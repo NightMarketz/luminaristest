@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { KitRefSchema } from '../../sectorKits/dtos/KitInstallationDto';
 
 /**
  * LAC-B — `POST /accounting-binding/activate-default` (FE-INCR-BINDING-ACTIVATION-brief.md,
@@ -30,6 +31,9 @@ export const ACTIVATION_PRECONDITION_CODES = [
   'CHART_OF_ACCOUNTS_EMPTY',
   'ACCOUNTING_PERIOD_NOT_OPEN',
   'EVENT_COVERAGE_MISSING',
+  // BE-INCR-KIT-SETOR PR-2: pré-check do kit (emenda E-5) e falha por exceção num passo da instalação (item 14).
+  'KIT_FISCAL_PROFILE_REQUIRED',
+  'KIT_INSTALL_STEP_FAILED',
 ] as const;
 
 export const ActivationBlockingIssueSchema = z
@@ -40,6 +44,8 @@ export const ActivationBlockingIssueSchema = z
     accountCode: z.string().optional(),
     /** Só em `ACCOUNTING_PERIOD_NOT_OPEN` — contrato da emenda I3 (ONBOARDING-WIZARD-plano-grafo-brief §3). */
     period: z.string().regex(/^\d{4}-\d{2}$/).optional(),
+    /** Só em `KIT_INSTALL_STEP_FAILED` — o passo da instalação do kit que falhou (BE-INCR-KIT-SETOR item 14). */
+    step: z.number().int().min(1).max(7).optional(),
   })
   .strict();
 export type ActivationBlockingIssue = z.infer<typeof ActivationBlockingIssueSchema>;
@@ -53,6 +59,9 @@ export const ActivateDefaultBindingResultSchema = z
     /** Ausente quando o pré-check barrou (nada foi gravado). */
     bindingVersion: z.number().int().positive().optional(),
     blocking: z.array(ActivationBlockingIssueSchema).optional(),
+    /** BE-INCR-KIT-SETOR PR-2 (item 11, aditivo): o kit de setor da unidade. Ausente no pré-check que barrou e na
+     *  unidade legada sem `KitInstallation`. */
+    kit: KitRefSchema.optional(),
   })
   .strict();
 export type ActivateDefaultBindingResult = z.infer<typeof ActivateDefaultBindingResultSchema>;

@@ -12,6 +12,7 @@ message: string
 slot?: string
 accountCode?: string
 period?: string
+step?: number
 }
 export interface ActivateDefaultBindingResultInput {
 status: ("Active" | "already-active" | "Draft")
@@ -22,5 +23,11 @@ message: string
 slot?: string
 accountCode?: string
 period?: string
+step?: number
 }[]
+kit?: {
+kitKey: string
+kitVersion: number
+status: ("INSTALLING" | "INSTALLED" | "FAILED")
+}
 }

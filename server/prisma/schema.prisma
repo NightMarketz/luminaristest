@@ -46,6 +46,7 @@ model User {
   counterparties             Counterparty[] // Relation to Counterparty (supplier/customer catalog, INCR-COUNTERPARTY)
   inventoryItems             InventoryItem[] // Relation to InventoryItem (perpetual inventory subledger, INCR-INVENTORY)
   accountingBindings         AccountingBinding[] // Relation to AccountingBinding (A Prensa, BE-INCR-BINDING-PRESS)
+  kitInstallations           KitInstallation[] // BE-INCR-KIT-SETOR PR-2 — kit de setor instalado por unidade
   reconcilePendingItems      ReconcilePendingItem[] // Relation to ReconcilePendingItem (BE-INCR-RECONCILE-PENDING, nó C7)
   bankSettlementItems        BankSettlementItem[] // Relation to BankSettlementItem (BE-INCR-BANK-SETTLEMENT, nó F7)
   accountingScopeSettings    AccountingScopeSettings[] // Relation to AccountingScopeSettings (config por escopo, F7 Fase C)
@@ -1352,6 +1353,29 @@ model AccountingBinding {
   @@unique([userId, unitId, sectorKey, bindingVersion])
   @@index([userId, unitId, sectorKey, status])
   @@map("accounting_bindings")
+}
+
+// BE-INCR-KIT-SETOR PR-2 (nó KIT-SETOR, BRIEF item 9, §3.2): o kit de setor instalado na unidade. UM kit por
+// unidade (dois kits colidiriam no mapper `unitId:sourceType`). `steps` = JSON `{lastCompletedStep, warnings}`:
+// a instalação roda 7 passos com commit próprio e uma nova chamada retoma do primeiro não concluído.
+model KitInstallation {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId      String
+  kitKey      String
+  kitVersion  Int
+  status      String // INSTALLING | INSTALLED | FAILED (models/kitInstallTypes.ts)
+  steps       String // JSON: { lastCompletedStep: 0..7, warnings: string[] }
+  installedAt DateTime?
+  updatedById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@unique([userId, unitId]) // um kit por unidade (item 9)
+  @@index([kitKey, kitVersion])
+  @@map("kit_installations")
 }
 
 // BE-INCR-RECONCILE-PENDING (nó C7) — resíduo F-W2F-3/5 (CEDULA-DECISAO-2026-09-03-modulos.md,

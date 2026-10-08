@@ -1,15 +1,67 @@
+import { KitInstallService } from '../../features/sectorKits/services/KitInstallService';
+import { SectorKitPolicy } from '../../features/sectorKits/policies/SectorKitPolicy';
+import type { IKitInstallationRepository } from '../../features/sectorKits/repositories/IKitInstallationRepository';
+import type { BindingScope } from '../../features/accountingBinding/repositories/IAccountingBindingRepository';
+
 const findFirstAccountingBinding = jest.fn();
 const findManyAccount = jest.fn();
 const disconnect = jest.fn(async () => {});
 const compile = jest.fn();
-const getAccountingBindingCompileService = jest.fn(() => ({ compile }));
-const getInstance = jest.fn(() => ({ getAccountingBindingCompileService }));
+const getAccountingBindingCompileService = jest.fn((_scope?: BindingScope) => ({ compile }));
+
+/**
+ * BE-INCR-KIT-SETOR PR-2 (emenda E-4): o CLI virou alias do `installSectorKitCli`, que instala pelo
+ * `KitInstallService`. Só os mocks mudam: o serviço é o REAL, montado sobre o `compile` acima e sobre portas
+ * que leem o mesmo `prisma.account.findMany` mockado (o plano da unidade). O kit v1 é vazio, então os passos de
+ * extensão, contas-padrão, padrões fiscais e referencial não chamam porta nenhuma; o período responde OPEN.
+ */
+let lastChart: Promise<Array<{ code: string; nature: string; acceptsEntries: boolean }> | undefined> = Promise.resolve([]);
+function memoryKitRepo(): IKitInstallationRepository {
+  let row: { id: string; kitKey: string; kitVersion: number; status: string; steps: string } | null = null;
+  return {
+    findByScope: async () => row as never,
+    begin: async (_scope: BindingScope, kit: { kitKey: string; kitVersion: number }) => {
+      row = row ? { ...row, status: 'INSTALLING' } : { id: 'k1', ...kit, status: 'INSTALLING', steps: '{"lastCompletedStep":0,"warnings":[]}' };
+      return row as never;
+    },
+    saveSteps: async (_s: BindingScope, _id: string, steps: unknown) => ({ ...row!, steps: JSON.stringify(steps) }) as never,
+    finish: async (_s: BindingScope, _id: string, status: string) => ({ ...row!, status }) as never,
+    runTransaction: async <T,>(fn: (tx: never) => Promise<T>) => fn({} as never),
+  };
+}
+const getKitInstallService = jest.fn(
+  (scope: BindingScope) =>
+    new KitInstallService(
+      new SectorKitPolicy(),
+      memoryKitRepo(),
+      { findActive: async () => null },
+      getAccountingBindingCompileService(scope),
+      {
+        listChart: async () => ((await lastChart) ?? []).map((a) => ({ code: a.code, nature: a.nature, acceptsEntries: a.acceptsEntries })),
+        installCanonicalChart: async () => {},
+        createAccountIfAbsent: async () => 'exists' as const,
+        findLiveAccountId: async () => null,
+      },
+      { status: async () => 'OPEN' as const, seedAndOpen: async () => {} },
+      { hasFiscalProfile: async () => false, fillNullScopeSettings: async () => [], fillNullFiscalProfile: async () => [] },
+      { hasProfile: async () => false, upsert: async () => {} },
+      { catalogLoaded: async () => false, mappedAccountIds: async () => new Set<string>(), batchSet: async () => {} },
+      { companyRegime: async () => null, unitRegime: async () => null },
+      { append: async () => {} },
+    ),
+);
+const getInstance = jest.fn(() => ({ getAccountingBindingCompileService, getKitInstallService }));
 
 jest.mock('../../lib/prisma', () => ({
   __esModule: true,
   default: {
     accountingBinding: { findFirst: (...a: unknown[]) => findFirstAccountingBinding(...a) },
-    account: { findMany: (...a: unknown[]) => findManyAccount(...a) },
+    account: {
+      findMany: (...a: unknown[]) => {
+        lastChart = Promise.resolve(findManyAccount(...a));
+        return lastChart;
+      },
+    },
     $disconnect: () => disconnect(),
   },
 }));

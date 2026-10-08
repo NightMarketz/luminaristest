@@ -11,11 +11,25 @@ import type { AuditService } from './AuditService';
 import type { IAccountantAssignmentRepository } from '../repositories/IAccountantAssignmentRepository';
 import type { IAccountingPolicyVersionRepository } from '../repositories/IAccountingPolicyVersionRepository';
 import { applyDirectInTx, assertNoActiveAccountant } from './policyVersionApply';
-import type { UpsertFiscalProfileInput, FiscalProfilePolicyPayload } from '../dtos/FiscalProfileDto';
+import { FiscalProfilePolicyPayloadSchema, type UpsertFiscalProfileInput, type FiscalProfilePolicyPayload } from '../dtos/FiscalProfileDto';
 import type { CostRegime } from '../../../lib/nfeCost';
 import type { FiscalProfile, Prisma } from 'generated/prisma';
 
 export const FISCAL_PROFILE_UPDATED = 'fiscal_profile.updated';
+
+/** Contas-padrão do perfil que o kit de setor pode preencher (BE-INCR-KIT-SETOR §3.1, `roleDefaults.fiscalProfile`). */
+export type FiscalProfileAccountField =
+  | 'icmsRecuperavelAccountId'
+  | 'pisCofinsRecuperavelAccountId'
+  | 'insumoExpenseAccountId'
+  | 'irpjDespesaAccountId'
+  | 'csllDespesaAccountId'
+  | 'irpjRecolherAccountId'
+  | 'csllRecolherAccountId'
+  | 'pisDespesaAccountId'
+  | 'cofinsDespesaAccountId'
+  | 'pisRecolherAccountId'
+  | 'cofinsRecolherAccountId';
 
 /**
  * BE-INCR-DFE (BRIEF item 7) — campos cujo valor vem de resposta pendente do contador (D1f, itens 5a–5f
@@ -188,6 +202,36 @@ export class FiscalProfileService {
   }
 
   /**
+   * BE-INCR-KIT-SETOR PR-2 (item 10, passo 3): contas-padrão do kit de setor, **só nos campos nulos** do perfil que
+   * já existe (regra Odoo: o modelo preenche, nunca sobrescreve). Sem perfil ⇒ 400 `fiscal_profile_missing` — o kit
+   * não inventa regime (emenda E-5: o pré-check do `activate-default` já barra antes). Mesmo caminho de escrita do
+   * PUT (policy, gate do contador dentro da tx, versão APPLIED, `fiscal_profile.updated`), com o perfil inteiro
+   * relido DENTRO da tx e o `d1fConfirmado` preservado. Devolve os campos gravados.
+   */
+  async fillNullAccounts(scope: AccountingScope, accountIds: Partial<Record<FiscalProfileAccountField, string>>): Promise<string[]> {
+    if (!this.policy.canManageFiscalProfile(scope)) throw new ForbiddenError('Você não tem permissão para alterar o perfil fiscal.');
+    await assertNoActiveAccountant(this.assignmentRepo, scope);
+    return this.repo.runTransaction(async (tx) => {
+      await assertNoActiveAccountant(this.assignmentRepo, scope, tx);
+      const row = await this.repo.findByScope(scope, tx);
+      if (!row) {
+        throw new ValidationError('fiscal_profile_missing: perfil fiscal da unidade não cadastrado (PUT /api/accounting/fiscal-profile).');
+      }
+      const patch = Object.fromEntries(
+        Object.entries(accountIds).filter(([field]) => row[field as FiscalProfileAccountField] == null),
+      );
+      const fields = Object.keys(patch);
+      if (fields.length === 0) return [];
+      const { unitId: _unitId, d1fConfirmado, emissao: _emissao, updatedAt: _updatedAt, ...current } = this.toView(row, null);
+      const payload = FiscalProfilePolicyPayloadSchema.parse({ ...current, ...patch });
+      await applyDirectInTx(this.policyVersionRepo, scope, 'FISCAL_PROFILE', payload, tx, (policyVersionId) =>
+        this.applyInTx(scope, payload, tx, policyVersionId, { d1fConfirmado }),
+      );
+      return fields;
+    });
+  }
+
+  /**
    * Asserções do perfil (contas do escopo + regime da empresa), só leitura. A proposta usa sem `tx` (item 7.3, erro
    * rápido para o dono); `applyInTx` reusa dentro da tx. Devolve o regime da empresa no ano corrente.
    */
@@ -236,13 +280,15 @@ export class FiscalProfileService {
     input: FiscalProfilePolicyPayload,
     tx: Prisma.TransactionClient,
     policyVersionId: string,
+    /** BE-INCR-KIT-SETOR PR-2: o kit preenche contas sem o operador ver os defaults D1f, então não os confirma. */
+    opts: { d1fConfirmado?: boolean } = {},
   ): Promise<FiscalProfileView> {
     const regimeEmpresa = await this.validate(scope, input, tx);
     const { ibsCbsInformar, ...rest } = input;
     const data = {
       ...rest,
       ibsCbsInformar: ibsCbsInformar ?? input.regimeTributario !== 'SIMPLES',
-      d1fConfirmado: true,
+      d1fConfirmado: opts.d1fConfirmado ?? true,
     };
     const row = await this.repo.upsert(scope, data, tx);
     await this.auditService.append(tx, scope, {

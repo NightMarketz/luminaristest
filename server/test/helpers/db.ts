@@ -104,6 +104,7 @@ export async function resetDb(): Promise<void> {
   await prisma.packageBalanceMovement.deleteMany();
   await prisma.packageValidityAcceptance.deleteMany(); // FE-INCR-PACOTE-VALIDADE: prova append-only, sem FK — folha pura
   await prisma.accountingBinding.deleteMany();
+  await prisma.kitInstallation.deleteMany(); // BE-INCR-KIT-SETOR PR-2 — folha (nada a referencia)
   await prisma.reconcilePendingItem.deleteMany();
   // BE-INCR-FIXED-ASSETS (nó C8): nada referencia FixedAsset por FK — folha pura; cai antes de
   // fixedAssetClass/depreciationRate (que ele referencia) e de journalEntry/sourceDocument/payable.

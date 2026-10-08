@@ -10,6 +10,9 @@ import {
 } from '../BindingActivationService';
 import { SALE_BINDING_V1, SALE_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../fixtures/saleBinding';
 import { CLINIC_BINDING_V1 } from '../../fixtures/clinicBinding';
+import { KitInstallService } from '../../../sectorKits/services/KitInstallService';
+import { SectorKitPolicy } from '../../../sectorKits/policies/SectorKitPolicy';
+import type { IKitInstallationRepository } from '../../../sectorKits/repositories/IKitInstallationRepository';
 
 /**
  * LAC-B — unidade do `BindingActivationService` (FE-INCR-BINDING-ACTIVATION itens 1–3 + emenda F-I3-1 a).
@@ -51,10 +54,44 @@ function build(opts: {
     status: jest.fn(async () => opts.period ?? 'OPEN'),
     seedAndOpen: jest.fn(async () => {}),
   };
+  // BE-INCR-KIT-SETOR PR-2 (item 11): o activate-default delega ao KitInstallService — aqui o REAL, sobre os
+  // mesmos dublês (compile, chart, período) e um repositório de instalação em memória. Kit v1 = vazio.
+  let installation: { id: string; kitKey: string; kitVersion: number; status: string; steps: string } | null = null;
+  const kitRepo: IKitInstallationRepository = {
+    findByScope: async () => installation as never,
+    begin: async (_s, kit) => {
+      installation = installation
+        ? { ...installation, status: 'INSTALLING' }
+        : { id: 'k1', ...kit, status: 'INSTALLING', steps: '{"lastCompletedStep":0,"warnings":[]}' };
+      return installation as never;
+    },
+    saveSteps: async (_s, _id, steps) => {
+      installation = { ...installation!, steps: JSON.stringify(steps) };
+      return installation as never;
+    },
+    finish: async (_s, _id, status, steps) => {
+      installation = { ...installation!, status, steps: JSON.stringify(steps) };
+      return installation as never;
+    },
+    runTransaction: async (fn) => fn({} as never),
+  };
+  const kitInstaller = new KitInstallService(
+    new SectorKitPolicy(),
+    kitRepo,
+    repo,
+    { compile } as never,
+    { ...chartPort, createAccountIfAbsent: async () => 'exists' as const, findLiveAccountId: async () => null },
+    periodPort,
+    { hasFiscalProfile: async () => false, fillNullScopeSettings: async () => [], fillNullFiscalProfile: async () => [] },
+    { hasProfile: async () => false, upsert: async () => {} },
+    { catalogLoaded: async () => false, mappedAccountIds: async () => new Set<string>(), batchSet: async () => {} },
+    { companyRegime: async () => null, unitRegime: async () => null },
+    { append: async () => {} },
+  );
   const service = new BindingActivationService(
     opts.policy ?? new AccountingBindingPolicy(),
     repo,
-    { compile } as never,
+    kitInstaller,
     chartPort,
     periodPort,
     () => TODAY,
@@ -71,7 +108,11 @@ const nothingWritten = (b: ReturnType<typeof build>) => {
 describe('BindingActivationService.activateDefault', () => {
   it('CONTROLE feliz: chart e período prontos ⇒ compila o binding do SALÃO (default) e devolve Active', async () => {
     const b = build();
-    await expect(b.service.activateDefault(scope, {})).resolves.toEqual({ status: 'Active', bindingVersion: 7 });
+    await expect(b.service.activateDefault(scope, {})).resolves.toEqual({
+      status: 'Active',
+      bindingVersion: 7,
+      kit: { kitKey: 'beautySalon', kitVersion: 1, status: 'INSTALLED' },
+    });
     expect(b.compile).toHaveBeenCalledWith(scope, {
       sectorKey: SALE_BINDING_V1.sectorKey,
       operationalSchema: SALE_OPERATIONAL_SCHEMA_SNAPSHOT,

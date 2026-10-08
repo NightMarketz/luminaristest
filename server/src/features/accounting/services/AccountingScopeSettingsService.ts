@@ -79,6 +79,35 @@ export class AccountingScopeSettingsService {
     });
   }
 
+  /**
+   * BE-INCR-KIT-SETOR PR-2 (item 10, passo 3): contas-padrão do kit de setor, **só nos campos nulos** (regra Odoo:
+   * o modelo preenche, nunca sobrescreve). Sem linha, cria só com essas contas (emenda E-5). Mesmo caminho de
+   * escrita do PUT (policy, gate do contador ativo dentro da tx, versão APPLIED, validação in-tx); o campo nulo é
+   * lido DENTRO da tx, então uma escrita concorrente do usuário nunca é sobrescrita. Devolve os campos gravados.
+   */
+  async fillNullAccounts(
+    scope: AccountingScope,
+    accountIds: Partial<Record<'bankChargeExpenseAccountId' | 'bankChargeIncomeAccountId' | 'depreciationExpenseAccountId' | 'disposalGainAccountId' | 'disposalLossAccountId', string>>,
+  ): Promise<string[]> {
+    if (!this.policy.canManageAccountingSettings(scope)) {
+      throw new ForbiddenError('Você não tem permissão para alterar a configuração contábil.');
+    }
+    await assertNoActiveAccountant(this.assignmentRepo, scope);
+    return this.policyVersionRepo.runTransaction(async (tx) => {
+      await assertNoActiveAccountant(this.assignmentRepo, scope, tx);
+      const current = await this.repo.getSettings(scope, tx);
+      const patch = Object.fromEntries(
+        Object.entries(accountIds).filter(([field]) => current?.[field as keyof typeof accountIds] == null),
+      ) as ScopeSettingsPolicyPayload;
+      const fields = Object.keys(patch);
+      if (fields.length === 0) return [];
+      await applyDirectInTx(this.policyVersionRepo, scope, 'SCOPE_SETTINGS', patch, tx, (policyVersionId) =>
+        this.applyInTx(scope, patch, tx, policyVersionId),
+      );
+      return fields;
+    });
+  }
+
   /** Asserções das contas do patch (só leitura); a proposta usa sem `tx` (item 7.3), `applyInTx` com. */
   async validate(scope: AccountingScope, input: ScopeSettingsPolicyPayload, tx?: Prisma.TransactionClient): Promise<SettingsData> {
     const data: SettingsData = {};

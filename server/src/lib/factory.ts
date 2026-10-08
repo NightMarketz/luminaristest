@@ -179,6 +179,21 @@ import type {
   ActivationChartPort,
   ActivationPeriodPort,
 } from '../features/accountingBinding/services/BindingActivationService';
+// BE-INCR-KIT-SETOR PR-2 — instalação do kit de setor (activate-default + installSectorKitCli).
+import { Prisma } from 'generated/prisma';
+import { KitInstallService, type KitVersionsLookup } from '../features/sectorKits/services/KitInstallService';
+import type {
+  IKitAuditPort,
+  KitChartPort,
+  KitReferentialPort,
+  KitRegime,
+  KitRegimePort,
+  KitRoleDefaultsPort,
+  KitServiceFiscalPort,
+} from '../features/sectorKits/services/kitInstallPorts';
+import { KitInstallationRepository } from '../features/sectorKits/repositories/KitInstallationRepository';
+import { SectorKitPolicy } from '../features/sectorKits/policies/SectorKitPolicy';
+import { UpsertServiceFiscalProfileSchema } from '../features/accounting/dtos/ServiceFiscalProfileDto';
 import { SalesCancellationService } from '../features/sales/services/SalesCancellationService';
 import { RegisterPaymentService } from '../features/sales/services/RegisterPaymentService';
 import { PresetSyncService } from '../features/dynamicTables/services/PresetSyncService';
@@ -360,6 +375,123 @@ function buildActivationPeriodPort(
       const periods = await periodService.seedYear(scope, year);
       const period = periods.find((p) => p.month === month);
       if (period && period.status === 'FUTURE') await periodService.openPeriod(scope, period.id);
+    },
+  };
+}
+
+/**
+ * BE-INCR-KIT-SETOR PR-2 — portas do `KitInstallService`, fechadas sobre o escopo (o `sectorKits` não importa
+ * `features/accounting`). Cada uma reusa o serviço/repositório dono do dado; nenhuma escreve por fora dele.
+ */
+function buildKitChartPort(accountRepo: IAccountRepository, postingService: PostingService, scope: AccountingScope): KitChartPort {
+  return {
+    ...buildActivationChartPort(accountRepo, postingService, scope),
+    async createAccountIfAbsent(account) {
+      if (await accountRepo.findByCode(scope, account.code)) return 'exists';
+      try {
+        await accountRepo.create({
+          userId: scope.ownerUserId,
+          unitId: scope.unitId,
+          code: account.code,
+          name: account.name,
+          nature: account.nature,
+          acceptsEntries: account.acceptsEntries,
+        });
+        return 'created';
+      } catch (error) {
+        // Só existe como linha soft-deleted (o @@unique não exclui deletedAt): a conta foi apagada pelo contador e
+        // o kit NUNCA a restaura (item 10.2) — ao contrário do `ensureChartOfAccounts` do canônico (F12).
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') return 'deleted';
+        throw error;
+      }
+    },
+    async findLiveAccountId(code) {
+      return (await accountRepo.findByCode(scope, code))?.id ?? null;
+    },
+  };
+}
+
+function buildKitRoleDefaultsPort(
+  fiscalProfileRepo: IFiscalProfileRepository,
+  settingsService: AccountingScopeSettingsService,
+  fiscalProfileService: FiscalProfileService,
+  scope: AccountingScope,
+): KitRoleDefaultsPort {
+  return {
+    async hasFiscalProfile() {
+      return (await fiscalProfileRepo.findByScope(scope)) !== null;
+    },
+    fillNullScopeSettings: (accountIds) => settingsService.fillNullAccounts(scope, accountIds),
+    fillNullFiscalProfile: (accountIds) => fiscalProfileService.fillNullAccounts(scope, accountIds),
+  };
+}
+
+function buildKitServiceFiscalPort(
+  repo: IServiceFiscalProfileRepository,
+  service: ServiceFiscalProfileService,
+  scope: AccountingScope,
+): KitServiceFiscalPort {
+  return {
+    async hasProfile(serviceRef) {
+      return (await repo.findByServiceRef(scope, serviceRef)) !== null;
+    },
+    async upsert(serviceRef, input) {
+      // Mesma validação do PUT (lista nacional LC 116, Anexo C) — o kit não fura o DTO da rota.
+      await service.upsert(scope, serviceRef, UpsertServiceFiscalProfileSchema.parse({ unitId: scope.unitId, ...input }));
+    },
+  };
+}
+
+function buildKitReferentialPort(
+  catalogRepo: IReferentialAccountRepository,
+  mappingRepo: IReferentialMappingRepository,
+  mappingService: ReferentialMappingService,
+  scope: AccountingScope,
+): KitReferentialPort {
+  return {
+    async catalogLoaded(mappingVersion) {
+      return (await catalogRepo.countByVersion(mappingVersion)) > 0;
+    },
+    async mappedAccountIds(mappingVersion) {
+      return new Set((await mappingRepo.findManyByVersion(scope, mappingVersion)).map((m) => m.accountId));
+    },
+    async batchSet(mappingVersion, items) {
+      await mappingService.batchSet(scope, { unitId: scope.unitId, mappingVersion, items });
+    },
+  };
+}
+
+function buildKitRegimePort(
+  companyRepo: ICompanyFiscalProfileRepository,
+  fiscalProfileRepo: IFiscalProfileRepository,
+  scope: AccountingScope,
+): KitRegimePort {
+  return {
+    async companyRegime(ano) {
+      return ((await companyRepo.findByYear(scope, ano))?.regime as KitRegime | undefined) ?? null;
+    },
+    async unitRegime() {
+      return ((await fiscalProfileRepo.findByScope(scope))?.regimeTributario as KitRegime | undefined) ?? null;
+    },
+  };
+}
+
+function buildKitAuditPort(
+  auditRepo: IAuditRepository,
+  postingRepo: IPostingRepository,
+  policy: IAccountingPolicy,
+  counterpartyRepo: ICounterpartyRepository,
+): IKitAuditPort {
+  const auditService = new AuditService(auditRepo, postingRepo, policy, counterpartyRepo);
+  return {
+    async append(tx, scope, event) {
+      await auditService.append(tx, bindingScopeToAccountingScope(scope), {
+        actorUserId: scope.actorUserId,
+        eventType: event.eventType,
+        targetType: 'KitInstallation',
+        targetId: event.targetId,
+        payload: event.payload,
+      });
     },
   };
 }
@@ -1464,9 +1596,37 @@ export class ApplicationFactory {
     return new BindingActivationService(
       new AccountingBindingPolicy(),
       new AccountingBindingRepository(),
-      this.getAccountingBindingCompileService(scope),
+      this.getKitInstallService(scope),
       buildActivationChartPort(this.repositories.account, this.services.posting, accountingScope),
       buildActivationPeriodPort(this.repositories.accountingPeriod, this.services.period, accountingScope),
+    );
+  }
+
+  /**
+   * BE-INCR-KIT-SETOR PR-2 — `KitInstallService` por escopo (portas fechadas sobre o escopo, mesmo motivo dos
+   * getters acima). Consumido pelo `activate-default` (item 11) e pelo `installSectorKitCli` (item 16).
+   * `kitVersions` só é passado por teste: prova os passos com um kit de conteúdo sem publicar um v2 no registro.
+   */
+  public getKitInstallService(scope: BindingScope, kitVersions?: KitVersionsLookup): KitInstallService {
+    const accountingScope = bindingScopeToAccountingScope(scope);
+    return new KitInstallService(
+      new SectorKitPolicy(),
+      new KitInstallationRepository(),
+      new AccountingBindingRepository(),
+      this.getAccountingBindingCompileService(scope),
+      buildKitChartPort(this.repositories.account, this.services.posting, accountingScope),
+      buildActivationPeriodPort(this.repositories.accountingPeriod, this.services.period, accountingScope),
+      buildKitRoleDefaultsPort(this.repositories.fiscalProfile, this.services.accountingScopeSettings, this.services.fiscalProfile, accountingScope),
+      buildKitServiceFiscalPort(this.repositories.serviceFiscalProfile, this.services.serviceFiscalProfile, accountingScope),
+      buildKitReferentialPort(
+        this.repositories.referentialAccount,
+        this.repositories.referentialMapping,
+        this.services.referentialMapping,
+        accountingScope,
+      ),
+      buildKitRegimePort(this.repositories.companyFiscalProfile, this.repositories.fiscalProfile, accountingScope),
+      buildKitAuditPort(this.repositories.audit, this.repositories.posting, this.policies.accounting, this.repositories.counterparty),
+      kitVersions,
     );
   }
 

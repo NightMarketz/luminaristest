@@ -121,6 +121,11 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'binding.compiled':          ['bindingId', 'sectorKey', 'bindingVersion', 'status'],
   'binding.activated':         ['bindingId', 'sectorKey', 'bindingVersion'],
   'binding.validation_failed': ['bindingId', 'sectorKey', 'bindingVersion', 'blockingCount'],
+  // BE-INCR-KIT-SETOR PR-2 (item 15) — instalação do kit de setor, emitida por `KitInstallService`
+  // (features/sectorKits, via `IKitAuditPort` em `lib/factory.ts`). Só chave do kit, versão, unidade e passo —
+  // sem PII. A trilha `binding.*` do passo de compile continua à parte.
+  'kit.installed':             ['kitKey', 'kitVersion', 'unitId'],
+  'kit.install_failed':        ['kitKey', 'kitVersion', 'step'],
   // BE-INCR-NFE — a ingestão fiscal NÃO emite evento `nfe.*` próprio (decisão A / T8): auditoria é IN-TX
   // e os serviços de integração (compra/venda) não possuem tx própria. A nota já entra no trilho imutável
   // in-tx pela escrita que de fato ocorre — `payable.created` e a chave como `entry.source_recorded`.
