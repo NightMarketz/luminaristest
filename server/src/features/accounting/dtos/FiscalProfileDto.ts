@@ -61,6 +61,9 @@ const FiscalProfileFields = z
     // reconhecimento — retenções a conciliar com clientes (Asset, redutora de clientes).
     pisCofinsRetidoCompensarAccountId: z.string().min(1).nullable().optional(),
     pisCofinsRetencaoConciliarAccountId: z.string().min(1).nullable().optional(),
+    // BE-INCR-SIMPLES-NACIONAL PR-3 (nó X14, item 21): provisão do DAS — dedução da receita (Revenue) / a recolher (Liability)
+    simplesDasDeducaoAccountId: z.string().min(1).nullable().optional(),
+    simplesRecolherAccountId: z.string().min(1).nullable().optional(),
     // X7 Fase B (BRIEF B item 16, F-TB-3 a): saldo negativo a compensar do ajuste anual (Asset) — código do contador (P-B8).
     irpjSaldoNegativoAccountId: z.string().min(1).nullable().optional(),
     csllSaldoNegativoAccountId: z.string().min(1).nullable().optional(),

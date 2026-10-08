@@ -68,7 +68,7 @@ describe('X13 PR-3 — regime e porte no onboarding', () => {
     const u = await novoUsuario();
     const r = await criar(u, { fiscal: { regime: 'MEI' } });
     expect(r.status).toBe(201);
-    expect(r.body.data.fiscal.obrigacoes.map((o: { status: string }) => o.status)).toEqual(['FACULTATIVA', 'NAO_SE_APLICA', 'CONDICIONAL']); // + DCTFWEB do MEI (X9 item 13)
+    expect(r.body.data.fiscal.obrigacoes.map((o: { status: string }) => o.status)).toEqual(['FACULTATIVA', 'NAO_SE_APLICA', 'CONDICIONAL', 'OBRIGATORIA']); // + DCTFWEB do MEI (X9 item 13) · + DASN_SIMEI (X14 PR-3 item 22)
   });
 
   it('item 19: NAO_SEI ou sem bloco fiscal → pendente, nenhum perfil criado', async () => {

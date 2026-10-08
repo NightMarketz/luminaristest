@@ -6,6 +6,9 @@ import {
   putSimplesHistorico,
   putSimplesSegregacao,
   updateParceria,
+  calcularApuracaoSimples,
+  getApuracaoSimples,
+  putDasSimples,
 } from '../controllers/simplesController';
 
 /**
@@ -21,5 +24,9 @@ router.post('/parcerias', createParceria);
 router.get('/parcerias', listParcerias);
 router.patch('/parcerias/:id', updateParceria);
 router.delete('/parcerias/:id', deleteParceria);
+// PR-3 (itens 17–19)
+router.post('/apuracoes/:competencia/calcular', calcularApuracaoSimples);
+router.get('/apuracoes/:competencia', getApuracaoSimples);
+router.put('/apuracoes/:competencia/das', putDasSimples);
 
 export default router;

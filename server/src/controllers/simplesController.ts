@@ -7,6 +7,7 @@ import {
   CompetenciaParamSchema,
   SalaoParceriaContratoPatchSchema,
   SalaoParceriaContratoSchema,
+  SimplesDasRegistroSchema,
   SimplesHistoricoUpsertSchema,
   SimplesIdParamSchema,
   SimplesSegregacaoUpsertSchema,
@@ -107,6 +108,58 @@ export const deleteParceria = async (req: Request, res: Response) => {
     if (!q.success) return bad(res, q.error.flatten());
     await service().deleteParceria(resolveAccountingScope(user, q.data.unitId), p.data.id);
     return res.status(204).send();
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+// ---- BE-INCR-SIMPLES-NACIONAL PR-3 (nó X14, itens 17–19) ----
+
+const apuracao = () => getFactory().getSimplesApuracaoService();
+
+/** POST /api/accounting/simples/apuracoes/:competencia/calcular — sob demanda, nada é gravado. */
+export const calcularApuracaoSimples = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const p = CompetenciaParamSchema.safeParse(req.params);
+    if (!p.success) return bad(res, p.error.flatten());
+    const b = SimplesUnitQuerySchema.safeParse(req.body);
+    if (!b.success) return bad(res, b.error.flatten());
+    const data = await apuracao().calcular(resolveAccountingScope(user, b.data.unitId), p.data.competencia);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** GET /api/accounting/simples/apuracoes/:competencia?unitId= — espelho do PGDAS-D + DAS oficial + divergência. */
+export const getApuracaoSimples = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const p = CompetenciaParamSchema.safeParse(req.params);
+    if (!p.success) return bad(res, p.error.flatten());
+    const q = SimplesUnitQuerySchema.safeParse(req.query);
+    if (!q.success) return bad(res, q.error.flatten());
+    const data = await apuracao().obter(resolveAccountingScope(user, q.data.unitId), p.data.competencia);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** PUT /api/accounting/simples/apuracoes/:competencia/das — registra o DAS oficial e persiste a apuração. */
+export const putDasSimples = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const p = CompetenciaParamSchema.safeParse(req.params);
+    if (!p.success) return bad(res, p.error.flatten());
+    const b = SimplesDasRegistroSchema.safeParse(req.body);
+    if (!b.success) return bad(res, b.error.flatten());
+    const data = await apuracao().registrarDas(resolveAccountingScope(user, b.data.unitId), p.data.competencia, b.data);
+    return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
   }

@@ -21,7 +21,7 @@
 
 import { getFactory } from '../../../../lib/factory';
 import logger from '../../../../lib/logger';
-import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScope, type AccountingScope } from '../../scope/AccountingScope';
 import { saleDayAsWritten, scopeDay, scopeToday } from '../../models/dates';
 import { buildSaleReturnedEvent, syncSkipErrorCode } from '../AccountingSyncPort';
 
@@ -79,12 +79,14 @@ export async function maybeReverseSale(
       // pre-check — reverseEntry itself owns idempotency.
       const revenue = await posting.findEntryBySource(scope, 'sale.finalized', row.id);
       if (revenue) {
-        await posting.reverseEntry(scope, {
+        const estorno = await posting.reverseEntry(scope, {
           unitId,
           lancamentoId: revenue.id,
           reversalPostingDate: scopeToday(scope),
           reason,
         });
+        // X14 PR-3: subrazão fiscal de receita — linhas negativas no dia do ESTORNO (commit 2, não fatal).
+        await maybeRecordEstornoFiscal(scope, row.id, 'CANCELAMENTO', () => estorno.reversal.date.toISOString().slice(0, 10));
       }
 
       // Adaptive (D2-Q4): if a settlement entry exists, reverse it too. This branch sleeps
@@ -112,6 +114,10 @@ export async function maybeReverseSale(
       return;
     }
 
+    const returnDay =
+      typeof data.returnedAt === 'string'
+        ? scopeDay(scope, data.returnedAt)
+        : saleDayAsWritten(scope, typeof data.date === 'string' ? data.date : undefined);
     const event = buildSaleReturnedEvent({
       saleId: row.id,
       unitId,
@@ -120,13 +126,12 @@ export async function maybeReverseSale(
       // `returnedAt` é 'datetime' no preset (SalesModule) — um INSTANTE. Resolvê-lo em dia-calendário
       // tem de ser no fuso do escopo: às 21h BRT o dia UTC já virou e a devolução postaria em D+1.
       // O fallback `data.date` é um DIA (ISO à meia-noite UTC do motor): lê-se como escrito (`saleDayAsWritten`).
-      occurredAt:
-        typeof data.returnedAt === 'string'
-          ? scopeDay(scope, data.returnedAt)
-          : saleDayAsWritten(scope, typeof data.date === 'string' ? data.date : undefined),
+      occurredAt: returnDay,
       label: `Devolução ${row.id}`,
     });
     await getFactory().getAccountingSyncService().sync(scope, event);
+    // X14 PR-3: subrazão fiscal de receita — linhas negativas no dia da devolução (D 3.2), commit 2, não fatal.
+    await maybeRecordEstornoFiscal(scope, row.id, 'DEVOLUCAO', () => returnDay);
   } catch (reversalError) {
     // Skip ONLY on the shared specific-code list (period-closed / MAX_CENTS poison) — never on a
     // base error class. syncSkipErrorCode reads AppError.errorCode; the old inline check read a
@@ -144,6 +149,22 @@ export async function maybeReverseSale(
       saleId: row.id,
       status: (row.data as Record<string, unknown> | undefined)?.status,
       error: reversalError instanceof Error ? reversalError.message : String(reversalError),
+    });
+  }
+}
+
+/**
+ * X14 PR-3 (lacuna 1 do PR-2) — espelha no subrazão fiscal de receita o cancelamento/devolução que acabou de ir ao
+ * razão (`ReceitaFiscalService.registrarEstorno`). Commit 2, não fatal: falha fica para a passada de reconcile.
+ */
+async function maybeRecordEstornoFiscal(scope: AccountingScope, saleId: string, tipo: 'CANCELAMENTO' | 'DEVOLUCAO', dia: () => string): Promise<void> {
+  try {
+    await getFactory().getReceitaFiscalService().registrarEstorno(scope, saleId, tipo, dia());
+  } catch (error) {
+    logger.error('Subrazão fiscal de receita (estorno) failed — left for reconciliation', {
+      saleId,
+      tipo,
+      error: error instanceof Error ? error.message : String(error),
     });
   }
 }

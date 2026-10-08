@@ -51,3 +51,10 @@ unitId: string
 export interface SimplesIdParamInput {
 id: string
 }
+export interface SimplesDasRegistroInput {
+unitId: string
+numeroDocumento: string
+valorCents: number
+vencimento: string
+sourceDocumentId?: (string | null)
+}
