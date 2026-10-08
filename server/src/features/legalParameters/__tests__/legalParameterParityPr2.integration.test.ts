@@ -31,8 +31,10 @@ let fot: LinhaLegal[];
 const tabelas = async (ts: LegalParameterTabela[]) => getFactory().getLegalParameterService().fotografia(ts);
 
 describe('BE-INCR-LEGAL-PARAMS PR-2 item 6 — paridade tabela em código × banco', () => {
+  // Síncrono à parte: o build a frio do banco-modelo (db push) bloqueia o loop por mais de 5 s e, dentro do hook
+  // async, estourava o timeout quando esta suíte é a primeira do shard (molde de legalParameterParity).
+  beforeAll(() => pushTestSchema());
   beforeAll(async () => {
-    pushTestSchema();
     await resetDb();
     fot = await tabelas(['CODIGO_RECEITA', 'PIS_COFINS', 'PIS_COFINS_MONOFASICO_NCM', 'CST_PIS_COFINS', 'CFOP_IMOBILIZADO', 'NFE_CSTAT_AUTORIZADA', 'OBRIGACAO_REGIME', 'LC116_SERVICO', 'ISS_LIMITE', 'LEIAUTE_SPED', 'FERIADO_NACIONAL']);
   }, 60000); // resetDb reaplica a semente v1..v3 (~730 INSERTs) quando o banco não a tem — memória timeout-5s-integracao
