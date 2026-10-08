@@ -56,6 +56,7 @@ model User {
   taxAssessments             TaxAssessment[] // BE-INCR-TAX-ASSESSMENT Fase A (nó X7, item 12) — apuração IRPJ/CSLL da PJ
   mitExports                 MitExport[] // BE-INCR-MIT-EXPORT PR-2 (nó X9, item 11) — arquivos do MIT gerados
   simplesHistorico           SimplesHistoricoMensal[] // BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14, itens 10–11)
+  simplesApuracoes           SimplesApuracao[] // X14 PR-3 item 19
   simplesSegregacoes         SimplesSegregacaoManual[] // X14 PR-2 item 12
   salaoParcerias             SalaoParceriaContrato[] // X14 PR-2 item 13
   receitaFiscalLinhas        ReceitaFiscalLinha[] // X14 PR-2 item 15
@@ -484,6 +485,8 @@ model Account {
   pisCofinsCreditoOutrosOf           FiscalProfile[]           @relation("FiscalProfilePisCofinsCreditoOutros") // X8 PR-3 (L-5)
   pisCofinsRetidoCompensarOf         FiscalProfile[]           @relation("FiscalProfilePisCofinsRetidoCompensar") // X8 PR-3 (retenções)
   pisCofinsRetencaoConciliarOf       FiscalProfile[]           @relation("FiscalProfilePisCofinsRetencaoConciliar") // X8 PR-3 (retenções)
+  simplesDasDeducaoOf                FiscalProfile[]           @relation("FiscalProfileSimplesDasDeducao") // X14 PR-3 item 21
+  simplesRecolherOf                  FiscalProfile[]           @relation("FiscalProfileSimplesRecolher") // X14 PR-3 item 21
   lalurEntries                       LalurEntry[]              @relation("LalurEntryAccount") // ajuste da Parte A com relação contábil (M310/M360.COD_CTA, ECF Fase 3B)
   fixedAssetClassCostOf              FixedAssetClass[]         @relation("FixedAssetClassCost") // conta do bem (1.2.x, BE-INCR-FIXED-ASSETS)
   fixedAssetClassAccumulatedOf       FixedAssetClass[]         @relation("FixedAssetClassAccumulatedDepreciation") // conta de depreciação acumulada (1.2.9.x)
@@ -1411,6 +1414,11 @@ model FiscalProfile {
   pisCofinsRetidoCompensarAccount     Account?  @relation("FiscalProfilePisCofinsRetidoCompensar", fields: [pisCofinsRetidoCompensarAccountId], references: [id], onDelete: Restrict)
   pisCofinsRetencaoConciliarAccountId String?
   pisCofinsRetencaoConciliarAccount   Account?  @relation("FiscalProfilePisCofinsRetencaoConciliar", fields: [pisCofinsRetencaoConciliarAccountId], references: [id], onDelete: Restrict)
+  // BE-INCR-SIMPLES-NACIONAL PR-3 (nó X14, item 21; F-SN-10 → a): provisão do DAS — D dedução da receita / C a recolher.
+  simplesDasDeducaoAccountId          String? // Revenue (dedução da receita, saldo devedor)
+  simplesDasDeducaoAccount            Account?  @relation("FiscalProfileSimplesDasDeducao", fields: [simplesDasDeducaoAccountId], references: [id], onDelete: Restrict)
+  simplesRecolherAccountId            String? // Liability
+  simplesRecolherAccount              Account?  @relation("FiscalProfileSimplesRecolher", fields: [simplesRecolherAccountId], references: [id], onDelete: Restrict)
   // X7 Fase B (BRIEF B item 16, F-TB-3 a): saldo negativo a compensar do ajuste anual — Asset, código do contador (P-B8)
   irpjSaldoNegativoAccountId          String? // Asset
   irpjSaldoNegativoAccount            Account?  @relation("FiscalProfileIrpjSaldoNegativo", fields: [irpjSaldoNegativoAccountId], references: [id], onDelete: Restrict)
@@ -2496,11 +2504,44 @@ model ReceitaFiscalLinha {
   excluir               Json // TributoSimples[] — marcas de segregação do item (vazio até o X10a)
   parceriaContratoId    String?
   cotaProfissionalCents BigInt   @default(0) // fora da receita bruta do salão (Lei 12.592 art. 1º-A § 5º)
+  // X14 PR-3 (lacuna 1 do PR-2): VENDA (positiva) | CANCELAMENTO | DEVOLUCAO (negativas, espelho do estorno/3.2,
+  // na competência do lançamento — dono 07/10). Idempotência por (venda, tipo).
+  tipo                  String   @default("VENDA")
   createdAt             DateTime @default(now())
 
   @@unique([userId, unitId, saleId, itemRef])
   @@index([userId, unitId, competencia])
   @@map("receita_fiscal_linhas")
+}
+
+// BE-INCR-SIMPLES-NACIONAL PR-3 (nó X14, item 19; B-1 → c, emenda F-SN-13 → b) — apuração do Simples persistida no
+// registro do DAS oficial (B-2 → a: nada é gravado no "calcular"). Molde de ciclo de vida/provisão do TaxAssessment:
+// CONFIRMED | SUPERSEDED, novo registro na mesma competência = SUPERSEDED + linha nova com `supersedesId`.
+model SimplesApuracao {
+  id                  String    @id @default(cuid())
+  userId              String
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId              String
+  competencia         String // YYYY-MM
+  regime              String // SIMPLES | MEI (MEI no PR-4)
+  valorOficialCents   BigInt
+  numeroDocumento     String
+  vencimento          String // YYYY-MM-DD
+  sourceDocumentId    String?
+  totalCalculadoCents BigInt
+  divergenciaCents    BigInt // oficial − calculado
+  memoria             Json // ApuracaoSimples (o cálculo inteiro, com alertas)
+  tabelaVersao        Json // ids das linhas legal_parameters usadas
+  status              String // CONFIRMED | SUPERSEDED
+  supersedesId        String?
+  provisaoEntryId     String?
+  createdById         String
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime?
+
+  @@index([userId, unitId, competencia, status])
+  @@map("simples_apuracoes")
 }
 
 // BE-INCR-LEGAL-PARAMS (nó LEGAL-PARAMS, BRIEF §3 itens 1–4, §4) — coeficiente/tabela de lei como dado de PLATAFORMA:

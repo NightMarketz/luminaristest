@@ -3,9 +3,10 @@
  *
  * Matriz regime × obrigação SPED como DADO versionado (não engine — `R-motor-regras` rejeitado). Só entra linha com
  * fonte verificada no corpus (`docs/accounting/fontes-oficiais/IN-RFB-2003-2021-ECD.txt`, `…2004-2021-ECF.txt`) ou
- * no Planalto (LC 123 art. 18-A §1º, baixado 24/09). EFD-Contribuições, PGDAS-D, DEFIS, DASN-SIMEI e EFD ICMS/IPI
- * ficam FORA até ter fonte (F-XP-7 a; BRIEF §5 item 1). A DCTFWeb entrou com o X9 (BE-INCR-MIT-EXPORT item 13,
- * F-X9-6 a; IN RFB 2.237/2024 relida no Sijut em 03/10).
+ * no Planalto (LC 123 art. 18-A §1º, baixado 24/09). EFD-Contribuições e EFD ICMS/IPI ficam FORA até ter fonte (F-XP-7 a;
+ * BRIEF §5 item 1). A DCTFWeb entrou com o X9 (BE-INCR-MIT-EXPORT item 13, F-X9-6 a; IN RFB 2.237/2024 relida no Sijut
+ * em 03/10). PGDAS-D, DEFIS, Livro Caixa (dispensado com escrituração) e DASN-SIMEI entraram com o X14 PR-3 (item 22;
+ * Res. CGSN 140/2018 arts. 38, 40, 63 § 3º, 72 e 109, corpus).
  *
  * BE-INCR-LEGAL-PARAMS PR-2 (item 20): as linhas da matriz moram na tabela de plataforma `OBRIGACAO_REGIME` (chave =
  * obrigação, discriminador = regime, `valorJson` = status base, condições, pergunta e status da inativa), cópia byte a
@@ -17,7 +18,7 @@ import { linhasVigentesDaTabela, type LinhaLegal } from '../../legalParameters/m
 export const STATUS_OBRIGACAO = ['OBRIGATORIA', 'CONDICIONAL', 'FACULTATIVA', 'NAO_SE_APLICA'] as const;
 export type StatusObrigacao = (typeof STATUS_OBRIGACAO)[number];
 /** O nome do tipo fica (BRIEF X9 item 13): DCTFWeb não é SPED, mas renomear mexe em 3 arquivos sem ganho. */
-export type ObrigacaoSped = 'ECD' | 'ECF' | 'DCTFWEB';
+export type ObrigacaoSped = 'ECD' | 'ECF' | 'DCTFWEB' | 'PGDAS_D' | 'DEFIS' | 'LIVRO_CAIXA' | 'DASN_SIMEI';
 
 /** Respostas do perfil que mudam o status. `null` = ainda não respondida (vira CONDICIONAL). */
 export interface CondicoesPerfil {
@@ -49,7 +50,7 @@ export interface LinhaMatriz {
 }
 
 /** A ordem da matriz (ECD, ECF; DCTFWEB no fim — lacuna do X9 PR-1 decidida pelo dono em 06/10). */
-const ORDEM_OBRIGACOES: readonly ObrigacaoSped[] = ['ECD', 'ECF', 'DCTFWEB'];
+const ORDEM_OBRIGACOES: readonly ObrigacaoSped[] = ['ECD', 'ECF', 'DCTFWEB', 'PGDAS_D', 'DEFIS', 'LIVRO_CAIXA', 'DASN_SIMEI'];
 
 /**
  * Fotografia → matriz vigente em `data`. Na ECD do Presumido a ordem das condições (guardada na linha) É a precedência

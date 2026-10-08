@@ -6726,6 +6726,81 @@ export {};
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *         '404': { $ref: '#/components/responses/NotFoundError' }
  *
+ *   /api/accounting/simples/apuracoes/{competencia}/calcular:
+ *     post:
+ *       summary: Compute the Simples Nacional assessment of a month on demand (BE-INCR-SIMPLES-NACIONAL PR-3, X14 item 17)
+ *       description: >-
+ *         Calcula a apuração ME/EPP da competência a partir do subrazão fiscal de receita, do histórico pré-adoção, da
+ *         segregação manual e dos contratos de parceria. Nada é gravado. 400 - perfil do ano ausente ou fora do Simples.
+ *         422 - regra não regulamentada (ex.: início de atividade a partir de 2027).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: competencia, required: true, schema: { type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$' } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               additionalProperties: false
+ *               required: [unitId]
+ *               properties:
+ *                 unitId: { type: string, minLength: 1 }
+ *       responses:
+ *         '200': { description: 'ApuracaoSimples (atividades, tributos, espelho do PGDAS-D, tie-out, alertas)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '422': { description: 'SIMPLES_REGRA_NAO_REGULAMENTADA' }
+ *
+ *   /api/accounting/simples/apuracoes/{competencia}:
+ *     get:
+ *       summary: PGDAS-D mirror of the month, with the registered official DAS and the divergence (X14 item 18)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: competencia, required: true, schema: { type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$' } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'ApuracaoSimples' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/accounting/simples/apuracoes/{competencia}/das:
+ *     put:
+ *       summary: Register the official DAS and persist the assessment (X14 items 19-21)
+ *       description: >-
+ *         Grava a apuração (SimplesApuracao) com o DAS oficial e provisiona D dedução da receita / C Simples a recolher
+ *         pelo valor oficial. Novo registro na mesma competência substitui o anterior e estorna a provisão dele. O mesmo
+ *         número e valor de novo só completa a provisão pendente. 400 - alerta bloqueante (TIEOUT_DIVERGENTE,
+ *         RBT12_INCOMPLETO, ATIVIDADE_SEM_ANEXO). 409 - a receita mudou depois do cálculo.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: competencia, required: true, schema: { type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$' } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               additionalProperties: false
+ *               required: [unitId, numeroDocumento, valorCents, vencimento]
+ *               properties:
+ *                 unitId:           { type: string, minLength: 1 }
+ *                 numeroDocumento:  { type: string, minLength: 1, maxLength: 40 }
+ *                 valorCents:       { type: integer, minimum: 1 }
+ *                 vencimento:       { type: string, format: date }
+ *                 sourceDocumentId: { type: string, nullable: true }
+ *       responses:
+ *         '200': { description: 'ApuracaoSimples com dasOficial' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '409': { description: 'A receita mudou depois do cálculo, ou registro concorrente' }
+ *
  *   /api/accounting/tax-assessments/{id}/provisao:
  *     post:
  *       summary: Reconcile the ledger provision of an IRPJ/CSLL or PIS/COFINS assessment (X7 Fase A item 16; X8 item 18)

@@ -23,6 +23,8 @@ export interface FiscalProfileData {
   pisCofinsCreditoOutrosAccountId?: string | null; // X8 PR-3 (L-5)
   pisCofinsRetidoCompensarAccountId?: string | null; // X8 PR-3 (retenções)
   pisCofinsRetencaoConciliarAccountId?: string | null; // X8 PR-3 (retenções)
+  simplesDasDeducaoAccountId?: string | null; // X14 PR-3 item 21
+  simplesRecolherAccountId?: string | null;
   irpjSaldoNegativoAccountId?: string | null; // X7 Fase B item 16
   csllSaldoNegativoAccountId?: string | null;
   partnerAccountRef?: string | null;

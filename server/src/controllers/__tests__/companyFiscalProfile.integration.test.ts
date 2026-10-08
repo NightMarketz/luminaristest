@@ -65,6 +65,8 @@ describe('X13 PR-1 — perfil fiscal da empresa, signatários e obrigações', (
       expect.objectContaining({ obrigacao: 'ECF', status: 'NAO_SE_APLICA', faltantes: [] }),
       // X9 item 13–14: DCTFWEB no fim (decisão do dono 06/10); MEI CONDICIONAL, sem faltantes (o X9 não gera, D10)
       expect.objectContaining({ obrigacao: 'DCTFWEB', status: 'CONDICIONAL', faltantes: [] }),
+      // X14 PR-3 item 22: DASN-SIMEI do MEI (Res. CGSN 140 art. 109), sem faltantes do perfil
+      expect.objectContaining({ obrigacao: 'DASN_SIMEI', status: 'OBRIGATORIA', faltantes: [] }),
     ]);
   });
 

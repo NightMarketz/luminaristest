@@ -160,3 +160,17 @@ const hasCorpus = existsSync(path.join(CORPUS, 'LC-123-2006-Simples.html')) && e
     }
   }, 120000);
 });
+
+describe('semente v2 à mão (X14 PR-3: cota de gestão da parceria + matriz de obrigações do item 22)', () => {
+  const V2 = path.join(REPO_ROOT, 'server/prisma/data/legal_parameters_simples_v2.sql');
+  const MIG3 = path.join(REPO_ROOT, 'server/prisma/migrations/20261008150000_add_simples_apuracao/migration.sql');
+  it('o migration.sql do PR-3 carrega o texto do arquivo, byte a byte; 5 linhas, todas com fonte', () => {
+    expect(norm(readFileSync(MIG3, 'utf8'))).toContain(norm(readFileSync(V2, 'utf8')).trimEnd());
+    const v2 = legalParamsSeedRows(V2);
+    expect(v2.map((r) => `${r.tabela}:${r.chave}`)).toEqual([
+      'SIMPLES_ENQUADRAMENTO:PARCERIA_GESTAO', 'OBRIGACAO_REGIME:PGDAS_D', 'OBRIGACAO_REGIME:DEFIS', 'OBRIGACAO_REGIME:LIVRO_CAIXA', 'OBRIGACAO_REGIME:DASN_SIMEI',
+    ]);
+    for (const r of v2) expect(r.fonte.trim()).not.toBe('');
+    EnquadramentoJsonSchema.parse(json(v2[0].valorJson));
+  });
+});
