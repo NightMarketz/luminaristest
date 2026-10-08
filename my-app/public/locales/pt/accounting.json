@@ -33,7 +33,8 @@
       "aprovacoes": "Aprovações",
       "nfe": "NF-e",
       "imobilizado": "Imobilizado",
-      "perfilFiscal": "Perfil fiscal"
+      "perfilFiscal": "Perfil fiscal",
+      "parametrosLegais": "Parâmetros legais"
     },
     "error": {
       "units": "Falha ao carregar as unidades.",
@@ -2540,6 +2541,97 @@
       "PROCESSING": "Em processamento",
       "REJECTED": "Rejeitada",
       "SENT": "Aguardando retorno do portal"
+    }
+  },
+  "legalParams": {
+    "title": "Parâmetros legais",
+    "subtitle": "Coeficientes e tabelas de lei usados pelos cálculos, iguais para todos os clientes. Mudança só pelo administrador da plataforma; cada linha cita a fonte.",
+    "new": "Propor linha",
+    "newVersion": "Nova versão",
+    "history": "Histórico",
+    "publish": "Publicar",
+    "revoke": "Revogar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "saving": "Enviando…",
+    "loading": "Carregando…",
+    "empty": "Nenhuma linha.",
+    "semFim": "sem fim",
+    "filter": {
+      "tabela": "Tabela",
+      "todasTabelas": "Todas as tabelas",
+      "status": "Status",
+      "todosStatus": "Todos os status",
+      "busca": "Buscar chave"
+    },
+    "status": {
+      "PUBLISHED": "Publicada"
+    },
+    "situacao": {
+      "EM_VIGOR": "Em vigor",
+      "RASCUNHO": "Rascunho",
+      "SUBSTITUIDA": "Substituída",
+      "REVOGADA": "Revogada"
+    },
+    "col": {
+      "tabela": "Tabela",
+      "chave": "Chave",
+      "valor": "Valor",
+      "vigencia": "Vigência",
+      "situacao": "Situação",
+      "fonte": "Fonte"
+    },
+    "historyModal": {
+      "title": "Histórico da linha",
+      "motivo": "Motivo",
+      "publicada": "Publicada",
+      "revogada": "Revogada"
+    },
+    "proposeModal": {
+      "title": "Propor linha",
+      "titleVersion": "Nova versão da linha",
+      "submit": "Propor (rascunho)"
+    },
+    "publishModal": {
+      "title": "Publicar linha",
+      "body": "A linha passa a valer para todos os clientes. Apurações confirmadas no período da vigência são recalculadas automaticamente."
+    },
+    "revokeModal": {
+      "title": "Revogar linha",
+      "body": "A linha deixa de valer (só o status muda). Apurações confirmadas no período da vigência são recalculadas automaticamente."
+    },
+    "form": {
+      "tabela": "Tabela",
+      "chave": "Chave",
+      "discriminador": "Discriminador (opcional)",
+      "tipoValor": "Tipo do valor",
+      "tipo": {
+        "int": "Inteiro (bp ou centavos)",
+        "texto": "Texto",
+        "json": "JSON"
+      },
+      "valor": "Valor",
+      "fonte": "Fonte (norma e artigo)",
+      "fonteUrl": "URL da fonte (opcional)",
+      "fonteSha256": "sha256 da fonte (opcional)",
+      "vigenteDesde": "Vigente desde",
+      "vigenteAte": "Vigente até (opcional)",
+      "motivo": "Motivo"
+    },
+    "error": {
+      "load": "Erro ao carregar os parâmetros legais.",
+      "propose": "Não foi possível propor a linha.",
+      "publish": "Não foi possível publicar a linha.",
+      "revoke": "Não foi possível revogar a linha.",
+      "chaveRequired": "Informe a chave.",
+      "valorRequired": "Informe o valor.",
+      "valorIntInvalid": "O valor inteiro deve ser um número inteiro.",
+      "valorJsonInvalid": "O valor não é um JSON válido.",
+      "fonteRequired": "Informe a fonte (norma e artigo).",
+      "vigenteDesdeInvalid": "Informe a data de início da vigência (AAAA-MM-DD).",
+      "vigenteAteInvalid": "Data final da vigência inválida (AAAA-MM-DD).",
+      "vigenciaInvertida": "A vigência termina antes de começar.",
+      "motivoRequired": "Informe o motivo."
     }
   }
 }

@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
-import type { Role } from '../../types/Role';
+import type { SessionRole } from '../../types/Role';
 
 interface WithAuthProps {
   // Props from the wrapped component can be defined here if needed by the HOC itself
 }
 
-export type AllowedRole = Role | 'PUBLIC' | 'AUTHENTICATED_USER';
+export type AllowedRole = SessionRole | 'PUBLIC' | 'AUTHENTICATED_USER';
 
 export interface AuthOptions {
   allowedRoles?: AllowedRole[];
@@ -52,7 +52,7 @@ export default function withAuth<P extends WithAuthProps>(
             return;
           }
           
-          const userSpecificRolesRequired = allowedRoles.filter(isUserSpecificRole) as Role[];
+          const userSpecificRolesRequired = allowedRoles.filter(isUserSpecificRole) as SessionRole[];
 
           if (userSpecificRolesRequired.length > 0) {
             const hasRequiredRole = user && userSpecificRolesRequired.includes(user.role);
@@ -94,7 +94,7 @@ export default function withAuth<P extends WithAuthProps>(
         if (allowedRoles.includes('AUTHENTICATED_USER')) {
           // Allowed for any authenticated user
         } else {
-            const userSpecificRolesRequired = allowedRoles.filter(isUserSpecificRole) as Role[];
+            const userSpecificRolesRequired = allowedRoles.filter(isUserSpecificRole) as SessionRole[];
             
             if (userSpecificRolesRequired.length > 0 && !userSpecificRolesRequired.includes(user.role)) {
                 return null; 
