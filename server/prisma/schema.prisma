@@ -2511,6 +2511,8 @@ model ReceitaFiscalLinha {
   @@unique([userId, unitId, saleId, itemRef])
   @@index([userId, unitId, competencia])
   @@map("receita_fiscal_linhas")
+}
+
 // BE-INCR-LEGAL-PARAMS PR-4 (item 10; emenda §9 L-3, dono 07/10 "Tabela de jobs") — fila do recálculo: publicar ou
 // revogar uma linha grava um job PENDING na MESMA tx; o agendador processa (reconfirma as apurações afetadas) e marca
 // DONE. Publicar nunca falha por causa de um cliente (o job roda fora da requisição). Sem soft-delete: registro de fato.
