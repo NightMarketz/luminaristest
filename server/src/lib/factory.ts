@@ -120,6 +120,7 @@ import { DimensionReportService } from '../features/accounting/services/Dimensio
 import { TieOutDiagnosticService } from '../features/accounting/services/TieOutDiagnosticService';
 import { DynamicTableProductRefLookup } from '../features/accounting/services/ProductRefLookup';
 import { DynamicTablePhysicalStockSync } from '../features/accounting/services/PhysicalStockSync';
+import type { ProductRefPort, StockRowPort, StockRowWriterPort } from '../features/accounting/ports/OriginPorts';
 import { CounterpartyService } from '../features/accounting/services/CounterpartyService';
 import { AccountingContactService } from '../features/accounting/services/AccountingContactService';
 import { AccountantAssignmentService } from '../features/accounting/services/AccountantAssignmentService';
@@ -882,6 +883,11 @@ export class ApplicationFactory {
     // de compra books every cent through the proved createPayable path, never postEntry directly.
     // BE-INCR-FIXED-ASSETS (nó C8, Bloco A) — tabela de taxas de depreciação. BE-INCR-LEGAL-PARAMS PR-3: o Anexo III é
     // a tabela de plataforma DEPRECIACAO_ANEXO_III (fotografia); construído antes do PayableService, que o injeta.
+    // KIT-SETOR PR-5 (item 43): portas de origem do núcleo contábil, implementadas aqui sobre o motor de
+    // DynamicTables (repositório para leitura; DynamicTableService para a escrita isSystem, que roda o plugin).
+    const stockRowPort: StockRowPort = this.repositories.dynamicTable;
+    const stockRowWriterPort: StockRowWriterPort = dynamicTableService;
+    const productRefPort: ProductRefPort = this.repositories.dynamicTable;
     const depreciationRateService = new DepreciationRateService(
       this.repositories.depreciationRate,
       legalParameterService,
@@ -899,9 +905,9 @@ export class ApplicationFactory {
       // stock and its cancel reverses it, via the shared InventoryService instance built above.
       inventoryService,
       // LAC-E F-E2: existence gate for inventoryProductRef against the DT `products` catalog.
-      new DynamicTableProductRefLookup(this.repositories.dynamicTable),
+      new DynamicTableProductRefLookup(productRefPort),
       // F-D2=(b): espelho físico da compra (movimento DT via escrita isSystem, best-effort).
-      new DynamicTablePhysicalStockSync(dynamicTableService, this.repositories.dynamicTable),
+      new DynamicTablePhysicalStockSync(stockRowWriterPort, stockRowPort),
       // BE-INCR-FIXED-ASSETS PR-5 (F-FA12 → a): modo 4 (fixedAssetItems) resolve class.costAccountId
       // via este repo — mesma instância do resto do módulo C8.
       this.repositories.fixedAssetClass,
@@ -1089,7 +1095,7 @@ export class ApplicationFactory {
       // de produto do LAC-E (reuso), sob a policy fiscal.
       productDestination: new ProductDestinationService(
         this.repositories.productDestinationDefault,
-        new DynamicTableProductRefLookup(this.repositories.dynamicTable),
+        new DynamicTableProductRefLookup(productRefPort),
         this.policies.accounting,
         auditService,
       ),

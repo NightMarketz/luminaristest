@@ -32,7 +32,7 @@ import type { DfeAmbiente, DfeEmissorPort } from '../dfe/DfeEmissorPort';
 import { scopeToday } from '../models/dates';
 import { IND_OP_DEFAULT_SALAO } from '../models/indOp';
 import { RECEITA_NAO_USO_CODE } from '../fixtures/ChartOfAccountsFixture';
-import { expiryCompetence, parseExpiryMovementKey } from '../../packages/models/validity';
+import { expiryCompetence, parseExpiryMovementKey } from '../models/expiryKey';
 import { centsFromDb } from '../models/money';
 import { findLc116, listaLc116De, type ListaLc116 } from '../models/lc116ListaNacional';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
