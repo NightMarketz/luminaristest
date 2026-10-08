@@ -177,6 +177,11 @@ export async function resetDb(): Promise<void> {
   await prisma.paymentAccount.deleteMany();
   // BE-INCR-MIT-EXPORT PR-2 (nó X9): mit_exports só referencia User (Cascade) — sem ordem de FK.
   await prisma.mitExport.deleteMany();
+  // BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14): só referenciam User (Cascade) — sem ordem de FK.
+  await prisma.simplesHistoricoMensal.deleteMany();
+  await prisma.simplesSegregacaoManual.deleteMany();
+  await prisma.salaoParceriaContrato.deleteMany();
+  await prisma.receitaFiscalLinha.deleteMany();
   // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7): tax_assessments só referencia User (Cascade) — sem ordem de FK.
   await prisma.taxAssessment.deleteMany();
   // BE-INCR-LEGAL-PARAMS PR-1: sem FK — volta ao estado da migração (linhas criadas/revogadas pelo teste somem).

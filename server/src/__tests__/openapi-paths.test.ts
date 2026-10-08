@@ -103,7 +103,7 @@ const { options } = require('../../scripts/generate-openapi');
 // +2 (BE-INCR-PIS-COFINS PR-2, X8 item 20): /accounting/tax-assessments/pis-cofins/preview e /pis-cofins (POST) — 247 → 249.
 // +1 (BE-INCR-MIT-EXPORT PR-2, X9 item 15): /accounting/mit-exports (POST + GET) — 249 → 250.
 // +4 (BE-INCR-LEGAL-PARAMS PR-1, item 11): /legal-parameters (GET+POST), /legal-parameters/vigente, /{id}/publish, /{id}/revoke — 250 → 254.
-const BASELINE = 254; // +3: /package-acceptances/notice, /package-acceptances (GET+POST), /package-acceptances/{saleId}/receipt (FE-INCR-PACOTE-VALIDADE, 244 → 247, 3 PATHS e 4 OPERAÇÕES) · +4: /accounting/policy-versions (+/{id}, /{id}/approve, /{id}/reject — GOV-CONTADOR política versionada) · +4: /accounting/accountant-assignments (+/mine, /{id}/accept, /{id}/end — GOV-CONTADOR) · +1: GET /accounting/sped/qualif-assinante (FE-INCR-SPED-SIGNERS) · +1: GET /accounting/delivery (FE-INCR-DELIVERY PR-D1)
+const BASELINE = 258; // +4: /accounting/simples/historico/{competencia}, /segregacao/{competencia}, /parcerias, /parcerias/{id} (BE-INCR-SIMPLES-NACIONAL PR-2, X14) · +3: /package-acceptances/notice, /package-acceptances (GET+POST), /package-acceptances/{saleId}/receipt (FE-INCR-PACOTE-VALIDADE, 244 → 247, 3 PATHS e 4 OPERAÇÕES) · +4: /accounting/policy-versions (+/{id}, /{id}/approve, /{id}/reject — GOV-CONTADOR política versionada) · +4: /accounting/accountant-assignments (+/mine, /{id}/accept, /{id}/end — GOV-CONTADOR) · +1: GET /accounting/sped/qualif-assinante (FE-INCR-SPED-SIGNERS) · +1: GET /accounting/delivery (FE-INCR-DELIVERY PR-D1)
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {

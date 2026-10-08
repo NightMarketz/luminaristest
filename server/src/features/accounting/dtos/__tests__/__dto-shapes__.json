@@ -2286,6 +2286,36 @@
         "declaraNaoProfissaoRegulamentada": {
           "default": false,
           "type": "boolean"
+        },
+        "ibsCbsOpcaoS1": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "DAS",
+                "REGULAR"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ibsCbsOpcaoS2": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "DAS",
+                "REGULAR"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -9917,6 +9947,288 @@
       "required": [
         "unitId",
         "cTribNac"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "SimplesDto.ts": {
+    "CompetenciaParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "competencia": {
+          "type": "string",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+        }
+      },
+      "required": [
+        "competencia"
+      ],
+      "additionalProperties": false
+    },
+    "SimplesHistoricoUpsertSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "receitaBrutaCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "folhaCents": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sourceDocumentId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "receitaBrutaCents"
+      ],
+      "additionalProperties": false
+    },
+    "SimplesSegregacaoParcelaSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "natureza": {
+          "type": "string",
+          "enum": [
+            "SERVICO",
+            "REVENDA",
+            "LOCACAO_MOVEL"
+          ]
+        },
+        "receitaCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "motivo": {
+          "type": "string",
+          "enum": [
+            "MONOFASICO",
+            "ICMS_ST",
+            "ISS_RETIDO",
+            "MONOFASICO_E_ICMS_ST"
+          ]
+        }
+      },
+      "required": [
+        "natureza",
+        "receitaCents",
+        "motivo"
+      ],
+      "additionalProperties": false
+    },
+    "SimplesSegregacaoUpsertSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parcelas": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "natureza": {
+                "type": "string",
+                "enum": [
+                  "SERVICO",
+                  "REVENDA",
+                  "LOCACAO_MOVEL"
+                ]
+              },
+              "receitaCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "motivo": {
+                "type": "string",
+                "enum": [
+                  "MONOFASICO",
+                  "ICMS_ST",
+                  "ISS_RETIDO",
+                  "MONOFASICO_E_ICMS_ST"
+                ]
+              }
+            },
+            "required": [
+              "natureza",
+              "receitaCents",
+              "motivo"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "unitId",
+        "parcelas"
+      ],
+      "additionalProperties": false
+    },
+    "SalaoParceriaContratoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profissionalContactId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cotaSalaoBp": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9999
+        },
+        "naturezaCota": {
+          "type": "string",
+          "enum": [
+            "ALUGUEL_BEM_MOVEL",
+            "GESTAO"
+          ]
+        },
+        "homologadoEm": {
+          "type": "string"
+        },
+        "sindicato": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "vigenteDesde": {
+          "type": "string"
+        },
+        "vigenteAte": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "profissionalContactId",
+        "cotaSalaoBp",
+        "naturezaCota",
+        "homologadoEm",
+        "sindicato",
+        "vigenteDesde",
+        "vigenteAte"
+      ],
+      "additionalProperties": false
+    },
+    "SalaoParceriaContratoPatchSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profissionalContactId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cotaSalaoBp": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9999
+        },
+        "naturezaCota": {
+          "type": "string",
+          "enum": [
+            "ALUGUEL_BEM_MOVEL",
+            "GESTAO"
+          ]
+        },
+        "homologadoEm": {
+          "type": "string"
+        },
+        "sindicato": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "vigenteDesde": {
+          "type": "string"
+        },
+        "vigenteAte": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "SimplesUnitQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "SimplesIdParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
       ],
       "additionalProperties": false
     }

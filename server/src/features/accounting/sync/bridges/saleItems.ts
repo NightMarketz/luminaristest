@@ -55,6 +55,14 @@ function toNum(v: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+/** The ONE item classifier (relation id first, then `type`) — shared by the split buckets and the revenue lines. */
+function classifyItem(d: Record<string, unknown>): 'Product' | 'Service' | 'Package' | 'Unknown' {
+  if (d.productId || String(d.type ?? '') === 'Product') return 'Product';
+  if (d.serviceId || String(d.type ?? '') === 'Service') return 'Service';
+  if (d.packageId || String(d.type ?? '') === 'Package') return 'Package';
+  return 'Unknown';
+}
+
 /** Load + classify a sale's items by querying the tenant's `saleItems` table for that saleId. */
 export async function loadSalePackageInfo(userId: string, saleId: string): Promise<SalePackageInfo> {
   const repo = getFactory().getDynamicTableRepository();
@@ -72,16 +80,17 @@ export async function loadSalePackageInfo(userId: string, saleId: string): Promi
   for (const r of rows) {
     const d = (r.data ?? {}) as Record<string, unknown>;
     const lineReais = toNum(d.quantity) * toNum(d.unitPrice);
-    if (d.productId || String(d.type ?? '') === 'Product') {
+    const k = classifyItem(d);
+    if (k === 'Product') {
       kinds.add('Product');
       productReais += lineReais;
       // COGS baixa needs a product reference: only a line with a productId can be valued in the
       // subledger. A Product-typed line without one contributes to revenue but not to CMV.
       if (d.productId) productLines.push({ productRef: String(d.productId), qty: toNum(d.quantity) });
-    } else if (d.serviceId || String(d.type ?? '') === 'Service') {
+    } else if (k === 'Service') {
       kinds.add('Service');
       serviceReais += lineReais;
-    } else if (d.packageId || String(d.type ?? '') === 'Package') {
+    } else if (k === 'Package') {
       kinds.add('Package');
       if (d.packageId) packageIds.add(String(d.packageId));
     } else {
@@ -158,4 +167,41 @@ export async function loadSaleServiceLines(userId: string, saleId: string): Prom
     });
   }
   return lines;
+}
+
+/**
+ * BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14, item 15) — one revenue line of a sale for the fiscal revenue subledger,
+ * bucketed by the SAME classifier as `revenueByNature` (so the per-line rateio sums to the 3.1/3.3 credits).
+ * Package/Unknown lines are not revenue here (prepaid / unclassifiable) and are omitted.
+ */
+export interface SaleRevenueLine {
+  itemRef: string;
+  nature: 'Service' | 'Product';
+  serviceRef: string | null;
+  productRef: string | null;
+  /** `responsibleEmployeeId` of the line — the professional the partnership contract is keyed on (B-3 → a). */
+  employeeRef: string | null;
+  lineReais: number;
+}
+
+export async function loadSaleRevenueLines(userId: string, saleId: string): Promise<SaleRevenueLine[]> {
+  const repo = getFactory().getDynamicTableRepository();
+  const itemsTable = await repo.findTableByInternalName(userId, 'saleItems');
+  if (!itemsTable) return [];
+  const rows = await repo.findRowsByFieldValue(itemsTable.id, 'saleId', saleId);
+  const out: SaleRevenueLine[] = [];
+  for (const r of rows) {
+    const d = (r.data ?? {}) as Record<string, unknown>;
+    const k = classifyItem(d);
+    if (k !== 'Service' && k !== 'Product') continue;
+    out.push({
+      itemRef: r.id,
+      nature: k,
+      serviceRef: d.serviceId ? String(d.serviceId) : null,
+      productRef: d.productId ? String(d.productId) : null,
+      employeeRef: d.responsibleEmployeeId ? String(d.responsibleEmployeeId) : null,
+      lineReais: toNum(d.quantity) * toNum(d.unitPrice),
+    });
+  }
+  return out.sort((a, b) => (a.itemRef < b.itemRef ? -1 : a.itemRef > b.itemRef ? 1 : 0));
 }

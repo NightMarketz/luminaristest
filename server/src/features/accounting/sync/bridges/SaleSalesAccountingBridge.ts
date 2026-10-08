@@ -18,7 +18,7 @@ import logger from '../../../../lib/logger';
 import { resolveAccountingScope } from '../../scope/AccountingScope';
 import { saleDayAsWritten } from '../../models/dates';
 import { buildSaleCogsEvent, buildSaleFinalizedEvent, syncSkipErrorCode } from '../AccountingSyncPort';
-import { loadSalePackageInfo } from './saleItems';
+import { loadSaleRevenueLines, loadSalePackageInfo } from './saleItems';
 import type { AccountingScope } from '../../scope/AccountingScope';
 import type { ProductLine } from './saleItems';
 
@@ -105,6 +105,10 @@ export async function maybeSyncSaleFinalized(
     // already-posted revenue (the reconcile job re-drives CMV independently, idempotent by
     // read-first + @@unique). Only product lines carry COGS; a pure-service sale has none.
     await maybeSyncSaleCogs(scope, row.id, unitId, currency, occurredAt, saleInfo.productLines);
+
+    // THIRD (BE-INCR-SIMPLES-NACIONAL PR-2, item 15): the fiscal revenue subledger — commit 2 after the revenue entry,
+    // own try/catch, never unwinds it; the reconcile pass re-drives a missing subledger (idempotent by @@unique).
+    await maybeRecordReceitaFiscal(scope, row.id, totalAmount, occurredAt);
   } catch (syncError) {
     // Skip ONLY on the shared specific-code list (period-closed / MAX_CENTS poison) — never on a
     // base error class. syncSkipErrorCode reads AppError.errorCode; the old inline check read a
@@ -121,6 +125,22 @@ export async function maybeSyncSaleFinalized(
     logger.error('AccountingSync (sale finalized) failed — left for reconciliation', {
       saleId: row.id,
       error: syncError instanceof Error ? syncError.message : String(syncError),
+    });
+  }
+}
+
+/**
+ * Item 15 (X14 PR-2) — writes the sale's fiscal revenue lines (`ReceitaFiscalService.registrarVenda`). SELF-CONTAINED
+ * and non-fatal like the CMV seam: a failure is logged for the reconcile job and never touches the posted revenue.
+ */
+async function maybeRecordReceitaFiscal(scope: AccountingScope, saleId: string, amount: number, dia: string): Promise<void> {
+  try {
+    const lines = await loadSaleRevenueLines(scope.ownerUserId, saleId);
+    await getFactory().getReceitaFiscalService().registrarVenda(scope, { saleId, amount, dia, lines });
+  } catch (error) {
+    logger.error('Subrazão fiscal de receita (sale finalized) failed — left for reconciliation', {
+      saleId,
+      error: error instanceof Error ? error.message : String(error),
     });
   }
 }

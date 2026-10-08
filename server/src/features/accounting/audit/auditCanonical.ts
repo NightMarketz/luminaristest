@@ -164,7 +164,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     // X7 Fase B (BRIEF B item 3b, F-TB-5 b): boolean da declaração de prestadora exclusiva.
     'prestadoraExclusivaServicos',
     // BE-INCR-TAX-PRESUMIDO-16 (F-P16-1 a): boolean da confirmação (Lei 9.250 art. 40 p.ú.).
-    'declaraNaoProfissaoRegulamentada'],
+    'declaraNaoProfissaoRegulamentada',
+    // BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14, item 14): enum da opção do IBS/CBS por semestre.
+    'ibsCbsOpcaoS1', 'ibsCbsOpcaoS2'],
   'company_fiscal_profile.deleted': ['anoCalendario'],
   // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7, item 22) — só ids, enum e centavos como string; sem PII. O documento
   // da dedução (texto livre) e a memória ficam FORA do evento.

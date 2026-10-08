@@ -6566,6 +6566,164 @@ export {};
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *
+ *   /api/accounting/simples/historico/{competencia}:
+ *     put:
+ *       summary: Upsert pre-adoption monthly gross revenue and payroll (BE-INCR-SIMPLES-NACIONAL PR-2, X14 items 10-11)
+ *       description: >-
+ *         Receita bruta (e, opcional, folha para o fator R) de um mês anterior ao uso do sistema, por unidade. Entra no
+ *         RBT12; sem 12 meses declarados (histórico ou subrazão) a apuração alerta RBT12_INCOMPLETO. 404 - documento
+ *         de origem fora da unidade.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: competencia, required: true, schema: { type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$' } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               additionalProperties: false
+ *               required: [unitId, receitaBrutaCents]
+ *               properties:
+ *                 unitId:            { type: string, minLength: 1 }
+ *                 receitaBrutaCents: { type: integer, minimum: 0 }
+ *                 folhaCents:        { type: integer, minimum: 0, nullable: true }
+ *                 sourceDocumentId:  { type: string, nullable: true }
+ *       responses:
+ *         '200': { description: 'SimplesHistoricoView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/accounting/simples/segregacao/{competencia}:
+ *     put:
+ *       summary: Upsert the manual revenue segregation of a month (X14 item 12)
+ *       description: >-
+ *         Parcelas da receita com o motivo legal que tira tributos do DAS (MONOFASICO, ICMS_ST, ISS_RETIDO ou
+ *         MONOFASICO_E_ICMS_ST - Res. CGSN 140 art. 25 §§ 6º e 8º). Os tributos excluídos derivam do motivo. ISS devido
+ *         a outro município não é motivo (continua no DAS).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: competencia, required: true, schema: { type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$' } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               additionalProperties: false
+ *               required: [unitId, parcelas]
+ *               properties:
+ *                 unitId: { type: string, minLength: 1 }
+ *                 parcelas:
+ *                   type: array
+ *                   maxItems: 50
+ *                   items:
+ *                     type: object
+ *                     additionalProperties: false
+ *                     required: [natureza, receitaCents, motivo]
+ *                     properties:
+ *                       natureza:     { type: string, enum: [SERVICO, REVENDA, LOCACAO_MOVEL] }
+ *                       receitaCents: { type: integer, minimum: 1 }
+ *                       motivo:       { type: string, enum: [MONOFASICO, ICMS_ST, ISS_RETIDO, MONOFASICO_E_ICMS_ST] }
+ *       responses:
+ *         '200': { description: 'SimplesSegregacaoView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/accounting/simples/parcerias:
+ *     post:
+ *       summary: Create a salon partnership contract (X14 item 13 - Lei 12.592 art. 1º-A)
+ *       description: >-
+ *         Contrato salão-parceiro × profissional-parceiro. A cota do profissional sai da receita bruta do salão (§ 5º)
+ *         nos itens de serviço feitos por ele, a partir da homologação (§ 8º). 409 - outro contrato do mesmo
+ *         profissional vigente no período.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               additionalProperties: false
+ *               required: [unitId, profissionalContactId, cotaSalaoBp, naturezaCota, homologadoEm, sindicato, vigenteDesde, vigenteAte]
+ *               properties:
+ *                 unitId:                { type: string, minLength: 1 }
+ *                 profissionalContactId: { type: string, minLength: 1 }
+ *                 cotaSalaoBp:           { type: integer, minimum: 1, maximum: 9999 }
+ *                 naturezaCota:          { type: string, enum: [ALUGUEL_BEM_MOVEL, GESTAO] }
+ *                 homologadoEm:          { type: string, format: date }
+ *                 sindicato:             { type: string, minLength: 1, maxLength: 200 }
+ *                 vigenteDesde:          { type: string, format: date }
+ *                 vigenteAte:            { type: string, format: date, nullable: true }
+ *       responses:
+ *         '201': { description: 'SalaoParceriaContratoView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '409': { description: 'Outro contrato do profissional vigente no período' }
+ *     get:
+ *       summary: List the unit's partnership contracts (X14 item 13)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'SalaoParceriaContratoView[]' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/accounting/simples/parcerias/{id}:
+ *     patch:
+ *       summary: Update a partnership contract (X14 item 13)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               additionalProperties: false
+ *               required: [unitId]
+ *               properties:
+ *                 unitId:                { type: string, minLength: 1 }
+ *                 profissionalContactId: { type: string, minLength: 1 }
+ *                 cotaSalaoBp:           { type: integer, minimum: 1, maximum: 9999 }
+ *                 naturezaCota:          { type: string, enum: [ALUGUEL_BEM_MOVEL, GESTAO] }
+ *                 homologadoEm:          { type: string, format: date }
+ *                 sindicato:             { type: string, minLength: 1, maxLength: 200 }
+ *                 vigenteDesde:          { type: string, format: date }
+ *                 vigenteAte:            { type: string, format: date, nullable: true }
+ *       responses:
+ *         '200': { description: 'SalaoParceriaContratoView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '409': { description: 'Outro contrato do profissional vigente no período' }
+ *     delete:
+ *       summary: Soft-delete a partnership contract (X14 item 13)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '204': { description: 'Removido (soft-delete)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
  *   /api/accounting/tax-assessments/{id}/provisao:
  *     post:
  *       summary: Reconcile the ledger provision of an IRPJ/CSLL or PIS/COFINS assessment (X7 Fase A item 16; X8 item 18)
