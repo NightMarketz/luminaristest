@@ -9,6 +9,11 @@ export interface RecalcResumo {
   inalteradas: number;
 }
 
+export interface RecalcJobFiltro {
+  status?: string;
+  legalParameterId?: string;
+}
+
 /**
  * Contrato do repositório de `legal_parameter_recalc_jobs` (BE-INCR-LEGAL-PARAMS PR-4, item 10; dono 07/10 "Tabela de
  * jobs"). Único lugar com `prisma.legalParameterRecalcJob.*`. Sem delete (registro de fato ocorrido).
@@ -20,6 +25,9 @@ export interface ILegalParameterRecalcJobRepository {
   findPending(limit: number): Promise<LegalParameterRecalcJob[]>;
   /** PENDING ⇒ DONE com o resumo. */
   markDone(id: string, resumo: RecalcResumo, at: Date): Promise<void>;
+  /** RECALC-STATUS (item 4): leitura paginada, mais recentes primeiro. */
+  findMany(filtro: RecalcJobFiltro, skip: number, take: number): Promise<LegalParameterRecalcJob[]>;
+  count(filtro: RecalcJobFiltro): Promise<number>;
   /** Falha da execução inteira: fica PENDING, conta a tentativa e guarda o erro (o agendador tenta de novo). */
   markFailedAttempt(id: string, erro: string): Promise<void>;
 }

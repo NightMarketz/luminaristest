@@ -6902,6 +6902,24 @@ export {};
  *         '404': { $ref: '#/components/responses/NotFoundError' }
  *         '409': { description: 'supersedesId não publicada' }
  *
+ *   /api/legal-parameters/recalc-jobs:
+ *     get:
+ *       summary: Status of the legal-parameter recalculation queue (RECALC-STATUS)
+ *       description: >-
+ *         Jobs de recálculo gravados ao publicar/revogar uma linha (BE-INCR-LEGAL-PARAMS PR-4), mais recentes
+ *         primeiro, com a linha legal que disparou cada um. Qualquer autenticado lê.
+ *       tags: [LegalParameters]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: status, required: false, schema: { type: string, enum: [PENDING, DONE] } }
+ *         - { in: query, name: legalParameterId, required: false, schema: { type: string } }
+ *         - { in: query, name: page, required: false, schema: { type: integer, minimum: 1, default: 1 } }
+ *         - { in: query, name: pageSize, required: false, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+ *       responses:
+ *         '200': { description: '{ items: RecalcJobView[], total, page, pageSize }' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *
  *   /api/legal-parameters/vigente:
  *     get:
  *       summary: Lookup of the legal parameter in force on a date (item 4)

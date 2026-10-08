@@ -17399,7 +17399,7 @@
     "/api/accounting/depreciation-rates": {
       "get": {
         "summary": "List the unit depreciation rate table (BE-INCR-FIXED-ASSETS, nó C8, item 3)",
-        "description": "Seeds the Anexo III (IN RFB 1.700/2017) table LAZILY on first read of the scope (idempotent — a scope only seeds once). includeHidden=false (default) omits rows the operator hid; ANEXO_* rows are immutable (no edit route), CUSTOM rows are created via POST below.",
+        "description": "BE-INCR-LEGAL-PARAMS PR-3: union, in one shape, of the Anexo III (IN RFB 1.700/2017) rows of the PLATFORM table DEPRECIACAO_ANEXO_III in force today (origem=PLATAFORMA, id = legal parameter id; changed only by PLATFORM_ADMIN publication) and the scope CUSTOM rows (origem=ESCOPO). includeHidden=false (default) omits CUSTOM rows the operator hid; CUSTOM rows are created via POST below.",
         "tags": [
           "Accounting"
         ],
@@ -17431,7 +17431,7 @@
         ],
         "responses": {
           "200": {
-            "description": "DepreciationRate[]"
+            "description": "TaxaDepreciacaoView[] — {id, origem PLATAFORMA|ESCOPO, ncm, sourceRow, description, lifeYears, annualRateBp, source, sourceUrl, sourceSha256, justification, hiddenAt, createdAt}"
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"
@@ -17515,7 +17515,7 @@
     "/api/accounting/depreciation-rates/{id}/hide": {
       "post": {
         "summary": "Hide a depreciation rate (soft — item 2)",
-        "description": "Never deletes: a rate a FixedAsset already snapshotted stays readable by id. Works on ANEXO_* and CUSTOM rows alike. Audited as depreciation_rate.hidden.",
+        "description": "Never deletes: a rate a FixedAsset already snapshotted stays readable by id. CUSTOM rows only — an Anexo III row is platform data (BE-INCR-LEGAL-PARAMS PR-3) and answers 404. Audited as depreciation_rate.hidden.",
         "tags": [
           "Accounting"
         ],
@@ -21953,7 +21953,7 @@
     "/api/accounting/tax-assessments/pis-cofins": {
       "post": {
         "summary": "Confirm the monthly PIS/Cofins assessment (commit 1, X8 item 14)",
-        "description": "Recalcula e grava as 2 linhas (PIS, COFINS) numa tx com os gates - CAS do a pagar (409), um só CONFIRMED por (PJ, ano, tributo, mês) (409; substituir = supersedesIds), ordem sequencial dos meses (409) e substituição de trás para frente (409 se o mês seguinte já está confirmado). Sem provisão no razão neste PR (provisaoPendente = true; a provisão é o PR-3 do X8). Leitura pelos GET de /tax-assessments.",
+        "description": "Recalcula e grava as 2 linhas (PIS, COFINS) numa tx com os gates - CAS do a pagar (409), um só CONFIRMED por (PJ, ano, tributo, mês) (409; substituir = supersedesIds), ordem sequencial dos meses (409). Substituir derruba os meses posteriores confirmados e os devolve em reconfirmar (BE-INCR-LEGAL-PARAMS PR-4); confirmar um mês novo por trás de um posterior confirmado segue 409. Sem provisão no razão neste PR (provisaoPendente = true; a provisão é o PR-3 do X8). Leitura pelos GET de /tax-assessments.",
         "tags": [
           "Accounting"
         ],
@@ -22987,6 +22987,74 @@
           },
           "409": {
             "description": "supersedesId não publicada"
+          }
+        }
+      }
+    },
+    "/api/legal-parameters/recalc-jobs": {
+      "get": {
+        "summary": "Status of the legal-parameter recalculation queue (RECALC-STATUS)",
+        "description": "Jobs de recálculo gravados ao publicar/revogar uma linha (BE-INCR-LEGAL-PARAMS PR-4), mais recentes primeiro, com a linha legal que disparou cada um. Qualquer autenticado lê.",
+        "tags": [
+          "LegalParameters"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "DONE"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "legalParameterId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ items: RecalcJobView[], total, page, pageSize }"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
           }
         }
       }

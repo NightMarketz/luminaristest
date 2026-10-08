@@ -11,12 +11,14 @@ const list = vi.fn();
 const propose = vi.fn();
 const publish = vi.fn();
 const revoke = vi.fn();
+const listRecalcJobs = vi.fn(async (..._a: unknown[]) => ({ items: [], total: 0, page: 1, pageSize: 20 }));
 vi.mock('../../../../lib/services/legalParameters.service', () => ({
   legalParametersService: {
     list: (...a: unknown[]) => list(...a),
     propose: (...a: unknown[]) => propose(...a),
     publish: (...a: unknown[]) => publish(...a),
     revoke: (...a: unknown[]) => revoke(...a),
+    listRecalcJobs: (...a: unknown[]) => listRecalcJobs(...a),
   },
 }));
 
@@ -103,8 +105,8 @@ describe('LegalParametersPanel (itens 3, 5, 6, 8)', () => {
   it('filtro por status mostra só os rascunhos', async () => {
     render(<LegalParametersPanel />);
     await screen.findByText('IRPJ_ADICIONAL_ALIQ');
-    fireEvent.change(screen.getByLabelText('Status'), { target: { value: 'DRAFT' } });
-    expect(screen.getAllByRole('row')).toHaveLength(2); // cabeçalho + 1
+    fireEvent.change(screen.getAllByLabelText('Status')[0], { target: { value: 'DRAFT' } }); // [1] é o filtro dos recálculos
+    expect(within(screen.getAllByRole('table')[0]).getAllByRole('row')).toHaveLength(2); // cabeçalho + 1
   });
 
   it('PLATFORM_ADMIN publica um rascunho e a lista recarrega', async () => {

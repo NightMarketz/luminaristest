@@ -2633,6 +2633,37 @@
       "vigenciaInvertida": "Validity ends before it starts.",
       "motivoRequired": "Enter the reason.",
       "valorTextoLongo": "Text is at most 64 characters."
+    },
+    "recalc": {
+      "title": "Recalculations",
+      "subtitle": "Every publication or revocation queues the recalculation of the confirmed assessments within its validity.",
+      "refresh": "Refresh",
+      "empty": "No recalculations.",
+      "linhaRemovida": "row not found",
+      "status": {
+        "PENDING": "Pending",
+        "DONE": "Done"
+      },
+      "evento": {
+        "PUBLISHED": "Publication",
+        "REVOKED": "Revocation"
+      },
+      "col": {
+        "quando": "Queued",
+        "evento": "Event",
+        "linha": "Row",
+        "status": "Status",
+        "resumo": "Result",
+        "tentativas": "Attempts"
+      },
+      "resumo": "{{reconfirmadas}} redone · {{avisos}} warnings · {{inalteradas}} unchanged",
+      "erro": "Last error",
+      "filter": {
+        "todos": "All"
+      },
+      "error": {
+        "load": "Failed to load the recalculations."
+      }
     }
   }
 }

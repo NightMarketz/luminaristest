@@ -20,6 +20,7 @@ import {
 import { resolveError } from '../lib/resolveError';
 import { useAccountingT } from '../lib/useAccountingT';
 import { Field, inputClass } from './SpedGenerationPanel';
+import { RecalcJobsSection } from './RecalcJobsSection';
 
 const POR_PAGINA = 50;
 const isHttpUrl = (u: string) => /^https?:\/\//i.test(u);
@@ -252,6 +253,9 @@ export function LegalParametersPanel() {
           )}
         </>
       )}
+
+      {/* RECALC-STATUS — a fila de recálculo que publicar/revogar alimenta */}
+      <RecalcJobsSection />
 
       {/* Histórico — cadeia de versões (item 5) */}
       <Modal isOpen={!!historico} onClose={() => setHistorico(null)} title={t('legalParams.historyModal.title', 'Histórico da linha')} themeColor="bg-emerald-600" maxWidth="max-w-3xl">

@@ -2633,6 +2633,37 @@
       "vigenciaInvertida": "A vigência termina antes de começar.",
       "motivoRequired": "Informe o motivo.",
       "valorTextoLongo": "O texto tem no máximo 64 caracteres."
+    },
+    "recalc": {
+      "title": "Recálculos",
+      "subtitle": "Cada publicação ou revogação enfileira o recálculo das apurações confirmadas que a vigência alcança.",
+      "refresh": "Atualizar",
+      "empty": "Nenhum recálculo.",
+      "linhaRemovida": "linha não encontrada",
+      "status": {
+        "PENDING": "Pendente",
+        "DONE": "Concluído"
+      },
+      "evento": {
+        "PUBLISHED": "Publicação",
+        "REVOKED": "Revogação"
+      },
+      "col": {
+        "quando": "Enfileirado",
+        "evento": "Evento",
+        "linha": "Linha",
+        "status": "Status",
+        "resumo": "Resultado",
+        "tentativas": "Tentativas"
+      },
+      "resumo": "{{reconfirmadas}} refeitas · {{avisos}} avisos · {{inalteradas}} sem mudança",
+      "erro": "Último erro",
+      "filter": {
+        "todos": "Todos"
+      },
+      "error": {
+        "load": "Erro ao carregar os recálculos."
+      }
     }
   }
 }

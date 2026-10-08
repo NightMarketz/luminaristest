@@ -19,6 +19,10 @@ export class LegalParameterRepository implements ILegalParameterRepository {
     });
   }
 
+  public async findByIds(ids: readonly string[]): Promise<LegalParameter[]> {
+    return ids.length === 0 ? [] : prisma.legalParameter.findMany({ where: { id: { in: [...ids] } } });
+  }
+
   public async findPublished(tabelas: readonly string[], tx?: Prisma.TransactionClient): Promise<LegalParameter[]> {
     return (tx ?? prisma).legalParameter.findMany({ where: { tabela: { in: [...tabelas] }, status: 'PUBLISHED' } });
   }

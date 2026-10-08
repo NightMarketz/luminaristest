@@ -44,6 +44,31 @@ export const ListLegalParametersQuerySchema = z
   .strict();
 export type ListLegalParametersQuery = z.infer<typeof ListLegalParametersQuerySchema>;
 
+/** GET /api/legal-parameters/recalc-jobs — status da fila de recálculo (RECALC-STATUS, itens 1–2). */
+export const ListRecalcJobsQuerySchema = z
+  .object({
+    status: z.enum(['PENDING', 'DONE']).optional(),
+    legalParameterId: z.string().min(1).max(64).optional(),
+    page: z.coerce.number().int().min(1).default(1),
+    pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  })
+  .strict();
+export type ListRecalcJobsQuery = z.infer<typeof ListRecalcJobsQuerySchema>;
+
+/** Item 3 — o job com a linha legal que o disparou (null se a linha não existe mais). */
+export type RecalcJobView = {
+  id: string;
+  evento: string;
+  status: string;
+  tentativas: number;
+  ultimoErro: string | null;
+  resumo: { reconfirmadas: number; avisos: number; inalteradas: number } | null;
+  createdAt: string;
+  processedAt: string | null;
+  legalParameterId: string;
+  linha: { tabela: string; chave: string; discriminador: string | null; vigenteDesde: string; vigenteAte: string | null; status: string } | null;
+};
+
 /** GET /api/legal-parameters/vigente — lookup do item 4. */
 export const VigenteLegalParameterQuerySchema = z
   .object({
