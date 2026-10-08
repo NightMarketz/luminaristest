@@ -66,6 +66,8 @@ export const CompanyDeclaranteSchema = z
   .partial()
   .strict();
 
+export const IBS_CBS_OPCOES = ['DAS', 'REGULAR'] as const;
+
 export const UpsertCompanyFiscalProfileSchema = z
   .object({
     unitId: z.string().min(1), // escopo/policy apenas — a chave é (dono, ano)
@@ -106,6 +108,10 @@ export const UpsertCompanyFiscalProfileSchema = z
     lc224LiminarReferencia: z.string().trim().min(1).max(60).nullable().default(null),
     prestadoraExclusivaServicos: z.boolean().default(false),
     declaraNaoProfissaoRegulamentada: z.boolean().default(false),
+    // BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14, item 14; F-SN-11 → a): IBS/CBS no DAS ou pelo regime regular, por
+    // semestre, a partir de 2027 (LC 123 art. 13 §§ 9º–10, red. LC 214). null = DAS. O ano é checado no serviço.
+    ibsCbsOpcaoS1: z.enum(IBS_CBS_OPCOES).nullable().default(null),
+    ibsCbsOpcaoS2: z.enum(IBS_CBS_OPCOES).nullable().default(null),
   })
   .strict()
   .superRefine((v, ctx) => {
@@ -135,6 +141,12 @@ export const UpsertCompanyFiscalProfileSchema = z
     // X7 item 2b (F-TA-5 a)
     if (v.lc224AcrescimoSuspenso && !v.lc224LiminarReferencia) {
       ctx.addIssue({ code: 'custom', path: ['lc224LiminarReferencia'], message: 'informe o processo da liminar' });
+    }
+    // X14 PR-2 item 14 — a opção só existe para optante ME/EPP
+    if (v.regime !== 'SIMPLES') {
+      for (const k of ['ibsCbsOpcaoS1', 'ibsCbsOpcaoS2'] as const) {
+        if (v[k] !== null) ctx.addIssue({ code: 'custom', path: [k], message: 'A opção do IBS/CBS por semestre é do optante pelo Simples Nacional (LC 123 art. 13 §§ 9º–10).' });
+      }
     }
     // BE-INCR-TAX-PRESUMIDO-16 item 11 (F-P16-1 a)
     if (v.regime === 'PRESUMIDO' && v.prestadoraExclusivaServicos && !v.declaraNaoProfissaoRegulamentada) {

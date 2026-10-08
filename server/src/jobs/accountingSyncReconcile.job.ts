@@ -100,7 +100,7 @@ import type { AccountingEvent, SyncResult } from '../features/accounting/sync/Ac
 import { syncSkipErrorCode } from '../features/accounting/sync/AccountingSyncPort';
 import { JournalEntryRepository } from '../features/accounting/repositories/JournalEntryRepository';
 import { PackageBalanceRepository } from '../features/packages/repositories/PackageBalanceRepository';
-import { loadPackageValidityDays, loadSalePackageInfo } from '../features/accounting/sync/bridges/saleItems';
+import { loadPackageValidityDays, loadSaleRevenueLines, loadSalePackageInfo } from '../features/accounting/sync/bridges/saleItems';
 import type { PackageCreditCommand } from '../features/packages/services/PackageBalanceService';
 import { saleDayAsWritten } from '../features/accounting/models/dates';
 import type { ProductLine } from '../features/accounting/sync/bridges/saleItems';
@@ -943,6 +943,55 @@ export async function reconcileSaleSettlements(
   }
 
   logger.info('Sale settlements reconcile complete', { ...summary });
+  return summary;
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Fiscal revenue subledger pass (BE-INCR-SIMPLES-NACIONAL PR-2, nó X14 item 15) — the durability net for the
+// post-commit subledger seam (maybeRecordReceitaFiscal): commit 1 is the 'sale.finalized' entry, commit 2 the
+// `receita_fiscal_linhas` of the sale. A crash between them leaves revenue without subledger; this pass re-drives
+// every Finalized non-package sale whose revenue entry exists and whose subledger is missing. `registrarVenda` is
+// idempotent by @@unique (a replay creates nothing).
+// ───────────────────────────────────────────────────────────────────────────
+
+export interface ReceitaFiscalSale {
+  ownerUserId: string;
+  saleId: string;
+  unitId: string;
+  amount: number;
+  /** Raw `data.date` of the sale; the pass resolves the day exactly like the bridge (`saleDayAsWritten`). */
+  date: string | undefined;
+}
+
+export interface ReceitaFiscalReconcileDeps {
+  listSales: () => Promise<ReceitaFiscalSale[]>;
+  hasExistingEntry: (scope: AccountingScope, sourceType: string, sourceId: string) => Promise<boolean>;
+  alreadyRecorded: (scope: AccountingScope, saleId: string) => Promise<boolean>;
+  record: (scope: AccountingScope, sale: ReceitaFiscalSale, dia: string) => Promise<number>;
+}
+
+export async function reconcileReceitaFiscal(deps: ReceitaFiscalReconcileDeps): Promise<ReconcileSummary> {
+  const sales = await deps.listSales();
+  const summary: ReconcileSummary = { total: sales.length, synced: 0, idempotentHits: 0, failed: 0 };
+  for (const sale of sales) {
+    try {
+      if (!sale.unitId) throw new Error(`Venda '${sale.saleId}' sem unitId — subrazão não reconciliável.`);
+      const scope = resolveAccountingScope({ userId: sale.ownerUserId }, sale.unitId);
+      // Sem receita no razão não há o que espelhar: o passe de vendas cuida dela primeiro.
+      if (!(await deps.hasExistingEntry(scope, 'sale.finalized', sale.saleId)) || (await deps.alreadyRecorded(scope, sale.saleId))) {
+        summary.idempotentHits++;
+        continue;
+      }
+      await deps.record(scope, sale, saleDayAsWritten(scope, sale.date));
+      summary.synced++;
+    } catch (error) {
+      summary.failed++;
+      logger.error('Receita fiscal reconcile failed — continuing', {
+        saleId: sale.saleId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
   return summary;
 }
 
@@ -2004,6 +2053,29 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
       reportResolved,
     });
 
+    // Fiscal revenue subledger (X14 PR-2 item 15) for every Finalized non-package sale lacking it.
+    const receitaFiscal = await reconcileReceitaFiscal({
+      listSales: async () =>
+        classifiedFinalized
+          .filter(({ isAllPackage }) => !isAllPackage)
+          .map(({ ownerUserId, row }) => ({
+            ownerUserId,
+            saleId: row.id,
+            unitId: typeof row.data.unitId === 'string' ? row.data.unitId : '',
+            amount: typeof row.data.totalAmount === 'number' ? row.data.totalAmount : NaN,
+            date: typeof row.data.date === 'string' ? row.data.date : undefined,
+          })),
+      hasExistingEntry,
+      alreadyRecorded: (scope, saleId) => factory.getReceitaFiscalService().vendaRegistrada(scope, saleId),
+      record: async (scope, sale, dia) =>
+        factory.getReceitaFiscalService().registrarVenda(scope, {
+          saleId: sale.saleId,
+          amount: sale.amount,
+          dia,
+          lines: await loadSaleRevenueLines(sale.ownerUserId, sale.saleId),
+        }),
+    });
+
     // Package origin (C 2.1.1 + balance credit) for every all-Package Finalized sale.
     const packageOrigin = await reconcileSalePackageOrigin({
       listPackageSales: async () =>
@@ -2165,7 +2237,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
       });
     }
 
-    return [crm, sale, cancellations, returns, settlements, cogs, packageOrigin, packageConsumption].reduce(
+    return [crm, sale, cancellations, returns, settlements, cogs, receitaFiscal, packageOrigin, packageConsumption].reduce(
       mergeSummaries,
     );
   };

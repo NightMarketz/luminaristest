@@ -31,6 +31,9 @@ export interface CompanyFiscalProfileData {
   // X7 Fase B (BRIEF B item 3b)
   prestadoraExclusivaServicos: boolean;
   declaraNaoProfissaoRegulamentada: boolean; // BE-INCR-TAX-PRESUMIDO-16 (F-P16-1 a)
+  // BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14, item 14): 'DAS' | 'REGULAR' | null (= DAS)
+  ibsCbsOpcaoS1: string | null;
+  ibsCbsOpcaoS2: string | null;
 }
 
 /**
