@@ -3,6 +3,7 @@ import { useTranslation } from 'next-i18next';
 import { FiBookOpen, FiCheckCircle, FiAlertTriangle, FiPlusCircle } from 'react-icons/fi';
 import { useAccountingData } from './hooks/useAccountingData';
 import { TrialBalanceTable } from './components/TrialBalanceTable';
+import { LegalParametersPanel } from './components/LegalParametersPanel';
 import { JournalEntriesPanel } from './components/JournalEntriesPanel';
 import { EntryApprovalsPanel } from './components/EntryApprovalsPanel';
 import { ChartOfAccountsPanel } from './components/ChartOfAccountsPanel';
@@ -41,7 +42,7 @@ import { toGovernanceScope } from './governance/GovernanceScope';
 import { AccountantAssignmentSection } from './governance/AccountantAssignmentSection';
 import { ClientModeStrip, PendingInvitesBanner, clientLabel } from './governance/ClientModeBars';
 
-export type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'nfe' | 'compliance' | 'dimensoes' | 'imobilizado' | 'perfil-fiscal';
+export type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'nfe' | 'compliance' | 'dimensoes' | 'imobilizado' | 'perfil-fiscal' | 'parametros-legais';
 
 // label = i18n fallback (current pt-BR); rendered via t(`view.tabs.<id>`, label)
 export const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
@@ -76,6 +77,8 @@ export const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
   { id: 'imobilizado',    labelKey: 'view.tabs.imobilizado',    label: 'Imobilizado' },
   // F-FE-DFE-6(a) ratificado 02/10: aba própria — o perfil serve à NF-e de compra (X6) E à NFS-e de venda.
   { id: 'perfil-fiscal',  labelKey: 'view.tabs.perfilFiscal',   label: 'Perfil fiscal' },
+  // FE-INCR-LEGAL-PARAMS (F-FE-LP-1 b, dono 08/10): coeficientes de lei da PLATAFORMA — o painel não usa a unidade.
+  { id: 'parametros-legais', labelKey: 'view.tabs.parametrosLegais', label: 'Parâmetros legais' },
 ];
 
 /**
@@ -494,6 +497,8 @@ export function AccountingView() {
           <ServiceFiscalProfilesPanel unitId={unitId} />
         </div>
       )}
+
+      {activeTab === 'parametros-legais' && unitId && <LegalParametersPanel />}
 
       {/* ── New Entry Modal ────────────────────────────────────────────────── */}
       <JournalEntryModal
