@@ -77,7 +77,7 @@ describe('POST /api/accounting-binding/activate-default (LAC-B)', () => {
       .send({ unitId: UNIT, installChartIfEmpty: true, openCurrentPeriodIfMissing: true });
 
     expect(res.status).toBe(200);
-    expect(res.body.data).toEqual({ status: 'Active', bindingVersion: 1 });
+    expect(res.body.data).toEqual({ status: 'Active', bindingVersion: 1, kit: { kitKey: 'beautySalon', kitVersion: 1, status: 'INSTALLED' } });
 
     const { year, month } = hoje();
     const periodo = await prisma.accountingPeriod.findFirst({ where: { userId: dono.id, unitId: UNIT, year, month } });
@@ -107,7 +107,7 @@ describe('POST /api/accounting-binding/activate-default (LAC-B)', () => {
       .send({ unitId: UNIT, installChartIfEmpty: true, openCurrentPeriodIfMissing: true });
 
     expect(res.status).toBe(200);
-    expect(res.body.data).toEqual({ status: 'already-active', bindingVersion: 1 });
+    expect(res.body.data).toEqual({ status: 'already-active', bindingVersion: 1, kit: { kitKey: 'beautySalon', kitVersion: 1, status: 'INSTALLED' } });
     expect(await prisma.accountingBinding.count({ where: { userId: dono.id, unitId: UNIT } })).toBe(1);
   });
 });

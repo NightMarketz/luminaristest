@@ -538,3 +538,18 @@ versões, códigos de papel ou de item e contagens.
 - **Viés do autor:** este BRIEF decide 7 forks pela referência. Onde a referência é de outra plataforma (Odoo, com
   tx única e Postgres), a tradução para o SQLite + `atomicUntil` daqui é inferência minha (F-KB-2), marcada como tal.
 - **O F-KB-6 (a) adia o valor visível:** o v1 não muda nada para o cliente. O primeiro ganho real é o v2 do salão (F-KB-9).
+
+## 10. Emenda do PR-2 — lacunas resolvidas pelo dono (chat, 2026-10-08, questionário)
+
+A execução do PR-2 achou 7 decisões que o checklist não cobria. Todas foram perguntadas e respondidas
+(regra 2 da `sessao-feature`); nenhuma foi escolhida pelo executor.
+
+| # | Lacuna | Decisão do dono |
+|---|---|---|
+| E-1 | O compile faz dry-run com `validateEntry`, que exige o período aberto, mas o item 10 abria o período só no passo 7. Instalação nova sairia `Draft` | **Período antes do compile.** Ordem final: 1 plano · 2 extensão · 3 `roleDefaults` · **4 período** · **5 compile** · 6 padrões fiscais por serviço · 7 referencial |
+| E-2 | `kit` na resposta × `toEqual` exato em 2 asserts de `activateDefault.integration.test.ts` | Incluir `kit` e ajustar **só esses 2 asserts** |
+| E-3 | Unidade com binding `Active` anterior ao PR-2, sem `KitInstallation` | **Backfill na migração:** `KitInstallation` v1 `INSTALLED` para todo binding `Active` de setor com kit (o v1 é vazio, então equivale ao que a unidade já tem) |
+| E-4 | Alias do CLI × mocks do teste do CLI | O alias delega ao `installSectorKitCli`; no teste **só os mocks mudam** (asserções intactas). O caminho do CLI segue sem instalar plano e sem abrir período |
+| E-5 | Passo 3 sem linha de `AccountingScopeSettings`/`FiscalProfile` | Settings ausente ⇒ cria a linha só com as contas. `FiscalProfile` ausente **e** kit com `roleDefaults.fiscalProfile` ⇒ **pré-check bloqueia sem escrita**, `KIT_FISCAL_PROFILE_REQUIRED`. O cálculo automático do perfil a partir dos dados da empresa fica como lacuna para um nó próprio |
+| E-6 | Qual entrada do `referential[]` instalar | `regime` da empresa **e** `mappingVersion == ano` exato |
+| E-7 | Compile que termina `Draft` (sem exceção) | `status = FAILED`, `steps` no passo anterior, `kit.install_failed {step}`; a resposta é o `Draft` de hoje (versão + bloqueantes do validador), sem `KIT_INSTALL_STEP_FAILED`; uma nova chamada recompila |

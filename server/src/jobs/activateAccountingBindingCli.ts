@@ -1,5 +1,9 @@
 /**
- * activateAccountingBindingCli — BE-INCR-BINDING-FEEDER (Fatia B, F-FEEDER-6 → migração de dado
+ * activateAccountingBindingCli — ALIAS do `installSectorKitCli` desde o BE-INCR-KIT-SETOR PR-2 (item 16, emenda
+ * E-4): mesmos argumentos (`--sector-key` = `--kit-key`) e mesmos códigos de saída; por baixo, instala
+ * o KIT do setor (o binding é o passo de compile da instalação). Histórico abaixo.
+ *
+ * BE-INCR-BINDING-FEEDER (Fatia B, F-FEEDER-6 → migração de dado
  * via compilador REAL). Não é seed direto (rejeitado no ADR-INCR-BINDING-FEEDER.md §7): chama
  * `BindingCompileService.compile()` de verdade — o MESMO caminho que `POST /accounting-binding/compile`
  * usa (`ApplicationFactory.getAccountingBindingCompileService(scope)`) — contra o plano de contas
@@ -24,13 +28,8 @@
  * `scripts/migrate-deploy.mjs` (ADR-M2 decisão 4): invocado explicitamente por humano ou pela
  * etapa dedicada de migração do pipeline, DEPOIS que o chart de contas já existe no alvo.
  */
-import { ApplicationFactory } from '../lib/factory';
-import prisma from '../lib/prisma';
-import {
-  DEFAULT_SECTOR_KEY,
-  SECTOR_BINDING_REGISTRY,
-} from '../features/accountingBinding/fixtures/sectorBindingRegistry';
-import type { BindingScope } from '../features/accountingBinding/repositories/IAccountingBindingRepository';
+import { DEFAULT_SECTOR_KEY } from '../features/accountingBinding/fixtures/sectorBindingRegistry';
+import { runInstall } from './installSectorKitCli';
 
 export interface ActivateBindingArgs {
   ownerUserId: string;
@@ -39,8 +38,8 @@ export interface ActivateBindingArgs {
   sectorKey: string;
 }
 
-// Registry `sectorKey → {binding, operationalSchema}` (F-P2-7 → a) — hoje em
-// `fixtures/sectorBindingRegistry.ts`, compartilhado com `POST /accounting-binding/activate-default` (LAC-B).
+// Registry de setores: desde o PR-2 do kit, o `KIT_REGISTRY` (`features/sectorKits/registry.ts`), lido pelo
+// `installSectorKitCli` — o `SECTOR_BINDING_REGISTRY` é derivado dele (PR-1).
 
 /** Lê `--flag valor` de um array argv — mesma convenção de `scripts/migrate-deploy.mjs`. */
 function readFlag(argv: string[], name: string): string | undefined {
@@ -69,8 +68,9 @@ export function parseArgs(argv: string[]): ActivateBindingArgs {
 }
 
 /**
- * Fluxo completo. Nunca chama `process.exit` (testável) — devolve o código de saída pretendido.
- * Sempre desconecta o Prisma no `finally`, mesmo padrão de `accountingSyncReconcileCli.ts`.
+ * Fluxo completo: lê os argumentos de sempre e delega ao `installSectorKitCli` (`runInstall`), que mantém o
+ * lookup do setor antes do banco, o pré-check de idempotência, a pré-condição dura do plano de contas e o
+ * compile pelo `BindingCompileService` real. Nunca chama `process.exit` (testável).
  */
 export async function runCli(argv: string[] = process.argv.slice(2)): Promise<number> {
   let args: ActivateBindingArgs;
@@ -80,91 +80,7 @@ export async function runCli(argv: string[] = process.argv.slice(2)): Promise<nu
     console.error(`erro: ${error instanceof Error ? error.message : String(error)}`);
     return 1;
   }
-
-  const scope: BindingScope = { ownerUserId: args.ownerUserId, actorUserId: args.actorUserId, unitId: args.unitId };
-
-  // F-P2-7 → (a): registry lookup ANTES de qualquer acesso a banco — um sectorKey desconhecido
-  // falha claro (nunca compila silenciosamente o binding de OUTRO setor sob o rótulo pedido, o
-  // footgun que este registry substitui).
-  const registryEntry = SECTOR_BINDING_REGISTRY[args.sectorKey];
-  if (!registryEntry) {
-    console.error(
-      `erro: setor '${args.sectorKey}' não está registrado neste CLI (SECTOR_BINDING_REGISTRY). ` +
-        `Setores conhecidos: ${Object.keys(SECTOR_BINDING_REGISTRY).join(', ')}.`,
-    );
-    return 1;
-  }
-
-  try {
-    // Idempotência (pré-check que compile() não faz sozinho — ver header).
-    // ponytail: este pré-check e o compile() abaixo são duas idas ao banco, sem tx compartilhada —
-    // é TOCTOU. Sob corrida (dois operadores rodando o CLI ao mesmo tempo), ambos passam aqui e
-    // ambos compilam; o dado NÃO corrompe, porque compile()/activateAtomically re-lê o
-    // `currentMax` DENTRO da própria tx e supersede atomicamente, e o SQLite serializa as duas —
-    // sobra exatamente UMA linha Active. O que se perde é a promessa de NO-OP: nasce uma
-    // bindingVersion extra, imediatamente supersedida, com o par de eventos de auditoria junto.
-    // Teto conhecido e aceito: este é um passo de deploy operado por uma pessoa, não um endpoint.
-    // Upgrade path se virar problema: mover o pré-check para dentro da tx do compile(), via
-    // método novo do repositório. O teste só cobre o caso sequencial — não exercita concorrência.
-    const existing = await prisma.accountingBinding.findFirst({
-      where: { userId: scope.ownerUserId, unitId: scope.unitId, sectorKey: args.sectorKey, status: 'Active', deletedAt: null },
-    });
-    if (existing) {
-      console.log(
-        `JÁ ATIVO: binding '${args.sectorKey}' (unidade '${scope.unitId}') já é Active — versão ` +
-          `${existing.bindingVersion}, id ${existing.id}. Nada a fazer (idempotente).`,
-      );
-      return 0;
-    }
-
-    // Pré-condição dura (ADR §8): chart de contas TEM de existir antes do binding.
-    const chartRows = await prisma.account.findMany({
-      where: { userId: scope.ownerUserId, unitId: scope.unitId, deletedAt: null },
-    });
-    if (chartRows.length === 0) {
-      console.error(
-        `FALHOU: nenhuma conta encontrada para userId='${scope.ownerUserId}' unitId='${scope.unitId}'. ` +
-          'O plano de contas precisa existir ANTES deste script (ordem chart→binding→boot é pré-condição ' +
-          'dura — docs/adr/ADR-INCR-BINDING-FEEDER.md §8). Rode a semente/onboarding do plano de contas ' +
-          'primeiro, depois rode este script de novo.',
-      );
-      return 1;
-    }
-    const chart = chartRows.map((a) => ({ code: a.code, nature: a.nature, acceptsEntries: a.acceptsEntries }));
-
-    // O MESMO caminho que POST /accounting-binding/compile usa — validador real, nunca bypass.
-    // Payload vem do REGISTRY (F-P2-7a), nunca mais hardcoded a `SALE_BINDING_V1` — é isso que
-    // fecha o footgun: `--sector-key aestheticClinic` agora compila `CLINIC_BINDING_V1` de fato.
-    const compileService = ApplicationFactory.getInstance().getAccountingBindingCompileService(scope);
-    const result = await compileService.compile(scope, {
-      sectorKey: args.sectorKey,
-      operationalSchema: registryEntry.operationalSchema,
-      chart,
-      eventBindings: registryEntry.binding.eventBindings,
-    });
-
-    if (result.status !== 'Active') {
-      console.error(
-        `FALHOU: binding compilou como '${result.status}' (não Active) — bloqueante(s) do validador: ` +
-          `${JSON.stringify(result.validation.blocking)}; cobertura de evento ausente: ` +
-          `${JSON.stringify(result.coverage.missing)}`,
-      );
-      return 1;
-    }
-
-    console.log(
-      `OK: binding '${args.sectorKey}' ativado — unidade '${scope.unitId}', versão ` +
-        `${result.binding.bindingVersion}, id ${result.binding.id}.`,
-    );
-    return 0;
-  } catch (error) {
-    console.error(`erro: ${error instanceof Error ? error.message : String(error)}`);
-    return 1;
-  } finally {
-    await prisma.$disconnect().catch(() => {
-      /* best-effort disconnect */
-    });
-  }
+  return runInstall({ ownerUserId: args.ownerUserId, actorUserId: args.actorUserId, unitId: args.unitId, kitKey: args.sectorKey });
 }
 
 // Only self-execute when run directly (not when imported by a test) — mesmo padrão de

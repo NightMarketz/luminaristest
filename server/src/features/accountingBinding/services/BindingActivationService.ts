@@ -8,7 +8,8 @@ import type {
 import { DEFAULT_SECTOR_KEY, SECTOR_BINDING_REGISTRY } from '../fixtures/sectorBindingRegistry';
 import type { IAccountingBindingPolicy } from '../policies/IAccountingBindingPolicy';
 import type { BindingScope, IAccountingBindingRepository } from '../repositories/IAccountingBindingRepository';
-import type { BindingCompileService } from './BindingCompileService';
+import type { KitInstallService } from '../../sectorKits/services/KitInstallService';
+import { KitInstallStepFailedError } from '../../sectorKits/models/kitInstallTypes';
 
 /**
  * Plano de contas do escopo, visto pelo módulo do binding. Porta (não import de
@@ -32,34 +33,39 @@ export interface ActivationPeriodPort {
 
 /**
  * LAC-B — `POST /accounting-binding/activate-default` (FE-INCR-BINDING-ACTIVATION-brief.md item 1–3
- * + emenda F-I3-1 → a). Equivalente HTTP de `jobs/activateAccountingBindingCli.ts`:
+ * + emenda F-I3-1 → a). Desde o BE-INCR-KIT-SETOR PR-2 (item 11) ele INSTALA O KIT do setor, delegando ao
+ * `KitInstallService`; o contrato HTTP e os pré-checks são os de antes:
  *
  *   1. policy (item 2) → 403;
  *   2. setor do registry (default = salão) — desconhecido ⇒ 400, nunca compila o binding de outro setor;
- *   3. Active já existente ⇒ `already-active`, sem compilar (idempotência, mesmo pré-check do CLI);
+ *   3. kit já instalado ⇒ `already-active` com a versão Active e o `kit` (idempotência). Unidade sem
+ *      `KitInstallation` mas com binding Active (setor fora do backfill da migração) ⇒ `already-active` como antes;
  *   4. PRÉ-CHECK sem efeito colateral: chart vazio sem `installChartIfEmpty` ⇒ `CHART_OF_ACCOUNTS_EMPTY`;
  *      período do mês corrente MISSING/FUTURE sem `openCurrentPeriodIfMissing` ⇒ `ACCOUNTING_PERIOD_NOT_OPEN`;
  *      período SOFT/HARD_CLOSED ⇒ `ACCOUNTING_PERIOD_NOT_OPEN` mesmo com a flag (a flag é "if missing":
- *      reabrir período fechado exige motivo e é ato do `reopen`, não desta rota). Qualquer bloqueante
- *      ⇒ `status: 'Draft'` SEM gravar versão (decisão do dono 2026-09-25) — todos os bloqueantes são
+ *      reabrir período fechado exige motivo e é ato do `reopen`, não desta rota); kit com contas-padrão do
+ *      perfil fiscal e unidade sem perfil ⇒ `KIT_FISCAL_PROFILE_REQUIRED` (emenda E-5). Qualquer bloqueante
+ *      ⇒ `status: 'Draft'` SEM gravar nada (decisão do dono 2026-09-25) — todos os bloqueantes são
  *      avaliados ANTES de qualquer escrita, então nunca sobra chart instalado com resposta bloqueada;
- *   5. aplica as flags pedidas, depois `BindingCompileService.compile()` — o MESMO caminho de
- *      `POST /compile` e do CLI (validador real, auditoria `binding.*` da cadeia existente, nenhum
- *      eventType novo — item 5).
+ *   5. `KitInstallService.install()` com as flags pedidas: 7 passos com commit próprio, e o compile é o MESMO
+ *      `BindingCompileService.compile()` de `POST /compile` e do CLI. Exceção num passo ⇒ `Draft` com
+ *      `KIT_INSTALL_STEP_FAILED { step }` (item 14); compile reprovado ⇒ o `Draft` de antes, com os
+ *      bloqueantes do validador (emenda E-7). Uma nova chamada retoma do passo que falhou.
  *
  * "Mês corrente" = o `today` UTC que o dry-run do validador usa (`BindingValidationService.todayDateOnly`)
  * — é esse o mês que o gate `assertPeriodOpen` checa; abrir o mês de outro relógio deixaria o compile
- * Draft na virada de mês.
+ * Draft na virada de mês. O ano desse `today` é o ano do referencial (item 12).
  *
- * ponytail: o pré-check do passo 3 e o compile são idas separadas ao banco (TOCTOU, mesmo teto aceito
- * no CLI): duas chamadas simultâneas podem ambas compilar; o compile supersede atomicamente, sobra UMA
- * Active e uma versão extra. Upgrade: mover o pré-check para dentro da tx do compile.
+ * ponytail: o pré-check do passo 3 e a instalação são idas separadas ao banco (TOCTOU, mesmo teto aceito
+ * no CLI): duas chamadas simultâneas podem ambas instalar; o compile pula quando já há Active e supersede
+ * atomicamente, então sobra UMA Active (no pior caso, uma versão extra). Upgrade: mover o pré-check para
+ * dentro da tx do `begin` da instalação.
  */
 export class BindingActivationService {
   constructor(
     private readonly policy: IAccountingBindingPolicy,
     private readonly repo: IAccountingBindingRepository,
-    private readonly compileService: Pick<BindingCompileService, 'compile'>,
+    private readonly kitInstaller: Pick<KitInstallService, 'install' | 'findInstallation' | 'resolveKit' | 'preconditions'>,
     private readonly chartPort: ActivationChartPort,
     private readonly periodPort: ActivationPeriodPort,
     private readonly today: () => string = () => new Date().toISOString().slice(0, 10),
@@ -81,10 +87,18 @@ export class BindingActivationService {
       );
     }
 
-    const active = await this.repo.findActive(scope, sectorKey);
-    if (active) return { status: 'already-active', bindingVersion: active.bindingVersion };
+    const installation = await this.kitInstaller.findInstallation(scope);
+    if (installation?.status === 'INSTALLED' && installation.kitKey === sectorKey) {
+      const active = await this.repo.findActive(scope, sectorKey);
+      return { status: 'already-active', bindingVersion: active?.bindingVersion, kit: installation };
+    }
+    if (!installation) {
+      const active = await this.repo.findActive(scope, sectorKey);
+      if (active) return { status: 'already-active', bindingVersion: active.bindingVersion };
+    }
 
-    const [year, month] = this.today().split('-').map(Number);
+    const today = this.today();
+    const [year, month] = today.split('-').map(Number);
     const chart = await this.chartPort.listChart();
     const periodStatus = await this.periodPort.status(year, month);
     const period = `${year}-${String(month).padStart(2, '0')}`;
@@ -110,23 +124,31 @@ export class BindingActivationService {
         message: `O período ${period} está fechado (${periodStatus}); reabra-o antes de ativar o binding.`,
       });
     }
+    const kit = await this.kitInstaller.resolveKit(scope, sectorKey);
+    if (kit) blocking.push(...(await this.kitInstaller.preconditions(kit)));
     if (blocking.length > 0) return { status: 'Draft', blocking };
 
-    let chartSnapshot = chart;
-    if (chart.length === 0) {
-      await this.chartPort.installCanonicalChart();
-      chartSnapshot = await this.chartPort.listChart();
+    let outcome: Awaited<ReturnType<KitInstallService['install']>>;
+    try {
+      outcome = await this.kitInstaller.install(scope, {
+        kitKey: sectorKey,
+        ano: year,
+        installChartIfEmpty: input.installChartIfEmpty ?? false,
+        openCurrentPeriodIfMissing: input.openCurrentPeriodIfMissing ?? false,
+        today,
+      });
+    } catch (error) {
+      if (!(error instanceof KitInstallStepFailedError)) throw error;
+      const failed = await this.kitInstaller.findInstallation(scope);
+      return {
+        status: 'Draft',
+        blocking: [{ code: 'KIT_INSTALL_STEP_FAILED', step: error.step, message: error.message }],
+        ...(failed ? { kit: failed } : {}),
+      };
     }
-    if (periodMissing) await this.periodPort.seedAndOpen(year, month);
 
-    const result = await this.compileService.compile(scope, {
-      sectorKey,
-      operationalSchema: entry.operationalSchema,
-      chart: chartSnapshot,
-      eventBindings: entry.binding.eventBindings,
-    });
-
-    if (result.status === 'Active') return { status: 'Active', bindingVersion: result.binding.bindingVersion };
+    if (outcome.status === 'INSTALLED') return { status: 'Active', bindingVersion: outcome.bindingVersion, kit: outcome.kit };
+    const result = outcome.compile;
     return {
       status: 'Draft',
       bindingVersion: result.binding.bindingVersion,
@@ -137,6 +159,7 @@ export class BindingActivationService {
           message: `O evento '${eventKey}' é emitido pela operação instalada e não tem eventBinding.`,
         })),
       ],
+      kit: outcome.kit,
     };
   }
 }

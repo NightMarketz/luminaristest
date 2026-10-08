@@ -51,3 +51,26 @@ describe('ActivateDefaultBindingResultSchema (LAC-B, contrato de saída)', () =>
     expect(ActivateDefaultBindingResultSchema.safeParse({ status: 'Active', extra: 1 }).success).toBe(false);
   });
 });
+
+describe('ActivateDefaultBindingResultSchema — kit de setor (BE-INCR-KIT-SETOR PR-2, item 11 e 14)', () => {
+  const kit = { kitKey: 'beautySalon', kitVersion: 1, status: 'INSTALLED' };
+
+  it('aceita o `kit` aditivo e o `step` do KIT_INSTALL_STEP_FAILED', () => {
+    expect(ActivateDefaultBindingResultSchema.safeParse({ status: 'Active', bindingVersion: 1, kit }).success).toBe(true);
+    expect(
+      ActivateDefaultBindingResultSchema.safeParse({
+        status: 'Draft',
+        blocking: [{ code: 'KIT_INSTALL_STEP_FAILED', step: 6, message: 'x' }],
+        kit: { ...kit, status: 'FAILED' },
+      }).success,
+    ).toBe(true);
+  });
+
+  it('rejeita status de kit fora do enum, kit com chave extra e step fora de 1..7', () => {
+    expect(ActivateDefaultBindingResultSchema.safeParse({ status: 'Active', kit: { ...kit, status: 'OK' } }).success).toBe(false);
+    expect(ActivateDefaultBindingResultSchema.safeParse({ status: 'Active', kit: { ...kit, steps: 7 } }).success).toBe(false);
+    expect(
+      ActivateDefaultBindingResultSchema.safeParse({ status: 'Draft', blocking: [{ code: 'KIT_INSTALL_STEP_FAILED', step: 8, message: 'x' }] }).success,
+    ).toBe(false);
+  });
+});

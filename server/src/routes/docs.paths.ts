@@ -4343,8 +4343,12 @@
  *         checadas ANTES de gravar qualquer coisa: plano de contas vazio sem installChartIfEmpty ⇒
  *         bloqueante CHART_OF_ACCOUNTS_EMPTY; período do mês corrente ausente/FUTURE sem
  *         openCurrentPeriodIfMissing (ou fechado) ⇒ bloqueante ACCOUNTING_PERIOD_NOT_OPEN — em ambos
- *         status 'Draft' sem bindingVersion. Passando, roda o MESMO compile de /compile (Active ou Draft
- *         com os bloqueantes do validador).
+ *         status 'Draft' sem bindingVersion. Passando, instala o KIT do setor (BE-INCR-KIT-SETOR PR-2): 7 passos
+ *         idempotentes com commit próprio (plano, extensão, contas-padrão, período, compile — o MESMO de
+ *         /compile —, padrões fiscais por serviço, referencial), retomando do primeiro não concluído. Kit com
+ *         contas-padrão do perfil fiscal e unidade sem perfil ⇒ bloqueante KIT_FISCAL_PROFILE_REQUIRED (nada
+ *         gravado). Exceção num passo ⇒ 'Draft' com KIT_INSTALL_STEP_FAILED { step }; compile reprovado ⇒ 'Draft'
+ *         com os bloqueantes do validador. 'already-active' = kit já instalado.
  *       tags: [AccountingBinding]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -4353,7 +4357,7 @@
  *           application/json:
  *             schema: { $ref: '#/components/schemas/AccountingBindingActivateDefaultRequest' }
  *       responses:
- *         '200': { description: "{ status: 'Active' | 'already-active' | 'Draft', bindingVersion?, blocking?: [{ code, message, period? ('YYYY-MM', só em ACCOUNTING_PERIOD_NOT_OPEN) }] }" }
+ *         '200': { description: "{ status: 'Active' | 'already-active' | 'Draft', bindingVersion?, blocking?: [{ code, message, period? ('YYYY-MM', só em ACCOUNTING_PERIOD_NOT_OPEN), step? (só em KIT_INSTALL_STEP_FAILED) }], kit?: { kitKey, kitVersion, status: INSTALLING | INSTALLED | FAILED } }" }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
