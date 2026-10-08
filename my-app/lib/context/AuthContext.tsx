@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { deleteCookie, getCookie } from 'cookies-next';
 import { useRouter } from 'next/router';
-import type { Role } from '../../types/Role';
+import type { SessionRole } from '../../types/Role';
 
 // API base URL — mirrors apiClient's fallback so auth works even when the
 // NEXT_PUBLIC_API_BASE_URL env var is unset (prevents a stuck "Authenticating…").
@@ -13,7 +13,7 @@ interface AuthUser {
   username: string;
   email: string;
   name: string;
-  role: Role;
+  role: SessionRole;
   locale: string;
   currency: string;
 }
