@@ -278,3 +278,12 @@ interface ParametrosUsados { ids: string[]; sha256: string }
 | L-14 | PR-3: ocultar linha do Anexo pelo escopo | *"404/400 — só CUSTOM se oculta"* (Recomendado) |
 | L-15 | PR-3: formato da linha DEPRECIACAO_ANEXO_III | *"chave=sourceRow, disc=source"* (Recomendado), vigenteDesde 2017-01-01 sem fim; as 2 Notas (sem `sourceRow` na fonte) usam chave `NOTA` |
 | L-16 | PR-3: o DTO aceita um valor só × taxa em `valorInt` + resto em `valorJson` | *"Tudo no valorJson"* (Recomendado) — `{annualRateBp, ncm, description, lifeYears, justification?}` |
+| L-17 | PR-4, item 7: forma do snapshot por apuração | *"Colunas novas, tabelaVersao fica"* (Recomendado) — `parametrosIds` (JSON) + `parametrosSha256`; antigas com null; o sha256 entra na trilha `tax.assessment.confirmed` |
+| L-18 | PR-4: "recalcular confirmada usa o snapshot" × item 10 (recalcula com a tabela nova) | *"Snapshot = proveniência"* (Recomendado) — prova as linhas usadas e é o que o job compara; o único recálculo é o do item 10 |
+| L-19 | PR-4, item 10: sinal de "entregue/paga" | *"Entrou num arquivo MIT"* (Recomendado) — substituída em `MitExport.apuracaoIds` ⇒ aviso "valor mudou depois da entrega" na nova; pagamento real não é rastreado |
+| L-20 | PR-4, item 10: autor da reconfirmação automática; revogar dispara? | *"Ator PLATFORM; revogar também dispara"* (Recomendado) |
+| L-21 | PR-4, item 10: quais apurações refazer | *"Recalcula e só reconfirma se mudar"* (Recomendado) — base/devido/a pagar/saldo/diferença iguais ⇒ nada |
+| L-22 | PR-4, item 10 (L-3): onde mora a fila | *"Tabela de jobs"* (dono 07/10, contra a recomendação "sem tabela de fila") — `legal_parameter_recalc_jobs`, gravado na tx de publicar/revogar |
+| L-23 | PR-4, item 10: posteriores derrubados pela cascata | *"Job reconfirma em ordem"* (Recomendado) — falha para a cadeia e o resto ganha aviso |
+| L-24 | PR-4, item 10: o job não tem a entrada que o usuário informou (deduções, modo do mês, créditos, retenções…) | *"Gravar a entrada; antigas viram aviso"* (Recomendado) — `entradaInformada` (JSON) daqui em diante; sem ela ⇒ aviso "reconfirme" |
+| L-25 | PR-4, item 10: PIS/Cofins sem cascata (X8 item 14, "de trás para frente") impede refazer mês com posterior confirmado | *"Abrir cascata no PIS/Cofins"* (dono 07/10, contra a recomendação "aviso nos anteriores") — substituir Mxx derruba os meses posteriores (ano e seguinte) e devolve `reconfirmar`; mês NOVO por trás de posterior segue 409 |

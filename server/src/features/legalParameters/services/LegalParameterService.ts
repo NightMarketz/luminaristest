@@ -3,6 +3,7 @@ import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '.
 import type { AuditService } from '../../accounting/services/AuditService';
 import type { AccountingScope } from '../../accounting/scope/AccountingScope';
 import type { ILegalParameterRepository } from '../repositories/ILegalParameterRepository';
+import type { ILegalParameterRecalcJobRepository } from '../repositories/ILegalParameterRecalcJobRepository';
 import type { ILegalParameterPolicy, LegalParameterActor } from '../policies/ILegalParameterPolicy';
 import type {
   LegalParameterView,
@@ -85,11 +86,21 @@ function toView(r: LegalParameter): LegalParameterView {
  * vez de esvaziar, porque o DTO estático lê o cache de forma síncrona).
  */
 export class LegalParameterService {
+  /** PR-4 (item 10): chamado DEPOIS do commit de publicar/revogar — acorda o agendador (fire-and-forget). */
+  private aoEnfileirar: () => void = () => undefined;
+
   constructor(
     private readonly repo: ILegalParameterRepository,
     private readonly policy: ILegalParameterPolicy,
     private readonly auditService: AuditService,
+    /** BE-INCR-LEGAL-PARAMS PR-4 (item 10; L-3, dono 07/10 "Tabela de jobs"): publicar/revogar enfileira o recálculo. */
+    private readonly recalcJobs: ILegalParameterRecalcJobRepository,
   ) {}
+
+  /** PR-4 — o factory liga o agendador do recálculo depois de construir os dois (sem ciclo de construção). */
+  setAoEnfileirar(fn: () => void): void {
+    this.aoEnfileirar = fn;
+  }
 
   private exigirLeitura(actor: LegalParameterActor): void {
     if (!this.policy.canRead(actor)) throw new ForbiddenError('Sem acesso aos parâmetros legais.');
@@ -207,9 +218,12 @@ export class LegalParameterService {
         targetId: id,
         payload: { legalParameterId: id, tabela: linha.tabela, chave: linha.chave, discriminador: linha.discriminador, vigenteDesde: linha.vigenteDesde, vigenteAte: linha.vigenteAte, supersedesId: linha.supersedesId },
       });
+      // PR-4 (item 10, L-3): o recálculo das apurações afetadas entra na fila na MESMA tx — nunca roda na requisição.
+      await this.recalcJobs.create(id, 'PUBLISHED', tx);
       return { ...linha, status: 'PUBLISHED', publishedById: actor.userId, publishedAt: at };
     });
     await this.aquecer();
+    this.aoEnfileirar();
     return toView(row);
   }
 
@@ -228,9 +242,12 @@ export class LegalParameterService {
         targetId: id,
         payload: { legalParameterId: id, tabela: linha.tabela, chave: linha.chave, discriminador: linha.discriminador },
       });
+      // PR-4 (dono 07/10 "revogar também dispara"): revogar muda o resultado como publicar.
+      await this.recalcJobs.create(id, 'REVOKED', tx);
       return { ...linha, status: 'REVOKED', revokedById: actor.userId, revokedAt: at };
     });
     await this.aquecer();
+    this.aoEnfileirar();
     return toView(row);
   }
 }

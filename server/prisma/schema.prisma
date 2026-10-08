@@ -2391,6 +2391,16 @@ model TaxAssessment {
   diferencaPostergadaCents BigInt    @default(0) // X7 Fase B (F-TB-5 b) — só IRPJ, só no mês do excesso do 16%; código 236202 | 599302
   memoria                  Json // MemoriaLinha[] — MemoriaCalculoSchema
   tabelaVersao             String
+  // BE-INCR-LEGAL-PARAMS PR-4 (item 7; dono 07/10 "Colunas novas, tabelaVersao fica"): as linhas de lei vigentes no
+  // período que o cálculo recebeu (ids ordenados) + sha256 delas. Proveniência e o que o job de recálculo compara.
+  // Null nas apurações anteriores ao PR-4.
+  parametrosIds            Json?
+  parametrosSha256         String?
+  // PR-4 (item 10; dono 07/10 "Gravar a entrada"): o que o usuário informou na confirmação (deduções, modo do mês,
+  // estimativas, créditos, retenções…) — o job reconfirma com ela. Null nas anteriores ao PR-4 ⇒ só aviso.
+  entradaInformada         Json?
+  // PR-4 (item 10): aviso visível da mudança de parâmetro legal ("reconfirme" ou "valor mudou depois do pagamento").
+  avisoParametroLegal      String?
   status                   String // CONFIRMED | SUPERSEDED
   supersedesId             String?
   provisaoEntryId          String? // PR-3 (commit 3 da provisão)
@@ -2512,6 +2522,24 @@ model ReceitaFiscalLinha {
   @@unique([userId, unitId, saleId, itemRef])
   @@index([userId, unitId, competencia])
   @@map("receita_fiscal_linhas")
+}
+
+// BE-INCR-LEGAL-PARAMS PR-4 (item 10; emenda §9 L-3, dono 07/10 "Tabela de jobs") — fila do recálculo: publicar ou
+// revogar uma linha grava um job PENDING na MESMA tx; o agendador processa (reconfirma as apurações afetadas) e marca
+// DONE. Publicar nunca falha por causa de um cliente (o job roda fora da requisição). Sem soft-delete: registro de fato.
+model LegalParameterRecalcJob {
+  id               String    @id @default(cuid())
+  legalParameterId String // a linha publicada/revogada (string simples: a fila não segura a linha)
+  evento           String // PUBLISHED | REVOKED
+  status           String // PENDING | DONE
+  tentativas       Int       @default(0)
+  ultimoErro       String?
+  resumo           Json? // { reconfirmadas, avisos, inalteradas } da última execução
+  createdAt        DateTime  @default(now())
+  processedAt      DateTime?
+
+  @@index([status, createdAt])
+  @@map("legal_parameter_recalc_jobs")
 }
 
 // BE-INCR-SIMPLES-NACIONAL PR-3 (nó X14, item 19; B-1 → c, emenda F-SN-13 → b) — apuração do Simples persistida no

@@ -30,6 +30,9 @@ import { fimDoMes } from '../models/taxAssessmentCalcAnual';
 import { mesBounds } from '../models/Lalur.model';
 import { razaoCreditoPisCofins, tabelaPisCofinsDe, type TributoPisCofins } from '../models/pisCofinsParams';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
+import { parametrosUsados, type ParametrosUsados } from '../../legalParameters/models/legalParameter';
+import { chaveCronologica, janelaDoPeriodo } from '../models/janelaApuracao';
+import type { RecalculoView } from './TaxAssessmentService';
 import {
   TRIBUTOS_PIS_COFINS,
   apurarPisCofinsMensal,
@@ -56,7 +59,18 @@ export interface PisCofinsPreviewView {
 export interface PisCofinsConfirmView {
   pis: TaxAssessmentView;
   cofins: TaxAssessmentView;
+  /** BE-INCR-LEGAL-PARAMS PR-4 (dono 07/10 "Abrir cascata no PIS/Cofins"): meses posteriores que a substituição derrubou (Mmm/AAAA). */
+  reconfirmar: string[];
 }
+
+/** PR-4 (item 10; dono 07/10 "Gravar a entrada") — o que o usuário informou na confirmação do X8. */
+export type EntradaInformadaX8 = Pick<PisCofinsConfirmInput, 'ajustesBase' | 'outrosCreditos' | 'retencoes' | 'saldoCredorAnterior'>;
+const entradaX8 = (i: PisCofinsPreviewInput): EntradaInformadaX8 => ({
+  ajustesBase: i.ajustesBase,
+  outrosCreditos: i.outrosCreditos,
+  retencoes: i.retencoes,
+  ...(i.saldoCredorAnterior !== undefined ? { saldoCredorAnterior: i.saldoCredorAnterior } : {}),
+});
 
 interface Calculo {
   perfil: CompanyFiscalProfile;
@@ -65,6 +79,8 @@ interface Calculo {
   anterioresIds: string[];
   provisaoContasConfiguradas: boolean;
   avisos: string[];
+  /** BE-INCR-LEGAL-PARAMS PR-4 (item 7): as linhas de lei do mês que o cálculo recebeu. */
+  parametros: ParametrosUsados;
 }
 
 const ehPisCofins = (r: TaxAssessment): boolean => (TRIBUTOS_PIS_COFINS as readonly string[]).includes(r.tributo) && isPeriodoPisCofins(r.periodo);
@@ -122,7 +138,11 @@ export function saldoAnterior(
  * Confirmação (item 14, molde X7 item 14): recalcula FORA da tx e abre UMA `runTransaction` com os gates autoritativos
  * dentro (memória `authoritative-gate-inside-tx`, `tx` propagado ao repo): perfil da PJ igual ao lido, linhas de M(x−1)
  * iguais às lidas, CAS do a pagar, ordem (item 11), "de trás para frente" (item 14), um só CONFIRMED por (PJ, ano,
- * tributo, período). Sem trava de forma (PIS/Cofins seguem o regime da PJ, já travado pelo X13/X7) e sem cascata.
+ * tributo, período). Sem trava de forma (PIS/Cofins seguem o regime da PJ, já travado pelo X13/X7).
+ *
+ * Cascata (BE-INCR-LEGAL-PARAMS PR-4; dono 07/10 "Abrir cascata no PIS/Cofins", muda o "de trás para frente" do item
+ * 14): SUBSTITUIR Mxx derruba as linhas CONFIRMED dos meses posteriores (o ano e o seguinte — o saldo credor encadeia
+ * mês a mês) e as devolve em `reconfirmar`, como o X7. Confirmar Mxx NOVO com um mês posterior já confirmado segue 409.
  */
 export class PisCofinsAssessmentService {
   constructor(
@@ -155,12 +175,28 @@ export class PisCofinsAssessmentService {
   /** Item 14 — confirmação, commit 1. */
   async confirm(scope: AccountingScope, input: PisCofinsConfirmInput): Promise<PisCofinsConfirmView> {
     this.assertManage(scope);
+    return this.confirmar(scope, input, null);
+  }
+
+  /** BE-INCR-LEGAL-PARAMS PR-4 (item 10) — recálculo do job, sem policy de usuário (autor PLATFORM). */
+  async recalcularPeloSistema(scope: AccountingScope, input: PisCofinsPreviewInput): Promise<RecalculoView> {
+    const c = await this.calcular(scope, input);
+    const linha = (t: TributoPisCofins) => ({ ...c.resultado[t], diferencaPostergadaCents: 0n });
+    return { linhas: { PIS: linha('PIS'), COFINS: linha('COFINS') }, parametros: c.parametros };
+  }
+
+  /** PR-4 (item 10) — a confirmação do job: mesmos gates na tx, autor PLATFORM, aviso opcional. */
+  async confirmarPeloSistema(scope: AccountingScope, input: PisCofinsConfirmInput, aviso: string | null): Promise<PisCofinsConfirmView> {
+    return this.confirmar(scope, input, aviso);
+  }
+
+  private async confirmar(scope: AccountingScope, input: PisCofinsConfirmInput, aviso: string | null): Promise<PisCofinsConfirmView> {
     const c = await this.calcular(scope, input);
     const { anoCalendario: ano, periodo } = input;
     const owner = scope.ownerUserId;
     const m = mesDoPeriodo(periodo);
 
-    const { out: gravadas, vivos: cair } = await this.repo.runTransaction(async (tx) => {
+    const { out: gravadas, cair, reconfirmar } = await this.repo.runTransaction(async (tx) => {
       const perfilTx = await this.companyProfileRepo.findByYear(scope, ano, tx);
       if (!perfilTx || perfilTx.updatedAt.getTime() !== c.perfil.updatedAt.getTime()) {
         throw new ConflictError(`o perfil fiscal da empresa de ${ano} mudou durante a confirmação — refaça a prévia.`, 'TAX_ASSESSMENT_STALE');
@@ -184,16 +220,18 @@ export class PisCofinsAssessmentService {
         }
       }
 
-      // Item 14: o saldo credor do mês seguinte leu ESTE mês — substituir (ou confirmar por trás) depois dele ⇒ 409.
-      const posteriores = [...v.doAno.filter((r) => mes(r) > m), ...v.anoSeguinte.filter((r) => r.periodo === 'M01')];
-      if (posteriores.length > 0) {
-        const p = [...new Set(posteriores.map((r) => `${r.periodo}/${r.anoCalendario}`))].join(', ');
-        throw new ConflictError(`${p} já confirmado depois de ${periodo}/${ano}: substitua de trás para frente (BRIEF X8 item 14).`, 'TAX_ASSESSMENT_ORDER');
-      }
-
       // Um só CONFIRMED por (PJ, ano, tributo, período) (item 14) — molde do X7.
       const vivos = v.doAno.filter((r) => r.periodo === periodo);
       const supersedes = input.supersedesIds ?? [];
+
+      // Item 14 + PR-4 (cascata): o saldo credor do mês seguinte leu ESTE mês. Substituir derruba os posteriores (o ano
+      // e o seguinte, encadeados); confirmar um mês NOVO por trás de um posterior confirmado ⇒ 409.
+      const anoSeguinte = supersedes.length > 0 ? (await this.repo.findConfirmedByYear(owner, ano + 1, tx)).filter(ehPisCofins) : v.anoSeguinte.filter((r) => r.periodo === 'M01');
+      const posteriores = [...v.doAno.filter((r) => mes(r) > m), ...anoSeguinte];
+      if (posteriores.length > 0 && supersedes.length === 0) {
+        const p = [...new Set(posteriores.map((r) => `${r.periodo}/${r.anoCalendario}`))].join(', ');
+        throw new ConflictError(`${p} já confirmado depois de ${periodo}/${ano}: para refazer ${periodo}, substitua-o (supersedesIds) — os posteriores caem junto (BRIEF X8 item 14; LEGAL-PARAMS PR-4).`, 'TAX_ASSESSMENT_ORDER');
+      }
       const estranhos = supersedes.filter((id) => !vivos.some((r) => r.id === id));
       if (estranhos.length > 0) {
         throw new ConflictError(`supersedesIds [${estranhos.join(', ')}] não é a apuração CONFIRMED viva de ${periodo}/${ano}.`, 'TAX_ASSESSMENT_SUPERSEDES');
@@ -205,8 +243,9 @@ export class PisCofinsAssessmentService {
           'TAX_ASSESSMENT_ALREADY_CONFIRMED',
         );
       }
-      const mudou = await this.repo.markSuperseded(owner, vivos.map((r) => r.id), tx);
-      if (mudou !== vivos.length) {
+      const cair = [...vivos, ...posteriores];
+      const mudou = await this.repo.markSuperseded(owner, cair.map((r) => r.id), tx);
+      if (mudou !== cair.length) {
         throw new ConflictError(`apuração substituída em paralelo em ${periodo}/${ano} — refaça a prévia.`, 'TAX_ASSESSMENT_STALE');
       }
 
@@ -234,6 +273,10 @@ export class PisCofinsAssessmentService {
             diferencaPostergadaCents: 0n,
             memoria: MemoriaCalculoSchema.parse(r.memoria) as Prisma.InputJsonValue,
             tabelaVersao: r.tabelaVersao,
+            parametrosIds: c.parametros.ids,
+            parametrosSha256: c.parametros.sha256,
+            entradaInformada: entradaX8(input) as Prisma.InputJsonValue,
+            avisoParametroLegal: aviso,
             status: 'CONFIRMED',
             supersedesId: substituida?.id ?? null,
             confirmedById: scope.actorUserId,
@@ -256,12 +299,13 @@ export class PisCofinsAssessmentService {
             aPagarCents: row.aPagarCents.toString(),
             devidoCents: row.devidoCents.toString(),
             tabelaVersao: row.tabelaVersao,
+            parametrosSha256: c.parametros.sha256,
             modo: row.modo,
             diferencaPostergadaCents: '0',
           },
         });
       }
-      for (const sub of vivos) {
+      for (const sub of cair) {
         await this.auditService.append(tx, scope, {
           actorUserId: scope.actorUserId,
           eventType: TAX_ASSESSMENT_SUPERSEDED,
@@ -276,11 +320,14 @@ export class PisCofinsAssessmentService {
           },
         });
       }
-      return { out, vivos };
+      const reconfirmar = [...new Map(posteriores.map((r) => [chaveCronologica(r.anoCalendario, r.periodo), `${r.periodo}/${r.anoCalendario}`])).entries()]
+        .sort(([a], [b]) => a - b)
+        .map(([, p]) => p);
+      return { out, cair, reconfirmar };
     });
     // Item 17 — commits 2/3, best-effort DEPOIS do commit 1: estorna a provisão das substituídas e provisiona as novas.
     const [pis, cofins] = await this.provisao.provisionarAposConfirmacao(scope, cair, [gravadas.PIS, gravadas.COFINS]);
-    return { pis: toView(pis), cofins: toView(cofins) };
+    return { pis: toView(pis), cofins: toView(cofins), reconfirmar };
   }
 
   /** Lê perfis, razão, NF-e do mês e M(x−1) e chama a função pura. Recusas do item 9 (400) e a ordem do item 11 (409). */
@@ -291,6 +338,8 @@ export class PisCofinsAssessmentService {
     if (!perfil) throw new ValidationError(`perfil fiscal da empresa de ${ano} ausente — cadastre-o antes de apurar PIS/Cofins.`);
     const modalidade = modalidadeDoRegime(perfil.regime); // SIMPLES/MEI ⇒ 400 (DAS)
     const linhasLegais = await this.legalParams.fotografia(['PIS_COFINS', 'CODIGO_RECEITA']);
+    const janela = janelaDoPeriodo(ano, periodo);
+    const parametros = parametrosUsados(linhasLegais, janela.de, janela.ate);
     const tabela = tabelaPisCofinsDe(linhasLegais);
     parametrosDoMes(tabela, ano, periodo, modalidade); // ≥ 2027-01 ⇒ 400 (a função pura repete; aqui a recusa vem antes de ler o razão)
     if (perfil.ecfIndRecReceita === '1') {
@@ -364,7 +413,7 @@ export class PisCofinsAssessmentService {
     if (creditosNfe.some((n) => n.derivado)) {
       avisos.push('há NF-e do mês com crédito PIS × Cofins derivado por 165:760 (nota anterior à gravação separada — F-X8-7 a).');
     }
-    return { perfil, resultado, anterioresIds: s.ids, provisaoContasConfiguradas, avisos };
+    return { perfil, resultado, anterioresIds: s.ids, provisaoContasConfiguradas, avisos, parametros };
   }
 
   /** Linhas CONFIRMED vivas de PIS/COFINS do ano (+ dezembro anterior em M01, + janeiro seguinte em M12). */

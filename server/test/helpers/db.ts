@@ -185,6 +185,7 @@ export async function resetDb(): Promise<void> {
   await prisma.simplesApuracao.deleteMany(); // X14 PR-3
   // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7): tax_assessments só referencia User (Cascade) — sem ordem de FK.
   await prisma.taxAssessment.deleteMany();
+  await prisma.legalParameterRecalcJob.deleteMany(); // BE-INCR-LEGAL-PARAMS PR-4 (item 14): a fila do recálculo
   // BE-INCR-LEGAL-PARAMS PR-1: sem FK — volta ao estado da migração (linhas criadas/revogadas pelo teste somem).
   // PR-2: 529 INSERTs um a um por teste estouravam o hook de 5 s. Linha semeada só muda de STATUS (emenda §9 L-6),
   // então basta apagar as que o teste criou e devolver as semeadas a PUBLISHED; ids fixos = a semente.

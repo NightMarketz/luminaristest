@@ -6507,8 +6507,9 @@ export {};
  *       summary: Confirm the monthly PIS/Cofins assessment (commit 1, X8 item 14)
  *       description: >-
  *         Recalcula e grava as 2 linhas (PIS, COFINS) numa tx com os gates - CAS do a pagar (409), um só CONFIRMED
- *         por (PJ, ano, tributo, mês) (409; substituir = supersedesIds), ordem sequencial dos meses (409) e
- *         substituição de trás para frente (409 se o mês seguinte já está confirmado). Sem provisão no razão neste
+ *         por (PJ, ano, tributo, mês) (409; substituir = supersedesIds), ordem sequencial dos meses (409). Substituir
+ *         derruba os meses posteriores confirmados e os devolve em reconfirmar (BE-INCR-LEGAL-PARAMS PR-4); confirmar
+ *         um mês novo por trás de um posterior confirmado segue 409. Sem provisão no razão neste
  *         PR (provisaoPendente = true; a provisão é o PR-3 do X8). Leitura pelos GET de /tax-assessments.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
