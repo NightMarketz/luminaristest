@@ -13,6 +13,7 @@ import type { BindingScope } from '@/features/accountingBinding/repositories/IAc
 import { SectorKitV1Schema, type SectorKitV1 } from '@/features/sectorKits/dtos/SectorKitDto';
 import { BEAUTY_SALON_KIT_V1 } from '@/features/sectorKits/kits/beautySalon/kit.v1';
 import { KitInstallStepFailedError } from '@/features/sectorKits/models/kitInstallTypes';
+import { CANONICAL_ACCOUNTS } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
 import type { InstallKitInput } from '@/features/sectorKits/dtos/KitInstallationDto';
 
 const UNIT = 'unit-kit';
@@ -297,6 +298,45 @@ describe('KitInstallService (integração, kit com conteúdo)', () => {
     const out = await kitService().install(scope(), input());
     expect(out).toMatchObject({ status: 'INSTALLED', warnings: ['KIT_REFERENTIAL_SKIPPED_NO_CATALOG'] });
     expect((await foto()).referencial).toBe(0);
+  });
+
+  /** Contador ACTIVE na unidade (GOV-CONTADOR): settings e perfil fiscal viram parâmetro governado (PUT ⇒ 409). */
+  async function contadorAtivo() {
+    const contador = await prisma.user.create({ data: { name: 'ct', username: 'kit-contador', email: 'ct@test.local', password: 'x', role: 'USER' } });
+    const contato = await prisma.accountingContact.create({
+      data: { ...where(), name: 'Contador', email: 'c@test.local', cpf: '52998224725', crcNumber: 'SP-123456/O-3', crcUf: 'SP' },
+    });
+    await prisma.accountantAssignment.create({
+      data: {
+        ...where(), accountantUserId: contador.id, accountingContactId: contato.id, crcNumber: 'SP-123456/O-3', crcUf: 'SP',
+        status: 'ACTIVE', activeSlot: 'ACTIVE', activeFrom: new Date(), createdById: ownerId,
+      },
+    });
+  }
+  async function contasDoKitVivas() {
+    // plano já instalado (canônico + extensão), como numa unidade que roda o kit pela 2ª vez
+    for (const a of [...CANONICAL_ACCOUNTS, ...TEST_KIT.chartExtension]) await prisma.account.create({ data: { ...where(), ...a } });
+  }
+
+  it('contador ativo e nenhum campo nulo a preencher: o passo 3 não vira parâmetro governado (achado do review)', async () => {
+    await contasDoKitVivas();
+    const [c43, c44, c219] = [(await accountId('4.3'))!, (await accountId('4.4'))!, (await accountId('2.1.9'))!];
+    await prisma.accountingScopeSettings.create({
+      data: { ...where(), bankChargeExpenseAccountId: c43, depreciationExpenseAccountId: c43, updatedById: ownerId },
+    });
+    await seedFiscalProfile({ irpjDespesaAccountId: c44, irpjRecolherAccountId: c219 });
+    await contadorAtivo();
+    const versoes = await prisma.accountingPolicyVersion.count({ where: where() });
+
+    await expect(kitService().install(scope(), input())).resolves.toMatchObject({ status: 'INSTALLED' });
+    expect(await prisma.accountingPolicyVersion.count({ where: where() })).toBe(versoes);
+  });
+
+  it('contador ativo e campo nulo a preencher: o passo 3 falha pelo gate do contador (a mudança vai por proposta)', async () => {
+    await seedFiscalProfile();
+    await contadorAtivo();
+    await expect(kitService().install(scope(), input())).rejects.toMatchObject({ step: 3 });
+    expect((await prisma.kitInstallation.findFirst({ where: where() }))?.status).toBe('FAILED');
   });
 
   it('um kit por unidade (item 9): outro kitKey na mesma unidade ⇒ 400, nada escrito', async () => {

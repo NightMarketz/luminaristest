@@ -70,7 +70,8 @@ export async function runInstall(args: InstallSectorKitArgs): Promise<number> {
     // Idempotência. ponytail: pré-check e instalação são idas separadas ao banco (TOCTOU, o mesmo teto do CLI
     // antigo: passo de deploy operado por uma pessoa; o compile pula quando já há Active e supersede atomicamente).
     const installation = await kitService.findInstallation(scope);
-    if (installation?.status === 'INSTALLED') {
+    // Só o MESMO kit é "já instalado"; outro kit na unidade cai no install(), que recusa (um kit por unidade, item 9).
+    if (installation?.status === 'INSTALLED' && installation.kitKey === args.kitKey) {
       console.log(
         `JÁ INSTALADO: kit '${installation.kitKey}' v${installation.kitVersion} na unidade '${scope.unitId}'. Nada a fazer (idempotente).`,
       );

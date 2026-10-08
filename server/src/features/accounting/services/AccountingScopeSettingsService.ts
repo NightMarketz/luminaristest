@@ -92,15 +92,15 @@ export class AccountingScopeSettingsService {
     if (!this.policy.canManageAccountingSettings(scope)) {
       throw new ForbiddenError('Você não tem permissão para alterar a configuração contábil.');
     }
-    await assertNoActiveAccountant(this.assignmentRepo, scope);
     return this.policyVersionRepo.runTransaction(async (tx) => {
-      await assertNoActiveAccountant(this.assignmentRepo, scope, tx);
       const current = await this.repo.getSettings(scope, tx);
       const patch = Object.fromEntries(
         Object.entries(accountIds).filter(([field]) => current?.[field as keyof typeof accountIds] == null),
       ) as ScopeSettingsPolicyPayload;
       const fields = Object.keys(patch);
       if (fields.length === 0) return [];
+      // gate do contador DEPOIS de saber que há o que gravar: kit sem campo nulo não vira parâmetro governado
+      await assertNoActiveAccountant(this.assignmentRepo, scope, tx);
       await applyDirectInTx(this.policyVersionRepo, scope, 'SCOPE_SETTINGS', patch, tx, (policyVersionId) =>
         this.applyInTx(scope, patch, tx, policyVersionId),
       );

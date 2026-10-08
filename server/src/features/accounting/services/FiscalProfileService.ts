@@ -210,9 +210,7 @@ export class FiscalProfileService {
    */
   async fillNullAccounts(scope: AccountingScope, accountIds: Partial<Record<FiscalProfileAccountField, string>>): Promise<string[]> {
     if (!this.policy.canManageFiscalProfile(scope)) throw new ForbiddenError('Você não tem permissão para alterar o perfil fiscal.');
-    await assertNoActiveAccountant(this.assignmentRepo, scope);
     return this.repo.runTransaction(async (tx) => {
-      await assertNoActiveAccountant(this.assignmentRepo, scope, tx);
       const row = await this.repo.findByScope(scope, tx);
       if (!row) {
         throw new ValidationError('fiscal_profile_missing: perfil fiscal da unidade não cadastrado (PUT /api/accounting/fiscal-profile).');
@@ -222,6 +220,8 @@ export class FiscalProfileService {
       );
       const fields = Object.keys(patch);
       if (fields.length === 0) return [];
+      // gate do contador DEPOIS de saber que há o que gravar: kit sem campo nulo não vira parâmetro governado
+      await assertNoActiveAccountant(this.assignmentRepo, scope, tx);
       const { unitId: _unitId, d1fConfirmado, emissao: _emissao, updatedAt: _updatedAt, ...current } = this.toView(row, null);
       const payload = FiscalProfilePolicyPayloadSchema.parse({ ...current, ...patch });
       await applyDirectInTx(this.policyVersionRepo, scope, 'FISCAL_PROFILE', payload, tx, (policyVersionId) =>
