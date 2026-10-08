@@ -57,6 +57,12 @@ export function ratearReceita(amount: number, lines: readonly SaleRevenueLine[])
   ] as const) {
     const doBalde = lines.filter((l) => l.nature === nature && l.lineReais > 0);
     const base = doBalde.reduce((s, l) => s + l.lineReais, 0);
+    // Defesa (review PR-2): crédito numa natureza sem item positivo — o rateio não teria onde pôr; uma linha sintética
+    // leva o valor inteiro para nenhum centavo sumir do subrazão.
+    if (doBalde.length === 0) {
+      if (cents !== 0) out.push({ line: null, natureza, receitaCents: cents });
+      continue;
+    }
     let resto = cents;
     doBalde.forEach((l, i) => {
       const v = i === doBalde.length - 1 ? resto : Math.round(cents * (l.lineReais / base));
@@ -113,7 +119,7 @@ export class ReceitaFiscalService {
         competencia: venda.dia.slice(0, 7),
         dia: venda.dia,
         saleId: venda.saleId,
-        itemRef: l?.itemRef ?? ITEM_VENDA_INTEIRA,
+        itemRef: l?.itemRef ?? (r.natureza === 'SERVICO' ? ITEM_VENDA_INTEIRA : `${ITEM_VENDA_INTEIRA}:REVENDA`),
         natureza: r.natureza,
         cTribNac: l?.serviceRef ? (cTribNacDe.get(l.serviceRef) ?? null) : null,
         productRef: l?.productRef ?? null,

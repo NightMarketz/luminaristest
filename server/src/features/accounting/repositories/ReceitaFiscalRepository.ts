@@ -7,18 +7,13 @@ import type { IReceitaFiscalRepository, ReceitaFiscalLinhaData } from './IReceit
 export class ReceitaFiscalRepository implements IReceitaFiscalRepository {
   public async createLinhasDaVenda(scope: AccountingScope, linhas: readonly ReceitaFiscalLinhaData[]): Promise<number> {
     const w = accountingScopeWhere(scope);
+    if (linhas.length === 0) return 0;
     return prisma.$transaction(async (tx) => {
-      let criadas = 0;
-      for (const l of linhas) {
-        const existe = await tx.receitaFiscalLinha.findUnique({
-          where: { userId_unitId_saleId_itemRef: { ...w, saleId: l.saleId, itemRef: l.itemRef } },
-          select: { id: true },
-        });
-        if (existe) continue;
-        await tx.receitaFiscalLinha.create({ data: { ...w, ...l } });
-        criadas++;
-      }
-      return criadas;
+      // Idempotência por VENDA, espelho do razão (o `sale.finalized` é único por venda e não muda se a venda for
+      // regravada): venda com qualquer linha não é regravada, nem parcialmente.
+      if ((await tx.receitaFiscalLinha.count({ where: { ...w, saleId: linhas[0].saleId } })) > 0) return 0;
+      for (const l of linhas) await tx.receitaFiscalLinha.create({ data: { ...w, ...l } });
+      return linhas.length;
     });
   }
 

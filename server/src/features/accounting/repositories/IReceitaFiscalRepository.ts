@@ -22,7 +22,7 @@ export interface ReceitaFiscalLinhaData {
  * (PJ, unidade, venda, item).
  */
 export interface IReceitaFiscalRepository {
-  /** Grava as linhas da venda numa tx; as que já existem ficam (replay do reconcile). Devolve quantas criou. */
+  /** Grava as linhas da venda numa tx; venda que já tem linha não é regravada (espelho do razão). Devolve quantas criou. */
   createLinhasDaVenda(scope: AccountingScope, linhas: readonly ReceitaFiscalLinhaData[]): Promise<number>;
   countLinhasDaVenda(scope: AccountingScope, saleId: string): Promise<number>;
   findByCompetencia(scope: AccountingScope, competencia: string): Promise<ReceitaFiscalLinha[]>;

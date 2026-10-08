@@ -45,7 +45,9 @@ export class SimplesEntradasRepository implements ISimplesEntradasRepository {
   }
 
   public async updateParceria(scope: AccountingScope, id: string, data: Partial<ParceriaData>, tx?: Prisma.TransactionClient): Promise<SalaoParceriaContrato> {
-    return (tx ?? prisma).salaoParceriaContrato.update({ where: { id }, data: { ...data, updatedById: scope.actorUserId } });
+    const c = tx ?? prisma;
+    await c.salaoParceriaContrato.updateMany({ where: { id, ...accountingScopeWhere(scope), deletedAt: null }, data: { ...data, updatedById: scope.actorUserId } });
+    return c.salaoParceriaContrato.findFirstOrThrow({ where: { id, ...accountingScopeWhere(scope) } });
   }
 
   public async softDeleteParceria(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<void> {

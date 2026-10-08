@@ -182,6 +182,14 @@ describe('itens 15–16 — subrazão fiscal de receita na finalização + tie-o
     expect(await prisma.receitaFiscalLinha.count({ where: { saleId: vendaMista } })).toBe(2);
   });
 
+  it('venda regravada com outros itens: o razão não muda (idempotente por venda) e o subrazão também não (review PR-2)', async () => {
+    await row('saleItems', { saleId: vendaMista, type: 'Product', productId: 'prd-novo', description: 'novo', quantity: 1, unitPrice: 30 });
+    const sale = await prisma.dynamicTableData.findUniqueOrThrow({ where: { id: vendaMista } });
+    await maybeSyncSaleFinalized({ userId: user.id }, tables.sales, { id: sale.id, data: sale.data });
+    expect((await linhasDaVenda(vendaMista)).map((l) => Number(l.receitaCents)).sort((a, b) => a - b)).toEqual([9_667, 19_333]);
+    expect(await prisma.receitaFiscalLinha.count({ where: { saleId: vendaMista } })).toBe(2);
+  });
+
   it('tie-out: Σ subrazão = (C − D) de 3.1 + 3.3 + 3.2 no mês', async () => {
     const t = await f().getReceitaFiscalService().tieOut(scope(), '2026-05');
     expect(t).toMatchObject({ subrazaoCents: 29_000, razaoCents: 29_000, ok: true, alerta: null });
