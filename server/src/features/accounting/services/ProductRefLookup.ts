@@ -1,4 +1,4 @@
-import type { IDynamicTableRepository } from '../../dynamicTables/repositories/IDynamicTableRepository';
+import type { ProductRefPort } from '../ports/OriginPorts';
 import type { AccountingScope } from '../scope/AccountingScope';
 
 /**
@@ -14,9 +14,9 @@ export interface IProductRefLookup {
   productExists(scope: AccountingScope, productRef: string): Promise<boolean>;
 }
 
-/** Implementação sobre o repositório de DynamicTables (injetada pela Factory). */
+/** Implementação sobre a `ProductRefPort` (KIT-SETOR PR-5, item 43) — montada pela Factory sobre o repositório de DynamicTables. */
 export class DynamicTableProductRefLookup implements IProductRefLookup {
-  constructor(private readonly repo: IDynamicTableRepository) {}
+  constructor(private readonly repo: ProductRefPort) {}
 
   async productExists(scope: AccountingScope, productRef: string): Promise<boolean> {
     const table = await this.repo.findTableByInternalName(scope.ownerUserId, 'products');

@@ -1,6 +1,5 @@
 import type { UserContext } from '../../../types/UserContext';
-import type { DynamicTableService } from '../../dynamicTables/services/DynamicTableService';
-import type { IDynamicTableRepository } from '../../dynamicTables/repositories/IDynamicTableRepository';
+import type { StockRowPort, StockRowWriterPort } from '../ports/OriginPorts';
 import type { AccountingScope } from '../scope/AccountingScope';
 import logger from '../../../lib/logger';
 
@@ -15,6 +14,8 @@ import logger from '../../../lib/logger';
  *
  * Fronteira (Contrato §2.1): accounting LÊ/ESCREVE DynamicTable pelo DynamicTableService
  * (escrita `isSystem`, precedente RegisterPaymentService) — nunca o inverso, nunca dentro do motor.
+ * Desde KIT-SETOR PR-5 (item 43) entra pelas portas `StockRowPort`/`StockRowWriterPort` do núcleo,
+ * montadas em `lib/factory.ts`.
  *
  * Idempotência e discriminação: TUDO pela chave `detailKey` (campo string DECLARADO no módulo;
  * o `sourceId` do preset é RELATION para `sales` e não pode carregar payableId, e um `sourceType`
@@ -60,8 +61,8 @@ export interface IPhysicalStockSync {
 
 export class DynamicTablePhysicalStockSync implements IPhysicalStockSync {
   constructor(
-    private readonly dynamicTableService: DynamicTableService,
-    private readonly repo: IDynamicTableRepository,
+    private readonly dynamicTableService: StockRowWriterPort,
+    private readonly repo: StockRowPort,
   ) {}
 
   /**
