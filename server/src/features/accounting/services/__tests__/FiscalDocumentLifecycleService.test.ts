@@ -181,6 +181,7 @@ describe('FiscalDocumentLifecycleService — consultarUm (itens 24-25)', () => {
   });
 
   it('AUTHORIZED em producao: cria attachment XML+PDF, anexa proveniência (0 lançamentos), grava dfe.authorized', async () => {
+    mockSelection.ambiente = 'producao';
     const { service, repo, documentAttachmentService, postingService, auditService } = makeService({
       docs: { 'doc-1': baseDoc({ ambiente: 'producao' }) },
     });
@@ -224,6 +225,7 @@ describe('FiscalDocumentLifecycleService — consultarUm (itens 24-25)', () => {
   });
 
   it('AUTHORIZED em producao: status mudou (cancelamento) entre a autorização e a gravação dos anexos → proveniência aposentada, sem erro', async () => {
+    mockSelection.ambiente = 'producao';
     const { service, repo, postingService } = makeService({ docs: { 'doc-1': baseDoc({ ambiente: 'producao' }) } });
     mockPort.consultar.mockResolvedValueOnce({ status: 'AUTHORIZED', partnerRef: 'ref-1', numero: '123', chaveOuCodigo: 'CHAVE-XYZ', xml: Buffer.from('<xml/>'), errors: [] } as EmissaoResult);
     repo.transition
