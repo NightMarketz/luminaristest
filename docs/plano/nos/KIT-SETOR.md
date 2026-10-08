@@ -10,7 +10,7 @@ autorizacao: "dono, chat, 2026-10-07: \"Esta autorizado\" (o texto do nó) + \"P
 perfil_previsto: "opus-medio"
 perfil_evidencia: "BRIEF §8: PR-1/PR-5 opus-baixo; PR-2/3/4/6 opus-medio (classificador do PR-4 no alto)"
 atualizado: "2026-10-08"
-prs: ["#579", "#580", "#582"]
+prs: ["#579", "#580", "#582", "#584"]
 ---
 # KIT-SETOR — Kit de setor: núcleo portável + estrutura importada pelo wizard
 
