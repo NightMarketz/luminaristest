@@ -2631,7 +2631,8 @@
       "vigenteDesdeInvalid": "Enter the start of validity (YYYY-MM-DD).",
       "vigenteAteInvalid": "Invalid end of validity (YYYY-MM-DD).",
       "vigenciaInvertida": "Validity ends before it starts.",
-      "motivoRequired": "Enter the reason."
+      "motivoRequired": "Enter the reason.",
+      "valorTextoLongo": "Text is at most 64 characters."
     }
   }
 }

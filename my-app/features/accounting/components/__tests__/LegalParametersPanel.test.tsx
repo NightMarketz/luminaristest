@@ -61,6 +61,9 @@ describe('helpers da aba Parâmetros legais (itens 4, 5, 7)', () => {
     expect(validarProposta({ ...f, tipoValor: 'json', valor: '{x' })).toBe('valorJsonInvalid');
     expect(validarProposta({ ...f, vigenteAte: '2026-12-31' })).toBe('vigenciaInvertida');
     expect(validarProposta({ ...f, fonte: ' ' })).toBe('fonteRequired');
+    expect(validarProposta({ ...f, valor: '9007199254740993' })).toBe('valorIntInvalid'); // > 2^53
+    expect(validarProposta({ ...f, tipoValor: 'json', valor: 'null' })).toBe('valorJsonInvalid');
+    expect(validarProposta({ ...f, tipoValor: 'texto', valor: 'x'.repeat(65) })).toBe('valorTextoLongo');
     expect(paraProposta(f)).toEqual({
       tabela: 'TAX_ASSESSMENT', chave: 'IRPJ_ALIQ', discriminador: undefined, valorInt: 1600, fonte: 'IN 1.700', fonteUrl: undefined,
       fonteSha256: undefined, vigenteDesde: '2027-01-01', vigenteAte: undefined, supersedesId: undefined, motivo: 'teste',

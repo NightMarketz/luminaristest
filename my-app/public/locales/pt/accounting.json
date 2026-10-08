@@ -2631,7 +2631,8 @@
       "vigenteDesdeInvalid": "Informe a data de início da vigência (AAAA-MM-DD).",
       "vigenteAteInvalid": "Data final da vigência inválida (AAAA-MM-DD).",
       "vigenciaInvertida": "A vigência termina antes de começar.",
-      "motivoRequired": "Informe o motivo."
+      "motivoRequired": "Informe o motivo.",
+      "valorTextoLongo": "O texto tem no máximo 64 caracteres."
     }
   }
 }

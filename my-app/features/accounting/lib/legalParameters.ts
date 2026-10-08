@@ -88,10 +88,13 @@ const DATA = /^\d{4}-\d{2}-\d{2}$/;
 export function validarProposta(f: PropostaForm): string | null {
   if (!f.chave.trim()) return 'chaveRequired';
   if (!f.valor.trim()) return 'valorRequired';
-  if (f.tipoValor === 'int' && !/^-?\d+$/.test(f.valor.trim())) return 'valorIntInvalid';
+  // Review: acima de 2^53 o Number() arredondaria em silêncio e o BE aceitaria o número errado.
+  if (f.tipoValor === 'int' && (!/^-?\d+$/.test(f.valor.trim()) || !Number.isSafeInteger(Number(f.valor.trim())))) return 'valorIntInvalid';
+  if (f.tipoValor === 'texto' && f.valor.trim().length > 64) return 'valorTextoLongo'; // limite do DTO do BE
   if (f.tipoValor === 'json') {
     try {
-      JSON.parse(f.valor);
+      // Review: `null` passaria no "exatamente um valor" do BE e gravaria uma linha sem valor.
+      if (JSON.parse(f.valor) === null) return 'valorJsonInvalid';
     } catch {
       return 'valorJsonInvalid';
     }
