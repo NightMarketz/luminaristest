@@ -1825,6 +1825,8 @@ model FixedAsset {
   residualValueCents           BigInt            @default(0)
   rateId                       String? // taxa de origem (Anexo III ou CUSTOM); XOR com annualRateBp explícito no DTO — aqui só o snapshot
   rate                         DepreciationRate? @relation(fields: [rateId], references: [id], onDelete: Restrict)
+  legalParameterId             String? // BE-INCR-LEGAL-PARAMS PR-3 (emenda §9 L-1): taxa do Anexo III de PLATAFORMA (XOR com rateId, que fica só CUSTOM)
+  legalParameter               LegalParameter? @relation(fields: [legalParameterId], references: [id], onDelete: Restrict)
   annualRateBp                 Int // SNAPSHOT no create (item 4) — nunca recalculado a partir de rateId depois
   bookAnnualRateBp             Int? // taxa contábil, se diverge da fiscal (item 12/23)
   bookRateJustification        String? // obrigatório se bookAnnualRateBp setado (item 8)
@@ -2527,6 +2529,7 @@ model LegalParameter {
   revokedById   String?
   revokedAt     DateTime?
   createdAt     DateTime  @default(now())
+  fixedAssets   FixedAsset[] // PR-3: bens com taxa do Anexo III de plataforma (Restrict)
 
   @@index([tabela, chave, status])
   @@map("legal_parameters")

@@ -75,6 +75,7 @@ describe('BE-INCR-LEGAL-PARAMS PR-1 — /api/legal-parameters', () => {
       { tabela: 'FERIADO_NACIONAL', chave: '2027-11-20', valorInt: undefined, valorTexto: 'Consciência Negra' }, // PR-2
       { valorInt: undefined, valorTexto: 'TEXTO' }, // IRPJ_ALIQ é valorInt
       { tabela: 'PIS_COFINS', chave: 'PIS', discriminador: 'OUTRA' },
+      { tabela: 'DEPRECIACAO_ANEXO_III', chave: '2', discriminador: 'ANEXO_III_IN_1700_2017' }, // PR-3: a taxa vai no valorJson, não em valorInt
       { extra: 1 }, // .strict()
     ];
     for (const c of casos) {

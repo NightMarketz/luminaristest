@@ -1,11 +1,11 @@
 /**
- * DepreciationRateService (BE-INCR-FIXED-ASSETS, nó C8, Bloco A). Unit: repo/seed/audit são
- * dublês; prova-se ORDEM (policy antes de dado), o gatilho lazy do seed em toda leitura, a
- * tradução cross-tenant → NotFound (D11), e o conteúdo do payload de auditoria.
+ * DepreciationRateService (BE-INCR-FIXED-ASSETS, nó C8, Bloco A). Unit: repo/audit são dublês e a fotografia legal é a
+ * semente da migração; prova-se ORDEM (policy antes de dado), o catálogo Anexo de plataforma + CUSTOM (BE-INCR-LEGAL-
+ * PARAMS PR-3), a tradução cross-tenant → NotFound (D11), e o conteúdo do payload de auditoria.
  */
 import { ForbiddenError, NotFoundError } from '@/lib/errors';
 import { DepreciationRateService } from '@/features/accounting/services/DepreciationRateService';
-import type { DepreciationRateSeedService } from '@/features/accounting/services/DepreciationRateSeedService';
+import { legalParamsSemente } from '@test/helpers/legalParams';
 import type {
   CreateDepreciationRateData,
   IDepreciationRateRepository,
@@ -43,10 +43,9 @@ function build(opts: { canRead?: boolean; canManage?: boolean; found?: typeof ra
   const findManyByUnit = jest.fn(async () => [rateRow]);
   const hide = jest.fn(async (_scope: AccountingScope, _id: string, _tx?: unknown) => ({ ...rateRow, hiddenAt: new Date() }));
   const runTransaction = jest.fn(async (fn: (tx: unknown) => Promise<unknown>) => fn({ tx: true }));
-  const seed = jest.fn(async () => undefined);
+  const fotografia = jest.fn(legalParamsSemente.fotografia);
 
   const repo = { create, findById, findManyByUnit, hide, runTransaction } as unknown as IDepreciationRateRepository;
-  const seedService = { seed } as unknown as DepreciationRateSeedService;
   const policy = {
     canRead: () => opts.canRead ?? true,
     canManageFixedAssets: () => opts.canManage ?? true,
@@ -54,24 +53,41 @@ function build(opts: { canRead?: boolean; canManage?: boolean; found?: typeof ra
   const auditService = { append: auditAppend } as unknown as AuditService;
 
   return {
-    service: new DepreciationRateService(repo, seedService, auditService, policy),
-    create, findById, findManyByUnit, hide, runTransaction, seed, auditAppend,
+    service: new DepreciationRateService(repo, { fotografia }, auditService, policy),
+    create, findById, findManyByUnit, hide, runTransaction, fotografia, auditAppend,
   };
 }
 
 describe('DepreciationRateService.listRates', () => {
-  it('nega ANTES de tocar seed/repo quando canRead=false', async () => {
-    const { service, seed, findManyByUnit } = build({ canRead: false });
+  it('nega ANTES de tocar fotografia/repo quando canRead=false', async () => {
+    const { service, fotografia, findManyByUnit } = build({ canRead: false });
     await expect(service.listRates(scope, false)).rejects.toBeInstanceOf(ForbiddenError);
-    expect(seed).not.toHaveBeenCalled();
+    expect(fotografia).not.toHaveBeenCalled();
     expect(findManyByUnit).not.toHaveBeenCalled();
   });
 
-  it('toda leitura dispara o seed lazy ANTES de listar (item 3)', async () => {
-    const { service, seed, findManyByUnit } = build();
-    await service.listRates(scope, true);
-    expect(seed).toHaveBeenCalledWith(scope);
+  it('PR-3: união no mesmo shape — 222 linhas do Anexo de PLATAFORMA + as CUSTOM do escopo (origem diz de onde)', async () => {
+    const { service, fotografia, findManyByUnit } = build();
+    const lista = await service.listRates(scope, true);
+    expect(fotografia).toHaveBeenCalledWith(['DEPRECIACAO_ANEXO_III']);
     expect(findManyByUnit).toHaveBeenCalledWith(scope, true);
+    expect(lista.filter((t) => t.origem === 'PLATAFORMA')).toHaveLength(222);
+    expect(lista.filter((t) => t.origem === 'ESCOPO').map((t) => t.id)).toEqual(['rate-1']);
+    // Linha do Anexo lida da plataforma com os mesmos números do fixture (ex.: sourceRow 2, INSTALAÇÕES 10%).
+    expect(lista.find((t) => t.id === 'lp3-dep-anexo-2')).toMatchObject({
+      sourceRow: 2, description: 'INSTALAÇÕES', lifeYears: 10, annualRateBp: 1000, source: 'ANEXO_III_IN_1700_2017', hiddenAt: null,
+    });
+    expect(lista.find((t) => t.id === 'lp3-dep-nota1-nota')).toMatchObject({ sourceRow: null, ncm: '8417', annualRateBp: 3330, source: 'ANEXO_III_NOTA_1' });
+  });
+});
+
+describe('DepreciationRateService.resolverTaxa (PR-3, L-1)', () => {
+  it('CUSTOM do escopo → rateId; Anexo de plataforma → legalParameterId; id desconhecido → NotFound', async () => {
+    const custom = build();
+    await expect(custom.service.resolverTaxa(scope, 'rate-1')).resolves.toEqual({ rateId: 'rate-1', legalParameterId: null, annualRateBp: 1000 });
+    const semCustom = build({ found: null });
+    await expect(semCustom.service.resolverTaxa(scope, 'lp3-dep-anexo-2')).resolves.toEqual({ rateId: null, legalParameterId: 'lp3-dep-anexo-2', annualRateBp: 1000 });
+    await expect(semCustom.service.resolverTaxa(scope, 'nao-existe')).rejects.toBeInstanceOf(NotFoundError);
   });
 });
 
@@ -101,6 +117,12 @@ describe('DepreciationRateService.createCustomRate', () => {
 });
 
 describe('DepreciationRateService.hideRate', () => {
+  it('PR-3: linha do Anexo (plataforma) não se oculta — não está em depreciation_rates ⇒ NotFound', async () => {
+    const { service, hide } = build({ found: null });
+    await expect(service.hideRate(scope, 'lp3-dep-anexo-2')).rejects.toBeInstanceOf(NotFoundError);
+    expect(hide).not.toHaveBeenCalled();
+  });
+
   it('id de outro escopo é NotFoundError (D11) — nunca Forbidden, nunca toca hide', async () => {
     const { service, hide } = build({ found: null });
     await expect(service.hideRate(scope, 'rate-alheio')).rejects.toBeInstanceOf(NotFoundError);
