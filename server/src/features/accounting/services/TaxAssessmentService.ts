@@ -33,6 +33,8 @@
  */
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import { tabelaApuracaoDe, type TabelaApuracao } from '../models/taxAssessmentParams';
+import { parametrosUsados, type ParametrosUsados } from '../../legalParameters/models/legalParameter';
+import { janelaDoPeriodo } from '../models/janelaApuracao';
 import type { CompanyFiscalProfile, FiscalProfile, Prisma, TaxAssessment } from 'generated/prisma';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
@@ -220,11 +222,15 @@ export interface TaxAssessmentView {
   supersedesId: string | null;
   provisaoPendente: boolean;
   tabelaVersao: string;
+  /** BE-INCR-LEGAL-PARAMS PR-4 (item 7): sha256 das linhas de lei do período; null nas anteriores ao PR-4. */
+  parametrosSha256: string | null;
+  /** PR-4 (item 10): aviso da mudança de parâmetro legal ("reconfirme" / "valor mudou depois do pagamento"). */
+  avisoParametroLegal: string | null;
   memoria: MemoriaLinha[];
   confirmedAt: string;
 }
 
-export type TaxAssessmentPreviewLinha = Omit<TaxAssessmentView, 'id' | 'status' | 'supersedesId' | 'provisaoPendente' | 'confirmedAt'>;
+export type TaxAssessmentPreviewLinha = Omit<TaxAssessmentView, 'id' | 'status' | 'supersedesId' | 'provisaoPendente' | 'confirmedAt' | 'parametrosSha256' | 'avisoParametroLegal'>;
 
 export interface TaxAssessmentPreviewView {
   irpj: TaxAssessmentPreviewLinha;
@@ -249,6 +255,25 @@ interface Calculo {
   avisos: string[];
   /** Ids das memórias CONFIRMED anteriores que o cálculo leu (F-TA-3 a) — re-checados dentro da tx. */
   anterioresIds: string[];
+  /** BE-INCR-LEGAL-PARAMS PR-4 (item 7): as linhas de lei do período que o cálculo recebeu. */
+  parametros: ParametrosUsados;
+}
+
+/**
+ * PR-4 (item 10; dono 07/10 "Gravar a entrada") — o que o usuário informou na confirmação do X7, sem o que é do pedido
+ * (unidade, CAS, substituídas). O job de recálculo reconfirma com isto.
+ */
+export type EntradaInformadaX7 = Pick<TaxAssessmentConfirmInput, 'deducoes' | 'modoMensal' | 'estimativasPagas'>;
+const entradaX7 = (i: TaxAssessmentPreviewInput): EntradaInformadaX7 => ({
+  deducoes: i.deducoes,
+  ...(i.modoMensal !== undefined ? { modoMensal: i.modoMensal } : {}),
+  ...(i.estimativasPagas !== undefined ? { estimativasPagas: i.estimativasPagas } : {}),
+});
+
+/** PR-4 — o resultado de um recálculo, para o job comparar com a linha confirmada. */
+export interface RecalculoView {
+  linhas: Record<string, Pick<TaxAssessment, 'baseCents' | 'devidoCents' | 'aPagarCents' | 'saldoNegativoCents' | 'diferencaPostergadaCents'>>;
+  parametros: ParametrosUsados;
 }
 
 
@@ -303,6 +328,24 @@ export class TaxAssessmentService {
   /** Item 14 — confirmação, commit 1. */
   async confirm(scope: AccountingScope, input: TaxAssessmentConfirmInput): Promise<TaxAssessmentConfirmView> {
     this.assertManage(scope);
+    return this.confirmar(scope, input, null);
+  }
+
+  /**
+   * BE-INCR-LEGAL-PARAMS PR-4 (item 10; dono 07/10 "Ator PLATFORM") — o recálculo do job, SEM a policy de usuário: o
+   * autor é a plataforma (`scope.actorUserId = 'PLATFORM'`). Só o `TaxAssessmentRecalcService` chama.
+   */
+  async recalcularPeloSistema(scope: AccountingScope, input: TaxAssessmentPreviewInput): Promise<RecalculoView> {
+    const c = await this.calcular(scope, input);
+    return { linhas: { IRPJ: c.irpj, CSLL: c.csll }, parametros: c.parametros };
+  }
+
+  /** PR-4 (item 10) — a confirmação do job: mesma cascata, mesmos gates na tx, autor PLATFORM, aviso opcional na linha. */
+  async confirmarPeloSistema(scope: AccountingScope, input: TaxAssessmentConfirmInput, aviso: string | null): Promise<TaxAssessmentConfirmView> {
+    return this.confirmar(scope, input, aviso);
+  }
+
+  private async confirmar(scope: AccountingScope, input: TaxAssessmentConfirmInput, aviso: string | null): Promise<TaxAssessmentConfirmView> {
     const c = await this.calcular(scope, input);
     const { anoCalendario: ano, periodo } = input;
     const owner = scope.ownerUserId;
@@ -414,6 +457,10 @@ export class TaxAssessmentService {
             diferencaPostergadaCents: r.diferencaPostergadaCents,
             memoria: MemoriaCalculoSchema.parse(r.memoria) as Prisma.InputJsonValue,
             tabelaVersao: r.tabelaVersao,
+            parametrosIds: c.parametros.ids,
+            parametrosSha256: c.parametros.sha256,
+            entradaInformada: entradaX7(input) as Prisma.InputJsonValue,
+            avisoParametroLegal: aviso,
             status: 'CONFIRMED',
             supersedesId: substituida?.id ?? null,
             confirmedById: scope.actorUserId,
@@ -435,6 +482,7 @@ export class TaxAssessmentService {
             aPagarCents: row.aPagarCents.toString(),
             devidoCents: row.devidoCents.toString(),
             tabelaVersao: row.tabelaVersao,
+            parametrosSha256: c.parametros.sha256, // LEGAL-PARAMS PR-4 (item 7): o snapshot entra na trilha
             modo: row.modo, // Fase B item 25 (allowlist): o modo do mês e a diferença postergada entram na trilha
             diferencaPostergadaCents: row.diferencaPostergadaCents.toString(),
           },
@@ -690,7 +738,10 @@ export class TaxAssessmentService {
       avisos.push('contas da provisão de IRPJ/CSLL não configuradas no perfil fiscal da unidade — a provisão ficará pendente (BRIEF X7 F-TA-7 a).');
     }
 
-    const tabela = tabelaApuracaoDe(await this.legalParams.fotografia(['TAX_ASSESSMENT', 'CSLL_ALIQUOTA', 'CODIGO_RECEITA']));
+    const linhasLegais = await this.legalParams.fotografia(['TAX_ASSESSMENT', 'CSLL_ALIQUOTA', 'CODIGO_RECEITA']);
+    const tabela = tabelaApuracaoDe(linhasLegais);
+    const janela = janelaDoPeriodo(ano, periodo);
+    const parametros = parametrosUsados(linhasLegais, janela.de, janela.ate);
     const confirmados = (await this.repo.findConfirmedByYear(scope.ownerUserId, ano)).filter(doIrpjCsll);
     const anterioresRows = confirmados.filter((r) => ordem(r.periodo) < ordem(periodo));
     const anteriores = (t: TributoApuracao): MemoriaAnterior[] =>
@@ -700,7 +751,7 @@ export class TaxAssessmentService {
 
     if (anual) {
       const r = await this.calcularAnual(scope, input, perfil, w, despesaIds, anterioresRows, avisos, tabela);
-      return { perfil, forma, ...r, provisaoContasConfiguradas, avisos, anterioresIds };
+      return { perfil, forma, ...r, provisaoContasConfiguradas, avisos, anterioresIds, parametros };
     }
 
     let irpj: ResultadoApuracaoAnual;
@@ -730,7 +781,7 @@ export class TaxAssessmentService {
       irpj = { ...apurarRealTrimestral({ ...base, periodo: periodo as PeriodoTrimestral, tributo: 'IRPJ', linhasParteA: await linhas('lalur') }), diferencaPostergadaCents: 0n };
       csll = { ...apurarRealTrimestral({ ...base, periodo: periodo as PeriodoTrimestral, tributo: 'CSLL', linhasParteA: await linhas('lacs') }), diferencaPostergadaCents: 0n };
     }
-    return { perfil, forma, irpj, csll, provisaoContasConfiguradas, avisos, anterioresIds };
+    return { perfil, forma, irpj, csll, provisaoContasConfiguradas, avisos, anterioresIds, parametros };
   }
 
   /**
@@ -899,6 +950,8 @@ export function toView(row: TaxAssessment): TaxAssessmentView {
     supersedesId: row.supersedesId,
     provisaoPendente: provisaoPendente(row),
     tabelaVersao: row.tabelaVersao,
+    parametrosSha256: row.parametrosSha256,
+    avisoParametroLegal: row.avisoParametroLegal,
     memoria: MemoriaCalculoSchema.parse(row.memoria),
     confirmedAt: row.confirmedAt.toISOString(),
   };

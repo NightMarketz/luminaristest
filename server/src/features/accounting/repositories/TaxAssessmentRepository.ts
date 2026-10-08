@@ -50,6 +50,24 @@ export class TaxAssessmentRepository implements ITaxAssessmentRepository {
     return r.count === 1;
   }
 
+  public async findConfirmedByTributos(tributos: readonly string[]): Promise<TaxAssessment[]> {
+    return prisma.taxAssessment.findMany({
+      where: { tributo: { in: [...tributos] }, status: 'CONFIRMED', deletedAt: null },
+      orderBy: [{ userId: 'asc' }, { anoCalendario: 'asc' }, { periodo: 'asc' }],
+    });
+  }
+
+  public async findLatestSuperseded(ownerUserId: string, anoCalendario: number, tributo: string, periodo: string): Promise<TaxAssessment | null> {
+    return prisma.taxAssessment.findFirst({
+      where: { userId: ownerUserId, anoCalendario, tributo, periodo, status: 'SUPERSEDED', deletedAt: null },
+      orderBy: { confirmedAt: 'desc' },
+    });
+  }
+
+  public async setAvisoParametroLegal(ownerUserId: string, id: string, aviso: string): Promise<void> {
+    await prisma.taxAssessment.updateMany({ where: { id, userId: ownerUserId, deletedAt: null }, data: { avisoParametroLegal: aviso } });
+  }
+
   public async runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
     return prisma.$transaction(fn);
   }

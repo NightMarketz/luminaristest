@@ -194,12 +194,16 @@ describe('X8 PR-2 — apuração mensal de PIS/Cofins: prévia, confirmação, l
       expect(r.status).toBe(409);
       expect(corpo(r)).toContain('TAX_ASSESSMENT_ORDER');
     }
-    // Item 14: substituir M01 com M02 confirmado ⇒ 409 "de trás para frente"; nada muda.
+    // Item 14 + LEGAL-PARAMS PR-4 (dono 07/10 "Abrir cascata no PIS/Cofins"): substituir M01 com M02 confirmado derruba
+    // o M02 junto e o devolve em `reconfirmar` (antes: 409 "de trás para frente").
     const m01 = (await linhas(dono)).filter((r) => r.periodo === 'M01').map((r) => r.id);
+    const idsM02 = (await linhas(dono)).filter((r) => r.periodo === 'M02').map((r) => r.id);
     const tras = await confirm(dono, 'M01', '0', '0', { ...saldo, supersedesIds: m01 });
-    expect(tras.status).toBe(409);
-    expect(corpo(tras)).toContain('substitua de trás para frente');
-    expect((await linhas(dono)).every((r) => r.status === 'CONFIRMED')).toBe(true);
+    expect(tras.status).toBe(201);
+    expect(tras.body.data.reconfirmar).toEqual(['M02/2026']);
+    const depois = await linhas(dono);
+    expect(depois.filter((r) => [...m01, ...idsM02].includes(r.id)).every((r) => r.status === 'SUPERSEDED')).toBe(true);
+    expect(depois.filter((r) => r.status === 'CONFIRMED').map((r) => r.periodo)).toEqual(['M01', 'M01']);
   });
 
   it('item 8 / 23 (d): Real com outros créditos e retenções; cumulativo com outros créditos ⇒ 400; ajuste acima da receita ⇒ 400; aviso de ajustes', async () => {

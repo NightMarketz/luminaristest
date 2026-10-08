@@ -3,6 +3,9 @@ import { LegalParameterRepository } from '../features/legalParameters/repositori
 import { LegalParameterPolicy } from '../features/legalParameters/policies/LegalParameterPolicy';
 import { LegalParameterService } from '../features/legalParameters/services/LegalParameterService';
 import type { ILegalParameterRepository } from '../features/legalParameters/repositories/ILegalParameterRepository';
+import { LegalParameterRecalcJobRepository } from '../features/legalParameters/repositories/LegalParameterRecalcJobRepository';
+import type { ILegalParameterRecalcJobRepository } from '../features/legalParameters/repositories/ILegalParameterRecalcJobRepository';
+import { TaxAssessmentRecalcService } from '../features/accounting/services/TaxAssessmentRecalcService';
 import type { ILegalParameterPolicy } from '../features/legalParameters/policies/ILegalParameterPolicy';
 import { ChatInstanceRepository } from '../features/chatInstances/repositories/ChatInstanceRepository';
 import { ChatMessageRepository } from '../features/chatMessages/repositories/ChatMessageRepository';
@@ -433,6 +436,7 @@ export class ApplicationFactory {
     packageBalance: IPackageBalanceRepository;
     packageAcceptance: IPackageAcceptanceRepository; // FE-INCR-PACOTE-VALIDADE
     legalParameter: ILegalParameterRepository; // BE-INCR-LEGAL-PARAMS PR-1
+    legalParameterRecalcJob: ILegalParameterRecalcJobRepository; // BE-INCR-LEGAL-PARAMS PR-4 (item 10)
     sourceProvenance: ISourceProvenanceRepository;
     referentialMapping: IReferentialMappingRepository;
     referentialAccount: IReferentialAccountRepository;
@@ -549,6 +553,7 @@ export class ApplicationFactory {
     simplesEntradas: SimplesEntradasService; // X14 PR-2
     receitaFiscal: ReceitaFiscalService; // X14 PR-2
     pisCofinsAssessment: PisCofinsAssessmentService; // X8 PR-2
+    taxAssessmentRecalc: TaxAssessmentRecalcService; // BE-INCR-LEGAL-PARAMS PR-4 (item 10)
     accountingDelivery: AccountingDeliveryService;
     accountingReview: AccountingReviewService;
     accountantAssignment: AccountantAssignmentService; // GOV-CONTADOR
@@ -599,6 +604,7 @@ export class ApplicationFactory {
       packageBalance: new PackageBalanceRepository(),
       packageAcceptance: new PackageAcceptanceRepository(),
       legalParameter: new LegalParameterRepository(),
+      legalParameterRecalcJob: new LegalParameterRecalcJobRepository(),
       sourceProvenance: new SourceProvenanceRepository(),
       referentialMapping: new ReferentialMappingRepository(),
       referentialAccount: new ReferentialAccountRepository(),
@@ -708,7 +714,12 @@ export class ApplicationFactory {
 
     // BE-INCR-LEGAL-PARAMS PR-1: coeficientes de lei de plataforma — hoisted porque X7 e X8 leem a fotografia (F-LP-4 a);
     // PR-2: subiu de novo (com o auditService) porque o saldo de pacote lê a fotografia FERIADO_NACIONAL.
-    const legalParameterService = new LegalParameterService(this.repositories.legalParameter, this.policies.legalParameter, auditService);
+    const legalParameterService = new LegalParameterService(
+      this.repositories.legalParameter,
+      this.policies.legalParameter,
+      auditService,
+      this.repositories.legalParameterRecalcJob, // PR-4 (item 10): publicar/revogar enfileira o recálculo na mesma tx
+    );
 
     const packageBalanceService = new PackageBalanceService(
       this.repositories.packageBalance,
@@ -1037,6 +1048,19 @@ export class ApplicationFactory {
       this.repositories.lalur, // X7 Fase B PR-4 item 2 (F-TB-6 a): troca de forma com o e-Lalur do ano preenchido
       legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia OBRIGACAO_REGIME
     );
+    // Hoisted no LEGAL-PARAMS PR-4: o TaxAssessmentRecalcService também o injeta.
+    const pisCofinsAssessmentService = new PisCofinsAssessmentService(
+      this.repositories.taxAssessment,
+      this.repositories.companyFiscalProfile,
+      this.repositories.fiscalProfile,
+      this.repositories.account,
+      this.repositories.posting,
+      this.repositories.payable, // item 6 (PR-1): crédito de PIS/Cofins das NF-e do mês, só leitura
+      this.policies.accounting,
+      auditService,
+      taxAssessmentService, // X8 PR-3 (item 17): a provisão em 2 commits do X7, reusada
+      legalParameterService, // BE-INCR-LEGAL-PARAMS PR-1: fotografia PIS_COFINS
+    );
     this.services = {
       bankSettlement: bankSettlementService,
       accountingScopeSettings: accountingScopeSettingsService,
@@ -1315,17 +1339,15 @@ export class ApplicationFactory {
         legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia CODIGO_RECEITA
       ),
       // BE-INCR-PIS-COFINS PR-2 (nó X8): prévia/confirmação da apuração mensal de PIS/Cofins (reusa o TaxAssessment do X7).
-      pisCofinsAssessment: new PisCofinsAssessmentService(
+      pisCofinsAssessment: pisCofinsAssessmentService,
+      // BE-INCR-LEGAL-PARAMS PR-4 (item 10): recálculo das apurações quando uma linha de lei é publicada/revogada.
+      taxAssessmentRecalc: new TaxAssessmentRecalcService(
+        this.repositories.legalParameterRecalcJob,
+        this.repositories.legalParameter,
         this.repositories.taxAssessment,
-        this.repositories.companyFiscalProfile,
-        this.repositories.fiscalProfile,
-        this.repositories.account,
-        this.repositories.posting,
-        this.repositories.payable, // item 6 (PR-1): crédito de PIS/Cofins das NF-e do mês, só leitura
-        this.policies.accounting,
-        auditService,
-        taxAssessmentService, // X8 PR-3 (item 17): a provisão em 2 commits do X7, reusada
-        legalParameterService, // BE-INCR-LEGAL-PARAMS PR-1: fotografia PIS_COFINS
+        this.repositories.mitExport, // aviso "valor mudou depois da entrega" (dono 07/10)
+        taxAssessmentService,
+        pisCofinsAssessmentService,
       ),
       legalParameter: legalParameterService,
       paymentAccount: new PaymentAccountService(
@@ -1558,6 +1580,7 @@ export class ApplicationFactory {
   public getPackageBalanceService = (): PackageBalanceService => this.services.packageBalance;
   public getPackageAcceptanceService = (): PackageAcceptanceService => this.services.packageAcceptance;
   public getLegalParameterService = (): LegalParameterService => this.services.legalParameter;
+  public getTaxAssessmentRecalcService = (): TaxAssessmentRecalcService => this.services.taxAssessmentRecalc;
   public getPresetSyncService = (): PresetSyncService => this.services.presetSync;
   public getModuleInstallService = (): ModuleInstallService => this.services.moduleInstall;
   public getAttachmentService = (): AttachmentService => this.services.attachment;

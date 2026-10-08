@@ -2,6 +2,7 @@
  * BE-INCR-LEGAL-PARAMS (nó LEGAL-PARAMS; BRIEF §3 itens 2 e 4, emenda §9 L-6/L-7) — catálogo fechado de tabelas de
  * lei e o lookup PURO por data do fato gerador. Guarda números e listas, nunca lógica (`R-motor-regras`).
  */
+import { createHash } from 'crypto';
 import { ValidationError } from '../../../lib/errors';
 
 /** Item 2 — uma tabela por fonte de verdade que hoje está em código. Fora do enum ⇒ 400 no DTO. */
@@ -111,4 +112,24 @@ export class SemLinhaVigenteError extends ValidationError {
     Object.setPrototypeOf(this, SemLinhaVigenteError.prototype); // ValidationError fixa o próprio protótipo
     this.name = 'SemLinhaVigenteError';
   }
+}
+
+/** PR-4 (item 7, §4 `ParametrosUsados`) — as linhas de lei que valeram no período de uma apuração + o hash delas. */
+export interface ParametrosUsados {
+  ids: string[];
+  sha256: string;
+}
+
+/**
+ * PR-4 (item 7; dono 07/10: "Snapshot = proveniência") — das linhas que o cálculo recebeu, as em vigor que alcançam
+ * algum dia de [`de`, `ate`] (YYYY-MM-DD). Ids ordenados e sha256 do conteúdo que o cálculo lê (valor e vigência): duas
+ * fotografias com o mesmo hash dão o mesmo cálculo; hash diferente é o que o job de recálculo procura. Não guarda a
+ * lógica — só a proveniência.
+ */
+export function parametrosUsados(linhas: readonly LinhaLegal[], de: string, ate: string): ParametrosUsados {
+  const usadas = linhasEmVigor(linhas)
+    .filter((l) => l.vigenteDesde <= ate && (l.vigenteAte === null || l.vigenteAte >= de))
+    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const conteudo = usadas.map((l) => [l.id, l.tabela, l.chave, l.discriminador, l.valorInt, l.valorTexto, l.valorJson, l.vigenteDesde, l.vigenteAte]);
+  return { ids: usadas.map((l) => l.id), sha256: createHash('sha256').update(JSON.stringify(conteudo)).digest('hex') };
 }

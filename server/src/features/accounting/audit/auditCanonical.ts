@@ -171,7 +171,7 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7, item 22) — só ids, enum e centavos como string; sem PII. O documento
   // da dedução (texto livre) e a memória ficam FORA do evento.
   'tax.assessment.confirmed': ['assessmentId', 'tributo', 'periodo', 'anoCalendario', 'aPagarCents', 'devidoCents', 'tabelaVersao',
-    'modo', 'diferencaPostergadaCents'], // X7 Fase B item 25: enum + centavos em string
+    'modo', 'diferencaPostergadaCents', 'parametrosSha256'], // X7 Fase B item 25: enum + centavos em string; LEGAL-PARAMS PR-4 (item 7): sha256 do snapshot
   'tax.assessment.superseded': ['assessmentId', 'supersededById', 'tributo', 'periodo', 'anoCalendario'],
   // BE-INCR-MIT-EXPORT PR-2 (nó X9, item 16; D12, invariante 9) — sem CPF, e-mail, telefone nem conteúdo do arquivo.
   'tax.mit_export.generated': ['mitExportId', 'anoCalendario', 'mes', 'sha256', 'apuracaoIds'],
