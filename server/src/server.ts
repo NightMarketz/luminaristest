@@ -7,6 +7,7 @@ import { ApplicationFactory } from './lib/factory';
 import { purgeOldDeletedRecords } from './jobs/PurgeDeletedRecords';
 import { accountingSyncScheduler } from './jobs/AccountingSyncScheduler';
 import { dfePollScheduler } from './jobs/DfePollScheduler';
+import { legalParamsRecalcScheduler } from './jobs/LegalParamsRecalcScheduler';
 import { DocumentStatus } from './features/documents/models/Document.model';
 
 const PORT = process.env.PORT || 3001;
@@ -38,6 +39,8 @@ async function bootstrap(): Promise<void> {
   // BE-INCR-LEGAL-PARAMS PR-2 (emenda §9 L-8): o DTO estático (LC 116, ISS máximo) lê o cache de parâmetros legais de
   // forma síncrona — aquecido ANTES do listen; cache frio é erro explícito, nunca lista vazia.
   await ApplicationFactory.getInstance().getLegalParameterService().aquecer();
+  // BE-INCR-LEGAL-PARAMS PR-4 (item 10, L-3): publicar/revogar acorda o recálculo logo depois do commit.
+  ApplicationFactory.getInstance().getLegalParameterService().setAoEnfileirar(() => legalParamsRecalcScheduler.kick());
 
   httpServer = app.listen(PORT, () => {
     console.log(`Luminaris Server running on http://localhost:${PORT}`);
@@ -51,6 +54,7 @@ async function bootstrap(): Promise<void> {
     // tick do reconcile enxerga os mappers vindos dos bindings Active, nunca a fixture.
     accountingSyncScheduler.start();
     dfePollScheduler.start(); // BE-INCR-DFE (nó X10b, item 27)
+    legalParamsRecalcScheduler.start(); // BE-INCR-LEGAL-PARAMS PR-4 (item 10): varredura dos jobs PENDING
   });
 }
 
@@ -116,6 +120,7 @@ function gracefulShutdown() {
   logger.info('Shutting down gracefully...');
   accountingSyncScheduler.stop();
   dfePollScheduler.stop();
+  legalParamsRecalcScheduler.stop();
 
   // Force-exit safety net after 10 seconds
   const forceExitTimer = setTimeout(() => {

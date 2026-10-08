@@ -20,6 +20,13 @@ export interface CreateTaxAssessmentData {
   diferencaPostergadaCents: bigint;
   memoria: Prisma.InputJsonValue;
   tabelaVersao: string;
+  /** BE-INCR-LEGAL-PARAMS PR-4 (item 7): snapshot das linhas de lei do período (ids ordenados + sha256). */
+  parametrosIds?: string[];
+  parametrosSha256?: string;
+  /** PR-4 (item 10): o payload que o usuário informou — o job reconfirma com ele. */
+  entradaInformada?: Prisma.InputJsonValue;
+  /** PR-4 (item 10): aviso visível da mudança de parâmetro legal. */
+  avisoParametroLegal?: string | null;
   status: string;
   supersedesId: string | null;
   confirmedById: string;
@@ -49,5 +56,11 @@ export interface ITaxAssessmentRepository {
   markSuperseded(ownerUserId: string, ids: string[], tx: Prisma.TransactionClient): Promise<number>;
   /** PR-3, "commit 3" do BRIEF (item 15): CAS `where provisaoEntryId is null`; `false` se outra chamada já vinculou. */
   setProvisaoEntryId(ownerUserId: string, id: string, entryId: string): Promise<boolean>;
+  /** PR-4 (item 10): linhas vivas `CONFIRMED` dos tributos, de TODAS as PJs — o universo que o job de recálculo varre. */
+  findConfirmedByTributos(tributos: readonly string[]): Promise<TaxAssessment[]>;
+  /** PR-4 (item 10): a última linha `SUPERSEDED` do (PJ, ano, tributo, período) — a cascata reconfirma a partir dela. */
+  findLatestSuperseded(ownerUserId: string, anoCalendario: number, tributo: string, periodo: string): Promise<TaxAssessment | null>;
+  /** PR-4 (item 10): grava o aviso visível na linha (único campo que muda numa linha já gravada além da provisão). */
+  setAvisoParametroLegal(ownerUserId: string, id: string, aviso: string): Promise<void>;
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 }
