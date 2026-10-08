@@ -547,3 +547,25 @@ describe('BE-INCR-DFE-MANUAL — adaptador do documento (item 9) e documento que
     expect(mockPort.emitir).not.toHaveBeenCalled(); // o adaptador do documento é o ManualEmissor, não o do env
   });
 });
+
+// GAP-MAP "DF-e — consultar, cancelar e webhook usam o ambiente do env, não o do documento" — teste-guarda
+// (sessao-instrumentacao, 07/10). Assere só o que as duas correções possíveis (bloquear ou rotear pelo ambiente do
+// documento) têm em comum: a porta configurada para OUTRO ambiente nunca é chamada com este documento.
+describe('GAP-MAP — ambiente do documento × ambiente do env (consultar/cancelar)', () => {
+  it('documento de homologacao com env em producao: a porta do env não é chamada para consultar nem cancelar', async () => {
+    mockSelection.ambiente = 'producao';
+    const { service } = makeService({
+      docs: {
+        'doc-1': baseDoc({ status: 'PROCESSING', ambiente: 'homologacao' }),
+        'doc-2': baseDoc({ id: 'doc-2', status: 'AUTHORIZED', ambiente: 'homologacao', partnerRef: 'doc-2:1', chaveOuCodigo: 'CH' }),
+      },
+    });
+    mockPort.consultar.mockResolvedValue({ status: 'PROCESSING', partnerRef: 'doc-1:1', errors: [] } satisfies EmissaoResult);
+    mockPort.cancelar.mockResolvedValue({ status: 'CANCELLED', errors: [] } satisfies CancelResult);
+
+    await service.consultarUm(SCOPE, 'doc-1').catch(() => undefined);
+    await service.cancelar(SCOPE, 'doc-2', { cMotivo: 1, xMotivo: 'erro na emissão — guarda' }).catch(() => undefined);
+
+    expect({ consultar: mockPort.consultar.mock.calls.length, cancelar: mockPort.cancelar.mock.calls.length }).toEqual({ consultar: 0, cancelar: 0 });
+  });
+});
