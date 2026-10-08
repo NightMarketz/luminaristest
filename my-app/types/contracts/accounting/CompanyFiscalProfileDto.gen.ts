@@ -78,6 +78,8 @@ lc224AcrescimoSuspenso?: boolean
 lc224LiminarReferencia?: (string | null)
 prestadoraExclusivaServicos?: boolean
 declaraNaoProfissaoRegulamentada?: boolean
+ibsCbsOpcaoS1?: (("DAS" | "REGULAR") | null)
+ibsCbsOpcaoS2?: (("DAS" | "REGULAR") | null)
 }
 export interface OnboardingFiscalInput {
 regime: ("MEI" | "SIMPLES" | "PRESUMIDO" | "REAL" | "NAO_SEI")

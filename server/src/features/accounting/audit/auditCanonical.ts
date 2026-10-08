@@ -144,6 +144,7 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     'irpjDespesaAccountId', 'csllDespesaAccountId', 'irpjRecolherAccountId', 'csllRecolherAccountId', // X7 item 3 (F-TA-6 a)
     'pisDespesaAccountId', 'cofinsDespesaAccountId', 'pisRecolherAccountId', 'cofinsRecolherAccountId', // X8 item 2 (F-PCB-1 b)
     'pisCofinsCreditoOutrosAccountId', 'pisCofinsRetidoCompensarAccountId', 'pisCofinsRetencaoConciliarAccountId', // X8 PR-3 (L-5, retenções; dono 06/10)
+    'simplesDasDeducaoAccountId', 'simplesRecolherAccountId', // X14 PR-3 item 21
     'irpjSaldoNegativoAccountId', 'csllSaldoNegativoAccountId', // X7 Fase B item 16 (F-TB-3 a)
     // BE-INCR-DFE (item 9): enum/boolean/int como string — IM/CNAE (texto livre) ficam FORA do evento
     'codMun', 'dpsSerie', 'regEspTrib', 'regApTribSN', 'issAliquotaBp', 'issRetidoTomadorPj', 'pacoteFatoGerador', 'pacoteCTribNac', 'pacoteCNBS', 'ibsCbsInformar', 'ibsCbsCst', 'ibsCbsClassTrib', 'pTotTribFedCent', 'pTotTribEstCent', 'pTotTribMunCent', 'pTotTribSNCent', 'emissaoForaDoMes',
@@ -164,7 +165,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     // X7 Fase B (BRIEF B item 3b, F-TB-5 b): boolean da declaração de prestadora exclusiva.
     'prestadoraExclusivaServicos',
     // BE-INCR-TAX-PRESUMIDO-16 (F-P16-1 a): boolean da confirmação (Lei 9.250 art. 40 p.ú.).
-    'declaraNaoProfissaoRegulamentada'],
+    'declaraNaoProfissaoRegulamentada',
+    // BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14, item 14): enum da opção do IBS/CBS por semestre.
+    'ibsCbsOpcaoS1', 'ibsCbsOpcaoS2'],
   'company_fiscal_profile.deleted': ['anoCalendario'],
   // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7, item 22) — só ids, enum e centavos como string; sem PII. O documento
   // da dedução (texto livre) e a memória ficam FORA do evento.
@@ -173,6 +176,10 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'tax.assessment.superseded': ['assessmentId', 'supersededById', 'tributo', 'periodo', 'anoCalendario'],
   // BE-INCR-MIT-EXPORT PR-2 (nó X9, item 16; D12, invariante 9) — sem CPF, e-mail, telefone nem conteúdo do arquivo.
   'tax.mit_export.generated': ['mitExportId', 'anoCalendario', 'mes', 'sha256', 'apuracaoIds'],
+  // BE-INCR-SIMPLES-NACIONAL PR-3 (nó X14, item 24): SIMPLES_DAS_REGISTRADO / _SUBSTITUIDO — ids, competência e centavos
+  // como string; o número do DAS e a memória ficam FORA.
+  'tax.simples_das.registrado': ['apuracaoId', 'competencia', 'valorOficialCents', 'totalCalculadoCents', 'divergenciaCents'],
+  'tax.simples_das.substituido': ['apuracaoId', 'competencia', 'valorOficialCents', 'totalCalculadoCents', 'divergenciaCents', 'supersedesId'],
   // BE-INCR-LEGAL-PARAMS PR-1 (item 8; emenda §9 L-5: corrente da plataforma) — coeficiente de lei, sem PII.
   'legal_parameter.proposed': ['legalParameterId', 'tabela', 'chave', 'discriminador', 'valorInt', 'valorTexto', 'vigenteDesde', 'vigenteAte', 'supersedesId'],
   'legal_parameter.published': ['legalParameterId', 'tabela', 'chave', 'discriminador', 'vigenteDesde', 'vigenteAte', 'supersedesId'],

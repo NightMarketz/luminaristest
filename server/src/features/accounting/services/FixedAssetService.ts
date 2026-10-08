@@ -21,7 +21,7 @@ import type {
 } from '../dtos/FixedAssetDto';
 import type { IFixedAssetRepository } from '../repositories/IFixedAssetRepository';
 import type { IFixedAssetClassRepository } from '../repositories/IFixedAssetClassRepository';
-import type { IDepreciationRateRepository } from '../repositories/IDepreciationRateRepository';
+import type { ITaxaDepreciacaoCatalogo } from './ITaxaDepreciacaoCatalogo';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IAccountingPeriodRepository } from '../repositories/IAccountingPeriodRepository';
 import type { AccountingScopeSettingsService } from './AccountingScopeSettingsService';
@@ -51,7 +51,7 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
   constructor(
     private readonly assetRepo: IFixedAssetRepository,
     private readonly classRepo: IFixedAssetClassRepository,
-    private readonly rateRepo: IDepreciationRateRepository,
+    private readonly taxas: ITaxaDepreciacaoCatalogo, // BE-INCR-LEGAL-PARAMS PR-3: Anexo de plataforma + CUSTOM
     private readonly accountRepo: IAccountRepository,
     private readonly periodRepo: IAccountingPeriodRepository,
     private readonly settingsService: AccountingScopeSettingsService,
@@ -84,17 +84,11 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
     const klass = await this.classRepo.findById(scope, dto.classId);
     if (!klass) throw new NotFoundError(`Classe de bem '${dto.classId}' não foi encontrada.`);
 
-    let annualRateBp: number;
-    let rateId: string | null = null;
-    if (dto.rateId) {
-      const rate = await this.rateRepo.findById(scope, dto.rateId);
-      if (!rate) throw new NotFoundError(`Taxa de depreciação '${dto.rateId}' não foi encontrada.`);
-      annualRateBp = rate.annualRateBp;
-      rateId = rate.id;
-    } else {
-      // XOR garantido pelo DTO (superRefine) — annualRateBp sempre presente neste ramo.
-      annualRateBp = dto.annualRateBp as number;
-    }
+    // PR-3 (L-1): `rateId` do DTO aceita id do Anexo de plataforma ou CUSTOM; a taxa vai para a coluna certa do bem.
+    // XOR garantido pelo DTO (superRefine) — sem rateId, annualRateBp sempre presente.
+    const { rateId, legalParameterId, annualRateBp } = dto.rateId
+      ? await this.taxas.resolverTaxa(scope, dto.rateId)
+      : { rateId: null, legalParameterId: null, annualRateBp: dto.annualRateBp as number };
 
     const { userId, unitId } = accountingScopeWhere(scope);
     return this.assetRepo.runTransaction(async (tx) => {
@@ -110,6 +104,7 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
           costCents: BigInt(dto.costCents),
           residualValueCents: BigInt(dto.residualValueCents),
           rateId,
+          legalParameterId,
           annualRateBp,
           bookAnnualRateBp: dto.bookAnnualRateBp ?? null,
           bookRateJustification: dto.bookRateJustification ?? null,
@@ -140,10 +135,7 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
       const klass = await this.classRepo.findById(scope, dto.classId);
       if (!klass) throw new NotFoundError(`Classe de bem '${dto.classId}' não foi encontrada.`);
     }
-    if (dto.rateId) {
-      const rate = await this.rateRepo.findById(scope, dto.rateId);
-      if (!rate) throw new NotFoundError(`Taxa de depreciação '${dto.rateId}' não foi encontrada.`);
-    }
+    const taxa = dto.rateId ? await this.taxas.resolverTaxa(scope, dto.rateId) : undefined;
     const nextCost = dto.costCents !== undefined ? BigInt(dto.costCents) : current.costCents;
     const nextResidual = dto.residualValueCents !== undefined ? BigInt(dto.residualValueCents) : current.residualValueCents;
     if (nextResidual >= nextCost) {
@@ -165,7 +157,7 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
       ...(dto.costCents !== undefined ? { costCents: BigInt(dto.costCents) } : {}),
       ...(dto.residualValueCents !== undefined ? { residualValueCents: BigInt(dto.residualValueCents) } : {}),
       ...(dto.acquiredAt !== undefined ? { acquiredAt: new Date(`${dto.acquiredAt}T00:00:00.000Z`) } : {}),
-      ...(dto.rateId !== undefined ? { rateId: dto.rateId } : {}),
+      ...(taxa ? { rateId: taxa.rateId, legalParameterId: taxa.legalParameterId } : {}),
       ...(dto.annualRateBp !== undefined ? { annualRateBp: dto.annualRateBp } : {}),
       ...(dto.bookAnnualRateBp !== undefined ? { bookAnnualRateBp: dto.bookAnnualRateBp } : {}),
       ...(dto.bookRateJustification !== undefined ? { bookRateJustification: dto.bookRateJustification } : {}),
@@ -371,6 +363,8 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
             costCents: BigInt(item.costCents),
             residualValueCents: 0n,
             rateId: item.rateId,
+            // `?? null`: rawJson gravado antes do PR-3 não tem o campo (redrive de rascunho pendente).
+            legalParameterId: item.legalParameterId ?? null,
             annualRateBp: item.annualRateBp,
             bookAnnualRateBp: null,
             bookRateJustification: null,
@@ -387,7 +381,7 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
           eventType: FIXED_ASSET_CREATED,
           targetType: 'fixed_asset',
           targetId: draft.id,
-          payload: { assetId: draft.id, payableId: payable.id, cProd: item.cProd, rateId: item.rateId, annualRateBp: item.annualRateBp },
+          payload: { assetId: draft.id, payableId: payable.id, cProd: item.cProd, rateId: item.rateId ?? item.legalParameterId, annualRateBp: item.annualRateBp },
         });
       });
       created += 1;

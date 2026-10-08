@@ -14,7 +14,9 @@ import { LALUR_MESES, LALUR_QUARTERS } from '../models/Lalur.model';
 import { scopeToday } from '../models/dates';
 import { regimeUnidadeEsperado } from '../models/regimeEmpresa';
 import type { PerfilParaPrefill } from '../models/spedPerfilPrefill';
-import type { CompanyDeclarante, UpsertCompanyFiscalProfileInput } from '../dtos/CompanyFiscalProfileDto';
+import type { CompanyDeclarante, IBS_CBS_OPCOES, UpsertCompanyFiscalProfileInput } from '../dtos/CompanyFiscalProfileDto';
+
+export type IbsCbsOpcao = (typeof IBS_CBS_OPCOES)[number];
 import { matrizObrigacoesDe, resolverObrigacoes, type ObrigacaoResolvida, type PerfilParaObrigacoes } from '../models/obrigacoesPorRegime';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import type { CondicoesPerfil, ObrigacaoSped, StatusObrigacao } from '../models/obrigacoesPorRegime';
@@ -57,6 +59,8 @@ export interface CompanyFiscalProfileView {
   // X7 Fase B (BRIEF B item 3b)
   prestadoraExclusivaServicos: boolean;
   declaraNaoProfissaoRegulamentada: boolean; // BE-INCR-TAX-PRESUMIDO-16 (F-P16-1 a)
+  ibsCbsOpcaoS1: IbsCbsOpcao | null; // X14 PR-2 item 14
+  ibsCbsOpcaoS2: IbsCbsOpcao | null;
   updatedAt: string;
 }
 
@@ -140,6 +144,10 @@ export class CompanyFiscalProfileService {
   async upsert(scope: AccountingScope, ano: number, input: UpsertCompanyFiscalProfileInput): Promise<CompanyFiscalProfileUpsertView> {
     this.assertManage(scope);
     const data = toData(input);
+    // X14 PR-2 item 14: a opção do IBS/CBS no DAS existe a partir de 2027 (LC 123 art. 13 §§ 9º–10, red. LC 214).
+    if (ano < 2027 && (data.ibsCbsOpcaoS1 !== null || data.ibsCbsOpcaoS2 !== null)) {
+      throw new ValidationError(`A opção do IBS/CBS por semestre só existe a partir de 2027 (perfil de ${ano}).`);
+    }
     return this.repo.runTransaction(async (tx) => {
       const atual = await this.repo.findByYear(scope, ano, tx);
       if (atual?.regimeTravadoEm && atual.regime !== data.regime) {
@@ -319,7 +327,8 @@ export class CompanyFiscalProfileService {
           if (view.declarante?.cnpj === undefined) faltantes.push('declarante.cnpj');
           if (!contadorVivo) faltantes.push('contadorContactId');
         }
-      } else if (cobra) {
+      } else if (cobra && (o.obrigacao === 'ECD' || o.obrigacao === 'ECF')) {
+        // X14 PR-3: PGDAS-D, DEFIS e DASN-SIMEI saem da apuração do Simples, não dos campos SPED do perfil — sem faltantes.
         if (o.status === 'CONDICIONAL') {
           for (const [k, v] of Object.entries(view.condicoes)) if (v === null) faltantes.push(`condicoes.${k}`);
         }
@@ -385,6 +394,8 @@ export class CompanyFiscalProfileService {
         lc224AcrescimoSuspenso: String(row.lc224AcrescimoSuspenso),
         prestadoraExclusivaServicos: String(row.prestadoraExclusivaServicos), // X7 Fase B item 3b
         declaraNaoProfissaoRegulamentada: String(row.declaraNaoProfissaoRegulamentada), // PRESUMIDO-16 (F-P16-1 a)
+        ibsCbsOpcaoS1: row.ibsCbsOpcaoS1 ?? '', // X14 PR-2 item 14 (enum)
+        ibsCbsOpcaoS2: row.ibsCbsOpcaoS2 ?? '',
         ...(copiadoDe === undefined ? {} : { copiadoDe: String(copiadoDe) }),
       },
     });
@@ -397,6 +408,16 @@ export class CompanyFiscalProfileService {
   private assertManage(scope: AccountingScope): void {
     if (!this.policy.canManageFiscalProfile(scope)) throw new ForbiddenError('Você não tem permissão para alterar o perfil fiscal da empresa.');
   }
+}
+
+/**
+ * X14 PR-2 item 14 (F-SN-11 → a) — IBS e CBS entram no DAS da competência? Antes de 2027 não existem; a partir daí,
+ * sim, salvo opção REGULAR no semestre (LC 123 art. 13 §§ 9º–10, red. LC 214). Lido pela apuração (PR-3).
+ */
+export function ibsCbsNoDas(perfil: { ibsCbsOpcaoS1: string | null; ibsCbsOpcaoS2: string | null } | null, competencia: string): boolean {
+  if (competencia < '2027-01') return false;
+  const opcao = Number(competencia.slice(5, 7)) <= 6 ? perfil?.ibsCbsOpcaoS1 : perfil?.ibsCbsOpcaoS2;
+  return opcao !== 'REGULAR';
 }
 
 /**
@@ -458,6 +479,8 @@ function toData(input: UpsertCompanyFiscalProfileInput): CompanyFiscalProfileDat
     lc224LiminarReferencia: input.lc224LiminarReferencia,
     prestadoraExclusivaServicos: input.prestadoraExclusivaServicos,
     declaraNaoProfissaoRegulamentada: input.declaraNaoProfissaoRegulamentada,
+    ibsCbsOpcaoS1: input.ibsCbsOpcaoS1,
+    ibsCbsOpcaoS2: input.ibsCbsOpcaoS2,
   };
 }
 
@@ -486,6 +509,8 @@ function rowToData(row: CompanyFiscalProfile): CompanyFiscalProfileData {
     lc224LiminarReferencia: row.lc224LiminarReferencia,
     prestadoraExclusivaServicos: row.prestadoraExclusivaServicos,
     declaraNaoProfissaoRegulamentada: row.declaraNaoProfissaoRegulamentada,
+    ibsCbsOpcaoS1: row.ibsCbsOpcaoS1,
+    ibsCbsOpcaoS2: row.ibsCbsOpcaoS2,
   };
 }
 
@@ -516,6 +541,8 @@ function toView(row: CompanyFiscalProfile): CompanyFiscalProfileView {
     lc224LiminarReferencia: row.lc224LiminarReferencia,
     prestadoraExclusivaServicos: row.prestadoraExclusivaServicos,
     declaraNaoProfissaoRegulamentada: row.declaraNaoProfissaoRegulamentada,
+    ibsCbsOpcaoS1: row.ibsCbsOpcaoS1 as IbsCbsOpcao | null,
+    ibsCbsOpcaoS2: row.ibsCbsOpcaoS2 as IbsCbsOpcao | null,
     updatedAt: row.updatedAt.toISOString(),
   };
 }

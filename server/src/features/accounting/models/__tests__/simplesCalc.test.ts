@@ -3,11 +3,11 @@
  * arquivo que a migração carrega). Os valores esperados são aritmética sobre a lei, não oráculo: o oráculo é o DAS do
  * portal (gate humano X14-DAS).
  */
-import { SIMPLES_SEED_FILE, legalParamsSeedRows } from '@test/helpers/legalParams';
+import { SIMPLES_SEED_FILES, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { AtividadeSemAnexoError, SimplesRegraNaoRegulamentadaError } from '../../../../lib/errors';
 import { SEGREGACAO_EXCLUI, apurar, janelaRbt12, rbt12, type ApuracaoInput, type MesReceita } from '../simplesCalc';
 
-const LINHAS = legalParamsSeedRows(SIMPLES_SEED_FILE);
+const LINHAS = legalParamsSeedRows(SIMPLES_SEED_FILES);
 
 const somaMeses = (comp: string, d: number) => {
   const [a, m] = comp.split('-').map(Number);
@@ -149,6 +149,12 @@ describe('item 6 — teto do ISS, 6ª faixa, sublimite', () => {
     expect(a.tributos).toEqual({ ISS: 500_000, IRPJ: 75_310, CSLL: 65_803, COFINS: 241_193, PIS: 52_292, CPP: 816_402 });
   });
 
+  it('locação de bem móvel na 5ª faixa: a parcela do ISS é deduzida, não transferida aos federais (review PR-3, achado 6)', () => {
+    const r = apurar(base('2026-06', { historico: historico('2026-06', 30_000_000), atividades: [{ natureza: 'LOCACAO_MOVEL', cTribNac: null, parcelas: [{ receitaCents: 100_000, excluir: [] }] }] }), LINHAS);
+    // 1.000 × 17,51% × (1 − 33,5% do ISS) = 116,44.
+    expect([r.atividades[0].tributos.ISS, r.totalCalculadoCents]).toEqual([undefined, 11_644]);
+  });
+
   it('abaixo do limiar o teto não age (3ª faixa: ISS 3,432%)', () => {
     const a = apurar(base('2026-06', { atividades: [servico(100_000)] }), LINHAS).atividades[0];
     expect(a.tributos.ISS).toBe(3_432);
@@ -168,8 +174,12 @@ describe('item 6 — teto do ISS, 6ª faixa, sublimite', () => {
     expect([a27.tributos.ISS, a27.tributos.IBS, a27.tributos.CBS]).toEqual([undefined, undefined, 1_733]);
   });
 
-  it('teto do ISS excedido na 6ª faixa: a nota só regula a 5ª → recusa', () => {
-    expect(() => apurar(base('2026-06', { historico: historico('2026-06', 35_000_000), atividades: [servico(100_000)] }), LINHAS)).toThrow(SimplesRegraNaoRegulamentadaError);
+  it('teto do ISS excedido na 6ª faixa (X14 PR-3): ISS = 5% e o excesso vai aos federais da 6ª, na proporção da repartição dela (art. 21 III "a")', () => {
+    // RBT12 R$ 4,2 mi, Anexo III 2026: 6ª = 17,5714…%; ISS pela 5ª = 18,0086…% × 33,5% = 6,0329% → excesso 1,0329%.
+    const a = apurar(base('2026-06', { historico: historico('2026-06', 35_000_000), atividades: [servico(100_000)] }), LINHAS).atividades[0];
+    expect(a.faixa).toBe(6);
+    // Total 236,04 (resíduo de −0,01 no IRPJ, o maior percentual — § 1º-B II).
+    expect(a.tributos).toEqual({ ISS: 5_000, IRPJ: 6_511, CSLL: 2_791, COFINS: 2_982, PIS: 646, CPP: 5_674 });
   });
 });
 

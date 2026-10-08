@@ -36,6 +36,9 @@ import { AccountingContactRepository } from '../features/accounting/repositories
 import { PaymentAccountRepository } from '../features/accounting/repositories/PaymentAccountRepository';
 import { TaxAssessmentRepository } from '../features/accounting/repositories/TaxAssessmentRepository';
 import { MitExportRepository } from '../features/accounting/repositories/MitExportRepository';
+import { SimplesEntradasRepository } from '../features/accounting/repositories/SimplesEntradasRepository';
+import { ReceitaFiscalRepository } from '../features/accounting/repositories/ReceitaFiscalRepository';
+import { SimplesApuracaoRepository } from '../features/accounting/repositories/SimplesApuracaoRepository';
 import { AccountingDeliveryRepository } from '../features/accounting/repositories/AccountingDeliveryRepository';
 import { AccountingReviewRepository } from '../features/accounting/repositories/AccountingReviewRepository';
 import { AccountantAssignmentRepository } from '../features/accounting/repositories/AccountantAssignmentRepository';
@@ -121,6 +124,9 @@ import { AccountingPolicyVersionService } from '../features/accounting/services/
 import { PaymentAccountService } from '../features/accounting/services/PaymentAccountService';
 import { TaxAssessmentService } from '../features/accounting/services/TaxAssessmentService';
 import { MitExportService } from '../features/accounting/services/MitExportService';
+import { SimplesEntradasService } from '../features/accounting/services/SimplesEntradasService';
+import { ReceitaFiscalService } from '../features/accounting/services/ReceitaFiscalService';
+import { SimplesApuracaoService } from '../features/accounting/services/SimplesApuracaoService';
 import { PisCofinsAssessmentService } from '../features/accounting/services/PisCofinsAssessmentService';
 import { AccountingDeliveryService } from '../features/accounting/services/AccountingDeliveryService';
 import { AccountingReviewService } from '../features/accounting/services/AccountingReviewService';
@@ -136,7 +142,6 @@ import { ServiceFiscalProfileService } from '../features/accounting/services/Ser
 import { ProductDestinationService } from '../features/accounting/services/ProductDestinationService';
 import { CompanyFiscalProfileService } from '../features/accounting/services/CompanyFiscalProfileService';
 import { CompanySignerService } from '../features/accounting/services/CompanySignerService';
-import { DepreciationRateSeedService } from '../features/accounting/services/DepreciationRateSeedService';
 import { DepreciationRateService } from '../features/accounting/services/DepreciationRateService';
 import { FixedAssetClassService } from '../features/accounting/services/FixedAssetClassService';
 import { FixedAssetService } from '../features/accounting/services/FixedAssetService';
@@ -219,6 +224,9 @@ import type { IAccountingContactRepository } from '../features/accounting/reposi
 import type { IPaymentAccountRepository } from '../features/accounting/repositories/IPaymentAccountRepository';
 import type { ITaxAssessmentRepository } from '../features/accounting/repositories/ITaxAssessmentRepository';
 import type { IMitExportRepository } from '../features/accounting/repositories/IMitExportRepository';
+import type { ISimplesEntradasRepository } from '../features/accounting/repositories/ISimplesEntradasRepository';
+import type { IReceitaFiscalRepository } from '../features/accounting/repositories/IReceitaFiscalRepository';
+import type { ISimplesApuracaoRepository } from '../features/accounting/repositories/ISimplesApuracaoRepository';
 import type { IAccountingDeliveryRepository } from '../features/accounting/repositories/IAccountingDeliveryRepository';
 import type { IAccountingReviewRepository } from '../features/accounting/repositories/IAccountingReviewRepository';
 import type { IAccountantAssignmentRepository } from '../features/accounting/repositories/IAccountantAssignmentRepository';
@@ -449,6 +457,9 @@ export class ApplicationFactory {
     paymentAccount: IPaymentAccountRepository; // BE-INCR-PAYMENT-PROVIDER PR-1
     taxAssessment: ITaxAssessmentRepository; // X7 Fase A PR-2
     mitExport: IMitExportRepository; // X9 PR-2
+    simplesEntradas: ISimplesEntradasRepository; // X14 PR-2
+    receitaFiscal: IReceitaFiscalRepository; // X14 PR-2
+    simplesApuracao: ISimplesApuracaoRepository; // X14 PR-3
     accountingDelivery: IAccountingDeliveryRepository;
     accountingReview: IAccountingReviewRepository;
     accountantAssignment: IAccountantAssignmentRepository; // GOV-CONTADOR
@@ -539,6 +550,9 @@ export class ApplicationFactory {
     paymentAccount: PaymentAccountService; // BE-INCR-PAYMENT-PROVIDER PR-1
     taxAssessment: TaxAssessmentService; // X7 Fase A PR-2
     mitExport: MitExportService; // X9 PR-2
+    simplesEntradas: SimplesEntradasService; // X14 PR-2
+    receitaFiscal: ReceitaFiscalService; // X14 PR-2
+    simplesApuracao: SimplesApuracaoService; // X14 PR-3
     pisCofinsAssessment: PisCofinsAssessmentService; // X8 PR-2
     accountingDelivery: AccountingDeliveryService;
     accountingReview: AccountingReviewService;
@@ -553,7 +567,6 @@ export class ApplicationFactory {
     attachment: AttachmentService;
     savedTableView: SavedTableViewService;
     systemProvisioning: SystemProvisioningService;
-    depreciationRateSeed: DepreciationRateSeedService;
     depreciationRate: DepreciationRateService;
     fixedAssetClass: FixedAssetClassService;
     fixedAsset: FixedAssetService;
@@ -612,6 +625,9 @@ export class ApplicationFactory {
       paymentAccount: new PaymentAccountRepository(),
       taxAssessment: new TaxAssessmentRepository(),
       mitExport: new MitExportRepository(),
+      simplesEntradas: new SimplesEntradasRepository(),
+      receitaFiscal: new ReceitaFiscalRepository(),
+      simplesApuracao: new SimplesApuracaoRepository(),
       accountingDelivery: new AccountingDeliveryRepository(),
       accountingReview: new AccountingReviewRepository(),
       accountantAssignment: new AccountantAssignmentRepository(),
@@ -782,6 +798,16 @@ export class ApplicationFactory {
       this.policies.accounting
     );
     // BE-INCR-TAX-ASSESSMENT (nó X7): hoisted no X8 PR-3 — o PisCofinsAssessmentService reusa a provisão (item 17).
+    // BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14): entradas da apuração + subrazão fiscal de receita (lê o contrato de parceria).
+    const simplesEntradasService = new SimplesEntradasService(this.repositories.simplesEntradas, this.policies.accounting);
+    const receitaFiscalService = new ReceitaFiscalService(
+      this.repositories.receitaFiscal,
+      this.repositories.serviceFiscalProfile,
+      simplesEntradasService,
+      this.repositories.account,
+      this.repositories.posting,
+      this.policies.accounting,
+    );
     const taxAssessmentService = new TaxAssessmentService(
       this.repositories.taxAssessment,
       this.repositories.companyFiscalProfile,
@@ -843,6 +869,14 @@ export class ApplicationFactory {
 
     // Extracted from the literal so NfeImportService (below) drives the SAME AP instance — the NF-e
     // de compra books every cent through the proved createPayable path, never postEntry directly.
+    // BE-INCR-FIXED-ASSETS (nó C8, Bloco A) — tabela de taxas de depreciação. BE-INCR-LEGAL-PARAMS PR-3: o Anexo III é
+    // a tabela de plataforma DEPRECIACAO_ANEXO_III (fotografia); construído antes do PayableService, que o injeta.
+    const depreciationRateService = new DepreciationRateService(
+      this.repositories.depreciationRate,
+      legalParameterService,
+      auditService,
+      this.policies.accounting,
+    );
     const payableService = new PayableService(
       this.repositories.payable,
       this.repositories.account,
@@ -862,7 +896,8 @@ export class ApplicationFactory {
       this.repositories.fixedAssetClass,
       // Review #366 (achado 1): catálogo de taxas VIVAS para resolveRateForNcm — a validação por
       // NCM roda ANTES do tx1 do Payable (resolveFixedAssetLines), nunca só no rascunho.
-      this.repositories.depreciationRate,
+      // BE-INCR-LEGAL-PARAMS PR-3: Anexo de plataforma + CUSTOM do escopo.
+      depreciationRateService,
       // BE-INCR-FIXED-ASSETS PR-5 (item 22/28, decisão do dono 23/09): lê o SourceDocument.rawJson
       // da recognition para redriveFixedAssetDrafts — nunca uma 2ª cópia do breakdown no Payable.
       this.repositories.sourceProvenance,
@@ -910,14 +945,6 @@ export class ApplicationFactory {
       this.repositories.companyFiscalProfile, // X13 PR-2: regime da empresa (itens 15/17)
       this.repositories.accountantAssignment, // GOV-CONTADOR política versionada (item 13)
       this.repositories.accountingPolicyVersion,
-    );
-    // BE-INCR-FIXED-ASSETS (nó C8, Bloco A) — tabela de taxas de depreciação, seed lazy do Anexo III.
-    const depreciationRateSeedService = new DepreciationRateSeedService(this.repositories.depreciationRate);
-    const depreciationRateService = new DepreciationRateService(
-      this.repositories.depreciationRate,
-      depreciationRateSeedService,
-      auditService,
-      this.policies.accounting,
     );
     // BE-INCR-DFE (nó X10b, PR-1): perfil fiscal do serviço (F-DFE-6 a) — extraído como const própria
     // (não só inline no literal abaixo) porque FiscalDocumentEmissionService (PR-2) também a injeta.
@@ -990,7 +1017,7 @@ export class ApplicationFactory {
     const fixedAssetService = new FixedAssetService(
       this.repositories.fixedAsset,
       this.repositories.fixedAssetClass,
-      this.repositories.depreciationRate,
+      depreciationRateService, // BE-INCR-LEGAL-PARAMS PR-3: catálogo de taxas (Anexo de plataforma + CUSTOM)
       this.repositories.account,
       this.repositories.accountingPeriod,
       accountingScopeSettingsService,
@@ -1045,7 +1072,6 @@ export class ApplicationFactory {
       // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13, PR-1): perfil da EMPRESA por ano + signatários não-contador.
       companyFiscalProfile: companyFiscalProfileService,
       companySigner: new CompanySignerService(this.repositories.companySigner, this.policies.accounting, auditService),
-      depreciationRateSeed: depreciationRateSeedService,
       depreciationRate: depreciationRateService,
       fixedAssetClass: fixedAssetClassService,
       fixedAsset: fixedAssetService,
@@ -1283,6 +1309,23 @@ export class ApplicationFactory {
       // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7): prévia/confirmação/leitura da apuração IRPJ/CSLL trimestral.
       taxAssessment: taxAssessmentService,
       // BE-INCR-MIT-EXPORT PR-2 (nó X9): arquivo JSON do MIT a partir das apurações confirmadas (só lê o X7).
+      simplesEntradas: simplesEntradasService,
+      receitaFiscal: receitaFiscalService,
+      // BE-INCR-SIMPLES-NACIONAL PR-3 (nó X14): apuração ME/EPP, registro do DAS oficial e provisão.
+      simplesApuracao: new SimplesApuracaoService(
+        this.repositories.simplesApuracao,
+        this.repositories.simplesEntradas,
+        this.repositories.receitaFiscal,
+        receitaFiscalService,
+        simplesEntradasService,
+        this.repositories.companyFiscalProfile,
+        this.repositories.fiscalProfile,
+        this.repositories.account,
+        legalParameterService,
+        postingService,
+        auditService,
+        this.policies.accounting,
+      ),
       mitExport: new MitExportService(
         this.repositories.mitExport,
         this.repositories.taxAssessment,
@@ -1504,6 +1547,9 @@ export class ApplicationFactory {
   public getPaymentAccountService = (): PaymentAccountService => this.services.paymentAccount;
   public getTaxAssessmentService = (): TaxAssessmentService => this.services.taxAssessment;
   public getMitExportService = (): MitExportService => this.services.mitExport;
+  public getSimplesEntradasService = (): SimplesEntradasService => this.services.simplesEntradas;
+  public getReceitaFiscalService = (): ReceitaFiscalService => this.services.receitaFiscal;
+  public getSimplesApuracaoService = (): SimplesApuracaoService => this.services.simplesApuracao;
   public getPisCofinsAssessmentService = (): PisCofinsAssessmentService => this.services.pisCofinsAssessment;
   public getAccountingDeliveryService = (): AccountingDeliveryService =>
     this.services.accountingDelivery;

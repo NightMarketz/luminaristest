@@ -62,6 +62,10 @@ export const REKEY_MODELS = [
   //   carrega `unitId` (item 7) → REKEY pelo F-RK-5. Deixá-la no unitId antigo tiraria do escopo re-chaveado o histórico de quem aprovou
   'PackageValidityAcceptance', // FE-INCR-PACOTE-VALIDADE (F-JUR-4): prova do aceite por venda; o `textSha256` cobre só o texto (sem unitId) → REKEY pelo F-RK-5.
   //   Deixá-la no unitId antigo separaria a prova da venda re-chaveada (o `saleId` segue a unidade nova)
+  // BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14): entradas da apuração e subrazão de receita, sem hash → REKEY pelo F-RK-5.
+  //   Deixá-las no unitId antigo tiraria da unidade re-chaveada o RBT12, a segregação, os contratos e o tie-out.
+  'SimplesHistoricoMensal', 'SimplesSegregacaoManual', 'SalaoParceriaContrato', 'ReceitaFiscalLinha',
+  'SimplesApuracao', // X14 PR-3: a apuração e a provisão seguem a unidade (sem hash) → REKEY pelo F-RK-5
 ] as const;
 
 /**

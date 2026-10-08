@@ -51,7 +51,7 @@ interface Opts {
   counterparty?: { id: string; userId: string; unitId: string; type: string } | null;
   counterpartyByName?: { id: string; userId: string; unitId: string; type: string } | null;
   canManageCounterparty?: boolean;
-  ratesByNcm?: { id: string; ncm: string | null; annualRateBp: number; hiddenAt: Date | null }[];
+  ratesByNcm?: { id: string; ncm: string | null; annualRateBp: number; hiddenAt: Date | null; origem?: 'PLATAFORMA' | 'ESCOPO' }[];
 }
 
 function build(opts: Opts = {}) {
@@ -145,8 +145,11 @@ function build(opts: Opts = {}) {
   // Review #366 (achado 1): catálogo de taxas VIVAS para `resolveRateForNcm` — a validação por
   // NCM roda ANTES do tx1 (`resolveFixedAssetLines`), nunca só no rascunho. Default: 1 linha que
   // casa com o NCM `8452.10` dos fixtures deste arquivo; testes de ambiguidade/ausência sobrescrevem.
+  // BE-INCR-LEGAL-PARAMS PR-3: o catálogo é Anexo de PLATAFORMA (default) + CUSTOM do escopo (`origem`).
   const depreciationRateRepo = {
-    findManyByUnit: jest.fn(async () => opts.ratesByNcm ?? [{ id: 'rate-ncm-8452', ncm: '8452', annualRateBp: 1000, hiddenAt: null }]),
+    catalogo: jest.fn(async () =>
+      (opts.ratesByNcm ?? [{ id: 'rate-ncm-8452', ncm: '8452', annualRateBp: 1000, hiddenAt: null }]).map((r) => ({ origem: 'PLATAFORMA', ...r })),
+    ),
   };
 
   // BE-INCR-FIXED-ASSETS PR-5 (item 22/28): dep de leitura do rawJson da recognition (redrive) e o
@@ -1159,6 +1162,16 @@ describe('PayableService.createPayable — modo 4 (fixedAssetItems, debita class
     expect(postEntry).not.toHaveBeenCalled();
   });
 
+  // BE-INCR-LEGAL-PARAMS PR-3 (L-1): taxa CUSTOM do escopo vai em `rateId`; do Anexo de plataforma, em `legalParameterId`.
+  it('PR-3: NCM que casa com taxa CUSTOM do escopo → rateId (legalParameterId null)', async () => {
+    const { service, fixedAssetDraftCreator } = build({
+      ratesByNcm: [{ id: 'custom-8452', ncm: '8452.10', annualRateBp: 2500, hiddenAt: null, origem: 'ESCOPO' }],
+    });
+    await service.createPayable(scope, pureAssetDto as never);
+    const items = (fixedAssetDraftCreator.createDraftFromPayable.mock.calls[0] as unknown[])[2] as Record<string, unknown>[];
+    expect(items[0]).toMatchObject({ rateId: 'custom-8452', legalParameterId: null, annualRateBp: 2500 });
+  });
+
   it('NÃO persiste fixedAssetItems na linha do Payable (decisão do dono 23/09) — o breakdown vai no rawJson do SourceDocument da recognition', async () => {
     const { service, payableRepo, postEntry } = build();
     await service.createPayable(scope, pureAssetDto as never);
@@ -1170,7 +1183,7 @@ describe('PayableService.createPayable — modo 4 (fixedAssetItems, debita class
     expect(parsed).toEqual({
       fixedAssetItems: [{
         classId: 'class-maq', accountCode: '4.1', cProd: 'MAQ-1', sourceItemRef: '1', costCents: 85000,
-        ncm: '8452.10', qty: 1, rateId: 'rate-ncm-8452', annualRateBp: 1000,
+        ncm: '8452.10', qty: 1, rateId: null, legalParameterId: 'rate-ncm-8452', annualRateBp: 1000,
       }],
     });
   });
@@ -1183,7 +1196,7 @@ describe('PayableService.createPayable — modo 4 (fixedAssetItems, debita class
     expect(args[1]).toBe(payable);
     expect(args[2]).toEqual([{
       classId: 'class-maq', accountCode: '4.1', cProd: 'MAQ-1', sourceItemRef: '1', costCents: 85000,
-      ncm: '8452.10', qty: 1, rateId: 'rate-ncm-8452', annualRateBp: 1000,
+      ncm: '8452.10', qty: 1, rateId: null, legalParameterId: 'rate-ncm-8452', annualRateBp: 1000,
     }]);
   });
 
@@ -1243,6 +1256,35 @@ describe('PayableService.createPayable — modo 4 (fixedAssetItems, debita class
     expect(fixedAssetDraftCreator.createDraftFromPayable).toHaveBeenCalledTimes(2); // 1ª crashou, 2ª (redrive) criou
     const secondCallItems = (fixedAssetDraftCreator.createDraftFromPayable as jest.Mock).mock.calls[1][2];
     expect(secondCallItems).toEqual(JSON.parse(rawJson).fixedAssetItems); // MESMO breakdown, não recomputado
+  });
+});
+
+// ── BE-INCR-LEGAL-PARAMS PR-3 (review independente, achado 1): rawJson de antes do PR-3 ──
+describe('PayableService.redriveMissingDrafts — rawJson gravado antes do PR-3', () => {
+  it('rateId de linha ANEXO_* apagada pela migração é reconduzido ao Anexo de plataforma pelo NCM; CUSTOM vivo fica', async () => {
+    const { service, payableRepo, fixedAssetDraftCreator, sourceProvenanceRepo, findEntryBySource } = build({
+      ratesByNcm: [
+        { id: 'lp3-dep-anexo-8452', ncm: '8452', annualRateBp: 1000, hiddenAt: null },
+        { id: 'custom-vivo', ncm: '9999', annualRateBp: 2500, hiddenAt: null, origem: 'ESCOPO' },
+      ],
+    });
+    const payable = { ...payableRow(), id: 'pay-legado', inventoryMultiItem: true };
+    payableRepo.findAllActive.mockResolvedValueOnce([payable]);
+    (findEntryBySource as jest.Mock).mockImplementationOnce(async () => ({ id: 'entry-legado' }));
+    const base = { classId: 'class-maq', accountCode: '4.1', costCents: 85000, qty: 1 };
+    const items = [
+      { ...base, cProd: 'MAQ-1', sourceItemRef: '1', ncm: '8452.10', rateId: 'anexo-por-escopo-apagado', annualRateBp: 1000 },
+      { ...base, cProd: 'MAQ-2', sourceItemRef: '2', ncm: '9999.00', rateId: 'custom-vivo', annualRateBp: 2500 },
+    ];
+    (sourceProvenanceRepo.findSourcesByEntry as jest.Mock).mockResolvedValueOnce([
+      { sourceDocumentId: 'doc-legado', sourceDocument: { id: 'doc-legado', rawJson: JSON.stringify({ fixedAssetItems: items }) } },
+    ]);
+
+    await service.redriveMissingDrafts(scope);
+
+    const enviados = (fixedAssetDraftCreator.createDraftFromPayable as jest.Mock).mock.calls[0][2] as Record<string, unknown>[];
+    expect(enviados[0]).toMatchObject({ rateId: null, legalParameterId: 'lp3-dep-anexo-8452', annualRateBp: 1000 });
+    expect(enviados[1]).toMatchObject({ rateId: 'custom-vivo', legalParameterId: null, annualRateBp: 2500 });
   });
 });
 

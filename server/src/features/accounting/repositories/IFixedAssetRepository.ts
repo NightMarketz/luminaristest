@@ -13,6 +13,7 @@ export interface CreateFixedAssetData {
   costCents: bigint;
   residualValueCents: bigint;
   rateId: string | null;
+  legalParameterId?: string | null; // BE-INCR-LEGAL-PARAMS PR-3 (L-1): taxa do Anexo de plataforma (XOR rateId)
   annualRateBp: number;
   bookAnnualRateBp: number | null;
   bookRateJustification: string | null;
@@ -33,6 +34,7 @@ export interface UpdateFixedAssetData {
   costCents?: bigint;
   residualValueCents?: bigint;
   rateId?: string | null;
+  legalParameterId?: string | null;
   annualRateBp?: number;
   bookAnnualRateBp?: number | null;
   bookRateJustification?: string | null;

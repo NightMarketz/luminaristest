@@ -4764,16 +4764,17 @@
  *     get:
  *       summary: List the unit depreciation rate table (BE-INCR-FIXED-ASSETS, nó C8, item 3)
  *       description: >-
- *         Seeds the Anexo III (IN RFB 1.700/2017) table LAZILY on first read of the scope (idempotent —
- *         a scope only seeds once). includeHidden=false (default) omits rows the operator hid; ANEXO_*
- *         rows are immutable (no edit route), CUSTOM rows are created via POST below.
+ *         BE-INCR-LEGAL-PARAMS PR-3: union, in one shape, of the Anexo III (IN RFB 1.700/2017) rows of the
+ *         PLATFORM table DEPRECIACAO_ANEXO_III in force today (origem=PLATAFORMA, id = legal parameter id;
+ *         changed only by PLATFORM_ADMIN publication) and the scope CUSTOM rows (origem=ESCOPO).
+ *         includeHidden=false (default) omits CUSTOM rows the operator hid; CUSTOM rows are created via POST below.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
  *         - { in: query, name: includeHidden, schema: { type: string, enum: ['true', 'false'] } }
  *       responses:
- *         '200': { description: 'DepreciationRate[]' }
+ *         '200': { description: 'TaxaDepreciacaoView[] — {id, origem PLATAFORMA|ESCOPO, ncm, sourceRow, description, lifeYears, annualRateBp, source, sourceUrl, sourceSha256, justification, hiddenAt, createdAt}' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
@@ -4810,8 +4811,9 @@
  *     post:
  *       summary: Hide a depreciation rate (soft — item 2)
  *       description: >-
- *         Never deletes: a rate a FixedAsset already snapshotted stays readable by id. Works on ANEXO_*
- *         and CUSTOM rows alike. Audited as depreciation_rate.hidden.
+ *         Never deletes: a rate a FixedAsset already snapshotted stays readable by id. CUSTOM rows only —
+ *         an Anexo III row is platform data (BE-INCR-LEGAL-PARAMS PR-3) and answers 404. Audited as
+ *         depreciation_rate.hidden.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -6565,6 +6567,239 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/accounting/simples/historico/{competencia}:
+ *     put:
+ *       summary: Upsert pre-adoption monthly gross revenue and payroll (BE-INCR-SIMPLES-NACIONAL PR-2, X14 items 10-11)
+ *       description: >-
+ *         Receita bruta (e, opcional, folha para o fator R) de um mês anterior ao uso do sistema, por unidade. Entra no
+ *         RBT12; sem 12 meses declarados (histórico ou subrazão) a apuração alerta RBT12_INCOMPLETO. 404 - documento
+ *         de origem fora da unidade.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: competencia, required: true, schema: { type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$' } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               additionalProperties: false
+ *               required: [unitId, receitaBrutaCents]
+ *               properties:
+ *                 unitId:            { type: string, minLength: 1 }
+ *                 receitaBrutaCents: { type: integer, minimum: 0 }
+ *                 folhaCents:        { type: integer, minimum: 0, nullable: true }
+ *                 sourceDocumentId:  { type: string, nullable: true }
+ *       responses:
+ *         '200': { description: 'SimplesHistoricoView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/accounting/simples/segregacao/{competencia}:
+ *     put:
+ *       summary: Upsert the manual revenue segregation of a month (X14 item 12)
+ *       description: >-
+ *         Parcelas da receita com o motivo legal que tira tributos do DAS (MONOFASICO, ICMS_ST, ISS_RETIDO ou
+ *         MONOFASICO_E_ICMS_ST - Res. CGSN 140 art. 25 §§ 6º e 8º). Os tributos excluídos derivam do motivo. ISS devido
+ *         a outro município não é motivo (continua no DAS).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: competencia, required: true, schema: { type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$' } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               additionalProperties: false
+ *               required: [unitId, parcelas]
+ *               properties:
+ *                 unitId: { type: string, minLength: 1 }
+ *                 parcelas:
+ *                   type: array
+ *                   maxItems: 50
+ *                   items:
+ *                     type: object
+ *                     additionalProperties: false
+ *                     required: [natureza, receitaCents, motivo]
+ *                     properties:
+ *                       natureza:     { type: string, enum: [SERVICO, REVENDA, LOCACAO_MOVEL] }
+ *                       receitaCents: { type: integer, minimum: 1 }
+ *                       motivo:       { type: string, enum: [MONOFASICO, ICMS_ST, ISS_RETIDO, MONOFASICO_E_ICMS_ST] }
+ *       responses:
+ *         '200': { description: 'SimplesSegregacaoView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/accounting/simples/parcerias:
+ *     post:
+ *       summary: Create a salon partnership contract (X14 item 13 - Lei 12.592 art. 1º-A)
+ *       description: >-
+ *         Contrato salão-parceiro × profissional-parceiro. A cota do profissional sai da receita bruta do salão (§ 5º)
+ *         nos itens de serviço feitos por ele, a partir da homologação (§ 8º). 409 - outro contrato do mesmo
+ *         profissional vigente no período.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               additionalProperties: false
+ *               required: [unitId, profissionalContactId, cotaSalaoBp, naturezaCota, homologadoEm, sindicato, vigenteDesde, vigenteAte]
+ *               properties:
+ *                 unitId:                { type: string, minLength: 1 }
+ *                 profissionalContactId: { type: string, minLength: 1 }
+ *                 cotaSalaoBp:           { type: integer, minimum: 1, maximum: 9999 }
+ *                 naturezaCota:          { type: string, enum: [ALUGUEL_BEM_MOVEL, GESTAO] }
+ *                 homologadoEm:          { type: string, format: date }
+ *                 sindicato:             { type: string, minLength: 1, maxLength: 200 }
+ *                 vigenteDesde:          { type: string, format: date }
+ *                 vigenteAte:            { type: string, format: date, nullable: true }
+ *       responses:
+ *         '201': { description: 'SalaoParceriaContratoView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '409': { description: 'Outro contrato do profissional vigente no período' }
+ *     get:
+ *       summary: List the unit's partnership contracts (X14 item 13)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'SalaoParceriaContratoView[]' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/accounting/simples/parcerias/{id}:
+ *     patch:
+ *       summary: Update a partnership contract (X14 item 13)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               additionalProperties: false
+ *               required: [unitId]
+ *               properties:
+ *                 unitId:                { type: string, minLength: 1 }
+ *                 profissionalContactId: { type: string, minLength: 1 }
+ *                 cotaSalaoBp:           { type: integer, minimum: 1, maximum: 9999 }
+ *                 naturezaCota:          { type: string, enum: [ALUGUEL_BEM_MOVEL, GESTAO] }
+ *                 homologadoEm:          { type: string, format: date }
+ *                 sindicato:             { type: string, minLength: 1, maxLength: 200 }
+ *                 vigenteDesde:          { type: string, format: date }
+ *                 vigenteAte:            { type: string, format: date, nullable: true }
+ *       responses:
+ *         '200': { description: 'SalaoParceriaContratoView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '409': { description: 'Outro contrato do profissional vigente no período' }
+ *     delete:
+ *       summary: Soft-delete a partnership contract (X14 item 13)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '204': { description: 'Removido (soft-delete)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/accounting/simples/apuracoes/{competencia}/calcular:
+ *     post:
+ *       summary: Compute the Simples Nacional assessment of a month on demand (BE-INCR-SIMPLES-NACIONAL PR-3, X14 item 17)
+ *       description: >-
+ *         Calcula a apuração ME/EPP da competência a partir do subrazão fiscal de receita, do histórico pré-adoção, da
+ *         segregação manual e dos contratos de parceria. Nada é gravado. 400 - perfil do ano ausente ou fora do Simples.
+ *         422 - regra não regulamentada (ex.: início de atividade a partir de 2027).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: competencia, required: true, schema: { type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$' } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               additionalProperties: false
+ *               required: [unitId]
+ *               properties:
+ *                 unitId: { type: string, minLength: 1 }
+ *       responses:
+ *         '200': { description: 'ApuracaoSimples (atividades, tributos, espelho do PGDAS-D, tie-out, alertas)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '422': { description: 'SIMPLES_REGRA_NAO_REGULAMENTADA' }
+ *
+ *   /api/accounting/simples/apuracoes/{competencia}:
+ *     get:
+ *       summary: PGDAS-D mirror of the month, with the registered official DAS and the divergence (X14 item 18)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: competencia, required: true, schema: { type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$' } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'ApuracaoSimples' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/accounting/simples/apuracoes/{competencia}/das:
+ *     put:
+ *       summary: Register the official DAS and persist the assessment (X14 items 19-21)
+ *       description: >-
+ *         Grava a apuração (SimplesApuracao) com o DAS oficial e provisiona D dedução da receita / C Simples a recolher
+ *         pelo valor oficial. Novo registro na mesma competência substitui o anterior e estorna a provisão dele. O mesmo
+ *         número e valor de novo só completa a provisão pendente. 400 - alerta bloqueante (TIEOUT_DIVERGENTE,
+ *         RBT12_INCOMPLETO, ATIVIDADE_SEM_ANEXO). 409 - a receita mudou depois do cálculo.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: competencia, required: true, schema: { type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$' } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               additionalProperties: false
+ *               required: [unitId, numeroDocumento, valorCents, vencimento]
+ *               properties:
+ *                 unitId:           { type: string, minLength: 1 }
+ *                 numeroDocumento:  { type: string, minLength: 1, maxLength: 40 }
+ *                 valorCents:       { type: integer, minimum: 1 }
+ *                 vencimento:       { type: string, format: date }
+ *                 sourceDocumentId: { type: string, nullable: true }
+ *       responses:
+ *         '200': { description: 'ApuracaoSimples com dasOficial' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '409': { description: 'A receita mudou depois do cálculo, ou registro concorrente' }
  *
  *   /api/accounting/tax-assessments/{id}/provisao:
  *     post:
