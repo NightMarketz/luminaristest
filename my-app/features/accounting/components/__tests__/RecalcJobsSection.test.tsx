@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react';
-import { RecalcJobsSection } from '../RecalcJobsSection';
+import { RecalcJobsSection, instanteLocal } from '../RecalcJobsSection';
 import type { RecalcJob } from '../../../../lib/services/legalParameters.service';
 
 (globalThis as unknown as { React: typeof React }).React = React;
@@ -19,6 +19,23 @@ const job = (id: string, extra: Partial<RecalcJob> = {}): RecalcJob => ({
 });
 
 describe('RecalcJobsSection (RECALC-STATUS item 6)', () => {
+  it('review: instante em America/Sao_Paulo — 00:30Z é 21:30 do dia anterior', () => {
+    expect(instanteLocal('2026-10-09T00:30:00.000Z')).toMatch(/08\/10\/2026,? 21:30/);
+  });
+
+  it('review: resposta antiga que chega depois não sobrescreve o filtro atual', async () => {
+    let soltarAntiga: (v: unknown) => void = () => undefined;
+    listRecalcJobs
+      .mockImplementationOnce(() => new Promise((res) => { soltarAntiga = res; }))
+      .mockResolvedValueOnce({ items: [job('pend', { status: 'PENDING' })], total: 1, page: 1, pageSize: 20 });
+    render(<RecalcJobsSection />);
+    fireEvent.change(screen.getByLabelText('Status'), { target: { value: 'PENDING' } });
+    expect(await screen.findByText('Pendente', { selector: 'span' })).toBeInTheDocument();
+    soltarAntiga({ items: [job('velho')], total: 1, page: 1, pageSize: 20 });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.queryByText('Concluído', { selector: 'span' })).toBeNull();
+  });
+
   afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
   it('lista os jobs com a linha, o status, o resultado e o último erro; linha sumida aparece como tal', async () => {

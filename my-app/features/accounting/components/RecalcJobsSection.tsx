@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiRefreshCw } from 'react-icons/fi';
 import { legalParametersService, type RecalcJob, type RecalcJobsPage } from '../../../lib/services/legalParameters.service';
 import { StandardPagination } from '../../dashboard/shared/components/StandardPagination';
@@ -7,6 +7,10 @@ import { useAccountingT } from '../lib/useAccountingT';
 import { inputClass } from './SpedGenerationPanel';
 
 const POR_PAGINA = 20;
+
+/** Review: o instante vem em UTC — mostra no fuso do escopo (America/Sao_Paulo), não a hora crua. */
+const FMT_INSTANTE = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' });
+export const instanteLocal = (iso: string): string => FMT_INSTANTE.format(new Date(iso));
 
 const STATUS_CLASSE: Record<RecalcJob['status'], string> = {
   PENDING: 'bg-amber-500/10 text-amber-300',
@@ -27,16 +31,20 @@ export function RecalcJobsSection() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Review: troca rápida de filtro/página — só a resposta do pedido mais recente entra na tela.
+  const ultimoPedido = useRef(0);
 
   const carregar = useCallback(async () => {
+    const pedido = ++ultimoPedido.current;
     setLoading(true);
     setError(null);
     try {
-      setDados(await legalParametersService.listRecalcJobs({ ...(status ? { status } : {}), page, pageSize: POR_PAGINA }));
+      const r = await legalParametersService.listRecalcJobs({ ...(status ? { status } : {}), page, pageSize: POR_PAGINA });
+      if (pedido === ultimoPedido.current) setDados(r);
     } catch (err: unknown) {
-      setError(resolveError(err, tRef.current('legalParams.recalc.error.load', 'Erro ao carregar os recálculos.')));
+      if (pedido === ultimoPedido.current) setError(resolveError(err, tRef.current('legalParams.recalc.error.load', 'Erro ao carregar os recálculos.')));
     } finally {
-      setLoading(false);
+      if (pedido === ultimoPedido.current) setLoading(false);
     }
   }, [status, page, tRef]);
 
@@ -95,7 +103,7 @@ export function RecalcJobsSection() {
             )}
             {itens.map((j) => (
               <tr key={j.id}>
-                <td className={`${td} whitespace-nowrap text-xs`}>{j.createdAt.slice(0, 16).replace('T', ' ')}</td>
+                <td className={`${td} whitespace-nowrap text-xs`}>{instanteLocal(j.createdAt)}</td>
                 <td className={`${td} text-xs`}>{t(`legalParams.recalc.evento.${j.evento}`, EVENTO_ROTULO[j.evento])}</td>
                 <td className={`${td} text-xs`}>
                   {j.linha
