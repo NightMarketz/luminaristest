@@ -25,8 +25,8 @@ export class ReceitaFiscalRepository implements IReceitaFiscalRepository {
     return prisma.receitaFiscalLinha.findMany({ where: { ...accountingScopeWhere(scope), saleId, tipo }, orderBy: { itemRef: 'asc' } });
   }
 
-  public async findByCompetencia(scope: AccountingScope, competencia: string): Promise<ReceitaFiscalLinha[]> {
-    return prisma.receitaFiscalLinha.findMany({
+  public async findByCompetencia(scope: AccountingScope, competencia: string, tx?: Prisma.TransactionClient): Promise<ReceitaFiscalLinha[]> {
+    return (tx ?? prisma).receitaFiscalLinha.findMany({
       where: { ...accountingScopeWhere(scope), competencia },
       orderBy: [{ dia: 'asc' }, { saleId: 'asc' }, { itemRef: 'asc' }],
     });

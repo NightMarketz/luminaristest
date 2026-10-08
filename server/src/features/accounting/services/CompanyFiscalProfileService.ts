@@ -327,7 +327,8 @@ export class CompanyFiscalProfileService {
           if (view.declarante?.cnpj === undefined) faltantes.push('declarante.cnpj');
           if (!contadorVivo) faltantes.push('contadorContactId');
         }
-      } else if (cobra) {
+      } else if (cobra && (o.obrigacao === 'ECD' || o.obrigacao === 'ECF')) {
+        // X14 PR-3: PGDAS-D, DEFIS e DASN-SIMEI saem da apuração do Simples, não dos campos SPED do perfil — sem faltantes.
         if (o.status === 'CONDICIONAL') {
           for (const [k, v] of Object.entries(view.condicoes)) if (v === null) faltantes.push(`condicoes.${k}`);
         }

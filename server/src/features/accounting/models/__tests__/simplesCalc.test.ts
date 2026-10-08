@@ -149,6 +149,12 @@ describe('item 6 — teto do ISS, 6ª faixa, sublimite', () => {
     expect(a.tributos).toEqual({ ISS: 500_000, IRPJ: 75_310, CSLL: 65_803, COFINS: 241_193, PIS: 52_292, CPP: 816_402 });
   });
 
+  it('locação de bem móvel na 5ª faixa: a parcela do ISS é deduzida, não transferida aos federais (review PR-3, achado 6)', () => {
+    const r = apurar(base('2026-06', { historico: historico('2026-06', 30_000_000), atividades: [{ natureza: 'LOCACAO_MOVEL', cTribNac: null, parcelas: [{ receitaCents: 100_000, excluir: [] }] }] }), LINHAS);
+    // 1.000 × 17,51% × (1 − 33,5% do ISS) = 116,44.
+    expect([r.atividades[0].tributos.ISS, r.totalCalculadoCents]).toEqual([undefined, 11_644]);
+  });
+
   it('abaixo do limiar o teto não age (3ª faixa: ISS 3,432%)', () => {
     const a = apurar(base('2026-06', { atividades: [servico(100_000)] }), LINHAS).atividades[0];
     expect(a.tributos.ISS).toBe(3_432);

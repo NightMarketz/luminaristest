@@ -149,6 +149,10 @@ export class ReceitaFiscalService {
   async registrarEstorno(scope: AccountingScope, saleId: string, tipo: 'CANCELAMENTO' | 'DEVOLUCAO', dia: string): Promise<number> {
     const vendas = await this.repo.findLinhasDaVenda(scope, saleId, 'VENDA');
     if (vendas.length === 0) return 0;
+    // Review do PR-3 (achado 8): devolvida e depois cancelada (ou o contrário) sai da receita UMA vez — o outro evento
+    // não grava linha. O razão é quem diz se a 2ª transição aconteceu; o subrazão nunca vai a −2×.
+    const outro = tipo === 'CANCELAMENTO' ? 'DEVOLUCAO' : 'CANCELAMENTO';
+    if ((await this.repo.countLinhasDaVenda(scope, saleId, outro)) > 0) return 0;
     const sufixo = tipo === 'CANCELAMENTO' ? '#cancelamento' : '#devolucao';
     return this.repo.createLinhasDaVenda(
       scope,

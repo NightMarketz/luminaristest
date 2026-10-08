@@ -16,6 +16,10 @@ export class SimplesApuracaoRepository implements ISimplesApuracaoRepository {
     return (tx ?? prisma).simplesApuracao.findFirst({ where: { id, ...accountingScopeWhere(scope), deletedAt: null } });
   }
 
+  public async findSubstituidas(scope: AccountingScope, competencia: string): Promise<SimplesApuracao[]> {
+    return prisma.simplesApuracao.findMany({ where: { ...accountingScopeWhere(scope), competencia, status: 'SUPERSEDED' } });
+  }
+
   public async supersede(scope: AccountingScope, id: string, tx: Prisma.TransactionClient): Promise<number> {
     const r = await tx.simplesApuracao.updateMany({ where: { id, ...accountingScopeWhere(scope), status: 'CONFIRMED' }, data: { status: 'SUPERSEDED' } });
     return r.count;

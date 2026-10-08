@@ -12,6 +12,7 @@ import { maybeSyncSaleFinalized } from '@/features/accounting/sync/bridges/SaleS
 import { maybeReverseSale } from '@/features/accounting/sync/bridges/SaleReversalBridge';
 import { reconcileReceitaFiscalEstornos } from '@/jobs/accountingSyncReconcile.job';
 import { SimplesEntradasRepository } from '@/features/accounting/repositories/SimplesEntradasRepository';
+import { PostingService } from '@/features/accounting/services/PostingService';
 import { SIMPLES_DAS_PROVISION_SOURCE_TYPE } from '@/features/accounting/services/SimplesApuracaoService';
 import { scopeToday } from '@/features/accounting/models/dates';
 
@@ -147,9 +148,11 @@ describe('itens 19–21 — registro do DAS, provisão, substituição', () => {
 
   it('item 20: gate dentro da tx — entrada mudou entre o cálculo e o registro ⇒ 409, nada gravado', async () => {
     const antes = await prisma.simplesApuracao.count();
-    const spy = jest.spyOn(SimplesEntradasRepository.prototype, 'findHistoricoTx').mockImplementationOnce(async function (this: SimplesEntradasRepository, s, comps, tx) {
-      const rows = await SimplesEntradasRepository.prototype.findHistorico.call(this, s, comps, tx);
-      return rows.map((h) => (h.competencia === '2025-07' ? { ...h, receitaBrutaCents: h.receitaBrutaCents + 1n } : h));
+    // Simula uma escrita concorrente: só a releitura DENTRO da tx (a chamada com `tx`) vê o histórico mudado.
+    const original = SimplesEntradasRepository.prototype.findHistorico;
+    const spy = jest.spyOn(SimplesEntradasRepository.prototype, 'findHistorico').mockImplementation(async function (this: SimplesEntradasRepository, s, comps, tx) {
+      const rows = await original.call(this, s, comps, tx);
+      return tx ? rows.map((h) => (h.competencia === '2025-07' ? { ...h, folhaCents: 1n } : h)) : rows;
     });
     const r = await das('2026-06', { numeroDocumento: '07202617000000003', valorCents: 1 });
     spy.mockRestore();
@@ -231,5 +234,39 @@ describe('item 22 — matriz de obrigações', () => {
     const st = Object.fromEntries(r.body.data.obrigacoes.map((o: { obrigacao: string; status: string }) => [o.obrigacao, o.status]));
     expect(st).toMatchObject({ PGDAS_D: 'OBRIGATORIA', DEFIS: 'OBRIGATORIA', LIVRO_CAIXA: 'NAO_SE_APLICA' });
     expect(st).not.toHaveProperty('DASN_SIMEI');
+  });
+});
+
+describe('review do PR-3', () => {
+  it('achado 2: o estorno da provisão anterior falha na substituição; repetir o PUT estorna e deixa 1 provisão viva', async () => {
+    await f().getSimplesEntradasService().upsertHistorico(scope(), '2025-08', { unitId: UNIT, receitaBrutaCents: 5_000_000 }); // o teste do item 20 o apagou
+    const spy = jest.spyOn(PostingService.prototype, 'reverseEntry').mockRejectedValueOnce(new Error('período fechado (simulado)'));
+    const r = await das('2026-06', { numeroDocumento: '07202617000000009', valorCents: 527_990 });
+    spy.mockRestore();
+    expect(r.status).toBe(200);
+    expect(r.body.data.dasOficial.provisaoPendente).toBe(true);
+    await das('2026-06', { numeroDocumento: '07202617000000009', valorCents: 527_990 });
+    const vivas = await provisoesVivas();
+    expect(vivas).toHaveLength(1);
+    expect(vivas[0].sourceId).toBe(r.body.data.dasOficial.id);
+  });
+
+  it('achado 1: uma parcela segregada é abatida UMA vez, mesmo com dois grupos da mesma natureza', async () => {
+    const mes = scopeToday(scope()).slice(0, 7);
+    await prisma.serviceFiscalProfile.create({ data: { userId: user.id, unitId: UNIT, serviceRef: 'srv-escova', cTribNac: '060201' } });
+    const dia = `${mes}-01`;
+    // O mês corrente já tem o cancelamento de R$ 2.000 (−200.000), compensado no grupo 060101 (achado 5).
+    await venda(dia, 5_000);
+    const sale = await row('sales', { status: 'Finalized', unitId: UNIT, totalAmount: 5_000, currency: 'BRL', date: dia, paymentStatus: 'Pending' });
+    await row('saleItems', { saleId: sale.id, type: 'Service', serviceId: 'srv-escova', description: 'Escova', quantity: 1, unitPrice: 5_000 });
+    await maybeSyncSaleFinalized({ userId: user.id }, tables.sales, { id: sale.id, data: sale.data });
+    await f().getSimplesEntradasService().upsertSegregacao(scope(), mes, { unitId: UNIT, parcelas: [{ natureza: 'SERVICO', receitaCents: 50_000, motivo: 'ISS_RETIDO' }] });
+    const resp = await calcular(mes);
+    expect(resp.status).toBe(200);
+    const a = resp.body.data;
+    const retidas = a.espelho.flatMap((e: { parcelas: Array<{ receitaCents: number; qualificacoes: Record<string, string> }> }) => e.parcelas).filter((p: { qualificacoes: Record<string, string> }) => p.qualificacoes.ISS);
+    expect(retidas.reduce((s: number, p: { receitaCents: number }) => s + p.receitaCents, 0)).toBe(50_000);
+    // achado 5: Σ das atividades = receita do PA (5.000 + 5.000 − 2.000 do cancelamento).
+    expect(a.atividades.reduce((s: number, x: { receitaCents: number }) => s + x.receitaCents, 0)).toBe(800_000);
   });
 });

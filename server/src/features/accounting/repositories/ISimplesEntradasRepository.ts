@@ -39,7 +39,7 @@ export interface ISimplesEntradasRepository {
   findParceria(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<SalaoParceriaContrato | null>;
   listParcerias(scope: AccountingScope, tx?: Prisma.TransactionClient): Promise<SalaoParceriaContrato[]>;
   /** X14 PR-3 — o contrato que a linha do subrazão referencia, mesmo removido depois (a venda já aconteceu). */
-  findParceriaMesmoRemovida(scope: AccountingScope, ids: readonly string[]): Promise<SalaoParceriaContrato[]>;
+  findParceriaMesmoRemovida(scope: AccountingScope, ids: readonly string[], tx?: Prisma.TransactionClient): Promise<SalaoParceriaContrato[]>;
   /** X14 PR-3 — histórico e Σ dos `updatedAt` para o gate dentro da tx (o cálculo mudou desde que foi feito?). */
   findHistoricoTx(scope: AccountingScope, competencias: readonly string[], tx: Prisma.TransactionClient): Promise<SimplesHistoricoMensal[]>;
   /** Contratos não removidos do profissional na unidade (o serviço filtra vigência e homologação). */

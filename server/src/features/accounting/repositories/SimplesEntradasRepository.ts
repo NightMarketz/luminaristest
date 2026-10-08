@@ -79,8 +79,8 @@ export class SimplesEntradasRepository implements ISimplesEntradasRepository {
     return prisma.$transaction(fn);
   }
 
-  public async findParceriaMesmoRemovida(scope: AccountingScope, ids: readonly string[]): Promise<SalaoParceriaContrato[]> {
-    return prisma.salaoParceriaContrato.findMany({ where: { ...accountingScopeWhere(scope), id: { in: [...ids] } } });
+  public async findParceriaMesmoRemovida(scope: AccountingScope, ids: readonly string[], tx?: Prisma.TransactionClient): Promise<SalaoParceriaContrato[]> {
+    return (tx ?? prisma).salaoParceriaContrato.findMany({ where: { ...accountingScopeWhere(scope), id: { in: [...ids] } } });
   }
 
   public async findHistoricoTx(scope: AccountingScope, competencias: readonly string[], tx: Prisma.TransactionClient): Promise<SimplesHistoricoMensal[]> {

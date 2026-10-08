@@ -88,6 +88,8 @@ interface Montagem {
   calculada: ApuracaoCalculada;
   entrada: AtividadeInput[];
   receitas: Receitas;
+  /** Item 20 — as entradas lidas (histórico, subrazão, linhas do PA, contratos, segregação, início de atividade). */
+  impressao: string;
   alertas: AlertaSimples[];
   tieOut: { subrazaoCents: number; razaoCents: number; ok: boolean };
 }
@@ -138,8 +140,10 @@ export class SimplesApuracaoService {
     const valorOficial = BigInt(input.valorCents);
     const total = BigInt(m.calculada.totalCalculadoCents);
     const { nova, anterior } = await this.repo.runTransaction(async (tx) => {
-      // Item 20 — gate autoritativo DENTRO da tx: as receitas mensais relidas aqui têm de ser as que o cálculo usou.
-      await this.assertEntradasIguais(scope, competencia, m.receitas, tx);
+      // Item 20 — gate autoritativo DENTRO da tx: TODAS as entradas relidas aqui têm de ser as que o cálculo usou
+      // (review do PR-3, achados 3–4: só os totais mensais deixavam passar segregação, contrato, folha e o PA vazio).
+      const releitura = await this.montar(scope, competencia, tx);
+      if (releitura.impressao !== m.impressao) throw new ConflictError(`As entradas de ${competencia} mudaram depois do cálculo — calcule de novo antes de registrar o DAS.`);
       const atual = await this.repo.findConfirmada(scope, competencia, tx);
       if (atual && (await this.repo.supersede(scope, atual.id, tx)) === 0) throw new ConflictError('Outra apuração foi registrada para esta competência ao mesmo tempo — tente de novo.');
       const row = await this.repo.create(
@@ -183,7 +187,7 @@ export class SimplesApuracaoService {
 
   private async montar(scope: AccountingScope, competencia: string, tx?: Prisma.TransactionClient): Promise<Montagem> {
     const ano = Number(competencia.slice(0, 4));
-    const perfil = await this.companyProfileRepo.findByYear(scope, ano);
+    const perfil = await this.companyProfileRepo.findByYear(scope, ano, tx);
     if (!perfil || perfil.regime !== 'SIMPLES') {
       throw new ValidationError(`Cadastre o perfil fiscal de ${ano} com regime SIMPLES antes de apurar o Simples Nacional (o MEI é apurado pelo SIMEI).`);
     }
@@ -214,9 +218,9 @@ export class SimplesApuracaoService {
     if (ignorados.length > 0) alertas.push({ codigo: 'HISTORICO_IGNORADO', detalhe: `histórico ignorado em ${ignorados.join(', ')} — o subrazão do mês prevalece` });
 
     // Atividades do PA a partir do subrazão (VENDA e linhas negativas de cancelamento/devolução).
-    const linhasPa = await this.receitaRepo.findByCompetencia(scope, competencia);
+    const linhasPa = await this.receitaRepo.findByCompetencia(scope, competencia, tx);
     const contratos = new Map(
-      (await this.entradasRepo.findParceriaMesmoRemovida(scope, [...new Set(linhasPa.map((l) => l.parceriaContratoId).filter((x): x is string => !!x))])).map((c) => [c.id, c]),
+      (await this.entradasRepo.findParceriaMesmoRemovida(scope, [...new Set(linhasPa.map((l) => l.parceriaContratoId).filter((x): x is string => !!x))], tx)).map((c) => [c.id, c]),
     );
     const grupos = new Map<string, { natureza: NaturezaSimples; cTribNac: string | null; receita: bigint }>();
     const somar = (natureza: NaturezaSimples, cTribNac: string | null, v: bigint) => {
@@ -231,28 +235,55 @@ export class SimplesApuracaoService {
         // Lei 12.592 art. 1º-A §§ 4º–5º: a receita do salão é a cota dele, a título de aluguel de bem móvel ou de gestão.
         somar(contrato.naturezaCota === 'ALUGUEL_BEM_MOVEL' ? 'LOCACAO_MOVEL' : 'PARCERIA_GESTAO', null, l.receitaCents - l.cotaProfissionalCents);
       } else {
-        somar(l.natureza === 'REVENDA' ? 'REVENDA' : 'SERVICO', l.natureza === 'REVENDA' ? null : l.cTribNac, l.receitaCents);
+        // Sem contrato achado, a cota já gravada continua fora da receita bruta (mesma regra do total do mês).
+        somar(l.natureza === 'REVENDA' ? 'REVENDA' : 'SERVICO', l.natureza === 'REVENDA' ? null : l.cTribNac, l.receitaCents - l.cotaProfissionalCents);
       }
     }
 
     // Item 12: a segregação manual tira parcelas da receita da natureza (motivo → tributos excluídos).
-    const seg = await this.entradas.segregacaoDaCompetencia(scope, competencia);
-    if (seg.alerta) alertas.push(seg.alerta);
-    const entrada: AtividadeInput[] = [];
-    const restantes = new Map([...grupos.values()].map((g) => [g, g.receita]));
-    for (const g of grupos.values()) {
-      if (g.receita <= 0n) continue;
-      const parcelas: AtividadeInput['parcelas'] = [];
-      for (const p of seg.parcelas.filter((x) => x.natureza === g.natureza)) {
-        const disponivel = restantes.get(g) ?? 0n;
-        const v = BigInt(p.receitaCents) > disponivel ? disponivel : BigInt(p.receitaCents);
-        if (v <= 0n) continue;
-        parcelas.push({ receitaCents: Number(v), excluir: excluirDoMotivo((p as SimplesSegregacaoParcela).motivo) });
-        restantes.set(g, disponivel - v);
+    const segRow = await this.entradasRepo.findSegregacao(scope, competencia, tx);
+    const seg = { parcelas: ((segRow?.parcelas ?? []) as SimplesSegregacaoParcela[]) };
+    if (seg.parcelas.length > 0) alertas.push({ codigo: 'SEGREGACAO_MANUAL', detalhe: `${seg.parcelas.length} parcela(s) segregada(s) por declaração manual` });
+    const impressao = JSON.stringify({
+      inicio: perfil.inicioAtividadeEm,
+      historico: historico.map((h) => [h.competencia, String(h.receitaBrutaCents), h.folhaCents === null ? null : String(h.folhaCents)]),
+      subrazao: [...subrazao.entries()].map(([k, v]) => [k, String(v.receitaCents), String(v.cotaCents)]).sort(),
+      linhasPa: linhasPa.map((l) => [l.id, l.natureza, l.cTribNac, String(l.receitaCents), String(l.cotaProfissionalCents), l.parceriaContratoId]),
+      contratos: [...contratos.values()].map((c) => [c.id, c.naturezaCota]).sort(),
+      segregacao: seg.parcelas,
+    });
+    // Review do PR-3 (achado 5): um grupo negativo (devolução/cancelamento de venda de outro mês) é compensado nos grupos
+    // positivos — primeiro os da mesma natureza, depois o maior — para que Σ das atividades = receita do PA.
+    const lista = [...grupos.values()];
+    for (const neg of lista.filter((g) => g.receita < 0n)) {
+      const alvos = lista.filter((g) => g.receita > 0n).sort((x, y) => (x.natureza === neg.natureza ? -1 : 0) - (y.natureza === neg.natureza ? -1 : 0) || (y.receita > x.receita ? 1 : -1));
+      for (const alvo of alvos) {
+        if (neg.receita >= 0n) break;
+        const v = alvo.receita < -neg.receita ? alvo.receita : -neg.receita;
+        alvo.receita -= v;
+        neg.receita += v;
       }
-      const resto = restantes.get(g) ?? 0n;
-      if (resto > 0n) parcelas.push({ receitaCents: Number(resto), excluir: [] });
+    }
+    // Review do PR-3 (achado 1): cada parcela segregada é consumida UMA vez, pelos grupos da natureza dela, em ordem.
+    const sobra = seg.parcelas.map((p) => BigInt(p.receitaCents));
+    const entrada: AtividadeInput[] = [];
+    for (const g of lista) {
+      if (g.receita <= 0n) continue;
+      let disponivel = g.receita;
+      const parcelas: AtividadeInput['parcelas'] = [];
+      seg.parcelas.forEach((p, i) => {
+        if (p.natureza !== g.natureza || disponivel <= 0n || sobra[i] <= 0n) return;
+        const v = sobra[i] > disponivel ? disponivel : sobra[i];
+        parcelas.push({ receitaCents: Number(v), excluir: excluirDoMotivo((p as SimplesSegregacaoParcela).motivo) });
+        sobra[i] -= v;
+        disponivel -= v;
+      });
+      if (disponivel > 0n) parcelas.push({ receitaCents: Number(disponivel), excluir: [] });
       entrada.push({ natureza: g.natureza, cTribNac: g.cTribNac, parcelas });
+    }
+    const naoAplicada = sobra.reduce((x, v) => x + v, 0n);
+    if (naoAplicada > 0n) {
+      alertas.push({ codigo: 'SEGREGACAO_MANUAL', detalhe: `R$ ${(Number(naoAplicada) / 100).toFixed(2)} declarados na segregação não têm receita da mesma natureza no mês e foram ignorados` });
     }
 
     // Item 23 — limites (LC 123 art. 3º I/II, §§ 9º, 9º-A; art. 13-A; Res. CGSN 140 art. 12 §§ 1º–2º).
@@ -284,7 +315,7 @@ export class SimplesApuracaoService {
     // Item 16 → item 20: o tie-out do PA também bloqueia o registro.
     const tie = await this.receitaFiscal.tieOut(scope, competencia);
     if (tie.alerta) alertas.push(tie.alerta);
-    return { calculada, entrada, receitas, alertas, tieOut: { subrazaoCents: tie.subrazaoCents, razaoCents: tie.razaoCents, ok: tie.ok } };
+    return { calculada, entrada, receitas, impressao, alertas, tieOut: { subrazaoCents: tie.subrazaoCents, razaoCents: tie.razaoCents, ok: tie.ok } };
   }
 
   /** Item 23. Devolve se o sublimite do ICMS/ISS (e IBS a partir de 2027) está excedido para o PA. */
@@ -310,32 +341,23 @@ export class SimplesApuracaoService {
     // Res. CGSN 140 art. 12 § 1º: excesso > 20% impede a partir do mês seguinte; ≤ 20%, a partir do ano seguinte.
     const acumuladoAteAnterior = competencia.endsWith('-01') ? 0n : soma(`${ano}-01`, proximo(competencia, -1));
     const impedidoEsteAno = sub > 0n && acumuladoAteAnterior > (sub * 12n) / 10n;
-    const impedidoPeloAnterior = sub > 0n && anoAnterior > limite('SUBLIMITE');
+    const inicioNoAnterior = inicio !== null && inicio.startsWith(`${ano - 1}-`);
+    const subAnterior = inicioNoAnterior ? (limite('SUBLIMITE') * BigInt(13 - Number(inicio!.slice(5, 7)))) / 12n : limite('SUBLIMITE');
+    const impedidoPeloAnterior = sub > 0n && anoAnterior > subAnterior;
     if (sub > 0n && acumuladoAno > sub) {
       alertas.push({ codigo: 'SUBLIMITE_ICMS_ISS', detalhe: `receita acumulada em ${ano} ${fmt(acumuladoAno)} acima do sublimite ${fmt(sub)} (LC 123 art. 13-A; Res. CGSN 140 art. 12)` });
     }
     return impedidoEsteAno || impedidoPeloAnterior;
   }
 
-  private async assertEntradasIguais(scope: AccountingScope, competencia: string, usadas: Receitas, tx: Prisma.TransactionClient): Promise<void> {
-    const todos = [...usadas.keys()];
-    const lista = todos.length > 0 ? todos : [competencia];
-    const [historico, subrazao] = await Promise.all([this.entradasRepo.findHistoricoTx(scope, lista, tx), this.receitaRepo.somaPorCompetencia(scope, lista, tx)]);
-    const hist = new Map(historico.map((h) => [h.competencia, h.receitaBrutaCents]));
-    for (const m of lista) {
-      const s = subrazao.get(m);
-      const atual = s ? s.receitaCents - s.cotaCents : hist.get(m);
-      if (atual !== usadas.get(m)) {
-        throw new ConflictError(`A receita de ${m} mudou depois do cálculo — calcule de novo antes de registrar o DAS.`);
-      }
-    }
-  }
-
   // ---- item 21: provisão ----
 
   private async provisionar(scope: AccountingScope, nova: SimplesApuracao, anterior: SimplesApuracao | null): Promise<void> {
     try {
-      if (anterior) await this.estornarProvisao(scope, anterior);
+      // Review do PR-3 (achado 2): estorna a provisão viva de TODA substituída da competência — não só a `anterior` —,
+      // antes de postar: o reconcile (anterior = null) também conserta um estorno que falhou. Nunca 2 vivas.
+      const substituidas = await this.repo.findSubstituidas(scope, nova.competencia);
+      for (const sub of anterior && !substituidas.some((x) => x.id === anterior.id) ? [...substituidas, anterior] : substituidas) await this.estornarProvisao(scope, sub);
       if (nova.provisaoEntryId) return;
       let entry = await this.postingService.findEntryBySource(scope, SIMPLES_DAS_PROVISION_SOURCE_TYPE, nova.id);
       if (!entry) {

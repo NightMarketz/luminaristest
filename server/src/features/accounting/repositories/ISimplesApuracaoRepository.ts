@@ -24,6 +24,8 @@ export interface ISimplesApuracaoRepository {
   /** A apuração CONFIRMED (não removida) da competência, ou null. */
   findConfirmada(scope: AccountingScope, competencia: string, tx?: Prisma.TransactionClient): Promise<SimplesApuracao | null>;
   findById(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<SimplesApuracao | null>;
+  /** As SUPERSEDED da competência (o reconcile da provisão estorna a viva de cada uma). */
+  findSubstituidas(scope: AccountingScope, competencia: string): Promise<SimplesApuracao[]>;
   /** CAS CONFIRMED → SUPERSEDED; devolve quantas mudaram (0 = outra tx chegou antes). */
   supersede(scope: AccountingScope, id: string, tx: Prisma.TransactionClient): Promise<number>;
   create(scope: AccountingScope, data: CreateSimplesApuracaoData, tx: Prisma.TransactionClient): Promise<SimplesApuracao>;

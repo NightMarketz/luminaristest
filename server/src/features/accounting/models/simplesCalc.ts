@@ -353,6 +353,10 @@ export function apurar(entrada: ApuracaoInput, linhas: readonly LinhaLegal[]): A
     }
     if (input.sublimiteExcedido) for (const t of sublimite) pct.delete(t);
 
+    // Locação de bem móvel: Anexo III "deduzida a parcela correspondente ao ISS" (art. 18 § 4º V) — ANTES do teto: a parcela
+    // sai, não é transferida aos federais (review do PR-3, achado 6).
+    if (enq.semIss) pct.delete('ISS');
+
     // Teto do ISS (art. 18 § 1º-B I): acima do teto, ISS = teto e a diferença vai pela tabela de transferência do anexo.
     const iss = pct.get('ISS');
     const teto = linha(linhas, 'SIMPLES_TETO_ISS', anexo, data, null, TetoIssJsonSchema, usadas);
@@ -382,8 +386,6 @@ export function apurar(entrada: ApuracaoInput, linhas: readonly LinhaLegal[]): A
       }
     }
 
-    // Locação de bem móvel: Anexo III "deduzida a parcela correspondente ao ISS" (art. 18 § 4º V).
-    if (enq.semIss) pct.delete('ISS');
 
     const tributos: Partial<Record<TributoSimples, number>> = {};
     let receita = 0;
