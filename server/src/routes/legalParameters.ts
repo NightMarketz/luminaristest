@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   getVigenteLegalParameter,
   listLegalParameters,
+  listLegalParameterRecalcJobs,
   proposeLegalParameter,
   publishLegalParameter,
   revokeLegalParameter,
@@ -15,6 +16,7 @@ const router = Router();
 
 router.get('/', listLegalParameters);
 router.get('/vigente', getVigenteLegalParameter);
+router.get('/recalc-jobs', listLegalParameterRecalcJobs); // RECALC-STATUS — estático, antes de qualquer /:id
 router.post('/', proposeLegalParameter);
 router.post('/:id/publish', publishLegalParameter);
 router.post('/:id/revoke', revokeLegalParameter);

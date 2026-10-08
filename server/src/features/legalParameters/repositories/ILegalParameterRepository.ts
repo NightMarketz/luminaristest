@@ -24,6 +24,8 @@ export interface CreateLegalParameterData {
 export interface ILegalParameterRepository {
   create(data: CreateLegalParameterData, tx?: Prisma.TransactionClient): Promise<LegalParameter>;
   findById(id: string, tx?: Prisma.TransactionClient): Promise<LegalParameter | null>;
+  /** RECALC-STATUS (item 4): as linhas dos jobs de uma página, em lote. */
+  findByIds(ids: readonly string[]): Promise<LegalParameter[]>;
   findMany(filter: { tabela?: string; status?: string }, tx?: Prisma.TransactionClient): Promise<LegalParameter[]>;
   /** Linhas PUBLISHED das tabelas (todas as chaves) — a fonte da fotografia. */
   findPublished(tabelas: readonly string[], tx?: Prisma.TransactionClient): Promise<LegalParameter[]>;

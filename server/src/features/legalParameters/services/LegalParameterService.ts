@@ -7,6 +7,8 @@ import type { ILegalParameterRecalcJobRepository } from '../repositories/ILegalP
 import type { ILegalParameterPolicy, LegalParameterActor } from '../policies/ILegalParameterPolicy';
 import type {
   LegalParameterView,
+  ListRecalcJobsQuery,
+  RecalcJobView,
   ListLegalParametersQuery,
   ProposeLegalParameterInput,
   VigenteLegalParameterQuery,
@@ -128,6 +130,33 @@ export class LegalParameterService {
     // Lê tudo e só então troca tabela a tabela: o cache nunca fica frio no meio (um DTO concorrente leria o antigo).
     const lidas = await this.repo.findPublished(LEGAL_PARAMETER_TABELAS);
     for (const t of LEGAL_PARAMETER_TABELAS) storePublished(t, lidas.filter((l) => l.tabela === t));
+  }
+
+  /**
+   * RECALC-STATUS (itens 1–4; dono 08/10: "Qualquer autenticado", "Jobs com a linha legal junto") — a fila de recálculo
+   * do PR-4, paginada, mais recentes primeiro, com a linha legal que disparou cada job (lida em lote).
+   */
+  async listRecalcJobs(actor: LegalParameterActor, q: ListRecalcJobsQuery): Promise<{ items: RecalcJobView[]; total: number; page: number; pageSize: number }> {
+    this.exigirLeitura(actor);
+    const filtro = { status: q.status, legalParameterId: q.legalParameterId };
+    const [jobs, total] = await Promise.all([this.recalcJobs.findMany(filtro, (q.page - 1) * q.pageSize, q.pageSize), this.recalcJobs.count(filtro)]);
+    const linhas = new Map((await this.repo.findByIds([...new Set(jobs.map((j) => j.legalParameterId))])).map((l) => [l.id, l]));
+    const items = jobs.map((j): RecalcJobView => {
+      const l = linhas.get(j.legalParameterId);
+      return {
+        id: j.id,
+        evento: j.evento,
+        status: j.status,
+        tentativas: j.tentativas,
+        ultimoErro: j.ultimoErro,
+        resumo: (j.resumo as RecalcJobView['resumo']) ?? null,
+        createdAt: j.createdAt.toISOString(),
+        processedAt: j.processedAt?.toISOString() ?? null,
+        legalParameterId: j.legalParameterId,
+        linha: l ? { tabela: l.tabela, chave: l.chave, discriminador: l.discriminador, vigenteDesde: l.vigenteDesde, vigenteAte: l.vigenteAte, status: l.status } : null,
+      };
+    });
+    return { items, total, page: q.page, pageSize: q.pageSize };
   }
 
   async list(actor: LegalParameterActor, q: ListLegalParametersQuery): Promise<LegalParameterView[]> {

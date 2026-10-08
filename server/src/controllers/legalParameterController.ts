@@ -4,6 +4,7 @@ import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
 import {
   ListLegalParametersQuerySchema,
+  ListRecalcJobsQuerySchema,
   ProposeLegalParameterSchema,
   VigenteLegalParameterQuerySchema,
 } from '../features/legalParameters/dtos/LegalParameterDto';
@@ -27,6 +28,19 @@ export const listLegalParameters = async (req: Request, res: Response) => {
     const q = ListLegalParametersQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
     return res.json({ success: true, data: await getFactory().getLegalParameterService().list(actor, q.data) });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** GET /api/legal-parameters/recalc-jobs?status=&legalParameterId=&page=&pageSize= (RECALC-STATUS) */
+export const listLegalParameterRecalcJobs = async (req: Request, res: Response) => {
+  try {
+    const actor = actorOf(req);
+    if (!actor) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const q = ListRecalcJobsQuerySchema.safeParse(req.query);
+    if (!q.success) return bad(res, q.error.flatten());
+    return res.json({ success: true, data: await getFactory().getLegalParameterService().listRecalcJobs(actor, q.data) });
   } catch (error) {
     return handleApiError(error, res);
   }
