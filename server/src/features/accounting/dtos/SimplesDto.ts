@@ -115,3 +115,18 @@ export type SalaoParceriaContratoView = {
   createdAt: string;
   updatedAt: string;
 };
+
+/**
+ * BE-INCR-SIMPLES-NACIONAL PR-3 (nó X14, item 19; contrato §3) — PUT /api/accounting/simples/apuracoes/:competencia/das.
+ * O DAS oficial (número, valor, vencimento e o PDF já anexado como `SourceDocument`) e a persistência da apuração.
+ */
+export const SimplesDasRegistroSchema = z
+  .object({
+    unitId: z.string().min(1),
+    numeroDocumento: z.string().trim().min(1).max(40),
+    valorCents: cents.refine((v) => v > 0, 'valor do DAS > 0'),
+    vencimento: dateOnly('vencimento'),
+    sourceDocumentId: z.string().min(1).nullable().optional(),
+  })
+  .strict();
+export type SimplesDasRegistro = z.infer<typeof SimplesDasRegistroSchema>;

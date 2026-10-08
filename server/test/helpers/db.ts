@@ -23,7 +23,7 @@ const DB_FILE = path.join(SERVER_DIR, 'prisma', 'test-integration.db');
  * acrescenta o segundo arquivo (tabelas do Simples, `simplesAnexosSeed.test.ts`).
  */
 // BE-INCR-LEGAL-PARAMS: uma semente por PR de migração (v1 = PR-1, v2 = PR-2) + a do Simples (X14 PR-1), aplicadas em ordem.
-const LEGAL_PARAMS_SEEDS = ['legal_parameters_v1.sql', 'legal_parameters_v2.sql', 'legal_parameters_simples_v1.sql'].map((f) => path.join(SERVER_DIR, 'prisma', 'data', f));
+const LEGAL_PARAMS_SEEDS = ['legal_parameters_v1.sql', 'legal_parameters_v2.sql', 'legal_parameters_simples_v1.sql', 'legal_parameters_simples_v2.sql'].map((f) => path.join(SERVER_DIR, 'prisma', 'data', f));
 
 /**
  * Banco-modelo: o `db push` (~3–5 s, um subprocesso `npx`) roda UMA vez por versão do schema e cada arquivo de
@@ -182,6 +182,7 @@ export async function resetDb(): Promise<void> {
   await prisma.simplesSegregacaoManual.deleteMany();
   await prisma.salaoParceriaContrato.deleteMany();
   await prisma.receitaFiscalLinha.deleteMany();
+  await prisma.simplesApuracao.deleteMany(); // X14 PR-3
   // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7): tax_assessments só referencia User (Cascade) — sem ordem de FK.
   await prisma.taxAssessment.deleteMany();
   // BE-INCR-LEGAL-PARAMS PR-1: sem FK — volta ao estado da migração (linhas criadas/revogadas pelo teste somem).

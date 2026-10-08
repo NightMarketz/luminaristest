@@ -32,6 +32,7 @@ const ACCOUNT_KEYS: Record<PolicyTarget, readonly string[]> = {
     'irpjDespesaAccountId', 'csllDespesaAccountId', 'irpjRecolherAccountId', 'csllRecolherAccountId',
     'pisDespesaAccountId', 'cofinsDespesaAccountId', 'pisRecolherAccountId', 'cofinsRecolherAccountId', // X8 item 2
     'pisCofinsCreditoOutrosAccountId', 'pisCofinsRetidoCompensarAccountId', 'pisCofinsRetencaoConciliarAccountId', // X8 PR-3 (L-5, retenções)
+    'simplesDasDeducaoAccountId', 'simplesRecolherAccountId', // X14 PR-3 item 21
     'irpjSaldoNegativoAccountId', 'csllSaldoNegativoAccountId', // X7 Fase B item 16
   ],
   SCOPE_SETTINGS: [

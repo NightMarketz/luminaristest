@@ -12,18 +12,34 @@ import { z } from 'zod';
 import { AtividadeSemAnexoError, SimplesRegraNaoRegulamentadaError } from '../../../lib/errors';
 import { linhaLegalVigente, type LinhaLegal } from '../../legalParameters/models/legalParameter';
 
-export const TRIBUTOS_SIMPLES = ['IRPJ', 'CSLL', 'COFINS', 'PIS', 'CBS', 'IBS', 'CPP', 'ICMS', 'ISS', 'IPI'] as const;
+export const TRIBUTOS_SIMPLES = [
+  'IRPJ',
+  'CSLL',
+  'COFINS',
+  'PIS',
+  'CBS',
+  'IBS',
+  'CPP',
+  'ICMS',
+  'ISS',
+  'IPI',
+] as const;
 export type TributoSimples = (typeof TRIBUTOS_SIMPLES)[number];
 export type AnexoSimples = 'I' | 'II' | 'III' | 'IV' | 'V';
-export type NaturezaSimples = 'SERVICO' | 'REVENDA' | 'LOCACAO_MOVEL';
+/** PARCERIA_GESTAO = cota-parte do salão a título de gestão (Lei 12.592 art. 1º-A § 4º; F-SN-12 → b: Anexo III). */
+export type NaturezaSimples = 'SERVICO' | 'REVENDA' | 'LOCACAO_MOVEL' | 'PARCERIA_GESTAO';
 
 // ---- contrato de entrada 1: o valorJson das tabelas (materializado; o teste parseia todas as linhas da semente) ----
 
 const tributo = z.enum(TRIBUTOS_SIMPLES);
 const bp = z.number().int().min(0).max(10000);
 const centavos = z.number().int().min(0);
-export const FaixaJsonSchema = z.object({ receitaAteCents: centavos, aliquotaNominalBp: bp, parcelaDeduzirCents: centavos }).strict();
-export const ReparticaoJsonSchema = z.partialRecord(tributo, bp).refine((r) => Object.keys(r).length > 0, 'repartição vazia');
+export const FaixaJsonSchema = z
+  .object({ receitaAteCents: centavos, aliquotaNominalBp: bp, parcelaDeduzirCents: centavos })
+  .strict();
+export const ReparticaoJsonSchema = z
+  .partialRecord(tributo, bp)
+  .refine((r) => Object.keys(r).length > 0, 'repartição vazia');
 export const TetoIssJsonSchema = z
   .object({
     percentualBp: bp,
@@ -50,8 +66,11 @@ export type Parcela = z.infer<typeof ParcelaSchema>;
 
 export const AtividadeInputSchema = z
   .object({
-    natureza: z.enum(['SERVICO', 'REVENDA', 'LOCACAO_MOVEL']),
-    cTribNac: z.string().regex(/^\d{6}$/).nullable(),
+    natureza: z.enum(['SERVICO', 'REVENDA', 'LOCACAO_MOVEL', 'PARCERIA_GESTAO']),
+    cTribNac: z
+      .string()
+      .regex(/^\d{6}$/)
+      .nullable(),
     /** A soma das parcelas é a receita da atividade no mês. */
     parcelas: z.array(ParcelaSchema).min(1),
   })
@@ -127,7 +146,9 @@ const arred = (a: Q): bigint => (2n * a.n + a.d) / (2n * a.d);
 const BP = (v: number): Q => q(BigInt(v), 10000n);
 const decimal = (a: Q, casas: number): string => {
   const e = 10n ** BigInt(casas);
-  const v = arred(mul(a, q(e))).toString().padStart(casas + 1, '0');
+  const v = arred(mul(a, q(e)))
+    .toString()
+    .padStart(casas + 1, '0');
   return `${v.slice(0, -casas)}.${v.slice(-casas)}`;
 };
 
@@ -168,7 +189,12 @@ export interface Rbt12 {
   meses: string[];
 }
 
-export function rbt12(historico: readonly MesReceita[], comp: string, inicioAtividade: string | null, receitaPaCents: number): Rbt12 {
+export function rbt12(
+  historico: readonly MesReceita[],
+  comp: string,
+  inicioAtividade: string | null,
+  receitaPaCents: number,
+): Rbt12 {
   const janela = janelaRbt12(comp);
   const todos: string[] = [];
   for (let m = janela.de; m <= janela.ate; m = somaMeses(m, 1)) todos.push(m);
@@ -211,7 +237,12 @@ const R01 = q(1n, 100n);
  * anualização do § 4º multiplica os dois termos pelo mesmo fator, então a razão é a das somas). No mês de início, r =
  * FSPA / RPAr (§ 6º). Casos de zero: §§ 6º e 7º. r ≥ 0,28 → Anexo III; senão Anexo V.
  */
-export function fatorR(historico: readonly MesReceita[], base: Rbt12, receitaPaCents: number, folhaPaCents: number): Q {
+export function fatorR(
+  historico: readonly MesReceita[],
+  base: Rbt12,
+  receitaPaCents: number,
+  folhaPaCents: number,
+): Q {
   let fs: bigint;
   let rb: bigint;
   if (base.metodo === 'INICIO_PRIMEIRO_MES') {
@@ -237,7 +268,15 @@ interface Usada {
   fonte: string;
   vigenteDesde: string;
 }
-function linha<T>(linhas: readonly LinhaLegal[], tabela: string, chave: string, data: string, disc: string | null, schema: z.ZodType<T>, usadas: Map<string, Usada>): T | undefined {
+function linha<T>(
+  linhas: readonly LinhaLegal[],
+  tabela: string,
+  chave: string,
+  data: string,
+  disc: string | null,
+  schema: z.ZodType<T>,
+  usadas: Map<string, Usada>,
+): T | undefined {
   const l = linhaLegalVigente(linhas, tabela, chave, data, disc);
   if (!l) return undefined;
   usadas.set(l.id, { id: l.id, fonte: l.fonte, vigenteDesde: l.vigenteDesde });
@@ -266,7 +305,10 @@ export function apurar(entrada: ApuracaoInput, linhas: readonly LinhaLegal[]): A
   const atividades = input.atividades.map((at): AtividadeApurada => {
     const chave = at.natureza === 'SERVICO' ? `SERVICO:${at.cTribNac ?? ''}` : at.natureza;
     const enq = linha(linhas, 'SIMPLES_ENQUADRAMENTO', chave, data, null, EnquadramentoJsonSchema, usadas);
-    if (!enq) throw new AtividadeSemAnexoError(`atividade ${chave} sem anexo em SIMPLES_ENQUADRAMENTO vigente em ${data}`);
+    if (!enq)
+      throw new AtividadeSemAnexoError(
+        `atividade ${chave} sem anexo em SIMPLES_ENQUADRAMENTO vigente em ${data}`,
+      );
 
     let anexo: AnexoSimples = enq.anexo;
     let r: Q | null = null;
@@ -276,16 +318,25 @@ export function apurar(entrada: ApuracaoInput, linhas: readonly LinhaLegal[]): A
     }
 
     const faixas = [1, 2, 3, 4, 5, 6].map((f) =>
-      exigir(linha(linhas, 'SIMPLES_ANEXO_FAIXA', anexo, data, `F${f}`, FaixaJsonSchema, usadas), `faixa F${f} do Anexo ${anexo}`),
+      exigir(
+        linha(linhas, 'SIMPLES_ANEXO_FAIXA', anexo, data, `F${f}`, FaixaJsonSchema, usadas),
+        `faixa F${f} do Anexo ${anexo}`,
+      ),
     );
     // Faixa pelo RBT12 (o R$ 1,00 do RBT12 zero cai na 1ª); acima da 6ª, a última (Res. CGSN 140 art. 22 § 5º).
     let faixa = faixas.findIndex((f) => cmp(base.valor, q(BigInt(f.receitaAteCents))) <= 0) + 1;
     if (faixa === 0) faixa = 6;
     const efetiva = (f: z.infer<typeof FaixaJsonSchema>): Q =>
-      q(base.valor.n * BigInt(f.aliquotaNominalBp) - BigInt(f.parcelaDeduzirCents) * 10000n * base.valor.d, base.valor.n * 10000n);
+      q(
+        base.valor.n * BigInt(f.aliquotaNominalBp) - BigInt(f.parcelaDeduzirCents) * 10000n * base.valor.d,
+        base.valor.n * 10000n,
+      );
     const nominal = faixas[faixa - 1];
     const eff = efetiva(nominal);
-    const rep = exigir(linha(linhas, 'SIMPLES_ANEXO_REPARTICAO', anexo, data, `F${faixa}`, ReparticaoJsonSchema, usadas), `repartição F${faixa} do Anexo ${anexo}`);
+    const rep = exigir(
+      linha(linhas, 'SIMPLES_ANEXO_REPARTICAO', anexo, data, `F${faixa}`, ReparticaoJsonSchema, usadas),
+      `repartição F${faixa} do Anexo ${anexo}`,
+    );
 
     // Percentual efetivo de cada tributo = alíquota efetiva × repartição (LC 123 art. 18 § 1º-B; Res. CGSN 140 art. 21 III).
     const pct = new Map<TributoSimples, Q>();
@@ -293,7 +344,10 @@ export function apurar(entrada: ApuracaoInput, linhas: readonly LinhaLegal[]): A
 
     // Res. CGSN 140 art. 21 III "b": RBT12 acima da 5ª faixa sem sublimite excedido — ICMS/ISS (e IBS) pela 5ª faixa.
     if (faixa === 6 && !input.sublimiteExcedido) {
-      const rep5 = exigir(linha(linhas, 'SIMPLES_ANEXO_REPARTICAO', anexo, data, 'F5', ReparticaoJsonSchema, usadas), `repartição F5 do Anexo ${anexo}`);
+      const rep5 = exigir(
+        linha(linhas, 'SIMPLES_ANEXO_REPARTICAO', anexo, data, 'F5', ReparticaoJsonSchema, usadas),
+        `repartição F5 do Anexo ${anexo}`,
+      );
       const eff5 = efetiva(faixas[4]);
       for (const t of sublimite) if (rep5[t] !== undefined) pct.set(t, mul(eff5, BP(rep5[t] as number)));
     }
@@ -303,13 +357,29 @@ export function apurar(entrada: ApuracaoInput, linhas: readonly LinhaLegal[]): A
     const iss = pct.get('ISS');
     const teto = linha(linhas, 'SIMPLES_TETO_ISS', anexo, data, null, TetoIssJsonSchema, usadas);
     if (iss && teto && cmp(iss, BP(teto.percentualBp)) > 0) {
-      if (faixa !== 5) {
-        throw new SimplesRegraNaoRegulamentadaError(`teto do ISS excedido na ${faixa}ª faixa do Anexo ${anexo}: a nota do anexo só traz a repartição da 5ª faixa`);
+      if (faixa === 6) {
+        // 6ª faixa (ISS pela fórmula da 5ª, Res. CGSN 140 art. 21 III "b"): a nota do anexo só traz a tabela da 5ª, então
+        // vale o art. 21 III "a" literal — a diferença vai "aos tributos federais da mesma faixa", na proporção da
+        // repartição da 6ª (X14 PR-3; a Focus NFe não trata o caso, dono 07/10: decide-se pela lei).
+        const excesso = sub(iss, BP(teto.percentualBp));
+        pct.set('ISS', BP(teto.percentualBp));
+        const federais = (Object.entries(rep) as Array<[TributoSimples, number]>).filter(
+          ([t]) => !sublimite.includes(t) && t !== 'ISS' && t !== 'ICMS',
+        );
+        const base = federais.reduce((s, [, v]) => s + v, 0);
+        for (const [t, v] of federais)
+          pct.set(t, add(pct.get(t) ?? q(0n), mul(excesso, q(BigInt(v), BigInt(base)))));
+      } else if (faixa !== 5) {
+        throw new SimplesRegraNaoRegulamentadaError(
+          `teto do ISS excedido na ${faixa}ª faixa do Anexo ${anexo}: a nota do anexo só traz a repartição da 5ª faixa`,
+        );
+      } else {
+        const excesso = sub(eff, BP(teto.percentualBp));
+        for (const t of pct.keys()) if (t !== 'ISS') pct.delete(t);
+        pct.set('ISS', BP(teto.percentualBp));
+        for (const [t, v] of Object.entries(teto.transferencia) as Array<[TributoSimples, number]>)
+          pct.set(t, mul(excesso, BP(v)));
       }
-      const excesso = sub(eff, BP(teto.percentualBp));
-      for (const t of pct.keys()) if (t !== 'ISS') pct.delete(t);
-      pct.set('ISS', BP(teto.percentualBp));
-      for (const [t, v] of Object.entries(teto.transferencia) as Array<[TributoSimples, number]>) pct.set(t, mul(excesso, BP(v)));
     }
 
     // Locação de bem móvel: Anexo III "deduzida a parcela correspondente ao ISS" (art. 18 § 4º V).
@@ -323,11 +393,17 @@ export function apurar(entrada: ApuracaoInput, linhas: readonly LinhaLegal[]): A
       const inclusos = [...pct.entries()].filter(([t]) => !p.excluir.includes(t));
       if (inclusos.length === 0) continue;
       const valores = inclusos.map(([t, v]) => [t, arred(mul(R, v))] as const);
-      const total = arred(mul(R, inclusos.reduce((s, [, v]) => add(s, v), q(0n))));
+      const total = arred(
+        mul(
+          R,
+          inclusos.reduce((s, [, v]) => add(s, v), q(0n)),
+        ),
+      );
       const residuo = total - valores.reduce((s, [, v]) => s + v, 0n);
       // § 1º-B II: o resíduo vai para o tributo de maior percentual (empate: o primeiro na ordem do anexo).
       const maior = inclusos.reduce((a, b) => (cmp(b[1], a[1]) > 0 ? b : a))[0];
-      for (const [t, v] of valores) tributos[t] = (tributos[t] ?? 0) + Number(v + (t === maior ? residuo : 0n));
+      for (const [t, v] of valores)
+        tributos[t] = (tributos[t] ?? 0) + Number(v + (t === maior ? residuo : 0n));
     }
 
     return {
@@ -344,7 +420,10 @@ export function apurar(entrada: ApuracaoInput, linhas: readonly LinhaLegal[]): A
     };
   });
 
-  const totalCalculadoCents = atividades.reduce((s, a) => s + Object.values(a.tributos).reduce((x, v) => x + (v ?? 0), 0), 0);
+  const totalCalculadoCents = atividades.reduce(
+    (s, a) => s + Object.values(a.tributos).reduce((x, v) => x + (v ?? 0), 0),
+    0,
+  );
   return {
     competencia: input.competencia,
     regime: 'SIMPLES',
@@ -353,6 +432,10 @@ export function apurar(entrada: ApuracaoInput, linhas: readonly LinhaLegal[]): A
     mesesFaltantes: base.mesesFaltantes,
     atividades,
     totalCalculadoCents,
-    tabela: [...usadas.values()].map((u) => ({ legalParameterId: u.id, fonte: u.fonte, vigenteDesde: u.vigenteDesde })),
+    tabela: [...usadas.values()].map((u) => ({
+      legalParameterId: u.id,
+      fonte: u.fonte,
+      vigenteDesde: u.vigenteDesde,
+    })),
   };
 }

@@ -8,7 +8,7 @@ import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IPostingRepository } from '../repositories/IPostingRepository';
-import type { IReceitaFiscalRepository, ReceitaFiscalLinhaData } from '../repositories/IReceitaFiscalRepository';
+import type { IReceitaFiscalRepository, ReceitaFiscalLinhaData, TipoLinhaReceita } from '../repositories/IReceitaFiscalRepository';
 import type { IServiceFiscalProfileRepository } from '../repositories/IServiceFiscalProfileRepository';
 import type { SimplesEntradasService } from './SimplesEntradasService';
 
@@ -128,14 +128,45 @@ export class ReceitaFiscalService {
         excluir: [],
         parceriaContratoId,
         cotaProfissionalCents,
+        tipo: 'VENDA',
       });
     }
     return this.repo.createLinhasDaVenda(scope, linhas);
   }
 
   /** O reconcile pergunta antes de regravar. */
-  async vendaRegistrada(scope: AccountingScope, saleId: string): Promise<boolean> {
-    return (await this.repo.countLinhasDaVenda(scope, saleId)) > 0;
+  async vendaRegistrada(scope: AccountingScope, saleId: string, tipo: TipoLinhaReceita = 'VENDA'): Promise<boolean> {
+    return (await this.repo.countLinhasDaVenda(scope, saleId, tipo)) > 0;
+  }
+
+  /**
+   * X14 PR-3 (lacuna 1 do PR-2; dono 07/10: "mês do estorno/devolução") — cancelamento (estorno do `sale.finalized`) e
+   * devolução (D 3.2 pelo total) tiram a venda inteira da receita bruta (Res. CGSN 140 art. 2º II: "excluídas as vendas
+   * canceladas"). As linhas negativas espelham as da VENDA, item a item, com a data do lançamento do razão — o tie-out
+   * fecha por construção. Sem linhas de VENDA não há o que espelhar (devolve 0; o reconcile grava a venda antes).
+   * Idempotente por (venda, tipo).
+   */
+  async registrarEstorno(scope: AccountingScope, saleId: string, tipo: 'CANCELAMENTO' | 'DEVOLUCAO', dia: string): Promise<number> {
+    const vendas = await this.repo.findLinhasDaVenda(scope, saleId, 'VENDA');
+    if (vendas.length === 0) return 0;
+    const sufixo = tipo === 'CANCELAMENTO' ? '#cancelamento' : '#devolucao';
+    return this.repo.createLinhasDaVenda(
+      scope,
+      vendas.map((v) => ({
+        competencia: dia.slice(0, 7),
+        dia,
+        saleId,
+        itemRef: `${v.itemRef}${sufixo}`,
+        natureza: v.natureza as ReceitaFiscalLinhaData['natureza'],
+        cTribNac: v.cTribNac,
+        productRef: v.productRef,
+        receitaCents: -v.receitaCents,
+        excluir: v.excluir as string[],
+        parceriaContratoId: v.parceriaContratoId,
+        cotaProfissionalCents: -v.cotaProfissionalCents,
+        tipo,
+      })),
+    );
   }
 
   async mesesComSubrazao(scope: AccountingScope, competencias: readonly string[]): Promise<Set<string>> {

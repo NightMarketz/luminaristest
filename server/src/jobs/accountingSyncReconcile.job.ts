@@ -995,6 +995,62 @@ export async function reconcileReceitaFiscal(deps: ReceitaFiscalReconcileDeps): 
   return summary;
 }
 
+// X14 PR-3 (lacuna 1 do PR-2) — durability net for the negative subledger lines of a cancellation (reversal of the
+// 'sale.finalized') or a return ('sale.returned', D 3.2). Re-drives every Cancelled/Returned sale whose ledger event
+// exists and whose negative lines are missing; the day comes from the LEDGER entry (mirror). A sale whose positive
+// lines never got written is written first (from its items, on the revenue entry's day).
+export interface ReceitaFiscalEstornoSale {
+  ownerUserId: string;
+  saleId: string;
+  unitId: string;
+  amount: number;
+  tipo: 'CANCELAMENTO' | 'DEVOLUCAO';
+}
+
+export interface ReceitaFiscalEstornoReconcileDeps {
+  listSales: () => Promise<ReceitaFiscalEstornoSale[]>;
+  /** Day (YYYY-MM-DD) of the ledger event mirrored by the negative lines, or null when it was not booked. */
+  eventDay: (scope: AccountingScope, sale: ReceitaFiscalEstornoSale) => Promise<string | null>;
+  /** Day of the 'sale.finalized' entry, or null. */
+  revenueDay: (scope: AccountingScope, saleId: string) => Promise<string | null>;
+  alreadyRecorded: (scope: AccountingScope, saleId: string, tipo: 'VENDA' | 'CANCELAMENTO' | 'DEVOLUCAO') => Promise<boolean>;
+  recordVenda: (scope: AccountingScope, sale: ReceitaFiscalEstornoSale, dia: string) => Promise<number>;
+  recordEstorno: (scope: AccountingScope, sale: ReceitaFiscalEstornoSale, dia: string) => Promise<number>;
+}
+
+export async function reconcileReceitaFiscalEstornos(deps: ReceitaFiscalEstornoReconcileDeps): Promise<ReconcileSummary> {
+  const sales = await deps.listSales();
+  const summary: ReconcileSummary = { total: sales.length, synced: 0, idempotentHits: 0, failed: 0 };
+  for (const sale of sales) {
+    try {
+      if (!sale.unitId) throw new Error(`Venda '${sale.saleId}' sem unitId — subrazão não reconciliável.`);
+      const scope = resolveAccountingScope({ userId: sale.ownerUserId }, sale.unitId);
+      const dia = await deps.eventDay(scope, sale);
+      if (dia === null || (await deps.alreadyRecorded(scope, sale.saleId, sale.tipo))) {
+        summary.idempotentHits++;
+        continue;
+      }
+      if (!(await deps.alreadyRecorded(scope, sale.saleId, 'VENDA'))) {
+        const diaVenda = await deps.revenueDay(scope, sale.saleId);
+        if (diaVenda === null) {
+          summary.idempotentHits++;
+          continue;
+        }
+        await deps.recordVenda(scope, sale, diaVenda);
+      }
+      await deps.recordEstorno(scope, sale, dia);
+      summary.synced++;
+    } catch (error) {
+      summary.failed++;
+      logger.error('Receita fiscal (estorno) reconcile failed — continuing', {
+        saleId: sale.saleId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+  return summary;
+}
+
 // ───────────────────────────────────────────────────────────────────────────
 // Sale CMV pass (INCR-INVENTORY Body 2, Gap 2 crash-recovery) — the durability net
 // for the post-commit CMV seam (maybeSyncSaleCogs). The live emission runs the
@@ -2076,6 +2132,41 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
         }),
     });
 
+    // X14 PR-3: negative subledger lines of Cancelled/Returned sales (mirror of the reversal / D 3.2).
+    const diaDe = (e: { date: Date } | null) => (e ? e.date.toISOString().slice(0, 10) : null);
+    const receitaFiscalEstornos = await reconcileReceitaFiscalEstornos({
+      listSales: async () => {
+        const out: ReceitaFiscalEstornoSale[] = [];
+        for (const [status, tipo] of [['Cancelled', 'CANCELAMENTO'], ['Returned', 'DEVOLUCAO']] as const) {
+          for (const { ownerUserId, row } of await listSalesByStatus(status)) {
+            out.push({
+              ownerUserId,
+              saleId: row.id,
+              unitId: typeof row.data.unitId === 'string' ? row.data.unitId : '',
+              amount: typeof row.data.totalAmount === 'number' ? row.data.totalAmount : NaN,
+              tipo,
+            });
+          }
+        }
+        return out;
+      },
+      eventDay: async (scope, sale) => {
+        if (sale.tipo === 'DEVOLUCAO') return diaDe(await journalRepo.findBySource(scope, 'sale.returned', sale.saleId));
+        const original = await journalRepo.findBySource(scope, 'sale.finalized', sale.saleId);
+        return original?.reversedById ? diaDe(await journalRepo.findById(scope, original.reversedById)) : null;
+      },
+      revenueDay: async (scope, saleId) => diaDe(await journalRepo.findBySource(scope, 'sale.finalized', saleId)),
+      alreadyRecorded: (scope, saleId, tipo) => factory.getReceitaFiscalService().vendaRegistrada(scope, saleId, tipo),
+      recordVenda: async (scope, sale, dia) =>
+        factory.getReceitaFiscalService().registrarVenda(scope, {
+          saleId: sale.saleId,
+          amount: sale.amount,
+          dia,
+          lines: await loadSaleRevenueLines(sale.ownerUserId, sale.saleId),
+        }),
+      recordEstorno: (scope, sale, dia) => factory.getReceitaFiscalService().registrarEstorno(scope, sale.saleId, sale.tipo, dia),
+    });
+
     // Package origin (C 2.1.1 + balance credit) for every all-Package Finalized sale.
     const packageOrigin = await reconcileSalePackageOrigin({
       listPackageSales: async () =>
@@ -2237,7 +2328,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
       });
     }
 
-    return [crm, sale, cancellations, returns, settlements, cogs, receitaFiscal, packageOrigin, packageConsumption].reduce(
+    return [crm, sale, cancellations, returns, settlements, cogs, receitaFiscal, receitaFiscalEstornos, packageOrigin, packageConsumption].reduce(
       mergeSummaries,
     );
   };

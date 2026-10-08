@@ -667,6 +667,28 @@
                     }
                   ]
                 },
+                "simplesDasDeducaoAccountId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "simplesRecolherAccountId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
                 "irpjSaldoNegativoAccountId": {
                   "anyOf": [
                     {
@@ -4792,6 +4814,28 @@
             }
           ]
         },
+        "simplesDasDeducaoAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "simplesRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "irpjSaldoNegativoAccountId": {
           "anyOf": [
             {
@@ -5200,6 +5244,28 @@
           ]
         },
         "pisCofinsRetencaoConciliarAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "simplesDasDeducaoAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "simplesRecolherAccountId": {
           "anyOf": [
             {
               "type": "string",
@@ -10229,6 +10295,47 @@
       },
       "required": [
         "id"
+      ],
+      "additionalProperties": false
+    },
+    "SimplesDasRegistroSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "numeroDocumento": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "valorCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "vencimento": {
+          "type": "string"
+        },
+        "sourceDocumentId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "numeroDocumento",
+        "valorCents",
+        "vencimento"
       ],
       "additionalProperties": false
     }

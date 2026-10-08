@@ -18,6 +18,9 @@ import { resolveEcdCodVerLc } from '@/lib/sped';
 export const LEGAL_PARAMS_SEED_FILE = path.resolve(__dirname, '../../prisma/data/legal_parameters_v1.sql');
 /** BE-INCR-SIMPLES-NACIONAL PR-1 — gerado por `scripts/gen-simples-anexos.mjs`; a migração carrega o mesmo texto. */
 export const SIMPLES_SEED_FILE = path.resolve(__dirname, '../../prisma/data/legal_parameters_simples_v1.sql');
+/** X14 PR-3 — a linha à mão da cota de gestão da parceria. */
+export const SIMPLES_SEED_FILE_V2 = path.resolve(__dirname, '../../prisma/data/legal_parameters_simples_v2.sql');
+export const SIMPLES_SEED_FILES = [SIMPLES_SEED_FILE, SIMPLES_SEED_FILE_V2];
 /** PR-2: as tabelas restantes (exceto DEPRECIACAO_ANEXO_III, PR-3). Mesma regra de igualdade com o migration.sql. */
 export const LEGAL_PARAMS_SEED_FILE_V2 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v2.sql');
 export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2];

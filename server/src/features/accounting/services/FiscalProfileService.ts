@@ -62,6 +62,8 @@ export interface FiscalProfileView extends CostRegime {
   pisCofinsCreditoOutrosAccountId: string | null; // X8 PR-3 (L-5)
   pisCofinsRetidoCompensarAccountId: string | null; // X8 PR-3 (retenções)
   pisCofinsRetencaoConciliarAccountId: string | null; // X8 PR-3 (retenções)
+  simplesDasDeducaoAccountId: string | null; // X14 PR-3 item 21
+  simplesRecolherAccountId: string | null;
   irpjSaldoNegativoAccountId: string | null;
   csllSaldoNegativoAccountId: string | null;
   partnerAccountRef: string | null;
@@ -208,6 +210,9 @@ export class FiscalProfileService {
     // X8 PR-3 (retenções, dono 06/10): retido a compensar = ativo; retenções a conciliar = ativo redutor de clientes.
     if (input.pisCofinsRetidoCompensarAccountId) await this.assertAssetAccount(scope, input.pisCofinsRetidoCompensarAccountId, 'PIS/COFINS retido a compensar', tx);
     if (input.pisCofinsRetencaoConciliarAccountId) await this.assertAssetAccount(scope, input.pisCofinsRetencaoConciliarAccountId, 'retenções de PIS/COFINS a conciliar com clientes', tx);
+    // X14 PR-3 item 21: o DAS é dedução da receita (folha de natureza Revenue, saldo devedor) / passivo a recolher.
+    if (input.simplesDasDeducaoAccountId) await this.assertRevenueAccount(scope, input.simplesDasDeducaoAccountId, 'Simples Nacional (DAS) — dedução da receita', tx);
+    if (input.simplesRecolherAccountId) await this.assertLiabilityAccount(scope, input.simplesRecolherAccountId, 'Simples Nacional a recolher', tx);
     // X7 Fase B item 16 (F-TB-3 a): o ajuste anual negativo debita o saldo negativo a compensar — ativo (Asset).
     if (input.irpjSaldoNegativoAccountId) await this.assertAssetAccount(scope, input.irpjSaldoNegativoAccountId, 'saldo negativo de IRPJ a compensar', tx);
     if (input.csllSaldoNegativoAccountId) await this.assertAssetAccount(scope, input.csllSaldoNegativoAccountId, 'saldo negativo de CSLL a compensar', tx);
@@ -268,6 +273,8 @@ export class FiscalProfileService {
         pisCofinsCreditoOutrosAccountId: row.pisCofinsCreditoOutrosAccountId ?? '', // X8 PR-3 (L-5)
         pisCofinsRetidoCompensarAccountId: row.pisCofinsRetidoCompensarAccountId ?? '', // X8 PR-3 (retenções)
         pisCofinsRetencaoConciliarAccountId: row.pisCofinsRetencaoConciliarAccountId ?? '',
+        simplesDasDeducaoAccountId: row.simplesDasDeducaoAccountId ?? '', // X14 PR-3 item 21
+        simplesRecolherAccountId: row.simplesRecolherAccountId ?? '',
         irpjSaldoNegativoAccountId: row.irpjSaldoNegativoAccountId ?? '',
         csllSaldoNegativoAccountId: row.csllSaldoNegativoAccountId ?? '',
         // BE-INCR-DFE (item 9): enum/boolean/int como string — sem texto livre (IM/CNAE ficam fora do evento)
@@ -315,6 +322,16 @@ export class FiscalProfileService {
     }
   }
 
+  /** X14 PR-3 item 21: a dedução da receita (DAS) é folha de natureza Revenue com saldo devedor, como 3.2 Devoluções. */
+  private async assertRevenueAccount(scope: AccountingScope, id: string, label: string, tx?: Prisma.TransactionClient): Promise<void> {
+    const account = await this.accountRepo.findById(scope, id, tx);
+    if (!account || account.deletedAt) throw new ValidationError(`Conta de ${label} '${id}' não existe neste escopo.`);
+    if (!account.acceptsEntries) throw new ValidationError(`Conta de ${label} '${account.code}' não aceita lançamentos (não é folha).`);
+    if (account.nature !== 'Revenue') {
+      throw new ValidationError(`Conta de ${label} '${account.code}' tem natureza ${account.nature}; esperado Revenue (dedução da receita bruta — BRIEF X14 item 21).`);
+    }
+  }
+
   /** X7 item 3 (F-TA-6 a): análogo ao `assertAssetAccount` — o imposto a recolher é passivo (`nature = Liability`). */
   private async assertLiabilityAccount(scope: AccountingScope, id: string, label: string, tx?: Prisma.TransactionClient): Promise<void> {
     const account = await this.accountRepo.findById(scope, id, tx);
@@ -348,6 +365,8 @@ export class FiscalProfileService {
       pisCofinsCreditoOutrosAccountId: row.pisCofinsCreditoOutrosAccountId,
       pisCofinsRetidoCompensarAccountId: row.pisCofinsRetidoCompensarAccountId,
       pisCofinsRetencaoConciliarAccountId: row.pisCofinsRetencaoConciliarAccountId,
+      simplesDasDeducaoAccountId: row.simplesDasDeducaoAccountId, // X14 PR-3 item 21
+      simplesRecolherAccountId: row.simplesRecolherAccountId,
       irpjSaldoNegativoAccountId: row.irpjSaldoNegativoAccountId,
       csllSaldoNegativoAccountId: row.csllSaldoNegativoAccountId,
       partnerAccountRef: row.partnerAccountRef,
