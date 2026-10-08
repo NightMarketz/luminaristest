@@ -9,11 +9,12 @@ depende_de: ["[[P1]]", "[[P2]]", "[[I3]]", "[[D-2026-10-07-NUCLEO-KIT-DE-SETOR]]
 autorizacao: "dono, chat, 2026-10-07: \"Esta autorizado\" (o texto do nó) + \"Pode passar esse plano na frente de tudo\" + forks decididos (D-2026-10-07-KIT-SETOR-FORKS-POR-REFERENCIA) + \"Sim abre o brief com o máximo de detalhe possível\" — autoriza o BRIEF; sem 'executa'"
 perfil_previsto: "opus-medio"
 perfil_evidencia: "BRIEF §8: PR-1/PR-5 opus-baixo; PR-2/3/4/6 opus-medio (classificador do PR-4 no alto)"
-atualizado: "2026-10-07"
+atualizado: "2026-10-08"
+prs: ["#579"]
 ---
 # KIT-SETOR — Kit de setor: núcleo portável + estrutura importada pelo wizard
 
-**Estado:** `planned` — PRIORIDADE 1 da fila (dono 07/10: *"Pode passar esse plano na frente de tudo, pq não faz sentido criar nem corrigir nada se não estiver na estrutura correta"*). F-KS-0 → (b): só a [[LAC-B]] pausa. PRE-ADR Accepted. **BRIEF pronto** (6 PRs, 51 itens); pendentes F-KB-6 (conteúdo do v1) e F-KB-9 (setor do v2).  
+**Estado:** `planned` — PRIORIDADE 1 da fila (dono 07/10: 'na frente de tudo'; F-KS-0 → b: só a LAC-B pausa). PRE-ADR Accepted 07/10 (F-KS-1..7 pela referência Odoo/OCA/BC + F-KS-0/R4 por questionário). BRIEF pronto 07/10 (BE-INCR-KIT-SETOR-brief.md: 6 PRs, 51 itens; F-KB-1..5/7/8 pela referência; F-KB-6 e F-KB-9 PENDENTES); código só com 'executa' por PR  
 **Autorização:** dono, chat, 07/10 — nó + BRIEF; sem "executa" (ORCH-006).  
 **Depende de:** [[P1]] ✅ (arquétipos + binding), [[P2]] ✅ (2º setor), [[I3]] ✅ (`activate-default`).  
 **Desbloqueia:** [[LAC-B]] (a tela instala o kit).
