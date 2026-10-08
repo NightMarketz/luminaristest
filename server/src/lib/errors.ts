@@ -158,6 +158,28 @@ export class MitNadaAExportarError extends AppError {
 }
 
 /**
+ * BE-INCR-SIMPLES-NACIONAL (nó X14, BRIEF item 4; F-SN-3 → a): atividade sem linha `SIMPLES_ENQUADRAMENTO` vigente —
+ * o cálculo não escolhe anexo por conta própria. 422.
+ */
+export class AtividadeSemAnexoError extends AppError {
+  constructor(message: string) {
+    super(message, 422, 'ATIVIDADE_SEM_ANEXO');
+    Object.setPrototypeOf(this, AtividadeSemAnexoError.prototype);
+  }
+}
+
+/**
+ * BE-INCR-SIMPLES-NACIONAL PR-1: caso que a norma lida não regula (início de atividade a partir de 2027 sem a
+ * regulamentação do CGSN; teto do ISS na 6ª faixa). O cálculo recusa em vez de inventar a regra. 422.
+ */
+export class SimplesRegraNaoRegulamentadaError extends AppError {
+  constructor(message: string) {
+    super(message, 422, 'SIMPLES_REGRA_NAO_REGULAMENTADA');
+    Object.setPrototypeOf(this, SimplesRegraNaoRegulamentadaError.prototype);
+  }
+}
+
+/**
  * BE-INCR-ACCOUNTANT-GOVERNANCE (nó GOV-CONTADOR, BRIEF item 13): há contador responsável ativo no escopo e
  * só ele reabre período ou assina/rejeita a revisão (F-GOV-3 a).
  */

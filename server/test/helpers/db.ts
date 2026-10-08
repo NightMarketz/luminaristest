@@ -19,10 +19,11 @@ const DB_FILE = path.join(SERVER_DIR, 'prisma', 'test-integration.db');
 /**
  * BE-INCR-LEGAL-PARAMS PR-1 (BRIEF item 14): coeficientes de lei são dado de PLATAFORMA que a migração semeia. O
  * `db push` não roda migração, então o modelo aplica o mesmo arquivo de dados que o `migration.sql` carrega
- * (teste-guarda de igualdade em legalParameterSeed.test.ts) e o `resetDb()` o reaplica.
+ * (teste-guarda de igualdade em legalParameterSeed.test.ts) e o `resetDb()` o reaplica. BE-INCR-SIMPLES-NACIONAL PR-1
+ * acrescenta o segundo arquivo (tabelas do Simples, `simplesAnexosSeed.test.ts`).
  */
-// BE-INCR-LEGAL-PARAMS: uma semente por PR de migração (v1 = PR-1, v2 = PR-2), aplicadas em ordem.
-const LEGAL_PARAMS_SEEDS = ['legal_parameters_v1.sql', 'legal_parameters_v2.sql'].map((f) => path.join(SERVER_DIR, 'prisma', 'data', f));
+// BE-INCR-LEGAL-PARAMS: uma semente por PR de migração (v1 = PR-1, v2 = PR-2) + a do Simples (X14 PR-1), aplicadas em ordem.
+const LEGAL_PARAMS_SEEDS = ['legal_parameters_v1.sql', 'legal_parameters_v2.sql', 'legal_parameters_simples_v1.sql'].map((f) => path.join(SERVER_DIR, 'prisma', 'data', f));
 
 /**
  * Banco-modelo: o `db push` (~3–5 s, um subprocesso `npx`) roda UMA vez por versão do schema e cada arquivo de
@@ -42,8 +43,13 @@ function templateDb(): string {
       env: { ...process.env, DATABASE_URL: `file:./${tmpName}` },
       stdio: 'inherit',
     });
-    for (const seed of LEGAL_PARAMS_SEEDS) {
-      execSync(`npx prisma db execute --file "${seed}" --url "file:${path.join(SERVER_DIR, 'prisma', tmpName)}"`, { cwd: SERVER_DIR, stdio: 'inherit' });
+    // Um `db execute` só (cada `npx` custa ~1–2 s; três estouravam o timeout de 5 s do beforeAll no CI).
+    const seedTmp = path.join(SERVER_DIR, 'prisma', `${tmpName}.seed.sql`);
+    fs.writeFileSync(seedTmp, LEGAL_PARAMS_SEEDS.map((f) => fs.readFileSync(f, 'utf8')).join('\n'));
+    try {
+      execSync(`npx prisma db execute --file "${seedTmp}" --url "file:${path.join(SERVER_DIR, 'prisma', tmpName)}"`, { cwd: SERVER_DIR, stdio: 'inherit' });
+    } finally {
+      fs.rmSync(seedTmp, { force: true });
     }
     fs.renameSync(path.join(SERVER_DIR, 'prisma', tmpName), template);
   }

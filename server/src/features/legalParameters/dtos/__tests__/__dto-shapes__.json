@@ -20,7 +20,14 @@
             "ISS_LIMITE",
             "DEPRECIACAO_ANEXO_III",
             "LEIAUTE_SPED",
-            "FERIADO_NACIONAL"
+            "FERIADO_NACIONAL",
+            "SIMPLES_ANEXO_FAIXA",
+            "SIMPLES_ANEXO_REPARTICAO",
+            "SIMPLES_TETO_ISS",
+            "SIMPLES_ENQUADRAMENTO",
+            "SIMPLES_LIMITE",
+            "SIMEI_VALOR",
+            "SALARIO_MINIMO"
           ]
         },
         "chave": {
@@ -102,7 +109,14 @@
             "ISS_LIMITE",
             "DEPRECIACAO_ANEXO_III",
             "LEIAUTE_SPED",
-            "FERIADO_NACIONAL"
+            "FERIADO_NACIONAL",
+            "SIMPLES_ANEXO_FAIXA",
+            "SIMPLES_ANEXO_REPARTICAO",
+            "SIMPLES_TETO_ISS",
+            "SIMPLES_ENQUADRAMENTO",
+            "SIMPLES_LIMITE",
+            "SIMEI_VALOR",
+            "SALARIO_MINIMO"
           ]
         },
         "status": {
@@ -136,7 +150,14 @@
             "ISS_LIMITE",
             "DEPRECIACAO_ANEXO_III",
             "LEIAUTE_SPED",
-            "FERIADO_NACIONAL"
+            "FERIADO_NACIONAL",
+            "SIMPLES_ANEXO_FAIXA",
+            "SIMPLES_ANEXO_REPARTICAO",
+            "SIMPLES_TETO_ISS",
+            "SIMPLES_ENQUADRAMENTO",
+            "SIMPLES_LIMITE",
+            "SIMEI_VALOR",
+            "SALARIO_MINIMO"
           ]
         },
         "chave": {
