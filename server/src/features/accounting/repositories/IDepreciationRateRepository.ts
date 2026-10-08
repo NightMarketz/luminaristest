@@ -1,7 +1,7 @@
 import type { DepreciationRate, Prisma } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
 
-/** Dado para criar uma linha (seed do Anexo ou CUSTOM). Escalares apenas. */
+/** Dado para criar uma linha CUSTOM (o Anexo III é tabela de plataforma desde BE-INCR-LEGAL-PARAMS PR-3). */
 export interface CreateDepreciationRateData {
   userId: string;
   unitId: string;
@@ -29,9 +29,6 @@ export interface CreateDepreciationRateData {
 export interface IDepreciationRateRepository {
   create(data: CreateDepreciationRateData, tx?: Prisma.TransactionClient): Promise<DepreciationRate>;
 
-  /** Seed em lote (item 3) — 222 linhas do fixture numa chamada só. */
-  createMany(data: CreateDepreciationRateData[], tx?: Prisma.TransactionClient): Promise<number>;
-
   /** Point lookup escopado — `null` quando o id não é deste escopo (cross-tenant → null, D11). */
   findById(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<DepreciationRate | null>;
 
@@ -41,10 +38,6 @@ export interface IDepreciationRateRepository {
     includeHidden: boolean,
     tx?: Prisma.TransactionClient,
   ): Promise<DepreciationRate[]>;
-
-  /** Verdadeiro se o Anexo já foi semeado neste escopo (qualquer linha com source ≠ CUSTOM). Base
-   *  do gatilho LAZY (item 3) — não conta linhas CUSTOM, que podem existir antes do 1º seed. */
-  hasAnexoSeed(scope: AccountingScope, tx?: Prisma.TransactionClient): Promise<boolean>;
 
   /** Soft-hide (`hiddenAt`) — nunca apaga; uma linha ANEXO_* usada por um FixedAsset snapshot
    *  continua legível. Escopo no `where` (extended-where), cross-tenant nunca escreve. */

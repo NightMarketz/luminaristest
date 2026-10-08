@@ -9,7 +9,7 @@ import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '@
 import { FixedAssetService } from '@/features/accounting/services/FixedAssetService';
 import type { IFixedAssetRepository } from '@/features/accounting/repositories/IFixedAssetRepository';
 import type { IFixedAssetClassRepository } from '@/features/accounting/repositories/IFixedAssetClassRepository';
-import type { IDepreciationRateRepository } from '@/features/accounting/repositories/IDepreciationRateRepository';
+import type { ITaxaDepreciacaoCatalogo } from '@/features/accounting/services/ITaxaDepreciacaoCatalogo';
 import type { IAccountRepository } from '@/features/accounting/repositories/IAccountRepository';
 import type { IAccountingPeriodRepository } from '@/features/accounting/repositories/IAccountingPeriodRepository';
 import type { AccountingScopeSettingsService } from '@/features/accounting/services/AccountingScopeSettingsService';
@@ -84,7 +84,14 @@ function build(opts: {
   // casa com o NCM `8452.10` do fixture; testes de matching mais específico sobrescrevem.
   const ratesByNcm = opts.ratesByNcm ?? [{ id: 'rate-ncm-8452', ncm: '8452', annualRateBp: 1000, hiddenAt: null }];
   const findManyByUnit = jest.fn(async () => ratesByNcm);
-  const rateRepo = { findById: rateFindById, findManyByUnit } as unknown as IDepreciationRateRepository;
+  // BE-INCR-LEGAL-PARAMS PR-3: o serviço lê o catálogo (Anexo de plataforma + CUSTOM), não o repo de taxas.
+  const resolverTaxa = jest.fn(async (_s: unknown, id: string) => {
+    const r = await rateFindById();
+    return id.startsWith('lp3-')
+      ? { rateId: null, legalParameterId: id, annualRateBp: 2000 }
+      : { rateId: r.id, legalParameterId: null, annualRateBp: r.annualRateBp };
+  });
+  const rateRepo = { resolverTaxa, catalogo: findManyByUnit } as unknown as ITaxaDepreciacaoCatalogo;
 
   const accountFindById = jest.fn(async (_s: unknown, id: string) => accountOf(id, `code-${id}`));
   const accountRepo = { findById: accountFindById } as unknown as IAccountRepository;
@@ -149,6 +156,13 @@ describe('FixedAssetService.createAsset', () => {
     const [data] = create.mock.calls[0] as [{ annualRateBp: number; rateId: string | null }];
     expect(data.annualRateBp).toBe(1000);
     expect(data.rateId).toBe('rate-1');
+  });
+
+  it('PR-3 (L-1): rateId de linha do Anexo de plataforma grava legalParameterId, rateId null', async () => {
+    const { service, create } = build();
+    await service.createAsset(scope, { unitId: 'unit-1', classId: 'class-1', code: 'A-1', description: 'x', quantity: 1, costCents: 1000, residualValueCents: 0, acquiredAt: '2026-01-01', rateId: 'lp3-dep-anexo-2' });
+    const [data] = create.mock.calls[0] as [{ annualRateBp: number; rateId: string | null; legalParameterId: string | null }];
+    expect([data.rateId, data.legalParameterId, data.annualRateBp]).toEqual([null, 'lp3-dep-anexo-2', 2000]);
   });
 });
 

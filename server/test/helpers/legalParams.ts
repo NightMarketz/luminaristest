@@ -23,7 +23,9 @@ export const SIMPLES_SEED_FILE_V2 = path.resolve(__dirname, '../../prisma/data/l
 export const SIMPLES_SEED_FILES = [SIMPLES_SEED_FILE, SIMPLES_SEED_FILE_V2];
 /** PR-2: as tabelas restantes (exceto DEPRECIACAO_ANEXO_III, PR-3). Mesma regra de igualdade com o migration.sql. */
 export const LEGAL_PARAMS_SEED_FILE_V2 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v2.sql');
-export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2];
+/** PR-3: DEPRECIACAO_ANEXO_III (cópia do fixture do Anexo III). Mesma regra de igualdade com o migration.sql. */
+export const LEGAL_PARAMS_SEED_FILE_V3 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v3.sql');
+export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3];
 
 type Valor = string | number | null;
 
@@ -61,7 +63,7 @@ function tokens(lista: string): Valor[] {
   return out;
 }
 
-export function legalParamsSeedRows(arquivos: string | readonly string[] = LEGAL_PARAMS_SEED_FILES): LinhaLegal[] {
+export function legalParamsSeedRows(arquivos: string | readonly string[] = LEGAL_PARAMS_SEED_FILES): (LinhaLegal & { fonteUrl: string | null; fonteSha256: string | null; createdAt: Date })[] {
   return (typeof arquivos === 'string' ? [arquivos] : arquivos).flatMap((f) => fs.readFileSync(f, 'utf8').split(/\r?\n/)
     .filter((l) => l.startsWith('INSERT'))
     .map((l) => {
@@ -79,6 +81,10 @@ export function legalParamsSeedRows(arquivos: string | readonly string[] = LEGAL
         valorTexto: r.valorTexto as string | null,
         valorJson: r.valorJson as string | null,
         fonte: r.fonte as string,
+        // PR-3: a lista de taxas (Anexo III de plataforma) mostra a fonte e a data da linha.
+        fonteUrl: r.fonteUrl as string | null,
+        fonteSha256: r.fonteSha256 as string | null,
+        createdAt: new Date('2026-10-07T00:00:00.000Z'),
         vigenteDesde: r.vigenteDesde as string,
         vigenteAte: r.vigenteAte as string | null,
         status: r.status as string,

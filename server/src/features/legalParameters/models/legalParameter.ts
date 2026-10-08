@@ -33,10 +33,10 @@ export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
 
 /**
  * Tabelas cujo consumidor já lê do banco (emenda §9 L-4: PR-1 = IRPJ/CSLL e PIS/Cofins; PR-2 = as demais, menos a
- * depreciação). Propor linha de outra tabela ⇒ 400: publicaria um número que nenhum cálculo lê ainda (PR-3 abre
- * DEPRECIACAO_ANEXO_III).
+ * depreciação; PR-3 = DEPRECIACAO_ANEXO_III). Desde o PR-3 são todas; o conjunto fica como guarda de que tabela nova
+ * no enum só se propõe quando um consumidor a lê.
  */
-export const TABELAS_MIGRADAS: ReadonlySet<LegalParameterTabela> = new Set(LEGAL_PARAMETER_TABELAS.filter((t) => t !== 'DEPRECIACAO_ANEXO_III'));
+export const TABELAS_MIGRADAS: ReadonlySet<LegalParameterTabela> = new Set(LEGAL_PARAMETER_TABELAS);
 
 export const LEGAL_PARAMETER_STATUS = ['DRAFT', 'PUBLISHED', 'REVOKED'] as const;
 export type LegalParameterStatus = (typeof LEGAL_PARAMETER_STATUS)[number];

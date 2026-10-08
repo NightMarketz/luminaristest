@@ -4764,16 +4764,17 @@
  *     get:
  *       summary: List the unit depreciation rate table (BE-INCR-FIXED-ASSETS, nó C8, item 3)
  *       description: >-
- *         Seeds the Anexo III (IN RFB 1.700/2017) table LAZILY on first read of the scope (idempotent —
- *         a scope only seeds once). includeHidden=false (default) omits rows the operator hid; ANEXO_*
- *         rows are immutable (no edit route), CUSTOM rows are created via POST below.
+ *         BE-INCR-LEGAL-PARAMS PR-3: union, in one shape, of the Anexo III (IN RFB 1.700/2017) rows of the
+ *         PLATFORM table DEPRECIACAO_ANEXO_III in force today (origem=PLATAFORMA, id = legal parameter id;
+ *         changed only by PLATFORM_ADMIN publication) and the scope CUSTOM rows (origem=ESCOPO).
+ *         includeHidden=false (default) omits CUSTOM rows the operator hid; CUSTOM rows are created via POST below.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
  *         - { in: query, name: includeHidden, schema: { type: string, enum: ['true', 'false'] } }
  *       responses:
- *         '200': { description: 'DepreciationRate[]' }
+ *         '200': { description: 'TaxaDepreciacaoView[] — {id, origem PLATAFORMA|ESCOPO, ncm, sourceRow, description, lifeYears, annualRateBp, source, sourceUrl, sourceSha256, justification, hiddenAt, createdAt}' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
@@ -4810,8 +4811,9 @@
  *     post:
  *       summary: Hide a depreciation rate (soft — item 2)
  *       description: >-
- *         Never deletes: a rate a FixedAsset already snapshotted stays readable by id. Works on ANEXO_*
- *         and CUSTOM rows alike. Audited as depreciation_rate.hidden.
+ *         Never deletes: a rate a FixedAsset already snapshotted stays readable by id. CUSTOM rows only —
+ *         an Anexo III row is platform data (BE-INCR-LEGAL-PARAMS PR-3) and answers 404. Audited as
+ *         depreciation_rate.hidden.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
