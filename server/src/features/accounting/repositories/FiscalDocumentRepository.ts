@@ -65,6 +65,12 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
   }
 
   public async findByPartnerRef(partnerRef: string, tx?: Prisma.TransactionClient): Promise<FiscalDocument | null> {
+    // Pendente ainda não tem `partnerRef` (só o AUTHORIZED grava): o parceiro conhece o `ref` da tentativa CORRENTE.
+    const attempt = await this.db(tx).fiscalDocumentAttempt.findUnique({ where: { ref: partnerRef }, include: { document: true } });
+    const doc = attempt?.document;
+    if (doc && !doc.deletedAt && (doc.status === 'SENT' || doc.status === 'PROCESSING') && attempt.attemptNo === doc.currentAttemptNo) {
+      return doc;
+    }
     return this.db(tx).fiscalDocument.findFirst({
       where: { partnerRef, status: { in: ['SENT', 'PROCESSING'] }, deletedAt: null },
     });

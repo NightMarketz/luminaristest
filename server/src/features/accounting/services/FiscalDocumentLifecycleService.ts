@@ -536,7 +536,7 @@ export class FiscalDocumentLifecycleService {
     };
 
     if (result.status === 'PROCESSING') {
-      await this.repo.transition(scope, doc.id, { status: 'PROCESSING', attemptResult });
+      await this.repo.transition(scope, doc.id, { status: 'PROCESSING', attemptResult, whenStatusIn: PENDING_STATUSES });
       return;
     }
 
@@ -545,7 +545,7 @@ export class FiscalDocumentLifecycleService {
         await this.repo.transition(
           scope,
           doc.id,
-          { status: 'REJECTED', errorsJson: JSON.stringify(result.errors), attemptResult, ...(manual ? { whenStatusIn: PENDING_STATUSES } : {}) },
+          { status: 'REJECTED', errorsJson: JSON.stringify(result.errors), attemptResult, whenStatusIn: PENDING_STATUSES },
           tx,
         );
         await this.auditService.append(tx, scope, {
@@ -583,7 +583,7 @@ export class FiscalDocumentLifecycleService {
         {
           status: divergente ? 'AUTHORIZED_DIVERGENT' : 'AUTHORIZED',
           ...(manual?.serie !== undefined ? { serie: manual.serie } : {}),
-          ...(manual ? { whenStatusIn: PENDING_STATUSES } : {}),
+          whenStatusIn: PENDING_STATUSES,
           partnerRef: result.partnerRef,
           nNFSe: result.nNFSe ?? null,
           chaveOuCodigo: result.chaveOuCodigo,
