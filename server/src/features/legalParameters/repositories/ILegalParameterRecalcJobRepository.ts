@@ -16,7 +16,7 @@ export interface RecalcResumo {
 export interface ILegalParameterRecalcJobRepository {
   /** Publicar/revogar grava o job na MESMA tx da transição de status. */
   create(legalParameterId: string, evento: LegalParameterRecalcEvento, tx: Prisma.TransactionClient): Promise<LegalParameterRecalcJob>;
-  /** Os PENDING mais antigos primeiro (a ordem de publicação é a ordem de recálculo). */
+  /** PENDING com menos tentativas primeiro, depois os mais antigos — um job que sempre falha não trava a fila. */
   findPending(limit: number): Promise<LegalParameterRecalcJob[]>;
   /** PENDING ⇒ DONE com o resumo. */
   markDone(id: string, resumo: RecalcResumo, at: Date): Promise<void>;

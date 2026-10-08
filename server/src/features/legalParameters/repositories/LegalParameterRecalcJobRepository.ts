@@ -9,7 +9,7 @@ export class LegalParameterRecalcJobRepository implements ILegalParameterRecalcJ
   }
 
   public async findPending(limit: number): Promise<LegalParameterRecalcJob[]> {
-    return prisma.legalParameterRecalcJob.findMany({ where: { status: 'PENDING' }, orderBy: { createdAt: 'asc' }, take: limit });
+    return prisma.legalParameterRecalcJob.findMany({ where: { status: 'PENDING' }, orderBy: [{ tentativas: 'asc' }, { createdAt: 'asc' }], take: limit });
   }
 
   public async markDone(id: string, resumo: RecalcResumo, at: Date): Promise<void> {

@@ -179,6 +179,25 @@ describe('LEGAL-PARAMS PR-4 — snapshot por apuração + recálculo automático
     expect(nova.avisoParametroLegal).toBe(AVISO_VALOR_MUDOU_APOS_ENTREGA);
   });
 
+  it('review: aviso de falha anterior não congela a apuração — o próximo job a reconfirma se tem entrada gravada', async () => {
+    const c = await cenario(2038);
+    await confirmar(c, 'T01');
+    await prisma.taxAssessment.updateMany({ where: { userId: c.dono.id }, data: { avisoParametroLegal: 'Parâmetro legal mudou — reconfirme esta apuração (falha anterior).' } });
+    await publicarIrpj(2038, 1700);
+    await recalc();
+    const irpj = (await vivas(c)).find((x) => x.tributo === 'IRPJ')!;
+    expect([irpj.confirmedById, irpj.devidoCents, irpj.avisoParametroLegal]).toEqual([ATOR_PLATAFORMA, 544_000n, null]);
+  });
+
+  it('review: job que sempre falha não trava a fila — menos tentativas primeiro', async () => {
+    await prisma.legalParameterRecalcJob.deleteMany();
+    const velho = await prisma.legalParameterRecalcJob.create({ data: { legalParameterId: 'x', evento: 'PUBLISHED', status: 'PENDING', tentativas: 7 } });
+    const novo = await prisma.legalParameterRecalcJob.create({ data: { legalParameterId: 'y', evento: 'PUBLISHED', status: 'PENDING' } });
+    const { LegalParameterRecalcJobRepository } = await import('@/features/legalParameters/repositories/LegalParameterRecalcJobRepository');
+    expect((await new LegalParameterRecalcJobRepository().findPending(1)).map((j) => j.id)).toEqual([novo.id]);
+    expect(velho.createdAt <= novo.createdAt).toBe(true);
+  });
+
   it('revogar também enfileira (dono 07/10) e o job volta a apuração ao valor da linha anterior', async () => {
     const c = await cenario(2037);
     const linhaId = await publicarIrpj(2037, 1700);

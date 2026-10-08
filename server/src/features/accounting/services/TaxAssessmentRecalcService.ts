@@ -118,9 +118,14 @@ export class TaxAssessmentRecalcService {
     const motivo = `${job.evento === 'PUBLISHED' ? 'publicada' : 'revogada'} a linha ${linha.tabela}/${linha.chave} de ${linha.vigenteDesde}`;
 
     for (const familia of familiasDaLinha(linha)) {
+      // Período fora do formato conhecido (dado antigo) não derruba o job inteiro: fica de fora da varredura.
       const vivas = (await this.taxRepo.findConfirmedByTributos(TRIBUTOS[familia])).filter((r) => {
-        const j = janelaDoPeriodo(r.anoCalendario, r.periodo);
-        return j.de <= ate && j.ate >= linha.vigenteDesde;
+        try {
+          const j = janelaDoPeriodo(r.anoCalendario, r.periodo);
+          return j.de <= ate && j.ate >= linha.vigenteDesde;
+        } catch {
+          return false;
+        }
       });
       // X7 encadeia dentro do ano (a cascata é anual); X8 encadeia mês a mês através dos anos (saldo credor).
       const grupos = new Map<string, { owner: string; periodos: Map<number, { ano: number; periodo: string }> }>();
@@ -143,7 +148,6 @@ export class TaxAssessmentRecalcService {
     for (const { ano, periodo } of periodos) {
       const vivas = (await this.taxRepo.findConfirmedByYear(owner, ano)).filter((r) => r.periodo === periodo && TRIBUTOS[familia].includes(r.tributo));
       if (vivas.length === 0) continue; // já refeito pela cascata de um período anterior
-      if (vivas.every((r) => r.avisoParametroLegal?.startsWith('Parâmetro legal mudou'))) continue; // já avisado, nada a refazer
       const entrada = vivas[0].entradaInformada;
       if (entrada === null) {
         await this.avisar(owner, vivas, avisoReconfirme(`${motivo}; apuração anterior à gravação da entrada`), resumo);
