@@ -8,8 +8,8 @@ estado_detalhe: "07/10: PR-1 (#569) mergeado; PR-2 (#572) — demais tabelas (CO
 depende_de: []
 autorizacao: "dono, chat, 2026-10-06: \"Autorizo planejar o pente fino + BRIEF — sessao-planejamento, sem executa\"; ratificação por questionário no mesmo dia — sem 'executa' · EXECUTA: dono, chat, 2026-10-07: \"Executa o BE-INCR-LEGAL-PARAMS\" — sessao-feature; lacunas L-1..L-7 por questionário ([[D-2026-10-07-LEGAL-PARAMS-EXECUCAO]])"
 ancora_sdd: "—"
-atualizado: "2026-10-07"
-prs: ["#569", "#572", "#574"]
+atualizado: "2026-10-08"
+prs: ["#569", "#572", "#574", "#581"]
 ---
 # LEGAL-PARAMS — coeficientes de lei em tabela de plataforma versionada
 
