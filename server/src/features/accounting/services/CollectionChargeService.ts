@@ -365,7 +365,7 @@ export class CollectionChargeService {
       throw await this.translateProviderError(account, error, charge.id);
     }
     await this.repo.runTransaction(async (tx) => {
-      await this.repo.casStatus(
+      const n = await this.repo.casStatus(
         charge.id,
         'CREATING',
         {
@@ -378,6 +378,13 @@ export class CollectionChargeService {
         },
         tx,
       );
+      if (n === 1) {
+        await this.audit(tx, scope, COLLECTION_CHARGE_STATUS_CHANGED, charge.id, {
+          from: 'CREATING',
+          to: 'PENDING',
+          providerStatus: result.providerStatus,
+        });
+      }
     });
     // A ordem pode já nascer num estado além de PENDING — aplica pela função comum (P2-7).
     return this.applyProviderResult(charge.id, result);
