@@ -362,7 +362,9 @@ export class SimplesApuracaoService {
     // Item 16 → item 20: o tie-out do PA também bloqueia o registro.
     const tie = await this.receitaFiscal.tieOut(scope, competencia);
     if (tie.alerta) alertas.push(tie.alerta);
-    await this.conferirNfse(scope, competencia, linhasPa, alertas, tx);
+    // Review do PR-4 (achado 1): a cota do salão a título de aluguel de bem móvel não é serviço (sem ISS, sem NFS-e).
+    const servicosPa = linhasPa.filter((l) => !(l.parceriaContratoId && contratos.get(l.parceriaContratoId)?.naturezaCota === 'ALUGUEL_BEM_MOVEL'));
+    await this.conferirNfse(scope, competencia, servicosPa, alertas, tx);
     return { calculada, entrada, receitas, impressao, alertas, tieOut: { subrazaoCents: tie.subrazaoCents, razaoCents: tie.razaoCents, ok: tie.ok } };
   }
 
