@@ -5,6 +5,11 @@
 > **Nenhum fork é ratificado aqui.** Todos os forks estão em §5 com recomendação e status RATIFICAÇÃO PENDENTE.
 > **Atualização 2026-10-02:** F-ENC-6 → (a) ratificado junto com o F-EM-12 da emenda 3.2
 > ([`D-2026-10-02-C8-EMENDA-3-2-E-I1B-FORKS`](../plano/decisoes/D-2026-10-02-C8-EMENDA-3-2-E-I1B-FORKS.md)). Os demais seguem pendentes.
+> **Atualização 2026-10-09 (EMENDA T — tarifa):** dono, chat: *"autorizo emendar o BRIEF da Emenda 3.3 para incluir a Tarifa
+> Bancária/Gateway como uma classe/categoria autônoma e desmembrada do encargo de juros e multas"* (classe
+> `TARIFA_BANCARIA`, despesa operacional, fora do e-Lalur) e *"Aprovo a Opção (a) para o `F-ENC-1`"* → **F-ENC-1 ✅ (a)**.
+> Escopo: planejar (sem `executa`). Origem: `FE-INCR-BANK-CHARGE-ACCOUNTS-brief.md` (tela **cancelada** pelo mesmo
+> F-ENC-1 a). A emenda está em §3 (bloco "PR-2 — tarifa", E26–E31), §4.1, §5 (F-ENC-11..13, PENDENTES) e §6.8–6.9.
 
 ## 0. Contexto fixo
 
@@ -87,6 +92,7 @@ em 29/09 (fonte fora do corpus local) · **P** = pendente (§6).
 | L6 | PIS/COFINS de 0,65%/4% sobre receita financeira só no regime não cumulativo | Decreto 8.426/2015 | V-dono |
 | L7 | PIS/COFINS se extinguem em 31/12/2026 | LC 214 art. 542 | V-dono |
 | L8 | No Presumido, as "demais receitas" entram inteiras na base | IN 1.700 art. 215 § 3º I (`:3953-3967`) | V-local (só motiva o achado §8.1) |
+| L9 | Tarifa bancária/de gateway é despesa operacional (serviço de terceiro), dedutível, **sem** ajuste na Parte A (M300/M350); fica fora do resultado financeiro | Diretriz do dono, chat, 2026-10-09 (cita RIR/2018 art. 311, a regra geral de dedutibilidade da despesa necessária) | V-dono; o artigo não foi relido aqui (§6.9) |
 
 ## 3. Checklist de comportamentos
 
@@ -145,11 +151,50 @@ Fatiamento conforme F-ENC-10 (recomendação: 4 PRs seriais, com a migração no
 
   Teste: AP com juros de 300 e multa de ofício de 700 → um lançamento, 3 postings (4.3.1 D 300, 4.4.1 D 700, banco C 1000),
   e a linha de extrato conciliada exata.
-- **E9 [cond:F-ENC-1]** Destino de `bankChargeExpenseAccountId` e `bankChargeIncomeAccountId`, conforme o fork. Em
-  **nenhum** caminho um campo aceito pelo PUT de settings é ignorado pelo F7 (classe `param-aceito-e-ignorado-e-bug`).
+- **E9 [F-ENC-1 ✅ a]** `bankChargeExpenseAccountId` e `bankChargeIncomeAccountId` saem de
+  `UpdateAccountingScopeSettingsSchema`, da view, de `SCOPE_SETTINGS` (`AccountingPolicyVersionService.ts:39`), do
+  `fillNullAccounts` e do `SectorKitDto` (`bankCharge*AccountCode`). A coluna fica até um fold. O PUT com essas chaves dá
+  400 pelo `.strict()`: em **nenhum** caminho um campo aceito é ignorado (classe `param-aceito-e-ignorado-e-bug`). Os
+  `.gen.ts` do FE são regenerados (E22); o `AccountingScopeSettings` à mão do FE (`accounting.service.ts:179-188`) perde
+  os 2 campos no mesmo PR. Teste: PUT com `bankChargeExpenseAccountId` → 400; kit de setor com a chave → 400 de schema.
 - **E10 [direto]** A view do item (`BankSettlementItemView`) passa a expor `chargeParts`, `shortfallCents`,
   `shortfallTreatment` e `discountSettlementId`. Um item CONFIRMED antes desta emenda mostra `chargeParts: []`; o histórico
   não é migrado.
+
+### PR-2 — F7: tarifa bancária (EMENDA T, 2026-10-09)
+
+Identidade da linha com tarifa (`fee` ≥ 0; `charges` e `shortfall` calculados sobre o **bruto**, como no F-PP-6 b):
+AR → `|linha| = saldo + Σcharges − shortfall − fee` · AP → `|linha| = saldo + Σcharges − shortfall + fee` (F-ENC-12).
+
+- **E26 [direto, F-ENC-1 a]** Folha canônica `4.5 Tarifas Bancárias e de Intermediação` (Expense, `acceptsEntries: true`,
+  constante `BANK_FEE_CODE`). Não é filha de `4.1`, porque `4.1` já é folha com lançamentos (transformá-la em grupo quebra o
+  razão existente). A DRE a leva para `expenses` pela regra só por natureza (S8), **não** para `financialResult` (L9).
+  Teste: escopo novo tem `4.5`; DRE com movimento em 4.5 → linha em `expenses`, `financialResult` intacto. Entra no E1 e
+  no E2 (re-leitura da natureza).
+- **E27 [direto]** `TARIFA_BANCARIA` é classe **própria**, fora de `BANK_CHARGE_KINDS`: `charges[]` com `kind =
+  'TARIFA_BANCARIA'` → 400 `charge_kind_not_allowed`. Motivo: o encargo **soma** à linha (`|linha| − saldo`), e a tarifa no
+  AR **subtrai**. Pô-la em `charges[]` é exatamente a mistura que a diretriz proíbe. O valor mora em
+  `BankSettlementItem.feeCents`, a **mesma coluna** do F5 PR-3 (P3-7, `BE-INCR-PAYMENT-PROVIDER-brief.md:207-212,306`).
+  Só o PR que entrar primeiro cria a coluna; o outro rebaseia.
+- **E28 [cond:F-ENC-13]** Origem do `feeCents` numa linha de extrato (não-MP): `ConfirmBankSettlementSchema` ganha
+  `feeCents?: int ≥ 1`. Ele só é aceito com `item.feeCents = 0` (o que veio do relatório do provedor não se sobrescreve:
+  400 `fee_already_set`, classe `param-aceito-e-ignorado-e-bug`). O pré-cheque re-deriva `chargeCents` e `shortfallCents`
+  sobre o bruto (identidade acima) e exige que `charges[]` feche no novo `chargeCents`. Teste: AR de 100,00, linha de
+  97,00, `feeCents = 300` → charge 0, shortfall 0, não parcial; sem `feeCents` → parcial de 3,00 (comportamento de hoje).
+- **E29 [cond:F-ENC-11]** Lançamento: etapa `FEE` (a mesma do F5 P3-8, depois de `CHARGE`, `feeEntryId` no item;
+  `failedStep = 'FEE'`), 1 lançamento por item, idempotente por `(sourceType, item.id)`:
+  - AR: `D 4.5 / C <statement.glAccountId>` — a perna de banco a crédito fecha o líquido no `manualMatch` (o S17 do F5 está
+    fechado pelo #608: soma por sinal);
+  - AP: `D 4.5 / C <statement.glAccountId>` (sai mais dinheiro do banco que o saldo).
+  Teste do exemplo do dono, **corrigido para AR**: título de 10.000,00, juros de 100,00, tarifa de 300,00, linha de 9.800,00
+  → recibo 10.000,00 (`D banco / C 1.1.5`), `bank.charge` (`D banco 100 / C 3.5.1 100`), `FEE` (`D 4.5 300 / C banco 300`);
+  banco líquido = 9.800,00 = linha, conciliada exata. Nenhuma linha em 4.3.x (a resposta de 09/10 debitava "despesa de
+  juros" num recebível; no AR os juros são receita, L4).
+- **E30 [direto]** e-Lalur: `TARIFA_BANCARIA` **não** entra em `LALUR_AUTO_ADDITIONS`, e o E16 não lê a `4.5`. Teste: trimestre
+  com 4.5 movimentada e sem 4.4.x → `closeParteB` não deriva nenhuma linha `system`.
+- **E31 [direto]** View e auditoria: `BankSettlementItemView` expõe `feeCents` e `feeEntryId` (mesmos nomes do F5);
+  `bank_settlement.confirmed` ganha `feeCents` e `feeEntryId` na allowlist (o F5 P3-12 propõe as mesmas chaves; quem chega
+  primeiro as cria).
 
 ### PR-3 — F7: desconto condicional
 
@@ -267,6 +312,11 @@ export const FINANCIAL_ACCOUNT_CODES = {
   RECEIVABLE: { JUROS_MORA: '3.5.1', MULTA_MORA: '3.5.2', DISCOUNT: '4.3.3' },
 } as const;
 
+// EMENDA T (E26–E27): classe própria, fora de BANK_CHARGE_KINDS e de LALUR_AUTO_ADDITIONS. Valor em item.feeCents.
+export const BANK_FEE_KIND = 'TARIFA_BANCARIA' as const;
+export const BANK_FEE_CODE = '4.5'; // Expense, folha; DRE → expenses (regra por natureza), nunca financialResult
+// ConfirmBankSettlementSchema += feeCents: z.number().int().positive().optional()  (E28, regras no serviço)
+
 // Lalur.model.ts — E16. Códigos verificados no catálogo (S19). (lacs, 8.65) fora até §6.3.
 export const LALUR_AUTO_ADDITIONS = [
   { kind: 'MULTA_OFICIO',         livro: 'lalur', codigo: '8.60' },
@@ -373,7 +423,10 @@ discountSettlementId: string | null;
 
 | Fork | Pergunta | Caminhos | Recomendação |
 |---|---|---|---|
-| **F-ENC-1** | Onde moram as contas por classe | **(a)** Folhas canônicas no fixture (E1), resolvidas por código (E2). Os 2 campos legados saem do DTO de settings; a coluna fica até um fold · **(b)** Folhas canônicas mais 8 colunas de override por classe em `AccountingScopeSettings`; os 2 campos legados passam a ser override de `JUROS_MORA` · **(c)** Só configuração, sem conta canônica; 400 até o tenant configurar (como hoje) | **(a).** O contador respondeu *"mapeio no seu plano"* (triagem :70): ele mapeia o **nosso** plano no referencial, e o plano precisa ter as contas. O que falta dele é o `ReferentialMapping` (§6.1), não a conta. Com (c), o F7 continua travado em `charge_account_not_configured`. Com (b), vêm 8 FKs sem consumidor pedido. Custo de (a): tirar 2 campos do DTO muda o contrato (E22). Nenhum seed e nenhuma tela de settings os usa (grep em `my-app`: só o tipo gerado) |
+| **F-ENC-1** | Onde moram as contas por classe | **(a)** Folhas canônicas no fixture (E1), resolvidas por código (E2). Os 2 campos legados saem do DTO de settings; a coluna fica até um fold · **(b)** Folhas canônicas mais 8 colunas de override por classe em `AccountingScopeSettings`; os 2 campos legados passam a ser override de `JUROS_MORA` · **(c)** Só configuração, sem conta canônica; 400 até o tenant configurar (como hoje) | **(a).** O contador respondeu *"mapeio no seu plano"* (triagem :70): ele mapeia o **nosso** plano no referencial, e o plano precisa ter as contas. O que falta dele é o `ReferentialMapping` (§6.1), não a conta. Com (c), o F7 continua travado em `charge_account_not_configured`. Com (b), vêm 8 FKs sem consumidor pedido. Custo de (a): tirar 2 campos do DTO muda o contrato (E22). Nenhum seed e nenhuma tela de settings os usa (grep em `my-app`: só o tipo gerado) · ✅ **RATIFICADO 2026-10-09 → (a)**, dono: *"Aprovo a Opção (a) para o `F-ENC-1`"*. **Releitura em 09/10:** o kit de setor (`fillNullAccounts`, `SectorKitDto.bankCharge*AccountCode`) **usa** os 2 campos desde o BE-INCR-KIT-SETOR PR-2. A saída deles do DTO leva junto as 2 chaves do kit (E9) |
+| **F-ENC-11** | Conta da tarifa × `PaymentAccount.providerFeeExpenseAccountId` (F5 P3-8, ratificado no F-PP-6 b) | **(a)** Uma conta só: `4.5` canônica (E26) para extrato e provedor; o F5 PR-3 lança o `FEE` nela, e `providerFeeExpenseAccountId` sai do contrato da `PaymentAccount` · **(b)** `4.5` para extrato; a `PaymentAccount` mantém a sua conta (override por provedor) · **(c)** Só a conta da `PaymentAccount`; extrato sem provedor não aceita tarifa | **(a).** Segue o F-ENC-1 (a) que o dono acabou de ratificar (conta resolvida por código, sem configuração que trave em runtime). Custo: muda um contrato do F5 **já com `executa`** (Q5 de 10/10). Se o PR-3 do F5 já estiver aberto, (b) é a transição sem retrabalho, e (a) vira um fold depois |
+| **F-ENC-12** | O AP aceita tarifa? | **(a)** Sim: `|linha| = saldo + Σcharges + fee` (TED/boleto debitado junto) · **(b)** Não: no AP a tarifa vem em linha própria do extrato e se concilia avulsa | **(a).** Sem ela, uma linha de AP com tarifa embutida só cabe em `charges[]` (o 400 obriga a classificar), e o humano a classificaria como juros, que é a mistura que a diretriz proíbe |
+| **F-ENC-13** | De onde vem o `feeCents` numa linha de extrato bancário | **(a)** O humano informa no `confirm` (E28) · **(b)** Só o provedor (F5) preenche; no extrato, tarifa = linha própria | **(a).** O extrato não separa os componentes (S24), igual ao encargo (F-ENC-2 a). (b) deixa boleto liquidado líquido sem caminho honesto |
 | **F-ENC-2** | Como o encargo único vira 4 classes | **(a)** `charges[]` obrigatório quando `chargeCents > 0` (E6), gravado em tabela-filha (E7); a alternativa de guardar é uma coluna por classe no item · **(b)** Sem `charges`, tudo vira `JUROS_MORA` · **(c)** Regra fixa (multa até 2% e o resto como juros) | **(a).** A classe tem efeito fiscal: o default (b) grava multa punitiva como dedutível e sub-adiciona no X4. O extrato não separa os componentes (S24), então só o humano sabe. A tela pode pré-preencher. (c) não tem fonte para salão |
 | **F-ENC-4** | Desconto condicional na baixa (linha menor que o saldo) | **(a)** Baixa de `kind = DISCOUNT` no protocolo do AP/AR (E13), com EMENDA ao ADR-PARTIAL-SETTLEMENT · **(b)** Lançamento avulso de desconto, com o título ainda PARTIALLY_*; isso quebra "soma dos abertos = saldo 2.1.2/1.1.5" · **(c)** Fora desta emenda (só PARTIAL). **Sub-fork do teto:** (a1) mesmo teto de 20% do encargo (F-F7-5) · (a2) sem teto | **(a) + (a1).** Só (a) mantém o subrazão amarrado ao razão. O teto repete o motivo do F-F7-5: sem ele, um clique transforma parcial de 10% em desconto de 90%. Acima do teto, o humano faz a parcial e ajusta à mão |
 | **F-ENC-5** | Quando a adição automática nasce | **(a)** Dentro do `closeParteB`, antes das bases (E16; padrão PF/BC e E17 do PR #441) · **(b)** Endpoint próprio de derivação, consumido pelo `close` · **(c)** Só na geração da ECF, sem persistir | **(a).** É o momento que já materializa a Parte B. A ECF exige os 4 trimestres fechados (S18), então a linha sempre existe na geração. Reabrir e refechar dá a prévia. (b) acrescenta path e guard sem ganho. (c) esconde a adição da tela e da base do M500 |
@@ -411,6 +464,14 @@ mantido para não renumerar as referências do §3.
 7. **Relevância para o 1º cliente (Simples):** se a receita financeira fica fora da receita bruta do DAS, separá-la da 3.1
    evita tributar juros como serviço. Grau **I**: confirmar no PRE-ADR do Simples (onda 3, decisão 8).
 
+8. **Nome e referencial da `4.5`** (EMENDA T): a resposta do dono de 09/10 sugere "3.01.01.07 / 3.02.01.07" para tarifas e
+   "3.01.04.01" para juros. Esses códigos **não** foram conferidos contra a tabela referencial vigente da RFB. Entram no
+   follow-up 0.8b ao contador, junto com o §6.1, e não no `ReferentialMapping` deste BRIEF.
+9. **Citações legais da diretriz de 09/10:** "RIR/2018 art. 311" para a dedutibilidade da tarifa (regra geral, V-dono) e
+   "art. 311 § 2º" para a multa fiscal indedutível. Para a multa, este BRIEF mantém L1 (IN 1.700 art. 132 V-local; Lei
+   8.981 art. 41 § 5º; RIR art. 352 § 5º) até alguém conferir a redação vigente (memória
+   `tabela-transcrita-de-lei-conferir-redacao-vigente`). Nenhum comportamento muda com isso.
+
 ## 7. Insumos ausentes (pausados, não varridos — regra 2)
 
 1. **EMENDA ao `ADR-INCR-PARTIAL-SETTLEMENT`** (`:370`, "não cobre juros/multa/desconto"). É pré-requisito do PR-3
@@ -447,6 +508,10 @@ mantido para não renumerar as referências do §3.
 7. **FE:** `charges[]`, a escolha PARTIAL/DISCOUNT no `BankSettlementPanel` e a exibição da seção `financialResult` são
    crescimento do [[FE-INCR-BANK-SETTLEMENT]] e das telas de relatório. Sem esse FE, o PR-2 faz o confirm com encargo, que
    hoje já dá 400 `charge_account_not_configured`, voltar 400 `charge_breakdown_required`.
+   **EMENDA T (09/10):** o mesmo FE recebe o campo de tarifa (`feeCents`, E28). Com o F-ENC-1 (a), não há tela de contas de
+   encargo: o `FE-INCR-BANK-CHARGE-ACCOUNTS` foi **cancelado**, e a escolha de conta é do plano de contas, não de
+   configuração. O texto `bankSettlement.chargeAccountHint` (`BankSettlementPanel.tsx:330-332`) morre com o 400
+   `charge_account_not_configured`.
 8. **Várias contas por código** na adição automática (M310 1:N, S17), para tenant com mais de uma conta de multa.
 9. **Insumo da apuração de PIS/COFINS** (X8, se F-X7-13 a; PR #446): 0,65%/4% sobre receita financeira, só no não
    cumulativo, até 31/12/2026, lida das folhas 3.5.x (F-ENC-8 a).
