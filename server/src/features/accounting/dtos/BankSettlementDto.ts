@@ -1,6 +1,13 @@
 import { z } from 'zod';
 import { PAYMENT_METHODS } from '../models/Payable.model';
 import { BANK_SETTLEMENT_STATUSES } from '../models/BankSettlement.model';
+import { PROVIDER_BALANCE_METHOD } from '../models/Receivable.model';
+
+/**
+ * F5 PR-3 (P3-9, F-PP-7 a): o F7 aceita também `ProviderBalance` — a conta vem da PaymentAccount do extrato, não do
+ * mapa fechado; fora desse caminho o pré-cheque responde 400 `provider_balance_requires_payment_account`.
+ */
+const BANK_SETTLEMENT_METHODS = [...PAYMENT_METHODS, PROVIDER_BALANCE_METHOD] as [string, ...string[]];
 
 /**
  * BE-INCR-BANK-SETTLEMENT (nó F7) — DTOs Zod, todos `.strict()` (campo extra = 400, classe
@@ -24,7 +31,7 @@ export type ScanBankSettlementsInput = z.infer<typeof ScanBankSettlementsSchema>
 export const ConfirmBankSettlementSchema = z
   .object({
     unitId: z.string().min(1),
-    method: z.enum(PAYMENT_METHODS),
+    method: z.enum(BANK_SETTLEMENT_METHODS),
   })
   .strict();
 export type ConfirmBankSettlementInput = z.infer<typeof ConfirmBankSettlementSchema>;
@@ -42,7 +49,7 @@ export type RejectBankSettlementInput = z.infer<typeof RejectBankSettlementSchem
 export const RetryBankSettlementSchema = z
   .object({
     unitId: z.string().min(1),
-    method: z.enum(PAYMENT_METHODS),
+    method: z.enum(BANK_SETTLEMENT_METHODS),
   })
   .strict();
 export type RetryBankSettlementInput = z.infer<typeof RetryBankSettlementSchema>;

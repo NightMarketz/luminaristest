@@ -63,11 +63,14 @@ const dateOnly = z
  *         periodEnd: { type: string, format: date }
  *         openingBalanceCents: { type: integer, nullable: true, minimum: -2147483647, maximum: 2147483647, description: "Signed integer cents (a closing balance can be negative — overdraft). POLICY ceiling in both directions (not a persistence limit — the column is BigInt since BE-INCR-MONEY-BIGINT): outside this range the API returns 400." }
  *         closingBalanceCents: { type: integer, nullable: true, minimum: -2147483647, maximum: 2147483647, description: "Signed integer cents. Same POLICY ceiling as openingBalanceCents (see above)." }
+ *         format: { type: string, enum: [mp_release], nullable: true, description: "F5 PR-3 (G6): opcional; vazio = formato detectado pelo conteúdo. mp_release = relatório de liberações do Mercado Pago da conta de provedor desta folha (sem conta ⇒ 409; saldos vêm só do arquivo — informar saldo ⇒ 400)." }
  *         file: { type: string, format: binary }
  */
 export const ImportBankStatementSchema = z
   .object({
     unitId: idLike,
+    // F5 PR-3 (G6, dono 2026-10-10): formato explícito opcional; '' / ausente = detecção pelo conteúdo (como antes).
+    format: z.preprocess((v) => (v === '' || v === null ? undefined : v), z.literal('mp_release').optional()),
     glAccountId: idLike,
     statementRef: z.string().min(1).max(120).optional(),
     periodStart: dateOnly,

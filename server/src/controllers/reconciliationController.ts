@@ -77,12 +77,16 @@ export const importBankStatement = async (req: Request, res: Response) => {
     }
 
     const scope = resolveAccountingScope(user, parsed.data.unitId);
-    const data = await getFactory()
-      .getReconciliationService()
-      .importStatement(scope, parsed.data, {
-        buffer: file.buffer,
-        format: sniffFormat(file.buffer, file.originalname),
-      });
+    // F5 PR-3 (G6): `format = mp_release` explícito vai ao relatório de liberações da conta de provedor; vazio = detecção.
+    const data =
+      parsed.data.format === 'mp_release'
+        ? await getFactory().getReleaseReportService().importManual(scope, parsed.data, file.buffer)
+        : await getFactory()
+            .getReconciliationService()
+            .importStatement(scope, parsed.data, {
+              buffer: file.buffer,
+              format: sniffFormat(file.buffer, file.originalname),
+            });
     return res.status(data.created ? 201 : 200).json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);

@@ -15,7 +15,7 @@ attachmentId?: string
 }
 export interface RegisterReceiptInput {
 unitId: string
-method: ("Cash" | "Pix" | "TED" | "Boleto")
+method: ("Cash" | "Pix" | "TED" | "Boleto" | "ProviderBalance")
 receivedAt: string
 amountCents: number
 }

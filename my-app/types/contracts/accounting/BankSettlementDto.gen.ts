@@ -6,7 +6,7 @@ statementId: string
 }
 export interface ConfirmBankSettlementInput {
 unitId: string
-method: ("Cash" | "Pix" | "TED" | "Boleto")
+method: ("Cash" | "Pix" | "TED" | "Boleto" | "ProviderBalance")
 }
 export interface RejectBankSettlementInput {
 unitId: string
@@ -14,7 +14,7 @@ reason: string
 }
 export interface RetryBankSettlementInput {
 unitId: string
-method: ("Cash" | "Pix" | "TED" | "Boleto")
+method: ("Cash" | "Pix" | "TED" | "Boleto" | "ProviderBalance")
 }
 export interface ListBankSettlementsQueryInput {
 unitId: string

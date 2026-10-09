@@ -106,6 +106,9 @@ export interface IReconciliationRepository {
    * alone is only a safe cursor ACROSS separate autoMatchStatement() calls
    * (a MATCHED line drops out of scope), not within one chunked call.
    */
+  /** F5 PR-3 (P3-4): `rawJson` das linhas dos extratos ATIVOS de uma PaymentAccount — chave de sobreposição. */
+  findLineRawsByPaymentAccount(scope: AccountingScope, paymentAccountId: string, tx?: Prisma.TransactionClient): Promise<string[]>;
+
   findLinesByStatement(
     scope: AccountingScope,
     statementId: string,

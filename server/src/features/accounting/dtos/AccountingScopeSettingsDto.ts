@@ -21,6 +21,8 @@ export const UpdateAccountingScopeSettingsSchema = z
     disposalLossAccountId: z.string().min(1).nullable().optional(),
     // BE-INCR-FIXED-ASSETS (nó C8, item 24, PR-3): conta da Parte B — FK LalurParteBAccount, não Account.
     depreciationParteBAccountId: z.string().min(1).nullable().optional(),
+    // BE-INCR-PAYMENT-PROVIDER PR-3 (nó F5, P3-11): despesa de tarifa do provedor de cobrança (código = contador, P3).
+    providerFeeExpenseAccountId: z.string().min(1).nullable().optional(),
   })
   .strict();
 export type UpdateAccountingScopeSettingsInput = z.infer<typeof UpdateAccountingScopeSettingsSchema>;

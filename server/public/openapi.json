@@ -496,7 +496,7 @@
               "type": "string"
             },
             "maxItems": 20,
-            "description": "Até 20 jobs EXPORTED extras (balancete, razão, conciliação, amostra, BP, DRE, memória das apurações, ISS por competência) — SPED nunca é extra"
+            "description": "Até 20 jobs EXPORTED extras (balancete, razão, conciliação, amostra, BP, DRE) — SPED nunca é extra"
           }
         }
       },
@@ -557,9 +557,7 @@
                 "EXPORT_BALANCE_SHEET",
                 "EXPORT_INCOME_STATEMENT",
                 "EXPORT_BANK_RECONCILIATION",
-                "EXPORT_ENTRY_SAMPLE",
-                "EXPORT_TAX_ASSESSMENT_MEMO",
-                "EXPORT_ISS_BY_COMPETENCE"
+                "EXPORT_ENTRY_SAMPLE"
               ]
             },
             "description": "Kinds que a UI pré-marca no build — SUGESTÃO, não gate (C6b PR-3, F-C6b-2 a)"
@@ -3391,8 +3389,10 @@
               "Cash",
               "Pix",
               "TED",
-              "Boleto"
-            ]
+              "Boleto",
+              "ProviderBalance"
+            ],
+            "description": "ProviderBalance (F5 PR-3, P3-9) só na confirmação do F7 — recibo avulso ⇒ 400 provider_balance_requires_payment_account"
           },
           "receivedAt": {
             "type": "string",
@@ -3536,6 +3536,14 @@
             "minimum": -2147483647,
             "maximum": 2147483647,
             "description": "Signed integer cents. Same POLICY ceiling as openingBalanceCents (see above)."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "mp_release"
+            ],
+            "nullable": true,
+            "description": "F5 PR-3 (G6): opcional; vazio = formato detectado pelo conteúdo. mp_release = relatório de liberações do Mercado Pago da conta de provedor desta folha (sem conta ⇒ 409; saldos vêm só do arquivo — informar saldo ⇒ 400)."
           },
           "file": {
             "type": "string",
@@ -11042,9 +11050,7 @@
                       "EXPORT_INCOME_STATEMENT",
                       "EXPORT_TEMPLATE",
                       "EXPORT_BANK_RECONCILIATION",
-                      "EXPORT_ENTRY_SAMPLE",
-                      "EXPORT_TAX_ASSESSMENT_MEMO",
-                      "EXPORT_ISS_BY_COMPETENCE"
+                      "EXPORT_ENTRY_SAMPLE"
                     ]
                   },
                   "format": {
@@ -11067,7 +11073,7 @@
                   },
                   "periodStart": {
                     "type": "string",
-                    "description": "YYYY-MM-DD — EXPORT_GENERAL_LEDGER (optional; window), EXPORT_BANK_RECONCILIATION, EXPORT_ENTRY_SAMPLE, EXPORT_TAX_ASSESSMENT_MEMO and EXPORT_ISS_BY_COMPETENCE (all REQUIRED) only (400 for any other kind). Must be given together with periodEnd (never just one — 400 otherwise)"
+                    "description": "YYYY-MM-DD — EXPORT_GENERAL_LEDGER (optional; window), EXPORT_BANK_RECONCILIATION and EXPORT_ENTRY_SAMPLE (both REQUIRED) only (400 for any other kind). Must be given together with periodEnd (never just one — 400 otherwise)"
                   },
                   "periodEnd": {
                     "type": "string",
@@ -12615,12 +12621,20 @@
                   "closingBalanceCents": {
                     "type": "integer"
                   },
+                  "format": {
+                    "type": "string",
+                    "enum": [
+                      "mp_release"
+                    ],
+                    "description": "F5 PR-3 (G6): optional; empty = auto-detected. mp_release = Mercado Pago released-money report of the PaymentAccount on this GL (none ⇒ 409 release_report_no_payment_account); balances come only from the file (sending them ⇒ 400 release_report_balance_from_file); missing columns ⇒ 400 release_report_missing_columns; SOURCE_ID+DESCRIPTION already imported ⇒ 400 release_report_overlap"
+                  },
                   "file": {
                     "type": "string",
                     "format": "binary",
                     "description": "CSV",
                     "XLSX": null,
-                    "OFX or CNAB 240": null
+                    "OFX": null,
+                    "CNAB 240 or mp_release CSV": null
                   }
                 }
               }
@@ -12645,6 +12659,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "description": "release_report_no_payment_account — mp_release on a GL account without a Mercado Pago PaymentAccount"
           }
         }
       },
@@ -16902,7 +16919,7 @@
     "/api/bank-settlements/{id}/confirm": {
       "post": {
         "summary": "Confirm a proposal — the ONLY financial effect (items 6–8, F-F7-3/4 a)",
-        "description": "CAS PENDING→CONFIRMING closes the race (two confirms = one effect). Authoritative pre-check in a read transaction BEFORE any effect: item PENDING, line UNMATCHED with no active match, statement active, title balance re-read ≥ proposedCents, the account the method resolves to must be the statement's bank account, and — when chargeCents > 0 — a charge account configured (PUT /api/accounting/settings) and the line's period OPEN. Any failure = 400 with no effect. Then idempotent steps with state saved on the item: (i) AP/AR registerPayment/registerReceipt (their own claim→book→finalize protocol), (ii) bank.charge entry when chargeCents > 0, (iii) manualMatch of the bank legs (Σ == |line| exact), (iv) CONFIRMED. Failure in (ii)/(iii) → FAILED with the ids kept.",
+        "description": "CAS PENDING→CONFIRMING closes the race (two confirms = one effect). Authoritative pre-check in a read transaction BEFORE any effect: item PENDING, line UNMATCHED with no active match, statement active, title balance re-read ≥ proposedCents, the account the method resolves to must be the statement's bank account, and — when chargeCents > 0 — a charge account configured (PUT /api/accounting/settings) and the line's period OPEN. Any failure = 400 with no effect. Then idempotent steps with state saved on the item: (i) AP/AR registerPayment/registerReceipt (their own claim→book→finalize protocol), (ii) bank.charge entry when chargeCents > 0, (ii-b) provider.fee entry when feeCents > 0 (F5 PR-3, P3-8: D providerFeeExpenseAccountId / C PaymentAccount GL), (iii) manualMatch of the statement-account legs (signed Σ == line), (iv) CONFIRMED. Failure in (ii)/(iii) → FAILED with the ids kept.",
         "tags": [
           "Accounting"
         ],
@@ -16941,9 +16958,10 @@
                       "Cash",
                       "Pix",
                       "TED",
-                      "Boleto"
+                      "Boleto",
+                      "ProviderBalance"
                     ],
-                    "description": "closed map PAYMENT_METHOD_ACCOUNTS — must resolve to the statement bank account"
+                    "description": "closed map PAYMENT_METHOD_ACCOUNTS — must resolve to the statement bank account. ProviderBalance (F5 PR-3, P3-9): only on a PaymentAccount statement (ACTIVE, same GL) for a RECEIVABLE — else 400 provider_balance_requires_payment_account"
                   }
                 }
               }
@@ -16955,7 +16973,7 @@
             "description": "BankSettlementItemView (status CONFIRMED)"
           },
           "400": {
-            "description": "pre-check failed (line_not_unmatched | title_not_open | title_balance | method_account_mismatch | charge_account_not_configured | period_not_open) or item not PENDING"
+            "description": "pre-check failed (line_not_unmatched | title_not_open | title_balance | method_account_mismatch | charge_account_not_configured | fee_account_not_configured | provider_balance_requires_payment_account | period_not_open) or item not PENDING"
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
@@ -17075,8 +17093,10 @@
                       "Cash",
                       "Pix",
                       "TED",
-                      "Boleto"
-                    ]
+                      "Boleto",
+                      "ProviderBalance"
+                    ],
+                    "description": "ProviderBalance só no caminho do F7 (P3-9)"
                   }
                 }
               }
@@ -17125,7 +17145,7 @@
         ],
         "responses": {
           "200": {
-            "description": "unitId, bankChargeExpenseAccountId, bankChargeIncomeAccountId, depreciationExpenseAccountId, disposalGainAccountId, disposalLossAccountId, depreciationParteBAccountId, updatedAt"
+            "description": "unitId, bankChargeExpenseAccountId, bankChargeIncomeAccountId, depreciationExpenseAccountId, disposalGainAccountId, disposalLossAccountId, depreciationParteBAccountId, providerFeeExpenseAccountId, updatedAt"
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"
@@ -17186,6 +17206,11 @@
                     "type": "string",
                     "nullable": true,
                     "description": "conta LalurParteBAccount para a diferença contábil×fiscal (item 24, PR-3)"
+                  },
+                  "providerFeeExpenseAccountId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "D tarifa do provedor de cobrança (Expense) — F5 PR-3, P3-11; sem ela, /confirm com feeCents > 0 dá 400 fee_account_not_configured"
                   }
                 }
               }
@@ -22250,54 +22275,6 @@
           },
           "409": {
             "description": "TAX_ASSESSMENT_CAS, _ALREADY_CONFIRMED, _SUPERSEDES, _ORDER, _REGIME ou _STALE"
-          }
-        }
-      }
-    },
-    "/api/accounting/tax-assessments/periodos": {
-      "get": {
-        "summary": "Expected periods of the year by tax family - X7 IRPJ/CSLL, X8 PIS/Cofins, Simples (TAX-ASSESSMENT-PERIODOS)",
-        "description": "Leitura pura. Para cada familia diz se e apuravel (motivo PERFIL_AUSENTE, REGIME_DAS, REGIME_NAO_SIMPLES ou REGIME_SEM_APURACAO quando nao), a forma (X7) ou a modalidade (X8) e os periodos esperados - T01..T04 ou A01..A12 + A00, M01..M12, competencias YYYY-MM - com o estado por tributo (SEM_APURACAO, CONFIRMED com id e aPagarCents, SO_SUPERSEDED, FORA_DA_ATIVIDADE, REVOGADO). Nenhuma regra nova - as mesmas funcoes da previa.",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "unitId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "anoCalendario",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "minimum": 2000,
-              "maximum": 2100
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "TaxAssessmentPeriodosView (anoCalendario, regime, familias)"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
           }
         }
       }

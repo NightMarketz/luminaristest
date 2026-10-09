@@ -215,3 +215,34 @@ describe('NullCollectionProvider (invariante 12)', () => {
     expect(p.verifyWebhook().ok).toBe(false);
   });
 });
+
+describe('MercadoPagoCollectionProvider — relatório de liberações (PR-3, P3-5; M10)', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  it('requestReleaseReport: POST /v1/account/release_report com begin_date/end_date ISO UTC e Bearer', async () => {
+    const spy = jest.spyOn(global, 'fetch').mockImplementation(async () => new Response('', { status: 202 }));
+    await new MercadoPagoCollectionProvider('https://mp.test').requestReleaseReport(account, { fromUtc: '2026-10-07T03:00:00.000Z', toUtc: '2026-10-10T03:00:00.000Z' });
+    const [url, init] = spy.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://mp.test/v1/account/release_report');
+    expect(init.method).toBe('POST');
+    expect((init.headers as Record<string, string>).Authorization).toBe(`Bearer ${TOKEN}`);
+    expect(JSON.parse(String(init.body))).toEqual({ begin_date: '2026-10-07T03:00:00.000Z', end_date: '2026-10-10T03:00:00.000Z' });
+  });
+
+  it('listReleaseReports mapeia file_name/begin_date/end_date; downloadReleaseReport devolve o corpo bruto', async () => {
+    mockFetch(200, [{ file_name: 'r1.csv', begin_date: '2026-10-07T03:00:00Z', end_date: '2026-10-10T03:00:00Z', id: 1 }, { foo: 1 }]);
+    const p = new MercadoPagoCollectionProvider('https://mp.test');
+    expect(await p.listReleaseReports(account)).toEqual([{ fileName: 'r1.csv', beginDate: '2026-10-07T03:00:00Z', endDate: '2026-10-10T03:00:00Z' }]);
+    jest.restoreAllMocks();
+    const spy = jest.spyOn(global, 'fetch').mockImplementation(async () => new Response('DATE,SOURCE_ID\n', { status: 200 }));
+    expect((await p.downloadReleaseReport(account, 'r 1.csv')).toString('utf8')).toBe('DATE,SOURCE_ID\n');
+    expect(spy.mock.calls[0][0]).toBe('https://mp.test/v1/account/release_report/r%201.csv');
+  });
+
+  it('401 no relatório ⇒ CollectionProviderError com httpStatus 401 (P2-4 vale para o job)', async () => {
+    mockFetch(401, { message: 'unauthorized' });
+    const err = await new MercadoPagoCollectionProvider('https://mp.test').listReleaseReports(account).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(CollectionProviderError);
+    expect((err as CollectionProviderError).httpStatus).toBe(401);
+  });
+});

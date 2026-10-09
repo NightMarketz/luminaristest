@@ -45,6 +45,7 @@ export class ReconciliationRepository implements IReconciliationRepository {
         unitId: data.unitId,
         glAccountId: data.glAccountId,
         statementRef: data.statementRef ?? null,
+        paymentAccountId: data.paymentAccountId ?? null,
         periodStart: data.periodStart,
         periodEnd: data.periodEnd,
         openingBalanceCents: data.openingBalanceCents ?? null,
@@ -162,6 +163,18 @@ export class ReconciliationRepository implements IReconciliationRepository {
     return (tx ?? prisma).bankStatementLine.findFirst({
       where: { id, ...accountingScopeWhere(scope) },
     });
+  }
+
+  public async findLineRawsByPaymentAccount(
+    scope: AccountingScope,
+    paymentAccountId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<string[]> {
+    const rows = await (tx ?? prisma).bankStatementLine.findMany({
+      where: { ...accountingScopeWhere(scope), statement: { paymentAccountId, deletedAt: null } },
+      select: { rawJson: true },
+    });
+    return rows.map((r) => r.rawJson);
   }
 
   public async findLinesByStatement(

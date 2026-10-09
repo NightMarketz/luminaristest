@@ -34,6 +34,12 @@ export interface IPaymentAccountRepository {
     excludeId: string,
     tx?: Prisma.TransactionClient,
   ): Promise<PaymentAccount | null>;
+  /** F5 PR-3 (G6): contas não apagadas do provedor sobre uma folha contábil (upload mp_release). */
+  findByGlAccount(scope: AccountingScope, provider: string, glAccountId: string, tx?: Prisma.TransactionClient): Promise<PaymentAccount[]>;
+  /** F5 PR-3 (P3-5): contas ACTIVE de um provedor em TODOS os escopos — só o job diário usa. */
+  findAllActiveAnyScope(provider: string): Promise<PaymentAccount[]>;
+  /** F5 PR-3 (G5): o ator do job ainda existe (revalidado a cada ciclo). */
+  userExists(userId: string): Promise<boolean>;
   update(
     scope: AccountingScope,
     id: string,

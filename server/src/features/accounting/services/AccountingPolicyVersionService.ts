@@ -37,7 +37,7 @@ const ACCOUNT_KEYS: Record<PolicyTarget, readonly string[]> = {
   ],
   SCOPE_SETTINGS: [
     'bankChargeExpenseAccountId', 'bankChargeIncomeAccountId', 'depreciationExpenseAccountId',
-    'disposalGainAccountId', 'disposalLossAccountId',
+    'disposalGainAccountId', 'disposalLossAccountId', 'providerFeeExpenseAccountId', // F5 PR-3 (P3-11)
   ],
 };
 /** `depreciationParteBAccountId` aponta para `LalurParteBAccount`, não `Account` (FK diferente). */

@@ -42,6 +42,26 @@ export class PaymentAccountRepository implements IPaymentAccountRepository {
     });
   }
 
+  public async findByGlAccount(
+    scope: AccountingScope,
+    provider: string,
+    glAccountId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<PaymentAccount[]> {
+    return (tx ?? prisma).paymentAccount.findMany({
+      where: { ...accountingScopeWhere(scope), provider, glAccountId, deletedAt: null },
+      orderBy: [{ createdAt: 'asc' }],
+    });
+  }
+
+  public async findAllActiveAnyScope(provider: string): Promise<PaymentAccount[]> {
+    return prisma.paymentAccount.findMany({ where: { provider, status: 'ACTIVE', deletedAt: null }, orderBy: [{ createdAt: 'asc' }] });
+  }
+
+  public async userExists(userId: string): Promise<boolean> {
+    return (await prisma.user.count({ where: { id: userId } })) > 0;
+  }
+
   public async update(
     scope: AccountingScope,
     id: string,

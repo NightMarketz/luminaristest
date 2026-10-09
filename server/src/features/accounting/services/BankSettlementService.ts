@@ -2,7 +2,7 @@
  * BankSettlementService — baixa bancária (F7). FIRST-CLASS PRISMA.
  *
  * atomicUntil: postEntry
- *   commit 1 — razão: baixa via PayableService.registerPayment / ReceivableService.registerReceipt (2 commits deles) + postEntry(sourceType='bank.charge', sourceId=itemId) do encargo; gate de período dentro da tx
+ *   commit 1 — razão: baixa via PayableService.registerPayment / ReceivableService.registerReceipt (2 commits deles) + postEntry(sourceType='bank.charge', sourceId=itemId) do encargo + postEntry(sourceType='provider.fee', sourceId=itemId) da tarifa do provedor (F5 PR-3, P3-8); gate de período dentro da tx
  *              teste: [sem teste — GAP-MAP N3 "BankSettlementService sem teste de serviço"] (serviço sem teste próprio; só o predicado puro em models/__tests__/bankSettlementCandidacy.test.ts)
  *   commit 2 — subrazão: settlementId/chargeEntryId gravados no item a cada etapa + CONFIRMING → CONFIRMED com auditoria, runTransaction próprio
  *              teste: [sem teste — GAP-MAP N3 "BankSettlementService sem teste de serviço"]
@@ -31,8 +31,19 @@ import type { PostingService } from './PostingService';
 import { centsFromDb } from '../models/money';
 import { dateOnlyFromDayNumber, toUtcDayNumber } from '../models/dates';
 import { resolvePaymentMethodAccount } from '../models/Payable.model';
+import { PROVIDER_BALANCE_METHOD } from '../models/Receivable.model';
+import { TERMINAL_CHARGE_STATUSES, type CollectionChargeStatus } from '../models/CollectionCharge.model';
+import { mpReleaseFeeCents } from '../../../lib/mpReleaseReport';
+import type { BankStatementLine } from 'generated/prisma';
+import type { IPaymentAccountRepository } from '../repositories/IPaymentAccountRepository';
+import type { ICollectionChargeRepository } from '../repositories/ICollectionChargeRepository';
 import {
   BANK_CHARGE_SOURCE_TYPE,
+  MP_RELEASE_PAYMENT_DESCRIPTION,
+  PROVIDER_FEE_SOURCE_TYPE,
+  TERMINAL_CHARGE_WARNING,
+  type CandidacyResult,
+  type CandidateTitle,
   BANK_SETTLEMENT_CONFIRMED,
   BANK_SETTLEMENT_FAILED,
   BANK_SETTLEMENT_REJECTED,
@@ -56,6 +67,9 @@ export interface ScanSummary {
   none: number;
   stale: number;
 }
+
+/** Resultado do passo novo (P3-6/P3-7): o genérico + tarifa e aviso G7. */
+type ProviderCandidacy = CandidacyResult & { feeCents?: number; reason?: string | null };
 
 export interface BankSettlementItemView {
   id: string;
@@ -102,6 +116,9 @@ export class BankSettlementService {
     private readonly receivables: ReceivableService,
     private readonly posting: PostingService,
     private readonly auditService: AuditService,
+    // F5 PR-3 (P3-6/P3-9): leituras da conta de provedor e da cobrança — o F5 continua dono da escrita.
+    private readonly paymentAccountRepo: Pick<IPaymentAccountRepository, 'findById'>,
+    private readonly collectionChargeRepo: Pick<ICollectionChargeRepository, 'findForReleaseLine'>,
   ) {}
 
   // ── Scan (itens 2, 3, 10) ─────────────────────────────────────────────────────────────────────
@@ -130,7 +147,8 @@ export class BankSettlementService {
       // Review #326 F2/F7: saldo que MUDOU (parcial cancelada/nova) invalida proposto/encargo — o item
       // vira STALE e o loop abaixo o renasce com os valores re-avaliados (mesmo scan).
       const open = openById.get(`${item.titleType}:${item.titleId}`) ?? 0;
-      const abs = line ? Math.abs(centsFromDb(line.amountCents)) : 0;
+      // P3-7: item com tarifa usa o BRUTO (|linha líquida| + tarifa) no shortfall e no stale.
+      const abs = line ? Math.abs(centsFromDb(line.amountCents)) + centsFromDb(item.feeCents) : 0;
       const balanceDrift = !lineGone && !titleGone && (Math.min(abs, open) !== centsFromDb(item.proposedCents) || Math.max(0, abs - open) !== centsFromDb(item.chargeCents));
       if (lineGone || titleGone || balanceDrift) {
         await this.repo.update(scope, item.id, {
@@ -145,10 +163,10 @@ export class BankSettlementService {
     for (const line of lines) {
       const amountCents = centsFromDb(line.amountCents);
       const titleType: BankSettlementTitleType = amountCents < 0 ? 'PAYABLE' : 'RECEIVABLE';
-      const result = pickCandidate(
-        { amountCents, date: line.date, externalRef: line.externalRef },
-        titleType === 'PAYABLE' ? payables : receivables,
-      );
+      // P3-6 / F-PPB-5 (a): extrato de PaymentAccount (G1) — só o passo novo propõe; o pickCandidate genérico NÃO roda.
+      const result: ProviderCandidacy = statement.paymentAccountId
+        ? await this.pickProviderCandidate(scope, statement.paymentAccountId, line, receivables)
+        : pickCandidate({ amountCents, date: line.date, externalRef: line.externalRef }, titleType === 'PAYABLE' ? payables : receivables);
       if (result.outcome === 'none') {
         summary.none += 1;
         continue;
@@ -171,7 +189,13 @@ export class BankSettlementService {
       const stale = existing.find((e) => e.status === 'STALE' && e.titleType === title.titleType && e.titleId === title.id);
       if (stale) {
         // Mesmo (linha, título) já existe como STALE — a @@unique impede 2ª linha; volta a PENDING com os valores re-avaliados.
-        await this.repo.update(scope, stale.id, { status: 'PENDING', reason: null, proposedCents: result.proposedCents!, chargeCents: result.chargeCents! });
+        await this.repo.update(scope, stale.id, {
+          status: 'PENDING',
+          reason: result.reason ?? null,
+          proposedCents: result.proposedCents!,
+          chargeCents: result.chargeCents!,
+          feeCents: result.feeCents ?? 0,
+        });
         summary.created += 1;
         continue;
       }
@@ -182,6 +206,8 @@ export class BankSettlementService {
         titleId: title.id,
         proposedCents: result.proposedCents!,
         chargeCents: result.chargeCents!,
+        feeCents: result.feeCents ?? 0,
+        reason: result.reason ?? null,
       });
       summary.created += 1;
     }
@@ -203,6 +229,57 @@ export class BankSettlementService {
       });
     });
     return summary;
+  }
+
+  /**
+   * P3-6 (F-PPB-1 c / F-PPB-5 a) + P3-7 (F-PP-6 b) — passo novo do scan em extrato de PaymentAccount. Linha
+   * `DESCRIPTION = payment` cujo `externalRef` (EXTERNAL_REFERENCE) é o `id` de uma CollectionCharge do escopo com
+   * `paymentAccountId` = conta do extrato; senão `SOURCE_ID = providerPaymentRef`. Título EXATO da cobrança, sem janela
+   * e sem valor aproximado (F-PP-5 a). Valores sobre o BRUTO: `proposed = min(gross, saldo)`, `charge = max(0, gross −
+   * saldo)`, `fee = GROSS − NET`; linha cujo `NET ≠ GROSS + Σ deduções` (G3) não vira candidata (`ambiguous`).
+   * A ordem das duas chaves é reconferida contra o CSV da sonda (§6.2) antes do merge.
+   * G7 (dono 2026-10-10): cobrança terminal casa e vira proposta COM aviso; a confirmação é sempre humana.
+   */
+  private async pickProviderCandidate(
+    scope: AccountingScope,
+    paymentAccountId: string,
+    line: BankStatementLine,
+    receivables: CandidateTitle[],
+  ): Promise<ProviderCandidacy> {
+    if (line.description !== MP_RELEASE_PAYMENT_DESCRIPTION || centsFromDb(line.amountCents) <= 0) return { outcome: 'none' };
+    let raw: Record<string, string>;
+    try {
+      raw = JSON.parse(line.rawJson) as Record<string, string>;
+    } catch {
+      return { outcome: 'none' };
+    }
+    let charge = line.externalRef
+      ? await this.collectionChargeRepo.findForReleaseLine(scope, paymentAccountId, { id: line.externalRef })
+      : null;
+    const sourceId = (raw.SOURCE_ID ?? '').trim();
+    if (!charge && sourceId) {
+      charge = await this.collectionChargeRepo.findForReleaseLine(scope, paymentAccountId, { providerPaymentRef: sourceId });
+    }
+    if (!charge) return { outcome: 'none' };
+    let fee: ReturnType<typeof mpReleaseFeeCents>;
+    try {
+      fee = mpReleaseFeeCents(raw);
+    } catch {
+      fee = null;
+    }
+    if (!fee || centsFromDb(line.amountCents) !== fee.grossCents - fee.feeCents) return { outcome: 'ambiguous' };
+    const receivableId = charge.receivableId;
+    const title = receivables.find((t) => t.id === receivableId);
+    if (!title || title.openCents <= 0) return { outcome: 'none' };
+    const terminal = (TERMINAL_CHARGE_STATUSES as readonly string[]).includes(charge.status as CollectionChargeStatus);
+    return {
+      outcome: 'one',
+      title,
+      proposedCents: Math.min(fee.grossCents, title.openCents),
+      chargeCents: Math.max(0, fee.grossCents - title.openCents),
+      feeCents: fee.feeCents,
+      reason: terminal ? `${TERMINAL_CHARGE_WARNING} (${charge.status}).` : null,
+    };
   }
 
   // ── List (item 4) ─────────────────────────────────────────────────────────────────────────────
@@ -318,9 +395,11 @@ export class BankSettlementService {
     const titleType = item.titleType as BankSettlementTitleType;
     const proposedCents = centsFromDb(item.proposedCents);
     const chargeCents = centsFromDb(item.chargeCents);
+    const feeCents = centsFromDb(item.feeCents);
     const lineDate = toDateOnly(item.statementLine.date);
     let settlementId = item.settlementId;
     let chargeEntryId = item.chargeEntryId;
+    let feeEntryId = item.feeEntryId;
     let step: BankSettlementStep = 'SETTLE';
 
     try {
@@ -329,7 +408,13 @@ export class BankSettlementService {
         const settlement =
           titleType === 'PAYABLE'
             ? await this.payables.registerPayment(scope, item.titleId, { unitId: scope.unitId, method, paidAt: lineDate, amountCents: proposedCents })
-            : await this.receivables.registerReceipt(scope, item.titleId, { unitId: scope.unitId, method, receivedAt: lineDate, amountCents: proposedCents });
+            : await this.receivables.registerReceipt(
+                scope,
+                item.titleId,
+                { unitId: scope.unitId, method, receivedAt: lineDate, amountCents: proposedCents },
+                // P3-9 (F-PPB-3 a): ProviderBalance debita a conta da PaymentAccount, gravada no recibo.
+                ctx.providerDebitAccountId ? { debitAccountId: ctx.providerDebitAccountId } : {},
+              );
         settlementId = settlement.id;
         await this.repo.update(scope, id, { settlementId });
       }
@@ -358,9 +443,29 @@ export class BankSettlementService {
         await this.repo.update(scope, id, { chargeEntryId });
       }
 
-      // (iii) conciliação: legs de banco da baixa (+ do encargo) fecham |linha| exato no gate do manualMatch.
+      // (ii-b) P3-8 (F-PP-6 b): tarifa do provedor `provider.fee` — D despesa de tarifa / C conta da PaymentAccount;
+      // idempotente por (sourceType, sourceId = item.id) no PostingService; retry pula pelo id gravado.
+      step = 'FEE';
+      if (feeCents > 0 && !feeEntryId) {
+        const entry = await this.posting.postEntry(scope, {
+          unitId: scope.unitId,
+          date: lineDate,
+          description: `Tarifa do provedor — ${titleType} ${item.titleId}`,
+          sourceType: PROVIDER_FEE_SOURCE_TYPE,
+          sourceId: item.id,
+          lines: [
+            { accountCode: ctx.feeAccountCode!, debitCents: feeCents, creditCents: 0 },
+            { accountCode: ctx.bankAccountCode, debitCents: 0, creditCents: feeCents },
+          ],
+        });
+        feeEntryId = entry.id;
+        await this.repo.update(scope, id, { feeEntryId });
+      }
+
+      // (iii) conciliação: legs da conta do extrato (baixa e encargo a débito, tarifa a CRÉDITO — P3-10) fecham a
+      // linha pela soma com sinal do manualMatch (correção #608).
       step = 'MATCH';
-      const bankPostingIds = await this.bankLegPostingIds(scope, ctx.bankAccountId, settlementId, titleType, chargeEntryId);
+      const bankPostingIds = await this.bankLegPostingIds(scope, ctx.bankAccountId, settlementId, titleType, chargeEntryId, feeEntryId);
       const freshLine = await this.reconciliationRepo.findLineById(scope, item.statementLineId);
       const alreadyMatched =
         freshLine?.status === 'MATCHED' &&
@@ -386,6 +491,8 @@ export class BankSettlementService {
             chargeCents: String(chargeCents),
             settlementId,
             chargeEntryId: chargeEntryId ?? '',
+            feeCents: String(feeCents),
+            feeEntryId: feeEntryId ?? '',
           },
         });
       });
@@ -393,7 +500,7 @@ export class BankSettlementService {
       const failReason = error instanceof Error ? error.message : String(error);
       logger.warn('bank settlement confirm failed — ids preserved, retry available', { itemId: id, step, failReason });
       await this.repo.runTransaction(async (tx) => {
-        await this.repo.update(scope, id, { status: 'FAILED', failedStep: step, reason: failReason, settlementId, chargeEntryId }, tx);
+        await this.repo.update(scope, id, { status: 'FAILED', failedStep: step, reason: failReason, settlementId, chargeEntryId, feeEntryId }, tx);
         await this.auditService.append(tx, scope, {
           actorUserId: scope.actorUserId,
           eventType: BANK_SETTLEMENT_FAILED,
@@ -441,7 +548,8 @@ export class BankSettlementService {
       // Review #326 F2: proposto/encargo foram derivados do saldo NO SCAN. Se o saldo mudou (parcial
       // cancelada ou nova), a mesma linha significa outra coisa — principal viraria "encargo" ou vice-versa.
       // Re-deriva do saldo atual e exige igualdade exata; o scan seguinte re-avalia (STALE → PENDING).
-      const abs = Math.abs(centsFromDb(line.amountCents));
+      // P3-7: com tarifa, o pré-cheque re-deriva sobre o BRUTO (gross = |linha| + feeCents).
+      const abs = Math.abs(centsFromDb(line.amountCents)) + centsFromDb(item.feeCents);
       const expectedProposed = Math.min(abs, title.openCents);
       const expectedCharge = Math.max(0, abs - title.openCents);
       if (expectedProposed !== proposedCents || expectedCharge !== centsFromDb(item.chargeCents)) {
@@ -457,10 +565,41 @@ export class BankSettlementService {
     if (!period || period.status !== 'OPEN') throw new ValidationError(`period_not_open: período ${day.slice(0, 7)} não está aberto para a baixa.`);
 
     // F-F7-3 (a): a conta do método TEM de ser a conta do extrato.
-    const bankAccountCode = resolvePaymentMethodAccount(method);
-    const bankAccount = await this.accountRepo.findByCode(scope, bankAccountCode, tx);
-    if (!bankAccount || bankAccount.id !== statement.glAccountId) {
-      throw new ValidationError(`method_account_mismatch: '${method}' resolve para ${bankAccountCode}, que não é a conta deste extrato.`);
+    let bankAccountCode: string;
+    let providerDebitAccountId: string | undefined;
+    if (method === PROVIDER_BALANCE_METHOD) {
+      // P3-9 (F-PP-7 a): ProviderBalance não resolve por código fixo — exige a PaymentAccount ACTIVE do extrato (G1)
+      // com a mesma folha; fora disso (título a pagar, extrato de banco) ⇒ 400 nomeado.
+      const account = statement.paymentAccountId ? await this.paymentAccountRepo.findById(scope, statement.paymentAccountId, tx) : null;
+      if (titleType !== 'RECEIVABLE' || !account || account.status !== 'ACTIVE' || account.glAccountId !== statement.glAccountId) {
+        throw new ValidationError(
+          'provider_balance_requires_payment_account: ProviderBalance só confirma recebimento em extrato de conta de provedor ACTIVE com a mesma conta contábil.',
+        );
+      }
+      const gl = await this.accountRepo.findById(scope, account.glAccountId, tx);
+      if (!gl || gl.deletedAt) throw new ValidationError('provider_balance_requires_payment_account: a conta contábil da conta de provedor não existe mais.');
+      bankAccountCode = gl.code;
+      providerDebitAccountId = gl.id;
+    } else {
+      bankAccountCode = resolvePaymentMethodAccount(method);
+      const bankAccount = await this.accountRepo.findByCode(scope, bankAccountCode, tx);
+      if (!bankAccount || bankAccount.id !== statement.glAccountId) {
+        throw new ValidationError(`method_account_mismatch: '${method}' resolve para ${bankAccountCode}, que não é a conta deste extrato.`);
+      }
+    }
+
+    // P3-8: tarifa > 0 exige a conta configurada — senão 400 nomeado, sem efeito (molde do charge_account_not_configured).
+    let feeAccountCode: string | undefined;
+    if (centsFromDb(item.feeCents) > 0) {
+      const settings = await this.repo.getSettings(scope, tx);
+      if (!settings?.providerFeeExpenseAccountId) {
+        throw new ValidationError(
+          'fee_account_not_configured: conta de tarifa do provedor não configurada (PUT /api/accounting/settings, providerFeeExpenseAccountId — código é pendência do contador).',
+        );
+      }
+      const feeAccount = await this.accountRepo.findById(scope, settings.providerFeeExpenseAccountId, tx);
+      if (!feeAccount || feeAccount.deletedAt) throw new ValidationError('fee_account_not_configured: a conta de tarifa configurada não existe mais.');
+      feeAccountCode = feeAccount.code;
     }
 
     // Encargo (item 8): conta configurada + período da linha aberto — senão 400 nomeado, sem efeito.
@@ -478,7 +617,7 @@ export class BankSettlementService {
       chargeAccountCode = chargeAccount.code;
     }
 
-    return { item, line, statement, bankAccountId: statement.glAccountId, bankAccountCode, chargeAccountCode };
+    return { item, line, statement, bankAccountId: statement.glAccountId, bankAccountCode, chargeAccountCode, feeAccountCode, providerDebitAccountId };
   }
 
   /** Review #326 F6 — recibo ACTIVE do título igual a (data, valor, método) que NÃO está ligado a nenhum item. */
@@ -510,6 +649,7 @@ export class BankSettlementService {
     settlementId: string,
     titleType: BankSettlementTitleType,
     chargeEntryId: string | null,
+    feeEntryId: string | null = null,
   ): Promise<string[]> {
     const settlementEntryId =
       titleType === 'PAYABLE'
@@ -517,7 +657,7 @@ export class BankSettlementService {
         : (await this.receivableRepo.findReceiptById(scope, settlementId))?.entryId;
     if (!settlementEntryId) throw new ValidationError('settlement_entry_missing: a baixa ainda não tem lançamento (reconcile do AP/AR pendente).');
     const ids: string[] = [];
-    for (const entryId of [settlementEntryId, chargeEntryId].filter((e): e is string => !!e)) {
+    for (const entryId of [settlementEntryId, chargeEntryId, feeEntryId].filter((e): e is string => !!e)) {
       const postings = await this.postingRepo.findByEntryId(scope, entryId);
       const leg = postings.find((p) => p.accountId === bankAccountId);
       if (!leg) throw new ValidationError(`bank_leg_missing: lançamento ${entryId} não tem posting na conta do extrato.`);

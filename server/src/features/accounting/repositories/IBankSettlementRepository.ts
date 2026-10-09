@@ -9,16 +9,22 @@ export interface CreateBankSettlementItemData {
   titleId: string;
   proposedCents: number;
   chargeCents: number;
+  /** F5 PR-3 (P3-7): tarifa do provedor (GROSS − NET); 0 = item bancário de sempre. */
+  feeCents?: number;
+  /** F5 PR-3 (G7): aviso de cobrança em estado terminal. */
+  reason?: string | null;
 }
 
 export interface BankSettlementItemPatch {
   status?: BankSettlementStatus;
   proposedCents?: number;
   chargeCents?: number;
+  feeCents?: number;
   reason?: string | null;
   failedStep?: BankSettlementStep | null;
   settlementId?: string | null;
   chargeEntryId?: string | null;
+  feeEntryId?: string | null;
   confirmedById?: string | null;
   confirmedAt?: Date | null;
 }
@@ -75,6 +81,8 @@ export interface IBankSettlementRepository {
       disposalGainAccountId?: string | null;
       disposalLossAccountId?: string | null;
       depreciationParteBAccountId?: string | null;
+      // F5 PR-3 (P3-11)
+      providerFeeExpenseAccountId?: string | null;
     },
     tx?: Prisma.TransactionClient,
   ): Promise<AccountingScopeSettings>;

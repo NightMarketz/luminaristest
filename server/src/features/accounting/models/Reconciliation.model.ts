@@ -26,6 +26,8 @@ export interface CreateBankStatementInput {
   sha256: string;
   attachmentId?: string | null;
   importedById?: string | null;
+  /** F5 PR-3 (G1): extrato mp_release da PaymentAccount; ausente/null = extrato bancário. */
+  paymentAccountId?: string | null;
 }
 
 /** Insert shape for one parsed line (amountCents SIGNED: >0 inflow, <0 outflow). */

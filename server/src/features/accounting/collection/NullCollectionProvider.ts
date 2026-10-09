@@ -3,6 +3,7 @@ import type {
   CollectionCapabilities,
   CollectionProviderPort,
   CreateChargeInput,
+  ReleaseReportFile,
   ResolvedAccount,
   WebhookVerification,
 } from './CollectionProviderPort';
@@ -46,5 +47,18 @@ export class NullCollectionProvider implements CollectionProviderPort {
 
   verifyWebhook(): WebhookVerification {
     return { ok: false, reason: 'signature' };
+  }
+
+  // PR-3 (P3-5): sem relatório — o adaptador nulo anuncia `releaseReport: false`.
+  async requestReleaseReport(): Promise<void> {
+    return undefined;
+  }
+
+  async listReleaseReports(): Promise<ReleaseReportFile[]> {
+    return [];
+  }
+
+  async downloadReleaseReport(): Promise<Buffer> {
+    return Buffer.alloc(0);
   }
 }

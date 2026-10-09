@@ -495,6 +495,7 @@ model Account {
   scopeSettingsDepreciationExpenseOf AccountingScopeSettings[] @relation("ScopeSettingsDepreciationExpense") // despesa de depreciação (4.x)
   scopeSettingsDisposalGainOf        AccountingScopeSettings[] @relation("ScopeSettingsDisposalGain") // ganho na baixa de imobilizado
   scopeSettingsDisposalLossOf        AccountingScopeSettings[] @relation("ScopeSettingsDisposalLoss") // perda na baixa de imobilizado
+  providerFeeExpenseOf               AccountingScopeSettings[] @relation("ScopeSettingsProviderFeeExpense") // tarifa do provedor (F5 PR-3, P3-11)
   paymentAccountsGl                  PaymentAccount[]          @relation("PaymentAccountGl") // folha do saldo no provedor (BE-INCR-PAYMENT-PROVIDER PR-1, P1-3)
   createdAt                          DateTime                  @default(now())
   updatedAt                          DateTime                  @updatedAt
@@ -786,6 +787,8 @@ model BankStatement {
   sha256              String // file hash — re-import idempotency (D1/ACC-013)
   attachmentId        String? // DocumentAttachment of the raw file (INCR-5)
   importedById        String? // actor (AccountingScope.actorUserId); plain string
+  paymentAccountId    String? // F5 PR-3 (G1, dono 2026-10-10): extrato mp_release da PaymentAccount; null = extrato bancario
+  paymentAccount      PaymentAccount?     @relation(fields: [paymentAccountId], references: [id], onDelete: Restrict)
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
   deletedAt           DateTime?
@@ -1081,30 +1084,30 @@ model PayablePayment {
 // double-receipt guard, D4; CANCELLED terminal). Business key dedupes the human record only; the
 // accounting idempotency lives in JournalEntry.@@unique([userId,unitId,sourceType,sourceId]).
 model Receivable {
-  id               String              @id @default(cuid())
-  userId           String // scope owner (AccountingScope.ownerUserId); FK User — audit trail is the AuditEvent (exception to cascade), the receivable row itself cascades
-  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  unitId           String // business unit (scoped string, not a FK)
-  customerName     String // snapshot of the customer display name (F1) — never resolved from customerRef at read time
-  customerRef      String? // scoped ref to a DynamicTable customer row (F1 rota (c); precedent CustomerPackageBalance.customerId) — plain string, not a FK
-  documentNumber   String? // nº da fatura/duplicata; part of the business key (SQLite treats NULL as distinct, like sourceId)
-  description      String
-  issueDate        DateTime // date-only (competência do reconhecimento) — validated by isValidDateOnly at the DTO
-  dueDate          DateTime // date-only (vencimento; aging is a later increment — F3)
-  amountCents      BigInt // integer cents (Contract §2.1); MAX_CENTS guarded at the DTO (ACC-014)
-  revenueAccountId String // FK Account — contrapartida do reconhecimento, folha nature='Revenue' (gate D4, re-checked in the service)
-  revenueAccount   Account             @relation("ReceivableRevenueAccount", fields: [revenueAccountId], references: [id])
-  counterpartyId   String // FK Counterparty (INCR-COUNTERPARTY / A1) — NOT NULL since SEC-A1-5 (2nd migration, F-NN1(a)): createReceivable resolves a body id RE-SCOPED (SEC-A1-1) or mints the identity from customerName, which is what lets CrmReceivableBridge keep passing none. customerName stays the snapshot.
-  counterparty     Counterparty        @relation(fields: [counterpartyId], references: [id], onDelete: Restrict) // F-NN2(a): SET NULL is unrepresentable on a NOT NULL column; archive is soft (SEC-A1-4), so RESTRICT never fires in the real flow.
-  status           String // OPEN | PARTIALLY_RECEIVED | RECEIVING | RECEIVED | CANCELLED (see RECEIVABLE_STATUSES)
-  receivedCents    BigInt              @default(0) // BE-INCR-PARTIAL-SETTLEMENT (F-PS1 c): espelho de Payable.paidCents
-  createdById      String? // actor who created (AccountingScope.actorUserId); plain string
-  cancelledById    String? // actor who cancelled; plain string
-  cancelReason     String?
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
-  deletedAt        DateTime?
-  receipts         ReceivableReceipt[]
+  id                String              @id @default(cuid())
+  userId            String // scope owner (AccountingScope.ownerUserId); FK User — audit trail is the AuditEvent (exception to cascade), the receivable row itself cascades
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId            String // business unit (scoped string, not a FK)
+  customerName      String // snapshot of the customer display name (F1) — never resolved from customerRef at read time
+  customerRef       String? // scoped ref to a DynamicTable customer row (F1 rota (c); precedent CustomerPackageBalance.customerId) — plain string, not a FK
+  documentNumber    String? // nº da fatura/duplicata; part of the business key (SQLite treats NULL as distinct, like sourceId)
+  description       String
+  issueDate         DateTime // date-only (competência do reconhecimento) — validated by isValidDateOnly at the DTO
+  dueDate           DateTime // date-only (vencimento; aging is a later increment — F3)
+  amountCents       BigInt // integer cents (Contract §2.1); MAX_CENTS guarded at the DTO (ACC-014)
+  revenueAccountId  String // FK Account — contrapartida do reconhecimento, folha nature='Revenue' (gate D4, re-checked in the service)
+  revenueAccount    Account             @relation("ReceivableRevenueAccount", fields: [revenueAccountId], references: [id])
+  counterpartyId    String // FK Counterparty (INCR-COUNTERPARTY / A1) — NOT NULL since SEC-A1-5 (2nd migration, F-NN1(a)): createReceivable resolves a body id RE-SCOPED (SEC-A1-1) or mints the identity from customerName, which is what lets CrmReceivableBridge keep passing none. customerName stays the snapshot.
+  counterparty      Counterparty        @relation(fields: [counterpartyId], references: [id], onDelete: Restrict) // F-NN2(a): SET NULL is unrepresentable on a NOT NULL column; archive is soft (SEC-A1-4), so RESTRICT never fires in the real flow.
+  status            String // OPEN | PARTIALLY_RECEIVED | RECEIVING | RECEIVED | CANCELLED (see RECEIVABLE_STATUSES)
+  receivedCents     BigInt              @default(0) // BE-INCR-PARTIAL-SETTLEMENT (F-PS1 c): espelho de Payable.paidCents
+  createdById       String? // actor who created (AccountingScope.actorUserId); plain string
+  cancelledById     String? // actor who cancelled; plain string
+  cancelReason      String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  deletedAt         DateTime?
+  receipts          ReceivableReceipt[]
   collectionCharges CollectionCharge[] // BE-INCR-PAYMENT-PROVIDER PR-2 (P2-2): cobranças no provedor — sem efeito no razão
 
   // Business key (D3): one live receivable per customer × document. rename-on-delete
@@ -1135,6 +1138,7 @@ model ReceivableReceipt {
   receivedByUserId String? // actor who registered the receipt; plain string
   status           String // ACTIVE | CANCELLED
   entryId          String? // receipt journal entry id (ar.receipt) — denormalized convenience; findEntryBySource is authoritative
+  debitAccountId   String? // F5 PR-3 (P3-9, F-PPB-3 a): conta de debito do recibo ProviderBalance; null = mapa fechado do metodo (legado)
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
@@ -1538,7 +1542,7 @@ model CompanyFiscalProfile {
   // X14 PR-4 (F-PR4-13, dono 09/10): MEI transportador autônomo de cargas — limite da Res. CGSN 140 art. 100 § 1º-A.
   meiTransportadorCargas           Boolean?
   // X14 F-PR4-12 (b), dono 10/10: regime de apuração da receita no Simples — COMPETENCIA | CAIXA (Res. CGSN 140 art. 16).
-  simplesRegimeApuracao            String   @default("COMPETENCIA")
+  simplesRegimeApuracao            String             @default("COMPETENCIA")
   createdById                      String?
   updatedById                      String?
   createdAt                        DateTime           @default(now())
@@ -1755,6 +1759,8 @@ model BankSettlementItem {
   failedStep      String? // 'SETTLE' | 'CHARGE' | 'MATCH' (BRIEF item 7)
   settlementId    String? // payable_payments.id | receivable_receipts.id (etapa i)
   chargeEntryId   String? // journal_entries.id do bank.charge (etapa ii)
+  feeCents        BigInt            @default(0) // F5 PR-3 (P3-7, F-PP-6 b): tarifa do provedor = GROSS - NET da linha mp_release
+  feeEntryId      String? // journal_entries.id do provider.fee (etapa FEE, P3-8)
   confirmedById   String?
   confirmedAt     DateTime?
   createdAt       DateTime          @default(now())
@@ -1788,6 +1794,8 @@ model AccountingScopeSettings {
   disposalGainAccount          Account?            @relation("ScopeSettingsDisposalGain", fields: [disposalGainAccountId], references: [id], onDelete: Restrict)
   disposalLossAccountId        String? // perda na baixa de imobilizado
   disposalLossAccount          Account?            @relation("ScopeSettingsDisposalLoss", fields: [disposalLossAccountId], references: [id], onDelete: Restrict)
+  providerFeeExpenseAccountId  String? // F5 PR-3 (P3-11): tarifa do provedor — D esta conta / C conta da PaymentAccount (codigo = contador, P3)
+  providerFeeExpenseAccount    Account?            @relation("ScopeSettingsProviderFeeExpense", fields: [providerFeeExpenseAccountId], references: [id], onDelete: Restrict)
   depreciationParteBAccountId  String? // item 24 — conta da Parte B (M010) p/ diferença contábil×fiscal de depreciação
   depreciationParteBAccount    LalurParteBAccount? @relation("ScopeSettingsDepreciationParteB", fields: [depreciationParteBAccountId], references: [id], onDelete: Restrict)
   updatedById                  String
@@ -1893,7 +1901,7 @@ model FixedAsset {
   rateId                       String? // taxa de origem (Anexo III ou CUSTOM); XOR com annualRateBp explícito no DTO — aqui só o snapshot
   rate                         DepreciationRate? @relation(fields: [rateId], references: [id], onDelete: Restrict)
   legalParameterId             String? // BE-INCR-LEGAL-PARAMS PR-3 (emenda §9 L-1): taxa do Anexo III de PLATAFORMA (XOR com rateId, que fica só CUSTOM)
-  legalParameter               LegalParameter? @relation(fields: [legalParameterId], references: [id], onDelete: Restrict)
+  legalParameter               LegalParameter?   @relation(fields: [legalParameterId], references: [id], onDelete: Restrict)
   annualRateBp                 Int // SNAPSHOT no create (item 4) — nunca recalculado a partir de rateId depois
   bookAnnualRateBp             Int? // taxa contábil, se diverge da fiscal (item 12/23)
   bookRateJustification        String? // obrigatório se bookAnnualRateBp setado (item 8)
@@ -2402,26 +2410,28 @@ model AccountingPolicyVersion {
 // provedor importa contra ela; trocar de conta = nova PaymentAccount. No máximo uma ACTIVE por
 // (userId, unitId, provider) — gate dentro da tx do serviço (P1-4), não constraint.
 model PaymentAccount {
-  id                   String    @id @default(cuid())
+  id                   String             @id @default(cuid())
   userId               String
   unitId               String
   provider             String // PAYMENT_PROVIDERS = ['MERCADO_PAGO'] (BANK_CNAB entra com o 2º adaptador)
   label                String
   glAccountId          String // FK Account folha, Restrict — IMUTÁVEL (P1-3)
-  glAccount            Account   @relation("PaymentAccountGl", fields: [glAccountId], references: [id], onDelete: Restrict)
+  glAccount            Account            @relation("PaymentAccountGl", fields: [glAccountId], references: [id], onDelete: Restrict)
   providerAccountRef   String? // MP: user_id do vendedor (informativo; nunca roteia — PP-D4 item 1)
   configJson           String // z.discriminatedUnion('provider') — P1-5
   credentialCiphertext Bytes? // iv ‖ tag ‖ ct; AAD = id (P1-1/P1-8)
   credentialKeyVersion Int?
   credentialSetAt      DateTime?
+  credentialSetById    String? // F5 PR-3 (G5, dono 2026-10-10): ator do job mpReleaseReportFetch
   credentialExpiresAt  DateTime? // OWN: sempre null (a doc do MP não declara validade, M12) — OAuth futuro
   accessTokenLast4     String? // única projeção legível (PP-D7)
   status               String // DRAFT | ACTIVE | CREDENTIAL_INVALID | DISABLED
   createdById          String?
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
   deletedAt            DateTime?
   charges              CollectionCharge[] // PR-2
+  statements           BankStatement[] // PR-3 (G1)
 
   @@index([userId, unitId, provider, status])
   @@map("payment_accounts")
@@ -2696,7 +2706,7 @@ model SimplesApuracao {
 // `supersedesId` (L-7). Guarda números e listas, nunca lógica (R-motor-regras). Sem FK: `proposedById`/`publishedById`
 // são string simples (a linha da migração nasce sem usuário).
 model LegalParameter {
-  id            String    @id @default(cuid())
+  id            String       @id @default(cuid())
   tabela        String // enum fechado do item 2 (validado no DTO)
   chave         String
   discriminador String?
@@ -2716,7 +2726,7 @@ model LegalParameter {
   publishedAt   DateTime?
   revokedById   String?
   revokedAt     DateTime?
-  createdAt     DateTime  @default(now())
+  createdAt     DateTime     @default(now())
   fixedAssets   FixedAsset[] // PR-3: bens com taxa do Anexo III de plataforma (Restrict)
 
   @@index([tabela, chave, status])

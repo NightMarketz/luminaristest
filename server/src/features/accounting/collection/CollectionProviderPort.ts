@@ -5,7 +5,7 @@ import type { CredentialSource } from '../models/PaymentAccount.model';
  * CollectionProviderPort — porta da cobrança por provedor (BE-INCR-PAYMENT-PROVIDER PR-2, P2-1; BRIEF §4.2, que
  * prevalece sobre o esboço do ADR §5). O adaptador é burro: devolve o status CRU do provedor; quem mapeia para
  * `CollectionCharge.status` é o serviço (`mapMercadoPagoStatus`, P2-7). Os métodos de relatório (`requestReleaseReport`,
- * `listReleaseReports`, `downloadReleaseReport`) são do PR-3 e não entram aqui.
+ * `listReleaseReports`, `downloadReleaseReport`) entram no PR-3 (P3-5; M10 do BRIEF).
  */
 
 export interface CollectionCapabilities {
@@ -98,4 +98,15 @@ export interface CollectionProviderPort {
   getCharge(account: ResolvedAccount, providerRef: string): Promise<ChargeResult>;
   cancelCharge(account: ResolvedAccount, providerRef: string, idempotencyKey: string): Promise<ChargeResult>;
   verifyWebhook(req: WebhookRequest, secret: string, now: Date): WebhookVerification;
+  /** PR-3 (P3-5, M10): pede o relatório de liberações da faixa `[fromUtc, toUtc)` (ISO UTC `…Z`); o MP responde 202. */
+  requestReleaseReport(account: ResolvedAccount, range: { fromUtc: string; toUtc: string }): Promise<void>;
+  listReleaseReports(account: ResolvedAccount): Promise<ReleaseReportFile[]>;
+  downloadReleaseReport(account: ResolvedAccount, fileName: string): Promise<Buffer>;
+}
+
+/** Um arquivo da lista do relatório de liberações (M10). Datas ISO como o MP devolve. */
+export interface ReleaseReportFile {
+  fileName: string;
+  beginDate: string;
+  endDate: string;
 }
