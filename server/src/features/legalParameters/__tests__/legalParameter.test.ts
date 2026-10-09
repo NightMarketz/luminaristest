@@ -4,7 +4,7 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4, legalParamsSeedRows, tabelaApuracaoSemente } from '@test/helpers/legalParams';
+import { LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4, LEGAL_PARAMS_SEED_FILE_V5, legalParamsSeedRows, tabelaApuracaoSemente } from '@test/helpers/legalParams';
 import anexoFixture from '../../accounting/fixtures/anexo-iii-in-1700-2017.json';
 import { LEGAL_PARAMETER_TABELAS, TABELAS_MIGRADAS, linhaLegalVigente, linhasEmVigor, type LinhaLegal } from '../models/legalParameter';
 import { erroDeFormato, type LinhaParaFormato } from '../models/formatoLinha';
@@ -13,6 +13,7 @@ import { LegalParameterPolicy } from '../policies/LegalParameterPolicy';
 const MIGRATION = path.resolve(__dirname, '../../../../prisma/migrations/20261007150000_add_legal_parameters/migration.sql');
 const MIGRATION_V2 = path.resolve(__dirname, '../../../../prisma/migrations/20261007160000_add_legal_parameters_v2/migration.sql');
 const MIGRATION_V3 = path.resolve(__dirname, '../../../../prisma/migrations/20261007170000_legal_parameters_v3_depreciacao/migration.sql');
+const MIGRATION_V5 = path.resolve(__dirname, '../../../../prisma/migrations/20261010090000_legal_parameters_v5_csll_bancos/migration.sql');
 const MIGRATION_V4 = path.resolve(__dirname, '../../../../prisma/migrations/20261009120000_legal_parameters_v4_csll_lc224/migration.sql');
 const norm = (s: string) => s.replace(/\r\n/g, '\n');
 
@@ -109,11 +110,11 @@ describe('BE-INCR-CSLL-ALIQUOTA-LC224 — linhas v4 de CSLL_ALIQUOTA (BRIEF §3 
     }
   });
 
-  it('item 2: aliquotaCsll por chave × data (F-CA-1 a: 3 desde 01/04/2026; F-CA-2 a: 2028 publicado)', () => {
+  it('item 2: aliquotaCsll por chave × data (F-CA-1 a: 3 desde 01/04/2026, antes pela v5 — BE-INCR-CSLL-BANCOS-Q1; F-CA-2 a: 2028 publicado)', () => {
     const t = tabelaApuracaoSemente();
     const DATAS = ['2026-03-31', '2026-04-01', '2026-06-30', '2027-12-31', '2028-01-01'];
     const esperado: Record<string, (number | undefined)[]> = {
-      '3': [undefined, 2000, 2000, 2000, 2000],
+      '3': [2000, 2000, 2000, 2000, 2000], // 2026-03-31 pela lp5-csll-3-a (BE-INCR-CSLL-BANCOS-Q1 item 3)
       '7': [900, 1200, 1200, 1200, 1500],
       '8': [1500, 1750, 1750, 1750, 2000],
     };
@@ -136,6 +137,34 @@ describe('BE-INCR-CSLL-ALIQUOTA-LC224 — linhas v4 de CSLL_ALIQUOTA (BRIEF §3 
   it('item 7: a migração só insere em legal_parameters (sem job de recálculo, sem UPDATE/DELETE)', () => {
     const sql = norm(fs.readFileSync(MIGRATION_V4, 'utf8')).split('\n').filter((l) => l.trim() && !l.startsWith('--'));
     expect(sql.every((l) => l.startsWith('INSERT OR IGNORE INTO "legal_parameters" '))).toBe(true);
+  });
+});
+
+describe('BE-INCR-CSLL-BANCOS-Q1 — linha v5 do código 3 antes de 01/04/2026 (BRIEF §3 itens 1–2; F-CB-1 b, F-CB-2 b)', () => {
+  const S1 = 'faa47fa18631e4b78931693fb9ef7edabe7a58c6d288c9eee8374397c40940c3';
+  const ART_30_IV = 'IN RFB 1.700/2017 art. 30 IV (red. IN RFB 1.942/2020; revogado pela IN RFB 2.315/2026)';
+
+  it('item 1: o migration.sql v5 carrega o texto de prisma/data/legal_parameters_v5.sql, byte a byte, e só insere', () => {
+    const mig = norm(fs.readFileSync(MIGRATION_V5, 'utf8'));
+    expect(mig).toContain(norm(fs.readFileSync(LEGAL_PARAMS_SEED_FILE_V5, 'utf8')).trimEnd());
+    expect(mig.split('\n').filter((l) => l.trim() && !l.startsWith('--')).every((l) => l.startsWith('INSERT OR IGNORE INTO "legal_parameters" '))).toBe(true);
+  });
+
+  it('item 2: 1 linha, CSLL_ALIQUOTA 3, 2020-03-01..2026-03-31, PUBLISHED, sem supersede, fonte S1, no formato', () => {
+    const v5 = legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_V5);
+    expect(v5.map((r) => [r.id, r.tabela, r.chave, r.valorInt, r.vigenteDesde, r.vigenteAte, r.status, r.supersedesId, r.fonte, r.fonteSha256])).toEqual([
+      ['lp5-csll-3-a', 'CSLL_ALIQUOTA', '3', 2000, '2020-03-01', '2026-03-31', 'PUBLISHED', null, ART_30_IV, S1],
+    ]);
+    expect(erroDeFormato({ ...v5[0], tabela: 'CSLL_ALIQUOTA', valorJson: undefined } as LinhaParaFormato)).toBeNull();
+  });
+
+  it('item 2: aliquotaCsll(3, d) — nada antes de 01/03/2020 (eram 15%); art. 30 IV até 31/03/2026; art. 30-D II depois', () => {
+    const t = tabelaApuracaoSemente();
+    const DATAS = ['2020-02-29', '2020-03-01', '2025-12-31', '2026-03-31', '2026-04-01', '2028-01-01'];
+    expect(DATAS.map((d) => t.aliquotaCsll('3', d)?.valor)).toEqual([undefined, 2000, 2000, 2000, 2000, 2000]);
+    expect(DATAS.slice(1).map((d) => t.aliquotaCsll('3', d)?.fonte)).toEqual([
+      ART_30_IV, ART_30_IV, ART_30_IV, 'IN RFB 1.700/2017 art. 30-D II (red. IN RFB 2.315/2026)', 'IN RFB 1.700/2017 art. 30-D II (red. IN RFB 2.315/2026)',
+    ]);
   });
 });
 
