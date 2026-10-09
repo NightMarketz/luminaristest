@@ -4,14 +4,14 @@ tipo: "decisao"
 dominio: "financeiro"
 titulo: "Forks do BRIEF FE-INCR-F7-TARIFA — F-TAR-1..9 ratificados pelo dono"
 estado: "decided"
-autorizacao: "dono, chat, 2026-10-10: \"ratifico F-TAR-1..8 → a, F-TAR-9 → b\" + \"F-TAR-9.1 → b\""
+autorizacao: "dono, chat, 2026-10-10: \"ratifico F-TAR-1..8 → a, F-TAR-9 → b\" + \"F-TAR-9.1 → b\" + questionário: \"PR de BE novo\" e \"#616 + emenda do #617\""
 atualizado: "2026-10-10"
 ---
-# D-2026-10-10-FE-F7-TARIFA-FORKS — forks do [[FE-INCR-F7-TARIFA]]
+# D-2026-10-10-FE-F7-TARIFA-FORKS — forks do [[FE-INCR-BANK-SETTLEMENT-FEE]] (ex-`FE-INCR-F7-TARIFA`)
 
 **Estado:** `decided`.
 **Autorização:** dono, chat, 2026-10-10: *"ratifico F-TAR-1..8 → a, F-TAR-9 → b"* e *"F-TAR-9.1 → b"*. Os caminhos e as justificativas
-estão no BRIEF (`docs/accounting/FE-INCR-F7-TARIFA-brief.md` §5). Esta nota não acrescenta fundamento normativo: o
+estavam no BRIEF `FE-INCR-F7-TARIFA` (hoje `docs/accounting/FE-INCR-BANK-SETTLEMENT-FEE-EMENDA-1-brief.md`). Esta nota não acrescenta fundamento normativo: o
 parecer colado no chat antes da ratificação **não** foi adotado como fundamento (citações legais não conferidas).
 
 | # | Decisão | Ratificado |
@@ -32,3 +32,19 @@ parecer colado no chat antes da ratificação **não** foi adotado como fundamen
 - **Executar o patch do F-TAR-1 no #615.** Exige "executa" próprio para o #615 (a sessão deste BRIEF tinha ordem de
   não tocá-lo).
 - **Implementar este nó.** Segue sem "executa".
+
+## Atualização 2026-10-10 — questionário depois do "executa" do F-TAR-1
+
+Ao abrir o "executa", a sessão achou o #615 **já mergeado** (`2f942f73`) e o BRIEF concorrente
+`FE-INCR-BANK-SETTLEMENT-FEE` (#616) em `main`, com F-FE-FEE-1..3 ratificados em 09/10 e em conflito com F-TAR-2/4/9.
+Respostas do dono (chat, 2026-10-10):
+
+- **Veículo do F-TAR-1:** *"PR de BE novo"*. O patch (`feeCents`/`feeEntryId` na `BankSettlementItemView`) vai num PR
+  contra `main` (`claude/be-f7-fee-view`), sem merge.
+- **BRIEF que prevalece:** *"#616 + emenda do #617"*. O #616 é o canônico, o #617 vira
+  `FE-INCR-BANK-SETTLEMENT-FEE-EMENDA-1-brief.md`, e nos conflitos valem as decisões do #616. O nó `FE-INCR-F7-TARIFA` foi
+  renomeado para [[FE-INCR-BANK-SETTLEMENT-FEE]].
+
+Destino de cada F-TAR: **mantidos** F-TAR-3, 5, 6, 7 e 8 (itens 10–13 da emenda). **Substituídos pelo #616** F-TAR-2
+(bruto = `|linha| + feeCents`), F-TAR-4 (coluna condicional) e F-TAR-9/9.1 (F-FE-FEE-1 (b)). O próprio F-FE-FEE-1 (b)
+colide com F-ENC-1/F-ENC-11 da EMENDA 3.3 e virou o fork **F-FEE-E1**, PENDENTE na emenda.
