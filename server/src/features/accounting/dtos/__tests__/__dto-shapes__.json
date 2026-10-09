@@ -2192,7 +2192,10 @@
                   "type": "string",
                   "enum": [
                     "1",
-                    "4"
+                    "3",
+                    "4",
+                    "7",
+                    "8"
                   ]
                 },
                 "indRecReceita": {
@@ -2370,6 +2373,14 @@
             {
               "type": "null"
             }
+          ]
+        },
+        "simplesRegimeApuracao": {
+          "default": "COMPETENCIA",
+          "type": "string",
+          "enum": [
+            "COMPETENCIA",
+            "CAIXA"
           ]
         }
       },
@@ -10423,6 +10434,50 @@
       ],
       "additionalProperties": false
     },
+    "AlertaSimplesSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "codigo": {
+          "type": "string",
+          "enum": [
+            "ATIVIDADE_SEM_ANEXO",
+            "RBT12_INCOMPLETO",
+            "LIMITE_ME_EXCEDIDO",
+            "LIMITE_EPP_EXCEDIDO",
+            "SUBLIMITE_ICMS_ISS",
+            "SEGREGACAO_MANUAL",
+            "TIEOUT_DIVERGENTE",
+            "HISTORICO_IGNORADO",
+            "LIMITE_MEI_EXCEDIDO",
+            "NFSE_DIVERGE_RECEITA"
+          ]
+        },
+        "detalhe": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "INFO",
+            "WARNING"
+          ]
+        },
+        "motivoInformativo": {
+          "type": "string",
+          "enum": [
+            "DOCUMENTO_MUNICIPAL_TRANSIÇÃO",
+            "REGIME_CAIXA"
+          ]
+        }
+      },
+      "required": [
+        "codigo",
+        "detalhe",
+        "severity"
+      ],
+      "additionalProperties": false
+    },
     "SimplesUnitQuerySchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -11512,7 +11567,10 @@
               "type": "string",
               "enum": [
                 "1",
-                "4"
+                "3",
+                "4",
+                "7",
+                "8"
               ]
             },
             "indRecReceita": {
@@ -11760,7 +11818,10 @@
               "type": "string",
               "enum": [
                 "1",
-                "4"
+                "3",
+                "4",
+                "7",
+                "8"
               ]
             },
             "indRecReceita": {
