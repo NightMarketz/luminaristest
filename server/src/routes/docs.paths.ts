@@ -6806,6 +6806,116 @@ export {};
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *         '409': { description: 'A receita mudou depois do cálculo, ou registro concorrente' }
  *
+ *   /api/accounting/simples/aliquotas/{competencia}:
+ *     get:
+ *       summary: Rates for documents issued in the month, from the previous month's assessment (X14 PR-4 item 29)
+ *       description: >-
+ *         Para a prestação na competência, apura o mês anterior (LC 123 art. 21 § 4º I; Res. CGSN 140 art. 27 I) e devolve,
+ *         por atividade, o percentual efetivo de ISS para a retenção, o pTotTribSN sugerido (a DPS continua digitada, B-4)
+ *         e, a partir de 2027, os % de ICMS/IBS/CBS para o crédito do adquirente. 400 - MEI (SIMEI não tem alíquota).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: competencia, required: true, schema: { type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$' } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'AliquotasSimples' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/accounting/simples/dasn-simei/{ano}:
+ *     get:
+ *       summary: DASN-SIMEI mirror of the year (X14 PR-4 item 27)
+ *       description: >-
+ *         Receita bruta total e parcela sujeita ao ICMS do subrazão + contratação de empregado digitada (Res. CGSN 140 art.
+ *         109). 400 - perfil do ano não é MEI.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: ano, required: true, schema: { type: integer } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'SimplesDasnSimeiView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *     put:
+ *       summary: Save the typed DASN-SIMEI field (X14 PR-4 item 27)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: ano, required: true, schema: { type: integer } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               additionalProperties: false
+ *               required: [unitId, contratouEmpregado]
+ *               properties:
+ *                 unitId:             { type: string, minLength: 1 }
+ *                 contratouEmpregado: { type: boolean }
+ *       responses:
+ *         '200': { description: 'SimplesDasnSimeiView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/accounting/simples/defis/{ano}:
+ *     get:
+ *       summary: Minimal DEFIS mirror of the year (X14 PR-4 item 28)
+ *       description: >-
+ *         Só anos ≤ 2026 com mês apurado aqui. Lucro contábil (DRE do ano) e estoques inicial/final (conta de estoques em
+ *         31/12) do razão + empregados, sócios e renda variável digitados (manual do PGDAS-D/DEFIS 9.4.3).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: ano, required: true, schema: { type: integer } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'SimplesDefisView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *     put:
+ *       summary: Save the typed DEFIS fields (X14 PR-4 item 28)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: ano, required: true, schema: { type: integer } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               additionalProperties: false
+ *               required: [unitId, empregadosInicio, empregadosFim, ganhosRendaVariavelCents, socios]
+ *               properties:
+ *                 unitId:                   { type: string, minLength: 1 }
+ *                 empregadosInicio:         { type: integer, minimum: 0 }
+ *                 empregadosFim:            { type: integer, minimum: 0 }
+ *                 ganhosRendaVariavelCents: { type: integer, minimum: 0 }
+ *                 socios:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     additionalProperties: false
+ *                     required: [contactId, rendimentosIsentosCents, rendimentosTributaveisCents, participacaoBp, irrfCents]
+ *                     properties:
+ *                       contactId:                   { type: string, minLength: 1 }
+ *                       rendimentosIsentosCents:     { type: integer, minimum: 0 }
+ *                       rendimentosTributaveisCents: { type: integer, minimum: 0 }
+ *                       participacaoBp:              { type: integer, minimum: 0, maximum: 10000 }
+ *                       irrfCents:                   { type: integer, minimum: 0 }
+ *       responses:
+ *         '200': { description: 'SimplesDefisView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
  *   /api/accounting/tax-assessments/{id}/provisao:
  *     post:
  *       summary: Reconcile the ledger provision of an IRPJ/CSLL or PIS/COFINS assessment (X7 Fase A item 16; X8 item 18)

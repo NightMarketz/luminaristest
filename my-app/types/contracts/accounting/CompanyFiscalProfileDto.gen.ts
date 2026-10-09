@@ -80,6 +80,8 @@ prestadoraExclusivaServicos?: boolean
 declaraNaoProfissaoRegulamentada?: boolean
 ibsCbsOpcaoS1?: (("DAS" | "REGULAR") | null)
 ibsCbsOpcaoS2?: (("DAS" | "REGULAR") | null)
+meiContribuinteIcms?: (boolean | null)
+meiContribuinteIss?: (boolean | null)
 }
 export interface OnboardingFiscalInput {
 regime: ("MEI" | "SIMPLES" | "PRESUMIDO" | "REAL" | "NAO_SEI")
