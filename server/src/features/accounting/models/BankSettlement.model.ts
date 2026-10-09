@@ -18,7 +18,8 @@ export type BankSettlementStatus = (typeof BANK_SETTLEMENT_STATUSES)[number];
 export const BANK_SETTLEMENT_TITLE_TYPES = ['PAYABLE', 'RECEIVABLE'] as const;
 export type BankSettlementTitleType = (typeof BANK_SETTLEMENT_TITLE_TYPES)[number];
 
-export const BANK_SETTLEMENT_STEPS = ['SETTLE', 'CHARGE', 'MATCH'] as const;
+/** F5 PR-3 (P3-8): `FEE` (tarifa do provedor) entre `CHARGE` e `MATCH`. */
+export const BANK_SETTLEMENT_STEPS = ['SETTLE', 'CHARGE', 'FEE', 'MATCH'] as const;
 export type BankSettlementStep = (typeof BANK_SETTLEMENT_STEPS)[number];
 
 /** F-F7-5 (a): cap RELATIVO do encargo — 20% do saldo aberto (basis points). Por escopo depois, se pedirem. */
@@ -33,6 +34,15 @@ export const BANK_SETTLEMENT_CONFIRMING_STALE_MS = 10 * 60 * 1000;
 
 /** `sourceType` do lançamento de encargo (BRIEF item 8) — idempotente por `sourceId = item.id`. */
 export const BANK_CHARGE_SOURCE_TYPE = 'bank.charge';
+
+/** F5 PR-3 (P3-8): `sourceType` do lançamento da tarifa do provedor — idempotente por `sourceId = item.id`. */
+export const PROVIDER_FEE_SOURCE_TYPE = 'provider.fee';
+
+/** F5 PR-3 (G7, dono 2026-10-10): aviso no item proposto para cobrança terminal. A confirmação continua humana. */
+export const TERMINAL_CHARGE_WARNING = 'Cobrança em estado terminal no Luminaris';
+
+/** `DESCRIPTION` da linha de pagamento no relatório de liberações (M11) — só ela entra no passo novo (P3-6). */
+export const MP_RELEASE_PAYMENT_DESCRIPTION = 'payment';
 
 export const BANK_SETTLEMENT_SCANNED = 'bank_settlement.scanned';
 export const BANK_SETTLEMENT_CONFIRMED = 'bank_settlement.confirmed';

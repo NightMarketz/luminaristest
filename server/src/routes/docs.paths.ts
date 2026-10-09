@@ -2910,11 +2910,13 @@
  *                 periodEnd:           { type: string, format: date, description: YYYY-MM-DD }
  *                 openingBalanceCents: { type: integer }
  *                 closingBalanceCents: { type: integer }
- *                 file:                { type: string, format: binary, description: CSV, XLSX, OFX or CNAB 240 }
+ *                 format:              { type: string, enum: [mp_release], description: 'F5 PR-3 (G6): optional; empty = auto-detected. mp_release = Mercado Pago released-money report of the PaymentAccount on this GL (none ⇒ 409 release_report_no_payment_account); balances come only from the file (sending them ⇒ 400 release_report_balance_from_file); missing columns ⇒ 400 release_report_missing_columns; SOURCE_ID+DESCRIPTION already imported ⇒ 400 release_report_overlap' }
+ *                 file:                { type: string, format: binary, description: CSV, XLSX, OFX, CNAB 240 or mp_release CSV }
  *       responses:
  *         '201': { description: Statement imported (created + staged lines) }
  *         '200': { description: Same file already imported (idempotent hit) }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '409': { description: 'release_report_no_payment_account — mp_release on a GL account without a Mercado Pago PaymentAccount' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *         '404': { $ref: '#/components/responses/NotFoundError' }
@@ -4576,8 +4578,9 @@
  *         a charge account configured (PUT /api/accounting/settings) and the line's period OPEN.
  *         Any failure = 400 with no effect. Then idempotent steps with state saved on the item:
  *         (i) AP/AR registerPayment/registerReceipt (their own claim→book→finalize protocol),
- *         (ii) bank.charge entry when chargeCents > 0, (iii) manualMatch of the bank legs
- *         (Σ == |line| exact), (iv) CONFIRMED. Failure in (ii)/(iii) → FAILED with the ids kept.
+ *         (ii) bank.charge entry when chargeCents > 0, (ii-b) provider.fee entry when feeCents > 0
+ *         (F5 PR-3, P3-8: D providerFeeExpenseAccountId / C PaymentAccount GL), (iii) manualMatch of the
+ *         statement-account legs (signed Σ == line), (iv) CONFIRMED. Failure in (ii)/(iii) → FAILED with the ids kept.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -4591,10 +4594,10 @@
  *               required: [unitId, method]
  *               properties:
  *                 unitId: { type: string }
- *                 method: { type: string, enum: [Cash, Pix, TED, Boleto], description: 'closed map PAYMENT_METHOD_ACCOUNTS — must resolve to the statement bank account' }
+ *                 method: { type: string, enum: [Cash, Pix, TED, Boleto, ProviderBalance], description: 'closed map PAYMENT_METHOD_ACCOUNTS — must resolve to the statement bank account. ProviderBalance (F5 PR-3, P3-9): only on a PaymentAccount statement (ACTIVE, same GL) for a RECEIVABLE — else 400 provider_balance_requires_payment_account' }
  *       responses:
  *         '200': { description: 'BankSettlementItemView (status CONFIRMED)' }
- *         '400': { description: 'pre-check failed (line_not_unmatched | title_not_open | title_balance | method_account_mismatch | charge_account_not_configured | period_not_open) or item not PENDING' }
+ *         '400': { description: 'pre-check failed (line_not_unmatched | title_not_open | title_balance | method_account_mismatch | charge_account_not_configured | fee_account_not_configured | provider_balance_requires_payment_account | period_not_open) or item not PENDING' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *         '404': { $ref: '#/components/responses/NotFoundError' }
@@ -4641,7 +4644,7 @@
  *               required: [unitId, method]
  *               properties:
  *                 unitId: { type: string }
- *                 method: { type: string, enum: [Cash, Pix, TED, Boleto] }
+ *                 method: { type: string, enum: [Cash, Pix, TED, Boleto, ProviderBalance], description: "ProviderBalance só no caminho do F7 (P3-9)" }
  *       responses:
  *         '200': { description: 'BankSettlementItemView (status CONFIRMED)' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
@@ -4657,7 +4660,7 @@
  *       parameters:
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
  *       responses:
- *         '200': { description: 'unitId, bankChargeExpenseAccountId, bankChargeIncomeAccountId, depreciationExpenseAccountId, disposalGainAccountId, disposalLossAccountId, depreciationParteBAccountId, updatedAt' }
+ *         '200': { description: 'unitId, bankChargeExpenseAccountId, bankChargeIncomeAccountId, depreciationExpenseAccountId, disposalGainAccountId, disposalLossAccountId, depreciationParteBAccountId, providerFeeExpenseAccountId, updatedAt' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *     put:
@@ -4686,6 +4689,7 @@
  *                 disposalGainAccountId:         { type: string, nullable: true, description: 'C ganho na baixa (item 5)' }
  *                 disposalLossAccountId:         { type: string, nullable: true, description: 'D perda na baixa (item 5)' }
  *                 depreciationParteBAccountId:   { type: string, nullable: true, description: 'conta LalurParteBAccount para a diferença contábil×fiscal (item 24, PR-3)' }
+ *                 providerFeeExpenseAccountId:   { type: string, nullable: true, description: 'D tarifa do provedor de cobrança (Expense) — F5 PR-3, P3-11; sem ela, /confirm com feeCents > 0 dá 400 fee_account_not_configured' }
  *       responses:
  *         '200': { description: 'the updated settings view' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }

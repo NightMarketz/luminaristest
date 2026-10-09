@@ -32,6 +32,8 @@ export class BankSettlementRepository implements IBankSettlementRepository {
         titleId: data.titleId,
         proposedCents: BigInt(data.proposedCents),
         chargeCents: BigInt(data.chargeCents),
+        feeCents: BigInt(data.feeCents ?? 0),
+        reason: data.reason ?? null,
         status: 'PENDING',
       },
     });
@@ -82,13 +84,14 @@ export class BankSettlementRepository implements IBankSettlementRepository {
 
   public async update(scope: AccountingScope, id: string, patch: BankSettlementItemPatch, tx?: Prisma.TransactionClient): Promise<BankSettlementItem> {
     // updateMany + re-read: `update` não aceita where composto por escopo (tenancy no where, sempre).
-    const { proposedCents, chargeCents, ...rest } = patch;
+    const { proposedCents, chargeCents, feeCents, ...rest } = patch;
     await this.db(tx).bankSettlementItem.updateMany({
       where: { id, ...accountingScopeWhere(scope), deletedAt: null },
       data: {
         ...rest,
         ...(proposedCents !== undefined ? { proposedCents: BigInt(proposedCents) } : {}),
         ...(chargeCents !== undefined ? { chargeCents: BigInt(chargeCents) } : {}),
+        ...(feeCents !== undefined ? { feeCents: BigInt(feeCents) } : {}),
       },
     });
     const row = await this.db(tx).bankSettlementItem.findFirst({ where: { id, ...accountingScopeWhere(scope), deletedAt: null } });
@@ -208,6 +211,7 @@ export class BankSettlementRepository implements IBankSettlementRepository {
       disposalGainAccountId?: string | null;
       disposalLossAccountId?: string | null;
       depreciationParteBAccountId?: string | null;
+      providerFeeExpenseAccountId?: string | null;
     },
     tx?: Prisma.TransactionClient,
   ): Promise<AccountingScopeSettings> {

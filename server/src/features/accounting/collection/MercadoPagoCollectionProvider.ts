@@ -5,6 +5,7 @@ import {
   type CollectionCapabilities,
   type CollectionProviderPort,
   type CreateChargeInput,
+  type ReleaseReportFile,
   type ResolvedAccount,
   type WebhookRequest,
   type WebhookVerification,
@@ -115,6 +116,50 @@ export class MercadoPagoCollectionProvider implements CollectionProviderPort {
     if (a.length !== b.length || !timingSafeEqual(a, b)) return { ok: false, reason: 'signature' };
     if (Math.abs(now.getTime() - tsMs) > PAYMENT_WEBHOOK_MAX_AGE_MS) return { ok: false, reason: 'replay_window' };
     return { ok: true, resourceRef: dataId };
+  }
+
+  // ── Relatório de liberações (PR-3, P3-5; M10: /en/docs/reports/released-money/api) ─────────────────────────
+  async requestReleaseReport(account: ResolvedAccount, range: { fromUtc: string; toUtc: string }): Promise<void> {
+    await this.raw(account, 'POST', '/v1/account/release_report', { begin_date: range.fromUtc, end_date: range.toUtc });
+  }
+
+  async listReleaseReports(account: ResolvedAccount): Promise<ReleaseReportFile[]> {
+    const res = await this.raw(account, 'GET', '/v1/account/release_report/list');
+    let json: unknown;
+    try {
+      json = JSON.parse(res.toString('utf8'));
+    } catch {
+      throw new CollectionProviderError('Mercado Pago respondeu lista de relatórios inválida', 200);
+    }
+    if (!Array.isArray(json)) throw new CollectionProviderError('Mercado Pago respondeu lista de relatórios inválida', 200);
+    return json
+      .filter(isRecord)
+      .filter((f) => typeof f.file_name === 'string' && typeof f.begin_date === 'string' && typeof f.end_date === 'string')
+      .map((f) => ({ fileName: f.file_name as string, beginDate: f.begin_date as string, endDate: f.end_date as string }));
+  }
+
+  async downloadReleaseReport(account: ResolvedAccount, fileName: string): Promise<Buffer> {
+    return this.raw(account, 'GET', `/v1/account/release_report/${encodeURIComponent(fileName)}`);
+  }
+
+  /** Chamada genérica (relatório): corpo bruto; erro HTTP ⇒ `CollectionProviderError` com o status (401 ⇒ P2-4). */
+  private async raw(account: ResolvedAccount, method: 'GET' | 'POST', path: string, body?: unknown): Promise<Buffer> {
+    const headers: Record<string, string> = { Authorization: `Bearer ${account.credential.accessToken}` };
+    if (body !== undefined) headers['Content-Type'] = 'application/json';
+    let res: Response;
+    try {
+      res = await fetch(`${this.baseUrl}${path}`, {
+        method,
+        headers,
+        body: body === undefined ? undefined : JSON.stringify(body),
+        signal: AbortSignal.timeout(60_000),
+      });
+    } catch (error) {
+      throw new CollectionProviderError(`Mercado Pago inacessível: ${error instanceof Error ? error.name : 'erro de rede'}`, null);
+    }
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (!res.ok) throw new CollectionProviderError(`Mercado Pago respondeu ${res.status}`, res.status);
+    return buf;
   }
 
   private async call(

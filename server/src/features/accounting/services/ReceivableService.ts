@@ -26,6 +26,7 @@ import {
   RECEIVABLE_SETTLEABLE_STATUSES,
   receivableStatusForBalance,
   resolveReceiptMethodAccount,
+  PROVIDER_BALANCE_METHOD,
 } from '../models/Receivable.model';
 import type {
   CancelReceivableInput,
@@ -222,6 +223,11 @@ export class ReceivableService {
     scope: AccountingScope,
     receivableId: string,
     dto: RegisterReceiptInput,
+    /**
+     * P3-9 (F-PP-7 a / F-PPB-3 a): só o F7 passa a conta da `PaymentAccount` (método `ProviderBalance`). Não é campo
+     * de DTO — recibo avulso com `ProviderBalance` cai no 400 `provider_balance_requires_payment_account`.
+     */
+    options: { debitAccountId?: string } = {},
   ): Promise<ReceivableReceipt> {
     if (!this.policy.canManageReceivable(scope)) {
       throw new ForbiddenError('Você não tem permissão para receber contas.');
@@ -248,7 +254,8 @@ export class ReceivableService {
     }
 
     // Resolve the debit account for the method (closed map — unknown REJECTS, D2) BEFORE the CAS.
-    const debitCode = resolveReceiptMethodAccount(dto.method);
+    const debitAccountId = dto.method === PROVIDER_BALANCE_METHOD ? options.debitAccountId ?? null : null;
+    const debitCode = await this.resolveReceiptDebitCode(scope, dto.method, debitAccountId);
 
     // ATOMIC SUM-CAS (D4 + ADR §3) — OPEN|PARTIALLY_RECEIVED → RECEIVING, receivedCents += amount.
     const claimed = await this.receivableRepo.claimForReceipt(scope, receivableId, amountCents, dto.amountCents);
@@ -271,6 +278,7 @@ export class ReceivableService {
         receivedAt: new Date(dto.receivedAt),
         receivedByUserId: scope.actorUserId,
         status: 'ACTIVE',
+        debitAccountId,
       });
 
       const entry = await this.posting.postEntry(
@@ -539,7 +547,7 @@ export class ReceivableService {
         if (!settlement) {
           const receivable = await this.receivableRepo.findByIdWithReceipts(scope, receipt.receivableId);
           if (!receivable) continue;
-          const debitCode = resolveReceiptMethodAccount(receipt.method);
+          const debitCode = await this.resolveReceiptDebitCode(scope, receipt.method, receipt.debitAccountId);
           settlement = await this.posting.postEntry(
             scope,
             this.buildReceiptInputFromRow(scope, receivable, receipt, debitCode),
@@ -617,6 +625,19 @@ export class ReceivableService {
    * pass, stops minting NULL rows without a single change of its own. Shared with AP — invariants in
    * `counterpartyResolution.ts`.
    */
+  /**
+   * P3-9 (F-PPB-3 a): conta de débito do recibo — `debitAccountId` gravado (ProviderBalance) vence o mapa fechado;
+   * `null` mantém o mapa de hoje (legado). Usado no registro E no re-post do reconcile (mesma conta nos dois).
+   */
+  private async resolveReceiptDebitCode(scope: AccountingScope, method: string, debitAccountId: string | null): Promise<string> {
+    if (debitAccountId === null) return resolveReceiptMethodAccount(method);
+    const account = await this.accountRepo.findById(scope, debitAccountId);
+    if (!account || account.deletedAt || !account.acceptsEntries) {
+      throw new ValidationError(`provider_balance_requires_payment_account: a conta '${debitAccountId}' da conta de provedor não é folha ativa do escopo.`);
+    }
+    return account.code;
+  }
+
   private async assertNoLiveCharge(scope: AccountingScope, receivableId: string, tx?: Prisma.TransactionClient): Promise<void> {
     const live = await this.collectionChargeRepo.findLiveByReceivable(scope, receivableId, tx);
     if (live) {

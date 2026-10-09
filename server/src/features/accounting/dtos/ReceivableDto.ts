@@ -63,7 +63,7 @@ export const CreateReceivableSchema = z
  *       required: [unitId, method, receivedAt, amountCents]
  *       properties:
  *         unitId:      { type: string }
- *         method:      { type: string, enum: [Cash, Pix, TED, Boleto] }
+ *         method:      { type: string, enum: [Cash, Pix, TED, Boleto, ProviderBalance], description: "ProviderBalance (F5 PR-3, P3-9) só na confirmação do F7 — recibo avulso ⇒ 400 provider_balance_requires_payment_account" }
  *         receivedAt:  { type: string, description: "Data-only YYYY-MM-DD — data EFETIVA do crédito bancário (D9), não a data do clique" }
  *         amountCents: { type: integer, minimum: 1, maximum: 2147483647, description: "Valor DESTE recebimento: qualquer parte do saldo em aberto (amountCents − receivedCents), nunca acima dele (BE-INCR-PARTIAL-SETTLEMENT). A checagem contra o saldo vive no serviço (sum-CAS atômico). Teto de POLÍTICA (não de persistência): acima disso a API responde 400." }
  */

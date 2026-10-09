@@ -26,6 +26,17 @@ export class CollectionChargeRepository implements ICollectionChargeRepository {
     return (tx ?? prisma).collectionCharge.findFirst({ where: { paymentAccountId, providerRef, deletedAt: null } });
   }
 
+  public async findForReleaseLine(
+    scope: AccountingScope,
+    paymentAccountId: string,
+    key: { id: string } | { providerPaymentRef: string },
+    tx?: Prisma.TransactionClient,
+  ): Promise<CollectionCharge | null> {
+    return (tx ?? prisma).collectionCharge.findFirst({
+      where: { ...accountingScopeWhere(scope), paymentAccountId, deletedAt: null, ...key },
+    });
+  }
+
   public async findLiveByReceivable(
     scope: AccountingScope,
     receivableId: string,

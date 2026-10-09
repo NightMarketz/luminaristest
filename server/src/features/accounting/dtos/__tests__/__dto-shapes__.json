@@ -1004,6 +1004,17 @@
                       "type": "null"
                     }
                   ]
+                },
+                "providerFeeExpenseAccountId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 }
               },
               "additionalProperties": false
@@ -1536,6 +1547,17 @@
               "type": "null"
             }
           ]
+        },
+        "providerFeeExpenseAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -1612,6 +1634,17 @@
               "type": "null"
             }
           ]
+        },
+        "providerFeeExpenseAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "additionalProperties": false
@@ -1666,7 +1699,8 @@
             "Cash",
             "Pix",
             "TED",
-            "Boleto"
+            "Boleto",
+            "ProviderBalance"
           ]
         }
       },
@@ -1710,7 +1744,8 @@
             "Cash",
             "Pix",
             "TED",
-            "Boleto"
+            "Boleto",
+            "ProviderBalance"
           ]
         }
       },
@@ -9381,7 +9416,8 @@
             "Cash",
             "Pix",
             "TED",
-            "Boleto"
+            "Boleto",
+            "ProviderBalance"
           ]
         },
         "receivedAt": {
@@ -9803,6 +9839,10 @@
           "minLength": 1,
           "pattern": "^[A-Za-z0-9_-]+$"
         },
+        "format": {
+          "type": "string",
+          "const": "mp_release"
+        },
         "glAccountId": {
           "type": "string",
           "minLength": 1,
@@ -9832,6 +9872,7 @@
       },
       "required": [
         "unitId",
+        "format",
         "glAccountId",
         "periodStart",
         "periodEnd",

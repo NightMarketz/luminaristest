@@ -64,11 +64,23 @@ export const RECEIPT_METHOD_ACCOUNTS: Readonly<Record<string, string>> = {
   Boleto: '1.1.1',
 };
 
+/**
+ * BE-INCR-PAYMENT-PROVIDER PR-3 (P3-9, F-PP-7 a): saldo no provedor de cobrança. NÃO entra no mapa fechado — a
+ * conta de débito é a da `PaymentAccount` do extrato, passada pelo F7 ao `registerReceipt` e gravada em
+ * `ReceivableReceipt.debitAccountId` (F-PPB-3 a). Fora desse caminho ⇒ 400 `provider_balance_requires_payment_account`.
+ */
+export const PROVIDER_BALANCE_METHOD = 'ProviderBalance';
+
 /** Accepted receipt methods (DTO enum source of truth). */
-export const RECEIPT_METHODS = Object.keys(RECEIPT_METHOD_ACCOUNTS) as [string, ...string[]];
+export const RECEIPT_METHODS = [...(Object.keys(RECEIPT_METHOD_ACCOUNTS) as [string, ...string[]]), PROVIDER_BALANCE_METHOD] as [string, ...string[]];
 
 /** Resolve the debit account code for a method, or REJECT (closed map, D2). */
 export function resolveReceiptMethodAccount(method: string): string {
+  if (method === PROVIDER_BALANCE_METHOD) {
+    throw new ValidationError(
+      'provider_balance_requires_payment_account: o método ProviderBalance só é aceito na confirmação de baixa (F7) de extrato de conta de provedor.',
+    );
+  }
   const code = RECEIPT_METHOD_ACCOUNTS[method];
   if (!code) {
     throw new ValidationError(

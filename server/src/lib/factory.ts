@@ -129,6 +129,8 @@ import { AccountantAssignmentService } from '../features/accounting/services/Acc
 import { AccountingPolicyVersionService } from '../features/accounting/services/AccountingPolicyVersionService';
 import { PaymentAccountService } from '../features/accounting/services/PaymentAccountService';
 import { CollectionChargeService } from '../features/accounting/services/CollectionChargeService';
+import { ReleaseReportService } from '../features/accounting/services/ReleaseReportService';
+import { JobWatermarkRepository } from '../jobs/JobWatermarkRepository';
 import { MercadoPagoCollectionProvider } from '../features/accounting/collection/MercadoPagoCollectionProvider';
 import { TaxAssessmentService } from '../features/accounting/services/TaxAssessmentService';
 import { MitExportService } from '../features/accounting/services/MitExportService';
@@ -695,6 +697,7 @@ export class ApplicationFactory {
     accountingContact: AccountingContactService;
     paymentAccount: PaymentAccountService; // BE-INCR-PAYMENT-PROVIDER PR-1
     collectionCharge: CollectionChargeService; // BE-INCR-PAYMENT-PROVIDER PR-2
+    releaseReport: ReleaseReportService; // BE-INCR-PAYMENT-PROVIDER PR-3
     taxAssessment: TaxAssessmentService; // X7 Fase A PR-2
     mitExport: MitExportService; // X9 PR-2
     simplesEntradas: SimplesEntradasService; // X14 PR-2
@@ -1100,6 +1103,35 @@ export class ApplicationFactory {
       receivableService,
       postingService,
       auditService,
+      this.repositories.paymentAccount, // BE-INCR-PAYMENT-PROVIDER PR-3 (P3-9)
+      this.repositories.collectionCharge, // BE-INCR-PAYMENT-PROVIDER PR-3 (P3-6)
+    );
+    // BE-INCR-PAYMENT-PROVIDER PR-2: o adaptador sai do `provider` da conta — MP é o único da porta hoje (P2-1).
+    const collectionChargeService = new CollectionChargeService(
+      this.repositories.collectionCharge,
+      this.repositories.paymentAccount,
+      this.repositories.receivable,
+      this.repositories.counterparty,
+      auditService,
+      this.policies.accounting,
+      (provider) => {
+        if (provider === 'MERCADO_PAGO') return mercadoPagoCollectionProvider;
+        throw new Error(`Provedor de cobrança sem adaptador: ${provider}`);
+      },
+    );
+    // BE-INCR-PAYMENT-PROVIDER PR-3 (P3-1..P3-5): import do relatório de liberações + job diário.
+    const releaseReportService = new ReleaseReportService(
+      this.repositories.paymentAccount,
+      this.repositories.reconciliation,
+      reconciliationService,
+      auditService,
+      this.policies.accounting,
+      (provider) => {
+        if (provider === 'MERCADO_PAGO') return mercadoPagoCollectionProvider;
+        throw new Error(`Provedor de cobrança sem adaptador: ${provider}`);
+      },
+      new JobWatermarkRepository(),
+      (account) => collectionChargeService.markCredentialInvalid(account),
     );
     const fiscalProfileService = new FiscalProfileService(
       this.repositories.fiscalProfile,
@@ -1542,19 +1574,8 @@ export class ApplicationFactory {
         auditService,
         this.policies.accounting,
       ),
-      // BE-INCR-PAYMENT-PROVIDER PR-2: o adaptador sai do `provider` da conta — MP é o único da porta hoje (P2-1).
-      collectionCharge: new CollectionChargeService(
-        this.repositories.collectionCharge,
-        this.repositories.paymentAccount,
-        this.repositories.receivable,
-        this.repositories.counterparty,
-        auditService,
-        this.policies.accounting,
-        (provider) => {
-          if (provider === 'MERCADO_PAGO') return mercadoPagoCollectionProvider;
-          throw new Error(`Provedor de cobrança sem adaptador: ${provider}`);
-        },
-      ),
+      collectionCharge: collectionChargeService,
+      releaseReport: releaseReportService, // BE-INCR-PAYMENT-PROVIDER PR-3 (P3-1..P3-5)
       accountingDelivery: new AccountingDeliveryService(
         this.repositories.accountingDelivery,
         this.repositories.accountingContact,
@@ -1774,6 +1795,7 @@ export class ApplicationFactory {
   public getAccountingContactService = (): AccountingContactService => this.services.accountingContact;
   public getPaymentAccountService = (): PaymentAccountService => this.services.paymentAccount;
   public getCollectionChargeService = (): CollectionChargeService => this.services.collectionCharge;
+  public getReleaseReportService = (): ReleaseReportService => this.services.releaseReport;
   public getTaxAssessmentService = (): TaxAssessmentService => this.services.taxAssessment;
   public getMitExportService = (): MitExportService => this.services.mitExport;
   public getSimplesEntradasService = (): SimplesEntradasService => this.services.simplesEntradas;

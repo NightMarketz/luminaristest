@@ -462,7 +462,8 @@ export class CollectionChargeService {
     return error instanceof AppError ? error : new AppError(error instanceof Error ? error.message : String(error), 500);
   }
 
-  private async markCredentialInvalid(account: PaymentAccount): Promise<void> {
+  /** Público desde o PR-3: o job do relatório (P3-5) aplica o mesmo P2-4. */
+  async markCredentialInvalid(account: PaymentAccount): Promise<void> {
     const scope = resolveAccountingScope({ userId: account.userId }, account.unitId);
     await this.paymentAccountRepo.runTransaction(async (tx) => {
       const fresh = await this.paymentAccountRepo.findById(scope, account.id, tx);

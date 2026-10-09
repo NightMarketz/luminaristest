@@ -17,6 +17,7 @@ type SettingsData = {
   disposalGainAccountId?: string | null;
   disposalLossAccountId?: string | null;
   depreciationParteBAccountId?: string | null;
+  providerFeeExpenseAccountId?: string | null;
 };
 
 export interface AccountingScopeSettingsView {
@@ -27,6 +28,7 @@ export interface AccountingScopeSettingsView {
   disposalGainAccountId: string | null;
   disposalLossAccountId: string | null;
   depreciationParteBAccountId: string | null;
+  providerFeeExpenseAccountId: string | null;
   updatedAt: string | null;
 }
 
@@ -140,6 +142,11 @@ export class AccountingScopeSettingsService {
       }
       data.depreciationParteBAccountId = input.depreciationParteBAccountId;
     }
+    // F5 PR-3 (P3-11, P3-8): a tarifa é DESPESA — D esta conta / C conta da PaymentAccount.
+    if (input.providerFeeExpenseAccountId !== undefined) {
+      if (input.providerFeeExpenseAccountId !== null) await this.assertAccount(scope, input.providerFeeExpenseAccountId, 'Expense', 'tarifa do provedor', tx);
+      data.providerFeeExpenseAccountId = input.providerFeeExpenseAccountId;
+    }
     return data;
   }
 
@@ -166,6 +173,7 @@ export class AccountingScopeSettingsService {
       disposalGainAccountId: row?.disposalGainAccountId ?? null,
       disposalLossAccountId: row?.disposalLossAccountId ?? null,
       depreciationParteBAccountId: row?.depreciationParteBAccountId ?? null,
+      providerFeeExpenseAccountId: row?.providerFeeExpenseAccountId ?? null,
       updatedAt: row ? row.updatedAt.toISOString() : null,
     };
   }

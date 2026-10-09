@@ -156,6 +156,7 @@ export class PaymentAccountService {
           credentialCiphertext: sealed.blob,
           credentialKeyVersion: sealed.keyVersion,
           credentialSetAt: new Date(),
+          credentialSetById: scope.actorUserId, // F5 PR-3 (G5): o job mpReleaseReportFetch roda em nome deste usuário
           credentialExpiresAt: null, // OWN: a doc do MP não declara validade (M12)
           accessTokenLast4: dto.accessToken.slice(-4),
           status: 'ACTIVE',

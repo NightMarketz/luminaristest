@@ -1,7 +1,7 @@
 import { createHash } from 'crypto';
 import type { BankStatement, BankStatementLine, Prisma } from 'generated/prisma';
 import { ForbiddenError, NotFoundError, ServiceError, ValidationError } from '../../../lib/errors';
-import { parseTable } from '../../../lib/spreadsheet';
+import { parseTable, type InTable } from '../../../lib/spreadsheet';
 import { parseOfx, type StatementFormat } from '../../../lib/ofx';
 import { parseCnab } from '../../../lib/cnab';
 import type { IReconciliationRepository } from '../repositories/IReconciliationRepository';
@@ -36,6 +36,21 @@ export const RECONCILE_CHUNK_SIZE = 200;
 /** Required import columns (same integer-cents convention as the INCR-6 templates). */
 const REQUIRED_COLS = ['date', 'amountCents', 'description'] as const;
 const OPTIONAL_REF_COL = 'externalRef';
+
+/**
+ * F5 PR-3 (P3-1/P3-4, G1/G2/G8): import de um relatório já normalizado (`mp_release`) pelo `ReleaseReportService`.
+ * O gate de linhas (`parseLines`), a idempotência por sha256 e a tx são os MESMOS do import de extrato.
+ */
+export interface PreParsedStatementImport {
+  table: InTable;
+  paymentAccountId: string;
+  openingBalanceCents: number | null;
+  closingBalanceCents: number | null;
+  /** Dentro da tx, antes de criar o extrato (sobreposição P3-4 — autoritativa). */
+  guardInTx: (tx: Prisma.TransactionClient) => Promise<void>;
+  /** Dentro da tx, depois de criar o extrato e as linhas (audit G8). */
+  afterCreateInTx: (tx: Prisma.TransactionClient, statement: BankStatement, lineCount: number) => Promise<void>;
+}
 
 interface ImportResult {
   statement: BankStatement;
@@ -83,6 +98,7 @@ export class ReconciliationService {
     scope: AccountingScope,
     dto: ImportBankStatementDto,
     file: { buffer: Buffer; format: StatementFormat },
+    preParsed?: PreParsedStatementImport,
   ): Promise<ImportResult> {
     if (!this.policy.canReconcile(scope)) {
       throw new ForbiddenError('Você não tem permissão para conciliar.');
@@ -105,8 +121,9 @@ export class ReconciliationService {
 
     // Same validation gate (parseLines) for every format — OFX and CNAB just normalize to
     // the identical {headers, rows} shape before it. Branch only on WHICH parser to call.
-    const table =
-      file.format === 'ofx'
+    const table = preParsed
+      ? preParsed.table
+      : file.format === 'ofx'
         ? parseOfx(file.buffer)
         : file.format === 'cnab'
           ? parseCnab(file.buffer)
@@ -119,6 +136,7 @@ export class ReconciliationService {
     // Pre-check above is advisory; the authoritative re-import guard is the real
     // @@unique([userId,unitId,sha256]) — a concurrent duplicate fails the tx (P2002).
     const statement = await this.repo.runTransaction(async (tx) => {
+      if (preParsed) await preParsed.guardInTx(tx);
       const created = await this.repo.createStatement(
         {
           userId: scope.ownerUserId,
@@ -127,8 +145,9 @@ export class ReconciliationService {
           statementRef: dto.statementRef ?? null,
           periodStart: dto.periodStart,
           periodEnd: dto.periodEnd,
-          openingBalanceCents: dto.openingBalanceCents ?? null,
-          closingBalanceCents: dto.closingBalanceCents ?? null,
+          openingBalanceCents: preParsed ? preParsed.openingBalanceCents : dto.openingBalanceCents ?? null,
+          closingBalanceCents: preParsed ? preParsed.closingBalanceCents : dto.closingBalanceCents ?? null,
+          paymentAccountId: preParsed?.paymentAccountId ?? null,
           sha256,
           // ponytail: anexo do arquivo bruto (INCR-5) fica de fora do MVP; upgrade =
           // persistir via DocumentAttachmentService e preencher attachmentId aqui.
@@ -154,6 +173,7 @@ export class ReconciliationService {
           periodEnd: dto.periodEnd.toISOString(),
         },
       });
+      if (preParsed) await preParsed.afterCreateInTx(tx, created, parsedLines.length);
       return created;
     });
 
@@ -181,6 +201,8 @@ export class ReconciliationService {
     const cAmount = col('amountCents');
     const cDesc = col('description');
     const cRef = col(OPTIONAL_REF_COL);
+    // F5 PR-3 (P3-1): o normalizador mp_release entrega o `rawJson` com TODAS as colunas do relatório.
+    const cRaw = col('rawJson');
 
     const errors: Array<{ row: number; error: string }> = [];
     const lines: Array<Omit<CreateBankStatementLineInput, 'statementId'>> = [];
@@ -226,7 +248,7 @@ export class ReconciliationService {
         amountCents,
         description,
         externalRef: cRef === -1 ? null : (row[cRef] ?? '').trim() || null,
-        rawJson: JSON.stringify(row),
+        rawJson: cRaw === -1 ? JSON.stringify(row) : row[cRaw] ?? '{}',
       });
     });
 

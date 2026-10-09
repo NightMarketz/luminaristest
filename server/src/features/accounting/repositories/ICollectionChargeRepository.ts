@@ -31,6 +31,13 @@ export interface ICollectionChargeRepository {
     providerRef: string,
     tx?: Prisma.TransactionClient,
   ): Promise<CollectionCharge | null>;
+  /** F5 PR-3 (P3-6): cobrança do escopo E da conta do extrato, por `id` (= EXTERNAL_REFERENCE) ou `providerPaymentRef` (SOURCE_ID). */
+  findForReleaseLine(
+    scope: AccountingScope,
+    paymentAccountId: string,
+    key: { id: string } | { providerPaymentRef: string },
+    tx?: Prisma.TransactionClient,
+  ): Promise<CollectionCharge | null>;
   findLiveByReceivable(
     scope: AccountingScope,
     receivableId: string,

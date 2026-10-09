@@ -8,6 +8,7 @@ import { purgeOldDeletedRecords } from './jobs/PurgeDeletedRecords';
 import { accountingSyncScheduler } from './jobs/AccountingSyncScheduler';
 import { dfePollScheduler } from './jobs/DfePollScheduler';
 import { collectionChargePollScheduler } from './jobs/CollectionChargePollScheduler';
+import { mpReleaseReportScheduler } from './jobs/MpReleaseReportScheduler';
 import { legalParamsRecalcScheduler } from './jobs/LegalParamsRecalcScheduler';
 import { DocumentStatus } from './features/documents/models/Document.model';
 
@@ -56,6 +57,7 @@ async function bootstrap(): Promise<void> {
     accountingSyncScheduler.start();
     dfePollScheduler.start(); // BE-INCR-DFE (nó X10b, item 27)
     collectionChargePollScheduler.start(); // BE-INCR-PAYMENT-PROVIDER PR-2 (P2-9)
+    mpReleaseReportScheduler.start(); // BE-INCR-PAYMENT-PROVIDER PR-3 (P3-5)
     legalParamsRecalcScheduler.start(); // BE-INCR-LEGAL-PARAMS PR-4 (item 10): varredura dos jobs PENDING
   });
 }
@@ -123,6 +125,7 @@ function gracefulShutdown() {
   accountingSyncScheduler.stop();
   dfePollScheduler.stop();
   collectionChargePollScheduler.stop();
+  mpReleaseReportScheduler.stop();
   legalParamsRecalcScheduler.stop();
 
   // Force-exit safety net after 10 seconds

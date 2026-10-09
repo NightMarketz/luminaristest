@@ -2,6 +2,7 @@
 // Mudou um DTO? UPDATE_DTO_SNAPSHOT=1 npx jest --selectProjects unit --testPathPatterns dtoShapeSnapshot e comite o diff.
 export interface ImportBankStatementInput {
 unitId: string
+format: "mp_release"
 glAccountId: string
 statementRef?: string
 periodStart: string

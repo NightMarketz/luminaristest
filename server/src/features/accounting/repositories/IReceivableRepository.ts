@@ -33,6 +33,8 @@ export interface CreateReceiptData {
   receivedAt: Date;
   receivedByUserId: string | null;
   status: string;
+  /** P3-9 (F-PPB-3 a): conta de débito do recibo ProviderBalance; null/ausente = mapa fechado do método. */
+  debitAccountId?: string | null;
 }
 
 /**

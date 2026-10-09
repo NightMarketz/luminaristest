@@ -140,7 +140,8 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // BE-INCR-BANK-SETTLEMENT (nó F7, item 13). Sem PII: a DESCRIÇÃO da linha do extrato nunca entra
   // (classe accounting-audit-allowlist-guards); `reason` (reject) é texto do operador → mascarado.
   'bank_settlement.scanned':   ['statementId', 'created', 'skippedExisting', 'ambiguous', 'none', 'stale'],
-  'bank_settlement.confirmed': ['itemId', 'titleType', 'titleId', 'proposedCents', 'chargeCents', 'settlementId', 'chargeEntryId'],
+  // F5 PR-3 (P3-12): + tarifa do provedor.
+  'bank_settlement.confirmed': ['itemId', 'titleType', 'titleId', 'proposedCents', 'chargeCents', 'settlementId', 'chargeEntryId', 'feeCents', 'feeEntryId'],
   'bank_settlement.rejected':  ['itemId', 'reason'],
   'bank_settlement.failed':    ['itemId', 'step', 'failReason'],
   // BE-INCR-NFE-COST-REGIME (nó X6, item 5): perfil fiscal — só enum/boolean/id, zero texto livre.
@@ -228,6 +229,8 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // BE-INCR-PAYMENT-PROVIDER PR-2 (P2-4, F8 a do dono 10/10; P2-14) — só ids/status/valor: NUNCA pagador (PII),
   // instrumento (linha digitável/QR), credencial nem a descrição enviada ao provedor.
   'payment_account.credential_invalid': ['paymentAccountId', 'fromStatus', 'toStatus'],
+  // BE-INCR-PAYMENT-PROVIDER PR-3 (P3-12, G8): job E upload manual; fromUtc/toUtc tirados do arquivo.
+  'payment_account.release_report_imported': ['statementId', 'lineCount', 'fromUtc', 'toUtc'],
   'collection_charge.created':        ['collectionChargeId', 'receivableId', 'paymentAccountId', 'kind', 'amountCents', 'status'],
   'collection_charge.status_changed': ['collectionChargeId', 'from', 'to', 'providerStatus'],
   'collection_charge.cancelled':      ['collectionChargeId', 'fromStatus', 'toStatus', 'providerStatus'],
