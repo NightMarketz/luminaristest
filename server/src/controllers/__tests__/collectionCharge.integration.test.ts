@@ -5,9 +5,12 @@
  * Itens: P2-2..P2-15; invariantes 1–7, 10, 13 do ADR §10; decisões F1–F9 do dono (10/10).
  */
 import { createHmac, randomBytes } from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { getFactory } from '@/lib/factory';
+import { CollectionChargeRepository } from '@/features/accounting/repositories/CollectionChargeRepository';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 
 const app = makeApp();
@@ -412,6 +415,43 @@ describe('F5 PR-2 — CollectionCharge + adaptador MP + webhook', () => {
     expect(ev.filter((p) => p.collectionChargeId === row.id)).toEqual([
       { collectionChargeId: row.id, from: 'CREATING', to: 'EXPIRED' }, // sem providerStatus: o MP não foi consultado
     ]);
+  });
+
+  it('achado 3: duas cobranças vivas no mesmo título (corrida) ⇒ o banco recusa; o create traduz para 409 CHARGE_LIVE_EXISTS', async () => {
+    // O banco de teste nasce de `db push` (templateDb), que não conhece índice parcial: aplica aqui o SQL da migração que o cria.
+    const migDir = path.join(__dirname, '../../../prisma/migrations');
+    for (const dir of fs.readdirSync(migDir)) {
+      const file = path.join(migDir, dir, 'migration.sql');
+      if (!fs.existsSync(file)) continue;
+      const sql = fs.readFileSync(file, 'utf8');
+      if (!sql.includes('collection_charges_one_live_per_receivable')) continue;
+      for (const stmt of sql.replace(/^\s*--.*$/gm, '').split(';').map((x) => x.trim()).filter(Boolean)) {
+        await prisma.$executeRawUnsafe(stmt);
+      }
+    }
+    const t = await novoTitulo();
+    const repo = new CollectionChargeRepository();
+    const base = {
+      userId: dono.id, unitId: UNIT, paymentAccountId: accountId, receivableId: t.id, counterpartyId: cpId, kind: 'PIX',
+      amountCents: 10000n, expiresAt: new Date(Date.now() + 86_400_000), payerSnapshotJson: JSON.stringify(payerPix), createdById: dono.id,
+    };
+    // Viva = CREATING/PENDING sem deletedAt (findLiveByReceivable): terminal e apagada no mesmo título não conflitam.
+    await repo.create({ ...base, status: 'FAILED' });
+    const apagada = await repo.create({ ...base, status: 'PENDING' });
+    await prisma.collectionCharge.update({ where: { id: apagada.id }, data: { deletedAt: new Date() } });
+    await repo.create({ ...base, status: 'CREATING' });
+    await expect(repo.create({ ...base, status: 'PENDING' })).rejects.toMatchObject({ code: 'P2002' });
+
+    // Caminho do serviço: o pré-cheque perde a corrida (lê null) e a recusa do banco vira o mesmo 409 do sequencial.
+    const spy = jest.spyOn(CollectionChargeRepository.prototype, 'findLiveByReceivable').mockResolvedValue(null);
+    try {
+      const r = await cobrar(t.id, { kind: 'PIX', payer: payerPix });
+      expect(r.status).toBe(409);
+      expect(JSON.stringify(r.body)).toContain('CHARGE_LIVE_EXISTS');
+      expect(mp.keys).toEqual([]);
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it('P2-11: sugestão do pagador = snapshot da última cobrança da contraparte; sem cobrança ⇒ só o taxId', async () => {
