@@ -19,5 +19,9 @@ function readMsEnv(name: string, fallback: number): number {
 
 export async function runDfePollPending(): Promise<PollSummary> {
   const olderThan = new Date(Date.now() - readMsEnv('DFE_POLL_AFTER_MS', DEFAULT_POLL_AFTER_MS));
-  return getFactory().getFiscalDocumentLifecycleService().pollPendingOnce(olderThan);
+  const service = getFactory().getFiscalDocumentLifecycleService();
+  const summary = await service.pollPendingOnce(olderThan);
+  // BE-INCR-DFE-ANEXO-PENDENTE item 7 (F-PA-2 a): mesmo tick, depois do poll.
+  const attachments = await service.drainPendingAttachmentsOnce();
+  return { ...summary, attachments };
 }

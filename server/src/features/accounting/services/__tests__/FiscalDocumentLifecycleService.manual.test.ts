@@ -80,8 +80,25 @@ function makeService(doc: ReturnType<typeof manualDoc>, opts: { outroComChave?: 
   const repo = {
     findById: jest.fn(async () => doc),
     findByChaveOuCodigo: jest.fn(async () => opts.outroComChave ?? null),
-    transition: jest.fn(async () => doc),
+    // stateful no status: a drenagem da pendência (DFE-ANEXO-PENDENTE) relê o documento depois da autorização.
+    transition: jest.fn(async (_s: unknown, _id: string, data: { status: string }) => {
+      doc.status = data.status;
+      return doc;
+    }),
     runTransaction: jest.fn(async (fn: (tx: unknown) => Promise<unknown>) => fn({})),
+    createPendingAttachment: jest.fn(async (_s: unknown, data: { documentId: string; xmlBytes: Buffer | null; pdfBytes: Buffer | null; resultJson: string }) => ({
+      id: 'pend-m',
+      userId: 'u1',
+      unitId: 'unit-1',
+      status: 'PENDING',
+      xmlAttachmentId: null,
+      pdfAttachmentId: null,
+      sourceDocumentId: null,
+      attempts: 0,
+      ...data,
+    })),
+    markPendingStep: jest.fn(async () => undefined),
+    markPendingDone: jest.fn(async () => undefined),
   };
   const emissionService = { getById: jest.fn(async () => ({ id: doc.id, status: 'x', pendencias: [] })) };
   const documentAttachmentService = { upload: jest.fn(async (_s: unknown, a: { fileName: string }) => ({ id: `att-${a.fileName}` })) };

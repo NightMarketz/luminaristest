@@ -1,4 +1,4 @@
-import type { FiscalDocument, FiscalDocumentAttempt, Prisma } from 'generated/prisma';
+import type { FiscalDocument, FiscalDocumentAttempt, FiscalDocumentPendingAttachment, Prisma } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
 
 export const FISCAL_DOCUMENT_KINDS = ['NFSE', 'NFE'] as const;
@@ -79,6 +79,26 @@ export interface TransitionData {
 
 export type FiscalDocumentWithAttempts = FiscalDocument & { attempts: FiscalDocumentAttempt[] };
 
+/** BE-INCR-DFE-ANEXO-PENDENTE (BRIEF item 2) — criação da pendência, na tx da autorização. */
+export interface CreatePendingAttachmentData {
+  documentId: string;
+  xmlBytes: Buffer | null;
+  pdfBytes: Buffer | null;
+  /** `PendingAttachmentResultSchema` serializado. */
+  resultJson: string;
+}
+
+/** Progresso por passo (F-PA-3 a) e controle de retentativa (F-PA-6 a). */
+export interface PendingAttachmentStepPatch {
+  xmlAttachmentId?: string;
+  pdfAttachmentId?: string;
+  sourceDocumentId?: string;
+  attempts?: number;
+  nextAttemptAt?: Date;
+  lastError?: string | null;
+  status?: 'PENDING' | 'FAILED';
+}
+
 /**
  * BE-INCR-DFE (nó X10b, BRIEF item 5) — único lugar com `prisma.fiscalDocument.*`, `prisma.fiscalDocumentAttempt.*`
  * e `prisma.fiscalDocumentSequence.*`. `tx?` em todos. O repositório NÃO expõe update de `payloadJson`
@@ -119,4 +139,18 @@ export interface IFiscalDocumentRepository {
   /** Próximo número por (escopo, kind, serie) — DENTRO da tx do SENT (ACC-015 por analogia). */
   nextNumber(scope: AccountingScope, kind: FiscalDocumentKind, serie: number, tx: Prisma.TransactionClient): Promise<bigint>;
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
+
+  // ---- BE-INCR-DFE-ANEXO-PENDENTE (BRIEF item 2) — único lugar com `prisma.fiscalDocumentPendingAttachment.*` ----
+  /** Cria a pendência (PENDING) — chamado DENTRO da tx da autorização. `documentId @unique`. */
+  createPendingAttachment(scope: AccountingScope, data: CreatePendingAttachmentData, tx?: Prisma.TransactionClient): Promise<FiscalDocumentPendingAttachment>;
+  /** PENDING com `nextAttemptAt <= now`, mais antigas primeiro. Sem escopo: cross-tenant, mesmo desenho de `listPending`. */
+  listDuePendingAttachments(now: Date, limit: number, tx?: Prisma.TransactionClient): Promise<FiscalDocumentPendingAttachment[]>;
+  markPendingStep(id: string, patch: PendingAttachmentStepPatch, tx?: Prisma.TransactionClient): Promise<void>;
+  /** DONE e bytes zerados (F-PA-6 a). */
+  markPendingDone(id: string, tx?: Prisma.TransactionClient): Promise<void>;
+  /**
+   * Candidatos do backfill por reconsulta (BRIEF item 11, F-PA-7 b): AUTHORIZED|AUTHORIZED_DIVERGENT em produção, vivos,
+   * com `xmlAttachmentId` e `sourceDocumentId` nulos e sem pendência. Cross-tenant.
+   */
+  listAttachmentBackfillCandidates(limit: number, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
 }

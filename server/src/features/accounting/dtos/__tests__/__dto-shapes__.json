@@ -4647,6 +4647,118 @@
       "additionalProperties": false
     }
   },
+  "FiscalDocumentPendingAttachmentDto.ts": {
+    "PendingAttachmentStatusSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "DONE",
+        "FAILED",
+        "DISCARDED"
+      ]
+    },
+    "PendingAttachmentResultSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "chaveOuCodigo": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nNFSe": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "numero": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "valores": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "vIssCents": {
+                  "type": "string"
+                },
+                "aliqIssBp": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "vIbsCents": {
+                  "type": "string"
+                },
+                "vCbsCents": {
+                  "type": "string"
+                },
+                "baseIssCents": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "chaveOuCodigo",
+        "nNFSe",
+        "numero",
+        "valores"
+      ],
+      "additionalProperties": false
+    },
+    "PendingAttachmentDrainSummarySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "done": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "failed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "discarded": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "total",
+        "done",
+        "failed",
+        "discarded"
+      ],
+      "additionalProperties": false
+    }
+  },
   "FiscalProfileDto.ts": {
     "FiscalProfileScopeQuerySchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

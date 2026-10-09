@@ -61,7 +61,7 @@ export class DfePollScheduler {
     this.running = true;
     try {
       const summary = await this.poll();
-      if (summary.failed > 0) {
+      if (summary.failed > 0 || (summary.attachments?.failed ?? 0) > 0) {
         this.log.warn(JOB, { job: JOB, event: 'complete', ...summary });
       } else {
         this.log.info(JOB, { job: JOB, event: 'complete', ...summary });

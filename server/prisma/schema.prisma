@@ -1672,6 +1672,31 @@ model FiscalDocument {
   @@map("fiscal_documents")
 }
 
+// BE-INCR-DFE-ANEXO-PENDENTE (BRIEF §4, F-PA-1 a / F-PA-3 a / F-PA-6 a) — transactional outbox local do anexo e da
+// proveniência da NFS-e autorizada em produção. Gravada NA MESMA tx da autorização (com os bytes), drenada inline e,
+// se falhar, pela varredura do DfePollScheduler. Progresso por passo: o upload não é idempotente.
+model FiscalDocumentPendingAttachment {
+  id               String   @id @default(cuid())
+  userId           String
+  unitId           String
+  documentId       String   @unique // um por documento (idempotência da criação)
+  status           String // PENDING | DONE | FAILED | DISCARDED
+  xmlBytes         Bytes? // F-PA-1 (a); null após DONE (F-PA-6)
+  pdfBytes         Bytes?
+  xmlAttachmentId  String? // progresso por passo (F-PA-3)
+  pdfAttachmentId  String?
+  sourceDocumentId String?
+  resultJson       String // { chaveOuCodigo, nNFSe, numero, valores } — sem PII (§1.12)
+  attempts         Int      @default(0)
+  nextAttemptAt    DateTime @default(now())
+  lastError        String? // truncado a 500
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([status, nextAttemptAt])
+  @@map("fiscal_document_pending_attachments")
+}
+
 // BE-INCR-DFE (ADR-DFE F-DFE-10 → a, §9.1) — o que foi ENVIADO, imutável POR TENTATIVA; `ref` único por
 // tentativa é a chave de idempotência no parceiro. `payloadJson` nunca muda depois de criado (o
 // repositório não expõe update dele). XML/PDF de rejeição pousam em DocumentAttachment com
