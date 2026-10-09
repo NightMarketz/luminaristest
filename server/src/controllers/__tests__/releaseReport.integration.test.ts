@@ -259,6 +259,7 @@ describe('F5 PR-3 — relatório de liberações → extrato da PaymentAccount �
     const calls: string[] = [];
     const files: Array<{ fileName: string; beginDate: string; endDate: string }> = [];
     let fail401 = false;
+    let nextDownload: Buffer | null = null;
     const port = {
       name: 'MERCADO_PAGO',
       capabilities: {} as CollectionProviderPort['capabilities'],
@@ -277,6 +278,7 @@ describe('F5 PR-3 — relatório de liberações → extrato da PaymentAccount �
       },
       downloadReleaseReport: async (_acc: unknown, name: string) => {
         calls.push(`download ${name}`);
+        if (nextDownload) return nextDownload;
         return csv(release('2026-10-08T10:00:00-03:00', 'PAY01JOB', 'job', 'payment', '20.00', '20.00', '0.00'));
       },
     } as unknown as CollectionProviderPort;
@@ -347,6 +349,100 @@ describe('F5 PR-3 — relatório de liberações → extrato da PaymentAccount �
       expect(s).toMatchObject({ failed: 1 });
       expect(invalid).toEqual([paId]);
       expect(marks.size).toBe(0);
+    });
+
+    it('A1 (R1 a, dono 2026-10-10): faixa sem movimento ⇒ watermark avança SEM extrato e grava release_report_empty_range', async () => {
+      fail401 = false;
+      marks.clear();
+      files.length = 0;
+      calls.length = 0;
+      files.push({ fileName: 'release-vazio.csv', beginDate: '2026-10-07T03:00:00Z', endDate: '2026-10-10T03:00:00Z' });
+      nextDownload = csv(
+        '2026-10-07T00:00:00-03:00,,,initial_available_balance,,0.00,0.00,,,,,,,20.00,',
+        '2026-10-09T23:59:59-03:00,,,available_balance,,20.00,0.00,,,,,,,20.00,',
+      );
+      const statements = await prisma.bankStatement.count();
+      const s1 = await service().fetchAll();
+      const s2 = await service().fetchAll();
+      nextDownload = null;
+      expect([s1.failed, s2.failed]).toEqual([0, 0]);
+      expect(marks.get(`mp_release:${paId}`)?.toISOString()).toBe('2026-10-10T03:00:00.000Z');
+      expect(await prisma.bankStatement.count()).toBe(statements);
+      expect(calls.filter((c) => c.startsWith('download'))).toEqual(['download release-vazio.csv']);
+      const ev = await eventos('payment_account.release_report_empty_range');
+      expect(ev).toHaveLength(1);
+      expect(ev[0].targetId).toBe(paId);
+      expect(JSON.parse(ev[0].payload)).toEqual({
+        paymentAccountId: paId,
+        fileName: 'release-vazio.csv',
+        fromUtc: '2026-10-07T03:00:00.000Z',
+        toUtc: '2026-10-10T03:00:00.000Z',
+      });
+    });
+
+    it('A2 (R2 a, dono 2026-10-10): sobreposição com extrato manual ⇒ 1º ciclo bloqueia a conta e grava o alerta; 2º ciclo não baixa', async () => {
+      const manual = await upload(csv(release('2026-10-08T09:00:00-03:00', 'PAY01MAN', 'man', 'payment', '15.00', '15.00', '0.00')));
+      expect(manual.status).toBe(201);
+      marks.clear();
+      files.length = 0;
+      calls.length = 0;
+      files.push({ fileName: 'release-2.csv', beginDate: '2026-10-07T03:00:00Z', endDate: '2026-10-10T03:00:00Z' });
+      nextDownload = csv(
+        release('2026-10-08T09:00:00-03:00', 'PAY01MAN', 'man', 'payment', '15.00', '15.00', '0.00'),
+        release('2026-10-08T11:00:00-03:00', 'PAY01NV2', 'nv2', 'payment', '7.00', '7.00', '0.00'),
+      );
+      const statements = await prisma.bankStatement.count();
+      await service().fetchAll();
+      expect(calls).toContain('download release-2.csv');
+      expect(marks.size).toBe(0);
+      expect(await prisma.bankStatement.count()).toBe(statements);
+      const view = await request(app).get(`/api/payment-accounts/${paId}`).query({ unitId: UNIT }).set(authHeader(dono));
+      expect(view.status).toBe(200);
+      expect(view.body.data.releaseReportBlockedReason).toContain('PAY01MAN');
+      const ev = await eventos('payment_account.release_report_blocked');
+      expect(ev).toHaveLength(1);
+      expect(ev[0].targetId).toBe(paId);
+      expect(JSON.parse(ev[0].payload)).toMatchObject({
+        paymentAccountId: paId,
+        fileName: 'release-2.csv',
+        fromUtc: '2026-10-07T03:00:00.000Z',
+        toUtc: '2026-10-10T03:00:00.000Z',
+        code: 'release_report_overlap',
+      });
+
+      calls.length = 0;
+      const s2 = await service().fetchAll();
+      nextDownload = null;
+      expect(s2).toMatchObject({ failed: 0, imported: 0 });
+      expect(calls).toEqual([]);
+      expect(await eventos('payment_account.release_report_blocked')).toHaveLength(1);
+    });
+
+    it('A2 destravar: POST …/release-report/unblock limpa o alerta, grava _unblocked e o ciclo seguinte volta a baixar', async () => {
+      const res = await request(app).post(`/api/payment-accounts/${paId}/release-report/unblock`).set(authHeader(dono)).send({ unitId: UNIT });
+      expect(res.status).toBe(200);
+      expect(res.body.data.releaseReportBlockedReason).toBeNull();
+      const ev = await eventos('payment_account.release_report_unblocked');
+      expect(ev).toHaveLength(1);
+      expect(JSON.parse(ev[0].payload)).toEqual({ paymentAccountId: paId });
+      // Sem bloqueio: 2ª chamada é 200 sem novo audit.
+      await request(app).post(`/api/payment-accounts/${paId}/release-report/unblock`).set(authHeader(dono)).send({ unitId: UNIT });
+      expect(await eventos('payment_account.release_report_unblocked')).toHaveLength(1);
+      // Corpo .strict(): chave extra ⇒ 400.
+      const extra = await request(app).post(`/api/payment-accounts/${paId}/release-report/unblock`).set(authHeader(dono)).send({ unitId: UNIT, x: 1 });
+      expect(extra.status).toBe(400);
+      // A sobreposição não foi resolvida (o extrato manual continua) ⇒ o ciclo baixa uma vez e para de novo.
+      calls.length = 0;
+      // Arquivo DIFERENTE do manual (byte a byte igual seria o mesmo sha256 ⇒ o import devolve o extrato existente).
+      nextDownload = csv(
+        release('2026-10-08T09:00:00-03:00', 'PAY01MAN', 'man', 'payment', '15.00', '15.00', '0.00'),
+        release('2026-10-08T11:00:00-03:00', 'PAY01NV2', 'nv2', 'payment', '7.00', '7.00', '0.00'),
+      );
+      const s = await service().fetchAll();
+      nextDownload = null;
+      expect(s).toMatchObject({ blocked: 1 });
+      expect(calls).toContain('download release-2.csv');
+      expect(await eventos('payment_account.release_report_blocked')).toHaveLength(2);
     });
   });
 });

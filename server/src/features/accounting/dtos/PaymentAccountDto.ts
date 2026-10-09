@@ -100,6 +100,10 @@ export const SetCredentialSchema = z
 /** Query de GET (lista e detalhe) e de DELETE — só o escopo. */
 export const PaymentAccountScopeQuerySchema = z.object({ unitId: z.string().min(1) });
 
+/** POST …/:id/release-report/unblock — review do #615, A2 (R2 a, dono 2026-10-10): operador destrava o job. */
+export const UnblockReleaseReportSchema = z.object({ unitId: z.string().min(1) }).strict();
+export type UnblockReleaseReportInput = z.infer<typeof UnblockReleaseReportSchema>;
+
 export type PaymentAccountConfig = z.infer<typeof PaymentAccountConfigSchema>;
 export type CreatePaymentAccountInput = z.infer<typeof CreatePaymentAccountSchema>;
 export type UpdatePaymentAccountInput = z.infer<typeof UpdatePaymentAccountSchema>;

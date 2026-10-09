@@ -9,6 +9,8 @@ import {
   type ResolvedAccount,
 } from '../collection/CollectionProviderPort';
 import {
+  PAYMENT_ACCOUNT_RELEASE_REPORT_BLOCKED,
+  PAYMENT_ACCOUNT_RELEASE_REPORT_EMPTY_RANGE,
   PAYMENT_ACCOUNT_RELEASE_REPORT_IMPORTED,
   RELEASE_REPORT_BALANCE_FROM_FILE,
   RELEASE_REPORT_NO_PAYMENT_ACCOUNT,
@@ -32,6 +34,8 @@ export interface ReleaseReportFetchSummary {
   requested: number;
   skipped: number;
   failed: number;
+  /** A2 (R2 a): contas paradas NESTE ciclo por sobreposição (nos seguintes contam como `skipped`). */
+  blocked: number;
 }
 
 export interface WatermarkStore {
@@ -156,7 +160,7 @@ export class ReleaseReportService {
    */
   async fetchAll(): Promise<ReleaseReportFetchSummary> {
     const accounts = await this.paymentAccountRepo.findAllActiveAnyScope(PROVIDER);
-    const summary: ReleaseReportFetchSummary = { accounts: accounts.length, imported: 0, requested: 0, skipped: 0, failed: 0 };
+    const summary: ReleaseReportFetchSummary = { accounts: accounts.length, imported: 0, requested: 0, skipped: 0, failed: 0, blocked: 0 };
     if (accounts.length === 0) return summary;
     let keyring: Keyring;
     try {
@@ -182,7 +186,11 @@ export class ReleaseReportService {
     return summary;
   }
 
-  private async fetchOne(account: PaymentAccount, keyring: Keyring): Promise<'imported' | 'requested' | 'skipped'> {
+  private async fetchOne(account: PaymentAccount, keyring: Keyring): Promise<'imported' | 'requested' | 'skipped' | 'blocked'> {
+    if (account.releaseReportBlockedReason) {
+      // A2 (R2 a): conta parada por sobreposição — nem lista nem baixa até o operador destravar.
+      return 'skipped';
+    }
     const actor = account.credentialSetById;
     if (!actor || !(await this.paymentAccountRepo.userExists(actor))) {
       logger.warn('mp_release_report_fetch: conta sem ator válido (G5) — pulada', { paymentAccountId: account.id });
@@ -220,7 +228,50 @@ export class ReleaseReportService {
       periodEnd: brtDateOnly(new Date(end.getTime() - 1)),
       format: 'mp_release',
     };
-    await this.importFor(scope, account, dto, parseMpReleaseReport(buffer), buffer);
+    const parsed = parseMpReleaseReport(buffer);
+    if (parsed.table.rows.length === 0) {
+      // A1 (R1 a): faixa sem movimento — não há extrato a criar (o import manual segue recusando "sem linhas"); a
+      // watermark anda para o job pedir a faixa seguinte, e o audit registra a faixa vazia.
+      await this.paymentAccountRepo.runTransaction((tx) =>
+        this.auditService.append(tx, scope, {
+          actorUserId: scope.actorUserId,
+          eventType: PAYMENT_ACCOUNT_RELEASE_REPORT_EMPTY_RANGE,
+          targetType: 'payment_account',
+          targetId: account.id,
+          payload: { paymentAccountId: account.id, fileName: file.fileName, fromUtc: from.toISOString(), toUtc: end.toISOString() },
+        }),
+      );
+      await this.watermarks.set(key, end);
+      return 'skipped';
+    }
+    try {
+      await this.importFor(scope, account, dto, parsed, buffer);
+    } catch (error) {
+      if (!(error instanceof ValidationError) || error.details?.code !== RELEASE_REPORT_OVERLAP) throw error;
+      // A2 (R2 a): sobreposição com extrato já importado (upload manual ou arquivo regerado) ⇒ o job PARA nesta conta.
+      // Nada é apagado; o alerta fica na conta (view) e no audit até o operador destravar.
+      const sourceIds = Array.isArray(error.details.sourceIds) ? (error.details.sourceIds as string[]) : [];
+      const reason = `${RELEASE_REPORT_OVERLAP}: o arquivo ${file.fileName} (${from.toISOString()} a ${end.toISOString()}) repete SOURCE_ID já importado(s) nesta conta: ${sourceIds.join(', ')}.`;
+      await this.paymentAccountRepo.runTransaction(async (tx) => {
+        await this.paymentAccountRepo.update(scope, account.id, { releaseReportBlockedReason: reason.slice(0, 2000) }, tx);
+        await this.auditService.append(tx, scope, {
+          actorUserId: scope.actorUserId,
+          eventType: PAYMENT_ACCOUNT_RELEASE_REPORT_BLOCKED,
+          targetType: 'payment_account',
+          targetId: account.id,
+          payload: {
+            paymentAccountId: account.id,
+            fileName: file.fileName,
+            fromUtc: from.toISOString(),
+            toUtc: end.toISOString(),
+            code: RELEASE_REPORT_OVERLAP,
+            sourceIds: sourceIds.join(','),
+          },
+        });
+      });
+      logger.warn('mp_release_report_fetch: sobreposição — job parado na conta até o operador destravar', { paymentAccountId: account.id });
+      return 'blocked';
+    }
     await this.watermarks.set(key, end);
     return 'imported';
   }

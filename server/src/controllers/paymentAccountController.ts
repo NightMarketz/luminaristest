@@ -7,6 +7,7 @@ import {
   CreatePaymentAccountSchema,
   PaymentAccountScopeQuerySchema,
   SetCredentialSchema,
+  UnblockReleaseReportSchema,
   UpdatePaymentAccountSchema,
 } from '../features/accounting/dtos/PaymentAccountDto';
 
@@ -86,6 +87,21 @@ export const setPaymentAccountCredential = async (req: Request, res: Response) =
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
     const scope = resolveAccountingScope(user, parsed.data.unitId);
     const data = await getFactory().getPaymentAccountService().setCredential(scope, req.params.id, parsed.data);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** POST /api/payment-accounts/:id/release-report/unblock — operador destrava o job do relatório (review #615, A2). */
+export const unblockPaymentAccountReleaseReport = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const parsed = UnblockReleaseReportSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
+    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const data = await getFactory().getPaymentAccountService().unblockReleaseReport(scope, req.params.id);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
