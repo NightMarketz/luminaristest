@@ -1,4 +1,4 @@
-import type { CollectionCharge, PaymentAccount, Prisma } from 'generated/prisma';
+import { Prisma, type CollectionCharge, type PaymentAccount } from 'generated/prisma';
 import { AppError, ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import { loadKeyring, open, type Keyring } from '../../../lib/secretBox';
@@ -164,6 +164,12 @@ export class CollectionChargeService {
         status: 'CREATING',
       });
       return { charge: created, account: acct };
+    }).catch((error: unknown) => {
+      // Corrida perdida: o pré-cheque acima leu "nenhuma viva", mas o índice parcial recusou (achado 3 do #609).
+      if (isLiveChargeUniqueViolation(error)) {
+        throw new ConflictError(`${CHARGE_LIVE_EXISTS}: o título já tem uma cobrança viva.`, CHARGE_LIVE_EXISTS);
+      }
+      throw error;
     });
 
     const sent = await this.send(charge, account, keyring, expiry.expiresIn);
@@ -544,7 +550,14 @@ export class CollectionChargeService {
   }
 }
 
-/** 4xx definitivo = qualquer 4xx exceto 401 (credencial, P2-4), 409 e 429 (transitórios) — P2-3. */
+/** P2002 do índice parcial `collection_charges_one_live_per_receivable` (uma viva por título; coluna `receivableId`). */
+function isLiveChargeUniqueViolation(error: unknown): boolean {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') return false;
+  const target = error.meta?.target;
+  return Array.isArray(target) ? target.includes('receivableId') : String(target ?? '').includes('receivableId');
+}
+
+/** 4xx definitivo =qualquer 4xx exceto 401 (credencial, P2-4), 409 e 429 (transitórios) — P2-3. */
 function isDefinitive(status: number | null): boolean {
   return status !== null && status >= 400 && status < 500 && status !== 401 && status !== 409 && status !== 429;
 }
