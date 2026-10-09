@@ -176,7 +176,20 @@ meiOcupacoes: z.array(z.string().regex(/^[AB]-\d{4}$/)).min(1).max(20).nullable(
 //   'MEI_CNAE_FORA_ANEXO_XI' | 'MEI_OCUPACAO_EXCLUIDA' | 'ISS_VALOR_FIXO_MUNICIPAL'
 ```
 
-## 5. Forks — RATIFICAÇÃO PENDENTE
+## 5.0 Ratificação (dono, chat, 2026-10-10, questionário)
+
+Todos os 11 forks ratificados. **Dois divergem da recomendação** e prevalecem sobre o checklist da §3 e os contratos da §4;
+a `sessao-feature` ajusta os itens afetados (bloco 1: cálculo do piso; bloco 2: itens do F-AX-4). Sem 'executa'.
+
+| Fork | Decisão | Nota |
+|---|---|---|
+| F-PI-1 | (a) tabela própria `IssBeneficioMunicipal` | na recomendação |
+| **F-PI-2** | **piso absoluto + alerta** — com benefício municipal (fora de 7.02/7.05/16.01), ISS = `max(reduzido, 2%)`, mesmo que fique **acima** do % puro da tabela (ex.: tabela 1,92% + isenção ⇒ 2%). Quando o ISS com benefício > % puro, alerta `BENEFICIO_MUNICIPAL_INAPLICAVEL_DESVANTAJOSO` (WARNING) orientando desmarcar o benefício naquela faixa | **diverge** da recomendação (a) `min(tabela, …)`. Fundamento do dono: Res. CGSN 140 art. 31 p. ú. aplicado como no PGDAS-D. Que o PGDAS-D eleva para 2% é **afirmação do dono, não conferida** |
+| F-PI-3..6 | na recomendação | aceite em bloco |
+| F-AX-1..3, F-AX-5 | na recomendação | aceite em bloco (F-AX-2: valida a ocupação declarada, CNAE derivado) |
+| **F-AX-4** | **bloqueio** — se **qualquer** CNAE do CNPJ (principal ou secundário) ou ocupação estiver fora do Anexo XI vigente: `apurarSimei()` não gera o DAS fixo, erro estruturado `SIMEI_CNAE_FORA_ANEXO_XI` com `cnaesImpeditivos` e `efeitoDesenquadramento`: mês subsequente à alteração do CNPJ (Res. CGSN 140 art. 115 II "a"); se a atividade existe desde a abertura, indeferido desde o início. A empresa é marcada para apuração como ME (Anexos I–V, RBT12 global) e o painel alerta para comunicar o desenquadramento no Portal do Simples | **diverge** da recomendação (400 + alerta). Artigos citados pelo dono (LC 123 art. 18-A § 4º I; Res. 140 arts. 100, 104 I "a", 115 II "a") **não conferidos na fonte** — a `sessao-feature` lê antes de codar. "Marcar para apuração ME" = efeito no perfil a especificar no 1º item do bloco 2 (não muda o regime sozinho sem ação do usuário — ponto a confirmar com o dono se ambíguo) |
+
+## 5. Forks — RATIFICAÇÃO PENDENTE (histórico — ver §5.0)
 
 | Fork | Pergunta | Caminhos | Recomendação |
 |---|---|---|---|
