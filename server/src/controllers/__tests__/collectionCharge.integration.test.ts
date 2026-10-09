@@ -381,6 +381,18 @@ describe('F5 PR-2 — CollectionCharge + adaptador MP + webhook', () => {
     expect(logged.some((l) => l.includes('collection_charge_paid_after_terminal'))).toBe(true);
   });
 
+  // ── Review independente do #609 (3 achados BAIXO) ─────────────────────────────────────────────────
+  it('achado 1 (P2-14): o 2º commit CREATING → PENDING emite collection_charge.status_changed na mesma tx', async () => {
+    const t = await novoTitulo();
+    const r = await cobrar(t.id, { kind: 'PIX', payer: payerPix });
+    expect(r.status).toBe(201);
+    expect(r.body.data.status).toBe('PENDING');
+    const ev = (await eventos('collection_charge.status_changed')).map((e) => JSON.parse(e.payload));
+    expect(ev.filter((p) => p.collectionChargeId === r.body.data.id)).toEqual([
+      { collectionChargeId: r.body.data.id, from: 'CREATING', to: 'PENDING', providerStatus: 'action_required' },
+    ]);
+  });
+
   it('P2-11: sugestão do pagador = snapshot da última cobrança da contraparte; sem cobrança ⇒ só o taxId', async () => {
     const r = await request(app).get(`/api/receivables/${tituloPix}/charges/payer-suggestion?unitId=${UNIT}`).set(authHeader(dono));
     expect(r.status).toBe(200);
