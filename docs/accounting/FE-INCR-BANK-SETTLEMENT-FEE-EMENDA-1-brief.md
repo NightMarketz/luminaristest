@@ -14,7 +14,7 @@
 
 | Ponto | Fato | Efeito no #616 |
 |---|---|---|
-| `feeCents`/`feeEntryId` na resposta | `BankSettlementItemView` (`BankSettlementService.ts:74`) e `toView` (`:300`) **não** os expõem. A coluna existe e a API não a devolve | O item 1 do #616 não tem de onde ler. **Resolvido por PR de BE próprio** (dono, chat, 2026-10-10, *"PR de BE novo"*): `claude/be-f7-fee-view`. É o mesmo campo que o E31 da EMENDA 3.3 já planejava ("`BankSettlementItemView` expõe `feeCents` e `feeEntryId` (mesmos nomes do F5)") |
+| `feeCents`/`feeEntryId` na resposta | `BankSettlementItemView` (`BankSettlementService.ts:74`) e `toView` (`:300`) **não** os expõem. A coluna existe e a API não a devolve | O item 1 do #616 não tem de onde ler. **Resolvido por PR de BE próprio** (dono, chat, 2026-10-10, *"PR de BE novo"*): #620 (`claude/be-f7-fee-view`). É o mesmo campo que o E31 da EMENDA 3.3 já planejava ("`BankSettlementItemView` expõe `feeCents` e `feeEntryId` (mesmos nomes do F5)") |
 | Tipo da resposta | O `dtoShapeSnapshot` gera `.gen.ts` **só dos schemas Zod de entrada**. As respostas do F7 são tipadas à mão (D11, `bankSettlement.service.ts:11-15`, `:29-45`) | Conflito com o item 1 e o F-FE-FEE-3 do #616 ("importados do `.gen.ts` … nada escrito à mão"). A condição do F-FE-FEE-3 (a) nunca se cumpre para a view. Ver **F-FEE-E2** |
 | Aviso G7 | O texto vai no `reason` do item `PENDING`: `` `${TERMINAL_CHARGE_WARNING} (${charge.status}).` `` (`:281`). Em `PENDING`, `reason` só é escrito por isso (o scan grava na criação; o release do confirm para `PENDING` não grava). A lista `TERMINAL_CHARGE_STATUSES` inclui `REFUNDED` | O #616 não cobre o G7. A tela hoje mostra `reason` só em `FAILED`/`REJECTED` (`BankSettlementPanel.tsx:212-213`), então o aviso é **invisível** |
 | Método `ProviderBalance` | `BankSettlementDto.gen.ts` já o tem em confirm/retry. O FE lista 4 à mão (`bankSettlement.service.ts:27`). Extrato com `paymentAccountId` só gera item `RECEIVABLE` (`:168`) e só aceita `ProviderBalance` (`:570-590`) | O #616 cobre só a dica do 400, não a escolha do método |
@@ -81,7 +81,7 @@ export function feeCheck(it: Pick<BankSettlementItemView, 'feeCents' | 'proposed
 
 | F-TAR | Ratificado 10/10 | Destino |
 |---|---|---|
-| F-TAR-1 (a) patch no #615 | o #615 mergeou antes | **Substituído** pela resposta do dono de 10/10: PR de BE novo (`claude/be-f7-fee-view`) |
+| F-TAR-1 (a) patch no #615 | o #615 mergeou antes | **Substituído** pela resposta do dono de 10/10: PR de BE novo (#620 (`claude/be-f7-fee-view`)) |
 | F-TAR-2 (a) bruto = proposto + encargo | conflito | **Vale o #616**: bruto = `|linha| + feeCents`. A soma proposto + encargo vira o lado conferido no item 12 |
 | F-TAR-3 (a) só ProviderBalance | — | **Mantido** → item 11 |
 | F-TAR-4 (a) sublinha na célula Valor | conflito | **Vale o F-FE-FEE-2 (a)**: coluna condicional |

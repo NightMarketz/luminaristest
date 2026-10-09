@@ -40,7 +40,7 @@ Ao abrir o "executa", a sessão achou o #615 **já mergeado** (`2f942f73`) e o B
 Respostas do dono (chat, 2026-10-10):
 
 - **Veículo do F-TAR-1:** *"PR de BE novo"*. O patch (`feeCents`/`feeEntryId` na `BankSettlementItemView`) vai num PR
-  contra `main` (`claude/be-f7-fee-view`), sem merge.
+  contra `main` (#620 (`claude/be-f7-fee-view`)), sem merge.
 - **BRIEF que prevalece:** *"#616 + emenda do #617"*. O #616 é o canônico, o #617 vira
   `FE-INCR-BANK-SETTLEMENT-FEE-EMENDA-1-brief.md`, e nos conflitos valem as decisões do #616. O nó `FE-INCR-F7-TARIFA` foi
   renomeado para [[FE-INCR-BANK-SETTLEMENT-FEE]].
