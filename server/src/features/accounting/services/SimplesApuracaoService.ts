@@ -39,6 +39,7 @@ import type { ISimplesEntradasRepository } from '../repositories/ISimplesEntrada
 import type { IIssBeneficioMunicipalRepository } from '../repositories/IIssBeneficioMunicipalRepository';
 import { beneficioDaAtividade, excecaoPisoIss, type BeneficioCadastrado } from '../models/issBeneficio';
 import { toBeneficio } from './IssBeneficioMunicipalService';
+import { TABELA_ANEXO_XI, anexoXiVigente, cnaesForaDoAnexo, enquadramentoDasOcupacoes, transportadorNaTabelaB, type OcupacaoAnexoXi } from '../models/meiAnexoXi';
 import type { IssBeneficioTipo } from '../dtos/IssBeneficioMunicipalDto';
 import type { AuditService } from './AuditService';
 import type { PostingService } from './PostingService';
@@ -165,7 +166,7 @@ export class SimplesApuracaoService {
     private readonly receitaFiscal: Pick<ReceitaFiscalService, 'tieOut'>,
     private readonly entradas: Pick<SimplesEntradasService, 'segregacaoDaCompetencia'>,
     private readonly companyProfileRepo: Pick<ICompanyFiscalProfileRepository, 'findByYear'>,
-    private readonly fiscalProfileRepo: Pick<IFiscalProfileRepository, 'findByScope'>,
+    private readonly fiscalProfileRepo: Pick<IFiscalProfileRepository, 'findByScope' | 'findManyByOwner'>,
     private readonly accountRepo: Pick<IAccountRepository, 'findById'>,
     private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
     private readonly postingService: Pick<PostingService, 'postEntry' | 'reverseEntry' | 'findEntryBySource'>,
@@ -483,6 +484,7 @@ export class SimplesApuracaoService {
       );
     }
     const enquadramento = { contribuinteIcms: perfil.meiContribuinteIcms, contribuinteIss: perfil.meiContribuinteIss };
+    const anexo = await this.anexoXiDaCompetencia(scope, competencia, perfil, tx);
     const linhas = await this.legalParams.fotografia(['SALARIO_MINIMO', 'SIMEI_VALOR', 'SIMPLES_LIMITE']);
     let calculada: ApuracaoSimei;
     try {
@@ -502,7 +504,30 @@ export class SimplesApuracaoService {
     const acumulado = doAno.reduce((t, m) => t + receita(m), 0n);
     const alertas: AlertaSimples[] = [];
     const inicio = perfil.inicioAtividadeEm ? perfil.inicioAtividadeEm.slice(0, 7) : null;
-    const limite = this.limiteMei(linhas, competencia, inicio, acumulado, alertas, perfil.meiTransportadorCargas === true);
+    let transportador = perfil.meiTransportadorCargas === true;
+    if (anexo) {
+      // Item 13 (M5, F-AX-3 b): o declarado manda; a divergência com o Anexo XI só alerta.
+      const implicado = enquadramentoDasOcupacoes(anexo.ocupacoes);
+      if (anexo.ocupacoes.length > 0 && (implicado.contribuinteIcms !== enquadramento.contribuinteIcms || implicado.contribuinteIss !== enquadramento.contribuinteIss)) {
+        const sn = (b: boolean) => (b ? 'S' : 'N');
+        alertas.push({
+          severity: 'WARNING',
+          codigo: 'MEI_ENQUADRAMENTO_DIVERGE',
+          detalhe: `as ocupações declaradas indicam ICMS ${sn(implicado.contribuinteIcms)} / ISS ${sn(implicado.contribuinteIss)} no Anexo XI, e o perfil declara ICMS ${sn(enquadramento.contribuinteIcms)} / ISS ${sn(enquadramento.contribuinteIss)} — a parcela do DAS segue o enquadramento do CNPJ (Res. CGSN 140 art. 101 § 1º); o declarado foi mantido`,
+        });
+      }
+      // Item 14 (M3/M4; decisão 5 do dono): o limite do transportador só com TODAS as ocupações na Tabela B.
+      if (transportador && !transportadorNaTabelaB(anexo.ocupacoes).soTabelaB) {
+        transportador = false;
+        const semB = !transportadorNaTabelaB(anexo.ocupacoes).algumaB;
+        alertas.push({
+          severity: 'WARNING',
+          codigo: 'MEI_TAC_COM_OCUPACAO_A',
+          detalhe: `${semB ? 'transportador autônomo de cargas declarado sem ocupação da Tabela B do Anexo XI' : 'ocupação da Tabela A junto com a da Tabela B'}: apurado como MEI comum, no limite geral (Res. CGSN 140 art. 100 caput e §§ 1º-A e 1º-B) — risco de desenquadramento do limite do transportador; revise as ocupações do perfil`,
+        });
+      }
+    }
+    const limite = this.limiteMei(linhas, competencia, inicio, acumulado, alertas, transportador);
 
     const linhasPa = await this.receitaRepo.findByCompetencia(scope, competencia, tx);
     // F-PR4-11 (dono 09/10): o mesmo filtro do ME — a cota do salão a título de aluguel de bem móvel não tem NFS-e.
@@ -519,6 +544,50 @@ export class SimplesApuracaoService {
       subrazao: [...subrazao.entries()].map(([k, v]) => [k, String(v.receitaCents), String(v.cotaCents)]).sort(),
     });
     return { calculada, impressao, alertas, enquadramento, receitaPaCents: receita(competencia), acumulado, limite };
+  }
+
+  /**
+   * SIMPLES-PISO-ANEXO-XI itens 12 e 15 (decisões 2, 4 e 6 do dono, chat, 10/10) — o Anexo XI vigente na competência
+   * apurada. Sem versão transcrita vigente (competência anterior à da tabela, F-AX-5 a) ⇒ `null`: nenhuma checagem.
+   * - perfil MEI sem ocupações ⇒ 400 `MEI_OCUPACOES_NAO_DECLARADAS` (o campo é opcional no perfil; a apuração exige);
+   * - CNAE do CNPJ (principal do declarante + o de cada unidade) fora do Anexo XI ⇒ 400 `SIMEI_CNAE_FORA_ANEXO_XI` com
+   *   `cnaesImpeditivos` e `efeitoDesenquadramento` (F-AX-4; Res. CGSN 140 art. 115 § 2º II "b" c/c § 3º II e § 4º II).
+   *   O regime não muda sozinho: a confirmação MEI → ME é do usuário/contador (fluxo de FE, fora deste PR).
+   */
+  private async anexoXiDaCompetencia(
+    scope: AccountingScope,
+    competencia: string,
+    perfil: { meiOcupacoes: unknown; declarante: unknown },
+    tx?: Prisma.TransactionClient,
+  ): Promise<{ ocupacoes: OcupacaoAnexoXi[] } | null> {
+    const anexo = anexoXiVigente(await this.legalParams.fotografia([TABELA_ANEXO_XI]), `${competencia}-01`);
+    if (!anexo) return null;
+    const chaves = Array.isArray(perfil.meiOcupacoes) ? (perfil.meiOcupacoes as string[]) : [];
+    if (chaves.length === 0) {
+      throw new ValidationError(
+        `Declare no perfil fiscal as ocupações do MEI (Anexo XI da Res. CGSN 140, art. 100 caput) antes de apurar o SIMEI de ${competencia}.`,
+        { campo: 'meiOcupacoes', competencia },
+        'MEI_OCUPACOES_NAO_DECLARADAS',
+      );
+    }
+    const principal = (perfil.declarante as { cnaeFiscal?: unknown } | null)?.cnaeFiscal;
+    const unidades = await this.fiscalProfileRepo.findManyByOwner(scope.ownerUserId, tx);
+    const cnaes = [typeof principal === 'string' ? principal : null, ...unidades.map((u) => u.cnae ?? null)].filter((c): c is string => !!c && c.trim() !== '');
+    const cnaesImpeditivos = cnaesForaDoAnexo(anexo, cnaes);
+    if (cnaesImpeditivos.length > 0) {
+      throw new ValidationError(
+        `CNAE do CNPJ fora do Anexo XI da Res. CGSN 140 (${cnaesImpeditivos.join(', ')}): o SIMEI de ${competencia} não é gerado. Comunique o desenquadramento no Portal do Simples Nacional e confirme a transição do perfil para ME.`,
+        {
+          cnaesImpeditivos,
+          efeitoDesenquadramento: {
+            atividadeIncluidaDepoisDoIngresso: 'a partir do mês subsequente ao da alteração do CNPJ (Res. CGSN 140 art. 115 § 2º II "b" c/c § 3º II)',
+            atividadeDesdeOIngresso: 'indeferido desde o início: os efeitos retroagem à data de ingresso no SIMEI (Res. CGSN 140 art. 115 § 4º II)',
+          },
+        },
+        'SIMEI_CNAE_FORA_ANEXO_XI',
+      );
+    }
+    return { ocupacoes: chaves.map((c) => anexo.get(c)).filter((o): o is OcupacaoAnexoXi => o !== undefined) };
   }
 
   /**

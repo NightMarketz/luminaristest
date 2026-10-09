@@ -39,9 +39,9 @@ export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
  * depreciação; PR-3 = DEPRECIACAO_ANEXO_III). Desde o PR-3 são todas; o conjunto fica como guarda de que tabela nova
  * no enum só se propõe quando um consumidor a lê.
  */
-// MEI_ANEXO_XI (SIMPLES-PISO-ANEXO-XI bloco 2) fica FORA até o consumidor (itens 12-16 do BRIEF, pausados pela lacuna
-// das citações do F-AX-4) ler a tabela — mesmo tratamento que a DEPRECIACAO_ANEXO_III teve entre o PR-2 e o PR-3.
-export const TABELAS_MIGRADAS: ReadonlySet<LegalParameterTabela> = new Set(LEGAL_PARAMETER_TABELAS.filter((t) => t !== 'MEI_ANEXO_XI'));
+// MEI_ANEXO_XI (SIMPLES-PISO-ANEXO-XI bloco 2) entrou quando o consumidor passou a ler a tabela (itens 12-15: perfil e
+// apuração do SIMEI) — mesmo tratamento que a DEPRECIACAO_ANEXO_III teve entre o PR-2 e o PR-3.
+export const TABELAS_MIGRADAS: ReadonlySet<LegalParameterTabela> = new Set(LEGAL_PARAMETER_TABELAS);
 
 export const LEGAL_PARAMETER_STATUS = ['DRAFT', 'PUBLISHED', 'REVOKED'] as const;
 export type LegalParameterStatus = (typeof LEGAL_PARAMETER_STATUS)[number];

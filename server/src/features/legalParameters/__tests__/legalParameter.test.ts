@@ -44,8 +44,8 @@ describe('semente da migração (item 6)', () => {
     }
   });
 
-  it('PR-3: TABELAS_MIGRADAS = todas (DEPRECIACAO_ANEXO_III aberta), menos MEI_ANEXO_XI até ter consumidor (SIMPLES-PISO-ANEXO-XI)', () => {
-    expect(LEGAL_PARAMETER_TABELAS.filter((t) => !TABELAS_MIGRADAS.has(t))).toEqual(['MEI_ANEXO_XI']);
+  it('PR-3: TABELAS_MIGRADAS = todas (DEPRECIACAO_ANEXO_III aberta; MEI_ANEXO_XI desde o consumidor do SIMPLES-PISO-ANEXO-XI)', () => {
+    expect(LEGAL_PARAMETER_TABELAS.filter((t) => !TABELAS_MIGRADAS.has(t))).toEqual([]);
   });
 
   it('PR-3: o migration.sql v3 carrega o texto de prisma/data/legal_parameters_v3.sql, byte a byte', () => {

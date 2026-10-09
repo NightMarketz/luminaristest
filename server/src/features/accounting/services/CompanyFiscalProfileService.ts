@@ -22,6 +22,7 @@ import { matrizObrigacoesDe, resolverObrigacoes, type ObrigacaoResolvida, type P
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import type { CondicoesPerfil, ObrigacaoSped, StatusObrigacao } from '../models/obrigacoesPorRegime';
 import type { RegimeEmpresa } from '../models/regimeEmpresa';
+import { TABELA_ANEXO_XI, chavesInexistentes } from '../models/meiAnexoXi';
 
 export const COMPANY_FISCAL_PROFILE_UPDATED = 'company_fiscal_profile.updated';
 export const COMPANY_FISCAL_PROFILE_DELETED = 'company_fiscal_profile.deleted';
@@ -153,6 +154,14 @@ export class CompanyFiscalProfileService {
     // X14 PR-2 item 14: a opção do IBS/CBS no DAS existe a partir de 2027 (LC 123 art. 13 §§ 9º–10, red. LC 214).
     if (ano < 2027 && (data.ibsCbsOpcaoS1 !== null || data.ibsCbsOpcaoS2 !== null)) {
       throw new ValidationError(`A opção do IBS/CBS por semestre só existe a partir de 2027 (perfil de ${ano}).`);
+    }
+    // SIMPLES-PISO-ANEXO-XI item 12 (decisões 2 e 4 do dono, chat, 10/10): campo opcional, mas chave que veio e não existe
+    // no Anexo XI (Res. CGSN 140 art. 100 caput e § 1º-C I) ⇒ 400. A vigência na competência é checada na apuração.
+    if (input.meiOcupacoes) {
+      const inexistentes = chavesInexistentes(await this.legalParams.fotografia([TABELA_ANEXO_XI]), input.meiOcupacoes);
+      if (inexistentes.length > 0) {
+        throw new ValidationError(`Ocupação do MEI fora do Anexo XI da Res. CGSN 140: ${inexistentes.join(', ')}.`, { meiOcupacoes: inexistentes });
+      }
     }
     return this.repo.runTransaction(async (tx) => {
       const atual = await this.repo.findByYear(scope, ano, tx);

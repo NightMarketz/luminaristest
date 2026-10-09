@@ -98,6 +98,9 @@ export const CODIGOS_ALERTA_SIMPLES = [
   // SIMPLES-PISO-ANEXO-XI bloco 1 (F-PI-2; F-PI-5)
   'BENEFICIO_MUNICIPAL_INAPLICAVEL_DESVANTAJOSO',
   'ISS_VALOR_FIXO_MUNICIPAL',
+  // SIMPLES-PISO-ANEXO-XI bloco 2 (itens 13 e 14)
+  'MEI_ENQUADRAMENTO_DIVERGE',
+  'MEI_TAC_COM_OCUPACAO_A',
 ] as const;
 /** D-2026-10-10-X14-ALERTA-INFORMATIVO (dono, chat, 2026-10-10), item 1: o código fica estável; o alerta ganha severidade. */
 export const SEVERIDADES_ALERTA_SIMPLES = ['INFO', 'WARNING'] as const;
