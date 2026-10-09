@@ -1,4 +1,4 @@
-import type { CollectionCharge, PaymentAccount, Prisma } from 'generated/prisma';
+import { Prisma, type CollectionCharge, type PaymentAccount } from 'generated/prisma';
 import { AppError, ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import { loadKeyring, open, type Keyring } from '../../../lib/secretBox';
@@ -164,6 +164,12 @@ export class CollectionChargeService {
         status: 'CREATING',
       });
       return { charge: created, account: acct };
+    }).catch((error: unknown) => {
+      // Corrida perdida: o pré-cheque acima leu "nenhuma viva", mas o índice parcial recusou (achado 3 do #609).
+      if (isLiveChargeUniqueViolation(error)) {
+        throw new ConflictError(`${CHARGE_LIVE_EXISTS}: o título já tem uma cobrança viva.`, CHARGE_LIVE_EXISTS);
+      }
+      throw error;
     });
 
     const sent = await this.send(charge, account, keyring, expiry.expiresIn);
@@ -277,7 +283,10 @@ export class CollectionChargeService {
       try {
         const account = await this.requireAccountRow(row.paymentAccountId);
         if (account.status !== 'ACTIVE') continue;
-        if (row.status === 'CREATING') {
+        if (row.status === 'CREATING' && row.expiresAt.getTime() <= this.now().getTime()) {
+          // Venceu antes de chegar ao MP: não reenvia; EXPIRED é terminal (F9: terminal nunca tem baixa automática).
+          await this.expireUnsent(row);
+        } else if (row.status === 'CREATING') {
           await this.send(row, account, keyring, expiresInFor(row, this.now()));
           summary.redriven += 1;
         } else if (row.providerRef) {
@@ -331,6 +340,17 @@ export class CollectionChargeService {
   }
 
   // ── Internos ───────────────────────────────────────────────────────────────
+  /** CREATING cujo `expiresAt` já passou ⇒ CAS para EXPIRED (+ audit na mesma tx), sem chamar o provedor. */
+  private async expireUnsent(charge: CollectionCharge): Promise<void> {
+    const scope = resolveAccountingScope({ userId: charge.userId }, charge.unitId);
+    await this.repo.runTransaction(async (tx) => {
+      const n = await this.repo.casStatus(charge.id, 'CREATING', { status: 'EXPIRED' }, tx);
+      if (n === 1) {
+        await this.audit(tx, scope, COLLECTION_CHARGE_STATUS_CHANGED, charge.id, { from: 'CREATING', to: 'EXPIRED' });
+      }
+    });
+  }
+
   /** Chamada externa da criação/re-drive (P2-2/P2-3) e o 2º commit. */
   private async send(charge: CollectionCharge, account: PaymentAccount, keyring: Keyring, expiresIn: string): Promise<CollectionCharge> {
     const scope = resolveAccountingScope({ userId: charge.userId }, charge.unitId);
@@ -365,7 +385,7 @@ export class CollectionChargeService {
       throw await this.translateProviderError(account, error, charge.id);
     }
     await this.repo.runTransaction(async (tx) => {
-      await this.repo.casStatus(
+      const n = await this.repo.casStatus(
         charge.id,
         'CREATING',
         {
@@ -378,6 +398,13 @@ export class CollectionChargeService {
         },
         tx,
       );
+      if (n === 1) {
+        await this.audit(tx, scope, COLLECTION_CHARGE_STATUS_CHANGED, charge.id, {
+          from: 'CREATING',
+          to: 'PENDING',
+          providerStatus: result.providerStatus,
+        });
+      }
     });
     // A ordem pode já nascer num estado além de PENDING — aplica pela função comum (P2-7).
     return this.applyProviderResult(charge.id, result);
@@ -523,7 +550,14 @@ export class CollectionChargeService {
   }
 }
 
-/** 4xx definitivo = qualquer 4xx exceto 401 (credencial, P2-4), 409 e 429 (transitórios) — P2-3. */
+/** P2002 do índice parcial `collection_charges_one_live_per_receivable` (uma viva por título; coluna `receivableId`). */
+function isLiveChargeUniqueViolation(error: unknown): boolean {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') return false;
+  const target = error.meta?.target;
+  return Array.isArray(target) ? target.includes('receivableId') : String(target ?? '').includes('receivableId');
+}
+
+/** 4xx definitivo =qualquer 4xx exceto 401 (credencial, P2-4), 409 e 429 (transitórios) — P2-3. */
 function isDefinitive(status: number | null): boolean {
   return status !== null && status >= 400 && status < 500 && status !== 401 && status !== 409 && status !== 429;
 }
