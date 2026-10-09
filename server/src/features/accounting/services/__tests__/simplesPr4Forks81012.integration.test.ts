@@ -70,6 +70,54 @@ describe('F-PR4-10 (a) — locação de bem móvel fora da conferência NFS-e do
   });
 });
 
+type Alerta = { codigo: string; detalhe: string; severity: string; motivoInformativo?: string };
+const nfseDiverge = async (c: Cenario, m: string) => {
+  const r = await calcular(c, m);
+  expect(r.status).toBe(200);
+  return (r.body.data.alertas as Alerta[]).find((a) => a.codigo === 'NFSE_DIVERGE_RECEITA');
+};
+let seq = 0;
+const nfse = (c: Cenario, dCompet: string, cents: number) =>
+  prisma.fiscalDocument.create({
+    data: { userId: c.user.id, unitId: c.unit, kind: 'NFSE', status: 'AUTHORIZED', saleId: `nf-f12-${++seq}`, saleKey: `nf-f12-${seq}`, cTribNac: '060101', anchorEntryId: 'x', ambiente: 'producao', partner: 'manual', serie: 1, dCompet, vServCents: BigInt(cents) },
+  });
+
+describe('D-2026-10-10-X14-ALERTA-INFORMATIVO — severidade do NFSE_DIVERGE_RECEITA', () => {
+  it('ME por competência, competência até 2026-10: INFO / DOCUMENTO_MUNICIPAL_TRANSIÇÃO', async () => {
+    const c = await cenario('alinfo10');
+    expect((await perfil(c, 2026, { regime: 'SIMPLES' })).status).toBe(200);
+    await linha(c, '2026-10', 10_000);
+    expect(await nfseDiverge(c, '2026-10')).toMatchObject({ severity: 'INFO', motivoInformativo: 'DOCUMENTO_MUNICIPAL_TRANSIÇÃO' });
+  });
+
+  it('ME por competência, competência 2026-11 em diante: WARNING, sem motivo', async () => {
+    const c = await cenario('alwarn11');
+    expect((await perfil(c, 2026, { regime: 'SIMPLES' })).status).toBe(200);
+    await linha(c, '2026-11', 10_000);
+    const a = await nfseDiverge(c, '2026-11');
+    expect(a?.severity).toBe('WARNING');
+    expect(a).not.toHaveProperty('motivoInformativo');
+  });
+
+  it('ME optante pelo caixa: com divergência ⇒ INFO / REGIME_CAIXA (também depois de 2026-10); sem divergência ⇒ nenhum alerta', async () => {
+    const c = await cenario('alcaixa');
+    expect((await perfil(c, 2026, { regime: 'SIMPLES', simplesRegimeApuracao: 'CAIXA' })).status).toBe(200);
+    await linha(c, '2026-11', 10_000);
+    expect(await nfseDiverge(c, '2026-11')).toMatchObject({ severity: 'INFO', motivoInformativo: 'REGIME_CAIXA' });
+    await nfse(c, '2026-11-10', 10_000);
+    expect(await nfseDiverge(c, '2026-11')).toBeUndefined();
+  });
+
+  it('MEI: WARNING mesmo antes de 2026-11 (a transição do documento municipal é do ME/EPP)', async () => {
+    const c = await cenario('almei');
+    expect((await perfil(c, 2026, { regime: 'MEI', meiContribuinteIcms: false, meiContribuinteIss: true })).status).toBe(200);
+    await linha(c, '2026-03', 10_000, { tomadorTipo: 'CNPJ' });
+    const a = await nfseDiverge(c, '2026-03');
+    expect(a?.severity).toBe('WARNING');
+    expect(a).not.toHaveProperty('motivoInformativo');
+  });
+});
+
 describe('F-PR4-12 (b) — regime de apuração do Simples no perfil fiscal', () => {
   let c: Cenario;
   beforeAll(async () => {
