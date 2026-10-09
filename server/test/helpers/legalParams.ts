@@ -29,7 +29,9 @@ export const SIMPLES_SEED_FILES = [SIMPLES_SEED_FILE, SIMPLES_SEED_FILE_V2, SIMP
 export const LEGAL_PARAMS_SEED_FILE_V2 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v2.sql');
 /** PR-3: DEPRECIACAO_ANEXO_III (cópia do fixture do Anexo III). Mesma regra de igualdade com o migration.sql. */
 export const LEGAL_PARAMS_SEED_FILE_V3 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v3.sql');
-export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3];
+/** CSLL-LC224: linhas v4 de CSLL_ALIQUOTA (LC 224/2025). Mesma regra de igualdade com o migration.sql. */
+export const LEGAL_PARAMS_SEED_FILE_V4 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v4.sql');
+export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4];
 
 type Valor = string | number | null;
 

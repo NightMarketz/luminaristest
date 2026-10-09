@@ -46,7 +46,7 @@ const FiscalRealSchema = z
     // 0010.FORMA_APUR — derivado do perfil do ano (X7 Fase B item 18); informado e diferente ⇒ 400 no serviço.
     formaApur: z.enum(['T', 'A']).optional(),
     // 0020.IND_ALIQ_CSLL — ECF ≥ 2019 ∈ {1 (9%), 4 (15%)} (REGRA_PREENCHIMENTO_IND_ALIQ_CSSL).
-    indAliqCsll: z.enum(['1', '4']).default('1'),
+    indAliqCsll: z.enum(['1', '3', '4', '7', '8']).default('1'),
     // 0010.IND_REC_RECEITA — 2 = Regime de Competência (default; mantém a ECD).
     indRecReceita: z.enum(['1', '2']).default('2'),
   })

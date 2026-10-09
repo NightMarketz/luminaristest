@@ -94,7 +94,7 @@ export const UpsertCompanyFiscalProfileSchema = z
       .nullable()
       .optional(),
     ecf: z
-      .object({ indAliqCsll: z.enum(['1', '4']), indRecReceita: z.enum(['1', '2']) })
+      .object({ indAliqCsll: z.enum(['1', '3', '4', '7', '8']), indRecReceita: z.enum(['1', '2']) })
       .strict()
       .nullable()
       .optional(),

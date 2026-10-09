@@ -61,6 +61,18 @@ const numMes = (p: LalurMes): number => LALUR_MESES.indexOf(p) + 1;
 const nomeMes = (m: number): LalurMes => LALUR_MESES[m - 1];
 const pad2 = (n: number): string => String(n).padStart(2, '0');
 
+/**
+ * BE-INCR-CSLL-ALIQUOTA-LC224 F-CA-4 (a): os códigos ECF `7`/`8` (0020.IND_ALIQ_CSLL "9% - 12%" / "15% - 17,5%") mudam
+ * de alíquota em 01/04/2026 (IN RFB 1.700/2017 art. 30-D III/IV, red. IN RFB 2.315/2026). A regra do Real anual com
+ * alíquota que muda no ano não foi lida (P-CA-4) ⇒ 400 explícito na estimativa, no balancete e no ajuste.
+ */
+export function aliquotaCsllAnual(t: TabelaApuracao, ind: string | null, dataFim: string): { valor: number; fonte: string } {
+  if (ind === '7' || ind === '8') {
+    throw new ValidationError(`alíquota da CSLL muda no ano (código ${ind} da ECF); apuração anual com código 7/8 não suportada.`);
+  }
+  return aliquotaCsll(t, ind, dataFim);
+}
+
 /** Último dia do mês (date-only) — a data em que a tabela de parâmetros é consultada. */
 export function fimDoMes(ano: number, m: number): string {
   return new Date(Date.UTC(ano, m, 0)).toISOString().slice(0, 10);
@@ -151,7 +163,7 @@ export function apurarEstimativaReceitaBruta(e: EntradaEstimativa): ResultadoApu
   assertMesEmAtividade(e.ano, m, e.perfil);
   const dataFim = fimDoMes(e.ano, m);
   const codigoReceita = codigoReceitaAnual(e.tabela, dataFim, e.tributo, 'ESTIMATIVA', e.perfil.lucroRealObrigatorio);
-  const aliqCsll = e.tributo === 'CSLL' ? aliquotaCsll(e.tabela, e.perfil.ecfIndAliqCsll, dataFim) : null;
+  const aliqCsll = e.tributo === 'CSLL' ? aliquotaCsllAnual(e.tabela, e.perfil.ecfIndAliqCsll, dataFim) : null;
   const chave = e.tributo === 'IRPJ' ? 'PRESUNCAO_IRPJ' : 'PRESUNCAO_CSLL';
   const pS = linhaVigente(e.tabela, chave, dataFim, 'SERVICO')!;
   const pR = linhaVigente(e.tabela, chave, dataFim, 'REVENDA')!;
@@ -280,7 +292,7 @@ export function apurarBalancete(e: EntradaBalancete): ResultadoApuracaoAnual {
   const ativos = assertMesEmAtividade(e.ano, m, e.perfil);
   const dataFim = fimDoMes(e.ano, m);
   const codigoReceita = codigoReceitaAnual(e.tabela, dataFim, e.tributo, 'ESTIMATIVA', e.perfil.lucroRealObrigatorio);
-  const aliqCsll = e.tributo === 'CSLL' ? aliquotaCsll(e.tabela, e.perfil.ecfIndAliqCsll, dataFim) : null;
+  const aliqCsll = e.tributo === 'CSLL' ? aliquotaCsllAnual(e.tabela, e.perfil.ecfIndAliqCsll, dataFim) : null;
   const n = m - ativos[0] + 1;
 
   const ajustes = ajustesParteA(e.tabela, e.tributo, e.resultadoAntesCents, e.linhasParteA, dataFim);
@@ -381,7 +393,7 @@ export function apurarAjusteAnual(e: EntradaAjusteAnual): ResultadoApuracaoAnual
   }
   const dataFim = `${e.ano}-12-31`;
   const codigoReceita = codigoReceitaAnual(e.tabela, dataFim, e.tributo, 'AJUSTE_ANUAL', e.perfil.lucroRealObrigatorio);
-  const aliqCsll = e.tributo === 'CSLL' ? aliquotaCsll(e.tabela, e.perfil.ecfIndAliqCsll, dataFim) : null;
+  const aliqCsll = e.tributo === 'CSLL' ? aliquotaCsllAnual(e.tabela, e.perfil.ecfIndAliqCsll, dataFim) : null;
 
   const ajustes = ajustesParteA(e.tabela, e.tributo, e.resultadoAntesCents, e.linhasParteA, dataFim);
   const memoria: MemoriaLinha[] = [

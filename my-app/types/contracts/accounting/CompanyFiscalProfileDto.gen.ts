@@ -65,7 +65,7 @@ numOrd: string
 natLivr: string
 } | null)
 ecf?: ({
-indAliqCsll: ("1" | "4")
+indAliqCsll: ("1" | "3" | "4" | "7" | "8")
 indRecReceita: ("1" | "2")
 } | null)
 contadorContactId?: (string | null)
