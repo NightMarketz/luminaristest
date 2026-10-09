@@ -379,5 +379,43 @@ describe('F5 PR-3 — relatório de liberações → extrato da PaymentAccount �
         toUtc: '2026-10-10T03:00:00.000Z',
       });
     });
+
+    it('A2 (R2 a, dono 2026-10-10): sobreposição com extrato manual ⇒ 1º ciclo bloqueia a conta e grava o alerta; 2º ciclo não baixa', async () => {
+      const manual = await upload(csv(release('2026-10-08T09:00:00-03:00', 'PAY01MAN', 'man', 'payment', '15.00', '15.00', '0.00')));
+      expect(manual.status).toBe(201);
+      marks.clear();
+      files.length = 0;
+      calls.length = 0;
+      files.push({ fileName: 'release-2.csv', beginDate: '2026-10-07T03:00:00Z', endDate: '2026-10-10T03:00:00Z' });
+      nextDownload = csv(
+        release('2026-10-08T09:00:00-03:00', 'PAY01MAN', 'man', 'payment', '15.00', '15.00', '0.00'),
+        release('2026-10-08T11:00:00-03:00', 'PAY01NV2', 'nv2', 'payment', '7.00', '7.00', '0.00'),
+      );
+      const statements = await prisma.bankStatement.count();
+      await service().fetchAll();
+      expect(calls).toContain('download release-2.csv');
+      expect(marks.size).toBe(0);
+      expect(await prisma.bankStatement.count()).toBe(statements);
+      const view = await request(app).get(`/api/payment-accounts/${paId}`).query({ unitId: UNIT }).set(authHeader(dono));
+      expect(view.status).toBe(200);
+      expect(view.body.data.releaseReportBlockedReason).toContain('PAY01MAN');
+      const ev = await eventos('payment_account.release_report_blocked');
+      expect(ev).toHaveLength(1);
+      expect(ev[0].targetId).toBe(paId);
+      expect(JSON.parse(ev[0].payload)).toMatchObject({
+        paymentAccountId: paId,
+        fileName: 'release-2.csv',
+        fromUtc: '2026-10-07T03:00:00.000Z',
+        toUtc: '2026-10-10T03:00:00.000Z',
+        reason: 'release_report_overlap',
+      });
+
+      calls.length = 0;
+      const s2 = await service().fetchAll();
+      nextDownload = null;
+      expect(s2).toMatchObject({ failed: 0, imported: 0 });
+      expect(calls).toEqual([]);
+      expect(await eventos('payment_account.release_report_blocked')).toHaveLength(1);
+    });
   });
 });
