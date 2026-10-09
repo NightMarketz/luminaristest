@@ -410,7 +410,7 @@ describe('F5 PR-2 — CollectionCharge + adaptador MP + webhook', () => {
     expect((await prisma.collectionCharge.findUniqueOrThrow({ where: { id: row.id } })).status).toBe('EXPIRED');
     const ev = (await eventos('collection_charge.status_changed')).map((e) => JSON.parse(e.payload));
     expect(ev.filter((p) => p.collectionChargeId === row.id)).toEqual([
-      { collectionChargeId: row.id, from: 'CREATING', to: 'EXPIRED', providerStatus: null },
+      { collectionChargeId: row.id, from: 'CREATING', to: 'EXPIRED' }, // sem providerStatus: o MP não foi consultado
     ]);
   });
 

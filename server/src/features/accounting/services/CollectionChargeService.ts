@@ -277,7 +277,10 @@ export class CollectionChargeService {
       try {
         const account = await this.requireAccountRow(row.paymentAccountId);
         if (account.status !== 'ACTIVE') continue;
-        if (row.status === 'CREATING') {
+        if (row.status === 'CREATING' && row.expiresAt.getTime() <= this.now().getTime()) {
+          // Venceu antes de chegar ao MP: não reenvia; EXPIRED é terminal (F9: terminal nunca tem baixa automática).
+          await this.expireUnsent(row);
+        } else if (row.status === 'CREATING') {
           await this.send(row, account, keyring, expiresInFor(row, this.now()));
           summary.redriven += 1;
         } else if (row.providerRef) {
@@ -331,6 +334,17 @@ export class CollectionChargeService {
   }
 
   // ── Internos ───────────────────────────────────────────────────────────────
+  /** CREATING cujo `expiresAt` já passou ⇒ CAS para EXPIRED (+ audit na mesma tx), sem chamar o provedor. */
+  private async expireUnsent(charge: CollectionCharge): Promise<void> {
+    const scope = resolveAccountingScope({ userId: charge.userId }, charge.unitId);
+    await this.repo.runTransaction(async (tx) => {
+      const n = await this.repo.casStatus(charge.id, 'CREATING', { status: 'EXPIRED' }, tx);
+      if (n === 1) {
+        await this.audit(tx, scope, COLLECTION_CHARGE_STATUS_CHANGED, charge.id, { from: 'CREATING', to: 'EXPIRED' });
+      }
+    });
+  }
+
   /** Chamada externa da criação/re-drive (P2-2/P2-3) e o 2º commit. */
   private async send(charge: CollectionCharge, account: PaymentAccount, keyring: Keyring, expiresIn: string): Promise<CollectionCharge> {
     const scope = resolveAccountingScope({ userId: charge.userId }, charge.unitId);
