@@ -4533,7 +4533,7 @@
  *         - { in: query, name: page, required: false, schema: { type: integer, default: 1 } }
  *         - { in: query, name: limit, required: false, schema: { type: integer, default: 20, maximum: 100 } }
  *       responses:
- *         '200': { description: 'items (BankSettlementItemView[]), total, page, limit' }
+ *         '200': { description: 'items (BankSettlementItemView[] — incl. feeCents: provider fee in integer cents, 0 = bank item; feeEntryId: provider.fee entry id or null), total, page, limit' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
