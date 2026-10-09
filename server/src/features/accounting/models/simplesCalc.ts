@@ -10,7 +10,7 @@
  */
 import { z } from 'zod';
 import { AtividadeSemAnexoError, SimplesRegraNaoRegulamentadaError } from '../../../lib/errors';
-import { linhaLegalVigente, type LinhaLegal } from '../../legalParameters/models/legalParameter';
+import { ParametroLegalAusenteError, linhaLegalVigente, type LinhaLegal } from '../../legalParameters/models/legalParameter';
 
 export const TRIBUTOS_SIMPLES = [
   'IRPJ',
@@ -366,6 +366,11 @@ export function apurar(entrada: ApuracaoInput, linhas: readonly LinhaLegal[]): A
     // Teto do ISS (art. 18 § 1º-B I): acima do teto, ISS = teto e a diferença vai pela tabela de transferência do anexo.
     const iss = pct.get('ISS');
     const teto = linha(linhas, 'SIMPLES_TETO_ISS', anexo, data, null, TetoIssJsonSchema, usadas);
+    // F-PR4-8 (a), dono 10/10 (D-2026-10-10-QUESTIONARIO-DONO Q1): sem a linha, falha só no Anexo III/IV antes de
+    // 2033 — no Anexo V e de 2033 em diante a falta da linha é a própria lei (PESQUISA-X14-PR4-LACUNAS, F-PR4-8).
+    if (iss && !teto && (anexo === 'III' || anexo === 'IV') && data < '2033-01-01') {
+      throw new ParametroLegalAusenteError('SIMPLES_TETO_ISS', data, anexo);
+    }
     if (iss && teto && cmp(iss, BP(teto.percentualBp)) > 0) {
       if (faixa === 6) {
         // 6ª faixa (ISS pela fórmula da 5ª, Res. CGSN 140 art. 21 III "b"): a nota do anexo só traz a tabela da 5ª, então
