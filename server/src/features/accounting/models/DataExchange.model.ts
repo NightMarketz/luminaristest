@@ -32,6 +32,9 @@ export const EXPORT_KINDS = [
   // Amostra determinística de lançamentos (C6b PR-2, Passo 9, F-C6b-8 a — BRIEF item 10).
   // Mesma coluna String ⇒ zero migration.
   'EXPORT_ENTRY_SAMPLE',
+  // ISS por competência × município (X7 Fase C, C2 — BRIEF item 17, F-TC-7 b: kind de export, sem rota nova).
+  // Mesma coluna String ⇒ zero migration.
+  'EXPORT_ISS_BY_COMPETENCE',
 ] as const;
 
 export type ImportKind = (typeof IMPORT_KINDS)[number];

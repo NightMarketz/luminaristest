@@ -496,7 +496,7 @@
               "type": "string"
             },
             "maxItems": 20,
-            "description": "Até 20 jobs EXPORTED extras (balancete, razão, conciliação, amostra, BP, DRE) — SPED nunca é extra"
+            "description": "Até 20 jobs EXPORTED extras (balancete, razão, conciliação, amostra, BP, DRE, ISS por competência) — SPED nunca é extra"
           }
         }
       },
@@ -557,7 +557,8 @@
                 "EXPORT_BALANCE_SHEET",
                 "EXPORT_INCOME_STATEMENT",
                 "EXPORT_BANK_RECONCILIATION",
-                "EXPORT_ENTRY_SAMPLE"
+                "EXPORT_ENTRY_SAMPLE",
+                "EXPORT_ISS_BY_COMPETENCE"
               ]
             },
             "description": "Kinds que a UI pré-marca no build — SUGESTÃO, não gate (C6b PR-3, F-C6b-2 a)"
@@ -11005,7 +11006,8 @@
                       "EXPORT_INCOME_STATEMENT",
                       "EXPORT_TEMPLATE",
                       "EXPORT_BANK_RECONCILIATION",
-                      "EXPORT_ENTRY_SAMPLE"
+                      "EXPORT_ENTRY_SAMPLE",
+                      "EXPORT_ISS_BY_COMPETENCE"
                     ]
                   },
                   "format": {
@@ -11028,7 +11030,7 @@
                   },
                   "periodStart": {
                     "type": "string",
-                    "description": "YYYY-MM-DD — EXPORT_GENERAL_LEDGER (optional; window), EXPORT_BANK_RECONCILIATION and EXPORT_ENTRY_SAMPLE (both REQUIRED) only (400 for any other kind). Must be given together with periodEnd (never just one — 400 otherwise)"
+                    "description": "YYYY-MM-DD — EXPORT_GENERAL_LEDGER (optional; window), EXPORT_BANK_RECONCILIATION, EXPORT_ENTRY_SAMPLE and EXPORT_ISS_BY_COMPETENCE (all REQUIRED) only (400 for any other kind). Must be given together with periodEnd (never just one — 400 otherwise)"
                   },
                   "periodEnd": {
                     "type": "string",

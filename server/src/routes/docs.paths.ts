@@ -2322,12 +2322,12 @@
  *               type: object
  *               required: [kind, format, unitId]
  *               properties:
- *                 kind:         { type: string, enum: [EXPORT_TRIAL_BALANCE, EXPORT_GENERAL_LEDGER, EXPORT_BALANCE_SHEET, EXPORT_INCOME_STATEMENT, EXPORT_TEMPLATE, EXPORT_BANK_RECONCILIATION, EXPORT_ENTRY_SAMPLE] }
+ *                 kind:         { type: string, enum: [EXPORT_TRIAL_BALANCE, EXPORT_GENERAL_LEDGER, EXPORT_BALANCE_SHEET, EXPORT_INCOME_STATEMENT, EXPORT_TEMPLATE, EXPORT_BANK_RECONCILIATION, EXPORT_ENTRY_SAMPLE, EXPORT_ISS_BY_COMPETENCE] }
  *                 format:       { type: string, enum: [csv, xlsx] }
  *                 unitId:       { type: string }
  *                 asOf:         { type: string, description: 'YYYY-MM-DD — required for BP/DRE; optional for EXPORT_TRIAL_BALANCE (balances as-of that date instead of accumulated-to-date)' }
  *                 accountCode:  { type: string, description: 'EXPORT_GENERAL_LEDGER only. When present, exports one account (optionally windowed by periodStart/periodEnd). When absent, exports the general ledger — every account with a leg in [periodStart, periodEnd] (periodStart/periodEnd then required)' }
- *                 periodStart:  { type: string, description: 'YYYY-MM-DD — EXPORT_GENERAL_LEDGER (optional; window), EXPORT_BANK_RECONCILIATION and EXPORT_ENTRY_SAMPLE (both REQUIRED) only (400 for any other kind). Must be given together with periodEnd (never just one — 400 otherwise)' }
+ *                 periodStart:  { type: string, description: 'YYYY-MM-DD — EXPORT_GENERAL_LEDGER (optional; window), EXPORT_BANK_RECONCILIATION, EXPORT_ENTRY_SAMPLE and EXPORT_ISS_BY_COMPETENCE (all REQUIRED) only (400 for any other kind). Must be given together with periodEnd (never just one — 400 otherwise)' }
  *                 periodEnd:    { type: string, description: 'YYYY-MM-DD — same kinds/rules as periodStart. >= periodStart' }
  *                 templateKind: { type: string, enum: [IMPORT_CHART_OF_ACCOUNTS, IMPORT_OPENING_BALANCES, IMPORT_JOURNAL_ENTRIES], description: 'required for EXPORT_TEMPLATE' }
  *                 perAccount:   { type: integer, minimum: 1, maximum: 50, description: 'EXPORT_ENTRY_SAMPLE only (400 for any other kind). Max legs sampled per account, default 5 when omitted.' }

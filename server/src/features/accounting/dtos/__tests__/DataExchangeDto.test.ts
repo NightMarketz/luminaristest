@@ -153,7 +153,7 @@ describe('ExportRequestSchema — periodStart/periodEnd (C6b PR-1, Passo 5)', ()
 });
 
 describe('ExportRequestSchema — listas fechadas', () => {
-  it('aceita os 7 kinds implementados e recusa um kind declarado-mas-não-fiado', () => {
+  it('aceita os 8 kinds implementados e recusa um kind declarado-mas-não-fiado', () => {
     for (const kind of IMPLEMENTED_EXPORT_KINDS) {
       const extra =
         kind === 'EXPORT_BALANCE_SHEET' || kind === 'EXPORT_INCOME_STATEMENT'
@@ -162,7 +162,7 @@ describe('ExportRequestSchema — listas fechadas', () => {
             ? { accountCode: '1.1.1' }
             : kind === 'EXPORT_TEMPLATE'
               ? { templateKind: 'IMPORT_CHART_OF_ACCOUNTS' as const }
-              : kind === 'EXPORT_BANK_RECONCILIATION'
+              : kind === 'EXPORT_BANK_RECONCILIATION' || kind === 'EXPORT_ISS_BY_COMPETENCE'
                 ? { periodStart: '2026-01-01', periodEnd: '2026-01-31' }
                 : kind === 'EXPORT_ENTRY_SAMPLE'
                   ? { periodStart: '2026-01-01', periodEnd: '2026-01-31', seed: 'seed-1' }
@@ -340,5 +340,29 @@ describe('Schemas de importação e escopo', () => {
   it('TemplateKindSchema é a lista fechada de importação', () => {
     expect(TemplateKindSchema.safeParse('IMPORT_OPENING_BALANCES').success).toBe(true);
     expect(TemplateKindSchema.safeParse('EXPORT_TEMPLATE').success).toBe(false);
+  });
+});
+
+// X7 Fase C PR-2 (BRIEF C item 17, F-TC-7 b): ISS por competência — janela obrigatória; campo de outro kind ⇒ 400.
+describe('ExportRequestSchema — EXPORT_ISS_BY_COMPETENCE (X7 Fase C PR-2)', () => {
+  const iss = { ...base, kind: 'EXPORT_ISS_BY_COMPETENCE' as const, periodStart: '2026-03-01', periodEnd: '2026-03-31' };
+
+  it('aceita o kind com a janela; sem janela ⇒ issue em periodStart', () => {
+    expect(ExportRequestSchema.safeParse(iss).success).toBe(true);
+    const parsed = ExportRequestSchema.safeParse({ ...base, kind: 'EXPORT_ISS_BY_COMPETENCE' });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) expect(parsed.error.issues.some((i) => i.path[0] === 'periodStart')).toBe(true);
+  });
+
+  it.each([
+    ['asOf', { asOf: '2026-06-30' }],
+    ['accountCode', { accountCode: '1.1.1' }],
+    ['templateKind', { templateKind: 'IMPORT_CHART_OF_ACCOUNTS' }],
+    ['perAccount', { perAccount: 5 }],
+    ['seed', { seed: 's' }],
+  ])('%s ⇒ issue nesse campo', (campo, extra) => {
+    const parsed = ExportRequestSchema.safeParse({ ...iss, ...extra });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) expect(parsed.error.issues.some((i) => i.path[0] === campo)).toBe(true);
   });
 });

@@ -1329,6 +1329,8 @@ export class ApplicationFactory {
         // Review #338 F1: IAccountReader — resolve o código da conta bancária via o plano de
         // contas ATIVO (findManyByUnit), nunca via trialBalance (só cobre conta com movimento).
         this.repositories.account,
+        // X7 Fase C PR-2: IIssDocumentReader (findForIssReport) para o ISS por competência.
+        this.repositories.fiscalDocument,
       ),
       dataExchangeImport: new DataExchangeImportService(
         this.repositories.dataExchange,

@@ -254,7 +254,7 @@ describe('BuildDeliveryPackageSchema', () => {
 });
 
 describe('PackageProfileSchema / PackageProfileQuerySchema (C6b PR-3, F-C6b-2 a)', () => {
-  it('aceita kinds vazio e os 6 kinds entregáveis', () => {
+  it('aceita kinds vazio e os 7 kinds entregáveis', () => {
     expect(PackageProfileSchema.safeParse({ kinds: [] }).success).toBe(true);
     expect(
       PackageProfileSchema.safeParse({
@@ -265,6 +265,7 @@ describe('PackageProfileSchema / PackageProfileQuerySchema (C6b PR-3, F-C6b-2 a)
           'EXPORT_INCOME_STATEMENT',
           'EXPORT_BANK_RECONCILIATION',
           'EXPORT_ENTRY_SAMPLE',
+          'EXPORT_ISS_BY_COMPETENCE',
         ],
       }).success,
     ).toBe(true);

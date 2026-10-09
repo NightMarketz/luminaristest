@@ -1,7 +1,7 @@
 // GERADO por server/src/features/accounting/dtos/__tests__/dtoShapeSnapshot.test.ts — NÃO EDITE.
 // Mudou um DTO? UPDATE_DTO_SNAPSHOT=1 npx jest --selectProjects unit --testPathPatterns dtoShapeSnapshot e comite o diff.
 export interface ExportRequestInput {
-kind: ("EXPORT_TRIAL_BALANCE" | "EXPORT_GENERAL_LEDGER" | "EXPORT_BALANCE_SHEET" | "EXPORT_INCOME_STATEMENT" | "EXPORT_TEMPLATE" | "EXPORT_BANK_RECONCILIATION" | "EXPORT_ENTRY_SAMPLE")
+kind: ("EXPORT_TRIAL_BALANCE" | "EXPORT_GENERAL_LEDGER" | "EXPORT_BALANCE_SHEET" | "EXPORT_INCOME_STATEMENT" | "EXPORT_TEMPLATE" | "EXPORT_BANK_RECONCILIATION" | "EXPORT_ENTRY_SAMPLE" | "EXPORT_ISS_BY_COMPETENCE")
 format: ("csv" | "xlsx")
 unitId: string
 asOf?: string
