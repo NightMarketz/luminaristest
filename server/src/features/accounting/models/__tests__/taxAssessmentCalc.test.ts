@@ -330,6 +330,15 @@ describe('Real trimestral (item 10; 23 c/d)', () => {
     expect(csll.devidoCents).toBe(R(15_000)); // 100.000 × 15% (indAliqCsll '4')
   });
 
+  it('BE-INCR-CSLL-BANCOS-Q1 item 4: banco (indAliqCsll 3) no T01/2026 — Presumido e Real a 20%, citando o art. 30 IV', () => {
+    const real = apurarRealTrimestral({ ...base, tributo: 'CSLL', perfil: { ...base.perfil, ecfIndAliqCsll: '3' } });
+    expect(real.devidoCents).toBe(R(20_000)); // 100.000 × 20%
+    expect(real.memoria.some((m) => m.fonte.includes('art. 30 IV'))).toBe(true);
+    const pres = apurarAno({ T01: [100_000, 0] }, 'CSLL', { ecfIndAliqCsll: '3' }).T01;
+    expect(pres.devidoCents).toBe(R(6_400)); // 32.000 × 20%
+    expect(pres.memoria.some((m) => m.fonte.includes('art. 30 IV'))).toBe(true);
+  });
+
   it('23(d) D6: compensação = arred(30% × L) passa; um centavo acima ⇒ 400 nomeando a linha P; L ≤ 0 com C > 0 ⇒ 400', () => {
     const teto = R(30_000); // 30% × 100.000
     expect(() => apurarRealTrimestral({ ...base, linhasParteA: [{ codigo: '174', valorCents: teto }] })).not.toThrow();

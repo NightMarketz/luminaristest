@@ -77,6 +77,28 @@ function baseDoc(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function pendingRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'pend-1',
+    userId: 'u1',
+    unitId: 'unit-1',
+    documentId: 'doc-1',
+    status: 'PENDING',
+    xmlBytes: null as Buffer | null,
+    pdfBytes: null as Buffer | null,
+    xmlAttachmentId: null as string | null,
+    pdfAttachmentId: null as string | null,
+    sourceDocumentId: null as string | null,
+    resultJson: JSON.stringify({ chaveOuCodigo: 'CHAVE-XYZ', nNFSe: 'NF123', numero: '123', valores: null }),
+    attempts: 0,
+    nextAttemptAt: new Date(),
+    lastError: null as string | null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  };
+}
+
 const REASSEMBLED_PAYLOAD = {
   versao: '1.01' as const,
   infDPS: {
@@ -105,9 +127,19 @@ function makeService(opts: { docs?: Record<string, ReturnType<typeof baseDoc>> }
     findById: jest.fn(async (_scope: unknown, id: string) => (docsById[id] ? { ...docsById[id], attempts: [] } : null)),
     findByPartnerRef: jest.fn(async (ref: string) => Object.values(docsById).find((d) => d.partnerRef === ref) ?? null),
     listPending: jest.fn(async () => Object.values(docsById).filter((d) => d.status === 'SENT' || d.status === 'PROCESSING')),
-    transition: jest.fn(async () => baseDoc()),
+    // stateful no status: a drenagem da pendência (DFE-ANEXO-PENDENTE) relê o documento depois da autorização.
+    transition: jest.fn(async (_scope: unknown, id: string, data: { status: string }) => {
+      if (docsById[id]) docsById[id] = { ...docsById[id], status: data.status };
+      return baseDoc();
+    }),
     appendAttempt: jest.fn(async () => ({ id: 'att-2', documentId: 'doc-1', attemptNo: 2, ref: 'doc-1:2', payloadJson: '{}', sentAt: new Date(), resultStatus: null, resultJson: null })),
     runTransaction: jest.fn(async (fn: (tx: unknown) => Promise<unknown>) => fn({})),
+    createPendingAttachment: jest.fn(async (_scope: unknown, data: { documentId: string; xmlBytes: Buffer | null; pdfBytes: Buffer | null; resultJson: string }) =>
+      pendingRow({ documentId: data.documentId, xmlBytes: data.xmlBytes, pdfBytes: data.pdfBytes, resultJson: data.resultJson })),
+    listDuePendingAttachments: jest.fn(async () => [] as ReturnType<typeof pendingRow>[]),
+    listAttachmentBackfillCandidates: jest.fn(async () => [] as ReturnType<typeof baseDoc>[]),
+    markPendingStep: jest.fn(async () => undefined),
+    markPendingDone: jest.fn(async () => undefined),
   };
   const emissionService = {
     getById: jest.fn(async (_scope: unknown, id: string) => ({ id, status: docsById[id]?.status ?? 'UNKNOWN', pendencias: [] })),
@@ -226,10 +258,13 @@ describe('FiscalDocumentLifecycleService — consultarUm (itens 24-25)', () => {
 
   it('AUTHORIZED em producao: status mudou (cancelamento) entre a autorização e a gravação dos anexos → proveniência aposentada, sem erro', async () => {
     mockSelection.ambiente = 'producao';
-    const { service, repo, postingService } = makeService({ docs: { 'doc-1': baseDoc({ ambiente: 'producao' }) } });
+    const { service, repo, postingService, docsById } = makeService({ docs: { 'doc-1': baseDoc({ ambiente: 'producao' }) } });
     mockPort.consultar.mockResolvedValueOnce({ status: 'AUTHORIZED', partnerRef: 'ref-1', numero: '123', chaveOuCodigo: 'CHAVE-XYZ', xml: Buffer.from('<xml/>'), errors: [] } as EmissaoResult);
     repo.transition
-      .mockImplementationOnce(async () => baseDoc({ status: 'AUTHORIZED' }))
+      .mockImplementationOnce(async () => {
+        docsById['doc-1'] = { ...docsById['doc-1'], status: 'AUTHORIZED' };
+        return baseDoc({ status: 'AUTHORIZED' });
+      })
       .mockRejectedValueOnce(new Error('fiscal_document_status_changed: doc-1'));
     await expect(service.consultarUm(SCOPE, 'doc-1')).resolves.toBeDefined();
     expect(repo.transition).toHaveBeenLastCalledWith(SCOPE, 'doc-1', expect.objectContaining({ whenStatusIn: ['AUTHORIZED'], sourceDocumentId: 'srcdoc-1' }));

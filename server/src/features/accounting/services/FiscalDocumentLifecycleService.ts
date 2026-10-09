@@ -1,4 +1,9 @@
-import type { FiscalDocument } from 'generated/prisma';
+import type { FiscalDocument, FiscalDocumentPendingAttachment } from 'generated/prisma';
+import {
+  PendingAttachmentDrainSummarySchema,
+  PendingAttachmentResultSchema,
+  type PendingAttachmentDrainSummary,
+} from '../dtos/FiscalDocumentPendingAttachmentDto';
 import { AppError, ConflictError, ForbiddenError, ValidationError } from '../../../lib/errors';
 import { parseNfseAutorizada, type ParsedNfse } from '../../../lib/nfse';
 import { parseEventoCancelamento } from '../../../lib/nfseEvento';
@@ -68,7 +73,16 @@ export interface PollSummary {
   updated: number;
   skipped: number;
   failed: number;
+  /** BE-INCR-DFE-ANEXO-PENDENTE item 7 — resultado da varredura de pendências de anexo no mesmo tick. */
+  attachments?: PendingAttachmentDrainSummary;
 }
+
+// BE-INCR-DFE-ANEXO-PENDENTE F-PA-6 (a): teto de 10 tentativas, backoff exponencial de 2 min até 1 h.
+export const PENDING_MAX_ATTEMPTS = 10;
+const PENDING_BACKOFF_BASE_MS = 120_000;
+const PENDING_BACKOFF_MAX_MS = 3_600_000;
+const PENDING_LAST_ERROR_MAX = 500;
+const PENDING_DRAIN_LIMIT = 50;
 
 export class FiscalDocumentLifecycleService {
   constructor(
@@ -591,7 +605,8 @@ export class FiscalDocumentLifecycleService {
     }
 
     const divergente = manual?.releitura?.releitura.status === 'DIVERGENTE';
-    await this.repo.runTransaction(async (tx) => {
+    const chaveOuCodigo = result.chaveOuCodigo;
+    const pending = await this.repo.runTransaction(async (tx) => {
       if (manual?.insideTx) await manual.insideTx(tx);
       await this.repo.transition(
         scope,
@@ -645,38 +660,87 @@ export class FiscalDocumentLifecycleService {
           },
         });
       }
+      // BE-INCR-DFE-ANEXO-PENDENTE item 3: em produção a pendência (com os bytes, F-PA-1 a) nasce NA MESMA tx da
+      // autorização — recusa da tx não deixa pendência. Em homologação nada é anexado (ADR §9.2 item 5).
+      if (doc.ambiente !== 'producao') return null;
+      return this.repo.createPendingAttachment(
+        scope,
+        {
+          documentId: doc.id,
+          xmlBytes: result.xml ?? null,
+          pdfBytes: result.pdf ?? null,
+          resultJson: JSON.stringify(
+            PendingAttachmentResultSchema.parse({
+              chaveOuCodigo,
+              nNFSe: result.nNFSe ?? null,
+              numero: result.numero ?? null,
+              valores: result.valores ?? null,
+            }),
+          ),
+        },
+        tx,
+      );
     });
 
-    let xmlAttachmentId: string | null = null;
-    let pdfAttachmentId: string | null = null;
-    let sourceDocumentId: string | null = null;
+    // BE-INCR-DFE-ANEXO-PENDENTE item 4 (F-PA-4 a): caminho rápido inline. Falha NÃO propaga — a autorização está
+    // commitada e a pendência (gravada na tx acima) fica para a varredura do DfePollScheduler.
+    if (pending) {
+      try {
+        await this.drainOne(pending);
+      } catch (error) {
+        logger.warn('dfe_authorized: anexo/proveniência falhou depois da autorização — pendência fica para a varredura', {
+          documentId: doc.id,
+          pendingAttachmentId: pending.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+  }
 
-    // Em produção: (1) XML/PDF -> DocumentAttachment; (2) attachSourceDocument (0 lançamentos
-    // novos, idempotente por externalRef). Em homologação: grava o documento, NÃO anexa nada
-    // (ADR §9.2 item 5). Só DEPOIS da tx de autorização (GAP-MAP applyResult, fork do dono 28/09):
-    // guarda recusada não deixa anexo nem proveniência. Falha aqui deixa AUTHORIZED sem anexo —
-    // reexecutável (attachSourceDocument é idempotente por externalRef).
-    if (doc.ambiente === 'producao') {
-      if (result.xml) {
-        const att = await this.documentAttachmentService.upload(scope, {
-          targetType: 'FISCAL_DOCUMENT',
-          targetId: doc.id,
-          fileName: `${doc.id}.xml`,
-          mimeType: 'application/xml',
-          buffer: result.xml,
-        });
-        xmlAttachmentId = att.id;
-      }
-      if (result.pdf) {
-        const att = await this.documentAttachmentService.upload(scope, {
-          targetType: 'FISCAL_DOCUMENT',
-          targetId: doc.id,
-          fileName: `${doc.id}.pdf`,
-          mimeType: 'application/pdf',
-          buffer: result.pdf,
-        });
-        pdfAttachmentId = att.id;
-      }
+  // ---- BE-INCR-DFE-ANEXO-PENDENTE (BRIEF itens 5–8 e 11) ----
+
+  /**
+   * Item 5 (F-PA-3 a) — drena UMA pendência, idempotente por passo: cada upload só roda se o id do passo ainda é null
+   * na pendência, e o id é gravado na pendência antes do passo seguinte (o `upload` não deduplica). A janela que sobra
+   * (upload commitou e a gravação do id falhou) gera no máximo um anexo duplicado, nunca uma perda (BRIEF F-PA-3).
+   * Item 6 (F-PA-5 c): documento que já não está autorizado ganha o anexo e a proveniência, que é aposentada em seguida
+   * (o mesmo ramo do #420 para o cancelamento entre as duas escritas). Em todos os casos a pendência termina DONE.
+   */
+  private async drainOne(pending: FiscalDocumentPendingAttachment): Promise<void> {
+    const scope = resolveAccountingScope({ userId: pending.userId }, pending.unitId);
+    const doc = await this.repo.findById(scope, pending.documentId);
+    if (!doc) throw new Error(`fiscal_document_not_found: ${pending.documentId}`);
+    const result = PendingAttachmentResultSchema.parse(JSON.parse(pending.resultJson));
+
+    let xmlAttachmentId = pending.xmlAttachmentId;
+    let pdfAttachmentId = pending.pdfAttachmentId;
+    let sourceDocumentId = pending.sourceDocumentId;
+
+    if (pending.xmlBytes && !xmlAttachmentId) {
+      const att = await this.documentAttachmentService.upload(scope, {
+        targetType: 'FISCAL_DOCUMENT',
+        targetId: doc.id,
+        fileName: `${doc.id}.xml`,
+        mimeType: 'application/xml',
+        buffer: Buffer.from(pending.xmlBytes),
+      });
+      xmlAttachmentId = att.id;
+      await this.repo.markPendingStep(pending.id, { xmlAttachmentId });
+    }
+    if (pending.pdfBytes && !pdfAttachmentId) {
+      const att = await this.documentAttachmentService.upload(scope, {
+        targetType: 'FISCAL_DOCUMENT',
+        targetId: doc.id,
+        fileName: `${doc.id}.pdf`,
+        mimeType: 'application/pdf',
+        buffer: Buffer.from(pending.pdfBytes),
+      });
+      pdfAttachmentId = att.id;
+      await this.repo.markPendingStep(pending.id, { pdfAttachmentId });
+    }
+    if (!sourceDocumentId) {
+      // attachSourceDocument já é idempotente por externalRef (0 lançamentos novos); o id gravado evita recriar uma
+      // proveniência que o ramo F-PA-5 c já aposentou.
       const sourceDoc = await this.postingService.attachSourceDocument(scope, doc.anchorEntryId, {
         sourceType: 'dfe.nfse',
         externalRef: result.chaveOuCodigo,
@@ -684,18 +748,128 @@ export class FiscalDocumentLifecycleService {
         description: `NFS-e ${result.nNFSe ?? result.numero}`,
         attachmentId: xmlAttachmentId ?? pdfAttachmentId ?? null,
         // sem PII — só o retorno estrutural do parceiro, nunca dados do tomador (§1.12).
-        rawJson: JSON.stringify({ status: result.status, partnerRef: result.partnerRef, numero: result.numero, nNFSe: result.nNFSe, chaveOuCodigo: result.chaveOuCodigo, valores: result.valores }),
+        rawJson: JSON.stringify({
+          status: 'AUTHORIZED',
+          partnerRef: doc.partnerRef,
+          numero: result.numero ?? undefined,
+          nNFSe: result.nNFSe ?? undefined,
+          chaveOuCodigo: result.chaveOuCodigo,
+          valores: result.valores ?? undefined,
+        }),
       });
       sourceDocumentId = sourceDoc.id;
-      const autorizado = divergente ? 'AUTHORIZED_DIVERGENT' : 'AUTHORIZED';
+      await this.repo.markPendingStep(pending.id, { sourceDocumentId });
+    }
+
+    const atual = doc.status as FiscalDocumentStatus;
+    let aposentar = !AUTHORIZED_STATUSES.includes(atual);
+    if (!aposentar) {
       try {
-        // Guarda na 2ª escrita: um cancelamento entre as duas escritas já aposentou a proveniência que conhecia (nenhuma);
-        // esta não pode ficar viva num documento cancelado.
-        await this.repo.transition(scope, doc.id, { status: autorizado, whenStatusIn: [autorizado], xmlAttachmentId, pdfAttachmentId, sourceDocumentId });
+        // Guarda na 2ª escrita (#420): um cancelamento no meio não pode deixar a proveniência viva num documento cancelado.
+        await this.repo.transition(scope, doc.id, { status: atual, whenStatusIn: [atual], xmlAttachmentId, pdfAttachmentId, sourceDocumentId });
       } catch (e) {
         if (!(e instanceof Error && e.message.startsWith('fiscal_document_status_changed'))) throw e;
-        await this.postingService.retireSourceDocument(scope, sourceDocumentId, 'dfe_status_changed');
-        logger.warn('dfe_authorized: status mudou antes de gravar anexos — proveniência aposentada', { documentId: doc.id });
+        aposentar = true;
+      }
+    }
+    if (aposentar) {
+      await this.postingService.retireSourceDocument(scope, sourceDocumentId, 'dfe_status_changed');
+      logger.warn('dfe_authorized: status mudou antes de gravar anexos — proveniência aposentada', { documentId: doc.id });
+    }
+    await this.repo.markPendingDone(pending.id);
+  }
+
+  /**
+   * Item 7 (F-PA-2 a) — varredura chamada pelo MESMO tick do `DfePollScheduler`, depois do `pollPendingOnce`. Antes de
+   * drenar, procura candidatos do backfill por reconsulta (item 11, F-PA-8 b: em todo tick). Item 8 (F-PA-6 a): falha
+   * ⇒ `attempts++`, backoff exponencial de 2 min até 1 h, `lastError` truncado a 500; no teto (10) ⇒ FAILED +
+   * `logger.error` (os bytes ficam, para reprocesso manual).
+   */
+  async drainPendingAttachmentsOnce(limit = PENDING_DRAIN_LIMIT): Promise<PendingAttachmentDrainSummary> {
+    await this.backfillPendingAttachments(limit);
+    const due = await this.repo.listDuePendingAttachments(new Date(), limit);
+    const summary: PendingAttachmentDrainSummary = { total: due.length, done: 0, failed: 0, discarded: 0 };
+    for (const pending of due) {
+      try {
+        await this.drainOne(pending);
+        summary.done++;
+      } catch (error) {
+        summary.failed++;
+        const message = (error instanceof Error ? error.message : String(error)).slice(0, PENDING_LAST_ERROR_MAX);
+        const attempts = pending.attempts + 1;
+        if (attempts >= PENDING_MAX_ATTEMPTS) {
+          await this.repo.markPendingStep(pending.id, { attempts, lastError: message, status: 'FAILED' });
+          logger.error('dfe_pending_attachment: teto de tentativas — pendência FAILED (reprocesso manual)', {
+            pendingAttachmentId: pending.id,
+            documentId: pending.documentId,
+            attempts,
+            error: message,
+          });
+        } else {
+          const delay = Math.min(PENDING_BACKOFF_BASE_MS * 2 ** (attempts - 1), PENDING_BACKOFF_MAX_MS);
+          await this.repo.markPendingStep(pending.id, { attempts, lastError: message, nextAttemptAt: new Date(Date.now() + delay) });
+          logger.warn('dfe_pending_attachment: falha — nova tentativa com backoff', {
+            pendingAttachmentId: pending.id,
+            documentId: pending.documentId,
+            attempts,
+            error: message,
+          });
+        }
+      }
+    }
+    return PendingAttachmentDrainSummarySchema.parse(summary);
+  }
+
+  /**
+   * Item 11 (F-PA-7 b, F-PA-8 b) — documento autorizado em produção sem anexo, sem proveniência e sem pendência: reconsulta
+   * o parceiro e, se o retorno trouxer XML, cria a pendência (PENDING) para a varredura drenar. Modo manual ou retorno
+   * sem XML: skip + `logger.warn` com o `documentId` (lista para ação humana). Custo declarado no BRIEF: esses
+   * documentos são reconsultados em todo tick.
+   */
+  private async backfillPendingAttachments(limit: number): Promise<void> {
+    const candidates = await this.repo.listAttachmentBackfillCandidates(limit);
+    if (!candidates.length) return;
+    const selection = selectDfeEmissor(process.env);
+    for (const doc of candidates) {
+      try {
+        if (!selection.enabled) {
+          logger.warn('dfe_pending_attachment_backfill: skip — porta desabilitada', { documentId: doc.id });
+          continue;
+        }
+        const port = resolveEmissorFor(doc.partner);
+        if (!port.capabilities.consultar) {
+          logger.warn('dfe_pending_attachment_backfill: skip — modo manual, sem de onde tirar o XML', { documentId: doc.id });
+          continue;
+        }
+        if (selection.port.name === doc.partner && selection.ambiente !== doc.ambiente) {
+          // F-AMB-2 a: a porta do env fala com o ambiente do env.
+          logger.warn('dfe_pending_attachment_backfill: skip — ambiente divergente', { documentId: doc.id });
+          continue;
+        }
+        const result = await port.consultar(doc.partnerRef ?? attemptRef(doc.id, doc.currentAttemptNo));
+        if (!result.xml) {
+          logger.warn('dfe_pending_attachment_backfill: skip — retorno sem XML', { documentId: doc.id });
+          continue;
+        }
+        const scope = resolveAccountingScope({ userId: doc.userId }, doc.unitId);
+        await this.repo.createPendingAttachment(scope, {
+          documentId: doc.id,
+          xmlBytes: result.xml,
+          pdfBytes: result.pdf ?? null,
+          resultJson: JSON.stringify(
+            PendingAttachmentResultSchema.parse({
+              chaveOuCodigo: doc.chaveOuCodigo ?? result.chaveOuCodigo,
+              nNFSe: doc.nNFSe ?? result.nNFSe ?? null,
+              numero: doc.numero != null ? String(doc.numero) : (result.numero ?? null),
+              valores: result.valores ?? null,
+            }),
+          ),
+        });
+      } catch (error) {
+        logger.error('dfe_pending_attachment_backfill: falha ao reconsultar documento — alerta', {
+          documentId: doc.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     }
   }

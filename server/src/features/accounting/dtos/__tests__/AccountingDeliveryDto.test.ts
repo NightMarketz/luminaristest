@@ -266,6 +266,7 @@ describe('PackageProfileSchema / PackageProfileQuerySchema (C6b PR-3, F-C6b-2 a)
           'EXPORT_BANK_RECONCILIATION',
           'EXPORT_ENTRY_SAMPLE',
           'EXPORT_TAX_ASSESSMENT_MEMO',
+          'EXPORT_ISS_BY_COMPETENCE',
         ],
       }).success,
     ).toBe(true);

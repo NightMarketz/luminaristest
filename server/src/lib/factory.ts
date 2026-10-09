@@ -133,6 +133,7 @@ import { ReleaseReportService } from '../features/accounting/services/ReleaseRep
 import { JobWatermarkRepository } from '../jobs/JobWatermarkRepository';
 import { MercadoPagoCollectionProvider } from '../features/accounting/collection/MercadoPagoCollectionProvider';
 import { TaxAssessmentService } from '../features/accounting/services/TaxAssessmentService';
+import { TaxAssessmentPeriodosService } from '../features/accounting/services/TaxAssessmentPeriodosService';
 import { MitExportService } from '../features/accounting/services/MitExportService';
 import { SimplesEntradasService } from '../features/accounting/services/SimplesEntradasService';
 import { ReceitaFiscalService } from '../features/accounting/services/ReceitaFiscalService';
@@ -699,6 +700,7 @@ export class ApplicationFactory {
     collectionCharge: CollectionChargeService; // BE-INCR-PAYMENT-PROVIDER PR-2
     releaseReport: ReleaseReportService; // BE-INCR-PAYMENT-PROVIDER PR-3
     taxAssessment: TaxAssessmentService; // X7 Fase A PR-2
+    taxAssessmentPeriodos: TaxAssessmentPeriodosService; // TAX-ASSESSMENT-PERIODOS
     mitExport: MitExportService; // X9 PR-2
     simplesEntradas: SimplesEntradasService; // X14 PR-2
     receitaFiscal: ReceitaFiscalService; // X14 PR-2
@@ -1372,6 +1374,8 @@ export class ApplicationFactory {
         this.repositories.account,
         // X7 Fase C PR-1: ITaxAssessmentReader (findConfirmedByYear existente) para a memória no pacote.
         this.repositories.taxAssessment,
+        // X7 Fase C PR-2: IIssDocumentReader (findForIssReport) para o ISS por competência.
+        this.repositories.fiscalDocument,
       ),
       dataExchangeImport: new DataExchangeImportService(
         this.repositories.dataExchange,
@@ -1519,6 +1523,14 @@ export class ApplicationFactory {
       ),
       // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7): prévia/confirmação/leitura da apuração IRPJ/CSLL trimestral.
       taxAssessment: taxAssessmentService,
+      // TAX-ASSESSMENT-PERIODOS (BRIEF item 10): só leitura — repositórios existentes + a fotografia legal do X8.
+      taxAssessmentPeriodos: new TaxAssessmentPeriodosService(
+        this.repositories.taxAssessment,
+        this.repositories.companyFiscalProfile,
+        this.repositories.simplesApuracao,
+        legalParameterService,
+        this.policies.accounting,
+      ),
       // BE-INCR-MIT-EXPORT PR-2 (nó X9): arquivo JSON do MIT a partir das apurações confirmadas (só lê o X7).
       simplesEntradas: simplesEntradasService,
       receitaFiscal: receitaFiscalService,
@@ -1799,6 +1811,7 @@ export class ApplicationFactory {
   public getCollectionChargeService = (): CollectionChargeService => this.services.collectionCharge;
   public getReleaseReportService = (): ReleaseReportService => this.services.releaseReport;
   public getTaxAssessmentService = (): TaxAssessmentService => this.services.taxAssessment;
+  public getTaxAssessmentPeriodosService = (): TaxAssessmentPeriodosService => this.services.taxAssessmentPeriodos;
   public getMitExportService = (): MitExportService => this.services.mitExport;
   public getSimplesEntradasService = (): SimplesEntradasService => this.services.simplesEntradas;
   public getReceitaFiscalService = (): ReceitaFiscalService => this.services.receitaFiscal;

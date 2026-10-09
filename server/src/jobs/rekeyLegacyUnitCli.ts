@@ -70,6 +70,8 @@ export const REKEY_MODELS = [
   'SimplesApuracao', // X14 PR-3: a apuração e a provisão seguem a unidade (sem hash) → REKEY pelo F-RK-5
   'SimplesDeclaracaoAnual', // X14 PR-4: os digitados da DEFIS/DASN-SIMEI seguem a unidade (sem hash) → REKEY pelo F-RK-5
   'CollectionCharge', // F5 PR-2: cobrança no provedor por unidade, sem hash; o `external_reference` no MP é o id, não o unitId → REKEY pelo F-RK-5
+  'FiscalDocumentPendingAttachment', // BE-INCR-DFE-ANEXO-PENDENTE: a pendência segue o `FiscalDocument` dela (sem hash) → REKEY pelo F-RK-5.
+  //   Deixá-la no unitId antigo faria a varredura anexar no escopo errado (o documento não seria achado e a pendência iria a FAILED)
 ] as const;
 
 /**

@@ -3,17 +3,17 @@ id: "DFE-ANEXO-PENDENTE"
 tipo: "plataforma"
 dominio: "fiscal"
 titulo: "Anexo e proveniência da NFS-e autorizada não se perdem se falharem depois da autorização (BE-INCR-DFE-ANEXO-PENDENTE)"
-estado: "ready"
+estado: "done"
 estado_detalhe: "28/09: BRIEF escrito (#425); F-PA-1..8 ratificados por questionário (F-PA-5 c, F-PA-7 b e F-PA-8 b contra a recomendação). Sem 'executa'. Nó aberto em 09/10 depois do cruzamento BRIEF × git log: nenhum commit de implementação"
 depende_de: ["[[X10b]]"]
 autorizacao: "dono, chat, 2026-09-28: \"BRIEF da pendência de anexo\" (só o BRIEF); dono, chat, 2026-10-09: \"sim, abre os nós\" (só a nota do nó) — sem 'executa'"
 ancora_sdd: "—"
 atualizado: "2026-10-09"
-prs: [425]
+prs: [425, "#602"]
 ---
 # DFE-ANEXO-PENDENTE — pendência de anexo da NFS-e autorizada
 
-**Estado:** `ready` — BRIEF com forks ratificados. Código só depois de um `executa` do dono.
+**Estado:** `done` — 28/09: BRIEF escrito (#425); F-PA-1..8 ratificados por questionário (F-PA-5 c, F-PA-7 b e F-PA-8 b contra a recomendação). Sem 'executa'. Nó aberto em 09/10 depois do cruzamento BRIEF × git log: nenhum commit de implementação  
 
 ## Escopo
 

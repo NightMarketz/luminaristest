@@ -28,7 +28,7 @@ const extraJobIdsSchema = z.array(z.string().min(1)).max(20).default([]);
  *         unitId:   { type: string }
  *         ecdJobId: { type: string, description: "Job EXPORTED da ECD (referência — o .txt nunca é copiado); o período vem dele" }
  *         ecfJobId: { type: string, description: "Job EXPORTED da ECF — tem de cobrir o MESMO período da ECD" }
- *         extraJobIds: { type: array, items: { type: string }, maxItems: 20, description: "Até 20 jobs EXPORTED extras (balancete, razão, conciliação, amostra, BP, DRE, memória das apurações) — SPED nunca é extra" }
+ *         extraJobIds: { type: array, items: { type: string }, maxItems: 20, description: "Até 20 jobs EXPORTED extras (balancete, razão, conciliação, amostra, BP, DRE, memória das apurações, ISS por competência) — SPED nunca é extra" }
  */
 export const BuildDeliveryPackageSchema = z
   .object({
@@ -76,7 +76,7 @@ export const ConfirmDeliverySchema = z
  *         kinds:
  *           type: array
  *           maxItems: 20
- *           items: { type: string, enum: [EXPORT_TRIAL_BALANCE, EXPORT_GENERAL_LEDGER, EXPORT_BALANCE_SHEET, EXPORT_INCOME_STATEMENT, EXPORT_BANK_RECONCILIATION, EXPORT_ENTRY_SAMPLE, EXPORT_TAX_ASSESSMENT_MEMO] }
+ *           items: { type: string, enum: [EXPORT_TRIAL_BALANCE, EXPORT_GENERAL_LEDGER, EXPORT_BALANCE_SHEET, EXPORT_INCOME_STATEMENT, EXPORT_BANK_RECONCILIATION, EXPORT_ENTRY_SAMPLE, EXPORT_TAX_ASSESSMENT_MEMO, EXPORT_ISS_BY_COMPETENCE] }
  *           description: "Kinds que a UI pré-marca no build — SUGESTÃO, não gate (C6b PR-3, F-C6b-2 a)"
  */
 export const PackageProfileSchema = z

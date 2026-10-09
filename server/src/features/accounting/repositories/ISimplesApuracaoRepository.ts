@@ -28,6 +28,8 @@ export interface ISimplesApuracaoRepository {
   findSubstituidas(scope: AccountingScope, competencia: string): Promise<SimplesApuracao[]>;
   /** X14 PR-4 (item 28) — as competências do ano com apuração CONFIRMED (não removida), em ordem. */
   competenciasConfirmadasDoAno(scope: AccountingScope, ano: number): Promise<string[]>;
+  /** TAX-ASSESSMENT-PERIODOS (BRIEF item 7): as apurações vivas (CONFIRMED e SUPERSEDED) das competências do ano — 1 consulta, sem N+1. */
+  findDoAno(scope: AccountingScope, ano: number): Promise<SimplesApuracao[]>;
   /** CAS CONFIRMED → SUPERSEDED; devolve quantas mudaram (0 = outra tx chegou antes). */
   supersede(scope: AccountingScope, id: string, tx: Prisma.TransactionClient): Promise<number>;
   create(scope: AccountingScope, data: CreateSimplesApuracaoData, tx: Prisma.TransactionClient): Promise<SimplesApuracao>;

@@ -20,6 +20,13 @@ export class SimplesApuracaoRepository implements ISimplesApuracaoRepository {
     return prisma.simplesApuracao.findMany({ where: { ...accountingScopeWhere(scope), competencia, status: 'SUPERSEDED' } });
   }
 
+  public async findDoAno(scope: AccountingScope, ano: number): Promise<SimplesApuracao[]> {
+    return prisma.simplesApuracao.findMany({
+      where: { ...accountingScopeWhere(scope), competencia: { startsWith: `${ano}-` }, deletedAt: null },
+      orderBy: [{ competencia: 'asc' }, { createdAt: 'asc' }],
+    });
+  }
+
   public async competenciasConfirmadasDoAno(scope: AccountingScope, ano: number): Promise<string[]> {
     const rows = await prisma.simplesApuracao.findMany({
       where: { ...accountingScopeWhere(scope), competencia: { startsWith: `${ano}-` }, status: 'CONFIRMED', deletedAt: null },

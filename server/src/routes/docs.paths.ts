@@ -2322,12 +2322,12 @@
  *               type: object
  *               required: [kind, format, unitId]
  *               properties:
- *                 kind:         { type: string, enum: [EXPORT_TRIAL_BALANCE, EXPORT_GENERAL_LEDGER, EXPORT_BALANCE_SHEET, EXPORT_INCOME_STATEMENT, EXPORT_TEMPLATE, EXPORT_BANK_RECONCILIATION, EXPORT_ENTRY_SAMPLE, EXPORT_TAX_ASSESSMENT_MEMO] }
+ *                 kind:         { type: string, enum: [EXPORT_TRIAL_BALANCE, EXPORT_GENERAL_LEDGER, EXPORT_BALANCE_SHEET, EXPORT_INCOME_STATEMENT, EXPORT_TEMPLATE, EXPORT_BANK_RECONCILIATION, EXPORT_ENTRY_SAMPLE, EXPORT_TAX_ASSESSMENT_MEMO, EXPORT_ISS_BY_COMPETENCE] }
  *                 format:       { type: string, enum: [csv, xlsx] }
  *                 unitId:       { type: string }
  *                 asOf:         { type: string, description: 'YYYY-MM-DD — required for BP/DRE; optional for EXPORT_TRIAL_BALANCE (balances as-of that date instead of accumulated-to-date)' }
  *                 accountCode:  { type: string, description: 'EXPORT_GENERAL_LEDGER only. When present, exports one account (optionally windowed by periodStart/periodEnd). When absent, exports the general ledger — every account with a leg in [periodStart, periodEnd] (periodStart/periodEnd then required)' }
- *                 periodStart:  { type: string, description: 'YYYY-MM-DD — EXPORT_GENERAL_LEDGER (optional; window), EXPORT_BANK_RECONCILIATION, EXPORT_ENTRY_SAMPLE and EXPORT_TAX_ASSESSMENT_MEMO (all REQUIRED) only (400 for any other kind). Must be given together with periodEnd (never just one — 400 otherwise)' }
+ *                 periodStart:  { type: string, description: 'YYYY-MM-DD — EXPORT_GENERAL_LEDGER (optional; window), EXPORT_BANK_RECONCILIATION, EXPORT_ENTRY_SAMPLE, EXPORT_TAX_ASSESSMENT_MEMO and EXPORT_ISS_BY_COMPETENCE (all REQUIRED) only (400 for any other kind). Must be given together with periodEnd (never just one — 400 otherwise)' }
  *                 periodEnd:    { type: string, description: 'YYYY-MM-DD — same kinds/rules as periodStart. >= periodStart' }
  *                 templateKind: { type: string, enum: [IMPORT_CHART_OF_ACCOUNTS, IMPORT_OPENING_BALANCES, IMPORT_JOURNAL_ENTRIES], description: 'required for EXPORT_TEMPLATE' }
  *                 perAccount:   { type: integer, minimum: 1, maximum: 50, description: 'EXPORT_ENTRY_SAMPLE only (400 for any other kind). Max legs sampled per account, default 5 when omitted.' }
@@ -6585,6 +6585,25 @@ export {};
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *         '409': { description: 'TAX_ASSESSMENT_CAS, _ALREADY_CONFIRMED, _SUPERSEDES, _ORDER, _REGIME ou _STALE' }
+ *
+ *   /api/accounting/tax-assessments/periodos:
+ *     get:
+ *       summary: Expected periods of the year by tax family - X7 IRPJ/CSLL, X8 PIS/Cofins, Simples (TAX-ASSESSMENT-PERIODOS)
+ *       description: >-
+ *         Leitura pura. Para cada familia diz se e apuravel (motivo PERFIL_AUSENTE, REGIME_DAS, REGIME_NAO_SIMPLES ou
+ *         REGIME_SEM_APURACAO quando nao), a forma (X7) ou a modalidade (X8) e os periodos esperados - T01..T04 ou
+ *         A01..A12 + A00, M01..M12, competencias YYYY-MM - com o estado por tributo (SEM_APURACAO, CONFIRMED com id e
+ *         aPagarCents, SO_SUPERSEDED, FORA_DA_ATIVIDADE, REVOGADO). Nenhuma regra nova - as mesmas funcoes da previa.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: anoCalendario, required: true, schema: { type: integer, minimum: 2000, maximum: 2100 } }
+ *       responses:
+ *         '200': { description: 'TaxAssessmentPeriodosView (anoCalendario, regime, familias)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *
  *   /api/accounting/tax-assessments/pis-cofins/preview:
  *     post:
