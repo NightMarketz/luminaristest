@@ -1,0 +1,5 @@
+-- X14 PR-4 (F-PR4-13). Só dado: o texto de prisma/data/legal_parameters_simples_v4.sql (teste-guarda de igualdade).
+-- Memória migracao-sqlite-nao-e-transacional: INSERT OR IGNORE com id fixo.
+-- X14 PR-4 (F-PR4-13, dono 09/10): limite do MEI transportador autônomo de cargas (Res. CGSN 140/2018 art. 100 § 1º-A:
+-- R$ 251.600,00; no início, R$ 20.966,67 × meses — o cálculo deriva o mensal do anual ÷ 12, arredondado ao centavo).
+INSERT OR IGNORE INTO "legal_parameters" ("id","tabela","chave","discriminador","valorInt","valorTexto","valorJson","fonte","fonteUrl","fonteSha256","vigenteDesde","vigenteAte","status","supersedesId","motivo","proposedById","publishedById","publishedAt","createdAt") VALUES ('sn4-lim-mei-tac', 'SIMPLES_LIMITE', 'MEI_TAC', NULL, 25160000, NULL, NULL, 'Res. CGSN 140/2018 art. 100 § 1º-A (LC 123 art. 18-F, incl. LC 188/2021)', NULL, NULL, '2022-01-01', NULL, 'PUBLISHED', NULL, 'X14 PR-4 F-PR4-13 (dono, chat, 2026-10-09)', 'migracao:BE-INCR-SIMPLES-NACIONAL', 'migracao:BE-INCR-SIMPLES-NACIONAL', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);

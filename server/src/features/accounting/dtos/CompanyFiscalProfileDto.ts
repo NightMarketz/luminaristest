@@ -116,6 +116,8 @@ export const UpsertCompanyFiscalProfileSchema = z
     // e/ou de ISS (Res. CGSN 140 art. 101 II/III e § 1º). Só no regime MEI; null = não declarado.
     meiContribuinteIcms: z.boolean().nullable().default(null),
     meiContribuinteIss: z.boolean().nullable().default(null),
+    // X14 PR-4 (F-PR4-13): MEI transportador autônomo de cargas (Res. CGSN 140 art. 100 § 1º-A). Só no regime MEI.
+    meiTransportadorCargas: z.boolean().nullable().default(null),
   })
   .strict()
   .superRefine((v, ctx) => {
@@ -154,7 +156,7 @@ export const UpsertCompanyFiscalProfileSchema = z
     }
     // X14 PR-4 item 25 — o enquadramento do Anexo XI só existe para o MEI
     if (v.regime !== 'MEI') {
-      for (const k of ['meiContribuinteIcms', 'meiContribuinteIss'] as const) {
+      for (const k of ['meiContribuinteIcms', 'meiContribuinteIss', 'meiTransportadorCargas'] as const) {
         if (v[k] !== null) ctx.addIssue({ code: 'custom', path: [k], message: 'O enquadramento ICMS/ISS do Anexo XI é do MEI (Res. CGSN 140 art. 101 § 1º).' });
       }
     }

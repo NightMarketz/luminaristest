@@ -473,7 +473,7 @@ export class SimplesApuracaoService {
     const acumulado = doAno.reduce((t, m) => t + receita(m), 0n);
     const alertas: AlertaSimples[] = [];
     const inicio = perfil.inicioAtividadeEm ? perfil.inicioAtividadeEm.slice(0, 7) : null;
-    const limite = this.limiteMei(linhas, competencia, inicio, acumulado, alertas);
+    const limite = this.limiteMei(linhas, competencia, inicio, acumulado, alertas, perfil.meiTransportadorCargas === true);
 
     const linhasPa = await this.receitaRepo.findByCompetencia(scope, competencia, tx);
     await this.conferirNfse(scope, competencia, linhasPa, alertas, tx);
@@ -489,7 +489,8 @@ export class SimplesApuracaoService {
 
   /**
    * Item 26 — limite do MEI: R$ 81.000 no ano (Res. CGSN 140 art. 100 caput, em `SIMPLES_LIMITE`/MEI); no ano de início,
-   * R$ 6.750 × meses do início ao fim do ano (§ 1º = limite ÷ 12 × meses). Excesso ⇒ desenquadramento obrigatório com
+   * R$ 6.750 × meses do início ao fim do ano (§ 1º). Transportador autônomo de cargas (§ 1º-A; F-PR4-13): R$ 251.600 em
+   * `SIMPLES_LIMITE`/MEI_TAC e, no início, R$ 20.966,67 × meses — o mensal é o anual ÷ 12 arredondado ao centavo. Excesso ⇒ desenquadramento obrigatório com
    * comunicação até o último dia útil do mês seguinte; efeitos pelo art. 115 § 2º II "a": ≤ 20% ⇒ 1º de janeiro do ano
    * seguinte (item 1); > 20% ⇒ retroativo a 1º de janeiro do ano (item 2) ou ao início de atividade (item 3).
    */
@@ -499,13 +500,15 @@ export class SimplesApuracaoService {
     inicio: string | null,
     acumulado: bigint,
     alertas: AlertaSimples[],
+    transportadorCargas: boolean,
   ): bigint {
     const ano = Number(competencia.slice(0, 4));
-    const valor = linhaLegalVigente(linhas, 'SIMPLES_LIMITE', 'MEI', `${competencia}-01`)?.valorInt;
-    if (valor === null || valor === undefined) throw new ParametroLegalAusenteError('SIMPLES_LIMITE', `${competencia}-01`, 'MEI'); // F-PR4-7
+    const chave = transportadorCargas ? 'MEI_TAC' : 'MEI';
+    const valor = linhaLegalVigente(linhas, 'SIMPLES_LIMITE', chave, `${competencia}-01`)?.valorInt;
+    if (valor === null || valor === undefined) throw new ParametroLegalAusenteError('SIMPLES_LIMITE', `${competencia}-01`, chave); // F-PR4-7
     const anual = BigInt(valor);
     const inicioNoAno = inicio !== null && inicio.startsWith(`${ano}-`);
-    const limite = inicioNoAno ? (anual * BigInt(13 - Number(inicio!.slice(5, 7)))) / 12n : anual;
+    const limite = inicioNoAno ? ((anual + 6n) / 12n) * BigInt(13 - Number(inicio!.slice(5, 7))) : anual;
     if (limite > 0n && acumulado > limite) {
       const fmt = (v: bigint) => `R$ ${(Number(v) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
       const efeito =

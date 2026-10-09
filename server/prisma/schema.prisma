@@ -1534,6 +1534,8 @@ model CompanyFiscalProfile {
   // Anexo XI (Res. CGSN 140 art. 101 II/III e § 1º): contribuinte de ICMS (+ R$ 1) / de ISS (+ R$ 5). null = não declarado.
   meiContribuinteIcms              Boolean?
   meiContribuinteIss               Boolean?
+  // X14 PR-4 (F-PR4-13, dono 09/10): MEI transportador autônomo de cargas — limite da Res. CGSN 140 art. 100 § 1º-A.
+  meiTransportadorCargas           Boolean?
   createdById                      String?
   updatedById                      String?
   createdAt                        DateTime           @default(now())
