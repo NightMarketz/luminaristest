@@ -426,12 +426,47 @@ Assinatura do executor (passo 21): ____________
       `unitId` na query. EVIDÊNCIA: [ ]
     - j) (Só se houver contador ACTIVE na unidade) Salvar o perfil da unidade: a mensagem do servidor sobre contador
       responsável aparece inteira, sem esconder o formulário. EVIDÊNCIA: [ ]
+      **[EMENDA 2026-10-09 — FE-INCR-ACCOUNTING-POLICY-VERSION item 14]** o resultado esperado do 22 j mudou: com
+      contador ACTIVE o botão já diz **"Enviar ao contador para aprovação"** (F-FE-POL-1 a) e o clique faz `POST
+      /policy-versions` (201), não `PUT`. O roteiro completo está no passo 23.
 
 Desfecho do passo 22 (marcar UM):
 [ ] PASSOU — a) a j) com evidência conferindo com o esperado
 [ ] FALHOU — item __ divergiu; evidência colada acima
 [ ] BLOQUEADO — pré-condição __ não se sustentava
 Assinatura do executor (passo 22): ____________
+
+### [EMENDA 2026-10-09] Passo 23 — Política contábil versionada: proposta do dono, decisão do contador (FE-INCR-ACCOUNTING-POLICY-VERSION)
+
+> Preparado por agente em 2026-10-09, **em branco** (`FE-INCR-ACCOUNTING-POLICY-VERSION-brief.md` §7 e item 14). Agente
+> não preenche evidência, não marca desfecho, não assina. Pré-condições: **build de produção** do commit do merge do PR
+> ou posterior; `dev.db` real (`server/prisma/prisma/dev.db`); dois usuários (dono com unidade e perfil fiscal,
+> contador com conta) e uma atribuição ACTIVE entre eles (convite + aceite pelas telas do #515); DevTools com o Network
+> filtrado em `policy-versions`.
+
+23. Resultado esperado em todas: 2xx nas escritas, console sem erro.
+    - a) **Dono, Perfil fiscal:** o botão diz "Enviar ao contador para aprovação" e o aviso mostra o nome e o CRC do
+      contador. Mudar "Crédito sobre compra de fornecedor do Simples" e enviar → 201; o formulário volta ao vigente
+      (desmarcado) e aparece a faixa da proposta v{n}. EVIDÊNCIA: [corpo do POST — sem `unitId` dentro de `payload` — + print]
+    - b) **Dono, Imobilizado → Contas:** mudar a despesa de depreciação e enviar → 201; a mensagem diz "Contas enviadas
+      ao contador", nunca "Contas salvas". EVIDÊNCIA: [corpo do POST com só as 3 chaves do imobilizado]
+    - c) **Dono, Perfil fiscal de novo:** enviar outra proposta → a faixa troca para v{n+1}; na aba **Política
+      contábil**, a anterior aparece "Substituída". EVIDÊNCIA: [print]
+    - d) **Contador, modo cliente:** a faixa do modo cliente mostra "2 proposta(s) de política aguardando sua decisão";
+      a aba **Política contábil** aparece; o detalhe mostra o diff com o rótulo das contas. EVIDÊNCIA: [Network **sem**
+      `GET /accounts`, `/fiscal-profile` ou `/settings` nesta sessão de tela; toda chamada com `ownerUserId`]
+    - e) **Contador aprova** a do perfil → "Aplicada"; o dono recarrega e vê o campo marcado no perfil. EVIDÊNCIA: [ ]
+    - f) **Contador rejeita** a das contas com motivo → "Rejeitada"; o dono vê o motivo na lista. EVIDÊNCIA: [ ]
+    - g) **Corrida:** com o detalhe aberto no contador, o dono envia nova proposta; o contador aprova a antiga → texto
+      "Esta proposta mudou…" e recarga (409 `POLICY_VERSION_STATUS_CHANGED`). EVIDÊNCIA: [ ]
+    - h) **Sem contador:** encerrar a atribuição; o dono salva o perfil direto (PUT 200), e a lista mostra a versão como
+      "aplicada direto (sem contador)". EVIDÊNCIA: [ ]
+
+Desfecho do passo 23 (marcar UM):
+[ ] PASSOU — a) a h) com evidência conferindo com o esperado
+[ ] FALHOU — item __ divergiu; evidência colada acima
+[ ] BLOQUEADO — pré-condição __ não se sustentava
+Assinatura do executor (passo 23): ____________
 
 ## Desfecho (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
