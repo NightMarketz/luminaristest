@@ -10,6 +10,7 @@ import {
   TaxAssessmentScopeQuerySchema,
 } from '../features/accounting/dtos/TaxAssessmentDto';
 import { PisCofinsConfirmSchema, PisCofinsPreviewSchema } from '../features/accounting/dtos/PisCofinsDto';
+import { TaxAssessmentPeriodosQuerySchema } from '../features/accounting/dtos/TaxAssessmentPeriodosDto';
 
 /**
  * BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7, itens 13, 14, 17) — borda HTTP fina: auth → Zod safeParse → escopo →
@@ -53,6 +54,20 @@ export const listTaxAssessments = async (req: Request, res: Response) => {
     const q = TaxAssessmentListQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
     const data = await getFactory().getTaxAssessmentService().list(resolveAccountingScope(user, q.data.unitId), q.data);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** GET /api/accounting/tax-assessments/periodos?unitId=&anoCalendario= — períodos esperados do ano por família (TAX-ASSESSMENT-PERIODOS). */
+export const listPeriodos = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const q = TaxAssessmentPeriodosQuerySchema.safeParse(req.query);
+    if (!q.success) return bad(res, q.error.flatten());
+    const data = await getFactory().getTaxAssessmentPeriodosService().listar(resolveAccountingScope(user, q.data.unitId), q.data);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
