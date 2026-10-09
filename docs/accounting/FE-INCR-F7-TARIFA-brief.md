@@ -2,7 +2,7 @@
 
 > **Estado: BRIEF pronto. F-TAR-1..8 → (a) e F-TAR-9 → (b) RATIFICADOS** (dono, chat, 2026-10-10: *"ratifico
 > F-TAR-1..8 → a, F-TAR-9 → b"*, registrado em `docs/plano/decisoes/D-2026-10-10-FE-F7-TARIFA-FORKS.md`).
-> **Sub-fork F-TAR-9.1 (onde fica o seletor) PENDENTE.** A versão original deste BRIEF foi produzida por `sessao-planejamento` em
+> **Sub-fork F-TAR-9.1 → (b) RATIFICADO** (dono, chat, 2026-10-10: *"F-TAR-9.1 → b"*). Nenhum fork pendente. A versão original deste BRIEF foi produzida por `sessao-planejamento` em
 > 2026-10-10 contra `origin/main` **`b8a700cf`** (#614) e contra o head do PR #615 **`62533dc6`**
 > (`claude/f5-pr3-relatorio`, aberto, sem merge). Não contém código de aplicação.
 > **Implementação exige "executa" próprio do dono** (ORCH-006), forks ratificados e o merge do #615.
@@ -139,7 +139,9 @@ Cada item é testável sozinho. **[F-TAR-n]** = a forma depende do fork. **[dep 
       dos patches, ou cria um método irmão com notificação própria, sem mudar o comportamento do imobilizado. Isso
       precisa de teste de não-regressão do `FixedAssetAccountsSection`.
     - **Tipo de resposta:** `AccountingScopeSettings` (à mão, D11) ganha `providerFeeExpenseAccountId: string | null`.
-    - **Posição na tela:** conforme o F-TAR-9.1. A dica do item 10 aponta para o seletor em vez do path do PUT.
+    - **Posição na tela (F-TAR-9.1 → b):** seção compacta "Conta de tarifa do provedor" no topo da sub-aba "Baixas por
+      retorno", visível quando o extrato selecionado tem `paymentAccountId`. A dica do item 10 aponta para essa seção em
+      vez do path do PUT.
     - **Testes:** o load preenche o vigente; o salvar manda só `{ unitId, providerFeeExpenseAccountId }`; vazio manda
       `null`; com o GET falho não salva; com contador ativo vira proposta e não diz "salvo"; e a seção do imobilizado
       continua mandando só as 3 chaves dela.
@@ -235,7 +237,7 @@ deste nó continuam sem "executa".
 | **F-TAR-7** ✅ (a) | Texto do aviso G7 | (a) mostrar o `reason` do BE **verbatim** (pt-BR, com o status entre parênteses) sob um rótulo i18n ("Aviso"), no molde de `FAILED`/`REJECTED` hoje; (b) BE expõe campo estruturado (por exemplo `terminalChargeStatus: string \| null`) e o FE monta o texto com i18n (en traduzido); (c) FE reconhece o prefixo `TERMINAL_CHARGE_WARNING` no `reason` | **(a)**, sem BE novo. Em `PENDING`, `reason` só é escrito pelo G7: o scan grava `result.reason` na criação (`:194`, `:210`), e o release do confirm para `PENDING` não grava `reason` (`:384-389`). Custo: em `en` o aviso sai em pt, como `FAILED`/`REJECTED` já saem hoje. (c) acopla o FE ao texto do BE. |
 | **F-TAR-8** ✅ (a) | Fricção antes de confirmar item com aviso G7 | (a) só o aviso visível, sem passo extra (a confirmação já é humana e um a um); (b) checkbox "Li o aviso" obrigatório para habilitar Confirmar | **(a).** O G7 decidiu que a confirmação é humana, e ela já é. Cobrança terminal com dinheiro liberado no MP é dinheiro real na conta, e confirmar é o caminho normal. (b) acrescenta passo que o G7 não pediu. |
 | **F-TAR-9** ✅ (b), contra a recomendação | Onde o operador configura `providerFeeExpenseAccountId` (sem ela, todo confirm com tarifa dá 400) | (a) fora deste nó: só a dica do item 10, no precedente da conta de encargo (`:331`, "ainda sem tela"); (b) incluir neste nó um seletor da conta de tarifa (`PUT /api/accounting/settings`, que o `accountingService.updateSettings` já chama, `:729`) | **(a)**, para não alargar o nó, e a tela de configuração das contas (encargo + tarifa) vira um nó próprio. Contra a recomendação: o dono quer completude, e sem configuração a tarifa nunca confirma. Se o dono escolher (b), o seletor entra como item 16 e o perfil sobe. |
-| **F-TAR-9.1** PENDENTE | Onde o seletor do item 16 aparece | (a) dentro da dica do erro `fee_account_not_configured`, no modal de confirmar; (b) seção compacta "Conta de tarifa do provedor" no topo da sub-aba "Baixas por retorno", visível quando o extrato selecionado é de conta de provedor, e a dica do erro aponta para ela; (c) seção "Contas da conciliação" que também traz as contas de encargo (`bankCharge*`) | **(b).** Revisa a sugestão (a) que dei no chat antes de ler o `FixedAssetAccountsSection`. Com contador ativo, salvar configuração vira **proposta** de política (`useGovernedSave`, `target: 'SCOPE_SETTINGS'`) e não aplica na hora. Dentro do modal de confirmar, o operador salvaria, tentaria confirmar e levaria o mesmo 400. Uma seção própria mostra o estado vigente e a proposta pendente. (c) resolve também a conta de encargo, mas alarga o nó além do F-TAR-9. |
+| **F-TAR-9.1** ✅ (b) | Onde o seletor do item 16 aparece | (a) dentro da dica do erro `fee_account_not_configured`, no modal de confirmar; (b) seção compacta "Conta de tarifa do provedor" no topo da sub-aba "Baixas por retorno", visível quando o extrato selecionado é de conta de provedor, e a dica do erro aponta para ela; (c) seção "Contas da conciliação" que também traz as contas de encargo (`bankCharge*`) | **(b).** Revisa a sugestão (a) que dei no chat antes de ler o `FixedAssetAccountsSection`. Com contador ativo, salvar configuração vira **proposta** de política (`useGovernedSave`, `target: 'SCOPE_SETTINGS'`) e não aplica na hora. Dentro do modal de confirmar, o operador salvaria, tentaria confirmar e levaria o mesmo 400. Uma seção própria mostra o estado vigente e a proposta pendente. (c) resolve também a conta de encargo, mas alarga o nó além do F-TAR-9. |
 
 ## 6. Pendências de validação externa
 
@@ -269,6 +271,6 @@ deste nó continuam sem "executa".
 
 ## 9. Perfil previsto
 
-`precisa-de-planejamento` (regra 1 do classificador: o sub-fork F-TAR-9.1 está PENDENTE). Com ele ratificado, o nó
+`sonnet-alto` (regra 4 do classificador): todos os forks ratificados; o nó
 fica só com FE (o F-TAR-1 → a põe o BE no #615), 16 itens, e o item 16 escreve configuração contábil governada, mas não
-cria lançamento. A previsão então é `sonnet-alto` (regra 4, mais de 8 itens).
+cria lançamento. Mais de 8 itens.

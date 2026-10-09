@@ -4,13 +4,13 @@ tipo: "decisao"
 dominio: "financeiro"
 titulo: "Forks do BRIEF FE-INCR-F7-TARIFA — F-TAR-1..9 ratificados pelo dono"
 estado: "decided"
-autorizacao: "dono, chat, 2026-10-10: \"ratifico F-TAR-1..8 → a, F-TAR-9 → b\""
+autorizacao: "dono, chat, 2026-10-10: \"ratifico F-TAR-1..8 → a, F-TAR-9 → b\" + \"F-TAR-9.1 → b\""
 atualizado: "2026-10-10"
 ---
 # D-2026-10-10-FE-F7-TARIFA-FORKS — forks do [[FE-INCR-F7-TARIFA]]
 
 **Estado:** `decided`.
-**Autorização:** dono, chat, 2026-10-10: *"ratifico F-TAR-1..8 → a, F-TAR-9 → b"*. Os caminhos e as justificativas
+**Autorização:** dono, chat, 2026-10-10: *"ratifico F-TAR-1..8 → a, F-TAR-9 → b"* e *"F-TAR-9.1 → b"*. Os caminhos e as justificativas
 estão no BRIEF (`docs/accounting/FE-INCR-F7-TARIFA-brief.md` §5). Esta nota não acrescenta fundamento normativo: o
 parecer colado no chat antes da ratificação **não** foi adotado como fundamento (citações legais não conferidas).
 
@@ -25,10 +25,10 @@ parecer colado no chat antes da ratificação **não** foi adotado como fundamen
 | F-TAR-7 | Texto do aviso G7 | **(a)** `reason` do BE verbatim sob rótulo i18n |
 | F-TAR-8 | Passo extra antes de confirmar item com aviso G7 | **(a)** nenhum |
 | F-TAR-9 | Configuração de `providerFeeExpenseAccountId` | **(b)** seletor neste nó (item 16 do BRIEF) |
+| F-TAR-9.1 | Onde o seletor aparece (dono, chat, 2026-10-10: *"F-TAR-9.1 → b"*) | **(b)** seção compacta no topo da sub-aba "Baixas por retorno", visível em extrato de conta de provedor; a dica do erro aponta para ela |
 
 ## O que a ratificação NÃO cobre
 
 - **Executar o patch do F-TAR-1 no #615.** Exige "executa" próprio para o #615 (a sessão deste BRIEF tinha ordem de
   não tocá-lo).
 - **Implementar este nó.** Segue sem "executa".
-- **Onde o seletor do F-TAR-9 aparece na tela.** Ficou como sub-fork **F-TAR-9.1**, PENDENTE no BRIEF.
