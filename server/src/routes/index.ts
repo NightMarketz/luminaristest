@@ -21,6 +21,7 @@ import receivableRoutes from './receivables';
 import dimensionRoutes from './dimensions';
 import counterpartyRoutes from './counterparties';
 import paymentAccountRoutes from './paymentAccounts';
+import { collectionChargesRouter, paymentCollectionWebhookRouter, receivableChargesRouter } from './collectionCharges';
 import nfeRoutes from './nfe';
 import dfeRoutes from './dfe';
 import entryApprovalRoutes from './entryApprovals';
@@ -80,6 +81,7 @@ router.use('/legal-parameters', legalParameterRoutes); // BE-INCR-LEGAL-PARAMS P
 router.use('/accounting', accountingRoutes);
 router.use('/accounting-binding', accountingBindingRoutes);
 router.use('/payables', payableRoutes);
+router.use('/receivables', receivableChargesRouter); // BE-INCR-PAYMENT-PROVIDER (nó F5) PR-2
 router.use('/receivables', receivableRoutes);
 router.use('/dimensions', dimensionRoutes);
 router.use('/counterparties', counterpartyRoutes);
@@ -94,6 +96,8 @@ router.use('/reconcile-pending', reconcilePendingRoutes);
 router.use('/bank-settlements', bankSettlementRoutes); // BE-INCR-BANK-SETTLEMENT (nó F7)
 router.use('/lalur', lalurRoutes);
 router.use('/payment-accounts', paymentAccountRoutes); // BE-INCR-PAYMENT-PROVIDER (nó F5) PR-1
+router.use('/collection-charges', collectionChargesRouter); // BE-INCR-PAYMENT-PROVIDER (nó F5) PR-2
+router.use('/payment-collection', paymentCollectionWebhookRouter); // PR-2 — webhook PÚBLICO (publicApiRoutes)
 
 export { router };
 

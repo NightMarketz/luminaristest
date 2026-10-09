@@ -1010,6 +1010,41 @@
           }
         }
       },
+      "CreateCollectionChargeInput": {
+        "type": "object",
+        "required": [
+          "unitId",
+          "kind",
+          "payer"
+        ],
+        "properties": {
+          "unitId": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "BOLETO",
+              "PIX"
+            ]
+          },
+          "expiresInDays": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 30,
+            "description": "só BOLETO; omitido = 3 dias úteis"
+          },
+          "expiresInMinutes": {
+            "type": "integer",
+            "minimum": 30,
+            "maximum": 43200,
+            "description": "só PIX; omitido = 24 h"
+          },
+          "payer": {
+            "type": "object"
+          }
+        }
+      },
       "CreateCounterpartyInput": {
         "type": "object",
         "required": [
@@ -21725,6 +21760,303 @@
           },
           "503": {
             "description": "payment_credential_key_missing"
+          }
+        }
+      }
+    },
+    "/api/receivables/{receivableId}/charges": {
+      "post": {
+        "summary": "Create a provider charge (boleto/Pix) for the open balance of a receivable (BE-INCR-PAYMENT-PROVIDER PR-2, P2-2)",
+        "description": "Valor = saldo em aberto relido na tx; conta Mercado Pago ACTIVE do escopo. Nenhum efeito no razão (PP-D5). Campos de juros/multa/desconto ou prazo do tipo errado ⇒ 400 (P2-12).",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "receivableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCollectionChargeInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "CollectionChargeView (PENDING, ou FAILED se o provedor recusou)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "description": "CHARGE_RECEIVABLE_NOT_CHARGEABLE | CHARGE_LIVE_EXISTS | CHARGE_NOTHING_TO_CHARGE | PAYMENT_ACCOUNT_NOT_ACTIVE"
+          },
+          "502": {
+            "description": "provider_credential_invalid | provider_unavailable (a cobrança fica CREATING e o job reenvia)"
+          },
+          "503": {
+            "description": "payment_credential_key_missing"
+          }
+        }
+      },
+      "get": {
+        "summary": "List the provider charges of a receivable (P2-15) — without payer data",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "receivableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CollectionChargeView[]"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/api/receivables/{receivableId}/charges/payer-suggestion": {
+      "get": {
+        "summary": "Suggest the payer from the last charge of the same counterparty (P2-11, F-PP-11 a1)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "receivableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "payer (parcial)"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/api/collection-charges/{id}": {
+      "get": {
+        "summary": "Read a provider charge (P2-15) — payer only for who manages receivables",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CollectionChargeView"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/api/collection-charges/{id}/cancel": {
+      "post": {
+        "summary": "Cancel a PENDING provider charge (P2-10); provider 409 ⇒ re-query and apply the real state",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "CollectionChargeView"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "description": "CHARGE_NOT_PENDING"
+          },
+          "502": {
+            "description": "provider_credential_invalid | provider_unavailable"
+          }
+        }
+      }
+    },
+    "/api/payment-collection/webhook/{provider}/{accountId}": {
+      "post": {
+        "summary": "Provider webhook (public) — wakes up a re-query, never transitions from the body (P2-5)",
+        "description": "Assinatura x-signature com o segredo da conta; janela de 15 dias. Conta inexistente, inativa, de outro provedor, assinatura ou janela inválida ⇒ 401 sem escrita.",
+        "tags": [
+          "Accounting"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "accountId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "data.id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "recebido"
+          },
+          "401": {
+            "description": "assinatura inválida / conta não habilitada"
           }
         }
       }

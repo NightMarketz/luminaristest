@@ -14,9 +14,10 @@ import { LALUR_MESES, LALUR_QUARTERS } from '../models/Lalur.model';
 import { scopeToday } from '../models/dates';
 import { regimeUnidadeEsperado } from '../models/regimeEmpresa';
 import type { PerfilParaPrefill } from '../models/spedPerfilPrefill';
-import type { CompanyDeclarante, IBS_CBS_OPCOES, UpsertCompanyFiscalProfileInput } from '../dtos/CompanyFiscalProfileDto';
+import type { CompanyDeclarante, IBS_CBS_OPCOES, SIMPLES_REGIMES_APURACAO, UpsertCompanyFiscalProfileInput } from '../dtos/CompanyFiscalProfileDto';
 
 export type IbsCbsOpcao = (typeof IBS_CBS_OPCOES)[number];
+export type SimplesRegimeApuracao = (typeof SIMPLES_REGIMES_APURACAO)[number];
 import { matrizObrigacoesDe, resolverObrigacoes, type ObrigacaoResolvida, type PerfilParaObrigacoes } from '../models/obrigacoesPorRegime';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import type { CondicoesPerfil, ObrigacaoSped, StatusObrigacao } from '../models/obrigacoesPorRegime';
@@ -62,6 +63,7 @@ export interface CompanyFiscalProfileView {
   meiContribuinteIcms: boolean | null; // X14 PR-4 item 25
   meiContribuinteIss: boolean | null;
   meiTransportadorCargas: boolean | null;
+  simplesRegimeApuracao: SimplesRegimeApuracao; // X14 F-PR4-12 (b)
   ibsCbsOpcaoS1: IbsCbsOpcao | null; // X14 PR-2 item 14
   ibsCbsOpcaoS2: IbsCbsOpcao | null;
   updatedAt: string;
@@ -402,6 +404,7 @@ export class CompanyFiscalProfileService {
         meiContribuinteIcms: b(row.meiContribuinteIcms), // X14 PR-4 item 25
         meiContribuinteIss: b(row.meiContribuinteIss),
         meiTransportadorCargas: b(row.meiTransportadorCargas),
+        simplesRegimeApuracao: row.simplesRegimeApuracao, // X14 F-PR4-12 (b) (enum)
         ...(copiadoDe === undefined ? {} : { copiadoDe: String(copiadoDe) }),
       },
     });
@@ -490,6 +493,7 @@ function toData(input: UpsertCompanyFiscalProfileInput): CompanyFiscalProfileDat
     meiContribuinteIcms: input.meiContribuinteIcms,
     meiContribuinteIss: input.meiContribuinteIss,
     meiTransportadorCargas: input.meiTransportadorCargas,
+    simplesRegimeApuracao: input.simplesRegimeApuracao,
   };
 }
 
@@ -523,6 +527,7 @@ function rowToData(row: CompanyFiscalProfile): CompanyFiscalProfileData {
     meiContribuinteIcms: row.meiContribuinteIcms,
     meiContribuinteIss: row.meiContribuinteIss,
     meiTransportadorCargas: row.meiTransportadorCargas,
+    simplesRegimeApuracao: row.simplesRegimeApuracao,
   };
 }
 
@@ -558,6 +563,7 @@ function toView(row: CompanyFiscalProfile): CompanyFiscalProfileView {
     meiContribuinteIcms: row.meiContribuinteIcms,
     meiContribuinteIss: row.meiContribuinteIss,
     meiTransportadorCargas: row.meiTransportadorCargas,
+    simplesRegimeApuracao: row.simplesRegimeApuracao as SimplesRegimeApuracao,
     updatedAt: row.updatedAt.toISOString(),
   };
 }

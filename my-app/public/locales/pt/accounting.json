@@ -34,7 +34,8 @@
       "nfe": "NF-e",
       "imobilizado": "Imobilizado",
       "perfilFiscal": "Perfil fiscal",
-      "parametrosLegais": "Parâmetros legais"
+      "parametrosLegais": "Parâmetros legais",
+      "politica": "Política contábil"
     },
     "error": {
       "units": "Falha ao carregar as unidades.",
@@ -2141,7 +2142,11 @@
       "pendingExists": "Já existe um convite pendente para este escopo. Encerre-o antes de convidar de novo.",
       "assignmentChanged": "O convite mudou de estado; recarregue a tela.",
       "generic": "Não foi possível concluir a operação.",
-      "load": "Erro ao carregar as atribuições do contador."
+      "load": "Erro ao carregar as atribuições do contador.",
+      "policyApprovalRequired": "Este escopo tem contador responsável ativo: a mudança precisa da aprovação dele.",
+      "policyNoAccountant": "Este escopo não tem mais contador responsável ativo: não há quem aprove a proposta.",
+      "policyVersionChanged": "Esta proposta mudou (o dono enviou outra ou ela já foi decidida); recarregado.",
+      "policyAccountantRequired": "Só o contador responsável ativo deste escopo aprova ou rejeita propostas de política."
     },
     "banner": {
       "active": "Contador responsável ativo: {{name}} ({{crc}}). Só ele reabre períodos e assina revisões; para fazer você mesmo, encerre a atribuição na aba Compliance."
@@ -2665,5 +2670,95 @@
         "load": "Erro ao carregar os recálculos."
       }
     }
+  },
+  "policy": {
+    "client": {
+      "pendingCount": "{{n}} proposta(s) de política aguardando sua decisão"
+    },
+    "col": {
+      "date": "Data",
+      "decidedBy": "Quem decidiu",
+      "reason": "Motivo da rejeição",
+      "status": "Status",
+      "target": "Alvo",
+      "version": "Versão"
+    },
+    "decide": {
+      "approve": "Aprovar",
+      "approveConfirm": "Aprovar aplica estes valores agora no livro de {{owner}}.",
+      "approveConfirmButton": "Aprovar e aplicar",
+      "approveTitle": "Aprovar proposta",
+      "cancel": "Cancelar",
+      "reason": "Motivo (obrigatório)",
+      "reject": "Rejeitar",
+      "rejectConfirmButton": "Rejeitar com este motivo",
+      "rejectTitle": "Rejeitar proposta"
+    },
+    "detail": {
+      "baseApplied": "Comparado com o que esta versão aplicou.",
+      "baseCurrent": "Comparado com o vigente.",
+      "loading": "Carregando…",
+      "reason": "Motivo da rejeição: {{reason}}",
+      "title": "Proposta v{{n}}"
+    },
+    "diff": {
+      "accountMissing": "conta não encontrada ({{id}})",
+      "applied": "Aplicado",
+      "current": "Vigente",
+      "field": "Campo",
+      "hideSame": "Esconder campos sem mudança",
+      "no": "Não",
+      "noChanges": "Nenhum campo muda em relação à base.",
+      "outside": "Campos fora desta lista não mudam.",
+      "proposed": "Proposto",
+      "showSame": "Mostrar campos sem mudança ({{n}})",
+      "yes": "Sim"
+    },
+    "empty": "Nenhuma versão registrada.",
+    "error": {
+      "approveStillPending": "A proposta segue pendente; rejeite com o motivo se ela não puder valer.",
+      "decide": "Não foi possível registrar a decisão.",
+      "load": "Não foi possível carregar as versões da política.",
+      "loadDetail": "Não foi possível carregar a proposta."
+    },
+    "filter": {
+      "allStatuses": "Todos os status",
+      "allTargets": "Todos os alvos",
+      "status": "Status",
+      "target": "Alvo"
+    },
+    "list": {
+      "direct": "aplicada direto (sem contador)",
+      "open": "Ver",
+      "otherAccountant": "outro contador",
+      "you": "você"
+    },
+    "loading": "Carregando…",
+    "owner": {
+      "activeNotice": "Este escopo tem contador responsável ativo ({{name}}, {{crc}}). A mudança só vale depois que ele aprovar.",
+      "offerPropose": "Enviar como proposta",
+      "offerPut": "Salvar direto",
+      "pending": "Proposta v{{n}} aguardando o contador desde {{date}}. Enviar outra substitui esta por inteiro.",
+      "pendingPartial": "Proposta v{{n}} aguardando o contador desde {{date}}. Ela é parcial: só as contas enviadas mudam. Enviar outra substitui esta.",
+      "proposedAccounts": "Contas enviadas ao contador (proposta v{{n}}). As contas acima continuam as vigentes até a aprovação.",
+      "proposedProfile": "Proposta v{{n}} enviada. O perfil abaixo continua o vigente até a aprovação.",
+      "sendToAccountant": "Enviar ao contador para aprovação",
+      "viewProposal": "Ver proposta"
+    },
+    "status": {
+      "APPLIED": "Aplicada",
+      "PROPOSED": "Aguardando o contador",
+      "REJECTED": "Rejeitada",
+      "SUPERSEDED": "Substituída"
+    },
+    "subtitle": {
+      "client": "Propostas do dono deste livro. Abra uma para ver o que muda e decidir.",
+      "own": "Versões do perfil fiscal e das contas do escopo. Com contador responsável ativo, cada mudança espera a aprovação dele."
+    },
+    "target": {
+      "FISCAL_PROFILE": "Perfil fiscal",
+      "SCOPE_SETTINGS": "Contas do escopo"
+    },
+    "title": "Política contábil"
   }
 }

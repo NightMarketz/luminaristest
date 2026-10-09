@@ -52,6 +52,8 @@ export async function resetDb(): Promise<void> {
   await prisma.accountingDataExchangeRow.deleteMany();
   await prisma.accountingPeriodTransition.deleteMany();
   await prisma.payablePayment.deleteMany();
+  // BE-INCR-PAYMENT-PROVIDER (nó F5) PR-2: collection_charges tem FK Restrict para receivables e payment_accounts — cai antes dos dois.
+  await prisma.collectionCharge.deleteMany();
   await prisma.receivableReceipt.deleteMany();
   await prisma.stockMovement.deleteMany();
   await prisma.referentialMapping.deleteMany();

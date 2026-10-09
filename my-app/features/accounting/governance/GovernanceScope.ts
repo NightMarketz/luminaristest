@@ -42,6 +42,10 @@ export const GOVERNANCE_ERROR_KEYS: Record<string, string> = {
   SELF_ASSIGNMENT: 'governance.error.selfAssignment',
   ASSIGNMENT_PENDING_EXISTS: 'governance.error.pendingExists',
   ASSIGNMENT_STATUS_CHANGED: 'governance.error.assignmentChanged',
+  // Política versionada (FE-INCR-ACCOUNTING-POLICY-VERSION item 3).
+  POLICY_APPROVAL_REQUIRED: 'governance.error.policyApprovalRequired',
+  POLICY_NO_ACCOUNTANT: 'governance.error.policyNoAccountant',
+  POLICY_VERSION_STATUS_CHANGED: 'governance.error.policyVersionChanged',
 };
 
 export const GOVERNANCE_ERROR_FALLBACK: Record<string, string> = {
@@ -54,4 +58,14 @@ export const GOVERNANCE_ERROR_FALLBACK: Record<string, string> = {
   SELF_ASSIGNMENT: 'Você não pode se atribuir como contador do próprio escopo.',
   ASSIGNMENT_PENDING_EXISTS: 'Já existe um convite pendente para este escopo. Encerre-o antes de convidar de novo.',
   ASSIGNMENT_STATUS_CHANGED: 'O convite mudou de estado; recarregue a tela.',
+  POLICY_APPROVAL_REQUIRED: 'Este escopo tem contador responsável ativo: a mudança precisa da aprovação dele.',
+  POLICY_NO_ACCOUNTANT: 'Este escopo não tem mais contador responsável ativo: não há quem aprove a proposta.',
+  POLICY_VERSION_STATUS_CHANGED: 'Esta proposta mudou (o dono enviou outra ou ela já foi decidida); recarregado.',
 };
+
+/**
+ * `ACCOUNTANT_REQUIRED` no contexto da política: o texto do mapa fala de período/revisão, então o painel de versões
+ * escolhe esta chave própria (item 3).
+ */
+export const POLICY_ACCOUNTANT_REQUIRED_KEY = 'governance.error.policyAccountantRequired';
+export const POLICY_ACCOUNTANT_REQUIRED_FALLBACK = 'Só o contador responsável ativo deste escopo aprova ou rejeita propostas de política.';

@@ -161,7 +161,8 @@ describe('AccountingView — aba Imobilizado (FE-INCR-FIXED-ASSETS item 1)', () 
   it('a barra de abas tem "Imobilizado" (22ª, depois de Dimensões; a 23ª é Perfil fiscal — FE-INCR-DFE PR-0) e clicar nela renderiza o FixedAssetsPanel', async () => {
     render(<AccountingView />);
     const tabs = await screen.findAllByRole('tab');
-    expect(tabs).toHaveLength(24); // 24ª = Parâmetros legais (FE-INCR-LEGAL-PARAMS)
+    expect(tabs).toHaveLength(25); // 24ª = Parâmetros legais (FE-INCR-LEGAL-PARAMS); 25ª = Política contábil (F-FE-POL-2 a)
+    expect(tabs[24]).toHaveTextContent('Política contábil');
     expect(tabs[21]).toHaveTextContent('Imobilizado');
     expect(tabs[22]).toHaveTextContent('Perfil fiscal');
     fireEvent.click(tabs[21]);

@@ -22,6 +22,10 @@ export interface CreatePaymentAccountData {
 export interface IPaymentAccountRepository {
   create(data: CreatePaymentAccountData, tx?: Prisma.TransactionClient): Promise<PaymentAccount>;
   findById(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<PaymentAccount | null>;
+  /** Sem escopo — só para o webhook público, que resolve o escopo pela própria linha (PR-2, P2-5). */
+  findByIdAnyScope(id: string, tx?: Prisma.TransactionClient): Promise<PaymentAccount | null>;
+  /** A conta `ACTIVE` viva do (escopo, provedor) — no máximo uma (P1-4). PR-2, P2-2. */
+  findActive(scope: AccountingScope, provider: string, tx?: Prisma.TransactionClient): Promise<PaymentAccount | null>;
   findManyByUnit(scope: AccountingScope, tx?: Prisma.TransactionClient): Promise<PaymentAccount[]>;
   /** Outra conta viva `ACTIVE` do mesmo (escopo, provedor), excluindo `excludeId` — o gate do P1-4. */
   findOtherActive(
