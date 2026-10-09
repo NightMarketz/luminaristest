@@ -30,3 +30,13 @@ arts. 59 e 79 da Res. CGSN 140 e torna obrigatória a NFS-e no padrão nacional 
 - O item 1 torna `severity` obrigatória em todo alerta. Os outros códigos ficam `WARNING`, o único valor não informativo.
 - Caixa e competência até 2026-10 ao mesmo tempo: vale o motivo `REGIME_CAIXA`, porque o item 2 o fixa para o optante pelo caixa.
 - MEI: sempre `WARNING`. O F-PR4-10 trata do alerta do ME/EPP, e o campo de caixa só é lido na montagem do ME/EPP.
+
+## Ratificação das escolhas do agente (dono, chat, 2026-10-10)
+
+As três escolhas marcadas acima como "não decididas pelo dono" foram **aceitas integralmente**:
+
+1. Alerta que não é informativo fica `WARNING`.
+2. Optante pelo caixa com competência até 10/2026: prevalece o motivo `REGIME_CAIXA`.
+3. MEI sempre `WARNING`. Base trazida pelo dono, **não conferida na fonte**: a NFS-e nacional é obrigatória para o MEI desde 01/09/2023 (Res. CGSN 169/2022); a transição até 01/11/2026 (Res. CGSN 191/2026) vale só para ME/EPP.
+
+A citação da Res. CGSN 191/2026 como "fonte do dono, não conferida", acompanhada do comunicado oficial da Receita Federal, foi aceita como está.
