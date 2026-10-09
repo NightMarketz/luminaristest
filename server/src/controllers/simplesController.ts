@@ -12,6 +12,9 @@ import {
   SimplesIdParamSchema,
   SimplesSegregacaoUpsertSchema,
   SimplesUnitQuerySchema,
+  AnoParamSchema,
+  SimplesDasnUpsertSchema,
+  SimplesDefisUpsertSchema,
 } from '../features/accounting/dtos/SimplesDto';
 
 /**
@@ -159,6 +162,90 @@ export const putDasSimples = async (req: Request, res: Response) => {
     const b = SimplesDasRegistroSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
     const data = await apuracao().registrarDas(resolveAccountingScope(user, b.data.unitId), p.data.competencia, b.data);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+// ---- BE-INCR-SIMPLES-NACIONAL PR-4 (nó X14, itens 27–29) ----
+
+const declaracao = () => getFactory().getSimplesDeclaracaoService();
+
+/** GET /api/accounting/simples/aliquotas/:competencia?unitId= — ISS a reter e pTotTribSN sugerido (mês anterior). */
+export const getAliquotasSimples = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const p = CompetenciaParamSchema.safeParse(req.params);
+    if (!p.success) return bad(res, p.error.flatten());
+    const q = SimplesUnitQuerySchema.safeParse(req.query);
+    if (!q.success) return bad(res, q.error.flatten());
+    const data = await apuracao().aliquotas(resolveAccountingScope(user, q.data.unitId), p.data.competencia);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** GET /api/accounting/simples/dasn-simei/:ano?unitId= — espelho da DASN-SIMEI. */
+export const getDasnSimei = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const p = AnoParamSchema.safeParse(req.params);
+    if (!p.success) return bad(res, p.error.flatten());
+    const q = SimplesUnitQuerySchema.safeParse(req.query);
+    if (!q.success) return bad(res, q.error.flatten());
+    const data = await declaracao().dasnSimei(resolveAccountingScope(user, q.data.unitId), p.data.ano);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** PUT /api/accounting/simples/dasn-simei/:ano — grava o campo digitado (contratação de empregado). */
+export const putDasnSimei = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const p = AnoParamSchema.safeParse(req.params);
+    if (!p.success) return bad(res, p.error.flatten());
+    const b = SimplesDasnUpsertSchema.safeParse(req.body);
+    if (!b.success) return bad(res, b.error.flatten());
+    const data = await declaracao().upsertDasnSimei(resolveAccountingScope(user, b.data.unitId), p.data.ano, b.data);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** GET /api/accounting/simples/defis/:ano?unitId= — espelho mínimo da DEFIS. */
+export const getDefis = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const p = AnoParamSchema.safeParse(req.params);
+    if (!p.success) return bad(res, p.error.flatten());
+    const q = SimplesUnitQuerySchema.safeParse(req.query);
+    if (!q.success) return bad(res, q.error.flatten());
+    const data = await declaracao().defis(resolveAccountingScope(user, q.data.unitId), p.data.ano);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** PUT /api/accounting/simples/defis/:ano — grava os campos digitados (empregados, sócios, renda variável). */
+export const putDefis = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const p = AnoParamSchema.safeParse(req.params);
+    if (!p.success) return bad(res, p.error.flatten());
+    const b = SimplesDefisUpsertSchema.safeParse(req.body);
+    if (!b.success) return bad(res, b.error.flatten());
+    const data = await declaracao().upsertDefis(resolveAccountingScope(user, b.data.unitId), p.data.ano, b.data);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);

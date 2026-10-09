@@ -44,3 +44,17 @@ describe('DpsPayloadSchema — pAliq [312] (TSDec1V2)', () => {
     expect(DpsPayloadSchema.safeParse(payload('10.00')).success).toBe(false);
   });
 });
+
+describe('DpsPayloadSchema — opSimpNac [140] (X14 PR-4 item 30)', () => {
+  const comOp = (opSimpNac: number) => {
+    const p = payload('5.00');
+    p.infDPS.prest.regTrib.opSimpNac = opSimpNac;
+    return p;
+  };
+  it('aceita 2 (MEI) além de 1 e 3', () => {
+    for (const op of [1, 2, 3]) expect(DpsPayloadSchema.safeParse(comOp(op)).success).toBe(true);
+  });
+  it('recusa código fora do leiaute', () => {
+    expect(DpsPayloadSchema.safeParse(comOp(4)).success).toBe(false);
+  });
+});

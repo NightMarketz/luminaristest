@@ -20,7 +20,11 @@ export const LEGAL_PARAMS_SEED_FILE = path.resolve(__dirname, '../../prisma/data
 export const SIMPLES_SEED_FILE = path.resolve(__dirname, '../../prisma/data/legal_parameters_simples_v1.sql');
 /** X14 PR-3 — a linha à mão da cota de gestão da parceria. */
 export const SIMPLES_SEED_FILE_V2 = path.resolve(__dirname, '../../prisma/data/legal_parameters_simples_v2.sql');
-export const SIMPLES_SEED_FILES = [SIMPLES_SEED_FILE, SIMPLES_SEED_FILE_V2];
+/** X14 PR-4 — SALARIO_MINIMO 2024–2026 (decretos do Planalto). */
+export const SIMPLES_SEED_FILE_V3 = path.resolve(__dirname, '../../prisma/data/legal_parameters_simples_v3.sql');
+/** X14 PR-4 (F-PR4-13) — SIMPLES_LIMITE/MEI_TAC do transportador autônomo de cargas. */
+export const SIMPLES_SEED_FILE_V4 = path.resolve(__dirname, '../../prisma/data/legal_parameters_simples_v4.sql');
+export const SIMPLES_SEED_FILES = [SIMPLES_SEED_FILE, SIMPLES_SEED_FILE_V2, SIMPLES_SEED_FILE_V3, SIMPLES_SEED_FILE_V4];
 /** PR-2: as tabelas restantes (exceto DEPRECIACAO_ANEXO_III, PR-3). Mesma regra de igualdade com o migration.sql. */
 export const LEGAL_PARAMS_SEED_FILE_V2 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v2.sql');
 /** PR-3: DEPRECIACAO_ANEXO_III (cópia do fixture do Anexo III). Mesma regra de igualdade com o migration.sql. */

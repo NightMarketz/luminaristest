@@ -34,6 +34,10 @@ export interface CompanyFiscalProfileData {
   // BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14, item 14): 'DAS' | 'REGULAR' | null (= DAS)
   ibsCbsOpcaoS1: string | null;
   ibsCbsOpcaoS2: string | null;
+  // BE-INCR-SIMPLES-NACIONAL PR-4 (nó X14, item 25): enquadramento do MEI no Anexo XI
+  meiContribuinteIcms: boolean | null;
+  meiContribuinteIss: boolean | null;
+  meiTransportadorCargas: boolean | null;
 }
 
 /**

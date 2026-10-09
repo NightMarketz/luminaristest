@@ -58,6 +58,7 @@ model User {
   mitExports                 MitExport[] // BE-INCR-MIT-EXPORT PR-2 (nó X9, item 11) — arquivos do MIT gerados
   simplesHistorico           SimplesHistoricoMensal[] // BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14, itens 10–11)
   simplesApuracoes           SimplesApuracao[] // X14 PR-3 item 19
+  simplesDeclaracoesAnuais   SimplesDeclaracaoAnual[] // X14 PR-4 itens 27–28
   simplesSegregacoes         SimplesSegregacaoManual[] // X14 PR-2 item 12
   salaoParcerias             SalaoParceriaContrato[] // X14 PR-2 item 13
   receitaFiscalLinhas        ReceitaFiscalLinha[] // X14 PR-2 item 15
@@ -1529,6 +1530,12 @@ model CompanyFiscalProfile {
   // (LC 123 art. 13 §§ 9º–10, red. LC 214): 'DAS' | 'REGULAR'; null = DAS (padrão).
   ibsCbsOpcaoS1                    String?
   ibsCbsOpcaoS2                    String?
+  // BE-INCR-SIMPLES-NACIONAL PR-4 (nó X14, item 25; fork L1 → declarado no perfil, dono 08/10) — enquadramento do MEI no
+  // Anexo XI (Res. CGSN 140 art. 101 II/III e § 1º): contribuinte de ICMS (+ R$ 1) / de ISS (+ R$ 5). null = não declarado.
+  meiContribuinteIcms              Boolean?
+  meiContribuinteIss               Boolean?
+  // X14 PR-4 (F-PR4-13, dono 09/10): MEI transportador autônomo de cargas — limite da Res. CGSN 140 art. 100 § 1º-A.
+  meiTransportadorCargas           Boolean?
   createdById                      String?
   updatedById                      String?
   createdAt                        DateTime           @default(now())
@@ -2541,6 +2548,9 @@ model ReceitaFiscalLinha {
   // X14 PR-3 (lacuna 1 do PR-2): VENDA (positiva) | CANCELAMENTO | DEVOLUCAO (negativas, espelho do estorno/3.2,
   // na competência do lançamento — dono 07/10). Idempotência por (venda, tipo).
   tipo                  String   @default("VENDA")
+  // X14 PR-4 (F-PR4-9, dono 09/10): CNPJ | CPF | NAO_IDENTIFICADO — o documento do cliente da venda na gravação. O MEI
+  // só deve NFS-e ao tomador CNPJ (LC 123 art. 26 § 6º II). Linhas anteriores = NAO_IDENTIFICADO.
+  tomadorTipo           String   @default("NAO_IDENTIFICADO")
   createdAt             DateTime @default(now())
 
   @@unique([userId, unitId, saleId, itemRef])
@@ -2569,6 +2579,25 @@ model LegalParameterRecalcJob {
 // BE-INCR-SIMPLES-NACIONAL PR-3 (nó X14, item 19; B-1 → c, emenda F-SN-13 → b) — apuração do Simples persistida no
 // registro do DAS oficial (B-2 → a: nada é gravado no "calcular"). Molde de ciclo de vida/provisão do TaxAssessment:
 // CONFIRMED | SUPERSEDED, novo registro na mesma competência = SUPERSEDED + linha nova com `supersedesId`.
+// BE-INCR-SIMPLES-NACIONAL PR-4 (nó X14, itens 27–28; fork L3 → PUT por ano + model, dono 08/10) — os campos DIGITADOS das
+// declarações anuais (DASN-SIMEI: empregado; DEFIS: sócios, empregados, aplicações). O calculado vem do sistema no GET.
+model SimplesDeclaracaoAnual {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId      String
+  ano         Int
+  tipo        String // DEFIS | DASN_SIMEI
+  dados       Json // SimplesDefisDigitado | SimplesDasnDigitado (dtos/SimplesDto.ts)
+  createdById String
+  updatedById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, unitId, ano, tipo])
+  @@map("simples_declaracoes_anuais")
+}
+
 model SimplesApuracao {
   id                  String    @id @default(cuid())
   userId              String

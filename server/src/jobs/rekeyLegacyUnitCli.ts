@@ -68,6 +68,7 @@ export const REKEY_MODELS = [
   //   Deixá-las no unitId antigo tiraria da unidade re-chaveada o RBT12, a segregação, os contratos e o tie-out.
   'SimplesHistoricoMensal', 'SimplesSegregacaoManual', 'SalaoParceriaContrato', 'ReceitaFiscalLinha',
   'SimplesApuracao', // X14 PR-3: a apuração e a provisão seguem a unidade (sem hash) → REKEY pelo F-RK-5
+  'SimplesDeclaracaoAnual', // X14 PR-4: os digitados da DEFIS/DASN-SIMEI seguem a unidade (sem hash) → REKEY pelo F-RK-5
 ] as const;
 
 /**

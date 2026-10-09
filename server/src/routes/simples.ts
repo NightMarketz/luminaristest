@@ -9,6 +9,11 @@ import {
   calcularApuracaoSimples,
   getApuracaoSimples,
   putDasSimples,
+  getAliquotasSimples,
+  getDasnSimei,
+  putDasnSimei,
+  getDefis,
+  putDefis,
 } from '../controllers/simplesController';
 
 /**
@@ -28,5 +33,11 @@ router.delete('/parcerias/:id', deleteParceria);
 router.post('/apuracoes/:competencia/calcular', calcularApuracaoSimples);
 router.get('/apuracoes/:competencia', getApuracaoSimples);
 router.put('/apuracoes/:competencia/das', putDasSimples);
+// PR-4 (itens 27–29)
+router.get('/aliquotas/:competencia', getAliquotasSimples);
+router.get('/dasn-simei/:ano', getDasnSimei);
+router.put('/dasn-simei/:ano', putDasnSimei);
+router.get('/defis/:ano', getDefis);
+router.put('/defis/:ano', putDefis);
 
 export default router;

@@ -174,3 +174,33 @@ describe('semente v2 à mão (X14 PR-3: cota de gestão da parceria + matriz de 
     EnquadramentoJsonSchema.parse(json(v2[0].valorJson));
   });
 });
+
+describe('semente v3 (X14 PR-4: SALARIO_MINIMO dos decretos, item 25)', () => {
+  const V3 = path.join(REPO_ROOT, 'server/prisma/data/legal_parameters_simples_v3.sql');
+  const MIG4 = path.join(REPO_ROOT, 'server/prisma/migrations/20261008220000_add_simples_mei_declaracoes/migration.sql');
+  it('o migration.sql do PR-4 carrega o texto do arquivo; 3 anos sem buraco, cada linha com decreto, URL e sha256', () => {
+    expect(norm(readFileSync(MIG4, 'utf8'))).toContain(norm(readFileSync(V3, 'utf8')).trimEnd());
+    const v3 = legalParamsSeedRows(V3);
+    expect(v3.map((r) => [r.tabela, r.chave, r.valorInt, r.vigenteDesde, r.vigenteAte])).toEqual([
+      ['SALARIO_MINIMO', 'NACIONAL', 141_200, '2024-01-01', '2024-12-31'],
+      ['SALARIO_MINIMO', 'NACIONAL', 151_800, '2025-01-01', '2025-12-31'],
+      ['SALARIO_MINIMO', 'NACIONAL', 162_100, '2026-01-01', null],
+    ]);
+    for (const r of v3) {
+      expect(r.fonte).toMatch(/^Decreto nº /);
+      expect(r.fonteUrl).toMatch(/^https:\/\/www\.planalto\.gov\.br\//);
+      expect(r.fonteSha256).toMatch(/^[0-9a-f]{64}$/);
+    }
+  });
+});
+
+describe('semente v4 (X14 PR-4: limite do MEI transportador autônomo de cargas, F-PR4-13)', () => {
+  const V4 = path.join(REPO_ROOT, 'server/prisma/data/legal_parameters_simples_v4.sql');
+  const MIG = path.join(REPO_ROOT, 'server/prisma/migrations/20261009090100_seed_simples_limite_mei_tac/migration.sql');
+  it('o migration.sql carrega o texto do arquivo; R$ 251.600,00 com a fonte da Res. CGSN 140 art. 100 § 1º-A', () => {
+    expect(norm(readFileSync(MIG, 'utf8'))).toContain(norm(readFileSync(V4, 'utf8')).trimEnd());
+    const v4 = legalParamsSeedRows(V4);
+    expect(v4.map((r) => [r.tabela, r.chave, r.valorInt, r.vigenteAte])).toEqual([['SIMPLES_LIMITE', 'MEI_TAC', 25_160_000, null]]);
+    expect(v4[0].fonte).toContain('art. 100 § 1º-A');
+  });
+});

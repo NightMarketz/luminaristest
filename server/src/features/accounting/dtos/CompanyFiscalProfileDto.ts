@@ -112,6 +112,12 @@ export const UpsertCompanyFiscalProfileSchema = z
     // semestre, a partir de 2027 (LC 123 art. 13 §§ 9º–10, red. LC 214). null = DAS. O ano é checado no serviço.
     ibsCbsOpcaoS1: z.enum(IBS_CBS_OPCOES).nullable().default(null),
     ibsCbsOpcaoS2: z.enum(IBS_CBS_OPCOES).nullable().default(null),
+    // BE-INCR-SIMPLES-NACIONAL PR-4 (nó X14, item 25; fork L1): enquadramento do MEI no Anexo XI — contribuinte de ICMS
+    // e/ou de ISS (Res. CGSN 140 art. 101 II/III e § 1º). Só no regime MEI; null = não declarado.
+    meiContribuinteIcms: z.boolean().nullable().default(null),
+    meiContribuinteIss: z.boolean().nullable().default(null),
+    // X14 PR-4 (F-PR4-13): MEI transportador autônomo de cargas (Res. CGSN 140 art. 100 § 1º-A). Só no regime MEI.
+    meiTransportadorCargas: z.boolean().nullable().default(null),
   })
   .strict()
   .superRefine((v, ctx) => {
@@ -146,6 +152,12 @@ export const UpsertCompanyFiscalProfileSchema = z
     if (v.regime !== 'SIMPLES') {
       for (const k of ['ibsCbsOpcaoS1', 'ibsCbsOpcaoS2'] as const) {
         if (v[k] !== null) ctx.addIssue({ code: 'custom', path: [k], message: 'A opção do IBS/CBS por semestre é do optante pelo Simples Nacional (LC 123 art. 13 §§ 9º–10).' });
+      }
+    }
+    // X14 PR-4 item 25 — o enquadramento do Anexo XI só existe para o MEI
+    if (v.regime !== 'MEI') {
+      for (const k of ['meiContribuinteIcms', 'meiContribuinteIss', 'meiTransportadorCargas'] as const) {
+        if (v[k] !== null) ctx.addIssue({ code: 'custom', path: [k], message: 'O enquadramento ICMS/ISS do Anexo XI é do MEI (Res. CGSN 140 art. 101 § 1º).' });
       }
     }
     // BE-INCR-TAX-PRESUMIDO-16 item 11 (F-P16-1 a)

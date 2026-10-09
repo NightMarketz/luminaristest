@@ -11,6 +11,7 @@ import type {
   IFiscalDocumentRepository,
   TransitionData,
 } from './IFiscalDocumentRepository';
+import { AUTHORIZED_STATUSES } from './IFiscalDocumentRepository';
 
 export function attemptRef(documentId: string, attemptNo: number): string {
   return `${documentId}:${attemptNo}`;
@@ -55,6 +56,21 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
       where: { ...accountingScopeWhere(scope), status, deletedAt: null },
       orderBy: [{ createdAt: 'asc' }],
     });
+  }
+
+  public async somaNfseAutorizadaNaCompetencia(scope: AccountingScope, competencia: string, tx?: Prisma.TransactionClient): Promise<bigint> {
+    const r = await this.db(tx).fiscalDocument.aggregate({
+      where: {
+        ...accountingScopeWhere(scope),
+        kind: 'NFSE',
+        ambiente: 'producao',
+        status: { in: [...AUTHORIZED_STATUSES] },
+        dCompet: { startsWith: `${competencia}-` },
+        deletedAt: null,
+      },
+      _sum: { vServCents: true },
+    });
+    return r._sum.vServCents ?? 0n;
   }
 
   public async listPending(olderThan: Date, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]> {

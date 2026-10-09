@@ -21,9 +21,9 @@
 import type { Prisma, SimplesApuracao } from 'generated/prisma';
 import { ConflictError, ForbiddenError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
-import { linhaLegalVigente, type LegalParameterTabela } from '../../legalParameters/models/legalParameter';
+import { ParametroLegalAusenteError, linhaLegalVigente, type LegalParameterTabela } from '../../legalParameters/models/legalParameter';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
-import { apurar, janelaRbt12, type ApuracaoCalculada, type AtividadeInput, type MesReceita, type NaturezaSimples } from '../models/simplesCalc';
+import { INICIO_LC214, apurar, apurarSimei, janelaRbt12, type ApuracaoSimei, type ApuracaoCalculada, type AtividadeInput, type MesReceita, type NaturezaSimples } from '../models/simplesCalc';
 import { espelhoPgdas, type EspelhoAtividade } from '../models/simplesEspelho';
 import { mesBounds } from '../models/Lalur.model';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -31,7 +31,9 @@ import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { ICompanyFiscalProfileRepository } from '../repositories/ICompanyFiscalProfileRepository';
 import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRepository';
+import type { IFiscalDocumentRepository } from '../repositories/IFiscalDocumentRepository';
 import type { IReceitaFiscalRepository } from '../repositories/IReceitaFiscalRepository';
+import type { IServiceFiscalProfileRepository } from '../repositories/IServiceFiscalProfileRepository';
 import type { ISimplesApuracaoRepository } from '../repositories/ISimplesApuracaoRepository';
 import type { ISimplesEntradasRepository } from '../repositories/ISimplesEntradasRepository';
 import type { AuditService } from './AuditService';
@@ -55,12 +57,14 @@ export type CodigoAlertaSimples =
   | 'SUBLIMITE_ICMS_ISS'
   | 'SEGREGACAO_MANUAL'
   | 'TIEOUT_DIVERGENTE'
-  | 'HISTORICO_IGNORADO';
+  | 'HISTORICO_IGNORADO'
+  | 'LIMITE_MEI_EXCEDIDO'
+  | 'NFSE_DIVERGE_RECEITA';
 export type AlertaSimples = { codigo: CodigoAlertaSimples; detalhe: string };
 /** Item 20: alertas que impedem o registro do DAS. */
 const BLOQUEANTES: readonly CodigoAlertaSimples[] = ['TIEOUT_DIVERGENTE', 'RBT12_INCOMPLETO', 'ATIVIDADE_SEM_ANEXO'];
 
-/** BRIEF §3 `ApuracaoSimples` (o `MEI` é do PR-4). */
+/** BRIEF §3 `ApuracaoSimples` — ME/EPP (o MEI é `ApuracaoMei`, PR-4). */
 export interface ApuracaoSimples extends Omit<ApuracaoCalculada, 'mesesFaltantes'> {
   espelho: EspelhoAtividade[];
   dasOficial: { id: string; numeroDocumento: string; valorCents: number; vencimento: string; provisaoPendente: boolean } | null;
@@ -68,6 +72,54 @@ export interface ApuracaoSimples extends Omit<ApuracaoCalculada, 'mesesFaltantes
   tieOut: { subrazaoCents: number; razaoCents: number; ok: boolean };
   alertas: AlertaSimples[];
 }
+
+/** X14 PR-4 (itens 25, 26, 31) — a apuração do SIMEI: valor fixo, receita do ano para o limite e a conferência NFS-e. */
+export interface ApuracaoMei extends ApuracaoSimei {
+  enquadramento: { contribuinteIcms: boolean; contribuinteIss: boolean };
+  receitaPaCents: number;
+  receitaAcumuladaAnoCents: number;
+  limiteAnoCents: number;
+  dasOficial: ApuracaoSimples['dasOficial'];
+  divergenciaCents: number | null;
+  alertas: AlertaSimples[];
+}
+
+/**
+ * X14 PR-4 (item 29; correções do dono 09/10, F-PR4-1..6) — SUGESTÃO da alíquota para o documento fiscal da prestação no
+ * mês, com a memória de cálculo. Quem informa e responde pela alíquota é o prestador (LC 123 art. 21 § 4º VI).
+ */
+export interface AliquotasSimples {
+  competencia: string;
+  /** O PA cuja faixa vale (= `periodoApuracao`); no mês de início, a própria competência. */
+  mesReferencia: string;
+  sugestao: true;
+  /** INICIO_ATIVIDADE (§ 4º II, 2%) · FAIXA_MES_ANTERIOR (§ 4º I red. LC 155, até 2026) · FAIXA_MES_PRESTACAO (red. LC 227, 2027+). */
+  regra: 'INICIO_ATIVIDADE' | 'FAIXA_MES_ANTERIOR' | 'FAIXA_MES_PRESTACAO';
+  periodoApuracao: string | null;
+  rbt12Cents: number | null;
+  janelaRbt12: ApuracaoCalculada['janelaRbt12'] | null;
+  atividades: Array<{
+    anexo: string | null;
+    natureza: NaturezaSimples;
+    cTribNac: string | null;
+    faixa: number | null;
+    fatorR: string | null;
+    aliquotaEfetiva: string | null;
+    issRetencao: string | null;
+    pTotTribSNSugerido: string | null;
+    creditoAdquirente: { ICMS: string | null; IBS: string | null; CBS: string | null } | null;
+  }>;
+  avisos: string[];
+  alertas: AlertaSimples[];
+}
+
+/** F-PR4-6: a rota sugere; o prestador responde pela alíquota informada. */
+const AVISOS_ALIQUOTA = [
+  'Sugestão: a alíquota informada no documento fiscal é responsabilidade do prestador; informada a menor, a diferença é recolhida em guia do Município (LC 123 art. 21 § 4º VI; Res. CGSN 140 art. 27 VI).',
+  'O Município pode fixar critério próprio de informação da alíquota (Res. CGSN 140 art. 27 § 2º); isenção ou redução municipal do ISS não entra nesta sugestão (art. 27 § 1º).',
+];
+const AVISO_INICIO =
+  'Mês de início de atividade (abertura do CNPJ, Res. CGSN 140 art. 2º V): 2% (LC 123 art. 21 § 4º II); a diferença para a alíquota apurada é recolhida no mês seguinte em guia do Município (§ 4º III).';
 
 const proximo = (m: string, d: number): string => {
   const [a, mm] = m.split('-').map(Number);
@@ -94,6 +146,17 @@ interface Montagem {
   tieOut: { subrazaoCents: number; razaoCents: number; ok: boolean };
 }
 
+/** X14 PR-4 — o que a montagem do SIMEI devolve (a `impressao` é o gate do item 20, como na do ME/EPP). */
+interface MontagemMei {
+  calculada: ApuracaoSimei;
+  impressao: string;
+  alertas: AlertaSimples[];
+  enquadramento: { contribuinteIcms: boolean; contribuinteIss: boolean };
+  receitaPaCents: bigint;
+  acumulado: bigint;
+  limite: bigint;
+}
+
 export class SimplesApuracaoService {
   constructor(
     private readonly repo: ISimplesApuracaoRepository,
@@ -108,16 +171,19 @@ export class SimplesApuracaoService {
     private readonly postingService: Pick<PostingService, 'postEntry' | 'reverseEntry' | 'findEntryBySource'>,
     private readonly auditService: AuditService,
     private readonly policy: IAccountingPolicy,
+    private readonly fiscalDocumentRepo: Pick<IFiscalDocumentRepository, 'somaNfseAutorizadaNaCompetencia'>,
+    private readonly serviceFiscalRepo: Pick<IServiceFiscalProfileRepository, 'listByScope'>,
   ) {}
 
   /** Item 17 — POST …/apuracoes/:competencia/calcular: calcula sob demanda, nada é gravado (B-2 → a). */
-  async calcular(scope: AccountingScope, competencia: string): Promise<ApuracaoSimples> {
+  async calcular(scope: AccountingScope, competencia: string): Promise<ApuracaoSimples | ApuracaoMei> {
     this.assertRead(scope);
+    if (await this.ehMei(scope, competencia)) return this.visaoMei(scope, competencia, await this.montarMei(scope, competencia));
     return this.visao(scope, competencia, await this.montar(scope, competencia));
   }
 
   /** Item 18 — GET …/apuracoes/:competencia: o cálculo + espelho do PGDAS-D + DAS oficial registrado + divergência. */
-  async obter(scope: AccountingScope, competencia: string): Promise<ApuracaoSimples> {
+  async obter(scope: AccountingScope, competencia: string): Promise<ApuracaoSimples | ApuracaoMei> {
     return this.calcular(scope, competencia);
   }
 
@@ -125,14 +191,18 @@ export class SimplesApuracaoService {
    * Item 19 — PUT …/apuracoes/:competencia/das: registra o DAS oficial e persiste a apuração (supersede da anterior).
    * O mesmo número e valor de novo = reconcile da provisão, sem linha nova.
    */
-  async registrarDas(scope: AccountingScope, competencia: string, input: SimplesDasRegistro): Promise<ApuracaoSimples> {
+  async registrarDas(scope: AccountingScope, competencia: string, input: SimplesDasRegistro): Promise<ApuracaoSimples | ApuracaoMei> {
     this.assertManage(scope);
     const vigente = await this.repo.findConfirmada(scope, competencia);
     if (vigente && vigente.numeroDocumento === input.numeroDocumento && vigente.valorOficialCents === BigInt(input.valorCents)) {
       await this.provisionar(scope, vigente, null);
       return this.calcular(scope, competencia);
     }
-    const m = await this.montar(scope, competencia);
+    // Item 25: o DAS do MEI registra pela mesma rota (regime 'MEI'); o gate dentro da tx relê as entradas do SIMEI.
+    const mei = await this.ehMei(scope, competencia);
+    const m: { calculada: ApuracaoCalculada | ApuracaoSimei; impressao: string; alertas: AlertaSimples[] } = mei
+      ? await this.montarMei(scope, competencia)
+      : await this.montar(scope, competencia);
     const bloqueio = m.alertas.filter((a) => BLOQUEANTES.includes(a.codigo));
     if (bloqueio.length > 0) {
       throw new ValidationError(`A apuração de ${competencia} não pode ser registrada: ${bloqueio.map((b) => `${b.codigo} (${b.detalhe})`).join('; ')}.`, { alertas: bloqueio });
@@ -142,7 +212,7 @@ export class SimplesApuracaoService {
     const { nova, anterior } = await this.repo.runTransaction(async (tx) => {
       // Item 20 — gate autoritativo DENTRO da tx: TODAS as entradas relidas aqui têm de ser as que o cálculo usou
       // (review do PR-3, achados 3–4: só os totais mensais deixavam passar segregação, contrato, folha e o PA vazio).
-      const releitura = await this.montar(scope, competencia, tx);
+      const releitura = mei ? await this.montarMei(scope, competencia, tx) : await this.montar(scope, competencia, tx);
       if (releitura.impressao !== m.impressao) throw new ConflictError(`As entradas de ${competencia} mudaram depois do cálculo — calcule de novo antes de registrar o DAS.`);
       const atual = await this.repo.findConfirmada(scope, competencia, tx);
       if (atual && (await this.repo.supersede(scope, atual.id, tx)) === 0) throw new ConflictError('Outra apuração foi registrada para esta competência ao mesmo tempo — tente de novo.');
@@ -150,7 +220,7 @@ export class SimplesApuracaoService {
         scope,
         {
           competencia,
-          regime: 'SIMPLES',
+          regime: mei ? 'MEI' : 'SIMPLES',
           valorOficialCents: valorOficial,
           numeroDocumento: input.numeroDocumento,
           vencimento: input.vencimento,
@@ -185,7 +255,13 @@ export class SimplesApuracaoService {
 
   // ---- montagem da entrada (itens 17, 23) ----
 
-  private async montar(scope: AccountingScope, competencia: string, tx?: Prisma.TransactionClient): Promise<Montagem> {
+  /** `catalogo` (só a rota de alíquotas, F-PR4-4): atividades do cadastro que entram mesmo sem receita no PA. */
+  private async montar(
+    scope: AccountingScope,
+    competencia: string,
+    tx?: Prisma.TransactionClient,
+    catalogo: ReadonlyArray<Pick<AtividadeInput, 'natureza' | 'cTribNac'>> = [],
+  ): Promise<Montagem> {
     const ano = Number(competencia.slice(0, 4));
     const perfil = await this.companyProfileRepo.findByYear(scope, ano, tx);
     if (!perfil || perfil.regime !== 'SIMPLES') {
@@ -281,6 +357,9 @@ export class SimplesApuracaoService {
       if (disponivel > 0n) parcelas.push({ receitaCents: Number(disponivel), excluir: [] });
       entrada.push({ natureza: g.natureza, cTribNac: g.cTribNac, parcelas });
     }
+    for (const a of catalogo) {
+      if (!entrada.some((e) => e.natureza === a.natureza && e.cTribNac === a.cTribNac)) entrada.push({ ...a, parcelas: [{ receitaCents: 0, excluir: [] }] });
+    }
     const naoAplicada = sobra.reduce((x, v) => x + v, 0n);
     if (naoAplicada > 0n) {
       alertas.push({ codigo: 'SEGREGACAO_MANUAL', detalhe: `R$ ${(Number(naoAplicada) / 100).toFixed(2)} declarados na segregação não têm receita da mesma natureza no mês e foram ignorados` });
@@ -315,13 +394,21 @@ export class SimplesApuracaoService {
     // Item 16 → item 20: o tie-out do PA também bloqueia o registro.
     const tie = await this.receitaFiscal.tieOut(scope, competencia);
     if (tie.alerta) alertas.push(tie.alerta);
+    // Review do PR-4 (achado 1): a cota do salão a título de aluguel de bem móvel não é serviço (sem ISS, sem NFS-e).
+    const servicosPa = linhasPa.filter((l) => !(l.parceriaContratoId && contratos.get(l.parceriaContratoId)?.naturezaCota === 'ALUGUEL_BEM_MOVEL'));
+    await this.conferirNfse(scope, competencia, servicosPa, alertas, tx);
     return { calculada, entrada, receitas, impressao, alertas, tieOut: { subrazaoCents: tie.subrazaoCents, razaoCents: tie.razaoCents, ok: tie.ok } };
   }
 
   /** Item 23. Devolve se o sublimite do ICMS/ISS (e IBS a partir de 2027) está excedido para o PA. */
   private limites(linhas: Awaited<ReturnType<LegalParameterService['fotografia']>>, competencia: string, receitas: Receitas, inicio: string | null, alertas: AlertaSimples[]): boolean {
     const data = `${competencia}-01`;
-    const limite = (chave: string) => BigInt(linhaLegalVigente(linhas, 'SIMPLES_LIMITE', chave, data)?.valorInt ?? 0);
+    // F-PR4-7 (dono 09/10): sem a linha, falha ruidoso — o zero calava o sublimite e o impedimento.
+    const limite = (chave: string) => {
+      const valor = linhaLegalVigente(linhas, 'SIMPLES_LIMITE', chave, data)?.valorInt;
+      if (valor === null || valor === undefined) throw new ParametroLegalAusenteError('SIMPLES_LIMITE', data, chave);
+      return BigInt(valor);
+    };
     const ano = Number(competencia.slice(0, 4));
     const soma = (de: string, ate: string) => meses(de, ate).reduce((s, m) => s + (receitas.get(m) ?? 0n), 0n);
     const acumuladoAno = soma(`${ano}-01`, competencia);
@@ -348,6 +435,195 @@ export class SimplesApuracaoService {
       alertas.push({ codigo: 'SUBLIMITE_ICMS_ISS', detalhe: `receita acumulada em ${ano} ${fmt(acumuladoAno)} acima do sublimite ${fmt(sub)} (LC 123 art. 13-A; Res. CGSN 140 art. 12)` });
     }
     return impedidoEsteAno || impedidoPeloAnterior;
+  }
+
+  // ---- PR-4: SIMEI (itens 25–26) ----
+
+  private async ehMei(scope: AccountingScope, competencia: string): Promise<boolean> {
+    const perfil = await this.companyProfileRepo.findByYear(scope, Number(competencia.slice(0, 4)));
+    return perfil?.regime === 'MEI';
+  }
+
+  private async montarMei(scope: AccountingScope, competencia: string, tx?: Prisma.TransactionClient): Promise<MontagemMei> {
+    const ano = Number(competencia.slice(0, 4));
+    const perfil = await this.companyProfileRepo.findByYear(scope, ano, tx);
+    if (!perfil || perfil.regime !== 'MEI') throw new ValidationError(`O perfil fiscal de ${ano} não é MEI.`);
+    if (perfil.meiContribuinteIcms === null || perfil.meiContribuinteIss === null) {
+      throw new ValidationError(
+        `Declare no perfil fiscal de ${ano} se o MEI é contribuinte de ICMS e de ISS (enquadramento do Anexo XI, Res. CGSN 140 art. 101 § 1º) antes de apurar o SIMEI.`,
+      );
+    }
+    const enquadramento = { contribuinteIcms: perfil.meiContribuinteIcms, contribuinteIss: perfil.meiContribuinteIss };
+    const linhas = await this.legalParams.fotografia(['SALARIO_MINIMO', 'SIMEI_VALOR', 'SIMPLES_LIMITE']);
+    let calculada: ApuracaoSimei;
+    try {
+      calculada = apurarSimei(competencia, enquadramento, linhas);
+    } catch (e) {
+      throw new ValidationError(`Não há parâmetro legal publicado para o SIMEI de ${competencia}: ${(e as Error).message}.`);
+    }
+
+    // Item 26 — receita do ano até o PA: o subrazão (receita − cota) prevalece; o histórico cobre os meses sem subrazão.
+    const doAno = meses(`${ano}-01`, competencia);
+    const [historico, subrazao] = await Promise.all([this.entradasRepo.findHistorico(scope, doAno, tx), this.receitaRepo.somaPorCompetencia(scope, doAno, tx)]);
+    const hist = new Map(historico.map((h) => [h.competencia, h.receitaBrutaCents]));
+    const receita = (m: string): bigint => {
+      const s = subrazao.get(m);
+      return s ? s.receitaCents - s.cotaCents : (hist.get(m) ?? 0n);
+    };
+    const acumulado = doAno.reduce((t, m) => t + receita(m), 0n);
+    const alertas: AlertaSimples[] = [];
+    const inicio = perfil.inicioAtividadeEm ? perfil.inicioAtividadeEm.slice(0, 7) : null;
+    const limite = this.limiteMei(linhas, competencia, inicio, acumulado, alertas, perfil.meiTransportadorCargas === true);
+
+    const linhasPa = await this.receitaRepo.findByCompetencia(scope, competencia, tx);
+    // F-PR4-11 (dono 09/10): o mesmo filtro do ME — a cota do salão a título de aluguel de bem móvel não tem NFS-e.
+    const ids = [...new Set(linhasPa.map((l) => l.parceriaContratoId).filter((x): x is string => !!x))];
+    const aluguel = new Set((await this.entradasRepo.findParceriaMesmoRemovida(scope, ids, tx)).filter((c) => c.naturezaCota === 'ALUGUEL_BEM_MOVEL').map((c) => c.id));
+    // F-PR4-9 (dono 09/10): o MEI só deve NFS-e ao tomador CNPJ (LC 123 art. 26 § 6º II; Res. CGSN 140 art. 106 II).
+    const devidas = linhasPa.filter((l) => l.tomadorTipo === 'CNPJ' && !(l.parceriaContratoId && aluguel.has(l.parceriaContratoId)));
+    await this.conferirNfse(scope, competencia, devidas, alertas, tx);
+    const impressao = JSON.stringify({
+      enquadramento,
+      inicio: perfil.inicioAtividadeEm,
+      tabela: calculada.tabela.map((t) => t.legalParameterId),
+      historico: historico.map((h) => [h.competencia, String(h.receitaBrutaCents)]),
+      subrazao: [...subrazao.entries()].map(([k, v]) => [k, String(v.receitaCents), String(v.cotaCents)]).sort(),
+    });
+    return { calculada, impressao, alertas, enquadramento, receitaPaCents: receita(competencia), acumulado, limite };
+  }
+
+  /**
+   * Item 26 — limite do MEI: R$ 81.000 no ano (Res. CGSN 140 art. 100 caput, em `SIMPLES_LIMITE`/MEI); no ano de início,
+   * R$ 6.750 × meses do início ao fim do ano (§ 1º). Transportador autônomo de cargas (§ 1º-A; F-PR4-13): R$ 251.600 em
+   * `SIMPLES_LIMITE`/MEI_TAC e, no início, R$ 20.966,67 × meses — o mensal é o anual ÷ 12 arredondado ao centavo. Excesso ⇒ desenquadramento obrigatório com
+   * comunicação até o último dia útil do mês seguinte; efeitos pelo art. 115 § 2º II "a": ≤ 20% ⇒ 1º de janeiro do ano
+   * seguinte (item 1); > 20% ⇒ retroativo a 1º de janeiro do ano (item 2) ou ao início de atividade (item 3).
+   */
+  private limiteMei(
+    linhas: Awaited<ReturnType<LegalParameterService['fotografia']>>,
+    competencia: string,
+    inicio: string | null,
+    acumulado: bigint,
+    alertas: AlertaSimples[],
+    transportadorCargas: boolean,
+  ): bigint {
+    const ano = Number(competencia.slice(0, 4));
+    const chave = transportadorCargas ? 'MEI_TAC' : 'MEI';
+    const valor = linhaLegalVigente(linhas, 'SIMPLES_LIMITE', chave, `${competencia}-01`)?.valorInt;
+    if (valor === null || valor === undefined) throw new ParametroLegalAusenteError('SIMPLES_LIMITE', `${competencia}-01`, chave); // F-PR4-7
+    const anual = BigInt(valor);
+    const inicioNoAno = inicio !== null && inicio.startsWith(`${ano}-`);
+    const limite = inicioNoAno ? ((anual + 6n) / 12n) * BigInt(13 - Number(inicio!.slice(5, 7))) : anual;
+    if (limite > 0n && acumulado > limite) {
+      const fmt = (v: bigint) => `R$ ${(Number(v) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+      const efeito =
+        acumulado * 10n <= limite * 12n
+          ? `desenquadramento do SIMEI a partir de 1º/01/${ano + 1} (Res. CGSN 140 art. 115 § 2º II "a" 1)`
+          : inicioNoAno
+            ? 'desenquadramento retroativo ao início de atividade (Res. CGSN 140 art. 115 § 2º II "a" 3)'
+            : `desenquadramento retroativo a 1º/01/${ano} (Res. CGSN 140 art. 115 § 2º II "a" 2)`;
+      alertas.push({
+        codigo: 'LIMITE_MEI_EXCEDIDO',
+        detalhe: `receita acumulada em ${ano} ${fmt(acumulado)} acima do limite do MEI ${fmt(limite)}: ${efeito}; comunique até o último dia útil do mês seguinte ao do excesso`,
+      });
+    }
+    return limite;
+  }
+
+  private async visaoMei(scope: AccountingScope, competencia: string, m: MontagemMei): Promise<ApuracaoMei> {
+    const das = await this.repo.findConfirmada(scope, competencia);
+    return {
+      ...m.calculada,
+      enquadramento: m.enquadramento,
+      receitaPaCents: Number(m.receitaPaCents),
+      receitaAcumuladaAnoCents: Number(m.acumulado),
+      limiteAnoCents: Number(m.limite),
+      dasOficial: das
+        ? { id: das.id, numeroDocumento: das.numeroDocumento, valorCents: Number(das.valorOficialCents), vencimento: das.vencimento, provisaoPendente: das.provisaoEntryId === null }
+        : null,
+      divergenciaCents: das ? Number(das.valorOficialCents) - m.calculada.totalCalculadoCents : null,
+      alertas: m.alertas,
+    };
+  }
+
+  /**
+   * Item 31 — conferência das NFS-e autorizadas em produção × receita de serviços da competência (subrazão, líquida da
+   * cota do profissional-parceiro). Só alerta, nunca bloqueia (LC 123 art. 26 § 10 e art. 25 §§ 6º–8º, red. 2027).
+   */
+  private async conferirNfse(
+    scope: AccountingScope,
+    competencia: string,
+    linhasPa: Awaited<ReturnType<IReceitaFiscalRepository['findByCompetencia']>>,
+    alertas: AlertaSimples[],
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
+    const servicos = linhasPa.filter((l) => l.natureza !== 'REVENDA').reduce((t, l) => t + l.receitaCents - l.cotaProfissionalCents, 0n);
+    const nfse = await this.fiscalDocumentRepo.somaNfseAutorizadaNaCompetencia(scope, competencia, tx);
+    if (nfse !== servicos) {
+      const fmt = (v: bigint) => `R$ ${(Number(v) / 100).toFixed(2)}`;
+      alertas.push({ codigo: 'NFSE_DIVERGE_RECEITA', detalhe: `NFS-e autorizadas em ${competencia} somam ${fmt(nfse)}; a receita de serviços do subrazão é ${fmt(servicos)}` });
+    }
+  }
+
+  // ---- PR-4: saída para documentos (item 29) ----
+
+  /**
+   * GET …/aliquotas/:competencia — sugestão do % efetivo de ISS a reter pelo tomador na prestação da competência M
+   * (LC 123 art. 21 § 4º; Res. CGSN 140 art. 27), por atividade do cadastro de serviços e das que tiveram receita no PA
+   * (F-PR4-4: a faixa é a do RBT12 GLOBAL; a atividade não precisa de receita para aparecer):
+   * - M = mês de abertura do CNPJ (F-PR4-1/3): 2% (§ 4º II);
+   * - até 2026: faixa do mês anterior, PA = M−1 (§ 4º I red. LC 155) — o 2º mês usa a receita do 1º × 12 (F-PR4-2 a);
+   * - a partir de 2027: faixa do mês da prestação, PA = M (red. LC 227 art. 169; efeitos art. 182 I "b"), janela
+   *   M−13…M−2 (LC 214 art. 517) e tabelas vigentes em M.
+   * Sem piso no percentual da tabela (F-PR4-5). O `pTotTribSN` só é sugerido (B-4 → b). A partir de 2027, os % de
+   * ICMS/IBS/CBS da faixa para o crédito do adquirente (art. 23 § 2º, red. LC 214).
+   */
+  async aliquotas(scope: AccountingScope, competencia: string): Promise<AliquotasSimples> {
+    this.assertRead(scope);
+    if (await this.ehMei(scope, competencia)) {
+      throw new ValidationError('O MEI recolhe valores fixos pelo SIMEI: não há alíquota efetiva para retenção nem para crédito (Res. CGSN 140 art. 101).');
+    }
+    const catalogo = [...new Set((await this.serviceFiscalRepo.listByScope(scope)).map((p) => p.cTribNac))].map((cTribNac) => ({ natureza: 'SERVICO' as const, cTribNac }));
+    const perfil = await this.companyProfileRepo.findByYear(scope, Number(competencia.slice(0, 4)));
+    if (perfil?.regime === 'SIMPLES' && perfil.inicioAtividadeEm?.slice(0, 7) === competencia) {
+      return {
+        competencia,
+        mesReferencia: competencia,
+        sugestao: true,
+        regra: 'INICIO_ATIVIDADE',
+        periodoApuracao: null,
+        rbt12Cents: null,
+        janelaRbt12: null,
+        atividades: catalogo.map((a) => ({ anexo: null, ...a, faixa: null, fatorR: null, aliquotaEfetiva: null, issRetencao: '2.0000', pTotTribSNSugerido: null, creditoAdquirente: null })),
+        avisos: [AVISO_INICIO, ...AVISOS_ALIQUOTA],
+        alertas: [],
+      };
+    }
+    const mesPrestacao = competencia >= INICIO_LC214;
+    const pa = mesPrestacao ? competencia : proximo(competencia, -1);
+    const m = await this.montar(scope, pa, undefined, catalogo);
+    return {
+      competencia,
+      mesReferencia: pa,
+      sugestao: true,
+      regra: mesPrestacao ? 'FAIXA_MES_PRESTACAO' : 'FAIXA_MES_ANTERIOR',
+      periodoApuracao: pa,
+      rbt12Cents: m.calculada.rbt12Cents,
+      janelaRbt12: m.calculada.janelaRbt12,
+      atividades: m.calculada.atividades.map((a) => ({
+        anexo: a.anexo,
+        natureza: a.natureza,
+        cTribNac: a.cTribNac,
+        faixa: a.faixa,
+        fatorR: a.fatorR,
+        aliquotaEfetiva: a.aliquotaEfetiva,
+        issRetencao: a.percentuais.ISS ?? null,
+        pTotTribSNSugerido: a.aliquotaEfetiva,
+        creditoAdquirente: mesPrestacao ? { ICMS: a.percentuais.ICMS ?? null, IBS: a.percentuais.IBS ?? null, CBS: a.percentuais.CBS ?? null } : null,
+      })),
+      avisos: AVISOS_ALIQUOTA,
+      alertas: m.alertas,
+    };
   }
 
   // ---- item 21: provisão ----

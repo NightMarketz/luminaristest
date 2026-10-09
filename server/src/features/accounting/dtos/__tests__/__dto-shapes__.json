@@ -2338,6 +2338,39 @@
               "type": "null"
             }
           ]
+        },
+        "meiContribuinteIcms": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "meiContribuinteIss": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "meiTransportadorCargas": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -3292,6 +3325,10 @@
                         },
                         {
                           "type": "number",
+                          "const": 2
+                        },
+                        {
+                          "type": "number",
                           "const": 3
                         }
                       ]
@@ -3734,6 +3771,10 @@
                         {
                           "type": "number",
                           "const": 1
+                        },
+                        {
+                          "type": "number",
+                          "const": 2
                         },
                         {
                           "type": "number",
@@ -10336,6 +10377,233 @@
         "numeroDocumento",
         "valorCents",
         "vencimento"
+      ],
+      "additionalProperties": false
+    },
+    "AnoParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "ano": {
+          "type": "integer",
+          "minimum": 2018,
+          "maximum": 2100
+        }
+      },
+      "required": [
+        "ano"
+      ],
+      "additionalProperties": false
+    },
+    "SimplesDasnDigitadoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "contratouEmpregado": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "contratouEmpregado"
+      ],
+      "additionalProperties": false
+    },
+    "SimplesDasnUpsertSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "contratouEmpregado": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "unitId",
+        "contratouEmpregado"
+      ],
+      "additionalProperties": false
+    },
+    "SimplesDefisSocioSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "contactId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rendimentosIsentosCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "rendimentosTributaveisCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "participacaoBp": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "irrfCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "contactId",
+        "rendimentosIsentosCents",
+        "rendimentosTributaveisCents",
+        "participacaoBp",
+        "irrfCents"
+      ],
+      "additionalProperties": false
+    },
+    "SimplesDefisDigitadoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "empregadosInicio": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "empregadosFim": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "ganhosRendaVariavelCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "socios": {
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "contactId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "rendimentosIsentosCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "rendimentosTributaveisCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "participacaoBp": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000
+              },
+              "irrfCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              }
+            },
+            "required": [
+              "contactId",
+              "rendimentosIsentosCents",
+              "rendimentosTributaveisCents",
+              "participacaoBp",
+              "irrfCents"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "empregadosInicio",
+        "empregadosFim",
+        "ganhosRendaVariavelCents",
+        "socios"
+      ],
+      "additionalProperties": false
+    },
+    "SimplesDefisUpsertSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "empregadosInicio": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "empregadosFim": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "ganhosRendaVariavelCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "socios": {
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "contactId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "rendimentosIsentosCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "rendimentosTributaveisCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "participacaoBp": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000
+              },
+              "irrfCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              }
+            },
+            "required": [
+              "contactId",
+              "rendimentosIsentosCents",
+              "rendimentosTributaveisCents",
+              "participacaoBp",
+              "irrfCents"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "unitId",
+        "empregadosInicio",
+        "empregadosFim",
+        "ganhosRendaVariavelCents",
+        "socios"
       ],
       "additionalProperties": false
     }

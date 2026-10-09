@@ -118,6 +118,12 @@ export interface AtividadeApurada {
   aliquotaEfetiva: string; // percentual, 4 casas (half-up; o cálculo usa o racional exato)
   fatorR: string | null; // razão, 4 casas — só para atividade sujeita ao fator R
   tributos: Partial<Record<TributoSimples, number>>;
+  /**
+   * X14 PR-4 (item 29): percentual efetivo de cada tributo sobre a receita da atividade (alíquota efetiva × repartição,
+   * já com teto do ISS e sublimite), 4 casas. É o que a retenção do ISS (LC 123 art. 21 § 4º I) e o crédito do adquirente
+   * (art. 23 § 2º, red. 2027) leem.
+   */
+  percentuais: Partial<Record<TributoSimples, string>>;
 }
 export interface ApuracaoCalculada {
   competencia: string;
@@ -419,6 +425,7 @@ export function apurar(entrada: ApuracaoInput, linhas: readonly LinhaLegal[]): A
       aliquotaEfetiva: decimal(mul(eff, q(100n)), 4),
       fatorR: r ? decimal(r, 4) : null,
       tributos,
+      percentuais: Object.fromEntries([...pct.entries()].map(([t, v]) => [t, decimal(mul(v, q(100n)), 4)])),
     };
   });
 
@@ -439,5 +446,54 @@ export function apurar(entrada: ApuracaoInput, linhas: readonly LinhaLegal[]): A
       fonte: u.fonte,
       vigenteDesde: u.vigenteDesde,
     })),
+  };
+}
+
+// ---- X14 PR-4, item 25: SIMEI (valores fixos mensais do MEI) ----
+
+/** O SIMEI recolhe CPP, ICMS e ISS em valor fixo (Res. CGSN 140 art. 101 I "b", II, III). */
+export type TributoSimei = 'CPP' | 'ICMS' | 'ISS';
+export interface ApuracaoSimei {
+  competencia: string;
+  regime: 'MEI';
+  salarioMinimoCents: number;
+  tributos: Partial<Record<TributoSimei, number>>;
+  totalCalculadoCents: number;
+  tabela: Array<{ legalParameterId: string; fonte: string; vigenteDesde: string }>;
+}
+
+/**
+ * Res. CGSN 140 art. 101: DAS mensal do MEI = 5% do limite mínimo mensal do salário de contribuição (I "b", desde 05/2011)
+ * + R$ 1,00 se contribuinte do ICMS (II) + R$ 5,00 se contribuinte do ISS (III), independentemente da receita do mês. O
+ * enquadramento ICMS/ISS é o do Anexo XI declarado no perfil (§ 1º; fork L1, dono 08/10). Sem regra de arredondamento na
+ * norma: half-up a centavo só no valor da CPP (regra silente nº 1 da nota de decisão). O transportador autônomo de cargas
+ * (12%, alínea "c") está fora do BRIEF.
+ */
+export function apurarSimei(
+  competencia: string,
+  enquadramento: { contribuinteIcms: boolean; contribuinteIss: boolean },
+  linhas: readonly LinhaLegal[],
+): ApuracaoSimei {
+  const data = `${competencia}-01`;
+  const usadas = new Map<string, Usada>();
+  const valor = (tabela: string, chave: string): number => {
+    const l = linhaLegalVigente(linhas, tabela, chave, data);
+    if (!l || l.valorInt === null || l.valorInt === undefined) throw new Error(`simplesCalc: sem linha vigente de ${tabela}/${chave} em ${data}`);
+    usadas.set(l.id, { id: l.id, fonte: l.fonte, vigenteDesde: l.vigenteDesde });
+    return Number(l.valorInt);
+  };
+  const salario = valor('SALARIO_MINIMO', 'NACIONAL');
+  const tributos: Partial<Record<TributoSimei, number>> = {
+    CPP: Number(arred(mul(q(BigInt(salario)), BP(valor('SIMEI_VALOR', 'CPP_PCT'))))),
+  };
+  if (enquadramento.contribuinteIcms) tributos.ICMS = valor('SIMEI_VALOR', 'ICMS');
+  if (enquadramento.contribuinteIss) tributos.ISS = valor('SIMEI_VALOR', 'ISS');
+  return {
+    competencia,
+    regime: 'MEI',
+    salarioMinimoCents: salario,
+    tributos,
+    totalCalculadoCents: Object.values(tributos).reduce((s, v) => s + (v ?? 0), 0),
+    tabela: [...usadas.values()].map((u) => ({ legalParameterId: u.id, fonte: u.fonte, vigenteDesde: u.vigenteDesde })),
   };
 }

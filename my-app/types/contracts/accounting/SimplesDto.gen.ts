@@ -58,3 +58,51 @@ valorCents: number
 vencimento: string
 sourceDocumentId?: (string | null)
 }
+export interface AnoParamInput {
+ano: number
+}
+export interface SimplesDasnDigitadoInput {
+contratouEmpregado: boolean
+}
+export interface SimplesDasnUpsertInput {
+unitId: string
+contratouEmpregado: boolean
+}
+export interface SimplesDefisSocioInput {
+contactId: string
+rendimentosIsentosCents: number
+rendimentosTributaveisCents: number
+participacaoBp: number
+irrfCents: number
+}
+export interface SimplesDefisDigitadoInput {
+empregadosInicio: number
+empregadosFim: number
+ganhosRendaVariavelCents: number
+/**
+ * @maxItems 100
+ */
+socios: {
+contactId: string
+rendimentosIsentosCents: number
+rendimentosTributaveisCents: number
+participacaoBp: number
+irrfCents: number
+}[]
+}
+export interface SimplesDefisUpsertInput {
+unitId: string
+empregadosInicio: number
+empregadosFim: number
+ganhosRendaVariavelCents: number
+/**
+ * @maxItems 100
+ */
+socios: {
+contactId: string
+rendimentosIsentosCents: number
+rendimentosTributaveisCents: number
+participacaoBp: number
+irrfCents: number
+}[]
+}
