@@ -47,4 +47,8 @@ Respostas do dono (chat, 2026-10-10):
 
 Destino de cada F-TAR: **mantidos** F-TAR-3, 5, 6, 7 e 8 (itens 10–13 da emenda). **Substituídos pelo #616** F-TAR-2
 (bruto = `|linha| + feeCents`), F-TAR-4 (coluna condicional) e F-TAR-9/9.1 (F-FE-FEE-1 (b)). O próprio F-FE-FEE-1 (b)
-colide com F-ENC-1/F-ENC-11 da EMENDA 3.3 e virou o fork **F-FEE-E1**, PENDENTE na emenda.
+colide com F-ENC-1/F-ENC-11 da EMENDA 3.3 e virou o fork **F-FEE-E1**.
+
+**Ratificação dos forks da emenda** (dono, chat, 2026-10-10: *"As outras pode seguir o que eu enviei, A pra todas"*): **F-FEE-E1 → (a)** (a seção fica só com
+`providerFeeExpenseAccountId`, rotulada como override; obrigatória até o E29, depois vazio = `4.5`) e **F-FEE-E2 → (a)**
+(tipo da resposta à mão, D11; o F-FE-FEE-3 (a) passa a ler "depois do #615 e do #620 em `main`"). Não é "executa".
