@@ -1,6 +1,8 @@
 # BRIEF — FE-INCR-F7-TARIFA (bruto, tarifa retida e líquido na baixa do F7)
 
-> **Estado: BRIEF pronto, forks F-TAR-1..9 em RATIFICAÇÃO PENDENTE.** Produzido por `sessao-planejamento` em
+> **Estado: BRIEF pronto. F-TAR-1..8 → (a) e F-TAR-9 → (b) RATIFICADOS** (dono, chat, 2026-10-10: *"ratifico
+> F-TAR-1..8 → a, F-TAR-9 → b"*, registrado em `docs/plano/decisoes/D-2026-10-10-FE-F7-TARIFA-FORKS.md`).
+> **Sub-fork F-TAR-9.1 (onde fica o seletor) PENDENTE.** A versão original deste BRIEF foi produzida por `sessao-planejamento` em
 > 2026-10-10 contra `origin/main` **`b8a700cf`** (#614) e contra o head do PR #615 **`62533dc6`**
 > (`claude/f5-pr3-relatorio`, aberto, sem merge). Não contém código de aplicação.
 > **Implementação exige "executa" próprio do dono** (ORCH-006), forks ratificados e o merge do #615.
@@ -124,6 +126,24 @@ Cada item é testável sozinho. **[F-TAR-n]** = a forma depende do fork. **[dep 
 15. **Gates:** `cd my-app && npx tsc --noEmit` limpo. O diff toca `__tests__`, então também `npm run test:types`
     (o `tsc` do my-app exclui testes). `npx vitest run` nos testes tocados fica verde. Nenhum `zinc-*`.
 
+16. **Seletor da conta de tarifa (F-TAR-9 → b) [dep #615] [F-TAR-9.1]:** o operador configura
+    `providerFeeExpenseAccountId` pela tela, no **molde do `FixedAssetAccountsSection.tsx`** (reuso de forma:
+    `getSettings` no load, `loaded` antes de permitir salvar para não gravar `null` sobre configuração existente, select
+    de conta folha `Expense`, `useGovernedSave` com `target: 'SCOPE_SETTINGS'`, de modo que com contador ativo o patch
+    vira proposta via `toScopeSettingsProposal`, e as barras `ActiveAccountantNotice`/`PendingProposalBanner`).
+    - **Contrato:** o patch é `Pick<UpdateAccountingScopeSettingsInput, 'unitId' | 'providerFeeExpenseAccountId'>`, do
+      `.gen.ts` que o #615 regenera (`AccountingScopeSettingsDto.gen.ts` e `AccountingPolicyVersionDto.gen.ts` já trazem o
+      campo). PUT parcial: **só** essa chave, nunca as do imobilizado nem as de encargo. Vazio vira `null`.
+    - **Serviço:** hoje `accountingService.updateSettings` aceita só `FixedAssetAccountsPatch` e notifica *"Contas do
+      imobilizado salvas."* (`accounting.service.ts:191-194`, `:729-733`). O executor alarga o tipo do parâmetro para a união
+      dos patches, ou cria um método irmão com notificação própria, sem mudar o comportamento do imobilizado. Isso
+      precisa de teste de não-regressão do `FixedAssetAccountsSection`.
+    - **Tipo de resposta:** `AccountingScopeSettings` (à mão, D11) ganha `providerFeeExpenseAccountId: string | null`.
+    - **Posição na tela:** conforme o F-TAR-9.1. A dica do item 10 aponta para o seletor em vez do path do PUT.
+    - **Testes:** o load preenche o vigente; o salvar manda só `{ unitId, providerFeeExpenseAccountId }`; vazio manda
+      `null`; com o GET falho não salva; com contador ativo vira proposta e não diz "salvo"; e a seção do imobilizado
+      continua mandando só as 3 chaves dela.
+
 ## 2. Contratos esboçados
 
 ```ts
@@ -198,19 +218,24 @@ Não vale `next dev`. Pré-condições: #615 mergeado, F-TAR-1 em `main`, server
 4. Evidência por `read_page`/estilo computado, não por impressão (skill `verificacao-visual`).
    **O sign-off de browser continua gate humano (H2)**: o agente prepara, e o desfecho e a assinatura são do dono.
 
-## 5. Forks — RATIFICAÇÃO PENDENTE (nenhum decidido nesta sessão)
+## 5. Forks
+
+**Ratificação (dono, chat, 2026-10-10):** *"ratifico F-TAR-1..8 → a, F-TAR-9 → b"*. A coluna "Recomendação" abaixo
+é a original. Onde o ratificado diverge dela (só o F-TAR-9), vale o ratificado. Patch no #615 (F-TAR-1) e implementação
+deste nó continuam sem "executa".
 
 | # | Decisão | Caminhos | Recomendação |
 |---|---|---|---|
-| **F-TAR-1** | Onde entra `feeCents` + `feeEntryId` na view do item (o BE de hoje não expõe) | (a) **patch no próprio #615 antes do merge**: o PR já espera a sonda de colunas (F-PPB-1 c), e o retorno dele já lista "FE do F7 sem exibir feeCents" como aberto; (b) micro-PR de BE separado (`BE-INCR-F7-FEE-VIEW`) depois do merge do #615; (c) dentro do PR deste FE (BE+FE juntos) | **(a).** É lacuna de contrato do próprio #615: o PR persiste um campo que nenhuma leitura devolve. Fechar antes do merge evita uma janela em produção com itens tarifados que a API não mostra. (b) é o segundo melhor, porque mantém BE/FE separados como a casa prefere. (c) mistura camadas num nó `fe`. |
-| **F-TAR-2** | Fonte do **bruto** na tela | (a) FE deriva `gross = proposedCents + chargeCents` e confere contra `|linha| + feeCents`; (b) BE expõe `grossCents` na view e o FE confere `grossCents − feeCents = |linha|`; (c) FE deriva `gross = |linha| + feeCents` | **(a).** Não precisa de campo novo e a conferência compara duas derivações **independentes** (proposta×encargo contra linha×tarifa). Em (c) a conferência vira tautologia, porque bruto − tarifa = linha por construção. (b) é equivalente a (a), mas custa campo. |
-| **F-TAR-3** | Método no modal quando o extrato é de conta de provedor | (a) o conjunto vem do extrato: provedor oferece **só** `ProviderBalance` (pré-selecionado), bancário oferece os 4 de hoje; (b) os 5 sempre, com `ProviderBalance` pré-selecionado no extrato de provedor; (c) os 5 sempre, default `Pix` | **(a).** Fora dessa combinação o BE responde 400 (`provider_balance_requires_payment_account` / `method_account_mismatch`, `:567-590`). Oferecer opção que sempre falha é ruído. Extrato de provedor só gera item `RECEIVABLE` (o scan passa só `receivables` ao passo novo, `:167-168`), então não existe o caso "a pagar em extrato de provedor". |
-| **F-TAR-4** | Como a **lista** mostra a tarifa | (a) a célula "Valor" mostra o líquido como hoje, com uma sublinha `bruto X · retido Y` só quando `feeCents > 0`; (b) coluna nova "Retido" sempre visível; (c) só no modal, e a lista ganha um selo "tarifa" | **(a).** A tabela já tem 8 colunas (`:176-183`). A sublinha mostra a explicação onde o "9700 vs 10000" aparece, e item sem tarifa não muda nada. |
-| **F-TAR-5** | Conferência que **não bate** | (a) aviso `✗` em vermelho, confirmar segue habilitado (o pré-cheque do BE é a autoridade e re-deriva sobre o bruto, `:551-558`); (b) aviso `✗` e confirmar desabilitado | **(a).** Um gate só, e ele é o do BE (classe *gate autoritativo dentro da tx*). Um bloqueio no FE duplica a regra e pode divergir dela. |
-| **F-TAR-6** | Rótulo de `feeCents` | (a) "Retido pelo provedor"; (b) "Tarifa"; (c) "Tarifas e impostos retidos" | **(a).** Hoje `feeCents` soma tarifas **e** `TAXES_AMOUNT` até a resposta P3 do contador (teste do #615, `mpReleaseReport.test.ts`: *"TAXES_AMOUNT entra no feeCents até a resposta P3 do contador"*). (b) fica errado se houver imposto. (c) fica errado se o contador separar. (a) continua certo nos dois casos, e o tooltip explica. |
-| **F-TAR-7** | Texto do aviso G7 | (a) mostrar o `reason` do BE **verbatim** (pt-BR, com o status entre parênteses) sob um rótulo i18n ("Aviso"), no molde de `FAILED`/`REJECTED` hoje; (b) BE expõe campo estruturado (por exemplo `terminalChargeStatus: string \| null`) e o FE monta o texto com i18n (en traduzido); (c) FE reconhece o prefixo `TERMINAL_CHARGE_WARNING` no `reason` | **(a)**, sem BE novo. Em `PENDING`, `reason` só é escrito pelo G7: o scan grava `result.reason` na criação (`:194`, `:210`), e o release do confirm para `PENDING` não grava `reason` (`:384-389`). Custo: em `en` o aviso sai em pt, como `FAILED`/`REJECTED` já saem hoje. (c) acopla o FE ao texto do BE. |
-| **F-TAR-8** | Fricção antes de confirmar item com aviso G7 | (a) só o aviso visível, sem passo extra (a confirmação já é humana e um a um); (b) checkbox "Li o aviso" obrigatório para habilitar Confirmar | **(a).** O G7 decidiu que a confirmação é humana, e ela já é. Cobrança terminal com dinheiro liberado no MP é dinheiro real na conta, e confirmar é o caminho normal. (b) acrescenta passo que o G7 não pediu. |
-| **F-TAR-9** | Onde o operador configura `providerFeeExpenseAccountId` (sem ela, todo confirm com tarifa dá 400) | (a) fora deste nó: só a dica do item 10, no precedente da conta de encargo (`:331`, "ainda sem tela"); (b) incluir neste nó um seletor da conta de tarifa (`PUT /api/accounting/settings`, que o `accountingService.updateSettings` já chama, `:729`) | **(a)**, para não alargar o nó, e a tela de configuração das contas (encargo + tarifa) vira um nó próprio. Contra a recomendação: o dono quer completude, e sem configuração a tarifa nunca confirma. Se o dono escolher (b), o seletor entra como item 16 e o perfil sobe. |
+| **F-TAR-1** ✅ (a) | Onde entra `feeCents` + `feeEntryId` na view do item (o BE de hoje não expõe) | (a) **patch no próprio #615 antes do merge**: o PR já espera a sonda de colunas (F-PPB-1 c), e o retorno dele já lista "FE do F7 sem exibir feeCents" como aberto; (b) micro-PR de BE separado (`BE-INCR-F7-FEE-VIEW`) depois do merge do #615; (c) dentro do PR deste FE (BE+FE juntos) | **(a).** É lacuna de contrato do próprio #615: o PR persiste um campo que nenhuma leitura devolve. Fechar antes do merge evita uma janela em produção com itens tarifados que a API não mostra. (b) é o segundo melhor, porque mantém BE/FE separados como a casa prefere. (c) mistura camadas num nó `fe`. |
+| **F-TAR-2** ✅ (a) | Fonte do **bruto** na tela | (a) FE deriva `gross = proposedCents + chargeCents` e confere contra `|linha| + feeCents`; (b) BE expõe `grossCents` na view e o FE confere `grossCents − feeCents = |linha|`; (c) FE deriva `gross = |linha| + feeCents` | **(a).** Não precisa de campo novo e a conferência compara duas derivações **independentes** (proposta×encargo contra linha×tarifa). Em (c) a conferência vira tautologia, porque bruto − tarifa = linha por construção. (b) é equivalente a (a), mas custa campo. |
+| **F-TAR-3** ✅ (a) | Método no modal quando o extrato é de conta de provedor | (a) o conjunto vem do extrato: provedor oferece **só** `ProviderBalance` (pré-selecionado), bancário oferece os 4 de hoje; (b) os 5 sempre, com `ProviderBalance` pré-selecionado no extrato de provedor; (c) os 5 sempre, default `Pix` | **(a).** Fora dessa combinação o BE responde 400 (`provider_balance_requires_payment_account` / `method_account_mismatch`, `:567-590`). Oferecer opção que sempre falha é ruído. Extrato de provedor só gera item `RECEIVABLE` (o scan passa só `receivables` ao passo novo, `:167-168`), então não existe o caso "a pagar em extrato de provedor". |
+| **F-TAR-4** ✅ (a) | Como a **lista** mostra a tarifa | (a) a célula "Valor" mostra o líquido como hoje, com uma sublinha `bruto X · retido Y` só quando `feeCents > 0`; (b) coluna nova "Retido" sempre visível; (c) só no modal, e a lista ganha um selo "tarifa" | **(a).** A tabela já tem 8 colunas (`:176-183`). A sublinha mostra a explicação onde o "9700 vs 10000" aparece, e item sem tarifa não muda nada. |
+| **F-TAR-5** ✅ (a) | Conferência que **não bate** | (a) aviso `✗` em vermelho, confirmar segue habilitado (o pré-cheque do BE é a autoridade e re-deriva sobre o bruto, `:551-558`); (b) aviso `✗` e confirmar desabilitado | **(a).** Um gate só, e ele é o do BE (classe *gate autoritativo dentro da tx*). Um bloqueio no FE duplica a regra e pode divergir dela. |
+| **F-TAR-6** ✅ (a) | Rótulo de `feeCents` | (a) "Retido pelo provedor"; (b) "Tarifa"; (c) "Tarifas e impostos retidos" | **(a).** Hoje `feeCents` soma tarifas **e** `TAXES_AMOUNT` até a resposta P3 do contador (teste do #615, `mpReleaseReport.test.ts`: *"TAXES_AMOUNT entra no feeCents até a resposta P3 do contador"*). (b) fica errado se houver imposto. (c) fica errado se o contador separar. (a) continua certo nos dois casos, e o tooltip explica. |
+| **F-TAR-7** ✅ (a) | Texto do aviso G7 | (a) mostrar o `reason` do BE **verbatim** (pt-BR, com o status entre parênteses) sob um rótulo i18n ("Aviso"), no molde de `FAILED`/`REJECTED` hoje; (b) BE expõe campo estruturado (por exemplo `terminalChargeStatus: string \| null`) e o FE monta o texto com i18n (en traduzido); (c) FE reconhece o prefixo `TERMINAL_CHARGE_WARNING` no `reason` | **(a)**, sem BE novo. Em `PENDING`, `reason` só é escrito pelo G7: o scan grava `result.reason` na criação (`:194`, `:210`), e o release do confirm para `PENDING` não grava `reason` (`:384-389`). Custo: em `en` o aviso sai em pt, como `FAILED`/`REJECTED` já saem hoje. (c) acopla o FE ao texto do BE. |
+| **F-TAR-8** ✅ (a) | Fricção antes de confirmar item com aviso G7 | (a) só o aviso visível, sem passo extra (a confirmação já é humana e um a um); (b) checkbox "Li o aviso" obrigatório para habilitar Confirmar | **(a).** O G7 decidiu que a confirmação é humana, e ela já é. Cobrança terminal com dinheiro liberado no MP é dinheiro real na conta, e confirmar é o caminho normal. (b) acrescenta passo que o G7 não pediu. |
+| **F-TAR-9** ✅ (b), contra a recomendação | Onde o operador configura `providerFeeExpenseAccountId` (sem ela, todo confirm com tarifa dá 400) | (a) fora deste nó: só a dica do item 10, no precedente da conta de encargo (`:331`, "ainda sem tela"); (b) incluir neste nó um seletor da conta de tarifa (`PUT /api/accounting/settings`, que o `accountingService.updateSettings` já chama, `:729`) | **(a)**, para não alargar o nó, e a tela de configuração das contas (encargo + tarifa) vira um nó próprio. Contra a recomendação: o dono quer completude, e sem configuração a tarifa nunca confirma. Se o dono escolher (b), o seletor entra como item 16 e o perfil sobe. |
+| **F-TAR-9.1** PENDENTE | Onde o seletor do item 16 aparece | (a) dentro da dica do erro `fee_account_not_configured`, no modal de confirmar; (b) seção compacta "Conta de tarifa do provedor" no topo da sub-aba "Baixas por retorno", visível quando o extrato selecionado é de conta de provedor, e a dica do erro aponta para ela; (c) seção "Contas da conciliação" que também traz as contas de encargo (`bankCharge*`) | **(b).** Revisa a sugestão (a) que dei no chat antes de ler o `FixedAssetAccountsSection`. Com contador ativo, salvar configuração vira **proposta** de política (`useGovernedSave`, `target: 'SCOPE_SETTINGS'`) e não aplica na hora. Dentro do modal de confirmar, o operador salvaria, tentaria confirmar e levaria o mesmo 400. Uma seção própria mostra o estado vigente e a proposta pendente. (c) resolve também a conta de encargo, mas alarga o nó além do F-TAR-9. |
 
 ## 6. Pendências de validação externa
 
@@ -244,6 +269,6 @@ Não vale `next dev`. Pré-condições: #615 mergeado, F-TAR-1 em `main`, server
 
 ## 9. Perfil previsto
 
-`precisa-de-planejamento` (regra 1 do classificador: forks pendentes). Com os forks ratificados e o F-TAR-1 em (a) ou (b),
-o nó fica só com FE, 15 itens e sem lançamento novo (o lançamento `provider.fee` é do #615). A previsão então é
-`sonnet-alto` (regra 4, mais de 8 itens).
+`precisa-de-planejamento` (regra 1 do classificador: o sub-fork F-TAR-9.1 está PENDENTE). Com ele ratificado, o nó
+fica só com FE (o F-TAR-1 → a põe o BE no #615), 16 itens, e o item 16 escreve configuração contábil governada, mas não
+cria lançamento. A previsão então é `sonnet-alto` (regra 4, mais de 8 itens).
