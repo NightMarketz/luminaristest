@@ -5,7 +5,7 @@
  */
 import { SIMPLES_SEED_FILES, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { AtividadeSemAnexoError, SimplesRegraNaoRegulamentadaError } from '../../../../lib/errors';
-import { SEGREGACAO_EXCLUI, apurar, janelaRbt12, rbt12, type ApuracaoInput, type MesReceita } from '../simplesCalc';
+import { SEGREGACAO_EXCLUI, apurar, apurarSimei, janelaRbt12, rbt12, type ApuracaoInput, type MesReceita } from '../simplesCalc';
 
 const LINHAS = legalParamsSeedRows(SIMPLES_SEED_FILES);
 
@@ -202,5 +202,33 @@ describe('item 8 — segregação (§ 4º-A, § 12)', () => {
     expect(r.tabela.map((t) => t.legalParameterId).sort()).toEqual(
       ['sn1-enq-servico-060101', 'sn1-teto-iii-2018-01-01', 'sn1-rep-iii-2018-01-01-f3', ...[1, 2, 3, 4, 5, 6].map((f) => `sn1-faixa-iii-2018-01-01-f${f}`)].sort(),
     );
+  });
+});
+
+describe('X14 PR-4 item 29 — percentual efetivo por tributo (ISS para a retenção)', () => {
+  it('2026, RBT12 R$ 600.000, Anexo III 3ª faixa: ISS = 10,56% × 32,50% = 3,4320% (R$ 1.716,00 sobre R$ 50.000)', () => {
+    const a = apurar(base('2026-06', { atividades: [servico(5_000_000)] }), LINHAS).atividades[0];
+    expect(a.percentuais.ISS).toBe('3.4320');
+    expect(a.tributos.ISS).toBe(171_600);
+    const soma = Object.values(a.percentuais).reduce((s, v) => s + Number(v), 0);
+    expect(soma.toFixed(4)).toBe(a.aliquotaEfetiva);
+  });
+});
+
+describe('X14 PR-4 item 25 — SIMEI (Res. CGSN 140 art. 101)', () => {
+  it('2026: 5% de R$ 1.621,00 (Decreto 12.797/2025) = R$ 81,05 + R$ 1 ICMS + R$ 5 ISS = R$ 87,05', () => {
+    const r = apurarSimei('2026-03', { contribuinteIcms: true, contribuinteIss: true }, LINHAS);
+    expect(r.salarioMinimoCents).toBe(162_100);
+    expect(r.tributos).toEqual({ CPP: 8_105, ICMS: 100, ISS: 500 });
+    expect(r.totalCalculadoCents).toBe(8_705);
+    expect(r.tabela.map((t) => t.legalParameterId).sort()).toEqual(['sn1-simei-cpp-pct', 'sn1-simei-icms', 'sn1-simei-iss', 'sn3-salmin-2026']);
+  });
+  it('2025: salário de R$ 1.518,00 → CPP R$ 75,90; só ISS (serviço) → R$ 80,90', () => {
+    const r = apurarSimei('2025-12', { contribuinteIcms: false, contribuinteIss: true }, LINHAS);
+    expect(r.tributos).toEqual({ CPP: 7_590, ISS: 500 });
+    expect(r.totalCalculadoCents).toBe(8_090);
+  });
+  it('sem salário mínimo vigente (2023) ⇒ erro explícito, nunca zero', () => {
+    expect(() => apurarSimei('2023-06', { contribuinteIcms: false, contribuinteIss: true }, LINHAS)).toThrow(/SALARIO_MINIMO/);
   });
 });

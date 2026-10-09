@@ -20,6 +20,15 @@ export class SimplesApuracaoRepository implements ISimplesApuracaoRepository {
     return prisma.simplesApuracao.findMany({ where: { ...accountingScopeWhere(scope), competencia, status: 'SUPERSEDED' } });
   }
 
+  public async competenciasConfirmadasDoAno(scope: AccountingScope, ano: number): Promise<string[]> {
+    const rows = await prisma.simplesApuracao.findMany({
+      where: { ...accountingScopeWhere(scope), competencia: { startsWith: `${ano}-` }, status: 'CONFIRMED', deletedAt: null },
+      select: { competencia: true },
+      orderBy: { competencia: 'asc' },
+    });
+    return [...new Set(rows.map((r) => r.competencia))];
+  }
+
   public async supersede(scope: AccountingScope, id: string, tx: Prisma.TransactionClient): Promise<number> {
     const r = await tx.simplesApuracao.updateMany({ where: { id, ...accountingScopeWhere(scope), status: 'CONFIRMED' }, data: { status: 'SUPERSEDED' } });
     return r.count;

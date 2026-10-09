@@ -222,6 +222,20 @@ código de receita nesse sentido.
 - **Recomendação: (b) até ler o leiaute da DPS (E0713)** — por regra do dono, decide-se pela norma; a norma ainda não
   foi lida, então não se automatiza (§6).
 
+### 4.1 Lacunas do PR-4 — RATIFICADAS (dono, chat, 2026-10-08, questionário, na sessão de feature do "executa X14 PR-4")
+
+Achadas na leitura da spec antes do código (sessão de feature, regra 2). Respostas literais:
+- **L1 — de onde vem o "contribuinte de ICMS/ISS" do MEI** (item 25; Res. 140 art. 101 § 1º: Anexo XI + CNAE do CNPJ).
+  *"Declarado no perfil (Recommended)"* → dois booleanos anuláveis no `CompanyFiscalProfile` (`meiContribuinteIcms`,
+  `meiContribuinteIss`), só no regime MEI; `null` = não declarado ⇒ a apuração do SIMEI pede a declaração (400).
+- **L2 — `SALARIO_MINIMO` sem linha publicada** (item 25). *"Migração com fonte (Recommended)"* → semente
+  `legal_parameters_simples_v3.sql` com 2024–2026 lidos dos Decretos 11.864/2023, 12.342/2024 e 12.797/2025 no Planalto
+  (URL + sha256 do HTML).
+- **L3 — campos digitados da DASN-SIMEI e da DEFIS** (itens 27–28; o §3 só listava os GET). *"PUT por ano + model
+  (Recommended)"* → model `SimplesDeclaracaoAnual` (PJ, unidade, ano, tipo) + `PUT …/dasn-simei/:ano` e `PUT …/defis/:ano`.
+- **L4 — forma da saída para documentos** (item 29). *"Rota própria"* → `GET /api/accounting/simples/aliquotas/:competencia`
+  (prestação no mês ⇒ faixa do mês anterior, Res. 140 art. 27 I).
+
 ## 5. Pendente de validação externa
 
 Por regra do dono (07/10), **nada vai ao contador**. Fica só o oráculo que nenhuma leitura substitui:

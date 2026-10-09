@@ -174,3 +174,22 @@ describe('semente v2 à mão (X14 PR-3: cota de gestão da parceria + matriz de 
     EnquadramentoJsonSchema.parse(json(v2[0].valorJson));
   });
 });
+
+describe('semente v3 (X14 PR-4: SALARIO_MINIMO dos decretos, item 25)', () => {
+  const V3 = path.join(REPO_ROOT, 'server/prisma/data/legal_parameters_simples_v3.sql');
+  const MIG4 = path.join(REPO_ROOT, 'server/prisma/migrations/20261008220000_add_simples_mei_declaracoes/migration.sql');
+  it('o migration.sql do PR-4 carrega o texto do arquivo; 3 anos sem buraco, cada linha com decreto, URL e sha256', () => {
+    expect(norm(readFileSync(MIG4, 'utf8'))).toContain(norm(readFileSync(V3, 'utf8')).trimEnd());
+    const v3 = legalParamsSeedRows(V3);
+    expect(v3.map((r) => [r.tabela, r.chave, r.valorInt, r.vigenteDesde, r.vigenteAte])).toEqual([
+      ['SALARIO_MINIMO', 'NACIONAL', 141_200, '2024-01-01', '2024-12-31'],
+      ['SALARIO_MINIMO', 'NACIONAL', 151_800, '2025-01-01', '2025-12-31'],
+      ['SALARIO_MINIMO', 'NACIONAL', 162_100, '2026-01-01', null],
+    ]);
+    for (const r of v3) {
+      expect(r.fonte).toMatch(/^Decreto nº /);
+      expect(r.fonteUrl).toMatch(/^https:\/\/www\.planalto\.gov\.br\//);
+      expect(r.fonteSha256).toMatch(/^[0-9a-f]{64}$/);
+    }
+  });
+});
