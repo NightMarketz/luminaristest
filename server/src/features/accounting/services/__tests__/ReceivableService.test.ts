@@ -120,7 +120,7 @@ function build(opts: Opts = {}) {
     auditService as never,
     policy as never,
     counterpartyRepo as never,
-    collectionChargeRepo,
+    collectionChargeRepo as never,
   );
   return { service, collectionChargeRepo, receivableRepo, accountRepo, auditService, postEntry, reverseEntry, findEntryBySource, counterpartyRepo };
 }
