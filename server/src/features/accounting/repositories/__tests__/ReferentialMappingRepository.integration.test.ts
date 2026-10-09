@@ -1,7 +1,7 @@
 /**
  * CONTRATO DO ReferentialMappingRepository — integração contra SQLite REAL, sem mock de prisma.
  *
- * Unidade 4 de 4 da subfila ratificada em `docs/audit/TRIAGEM-R1-R3.json`
+ * Unidade 4 de 4 da subfila ratificada em `docs/audit/TRIAGEM-R1-R3.json` (removida em 2026-08-09 — `git show b617d8f1:docs/audit/TRIAGEM-R1-R3.json`)
  * (`r2_decision.ratified_subqueue`), órfã desde d11b4716.
  *
  * POR QUE INTEGRAÇÃO. A suíte unit faz `jest.mock` de `lib/prisma` e afirma o mock; foi isso que

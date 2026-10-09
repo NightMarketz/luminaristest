@@ -1,7 +1,7 @@
 /**
  * CONTRATO DO CounterpartyRepository — integração contra SQLite REAL, sem mock de prisma.
  *
- * Unidade 2 de 4 da subfila ratificada em `docs/audit/TRIAGEM-R1-R3.json`
+ * Unidade 2 de 4 da subfila ratificada em `docs/audit/TRIAGEM-R1-R3.json` (removida em 2026-08-09 — `git show b617d8f1:docs/audit/TRIAGEM-R1-R3.json`)
  * (`r2_decision.ratified_subqueue`), órfã desde d11b4716. Invariantes nomeadas na linha da peça
  * central do AV-R2: **tx + inquilino + softdelete** — as três têm caso próprio abaixo.
  *
