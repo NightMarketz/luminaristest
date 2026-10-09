@@ -79,10 +79,14 @@ export interface BankSettlementItemView {
   titleId: string;
   proposedCents: number;
   chargeCents: number;
+  /** F-TAR-1 (D-2026-10-10-FE-F7-TARIFA-FORKS): tarifa do provedor (GROSS − NET); 0 = item bancário. */
+  feeCents: number;
   line: { id: string; date: string; amountCents: number; description: string; externalRef: string | null };
   title: { openCents: number; dueDate: string; counterpartyName: string; status: string } | null;
   settlementId: string | null;
   chargeEntryId: string | null;
+  /** F-TAR-1: journal_entries.id do `provider.fee` (etapa FEE); null até a etapa rodar. */
+  feeEntryId: string | null;
   reason: string | null;
   failedStep: string | null;
   confirmedAt: string | null;
@@ -308,6 +312,7 @@ export class BankSettlementService {
       titleId: item.titleId,
       proposedCents: centsFromDb(item.proposedCents),
       chargeCents: centsFromDb(item.chargeCents),
+      feeCents: centsFromDb(item.feeCents),
       line: {
         id: item.statementLine.id,
         date: toDateOnly(item.statementLine.date),
@@ -320,6 +325,7 @@ export class BankSettlementService {
         : null,
       settlementId: item.settlementId,
       chargeEntryId: item.chargeEntryId,
+      feeEntryId: item.feeEntryId,
       reason: item.reason,
       failedStep: item.failedStep,
       confirmedAt: item.confirmedAt ? item.confirmedAt.toISOString() : null,

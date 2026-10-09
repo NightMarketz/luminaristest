@@ -176,6 +176,12 @@ describe('F5 PR-3 — relatório de liberações → extrato da PaymentAccount �
     const b = await prisma.bankSettlementItem.findFirstOrThrow({ where: { statementLineId: lineByRef['PAY01BBB:payment'] } });
     expect([b.titleId, b.proposedCents, b.feeCents]).toEqual([rec.B, 10000n, 0n]);
     expect(b.reason).toBe('Cobrança em estado terminal no Luminaris (EXPIRED).');
+    // F-TAR-1: a view da lista expõe a tarifa e o id do lançamento dela (null antes do confirm).
+    const list = await request(app).get('/api/bank-settlements').query({ unitId: UNIT, statementId, status: 'PENDING' }).set(authHeader(dono));
+    expect(list.status).toBe(200);
+    const view = (id: string) => list.body.data.items.find((it: { id: string }) => it.id === id);
+    expect([view(a.id).feeCents, view(a.id).feeEntryId]).toEqual([300, null]);
+    expect([view(b.id).feeCents, view(b.id).feeEntryId]).toEqual([0, null]);
     expect(await prisma.bankSettlementItem.count({ where: { statementLine: { statementId } } })).toBe(2);
   });
 
@@ -207,6 +213,8 @@ describe('F5 PR-3 — relatório de liberações → extrato da PaymentAccount �
     expect(res.body.data.status).toBe('CONFIRMED');
     const item = await prisma.bankSettlementItem.findUniqueOrThrow({ where: { id: a.id } });
     expect(item.feeEntryId).toBeTruthy();
+    // F-TAR-1: a resposta do confirm devolve a tarifa e o lançamento dela.
+    expect([res.body.data.feeCents, res.body.data.feeEntryId]).toEqual([300, item.feeEntryId]);
     const receipt = await prisma.receivableReceipt.findUniqueOrThrow({ where: { id: item.settlementId! } });
     expect([receipt.method, receipt.debitAccountId, receipt.amountCents]).toEqual(['ProviderBalance', glMp, 10000n]);
     const receiptLegs = await prisma.posting.findMany({ where: { entryId: receipt.entryId! } });

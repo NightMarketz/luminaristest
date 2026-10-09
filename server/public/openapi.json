@@ -16853,7 +16853,7 @@
         ],
         "responses": {
           "200": {
-            "description": "items (BankSettlementItemView[]), total, page, limit"
+            "description": "items (BankSettlementItemView[] — incl. feeCents: provider fee in integer cents, 0 = bank item; feeEntryId: provider.fee entry id or null), total, page, limit"
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"
