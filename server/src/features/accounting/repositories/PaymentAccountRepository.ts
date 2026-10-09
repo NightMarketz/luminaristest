@@ -14,6 +14,16 @@ export class PaymentAccountRepository implements IPaymentAccountRepository {
     return (tx ?? prisma).paymentAccount.findFirst({ where: { id, ...accountingScopeWhere(scope), deletedAt: null } });
   }
 
+  public async findByIdAnyScope(id: string, tx?: Prisma.TransactionClient): Promise<PaymentAccount | null> {
+    return (tx ?? prisma).paymentAccount.findFirst({ where: { id, deletedAt: null } });
+  }
+
+  public async findActive(scope: AccountingScope, provider: string, tx?: Prisma.TransactionClient): Promise<PaymentAccount | null> {
+    return (tx ?? prisma).paymentAccount.findFirst({
+      where: { ...accountingScopeWhere(scope), provider, status: 'ACTIVE', deletedAt: null },
+    });
+  }
+
   public async findManyByUnit(scope: AccountingScope, tx?: Prisma.TransactionClient): Promise<PaymentAccount[]> {
     return (tx ?? prisma).paymentAccount.findMany({
       where: { ...accountingScopeWhere(scope), deletedAt: null },

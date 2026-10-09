@@ -76,7 +76,7 @@ function buildAp(f: Fakes) {
   const accountRepo = { findById: jest.fn(async () => ({ id: 'exp-1', code: '4.1', nature: 'Expense', acceptsEntries: true })) };
   const counterpartyRepo = { findById: jest.fn(async () => ({ id: 'cp-1', userId: 'owner-1', unitId: 'unit-1', type: 'SUPPLIER' })), findByName: jest.fn(async () => null), create: jest.fn() };
   /* eslint-disable @typescript-eslint/no-explicit-any */
-  const service = new PayableService(repo as any, accountRepo as any, posting as any, audit as any, policy as any, counterpartyRepo as any);
+  const service = new PayableService(repo as any, accountRepo as any, posting as any, audit as any, policy as any, counterpartyRepo as any, { findLiveByReceivable: async () => null });
   /* eslint-enable @typescript-eslint/no-explicit-any */
   return { service, repo, posting, audit };
 }

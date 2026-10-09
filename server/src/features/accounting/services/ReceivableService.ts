@@ -13,7 +13,7 @@
  *              teste: ReceivableService.test.ts › "does NOT re-post when the recognition already exists (idempotent)"
  *   fora da tx — nada
  */
-import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
+import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import { Prisma } from 'generated/prisma';
 import type { Account, Receivable, ReceivableReceipt } from 'generated/prisma';
@@ -37,6 +37,8 @@ import type {
 import type { IReceivableRepository, ReceivableWithReceipts } from '../repositories/IReceivableRepository';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
+import type { ICollectionChargeRepository } from '../repositories/ICollectionChargeRepository';
+import { RECEIVABLE_HAS_LIVE_CHARGE } from '../models/CollectionCharge.model';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { PostEntryInput } from '../dtos/PostingDto';
 import { syncSkipErrorCode } from '../sync/AccountingSyncPort';
@@ -87,6 +89,7 @@ export class ReceivableService {
     private readonly auditService: AuditService,
     private readonly policy: IAccountingPolicy,
     private readonly counterpartyRepo: ICounterpartyRepository,
+    private readonly collectionChargeRepo: Pick<ICollectionChargeRepository, 'findLiveByReceivable'>,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -350,6 +353,11 @@ export class ReceivableService {
       throw new ValidationError('Desfaça o recebimento ativo antes de cancelar a conta.');
     }
 
+    // BE-INCR-PAYMENT-PROVIDER PR-2 (P2-13, F-PPB-7 a): título com cobrança viva no provedor não cancela. Checado
+    // ANTES do reverseEntry, sem lançar nada (decisão F5 a do dono, 10/10 — efeito irreversível nunca antes do gate),
+    // e re-checado dentro da tx do cancelamento. Nenhuma chamada ao provedor aqui.
+    await this.assertNoLiveCharge(scope, receivableId);
+
     // Reverse the recognition if it exists (a dangling create may have none).
     const recognition = await this.posting.findEntryBySource(scope, AR_RECEIVABLE_SOURCE_TYPE, receivableId);
     let reversalEntryId: string | null = null;
@@ -364,6 +372,7 @@ export class ReceivableService {
     }
 
     return this.receivableRepo.runTransaction(async (tx) => {
+      await this.assertNoLiveCharge(scope, receivableId, tx);
       const cancelled = await this.receivableRepo.updateReceivable(
         scope,
         receivableId,
@@ -608,6 +617,16 @@ export class ReceivableService {
    * pass, stops minting NULL rows without a single change of its own. Shared with AP — invariants in
    * `counterpartyResolution.ts`.
    */
+  private async assertNoLiveCharge(scope: AccountingScope, receivableId: string, tx?: Prisma.TransactionClient): Promise<void> {
+    const live = await this.collectionChargeRepo.findLiveByReceivable(scope, receivableId, tx);
+    if (live) {
+      throw new ConflictError(
+        `${RECEIVABLE_HAS_LIVE_CHARGE}: o título tem a cobrança '${live.id}' (${live.status}) no provedor; cancele-a antes.`,
+        RECEIVABLE_HAS_LIVE_CHARGE,
+      );
+    }
+  }
+
   private async resolveOrCreateCounterpartyId(
     scope: AccountingScope,
     dto: CreateReceivableInput,
