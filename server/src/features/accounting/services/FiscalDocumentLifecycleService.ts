@@ -91,6 +91,7 @@ export class FiscalDocumentLifecycleService {
       return this.emissionService.getById(scope, documentId); // terminal — nada a consultar
     }
     const port = this.portFor(doc);
+    this.assertAmbienteDoDocumento(doc);
     if (!port.capabilities.consultar) {
       throw new ConflictError(
         'dfe_consulta_manual: documento do modo manual — registre o retorno pelo upload do XML da NFS-e autorizada.',
@@ -245,6 +246,7 @@ export class FiscalDocumentLifecycleService {
       });
     }
     const port = this.portFor(doc);
+    this.assertAmbienteDoDocumento(doc);
     if (!port.capabilities.cancelar) {
       throw new ConflictError(
         'dfe_cancelamento_manual: documento do modo manual — registre o cancelamento com o XML do evento (cancelamento-manual).',
@@ -513,6 +515,20 @@ export class FiscalDocumentLifecycleService {
     return resolveEmissorFor(doc.partner);
   }
 
+  /**
+   * Mesma regra do `reenviar` (F-AMB-2 a), para consultar/cancelar: a porta do env fala com o host/token do ambiente
+   * do env (Focus: um host e um token por ambiente — `token_producao`/`token_homologacao`), então documento de outro
+   * ambiente não passa por ela.
+   */
+  private assertAmbienteDoDocumento(doc: FiscalDocument): void {
+    const selection = selectDfeEmissor(process.env);
+    if (selection.port.name === doc.partner && selection.ambiente !== doc.ambiente) {
+      throw new ValidationError('dfe_ambiente_divergente', {
+        faltantes: [`documento em ${doc.ambiente}, emissão configurada em ${selection.ambiente ?? 'nenhum'}`],
+      });
+    }
+  }
+
   // ---- Item 24 (transição) + 25 (autorização/proveniência) + parte do 26 (rejeição) ----
 
   /**
@@ -536,7 +552,7 @@ export class FiscalDocumentLifecycleService {
     };
 
     if (result.status === 'PROCESSING') {
-      await this.repo.transition(scope, doc.id, { status: 'PROCESSING', attemptResult });
+      await this.repo.transition(scope, doc.id, { status: 'PROCESSING', attemptResult, whenStatusIn: PENDING_STATUSES });
       return;
     }
 
@@ -545,7 +561,7 @@ export class FiscalDocumentLifecycleService {
         await this.repo.transition(
           scope,
           doc.id,
-          { status: 'REJECTED', errorsJson: JSON.stringify(result.errors), attemptResult, ...(manual ? { whenStatusIn: PENDING_STATUSES } : {}) },
+          { status: 'REJECTED', errorsJson: JSON.stringify(result.errors), attemptResult, whenStatusIn: PENDING_STATUSES },
           tx,
         );
         await this.auditService.append(tx, scope, {
@@ -583,7 +599,7 @@ export class FiscalDocumentLifecycleService {
         {
           status: divergente ? 'AUTHORIZED_DIVERGENT' : 'AUTHORIZED',
           ...(manual?.serie !== undefined ? { serie: manual.serie } : {}),
-          ...(manual ? { whenStatusIn: PENDING_STATUSES } : {}),
+          whenStatusIn: PENDING_STATUSES,
           partnerRef: result.partnerRef,
           nNFSe: result.nNFSe ?? null,
           chaveOuCodigo: result.chaveOuCodigo,

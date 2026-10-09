@@ -775,6 +775,15 @@ describe('FiscalDocumentEmissionService — modo manual (BE-INCR-DFE-MANUAL item
     const data = repo.createSent.mock.calls[0][1] as { payloadJson: string };
     expect(JSON.parse(data.payloadJson).infDPS.nDPS).toBe(1);
   });
+
+  // GAP-MAP "DPS — `id` [102] nunca refeito com o `nDPS` real" — teste-guarda (sessao-instrumentacao, 07/10).
+  it('GAP-MAP id [102]: com numeração local, os 15 últimos dígitos do id são o nDPS consumido da sequência', async () => {
+    const { service, repo } = setup('null');
+    await service.emit(SCOPE, SALE_ID, 'NFSE');
+    const data = repo.createSent.mock.calls[0][1] as { payloadJson: string };
+    const infDPS = JSON.parse(data.payloadJson).infDPS as { id: string; nDPS: number };
+    expect(infDPS.id.slice(-15)).toBe(String(infDPS.nDPS).padStart(15, '0'));
+  });
 });
 
 

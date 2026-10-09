@@ -110,6 +110,15 @@ describe('FiscalDocument + ServiceFiscalProfile — contrato em SQLite real (BE-
     expect(relido?.currentAttemptNo).toBe(2);
   });
 
+  // GAP-MAP "DF-e — webhook nunca acha documento pendente" — teste-guarda (sessao-instrumentacao, 07/10). O webhook
+  // resolve o documento por `findByPartnerRef(ref da tentativa)`; o mock do LifecycleService.test grava `partnerRef`
+  // no documento pendente e por isso não enxerga a lacuna — aqui é o banco real.
+  it('GAP-MAP webhook: documento SENT é encontrado pelo ref da tentativa corrente (o ref que o parceiro conhece)', async () => {
+    const doc = await docRepo.createSent(escopo(DONO_A), sent('sale-webhook'));
+    const achado = await docRepo.findByPartnerRef(attemptRef(doc.id, 1));
+    expect(achado?.id).toBe(doc.id);
+  });
+
   it('tenancy: documento do dono A não é visível pelo dono B (e o controle prova que A enxerga)', async () => {
     const doc = await docRepo.createSent(escopo(DONO_A), sent('sale-tenant'));
     expect(await docRepo.findById(escopo(DONO_B), doc.id)).toBeNull();

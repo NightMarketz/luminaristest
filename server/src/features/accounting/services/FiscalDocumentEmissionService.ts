@@ -296,7 +296,7 @@ export class FiscalDocumentEmissionService {
       } else {
         const numerada = { ...group.payload };
         if (numero != null) {
-          numerada.infDPS = { ...numerada.infDPS, nDPS: Number(numero) };
+          numerada.infDPS = { ...numerada.infDPS, nDPS: Number(numero), id: numerada.infDPS.id.slice(0, -15) + String(numero).padStart(15, '0') };
         }
         payload = DpsPayloadSchema.parse(numerada); // valida ANTES de persistir (payload inválido = bug nosso, não 400)
       }
