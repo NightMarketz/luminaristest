@@ -1,7 +1,7 @@
 ---
 name: sessao-correcao
 description: Sessão de CORREÇÃO de lacuna mapeada — faz o teste-guarda vermelho passar com o diff mínimo, sem tocar em arquivo fora da localização e sem consertar nada além. Exige teste-guarda já falhando. Triggers "corrige a lacuna", "faz o teste-guarda passar", "sessão de correção", "fix mínimo da lacuna", "conserta o que o teste prova".
-argument-hint: "[linha da lacuna no GAP-MAP + caminho do teste-guarda que falha]"
+argument-hint: "[linha da lacuna no GAP-MAP + caminho do teste-guarda (ou comando-guarda) que falha]"
 allowed-tools: Read, Grep, Glob, Edit, Bash
 metadata:
   governance-skill-id: "SKL-SESS-FIX"
@@ -23,7 +23,7 @@ muda**. Achado não é tarefa.
 
 | Situação | Sessão correta |
 |---|---|
-| Não existe teste-guarda, ou ele não falha | `sessao-instrumentacao` |
+| Não existe teste-guarda (nem comando-guarda no GAP-MAP), ou ele não falha | `sessao-instrumentacao` |
 | O teste falha por setup/import/fixture, não pela asserção | `sessao-instrumentacao` (o teste está errado) |
 | O comportamento nunca existiu — é feature ausente | `sessao-planejamento` → `sessao-feature` |
 | A causa raiz está fora da localização listada | **Nenhuma** — regra 3: reporte a divergência |
@@ -34,7 +34,10 @@ muda**. Achado não é tarefa.
 
 > Pré-requisito: este prompt só é preenchível para lacuna que já tem
 > teste-guarda escrito e falhando. Sem teste-guarda, a sessão correta é a
-> de INSTRUMENTAÇÃO, não esta.
+> de INSTRUMENTAÇÃO, não esta. Vale como teste-guarda o comando-guarda
+> isolado que a `sessao-instrumentacao` aceita (lacuna do ambiente de
+> execução da suíte), desde que registrado na coluna "Comando que prova"
+> da linha do GAP-MAP.
 
 ### Contexto fixo (não rediscutir)
 > Regra de preenchimento: todo campo abaixo deve conter conteúdo real do
@@ -46,11 +49,14 @@ muda**. Achado não é tarefa.
 - Autorização: [referência à decisão do dono que priorizou esta lacuna —
   linha do GAP-MAP + data da decisão]
 - Localização: [arquivo(s) e função(ões) exatos identificados no censo]
-- Teste-guarda: [caminho do teste que hoje FALHA e reproduz a lacuna]
+- Teste-guarda: [caminho do teste que hoje FALHA e reproduz a lacuna — ou
+  o comando-guarda literal da coluna "Comando que prova" do GAP-MAP]
 
 ### Definição de pronto (única)
 O teste-guarda acima passa, e nenhum teste que passava antes quebrou.
-Nada além disso.
+Nada além disso. Se o guarda é um comando-guarda, ele passa na MESMA
+condição em que falhava (ex.: banco-modelo frio) — verde só na condição
+que não morde não é pronto.
 
 ### Regras de escopo — invioláveis
 1. Modifique SOMENTE os arquivos listados na localização. Se a correção
@@ -74,8 +80,9 @@ Nada além disso.
    pausada nesse ponto. Nunca escolha um caminho por conta própria.
 
 ### Sequência obrigatória
-1. Rode o teste-guarda e confirme que ele falha pelo motivo descrito.
-   Se passar ou falhar por outro motivo, PARE e reporte.
+1. Rode o teste-guarda (ou o comando-guarda, literal como está no
+   GAP-MAP) e confirme que ele falha pelo motivo descrito. Se passar ou
+   falhar por outro motivo, PARE e reporte.
 2. Implemente a correção mínima.
 3. Rode o teste-guarda (deve passar) e a suíte relacionada (nada novo
    pode quebrar).
@@ -90,6 +97,11 @@ Nada além disso.
 (ex.: GAP-MAP 7 = `PASSO-11`): aí a autorização é o campo `autorizacao` dela — vazio = não roteia
 (ORCH-006). O fold da nota entra no próprio PR, via `node scripts/plano-vault.mjs fold <NÓ> --pr <n>`
 (`docs/plano/README.md` §Fold) — é a única edição permitida fora da localização.
+
+**Comando-guarda — ratificado pelo dono (chat, 2026-10-09): "ratifica estender o comando-guarda à
+sessao-correcao".** Mesma forma aceita na `sessao-instrumentacao` (origem: #588/#589). Muda só o que conta
+como guarda; a regra 1 continua valendo — se o fix do ambiente da suíte exigir arquivo fora da localização
+listada (ex.: `jest.config.js`, `ci.yml`), PARE e reporte.
 
 **Nível de cerimônia — [OPS-006]** (`.claude/skills/_OPERATING-GATES.md`): no nível leve, o teste-guarda
 chega no commit `test:` do mesmo PR, e esta sessão entra com o commit `fix:` em seguida.
