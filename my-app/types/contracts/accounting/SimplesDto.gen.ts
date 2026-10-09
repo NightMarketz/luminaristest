@@ -45,6 +45,12 @@ sindicato?: string
 vigenteDesde?: string
 vigenteAte?: (string | null)
 }
+export interface AlertaSimplesInput {
+codigo: ("ATIVIDADE_SEM_ANEXO" | "RBT12_INCOMPLETO" | "LIMITE_ME_EXCEDIDO" | "LIMITE_EPP_EXCEDIDO" | "SUBLIMITE_ICMS_ISS" | "SEGREGACAO_MANUAL" | "TIEOUT_DIVERGENTE" | "HISTORICO_IGNORADO" | "LIMITE_MEI_EXCEDIDO" | "NFSE_DIVERGE_RECEITA")
+detalhe: string
+severity: ("INFO" | "WARNING")
+motivoInformativo?: ("DOCUMENTO_MUNICIPAL_TRANSIÇÃO" | "REGIME_CAIXA")
+}
 export interface SimplesUnitQueryInput {
 unitId: string
 }
