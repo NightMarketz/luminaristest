@@ -408,8 +408,11 @@ export class ReconciliationService {
     // Gate 4 — direction always; exact cents for single matches (integer equality,
     // no epsilon — ACC-014). Manual AGGREGATION (N postings ↔ 1 line, D3) skips the
     // per-posting equality: manualMatch enforces Σ(side amounts) === |line| instead.
-    const sideAmount =
-      freshLine.amountCents > 0 ? centsFromDb(posting.debitCents) : centsFromDb(posting.creditCents);
+    // Aggregation legs may sit on the opposite side (fee credit on an inflow line,
+    // F5 P3-10) — there the leg only has to move something; the signed Σ closes it.
+    const sideAmount = options?.skipExactAmountCheck
+      ? Math.abs(centsFromDb(posting.debitCents) - centsFromDb(posting.creditCents))
+      : freshLine.amountCents > 0 ? centsFromDb(posting.debitCents) : centsFromDb(posting.creditCents);
     if (centsFromDb(freshLine.amountCents) === 0 || sideAmount <= 0) {
       throw new ValidationError('Direção do posting não confere com a linha do extrato.');
     }
@@ -565,8 +568,12 @@ export class ReconciliationService {
         if (!posting) throw new NotFoundError(`Posting '${postingId}' não encontrado.`);
         postings.push(posting);
       }
-      const side = line.amountCents > 0 ? 'debitCents' : 'creditCents';
-      const sum = postings.reduce((acc, p) => acc + centsFromDb(p[side]), 0);
+      // Signed Σ (F5 P3-10): inflow line → Σ(débito − crédito); outflow → Σ(crédito − débito).
+      const sign = line.amountCents > 0 ? 1 : -1;
+      const sum = postings.reduce(
+        (acc, p) => acc + sign * (centsFromDb(p.debitCents) - centsFromDb(p.creditCents)),
+        0,
+      );
       const lineAbsCents = Math.abs(centsFromDb(line.amountCents));
       if (sum !== lineAbsCents) {
         throw new ValidationError(

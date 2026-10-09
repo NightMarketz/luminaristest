@@ -42,7 +42,7 @@ numTel?: string
 email: string
 }
 fiscal?: {
-indAliqCsll?: ("1" | "4")
+indAliqCsll?: ("1" | "3" | "4" | "7" | "8")
 indRecReceita?: ("1" | "2")
 }
 /**

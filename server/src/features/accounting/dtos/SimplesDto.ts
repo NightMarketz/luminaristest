@@ -83,6 +83,35 @@ export const SalaoParceriaContratoPatchSchema = z
   .refine(vigenciaOrdenada, { message: 'vigenteAte antes de vigenteDesde', path: ['vigenteAte'] });
 export type SalaoParceriaContratoPatch = z.infer<typeof SalaoParceriaContratoPatchSchema>;
 
+/** Códigos de alerta da apuração do Simples (ME/EPP e MEI). */
+export const CODIGOS_ALERTA_SIMPLES = [
+  'ATIVIDADE_SEM_ANEXO',
+  'RBT12_INCOMPLETO',
+  'LIMITE_ME_EXCEDIDO',
+  'LIMITE_EPP_EXCEDIDO',
+  'SUBLIMITE_ICMS_ISS',
+  'SEGREGACAO_MANUAL',
+  'TIEOUT_DIVERGENTE',
+  'HISTORICO_IGNORADO',
+  'LIMITE_MEI_EXCEDIDO',
+  'NFSE_DIVERGE_RECEITA',
+] as const;
+/** D-2026-10-10-X14-ALERTA-INFORMATIVO (dono, chat, 2026-10-10), item 1: o código fica estável; o alerta ganha severidade. */
+export const SEVERIDADES_ALERTA_SIMPLES = ['INFO', 'WARNING'] as const;
+export const MOTIVOS_ALERTA_INFORMATIVO = ['DOCUMENTO_MUNICIPAL_TRANSIÇÃO', 'REGIME_CAIXA'] as const;
+/** Alerta da apuração (saída). `motivoInformativo` só vem com `severity = INFO`. */
+export const AlertaSimplesSchema = z
+  .object({
+    codigo: z.enum(CODIGOS_ALERTA_SIMPLES),
+    detalhe: z.string(),
+    severity: z.enum(SEVERIDADES_ALERTA_SIMPLES),
+    motivoInformativo: z.enum(MOTIVOS_ALERTA_INFORMATIVO).optional(),
+  })
+  .strict()
+  .refine((a) => a.motivoInformativo === undefined || a.severity === 'INFO', { message: 'motivoInformativo só com severity INFO', path: ['motivoInformativo'] });
+export type AlertaSimples = z.infer<typeof AlertaSimplesSchema>;
+export type CodigoAlertaSimples = AlertaSimples['codigo'];
+
 export const SimplesUnitQuerySchema = z.object({ unitId: z.string().min(1) }).strict();
 export const SimplesIdParamSchema = z.object({ id: z.string().min(1) }).strict();
 

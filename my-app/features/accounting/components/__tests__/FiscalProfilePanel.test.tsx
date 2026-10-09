@@ -18,6 +18,13 @@ vi.mock('../../../../lib/services/fiscalProfile.service', () => ({
 vi.mock('../../../../lib/services/accounting.service', () => ({
   accountingService: { getAccounts: vi.fn() },
 }));
+// Política versionada (FE-INCR-ACCOUNTING-POLICY-VERSION): sem contador ativo e sem proposta — o caminho de sempre (PUT).
+vi.mock('../../../../lib/services/accountantAssignments.service', () => ({
+  accountantAssignmentsService: { listByScope: vi.fn(async () => []) },
+}));
+vi.mock('../../../../lib/services/policyVersions.service', () => ({
+  policyVersionsService: { list: vi.fn(async () => []), propose: vi.fn() },
+}));
 
 const accounts: Account[] = [
   { id: 'a-icms', code: '1.1.7.01', name: 'ICMS a recuperar', nature: 'Asset', acceptsEntries: true },
