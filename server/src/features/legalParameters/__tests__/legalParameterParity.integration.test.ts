@@ -90,7 +90,7 @@ describe('BE-INCR-LEGAL-PARAMS item 6 — paridade tabela em código × banco', 
     const t = tabelaApuracaoDe(await getFactory().getLegalParameterService().fotografia(['TAX_ASSESSMENT', 'CSLL_ALIQUOTA', 'CODIGO_RECEITA']));
     for (const data of DATAS) {
       for (const ind of ['1', '4']) expect(t.aliquotaCsll(ind, data)).toEqual(ANTIGA_CSLL[ind]);
-      for (const ind of ['2', '3']) expect(t.aliquotaCsll(ind, data)).toBeUndefined();
+      for (const ind of ['2']) expect(t.aliquotaCsll(ind, data)).toBeUndefined(); // CSLL-LC224 item 4: o 3 (bancos, lp4-csll-3) existe desde 01/04/2026
     }
   });
 

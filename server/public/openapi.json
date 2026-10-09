@@ -11569,7 +11569,10 @@
                         "type": "string",
                         "enum": [
                           "1",
-                          "4"
+                          "3",
+                          "4",
+                          "7",
+                          "8"
                         ],
                         "description": "1 = 9 percent"
                       },
@@ -11802,7 +11805,10 @@
                         "type": "string",
                         "enum": [
                           "1",
-                          "4"
+                          "3",
+                          "4",
+                          "7",
+                          "8"
                         ],
                         "description": "1 = 9 percent"
                       },
@@ -18664,7 +18670,10 @@
                         "type": "string",
                         "enum": [
                           "1",
-                          "4"
+                          "3",
+                          "4",
+                          "7",
+                          "8"
                         ]
                       },
                       "indRecReceita": {
