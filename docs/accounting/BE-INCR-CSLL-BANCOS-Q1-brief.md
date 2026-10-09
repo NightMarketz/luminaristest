@@ -4,7 +4,7 @@
 > sessao-planejamento"*. Antes, na mesma conversa, o dono decidiu: *"abra um Fast-Follow / Novo BRIEF para retroagir a
 > data de início da linha de 20% do código 3 (bancos) para cobrir o Q1/2026 e o histórico, ancorado na IN 1.700/2017
 > atualizada"*. **Cobre só este BRIEF.** Não cobre código nem migração (falta o `executa`).
-> **Sessão:** `sessao-planejamento`. Forks F-CB-1..3 estão **RATIFICAÇÃO PENDENTE** (§5).
+> **Sessão:** `sessao-planejamento`. Forks F-CB-1..3 **ratificados** por questionário em 10/10 (§5); F-CB-1 contra a recomendação. A ratificação não é `executa`.
 
 ## 0. Resumo em duas linhas
 
@@ -44,7 +44,7 @@ Os arts. 30-A a 30-C tratam da transição de 2020 (rateio de março) e também 
    a byte (molde v4). Teste de igualdade de bytes.
 2. **[F-CB-1, F-CB-2] Linha `lp5-csll-3-a`**: chave `3`, 2000 bp, `vigenteDesde` = F-CB-1, `vigenteAte = 2026-03-31`,
    fonte `IN RFB 1.700/2017 art. 30 IV (red. IN RFB 1.942/2020; revogado pela IN RFB 2.315/2026)`, `fonteUrl` e
-   `fonteSha256` = S1, `PUBLISHED`. Teste de tabela: `aliquotaCsll('3', d)` para `d` ∈ {véspera de F-CB-1, F-CB-1,
+   `fonteSha256` = S1, `PUBLISHED`. Teste de tabela: `aliquotaCsll('3', d)` para `d` ∈ {`2020-02-29`, `2020-03-01`,
    `2025-12-31`, `2026-03-31`, `2026-04-01`, `2028-01-01`} ⇒ {undefined, 2000, 2000, 2000, 2000, 2000}, com a fonte
    do art. 30 IV até `2026-03-31` e a do art. 30-D II depois.
 3. **[D] Ajustar o teste do #599** (`legalParameter.test.ts`, bloco CSLL-LC224, item 2): `'3'` em `2026-03-31` passa a
@@ -60,20 +60,20 @@ Os arts. 30-A a 30-C tratam da transição de 2020 (rateio de março) e também 
 
 | id | chave | valorInt | vigenteDesde | vigenteAte | fonte | supersedesId |
 |---|---|---|---|---|---|---|
-| `lp5-csll-3-a` | `3` | 2000 | *F-CB-1* (rec.: `2025-01-01`) | `2026-03-31` | IN RFB 1.700/2017 art. 30 IV (red. IN RFB 1.942/2020; revogado pela IN RFB 2.315/2026) | — *(F-CB-2 b)* |
+| `lp5-csll-3-a` | `3` | 2000 | `2020-03-01` *(F-CB-1 b)* | `2026-03-31` | IN RFB 1.700/2017 art. 30 IV (red. IN RFB 1.942/2020; revogado pela IN RFB 2.315/2026) | — *(F-CB-2 b)* |
 
 ```sql
 INSERT OR IGNORE INTO "legal_parameters" ("id","tabela","chave","discriminador","valorInt","valorTexto","valorJson","fonte","fonteUrl","fonteSha256","vigenteDesde","vigenteAte","status","supersedesId","motivo","proposedById","publishedById","publishedAt","createdAt")
-VALUES ('lp5-csll-3-a','CSLL_ALIQUOTA','3',NULL,2000,NULL,NULL,'IN RFB 1.700/2017 art. 30 IV (red. IN RFB 1.942/2020; revogado pela IN RFB 2.315/2026)','https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/visao/multivigente','faa47fa18631e4b78931693fb9ef7edabe7a58c6d288c9eee8374397c40940c3','2025-01-01','2026-03-31','PUBLISHED',NULL,'Bancos 20% antes da LC 224/2025 (ECF 0020.IND_ALIQ_CSLL = 3) — fast-follow do F-CA-1 a','migracao:BE-INCR-CSLL-BANCOS-Q1','migracao:BE-INCR-CSLL-BANCOS-Q1',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP);
+VALUES ('lp5-csll-3-a','CSLL_ALIQUOTA','3',NULL,2000,NULL,NULL,'IN RFB 1.700/2017 art. 30 IV (red. IN RFB 1.942/2020; revogado pela IN RFB 2.315/2026)','https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/visao/multivigente','faa47fa18631e4b78931693fb9ef7edabe7a58c6d288c9eee8374397c40940c3','2020-03-01','2026-03-31','PUBLISHED',NULL,'Bancos 20% antes da LC 224/2025 (ECF 0020.IND_ALIQ_CSLL = 3) — fast-follow do F-CA-1 a','migracao:BE-INCR-CSLL-BANCOS-Q1','migracao:BE-INCR-CSLL-BANCOS-Q1',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP);
 ```
 
-## 5. Forks — RATIFICAÇÃO PENDENTE
+## 5. Forks — 3/3 ratificados (dono, chat, 2026-10-10, questionário)
 
 | Fork | Caminhos | Recomendação | Status |
 |---|---|---|---|
-| **F-CB-1** Início da vigência da linha anterior | (a) `2025-01-01`: o 1º ano apurável do X7 · (b) `2020-03-01`: o início do 20% no art. 30 IV (antes disso, de 01/2019 a 02/2020, eram 15%, que o código `3` não descreve) · (c) `2026-01-01`: só o 1º tri/2026 | **(a).** Cobre todo período que a plataforma apura e a ECF do AC 2025. O (b) publica anos que nada lê; se um dia houver apuração de 2020–2024, a linha entra junto com ela. O (c) deixa 2025 sem linha, contra o *"e o histórico"* do dono | ⏳ **PENDENTE** |
-| **F-CB-2** Forma da correção | (a) linha única `2025-01-01 →` sem fim, com `supersedesId = lp4-csll-3` · (b) linha nova fechada em `2026-03-31`, sem supersede; a `lp4-csll-3` segue | **(b).** Cada período cita a sua fonte (art. 30 IV antes, art. 30-D II depois), e é só acréscimo, sem tirar linha publicada do lookup (L-7). O (a) põe uma fonte só em dois regimes normativos | ⏳ **PENDENTE** |
-| **F-CB-3** Onde mora no vault | (a) fold no `CSLL-LC224` (PR novo na linha `prs`, o nó segue `done`) · (b) nó próprio `CSLL-BANCOS-Q1` | **(a).** É o resíduo do F-CA-1 do mesmo nó: mesma tabela, mesma fonte S1 | ⏳ **PENDENTE** |
+| **F-CB-1** Início da vigência da linha anterior | (a) `2025-01-01`: o 1º ano apurável do X7 · (b) `2020-03-01`: o início do 20% no art. 30 IV (antes disso, de 01/2019 a 02/2020, eram 15%, que o código `3` não descreve) · (c) `2026-01-01`: só o 1º tri/2026 | **(a).** Cobre todo período que a plataforma apura e a ECF do AC 2025. O (b) publica anos que nada lê; se um dia houver apuração de 2020–2024, a linha entra junto com ela. O (c) deixa 2025 sem linha, contra o *"e o histórico"* do dono | ✅ **(b) contra a recomendação** — dono, chat, 2026-10-10 (questionário). Antes de 2020-03-01 não há linha (de 01/2019 a 02/2020 eram 15%, que o código `3` não descreve) |
+| **F-CB-2** Forma da correção | (a) linha única `2025-01-01 →` sem fim, com `supersedesId = lp4-csll-3` · (b) linha nova fechada em `2026-03-31`, sem supersede; a `lp4-csll-3` segue | **(b).** Cada período cita a sua fonte (art. 30 IV antes, art. 30-D II depois), e é só acréscimo, sem tirar linha publicada do lookup (L-7). O (a) põe uma fonte só em dois regimes normativos | ✅ **(b)** — dono, chat, 2026-10-10 (questionário) |
+| **F-CB-3** Onde mora no vault | (a) fold no `CSLL-LC224` (PR novo na linha `prs`, o nó segue `done`) · (b) nó próprio `CSLL-BANCOS-Q1` | **(a).** É o resíduo do F-CA-1 do mesmo nó: mesma tabela, mesma fonte S1 | ✅ **(a)** — dono, chat, 2026-10-10 (questionário). A linha da seção Docs da nota e o PR entram no fold do PR de execução |
 
 ## 6. Pendente de validação externa
 
