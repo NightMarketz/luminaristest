@@ -11,6 +11,7 @@ import { resolveAccountingScope, type AccountingScope } from '@/features/account
 import { CompanyFiscalProfileRepository } from '@/features/accounting/repositories/CompanyFiscalProfileRepository';
 import { SIMPLES_DAS_PROVISION_SOURCE_TYPE } from '@/features/accounting/services/SimplesApuracaoService';
 import { ApplicationFactory } from '@/lib/factory';
+import { storePublished } from '@/features/legalParameters/services/legalParameterCache';
 
 const app = makeApp();
 let user: { id: string; username: string };
@@ -126,6 +127,18 @@ describe('item 26 — limite do MEI (Res. CGSN 140 arts. 100 e 115)', () => {
     expect(codigos(dentro.body)).not.toContain('LIMITE_MEI_EXCEDIDO');
     await historico('2024-08', 100_000);
     expect(codigos((await calcular('2024-08')).body)).toContain('LIMITE_MEI_EXCEDIDO');
+  });
+
+  // Guarda: sem linha SIMPLES_LIMITE/MEI vigente (ex.: revogada), o limite do MEI não pode virar 0 e pular a checagem
+  // de desenquadramento em silêncio — a apuração bloqueia (SemLinhaVigenteError ⇒ 400). O cache vazio é o estado que o
+  // serviço vê depois de uma revogação; o beforeEach de jest.integrationLegalParams.ts o reaquece no teste seguinte.
+  it('sem linha SIMPLES_LIMITE vigente ⇒ 400 nomeando a tabela, nunca limite 0 calado', async () => {
+    await perfil(2025, { meiContribuinteIcms: false, meiContribuinteIss: true });
+    expect((await calcular('2025-03')).status).toBe(200);
+    storePublished('SIMPLES_LIMITE', []);
+    const r = await calcular('2025-03');
+    expect(r.status).toBe(400);
+    expect(JSON.stringify(r.body)).toContain('SIMPLES_LIMITE/MEI');
   });
 });
 

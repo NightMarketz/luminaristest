@@ -15,6 +15,7 @@ import { SimplesEntradasRepository } from '@/features/accounting/repositories/Si
 import { PostingService } from '@/features/accounting/services/PostingService';
 import { SIMPLES_DAS_PROVISION_SOURCE_TYPE } from '@/features/accounting/services/SimplesApuracaoService';
 import { scopeToday } from '@/features/accounting/models/dates';
+import { storePublished } from '@/features/legalParameters/services/legalParameterCache';
 
 const app = makeApp();
 const CNPJ = '11222333000181';
@@ -305,5 +306,18 @@ describe('X14 PR-4 item 28 — DEFIS espelho mínimo', () => {
   it('2027 (a declaração muda pela LC 214) e ano fora do Simples (2025 = Presumido) ⇒ 400', async () => {
     expect((await defis(2027)).status).toBe(400);
     expect((await defis(2025)).status).toBe(400);
+  });
+});
+
+// Guarda: sem linha SIMPLES_LIMITE vigente (ex.: revogada), os limites de ME/EPP/sublimite não podem virar 0 e desligar
+// em silêncio os alertas de exclusão e o impedimento do sublimite (item 23) — a apuração bloqueia (SemLinhaVigenteError
+// ⇒ 400). O cache vazio é o estado que o serviço vê depois de uma revogação; jest.integrationLegalParams.ts o reaquece.
+describe('limites do Simples sem parâmetro legal', () => {
+  it('sem linha SIMPLES_LIMITE vigente ⇒ 400 nomeando a tabela, nunca limite 0 calado', async () => {
+    expect((await calcular('2026-06')).status).toBe(200);
+    storePublished('SIMPLES_LIMITE', []);
+    const r = await calcular('2026-06');
+    expect(r.status).toBe(400);
+    expect(JSON.stringify(r.body)).toContain('SIMPLES_LIMITE/');
   });
 });
