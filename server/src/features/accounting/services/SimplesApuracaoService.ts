@@ -557,6 +557,8 @@ export class SimplesApuracaoService {
     alertas: AlertaSimples[],
     tx?: Prisma.TransactionClient,
   ): Promise<void> {
+    // F-PR4-10 (a), dono 10/10: a locação de bem móvel já chega fora daqui — a linha de receita só é SERVICO | REVENDA, e
+    // a locação é a cota ALUGUEL_BEM_MOVEL do salão-parceiro, tirada em `servicosPa` (ME) e no MEI (F-PR4-11).
     const servicos = linhasPa.filter((l) => l.natureza !== 'REVENDA').reduce((t, l) => t + l.receitaCents - l.cotaProfissionalCents, 0n);
     const nfse = await this.fiscalDocumentRepo.somaNfseAutorizadaNaCompetencia(scope, competencia, tx);
     if (nfse !== servicos) {

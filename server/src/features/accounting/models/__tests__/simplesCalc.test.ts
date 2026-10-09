@@ -232,3 +232,41 @@ describe('X14 PR-4 item 25 — SIMEI (Res. CGSN 140 art. 101)', () => {
     expect(() => apurarSimei('2023-06', { contribuinteIcms: false, contribuinteIss: true }, LINHAS)).toThrow(/SALARIO_MINIMO/);
   });
 });
+
+describe('F-PR4-8 (a), dono 10/10 — teto do ISS ausente', () => {
+  const semTeto = LINHAS.filter((l) => l.tabela !== 'SIMPLES_TETO_ISS');
+  const enq = (anexo: string) =>
+    semTeto.map((l) => (l.id === 'sn1-enq-servico-060101' ? { ...l, valorJson: JSON.stringify({ anexo, fatorR: false, semIss: false }) } : l));
+
+  it('Anexo III antes de 2033 sem SIMPLES_TETO_ISS ⇒ PARAMETRO_LEGAL_AUSENTE', () => {
+    expect(() => apurar(base('2026-06', { atividades: [servico(100_000)] }), semTeto)).toThrow(
+      expect.objectContaining({ name: 'ParametroLegalAusenteError', errorCode: 'PARAMETRO_LEGAL_AUSENTE' }),
+    );
+  });
+
+  it('Anexo IV antes de 2033 sem SIMPLES_TETO_ISS ⇒ PARAMETRO_LEGAL_AUSENTE', () => {
+    expect(() => apurar(base('2032-06', { atividades: [servico(100_000)] }), enq('IV'))).toThrow(
+      expect.objectContaining({ errorCode: 'PARAMETRO_LEGAL_AUSENTE' }),
+    );
+  });
+
+  it('Anexo V sem a linha: segue (a falta é a própria lei)', () => {
+    expect(apurar(base('2026-06', { atividades: [servico(100_000)] }), enq('V')).atividades[0].anexo).toBe('V');
+  });
+
+  it('2033 em diante sem a linha: segue', () => {
+    expect(() => apurar(base('2033-06', { atividades: [servico(100_000)] }), semTeto)).not.toThrow();
+    // A repartição real de 2033 já não tem ISS (o ramo nem chega ao teto). Linha SINTÉTICA com ISS para exercer o
+    // corte de data em si: sem o `data < 2033-01-01`, esta chamada lançaria.
+    const comIss2033 = semTeto.map((l) =>
+      l.tabela === 'SIMPLES_ANEXO_REPARTICAO' && l.vigenteDesde === '2033-01-01' && l.chave === 'III'
+        ? { ...l, valorJson: JSON.stringify({ ...JSON.parse(l.valorJson ?? '{}'), ISS: 100 }) }
+        : l,
+    );
+    expect(apurar(base('2033-06', { atividades: [servico(100_000)] }), comIss2033).atividades[0].tributos.ISS).toBeDefined();
+  });
+
+  it('com a linha da semente, Anexo III 2026 não muda (guarda de regressão)', () => {
+    expect(apurar(base('2026-06', { atividades: [servico(100_000)] }), LINHAS).atividades[0].tributos.ISS).toBe(3_432);
+  });
+});

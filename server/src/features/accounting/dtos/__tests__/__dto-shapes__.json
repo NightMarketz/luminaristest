@@ -2371,6 +2371,14 @@
               "type": "null"
             }
           ]
+        },
+        "simplesRegimeApuracao": {
+          "default": "COMPETENCIA",
+          "type": "string",
+          "enum": [
+            "COMPETENCIA",
+            "CAIXA"
+          ]
         }
       },
       "required": [

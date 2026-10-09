@@ -38,6 +38,7 @@ export interface CompanyFiscalProfileData {
   meiContribuinteIcms: boolean | null;
   meiContribuinteIss: boolean | null;
   meiTransportadorCargas: boolean | null;
+  simplesRegimeApuracao: string; // X14 F-PR4-12 (b): COMPETENCIA | CAIXA
 }
 
 /**
