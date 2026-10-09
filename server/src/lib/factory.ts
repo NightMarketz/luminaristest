@@ -1494,6 +1494,7 @@ export class ApplicationFactory {
         auditService,
         this.policies.accounting,
         this.repositories.fiscalDocument, // X14 PR-4 item 31: conferência NFS-e × receita
+        this.repositories.serviceFiscalProfile, // X14 PR-4 F-PR4-4: atividades do cadastro na rota de alíquotas
       ),
       // BE-INCR-SIMPLES-NACIONAL PR-4 (nó X14, itens 27–28): espelhos DASN-SIMEI e DEFIS.
       simplesDeclaracao: new SimplesDeclaracaoService(

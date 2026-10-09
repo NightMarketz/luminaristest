@@ -6808,11 +6808,13 @@ export {};
  *
  *   /api/accounting/simples/aliquotas/{competencia}:
  *     get:
- *       summary: Rates for documents issued in the month, from the previous month's assessment (X14 PR-4 item 29)
+ *       summary: Suggested rates for documents issued in the month, with the calculation trail (X14 PR-4 item 29)
  *       description: >-
- *         Para a prestação na competência, apura o mês anterior (LC 123 art. 21 § 4º I; Res. CGSN 140 art. 27 I) e devolve,
- *         por atividade, o percentual efetivo de ISS para a retenção, o pTotTribSN sugerido (a DPS continua digitada, B-4)
- *         e, a partir de 2027, os % de ICMS/IBS/CBS para o crédito do adquirente. 400 - MEI (SIMEI não tem alíquota).
+ *         SUGESTÃO (o prestador responde pela alíquota informada, LC 123 art. 21 § 4º VI) por atividade do cadastro de
+ *         serviços e das que tiveram receita no PA, com faixa do RBT12 global: no mês de abertura do CNPJ, 2% (§ 4º II);
+ *         até 2026, a faixa do mês anterior (PA = M−1); a partir de 2027, a do mês da prestação (PA = M, LC 227 art. 169;
+ *         janela M−13…M−2, LC 214 art. 517). Devolve PA, RBT12, janela, regra e avisos; o pTotTribSN só sugerido (B-4) e,
+ *         a partir de 2027, os % de ICMS/IBS/CBS para o crédito do adquirente. 400 - MEI (SIMEI não tem alíquota).
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
