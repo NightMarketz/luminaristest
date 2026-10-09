@@ -72,8 +72,20 @@ Um teste novo que FALHA PELO MOTIVO DA LACUNA: a asserção que quebra é
 a que expressa o comportamento correto esperado acima, e a mensagem de
 falha evidencia a lacuna (não erro de import, não fixture quebrada, não
 timeout de ambiente). Critério de verificação: a suíte inteira roda, o
-teste novo é o ÚNICO vermelho, e o motivo da falha é a asserção final —
-não a preparação. Nenhuma linha de código de aplicação é alterada.
+teste novo é o único vermelho NOVO (o ruído pré-existente registrado no
+passo 1 não conta), e o motivo da falha é a asserção final — não a
+preparação. Nenhuma linha de código de aplicação é alterada.
+
+Forma alternativa — comando-guarda isolado: quando a lacuna é do próprio
+ambiente de execução da suíte (ordem de arquivos, shard, cache, custo de
+setup contra o timeout de hook) e não cabe numa asserção, o guarda pode
+ser um comando que roda o caso mínimo explicitamente, sem depender da
+composição do shard. Ele entra na coluna "Comando que prova" do GAP-MAP,
+e a falha dele É a assinatura da lacuna (ex.: "Exceeded timeout … for a
+hook" quando a lacuna é esse timeout — aí timeout não é ruído de
+ambiente, é o motivo certo). Vale o mesmo critério: vermelho repetível
+pelo motivo da lacuna, verde no controle que só difere da condição que
+morde, e zero mudança em código de aplicação.
 
 ### Regras de escopo — invioláveis
 1. PROIBIDO corrigir. Se a correção parecer óbvia e de uma linha,
@@ -146,8 +158,9 @@ instrumentar for desse tipo, o teste precisa varrer a fonte e cruzar emitido-vs-
 `auditAllowlistCoverage.test.ts`. Não confie em suíte verde que mocka o colaborador para provar caminho de
 escrita.
 
-## Pendência de ratificação do próprio template
+## Ratificações do próprio template
 
-Registrada, **não aplicada**: a definição de pronto diz "o teste novo é o **ÚNICO vermelho**", enquanto o
-passo 3 diz "o único vermelho **novo**". Com ruído pré-existente conhecido no repo, a segunda formulação é
-a executável. Proposta: alinhar a definição de pronto ao passo 3.
+- **2026-10-09, dono (chat): "ratifica o item 3, alinha o template".** A definição de pronto dizia "o
+  **ÚNICO vermelho**" e o passo 3 "o único vermelho **novo**"; alinhada ao passo 3. Na mesma ratificação,
+  entrou o **comando-guarda isolado** como forma aceita de guarda (origem: instrumentação do shard 2/4 de
+  integração, PR #588, em que o guarda era um comando com o banco-modelo frio, não um teste da suíte).

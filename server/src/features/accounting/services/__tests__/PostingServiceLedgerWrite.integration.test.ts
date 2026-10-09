@@ -2,7 +2,7 @@
  * CAMINHO DE ESCRITA DO RAZÃO — teste de integração contra SQLite REAL, sem mock de prisma.
  *
  * Barreira do achado `caminho-de-escrita-do-razao-sem-cobertura-de-integracao`
- * (docs/audit/TRIAGEM-R1-R3.json item 4 · AV-R3 F1 · dano 4 · bloqueia_primeiro_cliente),
+ * (docs/audit/TRIAGEM-R1-R3.json [removida em 2026-08-09 — `git show b617d8f1:docs/audit/TRIAGEM-R1-R3.json`] item 4 · AV-R3 F1 · dano 4 · bloqueia_primeiro_cliente),
  * o de MAIOR dano da fila e o único cujo conserto era um arquivo novo.
  *
  * O QUE O ACHADO MEDIU, e o que este arquivo muda:

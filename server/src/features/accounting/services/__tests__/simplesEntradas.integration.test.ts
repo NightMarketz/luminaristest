@@ -212,7 +212,7 @@ describe('itens 15–16 — subrazão fiscal de receita na finalização + tie-o
         }),
       hasExistingEntry: async (s, t, id) => (await f().getPostingService().findEntryBySource(s, t, id)) !== null,
       alreadyRecorded: (s, id) => svc.vendaRegistrada(s, id),
-      record: async (s, sale, dia) => svc.registrarVenda(s, { saleId: sale.saleId, amount: sale.amount, dia, lines: await loadSaleRevenueLines(user.id, sale.saleId) }),
+      record: async (s, sale, dia) => svc.registrarVenda(s, { saleId: sale.saleId, amount: sale.amount, dia, lines: await loadSaleRevenueLines(user.id, sale.saleId), tomadorTipo: 'NAO_IDENTIFICADO' }),
     });
     expect(summary).toMatchObject({ total: 2, synced: 1, idempotentHits: 1, failed: 0 });
     expect(await f().getReceitaFiscalService().tieOut(scope(), '2026-05')).toMatchObject({ ok: true, subrazaoCents: 34_000 });

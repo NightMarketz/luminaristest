@@ -4,7 +4,7 @@ import { describe, it, expect } from 'vitest';
 
 /**
  * Barreira do achado `compose-injeta-next-public-api-url-nome-divergente`
- * (docs/audit/TRIAGEM-R1-R3.json item 3 · AV-R1 F1 · bloqueia_primeiro_cliente).
+ * (docs/audit/TRIAGEM-R1-R3.json [removida em 2026-08-09 — `git show b617d8f1:docs/audit/TRIAGEM-R1-R3.json`] item 3 · AV-R1 F1 · bloqueia_primeiro_cliente).
  *
  * O falsificador que provou o achado punha os dois nomes lado a lado:
  *   grep -n NEXT_PUBLIC docker-compose.yml my-app/next.config.js

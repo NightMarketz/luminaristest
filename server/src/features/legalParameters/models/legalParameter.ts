@@ -107,10 +107,22 @@ export function linhasVigentesDaTabela<T extends LinhaLegal>(linhas: readonly T[
 
 /** Item 4 — sem linha vigente da tabela/chave na data. `ValidationError` (400) para a prévia/rota que a dispara. */
 export class SemLinhaVigenteError extends ValidationError {
-  constructor(tabela: string, data: string, chave?: string) {
-    super(`Sem linha vigente de ${tabela}${chave ? `/${chave}` : ''} em ${data} (parâmetros legais da plataforma).`);
+  constructor(tabela: string, data: string, chave?: string, errorCode?: string) {
+    super(`Sem linha vigente de ${tabela}${chave ? `/${chave}` : ''} em ${data} (parâmetros legais da plataforma).`, null, errorCode);
     Object.setPrototypeOf(this, SemLinhaVigenteError.prototype); // ValidationError fixa o próprio protótipo
     this.name = 'SemLinhaVigenteError';
+  }
+}
+
+/**
+ * X14 PR-4 (F-PR4-7, dono 09/10: fail-fast, código próprio) — parâmetro legal que o cálculo exige e não tem linha
+ * vigente (carga incompleta ou data antes da tabela). 400 `PARAMETRO_LEGAL_AUSENTE`, nunca o zero silencioso.
+ */
+export class ParametroLegalAusenteError extends SemLinhaVigenteError {
+  constructor(tabela: string, data: string, chave?: string) {
+    super(tabela, data, chave, 'PARAMETRO_LEGAL_AUSENTE');
+    Object.setPrototypeOf(this, ParametroLegalAusenteError.prototype);
+    this.name = 'ParametroLegalAusenteError';
   }
 }
 

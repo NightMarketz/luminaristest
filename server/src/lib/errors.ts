@@ -67,9 +67,10 @@ export class ValidationError extends AppError {
 
   constructor(
     message: string = 'Validation failed',
-    details: { [key: string]: string[] | undefined } | Record<string, unknown> | null = null // Broader type for details
+    details: { [key: string]: string[] | undefined } | Record<string, unknown> | null = null, // Broader type for details
+    errorCode: string = 'VALIDATION_ERROR' // subclasses with their own code stay 400 (e.g. PARAMETRO_LEGAL_AUSENTE)
   ) {
-    super(message, 400, 'VALIDATION_ERROR'); // Use 400 Bad Request for validation errors
+    super(message, 400, errorCode); // Use 400 Bad Request for validation errors
     this.details = details;
     Object.setPrototypeOf(this, ValidationError.prototype);
   }

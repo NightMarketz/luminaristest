@@ -8,7 +8,7 @@ import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IPostingRepository } from '../repositories/IPostingRepository';
-import type { IReceitaFiscalRepository, ReceitaFiscalLinhaData, TipoLinhaReceita } from '../repositories/IReceitaFiscalRepository';
+import type { IReceitaFiscalRepository, ReceitaFiscalLinhaData, TipoLinhaReceita, TomadorTipo } from '../repositories/IReceitaFiscalRepository';
 import type { IServiceFiscalProfileRepository } from '../repositories/IServiceFiscalProfileRepository';
 import type { SimplesEntradasService } from './SimplesEntradasService';
 
@@ -25,6 +25,8 @@ export interface VendaReconhecida {
   /** Dia da receita (YYYY-MM-DD), o mesmo `occurredAt` do `sale.finalized`. */
   dia: string;
   lines: readonly SaleRevenueLine[];
+  /** X14 PR-4 (F-PR4-9): documento do cliente da venda (`loadSaleTomadorTipo`). */
+  tomadorTipo: TomadorTipo;
 }
 
 export interface TieOut {
@@ -129,6 +131,7 @@ export class ReceitaFiscalService {
         parceriaContratoId,
         cotaProfissionalCents,
         tipo: 'VENDA',
+        tomadorTipo: venda.tomadorTipo,
       });
     }
     return this.repo.createLinhasDaVenda(scope, linhas);
@@ -169,6 +172,7 @@ export class ReceitaFiscalService {
         parceriaContratoId: v.parceriaContratoId,
         cotaProfissionalCents: -v.cotaProfissionalCents,
         tipo,
+        tomadorTipo: v.tomadorTipo as TomadorTipo,
       })),
     );
   }

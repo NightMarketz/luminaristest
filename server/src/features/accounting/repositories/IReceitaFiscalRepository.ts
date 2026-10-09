@@ -16,7 +16,11 @@ export interface ReceitaFiscalLinhaData {
   cotaProfissionalCents: bigint;
   /** X14 PR-3: VENDA | CANCELAMENTO | DEVOLUCAO. */
   tipo: TipoLinhaReceita;
+  /** X14 PR-4 (F-PR4-9): documento do cliente da venda. */
+  tomadorTipo: TomadorTipo;
 }
+
+export type TomadorTipo = 'CNPJ' | 'CPF' | 'NAO_IDENTIFICADO';
 
 export type TipoLinhaReceita = 'VENDA' | 'CANCELAMENTO' | 'DEVOLUCAO';
 

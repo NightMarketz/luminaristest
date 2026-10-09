@@ -100,7 +100,7 @@ import type { AccountingEvent, SyncResult } from '../features/accounting/sync/Ac
 import { syncSkipErrorCode } from '../features/accounting/sync/AccountingSyncPort';
 import { JournalEntryRepository } from '../features/accounting/repositories/JournalEntryRepository';
 import { PackageBalanceRepository } from '../features/packages/repositories/PackageBalanceRepository';
-import { loadPackageValidityDays, loadSaleRevenueLines, loadSalePackageInfo } from '../features/accounting/sync/bridges/saleItems';
+import { loadPackageValidityDays, loadSaleRevenueLines, loadSalePackageInfo, loadSaleTomadorTipo } from '../features/accounting/sync/bridges/saleItems';
 import type { PackageCreditCommand } from '../features/packages/services/PackageBalanceService';
 import { saleDayAsWritten } from '../features/accounting/models/dates';
 import type { ProductLine } from '../features/accounting/sync/bridges/saleItems';
@@ -2129,6 +2129,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
           amount: sale.amount,
           dia,
           lines: await loadSaleRevenueLines(sale.ownerUserId, sale.saleId),
+          tomadorTipo: await loadSaleTomadorTipo(sale.ownerUserId, sale.saleId),
         }),
     });
 
@@ -2163,6 +2164,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
           amount: sale.amount,
           dia,
           lines: await loadSaleRevenueLines(sale.ownerUserId, sale.saleId),
+          tomadorTipo: await loadSaleTomadorTipo(sale.ownerUserId, sale.saleId),
         }),
       recordEstorno: (scope, sale, dia) => factory.getReceitaFiscalService().registrarEstorno(scope, sale.saleId, sale.tipo, dia),
     });
