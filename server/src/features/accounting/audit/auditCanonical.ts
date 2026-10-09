@@ -183,6 +183,8 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     'meiContribuinteIcms', 'meiContribuinteIss',
     // X14 PR-4 (F-PR4-13): boolean do MEI transportador autônomo de cargas.
     'meiTransportadorCargas',
+    // SIMPLES-PISO-ANEXO-XI item 12 (F-AX-2 a): chaves do Anexo XI (A-0001…) separadas por vírgula — sem texto livre.
+    'meiOcupacoes',
     // X14 F-PR4-12 (b): enum COMPETENCIA | CAIXA do regime de apuração do Simples.
     'simplesRegimeApuracao'],
   'company_fiscal_profile.deleted': ['anoCalendario'],

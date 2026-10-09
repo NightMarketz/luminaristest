@@ -110,7 +110,7 @@ describe('D-2026-10-10-X14-ALERTA-INFORMATIVO — severidade do NFSE_DIVERGE_REC
 
   it('MEI: WARNING mesmo antes de 2026-11 (a transição do documento municipal é do ME/EPP)', async () => {
     const c = await cenario('almei');
-    expect((await perfil(c, 2026, { regime: 'MEI', meiContribuinteIcms: false, meiContribuinteIss: true })).status).toBe(200);
+    expect((await perfil(c, 2026, { regime: 'MEI', meiContribuinteIcms: false, meiContribuinteIss: true, meiOcupacoes: ['A-0050'] })).status).toBe(200);
     await linha(c, '2026-03', 10_000, { tomadorTipo: 'CNPJ' });
     const a = await nfseDiverge(c, '2026-03');
     expect(a?.severity).toBe('WARNING');

@@ -44,7 +44,7 @@ describe('semente da migração (item 6)', () => {
     }
   });
 
-  it('PR-3: TABELAS_MIGRADAS = todas (DEPRECIACAO_ANEXO_III aberta)', () => {
+  it('PR-3: TABELAS_MIGRADAS = todas (DEPRECIACAO_ANEXO_III aberta; MEI_ANEXO_XI desde o consumidor do SIMPLES-PISO-ANEXO-XI)', () => {
     expect(LEGAL_PARAMETER_TABELAS.filter((t) => !TABELAS_MIGRADAS.has(t))).toEqual([]);
   });
 
@@ -89,8 +89,8 @@ describe('semente da migração (item 6)', () => {
     }
   });
 
-  it('o catálogo tem as 14 tabelas do item 2 (o item 27 do inventário fica fora) + as 7 do Simples (X14 PR-1)', () => {
-    expect(LEGAL_PARAMETER_TABELAS).toHaveLength(21);
+  it('o catálogo tem as 14 tabelas do item 2 (o item 27 do inventário fica fora) + as 7 do Simples (X14 PR-1) + MEI_ANEXO_XI (SIMPLES-PISO-ANEXO-XI)', () => {
+    expect(LEGAL_PARAMETER_TABELAS).toHaveLength(22);
   });
 });
 

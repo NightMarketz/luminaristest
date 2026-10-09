@@ -83,6 +83,7 @@ ibsCbsOpcaoS2?: (("DAS" | "REGULAR") | null)
 meiContribuinteIcms?: (boolean | null)
 meiContribuinteIss?: (boolean | null)
 meiTransportadorCargas?: (boolean | null)
+meiOcupacoes?: ([string, ...(string)[]] | null)
 simplesRegimeApuracao?: ("COMPETENCIA" | "CAIXA")
 }
 export interface OnboardingFiscalInput {

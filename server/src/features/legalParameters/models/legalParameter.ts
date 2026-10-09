@@ -29,6 +29,8 @@ export const LEGAL_PARAMETER_TABELAS = [
   'SIMPLES_LIMITE',
   'SIMEI_VALOR',
   'SALARIO_MINIMO',
+  // SIMPLES-PISO-ANEXO-XI bloco 2 (BRIEF item 11): ocupações permitidas ao MEI (Res. CGSN 140 Anexo XI, Tabelas A e B).
+  'MEI_ANEXO_XI',
 ] as const;
 export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
 
@@ -37,6 +39,8 @@ export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
  * depreciação; PR-3 = DEPRECIACAO_ANEXO_III). Desde o PR-3 são todas; o conjunto fica como guarda de que tabela nova
  * no enum só se propõe quando um consumidor a lê.
  */
+// MEI_ANEXO_XI (SIMPLES-PISO-ANEXO-XI bloco 2) entrou quando o consumidor passou a ler a tabela (itens 12-15: perfil e
+// apuração do SIMEI) — mesmo tratamento que a DEPRECIACAO_ANEXO_III teve entre o PR-2 e o PR-3.
 export const TABELAS_MIGRADAS: ReadonlySet<LegalParameterTabela> = new Set(LEGAL_PARAMETER_TABELAS);
 
 export const LEGAL_PARAMETER_STATUS = ['DRAFT', 'PUBLISHED', 'REVOKED'] as const;

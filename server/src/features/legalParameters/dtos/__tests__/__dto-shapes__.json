@@ -27,7 +27,8 @@
             "SIMPLES_ENQUADRAMENTO",
             "SIMPLES_LIMITE",
             "SIMEI_VALOR",
-            "SALARIO_MINIMO"
+            "SALARIO_MINIMO",
+            "MEI_ANEXO_XI"
           ]
         },
         "chave": {
@@ -116,7 +117,8 @@
             "SIMPLES_ENQUADRAMENTO",
             "SIMPLES_LIMITE",
             "SIMEI_VALOR",
-            "SALARIO_MINIMO"
+            "SALARIO_MINIMO",
+            "MEI_ANEXO_XI"
           ]
         },
         "status": {
@@ -188,7 +190,8 @@
             "SIMPLES_ENQUADRAMENTO",
             "SIMPLES_LIMITE",
             "SIMEI_VALOR",
-            "SALARIO_MINIMO"
+            "SALARIO_MINIMO",
+            "MEI_ANEXO_XI"
           ]
         },
         "chave": {

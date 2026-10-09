@@ -38,6 +38,7 @@ export interface CompanyFiscalProfileData {
   meiContribuinteIcms: boolean | null;
   meiContribuinteIss: boolean | null;
   meiTransportadorCargas: boolean | null;
+  meiOcupacoes: Prisma.InputJsonValue | typeof Prisma.DbNull; // SIMPLES-PISO-ANEXO-XI item 12: string[] de chaves MEI_ANEXO_XI
   simplesRegimeApuracao: string; // X14 F-PR4-12 (b): COMPETENCIA | CAIXA
 }
 

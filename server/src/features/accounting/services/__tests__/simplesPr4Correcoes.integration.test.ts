@@ -158,7 +158,7 @@ describe('F-PR4-7 — linha de SIMPLES_LIMITE ausente falha ruidoso (sem `?? 0`)
 
   it('MEI: calcular sem SIMPLES_LIMITE ⇒ 400 PARAMETRO_LEGAL_AUSENTE', async () => {
     const c = await cenario('pr4limmei');
-    expect((await perfil(c, 2026, { regime: 'MEI', meiContribuinteIcms: false, meiContribuinteIss: true })).status).toBe(200);
+    expect((await perfil(c, 2026, { regime: 'MEI', meiContribuinteIcms: false, meiContribuinteIss: true, meiOcupacoes: ['A-0050'] })).status).toBe(200);
     const spy = semTabela('SIMPLES_LIMITE');
     const r = await calcular(c, '2026-03');
     spy.mockRestore();
@@ -213,7 +213,7 @@ describe('F-PR4-9 — NFS-e do MEI: só a receita de serviço a tomador CNPJ exi
     await f().getPostingService().ensureChartOfAccounts(c.scope());
     await prisma.accountingPeriod.create({ data: { userId: u.id, unitId: unit, year: 2026, month: 3, status: 'OPEN', openedAt: new Date() } });
     await servico(c, 'srv-corte', '060101');
-    expect((await perfil(c, 2026, { regime: 'MEI', meiContribuinteIcms: false, meiContribuinteIss: true })).status).toBe(200);
+    expect((await perfil(c, 2026, { regime: 'MEI', meiContribuinteIcms: false, meiContribuinteIss: true, meiOcupacoes: ['A-0050'] })).status).toBe(200);
   });
 
   it('serviço a consumidor pessoa física (CPF) sem NFS-e: dispensado, sem alerta', async () => {
@@ -232,7 +232,7 @@ describe('F-PR4-9 — NFS-e do MEI: só a receita de serviço a tomador CNPJ exi
 describe('F-PR4-11 — cota de aluguel do salão-parceiro fora da conferência NFS-e também no MEI (Lei 12.592 art. 1º-A §§ 4º–5º)', () => {
   it('serviço de R$ 1.000 com cota do profissional R$ 600 e cota do salão a título de aluguel de bem móvel: sem NFS-e devida, sem alerta', async () => {
     const c = await cenario('pr4meicota');
-    expect((await perfil(c, 2026, { regime: 'MEI', meiContribuinteIcms: false, meiContribuinteIss: true })).status).toBe(200);
+    expect((await perfil(c, 2026, { regime: 'MEI', meiContribuinteIcms: false, meiContribuinteIss: true, meiOcupacoes: ['A-0050'] })).status).toBe(200);
     const contrato = await prisma.salaoParceriaContrato.create({
       data: { userId: c.user.id, unitId: c.unit, profissionalContactId: 'prof-1', cotaSalaoBp: 4_000, naturezaCota: 'ALUGUEL_BEM_MOVEL', homologadoEm: '2026-01-02', sindicato: 'MTE', vigenteDesde: '2026-01-01', createdById: c.user.id, updatedById: c.user.id },
     });

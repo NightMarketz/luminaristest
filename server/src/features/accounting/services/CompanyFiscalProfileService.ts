@@ -22,6 +22,7 @@ import { matrizObrigacoesDe, resolverObrigacoes, type ObrigacaoResolvida, type P
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import type { CondicoesPerfil, ObrigacaoSped, StatusObrigacao } from '../models/obrigacoesPorRegime';
 import type { RegimeEmpresa } from '../models/regimeEmpresa';
+import { TABELA_ANEXO_XI, chavesInexistentes } from '../models/meiAnexoXi';
 
 export const COMPANY_FISCAL_PROFILE_UPDATED = 'company_fiscal_profile.updated';
 export const COMPANY_FISCAL_PROFILE_DELETED = 'company_fiscal_profile.deleted';
@@ -63,6 +64,7 @@ export interface CompanyFiscalProfileView {
   meiContribuinteIcms: boolean | null; // X14 PR-4 item 25
   meiContribuinteIss: boolean | null;
   meiTransportadorCargas: boolean | null;
+  meiOcupacoes: string[] | null; // SIMPLES-PISO-ANEXO-XI item 12
   simplesRegimeApuracao: SimplesRegimeApuracao; // X14 F-PR4-12 (b)
   ibsCbsOpcaoS1: IbsCbsOpcao | null; // X14 PR-2 item 14
   ibsCbsOpcaoS2: IbsCbsOpcao | null;
@@ -152,6 +154,14 @@ export class CompanyFiscalProfileService {
     // X14 PR-2 item 14: a opção do IBS/CBS no DAS existe a partir de 2027 (LC 123 art. 13 §§ 9º–10, red. LC 214).
     if (ano < 2027 && (data.ibsCbsOpcaoS1 !== null || data.ibsCbsOpcaoS2 !== null)) {
       throw new ValidationError(`A opção do IBS/CBS por semestre só existe a partir de 2027 (perfil de ${ano}).`);
+    }
+    // SIMPLES-PISO-ANEXO-XI item 12 (decisões 2 e 4 do dono, chat, 10/10): campo opcional, mas chave que veio e não existe
+    // no Anexo XI (Res. CGSN 140 art. 100 caput e § 1º-C I) ⇒ 400. A vigência na competência é checada na apuração.
+    if (input.meiOcupacoes) {
+      const inexistentes = chavesInexistentes(await this.legalParams.fotografia([TABELA_ANEXO_XI]), input.meiOcupacoes);
+      if (inexistentes.length > 0) {
+        throw new ValidationError(`Ocupação do MEI fora do Anexo XI da Res. CGSN 140: ${inexistentes.join(', ')}.`, { meiOcupacoes: inexistentes });
+      }
     }
     return this.repo.runTransaction(async (tx) => {
       const atual = await this.repo.findByYear(scope, ano, tx);
@@ -404,6 +414,7 @@ export class CompanyFiscalProfileService {
         meiContribuinteIcms: b(row.meiContribuinteIcms), // X14 PR-4 item 25
         meiContribuinteIss: b(row.meiContribuinteIss),
         meiTransportadorCargas: b(row.meiTransportadorCargas),
+        meiOcupacoes: ((row.meiOcupacoes as string[] | null) ?? []).join(','), // SIMPLES-PISO-ANEXO-XI item 12: chaves A-0001…
         simplesRegimeApuracao: row.simplesRegimeApuracao, // X14 F-PR4-12 (b) (enum)
         ...(copiadoDe === undefined ? {} : { copiadoDe: String(copiadoDe) }),
       },
@@ -493,6 +504,7 @@ function toData(input: UpsertCompanyFiscalProfileInput): CompanyFiscalProfileDat
     meiContribuinteIcms: input.meiContribuinteIcms,
     meiContribuinteIss: input.meiContribuinteIss,
     meiTransportadorCargas: input.meiTransportadorCargas,
+    meiOcupacoes: input.meiOcupacoes ?? Prisma.DbNull,
     simplesRegimeApuracao: input.simplesRegimeApuracao,
   };
 }
@@ -527,6 +539,7 @@ function rowToData(row: CompanyFiscalProfile): CompanyFiscalProfileData {
     meiContribuinteIcms: row.meiContribuinteIcms,
     meiContribuinteIss: row.meiContribuinteIss,
     meiTransportadorCargas: row.meiTransportadorCargas,
+    meiOcupacoes: row.meiOcupacoes === null ? Prisma.DbNull : (row.meiOcupacoes as Prisma.InputJsonValue),
     simplesRegimeApuracao: row.simplesRegimeApuracao,
   };
 }
@@ -563,6 +576,7 @@ function toView(row: CompanyFiscalProfile): CompanyFiscalProfileView {
     meiContribuinteIcms: row.meiContribuinteIcms,
     meiContribuinteIss: row.meiContribuinteIss,
     meiTransportadorCargas: row.meiTransportadorCargas,
+    meiOcupacoes: (row.meiOcupacoes as string[] | null) ?? null,
     simplesRegimeApuracao: row.simplesRegimeApuracao as SimplesRegimeApuracao,
     updatedAt: row.updatedAt.toISOString(),
   };

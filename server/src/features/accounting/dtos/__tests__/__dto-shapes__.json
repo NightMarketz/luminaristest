@@ -2702,6 +2702,23 @@
             }
           ]
         },
+        "meiOcupacoes": {
+          "default": null,
+          "anyOf": [
+            {
+              "minItems": 1,
+              "maxItems": 20,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[AB]-\\d{4}$"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "simplesRegimeApuracao": {
           "default": "COMPETENCIA",
           "type": "string",
@@ -10907,7 +10924,10 @@
             "LIMITE_MEI_EXCEDIDO",
             "NFSE_DIVERGE_RECEITA",
             "BENEFICIO_MUNICIPAL_INAPLICAVEL_DESVANTAJOSO",
-            "ISS_VALOR_FIXO_MUNICIPAL"
+            "ISS_VALOR_FIXO_MUNICIPAL",
+            "MEI_ENQUADRAMENTO_DIVERGE",
+            "MEI_TAC_COM_OCUPACAO_A",
+            "MEI_OCUPACAO_EXCLUIDA"
           ]
         },
         "detalhe": {

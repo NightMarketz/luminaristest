@@ -60,7 +60,7 @@ describe('item 25 — SIMEI pela rota de apuração', () => {
   });
 
   it('2026, contribuinte de ICMS e ISS: R$ 81,05 (5% de R$ 1.621) + R$ 1 + R$ 5 = R$ 87,05', async () => {
-    expect((await perfil(2026, { meiContribuinteIcms: true, meiContribuinteIss: true })).status).toBe(200);
+    expect((await perfil(2026, { meiContribuinteIcms: true, meiContribuinteIss: true, meiOcupacoes: ['A-0002'] })).status).toBe(200);
     const r = await calcular('2026-03');
     expect(r.status).toBe(200);
     expect(r.body.data).toMatchObject({ regime: 'MEI', salarioMinimoCents: 162_100, tributos: { CPP: 8_105, ICMS: 100, ISS: 500 }, totalCalculadoCents: 8_705, dasOficial: null });
