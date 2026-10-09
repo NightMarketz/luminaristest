@@ -20,6 +20,8 @@
  * `AAA.AA.AAA/AAAA-10 ➔ |AAAAAAAAAAAA10|` — sem máscara, 14 posições exatas.
  */
 
+import { isValidCpf, stripCpfMask } from './cpf';
+
 /** 14 posições, sem máscara, MAIÚSCULO: 12 alfanuméricas + 2 DV numéricos. */
 export const CNPJ_REGEX = /^[A-Z0-9]{12}[0-9]{2}$/;
 /** CPF segue numérico (a IN 2.229 não o altera). */
@@ -97,4 +99,16 @@ export function nfeChaveCheckDigit(chave43: string): number {
 export function isValidNfeChave(chave44: string): boolean {
   if (!NFE_CHAVE_REGEX.test(chave44)) return false;
   return nfeChaveCheckDigit(chave44.slice(0, 43)) === Number(chave44[43]);
+}
+
+/**
+ * CPF (11 dígitos com DV) ou CNPJ (alfanumérico com DV) — o critério do tomador da DPS (F-DFE-7 b), compartilhado com o
+ * subrazão fiscal de receita (X14 PR-4, F-PR4-9). `null` = ausente ou inválido.
+ */
+export function classifyTaxId(raw: string): { cnpj?: string; cpf?: string } | null {
+  const digitsOnly = raw.replace(/\D/g, '');
+  if (digitsOnly.length === 11 && isValidCpf(stripCpfMask(raw))) return { cpf: stripCpfMask(raw) };
+  const cnpjCandidate = stripCnpjMask(raw).toUpperCase();
+  if (cnpjCandidate.length === 14 && isValidCnpj(cnpjCandidate)) return { cnpj: cnpjCandidate };
+  return null;
 }

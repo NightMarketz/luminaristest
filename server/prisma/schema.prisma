@@ -2548,6 +2548,9 @@ model ReceitaFiscalLinha {
   // X14 PR-3 (lacuna 1 do PR-2): VENDA (positiva) | CANCELAMENTO | DEVOLUCAO (negativas, espelho do estorno/3.2,
   // na competência do lançamento — dono 07/10). Idempotência por (venda, tipo).
   tipo                  String   @default("VENDA")
+  // X14 PR-4 (F-PR4-9, dono 09/10): CNPJ | CPF | NAO_IDENTIFICADO — o documento do cliente da venda na gravação. O MEI
+  // só deve NFS-e ao tomador CNPJ (LC 123 art. 26 § 6º II). Linhas anteriores = NAO_IDENTIFICADO.
+  tomadorTipo           String   @default("NAO_IDENTIFICADO")
   createdAt             DateTime @default(now())
 
   @@unique([userId, unitId, saleId, itemRef])

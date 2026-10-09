@@ -30,7 +30,7 @@ const codigos = (body: { data: { alertas: Array<{ codigo: string }> } }) => body
 let seq = 0;
 const linhaReceita = (competencia: string, natureza: 'SERVICO' | 'REVENDA', cents: number) =>
   prisma.receitaFiscalLinha.create({
-    data: { userId: user.id, unitId: UNIT, competencia, dia: `${competencia}-10`, saleId: `sale-${++seq}`, itemRef: `item-${seq}`, natureza, cTribNac: natureza === 'SERVICO' ? '060101' : null, receitaCents: BigInt(cents), excluir: [] },
+    data: { userId: user.id, unitId: UNIT, competencia, dia: `${competencia}-10`, saleId: `sale-${++seq}`, itemRef: `item-${seq}`, natureza, cTribNac: natureza === 'SERVICO' ? '060101' : null, receitaCents: BigInt(cents), excluir: [], tomadorTipo: 'CNPJ' }, // F-PR4-9: só o tomador CNPJ exige NFS-e do MEI
   });
 const nfse = (dCompet: string, cents: number, status = 'AUTHORIZED') =>
   prisma.fiscalDocument.create({

@@ -236,7 +236,7 @@ describe('F-PR4-11 — cota de aluguel do salão-parceiro fora da conferência N
     const contrato = await prisma.salaoParceriaContrato.create({
       data: { userId: c.user.id, unitId: c.unit, profissionalContactId: 'prof-1', cotaSalaoBp: 4_000, naturezaCota: 'ALUGUEL_BEM_MOVEL', homologadoEm: '2026-01-02', sindicato: 'MTE', vigenteDesde: '2026-01-01', createdById: c.user.id, updatedById: c.user.id },
     });
-    await linha(c, '2026-03', 100_000, { parceriaContratoId: contrato.id, cotaProfissionalCents: 60_000n });
+    await linha(c, '2026-03', 100_000, { parceriaContratoId: contrato.id, cotaProfissionalCents: 60_000n, tomadorTipo: 'CNPJ' }); // CNPJ: sem o F-PR4-9 decidir
     const r = await calcular(c, '2026-03');
     expect(r.status).toBe(200);
     expect(codigos(r.body)).not.toContain('NFSE_DIVERGE_RECEITA');

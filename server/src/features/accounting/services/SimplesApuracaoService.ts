@@ -479,7 +479,9 @@ export class SimplesApuracaoService {
     // F-PR4-11 (dono 09/10): o mesmo filtro do ME — a cota do salão a título de aluguel de bem móvel não tem NFS-e.
     const ids = [...new Set(linhasPa.map((l) => l.parceriaContratoId).filter((x): x is string => !!x))];
     const aluguel = new Set((await this.entradasRepo.findParceriaMesmoRemovida(scope, ids, tx)).filter((c) => c.naturezaCota === 'ALUGUEL_BEM_MOVEL').map((c) => c.id));
-    await this.conferirNfse(scope, competencia, linhasPa.filter((l) => !(l.parceriaContratoId && aluguel.has(l.parceriaContratoId))), alertas, tx);
+    // F-PR4-9 (dono 09/10): o MEI só deve NFS-e ao tomador CNPJ (LC 123 art. 26 § 6º II; Res. CGSN 140 art. 106 II).
+    const devidas = linhasPa.filter((l) => l.tomadorTipo === 'CNPJ' && !(l.parceriaContratoId && aluguel.has(l.parceriaContratoId)));
+    await this.conferirNfse(scope, competencia, devidas, alertas, tx);
     const impressao = JSON.stringify({
       enquadramento,
       inicio: perfil.inicioAtividadeEm,
