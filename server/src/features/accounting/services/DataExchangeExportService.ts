@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { AccountingDataExchangeJob, BankStatementLine } from 'generated/prisma';
+import type { AccountingDataExchangeJob, BankStatementLine, TaxAssessment } from 'generated/prisma';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import * as storage from '../../../lib/attachmentStorage';
 import { sendAlertWebhook } from '../../../lib/alertWebhook';
@@ -16,6 +16,7 @@ import type { ImportKind } from '../models/DataExchange.model';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { centsFromDb } from '../models/money';
 import { sampleEntries, type SampleableLeg } from '../models/entrySample';
+import { anosDaJanela, linhaMeta, linhasDaApuracao, MEMO_COLUMNS, selecionarApuracoes } from '../models/taxAssessmentMemoExport';
 import { toJobResponse, toJobListItem, type DataExchangeJobResponse, type DataExchangeJobListItem } from './dataExchangeMappers';
 import type {
   TrialBalanceReport,
@@ -75,6 +76,12 @@ export interface IReconciliationReader {
  */
 export interface IAccountReader {
   findManyByUnit(scope: AccountingScope): Promise<Array<{ id: string; code: string }>>;
+}
+
+/** Leitura que `EXPORT_TAX_ASSESSMENT_MEMO` precisa (X7 Fase C PR-1, BRIEF C item 3) — satisfeita
+ *  estruturalmente por `ITaxAssessmentRepository` (método existente, sem query nova). */
+export interface ITaxAssessmentReader {
+  findConfirmedByYear(ownerUserId: string, anoCalendario: number): Promise<TaxAssessment[]>;
 }
 
 /** `[YYYY-MM-DD, YYYY-MM-DD]` → `{from: T00:00:00.000Z, to: T00:00:00.000Z}` — job-column
@@ -139,6 +146,8 @@ export class DataExchangeExportService {
     // Review #338 F1 (ALTO): código da conta bancária para EXPORT_BANK_RECONCILIATION — NUNCA
     // via trialBalance (só cobre conta COM movimento; ver IAccountReader acima).
     private readonly accountRepo: IAccountReader,
+    // X7 Fase C PR-1 (BRIEF C item 3): apurações confirmadas para EXPORT_TAX_ASSESSMENT_MEMO.
+    private readonly taxAssessments: ITaxAssessmentReader,
   ) {}
 
   /**
@@ -362,6 +371,24 @@ export class DataExchangeExportService {
         ]);
         const table: OutTable = { headers: [metaLine], rows: [columnHeaders, ...dataRows] };
         return { table, period };
+      }
+      case 'EXPORT_TAX_ASSESSMENT_MEMO': {
+        // X7 Fase C PR-1 (BRIEF C itens 3–12). Item 11: além do canRead do export(), a policy da apuração.
+        if (!this.policy.canReadTaxAssessment(scope)) {
+          throw new ForbiddenError('Não autorizado a ler apurações de tributos.');
+        }
+        // DTO superRefine garante a janela para este kind (item 2).
+        const w = { periodStart: dto.periodStart as string, periodEnd: dto.periodEnd as string };
+        const porAno = await Promise.all(
+          anosDaJanela(w).map((ano) => this.taxAssessments.findConfirmedByYear(scope.ownerUserId, ano)),
+        );
+        const apuracoes = selecionarApuracoes(porAno.flat(), w);
+        const dataRows: OutTable['rows'] = apuracoes.flatMap((a) => linhasDaApuracao(a));
+        const table: OutTable = {
+          headers: [linhaMeta(w, apuracoes.length, new Date())],
+          rows: [[...MEMO_COLUMNS], ...dataRows],
+        };
+        return { table, period: periodColumns(w.periodStart, w.periodEnd) };
       }
       default:
         // Exhaustiveness guard — the DTO enum should prevent reaching here.

@@ -364,7 +364,8 @@
               "EXPORT_BALANCE_SHEET",
               "EXPORT_INCOME_STATEMENT",
               "EXPORT_BANK_RECONCILIATION",
-              "EXPORT_ENTRY_SAMPLE"
+              "EXPORT_ENTRY_SAMPLE",
+              "EXPORT_TAX_ASSESSMENT_MEMO"
             ]
           }
         }
@@ -2716,7 +2717,8 @@
             "EXPORT_INCOME_STATEMENT",
             "EXPORT_TEMPLATE",
             "EXPORT_BANK_RECONCILIATION",
-            "EXPORT_ENTRY_SAMPLE"
+            "EXPORT_ENTRY_SAMPLE",
+            "EXPORT_TAX_ASSESSMENT_MEMO"
           ]
         },
         "format": {
