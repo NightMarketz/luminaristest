@@ -259,6 +259,7 @@ describe('F5 PR-3 — relatório de liberações → extrato da PaymentAccount �
     const calls: string[] = [];
     const files: Array<{ fileName: string; beginDate: string; endDate: string }> = [];
     let fail401 = false;
+    let nextDownload: Buffer | null = null;
     const port = {
       name: 'MERCADO_PAGO',
       capabilities: {} as CollectionProviderPort['capabilities'],
@@ -277,6 +278,7 @@ describe('F5 PR-3 — relatório de liberações → extrato da PaymentAccount �
       },
       downloadReleaseReport: async (_acc: unknown, name: string) => {
         calls.push(`download ${name}`);
+        if (nextDownload) return nextDownload;
         return csv(release('2026-10-08T10:00:00-03:00', 'PAY01JOB', 'job', 'payment', '20.00', '20.00', '0.00'));
       },
     } as unknown as CollectionProviderPort;
@@ -347,6 +349,35 @@ describe('F5 PR-3 — relatório de liberações → extrato da PaymentAccount �
       expect(s).toMatchObject({ failed: 1 });
       expect(invalid).toEqual([paId]);
       expect(marks.size).toBe(0);
+    });
+
+    it('A1 (R1 a, dono 2026-10-10): faixa sem movimento ⇒ watermark avança SEM extrato e grava release_report_empty_range', async () => {
+      fail401 = false;
+      marks.clear();
+      files.length = 0;
+      calls.length = 0;
+      files.push({ fileName: 'release-vazio.csv', beginDate: '2026-10-07T03:00:00Z', endDate: '2026-10-10T03:00:00Z' });
+      nextDownload = csv(
+        '2026-10-07T00:00:00-03:00,,,initial_available_balance,,0.00,0.00,,,,,,,20.00,',
+        '2026-10-09T23:59:59-03:00,,,available_balance,,20.00,0.00,,,,,,,20.00,',
+      );
+      const statements = await prisma.bankStatement.count();
+      const s1 = await service().fetchAll();
+      const s2 = await service().fetchAll();
+      nextDownload = null;
+      expect([s1.failed, s2.failed]).toEqual([0, 0]);
+      expect(marks.get(`mp_release:${paId}`)?.toISOString()).toBe('2026-10-10T03:00:00.000Z');
+      expect(await prisma.bankStatement.count()).toBe(statements);
+      expect(calls.filter((c) => c.startsWith('download'))).toEqual(['download release-vazio.csv']);
+      const ev = await eventos('payment_account.release_report_empty_range');
+      expect(ev).toHaveLength(1);
+      expect(ev[0].targetId).toBe(paId);
+      expect(JSON.parse(ev[0].payload)).toEqual({
+        paymentAccountId: paId,
+        fileName: 'release-vazio.csv',
+        fromUtc: '2026-10-07T03:00:00.000Z',
+        toUtc: '2026-10-10T03:00:00.000Z',
+      });
     });
   });
 });
