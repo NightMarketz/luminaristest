@@ -120,6 +120,9 @@ export const UpsertCompanyFiscalProfileSchema = z
     meiContribuinteIss: z.boolean().nullable().default(null),
     // X14 PR-4 (F-PR4-13): MEI transportador autônomo de cargas (Res. CGSN 140 art. 100 § 1º-A). Só no regime MEI.
     meiTransportadorCargas: z.boolean().nullable().default(null),
+    // SIMPLES-PISO-ANEXO-XI item 12 (F-AX-2 a): ocupações do MEI = chaves da tabela MEI_ANEXO_XI (Res. CGSN 140 art. 100
+    // caput e § 1º-C I). Existência/vigência da chave no ano é checada no serviço (400, decisão do dono 10/10).
+    meiOcupacoes: z.array(z.string().regex(/^[AB]-\d{4}$/, 'Chave do Anexo XI = A-0001 ou B-0001.')).min(1).max(20).nullable().default(null),
     // X14 F-PR4-12 (b), dono 10/10: regime de apuração da receita no Simples. Default COMPETENCIA.
     simplesRegimeApuracao: z.enum(SIMPLES_REGIMES_APURACAO).default('COMPETENCIA'),
   })
@@ -160,7 +163,7 @@ export const UpsertCompanyFiscalProfileSchema = z
     }
     // X14 PR-4 item 25 — o enquadramento do Anexo XI só existe para o MEI
     if (v.regime !== 'MEI') {
-      for (const k of ['meiContribuinteIcms', 'meiContribuinteIss', 'meiTransportadorCargas'] as const) {
+      for (const k of ['meiContribuinteIcms', 'meiContribuinteIss', 'meiTransportadorCargas', 'meiOcupacoes'] as const) {
         if (v[k] !== null) ctx.addIssue({ code: 'custom', path: [k], message: 'O enquadramento ICMS/ISS do Anexo XI é do MEI (Res. CGSN 140 art. 101 § 1º).' });
       }
     }

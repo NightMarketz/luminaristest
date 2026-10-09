@@ -63,6 +63,7 @@ export interface CompanyFiscalProfileView {
   meiContribuinteIcms: boolean | null; // X14 PR-4 item 25
   meiContribuinteIss: boolean | null;
   meiTransportadorCargas: boolean | null;
+  meiOcupacoes: string[] | null; // SIMPLES-PISO-ANEXO-XI item 12
   simplesRegimeApuracao: SimplesRegimeApuracao; // X14 F-PR4-12 (b)
   ibsCbsOpcaoS1: IbsCbsOpcao | null; // X14 PR-2 item 14
   ibsCbsOpcaoS2: IbsCbsOpcao | null;
@@ -404,6 +405,7 @@ export class CompanyFiscalProfileService {
         meiContribuinteIcms: b(row.meiContribuinteIcms), // X14 PR-4 item 25
         meiContribuinteIss: b(row.meiContribuinteIss),
         meiTransportadorCargas: b(row.meiTransportadorCargas),
+        meiOcupacoes: ((row.meiOcupacoes as string[] | null) ?? []).join(','), // SIMPLES-PISO-ANEXO-XI item 12: chaves A-0001…
         simplesRegimeApuracao: row.simplesRegimeApuracao, // X14 F-PR4-12 (b) (enum)
         ...(copiadoDe === undefined ? {} : { copiadoDe: String(copiadoDe) }),
       },
@@ -493,6 +495,7 @@ function toData(input: UpsertCompanyFiscalProfileInput): CompanyFiscalProfileDat
     meiContribuinteIcms: input.meiContribuinteIcms,
     meiContribuinteIss: input.meiContribuinteIss,
     meiTransportadorCargas: input.meiTransportadorCargas,
+    meiOcupacoes: input.meiOcupacoes ?? Prisma.DbNull,
     simplesRegimeApuracao: input.simplesRegimeApuracao,
   };
 }
@@ -527,6 +530,7 @@ function rowToData(row: CompanyFiscalProfile): CompanyFiscalProfileData {
     meiContribuinteIcms: row.meiContribuinteIcms,
     meiContribuinteIss: row.meiContribuinteIss,
     meiTransportadorCargas: row.meiTransportadorCargas,
+    meiOcupacoes: row.meiOcupacoes === null ? Prisma.DbNull : (row.meiOcupacoes as Prisma.InputJsonValue),
     simplesRegimeApuracao: row.simplesRegimeApuracao,
   };
 }
@@ -563,6 +567,7 @@ function toView(row: CompanyFiscalProfile): CompanyFiscalProfileView {
     meiContribuinteIcms: row.meiContribuinteIcms,
     meiContribuinteIss: row.meiContribuinteIss,
     meiTransportadorCargas: row.meiTransportadorCargas,
+    meiOcupacoes: (row.meiOcupacoes as string[] | null) ?? null,
     simplesRegimeApuracao: row.simplesRegimeApuracao as SimplesRegimeApuracao,
     updatedAt: row.updatedAt.toISOString(),
   };

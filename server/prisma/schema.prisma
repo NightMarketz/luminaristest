@@ -1541,6 +1541,8 @@ model CompanyFiscalProfile {
   meiContribuinteIss               Boolean?
   // X14 PR-4 (F-PR4-13, dono 09/10): MEI transportador autônomo de cargas — limite da Res. CGSN 140 art. 100 § 1º-A.
   meiTransportadorCargas           Boolean?
+  // SIMPLES-PISO-ANEXO-XI item 12 (F-AX-2 a): ocupações declaradas do MEI — lista JSON de chaves de MEI_ANEXO_XI (A-0001…).
+  meiOcupacoes                     Json?
   // X14 F-PR4-12 (b), dono 10/10: regime de apuração da receita no Simples — COMPETENCIA | CAIXA (Res. CGSN 140 art. 16).
   simplesRegimeApuracao            String             @default("COMPETENCIA")
   createdById                      String?
