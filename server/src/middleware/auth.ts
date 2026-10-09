@@ -43,6 +43,9 @@ const publicApiRoutes: PublicRule[] = [
   // verificação é `porta.verifyWebhook` (assinatura), não JWT. POST apenas — HEAD deriva de GET
   // no Express (routedMethod acima), então nunca cai aqui por acidente.
   { path: '/api/nfe/dfe/webhook', method: 'POST', match: 'prefix' },
+  // BE-INCR-PAYMENT-PROVIDER PR-2 (P2-5, PP-D4) — webhook do provedor de cobrança: sem sessão; a prova é a
+  // assinatura `x-signature` com o segredo da conta do `:accountId`. POST apenas (GET/HEAD continuam 401).
+  { path: '/api/payment-collection/webhook', method: 'POST', match: 'prefix' },
 ];
 
 // Admin-only API paths with method checks (prefix match covers /api/users/:id).

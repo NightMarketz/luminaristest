@@ -1105,6 +1105,7 @@ model Receivable {
   updatedAt        DateTime            @updatedAt
   deletedAt        DateTime?
   receipts         ReceivableReceipt[]
+  collectionCharges CollectionCharge[] // BE-INCR-PAYMENT-PROVIDER PR-2 (P2-2): cobranças no provedor — sem efeito no razão
 
   // Business key (D3): one live receivable per customer × document. rename-on-delete
   // (documentNumber → deleted:<id>:<documentNumber>) frees the key on cancel/delete so a re-create
@@ -2395,9 +2396,47 @@ model PaymentAccount {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   deletedAt            DateTime?
+  charges              CollectionCharge[] // PR-2
 
   @@index([userId, unitId, provider, status])
   @@map("payment_accounts")
+}
+
+// BE-INCR-PAYMENT-PROVIDER PR-2 (nó F5; BRIEF §4.1, PP-D3) — uma cobrança emitida no provedor contra um título do AR.
+// SEM efeito no razão (PP-D5, resposta 20): nenhuma transição gera JournalEntry nem ReceivableReceipt (P2-8).
+// "No máximo 1 viva (CREATING/PENDING) por título" = gate dentro da tx (P2-2), não @@unique (SQLite sem índice parcial).
+model CollectionCharge {
+  id                   String         @id @default(cuid()) // = external_reference no provedor
+  userId               String
+  unitId               String
+  paymentAccountId     String
+  paymentAccount       PaymentAccount @relation(fields: [paymentAccountId], references: [id], onDelete: Restrict)
+  receivableId         String
+  receivable           Receivable     @relation(fields: [receivableId], references: [id], onDelete: Restrict)
+  counterpartyId       String? // copiado do título na criação — chave da sugestão do pagador (P2-11)
+  kind                 String // BOLETO | PIX
+  amountCents          BigInt // saldo aberto relido na tx (P2-2)
+  expiresAt            DateTime // prazo explícito calculado por nós (F4 a, dono 10/10)
+  attempt              Int            @default(1) // X-Idempotency-Key = id:attempt
+  providerRef          String? // ORD…
+  providerPaymentRef   String? // PAY01… (M3)
+  providerStatus       String? // cru (M6)
+  providerStatusDetail String?
+  status               String // CREATING | PENDING | PAID | PARTIALLY_REFUNDED | CHARGED_BACK | REFUNDED | EXPIRED | CANCELLED | FAILED (F-PPB-8 b)
+  paidAt               DateTime? // instante da re-consulta que viu accredited — informativo (P2-7)
+  payerSnapshotJson    String // PII — fora do AuditEvent (P2-14)
+  instrumentJson       String?
+  failReason           String?
+  createdById          String?
+  cancelledById        String?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  deletedAt            DateTime?
+
+  @@unique([paymentAccountId, providerRef])
+  @@index([userId, unitId, receivableId, status])
+  @@index([userId, unitId, counterpartyId, createdAt])
+  @@map("collection_charges")
 }
 
 // BE-INCR-TAX-ASSESSMENT Fase A (nó X7; BRIEF item 12, contrato §2; F-X7-3 a) — apuração trimestral confirmada de

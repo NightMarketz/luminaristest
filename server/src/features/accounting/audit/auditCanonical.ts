@@ -225,6 +225,13 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'payment_account.updated':        ['paymentAccountId', 'fromStatus', 'toStatus'],
   'payment_account.credential_set': ['paymentAccountId', 'credentialKeyVersion', 'fromStatus', 'toStatus'],
   'payment_account.disabled':       ['paymentAccountId', 'fromStatus'],
+  // BE-INCR-PAYMENT-PROVIDER PR-2 (P2-4, F8 a do dono 10/10; P2-14) — só ids/status/valor: NUNCA pagador (PII),
+  // instrumento (linha digitável/QR), credencial nem a descrição enviada ao provedor.
+  'payment_account.credential_invalid': ['paymentAccountId', 'fromStatus', 'toStatus'],
+  'collection_charge.created':        ['collectionChargeId', 'receivableId', 'paymentAccountId', 'kind', 'amountCents', 'status'],
+  'collection_charge.status_changed': ['collectionChargeId', 'from', 'to', 'providerStatus'],
+  'collection_charge.cancelled':      ['collectionChargeId', 'fromStatus', 'toStatus', 'providerStatus'],
+  'collection_charge.failed':         ['collectionChargeId', 'fromStatus', 'toStatus'],
   // itemCount/kinds (C6b PR-3, Passo 12): tamanho e composição do pacote N-ário — números/enums,
   // nunca sha256 dos EXTRAS (só o do núcleo, que já estava aqui desde a origem).
   'delivery.package_built': ['deliveryId', 'ecdJobId', 'ecfJobId', 'periodStart', 'periodEnd', 'sha256Ecd', 'sha256Ecf', 'itemCount', 'kinds'],

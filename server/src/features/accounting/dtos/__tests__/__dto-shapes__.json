@@ -1784,6 +1784,296 @@
       "additionalProperties": false
     }
   },
+  "CollectionChargeDto.ts": {
+    "PayerAddressSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "streetName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "streetNumber": {
+          "type": "string",
+          "minLength": 1
+        },
+        "zipCode": {
+          "type": "string",
+          "pattern": "^\\d{8}$"
+        },
+        "neighborhood": {
+          "type": "string",
+          "minLength": 1
+        },
+        "city": {
+          "type": "string",
+          "minLength": 1
+        },
+        "state": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$"
+        }
+      },
+      "required": [
+        "streetName",
+        "streetNumber",
+        "zipCode",
+        "neighborhood",
+        "city",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "PayerSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "firstName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lastName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+        },
+        "identification": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "CPF",
+                "CNPJ"
+              ]
+            },
+            "number": {
+              "type": "string",
+              "pattern": "^\\d{11}$|^\\d{14}$"
+            }
+          },
+          "required": [
+            "type",
+            "number"
+          ],
+          "additionalProperties": false
+        },
+        "address": {
+          "type": "object",
+          "properties": {
+            "streetName": {
+              "type": "string",
+              "minLength": 1
+            },
+            "streetNumber": {
+              "type": "string",
+              "minLength": 1
+            },
+            "zipCode": {
+              "type": "string",
+              "pattern": "^\\d{8}$"
+            },
+            "neighborhood": {
+              "type": "string",
+              "minLength": 1
+            },
+            "city": {
+              "type": "string",
+              "minLength": 1
+            },
+            "state": {
+              "type": "string",
+              "pattern": "^[A-Z]{2}$"
+            }
+          },
+          "required": [
+            "streetName",
+            "streetNumber",
+            "zipCode",
+            "neighborhood",
+            "city",
+            "state"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "firstName",
+        "lastName",
+        "email",
+        "identification"
+      ],
+      "additionalProperties": false
+    },
+    "CreateChargeSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "BOLETO",
+            "PIX"
+          ]
+        },
+        "expiresInDays": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30
+        },
+        "expiresInMinutes": {
+          "type": "integer",
+          "minimum": 30,
+          "maximum": 43200
+        },
+        "payer": {
+          "type": "object",
+          "properties": {
+            "firstName": {
+              "type": "string",
+              "minLength": 1
+            },
+            "lastName": {
+              "type": "string",
+              "minLength": 1
+            },
+            "email": {
+              "type": "string",
+              "format": "email",
+              "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+            },
+            "identification": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "CPF",
+                    "CNPJ"
+                  ]
+                },
+                "number": {
+                  "type": "string",
+                  "pattern": "^\\d{11}$|^\\d{14}$"
+                }
+              },
+              "required": [
+                "type",
+                "number"
+              ],
+              "additionalProperties": false
+            },
+            "address": {
+              "type": "object",
+              "properties": {
+                "streetName": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "streetNumber": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "zipCode": {
+                  "type": "string",
+                  "pattern": "^\\d{8}$"
+                },
+                "neighborhood": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "city": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "state": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{2}$"
+                }
+              },
+              "required": [
+                "streetName",
+                "streetNumber",
+                "zipCode",
+                "neighborhood",
+                "city",
+                "state"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "firstName",
+            "lastName",
+            "email",
+            "identification"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "unitId",
+        "kind",
+        "payer"
+      ],
+      "additionalProperties": false
+    },
+    "CollectionChargeScopeQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "CancelChargeSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "CollectionWebhookParamsSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "accountId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "provider",
+        "accountId"
+      ],
+      "additionalProperties": false
+    }
+  },
   "CompanyFiscalProfileDto.ts": {
     "CompanyFiscalProfileAnoParamSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
