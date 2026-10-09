@@ -7,6 +7,7 @@ import { ApplicationFactory } from './lib/factory';
 import { purgeOldDeletedRecords } from './jobs/PurgeDeletedRecords';
 import { accountingSyncScheduler } from './jobs/AccountingSyncScheduler';
 import { dfePollScheduler } from './jobs/DfePollScheduler';
+import { collectionChargePollScheduler } from './jobs/CollectionChargePollScheduler';
 import { legalParamsRecalcScheduler } from './jobs/LegalParamsRecalcScheduler';
 import { DocumentStatus } from './features/documents/models/Document.model';
 
@@ -54,6 +55,7 @@ async function bootstrap(): Promise<void> {
     // tick do reconcile enxerga os mappers vindos dos bindings Active, nunca a fixture.
     accountingSyncScheduler.start();
     dfePollScheduler.start(); // BE-INCR-DFE (nó X10b, item 27)
+    collectionChargePollScheduler.start(); // BE-INCR-PAYMENT-PROVIDER PR-2 (P2-9)
     legalParamsRecalcScheduler.start(); // BE-INCR-LEGAL-PARAMS PR-4 (item 10): varredura dos jobs PENDING
   });
 }
@@ -120,6 +122,7 @@ function gracefulShutdown() {
   logger.info('Shutting down gracefully...');
   accountingSyncScheduler.stop();
   dfePollScheduler.stop();
+  collectionChargePollScheduler.stop();
   legalParamsRecalcScheduler.stop();
 
   // Force-exit safety net after 10 seconds

@@ -162,7 +162,7 @@ describe('ExportRequestSchema — listas fechadas', () => {
             ? { accountCode: '1.1.1' }
             : kind === 'EXPORT_TEMPLATE'
               ? { templateKind: 'IMPORT_CHART_OF_ACCOUNTS' as const }
-              : kind === 'EXPORT_BANK_RECONCILIATION' || kind === 'EXPORT_ISS_BY_COMPETENCE'
+              : kind === 'EXPORT_BANK_RECONCILIATION' || kind === 'EXPORT_TAX_ASSESSMENT_MEMO' || kind === 'EXPORT_ISS_BY_COMPETENCE'
                 ? { periodStart: '2026-01-01', periodEnd: '2026-01-31' }
                 : kind === 'EXPORT_ENTRY_SAMPLE'
                   ? { periodStart: '2026-01-01', periodEnd: '2026-01-31', seed: 'seed-1' }
@@ -340,6 +340,33 @@ describe('Schemas de importação e escopo', () => {
   it('TemplateKindSchema é a lista fechada de importação', () => {
     expect(TemplateKindSchema.safeParse('IMPORT_OPENING_BALANCES').success).toBe(true);
     expect(TemplateKindSchema.safeParse('EXPORT_TEMPLATE').success).toBe(false);
+  });
+});
+
+// X7 Fase C PR-1 (BRIEF C itens 1–2): memória das apurações — janela obrigatória; campo de outro kind ⇒ 400.
+describe('ExportRequestSchema — EXPORT_TAX_ASSESSMENT_MEMO (X7 Fase C PR-1)', () => {
+  const memo = { ...base, kind: 'EXPORT_TAX_ASSESSMENT_MEMO' as const, periodStart: '2026-01-01', periodEnd: '2026-12-31' };
+
+  it('item 1: aceita o kind com a janela', () => {
+    expect(ExportRequestSchema.safeParse(memo).success).toBe(true);
+  });
+
+  it('item 2: sem janela ⇒ issue em periodStart', () => {
+    const parsed = ExportRequestSchema.safeParse({ ...base, kind: 'EXPORT_TAX_ASSESSMENT_MEMO' });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) expect(parsed.error.issues.some((i) => i.path[0] === 'periodStart')).toBe(true);
+  });
+
+  it.each([
+    ['asOf', { asOf: '2026-06-30' }],
+    ['accountCode', { accountCode: '1.1.1' }],
+    ['templateKind', { templateKind: 'IMPORT_CHART_OF_ACCOUNTS' }],
+    ['perAccount', { perAccount: 5 }],
+    ['seed', { seed: 's' }],
+  ])('item 2: %s ⇒ issue nesse campo', (campo, extra) => {
+    const parsed = ExportRequestSchema.safeParse({ ...memo, ...extra });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) expect(parsed.error.issues.some((i) => i.path[0] === campo)).toBe(true);
   });
 });
 

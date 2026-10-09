@@ -12,6 +12,7 @@ import {
   type MyAccountantAssignmentView,
 } from '../../../lib/services/accountantAssignments.service';
 import { DynamicTableService } from '../../../lib/services/dynamic-table.service';
+import { policyVersionsService } from '../../../lib/services/policyVersions.service';
 
 /**
  * FE-INCR-ACCOUNTANT-GOVERNANCE item 13c/13c2 — a mordida do risco principal: o modo cliente (F-FE-GOV-1 b) vive
@@ -32,6 +33,16 @@ vi.mock('../../../lib/services/dimensions.service', () => ({
 }));
 vi.mock('../../../lib/services/accountantAssignments.service', () => ({
   accountantAssignmentsService: { listMine: vi.fn(), listByScope: vi.fn(), accept: vi.fn(), end: vi.fn(), invite: vi.fn() },
+}));
+
+// Faixa do modo cliente lê as propostas pendentes (FE-INCR-ACCOUNTING-POLICY-VERSION item 10).
+vi.mock('../../../lib/services/policyVersions.service', () => ({
+  policyVersionsService: { list: vi.fn(), get: vi.fn(), propose: vi.fn(), approve: vi.fn(), reject: vi.fn() },
+}));
+vi.mock('../governance/PolicyVersionsPanel', () => ({
+  PolicyVersionsPanel: (p: { governance?: { ownerUserId: string } }) => (
+    <div data-testid="policy-panel" data-owner={p.governance?.ownerUserId ?? ''} />
+  ),
 }));
 
 vi.mock('../components/TrialBalanceTable', () => ({ TrialBalanceTable: () => <div data-testid="other-panel" /> }));
@@ -97,6 +108,7 @@ describe('AccountingView — modo cliente (F-FE-GOV-1 b)', () => {
     vi.mocked(accountingService.getTrialBalance).mockResolvedValue({ balanced: true, rows: [] } as never);
     vi.mocked(accountingService.getAccounts).mockResolvedValue({ accounts: [] } as never);
     vi.mocked(dimensionsService.listCatalog).mockResolvedValue([]);
+    vi.mocked(policyVersionsService.list).mockResolvedValue([]);
   });
 
   it('sem carteira (lista vazia): a tela é a de sempre — 22 abas, select de unidade, nada de seletor de livro', async () => {
@@ -131,6 +143,8 @@ describe('AccountingView — modo cliente (F-FE-GOV-1 b)', () => {
       expect(visible.includes(tab.label), `aba ${tab.id}`).toBe(isDelegated);
     }
     expect(visible).toHaveLength(DELEGATED_TABS.length);
+    // F-FE-POL-2 a: a aba 'politica' entra de propósito, e SÓ ela a mais (tirar ou acrescentar outra derruba aqui).
+    expect([...DELEGATED_TABS]).toEqual(['periodos', 'compliance', 'politica']);
 
     // Cai em Períodos (a aba default 'balancete' não existe no modo cliente), com o ownerUserId do contexto.
     expect(screen.getByRole('tab', { name: 'Períodos' })).toHaveAttribute('aria-selected', 'true');

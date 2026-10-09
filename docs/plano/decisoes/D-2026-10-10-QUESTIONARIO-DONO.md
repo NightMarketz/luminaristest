@@ -24,3 +24,9 @@ Base das recomendações: pacote da persona contábil de 09/10. A base legal nã
 | Q5 | [[F5]] PR-2 e PR-3 | "Executa o PR-2 e o PR-3, sem merge" | PR-3 fica engatilhado até a sonda de colunas no M2 |
 | Q6 | [[CSLL-LC224]] | executa depois de conferir P-CA-1/2 na fonte oficial; P-CA-3/4 viram aviso no PR | P-CA-1/2 fechadas em 10/10 (LC 224 art. 7º e art. 14 I b no Planalto; Lei 7.689 compilada), confirmam o BRIEF → executa liberado. Achado fora do BRIEF: Lei 15.525/2026 cria CSLL de 9% para resseguradora local, sem código no leiaute 12 da ECF — aviso no PR |
 | Q7 | PRs #588 e #590 | (a) fechar sem merge | fechados em 10/10 (o #591 já corrigiu na raiz) |
+
+## Complemento de 10/10 (Q4)
+
+O dono aprovou o texto da consulta ao CRC-SP para envio pelo canal oficial e confirmou a trava comercial
+("com contador incluso" suspenso até a triagem). Diretriz condicional para a pergunta 3 registrada na própria
+[consulta](../../accounting/CONSULTA-CRC-SP-2026-10-02-F-GOV-1.md#quando-a-resposta-chegar).

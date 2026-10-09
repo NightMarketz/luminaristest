@@ -32,6 +32,8 @@ export const DELIVERABLE_EXPORT_KINDS = [
   'EXPORT_INCOME_STATEMENT',
   'EXPORT_BANK_RECONCILIATION',
   'EXPORT_ENTRY_SAMPLE',
+  // X7 Fase C PR-1 (BRIEF C item 9): a memória de cálculo das apurações entra como extra do pacote.
+  'EXPORT_TAX_ASSESSMENT_MEMO',
   // X7 Fase C PR-2 (BRIEF C item 17, F-TC-7 b): o relatório de ISS entra como extra do pacote.
   'EXPORT_ISS_BY_COMPETENCE',
 ] as const;

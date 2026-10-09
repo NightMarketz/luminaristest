@@ -483,6 +483,20 @@ describe('AccountingDeliveryService', () => {
       ]);
     });
 
+    // X7 Fase C PR-1 (BRIEF C item 9): a memória das apurações é extra entregável; a regra de período ⊆ núcleo
+    // é a existente (E-S4), só exercitada com o kind novo.
+    it('X7 C item 9: extra EXPORT_TAX_ASSESSMENT_MEMO monta; fora do período do pacote ⇒ EXTRA_PERIOD_OUT_OF_RANGE', async () => {
+      const ok = build({ extraJobs: { 'extra-1': extraJob('extra-1', 'EXPORT_TAX_ASSESSMENT_MEMO', 'e'.repeat(64)) } });
+      const manifest = await ok.service.buildDeliveryPackage(scope, { ...buildDto, extraJobIds: ['extra-1'] });
+      expect(manifest.files.map((f) => f.kind)).toEqual(['EXPORT_SPED_ECD', 'EXPORT_SPED_ECF', 'EXPORT_TAX_ASSESSMENT_MEMO']);
+
+      const p2025 = { start: new Date('2025-01-01T00:00:00.000Z'), end: new Date('2025-12-31T00:00:00.000Z') };
+      const fora = build({ extraJobs: { 'extra-1': extraJob('extra-1', 'EXPORT_TAX_ASSESSMENT_MEMO', 'e'.repeat(64), 'EXPORTED', p2025) } });
+      await expect(
+        fora.service.buildDeliveryPackage(scope, { ...buildDto, extraJobIds: ['extra-1'] }),
+      ).rejects.toMatchObject({ errorCode: 'EXTRA_PERIOD_OUT_OF_RANGE' });
+    });
+
     // X7 Fase C PR-2 (BRIEF C item 17, F-TC-7 b): o ISS por competência é extra entregável; período ⊆ núcleo (E-S4).
     it('X7 C item 17: extra EXPORT_ISS_BY_COMPETENCE monta; fora do período do pacote ⇒ EXTRA_PERIOD_OUT_OF_RANGE', async () => {
       const ok = build({ extraJobs: { 'extra-1': extraJob('extra-1', 'EXPORT_ISS_BY_COMPETENCE', 'f'.repeat(64)) } });

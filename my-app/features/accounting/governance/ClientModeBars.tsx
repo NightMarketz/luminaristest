@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { MyAccountantAssignmentView } from '../../../lib/services/accountantAssignments.service';
+import { policyVersionsService } from '../../../lib/services/policyVersions.service';
 import { useAccountingT } from '../lib/useAccountingT';
 import { AcceptAssignmentModal, EndAssignmentModal } from './AssignmentModals';
 import { shortUnit, type GovernanceScope } from './GovernanceScope';
@@ -43,9 +44,21 @@ export function PendingInvitesBanner({ pending, onAccepted }: { pending: MyAccou
  * Faixa fixa do modo cliente (item 8.5): a cada aba, deixa claro que o livro é de OUTRO usuário. Leva o botão de
  * encerrar do lado do contador (item 6.6).
  */
-export function ClientModeStrip({ governance, onEnded }: { governance: GovernanceScope; onEnded: () => void }) {
+export function ClientModeStrip({ governance, onEnded, onOpenPolicy }: { governance: GovernanceScope; onEnded: () => void; onOpenPolicy?: () => void }) {
   const { t } = useAccountingT();
   const [ending, setEnding] = useState(false);
+  // Aviso de proposta de política pendente (FE-INCR-ACCOUNTING-POLICY-VERSION item 10): uma leitura por livro (o pai
+  // remonta a faixa por `contextKey`); falha = sem aviso, nunca erro.
+  const [pendingPolicies, setPendingPolicies] = useState(0);
+  const { unitId, ownerUserId } = governance;
+  useEffect(() => {
+    let cancelled = false;
+    policyVersionsService
+      .list({ unitId, ownerUserId, status: 'PROPOSED' })
+      .then((rows) => { if (!cancelled) setPendingPolicies(rows.length); })
+      .catch(() => { if (!cancelled) setPendingPolicies(0); });
+    return () => { cancelled = true; };
+  }, [unitId, ownerUserId]);
   return (
     <div
       role="status"
@@ -58,6 +71,16 @@ export function ClientModeStrip({ governance, onEnded }: { governance: Governanc
           unit: shortUnit(governance.unitId),
         })}
       </span>
+      {pendingPolicies > 0 && (
+        <button
+          type="button"
+          data-testid="policy-pending-strip"
+          onClick={onOpenPolicy}
+          className="rounded-xl border border-amber-800/60 bg-amber-950/30 px-3 py-1 text-xs font-medium text-amber-200 hover:bg-amber-900/30"
+        >
+          {t('policy.client.pendingCount', '{{n}} proposta(s) de política aguardando sua decisão', { n: String(pendingPolicies) })}
+        </button>
+      )}
       <button
         type="button"
         onClick={() => setEnding(true)}

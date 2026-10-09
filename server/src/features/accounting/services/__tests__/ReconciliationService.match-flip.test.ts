@@ -226,6 +226,46 @@ describe('ReconciliationService.manualMatch (D3 aggregation)', () => {
   });
 });
 
+describe('ReconciliationService.manualMatch — soma por sinal (GAP-MAP manualmatch-soma-por-sinal, F5 P3-10)', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  // BRIEF BE-INCR-PAYMENT-PROVIDER P3-10: recibo a débito + encargo a débito +
+  // tarifa a CRÉDITO fecham a linha LÍQUIDA. Σ(débitos) = 10000 ≠ 9700; o
+  // correto é Σ(débito − crédito) = 9500 + 500 − 300 = 9700 = linha.
+  it('linha positiva: Σ(débito − crédito) das pernas === linha líquida → MATCHED (perna de tarifa a crédito entra)', async () => {
+    const legs: Record<string, unknown> = {
+      p1: posting('p1', 9500),
+      p2: posting('p2', 500),
+      p3: { ...posting('p3', 0), creditCents: 300 },
+    };
+    const { svc, repo } = buildService({
+      repo: {
+        findLineById: jest.fn(async () => ({ ...line, amountCents: 9700 })),
+        findPostingById: jest.fn(async (_s: unknown, id: string) => legs[id]),
+      },
+    });
+    const result = await svc.manualMatch(scope, { statementLineId: 'l1', postingIds: ['p1', 'p2', 'p3'] });
+    expect(result.matchedPostings).toBe(3);
+    expect(repo.createMatch).toHaveBeenCalledTimes(3);
+  });
+
+  it('linha negativa (simetria): Σ(crédito − débito) === |linha| → MATCHED (perna a débito entra)', async () => {
+    const legs: Record<string, unknown> = {
+      p1: { ...posting('p1', 0), creditCents: 10000 },
+      p2: posting('p2', 300),
+    };
+    const { svc, repo } = buildService({
+      repo: {
+        findLineById: jest.fn(async () => ({ ...line, amountCents: -9700 })),
+        findPostingById: jest.fn(async (_s: unknown, id: string) => legs[id]),
+      },
+    });
+    const result = await svc.manualMatch(scope, { statementLineId: 'l1', postingIds: ['p1', 'p2'] });
+    expect(result.matchedPostings).toBe(2);
+    expect(repo.createMatch).toHaveBeenCalledTimes(2);
+  });
+});
+
 describe('ReconciliationService.unmatch (D7 soft + flip-back)', () => {
   beforeEach(() => jest.clearAllMocks());
 

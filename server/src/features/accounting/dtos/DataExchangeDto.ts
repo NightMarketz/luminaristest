@@ -21,6 +21,8 @@ export const IMPLEMENTED_EXPORT_KINDS = [
   // C6b PR-2 Passo 8/9 (F-C6b-5/8 a) — pacote ampliado ao contador (BRIEF item 9/10).
   'EXPORT_BANK_RECONCILIATION',
   'EXPORT_ENTRY_SAMPLE',
+  // X7 Fase C PR-1 (BRIEF C itens 1–2): memória de cálculo das apurações, janela obrigatória.
+  'EXPORT_TAX_ASSESSMENT_MEMO',
   // X7 Fase C PR-2 (BRIEF C item 17, F-TC-7 b): ISS por competência × município, janela obrigatória.
   'EXPORT_ISS_BY_COMPETENCE',
 ] as const;
@@ -32,7 +34,7 @@ const PERIOD_OPTIONAL_KINDS = new Set<string>(['EXPORT_GENERAL_LEDGER']);
 /** Kinds cujo `periodStart`/`periodEnd` são OBRIGATÓRIOS já na fronteira do DTO (C6b PR-2 Passo
  *  8/9): sem janela explícita, conciliação e amostra não têm o que exportar — nunca um scan
  *  sem fim ou um kind "all-time" silencioso (mesma classe que F-C6b-6 a fechou p/ o balancete). */
-const PERIOD_REQUIRED_KINDS = new Set<string>(['EXPORT_BANK_RECONCILIATION', 'EXPORT_ENTRY_SAMPLE', 'EXPORT_ISS_BY_COMPETENCE']);
+const PERIOD_REQUIRED_KINDS = new Set<string>(['EXPORT_BANK_RECONCILIATION', 'EXPORT_ENTRY_SAMPLE', 'EXPORT_TAX_ASSESSMENT_MEMO', 'EXPORT_ISS_BY_COMPETENCE']);
 
 /**
  * POST /exports body — which report/template to render and in which format.
@@ -85,7 +87,7 @@ export const ExportRequestSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['periodStart'],
-        message: 'periodStart/periodEnd só valem para razão, conciliação bancária, amostra de lançamentos e ISS por competência.',
+        message: 'periodStart/periodEnd só valem para razão, conciliação bancária, amostra de lançamentos memória das apurações e ISS por competência.',
       });
     }
     // C6b PR-2 Passo 8/9: para conciliação e amostra a janela é OBRIGATÓRIA (nunca um kind
