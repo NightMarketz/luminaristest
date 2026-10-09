@@ -41,8 +41,9 @@ import {
 import { toGovernanceScope } from './governance/GovernanceScope';
 import { AccountantAssignmentSection } from './governance/AccountantAssignmentSection';
 import { ClientModeStrip, PendingInvitesBanner, clientLabel } from './governance/ClientModeBars';
+import { PolicyVersionsPanel } from './governance/PolicyVersionsPanel';
 
-export type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'nfe' | 'compliance' | 'dimensoes' | 'imobilizado' | 'perfil-fiscal' | 'parametros-legais';
+export type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'nfe' | 'compliance' | 'dimensoes' | 'imobilizado' | 'perfil-fiscal' | 'parametros-legais' | 'politica';
 
 // label = i18n fallback (current pt-BR); rendered via t(`view.tabs.<id>`, label)
 export const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
@@ -79,13 +80,15 @@ export const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
   { id: 'perfil-fiscal',  labelKey: 'view.tabs.perfilFiscal',   label: 'Perfil fiscal' },
   // FE-INCR-LEGAL-PARAMS (F-FE-LP-1 b, dono 08/10): coeficientes de lei da PLATAFORMA — o painel não usa a unidade.
   { id: 'parametros-legais', labelKey: 'view.tabs.parametrosLegais', label: 'Parâmetros legais' },
+  // FE-INCR-ACCOUNTING-POLICY-VERSION (F-FE-POL-2 a, dono 06/10): versões da política — o mesmo painel nos dois modos.
+  { id: 'politica',       labelKey: 'view.tabs.politica',       label: 'Política contábil' },
 ];
 
 /**
  * Abas do modo cliente (F-FE-GOV-1 b, BRIEF item 8.1): lista de PERMITIDAS, não de proibidas — uma aba nova
  * acrescentada ao `TABS` fica ESCONDIDA por padrão no modo cliente até alguém pô-la aqui de propósito.
  */
-export const DELEGATED_TABS: readonly Tab[] = ['periodos', 'compliance'];
+export const DELEGATED_TABS: readonly Tab[] = ['periodos', 'compliance', 'politica'];
 
 const OWN_CONTEXT = 'own';
 
@@ -251,7 +254,7 @@ export function AccountingView() {
       </header>
 
       <PendingInvitesBanner pending={pendingAssignments} onAccepted={() => void reloadAssignments()} />
-      {governance && <ClientModeStrip governance={governance} onEnded={leaveClient} />}
+      {governance && <ClientModeStrip governance={governance} onEnded={leaveClient} onOpenPolicy={() => setActiveTab('politica')} />}
 
       {/* ── Tab bar ────────────────────────────────────────────────────────── */}
       <div
@@ -499,6 +502,11 @@ export function AccountingView() {
       )}
 
       {activeTab === 'parametros-legais' && unitId && <LegalParametersPanel />}
+
+      {/* ── Política contábil (versões, diff, aprovar/rejeitar no modo cliente) — FE-INCR-ACCOUNTING-POLICY-VERSION ── */}
+      {activeTab === 'politica' && unitId && (
+        <PolicyVersionsPanel key={contextKey} unitId={unitId} governance={governance} onAssignmentLost={leaveClient} />
+      )}
 
       {/* ── New Entry Modal ────────────────────────────────────────────────── */}
       <JournalEntryModal

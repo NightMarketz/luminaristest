@@ -34,7 +34,8 @@
       "nfe": "NF-e",
       "imobilizado": "Fixed assets",
       "perfilFiscal": "Tax profile",
-      "parametrosLegais": "Legal parameters"
+      "parametrosLegais": "Legal parameters",
+      "politica": "Accounting policy"
     },
     "error": {
       "units": "Failed to load units.",
@@ -2141,7 +2142,11 @@
       "pendingExists": "There is already a pending invitation for this scope. End it before inviting again.",
       "assignmentChanged": "The invitation changed state; reload the screen.",
       "generic": "Could not complete the operation.",
-      "load": "Error loading the accountant assignments."
+      "load": "Error loading the accountant assignments.",
+      "policyApprovalRequired": "This scope has an active responsible accountant: the change needs their approval.",
+      "policyNoAccountant": "This scope no longer has an active responsible accountant: no one can approve the proposal.",
+      "policyVersionChanged": "This proposal changed (the owner sent another one or it was already decided); reloaded.",
+      "policyAccountantRequired": "Only this scope's active responsible accountant approves or rejects policy proposals."
     },
     "banner": {
       "active": "Active responsible accountant: {{name}} ({{crc}}). Only they can reopen periods and sign reviews; to do it yourself, end the assignment in the Compliance tab."
@@ -2665,5 +2670,95 @@
         "load": "Failed to load the recalculations."
       }
     }
+  },
+  "policy": {
+    "client": {
+      "pendingCount": "{{n}} policy proposal(s) awaiting your decision"
+    },
+    "col": {
+      "date": "Date",
+      "decidedBy": "Decided by",
+      "reason": "Rejection reason",
+      "status": "Status",
+      "target": "Target",
+      "version": "Version"
+    },
+    "decide": {
+      "approve": "Approve",
+      "approveConfirm": "Approving applies these values now to {{owner}}'s books.",
+      "approveConfirmButton": "Approve and apply",
+      "approveTitle": "Approve proposal",
+      "cancel": "Cancel",
+      "reason": "Reason (required)",
+      "reject": "Reject",
+      "rejectConfirmButton": "Reject with this reason",
+      "rejectTitle": "Reject proposal"
+    },
+    "detail": {
+      "baseApplied": "Compared with what this version applied.",
+      "baseCurrent": "Compared with the current values.",
+      "loading": "Loading…",
+      "reason": "Rejection reason: {{reason}}",
+      "title": "Proposal v{{n}}"
+    },
+    "diff": {
+      "accountMissing": "account not found ({{id}})",
+      "applied": "Applied",
+      "current": "Current",
+      "field": "Field",
+      "hideSame": "Hide unchanged fields",
+      "no": "No",
+      "noChanges": "No field changes relative to the base.",
+      "outside": "Fields outside this list do not change.",
+      "proposed": "Proposed",
+      "showSame": "Show unchanged fields ({{n}})",
+      "yes": "Yes"
+    },
+    "empty": "No versions recorded.",
+    "error": {
+      "approveStillPending": "The proposal remains pending; reject it with a reason if it cannot take effect.",
+      "decide": "Could not record the decision.",
+      "load": "Could not load the policy versions.",
+      "loadDetail": "Could not load the proposal."
+    },
+    "filter": {
+      "allStatuses": "All statuses",
+      "allTargets": "All targets",
+      "status": "Status",
+      "target": "Target"
+    },
+    "list": {
+      "direct": "applied directly (no accountant)",
+      "open": "View",
+      "otherAccountant": "another accountant",
+      "you": "you"
+    },
+    "loading": "Loading…",
+    "owner": {
+      "activeNotice": "This scope has an active responsible accountant ({{name}}, {{crc}}). The change only takes effect after they approve it.",
+      "offerPropose": "Send as proposal",
+      "offerPut": "Save directly",
+      "pending": "Proposal v{{n}} awaiting the accountant since {{date}}. Sending another one replaces it entirely.",
+      "pendingPartial": "Proposal v{{n}} awaiting the accountant since {{date}}. It is partial: only the accounts sent change. Sending another one replaces it.",
+      "proposedAccounts": "Accounts sent to the accountant (proposal v{{n}}). The accounts above remain the current ones until approval.",
+      "proposedProfile": "Proposal v{{n}} sent. The profile below remains the current one until approval.",
+      "sendToAccountant": "Send to the accountant for approval",
+      "viewProposal": "View proposal"
+    },
+    "status": {
+      "APPLIED": "Applied",
+      "PROPOSED": "Awaiting the accountant",
+      "REJECTED": "Rejected",
+      "SUPERSEDED": "Superseded"
+    },
+    "subtitle": {
+      "client": "Proposals from this book's owner. Open one to see what changes and decide.",
+      "own": "Versions of the fiscal profile and scope accounts. With an active responsible accountant, each change waits for their approval."
+    },
+    "target": {
+      "FISCAL_PROFILE": "Fiscal profile",
+      "SCOPE_SETTINGS": "Scope accounts"
+    },
+    "title": "Accounting policy"
   }
 }

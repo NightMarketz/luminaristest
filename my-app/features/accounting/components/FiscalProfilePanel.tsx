@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiAlertTriangle, FiCheckCircle } from 'react-icons/fi';
-import { fiscalProfileService, type FiscalProfileView } from '../../../lib/services/fiscalProfile.service';
+import { fiscalProfileService, type FiscalProfileView, type UpsertFiscalProfileInput } from '../../../lib/services/fiscalProfile.service';
 import { accountingService, type Account } from '../../../lib/services/accounting.service';
 import { resolveError } from '../lib/resolveError';
+import { policyVersionsService } from '../../../lib/services/policyVersions.service';
+import { toFiscalProfileProposal } from '../lib/policyPayload';
+import { useGovernedSave } from '../governance/useGovernedSave';
+import { ActiveAccountantNotice, GovernedOfferButton, PendingProposalBanner } from '../governance/GovernedSaveBars';
 import { useAccountingT } from '../lib/useAccountingT';
 import { toFiscalProfileForm, toUpsertFiscalProfile, type FiscalProfileForm, type FiscalProfileFormError } from '../lib/fiscalProfileForm';
 import { Field, inputClass } from './SpedGenerationPanel';
@@ -55,8 +59,7 @@ export function FiscalProfilePanel({ unitId }: FiscalProfilePanelProps) {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   // Troca de unidade com resposta em voo: só a última carga vale (a da unidade antiga não pode preencher o formulário
   // que o PUT depois grava na unidade nova — review independente, A1). Cada `load` toma um número; resposta velha é descartada.
   const reqRef = useRef(0);
@@ -83,6 +86,26 @@ export function FiscalProfilePanel({ unitId }: FiscalProfilePanelProps) {
   }, [unitId, tRef]);
   useEffect(() => { void load(); }, [load]);
 
+  // Política versionada (FE-INCR-ACCOUNTING-POLICY-VERSION itens 4–5): com contador ativo o mesmo corpo do PUT vira
+  // proposta; o formulário segue mostrando o vigente (F-FE-POL-4 a) e relê o GET depois de propor.
+  const governed = useGovernedSave<UpsertFiscalProfileInput>({
+    unitId,
+    target: 'FISCAL_PROFILE',
+    put: async (body) => {
+      const req = reqRef.current;
+      const saved = await fiscalProfileService.putUnitProfile(body);
+      if (req !== reqRef.current) return;
+      setView(saved);
+      setForm(toFiscalProfileForm(saved));
+    },
+    propose: async (body) => {
+      const v = await policyVersionsService.propose(toFiscalProfileProposal(body));
+      void load();
+      return v;
+    },
+    saveErrorFallback: t('fiscalProfile.error.save', 'Não foi possível salvar o perfil fiscal.'),
+  });
+
   const set = <K extends keyof FiscalProfileForm>(key: K, value: FiscalProfileForm[K]) => setForm((f) => ({ ...f, [key]: value }));
 
   /** Troca de regime: o espelho do `superRefine` — SIMPLES trava ICMS/PIS-COFINS; sair de SIMPLES obriga a escolher o regime de PIS/COFINS. */
@@ -98,24 +121,16 @@ export function FiscalProfilePanel({ unitId }: FiscalProfilePanelProps) {
   async function save() {
     const built = toUpsertFiscalProfile(unitId, form);
     if (!built.ok) {
-      setSaveError(tRef.current(`fiscalProfile.error.${built.error}`, FORM_ERROR_LABEL[built.error]));
+      governed.reset();
+      setFormError(tRef.current(`fiscalProfile.error.${built.error}`, FORM_ERROR_LABEL[built.error]));
       return;
     }
-    const req = reqRef.current;
-    setSaving(true);
-    setSaveError(null);
-    try {
-      const saved = await fiscalProfileService.putUnitProfile(built.body);
-      if (req !== reqRef.current) return;
-      setView(saved);
-      setForm(toFiscalProfileForm(saved));
-    } catch (e: unknown) {
-      if (req !== reqRef.current) return;
-      setSaveError(resolveError(e, tRef.current('fiscalProfile.error.save', 'Não foi possível salvar o perfil fiscal.')));
-    } finally {
-      setSaving(false);
-    }
+    setFormError(null);
+    await governed.submit(built.body);
   }
+
+  const saving = governed.busy;
+  const saveError = formError ?? governed.error;
 
   // ponytail: os `as` dos <select> abaixo são folha string → união (cada <option> já é um membro da união), nunca objeto.
   const regime = form.regimeTributario;
@@ -362,7 +377,21 @@ export function FiscalProfilePanel({ unitId }: FiscalProfilePanelProps) {
             </fieldset>
           </div>
 
-          {saveError && <div role="alert" className="mt-4 rounded-xl border border-red-900/50 bg-red-950/30 px-3 py-2 text-xs text-red-300">{saveError}</div>}
+          <div className="mt-4 space-y-2">
+            {governed.pending && <PendingProposalBanner pending={governed.pending} unitId={unitId} />}
+            {governed.active && <ActiveAccountantNotice active={governed.active} />}
+            {governed.proposed && (
+              <div role="status" className="rounded-xl border border-emerald-900/50 bg-emerald-950/30 px-3 py-2 text-xs text-emerald-300">
+                {t('policy.owner.proposedProfile', 'Proposta v{{n}} enviada. O perfil abaixo continua o vigente até a aprovação.', { n: String(governed.proposed.version) })}
+              </div>
+            )}
+          </div>
+          {saveError && (
+            <div role="alert" className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-red-900/50 bg-red-950/30 px-3 py-2 text-xs text-red-300">
+              <span>{saveError}</span>
+              {!formError && <GovernedOfferButton offer={governed.offer} busy={governed.busy} onAccept={() => void governed.acceptOffer()} />}
+            </div>
+          )}
           <div className="mt-4 flex justify-end">
             <button
               type="button"
@@ -370,7 +399,11 @@ export function FiscalProfilePanel({ unitId }: FiscalProfilePanelProps) {
               disabled={saving}
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-500 disabled:opacity-50"
             >
-              {saving ? t('fiscalProfile.saving', 'Salvando…') : t('fiscalProfile.saveProfile', 'Salvar perfil')}
+              {saving
+                ? t('fiscalProfile.saving', 'Salvando…')
+                : governed.active
+                  ? t('policy.owner.sendToAccountant', 'Enviar ao contador para aprovação')
+                  : t('fiscalProfile.saveProfile', 'Salvar perfil')}
             </button>
           </div>
         </>
