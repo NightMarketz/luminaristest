@@ -276,6 +276,14 @@ const FONTES = [
     arquivo: 'Res-CGSN-140-2018.json',
   },
   {
+    id: 'res-cgsn-140-2018-anexo-xi',
+    assunto: 'MEI — Anexo XI (ocupacoes permitidas, Tabelas A e B; SIMPLES-PISO-ANEXO-XI F-AX-1) — fonte de scripts/anexo-xi-to-fixture.mjs',
+    titulo: 'Resolucao CGSN 140/2018, Anexo XI (binario id 81177, red. Res. CGSN 182/2025, vigencia 01/10/2025)',
+    tipo: 'arquivo',
+    url: 'https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/81177',
+    arquivo: 'Res-CGSN-140-2018-Anexo-XI.pdf',
+  },
+  {
     id: 'manual-pgdas-defis',
     assunto: 'Simples — campos do PGDAS-D e da DEFIS (espelho F-SN-8/F-SN-9)',
     titulo: 'Manual do PGDAS-D e DEFIS a partir de 2018 (portal do Simples Nacional)',

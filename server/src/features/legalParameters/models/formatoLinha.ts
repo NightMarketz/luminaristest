@@ -74,6 +74,11 @@ export const DepreciacaoAnexoJson = z
   })
   .strict();
 
+/** SIMPLES-PISO-ANEXO-XI bloco 2 (BRIEF §4 `MeiAnexoXiLinha`) — linha do Anexo XI da Res. CGSN 140. */
+export const MeiAnexoXiJson = z
+  .object({ ocupacao: texto, cnae: z.string().regex(/^\d{4}-\d\/\d{2}$/), descricaoCnae: texto, iss: z.boolean(), icms: z.boolean() })
+  .strict();
+
 type Valor = 'int' | 'texto' | 'json';
 interface Regra {
   valor: Valor;
@@ -146,6 +151,12 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
         'chave = linha da fonte (sourceRow) ou NOTA; discriminador ANEXO_III_IN_1700_2017|ANEXO_III_NOTA_1|ANEXO_III_NOTA_2',
       ) ??
       jsonOk(DepreciacaoAnexoJson, l.valorJson, 'valorJson = { annualRateBp: 1..10000, ncm: string|null, description, lifeYears ≥ 1, justification? }'),
+  },
+  MEI_ANEXO_XI: {
+    valor: 'json',
+    checar: (l) =>
+      so(/^[AB]-\d{4}$/.test(l.chave) && l.discriminador === l.chave.slice(0, 1), 'chave = tabela + ordinal da fonte (A-0001…); discriminador = A|B da chave') ??
+      jsonOk(MeiAnexoXiJson, l.valorJson, 'valorJson = { ocupacao, cnae 0000-0/00, descricaoCnae, iss, icms }'),
   },
   FERIADO_NACIONAL: {
     valor: 'texto',
