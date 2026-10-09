@@ -236,6 +236,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'payment_account.credential_invalid': ['paymentAccountId', 'fromStatus', 'toStatus'],
   // BE-INCR-PAYMENT-PROVIDER PR-3 (P3-12, G8): job E upload manual; fromUtc/toUtc tirados do arquivo.
   'payment_account.release_report_imported': ['statementId', 'lineCount', 'fromUtc', 'toUtc'],
+  // Review do #615, A1 (R1 a, dono 2026-10-10): faixa sem movimento — o job avança a watermark SEM extrato.
+  // fromUtc/toUtc = faixa do job; fileName = nome do arquivo no provedor (não é PII).
+  'payment_account.release_report_empty_range': ['paymentAccountId', 'fileName', 'fromUtc', 'toUtc'],
   'collection_charge.created':        ['collectionChargeId', 'receivableId', 'paymentAccountId', 'kind', 'amountCents', 'status'],
   'collection_charge.status_changed': ['collectionChargeId', 'from', 'to', 'providerStatus'],
   'collection_charge.cancelled':      ['collectionChargeId', 'fromStatus', 'toStatus', 'providerStatus'],

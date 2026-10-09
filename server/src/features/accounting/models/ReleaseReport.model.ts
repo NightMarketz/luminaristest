@@ -8,6 +8,12 @@ import { scopeDay } from './dates';
 /** P3-12 / G8: gravado no job E no upload manual. */
 export const PAYMENT_ACCOUNT_RELEASE_REPORT_IMPORTED = 'payment_account.release_report_imported';
 
+/**
+ * Review do #615, A1 (R1 a, dono 2026-10-10): arquivo do job só com linhas de saldo ⇒ nenhum extrato (o import continua
+ * recusando "extrato sem linhas"), a watermark avança e fica este audit.
+ */
+export const PAYMENT_ACCOUNT_RELEASE_REPORT_EMPTY_RANGE = 'payment_account.release_report_empty_range';
+
 export const RELEASE_REPORT_OVERLAP = 'release_report_overlap';
 /** G2: com `mp_release` os saldos vêm só das linhas de saldo do arquivo — DTO com saldo ⇒ 400. */
 export const RELEASE_REPORT_BALANCE_FROM_FILE = 'release_report_balance_from_file';

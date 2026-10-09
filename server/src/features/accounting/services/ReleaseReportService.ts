@@ -9,6 +9,7 @@ import {
   type ResolvedAccount,
 } from '../collection/CollectionProviderPort';
 import {
+  PAYMENT_ACCOUNT_RELEASE_REPORT_EMPTY_RANGE,
   PAYMENT_ACCOUNT_RELEASE_REPORT_IMPORTED,
   RELEASE_REPORT_BALANCE_FROM_FILE,
   RELEASE_REPORT_NO_PAYMENT_ACCOUNT,
@@ -220,7 +221,23 @@ export class ReleaseReportService {
       periodEnd: brtDateOnly(new Date(end.getTime() - 1)),
       format: 'mp_release',
     };
-    await this.importFor(scope, account, dto, parseMpReleaseReport(buffer), buffer);
+    const parsed = parseMpReleaseReport(buffer);
+    if (parsed.table.rows.length === 0) {
+      // A1 (R1 a): faixa sem movimento — não há extrato a criar (o import manual segue recusando "sem linhas"); a
+      // watermark anda para o job pedir a faixa seguinte, e o audit registra a faixa vazia.
+      await this.paymentAccountRepo.runTransaction((tx) =>
+        this.auditService.append(tx, scope, {
+          actorUserId: scope.actorUserId,
+          eventType: PAYMENT_ACCOUNT_RELEASE_REPORT_EMPTY_RANGE,
+          targetType: 'payment_account',
+          targetId: account.id,
+          payload: { paymentAccountId: account.id, fileName: file.fileName, fromUtc: from.toISOString(), toUtc: end.toISOString() },
+        }),
+      );
+      await this.watermarks.set(key, end);
+      return 'skipped';
+    }
+    await this.importFor(scope, account, dto, parsed, buffer);
     await this.watermarks.set(key, end);
     return 'imported';
   }
