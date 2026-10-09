@@ -14,6 +14,7 @@ import type {
   TransitionData,
 } from './IFiscalDocumentRepository';
 import { AUTHORIZED_STATUSES } from './IFiscalDocumentRepository';
+import { municipioDoPayload } from '../models/issCompetencia';
 
 export function attemptRef(documentId: string, attemptNo: number): string {
   return `${documentId}:${attemptNo}`;
@@ -57,6 +58,31 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     return this.db(tx).fiscalDocument.findMany({
       where: { ...accountingScopeWhere(scope), status, deletedAt: null },
       orderBy: [{ createdAt: 'asc' }],
+    });
+  }
+
+  public async findForIssReport(
+    scope: AccountingScope,
+    from: string,
+    to: string,
+    statuses: readonly FiscalDocumentStatus[],
+    tx?: Prisma.TransactionClient,
+  ): Promise<Array<FiscalDocument & { cLocPrestacao: string | null }>> {
+    const docs = await this.db(tx).fiscalDocument.findMany({
+      where: {
+        ...accountingScopeWhere(scope),
+        kind: 'NFSE',
+        ambiente: 'producao',
+        status: { in: [...statuses] },
+        dCompet: { gte: from, lte: to },
+        deletedAt: null,
+      },
+      include: { attempts: { select: { attemptNo: true, payloadJson: true } } },
+      orderBy: [{ dCompet: 'asc' }, { createdAt: 'asc' }],
+    });
+    return docs.map(({ attempts, ...doc }) => {
+      const corrente = attempts.find((a) => a.attemptNo === doc.currentAttemptNo);
+      return { ...doc, cLocPrestacao: corrente ? municipioDoPayload(corrente.payloadJson) : null };
     });
   }
 

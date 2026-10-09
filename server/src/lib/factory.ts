@@ -1340,6 +1340,8 @@ export class ApplicationFactory {
         this.repositories.account,
         // X7 Fase C PR-1: ITaxAssessmentReader (findConfirmedByYear existente) para a memória no pacote.
         this.repositories.taxAssessment,
+        // X7 Fase C PR-2: IIssDocumentReader (findForIssReport) para o ISS por competência.
+        this.repositories.fiscalDocument,
       ),
       dataExchangeImport: new DataExchangeImportService(
         this.repositories.dataExchange,

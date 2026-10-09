@@ -365,7 +365,8 @@
               "EXPORT_INCOME_STATEMENT",
               "EXPORT_BANK_RECONCILIATION",
               "EXPORT_ENTRY_SAMPLE",
-              "EXPORT_TAX_ASSESSMENT_MEMO"
+              "EXPORT_TAX_ASSESSMENT_MEMO",
+              "EXPORT_ISS_BY_COMPETENCE"
             ]
           }
         }
@@ -3019,7 +3020,8 @@
             "EXPORT_TEMPLATE",
             "EXPORT_BANK_RECONCILIATION",
             "EXPORT_ENTRY_SAMPLE",
-            "EXPORT_TAX_ASSESSMENT_MEMO"
+            "EXPORT_TAX_ASSESSMENT_MEMO",
+            "EXPORT_ISS_BY_COMPETENCE"
           ]
         },
         "format": {
