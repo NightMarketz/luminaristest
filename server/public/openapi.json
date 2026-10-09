@@ -496,7 +496,7 @@
               "type": "string"
             },
             "maxItems": 20,
-            "description": "Até 20 jobs EXPORTED extras (balancete, razão, conciliação, amostra, BP, DRE) — SPED nunca é extra"
+            "description": "Até 20 jobs EXPORTED extras (balancete, razão, conciliação, amostra, BP, DRE, memória das apurações) — SPED nunca é extra"
           }
         }
       },
@@ -557,7 +557,8 @@
                 "EXPORT_BALANCE_SHEET",
                 "EXPORT_INCOME_STATEMENT",
                 "EXPORT_BANK_RECONCILIATION",
-                "EXPORT_ENTRY_SAMPLE"
+                "EXPORT_ENTRY_SAMPLE",
+                "EXPORT_TAX_ASSESSMENT_MEMO"
               ]
             },
             "description": "Kinds que a UI pré-marca no build — SUGESTÃO, não gate (C6b PR-3, F-C6b-2 a)"
@@ -11040,7 +11041,8 @@
                       "EXPORT_INCOME_STATEMENT",
                       "EXPORT_TEMPLATE",
                       "EXPORT_BANK_RECONCILIATION",
-                      "EXPORT_ENTRY_SAMPLE"
+                      "EXPORT_ENTRY_SAMPLE",
+                      "EXPORT_TAX_ASSESSMENT_MEMO"
                     ]
                   },
                   "format": {
@@ -11063,7 +11065,7 @@
                   },
                   "periodStart": {
                     "type": "string",
-                    "description": "YYYY-MM-DD — EXPORT_GENERAL_LEDGER (optional; window), EXPORT_BANK_RECONCILIATION and EXPORT_ENTRY_SAMPLE (both REQUIRED) only (400 for any other kind). Must be given together with periodEnd (never just one — 400 otherwise)"
+                    "description": "YYYY-MM-DD — EXPORT_GENERAL_LEDGER (optional; window), EXPORT_BANK_RECONCILIATION, EXPORT_ENTRY_SAMPLE and EXPORT_TAX_ASSESSMENT_MEMO (all REQUIRED) only (400 for any other kind). Must be given together with periodEnd (never just one — 400 otherwise)"
                   },
                   "periodEnd": {
                     "type": "string",
@@ -11604,10 +11606,7 @@
                         "type": "string",
                         "enum": [
                           "1",
-                          "3",
-                          "4",
-                          "7",
-                          "8"
+                          "4"
                         ],
                         "description": "1 = 9 percent"
                       },
@@ -11840,10 +11839,7 @@
                         "type": "string",
                         "enum": [
                           "1",
-                          "3",
-                          "4",
-                          "7",
-                          "8"
+                          "4"
                         ],
                         "description": "1 = 9 percent"
                       },
@@ -18705,10 +18701,7 @@
                         "type": "string",
                         "enum": [
                           "1",
-                          "3",
-                          "4",
-                          "7",
-                          "8"
+                          "4"
                         ]
                       },
                       "indRecReceita": {

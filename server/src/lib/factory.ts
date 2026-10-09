@@ -1338,6 +1338,8 @@ export class ApplicationFactory {
         // Review #338 F1: IAccountReader — resolve o código da conta bancária via o plano de
         // contas ATIVO (findManyByUnit), nunca via trialBalance (só cobre conta com movimento).
         this.repositories.account,
+        // X7 Fase C PR-1: ITaxAssessmentReader (findConfirmedByYear existente) para a memória no pacote.
+        this.repositories.taxAssessment,
       ),
       dataExchangeImport: new DataExchangeImportService(
         this.repositories.dataExchange,
