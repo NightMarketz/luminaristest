@@ -393,6 +393,27 @@ describe('F5 PR-2 — CollectionCharge + adaptador MP + webhook', () => {
     ]);
   });
 
+  it('achado 2: CREATING velha com expiresAt no passado NÃO é reenviada ao MP — CAS para EXPIRED com audit', async () => {
+    const t = await novoTitulo();
+    mp.nextCreate = 'network';
+    const r = await cobrar(t.id, { kind: 'PIX', payer: payerPix });
+    expect(r.status).toBe(502);
+    const row = await prisma.collectionCharge.findFirstOrThrow({ where: { receivableId: t.id } });
+    expect(row.status).toBe('CREATING');
+    await prisma.collectionCharge.update({
+      where: { id: row.id },
+      data: { updatedAt: new Date(Date.now() - 11 * 60_000), expiresAt: new Date(Date.now() - 60_000) },
+    });
+    mp.reset();
+    await getFactory().getCollectionChargeService().pollPending();
+    expect(mp.keys).not.toContain(`${row.id}:1`); // o fake do MP não recebeu o reenvio desta cobrança
+    expect((await prisma.collectionCharge.findUniqueOrThrow({ where: { id: row.id } })).status).toBe('EXPIRED');
+    const ev = (await eventos('collection_charge.status_changed')).map((e) => JSON.parse(e.payload));
+    expect(ev.filter((p) => p.collectionChargeId === row.id)).toEqual([
+      { collectionChargeId: row.id, from: 'CREATING', to: 'EXPIRED', providerStatus: null },
+    ]);
+  });
+
   it('P2-11: sugestão do pagador = snapshot da última cobrança da contraparte; sem cobrança ⇒ só o taxId', async () => {
     const r = await request(app).get(`/api/receivables/${tituloPix}/charges/payer-suggestion?unitId=${UNIT}`).set(authHeader(dono));
     expect(r.status).toBe(200);
