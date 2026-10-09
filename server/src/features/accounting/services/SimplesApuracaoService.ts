@@ -21,7 +21,7 @@
 import type { Prisma, SimplesApuracao } from 'generated/prisma';
 import { ConflictError, ForbiddenError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
-import { linhaLegalVigente, type LegalParameterTabela } from '../../legalParameters/models/legalParameter';
+import { SemLinhaVigenteError, linhaLegalVigente, type LegalParameterTabela } from '../../legalParameters/models/legalParameter';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import { apurar, apurarSimei, janelaRbt12, type ApuracaoSimei, type ApuracaoCalculada, type AtividadeInput, type MesReceita, type NaturezaSimples } from '../models/simplesCalc';
 import { espelhoPgdas, type EspelhoAtividade } from '../models/simplesEspelho';
@@ -371,7 +371,11 @@ export class SimplesApuracaoService {
   /** Item 23. Devolve se o sublimite do ICMS/ISS (e IBS a partir de 2027) está excedido para o PA. */
   private limites(linhas: Awaited<ReturnType<LegalParameterService['fotografia']>>, competencia: string, receitas: Receitas, inicio: string | null, alertas: AlertaSimples[]): boolean {
     const data = `${competencia}-01`;
-    const limite = (chave: string) => BigInt(linhaLegalVigente(linhas, 'SIMPLES_LIMITE', chave, data)?.valorInt ?? 0);
+    const limite = (chave: string) => {
+      const v = linhaLegalVigente(linhas, 'SIMPLES_LIMITE', chave, data)?.valorInt;
+      if (v == null) throw new SemLinhaVigenteError('SIMPLES_LIMITE', data, chave);
+      return BigInt(v);
+    };
     const ano = Number(competencia.slice(0, 4));
     const soma = (de: string, ate: string) => meses(de, ate).reduce((s, m) => s + (receitas.get(m) ?? 0n), 0n);
     const acumuladoAno = soma(`${ano}-01`, competencia);
@@ -464,7 +468,9 @@ export class SimplesApuracaoService {
     alertas: AlertaSimples[],
   ): bigint {
     const ano = Number(competencia.slice(0, 4));
-    const anual = BigInt(linhaLegalVigente(linhas, 'SIMPLES_LIMITE', 'MEI', `${competencia}-01`)?.valorInt ?? 0);
+    const anualLinha = linhaLegalVigente(linhas, 'SIMPLES_LIMITE', 'MEI', `${competencia}-01`)?.valorInt;
+    if (anualLinha == null) throw new SemLinhaVigenteError('SIMPLES_LIMITE', `${competencia}-01`, 'MEI');
+    const anual = BigInt(anualLinha);
     const inicioNoAno = inicio !== null && inicio.startsWith(`${ano}-`);
     const limite = inicioNoAno ? (anual * BigInt(13 - Number(inicio!.slice(5, 7)))) / 12n : anual;
     if (limite > 0n && acumulado > limite) {
