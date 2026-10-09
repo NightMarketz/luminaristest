@@ -3,7 +3,7 @@ import { join } from 'path';
 
 /**
  * Barreira do achado `qdrant-publicado-sem-chave-embora-codigo-suporte`
- * (docs/audit/TRIAGEM-R1-R3.json item 2 · AV-R1 F2 · bloqueia_deploy).
+ * (docs/audit/TRIAGEM-R1-R3.json [removida em 2026-08-09 — `git show b617d8f1:docs/audit/TRIAGEM-R1-R3.json`] item 2 · AV-R1 F2 · bloqueia_deploy).
  *
  * O falsificador que provou o achado era estático e de uma linha:
  *   grep -A6 'qdrant:' docker-compose.yml | grep -qi 'api_key\|environment'

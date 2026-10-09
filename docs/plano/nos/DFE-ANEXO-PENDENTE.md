@@ -6,7 +6,7 @@ titulo: "Anexo e proveniência da NFS-e autorizada não se perdem se falharem de
 estado: "done"
 estado_detalhe: "28/09: BRIEF escrito (#425); F-PA-1..8 ratificados por questionário (F-PA-5 c, F-PA-7 b e F-PA-8 b contra a recomendação). Sem 'executa'. Nó aberto em 09/10 depois do cruzamento BRIEF × git log: nenhum commit de implementação"
 depende_de: ["[[X10b]]"]
-autorizacao: "dono, chat, 2026-09-28: \"BRIEF da pendência de anexo\" (só o BRIEF); dono, chat, 2026-10-09: \"sim, abre os nós\" (só a nota do nó); dono, chat, 2026-10-09: \"Já não consegue automatizar? ja que tudo esta planejado\" (execução do nó, sem merge)"
+autorizacao: "dono, chat, 2026-09-28: \"BRIEF da pendência de anexo\" (só o BRIEF); dono, chat, 2026-10-09: \"sim, abre os nós\" (só a nota do nó) — sem 'executa'"
 ancora_sdd: "—"
 atualizado: "2026-10-09"
 prs: [425, "#602"]
