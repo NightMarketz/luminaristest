@@ -149,7 +149,7 @@ describe('I1b — rekeyLegacyUnitCli', () => {
   it('item 2: inventário do DMMF = 61 models com unitId, classificação fechada 59 REKEY + 2 KEEP, toda REKEY com userId', () => {
     // 47 na medição do ADR (26/09) + ProductDestinationDefault (#481) + PaymentAccount (#484) + AccountantAssignment (#482). Model novo com unitId derruba este teste até ser classificado.
     const inv = buildInventory();
-    expect(inv).toHaveLength(61); // +1 FiscalDocumentPendingAttachment (DFE-ANEXO-PENDENTE) · +1 SimplesDeclaracaoAnual (X14 PR-4) · +1 KitInstallation (KIT-SETOR PR-2) · +1 SimplesApuracao (X14 PR-3) · +4 Simples* / SalaoParceriaContrato / ReceitaFiscalLinha (X14 PR-2) · +1 TaxAssessment (X7 Fase A PR-2) · +1 AccountingPolicyVersion (GOV-CONTADOR, política versionada) · +1 PackageValidityAcceptance (FE-INCR-PACOTE-VALIDADE)
+    expect(inv).toHaveLength(62); // +1 FiscalDocumentPendingAttachment (DFE-ANEXO-PENDENTE) · +1 CollectionCharge (F5 PR-2) · +1 SimplesDeclaracaoAnual (X14 PR-4) · +1 KitInstallation (KIT-SETOR PR-2) · +1 SimplesApuracao (X14 PR-3) · +4 Simples* / SalaoParceriaContrato / ReceitaFiscalLinha (X14 PR-2) · +1 TaxAssessment (X7 Fase A PR-2) · +1 AccountingPolicyVersion (GOV-CONTADOR, política versionada) · +1 PackageValidityAcceptance (FE-INCR-PACOTE-VALIDADE)
     expect(inv.filter((t) => t.cls === 'REKEY').map((t) => t.model).sort()).toEqual([...REKEY_MODELS].sort());
     expect(inv.filter((t) => t.cls === 'KEEP').map((t) => t.model).sort()).toEqual([...KEEP_MODELS].sort());
     expect(inv.filter((t) => t.cls === 'REKEY').every((t) => t.ownerColumn === 'userId')).toBe(true);

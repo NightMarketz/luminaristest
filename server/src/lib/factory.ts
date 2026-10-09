@@ -37,6 +37,7 @@ import { DimensionRepository } from '../features/accounting/repositories/Dimensi
 import { CounterpartyRepository } from '../features/accounting/repositories/CounterpartyRepository';
 import { AccountingContactRepository } from '../features/accounting/repositories/AccountingContactRepository';
 import { PaymentAccountRepository } from '../features/accounting/repositories/PaymentAccountRepository';
+import { CollectionChargeRepository } from '../features/accounting/repositories/CollectionChargeRepository';
 import { TaxAssessmentRepository } from '../features/accounting/repositories/TaxAssessmentRepository';
 import { MitExportRepository } from '../features/accounting/repositories/MitExportRepository';
 import { SimplesEntradasRepository } from '../features/accounting/repositories/SimplesEntradasRepository';
@@ -127,6 +128,8 @@ import { AccountingContactService } from '../features/accounting/services/Accoun
 import { AccountantAssignmentService } from '../features/accounting/services/AccountantAssignmentService';
 import { AccountingPolicyVersionService } from '../features/accounting/services/AccountingPolicyVersionService';
 import { PaymentAccountService } from '../features/accounting/services/PaymentAccountService';
+import { CollectionChargeService } from '../features/accounting/services/CollectionChargeService';
+import { MercadoPagoCollectionProvider } from '../features/accounting/collection/MercadoPagoCollectionProvider';
 import { TaxAssessmentService } from '../features/accounting/services/TaxAssessmentService';
 import { MitExportService } from '../features/accounting/services/MitExportService';
 import { SimplesEntradasService } from '../features/accounting/services/SimplesEntradasService';
@@ -243,6 +246,7 @@ import type { IPostingRepository } from '../features/accounting/repositories/IPo
 import type { IAccountingPeriodRepository } from '../features/accounting/repositories/IAccountingPeriodRepository';
 import type { IAccountingContactRepository } from '../features/accounting/repositories/IAccountingContactRepository';
 import type { IPaymentAccountRepository } from '../features/accounting/repositories/IPaymentAccountRepository';
+import type { ICollectionChargeRepository } from '../features/accounting/repositories/ICollectionChargeRepository';
 import type { ITaxAssessmentRepository } from '../features/accounting/repositories/ITaxAssessmentRepository';
 import type { IMitExportRepository } from '../features/accounting/repositories/IMitExportRepository';
 import type { ISimplesEntradasRepository } from '../features/accounting/repositories/ISimplesEntradasRepository';
@@ -595,6 +599,7 @@ export class ApplicationFactory {
     lalur: ILalurRepository;
     accountingContact: IAccountingContactRepository;
     paymentAccount: IPaymentAccountRepository; // BE-INCR-PAYMENT-PROVIDER PR-1
+    collectionCharge: ICollectionChargeRepository; // BE-INCR-PAYMENT-PROVIDER PR-2
     taxAssessment: ITaxAssessmentRepository; // X7 Fase A PR-2
     mitExport: IMitExportRepository; // X9 PR-2
     simplesEntradas: ISimplesEntradasRepository; // X14 PR-2
@@ -689,6 +694,7 @@ export class ApplicationFactory {
     lalur: LalurService;
     accountingContact: AccountingContactService;
     paymentAccount: PaymentAccountService; // BE-INCR-PAYMENT-PROVIDER PR-1
+    collectionCharge: CollectionChargeService; // BE-INCR-PAYMENT-PROVIDER PR-2
     taxAssessment: TaxAssessmentService; // X7 Fase A PR-2
     mitExport: MitExportService; // X9 PR-2
     simplesEntradas: SimplesEntradasService; // X14 PR-2
@@ -767,6 +773,7 @@ export class ApplicationFactory {
       lalur: new LalurRepository(),
       accountingContact: new AccountingContactRepository(),
       paymentAccount: new PaymentAccountRepository(),
+      collectionCharge: new CollectionChargeRepository(),
       taxAssessment: new TaxAssessmentRepository(),
       mitExport: new MitExportRepository(),
       simplesEntradas: new SimplesEntradasRepository(),
@@ -1059,6 +1066,7 @@ export class ApplicationFactory {
     );
 
     // Extracted from the literal so CrmReceivableBridge (below) shares the same instance.
+    const mercadoPagoCollectionProvider = new MercadoPagoCollectionProvider(); // BE-INCR-PAYMENT-PROVIDER PR-2 (P2-1)
     const receivableService = new ReceivableService(
       this.repositories.receivable,
       this.repositories.account,
@@ -1066,6 +1074,7 @@ export class ApplicationFactory {
       auditService,
       this.policies.accounting,
       this.repositories.counterparty,
+      this.repositories.collectionCharge, // BE-INCR-PAYMENT-PROVIDER PR-2 (P2-13)
     );
 
     const reconciliationService = new ReconciliationService(
@@ -1329,6 +1338,8 @@ export class ApplicationFactory {
         // Review #338 F1: IAccountReader — resolve o código da conta bancária via o plano de
         // contas ATIVO (findManyByUnit), nunca via trialBalance (só cobre conta com movimento).
         this.repositories.account,
+        // X7 Fase C PR-1: ITaxAssessmentReader (findConfirmedByYear existente) para a memória no pacote.
+        this.repositories.taxAssessment,
       ),
       dataExchangeImport: new DataExchangeImportService(
         this.repositories.dataExchange,
@@ -1532,6 +1543,19 @@ export class ApplicationFactory {
         this.repositories.account,
         auditService,
         this.policies.accounting,
+      ),
+      // BE-INCR-PAYMENT-PROVIDER PR-2: o adaptador sai do `provider` da conta — MP é o único da porta hoje (P2-1).
+      collectionCharge: new CollectionChargeService(
+        this.repositories.collectionCharge,
+        this.repositories.paymentAccount,
+        this.repositories.receivable,
+        this.repositories.counterparty,
+        auditService,
+        this.policies.accounting,
+        (provider) => {
+          if (provider === 'MERCADO_PAGO') return mercadoPagoCollectionProvider;
+          throw new Error(`Provedor de cobrança sem adaptador: ${provider}`);
+        },
       ),
       accountingDelivery: new AccountingDeliveryService(
         this.repositories.accountingDelivery,
@@ -1751,6 +1775,7 @@ export class ApplicationFactory {
   public getCounterpartyService = (): CounterpartyService => this.services.counterparty;
   public getAccountingContactService = (): AccountingContactService => this.services.accountingContact;
   public getPaymentAccountService = (): PaymentAccountService => this.services.paymentAccount;
+  public getCollectionChargeService = (): CollectionChargeService => this.services.collectionCharge;
   public getTaxAssessmentService = (): TaxAssessmentService => this.services.taxAssessment;
   public getMitExportService = (): MitExportService => this.services.mitExport;
   public getSimplesEntradasService = (): SimplesEntradasService => this.services.simplesEntradas;

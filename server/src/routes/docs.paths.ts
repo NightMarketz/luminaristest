@@ -2322,12 +2322,12 @@
  *               type: object
  *               required: [kind, format, unitId]
  *               properties:
- *                 kind:         { type: string, enum: [EXPORT_TRIAL_BALANCE, EXPORT_GENERAL_LEDGER, EXPORT_BALANCE_SHEET, EXPORT_INCOME_STATEMENT, EXPORT_TEMPLATE, EXPORT_BANK_RECONCILIATION, EXPORT_ENTRY_SAMPLE] }
+ *                 kind:         { type: string, enum: [EXPORT_TRIAL_BALANCE, EXPORT_GENERAL_LEDGER, EXPORT_BALANCE_SHEET, EXPORT_INCOME_STATEMENT, EXPORT_TEMPLATE, EXPORT_BANK_RECONCILIATION, EXPORT_ENTRY_SAMPLE, EXPORT_TAX_ASSESSMENT_MEMO] }
  *                 format:       { type: string, enum: [csv, xlsx] }
  *                 unitId:       { type: string }
  *                 asOf:         { type: string, description: 'YYYY-MM-DD — required for BP/DRE; optional for EXPORT_TRIAL_BALANCE (balances as-of that date instead of accumulated-to-date)' }
  *                 accountCode:  { type: string, description: 'EXPORT_GENERAL_LEDGER only. When present, exports one account (optionally windowed by periodStart/periodEnd). When absent, exports the general ledger — every account with a leg in [periodStart, periodEnd] (periodStart/periodEnd then required)' }
- *                 periodStart:  { type: string, description: 'YYYY-MM-DD — EXPORT_GENERAL_LEDGER (optional; window), EXPORT_BANK_RECONCILIATION and EXPORT_ENTRY_SAMPLE (both REQUIRED) only (400 for any other kind). Must be given together with periodEnd (never just one — 400 otherwise)' }
+ *                 periodStart:  { type: string, description: 'YYYY-MM-DD — EXPORT_GENERAL_LEDGER (optional; window), EXPORT_BANK_RECONCILIATION, EXPORT_ENTRY_SAMPLE and EXPORT_TAX_ASSESSMENT_MEMO (all REQUIRED) only (400 for any other kind). Must be given together with periodEnd (never just one — 400 otherwise)' }
  *                 periodEnd:    { type: string, description: 'YYYY-MM-DD — same kinds/rules as periodStart. >= periodStart' }
  *                 templateKind: { type: string, enum: [IMPORT_CHART_OF_ACCOUNTS, IMPORT_OPENING_BALANCES, IMPORT_JOURNAL_ENTRIES], description: 'required for EXPORT_TEMPLATE' }
  *                 perAccount:   { type: integer, minimum: 1, maximum: 50, description: 'EXPORT_ENTRY_SAMPLE only (400 for any other kind). Max legs sampled per account, default 5 when omitted.' }
@@ -6416,6 +6416,105 @@ export {};
  *         '404': { $ref: '#/components/responses/NotFoundError' }
  *         '409': { description: 'payment_account_already_active' }
  *         '503': { description: 'payment_credential_key_missing' }
+ */
+/**
+ * @openapi
+ * paths:
+ *   /api/receivables/{receivableId}/charges:
+ *     post:
+ *       summary: Create a provider charge (boleto/Pix) for the open balance of a receivable (BE-INCR-PAYMENT-PROVIDER PR-2, P2-2)
+ *       description: >-
+ *         Valor = saldo em aberto relido na tx; conta Mercado Pago ACTIVE do escopo. Nenhum efeito no razão (PP-D5).
+ *         Campos de juros/multa/desconto ou prazo do tipo errado ⇒ 400 (P2-12).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: receivableId, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/CreateCollectionChargeInput' }
+ *       responses:
+ *         '201': { description: 'CollectionChargeView (PENDING, ou FAILED se o provedor recusou)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '409': { description: 'CHARGE_RECEIVABLE_NOT_CHARGEABLE | CHARGE_LIVE_EXISTS | CHARGE_NOTHING_TO_CHARGE | PAYMENT_ACCOUNT_NOT_ACTIVE' }
+ *         '502': { description: 'provider_credential_invalid | provider_unavailable (a cobrança fica CREATING e o job reenvia)' }
+ *         '503': { description: 'payment_credential_key_missing' }
+ *     get:
+ *       summary: List the provider charges of a receivable (P2-15) — without payer data
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: receivableId, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'CollectionChargeView[]' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *   /api/receivables/{receivableId}/charges/payer-suggestion:
+ *     get:
+ *       summary: Suggest the payer from the last charge of the same counterparty (P2-11, F-PP-11 a1)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: receivableId, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'payer (parcial)' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *   /api/collection-charges/{id}:
+ *     get:
+ *       summary: Read a provider charge (P2-15) — payer only for who manages receivables
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'CollectionChargeView' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *   /api/collection-charges/{id}/cancel:
+ *     post:
+ *       summary: Cancel a PENDING provider charge (P2-10); provider 409 ⇒ re-query and apply the real state
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { type: object, required: [unitId], properties: { unitId: { type: string } } }
+ *       responses:
+ *         '200': { description: 'CollectionChargeView' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '409': { description: 'CHARGE_NOT_PENDING' }
+ *         '502': { description: 'provider_credential_invalid | provider_unavailable' }
+ *   /api/payment-collection/webhook/{provider}/{accountId}:
+ *     post:
+ *       summary: Provider webhook (public) — wakes up a re-query, never transitions from the body (P2-5)
+ *       description: >-
+ *         Assinatura x-signature com o segredo da conta; janela de 15 dias. Conta inexistente, inativa, de outro
+ *         provedor, assinatura ou janela inválida ⇒ 401 sem escrita.
+ *       tags: [Accounting]
+ *       parameters:
+ *         - { in: path, name: provider, required: true, schema: { type: string } }
+ *         - { in: path, name: accountId, required: true, schema: { type: string } }
+ *         - { in: query, name: data.id, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'recebido' }
+ *         '401': { description: 'assinatura inválida / conta não habilitada' }
  */
 /**
  * @openapi

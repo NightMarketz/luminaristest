@@ -32,6 +32,9 @@ export const EXPORT_KINDS = [
   // Amostra determinística de lançamentos (C6b PR-2, Passo 9, F-C6b-8 a — BRIEF item 10).
   // Mesma coluna String ⇒ zero migration.
   'EXPORT_ENTRY_SAMPLE',
+  // Memória de cálculo das apurações IRPJ/CSLL (X7 Fase C, C3 — BRIEF item 1; nome reservado na decisão 16
+  // de 29/09). Mesma coluna String ⇒ zero migration.
+  'EXPORT_TAX_ASSESSMENT_MEMO',
 ] as const;
 
 export type ImportKind = (typeof IMPORT_KINDS)[number];

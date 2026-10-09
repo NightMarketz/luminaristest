@@ -32,6 +32,8 @@ export const DELIVERABLE_EXPORT_KINDS = [
   'EXPORT_INCOME_STATEMENT',
   'EXPORT_BANK_RECONCILIATION',
   'EXPORT_ENTRY_SAMPLE',
+  // X7 Fase C PR-1 (BRIEF C item 9): a memória de cálculo das apurações entra como extra do pacote.
+  'EXPORT_TAX_ASSESSMENT_MEMO',
 ] as const;
 export type DeliverableExportKind = (typeof DELIVERABLE_EXPORT_KINDS)[number];
 
