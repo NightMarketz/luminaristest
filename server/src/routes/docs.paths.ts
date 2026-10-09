@@ -6507,6 +6507,34 @@ export {};
  *         '404': { $ref: '#/components/responses/NotFoundError' }
  *         '409': { description: 'payment_account_already_active' }
  *         '503': { description: 'payment_credential_key_missing' }
+ *   /api/payment-accounts/{id}/release-report/unblock:
+ *     post:
+ *       summary: Unblock the daily release-report job for this account (review of PR 615, A2)
+ *       description: >-
+ *         O job mpReleaseReportFetch para na conta quando o arquivo do Mercado Pago sobrepõe extrato já importado
+ *         (releaseReportBlockedReason na view + audit payment_account.release_report_blocked). Depois de resolver a
+ *         sobreposição (ex.: excluir o extrato manual), o operador destrava aqui; o próximo ciclo baixa a faixa de novo.
+ *         Conta não bloqueada ⇒ 200 sem efeito.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               additionalProperties: false
+ *               required: [unitId]
+ *               properties:
+ *                 unitId: { type: string }
+ *       responses:
+ *         '200': { description: 'PaymentAccountView com releaseReportBlockedReason null' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
  */
 /**
  * @openapi

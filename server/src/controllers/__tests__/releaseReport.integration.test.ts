@@ -407,7 +407,7 @@ describe('F5 PR-3 — relatório de liberações → extrato da PaymentAccount �
         fileName: 'release-2.csv',
         fromUtc: '2026-10-07T03:00:00.000Z',
         toUtc: '2026-10-10T03:00:00.000Z',
-        reason: 'release_report_overlap',
+        code: 'release_report_overlap',
       });
 
       calls.length = 0;
@@ -416,6 +416,33 @@ describe('F5 PR-3 — relatório de liberações → extrato da PaymentAccount �
       expect(s2).toMatchObject({ failed: 0, imported: 0 });
       expect(calls).toEqual([]);
       expect(await eventos('payment_account.release_report_blocked')).toHaveLength(1);
+    });
+
+    it('A2 destravar: POST …/release-report/unblock limpa o alerta, grava _unblocked e o ciclo seguinte volta a baixar', async () => {
+      const res = await request(app).post(`/api/payment-accounts/${paId}/release-report/unblock`).set(authHeader(dono)).send({ unitId: UNIT });
+      expect(res.status).toBe(200);
+      expect(res.body.data.releaseReportBlockedReason).toBeNull();
+      const ev = await eventos('payment_account.release_report_unblocked');
+      expect(ev).toHaveLength(1);
+      expect(JSON.parse(ev[0].payload)).toEqual({ paymentAccountId: paId });
+      // Sem bloqueio: 2ª chamada é 200 sem novo audit.
+      await request(app).post(`/api/payment-accounts/${paId}/release-report/unblock`).set(authHeader(dono)).send({ unitId: UNIT });
+      expect(await eventos('payment_account.release_report_unblocked')).toHaveLength(1);
+      // Corpo .strict(): chave extra ⇒ 400.
+      const extra = await request(app).post(`/api/payment-accounts/${paId}/release-report/unblock`).set(authHeader(dono)).send({ unitId: UNIT, x: 1 });
+      expect(extra.status).toBe(400);
+      // A sobreposição não foi resolvida (o extrato manual continua) ⇒ o ciclo baixa uma vez e para de novo.
+      calls.length = 0;
+      // Arquivo DIFERENTE do manual (byte a byte igual seria o mesmo sha256 ⇒ o import devolve o extrato existente).
+      nextDownload = csv(
+        release('2026-10-08T09:00:00-03:00', 'PAY01MAN', 'man', 'payment', '15.00', '15.00', '0.00'),
+        release('2026-10-08T11:00:00-03:00', 'PAY01NV2', 'nv2', 'payment', '7.00', '7.00', '0.00'),
+      );
+      const s = await service().fetchAll();
+      nextDownload = null;
+      expect(s).toMatchObject({ blocked: 1 });
+      expect(calls).toContain('download release-2.csv');
+      expect(await eventos('payment_account.release_report_blocked')).toHaveLength(2);
     });
   });
 });

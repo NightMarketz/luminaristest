@@ -9,6 +9,7 @@ import {
   PAYMENT_ACCOUNT_INVALID_TRANSITION,
   PAYMENT_ACCOUNT_UPDATED,
 } from '../models/PaymentAccount.model';
+import { PAYMENT_ACCOUNT_RELEASE_REPORT_UNBLOCKED } from '../models/ReleaseReport.model';
 import {
   PaymentAccountConfigSchema,
   type CreatePaymentAccountInput,
@@ -37,6 +38,8 @@ export interface PaymentAccountView {
   credentialSetAt: string | null;
   credentialExpiresAt: string | null;
   accessTokenLast4: string | null;
+  /** A2 (R2 a): não-nulo = job do relatório de liberações parado nesta conta; destrava em POST …/release-report/unblock. */
+  releaseReportBlockedReason: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -172,6 +175,23 @@ export class PaymentAccountService {
     });
   }
 
+  /**
+   * POST …/release-report/unblock — review do #615, A2 (R2 a, dono 2026-10-10). O operador resolve a sobreposição
+   * (ex.: exclui o extrato manual que cobre a faixa do job) e destrava: o próximo ciclo do job baixa a faixa de novo.
+   * Se a sobreposição persistir, o job para outra vez (um bloqueio por destravamento, nunca um ciclo por dia).
+   * Conta não bloqueada ⇒ devolve a view sem efeito nem audit.
+   */
+  async unblockReleaseReport(scope: AccountingScope, id: string): Promise<PaymentAccountView> {
+    this.assertManage(scope);
+    return this.repo.runTransaction(async (tx) => {
+      const current = await this.require(scope, id, tx);
+      if (!current.releaseReportBlockedReason) return toView(current);
+      const updated = await this.repo.update(scope, id, { releaseReportBlockedReason: null }, tx);
+      await this.audit(tx, scope, PAYMENT_ACCOUNT_RELEASE_REPORT_UNBLOCKED, id, {});
+      return toView(updated);
+    });
+  }
+
   /** DELETE: soft-delete; não é idempotente (a 2ª chamada é 404, leitura só de linha viva). */
   async remove(scope: AccountingScope, id: string): Promise<void> {
     this.assertManage(scope);
@@ -234,6 +254,7 @@ function toView(row: PaymentAccount): PaymentAccountView {
     credentialSetAt: row.credentialSetAt?.toISOString() ?? null,
     credentialExpiresAt: row.credentialExpiresAt?.toISOString() ?? null,
     accessTokenLast4: row.accessTokenLast4,
+    releaseReportBlockedReason: row.releaseReportBlockedReason,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };

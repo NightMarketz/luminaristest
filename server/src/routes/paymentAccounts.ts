@@ -5,6 +5,7 @@ import {
   getPaymentAccount,
   listPaymentAccounts,
   setPaymentAccountCredential,
+  unblockPaymentAccountReleaseReport,
   updatePaymentAccount,
 } from '../controllers/paymentAccountController';
 
@@ -21,5 +22,6 @@ router.get('/:id', getPaymentAccount);
 router.patch('/:id', updatePaymentAccount);
 router.delete('/:id', deletePaymentAccount);
 router.put('/:id/credential', setPaymentAccountCredential);
+router.post('/:id/release-report/unblock', unblockPaymentAccountReleaseReport);
 
 export default router;

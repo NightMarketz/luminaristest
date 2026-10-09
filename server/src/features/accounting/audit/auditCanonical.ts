@@ -239,6 +239,10 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // Review do #615, A1 (R1 a, dono 2026-10-10): faixa sem movimento — o job avança a watermark SEM extrato.
   // fromUtc/toUtc = faixa do job; fileName = nome do arquivo no provedor (não é PII).
   'payment_account.release_report_empty_range': ['paymentAccountId', 'fileName', 'fromUtc', 'toUtc'],
+  // Review do #615, A2 (R2 a, dono 2026-10-10): job parado por sobreposição (code = código do erro; sourceIds =
+  // ids do provedor já importados, até 50, separados por vírgula) e o destravamento pelo operador.
+  'payment_account.release_report_blocked':   ['paymentAccountId', 'fileName', 'fromUtc', 'toUtc', 'code', 'sourceIds'],
+  'payment_account.release_report_unblocked': ['paymentAccountId'],
   'collection_charge.created':        ['collectionChargeId', 'receivableId', 'paymentAccountId', 'kind', 'amountCents', 'status'],
   'collection_charge.status_changed': ['collectionChargeId', 'from', 'to', 'providerStatus'],
   'collection_charge.cancelled':      ['collectionChargeId', 'fromStatus', 'toStatus', 'providerStatus'],

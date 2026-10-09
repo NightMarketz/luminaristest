@@ -2450,6 +2450,9 @@ model PaymentAccount {
   credentialExpiresAt  DateTime? // OWN: sempre null (a doc do MP não declara validade, M12) — OAuth futuro
   accessTokenLast4     String? // única projeção legível (PP-D7)
   status               String // DRAFT | ACTIVE | CREDENTIAL_INVALID | DISABLED
+  // Review do #615, A2 (R2 a, dono 2026-10-10): não-nulo = o job mpReleaseReportFetch parou nesta conta (sobreposição
+  // com extrato já importado) e não tenta de novo até o operador destravar (POST …/release-report/unblock).
+  releaseReportBlockedReason String?
   createdById          String?
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt

@@ -14,6 +14,13 @@ export const PAYMENT_ACCOUNT_RELEASE_REPORT_IMPORTED = 'payment_account.release_
  */
 export const PAYMENT_ACCOUNT_RELEASE_REPORT_EMPTY_RANGE = 'payment_account.release_report_empty_range';
 
+/**
+ * Review do #615, A2 (R2 a, dono 2026-10-10): o arquivo do job sobrepõe extrato já importado ⇒ o job PARA na conta
+ * (`releaseReportBlockedReason`), grava este audit e não tenta de novo até o operador destravar (evento `_unblocked`).
+ */
+export const PAYMENT_ACCOUNT_RELEASE_REPORT_BLOCKED = 'payment_account.release_report_blocked';
+export const PAYMENT_ACCOUNT_RELEASE_REPORT_UNBLOCKED = 'payment_account.release_report_unblocked';
+
 export const RELEASE_REPORT_OVERLAP = 'release_report_overlap';
 /** G2: com `mp_release` os saldos vêm só das linhas de saldo do arquivo — DTO com saldo ⇒ 400. */
 export const RELEASE_REPORT_BALANCE_FROM_FILE = 'release_report_balance_from_file';

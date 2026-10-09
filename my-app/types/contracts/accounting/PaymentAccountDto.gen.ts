@@ -27,3 +27,6 @@ webhookSecret: string
 export interface PaymentAccountScopeQueryInput {
 unitId: string
 }
+export interface UnblockReleaseReportInput {
+unitId: string
+}
