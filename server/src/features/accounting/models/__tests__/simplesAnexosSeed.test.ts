@@ -193,3 +193,14 @@ describe('semente v3 (X14 PR-4: SALARIO_MINIMO dos decretos, item 25)', () => {
     }
   });
 });
+
+describe('semente v4 (X14 PR-4: limite do MEI transportador autônomo de cargas, F-PR4-13)', () => {
+  const V4 = path.join(REPO_ROOT, 'server/prisma/data/legal_parameters_simples_v4.sql');
+  const MIG = path.join(REPO_ROOT, 'server/prisma/migrations/20261009090100_seed_simples_limite_mei_tac/migration.sql');
+  it('o migration.sql carrega o texto do arquivo; R$ 251.600,00 com a fonte da Res. CGSN 140 art. 100 § 1º-A', () => {
+    expect(norm(readFileSync(MIG, 'utf8'))).toContain(norm(readFileSync(V4, 'utf8')).trimEnd());
+    const v4 = legalParamsSeedRows(V4);
+    expect(v4.map((r) => [r.tabela, r.chave, r.valorInt, r.vigenteAte])).toEqual([['SIMPLES_LIMITE', 'MEI_TAC', 25_160_000, null]]);
+    expect(v4[0].fonte).toContain('art. 100 § 1º-A');
+  });
+});

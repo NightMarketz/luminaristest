@@ -21,9 +21,9 @@
 import type { Prisma, SimplesApuracao } from 'generated/prisma';
 import { ConflictError, ForbiddenError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
-import { SemLinhaVigenteError, linhaLegalVigente, type LegalParameterTabela } from '../../legalParameters/models/legalParameter';
+import { ParametroLegalAusenteError, linhaLegalVigente, type LegalParameterTabela } from '../../legalParameters/models/legalParameter';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
-import { apurar, apurarSimei, janelaRbt12, type ApuracaoSimei, type ApuracaoCalculada, type AtividadeInput, type MesReceita, type NaturezaSimples } from '../models/simplesCalc';
+import { INICIO_LC214, apurar, apurarSimei, janelaRbt12, type ApuracaoSimei, type ApuracaoCalculada, type AtividadeInput, type MesReceita, type NaturezaSimples } from '../models/simplesCalc';
 import { espelhoPgdas, type EspelhoAtividade } from '../models/simplesEspelho';
 import { mesBounds } from '../models/Lalur.model';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -33,6 +33,7 @@ import type { ICompanyFiscalProfileRepository } from '../repositories/ICompanyFi
 import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRepository';
 import type { IFiscalDocumentRepository } from '../repositories/IFiscalDocumentRepository';
 import type { IReceitaFiscalRepository } from '../repositories/IReceitaFiscalRepository';
+import type { IServiceFiscalProfileRepository } from '../repositories/IServiceFiscalProfileRepository';
 import type { ISimplesApuracaoRepository } from '../repositories/ISimplesApuracaoRepository';
 import type { ISimplesEntradasRepository } from '../repositories/ISimplesEntradasRepository';
 import type { AuditService } from './AuditService';
@@ -83,21 +84,42 @@ export interface ApuracaoMei extends ApuracaoSimei {
   alertas: AlertaSimples[];
 }
 
-/** X14 PR-4 (item 29) — o que o documento fiscal da prestação no mês lê da apuração do mês anterior. */
+/**
+ * X14 PR-4 (item 29; correções do dono 09/10, F-PR4-1..6) — SUGESTÃO da alíquota para o documento fiscal da prestação no
+ * mês, com a memória de cálculo. Quem informa e responde pela alíquota é o prestador (LC 123 art. 21 § 4º VI).
+ */
 export interface AliquotasSimples {
   competencia: string;
+  /** O PA cuja faixa vale (= `periodoApuracao`); no mês de início, a própria competência. */
   mesReferencia: string;
+  sugestao: true;
+  /** INICIO_ATIVIDADE (§ 4º II, 2%) · FAIXA_MES_ANTERIOR (§ 4º I red. LC 155, até 2026) · FAIXA_MES_PRESTACAO (red. LC 227, 2027+). */
+  regra: 'INICIO_ATIVIDADE' | 'FAIXA_MES_ANTERIOR' | 'FAIXA_MES_PRESTACAO';
+  periodoApuracao: string | null;
+  rbt12Cents: number | null;
+  janelaRbt12: ApuracaoCalculada['janelaRbt12'] | null;
   atividades: Array<{
-    anexo: string;
+    anexo: string | null;
     natureza: NaturezaSimples;
     cTribNac: string | null;
-    aliquotaEfetiva: string;
+    faixa: number | null;
+    fatorR: string | null;
+    aliquotaEfetiva: string | null;
     issRetencao: string | null;
-    pTotTribSNSugerido: string;
+    pTotTribSNSugerido: string | null;
     creditoAdquirente: { ICMS: string | null; IBS: string | null; CBS: string | null } | null;
   }>;
+  avisos: string[];
   alertas: AlertaSimples[];
 }
+
+/** F-PR4-6: a rota sugere; o prestador responde pela alíquota informada. */
+const AVISOS_ALIQUOTA = [
+  'Sugestão: a alíquota informada no documento fiscal é responsabilidade do prestador; informada a menor, a diferença é recolhida em guia do Município (LC 123 art. 21 § 4º VI; Res. CGSN 140 art. 27 VI).',
+  'O Município pode fixar critério próprio de informação da alíquota (Res. CGSN 140 art. 27 § 2º); isenção ou redução municipal do ISS não entra nesta sugestão (art. 27 § 1º).',
+];
+const AVISO_INICIO =
+  'Mês de início de atividade (abertura do CNPJ, Res. CGSN 140 art. 2º V): 2% (LC 123 art. 21 § 4º II); a diferença para a alíquota apurada é recolhida no mês seguinte em guia do Município (§ 4º III).';
 
 const proximo = (m: string, d: number): string => {
   const [a, mm] = m.split('-').map(Number);
@@ -150,6 +172,7 @@ export class SimplesApuracaoService {
     private readonly auditService: AuditService,
     private readonly policy: IAccountingPolicy,
     private readonly fiscalDocumentRepo: Pick<IFiscalDocumentRepository, 'somaNfseAutorizadaNaCompetencia'>,
+    private readonly serviceFiscalRepo: Pick<IServiceFiscalProfileRepository, 'listByScope'>,
   ) {}
 
   /** Item 17 — POST …/apuracoes/:competencia/calcular: calcula sob demanda, nada é gravado (B-2 → a). */
@@ -232,7 +255,13 @@ export class SimplesApuracaoService {
 
   // ---- montagem da entrada (itens 17, 23) ----
 
-  private async montar(scope: AccountingScope, competencia: string, tx?: Prisma.TransactionClient): Promise<Montagem> {
+  /** `catalogo` (só a rota de alíquotas, F-PR4-4): atividades do cadastro que entram mesmo sem receita no PA. */
+  private async montar(
+    scope: AccountingScope,
+    competencia: string,
+    tx?: Prisma.TransactionClient,
+    catalogo: ReadonlyArray<Pick<AtividadeInput, 'natureza' | 'cTribNac'>> = [],
+  ): Promise<Montagem> {
     const ano = Number(competencia.slice(0, 4));
     const perfil = await this.companyProfileRepo.findByYear(scope, ano, tx);
     if (!perfil || perfil.regime !== 'SIMPLES') {
@@ -328,6 +357,9 @@ export class SimplesApuracaoService {
       if (disponivel > 0n) parcelas.push({ receitaCents: Number(disponivel), excluir: [] });
       entrada.push({ natureza: g.natureza, cTribNac: g.cTribNac, parcelas });
     }
+    for (const a of catalogo) {
+      if (!entrada.some((e) => e.natureza === a.natureza && e.cTribNac === a.cTribNac)) entrada.push({ ...a, parcelas: [{ receitaCents: 0, excluir: [] }] });
+    }
     const naoAplicada = sobra.reduce((x, v) => x + v, 0n);
     if (naoAplicada > 0n) {
       alertas.push({ codigo: 'SEGREGACAO_MANUAL', detalhe: `R$ ${(Number(naoAplicada) / 100).toFixed(2)} declarados na segregação não têm receita da mesma natureza no mês e foram ignorados` });
@@ -371,10 +403,11 @@ export class SimplesApuracaoService {
   /** Item 23. Devolve se o sublimite do ICMS/ISS (e IBS a partir de 2027) está excedido para o PA. */
   private limites(linhas: Awaited<ReturnType<LegalParameterService['fotografia']>>, competencia: string, receitas: Receitas, inicio: string | null, alertas: AlertaSimples[]): boolean {
     const data = `${competencia}-01`;
+    // F-PR4-7 (dono 09/10): sem a linha, falha ruidoso — o zero calava o sublimite e o impedimento.
     const limite = (chave: string) => {
-      const v = linhaLegalVigente(linhas, 'SIMPLES_LIMITE', chave, data)?.valorInt;
-      if (v == null) throw new SemLinhaVigenteError('SIMPLES_LIMITE', data, chave);
-      return BigInt(v);
+      const valor = linhaLegalVigente(linhas, 'SIMPLES_LIMITE', chave, data)?.valorInt;
+      if (valor === null || valor === undefined) throw new ParametroLegalAusenteError('SIMPLES_LIMITE', data, chave);
+      return BigInt(valor);
     };
     const ano = Number(competencia.slice(0, 4));
     const soma = (de: string, ate: string) => meses(de, ate).reduce((s, m) => s + (receitas.get(m) ?? 0n), 0n);
@@ -440,10 +473,15 @@ export class SimplesApuracaoService {
     const acumulado = doAno.reduce((t, m) => t + receita(m), 0n);
     const alertas: AlertaSimples[] = [];
     const inicio = perfil.inicioAtividadeEm ? perfil.inicioAtividadeEm.slice(0, 7) : null;
-    const limite = this.limiteMei(linhas, competencia, inicio, acumulado, alertas);
+    const limite = this.limiteMei(linhas, competencia, inicio, acumulado, alertas, perfil.meiTransportadorCargas === true);
 
     const linhasPa = await this.receitaRepo.findByCompetencia(scope, competencia, tx);
-    await this.conferirNfse(scope, competencia, linhasPa, alertas, tx);
+    // F-PR4-11 (dono 09/10): o mesmo filtro do ME — a cota do salão a título de aluguel de bem móvel não tem NFS-e.
+    const ids = [...new Set(linhasPa.map((l) => l.parceriaContratoId).filter((x): x is string => !!x))];
+    const aluguel = new Set((await this.entradasRepo.findParceriaMesmoRemovida(scope, ids, tx)).filter((c) => c.naturezaCota === 'ALUGUEL_BEM_MOVEL').map((c) => c.id));
+    // F-PR4-9 (dono 09/10): o MEI só deve NFS-e ao tomador CNPJ (LC 123 art. 26 § 6º II; Res. CGSN 140 art. 106 II).
+    const devidas = linhasPa.filter((l) => l.tomadorTipo === 'CNPJ' && !(l.parceriaContratoId && aluguel.has(l.parceriaContratoId)));
+    await this.conferirNfse(scope, competencia, devidas, alertas, tx);
     const impressao = JSON.stringify({
       enquadramento,
       inicio: perfil.inicioAtividadeEm,
@@ -456,7 +494,8 @@ export class SimplesApuracaoService {
 
   /**
    * Item 26 — limite do MEI: R$ 81.000 no ano (Res. CGSN 140 art. 100 caput, em `SIMPLES_LIMITE`/MEI); no ano de início,
-   * R$ 6.750 × meses do início ao fim do ano (§ 1º = limite ÷ 12 × meses). Excesso ⇒ desenquadramento obrigatório com
+   * R$ 6.750 × meses do início ao fim do ano (§ 1º). Transportador autônomo de cargas (§ 1º-A; F-PR4-13): R$ 251.600 em
+   * `SIMPLES_LIMITE`/MEI_TAC e, no início, R$ 20.966,67 × meses — o mensal é o anual ÷ 12 arredondado ao centavo. Excesso ⇒ desenquadramento obrigatório com
    * comunicação até o último dia útil do mês seguinte; efeitos pelo art. 115 § 2º II "a": ≤ 20% ⇒ 1º de janeiro do ano
    * seguinte (item 1); > 20% ⇒ retroativo a 1º de janeiro do ano (item 2) ou ao início de atividade (item 3).
    */
@@ -466,13 +505,15 @@ export class SimplesApuracaoService {
     inicio: string | null,
     acumulado: bigint,
     alertas: AlertaSimples[],
+    transportadorCargas: boolean,
   ): bigint {
     const ano = Number(competencia.slice(0, 4));
-    const anualLinha = linhaLegalVigente(linhas, 'SIMPLES_LIMITE', 'MEI', `${competencia}-01`)?.valorInt;
-    if (anualLinha == null) throw new SemLinhaVigenteError('SIMPLES_LIMITE', `${competencia}-01`, 'MEI');
-    const anual = BigInt(anualLinha);
+    const chave = transportadorCargas ? 'MEI_TAC' : 'MEI';
+    const valor = linhaLegalVigente(linhas, 'SIMPLES_LIMITE', chave, `${competencia}-01`)?.valorInt;
+    if (valor === null || valor === undefined) throw new ParametroLegalAusenteError('SIMPLES_LIMITE', `${competencia}-01`, chave); // F-PR4-7
+    const anual = BigInt(valor);
     const inicioNoAno = inicio !== null && inicio.startsWith(`${ano}-`);
-    const limite = inicioNoAno ? (anual * BigInt(13 - Number(inicio!.slice(5, 7)))) / 12n : anual;
+    const limite = inicioNoAno ? ((anual + 6n) / 12n) * BigInt(13 - Number(inicio!.slice(5, 7))) : anual;
     if (limite > 0n && acumulado > limite) {
       const fmt = (v: bigint) => `R$ ${(Number(v) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
       const efeito =
@@ -527,31 +568,60 @@ export class SimplesApuracaoService {
   // ---- PR-4: saída para documentos (item 29) ----
 
   /**
-   * GET …/aliquotas/:competencia — para a prestação na competência, o percentual efetivo de ISS a reter pelo tomador é o
-   * da faixa do MÊS ANTERIOR (LC 123 art. 21 § 4º I; Res. CGSN 140 art. 27 I "a"/"b"): apura o mês anterior e devolve,
-   * por atividade, `percentuais.ISS`. O `pTotTribSN` só é sugerido (B-4 → b: a DPS continua digitada). A partir de 2027,
-   * os % de ICMS/IBS/CBS da faixa para o crédito do adquirente (art. 23 § 2º, red. LC 214).
+   * GET …/aliquotas/:competencia — sugestão do % efetivo de ISS a reter pelo tomador na prestação da competência M
+   * (LC 123 art. 21 § 4º; Res. CGSN 140 art. 27), por atividade do cadastro de serviços e das que tiveram receita no PA
+   * (F-PR4-4: a faixa é a do RBT12 GLOBAL; a atividade não precisa de receita para aparecer):
+   * - M = mês de abertura do CNPJ (F-PR4-1/3): 2% (§ 4º II);
+   * - até 2026: faixa do mês anterior, PA = M−1 (§ 4º I red. LC 155) — o 2º mês usa a receita do 1º × 12 (F-PR4-2 a);
+   * - a partir de 2027: faixa do mês da prestação, PA = M (red. LC 227 art. 169; efeitos art. 182 I "b"), janela
+   *   M−13…M−2 (LC 214 art. 517) e tabelas vigentes em M.
+   * Sem piso no percentual da tabela (F-PR4-5). O `pTotTribSN` só é sugerido (B-4 → b). A partir de 2027, os % de
+   * ICMS/IBS/CBS da faixa para o crédito do adquirente (art. 23 § 2º, red. LC 214).
    */
   async aliquotas(scope: AccountingScope, competencia: string): Promise<AliquotasSimples> {
     this.assertRead(scope);
     if (await this.ehMei(scope, competencia)) {
       throw new ValidationError('O MEI recolhe valores fixos pelo SIMEI: não há alíquota efetiva para retenção nem para crédito (Res. CGSN 140 art. 101).');
     }
-    const mesReferencia = proximo(competencia, -1);
-    const m = await this.montar(scope, mesReferencia);
-    const credito = competencia >= '2027-01';
+    const catalogo = [...new Set((await this.serviceFiscalRepo.listByScope(scope)).map((p) => p.cTribNac))].map((cTribNac) => ({ natureza: 'SERVICO' as const, cTribNac }));
+    const perfil = await this.companyProfileRepo.findByYear(scope, Number(competencia.slice(0, 4)));
+    if (perfil?.regime === 'SIMPLES' && perfil.inicioAtividadeEm?.slice(0, 7) === competencia) {
+      return {
+        competencia,
+        mesReferencia: competencia,
+        sugestao: true,
+        regra: 'INICIO_ATIVIDADE',
+        periodoApuracao: null,
+        rbt12Cents: null,
+        janelaRbt12: null,
+        atividades: catalogo.map((a) => ({ anexo: null, ...a, faixa: null, fatorR: null, aliquotaEfetiva: null, issRetencao: '2.0000', pTotTribSNSugerido: null, creditoAdquirente: null })),
+        avisos: [AVISO_INICIO, ...AVISOS_ALIQUOTA],
+        alertas: [],
+      };
+    }
+    const mesPrestacao = competencia >= INICIO_LC214;
+    const pa = mesPrestacao ? competencia : proximo(competencia, -1);
+    const m = await this.montar(scope, pa, undefined, catalogo);
     return {
       competencia,
-      mesReferencia,
+      mesReferencia: pa,
+      sugestao: true,
+      regra: mesPrestacao ? 'FAIXA_MES_PRESTACAO' : 'FAIXA_MES_ANTERIOR',
+      periodoApuracao: pa,
+      rbt12Cents: m.calculada.rbt12Cents,
+      janelaRbt12: m.calculada.janelaRbt12,
       atividades: m.calculada.atividades.map((a) => ({
         anexo: a.anexo,
         natureza: a.natureza,
         cTribNac: a.cTribNac,
+        faixa: a.faixa,
+        fatorR: a.fatorR,
         aliquotaEfetiva: a.aliquotaEfetiva,
         issRetencao: a.percentuais.ISS ?? null,
         pTotTribSNSugerido: a.aliquotaEfetiva,
-        creditoAdquirente: credito ? { ICMS: a.percentuais.ICMS ?? null, IBS: a.percentuais.IBS ?? null, CBS: a.percentuais.CBS ?? null } : null,
+        creditoAdquirente: mesPrestacao ? { ICMS: a.percentuais.ICMS ?? null, IBS: a.percentuais.IBS ?? null, CBS: a.percentuais.CBS ?? null } : null,
       })),
+      avisos: AVISOS_ALIQUOTA,
       alertas: m.alertas,
     };
   }

@@ -13,6 +13,7 @@
 
 import { getFactory } from '../../../../lib/factory';
 import logger from '../../../../lib/logger';
+import { classifyTaxId } from '../../../../lib/cnpj';
 
 export type SaleItemsKind = 'Product' | 'Service' | 'Package' | 'Mixed' | 'Empty';
 
@@ -182,6 +183,23 @@ export interface SaleRevenueLine {
   /** `responsibleEmployeeId` of the line — the professional the partnership contract is keyed on (B-3 → a). */
   employeeRef: string | null;
   lineReais: number;
+}
+
+/**
+ * X14 PR-4 (F-PR4-9) — tipo do documento do cliente da venda (`customerId` → linha da tabela `customers` DESTE dono →
+ * `taxId`), pelo mesmo critério do tomador da DPS (`classifyTaxId`). Sem cliente, de outra tabela ou documento inválido ⇒
+ * NAO_IDENTIFICADO.
+ */
+export async function loadSaleTomadorTipo(userId: string, saleId: string): Promise<'CNPJ' | 'CPF' | 'NAO_IDENTIFICADO'> {
+  const repo = getFactory().getDynamicTableRepository();
+  const [salesTable, customersTable] = await Promise.all([repo.findTableByInternalName(userId, 'sales'), repo.findTableByInternalName(userId, 'customers')]);
+  const sale = salesTable ? await repo.findDataById(saleId) : null;
+  const customerId = sale && sale.dynamicTableId === salesTable!.id ? (sale.data as Record<string, unknown>)?.customerId : undefined;
+  if (typeof customerId !== 'string' || !customerId || !customersTable) return 'NAO_IDENTIFICADO';
+  const customer = await repo.findDataById(customerId);
+  if (!customer || customer.dynamicTableId !== customersTable.id) return 'NAO_IDENTIFICADO';
+  const doc = classifyTaxId(String((customer.data as Record<string, unknown>)?.taxId ?? ''));
+  return doc?.cnpj ? 'CNPJ' : doc?.cpf ? 'CPF' : 'NAO_IDENTIFICADO';
 }
 
 export async function loadSaleRevenueLines(userId: string, saleId: string): Promise<SaleRevenueLine[]> {

@@ -3,8 +3,7 @@ import { Prisma } from 'generated/prisma';
 import { ForbiddenError, PackageExpiryNfsePendingError, ValidationError } from '../../../lib/errors';
 import { getFactory } from '../../../lib/factory';
 import logger from '../../../lib/logger';
-import { isValidCnpj, stripCnpjMask } from '../../../lib/cnpj';
-import { isValidCpf, stripCpfMask } from '../../../lib/cpf';
+import { classifyTaxId, isValidCnpj, stripCnpjMask } from '../../../lib/cnpj';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
@@ -953,15 +952,7 @@ export class FiscalDocumentEmissionService {
   }
 
   private classifyTaxId(raw: string): { cnpj?: string; cpf?: string } | null {
-    const digitsOnly = raw.replace(/\D/g, '');
-    if (digitsOnly.length === 11 && isValidCpf(stripCpfMask(raw))) {
-      return { cpf: stripCpfMask(raw) };
-    }
-    const cnpjCandidate = stripCnpjMask(raw).toUpperCase();
-    if (cnpjCandidate.length === 14 && isValidCnpj(cnpjCandidate)) {
-      return { cnpj: cnpjCandidate };
-    }
-    return null;
+    return classifyTaxId(raw); // lib/cnpj — o mesmo critério grava o tomador do subrazão (X14 PR-4, F-PR4-9)
   }
 
   private async sumPostings(

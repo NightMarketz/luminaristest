@@ -2360,6 +2360,17 @@
               "type": "null"
             }
           ]
+        },
+        "meiTransportadorCargas": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [

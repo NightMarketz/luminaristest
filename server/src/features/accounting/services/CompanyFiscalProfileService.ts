@@ -61,6 +61,7 @@ export interface CompanyFiscalProfileView {
   declaraNaoProfissaoRegulamentada: boolean; // BE-INCR-TAX-PRESUMIDO-16 (F-P16-1 a)
   meiContribuinteIcms: boolean | null; // X14 PR-4 item 25
   meiContribuinteIss: boolean | null;
+  meiTransportadorCargas: boolean | null;
   ibsCbsOpcaoS1: IbsCbsOpcao | null; // X14 PR-2 item 14
   ibsCbsOpcaoS2: IbsCbsOpcao | null;
   updatedAt: string;
@@ -400,6 +401,7 @@ export class CompanyFiscalProfileService {
         ibsCbsOpcaoS2: row.ibsCbsOpcaoS2 ?? '',
         meiContribuinteIcms: b(row.meiContribuinteIcms), // X14 PR-4 item 25
         meiContribuinteIss: b(row.meiContribuinteIss),
+        meiTransportadorCargas: b(row.meiTransportadorCargas),
         ...(copiadoDe === undefined ? {} : { copiadoDe: String(copiadoDe) }),
       },
     });
@@ -487,6 +489,7 @@ function toData(input: UpsertCompanyFiscalProfileInput): CompanyFiscalProfileDat
     ibsCbsOpcaoS2: input.ibsCbsOpcaoS2,
     meiContribuinteIcms: input.meiContribuinteIcms,
     meiContribuinteIss: input.meiContribuinteIss,
+    meiTransportadorCargas: input.meiTransportadorCargas,
   };
 }
 
@@ -519,6 +522,7 @@ function rowToData(row: CompanyFiscalProfile): CompanyFiscalProfileData {
     ibsCbsOpcaoS2: row.ibsCbsOpcaoS2,
     meiContribuinteIcms: row.meiContribuinteIcms,
     meiContribuinteIss: row.meiContribuinteIss,
+    meiTransportadorCargas: row.meiTransportadorCargas,
   };
 }
 
@@ -553,6 +557,7 @@ function toView(row: CompanyFiscalProfile): CompanyFiscalProfileView {
     ibsCbsOpcaoS2: row.ibsCbsOpcaoS2 as IbsCbsOpcao | null,
     meiContribuinteIcms: row.meiContribuinteIcms,
     meiContribuinteIss: row.meiContribuinteIss,
+    meiTransportadorCargas: row.meiTransportadorCargas,
     updatedAt: row.updatedAt.toISOString(),
   };
 }

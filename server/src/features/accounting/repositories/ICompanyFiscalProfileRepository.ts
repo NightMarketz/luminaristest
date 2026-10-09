@@ -37,6 +37,7 @@ export interface CompanyFiscalProfileData {
   // BE-INCR-SIMPLES-NACIONAL PR-4 (nó X14, item 25): enquadramento do MEI no Anexo XI
   meiContribuinteIcms: boolean | null;
   meiContribuinteIss: boolean | null;
+  meiTransportadorCargas: boolean | null;
 }
 
 /**

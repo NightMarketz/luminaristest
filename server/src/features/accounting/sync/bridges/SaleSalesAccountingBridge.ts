@@ -18,7 +18,7 @@ import logger from '../../../../lib/logger';
 import { resolveAccountingScope } from '../../scope/AccountingScope';
 import { saleDayAsWritten } from '../../models/dates';
 import { buildSaleCogsEvent, buildSaleFinalizedEvent, syncSkipErrorCode } from '../AccountingSyncPort';
-import { loadSaleRevenueLines, loadSalePackageInfo } from './saleItems';
+import { loadSaleRevenueLines, loadSalePackageInfo, loadSaleTomadorTipo } from './saleItems';
 import type { AccountingScope } from '../../scope/AccountingScope';
 import type { ProductLine } from './saleItems';
 
@@ -136,7 +136,8 @@ export async function maybeSyncSaleFinalized(
 async function maybeRecordReceitaFiscal(scope: AccountingScope, saleId: string, amount: number, dia: string): Promise<void> {
   try {
     const lines = await loadSaleRevenueLines(scope.ownerUserId, saleId);
-    await getFactory().getReceitaFiscalService().registrarVenda(scope, { saleId, amount, dia, lines });
+    const tomadorTipo = await loadSaleTomadorTipo(scope.ownerUserId, saleId);
+    await getFactory().getReceitaFiscalService().registrarVenda(scope, { saleId, amount, dia, lines, tomadorTipo });
   } catch (error) {
     logger.error('Subrazão fiscal de receita (sale finalized) failed — left for reconciliation', {
       saleId,
