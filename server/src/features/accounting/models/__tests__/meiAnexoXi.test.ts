@@ -1,6 +1,6 @@
 /** SIMPLES-PISO-ANEXO-XI itens 12-15 — leitura pura do Anexo XI (tabela MEI_ANEXO_XI). */
 import type { LinhaLegal } from '../../../legalParameters/models/legalParameter';
-import { anexoXiVigente, chavesInexistentes, cnaesForaDoAnexo, enquadramentoDasOcupacoes, transportadorNaTabelaB } from '../meiAnexoXi';
+import { ocupacoesExcluidas, anexoXiVigente, chavesInexistentes, cnaesForaDoAnexo, enquadramentoDasOcupacoes, transportadorNaTabelaB } from '../meiAnexoXi';
 
 const linha = (chave: string, cnae: string, iss: boolean, icms: boolean, extra: Partial<LinhaLegal> = {}): LinhaLegal => ({
   id: `id-${chave}`,
@@ -45,5 +45,13 @@ describe('meiAnexoXi', () => {
     expect(transportadorNaTabelaB(o('B-0001', 'A-0050'))).toEqual({ soTabelaB: false, algumaB: true });
     expect(transportadorNaTabelaB(o('A-0050'))).toEqual({ soTabelaB: false, algumaB: false });
     expect(transportadorNaTabelaB([])).toEqual({ soTabelaB: false, algumaB: false });
+  });
+
+  it('ocupacoesExcluidas: encerrada antes da data ⇒ excluída com efeito no dia seguinte; com fim futuro ⇒ a excluir', () => {
+    const ls = [linha('A-0050', '9602-5/01', true, false, { vigenteAte: '2026-05-31' }), linha('A-0002', '1531-9/02', true, true)];
+    const antes = ocupacoesExcluidas(ls, anexoXiVigente(ls, '2026-03-01')!, ['A-0050', 'A-0002'], '2026-03-01');
+    expect(antes).toEqual({ excluidas: [], aExcluir: [{ chave: 'A-0050', efeitoDesde: '2026-06-01' }] });
+    const depois = ocupacoesExcluidas(ls, anexoXiVigente(ls, '2026-06-01')!, ['A-0050', 'A-0002'], '2026-06-01');
+    expect(depois).toEqual({ excluidas: [{ chave: 'A-0050', efeitoDesde: '2026-06-01' }], aExcluir: [] });
   });
 });

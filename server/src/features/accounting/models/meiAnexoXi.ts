@@ -15,13 +15,14 @@ export interface OcupacaoAnexoXi {
   cnae: string; // 7 dígitos, sem máscara (o Anexo traz 0000-0/00)
   iss: boolean;
   icms: boolean;
+  vigenteAte: string | null; // YYYY-MM-DD inclusive; preenchido = ocupação excluída por alteração do Anexo XI
 }
 
 const soDigitos = (s: string): string => s.replace(/\D/g, '');
 
 function paraOcupacao(l: LinhaLegal): OcupacaoAnexoXi {
   const v = MeiAnexoXiJson.parse(JSON.parse(l.valorJson ?? 'null'));
-  return { chave: l.chave, tabela: l.chave.startsWith('B') ? 'B' : 'A', ocupacao: v.ocupacao, cnae: soDigitos(v.cnae), iss: v.iss, icms: v.icms };
+  return { chave: l.chave, tabela: l.chave.startsWith('B') ? 'B' : 'A', ocupacao: v.ocupacao, cnae: soDigitos(v.cnae), iss: v.iss, icms: v.icms, vigenteAte: l.vigenteAte };
 }
 
 /** Item 12 (decisão 2 do dono): chaves que não existem em nenhuma linha em vigor do Anexo XI ⇒ o perfil devolve 400. */
@@ -65,4 +66,32 @@ export function enquadramentoDasOcupacoes(ocupacoes: readonly OcupacaoAnexoXi[])
 export function transportadorNaTabelaB(ocupacoes: readonly OcupacaoAnexoXi[]): { soTabelaB: boolean; algumaB: boolean } {
   const algumaB = ocupacoes.some((o) => o.tabela === 'B');
   return { soTabelaB: ocupacoes.length > 0 && ocupacoes.every((o) => o.tabela === 'B'), algumaB };
+}
+
+const diaSeguinte = (d: string): string => new Date(Date.parse(`${d}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
+
+/**
+ * Item 16 (dono, chat, 10/10: "Texto vigente da Res. 140") — ocupação excluída do Anexo XI: o desenquadramento vale a
+ * partir do 1º dia do mês em que a alteração produz efeitos (Res. CGSN 140 art. 101 § 3º II c/c art. 115 § 2º II "c").
+ * `excluidas` = chaves declaradas sem linha vigente na data (com a data de efeito, quando a linha encerrada é conhecida);
+ * `aExcluir` = vigentes com fim de vigência já publicado (efeito no dia seguinte ao `vigenteAte`).
+ */
+export function ocupacoesExcluidas(
+  linhas: readonly LinhaLegal[],
+  anexo: ReadonlyMap<string, OcupacaoAnexoXi>,
+  chaves: readonly string[],
+  data: string,
+): { excluidas: Array<{ chave: string; efeitoDesde: string | null }>; aExcluir: Array<{ chave: string; efeitoDesde: string }> } {
+  const emVigor = linhasEmVigor(linhas).filter((l) => l.tabela === TABELA_ANEXO_XI);
+  const excluidas = chaves
+    .filter((c) => !anexo.has(c))
+    .map((chave) => {
+      const fim = emVigor.filter((l) => l.chave === chave && l.vigenteAte !== null && l.vigenteAte < data).map((l) => l.vigenteAte as string).sort().pop();
+      return { chave, efeitoDesde: fim ? diaSeguinte(fim) : null };
+    });
+  const aExcluir = chaves
+    .map((c) => anexo.get(c))
+    .filter((o): o is OcupacaoAnexoXi => o !== undefined && o.vigenteAte !== null)
+    .map((o) => ({ chave: o.chave, efeitoDesde: diaSeguinte(o.vigenteAte as string) }));
+  return { excluidas, aExcluir };
 }

@@ -10912,7 +10912,8 @@
             "BENEFICIO_MUNICIPAL_INAPLICAVEL_DESVANTAJOSO",
             "ISS_VALOR_FIXO_MUNICIPAL",
             "MEI_ENQUADRAMENTO_DIVERGE",
-            "MEI_TAC_COM_OCUPACAO_A"
+            "MEI_TAC_COM_OCUPACAO_A",
+            "MEI_OCUPACAO_EXCLUIDA"
           ]
         },
         "detalhe": {

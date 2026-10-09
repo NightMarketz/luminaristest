@@ -9,6 +9,7 @@ import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
 import { ApplicationFactory } from '@/lib/factory';
+import { LegalParameterService } from '@/features/legalParameters/services/LegalParameterService';
 
 const app = makeApp();
 const S = '/api/accounting/simples';
@@ -126,5 +127,36 @@ describe('item 15 — CNAE do CNPJ fora do Anexo XI ⇒ SIMEI bloqueado (F-AX-4;
     expect((await perfil(c, 2026, { meiContribuinteIcms: false, meiContribuinteIss: true, meiOcupacoes: ['A-0050'] })).status).toBe(200);
     await unidadeComCnae(c, '9602-5/01');
     expect((await calcular(c, '2026-03')).status).toBe(200);
+  });
+});
+
+/** Item 16 (dono, 10/10: texto vigente da Res. 140) — simula a alteração do Anexo XI encerrando a linha de A-0050. */
+function a0050Ate(vigenteAte: string) {
+  const original = LegalParameterService.prototype.fotografia;
+  return jest.spyOn(LegalParameterService.prototype, 'fotografia').mockImplementation(async function (this: LegalParameterService, tabelas) {
+    return (await original.call(this, tabelas)).map((l) => (l.tabela === 'MEI_ANEXO_XI' && l.chave === 'A-0050' ? { ...l, vigenteAte } : l));
+  });
+}
+
+describe('item 16 — ocupação excluída do Anexo XI (art. 101 § 3º II c/c art. 115 § 2º II "c")', () => {
+  let c: Cenario;
+  beforeAll(async () => {
+    c = await cenario('axi16');
+    expect((await perfil(c, 2026, { meiContribuinteIcms: false, meiContribuinteIss: true, meiOcupacoes: ['A-0050'] })).status).toBe(200);
+  });
+
+  it('antes do efeito: apura com alerta MEI_OCUPACAO_EXCLUIDA citando o 1º dia do mês de efeito', async () => {
+    const spy = a0050Ate('2026-05-31');
+    const r = await calcular(c, '2026-03');
+    spy.mockRestore();
+    expect(r.status).toBe(200);
+    expect(alerta(r.body, 'MEI_OCUPACAO_EXCLUIDA')?.detalhe).toContain('a partir de 2026-06-01');
+  });
+
+  it('a partir do efeito: SIMEI bloqueado com MEI_OCUPACAO_EXCLUIDA (não ignora a ocupação)', async () => {
+    const spy = a0050Ate('2026-05-31');
+    const r = await calcular(c, '2026-06');
+    spy.mockRestore();
+    expect([r.status, r.body.code, r.body.details]).toEqual([400, 'MEI_OCUPACAO_EXCLUIDA', { ocupacoesExcluidas: [{ chave: 'A-0050', efeitoDesde: '2026-06-01' }] }]);
   });
 });

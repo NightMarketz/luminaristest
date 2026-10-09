@@ -39,7 +39,7 @@ import type { ISimplesEntradasRepository } from '../repositories/ISimplesEntrada
 import type { IIssBeneficioMunicipalRepository } from '../repositories/IIssBeneficioMunicipalRepository';
 import { beneficioDaAtividade, excecaoPisoIss, type BeneficioCadastrado } from '../models/issBeneficio';
 import { toBeneficio } from './IssBeneficioMunicipalService';
-import { TABELA_ANEXO_XI, anexoXiVigente, cnaesForaDoAnexo, enquadramentoDasOcupacoes, transportadorNaTabelaB, type OcupacaoAnexoXi } from '../models/meiAnexoXi';
+import { TABELA_ANEXO_XI, anexoXiVigente, cnaesForaDoAnexo, enquadramentoDasOcupacoes, transportadorNaTabelaB, ocupacoesExcluidas, type OcupacaoAnexoXi } from '../models/meiAnexoXi';
 import type { IssBeneficioTipo } from '../dtos/IssBeneficioMunicipalDto';
 import type { AuditService } from './AuditService';
 import type { PostingService } from './PostingService';
@@ -506,6 +506,14 @@ export class SimplesApuracaoService {
     const inicio = perfil.inicioAtividadeEm ? perfil.inicioAtividadeEm.slice(0, 7) : null;
     let transportador = perfil.meiTransportadorCargas === true;
     if (anexo) {
+      // Item 16: exclusão publicada e ainda sem efeito ⇒ alerta para comunicar no Portal do Simples.
+      for (const e of anexo.aExcluir) {
+        alertas.push({
+          severity: 'WARNING',
+          codigo: 'MEI_OCUPACAO_EXCLUIDA',
+          detalhe: `a ocupação ${e.chave} deixa de constar do Anexo XI: desenquadramento do SIMEI a partir de ${e.efeitoDesde} (Res. CGSN 140 art. 101 § 3º II c/c art. 115 § 2º II "c"); comunique no Portal do Simples Nacional até o último dia útil do mês em que verificado o impedimento`,
+        });
+      }
       // Item 13 (M5, F-AX-3 b): o declarado manda; a divergência com o Anexo XI só alerta.
       const implicado = enquadramentoDasOcupacoes(anexo.ocupacoes);
       if (anexo.ocupacoes.length > 0 && (implicado.contribuinteIcms !== enquadramento.contribuinteIcms || implicado.contribuinteIss !== enquadramento.contribuinteIss)) {
@@ -559,8 +567,9 @@ export class SimplesApuracaoService {
     competencia: string,
     perfil: { meiOcupacoes: unknown; declarante: unknown },
     tx?: Prisma.TransactionClient,
-  ): Promise<{ ocupacoes: OcupacaoAnexoXi[] } | null> {
-    const anexo = anexoXiVigente(await this.legalParams.fotografia([TABELA_ANEXO_XI]), `${competencia}-01`);
+  ): Promise<{ ocupacoes: OcupacaoAnexoXi[]; aExcluir: Array<{ chave: string; efeitoDesde: string }> } | null> {
+    const linhasAnexo = await this.legalParams.fotografia([TABELA_ANEXO_XI]);
+    const anexo = anexoXiVigente(linhasAnexo, `${competencia}-01`);
     if (!anexo) return null;
     const chaves = Array.isArray(perfil.meiOcupacoes) ? (perfil.meiOcupacoes as string[]) : [];
     if (chaves.length === 0) {
@@ -587,7 +596,16 @@ export class SimplesApuracaoService {
         'SIMEI_CNAE_FORA_ANEXO_XI',
       );
     }
-    return { ocupacoes: chaves.map((c) => anexo.get(c)).filter((o): o is OcupacaoAnexoXi => o !== undefined) };
+    // Item 16 (dono, 10/10: texto vigente da Res. 140): ocupação declarada sem linha vigente na competência ⇒ bloqueio.
+    const { excluidas, aExcluir } = ocupacoesExcluidas(linhasAnexo, anexo, chaves, `${competencia}-01`);
+    if (excluidas.length > 0) {
+      throw new ValidationError(
+        `Ocupação declarada que não consta do Anexo XI vigente em ${competencia} (${excluidas.map((e) => e.chave).join(', ')}): o SIMEI não é gerado. Comunique o desenquadramento no Portal do Simples Nacional (Res. CGSN 140 art. 101 § 3º II c/c art. 115 § 2º II "c").`,
+        { ocupacoesExcluidas: excluidas },
+        'MEI_OCUPACAO_EXCLUIDA',
+      );
+    }
+    return { ocupacoes: chaves.map((c) => anexo.get(c)).filter((o): o is OcupacaoAnexoXi => o !== undefined), aExcluir };
   }
 
   /**
