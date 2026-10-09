@@ -9,7 +9,7 @@ depende_de: []
 autorizacao: "dono, chat, 2026-10-10: \"abre o BRIEF dos dois\" — só o BRIEF (sessao-planejamento); sem código, sem 'executa', sem ratificar fork; dono, chat, 2026-10-10, questionário: F-PI-1..6 e F-AX-1..5 ratificados (F-PI-2 e F-AX-4 com texto próprio do dono) — sem 'executa' · dono, chat, 2026-10-10: \"A execução do nó SIMPLES-PISO-ANEXO-XI (PR #607) deve ser disparada exclusivamente após o merge do PR #603 (X14) na main\" — EXECUTA (sessao-feature), condição cumprida (#603 = 46d6489c); PR sem merge"
 ancora_sdd: "—"
 atualizado: "2026-10-09"
-prs: ["#618"]
+prs: ["#618", "#619"]
 ---
 # SIMPLES-PISO-ANEXO-XI — piso do ISS com benefício municipal + Anexo XI do MEI
 
