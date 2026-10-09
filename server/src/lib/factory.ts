@@ -53,6 +53,7 @@ import { ReconcilePendingRepository } from '../features/accounting/repositories/
 import { BankSettlementRepository } from '../features/accounting/repositories/BankSettlementRepository';
 import { FiscalProfileRepository } from '../features/accounting/repositories/FiscalProfileRepository';
 import { ServiceFiscalProfileRepository } from '../features/accounting/repositories/ServiceFiscalProfileRepository';
+import { IssBeneficioMunicipalRepository } from '../features/accounting/repositories/IssBeneficioMunicipalRepository';
 import { ProductDestinationDefaultRepository } from '../features/accounting/repositories/ProductDestinationDefaultRepository';
 import { CompanyFiscalProfileRepository } from '../features/accounting/repositories/CompanyFiscalProfileRepository';
 import { CompanySignerRepository } from '../features/accounting/repositories/CompanySignerRepository';
@@ -151,6 +152,7 @@ import { BankSettlementService } from '../features/accounting/services/BankSettl
 import { AccountingScopeSettingsService } from '../features/accounting/services/AccountingScopeSettingsService';
 import { FiscalProfileService } from '../features/accounting/services/FiscalProfileService';
 import { ServiceFiscalProfileService } from '../features/accounting/services/ServiceFiscalProfileService';
+import { IssBeneficioMunicipalService } from '../features/accounting/services/IssBeneficioMunicipalService';
 import { ProductDestinationService } from '../features/accounting/services/ProductDestinationService';
 import { CompanyFiscalProfileService } from '../features/accounting/services/CompanyFiscalProfileService';
 import { CompanySignerService } from '../features/accounting/services/CompanySignerService';
@@ -276,6 +278,7 @@ import type { IReconcilePendingRepository } from '../features/accounting/reposit
 import type { IBankSettlementRepository } from '../features/accounting/repositories/IBankSettlementRepository';
 import type { IFiscalProfileRepository } from '../features/accounting/repositories/IFiscalProfileRepository';
 import type { IServiceFiscalProfileRepository } from '../features/accounting/repositories/IServiceFiscalProfileRepository';
+import type { IIssBeneficioMunicipalRepository } from '../features/accounting/repositories/IIssBeneficioMunicipalRepository';
 import type { IProductDestinationDefaultRepository } from '../features/accounting/repositories/IProductDestinationDefaultRepository';
 import type { ICompanyFiscalProfileRepository } from '../features/accounting/repositories/ICompanyFiscalProfileRepository';
 import type { ICompanySignerRepository } from '../features/accounting/repositories/ICompanySignerRepository';
@@ -595,6 +598,7 @@ export class ApplicationFactory {
     bankSettlement: IBankSettlementRepository;
     fiscalProfile: IFiscalProfileRepository;
     serviceFiscalProfile: IServiceFiscalProfileRepository;
+    issBeneficioMunicipal: IIssBeneficioMunicipalRepository; // SIMPLES-PISO-ANEXO-XI bloco 1
     productDestinationDefault: IProductDestinationDefaultRepository; // ITEM-DESTINATION PR-2
     companyFiscalProfile: ICompanyFiscalProfileRepository; // X13
     companySigner: ICompanySignerRepository; // X13
@@ -689,6 +693,7 @@ export class ApplicationFactory {
     accountingScopeSettings: AccountingScopeSettingsService;
     fiscalProfile: FiscalProfileService;
     serviceFiscalProfile: ServiceFiscalProfileService;
+    issBeneficioMunicipal: IssBeneficioMunicipalService; // SIMPLES-PISO-ANEXO-XI bloco 1
     productDestination: ProductDestinationService; // ITEM-DESTINATION PR-2
     companyFiscalProfile: CompanyFiscalProfileService; // X13
     companySigner: CompanySignerService; // X13
@@ -771,6 +776,7 @@ export class ApplicationFactory {
       bankSettlement: new BankSettlementRepository(),
       fiscalProfile: new FiscalProfileRepository(),
       serviceFiscalProfile: new ServiceFiscalProfileRepository(),
+      issBeneficioMunicipal: new IssBeneficioMunicipalRepository(),
       productDestinationDefault: new ProductDestinationDefaultRepository(),
       companyFiscalProfile: new CompanyFiscalProfileRepository(),
       companySigner: new CompanySignerRepository(),
@@ -1272,6 +1278,7 @@ export class ApplicationFactory {
       // (requireCostRegime, F-X6-6 a) e nunca o escreve.
       fiscalProfile: fiscalProfileService,
       serviceFiscalProfile: serviceFiscalProfileService,
+      issBeneficioMunicipal: new IssBeneficioMunicipalService(this.repositories.issBeneficioMunicipal, this.policies.accounting, auditService),
       // ITEM-DESTINATION PR-2 (item 17, F-ID-2 a): destinação padrão por produto — a mesma porta de existência
       // de produto do LAC-E (reuso), sob a policy fiscal.
       productDestination: new ProductDestinationService(
@@ -1550,6 +1557,7 @@ export class ApplicationFactory {
         this.policies.accounting,
         this.repositories.fiscalDocument, // X14 PR-4 item 31: conferência NFS-e × receita
         this.repositories.serviceFiscalProfile, // X14 PR-4 F-PR4-4: atividades do cadastro na rota de alíquotas
+        this.repositories.issBeneficioMunicipal, // SIMPLES-PISO-ANEXO-XI bloco 1: benefício municipal de ISS
       ),
       // BE-INCR-SIMPLES-NACIONAL PR-4 (nó X14, itens 27–28): espelhos DASN-SIMEI e DEFIS.
       simplesDeclaracao: new SimplesDeclaracaoService(
@@ -1833,6 +1841,7 @@ export class ApplicationFactory {
   public getAccountingScopeSettingsService = (): AccountingScopeSettingsService => this.services.accountingScopeSettings;
   public getFiscalProfileService = (): FiscalProfileService => this.services.fiscalProfile;
   public getServiceFiscalProfileService = (): ServiceFiscalProfileService => this.services.serviceFiscalProfile;
+  public getIssBeneficioMunicipalService = (): IssBeneficioMunicipalService => this.services.issBeneficioMunicipal;
   public getProductDestinationService = (): ProductDestinationService => this.services.productDestination;
   public getCompanyFiscalProfileService = (): CompanyFiscalProfileService => this.services.companyFiscalProfile;
   public getCompanySignerService = (): CompanySignerService => this.services.companySigner;

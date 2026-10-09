@@ -36,6 +36,10 @@ import type { IReceitaFiscalRepository } from '../repositories/IReceitaFiscalRep
 import type { IServiceFiscalProfileRepository } from '../repositories/IServiceFiscalProfileRepository';
 import type { ISimplesApuracaoRepository } from '../repositories/ISimplesApuracaoRepository';
 import type { ISimplesEntradasRepository } from '../repositories/ISimplesEntradasRepository';
+import type { IIssBeneficioMunicipalRepository } from '../repositories/IIssBeneficioMunicipalRepository';
+import { beneficioDaAtividade, excecaoPisoIss, type BeneficioCadastrado } from '../models/issBeneficio';
+import { toBeneficio } from './IssBeneficioMunicipalService';
+import type { IssBeneficioTipo } from '../dtos/IssBeneficioMunicipalDto';
 import type { AuditService } from './AuditService';
 import type { PostingService } from './PostingService';
 import type { ReceitaFiscalService } from './ReceitaFiscalService';
@@ -97,6 +101,8 @@ export interface AliquotasSimples {
     fatorR: string | null;
     aliquotaEfetiva: string | null;
     issRetencao: string | null;
+    /** SIMPLES-PISO-ANEXO-XI bloco 1 (item 4): o benefício municipal vigente — a legislação vai no documento (art. 27 § 1º). */
+    beneficioMunicipal: { legislacao: string; tipo: IssBeneficioTipo; pisoAplicado: boolean; excecaoPiso: boolean } | null;
     pTotTribSNSugerido: string | null;
     creditoAdquirente: { ICMS: string | null; IBS: string | null; CBS: string | null } | null;
   }>;
@@ -107,7 +113,8 @@ export interface AliquotasSimples {
 /** F-PR4-6: a rota sugere; o prestador responde pela alíquota informada. */
 const AVISOS_ALIQUOTA = [
   'Sugestão: a alíquota informada no documento fiscal é responsabilidade do prestador; informada a menor, a diferença é recolhida em guia do Município (LC 123 art. 21 § 4º VI; Res. CGSN 140 art. 27 VI).',
-  'O Município pode fixar critério próprio de informação da alíquota (Res. CGSN 140 art. 27 § 2º); isenção ou redução municipal do ISS não entra nesta sugestão (art. 27 § 1º).',
+  'O Município pode fixar critério próprio de informação da alíquota (Res. CGSN 140 art. 27 § 2º).',
+  'Isenção ou redução municipal do ISS cadastrada reduz o percentual efetivo do ISS da faixa (Res. CGSN 140 art. 32 § 1º), sem resultar em menos de 2%, exceto nos subitens 7.02, 7.05 e 16.01 (art. 31 p.ú.; LC 116 art. 8º-A § 1º); informe no documento a alíquota e a legislação concessiva (art. 27 § 1º). Valor fixo municipal não entra na sugestão.',
 ];
 const AVISO_INICIO =
   'Mês de início de atividade (abertura do CNPJ, Res. CGSN 140 art. 2º V): 2% (LC 123 art. 21 § 4º II); a diferença para a alíquota apurada é recolhida no mês seguinte em guia do Município (§ 4º III).';
@@ -135,6 +142,8 @@ interface Montagem {
   impressao: string;
   alertas: AlertaSimples[];
   tieOut: { subrazaoCents: number; razaoCents: number; ok: boolean };
+  /** SIMPLES-PISO-ANEXO-XI bloco 1: benefício municipal por atividade (`natureza|cTribNac`). */
+  beneficios: Map<string, BeneficioCadastrado>;
 }
 
 /** X14 PR-4 — o que a montagem do SIMEI devolve (a `impressao` é o gate do item 20, como na do ME/EPP). */
@@ -164,6 +173,8 @@ export class SimplesApuracaoService {
     private readonly policy: IAccountingPolicy,
     private readonly fiscalDocumentRepo: Pick<IFiscalDocumentRepository, 'somaNfseAutorizadaNaCompetencia'>,
     private readonly serviceFiscalRepo: Pick<IServiceFiscalProfileRepository, 'listByScope'>,
+    /** SIMPLES-PISO-ANEXO-XI bloco 1 (F-PI-3 b): benefício municipal de ISS na retenção e na parcela ISS do DAS. */
+    private readonly beneficioRepo: Pick<IIssBeneficioMunicipalRepository, 'listByScope'>,
   ) {}
 
   /** Item 17 — POST …/apuracoes/:competencia/calcular: calcula sob demanda, nada é gravado (B-2 → a). */
@@ -308,6 +319,9 @@ export class SimplesApuracaoService {
     }
 
     // Item 12: a segregação manual tira parcelas da receita da natureza (motivo → tributos excluídos).
+    // SIMPLES-PISO-ANEXO-XI bloco 1: benefícios do Município da unidade (FiscalProfile.codMun), lidos com o resto da entrada.
+    const codMun = (await this.fiscalProfileRepo.findByScope(scope, tx))?.codMun ?? null;
+    const cadastrados = (await this.beneficioRepo.listByScope(scope, tx)).map(toBeneficio);
     const segRow = await this.entradasRepo.findSegregacao(scope, competencia, tx);
     const seg = { parcelas: ((segRow?.parcelas ?? []) as SimplesSegregacaoParcela[]) };
     if (seg.parcelas.length > 0) alertas.push({ severity: 'WARNING', codigo: 'SEGREGACAO_MANUAL', detalhe: `${seg.parcelas.length} parcela(s) segregada(s) por declaração manual` });
@@ -318,6 +332,7 @@ export class SimplesApuracaoService {
       linhasPa: linhasPa.map((l) => [l.id, l.natureza, l.cTribNac, String(l.receitaCents), String(l.cotaProfissionalCents), l.parceriaContratoId]),
       contratos: [...contratos.values()].map((c) => [c.id, c.naturezaCota]).sort(),
       segregacao: seg.parcelas,
+      beneficiosIss: { codMun, linhas: cadastrados },
     });
     // Review do PR-3 (achado 5): um grupo negativo (devolução/cancelamento de venda de outro mês) é compensado nos grupos
     // positivos — primeiro os da mesma natureza, depois o maior — para que Σ das atividades = receita do PA.
@@ -351,6 +366,20 @@ export class SimplesApuracaoService {
     for (const a of catalogo) {
       if (!entrada.some((e) => e.natureza === a.natureza && e.cTribNac === a.cTribNac)) entrada.push({ ...a, parcelas: [{ receitaCents: 0, excluir: [] }] });
     }
+    // SIMPLES-PISO-ANEXO-XI bloco 1 (itens 4-6): benefício vigente no 1º dia do PA que alcança o serviço. Valor fixo
+    // (art. 31 II / art. 33) fica fora do cálculo — só alerta (F-PI-5 a).
+    const beneficios = new Map<string, BeneficioCadastrado>();
+    for (const e of entrada) {
+      if (e.natureza !== 'SERVICO') continue;
+      const b = beneficioDaAtividade(cadastrados, { codMun, cTribNac: e.cTribNac, data: `${competencia}-01` });
+      if (!b) continue;
+      beneficios.set(`${e.natureza}|${e.cTribNac ?? ''}`, b);
+      if (b.tipo === 'VALOR_FIXO') {
+        alertas.push({ severity: 'INFO', codigo: 'ISS_VALOR_FIXO_MUNICIPAL', detalhe: `serviço ${e.cTribNac}: valor fixo municipal de ISS (${b.legislacao}) — fora do cálculo do DAS (Res. CGSN 140 arts. 31 II e 33)` });
+      } else {
+        e.beneficioIss = { tipo: b.tipo, reducaoBpPorFaixa: b.reducaoBpPorFaixa };
+      }
+    }
     const naoAplicada = sobra.reduce((x, v) => x + v, 0n);
     if (naoAplicada > 0n) {
       alertas.push({ severity: 'WARNING', codigo: 'SEGREGACAO_MANUAL', detalhe: `R$ ${(Number(naoAplicada) / 100).toFixed(2)} declarados na segregação não têm receita da mesma natureza no mês e foram ignorados` });
@@ -381,6 +410,15 @@ export class SimplesApuracaoService {
       calculada = { competencia, regime: 'SIMPLES', rbt12Cents: 0, janelaRbt12: janela, mesesFaltantes: [], atividades: [], totalCalculadoCents: 0, tabela: [] };
     }
     if (entrada.length === 0) calculada = { ...calculada, atividades: [], totalCalculadoCents: 0 };
+    // F-PI-2 (dono, 10/10): o piso de 2% elevou o ISS acima do % puro da tabela — orientar a desmarcar o benefício na faixa.
+    for (const a of calculada.atividades) {
+      if (!a.beneficioIss?.desvantajoso) continue;
+      alertas.push({
+        severity: 'WARNING',
+        codigo: 'BENEFICIO_MUNICIPAL_INAPLICAVEL_DESVANTAJOSO',
+        detalhe: `serviço ${a.cTribNac} na ${a.faixa}ª faixa: com o benefício municipal o ISS fica em ${a.percentuais.ISS}% (piso de 2%, Res. CGSN 140 art. 31 p.ú.), acima dos ${a.beneficioIss.issTabela}% da tabela — desmarque o benefício nesta faixa`,
+      });
+    }
     if (calculada.mesesFaltantes.length > 0) alertas.push({ severity: 'WARNING', codigo: 'RBT12_INCOMPLETO', detalhe: `sem receita declarada em ${calculada.mesesFaltantes.join(', ')}` });
     // Item 16 → item 20: o tie-out do PA também bloqueia o registro.
     const tie = await this.receitaFiscal.tieOut(scope, competencia);
@@ -388,7 +426,7 @@ export class SimplesApuracaoService {
     // Review do PR-4 (achado 1): a cota do salão a título de aluguel de bem móvel não é serviço (sem ISS, sem NFS-e).
     const servicosPa = linhasPa.filter((l) => !(l.parceriaContratoId && contratos.get(l.parceriaContratoId)?.naturezaCota === 'ALUGUEL_BEM_MOVEL'));
     await this.conferirNfse(scope, competencia, servicosPa, alertas, { me: true, caixa: perfil.simplesRegimeApuracao === 'CAIXA' }, tx);
-    return { calculada, entrada, receitas, impressao, alertas, tieOut: { subrazaoCents: tie.subrazaoCents, razaoCents: tie.razaoCents, ok: tie.ok } };
+    return { calculada, entrada, receitas, impressao, alertas, tieOut: { subrazaoCents: tie.subrazaoCents, razaoCents: tie.razaoCents, ok: tie.ok }, beneficios };
   }
 
   /** Item 23. Devolve se o sublimite do ICMS/ISS (e IBS a partir de 2027) está excedido para o PA. */
@@ -583,7 +621,7 @@ export class SimplesApuracaoService {
    * - até 2026: faixa do mês anterior, PA = M−1 (§ 4º I red. LC 155) — o 2º mês usa a receita do 1º × 12 (F-PR4-2 a);
    * - a partir de 2027: faixa do mês da prestação, PA = M (red. LC 227 art. 169; efeitos art. 182 I "b"), janela
    *   M−13…M−2 (LC 214 art. 517) e tabelas vigentes em M.
-   * Sem piso no percentual da tabela (F-PR4-5). O `pTotTribSN` só é sugerido (B-4 → b). A partir de 2027, os % de
+   * Sem piso no percentual puro da tabela (F-PR4-5); benefício municipal cadastrado reduz o ISS com piso de 2% (SIMPLES-PISO-ANEXO-XI, F-PI-2). O `pTotTribSN` só é sugerido (B-4 → b). A partir de 2027, os % de
    * ICMS/IBS/CBS da faixa para o crédito do adquirente (art. 23 § 2º, red. LC 214).
    */
   async aliquotas(scope: AccountingScope, competencia: string): Promise<AliquotasSimples> {
@@ -602,7 +640,7 @@ export class SimplesApuracaoService {
         periodoApuracao: null,
         rbt12Cents: null,
         janelaRbt12: null,
-        atividades: catalogo.map((a) => ({ anexo: null, ...a, faixa: null, fatorR: null, aliquotaEfetiva: null, issRetencao: '2.0000', pTotTribSNSugerido: null, creditoAdquirente: null })),
+        atividades: catalogo.map((a) => ({ anexo: null, ...a, faixa: null, fatorR: null, aliquotaEfetiva: null, issRetencao: '2.0000', beneficioMunicipal: null, pTotTribSNSugerido: null, creditoAdquirente: null })),
         avisos: [AVISO_INICIO, ...AVISOS_ALIQUOTA],
         alertas: [],
       };
@@ -626,6 +664,10 @@ export class SimplesApuracaoService {
         fatorR: a.fatorR,
         aliquotaEfetiva: a.aliquotaEfetiva,
         issRetencao: a.percentuais.ISS ?? null,
+        beneficioMunicipal: ((b) =>
+          b ? { legislacao: b.legislacao, tipo: b.tipo, pisoAplicado: a.beneficioIss?.pisoAplicado ?? false, excecaoPiso: a.beneficioIss?.excecaoPiso ?? excecaoPisoIss(a.cTribNac) } : null)(
+          m.beneficios.get(`${a.natureza}|${a.cTribNac ?? ''}`),
+        ),
         pTotTribSNSugerido: a.aliquotaEfetiva,
         creditoAdquirente: mesPrestacao ? { ICMS: a.percentuais.ICMS ?? null, IBS: a.percentuais.IBS ?? null, CBS: a.percentuais.CBS ?? null } : null,
       })),

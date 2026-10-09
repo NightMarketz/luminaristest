@@ -72,6 +72,7 @@ export const REKEY_MODELS = [
   'CollectionCharge', // F5 PR-2: cobrança no provedor por unidade, sem hash; o `external_reference` no MP é o id, não o unitId → REKEY pelo F-RK-5
   'FiscalDocumentPendingAttachment', // BE-INCR-DFE-ANEXO-PENDENTE: a pendência segue o `FiscalDocument` dela (sem hash) → REKEY pelo F-RK-5.
   //   Deixá-la no unitId antigo faria a varredura anexar no escopo errado (o documento não seria achado e a pendência iria a FAILED)
+  'IssBeneficioMunicipal', // SIMPLES-PISO-ANEXO-XI bloco 1: benefício municipal de ISS por unidade, sem hash → REKEY pelo F-RK-5
 ] as const;
 
 /**

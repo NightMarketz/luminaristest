@@ -172,6 +172,13 @@ import {
   upsertServiceFiscalProfile,
 } from '../controllers/serviceFiscalProfileController';
 import {
+  createIssBeneficioMunicipal,
+  deleteIssBeneficioMunicipal,
+  getIssBeneficioMunicipal,
+  listIssBeneficiosMunicipais,
+  updateIssBeneficioMunicipal,
+} from '../controllers/issBeneficioMunicipalController';
+import {
   deleteProductDestination,
   listProductDestinations,
   upsertProductDestination,
@@ -357,6 +364,12 @@ router.get('/service-fiscal-profiles', listServiceFiscalProfiles);
 router.get('/service-fiscal-profiles/:serviceRef', getServiceFiscalProfile);
 router.put('/service-fiscal-profiles/:serviceRef', upsertServiceFiscalProfile);
 router.delete('/service-fiscal-profiles/:serviceRef', deleteServiceFiscalProfile);
+// SIMPLES-PISO-ANEXO-XI bloco 1 (BRIEF item 1): benefício municipal de ISS (Res. CGSN 140 arts. 31-32)
+router.get('/iss-beneficios-municipais', listIssBeneficiosMunicipais);
+router.post('/iss-beneficios-municipais', createIssBeneficioMunicipal);
+router.get('/iss-beneficios-municipais/:id', getIssBeneficioMunicipal);
+router.put('/iss-beneficios-municipais/:id', updateIssBeneficioMunicipal);
+router.delete('/iss-beneficios-municipais/:id', deleteIssBeneficioMunicipal);
 // ITEM-DESTINATION PR-2 (BRIEF item 18, F-ID-2 a) — destinação padrão por produto
 router.get('/product-destinations', listProductDestinations);
 router.put('/product-destinations', upsertProductDestination);

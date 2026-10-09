@@ -82,6 +82,7 @@ export async function resetDb(): Promise<void> {
   await prisma.fiscalDocument.deleteMany();
   await prisma.fiscalDocumentSequence.deleteMany();
   await prisma.serviceFiscalProfile.deleteMany();
+  await prisma.issBeneficioMunicipal.deleteMany(); // SIMPLES-PISO-ANEXO-XI bloco 1
   // ITEM-DESTINATION PR-2: default de destinação por produto — folha (só FK Cascade para User).
   await prisma.productDestinationDefault.deleteMany();
   // C6b PR-3: o item do pacote tem FK RESTRICT para o log de entrega E para o job de

@@ -11,6 +11,7 @@
 import { z } from 'zod';
 import { AtividadeSemAnexoError, SimplesRegraNaoRegulamentadaError } from '../../../lib/errors';
 import { ParametroLegalAusenteError, linhaLegalVigente, type LinhaLegal } from '../../legalParameters/models/legalParameter';
+import { PISO_ISS_BP, excecaoPisoIss, reducaoBpDaFaixa } from './issBeneficio';
 
 export const TRIBUTOS_SIMPLES = [
   'IRPJ',
@@ -73,6 +74,14 @@ export const AtividadeInputSchema = z
       .nullable(),
     /** A soma das parcelas é a receita da atividade no mês. */
     parcelas: z.array(ParcelaSchema).min(1),
+    /**
+     * SIMPLES-PISO-ANEXO-XI bloco 1 (F-PI-3 b): benefício municipal de ISS vigente para a atividade — reduz o % efetivo
+     * do ISS da faixa (Res. CGSN 140 art. 32 § 1º) com o piso de 2% (art. 31 p.ú.; models/issBeneficio.ts).
+     */
+    beneficioIss: z
+      .object({ tipo: z.enum(['ISENCAO', 'REDUCAO_PERCENTUAL']), reducaoBpPorFaixa: z.array(z.number().int().min(0).max(10000)).min(1).max(6).nullable() })
+      .strict()
+      .optional(),
   })
   .strict();
 export type AtividadeInput = z.infer<typeof AtividadeInputSchema>;
@@ -124,6 +133,8 @@ export interface AtividadeApurada {
    * (art. 23 § 2º, red. 2027) leem.
    */
   percentuais: Partial<Record<TributoSimples, string>>;
+  /** SIMPLES-PISO-ANEXO-XI bloco 1: presente quando a entrada trouxe benefício municipal de ISS que alcançou a faixa. */
+  beneficioIss?: { issTabela: string; pisoAplicado: boolean; excecaoPiso: boolean; desvantajoso: boolean };
 }
 export interface ApuracaoCalculada {
   competencia: string;
@@ -397,6 +408,20 @@ export function apurar(entrada: ApuracaoInput, linhas: readonly LinhaLegal[]): A
       }
     }
 
+    // SIMPLES-PISO-ANEXO-XI bloco 1 (F-PI-3 b; F-PI-2): benefício municipal sobre o % efetivo do ISS da faixa, já com o
+    // teto (o percentual "decorrente da aplicação das tabelas", Res. CGSN 140 art. 32 § 1º). A parte reduzida sai do DAS
+    // — não é transferida a outro tributo. Piso de 2% absoluto fora de 7.02/7.05/16.01 (art. 31 p.ú.).
+    let beneficioIss: AtividadeApurada['beneficioIss'];
+    const issTabela = pct.get('ISS');
+    const reducao = at.beneficioIss && issTabela ? reducaoBpDaFaixa(at.beneficioIss, faixa) : null;
+    if (issTabela && reducao !== null) {
+      const excecaoPiso = excecaoPisoIss(at.cTribNac);
+      const reduzido = mul(issTabela, q(BigInt(10000 - reducao), 10000n));
+      const pisoAplicado = !excecaoPiso && cmp(reduzido, BP(PISO_ISS_BP)) < 0;
+      const aplicado = pisoAplicado ? BP(PISO_ISS_BP) : reduzido;
+      pct.set('ISS', aplicado);
+      beneficioIss = { issTabela: decimal(mul(issTabela, q(100n)), 4), pisoAplicado, excecaoPiso, desvantajoso: cmp(aplicado, issTabela) > 0 };
+    }
 
     const tributos: Partial<Record<TributoSimples, number>> = {};
     let receita = 0;
@@ -431,6 +456,7 @@ export function apurar(entrada: ApuracaoInput, linhas: readonly LinhaLegal[]): A
       fatorR: r ? decimal(r, 4) : null,
       tributos,
       percentuais: Object.fromEntries([...pct.entries()].map(([t, v]) => [t, decimal(mul(v, q(100n)), 4)])),
+      ...(beneficioIss ? { beneficioIss } : {}),
     };
   });
 
