@@ -42,6 +42,7 @@ import { MitExportRepository } from '../features/accounting/repositories/MitExpo
 import { SimplesEntradasRepository } from '../features/accounting/repositories/SimplesEntradasRepository';
 import { ReceitaFiscalRepository } from '../features/accounting/repositories/ReceitaFiscalRepository';
 import { SimplesApuracaoRepository } from '../features/accounting/repositories/SimplesApuracaoRepository';
+import { SimplesDeclaracaoRepository } from '../features/accounting/repositories/SimplesDeclaracaoRepository';
 import { AccountingDeliveryRepository } from '../features/accounting/repositories/AccountingDeliveryRepository';
 import { AccountingReviewRepository } from '../features/accounting/repositories/AccountingReviewRepository';
 import { AccountantAssignmentRepository } from '../features/accounting/repositories/AccountantAssignmentRepository';
@@ -131,6 +132,7 @@ import { MitExportService } from '../features/accounting/services/MitExportServi
 import { SimplesEntradasService } from '../features/accounting/services/SimplesEntradasService';
 import { ReceitaFiscalService } from '../features/accounting/services/ReceitaFiscalService';
 import { SimplesApuracaoService } from '../features/accounting/services/SimplesApuracaoService';
+import { SimplesDeclaracaoService } from '../features/accounting/services/SimplesDeclaracaoService';
 import { PisCofinsAssessmentService } from '../features/accounting/services/PisCofinsAssessmentService';
 import { AccountingDeliveryService } from '../features/accounting/services/AccountingDeliveryService';
 import { AccountingReviewService } from '../features/accounting/services/AccountingReviewService';
@@ -246,6 +248,7 @@ import type { IMitExportRepository } from '../features/accounting/repositories/I
 import type { ISimplesEntradasRepository } from '../features/accounting/repositories/ISimplesEntradasRepository';
 import type { IReceitaFiscalRepository } from '../features/accounting/repositories/IReceitaFiscalRepository';
 import type { ISimplesApuracaoRepository } from '../features/accounting/repositories/ISimplesApuracaoRepository';
+import type { ISimplesDeclaracaoRepository } from '../features/accounting/repositories/ISimplesDeclaracaoRepository';
 import type { IAccountingDeliveryRepository } from '../features/accounting/repositories/IAccountingDeliveryRepository';
 import type { IAccountingReviewRepository } from '../features/accounting/repositories/IAccountingReviewRepository';
 import type { IAccountantAssignmentRepository } from '../features/accounting/repositories/IAccountantAssignmentRepository';
@@ -597,6 +600,7 @@ export class ApplicationFactory {
     simplesEntradas: ISimplesEntradasRepository; // X14 PR-2
     receitaFiscal: IReceitaFiscalRepository; // X14 PR-2
     simplesApuracao: ISimplesApuracaoRepository; // X14 PR-3
+    simplesDeclaracao: ISimplesDeclaracaoRepository; // X14 PR-4
     accountingDelivery: IAccountingDeliveryRepository;
     accountingReview: IAccountingReviewRepository;
     accountantAssignment: IAccountantAssignmentRepository; // GOV-CONTADOR
@@ -690,6 +694,7 @@ export class ApplicationFactory {
     simplesEntradas: SimplesEntradasService; // X14 PR-2
     receitaFiscal: ReceitaFiscalService; // X14 PR-2
     simplesApuracao: SimplesApuracaoService; // X14 PR-3
+    simplesDeclaracao: SimplesDeclaracaoService; // X14 PR-4
     pisCofinsAssessment: PisCofinsAssessmentService; // X8 PR-2
     taxAssessmentRecalc: TaxAssessmentRecalcService; // BE-INCR-LEGAL-PARAMS PR-4 (item 10)
     accountingDelivery: AccountingDeliveryService;
@@ -767,6 +772,7 @@ export class ApplicationFactory {
       simplesEntradas: new SimplesEntradasRepository(),
       receitaFiscal: new ReceitaFiscalRepository(),
       simplesApuracao: new SimplesApuracaoRepository(),
+      simplesDeclaracao: new SimplesDeclaracaoRepository(),
       accountingDelivery: new AccountingDeliveryRepository(),
       accountingReview: new AccountingReviewRepository(),
       accountantAssignment: new AccountantAssignmentRepository(),
@@ -1487,6 +1493,17 @@ export class ApplicationFactory {
         postingService,
         auditService,
         this.policies.accounting,
+        this.repositories.fiscalDocument, // X14 PR-4 item 31: conferência NFS-e × receita
+      ),
+      // BE-INCR-SIMPLES-NACIONAL PR-4 (nó X14, itens 27–28): espelhos DASN-SIMEI e DEFIS.
+      simplesDeclaracao: new SimplesDeclaracaoService(
+        this.repositories.simplesDeclaracao,
+        this.repositories.simplesApuracao,
+        this.repositories.companyFiscalProfile,
+        this.repositories.simplesEntradas,
+        this.repositories.receitaFiscal,
+        accountingReportService,
+        this.policies.accounting,
       ),
       mitExport: new MitExportService(
         this.repositories.mitExport,
@@ -1738,6 +1755,7 @@ export class ApplicationFactory {
   public getSimplesEntradasService = (): SimplesEntradasService => this.services.simplesEntradas;
   public getReceitaFiscalService = (): ReceitaFiscalService => this.services.receitaFiscal;
   public getSimplesApuracaoService = (): SimplesApuracaoService => this.services.simplesApuracao;
+  public getSimplesDeclaracaoService = (): SimplesDeclaracaoService => this.services.simplesDeclaracao;
   public getPisCofinsAssessmentService = (): PisCofinsAssessmentService => this.services.pisCofinsAssessment;
   public getAccountingDeliveryService = (): AccountingDeliveryService =>
     this.services.accountingDelivery;

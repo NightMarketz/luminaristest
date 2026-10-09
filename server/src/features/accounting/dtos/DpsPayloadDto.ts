@@ -35,7 +35,7 @@ export const DpsPayloadSchema = z
             xNome: z.string().max(150).optional(), // [124]
             regTrib: z
               .object({
-                opSimpNac: z.union([z.literal(1), z.literal(3)]), // [140] MEI (2) fora do MVP
+                opSimpNac: z.union([z.literal(1), z.literal(2), z.literal(3)]), // [140] 1 não optante · 2 MEI (X14 PR-4 item 30) · 3 ME/EPP
                 regApTribSN: z.number().int().min(1).max(3).optional(), // [141]
                 regEspTrib: z.number().int().min(0).max(9), // [142]
               })

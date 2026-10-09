@@ -91,6 +91,11 @@ export interface IFiscalDocumentRepository {
   findLiveBySale(scope: AccountingScope, saleId: string, kind?: FiscalDocumentKind, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
   listBySale(scope: AccountingScope, saleId: string, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts[]>;
   listByStatus(scope: AccountingScope, status: FiscalDocumentStatus, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
+  /**
+   * X14 PR-4 (item 31) — Σ `vServCents` das NFS-e AUTORIZADAS em produção (com ou sem divergência na releitura), vivas,
+   * cuja `dCompet` cai na competência YYYY-MM.
+   */
+  somaNfseAutorizadaNaCompetencia(scope: AccountingScope, competencia: string, tx?: Prisma.TransactionClient): Promise<bigint>;
   /** SENT|PROCESSING mais velhos que `olderThan` — alvo do job de polling (BRIEF item 27). Sem escopo: o job varre todos. */
   listPending(olderThan: Date, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
   /**

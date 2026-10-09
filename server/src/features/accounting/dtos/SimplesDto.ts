@@ -130,3 +130,66 @@ export const SimplesDasRegistroSchema = z
   })
   .strict();
 export type SimplesDasRegistro = z.infer<typeof SimplesDasRegistroSchema>;
+
+// ---- BE-INCR-SIMPLES-NACIONAL PR-4 (nó X14, itens 27–29; forks L3/L4, dono 08/10) ----
+
+export const AnoParamSchema = z.object({ ano: z.coerce.number().int().min(2018).max(2100) }).strict();
+
+/**
+ * Item 27 — DASN-SIMEI, campo digitado (Res. CGSN 140 art. 109 III): contratação de empregado no ano. Receita total e
+ * parcela sujeita ao ICMS (I–II) vêm do subrazão no GET.
+ */
+export const SimplesDasnDigitadoSchema = z.object({ contratouEmpregado: z.boolean() }).strict();
+export type SimplesDasnDigitado = z.infer<typeof SimplesDasnDigitadoSchema>;
+export const SimplesDasnUpsertSchema = z.object({ unitId: z.string().min(1), ...SimplesDasnDigitadoSchema.shape }).strict();
+export type SimplesDasnUpsert = z.infer<typeof SimplesDasnUpsertSchema>;
+
+/**
+ * Item 28 — DEFIS, campos digitados do manual do PGDAS-D/DEFIS 9.4.3.1 (itens 2, 3, 7, 7.1–7.4 e 8). O sócio é
+ * referenciado pelo contato (`contactId`), sem CPF/nome no registro (o portal pede; o FE resolve do cadastro). Lucro
+ * contábil (item 4) e estoques (9.4.3.2 itens 1–2) vêm do razão no GET.
+ */
+export const SimplesDefisSocioSchema = z
+  .object({
+    contactId: z.string().min(1),
+    rendimentosIsentosCents: cents,
+    rendimentosTributaveisCents: cents,
+    participacaoBp: z.number().int().min(0).max(10000),
+    irrfCents: cents,
+  })
+  .strict();
+export const SimplesDefisDigitadoSchema = z
+  .object({
+    empregadosInicio: z.number().int().min(0).max(1_000_000),
+    empregadosFim: z.number().int().min(0).max(1_000_000),
+    ganhosRendaVariavelCents: cents,
+    socios: z.array(SimplesDefisSocioSchema).max(100),
+  })
+  .strict();
+export type SimplesDefisDigitado = z.infer<typeof SimplesDefisDigitadoSchema>;
+export const SimplesDefisUpsertSchema = z
+  .object({ unitId: z.string().min(1), ...SimplesDefisDigitadoSchema.shape })
+  .strict()
+  .refine((v) => v.socios.length === 0 || v.socios.reduce((s, x) => s + x.participacaoBp, 0) <= 10000, {
+    message: 'a soma das participações dos sócios não passa de 100% (manual 9.4.3.1 item 7.3)',
+    path: ['socios'],
+  });
+export type SimplesDefisUpsert = z.infer<typeof SimplesDefisUpsertSchema>;
+
+export type SimplesDasnSimeiView = {
+  ano: number;
+  prazo: string;
+  receitaBrutaTotalCents: number;
+  receitaIcmsCents: number;
+  mesesSemSubrazao: string[];
+  digitado: SimplesDasnDigitado | null;
+};
+export type SimplesDefisView = {
+  ano: number;
+  prazo: string;
+  mesesApurados: string[];
+  lucroContabilCents: number;
+  estoqueInicialCents: number;
+  estoqueFinalCents: number;
+  digitado: SimplesDefisDigitado | null;
+};

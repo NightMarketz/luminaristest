@@ -172,7 +172,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     // BE-INCR-TAX-PRESUMIDO-16 (F-P16-1 a): boolean da confirmação (Lei 9.250 art. 40 p.ú.).
     'declaraNaoProfissaoRegulamentada',
     // BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14, item 14): enum da opção do IBS/CBS por semestre.
-    'ibsCbsOpcaoS1', 'ibsCbsOpcaoS2'],
+    'ibsCbsOpcaoS1', 'ibsCbsOpcaoS2',
+    // BE-INCR-SIMPLES-NACIONAL PR-4 (nó X14, item 25): booleans do enquadramento do MEI no Anexo XI.
+    'meiContribuinteIcms', 'meiContribuinteIss'],
   'company_fiscal_profile.deleted': ['anoCalendario'],
   // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7, item 22) — só ids, enum e centavos como string; sem PII. O documento
   // da dedução (texto livre) e a memória ficam FORA do evento.

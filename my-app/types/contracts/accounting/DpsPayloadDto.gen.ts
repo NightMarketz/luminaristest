@@ -17,7 +17,7 @@ CNPJ: string
 IM?: string
 xNome?: string
 regTrib: {
-opSimpNac: (1 | 3)
+opSimpNac: (1 | 2 | 3)
 regApTribSN?: number
 regEspTrib: number
 }
@@ -106,7 +106,7 @@ CNPJ: string
 IM?: string
 xNome?: string
 regTrib: {
-opSimpNac: (1 | 3)
+opSimpNac: (1 | 2 | 3)
 regApTribSN?: number
 regEspTrib: number
 }

@@ -93,14 +93,15 @@ describe('itens 17–18 — calcular e espelho', () => {
     ]);
     expect(a.tieOut.ok).toBe(true);
     expect(a.dasOficial).toBeNull();
-    expect(a.alertas).toEqual([]);
+    // X14 PR-4 item 31: a venda de serviço não tem NFS-e autorizada no sistema ⇒ o único alerta é a conferência.
+    expect(a.alertas.map((x: { codigo: string }) => x.codigo)).toEqual(['NFSE_DIVERGE_RECEITA']);
   });
 
   it('histórico declarado num mês que tem subrazão: o subrazão prevalece e o alerta HISTORICO_IGNORADO avisa', async () => {
     await f().getSimplesEntradasService().upsertHistorico(scope(), '2026-06', { unitId: UNIT, receitaBrutaCents: 1 });
     const a = (await calcular('2026-06')).body.data;
     expect(a.totalCalculadoCents).toBe(528_000);
-    expect(a.alertas.map((x: { codigo: string }) => x.codigo)).toEqual(['HISTORICO_IGNORADO']);
+    expect(a.alertas.map((x: { codigo: string }) => x.codigo)).toEqual(['HISTORICO_IGNORADO', 'NFSE_DIVERGE_RECEITA']);
     await prisma.simplesHistoricoMensal.deleteMany({ where: { competencia: '2026-06' } });
   });
 
@@ -268,5 +269,41 @@ describe('review do PR-3', () => {
     expect(retidas.reduce((s: number, p: { receitaCents: number }) => s + p.receitaCents, 0)).toBe(50_000);
     // achado 5: Σ das atividades = receita do PA (5.000 + 5.000 − 2.000 do cancelamento).
     expect(a.atividades.reduce((s: number, x: { receitaCents: number }) => s + x.receitaCents, 0)).toBe(800_000);
+  });
+});
+
+describe('X14 PR-4 item 29 — alíquotas para os documentos da prestação no mês', () => {
+  it('prestação em 2026-07: ISS a reter = % efetivo de ISS da faixa de 2026-06 (10,56% × 32,50% = 3,4320%); pTotTribSN só sugerido', async () => {
+    const r = await request(app).get(`${S}/aliquotas/2026-07`).query({ unitId: UNIT }).set(authHeader(user));
+    expect(r.status).toBe(200);
+    expect(r.body.data).toMatchObject({ competencia: '2026-07', mesReferencia: '2026-06' });
+    const servico = r.body.data.atividades.find((a: { natureza: string }) => a.natureza === 'SERVICO');
+    expect(servico).toMatchObject({ anexo: 'III', cTribNac: '060101', aliquotaEfetiva: '10.5600', issRetencao: '3.4320', pTotTribSNSugerido: '10.5600', creditoAdquirente: null });
+  });
+});
+
+describe('X14 PR-4 item 28 — DEFIS espelho mínimo', () => {
+  const defis = (ano: number) => request(app).get(`${S}/defis/${ano}`).query({ unitId: UNIT }).set(authHeader(user));
+
+  it('2026: meses apurados aqui, lucro contábil da DRE do ano, estoques do razão em 31/12; prazo 31/03', async () => {
+    const r = await defis(2026);
+    expect(r.status).toBe(200);
+    const dre = await f().getAccountingReportService().incomeStatement(scope(), new Date('2026-12-31T23:59:59.999Z'));
+    expect(r.body.data).toMatchObject({ ano: 2026, prazo: '2027-03-31', mesesApurados: ['2026-06'], estoqueInicialCents: 0, estoqueFinalCents: 0, digitado: null });
+    expect(r.body.data.lucroContabilCents).toBe(Number(dre.netResult.amountCents));
+  });
+
+  it('PUT grava os digitados; participação dos sócios acima de 100% ⇒ 400', async () => {
+    const socio = { contactId: 'ct-1', rendimentosIsentosCents: 100_000, rendimentosTributaveisCents: 50_000, participacaoBp: 10_000, irrfCents: 0 };
+    const corpo = { unitId: UNIT, empregadosInicio: 2, empregadosFim: 3, ganhosRendaVariavelCents: 0 };
+    expect((await request(app).put(`${S}/defis/2026`).set(authHeader(user)).send({ ...corpo, socios: [socio, { ...socio, contactId: 'ct-2', participacaoBp: 1 }] })).status).toBe(400);
+    const ok = await request(app).put(`${S}/defis/2026`).set(authHeader(user)).send({ ...corpo, socios: [socio] });
+    expect(ok.status).toBe(200);
+    expect(ok.body.data.digitado).toEqual({ empregadosInicio: 2, empregadosFim: 3, ganhosRendaVariavelCents: 0, socios: [socio] });
+  });
+
+  it('2027 (a declaração muda pela LC 214) e ano fora do Simples (2025 = Presumido) ⇒ 400', async () => {
+    expect((await defis(2027)).status).toBe(400);
+    expect((await defis(2025)).status).toBe(400);
   });
 });
