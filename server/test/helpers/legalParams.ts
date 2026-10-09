@@ -31,7 +31,9 @@ export const LEGAL_PARAMS_SEED_FILE_V2 = path.resolve(__dirname, '../../prisma/d
 export const LEGAL_PARAMS_SEED_FILE_V3 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v3.sql');
 /** CSLL-LC224: linhas v4 de CSLL_ALIQUOTA (LC 224/2025). Mesma regra de igualdade com o migration.sql. */
 export const LEGAL_PARAMS_SEED_FILE_V4 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v4.sql');
-export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4];
+/** BE-INCR-CSLL-BANCOS-Q1: linha v5 de CSLL_ALIQUOTA (código 3 antes de 01/04/2026). Mesma regra de igualdade. */
+export const LEGAL_PARAMS_SEED_FILE_V5 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v5.sql');
+export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4, LEGAL_PARAMS_SEED_FILE_V5];
 
 type Valor = string | number | null;
 

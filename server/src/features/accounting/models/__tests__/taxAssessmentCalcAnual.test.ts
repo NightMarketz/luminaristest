@@ -145,6 +145,11 @@ describe('item 7 — estimativa por receita bruta (B2)', () => {
     }
   });
 
+  it('BE-INCR-CSLL-BANCOS-Q1 item 5: código 3 não é misto — estimativa de janeiro/2026 da CSLL a 20%', () => {
+    const [jan] = apurarMeses([{ servico: 100_000 }], 'CSLL', { ecfIndAliqCsll: '3' });
+    expect(jan.devidoCents).toBe(R(6_400)); // 100.000 × 32% × 20%
+  });
+
   it("26 (e) art. 47 § 2º: um balancete com excesso em A04 não muda a estimativa de A05", () => {
     const sem = apurarMeses([{ servico: 50_000 }, { servico: 50_000 }, { servico: 50_000 }, { servico: 50_000 }, { servico: 70_000 }]);
     const com = apurarMeses([{ servico: 50_000 }, { servico: 50_000 }, { servico: 50_000 }, { balancete: true, servico: 50_000 }, { servico: 70_000 }]);
