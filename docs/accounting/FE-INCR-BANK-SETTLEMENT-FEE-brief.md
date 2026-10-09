@@ -1,7 +1,8 @@
 # FE-INCR-BANK-SETTLEMENT-FEE — BRIEF (tarifa do provedor na tela de baixas do F7)
 
 > `sessao-planejamento`, 2026-10-09. Saída: este documento. Sem código, sem "executa".
-> **Forks F-FE-FEE-1..3: RATIFICAÇÃO PENDENTE.**
+> **Forks F-FE-FEE-1..3 ✅ ratificados** pelo dono, chat, 2026-10-09: "ratifica os forks com as recomendações" —
+> F-FE-FEE-1 → (b), F-FE-FEE-2 → (a), F-FE-FEE-3 → (a). Ainda sem "executa".
 
 ## 0. Contexto fixo
 
@@ -34,8 +35,8 @@ Cada item é testável sozinho (vitest + RTL, shim de `React` global).
 
 1. **[direto]** Tipos: o item de baixa ganha `feeCents: number` e `feeEntryId: string | null`, importados do `.gen.ts`
    regenerado depois do PR-3 (IA-1). Nada escrito à mão.
-2. **[direto, P3-7]** Linha com `feeCents > 0` mostra a tarifa e o bruto (`|linha| + feeCents`) — lugar na tabela é o
-   **F-FE-FEE-2**. Teste: linha líquida 9700, `feeCents = 300`, título aberto 10000 ⇒ mostra bruto R$ 100,00, tarifa
+2. **[direto, P3-7]** Linha com `feeCents > 0` mostra a tarifa e o bruto (`|linha| + feeCents`) — coluna "Tarifa" entre
+   Encargo e Status, só quando algum item da página tem `feeCents > 0` (F-FE-FEE-2 → a). Teste: linha líquida 9700, `feeCents = 300`, título aberto 10000 ⇒ mostra bruto R$ 100,00, tarifa
    R$ 3,00, proposto R$ 100,00, sem badge de encargo. Linha com `feeCents = 0` renderiza igual a hoje (teste de
    regressão sobre o fixture existente).
 3. **[direto, P3-8]** Resumo do modal de confirmação acrescenta `· Tarifa R$ x` quando `feeCents > 0`, no mesmo molde
@@ -46,7 +47,10 @@ Cada item é testável sozinho (vitest + RTL, shim de `React` global).
    `chargeAccountHint`. O texto depende do **F-FE-FEE-1** (aponta para a seção nova ou para a API).
 6. **[direto, P3-9]** Erro `provider_balance_requires_payment_account` mostra mensagem traduzida (o extrato não é de
    uma conta de provedor ativa). Sem ação na tela.
-7. **[fork F-FE-FEE-1]** Campo `providerFeeExpenseAccountId` editável na tela.
+7. **[F-FE-FEE-1 → b]** Seção "Contas da baixa" na sub-aba de baixas (molde `FixedAssetAccountsSection`) com
+   `bankChargeExpenseAccountId`, `bankChargeIncomeAccountId` e `providerFeeExpenseAccountId`; `updateSettings` envia só
+   esses três + `unitId` (teste de wire). As dicas de `charge_account_not_configured` e `fee_account_not_configured`
+   passam a apontar para a seção.
 8. **[direto]** Paridade i18n pt/en em `accounting.json` para toda chave nova (`bankSettlement.col.fee`,
    `bankSettlement.gross`, `bankSettlement.feeEntry`, `bankSettlement.feeAccountHint`,
    `bankSettlement.error.providerBalance` + as do item 7). O namespace já está no `ns`.
@@ -65,19 +69,24 @@ type BankSettlementItemFee = {
 const grossCents = (it) => Math.abs(it.line.amountCents) + it.feeCents;
 
 // escrita — PUT /api/accounting/settings (P3-11), só com os campos da seção (molde FixedAssetAccountsSection)
-type ProviderFeeSettingsWire = { unitId: string; providerFeeExpenseAccountId: string | null };
+type SettlementAccountsWire = {   // F-FE-FEE-1 → b
+  unitId: string;
+  bankChargeExpenseAccountId: string | null;
+  bankChargeIncomeAccountId: string | null;
+  providerFeeExpenseAccountId: string | null;
+};
 
 // erros lidos por code (IA-3)
 type FeeErrorCode = 'fee_account_not_configured' | 'provider_balance_requires_payment_account';
 ```
 
-## 4. Forks — RATIFICAÇÃO PENDENTE
+## 4. Forks — ✅ RATIFICADOS (dono, chat, 2026-10-09: recomendações)
 
-| Fork | Caminhos | Recomendação |
-|---|---|---|
-| **F-FE-FEE-1** — onde se configura a conta da tarifa | **(a)** seção nova "Contas da baixa" na sub-aba de baixas, molde `FixedAssetAccountsSection`, com **só** `providerFeeExpenseAccountId` · **(b)** a mesma seção com as três contas da baixa (`bankChargeExpenseAccountId`, `bankChargeIncomeAccountId`, `providerFeeExpenseAccountId`) — fecha também a dica "ainda sem tela" do encargo · **(c)** sem tela: só a dica apontando a API, como o encargo hoje | **(b).** A dica de `:331` já registra a falta da tela do encargo; as três contas são da mesma etapa de confirmação e falham com o mesmo molde de 400. Fazer só a da tarifa deixa duas contas vizinhas sem tela por motivo nenhum. Custo extra: dois selects. **Atenção:** (b) passa do item "tarifa"; se o dono quiser escopo estrito, (a) |
-| **F-FE-FEE-2** — onde a tarifa aparece na tabela | **(a)** coluna nova "Tarifa" entre Encargo e Status, mostrada só quando algum item da página tem `feeCents > 0` · **(b)** sem coluna: na célula Valor, `líquido (bruto − tarifa)` em texto secundário · **(c)** coluna sempre visível | **(a).** Extrato de banco nunca tem tarifa (P3-6 só roda em extrato de `PaymentAccount`), então coluna fixa seria vazia na maior parte das telas; (b) mistura três números numa célula e quebra o alinhamento à direita |
-| **F-FE-FEE-3** — quando executar | **(a)** `sessao-feature` só depois do PR-3 em `main` e do `.gen.ts` regenerado · **(b)** executar já com tipo local provisório e trocar depois | **(a).** (b) cria tipo à mão, que a memória `fe-contract-types-import-type` rejeita, e o PR-3 ainda pode mudar a forma (IA-2, F10, sonda) |
+| Fork | Caminhos | Recomendação | Decisão |
+|---|---|---|---|
+| **F-FE-FEE-1** — onde se configura a conta da tarifa | **(a)** seção nova "Contas da baixa" na sub-aba de baixas, molde `FixedAssetAccountsSection`, com **só** `providerFeeExpenseAccountId` · **(b)** a mesma seção com as três contas da baixa (`bankChargeExpenseAccountId`, `bankChargeIncomeAccountId`, `providerFeeExpenseAccountId`) — fecha também a dica "ainda sem tela" do encargo · **(c)** sem tela: só a dica apontando a API, como o encargo hoje | **(b).** A dica de `:331` já registra a falta da tela do encargo; as três contas são da mesma etapa de confirmação e falham com o mesmo molde de 400. Fazer só a da tarifa deixa duas contas vizinhas sem tela por motivo nenhum. Custo extra: dois selects. **Atenção:** (b) passa do item "tarifa"; se o dono quiser escopo estrito, (a) | ✅ (b) |
+| **F-FE-FEE-2** — onde a tarifa aparece na tabela | **(a)** coluna nova "Tarifa" entre Encargo e Status, mostrada só quando algum item da página tem `feeCents > 0` · **(b)** sem coluna: na célula Valor, `líquido (bruto − tarifa)` em texto secundário · **(c)** coluna sempre visível | **(a).** Extrato de banco nunca tem tarifa (P3-6 só roda em extrato de `PaymentAccount`), então coluna fixa seria vazia na maior parte das telas; (b) mistura três números numa célula e quebra o alinhamento à direita | ✅ (a) |
+| **F-FE-FEE-3** — quando executar | **(a)** `sessao-feature` só depois do PR-3 em `main` e do `.gen.ts` regenerado · **(b)** executar já com tipo local provisório e trocar depois | **(a).** (b) cria tipo à mão, que a memória `fe-contract-types-import-type` rejeita, e o PR-3 ainda pode mudar a forma (IA-2, F10, sonda) | ✅ (a) |
 
 ## 5. Pendente de validação externa
 
