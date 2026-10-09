@@ -24,6 +24,7 @@ prs: ["#599", "#614"]
 ## Docs
 
 - [`docs/accounting/BE-INCR-CSLL-ALIQUOTA-LC224-brief.md`](../../accounting/BE-INCR-CSLL-ALIQUOTA-LC224-brief.md) — BRIEF + forks F-CA-1..6
+- [`docs/accounting/BE-INCR-CSLL-BANCOS-Q1-brief.md`](../../accounting/BE-INCR-CSLL-BANCOS-Q1-brief.md) — fast-follow do F-CA-1 a: código 3 de 2020-03-01 a 2026-03-31 (F-CB-1..3; #614)
 
 ## Desbloqueia
 
