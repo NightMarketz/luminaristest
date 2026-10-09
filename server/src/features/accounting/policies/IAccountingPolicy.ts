@@ -129,6 +129,8 @@ export interface IAccountingPolicy {
    * de documento fiscal = quem gerencia dados contábeis (efeito legal externo); leitura = canRead.
    */
   canManageServiceFiscalProfile(scope: AccountingScope): boolean;
+  /** SIMPLES-PISO-ANEXO-XI bloco 1 (BRIEF item 1): benefício municipal de ISS = régua do perfil fiscal. */
+  canManageIssBeneficioMunicipal(scope: AccountingScope): boolean;
   canReadFiscalDocument(scope: AccountingScope): boolean;
 
   /** BE-INCR-FIXED-ASSETS (nó C8, item 11) — mesma régua de quem fecha período (padrão canManageFiscalProfile). */
