@@ -157,6 +157,11 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // BE-INCR-DFE (nó X10b, item 9) — perfil fiscal do serviço: só códigos (lista nacional/NBS/INDOP/IBGE) + serviceRef (id)
   'service_fiscal_profile.updated': ['serviceRef', 'cTribNac', 'cTribMun', 'cNBS', 'cIndOp', 'cLocPrestacao'],
   'service_fiscal_profile.deleted': ['serviceRef', 'cTribNac'],
+  // SIMPLES-PISO-ANEXO-XI bloco 1 (BRIEF item 1) — benefício municipal de ISS: códigos/enum/datas; a legislação
+  // concessiva (texto livre) fica FORA do evento.
+  'iss_beneficio_municipal.created': ['codMun', 'tipo', 'cTribNacPrefixos', 'reducaoBpPorFaixa', 'vigenteDesde', 'vigenteAte'],
+  'iss_beneficio_municipal.updated': ['codMun', 'tipo', 'cTribNacPrefixos', 'reducaoBpPorFaixa', 'vigenteDesde', 'vigenteAte'],
+  'iss_beneficio_municipal.deleted': ['codMun', 'tipo', 'cTribNacPrefixos', 'reducaoBpPorFaixa', 'vigenteDesde', 'vigenteAte'],
   // ITEM-DESTINATION PR-2 (item 17, F-ID-2 a) — destinação padrão por produto: productRef (id) + enum
   'product_destination.set':     ['productRef', 'destination'],
   'product_destination.cleared': ['productRef', 'destination'],

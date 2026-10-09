@@ -1600,6 +1600,30 @@ model ServiceFiscalProfile {
   @@map("service_fiscal_profiles")
 }
 
+// SIMPLES-PISO-ANEXO-XI bloco 1 (BRIEF item 1, F-PI-1 a): benefício municipal de ISS para ME/EPP do Simples (Res. CGSN
+// 140 arts. 31-32). Lei do Município: por unidade + codMun, ramo (prefixos de cTribNac; [] = todos) e faixa, com vigência.
+// Prisma first-class (§2.1). Soft-delete; sem @@unique (sobreposição é checada no serviço).
+model IssBeneficioMunicipal {
+  id                String    @id @default(cuid())
+  userId            String
+  unitId            String
+  codMun            String // IBGE 7
+  cTribNacPrefixos  Json // string[] — 4 (item+subitem) ou 6 dígitos; [] = todos os serviços (art. 32 II)
+  tipo              String // ISENCAO | REDUCAO_PERCENTUAL | VALOR_FIXO
+  reducaoBpPorFaixa Json? // number[] (1 ou 6) — redução sobre o % efetivo do ISS (art. 32 §§ 1º-3º)
+  legislacao        String // legislação concessiva (art. 27 § 1º)
+  vigenteDesde      String // YYYY-MM-DD
+  vigenteAte        String?
+  createdById       String?
+  updatedById       String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+
+  @@index([userId, unitId, deletedAt])
+  @@map("iss_beneficios_municipais")
+}
+
 // ITEM-DESTINATION (BE-INCR-ITEM-DESTINATION BRIEF item 2, F-ID-2 a): destinação PADRÃO de um produto nesta
 // unidade. Parâmetro fiscal com efeito em crédito → Prisma first-class (§2.1), nunca campo do preset.
 // productRef = string escopada, NÃO FK (F-INV5). Só REVENDA | INSUMO_SERVICO (EMENDA 29/09 item 25 — o

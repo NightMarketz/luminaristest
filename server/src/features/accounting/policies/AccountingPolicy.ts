@@ -162,6 +162,11 @@ export class AccountingPolicy implements IAccountingPolicy {
     return this.canManageFiscalProfile(scope);
   }
 
+  // SIMPLES-PISO-ANEXO-XI bloco 1 (BRIEF item 1)
+  canManageIssBeneficioMunicipal(scope: AccountingScope): boolean {
+    return this.canManageFiscalProfile(scope);
+  }
+
   canReadFiscalDocument(scope: AccountingScope): boolean {
     return this.canRead(scope);
   }
