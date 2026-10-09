@@ -7,6 +7,9 @@
 > ([`PLANO-POS-CONTADOR-2026-09-23.md`](PLANO-POS-CONTADOR-2026-09-23.md) linha 129). Cruza com o gate [[Z0-a]].
 > **Ponto a validar pedido pelo dono (02/10):** o efeito do F-GOV-11 (a), em que o dono reabre períodos que o
 > contador cobriu ([`D-2026-10-02-GOV-CONTADOR-FORKS`](../plano/decisoes/D-2026-10-02-GOV-CONTADOR-FORKS.md)).
+> **Status 10/10/2026:** texto **aprovado pelo dono para envio** ao CRC-SP pelo canal oficial de consultas (Q4 a de
+> [`D-2026-10-10-QUESTIONARIO-DONO`](../plano/decisoes/D-2026-10-10-QUESTIONARIO-DONO.md)). Envio = dono; data de envio
+> e protocolo: _a preencher pelo dono_. Trava comercial: "com contador incluso" suspenso até a triagem da resposta.
 
 ---
 
@@ -76,3 +79,9 @@ e o dono decide se manda.
 Chame o agente com "triagem da resposta do CRC-SP". A resposta é dado externo, não sign-off: cada ponto vira
 confirmação, crítica (fork ao dono) ou frente de negócio. O F-GOV-1 só sai de "do dono, fora do código" quando a
 triagem registrar a resposta.
+
+**Diretriz do dono para a pergunta 3 (10/10, chat):** se o CRC-SP disser que a reabertura pelo dono fere a
+responsabilidade técnica do contador, o sistema passa a **proibir a reabertura** (trava definitiva) e todo ajuste de
+período encerrado entra como **lançamento extemporâneo** na competência atual, com o período de origem no histórico.
+O dono citou o item 36 da ITG 2000 como base; **não conferido na fonte** pelo agente. Os nós afetados seriam
+F-GOV-10 e F-GOV-11, reabertos ao dono na triagem.

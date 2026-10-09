@@ -2524,7 +2524,7 @@
  *                 fiscal:
  *                   type: object
  *                   properties:
- *                     indAliqCsll:    { type: string, enum: ['1', '4'], description: '1 = 9 percent' }
+ *                     indAliqCsll:    { type: string, enum: ['1', '3', '4', '7', '8'], description: '1 = 9 percent' }
  *                     indRecReceita:  { type: string, enum: ['1', '2'], description: '2 = competencia' }
  *                 signers:
  *                   type: array
@@ -2619,7 +2619,7 @@
  *                     formaTribPer:   { type: string, description: '0010.FORMA_TRIB_PER, 4 chars in [0RPAES], one per quarter (Manual pp.71-72), no default' }
  *                     codVer:         { type: string, description: '0000.COD_VER override, 4 digits (e.g. 0012); absent = resolved by calendar year' }
  *                     formaApur:      { type: string, enum: ['T', 'A'], description: 'optional - derived from the fiscal profile of the year (A = ANUAL, else T); informed and different is a 400 (X7 Fase B item 18)' }
- *                     indAliqCsll:    { type: string, enum: ['1', '4'], description: '1 = 9 percent' }
+ *                     indAliqCsll:    { type: string, enum: ['1', '3', '4', '7', '8'], description: '1 = 9 percent' }
  *                     indRecReceita:  { type: string, enum: ['1', '2'], description: '2 = competencia' }
  *                 signers:
  *                   type: array
@@ -5276,7 +5276,7 @@
  *                   type: object
  *                   nullable: true
  *                   properties:
- *                     indAliqCsll: { type: string, enum: ['1', '4'] }
+ *                     indAliqCsll: { type: string, enum: ['1', '3', '4', '7', '8'] }
  *                     indRecReceita: { type: string, enum: ['1', '2'] }
  *                 contadorContactId: { type: string, nullable: true }
  *                 representanteLegalSignerId: { type: string, nullable: true }

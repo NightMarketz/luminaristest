@@ -138,6 +138,13 @@ describe('item 7 — estimativa por receita bruta (B2)', () => {
     expect(() => apurarMeses([{ servico: 1 }], 'IRPJ', { inicioAtividadeEm: '2026-02-10' })).toThrow(/fora do período de atividade/);
   });
 
+  it('CSLL-LC224 F-CA-4 (a): estimativa da CSLL com código misto 7/8 ⇒ 400; IRPJ com o mesmo perfil segue', () => {
+    for (const ind of ['7', '8']) {
+      expect(() => apurarMeses([{ servico: 100_000 }], 'CSLL', { ecfIndAliqCsll: ind })).toThrow(/código 7\/8 não suportada/);
+      expect(() => apurarMeses([{ servico: 100_000 }], 'IRPJ', { ecfIndAliqCsll: ind })).not.toThrow();
+    }
+  });
+
   it("26 (e) art. 47 § 2º: um balancete com excesso em A04 não muda a estimativa de A05", () => {
     const sem = apurarMeses([{ servico: 50_000 }, { servico: 50_000 }, { servico: 50_000 }, { servico: 50_000 }, { servico: 70_000 }]);
     const com = apurarMeses([{ servico: 50_000 }, { servico: 50_000 }, { servico: 50_000 }, { balancete: true, servico: 50_000 }, { servico: 70_000 }]);
@@ -154,6 +161,12 @@ describe('item 8 — balancete de suspensão/redução (B3)', () => {
       tabela, ano: 2026, periodo: 'A03', tributo: 'IRPJ', resultadoAntesCents: R(100_000), contasProvisaoConfiguradas: true,
       linhasParteA: [], anteriores: [], perfil: PERFIL, deducoes: [], ...o,
     });
+
+  it('CSLL-LC224 F-CA-4 (a): balancete da CSLL com código 7/8 ⇒ 400', () => {
+    for (const ind of ['7', '8']) {
+      expect(() => bal({ tributo: 'CSLL', perfil: { ...PERFIL, ecfIndAliqCsll: ind } })).toThrow(/código 7\/8 não suportada/);
+    }
+  });
   const mesConf = (periodo: LalurMes, devido: number, tributo: TributoApuracao = 'IRPJ', dif = 0): MesConfirmado => ({
     id: `c-${periodo}`, periodo, tributo, modo: 'ESTIMATIVA_RECEITA', devidoCents: R(devido), deducoesCents: 0n,
     aPagarCents: R(devido), diferencaPostergadaCents: R(dif), memoria: [],
@@ -264,6 +277,13 @@ describe('item 10 — ajuste anual (B6; F-TB-2 b)', () => {
       tabela, ano: 2026, tributo: 'IRPJ', resultadoAntesCents: R(384_000), contasProvisaoConfiguradas: true, linhasParteA: [],
       parteBFechada: true, meses: meses(), perfil: PERFIL, deducoes: [], ...o,
     });
+
+  it('CSLL-LC224 F-CA-4 (a): ajuste anual da CSLL com código 7/8 ⇒ 400', () => {
+    const mesesCsll = apurarMeses(Array.from({ length: 12 }, () => ({ servico: 100_000 })), 'CSLL').map((r, i) => confirmar(r, A(i + 1)));
+    for (const ind of ['7', '8']) {
+      expect(() => ajuste({ tributo: 'CSLL', meses: mesesCsll, perfil: { ...PERFIL, ecfIndAliqCsll: ind } })).toThrow(/código 7\/8 não suportada/);
+    }
+  });
 
   it('12 estimativas por receita bruta e ajuste igual ao devido ⇒ saldo 0; código 245601', () => {
     const r = ajuste({});

@@ -22,6 +22,12 @@ describe('UpsertCompanyFiscalProfileSchema (item 5)', () => {
     expect(ok({ regime: 'REAL', ecf })).toBe(true);
   });
 
+  it('CSLL-LC224 F-CA-3 (b): indAliqCsll aceita 1/3/4/7/8 (ECF leiaute 12, 0020) e recusa 2', () => {
+    for (const indAliqCsll of ['1', '3', '4', '7', '8']) expect(ok({ regime: 'REAL', ecf: { indAliqCsll, indRecReceita: '2' } })).toBe(true);
+    expect(ok({ regime: 'REAL', ecf: { indAliqCsll: '2', indRecReceita: '2' } })).toBe(false);
+  });
+
+
   it('livroCaixaSemEscrituracao/distribuicaoAcimaBase só no PRESUMIDO (IN 2.003 art. 3º §1º V e §3º)', () => {
     for (const k of ['livroCaixaSemEscrituracao', 'distribuicaoAcimaBase']) {
       expect(ok({ regime: 'PRESUMIDO', condicoes: { [k]: true } })).toBe(true);
