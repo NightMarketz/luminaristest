@@ -3,17 +3,17 @@ id: "CSLL-LC224"
 tipo: "plataforma"
 dominio: "fiscal"
 titulo: "Alíquotas da CSLL pela LC 224/2025 — linhas v4 de CSLL_ALIQUOTA + códigos ECF 3/7/8 (BE-INCR-CSLL-ALIQUOTA-LC224)"
-estado: "ready"
+estado: "done"
 estado_detalhe: "09/10: BRIEF escrito; F-CA-1..6 ratificados por questionário (F-CA-3 e F-CA-6 contra a recomendação). Sem 'executa'. Pendências externas P-CA-1..4 (texto da LC 224 no DOU, redação anterior, regra do PVA para 7/8, rateio no Real anual)"
 depende_de: ["[[LEGAL-PARAMS]]", "[[X7]]"]
 autorizacao: "dono, chat, 2026-10-09: \"Planeja a atualização de CSLL_ALIQUOTA pela LC 224/2025 — sessao-planejamento, sem 'executa'\"; F-CA-1..6 ratificados por questionário no mesmo dia; \"Cria a nota do nó CSLL-LC224 e abre o PR do BRIEF\" — sem 'executa'"
 ancora_sdd: "—"
 atualizado: "2026-10-09"
-prs: []
+prs: ["#599"]
 ---
 # CSLL-LC224 — alíquotas da CSLL pela LC 224/2025
 
-**Estado:** `ready` — BRIEF com forks ratificados. Código só depois de um `executa` do dono.
+**Estado:** `done` — 09/10: BRIEF escrito; F-CA-1..6 ratificados por questionário (F-CA-3 e F-CA-6 contra a recomendação). Sem 'executa'. Pendências externas P-CA-1..4 (texto da LC 224 no DOU, redação anterior, regra do PVA para 7/8, rateio no Real anual)  
 
 ## Escopo
 
