@@ -1105,6 +1105,7 @@ model Receivable {
   updatedAt        DateTime            @updatedAt
   deletedAt        DateTime?
   receipts         ReceivableReceipt[]
+  collectionCharges CollectionCharge[] // BE-INCR-PAYMENT-PROVIDER PR-2 (P2-2): cobranças no provedor — sem efeito no razão
 
   // Business key (D3): one live receivable per customer × document. rename-on-delete
   // (documentNumber → deleted:<id>:<documentNumber>) frees the key on cancel/delete so a re-create
@@ -1536,6 +1537,8 @@ model CompanyFiscalProfile {
   meiContribuinteIss               Boolean?
   // X14 PR-4 (F-PR4-13, dono 09/10): MEI transportador autônomo de cargas — limite da Res. CGSN 140 art. 100 § 1º-A.
   meiTransportadorCargas           Boolean?
+  // X14 F-PR4-12 (b), dono 10/10: regime de apuração da receita no Simples — COMPETENCIA | CAIXA (Res. CGSN 140 art. 16).
+  simplesRegimeApuracao            String   @default("COMPETENCIA")
   createdById                      String?
   updatedById                      String?
   createdAt                        DateTime           @default(now())
@@ -1670,6 +1673,31 @@ model FiscalDocument {
   @@index([userId, unitId, status])
   @@index([userId, unitId, saleId])
   @@map("fiscal_documents")
+}
+
+// BE-INCR-DFE-ANEXO-PENDENTE (BRIEF §4, F-PA-1 a / F-PA-3 a / F-PA-6 a) — transactional outbox local do anexo e da
+// proveniência da NFS-e autorizada em produção. Gravada NA MESMA tx da autorização (com os bytes), drenada inline e,
+// se falhar, pela varredura do DfePollScheduler. Progresso por passo: o upload não é idempotente.
+model FiscalDocumentPendingAttachment {
+  id               String   @id @default(cuid())
+  userId           String
+  unitId           String
+  documentId       String   @unique // um por documento (idempotência da criação)
+  status           String // PENDING | DONE | FAILED | DISCARDED
+  xmlBytes         Bytes? // F-PA-1 (a); null após DONE (F-PA-6)
+  pdfBytes         Bytes?
+  xmlAttachmentId  String? // progresso por passo (F-PA-3)
+  pdfAttachmentId  String?
+  sourceDocumentId String?
+  resultJson       String // { chaveOuCodigo, nNFSe, numero, valores } — sem PII (§1.12)
+  attempts         Int      @default(0)
+  nextAttemptAt    DateTime @default(now())
+  lastError        String? // truncado a 500
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([status, nextAttemptAt])
+  @@map("fiscal_document_pending_attachments")
 }
 
 // BE-INCR-DFE (ADR-DFE F-DFE-10 → a, §9.1) — o que foi ENVIADO, imutável POR TENTATIVA; `ref` único por
@@ -2393,9 +2421,47 @@ model PaymentAccount {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   deletedAt            DateTime?
+  charges              CollectionCharge[] // PR-2
 
   @@index([userId, unitId, provider, status])
   @@map("payment_accounts")
+}
+
+// BE-INCR-PAYMENT-PROVIDER PR-2 (nó F5; BRIEF §4.1, PP-D3) — uma cobrança emitida no provedor contra um título do AR.
+// SEM efeito no razão (PP-D5, resposta 20): nenhuma transição gera JournalEntry nem ReceivableReceipt (P2-8).
+// "No máximo 1 viva (CREATING/PENDING) por título" = gate dentro da tx (P2-2), não @@unique (SQLite sem índice parcial).
+model CollectionCharge {
+  id                   String         @id @default(cuid()) // = external_reference no provedor
+  userId               String
+  unitId               String
+  paymentAccountId     String
+  paymentAccount       PaymentAccount @relation(fields: [paymentAccountId], references: [id], onDelete: Restrict)
+  receivableId         String
+  receivable           Receivable     @relation(fields: [receivableId], references: [id], onDelete: Restrict)
+  counterpartyId       String? // copiado do título na criação — chave da sugestão do pagador (P2-11)
+  kind                 String // BOLETO | PIX
+  amountCents          BigInt // saldo aberto relido na tx (P2-2)
+  expiresAt            DateTime // prazo explícito calculado por nós (F4 a, dono 10/10)
+  attempt              Int            @default(1) // X-Idempotency-Key = id:attempt
+  providerRef          String? // ORD…
+  providerPaymentRef   String? // PAY01… (M3)
+  providerStatus       String? // cru (M6)
+  providerStatusDetail String?
+  status               String // CREATING | PENDING | PAID | PARTIALLY_REFUNDED | CHARGED_BACK | REFUNDED | EXPIRED | CANCELLED | FAILED (F-PPB-8 b)
+  paidAt               DateTime? // instante da re-consulta que viu accredited — informativo (P2-7)
+  payerSnapshotJson    String // PII — fora do AuditEvent (P2-14)
+  instrumentJson       String?
+  failReason           String?
+  createdById          String?
+  cancelledById        String?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  deletedAt            DateTime?
+
+  @@unique([paymentAccountId, providerRef])
+  @@index([userId, unitId, receivableId, status])
+  @@index([userId, unitId, counterpartyId, createdAt])
+  @@map("collection_charges")
 }
 
 // BE-INCR-TAX-ASSESSMENT Fase A (nó X7; BRIEF item 12, contrato §2; F-X7-3 a) — apuração trimestral confirmada de

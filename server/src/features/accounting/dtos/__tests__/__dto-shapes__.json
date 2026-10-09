@@ -364,7 +364,9 @@
               "EXPORT_BALANCE_SHEET",
               "EXPORT_INCOME_STATEMENT",
               "EXPORT_BANK_RECONCILIATION",
-              "EXPORT_ENTRY_SAMPLE"
+              "EXPORT_ENTRY_SAMPLE",
+              "EXPORT_TAX_ASSESSMENT_MEMO",
+              "EXPORT_ISS_BY_COMPETENCE"
             ]
           }
         }
@@ -1784,6 +1786,296 @@
       "additionalProperties": false
     }
   },
+  "CollectionChargeDto.ts": {
+    "PayerAddressSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "streetName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "streetNumber": {
+          "type": "string",
+          "minLength": 1
+        },
+        "zipCode": {
+          "type": "string",
+          "pattern": "^\\d{8}$"
+        },
+        "neighborhood": {
+          "type": "string",
+          "minLength": 1
+        },
+        "city": {
+          "type": "string",
+          "minLength": 1
+        },
+        "state": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$"
+        }
+      },
+      "required": [
+        "streetName",
+        "streetNumber",
+        "zipCode",
+        "neighborhood",
+        "city",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "PayerSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "firstName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lastName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+        },
+        "identification": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "CPF",
+                "CNPJ"
+              ]
+            },
+            "number": {
+              "type": "string",
+              "pattern": "^\\d{11}$|^\\d{14}$"
+            }
+          },
+          "required": [
+            "type",
+            "number"
+          ],
+          "additionalProperties": false
+        },
+        "address": {
+          "type": "object",
+          "properties": {
+            "streetName": {
+              "type": "string",
+              "minLength": 1
+            },
+            "streetNumber": {
+              "type": "string",
+              "minLength": 1
+            },
+            "zipCode": {
+              "type": "string",
+              "pattern": "^\\d{8}$"
+            },
+            "neighborhood": {
+              "type": "string",
+              "minLength": 1
+            },
+            "city": {
+              "type": "string",
+              "minLength": 1
+            },
+            "state": {
+              "type": "string",
+              "pattern": "^[A-Z]{2}$"
+            }
+          },
+          "required": [
+            "streetName",
+            "streetNumber",
+            "zipCode",
+            "neighborhood",
+            "city",
+            "state"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "firstName",
+        "lastName",
+        "email",
+        "identification"
+      ],
+      "additionalProperties": false
+    },
+    "CreateChargeSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "BOLETO",
+            "PIX"
+          ]
+        },
+        "expiresInDays": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30
+        },
+        "expiresInMinutes": {
+          "type": "integer",
+          "minimum": 30,
+          "maximum": 43200
+        },
+        "payer": {
+          "type": "object",
+          "properties": {
+            "firstName": {
+              "type": "string",
+              "minLength": 1
+            },
+            "lastName": {
+              "type": "string",
+              "minLength": 1
+            },
+            "email": {
+              "type": "string",
+              "format": "email",
+              "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+            },
+            "identification": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "CPF",
+                    "CNPJ"
+                  ]
+                },
+                "number": {
+                  "type": "string",
+                  "pattern": "^\\d{11}$|^\\d{14}$"
+                }
+              },
+              "required": [
+                "type",
+                "number"
+              ],
+              "additionalProperties": false
+            },
+            "address": {
+              "type": "object",
+              "properties": {
+                "streetName": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "streetNumber": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "zipCode": {
+                  "type": "string",
+                  "pattern": "^\\d{8}$"
+                },
+                "neighborhood": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "city": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "state": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{2}$"
+                }
+              },
+              "required": [
+                "streetName",
+                "streetNumber",
+                "zipCode",
+                "neighborhood",
+                "city",
+                "state"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "firstName",
+            "lastName",
+            "email",
+            "identification"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "unitId",
+        "kind",
+        "payer"
+      ],
+      "additionalProperties": false
+    },
+    "CollectionChargeScopeQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "CancelChargeSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "CollectionWebhookParamsSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "accountId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "provider",
+        "accountId"
+      ],
+      "additionalProperties": false
+    }
+  },
   "CompanyFiscalProfileDto.ts": {
     "CompanyFiscalProfileAnoParamSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2374,6 +2666,14 @@
               "type": "null"
             }
           ]
+        },
+        "simplesRegimeApuracao": {
+          "default": "COMPETENCIA",
+          "type": "string",
+          "enum": [
+            "COMPETENCIA",
+            "CAIXA"
+          ]
         }
       },
       "required": [
@@ -2719,7 +3019,9 @@
             "EXPORT_INCOME_STATEMENT",
             "EXPORT_TEMPLATE",
             "EXPORT_BANK_RECONCILIATION",
-            "EXPORT_ENTRY_SAMPLE"
+            "EXPORT_ENTRY_SAMPLE",
+            "EXPORT_TAX_ASSESSMENT_MEMO",
+            "EXPORT_ISS_BY_COMPETENCE"
           ]
         },
         "format": {
@@ -4646,6 +4948,118 @@
         "unitId",
         "cMotivo",
         "xMotivo"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "FiscalDocumentPendingAttachmentDto.ts": {
+    "PendingAttachmentStatusSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "DONE",
+        "FAILED",
+        "DISCARDED"
+      ]
+    },
+    "PendingAttachmentResultSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "chaveOuCodigo": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nNFSe": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "numero": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "valores": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "vIssCents": {
+                  "type": "string"
+                },
+                "aliqIssBp": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "vIbsCents": {
+                  "type": "string"
+                },
+                "vCbsCents": {
+                  "type": "string"
+                },
+                "baseIssCents": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "chaveOuCodigo",
+        "nNFSe",
+        "numero",
+        "valores"
+      ],
+      "additionalProperties": false
+    },
+    "PendingAttachmentDrainSummarySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "done": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "failed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "discarded": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "total",
+        "done",
+        "failed",
+        "discarded"
       ],
       "additionalProperties": false
     }
@@ -10311,6 +10725,50 @@
       },
       "required": [
         "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "AlertaSimplesSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "codigo": {
+          "type": "string",
+          "enum": [
+            "ATIVIDADE_SEM_ANEXO",
+            "RBT12_INCOMPLETO",
+            "LIMITE_ME_EXCEDIDO",
+            "LIMITE_EPP_EXCEDIDO",
+            "SUBLIMITE_ICMS_ISS",
+            "SEGREGACAO_MANUAL",
+            "TIEOUT_DIVERGENTE",
+            "HISTORICO_IGNORADO",
+            "LIMITE_MEI_EXCEDIDO",
+            "NFSE_DIVERGE_RECEITA"
+          ]
+        },
+        "detalhe": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "INFO",
+            "WARNING"
+          ]
+        },
+        "motivoInformativo": {
+          "type": "string",
+          "enum": [
+            "DOCUMENTO_MUNICIPAL_TRANSIÇÃO",
+            "REGIME_CAIXA"
+          ]
+        }
+      },
+      "required": [
+        "codigo",
+        "detalhe",
+        "severity"
       ],
       "additionalProperties": false
     },

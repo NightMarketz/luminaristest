@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { AccountingDataExchangeJob, BankStatementLine } from 'generated/prisma';
+import type { AccountingDataExchangeJob, BankStatementLine, FiscalDocument, TaxAssessment } from 'generated/prisma';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import * as storage from '../../../lib/attachmentStorage';
 import { sendAlertWebhook } from '../../../lib/alertWebhook';
@@ -16,6 +16,9 @@ import type { ImportKind } from '../models/DataExchange.model';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { centsFromDb } from '../models/money';
 import { sampleEntries, type SampleableLeg } from '../models/entrySample';
+import { anosDaJanela, linhaMeta, linhasDaApuracao, MEMO_COLUMNS, selecionarApuracoes } from '../models/taxAssessmentMemoExport';
+import { agregarIssPorCompetencia, ISS_COLUMNS, type IssDocInput } from '../models/issCompetencia';
+import type { FiscalDocumentStatus } from '../repositories/IFiscalDocumentRepository';
 import { toJobResponse, toJobListItem, type DataExchangeJobResponse, type DataExchangeJobListItem } from './dataExchangeMappers';
 import type {
   TrialBalanceReport,
@@ -76,6 +79,26 @@ export interface IReconciliationReader {
 export interface IAccountReader {
   findManyByUnit(scope: AccountingScope): Promise<Array<{ id: string; code: string }>>;
 }
+
+/** Leitura que `EXPORT_TAX_ASSESSMENT_MEMO` precisa (X7 Fase C PR-1, BRIEF C item 3) — satisfeita
+ *  estruturalmente por `ITaxAssessmentRepository` (método existente, sem query nova). */
+export interface ITaxAssessmentReader {
+  findConfirmedByYear(ownerUserId: string, anoCalendario: number): Promise<TaxAssessment[]>;
+}
+
+/** Leitura que `EXPORT_ISS_BY_COMPETENCE` precisa (X7 Fase C PR-2, BRIEF C item 14) — satisfeita
+ *  estruturalmente por `IFiscalDocumentRepository`. */
+export interface IIssDocumentReader {
+  findForIssReport(
+    scope: AccountingScope,
+    from: string,
+    to: string,
+    statuses: readonly FiscalDocumentStatus[],
+  ): Promise<Array<FiscalDocument & { cLocPrestacao: string | null }>>;
+}
+
+/** F-TC-3 (a): vale o status atual — `CANCELLED` sai. F-TC-4 (a): `AUTHORIZED_DIVERGENT` entra, contado à parte. */
+const ISS_STATUSES: readonly FiscalDocumentStatus[] = ['AUTHORIZED', 'AUTHORIZED_DIVERGENT'];
 
 /** `[YYYY-MM-DD, YYYY-MM-DD]` → `{from: T00:00:00.000Z, to: T00:00:00.000Z}` — job-column
  *  storage convention (period-as-marker, not a query bound; matches SpedGenerationService). */
@@ -139,6 +162,10 @@ export class DataExchangeExportService {
     // Review #338 F1 (ALTO): código da conta bancária para EXPORT_BANK_RECONCILIATION — NUNCA
     // via trialBalance (só cobre conta COM movimento; ver IAccountReader acima).
     private readonly accountRepo: IAccountReader,
+    // X7 Fase C PR-1 (BRIEF C item 3): apurações confirmadas para EXPORT_TAX_ASSESSMENT_MEMO.
+    private readonly taxAssessments: ITaxAssessmentReader,
+    // X7 Fase C PR-2 (BRIEF C item 14): NFS-e autorizadas para EXPORT_ISS_BY_COMPETENCE.
+    private readonly issDocuments: IIssDocumentReader,
   ) {}
 
   /**
@@ -362,6 +389,56 @@ export class DataExchangeExportService {
         ]);
         const table: OutTable = { headers: [metaLine], rows: [columnHeaders, ...dataRows] };
         return { table, period };
+      }
+      case 'EXPORT_TAX_ASSESSMENT_MEMO': {
+        // X7 Fase C PR-1 (BRIEF C itens 3–12). Item 11: além do canRead do export(), a policy da apuração.
+        if (!this.policy.canReadTaxAssessment(scope)) {
+          throw new ForbiddenError('Não autorizado a ler apurações de tributos.');
+        }
+        // DTO superRefine garante a janela para este kind (item 2).
+        const w = { periodStart: dto.periodStart as string, periodEnd: dto.periodEnd as string };
+        const porAno = await Promise.all(
+          anosDaJanela(w).map((ano) => this.taxAssessments.findConfirmedByYear(scope.ownerUserId, ano)),
+        );
+        const apuracoes = selecionarApuracoes(porAno.flat(), w);
+        const dataRows: OutTable['rows'] = apuracoes.flatMap((a) => linhasDaApuracao(a));
+        const table: OutTable = {
+          headers: [linhaMeta(w, apuracoes.length, new Date())],
+          rows: [[...MEMO_COLUMNS], ...dataRows],
+        };
+        return { table, period: periodColumns(w.periodStart, w.periodEnd) };
+      }
+      case 'EXPORT_ISS_BY_COMPETENCE': {
+        // X7 Fase C PR-2 (BRIEF C itens 13–20). Item 18: além do canRead do export(), a policy do documento fiscal.
+        if (!this.policy.canReadFiscalDocument(scope)) {
+          throw new ForbiddenError('Não autorizado a ler documentos fiscais.');
+        }
+        // DTO superRefine garante a janela para este kind.
+        const periodStart = dto.periodStart as string;
+        const periodEnd = dto.periodEnd as string;
+        const docs = await this.issDocuments.findForIssReport(scope, periodStart, periodEnd, ISS_STATUSES);
+        const inputs: IssDocInput[] = docs.map((d) => {
+          // F-TC-1 (a): o município é o do payload enviado. A DPS exige `locPrest.cLocPrestacao` ([192]); se faltar,
+          // o invariante do payload quebrou — erro com o id (500), nunca município inventado.
+          if (d.cLocPrestacao === null) throw new Error(`Documento fiscal ${d.id} sem cLocPrestacao no payload da tentativa corrente.`);
+          return {
+            dCompet: d.dCompet, municipioIbge: d.cLocPrestacao, tpRetISSQN: d.tpRetISSQN === 2 ? 2 : 1,
+            vServCents: d.vServCents, baseIssCents: d.baseIssCents, vIssCents: d.vIssCents,
+            divergente: d.status === 'AUTHORIZED_DIVERGENT',
+          };
+        });
+        const linhas = agregarIssPorCompetencia(inputs);
+        const semIss = linhas.reduce((n, l) => n + l.documentosSemIss, 0);
+        // Item 17: linha-meta no topo (mesmo precedente do EXPORT_ENTRY_SAMPLE); item 16 (F-TC-2 a): aviso quando há
+        // nota autorizada sem vIss.
+        const aviso = semIss > 0 ? `; aviso=${semIss} nota(s) autorizada(s) sem valor de ISS no retorno somam 0` : '';
+        const metaLine = `# kind=EXPORT_ISS_BY_COMPETENCE; periodStart=${periodStart}; periodEnd=${periodEnd}; documentos=${inputs.length}; documentosSemIss=${semIss}; geradoEm=${new Date().toISOString()}${aviso}`;
+        const dataRows: OutTable['rows'] = linhas.map((l) => [
+          l.competencia, l.municipioIbge, l.retido ? 'true' : 'false', l.documentos, l.documentosSemIss, l.divergentes,
+          l.vServCents, l.baseIssCents, l.vIssCents,
+        ]);
+        const table: OutTable = { headers: [metaLine], rows: [[...ISS_COLUMNS], ...dataRows] };
+        return { table, period: periodColumns(periodStart, periodEnd) };
       }
       default:
         // Exhaustiveness guard — the DTO enum should prevent reaching here.

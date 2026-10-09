@@ -52,6 +52,8 @@ export async function resetDb(): Promise<void> {
   await prisma.accountingDataExchangeRow.deleteMany();
   await prisma.accountingPeriodTransition.deleteMany();
   await prisma.payablePayment.deleteMany();
+  // BE-INCR-PAYMENT-PROVIDER (nó F5) PR-2: collection_charges tem FK Restrict para receivables e payment_accounts — cai antes dos dois.
+  await prisma.collectionCharge.deleteMany();
   await prisma.receivableReceipt.deleteMany();
   await prisma.stockMovement.deleteMany();
   await prisma.referentialMapping.deleteMany();
@@ -75,6 +77,7 @@ export async function resetDb(): Promise<void> {
   // BE-INCR-NFE-COST-REGIME (nó X6): perfil fiscal tem FK RESTRICT para as duas contas 'a recuperar' — antes de accounts.
   await prisma.fiscalProfile.deleteMany();
   // BE-INCR-DFE (nó X10b, PR-1): attempt tem FK Cascade ao documento — cai antes; sequence e perfil de serviço são folhas.
+  await prisma.fiscalDocumentPendingAttachment.deleteMany(); // BE-INCR-DFE-ANEXO-PENDENTE (BRIEF item 12)
   await prisma.fiscalDocumentAttempt.deleteMany();
   await prisma.fiscalDocument.deleteMany();
   await prisma.fiscalDocumentSequence.deleteMany();

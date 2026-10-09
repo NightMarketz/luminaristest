@@ -1,9 +1,11 @@
 import prisma from '../../../lib/prisma';
-import type { FiscalDocument, FiscalDocumentAttempt, Prisma } from 'generated/prisma';
+import type { FiscalDocument, FiscalDocumentAttempt, FiscalDocumentPendingAttachment, Prisma } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
 import type {
   AppendAttemptData,
+  CreatePendingAttachmentData,
+  PendingAttachmentStepPatch,
   CreateSentFiscalDocumentData,
   FiscalDocumentKind,
   FiscalDocumentStatus,
@@ -12,6 +14,7 @@ import type {
   TransitionData,
 } from './IFiscalDocumentRepository';
 import { AUTHORIZED_STATUSES } from './IFiscalDocumentRepository';
+import { municipioDoPayload } from '../models/issCompetencia';
 
 export function attemptRef(documentId: string, attemptNo: number): string {
   return `${documentId}:${attemptNo}`;
@@ -55,6 +58,31 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     return this.db(tx).fiscalDocument.findMany({
       where: { ...accountingScopeWhere(scope), status, deletedAt: null },
       orderBy: [{ createdAt: 'asc' }],
+    });
+  }
+
+  public async findForIssReport(
+    scope: AccountingScope,
+    from: string,
+    to: string,
+    statuses: readonly FiscalDocumentStatus[],
+    tx?: Prisma.TransactionClient,
+  ): Promise<Array<FiscalDocument & { cLocPrestacao: string | null }>> {
+    const docs = await this.db(tx).fiscalDocument.findMany({
+      where: {
+        ...accountingScopeWhere(scope),
+        kind: 'NFSE',
+        ambiente: 'producao',
+        status: { in: [...statuses] },
+        dCompet: { gte: from, lte: to },
+        deletedAt: null,
+      },
+      include: { attempts: { select: { attemptNo: true, payloadJson: true } } },
+      orderBy: [{ dCompet: 'asc' }, { createdAt: 'asc' }],
+    });
+    return docs.map(({ attempts, ...doc }) => {
+      const corrente = attempts.find((a) => a.attemptNo === doc.currentAttemptNo);
+      return { ...doc, cLocPrestacao: corrente ? municipioDoPayload(corrente.payloadJson) : null };
     });
   }
 
@@ -163,5 +191,61 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
 
   public async runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
     return prisma.$transaction(fn);
+  }
+
+  // ---- BE-INCR-DFE-ANEXO-PENDENTE (BRIEF item 2) ----
+
+  public async createPendingAttachment(
+    scope: AccountingScope,
+    data: CreatePendingAttachmentData,
+    tx?: Prisma.TransactionClient,
+  ): Promise<FiscalDocumentPendingAttachment> {
+    const { userId, unitId } = accountingScopeWhere(scope);
+    return this.db(tx).fiscalDocumentPendingAttachment.create({
+      data: {
+        userId,
+        unitId,
+        documentId: data.documentId,
+        status: 'PENDING',
+        xmlBytes: data.xmlBytes ? new Uint8Array(data.xmlBytes) : null,
+        pdfBytes: data.pdfBytes ? new Uint8Array(data.pdfBytes) : null,
+        resultJson: data.resultJson,
+      },
+    });
+  }
+
+  public async listDuePendingAttachments(now: Date, limit: number, tx?: Prisma.TransactionClient): Promise<FiscalDocumentPendingAttachment[]> {
+    return this.db(tx).fiscalDocumentPendingAttachment.findMany({
+      where: { status: 'PENDING', nextAttemptAt: { lte: now } },
+      orderBy: [{ nextAttemptAt: 'asc' }],
+      take: limit,
+    });
+  }
+
+  public async markPendingStep(id: string, patch: PendingAttachmentStepPatch, tx?: Prisma.TransactionClient): Promise<void> {
+    await this.db(tx).fiscalDocumentPendingAttachment.update({ where: { id }, data: patch });
+  }
+
+  public async markPendingDone(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+    await this.db(tx).fiscalDocumentPendingAttachment.update({
+      where: { id },
+      data: { status: 'DONE', xmlBytes: null, pdfBytes: null, lastError: null },
+    });
+  }
+
+  public async listAttachmentBackfillCandidates(limit: number, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]> {
+    const comPendencia = await this.db(tx).fiscalDocumentPendingAttachment.findMany({ select: { documentId: true } });
+    return this.db(tx).fiscalDocument.findMany({
+      where: {
+        status: { in: [...AUTHORIZED_STATUSES] },
+        ambiente: 'producao',
+        deletedAt: null,
+        xmlAttachmentId: null,
+        sourceDocumentId: null,
+        id: { notIn: comPendencia.map((p) => p.documentId) },
+      },
+      orderBy: [{ authorizedAt: 'asc' }],
+      take: limit,
+    });
   }
 }

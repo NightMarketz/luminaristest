@@ -40,7 +40,7 @@ import type { AuditService } from './AuditService';
 import type { PostingService } from './PostingService';
 import type { ReceitaFiscalService } from './ReceitaFiscalService';
 import type { SimplesEntradasService } from './SimplesEntradasService';
-import { excluirDoMotivo, type SimplesDasRegistro, type SimplesSegregacaoParcela } from '../dtos/SimplesDto';
+import { excluirDoMotivo, type AlertaSimples, type CodigoAlertaSimples, type SimplesDasRegistro, type SimplesSegregacaoParcela } from '../dtos/SimplesDto';
 
 export const SIMPLES_DAS_PROVISION_SOURCE_TYPE = 'simples.das.provision';
 /** BRIEF item 24: SIMPLES_DAS_REGISTRADO / SIMPLES_DAS_SUBSTITUIDO, no padrão de nome da allowlist. */
@@ -49,18 +49,9 @@ export const SIMPLES_DAS_SUBSTITUIDO = 'tax.simples_das.substituido';
 
 const TABELAS: readonly LegalParameterTabela[] = ['SIMPLES_ANEXO_FAIXA', 'SIMPLES_ANEXO_REPARTICAO', 'SIMPLES_TETO_ISS', 'SIMPLES_ENQUADRAMENTO', 'SIMPLES_LIMITE'];
 
-export type CodigoAlertaSimples =
-  | 'ATIVIDADE_SEM_ANEXO'
-  | 'RBT12_INCOMPLETO'
-  | 'LIMITE_ME_EXCEDIDO'
-  | 'LIMITE_EPP_EXCEDIDO'
-  | 'SUBLIMITE_ICMS_ISS'
-  | 'SEGREGACAO_MANUAL'
-  | 'TIEOUT_DIVERGENTE'
-  | 'HISTORICO_IGNORADO'
-  | 'LIMITE_MEI_EXCEDIDO'
-  | 'NFSE_DIVERGE_RECEITA';
-export type AlertaSimples = { codigo: CodigoAlertaSimples; detalhe: string };
+export type { AlertaSimples, CodigoAlertaSimples } from '../dtos/SimplesDto';
+/** Última competência em que a ME/EPP ainda pode usar documento municipal (NFS-e nacional obrigatória desde 01/11/2026). */
+const FIM_DOCUMENTO_MUNICIPAL = '2026-10';
 /** Item 20: alertas que impedem o registro do DAS. */
 const BLOQUEANTES: readonly CodigoAlertaSimples[] = ['TIEOUT_DIVERGENTE', 'RBT12_INCOMPLETO', 'ATIVIDADE_SEM_ANEXO'];
 
@@ -291,7 +282,7 @@ export class SimplesApuracaoService {
         historicoMes.push({ competencia: m, receitaBrutaCents: Number(receitas.get(m)), folhaCents: h?.folhaCents === null || h?.folhaCents === undefined ? null : Number(h.folhaCents) });
       }
     }
-    if (ignorados.length > 0) alertas.push({ codigo: 'HISTORICO_IGNORADO', detalhe: `histórico ignorado em ${ignorados.join(', ')} — o subrazão do mês prevalece` });
+    if (ignorados.length > 0) alertas.push({ severity: 'WARNING', codigo: 'HISTORICO_IGNORADO', detalhe: `histórico ignorado em ${ignorados.join(', ')} — o subrazão do mês prevalece` });
 
     // Atividades do PA a partir do subrazão (VENDA e linhas negativas de cancelamento/devolução).
     const linhasPa = await this.receitaRepo.findByCompetencia(scope, competencia, tx);
@@ -319,7 +310,7 @@ export class SimplesApuracaoService {
     // Item 12: a segregação manual tira parcelas da receita da natureza (motivo → tributos excluídos).
     const segRow = await this.entradasRepo.findSegregacao(scope, competencia, tx);
     const seg = { parcelas: ((segRow?.parcelas ?? []) as SimplesSegregacaoParcela[]) };
-    if (seg.parcelas.length > 0) alertas.push({ codigo: 'SEGREGACAO_MANUAL', detalhe: `${seg.parcelas.length} parcela(s) segregada(s) por declaração manual` });
+    if (seg.parcelas.length > 0) alertas.push({ severity: 'WARNING', codigo: 'SEGREGACAO_MANUAL', detalhe: `${seg.parcelas.length} parcela(s) segregada(s) por declaração manual` });
     const impressao = JSON.stringify({
       inicio: perfil.inicioAtividadeEm,
       historico: historico.map((h) => [h.competencia, String(h.receitaBrutaCents), h.folhaCents === null ? null : String(h.folhaCents)]),
@@ -362,7 +353,7 @@ export class SimplesApuracaoService {
     }
     const naoAplicada = sobra.reduce((x, v) => x + v, 0n);
     if (naoAplicada > 0n) {
-      alertas.push({ codigo: 'SEGREGACAO_MANUAL', detalhe: `R$ ${(Number(naoAplicada) / 100).toFixed(2)} declarados na segregação não têm receita da mesma natureza no mês e foram ignorados` });
+      alertas.push({ severity: 'WARNING', codigo: 'SEGREGACAO_MANUAL', detalhe: `R$ ${(Number(naoAplicada) / 100).toFixed(2)} declarados na segregação não têm receita da mesma natureza no mês e foram ignorados` });
     }
 
     // Item 23 — limites (LC 123 art. 3º I/II, §§ 9º, 9º-A; art. 13-A; Res. CGSN 140 art. 12 §§ 1º–2º).
@@ -386,17 +377,17 @@ export class SimplesApuracaoService {
       );
     } catch (e) {
       if ((e as { errorCode?: string }).errorCode !== 'ATIVIDADE_SEM_ANEXO') throw e;
-      alertas.push({ codigo: 'ATIVIDADE_SEM_ANEXO', detalhe: (e as Error).message });
+      alertas.push({ severity: 'WARNING', codigo: 'ATIVIDADE_SEM_ANEXO', detalhe: (e as Error).message });
       calculada = { competencia, regime: 'SIMPLES', rbt12Cents: 0, janelaRbt12: janela, mesesFaltantes: [], atividades: [], totalCalculadoCents: 0, tabela: [] };
     }
     if (entrada.length === 0) calculada = { ...calculada, atividades: [], totalCalculadoCents: 0 };
-    if (calculada.mesesFaltantes.length > 0) alertas.push({ codigo: 'RBT12_INCOMPLETO', detalhe: `sem receita declarada em ${calculada.mesesFaltantes.join(', ')}` });
+    if (calculada.mesesFaltantes.length > 0) alertas.push({ severity: 'WARNING', codigo: 'RBT12_INCOMPLETO', detalhe: `sem receita declarada em ${calculada.mesesFaltantes.join(', ')}` });
     // Item 16 → item 20: o tie-out do PA também bloqueia o registro.
     const tie = await this.receitaFiscal.tieOut(scope, competencia);
-    if (tie.alerta) alertas.push(tie.alerta);
+    if (tie.alerta) alertas.push({ ...tie.alerta, severity: 'WARNING' });
     // Review do PR-4 (achado 1): a cota do salão a título de aluguel de bem móvel não é serviço (sem ISS, sem NFS-e).
     const servicosPa = linhasPa.filter((l) => !(l.parceriaContratoId && contratos.get(l.parceriaContratoId)?.naturezaCota === 'ALUGUEL_BEM_MOVEL'));
-    await this.conferirNfse(scope, competencia, servicosPa, alertas, tx);
+    await this.conferirNfse(scope, competencia, servicosPa, alertas, { me: true, caixa: perfil.simplesRegimeApuracao === 'CAIXA' }, tx);
     return { calculada, entrada, receitas, impressao, alertas, tieOut: { subrazaoCents: tie.subrazaoCents, razaoCents: tie.razaoCents, ok: tie.ok } };
   }
 
@@ -420,10 +411,10 @@ export class SimplesApuracaoService {
     const epp = fator(limite('EPP'));
     const sub = fator(limite('SUBLIMITE'));
     const fmt = (v: bigint) => `R$ ${(Number(v) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-    if (me > 0n && acumuladoAno > me && acumuladoAno <= epp) alertas.push({ codigo: 'LIMITE_ME_EXCEDIDO', detalhe: `receita acumulada em ${ano} ${fmt(acumuladoAno)} acima de ${fmt(me)}: a empresa passa a EPP (LC 123 art. 3º I/II)` });
+    if (me > 0n && acumuladoAno > me && acumuladoAno <= epp) alertas.push({ severity: 'WARNING', codigo: 'LIMITE_ME_EXCEDIDO', detalhe: `receita acumulada em ${ano} ${fmt(acumuladoAno)} acima de ${fmt(me)}: a empresa passa a EPP (LC 123 art. 3º I/II)` });
     if (epp > 0n && acumuladoAno > epp) {
       const efeito = acumuladoAno > (epp * 12n) / 10n ? 'exclusão a partir do mês seguinte ao excesso' : 'exclusão a partir de janeiro do ano seguinte';
-      alertas.push({ codigo: 'LIMITE_EPP_EXCEDIDO', detalhe: `receita acumulada em ${ano} ${fmt(acumuladoAno)} acima de ${fmt(epp)}: ${efeito} (LC 123 art. 3º §§ 9º e 9º-A)` });
+      alertas.push({ severity: 'WARNING', codigo: 'LIMITE_EPP_EXCEDIDO', detalhe: `receita acumulada em ${ano} ${fmt(acumuladoAno)} acima de ${fmt(epp)}: ${efeito} (LC 123 art. 3º §§ 9º e 9º-A)` });
     }
     // Res. CGSN 140 art. 12 § 1º: excesso > 20% impede a partir do mês seguinte; ≤ 20%, a partir do ano seguinte.
     const acumuladoAteAnterior = competencia.endsWith('-01') ? 0n : soma(`${ano}-01`, proximo(competencia, -1));
@@ -432,7 +423,7 @@ export class SimplesApuracaoService {
     const subAnterior = inicioNoAnterior ? (limite('SUBLIMITE') * BigInt(13 - Number(inicio!.slice(5, 7)))) / 12n : limite('SUBLIMITE');
     const impedidoPeloAnterior = sub > 0n && anoAnterior > subAnterior;
     if (sub > 0n && acumuladoAno > sub) {
-      alertas.push({ codigo: 'SUBLIMITE_ICMS_ISS', detalhe: `receita acumulada em ${ano} ${fmt(acumuladoAno)} acima do sublimite ${fmt(sub)} (LC 123 art. 13-A; Res. CGSN 140 art. 12)` });
+      alertas.push({ severity: 'WARNING', codigo: 'SUBLIMITE_ICMS_ISS', detalhe: `receita acumulada em ${ano} ${fmt(acumuladoAno)} acima do sublimite ${fmt(sub)} (LC 123 art. 13-A; Res. CGSN 140 art. 12)` });
     }
     return impedidoEsteAno || impedidoPeloAnterior;
   }
@@ -481,7 +472,7 @@ export class SimplesApuracaoService {
     const aluguel = new Set((await this.entradasRepo.findParceriaMesmoRemovida(scope, ids, tx)).filter((c) => c.naturezaCota === 'ALUGUEL_BEM_MOVEL').map((c) => c.id));
     // F-PR4-9 (dono 09/10): o MEI só deve NFS-e ao tomador CNPJ (LC 123 art. 26 § 6º II; Res. CGSN 140 art. 106 II).
     const devidas = linhasPa.filter((l) => l.tomadorTipo === 'CNPJ' && !(l.parceriaContratoId && aluguel.has(l.parceriaContratoId)));
-    await this.conferirNfse(scope, competencia, devidas, alertas, tx);
+    await this.conferirNfse(scope, competencia, devidas, alertas, { me: false, caixa: false }, tx);
     const impressao = JSON.stringify({
       enquadramento,
       inicio: perfil.inicioAtividadeEm,
@@ -523,6 +514,7 @@ export class SimplesApuracaoService {
             ? 'desenquadramento retroativo ao início de atividade (Res. CGSN 140 art. 115 § 2º II "a" 3)'
             : `desenquadramento retroativo a 1º/01/${ano} (Res. CGSN 140 art. 115 § 2º II "a" 2)`;
       alertas.push({
+        severity: 'WARNING',
         codigo: 'LIMITE_MEI_EXCEDIDO',
         detalhe: `receita acumulada em ${ano} ${fmt(acumulado)} acima do limite do MEI ${fmt(limite)}: ${efeito}; comunique até o último dia útil do mês seguinte ao do excesso`,
       });
@@ -549,19 +541,35 @@ export class SimplesApuracaoService {
   /**
    * Item 31 — conferência das NFS-e autorizadas em produção × receita de serviços da competência (subrazão, líquida da
    * cota do profissional-parceiro). Só alerta, nunca bloqueia (LC 123 art. 26 § 10 e art. 25 §§ 6º–8º, red. 2027).
+   * Severidade (D-2026-10-10-X14-ALERTA-INFORMATIVO, dono, chat, 2026-10-10), só quando há divergência:
+   * - ME/EPP optante pelo caixa: INFO / REGIME_CAIXA (a NFS-e é pela prestação, a receita pelo recebimento; item 2);
+   * - ME/EPP com competência até 2026-10: INFO / DOCUMENTO_MUNICIPAL_TRANSIÇÃO (documento municipal ainda aceito,
+   *   Res. CGSN 140 art. 59 § 1º; item 3). Base do corte: a Res. CGSN 191/2026 altera os arts. 59 e 79 da Res. CGSN
+   *   140 e torna obrigatória a NFS-e nacional para ME/EPP a partir de 01/11/2026 — fonte do dono (chat, 10/10), não
+   *   conferida no texto da resolução;
+   * - demais casos (inclusive o MEI): WARNING.
    */
   private async conferirNfse(
     scope: AccountingScope,
     competencia: string,
     linhasPa: Awaited<ReturnType<IReceitaFiscalRepository['findByCompetencia']>>,
     alertas: AlertaSimples[],
+    contexto: { me: boolean; caixa: boolean },
     tx?: Prisma.TransactionClient,
   ): Promise<void> {
+    // F-PR4-10 (a), dono 10/10: a locação de bem móvel já chega fora daqui — a linha de receita só é SERVICO | REVENDA, e
+    // a locação é a cota ALUGUEL_BEM_MOVEL do salão-parceiro, tirada em `servicosPa` (ME) e no MEI (F-PR4-11).
     const servicos = linhasPa.filter((l) => l.natureza !== 'REVENDA').reduce((t, l) => t + l.receitaCents - l.cotaProfissionalCents, 0n);
     const nfse = await this.fiscalDocumentRepo.somaNfseAutorizadaNaCompetencia(scope, competencia, tx);
-    if (nfse !== servicos) {
-      const fmt = (v: bigint) => `R$ ${(Number(v) / 100).toFixed(2)}`;
-      alertas.push({ codigo: 'NFSE_DIVERGE_RECEITA', detalhe: `NFS-e autorizadas em ${competencia} somam ${fmt(nfse)}; a receita de serviços do subrazão é ${fmt(servicos)}` });
+    if (nfse === servicos) return;
+    const fmt = (v: bigint) => `R$ ${(Number(v) / 100).toFixed(2)}`;
+    const detalhe = `NFS-e autorizadas em ${competencia} somam ${fmt(nfse)}; a receita de serviços do subrazão é ${fmt(servicos)}`;
+    if (contexto.me && contexto.caixa) {
+      alertas.push({ codigo: 'NFSE_DIVERGE_RECEITA', severity: 'INFO', motivoInformativo: 'REGIME_CAIXA', detalhe: `${detalhe} (regime de caixa: NFS-e pela data da prestação, receita pelo recebimento)` });
+    } else if (contexto.me && competencia <= FIM_DOCUMENTO_MUNICIPAL) {
+      alertas.push({ codigo: 'NFSE_DIVERGE_RECEITA', severity: 'INFO', motivoInformativo: 'DOCUMENTO_MUNICIPAL_TRANSIÇÃO', detalhe: `${detalhe} (documento municipal ainda aceito até 31/10/2026)` });
+    } else {
+      alertas.push({ codigo: 'NFSE_DIVERGE_RECEITA', severity: 'WARNING', detalhe });
     }
   }
 

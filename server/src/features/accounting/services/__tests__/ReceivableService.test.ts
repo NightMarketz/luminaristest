@@ -48,6 +48,7 @@ interface Opts {
   counterparty?: { id: string; userId: string; unitId: string; type: string } | null;
   counterpartyByName?: { id: string; userId: string; unitId: string; type: string } | null;
   canManageCounterparty?: boolean;
+  liveCharges?: Array<{ id: string; status: string } | null>; // successive findLiveByReceivable results (F5 PR-2, P2-13)
 }
 
 function build(opts: Opts = {}) {
@@ -110,6 +111,8 @@ function build(opts: Opts = {}) {
     create: jest.fn(async (data: Record<string, unknown>) => ({ id: 'cp-minted', ref: null, ...data })),
   };
 
+  const liveCharges = [...(opts.liveCharges ?? [])];
+  const collectionChargeRepo = { findLiveByReceivable: jest.fn(async () => (liveCharges.length ? liveCharges.shift()! : null)) };
   const service = new ReceivableService(
     receivableRepo as never,
     accountRepo as never,
@@ -117,8 +120,9 @@ function build(opts: Opts = {}) {
     auditService as never,
     policy as never,
     counterpartyRepo as never,
+    collectionChargeRepo as never,
   );
-  return { service, receivableRepo, accountRepo, auditService, postEntry, reverseEntry, findEntryBySource, counterpartyRepo };
+  return { service, collectionChargeRepo, receivableRepo, accountRepo, auditService, postEntry, reverseEntry, findEntryBySource, counterpartyRepo };
 }
 
 const createDto = {
@@ -461,6 +465,28 @@ describe('ReceivableService.cancelReceivable — reverse recognition (F6/ACC-018
     await expect(
       service.cancelReceivable(scope, 'rec-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never),
     ).rejects.toBeInstanceOf(ValidationError);
+  });
+});
+
+describe('ReceivableService.cancelReceivable — cobrança viva no provedor (F5 PR-2, P2-13; F5 a do dono, 10/10)', () => {
+  const recognized = (type: string) => (type === AR_RECEIVABLE_SOURCE_TYPE ? { id: 'rec-entry-1' } : null);
+
+  it('cobrança viva ⇒ 409 receivable_has_live_charge ANTES do estorno: reverseEntry e a escrita não rodam', async () => {
+    const { service, reverseEntry, receivableRepo } = build({ findEntryBySource: recognized, liveCharges: [{ id: 'ch-1', status: 'PENDING' }] });
+    await expect(
+      service.cancelReceivable(scope, 'rec-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never),
+    ).rejects.toMatchObject({ statusCode: 409, errorCode: 'receivable_has_live_charge' });
+    expect(reverseEntry).not.toHaveBeenCalled();
+    expect(receivableRepo.updateReceivable).not.toHaveBeenCalled();
+  });
+
+  it('re-checa dentro da tx: cobrança criada entre o pré-cheque e a tx ⇒ 409 sem gravar CANCELLED', async () => {
+    const { service, collectionChargeRepo, receivableRepo } = build({ findEntryBySource: recognized, liveCharges: [null, { id: 'ch-2', status: 'CREATING' }] });
+    await expect(
+      service.cancelReceivable(scope, 'rec-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never),
+    ).rejects.toMatchObject({ errorCode: 'receivable_has_live_charge' });
+    expect(collectionChargeRepo.findLiveByReceivable).toHaveBeenCalledTimes(2);
+    expect(receivableRepo.updateReceivable).not.toHaveBeenCalled();
   });
 });
 

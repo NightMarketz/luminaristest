@@ -67,6 +67,8 @@ export const CompanyDeclaranteSchema = z
   .strict();
 
 export const IBS_CBS_OPCOES = ['DAS', 'REGULAR'] as const;
+/** X14 F-PR4-12 (b), dono 10/10: regime de apuração da receita no Simples (Res. CGSN 140 art. 16). */
+export const SIMPLES_REGIMES_APURACAO = ['COMPETENCIA', 'CAIXA'] as const;
 
 export const UpsertCompanyFiscalProfileSchema = z
   .object({
@@ -118,6 +120,8 @@ export const UpsertCompanyFiscalProfileSchema = z
     meiContribuinteIss: z.boolean().nullable().default(null),
     // X14 PR-4 (F-PR4-13): MEI transportador autônomo de cargas (Res. CGSN 140 art. 100 § 1º-A). Só no regime MEI.
     meiTransportadorCargas: z.boolean().nullable().default(null),
+    // X14 F-PR4-12 (b), dono 10/10: regime de apuração da receita no Simples. Default COMPETENCIA.
+    simplesRegimeApuracao: z.enum(SIMPLES_REGIMES_APURACAO).default('COMPETENCIA'),
   })
   .strict()
   .superRefine((v, ctx) => {
