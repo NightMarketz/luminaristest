@@ -51,6 +51,8 @@ module.exports = {
             ...base,
             displayName: 'integration',
             testMatch: ['**/__tests__/**/*.integration.test.ts'],
+            // Banco-modelo aquecido uma vez, fora do beforeAll de 5 s do 1º arquivo do shard (GAP-MAP Nível 4).
+            globalSetup: '<rootDir>/test/jest.integrationGlobalSetup.ts',
             setupFilesAfterEnv: ['<rootDir>/test/jest.integrationTeardown.ts', '<rootDir>/test/jest.integrationLegalParams.ts'],
             testPathIgnorePatterns: ['/node_modules/', '/legacy_kpis/'],
         },
