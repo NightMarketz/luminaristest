@@ -128,6 +128,7 @@ import { AccountantAssignmentService } from '../features/accounting/services/Acc
 import { AccountingPolicyVersionService } from '../features/accounting/services/AccountingPolicyVersionService';
 import { PaymentAccountService } from '../features/accounting/services/PaymentAccountService';
 import { TaxAssessmentService } from '../features/accounting/services/TaxAssessmentService';
+import { TaxAssessmentPeriodosService } from '../features/accounting/services/TaxAssessmentPeriodosService';
 import { MitExportService } from '../features/accounting/services/MitExportService';
 import { SimplesEntradasService } from '../features/accounting/services/SimplesEntradasService';
 import { ReceitaFiscalService } from '../features/accounting/services/ReceitaFiscalService';
@@ -690,6 +691,7 @@ export class ApplicationFactory {
     accountingContact: AccountingContactService;
     paymentAccount: PaymentAccountService; // BE-INCR-PAYMENT-PROVIDER PR-1
     taxAssessment: TaxAssessmentService; // X7 Fase A PR-2
+    taxAssessmentPeriodos: TaxAssessmentPeriodosService; // TAX-ASSESSMENT-PERIODOS
     mitExport: MitExportService; // X9 PR-2
     simplesEntradas: SimplesEntradasService; // X14 PR-2
     receitaFiscal: ReceitaFiscalService; // X14 PR-2
@@ -1476,6 +1478,14 @@ export class ApplicationFactory {
       ),
       // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7): prévia/confirmação/leitura da apuração IRPJ/CSLL trimestral.
       taxAssessment: taxAssessmentService,
+      // TAX-ASSESSMENT-PERIODOS (BRIEF item 10): só leitura — repositórios existentes + a fotografia legal do X8.
+      taxAssessmentPeriodos: new TaxAssessmentPeriodosService(
+        this.repositories.taxAssessment,
+        this.repositories.companyFiscalProfile,
+        this.repositories.simplesApuracao,
+        legalParameterService,
+        this.policies.accounting,
+      ),
       // BE-INCR-MIT-EXPORT PR-2 (nó X9): arquivo JSON do MIT a partir das apurações confirmadas (só lê o X7).
       simplesEntradas: simplesEntradasService,
       receitaFiscal: receitaFiscalService,
@@ -1752,6 +1762,7 @@ export class ApplicationFactory {
   public getAccountingContactService = (): AccountingContactService => this.services.accountingContact;
   public getPaymentAccountService = (): PaymentAccountService => this.services.paymentAccount;
   public getTaxAssessmentService = (): TaxAssessmentService => this.services.taxAssessment;
+  public getTaxAssessmentPeriodosService = (): TaxAssessmentPeriodosService => this.services.taxAssessmentPeriodos;
   public getMitExportService = (): MitExportService => this.services.mitExport;
   public getSimplesEntradasService = (): SimplesEntradasService => this.services.simplesEntradas;
   public getReceitaFiscalService = (): ReceitaFiscalService => this.services.receitaFiscal;

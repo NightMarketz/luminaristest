@@ -12239,6 +12239,336 @@
       "additionalProperties": false
     }
   },
+  "TaxAssessmentPeriodosDto.ts": {
+    "TaxAssessmentPeriodosQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "anoCalendario": {
+          "type": "integer",
+          "minimum": 2000,
+          "maximum": 2100
+        }
+      },
+      "required": [
+        "unitId",
+        "anoCalendario"
+      ],
+      "additionalProperties": false
+    },
+    "EstadoTributoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "estado": {
+          "type": "string",
+          "enum": [
+            "SEM_APURACAO",
+            "CONFIRMED",
+            "SO_SUPERSEDED",
+            "FORA_DA_ATIVIDADE",
+            "REVOGADO"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "aPagarCents": {
+          "type": "string",
+          "pattern": "^-?\\d+$"
+        }
+      },
+      "required": [
+        "estado"
+      ],
+      "additionalProperties": false
+    },
+    "PeriodoEsperadoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "periodo": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tributos": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "estado": {
+                "type": "string",
+                "enum": [
+                  "SEM_APURACAO",
+                  "CONFIRMED",
+                  "SO_SUPERSEDED",
+                  "FORA_DA_ATIVIDADE",
+                  "REVOGADO"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "aPagarCents": {
+                "type": "string",
+                "pattern": "^-?\\d+$"
+              }
+            },
+            "required": [
+              "estado"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "motivo": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "periodo",
+        "tributos"
+      ],
+      "additionalProperties": false
+    },
+    "FamiliaPeriodosSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "familia": {
+          "type": "string",
+          "enum": [
+            "X7",
+            "X8",
+            "SIMPLES"
+          ]
+        },
+        "apuravel": {
+          "type": "boolean"
+        },
+        "motivo": {
+          "type": "string",
+          "enum": [
+            "PERFIL_AUSENTE",
+            "REGIME_DAS",
+            "REGIME_MEI",
+            "REGIME_NAO_SIMPLES",
+            "REGIME_SEM_APURACAO"
+          ]
+        },
+        "forma": {
+          "type": "string",
+          "enum": [
+            "TRIMESTRAL",
+            "ANUAL"
+          ]
+        },
+        "modalidade": {
+          "type": "string",
+          "enum": [
+            "CUMULATIVO",
+            "NAO_CUMULATIVO"
+          ]
+        },
+        "periodos": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "periodo": {
+                "type": "string",
+                "minLength": 1
+              },
+              "tributos": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "estado": {
+                      "type": "string",
+                      "enum": [
+                        "SEM_APURACAO",
+                        "CONFIRMED",
+                        "SO_SUPERSEDED",
+                        "FORA_DA_ATIVIDADE",
+                        "REVOGADO"
+                      ]
+                    },
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "aPagarCents": {
+                      "type": "string",
+                      "pattern": "^-?\\d+$"
+                    }
+                  },
+                  "required": [
+                    "estado"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "motivo": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "periodo",
+              "tributos"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "familia",
+        "apuravel",
+        "periodos"
+      ],
+      "additionalProperties": false
+    },
+    "TaxAssessmentPeriodosViewSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "anoCalendario": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "regime": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "familias": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "familia": {
+                "type": "string",
+                "enum": [
+                  "X7",
+                  "X8",
+                  "SIMPLES"
+                ]
+              },
+              "apuravel": {
+                "type": "boolean"
+              },
+              "motivo": {
+                "type": "string",
+                "enum": [
+                  "PERFIL_AUSENTE",
+                  "REGIME_DAS",
+                  "REGIME_MEI",
+                  "REGIME_NAO_SIMPLES",
+                  "REGIME_SEM_APURACAO"
+                ]
+              },
+              "forma": {
+                "type": "string",
+                "enum": [
+                  "TRIMESTRAL",
+                  "ANUAL"
+                ]
+              },
+              "modalidade": {
+                "type": "string",
+                "enum": [
+                  "CUMULATIVO",
+                  "NAO_CUMULATIVO"
+                ]
+              },
+              "periodos": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "periodo": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "tributos": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "estado": {
+                            "type": "string",
+                            "enum": [
+                              "SEM_APURACAO",
+                              "CONFIRMED",
+                              "SO_SUPERSEDED",
+                              "FORA_DA_ATIVIDADE",
+                              "REVOGADO"
+                            ]
+                          },
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "aPagarCents": {
+                            "type": "string",
+                            "pattern": "^-?\\d+$"
+                          }
+                        },
+                        "required": [
+                          "estado"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "motivo": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "periodo",
+                    "tributos"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "familia",
+              "apuravel",
+              "periodos"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "anoCalendario",
+        "regime",
+        "familias"
+      ],
+      "additionalProperties": false
+    }
+  },
   "aging.dto.ts": {
     "AgingReportQuerySchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

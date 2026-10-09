@@ -21918,6 +21918,54 @@
         }
       }
     },
+    "/api/accounting/tax-assessments/periodos": {
+      "get": {
+        "summary": "Expected periods of the year by tax family - X7 IRPJ/CSLL, X8 PIS/Cofins, Simples (TAX-ASSESSMENT-PERIODOS)",
+        "description": "Leitura pura. Para cada familia diz se e apuravel (motivo PERFIL_AUSENTE, REGIME_DAS, REGIME_NAO_SIMPLES ou REGIME_SEM_APURACAO quando nao), a forma (X7) ou a modalidade (X8) e os periodos esperados - T01..T04 ou A01..A12 + A00, M01..M12, competencias YYYY-MM - com o estado por tributo (SEM_APURACAO, CONFIRMED com id e aPagarCents, SO_SUPERSEDED, FORA_DA_ATIVIDADE, REVOGADO). Nenhuma regra nova - as mesmas funcoes da previa.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "anoCalendario",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 2000,
+              "maximum": 2100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "TaxAssessmentPeriodosView (anoCalendario, regime, familias)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
     "/api/accounting/tax-assessments/pis-cofins/preview": {
       "post": {
         "summary": "Preview the monthly PIS/Cofins assessment (BE-INCR-PIS-COFINS PR-2, X8 item 13)",
