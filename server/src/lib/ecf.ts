@@ -188,7 +188,7 @@ export function build0010(i: Reg0010Input = {}): string {
 }
 
 export interface Reg0020Input {
-  indAliqCsll?: string; // '1' = 9% (default; REGRA: ECF≥2019 ∈ {1,4})
+  indAliqCsll?: string; // '1' = 9% (default); leiaute 12: 1/3/4/7/8 (BE-INCR-CSLL-ALIQUOTA-LC224)
 }
 
 /**

@@ -4,7 +4,7 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, legalParamsSeedRows } from '@test/helpers/legalParams';
+import { LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4, legalParamsSeedRows, tabelaApuracaoSemente } from '@test/helpers/legalParams';
 import anexoFixture from '../../accounting/fixtures/anexo-iii-in-1700-2017.json';
 import { LEGAL_PARAMETER_TABELAS, TABELAS_MIGRADAS, linhaLegalVigente, linhasEmVigor, type LinhaLegal } from '../models/legalParameter';
 import { erroDeFormato, type LinhaParaFormato } from '../models/formatoLinha';
@@ -13,6 +13,7 @@ import { LegalParameterPolicy } from '../policies/LegalParameterPolicy';
 const MIGRATION = path.resolve(__dirname, '../../../../prisma/migrations/20261007150000_add_legal_parameters/migration.sql');
 const MIGRATION_V2 = path.resolve(__dirname, '../../../../prisma/migrations/20261007160000_add_legal_parameters_v2/migration.sql');
 const MIGRATION_V3 = path.resolve(__dirname, '../../../../prisma/migrations/20261007170000_legal_parameters_v3_depreciacao/migration.sql');
+const MIGRATION_V4 = path.resolve(__dirname, '../../../../prisma/migrations/20261009120000_legal_parameters_v4_csll_lc224/migration.sql');
 const norm = (s: string) => s.replace(/\r\n/g, '\n');
 
 describe('semente da migração (item 6)', () => {
@@ -89,6 +90,52 @@ describe('semente da migração (item 6)', () => {
 
   it('o catálogo tem as 14 tabelas do item 2 (o item 27 do inventário fica fora) + as 7 do Simples (X14 PR-1)', () => {
     expect(LEGAL_PARAMETER_TABELAS).toHaveLength(21);
+  });
+});
+
+describe('BE-INCR-CSLL-ALIQUOTA-LC224 — linhas v4 de CSLL_ALIQUOTA (BRIEF §3 itens 1–3, 7)', () => {
+  const S1 = 'faa47fa18631e4b78931693fb9ef7edabe7a58c6d288c9eee8374397c40940c3';
+
+  it('item 1: o migration.sql v4 carrega o texto de prisma/data/legal_parameters_v4.sql, byte a byte', () => {
+    expect(norm(fs.readFileSync(MIGRATION_V4, 'utf8'))).toContain(norm(fs.readFileSync(LEGAL_PARAMS_SEED_FILE_V4, 'utf8')).trimEnd());
+  });
+
+  it('item 2: 7 linhas, só CSLL_ALIQUOTA, PUBLISHED, sem supersedesId, com fonteUrl e o sha256 do S1 (F-CA-5 a), no formato', () => {
+    const v4 = legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_V4);
+    expect(v4.map((r) => r.id)).toEqual(['lp4-csll-3', 'lp4-csll-7-a', 'lp4-csll-7-b', 'lp4-csll-7-c', 'lp4-csll-8-a', 'lp4-csll-8-b', 'lp4-csll-8-c']);
+    for (const r of v4) {
+      expect([r.id, r.tabela, r.status, r.supersedesId, r.fonteSha256, r.fonteUrl?.startsWith('https://normasinternet2.receita.fazenda.gov.br/')]).toEqual([r.id, 'CSLL_ALIQUOTA', 'PUBLISHED', null, S1, true]);
+      expect([r.id, erroDeFormato({ ...r, tabela: 'CSLL_ALIQUOTA', valorJson: undefined } as LinhaParaFormato)]).toEqual([r.id, null]);
+    }
+  });
+
+  it('item 2: aliquotaCsll por chave × data (F-CA-1 a: 3 desde 01/04/2026; F-CA-2 a: 2028 publicado)', () => {
+    const t = tabelaApuracaoSemente();
+    const DATAS = ['2026-03-31', '2026-04-01', '2026-06-30', '2027-12-31', '2028-01-01'];
+    const esperado: Record<string, (number | undefined)[]> = {
+      '3': [undefined, 2000, 2000, 2000, 2000],
+      '7': [900, 1200, 1200, 1200, 1500],
+      '8': [1500, 1750, 1750, 1750, 2000],
+    };
+    for (const [ind, valores] of Object.entries(esperado)) {
+      expect(DATAS.map((d) => t.aliquotaCsll(ind, d)?.valor)).toEqual(valores);
+    }
+    expect(t.aliquotaCsll('7', '2026-06-30')?.fonte).toBe('IN RFB 1.700/2017 art. 30-D III a (red. IN RFB 2.315/2026)');
+    expect(t.aliquotaCsll('8', '2026-03-31')?.fonte).toBe('IN RFB 1.700/2017 art. 30 I (redação anterior à IN RFB 2.315/2026)');
+    expect(t.aliquotaCsll('7', '2025-12-31')).toBeUndefined();
+  });
+
+  it('item 3: as linhas 1 e 4 não mudam (valor e fonte da v1) em 2026 e 2028', () => {
+    const t = tabelaApuracaoSemente();
+    for (const d of ['2026-06-30', '2028-03-31']) {
+      expect(t.aliquotaCsll('1', d)).toEqual({ valor: 900, fonte: 'Lei 7.689/1988 art. 3º III' });
+      expect(t.aliquotaCsll('4', d)).toEqual({ valor: 1500, fonte: 'Lei 7.689/1988 art. 3º I' });
+    }
+  });
+
+  it('item 7: a migração só insere em legal_parameters (sem job de recálculo, sem UPDATE/DELETE)', () => {
+    const sql = norm(fs.readFileSync(MIGRATION_V4, 'utf8')).split('\n').filter((l) => l.trim() && !l.startsWith('--'));
+    expect(sql.every((l) => l.startsWith('INSERT OR IGNORE INTO "legal_parameters" '))).toBe(true);
   });
 });
 

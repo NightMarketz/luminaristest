@@ -2,7 +2,7 @@
  * CONTRATO HTTP DO accountingController — app Express REAL sobre supertest + SQLite REAL,
  * sem mock de prisma e sem mock de serviço.
  *
- * Unidade 1 de 4 da subfila ratificada em `docs/audit/TRIAGEM-R1-R3.json`
+ * Unidade 1 de 4 da subfila ratificada em `docs/audit/TRIAGEM-R1-R3.json` (removida em 2026-08-09 — `git show b617d8f1:docs/audit/TRIAGEM-R1-R3.json`)
  * (`r2_decision.ratified_subqueue`), órfã desde d11b4716 — e a única das quatro cujas invariantes
  * nomeadas são **dinheiro + inquilino + autoriza**. As três têm bloco próprio abaixo.
  *

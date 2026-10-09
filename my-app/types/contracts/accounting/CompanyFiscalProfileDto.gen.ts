@@ -65,7 +65,7 @@ numOrd: string
 natLivr: string
 } | null)
 ecf?: ({
-indAliqCsll: ("1" | "4")
+indAliqCsll: ("1" | "3" | "4" | "7" | "8")
 indRecReceita: ("1" | "2")
 } | null)
 contadorContactId?: (string | null)
@@ -83,6 +83,7 @@ ibsCbsOpcaoS2?: (("DAS" | "REGULAR") | null)
 meiContribuinteIcms?: (boolean | null)
 meiContribuinteIss?: (boolean | null)
 meiTransportadorCargas?: (boolean | null)
+simplesRegimeApuracao?: ("COMPETENCIA" | "CAIXA")
 }
 export interface OnboardingFiscalInput {
 regime: ("MEI" | "SIMPLES" | "PRESUMIDO" | "REAL" | "NAO_SEI")
