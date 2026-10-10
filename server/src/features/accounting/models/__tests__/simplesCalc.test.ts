@@ -215,21 +215,82 @@ describe('X14 PR-4 item 29 — percentual efetivo por tributo (ISS para a reten�
   });
 });
 
+const COMUM = { transportadorCargas: false };
+const TAC = { transportadorCargas: true };
+const AMBOS = { contribuinteIcms: true, contribuinteIss: true };
+
 describe('X14 PR-4 item 25 — SIMEI (Res. CGSN 140 art. 101)', () => {
   it('2026: 5% de R$ 1.621,00 (Decreto 12.797/2025) = R$ 81,05 + R$ 1 ICMS + R$ 5 ISS = R$ 87,05', () => {
-    const r = apurarSimei('2026-03', { contribuinteIcms: true, contribuinteIss: true }, LINHAS);
+    const r = apurarSimei('2026-03', { contribuinteIcms: true, contribuinteIss: true }, LINHAS, COMUM);
     expect(r.salarioMinimoCents).toBe(162_100);
     expect(r.tributos).toEqual({ CPP: 8_105, ICMS: 100, ISS: 500 });
     expect(r.totalCalculadoCents).toBe(8_705);
     expect(r.tabela.map((t) => t.legalParameterId).sort()).toEqual(['sn1-simei-cpp-pct', 'sn1-simei-icms', 'sn1-simei-iss', 'sn3-salmin-2026']);
   });
   it('2025: salário de R$ 1.518,00 → CPP R$ 75,90; só ISS (serviço) → R$ 80,90', () => {
-    const r = apurarSimei('2025-12', { contribuinteIcms: false, contribuinteIss: true }, LINHAS);
+    const r = apurarSimei('2025-12', { contribuinteIcms: false, contribuinteIss: true }, LINHAS, COMUM);
     expect(r.tributos).toEqual({ CPP: 7_590, ISS: 500 });
     expect(r.totalCalculadoCents).toBe(8_090);
   });
   it('sem salário mínimo vigente (2023) ⇒ erro explícito, nunca zero', () => {
-    expect(() => apurarSimei('2023-06', { contribuinteIcms: false, contribuinteIss: true }, LINHAS)).toThrow(/SALARIO_MINIMO/);
+    expect(() => apurarSimei('2023-06', { contribuinteIcms: false, contribuinteIss: true }, LINHAS, COMUM)).toThrow(/SALARIO_MINIMO/);
+  });
+});
+
+describe('SIMEI-TAC-12 itens 2-3 — CPP de 12% do transportador (Res. CGSN 140 art. 101 I "c"; LC 123 art. 18-F III)', () => {
+  it('item 2, tabela 2026-05: comum = 8105; TAC = 19452 (12% de R$ 1.621); TAC + ICMS + ISS = 20052', () => {
+    const comum = apurarSimei('2026-05', { contribuinteIcms: false, contribuinteIss: false }, LINHAS, COMUM);
+    const tac = apurarSimei('2026-05', { contribuinteIcms: false, contribuinteIss: false }, LINHAS, TAC);
+    const tacAmbos = apurarSimei('2026-05', AMBOS, LINHAS, TAC);
+    expect([comum.totalCalculadoCents, tac.totalCalculadoCents, tacAmbos.totalCalculadoCents]).toEqual([8_105, 19_452, 20_052]);
+    expect([comum.cppAliquotaBp, tac.cppAliquotaBp, comum.transportadorCargas, tac.transportadorCargas]).toEqual([500, 1_200, false, true]);
+    expect(tac.tabela.map((t) => t.legalParameterId)).toContain('sn5-simei-cpp-tac-pct');
+    expect(tac.tabela.map((t) => t.legalParameterId)).not.toContain('sn1-simei-cpp-pct');
+  });
+  it('item 3 (F-TAC-4 a): TAC em 03/2022 ⇒ 5% (sem linha CPP_TAC_PCT vigente), em 04/2022 ⇒ 12% — nunca erro', () => {
+    // A semente não tem salário mínimo antes de 2024 (BRIEF §7): linha de FIXTURE, valor sintético (não é o SM de 2022).
+    const sm2022 = { ...LINHAS.find((l) => l.id === 'sn3-salmin-2024')!, id: 'fixture-salmin-2022', valorInt: 100_000, vigenteDesde: '2022-01-01', vigenteAte: '2022-12-31' };
+    const linhas = [...LINHAS, sm2022];
+    const marco = apurarSimei('2022-03', { contribuinteIcms: false, contribuinteIss: false }, linhas, TAC);
+    const abril = apurarSimei('2022-04', { contribuinteIcms: false, contribuinteIss: false }, linhas, TAC);
+    expect([marco.cppAliquotaBp, marco.tributos.CPP, marco.transportadorCargas]).toEqual([500, 5_000, true]);
+    expect([abril.cppAliquotaBp, abril.tributos.CPP]).toEqual([1_200, 12_000]);
+  });
+});
+
+describe('SIMEI-TAC-12 §9.5 itens 11-12 — Anexo VII da LC 123 (LC 214 arts. 517, 518, 520; F-TAC-7/F-TAC-8 a)', () => {
+  it('2026-12: sem CBS/IBS (tributosMilesimos vazio), R$ 1 + R$ 5 como hoje', () => {
+    const r = apurarSimei('2026-12', AMBOS, LINHAS, COMUM);
+    expect([r.tributos, r.tributosMilesimos, r.totalCalculadoCents]).toEqual([{ CPP: 8_105, ICMS: 100, ISS: 500 }, {}, 8_705]);
+  });
+  it('2027-01: CBS R$ 0,994 + IBS R$ 0,006 em milésimos; total = CPP + R$ 7,00; TAC soma o mesmo fixo (L9-7)', () => {
+    const comum = apurarSimei('2027-01', AMBOS, LINHAS, COMUM);
+    const tac = apurarSimei('2027-01', AMBOS, LINHAS, TAC);
+    expect([comum.tributos, comum.tributosMilesimos, comum.totalCalculadoCents]).toEqual([{ CPP: 8_105, ICMS: 100, ISS: 500 }, { CBS: 994, IBS: 6 }, 8_805]);
+    expect(tac.totalCalculadoCents).toBe(19_452 + 700);
+  });
+  it('F-TAC-8 (a): CBS/IBS em todo DAS do MEI; ICMS/ISS só se contribuinte — 2027 sem ICMS nem ISS = CPP + R$ 1,00', () => {
+    const r = apurarSimei('2027-06', { contribuinteIcms: false, contribuinteIss: false }, LINHAS, COMUM);
+    expect([r.tributos, r.tributosMilesimos, r.totalCalculadoCents]).toEqual([{ CPP: 8_105 }, { CBS: 994, IBS: 6 }, 8_205]);
+  });
+  it('item 12: por ano, a soma das parcelas (contribuinte dos dois) fecha com o TOTAL do Anexo VII', () => {
+    const totais: Array<[string, number]> = [['2027-01', 700], ['2028-12', 700], ['2029-01', 660], ['2030-01', 620], ['2031-01', 580], ['2032-12', 540], ['2033-01', 300], ['2040-01', 300]];
+    for (const [comp, fixo] of totais) expect([comp, apurarSimei(comp, AMBOS, LINHAS, COMUM).totalCalculadoCents - 8_105]).toEqual([comp, fixo]);
+  });
+  it('2029: ICMS R$ 0,90 / ISS R$ 4,50 / CBS R$ 1,00 / IBS R$ 0,20 (linhas do ano, não as de 2018)', () => {
+    const r = apurarSimei('2029-07', AMBOS, LINHAS, COMUM);
+    expect([r.tributos, r.tributosMilesimos]).toEqual([{ CPP: 8_105, ICMS: 90, ISS: 450 }, { CBS: 1_000, IBS: 200 }]);
+    expect(r.tabela.map((t) => t.legalParameterId)).not.toContain('sn1-simei-icms');
+  });
+  it('2033 (LC 214 art. 518): ICMS/ISS saem do DAS — parcela 0 fora de `tributos`, a linha de fim na memória', () => {
+    const r = apurarSimei('2033-01', AMBOS, LINHAS, COMUM);
+    expect([r.tributos, r.tributosMilesimos, r.totalCalculadoCents]).toEqual([{ CPP: 8_105 }, { CBS: 1_000, IBS: 2_000 }, 8_405]);
+    expect(r.tabela.map((t) => t.legalParameterId)).toEqual(expect.arrayContaining(['sn5-simei-icms-2033', 'sn5-simei-iss-2033']));
+  });
+  it('F-TAC-7 (a): só o total arredonda (half-up) — fixture com milésimos que não fecham centavo', () => {
+    const torto = LINHAS.map((l) => (l.id === 'sn5-simei-ibs-2027' ? { ...l, valorInt: 11 } : l)); // 994 + 11 = 1005 milésimos
+    const r = apurarSimei('2027-01', { contribuinteIcms: false, contribuinteIss: false }, torto, COMUM);
+    expect([r.tributosMilesimos, r.totalCalculadoCents]).toEqual([{ CBS: 994, IBS: 11 }, 8_105 + 101]);
   });
 });
 
