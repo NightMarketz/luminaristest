@@ -1,5 +1,8 @@
 # Follow-up ao contador — 2ª rodada (Fase 0.8 do PLANO-POS-CONTADOR-2026-09-23)
 
+> **SUPERSEDIDO em 10/10/2026 por [`PEDIDO-CONTADOR-2026-10-10-UNICO.md`](PEDIDO-CONTADOR-2026-10-10-UNICO.md)**
+> (dono, chat: "Devemos montar um pedido único"). Não enviar este; fica como histórico.
+
 > **Rascunho do agente** (skill `luminaris-contador-liaison`), montado em 2026-09-26 por autorização do dono em
 > chat ("Não enviei; monta o rascunho"). **[CTD-001] O envio é do dono.** Resposta chega → "triagem do que o
 > contador mandou". O item (c) original do 0.8 (D8, declarante/signatários) **saiu**: fechado em 24/09

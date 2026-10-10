@@ -1,0 +1,350 @@
+<title>Luminaris Fiscal na Régua</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: coluna de leitura de 72rem; régua de 6 degraus como fio condutor; matriz em tabela rolável; cards só onde há comparação lado a lado */
+:root{
+  --bg:#f5f7f8; --surface:#ffffff; --ink:#15202b; --muted:#56636f; --line:#d8dee3;
+  --accent:#0d6b5c; --accent-soft:#e1f0ec;
+  --l0:#e4e8eb; --l1:#d3dde6; --l2:#a9cfc6; --l3:#5fae9c; --l4:#1f7f6b; --l5:#0b4d41;
+  --l0-ink:#56636f; --l1-ink:#33495c; --l2-ink:#0f3d33; --l3-ink:#06261f; --l4-ink:#ffffff; --l5-ink:#ffffff;
+  --warn:#9a5b00; --warn-soft:#fbf0dc; --crit:#a3262a; --crit-soft:#f9e3e3;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0f1519; --surface:#161e24; --ink:#e6ecef; --muted:#9aa8b3; --line:#2a353d;
+  --accent:#5cc5ae; --accent-soft:#16332d;
+  --l0:#222c33; --l1:#2b3a46; --l2:#245047; --l3:#2f7a68; --l4:#4fb39b; --l5:#8fe0cb;
+  --l0-ink:#9aa8b3; --l1-ink:#c3d1dc; --l2-ink:#d6f0ea; --l3-ink:#ffffff; --l4-ink:#06221c; --l5-ink:#06221c;
+  --warn:#e8b25c; --warn-soft:#33270f; --crit:#f08a8d; --crit-soft:#3a1a1b; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0f1519; --surface:#161e24; --ink:#e6ecef; --muted:#9aa8b3; --line:#2a353d;
+  --accent:#5cc5ae; --accent-soft:#16332d;
+  --l0:#222c33; --l1:#2b3a46; --l2:#245047; --l3:#2f7a68; --l4:#4fb39b; --l5:#8fe0cb;
+  --l0-ink:#9aa8b3; --l1-ink:#c3d1dc; --l2-ink:#d6f0ea; --l3-ink:#ffffff; --l4-ink:#06221c; --l5-ink:#06221c;
+  --warn:#e8b25c; --warn-soft:#33270f; --crit:#f08a8d; --crit-soft:#3a1a1b; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55;margin:0}
+.wrap{max-width:72rem;margin:0 auto;padding-inline:20px;padding-block:40px 80px;display:grid;gap:56px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(2rem,5vw,3.1rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:clamp(1.45rem,3vw,1.9rem);font-weight:700}
+h3{font-size:1.15rem;font-weight:700}
+p{margin:0;max-width:68ch}
+.eyebrow{font-family:var(--mono);font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+section{display:grid;gap:20px;min-width:0}
+.lede{font-size:1.15rem;color:var(--muted)}
+code,.mono{font-family:var(--mono);font-size:.86em}
+a{color:var(--accent)}
+
+/* veredito */
+.verdict{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:24px;display:grid;gap:14px}
+.verdict p strong{color:var(--ink)}
+.risk{background:var(--crit-soft);color:var(--ink);border-radius:14px;padding:14px 16px;display:grid;gap:4px}
+.risk .eyebrow{color:var(--crit)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{border-top:2px solid var(--line);padding-top:10px;display:grid;gap:2px}
+.stat b{font-family:var(--display);font-size:1.8rem;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:.9rem}
+
+/* régua */
+.ladder{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;align-items:end}
+.rung{border-radius:12px;padding:12px;display:grid;gap:6px;align-content:start;min-width:0}
+.rung b{font-family:var(--mono);font-size:.8rem}
+.rung strong{font-family:var(--display);font-size:1rem;line-height:1.2}
+.rung small{font-size:.82rem;line-height:1.35;opacity:.9}
+.r0{background:var(--l0);color:var(--l0-ink);min-height:150px}
+.r1{background:var(--l1);color:var(--l1-ink);min-height:170px}
+.r2{background:var(--l2);color:var(--l2-ink);min-height:190px}
+.r3{background:var(--l3);color:var(--l3-ink);min-height:210px}
+.r4{background:var(--l4);color:var(--l4-ink);min-height:230px}
+.r5{background:var(--l5);color:var(--l5-ink);min-height:250px}
+.ladder-note{font-size:.95rem;color:var(--muted)}
+@media (max-width:760px){.ladder{grid-template-columns:1fr 1fr}.rung{min-height:0!important}}
+
+/* matriz */
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tools button{font:inherit;font-size:.9rem;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 14px;cursor:pointer}
+.tools button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tools button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tablebox{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:820px;font-size:.93rem}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+thead th{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--surface);position:sticky;top:0}
+tbody tr:last-child td{border-bottom:0}
+tr.dom td{background:var(--accent-soft);font-family:var(--display);font-weight:700;font-size:.95rem}
+td.cap{min-width:220px}
+td.cap small{display:block;color:var(--muted);font-size:.84rem;line-height:1.35;margin-top:2px}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:2px 10px;font-family:var(--mono);font-size:.78rem;font-weight:600;white-space:nowrap}
+.c0{background:var(--l0);color:var(--l0-ink)}.c1{background:var(--l1);color:var(--l1-ink)}.c2{background:var(--l2);color:var(--l2-ink)}
+.c3{background:var(--l3);color:var(--l3-ink)}.c4{background:var(--l4);color:var(--l4-ink)}.c5{background:var(--l5);color:var(--l5-ink)}
+td.m{text-align:center;font-size:1.05rem;color:var(--muted);width:92px}
+td.m.full{color:var(--accent)}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:.88rem;color:var(--muted)}
+
+/* comparações */
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px;display:grid;gap:12px;align-content:start;min-width:0}
+.card ul{margin:0;padding-left:18px;display:grid;gap:6px}
+.card .who{font-size:.88rem;color:var(--muted)}
+.tag{font-family:var(--mono);font-size:.74rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.tag.ahead{color:var(--accent)}.tag.behind{color:var(--crit)}
+.bar{height:10px;border-radius:999px;background:var(--l0);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:999px}
+
+/* fila e achados */
+.list{display:grid;gap:10px}
+.item{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.item .k{font-family:var(--mono);font-size:.8rem;font-weight:600;padding:2px 8px;border-radius:8px;background:var(--warn-soft);color:var(--warn);white-space:nowrap}
+.item .k.crit{background:var(--crit-soft);color:var(--crit)}
+.item .k.ok{background:var(--accent-soft);color:var(--accent)}
+.item p{font-size:.96rem}
+dl.gloss{display:grid;grid-template-columns:minmax(140px,220px) 1fr;gap:10px 20px;margin:0}
+dl.gloss dt{font-family:var(--mono);font-size:.88rem;font-weight:600}
+dl.gloss dd{margin:0;color:var(--muted);font-size:.96rem}
+@media (max-width:600px){dl.gloss{grid-template-columns:1fr}dl.gloss dd{margin-bottom:8px}}
+.method{font-size:.92rem;color:var(--muted);display:grid;gap:10px}
+.method p{max-width:80ch}
+@media (prefers-reduced-motion:no-preference){.bar i{transition:width .6s ease}}
+</style>
+
+<div class="wrap">
+
+<header style="display:grid;gap:16px">
+  <span class="eyebrow">Relatório · módulo fiscal, contábil e financeiro · 10/10/2026 · main em 845d79ce</span>
+  <h1>Onde o Luminaris está, comparado com quem já vende contabilidade e nota fiscal</h1>
+  <p class="lede">Versão didática. Primeiro a régua usada para medir, depois a matriz capacidade por capacidade, depois o que nos separa de cada tipo de concorrente.</p>
+</header>
+
+<section class="verdict" aria-labelledby="v">
+  <span class="eyebrow" id="v">Resposta curta</span>
+  <p><strong>No código, o Luminaris já tem a profundidade de um sistema de escritório contábil:</strong> partidas dobradas com trilha à prova de adulteração, ECD, ECF do Presumido e do Real com e-Lalur, apuração do Simples, IRPJ/CSLL, PIS/Cofins e ISS. Isso está acima do que ERPs de PME como Conta Azul ou Omie entregam por conta própria.</p>
+  <div class="risk">
+    <span class="eyebrow">Risco principal</span>
+    <p><strong>Nenhuma capacidade passou ainda por um validador de fora.</strong> O PVA da Receita parou no passo 5 do H1, não há XML de NF-e real, a emissão de nota não transmite para o governo e não houve deploy. Na régua abaixo, quase tudo para no degrau 2 ou 3; o degrau 4 está vazio.</p>
+  </div>
+  <div class="stats">
+    <div class="stat"><b>53/62</b><span>nós da régua fechados (contábil 21/22, financeiro 17/19, fiscal 15/21)</span></div>
+    <div class="stat"><b>78</b><span>serviços em <code>server/src/features/accounting/services</code></span></div>
+    <div class="stat"><b>25</b><span>abas na tela de Contabilidade</span></div>
+    <div class="stat"><b>0</b><span>capacidades validadas por PVA, SEFAZ/ADN ou cliente em produção</span></div>
+  </div>
+</section>
+
+<section aria-labelledby="regua">
+  <span class="eyebrow">1 · Como medir</span>
+  <h2 id="regua">A régua de maturidade: seis degraus</h2>
+  <p>Ter o código não é o mesmo que estar pronto. Um app comercial está no degrau 5 em tudo o que vende. A pergunta útil é em que degrau está cada capacidade.</p>
+  <div class="ladder" role="list">
+    <div class="rung r0" role="listitem"><b>0</b><strong>Não existe</strong><small>Nem decisão nem código.</small></div>
+    <div class="rung r1" role="listitem"><b>1</b><strong>No papel</strong><small>ADR ou BRIEF escrito, forks decididos. Zero código.</small></div>
+    <div class="rung r2" role="listitem"><b>2</b><strong>Motor pronto</strong><small>Backend com testes. O usuário ainda não chega lá pela tela.</small></div>
+    <div class="rung r3" role="listitem"><b>3</b><strong>Na tela</strong><small>Dá para usar no app, com dado de seed.</small></div>
+    <div class="rung r4" role="listitem"><b>4</b><strong>Validado fora</strong><small>PVA aceita, governo autoriza a nota, contador assina.</small></div>
+    <div class="rung r5" role="listitem"><b>5</b><strong>Em produção</strong><small>Cliente real usando com dinheiro e fisco de verdade.</small></div>
+  </div>
+  <p class="ladder-note">Os degraus 4 e 5 dependem de gente e de sistemas fora do repositório (o Bloco A do plano). Por isso o CLAUDE.md proíbe montar mais auditoria interna enquanto eles estão abertos: mais revisão não sobe ninguém do 3 para o 4.</p>
+</section>
+
+<section aria-labelledby="matriz">
+  <span class="eyebrow">2 · Capacidade por capacidade</span>
+  <h2 id="matriz">A matriz comparativa</h2>
+  <p>Cada linha é algo que um contador ou um dono de empresa espera do sistema. A coluna Luminaris mostra o degrau, conferido no repositório hoje. As outras quatro colunas descrevem o que cada <em>categoria</em> de produto costuma entregar.</p>
+  <div class="legend">
+    <span><b style="color:var(--accent)">●</b> entrega como produto principal</span>
+    <span>◐ entrega parcial, por módulo extra ou integração</span>
+    <span>○ fora do foco da categoria</span>
+  </div>
+  <div class="tools" role="group" aria-label="Filtro da matriz">
+    <button type="button" id="f-all" aria-pressed="true" data-f="all">Tudo</button>
+    <button type="button" id="f-gap" aria-pressed="false" data-f="gap">Só lacunas (degrau 0–2)</button>
+    <button type="button" id="f-ok" aria-pressed="false" data-f="ok">Só o que já tem tela (3+)</button>
+  </div>
+  <div class="tablebox">
+  <table id="mx">
+    <thead><tr>
+      <th>Capacidade</th><th>Luminaris</th>
+      <th style="text-align:center">Emissor de nota<br>via API</th>
+      <th style="text-align:center">ERP de PME</th>
+      <th style="text-align:center">Sistema de escritório contábil</th>
+      <th style="text-align:center">ERP grande</th>
+    </tr></thead>
+    <tbody>
+      <tr class="dom"><td colspan="6">Emissão de nota fiscal</td></tr>
+      <tr data-l="2"><td class="cap">Emitir NFS-e (serviço)<small>Hoje é manual: o app monta a ficha da DPS, o usuário emite no Emissor Nacional e devolve o XML, que o app relê e confere. Não transmite ao ADN.</small></td><td><span class="chip c2">2–3 · manual</span></td><td class="m full">●</td><td class="m full">●</td><td class="m">◐</td><td class="m full">●</td></tr>
+      <tr data-l="0"><td class="cap">Emitir NF-e / NFC-e (produto)<small>Só importação. O adaptador por tipo de documento (X10a) está bloqueado.</small></td><td><span class="chip c0">0</span></td><td class="m full">●</td><td class="m full">●</td><td class="m">◐</td><td class="m full">●</td></tr>
+      <tr data-l="1"><td class="cap">Cancelar, substituir, carta de correção<small>Só o cancelamento existe, sem calcular prazo. BRIEF do X11 aprovado, sem execução.</small></td><td><span class="chip c1">1</span></td><td class="m full">●</td><td class="m full">●</td><td class="m">◐</td><td class="m full">●</td></tr>
+      <tr data-l="3"><td class="cap">Importar NF-e de compra<small>Lê o XML, verifica a assinatura digital, pré-preenche o contas a pagar e separa revenda de insumo.</small></td><td><span class="chip c3">3</span></td><td class="m">◐</td><td class="m full">●</td><td class="m full">●</td><td class="m full">●</td></tr>
+      <tr data-l="1"><td class="cap">IBS/CBS da reforma tributária<small>Os campos CST e cClassTrib existem na DPS. Cálculo e split payment estão diferidos por decisão (M5-ibs-cbs): no Simples, só em 2027.</small></td><td><span class="chip c1">1</span></td><td class="m">◐</td><td class="m">◐</td><td class="m">◐</td><td class="m">◐</td></tr>
+
+      <tr class="dom"><td colspan="6">Financeiro</td></tr>
+      <tr data-l="3"><td class="cap">Contas a pagar e a receber<small>Com baixa parcial, aging, contrapartes e filtros por subrazão.</small></td><td><span class="chip c3">3</span></td><td class="m">○</td><td class="m full">●</td><td class="m">◐</td><td class="m full">●</td></tr>
+      <tr data-l="3"><td class="cap">Conciliação bancária<small>OFX e CNAB 240, casamento automático e desfazer. Baixa por retorno bancário com confirmação humana (F7).</small></td><td><span class="chip c3">3</span></td><td class="m">○</td><td class="m full">●</td><td class="m full">●</td><td class="m full">●</td></tr>
+      <tr data-l="2"><td class="cap">Cobrança por boleto e Pix<small>Mercado Pago: cobrança, webhook e relatório de liberações já em main (#609, #615). Sem tela e sem chave de produção.</small></td><td><span class="chip c2">2</span></td><td class="m">◐</td><td class="m full">●</td><td class="m">○</td><td class="m full">●</td></tr>
+      <tr data-l="0"><td class="cap">Pix de saída (pagar fornecedor)<small>Bloqueado: a API de payouts do Mercado Pago exige chave aprovada pelo próprio MP.</small></td><td><span class="chip c0">0</span></td><td class="m">○</td><td class="m">◐</td><td class="m">○</td><td class="m full">●</td></tr>
+      <tr data-l="3"><td class="cap">Fluxo de caixa projetado e DFC</td><td><span class="chip c3">3</span></td><td class="m">○</td><td class="m full">●</td><td class="m">◐</td><td class="m full">●</td></tr>
+      <tr data-l="3"><td class="cap">Estoque perpétuo e CMV<small>Com conferência físico × contábil.</small></td><td><span class="chip c3">3</span></td><td class="m">○</td><td class="m full">●</td><td class="m">◐</td><td class="m full">●</td></tr>
+      <tr data-l="3"><td class="cap">Pacote pré-pago com validade<small>Particular do salão e da clínica. Tela pronta; o tratamento contábil do vencido espera o contador.</small></td><td><span class="chip c3">3</span></td><td class="m">○</td><td class="m">○</td><td class="m">○</td><td class="m">◐</td></tr>
+
+      <tr class="dom"><td colspan="6">Contabilidade</td></tr>
+      <tr data-l="3"><td class="cap">Lançamentos em partidas dobradas<small>Numeração sem buraco, encadeamento por hash, aprovação por segunda pessoa, períodos com trava.</small></td><td><span class="chip c3">3</span></td><td class="m">○</td><td class="m">◐</td><td class="m full">●</td><td class="m full">●</td></tr>
+      <tr data-l="3"><td class="cap">Balancete, razão, diário, BP e DRE<small>Também comparativo entre períodos e por centro de custo.</small></td><td><span class="chip c3">3</span></td><td class="m">○</td><td class="m">◐</td><td class="m full">●</td><td class="m full">●</td></tr>
+      <tr data-l="3"><td class="cap">Imobilizado e depreciação</td><td><span class="chip c3">3</span></td><td class="m">○</td><td class="m">◐</td><td class="m full">●</td><td class="m full">●</td></tr>
+      <tr data-l="3"><td class="cap">Encerramento do exercício<small>Registros I350/I355 da ECD, com tela.</small></td><td><span class="chip c3">3</span></td><td class="m">○</td><td class="m">○</td><td class="m full">●</td><td class="m full">●</td></tr>
+      <tr data-l="3"><td class="cap">Pacote ao contador e revisão profissional<small>Envio de ECD/ECF e anexos; o contador anota e corrige dentro do app.</small></td><td><span class="chip c3">3</span></td><td class="m">○</td><td class="m">◐</td><td class="m">◐</td><td class="m">◐</td></tr>
+
+      <tr class="dom"><td colspan="6">Obrigações e apuração</td></tr>
+      <tr data-l="3"><td class="cap">ECD (escrituração contábil digital)<small>Gera o arquivo. A validação no PVA (H1) parou porque uma conta nova ainda não tem código referencial.</small></td><td><span class="chip c3">3 · PVA pendente</span></td><td class="m">○</td><td class="m">○</td><td class="m full">●</td><td class="m full">●</td></tr>
+      <tr data-l="3"><td class="cap">ECF Presumido e Real, com e-Lalur e e-Lacs<small>Blocos L, M e N; Parte B do Lalur com tela.</small></td><td><span class="chip c3">3 · PVA pendente</span></td><td class="m">○</td><td class="m">○</td><td class="m full">●</td><td class="m full">●</td></tr>
+      <tr data-l="2"><td class="cap">Apuração do Simples Nacional<small>Anexos I–V, fator R, MEI e SIMEI, DAS, DEFIS, limites. A tela de apuração só tem BRIEF (#585).</small></td><td><span class="chip c2">2</span></td><td class="m">○</td><td class="m">◐</td><td class="m full">●</td><td class="m full">●</td></tr>
+      <tr data-l="2"><td class="cap">IRPJ/CSLL, PIS/Cofins e ISS<small>Trimestral e anual, memória de cálculo no pacote do contador, ISS por município.</small></td><td><span class="chip c2">2</span></td><td class="m">○</td><td class="m">◐</td><td class="m full">●</td><td class="m full">●</td></tr>
+      <tr data-l="1"><td class="cap">EFD-Contribuições (arquivo)<small>A apuração de PIS/Cofins existe (X8), mas o gerador do arquivo SPED foi diferido por decisão (F-X8-1 → a).</small></td><td><span class="chip c1">1 · arquivo diferido</span></td><td class="m">○</td><td class="m">○</td><td class="m full">●</td><td class="m full">●</td></tr>
+      <tr data-l="2"><td class="cap">DCTFWeb / MIT<small>Gera o arquivo JSON do MIT a partir das apurações confirmadas.</small></td><td><span class="chip c2">2</span></td><td class="m">○</td><td class="m">○</td><td class="m full">●</td><td class="m full">●</td></tr>
+      <tr data-l="0"><td class="cap">EFD ICMS/IPI<small>Nenhum código nem nó no plano. O 1º cliente presta serviço, então não pesa agora.</small></td><td><span class="chip c0">0</span></td><td class="m">○</td><td class="m">◐</td><td class="m full">●</td><td class="m full">●</td></tr>
+      <tr data-l="0"><td class="cap">Folha, eSocial, EFD-Reinf<small>Fora do plano atual.</small></td><td><span class="chip c0">0</span></td><td class="m">○</td><td class="m">◐</td><td class="m full">●</td><td class="m full">●</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="ladder-note">As colunas de mercado vêm de conhecimento geral sobre cada categoria, sem nova pesquisa nesta sessão. Servem para orientar, não para comparar produto a produto.</p>
+</section>
+
+<section aria-labelledby="vs">
+  <span class="eyebrow">3 · Lado a lado</span>
+  <h2 id="vs">O que nos separa de cada tipo de concorrente</h2>
+  <div class="cmp">
+    <article class="card">
+      <h3>Emissor de nota via API</h3>
+      <span class="who">Focus NFe, NFE.io, PlugNotas, eNotas</span>
+      <div class="bar" aria-label="Cobertura aproximada: 15%"><i style="width:15%"></i></div>
+      <span class="tag behind">Atrás</span>
+      <ul>
+        <li>Eles transmitem NF-e, NFC-e e NFS-e para a SEFAZ, o ADN e centenas de prefeituras. Nós ainda não transmitimos nada.</li>
+        <li>Eles mantêm certificado A1, numeração, contingência e eventos. Nós decidimos fazer emissor próprio direto no ADN (D5, 07/10) e ainda falta o A1 de teste.</li>
+      </ul>
+      <span class="tag ahead">À frente</span>
+      <ul><li>A nota deles para no XML. A nossa nasce ligada à venda, ao contas a receber, ao lançamento e à apuração.</li></ul>
+    </article>
+    <article class="card">
+      <h3>ERP de PME</h3>
+      <span class="who">Conta Azul, Omie, Bling</span>
+      <div class="bar" aria-label="Cobertura aproximada: 60%"><i style="width:60%"></i></div>
+      <span class="tag behind">Atrás</span>
+      <ul>
+        <li>Emitem nota e boleto com um clique, em produção. Nós temos cobrança MP só no backend e nota manual.</li>
+        <li>São usados por milhares de empresas; nós ainda não temos o primeiro cliente rodando.</li>
+      </ul>
+      <span class="tag ahead">À frente</span>
+      <ul><li>Escrituração formal (ECD, ECF, Lalur), apuração e trilha auditável. Nesses produtos isso fica com o contador, em outro sistema.</li></ul>
+    </article>
+    <article class="card">
+      <h3>Sistema de escritório contábil</h3>
+      <span class="who">Domínio, Alterdata, Fortes, Questor</span>
+      <div class="bar" aria-label="Cobertura aproximada: 50%"><i style="width:50%"></i></div>
+      <span class="tag behind">Atrás</span>
+      <ul>
+        <li>Folha, eSocial, Reinf e EFD ICMS/IPI. Nós não temos nenhum dos quatro.</li>
+        <li>Arquivos já aceitos pelo PVA há anos. O nosso ainda não passou.</li>
+      </ul>
+      <span class="tag ahead">À frente</span>
+      <ul><li>A operação (venda, estoque, cobrança) e a contabilidade estão no mesmo sistema. O lançamento nasce do fato, sem importar planilha.</li></ul>
+    </article>
+  </div>
+  <p class="ladder-note">As barras são uma estimativa grosseira de quanto do que a categoria vende já existe no Luminaris em degrau 3 ou mais. Contra um ERP grande como o TOTVS Protheus, a distância é a soma das três: emissão real, folha e escala operacional.</p>
+</section>
+
+<section aria-labelledby="fila">
+  <span class="eyebrow">4 · O que destrava o degrau 4</span>
+  <h2 id="fila">O gargalo é externo e tem dono</h2>
+  <div class="list">
+    <div class="item"><span class="k crit">H1</span><p><strong>PVA em Lucro Presumido.</strong> Parado no passo 5: a conta 3.4 (receita de pacote vencido) não tem código referencial e a ECD devolve 400. O código foi pedido ao contador (item 3b do pedido de 02/10). Depois do H1 vêm H2 (sign-off no navegador), H3 (clínica) e M2 (deploy).</p></div>
+    <div class="item"><span class="k crit">D5</span><p><strong>Emissor próprio no ADN.</strong> Falta o certificado A1 de teste e o acesso ao ambiente de produção restrita. Sem isso a emissão (X10i) fica bloqueada, e com ela cancelamento e substituição (X11).</p></div>
+    <div class="item"><span class="k">D2</span><p><strong>XML de NF-e real.</strong> Só com o primeiro cliente. Hoje os testes usam uma nota fictícia de leiaute completo.</p></div>
+    <div class="item"><span class="k">M2</span><p><strong>Deploy.</strong> VPS contratada em 26/09; o runbook espera o H2. A cobrança MP também depende da chave no ambiente do M2.</p></div>
+    <div class="item"><span class="k">Prazo</span><p><strong>Calendário do fisco.</strong> Simples no Emissor Nacional a partir de 01/11/2026; NF-e para quem não tem IE a partir de 01/12/2026; correções do PNCT até 31/12/2026 (D7); CBS plena em 2027.</p></div>
+  </div>
+</section>
+
+<section aria-labelledby="achados">
+  <span class="eyebrow">5 · Achados deste relatório</span>
+  <h2 id="achados">O que mudou ou está desalinhado</h2>
+  <div class="list">
+    <div class="item"><span class="k">Índice</span><p>O <code>_INDEX.md</code> diz que o PR-2 do F5 (#609) está "aberto, sem merge". No <code>git log</code> ele já está em main (<code>ac80e1f8</code>), assim como o PR-3 (#615) e duas rodadas de correção (#621, #623). A nota do F5 precisa de fold.</p></div>
+    <div class="item"><span class="k">Tela</span><p>O backend de apuração (Simples, X7, X8, MIT) avançou muito desde 29/09, mas nenhuma aba do app chama <code>tax-assessments</code>, <code>mit-exports</code> ou <code>collection-charges</code>. A maior distância entre degrau 2 e 3 está aqui.</p></div>
+    <div class="item"><span class="k">Reforma</span><p>IBS/CBS aparece só como campo da DPS, mas isso é um diferimento decidido (<code>M5-ibs-cbs</code>), não uma lacuna esquecida: pela triagem do contador de 23/09, fica como controle extracontábil e, no Simples, só entra em 2027. A primeira versão deste relatório dizia o contrário; corrigido.</p></div>
+    <div class="item"><span class="k ok">Avanço</span><p>Desde 26/09 entraram 234 commits: Simples completo no backend (PR-1 a PR-4 e piso do Anexo XI), X7 Fases B e C, MIT, KIT-SETOR PR-1/2/5 e a tela da NFS-e manual.</p></div>
+  </div>
+</section>
+
+<section aria-labelledby="nm">
+  <span class="eyebrow">6 · Fora do mapa</span>
+  <h2 id="nm">O que ainda não está mapeado</h2>
+  <p>Três varreduras de 10/10. Duas compararam o domínio contábil e o financeiro com um sistema completo. Uma cruzou cada rota do backend com as telas. "Não mapeado" quer dizer que o item não aparece em código, nó, ADR, BRIEF nem no catálogo de destino.</p>
+  <div class="stats">
+    <div class="stat"><b>39</b><span>itens contábeis e de obrigações não mapeados, de 115 (4 não se aplicam ao público)</span></div>
+    <div class="stat"><b>31</b><span>itens financeiros não mapeados, de 95</span></div>
+    <div class="stat"><b>83</b><span>rotas de 265 que existem no backend e nenhuma tela chama</span></div>
+  </div>
+  <div class="list">
+    <div class="item"><span class="k crit">Contábil</span><p><strong>Agenda de vencimentos com alerta</strong> (DAS dia 20, NFTS dia 5, DEFIS, DMED). O sistema sabe quais obrigações valem, mas não quando vencem. Também faltam: DMED para a clínica, distribuição de lucros, NFTS de SP, capital social no plano de contas e a baixa do tributo apurado como conta a pagar.</p></div>
+    <div class="item"><span class="k crit">Financeiro</span><p><strong>Caixa do balcão</strong> (abertura, fechamento, sangria) e <strong>conciliação da maquininha</strong> (taxa e D+30). O recebível de cartão acumula sem baixa. Também faltam: extrato e comissão do profissional sobre o líquido, parcelamento, recorrência, sinal, gorjeta e vale-presente.</p></div>
+    <div class="item"><span class="k">Sem tela</span><p>Apuração, MIT e Simples (19 rotas, BRIEF #585 nunca executado), cobrança MP (12, BRIEF de hoje), ativação do binding (4). Sem BRIEF nenhum: DASN-SIMEI e DEFIS, perfil fiscal da empresa por ano, benefício municipal de ISS e mais 18 rotas avulsas.</p></div>
+    <div class="item"><span class="k">Risco</span><p>Os indicadores de gestão leem a tabela de vendas e despesas, não o razão (inferido). Uma despesa lançada só no contas a pagar não aparece no KPI.</p></div>
+  </div>
+  <p class="ladder-note">Detalhe em <code>docs/accounting/mapa-2026-10-10/</code>. A lista é forte, não exaustiva: depende de busca por termo, com 2 a 6 sinônimos por item.</p>
+</section>
+
+<section aria-labelledby="gl">
+  <span class="eyebrow">7 · Glossário</span>
+  <h2 id="gl">Os termos, em uma linha</h2>
+  <dl class="gloss">
+    <dt>NF-e / NFC-e</dt><dd>Nota de venda de produto (empresa ou consumidor), autorizada pela SEFAZ do estado.</dd>
+    <dt>NFS-e e DPS</dt><dd>Nota de serviço. A DPS é o pedido de emissão; o ADN (Ambiente de Dados Nacional) devolve a nota autorizada.</dd>
+    <dt>SPED</dt><dd>Família de arquivos digitais enviados à Receita: ECD, ECF, EFD-Contribuições, EFD ICMS/IPI.</dd>
+    <dt>ECD</dt><dd>Livro diário e razão em arquivo. Substitui o livro em papel.</dd>
+    <dt>ECF e e-Lalur</dt><dd>Declaração anual do IRPJ e da CSLL. O e-Lalur registra os ajustes entre o lucro contábil e o lucro tributável.</dd>
+    <dt>PVA</dt><dd>Programa da Receita que valida o arquivo antes do envio. Passar no PVA é o degrau 4 para SPED.</dd>
+    <dt>DAS, DCTFWeb, MIT</dt><dd>Guia do Simples; declaração mensal de débitos federais; o MIT é o módulo onde se informam IRPJ, CSLL, PIS e Cofins.</dd>
+    <dt>IBS / CBS</dt><dd>Tributos da reforma que substituem ICMS/ISS e PIS/Cofins. 2026 é ano de teste; a CBS fica plena em 2027.</dd>
+    <dt>Certificado A1</dt><dd>Arquivo de certificado digital da empresa, exigido para assinar e transmitir notas.</dd>
+  </dl>
+</section>
+
+<section class="method" aria-labelledby="mt">
+  <span class="eyebrow" id="mt">Método e grau de confiança</span>
+  <p><strong>Verificado no repositório (10/10, main em 845d79ce):</strong> régua 53/62 pelo <code>docs/plano/_INDEX.md</code>; 78 serviços em <code>features/accounting/services</code>; 25 abas em <code>AccountingView.tsx</code>; ausência de chamadas de FE para apuração, MIT e cobrança (grep em <code>my-app/features</code>, <code>pages</code>, <code>components</code>, <code>lib</code>); IBS/CBS só em <code>DpsPayloadDto.ts</code> e <code>lib/nfse.ts</code>; zero ocorrência de eSocial, Reinf e EFD ICMS/IPI em <code>server/src</code>; merges do F5 pelo <code>git log</code>.</p>
+  <p><strong>Inferido:</strong> o degrau de cada linha cruza o estado do nó com a existência de aba na tela. Não abri cada tela no navegador nem rodei a suíte nesta sessão.</p>
+  <p><strong>Assumido:</strong> as colunas de mercado e as barras de cobertura. Vêm de conhecimento geral sobre as categorias, sem pesquisa nova hoje.</p>
+  <p><strong>Caso adversarial tentado:</strong> procurei algo já validado por oráculo externo que pusesse uma capacidade no degrau 4. Os quatro gates fechados (B-4 backup, X2 import do arquivo RFB, Z0-a premissa do contador, SEED-MY) validam insumo e ambiente, não a saída do sistema. A resposta do contador de 23/09 é insumo, não sign-off. O degrau 4 continua vazio.</p>
+</section>
+
+</div>
+
+<script>
+(function(){
+  var btns=document.querySelectorAll('.tools button');
+  var rows=document.querySelectorAll('#mx tbody tr');
+  function apply(f){
+    btns.forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.f===f))});
+    var shown={};
+    rows.forEach(function(r){
+      if(r.classList.contains('dom')) return;
+      var l=+r.dataset.l, ok=f==='all'||(f==='gap'&&l<=2)||(f==='ok'&&l>=3);
+      r.hidden=!ok;
+    });
+    rows.forEach(function(r,i){
+      if(!r.classList.contains('dom')) return;
+      var any=false;
+      for(var j=i+1;j<rows.length&&!rows[j].classList.contains('dom');j++){ if(!rows[j].hidden){any=true;break} }
+      r.hidden=!any;
+    });
+    try{localStorage.setItem('mxf',f)}catch(e){}
+  }
+  btns.forEach(function(b){b.addEventListener('click',function(){apply(b.dataset.f)})});
+  var s='all'; try{s=localStorage.getItem('mxf')||'all'}catch(e){}
+  apply(s);
+})();
+</script>
