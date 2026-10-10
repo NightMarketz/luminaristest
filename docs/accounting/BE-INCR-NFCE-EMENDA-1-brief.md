@@ -287,7 +287,7 @@ model NfceCsc {
 - **(b) Por que importa:** alimenta `nfceCancelPrazoHoras` (item 27 do original, F-NFCE-10 a). Sem ele, o padrão é
   24 h, e a NFC-e fora do prazo é rejeição terminal (501).
 - **(c) O que a pesquisa encontrou:** o MOC 7.0 VG Tabela 5-38 dá 24 h "considera a exceção de prazo definida em
-  legislação estadual" (BRIEF original, `[NFE-CANC-PRAZO]`). O ato de SP não foi identificado (BRIEF original §6, "não
+  legislação estadual" (BRIEF original, `[NFE-CANC-PRAZO]`). O ato de SP não foi identificado (BRIEF original §6, "não **[ERRATA 10/10 — `docs/plano/PERGUNTAS-DE-LEI-2026-10-10.md` §10.2]** NFC-e: 30 minutos pelo Ajuste SINIEF 19/16 cl. 15ª.
   identificado nesta sessão"). Nesta sessão também não.
 - **(d) Quem responde:** lei pesquisável (ato da SEFAZ-SP sobre NFC-e) ou SEFAZ-SP.
 

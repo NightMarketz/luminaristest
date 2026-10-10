@@ -383,7 +383,7 @@ export function resolveDestinations(
 | REVENDA | TRIBUTADO | 01/02 | base × 9,25% | credita `vICMS` | X6, sem mudança (V) |
 | REVENDA | MONOFASICO | qualquer | 0 | credita `vICMS` | Lei 10.833 art. 3º § 2º II (corpus); sem mudança |
 | INSUMO_SERVICO | TRIBUTADO | 01/02 | base × 9,25% | **0 (fica no custo)** | art. 3º II das Leis 10.637/10.833 (I); ICMS: P-2 [NC] |
-| INSUMO_SERVICO | MONOFASICO por NCM | 02 | **F-ID-4** (rec. a: base × 9,25% + warning) | 0 | IN 2.121 / SC 4.024 (fora do corpus: P-1) |
+| INSUMO_SERVICO | MONOFASICO por NCM | 02 | **F-ID-4** (rec. a: base × 9,25% + warning) | 0 | IN 2.121 / SC 4.024 (fora do corpus: P-1) **[ERRATA 10/10 — `docs/plano/PERGUNTAS-DE-LEI-2026-10-10.md` §10.2]** a base é a SC Cosit 496/2017 (crédito do insumo monofásico), não a SC 4.024. |
 | INSUMO_SERVICO | MONOFASICO por NCM | 04/06/outro | 0 + warning | 0 | idem |
 | qualquer | UNKNOWN | — | 0 + warning | conforme a destinação | X6, sem mudança |
 
@@ -433,7 +433,7 @@ No `CUMULATIVO` (Presumido), a coluna de PIS/COFINS é sempre 0 e só a do ICMS 
 ### F-ID-4 — Crédito de PIS/COFINS do monofásico comprado como insumo (a posição oficial é **fork**, não fato) — ✅ (a) em 2 etapas: (c) até a P-1
 
 - **(a) Posição da RFB:**
-  - **Normas:** IN RFB 2.121/2022 art. 160 I e arts. 534/536 § 1º II; SC SRRF04 nº 4.024/2021 (ambas citadas
+  - **Normas:** IN RFB 2.121/2022 art. 160 I e arts. 534/536 § 1º II; SC SRRF04 nº 4.024/2021 (ambas citadas **[ERRATA 10/10 — `docs/plano/PERGUNTAS-DE-LEI-2026-10-10.md` §10.2]** a SC SRRF04 4.024/2021 não trata de monofásico (é alíquota zero de produto hospitalar). Fonte correta: SC Cosit 496/2017 + SC Cosit 16/2024 (vigentes). F-ID-4 → configurável por cliente (D-5, 10/10).
     pelo dono e pelo dossiê D-6 item 4 como lidas em 29/09; **fora do corpus**, NV nesta sessão).
   - **Regra:** compra **a alíquota zero** (do revendedor) **não dá crédito**, mesmo usada como insumo. Compra do
     **fabricante/importador** dá crédito de 1,65% + 7,6%.
@@ -511,7 +511,7 @@ escolher F-ID-2 (b) ou F-ID-3 (b), abre-se ADR antes do "executa".
 
 | # | Ponto | Por que não entra no checklist como decidido | Quem fecha |
 |---|---|---|---|
-| **P-1** | Crédito do monofásico usado como insumo (F-ID-4): IN RFB 2.121/2022 art. 160 I, arts. 534 e 536 § 1º II; SC SRRF04 4.024/2021; Lei 10.147 art. 2º | Fontes **fora do corpus**. O dossiê as dá como lidas em 29/09 (V lá; a aplicação ao salão é I). A transcrição exige autorização de download (padrão D-8) e segue a regra `tabela-transcrita-de-lei` (redação vigente) | O dono autoriza o download. O contador responde a pergunta reformulada do D-6 item 4 |
+| **P-1** | Crédito do monofásico usado como insumo (F-ID-4): IN RFB 2.121/2022 art. 160 I, arts. 534 e 536 § 1º II; SC SRRF04 4.024/2021; Lei 10.147 art. 2º | Fontes **fora do corpus**. O dossiê as dá como lidas em 29/09 (V lá; a aplicação ao salão é I). A transcrição exige autorização de download (padrão D-8) e segue a regra `tabela-transcrita-de-lei` (redação vigente) | O dono autoriza o download. O contador responde a pergunta reformulada do D-6 item 4 **[ERRATA 10/10 — `docs/plano/PERGUNTAS-DE-LEI-2026-10-10.md` §10.2]** P-1 respondida pela SC Cosit 496/2017: há crédito (1,65%/7,6%) do insumo monofásico, inclusive comprado de revendedor; o STJ Tema 1093 trata só de revenda. |
 | **P-2** | ICMS do insumo de serviço sujeito ao ISS não é recuperável (item 5) | LC 87/96 art. 20 § 1º e art. 33 I **[NC]**, fora do corpus. O contador disse "ICMS uso e consumo" (lembrado). O default do item 5 é o conservador (sem crédito) | Contador |
 | **P-3** | "Insumo" no salão para PIS/COFINS (art. 3º II: tintura, química, descartável) | O conceito de insumo (essencialidade/relevância) não está no corpus **[NC]**. O contador disse "crédito básico" (lembrado) | Contador |
 | **P-4** | Insumo na despesa na entrada × estoque de materiais até o consumo (F-ID-3), no Presumido/Real | Critério contábil (CPC 16) e materialidade | Contador |
@@ -540,7 +540,7 @@ escolher F-ID-2 (b) ou F-ID-3 (b), abre-se ADR antes do "executa".
 | A-5 | Estoque físico e valorado de insumo com **consumo por serviço** (movimento novo + ADR): o upgrade de F-ID-3 (b) | V (não existe) | Frente nova |
 | A-6 | **Par FE:** seletor de destinação no mapeamento do `NfePanel` + tela de defaults por produto. Sem ele, a feature só é alcançável pela API | V | Nó FE novo (não existe no vault) |
 | A-7 | Persistência de crédito **por item** (a regra aplicada a cada item) para o pacote do contador e para o IBS/CBS futuro | V (hoje só totais) | [[C6b]] 3.4 "créditos por nota e item" |
-| A-8 | CFOP de entrada para escrituração derivado da destinação (1102 × 1556 × o CFOP de compra para prestação de serviço sujeita ao ISS) | NV | Consumidor futuro: EFD ICMS/IPI (X8) |
+| A-8 | CFOP de entrada para escrituração derivado da destinação (1102 × 1556 × o CFOP de compra para prestação de serviço sujeita ao ISS) | NV | Consumidor futuro: EFD ICMS/IPI (X8) **[ERRATA 10/10 — `docs/plano/PERGUNTAS-DE-LEI-2026-10-10.md` §10.2]** o CFOP da mercadoria usada em prestação de serviço sujeita ao ISS é **1.128/2.128** (Ajuste SINIEF 03/22, tabela vigente desde 01/06/2022), não 1.556. |
 
 ## 7. Plano de execução por fatias (para a `sessao-feature`, depois do "executa")
 
