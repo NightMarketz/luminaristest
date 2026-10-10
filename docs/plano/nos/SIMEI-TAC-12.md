@@ -4,9 +4,9 @@ tipo: "plataforma"
 dominio: "fiscal"
 titulo: "SIMEI: CPP de 12% do salário-mínimo no DAS-MEI do transportador autônomo de cargas (BE-INCR-SIMEI-TAC-12)"
 estado: "planned"
-estado_detalhe: "BRIEF escrito; F-TAC-1..5 RATIFICADOS (dono, 10/10: a,a,a,a,b); bloco 2027 (IBS/CBS no DAS-MEI, Anexo VII) no BRIEF §9 com F-TAC-6..10 PENDENTES; sem executa"
+estado_detalhe: "BRIEF escrito; F-TAC-1..5 RATIFICADOS (dono, 10/10: a,a,a,a,b); bloco 2027 (IBS/CBS no DAS-MEI, Anexo VII) no BRIEF §9 com F-TAC-6..10 RATIFICADOS (dono, 09/10, todos (a)); sem executa"
 depende_de: ["[[X14]]"]
-autorizacao: "dono, chat, 2026-10-10: \"abre o BRIEF do DAS de 12% do transportador\" — só o BRIEF (sessao-planejamento); dono, chat, 2026-10-10, questionário: F-TAC-1..4 (a), F-TAC-5 (b) — IBS/CBS 2027 entra no nó; sem código, sem executa"
+autorizacao: "dono, chat, 2026-10-10: \"abre o BRIEF do DAS de 12% do transportador\" — só o BRIEF (sessao-planejamento); dono, chat, 2026-10-10, questionário: F-TAC-1..4 (a), F-TAC-5 (b) — IBS/CBS 2027 entra no nó; sem código, sem executa · dono, chat, 2026-10-09, questionário: F-TAC-6..10 (a) — sem 'executa'"
 ancora_sdd: "—"
 atualizado: "2026-10-09"
 prs: []

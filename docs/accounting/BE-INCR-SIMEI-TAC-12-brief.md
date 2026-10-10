@@ -4,7 +4,7 @@
 > **Autorização:** dono, chat, 2026-10-10: *"abre o BRIEF do DAS de 12% do transportador"* (repassada pelo
 > orquestrador). Cobre **só** este BRIEF. **Não** cobre código nem `executa`.
 > **Ratificação F-TAC-1..5:** dono, chat, 2026-10-10, questionário (repassada pelo orquestrador) — ver §0. F-TAC-5 → (b)
-> trouxe o bloco 2027 (§9) para este nó; forks F-TAC-6..10 **PENDENTES**.
+> trouxe o bloco 2027 (§9) para este nó; forks F-TAC-6..10 **RATIFICADOS** (dono, 2026-10-09, todos (a) — §9.6.0).
 > **Nó no vault:** [`SIMEI-TAC-12`](../plano/nos/SIMEI-TAC-12.md) (`planned`, depende de [[X14]]).
 > **Origem da lacuna:** D3 do [BRIEF SIMPLES-PISO-ANEXO-XI](BE-INCR-SIMPLES-PISO-ISS-ANEXO-XI-brief.md) §5.2 e PR #619.
 > **Base:** `origin/main` `45790e8f` (fetch 2026-10-09).
@@ -232,7 +232,22 @@ Nenhum campo novo de entrada: `meiTransportadorCargas` e `meiOcupacoes` já exis
 
 Contrato (esboço): `tributos: Partial<Record<'CPP' | 'ICMS' | 'ISS' | 'CBS' | 'IBS', number>>` (centavos inteiros na saída).
 
-### 9.6 Forks novos — RATIFICAÇÃO PENDENTE
+### 9.6.0 Ratificação F-TAC-6..10 (dono, chat, 2026-10-09, questionário)
+
+Todos **na recomendação (a)**; prevalecem sobre o texto da §9.6 abaixo, mantido como histórico.
+
+| Fork | Decisão |
+|---|---|
+| F-TAC-6 | (a) Anexo VII em `legal_parameters`, vigência por ano (mesmo padrão do F-TAC-1) |
+| F-TAC-7 | (a) parcelas em milésimos de real como no texto legal; arredonda só o total do DAS |
+| F-TAC-8 | (a) CBS/IBS em todo DAS do MEI; ICMS (R$ 1) e ISS (R$ 5) continuam condicionados a ser contribuinte |
+| F-TAC-9 | (a) não neste nó: MEI sempre recolhe IBS/CBS no DAS; sem campo novo no perfil — emenda se o CGSN regulamentar a opção |
+| F-TAC-10 | (a) lançamento inalterado: uma partida pelo valor oficial do DAS; o MEI não toma crédito |
+
+Fundamentos trazidos pelo dono (EC 132, IVA-Dual de base ampla, crédito ao adquirente, regime regular só para ME/EPP)
+estão registrados como **fonte do dono, não conferida**; o texto legal lido é o da §9.1.
+
+### 9.6 Forks novos — RATIFICADOS (ver §9.6.0)
 
 | Fork | Pergunta | Caminhos | Recomendação |
 |---|---|---|---|
