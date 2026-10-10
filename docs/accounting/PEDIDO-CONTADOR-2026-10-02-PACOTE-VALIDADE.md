@@ -1,5 +1,9 @@
 # PEDIDO AO CONTADOR — validade do pacote pré-pago (PE-1..PE-5) — 2026-10-02
 
+> **SUPERSEDIDO em 10/10/2026 por [`PEDIDO-CONTADOR-2026-10-10-UNICO.md`](PEDIDO-CONTADOR-2026-10-10-UNICO.md)**
+> (dono, chat: "Devemos montar um pedido único"). PE-4 → A4 · PE-1(ii) → A1 · PE-1(i)(iii)(iv) → C1/C2 · PE-2/PE-5 → C4 ·
+> PE-3 saiu (decide-se pela lei). Não enviar este; fica como histórico.
+
 > Rascunho preparado pelo agente (skill `luminaris-contador-liaison`). **O dono envia** (CTD-001). O agente não
 > enviou nada.
 > Escopo: **só PE-1..PE-5** do [`BE-INCR-PACOTE-VALIDADE-brief.md`](BE-INCR-PACOTE-VALIDADE-brief.md) §6
