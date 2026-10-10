@@ -455,7 +455,21 @@ As parciais viraram perguntas assertivas ("Pela [norma], entendemos [X]. Confirm
   2.110 arts. 37, 41 e 165). Retém também IRRF pela tabela. Pela Res. 140 art. 2º §5º VI, só a cota de parceiro com
   CNPJ sai da receita do salão. O fator R não se aplica à receita da parceria (art. 25 §18).
 
-### 10.2 Afirmações do repositório que caem (corrigir no fold)
+### 10.2 Afirmações do repositório que caem
+
+> **Errata aplicada em 10/10** (dono, chat: "Faz uma sessão de errata"): nota `[ERRATA 10/10]` na própria linha de
+> cada documento, sem apagar o texto original.
+> - **MANIFEST:** 3 linhas.
+> - **PESQUISA-X14 §3a:** 1 linha.
+> - **TAX-ASSESSMENT-A:** P-2 e item 186.
+> - **ADR X7:** ADI 7982, 2 linhas.
+> - **Multa** (FE-BANK-CHARGE-ACCOUNTS, EMENDA-3-3): citação conferida, nada a trocar.
+> - **DOSSIE e ITEM-DESTINATION** (SC 4.024 → SC Cosit 496/2017; CFOP 1.128): 5 linhas.
+> - **NFC-e 30 min:** NFCE-brief, 2 linhas; EMENDA-1, 1 linha.
+> - **PRE-ADR Simples:** livro-caixa.
+> - **Sem errata:** IN 459, porque a afirmação estava no texto da IN e não num doc nosso; DOC-ICP-03, que já está
+>   corrigido no §8.1/§10.2 deste documento.
+> - **Corpus defasado registrado no MANIFEST e não rebaixado:** IN 1.700 (IN 2.343/2026) e NT 2025.002 v1.52.
 | Onde | Afirmação | Correção | Fonte |
 |---|---|---|---|
 | `fontes-oficiais/MANIFEST.md` | compilação da Res. 140 vai até a 183 | já traz as 190 e 191 | arquivo do corpus (sha `8d9b024965c1`) |

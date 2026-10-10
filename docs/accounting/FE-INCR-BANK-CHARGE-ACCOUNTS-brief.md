@@ -98,7 +98,7 @@ Backend: **nenhuma mudança**. Rota, DTO `.strict()`, validação de natureza e 
    Pontos da resposta que **não** entram como artefato até alguém conferir o texto vigente (classe
    `tabela-transcrita-de-lei`):
    - a. A resposta cita a indedutibilidade da multa fiscal como "RIR/2018 art. 311 § 2º". O nó F7 e o BRIEF 3.3 citam
-     Lei 8.981 art. 41 § 5º e RIR art. 352. Prevalece a citação já registrada até a conferência.
+     Lei 8.981 art. 41 § 5º e RIR art. 352. Prevalece a citação já registrada até a conferência. **[ERRATA 10/10 — `docs/plano/PERGUNTAS-DE-LEI-2026-10-10.md` §10.2]** conferido: a multa indedutível é o **RIR/2018 art. 352 § 5º**, que reproduz a Lei 8.981 art. 41 § 5º; o "art. 311 § 2º" trata de despesa usual. Item (b): `3.01.01.07` é sintética e `3.02.01.07` não existe (`PROPOSTA-REFERENCIAL-D1-2026-10-10.md`).
    - b. Os códigos referenciais "3.01.01.07 / 3.02.01.07 / 3.01.04.01" não foram conferidos contra a tabela da RFB
      vigente. O mapeamento é do contador (follow-up 0.8b).
    - c. No exemplo de lançamento da resposta, um título **a receber** debita "despesa de juros". No AR, juros recebidos

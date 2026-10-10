@@ -550,7 +550,7 @@ Contador e dado do cliente. Vira pedido pela `luminaris-contador-liaison`; quem 
    onboarding/perfil.
 3. **Split payment × DAS** (LC 123 art. 21 § 3º-A, red. 2027): o IBS/CBS pode ser extinto na liquidação. O efeito no DAS
    fica para o PRE-ADR do split.
-4. **Livro-caixa** do ME/EPP (art. 26 § 2º) não está na matriz de obrigações.
+4. **Livro-caixa** do ME/EPP (art. 26 § 2º) não está na matriz de obrigações. **[ERRATA 10/10 — `docs/plano/PERGUNTAS-DE-LEI-2026-10-10.md` §10.2]** desatualizado: `LIVRO_CAIXA` já está na matriz (`server/src/features/accounting/models/obrigacoesPorRegime.ts:21`).
 5. **Distribuição isenta acima da presunção** quando há escrituração (art. 14 §§ 1º–2º): é valor de produto da
    contabilidade completa. Não planejado.
 6. **Divergência textual** no Anexo XX (2027–28): a nota fala em transferir o excesso do ISS "aos tributos federais", mas
