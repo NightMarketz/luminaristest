@@ -480,7 +480,34 @@ EVIDÊNCIA: [colar o JSON da resposta 201 — id do lançamento e as pernas]
 > BE-INCR-H1-REFERENCIAL-3-4, porque antes dele o gate de exaustividade dá 400.
 >
 > ```text
-> EVIDÊNCIA (P5, 3.4): [em branco]
+> EVIDÊNCIA (P5, 3.4): preenchida pelo agente sob comando do dono no chat (2026-10-11), dev.db real
+> (server/prisma/prisma/dev.db), backend de main 3af9a6b5 em :3001. Saída literal do script da sessão:
+>
+> pré-condição  o dev.db estava 23 migrações atrás (20261007160000_add_legal_parameters_v2 … 20261012120000_
+>               add_payment_account_release_report_block) e o boot abortava (P2021 legal_parameters). Com o OK do
+>               dono: backup em server/prisma/backups/dev-20261011-pre-3-4.db (7581696 B) e `prisma migrate deploy`
+>               → "All migrations have been successfully applied." (exit 0)
+>
+> === seed-presumido · unidade cmuw4yqxg001jcii0iz2yb9rw · login HTTP 200
+> passo 1  GET /accounting/accounts?unitId=cmuw4yqxg001jcii0iz2yb9rw → HTTP 200 · 3.4 = cmuw4yr69003xcii0vk9k1tr9 "Receita de Pacotes Não Utilizados"
+> antes    GET /referential/coverage → HTTP 200 · 14/15 · ready false
+> passo 2  PUT /referential/mappings {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","accountId":"cmuw4yr69003xcii0vk9k1tr9","referentialCode":"3.01.01.01.01.98","label":"Outras Receitas da Atividade Geral","mappingVersion":"2025"} → HTTP 200 · id cmv4fuoqy0001ciawe8fs0wvr
+> passo 3  GET /referential/coverage?unitId=cmuw4yqxg001jcii0iz2yb9rw&version=2025 → HTTP 200 · mappedCount 15 / leafAccountCount 15 · ready true · unmapped []
+> passo 4  POST /sped/ecd/generate (seed-presumido, 2025) → HTTP 400 · fieldErrors: declarant "expected object, received undefined" · book (2× "expected string") · signers "expected array"
+>
+> === seed-real · unidade cmuw4z7zj02ehcii0st3unfr4 · login HTTP 200
+> passo 1  GET /accounting/accounts?unitId=cmuw4z7zj02ehcii0st3unfr4 → HTTP 200 · 3.4 = cmuw4z86m02gvcii0dnen1ldv "Receita de Pacotes Não Utilizados"
+> antes    GET /referential/coverage → HTTP 200 · 14/15 · ready false
+> passo 2  PUT /referential/mappings {"unitId":"cmuw4z7zj02ehcii0st3unfr4","accountId":"cmuw4z86m02gvcii0dnen1ldv","referentialCode":"3.01.01.01.01.98","label":"Outras Receitas da Atividade Geral","mappingVersion":"2025"} → HTTP 200 · id cmv4fuouq0003ciaw6elejnx7
+> passo 3  GET /referential/coverage?unitId=cmuw4z7zj02ehcii0st3unfr4&version=2025 → HTTP 200 · mappedCount 15 / leafAccountCount 15 · ready true · unmapped []
+> passo 4  POST /sped/ecd/generate (seed-real, 2025) → HTTP 400 · mesmos fieldErrors (declarant/book/signers)
+>
+> leitura   passos 1–3 fecham a cobertura (15/15 · ready true nas duas unidades). O passo 4 NÃO rodou até o gate de
+>           cobertura: o corpo mínimo foi rejeitado no Zod porque as unidades seed não têm perfil fiscal para
+>           preencher declarant/book/signers — esses são os dados do P6 (do dono). O agente não inventou declarante.
+>           A ECD 200 fica para a geração do passo 3 com o P6 preenchido.
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
 > ```
 
 ### 2. Conferir que o encerramento entrou no razão
