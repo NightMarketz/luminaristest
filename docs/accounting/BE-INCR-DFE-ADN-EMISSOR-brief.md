@@ -1,5 +1,7 @@
 # BRIEF — BE-INCR-DFE-ADN-EMISSOR (emissor próprio de NFS-e na Sefin Nacional / ADN, sem depender do A1 real) — nó X10i
 
+> **EMENDA 2026-10-11:** ver [`EMENDAS-BRIEF-2026-10-11.md`](EMENDAS-BRIEF-2026-10-11.md) §8 (F-ADN-1 superado pela decisão PAA + PSC de 11/10; F-ADN-2/3 sem objeto). Sem código; cada item exige 'executa'.
+
 > Produzido em `sessao-planejamento` (2026-10-10), nó [`X10i`](../plano/nos/X10i.md), gate [`D5`](../plano/gates/D5.md),
 > Fase E do [`PLANO-EMISSAO-FISCAL-2026-09-27.md`](PLANO-EMISSAO-FISCAL-2026-09-27.md) (o passo E.3 previa um BRIEF
 > `BE-INCR-DFE-FOCUS`; com o D5 de 07/10 o adaptador passa a ser o nosso). **Este documento não escreve código.** Traz

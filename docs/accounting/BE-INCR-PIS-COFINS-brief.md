@@ -1,5 +1,7 @@
 # BRIEF — BE-INCR-PIS-COFINS (apuração mensal de PIS/Cofins: cumulativo do Presumido, não cumulativo do Real) — nó X8
 
+> **EMENDA 2026-10-11:** ver [`EMENDAS-BRIEF-2026-10-11.md`](EMENDAS-BRIEF-2026-10-11.md) §6 (crédito do monofásico usado como insumo configurável por cliente, D-5). Sem código; cada item exige 'executa'.
+
 > Produzido em `sessao-planejamento` em 02/10/2026, sobre `origin/main` `dafe594e`. Herda o esqueleto da §5 (P1–P12) do
 > [`ADR-INCR-PIS-COFINS`](../adr/ADR-INCR-PIS-COFINS.md), **Accepted** em 02/10 (8/8 forks ratificados, todos (a):
 > [`D-2026-10-02-X8-PIS-COFINS-FORKS`](../plano/decisoes/D-2026-10-02-X8-PIS-COFINS-FORKS.md)).
