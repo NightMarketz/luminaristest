@@ -11,6 +11,9 @@
 > comércio eletrônico** (cl. 1ª § 2º), e a venda de balcão do salão não é isso. Por isso a metade "NF-e/NFC-e pelo PAA"
 > da decisão (a) de 11/10 **não tem caminho para o salão**, e o fork que reabre é outro: como o salão assina NF-e/NFC-e
 > sem o Luminaris guardar o certificado (F-E8-1R).
+>
+> **Ratificação, 2026-10-11:** F-E8-1R = (a), certificado em nuvem no PSC para os três DF-e (dono, chat: *"Pode seguir a
+> sua sugestao pra decisão nova"*). O F-E8-3 (critério do PSC) segue **RATIFICAÇÃO PENDENTE**.
 
 ---
 
@@ -95,9 +98,12 @@ export interface AssinadorRemotoPort {
 Gates que este contrato aciona quando virar código: snapshot de shape do DTO, um eventType de auditoria por assinatura
 (`dfe.signature.remote`) na allowlist do `auditCanonical.ts`, e nenhum campo de segredo na trilha (allowlist PII).
 
-## 5. Forks — todos RATIFICAÇÃO PENDENTE
+## 5. Forks
 
-**F-E8-1R: como o salão assina NF-e/NFC-e, já que o PAA não o alcança.** RATIFICAÇÃO PENDENTE.
+**F-E8-1R: como o salão assina NF-e/NFC-e, já que o PAA não o alcança.** **RATIFICADO (a)**: dono, chat, 2026-10-11,
+*"Pode seguir a sua sugestao pra decisão nova"*, em resposta à recomendação (a) deste fork. A ratificação **não é
+"executa"**: os itens 1–3 do §3 continuam precisando de pedido próprio, por PR. Efeito: a metade "NF-e/NFC-e pelo PAA"
+da decisão (a) de 11/10 dá lugar ao PSC, e o F-E8-1 da `EMENDAS-BRIEF-2026-10-11` §8 fica **superado**.
 - (a) **Certificado em nuvem num PSC**, o mesmo caminho da NFS-e. O cliente contrata o PSC e dá ao Luminaris uma
   credencial de assinatura com escopo (F-E8-2 a), e uma porta só assina os três DF-e. O Luminaris não guarda chave, e a
   decisão 2 de 26/09 continua valendo.
