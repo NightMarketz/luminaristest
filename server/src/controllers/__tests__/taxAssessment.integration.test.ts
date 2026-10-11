@@ -137,6 +137,29 @@ describe('X7 PR-2 — apuração IRPJ/CSLL: prévia, confirmação, leitura', ()
     expect(await linhas(dono)).toHaveLength(2);
   });
 
+  // BE-INCR-H1-REFERENCIAL-3-4 item 5 (decisão (b) do dono, 2026-10-11; F-HR-3 b): a 3.4 (pacote vencido) entra na base
+  // de serviço com linha própria na memória; a 3.2 com movimento continua reprovando o gate de exaustividade.
+  it('BE-INCR-H1-REFERENCIAL-3-4: Presumido T01 com 3.4 — base (100.000 + 10.000) × 32%; RECEITA_NAO_USO na memória; 3.2 ⇒ 400', async () => {
+    const dono = await novoDono('PRESUMIDO');
+    await lancar(dono, UNIT, '2026-02-10', 100_000_00);
+    await lancar(dono, UNIT, '2026-03-10', 10_000_00, '3.4');
+    const p = await preview(dono, 'T01');
+    expect(p.status).toBe(200);
+    // base 35.200,00; IRPJ 15% = 5.280,00 (sem adicional); CSLL 9% = 3.168,00
+    expect(p.body.data.irpj).toMatchObject({ baseCents: '3520000', devidoCents: '528000' });
+    expect(p.body.data.csll).toMatchObject({ devidoCents: '316800' });
+    const mem = p.body.data.irpj.memoria as { codigo: string; valorCents: string }[];
+    expect(mem.find((m) => m.codigo === 'RECEITA_SERVICO')?.valorCents).toBe('10000000');
+    expect(mem.find((m) => m.codigo === 'RECEITA_NAO_USO')?.valorCents).toBe('1000000');
+
+    const devol = await novoDono('PRESUMIDO');
+    await lancar(devol, UNIT, '2026-02-10', 100_000_00);
+    await lancar(devol, UNIT, '2026-02-11', 1_000_00, '3.2');
+    const r = await preview(devol, 'T01');
+    expect(r.status).toBe(400);
+    expect(JSON.stringify(r.body)).toContain('unmappedRevenueAccounts');
+  });
+
   it('item 14 (F-TA-3 a + cascata): T03 sem T02 ⇒ 409; substituir T01 derruba o T02 confirmado e pede reconfirmação; leitura', async () => {
     const dono = await novoDono('PRESUMIDO');
     await lancar(dono, UNIT, '2026-02-10', 1_000_000_00);

@@ -463,6 +463,25 @@ EVIDÊNCIA: [colar o JSON da resposta 201 — id do lançamento e as pernas]
 > **P5 não se sustenta até o contador responder** — pergunta incluída no item 3b do
 > [`PEDIDO-CONTADOR-2026-10-02-PACOTE-VALIDADE.md`](PEDIDO-CONTADOR-2026-10-02-PACOTE-VALIDADE.md) (dono, 07/10).
 > Com o código: `PUT /referential/mappings` da 3.4 nas duas unidades → cobertura 15/15 → passo 3.
+>
+> **EMENDA 2026-10-11 (BE-INCR-H1-REFERENCIAL-3-4 item 14).** O código saiu por delegação, não do contador:
+> `3.01.01.01.01.98` "Outras Receitas da Atividade Geral" (D-1 de 10/10 e decisão (b) do dono em 11/10,
+> [`D-2026-10-11-QUESTIONARIO-DONO`](../plano/decisoes/D-2026-10-11-QUESTIONARIO-DONO.md); PROPOSTA-REFERENCIAL-D1 §3).
+> **Quem executa é o dono**, ou o agente sob comando literal do dono no chat, colando a saída aqui. Desfecho e
+> assinatura são do dono. Em cada uma das duas unidades:
+>
+> 1. Pegar o `id` da conta 3.4 da unidade, com `GET /api/accounting/accounts?unitId=<unidade>`.
+> 2. `PUT /api/accounting/referential/mappings` com corpo
+>    `{"unitId":"<unidade>","accountId":"<id da 3.4>","referentialCode":"3.01.01.01.01.98","label":"Outras Receitas da Atividade Geral","mappingVersion":"2025"}`.
+> 3. `GET /referential/coverage?unitId=<unidade>&version=2025`. Esperado: `15/15 · ready true`.
+> 4. Gerar a ECD do P5 de novo. Esperado: 200.
+>
+> Para a **ECF Presumido** do H1, a 3.4 com movimento só passa depois do merge do PR-1 do
+> BE-INCR-H1-REFERENCIAL-3-4, porque antes dele o gate de exaustividade dá 400.
+>
+> ```text
+> EVIDÊNCIA (P5, 3.4): [em branco]
+> ```
 
 ### 2. Conferir que o encerramento entrou no razão
 

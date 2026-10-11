@@ -281,6 +281,61 @@ describe('Presumido — 16% do prestador exclusivo (BE-INCR-TAX-PRESUMIDO-16)', 
   });
 });
 
+describe('3.4 receita por não uso (BE-INCR-H1-REFERENCIAL-3-4, F-HR-3 b)', () => {
+  const P16 = { prestadoraExclusivaServicos: true, declaraNaoProfissaoRegulamentada: true };
+  const trimestre = (periodo: PeriodoTrimestral, servico: number, naoUso: number, anteriores: MemoriaAnterior[] = [], perfil: Partial<PerfilApuracaoPresumido> = {}) =>
+    apurarPresumidoTrimestral({
+      tabela, ano: 2025, periodo, tributo: 'IRPJ', receitaServicoCents: R(servico), receitaRevendaCents: 0n, receitaNaoUsoCents: R(naoUso),
+      perfil: { ...PERFIL, ...perfil }, anteriores, deducoes: [],
+    });
+
+  it('itens 2/2a/5: a 3.4 entra na base de serviço; RECEITA_SERVICO segue só a 3.1; linha própria RECEITA_NAO_USO', () => {
+    // (100.000 + 10.000) × 32% = 35.200,00; IRPJ 15% = 5.280,00 (adicional 0)
+    const r = trimestre('T01', 100_000, 10_000);
+    expect(r.baseCents).toBe(R(35_200));
+    expect(r.devidoCents).toBe(R(5_280));
+    expect(v(r, 'RECEITA_SERVICO')).toBe(String(R(100_000)));
+    expect(v(r, 'RECEITA_NAO_USO')).toBe(String(R(10_000)));
+    expect(r.memoria.find((m) => m.codigo === 'RECEITA_NAO_USO')?.fonte).toMatch(/DL 1\.598\/1977 art\. 12 IV/);
+    expect(MemoriaCalculoSchema.safeParse(r.memoria).success).toBe(true);
+  });
+
+  it('item 2a: sem movimento na 3.4 a memória não ganha a linha (memória de hoje inalterada)', () => {
+    expect(v(trimestre('T01', 100_000, 0), 'RECEITA_NAO_USO')).toBeUndefined();
+  });
+
+  it('item 2: débito líquido na 3.4 (estorno) reduz a base de serviço; piso 0 na soma', () => {
+    expect(trimestre('T01', 1_000, -200).baseCents).toBe(R(256)); // 800 × 32%
+    expect(trimestre('T01', 100, -200).baseCents).toBe(0n);
+  });
+
+  it('item 2b: memória confirmada sem a linha da 3.4 (anterior ao incremento) é lida como 0, sem 400', () => {
+    const t01 = trimestre('T01', 60_000, 0, [], P16);
+    expect(v(t01, 'RECEITA_NAO_USO')).toBeUndefined();
+    expect(() => trimestre('T02', 10_000, 0, [{ periodo: 'T01', memoria: t01.memoria }], P16)).not.toThrow();
+  });
+
+  it('item 6: a 3.4 conta no teto do 16% — 3.1 = 110 mil + 3.4 = 15 mil passa do limite e gera a diferença do T01', () => {
+    // T01: 60.000 a 16%. T02: 50.000 + 15.000 = 65.000 → acumulada 125.000 > 120.000 ⇒ 32% + diferença do T01.
+    const t01 = trimestre('T01', 60_000, 0, [], P16);
+    const t02 = trimestre('T02', 50_000, 15_000, [{ periodo: 'T01', memoria: t01.memoria }], P16);
+    expect(v(t02, 'RECEITA_ACUMULADA_ANO')).toBe(String(R(125_000)));
+    expect(v(t02, 'PRESUNCAO_SERVICO')).toBe(String(R(20_800))); // 65.000 × 32%
+    expect(t02.diferencaPostergadaCents).toBe(R(1_440)); // 60.000 × 32% × 15% − 1.440
+    // sem a 3.4 a acumulada (110.000) fica abaixo do limite: 16%, sem diferença
+    expect(trimestre('T02', 50_000, 0, [{ periodo: 'T01', memoria: t01.memoria }], P16).diferencaPostergadaCents).toBe(0n);
+  });
+
+  it('item 2b: a diferença postergada recalcula o trimestre anterior com a 3.4 lida da memória', () => {
+    // T01: 50.000 + 10.000 a 16% → devido 60.000 × 16% × 15% = 1.440. T02: 70.000 → acumulada 130.000 ⇒ diferença
+    // = 60.000 × 32% × 15% − 1.440 = 1.440 (a 3.4 do T01 entra no recálculo a 32%).
+    const t01 = trimestre('T01', 50_000, 10_000, [], P16);
+    expect(t01.devidoCents).toBe(R(1_440));
+    const t02 = trimestre('T02', 70_000, 0, [{ periodo: 'T01', memoria: t01.memoria }], P16);
+    expect(v(t02, 'DIFERENCA_POSTERGADA_T01')).toBe(String(R(1_440)));
+  });
+});
+
 describe('deduções (item 11, F-X7-11 a; F-TA-9 a)', () => {
   it('só as do próprio tributo; OUTRA com documento na memória; excedente vira saldo negativo', () => {
     // 2025, serviço 100.000 → IRPJ devido 4.800,00

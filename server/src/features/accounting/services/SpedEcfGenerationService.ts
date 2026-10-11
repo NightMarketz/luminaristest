@@ -90,8 +90,9 @@ export class SpedEcfGenerationService {
     await receitaBrutaPorAtividade(deps, scope, yearFrom, yearTo, accounts);
     const quarters: EcfQuarter[] = [];
     for (const w of windows) {
-      const { servicoCents, revendaCents } = await receitaBrutaPorAtividadeSemGate(this.postingRepo, scope, accounts, w.from, w.to);
-      quarters.push({ perApur: w.perApur, dtIni: w.dtIni, dtFin: w.dtFin, servicoCents, revendaCents });
+      const { servicoCents, revendaCents, naoUsoCents } = await receitaBrutaPorAtividadeSemGate(this.postingRepo, scope, accounts, w.from, w.to);
+      // BE-INCR-H1-REFERENCIAL-3-4: o P200/P400 não tem linha própria para a 3.4 — entra na base de serviço.
+      quarters.push({ perApur: w.perApur, dtIni: w.dtIni, dtFin: w.dtFin, servicoCents: Math.max(0, servicoCents + naoUsoCents), revendaCents });
     }
 
     // Item 25: ano sem leiaute é 400 explícito (a lib lança Error puro — mesmo tratamento do SpedEcfRealGenerationService).

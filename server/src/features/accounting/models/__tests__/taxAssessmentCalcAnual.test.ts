@@ -69,6 +69,31 @@ function apurarMeses(meses: Mes[], tributo: TributoApuracao = 'IRPJ', perfil: Pa
   return out;
 }
 
+describe('3.4 receita por não uso na estimativa (BE-INCR-H1-REFERENCIAL-3-4 item 7, F-HR-3 b)', () => {
+  it('a 3.4 entra na base de serviço e na receita do mês, com linha própria; RECEITA_SERVICO segue só a 3.1', () => {
+    // (100.000 + 10.000) × 32% = 35.200; IRPJ 15% = 5.280 + adicional 10% × (35.200 − 20.000) = 1.520 ⇒ 6.800,00
+    const r = apurarEstimativaReceitaBruta({
+      tabela, ano: 2026, periodo: A(1), tributo: 'IRPJ', receitaServicoCents: R(100_000), receitaRevendaCents: 0n, receitaNaoUsoCents: R(10_000),
+      receitasMesesAnteriores: [], confirmados: [], perfil: PERFIL, deducoes: [],
+    });
+    expect(r.baseCents).toBe(R(35_200));
+    expect(r.devidoCents).toBe(R(6_800));
+    expect(v(r, 'RECEITA_SERVICO')).toBe(String(R(100_000)));
+    expect(v(r, 'RECEITA_NAO_USO')).toBe(String(R(10_000)));
+    expect(v(r, 'RECEITA_MES')).toBe(String(R(110_000)));
+  });
+
+  it('16% do prestador exclusivo: a 3.4 dos meses anteriores (ReceitaMes.naoUsoCents) conta na acumulada', () => {
+    const r = apurarEstimativaReceitaBruta({
+      tabela, ano: 2026, periodo: A(2), tributo: 'IRPJ', receitaServicoCents: R(10_000), receitaRevendaCents: 0n,
+      receitasMesesAnteriores: [{ periodo: A(1), servicoCents: R(100_000), revendaCents: 0n, naoUsoCents: R(15_000) }],
+      confirmados: [], perfil: { ...PERFIL, prestadoraExclusivaServicos: true }, deducoes: [],
+    });
+    expect(v(r, 'RECEITA_ACUMULADA_ANO')).toBe(String(R(125_000))); // > 120.000 ⇒ 32%
+    expect(v(r, 'PRESUNCAO_REDUZIDA_16')).toBeUndefined();
+  });
+});
+
 describe('item 3 — códigos de receita (ADR §3)', () => {
   it('cada modo × lucroRealObrigatorio resolve exatamente um código; IRPJ com obrigatoriedade nula ⇒ 400', () => {
     const codigos: [TributoApuracao, 'ESTIMATIVA' | 'AJUSTE_ANUAL' | 'DIFERENCA_POSTERGADA_16', boolean, string][] = [

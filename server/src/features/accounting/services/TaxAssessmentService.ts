@@ -764,6 +764,7 @@ export class TaxAssessmentService {
         periodo,
         receitaServicoCents: BigInt(rec.servicoCents),
         receitaRevendaCents: BigInt(rec.revendaCents),
+        receitaNaoUsoCents: BigInt(rec.naoUsoCents),
         perfil,
         deducoes,
       };
@@ -830,7 +831,7 @@ export class TaxAssessmentService {
     const receitaDoMes = async (k: number): Promise<ReceitaMes> => {
       const b = mesBounds(ano, k);
       const rec = await receitaBrutaPorAtividade({ accountRepo: this.accountRepo, postingRepo: this.postingRepo }, scope, b.from, b.to);
-      return { periodo: nomeMes(k), servicoCents: BigInt(rec.servicoCents), revendaCents: BigInt(rec.revendaCents) };
+      return { periodo: nomeMes(k), servicoCents: BigInt(rec.servicoCents), revendaCents: BigInt(rec.revendaCents), naoUsoCents: BigInt(rec.naoUsoCents) };
     };
     const receitasAnteriores = async (): Promise<ReceitaMes[]> => {
       if (!perfil.prestadoraExclusivaServicos) return [];
@@ -841,7 +842,7 @@ export class TaxAssessmentService {
     if (input.modoMensal === 'RECEITA_BRUTA') {
       const rec = await receitaDoMes(m);
       const anteriores = await receitasAnteriores();
-      const base = { tabela, ano, periodo: mes, receitaServicoCents: rec.servicoCents, receitaRevendaCents: rec.revendaCents, receitasMesesAnteriores: anteriores, perfil, deducoes };
+      const base = { tabela, ano, periodo: mes, receitaServicoCents: rec.servicoCents, receitaRevendaCents: rec.revendaCents, receitaNaoUsoCents: rec.naoUsoCents, receitasMesesAnteriores: anteriores, perfil, deducoes };
       return {
         irpj: apurarEstimativaReceitaBruta({ ...base, tributo: 'IRPJ', confirmados: meses('IRPJ') }),
         csll: apurarEstimativaReceitaBruta({ ...base, tributo: 'CSLL', confirmados: meses('CSLL') }),

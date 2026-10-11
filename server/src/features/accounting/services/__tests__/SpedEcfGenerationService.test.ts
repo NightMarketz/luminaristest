@@ -134,23 +134,33 @@ describe('SpedEcfGenerationService.generate', () => {
     expect(savedBuffers).toHaveLength(0);
   });
 
-  // BE-INCR-PACOTE-VALIDADE item 13 (F-PV-4 a): a 3.4 Receita de Pacotes Não Utilizados fica FORA do mapa de
-  // presunção até o contador (PE-2). Falhar alto é o comportamento DESEJADO, não efeito colateral.
-  it('ECF Presumido com movimento na 3.4 (pacote vencido) reprova o gate de exaustividade até o PE-2', async () => {
+  // BE-INCR-H1-REFERENCIAL-3-4 item 4 (decisão (b) do dono, 2026-10-11 — D-2026-10-11-QUESTIONARIO-DONO): a 3.4
+  // Receita de Pacotes Não Utilizados é receita bruta da atividade (DL 1.598 art. 12 IV), presunção de serviço. Antes
+  // (BE-INCR-PACOTE-VALIDADE item 13, F-PV-4 a) ela reprovava o gate "até o PE-2"; a PE-2 fechou por delegação (D-1).
+  it('ECF Presumido com movimento na 3.4 (pacote vencido) gera o arquivo e soma a 3.4 no P200(8)/P400(4) de serviço', async () => {
     const naoUso = CANONICAL_ACCOUNTS.find((a) => a.code === RECEITA_NAO_USO_CODE)!;
     const REC_NAO_USO = makeAccount({ id: 'rec34', code: naoUso.code, name: naoUso.name, nature: naoUso.nature, acceptsEntries: naoUso.acceptsEntries });
-    const { service, createJob } = buildService({
+    const { service } = buildService({
       accounts: [GRUPO_REC, SERVICO, REVENDA, REC_NAO_USO],
       extraRevenueMove: true,
       extraRevenueAccountId: 'rec34',
     });
+    await service.generate(scope, makeDto());
+    const lines = producedLines();
+    // 3.1 150.000,00 + 3.4 10.000,00 por trimestre = 160.000,00 de serviço; revenda intacta.
+    expect(lines).toContain('|P200|8||160000,00|');
+    expect(lines).toContain('|P400|4||160000,00|');
+    expect(lines).toContain('|P200|4||50000,00|');
+  });
+
+  // Item 1 (guarda): o mapa não virou "toda Revenue" — a 3.2 Devoluções com movimento continua 400.
+  it('3.2 Devoluções com movimento continua reprovando o gate de exaustividade', async () => {
+    const DEVOL = makeAccount({ id: 'rec32', code: '3.2', name: 'Devoluções de Vendas', nature: 'Revenue', acceptsEntries: true });
+    const { service, createJob } = buildService({ accounts: [GRUPO_REC, SERVICO, REVENDA, DEVOL], extraRevenueMove: true, extraRevenueAccountId: 'rec32' });
     const err = await service.generate(scope, makeDto()).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(ValidationError);
-    expect((err as ValidationError).details).toEqual({
-      unmappedRevenueAccounts: [{ code: '3.4', name: 'Receita de Pacotes Não Utilizados' }],
-    });
+    expect((err as ValidationError).details).toEqual({ unmappedRevenueAccounts: [{ code: '3.2', name: 'Devoluções de Vendas' }] });
     expect(createJob).not.toHaveBeenCalled();
-    expect(savedBuffers).toHaveLength(0);
   });
 
   it('does NOT block when the extra Revenue account has ZERO movement', async () => {

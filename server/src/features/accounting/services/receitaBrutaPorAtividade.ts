@@ -5,21 +5,26 @@ import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IPostingRepository } from '../repositories/IPostingRepository';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { CLOSING_SOURCE_TYPE } from '../models/closing';
+import { RECEITA_NAO_USO_CODE } from '../fixtures/ChartOfAccountsFixture';
 
 /**
  * Ledger account codes that map to a presunção activity line (ADR-INCR-SPED-ECF §Emenda FASE 2 ponto 5). These
  * are the ONLY accounts whose receita bruta is segregated; any OTHER Revenue-nature account with movement fails
  * the exhaustiveness gate.
  *   3.1 Receita de Serviços        → serviço (P200(8) 32% IRPJ, P400(4) 32% CSLL)
+ *   3.4 Receita por não uso (pacote vencido) → serviço, campo próprio (BE-INCR-H1-REFERENCIAL-3-4: decisão (b) do
+ *       dono 2026-10-11 — receita bruta da atividade, DL 1.598 art. 12 IV; F-HR-3 b)
  *   3.3 Receita de Revenda de Merc. → revenda (P200(4) 8% IRPJ,  P400(2) 12% CSLL)
  */
 export const SERVICO_ACCOUNT_CODE = '3.1';
 export const REVENDA_ACCOUNT_CODE = '3.3';
-const PRESUNCAO_ACCOUNT_CODES = new Set([SERVICO_ACCOUNT_CODE, REVENDA_ACCOUNT_CODE]);
+const PRESUNCAO_ACCOUNT_CODES = new Set([SERVICO_ACCOUNT_CODE, RECEITA_NAO_USO_CODE, REVENDA_ACCOUNT_CODE]);
 
 export interface ReceitaPorAtividade {
-  servicoCents: number;
-  revendaCents: number;
+  servicoCents: number; // max(0, net 3.1)
+  revendaCents: number; // max(0, net 3.3)
+  /** Net da 3.4 COM sinal (estorno de vencimento reduz a base de serviço — `baseServicoCents` no model). */
+  naoUsoCents: number;
 }
 
 interface Deps {
@@ -50,7 +55,7 @@ export async function receitaBrutaPorAtividade(
     .map((a) => ({ code: a.code, name: a.name }));
   if (unmapped.length > 0) {
     throw new ValidationError(
-      'Receita não segregável por atividade: contas de receita sem linha de presunção (3.1 serviço / 3.3 revenda). ' +
+      'Receita não segregável por atividade: contas de receita sem linha de presunção (3.1 serviço / 3.4 receita por não uso, serviço / 3.3 revenda). ' +
         'Reclassifique-as ou estenda o mapa de presunção antes de gerar a ECF.',
       { unmappedRevenueAccounts: unmapped },
     );
@@ -81,8 +86,10 @@ function segregar(accounts: Account[], netById: Map<string, number>): ReceitaPor
   const accountByCode = new Map(accounts.map((a) => [a.code, a]));
   const servico = accountByCode.get(SERVICO_ACCOUNT_CODE);
   const revenda = accountByCode.get(REVENDA_ACCOUNT_CODE);
+  const naoUso = accountByCode.get(RECEITA_NAO_USO_CODE);
   return {
     servicoCents: servico ? Math.max(0, netById.get(servico.id) ?? 0) : 0,
     revendaCents: revenda ? Math.max(0, netById.get(revenda.id) ?? 0) : 0,
+    naoUsoCents: naoUso ? (netById.get(naoUso.id) ?? 0) : 0,
   };
 }
