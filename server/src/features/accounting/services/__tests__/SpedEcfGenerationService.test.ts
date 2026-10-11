@@ -153,6 +153,16 @@ describe('SpedEcfGenerationService.generate', () => {
     expect(lines).toContain('|P200|4||50000,00|');
   });
 
+  // Item 4 (invariância): a 3.4 sem movimento não muda um byte do arquivo.
+  it('3.4 sem movimento: arquivo byte a byte igual ao do plano sem a 3.4', async () => {
+    const REC_NAO_USO = makeAccount({ id: 'rec34', code: RECEITA_NAO_USO_CODE, name: 'Receita de Pacotes Não Utilizados', nature: 'Revenue', acceptsEntries: true });
+    await buildService({ accounts: [GRUPO_REC, SERVICO, REVENDA] }).service.generate(scope, makeDto());
+    const sem = savedBuffers[savedBuffers.length - 1];
+    await buildService({ accounts: [GRUPO_REC, SERVICO, REVENDA, REC_NAO_USO] }).service.generate(scope, makeDto());
+    const com = savedBuffers[savedBuffers.length - 1];
+    expect(com.equals(sem)).toBe(true);
+  });
+
   // Item 1 (guarda): o mapa não virou "toda Revenue" — a 3.2 Devoluções com movimento continua 400.
   it('3.2 Devoluções com movimento continua reprovando o gate de exaustividade', async () => {
     const DEVOL = makeAccount({ id: 'rec32', code: '3.2', name: 'Devoluções de Vendas', nature: 'Revenue', acceptsEntries: true });

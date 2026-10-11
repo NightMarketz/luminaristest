@@ -155,6 +155,17 @@ describe('X8 PR-2 — apuração mensal de PIS/Cofins: prévia, confirmação, l
     expect((await eventos(dono, 'tax.assessment.superseded')).map((e) => e.tributo).sort()).toEqual(['COFINS', 'PIS']);
   });
 
+  it('BE-INCR-H1-REFERENCIAL-3-4 (review #630 achado 5): Presumido M03 com 3.4 — base (100.000 + 10.000) ⇒ PIS 715,00 / Cofins 3.300,00', async () => {
+    const dono = await novoDono('PRESUMIDO');
+    await lancar(dono, UNIT, '2026-03-10', 100_000_00);
+    await lancar(dono, UNIT, '2026-03-20', 10_000_00, '1.1', '3.4');
+    const p = await preview(dono, 'M03');
+    expect(p.status).toBe(200);
+    expect(p.body.data.pis).toMatchObject({ baseCents: '11000000', devidoCents: '71500' });
+    expect(p.body.data.cofins).toMatchObject({ devidoCents: '330000' });
+    expect((p.body.data.pis.memoria as { codigo: string; valorCents: string }[]).find((m) => m.codigo === 'RECEITA_NAO_USO')?.valorCents).toBe('1000000');
+  });
+
   it('23 (a)(b)(c) / itens 6, 8, 11: Real — crédito da NF-e (nova + DERIVADO) > débito ⇒ saldo credor; M02 o consome; ordem e "de trás para frente"', async () => {
     const dono = await novoDono('REAL');
     await lancar(dono, UNIT, '2026-01-15', 100_00);

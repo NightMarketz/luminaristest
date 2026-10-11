@@ -103,6 +103,28 @@ describe('X7 Fase B PR-3 — Lucro Real anual (estimativa, balancete, ajuste, pr
     await prisma.$disconnect();
   });
 
+  // BE-INCR-H1-REFERENCIAL-3-4 (review #630 achado 5): o serviço passa a 3.4 do mês à estimativa por receita bruta.
+  describe('2049 — 3.4 na estimativa por receita bruta', () => {
+    const U = 'u-x7b-2049-34';
+    const ANO = 2049;
+
+    beforeAll(async () => {
+      await cenario(U, ANO);
+      await prisma.account.create({ data: { userId: dono.id, unitId: U, code: '3.4', name: 'Receita de Pacotes Não Utilizados', nature: 'Revenue', acceptsEntries: true } });
+      await lancar(U, `${ANO}-11-10`, '1.1.1', '3.1', 10_000_000);
+      await lancar(U, `${ANO}-11-20`, '1.1.1', '3.4', 1_000_000);
+    });
+
+    it('A11: base (100.000 + 10.000) × 32%; IRPJ 5.280 + adicional 1.520 = 6.800,00; RECEITA_NAO_USO na memória', async () => {
+      const p = await preview(U, ANO, 'A11', { modoMensal: 'RECEITA_BRUTA' });
+      expect(p.status).toBe(200);
+      expect(p.body.data.irpj).toMatchObject({ baseCents: '3520000', devidoCents: '680000' });
+      expect(linha(p.body.data.irpj.memoria, 'RECEITA_SERVICO')).toBe('10000000');
+      expect(linha(p.body.data.irpj.memoria, 'RECEITA_NAO_USO')).toBe('1000000');
+      expect(linha(p.body.data.irpj.memoria, 'RECEITA_MES')).toBe('11000000');
+    });
+  });
+
   describe('2040 — receita bruta, balancete com redução, ajuste igual aos meses, cascata', () => {
     const U = 'u-x7b-2040';
     const ANO = 2040;

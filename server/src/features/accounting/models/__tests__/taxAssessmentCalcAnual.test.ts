@@ -83,6 +83,26 @@ describe('3.4 receita por não uso na estimativa (BE-INCR-H1-REFERENCIAL-3-4 ite
     expect(v(r, 'RECEITA_MES')).toBe(String(R(110_000)));
   });
 
+  it('review #630 achado 1: o balancete acha o mês do excesso do 16% com a 3.4 dos meses (receitaMes e anteriores)', () => {
+    // jan por estimativa: 3.1 = 100.000 + 3.4 = 15.000 (acumulada 115.000 ≤ 120.000 ⇒ 16%: base 18.400; IRPJ 2.760).
+    // fev por balancete com 3.1 = 10.000 ⇒ acumulada 125.000 > limite ⇒ diferença de jan = 115.000 × 32% = 36.800 →
+    // IRPJ 5.520 + adicional 10% × (36.800 − 20.000) = 1.680 ⇒ 7.200 − 2.760 = 4.440,00. Sem a 3.4, 110.000 ≤ limite ⇒ 0.
+    const jan = apurarEstimativaReceitaBruta({
+      tabela, ano: 2026, periodo: A(1), tributo: 'IRPJ', receitaServicoCents: R(100_000), receitaRevendaCents: 0n, receitaNaoUsoCents: R(15_000),
+      receitasMesesAnteriores: [], confirmados: [], perfil: { ...PERFIL, prestadoraExclusivaServicos: true }, deducoes: [],
+    });
+    expect(v(jan, 'PRESUNCAO_REDUZIDA_16')).toBe(String(R(18_400)));
+    const fev = (naoUsoJan: bigint) =>
+      apurarBalancete({
+        tabela, ano: 2026, periodo: A(2), tributo: 'IRPJ', resultadoAntesCents: R(0), contasProvisaoConfiguradas: true, linhasParteA: [],
+        anteriores: [confirmar(jan, A(1))], perfil: { ...PERFIL, prestadoraExclusivaServicos: true }, deducoes: [],
+        receitaMes: { periodo: A(2), servicoCents: R(10_000), revendaCents: 0n },
+        receitasMesesAnteriores: [{ periodo: A(1), servicoCents: R(100_000), revendaCents: 0n, naoUsoCents: naoUsoJan }],
+      });
+    expect(fev(R(15_000)).diferencaPostergadaCents).toBe(R(4_440));
+    expect(fev(0n).diferencaPostergadaCents).toBe(0n);
+  });
+
   it('16% do prestador exclusivo: a 3.4 dos meses anteriores (ReceitaMes.naoUsoCents) conta na acumulada', () => {
     const r = apurarEstimativaReceitaBruta({
       tabela, ano: 2026, periodo: A(2), tributo: 'IRPJ', receitaServicoCents: R(10_000), receitaRevendaCents: 0n,

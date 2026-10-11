@@ -340,8 +340,8 @@ export function apurarBalancete(e: EntradaBalancete): ResultadoApuracaoAnual {
 /** Decisão 1 do PR-3: a diferença do § 8º quando m é o mês do excesso (mesma regra de m* do item 9); senão null. */
 function excessoNoBalancete(e: EntradaBalancete, m: number, dataFim: string, memoria: MemoriaLinha[]): { total: bigint; linhas: MemoriaLinha[] } | null {
   const anteriores = (e.receitasMesesAnteriores ?? []).filter((r) => numMes(r.periodo) < m);
-  const acumuladaAnterior = anteriores.reduce((s, r) => s + r.servicoCents + r.revendaCents, 0n);
-  const acumulada = acumuladaAnterior + e.receitaMes!.servicoCents + e.receitaMes!.revendaCents;
+  const acumuladaAnterior = anteriores.reduce((s, r) => s + baseServicoCents(r.servicoCents, r.naoUsoCents) + r.revendaCents, 0n);
+  const acumulada = acumuladaAnterior + baseServicoCents(e.receitaMes!.servicoCents, e.receitaMes!.naoUsoCents) + e.receitaMes!.revendaCents;
   const limite = linhaVigente(e.tabela, 'RECEITA_LIMITE_REDUZIDA_ANO_CENTS', dataFim)!;
   if (!(acumuladaAnterior <= BigInt(limite.valor) && acumulada > BigInt(limite.valor))) return null;
   memoria.push(linha('RECEITA_ACUMULADA_ANO', `Receita bruta acumulada do ano até ${e.periodo} (limite ${limite.valor} centavos)`, acumulada, limite.fonte));

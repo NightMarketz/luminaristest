@@ -312,7 +312,8 @@ describe('3.4 receita por não uso (BE-INCR-H1-REFERENCIAL-3-4, F-HR-3 b)', () =
   it('item 2b: memória confirmada sem a linha da 3.4 (anterior ao incremento) é lida como 0, sem 400', () => {
     const t01 = trimestre('T01', 60_000, 0, [], P16);
     expect(v(t01, 'RECEITA_NAO_USO')).toBeUndefined();
-    expect(() => trimestre('T02', 10_000, 0, [{ periodo: 'T01', memoria: t01.memoria }], P16)).not.toThrow();
+    const t02 = trimestre('T02', 10_000, 0, [{ periodo: 'T01', memoria: t01.memoria }], P16);
+    expect(v(t02, 'RECEITA_ACUMULADA_ANO')).toBe(String(R(70_000))); // acumulada igual à de hoje: 60.000 + 10.000
   });
 
   it('item 6: a 3.4 conta no teto do 16% — 3.1 = 110 mil + 3.4 = 15 mil passa do limite e gera a diferença do T01', () => {

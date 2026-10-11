@@ -28,6 +28,15 @@ describe('apurarPisCofinsMensal', () => {
     expect(valor(apurarPisCofinsMensal(entrada({})).PIS.memoria, 'RECEITA_NAO_USO')).toBeUndefined();
   });
 
+  it('review #630 achado 2: estorno da 3.4 + cota-parte não levam a base abaixo de zero', () => {
+    // 3.1 = 1.000, 3.4 = −800, cota = 1.000 (≤ 3.1, passa a validação) ⇒ 200 − 1.000 = −800 ⇒ piso 0
+    const r = apurarPisCofinsMensal(
+      entrada({ receitaServicoCents: 100_000n, receitaNaoUsoCents: -80_000n, ajustesBase: [{ tipo: 'COTA_PARTE_PARCEIRO', valorCents: '100000', documento: 'contrato 1' }] }),
+    );
+    expect(r.PIS).toMatchObject({ baseCents: 0n, devidoCents: 0n, aPagarCents: 0n });
+    expect(valor(r.PIS.memoria, 'DEBITO')).toBe('0');
+  });
+
   it('23 (a) Presumido: 100.000,00 ⇒ PIS 650,00 / Cofins 3.000,00, códigos 810902/217201, sem linha de crédito', () => {
     const r = apurarPisCofinsMensal(entrada({}));
     expect(r.PIS).toMatchObject({ modo: 'PIS_COFINS_CUMULATIVO', codigoReceita: '810902', baseCents: 10_000_000n, devidoCents: 65_000n, aPagarCents: 65_000n, saldoNegativoCents: 0n });

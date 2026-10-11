@@ -209,7 +209,8 @@ export function apurarPisCofinsMensal(e: EntradaPisCofins): Record<TributoPisCof
         memoria.push(linha(`AJUSTE_COTA_PARTE_${nCota}`, `Cota-parte do profissional-parceiro (fora da receita bruta)${doc}`, v, F_COTA_PARTE));
       }
     }
-    const base = baseServicoCents(e.receitaServicoCents, e.receitaNaoUsoCents) + e.receitaRevendaCents - ajustes;
+    // Piso 0: o estorno da 3.4 (com sinal) + a cota-parte (limitada à 3.1) podiam levar a base abaixo de zero (review #630).
+    const base = maxZero(baseServicoCents(e.receitaServicoCents, e.receitaNaoUsoCents) + e.receitaRevendaCents - ajustes);
     const debito = mulBp(base, p.aliquotaBp);
     memoria.push(
       linha('BASE', 'Base de cálculo (receita − ajustes)', base, F_BASE[e.modalidade]),

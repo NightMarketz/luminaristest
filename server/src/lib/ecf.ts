@@ -334,7 +334,7 @@ export interface EcfQuarter {
   perApur: string; // 'T01'..'T04'
   dtIni: string; // ISO
   dtFin: string; // ISO
-  servicoCents: number; // receita bruta de serviços (conta 3.1) no trimestre
+  servicoCents: number; // receita bruta de serviços no trimestre: max(0, 3.1 + 3.4) (BE-INCR-H1-REFERENCIAL-3-4)
   revendaCents: number; // receita bruta de revenda (conta 3.3) no trimestre
 }
 
