@@ -209,6 +209,18 @@ describe('Presumido trimestral (item 8) e LC 224 (item 9)', () => {
     });
     expect(v(ano.T04, 'LC224_ACERTO_T04')).toBe('0');
   });
+
+  it('EMENDAS-BRIEF-2026-10-11 E1-1: CSLL de 2026 conta ¾ do limite (R$ 3.750.000,00 no ano; T02 sem sobra do T01)', () => {
+    // P&R LC 224 v5 item 13 e SC Disit/SRRF10 10010/2026: a CSLL só tem a LC 224 desde 01/04/2026, então o limite
+    // anual dela em 2026 é 3 × 1.250.000 = 3.750.000. Receita 1.500.000/trimestre: o IRPJ (controle) continua com
+    // 4 × 1.250.000 = 5.000.000; a CSLL do T04 tem de trazer 3.750.000 e a do T02 nenhuma sobra do T01.
+    const receitas: Record<PeriodoTrimestral, [number, number]> = { T01: [1_500_000, 0], T02: [1_500_000, 0], T03: [1_500_000, 0], T04: [1_500_000, 0] };
+    const irpj = apurarAno(receitas, 'IRPJ');
+    expect(v(irpj.T04, 'LC224_LIMITE_ANUAL')).toBe(String(R(5_000_000)));
+    const csll = apurarAno(receitas, 'CSLL');
+    expect(v(csll.T02, 'LC224_SOBRA_ANTERIOR')).toBe('0');
+    expect(v(csll.T04, 'LC224_LIMITE_ANUAL')).toBe(String(R(3_750_000)));
+  });
 });
 
 /**
