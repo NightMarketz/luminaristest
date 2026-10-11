@@ -108,7 +108,7 @@ describe('item 14 — substituição em SQLite real', () => {
     expect(append).toHaveBeenCalledWith(expect.anything(), scope, expect.objectContaining({ eventType: 'dfe.substituted' }));
   });
 
-  it('F-EVT-6 (a): a original foi cancelada pelo emitente DURANTE a consulta → status relido na tx; a substituta autoriza e a original só ganha o vínculo', async () => {
+  it('F-EVT-6 (a): a original já está CANCELLED (cancelada pelo emitente durante a consulta) quando a substituta autoriza → a substituta autoriza e a original só ganha o vínculo, sem aposentar proveniência', async () => {
     const orig = await original('sale-subst-2');
     const subst = await substituta(orig);
     mockPort.consultar.mockImplementationOnce(async () => {

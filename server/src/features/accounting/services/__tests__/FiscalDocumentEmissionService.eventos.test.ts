@@ -121,4 +121,14 @@ describe('item 11 — createSubstitute (mesmo caminho da emissão)', () => {
     expect(JSON.parse(data.payloadJson as string).infDPS.subst).toEqual({ chSubstda: '1'.repeat(50), cMotivo: '03' });
     expect(repo.nextNumber).not.toHaveBeenCalled(); // modo manual: o portal numera
   });
+
+  it('review M1: original cancelada entre a guarda e o insert (relida DENTRO da tx) → 409, nenhuma substituta criada', async () => {
+    const { svc, repo } = make([row()]);
+    const fora = repo.findById;
+    repo.findById = async (s: unknown, id: string, tx?: unknown) => (tx ? row({ status: 'CANCELLED' }) : fora(s, id)) as never;
+    await expect(
+      svc.createSubstitute(SCOPE as never, row() as never, { payload, vServCents: 10000, cnpjEmitente: '11222333000181', partnerAccountRef: null, subst: { cMotivo: '03', xMotivo: null } }),
+    ).rejects.toMatchObject({ statusCode: 409, errorCode: 'DFE_STATUS_INVALIDO' });
+    expect(repo.createSent).not.toHaveBeenCalled();
+  });
 });

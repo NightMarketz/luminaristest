@@ -206,6 +206,22 @@ export class FiscalDocumentLifecycleService {
       doc.ambiente as DfeAmbiente,
       doc.saleKey, // BE-INCR-PACOTE-VALIDADE (L2, dono 03/10): nota de saldo vencido remonta pelo vencimento
     );
+    // BE-INCR-DFE-EVENTOS (review B1): a remontagem não conhece o `subst` — a substituta reenviada tem de continuar
+    // substituindo a original (chave da original + substMotivo/substReason; E0078 validado pelo DpsSubstSchema abaixo).
+    if (doc.substitutesDocumentId) {
+      const original = await this.repo.findById(scope, doc.substitutesDocumentId);
+      reassembled.payload = {
+        ...reassembled.payload,
+        infDPS: {
+          ...reassembled.payload.infDPS,
+          subst: {
+            chSubstda: original?.chaveOuCodigo ?? '',
+            cMotivo: doc.substMotivo as SubstMotivo,
+            ...(doc.substReason ? { xMotivo: doc.substReason } : {}),
+          },
+        },
+      };
+    }
     // A numeração NÃO é reconsumida no reenvio — é a MESMA DPS, uma nova tentativa de envio dela.
     const payload = port.capabilities.numbersDps
       ? DpsManualPayloadSchema.parse(toManualDps(reassembled.payload)) // F-MAN-4 a: o portal numera

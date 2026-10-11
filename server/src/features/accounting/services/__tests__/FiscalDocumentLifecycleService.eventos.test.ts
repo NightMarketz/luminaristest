@@ -111,6 +111,7 @@ function make(docs: Doc[], opts: { janela?: ReturnType<typeof JANELA>; policy?: 
     createPendingAttachment: jest.fn(async () => null),
     markPendingStep: jest.fn(),
     markPendingDone: jest.fn(),
+    appendAttempt: jest.fn(async () => ({})),
   };
   const emissionService = {
     getById: jest.fn(async (_s: unknown, id: string) => ({ id, status: byId[id]?.status, pendencias: [], janela: opts.janela ?? JANELA() })),
@@ -310,6 +311,25 @@ describe('itens 11, 12 e 16 — pedir a substituição', () => {
     const s = make([doc({ saleKey: 'expiry:bal-1:2026-09-30' })]);
     await expect(s.service.substituir(SCOPE, 'orig', pedido)).rejects.toMatchObject({ statusCode: 409, errorCode: 'DFE_SUBST_NAO_SUPORTADA' });
     semEscrita(s);
+  });
+});
+
+describe('review B1 — reenviar a substituta REJECTED recoloca o subst', () => {
+  const payloadDaTentativa2 = (repo: { appendAttempt: jest.Mock }) =>
+    JSON.parse((repo.appendAttempt.mock.calls[0][1] as { payloadJson: string }).payloadJson) as { infDPS: { subst?: unknown } };
+
+  it('manual: payloadJson da tentativa 2 traz subst { chave da original, substMotivo }', async () => {
+    const s = make([doc(), substituta({ status: 'REJECTED' })]);
+    await s.service.reenviar(SCOPE, 'subst');
+    expect(payloadDaTentativa2(s.repo as never).infDPS.subst).toEqual({ chSubstda: CHAVE_ORIGINAL, cMotivo: '03' });
+  });
+
+  it('máquina: idem, com xMotivo do pedido', async () => {
+    mockPort.name = 'null';
+    mockPort.capabilities = { numbersDps: false, consultar: true, cancelar: true, webhook: false, substituir: true };
+    const s = make([doc({ partner: 'null' }), substituta({ status: 'REJECTED', partner: 'null', numero: 9n, substMotivo: '99', substReason: 'valor do servico corrigido' })]);
+    await s.service.reenviar(SCOPE, 'subst');
+    expect(payloadDaTentativa2(s.repo as never).infDPS.subst).toEqual({ chSubstda: CHAVE_ORIGINAL, cMotivo: '99', xMotivo: 'valor do servico corrigido' });
   });
 });
 

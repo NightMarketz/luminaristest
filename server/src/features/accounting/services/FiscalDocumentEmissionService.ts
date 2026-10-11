@@ -1,6 +1,6 @@
 import type { FiscalDocument } from 'generated/prisma';
 import { Prisma } from 'generated/prisma';
-import { ForbiddenError, PackageExpiryNfsePendingError, ValidationError } from '../../../lib/errors';
+import { ConflictError, ForbiddenError, PackageExpiryNfsePendingError, ValidationError } from '../../../lib/errors';
 import { getFactory } from '../../../lib/factory';
 import logger from '../../../lib/logger';
 import { classifyTaxId, isValidCnpj, stripCnpjMask } from '../../../lib/cnpj';
@@ -328,6 +328,13 @@ export class FiscalDocumentEmissionService {
   ): Promise<FiscalDocumentWithAttempts> {
     const { group } = args;
     const doc = await this.repo.runTransaction(async (tx) => {
+      // X11 review M1: a original é relida DENTRO da tx do insert — gate autoritativo (E0046: cancelada não substitui).
+      if (args.substitutes) {
+        const original = await this.repo.findById(scope, args.substitutes.documentId, tx);
+        if (!original || !AUTHORIZED_STATUSES.includes(original.status as FiscalDocumentStatus)) {
+          throw new ConflictError('dfe_status_invalido: a original deixou de estar autorizada antes da substituição (E0046).', 'DFE_STATUS_INVALIDO');
+        }
+      }
       let numero: bigint | null = null;
       if (!selection.port.capabilities.numbersDps) {
         numero = await this.repo.nextNumber(scope, kind, args.serie, tx);
@@ -500,7 +507,8 @@ export class FiscalDocumentEmissionService {
         // como cancelada pelo emitente (cancelMotivo do e101101 gravado) — o registro local está errado ou é de outra nota.
         if (doc.substitutedByDocumentId && doc.cancelMotivo != null) pendencias.push('substituicao_sobre_cancelada');
       }
-      // BE-INCR-DFE-EVENTOS item 15: a substituta foi rejeitada e a original segue viva — o operador reenvia a substituta.
+      // BE-INCR-DFE-EVENTOS item 15: a substituta foi rejeitada e a original segue viva — o operador reenvia a substituta
+      // (o reenvio recoloca o grupo subst, review B1).
       if (AUTHORIZED_STATUSES.includes(doc.status as FiscalDocumentStatus)) {
         const substituta = siblings.find((d) => d.substitutesDocumentId === doc.id);
         if (substituta?.status === 'REJECTED') pendencias.push('substituicao_rejeitada');
