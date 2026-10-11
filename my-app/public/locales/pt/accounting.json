@@ -2794,7 +2794,9 @@
       "semSnapshot": "— (anterior ao snapshot)",
       "memoria": "Memória de cálculo",
       "historico": "Histórico de versões",
-      "substitui": "substitui"
+      "substitui": "substitui",
+      "tabelaVersao": "Versão da tabela",
+      "parametrosSha256": "Hash dos parâmetros (SHA-256)"
     },
     "memoria": {
       "codigo": "Código",

@@ -49,6 +49,12 @@ describe('helpers da grade (itens 2, 3)', () => {
     expect(g[0]).toMatchObject({ aviso: true, pendente: true });
   });
 
+  it('M-6: A00 (ajuste anual) vem depois de A01..A12, e os meses do PIS depois', () => {
+    const ps = ['M02', 'A00', 'A12', 'A01', 'T04', 'A02', 'M01'];
+    const g = montarGrade(ps.map((p, i) => ta(`x${i}`, { periodo: p })));
+    expect(g.map((c) => c.periodo)).toEqual(['T04', 'A01', 'A02', 'A12', 'A00', 'M01', 'M02']);
+  });
+
   it('sem viva, a célula mostra a substituída mais recente', () => {
     expect(montarGrade([irpjVelha])[0].tributos.IRPJ?.atual.id).toBe('irpj-v1');
   });
@@ -86,8 +92,11 @@ describe('TaxAssessmentPanel', () => {
   it('item 2: trocar o ano recarrega', async () => {
     render(<TaxAssessmentPanel unitId="u1" />);
     await screen.findByTestId('celula-T01-IRPJ');
+    list.mockResolvedValue([pis]);
     fireEvent.change(screen.getByLabelText('Ano-calendário'), { target: { value: '2025' } });
-    await waitFor(() => expect(list).toHaveBeenLastCalledWith({ unitId: 'u1', anoCalendario: 2025 }));
+    await waitFor(() => expect(screen.queryByTestId('celula-T01-IRPJ')).toBeNull());
+    expect(screen.getByTestId('celula-M01-PIS')).toBeInTheDocument();
+    expect(list).toHaveBeenLastCalledWith({ unitId: 'u1', anoCalendario: 2025 });
   });
 
   it('vazio: mensagem sem grade', async () => {
@@ -122,12 +131,15 @@ describe('TaxAssessmentPanel', () => {
   });
 
   it('item 7: reconciliar a provisão pendente chama o BE e recarrega a grade', async () => {
-    reconcileProvisao.mockResolvedValue({ ...csll, provisaoPendente: false });
+    const reconciliada = { ...csll, provisaoPendente: false };
+    reconcileProvisao.mockResolvedValue(reconciliada);
     render(<TaxAssessmentPanel unitId="u1" />);
     fireEvent.click(within(await screen.findByTestId('celula-T01-CSLL')).getByRole('button'));
     fireEvent.click(await screen.findByRole('button', { name: 'Reconciliar provisão' }));
-    await waitFor(() => expect(reconcileProvisao).toHaveBeenCalledWith('csll-1', { unitId: 'u1' }));
-    await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+    list.mockResolvedValue([irpjViva, irpjVelha, reconciliada, pis]);
+    await waitFor(() => expect(screen.getByTestId('celula-T01-CSLL')).not.toHaveTextContent('Provisão pendente'));
+    expect(screen.queryByRole('button', { name: 'Reconciliar provisão' })).toBeNull();
+    expect(reconcileProvisao).toHaveBeenCalledWith('csll-1', { unitId: 'u1' });
   });
 
   it('item 7: erro do BE no reconcile aparece no modal', async () => {
@@ -143,5 +155,96 @@ describe('TaxAssessmentPanel', () => {
     fireEvent.click(within(await screen.findByTestId('celula-T01-IRPJ')).getByRole('button'));
     await screen.findByTestId('versao-irpj-v2');
     expect(screen.queryByRole('button', { name: 'Reconciliar provisão' })).toBeNull();
+  });
+});
+
+describe('TaxAssessmentPanel — correções do review do #631', () => {
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
+
+  const deferred = <T,>() => {
+    let resolve!: (v: T) => void;
+    const promise = new Promise<T>((r) => { resolve = r; });
+    return { promise, resolve };
+  };
+
+  it('I-1: respostas da lista fora de ordem — a grade é a do último ano pedido', async () => {
+    const pend = new Map<number, ReturnType<typeof deferred<TaxAssessment[]>>>();
+    list.mockImplementation(({ anoCalendario }: { anoCalendario: number }) => {
+      const d = deferred<TaxAssessment[]>();
+      pend.set(anoCalendario, d);
+      return d.promise;
+    });
+    render(<TaxAssessmentPanel unitId="u1" />);
+    const input = screen.getByLabelText('Ano-calendário');
+    fireEvent.change(input, { target: { value: '2025' } });
+    fireEvent.change(input, { target: { value: '2024' } });
+    await waitFor(() => expect(pend.has(2024)).toBe(true));
+    const anoAtual = new Date().getFullYear();
+    pend.get(2024)!.resolve([ta('y2024', { periodo: 'T02' })]);
+    await screen.findByTestId('celula-T02-IRPJ');
+    pend.get(2025)!.resolve([ta('y2025', { periodo: 'T03' })]);
+    pend.get(anoAtual)!.resolve([ta('yAtual', { periodo: 'T04' })]);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.getByTestId('celula-T02-IRPJ')).toBeInTheDocument();
+    expect(screen.queryByTestId('celula-T03-IRPJ')).toBeNull();
+    expect(screen.queryByTestId('celula-T04-IRPJ')).toBeNull();
+    expect(input).toHaveValue(2024);
+  });
+
+  it('M-3: duas versões clicadas seguidas — fica o detalhe da última', async () => {
+    list.mockResolvedValue(linhas);
+    const pend = new Map<string, ReturnType<typeof deferred<TaxAssessment>>>();
+    get.mockImplementation((id: string) => {
+      const d = deferred<TaxAssessment>();
+      pend.set(id, d);
+      return d.promise;
+    });
+    render(<TaxAssessmentPanel unitId="u1" />);
+    fireEvent.click(within(await screen.findByTestId('celula-T01-IRPJ')).getByRole('button'));
+    fireEvent.click(within(await screen.findByTestId('versao-irpj-v1')).getByText(/Substituída/));
+    await waitFor(() => expect(get).toHaveBeenCalledTimes(2));
+    // a 2ª chamada (v1) resolve antes da 1ª (v2, aberta pela célula)
+    pend.get('irpj-v1')!.resolve(irpjVelha);
+    expect(await screen.findByRole('alert')).toHaveTextContent(AVISO);
+    pend.get('irpj-v2')!.resolve(irpjViva);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.getByRole('alert')).toHaveTextContent(AVISO);
+  });
+
+  it('I-2: limpar e digitar 2024 tecla a tecla carrega 2024 uma vez', async () => {
+    list.mockResolvedValue([]);
+    render(<TaxAssessmentPanel unitId="u1" />);
+    await screen.findByText('Nenhuma apuração gravada neste ano.');
+    const input = screen.getByLabelText('Ano-calendário');
+    for (const v of ['', '2', '20', '202', '2024']) {
+      fireEvent.change(input, { target: { value: v } });
+      if (v) expect(input).toHaveValue(Number(v));
+    }
+    await waitFor(() => expect(list).toHaveBeenLastCalledWith({ unitId: 'u1', anoCalendario: 2024 }));
+    expect(list.mock.calls.filter(([q]) => (q as { anoCalendario: number }).anoCalendario === 2024)).toHaveLength(1);
+    expect(list).toHaveBeenCalledTimes(new Date().getFullYear() === 2024 ? 1 : 2);
+  });
+
+  it('M-4: data da confirmação no fuso de Brasília (01:30 UTC de 01/03 = 28/02)', async () => {
+    const tarde = ta('late', { confirmedAt: '2026-03-01T01:30:00.000Z' });
+    list.mockResolvedValue([tarde]);
+    get.mockResolvedValue(tarde);
+    render(<TaxAssessmentPanel unitId="u1" />);
+    fireEvent.click(within(await screen.findByTestId('celula-T01-IRPJ')).getByRole('button'));
+    expect(await screen.findByTestId('versao-late')).toHaveTextContent('28/02/2026');
+    expect(screen.getByText('28/02/2026, 22:30')).toBeInTheDocument();
+  });
+
+  it('M-5: rótulos do snapshot vêm do i18n (fallback pt)', async () => {
+    list.mockResolvedValue([irpjViva]);
+    get.mockResolvedValue(irpjViva);
+    render(<TaxAssessmentPanel unitId="u1" />);
+    fireEvent.click(within(await screen.findByTestId('celula-T01-IRPJ')).getByRole('button'));
+    expect(await screen.findByText('Versão da tabela')).toBeInTheDocument();
+    expect(screen.getByText('Hash dos parâmetros (SHA-256)')).toBeInTheDocument();
+    expect(screen.queryByText('parametrosSha256')).toBeNull();
   });
 });

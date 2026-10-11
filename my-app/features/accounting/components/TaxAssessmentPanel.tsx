@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FiAlertTriangle } from 'react-icons/fi';
 import { Modal } from '../../../components/ui/Modal';
 import { taxAssessmentsService, type TaxAssessment, type TributoApuracao } from '../../../lib/services/taxAssessments.service';
 import { TRIBUTOS_GRADE, formatCentsStr, montarGrade, type CelulaTributo } from '../lib/taxAssessmentGrid';
 import { resolveError } from '../lib/resolveError';
+import { formatScopeDateBR, formatScopeDateTimeBR } from '../../dashboard/shared/utils/formatters';
 import { useAccountingT } from '../lib/useAccountingT';
 
 interface Props {
@@ -19,6 +20,8 @@ interface Props {
 export function TaxAssessmentPanel({ unitId }: Props) {
   const { t, tRef } = useAccountingT();
   const [ano, setAno] = useState(() => new Date().getFullYear());
+  // I-2: o texto digitado é local; o ano só é aplicado quando válido (4 dígitos, 2000–2100).
+  const [anoTexto, setAnoTexto] = useState(() => String(new Date().getFullYear()));
   const [linhas, setLinhas] = useState<TaxAssessment[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,16 +30,21 @@ export function TaxAssessmentPanel({ unitId }: Props) {
   const [detalhe, setDetalhe] = useState<TaxAssessment | null>(null);
   const [detalheError, setDetalheError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // I-1 / M-3: só a última requisição de cada tipo aplica a resposta (as anteriores chegam fora de ordem e são descartadas).
+  const listaReq = useRef(0);
+  const detalheReq = useRef(0);
 
   const carregar = useCallback(async () => {
+    const req = ++listaReq.current;
     setLoading(true);
     setError(null);
     try {
-      setLinhas(await taxAssessmentsService.list({ unitId, anoCalendario: ano }));
+      const r = await taxAssessmentsService.list({ unitId, anoCalendario: ano });
+      if (req === listaReq.current) setLinhas(r);
     } catch (err: unknown) {
-      setError(resolveError(err, tRef.current('taxAssessment.error.load', 'Erro ao carregar as apurações.')));
+      if (req === listaReq.current) setError(resolveError(err, tRef.current('taxAssessment.error.load', 'Erro ao carregar as apurações.')));
     } finally {
-      setLoading(false);
+      if (req === listaReq.current) setLoading(false);
     }
   }, [unitId, ano, tRef]);
 
@@ -46,10 +54,13 @@ export function TaxAssessmentPanel({ unitId }: Props) {
   const aberta: CelulaTributo | undefined = celula ? grade.find((g) => g.periodo === celula.periodo)?.tributos[celula.tributo] : undefined;
 
   const abrirVersao = useCallback(async (id: string) => {
+    const req = ++detalheReq.current;
     setDetalheError(null);
     try {
-      setDetalhe(await taxAssessmentsService.get(id, { unitId }));
+      const v = await taxAssessmentsService.get(id, { unitId });
+      if (req === detalheReq.current) setDetalhe(v);
     } catch (err: unknown) {
+      if (req !== detalheReq.current) return;
       setDetalhe(null);
       setDetalheError(resolveError(err, tRef.current('taxAssessment.error.detail', 'Erro ao carregar o detalhe.')));
     }
@@ -66,6 +77,7 @@ export function TaxAssessmentPanel({ unitId }: Props) {
     setDetalheError(null);
     try {
       const v = await taxAssessmentsService.reconcileProvisao(id, { unitId });
+      detalheReq.current += 1;
       setDetalhe(v);
       await carregar();
     } catch (err: unknown) {
@@ -102,10 +114,15 @@ export function TaxAssessmentPanel({ unitId }: Props) {
           <input
             type="number"
             aria-label={t('taxAssessment.ano', 'Ano-calendário')}
-            value={ano}
+            value={anoTexto}
             min={2000}
             max={2100}
-            onChange={(e) => { const n = Number(e.target.value); if (Number.isInteger(n) && n >= 2000 && n <= 2100) setAno(n); }}
+            onChange={(e) => {
+              const v = e.target.value;
+              setAnoTexto(v);
+              const n = Number(v);
+              if (/^\d{4}$/.test(v) && n >= 2000 && n <= 2100) setAno(n);
+            }}
             className="w-24 rounded-xl border border-neutral-700 bg-neutral-800 px-2 py-1 text-neutral-100"
           />
         </label>
@@ -183,14 +200,14 @@ export function TaxAssessmentPanel({ unitId }: Props) {
                 <dt className="text-neutral-500">{t('taxAssessment.detail.aPagar', 'A pagar')}</dt><dd className="font-mono">{formatCentsStr(detalhe.aPagarCents)}</dd>
                 <dt className="text-neutral-500">{t('taxAssessment.detail.saldoNegativo', 'Saldo negativo')}</dt><dd className="font-mono">{formatCentsStr(detalhe.saldoNegativoCents)}</dd>
                 <dt className="text-neutral-500">{t('taxAssessment.detail.diferencaPostergada', 'Diferença postergada')}</dt><dd className="font-mono">{formatCentsStr(detalhe.diferencaPostergadaCents)}</dd>
-                <dt className="text-neutral-500">{t('taxAssessment.detail.confirmedAt', 'Confirmada em')}</dt><dd className="font-mono">{detalhe.confirmedAt}</dd>
+                <dt className="text-neutral-500">{t('taxAssessment.detail.confirmedAt', 'Confirmada em')}</dt><dd className="font-mono">{formatScopeDateTimeBR(detalhe.confirmedAt)}</dd>
               </dl>
 
               <section>
                 <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-neutral-500">{t('taxAssessment.detail.snapshot', 'Snapshot dos parâmetros')}</h3>
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-neutral-300">
-                  <dt className="text-neutral-500">tabelaVersao</dt><dd className="font-mono">{detalhe.tabelaVersao}</dd>
-                  <dt className="text-neutral-500">parametrosSha256</dt>
+                  <dt className="text-neutral-500">{t('taxAssessment.detail.tabelaVersao', 'Versão da tabela')}</dt><dd className="font-mono">{detalhe.tabelaVersao}</dd>
+                  <dt className="text-neutral-500">{t('taxAssessment.detail.parametrosSha256', 'Hash dos parâmetros (SHA-256)')}</dt>
                   <dd className="break-all font-mono">{detalhe.parametrosSha256 ?? t('taxAssessment.detail.semSnapshot', '— (anterior ao snapshot)')}</dd>
                 </dl>
               </section>
@@ -229,7 +246,7 @@ export function TaxAssessmentPanel({ unitId }: Props) {
                   <li key={v.id} data-testid={`versao-${v.id}`} className="rounded-xl border border-neutral-800 bg-neutral-900 px-3 py-2">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <button type="button" onClick={() => void abrirVersao(v.id)} className="text-left text-neutral-200 hover:underline">
-                        <span className="font-mono">{v.confirmedAt.slice(0, 10)}</span> · {statusTexto(v.status)} · <span className="font-mono">{formatCentsStr(v.aPagarCents)}</span>
+                        <span className="font-mono">{formatScopeDateBR(v.confirmedAt)}</span> · {statusTexto(v.status)} · <span className="font-mono">{formatCentsStr(v.aPagarCents)}</span>
                         {v.supersedesId && <span className="text-neutral-500"> · {t('taxAssessment.detail.substitui', 'substitui')} {v.supersedesId}</span>}
                       </button>
                       <div className="flex items-center gap-2">

@@ -112,6 +112,20 @@ export function scopeToday(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: SCOPE_TIME_ZONE });
 }
 
+/** Instante ISO (datetime) → dd/mm/aaaa no fuso do ESCOPO (não no fuso da máquina). */
+export function formatScopeDateBR(iso: string): string {
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? iso : d.toLocaleDateString('pt-BR', { timeZone: SCOPE_TIME_ZONE });
+}
+
+/** Instante ISO (datetime) → dd/mm/aaaa hh:mm no fuso do ESCOPO. */
+export function formatScopeDateTimeBR(iso: string): string {
+  const d = new Date(iso);
+  return isNaN(d.getTime())
+    ? iso
+    : d.toLocaleString('pt-BR', { timeZone: SCOPE_TIME_ZONE, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
 export function formatDateNumericBR(value?: string | Date | null): string {
     if (!value) return '—';
     let d: Date;

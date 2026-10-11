@@ -2794,7 +2794,9 @@
       "semSnapshot": "— (before snapshot)",
       "memoria": "Calculation memo",
       "historico": "Version history",
-      "substitui": "supersedes"
+      "substitui": "supersedes",
+      "tabelaVersao": "Table version",
+      "parametrosSha256": "Parameters hash (SHA-256)"
     },
     "memoria": {
       "codigo": "Code",
