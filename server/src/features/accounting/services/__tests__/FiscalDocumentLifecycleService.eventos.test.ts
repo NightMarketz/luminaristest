@@ -103,7 +103,7 @@ function make(docs: Doc[], opts: { janela?: ReturnType<typeof JANELA>; policy?: 
     findById: jest.fn(async (_s: unknown, id: string) => byId[id] ?? null),
     findByChaveOuCodigo: jest.fn(async () => null),
     findSubstituteOf: jest.fn(async (_s: unknown, id: string) => Object.values(byId).find((d) => d.substitutesDocumentId === id) ?? null),
-    transition: jest.fn(async (_s: unknown, id: string, data: { status: string }) => {
+    transition: jest.fn(async (_s: unknown, id: string, data: { status: string }, _tx?: unknown) => {
       if (byId[id]) byId[id] = { ...byId[id], status: data.status };
       return byId[id];
     }),
