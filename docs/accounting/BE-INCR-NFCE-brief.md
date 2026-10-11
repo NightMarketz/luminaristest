@@ -132,7 +132,7 @@ Arquivos: `MOC-7.0-Visao-Geral.pdf` (sha256 `f664dcf94b77…`, 150 pp.), `MOC-7.
 | `[NFCE-EVENTOS]` | para a NFC-e o Ajuste SINIEF 19/16 regra **só** Cancelamento e EPEC; 110110 CC-e, 110111 Cancelamento, 110112 Cancelamento por substituição (NFC-e, ≤ 168 h) | VG §3.1, Tabela 3-1, p. 28 |
 | `[NFCE-CANC-SUBST]` | 110112 só quando outra NFC-e **em contingência** acobertou a operação | VG §3.5, pp. 47–48 |
 | `[NFE-CANC]` | entrada: `nProt` (15), `xJust` (15–255); 110112 acrescenta `cOrgaoAutor`, `tpAutor`, `verAplic`, `chNFeRef` | VG §5.9.1, Tabela 5-37, p. 105 |
-| `[NFE-CANC-PRAZO]` | 110111: rej. **501** se autorizada há mais de **24 h**, "considera a exceção de prazo definida em legislação estadual"; 110112: 168 h | VG §5.9.3, Tabela 5-38, p. 106 |
+| `[NFE-CANC-PRAZO]` | 110111: rej. **501** se autorizada há mais de **24 h**, "considera a exceção de prazo definida em legislação estadual"; 110112: 168 h | VG §5.9.3, Tabela 5-38, p. 106 **[ERRATA 10/10 — `docs/plano/PERGUNTAS-DE-LEI-2026-10-10.md` §10.2]** para a **NFC-e o prazo é 30 minutos** (Ajuste SINIEF 19/16 cl. 15ª, desde 01/10/2018); as 24 h valem para a NF-e (`pesquisa-lei-2026-10-10/piscofins-icms.md`). |
 | `[NFCE-CANC-FORA]` | NF-e: a SEFAZ pode aceitar fora do prazo (cStat 155); **NFC-e fora do prazo é rejeitada (501)** | VG §5.9.4, p. 107 |
 | `[NFCE-SEM-CCE]` | "Se Modelo = 65: NFC-e não permite o evento de Carta de Correção" | VG §5.10.3, Tabela 5-40, p. 111 |
 | `[NFE-INUT]` | `inutNFe`: tpAmb, xServ='INUTILIZAR', cUF, ano(2), CNPJ, **mod (55 ou 65)**, serie(1-3), nNFIni/nNFFin(1-9), xJust(15-255) | VG §5.3.1, Tabela 5-9, pp. 78–79 |
@@ -273,7 +273,7 @@ Cada item termina no teste que o prova.
 27. **[cond:F-NFCE-10]** Cancelamento 55/65 (110111) com `xJust` 15–255 (`[NFE-CANC]`). Janela pela **mesma**
     função pura do BRIEF irmão do X11 (`janelaEventos`, item 3 do PR #466), estendida com o ramo 55/65: base = data
     da autorização devolvida pelo parceiro (`EmissaoResult.dhProc`, item 1 do X11; tag exata no PR-0), prazo
-    `nfeCancelPrazoHoras`/`nfceCancelPrazoHoras` do perfil com `null` ⇒ 24 h (`[NFE-CANC-PRAZO]`, regra nacional
+    `nfeCancelPrazoHoras`/`nfceCancelPrazoHoras` do perfil com `null` ⇒ 24 h (`[NFE-CANC-PRAZO]`, regra nacional **[ERRATA 10/10 — `docs/plano/PERGUNTAS-DE-LEI-2026-10-10.md` §10.2]** default da NFC-e = 30 min (Ajuste SINIEF 19/16 cl. 15ª), não 24 h; o campo em horas não comporta — precisa de minutos.
     com exceção estadual). Política = a do F-EVT-1 ratificado; com (a), fora da janela **segue** para a porta com
     aviso, e `OUT_OF_WINDOW` passa a significar "o fisco rejeitou com **501**" para 55/65 (`[NFCE-CANC-FORA]`: na
     NFC-e é terminal). Teste: autorizada há 25 h, prazo nulo ⇒ resposta com `avisos: ['fora_da_janela_configurada']`

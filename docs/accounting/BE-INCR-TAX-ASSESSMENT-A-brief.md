@@ -183,7 +183,7 @@ pendência externa (§4), e a implementação usa o valor marcado como default, 
    - dedução maior que o devido do T04 ⇒ excedente para restituição/compensação (§ 7º), registrado como
      `saldoNegativoCents` com a linha da memória *"§ 7º — pedido fora do sistema"*;
    - CSLL com `vigenteDesde 2026-04-01`: o acréscimo da CSLL é 0 nos trimestres anteriores a abril de 2026, e o
-     limite é contado do mesmo jeito que no IRPJ (P-2);
+     limite é contado do mesmo jeito que no IRPJ (P-2); **[ERRATA 10/10 — `docs/plano/PERGUNTAS-DE-LEI-2026-10-10.md` §10.2]** ver P-2: limite da CSLL em 2026 = R$ 3,75 mi.
    - **Teste-tabela:** um caso por parágrafo (§§ 3º, 4º, 5º I, 5º II, 5º III, 6º, 9º), com a conta feita à mão no
      comentário do teste e a citação do parágrafo.
 10. **[D] Real trimestral** (A5).
@@ -412,7 +412,7 @@ type ParametroApuracao = {
 | # | O quê | Por que está aqui | Quem fecha |
 |---|---|---|---|
 | P-1 | "Percentual acrescido em 10%" = percentual × 1,10 (32% → 35,2%), não +10 p.p. | IN 2.305 arts. 13–15 dizem "acréscimo de 10% nos percentuais"; a leitura multiplicativa é **I** | contador |
-| P-2 | CSLL em 2026: acréscimo 0 até 31/03 e limite contado no ano inteiro, como no IRPJ | art. 3º II dá a data, mas a IN não diz como o limite anual se conta para a CSLL no ano da transição (**I**) | contador |
+| P-2 | CSLL em 2026: acréscimo 0 até 31/03 e limite contado no ano inteiro, como no IRPJ | art. 3º II dá a data, mas a IN não diz como o limite anual se conta para a CSLL no ano da transição (**I**) | contador **[ERRATA 10/10 — `docs/plano/PERGUNTAS-DE-LEI-2026-10-10.md` §10.2]** resposta da Receita: o limite da CSLL em 2026 é **R$ 3,75 mi** (acréscimo só de abril a dezembro), não o ano inteiro — P&R LC 224 v5 item 13 e SC Disit/SRRF10 10010/2026 (`pesquisa-lei-2026-10-10/irpj-sped.md`; `pesquisa-juris-2026-10-10/b3-irpj.md`). O item 9 precisa de emenda antes de executar. |
 | P-3 | Os ramos "poderá" do § 5º I-b e II-b aplicados sempre | é opção do contribuinte; aplicar sempre só reduz o devido (**I**) | contador |
 | P-4 | Regra de arredondamento (F-TA-2) | sem fonte primária encontrada | PVA (H1/X5) + contador |
 | P-5 | Contas de provisão, código referencial e o lançamento que baixa as retenções contra o "a recolher" | ADR §9 item 3; a provisão desta fase é pelo **devido** bruto | contador |

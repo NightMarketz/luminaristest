@@ -469,7 +469,7 @@ mantido para não renumerar as referências do §3.
    follow-up 0.8b ao contador, junto com o §6.1, e não no `ReferentialMapping` deste BRIEF.
 9. **Citações legais da diretriz de 09/10:** "RIR/2018 art. 311" para a dedutibilidade da tarifa (regra geral, V-dono) e
    "art. 311 § 2º" para a multa fiscal indedutível. Para a multa, este BRIEF mantém L1 (IN 1.700 art. 132 V-local; Lei
-   8.981 art. 41 § 5º; RIR art. 352 § 5º) até alguém conferir a redação vigente (memória
+   8.981 art. 41 § 5º; RIR art. 352 § 5º) até alguém conferir a redação vigente (memória **[ERRATA 10/10 — `docs/plano/PERGUNTAS-DE-LEI-2026-10-10.md` §10.2]** conferido: RIR/2018 art. 352 § 5º (= Lei 8.981 art. 41 § 5º) é a citação certa da multa indedutível; o art. 311 § 2º não é. L1 mantido.
    `tabela-transcrita-de-lei-conferir-redacao-vigente`). Nenhum comportamento muda com isso.
 
 ## 7. Insumos ausentes (pausados, não varridos — regra 2)
