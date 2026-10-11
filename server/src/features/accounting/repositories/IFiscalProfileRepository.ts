@@ -50,6 +50,10 @@ export interface FiscalProfileData {
   pTotTribSNCent?: number | null;
   emissaoForaDoMes: string;
   d1fConfirmado: boolean;
+  // BE-INCR-DFE-EVENTOS (nó X11, item 2) — prazos do município (F-EVT-1 a)
+  cancelPrazoDias?: number | null;
+  substPrazoDias?: number | null;
+  prazoFonte?: string | null;
 }
 
 /** BE-INCR-NFE-COST-REGIME (nó X6, item 2) — único lugar com `prisma.fiscalProfile.*`. `tx?` em todos. */

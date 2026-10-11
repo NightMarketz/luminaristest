@@ -14,6 +14,7 @@ export class NullEmissor implements DfeEmissorPort {
     cancelar: true,
     // Nenhum parceiro real por trás — sem webhook de verdade para verificar (item 28: Null/File ⇒ 401 sempre).
     webhook: false,
+    substituir: true, // BE-INCR-DFE-EVENTOS item 16 — a substituta é uma DPS nova com o grupo subst (Guia §5.2)
   };
 
   constructor() {

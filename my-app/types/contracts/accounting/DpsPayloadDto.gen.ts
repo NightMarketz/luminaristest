@@ -1,5 +1,10 @@
 // GERADO por server/src/features/accounting/dtos/__tests__/dtoShapeSnapshot.test.ts — NÃO EDITE.
 // Mudou um DTO? UPDATE_DTO_SNAPSHOT=1 npx jest --selectProjects unit --testPathPatterns dtoShapeSnapshot e comite o diff.
+export interface DpsSubstInput {
+chSubstda: string
+cMotivo: ("99" | "01" | "02" | "03" | "04" | "05")
+xMotivo?: string
+}
 export interface DpsPayloadInput {
 versao: "1.01"
 infDPS: {
@@ -12,6 +17,11 @@ nDPS: number
 dCompet: string
 tpEmit: 1
 cLocEmi: string
+subst?: {
+chSubstda: string
+cMotivo: ("99" | "01" | "02" | "03" | "04" | "05")
+xMotivo?: string
+}
 prest: {
 CNPJ: string
 IM?: string
@@ -101,6 +111,11 @@ verAplic: string
 dCompet: string
 tpEmit: 1
 cLocEmi: string
+subst?: {
+chSubstda: string
+cMotivo: ("99" | "01" | "02" | "03" | "04" | "05")
+xMotivo?: string
+}
 prest: {
 CNPJ: string
 IM?: string

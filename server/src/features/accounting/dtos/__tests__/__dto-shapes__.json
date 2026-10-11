@@ -910,6 +910,42 @@
                     "AVISAR",
                     "BLOQUEAR"
                   ]
+                },
+                "cancelPrazoDias": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "substPrazoDias": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 730
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "prazoFonte": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 }
               },
               "required": [
@@ -3597,6 +3633,37 @@
     }
   },
   "DpsPayloadDto.ts": {
+    "DpsSubstSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "chSubstda": {
+          "type": "string",
+          "pattern": "^\\d{50}$"
+        },
+        "cMotivo": {
+          "type": "string",
+          "enum": [
+            "99",
+            "01",
+            "02",
+            "03",
+            "04",
+            "05"
+          ]
+        },
+        "xMotivo": {
+          "type": "string",
+          "minLength": 15,
+          "maxLength": 255
+        }
+      },
+      "required": [
+        "chSubstda",
+        "cMotivo"
+      ],
+      "additionalProperties": false
+    },
     "DpsPayloadSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -3655,6 +3722,36 @@
             "cLocEmi": {
               "type": "string",
               "pattern": "^\\d{7}$"
+            },
+            "subst": {
+              "type": "object",
+              "properties": {
+                "chSubstda": {
+                  "type": "string",
+                  "pattern": "^\\d{50}$"
+                },
+                "cMotivo": {
+                  "type": "string",
+                  "enum": [
+                    "99",
+                    "01",
+                    "02",
+                    "03",
+                    "04",
+                    "05"
+                  ]
+                },
+                "xMotivo": {
+                  "type": "string",
+                  "minLength": 15,
+                  "maxLength": 255
+                }
+              },
+              "required": [
+                "chSubstda",
+                "cMotivo"
+              ],
+              "additionalProperties": false
             },
             "prest": {
               "type": "object",
@@ -4104,6 +4201,36 @@
             "cLocEmi": {
               "type": "string",
               "pattern": "^\\d{7}$"
+            },
+            "subst": {
+              "type": "object",
+              "properties": {
+                "chSubstda": {
+                  "type": "string",
+                  "pattern": "^\\d{50}$"
+                },
+                "cMotivo": {
+                  "type": "string",
+                  "enum": [
+                    "99",
+                    "01",
+                    "02",
+                    "03",
+                    "04",
+                    "05"
+                  ]
+                },
+                "xMotivo": {
+                  "type": "string",
+                  "minLength": 15,
+                  "maxLength": 255
+                }
+              },
+              "required": [
+                "chSubstda",
+                "cMotivo"
+              ],
+              "additionalProperties": false
             },
             "prest": {
               "type": "object",
@@ -5002,6 +5129,93 @@
         "xMotivo"
       ],
       "additionalProperties": false
+    },
+    "SubstituirFiscalDocumentSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cMotivo": {
+          "type": "string",
+          "enum": [
+            "99",
+            "01",
+            "02",
+            "03",
+            "04",
+            "05"
+          ]
+        },
+        "xMotivo": {
+          "type": "string",
+          "minLength": 15,
+          "maxLength": 255
+        }
+      },
+      "required": [
+        "unitId",
+        "cMotivo"
+      ],
+      "additionalProperties": false
+    },
+    "JanelaEventosSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "cancelarAte": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "substituirAte": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "substituirTeto": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "fonte": {
+          "type": "string",
+          "enum": [
+            "perfil",
+            "desconhecida"
+          ]
+        }
+      },
+      "required": [
+        "cancelarAte",
+        "substituirAte",
+        "substituirTeto",
+        "fonte"
+      ],
+      "additionalProperties": false
     }
   },
   "FiscalDocumentPendingAttachmentDto.ts": {
@@ -5565,6 +5779,42 @@
             "AVISAR",
             "BLOQUEAR"
           ]
+        },
+        "cancelPrazoDias": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "substPrazoDias": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 730
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "prazoFonte": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -6004,6 +6254,42 @@
           "enum": [
             "AVISAR",
             "BLOQUEAR"
+          ]
+        },
+        "cancelPrazoDias": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "substPrazoDias": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 730
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "prazoFonte": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            {
+              "type": "null"
+            }
           ]
         }
       },

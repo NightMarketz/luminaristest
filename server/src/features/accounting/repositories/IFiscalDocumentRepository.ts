@@ -35,6 +35,10 @@ export interface CreateSentFiscalDocumentData {
    * — uma nota por vencimento pela `@@unique([userId, unitId, saleKey, kind, cTribNac])`.
    */
   saleKey?: string;
+  /** BE-INCR-DFE-EVENTOS (item 11) — documento substituto: a original, o `cMotivo` (TSCodJustSubst) e o `xMotivo`. */
+  substitutesDocumentId?: string;
+  substMotivo?: string;
+  substReason?: string | null;
 }
 
 export interface AppendAttemptData {
@@ -68,6 +72,12 @@ export interface TransitionData {
   currentAttemptNo?: number;
   /** rename-on-cancel: `cancelled:<id>:<saleId>` libera o @@unique (memória unique-de-idempotencia-x-soft-delete). */
   saleKey?: string;
+  /** BE-INCR-DFE-EVENTOS (item 1) — infNFSe/dhProc [19], gravado no AUTHORIZED. */
+  nfseDhProc?: Date | null;
+  /** BE-INCR-DFE-EVENTOS (item 14) — a original aponta a substituta autorizada. */
+  substitutedByDocumentId?: string | null;
+  /** BE-INCR-DFE-EVENTOS (item 7) — anexo do XML do evento e101101. */
+  cancelEventAttachmentId?: string | null;
   /**
    * Guarda autoritativa DENTRO da escrita (memória authoritative-gate-inside-tx): a transição só acontece se o status
    * atual estiver aqui; senão o repositório lança `fiscal_document_status_changed`.
@@ -138,6 +148,11 @@ export interface IFiscalDocumentRepository {
   findByChaveOuCodigo(scope: AccountingScope, chaveOuCodigo: string, tx?: Prisma.TransactionClient): Promise<FiscalDocument | null>;
   /** BE-INCR-PACOTE-VALIDADE (§5.2 item 9.5) — documento (deletedAt null, qualquer status) com este `saleKey`/kind. */
   findBySaleKey(scope: AccountingScope, saleKey: string, kind: FiscalDocumentKind, tx?: Prisma.TransactionClient): Promise<FiscalDocument | null>;
+  /**
+   * BE-INCR-DFE-EVENTOS (item 11) — o substituto (deletedAt null, qualquer status) já criado para esta original, se
+   * houver. "Um por original": o rejeitado sai por `reenviar`, não por um 2º pedido.
+   */
+  findSubstituteOf(scope: AccountingScope, originalId: string, tx?: Prisma.TransactionClient): Promise<FiscalDocument | null>;
   /** Cria documento em SENT + tentativa 1 (`ref = <id>:1`). */
   createSent(scope: AccountingScope, data: CreateSentFiscalDocumentData, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts>;
   appendAttempt(scope: AccountingScope, data: AppendAttemptData, tx?: Prisma.TransactionClient): Promise<FiscalDocumentAttempt>;

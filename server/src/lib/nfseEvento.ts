@@ -47,6 +47,11 @@ export function parseEventoCancelamento(input: string | Buffer): EventoCancelame
   const infPedReg = obj(obj(infEvento!.pedRegEvento)?.infPedReg);
   if (!infPedReg) fail('infEvento/pedRegEvento/infPedReg não encontrado.');
   const e101101 = obj(infPedReg!.e101101);
+  // BE-INCR-DFE-EVENTOS (nó X11, item 8): o e105102 (Anexo II [3]) é gerado pelo sistema quando a substituta é
+  // autorizada — não é o cancelamento do emitente; quem o registra é a substituição.
+  if (!e101101 && obj(infPedReg!.e105102)) {
+    fail('o evento é um cancelamento por substituição (e105102) — registre pela substituição.');
+  }
   if (!e101101) fail('o evento não é um cancelamento (e101101 ausente).');
 
   const chNFSe = txt(infPedReg!.chNFSe);

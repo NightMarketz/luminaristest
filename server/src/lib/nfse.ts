@@ -40,6 +40,8 @@ export interface ParsedNfse {
     tpRetISSQN: '1' | '2'; // [311]
     pAliqBp?: number; // [312]
     ibsCbs?: { cst: string; cClassTrib: string }; // [406]/[407]
+    /** BE-INCR-DFE-EVENTOS (nó X11, item 10) — grupo `infDPS/subst` (Anexo I [113]–[116]): a nota substituiu outra. */
+    subst?: { chSubstda: string; cMotivo: string; xMotivo?: string };
   };
 }
 
@@ -130,6 +132,17 @@ export function parseNfseAutorizada(input: string | Buffer): ParsedNfse {
   const desc = obj(vals?.vDescCondIncond);
   const tribMun = obj(obj(vals?.trib)?.tribMun);
   const gIBSCBS = obj(obj(obj(obj(dpsInf!.IBSCBS)?.valores)?.trib)?.gIBSCBS);
+  const substNode = obj(dpsInf!.subst);
+  let subst: ParsedNfse['dps']['subst'];
+  if (substNode) {
+    // [114] TSChaveNFSe 50 dígitos · [115] XSD TSCodJustSubst (01|02|03|04|05|99 — o XSD vence a planilha) · [116] 0-1
+    const chSubstda = req(substNode, 'chSubstda', `${P}/subst`);
+    if (!/^\d{50}$/.test(chSubstda)) fail(`${P}/subst/chSubstda "${chSubstda}" fora do formato de 50 dígitos.`);
+    const cMotivo = req(substNode, 'cMotivo', `${P}/subst`);
+    if (!['01', '02', '03', '04', '05', '99'].includes(cMotivo)) fail(`${P}/subst/cMotivo "${cMotivo}" fora do TSCodJustSubst.`);
+    const xMotivo = txt(substNode.xMotivo);
+    subst = { chSubstda, cMotivo, ...(xMotivo ? { xMotivo } : {}) };
+  }
 
   const tomaCnpj = txt(toma?.CNPJ);
   const tomaCpf = txt(toma?.CPF);
@@ -168,6 +181,7 @@ export function parseNfseAutorizada(input: string | Buffer): ParsedNfse {
       tpRetISSQN: tpRet as '1' | '2',
       pAliqBp: bpOpt(tribMun, 'pAliq', `${P}/valores/trib/tribMun`),
       ...(gIBSCBS ? { ibsCbs: { cst: txt(gIBSCBS.CST), cClassTrib: txt(gIBSCBS.cClassTrib) } } : {}),
+      ...(subst ? { subst } : {}),
     },
   };
 }

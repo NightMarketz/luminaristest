@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { queryBoolean } from './queryPrimitives';
+import { SUBST_MOTIVOS, refineSubstMotivo } from './DpsPayloadDto';
 
 /**
  * BE-INCR-DFE (nó X10b, BRIEF §3 "Zod — entradas HTTP" + item 39) — DTOs `.strict()` das rotas de
@@ -82,3 +83,32 @@ export type RejeicaoManualInput = z.infer<typeof RejeicaoManualSchema>;
  * bug); o texto gravado é o `xMotivo` do XML (transcrição §7).
  */
 export const CancelamentoManualSchema = CancelFiscalDocumentSchema;
+
+/**
+ * BE-INCR-DFE-EVENTOS (nó X11, itens 11 e 17) — POST …/documents/:id/substituir. `cMotivo` é o `TSCodJustSubst` do
+ * XSD 1.01 (string de 2, nunca número — Anexo I [115]); `xMotivo` 15–255 ([116]), obrigatório com 99 (RN E0078).
+ */
+export const SubstituirFiscalDocumentSchema = z
+  .object({
+    unitId: z.string().min(1),
+    cMotivo: z.enum(SUBST_MOTIVOS),
+    xMotivo: z.string().min(15).max(255).optional(),
+  })
+  .strict()
+  .superRefine(refineSubstMotivo);
+export type SubstituirFiscalDocumentInput = z.infer<typeof SubstituirFiscalDocumentSchema>;
+
+/**
+ * BE-INCR-DFE-EVENTOS (nó X11, itens 3–4) — contrato de SAÍDA da janela de eventos na `FiscalDocumentView`.
+ * ISO 8601 com fuso ou `null`. `substituirTeto` = base + 2 anos (Anexo I [114], único limite nacional);
+ * `cancelarAte`/`substituirAte` só existem com o prazo do município configurado no perfil (F-EVT-1 a).
+ */
+export const JanelaEventosSchema = z
+  .object({
+    cancelarAte: z.string().datetime({ offset: true }).nullable(),
+    substituirAte: z.string().datetime({ offset: true }).nullable(),
+    substituirTeto: z.string().datetime({ offset: true }).nullable(),
+    fonte: z.enum(['perfil', 'desconhecida']),
+  })
+  .strict();
+export type JanelaEventos = z.infer<typeof JanelaEventosSchema>;

@@ -1478,6 +1478,10 @@ model FiscalProfile {
   pTotTribSNCent                      Int? // [335] só SIMPLES
   emissaoForaDoMes                    String    @default("AVISAR") // 5f — AVISAR | BLOQUEAR — pendente contador
   d1fConfirmado                       Boolean   @default(false) // item 7 — PUT explícito do operador retira os campos D1f de pendingExternalValidation
+  // BE-INCR-DFE-EVENTOS (nó X11, item 2; F-EVT-1 a): prazos do MUNICÍPIO (nível 3) — null = desconhecido; só avisam, nunca bloqueiam
+  cancelPrazoDias                     Int? // Anexo II RN E0822 [28] — prazo de cancelamento, "conforme parametrização do município emissor"
+  substPrazoDias                      Int? // Anexo I RN E0050 [173] — prazo de substituição; ≤ 730 (Anexo I [114] "Prazo máximo parametrizável é 2 anos")
+  prazoFonte                          String? // onde o operador achou o número (link/norma municipal)
   createdById                         String?
   updatedById                         String?
   createdAt                           DateTime  @default(now())
@@ -1693,6 +1697,13 @@ model FiscalDocument {
   xmlAttachmentId  String? // DocumentAttachment (targetType FISCAL_DOCUMENT)
   pdfAttachmentId  String?
   sourceDocumentId String? // após AUTHORIZED em producao (ADR D7)
+  // BE-INCR-DFE-EVENTOS (nó X11, PR-1)
+  nfseDhProc              DateTime? // item 1 — infNFSe/dhProc [19]: instante fiscal da nota, base da janela (F-EVT-2 b)
+  substitutesDocumentId   String? // item 11 — esta é a substituta de … (DPS com o grupo infDPS/subst, Anexo I [113])
+  substitutedByDocumentId String? // item 14 — esta foi substituída por … (e105102, Anexo II [3])
+  substMotivo             String? // TSCodJustSubst 01|02|03|04|05|99 (Anexo I [115]) — domínio ≠ cancelMotivo (TSCodJustCanc 1|2|9)
+  substReason             String? // xMotivo 15–255 (Anexo I [116])
+  cancelEventAttachmentId String? // item 7 — XML do evento e101101 (DocumentAttachment, só em produção)
   createdById      String?
   createdAt        DateTime                @default(now())
   updatedAt        DateTime                @updatedAt
@@ -1702,6 +1713,7 @@ model FiscalDocument {
   @@unique([userId, unitId, saleKey, kind, cTribNac])
   @@index([userId, unitId, status])
   @@index([userId, unitId, saleId])
+  @@index([userId, unitId, substitutesDocumentId])
   @@map("fiscal_documents")
 }
 

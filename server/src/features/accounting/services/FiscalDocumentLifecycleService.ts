@@ -1,4 +1,9 @@
 import type { FiscalDocument, FiscalDocumentPendingAttachment } from 'generated/prisma';
+import { Prisma } from 'generated/prisma';
+import { SubstituicaoBloqueadaError } from '../../../lib/errors';
+import { foraDaJanela } from '../models/janelaEventos';
+import { invariantesSubstituicao } from '../models/substituicaoInvariantes';
+import type { DpsPayload, SubstMotivo } from '../dtos/DpsPayloadDto';
 import {
   PendingAttachmentDrainSummarySchema,
   PendingAttachmentResultSchema,
@@ -55,6 +60,9 @@ function isDfeSkippableError(error: unknown): boolean {
 }
 
 const PENDING_STATUSES: readonly FiscalDocumentStatus[] = ['SENT', 'PROCESSING'];
+
+/** BE-INCR-DFE-EVENTOS itens 5 e 11 (F-EVT-1 a): fora da janela configurada — aviso na resposta, nunca bloqueio. */
+export const AVISO_FORA_DA_JANELA = 'fora_da_janela_configurada';
 
 /** A guarda `whenStatusIn` do repositório perdeu a corrida (outro pedido mudou o status antes) ⇒ 409, nunca 500. */
 async function raceToConflict<T>(fn: () => Promise<T>): Promise<T> {
@@ -248,7 +256,11 @@ export class FiscalDocumentLifecycleService {
    * nem o razão (ADR §7 item 5) — só o documento fiscal e, se autorizado em produção, a
    * proveniência que ele havia anexado (F-DFE-18, soft-delete, sem apagar lançamento nenhum).
    */
-  async cancelar(scope: AccountingScope, documentId: string, input: { cMotivo: 1 | 2 | 9; xMotivo: string }): Promise<FiscalDocumentView> {
+  async cancelar(
+    scope: AccountingScope,
+    documentId: string,
+    input: { cMotivo: 1 | 2 | 9; xMotivo: string },
+  ): Promise<FiscalDocumentView & { avisos: string[] }> {
     if (!this.policy.canCancelFiscalDocument(scope)) {
       throw new ForbiddenError('Você não tem permissão para cancelar documento fiscal.');
     }
@@ -268,6 +280,11 @@ export class FiscalDocumentLifecycleService {
       );
     }
 
+    // BE-INCR-DFE-EVENTOS item 5 (F-EVT-1 a): fora da janela CONFIGURADA a operação segue para a porta e só avisa —
+    // quem recusa é o fisco (E0822 → OUT_OF_WINDOW, item 6). O prazo é parâmetro do município (Anexo II RN E0822 [28]).
+    const { janela } = await this.emissionService.getById(scope, documentId);
+    const avisos = foraDaJanela(janela.cancelarAte, new Date()) ? [AVISO_FORA_DA_JANELA] : [];
+
     const partnerRef = doc.partnerRef ?? attemptRef(doc.id, doc.currentAttemptNo);
     const result = await port.cancelar(partnerRef, input);
 
@@ -275,7 +292,8 @@ export class FiscalDocumentLifecycleService {
       throw new ConflictError('prazo do município (E0822): fora da janela de cancelamento.', 'DFE_CANCEL_OUT_OF_WINDOW');
     }
     if (result.status === 'REJECTED') {
-      const detail = result.errors.map((e) => e.message).join('; ') || 'sem detalhe do parceiro';
+      // item 6: o código do fisco (E0823/E0824/E0827/E0840…) vai na mensagem, não só o texto.
+      const detail = result.errors.map((e) => `${e.code}: ${e.message}`).join('; ') || 'sem detalhe do parceiro';
       throw new ConflictError(`Cancelamento rejeitado pelo parceiro: ${detail}`, 'DFE_CANCEL_REJECTED');
     }
     if (result.status === 'PROCESSING') {
@@ -286,18 +304,25 @@ export class FiscalDocumentLifecycleService {
 
     // CANCELLED
     await raceToConflict(() => this.markCancelled(scope, doc, input.cMotivo, input.xMotivo));
-    return this.emissionService.getById(scope, documentId);
+    return { ...(await this.emissionService.getById(scope, documentId)), avisos };
   }
 
   /**
    * Ramo CANCELLED (item 29), compartilhado com o cancelamento manual (BE-INCR-DFE-MANUAL item 13). Status re-checado
    * DENTRO da escrita (`whenStatusIn`). Nunca toca venda nem razão; só aposenta a proveniência.
+   * `cancelledAt`: no manual, o `dhProc` do evento (BE-INCR-DFE-EVENTOS item 7); por máquina, o instante do registro.
    */
-  private async markCancelled(scope: AccountingScope, doc: FiscalDocument, cMotivo: 1 | 2 | 9, xMotivo: string): Promise<void> {
+  private async markCancelled(
+    scope: AccountingScope,
+    doc: FiscalDocument,
+    cMotivo: 1 | 2 | 9,
+    xMotivo: string,
+    cancelledAt: Date = new Date(),
+  ): Promise<void> {
     await this.repo.runTransaction(async (tx) => {
       await this.repo.transition(scope, doc.id, {
         status: 'CANCELLED',
-        cancelledAt: new Date(),
+        cancelledAt,
         cancelMotivo: cMotivo,
         cancelReason: xMotivo,
         saleKey: `cancelled:${doc.id}:${doc.saleId}`, // rename-on-cancel libera o @@unique (F-DFE-16 b)
@@ -397,6 +422,19 @@ export class FiscalDocumentLifecycleService {
     if (ambienteNota !== doc.ambiente) {
       identidade.push(`ambiente: nota de ${ambienteNota} (tpAmb=${nota.tpAmb}), documento de ${doc.ambiente}`);
     }
+    // BE-INCR-DFE-EVENTOS item 13 (fecha L9): (i) o documento substituto exige a nota que substitui a original pedida,
+    // pelo motivo pedido (Anexo I [114]/[115]); (ii) o documento comum exige `subst` AUSENTE.
+    if (doc.substitutesDocumentId) {
+      const original = await this.repo.findById(scope, doc.substitutesDocumentId);
+      const subst = nota.dps.subst;
+      if (!subst || !original?.chaveOuCodigo || subst.chSubstda !== original.chaveOuCodigo) {
+        identidade.push('subst: a nota não substitui a original deste pedido (chSubstda ≠ chave da original)');
+      } else if (subst.cMotivo !== doc.substMotivo) {
+        identidade.push(`subst: cMotivo da nota (${subst.cMotivo}) ≠ o pedido (${doc.substMotivo ?? 'ausente'})`);
+      }
+    } else if (nota.dps.subst) {
+      identidade.push('subst: a nota do portal substituiu outra — use a substituição');
+    }
     if (identidade.length) {
       throw new AppError(`dfe_identidade_divergente: ${identidade.join('; ')}`, 422, 'DFE_IDENTIDADE_DIVERGENTE');
     }
@@ -425,6 +463,7 @@ export class FiscalDocumentLifecycleService {
         },
         xml,
         ...(pdf ? { pdf } : {}),
+        dhProc: nota.dhProc, // BE-INCR-DFE-EVENTOS item 1: o instante fiscal, não o do upload
         errors: [],
       },
       {
@@ -491,8 +530,138 @@ export class FiscalDocumentLifecycleService {
         'DFE_EVENTO_DIVERGENTE',
       );
     }
-    await raceToConflict(() => this.markCancelled(scope, doc, evento.cMotivo, evento.xMotivo));
+    // BE-INCR-DFE-EVENTOS item 7: `cancelledAt` = o instante do fisco (infEvento/dhProc), não a hora do upload.
+    await raceToConflict(() => this.markCancelled(scope, doc, evento.cMotivo, evento.xMotivo, new Date(evento.dhProc)));
+
+    // Item 7: a prova (XML do e101101) vira anexo DEPOIS da tx do CANCELLED — mesma ordem "transição antes, anexo
+    // depois" do GAP-MAP `applyResult` (28/09). Só em produção (ADR §9.2 item 5). Falha aqui deixa o documento
+    // CANCELLED sem anexo (log), nunca desfaz o cancelamento.
+    if (doc.ambiente === 'producao') {
+      try {
+        const att = await this.documentAttachmentService.upload(scope, {
+          targetType: 'FISCAL_DOCUMENT',
+          targetId: doc.id,
+          fileName: `${doc.id}.evento-101101.xml`,
+          mimeType: 'application/xml',
+          buffer: eventoXml,
+        });
+        await this.repo.transition(scope, doc.id, { status: 'CANCELLED', whenStatusIn: ['CANCELLED'], cancelEventAttachmentId: att.id });
+      } catch (error) {
+        logger.warn('dfe_cancelamento_manual: anexo do XML do evento falhou — documento CANCELLED sem a prova anexada', {
+          documentId: doc.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
     return this.emissionService.getById(scope, documentId);
+  }
+
+  /**
+   * POST …/documents/:id/substituir (BE-INCR-DFE-EVENTOS, nó X11, item 11). Substituir = emitir uma DPS NOVA com o grupo
+   * `infDPS/subst` apontando a chave da original (Guia do Emissor Web v1.2 §5.2; Anexo II [27]–[29]); o `e105102` é
+   * gerado pelo sistema quando a substituta é autorizada — o emitente não o envia (Anexo II [3]).
+   *
+   * Guardas, TODAS antes de qualquer escrita, cada uma com a RN que espelha:
+   * - NF-e não tem substituição neste sentido (BRIEF §7) e o adaptador tem de declarar `substituir` (item 16) → 409
+   *   `DFE_SUBST_NAO_SUPORTADA`;
+   * - status ∈ AUTHORIZED | AUTHORIZED_DIVERGENT (E0046, Anexo I [172]: cancelada não substitui) → 409 `DFE_STATUS_INVALIDO`;
+   * - um substituto por original (o rejeitado sai por `reenviar`) → 409 `DFE_SUBSTITUICAO_EXISTENTE`;
+   * - agora ≤ `substituirTeto` (Anexo I [114], 2 anos) → 409 `DFE_SUBST_FORA_DO_TETO`;
+   * - fora de `substituirAte` e `cMotivo ∉ {01, 02}` (E0050 [173], exceção do Simples) → só aviso (F-EVT-1 a);
+   * - E0068 (análise fiscal pendente, [179]) — coberto pela guarda de status: o status `CANCEL_ANALYSIS` só nasce no
+   *   PR-3 (F-EVT-4 b);
+   * - invariantes nível 2 (E0060/E0061, item 12) → 422 `SUBSTITUICAO_BLOQUEADA`.
+   * Policy: `canEmitFiscalDocument` E `canCancelFiscalDocument` (emite uma nota e cancela outra).
+   */
+  async substituir(
+    scope: AccountingScope,
+    documentId: string,
+    input: { cMotivo: SubstMotivo; xMotivo?: string },
+  ): Promise<FiscalDocumentView & { avisos: string[] }> {
+    if (!this.policy.canEmitFiscalDocument(scope) || !this.policy.canCancelFiscalDocument(scope)) {
+      throw new ForbiddenError('Você não tem permissão para substituir documento fiscal (emitir e cancelar).');
+    }
+    const doc = await this.repo.findById(scope, documentId);
+    if (!doc) throw new ValidationError(`Documento fiscal '${documentId}' não encontrado.`, null);
+    const selection = selectDfeEmissor(process.env);
+    if (doc.kind !== 'NFSE' || !selection.port.capabilities.substituir) {
+      throw new ConflictError(
+        `dfe_subst_nao_suportada: ${doc.kind !== 'NFSE' ? 'só NFS-e tem substituição (BRIEF §7)' : `o adaptador '${selection.port.name}' não substitui`}.`,
+        'DFE_SUBST_NAO_SUPORTADA',
+      );
+    }
+    if (!AUTHORIZED_STATUSES.includes(doc.status as FiscalDocumentStatus)) {
+      throw new ConflictError(
+        `dfe_status_invalido: só documento autorizado é substituído (E0046 — status atual ${doc.status}).`,
+        'DFE_STATUS_INVALIDO',
+      );
+    }
+    if (await this.repo.findSubstituteOf(scope, doc.id)) {
+      throw new ConflictError('dfe_substituicao_existente: esta nota já tem um documento substituto.', 'DFE_SUBSTITUICAO_EXISTENTE');
+    }
+    // LACUNA DE SPEC (registrada no retorno dfe-eventos-pr1): o item 14 diz "substituta assume saleKey = saleId"; a nota
+    // de saldo VENCIDO tem saleKey = chave do movimento (BE-INCR-PACOTE-VALIDADE) e o re-drive procura por ela. A spec não
+    // cobre o caso — recusa sem escrita até o dono decidir.
+    if (doc.saleKey !== doc.saleId) {
+      throw new ConflictError(
+        'dfe_subst_nao_suportada: substituição de NFS-e de saldo de pacote vencido não está coberta pela spec (lacuna registrada).',
+        'DFE_SUBST_NAO_SUPORTADA',
+      );
+    }
+    // LACUNA DE SPEC (registrada): a substituta sai pela porta do env; a spec não diz o que fazer quando o ambiente do
+    // env difere do da original (E0065 é do fisco). Recusa sem escrita, como o reenvio (F-AMB-2 a).
+    if (selection.ambiente !== doc.ambiente) {
+      throw new ValidationError('substituicao_bloqueada: ambiente_divergente', {
+        faltantes: [`documento em ${doc.ambiente}, emissão configurada em ${selection.ambiente ?? 'nenhum'}`],
+      });
+    }
+
+    const { janela } = await this.emissionService.getById(scope, documentId);
+    const agora = new Date();
+    if (foraDaJanela(janela.substituirTeto, agora)) {
+      throw new ConflictError(
+        `dfe_subst_fora_do_teto: o prazo máximo de substituição é 2 anos (Anexo I [114]) — teto ${janela.substituirTeto}.`,
+        'DFE_SUBST_FORA_DO_TETO',
+      );
+    }
+    const avisos = foraDaJanela(janela.substituirAte, agora) && input.cMotivo !== '01' && input.cMotivo !== '02' ? [AVISO_FORA_DA_JANELA] : [];
+
+    // Mesmo caminho do reenvio: venda + perfil ATUAIS (item 11).
+    const reassembled = await this.emissionService.reassembleGroupForReenvio(
+      scope,
+      doc.saleId,
+      doc.kind as FiscalDocumentKind,
+      doc.cTribNac,
+      doc.ambiente as DfeAmbiente,
+      doc.saleKey,
+    );
+    const faltantes = invariantesSubstituicao(JSON.parse(this.currentAttempt(doc).payloadJson), reassembled.payload);
+    if (faltantes.length) throw new SubstituicaoBloqueadaError(faltantes);
+
+    const payload: DpsPayload = {
+      ...reassembled.payload,
+      infDPS: {
+        ...reassembled.payload.infDPS,
+        subst: { chSubstda: doc.chaveOuCodigo ?? '', cMotivo: input.cMotivo, ...(input.xMotivo ? { xMotivo: input.xMotivo } : {}) },
+      },
+    };
+    let created: FiscalDocumentWithAttempts;
+    try {
+      created = await this.emissionService.createSubstitute(scope, doc, {
+        payload,
+        vServCents: reassembled.vServCents,
+        cnpjEmitente: reassembled.cnpjEmitente,
+        partnerAccountRef: reassembled.partnerAccountRef,
+        subst: { cMotivo: input.cMotivo, xMotivo: input.xMotivo ?? null },
+      });
+    } catch (e) {
+      // Corrida de dois pedidos: o @@unique da saleKey temporária `subst:<id>:<saleId>` fecha (F-EVT-3 a).
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+        throw new ConflictError('dfe_substituicao_existente: esta nota já tem um documento substituto.', 'DFE_SUBSTITUICAO_EXISTENTE');
+      }
+      throw e;
+    }
+    return { ...(await this.emissionService.getById(scope, created.id)), avisos };
   }
 
   /** Documento do modo manual, no escopo, num dos status esperados — senão 404/409 nomeados. */
@@ -606,8 +775,48 @@ export class FiscalDocumentLifecycleService {
 
     const divergente = manual?.releitura?.releitura.status === 'DIVERGENTE';
     const chaveOuCodigo = result.chaveOuCodigo;
+    const nfseDhProc = result.dhProc ? new Date(result.dhProc) : null;
+    let originalSourceARetirar = null as string | null; // atribuída dentro da tx (o `as` evita o estreitamento para null)
     const pending = await this.repo.runTransaction(async (tx) => {
       if (manual?.insideTx) await manual.insideTx(tx);
+      // BE-INCR-DFE-EVENTOS item 14 (F-EVT-3 a, F-EVT-6 a): a substituta autorizada cancela a original NA MESMA tx (o
+      // fisco gerou o e105102 — Anexo II [3], Guia §5.2). Status da original lido DENTRO da tx (gate autoritativo).
+      // Ordem: a original libera a saleKey ANTES de a substituta assumir o saleId (@@unique).
+      if (doc.substitutesDocumentId) {
+        const original = await this.repo.findById(scope, doc.substitutesDocumentId, tx);
+        if (!original) throw new Error(`fiscal_document_not_found: ${doc.substitutesDocumentId}`);
+        if (AUTHORIZED_STATUSES.includes(original.status as FiscalDocumentStatus)) {
+          await this.repo.transition(
+            scope,
+            original.id,
+            {
+              status: 'CANCELLED',
+              cancelledAt: nfseDhProc ?? new Date(),
+              saleKey: `cancelled:${original.id}:${original.saleId}`,
+              substitutedByDocumentId: doc.id,
+              whenStatusIn: AUTHORIZED_STATUSES,
+            },
+            tx,
+          );
+          originalSourceARetirar = original.sourceDocumentId;
+        } else {
+          // F-EVT-6 (a): o fato do fisco vence — a original fica como está, só ganha o vínculo; a view acusa
+          // `substituicao_sobre_cancelada`.
+          await this.repo.transition(
+            scope,
+            original.id,
+            { status: original.status as FiscalDocumentStatus, substitutedByDocumentId: doc.id, whenStatusIn: [original.status as FiscalDocumentStatus] },
+            tx,
+          );
+        }
+        await this.auditService.append(tx, scope, {
+          actorUserId: scope.actorUserId,
+          eventType: 'dfe.substituted',
+          targetType: 'fiscal_document',
+          targetId: original.id,
+          payload: { documentId: original.id, substituteDocumentId: doc.id, cMotivo: doc.substMotivo ?? '' },
+        });
+      }
       await this.repo.transition(
         scope,
         doc.id,
@@ -625,6 +834,8 @@ export class FiscalDocumentLifecycleService {
           vIbsCents: result.valores?.vIbsCents != null ? BigInt(result.valores.vIbsCents) : undefined,
           vCbsCents: result.valores?.vCbsCents != null ? BigInt(result.valores.vCbsCents) : undefined,
           authorizedAt: new Date(),
+          nfseDhProc, // BE-INCR-DFE-EVENTOS item 1
+          ...(doc.substitutesDocumentId ? { saleKey: doc.saleId } : {}), // item 14 (F-EVT-3 a)
           xmlAttachmentId: null,
           pdfAttachmentId: null,
           sourceDocumentId: null,
@@ -681,6 +892,20 @@ export class FiscalDocumentLifecycleService {
         tx,
       );
     });
+
+    // BE-INCR-DFE-EVENTOS item 14: depois da tx, aposenta a proveniência da original cancelada pela substituição (a da
+    // substituta segue o caminho já existente abaixo). Falha não propaga — a substituição está commitada.
+    if (originalSourceARetirar) {
+      try {
+        await this.postingService.retireSourceDocument(scope, originalSourceARetirar, `dfe_substituted:${doc.substMotivo ?? ''}`);
+      } catch (error) {
+        logger.error('dfe_substituted: falha ao aposentar a proveniência da original — ação manual', {
+          documentId: doc.substitutesDocumentId,
+          sourceDocumentId: originalSourceARetirar,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
 
     // BE-INCR-DFE-ANEXO-PENDENTE item 4 (F-PA-4 a): caminho rápido inline. Falha NÃO propaga — a autorização está
     // commitada e a pendência (gravada na tx acima) fica para a varredura do DfePollScheduler.

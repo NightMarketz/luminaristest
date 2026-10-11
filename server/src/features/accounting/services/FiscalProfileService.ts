@@ -48,6 +48,10 @@ export const D1F_FIELDS = [
   'pTotTribFedCent', // Lei 12.741 / IBPT (linha nova do pedido)
   'pTotTribEstCent',
   'pTotTribMunCent',
+  // BE-INCR-DFE-EVENTOS (nó X11, item 2; F-EVT-1 a) — "mesmo padrão dos campos D1f": prazo do município (PV-1), nunca
+  // bloqueia emissão.
+  'cancelPrazoDias',
+  'substPrazoDias',
 ] as const;
 
 export interface FiscalProfileEmissaoStatus {
@@ -100,6 +104,10 @@ export interface FiscalProfileView extends CostRegime {
   pTotTribMunCent: number | null;
   pTotTribSNCent: number | null;
   emissaoForaDoMes: string;
+  // BE-INCR-DFE-EVENTOS (nó X11, item 2)
+  cancelPrazoDias: number | null;
+  substPrazoDias: number | null;
+  prazoFonte: string | null;
   d1fConfirmado: boolean;
   emissao: FiscalProfileEmissaoStatus;
   updatedAt: string;
@@ -435,6 +443,9 @@ export class FiscalProfileService {
       pTotTribMunCent: row.pTotTribMunCent,
       pTotTribSNCent: row.pTotTribSNCent,
       emissaoForaDoMes: row.emissaoForaDoMes,
+      cancelPrazoDias: row.cancelPrazoDias,
+      substPrazoDias: row.substPrazoDias,
+      prazoFonte: row.prazoFonte,
       d1fConfirmado: row.d1fConfirmado,
       emissao: fiscalProfileEmissaoStatus(row, regimeEmpresa),
       updatedAt: row.updatedAt.toISOString(),

@@ -36,6 +36,8 @@ import { centsFromDb } from '../models/money';
 import { findLc116, listaLc116De, type ListaLc116 } from '../models/lc116ListaNacional';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import type { ReleituraJson } from '../../../lib/nfseReadback';
+import type { JanelaEventos } from '../dtos/FiscalDocumentDto';
+import { janelaEventos } from '../models/janelaEventos';
 
 export const DFE_EMITTED_EVENT = 'dfe.emitted';
 
@@ -90,6 +92,11 @@ export interface FiscalDocumentView {
   pdfAttachmentId: string | null;
   /** FE-INCR-DFE PR-1 (item 10) — releitura da tentativa corrente (retorno manual); `null` sem retorno ou sem releitura. Sem PII (toReleituraJson). */
   releitura: ReleituraJson['releitura'] | null;
+  /** BE-INCR-DFE-EVENTOS (nó X11, item 4) — janela calculada (item 3) e vínculos da substituição. */
+  janela: JanelaEventos;
+  substitutesDocumentId: string | null;
+  substitutedByDocumentId: string | null;
+  substMotivo: string | null;
 }
 
 /** `resultJson` nulo, inválido ou sem `releitura` ⇒ `null` (nunca lança — a view não pode quebrar por dado legado). */
@@ -214,7 +221,8 @@ export class FiscalDocumentEmissionService {
     for (const group of assembly.groups) {
       created.push(await this.createAndSend(scope, selection, kind, { ...assembly, saleId, group }));
     }
-    return created.map((d) => this.toView(d));
+    const prazos = await this.fiscalProfileService.get(scope);
+    return created.map((d) => this.toView(d, [], prazos));
   }
 
   /**
@@ -263,6 +271,40 @@ export class FiscalDocumentEmissionService {
   }
 
   /**
+   * BE-INCR-DFE-EVENTOS (nó X11, item 11) — cria o documento SUBSTITUTO pelo MESMO caminho da emissão (`createAndSend`:
+   * SENT + tentativa 1 + `dfe.emitted` na tx; numeração NOVA quando local — é outra DPS, RN E0010; porta pós-commit).
+   * `saleKey` temporária `subst:<originalId>:<saleId>` (F-EVT-3 a): o `@@unique` fecha a corrida de dois pedidos e a
+   * substituta só assume o `saleId` na tx da autorização (item 14). As guardas são de quem chama
+   * (`FiscalDocumentLifecycleService.substituir`); aqui só se monta e persiste.
+   */
+  async createSubstitute(
+    scope: AccountingScope,
+    original: FiscalDocument,
+    args: {
+      payload: DpsPayload;
+      vServCents: number;
+      cnpjEmitente: string;
+      partnerAccountRef: string | null;
+      subst: { cMotivo: string; xMotivo: string | null };
+    },
+  ): Promise<FiscalDocumentWithAttempts> {
+    const selection = selectDfeEmissor(process.env);
+    const { infDPS } = args.payload;
+    return this.createAndSend(scope, selection, original.kind as FiscalDocumentKind, {
+      saleId: original.saleId,
+      saleKey: `subst:${original.id}:${original.saleId}`,
+      group: { cTribNac: original.cTribNac, vServCents: args.vServCents, payload: args.payload },
+      anchorEntryId: original.anchorEntryId,
+      serie: infDPS.serie,
+      dCompet: infDPS.dCompet,
+      tpRetISSQN: infDPS.valores.trib.tribMun.tpRetISSQN,
+      cnpjEmitente: args.cnpjEmitente,
+      partnerAccountRef: args.partnerAccountRef,
+      substitutes: { documentId: original.id, cMotivo: args.subst.cMotivo, xMotivo: args.subst.xMotivo },
+    });
+  }
+
+  /**
    * Cria o documento em SENT + tentativa 1 + `dfe.emitted` numa tx e chama a porta PÓS-COMMIT (extraído do
    * laço de `emit`, sem mudança de comportamento, para servir também a `emitPackageExpiry`).
    */
@@ -280,6 +322,8 @@ export class FiscalDocumentEmissionService {
       tpRetISSQN: number;
       cnpjEmitente: string;
       partnerAccountRef: string | null;
+      /** BE-INCR-DFE-EVENTOS (item 11) — só no documento substituto. */
+      substitutes?: { documentId: string; cMotivo: string; xMotivo: string | null };
     },
   ): Promise<FiscalDocumentWithAttempts> {
     const { group } = args;
@@ -316,6 +360,13 @@ export class FiscalDocumentEmissionService {
           vServCents: BigInt(group.vServCents),
           tpRetISSQN: args.tpRetISSQN,
           payloadJson: JSON.stringify(payload),
+          ...(args.substitutes
+            ? {
+                substitutesDocumentId: args.substitutes.documentId,
+                substMotivo: args.substitutes.cMotivo,
+                substReason: args.substitutes.xMotivo,
+              }
+            : {}),
         },
         tx,
       );
@@ -420,6 +471,8 @@ export class FiscalDocumentEmissionService {
     const salesTable = await dynamicTableRepo.findTableByInternalName(scope.ownerUserId, 'sales');
     const saleStatusCache = new Map<string, string | undefined>();
     const siblingsCache = new Map<string, FiscalDocument[]>(siblingsSeed ?? []);
+    // BE-INCR-DFE-EVENTOS (item 3): os prazos do município vêm do perfil da unidade (F-EVT-1 a).
+    const prazos = docs.length ? await this.fiscalProfileService.get(scope) : null;
     const views: FiscalDocumentView[] = [];
     for (const doc of docs) {
       if (!saleStatusCache.has(doc.saleId)) {
@@ -443,8 +496,16 @@ export class FiscalDocumentEmissionService {
       if (doc.status === 'CANCELLED') {
         const hasReplacement = siblings.some((d) => d.id !== doc.id && d.cTribNac === doc.cTribNac && d.status !== 'CANCELLED');
         if (!hasReplacement) pendencias.push('cancelled_without_replacement');
+        // BE-INCR-DFE-EVENTOS item 14 / F-EVT-6 (a): o fisco autorizou a substituta de uma nota que o Luminaris já tinha
+        // como cancelada pelo emitente (cancelMotivo do e101101 gravado) — o registro local está errado ou é de outra nota.
+        if (doc.substitutedByDocumentId && doc.cancelMotivo != null) pendencias.push('substituicao_sobre_cancelada');
       }
-      views.push(this.toView(doc, pendencias));
+      // BE-INCR-DFE-EVENTOS item 15: a substituta foi rejeitada e a original segue viva — o operador reenvia a substituta.
+      if (AUTHORIZED_STATUSES.includes(doc.status as FiscalDocumentStatus)) {
+        const substituta = siblings.find((d) => d.substitutesDocumentId === doc.id);
+        if (substituta?.status === 'REJECTED') pendencias.push('substituicao_rejeitada');
+      }
+      views.push(this.toView(doc, pendencias, prazos));
     }
     return views;
   }
@@ -968,7 +1029,11 @@ export class FiscalDocumentEmissionService {
       .reduce((sum, p) => sum + centsFromDb(side === 'debit' ? p.debitCents : p.creditCents), 0);
   }
 
-  private toView(doc: FiscalDocumentWithAttempts, pendencias: string[] = []): FiscalDocumentView {
+  private toView(
+    doc: FiscalDocumentWithAttempts,
+    pendencias: string[] = [],
+    prazos: { cancelPrazoDias: number | null; substPrazoDias: number | null } | null = null,
+  ): FiscalDocumentView {
     return {
       id: doc.id,
       kind: doc.kind,
@@ -1004,6 +1069,10 @@ export class FiscalDocumentEmissionService {
       xmlAttachmentId: doc.xmlAttachmentId ?? null,
       pdfAttachmentId: doc.pdfAttachmentId ?? null,
       releitura: readReleitura(doc.attempts.find((a) => a.attemptNo === doc.currentAttemptNo)?.resultJson),
+      janela: janelaEventos({ nfseDhProc: doc.nfseDhProc ?? null }, prazos),
+      substitutesDocumentId: doc.substitutesDocumentId ?? null,
+      substitutedByDocumentId: doc.substitutedByDocumentId ?? null,
+      substMotivo: doc.substMotivo ?? null,
     };
   }
 }

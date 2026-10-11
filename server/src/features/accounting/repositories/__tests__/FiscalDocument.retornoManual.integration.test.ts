@@ -44,7 +44,7 @@ function dps(vServ: string, tomaCpf = '12345678909') {
 describe('retorno manual → GET /documents/:id (FE-INCR-DFE PR-1, itens 10–13) — SQLite real', () => {
   const repo = new FiscalDocumentRepository();
   const policy = { canEmitFiscalDocument: () => true, canReadFiscalDocument: () => true, canCancelFiscalDocument: () => true };
-  const emission = new FiscalDocumentEmissionService(repo, null as never, null as never, null as never, null as never, policy as never, null as never, legalParamsSemente);
+  const emission = new FiscalDocumentEmissionService(repo, null as never, null as never, { get: async () => null } as never /* X11 item 3: prazos do perfil (sem perfil = janela desconhecida) */, null as never, policy as never, null as never, legalParamsSemente);
   const lifecycle = new FiscalDocumentLifecycleService(
     repo,
     emission,

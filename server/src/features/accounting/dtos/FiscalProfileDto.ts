@@ -105,6 +105,12 @@ const FiscalProfileFields = z
     pTotTribMunCent: pct2Cent.nullable().optional(),
     pTotTribSNCent: pct2Cent.nullable().optional(),
     emissaoForaDoMes: z.enum(EMISSAO_FORA_DO_MES).default('AVISAR'),
+    // BE-INCR-DFE-EVENTOS (nó X11, item 2; F-EVT-1 a): prazos do MUNICÍPIO — nível 3, a fonte primária não traz o
+    // número (Anexo II RN E0822 [28]; Anexo I RN E0050 [173]). null = desconhecido. Só informam a janela (item 3).
+    cancelPrazoDias: z.number().int().min(0).nullable().optional(),
+    // Anexo I [114] (obs. de chSubstda): "Prazo máximo parametrizável é 2 anos" ⇒ ≤ 730 dias.
+    substPrazoDias: z.number().int().min(0).max(730).nullable().optional(),
+    prazoFonte: z.string().min(1).max(500).nullable().optional(),
   })
   .strict();
 

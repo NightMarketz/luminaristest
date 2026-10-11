@@ -15,6 +15,7 @@ import {
   rejeicaoManualFiscalDocument,
   cancelamentoManualFiscalDocument,
   getFichaFiscalDocument,
+  substituirFiscalDocument,
 } from '../controllers/fiscalDocumentController';
 
 /**
@@ -37,6 +38,8 @@ router.get('/documents/:id', getFiscalDocument);
 router.post('/documents/:id/consultar', consultarFiscalDocument);
 router.post('/documents/:id/reenviar', reenviarFiscalDocument);
 router.post('/documents/:id/cancelar', cancelarFiscalDocument);
+// BE-INCR-DFE-EVENTOS (nó X11, item 11) — substituição de NFS-e (DPS nova com o grupo subst; o e105102 vem do fisco).
+router.post('/documents/:id/substituir', substituirFiscalDocument);
 // BE-INCR-DFE-MANUAL (itens 11–14) — modo manual: o retorno vem do portal público, por upload do XML.
 router.get('/documents/:id/ficha', getFichaFiscalDocument);
 router.post('/documents/:id/retorno-manual', retornoManualUpload, retornoManualFiscalDocument);
