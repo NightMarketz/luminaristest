@@ -85,16 +85,22 @@ export type SimplesDefisView = {
 
 ## 4. Pendente de validação externa
 
-- **Item 9 (doações eleitorais):** campos exatos — conferir na tela do módulo DEFIS do PGDAS-D (oráculo humano) ou em
+- **Item 9 (doações eleitorais) — nota de 12/10 (pesquisa colada pelo dono, conferida):** o STF declarou
+  inconstitucional a doação eleitoral de pessoa jurídica (ADI 4650, set/2015) — grau I (conhecimento, não relido na
+  fonte nesta sessão). Se confirmado, o campo só recebe valor de anos anteriores a 2016, e a DEFIS espelho (anos
+  apurados aqui) o deixa vazio: reforça o F-DM-4 (a). Campos exatos — conferir na tela do módulo DEFIS do PGDAS-D (oráculo humano) ou em
   versão do manual com texto legível.
 - **Oráculo do conjunto:** comparar com uma DEFIS real entregue (gate humano, como o X14-DAS).
 
 ## 5. Insumos ausentes
 
-- Presunção do IRPJ para atividades além de SERVICO/REVENDA (art. 15 Lei 9.249: 1,6%, 16% etc.) — não cadastradas;
+- Presunção do IRPJ para atividades além de SERVICO/REVENDA (IN RFB 1.700 art. 33 § 1º, conferido no corpus: 1,6%
+  combustível; 8% hospitalar, transporte de **carga**, imobiliária, empreitada com material; 16% demais transportes e
+  instituições financeiras; 32% serviços em geral) — não cadastradas;
   F-DM-1 (a) devolve `null` com alerta nesses casos.
-- Receita bruta anual **por atividade** a partir das apurações confirmadas: confirmar na execução se `SimplesApuracao`
-  guarda a decomposição por anexo/natureza (lido só o tipo `ApuracaoSimples`, não a persistência).
+- ~~Receita por atividade~~ **resolvido 12/10:** `SimplesApuracao.memoria` (Json) guarda o `ApuracaoSimples` inteiro
+  (`schema.prisma`, model `SimplesApuracao`), com `atividades[]` (receita + tributos, inclusive IRPJ). O IRPJ do
+  limite = soma da parcela IRPJ **calculada** das apurações CONFIRMED (o DAS oficial só tem o total).
 
 ## 6. Achados fora de escopo
 
