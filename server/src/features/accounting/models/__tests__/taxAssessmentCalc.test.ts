@@ -94,9 +94,9 @@ describe('Presumido trimestral (item 8) e LC 224 (item 9)', () => {
     expect(v(irpj, 'LC224_ACRESCIMO_SERVICO')).toBe(String(R(24_000)));
     expect(irpj.baseCents).toBe(R(664_000));
     expect(irpj.devidoCents).toBe(R(160_000));
-    // CSLL T01/2026: acréscimo 0 (IN 2.305 art. 3º II); o excedente é contado igual (P-2) → base 640.000 × 9% = 57.600
+    // CSLL T01/2026: fora da LC 224 (art. 3º II; F-E1-1 a) — sem linha de limite/excedente → base 640.000 × 9% = 57.600
     const csll = apurarAno({ T01: [2_000_000, 0] }, 'CSLL').T01;
-    expect(v(csll, 'LC224_EXCEDENTE')).toBe(String(R(750_000)));
+    expect(v(csll, 'LC224_EXCEDENTE')).toBeUndefined();
     expect(csll.devidoCents).toBe(R(57_600));
   });
 
@@ -209,6 +209,18 @@ describe('Presumido trimestral (item 8) e LC 224 (item 9)', () => {
     });
     expect(v(ano.T04, 'LC224_ACERTO_T04')).toBe('0');
   });
+
+  it('EMENDAS-BRIEF-2026-10-11 E1-1: CSLL de 2026 conta ¾ do limite (R$ 3.750.000,00 no ano; T02 sem sobra do T01)', () => {
+    // P&R LC 224 v5 item 13 e SC Disit/SRRF10 10010/2026: a CSLL só tem a LC 224 desde 01/04/2026, então o limite
+    // anual dela em 2026 é 3 × 1.250.000 = 3.750.000. Receita 1.500.000/trimestre: o IRPJ (controle) continua com
+    // 4 × 1.250.000 = 5.000.000; a CSLL do T04 tem de trazer 3.750.000 e a do T02 nenhuma sobra do T01.
+    const receitas: Record<PeriodoTrimestral, [number, number]> = { T01: [1_500_000, 0], T02: [1_500_000, 0], T03: [1_500_000, 0], T04: [1_500_000, 0] };
+    const irpj = apurarAno(receitas, 'IRPJ');
+    expect(v(irpj.T04, 'LC224_LIMITE_ANUAL')).toBe(String(R(5_000_000)));
+    const csll = apurarAno(receitas, 'CSLL');
+    expect(v(csll.T02, 'LC224_SOBRA_ANTERIOR')).toBe('0');
+    expect(v(csll.T04, 'LC224_LIMITE_ANUAL')).toBe(String(R(3_750_000)));
+  });
 });
 
 /**
@@ -276,7 +288,7 @@ describe('Presumido — 16% do prestador exclusivo (BE-INCR-TAX-PRESUMIDO-16)', 
 
   it('item 10 / F-P16-3 (b): flag + receita do trimestre acima do limite da LC 224 ⇒ 400 nos dois tributos; antes da LC 224, não', () => {
     expect(() => apurarAno({ T01: [1_300_000, 0] }, 'IRPJ', P16)).toThrow(/F-P16-3/);
-    expect(() => apurarAno({ T01: [1_300_000, 0] }, 'CSLL', P16)).toThrow(/F-P16-3/);
+    expect(() => apurarAno({ T02: [1_300_000, 0] }, 'CSLL', P16)).toThrow(/F-P16-3/); // CSLL só desde o T02/2026 (F-E1-1 a)
     expect(apurarAno({ T01: [1_300_000, 0] }, 'IRPJ', P16, [], 2025).T01.diferencaPostergadaCents).toBe(0n);
   });
 });
