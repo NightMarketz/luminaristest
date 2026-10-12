@@ -1,6 +1,7 @@
 import type { SectorKitV1 } from './dtos/SectorKitDto';
 import type { KitCatalogEntry, KitRegistry } from './models/kitTypes';
 import { BEAUTY_SALON_KIT_V1 } from './kits/beautySalon/kit.v1';
+import { BEAUTY_SALON_KIT_V2 } from './kits/beautySalon/kit.v2';
 import { AESTHETIC_CLINIC_KIT_V1 } from './kits/aestheticClinic/kit.v1';
 
 /**
@@ -9,7 +10,7 @@ import { AESTHETIC_CLINIC_KIT_V1 } from './kits/aestheticClinic/kit.v1';
  * Kit novo ou versão nova entra num lugar só: o array do seu `kitKey`.
  */
 export const KIT_REGISTRY: KitRegistry = {
-  beautySalon: [BEAUTY_SALON_KIT_V1],
+  beautySalon: [BEAUTY_SALON_KIT_V1, BEAUTY_SALON_KIT_V2],
   aestheticClinic: [AESTHETIC_CLINIC_KIT_V1],
 };
 
