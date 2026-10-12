@@ -24,6 +24,9 @@ import { FiscalDocumentLifecycleService, isValidResultTransition } from '../Fisc
 import type { AccountingScope } from '../../scope/AccountingScope';
 import type { CancelResult, EmissaoResult } from '../../dfe/DfeEmissorPort';
 
+// BE-INCR-DFE-EVENTOS (item 5): o `cancelar` lê a janela da view — sem prazo configurado, nunca há aviso.
+const JANELA_DESCONHECIDA = { cancelarAte: null, substituirAte: null, substituirTeto: null, fonte: 'desconhecida' };
+
 const SCOPE: AccountingScope = {
   ownerUserId: 'u1',
   actorUserId: 'u1',
@@ -142,7 +145,7 @@ function makeService(opts: { docs?: Record<string, ReturnType<typeof baseDoc>> }
     markPendingDone: jest.fn(async () => undefined),
   };
   const emissionService = {
-    getById: jest.fn(async (_scope: unknown, id: string) => ({ id, status: docsById[id]?.status ?? 'UNKNOWN', pendencias: [] })),
+    getById: jest.fn(async (_scope: unknown, id: string) => ({ id, status: docsById[id]?.status ?? 'UNKNOWN', pendencias: [], janela: JANELA_DESCONHECIDA })),
     reassembleGroupForReenvio: jest.fn(async () => ({
       vServCents: 10000,
       payload: REASSEMBLED_PAYLOAD,

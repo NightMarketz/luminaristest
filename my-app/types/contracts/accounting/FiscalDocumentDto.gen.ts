@@ -55,3 +55,14 @@ unitId: string
 cMotivo: (1 | 2 | 9)
 xMotivo: string
 }
+export interface SubstituirFiscalDocumentInput {
+unitId: string
+cMotivo: ("99" | "01" | "02" | "03" | "04" | "05")
+xMotivo?: string
+}
+export interface JanelaEventosInput {
+cancelarAte: (string | null)
+substituirAte: (string | null)
+substituirTeto: (string | null)
+fonte: ("perfil" | "desconhecida")
+}

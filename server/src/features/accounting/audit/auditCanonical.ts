@@ -219,6 +219,8 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // BE-INCR-DFE-MANUAL (item 15) — resultado da releitura no retorno manual. Nomes de campo divergentes NÃO entram
   // (ficam no resultJson da tentativa, sem PII); aqui só o veredito e a contagem.
   'dfe.manual_result': ['documentId', 'attemptNo', 'releitura', 'nDivergencias'],
+  // BE-INCR-DFE-EVENTOS (nó X11, item 14) — a substituta autorizada cancelou a original (e105102). Sem PII.
+  'dfe.substituted': ['documentId', 'substituteDocumentId', 'cMotivo'],
   // BE-INCR-CONTADOR-DELIVERY (item 14) — cadastro do contador + entrega do pacote ECD/ECF.
   // `name`/`email` do contador NUNCA aparecem aqui (D5): são PII de TERCEIRO numa trilha
   // append-only e hash-encadeada, então o que entra não sai. A trilha carrega `contactId`, que

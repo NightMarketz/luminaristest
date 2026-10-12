@@ -104,12 +104,12 @@ describe('FiscalProfileService — BE-INCR-DFE (itens 6/7/9)', () => {
     expect(v2.ibsCbsInformar).toBe(false);
   });
 
-  it('GET de perfil X6 existente (linha pré-DFE) devolve emissao.completo=false com faltantes e os 12 campos D1f pendentes', async () => {
+  it('GET de perfil X6 existente (linha pré-DFE) devolve emissao.completo=false com faltantes e os 14 campos D1f pendentes (12 do X10b + 2 prazos do X11 item 2)', async () => {
     const { svc } = build({ existing: rowFrom({ regimeTributario: 'PRESUMIDO' }) });
     const v = await svc.get(scope);
     expect(v?.emissao.completo).toBe(false);
     expect(v?.emissao.faltantes).toContain('codMun');
-    expect(v?.emissao.pendingExternalValidation).toHaveLength(12);
+    expect(v?.emissao.pendingExternalValidation).toHaveLength(14);
   });
 
   it('audit fiscal_profile.updated leva os campos DFE como string, sem IM/CNAE (texto livre) — e a allowlist os mantém', async () => {

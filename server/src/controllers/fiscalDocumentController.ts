@@ -15,6 +15,7 @@ import {
   RetornoManualBodySchema,
   RejeicaoManualSchema,
   CancelamentoManualSchema,
+  SubstituirFiscalDocumentSchema,
 } from '../features/accounting/dtos/FiscalDocumentDto';
 import { makeUploadFieldsMiddleware } from '../lib/uploadSecurity';
 
@@ -142,6 +143,25 @@ export const cancelarFiscalDocument = async (req: Request, res: Response) => {
       .getFiscalDocumentLifecycleService()
       .cancelar(scope, params.data.id, { cMotivo: body.data.cMotivo, xMotivo: body.data.xMotivo });
     return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** POST /api/nfe/dfe/documents/:id/substituir (BE-INCR-DFE-EVENTOS, nó X11, item 11) — 201 com a substituta. */
+export const substituirFiscalDocument = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const params = FiscalDocumentParamsSchema.safeParse(req.params);
+    const body = SubstituirFiscalDocumentSchema.safeParse(req.body);
+    if (!params.success) return res.status(400).json({ success: false, error: params.error.flatten() });
+    if (!body.success) return res.status(400).json({ success: false, error: body.error.flatten() });
+    const scope = resolveAccountingScope(user, body.data.unitId);
+    const data = await getFactory()
+      .getFiscalDocumentLifecycleService()
+      .substituir(scope, params.data.id, { cMotivo: body.data.cMotivo, ...(body.data.xMotivo ? { xMotivo: body.data.xMotivo } : {}) });
+    return res.status(201).json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
   }

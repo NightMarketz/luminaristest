@@ -49,6 +49,9 @@ pTotTribEstCent?: (number | null)
 pTotTribMunCent?: (number | null)
 pTotTribSNCent?: (number | null)
 emissaoForaDoMes?: ("AVISAR" | "BLOQUEAR")
+cancelPrazoDias?: (number | null)
+substPrazoDias?: (number | null)
+prazoFonte?: (string | null)
 }
 export interface FiscalProfilePolicyPayloadInput {
 regimeTributario: ("SIMPLES" | "PRESUMIDO" | "REAL")
@@ -95,4 +98,7 @@ pTotTribEstCent?: (number | null)
 pTotTribMunCent?: (number | null)
 pTotTribSNCent?: (number | null)
 emissaoForaDoMes?: ("AVISAR" | "BLOQUEAR")
+cancelPrazoDias?: (number | null)
+substPrazoDias?: (number | null)
+prazoFonte?: (string | null)
 }

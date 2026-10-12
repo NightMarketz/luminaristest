@@ -14,6 +14,32 @@ const Money = z.string().regex(/^\d{1,15}\.\d{2}$/); // 1-15V2
 const Pct2 = z.string().regex(/^\d{1,2}\.\d{2}$/); // 1-2V2
 const Ibge7 = z.string().regex(/^\d{7}$/);
 
+/**
+ * BE-INCR-DFE-EVENTOS (nó X11, item 9) — códigos de justificativa da substituição: XSD 1.01 `TSCodJustSubst`
+ * (o XSD vence a planilha, que diz TAM 1): 01 desenquadramento do Simples · 02 enquadramento no Simples ·
+ * 03 inclusão retroativa de imunidade/isenção · 04 exclusão retroativa · 05 rejeição pelo tomador/intermediário ·
+ * 99 outros (Anexo I [115]).
+ */
+export const SUBST_MOTIVOS = ['01', '02', '03', '04', '05', '99'] as const;
+export type SubstMotivo = (typeof SUBST_MOTIVOS)[number];
+
+/** RN E0078 (Anexo I [187]): `xMotivo` é obrigatório quando `cMotivo = 99`. */
+export function refineSubstMotivo(s: { cMotivo: string; xMotivo?: string }, ctx: z.RefinementCtx): void {
+  if (s.cMotivo === '99' && !s.xMotivo) {
+    ctx.addIssue({ code: 'custom', path: ['xMotivo'], message: 'xMotivo é obrigatório quando cMotivo = 99 (RN E0078).' });
+  }
+}
+
+/** Grupo `infDPS/subst` (Anexo I [113]–[116]; XSD `TCSubstituicao`). */
+export const DpsSubstSchema = z
+  .object({
+    chSubstda: z.string().regex(/^\d{50}$/), // [114] TSChaveNFSe
+    cMotivo: z.enum(SUBST_MOTIVOS), // [115] TSCodJustSubst
+    xMotivo: z.string().min(15).max(255).optional(), // [116]
+  })
+  .strict()
+  .superRefine(refineSubstMotivo);
+
 export const DpsPayloadSchema = z
   .object({
     versao: z.literal('1.01'),
@@ -28,6 +54,7 @@ export const DpsPayloadSchema = z
         dCompet: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // [108] = sale.date
         tpEmit: z.literal(1), // [109]
         cLocEmi: Ibge7, // [112]
+        subst: DpsSubstSchema.optional(), // [113] 0-1 — só na DPS substituta (BE-INCR-DFE-EVENTOS item 9)
         prest: z
           .object({
             CNPJ: z.string().regex(CNPJ_REGEX), // [118] alfanumérico (#280 / F-DFE-17 a)

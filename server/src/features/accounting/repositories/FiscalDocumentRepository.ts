@@ -128,6 +128,13 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     return this.db(tx).fiscalDocument.findFirst({ where: { ...accountingScopeWhere(scope), saleKey, kind, deletedAt: null } });
   }
 
+  public async findSubstituteOf(scope: AccountingScope, originalId: string, tx?: Prisma.TransactionClient): Promise<FiscalDocument | null> {
+    return this.db(tx).fiscalDocument.findFirst({
+      where: { ...accountingScopeWhere(scope), substitutesDocumentId: originalId, deletedAt: null },
+      orderBy: [{ createdAt: 'desc' }],
+    });
+  }
+
   public async createSent(scope: AccountingScope, data: CreateSentFiscalDocumentData, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts> {
     const { userId, unitId } = accountingScopeWhere(scope);
     const { payloadJson, ...doc } = data;

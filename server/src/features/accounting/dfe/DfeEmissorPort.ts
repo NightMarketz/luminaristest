@@ -59,6 +59,11 @@ export interface DfeCapabilities {
   consultar: boolean;
   cancelar: boolean;
   webhook: boolean;
+  /**
+   * BE-INCR-DFE-EVENTOS (nó X11, item 16) — o adaptador emite a DPS substituta (grupo `infDPS/subst`, Anexo I [113]).
+   * `false` ⇒ `POST …/substituir` recusa com 409 `DFE_SUBST_NAO_SUPORTADA`.
+   */
+  substituir: boolean;
 }
 
 /** Fase E (NF-e 55) é [pendente-insumo] — reservado até a transcrição do MOC 7.0 de saída. */
@@ -91,9 +96,22 @@ export interface EmissaoResult {
   };
   xml?: Buffer;
   pdf?: Buffer;
+  /**
+   * BE-INCR-DFE-EVENTOS (nó X11, item 1) — `infNFSe/dhProc` [19] (TSDateTimeUTC, com fuso): o instante fiscal da nota,
+   * gravado em `FiscalDocument.nfseDhProc` no AUTHORIZED. Opcional: adaptador que não o devolve deixa a janela `null`.
+   */
+  dhProc?: string;
   errors: Array<{ code: string; message: string }>;
 }
 
+/**
+ * BE-INCR-DFE-EVENTOS (nó X11, item 6) — contrato do resultado do cancelamento por máquina:
+ * - `OUT_OF_WINDOW` ⇔ o fisco rejeitou com **E0822** ("fora do prazo limite … conforme parametrização do município
+ *   emissor", Anexo II aba `RN EVENTO_PED.REG.EVENTO` [28]).
+ * - E0823 / E0824 / E0827 / E0840 (Anexo II [29]/[30]/[31]/[35]) e qualquer outra rejeição ⇒ `REJECTED`, com o
+ *   código preservado em `errors[].code`.
+ * O adaptador real (X10i) herda o teste de tradução (`DfeCancelResultContract.test.ts`).
+ */
 export interface CancelResult {
   status: 'CANCELLED' | 'OUT_OF_WINDOW' | 'REJECTED' | 'PROCESSING';
   errors: Array<{ code: string; message: string }>;

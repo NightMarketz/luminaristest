@@ -48,6 +48,9 @@ pTotTribEstCent?: (number | null)
 pTotTribMunCent?: (number | null)
 pTotTribSNCent?: (number | null)
 emissaoForaDoMes?: ("AVISAR" | "BLOQUEAR")
+cancelPrazoDias?: (number | null)
+substPrazoDias?: (number | null)
+prazoFonte?: (string | null)
 }
 } | {
 unitId: string

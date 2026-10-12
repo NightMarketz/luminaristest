@@ -5707,11 +5707,41 @@
  *                 cMotivo: { type: integer, enum: [1, 2, 9], description: '1 erro na emissão | 2 serviço não prestado | 9 outros' }
  *                 xMotivo: { type: string, minLength: 15, maxLength: 255 }
  *       responses:
- *         '200': { description: 'FiscalDocumentView (status CANCELLED)' }
+ *         '200': { description: "FiscalDocumentView (status CANCELLED) + avisos (['fora_da_janela_configurada'] quando passou do prazo configurado no perfil — só aviso, BE-INCR-DFE-EVENTOS item 5)" }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '409': { description: 'OUT_OF_WINDOW (E0822) ou REJECTED pelo parceiro' }
+ *         '409': { description: 'OUT_OF_WINDOW (E0822) ou REJECTED pelo parceiro (código do fisco na mensagem)' }
+ *
+ *   /api/nfe/dfe/documents/{id}/substituir:
+ *     post:
+ *       summary: Substitute an authorized NFS-e (BE-INCR-DFE-EVENTOS item 11, DPS with infDPS/subst)
+ *       description: >-
+ *         Cria o documento substituto (DPS nova com o grupo subst apontando a chave da original; Anexo I [113]-[116]).
+ *         Quando a substituta é autorizada, a original vira CANCELLED na mesma transação (e105102 gerado pelo fisco).
+ *         Fora do prazo do município configurado no perfil e cMotivo fora de 01/02 só gera aviso (E0050, nível 3).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [unitId, cMotivo]
+ *               properties:
+ *                 unitId: { type: string }
+ *                 cMotivo: { type: string, enum: ['01', '02', '03', '04', '05', '99'], description: 'TSCodJustSubst (XSD 1.01)' }
+ *                 xMotivo: { type: string, minLength: 15, maxLength: 255, description: 'obrigatório com cMotivo 99 (RN E0078)' }
+ *       responses:
+ *         '201': { description: 'FiscalDocumentView da substituta (SENT) + avisos' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '409': { description: 'DFE_STATUS_INVALIDO | DFE_SUBSTITUICAO_EXISTENTE | DFE_SUBST_FORA_DO_TETO | DFE_SUBST_NAO_SUPORTADA' }
+ *         '422': { description: 'SUBSTITUICAO_BLOQUEADA — muda campo congelado por E0060/E0061' }
  *
  *   /api/nfe/dfe/documents/{id}/ficha:
  *     get:

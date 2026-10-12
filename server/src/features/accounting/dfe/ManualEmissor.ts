@@ -19,6 +19,7 @@ export class ManualEmissor implements DfeEmissorPort {
     consultar: false,
     cancelar: false,
     webhook: false,
+    substituir: true, // BE-INCR-DFE-EVENTOS item 16 — a substituta é uma DPS nova com o grupo subst (Guia §5.2)
   };
 
   async emitir(input: EmitirInput): Promise<EmissaoResult> {

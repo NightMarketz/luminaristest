@@ -311,6 +311,19 @@ export class PackageExpiryNfsePendingError extends AppError {
   }
 }
 
+/**
+ * BE-INCR-DFE-EVENTOS (nó X11, item 12) — a DPS substituta muda campo que a RN nacional nível 2 congela (E0060/E0061,
+ * Anexo I [176]/[177]). 422 com os faltantes nomeados; nada é escrito.
+ */
+export class SubstituicaoBloqueadaError extends AppError {
+  public readonly faltantes: string[];
+  constructor(faltantes: string[]) {
+    super(`substituicao_bloqueada: ${faltantes.join('; ')}`, 422, 'SUBSTITUICAO_BLOQUEADA');
+    this.faltantes = faltantes;
+    Object.setPrototypeOf(this, SubstituicaoBloqueadaError.prototype);
+  }
+}
+
 // ── FE-INCR-PACOTE-VALIDADE (BRIEF §4.4) — aceite da validade do pacote (F-JUR-4): códigos próprios.
 
 /** Item 1: a venda já tem aceite (append-only, um por venda) — 409 antes de qualquer escrita. */

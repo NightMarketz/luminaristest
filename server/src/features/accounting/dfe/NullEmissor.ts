@@ -14,6 +14,7 @@ export class NullEmissor implements DfeEmissorPort {
     cancelar: true,
     // Nenhum parceiro real por trás — sem webhook de verdade para verificar (item 28: Null/File ⇒ 401 sempre).
     webhook: false,
+    substituir: false, // X11 review M3: a chave sintética NULL<hex> não é TSChaveNFSe (50 dígitos) — não monta o subst
   };
 
   constructor() {
