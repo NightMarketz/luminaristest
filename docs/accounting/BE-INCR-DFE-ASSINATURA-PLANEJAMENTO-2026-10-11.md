@@ -13,7 +13,9 @@
 > sem o Luminaris guardar o certificado (F-E8-1R).
 >
 > **Ratificação, 2026-10-11:** F-E8-1R = (a), certificado em nuvem no PSC para os três DF-e (dono, chat: *"Pode seguir a
-> sua sugestao pra decisão nova"*). O F-E8-3 = (b), o Luminaris homologa um ou dois PSCs (dono, chat, 11/10: *"Pode ratificar e resolver"*).
+> sua sugestao pra decisão nova"*). **F-E8-3 = (a)**: qualquer PSC da LPSC por um adaptador só na API v0 do ITI, habilitado
+> por assinatura de teste e cota que cubra o volume (dono, chat: *"Qualquer PSC (Recomendado)"*). Substitui o (b) de `4554422d`
+> (*"Pode ratificar e resolver"*), dado antes dos dados do §9.
 
 ---
 
@@ -118,7 +120,10 @@ reaproveita o F-E8-2 da NFS-e e deixa uma porta só para os três DF-e. Riscos: 
 (insumo ausente) e a pergunta F-3 sobre selo SE-S como "manifestação de vontade" (Res. CG 211/2024 art. 4º), que vale
 para qualquer um dos três caminhos.
 
-**F-E8-3: critério para escolher o PSC (F-E8-1R = a, ratificado).** RATIFICAÇÃO PENDENTE. Dados no §9.
+**F-E8-3: critério para escolher o PSC (F-E8-1R = a, ratificado).** **RATIFICADO (a)**: dono, chat, 2026-10-11 (depois das
+22:23), questionário, *"Qualquer PSC (Recomendado)"*, com os dados do §9 em mãos. **Substitui** a ratificação (b) registrada
+antes, no commit `4554422d` (dono, chat, 11/10: *"Pode ratificar e resolver"*), dada quando a recomendação ainda era (b) e
+o §9 não existia. Não é "executa". Dados no §9.
 - (a) **Qualquer PSC da LPSC, por um adaptador só, na API padrão do ITI (v0).** O cliente traz o PSC dele. O Luminaris
   só habilita o PSC depois de uma assinatura de teste real e de conferir que a cota contratada cobre o volume do salão.
 - (b) **Lista curta homologada pelo Luminaris** (1–2 PSCs). O cliente escolhe entre eles.
