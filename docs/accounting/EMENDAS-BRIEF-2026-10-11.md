@@ -256,6 +256,12 @@ insumo ausente aqui.
 
 ## 8. Consequência da decisão (a) de 11/10 nos BRIEFs ADN e NFC-e (`BE-INCR-DFE-ADN-EMISSOR-brief.md` F-ADN-1; `BE-INCR-NFCE-EMENDA-1-brief.md` F-NFCE-E1-1)
 
+> **Estado em 12/10 (leia antes do resto desta seção).** A metade "PAA" foi **superada** pelo #635
+> (`BE-INCR-DFE-ASSINATURA-PLANEJAMENTO-2026-10-11.md` §5): nenhum PAA homologado atende o salão, e o **F-E8-1R = (a)**
+> foi ratificado — certificado em nuvem num PSC para **NFS-e, NF-e e NFC-e**. Logo: o **F-E8-1** abaixo está superado;
+> os itens **E8-1** e **E8-3** valem com "PSC" no lugar de "PAA"; o **F-E8-3 = (a)** (qualquer PSC da LPSC, um adaptador
+> na API v0 do ITI) está ratificado. O **F-E8-2 continua RATIFICAÇÃO PENDENTE** — é o único fork do §8 em aberto.
+
 **Decisão.** Dono, 11/10: *"PAA + PSC nuvem (Recomendado)"*:
 - NF-e e NFC-e assinadas pelo PAA (NT 2026.001), sem guardar o certificado do cliente;
 - NFS-e nacional por certificado em nuvem num PSC credenciado (DOC-ICP-04 v8.3, 6.1.1.8).

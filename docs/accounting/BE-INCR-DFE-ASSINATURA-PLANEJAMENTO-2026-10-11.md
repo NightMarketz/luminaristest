@@ -107,7 +107,7 @@ Gates que este contrato aciona quando virar código: snapshot de shape do DTO, u
 "executa"**: os itens 1–3 do §3 continuam precisando de pedido próprio, por PR. Efeito: a metade "NF-e/NFC-e pelo PAA"
 da decisão (a) de 11/10 dá lugar ao PSC, e o F-E8-1 da `EMENDAS-BRIEF-2026-10-11` §8 fica **superado**.
 - (a) **Certificado em nuvem num PSC**, o mesmo caminho da NFS-e. O cliente contrata o PSC e dá ao Luminaris uma
-  credencial de assinatura com escopo (F-E8-2 a), e uma porta só assina os três DF-e. O Luminaris não guarda chave, e a
+  credencial de assinatura com escopo (F-E8-2 (a) — recomendação; o F-E8-2 segue RATIFICAÇÃO PENDENTE em 12/10), e uma porta só assina os três DF-e. O Luminaris não guarda chave, e a
   decisão 2 de 26/09 continua valendo.
 - (b) **Emissor terceiro que guarda o certificado do cliente** (o modelo dos emissores de nota por API). A guarda sai do
   Luminaris e vai para o fornecedor, mas a pergunta da MP 2.200-2 art. 6º p.ú. só muda de dono. Reabre a escolha de
