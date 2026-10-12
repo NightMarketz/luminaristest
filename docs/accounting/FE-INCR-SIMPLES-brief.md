@@ -77,7 +77,8 @@ aba · P4-5 (a) PDF do DAS como `SourceDocument` · P4-6 (b) o FE espera o SIMEI
 ### PR-B — escrita do mês
 9. **Registrar o DAS oficial** (`PUT …/das`) — item 5 do §3.1 do FE-INCR-TAX-ASSESSMENT, valendo também para o MEI
    (mesma rota): prévia obrigatória [F-4] (calcular na sessão sem bloqueante), calculado × oficial lado a lado,
-   vencimento date-only com validação de calendário (sugestão dia 20 do mês seguinte, só sugestão), PDF como
+   vencimento date-only com validação de calendário (sugestão dia 20 do mês seguinte, só sugestão — LC 123 art. 21
+   III; Res. CGSN 140 art. 40; prorrogação por calamidade do art. 40-A é exceção que a sugestão não cobre), PDF como
    `SourceDocument` [P4-5]; 409 ⇒ "as entradas mudaram, calcule de novo" + recalcula; 400 com `details.alertas` ⇒
    lista os bloqueantes; re-registro avisa a substituição [P4-7].
 10. **Parcerias salão-parceiro** — item 8 do §3.1 (sub-painel da aba, só em ano SIMPLES [P4-4]); some em ano MEI.
@@ -93,7 +94,9 @@ aba · P4-5 (a) PDF do DAS como `SourceDocument` · P4-6 (b) o FE espera o SIMEI
 14. **DEFIS** (ano SIMPLES): `GET /simples/defis/{ano}?unitId` mostra prazo, meses apurados, lucro contábil e
     estoques (só leitura, do razão); formulário: empregados início/fim, ganhos de renda variável, sócios (contato
     canônico, rendimentos isentos/tributáveis, participação % → bp, IRRF) com soma ≤ 100% validada no cliente antes do
-    400 do BE.
+    400 do BE. **Só anos ≤ 2026:** a partir de 2027 a DEFIS muda (LC 123 art. 25, red. LC 214) e o BE responde 400
+    (`SimplesDeclaracaoService.ts:29,128`); a tela mostra esse estado com o texto do BE em vez do formulário.
+    Prazo exibido = o do BE (31/03 do ano seguinte — Res. CGSN 140 art. 72 § 1º).
 15. **Alíquotas sugeridas do mês** (ano SIMPLES): `GET /simples/aliquotas/{competencia}?unitId` — por atividade:
     alíquota efetiva, retenção de ISS, benefício municipal, `pTotTribSNSugerido`, crédito do adquirente; `regra` e
     `avisos[]` do BE sempre visíveis com selo **"Sugestão"** (`sugestao: true`). Em ano MEI não aparece (o BE dá 400).
