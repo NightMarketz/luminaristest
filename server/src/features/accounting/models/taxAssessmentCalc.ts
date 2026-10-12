@@ -119,12 +119,15 @@ const F_15_3 = 'IN RFB 2.305/2025 art. 15 § 3º';
 const F_15_4 = 'IN RFB 2.305/2025 art. 15 § 4º';
 const F_15_5 = 'IN RFB 2.305/2025 art. 15 § 5º';
 const F_15_9 = 'IN RFB 2.305/2025 art. 15 § 9º';
+/** F-E1-1 (a): a CSLL só tem a LC 224 desde 01/04/2026 (art. 3º II; P&R LC 224 v5 item 13; SC Disit/SRRF10 10010/2026). */
+const CSLL_LC224_DESDE = '2026-04-01';
 
 export interface EntradaLc224 {
   /** BE-INCR-LEGAL-PARAMS (F-LP-4 a): fotografia das linhas de plataforma, montada pelo serviço. */
   tabela: TabelaApuracao;
   ano: number;
   periodo: PeriodoTrimestral;
+  tributo: TributoApuracao;
   receitaTrimestreCents: bigint;
   anteriores: MemoriaAnterior[];
   inicioAtividadeEm: string | null;
@@ -169,7 +172,12 @@ export interface ResultadoLc224 {
 export function parcelaExcedenteLc224(e: EntradaLc224): ResultadoLc224 {
   const dataFim = fimDoTrimestre(e.ano, e.periodo);
   const limiteParam = linhaVigente(e.tabela, 'LC224_LIMITE_TRIMESTRE_CENTS', dataFim);
-  if (!limiteParam) return { vigente: false, limiteTrimestreCents: 0n, sobraAnteriorCents: 0n, excedenteCents: 0n, memoria: [] };
+  // F-E1-1 (a): para a CSLL, trimestre anterior a 01/04/2026 conta como fora de atividade (§ 9º).
+  const inicio = e.tributo === 'CSLL' && (e.inicioAtividadeEm ?? '') < CSLL_LC224_DESDE ? CSLL_LC224_DESDE : e.inicioAtividadeEm;
+  const ativos = trimestresEmAtividade(e.ano, inicio, e.encerramentoAtividadeEm);
+  if (!limiteParam || !ativos.includes(e.periodo)) {
+    return { vigente: false, limiteTrimestreCents: 0n, sobraAnteriorCents: 0n, excedenteCents: 0n, memoria: [] };
+  }
 
   const limite = BigInt(limiteParam.valor);
   const ant = anteriorDe(e.anteriores, e.periodo);
@@ -189,8 +197,8 @@ export function parcelaExcedenteLc224(e: EntradaLc224): ResultadoLc224 {
     return { vigente: true, limiteTrimestreCents: limite, sobraAnteriorCents: sobra, excedenteCents: excedenteTrimestre, memoria };
   }
 
-  const anteriores = e.anteriores.filter((a) => a.periodo !== 'T04');
-  const n = BigInt(trimestresEmAtividade(e.ano, e.inicioAtividadeEm, e.encerramentoAtividadeEm).length);
+  const anteriores = e.anteriores.filter((a) => a.periodo !== 'T04' && ativos.includes(a.periodo));
+  const n = BigInt(ativos.length);
   const limiteAnual = n * limite;
   const acumulada = anteriores.reduce((s, a) => s + receitaDaMemoria(a), 0n) + e.receitaTrimestreCents;
   const excedenteAnual = maxZero(acumulada - limiteAnual);
@@ -434,6 +442,7 @@ export function apurarPresumidoTrimestral(e: EntradaPresumido): ResultadoApuraca
     tabela: e.tabela,
     ano: e.ano,
     periodo: e.periodo,
+    tributo: e.tributo,
     receitaTrimestreCents: receita,
     anteriores: e.anteriores,
     inicioAtividadeEm: e.perfil.inicioAtividadeEm,

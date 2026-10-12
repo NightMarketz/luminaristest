@@ -94,9 +94,9 @@ describe('Presumido trimestral (item 8) e LC 224 (item 9)', () => {
     expect(v(irpj, 'LC224_ACRESCIMO_SERVICO')).toBe(String(R(24_000)));
     expect(irpj.baseCents).toBe(R(664_000));
     expect(irpj.devidoCents).toBe(R(160_000));
-    // CSLL T01/2026: acréscimo 0 (IN 2.305 art. 3º II); o excedente é contado igual (P-2) → base 640.000 × 9% = 57.600
+    // CSLL T01/2026: fora da LC 224 (art. 3º II; F-E1-1 a) — sem linha de limite/excedente → base 640.000 × 9% = 57.600
     const csll = apurarAno({ T01: [2_000_000, 0] }, 'CSLL').T01;
-    expect(v(csll, 'LC224_EXCEDENTE')).toBe(String(R(750_000)));
+    expect(v(csll, 'LC224_EXCEDENTE')).toBeUndefined();
     expect(csll.devidoCents).toBe(R(57_600));
   });
 
@@ -288,7 +288,7 @@ describe('Presumido — 16% do prestador exclusivo (BE-INCR-TAX-PRESUMIDO-16)', 
 
   it('item 10 / F-P16-3 (b): flag + receita do trimestre acima do limite da LC 224 ⇒ 400 nos dois tributos; antes da LC 224, não', () => {
     expect(() => apurarAno({ T01: [1_300_000, 0] }, 'IRPJ', P16)).toThrow(/F-P16-3/);
-    expect(() => apurarAno({ T01: [1_300_000, 0] }, 'CSLL', P16)).toThrow(/F-P16-3/);
+    expect(() => apurarAno({ T02: [1_300_000, 0] }, 'CSLL', P16)).toThrow(/F-P16-3/); // CSLL só desde o T02/2026 (F-E1-1 a)
     expect(apurarAno({ T01: [1_300_000, 0] }, 'IRPJ', P16, [], 2025).T01.diferencaPostergadaCents).toBe(0n);
   });
 });
