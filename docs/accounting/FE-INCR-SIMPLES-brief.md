@@ -93,8 +93,8 @@ aba · P4-5 (a) PDF do DAS como `SourceDocument` · P4-6 (b) o FE espera o SIMEI
     ICMS, `mesesSemSubrazao` como aviso; formulário de `contratouEmpregado` → `PUT`.
 14. **DEFIS** (ano SIMPLES): `GET /simples/defis/{ano}?unitId` mostra prazo, meses apurados, lucro contábil e
     estoques (só leitura, do razão); formulário: empregados início/fim, ganhos de renda variável, sócios (contato
-    canônico, rendimentos isentos/tributáveis, participação % → bp, IRRF) com soma ≤ 100% validada no cliente antes do
-    400 do BE. **Só anos ≤ 2026:** a partir de 2027 a DEFIS muda (LC 123 art. 25, red. LC 214) e o BE responde 400
+    canônico, rendimentos isentos/tributáveis, participação % → bp, IRRF); a validação da soma das participações é o **F-FS-8** (o manual exige = 100%,
+    o BE aceita ≤ 100%). **Só anos ≤ 2026:** a partir de 2027 a DEFIS muda (LC 123 art. 25, red. LC 214) e o BE responde 400
     (`SimplesDeclaracaoService.ts:29,128`); a tela mostra esse estado com o texto do BE em vez do formulário.
     Prazo exibido = o do BE (31/03 do ano seguinte — Res. CGSN 140 art. 72 § 1º).
 15. **Alíquotas sugeridas do mês** (ano SIMPLES): `GET /simples/aliquotas/{competencia}?unitId` — por atividade:
@@ -159,6 +159,7 @@ type CelulaSimples = { competencia: string;
 | **F-FS-5** Campos MEI do perfil fiscal | (a) entram no PR-A deste nó (o SIMEI não calcula sem eles) · (b) nó próprio no perfil fiscal, antes do PR-A | **(a)**: sem eles o detalhe MEI só mostra 400; o formulário do perfil já existe e o shape vem do `.gen`  — ✅ ratificada |
 | **F-FS-6** Onde ficam as declarações anuais | (a) cabeçalho do ano na aba Apuração (botões "DASN-SIMEI"/"DEFIS" conforme o regime) · (b) aba própria "Declarações" | **(a)**: mesma lógica do P4-4 (o dado nasce das apurações do ano)  — ✅ ratificada |
 | **F-FS-7** X14-CAIXA | (a) nada agora; quando o regime de caixa existir, entra como emenda (aresta pontilhada) · (b) reservar já a coluna "base" na grade | **(a)**: D4 de [[D-2026-10-10-X14-PROXIMOS-PASSOS]] já diz que o caixa entra depois como emenda  — ✅ ratificada |
+| **F-FS-8** Soma das participações na DEFIS — **RATIFICAÇÃO PENDENTE** | O Manual do PGDAS-D/DEFIS (versão 17/06/2025, sha `e73b2bfc7ede`, §9.4.3.1 itens 7.3 e 8) exige **soma = 100%**, contando sócios **mais cotas em tesouraria**; o BE (`SimplesDefisUpsertSchema`) aceita ≤ 100% e não tem o campo de tesouraria. (a) a tela só avisa quando a soma ≠ 100% e grava assim mesmo; a correção vai para o BE, numa frente própria (campo de tesouraria + regra = 100%) · (b) a tela bloqueia ≠ 100% sem o campo de tesouraria (quem tem cotas em tesouraria não consegue gravar) · (c) o PR-D espera a correção do BE | **(a)**: a tela não cria regra fiscal que o BE não tem; o aviso mostra o que o manual pede |
 
 ## 5. Pendente de validação externa
 
@@ -176,6 +177,10 @@ segue o gate humano X14-DAS (PGDAS-D para ME/EPP, PGMEI para MEI/TAC — D3 de [
   ocupações vem do BE ou de `LegalParameter`? Não lido nesta sessão.
 
 ## 7. Achados fora de escopo
+
+- **BE da DEFIS × manual (§9.4.3.1):** o DTO não tem *percentual em cotas em tesouraria* (item 8), *receita de exportação
+  direta* (item 5) nem *via comercial exportadora* (item 6), e aceita soma das participações ≤ 100%, quando o manual
+  exige = 100%. É uma frente de BE que exige autorização própria (ver F-FS-8).
 
 - O PR-4 do FE-INCR-TAX-ASSESSMENT e este nó cobrem as mesmas telas: resolver pelo F-FS-1 e ajustar a nota do nó
   FE-INCR-TAX-ASSESSMENT (se houver) no fold.
