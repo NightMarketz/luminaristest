@@ -118,16 +118,15 @@ reaproveita o F-E8-2 da NFS-e e deixa uma porta só para os três DF-e. Riscos: 
 (insumo ausente) e a pergunta F-3 sobre selo SE-S como "manifestação de vontade" (Res. CG 211/2024 art. 4º), que vale
 para qualquer um dos três caminhos.
 
-**F-E8-3: critério para escolher o PSC (se F-E8-1R = a).** **RATIFICADO (b)**: dono, chat, 2026-10-11, *"Pode ratificar e
-resolver"*, em resposta à recomendação (b) deste fork. Não é "executa": escolher os PSCs depende dos insumos do §7
-(LPSC vigente, preço, latência).
-- (a) O cliente escolhe qualquer PSC da LPSC do ITI, e o Luminaris implementa um adaptador por PSC que tiver cliente.
-- (b) O Luminaris homologa um ou dois PSCs (API de assinatura remota com autorização por lote ou escopo, preço por
-  assinatura, SLA) e o cliente escolhe entre eles.
+**F-E8-3: critério para escolher o PSC (F-E8-1R = a, ratificado).** RATIFICAÇÃO PENDENTE. Dados no §9.
+- (a) **Qualquer PSC da LPSC, por um adaptador só, na API padrão do ITI (v0).** O cliente traz o PSC dele. O Luminaris
+  só habilita o PSC depois de uma assinatura de teste real e de conferir que a cota contratada cobre o volume do salão.
+- (b) **Lista curta homologada pelo Luminaris** (1–2 PSCs). O cliente escolhe entre eles.
 
-**Recomendação: (b)** para o 1º cliente. Menos adaptadores, e o critério do lote ou escopo decide se a NFC-e por venda é
-viável. Candidatos só por indício: o diagrama do ecossistema ICP-Brasil do ITI (ago/2022) lista Certisign, Soluti, BRy,
-Serasa, Serpro, Valid e Safeweb como PSC. **A LPSC vigente não foi lida**, e preço e API não foram verificados.
+**Recomendação: (a)**, revista em 11/10 com os dados do §9. A versão anterior recomendava (b) para ter "menos
+adaptadores". Isso caiu: o DOC-ICP-17.01 obriga todo PSC a expor a mesma API OAuth 2.0, então são **um adaptador e N
+PSCs**. O filtro que importa deixa de ser o fornecedor e passa a ser a **cota de assinaturas** e o **tempo de sessão**
+(itens 4–6 do §9). Um PSC com cota baixa quebra a NFC-e do caixa no meio do ano.
 
 ## 6. Pendente de validação externa
 
@@ -159,3 +158,26 @@ Serasa, Serpro, Valid e Safeweb como PSC. **A LPSC vigente não foi lida**, e pr
 - **Indício:** os candidatos a PSC do F-E8-3 (diagrama do ITI de 2022).
 - **Checagem que teria falhado se eu estivesse errado:** se o § 2º não existisse ou tivesse outro sujeito, a citação
   literal do CONFAZ teria mostrado. Ela mostrou o contribuinte como sujeito.
+
+## 9. Dados para o F-E8-3 (levantados em 2026-10-11)
+
+| # | Fato | Fonte | Grau |
+|---|---|---|---|
+| 1 | **8 PSCs credenciados:** ACDIGITAL (23/10/2025), DIGITALSIGN (25/10/2023), SERPRO (13/04/2018), CERTISIGN (24/10/2018), SOLUTI (18/01/2019), SAFEWEB (26/03/2019), VALID (19/09/2019), SYNGULARID (22/07/2024). A página não diz o tipo de serviço de cada um | [ITI, Lista de PSC](https://www.gov.br/iti/pt-br/assuntos/icp-brasil/lista-de-prestadores-de-servico-de-confianca-psc), atualizada em 17/09/2026 | **Verificado** |
+| 2 | **API obrigatória e igual para todos:** "Deverá ser utilizado o framework OAuth 2.0 (RFC 6749 e RFC 7636) para implementação da interface aos serviços de confiança dos PSC". Outra interface é só "adicionalmente". Serviços obrigatórios: código de autorização, token, assinatura, cadastro de aplicação com certificado, listagem e recuperação de certificado, localização de titular. Caminhos `<URI-base>/v0/oauth/authorize`, `/oauth/token` e `/oauth/signature` | [DOC-ICP-17.01 v2.3](https://www.gov.br/iti/pt-br/assuntos/legislacao/documentos-principais/DOCICP17.01verso2.3PROCEDIMENTOSOPERACIONAISMNIMOSPARAOSPRESTADORESDESERVIODECONFIANADAICPBRASIL.pdf) §§ 6.4.1–6.4.5 | **Verificado** (texto extraído do PDF). A pesquisa de 10/10 cita uma v3.0 (IN ITI 20/2020) que não li. Conferir se a API v0 mudou |
+| 3 | **Sessão de assinatura:** o escopo `signature_session` permite "várias assinaturas em várias chamadas a API" enquanto o token valer ou não for revogado, e o `lifetime` é pedido em segundos. O titular autoriza no equipamento dele, e "as aplicações não deverão coletar fatores de autenticação do titular" (6.4.3.2). Uptime mínimo de 99,99% ao mês (6.3.2) | idem | **Verificado** |
+| 4 | **Tempo de sessão na prática:** no Bird ID (Soluti), o titular escolhe de 1 a 12 h. Uma documentação de integrador mostra `lifetime=2592000` (30 dias), mas como exemplo, não como limite garantido | [VaultID/CESS](https://docs.vaultid.com.br/workspace/cess/api/autenticacao-e-autorizacao-1), suporte de terceiros | **Indício** (não é documentação do PSC) |
+| 5 | **Cotas e preços (e-CNPJ em nuvem):** Valid (VIDaaS): 12 meses por R$ 208,00, com **6.000 assinaturas por ano** (4 meses: 1.000). DigitalSign: 12 meses por R$ 180,00 e 24 meses por R$ 220,00, "Sem Limite de Transações e Assinaturas", sem as condições escritas. Soluti (Bird ID): a página só traz o PF, 5.000 transações por ano e plano de R$ 34,90/mês ou R$ 149,90/ano; o PJ não aparece. SafeID (Safeweb): planos com volume, sem número na página. Serpro (NeoID), Certisign, SyngularID e ACDIGITAL: não achei cota nem preço | [Valid](https://validcertificadora.com.br/products/e-cnpj-a3-em-nuvem), [DigitalSign](https://www.digitalsigncertificadora.com.br/pt/ds-cloud), [Soluti](https://soluti.com.br/certificado-digital/bird-id/) | **Verificado** nas páginas (preço de loja muda); o resto **não encontrado** |
+| 6 | **Conta de volume (inferida, com volume assumido):** 40 vendas por dia × 26 dias × 12 meses = **12.480 NFC-e por ano**, cada uma assinada uma vez, mais cancelamentos e eventos. Com a cota da Valid (6.000) ou do Bird ID PF (5.000), o caixa para por volta de junho. Com 20 vendas por dia, 6.240 por ano, a Valid já não cobre. O volume real do salão não está no repo | conta | **Inferido**. O volume é **assumido** |
+
+**O que isso muda no produto (inferido):**
+- Com `signature_session`, o titular aprova uma vez por sessão, não uma vez por nota. Se o PSC limitar a sessão a 12 h,
+  o salão precisa de **uma aprovação por dia no celular**, na abertura do caixa. Isso entra no checklist como fluxo de
+  "sessão vencida → NFC-e pendente → pedir reaprovação", e não como erro.
+- A cota passa a ser um **dado do cadastro do PSC no Luminaris**, com um alerta quando o consumo projetado passar dela,
+  porque o PSC pode recusar a assinatura no meio do expediente.
+
+**Para fechar o F-E8-3, perguntar por escrito a 2–3 PSCs** (DigitalSign, Valid e Soluti têm preço público. Sugestão de
+texto): *"Para e-CNPJ em nuvem usado por um sistema emissor de NFC-e via API OAuth (DOC-ICP-17.01, escopo
+signature_session): (1) qual a cota de assinaturas por ano e o que acontece ao estourar? (2) qual o lifetime máximo do
+token de signature_session? (3) há preço por volume acima da cota? (4) o certificado é SE-S ou e-CNPJ A3?"*
