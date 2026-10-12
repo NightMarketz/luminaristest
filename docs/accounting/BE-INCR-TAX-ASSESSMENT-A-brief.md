@@ -1,5 +1,7 @@
 # BRIEF — BE-INCR-TAX-ASSESSMENT Fase A (apuração trimestral de IRPJ/CSLL: Presumido e Real) — nó X7
 
+> **EMENDA 2026-10-11:** ver [`EMENDAS-BRIEF-2026-10-11.md`](EMENDAS-BRIEF-2026-10-11.md) §1 (limite da CSLL de R$ 3,75 mi em 2026; F-E1-1 pendente). Sem código; cada item exige 'executa'.
+
 > Produzido em `sessao-planejamento` em 02/10/2026, sobre `origin/main` `4dd8fcb4`. Herda o esqueleto da §5 (Fase A,
 > itens A1–A10) do [`ADR-INCR-TAX-ASSESSMENT`](../adr/ADR-INCR-TAX-ASSESSMENT.md), que está **Accepted** desde 02/10
 > (14/14 forks ratificados: [`D-2026-10-02-X7-TAX-ASSESSMENT-FORKS`](../plano/decisoes/D-2026-10-02-X7-TAX-ASSESSMENT-FORKS.md)).

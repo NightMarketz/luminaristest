@@ -1,5 +1,5 @@
 import { ValidationError } from '../../../lib/errors';
-import { linha, maxZero, type MemoriaLinha } from './taxAssessmentCalc';
+import { baseServicoCents, linha, linhaNaoUso, maxZero, type MemoriaLinha } from './taxAssessmentCalc';
 import { mulBp } from './taxAssessmentParams';
 import { fimDoMes } from './taxAssessmentCalcAnual';
 import {
@@ -76,6 +76,8 @@ export interface EntradaPisCofins {
   /** Item 7 — `receitaBrutaPorAtividade` do mês (o gate de exaustividade do X7 já rodou, sem mudança — F-PCB-1 b). */
   receitaServicoCents: bigint;
   receitaRevendaCents: bigint;
+  /** BE-INCR-H1-REFERENCIAL-3-4 (F-HR-3 b) — conta 3.4 do mês, com sinal; ausente = 0. Entra na base, não no teto da cota-parte. */
+  receitaNaoUsoCents?: bigint;
   ajustesBase: AjusteBaseInformado[];
   outrosCreditos: OutroCreditoInformado[];
   retencoes: RetencaoInformada[];
@@ -189,6 +191,7 @@ export function apurarPisCofinsMensal(e: EntradaPisCofins): Record<TributoPisCof
     const p = params[t];
     const memoria: MemoriaLinha[] = [
       linha('RECEITA_SERVICO', 'Receita bruta de serviço do mês (conta 3.1)', e.receitaServicoCents, F_BASE[e.modalidade]),
+      ...linhaNaoUso(e.receitaNaoUsoCents, 'mês'),
       linha('RECEITA_REVENDA', 'Receita bruta de revenda do mês (conta 3.3)', e.receitaRevendaCents, F_BASE[e.modalidade]),
     ];
     let ajustes = 0n;
@@ -206,7 +209,8 @@ export function apurarPisCofinsMensal(e: EntradaPisCofins): Record<TributoPisCof
         memoria.push(linha(`AJUSTE_COTA_PARTE_${nCota}`, `Cota-parte do profissional-parceiro (fora da receita bruta)${doc}`, v, F_COTA_PARTE));
       }
     }
-    const base = e.receitaServicoCents + e.receitaRevendaCents - ajustes;
+    // Piso 0: o estorno da 3.4 (com sinal) + a cota-parte (limitada à 3.1) podiam levar a base abaixo de zero (review #630).
+    const base = maxZero(baseServicoCents(e.receitaServicoCents, e.receitaNaoUsoCents) + e.receitaRevendaCents - ajustes);
     const debito = mulBp(base, p.aliquotaBp);
     memoria.push(
       linha('BASE', 'Base de cálculo (receita − ajustes)', base, F_BASE[e.modalidade]),

@@ -463,6 +463,52 @@ EVIDÊNCIA: [colar o JSON da resposta 201 — id do lançamento e as pernas]
 > **P5 não se sustenta até o contador responder** — pergunta incluída no item 3b do
 > [`PEDIDO-CONTADOR-2026-10-02-PACOTE-VALIDADE.md`](PEDIDO-CONTADOR-2026-10-02-PACOTE-VALIDADE.md) (dono, 07/10).
 > Com o código: `PUT /referential/mappings` da 3.4 nas duas unidades → cobertura 15/15 → passo 3.
+>
+> **EMENDA 2026-10-11 (BE-INCR-H1-REFERENCIAL-3-4 item 14).** O código saiu por delegação, não do contador:
+> `3.01.01.01.01.98` "Outras Receitas da Atividade Geral" (D-1 de 10/10 e decisão (b) do dono em 11/10,
+> [`D-2026-10-11-QUESTIONARIO-DONO`](../plano/decisoes/D-2026-10-11-QUESTIONARIO-DONO.md); PROPOSTA-REFERENCIAL-D1 §3).
+> **Quem executa é o dono**, ou o agente sob comando literal do dono no chat, colando a saída aqui. Desfecho e
+> assinatura são do dono. Em cada uma das duas unidades:
+>
+> 1. Pegar o `id` da conta 3.4 da unidade, com `GET /api/accounting/accounts?unitId=<unidade>`.
+> 2. `PUT /api/accounting/referential/mappings` com corpo
+>    `{"unitId":"<unidade>","accountId":"<id da 3.4>","referentialCode":"3.01.01.01.01.98","label":"Outras Receitas da Atividade Geral","mappingVersion":"2025"}`.
+> 3. `GET /referential/coverage?unitId=<unidade>&version=2025`. Esperado: `15/15 · ready true`.
+> 4. Gerar a ECD do P5 de novo. Esperado: 200.
+>
+> Para a **ECF Presumido** do H1, a 3.4 com movimento só passa depois do merge do PR-1 do
+> BE-INCR-H1-REFERENCIAL-3-4, porque antes dele o gate de exaustividade dá 400.
+>
+> ```text
+> EVIDÊNCIA (P5, 3.4): preenchida pelo agente sob comando do dono no chat (2026-10-11), dev.db real
+> (server/prisma/prisma/dev.db), backend de main 3af9a6b5 em :3001. Saída literal do script da sessão:
+>
+> pré-condição  o dev.db estava 23 migrações atrás (20261007160000_add_legal_parameters_v2 … 20261012120000_
+>               add_payment_account_release_report_block) e o boot abortava (P2021 legal_parameters). Com o OK do
+>               dono: backup em server/prisma/backups/dev-20261011-pre-3-4.db (7581696 B) e `prisma migrate deploy`
+>               → "All migrations have been successfully applied." (exit 0)
+>
+> === seed-presumido · unidade cmuw4yqxg001jcii0iz2yb9rw · login HTTP 200
+> passo 1  GET /accounting/accounts?unitId=cmuw4yqxg001jcii0iz2yb9rw → HTTP 200 · 3.4 = cmuw4yr69003xcii0vk9k1tr9 "Receita de Pacotes Não Utilizados"
+> antes    GET /referential/coverage → HTTP 200 · 14/15 · ready false
+> passo 2  PUT /referential/mappings {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","accountId":"cmuw4yr69003xcii0vk9k1tr9","referentialCode":"3.01.01.01.01.98","label":"Outras Receitas da Atividade Geral","mappingVersion":"2025"} → HTTP 200 · id cmv4fuoqy0001ciawe8fs0wvr
+> passo 3  GET /referential/coverage?unitId=cmuw4yqxg001jcii0iz2yb9rw&version=2025 → HTTP 200 · mappedCount 15 / leafAccountCount 15 · ready true · unmapped []
+> passo 4  POST /sped/ecd/generate (seed-presumido, 2025) → HTTP 400 · fieldErrors: declarant "expected object, received undefined" · book (2× "expected string") · signers "expected array"
+>
+> === seed-real · unidade cmuw4z7zj02ehcii0st3unfr4 · login HTTP 200
+> passo 1  GET /accounting/accounts?unitId=cmuw4z7zj02ehcii0st3unfr4 → HTTP 200 · 3.4 = cmuw4z86m02gvcii0dnen1ldv "Receita de Pacotes Não Utilizados"
+> antes    GET /referential/coverage → HTTP 200 · 14/15 · ready false
+> passo 2  PUT /referential/mappings {"unitId":"cmuw4z7zj02ehcii0st3unfr4","accountId":"cmuw4z86m02gvcii0dnen1ldv","referentialCode":"3.01.01.01.01.98","label":"Outras Receitas da Atividade Geral","mappingVersion":"2025"} → HTTP 200 · id cmv4fuouq0003ciaw6elejnx7
+> passo 3  GET /referential/coverage?unitId=cmuw4z7zj02ehcii0st3unfr4&version=2025 → HTTP 200 · mappedCount 15 / leafAccountCount 15 · ready true · unmapped []
+> passo 4  POST /sped/ecd/generate (seed-real, 2025) → HTTP 400 · mesmos fieldErrors (declarant/book/signers)
+>
+> leitura   passos 1–3 fecham a cobertura (15/15 · ready true nas duas unidades). O passo 4 NÃO rodou até o gate de
+>           cobertura: o corpo mínimo foi rejeitado no Zod porque as unidades seed não têm perfil fiscal para
+>           preencher declarant/book/signers — esses são os dados do P6 (do dono). O agente não inventou declarante.
+>           A ECD 200 fica para a geração do passo 3 com o P6 preenchido.
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
+> ```
 
 ### 2. Conferir que o encerramento entrou no razão
 

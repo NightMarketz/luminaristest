@@ -1,5 +1,7 @@
 # BE-INCR-NFCE — EMENDA 1 (de "via Focus" para emissor próprio na SEFAZ)
 
+> **EMENDA 2026-10-11:** ver [`EMENDAS-BRIEF-2026-10-11.md`](EMENDAS-BRIEF-2026-10-11.md) §3 (30 minutos) e §8 (F-NFCE-E1-1 respondido pela decisão PAA + PSC de 11/10). Sem código; cada item exige 'executa'.
+
 > `sessao-planejamento`, 2026-10-10. **Emenda** ao BRIEF canônico [`BE-INCR-NFCE-brief.md`](BE-INCR-NFCE-brief.md)
 > (nó [`X10a`](../plano/nos/X10a.md); F-NFCE-1..12 + 12b ratificados em 02/10). Sem código de aplicação. O BRIEF
 > original **não foi editado** (regra 1). **Implementação exige "executa" próprio** (ORCH-006). Forks novos

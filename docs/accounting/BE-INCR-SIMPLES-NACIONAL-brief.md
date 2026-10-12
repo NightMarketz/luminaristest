@@ -1,5 +1,7 @@
 # BE-INCR-SIMPLES-NACIONAL — apuração do Simples Nacional (ME/EPP + MEI) (BRIEF, nó X14)
 
+> **EMENDA 2026-10-11:** ver [`EMENDAS-BRIEF-2026-10-11.md`](EMENDAS-BRIEF-2026-10-11.md) §5 (viradas de 2027: caixa acaba, MEI emite em toda venda, juros/multa na receita com alerta, DEFIS acaba). Sem código; cada item exige 'executa'.
+
 > **Sessão:** `sessao-planejamento` — produz decisão, não código. Fork novo deste documento **não** se auto-ratifica.
 > **Autorização (dono, chat, 2026-10-07):** *"mergeia e escreve o BRIEF do X14"* + *"Ja faz o brief de tudo nosso
 > esforço é pra terminar o quanto antes a nossa sessão de contabilidade e fiscal"*. Cobre o BRIEF **inteiro** do X14

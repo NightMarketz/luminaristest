@@ -1,5 +1,7 @@
 # BRIEF — BE-INCR-ITEM-DESTINATION (destinação por item na entrada: revenda × insumo do serviço) — nó ITEM-DESTINATION
 
+> **EMENDA 2026-10-11:** ver [`EMENDAS-BRIEF-2026-10-11.md`](EMENDAS-BRIEF-2026-10-11.md) §6 (crédito do monofásico usado como insumo configurável por cliente, D-5). Sem código; cada item exige 'executa'.
+
 > Produzido em `sessao-planejamento` em 29/09/2026, sobre `origin/main` `9dd690b3`. É a Fase 3.1 do
 > [`PLANO-POS-CONTADOR-2026-09-23.md`](PLANO-POS-CONTADOR-2026-09-23.md) (linha 102) e o nó
 > [`docs/plano/nos/ITEM-DESTINATION.md`](../plano/nos/ITEM-DESTINATION.md).

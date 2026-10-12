@@ -1,5 +1,7 @@
 # BE-INCR-TAX-PRESUMIDO-16 — 16% do IRPJ do prestador exclusivo no Lucro Presumido trimestral (BRIEF)
 
+> **EMENDA 2026-10-11:** ver [`EMENDAS-BRIEF-2026-10-11.md`](EMENDAS-BRIEF-2026-10-11.md) §2 (esteticista tira o 16% da PJ inteira; ano de início proporcional; F-E2-1/2 pendentes). Sem código; cada item exige 'executa'.
+
 > **Sessão:** `sessao-planejamento` — sem código. Nenhum fork se auto-ratifica.
 > **Autorização (dono, chat, 2026-10-06, questionário):** D-1 → *"Errata + BRIEF do 16%"*, dentro da autorização da
 > mesma data *"Autorizo planejar o pente fino + BRIEF — sessao-planejamento, sem executa"*. Cobre: a errata do ADR

@@ -18,6 +18,25 @@ const entrada = (e: Partial<EntradaPisCofins>): EntradaPisCofins => ({
 });
 
 describe('apurarPisCofinsMensal', () => {
+  it('BE-INCR-H1-REFERENCIAL-3-4 item 7: a 3.4 entra na base do cumulativo com linha própria', () => {
+    // (100.000 + 10.000) × 0,65% = 715,00 / × 3% = 3.300,00
+    const r = apurarPisCofinsMensal(entrada({ receitaNaoUsoCents: 1_000_000n }));
+    expect(r.PIS).toMatchObject({ baseCents: 11_000_000n, devidoCents: 71_500n });
+    expect(r.COFINS).toMatchObject({ devidoCents: 330_000n });
+    expect(valor(r.PIS.memoria, 'RECEITA_SERVICO')).toBe('10000000');
+    expect(valor(r.PIS.memoria, 'RECEITA_NAO_USO')).toBe('1000000');
+    expect(valor(apurarPisCofinsMensal(entrada({})).PIS.memoria, 'RECEITA_NAO_USO')).toBeUndefined();
+  });
+
+  it('review #630 achado 2: estorno da 3.4 + cota-parte não levam a base abaixo de zero', () => {
+    // 3.1 = 1.000, 3.4 = −800, cota = 1.000 (≤ 3.1, passa a validação) ⇒ 200 − 1.000 = −800 ⇒ piso 0
+    const r = apurarPisCofinsMensal(
+      entrada({ receitaServicoCents: 100_000n, receitaNaoUsoCents: -80_000n, ajustesBase: [{ tipo: 'COTA_PARTE_PARCEIRO', valorCents: '100000', documento: 'contrato 1' }] }),
+    );
+    expect(r.PIS).toMatchObject({ baseCents: 0n, devidoCents: 0n, aPagarCents: 0n });
+    expect(valor(r.PIS.memoria, 'DEBITO')).toBe('0');
+  });
+
   it('23 (a) Presumido: 100.000,00 ⇒ PIS 650,00 / Cofins 3.000,00, códigos 810902/217201, sem linha de crédito', () => {
     const r = apurarPisCofinsMensal(entrada({}));
     expect(r.PIS).toMatchObject({ modo: 'PIS_COFINS_CUMULATIVO', codigoReceita: '810902', baseCents: 10_000_000n, devidoCents: 65_000n, aPagarCents: 65_000n, saldoNegativoCents: 0n });

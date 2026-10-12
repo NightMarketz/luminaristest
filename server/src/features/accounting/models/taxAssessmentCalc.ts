@@ -228,7 +228,30 @@ export function parcelaExcedenteLc224(e: EntradaLc224): ResultadoLc224 {
 }
 
 function receitaDaMemoria(a: MemoriaAnterior): bigint {
-  return valorLinha(a.memoria, 'RECEITA_SERVICO', a.periodo) + valorLinha(a.memoria, 'RECEITA_REVENDA', a.periodo);
+  return receitaServicoDaMemoria(a.memoria, a.periodo) + valorLinha(a.memoria, 'RECEITA_REVENDA', a.periodo);
+}
+
+// ─── BE-INCR-H1-REFERENCIAL-3-4 (F-HR-3 b) — a 3.4 (receita por não uso de pacote) com campo próprio ────────────
+// Decisão (b) do dono, 11/10 (D-2026-10-11-QUESTIONARIO-DONO): receita bruta da atividade (DL 1.598 art. 12 IV),
+// presunção de serviço. `RECEITA_SERVICO` segue só a 3.1; a 3.4 tem a sua linha; a base de serviço soma as duas.
+
+export const RECEITA_NAO_USO = 'RECEITA_NAO_USO';
+const F_NAO_USO = 'DL 1.598/1977 art. 12 IV; decisão (b) do dono 2026-10-11 (BE-INCR-H1-REFERENCIAL-3-4)';
+
+/** Base de serviço = max(0, 3.1 + 3.4): a 3.4 vem com sinal (débito líquido = estorno de vencimento reduz a base). */
+export function baseServicoCents(servicoCents: bigint, naoUsoCents: bigint = 0n): bigint {
+  return maxZero(servicoCents + naoUsoCents);
+}
+
+/** Linha de memória da 3.4 — só quando houve movimento, para não mudar a memória de quem não tem pacote vencido. */
+export function linhaNaoUso(naoUsoCents: bigint | undefined, periodoDesc: string): MemoriaLinha[] {
+  return naoUsoCents ? [linha(RECEITA_NAO_USO, `Receita por não uso de pacote do ${periodoDesc} (conta 3.4), presunção de serviço`, naoUsoCents, F_NAO_USO)] : [];
+}
+
+/** Base de serviço lida de uma memória confirmada; memória anterior a este incremento não tem a linha da 3.4 (= 0). */
+export function receitaServicoDaMemoria(memoria: MemoriaLinha[], periodo: string): bigint {
+  const naoUso = temLinha(memoria, RECEITA_NAO_USO) ? valorLinha(memoria, RECEITA_NAO_USO, periodo) : 0n;
+  return baseServicoCents(valorLinha(memoria, 'RECEITA_SERVICO', periodo), naoUso);
 }
 
 // ─── Item 8 — Presumido trimestral ────────────────────────────────────────────────────────────────────────────
@@ -254,6 +277,8 @@ export interface EntradaPresumido {
   /** Item 6 — `receitaBrutaPorAtividade` do trimestre (o gate de exaustividade já rodou). */
   receitaServicoCents: bigint;
   receitaRevendaCents: bigint;
+  /** BE-INCR-H1-REFERENCIAL-3-4 (F-HR-3 b) — conta 3.4 do trimestre, com sinal; ausente = 0. */
+  receitaNaoUsoCents?: bigint;
   perfil: PerfilApuracaoPresumido;
   anteriores: MemoriaAnterior[];
   deducoes: DeducaoInformada[];
@@ -365,7 +390,7 @@ function regra16(
       'declarou prestadora exclusiva de serviços sem confirmar que não é sociedade de profissão legalmente regulamentada nem prestadora de serviço hospitalar ou de transporte (Lei 9.250/1995 art. 40 parágrafo único; F-P16-1).',
     );
   }
-  const receitaTrimestre = e.receitaServicoCents + e.receitaRevendaCents;
+  const receitaTrimestre = baseServicoCents(e.receitaServicoCents, e.receitaNaoUsoCents) + e.receitaRevendaCents;
   if (lc.vigente && receitaTrimestre > lc.limiteTrimestreCents) {
     throw new ValidationError(
       `declarou prestadora exclusiva de serviços (16% até R$ 120.000,00 no ano, IN RFB 1.700/2017 art. 215 § 10) com receita do trimestre acima do limite da LC 224 (${lc.limiteTrimestreCents} centavos): combinação impossível — revise a declaração no perfil fiscal (F-P16-3).`,
@@ -395,7 +420,7 @@ function diferencaPostergada16Trimestral(e: EntradaPresumido): { total: bigint; 
   for (const a of trimestres) {
     const dataFimK = fimDoTrimestre(e.ano, a.periodo);
     const pS = linhaVigente(e.tabela, 'PRESUNCAO_IRPJ', dataFimK, 'SERVICO')!;
-    const devido32 = impostoSobreBase(e.tabela, 'IRPJ', dataFimK, mulBp(valorLinha(a.memoria, 'RECEITA_SERVICO', a.periodo), pS.valor), null).devidoCents;
+    const devido32 = impostoSobreBase(e.tabela, 'IRPJ', dataFimK, mulBp(receitaServicoDaMemoria(a.memoria, a.periodo), pS.valor), null).devidoCents;
     const devido = valorLinha(a.memoria, 'DEVIDO', a.periodo);
     total += devido32 - devido;
     linhas.push(
@@ -429,7 +454,8 @@ export function apurarPresumidoTrimestral(e: EntradaPresumido): ResultadoApuraca
     );
   }
   const dataFim = fimDoTrimestre(e.ano, e.periodo);
-  const receita = e.receitaServicoCents + e.receitaRevendaCents;
+  const servico = baseServicoCents(e.receitaServicoCents, e.receitaNaoUsoCents);
+  const receita = servico + e.receitaRevendaCents;
   const lc = parcelaExcedenteLc224({
     tabela: e.tabela,
     ano: e.ano,
@@ -443,6 +469,7 @@ export function apurarPresumidoTrimestral(e: EntradaPresumido): ResultadoApuraca
   const r16 = regra16(e, dataFim, lc);
   const memoria: MemoriaLinha[] = [
     linha('RECEITA_SERVICO', 'Receita bruta de serviço do trimestre (conta 3.1)', e.receitaServicoCents, 'IN RFB 1.700/2017 art. 215 caput'),
+    ...linhaNaoUso(e.receitaNaoUsoCents, 'trimestre'),
     linha('RECEITA_REVENDA', 'Receita bruta de revenda do trimestre (conta 3.3)', e.receitaRevendaCents, 'IN RFB 1.700/2017 art. 215 caput'),
     ...r16.memoria,
     ...lc.memoria,
@@ -452,7 +479,7 @@ export function apurarPresumidoTrimestral(e: EntradaPresumido): ResultadoApuraca
       linha('LC224_SUSPENSO', `Acréscimo da LC 224 suspenso por liminar (processo ${e.perfil.lc224LiminarReferencia ?? '—'}); limite e sobra continuam contados`, 0n, 'F-TA-5 (a) — chave do perfil fiscal da empresa'),
     );
   }
-  const calc = basePresumido(e.tabela, e.tributo, dataFim, e.receitaServicoCents, e.receitaRevendaCents, lc.excedenteCents, suspenso, aliqCsll, r16.reduzida16);
+  const calc = basePresumido(e.tabela, e.tributo, dataFim, servico, e.receitaRevendaCents, lc.excedenteCents, suspenso, aliqCsll, r16.reduzida16);
   memoria.push(...calc.memoria);
 
   // § 5º I-b / II-b: recalcula os trimestres anteriores com a parcela excedente' e deduz a diferença no T04.
@@ -464,7 +491,7 @@ export function apurarPresumidoTrimestral(e: EntradaPresumido): ResultadoApuraca
         e.tabela,
         e.tributo,
         fimDoTrimestre(e.ano, a.periodo),
-        valorLinha(a.memoria, 'RECEITA_SERVICO', a.periodo),
+        receitaServicoDaMemoria(a.memoria, a.periodo),
         valorLinha(a.memoria, 'RECEITA_REVENDA', a.periodo),
         r.excedenteCents,
         temLinha(a.memoria, 'LC224_SUSPENSO'), // o trimestre suspenso foi apurado (e é recalculado) sem acréscimo

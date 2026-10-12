@@ -3,10 +3,13 @@ import { LALUR_MESES, type LalurMes } from './Lalur.model';
 import {
   ajustesParteA,
   aliquotaCsll,
+  baseServicoCents,
   fecharComDeducoes,
   impostoSobreBase,
   linha,
+  linhaNaoUso,
   maxZero,
+  receitaServicoDaMemoria,
   somarDeducoes,
   temLinha,
   valorLinha,
@@ -128,6 +131,8 @@ export interface ReceitaMes {
   periodo: LalurMes;
   servicoCents: bigint;
   revendaCents: bigint;
+  /** BE-INCR-H1-REFERENCIAL-3-4 (F-HR-3 b) — conta 3.4 do mês, com sinal; ausente = 0. */
+  naoUsoCents?: bigint;
 }
 
 export interface EntradaEstimativa {
@@ -138,6 +143,8 @@ export interface EntradaEstimativa {
   /** Item 5 — `receitaBrutaPorAtividade` do MÊS (`mesBounds`), com o gate de exaustividade já rodado. */
   receitaServicoCents: bigint;
   receitaRevendaCents: bigint;
+  /** BE-INCR-H1-REFERENCIAL-3-4 (F-HR-3 b) — conta 3.4 do mês, com sinal; ausente = 0. */
+  receitaNaoUsoCents?: bigint;
   /** Item 9 — receita dos meses em atividade ANTERIORES do ano, mês a mês (só o 16% lê). */
   receitasMesesAnteriores: ReceitaMes[];
   /** Item 9 — meses `CONFIRMED` do ano, do mesmo tributo (só a diferença postergada lê). */
@@ -168,13 +175,15 @@ export function apurarEstimativaReceitaBruta(e: EntradaEstimativa): ResultadoApu
   const pS = linhaVigente(e.tabela, chave, dataFim, 'SERVICO')!;
   const pR = linhaVigente(e.tabela, chave, dataFim, 'REVENDA')!;
 
+  const servico = baseServicoCents(e.receitaServicoCents, e.receitaNaoUsoCents);
   const memoria: MemoriaLinha[] = [
     linha('RECEITA_SERVICO', 'Receita bruta de serviço do mês (conta 3.1)', e.receitaServicoCents, F_ART2),
+    ...linhaNaoUso(e.receitaNaoUsoCents, 'mês'),
     linha('RECEITA_REVENDA', 'Receita bruta de revenda do mês (conta 3.3)', e.receitaRevendaCents, F_ART2),
-    linha('RECEITA_MES', 'Receita bruta do mês', e.receitaServicoCents + e.receitaRevendaCents, F_ART2),
+    linha('RECEITA_MES', 'Receita bruta do mês', servico + e.receitaRevendaCents, F_ART2),
   ];
 
-  let presServico = mulBp(e.receitaServicoCents, pS.valor);
+  let presServico = mulBp(servico, pS.valor);
   let codigoServico = 'PRESUNCAO_SERVICO';
   let descServico = `Receita de serviço × ${pS.valor / 100}%`;
   let fonteServico = pS.fonte;
@@ -188,13 +197,13 @@ export function apurarEstimativaReceitaBruta(e: EntradaEstimativa): ResultadoApu
         'declarou prestadora exclusiva de serviços, mas há receita de revenda no ano — exclusividade é condição do 16% (IN RFB 1.700/2017 art. 33 § 7º).',
       );
     }
-    const acumuladaAnterior = anteriores.reduce((s, r) => s + r.servicoCents + r.revendaCents, 0n);
-    const acumulada = acumuladaAnterior + e.receitaServicoCents + e.receitaRevendaCents;
+    const acumuladaAnterior = anteriores.reduce((s, r) => s + baseServicoCents(r.servicoCents, r.naoUsoCents) + r.revendaCents, 0n);
+    const acumulada = acumuladaAnterior + servico + e.receitaRevendaCents;
     const limite = linhaVigente(e.tabela, 'RECEITA_LIMITE_REDUZIDA_ANO_CENTS', dataFim)!;
     const reduzida = linhaVigente(e.tabela, 'PRESUNCAO_IRPJ_REDUZIDA', dataFim)!;
     memoria.push(linha('RECEITA_ACUMULADA_ANO', `Receita bruta acumulada do ano até ${e.periodo} (limite ${limite.valor} centavos)`, acumulada, limite.fonte));
     if (acumulada <= BigInt(limite.valor)) {
-      presServico = mulBp(e.receitaServicoCents, reduzida.valor);
+      presServico = mulBp(servico, reduzida.valor);
       codigoServico = 'PRESUNCAO_REDUZIDA_16';
       descServico = `Receita de serviço × ${reduzida.valor / 100}% (prestadora exclusiva, acumulada ≤ limite)`;
       fonteServico = reduzida.fonte;
@@ -238,7 +247,7 @@ function diferencaPostergada16(t: TabelaApuracao, ano: number, confirmados: MesC
     const k = numMes(c.periodo);
     const dataFimK = fimDoMes(ano, k);
     const pS = linhaVigente(t, 'PRESUNCAO_IRPJ', dataFimK, 'SERVICO')!;
-    const base32 = mulBp(valorLinha(c.memoria, 'RECEITA_SERVICO', c.periodo), pS.valor);
+    const base32 = mulBp(receitaServicoDaMemoria(c.memoria, c.periodo), pS.valor);
     const devido32 = impostoSobreBase(t, 'IRPJ', dataFimK, base32, null, 1n).devidoCents;
     const dif = devido32 - c.devidoCents;
     total += dif;
@@ -331,8 +340,8 @@ export function apurarBalancete(e: EntradaBalancete): ResultadoApuracaoAnual {
 /** Decisão 1 do PR-3: a diferença do § 8º quando m é o mês do excesso (mesma regra de m* do item 9); senão null. */
 function excessoNoBalancete(e: EntradaBalancete, m: number, dataFim: string, memoria: MemoriaLinha[]): { total: bigint; linhas: MemoriaLinha[] } | null {
   const anteriores = (e.receitasMesesAnteriores ?? []).filter((r) => numMes(r.periodo) < m);
-  const acumuladaAnterior = anteriores.reduce((s, r) => s + r.servicoCents + r.revendaCents, 0n);
-  const acumulada = acumuladaAnterior + e.receitaMes!.servicoCents + e.receitaMes!.revendaCents;
+  const acumuladaAnterior = anteriores.reduce((s, r) => s + baseServicoCents(r.servicoCents, r.naoUsoCents) + r.revendaCents, 0n);
+  const acumulada = acumuladaAnterior + baseServicoCents(e.receitaMes!.servicoCents, e.receitaMes!.naoUsoCents) + e.receitaMes!.revendaCents;
   const limite = linhaVigente(e.tabela, 'RECEITA_LIMITE_REDUZIDA_ANO_CENTS', dataFim)!;
   if (!(acumuladaAnterior <= BigInt(limite.valor) && acumulada > BigInt(limite.valor))) return null;
   memoria.push(linha('RECEITA_ACUMULADA_ANO', `Receita bruta acumulada do ano até ${e.periodo} (limite ${limite.valor} centavos)`, acumulada, limite.fonte));

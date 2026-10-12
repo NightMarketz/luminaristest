@@ -1,5 +1,7 @@
 # BRIEF — BE-INCR-NFCE (NFC-e modelo 65 + NF-e 55 própria atrás da porta, seleção por tipo) — nó X10a
 
+> **EMENDA 2026-10-11:** ver [`EMENDAS-BRIEF-2026-10-11.md`](EMENDAS-BRIEF-2026-10-11.md) §3 (cancelamento da NFC-e em 30 minutos, campo em minutos) e §8 (PAA). Sem código; cada item exige 'executa'.
+
 > Produzido em `sessao-planejamento` (2026-10-02), nó [`X10a`](../plano/nos/X10a.md), Fase F do
 > [`PLANO-EMISSAO-FISCAL-2026-09-27.md`](PLANO-EMISSAO-FISCAL-2026-09-27.md). Base:
 > [`ADR-INCR-DFE-EMISSAO-PARCEIRO`](../adr/ADR-INCR-DFE-EMISSAO-PARCEIRO.md) (§3, §9, §10, §11),

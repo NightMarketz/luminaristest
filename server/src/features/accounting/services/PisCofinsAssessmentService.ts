@@ -385,6 +385,7 @@ export class PisCofinsAssessmentService {
       modalidade,
       receitaServicoCents: BigInt(rec.servicoCents),
       receitaRevendaCents: BigInt(rec.revendaCents),
+      receitaNaoUsoCents: BigInt(rec.naoUsoCents),
       ajustesBase: input.ajustesBase,
       outrosCreditos: input.outrosCreditos,
       retencoes: input.retencoes,
