@@ -13,7 +13,7 @@
 > sem o Luminaris guardar o certificado (F-E8-1R).
 >
 > **Ratificação, 2026-10-11:** F-E8-1R = (a), certificado em nuvem no PSC para os três DF-e (dono, chat: *"Pode seguir a
-> sua sugestao pra decisão nova"*). O F-E8-3 (critério do PSC) segue **RATIFICAÇÃO PENDENTE**.
+> sua sugestao pra decisão nova"*). O F-E8-3 = (b), o Luminaris homologa um ou dois PSCs (dono, chat, 11/10: *"Pode ratificar e resolver"*).
 
 ---
 
@@ -118,7 +118,9 @@ reaproveita o F-E8-2 da NFS-e e deixa uma porta só para os três DF-e. Riscos: 
 (insumo ausente) e a pergunta F-3 sobre selo SE-S como "manifestação de vontade" (Res. CG 211/2024 art. 4º), que vale
 para qualquer um dos três caminhos.
 
-**F-E8-3: critério para escolher o PSC (se F-E8-1R = a).** RATIFICAÇÃO PENDENTE.
+**F-E8-3: critério para escolher o PSC (se F-E8-1R = a).** **RATIFICADO (b)**: dono, chat, 2026-10-11, *"Pode ratificar e
+resolver"*, em resposta à recomendação (b) deste fork. Não é "executa": escolher os PSCs depende dos insumos do §7
+(LPSC vigente, preço, latência).
 - (a) O cliente escolhe qualquer PSC da LPSC do ITI, e o Luminaris implementa um adaptador por PSC que tiver cliente.
 - (b) O Luminaris homologa um ou dois PSCs (API de assinatura remota com autorização por lote ou escopo, preço por
   assinatura, SLA) e o cliente escolhe entre eles.
