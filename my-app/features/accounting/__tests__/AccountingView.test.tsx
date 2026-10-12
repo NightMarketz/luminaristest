@@ -62,6 +62,7 @@ vi.mock('../components/PeriodComparisonPanel', () => ({ PeriodComparisonPanel: (
 vi.mock('../components/DailyJournalPanel', () => ({ DailyJournalPanel: () => null }));
 vi.mock('../components/CounterpartiesPanel', () => ({ CounterpartiesPanel: () => null }));
 vi.mock('../components/DimensionsPanel', () => ({ DimensionsPanel: () => null }));
+vi.mock('../components/TaxAssessmentPanel', () => ({ TaxAssessmentPanel: () => <div data-testid="tax-assessment-panel-mock" /> }));
 vi.mock('../components/NfePanel', () => ({
   NfePanel: (p: { onNavigateTab?: (tab: 'imobilizado', section: 'classes') => void }) =>
     React.createElement('button', { 'data-testid': 'nfe-panel-mock', onClick: () => p.onNavigateTab?.('imobilizado', 'classes') }, 'nfe'),
@@ -148,6 +149,14 @@ describe('AccountingView — F-AGING-5(b) cross-navigation seed', () => {
   });
 });
 
+describe('AccountingView — aba Apuração (FE-INCR-TAX-ASSESSMENT PR-1, F-1 a)', () => {
+  it('a barra de abas tem "Apuração" e clicar nela renderiza o TaxAssessmentPanel', async () => {
+    render(<AccountingView />);
+    fireEvent.click(await screen.findByRole('tab', { name: 'Apuração' }));
+    expect(await screen.findByTestId('tax-assessment-panel-mock')).toBeInTheDocument();
+  });
+});
+
 describe('AccountingView — aba NF-e (FE-INCR-NFE V4/V18)', () => {
   it('a barra de abas tem o botão "NF-e" e clicar nele renderiza o NfePanel', async () => {
     render(<AccountingView />);
@@ -161,8 +170,9 @@ describe('AccountingView — aba Imobilizado (FE-INCR-FIXED-ASSETS item 1)', () 
   it('a barra de abas tem "Imobilizado" (22ª, depois de Dimensões; a 23ª é Perfil fiscal — FE-INCR-DFE PR-0) e clicar nela renderiza o FixedAssetsPanel', async () => {
     render(<AccountingView />);
     const tabs = await screen.findAllByRole('tab');
-    expect(tabs).toHaveLength(25); // 24ª = Parâmetros legais (FE-INCR-LEGAL-PARAMS); 25ª = Política contábil (F-FE-POL-2 a)
+    expect(tabs).toHaveLength(26); // 24ª = Parâmetros legais (FE-INCR-LEGAL-PARAMS); 25ª = Política contábil (F-FE-POL-2 a); 26ª = Apuração (FE-INCR-TAX-ASSESSMENT PR-1)
     expect(tabs[24]).toHaveTextContent('Política contábil');
+    expect(tabs[25]).toHaveTextContent('Apuração');
     expect(tabs[21]).toHaveTextContent('Imobilizado');
     expect(tabs[22]).toHaveTextContent('Perfil fiscal');
     fireEvent.click(tabs[21]);

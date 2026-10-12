@@ -35,7 +35,8 @@
       "imobilizado": "Imobilizado",
       "perfilFiscal": "Perfil fiscal",
       "parametrosLegais": "Parâmetros legais",
-      "politica": "Política contábil"
+      "politica": "Política contábil",
+      "apuracao": "Apuração"
     },
     "error": {
       "units": "Falha ao carregar as unidades.",
@@ -2760,5 +2761,53 @@
       "SCOPE_SETTINGS": "Contas do escopo"
     },
     "title": "Política contábil"
+  },
+  "taxAssessment": {
+    "title": "Apuração de tributos",
+    "ano": "Ano-calendário",
+    "loading": "Carregando…",
+    "empty": "Nenhuma apuração gravada neste ano.",
+    "reconcile": "Reconciliar provisão",
+    "col": {
+      "periodo": "Período"
+    },
+    "status": {
+      "CONFIRMED": "Confirmada",
+      "SUPERSEDED": "Substituída"
+    },
+    "badge": {
+      "aviso": "Parâmetro legal",
+      "pendente": "Provisão pendente"
+    },
+    "detail": {
+      "status": "Situação",
+      "modo": "Modo",
+      "codigoReceita": "Código de receita",
+      "base": "Base",
+      "devido": "Devido",
+      "deducoes": "Deduções",
+      "aPagar": "A pagar",
+      "saldoNegativo": "Saldo negativo",
+      "diferencaPostergada": "Diferença postergada",
+      "confirmedAt": "Confirmada em",
+      "snapshot": "Snapshot dos parâmetros",
+      "semSnapshot": "— (anterior ao snapshot)",
+      "memoria": "Memória de cálculo",
+      "historico": "Histórico de versões",
+      "substitui": "substitui",
+      "tabelaVersao": "Versão da tabela",
+      "parametrosSha256": "Hash dos parâmetros (SHA-256)"
+    },
+    "memoria": {
+      "codigo": "Código",
+      "descricao": "Descrição",
+      "valor": "Valor",
+      "fonte": "Fonte"
+    },
+    "error": {
+      "load": "Erro ao carregar as apurações.",
+      "detail": "Erro ao carregar o detalhe.",
+      "reconcile": "Não foi possível reconciliar a provisão."
+    }
   }
 }

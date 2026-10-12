@@ -35,7 +35,8 @@
       "imobilizado": "Fixed assets",
       "perfilFiscal": "Tax profile",
       "parametrosLegais": "Legal parameters",
-      "politica": "Accounting policy"
+      "politica": "Accounting policy",
+      "apuracao": "Tax assessment"
     },
     "error": {
       "units": "Failed to load units.",
@@ -2760,5 +2761,53 @@
       "SCOPE_SETTINGS": "Scope accounts"
     },
     "title": "Accounting policy"
+  },
+  "taxAssessment": {
+    "title": "Tax assessment",
+    "ano": "Calendar year",
+    "loading": "Loading…",
+    "empty": "No assessment recorded for this year.",
+    "reconcile": "Reconcile provision",
+    "col": {
+      "periodo": "Period"
+    },
+    "status": {
+      "CONFIRMED": "Confirmed",
+      "SUPERSEDED": "Superseded"
+    },
+    "badge": {
+      "aviso": "Legal parameter",
+      "pendente": "Provision pending"
+    },
+    "detail": {
+      "status": "Status",
+      "modo": "Mode",
+      "codigoReceita": "Revenue code",
+      "base": "Base",
+      "devido": "Due",
+      "deducoes": "Deductions",
+      "aPagar": "Payable",
+      "saldoNegativo": "Negative balance",
+      "diferencaPostergada": "Deferred difference",
+      "confirmedAt": "Confirmed at",
+      "snapshot": "Parameter snapshot",
+      "semSnapshot": "— (before snapshot)",
+      "memoria": "Calculation memo",
+      "historico": "Version history",
+      "substitui": "supersedes",
+      "tabelaVersao": "Table version",
+      "parametrosSha256": "Parameters hash (SHA-256)"
+    },
+    "memoria": {
+      "codigo": "Code",
+      "descricao": "Description",
+      "valor": "Amount",
+      "fonte": "Source"
+    },
+    "error": {
+      "load": "Failed to load assessments.",
+      "detail": "Failed to load the detail.",
+      "reconcile": "Could not reconcile the provision."
+    }
   }
 }

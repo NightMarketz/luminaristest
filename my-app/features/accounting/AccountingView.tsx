@@ -30,6 +30,7 @@ import { CounterpartiesPanel } from './components/CounterpartiesPanel';
 import { DimensionsPanel } from './components/DimensionsPanel';
 import { FixedAssetsPanel, type FixedAssetsSectionId } from './components/FixedAssetsPanel';
 import { FiscalProfilePanel } from './components/FiscalProfilePanel';
+import { TaxAssessmentPanel } from './components/TaxAssessmentPanel';
 import { ServiceFiscalProfilesPanel } from './components/ServiceFiscalProfilesPanel';
 import { JournalEntryModal, type AccountOption } from './components/JournalEntryModal';
 import { accountingService } from '../../lib/services/accounting.service';
@@ -43,7 +44,7 @@ import { AccountantAssignmentSection } from './governance/AccountantAssignmentSe
 import { ClientModeStrip, PendingInvitesBanner, clientLabel } from './governance/ClientModeBars';
 import { PolicyVersionsPanel } from './governance/PolicyVersionsPanel';
 
-export type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'nfe' | 'compliance' | 'dimensoes' | 'imobilizado' | 'perfil-fiscal' | 'parametros-legais' | 'politica';
+export type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'nfe' | 'compliance' | 'dimensoes' | 'imobilizado' | 'perfil-fiscal' | 'parametros-legais' | 'politica' | 'apuracao';
 
 // label = i18n fallback (current pt-BR); rendered via t(`view.tabs.<id>`, label)
 export const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
@@ -82,6 +83,8 @@ export const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
   { id: 'parametros-legais', labelKey: 'view.tabs.parametrosLegais', label: 'Parâmetros legais' },
   // FE-INCR-ACCOUNTING-POLICY-VERSION (F-FE-POL-2 a, dono 06/10): versões da política — o mesmo painel nos dois modos.
   { id: 'politica',       labelKey: 'view.tabs.politica',       label: 'Política contábil' },
+  // FE-INCR-TAX-ASSESSMENT PR-1 (F-1 a, dono 08/10): aba "Apuração" — grade do ano X7 + X8, leitura + aviso.
+  { id: 'apuracao',       labelKey: 'view.tabs.apuracao',       label: 'Apuração' },
 ];
 
 /**
@@ -507,6 +510,9 @@ export function AccountingView() {
       {activeTab === 'politica' && unitId && (
         <PolicyVersionsPanel key={contextKey} unitId={unitId} governance={governance} onAssignmentLost={leaveClient} />
       )}
+
+      {/* ── Apuração (IRPJ/CSLL + PIS/Cofins) tab — FE-INCR-TAX-ASSESSMENT PR-1 ── */}
+      {activeTab === 'apuracao' && unitId && <TaxAssessmentPanel unitId={unitId} />}
 
       {/* ── New Entry Modal ────────────────────────────────────────────────── */}
       <JournalEntryModal
