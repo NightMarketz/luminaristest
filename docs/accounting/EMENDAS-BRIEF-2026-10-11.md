@@ -43,7 +43,7 @@ a CSLL só a partir de 01/04/2026 (`pesquisa-lei-2026-10-10/irpj-sped.md:51-52`)
 - **E1-3 [direto]** A memória da CSLL de 2026 cita a fonte nova (P&R LC 224 v5 item 13; SC 10010/2026) na linha do
   limite.
 
-**F-E1-1: como a CSLL de 2026 conta o limite.** RATIFICAÇÃO PENDENTE.
+**F-E1-1: como a CSLL de 2026 conta o limite.** **RATIFICADO (a)**: dono, chat, 2026-10-11, *"Pode ratificar e resolver"*; implementado no #634 (`59f2dec5`).
 - (a) A CSLL de 2026 trata o T01 como "fora de atividade" para a LC 224: reusa o §9 (trimestres em atividade), a sobra
   do T01 não passa e o limite anual é de 3 × 1,25 mi. A receita do T01 fica fora da acumulada da CSLL.
 - (b) Parâmetro novo `LC224_LIMITE_ANUAL_CSLL_2026_CENTS = 375000000` só para o §5º, mantendo o trimestral.
