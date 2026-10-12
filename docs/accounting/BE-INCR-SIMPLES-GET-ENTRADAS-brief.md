@@ -42,11 +42,11 @@ interface ISimplesEntradasService {
 }
 ```
 
-## 3. Forks — RATIFICAÇÃO PENDENTE
+## 3. Forks — RATIFICADOS (dono, chat, 2026-10-12, questionário — todos na recomendação)
 
 | Fork | Caminhos | Recomendação |
 |---|---|---|
-| **F-GE-1** Sem registro | (a) `404` · (b) `200 null` | **(a)**: padrão REST da casa para recurso por chave; o FE trata 404 como "formulário em branco" |
+| **F-GE-1** Sem registro | (a) `404` · (b) `200 null` | **(a)**: padrão REST da casa para recurso por chave; o FE trata 404 como "formulário em branco"  — ✅ ratificada |
 
 ## 4. Pendente de validação externa
 Nenhuma — leitura de dado já gravado, sem regra fiscal.

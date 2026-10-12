@@ -73,15 +73,15 @@ export type SimplesDefisView = {
 };
 ```
 
-## 3. Forks — RATIFICAÇÃO PENDENTE
+## 3. Forks — RATIFICADOS (dono, chat, 2026-10-12, questionário — todos na recomendação)
 
 | Fork | Caminhos | Recomendação |
 |---|---|---|
-| **F-DM-1** Limite do art. 145 § 1º | (a) o BE calcula: presunção do IRPJ (tabela existente SERVICO/REVENDA, por atividade da apuração) × receita do ano − IRPJ do DAS; `informar` derivado · (b) o usuário marca "lucro acima do limite" e o BE só mostra o valor · (c) sempre mostrar o lucro (hoje) com aviso do item 4 | **(a)**: os insumos existem no sistema (receita por atividade nas apurações, parcela IRPJ no DAS, tabela de presunção); limitação: atividades fora de SERVICO/REVENDA (ex. 1,6% combustível, 16% transporte) não estão na tabela → alerta e `limiteIsencaoCents: null` |
-| **F-DM-2** Escrituração contábil | (a) presume-se que sim (o sistema É a escrituração) · (b) flag no perfil fiscal | **(a)**: quem usa o razão do Luminaris escritura; sem flag nova |
-| **F-DM-3** Exportação direta | (a) digitada · (b) derivada das apurações (exige o Simples registrar exportação — frente nova) | **(a)**: o Simples não registra exportação hoje; o manual diz "caso tenha informado no PGDAS-D" |
-| **F-DM-4** Doações eleitorais (item 9) | (a) fora até ler os campos na tela do PGDAS-D/DEFIS (o texto extraído só tem o título) · (b) modelar CNPJ + valor por analogia com o item 6 | **(a)**: não inventar campo sem fonte legível — vai a "Pendente de validação externa" |
-| **F-DM-5** Mudança de shape do GET | (a) `lucroContabilCents` vira objeto `lucroContabil` (quebra; o FE da DEFIS ainda não existe) · (b) mantém `lucroContabilCents` e acrescenta campos | **(a)**: não há consumidor no FE (grep vazio); evita dois campos para a mesma coisa |
+| **F-DM-1** Limite do art. 145 § 1º | (a) o BE calcula: presunção do IRPJ (tabela existente SERVICO/REVENDA, por atividade da apuração) × receita do ano − IRPJ do DAS; `informar` derivado · (b) o usuário marca "lucro acima do limite" e o BE só mostra o valor · (c) sempre mostrar o lucro (hoje) com aviso do item 4 | **(a)**: os insumos existem no sistema (receita por atividade nas apurações, parcela IRPJ no DAS, tabela de presunção); limitação: atividades fora de SERVICO/REVENDA (ex. 1,6% combustível, 16% transporte) não estão na tabela → alerta e `limiteIsencaoCents: null`  — ✅ ratificada |
+| **F-DM-2** Escrituração contábil | (a) presume-se que sim (o sistema É a escrituração) · (b) flag no perfil fiscal | **(a)**: quem usa o razão do Luminaris escritura; sem flag nova  — ✅ ratificada |
+| **F-DM-3** Exportação direta | (a) digitada · (b) derivada das apurações (exige o Simples registrar exportação — frente nova) | **(a)**: o Simples não registra exportação hoje; o manual diz "caso tenha informado no PGDAS-D"  — ✅ ratificada |
+| **F-DM-4** Doações eleitorais (item 9) | (a) fora até ler os campos na tela do PGDAS-D/DEFIS (o texto extraído só tem o título) · (b) modelar CNPJ + valor por analogia com o item 6 | **(a)**: não inventar campo sem fonte legível — vai a "Pendente de validação externa"  — ✅ ratificada |
+| **F-DM-5** Mudança de shape do GET | (a) `lucroContabilCents` vira objeto `lucroContabil` (quebra; o FE da DEFIS ainda não existe) · (b) mantém `lucroContabilCents` e acrescenta campos | **(a)**: não há consumidor no FE (grep vazio); evita dois campos para a mesma coisa  — ✅ ratificada |
 
 ## 4. Pendente de validação externa
 
