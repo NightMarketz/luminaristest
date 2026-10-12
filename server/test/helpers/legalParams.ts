@@ -24,7 +24,9 @@ export const SIMPLES_SEED_FILE_V2 = path.resolve(__dirname, '../../prisma/data/l
 export const SIMPLES_SEED_FILE_V3 = path.resolve(__dirname, '../../prisma/data/legal_parameters_simples_v3.sql');
 /** X14 PR-4 (F-PR4-13) — SIMPLES_LIMITE/MEI_TAC do transportador autônomo de cargas. */
 export const SIMPLES_SEED_FILE_V4 = path.resolve(__dirname, '../../prisma/data/legal_parameters_simples_v4.sql');
-export const SIMPLES_SEED_FILES = [SIMPLES_SEED_FILE, SIMPLES_SEED_FILE_V2, SIMPLES_SEED_FILE_V3, SIMPLES_SEED_FILE_V4];
+/** SIMEI-TAC-12 — SIMEI_VALOR/CPP_TAC_PCT (12% do transportador) e o Anexo VII da LC 123 (CBS/IBS 2027+, ICMS/ISS 2029–2033). */
+export const SIMPLES_SEED_FILE_V5 = path.resolve(__dirname, '../../prisma/data/legal_parameters_simples_v5.sql');
+export const SIMPLES_SEED_FILES = [SIMPLES_SEED_FILE, SIMPLES_SEED_FILE_V2, SIMPLES_SEED_FILE_V3, SIMPLES_SEED_FILE_V4, SIMPLES_SEED_FILE_V5];
 /** PR-2: as tabelas restantes (exceto DEPRECIACAO_ANEXO_III, PR-3). Mesma regra de igualdade com o migration.sql. */
 export const LEGAL_PARAMS_SEED_FILE_V2 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v2.sql');
 /** PR-3: DEPRECIACAO_ANEXO_III (cópia do fixture do Anexo III). Mesma regra de igualdade com o migration.sql. */

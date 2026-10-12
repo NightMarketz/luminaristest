@@ -14,7 +14,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { SIMPLES_SEED_FILE, legalParamsSeedRows } from '@test/helpers/legalParams';
-import { LEGAL_PARAMETER_TABELAS, TABELAS_MIGRADAS } from '../../../legalParameters/models/legalParameter';
+import { LEGAL_PARAMETER_TABELAS, TABELAS_MIGRADAS, linhaLegalVigente } from '../../../legalParameters/models/legalParameter';
 import { EnquadramentoJsonSchema, FaixaJsonSchema, ReparticaoJsonSchema, TetoIssJsonSchema } from '../simplesCalc';
 
 const REPO_ROOT = path.resolve(__dirname, '../../../../../..');
@@ -202,5 +202,40 @@ describe('semente v4 (X14 PR-4: limite do MEI transportador autônomo de cargas,
     const v4 = legalParamsSeedRows(V4);
     expect(v4.map((r) => [r.tabela, r.chave, r.valorInt, r.vigenteAte])).toEqual([['SIMPLES_LIMITE', 'MEI_TAC', 25_160_000, null]]);
     expect(v4[0].fonte).toContain('art. 100 § 1º-A');
+  });
+});
+
+describe('semente v5 (SIMEI-TAC-12: CPP_TAC_PCT e Anexo VII da LC 123)', () => {
+  const V5 = path.join(REPO_ROOT, 'server/prisma/data/legal_parameters_simples_v5.sql');
+  const MIG = path.join(REPO_ROOT, 'server/prisma/migrations/20261013090000_seed_simei_tac_anexo_vii/migration.sql');
+  const v5 = legalParamsSeedRows(V5);
+  it('o migration.sql carrega o texto do arquivo, byte a byte, e só insere', () => {
+    const mig = norm(readFileSync(MIG, 'utf8'));
+    expect(mig).toContain(norm(readFileSync(V5, 'utf8')).trimEnd());
+    expect(mig.split('\n').filter((l) => l.trim() && !l.startsWith('--')).every((l) => l.startsWith('INSERT OR IGNORE INTO "legal_parameters"'))).toBe(true);
+  });
+  it('item 1: CPP_TAC_PCT = 1200 bp vigente em 2022-04, ausente em 2022-03, com a fonte do art. 101 I "c"', () => {
+    expect(linhaLegalVigente(v5, 'SIMEI_VALOR', 'CPP_TAC_PCT', '2022-04-01')?.valorInt).toBe(1_200);
+    expect(linhaLegalVigente(v5, 'SIMEI_VALOR', 'CPP_TAC_PCT', '2022-03-31')).toBeUndefined();
+    expect(linhaLegalVigente(v5, 'SIMEI_VALOR', 'CPP_TAC_PCT', '2022-04-01')?.fonte).toContain('art. 101 I "c"');
+  });
+  it('item 10: o Anexo VII transcrito (conferido no Planalto, LC 214 Anexo XXIII) — valor de cada ano por linhaLegalVigente', () => {
+    const v = (chave: string, data: string) => linhaLegalVigente(v5, 'SIMEI_VALOR', chave, data)?.valorInt ?? null;
+    const anexo: Array<[string, number | null, number | null, number, number]> = [
+      // data,        ICMS (¢), ISS (¢), CBS (milésimos), IBS (milésimos)
+      ['2027-01-01', null, null, 994, 6],
+      ['2028-12-31', null, null, 994, 6],
+      ['2029-01-01', 90, 450, 1_000, 200],
+      ['2030-06-01', 80, 400, 1_000, 400],
+      ['2031-06-01', 70, 350, 1_000, 600],
+      ['2032-12-31', 60, 300, 1_000, 800],
+      ['2033-01-01', 0, 0, 1_000, 2_000],
+    ];
+    for (const [d, icms, iss, cbs, ibs] of anexo) expect([d, v('ICMS', d), v('ISS', d), v('CBS_MILESIMOS', d), v('IBS_MILESIMOS', d)]).toEqual([d, icms, iss, cbs, ibs]);
+    expect([v('CBS_MILESIMOS', '2026-12-31'), v('IBS_MILESIMOS', '2026-12-31')]).toEqual([null, null]);
+    for (const r of v5.filter((l) => l.chave !== 'CPP_TAC_PCT')) {
+      expect(r.fonteUrl).toBe('https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm');
+      expect(r.fonteSha256).toMatch(/^[0-9a-f]{64}$/);
+    }
   });
 });

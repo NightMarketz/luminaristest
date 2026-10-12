@@ -15,7 +15,7 @@ export const SERVER_DIR = path.resolve(__dirname, '../..'); // test/helpers -> s
  * acrescenta o segundo arquivo (tabelas do Simples, `simplesAnexosSeed.test.ts`).
  */
 // BE-INCR-LEGAL-PARAMS: uma semente por PR de migração (v1 = PR-1, v2 = PR-2, v3 = PR-3) + as do Simples (X14 PR-1 e PR-3), aplicadas em ordem.
-export const LEGAL_PARAMS_SEEDS = ['legal_parameters_v1.sql', 'legal_parameters_v2.sql', 'legal_parameters_v3.sql', 'legal_parameters_v4.sql', 'legal_parameters_v5.sql', 'legal_parameters_v6.sql', 'legal_parameters_simples_v1.sql', 'legal_parameters_simples_v2.sql', 'legal_parameters_simples_v3.sql', 'legal_parameters_simples_v4.sql'].map((f) => path.join(SERVER_DIR, 'prisma', 'data', f));
+export const LEGAL_PARAMS_SEEDS = ['legal_parameters_v1.sql', 'legal_parameters_v2.sql', 'legal_parameters_v3.sql', 'legal_parameters_v4.sql', 'legal_parameters_v5.sql', 'legal_parameters_v6.sql', 'legal_parameters_simples_v1.sql', 'legal_parameters_simples_v2.sql', 'legal_parameters_simples_v3.sql', 'legal_parameters_simples_v4.sql', 'legal_parameters_simples_v5.sql'].map((f) => path.join(SERVER_DIR, 'prisma', 'data', f));
 
 /**
  * Banco-modelo: o `db push` (~3–5 s, um subprocesso `npx`) roda UMA vez por versão do schema e cada arquivo de

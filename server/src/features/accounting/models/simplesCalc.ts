@@ -482,49 +482,91 @@ export function apurar(entrada: ApuracaoInput, linhas: readonly LinhaLegal[]): A
 
 // ---- X14 PR-4, item 25: SIMEI (valores fixos mensais do MEI) ----
 
-/** O SIMEI recolhe CPP, ICMS e ISS em valor fixo (Res. CGSN 140 art. 101 I "b", II, III). */
+/** O SIMEI recolhe CPP, ICMS e ISS em valor fixo (Res. CGSN 140 art. 101 I, II, III) e, a partir de 2027, CBS e IBS (LC 123 Anexo VII). */
 export type TributoSimei = 'CPP' | 'ICMS' | 'ISS';
+/** SIMEI-TAC-12 item 11 (F-TAC-7 a): CBS e IBS do Anexo VII em milésimos de real, como no texto legal (R$ 0,994 = 994). */
+export type TributoSimeiMilesimos = 'CBS' | 'IBS';
+/** SIMEI-TAC-12 item 2 — o que o chamador decide antes do cálculo (o transportador efetivo, após o item 14 do #619). */
+export interface OpcoesSimei {
+  transportadorCargas: boolean;
+}
 export interface ApuracaoSimei {
   competencia: string;
   regime: 'MEI';
   salarioMinimoCents: number;
+  /** SIMEI-TAC-12 item 5 — o transportador efetivo (flag do perfil, rebaixada pelo item 14 do #619). */
+  transportadorCargas: boolean;
+  /** SIMEI-TAC-12 item 5 — a alíquota da CPP lida da linha vigente (500 = 5%; 1200 = 12% do transportador desde 04/2022). */
+  cppAliquotaBp: number;
+  /** Centavos inteiros. */
   tributos: Partial<Record<TributoSimei, number>>;
+  /** SIMEI-TAC-12 item 11 (F-TAC-7 a) — milésimos de real; vazio antes de 2027. */
+  tributosMilesimos: Partial<Record<TributoSimeiMilesimos, number>>;
   totalCalculadoCents: number;
   tabela: Array<{ legalParameterId: string; fonte: string; vigenteDesde: string }>;
 }
 
 /**
- * Res. CGSN 140 art. 101: DAS mensal do MEI = 5% do limite mínimo mensal do salário de contribuição (I "b", desde 05/2011)
- * + R$ 1,00 se contribuinte do ICMS (II) + R$ 5,00 se contribuinte do ISS (III), independentemente da receita do mês. O
- * enquadramento ICMS/ISS é o do Anexo XI declarado no perfil (§ 1º; fork L1, dono 08/10). Sem regra de arredondamento na
- * norma: half-up a centavo só no valor da CPP (regra silente nº 1 da nota de decisão). O transportador autônomo de cargas
- * (12%, alínea "c") está fora do BRIEF.
+ * Res. CGSN 140 art. 101: DAS mensal do MEI = CPP sobre o limite mínimo mensal do salário de contribuição — 5% (I "b",
+ * desde 05/2011) ou, para o transportador autônomo de cargas do art. 100 § 1º-A, 12% a partir da competência 04/2022
+ * (I "c"; LC 123 art. 18-F III) — + R$ 1,00 se contribuinte do ICMS (II) + R$ 5,00 se contribuinte do ISS (III),
+ * independentemente da receita do mês. O enquadramento ICMS/ISS é o do Anexo XI declarado no perfil (§ 1º; fork L1, dono
+ * 08/10). Sem regra de arredondamento na norma: half-up a centavo só no valor da CPP (regra silente nº 1 da nota de decisão).
+ *
+ * SIMEI-TAC-12:
+ * - F-TAC-1 (a): o 12% é a linha `SIMEI_VALOR/CPP_TAC_PCT`; F-TAC-4 (a): transportador sem linha vigente (antes de
+ *   04/2022) ⇒ 5% (`CPP_PCT`), não erro. F-TAC-2/3 (a): quem decide `transportadorCargas` é o chamador (`montarMei`).
+ * - 2027+ (F-TAC-5 b; LC 123 art. 18-A § 3º IV "b" e V "d"/"e", red. LC 214 art. 517; Anexo VII, LC 214 art. 520):
+ *   F-TAC-8 (a) CBS/IBS em todo DAS do MEI quando há linha vigente; ICMS/ISS seguem "caso seja contribuinte", com o valor
+ *   do ano do Anexo VII (2029–2032) e 0 a partir de 2033 (LC 214 art. 518; parcela 0 não entra em `tributos`).
+ *   F-TAC-7 (a): CBS/IBS em milésimos; só o total do DAS arredonda a centavo (half-up).
  */
 export function apurarSimei(
   competencia: string,
   enquadramento: { contribuinteIcms: boolean; contribuinteIss: boolean },
   linhas: readonly LinhaLegal[],
+  opcoes: OpcoesSimei,
 ): ApuracaoSimei {
   const data = `${competencia}-01`;
   const usadas = new Map<string, Usada>();
-  const valor = (tabela: string, chave: string): number => {
+  const linha = (tabela: string, chave: string): number | null => {
     const l = linhaLegalVigente(linhas, tabela, chave, data);
-    if (!l || l.valorInt === null || l.valorInt === undefined) throw new Error(`simplesCalc: sem linha vigente de ${tabela}/${chave} em ${data}`);
+    if (!l || l.valorInt === null || l.valorInt === undefined) return null;
     usadas.set(l.id, { id: l.id, fonte: l.fonte, vigenteDesde: l.vigenteDesde });
     return Number(l.valorInt);
   };
-  const salario = valor('SALARIO_MINIMO', 'NACIONAL');
-  const tributos: Partial<Record<TributoSimei, number>> = {
-    CPP: Number(arred(mul(q(BigInt(salario)), BP(valor('SIMEI_VALOR', 'CPP_PCT'))))),
+  const valor = (tabela: string, chave: string): number => {
+    const v = linha(tabela, chave);
+    if (v === null) throw new Error(`simplesCalc: sem linha vigente de ${tabela}/${chave} em ${data}`);
+    return v;
   };
-  if (enquadramento.contribuinteIcms) tributos.ICMS = valor('SIMEI_VALOR', 'ICMS');
-  if (enquadramento.contribuinteIss) tributos.ISS = valor('SIMEI_VALOR', 'ISS');
+  const salario = valor('SALARIO_MINIMO', 'NACIONAL');
+  const cppAliquotaBp = (opcoes.transportadorCargas ? linha('SIMEI_VALOR', 'CPP_TAC_PCT') : null) ?? valor('SIMEI_VALOR', 'CPP_PCT');
+  const tributos: Partial<Record<TributoSimei, number>> = {
+    CPP: Number(arred(mul(q(BigInt(salario)), BP(cppAliquotaBp)))),
+  };
+  const fixo = (t: 'ICMS' | 'ISS') => {
+    const v = valor('SIMEI_VALOR', t);
+    if (v > 0) tributos[t] = v;
+  };
+  if (enquadramento.contribuinteIcms) fixo('ICMS');
+  if (enquadramento.contribuinteIss) fixo('ISS');
+  const tributosMilesimos: Partial<Record<TributoSimeiMilesimos, number>> = {};
+  for (const t of ['CBS', 'IBS'] as const) {
+    const v = linha('SIMEI_VALOR', `${t}_MILESIMOS`);
+    if (v !== null) tributosMilesimos[t] = v;
+  }
+  const centavos = Object.values(tributos).reduce((s, v) => s + (v ?? 0), 0);
+  const milesimos = Object.values(tributosMilesimos).reduce((s, v) => s + (v ?? 0), 0);
   return {
     competencia,
     regime: 'MEI',
     salarioMinimoCents: salario,
+    transportadorCargas: opcoes.transportadorCargas,
+    cppAliquotaBp,
     tributos,
-    totalCalculadoCents: Object.values(tributos).reduce((s, v) => s + (v ?? 0), 0),
+    tributosMilesimos,
+    totalCalculadoCents: centavos + Number(arred(q(BigInt(milesimos), 10n))),
     tabela: [...usadas.values()].map((u) => ({ legalParameterId: u.id, fonte: u.fonte, vigenteDesde: u.vigenteDesde })),
   };
 }

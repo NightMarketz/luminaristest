@@ -486,24 +486,9 @@ export class SimplesApuracaoService {
     const enquadramento = { contribuinteIcms: perfil.meiContribuinteIcms, contribuinteIss: perfil.meiContribuinteIss };
     const anexo = await this.anexoXiDaCompetencia(scope, competencia, perfil, tx);
     const linhas = await this.legalParams.fotografia(['SALARIO_MINIMO', 'SIMEI_VALOR', 'SIMPLES_LIMITE']);
-    let calculada: ApuracaoSimei;
-    try {
-      calculada = apurarSimei(competencia, enquadramento, linhas);
-    } catch (e) {
-      throw new ValidationError(`Não há parâmetro legal publicado para o SIMEI de ${competencia}: ${(e as Error).message}.`);
-    }
-
-    // Item 26 — receita do ano até o PA: o subrazão (receita − cota) prevalece; o histórico cobre os meses sem subrazão.
-    const doAno = meses(`${ano}-01`, competencia);
-    const [historico, subrazao] = await Promise.all([this.entradasRepo.findHistorico(scope, doAno, tx), this.receitaRepo.somaPorCompetencia(scope, doAno, tx)]);
-    const hist = new Map(historico.map((h) => [h.competencia, h.receitaBrutaCents]));
-    const receita = (m: string): bigint => {
-      const s = subrazao.get(m);
-      return s ? s.receitaCents - s.cotaCents : (hist.get(m) ?? 0n);
-    };
-    const acumulado = doAno.reduce((t, m) => t + receita(m), 0n);
     const alertas: AlertaSimples[] = [];
-    const inicio = perfil.inicioAtividadeEm ? perfil.inicioAtividadeEm.slice(0, 7) : null;
+    // SIMEI-TAC-12 item 4: o transportador efetivo é decidido ANTES do cálculo e o mesmo booleano alimenta a CPP (12%,
+    // Res. CGSN 140 art. 101 I "c") e o limite (art. 100 § 1º-A) — F-TAC-2/F-TAC-3 (a), dono 10/10.
     let transportador = perfil.meiTransportadorCargas === true;
     if (anexo) {
       // Item 16: exclusão publicada e ainda sem efeito ⇒ alerta para comunicar no Portal do Simples.
@@ -531,10 +516,27 @@ export class SimplesApuracaoService {
         alertas.push({
           severity: 'WARNING',
           codigo: 'MEI_TAC_COM_OCUPACAO_A',
-          detalhe: `${semB ? 'transportador autônomo de cargas declarado sem ocupação da Tabela B do Anexo XI' : 'ocupação da Tabela A junto com a da Tabela B'}: apurado como MEI comum, no limite geral (Res. CGSN 140 art. 100 caput e §§ 1º-A e 1º-B) — risco de desenquadramento do limite do transportador; revise as ocupações do perfil`,
+          detalhe: `${semB ? 'transportador autônomo de cargas declarado sem ocupação da Tabela B do Anexo XI' : 'ocupação da Tabela A junto com a da Tabela B'}: apurado como MEI comum, no limite geral e CPP de 5% (Res. CGSN 140 art. 100 caput e §§ 1º-A e 1º-B; art. 101 I "b"-"c") — risco de desenquadramento do limite do transportador; revise as ocupações do perfil`,
         });
       }
     }
+    let calculada: ApuracaoSimei;
+    try {
+      calculada = apurarSimei(competencia, enquadramento, linhas, { transportadorCargas: transportador });
+    } catch (e) {
+      throw new ValidationError(`Não há parâmetro legal publicado para o SIMEI de ${competencia}: ${(e as Error).message}.`);
+    }
+
+    // Item 26 — receita do ano até o PA: o subrazão (receita − cota) prevalece; o histórico cobre os meses sem subrazão.
+    const doAno = meses(`${ano}-01`, competencia);
+    const [historico, subrazao] = await Promise.all([this.entradasRepo.findHistorico(scope, doAno, tx), this.receitaRepo.somaPorCompetencia(scope, doAno, tx)]);
+    const hist = new Map(historico.map((h) => [h.competencia, h.receitaBrutaCents]));
+    const receita = (m: string): bigint => {
+      const s = subrazao.get(m);
+      return s ? s.receitaCents - s.cotaCents : (hist.get(m) ?? 0n);
+    };
+    const acumulado = doAno.reduce((t, m) => t + receita(m), 0n);
+    const inicio = perfil.inicioAtividadeEm ? perfil.inicioAtividadeEm.slice(0, 7) : null;
     const limite = this.limiteMei(linhas, competencia, inicio, acumulado, alertas, transportador);
 
     const linhasPa = await this.receitaRepo.findByCompetencia(scope, competencia, tx);
@@ -546,6 +548,8 @@ export class SimplesApuracaoService {
     await this.conferirNfse(scope, competencia, devidas, alertas, { me: false, caixa: false }, tx);
     const impressao = JSON.stringify({
       enquadramento,
+      // SIMEI-TAC-12 item 6: o transportador efetivo (CPP e limite) entra no gate da tx.
+      transportador,
       inicio: perfil.inicioAtividadeEm,
       tabela: calculada.tabela.map((t) => t.legalParameterId),
       historico: historico.map((h) => [h.competencia, String(h.receitaBrutaCents)]),
