@@ -1,5 +1,5 @@
 /**
- * Emenda 3.3 (BE-INCR-ENCARGOS-DESCONTOS) PR-1 — F-HR-4 a (dono 11/10), v4 por decisão do dono de 13/10: o kit v4 do
+ * Emenda 3.3 (BE-INCR-ENCARGOS-DESCONTOS) PR-1 — F-HR-4 a (dono 11/10), "a próxima versão" (dono, 13/10; v4 já publicado pelo PR-K3): o kit v5 do
  * salão e da clínica mapeia as 9 folhas novas do canônico; instalação nova sai com a ECD pronta (32/32).
  *
  * (Base copiada do teste do v3.) BE-INCR-KIT-SETOR-EMENDA-1, PR-K2 (itens 5, 6 e 8; F-KE-1 a, F-KE-2 a, F-PCB-1R a — dono, 13/10) — o kit v3 PUBLICADO
@@ -13,21 +13,21 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema, resetDb } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
 import type { BindingScope } from '@/features/accountingBinding/repositories/IAccountingBindingRepository';
-import { BEAUTY_SALON_KIT_V4 } from '@/features/sectorKits/kits/beautySalon/kit.v4';
-import { AESTHETIC_CLINIC_KIT_V4 } from '@/features/sectorKits/kits/aestheticClinic/kit.v4';
+import { BEAUTY_SALON_KIT_V5 } from '@/features/sectorKits/kits/beautySalon/kit.v5';
+import { AESTHETIC_CLINIC_KIT_V5 } from '@/features/sectorKits/kits/aestheticClinic/kit.v5';
 
-const UNIT = 'unit-kit-v4';
+const UNIT = 'unit-kit-v5';
 const TODAY = new Date().toISOString().slice(0, 10);
 let ownerId: string;
 
 const scope = (): BindingScope => ({ ownerUserId: ownerId, actorUserId: ownerId, unitId: UNIT });
 const where = () => ({ userId: ownerId, unitId: UNIT });
-const KITS = [BEAUTY_SALON_KIT_V4, AESTHETIC_CLINIC_KIT_V4];
+const KITS = [BEAUTY_SALON_KIT_V5, AESTHETIC_CLINIC_KIT_V5];
 const T = 60000; // resetDb + instalação dos 7 passos passa de 5 s no Windows
 
 async function preparar(regime: 'PRESUMIDO' | 'REAL', perfil: Record<string, unknown> = {}) {
   await resetDb();
-  ownerId = (await prisma.user.create({ data: { name: 'kitv4', username: 'kit-v4-dono', email: 'kitv4@test.local', password: 'x', role: 'USER' } })).id;
+  ownerId = (await prisma.user.create({ data: { name: 'kitv5', username: 'kit-v5-dono', email: 'kitv5@test.local', password: 'x', role: 'USER' } })).id;
   const codigos = [...new Set(KITS.flatMap((k) => k.referential.flatMap((b) => b.entries.map((e) => e.referentialCode))))];
   for (const code of codigos) await prisma.referentialAccount.create({ data: { layoutVersion: '2025', code, name: code, isAnalytic: true } });
   await prisma.fiscalProfile.create({
@@ -51,14 +51,14 @@ const FOLHAS_EMENDA_3_3 = ['3.5.1', '3.5.2', '3.5.3', '4.3.1', '4.3.2', '4.3.3',
 
 const codigo = async (id: string | null) => (id ? (await prisma.account.findUniqueOrThrow({ where: { id } })).code : null);
 
-describe('kit v4 — referencial das 9 folhas da emenda 3.3 (F-HR-4 a)', () => {
+describe('kit v5 — referencial das 9 folhas da emenda 3.3 (F-HR-4 a)', () => {
   beforeAll(() => pushTestSchema(), 120000);
   afterAll(async () => prisma.$disconnect());
 
   describe.each(KITS.map((k) => k.kitKey))('%s', (kitKey) => {
     it.each(['PRESUMIDO', 'REAL'] as const)('%s: conteúdo do v3 + cobertura 2025 32/32 com o referencial da PROPOSTA §1.2', async (regime) => {
       await preparar(regime);
-      await expect(instalar(kitKey)).resolves.toMatchObject({ status: 'INSTALLED', kit: { kitKey, kitVersion: 4 } });
+      await expect(instalar(kitKey)).resolves.toMatchObject({ status: 'INSTALLED', kit: { kitKey, kitVersion: 5 } });
 
       const novas = await prisma.account.findMany({
         where: { ...where(), code: { in: ['2.1.3', '2.1.4', '2.1.5', '2.1.6', '3.6.1', '3.6.2', '4.5.1', '4.5.2'] } },

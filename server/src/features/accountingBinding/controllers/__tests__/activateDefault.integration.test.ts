@@ -64,7 +64,7 @@ describe('POST /api/accounting-binding/activate-default (LAC-B)', () => {
     expect(res.body.data.blocking.map((i: { code: string }) => i.code)).toEqual([
       'CHART_OF_ACCOUNTS_EMPTY',
       'ACCOUNTING_PERIOD_NOT_OPEN',
-      'KIT_FISCAL_PROFILE_REQUIRED', // E-5: o kit vigente (v3 em diante) traz contas do perfil fiscal
+      'KIT_FISCAL_PROFILE_REQUIRED', // E-5: o kit vigente (v4) traz contas do perfil fiscal
     ]);
     const { year, month } = hoje();
     expect(res.body.data.blocking[1].period).toBe(`${year}-${String(month).padStart(2, '0')}`);
@@ -83,7 +83,7 @@ describe('POST /api/accounting-binding/activate-default (LAC-B)', () => {
   });
 
   it('feliz: com as 2 flags instala o chart canônico, abre o mês corrente e ativa o binding do salão', async () => {
-    // E-5: o kit vigente (v3 em diante) preenche contas do perfil fiscal — o perfil vem antes (PUT /accounting/fiscal-profile).
+    // E-5: o kit vigente (v4) preenche contas do perfil fiscal — o perfil vem antes (PUT /accounting/fiscal-profile).
     await prisma.fiscalProfile.create({
       data: { userId: dono.id, unitId: UNIT, regimeTributario: 'PRESUMIDO', pisCofinsRegime: 'CUMULATIVO', d1fConfirmado: false },
     });
@@ -93,7 +93,7 @@ describe('POST /api/accounting-binding/activate-default (LAC-B)', () => {
       .send({ unitId: UNIT, installChartIfEmpty: true, openCurrentPeriodIfMissing: true });
 
     expect(res.status).toBe(200);
-    expect(res.body.data).toEqual({ status: 'Active', bindingVersion: 1, kit: { kitKey: 'beautySalon', kitVersion: 4, status: 'INSTALLED' } });
+    expect(res.body.data).toEqual({ status: 'Active', bindingVersion: 1, kit: { kitKey: 'beautySalon', kitVersion: 5, status: 'INSTALLED' } });
 
     const { year, month } = hoje();
     const periodo = await prisma.accountingPeriod.findFirst({ where: { userId: dono.id, unitId: UNIT, year, month } });
@@ -115,7 +115,7 @@ describe('POST /api/accounting-binding/activate-default (LAC-B)', () => {
     );
     expect(eventos).toEqual(expect.arrayContaining(['period.opened', 'binding.compiled', 'binding.activated']));
 
-    // Kit v3 (PR-K2): PIS/COFINS do perfil apontam para as deduções 3.6.1/3.6.2 da extensão.
+    // Kit v3+ (PR-K2): PIS/COFINS do perfil apontam para as deduções 3.6.1/3.6.2 da extensão.
     const perfil = await prisma.fiscalProfile.findFirstOrThrow({ where: { userId: dono.id, unitId: UNIT } });
     const codigoDe = async (id: string | null) => (id ? (await prisma.account.findUniqueOrThrow({ where: { id } })).code : null);
     expect([await codigoDe(perfil.pisDespesaAccountId), await codigoDe(perfil.cofinsDespesaAccountId)]).toEqual(['3.6.1', '3.6.2']);
@@ -128,7 +128,7 @@ describe('POST /api/accounting-binding/activate-default (LAC-B)', () => {
       .send({ unitId: UNIT, installChartIfEmpty: true, openCurrentPeriodIfMissing: true });
 
     expect(res.status).toBe(200);
-    expect(res.body.data).toEqual({ status: 'already-active', bindingVersion: 1, kit: { kitKey: 'beautySalon', kitVersion: 4, status: 'INSTALLED' } });
+    expect(res.body.data).toEqual({ status: 'already-active', bindingVersion: 1, kit: { kitKey: 'beautySalon', kitVersion: 5, status: 'INSTALLED' } });
     expect(await prisma.accountingBinding.count({ where: { userId: dono.id, unitId: UNIT } })).toBe(1);
   });
 });

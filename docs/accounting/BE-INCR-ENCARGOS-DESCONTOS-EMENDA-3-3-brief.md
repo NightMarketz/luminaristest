@@ -15,7 +15,7 @@
 > ratificados; *"Executa só o PR-1"* (E1–E5 + E26 no E1/E2 + F-HR-4). Na execução apareceu uma colisão: o kit v3
 > (KIT-SETOR, #652, F-KE-1 a) usa **4.5.1/4.5.2** para IRPJ/CSLL, então a 4.5 não pode ser folha. Dono: *"4.6 Tarifas
 > (Recomendado)"* → a tarifa é **`4.6`** (`BANK_FEE_CODE = '4.6'`), com o mesmo referencial e a mesma regra de DRE. E o
-> "kit v3" do F-HR-4 vira **kit v4** (o v3 já estava publicado): *"Kit v4 (Recomendado)"*, salão e clínica. Onde este
+> "kit v3" do F-HR-4 vira a próxima versão: *"Kit v4 (Recomendado)"*, salão e clínica — publicado como **v5**, porque o PR-K3 (#655) publicou o v4 durante esta sessão. Onde este
 > BRIEF diz `4.5` para a tarifa, leia `4.6`. F-ENC-4, 5, 7 e 8 seguem pendentes (PR-2 a PR-4, sem "executa").
 
 ## 0. Contexto fixo

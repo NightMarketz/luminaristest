@@ -516,7 +516,7 @@ EVIDÊNCIA: [colar o JSON da resposta 201 — id do lançamento e as pernas]
 > PR-1 da emenda 3.3, o plano canônico ganha 9 folhas (3.5.1–3.5.3, 4.3.1–4.3.3, 4.4.1, 4.4.2, 4.6). Elas nascem nos
 > escopos que já existem na primeira chamada que roda o `ensureChartOfAccounts` (`GET /accounts`, ou qualquer
 > lançamento), e o gate da ECD conta toda folha ativa: **sem o lote abaixo, a ECD volta a dar 400 nas duas unidades**.
-> Instalação nova pelo kit v4 já sai mapeada; o lote é só para as unidades do seed. Mesmos códigos em Presumido e Real
+> Instalação nova pelo kit v5 já sai mapeada; o lote é só para as unidades do seed. Mesmos códigos em Presumido e Real
 > (PROPOSTA-REFERENCIAL-D1 §1.2; descrições oficiais conferidas em `referential_accounts` 2025 do dev.db em 13/10).
 >
 > Nas duas unidades (seed-presumido e seed-real):

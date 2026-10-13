@@ -63,8 +63,15 @@ describe('SectorKitV1Schema — refinamentos do item 2', () => {
     ];
     expect(messages(k)).toEqual(['Conta 7.7 não existe no canônico nem na extensão.']);
     const s = base();
-    s.serviceFiscalDefaults = [{ serviceRef: 'corte', cTribNac: '12345', cIndOp: '030101' }];
+    s.serviceFiscalDefaults = [{ key: 'corte', label: 'Corte', cTribNac: '12345', sinonimos: ['corte'], fonte: 'LC 116 6.01' }];
     expect(messages(s)).toEqual(['cTribNac tem 6 dígitos.']);
+  });
+
+  it('PR-K3 (7a): catálogo com chave repetida reprova (a key é o enum da IA)', () => {
+    const item = { key: 'corte', label: 'Corte', cTribNac: '060101', sinonimos: ['corte'], fonte: 'LC 116 6.01' };
+    const s = base();
+    s.serviceFiscalDefaults = [item, { ...item, label: 'Outro' }];
+    expect(messages(s)).toEqual(['Chave corte repetida no catálogo.']);
   });
 
   it('é strict em todo nível (chave desconhecida reprova)', () => {

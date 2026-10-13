@@ -3,14 +3,14 @@
  *
  * atomicUntil: passo do kit (sem tx única — cada serviço orquestrado abre a sua; F-KB-2 → Contrato §2.3)
  *   commit 1 — razão: nenhum postEntry. Os passos 1–7 commitam cada um no serviço dono (plano canônico, extensão,
- *              roleDefaults, período, compile do binding, perfis fiscais por serviço, referencial), em ordem fixa
+ *              roleDefaults, período, compile do binding, [passo 6 vazio desde o PR-K3], referencial), em ordem fixa
  *              teste: KitInstallService.integration.test.ts › "instala o kit com conteúdo: os 7 passos em ordem"
  *   commit 2 — KitInstallation.steps = último passo concluído, gravado depois do commit do passo; no fim,
  *              status INSTALLED + `kit.installed` na mesma tx (falha: FAILED + `kit.install_failed`, steps preservado)
- *              teste: KitInstallService.integration.test.ts › "falha injetada no passo 6: FAILED, steps=5, Draft KIT_INSTALL_STEP_FAILED"
+ *              teste: KitInstallService.integration.test.ts › "falha injetada no passo 7: FAILED, steps=6, KitInstallStepFailedError e kit.install_failed"
  *   reconcile — install() de novo: retoma do primeiro passo não concluído; cada passo é read-first idempotente
- *              (cria-se-falta, só campo nulo, compile só sem Active, upsert só sem perfil, batchSet só sem mapeamento)
- *              teste: KitInstallService.integration.test.ts › "retomada: a 2ª chamada retoma do passo 6 sem duplicar efeito"
+ *              (cria-se-falta, só campo nulo, compile só sem Active, batchSet só sem mapeamento)
+ *              teste: KitInstallService.integration.test.ts › "retomada: a 2ª chamada retoma do passo 7 sem duplicar efeito"
  *              teste: KitInstallService.integration.test.ts › "idempotência: reexecutar os 7 passos sobre o tenant instalado não duplica nada"
  *   fora da tx — nada
  *
@@ -50,7 +50,6 @@ import type {
   KitRegime,
   KitRegimePort,
   KitRoleDefaultsPort,
-  KitServiceFiscalPort,
 } from './kitInstallPorts';
 
 /** Resultado de `install()`. Falha por exceção não volta aqui: vira `KitInstallStepFailedError` (item 14). */
@@ -85,7 +84,6 @@ export class KitInstallService {
     private readonly chart: KitChartPort,
     private readonly period: ActivationPeriodPort,
     private readonly roleDefaults: KitRoleDefaultsPort,
-    private readonly serviceFiscal: KitServiceFiscalPort,
     private readonly referential: KitReferentialPort,
     private readonly regime: KitRegimePort,
     private readonly audit: IKitAuditPort,
@@ -203,7 +201,7 @@ export class KitInstallService {
       case KIT_INSTALL_STEPS.COMPILE:
         return this.stepCompile(scope, kit);
       case KIT_INSTALL_STEPS.SERVICE_FISCAL_DEFAULTS:
-        return this.stepServiceFiscalDefaults(kit);
+        return this.stepServiceFiscalDefaults();
       case KIT_INSTALL_STEPS.REFERENTIAL:
         return this.stepReferential(kit, input);
     }
@@ -266,12 +264,12 @@ export class KitInstallService {
     return result.status === 'Active' ? { bindingVersion: result.binding.bindingVersion } : { compileDraft: result };
   }
 
-  /** Passo 6 — padrões fiscais por serviço, só onde não há perfil. */
-  private async stepServiceFiscalDefaults(kit: SectorKitV1): Promise<StepResult> {
-    for (const d of kit.serviceFiscalDefaults) {
-      if (await this.serviceFiscal.hasProfile(d.serviceRef)) continue;
-      await this.serviceFiscal.upsert(d.serviceRef, { cTribNac: d.cTribNac, cNBS: d.cNBS, cIndOp: d.cIndOp });
-    }
+  /**
+   * Passo 6 — vazio desde o PR-K3 (EMENDA-1, itens 7a/7d; F-KE-3 b; L2 de 13/10): o `serviceFiscalDefaults` virou
+   * catálogo de SUGESTÕES, que não se instala — o cadastro de serviço oferece, o usuário escolhe, nada é gravado por
+   * palpite. O número do passo fica, para o `steps` gravado das instalações existentes continuar valendo.
+   */
+  private async stepServiceFiscalDefaults(): Promise<StepResult> {
     return {};
   }
 
