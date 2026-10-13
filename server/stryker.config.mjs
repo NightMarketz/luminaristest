@@ -17,9 +17,16 @@ export default {
     '!src/**/*.d.ts',
   ],
   // inPlace: testes fiscais leem fixtures por caminho relativo à raiz do repo (../../server/prisma/data),
-  // que não existe dentro de um sandbox .stryker-tmp/. O Stryker restaura os arquivos ao terminar —
-  // confira `git status` limpo depois de uma rodada interrompida.
+  // que não existe dentro de um sandbox .stryker-tmp/. O Stryker restaura os arquivos ao terminar
+  // NORMALMENTE; morto à força (kill/fechar terminal), os arquivos ficam instrumentados. Recuperação
+  // (só com a árvore commitada!): `git checkout -- . && rm -rf .stryker-tmp` em server/.
   inPlace: true,
+  // Sem `// @ts-nocheck` em massa: o default escrevia em ~1.360 arquivos (scripts/configs inclusive)
+  // no modo inPlace. ts-jest aqui só transpila (tsconfig.jest.json), então não há type-check a desligar.
+  disableTypeChecks: false,
+  // Mutante estático (constante de módulo — ex.: tabelas legais em models/) roda a suíte inteira:
+  // 5.022 deles (14%) custavam 97% do tempo (~85 h estimadas). Ficam como "Ignored" no relatório.
+  ignoreStatic: true,
   ignorePatterns: ['/dist', '/coverage', '/reports', '/.stryker-tmp'],
   reporters: ['clear-text', 'progress', 'html', 'json'],
   htmlReporter: { fileName: 'reports/mutation/mutation.html' },
