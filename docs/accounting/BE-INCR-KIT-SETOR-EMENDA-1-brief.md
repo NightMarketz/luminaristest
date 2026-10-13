@@ -95,7 +95,7 @@ export const AESTHETIC_CLINIC_KIT_V2: SectorKitV1; // kitVersion 2; referential 
   sobre ela incidentes" (DL 1.598/77 art. 12 §1º III, redação da Lei 12.973/2014), e a DRE discrimina as deduções e
   os impostos antes da receita líquida (Lei 6.404/76 art. 187 I–II). **RATIFICADO (a) em 13/10.**
 
-### F-KE-3 — Onde mora o padrão fiscal por serviço, se o preset não tem serviço fixo — RATIFICAÇÃO PENDENTE
+### F-KE-3 — Onde mora o padrão fiscal por serviço, se o preset não tem serviço fixo — ✅ (b), dono 13/10
 Fato (pesquisa de 13/10, `pesquisas-legais/ctribnac-salao-clinica/relatorio.md`): a tabela `services` do preset é do
 usuário, a `category` é texto livre, e o `serviceRef` do `ServiceFiscalProfile` é a linha do tenant. **Não existe
 `serviceRef` estável** para o `serviceFiscalDefaults` do kit (item 7) apontar.
@@ -109,6 +109,55 @@ usuário, a `category` é texto livre, e o `serviceRef` do `ServiceFiscalProfile
   6.02 × 4.01, que depende de quem executa. O (a) erra a clínica por construção, e o (c) cria linhas operacionais que
   o usuário não pediu. Custo do (b): o item 7 vira "catálogo de sugestões" e o FE do cadastro de serviço precisa
   ler o catálogo (nó vizinho, BRIEF de FE).
+
+### F-KE-4 — Motor de sugestão para nomes análogos — ✅ dono 13/10 (pedido do dono, junto com o F-KE-3)
+Texto do dono: *"criar um motor que pesquise caso existam serviços análogos com nome diferente e sugira também"*.
+Cédulas: **"Sinônimos + IA de reserva"** e varredura **"Sim, lista de pendências"**.
+
+### PR-K3 — catálogo e motor de sugestão (substitui o item 7)
+
+7a. **Catálogo no kit.** `serviceFiscalDefaults` muda de sentido: deixa de ser "por `serviceRef`" e vira **catálogo de
+    sugestões** `{key, label, cTribNac, cNBS, sinonimos[], fonte}`. O campo `serviceRef` sai do schema numa versão nova
+    do contrato do kit, porque nenhum kit publicado usa esse campo (v1/v2 têm `[]`). Conteúdo do salão e da clínica:
+    a tabela do relatório `ctribnac-salao-clinica` (060101, 060201, 060301, 060501, 040101/040102). A clínica traz
+    **as duas** entradas (6.02 e 4.01), cada uma com o rótulo de quem executa.
+7b. **Camada 1, determinística: `suggestFromCatalog(nome, catalogo) → Suggestion[]`**, função **pura**. Normaliza
+    (minúsculas, sem acento, plural simples, sem stopwords) e casa por sinônimo/palavra-chave. Devolve até 3 itens
+    com `origem:'dicionario'` e o termo que casou. *Testes de tabela:* "Escova progressiva" → 060101; "Design de
+    sobrancelha" → 060201; "Drenagem linfática" → 060301; nome sem casamento → `[]`.
+7c. **Camada 2, IA de reserva:** só quando a camada 1 devolve `[]`, e só se a IA estiver configurada. Usa o canônico
+    `OpenAIService.extractStructuredData` (`lib/openai/OpenAIService.ts:274`) com saída presa a um **enum das `key`
+    do catálogo** (ou `null`). A IA nunca inventa código: o `cTribNac` vem do catálogo, não da resposta. Resultado com
+    `origem:'ia'` e o rótulo "sugestão da IA — confira". Sem chave ou com erro ⇒ `[]`, com `logger.warn`, sem
+    derrubar a tela. *Teste:* cliente de IA falso devolvendo `key` fora do enum ⇒ descartado.
+7d. **Nunca grava.** Nenhum dos dois caminhos chama `ServiceFiscalProfileService.upsert`. Aceitar é ação do usuário
+    pela rota que já existe (o FE envia o `cTribNac`/`cNBS` escolhido). *Teste:* `upsert` nunca chamado pelo serviço
+    de sugestão.
+7e. **Varredura em lote:** `GET /api/service-fiscal-suggestions?unitId=` lista os serviços da unidade **sem perfil
+    fiscal** e a sugestão de cada um (camada 1; a camada 2 só sob demanda, `?ia=1`, com teto de itens por chamada
+    para conter custo). A leitura dos serviços vem por **porta** (`ServiceCatalogPort`, molde do `ProductRefPort`),
+    no nível de serviço de integração. **Não entra no `DynamicTableService` nem no motor de plugins** (CLAUDE.md,
+    STOP; Contrato §2.1). Cadeia Route→Controller→Service (+Policy `canReadReceivable`-equivalente do fiscal),
+    DTO Zod `.strict()`, rota em 2 toques.
+7f. **Sugestão no cadastro:** `POST /api/service-fiscal-suggestions/preview` `{unitId, nome}` → `Suggestion[]`, para
+    o formulário de serviço. O FE (cadastro e lista de pendências) é nó vizinho: BRIEF de FE próprio.
+7g. **Gates:** snapshot de shape dos DTOs novos; path-count do openapi +2; sem `eventType` de auditoria (leitura).
+
+```ts
+// sectorKits/dtos/SectorKitDto.ts — catálogo (substitui ServiceFiscalDefaultSchema numa versão nova do contrato)
+const ServiceFiscalCatalogItemSchema = z.object({
+  key: z.string().regex(/^[a-z][a-z0-9_]+$/),
+  label: z.string().min(1),
+  cTribNac: z.string().regex(/^\d{6}$/),      // refine: ∈ lista LC116 vigente
+  cNBS: z.string().regex(/^\d{9}$/).optional(),
+  sinonimos: z.array(z.string().min(2)).min(1),
+  fonte: z.string().min(1),                    // "LC 116 6.01; Anexo B v1.01"
+}).strict();
+type Suggestion = { key: string; cTribNac: string; cNBS?: string; label: string; origem: 'dicionario' | 'ia'; termo?: string };
+```
+
+Nota de desenho: o "motor" pedido é uma função pura + um serviço de leitura. Não é motor de domínio, que segue
+rejeitado (sem engine, DAG nem fila).
 
 ## 5. Pendente de validação externa
 
@@ -132,3 +181,4 @@ usuário, a `category` é texto livre, e o `serviceRef` do `ServiceFiscalProfile
 |---|---|---|
 | PR-K1 | opus-baixo | Dado com fonte + teste no molde do salão v2 |
 | PR-K2 | opus-medio | Contas novas + referencial + coordenação de versão com a emenda 3.3 |
+| PR-K3 | opus-medio | Função pura + IA presa a enum + porta para a tabela de serviços |

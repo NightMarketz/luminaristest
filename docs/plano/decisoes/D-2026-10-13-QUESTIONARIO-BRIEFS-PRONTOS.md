@@ -85,3 +85,12 @@ foi decidido. Conferir `docs/plano/decisoes/` pelo ID do fork antes de perguntar
 | KIT-SETOR | F-KE-1 | **(a)** 2.1.3 IRPJ, 2.1.4 CSLL, 2.1.5 PIS, 2.1.6 COFINS a recolher; 4.5.1 IRPJ, 4.5.2 CSLL | — (escolha de plano, não lei) |
 
 Todas na recomendação. Não é "executa". Com isso, o PR-K2 do KIT depende só das fontes de `cTribNac`/`cNBS`; o PR-9 da NFC-e fica decidido.
+
+## 3ª rodada (13/10, depois da pesquisa do cTribNac)
+
+| Nó | Fork | Decisão |
+|---|---|---|
+| KIT-SETOR | F-KE-3 | **(b)** catálogo de sugestões no kit; o cadastro de serviço oferece e nada é gravado sozinho (dono: *"é o único caminho que não grava enquadramento por palpite"*) |
+| KIT-SETOR | F-KE-4 | **pedido novo do dono:** *"criar um motor que pesquise caso existam serviços análogos com nome diferente e sugira também"* → **sinônimos versionados no kit + IA de reserva** presa ao enum do catálogo; **varredura em lote** dos serviços sem perfil fiscal. Só sugere. Vira o PR-K3 da emenda |
+
+Não é "executa".
