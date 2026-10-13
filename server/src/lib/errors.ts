@@ -80,6 +80,31 @@ export class ValidationError extends AppError {
 // e.g., DatabaseError, ServiceUnavailableError, etc.
 
 /**
+ * BE-INCR-CRM-REPORT-BUILDER PR-2 (item 12): relatório do CRM inexistente, apagado ou alheio (sem ser ADMIN) — 404
+ * nomeado; os três casos são indistinguíveis de propósito (anti-enumeração, como SavedTableView).
+ */
+export class ReportNotFoundError extends AppError {
+  constructor(message: string = 'Relatório não encontrado.') {
+    super(message, 404, 'REPORT_NOT_FOUND');
+    Object.setPrototypeOf(this, ReportNotFoundError.prototype);
+  }
+}
+
+/**
+ * BE-INCR-CRM-REPORT-BUILDER PR-2 (item 9, F-RB5; emenda §9 E2): a execução passou do teto de linhas lidas — 422 com
+ * `{rowsRead, cap}`, nunca truncamento silencioso. Lançado DURANTE a leitura em lotes, antes do lote seguinte.
+ */
+export class ReportTooLargeError extends AppError {
+  public readonly details: { rowsRead: number; cap: number };
+
+  constructor(rowsRead: number, cap: number) {
+    super(`O relatório lê mais de ${cap} linhas.`, 422, 'REPORT_TOO_LARGE');
+    this.details = { rowsRead, cap };
+    Object.setPrototypeOf(this, ReportTooLargeError.prototype);
+  }
+}
+
+/**
  * Specific error class for issues within service layer operations.
  */
 export class ServiceError extends AppError {
