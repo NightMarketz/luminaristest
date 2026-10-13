@@ -58,12 +58,12 @@ export function natureToCodNat(nature: string): string {
   }
 }
 
-/** Level = depth of the dot-separated hierarchical code ("1.1.2" -> 3). */
+/** Level = depth of the dot-separated hierarchical code ("1.1.2.01" -> 4). */
 function codeLevel(code: string): number {
   return code.split('.').length;
 }
 
-/** Immediate parent code ("1.1.2" -> "1.1"), or undefined at the top level. */
+/** Immediate parent code ("a.b.c.d" -> "a.b.c"), or undefined at the top level. */
 function parentCode(code: string): string | undefined {
   const parts = code.split('.');
   return parts.length > 1 ? parts.slice(0, -1).join('.') : undefined;

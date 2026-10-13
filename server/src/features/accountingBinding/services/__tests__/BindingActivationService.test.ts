@@ -8,8 +8,8 @@ import {
   type ActivationPeriodPort,
   type ActivationPeriodStatus,
 } from '../BindingActivationService';
-import { SALE_BINDING_V1, SALE_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../fixtures/saleBinding';
-import { CLINIC_BINDING_V1 } from '../../fixtures/clinicBinding';
+import { SALE_BINDING_V2, SALE_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../fixtures/saleBinding';
+import { CLINIC_BINDING_V2 } from '../../fixtures/clinicBinding';
 import { KitInstallService } from '../../../sectorKits/services/KitInstallService';
 import { SectorKitPolicy } from '../../../sectorKits/policies/SectorKitPolicy';
 import type { IKitInstallationRepository } from '../../../sectorKits/repositories/IKitInstallationRepository';
@@ -22,7 +22,7 @@ import type { IKitInstallationRepository } from '../../../sectorKits/repositorie
  */
 const scope: BindingScope = { ownerUserId: 'u1', actorUserId: 'u1', unitId: 'unit-1' };
 const TODAY = '2026-09-25';
-const CHART = [{ code: '1.1.2', nature: 'Asset', acceptsEntries: true }];
+const CHART = [{ code: '1.1.2.01', nature: 'Asset', acceptsEntries: true }];
 
 function build(opts: {
   policy?: IAccountingBindingPolicy;
@@ -111,22 +111,22 @@ describe('BindingActivationService.activateDefault', () => {
     await expect(b.service.activateDefault(scope, {})).resolves.toEqual({
       status: 'Active',
       bindingVersion: 7,
-      kit: { kitKey: 'beautySalon', kitVersion: 2, status: 'INSTALLED' },
+      kit: { kitKey: 'beautySalon', kitVersion: 3, status: 'INSTALLED' }, // BE-INCR-PLANO-4-NIVEIS: a vigente é a v3
     });
     expect(b.compile).toHaveBeenCalledWith(scope, {
-      sectorKey: SALE_BINDING_V1.sectorKey,
+      sectorKey: SALE_BINDING_V2.sectorKey,
       operationalSchema: SALE_OPERATIONAL_SCHEMA_SNAPSHOT,
       chart: CHART,
-      eventBindings: SALE_BINDING_V1.eventBindings,
+      eventBindings: SALE_BINDING_V2.eventBindings,
     });
   });
 
   it('sectorKey explícito escolhe o binding DAQUELE setor (nunca o do salão sob outro rótulo)', async () => {
     const b = build();
-    await b.service.activateDefault(scope, { sectorKey: CLINIC_BINDING_V1.sectorKey });
+    await b.service.activateDefault(scope, { sectorKey: CLINIC_BINDING_V2.sectorKey });
     expect(b.compile).toHaveBeenCalledWith(scope, expect.objectContaining({
       sectorKey: 'aestheticClinic',
-      eventBindings: CLINIC_BINDING_V1.eventBindings,
+      eventBindings: CLINIC_BINDING_V2.eventBindings,
     }));
   });
 

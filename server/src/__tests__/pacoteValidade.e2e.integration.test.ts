@@ -102,7 +102,7 @@ async function balanceVsLiability() {
         unitId: g.unitId,
         balanceCents: centsFromDb(g._sum.balanceCents ?? 0n),
       })),
-    getLiabilityCents: (scope) => creditNormalCents(scope.unitId, '2.1.1'),
+    getLiabilityCents: (scope) => creditNormalCents(scope.unitId, '2.1.1.01'),
   });
 }
 
@@ -194,7 +194,7 @@ describe('BE-INCR-PACOTE-VALIDADE — ponta a ponta (SQLite real)', () => {
     const b = await balanceOf(UNIT_A, customer, pkg30);
     expect(centsFromDb(b.balanceCents)).toBe(10000);
     expect(b.expiresAt?.toISOString().slice(0, 10)).toBe(expiresOnA);
-    expect(await creditNormalCents(UNIT_A, '2.1.1')).toBe(10000);
+    expect(await creditNormalCents(UNIT_A, '2.1.1.01')).toBe(10000);
   });
 
   it('consome R$ 30 pelo POST /api/sales/pay num dia válido (pré-check passa, Paid, liquidação 2.1.1, débito)', async () => {
@@ -205,7 +205,7 @@ describe('BE-INCR-PACOTE-VALIDADE — ponta a ponta (SQLite real)', () => {
       .send({ tableId: tables.sales, saleId, paymentMethod: 'Package Balance', packageId: pkg30 });
     expect(r.status).toBe(200);
     expect(centsFromDb((await balanceOf(UNIT_A, customer, pkg30)).balanceCents)).toBe(7000);
-    expect(await creditNormalCents(UNIT_A, '2.1.1')).toBe(7000);
+    expect(await creditNormalCents(UNIT_A, '2.1.1.01')).toBe(7000);
   });
 
   it('item 4: saldo vencido → 400 PACKAGE_BALANCE_EXPIRED e NADA escrito (sem Paid, sem liquidação, sem débito)', async () => {
@@ -234,7 +234,7 @@ describe('BE-INCR-PACOTE-VALIDADE — ponta a ponta (SQLite real)', () => {
     await row('saleItems', { saleId: sale.id, type: 'Service', serviceId: 'srv-1', description: 'Escova', quantity: 1, unitPrice: 10 });
     await maybeSyncSaleFinalized({ userId: user.id }, tables.sales, { id: sale.id, data: sale.data });
     await maybeSyncSaleSettled({ userId: user.id }, tables.sales, { id: sale.id, data: sale.data });
-    expect(await creditNormalCents(UNIT_B, '2.1.1')).toBe(4000); // liquidação D 2.1.1 já no razão
+    expect(await creditNormalCents(UNIT_B, '2.1.1.01')).toBe(4000); // liquidação D 2.1.1 já no razão
 
     // Re-drive do débito hoje, com o saldo vencido: não confere validade (item 5).
     await ApplicationFactory.getInstance()
@@ -289,7 +289,7 @@ describe('BE-INCR-PACOTE-VALIDADE — ponta a ponta (SQLite real)', () => {
     // ── UNIT_A
     const keyA = `expiry:${(await balanceOf(UNIT_A, customer, pkg30)).id}:${expiresOnA}`;
     expect(centsFromDb((await balanceOf(UNIT_A, customer, pkg30)).balanceCents)).toBe(0);
-    expect(await creditNormalCents(UNIT_A, '2.1.1')).toBe(0);
+    expect(await creditNormalCents(UNIT_A, '2.1.1.01')).toBe(0);
     expect(await creditNormalCents(UNIT_A, '3.4')).toBe(7000);
     const mvA = await prisma.packageBalanceMovement.findFirstOrThrow({ where: { userId: user.id, unitId: UNIT_A, kind: 'expiry' } });
     expect(mvA.saleId).toBe(keyA);
@@ -335,7 +335,7 @@ describe('BE-INCR-PACOTE-VALIDADE — ponta a ponta (SQLite real)', () => {
     await prisma.accountingPeriod.updateMany({ where: { userId: user.id, unitId: UNIT_E }, data: { status: 'OPEN' } });
     await reconcileSalePackageExpiryPosting(buildPackageExpiryDeps({ today: () => dueDay }));
     expect(await creditNormalCents(UNIT_E, '3.4')).toBe(1500);
-    expect(await creditNormalCents(UNIT_E, '2.1.1')).toBe(0);
+    expect(await creditNormalCents(UNIT_E, '2.1.1.01')).toBe(0);
     expect((await balanceVsLiability()).divergences).toBe(0);
   });
 
@@ -382,7 +382,7 @@ describe('BE-INCR-PACOTE-VALIDADE — ponta a ponta (SQLite real)', () => {
     const keys = (await prisma.packageBalanceMovement.findMany({ where: { userId: user.id, unitId: UNIT_A, kind: 'expiry' } })).map((m) => m.saleId).sort();
     expect(keys).toEqual([`expiry:${b.id}:${expiresOnA}`, `expiry:${b.id}:${expiresOnA}:2`]);
     expect(await creditNormalCents(UNIT_A, '3.4')).toBe(7500);
-    expect(await creditNormalCents(UNIT_A, '2.1.1')).toBe(0);
+    expect(await creditNormalCents(UNIT_A, '2.1.1.01')).toBe(0);
     expect(await prisma.fiscalDocument.count({ where: { userId: user.id, unitId: UNIT_A } })).toBe(2); // uma nota por vencimento
   });
 

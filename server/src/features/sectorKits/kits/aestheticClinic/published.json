@@ -1,4 +1,5 @@
 [
   { "kitVersion": 1, "sha256": "b5141e95f422a5dccfb8c6b309cdd2a57374ef8ed0d72e5c9b3763119a04cb95" },
-  { "kitVersion": 2, "sha256": "d693f8774975cee041966500ffc97a2685b907bd66c78a4e7bbe3f952718c8a8" }
+  { "kitVersion": 2, "sha256": "d693f8774975cee041966500ffc97a2685b907bd66c78a4e7bbe3f952718c8a8" },
+  { "kitVersion": 3, "sha256": "07b2e335ab01cb9a4142a412c3f6edfb847ba9cb718a3e60b55098e620e631e3" }
 ]

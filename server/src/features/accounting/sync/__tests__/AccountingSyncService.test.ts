@@ -119,7 +119,7 @@ describe('AccountingSyncService', () => {
 
   it('MaxCentsExceededError is NOT retried (deterministic poison — Council 1.5) and surfaces its own code', async () => {
     const postEntry = jest.fn(async () => {
-      throw new MaxCentsExceededError('1.1.2', 2_147_483_648, 2_147_483_647);
+      throw new MaxCentsExceededError('1.1.2.01', 2_147_483_648, 2_147_483_647);
     });
     const { svc } = buildService(postEntry);
 
@@ -164,7 +164,7 @@ describe('AccountingSyncService', () => {
     // the chart authority (§2.1), not the mapper. Here postEntry simulates 2.1.1 being absent: the
     // Package Balance settlement must surface ValidationError, not retry, and never post a partial.
     const postEntry = jest.fn((_s: AccountingScope, _i: PostEntryInput) => {
-      throw new ValidationError("Conta '2.1.1' não existe no plano de contas.");
+      throw new ValidationError("Conta '2.1.1.01' não existe no plano de contas.");
     });
     const postingService = { postEntry } as unknown as ConstructorParameters<typeof AccountingSyncService>[0];
     const svc = new AccountingSyncService(postingService, [new SaleSettledMapper()], {
@@ -185,8 +185,8 @@ describe('AccountingSyncService', () => {
     await expect(svc.sync(scope, settledEvent)).rejects.toBeInstanceOf(ValidationError);
     expect(postEntry).toHaveBeenCalledTimes(1); // deterministic fault — no retry, no partial write
     // The mapper still chose the prepaid liability (never cash) before the chart rejected it.
-    expect(postEntry.mock.calls[0]![1].lines.some((l) => l.accountCode === '2.1.1')).toBe(true);
-    expect(postEntry.mock.calls[0]![1].lines.some((l) => l.accountCode === '1.1.3')).toBe(false);
+    expect(postEntry.mock.calls[0]![1].lines.some((l) => l.accountCode === '2.1.1.01')).toBe(true);
+    expect(postEntry.mock.calls[0]![1].lines.some((l) => l.accountCode === '1.1.1.02')).toBe(false);
   });
 
   it('unitId is never substituted or crossed — the posting input carries the event unit', async () => {

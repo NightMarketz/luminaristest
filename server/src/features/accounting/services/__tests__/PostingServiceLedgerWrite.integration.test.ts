@@ -48,7 +48,7 @@ const lancamento = (descricao: string, centavos: number) => ({
   sourceType: 'manual',
   lines: [
     { accountCode: '4.1', debitCents: centavos, creditCents: 0 },
-    { accountCode: '1.1.1', debitCents: 0, creditCents: centavos },
+    { accountCode: '1.1.1.01', debitCents: 0, creditCents: centavos },
   ],
 });
 

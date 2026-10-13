@@ -7,7 +7,7 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema, resetDb } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
 import type { BindingScope } from '@/features/accountingBinding/repositories/IAccountingBindingRepository';
-import { BEAUTY_SALON_KIT_V2 } from '@/features/sectorKits/kits/beautySalon/kit.v2';
+import { BEAUTY_SALON_KIT_V3 as BEAUTY_SALON_KIT_V2 } from '@/features/sectorKits/kits/beautySalon/kit.v3'; // BE-INCR-PLANO-4-NIVEIS: o kit instalado agora é o v3 (mesmo referencial, códigos novos)
 
 const UNIT = 'unit-kit-v2';
 const TODAY = new Date().toISOString().slice(0, 10);

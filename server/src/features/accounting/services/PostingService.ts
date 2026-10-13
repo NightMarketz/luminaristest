@@ -2,7 +2,7 @@ import { AccountingPeriodNotOpenError, AppError, ForbiddenError, MaxCentsExceede
 import logger from '../../../lib/logger';
 import { Prisma } from 'generated/prisma';
 import type { Account, SourceDocument } from 'generated/prisma';
-import { CANONICAL_ACCOUNTS } from '../fixtures/ChartOfAccountsFixture';
+import { CANONICAL_ACCOUNTS, NIVEL_MINIMO_ANALITICA_PATRIMONIAL, PATRIMONIAL_NATURES } from '../fixtures/ChartOfAccountsFixture';
 import { CLOSING_SOURCE_TYPE, reversedClosingSourceId } from '../models/closing';
 import { MAX_CENTS, centsFromDb } from '../models/money';
 import type { CreateAccountInput, PostEntryInput, ReverseEntryInput } from '../dtos/PostingDto';
@@ -881,6 +881,32 @@ export class PostingService {
   }
 
   /**
+   * BE-INCR-PLANO-4-NIVEIS (L8, item 6): a regra do PVA aplicada na origem. Manual da ECD L9 (jan/2026) p. 119,
+   * REGRA_VALIDA_NIVEL_CONTAS: analítica de ativo/passivo/PL no nível ≥ 4 (o nível do I050 é a profundidade do
+   * código); e toda conta abaixo do nível 1 precisa da conta superior (I050.COD_CTA_SUP), que é sintética.
+   */
+  private async assertNivelDoPlano(scope: AccountingScope, dto: CreateAccountInput): Promise<void> {
+    const segmentos = dto.code.split('.');
+    const analitica = dto.acceptsEntries ?? true;
+    if (analitica && PATRIMONIAL_NATURES.includes(dto.nature) && segmentos.length < NIVEL_MINIMO_ANALITICA_PATRIMONIAL) {
+      throw new ValidationError(
+        `Conta analítica de ativo, passivo ou patrimônio líquido precisa ter no mínimo ${NIVEL_MINIMO_ANALITICA_PATRIMONIAL} ` +
+          `níveis no código (ex.: 1.1.1.01); '${dto.code}' tem ${segmentos.length} (Manual da ECD, REGRA_VALIDA_NIVEL_CONTAS).`,
+      );
+    }
+    if (segmentos.length > 1) {
+      const pai = segmentos.slice(0, -1).join('.');
+      const superior = await this.accountRepo.findByCode(scope, pai);
+      if (!superior || superior.acceptsEntries) {
+        throw new ValidationError(
+          `A conta superior '${pai}' de '${dto.code}' precisa existir como conta sintética (que não recebe lançamento) ` +
+            'antes da conta nova (I050.COD_CTA_SUP).',
+        );
+      }
+    }
+  }
+
+  /**
    * Create a user-defined account in the chart of accounts (non-canonical).
    * Duplicate codes are blocked by the @@unique constraint; P2002 → ValidationError.
    */
@@ -888,6 +914,7 @@ export class PostingService {
     if (!this.policy.canManage(scope)) {
       throw new ForbiddenError('Você não tem permissão para criar contas.');
     }
+    await this.assertNivelDoPlano(scope, dto);
     const { userId, unitId } = accountingScopeWhere(scope);
     try {
       return await this.postingRepo.runTransaction(async (tx) => {

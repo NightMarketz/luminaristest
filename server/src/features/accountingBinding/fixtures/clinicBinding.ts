@@ -2,6 +2,7 @@ import type { AccountingBindingV1 } from '../dtos/AccountingBindingDto';
 import { AccountingBindingV1Schema } from '../dtos/AccountingBindingDto';
 import type { ChartAccountSnapshot } from '../dtos/CompileBindingDto';
 import { computeCompiledFromHash } from '../services/BindingCompileService';
+import { bindingPosL8 } from './bindingPosL8';
 
 /**
  * BE-INCR-P2-VERTICAL-CLINICA — Bloco II, comportamento 4. O binding do SEGUNDO vertical
@@ -20,7 +21,7 @@ import { computeCompiledFromHash } from '../services/BindingCompileService';
  * `docs/adr/ADR-P2-second-vertical.md` §6 passo 5 — parecer do arquiteto só é exigido quando o
  * preset esboçar contas novas, o que não aconteceu aqui).
  */
-const CLINIC_CHART_SNAPSHOT: ChartAccountSnapshot[] = [
+export const CLINIC_CHART_SNAPSHOT: ChartAccountSnapshot[] = [
   { code: '1.1.1', nature: 'Asset', acceptsEntries: true }, // Banco
   { code: '1.1.2', nature: 'Asset', acceptsEntries: true }, // A Receber
   { code: '1.1.3', nature: 'Asset', acceptsEntries: true }, // Caixa
@@ -161,3 +162,9 @@ const candidate: AccountingBindingV1 = {
 // Falha alto no import se algum dia divergir do shape que a Fase 0 fechou (mesmo padrão de
 // `saleBinding.ts`) — este módulo é insumo de teste e do CLI de ativação (F-P2-7).
 export const CLINIC_BINDING_V1: AccountingBindingV1 = AccountingBindingV1Schema.parse(candidate);
+
+/**
+ * BE-INCR-PLANO-4-NIVEIS (L8; F-L8-7 a): o V1 acima está publicado nos kits v1/v2 e não se edita. O V2 é o mesmo binding
+ * no plano de 4 níveis, derivado pelo de-para `RENOMEACAO_CANONICA_L8` — é o que o kit v3 embute.
+ */
+export const CLINIC_BINDING_V2: AccountingBindingV1 = bindingPosL8(CLINIC_BINDING_V1, CLINIC_CHART_SNAPSHOT, CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT, '2026-10-13T00:00:00.000Z');

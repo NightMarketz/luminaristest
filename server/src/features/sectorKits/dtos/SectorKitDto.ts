@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { AccountingBindingV1Schema } from '../../accountingBinding/dtos/AccountingBindingDto';
-import { CANONICAL_ACCOUNTS } from '../../accounting/fixtures/ChartOfAccountsFixture';
+import { CANONICAL_ACCOUNTS, CANONICAL_ACCOUNTS_PRE_L8 } from '../../accounting/fixtures/ChartOfAccountsFixture';
 
 /**
  * Contrato do kit de setor — `SectorKitV1` (BE-INCR-KIT-SETOR, PR-1, itens 1–2; BRIEF §3.1).
@@ -89,11 +89,26 @@ const SectorKitBaseSchema = z
 
 type SectorKitBase = z.infer<typeof SectorKitBaseSchema>;
 
+/**
+ * BE-INCR-PLANO-4-NIVEIS (F-L8-9 a, dono 13/10): as versões publicadas ANTES da L8 (plano de 3 níveis) são validadas
+ * contra o plano da época, congelado; toda outra versão, contra o plano vigente. Lista explícita, não "versão < 3":
+ * um setor novo publicado depois da L8 na v1 tem de ser validado contra o plano vigente.
+ */
+const KITS_PUBLICADOS_PRE_L8: Readonly<Record<string, readonly number[]>> = {
+  beautySalon: [1, 2],
+  aestheticClinic: [1, 2],
+};
+
+function planoDaEpoca(kit: SectorKitBase) {
+  return KITS_PUBLICADOS_PRE_L8[kit.kitKey]?.includes(kit.kitVersion) ? CANONICAL_ACCOUNTS_PRE_L8 : CANONICAL_ACCOUNTS;
+}
+
 /** Refinamentos do item 2 do BRIEF. */
 function kitRefinements(kit: SectorKitBase, ctx: z.RefinementCtx): void {
   const issue = (path: (string | number)[], message: string) => ctx.addIssue({ code: 'custom', path, message });
+  const plano = planoDaEpoca(kit);
 
-  const canonicalCodes = new Set(CANONICAL_ACCOUNTS.map((a) => a.code));
+  const canonicalCodes = new Set(plano.map((a) => a.code));
   const seen = new Set<string>();
   kit.chartExtension.forEach((acc, i) => {
     if (canonicalCodes.has(acc.code)) issue(['chartExtension', i, 'code'], `Conta ${acc.code} já é do plano canônico.`);
@@ -102,7 +117,7 @@ function kitRefinements(kit: SectorKitBase, ctx: z.RefinementCtx): void {
   });
 
   const leafByCode = new Map<string, boolean>();
-  for (const a of CANONICAL_ACCOUNTS) leafByCode.set(a.code, a.acceptsEntries);
+  for (const a of plano) leafByCode.set(a.code, a.acceptsEntries);
   for (const a of kit.chartExtension) if (!leafByCode.has(a.code)) leafByCode.set(a.code, a.acceptsEntries);
 
   const checkLeaf = (code: string | undefined, path: (string | number)[]) => {

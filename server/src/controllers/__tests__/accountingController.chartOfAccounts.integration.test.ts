@@ -119,6 +119,10 @@ describe('accountingController — plano de contas: fronteira de inquilino nas 3
    * o plano do vizinho.
    */
   it('inquilino: conta do dono B nasce do TOKEN, não do corpo — e a homônima do dono A fica intacta', async () => {
+    // BE-INCR-PLANO-4-NIVEIS (item 6): conta nova precisa da superior sintética — arranjada na base, para os dois donos.
+    for (const dono of [donoA, donoB]) {
+      await prisma.account.create({ data: { userId: dono.id, unitId: UNIT, code: '9.9', name: 'Grupo 9.9', nature: 'Expense', acceptsEntries: false } });
+    }
     // Controle: o dono A cria a sua conta 9.9.1 e ela é dele.
     const doA = await request(app)
       .post('/api/accounting/accounts')

@@ -420,7 +420,7 @@ describe('FiscalDocumentEmissionService — pacote VENDA (item 21; destravado pe
     findRowsByFieldValue.mockResolvedValue([{ data: { packageId: 'pkg-1', type: 'Package', quantity: 1, unitPrice: 200 } }]);
     const { service } = makeService({
       fiscalProfile: baseFiscalProfileView({ pacoteFatoGerador: 'VENDA', pacoteCTribNac: '060101', pacoteCNBS: null }),
-      ledgerPostings: [{ accountId: 'acc-1.1.2', debitCents: 20000n, creditCents: 0n }],
+      ledgerPostings: [{ accountId: 'acc-1.1.2.01', debitCents: 20000n, creditCents: 0n }],
       anchorSourceType: 'sale.package.sold',
     });
     const result = await service.preview(SCOPE, SALE_ID, 'NFSE');
@@ -460,7 +460,7 @@ describe('FiscalDocumentEmissionService.emitPackageExpiry (BE-INCR-PACOTE-VALIDA
 
   const consumo = () => baseFiscalProfileView({ pacoteFatoGerador: 'CONSUMO', pacoteCTribNac: '060101', pacoteCNBS: null });
   const anchorPostings = [
-    { accountId: 'acc-2.1.1', debitCents: 7000n, creditCents: 0n },
+    { accountId: 'acc-2.1.1.01', debitCents: 7000n, creditCents: 0n },
     { accountId: 'acc-3.4', debitCents: 0n, creditCents: 7000n },
   ];
 

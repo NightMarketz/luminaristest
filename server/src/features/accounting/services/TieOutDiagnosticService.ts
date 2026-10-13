@@ -8,11 +8,7 @@ import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { centsFromDb } from '../models/money';
-import {
-  CLIENTES_A_RECEBER_CODE,
-  ESTOQUES_CODE,
-  FORNECEDORES_A_PAGAR_CODE,
-} from '../fixtures/ChartOfAccountsFixture';
+import { CLIENTES_A_RECEBER_CODE, ESTOQUES_CODE, FORNECEDORES_A_PAGAR_CODE, A_RECEBER_CODE } from '../fixtures/ChartOfAccountsFixture';
 import type { AccountingEvent } from '../sync/AccountingSyncPort';
 import { CRM_LEGACY_SOURCE_TYPE } from '../sync/AccountingSyncPort';
 
@@ -23,7 +19,7 @@ import { CRM_LEGACY_SOURCE_TYPE } from '../sync/AccountingSyncPort';
  * AccountingSync a referenciam por código (Sale*Mapper / SalePackageSoldMapper);
  * resolvida aqui por LOOKUP no plano (findByCode), nunca por id.
  */
-export const POS_RECEIVABLE_CODE = '1.1.2';
+export const POS_RECEIVABLE_CODE = A_RECEBER_CODE;
 
 /**
  * TODOS os sourceTypes que já alimentaram a 1.1.2. O board (Council 1.3) confirma que o CRM

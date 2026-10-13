@@ -47,6 +47,7 @@ import { UpsertFiscalProfileSchema } from '../features/accounting/dtos/FiscalPro
 import { buildQuickPreset } from '../features/onboarding/services/buildQuickPreset';
 import { Role } from '../features/users/models/User.model';
 import type { UserContext } from '../types/UserContext';
+import { BANCO_CODE, CAIXA_CODE, CARTAO_ADQUIRENTE_CODE, ESTOQUES_CODE, PACOTES_PRE_PAGOS_CODE } from '../features/accounting/fixtures/ChartOfAccountsFixture';
 
 export const SEED_SOURCE_TYPE = 'seed';
 
@@ -196,18 +197,18 @@ export function buildMonthPlan(
   const ar2 = amount();
 
   const entries: MonthPlan['entries'] = [
-    { date: day(5), description: `Seed: receita de serviços (caixa) ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('servico-caixa'), lines: [leg('1.1.3', service1, 0), leg('3.1', 0, service1)] },
-    { date: day(5), description: `Seed: depósito do caixa no banco ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('deposito-caixa'), lines: [leg('1.1.1', service1, 0), leg('1.1.3', 0, service1)] },
-    { date: day(8), description: `Seed: receita de serviços (banco) ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('servico-banco'), lines: [leg('1.1.1', service2, 0), leg('3.1', 0, service2)] },
-    { date: day(12), description: `Seed: revenda de mercadorias ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('revenda'), lines: [leg('1.1.4', resale, 0), leg('3.3', 0, resale)] },
-    { date: day(12), description: `Seed: liquidação do cartão no banco ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('liquidacao-cartao'), lines: [leg('1.1.1', resale, 0), leg('1.1.4', 0, resale)] },
-    { date: day(13), description: `Seed: compra de mercadorias ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('estoque'), lines: [leg('1.1.6', purchase, 0), leg('1.1.1', 0, purchase)] },
-    { date: day(13), description: `Seed: CMV ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('cmv'), lines: [leg('4.2', cmv, 0), leg('1.1.6', 0, cmv)] },
-    { date: day(15), description: `Seed: venda de pacote pré-pago ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('pacote-venda'), lines: [leg('1.1.1', packageSold, 0), leg('2.1.1', 0, packageSold)] },
-    { date: day(20), description: `Seed: despesas operacionais ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('despesa'), lines: [leg('4.1', expense, 0), leg('1.1.1', 0, expense)] },
+    { date: day(5), description: `Seed: receita de serviços (caixa) ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('servico-caixa'), lines: [leg(CAIXA_CODE, service1, 0), leg('3.1', 0, service1)] },
+    { date: day(5), description: `Seed: depósito do caixa no banco ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('deposito-caixa'), lines: [leg(BANCO_CODE, service1, 0), leg(CAIXA_CODE, 0, service1)] },
+    { date: day(8), description: `Seed: receita de serviços (banco) ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('servico-banco'), lines: [leg(BANCO_CODE, service2, 0), leg('3.1', 0, service2)] },
+    { date: day(12), description: `Seed: revenda de mercadorias ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('revenda'), lines: [leg(CARTAO_ADQUIRENTE_CODE, resale, 0), leg('3.3', 0, resale)] },
+    { date: day(12), description: `Seed: liquidação do cartão no banco ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('liquidacao-cartao'), lines: [leg(BANCO_CODE, resale, 0), leg(CARTAO_ADQUIRENTE_CODE, 0, resale)] },
+    { date: day(13), description: `Seed: compra de mercadorias ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('estoque'), lines: [leg(ESTOQUES_CODE, purchase, 0), leg(BANCO_CODE, 0, purchase)] },
+    { date: day(13), description: `Seed: CMV ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('cmv'), lines: [leg('4.2', cmv, 0), leg(ESTOQUES_CODE, 0, cmv)] },
+    { date: day(15), description: `Seed: venda de pacote pré-pago ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('pacote-venda'), lines: [leg(BANCO_CODE, packageSold, 0), leg(PACOTES_PRE_PAGOS_CODE, 0, packageSold)] },
+    { date: day(20), description: `Seed: despesas operacionais ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('despesa'), lines: [leg('4.1', expense, 0), leg(BANCO_CODE, 0, expense)] },
   ];
   if (consumePriorPackageCents > 0) {
-    entries.push({ date: day(3), description: `Seed: consumo do pacote do mês anterior ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('pacote-consumo'), lines: [leg('2.1.1', consumePriorPackageCents, 0), leg('3.1', 0, consumePriorPackageCents)] });
+    entries.push({ date: day(3), description: `Seed: consumo do pacote do mês anterior ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('pacote-consumo'), lines: [leg(PACOTES_PRE_PAGOS_CODE, consumePriorPackageCents, 0), leg('3.1', 0, consumePriorPackageCents)] });
   }
 
   return {

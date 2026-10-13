@@ -10,7 +10,7 @@
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
-import { SALE_BINDING_V1 } from '@/features/accountingBinding/fixtures/saleBinding';
+import { SALE_BINDING_V2 } from '@/features/accountingBinding/fixtures/saleBinding';
 
 const app = makeApp();
 const URL = '/api/accounting-binding/activate-default';
@@ -77,14 +77,14 @@ describe('POST /api/accounting-binding/activate-default (LAC-B)', () => {
       .send({ unitId: UNIT, installChartIfEmpty: true, openCurrentPeriodIfMissing: true });
 
     expect(res.status).toBe(200);
-    expect(res.body.data).toEqual({ status: 'Active', bindingVersion: 1, kit: { kitKey: 'beautySalon', kitVersion: 2, status: 'INSTALLED' } });
+    expect(res.body.data).toEqual({ status: 'Active', bindingVersion: 1, kit: { kitKey: 'beautySalon', kitVersion: 3, status: 'INSTALLED' } });
 
     const { year, month } = hoje();
     const periodo = await prisma.accountingPeriod.findFirst({ where: { userId: dono.id, unitId: UNIT, year, month } });
     expect(periodo?.status).toBe('OPEN');
     // Chart instalado: toda conta que o binding do salão referencia existe como folha. (Sem importar
     // o fixture de `features/accounting` — a fronteira do importBoundary.test.ts vale para testes.)
-    const codigos = [...new Set(SALE_BINDING_V1.eventBindings.flatMap((e) => e.roleSlots.map((r) => r.accountCode)))];
+    const codigos = [...new Set(SALE_BINDING_V2.eventBindings.flatMap((e) => e.roleSlots.map((r) => r.accountCode)))];
     const folhas = await prisma.account.findMany({
       where: { userId: dono.id, unitId: UNIT, deletedAt: null, code: { in: codigos }, acceptsEntries: true },
     });
@@ -107,7 +107,7 @@ describe('POST /api/accounting-binding/activate-default (LAC-B)', () => {
       .send({ unitId: UNIT, installChartIfEmpty: true, openCurrentPeriodIfMissing: true });
 
     expect(res.status).toBe(200);
-    expect(res.body.data).toEqual({ status: 'already-active', bindingVersion: 1, kit: { kitKey: 'beautySalon', kitVersion: 2, status: 'INSTALLED' } });
+    expect(res.body.data).toEqual({ status: 'already-active', bindingVersion: 1, kit: { kitKey: 'beautySalon', kitVersion: 3, status: 'INSTALLED' } });
     expect(await prisma.accountingBinding.count({ where: { userId: dono.id, unitId: UNIT } })).toBe(1);
   });
 });

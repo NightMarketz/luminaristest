@@ -30,7 +30,7 @@ import { assertTpAmb, tpAmbFor } from '../dfe/DfeEmissorPort';
 import type { DfeAmbiente, DfeEmissorPort } from '../dfe/DfeEmissorPort';
 import { scopeToday } from '../models/dates';
 import { IND_OP_DEFAULT_SALAO } from '../models/indOp';
-import { RECEITA_NAO_USO_CODE } from '../fixtures/ChartOfAccountsFixture';
+import { RECEITA_NAO_USO_CODE, A_RECEBER_CODE } from '../fixtures/ChartOfAccountsFixture';
 import { expiryCompetence, parseExpiryMovementKey } from '../models/expiryKey';
 import { centsFromDb } from '../models/money';
 import { findLc116, listaLc116De, type ListaLc116 } from '../models/lc116ListaNacional';
@@ -41,7 +41,7 @@ import { janelaEventos } from '../models/janelaEventos';
 
 export const DFE_EMITTED_EVENT = 'dfe.emitted';
 
-const PACKAGE_RECEIVABLE_ACCOUNT = '1.1.2'; // A Receber (item 21 — débito do lançamento sale.package.sold)
+const PACKAGE_RECEIVABLE_ACCOUNT = A_RECEBER_CODE; // A Receber (item 21 — débito do lançamento sale.package.sold)
 const DPS_VERAPLIC = 'luminaris-1.0';
 
 /** Grupo de linhas de serviço da venda, uma por `cTribNac` (F-DFE-16 b — a DPS é mono-serviço). */

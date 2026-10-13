@@ -166,7 +166,7 @@ const balancedInput = {
   description: 'Venda à vista',
   sourceType: 'manual',
   lines: [
-    { accountCode: '1.1.1', debitCents: 10000, creditCents: 0 },
+    { accountCode: '1.1.1.01', debitCents: 10000, creditCents: 0 },
     { accountCode: '3.1', debitCents: 0, creditCents: 10000 },
   ],
 };
@@ -208,7 +208,7 @@ describe('PostingService', () => {
       const unbalanced = {
         ...balancedInput,
         lines: [
-          { accountCode: '1.1.1', debitCents: 10000, creditCents: 0 },
+          { accountCode: '1.1.1.01', debitCents: 10000, creditCents: 0 },
           { accountCode: '3.1', debitCents: 0, creditCents: 9999 },
         ],
       };
@@ -223,7 +223,7 @@ describe('PostingService', () => {
       const zero = {
         ...balancedInput,
         lines: [
-          { accountCode: '1.1.1', debitCents: 0, creditCents: 0 },
+          { accountCode: '1.1.1.01', debitCents: 0, creditCents: 0 },
           { accountCode: '3.1', debitCents: 0, creditCents: 0 },
         ],
       };
@@ -301,7 +301,7 @@ describe('PostingService', () => {
     });
 
     it('ensureChartOfAccounts creates ONLY the missing canonical accounts', async () => {
-      const present = new Set(['1.1.1', '3.1']);
+      const present = new Set(['1.1.1.01', '3.1']);
       const create = jest.fn(async (data: any) => ({ id: `acc-${data.code}`, ...data }));
       const { svc } = buildService({
         accountRepo: {
@@ -317,10 +317,10 @@ describe('PostingService', () => {
       // 8 canonical accounts, 2 already present -> exactly 6 created, never the present ones
       const createdCodes = create.mock.calls.map((c) => c[0].code);
       expect(create).toHaveBeenCalledTimes(CANONICAL_ACCOUNTS.length - present.size);
-      expect(createdCodes).not.toContain('1.1.1');
+      expect(createdCodes).not.toContain('1.1.1.01');
       expect(createdCodes).not.toContain('3.1');
       expect(createdCodes).toEqual(
-        expect.arrayContaining(['1', '1.1.2', '1.1.3', '3', '4', '4.1']),
+        expect.arrayContaining(['1', '1.1.2.01', '1.1.1.02', '3', '4', '4.1']),
       );
     });
 
@@ -329,7 +329,7 @@ describe('PostingService', () => {
       // but the LINE accounts the post later resolves are present so resolution succeeds —
       // the P2002 here only concerns the ensure create path.
       const findByCode = jest.fn(async (_scope: AccountingScope, code: string) =>
-        code === '1.1.1' || code === '3.1'
+        code === '1.1.1.01' || code === '3.1'
           ? { id: `acc-${code}`, code, acceptsEntries: true }
           : null,
       );
@@ -809,14 +809,15 @@ describe('PostingService', () => {
 
     describe('createAccount audit', () => {
       it('appends account.created with code, name, nature in payload', async () => {
-        const { svc, auditService } = buildService();
-        await svc.createAccount(scope, { code: '9.9', name: 'Teste', nature: 'Asset', acceptsEntries: true, unitId });
+        // BE-INCR-PLANO-4-NIVEIS: analítica patrimonial no nível 4, com a superior sintética.
+        const { svc, auditService } = buildService({ accountRepo: { findByCode: jest.fn(async (_s: AccountingScope, code: string) => ({ id: `acc-${code}`, code, nature: 'Asset', acceptsEntries: false })) } });
+        await svc.createAccount(scope, { code: '9.9.9.01', name: 'Teste', nature: 'Asset', acceptsEntries: true, unitId });
         expect(auditService.append).toHaveBeenCalledTimes(1);
         const call = (auditService.append.mock.calls as any[])[0];
         expect(call[2]).toMatchObject({
           eventType:  'account.created',
           targetType: 'account',
-          payload:    expect.objectContaining({ code: '9.9', name: 'Teste', nature: 'Asset' }),
+          payload:    expect.objectContaining({ code: '9.9.9.01', name: 'Teste', nature: 'Asset' }),
         });
       });
 
@@ -836,11 +837,57 @@ describe('PostingService', () => {
           clientVersion: 'test',
         });
         const { svc, auditService } = buildService({
-          accountRepo: { create: jest.fn(async () => { throw p2002; }) },
+          accountRepo: { create: jest.fn(async () => { throw p2002; }), findByCode: jest.fn(async (_s: AccountingScope, code: string) => ({ id: `acc-${code}`, code, nature: 'Asset', acceptsEntries: false })) },
         });
-        await expect(svc.createAccount(scope, { code: '9.9', name: 'Teste', nature: 'Asset', acceptsEntries: true, unitId }))
+        await expect(svc.createAccount(scope, { code: '9.9.9.01', name: 'Teste', nature: 'Asset', acceptsEntries: true, unitId }))
           .rejects.toBeInstanceOf(ValidationError);
         expect(auditService.append).not.toHaveBeenCalled();
+      });
+    });
+
+    // BE-INCR-PLANO-4-NIVEIS item 6: a REGRA_VALIDA_NIVEL_CONTAS do PVA (Manual da ECD L9 p. 119) aplicada na origem.
+    describe('createAccount — nível do plano (L8)', () => {
+      const plano = (codes: Record<string, boolean>) => ({
+        findByCode: jest.fn(async (_s: AccountingScope, code: string) =>
+          code in codes ? { id: `acc-${code}`, code, nature: 'Asset', acceptsEntries: codes[code] } : null),
+      });
+
+      it('analítica de ativo com 3 segmentos → 400, sem escrever', async () => {
+        const { svc, accountRepo } = buildService({ accountRepo: plano({ '1.1': false }) });
+        await expect(svc.createAccount(scope, { code: '1.1.7', name: 'X', nature: 'Asset', acceptsEntries: true, unitId }))
+          .rejects.toThrow(/no mínimo 4 níveis/);
+        expect(accountRepo.create).not.toHaveBeenCalled();
+      });
+
+      it('analítica de PL com 4 segmentos sob sintética → cria', async () => {
+        const { svc, accountRepo } = buildService({ accountRepo: plano({ '2.3.1': false }) });
+        await svc.createAccount(scope, { code: '2.3.1.02', name: 'Reserva', nature: 'Equity', acceptsEntries: true, unitId });
+        expect(accountRepo.create).toHaveBeenCalledTimes(1);
+      });
+
+      it('sintética patrimonial rasa é permitida (a regra é da analítica)', async () => {
+        const { svc, accountRepo } = buildService({ accountRepo: plano({ '1': false }) });
+        await svc.createAccount(scope, { code: '1.2', name: 'Ativo Não Circulante', nature: 'Asset', acceptsEntries: false, unitId });
+        expect(accountRepo.create).toHaveBeenCalledTimes(1);
+      });
+
+      it('superior inexistente → 400', async () => {
+        const { svc, accountRepo } = buildService({ accountRepo: plano({}) });
+        await expect(svc.createAccount(scope, { code: '1.1.4.01', name: 'X', nature: 'Asset', acceptsEntries: true, unitId }))
+          .rejects.toThrow(/conta superior '1.1.4'/);
+        expect(accountRepo.create).not.toHaveBeenCalled();
+      });
+
+      it('superior analítica (aceita lançamento) → 400', async () => {
+        const { svc } = buildService({ accountRepo: plano({ '3.1': true }) });
+        await expect(svc.createAccount(scope, { code: '3.1.1', name: 'X', nature: 'Revenue', acceptsEntries: true, unitId }))
+          .rejects.toThrow(/conta superior '3.1'/);
+      });
+
+      it('resultado com 2 segmentos sob sintética → cria (fora da regra de 4 níveis)', async () => {
+        const { svc, accountRepo } = buildService({ accountRepo: plano({ '4': false }) });
+        await svc.createAccount(scope, { code: '4.3', name: 'Despesas Financeiras', nature: 'Expense', acceptsEntries: true, unitId });
+        expect(accountRepo.create).toHaveBeenCalledTimes(1);
       });
     });
 
@@ -1085,7 +1132,7 @@ describe('PostingService', () => {
     const taggedInput = (dimensions: string[]) => ({
       ...balancedInput,
       lines: [
-        { accountCode: '1.1.1', debitCents: 10000, creditCents: 0 },
+        { accountCode: '1.1.1.01', debitCents: 10000, creditCents: 0 },
         { accountCode: '3.1', debitCents: 0, creditCents: 10000, dimensions },
       ],
     });
@@ -1188,7 +1235,7 @@ describe('PostingService', () => {
     const taggedInput = (dimensions: string[]) => ({
       ...balancedInput,
       lines: [
-        { accountCode: '1.1.1', debitCents: 10000, creditCents: 0 },
+        { accountCode: '1.1.1.01', debitCents: 10000, creditCents: 0 },
         { accountCode: '3.1', debitCents: 0, creditCents: 10000, dimensions },
       ],
     });
@@ -1233,7 +1280,7 @@ describe('PostingService', () => {
         sourceId: '2026',
         lines: [
           { accountCode: '3.1', debitCents: 150000, creditCents: 0 }, // requiresDimension, UNTAGGED
-          { accountCode: '2.3.1', debitCents: 0, creditCents: 150000 },
+          { accountCode: '2.3.1.01', debitCents: 0, creditCents: 150000 },
         ],
       };
       const { svc, journalEntryRepo } = buildService({ accountRepo: requiresOn31 });
@@ -1301,7 +1348,7 @@ describe('PostingService', () => {
       sourceType: 'sale.finalized',
       sourceId: 'sale-big',
       lines: [
-        { accountCode: '1.1.2', debitCents: MAX_CENTS + 1, creditCents: 0 },
+        { accountCode: '1.1.2.01', debitCents: MAX_CENTS + 1, creditCents: 0 },
         { accountCode: '3.1', debitCents: 0, creditCents: MAX_CENTS + 1 },
       ],
     };
@@ -1312,7 +1359,7 @@ describe('PostingService', () => {
       expect(err).toBeInstanceOf(MaxCentsExceededError);
       expect(err.errorCode).toBe('MAX_CENTS_EXCEEDED');
       expect(err.errorCode).not.toBe('ACCOUNTING_PERIOD_NOT_OPEN');
-      expect(err.message).toContain('1.1.2'); // account-coded, as actionable as the old border replicas
+      expect(err.message).toContain('1.1.2.01'); // account-coded, as actionable as the old border replicas
       expect($transaction).not.toHaveBeenCalled();
       expect(journalEntryRepo.create).not.toHaveBeenCalled();
     });
@@ -1322,7 +1369,7 @@ describe('PostingService', () => {
       const atCeiling = {
         ...overCeilingInput,
         lines: [
-          { accountCode: '1.1.2', debitCents: MAX_CENTS, creditCents: 0 },
+          { accountCode: '1.1.2.01', debitCents: MAX_CENTS, creditCents: 0 },
           { accountCode: '3.1', debitCents: 0, creditCents: MAX_CENTS },
         ],
       };
@@ -1334,7 +1381,7 @@ describe('PostingService', () => {
       const floaty = {
         ...overCeilingInput,
         lines: [
-          { accountCode: '1.1.2', debitCents: 100.5, creditCents: 0 },
+          { accountCode: '1.1.2.01', debitCents: 100.5, creditCents: 0 },
           { accountCode: '3.1', debitCents: 0, creditCents: 100.5 },
         ],
       };
@@ -1349,8 +1396,8 @@ describe('PostingService', () => {
         ...overCeilingInput,
         lines: [
           // Balanced sums (Σd = Σc = 100) — only the per-line guard can catch this.
-          { accountCode: '1.1.2', debitCents: -100, creditCents: 0 },
-          { accountCode: '1.1.1', debitCents: 200, creditCents: 0 },
+          { accountCode: '1.1.2.01', debitCents: -100, creditCents: 0 },
+          { accountCode: '1.1.1.01', debitCents: 200, creditCents: 0 },
           { accountCode: '3.1', debitCents: 0, creditCents: 100 },
         ],
       };

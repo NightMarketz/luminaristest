@@ -249,10 +249,10 @@ describe('CashForecastReportService.forecast — saldo inicial (F-CF2→a, deriv
   it('soma SÓ contas de caixa (1.1.1 Banco / 1.1.3 Caixa); ignora contas não-caixa', async () => {
     const { svc, reportService } = buildService({
       balanceRows: [
-        { accountId: 'a1', code: '1.1.1', balanceCents: 100000 }, // Banco — caixa
-        { accountId: 'a2', code: '1.1.3', balanceCents: 5000 }, // Caixa — caixa
-        { accountId: 'a3', code: '1.1.2', balanceCents: 999999 }, // A Receber — NÃO é caixa
-        { accountId: 'a4', code: '2.1.2', balanceCents: -50000 }, // Fornecedores — NÃO é caixa
+        { accountId: 'a1', code: '1.1.1.01', balanceCents: 100000 }, // Banco — caixa
+        { accountId: 'a2', code: '1.1.1.02', balanceCents: 5000 }, // Caixa — caixa
+        { accountId: 'a3', code: '1.1.2.01', balanceCents: 999999 }, // A Receber — NÃO é caixa
+        { accountId: 'a4', code: '2.1.2.01', balanceCents: -50000 }, // Fornecedores — NÃO é caixa
       ],
     });
     const r = await svc.forecast(scope, { asOf: AS_OF });
@@ -264,7 +264,7 @@ describe('CashForecastReportService.forecast — saldo inicial (F-CF2→a, deriv
     const day1 = dateOnlyFromDayNumber(dayNumberFromDateOnly(AS_OF) + 1);
     const day2 = dateOnlyFromDayNumber(dayNumberFromDateOnly(AS_OF) + 2);
     const { svc } = buildService({
-      balanceRows: [{ accountId: 'a1', code: '1.1.1', balanceCents: 10000 }],
+      balanceRows: [{ accountId: 'a1', code: '1.1.1.01', balanceCents: 10000 }],
       receivableRows: [line({ id: 'r1', dueDate: day1, amountCents: 3000 })],
       payableRows: [line({ id: 'p1', dueDate: day2, amountCents: 8000 })],
     });
@@ -281,7 +281,7 @@ describe('CashForecastReportService.forecast — saldo inicial (F-CF2→a, deriv
 
   it('saldo projetado pode ficar NEGATIVO — é exatamente a pergunta que o produto responde', async () => {
     const { svc } = buildService({
-      balanceRows: [{ accountId: 'a1', code: '1.1.1', balanceCents: 1000 }],
+      balanceRows: [{ accountId: 'a1', code: '1.1.1.01', balanceCents: 1000 }],
       payableRows: [line({ id: 'p1', dueDate: AS_OF, amountCents: 5000 })],
     });
     const r = await svc.forecast(scope, { asOf: AS_OF });
@@ -343,7 +343,7 @@ describe('CashForecastReportService.forecast — invariante de soma exata', () =
 
   it('Σ inflowCents das linhas === totalInflowCents; Σ outflowCents === totalOutflowCents; nenhuma "NaN"', async () => {
     const { svc } = buildService({
-      balanceRows: [{ accountId: 'a1', code: '1.1.1', balanceCents: 123456 }],
+      balanceRows: [{ accountId: 'a1', code: '1.1.1.01', balanceCents: 123456 }],
       receivableRows: [
         line({ id: 'r1', dueDate: '2026-07-18', amountCents: 12345 }),
         line({ id: 'r2', dueDate: '2026-08-01', amountCents: 67890 }),

@@ -35,7 +35,7 @@ describe('SaleCogsMapper', () => {
     const debit = input.lines.find((l) => l.debitCents > 0)!;
     const credit = input.lines.find((l) => l.creditCents > 0)!;
     expect(debit.accountCode).toBe('4.2');
-    expect(credit.accountCode).toBe('1.1.6');
+    expect(credit.accountCode).toBe('1.1.3.01');
     expect(debit.debitCents).toBe(20000);
     expect(credit.creditCents).toBe(20000);
     expect(debit.debitCents).toBe(credit.creditCents); // balanced
