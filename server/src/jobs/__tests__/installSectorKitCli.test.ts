@@ -34,7 +34,7 @@ const getKitInstallService = jest.fn(
         findLiveAccountId: async () => null,
       },
       { status: async () => 'OPEN' as const, seedAndOpen: async () => {} },
-      { hasFiscalProfile: async () => false, fillNullScopeSettings: async () => [], fillNullFiscalProfile: async () => [] },
+      { hasFiscalProfile: async () => true /* E-5: o kit vigente exige perfil fiscal; aqui ele existe */, fillNullScopeSettings: async () => [], fillNullFiscalProfile: async () => [] },
       { hasProfile: async () => false, upsert: async () => {} },
       { catalogLoaded: async () => false, mappedAccountIds: async () => new Set<string>(), batchSet: async () => {} },
       { companyRegime: async () => null, unitRegime: async () => null },

@@ -26,6 +26,9 @@ export const STATEMENT_MAPPING_RULES = [
   // (PE-1: receita bruta, outras receitas operacionais ou outra). Sem regra, a conta sumiria da DRE em silêncio.
   { id: 'dre.gross_rev_breakage', statement: 'DRE', match: { nature: 'Revenue', codePrefix: '3.4' }, section: 'grossRevenue', sign: 'credit_positive', order: 106 },
   { id: 'dre.deductions', statement: 'DRE', match: { nature: 'Revenue', codePrefix: '3.2' },  section: 'revenueDeductions', sign: 'credit_negative',  order: 110 },
+  // Tributos sobre a receita (3.6.x: 3.6.1 PIS, 3.6.2 COFINS — F-KE-1/F-KE-2 do KIT-SETOR; F-PCB-1R a, dono 13/10):
+  // dedução da receita bruta (Lei 6.404 art. 187 II). Sem regra, a conta sumiria da DRE em silêncio (só há regra por prefixo para Revenue).
+  { id: 'dre.deductions_taxes', statement: 'DRE', match: { nature: 'Revenue', codePrefix: '3.6' }, section: 'revenueDeductions', sign: 'credit_negative', order: 111 },
   // Custo das Mercadorias Vendidas (4.2, INCR-INVENTORY Body 2). MUST precede the nature-only
   // dre.expenses rule in this array so findMappingRule (first-match) routes 4.2 to costOfGoodsSold
   // instead of the generic expenses bucket — otherwise CMV would inflate expenses and the DRE would

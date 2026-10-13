@@ -9,6 +9,7 @@ import { pushTestSchema, resetDb } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
 import type { BindingScope } from '@/features/accountingBinding/repositories/IAccountingBindingRepository';
 import { AESTHETIC_CLINIC_KIT_V2 } from '@/features/sectorKits/kits/aestheticClinic/kit.v2';
+import { AESTHETIC_CLINIC_KIT_V1 } from '@/features/sectorKits/kits/aestheticClinic/kit.v1';
 
 const UNIT = 'unit-kit-v2-clinica';
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -30,7 +31,8 @@ async function preparar(regime: 'PRESUMIDO' | 'REAL' | 'SIMPLES') {
 
 const instalar = () =>
   ApplicationFactory.getInstance()
-    .getKitInstallService(scope())
+    // o v3 (PR-K2) é a versão vigente; este teste prende o registro no v2 publicado
+    .getKitInstallService(scope(), () => [AESTHETIC_CLINIC_KIT_V1, AESTHETIC_CLINIC_KIT_V2])
     .install(scope(), { kitKey: 'aestheticClinic', ano: 2025, installChartIfEmpty: true, openCurrentPeriodIfMissing: true, today: TODAY });
 
 /** Cobertura como o gate da ECD conta (`ReferentialMappingService.coverage`): folhas vivas sem mapeamento 2025. A fronteira
@@ -45,7 +47,7 @@ describe('kit v2 da clínica — referencial 2025 (BE-INCR-KIT-SETOR-EMENDA-1 PR
   beforeAll(() => pushTestSchema(), 120000);
   afterAll(async () => prisma.$disconnect());
 
-  it.each(['PRESUMIDO', 'REAL'] as const)('%s: instalação do registro real ⇒ cobertura 2025 15/15, 3.4 → 3.01.01.01.01.98', async (regime) => {
+  it.each(['PRESUMIDO', 'REAL'] as const)('%s: instalação do v2 publicado ⇒ cobertura 2025 15/15, 3.4 → 3.01.01.01.01.98', async (regime) => {
     await preparar(regime);
     await expect(instalar()).resolves.toMatchObject({ status: 'INSTALLED' });
     const c = await cobertura();

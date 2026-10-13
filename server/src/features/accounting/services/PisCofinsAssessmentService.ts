@@ -8,7 +8,7 @@
  *
  * Reusa (F-X8-2 a): o model e o repositório `TaxAssessment` do X7 (sem migração), a policy `canRead/ManageTaxAssessment`
  * (item 15), os eventType `tax.assessment.confirmed`/`.superseded` (itens 14 e 22), `receitaBrutaPorAtividade` com o
- * MESMO gate de exaustividade (item 7, F-PCB-1 b) e a leitura do crédito do mês do PR-1 (`findPisCofinsCredits`, item 6).
+ * MESMO gate de exaustividade (item 7; F-PCB-1R a: sem as contas de dedução de PIS/COFINS do perfil) e a leitura do crédito do mês do PR-1 (`findPisCofinsCredits`, item 6).
  */
 import type { CompanyFiscalProfile, Prisma, TaxAssessment } from 'generated/prisma';
 import { ConflictError, ForbiddenError, ValidationError } from '../../../lib/errors';
@@ -365,7 +365,7 @@ export class PisCofinsAssessmentService {
     const v = await this.vizinhos(scope.ownerUserId, ano, periodo);
     const s = saldoAnterior(ano, periodo, v, input.saldoCredorAnterior);
 
-    const rec = await receitaBrutaPorAtividade({ accountRepo: this.accountRepo, postingRepo: this.postingRepo }, scope, w.from, w.to);
+    const rec = await receitaBrutaPorAtividade({ accountRepo: this.accountRepo, postingRepo: this.postingRepo, fiscalProfileRepo: this.fiscalProfileRepo }, scope, w.from, w.to);
     const mm = String(m).padStart(2, '0');
     const creditosNfe = modalidade === 'NAO_CUMULATIVO' ? await this.payableRepo.findPisCofinsCredits(scope, `${ano}-${mm}-01`, fimDoMes(ano, m), razaoCreditoPisCofins(linhasLegais, fimDoMes(ano, m))) : [];
 
