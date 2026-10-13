@@ -10,11 +10,11 @@ autorizacao: "dono, chat, 2026-10-07: \"Esta autorizado\" (o texto do nó) + \"P
 perfil_previsto: "opus-medio"
 perfil_evidencia: "BRIEF §8: PR-1/PR-5 opus-baixo; PR-2/3/4/6 opus-medio (classificador do PR-4 no alto)"
 atualizado: "2026-10-13"
-prs: ["#579", "#580", "#582", "#584", "#632"]
+prs: ["#579", "#580", "#582", "#584", "#632", "#643"]
 ---
 # KIT-SETOR — Kit de setor: núcleo portável + estrutura importada pelo wizard
 
-**Estado:** `planned` — 11/10: 1º kit com conteúdo — kit v2 do salão com o referencial 2025 das 15 folhas (Presumido + Real; 3.4 → .98), PR #632 (BE-INCR-H1-REFERENCIAL-3-4 PR-2, F-HR-1/2 a); alcança só instalação nova (sem upgrade, PR-4) · PRIORIDADE 1 da fila (dono 07/10: 'na frente de tudo'; F-KS-0 → b: só a LAC-B pausa). PRE-ADR Accepted 07/10 (F-KS-1..7 pela referência Odoo/OCA/BC + F-KS-0/R4 por questionário). BRIEF pronto 07/10 (BE-INCR-KIT-SETOR-brief.md: 6 PRs, 51 itens; F-KB-1..5/7/8 pela referência; F-KB-6 e F-KB-9 PENDENTES); código só com 'executa' por PR  
+**Estado:** `planned` — 13/10: F-KB-6R/F-KB-9R (sobre o estado real: v1 publicado, salão v2 em main) — conteúdo já nos dois setores, sem esperar o PR-4; clínica v2 alcança o salão. EMENDA-1 (BE-INCR-KIT-SETOR-EMENDA-1-brief.md): PR-K1 clínica v2 PRONTO p/ executa; PR-K2 conteúdo fiscal com F-KE-1/F-KE-2 PENDENTES. Obs.: F-KB-6/9 já estavam decididos (a) em 08/10 ([[D-2026-10-08-KIT-SETOR-FORKS-KB6-KB9]]), sem fold nesta nota · 11/10: 1º kit com conteúdo — kit v2 do salão com o referencial 2025 das 15 folhas (Presumido + Real; 3.4 → .98), PR #632 (BE-INCR-H1-REFERENCIAL-3-4 PR-2, F-HR-1/2 a); alcança só instalação nova (sem upgrade, PR-4) · PRIORIDADE 1 da fila (dono 07/10: 'na frente de tudo'; F-KS-0 → b: só a LAC-B pausa). PRE-ADR Accepted 07/10 (F-KS-1..7 pela referência Odoo/OCA/BC + F-KS-0/R4 por questionário). BRIEF pronto 07/10 (BE-INCR-KIT-SETOR-brief.md: 6 PRs, 51 itens; F-KB-1..5/7/8 pela referência; F-KB-6 e F-KB-9 PENDENTES); código só com 'executa' por PR  
 **Autorização:** dono, chat, 07/10 — nó + BRIEF; sem "executa" (ORCH-006).  
 **Depende de:** [[P1]] ✅ (arquétipos + binding), [[P2]] ✅ (2º setor), [[I3]] ✅ (`activate-default`).  
 **Desbloqueia:** [[LAC-B]] (a tela instala o kit).
