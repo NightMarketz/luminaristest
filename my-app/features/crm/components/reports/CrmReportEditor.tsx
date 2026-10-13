@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'next-i18next';
 import type { ISchemaField } from '../../../dashboard/components/shared/dynamic-tables.client';
@@ -20,6 +20,7 @@ import {
   measureFieldOptions,
   periodFieldOptions,
   selectOptions,
+  settle,
   withKind,
   type DimensionDraft,
   type FilterDraft,
@@ -64,7 +65,8 @@ export function CrmReportEditor({ draft, fields, sources, onChange, onSourceChan
   const fieldOptionLabel = (f: ISchemaField) =>
     isMoneyField(f) ? `${fieldLabel(f)} ${t('report_builder.editor.money_suffix', '(dinheiro)')}` : fieldLabel(f);
 
-  const set = (patch: Partial<ReportDraft>) => onChange({ ...draft, ...patch });
+  // toda mudança passa pelo `settle`: a conversão que deixa de valer sai do rascunho (review do PR-A)
+  const set = (patch: Partial<ReportDraft>) => onChange(settle({ ...draft, ...patch }, list));
   const setMeasure = (i: number, m: MeasureDraft) => set({ measures: draft.measures.map((x, j) => (j === i ? m : x)) });
   const setDimension = (i: number, d: DimensionDraft) => set({ dimensions: draft.dimensions.map((x, j) => (j === i ? d : x)) });
   const setFilter = (i: number, f: FilterDraft) => set({ filters: draft.filters.map((x, j) => (j === i ? f : x)) });
@@ -273,9 +275,18 @@ export function CrmReportEditor({ draft, fields, sources, onChange, onSourceChan
           {/* Dimensões (item 6) — KPI não tem dimensão, salvo a de moeda (F-FRB6) */}
           {isKpi ? (
             draft.dimensions.length > 0 ? (
-              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                {t('report_builder.editor.kpi_by_currency', 'KPI separado por moeda: um card por moeda.')}
-              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                  {t('report_builder.editor.kpi_by_currency', 'KPI separado por moeda: um card por moeda.')}
+                </p>
+                <button
+                  type="button"
+                  className={smallBtn}
+                  onClick={() => set({ dimensions: [], sort: draft.sort?.by === 'dimension' ? null : draft.sort })}
+                >
+                  {t('report_builder.editor.kpi_remove_split', 'Tirar a separação')}
+                </button>
+              </div>
             ) : null
           ) : (
             <section className={sectionCls}>
@@ -567,26 +578,7 @@ function FilterValueInput({
     );
   }
 
-  if (multi) {
-    const text = Array.isArray(filter.value) ? filter.value.map(String).join(', ') : '';
-    return (
-      <input
-        aria-label={label}
-        className={inputCls}
-        placeholder={t('report_builder.editor.multi_hint', 'Valores separados por vírgula')}
-        defaultValue={text}
-        onBlur={(e) =>
-          onChange(
-            e.target.value
-              .split(',')
-              .map((s) => s.trim())
-              .filter(Boolean)
-              .map((s) => coerceFilterValue(s, field)),
-          )
-        }
-      />
-    );
-  }
+  if (multi) return <MultiValueInput label={label} value={filter.value} field={field} onChange={onChange} />;
 
   const type = field?.type === 'number' ? 'number' : field?.type === 'date' ? 'date' : field?.type === 'datetime' ? 'datetime-local' : 'text';
   return (
@@ -596,6 +588,45 @@ function FilterValueInput({
       className={inputCls}
       value={filter.value == null ? '' : String(filter.value)}
       onChange={(e) => onChange(coerceFilterValue(e.target.value, field))}
+    />
+  );
+}
+
+/**
+ * `in`/`nin` em campo sem opções: texto separado por vírgula, aplicado ao sair do campo. Controlado e ressincronizado
+ * quando o valor muda por fora (remoção de outra linha, troca de campo/operador) — review do PR-A.
+ */
+function MultiValueInput({
+  label,
+  value,
+  field,
+  onChange,
+}: {
+  label: string;
+  value: unknown;
+  field: ISchemaField | undefined;
+  onChange: (value: unknown) => void;
+}) {
+  const { t } = useTranslation('crm');
+  const joined = Array.isArray(value) ? value.map(String).join(', ') : '';
+  const [text, setText] = useState(joined);
+  useEffect(() => setText(joined), [joined]);
+  return (
+    <input
+      aria-label={label}
+      className={inputCls}
+      placeholder={t('report_builder.editor.multi_hint', 'Valores separados por vírgula')}
+      value={text}
+      onChange={(e) => setText(e.target.value)}
+      onBlur={() =>
+        onChange(
+          text
+            .split(',')
+            .map((x) => x.trim())
+            .filter(Boolean)
+            .map((x) => coerceFilterValue(x, field)),
+        )
+      }
     />
   );
 }

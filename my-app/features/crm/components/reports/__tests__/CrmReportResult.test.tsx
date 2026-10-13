@@ -152,4 +152,28 @@ describe('CrmReportResult', () => {
     // verdade (3 cards por moeda) + convertido (1 card em R$)
     expect(kpis.map((k) => nbsp(k.value))).toEqual(['R$ 1.000,00', 'US$ 50,00', '7', 'R$ 1.271,60']);
   });
+
+  it('review — tabela alinha as linhas pelo nome do ponto, não pela posição', () => {
+    render(
+      <CrmReportResult
+        snapshot={snap({
+          kind: 'table',
+          chartType: 'table',
+          dimensions: [{ type: 'field', field: 'status' }],
+          moneyIndexes: [],
+          output: {
+            series: [
+              { measure: 'count:*', points: [{ name: 'Open', value: 2 }, { name: 'Won', value: 1 }] },
+              { measure: 'count:x', points: [{ name: 'Won', value: 5 }] },
+            ],
+            meta: meta(null),
+          },
+        })}
+      />,
+    );
+    expect(tables[0].records.map((r) => [r.data.__group, r.data.s0, r.data.s1])).toEqual([
+      ['Open', '2', '—'],
+      ['Won', '1', '5'],
+    ]);
+  });
 });

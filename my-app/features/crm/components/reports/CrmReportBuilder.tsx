@@ -9,10 +9,10 @@ import {
   blockReason,
   browserTimeZone,
   buildPatch,
+  currencyIndexes,
   emptyDraft,
   fieldLabel,
   fromReport,
-  isMoneyMeasure,
   prunedForFields,
   reportError,
   reportFields,
@@ -98,7 +98,7 @@ export function CrmReportBuilder() {
       kind: d.kind,
       chartType: d.chartType,
       dimensions: d.dimensions,
-      moneyIndexes: d.measures.flatMap((m, i) => (isMoneyMeasure(m, flds) ? [i] : [])),
+      moneyIndexes: currencyIndexes(d, flds, output.meta.currency),
       measureLabels: d.measures.map((m) => measureText(m, flds, t)),
       groupLabel:
         d.dimensions
@@ -147,6 +147,8 @@ export function CrmReportBuilder() {
       setSchemaFields(raw);
       setResult(null);
       setMode('editor');
+      // schema indisponível (ou fonte desinstalada — aí o run diz o porquê, 409 CRM_MODULE_NOT_INSTALLED)
+      if (!raw) setError({ key: 'report_builder.errors.SCHEMA_UNAVAILABLE', params: {}, code: null });
       setRunning(true);
       try {
         const run = await CrmReportsService.run(row.id, { timeZone: browserTimeZone() });
@@ -174,7 +176,7 @@ export function CrmReportBuilder() {
   };
 
   const changeSource = async (source: ReportSource) => {
-    if (source === draft.source) return;
+    if (source === draft.source && schemaFields) return;
     const raw = await fieldsOf(source);
     if (draft.source && sourceChangeLosesItems(draft, reportFields(raw ?? [], labels))) {
       setPendingSource({ source, raw });

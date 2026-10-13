@@ -106,12 +106,15 @@ function ResultBody({
       ...series.map((_, i): ISchemaField => ({ name: `s${i}`, label: label(i), type: 'string' })),
     ];
     const schema: ITableSchema = { fields };
-    const base = series[0]?.points ?? [];
-    const records = base.map((p, row) => {
-      const data: Record<string, unknown> = { __group: displayPointName(p.name, noCurrency) };
-      series.forEach((s, i) => {
-        const point = s.points[row];
-        data[`s${i}`] = point ? fmt(i, point.name, point.value) : '—';
+    // linhas alinhadas por NOME do ponto (ordem da 1ª série; nome que só outra série tem entra no fim) — review do PR-A
+    const names: string[] = [];
+    for (const s of series) for (const p of s.points) if (!names.includes(p.name)) names.push(p.name);
+    const byName = series.map((s) => new Map(s.points.map((p) => [p.name, p.value])));
+    const records = names.map((name, row) => {
+      const data: Record<string, unknown> = { __group: displayPointName(name, noCurrency) };
+      series.forEach((_, i) => {
+        const value = byName[i].get(name);
+        data[`s${i}`] = value === undefined ? '—' : fmt(i, name, value);
       });
       return { id: `${idPrefix}-${row}`, data };
     });

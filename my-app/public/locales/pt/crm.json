@@ -362,7 +362,8 @@
       "running": "Calculando…",
       "save": "Salvar",
       "save_as": "Salvar como",
-      "other_user": "Este relatório é de outro usuário. As mudanças valem para ele."
+      "other_user": "Este relatório é de outro usuário. As mudanças valem para ele.",
+      "kpi_remove_split": "Tirar a separação"
     },
     "currency": {
       "mixed": "O valor de \"{{field}}\" pode estar em moedas diferentes. Separe por moeda ou escolha uma moeda só.",

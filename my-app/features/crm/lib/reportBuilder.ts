@@ -71,7 +71,10 @@ export interface MeasureDraft {
   field: string;
   alias: string;
 }
-export type DimensionDraft = { type: 'field'; field: string } | { type: 'period'; dateField: string; period: PeriodUnit };
+/** `label` só passa adiante (relatório salvo pela API); o editor não o edita. */
+export type DimensionDraft =
+  | { type: 'field'; field: string; label?: string }
+  | { type: 'period'; dateField: string; period: PeriodUnit; label?: string };
 export interface FilterDraft {
   field: string;
   op: FilterOp;
@@ -212,7 +215,8 @@ export function currencyRequirements(draft: ReportDraft, fields: readonly ISchem
   draft.measures.forEach((m, measureIndex) => {
     if (!isMoneyMeasure(m, fields)) return;
     const pairField = pairs[m.field];
-    if (!pairField) return; // sem par → moeda não declarada (o BE aceita e marca `undeclared`)
+    // sem par, ou par ausente do schema vivo → moeda não declarada (o BE aceita e marca `undeclared`; `pairFieldOf`)
+    if (!pairField || !fields.some((f) => f.name === pairField)) return;
     const byDimension = draft.dimensions.some((d) => d.type === 'field' && d.field === pairField);
     const byFilter = singleCurrencyFilter(draft.filters, pairField) !== undefined;
     out.push({ measureIndex, field: m.field, pairField, satisfied: byDimension || byFilter });
@@ -243,11 +247,11 @@ export function kpiAllowedDimensionFields(draft: ReportDraft, fields: readonly I
 export function withKind(draft: ReportDraft, kind: ReportKind, fields: readonly ISchemaField[]): ReportDraft {
   const chartTypes = allowedChartTypes(kind);
   const chartType = chartTypes.includes(draft.chartType) ? draft.chartType : chartTypes[0];
-  if (kind !== 'kpi') return { ...draft, kind, chartType };
+  if (kind !== 'kpi') return settle({ ...draft, kind, chartType }, fields);
   const allowed = new Set(kpiAllowedDimensionFields(draft, fields));
   const dimensions = draft.dimensions.filter((d) => d.type === 'field' && allowed.has(d.field));
   const sort = draft.sort?.by === 'dimension' && dimensions.length === 0 ? null : draft.sort;
-  return { ...draft, kind, chartType, dimensions, sort };
+  return settle({ ...draft, kind, chartType, dimensions, sort }, fields);
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -263,12 +267,24 @@ export function installedSources(internalNames: readonly (string | null | undefi
 /** O que deixa de existir ao trocar a fonte: itens que citam campo ausente no schema novo. */
 export function prunedForFields(draft: ReportDraft, fields: readonly ISchemaField[]): ReportDraft {
   const has = (name: string) => fields.some((f) => f.name === name);
-  const measures = draft.measures.filter((m) => m.field === '' || has(m.field));
+  const keptIdx = draft.measures.flatMap((m, i) => (m.field === '' || has(m.field) ? [i] : []));
+  const measures = keptIdx.map((i) => draft.measures[i]);
   const kept = measures.length > 0 ? measures : [{ type: 'count' as const, field: '', alias: '' }];
   const dimensions = draft.dimensions.filter((d) => has(d.type === 'field' ? d.field : d.dateField));
   const filters = draft.filters.filter((f) => has(f.field));
-  const sortIndexOk = draft.sort?.measureIndex == null || draft.sort.measureIndex < kept.length;
-  return { ...draft, measures: kept, dimensions, filters, sort: sortIndexOk ? draft.sort : null, joins: undefined };
+  // o sort aponta para a MESMA medida depois da poda (índice remapeado); medida removida → sem medida escolhida
+  let sort = draft.sort;
+  if (sort?.measureIndex != null) {
+    const at = keptIdx.indexOf(sort.measureIndex);
+    sort = { ...sort, measureIndex: at >= 0 ? at : null };
+  }
+  if (sort?.by === 'dimension' && dimensions.length === 0) sort = null;
+  return settle({ ...draft, measures: kept, dimensions, filters, sort, joins: undefined }, fields);
+}
+
+/** Achado do review: a conversão marcada que deixa de valer sai do rascunho (senão o BE responde 400). */
+export function settle(draft: ReportDraft, fields: readonly ISchemaField[]): ReportDraft {
+  return draft.convertTo && !conversionAvailable(draft, fields) ? { ...draft, convertTo: false } : draft;
 }
 
 /** Trocar a fonte limpa algo? (para pedir confirmação antes). */
@@ -332,7 +348,10 @@ function toMeasure(m: MeasureDraft): SpecMeasure {
 }
 
 function toDimension(d: DimensionDraft): SpecDimension {
-  return d.type === 'field' ? { type: 'field', field: d.field } : { type: 'period', dateField: d.dateField, period: d.period };
+  if (d.type === 'field') return d.label ? { type: 'field', field: d.field, label: d.label } : { type: 'field', field: d.field };
+  return d.label
+    ? { type: 'period', dateField: d.dateField, period: d.period, label: d.label }
+    : { type: 'period', dateField: d.dateField, period: d.period };
 }
 
 function toFilter(f: FilterDraft): SpecFilter {
@@ -394,7 +413,10 @@ function fromMeasure(m: SpecMeasure): MeasureDraft {
 }
 
 function fromDimension(d: SpecDimension): DimensionDraft {
-  return d.type === 'field' ? { type: 'field', field: d.field } : { type: 'period', dateField: d.dateField, period: d.period };
+  if (d.type === 'field') return d.label ? { type: 'field', field: d.field, label: d.label } : { type: 'field', field: d.field };
+  return d.label
+    ? { type: 'period', dateField: d.dateField, period: d.period, label: d.label }
+    : { type: 'period', dateField: d.dateField, period: d.period };
 }
 
 function fromFilter(f: SpecFilter): FilterDraft {
@@ -474,6 +496,16 @@ export function formatReportValue(value: number, currency: PointCurrency, locale
     return new Intl.NumberFormat(locale, { style: 'currency', currency, maximumFractionDigits: 2 }).format(value);
   }
   return new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value);
+}
+
+/**
+ * Achado do review: o `meta.currency` do BE descreve a moeda pelo par da 1ª medida de dinheiro (`currencyMode`). Só as
+ * medidas de dinheiro cujo par é esse campo levam símbolo; dinheiro sem par (ou modo `undeclared`) fica sem símbolo.
+ */
+export function currencyIndexes(draft: ReportDraft, fields: readonly ISchemaField[], meta: CurrencyMeta): number[] {
+  if (!meta || meta.mode === 'undeclared') return [];
+  const byMeasure = new Map(currencyRequirements(draft, fields).map((r) => [r.measureIndex, r.pairField]));
+  return draft.measures.flatMap((_, i) => (byMeasure.get(i) === meta.field ? [i] : []));
 }
 
 export interface SeriesView {

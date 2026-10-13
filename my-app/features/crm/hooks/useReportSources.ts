@@ -22,10 +22,12 @@ export function useReportSources(): ReportSourcesState {
   const [error, setError] = useState(false);
   const tableIds = useRef(new Map<ReportSource, string>());
   const cache = useRef(new Map<ReportSource, Promise<ISchemaField[] | null>>());
+  // `fieldsOf` espera a lista de tabelas: abrir um relatório antes dela chegar não vira "sem campos" (review do PR-A)
+  const ready = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
     let alive = true;
-    DynamicTableService.getTables()
+    ready.current = DynamicTableService.getTables()
       .then((res) => {
         const list = Array.isArray(res?.data) ? (res.data as { id?: string; internalName?: string | null }[]) : [];
         const installed = installedSources(list.map((t) => t?.internalName));
@@ -46,11 +48,12 @@ export function useReportSources(): ReportSourcesState {
     };
   }, []);
 
-  const fieldsOf = useCallback((source: ReportSource): Promise<ISchemaField[] | null> => {
+  const fieldsOf = useCallback(async (source: ReportSource): Promise<ISchemaField[] | null> => {
+    await ready.current;
     const hit = cache.current.get(source);
     if (hit) return hit;
     const tableId = tableIds.current.get(source);
-    if (!tableId) return Promise.resolve(null);
+    if (!tableId) return null;
     const p = DynamicTableService.getTableById(tableId)
       .then((meta) => {
         const schema = (meta as { data?: { schema?: unknown } })?.data?.schema;

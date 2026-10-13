@@ -18,6 +18,7 @@ const FIELDS: ISchemaField[] = reportFields(
     { name: 'currency', label: 'Moeda', type: 'select', options: ['BRL', 'USD', 'EUR'] },
     { name: 'status', label: 'Status', type: 'select', options: ['Draft', 'Sent'] },
     { name: 'estimatedCloseDate', label: 'Fechamento', type: 'date' },
+    { name: 'title2', label: 'Código', type: 'string' },
   ],
   { id: 'ID', createdAt: 'Criado em', updatedAt: 'Atualizado em' },
 );
@@ -114,5 +115,39 @@ describe('CrmReportEditor', () => {
     expect(optionTexts(screen.getByLabelText('Gráfico'))).toEqual(['Barras', 'Linha', 'Área', 'Pizza', 'Rosca']);
     expect(latest.kind).toBe('kpi');
     expect(screen.queryByText('Adicionar agrupamento')).toBeNull();
+  });
+
+  it('review — achado 1: trocar a medida de dinheiro por contagem desmarca a conversão no rascunho', () => {
+    render(
+      <Harness
+        initial={{ measures: [{ type: 'sum', field: 'amount', alias: '' }], filters: [{ field: 'currency', op: 'eq', value: 'USD' }], convertTo: true }}
+      />,
+    );
+    fireEvent.change(within(screen.getByTestId('measure-0')).getByLabelText('Cálculo'), { target: { value: 'count' } });
+    expect(latest.convertTo).toBe(false);
+  });
+
+  it('review — achado 3: remover um filtro `in` de texto não deixa o valor dele na linha de baixo', () => {
+    render(
+      <Harness
+        initial={{
+          filters: [
+            { field: 'title2', op: 'in', value: ['a', 'b'] },
+            { field: 'title2', op: 'in', value: ['c'] },
+          ],
+        }}
+      />,
+    );
+    fireEvent.click(within(screen.getByTestId('filter-0')).getByText('Remover'));
+    const input = within(screen.getByTestId('filter-0')).getByLabelText('Valor') as HTMLInputElement;
+    expect(input.value).toBe('c');
+    fireEvent.blur(input);
+    expect(latest.filters).toEqual([{ field: 'title2', op: 'in', value: ['c'] }]);
+  });
+
+  it('review — KPI com a separação por moeda tem saída pela tela', () => {
+    render(<Harness initial={{ kind: 'kpi', dimensions: [{ type: 'field', field: 'currency' }] }} />);
+    fireEvent.click(screen.getByText('Tirar a separação'));
+    expect(latest.dimensions).toEqual([]);
   });
 });

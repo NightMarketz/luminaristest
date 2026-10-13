@@ -362,7 +362,8 @@
       "running": "Calculating…",
       "save": "Save",
       "save_as": "Save as",
-      "other_user": "This report belongs to another user. Changes apply to their report."
+      "other_user": "This report belongs to another user. Changes apply to their report.",
+      "kpi_remove_split": "Remove the split"
     },
     "currency": {
       "mixed": "The amount in \"{{field}}\" may be in different currencies. Split by currency or pick a single currency.",

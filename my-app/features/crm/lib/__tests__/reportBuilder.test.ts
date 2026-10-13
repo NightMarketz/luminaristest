@@ -6,6 +6,7 @@ import {
   blockReason,
   buildPatch,
   conversionAvailable,
+  currencyIndexes,
   currencyRequirements,
   displayPointName,
   emptyDraft,
@@ -19,6 +20,7 @@ import {
   reportError,
   reportFields,
   seriesViews,
+  settle,
   sourceChangeLosesItems,
   toCreateInput,
   toSpec,
@@ -274,5 +276,60 @@ describe('itens 17–18 — salvar, patch e abrir', () => {
     const body = toCreateInput(proposalsDraft({ name: ' Funil ', measures: [{ type: 'count', field: 'status', alias: '  ' }] }));
     expect(body).toEqual({ name: 'Funil', kind: 'chart', chartType: 'bar', spec: { source: 'leadProposals', measures: [{ type: 'count', field: 'status' }] } });
     expect(toCreateInput(proposalsDraft({ name: '' }))).toBeNull();
+  });
+});
+
+describe('review independente do PR-A — regressões', () => {
+  it('achado 1: conversão marcada que deixa de valer sai do rascunho (senão 400 REPORT_CONVERSION_NOT_APPLICABLE)', () => {
+    const d = proposalsDraft({ measures: [{ type: 'count', field: '', alias: '' }], convertTo: true });
+    expect(toSpec(settle(d, PROPOSAL_FIELDS))?.convertTo).toBeUndefined();
+    const money = proposalsDraft({ measures: [{ type: 'sum', field: 'amount', alias: '' }], convertTo: true });
+    expect(settle(money, PROPOSAL_FIELDS).convertTo).toBe(true);
+  });
+
+  it('achado 2: trocar a fonte mantém o sort na MESMA medida (índice remapeado) ou o solta', () => {
+    const d = proposalsDraft({
+      measures: [
+        { type: 'avg', field: 'probability', alias: '' },
+        { type: 'count', field: '', alias: 'Total' },
+        { type: 'count', field: 'status', alias: 'ComStatus' },
+      ],
+      sort: { by: 'measure', measureIndex: 1, dir: 'desc' },
+    });
+    const next = reportFields([{ name: 'status', label: 'Status', type: 'select' }], LABELS);
+    const pruned = prunedForFields(d, next);
+    expect(toSpec(pruned)?.sort).toEqual({ by: 'measure', key: 'Total', dir: 'desc' });
+    const lost = prunedForFields({ ...d, sort: { by: 'measure', measureIndex: 0, dir: 'asc' } }, next);
+    expect(lost.sort).toEqual({ by: 'measure', measureIndex: null, dir: 'asc' });
+  });
+
+  it('achado 4: só a medida cujo par é o campo do meta leva moeda; dinheiro sem par e modo undeclared, não', () => {
+    const fields = [...PROPOSAL_FIELDS, { name: 'fee', label: 'Taxa', type: 'number', numberFormat: 'currency' as const }];
+    const d = proposalsDraft({
+      measures: [{ type: 'sum', field: 'amount', alias: '' }, { type: 'sum', field: 'fee', alias: '' }, { type: 'count', field: '', alias: '' }],
+    });
+    expect(currencyIndexes(d, fields, { mode: 'filter', field: 'currency', value: 'USD' })).toEqual([0]);
+    expect(currencyIndexes(d, fields, { mode: 'undeclared' })).toEqual([]);
+    expect(currencyIndexes(d, fields, null)).toEqual([]);
+  });
+
+  it('par de moeda ausente do schema vivo → não exige escolha (o BE trata como undeclared, `pairFieldOf`)', () => {
+    const semPar = PROPOSAL_FIELDS.filter((f) => f.name !== 'currency');
+    expect(currencyRequirements(proposalsDraft({ measures: [{ type: 'sum', field: 'amount', alias: '' }] }), semPar)).toEqual([]);
+  });
+
+  it('label de dimensão de relatório salvo pela API não se perde no ida-e-volta', () => {
+    const row: CrmReportRow = {
+      id: 'r9',
+      userId: 'u1',
+      name: 'Com rótulo',
+      description: null,
+      kind: 'chart',
+      chartType: 'bar',
+      spec: { source: 'leads', measures: [{ type: 'count' }], dimensions: [{ type: 'field', field: 'status', label: 'Situação' }] },
+      createdAt: '2026-10-13T10:00:00.000Z',
+      updatedAt: '2026-10-13T10:00:00.000Z',
+    };
+    expect(toSpec(fromReport(row))).toEqual(row.spec);
   });
 });
