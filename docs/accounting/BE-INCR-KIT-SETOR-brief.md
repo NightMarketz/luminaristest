@@ -1,5 +1,7 @@
 # BE-INCR-KIT-SETOR — kit de setor: núcleo portável + estrutura importada pelo wizard, com atualização em 3 níveis (BRIEF, nó KIT-SETOR)
 
+> **EMENDA 2026-10-13:** ver [`BE-INCR-KIT-SETOR-EMENDA-1-brief.md`](BE-INCR-KIT-SETOR-EMENDA-1-brief.md) — forks decididos em [D-2026-10-13-QUESTIONARIO-BRIEFS-PRONTOS](../plano/decisoes/D-2026-10-13-QUESTIONARIO-BRIEFS-PRONTOS.md). Sem código; cada PR exige 'executa'.
+
 > **Sessão:** `sessao-planejamento` — produz decisão, não código.
 > **Autorização (dono, chat, 2026-10-07):** *"Sim abre o brief com o máximo de detalhe possível"*, sobre o nó
 > [`KIT-SETOR`](../plano/nos/KIT-SETOR.md), cujo campo `autorizacao` diz *"autoriza o BRIEF; sem 'executa'"*. Cobre o

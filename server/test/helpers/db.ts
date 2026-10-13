@@ -60,6 +60,7 @@ export async function resetDb(): Promise<void> {
   await prisma.auditEvent.deleteMany();
   await prisma.auditChainHead.deleteMany();
   await prisma.referentialAccount.deleteMany();
+  await prisma.ptaxRate.deleteMany(); // BE-INCR-CRM-REPORT-BUILDER PR-1 — global, sem FK (folha)
   await prisma.journalEntrySequence.deleteMany();
   await prisma.customerPackageBalance.deleteMany();
   await prisma.packageBalanceMovement.deleteMany();

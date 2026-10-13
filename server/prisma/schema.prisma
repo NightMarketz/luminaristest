@@ -559,6 +559,24 @@ model ReferentialAccount {
   @@map("referential_accounts")
 }
 
+// BE-INCR-CRM-REPORT-BUILDER PR-1 (nó CRM-RB; BRIEF §1.1, item 20; F-RB8, dono 29/09) — PTAX de fechamento do BCB, uma
+// linha por moeda por dia útil. GLOBAL (sem userId: fato público igual para todo tenant) e append-only, sem rota nem
+// soft-delete — mesmo precedente de `ReferentialAccount`. Módulo neutro `features/fx` (item 26). Só exibição: NÃO é o
+// slot `exchangeRate` do AccountingScope (R-multimoeda rejeitada); a contabilidade não lê esta tabela.
+model PtaxRate {
+  id         String   @id @default(cuid())
+  currency   String // ISO 4217: 'USD' | 'EUR' (CURRENCIES − BRL, crm/constants.ts:1)
+  rateDate   DateTime // date-only — dia do boletim de fechamento (Brasília), meia-noite UTC; validado por isValidDateOnly
+  buyRateE5  Int // cotacaoCompra × 1e5 (a API devolve 5 casas — BRIEF §8)
+  sellRateE5 Int // cotacaoVenda × 1e5 — a usada na conversão (F-RB8e)
+  quotedAt   DateTime // dataHoraCotacao do BCB (vem sem fuso; é hora de Brasília, UTC−3)
+  source     String // 'BCB_PTAX_FECHAMENTO'
+  fetchedAt  DateTime @default(now())
+
+  @@unique([currency, rateDate]) // idempotência do job + busca "última ≤ data"
+  @@map("ptax_rates")
+}
+
 // Journal entry header (lançamento). Groups N balanced legs (`postings`) where
 // Σdebit = Σcredit (enforced in the posting service). Posted entries are immutable —
 // corrections are made via a reversing entry (estorno). `reversedById` links an

@@ -1,0 +1,80 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Perguntas Frequentes",
+      "url": "https://portal.fazenda.sp.gov.br/servicos/nfce/Paginas/perguntas-frequentes.aspx",
+      "url_final": "https://portal.fazenda.sp.gov.br/servicos/nfce/Paginas/perguntas-frequentes.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-13T00:56:29-03:00",
+      "sha256": "23629bb9a699aecea71ccaf447321b1144f492e82268b543edb40c7951f4aa85",
+      "arquivo": "docs/D01_perguntas-frequentes-aspx.html",
+      "texto": "docs/D01_perguntas-frequentes-aspx.txt",
+      "bytes": 98670
+    },
+    {
+      "id": "D02",
+      "titulo": "Páginas\r\n\t- \r\n\tSobre a Nota Fiscal de Consumidor Eletrônica",
+      "url": "https://portal.fazenda.sp.gov.br/servicos/nfce",
+      "url_final": "https://portal.fazenda.sp.gov.br/servicos/nfce",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-13T00:56:29-03:00",
+      "sha256": "ec59d58a33d29d9f5b09a53490093e28760dbb6a2fdaab558f5538632a2b7b25",
+      "arquivo": "docs/D02_nfce.html",
+      "texto": "docs/D02_nfce.txt",
+      "bytes": 104952
+    },
+    {
+      "id": "D03",
+      "titulo": "D03_items",
+      "url": "https://portal.fazenda.sp.gov.br/servicos/nfce/_api/web/lists/getByTitle('Perguntas%20Frequentes')/items?$select=Id,Title,Resposta,Assunto&$top=1000",
+      "url_final": "https://portal.fazenda.sp.gov.br/servicos/nfce/_api/web/lists/getByTitle('Perguntas%20Frequentes')/items?$select=Id,Title,Resposta,Assunto&$top=1000",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-13T00:57:07-03:00",
+      "sha256": "47efc811a21b6d50190790a93dbb7ac0f2f235febe2ffd4d9bf620ee996eb236",
+      "arquivo": "docs/D03_items.html",
+      "texto": "docs/D03_items.txt",
+      "bytes": 73958
+    },
+    {
+      "id": "D04",
+      "titulo": "WebServices",
+      "url": "https://portal.fazenda.sp.gov.br/servicos/nfce/Paginas/WebServices.aspx",
+      "url_final": "https://portal.fazenda.sp.gov.br/servicos/nfce/Paginas/WebServices.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-13T00:57:23-03:00",
+      "sha256": "142ca899c20baca5cad81e1e12debc9a5d943cdf7d7eb14e15e5e1efa488f005",
+      "arquivo": "docs/D04_WebServices-aspx.html",
+      "texto": "docs/D04_WebServices-aspx.txt",
+      "bytes": 118933
+    },
+    {
+      "id": "D05",
+      "titulo": "Regras de validação facultativas por UF",
+      "url": "https://portal.fazenda.sp.gov.br/servicos/nfce/Paginas/Regras-de-validacao.aspx",
+      "url_final": "https://portal.fazenda.sp.gov.br/servicos/nfce/Paginas/Regras-de-validacao.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-13T01:24:58-03:00",
+      "sha256": "8c03febbc068f73fe8fd3494bfa514c7a671c70535cc23de19370565703c7bdd",
+      "arquivo": "docs/D05_Regras-de-validacao-aspx.html",
+      "texto": "docs/D05_Regras-de-validacao-aspx.txt",
+      "bytes": 115952
+    },
+    {
+      "id": "D06",
+      "titulo": "Páginas\r\n\t- \r\n\tSobre a Nota Fiscal de Consumidor Eletrônica",
+      "url": "https://portal.fazenda.sp.gov.br/servicos/nfce/Paginas/Sobre.aspx",
+      "url_final": "https://portal.fazenda.sp.gov.br/servicos/nfce/Paginas/Sobre.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-13T01:24:59-03:00",
+      "sha256": "3d2bf48476f41bf5719084af3a1e557ce4db275e54c8ddc6bb0b457cb2bfd994",
+      "arquivo": "docs/D06_Sobre-aspx.html",
+      "texto": "docs/D06_Sobre-aspx.txt",
+      "bytes": 104983
+    }
+  ],
+  "buscas": [],
+  "slug": "nfce-sp-qrcode-v3",
+  "pergunta": "L-NFCE-1: a SEFAZ-SP aceita NFC-e de PJ com QR Code versão 3, sem CSC?",
+  "criado": "2026-10-13T00:55:34-03:00"
+}

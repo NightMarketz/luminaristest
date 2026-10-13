@@ -1,0 +1,44 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "MOC 7.0 - Visão Geral",
+      "url": "https://www.confaz.fazenda.gov.br/legislacao/arquivo-manuais/moc7-visao-geral.pdf",
+      "url_final": "https://www.confaz.fazenda.gov.br/legislacao/arquivo-manuais/moc7-visao-geral.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-13T00:58:08-03:00",
+      "sha256": "f664dcf94b77cabb32311620d85a7eb02cdf86adb2d4632ce178af2572dd2ad1",
+      "arquivo": "docs/D01_moc7-visao-geral-pdf.pdf",
+      "texto": "docs/D01_moc7-visao-geral-pdf.txt",
+      "bytes": 4304647
+    },
+    {
+      "id": "D02",
+      "titulo": "D02_manual-contribuintes-emissor-publico-api-sistema-nacional-nf",
+      "url": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/documentacao-atual/manual-contribuintes-emissor-publico-api-sistema-nacional-nfs-e-v1-2-out2025.pdf",
+      "url_final": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/documentacao-atual/manual-contribuintes-emissor-publico-api-sistema-nacional-nfs-e-v1-2-out2025.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-13T00:58:33-03:00",
+      "sha256": "ac2f36e34ff565cc36d67c5d67415c33cc09f27b2dea006e8da9bcd2ddce5581",
+      "arquivo": "docs/D02_manual-contribuintes-emissor-publico-api-sistema-nacional-nf.pdf",
+      "texto": "docs/D02_manual-contribuintes-emissor-publico-api-sistema-nacional-nf.txt",
+      "bytes": 188158
+    },
+    {
+      "id": "D03",
+      "titulo": "D03_manual-contribuintes-apis-adn-sistema-nacional-nfse-pdf",
+      "url": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/documentacao-atual/manual-contribuintes-apis-adn-sistema-nacional-nfse.pdf",
+      "url_final": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/documentacao-atual/manual-contribuintes-apis-adn-sistema-nacional-nfse.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-13T00:58:33-03:00",
+      "sha256": "9ffc97d8b1be4c80a440b3569b0027df61265b9e75ef69437f21f9481a9a1d6d",
+      "arquivo": "docs/D03_manual-contribuintes-apis-adn-sistema-nacional-nfse-pdf.pdf",
+      "texto": "docs/D03_manual-contribuintes-apis-adn-sistema-nacional-nfse-pdf.txt",
+      "bytes": 201769
+    }
+  ],
+  "buscas": [],
+  "slug": "dfe-mtls-psc",
+  "pergunta": "Certificado só em PSC (nuvem): a norma ICP-Brasil/DOC-ICP-17.01 e os webservices SEFAZ/Sefin exigem TLS mútuo com o e-CNPJ do contribuinte? Há como autenticar o transporte sem ter a chave privada?",
+  "criado": "2026-10-13T00:55:35-03:00"
+}

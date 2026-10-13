@@ -28,6 +28,7 @@ import {
   type RegJ100Line,
   type RegJ150Line,
   sanitizeRtfForSped,
+  textoLatin1Sped,
   resolveEcdCodVerLc,
 } from '../../../lib/sped';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
@@ -153,6 +154,12 @@ export class SpedGenerationService {
         { unmappedAccounts: coverage.unmappedAccounts, mappingVersion: dto.mappingVersion },
       );
     }
+    // L5 (RUNBOOK-H1, PVA 13/10): com mapeamento (I051), o PVA exige o 0000.COD_PLAN_REF (Manual ECD L9 p. 63, nota 21).
+    if (coverage.totals.mappedCount > 0 && !dto.declarant.codPlanRef) {
+      throw new ValidationError(
+        '0000.COD_PLAN_REF é obrigatório quando há mapeamento referencial (I051): informe o plano referencial usado no mapeamento.',
+      );
+    }
 
     const periodStart = new Date(`${year}-01-01T00:00:00.000Z`);
     const periodEnd = new Date(`${year}-12-31T00:00:00.000Z`);
@@ -169,7 +176,12 @@ export class SpedGenerationService {
     const input = await this.composeFile(scope, dto, dtIni, dtFin, rtfFile);
     const lines = buildEcdFile(input);
     const text = serializeEcd(lines);
-    const buffer = Buffer.from(text, 'latin1'); // ISO-8859-1 (PVA-7)
+    let buffer: Buffer;
+    try {
+      buffer = Buffer.from(textoLatin1Sped(text), 'latin1'); // ISO-8859-1 (PVA-7); L6 — nunca byte de controle
+    } catch (e) {
+      throw new ValidationError(e instanceof Error ? e.message : String(e));
+    }
     const sha256 = createHash('sha256').update(buffer).digest('hex');
     const fileName = `ecd_${dto.declarant.cnpj}_${year}.txt`;
 
@@ -610,26 +622,30 @@ export class SpedGenerationService {
       negate: boolean,
     ) => {
       const sign = negate ? -1 : 1;
+      // L9 (RUNBOOK-H1, PVA 13/10): só o Resultado do Exercício fica no nível 1 (Manual ECD L9 p. 180) — as seções
+      // são nível 2 sob ele e os detalhes nível 3 sob a seção.
       lines.push({
-        nuOrdem: ordem++, codAgl: totCode, indCodAgl: 'T', nivelAgl: 1,
+        nuOrdem: ordem++, codAgl: totCode, indCodAgl: 'T', nivelAgl: 2, codAglSup: 'DRE_RESULTADO',
         descr: totDescr, vlIniCents: 0, vlFinCents: sign * parseInt(section.totalCents, 10), indGrpDre: grp,
       });
       for (const a of section.accounts) {
         lines.push({
-          nuOrdem: ordem++, codAgl: a.code, indCodAgl: 'D', nivelAgl: 2, codAglSup: totCode,
+          nuOrdem: ordem++, codAgl: a.code, indCodAgl: 'D', nivelAgl: 3, codAglSup: totCode,
           descr: a.name, vlIniCents: 0, vlFinCents: sign * parseInt(a.amountCents, 10), indGrpDre: grp,
         });
       }
     };
 
     pushSection('DRE_RECEITA', 'RECEITA BRUTA', dre.grossRevenue, 'R', true);
-    pushSection('DRE_DEDUCOES', 'DEDUÇÕES DA RECEITA', dre.revenueDeductions, 'D', false);
+    pushSection('DRE_DEDUCOES', 'DEDUÇÕES DA RECEITA', dre.revenueDeductions, 'D', true);
     // Custo das Mercadorias Vendidas (INCR-INVENTORY Body 2). Before B-2b, 4.2 accounts lived in
     // `expenses` and reached J150 under DESPESAS; the DRE now segregates them into costOfGoodsSold,
     // so J150 must push this section explicitly or the CMV would silently vanish from ECD (same 'D'
     // group and sign handling as expenses — amountCents is already debit_negative).
-    pushSection('DRE_CMV', 'CUSTO DAS MERCADORIAS VENDIDAS', dre.costOfGoodsSold, 'D', false);
-    pushSection('DRE_DESPESAS', 'DESPESAS', dre.expenses, 'D', false);
+    // L9 (RUNBOOK-H1, PVA 13/10): o relatório da DRE traz despesa/CMV/dedução negativas (sinal do resultado); o J150
+    // inverte como na receita, para saírem devedoras (D) e o Resultado fechar com as filhas (REGRA_SOMA_NIVEIS_DRE).
+    pushSection('DRE_CMV', 'CUSTO DAS MERCADORIAS VENDIDAS', dre.costOfGoodsSold, 'D', true);
+    pushSection('DRE_DESPESAS', 'DESPESAS', dre.expenses, 'D', true);
     lines.push({
       nuOrdem: ordem++, codAgl: 'DRE_RESULTADO', indCodAgl: 'T', nivelAgl: 1,
       descr: 'RESULTADO LÍQUIDO DO EXERCÍCIO', vlIniCents: 0,

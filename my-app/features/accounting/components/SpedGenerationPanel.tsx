@@ -101,6 +101,7 @@ export function toEcdDeclarantPayload(d: EcdDeclarantDraft): GenerateEcdPayload[
     codMun: d.codMun,
     indNire: d.indNire,
     indGrandePorte: d.indGrandePorte,
+    ...(d.codPlanRef ? { codPlanRef: d.codPlanRef } : {}),
   };
 }
 
@@ -244,7 +245,7 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
   const [ecdYear, setEcdYear] = useState(String(currentYear - 1));
   const [ecdVersion, setEcdVersion] = useState('');
   const [ecdDeclarant, setEcdDeclarant] = useState<EcdDeclarantDraft>({
-    nome: '', cnpj: '', uf: 'SP', codMun: '', indNire: '0', indGrandePorte: '0',
+    nome: '', cnpj: '', uf: 'SP', codMun: '', indNire: '0', indGrandePorte: '0', codPlanRef: '',
   });
   const [ecdBook, setEcdBook] = useState<EcdBookDraft>({ numOrd: '', natLivr: '', dtExSocial: '' });
   const [ecdSigners, setEcdSigners] = useState<EcdSignerDraft[]>([emptyEcdSigner()]);
@@ -418,6 +419,15 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
             <select value={ecdDeclarant.indGrandePorte} onChange={(e) => setEcdD('indGrandePorte', e.target.value as '0' | '1')} className={inputClass}>
               <option value="0">{t('sped.opt.no', 'Não')}</option>
               <option value="1">{t('sped.opt.yes', 'Sim')}</option>
+            </select>
+          </Field>
+          {/* L5 (RUNBOOK-H1, PVA 13/10): 0000.COD_PLAN_REF — tabela do Manual ECD L9 (jan/2026) p. 67. */}
+          <Field label={t('sped.field.codPlanRef', 'Plano referencial')}>
+            <select value={ecdDeclarant.codPlanRef} onChange={(e) => setEcdD('codPlanRef', e.target.value as EcdDeclarantDraft['codPlanRef'])} className={inputClass}>
+              <option value="">{t('sped.opt.select', 'Selecione')}</option>
+              {(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'] as const).map((c) => (
+                <option key={c} value={c}>{`${c} - ${t(`sped.planRef.${c}`)}`}</option>
+              ))}
             </select>
           </Field>
         </div>

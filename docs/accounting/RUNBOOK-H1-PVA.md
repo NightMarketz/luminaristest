@@ -263,6 +263,8 @@ Server em `http://localhost:3001`, app em `http://localhost:3000`. Logue na apli
 > L9 p. 202). A tabela *ECD — signatários (J930)* abaixo foi reescrita por
 > [SpedEcdDto.ts:134-218 e :396-445](../../server/src/features/accounting/dtos/SpedEcdDto.ts).
 
+> **[2026-10-13]** Versão de teste com dado público (CVM/IBGE) e pessoas fictícias, já conferida contra o schema: [`H1-P6-DADOS-PUBLICOS-2026-10-13.md`](H1-P6-DADOS-PUBLICOS-2026-10-13.md).
+
 **Separe por origem antes de escrever para o contador** — o formulário da tela mistura os dois, mas
 pedir ao contador o que já está no CNPJ/contrato social da empresa é ida-e-volta desnecessária:
 - 🏢 **Do dono/empresa** — está no cartão CNPJ, contrato social ou já cadastrado no sistema.
@@ -517,7 +519,49 @@ e o resultado transferido para lucros/prejuízos acumulados.
 
 Resultado esperado: DRE do exercício encerrado sem saldo residual nas contas de resultado.
 
-EVIDÊNCIA: [screenshot do balancete/DRE após o encerramento]
+> **[EMENDA 2026-10-13 — dono: "Pode emendar o passo 2 e documentar se temos lacunas reais aqui"]** O texto acima
+> **não é executável** e levaria a um FALHOU falso. Nem o Balancete nem a DRE mostram o resultado zerado de um exercício
+> encerrado:
+>
+> - O **Balancete** não tem data. A tela chama `GET /trial-balance?unitId=` e a rota ignora `from`/`to` (lacuna L1 abaixo),
+>   então o saldo vai até HOJE e mistura o movimento de 2026. No seed, 3.1/3.3/4.1/4.2 aparecem com saldo.
+> - A **DRE** exclui de propósito o lançamento de encerramento (`CLOSING_SOURCE_TYPE`). Ela mostra o resultado do ano
+>   ANTES do encerramento, que é o certo para uma DRE, e não aceita `from` (`FROM_DATE_NOT_SUPPORTED_IN_INCR4`).
+>
+> **Passo 2 vigente:** aba **Balanço Patrimonial**, campo de data em **31/12/<ano>** (no seed: 31/12/2025). Resultado
+> esperado, as três coisas juntas:
+> 1. linha **"Resultado do exercício"** = **0** (`netResultLine.amountCents = 0`);
+> 2. **Lucros ou Prejuízos Acumulados (2.3.1)** = o **resultado líquido da DRE** do mesmo ano (aba DRE com data
+>    31/12/<ano>; é o valor transferido pelo encerramento);
+> 3. balanço **fechado** (ativo = passivo + PL), sem aviso de "resultado de exercício anterior não encerrado".
+>
+> EVIDÊNCIA = screenshot do BP em 31/12/<ano> + screenshot da DRE em 31/12/<ano>.
+>
+> Conferência prévia do agente (13/10, `seed-presumido`, unidade `cmuw4yqxg001jcii0iz2yb9rw`, build de produção de
+> `9f6477d8`; **é preflight, NÃO é a evidência do passo**):
+>
+> ```text
+> GET /balance-sheet?asOf=2025-12-31     → HTTP 200 · netResultLine 0 · 2.3.1 = 11076634 · balanced true
+>                                          · hasUnclosedPriorYearResult false
+> GET /income-statement?asOf=2025-12-31  → HTTP 200 · receita 21142786 · CMV −2550807 · despesas −7515345
+>                                          · netResult 11076634   (= 2.3.1 ✔)
+> GET /trial-balance?asOf=2025-12-31     → HTTP 200 · 3.1 −12865009 · 3.3 −4951464 · 4.1 6256866 · 4.2 2188515
+>                                          (asOf ignorado → acumulado até hoje; ver L1)
+> razão (leitura Prisma, 2025)           → Σ 3.x/4.x com o encerramento = 0 em todas as contas
+> ```
+>
+> #### Lacunas achadas no preflight de 13/10 (grau por linha; agente não corrigiu, achado ≠ hotfix)
+>
+> | # | Lacuna | Grau | Efeito | Trilho sugerido |
+> |---|---|---|---|---|
+> | **L1** | `GET /api/accounting/trial-balance` aceita `from`/`to` no `ReportQuerySchema` (`PostingDto.ts:142-146`) e **ignora**: `getTrialBalance` (`accountingController.ts:74`) chama `trialBalance(scope)` sem data, mas o serviço já aceita `asOf` (`AccountingReportService.ts:402`, C6b). O `accounting.service.ts:667-669` do front também manda `from`/`to`. É a classe "param aceito e ignorado". | **verificado** (leitura + resposta HTTP idêntica com e sem data) | Não existe balancete de exercício encerrado pela API nem pela tela. O conferente vê saldo em conta de resultado e lê "encerramento não zerou". | instrumentação → correção (expor `asOf` ou recusar com 400), dentro do CONT-08 |
+> | **L2** | A tela do Balancete não tem seletor de data: `useAccountingData.ts:92` chama `getTrialBalance({ unitId })`. | **verificado** (leitura) | Mesmo com L1 corrigida, a tela só mostra o acumulado até hoje. | FE, junto com L1 |
+> | **L3** | `indNire = '1'` sem `book.nire` passa no backend (`SpedEcdDto.ts:104,123`: `nire` opcional, sem refine cruzado). Se o PVA exigir o NIRE no I030 quando `IND_NIRE = 1`, a crítica só aparece no passo 4. | **inferido** (regra do Manual ECD não relida nesta sessão) | Possível FALHOU no passo 4 por dado do livro, não por código contábil. | o passo 4 é o oráculo; se a crítica aparecer → emenda do DTO |
+> | **L4** | "Subir o ambiente" ainda manda escolher a unidade `seed-unit-presumido`; desde a re-semeadura (07/10) a unidade tem id gerado (`cmuw4yqxg001jcii0iz2yb9rw` / `cmuw4z7zj02ehcii0st3unfr4`). | **verificado** | Só texto: o conferente procura uma unidade que não existe com esse nome. | emenda de runbook (fora do escopo desta) |
+>
+> **Não são lacunas** (desenho documentado): a DRE excluir o lançamento de encerramento e não aceitar `from`.
+
+EVIDÊNCIA: [screenshot do BP em 31/12/<ano> + screenshot da DRE em 31/12/<ano> — ver EMENDA 2026-10-13]
 
 ### 3. Gerar a ECD
 
@@ -534,6 +578,33 @@ não falha de execução — feche a cobertura e recomece.
 EVIDÊNCIA: [nome do arquivo baixado + tamanho; e as primeiras linhas do registro 0000 — **tarje
 CNPJ/CPF** se este runbook for commitado]
 
+> Preenchida pelo agente sob comando do dono no chat (2026-10-13: *"pode gerar a ECD"*), tenant `seed-presumido`, unidade
+> `cmuw4yqxg001jcii0iz2yb9rw`, build de produção de `9f6477d8`. Gerado pela API (o mesmo endpoint que a tela chama), com o P6 de
+> [`H1-P6-DADOS-PUBLICOS-2026-10-13`](H1-P6-DADOS-PUBLICOS-2026-10-13.md). CNPJ tarjado (`08.845.676/…` → `08845676XXXXXX`); os
+> CPFs são fictícios. Saída literal:
+>
+> ```text
+> POST /accounting/sped/ecd/generate → HTTP 201
+>   job cmv645m6d0000ciys9pc2w2fj · EXPORT_SPED_ECD · EXPORTED · fileName ecd_08845676XXXXXX_2025.txt · sizeBytes 48403
+>   sha256 d026d00e3e3e99f8aa8e6a99c7e432041e369ef1952b5f6de6e55a8063a2c598 · totalRows 888 · período 2025-01-01..2025-12-31
+>   avisos: ["perfil fiscal da empresa ausente para 2025: a geração usou só o corpo da requisição (F-XP-1 c)."]
+> GET /accounting/data-exchange/jobs/cmv645m6d0000ciys9pc2w2fj/download?unitId=… → HTTP 200 · text/plain
+>   48403 bytes · 888 linhas · CRLF · 233 bytes > 0x7F (Latin-1) · sha256 igual ao do job
+> |0000|LECD|01012025|31122025|CORPÓREOS - SERVIÇOS TERAPÊUTICOS S.A.|08845676XXXXXX|SP||3550308|||0|1|0||0|0||N|N|0|0||
+> |I030|TERMO DE ABERTURA|1|LIVRO DIARIO|888|CORPÓREOS - SERVIÇOS TERAPÊUTICOS S.A.||08845676XXXXXX||||31122025|
+> |J930|DIRETOR FICTICIO DE TESTE|12345678062|Diretor|203|||||||S|
+> |J930|CONTADOR FICTICIO DE TESTE|23456789173|Contador|900|SP-123456/O-1|contador.teste@example.com|1148583340|SP|SP/2026/000001|31122026|N|
+> |9999|888|
+> registros: 0000 0001 0990 · I001 I010 I030 I050×20 I051×15 I052×15 I150×12 I155×144 I200×204 I250×411 I350 I355×4 I990
+>            · J001 J005 J100×10 J150×9 J900 J930×2 J990 · 9001 9900×27 9990 9999
+> ```
+>
+> Observação para o passo 4: o NIRE do I030 saiu **vazio** com `IND_NIRE = 1` no 0000 (lacuna L3). Se o PVA criticar o I030,
+> é essa a causa. Arquivo para importar: `C:\Users\smurf\Downloads\H1-PVA\ecd_08845676000198_2025.txt` (não abra nem salve
+> em editor).
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
+
 ### 4. Importar a ECD no PVA
 
 Abra o PVA da ECD → importar o `.txt` gerado. Anote **cada crítica** com o código do registro
@@ -542,6 +613,74 @@ Abra o PVA da ECD → importar o `.txt` gerado. Anote **cada crítica** com o c�
 Resultado esperado: import **sem críticas impeditivas**.
 
 EVIDÊNCIA: [tela/protocolo do PVA com o resultado do import + lista de críticas, se houver]
+
+> **Tentativa 1 — 2026-10-13.** O dono importou no PVA da ECD 10.4.1 o arquivo do passo 3 (`ecd_08845676XXXXXX_2025.txt`, sha256
+> `d026d00e…`) e colou no chat a tela e o relatório de erros em PDF (28 páginas, sha256 `6f64fa76…b52485`). O agente transcreveu
+> o relatório e o cruzou com o arquivo, sob o comando do dono (*"mexa por mim"*). O PVA não pôde ser operado pelo agente: as
+> janelas rodam como administrador e o Windows (UIPI) bloqueia a entrada.
+>
+> ```text
+> PVA ECD: "O arquivo contém erros e não será importado."     Total de Erros 189
+>   1   Bloco não importado. — "O bloco I não foi importado pois contém erros."
+>  15   Registro não deve existir neste tipo de escrituração. Não houve informação de plano referencial no registro 0000 (COD_PLAN_REF).
+>       → I051 nas linhas 9, 12, 15, 18, 21, 24, 28, 31, 35, 39, 42, 45, 48, 52, 55 (todos os 15)
+> 173   Conteúdo do campo inválido. → campo HIST do I250, a partir da linha 220
+>       ex.: |I250|2.1.2||769,06|C|||Contas a pagar  Fornecedor Seed (NF SEED-AP-2025-01-1)||
+> cruzamento com o arquivo (agente): 173 de 411 I250 têm o byte 0x14 no HIST e são exatamente os 173 criticados.
+>       HIST hex: … 70 61 67 61 72 20 14 20 46 6f 72 6e …   ("pagar \x14 Fornecedor")
+> ```
+>
+> **Diagnóstico (achado, não hotfix; GHC-003):**
+>
+> | # | Achado | Causa no código | Grau | Saída com dado (sem código)? |
+> |---|---|---|---|---|
+> | **L5** | 0000.`COD_PLAN_REF` vazio com 15 I051 emitidos | `codPlanRef` é opcional em `SpedEcdDto.ts:117` e o gerador emite I051 assim mesmo (`sped.ts:211`). A tabela P6 deste runbook também o dava como opcional. O enum aceita 1–10, e a tabela vai até 11 (TEF). | **verificado pelo PVA** | sim: `codPlanRef = '1'`, porque o catálogo mapeado é `L100A`+`L300A` (PJ em geral, Real; RUNBOOK-X2). O valor exato é inferido até o PVA aceitar. |
+> | **L6** | Caractere fora do Latin-1 vira byte de controle no arquivo | `Buffer.from(text, 'latin1')` trunca o code point para o byte baixo: o "—" (U+2014) dos históricos de AP/AR (`PayableService.ts:1439,1453` e `ReceivableService.ts:774,785`) sai como `0x14`. Mesma conversão em `SpedGenerationService.ts:172`, `SpedEcfGenerationService.ts:144` e `SpedEcfRealGenerationService.ts:474`, então a ECF corre o mesmo risco com qualquer texto livre. | **verificado** (PVA + bytes do arquivo + leitura do código) | **não**: os históricos vêm do razão gravado. É preciso corrigir o gerador (transliterar ou recusar antes de codificar). |
+>
+> Desfecho desta tentativa pela regra acima: **FALHOU no passo 4**; passos 5 e 6 não executados. A marcação é do dono e foi
+> diferida ao go-live (13/10). Reexecução só depois da correção de L6 (sessão de instrumentação → correção, que exige "executa").
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
+
+> **Tentativa 2 — 2026-10-13, depois do #642 (L5/L6 corrigidas; main `c00e7b8e`, build de produção).** O agente gerou de
+> novo a ECD sob comando do dono, com o P6 + `codPlanRef = '1'`: job `cmv66y0st0000civkawovszls`, 48.404 bytes, 888 linhas,
+> sha256 `ea7cb533…e8afd8`. 0000 termina em `|1|`, 0 byte de controle e 173 I250 com " - ". O dono importou no PVA 10.4.1
+> (`…-tentativa2.txt`) e colou as telas e o relatório de validação em PDF (9 páginas, sha256 `a9b657c2…`). O agente o
+> transcreveu.
+>
+> ```text
+> PVA: "A importação foi concluída com êxito. A escrituração não possui erros de estrutura."   ← L5 e L6 resolvidas
+> validação de conteúdo: "O arquivo contém erros e avisos."     Total de Erros 23 · Total de Advertências 21
+> ERROS
+>  1  Registro obrigatório não encontrado. → 0007
+>  1  O campo NIRE é obrigatório quando a escrituração possui registro na Junta Comercial. → I030 campo 7 (linha 6)
+>  9  Plano de contas deve conter no mínimo 4 níveis (Res. CFC 1299/2010): analítica de Ativo/Passivo/PL deve ser nível ≥ 4
+>     → I050 1.1.1, 1.1.2, 1.1.3, 1.1.4, 1.1.5, 1.1.6, 2.1.1, 2.1.2 (NIVEL 3) e 2.3.1 (NIVEL 3, sup 2.3)
+>  8  Campo obrigatório não preenchido. → I050 campo 7 COD_CTA_SUP vazio em 1.1.1..1.1.6, 2.1.1, 2.1.2
+>  1  Não deve existir mais de uma linha de nível igual a 1 na DRE. → J150 linha 850 (DRE_CMV, nível 1)
+>  2  VL_CTA_FIN da linha de detalhe da DRE ≠ calculado de I155/I355 → J150 4.2 (−25508,07 × 25508,07 C) e 4.1
+>     (−75153,45 × 75153,45 C)
+>  1  Totalizador da DRE ≠ soma das linhas de nível imediatamente inferior → J150 DRE_RESULTADO (110766,34 × esperado 0,00)
+> ADVERTÊNCIAS
+> 11  I155 com todos os campos zerados → 2.3.1 nos meses sem movimento
+>  1  Não houve recuperação da ECD anterior.
+>  8  Conta de nível superior deverá ter a mesma natureza da subconta → I050 1.1.x, 2.1.x (consequência do COD_CTA_SUP vazio)
+>  1  Data de arquivamento dos atos constitutivos (I030 DT_ARQ) não informada.
+> ```
+>
+> **Diagnóstico (achado, não hotfix; GHC-003).** Os 23 erros fecham em 4 grupos:
+>
+> | # | Erros | Causa | Grau | Trilho |
+> |---|---|---|---|---|
+> | **L3** | 1 | NIRE vazio com `IND_NIRE = 1` (P6 de teste) | **verificado pelo PVA** | dado: `indNire = '0'` ou o NIRE real (JUCESP). Fica aberto o refine do DTO (exigir `nire` se `indNire = 1`) |
+> | **L7** | 1 | o gerador não emite o registro **0007** (outras inscrições cadastrais), obrigatório | verificado pelo PVA; causa no código a conferir | instrumentação → correção |
+> | **L8** | 9 + 8 (+ 8 adv.) | **o plano de contas canônico é raso**: as analíticas patrimoniais estão no nível 3 e as sintéticas intermediárias (`1.1`, `2.1`) não existem. A Res. CFC 1.299/2010 exige ≥ 4 níveis. | verificado pelo PVA | **domínio: ADR** (plano canônico + migração dos tenants instalados). Não é correção mínima |
+> | **L9** | 1 + 2 + 1 | **DRE (J150)**: cada grupo sai no nível 1; despesa/CMV com `IND_DC_CTA_FIN = C`; o totalizador "Resultado" não tem filhas | verificado pelo PVA | instrumentação → correção (gerador do bloco J) |
+>
+> Desfecho desta tentativa pela regra acima: **FALHOU no passo 4** (marcação do dono, diferida ao go-live). Para a
+> tentativa 3: L3 sai por dado; L7 e L9 exigem "executa"; L8 exige ADR com decisão do dono antes de qualquer código.
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
 
 > **Se houver crítica:** desfecho **FALHOU**, e **pare aqui — não execute os passos 5 e 6.**
 > Crítica do PVA é **achado de domínio**: vira ADR ou emenda do ADR existente, **nunca hotfix**.
