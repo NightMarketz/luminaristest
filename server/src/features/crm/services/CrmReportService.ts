@@ -98,7 +98,8 @@ function setPath(obj: Record<string, unknown>, path: string, value: unknown): vo
   const parts = path.split('.');
   let cur = obj;
   for (const p of parts.slice(0, -1)) {
-    if (cur[p] == null || typeof cur[p] !== 'object') return;
+    if (cur[p] == null) cur[p] = {}; // linha da fonte sem par no join: o grupo de moeda vazia ainda sai nomeado (item 18)
+    if (typeof cur[p] !== 'object') return;
     cur = cur[p] as Record<string, unknown>;
   }
   cur[parts[parts.length - 1]] = value;
@@ -187,7 +188,9 @@ export class CrmReportService {
     // E2: um contador só para o run inteiro, checado durante a leitura em lotes.
     const budget = { read: 0 };
     const source = await this.load(actor, plan.source, budget);
-    const joined = await Promise.all(plan.joins.map(async (j) => ({ join: j, loaded: await this.load(actor, j.table, budget) })));
+    // Sequencial, não Promise.all: com o estouro num join, o outro não pode pedir mais um lote (E2).
+    const joined: Array<{ join: ResolvedJoin; loaded: LoadedTable }> = [];
+    for (const j of plan.joins) joined.push({ join: j, loaded: await this.load(actor, j.table, budget) });
     const relationTargets = await this.loadRelationTargets(actor, ownerId, plan.source, spec, budget);
 
     // Linhas desnormalizadas: dado + sintéticos + joins (cópia por linha: o serviço reescreve campos derivados).
@@ -270,8 +273,9 @@ export class CrmReportService {
     const joins: ResolvedJoin[] = [];
     for (const j of spec.joins ?? []) {
       const alias = j.alias ?? DEFAULT_JOIN_ALIAS;
-      if (joins.some((x) => x.alias === alias)) {
-        throw new ValidationError('Dois joins com o mesmo alias.', { alias }, 'REPORT_JOIN_ALIAS_DUPLICATE');
+      // O alias vira chave na linha desnormalizada: não pode repetir nem esconder um campo da fonte.
+      if (joins.some((x) => x.alias === alias) || alias === 'id' || alias.startsWith('_') || fieldOf(source, alias)) {
+        throw new ValidationError('Alias de join repetido ou em conflito com um campo da fonte.', { alias }, 'REPORT_JOIN_ALIAS_DUPLICATE');
       }
       // E3: a tabela do join é resolvida ANTES do agregador — ausente vira erro nomeado, nunca vazio.
       const table = await this.resolveTable(ownerId, j.rightSource);
@@ -461,7 +465,8 @@ export class CrmReportService {
       const counts = new Map<string, number>();
       for (const [currency, subset] of partitions) {
         if (currency === NO_CURRENCY_KEY) {
-          const n = await countRows(subset);
+          // Só as linhas que TÊM valor sem moeda (lead sem proposta não é "excluído", não tem o que converter).
+          const n = await countRows(subset.filter((r) => { const v = getPath(r.data, mm.measure.field); return v != null && v !== ''; }));
           if (n > 0) excluded.push({ reason: 'NO_CURRENCY', measure: mm.name, rows: n });
           continue;
         }
@@ -487,7 +492,7 @@ export class CrmReportService {
     }
 
     const rates = [...rateCache.values()].filter((v): v is PtaxRateView => v !== null);
-    return { target: 'BRL', referenceDate, rates, series: applySortAndLimit(series, spec), excluded };
+    return { target: 'BRL', referenceDate, rates, series: applySortAndLimitByName(series, spec), excluded };
   }
 }
 
@@ -527,18 +532,41 @@ function currencyMode(spec: ReportSpec, money: MoneyMeasure[]): CurrencyMode {
 function applySortAndLimit(series: ReportSeries[], spec: ReportSpec): ReportSeries[] {
   if (series.length === 0) return series;
   const dir = spec.sort?.dir === 'desc' ? -1 : 1;
+  const key = spec.sort?.by === 'measure' ? (spec.sort.key ?? (series.length === 1 ? series[0].measure : undefined)) : undefined;
+  const keySeries = key ? series.find((s) => s.measure === key) : undefined;
+  // As séries do agregador saem com os mesmos grupos na mesma posição (mesmas linhas, filtros e dimensões; ordem por
+  // nome, estável). Alinhar por POSIÇÃO, não por nome: dois grupos com o mesmo nome de exibição (etapas homônimas em
+  // funis diferentes, contatos homônimos) são pontos distintos e nenhum pode sumir.
+  const base = keySeries ?? series[0];
+  const idx = base.points.map((_, i) => i);
+  const nameAt = (i: number): string => base.points[i].name;
+  if (keySeries) idx.sort((a, b) => dir * (keySeries.points[a].value - keySeries.points[b].value) || nameAt(a).localeCompare(nameAt(b)) || a - b);
+  else idx.sort((a, b) => dir * nameAt(a).localeCompare(nameAt(b)) || a - b);
+  const order = spec.limit ? idx.slice(0, spec.limit) : idx;
+  return series.map((s) => {
+    if (s.points.length !== base.points.length) throw new Error('séries desalinhadas: o agregador devolveu grupos diferentes por medida');
+    return { measure: s.measure, points: order.map((i) => s.points[i]) };
+  });
+}
+
+/**
+ * Variante da visão convertida: lá cada ponto já é a soma, por NOME, das moedas convertidas (a dimensão de moeda
+ * colapsa), então o nome é a chave e os conjuntos podem diferir entre medidas (exclusões diferentes). Mesmas regras
+ * de `sort`/`limit`; `key` que não é série convertida cai na ordem por nome.
+ */
+function applySortAndLimitByName(series: ReportSeries[], spec: ReportSpec): ReportSeries[] {
+  if (series.length === 0) return series;
+  const dir = spec.sort?.dir === 'desc' ? -1 : 1;
   const names = [...new Set(series.flatMap((s) => s.points.map((p) => p.name)))];
-  const byName = (a: string, b: string): number => a.localeCompare(b);
-  let order: string[];
-  const keySeries =
-    spec.sort?.by === 'measure' ? series.find((s) => s.measure === (spec.sort?.key ?? (series.length === 1 ? series[0].measure : undefined))) : undefined;
+  const key = spec.sort?.by === 'measure' ? (spec.sort.key ?? (series.length === 1 ? series[0].measure : undefined)) : undefined;
+  const keySeries = key ? series.find((s) => s.measure === key) : undefined;
   if (keySeries) {
     const value = new Map(keySeries.points.map((p) => [p.name, p.value]));
-    order = names.sort((a, b) => dir * ((value.get(a) ?? 0) - (value.get(b) ?? 0)) || byName(a, b));
+    names.sort((a, b) => dir * ((value.get(a) ?? 0) - (value.get(b) ?? 0)) || a.localeCompare(b));
   } else {
-    order = names.sort((a, b) => dir * byName(a, b));
+    names.sort((a, b) => dir * a.localeCompare(b));
   }
-  if (spec.limit) order = order.slice(0, spec.limit);
+  const order = spec.limit ? names.slice(0, spec.limit) : names;
   return series.map((s) => {
     const point = new Map(s.points.map((p) => [p.name, p]));
     return { measure: s.measure, points: order.map((n) => point.get(n)).filter((p): p is ChartDataPoint => !!p) };

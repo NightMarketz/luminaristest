@@ -88,6 +88,10 @@ describe('BE-INCR-CRM-REPORT-BUILDER — /api/crm/reports', () => {
     expect([missing.status, missing.body.code]).toEqual([409, 'CRM_MODULE_NOT_INSTALLED']);
     const bad = await request(app).post('/api/crm/reports/run').set(authHeader(owner)).send({ spec: { source: 'leads', measures: [] } });
     expect(bad.status).toBe(400);
+    const src = await request(app).post('/api/crm/reports/run').set(authHeader(owner)).send({ spec: { source: 'employees', measures: [{ type: 'count' }] } });
+    expect([src.status, src.body.code]).toEqual([400, 'REPORT_SOURCE_NOT_ALLOWED']);
+    const tz = await request(app).post('/api/crm/reports/run').set(authHeader(owner)).send({ spec: BY_STATUS, timeZone: 'Marte/Olympus' });
+    expect([tz.status, tz.body.code]).toEqual([400, 'INVALID_TIME_ZONE']);
     const strict = await request(app).post('/api/crm/reports').set(authHeader(owner)).send({ ...chart(BY_STATUS), userId: other.id });
     expect(strict.status).toBe(400);
   });

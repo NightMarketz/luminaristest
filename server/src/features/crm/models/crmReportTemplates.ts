@@ -8,8 +8,10 @@ import type { CreateCrmReportInput } from '../dtos/CrmReportDto';
  * VALORES (os mesmos pares nome→valor na mesma fixture). Diferenças aceitas e documentadas:
  * - a ORDEM fixa dos gráficos (etapas por `order`, Open→Won→Lost…, Draft→Sent…) não se expressa no builder, que só ordena
  *   por nome ou por valor;
- * - valor vazio: os fixos rotulam 'Desconhecida'/'Open'/'Draft'/'note'; no builder o grupo vazio fica vazio;
- * - funil: os fixos fundem etapas de mesmo nome entre funis; o builder agrupa pela etapa (id) e mostra o nome.
+ * - valor vazio: os fixos rotulam 'Desconhecida'/'Open'/'Draft'/'note' (o funil fixo descarta lead sem etapa); no
+ *   builder o grupo vazio fica vazio;
+ * - funil: o fixo funde etapas de mesmo nome entre funis; o builder agrupa pela etapa (id) e mostra o nome — duas
+ *   etapas homônimas saem como dois pontos com o mesmo nome (nenhum lead some).
  * O BANT fica de fora: % de leads 'High' em 4 campos diferentes exige fórmula, fora do v1 (F-RB5).
  * Nenhum dos 5 soma dinheiro (item 13: a paridade não depende do F-RB8).
  */
@@ -23,8 +25,8 @@ export const CRM_REPORT_TEMPLATES: readonly CrmReportTemplate[] = [
     name: 'Funil por etapa',
     kind: 'chart',
     chartType: 'bar',
-    // o funil fixo ignora lead sem etapa
-    spec: { source: 'leads', filters: [{ field: 'stageId', op: 'nin', value: [null, ''] }], dimensions: [{ type: 'field', field: 'stageId' }], measures: [{ type: 'count' }] },
+    // o funil fixo ignora lead sem etapa; aqui ele sai no grupo vazio (o filtro não distingue campo ausente de null)
+    spec: { source: 'leads', dimensions: [{ type: 'field', field: 'stageId' }], measures: [{ type: 'count' }] },
   },
   {
     key: 'source',

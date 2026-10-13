@@ -394,3 +394,60 @@ describe('itens 3 e 12 — posse, ADMIN e widget', () => {
     expect(await service.runSaved(OWNER, r.id, {}).catch((x) => x.errorCode)).toBe('REPORT_NOT_FOUND');
   });
 });
+
+describe('review independente do PR-2 — regressões', () => {
+  it('duas etapas homônimas (funis diferentes) → dois pontos "Novo"; nenhum lead some, com e sem sort', async () => {
+    const e = new FakeEngine();
+    e.addTable('owner', 'leadStages', [{ id: 's1', data: { name: 'Novo' } }, { id: 's2', data: { name: 'Novo' } }]);
+    e.addTable('owner', 'leads', [lead('a', { stageId: 's1' }), lead('b', { stageId: 's1' }), lead('c', { stageId: 's2' })]);
+    const { service } = makeService(e);
+    const spec: ReportSpec = { source: 'leads', dimensions: [{ type: 'field', field: 'stageId' }], measures: [{ type: 'count' }, { type: 'count', alias: 'n' }] };
+    for (const s of [spec, { ...spec, sort: { by: 'measure' as const, key: 'n', dir: 'desc' as const } }]) {
+      const out = await run(service, s);
+      expect(out.series.map((x) => x.points.reduce((acc, p) => acc + p.value, 0))).toEqual([3, 3]);
+      expect(out.series[1].points.map((p) => p.name)).toEqual(['Novo', 'Novo']);
+    }
+  });
+
+  it('item 18 via join: linha sem par no join cai em __NO_CURRENCY__, nunca na chave vazia', async () => {
+    const e = new FakeEngine();
+    e.addTable('owner', 'leads', [lead('L1', {}), lead('L2', {})]);
+    e.addTable('owner', 'crmOpportunities', [{ id: 'o1', data: { leadId: 'L1', amount: 10, currency: 'USD' } }]);
+    const out = await run(makeService(e).service, {
+      source: 'leads',
+      joins: [{ leftField: 'id', rightSource: 'crmOpportunities', rightField: 'leadId', alias: 'opp' }],
+      dimensions: [{ type: 'field', field: 'opp.currency' }],
+      measures: [{ type: 'sum', field: 'opp.amount' }],
+    });
+    expect(points(out.series[0])).toEqual([['__NO_CURRENCY__', 0], ['USD', 10]]);
+  });
+
+  it('alias de join igual a campo da fonte → 400 REPORT_JOIN_ALIAS_DUPLICATE', async () => {
+    const e = new FakeEngine();
+    e.addTable('owner', 'leads', []);
+    e.addTable('owner', 'crmOpportunities', []);
+    expect(await code(run(makeService(e).service, { source: 'leads', joins: [{ leftField: 'id', rightSource: 'crmOpportunities', rightField: 'leadId', alias: 'status' }], measures: [{ type: 'count' }] }))).toBe('REPORT_JOIN_ALIAS_DUPLICATE');
+  });
+
+  it('E2 com dois joins: estourou no primeiro, o segundo nem começa a ler', async () => {
+    const e = new FakeEngine();
+    const many = (n: number, p: string): FakeRow[] => Array.from({ length: n }, (_, i) => ({ id: `${p}${i}`, data: {} }));
+    e.addTable('owner', 'leads', many(CRM_REPORT_ROW_CAP - 5, 'l'));
+    e.addTable('owner', 'crmOpportunities', many(10, 'o'));
+    e.addTable('owner', 'crmAccounts', many(10, 'a'));
+    const spec: ReportSpec = {
+      source: 'leads',
+      joins: [{ leftField: 'id', rightSource: 'crmOpportunities', rightField: 'id', alias: 'o' }, { leftField: 'id', rightSource: 'crmAccounts', rightField: 'id', alias: 'a' }],
+      measures: [{ type: 'count' }],
+    };
+    expect(await code(run(makeService(e).service, spec))).toBe('REPORT_TOO_LARGE');
+    expect(e.batches.some(([t]) => t === 'owner-crmAccounts')).toBe(false);
+  });
+
+  it('excluded NO_CURRENCY conta só linhas com valor (lead sem proposta não é excluído)', async () => {
+    const e = new FakeEngine();
+    e.addTable('owner', 'leads', [lead('a', { latestProposalAmount: 10, latestProposalCurrency: 'BRL' }), lead('b', { latestProposalAmount: 5 }), lead('c', {}), lead('d', {})]);
+    const out = await run(makeService(e).service, { source: 'leads', dimensions: [{ type: 'field', field: 'latestProposalCurrency' }], measures: [{ type: 'sum', field: 'latestProposalAmount' }], convertTo: 'BRL' });
+    expect(out.converted!.excluded).toEqual([{ reason: 'NO_CURRENCY', measure: 'sum:latestProposalAmount', rows: 1 }]);
+  });
+});
