@@ -578,6 +578,33 @@ não falha de execução — feche a cobertura e recomece.
 EVIDÊNCIA: [nome do arquivo baixado + tamanho; e as primeiras linhas do registro 0000 — **tarje
 CNPJ/CPF** se este runbook for commitado]
 
+> Preenchida pelo agente sob comando do dono no chat (2026-10-13: *"pode gerar a ECD"*), tenant `seed-presumido`, unidade
+> `cmuw4yqxg001jcii0iz2yb9rw`, build de produção de `9f6477d8`. Gerado pela API (o mesmo endpoint que a tela chama), com o P6 de
+> [`H1-P6-DADOS-PUBLICOS-2026-10-13`](H1-P6-DADOS-PUBLICOS-2026-10-13.md). CNPJ tarjado (`08.845.676/…` → `08845676XXXXXX`); os
+> CPFs são fictícios. Saída literal:
+>
+> ```text
+> POST /accounting/sped/ecd/generate → HTTP 201
+>   job cmv645m6d0000ciys9pc2w2fj · EXPORT_SPED_ECD · EXPORTED · fileName ecd_08845676XXXXXX_2025.txt · sizeBytes 48403
+>   sha256 d026d00e3e3e99f8aa8e6a99c7e432041e369ef1952b5f6de6e55a8063a2c598 · totalRows 888 · período 2025-01-01..2025-12-31
+>   avisos: ["perfil fiscal da empresa ausente para 2025: a geração usou só o corpo da requisição (F-XP-1 c)."]
+> GET /accounting/data-exchange/jobs/cmv645m6d0000ciys9pc2w2fj/download?unitId=… → HTTP 200 · text/plain
+>   48403 bytes · 888 linhas · CRLF · 233 bytes > 0x7F (Latin-1) · sha256 igual ao do job
+> |0000|LECD|01012025|31122025|CORPÓREOS - SERVIÇOS TERAPÊUTICOS S.A.|08845676XXXXXX|SP||3550308|||0|1|0||0|0||N|N|0|0||
+> |I030|TERMO DE ABERTURA|1|LIVRO DIARIO|888|CORPÓREOS - SERVIÇOS TERAPÊUTICOS S.A.||08845676XXXXXX||||31122025|
+> |J930|DIRETOR FICTICIO DE TESTE|12345678062|Diretor|203|||||||S|
+> |J930|CONTADOR FICTICIO DE TESTE|23456789173|Contador|900|SP-123456/O-1|contador.teste@example.com|1148583340|SP|SP/2026/000001|31122026|N|
+> |9999|888|
+> registros: 0000 0001 0990 · I001 I010 I030 I050×20 I051×15 I052×15 I150×12 I155×144 I200×204 I250×411 I350 I355×4 I990
+>            · J001 J005 J100×10 J150×9 J900 J930×2 J990 · 9001 9900×27 9990 9999
+> ```
+>
+> Observação para o passo 4: o NIRE do I030 saiu **vazio** com `IND_NIRE = 1` no 0000 (lacuna L3). Se o PVA criticar o I030,
+> é essa a causa. Arquivo para importar: `C:\Users\smurf\Downloads\H1-PVA\ecd_08845676000198_2025.txt` (não abra nem salve
+> em editor).
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
+
 ### 4. Importar a ECD no PVA
 
 Abra o PVA da ECD → importar o `.txt` gerado. Anote **cada crítica** com o código do registro
