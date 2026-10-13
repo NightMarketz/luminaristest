@@ -263,6 +263,8 @@ Server em `http://localhost:3001`, app em `http://localhost:3000`. Logue na apli
 > L9 p. 202). A tabela *ECD — signatários (J930)* abaixo foi reescrita por
 > [SpedEcdDto.ts:134-218 e :396-445](../../server/src/features/accounting/dtos/SpedEcdDto.ts).
 
+> **[2026-10-13]** Versão de teste com dado público (CVM/IBGE) e pessoas fictícias, já conferida contra o schema: [`H1-P6-DADOS-PUBLICOS-2026-10-13.md`](H1-P6-DADOS-PUBLICOS-2026-10-13.md).
+
 **Separe por origem antes de escrever para o contador** — o formulário da tela mistura os dois, mas
 pedir ao contador o que já está no CNPJ/contrato social da empresa é ida-e-volta desnecessária:
 - 🏢 **Do dono/empresa** — está no cartão CNPJ, contrato social ou já cadastrado no sistema.
@@ -517,7 +519,49 @@ e o resultado transferido para lucros/prejuízos acumulados.
 
 Resultado esperado: DRE do exercício encerrado sem saldo residual nas contas de resultado.
 
-EVIDÊNCIA: [screenshot do balancete/DRE após o encerramento]
+> **[EMENDA 2026-10-13 — dono: "Pode emendar o passo 2 e documentar se temos lacunas reais aqui"]** O texto acima
+> **não é executável** e levaria a um FALHOU falso. Nem o Balancete nem a DRE mostram o resultado zerado de um exercício
+> encerrado:
+>
+> - O **Balancete** não tem data. A tela chama `GET /trial-balance?unitId=` e a rota ignora `from`/`to` (lacuna L1 abaixo),
+>   então o saldo vai até HOJE e mistura o movimento de 2026. No seed, 3.1/3.3/4.1/4.2 aparecem com saldo.
+> - A **DRE** exclui de propósito o lançamento de encerramento (`CLOSING_SOURCE_TYPE`). Ela mostra o resultado do ano
+>   ANTES do encerramento, que é o certo para uma DRE, e não aceita `from` (`FROM_DATE_NOT_SUPPORTED_IN_INCR4`).
+>
+> **Passo 2 vigente:** aba **Balanço Patrimonial**, campo de data em **31/12/<ano>** (no seed: 31/12/2025). Resultado
+> esperado, as três coisas juntas:
+> 1. linha **"Resultado do exercício"** = **0** (`netResultLine.amountCents = 0`);
+> 2. **Lucros ou Prejuízos Acumulados (2.3.1)** = o **resultado líquido da DRE** do mesmo ano (aba DRE com data
+>    31/12/<ano>; é o valor transferido pelo encerramento);
+> 3. balanço **fechado** (ativo = passivo + PL), sem aviso de "resultado de exercício anterior não encerrado".
+>
+> EVIDÊNCIA = screenshot do BP em 31/12/<ano> + screenshot da DRE em 31/12/<ano>.
+>
+> Conferência prévia do agente (13/10, `seed-presumido`, unidade `cmuw4yqxg001jcii0iz2yb9rw`, build de produção de
+> `9f6477d8`; **é preflight, NÃO é a evidência do passo**):
+>
+> ```text
+> GET /balance-sheet?asOf=2025-12-31     → HTTP 200 · netResultLine 0 · 2.3.1 = 11076634 · balanced true
+>                                          · hasUnclosedPriorYearResult false
+> GET /income-statement?asOf=2025-12-31  → HTTP 200 · receita 21142786 · CMV −2550807 · despesas −7515345
+>                                          · netResult 11076634   (= 2.3.1 ✔)
+> GET /trial-balance?asOf=2025-12-31     → HTTP 200 · 3.1 −12865009 · 3.3 −4951464 · 4.1 6256866 · 4.2 2188515
+>                                          (asOf ignorado → acumulado até hoje; ver L1)
+> razão (leitura Prisma, 2025)           → Σ 3.x/4.x com o encerramento = 0 em todas as contas
+> ```
+>
+> #### Lacunas achadas no preflight de 13/10 (grau por linha; agente não corrigiu, achado ≠ hotfix)
+>
+> | # | Lacuna | Grau | Efeito | Trilho sugerido |
+> |---|---|---|---|---|
+> | **L1** | `GET /api/accounting/trial-balance` aceita `from`/`to` no `ReportQuerySchema` (`PostingDto.ts:142-146`) e **ignora**: `getTrialBalance` (`accountingController.ts:74`) chama `trialBalance(scope)` sem data, mas o serviço já aceita `asOf` (`AccountingReportService.ts:402`, C6b). O `accounting.service.ts:667-669` do front também manda `from`/`to`. É a classe "param aceito e ignorado". | **verificado** (leitura + resposta HTTP idêntica com e sem data) | Não existe balancete de exercício encerrado pela API nem pela tela. O conferente vê saldo em conta de resultado e lê "encerramento não zerou". | instrumentação → correção (expor `asOf` ou recusar com 400), dentro do CONT-08 |
+> | **L2** | A tela do Balancete não tem seletor de data: `useAccountingData.ts:92` chama `getTrialBalance({ unitId })`. | **verificado** (leitura) | Mesmo com L1 corrigida, a tela só mostra o acumulado até hoje. | FE, junto com L1 |
+> | **L3** | `indNire = '1'` sem `book.nire` passa no backend (`SpedEcdDto.ts:104,123`: `nire` opcional, sem refine cruzado). Se o PVA exigir o NIRE no I030 quando `IND_NIRE = 1`, a crítica só aparece no passo 4. | **inferido** (regra do Manual ECD não relida nesta sessão) | Possível FALHOU no passo 4 por dado do livro, não por código contábil. | o passo 4 é o oráculo; se a crítica aparecer → emenda do DTO |
+> | **L4** | "Subir o ambiente" ainda manda escolher a unidade `seed-unit-presumido`; desde a re-semeadura (07/10) a unidade tem id gerado (`cmuw4yqxg001jcii0iz2yb9rw` / `cmuw4z7zj02ehcii0st3unfr4`). | **verificado** | Só texto: o conferente procura uma unidade que não existe com esse nome. | emenda de runbook (fora do escopo desta) |
+>
+> **Não são lacunas** (desenho documentado): a DRE excluir o lançamento de encerramento e não aceitar `from`.
+
+EVIDÊNCIA: [screenshot do BP em 31/12/<ano> + screenshot da DRE em 31/12/<ano> — ver EMENDA 2026-10-13]
 
 ### 3. Gerar a ECD
 
