@@ -287,16 +287,26 @@ export class KitUpgradeService {
         })),
         tx,
       );
+      let final: { status: KitUpgradeRunStatus; report: KitUpgradeReport } = { status, report };
       if (!failed) {
-        await this.kitRepo.advanceVersion(scope, installation.id, run.fromVersion, run.toVersion, tx);
-        await this.audit.append(tx, scope, {
-          eventType: KIT_UPGRADE_APPLIED,
-          targetId: installation.id,
-          payload: { fromVersion: run.fromVersion, toVersion: run.toVersion, ...counts(diff) },
-        });
+        // CAS sobre `kitVersion = from`: 0 linhas = outra execução avançou antes (review independente N1) — esta
+        // não conta como aplicada, não audita e o relatório diz por quê.
+        if ((await this.kitRepo.advanceVersion(scope, installation.id, run.fromVersion, run.toVersion, tx)) === 1) {
+          await this.audit.append(tx, scope, {
+            eventType: KIT_UPGRADE_APPLIED,
+            targetId: installation.id,
+            payload: { fromVersion: run.fromVersion, toVersion: run.toVersion, ...counts(diff) },
+          });
+        } else {
+          final = {
+            status: 'FAILED',
+            report: { ...report, results: [...report.results, { itemKey: 'kitVersion', outcome: 'failed', error: `a instalação já não estava na v${run.fromVersion}` }] },
+          };
+        }
       }
-      return this.repo.finishRun(scope, run.id, { status, report: JSON.stringify(report) }, tx);
+      const row = await this.repo.finishRun(scope, run.id, { status: final.status, report: JSON.stringify(final.report) }, tx);
+      return { row, final };
     });
-    return { status, run: toRunSummary(finished), report };
+    return { status: finished.final.status as Exclude<KitUpgradeRunStatus, 'PARTIAL'>, run: toRunSummary(finished.row), report: finished.final.report };
   }
 }

@@ -12,8 +12,10 @@
  *   commit 2 — tx da decisão: CAS `OPEN → ACCEPTED` + `kit.upgrade_pending_accepted`, juntos
  *              teste: KitPendingService.integration.test.ts › "aceitar campo preenchido grava o valor do kit; decidir de novo dá 409"
  *   reconcile — processo morto entre os commits: o efeito ficou e a pendência segue OPEN; aceitar de novo é seguro
- *              (renomear/gravar/mapear o mesmo valor não muda nada; sem ajuste vivo, `override` só fecha)
+ *              (renomear/gravar/mapear o mesmo valor não muda nada; sem ajuste vivo, `override` só fecha). Restaurar
+ *              conta cuja recompilação dá Draft volta a apagá-la (422 KIT_PENDING_COMPILE_DRAFT)
  *              teste: KitPendingService.integration.test.ts › "aceitar override sem ajuste vivo só fecha a pendência"
+ *              teste: KitPendingService.integration.test.ts › "aceitar conta apagada com recompilação Draft: a conta volta a ser apagada e dá 422"
  *   fora da tx — nada. Recusar é uma tx só (CAS + auditoria).
  */
 import { ForbiddenError, RoleOverrideCompileDraftError, ValidationError } from '../../../lib/errors';
@@ -161,7 +163,8 @@ export class KitPendingService {
         try {
           await this.recompileInstalled(scope);
         } catch (error) {
-          await this.write.deleteAccount(code);
+          // Desfaz o restaurar; se o desfazer também falhar, o erro que sobe continua sendo o da recompilação.
+          await this.write.deleteAccount(code).catch(() => undefined);
           throw error;
         }
         return;
@@ -181,6 +184,8 @@ export class KitPendingService {
       }
       case 'referential_mapped_differently': {
         const v = kitValue as ReferentialItemValue;
+        // O ano pode ter congelado depois que a pendência nasceu (review independente B1): relido agora.
+        if (await this.write.isYearFrozen(v.mappingVersion)) throw new KitPendingFrozenYearError(pending.itemKey);
         await this.write.setReferentialMapping(v.mappingVersion, {
           accountId: await this.liveAccountId(v.accountCode),
           referentialCode: v.referentialCode,

@@ -134,6 +134,40 @@ describe('KitPendingService (integração)', () => {
     expect((await prisma.referentialMapping.findFirstOrThrow({ where: { ...where(), mappingVersion: '2025', accountId: await accountId('3.1') } })).referentialCode).toBe(kitCode);
   }, T);
 
+  it('review B1: o ano congelou depois da pendência ⇒ aceitar o referencial dá 422 e não muda o mapeamento', async () => {
+    await preparar();
+    await prisma.referentialMapping.create({
+      data: { ...where(), accountId: await accountId('3.1'), referentialCode: '9.99.99.99.99', label: 'do tenant', mappingVersion: '2025' },
+    });
+    await atualizar('d1'); // 2025 aberto: nasce referential_mapped_differently
+    const p = await pendencia('referential:2025:3.1');
+    expect(p.reason).toBe('referential_mapped_differently');
+    await prisma.companyFiscalProfile.create({ data: { userId: dono.id, anoCalendario: 2025, regime: 'PRESUMIDO', ecfRecibo: 'REC-2025' } });
+
+    const res = await decidir(p.id, 'accept');
+    expect({ status: res.status, code: res.body.code }).toEqual({ status: 422, code: 'KIT_PENDING_FROZEN_YEAR' });
+    expect((await prisma.referentialMapping.findFirstOrThrow({ where: { ...where(), mappingVersion: '2025', accountId: await accountId('3.1') } })).referentialCode).toBe('9.99.99.99.99');
+    expect((await pendencia(p.itemKey)).status).toBe('OPEN');
+  }, T);
+
+  it('aceitar conta apagada com recompilação Draft: a conta volta a ser apagada e dá 422', async () => {
+    await preparar();
+    const id48 = (await prisma.account.create({ data: { ...where(), code: '4.8', name: 'CMV próprio', nature: 'Expense' } })).id;
+    await prisma.account.update({ where: { id: id48 }, data: { deletedAt: new Date() } });
+    const lookup: KitVersionsLookup = () => [BEAUTY_SALON_KIT_V1, comPapel(BEAUTY_SALON_KIT_V1, 2, 'custo-mercadoria-vendida', '4.8')];
+    await atualizar('d1', lookup);
+    const p = await pendencia('account:4.8');
+    // mês fechado: o dry-run do validador reprova a recompilação
+    await prisma.accountingPeriod.updateMany({ where: { ...where(), year: Number(TODAY.slice(0, 4)), month: Number(TODAY.slice(5, 7)) }, data: { status: 'SOFT_CLOSED' } });
+
+    await expect(factory().getKitPendingService(scope(), lookup).accept(scope(), p.id, { unitId: UNIT, motivo: MOTIVO })).rejects.toMatchObject({
+      errorCode: 'KIT_PENDING_COMPILE_DRAFT',
+      statusCode: 422,
+    });
+    expect((await prisma.account.findUniqueOrThrow({ where: { id: id48 } })).deletedAt).not.toBeNull();
+    expect((await pendencia('account:4.8')).status).toBe('OPEN');
+  }, T);
+
   it('aceitar override remove o ajuste e recompila no código do kit', async () => {
     await preparar();
     const id35 = (await prisma.account.create({ data: { ...where(), code: '3.5', name: 'Receita própria', nature: 'Revenue' } })).id;

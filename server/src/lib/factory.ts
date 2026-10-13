@@ -566,9 +566,15 @@ function buildKitUpgradeWritePort(
   settingsService: AccountingScopeSettingsService,
   fiscalProfileService: FiscalProfileService,
   mappingService: ReferentialMappingService,
+  companyRepo: ICompanyFiscalProfileRepository,
+  periodRepo: IAccountingPeriodRepository,
   scope: AccountingScope,
 ): KitUpgradeWritePort {
   return {
+    async isYearFrozen(year) {
+      if ((await companyRepo.findByYear(scope, Number(year)))?.ecfRecibo) return true;
+      return (await periodRepo.list(scope, Number(year))).some((p) => p.status === 'HARD_CLOSED');
+    },
     async updateAccountIfUnused(code, data) {
       return prismaClient.$transaction(async (tx) => {
         const account = await accountRepo.findByCode(scope, code, tx);
@@ -1954,6 +1960,8 @@ export class ApplicationFactory {
       this.services.accountingScopeSettings,
       this.services.fiscalProfile,
       this.services.referentialMapping,
+      this.repositories.companyFiscalProfile,
+      this.repositories.accountingPeriod,
       scope,
     );
   }

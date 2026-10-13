@@ -28,6 +28,8 @@ export interface KitUpgradeWritePort {
   /** Aceitar `field_set_by_user`: grava por cima, pelo serviço dono (policy + gate do contador). */
   setScopeSettings(accountIds: Record<string, string>): Promise<string[]>;
   setFiscalProfile(accountIds: Record<string, string>): Promise<string[]>;
+  /** Item 31 relido na hora de aceitar (review independente B1): `ecfRecibo` no ano ou período `HARD_CLOSED`. */
+  isYearFrozen(year: string): Promise<boolean>;
   /** Aceitar `referential_mapped_differently`: troca o mapeamento pelo `ReferentialMappingService.setMapping`. */
   setReferentialMapping(mappingVersion: string, item: { accountId: string; referentialCode: string; label: string }): Promise<void>;
 }

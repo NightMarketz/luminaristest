@@ -146,14 +146,28 @@ describe('classifyKitDiff — nível (c), um teste por motivo', () => {
     expect(keys(diff).additive).not.toContain('roleDefault:fiscalProfile.irpjRecolherAccountCode');
   });
 
-  it('account_changed_in_use: o kit muda o nome de conta com partida (natureza com partida nunca muda)', () => {
-    const accounts = { ...ext(), '2.1.3': conta('2.1.3', 'Liability', { name: 'Outro nome', hasPostings: true }) };
-    const diff = classifyKitDiff(V4, V4, tenantV1({ accounts }));
+  /** v5 = v4 com a conta 2.1.3 mudada pelo KIT (nome e/ou natureza). */
+  const v5 = (over: { name?: string; nature?: 'Asset' | 'Liability' }): SectorKitV1 => ({
+    ...V4,
+    kitVersion: 5,
+    chartExtension: V4.chartExtension.map((a) => (a.code === '2.1.3' ? { ...a, ...over } : a)),
+  });
+
+  it('account_changed_in_use: o KIT muda o nome de conta com partida (natureza com partida nunca muda)', () => {
+    const accounts = { ...ext(), '2.1.3': { ...ext()['2.1.3'], hasPostings: true } };
+    const diff = classifyKitDiff(v5({ name: 'IRPJ a pagar' }), V4, tenantV1({ accounts }));
     expect(keys(diff).conflict).toContain('account_changed_in_use@account:2.1.3');
-    const naturezaSo = { ...ext(), '2.1.3': conta('2.1.3', 'Asset', { name: V4.chartExtension.find((a) => a.code === '2.1.3')!.name, hasPostings: true }) };
-    const d2 = classifyKitDiff(V4, V4, tenantV1({ accounts: naturezaSo }));
+    const d2 = classifyKitDiff(v5({ nature: 'Asset' }), V4, tenantV1({ accounts }));
     expect(keys(d2).conflict).not.toContain('account_changed_in_use@account:2.1.3');
     expect(d2.notices.map((n) => n.itemKey)).toContain('account:2.1.3');
+  });
+
+  it('review B2: o TENANT renomeou conta com partida e o kit não mudou ⇒ aviso, nunca pendência', () => {
+    const accounts = { ...ext(), '2.1.3': conta('2.1.3', 'Liability', { name: 'Nome do tenant', hasPostings: true }) };
+    const diff = classifyKitDiff({ ...V4, kitVersion: 5 }, V4, tenantV1({ accounts }));
+    expect(keys(diff).conflict).toEqual([]);
+    expect(keys(diff).forward).toEqual([]);
+    expect(diff.notices.map((n) => n.itemKey)).toContain('account:2.1.3');
   });
 
   it('field_set_by_user: campo do perfil já preenchido com outra conta', () => {

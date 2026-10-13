@@ -94,6 +94,14 @@ export function classifyKitDiff(target: SectorKitV1, installed: SectorKitV1, ten
     const nameDiffers = t.name !== acc.name;
     const natureDiffers = t.nature !== acc.nature;
     if (!nameDiffers && !natureDiffers) continue;
+    // Item 26: a versão instalada diz se foi o KIT que mudou a conta. Se o kit não mudou (o alvo é igual ao que ele
+    // instalou), quem mudou foi o tenant — e o kit nunca sobrescreve conta editada (E-12.2; review independente B2).
+    const before = installedExtension.get(acc.code);
+    const kitChanged = before !== undefined && (before.name !== acc.name || before.nature !== acc.nature);
+    if (!kitChanged) {
+      notices.push({ itemKey: accountKey(acc.code), message: `A conta ${acc.code} foi criada ou editada pelo tenant e difere do kit; fica como está.` });
+      continue;
+    }
     if (t.hasPostings) {
       // Natureza com partida nunca muda; o nome vira pendência (item 29).
       if (nameDiffers) {
@@ -106,7 +114,7 @@ export function classifyKitDiff(target: SectorKitV1, installed: SectorKitV1, ten
       } else {
         notices.push({ itemKey: accountKey(acc.code), message: `A conta ${acc.code} tem partida: a natureza ${t.nature} não muda para ${acc.nature}.` });
       }
-    } else if (installedExtension.get(acc.code)?.name === t.name && installedExtension.get(acc.code)?.nature === t.nature) {
+    } else if (before.name === t.name && before.nature === t.nature) {
       // Veio do kit e segue como o kit instalou: o alvo muda nome/natureza (E-12.2).
       forward.push({
         kind: 'changed_account',
@@ -115,7 +123,7 @@ export function classifyKitDiff(target: SectorKitV1, installed: SectorKitV1, ten
         after: { code: acc.code, name: acc.name, nature: acc.nature },
       });
     } else {
-      // Criada ou editada pelo tenant: o kit não sobrescreve conta existente (referência Odoo, BRIEF §0).
+      // O kit mudou E o tenant também editou, sem partida: o kit não sobrescreve conta editada (referência Odoo, §0).
       notices.push({ itemKey: accountKey(acc.code), message: `A conta ${acc.code} foi criada ou editada pelo tenant e difere do kit; fica como está.` });
     }
   }
