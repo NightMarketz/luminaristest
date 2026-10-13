@@ -10,6 +10,8 @@ import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { resetDb } from '@test/helpers/db';
 import { latestKit } from '@/features/sectorKits/registry';
+import { getFactory } from '@/lib/factory';
+import { BindingCompileService } from '@/features/accountingBinding/services/BindingCompileService';
 
 const app = makeApp();
 const UNIT = 'unit-ajuste';
@@ -207,6 +209,45 @@ describe('ajuste papel→conta do kit (PR-3)', () => {
     expect((await put('caixa-por-metodo:Pix', { accountId: id117 })).status).toBe(422);
     expect(await vivos()).toEqual([{ role: 'receita-serviço', accountId: id35 }]);
     expect((await payloads()).slice(5).map((e) => e.eventType)).toEqual(['kit.role_override_set', 'kit.role_override_removed']);
+  });
+
+  it('compile lança no meio de um PUT concorrente: a compensação não revive a linha antiga', async () => {
+    // Review independente (achado 1): P vivo → PUT A grava A → antes do compile de A, PUT B grava B e compila
+    // Active → o compile de A lança. Desfazer às cegas reviveria P ao lado de B.
+    const [idP, idA, idB] = [await novaConta('3.5', 'Revenue'), await novaConta('3.6', 'Revenue'), await novaConta('3.7', 'Revenue')];
+    await put('receita-serviço', { accountId: idP });
+    const scope = { ownerUserId: dono.id, actorUserId: dono.id, unitId: UNIT };
+    const spy = jest.spyOn(BindingCompileService.prototype, 'compile').mockImplementationOnce(async () => {
+      await getFactory().getRoleAccountOverrideService(scope).set(scope, 'receita-serviço', { unitId: UNIT, accountId: idB, motivo: MOTIVO });
+      throw new Error('falha injetada no compile de A');
+    });
+    try {
+      await expect(
+        getFactory().getRoleAccountOverrideService(scope).set(scope, 'receita-serviço', { unitId: UNIT, accountId: idA, motivo: MOTIVO }),
+      ).rejects.toThrow('falha injetada no compile de A');
+    } finally {
+      spy.mockRestore();
+    }
+    expect(await vivos()).toEqual([{ role: 'receita-serviço', accountId: idB }]);
+    expect((await activeBinding()).codes['receita-serviço']).toBe('3.7');
+    // sem evento de desfazer: a escrita de B já é o estado vigente
+    expect((await payloads()).map((e) => e.payload.accountId)).toEqual([idP, idA, idB]);
+  });
+
+  it('compile lança num PUT de papel sem ajuste: a linha nova some e o desfazer é auditado', async () => {
+    const id117 = await novaConta('1.1.7', 'Asset');
+    const scope = { ownerUserId: dono.id, actorUserId: dono.id, unitId: UNIT };
+    const spy = jest.spyOn(BindingCompileService.prototype, 'compile').mockRejectedValueOnce(new Error('falha injetada'));
+    try {
+      await expect(
+        getFactory().getRoleAccountOverrideService(scope).set(scope, 'caixa-por-metodo:Pix', { unitId: UNIT, accountId: id117, motivo: MOTIVO }),
+      ).rejects.toThrow('falha injetada');
+    } finally {
+      spy.mockRestore();
+    }
+    expect(await vivos()).toEqual([]);
+    expect((await payloads()).map((e) => e.eventType)).toEqual(['kit.role_override_set', 'kit.role_override_removed']);
+    expect(JSON.stringify(await eventosDeAjuste())).not.toContain(MOTIVO);
   });
 
   it('item 25: recompilar pelo POST /accounting-binding/compile com sectorKey de kit não perde o ajuste', async () => {

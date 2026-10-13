@@ -11,10 +11,12 @@
  *   commit 2 — `compile()` do binding do kit instalado (tx própria), que lê os ajustes vivos com o `tx` dele (item 25)
  *              teste: RoleAccountOverrideService.integration.test.ts › "DELETE recompila de volta ao código do kit"
  *   reconcile — compile `Draft` ou exceção ⇒ tx de compensação: volta a linha ao estado anterior e audita o desfazer
- *              (E-11.1); `Draft` ⇒ 422 ROLE_OVERRIDE_COMPILE_DRAFT (E-11.2). Processo morto entre os commits 1 e 2 ⇒ o
+ *              (E-11.1) — só se, relida in-tx, a linha viva do papel ainda for a deste passo (escrita concorrente
+ *              posterior vence; desfazer às cegas deixaria duas linhas vivas); `Draft` ⇒ 422 ROLE_OVERRIDE_COMPILE_DRAFT (E-11.2). Processo morto entre os commits 1 e 2 ⇒ o
  *              ajuste fica gravado sem versão nova; a próxima compilação por qualquer caminho o aplica (item 25), e
  *              repetir o PUT/DELETE recompila
  *              teste: RoleAccountOverrideService.integration.test.ts › "compile Draft: compensa, audita o desfazer e devolve 422"
+ *              teste: RoleAccountOverrideService.integration.test.ts › "compile lança no meio de um PUT concorrente: a compensação não revive a linha antiga"
  *   fora da tx — nada
  */
 import { ForbiddenError, RoleOverrideCompileDraftError } from '../../../lib/errors';
@@ -113,6 +115,9 @@ export class RoleAccountOverrideService {
     });
 
     const binding = await this.recompileOrCompensate(scope, kit, async (tx) => {
+      // Relido in-tx: se outro PUT/DELETE do mesmo papel commitou depois do nosso commit 1, a linha viva já não é a
+      // nossa e desfazer reviveria uma segunda linha viva — o estado vigente é o da escrita posterior; nada a fazer.
+      if ((await this.repo.findLiveByRole(scope, role, tx))?.id !== created.id) return;
       await this.repo.softDelete(scope, created.id, tx);
       if (previous) {
         await this.repo.revive(scope, previous.id, tx);
@@ -138,6 +143,8 @@ export class RoleAccountOverrideService {
     });
 
     const binding = await this.recompileOrCompensate(scope, kit, async (tx) => {
+      // Relido in-tx: um PUT posterior já deu linha viva ao papel ⇒ reviver a removida criaria a segunda; nada a fazer.
+      if (await this.repo.findLiveByRole(scope, role, tx)) return;
       await this.repo.revive(scope, removed.id, tx);
       await this.appendSet(tx, scope, removed.id, role, removed.accountId, null);
     });
