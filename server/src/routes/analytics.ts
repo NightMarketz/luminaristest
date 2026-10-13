@@ -8,12 +8,8 @@ import {
   discoverTableKPIs,
   getDrillDownData,
 } from '@/controllers/analyticsController';
-import { executeCustomKpisHandler } from '@/controllers/customKpiController';
 
 const router = Router();
-
-// POST /api/analytics/custom-kpis
-router.post('/custom-kpis', executeCustomKpisHandler);
 
 // GET /api/analytics/drill-down
 router.get('/drill-down', getDrillDownData);

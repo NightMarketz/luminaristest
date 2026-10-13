@@ -1502,6 +1502,126 @@
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404': { $ref: '#/components/responses/NotFoundError' }
  *
+ *   # CRM report builder (BE-INCR-CRM-REPORT-BUILDER PR-2, item 10). Erros nomeados: 400 REPORT_FIELD_NOT_FOUND {field},
+ *   # REPORT_CURRENCY_MIXED {field, currencyField}, REPORT_CONVERSION_NOT_APPLICABLE, REPORT_SORT_KEY_NOT_FOUND {key},
+ *   # REPORT_JOIN_ALIAS_DUPLICATE {alias}; 404 REPORT_NOT_FOUND; 409 CRM_MODULE_NOT_INSTALLED; 422 REPORT_TOO_LARGE {rowsRead, cap}.
+ *   /api/crm/reports:
+ *     get:
+ *       summary: List saved CRM report definitions (own; ADMIN sees all)
+ *       tags: [CRM Reports]
+ *       security: [{ bearerAuth: [] }]
+ *       responses:
+ *         '200': { description: Array of report definitions }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *     post:
+ *       summary: Create a CRM report definition (spec validated against the live table schema)
+ *       tags: [CRM Reports]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/CreateCrmReport' }
+ *       responses:
+ *         '201': { description: Report definition created }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '409': { description: CRM_MODULE_NOT_INSTALLED — source/join table not installed }
+ *
+ *   /api/crm/reports/run:
+ *     post:
+ *       summary: Run an unsaved report spec (preview) over the caller's CRM tables
+ *       tags: [CRM Reports]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [spec]
+ *               properties:
+ *                 spec: { $ref: '#/components/schemas/CrmReportSpec' }
+ *                 timeZone: { type: string, description: 'IANA; default America/Sao_Paulo' }
+ *       responses:
+ *         '200': { description: 'series[] (one per measure, per currency) + meta; converted only with spec.convertTo' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '409': { description: CRM_MODULE_NOT_INSTALLED }
+ *         '422': { description: REPORT_TOO_LARGE }
+ *
+ *   /api/crm/reports/{id}:
+ *     get:
+ *       summary: Get a report definition (owner or ADMIN)
+ *       tags: [CRM Reports]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - in: path
+ *           name: id
+ *           required: true
+ *           schema: { type: string, format: cuid }
+ *       responses:
+ *         '200': { description: Report definition }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *     put:
+ *       summary: Update a report definition (owner or ADMIN; ownership never changes)
+ *       tags: [CRM Reports]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - in: path
+ *           name: id
+ *           required: true
+ *           schema: { type: string, format: cuid }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/CreateCrmReport' }
+ *       responses:
+ *         '200': { description: Updated report definition }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *     delete:
+ *       summary: Delete a report definition (soft-delete; owner or ADMIN)
+ *       tags: [CRM Reports]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - in: path
+ *           name: id
+ *           required: true
+ *           schema: { type: string, format: cuid }
+ *       responses:
+ *         '200': { description: Report definition deleted }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/crm/reports/{id}/run:
+ *     post:
+ *       summary: Run a saved report (also the dashboard crmReport widget); ADMIN reads the owner's tables
+ *       tags: [CRM Reports]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - in: path
+ *           name: id
+ *           required: true
+ *           schema: { type: string, format: cuid }
+ *       requestBody:
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 timeZone: { type: string, description: 'IANA; default America/Sao_Paulo' }
+ *       responses:
+ *         '200': { description: 'series[] + meta (+ converted)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '409': { description: CRM_MODULE_NOT_INSTALLED }
+ *         '422': { description: REPORT_TOO_LARGE }
+ *
  *   /api/crm/attachments:
  *     post:
  *       summary: Upload a downloadable file attachment for a CRM record

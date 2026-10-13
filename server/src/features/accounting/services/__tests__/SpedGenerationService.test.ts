@@ -70,6 +70,8 @@ interface Mocks {
   createJobError?: Error;
   /** Histórico do lançamento 'e1' (I250.HIST) — default 'Venda'. */
   description?: string;
+  /** DRE devolvida por reports.incomeStatement — default: só receita 3.1 (500,00). */
+  dre?: Record<string, unknown>;
 }
 
 function buildService(m: Mocks = {}) {
@@ -148,7 +150,7 @@ function buildService(m: Mocks = {}) {
       equity: { accounts: [], totalCents: '0' },
       netResultLine: { amountCents: '50000' },
     })),
-    incomeStatement: jest.fn(async () => ({
+    incomeStatement: jest.fn(async () => m.dre ?? ({
       grossRevenue: { accounts: [{ code: '3.1', name: 'Receita', amountCents: '50000' }], totalCents: '50000' },
       revenueDeductions: { accounts: [], totalCents: '0' },
       costOfGoodsSold: { accounts: [], totalCents: '0' },
@@ -582,3 +584,47 @@ describe('SpedGenerationService.generate — L5: COD_PLAN_REF com mapeamento (RU
     expect(savedBuffers).toHaveLength(0);
   });
 });
+
+describe('SpedGenerationService.generate — L7: registro 0007 (RUNBOOK-H1, PVA 13/10, tentativa 2)', () => {
+  // PVA ECD 10.4.1: "Registro obrigatório não encontrado. → 0007". Manual ECD L9 (jan/2026) pp. 76-77: registro
+  // obrigatório, ocorrência 1:N; sem outra inscrição, COD_ENT_REF = "00" (Nenhuma inscrição em outras entidades).
+  it('emite o 0007 com COD_ENT_REF 00 quando não há outra inscrição cadastral', async () => {
+    const { service } = buildService();
+    await service.generate(scope, makeDto());
+    expect(producedLines().filter((l) => l.startsWith('|0007|'))).toEqual(['|0007|00||']);
+  });
+});
+
+describe('SpedGenerationService.generate — L9: hierarquia e sinal da DRE no J150 (RUNBOOK-H1, PVA 13/10, tentativa 2)', () => {
+  // PVA ECD 10.4.1: "Não deve existir mais de uma linha de nível igual a 1 na DRE"; detalhe de CMV/despesa com
+  // IND_DC "C" (esperado devedor); totalizador "Resultado" sem filhas. Manual ECD L9 (jan/2026) p. 180: só uma linha
+  // de nível 1 (o Resultado do Exercício), os demais totalizadores do nível 2 em diante; p. 183 REGRA_SOMA_NIVEIS_DRE.
+  const dre = {
+    grossRevenue: { accounts: [{ code: '3.1', name: 'Receita', amountCents: '50000' }], totalCents: '50000' },
+    revenueDeductions: { accounts: [], totalCents: '0' },
+    costOfGoodsSold: { accounts: [{ code: '4.2', name: 'CMV', amountCents: '-5000' }], totalCents: '-5000' },
+    expenses: { accounts: [{ code: '4.1', name: 'Despesas', amountCents: '-20000' }], totalCents: '-20000' },
+    netResult: { amountCents: '25000' },
+  };
+  const j150 = () => producedLines().filter((l) => l.startsWith('|J150|')).map((l) => l.split('|'));
+
+  it('só o Resultado do Exercício no nível 1; seções no nível 2 sob ele; detalhes no nível 3 sob a seção', async () => {
+    const { service } = buildService({ dre });
+    await service.generate(scope, makeDto());
+    const rows = j150();
+    // campos: [1]=REG [2]=NU_ORDEM [3]=COD_AGL [4]=IND_COD_AGL [5]=NIVEL_AGL [6]=COD_AGL_SUP
+    expect(rows.filter((r) => r[5] === '1').map((r) => [r[3], r[4], r[6]])).toEqual([['DRE_RESULTADO', 'T', '']]);
+    expect(rows.filter((r) => r[4] === 'T' && r[5] === '2').every((r) => r[6] === 'DRE_RESULTADO')).toBe(true);
+    expect(rows.find((r) => r[3] === '4.1')!.slice(5, 7)).toEqual(['3', 'DRE_DESPESAS']);
+  });
+
+  it('despesa e CMV saem devedores (D) e o Resultado credor (C) — o totalizador fecha com as filhas', async () => {
+    const { service } = buildService({ dre });
+    await service.generate(scope, makeDto());
+    const val = (cod: string) => { const r = j150().find((x) => x[3] === cod)!; return `${r[10]} ${r[11]}`; };
+    expect([val('4.2'), val('4.1'), val('DRE_CMV'), val('DRE_DESPESAS'), val('3.1'), val('DRE_RESULTADO')]).toEqual([
+      '50,00 D', '200,00 D', '50,00 D', '200,00 D', '500,00 C', '250,00 C',
+    ]);
+  });
+});
+

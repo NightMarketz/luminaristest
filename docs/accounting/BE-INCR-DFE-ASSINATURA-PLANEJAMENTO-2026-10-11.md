@@ -102,12 +102,12 @@ Gates que este contrato aciona quando virar código: snapshot de shape do DTO, u
 
 ## 5. Forks
 
-**F-E8-1R: como o salão assina NF-e/NFC-e, já que o PAA não o alcança.** **RATIFICADO (a)**: dono, chat, 2026-10-11,
+**F-E8-1R: como o salão assina NF-e/NFC-e, já que o PAA não o alcança.** **12/10: REABERTO → (c) o Luminaris guarda o certificado (SE-S) do cliente**, para NFS-e, NF-e e NFC-e (dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]] §5ª rodada)), depois que a FAQ NFS-e 17.7 mostrou que o mTLS exige o certificado do próprio prestador. F-E8-2/F-E8-3 perdem o objeto. Histórico: **RATIFICADO (a)**: dono, chat, 2026-10-11,
 *"Pode seguir a sua sugestao pra decisão nova"*, em resposta à recomendação (a) deste fork. A ratificação **não é
 "executa"**: os itens 1–3 do §3 continuam precisando de pedido próprio, por PR. Efeito: a metade "NF-e/NFC-e pelo PAA"
 da decisão (a) de 11/10 dá lugar ao PSC, e o F-E8-1 da `EMENDAS-BRIEF-2026-10-11` §8 fica **superado**.
 - (a) **Certificado em nuvem num PSC**, o mesmo caminho da NFS-e. O cliente contrata o PSC e dá ao Luminaris uma
-  credencial de assinatura com escopo (F-E8-2 a), e uma porta só assina os três DF-e. O Luminaris não guarda chave, e a
+  credencial de assinatura com escopo (F-E8-2 (a) era a recomendação; **ratificado (b) em 12/10**: o Luminaris contrata o PSC e revende), e uma porta só assina os três DF-e. O Luminaris não guarda chave, e a
   decisão 2 de 26/09 continua valendo.
 - (b) **Emissor terceiro que guarda o certificado do cliente** (o modelo dos emissores de nota por API). A guarda sai do
   Luminaris e vai para o fornecedor, mas a pergunta da MP 2.200-2 art. 6º p.ú. só muda de dono. Reabre a escolha de
@@ -120,7 +120,7 @@ reaproveita o F-E8-2 da NFS-e e deixa uma porta só para os três DF-e. Riscos: 
 (insumo ausente) e a pergunta F-3 sobre selo SE-S como "manifestação de vontade" (Res. CG 211/2024 art. 4º), que vale
 para qualquer um dos três caminhos.
 
-**F-E8-3: critério para escolher o PSC (F-E8-1R = a, ratificado).** **RATIFICADO (a)**: dono, chat, 2026-10-11 (depois das
+**F-E8-3: critério para escolher o PSC (F-E8-1R = a, ratificado).** **12/10: REABERTO → (b) lista curta homologada pelo Luminaris**, dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]]), por coerência com o F-E8-2 = (b) (o Luminaris contrata e revende). Histórico: **RATIFICADO (a)**: dono, chat, 2026-10-11 (depois das
 22:23), questionário, *"Qualquer PSC (Recomendado)"*, com os dados do §9 em mãos. **Substitui** a ratificação (b) registrada
 antes, no commit `4554422d` (dono, chat, 11/10: *"Pode ratificar e resolver"*), dada quando a recomendação ainda era (b) e
 o §9 não existia. Não é "executa". Dados no §9.

@@ -263,5 +263,24 @@
     "stage_change": "Stage change",
     "today": "Today",
     "yesterday": "Yesterday"
+  },
+  "report_builder": {
+    "errors": {
+      "REPORT_FIELD_NOT_FOUND": "Field \"{{field}}\" does not exist in the table.",
+      "REPORT_TOO_LARGE": "The report reads more than {{cap}} rows. Add filters or pick another source.",
+      "REPORT_SOURCE_NOT_ALLOWED": "This source is not available in the CRM report builder.",
+      "REPORT_CURRENCY_MIXED": "Summing amounts in different currencies is not allowed: group or filter by \"{{currencyField}}\".",
+      "REPORT_CONVERSION_NOT_APPLICABLE": "Conversion to BRL only applies to reports with a sum or average of an amount with currency.",
+      "REPORT_SORT_KEY_REQUIRED": "With more than one measure, choose which measure to sort by.",
+      "REPORT_SORT_KEY_NOT_FOUND": "Sort key \"{{key}}\" does not match any measure.",
+      "REPORT_JOIN_ALIAS_DUPLICATE": "Two joins share the alias \"{{alias}}\".",
+      "REPORT_NOT_FOUND": "Report not found.",
+      "INVALID_TIME_ZONE": "Invalid time zone."
+    },
+    "labels": {
+      "NO_CURRENCY": "No currency",
+      "UNDECLARED_CURRENCY": "Undeclared currency",
+      "RATE_UNAVAILABLE": "Rate unavailable"
+    }
   }
 }
