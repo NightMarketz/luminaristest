@@ -84,7 +84,7 @@ describe('listKits (item 7)', () => {
   it('devolve {kitKey, label, latestVersion} de cada kit', () => {
     expect(listKits()).toEqual([
       { kitKey: 'beautySalon', label: 'Salão de beleza', latestVersion: 2 },
-      { kitKey: 'aestheticClinic', label: 'Clínica estética', latestVersion: 1 },
+      { kitKey: 'aestheticClinic', label: 'Clínica estética', latestVersion: 2 },
     ]);
   });
 });

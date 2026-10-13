@@ -212,8 +212,8 @@ export function build0000(i: Reg0000Input): string {
   ]);
 }
 
-/** 0007 — Outras inscrições cadastrais (condicional). REG, COD_ENT, COD_INSCR.
- * Manual p. 68. Emitido só quando o declarante traz inscrições extras. */
+/** 0007 — Outras inscrições cadastrais. REG, COD_ENT, COD_INSCR. Registro OBRIGATÓRIO (Manual ECD L9 jan/2026
+ * pp. 76-77, L7 do RUNBOOK-H1): sem outra inscrição, sai `|0007|00||` (00 = nenhuma inscrição em outras entidades). */
 export interface Reg0007Input {
   codEnt: string;
   codInscr: string;
@@ -912,7 +912,8 @@ export function buildEcdFile(input: EcdFileInput): string[] {
   const block0: string[] = [];
   block0.push(build0000(input.declarant));
   block0.push(buildBlockOpen('0001'));
-  for (const ins of input.extraInscriptions ?? []) block0.push(build0007(ins));
+  const inscricoes = input.extraInscriptions?.length ? input.extraInscriptions : [{ codEnt: '00', codInscr: '' }];
+  for (const ins of inscricoes) block0.push(build0007(ins));
   block0.push(EMPTY); // slot do 0990
   block0[block0.length - 1] = buildBlockClose('0990', block0.length);
 

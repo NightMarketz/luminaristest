@@ -249,7 +249,7 @@ recibos e totalizadores, contabiliza e alimenta o fator R.
 **Caso adversarial tentado:** *"o 1º cliente tem 4 empregados CLT e o contador cobra caro pela folha; a fase 1 não o
 serve"*. Resposta: a fase 1 serve a contabilidade, o fator R e a DCTFWeb desse cliente, desde que o contador entregue os
 XML. O que ela não tira é o custo da folha no contador. Se o dono considerar esse o objetivo comercial, a escolha certa
-é (a), e a pergunta passa a ser comercial, não técnica. Por isso F-PES-0 fica **PENDENTE**, e o fato que decide (há
+é (a), e a pergunta passa a ser comercial, não técnica. Por isso F-PES-0 ficava **PENDENTE** (12/10: o bloco F-PES-0..13 foi ratificado em lote pela recomendação, dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]]) — para o F-PES-0 vale a recomendação escrita acima, condicionada ao fato comercial), e o fato que decide (há
 empregado CLT? quem faz a folha hoje?) está no §11.
 
 **RATIFICAÇÃO PENDENTE.**

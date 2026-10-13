@@ -16,6 +16,7 @@
 > alerta `releaseReportBlockedReason` com o botão de destravar ([[D-2026-10-10-F5-PR3-REVIEW-FIXES]] §Aberto). Não há
 > nota `docs/plano/nos/FE-INCR-PAYMENT-PROVIDER.md`; criar o nó fica para o fold (pendência 2 do template).
 > **Forks F-FE-COB-1..8: RATIFICAÇÃO PENDENTE** (§4).
+> **12/10: F-FE-COB-1..8 RATIFICADOS em lote pela recomendação (a) de cada um** (dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]])). Sem "executa".
 
 ## 0. Contexto fixo (não rediscutir)
 
