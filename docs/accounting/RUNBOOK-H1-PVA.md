@@ -614,6 +614,34 @@ Resultado esperado: import **sem críticas impeditivas**.
 
 EVIDÊNCIA: [tela/protocolo do PVA com o resultado do import + lista de críticas, se houver]
 
+> **Tentativa 1 — 2026-10-13.** O dono importou no PVA da ECD 10.4.1 o arquivo do passo 3 (`ecd_08845676XXXXXX_2025.txt`, sha256
+> `d026d00e…`) e colou no chat a tela e o relatório de erros em PDF (28 páginas, sha256 `6f64fa76…b52485`). O agente transcreveu
+> o relatório e o cruzou com o arquivo, sob o comando do dono (*"mexa por mim"*). O PVA não pôde ser operado pelo agente: as
+> janelas rodam como administrador e o Windows (UIPI) bloqueia a entrada.
+>
+> ```text
+> PVA ECD: "O arquivo contém erros e não será importado."     Total de Erros 189
+>   1   Bloco não importado. — "O bloco I não foi importado pois contém erros."
+>  15   Registro não deve existir neste tipo de escrituração. Não houve informação de plano referencial no registro 0000 (COD_PLAN_REF).
+>       → I051 nas linhas 9, 12, 15, 18, 21, 24, 28, 31, 35, 39, 42, 45, 48, 52, 55 (todos os 15)
+> 173   Conteúdo do campo inválido. → campo HIST do I250, a partir da linha 220
+>       ex.: |I250|2.1.2||769,06|C|||Contas a pagar  Fornecedor Seed (NF SEED-AP-2025-01-1)||
+> cruzamento com o arquivo (agente): 173 de 411 I250 têm o byte 0x14 no HIST e são exatamente os 173 criticados.
+>       HIST hex: … 70 61 67 61 72 20 14 20 46 6f 72 6e …   ("pagar \x14 Fornecedor")
+> ```
+>
+> **Diagnóstico (achado, não hotfix; GHC-003):**
+>
+> | # | Achado | Causa no código | Grau | Saída com dado (sem código)? |
+> |---|---|---|---|---|
+> | **L5** | 0000.`COD_PLAN_REF` vazio com 15 I051 emitidos | `codPlanRef` é opcional em `SpedEcdDto.ts:117` e o gerador emite I051 assim mesmo (`sped.ts:211`). A tabela P6 deste runbook também o dava como opcional. O enum aceita 1–10, e a tabela vai até 11 (TEF). | **verificado pelo PVA** | sim: `codPlanRef = '1'`, porque o catálogo mapeado é `L100A`+`L300A` (PJ em geral, Real; RUNBOOK-X2). O valor exato é inferido até o PVA aceitar. |
+> | **L6** | Caractere fora do Latin-1 vira byte de controle no arquivo | `Buffer.from(text, 'latin1')` trunca o code point para o byte baixo: o "—" (U+2014) dos históricos de AP/AR (`PayableService.ts:1439,1453` e `ReceivableService.ts:774,785`) sai como `0x14`. Mesma conversão em `SpedGenerationService.ts:172`, `SpedEcfGenerationService.ts:144` e `SpedEcfRealGenerationService.ts:474`, então a ECF corre o mesmo risco com qualquer texto livre. | **verificado** (PVA + bytes do arquivo + leitura do código) | **não**: os históricos vêm do razão gravado. É preciso corrigir o gerador (transliterar ou recusar antes de codificar). |
+>
+> Desfecho desta tentativa pela regra acima: **FALHOU no passo 4**; passos 5 e 6 não executados. A marcação é do dono e foi
+> diferida ao go-live (13/10). Reexecução só depois da correção de L6 (sessão de instrumentação → correção, que exige "executa").
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
+
 > **Se houver crítica:** desfecho **FALHOU**, e **pare aqui — não execute os passos 5 e 6.**
 > Crítica do PVA é **achado de domínio**: vira ADR ou emenda do ADR existente, **nunca hotfix**.
 
