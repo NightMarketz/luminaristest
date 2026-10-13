@@ -158,4 +158,19 @@ describe('CrmReportEditor', () => {
     fireEvent.blur(input);
     expect(latest.filters).toEqual([{ field: 'amount', op: 'in', value: [1] }]);
   });
+
+  it('3ª passada: par de moeda oculto em uso aparece no select da linha (o valor mostrado é o do rascunho)', () => {
+    const hidden = FIELDS.map((f) => (f.name === 'currency' ? { ...f, hidden: true } : f));
+    function HiddenHarness() {
+      const [draft, setDraft] = useState<ReportDraft>({ ...emptyDraft(), source: 'leadProposals', measures: [{ type: 'sum', field: 'amount', alias: '' }] });
+      latest = draft;
+      return <CrmReportEditor draft={draft} fields={hidden} sources={['leadProposals']} onChange={setDraft} onSourceChange={vi.fn()} />;
+    }
+    render(<HiddenHarness />);
+    fireEvent.click(screen.getByText('Separar por moeda'));
+    expect(latest.dimensions).toEqual([{ type: 'field', field: 'currency' }]);
+    expect(within(screen.getByTestId('dimension-0')).getByLabelText('Campo do agrupamento')).toHaveValue('currency');
+    fireEvent.click(screen.getByText('Adicionar agrupamento'));
+    expect(optionTexts(within(screen.getByTestId('dimension-1')).getByLabelText('Campo do agrupamento'))).not.toContain('Moeda');
+  });
 });

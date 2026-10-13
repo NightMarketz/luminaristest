@@ -63,6 +63,11 @@ export function CrmReportEditor({ draft, fields, sources, onChange, onSourceChan
   const { t } = useTranslation('crm');
   const list = fields ?? [];
   const offered = offeredFields(list); // selects não oferecem campo oculto
+  // ...salvo o que a linha já usa (par de moeda oculto, relatório salvo): o select mostra o valor real do rascunho
+  const optionsWith = (name: string) => {
+    const current = list.find((f) => f.name === name);
+    return current && current.hidden ? [...offered, current] : offered;
+  };
   const byName = (name: string) => list.find((f) => f.name === name);
   const fieldOptionLabel = (f: ISchemaField) =>
     isMoneyField(f) ? `${fieldLabel(f)} ${t('report_builder.editor.money_suffix', '(dinheiro)')}` : fieldLabel(f);
@@ -319,7 +324,7 @@ export function CrmReportEditor({ draft, fields, sources, onChange, onSourceChan
                         value={d.field}
                         onChange={(e) => setDimension(i, { type: 'field', field: e.target.value })}
                       >
-                        {offered.map((f) => (
+                        {optionsWith(d.field).map((f) => (
                           <option key={f.name} value={f.name}>
                             {fieldLabel(f)}
                           </option>
@@ -391,7 +396,7 @@ export function CrmReportEditor({ draft, fields, sources, onChange, onSourceChan
                     onChange={(e) => setFilter(i, { field: e.target.value, op: f.op, value: isMultiValueOp(f.op) ? [] : '' })}
                   >
                     <option value="">{t('report_builder.editor.pick_field', 'Escolha o campo…')}</option>
-                    {offered.map((x) => (
+                    {optionsWith(f.field).map((x) => (
                       <option key={x.name} value={x.name}>
                         {fieldLabel(x)}
                       </option>
