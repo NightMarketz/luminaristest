@@ -105,6 +105,73 @@
       "additionalProperties": false
     }
   },
+  "KitTraceDto.ts": {
+    "KitTraceQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId",
+        "sourceType",
+        "sourceId"
+      ],
+      "additionalProperties": false
+    },
+    "KitTraceViewSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "eventKey": {
+          "type": "string"
+        },
+        "archetypeKey": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "bindingVersion": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "journalEntryId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "eventKey",
+        "archetypeKey",
+        "bindingVersion",
+        "journalEntryId"
+      ],
+      "additionalProperties": false
+    }
+  },
   "SectorKitDto.ts": {
     "CanonicalAccountSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

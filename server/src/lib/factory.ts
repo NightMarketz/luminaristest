@@ -203,6 +203,8 @@ import type {
 import { Prisma } from 'generated/prisma';
 import { KitInstallService, type KitVersionsLookup } from '../features/sectorKits/services/KitInstallService';
 import { ServiceFiscalSuggestionService } from '../features/sectorKits/services/ServiceFiscalSuggestionService';
+import { declaredEventKeys } from '../features/sectorKits/registry';
+import { KitTraceService } from '../features/sectorKits/services/KitTraceService';
 import type {
   IKitAuditPort,
   KitChartPort,
@@ -1726,6 +1728,27 @@ export class ApplicationFactory {
     );
   }
 
+  /**
+   * BE-INCR-KIT-SETOR PR-6 (item 50) — rastro evento → fato → lançamento, por escopo. A porta do razão fecha sobre o
+   * `JournalEntryRepository.findBySource` (o `sectorKits` não importa `features/accounting`). Só leitura.
+   */
+  public getKitTraceService(scope: BindingScope): KitTraceService {
+    const accountingScope = bindingScopeToAccountingScope(scope);
+    const journalEntryRepo = this.repositories.journalEntry;
+    return new KitTraceService(
+      new SectorKitPolicy(),
+      {
+        async findBySource(sourceType, sourceId) {
+          const entry = await journalEntryRepo.findBySource(accountingScope, sourceType, sourceId);
+          return entry
+            ? { id: entry.id, sourceType: entry.sourceType, bindingId: entry.bindingId, bindingVersion: entry.bindingVersion }
+            : null;
+        },
+      },
+      new AccountingBindingRepository(),
+    );
+  }
+
   public getKitInstallService(scope: BindingScope, kitVersions?: KitVersionsLookup): KitInstallService {
     const accountingScope = bindingScopeToAccountingScope(scope);
     return new KitInstallService(
@@ -1798,7 +1821,7 @@ export class ApplicationFactory {
    */
   public async initializeAccountingSyncFromBindings(): Promise<void> {
     const registrations = await this.getAccountingBindingFeederService().buildActiveMapperRegistrations();
-    this.services.accountingSync = new AccountingSyncService(this.services.posting, registrations);
+    this.services.accountingSync = new AccountingSyncService(this.services.posting, registrations, { declaredEventKeys: declaredEventKeys() });
   }
 
   // Service Getters

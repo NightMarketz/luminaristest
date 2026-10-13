@@ -23,11 +23,17 @@ import { type AccountingEventLike, interpret, isSubledgerCommand } from './inter
  * dado de evento — falha na construção do adaptador, não no runtime de um evento específico.
  */
 export class InterpretedEventMapper implements IAccountingEventMapper {
-  public readonly sourceType: AccountingEventLike['sourceType'];
+  public readonly sourceType: string;
 
+  /**
+   * `bindingRef` (BE-INCR-KIT-SETOR PR-6, item 50): a linha `AccountingBinding` compilada de onde veio `binding`. Quando
+   * presente, todo `PostEntryInput` sai com ela e o `JournalEntry` grava a versão que o interpretou. Ausente no
+   * bootstrap síncrono da Factory e nos testes do golden (sem linha no banco).
+   */
   constructor(
     private readonly archetype: Archetype,
     private readonly binding: EventBinding,
+    private readonly bindingRef?: { bindingId: string; bindingVersion: number },
   ) {
     if (archetype.kind !== 'postEntry') {
       throw new Error(
@@ -37,10 +43,8 @@ export class InterpretedEventMapper implements IAccountingEventMapper {
       );
     }
     // eventKey do binding é a chave de registro do evento (mesmo valor que AccountingEvent.sourceType
-    // usa) — o cast é estreito porque EventBindingSchema.eventKey é `string` livre na FORMA; a
-    // pertinência à union fechada de sourceType é checada pelo validador determinístico (Corpo B)
-    // antes de o binding poder ativar (F-BP-2b), não aqui.
-    this.sourceType = binding.eventKey as AccountingEventLike['sourceType'];
+    // usa). Desde o PR-6 do KIT-SETOR o sourceType é `string` aberto (F-KB-4 → b): sem cast.
+    this.sourceType = binding.eventKey;
   }
 
   public map(event: AccountingEventLike): PostEntryInput {
@@ -50,6 +54,6 @@ export class InterpretedEventMapper implements IAccountingEventMapper {
       // profundidade contra o `archetype` mutar depois da construção.
       throw new Error('interpret() retornou SubledgerCommand para um arquétipo postEntry — bug de dispatch.');
     }
-    return result;
+    return this.bindingRef ? { ...result, bindingRef: this.bindingRef } : result;
   }
 }

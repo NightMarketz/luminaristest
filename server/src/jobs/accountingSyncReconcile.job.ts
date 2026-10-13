@@ -1520,7 +1520,7 @@ export interface PackageExpiryReconcileDeps extends PackageExpiryEffectsDeps {
   /** Guard 9.2 (F-PV-8 a): a credit of this balance whose origin sale is Cancelled/Returned → its saleId. */
   findReversedOrigin: (scope: AccountingScope, c: PackageExpiryCandidate) => Promise<string | null>;
   /** Guard 9.3 (F-PV-6 a): `AccountingSyncService.hasMapper` — same resolution as `sync()`. */
-  hasMapper: (unitId: string, sourceType: AccountingEvent['sourceType']) => boolean;
+  hasMapper: (unitId: string, sourceType: string) => boolean;
   /** Guard 9.4 (F-PV-5): is the period of the posting date OPEN? */
   isPeriodOpen: (scope: AccountingScope, dateOnly: string) => Promise<boolean>;
   expireDue: (scope: AccountingScope, balanceId: string, today: string) => Promise<ExpireDueResult | null>;

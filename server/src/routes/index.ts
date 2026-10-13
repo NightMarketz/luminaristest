@@ -23,6 +23,7 @@ import counterpartyRoutes from './counterparties';
 import paymentAccountRoutes from './paymentAccounts';
 import { collectionChargesRouter, paymentCollectionWebhookRouter, receivableChargesRouter } from './collectionCharges';
 import serviceFiscalSuggestionRoutes from './serviceFiscalSuggestions';
+import accountingKitRoutes from './accountingKit';
 import nfeRoutes from './nfe';
 import dfeRoutes from './dfe';
 import entryApprovalRoutes from './entryApprovals';
@@ -100,6 +101,7 @@ router.use('/payment-accounts', paymentAccountRoutes); // BE-INCR-PAYMENT-PROVID
 router.use('/collection-charges', collectionChargesRouter); // BE-INCR-PAYMENT-PROVIDER (nó F5) PR-2
 router.use('/payment-collection', paymentCollectionWebhookRouter); // PR-2 — webhook PÚBLICO (publicApiRoutes)
 router.use('/service-fiscal-suggestions', serviceFiscalSuggestionRoutes); // BE-INCR-KIT-SETOR-EMENDA-1 PR-K3 (7e/7f)
+router.use('/accounting-kit', accountingKitRoutes); // BE-INCR-KIT-SETOR PR-6 (item 50)
 
 export { router };
 

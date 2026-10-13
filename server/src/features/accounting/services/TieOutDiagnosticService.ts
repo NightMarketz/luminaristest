@@ -13,7 +13,7 @@ import {
   ESTOQUES_CODE,
   FORNECEDORES_A_PAGAR_CODE,
 } from '../fixtures/ChartOfAccountsFixture';
-import type { AccountingEvent } from '../sync/AccountingSyncPort';
+import type { SaleSourceType } from '../sync/AccountingSyncPort';
 import { CRM_LEGACY_SOURCE_TYPE } from '../sync/AccountingSyncPort';
 
 // ─── Constantes de domínio ────────────────────────────────────────────────────
@@ -30,13 +30,13 @@ export const POS_RECEIVABLE_CODE = '1.1.2';
  * também debitava 1.1.2 — desde o ADR-CRM-AR-SEAM o CRM entra pelo subrazão AR (1.1.5), então
  * 'crm.opportunity.won' aqui cobre a POPULAÇÃO LEGADA FECHADA (entradas pré-seam, sem
  * settlement possível); o tie-out da 1.1.2 compara o agregado (salão + CRM-legado) vs razão.
- * O Record força exaustividade nos DOIS sentidos contra a union `AccountingEvent['sourceType']`
+ * O Record força exaustividade nos DOIS sentidos contra a union `SaleSourceType`
  * + a chave legada: um 6º feeder novo quebra o tsc aqui (chave faltando) e um typo também
  * (chave extra). Incluir um feeder que não toque 1.1.2 é inócuo — a exclusão só afeta a linha
  * agregada da própria 1.1.2.
  */
 const POS_FEEDER_SOURCE_TYPE_MAP: Record<
-  AccountingEvent['sourceType'] | typeof CRM_LEGACY_SOURCE_TYPE,
+  SaleSourceType | typeof CRM_LEGACY_SOURCE_TYPE,
   true
 > = {
   [CRM_LEGACY_SOURCE_TYPE]: true,
@@ -51,7 +51,7 @@ const POS_FEEDER_SOURCE_TYPE_MAP: Record<
 };
 
 export const POS_FEEDER_SOURCE_TYPES = Object.keys(POS_FEEDER_SOURCE_TYPE_MAP) as Array<
-  AccountingEvent['sourceType'] | typeof CRM_LEGACY_SOURCE_TYPE
+  SaleSourceType | typeof CRM_LEGACY_SOURCE_TYPE
 >;
 
 // ─── Report shapes (money em INTEGER CENTS, serializado como string — convenção INCR-4) ──
