@@ -9,6 +9,7 @@ import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IPostingRepository } from '../repositories/IPostingRepository';
+import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRepository';
 import type { IDataExchangeRepository } from '../repositories/IDataExchangeRepository';
 import type { AuditService } from './AuditService';
 import { toJobResponse, type DataExchangeJobResponse } from './dataExchangeMappers';
@@ -60,6 +61,8 @@ export class SpedEcfGenerationService {
     private readonly audit: AuditService,
     /** BE-INCR-LEGAL-PARAMS PR-2 (F-LP-4 a): fotografia `LEIAUTE_SPED` (0000.COD_VER do ano). */
     private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
+    /** F-PCB-1R (dono 13/10): as contas de dedução de PIS/COFINS do perfil saem do gate de receita bruta. */
+    private readonly fiscalProfileRepo: Pick<IFiscalProfileRepository, 'findByScope'>,
   ) {}
 
   public async generate(scope: AccountingScope, dto: SpedEcfRequestDto): Promise<DataExchangeJobResponse> {
@@ -87,7 +90,7 @@ export class SpedEcfGenerationService {
     const accounts = await this.accountRepo.findManyByUnit(scope);
     const yearFrom = new Date(Date.UTC(year, 0, 1, 0, 0, 0, 0));
     const yearTo = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
-    const deps = { accountRepo: this.accountRepo, postingRepo: this.postingRepo };
+    const deps = { accountRepo: this.accountRepo, postingRepo: this.postingRepo, fiscalProfileRepo: this.fiscalProfileRepo };
     await receitaBrutaPorAtividade(deps, scope, yearFrom, yearTo, accounts);
     const quarters: EcfQuarter[] = [];
     for (const w of windows) {

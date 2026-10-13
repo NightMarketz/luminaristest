@@ -297,7 +297,7 @@ describe('X8 PR-2 — apuração mensal de PIS/Cofins: prévia, confirmação, l
   });
 });
 
-describe('X8 PR-2 — 23 (f): a ECF Presumido de um ano com provisão de PIS/Cofins lançada gera (F-PCB-1 b: conta Expense, gate intocado)', () => {
+describe('X8 PR-2 — 23 (f): a ECF Presumido de um ano com provisão de PIS/Cofins lançada gera (F-PCB-1R a, dono 13/10: dedução Revenue, fora do gate só pelo perfil)', () => {
   const DONO = 'u-x8-pr2-ecf';
   const UNIDADE = 'unit-x8-pr2-ecf';
   const scope: AccountingScope = { ownerUserId: DONO, actorUserId: DONO, unitId: UNIDADE, ledgerCode: 'DEFAULT', baseCurrencyCode: 'BRL', timeZone: 'America/Sao_Paulo' };
@@ -324,11 +324,19 @@ describe('X8 PR-2 — 23 (f): a ECF Presumido de um ano com provisão de PIS/Cof
       { code: '2.1.9.4', nature: 'Liability' },
       { code: '2.3.1', nature: 'Equity' },
       { code: '3.1', nature: 'Revenue' },
-      { code: '4.9.3', nature: 'Expense' },
-      { code: '4.9.4', nature: 'Expense' },
+      { code: '3.6.1', nature: 'Revenue' },
+      { code: '3.6.2', nature: 'Revenue' },
     ]) {
       await prisma.account.create({ data: { userId: DONO, unitId: UNIDADE, name: acc.code, ...acc, acceptsEntries: true } });
     }
+    const id = async (code: string) => (await prisma.account.findFirstOrThrow({ where: { userId: DONO, unitId: UNIDADE, code } })).id;
+    await prisma.fiscalProfile.create({
+      data: {
+        userId: DONO, unitId: UNIDADE, regimeTributario: 'PRESUMIDO', pisCofinsRegime: 'CUMULATIVO',
+        pisDespesaAccountId: await id('3.6.1'), cofinsDespesaAccountId: await id('3.6.2'),
+        pisRecolherAccountId: await id('2.1.9.3'), cofinsRecolherAccountId: await id('2.1.9.4'),
+      },
+    });
     await prisma.accountingPeriod.create({ data: { userId: DONO, unitId: UNIDADE, year: 2025, month: 10, status: 'OPEN', openedAt: new Date() } });
   }, 120000);
 
@@ -336,7 +344,7 @@ describe('X8 PR-2 — 23 (f): a ECF Presumido de um ano com provisão de PIS/Cof
     await prisma.$disconnect();
   });
 
-  it('receita de serviço + D despesa de PIS/Cofins / C a recolher ⇒ a ECF sai, com o serviço em P200(8)', async () => {
+  it('receita de serviço + D dedução de PIS/Cofins (3.6.x) / C a recolher ⇒ a ECF sai, com o serviço em P200(8) sem a dedução', async () => {
     const posting = ApplicationFactory.getInstance().getPostingService();
     await posting.postEntry(scope, {
       unitId: UNIDADE, date: '2025-10-15', sourceType: 'manual', description: 'Serviço prestado em outubro',
@@ -348,8 +356,8 @@ describe('X8 PR-2 — 23 (f): a ECF Presumido de um ano com provisão de PIS/Cof
     await posting.postEntry(scope, {
       unitId: UNIDADE, date: '2025-10-31', sourceType: 'manual', description: 'Provisão de PIS/Cofins de outubro (no lugar da do PR-3)',
       lines: [
-        { accountCode: '4.9.3', debitCents: 6_500, creditCents: 0 },
-        { accountCode: '4.9.4', debitCents: 30_000, creditCents: 0 },
+        { accountCode: '3.6.1', debitCents: 6_500, creditCents: 0 },
+        { accountCode: '3.6.2', debitCents: 30_000, creditCents: 0 },
         { accountCode: '2.1.9.3', debitCents: 0, creditCents: 6_500 },
         { accountCode: '2.1.9.4', debitCents: 0, creditCents: 30_000 },
       ],
@@ -358,5 +366,19 @@ describe('X8 PR-2 — 23 (f): a ECF Presumido de um ano com provisão de PIS/Cof
     const row = await prisma.accountingDataExchangeJob.findUniqueOrThrow({ where: { id: job.id } });
     const text = (await readFile(resolveReadPath(row.storageKey!))).toString('latin1');
     expect(text).toContain('|P200|8||10000,00|');
+  });
+
+  it('a mesma dedução, com o perfil sem as contas ⇒ 400 unmappedRevenueAccounts (é o perfil que tira do gate, não o código)', async () => {
+    await prisma.fiscalProfile.update({
+      where: { userId_unitId: { userId: DONO, unitId: UNIDADE } },
+      data: { pisDespesaAccountId: null, cofinsDespesaAccountId: null },
+    });
+    const err = await ApplicationFactory.getInstance().getSpedEcfGenerationService().generate(scope, dto).catch((e: unknown) => e);
+    expect((err as { details?: unknown }).details).toEqual({
+      unmappedRevenueAccounts: [
+        { code: '3.6.1', name: '3.6.1' },
+        { code: '3.6.2', name: '3.6.2' },
+      ],
+    });
   });
 });
