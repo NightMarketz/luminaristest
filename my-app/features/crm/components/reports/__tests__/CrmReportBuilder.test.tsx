@@ -254,3 +254,55 @@ describe('review do PR-B — regressões no orquestrador', () => {
     expect(screen.getByTestId('block-reason')).toHaveTextContent('Corrija o apelido do cruzamento.');
   });
 });
+
+describe('review do PR-B — 2ª passada no orquestrador', () => {
+  const OPP_SCHEMA = [
+    { name: 'title', label: 'Título', type: 'string' },
+    { name: 'leadId', label: 'Lead', type: 'relation', relation: { targetTable: '@@PRESET_TABLE_KEY::leads' } },
+  ];
+  const LEAD_SCHEMA = [{ name: 'status', label: 'Status', type: 'select', options: ['Novo', 'Ganho'] }];
+  const twoJoins: CrmReportRow = {
+    ...saved,
+    id: 'r2j',
+    userId: 'eu',
+    name: 'Dois joins',
+    spec: {
+      source: 'crmOpportunities',
+      joins: [
+        { leftField: 'leadId', rightSource: 'leads', rightField: 'id', alias: 'a' },
+        { leftField: 'title', rightSource: 'leads', rightField: 'status', alias: 'b' },
+      ],
+      measures: [{ type: 'count' }],
+      filters: [{ field: 'b.status', op: 'eq', value: 'Novo' }],
+    },
+  };
+  beforeEach(() => {
+    Object.values(svc).forEach((f) => f.mockReset());
+    svc.list.mockImplementation(() => ok([twoJoins]));
+    svc.get.mockImplementation(() => ok(twoJoins));
+    svc.run.mockImplementation(() => ok(RUN));
+  });
+  afterEach(() => cleanup());
+
+  it('trocar a tabela do join 0 e removê-lo na espera não aplica a troca ao join que sobrou', async () => {
+    let release: (v: unknown) => void = () => {};
+    fieldsOf
+      .mockReset()
+      .mockImplementation((s: string) =>
+        s === 'leadProposals' ? new Promise((r) => (release = () => r(OPP_SCHEMA))) : Promise.resolve(s === 'leads' ? LEAD_SCHEMA : OPP_SCHEMA),
+      );
+    render(<CrmReportBuilder />);
+    fireEvent.click(await screen.findByText('Abrir'));
+    await waitFor(() => expect(svc.run).toHaveBeenCalled());
+    fireEvent.change(within(screen.getByTestId('join-0')).getByLabelText('Tabela'), { target: { value: 'leadProposals' } });
+    fireEvent.click(within(screen.getByTestId('join-0')).getByText('Remover'));
+    expect(screen.getAllByTestId(/^join-/)).toHaveLength(1);
+    release(undefined);
+    await new Promise((r) => setTimeout(r, 0));
+    const left = within(screen.getByTestId('join-0'));
+    expect(left.getByLabelText('Tabela')).toHaveValue('leads');
+    expect(left.getByLabelText('Apelido')).toHaveValue('b');
+    expect(screen.getByTestId('filter-0')).toBeInTheDocument();
+    expect(screen.queryByText('Mudar o cruzamento?')).toBeNull();
+  });
+});

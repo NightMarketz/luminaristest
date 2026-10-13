@@ -536,8 +536,8 @@ export function CrmReportEditor({
             <label className="mt-3 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-200">
               <input
                 type="checkbox"
-                checked={draft.convertTo && canConvert}
-                disabled={!canConvert}
+                checked={draft.convertTo}
+                disabled={!canConvert && !draft.convertTo} // a caixa mostra o que vai no spec (2ª passada do review do PR-B)
                 onChange={(e) => set({ convertTo: e.target.checked })}
               />
               {t('report_builder.editor.convert', 'Mostrar também convertido para R$ (PTAX)')}

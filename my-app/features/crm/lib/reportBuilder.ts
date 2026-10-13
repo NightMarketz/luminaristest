@@ -476,8 +476,9 @@ function pruneBy(draft: ReportDraft, has: (name: string) => boolean): ReportDraf
 /** Achado do review: a conversão marcada que deixa de valer sai do rascunho (senão o BE responde 400). */
 export function settle(draft: ReportDraft, fields: readonly ISchemaField[]): ReportDraft {
   if (!draft.convertTo || conversionAvailable(draft, fields)) return draft;
-  // medida de join cujo schema não carregou: não dá para saber se é dinheiro — mantém (review do PR-B, achado 5)
-  if (draft.measures.some((m) => unresolvedJoinRef(draft, fields, m.field))) return draft;
+  // soma/média de join cujo schema não carregou: não dá para saber se é dinheiro — mantém (review do PR-B, achado 5);
+  // contagem nunca é dinheiro (2ª passada: `count` de join não segurava a conversão sem medida de dinheiro)
+  if (draft.measures.some((m) => m.type !== 'count' && unresolvedJoinRef(draft, fields, m.field))) return draft;
   return { ...draft, convertTo: false };
 }
 

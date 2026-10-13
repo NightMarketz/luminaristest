@@ -224,14 +224,18 @@ export function CrmReportBuilder() {
     else apply();
   };
 
-  const changeJoinSource = async (index: number, source: ReportSource) => {
+  const changeJoinSource = async (clicked: number, source: ReportSource) => {
+    // o join é seguido pela identidade, não pelo índice: removido ou mexido na espera, a troca não cai em outro join
+    // (2ª passada do review do PR-B)
+    const target = latest.current.draft.joins[clicked];
     const raw = latest.current.rightRaw[source] ?? (await fieldsOf(source));
     if (!raw) {
       setError({ key: 'report_builder.errors.SCHEMA_UNAVAILABLE', params: {}, code: null });
       return;
     }
     const { draft: now, rightRaw: nowRaw, sourceFields: nowFields } = latest.current;
-    if (!nowFields || !now.joins[index]) return;
+    const index = target ? now.joins.indexOf(target) : -1;
+    if (!nowFields || index < 0) return;
     const nextRaw = { ...nowRaw, [source]: raw };
     applyJoinChange(now, withJoinSource(now, index, source, nowFields, rightFieldsFrom(nextRaw)), nextRaw);
   };

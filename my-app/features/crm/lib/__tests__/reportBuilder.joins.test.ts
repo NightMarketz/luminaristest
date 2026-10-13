@@ -294,3 +294,18 @@ describe('review do PR-B — regressões', () => {
     expect(settle(d, combinedFields(OPP, d.joins, notLoaded)).convertTo).toBe(true);
   });
 });
+
+describe('review do PR-B — 2ª passada', () => {
+  it('count sobre join sem schema não segura a conversão quando não sobra medida de dinheiro', () => {
+    const notLoaded = right({ crmOpportunities: OPP });
+    const d: ReportDraft = {
+      ...emptyDraft(),
+      source: 'crmOpportunities',
+      joins: [join({ alias: 'lead' })],
+      measures: [{ type: 'count', field: 'lead.id', alias: '' }],
+      dimensions: [{ type: 'field', field: 'currency' }],
+      convertTo: true,
+    };
+    expect(settle(d, combinedFields(OPP, d.joins, notLoaded)).convertTo).toBe(false);
+  });
+});
