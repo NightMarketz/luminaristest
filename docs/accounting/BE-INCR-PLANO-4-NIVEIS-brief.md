@@ -189,6 +189,19 @@ interface RelatorioMigracaoUnidade {
 | **F-L8-5** | Analítica patrimonial **personalizada** pelo tenant (fora do canônico) | (a) **não renomear; listar** no relatório e o dono/contador decide; (b) renomear para `<código>.01` com uma sintética do mesmo nome | **(a)**. Mexer no plano próprio do cliente é decisão contábil dele. Hoje não há cliente real, então a lista do `dev.db` é a prova. |
 | **F-L8-6** | ECD de exercício já entregue com o plano velho | (a) **fora de escopo**: nenhum tenant tem ECD transmitida (o H1 nunca passou; não há cliente real); registrar que a 1ª ECD após a mudança, para quem já tiver entregue, exige `0000.IND_MUDANC_PC = 1` + I157; (b) implementar o I157 agora | **(a)**, condicionado à verificação do insumo ausente §6.1. |
 
+### Forks achados na execução (sessao-feature, 13/10) — RATIFICADOS pelo dono no chat (questionário), todos (a)
+
+| Fork | Lacuna | Decisão |
+|---|---|---|
+| **F-L8-7** | Os kits salão/clínica v1/v2 são versões **publicadas** (`published.json` com sha256 travado por teste) e embutem o binding com os códigos antigos; o item 5 deste BRIEF mandava editar o de-para do v2 no lugar | **(a) Publicar versões novas:** `SALE_BINDING_V2`/`CLINIC_BINDING_V2` derivados dos V1 pelo de-para (`bindingPosL8`) + **kit v3** do salão e da clínica (`REFERENCIAL_2025_CANONICO_V2`). v1/v2 ficam congelados; instalar = a vigente (v3); a migração leva a instalação à v3. Substitui o texto do item 5. |
+| **F-L8-8** | As allowlists de import de `accountingBinding`/`sectorKits` (a de `sectorKits` decidida em 08/10) não permitiam importar o de-para | **(a) Ampliar** só com `codigoPosL8` e `CANONICAL_ACCOUNTS_PRE_L8`. |
+| **F-L8-9** | O schema do kit valida o binding contra o plano **vigente**; com o plano novo, v1/v2 deixam de passar no parse (o boot quebraria) | **(a) Validar contra o plano da época:** lista explícita `KITS_PUBLICADOS_PRE_L8` (não "versão < 3") valida contra `CANONICAL_ACCOUNTS_PRE_L8`; o resto contra o vigente. |
+
+Desvio registrado no item 1: o invariante "sintética da **mesma natureza**" tem a exceção do PL (Equity) sob `2` Passivo,
+que o próprio plano já tinha e o PVA aceitou na tentativa 2. Acréscimo ao item 8: a migração confere o **período corrente
+aberto ANTES de renomear** (o recompile do binding faz dry-run de lançamento) — o 1º teste mostrou o estado parcial
+"plano migrado com binding velho".
+
 ## 5. Pendente de validação externa
 
 - **Nomes e agrupamento da árvore (F-L8-2):** a estrutura segue o art. 178 da Lei 6.404 (grupos) e o Manual da ECD
