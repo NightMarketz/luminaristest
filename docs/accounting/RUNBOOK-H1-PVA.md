@@ -642,6 +642,46 @@ EVIDÊNCIA: [tela/protocolo do PVA com o resultado do import + lista de crítica
 >
 > DESFECHO: [dono]   ASSINATURA: [dono]
 
+> **Tentativa 2 — 2026-10-13, depois do #642 (L5/L6 corrigidas; main `c00e7b8e`, build de produção).** O agente gerou de
+> novo a ECD sob comando do dono, com o P6 + `codPlanRef = '1'`: job `cmv66y0st0000civkawovszls`, 48.404 bytes, 888 linhas,
+> sha256 `ea7cb533…e8afd8`. 0000 termina em `|1|`, 0 byte de controle e 173 I250 com " - ". O dono importou no PVA 10.4.1
+> (`…-tentativa2.txt`) e colou as telas e o relatório de validação em PDF (9 páginas, sha256 `a9b657c2…`). O agente o
+> transcreveu.
+>
+> ```text
+> PVA: "A importação foi concluída com êxito. A escrituração não possui erros de estrutura."   ← L5 e L6 resolvidas
+> validação de conteúdo: "O arquivo contém erros e avisos."     Total de Erros 23 · Total de Advertências 21
+> ERROS
+>  1  Registro obrigatório não encontrado. → 0007
+>  1  O campo NIRE é obrigatório quando a escrituração possui registro na Junta Comercial. → I030 campo 7 (linha 6)
+>  9  Plano de contas deve conter no mínimo 4 níveis (Res. CFC 1299/2010): analítica de Ativo/Passivo/PL deve ser nível ≥ 4
+>     → I050 1.1.1, 1.1.2, 1.1.3, 1.1.4, 1.1.5, 1.1.6, 2.1.1, 2.1.2 (NIVEL 3) e 2.3.1 (NIVEL 3, sup 2.3)
+>  8  Campo obrigatório não preenchido. → I050 campo 7 COD_CTA_SUP vazio em 1.1.1..1.1.6, 2.1.1, 2.1.2
+>  1  Não deve existir mais de uma linha de nível igual a 1 na DRE. → J150 linha 850 (DRE_CMV, nível 1)
+>  2  VL_CTA_FIN da linha de detalhe da DRE ≠ calculado de I155/I355 → J150 4.2 (−25508,07 × 25508,07 C) e 4.1
+>     (−75153,45 × 75153,45 C)
+>  1  Totalizador da DRE ≠ soma das linhas de nível imediatamente inferior → J150 DRE_RESULTADO (110766,34 × esperado 0,00)
+> ADVERTÊNCIAS
+> 11  I155 com todos os campos zerados → 2.3.1 nos meses sem movimento
+>  1  Não houve recuperação da ECD anterior.
+>  8  Conta de nível superior deverá ter a mesma natureza da subconta → I050 1.1.x, 2.1.x (consequência do COD_CTA_SUP vazio)
+>  1  Data de arquivamento dos atos constitutivos (I030 DT_ARQ) não informada.
+> ```
+>
+> **Diagnóstico (achado, não hotfix; GHC-003).** Os 23 erros fecham em 4 grupos:
+>
+> | # | Erros | Causa | Grau | Trilho |
+> |---|---|---|---|---|
+> | **L3** | 1 | NIRE vazio com `IND_NIRE = 1` (P6 de teste) | **verificado pelo PVA** | dado: `indNire = '0'` ou o NIRE real (JUCESP). Fica aberto o refine do DTO (exigir `nire` se `indNire = 1`) |
+> | **L7** | 1 | o gerador não emite o registro **0007** (outras inscrições cadastrais), obrigatório | verificado pelo PVA; causa no código a conferir | instrumentação → correção |
+> | **L8** | 9 + 8 (+ 8 adv.) | **o plano de contas canônico é raso**: as analíticas patrimoniais estão no nível 3 e as sintéticas intermediárias (`1.1`, `2.1`) não existem. A Res. CFC 1.299/2010 exige ≥ 4 níveis. | verificado pelo PVA | **domínio: ADR** (plano canônico + migração dos tenants instalados). Não é correção mínima |
+> | **L9** | 1 + 2 + 1 | **DRE (J150)**: cada grupo sai no nível 1; despesa/CMV com `IND_DC_CTA_FIN = C`; o totalizador "Resultado" não tem filhas | verificado pelo PVA | instrumentação → correção (gerador do bloco J) |
+>
+> Desfecho desta tentativa pela regra acima: **FALHOU no passo 4** (marcação do dono, diferida ao go-live). Para a
+> tentativa 3: L3 sai por dado; L7 e L9 exigem "executa"; L8 exige ADR com decisão do dono antes de qualquer código.
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
+
 > **Se houver crítica:** desfecho **FALHOU**, e **pare aqui — não execute os passos 5 e 6.**
 > Crítica do PVA é **achado de domínio**: vira ADR ou emenda do ADR existente, **nunca hotfix**.
 
