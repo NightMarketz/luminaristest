@@ -75,12 +75,14 @@ describe('GET /api/analytics/drill-down', () => {
  * CustomKpiExecutor e KpiSchema. A rota não existe mais.
  */
 describe('POST /api/analytics/custom-kpis (removida)', () => {
-  it('responde 404 para usuário autenticado', async () => {
+  // Corpo que a rota viva recusava com 400 (kpis vazio, antes da busca da tabela): só a remoção dá 404. Uma tabela
+  // inexistente não serviria — a rota antiga também respondia 404 "Table not found" nesse caso.
+  it('responde 404 a um corpo que a rota viva recusava com 400', async () => {
     const u = await seedUser({ username: 'u' });
     const res = await request(app)
       .post('/api/analytics/custom-kpis')
       .set(authHeader({ id: u.id, username: u.username }))
-      .send({ tableId: 't1', kpis: [{ name: 'k', tableId: 't1', measure: 'count', field: 'amount' }] });
+      .send({ tableId: 't1', kpis: [] });
     expect(res.status).toBe(404);
   });
 });
