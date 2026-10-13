@@ -34,6 +34,7 @@ model User {
   actionProposals            ActionProposal[] // Relation to ActionProposal
   crmAttachments             CrmAttachment[] // Relation to CrmAttachment
   savedTableViews            SavedTableView[] // Relation to SavedTableView
+  crmReportDefinitions       CrmReportDefinition[] // BE-INCR-CRM-REPORT-BUILDER PR-2 (item 1)
   accounts                   Account[] // Relation to Account (accounting)
   journalEntries             JournalEntry[] // Relation to JournalEntry (accounting)
   postings                   Posting[] // Relation to Posting (accounting)
@@ -92,6 +93,26 @@ model SavedTableView {
 
   @@index([userId, tableId])
   @@map("saved_table_views")
+}
+
+// BE-INCR-CRM-REPORT-BUILDER PR-2 (nó CRM-RB; BRIEF item 1; F-RB1=(a)) — definição salva de relatório/dashboard do CRM.
+// Metadado de plataforma sobre tabelas do motor (aponta fonte + campos por nome), mesmo shape de SavedTableView:
+// spec Json validado pelo ReportSpecSchema no DTO e contra o schema vivo no serviço; soft-delete; cascade do User.
+model CrmReportDefinition {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  kind        String // chart | table | kpi (validado no DTO)
+  chartType   String
+  spec        Json // ReportSpecSchema
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@index([userId])
+  @@map("crm_report_definitions")
 }
 
 // Downloadable file-store metadata for CRM record attachments (polymorphic, soft-delete).
