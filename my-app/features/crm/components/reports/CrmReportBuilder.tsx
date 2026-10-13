@@ -75,7 +75,7 @@ export function CrmReportBuilder() {
   const [error, setError] = useState<ReportErrorView | null>(null);
 
   const [rightRaw, setRightRaw] = useState<RightRaw>({});
-  const [busyJoin, setBusyJoin] = useState<JoinDraft | null>(null);
+  const [busyJoins, setBusyJoins] = useState<JoinDraft[]>([]);
   const [pending, setPending] = useState<{ kind: 'source' | 'join'; apply: () => void } | null>(null);
   const [toDelete, setToDelete] = useState<CrmReportRow | null>(null);
   const [saveAsName, setSaveAsName] = useState<string | null>(null);
@@ -232,11 +232,11 @@ export function CrmReportBuilder() {
     const target = latest.current.draft.joins[clicked];
     let raw = latest.current.rightRaw[source];
     if (!raw) {
-      setBusyJoin(target ?? null);
+      if (target) setBusyJoins((b) => [...b, target]);
       try {
         raw = await fieldsOf(source);
       } finally {
-        setBusyJoin(null);
+        if (target) setBusyJoins((b) => b.filter((x) => x !== target));
       }
     }
     if (!raw) {
@@ -421,7 +421,7 @@ export function CrmReportBuilder() {
               onSourceChange={(s) => void changeSource(s)}
               onJoinSourceChange={(i, s) => void changeJoinSource(i, s)}
               onJoinRemove={removeJoinAt}
-              busyJoin={busyJoin}
+              busyJoins={busyJoins}
             />
             <div className="flex flex-col gap-4">
               {result ? (

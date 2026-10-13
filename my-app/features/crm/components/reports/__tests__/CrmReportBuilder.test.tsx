@@ -336,3 +336,41 @@ describe('review do PR-B — 3ª passada no orquestrador', () => {
     expect(row.getByLabelText('Tabela')).toHaveValue('leads');
   });
 });
+
+describe('review do PR-B — 4ª passada no orquestrador', () => {
+  const OPP_SCHEMA = [{ name: 'title', label: 'Título', type: 'string' }];
+  const LEAD_SCHEMA = [{ name: 'status', label: 'Status', type: 'select', options: ['Novo'] }];
+  beforeEach(() => {
+    Object.values(svc).forEach((f) => f.mockReset());
+    svc.list.mockImplementation(() => ok([]));
+  });
+  afterEach(() => cleanup());
+
+  it('dois joins carregando ao mesmo tempo: o primeiro continua travado até a SUA tabela chegar', async () => {
+    const release: Record<string, (v: unknown) => void> = {};
+    fieldsOf.mockReset().mockResolvedValue(OPP_SCHEMA);
+    await newReportOn('leadProposals');
+    fireEvent.click(screen.getByText('Avançado: cruzar com outra tabela'));
+    fireEvent.click(screen.getByText('Adicionar cruzamento'));
+    fireEvent.click(screen.getByText('Adicionar cruzamento'));
+    const j0 = within(screen.getByTestId('join-0'));
+    const j1 = within(screen.getByTestId('join-1'));
+    // daqui em diante as duas tabelas dos joins chegam devagar, cada uma liberada à parte
+    fieldsOf.mockImplementation((s: string) =>
+      s === 'leads' || s === 'leadProposals'
+        ? new Promise((r) => (release[s] = () => r(s === 'leads' ? LEAD_SCHEMA : OPP_SCHEMA)))
+        : Promise.resolve(OPP_SCHEMA),
+    );
+    fireEvent.change(j0.getByLabelText('Tabela'), { target: { value: 'leads' } });
+    await waitFor(() => expect(j0.getByLabelText('Tabela')).toBeDisabled());
+    fireEvent.change(j1.getByLabelText('Tabela'), { target: { value: 'leadProposals' } });
+    await waitFor(() => expect(j1.getByLabelText('Tabela')).toBeDisabled());
+    expect(j0.getByLabelText('Tabela')).toBeDisabled(); // o segundo não destrava o primeiro
+    release.leadProposals(undefined);
+    await waitFor(() => expect(j1.getByLabelText('Tabela')).toBeEnabled());
+    expect(j0.getByLabelText('Tabela')).toBeDisabled(); // o fim da carga do segundo não destrava o primeiro
+    release.leads(undefined);
+    await waitFor(() => expect(j0.getByLabelText('Tabela')).toHaveValue('leads'));
+    expect(j1.getByLabelText('Tabela')).toHaveValue('leadProposals');
+  });
+});

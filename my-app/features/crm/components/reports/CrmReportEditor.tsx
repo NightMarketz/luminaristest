@@ -63,12 +63,13 @@ export interface CrmReportEditorProps {
   onJoinSourceChange: (index: number, source: ReportSource) => void;
   onJoinRemove: (index: number) => void;
   /**
-   * Join cuja tabela nova está carregando: os campos dele ficam travados até o schema chegar (a troca segue o join pela
+   * Joins cuja tabela nova está carregando (um ou dois ao mesmo tempo — 4ª passada): os campos dele ficam travados até o schema chegar (a troca segue o join pela
    * identidade — editar o próprio join na espera descartaria a troca; 3ª passada do review do PR-B). Remover segue livre.
    */
-  busyJoin?: JoinDraft | null;
+  busyJoins?: readonly JoinDraft[];
 }
 
+const NO_BUSY_JOINS: readonly JoinDraft[] = [];
 const MEASURE_TYPES: readonly MeasureType[] = ['count', 'sum', 'avg'];
 const CURRENCY_FALLBACK = ['BRL', 'USD', 'EUR'];
 
@@ -88,7 +89,7 @@ export function CrmReportEditor({
   onSourceChange,
   onJoinSourceChange,
   onJoinRemove,
-  busyJoin = null,
+  busyJoins = NO_BUSY_JOINS,
 }: CrmReportEditorProps) {
   const { t } = useTranslation('crm');
   const list = fields ?? [];
@@ -193,7 +194,7 @@ export function CrmReportEditor({
             onChange={onChange}
             onJoinSourceChange={onJoinSourceChange}
             onJoinRemove={onJoinRemove}
-            busyJoin={busyJoin}
+            busyJoins={busyJoins}
           />
 
           {/* Medidas (item 5) */}
@@ -703,7 +704,7 @@ function JoinsSection({
   onChange,
   onJoinSourceChange,
   onJoinRemove,
-  busyJoin,
+  busyJoins,
 }: {
   draft: ReportDraft;
   fields: ISchemaField[];
@@ -712,7 +713,7 @@ function JoinsSection({
   onChange: (next: ReportDraft) => void;
   onJoinSourceChange: (index: number, source: ReportSource) => void;
   onJoinRemove: (index: number) => void;
-  busyJoin: JoinDraft | null;
+  busyJoins: readonly JoinDraft[];
 }) {
   const { t } = useTranslation('crm');
   const [open, setOpen] = useState(false);
@@ -743,7 +744,7 @@ function JoinsSection({
           {draft.joins.map((j, i) => {
             const right = j.rightSource ? rightFieldsOf(j.rightSource) : null;
             const rightOptions = right ? offeredFields(right) : [];
-            const busy = j === busyJoin;
+            const busy = busyJoins.includes(j);
             return (
               <div key={i} className="flex flex-wrap items-start gap-2" data-testid={`join-${i}`}>
                 <select
