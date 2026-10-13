@@ -197,4 +197,39 @@ describe('CrmReportWidget', () => {
       expect(svc.list).toHaveBeenCalledTimes(2);
     });
   });
+
+  describe('review do PR-D — 3ª passada', () => {
+    it('erro da exibição → reconfigurar → Cancelar volta ao erro com a ação (não fica em branco)', async () => {
+      svc.get.mockRejectedValue(notFound);
+      render(<CrmReportWidget id="w1" initialConfig={{ reportId: 'apagado' }} />);
+      fireEvent.click(await screen.findByText('Escolher outro relatório'));
+      fireEvent.click(await screen.findByText('Cancelar'));
+      expect(screen.getByText('Este relatório não existe mais.')).toBeInTheDocument();
+      expect(screen.getByText('Escolher outro relatório')).toBeInTheDocument();
+    });
+
+    it('lista que falha na configuração não esconde o resultado válido depois do Cancelar', async () => {
+      render(<CrmReportWidget id="w1" initialConfig={{ reportId: 'r1' }} />);
+      await screen.findByText(/^Total=/);
+      svc.list.mockRejectedValueOnce({ success: false, code: 'X', message: 'x', status: 500 });
+      fireEvent.click(screen.getByLabelText('Escolher o relatório'));
+      await screen.findByText('Tentar de novo');
+      fireEvent.click(screen.getByText('Cancelar'));
+      expect(screen.getByText(/^Total=/)).toBeInTheDocument();
+      expect(screen.queryByRole('alert')).toBeNull();
+    });
+
+    it('run que falha com a configuração aberta não tira a lista da tela', async () => {
+      let rejectRun: (e: unknown) => void = () => {};
+      svc.run.mockImplementation(() => new Promise((_, rej) => (rejectRun = rej)));
+      render(<CrmReportWidget id="w1" initialConfig={{ reportId: 'r1' }} />);
+      await waitFor(() => expect(svc.run).toHaveBeenCalled());
+      fireEvent.click(screen.getByLabelText('Escolher o relatório'));
+      expect(await screen.findByText('Total proposto')).toBeInTheDocument();
+      rejectRun({ success: false, code: 'REPORT_TOO_LARGE', message: 'x', details: { rowsRead: 20001, cap: 20000 }, status: 422 });
+      await new Promise((r) => setTimeout(r, 0));
+      expect(screen.getByText('Total proposto')).toBeInTheDocument();
+      expect(screen.queryByRole('alert')).toBeNull();
+    });
+  });
 });
