@@ -277,6 +277,10 @@ Dependências: PR-2 depois do PR-1; PR-3 e PR-4 depois do PR-2 (o PR-4 consome o
 50. **Rastro evento → fato → lançamento** (decisão 3): o `JournalEntry` já guarda `sourceType`/`sourceId` (o evento de
     negócio). A linha do binding guarda `eventKey → archetypeKey` (o fato contábil). `GET /accounting-kit/trace?sourceType=&sourceId=`
     devolve `{evento, arquétipo, bindingVersion, journalEntryId}`. Só leitura.
+    *Emenda 13/10 (lacuna levantada na execução; dono, chat, questionário: "Gravar a versão"):* o `JournalEntry` não
+    guardava a versão, e inferir pela data erra porque os mappers só recarregam no boot (F9). O lançamento passa a gravar
+    `bindingId`/`bindingVersion` (colunas nullable, sem backfill; null em manual, subrazão e lançamento anterior ao PR-6),
+    preenchidos pelo `InterpretedEventMapper`; o rastro lê direto.
 51. **Gates:** snapshot de shape dos DTOs (`dtoShapeSnapshot`) para todo DTO novo ou alterado; paridade i18n pt/en
     dos códigos de erro e motivos de pendência; `npm run docs:generate` e o guard de path-count do openapi (rotas novas:
     PR-3 +3, PR-4 +4, PR-6 +1).

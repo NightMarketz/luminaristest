@@ -20,18 +20,36 @@ import { AppError } from '../../../lib/errors';
  * The RAW source amount (reais, float) is carried here — conversion to integer
  * cents happens in the mapper (the money boundary), never before.
  */
+/**
+ * Vocabulário `sale.*` dos mappers escritos à mão e do golden (BE-INCR-KIT-SETOR PR-6, item 48): segue literal para
+ * quem precisa de exaustividade (`TieOutDiagnosticService`); só a porta (`AccountingEvent.sourceType`) alarga.
+ *  NOTE: 'crm.opportunity.won' was RETIRED from this union (ADR-CRM-AR-SEAM) — CRM Won deals
+ *  now create a Contas a Receber via CrmReceivableBridge instead of posting directly; the
+ *  string survives only as CRM_LEGACY_SOURCE_TYPE (legacy-era guard + old ledger entries).
+ */
+export type SaleSourceType =
+  | 'sale.finalized'
+  | 'sale.cogs'
+  | 'sale.returned'
+  | 'sale.settled'
+  | 'sale.package.sold'
+  | 'sale.package.expired';
+
+/**
+ * Formato de um `sourceType`/`eventKey` de negócio (BE-INCR-KIT-SETOR PR-6, item 46; F-KB-4 → b): o vocabulário é
+ * aberto — quem declara as chaves válidas é o kit (`operationalSchema`), não esta união.
+ */
+export const EVENT_KEY_PATTERN = /^[a-z][a-z0-9]*(\.[a-z0-9_]+)+$/;
+
+/**
+ * A domain fact that should produce a journal entry. Discriminated by `sourceType`.
+ * The RAW source amount (reais, float) is carried here — conversion to integer
+ * cents happens in the mapper (the money boundary), never before.
+ */
 export type AccountingEvent = {
-  /** Stable event-kind key. Also the JournalEntry.sourceType (idempotency axis 1).
-   *  NOTE: 'crm.opportunity.won' was RETIRED from this union (ADR-CRM-AR-SEAM) — CRM Won deals
-   *  now create a Contas a Receber via CrmReceivableBridge instead of posting directly; the
-   *  string survives only as CRM_LEGACY_SOURCE_TYPE (legacy-era guard + old ledger entries). */
-  sourceType:
-    | 'sale.finalized'
-    | 'sale.cogs'
-    | 'sale.returned'
-    | 'sale.settled'
-    | 'sale.package.sold'
-    | 'sale.package.expired';
+  /** Stable event-kind key (formato `EVENT_KEY_PATTERN`). Also the JournalEntry.sourceType (idempotency axis 1).
+   *  Aberto desde o PR-6 do KIT-SETOR: um kit novo declara evento novo sem editar o núcleo (item 49). */
+  sourceType: string;
   /** The source record id. JournalEntry.sourceId (idempotency axis 2). */
   sourceId: string;
   /** Tenancy unit of the SOURCE record — never defaulted or inferred elsewhere. */

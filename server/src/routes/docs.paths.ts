@@ -7567,5 +7567,23 @@ export {};
  *         '400': { description: 'body inválido ou UNIDADE_SEM_KIT' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *   /api/accounting-kit/trace:
+ *     get:
+ *       summary: Trace event → accounting fact → journal entry (KIT-SETOR PR-6, item 50)
+ *       description: >-
+ *         Só leitura. eventKey = sourceType do lançamento; archetypeKey e bindingVersion vêm do binding gravado no
+ *         lançamento (null em lançamento manual, de subrazão ou anterior ao PR-6).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: sourceType, required: true, schema: { type: string } }
+ *         - { in: query, name: sourceId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'KitTraceView ({ eventKey, archetypeKey|null, bindingVersion|null, journalEntryId })' }
+ *         '400': { description: 'query inválida' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { description: 'nenhum lançamento para o evento nesta unidade' }
  */
 export {};

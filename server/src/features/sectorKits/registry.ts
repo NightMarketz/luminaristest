@@ -34,3 +34,16 @@ export function listKits(): KitCatalogEntry[] {
     return { kitKey, label: kit.label, latestVersion: kit.kitVersion };
   });
 }
+
+/**
+ * Registro de eventos de negócio (BE-INCR-KIT-SETOR PR-6, item 47): toda chave que algum kit, em qualquer versão,
+ * declara no `operationalSchema` (= `emittableEventKeys`, F4). A Factory entrega ao `AccountingSyncService`, que com
+ * ele distingue `UNKNOWN_EVENT_KEY` de `NO_MAPPER_FOR_UNIT`. Versão antiga entra: unidade parada nela emite as chaves dela.
+ */
+export function declaredEventKeys(registry: KitRegistry = KIT_REGISTRY): ReadonlySet<string> {
+  const keys = new Set<string>();
+  for (const versions of Object.values(registry)) {
+    for (const kit of versions) for (const key of Object.keys(kit.operationalSchema)) keys.add(key);
+  }
+  return keys;
+}

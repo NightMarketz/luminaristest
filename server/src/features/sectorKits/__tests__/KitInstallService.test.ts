@@ -56,7 +56,7 @@ function build(opts: { failOn?: string; compileStatus?: 'Active' | 'Draft'; char
     } as never;
   });
   const service = new KitInstallService(
-    { canInstallKit: () => opts.canInstall ?? true, canManageKit: () => true, canReadServiceFiscalSuggestions: () => true },
+    { canInstallKit: () => opts.canInstall ?? true, canManageKit: () => true, canReadServiceFiscalSuggestions: () => true, canReadKitTrace: () => true },
     repo,
     { findActive: async () => null },
     { compile },

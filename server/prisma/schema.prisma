@@ -614,6 +614,11 @@ model JournalEntry {
   status              String                   @default("Draft") // Draft | PendingApproval | Posted | Reconciled | Reversed
   sourceType          String                   @default("manual")
   sourceId            String?
+  // BE-INCR-KIT-SETOR PR-6 (item 50; dono, chat, 13/10: "Gravar a versão"): o binding que interpretou o evento.
+  // Gravado pelo InterpretedEventMapper; null em lançamento manual, de subrazão ou anterior ao PR-6. Sem FK: o
+  // rastro sobrevive à versão do binding (mesmo padrão de audit/log).
+  bindingId           String?
+  bindingVersion      Int?
   reversedById        String?                  @unique // the reversal entry that estorned this one
   reversedBy          JournalEntry?            @relation("Reversal", fields: [reversedById], references: [id])
   reverses            JournalEntry?            @relation("Reversal")
