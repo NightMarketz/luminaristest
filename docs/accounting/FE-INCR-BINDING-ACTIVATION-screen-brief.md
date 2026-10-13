@@ -1,5 +1,7 @@
 # BRIEF — FE-INCR-BINDING-ACTIVATION (tela) — LAC-B: o operador ativa a contabilidade da unidade sem CLI
 
+> **EMENDA 2026-10-13:** ver [`FE-INCR-BINDING-ACTIVATION-EMENDA-1-brief.md`](FE-INCR-BINDING-ACTIVATION-EMENDA-1-brief.md) — forks decididos em [D-2026-10-13-QUESTIONARIO-BRIEFS-PRONTOS](../plano/decisoes/D-2026-10-13-QUESTIONARIO-BRIEFS-PRONTOS.md). Sem código; cada PR exige 'executa'.
+
 > Produzido em `sessao-planejamento`, 2026-10-06, sobre `origin/main` `6ac4381d`. Nó [LAC-B](../plano/nos/LAC-B.md).
 > Complementa o [BRIEF de 02/09](FE-INCR-BINDING-ACTIVATION-brief.md) (itens 1–3 e 5 entregues no #389) no seu
 > **item 4** ("UI mínima conforme F-B1"), que nunca ganhou spec.

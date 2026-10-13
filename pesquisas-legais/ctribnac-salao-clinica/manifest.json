@@ -1,0 +1,32 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "D01_anexo_b-nbs2-lista_servico_nacional-snnfse-v1-01-20260122-xl",
+      "url": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/documentacao-atual/anexo_b-nbs2-lista_servico_nacional-snnfse-v1-01-20260122.xlsx",
+      "url_final": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/documentacao-atual/anexo_b-nbs2-lista_servico_nacional-snnfse-v1-01-20260122.xlsx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-13T01:23:34-03:00",
+      "sha256": "e74b0be8ad204e458932efb1716225a3fb5703a84e5475ce5c4c6789d1c61b1a",
+      "arquivo": "docs/D01_anexo_b-nbs2-lista_servico_nacional-snnfse-v1-01-20260122-xl.html",
+      "texto": "docs/D01_anexo_b-nbs2-lista_servico_nacional-snnfse-v1-01-20260122-xl.txt",
+      "bytes": 85008
+    },
+    {
+      "id": "D02",
+      "titulo": "Lcp 116",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp116.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp116.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-13T01:23:35-03:00",
+      "sha256": "9e47381b0dcd79e943ea8117fa61828058f6a9beb9730d52b448a65a5e05e55b",
+      "arquivo": "docs/D02_lcp116-htm.html",
+      "texto": "docs/D02_lcp116-htm.txt",
+      "bytes": 104392
+    }
+  ],
+  "buscas": [],
+  "slug": "ctribnac-salao-clinica",
+  "pergunta": "cTribNac (lista nacional NFS-e) e cNBS de cada serviço do preset do salão de beleza e da clínica estética",
+  "criado": "2026-10-13T01:23:34-03:00"
+}

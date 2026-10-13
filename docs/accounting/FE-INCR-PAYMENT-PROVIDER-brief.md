@@ -1,5 +1,7 @@
 # FE-INCR-PAYMENT-PROVIDER — tela de cobrança por provedor (Mercado Pago) sobre o backend do F5 (BRIEF)
 
+> **EMENDA 2026-10-13:** ver [`FE-INCR-PAYMENT-PROVIDER-EMENDA-1-brief.md`](FE-INCR-PAYMENT-PROVIDER-EMENDA-1-brief.md) — forks decididos em [D-2026-10-13-QUESTIONARIO-BRIEFS-PRONTOS](../plano/decisoes/D-2026-10-13-QUESTIONARIO-BRIEFS-PRONTOS.md). Sem código; cada PR exige 'executa'.
+
 > **EMENDA 2026-10-11:** ver [`EMENDAS-BRIEF-2026-10-11.md`](EMENDAS-BRIEF-2026-10-11.md) §4 (multa de 2% para consumidor PF; dias não úteis CC 132; F-E4-1 pendente). Sem código; cada item exige 'executa'.
 
 > **Sessão:** `sessao-planejamento`, 2026-10-10, base `origin/main` `845d79ce`. Produz decisão, não código. Não cria
