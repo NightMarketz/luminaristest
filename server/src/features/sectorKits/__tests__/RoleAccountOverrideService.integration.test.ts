@@ -70,7 +70,7 @@ describe('ajuste papel→conta do kit (PR-3)', () => {
   });
 
   it('PUT grava o ajuste, recompila e a versão Active usa a conta nova', async () => {
-    const id35 = await novaConta('3.5', 'Revenue');
+    const id35 = await novaConta('3.9', 'Revenue');
     const res = await put('receita-serviço', { accountId: id35 });
 
     expect(res.status).toBe(200);
@@ -78,14 +78,14 @@ describe('ajuste papel→conta do kit (PR-3)', () => {
     expect(res.body.data.override).toMatchObject({
       role: 'receita-serviço',
       accountId: id35,
-      accountCode: '3.5',
+      accountCode: '3.9',
       kitAccountCode: '3.1',
       motivo: MOTIVO,
       setById: dono.id,
     });
     const active = await activeBinding();
     expect(active.bindingVersion).toBe(2);
-    expect(active.codes['receita-serviço']).toBe('3.5');
+    expect(active.codes['receita-serviço']).toBe('3.9');
     expect(active.codes['receita-revenda']).toBe('3.3'); // só o papel ajustado muda
     expect(await vivos()).toEqual([{ role: 'receita-serviço', accountId: id35 }]);
     // item 24: papel + ids; o motivo NUNCA vai ao payload (`previousAccountId: null` some na canonicalização do audit)
@@ -98,10 +98,10 @@ describe('ajuste papel→conta do kit (PR-3)', () => {
 
   it('natureza incompatível: 422 sem gravar nada (e os outros gates do item 20 e do §3.4)', async () => {
     const fora = await prisma.user.create({ data: { name: 'f', username: 'fora', email: 'fora@test.local', password: 'x', role: 'USER' } });
-    const contaAlheia = (await prisma.account.create({ data: { userId: fora.id, unitId: UNIT, code: '3.5', name: 'x', nature: 'Revenue' } })).id;
+    const contaAlheia = (await prisma.account.create({ data: { userId: fora.id, unitId: UNIT, code: '3.9', name: 'x', nature: 'Revenue' } })).id;
     const sintetica = await contaId('3');
     const despesa = await contaId('4.2');
-    const id35 = await novaConta('3.5', 'Revenue');
+    const id35 = await novaConta('3.9', 'Revenue');
 
     const casos: Array<[string, Record<string, unknown>, string]> = [
       ['receita-serviço', { accountId: despesa }, 'ROLE_ACCOUNT_NATURE_MISMATCH'],
@@ -126,7 +126,7 @@ describe('ajuste papel→conta do kit (PR-3)', () => {
   });
 
   it('trocar a conta duas vezes: uma linha viva por papel, auditoria com a conta anterior', async () => {
-    const id35 = await novaConta('3.5', 'Revenue');
+    const id35 = await novaConta('3.9', 'Revenue');
     const id36 = await novaConta('3.6', 'Revenue');
     expect((await put('receita-serviço', { accountId: id35 })).status).toBe(200);
     const res = await put('receita-serviço', { accountId: id36 });
@@ -153,7 +153,7 @@ describe('ajuste papel→conta do kit (PR-3)', () => {
   });
 
   it('DELETE recompila de volta ao código do kit', async () => {
-    const id35 = await novaConta('3.5', 'Revenue');
+    const id35 = await novaConta('3.9', 'Revenue');
     await put('receita-serviço', { accountId: id35 });
     const res = await del('receita-serviço');
 
@@ -172,7 +172,7 @@ describe('ajuste papel→conta do kit (PR-3)', () => {
   });
 
   it('compile Draft: compensa, audita o desfazer e devolve 422', async () => {
-    const id35 = await novaConta('3.5', 'Revenue');
+    const id35 = await novaConta('3.9', 'Revenue');
     const id36 = await novaConta('3.6', 'Revenue');
     await put('receita-serviço', { accountId: id35 });
     // Mês fechado: o dry-run do validador reprova ⇒ o compile grava Draft.
@@ -189,7 +189,7 @@ describe('ajuste papel→conta do kit (PR-3)', () => {
     expect(res.body.details.blocking.length).toBeGreaterThan(0);
     // o ajuste anterior volta a valer; a Active segue a v2 com 3.5
     expect(await vivos()).toEqual([{ role: 'receita-serviço', accountId: id35 }]);
-    expect(await activeBinding()).toMatchObject({ bindingVersion: 2, codes: { 'receita-serviço': '3.5' } });
+    expect(await activeBinding()).toMatchObject({ bindingVersion: 2, codes: { 'receita-serviço': '3.9' } });
     expect((await payloads()).slice(1)).toEqual([
       { eventType: 'kit.role_override_set', payload: { role: 'receita-serviço', accountId: id36, previousAccountId: id35 } },
       { eventType: 'kit.role_override_set', payload: { role: 'receita-serviço', accountId: id35, previousAccountId: id36 } },
@@ -214,7 +214,7 @@ describe('ajuste papel→conta do kit (PR-3)', () => {
   it('compile lança no meio de um PUT concorrente: a compensação não revive a linha antiga', async () => {
     // Review independente (achado 1): P vivo → PUT A grava A → antes do compile de A, PUT B grava B e compila
     // Active → o compile de A lança. Desfazer às cegas reviveria P ao lado de B.
-    const [idP, idA, idB] = [await novaConta('3.5', 'Revenue'), await novaConta('3.6', 'Revenue'), await novaConta('3.7', 'Revenue')];
+    const [idP, idA, idB] = [await novaConta('3.9', 'Revenue'), await novaConta('3.6', 'Revenue'), await novaConta('3.7', 'Revenue')];
     await put('receita-serviço', { accountId: idP });
     const scope = { ownerUserId: dono.id, actorUserId: dono.id, unitId: UNIT };
     const spy = jest.spyOn(BindingCompileService.prototype, 'compile').mockImplementationOnce(async () => {
@@ -251,7 +251,7 @@ describe('ajuste papel→conta do kit (PR-3)', () => {
   });
 
   it('item 25: recompilar pelo POST /accounting-binding/compile com sectorKey de kit não perde o ajuste', async () => {
-    const id35 = await novaConta('3.5', 'Revenue');
+    const id35 = await novaConta('3.9', 'Revenue');
     await put('receita-serviço', { accountId: id35 });
     const kit = latestKit('beautySalon')!;
     const chart = (await prisma.account.findMany({ where: { ...where(), deletedAt: null } })).map((a) => ({
@@ -269,7 +269,7 @@ describe('ajuste papel→conta do kit (PR-3)', () => {
     const res = await compile('beautySalon');
     expect(res.status).toBe(200);
     expect(res.body.data.status).toBe('Active');
-    expect(await activeBinding()).toMatchObject({ bindingVersion: 3, codes: { 'receita-serviço': '3.5' } });
+    expect(await activeBinding()).toMatchObject({ bindingVersion: 3, codes: { 'receita-serviço': '3.9' } });
 
     // sectorKey que não é de kit: identidade
     const outro = await compile('setorSemKit');

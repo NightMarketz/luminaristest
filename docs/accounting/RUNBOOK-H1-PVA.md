@@ -512,6 +512,44 @@ EVIDÊNCIA: [colar o JSON da resposta 201 — id do lançamento e as pernas]
 > DESFECHO: [dono]   ASSINATURA: [dono]
 > ```
 
+> **[EMENDA 2026-10-13 — emenda 3.3 PR-1, F-HR-4 a (dono, 11/10); tarifa em 4.6 (dono, 13/10)]** Depois do merge do
+> PR-1 da emenda 3.3, o plano canônico ganha 9 folhas (3.5.1–3.5.3, 4.3.1–4.3.3, 4.4.1, 4.4.2, 4.6). Elas nascem nos
+> escopos que já existem na primeira chamada que roda o `ensureChartOfAccounts` (`GET /accounts`, ou qualquer
+> lançamento), e o gate da ECD conta toda folha ativa: **sem o lote abaixo, a ECD volta a dar 400 nas duas unidades**.
+> Instalação nova pelo kit v5 já sai mapeada; o lote é só para as unidades do seed. Mesmos códigos em Presumido e Real
+> (PROPOSTA-REFERENCIAL-D1 §1.2; descrições oficiais conferidas em `referential_accounts` 2025 do dev.db em 13/10).
+>
+> Nas duas unidades (seed-presumido e seed-real):
+>
+> 1. `GET /api/accounting/accounts?unitId=<unidade>`. Cria as 9 folhas, se faltarem, e devolve os ids. Anote o `id`
+>    de cada código da tabela.
+> 2. `GET /api/accounting/referential/coverage?unitId=<unidade>&version=2025`. Esperado: `15/24 · ready false`, e as
+>    9 folhas novas entre as não mapeadas.
+> 3. `POST /api/accounting/referential/mappings/batch` com
+>    `{"unitId":"<unidade>","mappingVersion":"2025","items":[ … 9 itens {accountId, referentialCode, label} … ]}`:
+>
+>    | Conta | referentialCode | label |
+>    |---|---|---|
+>    | 3.5.1, 3.5.2, 3.5.3 | `3.01.01.05.01.05` | Outras Receitas Financeiras |
+>    | 4.3.1, 4.3.3 | `3.01.01.09.01.08` | (-) Outras Despesas Financeiras |
+>    | 4.3.2, 4.4.1, 4.4.2 | `3.01.01.07.01.22` | (-) Multas |
+>    | 4.6 | `3.01.01.07.01.04` | (-) Outros Serviços Prestados por Pessoa Física ou Jurídica |
+>
+>    Esperado: HTTP 200 (lote atômico; um id errado derruba os 9).
+> 4. Repita o passo 2. Esperado: `24/24 · ready true`.
+>
+> Se a unidade já tiver as contas fiscais do kit v3 (2.1.3–2.1.6, 3.6.x, 4.5.x), os totais sobem 8 nos dois
+> lados (23/32 → 32/32). O critério é `ready true` e nenhuma folha não mapeada.
+>
+> Quem executa é o dono, ou o agente sob comando literal dele no chat, colando a saída aqui. Desfecho e assinatura são
+> do dono.
+>
+> ```
+> EVIDÊNCIA (P5, emenda 3.3): [colar a saída dos passos 1–4 nas duas unidades]
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
+> ```
+
 ### 2. Conferir que o encerramento entrou no razão
 
 Na aplicação, aba **Balancete** (e DRE) do ano-calendário: as contas de resultado devem estar zeradas
