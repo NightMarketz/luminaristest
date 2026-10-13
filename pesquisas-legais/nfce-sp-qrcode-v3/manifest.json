@@ -47,6 +47,30 @@
       "arquivo": "docs/D04_WebServices-aspx.html",
       "texto": "docs/D04_WebServices-aspx.txt",
       "bytes": 118933
+    },
+    {
+      "id": "D05",
+      "titulo": "Regras de validação facultativas por UF",
+      "url": "https://portal.fazenda.sp.gov.br/servicos/nfce/Paginas/Regras-de-validacao.aspx",
+      "url_final": "https://portal.fazenda.sp.gov.br/servicos/nfce/Paginas/Regras-de-validacao.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-13T01:24:58-03:00",
+      "sha256": "8c03febbc068f73fe8fd3494bfa514c7a671c70535cc23de19370565703c7bdd",
+      "arquivo": "docs/D05_Regras-de-validacao-aspx.html",
+      "texto": "docs/D05_Regras-de-validacao-aspx.txt",
+      "bytes": 115952
+    },
+    {
+      "id": "D06",
+      "titulo": "Páginas\r\n\t- \r\n\tSobre a Nota Fiscal de Consumidor Eletrônica",
+      "url": "https://portal.fazenda.sp.gov.br/servicos/nfce/Paginas/Sobre.aspx",
+      "url_final": "https://portal.fazenda.sp.gov.br/servicos/nfce/Paginas/Sobre.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-13T01:24:59-03:00",
+      "sha256": "3d2bf48476f41bf5719084af3a1e557ce4db275e54c8ddc6bb0b457cb2bfd994",
+      "arquivo": "docs/D06_Sobre-aspx.html",
+      "texto": "docs/D06_Sobre-aspx.txt",
+      "bytes": 104983
     }
   ],
   "buscas": [],

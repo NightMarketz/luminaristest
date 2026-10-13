@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — nfce-sp-qrcode-v3
 
 **Pergunta:** L-NFCE-1: a SEFAZ-SP aceita NFC-e de PJ com QR Code versão 3, sem CSC?
-**Aberto em:** 2026-10-13T00:55:34-03:00 · **Atualizado em:** 2026-10-13T00:59:50-03:00
+**Aberto em:** 2026-10-13T00:55:34-03:00 · **Atualizado em:** 2026-10-13T01:28:16-03:00
 **Método:** somente fontes oficiais; documentos baixados e com hash para referência.
 
 <!-- ANALISE -->
@@ -62,6 +62,14 @@ Achados extras da mesma fonte, para as outras perguntas de lei da emenda:
 - **[D04]** WebServices — Órgãos federais (Receita, ANPD, INSS, etc.)  
   Link oficial: <https://portal.fazenda.sp.gov.br/servicos/nfce/Paginas/WebServices.aspx>  
   Baixado em 2026-10-13T00:57:23-03:00 · arquivo local `docs/D04_WebServices-aspx.html` · SHA-256 `142ca899c20baca5cad81e1e12debc9a5d943cdf7d7eb14e15e5e1efa488f005`
+- **[D05]** Regras de validação facultativas por UF — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://portal.fazenda.sp.gov.br/servicos/nfce/Paginas/Regras-de-validacao.aspx>  
+  Baixado em 2026-10-13T01:24:58-03:00 · arquivo local `docs/D05_Regras-de-validacao-aspx.html` · SHA-256 `8c03febbc068f73fe8fd3494bfa514c7a671c70535cc23de19370565703c7bdd`
+- **[D06]** Páginas
+	- 
+	Sobre a Nota Fiscal de Consumidor Eletrônica — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://portal.fazenda.sp.gov.br/servicos/nfce/Paginas/Sobre.aspx>  
+  Baixado em 2026-10-13T01:24:59-03:00 · arquivo local `docs/D06_Sobre-aspx.html` · SHA-256 `3d2bf48476f41bf5719084af3a1e557ce4db275e54c8ddc6bb0b457cb2bfd994`
 
 ## Registro de buscas
 _Nenhuma busca registrada._
