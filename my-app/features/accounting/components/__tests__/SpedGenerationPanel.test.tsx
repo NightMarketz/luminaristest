@@ -363,6 +363,27 @@ describe('SpedGenerationPanel — contador do cadastro (signerContactIds)', () =
     expect(payload.signers).toStrictEqual([{ identNom: 'Sócio', identCpfCnpj: '52998224725', codAssin: '205', indRespLegal: 'S' }]);
   });
 
+  // L5 (RUNBOOK-H1, PVA 13/10): com mapeamento referencial, o 0000.COD_PLAN_REF é obrigatório — a tela não tinha o
+  // campo e o PVA recusou os 15 I051. Decisão do dono (13/10): exigir no backend e expor o campo na tela.
+  it('ECD: o "Plano referencial" escolhido sai no payload como declarant.codPlanRef', async () => {
+    const { spedService } = await import('../../../../lib/services/sped.service');
+    render(<SpedGenerationPanel unitId="u1" />);
+    await flush();
+    const ecdForm = within(screen.getByRole('heading', { name: /Gerar SPED ECD/ }).closest('section') as HTMLElement);
+    fireEvent.change(ecdForm.getByLabelText('Contador do cadastro (opcional)'), { target: { value: 'ct1' } });
+    fireEvent.change(ecdForm.getByPlaceholderText('2026'), { target: { value: '2026' } });
+    fireEvent.change(ecdForm.getByPlaceholderText('Nome'), { target: { value: 'Sócio' } });
+    fireEvent.change(ecdForm.getByPlaceholderText('CPF/CNPJ'), { target: { value: '52998224725' } });
+    pick(ecdForm.getByPlaceholderText('Cód. (900=contador)'), '205');
+    fireEvent.change(ecdForm.getByDisplayValue('Não resp. legal'), { target: { value: 'S' } });
+    fireEvent.change(ecdForm.getByLabelText('Plano referencial'), { target: { value: '1' } });
+    fireEvent.click(ecdForm.getByRole('button', { name: 'Gerar e baixar ECD' }));
+
+    await waitFor(() => expect(spedService.generateAndDownloadEcd).toHaveBeenCalledTimes(1));
+    const payload = vi.mocked(spedService.generateAndDownloadEcd).mock.calls[0][0];
+    expect(payload.declarant.codPlanRef).toBe('1');
+  });
+
   it('ECF: o 400 do servidor ("não tem telefone") aparece íntegro', async () => {
     const { spedService } = await import('../../../../lib/services/sped.service');
     vi.mocked(spedService.generateAndDownloadEcf).mockRejectedValue({ success: false, error: "O contador 'ct1' não tem telefone no cadastro — o registro 0930 da ECF exige FONE.", status: 400 });

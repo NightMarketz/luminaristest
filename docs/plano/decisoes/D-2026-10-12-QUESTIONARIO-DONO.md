@@ -7,6 +7,8 @@ estado: "decided"
 autorizacao: "dono, chat, 2026-10-12, questionário (AskUserQuestion) — 3 rodadas; ratificação de forks, sem 'executa'"
 atualizado: "2026-10-12"
 ---
+> **SUPERADO EM 13/10 (dono, conciliação do PR #639):** vale [[D-2026-10-13-QUESTIONARIO-BRIEFS-PRONTOS]] — **ADN pausado, pesquisar PSC**; a guarda do certificado pelo Luminaris (decisão de 12/10) não vale. Onde as respostas de 12/10 e 13/10 a F-NFCE-E1/F-FE-COB divergirem, vale 13/10. O achado da FAQ NFS-e v1.1 17.7 (mTLS exige o certificado do próprio prestador; PSC não cobre a conexão) continua de pé e fica para a pesquisa de PSC.
+
 # D-2026-10-12-QUESTIONARIO-DONO
 
 **Estado:** `decided`. Origem: conferência do relatório de próximos passos de 12/10 contra `origin/main`

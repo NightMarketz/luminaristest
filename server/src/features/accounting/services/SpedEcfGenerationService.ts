@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { ForbiddenError, ConflictError, ValidationError } from '../../../lib/errors';
+import { textoLatin1Sped } from '../../../lib/sped';
 import { resolveSupersededJob, isSupersedesUniqueViolation } from './spedRectificationGate';
 import * as storage from '../../../lib/attachmentStorage';
 import { sendAlertWebhook } from '../../../lib/alertWebhook';
@@ -141,7 +142,12 @@ export class SpedEcfGenerationService {
 
     const lines = buildEcfFile(input);
     const text = serializeEcf(lines);
-    const buffer = Buffer.from(text, 'latin1'); // ISO-8859-1 (ECF-6, Manual p. 31)
+    let buffer: Buffer;
+    try {
+      buffer = Buffer.from(textoLatin1Sped(text), 'latin1'); // ISO-8859-1 (ECF-6, Manual p. 31); L6 — nunca byte de controle
+    } catch (e) {
+      throw new ValidationError(e instanceof Error ? e.message : String(e));
+    }
     const sha256 = createHash('sha256').update(buffer).digest('hex');
     const fileName = `ecf_${dto.declarant.cnpj}_${year}.txt`;
 

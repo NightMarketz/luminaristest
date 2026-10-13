@@ -47,6 +47,8 @@ function makeDto(over: Partial<SpedEcdRequestDto> = {}): SpedEcdRequestDto {
       nome: 'EMPRESA TESTE LTDA', cnpj: '11222333000181', uf: 'SP', codMun: '3550308',
       indSitIniPer: '0', indNire: '1', indFinEsc: '0', indGrandePorte: '0', tipEcd: '0',
       identMf: 'N', indEscCons: 'N', indCentralizada: '0', indMudancPc: '0',
+      // L5 (RUNBOOK-H1 13/10): com I051 emitido, o 0000.COD_PLAN_REF é obrigatório no PVA.
+      codPlanRef: '1',
     },
     book: { numOrd: '1', natLivr: 'DIARIO GERAL', dtExSocial: '2026-12-31' },
     // C12: IDENT_QUALIF (campo 04) não existe mais no DTO — SpedGenerationService.generate() deriva
@@ -66,6 +68,10 @@ interface Mocks {
   supersededJob?: Partial<AccountingDataExchangeJob> | null;
   existingSuccessor?: Partial<AccountingDataExchangeJob> | null;
   createJobError?: Error;
+  /** Histórico do lançamento 'e1' (I250.HIST) — default 'Venda'. */
+  description?: string;
+  /** DRE devolvida por reports.incomeStatement — default: só receita 3.1 (500,00). */
+  dre?: Record<string, unknown>;
 }
 
 function buildService(m: Mocks = {}) {
@@ -99,7 +105,7 @@ function buildService(m: Mocks = {}) {
 
   const findManyForExport = jest.fn(async () => [
     {
-      id: 'e1', entryNumber: 1, date: new Date('2026-01-15T00:00:00Z'), description: 'Venda',
+      id: 'e1', entryNumber: 1, date: new Date('2026-01-15T00:00:00Z'), description: m.description ?? 'Venda',
       status: 'Posted', sourceType: 'manual',
       postings: [
         { debitCents: 50000, creditCents: 0, account: { code: '1.1', name: 'Caixa' } },
@@ -144,7 +150,7 @@ function buildService(m: Mocks = {}) {
       equity: { accounts: [], totalCents: '0' },
       netResultLine: { amountCents: '50000' },
     })),
-    incomeStatement: jest.fn(async () => ({
+    incomeStatement: jest.fn(async () => m.dre ?? ({
       grossRevenue: { accounts: [{ code: '3.1', name: 'Receita', amountCents: '50000' }], totalCents: '50000' },
       revenueDeductions: { accounts: [], totalCents: '0' },
       costOfGoodsSold: { accounts: [], totalCents: '0' },
@@ -389,7 +395,7 @@ describe('SpedGenerationService.generate — retificação versionada (ECD subst
         nome: 'EMPRESA TESTE LTDA', cnpj: '11222333000181', uf: 'SP', codMun: '3550308',
         indSitIniPer: '0', indNire: '1', indFinEsc: '1', codHashSub: 'a'.repeat(40),
         indGrandePorte: '0', tipEcd: '0', identMf: 'N', indEscCons: 'N',
-        indCentralizada: '0', indMudancPc: '0',
+        indCentralizada: '0', indMudancPc: '0', codPlanRef: '1',
       } as unknown as SpedEcdRequestDto['declarant'],
       supersedesJobId: 'job-0',
       verificationTerm: verificationTerm(),
@@ -492,7 +498,7 @@ describe('SpedGenerationService.generate — sanitização do .rtf (item 3)', ()
         nome: 'EMPRESA TESTE LTDA', cnpj: '11222333000181', uf: 'SP', codMun: '3550308',
         indSitIniPer: '0', indNire: '1', indFinEsc: '1', codHashSub: 'a'.repeat(40),
         indGrandePorte: '0', tipEcd: '0', identMf: 'N', indEscCons: 'N',
-        indCentralizada: '0', indMudancPc: '0',
+        indCentralizada: '0', indMudancPc: '0', codPlanRef: '1',
       } as unknown as SpedEcdRequestDto['declarant'],
       supersedesJobId: 'job-0',
       verificationTerm: verificationTerm(),
@@ -536,3 +542,89 @@ describe('SpedGenerationService.generate — sanitização do .rtf (item 3)', ()
     expect(nine900J801).toBe('|9900|J801|1|');
   });
 });
+
+/** Bytes de controle C0/C1 (exceto CR/LF, que são o separador de linha) — o PVA recusa o campo que os contém. */
+function controlBytes(buf: Buffer): number[] {
+  return [...buf].filter((b) => (b < 0x20 && b !== 0x0d && b !== 0x0a) || (b >= 0x7f && b <= 0x9f));
+}
+
+describe('SpedGenerationService.generate — L6: texto fora do Latin-1 (RUNBOOK-H1, PVA 13/10)', () => {
+  // PVA ECD 10.4.1, 13/10: 173 × "Conteúdo do campo inválido" no I250.HIST — o "—" (U+2014) dos históricos de
+  // AP/AR saía como o byte 0x14 (Buffer.from(…, 'latin1') trunca o code point). Decisão do dono (13/10):
+  // transliterar a pontuação tipográfica e recusar o que não tiver equivalente.
+  it('translitera pontuação tipográfica — "—" vira "-" e aspas curvas viram retas, sem byte de controle', async () => {
+    const { service } = buildService({ description: 'Contas a pagar — Fornecedor “Seed”' });
+    await service.generate(scope, makeDto());
+    const buf = savedBuffers[savedBuffers.length - 1];
+    expect(controlBytes(buf)).toEqual([]);
+    expect(producedLines().filter((l) => l.startsWith('|I250|')).map((l) => l.split('|')[8])).toEqual([
+      'Contas a pagar - Fornecedor "Seed"',
+      'Contas a pagar - Fornecedor "Seed"',
+    ]);
+  });
+
+  it('caractere sem equivalente Latin-1 (emoji) → 400 nomeado, sem arquivo', async () => {
+    const { service, createJob } = buildService({ description: 'Venda \u{1F600}' });
+    await expect(service.generate(scope, makeDto())).rejects.toBeInstanceOf(ValidationError);
+    expect(createJob).not.toHaveBeenCalled();
+    expect(savedBuffers).toHaveLength(0);
+  });
+});
+
+describe('SpedGenerationService.generate — L5: COD_PLAN_REF com mapeamento (RUNBOOK-H1, PVA 13/10)', () => {
+  // PVA ECD 10.4.1, 13/10: 15 × "Registro não deve existir neste tipo de escrituração. Não houve informação de
+  // plano referencial no registro 0000 (COD_PLAN_REF)" — o gerador emitia I051 com o 0000.COD_PLAN_REF vazio.
+  // Decisão do dono (13/10): exigir o código (400) e expor o campo na tela.
+  it('mapeamento presente e codPlanRef ausente → 400 nomeado, sem arquivo', async () => {
+    const { service, createJob } = buildService();
+    const dto = makeDto();
+    delete (dto.declarant as { codPlanRef?: string }).codPlanRef;
+    await expect(service.generate(scope, dto)).rejects.toThrow(/COD_PLAN_REF/);
+    expect(createJob).not.toHaveBeenCalled();
+    expect(savedBuffers).toHaveLength(0);
+  });
+});
+
+describe('SpedGenerationService.generate — L7: registro 0007 (RUNBOOK-H1, PVA 13/10, tentativa 2)', () => {
+  // PVA ECD 10.4.1: "Registro obrigatório não encontrado. → 0007". Manual ECD L9 (jan/2026) pp. 76-77: registro
+  // obrigatório, ocorrência 1:N; sem outra inscrição, COD_ENT_REF = "00" (Nenhuma inscrição em outras entidades).
+  it('emite o 0007 com COD_ENT_REF 00 quando não há outra inscrição cadastral', async () => {
+    const { service } = buildService();
+    await service.generate(scope, makeDto());
+    expect(producedLines().filter((l) => l.startsWith('|0007|'))).toEqual(['|0007|00||']);
+  });
+});
+
+describe('SpedGenerationService.generate — L9: hierarquia e sinal da DRE no J150 (RUNBOOK-H1, PVA 13/10, tentativa 2)', () => {
+  // PVA ECD 10.4.1: "Não deve existir mais de uma linha de nível igual a 1 na DRE"; detalhe de CMV/despesa com
+  // IND_DC "C" (esperado devedor); totalizador "Resultado" sem filhas. Manual ECD L9 (jan/2026) p. 180: só uma linha
+  // de nível 1 (o Resultado do Exercício), os demais totalizadores do nível 2 em diante; p. 183 REGRA_SOMA_NIVEIS_DRE.
+  const dre = {
+    grossRevenue: { accounts: [{ code: '3.1', name: 'Receita', amountCents: '50000' }], totalCents: '50000' },
+    revenueDeductions: { accounts: [], totalCents: '0' },
+    costOfGoodsSold: { accounts: [{ code: '4.2', name: 'CMV', amountCents: '-5000' }], totalCents: '-5000' },
+    expenses: { accounts: [{ code: '4.1', name: 'Despesas', amountCents: '-20000' }], totalCents: '-20000' },
+    netResult: { amountCents: '25000' },
+  };
+  const j150 = () => producedLines().filter((l) => l.startsWith('|J150|')).map((l) => l.split('|'));
+
+  it('só o Resultado do Exercício no nível 1; seções no nível 2 sob ele; detalhes no nível 3 sob a seção', async () => {
+    const { service } = buildService({ dre });
+    await service.generate(scope, makeDto());
+    const rows = j150();
+    // campos: [1]=REG [2]=NU_ORDEM [3]=COD_AGL [4]=IND_COD_AGL [5]=NIVEL_AGL [6]=COD_AGL_SUP
+    expect(rows.filter((r) => r[5] === '1').map((r) => [r[3], r[4], r[6]])).toEqual([['DRE_RESULTADO', 'T', '']]);
+    expect(rows.filter((r) => r[4] === 'T' && r[5] === '2').every((r) => r[6] === 'DRE_RESULTADO')).toBe(true);
+    expect(rows.find((r) => r[3] === '4.1')!.slice(5, 7)).toEqual(['3', 'DRE_DESPESAS']);
+  });
+
+  it('despesa e CMV saem devedores (D) e o Resultado credor (C) — o totalizador fecha com as filhas', async () => {
+    const { service } = buildService({ dre });
+    await service.generate(scope, makeDto());
+    const val = (cod: string) => { const r = j150().find((x) => x[3] === cod)!; return `${r[10]} ${r[11]}`; };
+    expect([val('4.2'), val('4.1'), val('DRE_CMV'), val('DRE_DESPESAS'), val('3.1'), val('DRE_RESULTADO')]).toEqual([
+      '50,00 D', '200,00 D', '50,00 D', '200,00 D', '500,00 C', '250,00 C',
+    ]);
+  });
+});
+

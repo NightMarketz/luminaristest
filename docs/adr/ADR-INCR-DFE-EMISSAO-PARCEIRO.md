@@ -407,6 +407,10 @@ público — com ou sem o Luminaris.
 
 ## 12. EMENDA 2026-10-13 — emissor próprio no ADN e guarda do certificado do cliente (PR-0 do BE-INCR-DFE-ADN-EMISSOR)
 
+> **SUPERADO EM 13/10 (dono, conciliação do PR #639):** vale [[D-2026-10-13-QUESTIONARIO-BRIEFS-PRONTOS]] — **ADN pausado, pesquisar PSC**; a guarda do certificado pelo Luminaris (decisão de 12/10) não vale. Onde as respostas de 12/10 e 13/10 a F-NFCE-E1/F-FE-COB divergirem, vale 13/10. O achado da FAQ NFS-e v1.1 17.7 (mTLS exige o certificado do próprio prestador; PSC não cobre a conexão) continua de pé e fica para a pesquisa de PSC.
+> A §12.1 abaixo fica como registro; o D1 ("o Luminaris nunca guarda certificado") **volta a valer**.
+
+
 Origem: item 1 do PR-0 do [`BE-INCR-DFE-ADN-EMISSOR-brief.md`](../accounting/BE-INCR-DFE-ADN-EMISSOR-brief.md),
 F-ADN-1 = (a). Decisões: [`D-2026-10-12-QUESTIONARIO-DONO`](../plano/decisoes/D-2026-10-12-QUESTIONARIO-DONO.md)
 (5ª rodada). Execução autorizada pelo dono no chat em 2026-10-13: *"executa o PR-0 do BRIEF do ADN"*.

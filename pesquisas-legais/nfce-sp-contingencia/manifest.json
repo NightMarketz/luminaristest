@@ -1,0 +1,68 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "AJUSTE SINIEF 19/16 — Conselho Nacional de Política Fazendária CONFAZ",
+      "url": "https://www.confaz.fazenda.gov.br/legislacao/ajustes/2016/AJ_019_16",
+      "url_final": "https://www.confaz.fazenda.gov.br/legislacao/ajustes/2016/AJ_019_16",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-13T00:55:56-03:00",
+      "sha256": "261b396db284911964a380fa554809892ec5f6f753467f6129b70e1bb0a46e8c",
+      "arquivo": "docs/D01_AJ_019_16.html",
+      "texto": "docs/D01_AJ_019_16.txt",
+      "bytes": 124850
+    },
+    {
+      "id": "D02",
+      "titulo": "Portaria SRE 40 de 2024",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/Portaria-SRE-40-de-2024.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/Portaria-SRE-40-de-2024.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-13T00:55:56-03:00",
+      "sha256": "f8fe967390131cb88e6381c62534319e9df4f8a10aee2a746f7913a5c56fe977",
+      "arquivo": "docs/D02_Portaria-SRE-40-de-2024-aspx.html",
+      "texto": "docs/D02_Portaria-SRE-40-de-2024-aspx.txt",
+      "bytes": 159552
+    },
+    {
+      "id": "D03",
+      "titulo": "RC 34105/2026",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/RC34105_2026.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/RC34105_2026.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-13T00:55:57-03:00",
+      "sha256": "cd736d059300dd084db932848340a1bdfd16ed14c6b23ad828dac007a37dc846",
+      "arquivo": "docs/D03_RC34105_2026-aspx.html",
+      "texto": "docs/D03_RC34105_2026-aspx.txt",
+      "bytes": 153339
+    },
+    {
+      "id": "D04",
+      "titulo": "Páginas\r\n\t- \r\n\tSobre a Nota Fiscal de Consumidor Eletrônica",
+      "url": "https://portal.fazenda.sp.gov.br/servicos/nfce",
+      "url_final": "https://portal.fazenda.sp.gov.br/servicos/nfce",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-13T00:55:57-03:00",
+      "sha256": "e490e4663f719bde9086a4fcbbdd4acb529c705083d42104cfa5a6f8606c3ef0",
+      "arquivo": "docs/D04_nfce.html",
+      "texto": "docs/D04_nfce.txt",
+      "bytes": 104952
+    },
+    {
+      "id": "D05",
+      "titulo": "D05_items",
+      "url": "https://portal.fazenda.sp.gov.br/servicos/nfce/_api/web/lists/getByTitle('Perguntas%20Frequentes')/items?$select=Id,Title,Resposta,Assunto&$top=1000",
+      "url_final": "https://portal.fazenda.sp.gov.br/servicos/nfce/_api/web/lists/getByTitle('Perguntas%20Frequentes')/items?$select=Id,Title,Resposta,Assunto&$top=1000",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-13T00:57:08-03:00",
+      "sha256": "99248860606a9966ed3f5181888a0070bbc42031a232837497ab6f0519271e58",
+      "arquivo": "docs/D05_items.html",
+      "texto": "docs/D05_items.txt",
+      "bytes": 73958
+    }
+  ],
+  "buscas": [],
+  "slug": "nfce-sp-contingencia",
+  "pergunta": "L-NFCE-2: que contingência SP admite para NFC-e, e pode vender e emitir depois quando a SEFAZ cai?",
+  "criado": "2026-10-13T00:55:34-03:00"
+}

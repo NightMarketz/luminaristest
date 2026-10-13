@@ -1,5 +1,7 @@
 # BRIEF — BE-INCR-ONBOARDING-ACTIVATION (nós I4 + I5): o onboarding liga a contabilidade; venda sem mapper vira pendência visível
 
+> **RATIFICAÇÃO 2026-10-13:** F-I4-4 → (a) e F-I4-5 → (b) ([D-2026-10-13-QUESTIONARIO-BRIEFS-PRONTOS](../plano/decisoes/D-2026-10-13-QUESTIONARIO-BRIEFS-PRONTOS.md)). Nenhum fork deste BRIEF segue pendente. Não é 'executa'.
+
 > Produzido em `sessao-planejamento`, 2026-09-29, sobre `origin/main` `9dd690b3`. Nós [I4](../plano/nos/I4.md) e
 > [I5](../plano/nos/I5.md) do [plano em grafo](ONBOARDING-WIZARD-plano-grafo-brief.md) (§ I4 e I5, linhas 185-221).
 >

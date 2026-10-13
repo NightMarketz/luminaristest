@@ -426,11 +426,13 @@
       "ufCrc": "UF do CRC",
       "fone": "Fone",
       "formaTrib": "Forma de tributação (0010)",
-      "formaTribPer": "Forma trib. do período (0010, 4 posições)"
+      "formaTribPer": "Forma trib. do período (0010, 4 posições)",
+      "codPlanRef": "Plano referencial"
     },
     "opt": {
       "no": "Não",
-      "yes": "Sim"
+      "yes": "Sim",
+      "select": "Selecione"
     },
     "signers": {
       "title": "Signatários (J930)",
@@ -460,6 +462,18 @@
       "contadorManual": "— preencher o contador à mão —",
       "contadorHint": "Os dados do contador vêm do cadastro; não é preciso uma linha 900 abaixo.",
       "loadError": "Erro ao carregar a tabela de qualificação do assinante."
+    },
+    "planRef": {
+      "1": "PJ em Geral - Lucro Real",
+      "2": "PJ em Geral - Lucro Presumido",
+      "3": "Financeiras - Lucro Real",
+      "4": "Seguradoras - Lucro Real",
+      "5": "Imunes e Isentas em Geral",
+      "6": "Imunes e Isentas - Financeiras",
+      "7": "Imunes e Isentas - Seguradoras",
+      "8": "Entidades Fechadas de Previdência Complementar",
+      "9": "Partidos Políticos",
+      "10": "Financeiras - Lucro Presumido"
     }
   },
   "trialBalance": {
