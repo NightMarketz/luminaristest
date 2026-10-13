@@ -5,7 +5,7 @@
 -- numa transação. Se abortar no meio, sobra a tabela sem o índice; reexecutar converge porque toda criação é IF NOT EXISTS.
 
 -- CreateTable
-CREATE TABLE "ptax_rates" (
+CREATE TABLE IF NOT EXISTS "ptax_rates" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "currency" TEXT NOT NULL,
     "rateDate" DATETIME NOT NULL,
