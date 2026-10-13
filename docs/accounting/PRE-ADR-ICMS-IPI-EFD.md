@@ -1,7 +1,7 @@
 # PRE-ADR-ICMS-IPI-EFD — Escopo da apuração de ICMS/IPI e da EFD ICMS/IPI: UFs, ST/DIFAL, FCP, CIAP e qual vertical primeiro
 
 - **Data:** 2026-10-10
-- **Status:** **Proposed** — F-ICMS-0..14 com **RATIFICAÇÃO PENDENTE**. Nenhum código autorizado. Sem "executa".
+- **Status:** **Proposed** — F-ICMS-0..14 **RATIFICADOS em lote pela recomendação de cada fork** (dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]])). Nenhum código autorizado. Sem "executa".
 - **Autorização:** dono, chat, 2026-10-10, questionário: *"PRE-ADR EFD ICMS/IPI"*, opção descrita como *"PRE-ADR de
   escopo da apuração de ICMS/IPI e da EFD: quais UFs, ST/DIFAL e qual vertical de comércio primeiro."* Escopo: só
   documento, sem código, sem "executa".
