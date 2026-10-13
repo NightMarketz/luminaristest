@@ -10,6 +10,7 @@ import { dfePollScheduler } from './jobs/DfePollScheduler';
 import { collectionChargePollScheduler } from './jobs/CollectionChargePollScheduler';
 import { mpReleaseReportScheduler } from './jobs/MpReleaseReportScheduler';
 import { legalParamsRecalcScheduler } from './jobs/LegalParamsRecalcScheduler';
+import { ptaxRateScheduler } from './jobs/PtaxRateScheduler';
 import { DocumentStatus } from './features/documents/models/Document.model';
 
 const PORT = process.env.PORT || 3001;
@@ -59,6 +60,7 @@ async function bootstrap(): Promise<void> {
     collectionChargePollScheduler.start(); // BE-INCR-PAYMENT-PROVIDER PR-2 (P2-9)
     mpReleaseReportScheduler.start(); // BE-INCR-PAYMENT-PROVIDER PR-3 (P3-5)
     legalParamsRecalcScheduler.start(); // BE-INCR-LEGAL-PARAMS PR-4 (item 10): varredura dos jobs PENDING
+    ptaxRateScheduler.start(); // BE-INCR-CRM-REPORT-BUILDER PR-1 (item 23): PTAX de fechamento do BCB
   });
 }
 
@@ -127,6 +129,7 @@ function gracefulShutdown() {
   collectionChargePollScheduler.stop();
   mpReleaseReportScheduler.stop();
   legalParamsRecalcScheduler.stop();
+  ptaxRateScheduler.stop();
 
   // Force-exit safety net after 10 seconds
   const forceExitTimer = setTimeout(() => {

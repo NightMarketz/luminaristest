@@ -7,6 +7,15 @@ import {
   downloadAttachment,
   deleteAttachment,
 } from '../controllers/attachmentsController';
+import {
+  listCrmReports,
+  createCrmReport,
+  getCrmReport,
+  updateCrmReport,
+  deleteCrmReport,
+  runCrmReportPreview,
+  runSavedCrmReport,
+} from '../controllers/crmReportsController';
 
 const router = Router();
 
@@ -22,6 +31,15 @@ router.post('/pipeline/convert-lead-to-opportunity', convertLeadToOpportunity);
 
 // CRM analytics — aggregated KPI bundle over the leads dataset.
 router.get('/pipeline-analytics', getCrmAnalytics);
+
+// CRM report builder (BE-INCR-CRM-REPORT-BUILDER PR-2, item 10) — definições salvas + execução/preview.
+router.get('/reports', listCrmReports);
+router.post('/reports', createCrmReport);
+router.post('/reports/run', runCrmReportPreview);
+router.get('/reports/:id', getCrmReport);
+router.put('/reports/:id', updateCrmReport);
+router.delete('/reports/:id', deleteCrmReport);
+router.post('/reports/:id/run', runSavedCrmReport);
 
 // CRM attachments — downloadable file-store for record attachments.
 router.post('/attachments', uploadMiddleware, createAttachment);

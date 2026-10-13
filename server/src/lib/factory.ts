@@ -5,6 +5,11 @@ import { LegalParameterService } from '../features/legalParameters/services/Lega
 import type { ILegalParameterRepository } from '../features/legalParameters/repositories/ILegalParameterRepository';
 import { LegalParameterRecalcJobRepository } from '../features/legalParameters/repositories/LegalParameterRecalcJobRepository';
 import type { ILegalParameterRecalcJobRepository } from '../features/legalParameters/repositories/ILegalParameterRecalcJobRepository';
+import { PtaxRateRepository } from '../features/fx/repositories/PtaxRateRepository';
+import type { IPtaxRateRepository } from '../features/fx/repositories/IPtaxRateRepository';
+import { BcbPtaxClient } from '../features/fx/clients/BcbPtaxClient';
+import type { IPtaxClient } from '../features/fx/ports/IPtaxClient';
+import { PtaxSyncService } from '../features/fx/services/PtaxSyncService';
 import { TaxAssessmentRecalcService } from '../features/accounting/services/TaxAssessmentRecalcService';
 import type { ILegalParameterPolicy } from '../features/legalParameters/policies/ILegalParameterPolicy';
 import { ChatInstanceRepository } from '../features/chatInstances/repositories/ChatInstanceRepository';
@@ -95,6 +100,11 @@ import { LuminarisAgentService } from '../features/chat/services/LuminarisAgentS
 import { KnowledgeGraphService } from '../features/chat/services/KnowledgeGraphService';
 import { CrmPipelineService } from '../features/crm/services/CrmPipelineService';
 import { CrmAnalyticsService } from '../features/crm/services/CrmAnalyticsService';
+import { CrmReportService } from '../features/crm/services/CrmReportService';
+import { CrmReportDefinitionRepository } from '../features/crm/repositories/CrmReportDefinitionRepository';
+import type { ICrmReportDefinitionRepository } from '../features/crm/repositories/ICrmReportDefinitionRepository';
+import { CrmReportDefinitionPolicy } from '../features/crm/policies/CrmReportDefinitionPolicy';
+import type { ICrmReportDefinitionPolicy } from '../features/crm/policies/ICrmReportDefinitionPolicy';
 import { PostingService } from '../features/accounting/services/PostingService';
 import { EntryApprovalService } from '../features/accounting/services/EntryApprovalService';
 import { PeriodService } from '../features/accounting/services/PeriodService';
@@ -586,6 +596,8 @@ export class ApplicationFactory {
     packageAcceptance: IPackageAcceptanceRepository; // FE-INCR-PACOTE-VALIDADE
     legalParameter: ILegalParameterRepository; // BE-INCR-LEGAL-PARAMS PR-1
     legalParameterRecalcJob: ILegalParameterRecalcJobRepository; // BE-INCR-LEGAL-PARAMS PR-4 (item 10)
+    ptaxRate: IPtaxRateRepository; // BE-INCR-CRM-REPORT-BUILDER PR-1 (item 21)
+    crmReportDefinition: ICrmReportDefinitionRepository; // BE-INCR-CRM-REPORT-BUILDER PR-2 (item 2)
     sourceProvenance: ISourceProvenanceRepository;
     referentialMapping: IReferentialMappingRepository;
     referentialAccount: IReferentialAccountRepository;
@@ -632,6 +644,7 @@ export class ApplicationFactory {
     dynamicTable: IDynamicTablePolicy;
     attachment: IAttachmentPolicy;
     savedTableView: ISavedTableViewPolicy;
+    crmReportDefinition: ICrmReportDefinitionPolicy; // BE-INCR-CRM-REPORT-BUILDER PR-2 (item 3)
     systemProvisioning: ISystemProvisioningPolicy;
     accounting: IAccountingPolicy;
     packageBalance: IPackageBalancePolicy;
@@ -726,16 +739,23 @@ export class ApplicationFactory {
     attachment: AttachmentService;
     savedTableView: SavedTableViewService;
     systemProvisioning: SystemProvisioningService;
+    ptaxSync: PtaxSyncService; // BE-INCR-CRM-REPORT-BUILDER PR-1 (item 23)
+    crmReport: CrmReportService; // BE-INCR-CRM-REPORT-BUILDER PR-2 (item 11)
     depreciationRate: DepreciationRateService;
     fixedAssetClass: FixedAssetClassService;
     fixedAsset: FixedAssetService;
     depreciation: DepreciationService;
   };
 
+  /** Porta do BCB (BE-INCR-CRM-REPORT-BUILDER PR-1, item 22) — cliente HTTP externo, não repositório. */
+  private readonly ptaxClient: IPtaxClient;
+
   private constructor() {
     // External services (singletons)
     const chatOpenAIService = new ChatOpenAIService();
     const embeddingOpenAIService = new EmbeddingService({ apiKey: process.env.OPENAI_API_KEY || '' });
+
+    this.ptaxClient = new BcbPtaxClient();
 
     // Repositories
     this.repositories = {
@@ -764,6 +784,8 @@ export class ApplicationFactory {
       packageAcceptance: new PackageAcceptanceRepository(),
       legalParameter: new LegalParameterRepository(),
       legalParameterRecalcJob: new LegalParameterRecalcJobRepository(),
+      ptaxRate: new PtaxRateRepository(),
+      crmReportDefinition: new CrmReportDefinitionRepository(),
       sourceProvenance: new SourceProvenanceRepository(),
       referentialMapping: new ReferentialMappingRepository(),
       referentialAccount: new ReferentialAccountRepository(),
@@ -811,6 +833,7 @@ export class ApplicationFactory {
       dynamicTable: new DynamicTablePolicy(),
       attachment: new AttachmentPolicy(),
       savedTableView: new SavedTableViewPolicy(),
+      crmReportDefinition: new CrmReportDefinitionPolicy(),
       systemProvisioning: new SystemProvisioningPolicy(),
       accounting: new AccountingPolicy(),
       packageBalance: new PackageBalancePolicy(),
@@ -1632,6 +1655,14 @@ export class ApplicationFactory {
         this.repositories.knowledgeGraph,
         this.policies.systemProvisioning,
       ),
+      ptaxSync: new PtaxSyncService(this.repositories.ptaxRate, this.ptaxClient),
+      crmReport: new CrmReportService(
+        dynamicTableService,
+        this.repositories.dynamicTable,
+        this.repositories.crmReportDefinition,
+        this.policies.crmReportDefinition,
+        this.repositories.ptaxRate,
+      ),
     };
   }
 
@@ -1858,6 +1889,11 @@ export class ApplicationFactory {
   public getPackageAcceptanceService = (): PackageAcceptanceService => this.services.packageAcceptance;
   public getLegalParameterService = (): LegalParameterService => this.services.legalParameter;
   public getTaxAssessmentRecalcService = (): TaxAssessmentRecalcService => this.services.taxAssessmentRecalc;
+  // BE-INCR-CRM-REPORT-BUILDER PR-1 (item 11, emenda 29/09): módulo neutro features/fx
+  public getPtaxRateRepository = (): IPtaxRateRepository => this.repositories.ptaxRate;
+  public getPtaxClient = (): IPtaxClient => this.ptaxClient;
+  public getPtaxSyncService = (): PtaxSyncService => this.services.ptaxSync;
+  public getCrmReportService = (): CrmReportService => this.services.crmReport; // PR-2 (item 11)
   public getPresetSyncService = (): PresetSyncService => this.services.presetSync;
   public getModuleInstallService = (): ModuleInstallService => this.services.moduleInstall;
   public getAttachmentService = (): AttachmentService => this.services.attachment;

@@ -404,3 +404,57 @@ documentos do art. 112 dos regulamentos do IBS/CBS; o 01/11 pode vir de outra no
 padrão nacional), e aí as duas valem. Pergunta 5 do follow-up ao contador. **Consequência prática:** o salão em
 regime normal emite NFS-e nacional a partir de 01/10/2026. Até existir um adaptador pronto, o caminho é o portal
 público — com ou sem o Luminaris.
+
+## 12. EMENDA 2026-10-13 — emissor próprio no ADN e guarda do certificado do cliente (PR-0 do BE-INCR-DFE-ADN-EMISSOR)
+
+> **SUPERADO EM 13/10 (dono, conciliação do PR #639):** vale [[D-2026-10-13-QUESTIONARIO-BRIEFS-PRONTOS]] — **ADN pausado, pesquisar PSC**; a guarda do certificado pelo Luminaris (decisão de 12/10) não vale. Onde as respostas de 12/10 e 13/10 a F-NFCE-E1/F-FE-COB divergirem, vale 13/10. O achado da FAQ NFS-e v1.1 17.7 (mTLS exige o certificado do próprio prestador; PSC não cobre a conexão) continua de pé e fica para a pesquisa de PSC.
+> A §12.1 abaixo fica como registro; o D1 ("o Luminaris nunca guarda certificado") **volta a valer**.
+
+
+Origem: item 1 do PR-0 do [`BE-INCR-DFE-ADN-EMISSOR-brief.md`](../accounting/BE-INCR-DFE-ADN-EMISSOR-brief.md),
+F-ADN-1 = (a). Decisões: [`D-2026-10-12-QUESTIONARIO-DONO`](../plano/decisoes/D-2026-10-12-QUESTIONARIO-DONO.md)
+(5ª rodada). Execução autorizada pelo dono no chat em 2026-10-13: *"executa o PR-0 do BRIEF do ADN"*.
+
+### 12.1 O que muda neste ADR
+
+1. **A decisão 2 de 26/09 é reaberta, e a consequência do D1 muda.** Onde o D1 diz "o Luminaris nunca guarda
+   certificado A1/A3" e a §11.1 item 2 diz "D1 fica mais estrito: só parceiro", passa a valer: **o Luminaris guarda o
+   certificado do cliente (SE-S em arquivo; o tipo A1 foi extinto pela Res. CG ICP-Brasil 211/2024), cifrado em
+   repouso, um por unidade/CNPJ**, e o usa para a assinatura e o mTLS de NFS-e, NF-e e NFC-e. Decisão do dono,
+   12/10, contra a recomendação (portal + PSC).
+2. **Por que o caminho PSC caiu:** a FAQ oficial da NFS-e (v1.1, 22/09/2026, item 17.7) diz que a assinatura da DPS
+   **e a autenticação mTLS** exigem o certificado do **próprio prestador**, sem procuração para integrador, e que o
+   PAA da NFS-e está indisponível. Certificado em nuvem não faz mTLS. Dossiê:
+   `pesquisas-legais/nfse-adn-certificado-numeracao/relatorio.md`.
+3. **Condições da decisão 2 (§11.1 item 2):** a fala do dono de 07/10 (emissor próprio no ADN) e a de 12/10 (guarda
+   do certificado) cumprem a condição "aceite de custódia, com cifra em repouso". A cifra é o keyring próprio
+   `DFE_CERT_KEYS` (F-ADN-3 b), pré-condição de deploy do M2. A condição "demanda de cliente só-serviço" o dono não
+   tratou como necessária: a decisão foi tomada pelo prazo de 01/11/2026.
+4. **Novo adaptador `adn`** (Sefin Nacional / ADN) como protocolo próprio, pela regra da §11.1 item 3 (um adaptador
+   por protocolo). Coexiste com `manual`; o adaptador de cada documento continua sendo o do documento (§11.1 item 6).
+5. **Releitura (§11.1 item 5)** vale também para o `adn`: o XML devolvido pelo POST síncrono é relido e comparado.
+
+### 12.2 Forks do BRIEF ratificados (fonte: D-2026-10-12, 5ª rodada)
+
+| Fork | Decisão |
+| --- | --- |
+| F-ADN-1 | (a) esta emenda, antes do PR-1 |
+| F-ADN-2 | (a) tabela `FiscalCertificate` por unidade, cifrada por linha |
+| F-ADN-3 | (b) keyring próprio `DFE_CERT_KEYS` |
+| F-ADN-4 | (a) `node-forge` para abrir o PKCS#12 |
+| F-ADN-5 | (a) aplicar o resultado síncrono |
+| F-ADN-6 | (a) `partnerRef` = `infDPS/@Id` |
+| F-ADN-7 | (c) algoritmos numa constante única, trocada pelo runbook do D5 |
+| F-ADN-8 | (a) não achou após N consultas ⇒ `REJECTED` + reenvio manual |
+| F-ADN-9 | (a) este BRIEF migra a sequência por ambiente |
+| F-ADN-10 | (a) recusa vencido + aviso 30 dias antes |
+| F-ADN-11 | (a) 14 dígitos — sustentado pela FAQ NFS-e 17.7 e 28.2 (pesquisa, sem pergunta) |
+| F-ADN-12 | (a) hosts no código, override do caminho base |
+| F-ADN-13 | (a) o adaptador nasce com `cancelar` |
+
+### 12.3 Risco aberto (não bloqueia código em homologação)
+
+- **L-ADN-5 — custódia de certificado de terceiro.** DOC-ICP-04 v8.3 item 6.1.1.8 reserva a guarda de chave de
+  terceiro em hardware a PSC credenciado; a guarda em software não tem regra própria, mas choca com 6.1.1.6 "c" e
+  DOC-ICP-05 9.3.3.3 (`docs/accounting/pesquisa-lei-2026-10-10/parceria-consumidor-a1.md` F-2). **Advogado antes do
+  1º certificado de cliente em produção.**
