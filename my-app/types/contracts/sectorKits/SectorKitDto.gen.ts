@@ -6,6 +6,17 @@ name: string
 nature: ("Asset" | "Liability" | "Equity" | "Revenue" | "Expense")
 acceptsEntries: boolean
 }
+export interface ServiceFiscalCatalogItemInput {
+key: string
+label: string
+cTribNac: string
+cNBS?: string
+/**
+ * @minItems 1
+ */
+sinonimos: [string, ...(string)[]]
+fonte: string
+}
 export interface SectorKitV1Input {
 kitKey: string
 kitVersion: number
@@ -108,10 +119,15 @@ cofinsRecolherAccountCode?: string
 }
 }
 serviceFiscalDefaults?: {
-serviceRef: string
+key: string
+label: string
 cTribNac: string
 cNBS?: string
-cIndOp?: string
+/**
+ * @minItems 1
+ */
+sinonimos: [string, ...(string)[]]
+fonte: string
 }[]
 referential?: {
 regime: ("MEI" | "SIMPLES" | "PRESUMIDO" | "REAL")
