@@ -1,3 +1,5 @@
+> **SUPERADA em 2026-10-12** (dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]] §5ª rodada)): a FAQ oficial da NFS-e (17.7) exige o certificado do próprio prestador no mTLS, o que derruba o F-PSC-1; o dono escolheu a guarda do certificado do cliente pelo Luminaris para os três DF-e. F-PSC-1..8 perdem o objeto. Vale o BRIEF-ADN original. Mantido como registro.
+
 # BRIEF — Emenda PSC do BE-INCR-DFE-ADN-EMISSOR (assinatura por certificado em nuvem contratado pelo Luminaris) — nó X10i
 
 > Produzido em `sessao-planejamento` (2026-10-12), nó [`X10i`](../plano/nos/X10i.md), gate [`D5`](../plano/gates/D5.md).

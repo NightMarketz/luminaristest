@@ -38,10 +38,32 @@ atualizado: "2026-10-12"
 | F-PSC-4, 5, 6 | "Todas (a) (Recomendado)" | Aviso a 80% da cota; pré-voo bloqueia e avisa; `PENDING_SIGNATURE` sem consumir número |
 | F-PSC-7, F-PSC-8 | "Ambas (a) (Recomendado)" | Contingência pelo portal se não houver resposta até 25/10; cobrança da revenda fora do BRIEF |
 
+## 5ª rodada — pesquisa legal derrubou o F-PSC-1 (dossiê `pesquisas-legais/nfse-adn-certificado-numeracao`)
+
+Pesquisa (protocolo de fonte oficial): a FAQ NFS-e v1.1 (gov.br, 22/09/2026) item 17.7 diz que "a assinatura da DPS e a
+autenticação mTLS na API exigem obrigatoriamente o certificado … pertencente ao próprio prestador"; sem procuração para
+integrador; PAA da NFS-e indisponível. Decreto 12.955 arts. 127–129 remetem à documentação técnica. L-ADN-1 (14 dígitos)
+e L-ADN-4 (não) respondidas; L-ADN-2/3 com leitura segura no relatório.
+
+| Pergunta | Resposta | Efeito |
+| --- | --- | --- |
+| Como emitir a NFS-e | "Reabrir guarda do A1" — **contra a recomendação** (portal + perguntar PSCs) | Decisão 2 de 26/09 reaberta: o Luminaris guarda o certificado do cliente |
+| Escopo | "Os três DF-e com o certificado guardado" — **contra a recomendação** | PSC abandonado; F-E8-1R → (c); F-E8-2, F-E8-3 e F-PSC-1..8 **perdem o objeto**; emenda PSC SUPERADA |
+| F-ADN-1..4, 10 | "Todas recomendadas" | 1 (a), 2 (a), 3 (b), 4 (a), 10 (a) |
+| F-ADN-5, 6 | "Ambas (a)" | |
+| F-ADN-7, 12, 13 | "Todas recomendadas" | 7 (c), 12 (a), 13 (a) |
+| F-ADN-8, 9 | "Ambas (a)" | |
+| F-ADN-11 | resolvido pela pesquisa → (a) | 14 dígitos (FAQ 17.7, 28.2) |
+
+**Risco aberto (do dono, com advogado):** L-ADN-5 — custódia do certificado de terceiro. DOC-ICP-04 6.1.1.8 reserva a
+guarda em hardware a PSC; a guarda em software não tem regra própria, mas choca com 6.1.1.6 "c" e DOC-ICP-05 9.3.3.3
+(`docs/accounting/pesquisa-lei-2026-10-10/parceria-consumidor-a1.md` F-2). Bloqueia o 1º certificado de cliente em
+produção, não o código em homologação.
+
 ## Já resolvidos antes (registro)
 - F-E1-1 = (a), dono 11/10, implementado no #634.
 - F-E8-1R = (a), dono 11/10 (#635); F-E8-1 e F-ADN-1 superados; F-ADN-2/3 sem objeto.
 
 ## Ainda pendentes
-- F-ADN-5, 6, 7, 8, 9, 11, 12, 13 (mantidos pela emenda PSC). F-ADN-2/4 sem objeto; F-ADN-3 → F-PSC-3; F-ADN-10 → F-PSC-5.
+- Nenhum fork do emissor ADN. Pendente externo: L-ADN-5 (advogado) e o runbook do D5.
 - F-E8-1 (PAA) ficou superado, não pendente.

@@ -102,7 +102,7 @@ Gates que este contrato aciona quando virar código: snapshot de shape do DTO, u
 
 ## 5. Forks
 
-**F-E8-1R: como o salão assina NF-e/NFC-e, já que o PAA não o alcança.** **RATIFICADO (a)**: dono, chat, 2026-10-11,
+**F-E8-1R: como o salão assina NF-e/NFC-e, já que o PAA não o alcança.** **12/10: REABERTO → (c) o Luminaris guarda o certificado (SE-S) do cliente**, para NFS-e, NF-e e NFC-e (dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]] §5ª rodada)), depois que a FAQ NFS-e 17.7 mostrou que o mTLS exige o certificado do próprio prestador. F-E8-2/F-E8-3 perdem o objeto. Histórico: **RATIFICADO (a)**: dono, chat, 2026-10-11,
 *"Pode seguir a sua sugestao pra decisão nova"*, em resposta à recomendação (a) deste fork. A ratificação **não é
 "executa"**: os itens 1–3 do §3 continuam precisando de pedido próprio, por PR. Efeito: a metade "NF-e/NFC-e pelo PAA"
 da decisão (a) de 11/10 dá lugar ao PSC, e o F-E8-1 da `EMENDAS-BRIEF-2026-10-11` §8 fica **superado**.

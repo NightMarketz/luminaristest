@@ -1,6 +1,6 @@
 # BRIEF — BE-INCR-DFE-ADN-EMISSOR (emissor próprio de NFS-e na Sefin Nacional / ADN, sem depender do A1 real) — nó X10i
 
-> **EMENDA PSC 2026-10-12:** ver [`BE-INCR-DFE-ADN-EMENDA-PSC-brief.md`](BE-INCR-DFE-ADN-EMENDA-PSC-brief.md) — assinatura pelo PSC contratado pelo Luminaris; itens 3–7, 9, 13 substituídos; F-ADN-2/4 sem objeto, F-ADN-3→F-PSC-3, F-ADN-10→F-PSC-5; F-PSC-1..8 ratificados (a) em 12/10; F-PSC-1 (mTLS com A1 do Luminaris) ainda depende da L-ADN-4 para produção.
+> **ESTADO 2026-10-12 (leia primeiro):** a emenda PSC ([`BE-INCR-DFE-ADN-EMENDA-PSC-brief.md`](BE-INCR-DFE-ADN-EMENDA-PSC-brief.md)) está **SUPERADA**. A FAQ oficial da NFS-e (v1.1, 22/09/2026, item 17.7) exige o certificado do **próprio prestador** no mTLS e na assinatura, e o PAA da NFS-e está indisponível (`pesquisas-legais/nfse-adn-certificado-numeracao/relatorio.md`). O dono reabriu a guarda: **o Luminaris guarda o certificado (SE-S em arquivo, ex-A1) do cliente** para NFS-e, NF-e e NFC-e. **Este BRIEF volta a valer como escrito**, com F-ADN-1..13 RATIFICADOS (11 pela pesquisa). Risco aberto: L-ADN-5 (custódia; DOC-ICP-04 6.1.1.6 "c" e 6.1.1.8) com o advogado antes do 1º certificado de cliente em produção.
 
 > **EMENDA 2026-10-11:** ver [`EMENDAS-BRIEF-2026-10-11.md`](EMENDAS-BRIEF-2026-10-11.md) §8 (F-ADN-1 superado pela decisão PAA + PSC de 11/10; F-ADN-2/3 sem objeto). Sem código; cada item exige 'executa'.
 
@@ -369,7 +369,7 @@ DFE_PARTNER_ENV=homologacao               # producao só depois do runbook do D5
 - **Recomendação: (a).** O ADR ainda diz "o Luminaris nunca guarda certificado A1/A3", e a nota de decisão diz
   "emissão direta fora". Um executor que leia os dois vai parar no PR-1. A condição (a) da decisão 2 (demanda de
   cliente só-serviço sensível a preço) também não foi registrada como cumprida; só o dono diz se ela ainda importa.
-  **RATIFICAÇÃO PENDENTE.**
+  **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]] §5ª rodada).
 
 ### F-ADN-2 — Onde mora o A1
 - **(a)** Tabela nova `FiscalCertificate` por unidade, cifrada por linha (molde do `PaymentAccount`).
@@ -377,14 +377,14 @@ DFE_PARTNER_ENV=homologacao               # producao só depois do runbook do D5
 - **(c)** Arquivo PFX + senha no env/disco da instância (estilo D2, "uma chave por instância").
 - **Recomendação: (a).** R8 pede um A1 por unidade, e o `FiscalProfile` já tem dezenas de colunas de natureza
   diferente (contas e parâmetros, `schema.prisma:1404-1490`). (c) quebra com duas unidades e põe o segredo fora da cifra com AAD. Custo de (a): uma tabela e
-  uma rota. **RATIFICAÇÃO PENDENTE.**
+  uma rota. **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]] §5ª rodada).
 
 ### F-ADN-3 — Chave da cifra do A1
 - **(a)** Reusar o keyring do F5 (`PAYMENT_CREDENTIAL_KEYS`).
 - **(b)** Keyring próprio `DFE_CERT_KEYS`, com o `secretBox` parametrizado pelo prefixo.
 - **Recomendação: (b).** O A1 assina documento fiscal em nome do cliente, o que é risco maior que um token de
   cobrança. Rotação e backup separados, e o vazamento de um não abre o outro. O custo é um parâmetro no `secretBox`
-  e uma linha a mais no runbook do M2. **RATIFICAÇÃO PENDENTE.**
+  e uma linha a mais no runbook do M2. **RATIFICADO (b)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]] §5ª rodada).
 
 ### F-ADN-4 — Como abrir o PKCS#12
 - **(a)** Dependência nova `node-forge` (JS puro), versão fixada, só no upload; os testes também a usam para gerar PFX.
@@ -392,21 +392,21 @@ DFE_PARTNER_ENV=homologacao               # producao só depois do runbook do D5
 - **(c)** Não aceitar PFX: o cliente sobe chave PEM + certificado PEM.
 - **Recomendação: (a).** O `node:crypto` não lê PKCS#12; o TLS aceita `pfx`, mas a assinatura XML precisa da chave em
   PEM. (b) depende de binário no host da VPS e no CI. (c) empurra para o cliente uma conversão que ele não sabe fazer
-  (o A1 vem em .pfx da AC). Custo de (a): dependência nova, com auditoria de versão. **RATIFICAÇÃO PENDENTE.**
+  (o A1 vem em .pfx da AC). Custo de (a): dependência nova, com auditoria de versão. **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]] §5ª rodada).
 
 ### F-ADN-5 — Aplicar o resultado síncrono no envio
 - **(a)** `createAndSend`/`reenviar` aplicam o resultado imediato pelo `applyResult` existente.
 - **(b)** Manter `SENT` e deixar o polling buscar por `GET /dps/{id}`.
 - **Recomendação: (a).** O POST devolve a NFS-e (`[API-NFSE-POST]`); com (b), cada nota custa uma 2ª e uma 3ª chamada
   e fica minutos "em envio" na tela. O risco de (a) é a corrida com o polling; o `applyResult` já tem guarda de
-  transição dentro da tx (`whenStatusIn`). **RATIFICAÇÃO PENDENTE.**
+  transição dentro da tx (`whenStatusIn`). **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]] §5ª rodada).
 
 ### F-ADN-6 — `partnerRef` do documento `adn`
 - **(a)** `partnerRef` = `infDPS/@Id` (45 caracteres, a chave que a API consulta).
 - **(b)** Manter o `attemptRef` `"<id>:<n>"` e derivar o Id do payload a cada consulta.
 - **Recomendação: (a).** A Sefin não conhece o nosso `ref` (não há idempotência por referência como na Focus). O Id
   da DPS **é** a chave de idempotência dela: o mesmo Id não gera duas notas (inferido do `[API-DPS-GET]`). O
-  `attemptRef` continua sendo a chave da tentativa no banco. **RATIFICAÇÃO PENDENTE.**
+  `attemptRef` continua sendo a chave da tentativa no banco. **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]] §5ª rodada).
 
 ### F-ADN-7 — Algoritmos da assinatura da DPS e do pedido de evento
 - **(a)** Fixar rsa-sha256 + sha256 + c14n.
@@ -414,7 +414,7 @@ DFE_PARTNER_ENV=homologacao               # producao só depois do runbook do D5
 - **(c)** Constante única com (b) como padrão inicial, trocada só pelo resultado do runbook do D5.
 - **Recomendação: (c).** O XSD não fixa algoritmo (`[XSD-DSIG]`), o corpus não fixa, e o nosso verificador já aceita
   os dois (`nfseSignature.ts:28-32`). (b) é o único parâmetro com fonte primária na família. O runbook fecha a dúvida
-  com uma nota de verdade. **RATIFICAÇÃO PENDENTE.**
+  com uma nota de verdade. **RATIFICADO (c)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]] §5ª rodada).
 
 ### F-ADN-8 — Falha de rede depois do POST: o que fazer quando a consulta não acha a nota
 - **(a)** O job consulta `GET /dps/{id}`; achou ⇒ item 19; não achou em N tentativas espaçadas ⇒ `REJECTED` com
@@ -422,7 +422,7 @@ DFE_PARTNER_ENV=homologacao               # producao só depois do runbook do D5
 - **(b)** Não achou ⇒ fica `SENT` com pendência visível até o operador decidir.
 - **Recomendação: (a)**, com N e espaçamento como constantes. (b) deixa nota parada sem prazo. (a) só é seguro se o
   mesmo Id puder ser reenviado depois de não gerar nota, e isso é pergunta **L-ADN-2**; até a resposta, (a) com
-  reenvio manual (nunca automático). **RATIFICAÇÃO PENDENTE.**
+  reenvio manual (nunca automático). **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]] §5ª rodada).
 
 ### F-ADN-9 — Sequência por ambiente: quem migra a tabela
 - **(a)** Este BRIEF migra a chave para incluir `ambiente` em **todos** os tipos (item 12); o PR-4 do BRIEF NFCE
@@ -430,35 +430,35 @@ DFE_PARTNER_ENV=homologacao               # producao só depois do runbook do D5
 - **(b)** O PR-4 do BRIEF NFCE migra (F-NFCE-4 a) e este BRIEF espera.
 - **Recomendação: (a).** O D5 de 07/10 põe a sequência por ambiente como requisito do emissor de NFS-e, e a NFS-e é
   a primeira a sair (01/11/2026). Duas migrações na mesma chave em PRs diferentes colidem; quem chegar primeiro migra,
-  e a outra emenda registra isso. **RATIFICAÇÃO PENDENTE.**
+  e a outra emenda registra isso. **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]] §5ª rodada).
 
 ### F-ADN-10 — Pré-voo de validade do A1
 - **(a)** Recusa com o A1 vencido + aviso a partir de 30 dias antes.
 - **(b)** Só recusa.
 - **(c)** (a) + job diário que grava alerta no painel.
 - **Recomendação: (a).** Mesmo princípio do pré-voo previsto no passo E.3 do plano. (c) é frente de notificação (FE);
-  fica em achados. **RATIFICAÇÃO PENDENTE.**
+  fica em achados. **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]] §5ª rodada).
 
 ### F-ADN-11 — CNPJ do certificado × CNPJ da unidade emitente
 - **(a)** Igualdade dos 14 dígitos (R8 literal: "um A1 por unidade/CNPJ").
 - **(b)** Igualdade da raiz (8 dígitos), como o SIG-NFE aceita na NF-e (`[SIG-CERT-CNPJ]`, F-SIG-3 b).
 - **Recomendação: (a) até a L-ADN-1 responder.** A RN E0718 fala em "certificado do emitente da DPS", e só a
   distribuição do ADN declara a regra da raiz (`[ADN-DIST]`). (b) deixaria a filial emitir com o A1 da matriz, e
-  isso a fonte de emissão não autoriza por escrito. Custo de (a): filial sem A1 próprio não emite. **RATIFICAÇÃO PENDENTE.**
+  isso a fonte de emissão não autoriza por escrito. Custo de (a): filial sem A1 próprio não emite. **RATIFICADO (a)**: pesquisa legal de 12/10 — sustentado pela pesquisa oficial (FAQ NFS-e v1.1 17.7 e 28.2; `pesquisas-legais/nfse-adn-certificado-numeracao/relatorio.md`), sem pergunta ao dono.
 
 ### F-ADN-12 — Endereços da API
 - **(a)** Tabela no código (`ADN_HOSTS`, citando a página gov.br de 20/08/2026) com override por env só para o
   caminho base.
 - **(b)** Só env (`DFE_ADN_SEFIN_URL`, `DFE_ADN_URL`).
 - **Recomendação: (a).** O host por ambiente é fato oficial e não deve depender de digitação no deploy; o caminho base
-  (`/API/SefinNacional` × `/SefinNacional`) é o único ponto de grau I e o runbook pode exigir troca. **RATIFICAÇÃO PENDENTE.**
+  (`/API/SefinNacional` × `/SefinNacional`) é o único ponto de grau I e o runbook pode exigir troca. **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]] §5ª rodada).
 
 ### F-ADN-13 — Cancelamento por API neste BRIEF ou no PR-2 do X11
 - **(a)** Neste BRIEF: o adaptador nasce com `cancelar: true` (item 21). A janela e a substituição seguem no X11.
 - **(b)** `cancelar: false` aqui; o cancelamento por máquina entra no PR-2 do X11.
 - **Recomendação: (a).** Sem (a), a primeira nota errada emitida pelo `adn` só se cancela no portal, por fora, e o
   documento fica `AUTHORIZED` no Luminaris. O caminho de cancelamento já existe na porta e no serviço; falta só o
-  protocolo. **RATIFICAÇÃO PENDENTE.**
+  protocolo. **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]] §5ª rodada).
 
 ## 6. Pendente de validação externa
 

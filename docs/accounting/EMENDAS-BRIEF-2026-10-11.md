@@ -256,7 +256,9 @@ insumo ausente aqui.
 
 ## 8. Consequência da decisão (a) de 11/10 nos BRIEFs ADN e NFC-e (`BE-INCR-DFE-ADN-EMISSOR-brief.md` F-ADN-1; `BE-INCR-NFCE-EMENDA-1-brief.md` F-NFCE-E1-1)
 
-> **Estado em 12/10 (leia antes do resto desta seção).** A metade "PAA" foi **superada** pelo #635
+> **Estado final em 12/10:** o caminho PSC foi **abandonado** — o Luminaris guarda o certificado (SE-S) do cliente para os três DF-e; F-E8-2/3 sem objeto; vale o BRIEF-ADN original ([[D-2026-10-12-QUESTIONARIO-DONO]] 5ª rodada).
+>
+> **Estado anterior em 12/10:** A metade "PAA" foi **superada** pelo #635
 > (`BE-INCR-DFE-ASSINATURA-PLANEJAMENTO-2026-10-11.md` §5): nenhum PAA homologado atende o salão, e o **F-E8-1R = (a)**
 > foi ratificado — certificado em nuvem num PSC para **NFS-e, NF-e e NFC-e**. Logo: o **F-E8-1** abaixo está superado;
 > os itens **E8-1** e **E8-3** valem com "PSC" no lugar de "PAA"; o F-E8-3 foi ratificado (a) em 11/10 e **reaberto → (b)** em 12/10. Em 12/10: **F-E8-2 = (b)** (Luminaris contrata e revende) e o **F-E8-3 foi reaberto → (b)** lista curta homologada ([[D-2026-10-12-QUESTIONARIO-DONO]]).
