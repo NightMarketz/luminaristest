@@ -153,18 +153,54 @@ describe('CrmReportResult', () => {
     expect(kpis.map((k) => nbsp(k.value))).toEqual(['R$ 1.000,00', 'US$ 50,00', '7', 'R$ 1.271,60']);
   });
 
-  it('review — tabela alinha as linhas pelo nome do ponto, não pela posição', () => {
+  it('review — bloco convertido em tabela alinha as linhas pelo nome do ponto, não pela posição', () => {
     render(
       <CrmReportResult
         snapshot={snap({
           kind: 'table',
           chartType: 'table',
           dimensions: [{ type: 'field', field: 'status' }],
+          moneyIndexes: [0, 1],
+          measureLabels: ['Soma A', 'Soma B'],
+          output: {
+            series: [
+              { measure: 'a', points: [{ name: 'Open', value: 1 }] },
+              { measure: 'b', points: [{ name: 'Open', value: 1 }] },
+            ],
+            meta: meta({ mode: 'filter', field: 'currency', value: 'BRL' }),
+            converted: {
+              target: 'BRL',
+              referenceDate: '2026-10-13',
+              rates: [],
+              series: [
+                { measure: 'a', points: [{ name: 'Open', value: 2 }, { name: 'Won', value: 1 }] },
+                { measure: 'b', points: [{ name: 'Won', value: 5 }] },
+              ],
+              excluded: [],
+            },
+          },
+        })}
+      />,
+    );
+    const conv = tables[1];
+    expect(conv.records.map((r) => [r.data.__group, String(r.data.s0).replace(/\s/g, ' '), String(r.data.s1).replace(/\s/g, ' ')])).toEqual([
+      ['Open', 'R$ 2,00', '—'],
+      ['Won', 'R$ 1,00', 'R$ 5,00'],
+    ]);
+  });
+
+  it('2ª passada N1: na verdade, pontos homônimos (dois contatos "Maria") são linhas distintas', () => {
+    render(
+      <CrmReportResult
+        snapshot={snap({
+          kind: 'table',
+          chartType: 'table',
+          dimensions: [{ type: 'field', field: 'contactId' }],
           moneyIndexes: [],
           output: {
             series: [
-              { measure: 'count:*', points: [{ name: 'Open', value: 2 }, { name: 'Won', value: 1 }] },
-              { measure: 'count:x', points: [{ name: 'Won', value: 5 }] },
+              { measure: 'count:*', points: [{ name: 'Maria', value: 3 }, { name: 'Maria', value: 5 }] },
+              { measure: 'count:x', points: [{ name: 'Maria', value: 1 }, { name: 'Maria', value: 2 }] },
             ],
             meta: meta(null),
           },
@@ -172,8 +208,8 @@ describe('CrmReportResult', () => {
       />,
     );
     expect(tables[0].records.map((r) => [r.data.__group, r.data.s0, r.data.s1])).toEqual([
-      ['Open', '2', '—'],
-      ['Won', '1', '5'],
+      ['Maria', '3', '1'],
+      ['Maria', '5', '2'],
     ]);
   });
 });

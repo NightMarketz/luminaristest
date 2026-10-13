@@ -106,15 +106,22 @@ function ResultBody({
       ...series.map((_, i): ISchemaField => ({ name: `s${i}`, label: label(i), type: 'string' })),
     ];
     const schema: ITableSchema = { fields };
-    // linhas alinhadas por NOME do ponto (ordem da 1ª série; nome que só outra série tem entra no fim) — review do PR-A
-    const names: string[] = [];
-    for (const s of series) for (const p of s.points) if (!names.includes(p.name)) names.push(p.name);
-    const byName = series.map((s) => new Map(s.points.map((p) => [p.name, p.value])));
-    const records = names.map((name, row) => {
-      const data: Record<string, unknown> = { __group: displayPointName(name, noCurrency) };
-      series.forEach((_, i) => {
-        const value = byName[i].get(name);
-        data[`s${i}`] = value === undefined ? '—' : fmt(i, name, value);
+    // Verdade: alinhada por POSIÇÃO — o BE devolve o mesmo conjunto e ordem de pontos em todas as séries, e dois pontos
+    // com o mesmo nome (etapas/contatos homônimos) são grupos distintos (CrmReportService, "séries desalinhadas").
+    // Convertido: alinhado por NOME (o BE monta a visão convertida por nome) — 2ª passada do review do PR-A.
+    const rows: { name: string; values: (number | undefined)[] }[] = [];
+    if (forcedCurrency === null) {
+      (series[0]?.points ?? []).forEach((p, row) => rows.push({ name: p.name, values: series.map((s) => s.points[row]?.value) }));
+    } else {
+      const names: string[] = [];
+      for (const s of series) for (const p of s.points) if (!names.includes(p.name)) names.push(p.name);
+      const byName = series.map((s) => new Map(s.points.map((p) => [p.name, p.value])));
+      names.forEach((name) => rows.push({ name, values: byName.map((m) => m.get(name)) }));
+    }
+    const records = rows.map((r, row) => {
+      const data: Record<string, unknown> = { __group: displayPointName(r.name, noCurrency) };
+      r.values.forEach((value, i) => {
+        data[`s${i}`] = value === undefined ? '—' : fmt(i, r.name, value);
       });
       return { id: `${idPrefix}-${row}`, data };
     });

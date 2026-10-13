@@ -69,9 +69,10 @@ describe('item 3 — fontes instaladas e troca de fonte', () => {
 });
 
 describe('item 4 — campos do schema vivo + sintéticos', () => {
-  it('acrescenta id, _createdAt e _updatedAt rotulados; oculto fica fora', () => {
+  it('acrescenta id, _createdAt e _updatedAt rotulados; oculto fica na lista mas não é oferecido', () => {
     const names = PROPOSAL_FIELDS.map((f) => f.name);
-    expect(names).toEqual(['title', 'amount', 'currency', 'status', 'estimatedCloseDate', 'probability', 'id', '_createdAt', '_updatedAt']);
+    expect(names).toEqual(['title', 'amount', 'currency', 'status', 'estimatedCloseDate', 'probability', 'secret', 'id', '_createdAt', '_updatedAt']);
+    expect(measureFieldOptions('count', PROPOSAL_FIELDS).map((f) => f.name)).not.toContain('secret');
     expect(PROPOSAL_FIELDS.find((f) => f.name === '_createdAt')).toMatchObject({ label: 'Criado em', type: 'datetime' });
   });
 });
@@ -79,7 +80,7 @@ describe('item 4 — campos do schema vivo + sintéticos', () => {
 describe('itens 5–6 — medidas e dimensões', () => {
   it('sum/avg só em number; count em qualquer campo', () => {
     expect(measureFieldOptions('sum', PROPOSAL_FIELDS).map((f) => f.name)).toEqual(['amount', 'probability']);
-    expect(measureFieldOptions('count', PROPOSAL_FIELDS)).toHaveLength(PROPOSAL_FIELDS.length);
+    expect(measureFieldOptions('count', PROPOSAL_FIELDS)).toHaveLength(PROPOSAL_FIELDS.length - 1); // sem o oculto
   });
 
   it('período só em campo de data (inclui os sintéticos)', () => {
@@ -331,5 +332,18 @@ describe('review independente do PR-A — regressões', () => {
       updatedAt: '2026-10-13T10:00:00.000Z',
     };
     expect(toSpec(fromReport(row))).toEqual(row.spec);
+  });
+
+  it('2ª passada R1: par de moeda OCULTO ainda conta (o BE o enxerga) — a escolha de moeda continua exigida', () => {
+    // pelo caminho real: schema cru com a moeda oculta → reportFields → regra
+    const oculto = reportFields(
+      [
+        { name: 'amount', label: 'Valor', type: 'number', numberFormat: 'currency' },
+        { name: 'currency', label: 'Moeda', type: 'select', options: ['BRL', 'USD'], hidden: true },
+      ],
+      LABELS,
+    );
+    const d = proposalsDraft({ measures: [{ type: 'sum', field: 'amount', alias: '' }] });
+    expect(blockReason(d, oculto)).toBe('CURRENCY_CHOICE_REQUIRED');
   });
 });

@@ -136,9 +136,12 @@ export interface SyntheticLabels {
   updatedAt: string;
 }
 
-/** Item 4: campos do schema vivo + `id`, `_createdAt`, `_updatedAt` (sintéticos do agregador). Ocultos ficam fora. */
+/**
+ * Item 4: campos do schema vivo + `id`, `_createdAt`, `_updatedAt` (sintéticos do agregador). Campo oculto continua na
+ * lista (o par de moeda pode estar oculto e o BE o enxerga — `pairFieldOf`), mas não é oferecido (`offeredFields`).
+ */
 export function reportFields(schemaFields: readonly ISchemaField[], labels: SyntheticLabels): ISchemaField[] {
-  const own = schemaFields.filter((f) => !f.hidden && f.type !== 'json');
+  const own = schemaFields.filter((f) => f.type !== 'json');
   return [
     ...own,
     { name: 'id', label: labels.id, type: 'string' },
@@ -148,17 +151,20 @@ export function reportFields(schemaFields: readonly ISchemaField[], labels: Synt
 }
 
 export const fieldLabel = (f: ISchemaField): string => f.label || f.name;
+/** O que o editor oferece nos selects: sem os ocultos. */
+export const offeredFields = (fields: readonly ISchemaField[]): ISchemaField[] => fields.filter((f) => !f.hidden);
 export const isMoneyField = (f: ISchemaField | undefined): boolean => f?.type === 'number' && f.numberFormat === 'currency';
 const isDateField = (f: ISchemaField): boolean => f.type === 'date' || f.type === 'datetime';
 
 /** Item 5: `count` aceita qualquer campo (opcional); `sum`/`avg` só `number`. */
 export function measureFieldOptions(type: MeasureType, fields: readonly ISchemaField[]): ISchemaField[] {
-  return type === 'count' ? [...fields] : fields.filter((f) => f.type === 'number');
+  const offered = offeredFields(fields);
+  return type === 'count' ? offered : offered.filter((f) => f.type === 'number');
 }
 
 /** Item 6: período só em campo de data (inclui os sintéticos). */
 export function periodFieldOptions(fields: readonly ISchemaField[]): ISchemaField[] {
-  return fields.filter(isDateField);
+  return offeredFields(fields).filter(isDateField);
 }
 
 /** Item 7: valor do filtro tipado pelo campo (número → Number; booleano → true/false; resto, texto). */

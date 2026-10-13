@@ -150,4 +150,12 @@ describe('CrmReportEditor', () => {
     fireEvent.click(screen.getByText('Tirar a separação'));
     expect(latest.dimensions).toEqual([]);
   });
+
+  it('2ª passada R2: `in` em campo numérico ignora valor que não é número', () => {
+    render(<Harness initial={{ filters: [{ field: 'amount', op: 'in', value: [] }] }} />);
+    const input = within(screen.getByTestId('filter-0')).getByLabelText('Valor');
+    fireEvent.change(input, { target: { value: '1, abc' } });
+    fireEvent.blur(input);
+    expect(latest.filters).toEqual([{ field: 'amount', op: 'in', value: [1] }]);
+  });
 });

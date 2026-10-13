@@ -18,6 +18,7 @@ import {
   isMoneyField,
   isMultiValueOp,
   measureFieldOptions,
+  offeredFields,
   periodFieldOptions,
   selectOptions,
   settle,
@@ -61,6 +62,7 @@ const smallBtn =
 export function CrmReportEditor({ draft, fields, sources, onChange, onSourceChange }: CrmReportEditorProps) {
   const { t } = useTranslation('crm');
   const list = fields ?? [];
+  const offered = offeredFields(list); // selects não oferecem campo oculto
   const byName = (name: string) => list.find((f) => f.name === name);
   const fieldOptionLabel = (f: ISchemaField) =>
     isMoneyField(f) ? `${fieldLabel(f)} ${t('report_builder.editor.money_suffix', '(dinheiro)')}` : fieldLabel(f);
@@ -303,7 +305,7 @@ export function CrmReportEditor({ draft, fields, sources, onChange, onSourceChan
                           i,
                           e.target.value === 'period'
                             ? { type: 'period', dateField: periodFieldOptions(list)[0]?.name ?? '', period: 'month' }
-                            : { type: 'field', field: list[0]?.name ?? '' },
+                            : { type: 'field', field: offered[0]?.name ?? '' },
                         )
                       }
                     >
@@ -317,7 +319,7 @@ export function CrmReportEditor({ draft, fields, sources, onChange, onSourceChan
                         value={d.field}
                         onChange={(e) => setDimension(i, { type: 'field', field: e.target.value })}
                       >
-                        {list.map((f) => (
+                        {offered.map((f) => (
                           <option key={f.name} value={f.name}>
                             {fieldLabel(f)}
                           </option>
@@ -368,7 +370,7 @@ export function CrmReportEditor({ draft, fields, sources, onChange, onSourceChan
                 <button
                   type="button"
                   className={`${smallBtn} mt-3`}
-                  onClick={() => set({ dimensions: [...draft.dimensions, { type: 'field', field: list[0]?.name ?? '' }] })}
+                  onClick={() => set({ dimensions: [...draft.dimensions, { type: 'field', field: offered[0]?.name ?? '' }] })}
                 >
                   {t('report_builder.editor.add_dimension', 'Adicionar agrupamento')}
                 </button>
@@ -389,7 +391,7 @@ export function CrmReportEditor({ draft, fields, sources, onChange, onSourceChan
                     onChange={(e) => setFilter(i, { field: e.target.value, op: f.op, value: isMultiValueOp(f.op) ? [] : '' })}
                   >
                     <option value="">{t('report_builder.editor.pick_field', 'Escolha o campo…')}</option>
-                    {list.map((x) => (
+                    {offered.map((x) => (
                       <option key={x.name} value={x.name}>
                         {fieldLabel(x)}
                       </option>
@@ -624,7 +626,8 @@ function MultiValueInput({
             .split(',')
             .map((x) => x.trim())
             .filter(Boolean)
-            .map((x) => coerceFilterValue(x, field)),
+            .map((x) => coerceFilterValue(x, field))
+            .filter((v) => v !== ''),
         )
       }
     />
