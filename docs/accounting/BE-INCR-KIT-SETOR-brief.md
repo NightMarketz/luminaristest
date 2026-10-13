@@ -568,3 +568,20 @@ recomendação nas 4.
 | E-11.2 | Resposta HTTP do PUT/DELETE quando o compile dá `Draft` | **422 `ROLE_OVERRIDE_COMPILE_DRAFT`** com `{binding:{status:'Draft', bindingVersion}, blocking, missingEventKeys}` |
 | E-11.3 | Base da recompilação e unidade sem kit `INSTALLED` | **Base = binding do kit na `kitVersion` da `KitInstallation`** (o DELETE volta ao código do kit, item 22); sem kit `INSTALLED` ⇒ **422 `KIT_NOT_INSTALLED`** (código novo) |
 | E-11.4 | Shape do `RoleAccountOverrideView` (§3.4 não define) | `{id, role, accountId, accountCode, kitAccountCode, motivo, setById, createdAt, updatedAt}`; `kitAccountCode` = código do kit instalado para o papel, ou `null` |
+
+## 12. Emenda do PR-4 — lacunas resolvidas pelo dono (chat, 2026-10-13, questionário)
+
+A execução do PR-4 (autorização: dono, chat, 2026-10-13, *"Executa o PR-4 do KIT-SETOR"*) achou 5 decisões que o
+checklist não cobria. Todas foram perguntadas e respondidas (regra 2 da `sessao-feature`).
+
+| # | Lacuna | Decisão do dono |
+|---|---|---|
+| E-12.1 | O PR-K3 (L2 de [D-2026-10-13-KIT-SETOR-PR-K3-LACUNAS](../plano/decisoes/D-2026-10-13-KIT-SETOR-PR-K3-LACUNAS.md)) fez do `serviceFiscalDefaults` um catálogo de sugestões que o kit nunca grava; os itens 27/28 e o motivo `service_profile_edited` do 29 falavam de perfil por `serviceRef` | **Saem do diff, com aviso.** O catálogo novo vale quando a `kitVersion` avança (a sugestão lê o kit instalado); as mudanças do catálogo entram em `notices`. `service_profile_edited` sai da lista de motivos |
+| E-12.2 | Nome/natureza de conta da extensão que já existe, **sem** partida (o item 29 só cobre "com partida") | **Aplica com aviso (forward `changed_account`)**, relendo "sem partida" dentro da tx. Vale para a conta que veio do kit e segue como o kit a instalou; conta criada ou editada pelo tenant com o mesmo código vira aviso (o kit não sobrescreve conta existente, referência Odoo do §0) |
+| E-12.3 | O que "aceitar" faz para cada motivo além de `override` | **Por motivo:** conta apagada → restaura e recompila (Draft ⇒ a conta volta a ser apagada, 422 `KIT_PENDING_COMPILE_DRAFT`); conta mudada → renomeia (natureza com partida nunca); campo preenchido → grava o valor do kit pelo serviço dono (gate do contador vale); referencial diferente → troca o mapeamento; **ano congelado → 422 `KIT_PENDING_FROZEN_YEAR`**, só recusar |
+| E-12.4 | Forward cujo compile dá `Draft` (ex.: o alvo usa conta apagada pelo tenant) | **A unidade falha:** os aditivos ficam, as pendências são criadas, o binding e a `kitVersion` não mudam, e o CLI sai ≠ 0 |
+| E-12.5 | Quais blocos de referencial (regime × ano) a atualização compara | **Todo ano cujo regime da empresa** (`CompanyFiscalProfile` do ano; sem ele, o da unidade) **é o do bloco.** Ano sem regime conhecido → aviso. Ano congelado → pendência |
+
+Ajuste mecânico, sem decisão nova: a guarda de auditoria trata toda chave `reason` como texto livre; o `reason` dos
+eventos `kit.upgrade_pending_*` (o código fechado do conflito, item 39) foi declarado em `MASKABLE_FREE_TEXT_KEYS`,
+como o precedente `reconciliation.unmatched`.

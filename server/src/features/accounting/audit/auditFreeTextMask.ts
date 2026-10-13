@@ -59,6 +59,11 @@ export const MASKABLE_FREE_TEXT_KEYS: Record<string, readonly string[]> = {
   'receivable.cancelled':         ['reason'],
   'receivable.settlement_cancelled': ['reason'],
   'reconciliation.unmatched':     ['reason'],
+  // BE-INCR-KIT-SETOR PR-4 (item 39): aqui `reason` é o CÓDIGO fechado do conflito (ConflictReason), não texto
+  // digitado — declarado mesmo assim, como o `reconciliation.unmatched`, porque a guarda casa pelo nome da chave e
+  // mascarar um código não muda nada. O `motivo` livre da decisão nunca entra no payload (fica na linha).
+  'kit.upgrade_pending_accepted': ['reason'],
+  'kit.upgrade_pending_rejected': ['reason'],
   // BE-INCR-CONTADOR-DELIVERY: `failureReason` é texto livre do operador — mesma classe de
   // `reason` dos demais. Sem esta linha o teste de contrato reprova (toda chave `reason`
   // allowlistada precisa de mascaramento declarado).

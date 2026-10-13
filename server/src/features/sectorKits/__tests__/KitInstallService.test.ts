@@ -44,6 +44,8 @@ function build(opts: { failOn?: string; compileStatus?: 'Active' | 'Draft'; char
       row = { ...row!, status, steps: JSON.stringify(steps) };
       return row as never;
     },
+    advanceVersion: async () => 1, // PR-4 — não exercitado aqui
+    findAllInstalled: async () => [],
     runTransaction: async (fn) => fn({} as never),
   };
   const compile = jest.fn(async () => {

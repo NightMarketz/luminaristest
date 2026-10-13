@@ -105,6 +105,700 @@
       "additionalProperties": false
     }
   },
+  "KitUpgradeDto.ts": {
+    "KitDiffSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "additive": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "account",
+                  "roleDefault",
+                  "referential"
+                ]
+              },
+              "itemKey": {
+                "type": "string"
+              },
+              "value": {}
+            },
+            "required": [
+              "kind",
+              "itemKey",
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "forward": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "new_binding",
+                  "changed_binding",
+                  "changed_account"
+                ]
+              },
+              "itemKey": {
+                "type": "string"
+              },
+              "eventKey": {
+                "type": "string"
+              },
+              "before": {},
+              "after": {}
+            },
+            "required": [
+              "kind",
+              "itemKey",
+              "before",
+              "after"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "conflict": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "reason": {
+                "type": "string",
+                "enum": [
+                  "override",
+                  "account_deleted_by_user",
+                  "account_changed_in_use",
+                  "field_set_by_user",
+                  "referential_year_frozen",
+                  "referential_mapped_differently"
+                ]
+              },
+              "itemKey": {
+                "type": "string"
+              },
+              "kitValue": {},
+              "tenantValue": {}
+            },
+            "required": [
+              "reason",
+              "itemKey",
+              "kitValue",
+              "tenantValue"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "notices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "itemKey": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "itemKey",
+              "message"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "additive",
+        "forward",
+        "conflict",
+        "notices"
+      ],
+      "additionalProperties": false
+    },
+    "KitUpgradeReportSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "additive": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "account",
+                  "roleDefault",
+                  "referential"
+                ]
+              },
+              "itemKey": {
+                "type": "string"
+              },
+              "value": {}
+            },
+            "required": [
+              "kind",
+              "itemKey",
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "forward": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "new_binding",
+                  "changed_binding",
+                  "changed_account"
+                ]
+              },
+              "itemKey": {
+                "type": "string"
+              },
+              "eventKey": {
+                "type": "string"
+              },
+              "before": {},
+              "after": {}
+            },
+            "required": [
+              "kind",
+              "itemKey",
+              "before",
+              "after"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "conflict": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "reason": {
+                "type": "string",
+                "enum": [
+                  "override",
+                  "account_deleted_by_user",
+                  "account_changed_in_use",
+                  "field_set_by_user",
+                  "referential_year_frozen",
+                  "referential_mapped_differently"
+                ]
+              },
+              "itemKey": {
+                "type": "string"
+              },
+              "kitValue": {},
+              "tenantValue": {}
+            },
+            "required": [
+              "reason",
+              "itemKey",
+              "kitValue",
+              "tenantValue"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "notices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "itemKey": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "itemKey",
+              "message"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "itemKey": {
+                "type": "string"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "applied",
+                  "pending",
+                  "skipped",
+                  "failed"
+                ]
+              },
+              "error": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "itemKey",
+              "outcome"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "bindingVersionBefore": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "bindingVersionAfter": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "additive",
+        "forward",
+        "conflict",
+        "notices",
+        "results"
+      ],
+      "additionalProperties": false
+    },
+    "UpgradeUnitInputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "DRY_RUN",
+            "APPLY"
+          ]
+        },
+        "deployId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "actor": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "mode",
+        "deployId",
+        "actor"
+      ],
+      "additionalProperties": false
+    },
+    "KitUpgradeRunSummarySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "DRY_RUN",
+            "APPLY"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "PLANNED",
+            "APPLIED",
+            "PARTIAL",
+            "FAILED"
+          ]
+        },
+        "fromVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "toVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "deployId": {
+          "type": "string"
+        },
+        "startedAt": {
+          "type": "string"
+        },
+        "finishedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "counts": {
+          "type": "object",
+          "properties": {
+            "additive": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "forward": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "conflicts": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "additive",
+            "forward",
+            "conflicts"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "id",
+        "mode",
+        "status",
+        "fromVersion",
+        "toVersion",
+        "deployId",
+        "startedAt",
+        "finishedAt",
+        "counts"
+      ],
+      "additionalProperties": false
+    },
+    "KitInstallationViewSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "kitKey": {
+          "type": "string"
+        },
+        "kitVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "latestVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "INSTALLING",
+            "INSTALLED",
+            "FAILED"
+          ]
+        },
+        "lastRun": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "DRY_RUN",
+                    "APPLY"
+                  ]
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "PLANNED",
+                    "APPLIED",
+                    "PARTIAL",
+                    "FAILED"
+                  ]
+                },
+                "fromVersion": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "toVersion": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "deployId": {
+                  "type": "string"
+                },
+                "startedAt": {
+                  "type": "string"
+                },
+                "finishedAt": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "counts": {
+                  "type": "object",
+                  "properties": {
+                    "additive": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "forward": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "conflicts": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "additive",
+                    "forward",
+                    "conflicts"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "id",
+                "mode",
+                "status",
+                "fromVersion",
+                "toVersion",
+                "deployId",
+                "startedAt",
+                "finishedAt",
+                "counts"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "openPendingCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "changelog": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kitVersion": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "entries": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "kitVersion",
+              "entries"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "kitKey",
+        "kitVersion",
+        "latestVersion",
+        "status",
+        "lastRun",
+        "openPendingCount",
+        "changelog"
+      ],
+      "additionalProperties": false
+    },
+    "KitUpgradePendingViewSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "kitKey": {
+          "type": "string"
+        },
+        "toVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "runId": {
+          "type": "string"
+        },
+        "itemKey": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "override",
+            "account_deleted_by_user",
+            "account_changed_in_use",
+            "field_set_by_user",
+            "referential_year_frozen",
+            "referential_mapped_differently"
+          ]
+        },
+        "kitValue": {},
+        "tenantValue": {},
+        "status": {
+          "type": "string",
+          "enum": [
+            "OPEN",
+            "ACCEPTED",
+            "REJECTED"
+          ]
+        },
+        "decidedById": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decidedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "motivo": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "kitKey",
+        "toVersion",
+        "runId",
+        "itemKey",
+        "reason",
+        "kitValue",
+        "tenantValue",
+        "status",
+        "decidedById",
+        "decidedAt",
+        "motivo",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "ListKitPendingQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "OPEN",
+            "ACCEPTED",
+            "REJECTED"
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "DecideKitPendingRequestSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "motivo": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "unitId",
+        "motivo"
+      ],
+      "additionalProperties": false
+    }
+  },
   "RoleAccountOverrideDto.ts": {
     "RoleOverrideRoleParamSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
