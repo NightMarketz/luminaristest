@@ -1663,40 +1663,40 @@ model ProductDestinationDefault {
 // `cTribNac` = "" (não null) para NFE — SQLite trata NULL como distinto no unique.
 // Status só transiciona pelo serviço (SENT|PROCESSING → AUTHORIZED|REJECTED|PROCESSING; AUTHORIZED → CANCELLED).
 model FiscalDocument {
-  id               String                  @id @default(cuid())
-  userId           String
-  unitId           String
-  kind             String // NFSE | NFE
-  status           String // SENT | PROCESSING | AUTHORIZED | AUTHORIZED_DIVERGENT (releitura divergente, F-MAN-2 c) | REJECTED | CANCELLED
-  saleId           String
-  saleKey          String // = saleId enquanto vivo; "cancelled:<id>:<saleId>" após CANCELLED
-  cTribNac         String                  @default("") // F-DFE-16 (b); "" para NFE
-  anchorEntryId    String // JournalEntry âncora: sale.finalized | sale.package.sold (pacote VENDA, 5c)
-  ambiente         String // producao | homologacao (ADR §9.2 item 5 — só producao vira SourceDocument)
-  partner          String // null | manual | <parceiro> (DFE_PARTNER) — o adaptador do documento (BE-INCR-DFE-MANUAL item 9)
-  partnerRef       String?
-  serie            Int
-  numero           BigInt? // nDPS (nosso) | nNF (NF-e)
-  nNFSe            String? // número da NFS-e gerado pelo ADN (retorno)
-  chaveOuCodigo    String? // chave ADN da NFS-e | chave 44 da NF-e
-  dCompet          String // AAAA-MM-DD = sale.date (leiaute [108]: data da prestação)
-  vServCents       BigInt // NFSE: parcela do crédito 3.1 | NFE: crédito 3.3 — tie-out exato (F-DFE-11 a / F-DFE-15 a)
-  vDescIncondCents BigInt                  @default(0) // reservado (F-DFE-15 a => 0)
-  baseIssCents     BigInt?
-  aliqIssBp        Int? // retorno (pAliqAplic) ou issAliquotaBp
-  vIssCents        BigInt? // retorno
-  tpRetISSQN       Int                     @default(1) // 1 não retido | 2 retido pelo tomador [311]
-  vIbsCents        BigInt? // retorno — a DPS não carrega valores de IBS/CBS (BRIEF §1)
-  vCbsCents        BigInt? // retorno
-  currentAttemptNo Int                     @default(1)
-  authorizedAt     DateTime?
-  cancelledAt      DateTime?
-  cancelMotivo     Int? // Anexo II e101101 cMotivo: 1 erro na emissão | 2 serviço não prestado | 9 outros
-  cancelReason     String? // xMotivo 15-255
-  errorsJson       String? // último resultado REJECTED / inconsistência PNCT (vigilância)
-  xmlAttachmentId  String? // DocumentAttachment (targetType FISCAL_DOCUMENT)
-  pdfAttachmentId  String?
-  sourceDocumentId String? // após AUTHORIZED em producao (ADR D7)
+  id                      String                  @id @default(cuid())
+  userId                  String
+  unitId                  String
+  kind                    String // NFSE | NFE
+  status                  String // SENT | PROCESSING | AUTHORIZED | AUTHORIZED_DIVERGENT (releitura divergente, F-MAN-2 c) | REJECTED | CANCELLED
+  saleId                  String
+  saleKey                 String // = saleId enquanto vivo; "cancelled:<id>:<saleId>" após CANCELLED
+  cTribNac                String                  @default("") // F-DFE-16 (b); "" para NFE
+  anchorEntryId           String // JournalEntry âncora: sale.finalized | sale.package.sold (pacote VENDA, 5c)
+  ambiente                String // producao | homologacao (ADR §9.2 item 5 — só producao vira SourceDocument)
+  partner                 String // null | manual | <parceiro> (DFE_PARTNER) — o adaptador do documento (BE-INCR-DFE-MANUAL item 9)
+  partnerRef              String?
+  serie                   Int
+  numero                  BigInt? // nDPS (nosso) | nNF (NF-e)
+  nNFSe                   String? // número da NFS-e gerado pelo ADN (retorno)
+  chaveOuCodigo           String? // chave ADN da NFS-e | chave 44 da NF-e
+  dCompet                 String // AAAA-MM-DD = sale.date (leiaute [108]: data da prestação)
+  vServCents              BigInt // NFSE: parcela do crédito 3.1 | NFE: crédito 3.3 — tie-out exato (F-DFE-11 a / F-DFE-15 a)
+  vDescIncondCents        BigInt                  @default(0) // reservado (F-DFE-15 a => 0)
+  baseIssCents            BigInt?
+  aliqIssBp               Int? // retorno (pAliqAplic) ou issAliquotaBp
+  vIssCents               BigInt? // retorno
+  tpRetISSQN              Int                     @default(1) // 1 não retido | 2 retido pelo tomador [311]
+  vIbsCents               BigInt? // retorno — a DPS não carrega valores de IBS/CBS (BRIEF §1)
+  vCbsCents               BigInt? // retorno
+  currentAttemptNo        Int                     @default(1)
+  authorizedAt            DateTime?
+  cancelledAt             DateTime?
+  cancelMotivo            Int? // Anexo II e101101 cMotivo: 1 erro na emissão | 2 serviço não prestado | 9 outros
+  cancelReason            String? // xMotivo 15-255
+  errorsJson              String? // último resultado REJECTED / inconsistência PNCT (vigilância)
+  xmlAttachmentId         String? // DocumentAttachment (targetType FISCAL_DOCUMENT)
+  pdfAttachmentId         String?
+  sourceDocumentId        String? // após AUTHORIZED em producao (ADR D7)
   // BE-INCR-DFE-EVENTOS (nó X11, PR-1)
   nfseDhProc              DateTime? // item 1 — infNFSe/dhProc [19]: instante fiscal da nota, base da janela (F-EVT-2 b)
   substitutesDocumentId   String? // item 11 — esta é a substituta de … (DPS com o grupo infDPS/subst, Anexo I [113])
@@ -1704,11 +1704,11 @@ model FiscalDocument {
   substMotivo             String? // TSCodJustSubst 01|02|03|04|05|99 (Anexo I [115]) — domínio ≠ cancelMotivo (TSCodJustCanc 1|2|9)
   substReason             String? // xMotivo 15–255 (Anexo I [116])
   cancelEventAttachmentId String? // item 7 — XML do evento e101101 (DocumentAttachment, só em produção)
-  createdById      String?
-  createdAt        DateTime                @default(now())
-  updatedAt        DateTime                @updatedAt
-  deletedAt        DateTime?
-  attempts         FiscalDocumentAttempt[]
+  createdById             String?
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
+  deletedAt               DateTime?
+  attempts                FiscalDocumentAttempt[]
 
   @@unique([userId, unitId, saleKey, kind, cTribNac])
   @@index([userId, unitId, status])
@@ -2448,31 +2448,31 @@ model AccountingPolicyVersion {
 // provedor importa contra ela; trocar de conta = nova PaymentAccount. No máximo uma ACTIVE por
 // (userId, unitId, provider) — gate dentro da tx do serviço (P1-4), não constraint.
 model PaymentAccount {
-  id                   String             @id @default(cuid())
-  userId               String
-  unitId               String
-  provider             String // PAYMENT_PROVIDERS = ['MERCADO_PAGO'] (BANK_CNAB entra com o 2º adaptador)
-  label                String
-  glAccountId          String // FK Account folha, Restrict — IMUTÁVEL (P1-3)
-  glAccount            Account            @relation("PaymentAccountGl", fields: [glAccountId], references: [id], onDelete: Restrict)
-  providerAccountRef   String? // MP: user_id do vendedor (informativo; nunca roteia — PP-D4 item 1)
-  configJson           String // z.discriminatedUnion('provider') — P1-5
-  credentialCiphertext Bytes? // iv ‖ tag ‖ ct; AAD = id (P1-1/P1-8)
-  credentialKeyVersion Int?
-  credentialSetAt      DateTime?
-  credentialSetById    String? // F5 PR-3 (G5, dono 2026-10-10): ator do job mpReleaseReportFetch
-  credentialExpiresAt  DateTime? // OWN: sempre null (a doc do MP não declara validade, M12) — OAuth futuro
-  accessTokenLast4     String? // única projeção legível (PP-D7)
-  status               String // DRAFT | ACTIVE | CREDENTIAL_INVALID | DISABLED
+  id                         String             @id @default(cuid())
+  userId                     String
+  unitId                     String
+  provider                   String // PAYMENT_PROVIDERS = ['MERCADO_PAGO'] (BANK_CNAB entra com o 2º adaptador)
+  label                      String
+  glAccountId                String // FK Account folha, Restrict — IMUTÁVEL (P1-3)
+  glAccount                  Account            @relation("PaymentAccountGl", fields: [glAccountId], references: [id], onDelete: Restrict)
+  providerAccountRef         String? // MP: user_id do vendedor (informativo; nunca roteia — PP-D4 item 1)
+  configJson                 String // z.discriminatedUnion('provider') — P1-5
+  credentialCiphertext       Bytes? // iv ‖ tag ‖ ct; AAD = id (P1-1/P1-8)
+  credentialKeyVersion       Int?
+  credentialSetAt            DateTime?
+  credentialSetById          String? // F5 PR-3 (G5, dono 2026-10-10): ator do job mpReleaseReportFetch
+  credentialExpiresAt        DateTime? // OWN: sempre null (a doc do MP não declara validade, M12) — OAuth futuro
+  accessTokenLast4           String? // única projeção legível (PP-D7)
+  status                     String // DRAFT | ACTIVE | CREDENTIAL_INVALID | DISABLED
   // Review do #615, A2 (R2 a, dono 2026-10-10): não-nulo = o job mpReleaseReportFetch parou nesta conta (sobreposição
   // com extrato já importado) e não tenta de novo até o operador destravar (POST …/release-report/unblock).
   releaseReportBlockedReason String?
-  createdById          String?
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
-  deletedAt            DateTime?
-  charges              CollectionCharge[] // PR-2
-  statements           BankStatement[] // PR-3 (G1)
+  createdById                String?
+  createdAt                  DateTime           @default(now())
+  updatedAt                  DateTime           @updatedAt
+  deletedAt                  DateTime?
+  charges                    CollectionCharge[] // PR-2
+  statements                 BankStatement[] // PR-3 (G1)
 
   @@index([userId, unitId, provider, status])
   @@map("payment_accounts")
@@ -2772,4 +2772,30 @@ model LegalParameter {
 
   @@index([tabela, chave, status])
   @@map("legal_parameters")
+}
+
+// BE-INCR-DFE-ADN-EMISSOR PR-1 (nó X10i; itens 3–6; F-ADN-2 a, F-ADN-3 b; ADR-DFE §12): certificado do cliente
+// (SE-S/ex-A1) que o emissor `adn` usa na assinatura e no mTLS. Prisma first-class (§2.1: credencial de emissão legal).
+// Uma linha viva por (userId, unitId) — R8: um certificado por unidade/CNPJ. Chave PKCS#8 e certificado DER cifrados
+// (secretBox, AAD = id, keyring DFE_CERT_KEYS); o PFX e a senha nunca são persistidos. Soft-delete com rename do unitId
+// e ciphertext zerado na mesma tx (item 6).
+model FiscalCertificate {
+  id                String    @id @default(cuid())
+  userId            String
+  unitId            String
+  keyCiphertext     Bytes? // PKCS#8 PEM cifrado; null após DELETE
+  certCiphertext    Bytes? // DER do certificado do usuário final, cifrado; null após DELETE
+  keyVersion        Int?
+  cnpjCertificado   String // OtherName 2.16.76.1.3.3
+  notBefore         String // AAAA-MM-DD
+  notAfter          String // AAAA-MM-DD
+  fingerprintSha256 String // sha256 do DER, hex minúsculo
+  setById           String?
+  setAt             DateTime  @default(now())
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+
+  @@unique([userId, unitId])
+  @@map("fiscal_certificates")
 }

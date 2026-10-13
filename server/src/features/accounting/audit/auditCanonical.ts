@@ -247,6 +247,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // ids do provedor já importados, até 50, separados por vírgula) e o destravamento pelo operador.
   'payment_account.release_report_blocked':   ['paymentAccountId', 'fileName', 'fromUtc', 'toUtc', 'code', 'sourceIds'],
   'payment_account.release_report_unblocked': ['paymentAccountId'],
+  // BE-INCR-DFE-ADN-EMISSOR PR-1 (item 6) — só unidade, fingerprint e validade: NUNCA chave, certificado, senha nem CNPJ.
+  'fiscal_certificate.set':     ['unitId', 'fingerprintSha256', 'notAfter'],
+  'fiscal_certificate.removed': ['unitId', 'fingerprintSha256', 'notAfter'],
   'collection_charge.created':        ['collectionChargeId', 'receivableId', 'paymentAccountId', 'kind', 'amountCents', 'status'],
   'collection_charge.status_changed': ['collectionChargeId', 'from', 'to', 'providerStatus'],
   'collection_charge.cancelled':      ['collectionChargeId', 'fromStatus', 'toStatus', 'providerStatus'],
