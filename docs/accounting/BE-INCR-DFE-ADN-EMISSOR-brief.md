@@ -1,6 +1,6 @@
 # BRIEF — BE-INCR-DFE-ADN-EMISSOR (emissor próprio de NFS-e na Sefin Nacional / ADN, sem depender do A1 real) — nó X10i
 
-> **EMENDA PSC 2026-10-12:** ver [`BE-INCR-DFE-ADN-EMENDA-PSC-brief.md`](BE-INCR-DFE-ADN-EMENDA-PSC-brief.md) — assinatura pelo PSC contratado pelo Luminaris; itens 3–7, 9, 13 substituídos; F-ADN-2/4 sem objeto, F-ADN-3→F-PSC-3, F-ADN-10→F-PSC-5; F-PSC-1..8 pendentes (F-PSC-1 = mTLS, bloqueia o PR-3).
+> **EMENDA PSC 2026-10-12:** ver [`BE-INCR-DFE-ADN-EMENDA-PSC-brief.md`](BE-INCR-DFE-ADN-EMENDA-PSC-brief.md) — assinatura pelo PSC contratado pelo Luminaris; itens 3–7, 9, 13 substituídos; F-ADN-2/4 sem objeto, F-ADN-3→F-PSC-3, F-ADN-10→F-PSC-5; F-PSC-1..8 ratificados (a) em 12/10; F-PSC-1 (mTLS com A1 do Luminaris) ainda depende da L-ADN-4 para produção.
 
 > **EMENDA 2026-10-11:** ver [`EMENDAS-BRIEF-2026-10-11.md`](EMENDAS-BRIEF-2026-10-11.md) §8 (F-ADN-1 superado pela decisão PAA + PSC de 11/10; F-ADN-2/3 sem objeto). Sem código; cada item exige 'executa'.
 

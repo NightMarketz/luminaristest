@@ -29,10 +29,19 @@ atualizado: "2026-10-12"
 | F-PES-0..13 | Folha/eSocial/Reinf | "Ratificar recomendações" (a recomendação da pergunta era adiar) | Recomendação de cada fork do PRE-ADR; o F-PES-0 segue condicionado ao fato comercial que o PRE-ADR descreve |
 | F-ICMS-0..14 | ICMS/IPI/EFD | "Ratificar recomendações" (a recomendação da pergunta era adiar) | Recomendação de cada fork do PRE-ADR |
 
+## F-PSC (emenda PSC do BRIEF ADN, 4ª rodada)
+
+| Fork | Resposta | Efeito |
+| --- | --- | --- |
+| F-PSC-1 | "(a) A1 do Luminaris (Recomendado)" | mTLS com certificado do Luminaris (transmissor); produção depende da L-ADN-4 |
+| F-PSC-2, F-PSC-3 | "Ambas (a) (Recomendado)" | Tabela `PscProvider` da plataforma; keyring `DFE_PSC_KEYS` próprio |
+| F-PSC-4, 5, 6 | "Todas (a) (Recomendado)" | Aviso a 80% da cota; pré-voo bloqueia e avisa; `PENDING_SIGNATURE` sem consumir número |
+| F-PSC-7, F-PSC-8 | "Ambas (a) (Recomendado)" | Contingência pelo portal se não houver resposta até 25/10; cobrança da revenda fora do BRIEF |
+
 ## Já resolvidos antes (registro)
 - F-E1-1 = (a), dono 11/10, implementado no #634.
 - F-E8-1R = (a), dono 11/10 (#635); F-E8-1 e F-ADN-1 superados; F-ADN-2/3 sem objeto.
 
 ## Ainda pendentes
-- F-ADN-4..13 (BRIEF do emissor ADN) — a emenda do BRIEF para o caminho PSC (contratado pelo Luminaris) deve revisá-los.
+- F-ADN-5, 6, 7, 8, 9, 11, 12, 13 (mantidos pela emenda PSC). F-ADN-2/4 sem objeto; F-ADN-3 → F-PSC-3; F-ADN-10 → F-PSC-5.
 - F-E8-1 (PAA) ficou superado, não pendente.

@@ -2,8 +2,8 @@
 
 > Produzido em `sessao-planejamento` (2026-10-12), nó [`X10i`](../plano/nos/X10i.md), gate [`D5`](../plano/gates/D5.md).
 > **Este documento não escreve código.** Emenda o [`BE-INCR-DFE-ADN-EMISSOR-brief.md`](BE-INCR-DFE-ADN-EMISSOR-brief.md)
-> (chamado aqui de "BRIEF-ADN"): diz o que cai, o que fica e o que entra. Forks novos **F-PSC-1..8, todos com
-> RATIFICAÇÃO PENDENTE**. A `sessao-feature` só abre com "executa" do dono, e a emissão real continua exigindo o
+> (chamado aqui de "BRIEF-ADN"): diz o que cai, o que fica e o que entra. Forks novos **F-PSC-1..8, todos
+> RATIFICADOS (a) em 12/10** (F-PSC-1 segue condicionado à L-ADN-4). A `sessao-feature` só abre com "executa" do dono, e a emissão real continua exigindo o
 > "executa" da emissão (regra do X10i).
 >
 > **Em duas linhas:** a assinatura da DPS sai do A1 guardado e vai para a API OAuth do PSC (DOC-ICP-17.01 §6.4); o resto
@@ -222,7 +222,7 @@ DFE_TRANSMISSOR_CERT=/caminho/seguro    # só com F-PSC-1 (a): A1 DO LUMINARIS, 
 
 ---
 
-## 5. Forks — RATIFICAÇÃO PENDENTE (nenhum se auto-ratifica)
+## 5. Forks — RATIFICADOS (a) em 12/10 pelo dono
 
 ### F-PSC-1 — Com que certificado a conexão (mTLS) com a Sefin é feita
 - **(a)** Certificado **do Luminaris** (e-CNPJ A1 próprio, transmissor), um por instância; a DPS segue assinada pelo
@@ -231,49 +231,49 @@ DFE_TRANSMISSOR_CERT=/caminho/seguro    # só com F-PSC-1 (a): A1 DO LUMINARIS, 
 - **(c)** Sem mTLS próprio: usar o emissor web da Sefin (portal) até haver resposta, pelo `ManualEmissor`.
 - **Recomendação: (a)**, condicionada à L-ADN-4. É o único caminho que a API do PSC permite sem dependência nativa; o
   A1 é do próprio Luminaris, então a decisão 2 de 26/09 não é ferida. (b) não tem fonte de que algum PSC exponha
-  PKCS#11 (insumo ausente 2). (c) é a contingência, não o desenho. **RATIFICAÇÃO PENDENTE.**
+  PKCS#11 (insumo ausente 2). (c) é a contingência, não o desenho. **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]] §F-PSC). Sem "executa".
 
 ### F-PSC-2 — Onde fica o cadastro dos PSCs homologados
 - **(a)** Tabela `PscProvider` gerida pela plataforma (admin), habilitação só depois de assinatura de teste real.
 - **(b)** Constante no código por PSC.
 - **Recomendação: (a).** Com o F-E8-2 (b) o `clientId`/segredo é do contrato do Luminaris e muda sem deploy; a cota é
-  dado comercial. **RATIFICAÇÃO PENDENTE.**
+  dado comercial. **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]] §F-PSC). Sem "executa".
 
 ### F-PSC-3 — Cifra do token e do segredo OAuth em repouso
 - **(a)** Keyring próprio `DFE_PSC_KEYS` no formato do F5 (`secretBox` com prefixo), falha fechada.
 - **(b)** Reusar o keyring do F5.
 - **Recomendação: (a).** Mesmo raciocínio do F-ADN-3 (b) original: chaves separadas por finalidade, rotação
-  independente. Pré-condição de deploy do M2. **RATIFICAÇÃO PENDENTE.**
+  independente. Pré-condição de deploy do M2. **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]] §F-PSC). Sem "executa".
 
 ### F-PSC-4 — Cota de assinaturas
 - **(a)** Contador por credencial + aviso a partir de 80% da cota anual do PSC.
 - **(b)** Só registrar o erro `COTA_ESGOTADA` quando o PSC recusar.
 - **Recomendação: (a).** O §9 do planejamento mostra cota de 5–6 mil/ano em PSCs com preço público; o salão pode
-  passar disso. Com o F-E8-2 (b), estourar a cota é problema comercial do Luminaris. **RATIFICAÇÃO PENDENTE.**
+  passar disso. Com o F-E8-2 (b), estourar a cota é problema comercial do Luminaris. **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]] §F-PSC). Sem "executa".
 
 ### F-PSC-5 — Pré-voo: o que bloqueia a emissão
 - **(a)** Bloqueia com certificado vencido ou token expirado; avisa 30 dias antes do `certNotAfter` e quando o token
   vence em menos de 1 h.
 - **(b)** Só bloqueia; sem aviso.
-- **Recomendação: (a)**, herdando o F-ADN-10 (a). **RATIFICAÇÃO PENDENTE.**
+- **Recomendação: (a)**, herdando o F-ADN-10 (a). **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]] §F-PSC). Sem "executa".
 
 ### F-PSC-6 — Sessão vencida durante o expediente
 - **(a)** Estado novo `PENDING_SIGNATURE`: a nota espera a reautorização sem consumir número.
 - **(b)** `REJECTED` com `psc_sessao_expirada`, e o operador reenvia.
 - **Recomendação: (a).** Com `lifetime` de até 12 h (Bird ID, indício), o salão reautoriza 1×/dia; (b) faria cada
   venda após o vencimento virar rejeição visível. Custo: estado novo no enum de status do DF-e (snapshot de contrato).
-  **RATIFICAÇÃO PENDENTE.**
+  **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]] §F-PSC). Sem "executa".
 
 ### F-PSC-7 — Contingência para 01/11
 - **(a)** Se o PR-3 não tiver a L-ADN-4 respondida até 25/10, o 1º cliente começa no emissor web da Sefin com o
   `ManualEmissor` (já em main) e migra para o `adn` depois.
 - **(b)** Sem contingência; segura a 1ª emissão até o `adn` estar pronto.
-- **Recomendação: (a).** O 01/11 é obrigação do cliente, não do Luminaris; o portal cumpre. **RATIFICAÇÃO PENDENTE.**
+- **Recomendação: (a).** O 01/11 é obrigação do cliente, não do Luminaris; o portal cumpre. **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]] §F-PSC). Sem "executa".
 
 ### F-PSC-8 — Revenda: como o custo do PSC chega ao cliente
 - **(a)** Fora deste BRIEF (decisão comercial/plano de preço); o BE só registra consumo (E-9).
 - **(b)** O BE gera cobrança do consumo.
-- **Recomendação: (a).** Cobrança é outro nó (F5/plano comercial). **RATIFICAÇÃO PENDENTE.**
+- **Recomendação: (a).** Cobrança é outro nó (F5/plano comercial). **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]] §F-PSC). Sem "executa".
 
 ---
 
