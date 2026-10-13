@@ -30,6 +30,8 @@ function build(opts: {
   chart?: typeof CHART;
   period?: ActivationPeriodStatus;
   compileStatus?: 'Active' | 'Draft';
+  /** E-5: o kit vigente (v3) traz contas do perfil fiscal — sem perfil a ativação bloqueia. Padrão: perfil existe. */
+  hasFiscalProfile?: boolean;
 } = {}) {
   const findActive = jest.fn(async () => opts.active ?? null);
   const repo = { findActive } as unknown as IAccountingBindingRepository;
@@ -82,7 +84,7 @@ function build(opts: {
     { compile } as never,
     { ...chartPort, createAccountIfAbsent: async () => 'exists' as const, findLiveAccountId: async () => null },
     periodPort,
-    { hasFiscalProfile: async () => false, fillNullScopeSettings: async () => [], fillNullFiscalProfile: async () => [] },
+    { hasFiscalProfile: async () => opts.hasFiscalProfile ?? true, fillNullScopeSettings: async () => [], fillNullFiscalProfile: async () => [] },
     { hasProfile: async () => false, upsert: async () => {} },
     { catalogLoaded: async () => false, mappedAccountIds: async () => new Set<string>(), batchSet: async () => {} },
     { companyRegime: async () => null, unitRegime: async () => null },
@@ -106,12 +108,20 @@ const nothingWritten = (b: ReturnType<typeof build>) => {
 };
 
 describe('BindingActivationService.activateDefault', () => {
+  it('E-5 (mantida pelo dono, 13/10): kit vigente com contas do perfil fiscal e unidade sem perfil ⇒ Draft KIT_FISCAL_PROFILE_REQUIRED, nada escrito', async () => {
+    const b = build({ hasFiscalProfile: false });
+    const out = await b.service.activateDefault(scope, {});
+    expect(out.status).toBe('Draft');
+    expect(JSON.stringify(out)).toContain('KIT_FISCAL_PROFILE_REQUIRED');
+    nothingWritten(b);
+  });
+
   it('CONTROLE feliz: chart e período prontos ⇒ compila o binding do SALÃO (default) e devolve Active', async () => {
     const b = build();
     await expect(b.service.activateDefault(scope, {})).resolves.toEqual({
       status: 'Active',
       bindingVersion: 7,
-      kit: { kitKey: 'beautySalon', kitVersion: 2, status: 'INSTALLED' },
+      kit: { kitKey: 'beautySalon', kitVersion: 3, status: 'INSTALLED' },
     });
     expect(b.compile).toHaveBeenCalledWith(scope, {
       sectorKey: SALE_BINDING_V1.sectorKey,
