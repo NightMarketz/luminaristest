@@ -1,0 +1,32 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "L6404consol",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/l6404consol.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/l6404consol.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-13T00:58:43-03:00",
+      "sha256": "dbddd484209cd14bdb2415750253d83a4af7d2f5011f7153950606e5db90fcec",
+      "arquivo": "docs/D01_l6404consol-htm.html",
+      "texto": "docs/D01_l6404consol-htm.txt",
+      "bytes": 757607
+    },
+    {
+      "id": "D02",
+      "titulo": "DEL1598",
+      "url": "https://www.planalto.gov.br/ccivil_03/decreto-lei/del1598.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/decreto-lei/del1598.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-13T00:58:43-03:00",
+      "sha256": "3f3d620f315d8af8ae57ff8b4f6a093cce8e5239b7d4521cc54a19cf5306a1c2",
+      "arquivo": "docs/D02_del1598-htm.html",
+      "texto": "docs/D02_del1598-htm.txt",
+      "bytes": 335035
+    }
+  ],
+  "buscas": [],
+  "slug": "pis-cofins-deducao-receita",
+  "pergunta": "F-KE-2: PIS/COFINS sobre faturamento são dedução da receita bruta (receita líquida) ou despesa na DRE?",
+  "criado": "2026-10-13T00:55:35-03:00"
+}
