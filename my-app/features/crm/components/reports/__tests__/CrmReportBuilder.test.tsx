@@ -430,3 +430,65 @@ describe('review do PR-B — 5ª passada no orquestrador', () => {
     expect(screen.queryByTestId('filter-0')).toBeNull();
   });
 });
+
+describe('review do PR-B — 6ª passada no orquestrador', () => {
+  const OPP_SCHEMA = [
+    { name: 'title', label: 'Título', type: 'string' },
+    { name: 'leadId', label: 'Lead', type: 'relation', relation: { targetTable: '@@PRESET_TABLE_KEY::leads' } },
+  ];
+  const LEAD_SCHEMA = [{ name: 'status', label: 'Status', type: 'select', options: ['Novo'] }];
+  const PROPOSAL_SCHEMA_J = [{ name: 'amount', label: 'Valor', type: 'number' }];
+  const ab: CrmReportRow = {
+    ...saved,
+    id: 'rab2',
+    userId: 'eu',
+    name: 'A e B usados',
+    spec: {
+      source: 'crmOpportunities',
+      joins: [
+        { leftField: 'leadId', rightSource: 'leads', rightField: 'id', alias: 'a' },
+        { leftField: 'title', rightSource: 'leads', rightField: 'status', alias: 'b' },
+      ],
+      measures: [{ type: 'count' }],
+      filters: [
+        { field: 'a.status', op: 'eq', value: 'Novo' },
+        { field: 'b.status', op: 'eq', value: 'Novo' },
+      ],
+    },
+  };
+  beforeEach(() => {
+    Object.values(svc).forEach((f) => f.mockReset());
+    svc.list.mockImplementation(() => ok([ab]));
+    svc.get.mockImplementation(() => ok(ab));
+    svc.run.mockImplementation(() => ok(RUN));
+  });
+  afterEach(() => cleanup());
+
+  it('duas confirmações que chegam juntas entram em fila: confirmar as duas aplica as duas trocas', async () => {
+    const pending: ((v: unknown) => void)[] = [];
+    fieldsOf.mockReset().mockImplementation((s: string) =>
+      s === 'leadProposals'
+        ? new Promise((r) => pending.push(() => r(PROPOSAL_SCHEMA_J)))
+        : Promise.resolve(s === 'leads' ? LEAD_SCHEMA : OPP_SCHEMA),
+    );
+    render(<CrmReportBuilder />);
+    fireEvent.click(await screen.findByText('Abrir'));
+    await waitFor(() => expect(svc.run).toHaveBeenCalled());
+    const j0 = within(screen.getByTestId('join-0'));
+    const j1 = within(screen.getByTestId('join-1'));
+    fireEvent.change(j0.getByLabelText('Tabela'), { target: { value: 'leadProposals' } });
+    fireEvent.change(j1.getByLabelText('Tabela'), { target: { value: 'leadProposals' } });
+    await waitFor(() => expect(pending).toHaveLength(2));
+    pending[0](undefined);
+    await screen.findByText('Mudar o cruzamento?');
+    pending[1](undefined);
+    await new Promise((r) => setTimeout(r, 0));
+    fireEvent.click(screen.getByText('Mudar e limpar'));
+    await waitFor(() => expect(j0.getByLabelText('Tabela')).toHaveValue('leadProposals'));
+    expect(await screen.findByText('Mudar o cruzamento?')).toBeInTheDocument(); // a segunda confirmação
+    fireEvent.click(screen.getByText('Mudar e limpar'));
+    await waitFor(() => expect(j1.getByLabelText('Tabela')).toHaveValue('leadProposals'));
+    expect(screen.queryByText('Mudar o cruzamento?')).toBeNull();
+    expect(screen.queryByTestId('filter-0')).toBeNull();
+  });
+});

@@ -76,7 +76,11 @@ export function CrmReportBuilder() {
 
   const [rightRaw, setRightRaw] = useState<RightRaw>({});
   const [busyJoins, setBusyJoins] = useState<JoinDraft[]>([]);
-  const [pending, setPending] = useState<{ kind: 'source' | 'join'; apply: () => void } | null>(null);
+  // fila de confirmações: duas trocas que chegam juntas não se sobrescrevem (6ª passada do review do PR-B)
+  const [pendingQueue, setPendingQueue] = useState<{ kind: 'source' | 'join'; apply: () => void }[]>([]);
+  const pending = pendingQueue[0] ?? null;
+  const setPending = (p: { kind: 'source' | 'join'; apply: () => void }) => setPendingQueue((q) => [...q, p]);
+  const closePending = () => setPendingQueue((q) => q.slice(1));
   const [toDelete, setToDelete] = useState<CrmReportRow | null>(null);
   const [saveAsName, setSaveAsName] = useState<string | null>(null);
 
@@ -456,7 +460,7 @@ export function CrmReportBuilder() {
 
       <Modal
         isOpen={pending !== null}
-        onClose={() => setPending(null)}
+        onClose={closePending}
         title={
           pending?.kind === 'join'
             ? t('report_builder.confirm.join_title', 'Mudar o cruzamento?')
@@ -464,7 +468,7 @@ export function CrmReportBuilder() {
         }
         footer={
           <div className="flex justify-end gap-2">
-            <button type="button" className={secondaryBtn} onClick={() => setPending(null)}>
+            <button type="button" className={secondaryBtn} onClick={closePending}>
               {t('report_builder.confirm.cancel', 'Cancelar')}
             </button>
             <button
@@ -472,7 +476,7 @@ export function CrmReportBuilder() {
               className={primaryBtn}
               onClick={() => {
                 pending?.apply();
-                setPending(null);
+                closePending();
               }}
             >
               {pending?.kind === 'join'
