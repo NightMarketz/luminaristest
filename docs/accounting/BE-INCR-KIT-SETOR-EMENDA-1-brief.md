@@ -80,20 +80,20 @@ export const AESTHETIC_CLINIC_KIT_V2: SectorKitV1; // kitVersion 2; referential 
 
 ## 4. Forks — RATIFICAÇÃO PENDENTE
 
-### F-KE-1 — Códigos das contas de imposto na extensão
+### F-KE-1 — Códigos das contas de imposto na extensão — ✅ (a), dono 13/10
 - **(a)** Passivo: 2.1.3 IRPJ a recolher, 2.1.4 CSLL a recolher, 2.1.5 PIS a recolher, 2.1.6 COFINS a recolher.
   Resultado: 4.5.1 IRPJ, 4.5.2 CSLL (fora de 4.3/4.4, reservados pela emenda 3.3, F6).
 - **(b)** Grupo próprio 2.2 "Obrigações tributárias" com 2.2.1–2.2.4.
 - **Recomendação: (a).** Não cria nível sintético novo e não colide com F6. Risco: escopos que já criaram contas à mão
   nesses códigos — insumo ausente 1.
 
-### F-KE-2 — Onde caem PIS/COFINS sobre o faturamento
+### F-KE-2 — Onde caem PIS/COFINS sobre o faturamento — ✅ (a), dono 13/10
 - **(a)** Redutora da receita (natureza `Revenue`, ex.: 3.6.1 PIS, 3.6.2 COFINS), como dedução da receita bruta.
 - **(b)** Despesa (4.5.3, 4.5.4), como o nome do campo `pisDespesaAccountCode` sugere.
 - **Recomendação: (a)**, por ser dedução da receita bruta. **Fonte conferida em 13/10**
   (`pesquisas-legais/pis-cofins-deducao-receita/relatorio.md`): a receita líquida é a bruta diminuída dos "tributos
   sobre ela incidentes" (DL 1.598/77 art. 12 §1º III, redação da Lei 12.973/2014), e a DRE discrimina as deduções e
-  os impostos antes da receita líquida (Lei 6.404/76 art. 187 I–II). **RATIFICAÇÃO PENDENTE.**
+  os impostos antes da receita líquida (Lei 6.404/76 art. 187 I–II). **RATIFICADO (a) em 13/10.**
 
 ## 5. Pendente de validação externa
 

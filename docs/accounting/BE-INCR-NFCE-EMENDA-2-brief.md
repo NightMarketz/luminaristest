@@ -28,7 +28,7 @@
 | E1-2 | (a) um `SefazNfeEmissor` para 55 e 65 | sem mudança |
 | E1-3 | **(b) 27 UF agora** (contra a recomendação) | item E-11 novo (§3) |
 | E1-4 | v3; v2/CSC só se a L-NFCE-1 disser que SP não aceita v3 | E-3 condicional à L-NFCE-1; `NfceCsc` só nesse ramo |
-| E1-5 | **pendente** (L-NFCE-2) | E-9 e PR-9 seguem pausados |
+| E1-5 | **(b) off-line**, ratificado na 2ª rodada de 13/10 (EPEC fora) | E-9 = off-line; PR-9 decidido |
 | E1-6 | (b) BE entrega chave/QR/URL; DANFE no BRIEF de FE | sem item de PDF no BE |
 | E1-7 | (a) NT 2025.002 **v1.52**, download autorizado | PR-0 baixa o PDF pela ferramenta oficial (`legal.py baixar`, domínio oficial, SHA-256 no manifest) |
 | E1-8 | (b) envia direto; status sob demanda | sem pré-chamada no caminho do balcão |
@@ -63,7 +63,7 @@
 |---|---|---|
 | §4 item 1 — mTLS × PSC | **NF-e/NFC-e: resolvido.** O certificado do TLS é o do *transmissor*, "não necessariamente o CNPJ/CPF da empresa emissora" (MOC 7.0 Visão Geral) ⇒ e-CNPJ do Luminaris no transporte + assinatura pelo PSC. **NFS-e: em parte.** `GET /dps/{id}` só responde a certificado de ator da DPS; o manual não diz o que o `POST` exige (`dfe-mtls-psc/relatorio.md`) | PR-7 destravado do lado SEFAZ; a NFS-e precisa do teste em produção restrita |
 | L-NFCE-1 — QR v3 em SP | **Não confirmado.** A FAQ oficial da SEFAZ-SP diz que o CSC é "requisito de validade"; não há ato de SP sobre a v3 (`nfce-sp-qrcode-v3/relatorio.md`) | E1-4 cai no ramo **(c)**: v3 + v2/CSC; `NfceCsc` entra no PR-8. Pergunta ao Fale Conosco da SEFAZ-SP no relatório |
-| L-NFCE-2 — contingência | **Obrigatória, off-line.** Portaria SRE 40/2024 art. 6º + Ajuste SINIEF 19/16 cl. 11ª; off-line em SP desde 10/07/2024; EPEC só quando a SEFAZ-SP ativa; transmissão até o 1º dia útil seguinte (`nfce-sp-contingencia/relatorio.md`) | E1-5: a opção (a) "nenhuma" é ilegal; resposta legal = (b) off-line. **Fork volta ao dono só para ratificar (b)** |
+| L-NFCE-2 — contingência | **Obrigatória, off-line.** Portaria SRE 40/2024 art. 6º + Ajuste SINIEF 19/16 cl. 11ª; off-line em SP desde 10/07/2024; EPEC só quando a SEFAZ-SP ativa; transmissão até o 1º dia útil seguinte (`nfce-sp-contingencia/relatorio.md`) | E1-5: a opção (a) "nenhuma" é ilegal; resposta legal = (b) off-line. **(b) ratificado em 13/10** |
 | L-NFCE-3 / 4 / 5 (bônus da FAQ) | Cancelamento em 30 min; DANFE eletrônico só com concordância do adquirente; **credenciamento por estabelecimento obrigatório**, software sem homologação | Credenciamento vira passo do runbook de produção |
 
 ## 5. Plano por fatias (substitui a linha PR-7 do §9 da EMENDA-1)

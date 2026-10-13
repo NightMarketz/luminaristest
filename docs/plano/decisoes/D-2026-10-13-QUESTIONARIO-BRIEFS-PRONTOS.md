@@ -75,3 +75,13 @@ foi decidido. Conferir `docs/plano/decisoes/` pelo ID do fork antes de perguntar
 - **Risco novo levantado na emenda da NFC-e (inferido, não verificado):** SEFAZ e Sefin Nacional exigem TLS mútuo com
   o e-CNPJ. Com o certificado só no PSC, o Luminaris não tem a chave privada para o handshake. Se o PSC não oferecer
   sessão TLS ou assinatura do handshake, o transporte mTLS do BRIEF irmão não fecha. Vai para validação externa.
+
+## 2ª rodada (13/10, depois da pesquisa legal — `pesquisas-legais/`)
+
+| Nó | Fork | Decisão | Base |
+|---|---|---|---|
+| X10a | F-NFCE-E1-5 | **(b) contingência off-line** (`tpEmis=9`, QR assinado pelo PSC, transmissão até o 1º dia útil seguinte, guarda do XML no lugar da 2ª via). EPEC fora até a SEFAZ-SP ativar | Portaria SRE 40/2024 art. 6º; Ajuste SINIEF 19/16 cl. 11ª; RC 34105/2026 (`nfce-sp-contingencia`) |
+| KIT-SETOR | F-KE-2 | **(a)** PIS/COFINS como redutoras da receita (3.6.1, 3.6.2) | DL 1.598/77 art. 12 §1º III; Lei 6.404 art. 187 (`pis-cofins-deducao-receita`) |
+| KIT-SETOR | F-KE-1 | **(a)** 2.1.3 IRPJ, 2.1.4 CSLL, 2.1.5 PIS, 2.1.6 COFINS a recolher; 4.5.1 IRPJ, 4.5.2 CSLL | — (escolha de plano, não lei) |
+
+Todas na recomendação. Não é "executa". Com isso, o PR-K2 do KIT depende só das fontes de `cTribNac`/`cNBS`; o PR-9 da NFC-e fica decidido.
