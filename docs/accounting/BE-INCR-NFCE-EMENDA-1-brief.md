@@ -6,6 +6,7 @@
 > (nó [`X10a`](../plano/nos/X10a.md); F-NFCE-1..12 + 12b ratificados em 02/10). Sem código de aplicação. O BRIEF
 > original **não foi editado** (regra 1). **Implementação exige "executa" próprio** (ORCH-006). Forks novos
 > **F-NFCE-E1-1..9, todos com RATIFICAÇÃO PENDENTE.**
+> **12/10: RATIFICADOS em lote pela recomendação de cada fork** (dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]]); o F-NFCE-E1-1 já estava respondido pelo PSC). Sem "executa".
 >
 > **Autorização, citada literalmente:** dono, chat, **2026-10-10**, questionário: *"BRIEF emissor ADN (Recommended)"*.
 > Opção descrita como *"BRIEF do emissor próprio no ADN sem depender do A1 real, junto com a emenda do BE-INCR-NFCE de
