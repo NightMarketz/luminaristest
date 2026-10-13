@@ -9,4 +9,9 @@ export class SectorKitPolicy implements ISectorKitPolicy {
   canInstallKit(scope: BindingScope): boolean {
     return !!scope.actorUserId;
   }
+
+  /** Mesma regra de `AccountingBindingPolicy.canCompile` (`!!actorUserId`) — item 23. */
+  canManageKit(scope: BindingScope): boolean {
+    return !!scope.actorUserId;
+  }
 }

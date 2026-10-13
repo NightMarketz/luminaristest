@@ -105,6 +105,25 @@ export class ReportTooLargeError extends AppError {
 }
 
 /**
+ * BE-INCR-KIT-SETOR PR-3 (item 21; emenda §11 E-11.2 do BRIEF): o ajuste papel→conta foi desfeito porque a
+ * recompilação deu `Draft` — 422 com a versão `Draft` gravada e os bloqueantes do validador/cobertura, como o
+ * `POST /accounting-binding/compile` devolve hoje. A contabilidade não mudou: a versão `Active` segue a anterior.
+ */
+export class RoleOverrideCompileDraftError extends AppError {
+  public readonly details: {
+    binding: { status: string; bindingVersion: number };
+    blocking: unknown[];
+    missingEventKeys: string[];
+  };
+
+  constructor(details: RoleOverrideCompileDraftError['details']) {
+    super('A recompilação com o ajuste reprovou; o ajuste não foi gravado.', 422, 'ROLE_OVERRIDE_COMPILE_DRAFT');
+    this.details = details;
+    Object.setPrototypeOf(this, RoleOverrideCompileDraftError.prototype);
+  }
+}
+
+/**
  * Specific error class for issues within service layer operations.
  */
 export class ServiceError extends AppError {

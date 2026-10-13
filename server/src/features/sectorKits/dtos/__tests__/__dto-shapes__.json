@@ -105,6 +105,247 @@
       "additionalProperties": false
     }
   },
+  "RoleAccountOverrideDto.ts": {
+    "RoleOverrideRoleParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "SetRoleOverrideRequestSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "accountId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "motivo": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "unitId",
+        "accountId",
+        "motivo"
+      ],
+      "additionalProperties": false
+    },
+    "RoleOverrideScopeQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "RoleAccountOverrideViewSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "accountId": {
+          "type": "string"
+        },
+        "accountCode": {
+          "type": "string"
+        },
+        "kitAccountCode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "motivo": {
+          "type": "string"
+        },
+        "setById": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "role",
+        "accountId",
+        "accountCode",
+        "kitAccountCode",
+        "motivo",
+        "setById",
+        "createdAt",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "RoleOverrideBindingRefSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "Draft",
+            "Active",
+            "Superseded"
+          ]
+        },
+        "bindingVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "status",
+        "bindingVersion"
+      ],
+      "additionalProperties": false
+    },
+    "SetRoleOverrideResultSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "override": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "role": {
+              "type": "string"
+            },
+            "accountId": {
+              "type": "string"
+            },
+            "accountCode": {
+              "type": "string"
+            },
+            "kitAccountCode": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "motivo": {
+              "type": "string"
+            },
+            "setById": {
+              "type": "string"
+            },
+            "createdAt": {
+              "type": "string"
+            },
+            "updatedAt": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "role",
+            "accountId",
+            "accountCode",
+            "kitAccountCode",
+            "motivo",
+            "setById",
+            "createdAt",
+            "updatedAt"
+          ],
+          "additionalProperties": false
+        },
+        "binding": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "Draft",
+                "Active",
+                "Superseded"
+              ]
+            },
+            "bindingVersion": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "status",
+            "bindingVersion"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "override",
+        "binding"
+      ],
+      "additionalProperties": false
+    },
+    "RemoveRoleOverrideResultSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "binding": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "Draft",
+                "Active",
+                "Superseded"
+              ]
+            },
+            "bindingVersion": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "status",
+            "bindingVersion"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "binding"
+      ],
+      "additionalProperties": false
+    }
+  },
   "SectorKitDto.ts": {
     "CanonicalAccountSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

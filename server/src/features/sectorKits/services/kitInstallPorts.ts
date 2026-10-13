@@ -56,11 +56,30 @@ export interface KitRegimePort {
   unitRegime(): Promise<KitRegime | null>;
 }
 
-/** Auditoria in-tx dos eventos `kit.*` (item 15), no molde de `IBindingAuditPort`. */
+/**
+ * Auditoria in-tx dos eventos `kit.*` (itens 15 e 24), no molde de `IBindingAuditPort`. `targetType` ausente ⇒
+ * `KitInstallation` (os eventos do PR-2); o ajuste do PR-3 passa `RoleAccountOverride`.
+ */
 export interface IKitAuditPort {
   append(
     tx: Prisma.TransactionClient,
     scope: BindingScope,
-    event: { eventType: 'kit.installed' | 'kit.install_failed'; targetId: string; payload: Record<string, unknown> },
+    event: {
+      eventType: 'kit.installed' | 'kit.install_failed' | 'kit.role_override_set' | 'kit.role_override_removed';
+      targetType?: 'KitInstallation' | 'RoleAccountOverride';
+      targetId: string;
+      payload: Record<string, unknown>;
+    },
   ): Promise<void>;
+}
+
+/**
+ * PR-3, item 20: a conta do ajuste, lida com o `tx` do gate. Devolve só conta VIVA do escopo (inexistente,
+ * apagada ou de outro escopo ⇒ `null`, indistinguíveis de propósito).
+ */
+export interface KitOverrideAccountPort {
+  findLiveInScope(
+    accountId: string,
+    tx: Prisma.TransactionClient,
+  ): Promise<{ id: string; code: string; nature: string; acceptsEntries: boolean } | null>;
 }
