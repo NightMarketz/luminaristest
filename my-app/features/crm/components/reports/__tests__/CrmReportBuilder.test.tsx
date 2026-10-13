@@ -306,3 +306,33 @@ describe('review do PR-B — 2ª passada no orquestrador', () => {
     expect(screen.queryByText('Mudar o cruzamento?')).toBeNull();
   });
 });
+
+describe('review do PR-B — 3ª passada no orquestrador', () => {
+  const OPP_SCHEMA = [{ name: 'title', label: 'Título', type: 'string' }];
+  const LEAD_SCHEMA = [{ name: 'status', label: 'Status', type: 'select', options: ['Novo'] }];
+  beforeEach(() => {
+    Object.values(svc).forEach((f) => f.mockReset());
+    svc.list.mockImplementation(() => ok([]));
+  });
+  afterEach(() => cleanup());
+
+  it('enquanto a tabela nova carrega, os campos do próprio join ficam travados e a troca é aplicada', async () => {
+    let release: (v: unknown) => void = () => {};
+    fieldsOf
+      .mockReset()
+      .mockImplementation((s: string) => (s === 'leads' ? new Promise((r) => (release = () => r(LEAD_SCHEMA))) : Promise.resolve(OPP_SCHEMA)));
+    await newReportOn('leadProposals');
+    fireEvent.click(screen.getByText('Avançado: cruzar com outra tabela'));
+    fireEvent.click(screen.getByText('Adicionar cruzamento'));
+    const row = within(screen.getByTestId('join-0'));
+    fireEvent.change(row.getByLabelText('Tabela'), { target: { value: 'leads' } });
+    await waitFor(() => expect(row.getByLabelText('Apelido')).toBeDisabled());
+    expect(row.getByLabelText('Campo da fonte')).toBeDisabled();
+    expect(row.getByLabelText('Tabela')).toBeDisabled();
+    expect(row.getByText('Remover')).toBeEnabled();
+    release(undefined);
+    await waitFor(() => expect(row.getByLabelText('Apelido')).toHaveValue('leads'));
+    expect(row.getByLabelText('Apelido')).toBeEnabled();
+    expect(row.getByLabelText('Tabela')).toHaveValue('leads');
+  });
+});

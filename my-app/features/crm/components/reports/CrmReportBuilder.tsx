@@ -23,6 +23,7 @@ import {
   toCreateInput,
   toSpec,
   withJoinSource,
+  type JoinDraft,
   type ReportDraft,
   type ReportErrorView,
   type ReportSource,
@@ -74,6 +75,7 @@ export function CrmReportBuilder() {
   const [error, setError] = useState<ReportErrorView | null>(null);
 
   const [rightRaw, setRightRaw] = useState<RightRaw>({});
+  const [busyJoin, setBusyJoin] = useState<JoinDraft | null>(null);
   const [pending, setPending] = useState<{ kind: 'source' | 'join'; apply: () => void } | null>(null);
   const [toDelete, setToDelete] = useState<CrmReportRow | null>(null);
   const [saveAsName, setSaveAsName] = useState<string | null>(null);
@@ -228,7 +230,15 @@ export function CrmReportBuilder() {
     // o join é seguido pela identidade, não pelo índice: removido ou mexido na espera, a troca não cai em outro join
     // (2ª passada do review do PR-B)
     const target = latest.current.draft.joins[clicked];
-    const raw = latest.current.rightRaw[source] ?? (await fieldsOf(source));
+    let raw = latest.current.rightRaw[source];
+    if (!raw) {
+      setBusyJoin(target ?? null);
+      try {
+        raw = await fieldsOf(source);
+      } finally {
+        setBusyJoin(null);
+      }
+    }
     if (!raw) {
       setError({ key: 'report_builder.errors.SCHEMA_UNAVAILABLE', params: {}, code: null });
       return;
@@ -411,6 +421,7 @@ export function CrmReportBuilder() {
               onSourceChange={(s) => void changeSource(s)}
               onJoinSourceChange={(i, s) => void changeJoinSource(i, s)}
               onJoinRemove={removeJoinAt}
+              busyJoin={busyJoin}
             />
             <div className="flex flex-col gap-4">
               {result ? (

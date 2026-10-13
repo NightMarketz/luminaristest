@@ -62,6 +62,11 @@ export interface CrmReportEditorProps {
   onSourceChange: (source: ReportSource) => void;
   onJoinSourceChange: (index: number, source: ReportSource) => void;
   onJoinRemove: (index: number) => void;
+  /**
+   * Join cuja tabela nova está carregando: os campos dele ficam travados até o schema chegar (a troca segue o join pela
+   * identidade — editar o próprio join na espera descartaria a troca; 3ª passada do review do PR-B). Remover segue livre.
+   */
+  busyJoin?: JoinDraft | null;
 }
 
 const MEASURE_TYPES: readonly MeasureType[] = ['count', 'sum', 'avg'];
@@ -83,6 +88,7 @@ export function CrmReportEditor({
   onSourceChange,
   onJoinSourceChange,
   onJoinRemove,
+  busyJoin = null,
 }: CrmReportEditorProps) {
   const { t } = useTranslation('crm');
   const list = fields ?? [];
@@ -187,6 +193,7 @@ export function CrmReportEditor({
             onChange={onChange}
             onJoinSourceChange={onJoinSourceChange}
             onJoinRemove={onJoinRemove}
+            busyJoin={busyJoin}
           />
 
           {/* Medidas (item 5) */}
@@ -696,6 +703,7 @@ function JoinsSection({
   onChange,
   onJoinSourceChange,
   onJoinRemove,
+  busyJoin,
 }: {
   draft: ReportDraft;
   fields: ISchemaField[];
@@ -704,6 +712,7 @@ function JoinsSection({
   onChange: (next: ReportDraft) => void;
   onJoinSourceChange: (index: number, source: ReportSource) => void;
   onJoinRemove: (index: number) => void;
+  busyJoin: JoinDraft | null;
 }) {
   const { t } = useTranslation('crm');
   const [open, setOpen] = useState(false);
@@ -734,12 +743,14 @@ function JoinsSection({
           {draft.joins.map((j, i) => {
             const right = j.rightSource ? rightFieldsOf(j.rightSource) : null;
             const rightOptions = right ? offeredFields(right) : [];
+            const busy = j === busyJoin;
             return (
               <div key={i} className="flex flex-wrap items-start gap-2" data-testid={`join-${i}`}>
                 <select
                   aria-label={t('report_builder.joins.right_source', 'Tabela')}
                   className={inputCls}
                   value={j.rightSource ?? ''}
+                  disabled={busy}
                   onChange={(e) => e.target.value && onJoinSourceChange(i, e.target.value as ReportSource)} // ponytail: folha string → união
                 >
                   <option value="">{t('report_builder.joins.pick_source', 'Escolha a tabela…')}</option>
@@ -753,6 +764,7 @@ function JoinsSection({
                   aria-label={t('report_builder.joins.left_field', 'Campo da fonte')}
                   className={inputCls}
                   value={j.leftField}
+                  disabled={busy}
                   onChange={(e) => setJoin(i, { leftField: e.target.value })}
                 >
                   <option value="">{t('report_builder.joins.left_field', 'Campo da fonte')}…</option>
@@ -767,7 +779,7 @@ function JoinsSection({
                   aria-label={t('report_builder.joins.right_field', 'Campo da outra tabela')}
                   className={inputCls}
                   value={j.rightField}
-                  disabled={!j.rightSource}
+                  disabled={!j.rightSource || busy}
                   onChange={(e) => setJoin(i, { rightField: e.target.value })}
                 >
                   <option value="">{t('report_builder.joins.right_field', 'Campo da outra tabela')}…</option>
@@ -777,7 +789,7 @@ function JoinsSection({
                     </option>
                   ))}
                 </select>
-                <AliasInput draft={draft} index={i} fields={fields} onChange={onChange} />
+                <AliasInput draft={draft} index={i} fields={fields} onChange={onChange} disabled={busy} />
                 <button type="button" className={smallBtn} onClick={() => onJoinRemove(i)}>
                   {t('report_builder.editor.remove', 'Remover')}
                 </button>
@@ -805,11 +817,13 @@ function AliasInput({
   index,
   fields,
   onChange,
+  disabled,
 }: {
   draft: ReportDraft;
   index: number;
   fields: ISchemaField[];
   onChange: (next: ReportDraft) => void;
+  disabled: boolean;
 }) {
   const { t } = useTranslation('crm');
   const join = draft.joins[index];
@@ -838,6 +852,7 @@ function AliasInput({
         className={inputCls}
         maxLength={MAX_JOIN_ALIAS + 1}
         value={text}
+        disabled={disabled}
         aria-invalid={problem !== null}
         onChange={(e) => setPending(e.target.value)}
         onBlur={() => {
