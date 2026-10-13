@@ -49,10 +49,29 @@ export interface IBindingAuditPort {
   ): Promise<void>;
 }
 
+/**
+ * BE-INCR-KIT-SETOR PR-3 (item 25) — porta do ajuste papel→conta do contador. Definida AQUI pelo mesmo motivo de
+ * `IBindingValidationService` (o consumidor define a forma); o adaptador concreto vive em `features/sectorKits` e
+ * entra pelo `lib/factory.ts`. Roda DENTRO da tx do `compile()`, com o `tx` dele, então TODO caminho que compila —
+ * instalação do kit, PUT/DELETE do ajuste, `POST /accounting-binding/compile` com `sectorKey` de kit e a
+ * atualização do PR-4 — lê os ajustes vivos no mesmo instante em que grava a versão. `sectorKey` fora de kit ⇒
+ * identidade.
+ */
+export interface IRoleOverrideSource {
+  apply(
+    scope: BindingScope,
+    sectorKey: string,
+    eventBindings: EventBinding[],
+    tx: Prisma.TransactionClient,
+  ): Promise<EventBinding[]>;
+}
+
 /** Entrada de `compile()`/`validateOnly()` — "schema operacional + chart do tenant + escolhas
  *  papel→conta" (BRIEF item 9). `eventBindings` já carrega os `roleSlots[].accountCode` literais
  *  (F-P1-5a: a escolha papel→conta acontece ANTES de chegar aqui; este service não resolve
- *  papel→conta, só valida o que foi escolhido via `IBindingValidationService`). */
+ *  papel→conta, só valida o que foi escolhido via `IBindingValidationService`).
+ *  Única exceção: o ajuste papel→conta do contador (`IRoleOverrideSource`, KIT-SETOR PR-3), que o
+ *  `compile()` aplica por cima dos códigos recebidos quando o `sectorKey` é de kit. */
 export interface CompileBindingInput {
   sectorKey: string;
   /** Schema operacional do preset instalado — canonicalizado para `compiledFromHash`. */
@@ -175,6 +194,8 @@ export class BindingCompileService {
     private readonly policy: IAccountingBindingPolicy,
     private readonly validationService: IBindingValidationService,
     private readonly auditPort: IBindingAuditPort,
+    /** Ausente ⇒ nenhum ajuste (testes do núcleo da prensa). Produção sempre injeta (`lib/factory.ts`). */
+    private readonly roleOverrides?: IRoleOverrideSource,
   ) {}
 
   /** Compila e persiste (Draft ou auto-ativa Active — ver header da classe). */
@@ -190,13 +211,17 @@ export class BindingCompileService {
       const currentMax = await this.repo.findMaxVersion(scope, input.sectorKey, tx);
       const nextVersion = currentMax + 1;
 
-      const candidate = this.buildCandidate(input, nextVersion, compiledAt, compiledFromHash);
+      // Item 25 (KIT-SETOR PR-3): os ajustes papel→conta vivos, lidos com o `tx` desta compilação.
+      const eventBindings = this.roleOverrides
+        ? await this.roleOverrides.apply(scope, input.sectorKey, input.eventBindings, tx)
+        : input.eventBindings;
+      const candidate = this.buildCandidate({ ...input, eventBindings }, nextVersion, compiledAt, compiledFromHash);
       const validation = await this.validationService.validate(candidate);
       // Gate de cobertura de evento (BE-INCR-P2-VERTICAL-CLINICA, comportamento 5) — roda SEMPRE,
       // independente do validador estrutural: um binding pode passar nas 9 checagens do validador
       // (todo eventBinding presente é válido) e AINDA assim faltar um eventBinding inteiro que a
       // operação instalada emite. `missing` não-vazio reprova a ativação — ver `computeEventCoverage`.
-      const coverage = computeEventCoverage(scope.unitId, input.sectorKey, input.operationalSchema, input.eventBindings);
+      const coverage = computeEventCoverage(scope.unitId, input.sectorKey, input.operationalSchema, eventBindings);
       const status: AccountingBindingStatus = validation.ok && coverage.missing.length === 0 ? 'Active' : 'Draft';
 
       const created = await this.repo.create(

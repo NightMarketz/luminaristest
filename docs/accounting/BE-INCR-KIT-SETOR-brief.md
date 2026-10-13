@@ -555,3 +555,16 @@ A execução do PR-2 achou 7 decisões que o checklist não cobria. Todas foram 
 | E-5 | Passo 3 sem linha de `AccountingScopeSettings`/`FiscalProfile` | Settings ausente ⇒ cria a linha só com as contas. `FiscalProfile` ausente **e** kit com `roleDefaults.fiscalProfile` ⇒ **pré-check bloqueia sem escrita**, `KIT_FISCAL_PROFILE_REQUIRED`. O cálculo automático do perfil a partir dos dados da empresa fica como lacuna para um nó próprio |
 | E-6 | Qual entrada do `referential[]` instalar | `regime` da empresa **e** `mappingVersion == ano` exato |
 | E-7 | Compile que termina `Draft` (sem exceção) | `status = FAILED`, `steps` no passo anterior, `kit.install_failed {step}`; a resposta é o `Draft` de hoje (versão + bloqueantes do validador), sem `KIT_INSTALL_STEP_FAILED`; uma nova chamada recompila |
+
+## 11. Emenda do PR-3 — lacunas resolvidas pelo dono (chat, 2026-10-13, questionário)
+
+A execução do PR-3 (autorização: dono, chat, 2026-10-13, *"Executa o PR-3 do KIT-SETOR"*) achou 4 decisões que o
+checklist não cobria. Todas foram perguntadas e respondidas (regra 2 da `sessao-feature`); o dono escolheu a
+recomendação nas 4.
+
+| # | Lacuna | Decisão do dono |
+|---|---|---|
+| E-11.1 | O ajuste grava numa tx e o `compile()` abre a sua (SQLite sem tx aninhada); o item 21 manda desfazer o ajuste se o compile der `Draft`, sem dizer o que a auditoria registra | **Compensa e audita.** tx1 = gate + grava + `kit.role_override_set`/`_removed`; `Draft` ou exceção ⇒ tx de compensação volta ao estado anterior e audita o desfazer com os mesmos dois eventos |
+| E-11.2 | Resposta HTTP do PUT/DELETE quando o compile dá `Draft` | **422 `ROLE_OVERRIDE_COMPILE_DRAFT`** com `{binding:{status:'Draft', bindingVersion}, blocking, missingEventKeys}` |
+| E-11.3 | Base da recompilação e unidade sem kit `INSTALLED` | **Base = binding do kit na `kitVersion` da `KitInstallation`** (o DELETE volta ao código do kit, item 22); sem kit `INSTALLED` ⇒ **422 `KIT_NOT_INSTALLED`** (código novo) |
+| E-11.4 | Shape do `RoleAccountOverrideView` (§3.4 não define) | `{id, role, accountId, accountCode, kitAccountCode, motivo, setById, createdAt, updatedAt}`; `kitAccountCode` = código do kit instalado para o papel, ou `null` |

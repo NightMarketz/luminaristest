@@ -126,6 +126,11 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // sem PII. A trilha `binding.*` do passo de compile continua à parte.
   'kit.installed':             ['kitKey', 'kitVersion', 'unitId'],
   'kit.install_failed':        ['kitKey', 'kitVersion', 'step'],
+  // BE-INCR-KIT-SETOR PR-3 (item 24) — ajuste papel→conta. Papel + ids de conta; o `motivo` (texto livre, risco de
+  // PII) fica só na linha `role_account_overrides`, nunca aqui. O desfazer de um ajuste reprovado (emenda E-11.1)
+  // usa os mesmos dois eventos.
+  'kit.role_override_set':     ['role', 'accountId', 'previousAccountId'],
+  'kit.role_override_removed': ['role'],
   // BE-INCR-NFE — a ingestão fiscal NÃO emite evento `nfe.*` próprio (decisão A / T8): auditoria é IN-TX
   // e os serviços de integração (compra/venda) não possuem tx própria. A nota já entra no trilho imutável
   // in-tx pela escrita que de fato ocorre — `payable.created` e a chave como `entry.source_recorded`.
