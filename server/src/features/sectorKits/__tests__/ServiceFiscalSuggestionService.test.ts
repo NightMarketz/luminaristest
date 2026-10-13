@@ -18,7 +18,7 @@ function build(opts: {
   canRead?: boolean;
 } = {}) {
   const service = new ServiceFiscalSuggestionService(
-    { canInstallKit: () => true, canReadServiceFiscalSuggestions: () => opts.canRead ?? true },
+    { canInstallKit: () => true, canManageKit: () => true, canReadServiceFiscalSuggestions: () => opts.canRead ?? true },
     { findByScope: async () => (opts.kit === false ? null : ({ kitKey: 'beautySalon', kitVersion: 4 } as never)) },
     {
       findTableByInternalName: async () => ({ id: 't-services' }),
