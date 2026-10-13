@@ -90,9 +90,10 @@ export const AESTHETIC_CLINIC_KIT_V2: SectorKitV1; // kitVersion 2; referential 
 ### F-KE-2 — Onde caem PIS/COFINS sobre o faturamento
 - **(a)** Redutora da receita (natureza `Revenue`, ex.: 3.6.1 PIS, 3.6.2 COFINS), como dedução da receita bruta.
 - **(b)** Despesa (4.5.3, 4.5.4), como o nome do campo `pisDespesaAccountCode` sugere.
-- **Recomendação: (a)**, por ser dedução da receita bruta na DRE. **Sem fonte oficial lida nesta sessão:** a norma
-  (Lei 6.404 e a legislação do IRPJ sobre receita líquida) tem de ser conferida na redação vigente pelo método legal
-  antes da ratificação.
+- **Recomendação: (a)**, por ser dedução da receita bruta. **Fonte conferida em 13/10**
+  (`pesquisas-legais/pis-cofins-deducao-receita/relatorio.md`): a receita líquida é a bruta diminuída dos "tributos
+  sobre ela incidentes" (DL 1.598/77 art. 12 §1º III, redação da Lei 12.973/2014), e a DRE discrimina as deduções e
+  os impostos antes da receita líquida (Lei 6.404/76 art. 187 I–II). **RATIFICAÇÃO PENDENTE.**
 
 ## 5. Pendente de validação externa
 

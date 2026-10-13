@@ -57,6 +57,15 @@
 3. **L-NFCE-2** (contingência em SP; vender sem nota quando a SEFAZ cai) — decide o E1-5.
 4. **Cota do PSC × NFC-e por venda** (risco anotado em 11/10: 6.000 assinaturas/ano num PSC). Volume do salão a medir.
 
+### 4.1 Resultado da pesquisa legal (13/10, fontes oficiais; relatórios em `pesquisas-legais/`)
+
+| Pergunta | Resultado | Efeito |
+|---|---|---|
+| §4 item 1 — mTLS × PSC | **NF-e/NFC-e: resolvido.** O certificado do TLS é o do *transmissor*, "não necessariamente o CNPJ/CPF da empresa emissora" (MOC 7.0 Visão Geral) ⇒ e-CNPJ do Luminaris no transporte + assinatura pelo PSC. **NFS-e: em parte.** `GET /dps/{id}` só responde a certificado de ator da DPS; o manual não diz o que o `POST` exige (`dfe-mtls-psc/relatorio.md`) | PR-7 destravado do lado SEFAZ; a NFS-e precisa do teste em produção restrita |
+| L-NFCE-1 — QR v3 em SP | **Não confirmado.** A FAQ oficial da SEFAZ-SP diz que o CSC é "requisito de validade"; não há ato de SP sobre a v3 (`nfce-sp-qrcode-v3/relatorio.md`) | E1-4 cai no ramo **(c)**: v3 + v2/CSC; `NfceCsc` entra no PR-8. Pergunta ao Fale Conosco da SEFAZ-SP no relatório |
+| L-NFCE-2 — contingência | **Obrigatória, off-line.** Portaria SRE 40/2024 art. 6º + Ajuste SINIEF 19/16 cl. 11ª; off-line em SP desde 10/07/2024; EPEC só quando a SEFAZ-SP ativa; transmissão até o 1º dia útil seguinte (`nfce-sp-contingencia/relatorio.md`) | E1-5: a opção (a) "nenhuma" é ilegal; resposta legal = (b) off-line. **Fork volta ao dono só para ratificar (b)** |
+| L-NFCE-3 / 4 / 5 (bônus da FAQ) | Cancelamento em 30 min; DANFE eletrônico só com concordância do adquirente; **credenciamento por estabelecimento obrigatório**, software sem homologação | Credenciamento vira passo do runbook de produção |
+
 ## 5. Plano por fatias (substitui a linha PR-7 do §9 da EMENDA-1)
 
 | PR | Itens | Depende |
