@@ -1,0 +1,229 @@
+[
+  {
+    "type": "dependency",
+    "from": "lib/context/ToastContext.tsx",
+    "to": "components/ui/feedback/Toast.tsx",
+    "rule": {
+      "severity": "error",
+      "name": "U2-lib-not-ui"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/analytics/AnalyticsWidget.tsx",
+    "to": "features/dashboard/category-views/finance/components/analytics/charts/ChartRenderer.tsx",
+    "rule": {
+      "severity": "error",
+      "name": "U3-components-not-features"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/analytics/AnalyticsWidget.tsx",
+    "to": "features/dashboard/category-views/finance/hooks/index.ts",
+    "rule": {
+      "severity": "error",
+      "name": "U3-components-not-features"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/analytics/AnalyticsWidget.tsx",
+    "to": "features/dashboard/category-views/finance/types/index.ts",
+    "rule": {
+      "severity": "error",
+      "name": "U3-components-not-features"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/analytics/GoldKpiWidgetView.tsx",
+    "to": "features/dashboard/category-views/finance/types/index.ts",
+    "rule": {
+      "severity": "error",
+      "name": "U3-components-not-features"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/analytics/GoldKpiWidgetView.tsx",
+    "to": "features/dashboard/category-views/finance/utils/kpiHelpers.ts",
+    "rule": {
+      "severity": "error",
+      "name": "U3-components-not-features"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/erp-view/ErpViewWidget.tsx",
+    "to": "features/dashboard/category-views/finance/FinanceView.tsx",
+    "rule": {
+      "severity": "error",
+      "name": "U3-components-not-features"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/erp-view/ErpViewWidget.tsx",
+    "to": "features/dashboard/category-views/inventory/InventoryView.tsx",
+    "rule": {
+      "severity": "error",
+      "name": "U3-components-not-features"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/erp-view/ErpViewWidget.tsx",
+    "to": "features/dashboard/category-views/people/PeopleView.tsx",
+    "rule": {
+      "severity": "error",
+      "name": "U3-components-not-features"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/erp-view/ErpViewWidget.tsx",
+    "to": "features/dashboard/category-views/planning/PlanningView.tsx",
+    "rule": {
+      "severity": "error",
+      "name": "U3-components-not-features"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/erp-view/ErpViewWidget.tsx",
+    "to": "features/dashboard/category-views/products/InternalProductsView.tsx",
+    "rule": {
+      "severity": "error",
+      "name": "U3-components-not-features"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/erp-view/ErpViewWidget.tsx",
+    "to": "features/dashboard/category-views/services/ServicesView.tsx",
+    "rule": {
+      "severity": "error",
+      "name": "U3-components-not-features"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/erp-view/ErpViewWidget.tsx",
+    "to": "features/dashboard/category-views/shared/GenericTabbedView.tsx",
+    "rule": {
+      "severity": "error",
+      "name": "U3-components-not-features"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/erp-view/ErpViewWidget.tsx",
+    "to": "features/dashboard/components/shared/dynamic-tables.client.ts",
+    "rule": {
+      "severity": "error",
+      "name": "U3-components-not-features"
+    }
+  },
+  {
+    "type": "cycle",
+    "from": "features/accounting/components/QualifAssinanteSelect.tsx",
+    "to": "features/accounting/components/SpedGenerationPanel.tsx",
+    "rule": {
+      "severity": "error",
+      "name": "U7-no-circular"
+    },
+    "cycle": [
+      {
+        "name": "features/accounting/components/SpedGenerationPanel.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "features/accounting/components/QualifAssinanteSelect.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "features/accounting/components/ReviewDetailModal.tsx",
+    "to": "features/accounting/components/ReviewPanel.tsx",
+    "rule": {
+      "severity": "error",
+      "name": "U7-no-circular"
+    },
+    "cycle": [
+      {
+        "name": "features/accounting/components/ReviewPanel.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "features/accounting/components/ReviewDetailModal.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "features/accounting/components/SpedEcfRealPanel.tsx",
+    "to": "features/accounting/components/SpedGenerationPanel.tsx",
+    "rule": {
+      "severity": "error",
+      "name": "U7-no-circular"
+    },
+    "cycle": [
+      {
+        "name": "features/accounting/components/SpedGenerationPanel.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "features/accounting/components/SpedEcfRealPanel.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "features/dashboard/category-views/finance/components/expenses/ExpensesRow.tsx",
+    "to": "features/dashboard/category-views/finance/components/expenses/ExpensesTable.tsx",
+    "rule": {
+      "severity": "error",
+      "name": "U7-no-circular"
+    },
+    "cycle": [
+      {
+        "name": "features/dashboard/category-views/finance/components/expenses/ExpensesTable.tsx",
+        "dependencyTypes": [
+          "local",
+          "type-only",
+          "import"
+        ]
+      },
+      {
+        "name": "features/dashboard/category-views/finance/components/expenses/ExpensesRow.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  }
+]

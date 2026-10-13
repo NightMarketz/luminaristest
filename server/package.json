@@ -33,7 +33,11 @@
     "test:integration": "jest --selectProjects integration --runInBand --forceExit",
     "test:coverage": "jest --coverage --runInBand --forceExit",
     "test:watch": "jest --selectProjects unit --watch",
-    "test:leaks": "node --max-old-space-size=6144 node_modules/jest/bin/jest.js --detectOpenHandles --runInBand"
+    "test:leaks": "node --max-old-space-size=6144 node_modules/jest/bin/jest.js --detectOpenHandles --runInBand",
+    "check:arch": "depcruise src --config .dependency-cruiser.cjs --ignore-known .dependency-cruiser-known-violations.json --output-type err",
+    "check:arch:baseline": "depcruise src --config .dependency-cruiser.cjs --output-type baseline --output-to .dependency-cruiser-known-violations.json",
+    "check:dead": "knip --no-exit-code",
+    "check:dup": "jscpd src --config .jscpd.json --exitCode 0"
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",
@@ -77,11 +81,14 @@
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
     "@types/uuid": "^10.0.0",
+    "dependency-cruiser": "16.10.4",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
     "fast-check": "^4.9.0",
     "jest": "^30.2.0",
+    "jscpd": "4.3.0",
     "json-schema-to-typescript": "15.0.4",
+    "knip": "5.88.1",
     "prettier": "^3.8.5",
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.6",

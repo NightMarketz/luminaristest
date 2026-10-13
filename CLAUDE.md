@@ -7,6 +7,9 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
   só o trilho/rejeitada que ela linka (protocolo em `docs/plano/README.md`). **Não abra o `docs/SDD-LUMINARIS.md`
   inteiro** (snapshot consolidado de 23/09); citação "master map §N" resolve em `docs/plano/_ANCORAS.md`.
 - **Bar de qualidade / camadas:** `.claude/skills/_ARCHITECTURE-CONTRACT.md`
+- **Antes de mudar estrutura ou dependência entre camadas, leia `docs/adr/`** (índice em `docs/adr/INDEX.md`).
+  Fronteiras mecanizadas: `docs/adr/ADR-ARCH-BOUNDARIES.md` — `npm run check:arch` (server/ e my-app/) bloqueia
+  violação nova; o baseline só encolhe.
 - **Critério reuse-vs-bespoke:** `.claude/skills/_REUSE-CRITERION.md`
 - **Scaffolding (nomes/paths por camada):** `docs/claude-skills/GENERATION_CONTRACTS.md`
 - **Disciplina operacional do agente (OPS-001..006):** `.claude/skills/_OPERATING-GATES.md`
@@ -44,6 +47,8 @@ Removidos `docs/audit/`, `bancada-gate.mjs`, `review-ledger-check.mjs` e os pass
 externo** aberto há mais de 14 dias (hoje: **4 de 4**), **não monte aparato de auditoria novo** — nem
 gate, nem rodada, nem mais um revisor. O gargalo é PVA / NF-e real / contador / implantar (medida em
 `docs/operating-manual/CLAUDE-RAIZ-DETALHE.md`).
+Exceção ratificada (dono, 2026-10-13): o gate estático de fronteiras `check:arch` (`ADR-ARCH-BOUNDARIES.md` §4) —
+lê o código como o `tsc`; não reabre bancada, rodada nem revisor.
 
 **Citação a `docs/audit/**` em comentário de teste, ADR ou doc é HISTÓRICA** — o caminho não existe
 mais; use `git show b617d8f1:<caminho>` se precisar.
