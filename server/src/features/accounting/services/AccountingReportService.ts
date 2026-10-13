@@ -147,6 +147,8 @@ export interface IncomeStatementReport {
   /** Custo das Mercadorias Vendidas (4.2, INCR-INVENTORY Body 2) — segregated from `expenses`
    *  so the DRE reports gross profit; negative (a cost). Rows route here via the dre.cogs rule. */
   costOfGoodsSold: StatementSection;
+  /** Resultado financeiro (emenda 3.3, E3; F-ENC-9 a): 3.5 receitas financeiras (+) e 4.3 despesas financeiras (−). */
+  financialResult: StatementSection;
   expenses: StatementSection;
   netResult: {
     amountCents: string;
@@ -244,12 +246,14 @@ export class AccountingReportService {
     grossRevenueCents: number;
     deductionsCents: number;
     cogsCents: number;
+    financialCents: number;
     expensesCents: number;
     netCents: number;
   } {
     let grossRevenueCents = 0;
     let deductionsCents = 0;
     let cogsCents = 0;
+    let financialCents = 0;
     let expensesCents = 0;
 
     for (const row of rows) {
@@ -259,6 +263,7 @@ export class AccountingReportService {
       if (rule.section === 'grossRevenue') grossRevenueCents += signed;
       else if (rule.section === 'revenueDeductions') deductionsCents += signed;
       else if (rule.section === 'costOfGoodsSold') cogsCents += signed;
+      else if (rule.section === 'financialResult') financialCents += signed;
       else if (rule.section === 'expenses') expensesCents += signed;
     }
 
@@ -266,8 +271,9 @@ export class AccountingReportService {
       grossRevenueCents,
       deductionsCents,
       cogsCents,
+      financialCents,
       expensesCents,
-      netCents: grossRevenueCents + deductionsCents + cogsCents + expensesCents,
+      netCents: grossRevenueCents + deductionsCents + cogsCents + financialCents + expensesCents,
     };
   }
 
@@ -779,6 +785,7 @@ export class AccountingReportService {
       const grossRevenue = this.buildSection(dreRows, 'DRE', 'grossRevenue');
       const revenueDeductions = this.buildSection(dreRows, 'DRE', 'revenueDeductions');
       const costOfGoodsSold = this.buildSection(dreRows, 'DRE', 'costOfGoodsSold');
+      const financialResult = this.buildSection(dreRows, 'DRE', 'financialResult');
       const expenses = this.buildSection(dreRows, 'DRE', 'expenses');
 
       const { netCents: dreNetCents } = this.computeDreNet(dreRows);
@@ -795,6 +802,7 @@ export class AccountingReportService {
         grossRevenue,
         revenueDeductions,
         costOfGoodsSold,
+        financialResult,
         expenses,
         netResult: {
           amountCents: String(dreNetCents),

@@ -16663,6 +16663,162 @@
         }
       }
     },
+    "/api/accounting-kit/role-overrides": {
+      "get": {
+        "summary": "List the unit's live role→account adjustments over the installed sector kit (BE-INCR-KIT-SETOR PR-3)",
+        "tags": [
+          "AccountingKit"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "RoleAccountOverrideView[] — { id, role, accountId, accountCode, kitAccountCode (código do kit instalado para o papel, ou null), motivo, setById, createdAt, updatedAt }"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/accounting-kit/role-overrides/{role}": {
+      "put": {
+        "summary": "Set the account for a binding role of the installed kit and recompile the binding",
+        "description": "O papel é o do binding do kit, com sub-chave quando houver (caixa-por-metodo:Pix — codifique na URL). Gate in-tx: kit INSTALLED (senão 422 KIT_NOT_INSTALLED), papel usado pelo kit (senão 422 ROLE_NOT_IN_KIT), conta viva do escopo (422 ACCOUNT_NOT_FOUND), folha (422 ACCOUNT_NOT_LEAF) e natureza aceita pelo papel (422 ROLE_ACCOUNT_NATURE_MISMATCH, a mesma tabela do validador do binding). Grava o ajuste e recompila o binding do kit com os ajustes vivos (nova bindingVersion Active). Compile reprovado ⇒ o ajuste é desfeito e auditado, e a resposta é 422 ROLE_OVERRIDE_COMPILE_DRAFT com { binding: { status: 'Draft', bindingVersion }, blocking, missingEventKeys }.",
+        "tags": [
+          "AccountingKit"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "unitId",
+                  "accountId",
+                  "motivo"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "accountId": {
+                    "type": "string"
+                  },
+                  "motivo": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 500
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ override: RoleAccountOverrideView, binding: { status: 'Active', bindingVersion } }"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "422": {
+            "description": "KIT_NOT_INSTALLED | ROLE_NOT_IN_KIT | ACCOUNT_NOT_FOUND | ACCOUNT_NOT_LEAF | ROLE_ACCOUNT_NATURE_MISMATCH | ROLE_OVERRIDE_COMPILE_DRAFT"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove the role adjustment and recompile the binding back to the kit's account code",
+        "tags": [
+          "AccountingKit"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ binding: { status: 'Active', bindingVersion } }"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "ROLE_OVERRIDE_NOT_FOUND — o papel não tem ajuste vivo"
+          },
+          "422": {
+            "description": "KIT_NOT_INSTALLED | ROLE_NOT_IN_KIT | ROLE_OVERRIDE_COMPILE_DRAFT"
+          }
+        }
+      }
+    },
     "/api/package-balances": {
       "get": {
         "summary": "List prepaid-package balances for a unit, optionally one customer (Incremento G)",
@@ -24813,6 +24969,10 @@
     {
       "name": "AccountingBinding",
       "description": "A Prensa (BE-INCR-BINDING-PRESS) — compilador + validador determinístico do binding vertical→contabilidade (schema operacional do preset + plano de contas do tenant + escolhas papel→conta → AccountingBindingV1 versionado). F-BP-2(b): sem bloqueante, o compile auto-ativa; não há rota /activate separada."
+    },
+    {
+      "name": "AccountingKit",
+      "description": "Kit de setor (BE-INCR-KIT-SETOR) — ajuste papel→conta do contador sobre o binding do kit instalado; todo caminho que compila aplica os ajustes vivos."
     }
   ]
 }

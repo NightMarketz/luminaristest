@@ -258,6 +258,8 @@ export class DataExchangeExportService {
         // COST_OF_GOODS_SOLD (INCR-INVENTORY Body 2): 4.2 accounts moved out of EXPENSES into their
         // own DRE section — push them so the export keeps every DRE account (no silent drop).
         push('COST_OF_GOODS_SOLD', r.costOfGoodsSold.accounts);
+        // FINANCIAL_RESULT (emenda 3.3, E3): 3.5/4.3 em seção própria — sem o push a exportação as perderia.
+        push('FINANCIAL_RESULT', r.financialResult.accounts);
         push('EXPENSES', r.expenses.accounts);
         rows.push(['NET_RESULT', '', 'Resultado líquido', r.netResult.amountCents]);
         const table: OutTable = { headers: ['section', 'code', 'name', 'amountCents'], rows };

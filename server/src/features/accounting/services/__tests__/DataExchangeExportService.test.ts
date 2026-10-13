@@ -107,7 +107,7 @@ function makeReports(): IReportReader {
     incomeStatement: jest.fn(async () => ({
       unitId: 'unit-1', periodSemantics: 'year_to_date', fromDate: '2026-01-01', toDate: '2026-12-31', mappingVersion: 'v1',
       grossRevenue: { accounts: [], totalCents: '0' }, revenueDeductions: { accounts: [], totalCents: '0' },
-      costOfGoodsSold: { accounts: [], totalCents: '0' }, expenses: { accounts: [], totalCents: '0' },
+      costOfGoodsSold: { accounts: [], totalCents: '0' }, financialResult: { accounts: [], totalCents: '0' }, expenses: { accounts: [], totalCents: '0' },
       netResult: { amountCents: '0', isComputed: true, computation: 'income_statement_net_result' },
       reportStatus: 'OK',
       diagnostics: { mappingVersion: 'v1', unmappedAccounts: [], removedAccountsReferenced: [], hasUnclosedPriorYearResult: false, priorYearResultCents: 0, warnings: [] },

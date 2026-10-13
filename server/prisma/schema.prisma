@@ -48,6 +48,7 @@ model User {
   inventoryItems             InventoryItem[] // Relation to InventoryItem (perpetual inventory subledger, INCR-INVENTORY)
   accountingBindings         AccountingBinding[] // Relation to AccountingBinding (A Prensa, BE-INCR-BINDING-PRESS)
   kitInstallations           KitInstallation[] // BE-INCR-KIT-SETOR PR-2 — kit de setor instalado por unidade
+  roleAccountOverrides       RoleAccountOverride[] // BE-INCR-KIT-SETOR PR-3 — ajuste papel→conta do contador
   reconcilePendingItems      ReconcilePendingItem[] // Relation to ReconcilePendingItem (BE-INCR-RECONCILE-PENDING, nó C7)
   bankSettlementItems        BankSettlementItem[] // Relation to BankSettlementItem (BE-INCR-BANK-SETTLEMENT, nó F7)
   accountingScopeSettings    AccountingScopeSettings[] // Relation to AccountingScopeSettings (config por escopo, F7 Fase C)
@@ -517,6 +518,7 @@ model Account {
   scopeSettingsDisposalGainOf        AccountingScopeSettings[] @relation("ScopeSettingsDisposalGain") // ganho na baixa de imobilizado
   scopeSettingsDisposalLossOf        AccountingScopeSettings[] @relation("ScopeSettingsDisposalLoss") // perda na baixa de imobilizado
   providerFeeExpenseOf               AccountingScopeSettings[] @relation("ScopeSettingsProviderFeeExpense") // tarifa do provedor (F5 PR-3, P3-11)
+  roleOverrides                      RoleAccountOverride[]     // ajuste papel→conta do binding do kit (BE-INCR-KIT-SETOR PR-3)
   paymentAccountsGl                  PaymentAccount[]          @relation("PaymentAccountGl") // folha do saldo no provedor (BE-INCR-PAYMENT-PROVIDER PR-1, P1-3)
   createdAt                          DateTime                  @default(now())
   updatedAt                          DateTime                  @updatedAt
@@ -1112,6 +1114,7 @@ model PayablePayment {
   paidByUserId String? // actor who registered the payment; plain string
   status       String // ACTIVE | CANCELLED
   entryId      String? // settlement journal entry id (ap.payment) — denormalized convenience; findEntryBySource is authoritative
+  kind         String   @default("PAYMENT") // SETTLEMENT_KINDS — 'DISCOUNT' = baixa sem caixa (emenda 3.3, E13; coluna no PR-1)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -1183,6 +1186,7 @@ model ReceivableReceipt {
   status           String // ACTIVE | CANCELLED
   entryId          String? // receipt journal entry id (ar.receipt) — denormalized convenience; findEntryBySource is authoritative
   debitAccountId   String? // F5 PR-3 (P3-9, F-PPB-3 a): conta de debito do recibo ProviderBalance; null = mapa fechado do metodo (legado)
+  kind             String     @default("PAYMENT") // SETTLEMENT_KINDS — 'DISCOUNT' = baixa sem caixa (emenda 3.3, E13; coluna no PR-1)
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
@@ -1426,6 +1430,29 @@ model KitInstallation {
   @@unique([userId, unitId]) // um kit por unidade (item 9)
   @@index([kitKey, kitVersion])
   @@map("kit_installations")
+}
+
+// BE-INCR-KIT-SETOR PR-3 (BRIEF item 18, §3.2) — ajuste papel→conta do contador sobre o binding do kit. Só papéis do
+// binding (F-KB-3 → b); `role` = AccountRole, com sub-chave 'caixa-por-metodo:<método>'. Unicidade VIVA por
+// (userId, unitId, role) garantida no serviço, in-tx — sem @@unique, porque remover e recriar o mesmo papel morreria
+// em P2002 com a linha soft-deleted (memória unique-de-idempotencia-x-soft-delete). Trocar a conta = soft-delete da
+// linha viva + linha nova (o `motivo` de cada troca fica na sua linha).
+model RoleAccountOverride {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId    String
+  role      String // AccountRole (accountingBinding/models/types.ts), com sub-chave 'caixa-por-metodo:<m>'
+  accountId String
+  account   Account   @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  motivo    String // 10–500 chars (DTO); fica só na linha, nunca no payload de auditoria (item 24)
+  setById   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([userId, unitId, role])
+  @@map("role_account_overrides")
 }
 
 // BE-INCR-RECONCILE-PENDING (nó C7) — resíduo F-W2F-3/5 (CEDULA-DECISAO-2026-09-03-modulos.md,
@@ -1843,6 +1870,11 @@ model BankSettlementItem {
   chargeEntryId   String? // journal_entries.id do bank.charge (etapa ii)
   feeCents        BigInt            @default(0) // F5 PR-3 (P3-7, F-PP-6 b): tarifa do provedor = GROSS - NET da linha mp_release
   feeEntryId      String? // journal_entries.id do provider.fee (etapa FEE, P3-8)
+  // Emenda 3.3 (BE-INCR-ENCARGOS-DESCONTOS; colunas no PR-1, E5 — uso no PR-2/PR-3)
+  shortfallCents       BigInt                     @default(0) // E11 — max(0, saldo − |linha|) no scan; re-derivado no pré-cheque
+  shortfallTreatment   String? // E12 — SHORTFALL_TREATMENTS, gravado no confirm
+  discountSettlementId String? // E12 — payable_payments.id | receivable_receipts.id (kind DISCOUNT)
+  chargeParts          BankSettlementChargePart[]
   confirmedById   String?
   confirmedAt     DateTime?
   createdAt       DateTime          @default(now())
@@ -1853,6 +1885,19 @@ model BankSettlementItem {
   @@index([userId, unitId, status])
   @@index([userId, unitId, statementLineId])
   @@map("bank_settlement_items")
+}
+
+// Emenda 3.3, E7 (F-ENC-2 a, dono 13/10): partes do encargo informadas pelo humano no confirm — value-object do item
+// (precedente PostingDimension / LalurProcess), sem deletedAt; substituível até a etapa CHARGE.
+model BankSettlementChargePart {
+  id     String             @id @default(cuid())
+  itemId String
+  item   BankSettlementItem @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  kind   String // BANK_CHARGE_KINDS
+  cents  BigInt
+
+  @@unique([itemId, kind])
+  @@map("bank_settlement_charge_parts")
 }
 
 // Configuração por escopo (decisão do dono 2026-09-15, questionário na sessão do F7): 1 linha por
@@ -2249,6 +2294,7 @@ model LalurEntry {
   createdAt      DateTime                 @default(now())
   updatedAt      DateTime                 @updatedAt
   deletedAt      DateTime? // set when archived (soft) — together with the rename-on-key
+  origem         String                   @default("user") // LALUR_ORIGENS — 'system' = adição derivada no fechamento (emenda 3.3, E15; uso no PR-4)
 
   @@unique([userId, unitId, year, quarter, livro, codigo]) // uma linha viva por código × período × livro (D-M2)
   @@index([userId, unitId, year])

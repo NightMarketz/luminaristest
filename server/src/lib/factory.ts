@@ -212,9 +212,14 @@ import type {
   KitRegime,
   KitRegimePort,
   KitRoleDefaultsPort,
+  KitOverrideAccountPort,
 } from '../features/sectorKits/services/kitInstallPorts';
 import { KitInstallationRepository } from '../features/sectorKits/repositories/KitInstallationRepository';
 import { SectorKitPolicy } from '../features/sectorKits/policies/SectorKitPolicy';
+// BE-INCR-KIT-SETOR PR-3 — ajuste papel→conta do contador (rotas /accounting-kit/role-overrides + compile).
+import { RoleAccountOverrideRepository } from '../features/sectorKits/repositories/RoleAccountOverrideRepository';
+import { RoleOverrideSource } from '../features/sectorKits/services/RoleOverrideSource';
+import { RoleAccountOverrideService } from '../features/sectorKits/services/RoleAccountOverrideService';
 import { SalesCancellationService } from '../features/sales/services/SalesCancellationService';
 import { RegisterPaymentService } from '../features/sales/services/RegisterPaymentService';
 import { PresetSyncService } from '../features/dynamicTables/services/PresetSyncService';
@@ -484,6 +489,16 @@ function buildKitRegimePort(
   };
 }
 
+/** PR-3, item 20 — conta do ajuste lida com o `tx` do gate (`findById` já filtra escopo e `deletedAt`). */
+function buildKitOverrideAccountPort(accountRepo: IAccountRepository, scope: AccountingScope): KitOverrideAccountPort {
+  return {
+    async findLiveInScope(accountId, tx) {
+      const account = await accountRepo.findById(scope, accountId, tx);
+      return account ? { id: account.id, code: account.code, nature: account.nature, acceptsEntries: account.acceptsEntries } : null;
+    },
+  };
+}
+
 function buildKitAuditPort(
   auditRepo: IAuditRepository,
   postingRepo: IPostingRepository,
@@ -496,7 +511,7 @@ function buildKitAuditPort(
       await auditService.append(tx, bindingScopeToAccountingScope(scope), {
         actorUserId: scope.actorUserId,
         eventType: event.eventType,
-        targetType: 'KitInstallation',
+        targetType: event.targetType ?? 'KitInstallation',
         targetId: event.targetId,
         payload: event.payload,
       });
@@ -1687,6 +1702,8 @@ export class ApplicationFactory {
       new AccountingBindingPolicy(),
       validationService,
       auditPort,
+      // BE-INCR-KIT-SETOR PR-3 (item 25): todo caminho que compila lê o ajuste papel→conta vivo da unidade.
+      new RoleOverrideSource(new RoleAccountOverrideRepository()),
     );
   }
 
@@ -1766,6 +1783,24 @@ export class ApplicationFactory {
         accountingScope,
       ),
       buildKitRegimePort(this.repositories.companyFiscalProfile, this.repositories.fiscalProfile, accountingScope),
+      buildKitAuditPort(this.repositories.audit, this.repositories.posting, this.policies.accounting, this.repositories.counterparty),
+      kitVersions,
+    );
+  }
+
+  /**
+   * BE-INCR-KIT-SETOR PR-3 — `RoleAccountOverrideService` por escopo (portas fechadas sobre o escopo, mesmo motivo
+   * dos getters acima). Consumido pelas rotas `/accounting-kit/role-overrides` (item 22).
+   */
+  public getRoleAccountOverrideService(scope: BindingScope, kitVersions?: KitVersionsLookup): RoleAccountOverrideService {
+    const accountingScope = bindingScopeToAccountingScope(scope);
+    return new RoleAccountOverrideService(
+      new SectorKitPolicy(),
+      new RoleAccountOverrideRepository(),
+      new KitInstallationRepository(),
+      this.getAccountingBindingCompileService(scope),
+      buildKitOverrideAccountPort(this.repositories.account, accountingScope),
+      buildActivationChartPort(this.repositories.account, this.services.posting, accountingScope),
       buildKitAuditPort(this.repositories.audit, this.repositories.posting, this.policies.accounting, this.repositories.counterparty),
       kitVersions,
     );

@@ -67,7 +67,11 @@ describe('kit v3 — conteúdo fiscal (BE-INCR-KIT-SETOR-EMENDA-1 PR-K2)', () =>
         '2.1.3:Liability', '2.1.4:Liability', '2.1.5:Liability', '2.1.6:Liability',
         '3.6.1:Revenue', '3.6.2:Revenue', '4.5.1:Expense', '4.5.2:Expense',
       ]);
-      expect(await cobertura()).toEqual({ folhas: 23, faltam: [] });
+      // Desde a emenda 3.3 (PR-1) o canônico tem +9 folhas que só o kit v5 mapeia (F-HR-4 a): o v3 deixa exatamente elas.
+      const c = await cobertura();
+      expect({ ...c, faltam: [...c.faltam].sort() }).toEqual({
+        folhas: 32, faltam: ['3.5.1', '3.5.2', '3.5.3', '4.3.1', '4.3.2', '4.3.3', '4.4.1', '4.4.2', '4.6'],
+      });
 
       const p = await prisma.fiscalProfile.findFirstOrThrow({ where: where() });
       expect({
