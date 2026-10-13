@@ -14,10 +14,10 @@ import { KitInstallService } from '../services/KitInstallService';
 const scope: BindingScope = { ownerUserId: 'u1', actorUserId: 'u1', unitId: 'unit-1' };
 const KIT = SectorKitV1Schema.parse({
   ...BEAUTY_SALON_KIT_V1,
-  chartExtension: [{ code: '4.3', name: 'Despesas Bancárias', nature: 'Expense', acceptsEntries: true }],
-  roleDefaults: { scopeSettings: { bankChargeExpenseAccountCode: '4.3' }, fiscalProfile: { irpjDespesaAccountCode: '4.3' } },
+  chartExtension: [{ code: '4.8', name: 'Despesas Bancárias', nature: 'Expense', acceptsEntries: true }],
+  roleDefaults: { scopeSettings: { bankChargeExpenseAccountCode: '4.8' }, fiscalProfile: { irpjDespesaAccountCode: '4.8' } },
   serviceFiscalDefaults: [{ serviceRef: 'svc', cTribNac: '060101' }],
-  referential: [{ regime: 'SIMPLES', mappingVersion: '2026', entries: [{ accountCode: '4.3', referentialCode: 'R', label: 'r' }] }],
+  referential: [{ regime: 'SIMPLES', mappingVersion: '2026', entries: [{ accountCode: '4.8', referentialCode: 'R', label: 'r' }] }],
 });
 const INPUT = { kitKey: 'beautySalon', ano: 2026, installChartIfEmpty: true, openCurrentPeriodIfMissing: true, today: '2026-10-08' };
 

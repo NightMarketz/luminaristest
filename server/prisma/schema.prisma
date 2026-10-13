@@ -1107,6 +1107,7 @@ model PayablePayment {
   paidByUserId String? // actor who registered the payment; plain string
   status       String // ACTIVE | CANCELLED
   entryId      String? // settlement journal entry id (ap.payment) — denormalized convenience; findEntryBySource is authoritative
+  kind         String   @default("PAYMENT") // SETTLEMENT_KINDS — 'DISCOUNT' = baixa sem caixa (emenda 3.3, E13; coluna no PR-1)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -1178,6 +1179,7 @@ model ReceivableReceipt {
   status           String // ACTIVE | CANCELLED
   entryId          String? // receipt journal entry id (ar.receipt) — denormalized convenience; findEntryBySource is authoritative
   debitAccountId   String? // F5 PR-3 (P3-9, F-PPB-3 a): conta de debito do recibo ProviderBalance; null = mapa fechado do metodo (legado)
+  kind             String     @default("PAYMENT") // SETTLEMENT_KINDS — 'DISCOUNT' = baixa sem caixa (emenda 3.3, E13; coluna no PR-1)
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
@@ -1838,6 +1840,11 @@ model BankSettlementItem {
   chargeEntryId   String? // journal_entries.id do bank.charge (etapa ii)
   feeCents        BigInt            @default(0) // F5 PR-3 (P3-7, F-PP-6 b): tarifa do provedor = GROSS - NET da linha mp_release
   feeEntryId      String? // journal_entries.id do provider.fee (etapa FEE, P3-8)
+  // Emenda 3.3 (BE-INCR-ENCARGOS-DESCONTOS; colunas no PR-1, E5 — uso no PR-2/PR-3)
+  shortfallCents       BigInt                     @default(0) // E11 — max(0, saldo − |linha|) no scan; re-derivado no pré-cheque
+  shortfallTreatment   String? // E12 — SHORTFALL_TREATMENTS, gravado no confirm
+  discountSettlementId String? // E12 — payable_payments.id | receivable_receipts.id (kind DISCOUNT)
+  chargeParts          BankSettlementChargePart[]
   confirmedById   String?
   confirmedAt     DateTime?
   createdAt       DateTime          @default(now())
@@ -1848,6 +1855,19 @@ model BankSettlementItem {
   @@index([userId, unitId, status])
   @@index([userId, unitId, statementLineId])
   @@map("bank_settlement_items")
+}
+
+// Emenda 3.3, E7 (F-ENC-2 a, dono 13/10): partes do encargo informadas pelo humano no confirm — value-object do item
+// (precedente PostingDimension / LalurProcess), sem deletedAt; substituível até a etapa CHARGE.
+model BankSettlementChargePart {
+  id     String             @id @default(cuid())
+  itemId String
+  item   BankSettlementItem @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  kind   String // BANK_CHARGE_KINDS
+  cents  BigInt
+
+  @@unique([itemId, kind])
+  @@map("bank_settlement_charge_parts")
 }
 
 // Configuração por escopo (decisão do dono 2026-09-15, questionário na sessão do F7): 1 linha por
@@ -2244,6 +2264,7 @@ model LalurEntry {
   createdAt      DateTime                 @default(now())
   updatedAt      DateTime                 @updatedAt
   deletedAt      DateTime? // set when archived (soft) — together with the rename-on-key
+  origem         String                   @default("user") // LALUR_ORIGENS — 'system' = adição derivada no fechamento (emenda 3.3, E15; uso no PR-4)
 
   @@unique([userId, unitId, year, quarter, livro, codigo]) // uma linha viva por código × período × livro (D-M2)
   @@index([userId, unitId, year])

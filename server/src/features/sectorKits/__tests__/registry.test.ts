@@ -83,8 +83,8 @@ describe('changelog (item 6)', () => {
 describe('listKits (item 7)', () => {
   it('devolve {kitKey, label, latestVersion} de cada kit', () => {
     expect(listKits()).toEqual([
-      { kitKey: 'beautySalon', label: 'Salão de beleza', latestVersion: 3 },
-      { kitKey: 'aestheticClinic', label: 'Clínica estética', latestVersion: 3 },
+      { kitKey: 'beautySalon', label: 'Salão de beleza', latestVersion: 4 },
+      { kitKey: 'aestheticClinic', label: 'Clínica estética', latestVersion: 4 },
     ]);
   });
 });

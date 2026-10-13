@@ -10,8 +10,8 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema, resetDb } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
 import type { BindingScope } from '@/features/accountingBinding/repositories/IAccountingBindingRepository';
-import { BEAUTY_SALON_KIT_V3 } from '@/features/sectorKits/kits/beautySalon/kit.v3';
-import { AESTHETIC_CLINIC_KIT_V3 } from '@/features/sectorKits/kits/aestheticClinic/kit.v3';
+import { BEAUTY_SALON_KIT_V4 } from '@/features/sectorKits/kits/beautySalon/kit.v4';
+import { AESTHETIC_CLINIC_KIT_V4 } from '@/features/sectorKits/kits/aestheticClinic/kit.v4';
 import { CANONICAL_ACCOUNTS } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
 
 const UNIT = 'unit-kit-v3';
@@ -20,7 +20,8 @@ let ownerId: string;
 
 const scope = (): BindingScope => ({ ownerUserId: ownerId, actorUserId: ownerId, unitId: UNIT });
 const where = () => ({ userId: ownerId, unitId: UNIT });
-const KITS = [BEAUTY_SALON_KIT_V3, AESTHETIC_CLINIC_KIT_V3];
+// `install(kitKey)` instala a versão VIGENTE: desde a emenda 3.3 (PR-1) é a v4, que herda todo o conteúdo fiscal do v3.
+const KITS = [BEAUTY_SALON_KIT_V4, AESTHETIC_CLINIC_KIT_V4];
 const T = 60000; // resetDb + instalação dos 7 passos passa de 5 s no Windows
 
 async function preparar(regime: 'PRESUMIDO' | 'REAL', perfil: Record<string, unknown> = {}) {
@@ -52,9 +53,9 @@ describe('kit v3 — conteúdo fiscal (BE-INCR-KIT-SETOR-EMENDA-1 PR-K2)', () =>
   afterAll(async () => prisma.$disconnect());
 
   describe.each(KITS.map((k) => k.kitKey))('%s', (kitKey) => {
-    it.each(['PRESUMIDO', 'REAL'] as const)('%s: 8 contas de imposto, cobertura 2025 23/23 e perfil fiscal preenchido (itens 5–6)', async (regime) => {
+    it.each(['PRESUMIDO', 'REAL'] as const)('%s: 8 contas de imposto, cobertura 2025 completa e perfil fiscal preenchido (itens 5–6)', async (regime) => {
       await preparar(regime);
-      await expect(instalar(kitKey)).resolves.toMatchObject({ status: 'INSTALLED', kit: { kitKey, kitVersion: 3 } });
+      await expect(instalar(kitKey)).resolves.toMatchObject({ status: 'INSTALLED', kit: { kitKey, kitVersion: 4 } });
 
       const novas = await prisma.account.findMany({
         where: { ...where(), code: { in: ['2.1.3', '2.1.4', '2.1.5', '2.1.6', '3.6.1', '3.6.2', '4.5.1', '4.5.2'] } },
@@ -65,7 +66,8 @@ describe('kit v3 — conteúdo fiscal (BE-INCR-KIT-SETOR-EMENDA-1 PR-K2)', () =>
         '2.1.3:Liability', '2.1.4:Liability', '2.1.5:Liability', '2.1.6:Liability',
         '3.6.1:Revenue', '3.6.2:Revenue', '4.5.1:Expense', '4.5.2:Expense',
       ]);
-      expect(await cobertura()).toEqual({ folhas: 23, faltam: [] });
+      // 23 do v3 + as 9 folhas da emenda 3.3, que o v4 mapeia (F-HR-4 a).
+      expect(await cobertura()).toEqual({ folhas: 32, faltam: [] });
 
       const p = await prisma.fiscalProfile.findFirstOrThrow({ where: where() });
       expect({

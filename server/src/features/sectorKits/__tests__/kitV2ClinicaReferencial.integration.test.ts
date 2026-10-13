@@ -47,11 +47,13 @@ describe('kit v2 da clínica — referencial 2025 (BE-INCR-KIT-SETOR-EMENDA-1 PR
   beforeAll(() => pushTestSchema(), 120000);
   afterAll(async () => prisma.$disconnect());
 
-  it.each(['PRESUMIDO', 'REAL'] as const)('%s: instalação do v2 publicado ⇒ cobertura 2025 15/15, 3.4 → 3.01.01.01.01.98', async (regime) => {
+  it.each(['PRESUMIDO', 'REAL'] as const)('%s: instalação do v2 publicado ⇒ as 15 folhas dele cobertas, 3.4 → 3.01.01.01.01.98', async (regime) => {
     await preparar(regime);
     await expect(instalar()).resolves.toMatchObject({ status: 'INSTALLED' });
     const c = await cobertura();
-    expect(c).toEqual({ folhas: 15, faltam: [] });
+    // Desde a emenda 3.3 (PR-1) o canônico tem +9 folhas que só o kit v4 mapeia (F-HR-4 a): o v2 publicado deixa
+    // exatamente elas sem mapeamento; as 15 dele continuam cobertas.
+    expect({ ...c, faltam: [...c.faltam].sort() }).toEqual({ folhas: 24, faltam: ['3.5.1', '3.5.2', '3.5.3', '4.3.1', '4.3.2', '4.3.3', '4.4.1', '4.4.2', '4.6'] });
     const conta34 = await prisma.account.findFirstOrThrow({ where: { ...where(), code: '3.4' } });
     const m = await prisma.referentialMapping.findFirstOrThrow({ where: { ...where(), accountId: conta34.id, mappingVersion: '2025' } });
     expect(m.referentialCode).toBe('3.01.01.01.01.98');

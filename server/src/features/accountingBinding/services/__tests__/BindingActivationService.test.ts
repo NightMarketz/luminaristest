@@ -121,7 +121,7 @@ describe('BindingActivationService.activateDefault', () => {
     await expect(b.service.activateDefault(scope, {})).resolves.toEqual({
       status: 'Active',
       bindingVersion: 7,
-      kit: { kitKey: 'beautySalon', kitVersion: 3, status: 'INSTALLED' },
+      kit: { kitKey: 'beautySalon', kitVersion: 4, status: 'INSTALLED' },
     });
     expect(b.compile).toHaveBeenCalledWith(scope, {
       sectorKey: SALE_BINDING_V1.sectorKey,

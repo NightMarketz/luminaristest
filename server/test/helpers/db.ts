@@ -74,6 +74,7 @@ export async function resetDb(): Promise<void> {
   await prisma.fixedAsset.deleteMany();
   // BE-INCR-BANK-SETTLEMENT (nó F7): item cascade da linha do extrato; settings tem FK RESTRICT para
   // `accounts` — os dois caem ANTES de accounts/statements ou o deleteMany deles falha por violação.
+  await prisma.bankSettlementChargePart.deleteMany(); // emenda 3.3 (E5): FK RESTRICT para o item — cai antes dele
   await prisma.bankSettlementItem.deleteMany();
   await prisma.accountingScopeSettings.deleteMany();
   // BE-INCR-NFE-COST-REGIME (nó X6): perfil fiscal tem FK RESTRICT para as duas contas 'a recuperar' — antes de accounts.

@@ -72,6 +72,13 @@ export const CANONICAL_ACCOUNTS: ReadonlyArray<CanonicalAccount> = [
   // the ECF-Presumido presumption set: an ECF with movement here fails the exhaustiveness gate until PE-2.
   // Sibling leaf under `3` — zero migration (create-if-missing by code).
   { code: '3.4', name: 'Receita de Pacotes Não Utilizados', nature: 'Revenue', acceptsEntries: true },
+  // Emenda 3.3 (BE-INCR-ENCARGOS-DESCONTOS, PR-1, E1; F-ENC-1 a, dono 09/10): receita financeira dos encargos
+  // recebidos e do desconto condicional obtido (IN 1.700 art. 144; RIR/2018 art. 397). Grupo próprio `3.5` (o `3.4` é
+  // do PACOTE-VALIDADE). DRE → seção `financialResult` (F-ENC-9 a, dono 13/10). Zero migração (create-if-missing).
+  { code: '3.5', name: 'Receitas Financeiras', nature: 'Revenue', acceptsEntries: false },
+  { code: '3.5.1', name: 'Juros de Mora Recebidos', nature: 'Revenue', acceptsEntries: true },
+  { code: '3.5.2', name: 'Multas de Mora Recebidas', nature: 'Revenue', acceptsEntries: true },
+  { code: '3.5.3', name: 'Descontos Financeiros Obtidos', nature: 'Revenue', acceptsEntries: true },
   { code: '4', name: 'Despesa', nature: 'Expense', acceptsEntries: false },
   { code: '4.1', name: 'Despesas Operacionais', nature: 'Expense', acceptsEntries: true },
   // Custo das Mercadorias Vendidas (INCR-INVENTORY / ADR-INCR-INVENTORY F-INV0 → a, D7): the CMV leaf.
@@ -80,6 +87,20 @@ export const CANONICAL_ACCOUNTS: ReadonlyArray<CanonicalAccount> = [
   // CMV never silently folds into general expenses (lesson FAIL-1 do revenue-split). Sibling leaf under
   // `4` — zero migration (create-if-missing by code).
   { code: '4.2', name: 'Custo das Mercadorias Vendidas', nature: 'Expense', acceptsEntries: true },
+  // Emenda 3.3 (PR-1, E1; F-ENC-1 a): despesa financeira (juros e multa de mora pagos — dedutíveis, a multa de mora é a
+  // "compensatória" da IN 1.700 art. 132 — e desconto condicional concedido) → DRE `financialResult` (F-ENC-9 a).
+  { code: '4.3', name: 'Despesas Financeiras', nature: 'Expense', acceptsEntries: false },
+  { code: '4.3.1', name: 'Juros de Mora Pagos', nature: 'Expense', acceptsEntries: true },
+  { code: '4.3.2', name: 'Multas de Mora Pagas', nature: 'Expense', acceptsEntries: true },
+  { code: '4.3.3', name: 'Descontos Financeiros Concedidos', nature: 'Expense', acceptsEntries: true },
+  // Multas indedutíveis (IN 1.700 arts. 132 e 133; Lei 8.981 art. 41 § 5º; RIR/2018 art. 352 § 5º): ficam em `expenses`
+  // pela regra só por natureza; a adição na Parte A é o PR-4 (X4). Nome e grupo provisórios até o contador (BRIEF §6.2).
+  { code: '4.4', name: 'Multas Indedutíveis', nature: 'Expense', acceptsEntries: false },
+  { code: '4.4.1', name: 'Multas Fiscais Punitivas (de Ofício)', nature: 'Expense', acceptsEntries: true },
+  { code: '4.4.2', name: 'Multas de Natureza Não Tributária', nature: 'Expense', acceptsEntries: true },
+  // Tarifa bancária/de gateway (EMENDA T, E26; F-ENC-1 a): despesa operacional, fora do resultado financeiro e do e-Lalur
+  // (L9). Folha `4.6`, não `4.5`: o kit v3 (KIT-SETOR F-KE-1 a) já usa 4.5.1/4.5.2 para IRPJ/CSLL (dono, 13/10).
+  { code: '4.6', name: 'Tarifas Bancárias e de Intermediação', nature: 'Expense', acceptsEntries: true },
 ];
 
 /**
@@ -121,3 +142,18 @@ export const CMV_CODE = '4.2';
  * credits it (D 2.1.1 / C 3.4). DRE section provisional until the accountant (PE-1). Resolved by CODE.
  */
 export const RECEITA_NAO_USO_CODE = '3.4';
+
+/**
+ * Emenda 3.3 (BE-INCR-ENCARGOS-DESCONTOS, PR-1, E1/E26). Folhas resolvidas por CÓDIGO (F-ENC-1 a); quem as usa re-lê a
+ * conta e confere natureza e `acceptsEntries` (E2, `resolveFinancialAccountCode` em `BankSettlement.model.ts`).
+ */
+export const JUROS_MORA_RECEBIDOS_CODE = '3.5.1';
+export const MULTAS_MORA_RECEBIDAS_CODE = '3.5.2';
+export const DESCONTOS_OBTIDOS_CODE = '3.5.3';
+export const JUROS_MORA_PAGOS_CODE = '4.3.1';
+export const MULTAS_MORA_PAGAS_CODE = '4.3.2';
+export const DESCONTOS_CONCEDIDOS_CODE = '4.3.3';
+export const MULTAS_OFICIO_CODE = '4.4.1';
+export const MULTAS_NAO_TRIBUTARIAS_CODE = '4.4.2';
+/** Tarifa bancária/de intermediação (E26). `4.6` por decisão do dono de 13/10 (o `4.5` é do kit fiscal). */
+export const BANK_FEE_CODE = '4.6';
