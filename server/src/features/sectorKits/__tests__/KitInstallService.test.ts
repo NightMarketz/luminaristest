@@ -16,7 +16,7 @@ const KIT = SectorKitV1Schema.parse({
   ...BEAUTY_SALON_KIT_V1,
   chartExtension: [{ code: '4.3', name: 'Despesas Bancárias', nature: 'Expense', acceptsEntries: true }],
   roleDefaults: { scopeSettings: { bankChargeExpenseAccountCode: '4.3' }, fiscalProfile: { irpjDespesaAccountCode: '4.3' } },
-  serviceFiscalDefaults: [{ serviceRef: 'svc', cTribNac: '060101' }],
+  serviceFiscalDefaults: [{ key: 'cabeleireiro', label: 'Cabeleireiro', cTribNac: '060101', sinonimos: ['corte'], fonte: 'LC 116 6.01' }], // PR-K3: catálogo — o passo 6 não grava nada
   referential: [{ regime: 'SIMPLES', mappingVersion: '2026', entries: [{ accountCode: '4.3', referentialCode: 'R', label: 'r' }] }],
 });
 const INPUT = { kitKey: 'beautySalon', ano: 2026, installChartIfEmpty: true, openCurrentPeriodIfMissing: true, today: '2026-10-08' };
@@ -72,7 +72,6 @@ function build(opts: { failOn?: string; compileStatus?: 'Active' | 'Draft'; char
       fillNullScopeSettings: () => hit('fillNullScopeSettings', []),
       fillNullFiscalProfile: () => hit('fillNullFiscalProfile', []),
     },
-    { hasProfile: () => hit('hasProfile', false), upsert: () => hit('serviceFiscal.upsert', undefined) },
     {
       catalogLoaded: () => hit('catalogLoaded', true),
       mappedAccountIds: () => hit('mappedAccountIds', new Set<string>()),
@@ -86,28 +85,27 @@ function build(opts: { failOn?: string; compileStatus?: 'Active' | 'Draft'; char
 }
 
 describe('KitInstallService.install', () => {
-  it('7 passos na ordem da emenda E-1: plano, extensão, contas-padrão, PERÍODO, COMPILE, serviços, referencial', async () => {
+  it('7 passos na ordem da emenda E-1: plano, extensão, contas-padrão, PERÍODO, COMPILE, [6 vazio], referencial', async () => {
     const b = build();
     await expect(b.service.install(scope, INPUT)).resolves.toMatchObject({ status: 'INSTALLED', bindingVersion: 3 });
-    const marcos = ['installCanonicalChart', 'createAccountIfAbsent', 'fillNullScopeSettings', 'fillNullFiscalProfile', 'seedAndOpen', 'compile', 'serviceFiscal.upsert', 'batchSet', 'finish:INSTALLED', 'audit:kit.installed'];
+    const marcos = ['installCanonicalChart', 'createAccountIfAbsent', 'fillNullScopeSettings', 'fillNullFiscalProfile', 'seedAndOpen', 'compile', 'batchSet', 'finish:INSTALLED', 'audit:kit.installed'];
     expect(b.calls.filter((c) => marcos.includes(c))).toEqual(marcos);
   });
 
-  it('falha por exceção no passo 6 ⇒ KitInstallStepFailedError(6), FAILED com steps=5 e kit.install_failed', async () => {
-    const b = build({ failOn: 'serviceFiscal.upsert' });
+  it('falha por exceção no passo 7 ⇒ KitInstallStepFailedError(7), FAILED com steps=6 e kit.install_failed', async () => {
+    const b = build({ failOn: 'batchSet' });
     const erro = await b.service.install(scope, INPUT).catch((e: unknown) => e);
     expect(erro).toBeInstanceOf(KitInstallStepFailedError);
-    expect((erro as KitInstallStepFailedError).step).toBe(6);
-    expect(b.row()).toMatchObject({ status: 'FAILED', steps: '{"lastCompletedStep":5,"warnings":[]}' });
+    expect((erro as KitInstallStepFailedError).step).toBe(7);
+    expect(b.row()).toMatchObject({ status: 'FAILED', steps: '{"lastCompletedStep":6,"warnings":[]}' });
     expect(b.calls.slice(-2)).toEqual(['finish:FAILED', 'audit:kit.install_failed']);
-    expect(b.calls).not.toContain('batchSet');
   });
 
   it('compile Draft (E-7) ⇒ COMPILE_DRAFT, FAILED com steps=4, sem passos 6–7', async () => {
     const b = build({ compileStatus: 'Draft' });
     await expect(b.service.install(scope, INPUT)).resolves.toMatchObject({ status: 'COMPILE_DRAFT', kit: { status: 'FAILED' } });
     expect(JSON.parse(b.row()!.steps).lastCompletedStep).toBe(4);
-    expect(b.calls).not.toContain('serviceFiscal.upsert');
+    expect(b.calls).not.toContain('batchSet');
   });
 
   it('o CLI (flags false) nunca instala plano nem abre período', async () => {

@@ -30,7 +30,7 @@ function build(opts: {
   chart?: typeof CHART;
   period?: ActivationPeriodStatus;
   compileStatus?: 'Active' | 'Draft';
-  /** E-5: o kit vigente (v3) traz contas do perfil fiscal — sem perfil a ativação bloqueia. Padrão: perfil existe. */
+  /** E-5: o kit vigente (v4) traz contas do perfil fiscal — sem perfil a ativação bloqueia. Padrão: perfil existe. */
   hasFiscalProfile?: boolean;
 } = {}) {
   const findActive = jest.fn(async () => opts.active ?? null);
@@ -85,7 +85,6 @@ function build(opts: {
     { ...chartPort, createAccountIfAbsent: async () => 'exists' as const, findLiveAccountId: async () => null },
     periodPort,
     { hasFiscalProfile: async () => opts.hasFiscalProfile ?? true, fillNullScopeSettings: async () => [], fillNullFiscalProfile: async () => [] },
-    { hasProfile: async () => false, upsert: async () => {} },
     { catalogLoaded: async () => false, mappedAccountIds: async () => new Set<string>(), batchSet: async () => {} },
     { companyRegime: async () => null, unitRegime: async () => null },
     { append: async () => {} },
@@ -121,7 +120,7 @@ describe('BindingActivationService.activateDefault', () => {
     await expect(b.service.activateDefault(scope, {})).resolves.toEqual({
       status: 'Active',
       bindingVersion: 7,
-      kit: { kitKey: 'beautySalon', kitVersion: 3, status: 'INSTALLED' },
+      kit: { kitKey: 'beautySalon', kitVersion: 4, status: 'INSTALLED' },
     });
     expect(b.compile).toHaveBeenCalledWith(scope, {
       sectorKey: SALE_BINDING_V1.sectorKey,

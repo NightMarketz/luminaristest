@@ -68,6 +68,37 @@ export interface ExtractedStructuredData {
   data?: unknown;
 }
 
+/**
+ * Classificação presa a um conjunto fechado (BE-INCR-KIT-SETOR-EMENDA-1 PR-K3, item 7c; L1 do dono, 13/10): structured
+ * outputs `json_schema` strict, com `key` = uma das opções ou `null` — a API não pode devolver valor fora da lista.
+ */
+export function buildEnumResponseFormat(options: readonly string[]) {
+  return {
+    type: 'json_schema' as const,
+    json_schema: {
+      name: 'classificacao',
+      strict: true,
+      schema: {
+        type: 'object',
+        properties: { key: { anyOf: [{ type: 'string', enum: [...options] }, { type: 'null' }] } },
+        required: ['key'],
+        additionalProperties: false,
+      },
+    },
+  };
+}
+
+/** Lê a escolha da resposta; JSON inválido, `null` ou valor fora de `options` ⇒ `null` (defesa além do schema). */
+export function parseEnumChoice(content: string | null | undefined, options: readonly string[]): string | null {
+  if (!content) return null;
+  try {
+    const key = (JSON.parse(content) as { key?: unknown }).key;
+    return typeof key === 'string' && options.includes(key) ? key : null;
+  } catch {
+    return null;
+  }
+}
+
 export function tryFixMalformedJson(jsonString: string): string | null {
   try {
     JSON.parse(jsonString);
@@ -206,6 +237,25 @@ export class OpenAIService {
       logger.error('Error getting chat completion from OpenAI with tools and history', { error });
       throw new Error('Failed to get response from AI service with tools and history.', { cause: error });
     }
+  }
+
+  /**
+   * Escolhe uma das `options` para o `input` (ou `null`), com a saída restrita pelo schema (BE-INCR-KIT-SETOR-EMENDA-1
+   * PR-K3, item 7c; L1 de 13/10). Modelo = `FALLBACK` (`gpt-4o-mini`): o `CHAT` (3.5) não suporta structured outputs.
+   * Erro da API sobe para o chamador (a sugestão fiscal o trata como "sem sugestão").
+   */
+  public async classifyIntoEnum(input: string, systemPrompt: string, options: readonly string[]): Promise<string | null> {
+    if (options.length === 0) return null;
+    const completion = await this.openai.chat.completions.create({
+      model: CONFIG.MODELS.FALLBACK,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: input },
+      ],
+      response_format: buildEnumResponseFormat(options),
+      max_tokens: 50,
+    });
+    return parseEnumChoice(completion.choices[0]?.message?.content, options);
   }
 
   /**

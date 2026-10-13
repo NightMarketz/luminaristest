@@ -192,6 +192,7 @@ import type {
 // BE-INCR-KIT-SETOR PR-2 — instalação do kit de setor (activate-default + installSectorKitCli).
 import { Prisma } from 'generated/prisma';
 import { KitInstallService, type KitVersionsLookup } from '../features/sectorKits/services/KitInstallService';
+import { ServiceFiscalSuggestionService } from '../features/sectorKits/services/ServiceFiscalSuggestionService';
 import type {
   IKitAuditPort,
   KitChartPort,
@@ -199,11 +200,9 @@ import type {
   KitRegime,
   KitRegimePort,
   KitRoleDefaultsPort,
-  KitServiceFiscalPort,
 } from '../features/sectorKits/services/kitInstallPorts';
 import { KitInstallationRepository } from '../features/sectorKits/repositories/KitInstallationRepository';
 import { SectorKitPolicy } from '../features/sectorKits/policies/SectorKitPolicy';
-import { UpsertServiceFiscalProfileSchema } from '../features/accounting/dtos/ServiceFiscalProfileDto';
 import { SalesCancellationService } from '../features/sales/services/SalesCancellationService';
 import { RegisterPaymentService } from '../features/sales/services/RegisterPaymentService';
 import { PresetSyncService } from '../features/dynamicTables/services/PresetSyncService';
@@ -436,22 +435,6 @@ function buildKitRoleDefaultsPort(
     },
     fillNullScopeSettings: (accountIds) => settingsService.fillNullAccounts(scope, accountIds),
     fillNullFiscalProfile: (accountIds) => fiscalProfileService.fillNullAccounts(scope, accountIds),
-  };
-}
-
-function buildKitServiceFiscalPort(
-  repo: IServiceFiscalProfileRepository,
-  service: ServiceFiscalProfileService,
-  scope: AccountingScope,
-): KitServiceFiscalPort {
-  return {
-    async hasProfile(serviceRef) {
-      return (await repo.findByServiceRef(scope, serviceRef)) !== null;
-    },
-    async upsert(serviceRef, input) {
-      // Mesma validação do PUT (lista nacional LC 116, Anexo C) — o kit não fura o DTO da rota.
-      await service.upsert(scope, serviceRef, UpsertServiceFiscalProfileSchema.parse({ unitId: scope.unitId, ...input }));
-    },
   };
 }
 
@@ -1691,6 +1674,27 @@ export class ApplicationFactory {
    * getters acima). Consumido pelo `activate-default` (item 11) e pelo `installSectorKitCli` (item 16).
    * `kitVersions` só é passado por teste: prova os passos com um kit de conteúdo sem publicar um v2 no registro.
    */
+  /**
+   * BE-INCR-KIT-SETOR-EMENDA-1 PR-K3 (7e/7f) — sugestão fiscal por serviço, por escopo. Serviço de integração: lê a tabela
+   * `services` do dono pelo repositório de DynamicTables (molde do `ProductRefPort`) e os perfis fiscais de serviço da
+   * unidade; nenhuma porta de gravação (7d). IA de reserva só com `OPENAI_API_KEY` configurada (7c).
+   */
+  public getServiceFiscalSuggestionService(scope: BindingScope): ServiceFiscalSuggestionService {
+    const accountingScope = bindingScopeToAccountingScope(scope);
+    const serviceFiscalProfileRepo = this.repositories.serviceFiscalProfile;
+    return new ServiceFiscalSuggestionService(
+      new SectorKitPolicy(),
+      new KitInstallationRepository(),
+      this.repositories.dynamicTable,
+      {
+        async serviceRefsComPerfil() {
+          return new Set((await serviceFiscalProfileRepo.listByScope(accountingScope)).map((p) => p.serviceRef));
+        },
+      },
+      process.env.OPENAI_API_KEY ? ChatOpenAIService.getInstance() : null,
+    );
+  }
+
   public getKitInstallService(scope: BindingScope, kitVersions?: KitVersionsLookup): KitInstallService {
     const accountingScope = bindingScopeToAccountingScope(scope);
     return new KitInstallService(
@@ -1701,7 +1705,6 @@ export class ApplicationFactory {
       buildKitChartPort(this.repositories.account, this.services.posting, accountingScope),
       buildActivationPeriodPort(this.repositories.accountingPeriod, this.services.period, accountingScope),
       buildKitRoleDefaultsPort(this.repositories.fiscalProfile, this.services.accountingScopeSettings, this.services.fiscalProfile, accountingScope),
-      buildKitServiceFiscalPort(this.repositories.serviceFiscalProfile, this.services.serviceFiscalProfile, accountingScope),
       buildKitReferentialPort(
         this.repositories.referentialAccount,
         this.repositories.referentialMapping,
