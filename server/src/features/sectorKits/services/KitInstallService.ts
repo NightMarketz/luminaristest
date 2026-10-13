@@ -42,7 +42,6 @@ import {
 import type { ISectorKitPolicy } from '../policies/ISectorKitPolicy';
 import type { IKitInstallationRepository } from '../repositories/IKitInstallationRepository';
 import { KIT_REGISTRY } from '../registry';
-import { applyRoleOverrides } from './applyRoleOverrides';
 import type {
   IKitAuditPort,
   KitChartPort,
@@ -251,7 +250,10 @@ export class KitInstallService {
     return {};
   }
 
-  /** Passo 5 — compile do binding do kit (com o ajuste papel→conta, identidade no PR-2). Pula se já há Active. */
+  /**
+   * Passo 5 — compile do binding do kit. Pula se já há Active. O ajuste papel→conta (PR-3, item 25) não passa por
+   * aqui: o próprio `compile()` o aplica, com o `tx` dele, em todo caminho que compila.
+   */
   private async stepCompile(scope: BindingScope, kit: SectorKitV1): Promise<StepResult> {
     const active = await this.bindingRepo.findActive(scope, kit.binding.sectorKey);
     if (active) return { bindingVersion: active.bindingVersion };
@@ -259,7 +261,7 @@ export class KitInstallService {
       sectorKey: kit.binding.sectorKey,
       operationalSchema: kit.operationalSchema,
       chart: await this.chart.listChart(),
-      eventBindings: applyRoleOverrides(kit.binding.eventBindings),
+      eventBindings: kit.binding.eventBindings,
     });
     return result.status === 'Active' ? { bindingVersion: result.binding.bindingVersion } : { compileDraft: result };
   }

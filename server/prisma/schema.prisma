@@ -48,6 +48,7 @@ model User {
   inventoryItems             InventoryItem[] // Relation to InventoryItem (perpetual inventory subledger, INCR-INVENTORY)
   accountingBindings         AccountingBinding[] // Relation to AccountingBinding (A Prensa, BE-INCR-BINDING-PRESS)
   kitInstallations           KitInstallation[] // BE-INCR-KIT-SETOR PR-2 — kit de setor instalado por unidade
+  roleAccountOverrides       RoleAccountOverride[] // BE-INCR-KIT-SETOR PR-3 — ajuste papel→conta do contador
   reconcilePendingItems      ReconcilePendingItem[] // Relation to ReconcilePendingItem (BE-INCR-RECONCILE-PENDING, nó C7)
   bankSettlementItems        BankSettlementItem[] // Relation to BankSettlementItem (BE-INCR-BANK-SETTLEMENT, nó F7)
   accountingScopeSettings    AccountingScopeSettings[] // Relation to AccountingScopeSettings (config por escopo, F7 Fase C)
@@ -517,6 +518,7 @@ model Account {
   scopeSettingsDisposalGainOf        AccountingScopeSettings[] @relation("ScopeSettingsDisposalGain") // ganho na baixa de imobilizado
   scopeSettingsDisposalLossOf        AccountingScopeSettings[] @relation("ScopeSettingsDisposalLoss") // perda na baixa de imobilizado
   providerFeeExpenseOf               AccountingScopeSettings[] @relation("ScopeSettingsProviderFeeExpense") // tarifa do provedor (F5 PR-3, P3-11)
+  roleOverrides                      RoleAccountOverride[]     // ajuste papel→conta do binding do kit (BE-INCR-KIT-SETOR PR-3)
   paymentAccountsGl                  PaymentAccount[]          @relation("PaymentAccountGl") // folha do saldo no provedor (BE-INCR-PAYMENT-PROVIDER PR-1, P1-3)
   createdAt                          DateTime                  @default(now())
   updatedAt                          DateTime                  @updatedAt
@@ -1423,6 +1425,29 @@ model KitInstallation {
   @@unique([userId, unitId]) // um kit por unidade (item 9)
   @@index([kitKey, kitVersion])
   @@map("kit_installations")
+}
+
+// BE-INCR-KIT-SETOR PR-3 (BRIEF item 18, §3.2) — ajuste papel→conta do contador sobre o binding do kit. Só papéis do
+// binding (F-KB-3 → b); `role` = AccountRole, com sub-chave 'caixa-por-metodo:<método>'. Unicidade VIVA por
+// (userId, unitId, role) garantida no serviço, in-tx — sem @@unique, porque remover e recriar o mesmo papel morreria
+// em P2002 com a linha soft-deleted (memória unique-de-idempotencia-x-soft-delete). Trocar a conta = soft-delete da
+// linha viva + linha nova (o `motivo` de cada troca fica na sua linha).
+model RoleAccountOverride {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId    String
+  role      String // AccountRole (accountingBinding/models/types.ts), com sub-chave 'caixa-por-metodo:<m>'
+  accountId String
+  account   Account   @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  motivo    String // 10–500 chars (DTO); fica só na linha, nunca no payload de auditoria (item 24)
+  setById   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([userId, unitId, role])
+  @@map("role_account_overrides")
 }
 
 // BE-INCR-RECONCILE-PENDING (nó C7) — resíduo F-W2F-3/5 (CEDULA-DECISAO-2026-09-03-modulos.md,
