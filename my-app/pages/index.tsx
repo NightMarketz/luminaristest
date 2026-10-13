@@ -16,7 +16,8 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
         'products_view',
         'finance_view',
         'analytics',
-        'chatMessages'
+        'chatMessages',
+        'crm' // widget "Relatório do CRM" (FE-INCR-CRM-REPORT-BUILDER item 20)
       ])),
     },
   };
