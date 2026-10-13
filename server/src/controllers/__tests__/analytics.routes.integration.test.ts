@@ -16,8 +16,6 @@ import {
   disconnectDb,
   seedUser,
   authHeader,
-  seedDynamicTable,
-  seedDynamicTableData,
 } from '@test/helpers';
 
 const app = makeApp();
@@ -72,112 +70,17 @@ describe('GET /api/analytics/drill-down', () => {
 });
 
 /**
- * The custom-KPI route has no frontend caller — these tests ARE its only exercise. The 200 case
- * seeds real rows and asserts the computed number, so a regression in the validate/fetch/execute
- * pipeline fails here rather than silently returning a wrong aggregate.
+ * BE-INCR-CRM-REPORT-BUILDER PR-3 (item 16; F-RB6=(a), emenda do ADR-ANALYTICS-DEFS 26/09): o builder de relatórios do
+ * CRM fechou o F-AD5, então o `custom-kpis` órfão (zero consumidor no FE) foi removido — rota, controller,
+ * CustomKpiExecutor e KpiSchema. A rota não existe mais.
  */
-describe('POST /api/analytics/custom-kpis', () => {
-  const AMOUNT_SCHEMA = {
-    fields: [
-      { name: 'amount', label: 'Amount', type: 'number', required: true },
-      { name: 'status', label: 'Status', type: 'string', required: false },
-    ],
-  };
-
-  it('401s without a token', async () => {
+describe('POST /api/analytics/custom-kpis (removida)', () => {
+  it('responde 404 para usuário autenticado', async () => {
+    const u = await seedUser({ username: 'u' });
     const res = await request(app)
       .post('/api/analytics/custom-kpis')
+      .set(authHeader({ id: u.id, username: u.username }))
       .send({ tableId: 't1', kpis: [{ name: 'k', tableId: 't1', measure: 'count', field: 'amount' }] });
-    expect(res.status).toBe(401);
-  });
-
-  it('400s when the kpis array is empty', async () => {
-    const u = await seedUser({ username: 'u' });
-    const res = await request(app)
-      .post('/api/analytics/custom-kpis')
-      .set(authHeader({ id: u.id, username: u.username }))
-      .send({ tableId: 't1', kpis: [] });
-    expect(res.status).toBe(400);
-    expect(res.body.success).toBe(false);
-  });
-
-  it('400s when a kpi.tableId does not match the top-level tableId', async () => {
-    const u = await seedUser({ username: 'u' });
-    const table = await seedDynamicTable({ userId: u.id, schema: AMOUNT_SCHEMA });
-    const res = await request(app)
-      .post('/api/analytics/custom-kpis')
-      .set(authHeader({ id: u.id, username: u.username }))
-      .send({
-        tableId: table.id,
-        kpis: [{ name: 'Wrong table', tableId: 'some-other-table', measure: 'count', field: 'amount' }],
-      });
-    expect(res.status).toBe(400);
-    expect(res.body.details).toEqual(['Wrong table']);
-  });
-
-  it('404s for a table that does not exist', async () => {
-    const u = await seedUser({ username: 'u' });
-    const res = await request(app)
-      .post('/api/analytics/custom-kpis')
-      .set(authHeader({ id: u.id, username: u.username }))
-      .send({
-        tableId: 'missing-table',
-        kpis: [{ name: 'k', tableId: 'missing-table', measure: 'count', field: 'amount' }],
-      });
     expect(res.status).toBe(404);
-  });
-
-  it('400s when a KPI references a field absent from the table schema', async () => {
-    const u = await seedUser({ username: 'u' });
-    const table = await seedDynamicTable({ userId: u.id, schema: AMOUNT_SCHEMA });
-    const res = await request(app)
-      .post('/api/analytics/custom-kpis')
-      .set(authHeader({ id: u.id, username: u.username }))
-      .send({
-        tableId: table.id,
-        kpis: [{ name: 'Ghost', tableId: table.id, measure: 'sum', field: 'nopeNotAColumn' }],
-      });
-    expect(res.status).toBe(400);
-    expect(res.body.details[0].kpiName).toBe('Ghost');
-  });
-
-  it('200s and computes the KPIs over the seeded rows, honouring filters and soft-delete', async () => {
-    const u = await seedUser({ username: 'u' });
-    const table = await seedDynamicTable({ userId: u.id, schema: AMOUNT_SCHEMA });
-    await seedDynamicTableData({ dynamicTableId: table.id, data: { amount: 100, status: 'paid' } });
-    await seedDynamicTableData({ dynamicTableId: table.id, data: { amount: 50, status: 'paid' } });
-    await seedDynamicTableData({ dynamicTableId: table.id, data: { amount: 7, status: 'open' } });
-    await seedDynamicTableData({
-      dynamicTableId: table.id,
-      data: { amount: 999, status: 'paid' },
-      deletedAt: new Date(),
-    });
-
-    const res = await request(app)
-      .post('/api/analytics/custom-kpis')
-      .set(authHeader({ id: u.id, username: u.username }))
-      .send({
-        tableId: table.id,
-        kpis: [
-          { name: 'Total', tableId: table.id, measure: 'sum', field: 'amount' },
-          {
-            name: 'Paid total',
-            tableId: table.id,
-            measure: 'sum',
-            field: 'amount',
-            filters: [{ field: 'status', operator: 'eq', value: 'paid' }],
-          },
-          { name: 'Rows', tableId: table.id, measure: 'count', field: 'amount' },
-        ],
-      });
-
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    // 999 is soft-deleted and must not appear in any aggregate.
-    expect(res.body.data).toEqual([
-      { kpiName: 'Total', value: 157, error: null },
-      { kpiName: 'Paid total', value: 150, error: null },
-      { kpiName: 'Rows', value: 3, error: null },
-    ]);
   });
 });
