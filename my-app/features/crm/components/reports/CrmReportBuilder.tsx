@@ -217,13 +217,24 @@ export function CrmReportBuilder() {
   };
 
   /** Item 10: aplica a mudança de join; se ela tira medida/agrupamento/filtro, confirma antes (PR-B/D lacunas). */
-  const applyJoinChange = (before: ReportDraft, next: ReportDraft, nextRaw: RightRaw) => {
-    const apply = () => {
-      setRightRaw(nextRaw);
-      setDraft(next);
+  type JoinChange = (now: typeof latest.current) => { next: ReportDraft; nextRaw: RightRaw } | null;
+  // a mudança é recalculada sobre o rascunho ATUAL também na confirmação do Modal — outra troca aplicada enquanto ele
+  // estava aberto não é desfeita (5ª passada do review do PR-B)
+  const applyJoinChange = (build: JoinChange) => {
+    const first = build(latest.current);
+    if (!first) return;
+    const commit = (r: { next: ReportDraft; nextRaw: RightRaw }) => {
+      setRightRaw(r.nextRaw);
+      setDraft(r.next);
     };
-    if (itemsLost(before, next)) setPending({ kind: 'join', apply });
-    else apply();
+    if (!itemsLost(latest.current.draft, first.next)) return commit(first);
+    setPending({
+      kind: 'join',
+      apply: () => {
+        const r = build(latest.current);
+        if (r) commit(r);
+      },
+    });
   };
 
   const changeJoinSource = async (clicked: number, source: ReportSource) => {
@@ -243,15 +254,22 @@ export function CrmReportBuilder() {
       setError({ key: 'report_builder.errors.SCHEMA_UNAVAILABLE', params: {}, code: null });
       return;
     }
-    const { draft: now, rightRaw: nowRaw, sourceFields: nowFields } = latest.current;
-    const index = target ? now.joins.indexOf(target) : -1;
-    if (!nowFields || index < 0) return;
-    const nextRaw = { ...nowRaw, [source]: raw };
-    applyJoinChange(now, withJoinSource(now, index, source, nowFields, rightFieldsFrom(nextRaw)), nextRaw);
+    const loaded = raw;
+    applyJoinChange((now) => {
+      const index = target ? now.draft.joins.indexOf(target) : -1;
+      if (!now.sourceFields || index < 0) return null;
+      const nextRaw = { ...now.rightRaw, [source]: loaded };
+      return { next: withJoinSource(now.draft, index, source, now.sourceFields, rightFieldsFrom(nextRaw)), nextRaw };
+    });
   };
 
-  const removeJoinAt = (index: number) => {
-    if (sourceFields) applyJoinChange(draft, removeJoin(draft, index, sourceFields, rightFieldsOf), rightRaw);
+  const removeJoinAt = (clicked: number) => {
+    const target = draft.joins[clicked];
+    applyJoinChange((now) => {
+      const index = target ? now.draft.joins.indexOf(target) : -1;
+      if (!now.sourceFields || index < 0) return null;
+      return { next: removeJoin(now.draft, index, now.sourceFields, rightFieldsFrom(now.rightRaw)), nextRaw: now.rightRaw };
+    });
   };
 
   const preview = async () => {

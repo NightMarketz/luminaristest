@@ -374,3 +374,59 @@ describe('review do PR-B — 4ª passada no orquestrador', () => {
     expect(j1.getByLabelText('Tabela')).toHaveValue('leadProposals');
   });
 });
+
+describe('review do PR-B — 5ª passada no orquestrador', () => {
+  const OPP_SCHEMA = [
+    { name: 'title', label: 'Título', type: 'string' },
+    { name: 'leadId', label: 'Lead', type: 'relation', relation: { targetTable: '@@PRESET_TABLE_KEY::leads' } },
+  ];
+  const LEAD_SCHEMA = [{ name: 'status', label: 'Status', type: 'select', options: ['Novo'] }];
+  const PROPOSAL_SCHEMA_J = [{ name: 'amount', label: 'Valor', type: 'number' }];
+  const ab: CrmReportRow = {
+    ...saved,
+    id: 'rab',
+    userId: 'eu',
+    name: 'A e B',
+    spec: {
+      source: 'crmOpportunities',
+      joins: [
+        { leftField: 'leadId', rightSource: 'leads', rightField: 'id', alias: 'a' },
+        { leftField: 'title', rightSource: 'leads', rightField: 'status', alias: 'b' },
+      ],
+      measures: [{ type: 'count' }],
+      filters: [{ field: 'a.status', op: 'eq', value: 'Novo' }],
+    },
+  };
+  beforeEach(() => {
+    Object.values(svc).forEach((f) => f.mockReset());
+    svc.list.mockImplementation(() => ok([ab]));
+    svc.get.mockImplementation(() => ok(ab));
+    svc.run.mockImplementation(() => ok(RUN));
+  });
+  afterEach(() => cleanup());
+
+  it('confirmar o Modal de um join não desfaz a troca do outro aplicada enquanto ele estava aberto', async () => {
+    const pending: ((v: unknown) => void)[] = [];
+    fieldsOf.mockReset().mockImplementation((s: string) =>
+      s === 'leadProposals'
+        ? new Promise((r) => pending.push(() => r(PROPOSAL_SCHEMA_J)))
+        : Promise.resolve(s === 'leads' ? LEAD_SCHEMA : OPP_SCHEMA),
+    );
+    render(<CrmReportBuilder />);
+    fireEvent.click(await screen.findByText('Abrir'));
+    await waitFor(() => expect(svc.run).toHaveBeenCalled());
+    const j0 = within(screen.getByTestId('join-0'));
+    const j1 = within(screen.getByTestId('join-1'));
+    fireEvent.change(j0.getByLabelText('Tabela'), { target: { value: 'leadProposals' } });
+    fireEvent.change(j1.getByLabelText('Tabela'), { target: { value: 'leadProposals' } });
+    await waitFor(() => expect(pending).toHaveLength(2));
+    pending[0](undefined); // join 0: tira o filtro a.status → Modal
+    expect(await screen.findByText('Mudar o cruzamento?')).toBeInTheDocument();
+    pending[1](undefined); // join 1: nada a perder → aplica direto
+    await waitFor(() => expect(j1.getByLabelText('Tabela')).toHaveValue('leadProposals'));
+    fireEvent.click(screen.getByText('Mudar e limpar'));
+    await waitFor(() => expect(j0.getByLabelText('Tabela')).toHaveValue('leadProposals'));
+    expect(j1.getByLabelText('Tabela')).toHaveValue('leadProposals');
+    expect(screen.queryByTestId('filter-0')).toBeNull();
+  });
+});
