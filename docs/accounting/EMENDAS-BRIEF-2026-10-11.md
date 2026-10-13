@@ -43,7 +43,7 @@ a CSLL só a partir de 01/04/2026 (`pesquisa-lei-2026-10-10/irpj-sped.md:51-52`)
 - **E1-3 [direto]** A memória da CSLL de 2026 cita a fonte nova (P&R LC 224 v5 item 13; SC 10010/2026) na linha do
   limite.
 
-**F-E1-1: como a CSLL de 2026 conta o limite.** RATIFICAÇÃO PENDENTE.
+**F-E1-1: como a CSLL de 2026 conta o limite.** **RATIFICADO (a)**: dono, chat, 2026-10-11, *"Pode ratificar e resolver"*; implementado no #634 (`59f2dec5`).
 - (a) A CSLL de 2026 trata o T01 como "fora de atividade" para a LC 224: reusa o §9 (trimestres em atividade), a sobra
   do T01 não passa e o limite anual é de 3 × 1,25 mi. A receita do T01 fica fora da acumulada da CSLL.
 - (b) Parâmetro novo `LC224_LIMITE_ANUAL_CSLL_2026_CENTS = 375000000` só para o §5º, mantendo o trimestral.
@@ -79,7 +79,7 @@ na acumulada da CSLL. Se o contador disser que entra, (a) muda só nesse ponto.
   para a estimativa (Real).
 - **E2-4 [direto]** A fonte do estouro na memória ganha "CARF 1003-000.186" ao lado do §11.
 
-**F-E2-1: como o sistema sabe que há esteticista.** RATIFICAÇÃO PENDENTE.
+**F-E2-1: como o sistema sabe que há esteticista.** **RATIFICADO (b)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]]). Sem "executa".
 - (a) Só a declaração (E2-1). O dono responde.
 - (b) A declaração mais um alerta automático quando o catálogo de serviços da PJ tiver serviço de estética (cTribNac do
   grupo 06.02 no perfil fiscal do serviço, ou kit `aestheticClinic` instalado).
@@ -89,7 +89,7 @@ na acumulada da CSLL. Se o contador disser que entra, (a) muda só nesse ponto.
 depende de quem trabalha, e o código de serviço não prova isso. (c) erraria com salão que tem o serviço cadastrado e
 nunca o vendeu.
 
-**F-E2-2: aplicar o proporcional do ano de início.** RATIFICAÇÃO PENDENTE.
+**F-E2-2: aplicar o proporcional do ano de início.** **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]]). Sem "executa".
 - (a) Sim, como D-4 decidiu: é conservador e reduz o risco de autuação.
 - (b) Não. Limite cheio até haver fonte.
 
@@ -140,7 +140,7 @@ Ajuste e só fica menor se a UF reduzir.
 - **E4-3 [cond: F-E4-1]** Status `PENDING` com `expiresAt` no passado (F-FE-COB-7) não vira "vencido" se o vencimento
   original caiu em dia não útil e o pagamento veio no dia útil seguinte.
 
-**F-E4-1: calendário de feriados estadual e municipal.** RATIFICAÇÃO PENDENTE.
+**F-E4-1: calendário de feriados estadual e municipal.** **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]]). Sem "executa".
 - (a) Tabela de feriados por UF e município em `legal_parameters` (publicada pelo dono, como as outras), mais um helper
   `proximoDiaUtil(data, uf, codMun)` que estende o de hoje (nacional).
 - (b) Só nacional e fim de semana. O estadual e o municipal ficam como aviso de texto.
@@ -179,7 +179,7 @@ tabela. (c) não serve porque o MP não documenta feriado local. Insumo ausente:
 - **E5-6 [direto]** DASN-SIMEI continua (o MEI não muda). A nota do FE-INCR-TAX-ASSESSMENT (item 3 da fila) registra
   que DASN-SIMEI e DEFIS não têm tela.
 
-**F-E5-1: perfil em CAIXA na virada.** RATIFICAÇÃO PENDENTE.
+**F-E5-1: perfil em CAIXA na virada.** **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]]). Sem "executa".
 - (a) Alerta no fim de 2026 e oferta de "levar o saldo a receber para dez/2026", sem automatizar (D-6 a).
 - (b) Lançar o saldo a receber em dez/2026 automaticamente.
 
@@ -205,7 +205,7 @@ oferecer o saldo em dez/2026 (pesquisa-juris 4.4, média-baixa).
   - flag `true` ⇒ base × 9,25% (1,65% + 7,6%) com fonte "SC Cosit 496/2017; IN 2.121 art. 160 II b".
 - **E6-3 [direto]** Teste: mesma NF-e de insumo monofásico com a flag nos dois valores. Cumulativo e Simples sem efeito.
 
-**F-E6-1: quem pode ligar a flag.** RATIFICAÇÃO PENDENTE.
+**F-E6-1: quem pode ligar a flag.** **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]]). Sem "executa".
 - (a) Só o contador ativo, pela política versionada (GOV-CONTADOR: proposta do dono e aprovação do contador).
 - (b) O dono direto.
 
@@ -238,14 +238,14 @@ insumo ausente aqui.
 - **E7-4** DARF: o retido entra no X9/MIT como débito de IRRF (código 1708) do mês do pagamento. Fica dependente do X9
   PR-2.
 
-**F-E7-1: conta do IRRF a recolher.** RATIFICAÇÃO PENDENTE.
+**F-E7-1: conta do IRRF a recolher.** **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]]). Sem "executa".
 - (a) Folha canônica nova `2.1.x IRRF a Recolher`, com referencial `2.01.01.09.28` "Outros Tributos a Recolher", no
   mesmo PR e no kit (lição da §1.2 da PROPOSTA-REFERENCIAL).
 - (b) Conta configurável no `FiscalProfile`.
 
 **Recomendação: (a)**, pelo mesmo motivo do F-ENC-1 (a): conta resolvida por código não trava em runtime.
 
-**F-E7-2: como se sabe que o prestador é do Simples.** RATIFICAÇÃO PENDENTE.
+**F-E7-2: como se sabe que o prestador é do Simples.** **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]]). Sem "executa".
 - (a) Campo no cadastro do fornecedor (declaração do prestador, IN 765 art. 1º).
 - (b) Consulta ao Portal do Simples por CNPJ.
 
@@ -255,6 +255,15 @@ insumo ausente aqui.
 ---
 
 ## 8. Consequência da decisão (a) de 11/10 nos BRIEFs ADN e NFC-e (`BE-INCR-DFE-ADN-EMISSOR-brief.md` F-ADN-1; `BE-INCR-NFCE-EMENDA-1-brief.md` F-NFCE-E1-1)
+
+> **13/10 (vale):** ADN pausado, pesquisar PSC ([[D-2026-10-13-QUESTIONARIO-BRIEFS-PRONTOS]]); o "estado final de 12/10" abaixo foi superado.
+>
+> **Estado em 12/10 (superado):** o caminho PSC foi **abandonado** — o Luminaris guarda o certificado (SE-S) do cliente para os três DF-e; F-E8-2/3 sem objeto; vale o BRIEF-ADN original ([[D-2026-10-12-QUESTIONARIO-DONO]] 5ª rodada).
+>
+> **Estado anterior em 12/10:** A metade "PAA" foi **superada** pelo #635
+> (`BE-INCR-DFE-ASSINATURA-PLANEJAMENTO-2026-10-11.md` §5): nenhum PAA homologado atende o salão, e o **F-E8-1R = (a)**
+> foi ratificado — certificado em nuvem num PSC para **NFS-e, NF-e e NFC-e**. Logo: o **F-E8-1** abaixo está superado;
+> os itens **E8-1** e **E8-3** valem com "PSC" no lugar de "PAA"; o F-E8-3 foi ratificado (a) em 11/10 e **reaberto → (b)** em 12/10. Em 12/10: **F-E8-2 = (b)** (Luminaris contrata e revende) e o **F-E8-3 foi reaberto → (b)** lista curta homologada ([[D-2026-10-12-QUESTIONARIO-DONO]]).
 
 **Decisão.** Dono, 11/10: *"PAA + PSC nuvem (Recomendado)"*:
 - NF-e e NFC-e assinadas pelo PAA (NT 2026.001), sem guardar o certificado do cliente;
@@ -284,7 +293,7 @@ insumo ausente aqui.
 prazo conhecido. Pela regra de "Focus = referência, não fornecedor" (07/10), isso **reabre a escolha de fornecedor**, e
 o dono decide sabendo disso.
 
-**F-E8-2: PSC da NFS-e.** RATIFICAÇÃO PENDENTE.
+**F-E8-2: PSC da NFS-e.** **RATIFICADO (b)** — contra a recomendação: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]]). O Luminaris contrata o PSC e revende; vale para NFS-e, NF-e e NFC-e (F-E8-1R). Pergunta ao advogado (§10.3) muda de foco: responsabilidade do Luminaris como contratante/revendedor.
 - (a) O cliente contrata o PSC e entrega ao Luminaris uma credencial de assinatura com escopo (BYOK).
 - (b) O Luminaris contrata o PSC e revende.
 

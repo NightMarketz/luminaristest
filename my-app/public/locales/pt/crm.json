@@ -263,5 +263,24 @@
     "stage_change": "Mudança de etapa",
     "today": "Hoje",
     "yesterday": "Ontem"
+  },
+  "report_builder": {
+    "errors": {
+      "REPORT_FIELD_NOT_FOUND": "O campo \"{{field}}\" não existe na tabela.",
+      "REPORT_TOO_LARGE": "O relatório lê mais de {{cap}} linhas. Adicione filtros ou escolha outra fonte.",
+      "REPORT_SOURCE_NOT_ALLOWED": "Esta fonte não está disponível no construtor de relatórios do CRM.",
+      "REPORT_CURRENCY_MIXED": "Somar valores em moedas diferentes não é permitido: agrupe ou filtre por \"{{currencyField}}\".",
+      "REPORT_CONVERSION_NOT_APPLICABLE": "A conversão para reais só se aplica a relatórios com soma ou média de valor com moeda.",
+      "REPORT_SORT_KEY_REQUIRED": "Com mais de uma medida, escolha por qual medida ordenar.",
+      "REPORT_SORT_KEY_NOT_FOUND": "A ordenação \"{{key}}\" não corresponde a nenhuma medida.",
+      "REPORT_JOIN_ALIAS_DUPLICATE": "Dois cruzamentos com o mesmo apelido \"{{alias}}\".",
+      "REPORT_NOT_FOUND": "Relatório não encontrado.",
+      "INVALID_TIME_ZONE": "Fuso horário inválido."
+    },
+    "labels": {
+      "NO_CURRENCY": "Sem moeda",
+      "UNDECLARED_CURRENCY": "Moeda não declarada",
+      "RATE_UNAVAILABLE": "Cotação indisponível"
+    }
   }
 }
