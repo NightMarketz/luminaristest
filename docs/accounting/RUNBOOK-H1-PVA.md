@@ -607,6 +607,20 @@ CNPJ/CPF** se este runbook for commitado]
 
 ### 4. Importar a ECD no PVA
 
+> **[EMENDA 2026-10-13 — BE-INCR-PLANO-4-NIVEIS (L8), item 12 do BRIEF] Pré-condição da tentativa 3.** O plano canônico
+> passou a 4 níveis (analítica patrimonial `x.y.z.NN`; ADR-PLANO-CONTAS-4-NIVEIS). Antes de subir o build que contém a
+> mudança, com o servidor **parado** e depois do backup do `dev.db` (P2):
+>
+> ```bash
+> cd server && npx ts-node -r tsconfig-paths/register src/jobs/migratePlano4NiveisCli.ts --all
+> ```
+>
+> Esperado: `OK {...}` por unidade, com `saldoAntesDepoisIgual: true` e `renomeadas` com as 9 linhas do de-para na
+> primeira rodada; uma 2ª rodada devolve `renomeadas: []` (idempotente). O período corrente de cada unidade com binding
+> precisa estar **aberto** (o binding é recompilado com dry-run); se não estiver, a CLI recusa sem alterar nada.
+> **Nunca suba o servidor novo antes da migração:** o `ensureChartOfAccounts` criaria a analítica nova vazia ao lado da
+> antiga com saldo.
+
 Abra o PVA da ECD → importar o `.txt` gerado. Anote **cada crítica** com o código do registro
 (ex.: I050, J930), não só a mensagem.
 
