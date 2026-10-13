@@ -16,6 +16,7 @@ import analyticsDefinitionsRoutes from './analyticsDefinitions';
 import crmRoutes from './crm';
 import accountingRoutes from './accounting';
 import accountingBindingRoutes from './accounting-binding';
+import accountingKitRoutes from './accounting-kit';
 import payableRoutes from './payables';
 import receivableRoutes from './receivables';
 import dimensionRoutes from './dimensions';
@@ -81,6 +82,7 @@ router.use('/accounting/mit-exports', mitExportRoutes); // BE-INCR-MIT-EXPORT PR
 router.use('/legal-parameters', legalParameterRoutes); // BE-INCR-LEGAL-PARAMS PR-1 — coeficientes de lei da plataforma
 router.use('/accounting', accountingRoutes);
 router.use('/accounting-binding', accountingBindingRoutes);
+router.use('/accounting-kit', accountingKitRoutes); // BE-INCR-KIT-SETOR PR-3
 router.use('/payables', payableRoutes);
 router.use('/receivables', receivableChargesRouter); // BE-INCR-PAYMENT-PROVIDER (nó F5) PR-2
 router.use('/receivables', receivableRoutes);
