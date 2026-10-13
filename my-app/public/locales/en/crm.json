@@ -11,7 +11,8 @@
     "proposals": "Proposals",
     "activities": "Activities",
     "meetings": "Meetings",
-    "analytics": "Analytics"
+    "analytics": "Analytics",
+    "reports": "Reports"
   },
   "analytics": {
     "title": "CRM — Analytics",
@@ -275,12 +276,170 @@
       "REPORT_SORT_KEY_NOT_FOUND": "Sort key \"{{key}}\" does not match any measure.",
       "REPORT_JOIN_ALIAS_DUPLICATE": "Two joins share the alias \"{{alias}}\".",
       "REPORT_NOT_FOUND": "Report not found.",
-      "INVALID_TIME_ZONE": "Invalid time zone."
+      "INVALID_TIME_ZONE": "Invalid time zone.",
+      "CRM_MODULE_NOT_INSTALLED": "CRM module {{moduleKey}} is not installed; this source is not available.",
+      "SCHEMA_UNAVAILABLE": "Could not load the fields of this source.",
+      "GENERIC": "Could not complete. Try again."
     },
     "labels": {
       "NO_CURRENCY": "No currency",
       "UNDECLARED_CURRENCY": "Undeclared currency",
       "RATE_UNAVAILABLE": "Rate unavailable"
+    },
+    "title": "CRM — Reports",
+    "subtitle": "Build, save and reopen reports over the CRM tables",
+    "list": {
+      "empty": "No saved reports yet.",
+      "new": "New report",
+      "name": "Name",
+      "kind": "Type",
+      "chart": "Chart",
+      "updated": "Updated at",
+      "other_user": "another user's",
+      "open": "Open",
+      "delete": "Delete"
+    },
+    "kind": {
+      "chart": "Chart",
+      "table": "Table",
+      "kpi": "KPI"
+    },
+    "chart_type": {
+      "bar": "Bar",
+      "line": "Line",
+      "area": "Area",
+      "pie": "Pie",
+      "donut": "Donut",
+      "table": "Table"
+    },
+    "editor": {
+      "money_suffix": "(money)",
+      "name": "Name",
+      "description": "Description",
+      "kind": "Type",
+      "chart_type": "Chart",
+      "source": "Source",
+      "pick_source": "Pick a source…",
+      "measures": "Measures",
+      "measure_type": "Calculation",
+      "measure_field": "Field",
+      "all_rows": "All rows",
+      "pick_field": "Pick a field…",
+      "alias": "Alias (optional)",
+      "remove": "Remove",
+      "add_measure": "Add measure",
+      "kpi_by_currency": "KPI split by currency: one card per currency.",
+      "dimensions": "Group by",
+      "dimension_type": "Group",
+      "by_field": "By field",
+      "by_period": "By period",
+      "dimension_field": "Grouping field",
+      "date_field": "Date field",
+      "period": "Period",
+      "add_dimension": "Add grouping",
+      "filters": "Filters",
+      "filter_field": "Filter field",
+      "filter_op": "Operator",
+      "filter_value": "Value",
+      "add_filter": "Add filter",
+      "multi_hint": "Comma-separated values",
+      "yes": "Yes",
+      "no": "No",
+      "sort_limit": "Sort and limit",
+      "sort_by": "Sort",
+      "sort_none": "No sorting",
+      "sort_dimension": "By grouping",
+      "sort_measure": "By measure",
+      "sort_key": "Which measure",
+      "sort_dir": "Direction",
+      "asc": "Ascending",
+      "desc": "Descending",
+      "limit": "Limit",
+      "convert": "Also show converted to BRL (PTAX)",
+      "convert_unavailable": "Only available with a sum or average of an amount that has a currency.",
+      "back": "Back to list",
+      "preview": "Preview",
+      "running": "Calculating…",
+      "save": "Save",
+      "save_as": "Save as",
+      "other_user": "This report belongs to another user. Changes apply to their report."
+    },
+    "currency": {
+      "mixed": "The amount in \"{{field}}\" may be in different currencies. Split by currency or pick a single currency.",
+      "split": "Split by currency",
+      "single": "Single currency"
+    },
+    "sources": {
+      "leads": "Leads",
+      "crmOpportunities": "Opportunities",
+      "leadActivities": "Activities",
+      "leadProposals": "Proposals",
+      "crmAccounts": "Accounts",
+      "crmContacts": "Contacts"
+    },
+    "measure_type": {
+      "count": "Count",
+      "sum": "Sum",
+      "avg": "Average"
+    },
+    "measure_label": {
+      "count_rows": "Count",
+      "count": "Count of {{field}}",
+      "sum": "Sum of {{field}}",
+      "avg": "Average of {{field}}"
+    },
+    "period": {
+      "day": "Day",
+      "week": "Week",
+      "month": "Month",
+      "quarter": "Quarter",
+      "year": "Year"
+    },
+    "op": {
+      "eq": "equals",
+      "ne": "not equal to",
+      "in": "is one of",
+      "nin": "is none of",
+      "gt": "greater than",
+      "gte": "greater than or equal to",
+      "lt": "less than",
+      "lte": "less than or equal to"
+    },
+    "fields": {
+      "id": "ID",
+      "created_at": "Created at",
+      "updated_at": "Updated at"
+    },
+    "result": {
+      "undeclared": "Undeclared currency: values are shown without a currency symbol.",
+      "empty": "No data for these filters.",
+      "total": "Total",
+      "hint": "Build the report and click Preview."
+    },
+    "converted": {
+      "title": "Estimate in BRL by the PTAX selling rate of {{date}} — not an accounting figure",
+      "rate": "{{currency}}: {{rate}} (rate of {{date}})",
+      "stale": "rate older than 5 days",
+      "excluded": "Left out of the conversion",
+      "rows": "{{n}} row(s)"
+    },
+    "block": {
+      "NO_SOURCE": "Pick the report source.",
+      "MEASURE_FIELD_REQUIRED": "Sum and average need a field.",
+      "CURRENCY_CHOICE_REQUIRED": "Choose to split by currency or a single currency before previewing.",
+      "SORT_KEY_REQUIRED": "With more than one measure, choose which measure to sort by.",
+      "FILTER_INCOMPLETE": "Complete or remove filters without a field or value.",
+      "KPI_DIMENSION": "A KPI has no grouping, except the split by currency.",
+      "LIMIT_RANGE": "The limit goes from 1 to 500."
+    },
+    "confirm": {
+      "source_title": "Change the source?",
+      "source_body": "Measures, groupings and filters using fields that do not exist in the new source will be removed.",
+      "source_ok": "Change and clear",
+      "cancel": "Cancel",
+      "delete_title": "Delete report?",
+      "delete_body": "The report \"{{name}}\" will be deleted.",
+      "delete_ok": "Delete"
     }
   }
 }
