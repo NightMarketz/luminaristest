@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — nfce-sp-qrcode-v3
 
 **Pergunta:** L-NFCE-1: a SEFAZ-SP aceita NFC-e de PJ com QR Code versão 3, sem CSC?
-**Aberto em:** 2026-10-13T00:55:34-03:00 · **Atualizado em:** 2026-10-13T01:28:16-03:00
+**Aberto em:** 2026-10-13T00:55:34-03:00 · **Atualizado em:** 2026-10-13T01:28:37-03:00
 **Método:** somente fontes oficiais; documentos baixados e com hash para referência.
 
 <!-- ANALISE -->
@@ -45,6 +45,19 @@ Achados extras da mesma fonte, para as outras perguntas de lei da emenda:
 
 ## 5. Lacunas
 - Nenhum ato normativo de SP sobre a v3 foi encontrado.
+
+## 6. Rodada 2 (13/10) — portal oficial de SP, listas e páginas
+- A página "Regras de validação facultativas por UF" de SP [D05] lista as regras ativas e inativas. **A regra do QR
+  v3 (rejeição 407) não aparece**; o único "407" na página é parte de "B06-40 / 775".
+- A página "Sobre" [D06], com notícias até setembro de 2026 (protocolo de 17 posições em 05/10/2026, manutenção em
+  20/09/2026), **não fala da v3** e repete: "para que o contribuinte possa emitir NFC-e, é necessário obter o código
+  de segurança".
+- As listas "Legislação" e "Downloads" do portal (lidas pela API oficial) param no Manual do DANFE v4.1 e não têm a
+  NT 2025.001.
+- **Conclusão mantida:** não há confirmação oficial de que SP aceite a v3 de PJ. Toda a fonte oficial de SP aponta o
+  CSC como obrigatório. O ramo (c) segue: v3 tentada, v2 + CSC como caminho real em SP. **Só duas coisas fecham a
+  dúvida:** a resposta do Fale Conosco da SEFAZ-SP ou uma v3 enviada em homologação (rejeição 407 ou não). Ambas ficam
+  fora do alcance do agente: a primeira é mensagem em nome do dono, a segunda exige credenciamento e certificado.
 <!-- /ANALISE -->
 
 ## Fontes oficiais consultadas

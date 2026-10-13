@@ -95,10 +95,25 @@ export const AESTHETIC_CLINIC_KIT_V2: SectorKitV1; // kitVersion 2; referential 
   sobre ela incidentes" (DL 1.598/77 art. 12 §1º III, redação da Lei 12.973/2014), e a DRE discrimina as deduções e
   os impostos antes da receita líquida (Lei 6.404/76 art. 187 I–II). **RATIFICADO (a) em 13/10.**
 
+### F-KE-3 — Onde mora o padrão fiscal por serviço, se o preset não tem serviço fixo — RATIFICAÇÃO PENDENTE
+Fato (pesquisa de 13/10, `pesquisas-legais/ctribnac-salao-clinica/relatorio.md`): a tabela `services` do preset é do
+usuário, a `category` é texto livre, e o `serviceRef` do `ServiceFiscalProfile` é a linha do tenant. **Não existe
+`serviceRef` estável** para o `serviceFiscalDefaults` do kit (item 7) apontar.
+- **(a)** O kit leva um **padrão por setor**: salão 060101 / 126021000, e a clínica sem padrão único (6.02 × 4.01 é
+  ambíguo). O perfil fiscal da unidade guarda esse padrão, e serviço sem perfil próprio usa o da unidade. Exige um
+  campo novo no perfil (molde do `pacoteCTribNac`, já em `main`).
+- **(b)** Sugestão na tela: o kit leva um **catálogo** `{rótulo → cTribNac, cNBS}` (corte/barba, manicure, estética,
+  massagem, médico), e o cadastro do serviço oferece a escolha. Nada é gravado sem o usuário escolher.
+- **(c)** O kit semeia linhas de serviço com `serviceRef` estável (ex.: "Corte feminino") e o perfil de cada uma.
+- **Recomendação: (b).** É o único caminho que não grava enquadramento por palpite: a clínica tem a ambiguidade
+  6.02 × 4.01, que depende de quem executa. O (a) erra a clínica por construção, e o (c) cria linhas operacionais que
+  o usuário não pediu. Custo do (b): o item 7 vira "catálogo de sugestões" e o FE do cadastro de serviço precisa
+  ler o catálogo (nó vizinho, BRIEF de FE).
+
 ## 5. Pendente de validação externa
 
-- `cTribNac`/`cNBS` de cada serviço do salão e da clínica (LC 116 lista + NBS 2.0). O X14 cita 060101/060201/060301
-  para beleza; a clínica estética não tem fonte ainda. Pesquisa por fonte oficial antes do PR-K2.
+- ~~`cTribNac`/`cNBS` de cada serviço~~ **pesquisado em 13/10** (`ctribnac-salao-clinica`): 060101, 060201, 060301,
+  060501, 040101/040102, com NBS 1.2602.x e 1.2301.22.00. Fica pendente só o 6.02 × 4.01 da clínica (contador) e o F-KE-3.
 - Linha referencial 2025 de cada conta nova do F-KE-1/F-KE-2 (catálogo RFB já no banco; o de-para é enquadramento).
 
 ## 6. Insumos ausentes
