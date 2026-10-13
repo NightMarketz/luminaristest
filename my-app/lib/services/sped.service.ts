@@ -44,6 +44,8 @@ export interface EcdDeclarantDraft {
   codMun: string;
   indNire: '0' | '1';
   indGrandePorte: '0' | '1';
+  /** 0000.COD_PLAN_REF (L5, RUNBOOK-H1 13/10) — '' = não escolhido; obrigatório no BE quando há mapeamento. */
+  codPlanRef: '' | NonNullable<GenerateEcdPayload['declarant']['codPlanRef']>;
 }
 export interface EcdBookDraft {
   numOrd: string;
