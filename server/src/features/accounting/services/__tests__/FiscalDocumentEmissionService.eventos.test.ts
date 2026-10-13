@@ -87,6 +87,14 @@ describe('item 15 — pendências coerentes', () => {
     expect((await svc.getById(SCOPE as never, 'orig')).pendencias).toEqual([]);
   });
 
+  it('substituta REJECTED e original cancelada à mão → cancelled_without_replacement (REJECTED não substitui)', async () => {
+    const { svc } = make([
+      row({ status: 'CANCELLED', saleKey: 'cancelled:orig:s', cancelMotivo: 1 }),
+      row({ id: 'subst', status: 'REJECTED', substitutesDocumentId: 'orig' }),
+    ]);
+    expect((await svc.getById(SCOPE as never, 'orig')).pendencias).toEqual(['cancelled_without_replacement']);
+  });
+
   it('F-EVT-6 (a): original cancelada pelo emitente (cancelMotivo) e depois substituída → substituicao_sobre_cancelada', async () => {
     const { svc } = make([
       row({ status: 'CANCELLED', cancelMotivo: 1, substitutedByDocumentId: 'subst' }),
