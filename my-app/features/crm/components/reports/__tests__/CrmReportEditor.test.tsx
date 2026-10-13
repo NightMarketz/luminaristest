@@ -260,6 +260,7 @@ describe('CrmReportEditor', () => {
       fireEvent.blur(alias);
       expect(within(row).getByRole('alert')).toHaveTextContent('A fonte já tem um campo com esse nome.');
       expect(latest.joins[0].alias).toBe('leads');
+      expect(latest.joins[0].pendingAlias).toBe('amount'); // fica pendente e bloqueia (review do PR-B, achado 3)
       fireEvent.change(alias, { target: { value: 'lead' } });
       fireEvent.blur(alias);
       expect(latest.joins[0].alias).toBe('lead');

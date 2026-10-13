@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 import { Modal } from '../../../../components/ui/Modal';
 import { useAuth } from '../../../../lib/context/AuthContext';
@@ -92,6 +92,10 @@ export function CrmReportBuilder() {
     () => (sourceFields ? combinedFields(sourceFields, draft.joins, rightFieldsOf) : null),
     [sourceFields, draft.joins, rightFieldsOf],
   );
+  // o schema da tabela do join chega depois de um await: a mudança se aplica ao rascunho ATUAL, não ao do clique
+  // (review do PR-B, achado 1)
+  const latest = useRef({ draft, rightRaw, sourceFields });
+  latest.current = { draft, rightRaw, sourceFields };
   const reason = fields ? blockReason(draft, fields) : 'NO_SOURCE';
   const patch = saved ? buildPatch(saved, draft) : null;
   const canSave = !saving && reason === null && draft.name.trim() !== '' && (saved ? patch !== null : true);
@@ -211,28 +215,29 @@ export function CrmReportBuilder() {
   };
 
   /** Item 10: aplica a mudança de join; se ela tira medida/agrupamento/filtro, confirma antes (PR-B/D lacunas). */
-  const applyJoinChange = (next: ReportDraft, nextRaw: RightRaw = rightRaw) => {
+  const applyJoinChange = (before: ReportDraft, next: ReportDraft, nextRaw: RightRaw) => {
     const apply = () => {
       setRightRaw(nextRaw);
       setDraft(next);
     };
-    if (itemsLost(draft, next)) setPending({ kind: 'join', apply });
+    if (itemsLost(before, next)) setPending({ kind: 'join', apply });
     else apply();
   };
 
   const changeJoinSource = async (index: number, source: ReportSource) => {
-    if (!sourceFields) return;
-    const raw = rightRaw[source] ?? (await fieldsOf(source));
+    const raw = latest.current.rightRaw[source] ?? (await fieldsOf(source));
     if (!raw) {
       setError({ key: 'report_builder.errors.SCHEMA_UNAVAILABLE', params: {}, code: null });
       return;
     }
-    const nextRaw = { ...rightRaw, [source]: raw };
-    applyJoinChange(withJoinSource(draft, index, source, sourceFields, rightFieldsFrom(nextRaw)), nextRaw);
+    const { draft: now, rightRaw: nowRaw, sourceFields: nowFields } = latest.current;
+    if (!nowFields || !now.joins[index]) return;
+    const nextRaw = { ...nowRaw, [source]: raw };
+    applyJoinChange(now, withJoinSource(now, index, source, nowFields, rightFieldsFrom(nextRaw)), nextRaw);
   };
 
   const removeJoinAt = (index: number) => {
-    if (sourceFields) applyJoinChange(removeJoin(draft, index, sourceFields, rightFieldsOf));
+    if (sourceFields) applyJoinChange(draft, removeJoin(draft, index, sourceFields, rightFieldsOf), rightRaw);
   };
 
   const preview = async () => {

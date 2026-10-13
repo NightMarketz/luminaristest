@@ -4,6 +4,8 @@ import type { CrmReportRow } from '../../../../lib/services/crmReports.service';
 import {
   aliasProblem,
   blockReason,
+  measureFieldOptions as measureOptions,
+  settle,
   buildPatch,
   combinedFields,
   currencyIndexes,
@@ -159,11 +161,12 @@ describe('item 10 — join em uso: renomear reescreve, remover/trocar tabela lim
     expect(itemsLost(d, removeJoin(d, 0, OPP, RF))).toBe(false);
   });
 
-  it('trocar a tabela da direita: mantém o campo da direita se existir, poda o que sumiu, mantém o apelido', () => {
+  it('trocar a tabela da direita: tira TODO item do apelido, zera o campo da direita, mantém o apelido escrito pelo usuário', () => {
     const next = withJoinSource(used, 0, 'crmOpportunities', OPP, RF);
-    expect(next.joins[0]).toEqual({ rightSource: 'crmOpportunities', leftField: 'leadId', rightField: 'id', alias: 'lead' });
+    expect(next.joins[0]).toEqual({ rightSource: 'crmOpportunities', leftField: 'leadId', rightField: '', alias: 'lead' });
     expect(next.filters.map((f) => f.field)).toEqual(['leadx.status']);
-    expect(next.dimensions).toEqual([{ type: 'period', dateField: 'lead._createdAt', period: 'month' }]);
+    // `lead._createdAt` existe nas duas tabelas, mas é outro dado — sai também (review do PR-B, achado 2)
+    expect(next.dimensions).toEqual([]);
     expect(itemsLost(used, next)).toBe(true);
   });
 
@@ -242,5 +245,52 @@ describe('item 10 — rascunho ⇄ contrato', () => {
     expect(d.dimensions).toEqual([{ type: 'field', field: 'right.status' }]);
     expect(buildPatch(row, d)).toBeNull();
     expect(buildPatch(row, renameJoinAlias(d, 0, 'lead'))?.spec?.dimensions).toEqual([{ type: 'field', field: 'lead.status' }]);
+  });
+});
+
+describe('review do PR-B — regressões', () => {
+  it('achado 2: trocar a tabela não reaponta campo homônimo e troca o apelido sugerido pelo da tabela nova', () => {
+    const d = oppDraft({
+      joins: [join({ alias: 'leads' })],
+      filters: [{ field: 'leads.status', op: 'eq', value: 'Ganho' }],
+    });
+    const statusOpp: ISchemaField[] = [...OPP, { name: 'status', label: 'Status', type: 'select', options: ['Aberta'] }];
+    const next = withJoinSource(d, 0, 'crmOpportunities', OPP, right({ leads: LEADS, crmOpportunities: statusOpp }));
+    expect(next.filters).toEqual([]);
+    expect(next.joins[0].alias).toBe('crmOpportunities');
+    expect(itemsLost(d, next)).toBe(true);
+  });
+
+  it('achado 3: apelido digitado e inválido bloqueia visualizar, mesmo sem ter sido aplicado', () => {
+    const d = oppDraft({ joins: [{ ...join(), pendingAlias: 'id' }] });
+    expect(blockReason(d, fieldsOf(d))).toBe('JOIN_ALIAS_INVALID');
+    expect(toSpec(d)?.joins?.[0].alias).toBe('lead'); // o pendente nunca vai ao spec
+    const ok = oppDraft({ joins: [{ ...join(), pendingAlias: 'cliente' }] });
+    expect(blockReason(ok, fieldsOf(ok))).toBeNull();
+    expect(renameJoinAlias(ok, 0, 'cliente').joins[0]).toEqual({ rightSource: 'leads', leftField: 'leadId', rightField: 'id', alias: 'cliente' });
+  });
+
+  it('achado 4: campo json da fonte entra na lista oculto — apelido igual a ele é conflito, e ele não é oferecido', () => {
+    const fields = reportFields([{ name: 'payload', label: 'Payload', type: 'json' }, ...OPP.filter((f) => !['id', '_createdAt', '_updatedAt'].includes(f.name))], LABELS);
+    expect(aliasProblem('payload', 0, [join({ alias: '' })], fields)).toBe('FIELD_CONFLICT');
+    expect(measureOptions('count', fields).map((f) => f.name)).not.toContain('payload');
+  });
+
+  it('achado 5: join cujo schema não carregou não perde itens nem desmarca a conversão; apelido.id salvo também fica', () => {
+    const notLoaded = right({ crmOpportunities: OPP });
+    const d: ReportDraft = {
+      ...emptyDraft(),
+      source: 'crmOpportunities',
+      joins: [join({ alias: 'lead' }), join({ alias: 'b', leftField: 'title', rightField: 'name' })],
+      measures: [{ type: 'sum', field: 'lead.amount', alias: '' }],
+      filters: [{ field: 'lead.status', op: 'eq', value: 'Novo' }, { field: 'b.id', op: 'eq', value: 'x' }],
+      convertTo: true,
+    };
+    const after = removeJoin({ ...d, joins: [...d.joins, join({ rightSource: 'crmOpportunities', alias: 'c' })] }, 2, OPP, notLoaded);
+    expect(after.measures).toEqual(d.measures);
+    expect(after.filters).toEqual(d.filters);
+    expect(after.convertTo).toBe(true);
+    expect(itemsLost(d, after)).toBe(false);
+    expect(settle(d, combinedFields(OPP, d.joins, notLoaded)).convertTo).toBe(true);
   });
 });

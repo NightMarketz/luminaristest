@@ -777,7 +777,7 @@ function JoinsSection({
                     </option>
                   ))}
                 </select>
-                <AliasInput draft={draft} index={i} fields={fields} onCommit={(alias) => onChange(renameJoinAlias(draft, i, alias))} />
+                <AliasInput draft={draft} index={i} fields={fields} onChange={onChange} />
                 <button type="button" className={smallBtn} onClick={() => onJoinRemove(i)}>
                   {t('report_builder.editor.remove', 'Remover')}
                 </button>
@@ -796,25 +796,38 @@ function JoinsSection({
 }
 
 /**
- * Apelido: o rascunho só recebe apelido válido, aplicado ao sair do campo — renomear reescreve as referências, e um
- * apelido intermediário igual ao de outro join fundiria as referências dos dois. Inválido fica no campo com o motivo.
+ * Apelido: o texto digitado fica em `pendingAlias` e só vira o apelido ao sair do campo, se válido — renomear reescreve
+ * as referências, e um apelido intermediário igual ao de outro join fundiria as referências dos dois. Inválido fica no
+ * campo com o motivo e bloqueia visualizar/salvar (`blockReason`, review do PR-B achado 3).
  */
 function AliasInput({
   draft,
   index,
   fields,
-  onCommit,
+  onChange,
 }: {
   draft: ReportDraft;
   index: number;
   fields: ISchemaField[];
-  onCommit: (alias: string) => void;
+  onChange: (next: ReportDraft) => void;
 }) {
   const { t } = useTranslation('crm');
-  const current = draft.joins[index]?.alias ?? '';
-  const [text, setText] = useState(current);
-  useEffect(() => setText(current), [current]);
+  const join = draft.joins[index];
+  const current = join?.alias ?? '';
+  const text = join?.pendingAlias ?? current;
   const problem = aliasProblem(text, index, draft.joins, fields);
+  const setPending = (value: string) =>
+    onChange({
+      ...draft,
+      joins: draft.joins.map(
+        (j, k): JoinDraft =>
+          k !== index
+            ? j
+            : value === j.alias
+              ? { rightSource: j.rightSource, leftField: j.leftField, rightField: j.rightField, alias: j.alias }
+              : { ...j, pendingAlias: value },
+      ),
+    });
   // join recém-adicionado, sem tabela: o apelido vem com a tabela — não acusa "obrigatório" antes disso
   const show = problem !== null && (problem !== 'REQUIRED' || Boolean(draft.joins[index]?.rightSource));
   return (
@@ -826,9 +839,9 @@ function AliasInput({
         maxLength={MAX_JOIN_ALIAS + 1}
         value={text}
         aria-invalid={problem !== null}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => setPending(e.target.value)}
         onBlur={() => {
-          if (problem === null && text !== current) onCommit(text);
+          if (problem === null && join?.pendingAlias !== undefined) onChange(renameJoinAlias(draft, index, text));
         }}
       />
       {show && problem ? (

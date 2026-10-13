@@ -205,3 +205,52 @@ describe('CrmReportBuilder', () => {
     });
   });
 });
+
+describe('review do PR-B — regressões no orquestrador', () => {
+  const OPP_SCHEMA = [
+    { name: 'title', label: 'Título', type: 'string' },
+    { name: 'leadId', label: 'Lead', type: 'relation', relation: { targetTable: '@@PRESET_TABLE_KEY::leads' } },
+  ];
+  const LEAD_SCHEMA = [{ name: 'status', label: 'Status', type: 'select', options: ['Novo', 'Ganho'] }];
+  beforeEach(() => {
+    Object.values(svc).forEach((f) => f.mockReset());
+    svc.list.mockImplementation(() => ok([]));
+  });
+  afterEach(() => cleanup());
+
+  it('achado 1: editar enquanto o schema da tabela do join carrega não se perde', async () => {
+    let release: (v: unknown) => void = () => {};
+    fieldsOf.mockReset().mockImplementation((s: string) =>
+      s === 'leads' ? new Promise((r) => (release = () => r(LEAD_SCHEMA))) : Promise.resolve(OPP_SCHEMA),
+    );
+    await newReportOn('leadProposals'); // fonte do mock de useReportSources; os campos vêm do fieldsOf acima
+    fireEvent.click(screen.getByText('Avançado: cruzar com outra tabela'));
+    fireEvent.click(screen.getByText('Adicionar cruzamento'));
+    fireEvent.change(within(screen.getByTestId('join-0')).getByLabelText('Tabela'), { target: { value: 'leads' } });
+    fireEvent.click(screen.getByText('Adicionar medida'));
+    expect(screen.getAllByTestId(/^measure-/)).toHaveLength(2);
+    release(undefined);
+    await waitFor(() => expect(within(screen.getByTestId('join-0')).getByLabelText('Apelido')).toHaveValue('leads'));
+    expect(screen.getAllByTestId(/^measure-/)).toHaveLength(2);
+  });
+
+  it('achado 3: apelido inválido digitado desabilita Visualizar e Salvar', async () => {
+    fieldsOf.mockReset().mockImplementation((s: string) => Promise.resolve(s === 'leads' ? LEAD_SCHEMA : OPP_SCHEMA));
+    await newReportOn('leadProposals');
+    fireEvent.change(screen.getByLabelText('Nome'), { target: { value: 'R' } });
+    fireEvent.click(screen.getByText('Avançado: cruzar com outra tabela'));
+    fireEvent.click(screen.getByText('Adicionar cruzamento'));
+    const row = screen.getByTestId('join-0');
+    fireEvent.change(within(row).getByLabelText('Tabela'), { target: { value: 'leads' } });
+    await waitFor(() => expect(within(row).getByLabelText('Apelido')).toHaveValue('leads'));
+    fireEvent.change(within(row).getByLabelText('Campo da fonte'), { target: { value: 'leadId' } });
+    fireEvent.change(within(row).getByLabelText('Campo da outra tabela'), { target: { value: 'id' } });
+    expect(screen.getByText('Visualizar')).toBeEnabled();
+    const alias = within(row).getByLabelText('Apelido');
+    fireEvent.change(alias, { target: { value: 'id' } });
+    fireEvent.blur(alias);
+    expect(screen.getByText('Visualizar')).toBeDisabled();
+    expect(screen.getByText('Salvar')).toBeDisabled();
+    expect(screen.getByTestId('block-reason')).toHaveTextContent('Corrija o apelido do cruzamento.');
+  });
+});

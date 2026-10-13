@@ -99,6 +99,11 @@ export interface JoinDraft {
   rightField: string;
   /** Obrigatório na tela, pré-preenchido com o nome da tabela ([[D-2026-10-13-FE-CRM-RB-PR-B-D-LACUNAS]]). */
   alias: string;
+  /**
+   * Texto digitado no apelido e ainda não aplicado (aplica ao sair do campo, se válido). Não vai ao spec; inválido
+   * bloqueia visualizar/salvar (review do PR-B, achado 3).
+   */
+  pendingAlias?: string;
 }
 
 export interface ReportDraft {
@@ -155,7 +160,9 @@ export interface SyntheticLabels {
  * lista (o par de moeda pode estar oculto e o BE o enxerga — `pairFieldOf`), mas não é oferecido (`offeredFields`).
  */
 export function reportFields(schemaFields: readonly ISchemaField[], labels: SyntheticLabels): ISchemaField[] {
-  const own = schemaFields.filter((f) => f.type !== 'json');
+  // json não é oferecido (oculto), mas fica na lista: o apelido de join não pode repetir nome de campo nenhum da fonte
+  // (`fieldOf(source, alias)` no BE) — review do PR-B, achado 4
+  const own = schemaFields.map((f): ISchemaField => (f.type === 'json' ? { ...f, hidden: true } : f));
   return [
     ...own,
     { name: 'id', label: labels.id, type: 'string' },
@@ -252,7 +259,9 @@ const rewriteRef = (name: string, from: string, to: string): string => (name.sta
 /** Renomear o apelido reescreve as referências `apelido.campo` (decisão do dono, PR-B/D lacunas). */
 export function renameJoinAlias(draft: ReportDraft, index: number, alias: string): ReportDraft {
   const old = draft.joins[index]?.alias ?? '';
-  const joins = draft.joins.map((j, i): JoinDraft => (i === index ? { ...j, alias } : j));
+  const joins = draft.joins.map(
+    (j, i): JoinDraft => (i === index ? { rightSource: j.rightSource, leftField: j.leftField, rightField: j.rightField, alias } : j),
+  );
   if (!old || old === alias) return { ...draft, joins };
   const r = (name: string) => rewriteRef(name, old, alias);
   return {
@@ -264,9 +273,14 @@ export function renameJoinAlias(draft: ReportDraft, index: number, alias: string
   };
 }
 
+/** O apelido é o que a tela sugeriu para essa tabela (`leads`, `leads_2`…)? */
+const isSuggestedAlias = (alias: string, source: ReportSource): boolean => alias === source || new RegExp(`^${source}_\\d+$`).test(alias);
+
 /**
- * Trocar a tabela da direita: o campo da direita fica se existir na tabela nova; o apelido vazio ganha a sugestão.
- * Itens que citam campo que deixou de existir saem (com confirmação antes — `itemsLost`).
+ * Escolher a tabela da direita. Num join novo, o apelido vazio ganha a sugestão. TROCAR a tabela de um join existente
+ * tira todo item que cita `apelido.campo` dele — mesmo nome de campo na tabela nova é outro dado (review do PR-B,
+ * achado 2) —, zera o campo da direita e troca o apelido sugerido pelo da tabela nova; apelido escrito pelo usuário fica.
+ * A perda é confirmada antes (`itemsLost`).
  */
 export function withJoinSource(
   draft: ReportDraft,
@@ -275,14 +289,18 @@ export function withJoinSource(
   sourceFields: readonly ISchemaField[],
   rightFieldsOf: RightFieldsOf,
 ): ReportDraft {
-  const right = rightFieldsOf(source) ?? [];
-  const joins = draft.joins.map((j, i): JoinDraft => {
+  const old = draft.joins[index];
+  if (!old || old.rightSource === source) return draft;
+  const changed = old.rightSource !== null;
+  const base = changed && old.alias ? pruneBy(draft, (name) => !name.startsWith(`${old.alias}.`)) : draft;
+  const resuggest = !old.alias || (old.rightSource !== null && isSuggestedAlias(old.alias, old.rightSource));
+  const joins = base.joins.map((j, i): JoinDraft => {
     if (i !== index) return j;
-    const rightField = right.some((f) => f.name === j.rightField) ? j.rightField : '';
-    const alias = j.alias || suggestAlias(source, index, draft.joins, sourceFields);
-    return { ...j, rightSource: source, rightField, alias };
+    const others = base.joins.map((x, k): JoinDraft => (k === index ? { ...x, alias: '' } : x));
+    const alias = resuggest ? suggestAlias(source, index, others, sourceFields) : j.alias;
+    return { rightSource: source, leftField: j.leftField, rightField: changed ? '' : j.rightField, alias };
   });
-  return pruneItems({ ...draft, joins }, combinedFields(sourceFields, joins, rightFieldsOf));
+  return pruneItems({ ...base, joins }, combinedFields(sourceFields, joins, rightFieldsOf));
 }
 
 /** Remover o join tira os itens que citam `apelido.campo` dele. */
@@ -421,9 +439,25 @@ export function prunedForFields(draft: ReportDraft, sourceFields: readonly ISche
   return pruneItems({ ...draft, joins }, combinedFields(own, joins, rightFieldsOf));
 }
 
+/**
+ * `apelido.campo` de um join existente cujo schema não está em `fields` (não carregou) ou `apelido.id` (aceito pelo BE,
+ * não oferecido): a tela não sabe se o campo existe — não poda nem desmarca nada por ele (review do PR-B, achado 5).
+ */
+function unresolvedJoinRef(draft: ReportDraft, fields: readonly ISchemaField[], name: string): boolean {
+  const dot = name.indexOf('.');
+  if (dot < 0) return false;
+  const alias = name.slice(0, dot);
+  if (!draft.joins.some((j) => j.alias === alias && j.rightSource)) return false;
+  return name.slice(dot + 1) === 'id' || !fields.some((f) => f.name.startsWith(`${alias}.`));
+}
+
 /** Itens (medidas, agrupamentos, filtros, sort) que citam campo fora de `fields`; os joins ficam como estão. */
 export function pruneItems(draft: ReportDraft, fields: readonly ISchemaField[]): ReportDraft {
-  const has = (name: string) => fields.some((f) => f.name === name);
+  const has = (name: string) => fields.some((f) => f.name === name) || unresolvedJoinRef(draft, fields, name);
+  return settle(pruneBy(draft, has), fields);
+}
+
+function pruneBy(draft: ReportDraft, has: (name: string) => boolean): ReportDraft {
   const keptIdx = draft.measures.flatMap((m, i) => (m.field === '' || has(m.field) ? [i] : []));
   const measures = keptIdx.map((i) => draft.measures[i]);
   const kept = measures.length > 0 ? measures : [{ type: 'count' as const, field: '', alias: '' }];
@@ -436,12 +470,15 @@ export function pruneItems(draft: ReportDraft, fields: readonly ISchemaField[]):
     sort = { ...sort, measureIndex: at >= 0 ? at : null };
   }
   if (sort?.by === 'dimension' && dimensions.length === 0) sort = null;
-  return settle({ ...draft, measures: kept, dimensions, filters, sort }, fields);
+  return { ...draft, measures: kept, dimensions, filters, sort };
 }
 
 /** Achado do review: a conversão marcada que deixa de valer sai do rascunho (senão o BE responde 400). */
 export function settle(draft: ReportDraft, fields: readonly ISchemaField[]): ReportDraft {
-  return draft.convertTo && !conversionAvailable(draft, fields) ? { ...draft, convertTo: false } : draft;
+  if (!draft.convertTo || conversionAvailable(draft, fields)) return draft;
+  // medida de join cujo schema não carregou: não dá para saber se é dinheiro — mantém (review do PR-B, achado 5)
+  if (draft.measures.some((m) => unresolvedJoinRef(draft, fields, m.field))) return draft;
+  return { ...draft, convertTo: false };
 }
 
 /** Trocar a fonte limpa algo? (para pedir confirmação antes). */
@@ -479,7 +516,15 @@ export type BlockReason =
 export function blockReason(draft: ReportDraft, fields: readonly ISchemaField[]): BlockReason | null {
   if (!draft.source) return 'NO_SOURCE';
   if (draft.joins.some((j) => !j.rightSource || j.leftField === '' || j.rightField === '')) return 'JOIN_INCOMPLETE';
-  if (draft.joins.some((j, i) => aliasProblem(j.alias, i, draft.joins, fields) !== null)) return 'JOIN_ALIAS_INVALID';
+  if (
+    draft.joins.some(
+      (j, i) =>
+        aliasProblem(j.alias, i, draft.joins, fields) !== null ||
+        (j.pendingAlias !== undefined && aliasProblem(j.pendingAlias, i, draft.joins, fields) !== null),
+    )
+  ) {
+    return 'JOIN_ALIAS_INVALID';
+  }
   if (draft.measures.some((m) => m.type !== 'count' && m.field === '')) return 'MEASURE_FIELD_REQUIRED';
   if (
     draft.filters.some(
