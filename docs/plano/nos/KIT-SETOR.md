@@ -9,8 +9,8 @@ depende_de: ["[[P1]]", "[[P2]]", "[[I3]]", "[[D-2026-10-07-NUCLEO-KIT-DE-SETOR]]
 autorizacao: "dono, chat, 2026-10-07: \"Esta autorizado\" (o texto do nó) + \"Pode passar esse plano na frente de tudo\" + forks decididos (D-2026-10-07-KIT-SETOR-FORKS-POR-REFERENCIA) + \"Sim abre o brief com o máximo de detalhe possível\" — autoriza o BRIEF; sem 'executa'"
 perfil_previsto: "opus-medio"
 perfil_evidencia: "BRIEF §8: PR-1/PR-5 opus-baixo; PR-2/3/4/6 opus-medio (classificador do PR-4 no alto)"
-atualizado: "2026-10-11"
-prs: ["#579", "#580", "#582", "#584", "#632"]
+atualizado: "2026-10-13"
+prs: ["#579", "#580", "#582", "#584", "#632", "#643"]
 ---
 # KIT-SETOR — Kit de setor: núcleo portável + estrutura importada pelo wizard
 
