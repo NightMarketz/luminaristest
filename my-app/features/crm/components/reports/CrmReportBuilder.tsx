@@ -9,19 +9,24 @@ import {
   blockReason,
   browserTimeZone,
   buildPatch,
+  combinedFields,
   currencyIndexes,
   emptyDraft,
   fieldLabel,
   fromReport,
+  itemsLost,
   prunedForFields,
+  removeJoin,
   reportError,
   reportFields,
   sourceChangeLosesItems,
   toCreateInput,
   toSpec,
+  withJoinSource,
   type ReportDraft,
   type ReportErrorView,
   type ReportSource,
+  type RightFieldsOf,
 } from '../../lib/reportBuilder';
 import { CrmReportEditor, measureText } from './CrmReportEditor';
 import { CrmReportList } from './CrmReportList';
@@ -30,9 +35,11 @@ import { CrmReportResult, type ReportRunSnapshot } from './CrmReportResult';
 /**
  * Tela do builder de relatórios do CRM (FE-INCR-CRM-REPORT-BUILDER PR-A, itens 2–9, 11–18). Lista ⇄ editor; a
  * visualização é por botão (F-FRB2=(a)) com o `timeZone` do navegador (F-RB11); erros nomeados do BE viram texto
- * traduzido (item 16). O BE é a verdade de toda regra — o editor só evita o 400.
+ * traduzido (item 16). O BE é a verdade de toda regra — o editor só evita o 400. PR-B (item 10): o schema de cada
+ * tabela da direita é carregado aqui; trocar/remover join que tira itens pede confirmação (como a troca de fonte).
  */
 type Mode = 'list' | 'editor';
+type RightRaw = Partial<Record<ReportSource, ISchemaField[] | null>>;
 type CrmRunOutput = ReportRunSnapshot['output'];
 
 const btn = 'rounded-xl px-4 py-2 text-xs font-black transition disabled:cursor-not-allowed disabled:opacity-40';
@@ -66,11 +73,25 @@ export function CrmReportBuilder() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<ReportErrorView | null>(null);
 
-  const [pendingSource, setPendingSource] = useState<{ source: ReportSource; raw: ISchemaField[] | null } | null>(null);
+  const [rightRaw, setRightRaw] = useState<RightRaw>({});
+  const [pending, setPending] = useState<{ kind: 'source' | 'join'; apply: () => void } | null>(null);
   const [toDelete, setToDelete] = useState<CrmReportRow | null>(null);
   const [saveAsName, setSaveAsName] = useState<string | null>(null);
 
-  const fields = useMemo(() => (schemaFields ? reportFields(schemaFields, labels) : null), [schemaFields, labels]);
+  const rightFieldsFrom = useCallback(
+    (map: RightRaw): RightFieldsOf =>
+      (s) => {
+        const raw = map[s];
+        return raw ? reportFields(raw, labels) : null;
+      },
+    [labels],
+  );
+  const rightFieldsOf = useMemo(() => rightFieldsFrom(rightRaw), [rightFieldsFrom, rightRaw]);
+  const sourceFields = useMemo(() => (schemaFields ? reportFields(schemaFields, labels) : null), [schemaFields, labels]);
+  const fields = useMemo(
+    () => (sourceFields ? combinedFields(sourceFields, draft.joins, rightFieldsOf) : null),
+    [sourceFields, draft.joins, rightFieldsOf],
+  );
   const reason = fields ? blockReason(draft, fields) : 'NO_SOURCE';
   const patch = saved ? buildPatch(saved, draft) : null;
   const canSave = !saving && reason === null && draft.name.trim() !== '' && (saved ? patch !== null : true);
@@ -128,6 +149,7 @@ export function CrmReportBuilder() {
     setDraft(emptyDraft());
     setSaved(null);
     setSchemaFields(null);
+    setRightRaw({});
     setResult(null);
     setError(null);
     setNotice(null);
@@ -142,17 +164,20 @@ export function CrmReportBuilder() {
       const row = res.data;
       const raw = await fieldsOf(row.spec.source);
       const d = fromReport(row);
+      const rr: RightRaw = {};
+      for (const j of d.joins) if (j.rightSource && !(j.rightSource in rr)) rr[j.rightSource] = await fieldsOf(j.rightSource);
       setSaved(row);
       setDraft(d);
       setSchemaFields(raw);
+      setRightRaw(rr);
       setResult(null);
       setMode('editor');
       // schema indisponível (ou fonte desinstalada — aí o run diz o porquê, 409 CRM_MODULE_NOT_INSTALLED)
-      if (!raw) setError({ key: 'report_builder.errors.SCHEMA_UNAVAILABLE', params: {}, code: null });
+      if (!raw || Object.values(rr).some((x) => !x)) setError({ key: 'report_builder.errors.SCHEMA_UNAVAILABLE', params: {}, code: null });
       setRunning(true);
       try {
         const run = await CrmReportsService.run(row.id, { timeZone: browserTimeZone() });
-        setResult(snapshotOf(run.data, d, reportFields(raw ?? [], labels)));
+        setResult(snapshotOf(run.data, d, combinedFields(reportFields(raw ?? [], labels), d.joins, rightFieldsFrom(rr))));
       } catch (e) {
         const v = reportError(e);
         if (v.code === 'REPORT_NOT_FOUND') backToListWith(v);
@@ -169,7 +194,7 @@ export function CrmReportBuilder() {
 
   const applySource = (source: ReportSource, raw: ISchemaField[] | null) => {
     setSchemaFields(raw);
-    setDraft((d) => prunedForFields({ ...d, source }, reportFields(raw ?? [], labels)));
+    setDraft((d) => prunedForFields({ ...d, source }, reportFields(raw ?? [], labels), rightFieldsOf));
     setResult(null);
     if (!raw) setError({ key: 'report_builder.errors.SCHEMA_UNAVAILABLE', params: {}, code: null });
     else setError(null);
@@ -178,11 +203,36 @@ export function CrmReportBuilder() {
   const changeSource = async (source: ReportSource) => {
     if (source === draft.source && schemaFields) return;
     const raw = await fieldsOf(source);
-    if (draft.source && sourceChangeLosesItems(draft, reportFields(raw ?? [], labels))) {
-      setPendingSource({ source, raw });
+    if (draft.source && sourceChangeLosesItems(draft, reportFields(raw ?? [], labels), rightFieldsOf)) {
+      setPending({ kind: 'source', apply: () => applySource(source, raw) });
       return;
     }
     applySource(source, raw);
+  };
+
+  /** Item 10: aplica a mudança de join; se ela tira medida/agrupamento/filtro, confirma antes (PR-B/D lacunas). */
+  const applyJoinChange = (next: ReportDraft, nextRaw: RightRaw = rightRaw) => {
+    const apply = () => {
+      setRightRaw(nextRaw);
+      setDraft(next);
+    };
+    if (itemsLost(draft, next)) setPending({ kind: 'join', apply });
+    else apply();
+  };
+
+  const changeJoinSource = async (index: number, source: ReportSource) => {
+    if (!sourceFields) return;
+    const raw = rightRaw[source] ?? (await fieldsOf(source));
+    if (!raw) {
+      setError({ key: 'report_builder.errors.SCHEMA_UNAVAILABLE', params: {}, code: null });
+      return;
+    }
+    const nextRaw = { ...rightRaw, [source]: raw };
+    applyJoinChange(withJoinSource(draft, index, source, sourceFields, rightFieldsFrom(nextRaw)), nextRaw);
+  };
+
+  const removeJoinAt = (index: number) => {
+    if (sourceFields) applyJoinChange(removeJoin(draft, index, sourceFields, rightFieldsOf));
   };
 
   const preview = async () => {
@@ -343,7 +393,16 @@ export function CrmReportBuilder() {
           ) : null}
           {errorBox(error)}
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-            <CrmReportEditor draft={draft} fields={fields} sources={sources} onChange={setDraft} onSourceChange={(s) => void changeSource(s)} />
+            <CrmReportEditor
+              draft={draft}
+              fields={fields}
+              sources={sources}
+              rightFieldsOf={rightFieldsOf}
+              onChange={setDraft}
+              onSourceChange={(s) => void changeSource(s)}
+              onJoinSourceChange={(i, s) => void changeJoinSource(i, s)}
+              onJoinRemove={removeJoinAt}
+            />
             <div className="flex flex-col gap-4">
               {result ? (
                 <CrmReportResult snapshot={result} />
@@ -358,29 +417,40 @@ export function CrmReportBuilder() {
       )}
 
       <Modal
-        isOpen={pendingSource !== null}
-        onClose={() => setPendingSource(null)}
-        title={t('report_builder.confirm.source_title', 'Trocar a fonte?')}
+        isOpen={pending !== null}
+        onClose={() => setPending(null)}
+        title={
+          pending?.kind === 'join'
+            ? t('report_builder.confirm.join_title', 'Mudar o cruzamento?')
+            : t('report_builder.confirm.source_title', 'Trocar a fonte?')
+        }
         footer={
           <div className="flex justify-end gap-2">
-            <button type="button" className={secondaryBtn} onClick={() => setPendingSource(null)}>
+            <button type="button" className={secondaryBtn} onClick={() => setPending(null)}>
               {t('report_builder.confirm.cancel', 'Cancelar')}
             </button>
             <button
               type="button"
               className={primaryBtn}
               onClick={() => {
-                if (pendingSource) applySource(pendingSource.source, pendingSource.raw);
-                setPendingSource(null);
+                pending?.apply();
+                setPending(null);
               }}
             >
-              {t('report_builder.confirm.source_ok', 'Trocar e limpar')}
+              {pending?.kind === 'join'
+                ? t('report_builder.confirm.join_ok', 'Mudar e limpar')
+                : t('report_builder.confirm.source_ok', 'Trocar e limpar')}
             </button>
           </div>
         }
       >
         <p className="text-sm text-gray-600 dark:text-gray-300">
-          {t('report_builder.confirm.source_body', 'Medidas, agrupamentos e filtros com campos que não existem na nova fonte serão removidos.')}
+          {pending?.kind === 'join'
+            ? t(
+                'report_builder.confirm.join_body',
+                'Medidas, agrupamentos e filtros que usam campos deste cruzamento e deixam de existir serão removidos.',
+              )
+            : t('report_builder.confirm.source_body', 'Medidas, agrupamentos e filtros com campos que não existem na nova fonte serão removidos.')}
         </p>
       </Modal>
 

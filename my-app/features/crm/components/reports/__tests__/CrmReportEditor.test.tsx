@@ -5,11 +5,20 @@ import { render, screen, fireEvent, within, cleanup } from '@testing-library/rea
 vi.mock('next-i18next', async () => (await import('./i18nPt')).nextI18nextPt());
 
 import { CrmReportEditor } from '../CrmReportEditor';
-import { emptyDraft, reportFields, type ReportDraft } from '../../../lib/reportBuilder';
+import {
+  combinedFields,
+  emptyDraft,
+  removeJoin,
+  reportFields,
+  withJoinSource,
+  type ReportDraft,
+  type ReportSource,
+} from '../../../lib/reportBuilder';
 import type { ISchemaField } from '../../../../dashboard/components/shared/dynamic-tables.client';
 
 /**
- * Editor do builder — FE-INCR-CRM-REPORT-BUILDER PR-A, itens 5–8, 11, 12 (o que é oferecido e o que cada ação monta).
+ * Editor do builder — FE-INCR-CRM-REPORT-BUILDER PR-A, itens 5–8, 11, 12 (o que é oferecido e o que cada ação monta);
+ * PR-B, item 10 (joins).
  */
 const FIELDS: ISchemaField[] = reportFields(
   [
@@ -23,20 +32,35 @@ const FIELDS: ISchemaField[] = reportFields(
   { id: 'ID', createdAt: 'Criado em', updatedAt: 'Atualizado em' },
 );
 
+const LEADS: ISchemaField[] = reportFields(
+  [
+    { name: 'name', label: 'Nome', type: 'string' },
+    { name: 'status', label: 'Status', type: 'select', options: ['Novo', 'Ganho'] },
+    { name: 'ownerId', label: 'Dono', type: 'relation', relation: { targetTable: 'users' } },
+  ],
+  { id: 'ID', createdAt: 'Criado em', updatedAt: 'Atualizado em' },
+);
+const rightFieldsOf = (s: ReportSource) => (s === 'leads' ? LEADS : null);
+
 let latest: ReportDraft;
+/** Faz o papel do pai: campos = fonte + joins; trocar a tabela do join / remover aplicam direto (sem o Modal). */
 function Harness({ initial }: { initial?: Partial<ReportDraft> }) {
   const [draft, setDraft] = useState<ReportDraft>({ ...emptyDraft(), source: 'leadProposals', ...initial });
   latest = draft;
+  const apply = (d: ReportDraft) => {
+    latest = d;
+    setDraft(d);
+  };
   return (
     <CrmReportEditor
       draft={draft}
-      fields={FIELDS}
+      fields={combinedFields(FIELDS, draft.joins, rightFieldsOf)}
       sources={['leads', 'leadProposals']}
-      onChange={(d) => {
-        latest = d;
-        setDraft(d);
-      }}
+      rightFieldsOf={rightFieldsOf}
+      onChange={apply}
       onSourceChange={vi.fn()}
+      onJoinSourceChange={(i, src) => apply(withJoinSource(draft, i, src, FIELDS, rightFieldsOf))}
+      onJoinRemove={(i) => apply(removeJoin(draft, i, FIELDS, rightFieldsOf))}
     />
   );
 }
@@ -164,7 +188,18 @@ describe('CrmReportEditor', () => {
     function HiddenHarness() {
       const [draft, setDraft] = useState<ReportDraft>({ ...emptyDraft(), source: 'leadProposals', measures: [{ type: 'sum', field: 'amount', alias: '' }] });
       latest = draft;
-      return <CrmReportEditor draft={draft} fields={hidden} sources={['leadProposals']} onChange={setDraft} onSourceChange={vi.fn()} />;
+      return (
+        <CrmReportEditor
+          draft={draft}
+          fields={hidden}
+          sources={['leadProposals']}
+          rightFieldsOf={() => null}
+          onChange={setDraft}
+          onSourceChange={vi.fn()}
+          onJoinSourceChange={vi.fn()}
+          onJoinRemove={vi.fn()}
+        />
+      );
     }
     render(<HiddenHarness />);
     fireEvent.click(screen.getByText('Separar por moeda'));
@@ -172,5 +207,73 @@ describe('CrmReportEditor', () => {
     expect(within(screen.getByTestId('dimension-0')).getByLabelText('Campo do agrupamento')).toHaveValue('currency');
     fireEvent.click(screen.getByText('Adicionar agrupamento'));
     expect(optionTexts(within(screen.getByTestId('dimension-1')).getByLabelText('Campo do agrupamento'))).not.toContain('Moeda');
+  });
+
+  describe('item 10 — joins (seção avançado)', () => {
+    const openAndAdd = () => {
+      fireEvent.click(screen.getByText('Avançado: cruzar com outra tabela'));
+      fireEvent.click(screen.getByText('Adicionar cruzamento'));
+      const row = screen.getByTestId('join-0');
+      fireEvent.change(within(row).getByLabelText('Tabela'), { target: { value: 'leads' } });
+      fireEvent.change(within(row).getByLabelText('Campo da fonte'), { target: { value: 'title2' } });
+      fireEvent.change(within(row).getByLabelText('Campo da outra tabela'), { target: { value: 'id' } });
+      return row;
+    };
+
+    it('fechada por padrão; abre, aceita até 2 cruzamentos e o 3º não é oferecido', () => {
+      render(<Harness />);
+      expect(screen.queryByText('Adicionar cruzamento')).toBeNull();
+      fireEvent.click(screen.getByText('Avançado: cruzar com outra tabela'));
+      fireEvent.click(screen.getByText('Adicionar cruzamento'));
+      fireEvent.click(screen.getByText('Adicionar cruzamento'));
+      expect(screen.getAllByTestId(/^join-/)).toHaveLength(2);
+      expect(screen.queryByText('Adicionar cruzamento')).toBeNull();
+      expect(screen.getByText(/primeira linha da outra tabela/)).toBeInTheDocument();
+    });
+
+    it('escolher a tabela pré-preenche o apelido; os campos do join entram como apelido.campo nos itens 5–7', () => {
+      render(<Harness />);
+      const row = openAndAdd();
+      expect(within(row).getByLabelText('Apelido')).toHaveValue('leads');
+      expect(latest.joins).toEqual([{ rightSource: 'leads', leftField: 'title2', rightField: 'id', alias: 'leads' }]);
+      // medida (count) e filtro listam o campo do join
+      expect(optionTexts(within(screen.getByTestId('measure-0')).getByLabelText('Campo'))).toContain('leads.Status');
+      fireEvent.click(screen.getByText('Adicionar filtro'));
+      expect(optionTexts(screen.getByLabelText('Campo do filtro'))).toContain('leads.Dono');
+      // agrupar: status do lead sim; relação do join (id cru no BE) e leads.id não
+      fireEvent.click(screen.getByText('Adicionar agrupamento'));
+      const dimOpts = optionTexts(within(screen.getByTestId('dimension-0')).getByLabelText('Campo do agrupamento'));
+      expect(dimOpts).toContain('leads.Status');
+      expect(dimOpts).not.toContain('leads.Dono');
+      expect(dimOpts).not.toContain('leads.ID');
+      // período enxerga a data sintética do join
+      fireEvent.change(within(screen.getByTestId('dimension-0')).getByLabelText('Agrupar'), { target: { value: 'period' } });
+      expect(optionTexts(screen.getByLabelText('Campo de data'))).toContain('leads.Criado em');
+    });
+
+    it('apelido inválido mostra o motivo e não entra no rascunho; válido, ao sair do campo, reescreve as referências', () => {
+      render(<Harness />);
+      const row = openAndAdd();
+      fireEvent.change(within(screen.getByTestId('measure-0')).getByLabelText('Campo'), { target: { value: 'leads.status' } });
+      const alias = within(row).getByLabelText('Apelido');
+      fireEvent.change(alias, { target: { value: 'amount' } });
+      fireEvent.blur(alias);
+      expect(within(row).getByRole('alert')).toHaveTextContent('A fonte já tem um campo com esse nome.');
+      expect(latest.joins[0].alias).toBe('leads');
+      fireEvent.change(alias, { target: { value: 'lead' } });
+      fireEvent.blur(alias);
+      expect(latest.joins[0].alias).toBe('lead');
+      expect(latest.measures[0].field).toBe('lead.status');
+      expect(within(row).queryByRole('alert')).toBeNull();
+    });
+
+    it('remover o cruzamento tira as referências a ele', () => {
+      render(<Harness />);
+      openAndAdd();
+      fireEvent.change(within(screen.getByTestId('measure-0')).getByLabelText('Campo'), { target: { value: 'leads.status' } });
+      fireEvent.click(within(screen.getByTestId('join-0')).getByText('Remover'));
+      expect(latest.joins).toEqual([]);
+      expect(latest.measures).toEqual([{ type: 'count', field: '', alias: '' }]);
+    });
   });
 });

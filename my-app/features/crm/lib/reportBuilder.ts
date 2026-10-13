@@ -9,7 +9,7 @@ import { nonEmpty } from '../../../lib/utils/nonEmpty';
 
 /**
  * Lógica pura da tela do builder de relatórios do CRM (FE-INCR-CRM-REPORT-BUILDER PR-A, BRIEF
- * `docs/crm/FE-INCR-CRM-REPORT-BUILDER-brief.md` §1 itens 3–9, 11–18). Sem React: o editor monta um rascunho
+ * `docs/crm/FE-INCR-CRM-REPORT-BUILDER-brief.md` §1 itens 3–9, 11–18; PR-B, item 10 — joins). Sem React: o editor monta um rascunho
  * (`ReportDraft`), estas funções dizem o que oferecer, o que bloqueia a visualização e como o rascunho vira o spec do
  * contrato gerado. O BE continua sendo a verdade de toda regra (o FE só evita o 400).
  */
@@ -22,6 +22,7 @@ type SpecMeasure = ReportSpec['measures'][number];
 type SpecDimension = NonNullable<ReportSpec['dimensions']>[number];
 type SpecFilter = NonNullable<ReportSpec['filters']>[number];
 type SpecSort = NonNullable<ReportSpec['sort']>;
+type SpecJoin = NonNullable<ReportSpec['joins']>[number];
 export type FilterOp = SpecFilter['op'];
 export type PeriodUnit = Extract<SpecDimension, { type: 'period' }>['period'];
 export type MeasureType = SpecMeasure['type'];
@@ -54,6 +55,9 @@ export const MAX_MEASURES = 4;
 export const MAX_DIMENSIONS = 2;
 export const MAX_FILTERS = 10;
 export const MAX_LIMIT = 500;
+/** F-RB5 (`ReportSpecSchema.joins.max(2)`) e `ReportJoinSchema.alias.max(40)`. */
+export const MAX_JOINS = 2;
+export const MAX_JOIN_ALIAS = 40;
 export const FILTER_OPS: readonly FilterOp[] = ['eq', 'ne', 'in', 'nin', 'gt', 'gte', 'lt', 'lte'];
 export const PERIODS: readonly PeriodUnit[] = ['day', 'week', 'month', 'quarter', 'year'];
 export const KINDS: readonly ReportKind[] = ['chart', 'table', 'kpi'];
@@ -87,6 +91,16 @@ export interface SortDraft {
   measureIndex: number | null;
   dir: 'asc' | 'desc';
 }
+/** Item 10: cruzamento com outra tabela da whitelist (`ReportJoinSchema`). `''`/`null` = ainda não escolhido. */
+export interface JoinDraft {
+  rightSource: ReportSource | null;
+  /** Campo da fonte (o BE só aceita campo da fonte — `assertField(source, leftField)`). */
+  leftField: string;
+  rightField: string;
+  /** Obrigatório na tela, pré-preenchido com o nome da tabela ([[D-2026-10-13-FE-CRM-RB-PR-B-D-LACUNAS]]). */
+  alias: string;
+}
+
 export interface ReportDraft {
   name: string;
   description: string;
@@ -99,8 +113,8 @@ export interface ReportDraft {
   sort: SortDraft | null;
   limit: number | null;
   convertTo: boolean;
-  /** Cruzamentos de um relatório salvo (editados no PR-B) — passam intactos, para salvar não apagar. */
-  joins: ReportSpec['joins'];
+  /** Item 10 (PR-B): até 2 cruzamentos; os campos deles entram nos itens 5–7 como `apelido.campo`. */
+  joins: JoinDraft[];
 }
 
 export function emptyDraft(): ReportDraft {
@@ -116,7 +130,7 @@ export function emptyDraft(): ReportDraft {
     sort: null,
     limit: null,
     convertTo: false,
-    joins: undefined,
+    joins: [],
   };
 }
 
@@ -165,6 +179,121 @@ export function measureFieldOptions(type: MeasureType, fields: readonly ISchemaF
 /** Item 6: período só em campo de data (inclui os sintéticos). */
 export function periodFieldOptions(fields: readonly ISchemaField[]): ISchemaField[] {
   return offeredFields(fields).filter(isDateField);
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Joins (item 10, F-FRB5=(a))
+// ---------------------------------------------------------------------------------------------------------------
+
+/** Campos da tabela da direita (já com os sintéticos de `reportFields`) por fonte; `null`/`undefined` = não carregado. */
+export type RightFieldsOf = (source: ReportSource) => readonly ISchemaField[] | null | undefined;
+const noRightFields: RightFieldsOf = () => null;
+
+/** `apelido.campo` é campo de join; campo da fonte nunca tem ponto. */
+export const isJoinRef = (name: string): boolean => name.includes('.');
+const sourceOnly = (fields: readonly ISchemaField[]): ISchemaField[] => fields.filter((f) => !isJoinRef(f.name));
+
+/**
+ * Item 10: campos de cada join como `apelido.campo` (rótulo `apelido.Rótulo`). Sem `apelido.id`: a linha do join não
+ * carrega o id no BE (`index.set(key, rr.data)`) — o valor sairia vazio ([[D-2026-10-13-FE-CRM-RB-PR-B-D-LACUNAS]]).
+ */
+export function joinedFields(joins: readonly JoinDraft[], rightFieldsOf: RightFieldsOf): ISchemaField[] {
+  return joins.flatMap((j) => {
+    const right = j.rightSource && j.alias ? rightFieldsOf(j.rightSource) : null;
+    if (!right) return [];
+    return right
+      .filter((f) => f.name !== 'id')
+      .map((f): ISchemaField => ({ ...f, name: `${j.alias}.${f.name}`, label: `${j.alias}.${fieldLabel(f)}` }));
+  });
+}
+
+/** Lista única dos itens 5–7: campos da fonte (com sintéticos) + campos dos joins. */
+export function combinedFields(sourceFields: readonly ISchemaField[], joins: readonly JoinDraft[], rightFieldsOf: RightFieldsOf): ISchemaField[] {
+  return [...sourceOnly(sourceFields), ...joinedFields(joins, rightFieldsOf)];
+}
+
+/**
+ * "Agrupar por campo": sem campo de relação do join — o BE só resolve o nome da relação para campo da fonte
+ * (`loadRelationTargets`) e mostraria o id cru ([[D-2026-10-13-FE-CRM-RB-PR-B-D-LACUNAS]]).
+ */
+export function dimensionFieldOptions(fields: readonly ISchemaField[]): ISchemaField[] {
+  return offeredFields(fields).filter((f) => !(isJoinRef(f.name) && f.type === 'relation'));
+}
+
+/** Campo da esquerda do vínculo: só campos da fonte (o BE não aceita `apelido.campo` aqui). */
+export const joinLeftFieldOptions = (fields: readonly ISchemaField[]): ISchemaField[] => offeredFields(sourceOnly(fields));
+
+export type AliasProblem = 'REQUIRED' | 'CHARS' | 'TOO_LONG' | 'RESERVED' | 'DUPLICATE' | 'FIELD_CONFLICT';
+
+/**
+ * Regras do BE (`REPORT_JOIN_ALIAS_DUPLICATE`: repetido, `id`, começa com `_`, igual a campo da fonte) + o que quebra a
+ * referência `apelido.campo` (ponto, espaço) + o teto do DTO (40).
+ */
+export function aliasProblem(alias: string, index: number, joins: readonly JoinDraft[], sourceFields: readonly ISchemaField[]): AliasProblem | null {
+  if (alias === '') return 'REQUIRED';
+  if (/[.\s]/.test(alias)) return 'CHARS';
+  if (alias.length > MAX_JOIN_ALIAS) return 'TOO_LONG';
+  if (alias === 'id' || alias.startsWith('_')) return 'RESERVED';
+  if (joins.some((j, i) => i !== index && j.alias === alias)) return 'DUPLICATE';
+  if (sourceOnly(sourceFields).some((f) => f.name === alias)) return 'FIELD_CONFLICT';
+  return null;
+}
+
+/** Apelido sugerido: o nome da tabela da direita; `_2`, `_3`… se já estiver em uso. */
+export function suggestAlias(source: ReportSource, index: number, joins: readonly JoinDraft[], sourceFields: readonly ISchemaField[]): string {
+  for (let n = 1; ; n++) {
+    const candidate = n === 1 ? source : `${source}_${n}`;
+    if (aliasProblem(candidate, index, joins, sourceFields) === null) return candidate;
+  }
+}
+
+const rewriteRef = (name: string, from: string, to: string): string => (name.startsWith(`${from}.`) ? `${to}${name.slice(from.length)}` : name);
+
+/** Renomear o apelido reescreve as referências `apelido.campo` (decisão do dono, PR-B/D lacunas). */
+export function renameJoinAlias(draft: ReportDraft, index: number, alias: string): ReportDraft {
+  const old = draft.joins[index]?.alias ?? '';
+  const joins = draft.joins.map((j, i): JoinDraft => (i === index ? { ...j, alias } : j));
+  if (!old || old === alias) return { ...draft, joins };
+  const r = (name: string) => rewriteRef(name, old, alias);
+  return {
+    ...draft,
+    joins,
+    measures: draft.measures.map((m): MeasureDraft => ({ ...m, field: r(m.field) })),
+    dimensions: draft.dimensions.map((d): DimensionDraft => (d.type === 'field' ? { ...d, field: r(d.field) } : { ...d, dateField: r(d.dateField) })),
+    filters: draft.filters.map((f): FilterDraft => ({ ...f, field: r(f.field) })),
+  };
+}
+
+/**
+ * Trocar a tabela da direita: o campo da direita fica se existir na tabela nova; o apelido vazio ganha a sugestão.
+ * Itens que citam campo que deixou de existir saem (com confirmação antes — `itemsLost`).
+ */
+export function withJoinSource(
+  draft: ReportDraft,
+  index: number,
+  source: ReportSource,
+  sourceFields: readonly ISchemaField[],
+  rightFieldsOf: RightFieldsOf,
+): ReportDraft {
+  const right = rightFieldsOf(source) ?? [];
+  const joins = draft.joins.map((j, i): JoinDraft => {
+    if (i !== index) return j;
+    const rightField = right.some((f) => f.name === j.rightField) ? j.rightField : '';
+    const alias = j.alias || suggestAlias(source, index, draft.joins, sourceFields);
+    return { ...j, rightSource: source, rightField, alias };
+  });
+  return pruneItems({ ...draft, joins }, combinedFields(sourceFields, joins, rightFieldsOf));
+}
+
+/** Remover o join tira os itens que citam `apelido.campo` dele. */
+export function removeJoin(draft: ReportDraft, index: number, sourceFields: readonly ISchemaField[], rightFieldsOf: RightFieldsOf): ReportDraft {
+  const joins = draft.joins.filter((_, i) => i !== index);
+  return pruneItems({ ...draft, joins }, combinedFields(sourceFields, joins, rightFieldsOf));
+}
+
+export function addJoin(draft: ReportDraft): ReportDraft {
+  if (draft.joins.length >= MAX_JOINS) return draft;
+  return { ...draft, joins: [...draft.joins, { rightSource: null, leftField: '', rightField: '', alias: '' }] };
 }
 
 /** Item 7: valor do filtro tipado pelo campo (número → Number; booleano → true/false; resto, texto). */
@@ -216,11 +345,10 @@ export function singleCurrencyFilter(filters: readonly FilterDraft[], pairField:
 
 /** Item 8: cada soma/média de dinheiro com par exige separar por moeda (dimensão do par) ou fixar uma moeda (filtro). */
 export function currencyRequirements(draft: ReportDraft, fields: readonly ISchemaField[]): CurrencyRequirement[] {
-  const pairs = draft.source ? CRM_MONEY_CURRENCY_PAIRS_FE[draft.source] ?? {} : {};
   const out: CurrencyRequirement[] = [];
   draft.measures.forEach((m, measureIndex) => {
     if (!isMoneyMeasure(m, fields)) return;
-    const pairField = pairs[m.field];
+    const pairField = pairFieldOf(draft, m.field);
     // sem par, ou par ausente do schema vivo → moeda não declarada (o BE aceita e marca `undeclared`; `pairFieldOf`)
     if (!pairField || !fields.some((f) => f.name === pairField)) return;
     const byDimension = draft.dimensions.some((d) => d.type === 'field' && d.field === pairField);
@@ -228,6 +356,19 @@ export function currencyRequirements(draft: ReportDraft, fields: readonly ISchem
     out.push({ measureIndex, field: m.field, pairField, satisfied: byDimension || byFilter });
   });
   return out;
+}
+
+/**
+ * Par de moeda de um campo de dinheiro — na fonte, ou no join com o prefixo do apelido (`apelido.currency`), como o
+ * `pairFieldOf` do BE.
+ */
+function pairFieldOf(draft: ReportDraft, field: string): string | undefined {
+  const dot = field.indexOf('.');
+  if (dot < 0) return draft.source ? CRM_MONEY_CURRENCY_PAIRS_FE[draft.source]?.[field] : undefined;
+  const alias = field.slice(0, dot);
+  const join = draft.joins.find((j) => j.alias === alias);
+  const pair = join?.rightSource ? CRM_MONEY_CURRENCY_PAIRS_FE[join.rightSource]?.[field.slice(dot + 1)] : undefined;
+  return pair ? `${alias}.${pair}` : undefined;
 }
 
 /** Item 11: a conversão para R$ só existe com medida de dinheiro que tem par de moeda. */
@@ -270,8 +411,18 @@ export function installedSources(internalNames: readonly (string | null | undefi
   return REPORT_SOURCES.filter((s) => present.has(s));
 }
 
-/** O que deixa de existir ao trocar a fonte: itens que citam campo ausente no schema novo. */
-export function prunedForFields(draft: ReportDraft, fields: readonly ISchemaField[]): ReportDraft {
+/**
+ * O que deixa de existir ao trocar a fonte: joins cujo campo da esquerda some da fonte nova e itens que citam campo
+ * ausente. `sourceFields` = campos da fonte nova (com sintéticos).
+ */
+export function prunedForFields(draft: ReportDraft, sourceFields: readonly ISchemaField[], rightFieldsOf: RightFieldsOf = noRightFields): ReportDraft {
+  const own = sourceOnly(sourceFields);
+  const joins = draft.joins.filter((j) => j.leftField === '' || own.some((f) => f.name === j.leftField));
+  return pruneItems({ ...draft, joins }, combinedFields(own, joins, rightFieldsOf));
+}
+
+/** Itens (medidas, agrupamentos, filtros, sort) que citam campo fora de `fields`; os joins ficam como estão. */
+export function pruneItems(draft: ReportDraft, fields: readonly ISchemaField[]): ReportDraft {
   const has = (name: string) => fields.some((f) => f.name === name);
   const keptIdx = draft.measures.flatMap((m, i) => (m.field === '' || has(m.field) ? [i] : []));
   const measures = keptIdx.map((i) => draft.measures[i]);
@@ -285,7 +436,7 @@ export function prunedForFields(draft: ReportDraft, fields: readonly ISchemaFiel
     sort = { ...sort, measureIndex: at >= 0 ? at : null };
   }
   if (sort?.by === 'dimension' && dimensions.length === 0) sort = null;
-  return settle({ ...draft, measures: kept, dimensions, filters, sort, joins: undefined }, fields);
+  return settle({ ...draft, measures: kept, dimensions, filters, sort }, fields);
 }
 
 /** Achado do review: a conversão marcada que deixa de valer sai do rascunho (senão o BE responde 400). */
@@ -294,14 +445,18 @@ export function settle(draft: ReportDraft, fields: readonly ISchemaField[]): Rep
 }
 
 /** Trocar a fonte limpa algo? (para pedir confirmação antes). */
-export function sourceChangeLosesItems(draft: ReportDraft, nextFields: readonly ISchemaField[]): boolean {
-  const next = prunedForFields(draft, nextFields);
+export function sourceChangeLosesItems(draft: ReportDraft, nextFields: readonly ISchemaField[], rightFieldsOf: RightFieldsOf = noRightFields): boolean {
+  const next = prunedForFields(draft, nextFields, rightFieldsOf);
+  return next.joins.length !== draft.joins.length || itemsLost(draft, next);
+}
+
+/** A mudança `before → after` tirou medida, agrupamento ou filtro? (confirmação antes — itens 3 e 10). */
+export function itemsLost(before: ReportDraft, after: ReportDraft): boolean {
   return (
-    next.measures.length !== draft.measures.length ||
-    next.measures.some((m, i) => m.field !== draft.measures[i]?.field) ||
-    next.dimensions.length !== draft.dimensions.length ||
-    next.filters.length !== draft.filters.length ||
-    Boolean(draft.joins?.length)
+    after.measures.length !== before.measures.length ||
+    after.measures.some((m, i) => m.field !== before.measures[i]?.field) ||
+    after.dimensions.length !== before.dimensions.length ||
+    after.filters.length !== before.filters.length
   );
 }
 
@@ -311,6 +466,8 @@ export function sourceChangeLosesItems(draft: ReportDraft, nextFields: readonly 
 
 export type BlockReason =
   | 'NO_SOURCE'
+  | 'JOIN_INCOMPLETE'
+  | 'JOIN_ALIAS_INVALID'
   | 'MEASURE_FIELD_REQUIRED'
   | 'CURRENCY_CHOICE_REQUIRED'
   | 'SORT_KEY_REQUIRED'
@@ -321,6 +478,8 @@ export type BlockReason =
 /** Primeiro motivo que impede visualizar (itens 5, 7, 8, 9, F-FRB6); `null` = pode enviar. */
 export function blockReason(draft: ReportDraft, fields: readonly ISchemaField[]): BlockReason | null {
   if (!draft.source) return 'NO_SOURCE';
+  if (draft.joins.some((j) => !j.rightSource || j.leftField === '' || j.rightField === '')) return 'JOIN_INCOMPLETE';
+  if (draft.joins.some((j, i) => aliasProblem(j.alias, i, draft.joins, fields) !== null)) return 'JOIN_ALIAS_INVALID';
   if (draft.measures.some((m) => m.type !== 'count' && m.field === '')) return 'MEASURE_FIELD_REQUIRED';
   if (
     draft.filters.some(
@@ -364,6 +523,11 @@ function toFilter(f: FilterDraft): SpecFilter {
   return { field: f.field, op: f.op, value: f.value };
 }
 
+/** O apelido vai sempre (obrigatório na tela). */
+function toJoin(j: JoinDraft, rightSource: ReportSource): SpecJoin {
+  return { leftField: j.leftField, rightSource, rightField: j.rightField, alias: j.alias };
+}
+
 function toSort(sort: SortDraft, measures: readonly MeasureDraft[]): SpecSort {
   if (sort.by === 'dimension') return { by: 'dimension', dir: sort.dir };
   const m = sort.measureIndex != null ? measures[sort.measureIndex] : undefined;
@@ -375,7 +539,8 @@ export function toSpec(draft: ReportDraft): ReportSpec | null {
   const measures = nonEmpty(draft.measures.map(toMeasure));
   if (!draft.source || !measures) return null;
   const spec: ReportSpec = { source: draft.source, measures };
-  if (draft.joins && draft.joins.length > 0) spec.joins = draft.joins;
+  const joins = draft.joins.flatMap((j) => (j.rightSource ? [toJoin(j, j.rightSource)] : []));
+  if (joins.length > 0) spec.joins = joins;
   if (draft.filters.length > 0) spec.filters = draft.filters.map(toFilter);
   if (draft.dimensions.length > 0) spec.dimensions = draft.dimensions.map(toDimension);
   if (draft.sort) spec.sort = toSort(draft.sort, draft.measures);
@@ -429,6 +594,11 @@ function fromFilter(f: SpecFilter): FilterDraft {
   return { field: f.field, op: f.op, value: f.value };
 }
 
+/** Join salvo sem apelido usa o padrão do BE (`DEFAULT_JOIN_ALIAS = 'right'`) — as referências `right.campo` seguem valendo. */
+function fromJoin(j: SpecJoin): JoinDraft {
+  return { rightSource: j.rightSource, leftField: j.leftField, rightField: j.rightField, alias: j.alias ?? 'right' };
+}
+
 function fromSpec(spec: ReportSpec, base: ReportDraft): ReportDraft {
   const measures = spec.measures.map(fromMeasure);
   let sort: SortDraft | null = null;
@@ -446,7 +616,7 @@ function fromSpec(spec: ReportSpec, base: ReportDraft): ReportDraft {
     sort,
     limit: spec.limit ?? null,
     convertTo: spec.convertTo === 'BRL',
-    joins: spec.joins,
+    joins: (spec.joins ?? []).map(fromJoin),
   };
 }
 

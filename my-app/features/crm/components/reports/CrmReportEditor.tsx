@@ -7,25 +7,34 @@ import {
   KINDS,
   MAX_DIMENSIONS,
   MAX_FILTERS,
+  MAX_JOINS,
+  MAX_JOIN_ALIAS,
   MAX_LIMIT,
   MAX_MEASURES,
   PERIODS,
+  addJoin,
+  aliasProblem,
   allowedChartTypes,
   coerceFilterValue,
   conversionAvailable,
   currencyRequirements,
+  dimensionFieldOptions,
   fieldLabel,
   isMoneyField,
   isMultiValueOp,
+  joinLeftFieldOptions,
   measureFieldOptions,
   offeredFields,
   periodFieldOptions,
+  renameJoinAlias,
   selectOptions,
   settle,
   withKind,
+  type AliasProblem,
   type DimensionDraft,
   type FilterDraft,
   type FilterOp,
+  type JoinDraft,
   type MeasureDraft,
   type MeasureType,
   type PeriodUnit,
@@ -38,15 +47,21 @@ import {
 /**
  * Editor do builder de relatórios do CRM (FE-INCR-CRM-REPORT-BUILDER PR-A, itens 3–9, 11, 12). Controlado: recebe o
  * rascunho e devolve o próximo. A troca de fonte sobe ao pai (`onSourceChange`), que carrega o schema novo e pede
- * confirmação antes de limpar o que deixa de existir (item 3). Joins ficam para o PR-B (F-FRB5).
+ * confirmação antes de limpar o que deixa de existir (item 3). Joins (PR-B, item 10): seção "avançado" com até 2;
+ * trocar a tabela da direita e remover sobem ao pai pelo mesmo motivo (schema novo + confirmação); renomear o apelido
+ * reescreve as referências aqui mesmo.
  */
 export interface CrmReportEditorProps {
   draft: ReportDraft;
-  /** Campos da fonte (schema vivo + sintéticos); `null` sem fonte ou carregando. */
+  /** Campos da fonte (schema vivo + sintéticos) + campos dos joins (`apelido.campo`); `null` sem fonte ou carregando. */
   fields: ISchemaField[] | null;
   sources: ReportSource[];
+  /** Campos (com sintéticos) da tabela da direita, para o campo do vínculo; `null` = não carregado. */
+  rightFieldsOf: (source: ReportSource) => readonly ISchemaField[] | null | undefined;
   onChange: (next: ReportDraft) => void;
   onSourceChange: (source: ReportSource) => void;
+  onJoinSourceChange: (index: number, source: ReportSource) => void;
+  onJoinRemove: (index: number) => void;
 }
 
 const MEASURE_TYPES: readonly MeasureType[] = ['count', 'sum', 'avg'];
@@ -59,14 +74,24 @@ const titleCls = 'mb-3 text-[11px] font-black uppercase tracking-widest text-gra
 const smallBtn =
   'rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-bold text-gray-700 hover:bg-gray-100 disabled:opacity-40 dark:border-neutral-700 dark:text-gray-200 dark:hover:bg-neutral-800';
 
-export function CrmReportEditor({ draft, fields, sources, onChange, onSourceChange }: CrmReportEditorProps) {
+export function CrmReportEditor({
+  draft,
+  fields,
+  sources,
+  rightFieldsOf,
+  onChange,
+  onSourceChange,
+  onJoinSourceChange,
+  onJoinRemove,
+}: CrmReportEditorProps) {
   const { t } = useTranslation('crm');
   const list = fields ?? [];
   const offered = offeredFields(list); // selects não oferecem campo oculto
+  const dimensionOffered = dimensionFieldOptions(list); // sem relação do join (o BE mostraria o id cru)
   // ...salvo o que a linha já usa (par de moeda oculto, relatório salvo): o select mostra o valor real do rascunho
-  const optionsWith = (name: string) => {
+  const optionsWith = (name: string, base: ISchemaField[] = offered) => {
     const current = list.find((f) => f.name === name);
-    return current && current.hidden ? [...offered, current] : offered;
+    return current && !base.includes(current) ? [...base, current] : base;
   };
   const byName = (name: string) => list.find((f) => f.name === name);
   const fieldOptionLabel = (f: ISchemaField) =>
@@ -153,6 +178,17 @@ export function CrmReportEditor({ draft, fields, sources, onChange, onSourceChan
 
       {draft.source && fields ? (
         <>
+          {/* Joins (item 10, F-FRB5=(a)) — seção "avançado" */}
+          <JoinsSection
+            draft={draft}
+            fields={list}
+            sources={sources}
+            rightFieldsOf={rightFieldsOf}
+            onChange={onChange}
+            onJoinSourceChange={onJoinSourceChange}
+            onJoinRemove={onJoinRemove}
+          />
+
           {/* Medidas (item 5) */}
           <section className={sectionCls}>
             <h3 className={titleCls}>{t('report_builder.editor.measures', 'Medidas')}</h3>
@@ -310,7 +346,7 @@ export function CrmReportEditor({ draft, fields, sources, onChange, onSourceChan
                           i,
                           e.target.value === 'period'
                             ? { type: 'period', dateField: periodFieldOptions(list)[0]?.name ?? '', period: 'month' }
-                            : { type: 'field', field: offered[0]?.name ?? '' },
+                            : { type: 'field', field: dimensionOffered[0]?.name ?? '' },
                         )
                       }
                     >
@@ -324,7 +360,7 @@ export function CrmReportEditor({ draft, fields, sources, onChange, onSourceChan
                         value={d.field}
                         onChange={(e) => setDimension(i, { type: 'field', field: e.target.value })}
                       >
-                        {optionsWith(d.field).map((f) => (
+                        {optionsWith(d.field, dimensionOffered).map((f) => (
                           <option key={f.name} value={f.name}>
                             {fieldLabel(f)}
                           </option>
@@ -375,7 +411,7 @@ export function CrmReportEditor({ draft, fields, sources, onChange, onSourceChan
                 <button
                   type="button"
                   className={`${smallBtn} mt-3`}
-                  onClick={() => set({ dimensions: [...draft.dimensions, { type: 'field', field: offered[0]?.name ?? '' }] })}
+                  onClick={() => set({ dimensions: [...draft.dimensions, { type: 'field', field: dimensionOffered[0]?.name ?? '' }] })}
                 >
                   {t('report_builder.editor.add_dimension', 'Adicionar agrupamento')}
                 </button>
@@ -636,5 +672,170 @@ function MultiValueInput({
         )
       }
     />
+  );
+}
+
+const ALIAS_PROBLEM_TEXT: Record<AliasProblem, string> = {
+  REQUIRED: 'Dê um apelido ao cruzamento.',
+  CHARS: 'O apelido não pode ter ponto nem espaço.',
+  TOO_LONG: 'O apelido pode ter até 40 caracteres.',
+  RESERVED: 'O apelido não pode ser "id" nem começar com "_".',
+  DUPLICATE: 'Outro cruzamento já usa esse apelido.',
+  FIELD_CONFLICT: 'A fonte já tem um campo com esse nome.',
+};
+
+/**
+ * Item 10: até 2 cruzamentos, cada um com tabela da direita (instalada), campo da fonte, campo da direita e apelido.
+ * Os campos do join entram nos itens 5–7 como `apelido.campo` (via `fields` do pai).
+ */
+function JoinsSection({
+  draft,
+  fields,
+  sources,
+  rightFieldsOf,
+  onChange,
+  onJoinSourceChange,
+  onJoinRemove,
+}: {
+  draft: ReportDraft;
+  fields: ISchemaField[];
+  sources: ReportSource[];
+  rightFieldsOf: CrmReportEditorProps['rightFieldsOf'];
+  onChange: (next: ReportDraft) => void;
+  onJoinSourceChange: (index: number, source: ReportSource) => void;
+  onJoinRemove: (index: number) => void;
+}) {
+  const { t } = useTranslation('crm');
+  const [open, setOpen] = useState(false);
+  const expanded = open || draft.joins.length > 0;
+  const leftOptions = joinLeftFieldOptions(fields);
+  const setJoin = (i: number, patch: Partial<JoinDraft>) =>
+    onChange(settle({ ...draft, joins: draft.joins.map((j, k): JoinDraft => (k === i ? { ...j, ...patch } : j)) }, fields));
+
+  return (
+    <section className={sectionCls} data-testid="joins-section">
+      <button
+        type="button"
+        className="flex w-full items-center justify-between text-left"
+        aria-expanded={expanded}
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span className={titleCls.replace('mb-3', 'mb-0')}>{t('report_builder.joins.title', 'Avançado: cruzar com outra tabela')}</span>
+        <span className="text-xs font-bold text-gray-400">{expanded ? '−' : '+'}</span>
+      </button>
+      {expanded ? (
+        <div className="mt-3 flex flex-col gap-3">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {t(
+              'report_builder.joins.hint',
+              'Cada linha da fonte pega a primeira linha da outra tabela em que os dois campos têm o mesmo valor. Os campos da outra tabela aparecem como apelido.campo.',
+            )}
+          </p>
+          {draft.joins.map((j, i) => {
+            const right = j.rightSource ? rightFieldsOf(j.rightSource) : null;
+            const rightOptions = right ? offeredFields(right) : [];
+            return (
+              <div key={i} className="flex flex-wrap items-start gap-2" data-testid={`join-${i}`}>
+                <select
+                  aria-label={t('report_builder.joins.right_source', 'Tabela')}
+                  className={inputCls}
+                  value={j.rightSource ?? ''}
+                  onChange={(e) => e.target.value && onJoinSourceChange(i, e.target.value as ReportSource)} // ponytail: folha string → união
+                >
+                  <option value="">{t('report_builder.joins.pick_source', 'Escolha a tabela…')}</option>
+                  {sources.map((s) => (
+                    <option key={s} value={s}>
+                      {t(`report_builder.sources.${s}`, s)}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  aria-label={t('report_builder.joins.left_field', 'Campo da fonte')}
+                  className={inputCls}
+                  value={j.leftField}
+                  onChange={(e) => setJoin(i, { leftField: e.target.value })}
+                >
+                  <option value="">{t('report_builder.joins.left_field', 'Campo da fonte')}…</option>
+                  {leftOptions.map((f) => (
+                    <option key={f.name} value={f.name}>
+                      {fieldLabel(f)}
+                    </option>
+                  ))}
+                </select>
+                <span className="self-center text-xs font-bold text-gray-400">=</span>
+                <select
+                  aria-label={t('report_builder.joins.right_field', 'Campo da outra tabela')}
+                  className={inputCls}
+                  value={j.rightField}
+                  disabled={!j.rightSource}
+                  onChange={(e) => setJoin(i, { rightField: e.target.value })}
+                >
+                  <option value="">{t('report_builder.joins.right_field', 'Campo da outra tabela')}…</option>
+                  {rightOptions.map((f) => (
+                    <option key={f.name} value={f.name}>
+                      {fieldLabel(f)}
+                    </option>
+                  ))}
+                </select>
+                <AliasInput draft={draft} index={i} fields={fields} onCommit={(alias) => onChange(renameJoinAlias(draft, i, alias))} />
+                <button type="button" className={smallBtn} onClick={() => onJoinRemove(i)}>
+                  {t('report_builder.editor.remove', 'Remover')}
+                </button>
+              </div>
+            );
+          })}
+          {draft.joins.length < MAX_JOINS ? (
+            <button type="button" className={`${smallBtn} self-start`} onClick={() => onChange(addJoin(draft))}>
+              {t('report_builder.joins.add', 'Adicionar cruzamento')}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+/**
+ * Apelido: o rascunho só recebe apelido válido, aplicado ao sair do campo — renomear reescreve as referências, e um
+ * apelido intermediário igual ao de outro join fundiria as referências dos dois. Inválido fica no campo com o motivo.
+ */
+function AliasInput({
+  draft,
+  index,
+  fields,
+  onCommit,
+}: {
+  draft: ReportDraft;
+  index: number;
+  fields: ISchemaField[];
+  onCommit: (alias: string) => void;
+}) {
+  const { t } = useTranslation('crm');
+  const current = draft.joins[index]?.alias ?? '';
+  const [text, setText] = useState(current);
+  useEffect(() => setText(current), [current]);
+  const problem = aliasProblem(text, index, draft.joins, fields);
+  // join recém-adicionado, sem tabela: o apelido vem com a tabela — não acusa "obrigatório" antes disso
+  const show = problem !== null && (problem !== 'REQUIRED' || Boolean(draft.joins[index]?.rightSource));
+  return (
+    <div className="flex flex-col gap-1">
+      <input
+        aria-label={t('report_builder.joins.alias', 'Apelido')}
+        placeholder={t('report_builder.joins.alias', 'Apelido')}
+        className={inputCls}
+        maxLength={MAX_JOIN_ALIAS + 1}
+        value={text}
+        aria-invalid={problem !== null}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={() => {
+          if (problem === null && text !== current) onCommit(text);
+        }}
+      />
+      {show && problem ? (
+        <p role="alert" className="text-xs font-semibold text-rose-600 dark:text-rose-300">
+          {t(`report_builder.joins.alias_problem.${problem}`, ALIAS_PROBLEM_TEXT[problem])}
+        </p>
+      ) : null}
+    </div>
   );
 }

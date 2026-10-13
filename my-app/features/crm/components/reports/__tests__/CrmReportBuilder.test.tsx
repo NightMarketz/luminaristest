@@ -21,7 +21,8 @@ import type { CrmReportRow } from '../../../../../lib/services/crmReports.servic
 
 /**
  * Orquestrador do builder — FE-INCR-CRM-REPORT-BUILDER PR-A, itens 8 (bloqueio com explicação), 13 (visualizar),
- * 16 (erros nomeados), 17 (salvar/salvar como/apagar) e 18 (abrir salvo, 404).
+ * 16 (erros nomeados), 17 (salvar/salvar como/apagar) e 18 (abrir salvo, 404); PR-B, item 10 (joins: schema da tabela
+ * da direita, envio e confirmação ao remover join em uso).
  */
 const PROPOSAL_SCHEMA = [
   { name: 'amount', label: 'Valor', type: 'number', numberFormat: 'currency' },
@@ -136,5 +137,71 @@ describe('CrmReportBuilder', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Relatório não encontrado.');
     expect(screen.getByText('Propostas')).toBeInTheDocument(); // a lista
     expect(svc.list).toHaveBeenCalledTimes(2);
+  });
+
+  describe('item 10 — joins', () => {
+    const OPP_SCHEMA = [
+      { name: 'title', label: 'Título', type: 'string' },
+      { name: 'leadId', label: 'Lead', type: 'relation', relation: { targetTable: '@@PRESET_TABLE_KEY::leads' } },
+    ];
+    const LEAD_SCHEMA = [{ name: 'status', label: 'Status', type: 'select', options: ['Novo', 'Ganho'] }];
+    const withJoin: CrmReportRow = {
+      ...saved,
+      id: 'rj',
+      userId: 'eu',
+      name: 'Opps por status do lead',
+      spec: {
+        source: 'crmOpportunities',
+        joins: [{ leftField: 'leadId', rightSource: 'leads', rightField: 'id', alias: 'lead' }],
+        measures: [{ type: 'count' }],
+        dimensions: [{ type: 'field', field: 'lead.status' }],
+      },
+    };
+
+    beforeEach(() => {
+      fieldsOf.mockImplementation((s: string) => Promise.resolve(s === 'leads' ? LEAD_SCHEMA : OPP_SCHEMA));
+      svc.list.mockImplementation(() => ok([withJoin]));
+      svc.get.mockImplementation(() => ok(withJoin));
+    });
+
+    it('abrir salvo com join carrega o schema da tabela da direita; o agrupamento mostra apelido.campo; Visualizar manda o join', async () => {
+      render(<CrmReportBuilder />);
+      fireEvent.click(await screen.findByText('Abrir'));
+      await waitFor(() => expect(svc.run).toHaveBeenCalled());
+      expect(fieldsOf).toHaveBeenCalledWith('leads');
+      const dim = within(screen.getByTestId('dimension-0')).getByLabelText('Campo do agrupamento');
+      expect(dim).toHaveValue('lead.status');
+      expect(within(dim).getByRole('option', { selected: true })).toHaveTextContent('lead.Status');
+      fireEvent.click(screen.getByText('Visualizar'));
+      await waitFor(() => expect(svc.preview).toHaveBeenCalledTimes(1));
+      expect(svc.preview.mock.calls[0][0].spec).toEqual(withJoin.spec);
+    });
+
+    it('remover join em uso pede confirmação: cancelar mantém; confirmar remove o join e o agrupamento', async () => {
+      render(<CrmReportBuilder />);
+      fireEvent.click(await screen.findByText('Abrir'));
+      await waitFor(() => expect(svc.run).toHaveBeenCalled());
+      fireEvent.click(within(screen.getByTestId('join-0')).getByText('Remover'));
+      expect(screen.getByText('Mudar o cruzamento?')).toBeInTheDocument();
+      fireEvent.click(screen.getByText('Cancelar'));
+      expect(screen.getByTestId('join-0')).toBeInTheDocument();
+      expect(screen.getByTestId('dimension-0')).toBeInTheDocument();
+
+      fireEvent.click(within(screen.getByTestId('join-0')).getByText('Remover'));
+      fireEvent.click(screen.getByText('Mudar e limpar'));
+      await waitFor(() => expect(screen.queryByTestId('join-0')).toBeNull());
+      expect(screen.queryByTestId('dimension-0')).toBeNull();
+    });
+
+    it('join novo incompleto bloqueia Visualizar com a explicação', async () => {
+      fieldsOf.mockImplementation((s: string) => Promise.resolve(s === 'leads' ? LEAD_SCHEMA : OPP_SCHEMA));
+      await newReportOn('leadProposals');
+      fireEvent.click(screen.getByText('Avançado: cruzar com outra tabela'));
+      fireEvent.click(screen.getByText('Adicionar cruzamento'));
+      expect(screen.getByText('Visualizar')).toBeDisabled();
+      expect(screen.getByTestId('block-reason')).toHaveTextContent('Complete ou remova o cruzamento: escolha a tabela e os dois campos.');
+      fireEvent.change(within(screen.getByTestId('join-0')).getByLabelText('Tabela'), { target: { value: 'leads' } });
+      await waitFor(() => expect(within(screen.getByTestId('join-0')).getByLabelText('Apelido')).toHaveValue('leads'));
+    });
   });
 });
