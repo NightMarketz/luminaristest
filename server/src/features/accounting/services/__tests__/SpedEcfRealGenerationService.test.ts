@@ -604,3 +604,17 @@ describe('X7 Fase B PR-4 — ECF anual (itens 18–21)', () => {
     }
   });
 });
+
+describe('SpedEcfRealGenerationService.generate — L6: texto fora do Latin-1 (RUNBOOK-H1, PVA 13/10)', () => {
+  // Mesma classe dos 173 erros do PVA da ECD em 13/10: Buffer.from(…, 'latin1') trunca o code point, e o "—"
+  // (U+2014) sai como o byte 0x14. Decisão do dono (13/10): transliterar a pontuação tipográfica.
+  it('translitera "—" e aspas curvas no 0000.NOME, sem byte de controle no arquivo', async () => {
+    const { service } = buildService();
+    const dto = makeDto();
+    await service.generate(scope, { ...dto, declarant: { ...dto.declarant, nome: 'INDUSTRIA \u2014 TESTE \u201cX\u201d LTDA' } });
+    const buf = savedBuffers[savedBuffers.length - 1];
+    expect([...buf].filter((b) => (b < 0x20 && b !== 0x0d && b !== 0x0a) || (b >= 0x7f && b <= 0x9f))).toEqual([]);
+    expect(producedLines()[0]).toContain('|INDUSTRIA - TESTE "X" LTDA|');
+  });
+});
+

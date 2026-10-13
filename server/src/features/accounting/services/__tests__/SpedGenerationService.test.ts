@@ -47,6 +47,8 @@ function makeDto(over: Partial<SpedEcdRequestDto> = {}): SpedEcdRequestDto {
       nome: 'EMPRESA TESTE LTDA', cnpj: '11222333000181', uf: 'SP', codMun: '3550308',
       indSitIniPer: '0', indNire: '1', indFinEsc: '0', indGrandePorte: '0', tipEcd: '0',
       identMf: 'N', indEscCons: 'N', indCentralizada: '0', indMudancPc: '0',
+      // L5 (RUNBOOK-H1 13/10): com I051 emitido, o 0000.COD_PLAN_REF é obrigatório no PVA.
+      codPlanRef: '1',
     },
     book: { numOrd: '1', natLivr: 'DIARIO GERAL', dtExSocial: '2026-12-31' },
     // C12: IDENT_QUALIF (campo 04) não existe mais no DTO — SpedGenerationService.generate() deriva
@@ -66,6 +68,8 @@ interface Mocks {
   supersededJob?: Partial<AccountingDataExchangeJob> | null;
   existingSuccessor?: Partial<AccountingDataExchangeJob> | null;
   createJobError?: Error;
+  /** Histórico do lançamento 'e1' (I250.HIST) — default 'Venda'. */
+  description?: string;
 }
 
 function buildService(m: Mocks = {}) {
@@ -99,7 +103,7 @@ function buildService(m: Mocks = {}) {
 
   const findManyForExport = jest.fn(async () => [
     {
-      id: 'e1', entryNumber: 1, date: new Date('2026-01-15T00:00:00Z'), description: 'Venda',
+      id: 'e1', entryNumber: 1, date: new Date('2026-01-15T00:00:00Z'), description: m.description ?? 'Venda',
       status: 'Posted', sourceType: 'manual',
       postings: [
         { debitCents: 50000, creditCents: 0, account: { code: '1.1', name: 'Caixa' } },
@@ -389,7 +393,7 @@ describe('SpedGenerationService.generate — retificação versionada (ECD subst
         nome: 'EMPRESA TESTE LTDA', cnpj: '11222333000181', uf: 'SP', codMun: '3550308',
         indSitIniPer: '0', indNire: '1', indFinEsc: '1', codHashSub: 'a'.repeat(40),
         indGrandePorte: '0', tipEcd: '0', identMf: 'N', indEscCons: 'N',
-        indCentralizada: '0', indMudancPc: '0',
+        indCentralizada: '0', indMudancPc: '0', codPlanRef: '1',
       } as unknown as SpedEcdRequestDto['declarant'],
       supersedesJobId: 'job-0',
       verificationTerm: verificationTerm(),
@@ -492,7 +496,7 @@ describe('SpedGenerationService.generate — sanitização do .rtf (item 3)', ()
         nome: 'EMPRESA TESTE LTDA', cnpj: '11222333000181', uf: 'SP', codMun: '3550308',
         indSitIniPer: '0', indNire: '1', indFinEsc: '1', codHashSub: 'a'.repeat(40),
         indGrandePorte: '0', tipEcd: '0', identMf: 'N', indEscCons: 'N',
-        indCentralizada: '0', indMudancPc: '0',
+        indCentralizada: '0', indMudancPc: '0', codPlanRef: '1',
       } as unknown as SpedEcdRequestDto['declarant'],
       supersedesJobId: 'job-0',
       verificationTerm: verificationTerm(),
@@ -534,5 +538,47 @@ describe('SpedGenerationService.generate — sanitização do .rtf (item 3)', ()
     // conteúdo multilinha não se tornou 3 "linhas" físicas por engano).
     const nine900J801 = physicalLines.find((l) => l.startsWith('|9900|J801|'));
     expect(nine900J801).toBe('|9900|J801|1|');
+  });
+});
+
+/** Bytes de controle C0/C1 (exceto CR/LF, que são o separador de linha) — o PVA recusa o campo que os contém. */
+function controlBytes(buf: Buffer): number[] {
+  return [...buf].filter((b) => (b < 0x20 && b !== 0x0d && b !== 0x0a) || (b >= 0x7f && b <= 0x9f));
+}
+
+describe('SpedGenerationService.generate — L6: texto fora do Latin-1 (RUNBOOK-H1, PVA 13/10)', () => {
+  // PVA ECD 10.4.1, 13/10: 173 × "Conteúdo do campo inválido" no I250.HIST — o "—" (U+2014) dos históricos de
+  // AP/AR saía como o byte 0x14 (Buffer.from(…, 'latin1') trunca o code point). Decisão do dono (13/10):
+  // transliterar a pontuação tipográfica e recusar o que não tiver equivalente.
+  it('translitera pontuação tipográfica — "—" vira "-" e aspas curvas viram retas, sem byte de controle', async () => {
+    const { service } = buildService({ description: 'Contas a pagar — Fornecedor “Seed”' });
+    await service.generate(scope, makeDto());
+    const buf = savedBuffers[savedBuffers.length - 1];
+    expect(controlBytes(buf)).toEqual([]);
+    expect(producedLines().filter((l) => l.startsWith('|I250|')).map((l) => l.split('|')[8])).toEqual([
+      'Contas a pagar - Fornecedor "Seed"',
+      'Contas a pagar - Fornecedor "Seed"',
+    ]);
+  });
+
+  it('caractere sem equivalente Latin-1 (emoji) → 400 nomeado, sem arquivo', async () => {
+    const { service, createJob } = buildService({ description: 'Venda \u{1F600}' });
+    await expect(service.generate(scope, makeDto())).rejects.toBeInstanceOf(ValidationError);
+    expect(createJob).not.toHaveBeenCalled();
+    expect(savedBuffers).toHaveLength(0);
+  });
+});
+
+describe('SpedGenerationService.generate — L5: COD_PLAN_REF com mapeamento (RUNBOOK-H1, PVA 13/10)', () => {
+  // PVA ECD 10.4.1, 13/10: 15 × "Registro não deve existir neste tipo de escrituração. Não houve informação de
+  // plano referencial no registro 0000 (COD_PLAN_REF)" — o gerador emitia I051 com o 0000.COD_PLAN_REF vazio.
+  // Decisão do dono (13/10): exigir o código (400) e expor o campo na tela.
+  it('mapeamento presente e codPlanRef ausente → 400 nomeado, sem arquivo', async () => {
+    const { service, createJob } = buildService();
+    const dto = makeDto();
+    delete (dto.declarant as { codPlanRef?: string }).codPlanRef;
+    await expect(service.generate(scope, dto)).rejects.toThrow(/COD_PLAN_REF/);
+    expect(createJob).not.toHaveBeenCalled();
+    expect(savedBuffers).toHaveLength(0);
   });
 });
