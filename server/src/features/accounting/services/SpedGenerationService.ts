@@ -28,6 +28,7 @@ import {
   type RegJ100Line,
   type RegJ150Line,
   sanitizeRtfForSped,
+  textoLatin1Sped,
   resolveEcdCodVerLc,
 } from '../../../lib/sped';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
@@ -153,6 +154,12 @@ export class SpedGenerationService {
         { unmappedAccounts: coverage.unmappedAccounts, mappingVersion: dto.mappingVersion },
       );
     }
+    // L5 (RUNBOOK-H1, PVA 13/10): com mapeamento (I051), o PVA exige o 0000.COD_PLAN_REF (Manual ECD L9 p. 63, nota 21).
+    if (coverage.totals.mappedCount > 0 && !dto.declarant.codPlanRef) {
+      throw new ValidationError(
+        '0000.COD_PLAN_REF é obrigatório quando há mapeamento referencial (I051): informe o plano referencial usado no mapeamento.',
+      );
+    }
 
     const periodStart = new Date(`${year}-01-01T00:00:00.000Z`);
     const periodEnd = new Date(`${year}-12-31T00:00:00.000Z`);
@@ -169,7 +176,12 @@ export class SpedGenerationService {
     const input = await this.composeFile(scope, dto, dtIni, dtFin, rtfFile);
     const lines = buildEcdFile(input);
     const text = serializeEcd(lines);
-    const buffer = Buffer.from(text, 'latin1'); // ISO-8859-1 (PVA-7)
+    let buffer: Buffer;
+    try {
+      buffer = Buffer.from(textoLatin1Sped(text), 'latin1'); // ISO-8859-1 (PVA-7); L6 — nunca byte de controle
+    } catch (e) {
+      throw new ValidationError(e instanceof Error ? e.message : String(e));
+    }
     const sha256 = createHash('sha256').update(buffer).digest('hex');
     const fileName = `ecd_${dto.declarant.cnpj}_${year}.txt`;
 

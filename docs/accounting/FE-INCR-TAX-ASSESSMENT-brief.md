@@ -82,6 +82,9 @@ type CelulaApuracao = { periodo: string; tributos: Record<string, TaxAssessment 
 
 ### 3.1 PR-4 Simples (X14) — detalhe
 
+> **SUPERADO (dono, chat, 2026-10-12, F-FS-1 a):** as telas do Simples passam a [`FE-INCR-SIMPLES-brief.md`](FE-INCR-SIMPLES-brief.md),
+> que herda os P4-1..P4-7 abaixo. O PR-4 sai das fatias deste nó; o texto fica como histórico.
+
 > **Autorização:** dono, chat, 2026-10-08 — *"Este pedido autoriza só detalhar o PR-4 no BRIEF, sem código."*
 > **Insumos lidos (origin/main `824f1c9f`):** nota `docs/plano/nos/X14.md`; [`BE-INCR-SIMPLES-NACIONAL-brief.md`](BE-INCR-SIMPLES-NACIONAL-brief.md)
 > (itens 10–24, B-1..B-4); `docs.paths.ts` (7 rotas `/api/accounting/simples/*`); `dtos/SimplesDto.ts`;

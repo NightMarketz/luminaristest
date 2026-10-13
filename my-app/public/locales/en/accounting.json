@@ -426,11 +426,13 @@
       "ufCrc": "CRC state",
       "fone": "Phone",
       "formaTrib": "Taxation form (0010)",
-      "formaTribPer": "Period taxation form (0010, 4 characters)"
+      "formaTribPer": "Period taxation form (0010, 4 characters)",
+      "codPlanRef": "Referential chart"
     },
     "opt": {
       "no": "No",
-      "yes": "Yes"
+      "yes": "Yes",
+      "select": "Select"
     },
     "signers": {
       "title": "Signers (J930)",
@@ -460,6 +462,18 @@
       "contadorManual": "— fill the accountant in by hand —",
       "contadorHint": "The accountant data comes from the registry; no 900 row is needed below.",
       "loadError": "Error loading the signer qualification table."
+    },
+    "planRef": {
+      "1": "Companies in general - Actual profit",
+      "2": "Companies in general - Presumed profit",
+      "3": "Financial institutions - Actual profit",
+      "4": "Insurers - Actual profit",
+      "5": "Immune and exempt in general",
+      "6": "Immune and exempt - Financial institutions",
+      "7": "Immune and exempt - Insurers",
+      "8": "Closed supplementary pension entities",
+      "9": "Political parties",
+      "10": "Financial institutions - Presumed profit"
     }
   },
   "trialBalance": {

@@ -784,6 +784,42 @@ export function serializeEcd(lines: string[]): string {
   return lines.map((l) => l + SPED_LINE_TERMINATOR).join('');
 }
 
+/**
+ * L6 (RUNBOOK-H1, PVA ECD 13/10): `Buffer.from(text, 'latin1')` trunca o code point acima de U+00FF para o byte baixo —
+ * o "—" (U+2014) dos históricos de AP/AR saía como 0x14 e o PVA recusou 173 I250 ("Conteúdo do campo inválido").
+ * Decisão do dono (13/10): pontuação tipográfica vira o equivalente Latin-1, letra com diacrítico fora do Latin-1 perde
+ * o diacrítico (NFKD), e o que ainda não couber é erro (o serviço traduz para 400) — nunca byte de controle no arquivo.
+ */
+const TRANSLITERACAO_LATIN1: Record<string, string> = {
+  '‐': '-', '‑': '-', '‒': '-', '–': '-', '—': '-', '―': '-', '−': '-',
+  '‘': "'", '’': "'", '‚': "'", '′': "'",
+  '“': '"', '”': '"', '„': '"', '″': '"',
+  '…': '...', '•': '-',
+  ' ': ' ', ' ': ' ', ' ': ' ', ' ': ' ', ' ': ' ',
+  '​': '', '‌': '', '‍': '', '﻿': '',
+};
+
+export function textoLatin1Sped(text: string): string {
+  let out = '';
+  for (const ch of text) {
+    if (ch.codePointAt(0)! <= 0xff) {
+      out += ch;
+      continue;
+    }
+    const sub = TRANSLITERACAO_LATIN1[ch] ?? ch.normalize('NFKD').replace(/[̀-ͯ]/g, '');
+    if ([...sub].some((c) => c.codePointAt(0)! > 0xff)) {
+      const linha = out.slice(out.lastIndexOf('\n') + 1);
+      const cp = ch.codePointAt(0)!.toString(16).toUpperCase().padStart(4, '0');
+      throw new Error(
+        `SPED_CARACTERE_FORA_DO_LATIN1: o caractere U+${cp} ("${ch}") no registro ${linha.split('|')[1] ?? '?'} não ` +
+          'existe em ISO-8859-1 nem tem equivalente — troque-o no texto de origem (histórico, nome de conta ou cadastro).',
+      );
+    }
+    out += sub;
+  }
+  return out;
+}
+
 export interface EcdI050Node {
   account: RegI050Input;
   /** COD_CTA_REF (I051) — presente só p/ conta analítica mapeada. */
