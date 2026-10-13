@@ -176,7 +176,9 @@ interface RelatorioMigracaoUnidade {
 }
 ```
 
-## 4. Forks (RATIFICAÇÃO PENDENTE)
+## 4. Forks
+
+> **RATIFICADOS — dono, chat, 2026-10-13 (questionário):** F-L8-1 → (a) *"Renomear para 4 segmentos"*; F-L8-2 → (a) *"Grupos do art. 178"*; F-L8-4 → (a) *"Script de dado antes do deploy"*; F-L8-3, F-L8-5, F-L8-6 → (a) *"Aceito as três"*. Todos na recomendação. **Código continua exigindo "executa"** (ORCH-006).
 
 | Fork | Pergunta | Caminhos | Recomendação |
 |---|---|---|---|

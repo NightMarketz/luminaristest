@@ -1,8 +1,8 @@
 # ADR-PLANO-CONTAS-4-NIVEIS — Plano de contas canônico com analítica patrimonial no nível ≥ 4
 
 - **Data:** 2026-10-13
-- **Status:** **Proposed.** Os forks F-L8-1..6 do BRIEF estão com ratificação pendente. Nenhum código está autorizado
-  sem "executa".
+- **Status:** **Accepted (2026-10-13).** F-L8-1..6 ratificados pelo dono no chat (questionário de 13/10), todos na
+  recomendação (a). Nenhum código está autorizado sem "executa".
 - **Autorização:** dono, chat, 13/10. Diante da L8 do H1, escolheu *"Aprofundar o plano canônico (Recommended)"*, com a
   descrição "ADR + BRIEF … e uma migração para os tenants já instalados". Depois pediu *"abrir o planejamento da L8"*.
 - **BRIEF:** [`BE-INCR-PLANO-4-NIVEIS-brief.md`](../accounting/BE-INCR-PLANO-4-NIVEIS-brief.md)
@@ -18,7 +18,7 @@ O canônico vai de `1 Ativo` direto a `1.1.1 Banco`, sem a sintética `1.1`. O n
 profundidade do código (`SpedGenerationService.ts:61-68`), e a hierarquia é pela chave codificada, sem `parentId`
 (Contrato §2.1).
 
-## Decisão (proposta)
+## Decisão
 
 1. **O plano canônico ganha os grupos do art. 178 da Lei 6.404/1976** (redação da Lei 11.941/2009): Ativo Circulante e
    Passivo Circulante como sintéticas de nível 2; grupos de nível 3 (Disponível, Créditos, Estoques; Obrigações com
