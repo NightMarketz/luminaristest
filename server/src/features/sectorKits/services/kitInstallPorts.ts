@@ -35,12 +35,6 @@ export interface KitRoleDefaultsPort {
   fillNullFiscalProfile(accountIds: Record<string, string>): Promise<string[]>;
 }
 
-/** Passo 6: padrões fiscais por serviço (`ServiceFiscalProfileService`). */
-export interface KitServiceFiscalPort {
-  hasProfile(serviceRef: string): Promise<boolean>;
-  upsert(serviceRef: string, input: { cTribNac: string; cNBS?: string; cIndOp: string }): Promise<void>;
-}
-
 /** Passo 7: referencial RFB (`ReferentialMappingService.batchSet` + catálogo). */
 export interface KitReferentialPort {
   /** Há `ReferentialAccount` para esta versão? (item 13) */

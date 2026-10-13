@@ -54,14 +54,23 @@ const RoleDefaultsSchema = z
   })
   .strict();
 
-const ServiceFiscalDefaultSchema = z
+/**
+ * Catálogo de sugestões fiscais por serviço (BE-INCR-KIT-SETOR-EMENDA-1, PR-K3, item 7a; F-KE-3 b, dono 13/10): o kit
+ * não grava enquadramento — o cadastro de serviço oferece estas entradas e o usuário escolhe. Substitui o antigo
+ * "padrão por `serviceRef`" (nenhum kit publicado usava: v1–v3 têm `[]`). "cTribNac ∈ lista LC 116 vigente" é teste de
+ * build do kit (`kitServiceCatalog.test.ts`): a lista vive em `features/accounting`, fora da fronteira (L2 de 13/10).
+ */
+export const ServiceFiscalCatalogItemSchema = z
   .object({
-    serviceRef: z.string().min(1), // chave do serviço no preset do setor
+    key: z.string().regex(/^[a-z][a-z0-9_]+$/),
+    label: z.string().min(1),
     cTribNac: z.string().regex(/^\d{6}$/, 'cTribNac tem 6 dígitos.'),
     cNBS: z.string().regex(/^\d{9}$/).optional(),
-    cIndOp: z.string().regex(/^\d{6}$/).default('030101'),
+    sinonimos: z.array(z.string().min(2)).min(1),
+    fonte: z.string().min(1), // ex.: "LC 116 6.01; Anexo B v1.01"
   })
   .strict();
+export type ServiceFiscalCatalogItem = z.infer<typeof ServiceFiscalCatalogItemSchema>;
 
 const ReferentialSchema = z
   .object({
@@ -82,7 +91,7 @@ const SectorKitBaseSchema = z
     binding: AccountingBindingV1Schema, // ADR-P1, inalterado
     operationalSchema: z.record(z.string(), z.unknown()), // chaves = emittableEventKeys (F4)
     roleDefaults: RoleDefaultsSchema.default({ scopeSettings: {}, fiscalProfile: {} }),
-    serviceFiscalDefaults: z.array(ServiceFiscalDefaultSchema).default([]),
+    serviceFiscalDefaults: z.array(ServiceFiscalCatalogItemSchema).default([]), // PR-K3: catálogo de sugestões
     referential: z.array(ReferentialSchema).default([]),
   })
   .strict();
@@ -120,6 +129,13 @@ function kitRefinements(kit: SectorKitBase, ctx: z.RefinementCtx): void {
       checkLeaf(code, ['roleDefaults', group, field]);
     }
   }
+
+  // PR-K3: a `key` identifica a sugestão (e é o enum da IA, 7c) — única no catálogo.
+  const keys = new Set<string>();
+  kit.serviceFiscalDefaults.forEach((item, i) => {
+    if (keys.has(item.key)) issue(['serviceFiscalDefaults', i, 'key'], `Chave ${item.key} repetida no catálogo.`);
+    keys.add(item.key);
+  });
 
   const emittable = new Set(Object.keys(kit.operationalSchema));
   const bound = new Set(kit.binding.eventBindings.map((eb) => eb.eventKey));

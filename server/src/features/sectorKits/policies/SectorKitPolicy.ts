@@ -14,4 +14,9 @@ export class SectorKitPolicy implements ISectorKitPolicy {
   canManageKit(scope: BindingScope): boolean {
     return !!scope.actorUserId;
   }
+
+  /** Espelho de `AccountingPolicy.canReadFiscalProfile` (= `canRead`, `!!actorUserId`): a sugestão só lê. */
+  canReadServiceFiscalSuggestions(scope: BindingScope): boolean {
+    return !!scope.actorUserId;
+  }
 }

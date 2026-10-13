@@ -12,6 +12,7 @@ import { ApplicationFactory } from '@/lib/factory';
 import type { BindingScope } from '@/features/accountingBinding/repositories/IAccountingBindingRepository';
 import { BEAUTY_SALON_KIT_V3 } from '@/features/sectorKits/kits/beautySalon/kit.v3';
 import { AESTHETIC_CLINIC_KIT_V3 } from '@/features/sectorKits/kits/aestheticClinic/kit.v3';
+import { KIT_REGISTRY } from '@/features/sectorKits/registry';
 import { CANONICAL_ACCOUNTS } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
 
 const UNIT = 'unit-kit-v3';
@@ -35,7 +36,8 @@ async function preparar(regime: 'PRESUMIDO' | 'REAL', perfil: Record<string, unk
 
 const instalar = (kitKey: string) =>
   ApplicationFactory.getInstance()
-    .getKitInstallService(scope())
+    // o v4 (PR-K3) é a versão vigente; este teste prende o registro no v3 publicado
+    .getKitInstallService(scope(), (k) => KIT_REGISTRY[k]?.filter((v) => v.kitVersion <= 3))
     .install(scope(), { kitKey, ano: 2025, installChartIfEmpty: true, openCurrentPeriodIfMissing: true, today: TODAY });
 
 /** Mesma conta do gate da ECD que o `kitV2Referencial` refaz no banco (a fronteira não deixa importar o serviço). */

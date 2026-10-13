@@ -9,4 +9,6 @@ export interface ISectorKitPolicy {
    * aceitá-lo também.
    */
   canManageKit(scope: BindingScope): boolean;
+  /** PR-K3 (7e/7f): ler as sugestões fiscais por serviço — a mesma regra do `canReadFiscalProfile` do accounting. */
+  canReadServiceFiscalSuggestions(scope: BindingScope): boolean;
 }

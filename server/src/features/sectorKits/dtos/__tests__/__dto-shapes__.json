@@ -381,6 +381,48 @@
       ],
       "additionalProperties": false
     },
+    "ServiceFiscalCatalogItemSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]+$"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cTribNac": {
+          "type": "string",
+          "pattern": "^\\d{6}$"
+        },
+        "cNBS": {
+          "type": "string",
+          "pattern": "^\\d{9}$"
+        },
+        "sinonimos": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 2
+          }
+        },
+        "fonte": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "key",
+        "label",
+        "cTribNac",
+        "sinonimos",
+        "fonte"
+      ],
+      "additionalProperties": false
+    },
     "SectorKitV1Schema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -647,7 +689,11 @@
           "items": {
             "type": "object",
             "properties": {
-              "serviceRef": {
+              "key": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]+$"
+              },
+              "label": {
                 "type": "string",
                 "minLength": 1
               },
@@ -659,15 +705,25 @@
                 "type": "string",
                 "pattern": "^\\d{9}$"
               },
-              "cIndOp": {
-                "default": "030101",
+              "sinonimos": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 2
+                }
+              },
+              "fonte": {
                 "type": "string",
-                "pattern": "^\\d{6}$"
+                "minLength": 1
               }
             },
             "required": [
-              "serviceRef",
-              "cTribNac"
+              "key",
+              "label",
+              "cTribNac",
+              "sinonimos",
+              "fonte"
             ],
             "additionalProperties": false
           }
@@ -732,6 +788,143 @@
         "chartExtension",
         "binding",
         "operationalSchema"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "ServiceFiscalSuggestionDto.ts": {
+    "SuggestionSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "cTribNac": {
+          "type": "string",
+          "pattern": "^\\d{6}$"
+        },
+        "cNBS": {
+          "type": "string",
+          "pattern": "^\\d{9}$"
+        },
+        "label": {
+          "type": "string"
+        },
+        "origem": {
+          "type": "string",
+          "enum": [
+            "dicionario",
+            "ia"
+          ]
+        },
+        "termo": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "cTribNac",
+        "label",
+        "origem"
+      ],
+      "additionalProperties": false
+    },
+    "ServiceFiscalSuggestionsQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ia": {
+          "type": "string",
+          "enum": [
+            "0",
+            "1"
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "ServiceFiscalSuggestionPreviewSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "unitId",
+        "nome"
+      ],
+      "additionalProperties": false
+    },
+    "PendingServiceSuggestionSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "serviceRef": {
+          "type": "string"
+        },
+        "nome": {
+          "type": "string"
+        },
+        "sugestoes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "cTribNac": {
+                "type": "string",
+                "pattern": "^\\d{6}$"
+              },
+              "cNBS": {
+                "type": "string",
+                "pattern": "^\\d{9}$"
+              },
+              "label": {
+                "type": "string"
+              },
+              "origem": {
+                "type": "string",
+                "enum": [
+                  "dicionario",
+                  "ia"
+                ]
+              },
+              "termo": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "key",
+              "cTribNac",
+              "label",
+              "origem"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "serviceRef",
+        "nome",
+        "sugestoes"
       ],
       "additionalProperties": false
     }
