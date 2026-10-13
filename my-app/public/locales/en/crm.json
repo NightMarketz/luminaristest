@@ -477,6 +477,7 @@
     "go_builder": "Create a report in the builder",
     "not_found": "This report no longer exists.",
     "reconfigure": "Pick another report",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "retry": "Try again"
   }
 }

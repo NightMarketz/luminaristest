@@ -54,6 +54,8 @@ export default function CrmReportWidget({ onClose, initialConfig, onConfigChange
   const [error, setError] = useState<ReportErrorView | null>(null);
   /** Schema da fonte ou de um join não carregou: rótulos/moeda podem sair crus — avisa, como o builder (review do PR-D). */
   const [schemaMissing, setSchemaMissing] = useState(false);
+  /** Nova tentativa da lista que falhou (2ª passada do review do PR-D). */
+  const [listAttempt, setListAttempt] = useState(0);
 
   // Configuração: a lista dos relatórios salvos
   useEffect(() => {
@@ -72,11 +74,12 @@ export default function CrmReportWidget({ onClose, initialConfig, onConfigChange
     return () => {
       alive = false;
     };
-  }, [configuring]);
+  }, [configuring, listAttempt]);
 
-  // Exibição: o relatório (rótulos, moeda por medida) + o run salvo
+  // Exibição: o relatório (rótulos, moeda por medida) + o run salvo. Só a troca de relatório roda de novo — abrir e
+  // cancelar a configuração mantém o resultado na tela (2ª passada do review do PR-D).
   useEffect(() => {
-    if (configuring || !config) return;
+    if (!config) return;
     let alive = true;
     setLoading(true);
     setError(null);
@@ -86,6 +89,7 @@ export default function CrmReportWidget({ onClose, initialConfig, onConfigChange
       try {
         // em série: relatório apagado para no GET (um 404 só, não dois — review do PR-D, achado 4)
         const got = await CrmReportsService.get(config.reportId);
+        if (!alive) return; // trocou de relatório na espera: não roda o antigo
         const run = await CrmReportsService.run(config.reportId, { timeZone: browserTimeZone() });
         const draft = fromReport(got.data);
         const tr = tRef.current;
@@ -114,7 +118,7 @@ export default function CrmReportWidget({ onClose, initialConfig, onConfigChange
     return () => {
       alive = false;
     };
-  }, [configuring, config, fieldsOf]);
+  }, [config, fieldsOf]);
 
   const choose = (reportId: string) => {
     const next: CrmReportWidgetConfig = { reportId };
@@ -174,7 +178,18 @@ export default function CrmReportWidget({ onClose, initialConfig, onConfigChange
         {configuring ? (
           <div className="flex flex-col gap-2" data-testid="crm-report-widget-config">
             <p className="text-xs font-bold text-gray-600 dark:text-gray-300">{t('report_widget.pick', 'Escolha o relatório salvo:')}</p>
-            {error ? <ErrorText view={error} /> : null}
+            {error ? (
+              <div className="flex flex-col items-start gap-2">
+                <ErrorText view={error} />
+                <button
+                  type="button"
+                  className="text-xs font-bold text-blue-600 hover:underline dark:text-blue-400"
+                  onClick={() => setListAttempt((n) => n + 1)}
+                >
+                  {t('report_widget.retry', 'Tentar de novo')}
+                </button>
+              </div>
+            ) : null}
             {error ? null : reports === null ? (
               <p className="text-xs text-gray-500 dark:text-gray-400">{t('report_widget.loading', 'Carregando…')}</p>
             ) : reports.length === 0 ? (

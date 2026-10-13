@@ -161,4 +161,40 @@ describe('CrmReportWidget', () => {
       expect(svc.run).not.toHaveBeenCalled();
     });
   });
+
+  describe('review do PR-D — 2ª passada', () => {
+    it('Cancelar volta ao resultado sem rodar de novo', async () => {
+      render(<CrmReportWidget id="w1" initialConfig={{ reportId: 'r1' }} />);
+      await screen.findByText(/^Total=/);
+      fireEvent.click(screen.getByLabelText('Escolher o relatório'));
+      fireEvent.click(await screen.findByText('Cancelar'));
+      expect(screen.getByText(/^Total=/)).toBeInTheDocument();
+      expect(svc.get).toHaveBeenCalledTimes(1);
+      expect(svc.run).toHaveBeenCalledTimes(1);
+    });
+
+    it('trocar de relatório com o GET do anterior pendente não roda o anterior', async () => {
+      let releaseA: (v: unknown) => void = () => {};
+      svc.get.mockImplementation((id: string) =>
+        id === 'r1' ? new Promise((r) => (releaseA = () => r({ success: true, data: report }))) : ok({ ...report, id: 'r2', name: 'Outro' }),
+      );
+      svc.list.mockImplementation(() => ok([report, { ...report, id: 'r2', name: 'Outro' }]));
+      render(<CrmReportWidget id="w1" initialConfig={{ reportId: 'r1' }} />);
+      await waitFor(() => expect(svc.get).toHaveBeenCalledWith('r1'));
+      fireEvent.click(screen.getByLabelText('Escolher o relatório'));
+      fireEvent.click(await screen.findByText('Outro'));
+      await waitFor(() => expect(svc.run).toHaveBeenCalledWith('r2', expect.anything()));
+      releaseA(undefined);
+      await new Promise((r) => setTimeout(r, 0));
+      expect(svc.run.mock.calls.map((c) => c[0])).toEqual(['r2']);
+    });
+
+    it('lista que falha num widget novo tem "Tentar de novo"', async () => {
+      svc.list.mockRejectedValueOnce({ success: false, code: 'X', message: 'x', status: 500 });
+      render(<CrmReportWidget id="w1" />);
+      fireEvent.click(await screen.findByText('Tentar de novo'));
+      expect(await screen.findByText('Total proposto')).toBeInTheDocument();
+      expect(svc.list).toHaveBeenCalledTimes(2);
+    });
+  });
 });
