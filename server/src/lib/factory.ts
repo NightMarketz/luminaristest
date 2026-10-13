@@ -5,6 +5,11 @@ import { LegalParameterService } from '../features/legalParameters/services/Lega
 import type { ILegalParameterRepository } from '../features/legalParameters/repositories/ILegalParameterRepository';
 import { LegalParameterRecalcJobRepository } from '../features/legalParameters/repositories/LegalParameterRecalcJobRepository';
 import type { ILegalParameterRecalcJobRepository } from '../features/legalParameters/repositories/ILegalParameterRecalcJobRepository';
+import { PtaxRateRepository } from '../features/fx/repositories/PtaxRateRepository';
+import type { IPtaxRateRepository } from '../features/fx/repositories/IPtaxRateRepository';
+import { BcbPtaxClient } from '../features/fx/clients/BcbPtaxClient';
+import type { IPtaxClient } from '../features/fx/ports/IPtaxClient';
+import { PtaxSyncService } from '../features/fx/services/PtaxSyncService';
 import { TaxAssessmentRecalcService } from '../features/accounting/services/TaxAssessmentRecalcService';
 import type { ILegalParameterPolicy } from '../features/legalParameters/policies/ILegalParameterPolicy';
 import { ChatInstanceRepository } from '../features/chatInstances/repositories/ChatInstanceRepository';
@@ -586,6 +591,7 @@ export class ApplicationFactory {
     packageAcceptance: IPackageAcceptanceRepository; // FE-INCR-PACOTE-VALIDADE
     legalParameter: ILegalParameterRepository; // BE-INCR-LEGAL-PARAMS PR-1
     legalParameterRecalcJob: ILegalParameterRecalcJobRepository; // BE-INCR-LEGAL-PARAMS PR-4 (item 10)
+    ptaxRate: IPtaxRateRepository; // BE-INCR-CRM-REPORT-BUILDER PR-1 (item 21)
     sourceProvenance: ISourceProvenanceRepository;
     referentialMapping: IReferentialMappingRepository;
     referentialAccount: IReferentialAccountRepository;
@@ -726,16 +732,22 @@ export class ApplicationFactory {
     attachment: AttachmentService;
     savedTableView: SavedTableViewService;
     systemProvisioning: SystemProvisioningService;
+    ptaxSync: PtaxSyncService; // BE-INCR-CRM-REPORT-BUILDER PR-1 (item 23)
     depreciationRate: DepreciationRateService;
     fixedAssetClass: FixedAssetClassService;
     fixedAsset: FixedAssetService;
     depreciation: DepreciationService;
   };
 
+  /** Porta do BCB (BE-INCR-CRM-REPORT-BUILDER PR-1, item 22) — cliente HTTP externo, não repositório. */
+  private readonly ptaxClient: IPtaxClient;
+
   private constructor() {
     // External services (singletons)
     const chatOpenAIService = new ChatOpenAIService();
     const embeddingOpenAIService = new EmbeddingService({ apiKey: process.env.OPENAI_API_KEY || '' });
+
+    this.ptaxClient = new BcbPtaxClient();
 
     // Repositories
     this.repositories = {
@@ -764,6 +776,7 @@ export class ApplicationFactory {
       packageAcceptance: new PackageAcceptanceRepository(),
       legalParameter: new LegalParameterRepository(),
       legalParameterRecalcJob: new LegalParameterRecalcJobRepository(),
+      ptaxRate: new PtaxRateRepository(),
       sourceProvenance: new SourceProvenanceRepository(),
       referentialMapping: new ReferentialMappingRepository(),
       referentialAccount: new ReferentialAccountRepository(),
@@ -1631,6 +1644,7 @@ export class ApplicationFactory {
         this.repositories.knowledgeGraph,
         this.policies.systemProvisioning,
       ),
+      ptaxSync: new PtaxSyncService(this.repositories.ptaxRate, this.ptaxClient),
     };
   }
 
@@ -1857,6 +1871,10 @@ export class ApplicationFactory {
   public getPackageAcceptanceService = (): PackageAcceptanceService => this.services.packageAcceptance;
   public getLegalParameterService = (): LegalParameterService => this.services.legalParameter;
   public getTaxAssessmentRecalcService = (): TaxAssessmentRecalcService => this.services.taxAssessmentRecalc;
+  // BE-INCR-CRM-REPORT-BUILDER PR-1 (item 11, emenda 29/09): módulo neutro features/fx
+  public getPtaxRateRepository = (): IPtaxRateRepository => this.repositories.ptaxRate;
+  public getPtaxClient = (): IPtaxClient => this.ptaxClient;
+  public getPtaxSyncService = (): PtaxSyncService => this.services.ptaxSync;
   public getPresetSyncService = (): PresetSyncService => this.services.presetSync;
   public getModuleInstallService = (): ModuleInstallService => this.services.moduleInstall;
   public getAttachmentService = (): AttachmentService => this.services.attachment;
