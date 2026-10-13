@@ -129,4 +129,36 @@ describe('CrmReportWidget', () => {
     expect(await screen.findByText('Total proposto')).toBeInTheDocument();
     expect(svc.run).not.toHaveBeenCalled();
   });
+
+  describe('review do PR-D — regressões', () => {
+    it('achado 1: schema da fonte indisponível → aviso explícito (os valores podem sair sem moeda)', async () => {
+      fieldsOf.mockResolvedValue(null);
+      render(<CrmReportWidget id="w1" initialConfig={{ reportId: 'r1' }} />);
+      expect(await screen.findByText(/^Total=/)).toBeInTheDocument();
+      expect(screen.getByRole('alert')).toHaveTextContent('Não foi possível carregar os campos desta fonte.');
+    });
+
+    it('achado 2: abrir a configuração de um widget válido tem Cancelar, que volta ao relatório', async () => {
+      render(<CrmReportWidget id="w1" initialConfig={{ reportId: 'r1' }} />);
+      await screen.findByText(/^Total=/);
+      fireEvent.click(screen.getByLabelText('Escolher o relatório'));
+      fireEvent.click(await screen.findByText('Cancelar'));
+      expect(await screen.findByText(/^Total=/)).toBeInTheDocument();
+    });
+
+    it('achado 3: lista que falha mostra o erro, não "nenhum relatório salvo"', async () => {
+      svc.list.mockRejectedValue({ success: false, code: 'X', message: 'x', status: 500 });
+      render(<CrmReportWidget id="w1" />);
+      expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível concluir. Tente de novo.');
+      expect(screen.queryByText('Nenhum relatório salvo.')).toBeNull();
+      expect(screen.queryByText('Carregando…')).toBeNull();
+    });
+
+    it('achado 4: relatório apagado para no GET — o run não é chamado (um 404 só)', async () => {
+      svc.get.mockRejectedValue(notFound);
+      render(<CrmReportWidget id="w1" initialConfig={{ reportId: 'apagado' }} />);
+      expect(await screen.findByText('Este relatório não existe mais.')).toBeInTheDocument();
+      expect(svc.run).not.toHaveBeenCalled();
+    });
+  });
 });

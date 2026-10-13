@@ -476,6 +476,7 @@
     "empty": "Nenhum relatório salvo.",
     "go_builder": "Criar um relatório no construtor",
     "not_found": "Este relatório não existe mais.",
-    "reconfigure": "Escolher outro relatório"
+    "reconfigure": "Escolher outro relatório",
+    "cancel": "Cancelar"
   }
 }

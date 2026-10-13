@@ -52,6 +52,8 @@ export default function CrmReportWidget({ onClose, initialConfig, onConfigChange
   const [snapshot, setSnapshot] = useState<ReportRunSnapshot | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<ReportErrorView | null>(null);
+  /** Schema da fonte ou de um join não carregou: rótulos/moeda podem sair crus — avisa, como o builder (review do PR-D). */
+  const [schemaMissing, setSchemaMissing] = useState(false);
 
   // Configuração: a lista dos relatórios salvos
   useEffect(() => {
@@ -64,9 +66,8 @@ export default function CrmReportWidget({ onClose, initialConfig, onConfigChange
         if (alive) setReports(Array.isArray(res?.data) ? res.data : []);
       })
       .catch((e) => {
-        if (!alive) return;
-        setReports([]);
-        setError(reportError(e));
+        // falha da lista não é "nenhum relatório salvo" (review do PR-D, achado 3): fica o erro, sem o estado vazio
+        if (alive) setError(reportError(e));
       });
     return () => {
       alive = false;
@@ -80,12 +81,12 @@ export default function CrmReportWidget({ onClose, initialConfig, onConfigChange
     setLoading(true);
     setError(null);
     setSnapshot(null);
+    setSchemaMissing(false);
     (async () => {
       try {
-        const [got, run] = await Promise.all([
-          CrmReportsService.get(config.reportId),
-          CrmReportsService.run(config.reportId, { timeZone: browserTimeZone() }),
-        ]);
+        // em série: relatório apagado para no GET (um 404 só, não dois — review do PR-D, achado 4)
+        const got = await CrmReportsService.get(config.reportId);
+        const run = await CrmReportsService.run(config.reportId, { timeZone: browserTimeZone() });
         const draft = fromReport(got.data);
         const tr = tRef.current;
         const labels = {
@@ -102,6 +103,7 @@ export default function CrmReportWidget({ onClose, initialConfig, onConfigChange
         });
         if (!alive) return;
         setRow(got.data);
+        setSchemaMissing(!source || Object.values(right).some((x) => !x));
         setSnapshot(buildRunSnapshot(run.data, draft, fields, tr));
       } catch (e) {
         if (alive) setError(reportError(e));
@@ -173,7 +175,7 @@ export default function CrmReportWidget({ onClose, initialConfig, onConfigChange
           <div className="flex flex-col gap-2" data-testid="crm-report-widget-config">
             <p className="text-xs font-bold text-gray-600 dark:text-gray-300">{t('report_widget.pick', 'Escolha o relatório salvo:')}</p>
             {error ? <ErrorText view={error} /> : null}
-            {reports === null ? (
+            {error ? null : reports === null ? (
               <p className="text-xs text-gray-500 dark:text-gray-400">{t('report_widget.loading', 'Carregando…')}</p>
             ) : reports.length === 0 ? (
               <div className="flex flex-col gap-2 text-sm text-gray-600 dark:text-gray-300">
@@ -198,6 +200,16 @@ export default function CrmReportWidget({ onClose, initialConfig, onConfigChange
                 </button>
               ))
             )}
+            {config ? (
+              // já havia um relatório válido: abrir a configuração não pode perdê-lo (review do PR-D, achado 2)
+              <button
+                type="button"
+                className="self-start text-xs font-bold text-gray-500 hover:underline dark:text-gray-400"
+                onClick={() => setConfiguring(false)}
+              >
+                {t('report_widget.cancel', 'Cancelar')}
+              </button>
+            ) : null}
           </div>
         ) : loading ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">{t('report_widget.loading', 'Carregando…')}</p>
@@ -217,7 +229,10 @@ export default function CrmReportWidget({ onClose, initialConfig, onConfigChange
         ) : error ? (
           <ErrorText view={error} />
         ) : snapshot ? (
-          <CrmReportResult snapshot={snapshot} />
+          <div className="flex flex-col gap-3">
+            {schemaMissing ? <ErrorText view={{ key: 'report_builder.errors.SCHEMA_UNAVAILABLE', params: {}, code: null }} /> : null}
+            <CrmReportResult snapshot={snapshot} />
+          </div>
         ) : null}
       </div>
     </div>

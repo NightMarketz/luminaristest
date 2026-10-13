@@ -476,6 +476,7 @@
     "empty": "No saved reports.",
     "go_builder": "Create a report in the builder",
     "not_found": "This report no longer exists.",
-    "reconfigure": "Pick another report"
+    "reconfigure": "Pick another report",
+    "cancel": "Cancel"
   }
 }
