@@ -15,6 +15,7 @@ const ITEMS: { href: string; key: string; fallback: string; module: CrmModuleKey
   { href: '/crm/activities', key: 'nav.activities', fallback: 'Atividades', module: 'CRM-0' },
   { href: '/crm/meetings', key: 'nav.meetings', fallback: 'Reuniões', module: 'CRM-0' },
   { href: '/crm/analytics', key: 'nav.analytics', fallback: 'Analytics', module: 'CRM-0' },
+  { href: '/crm/reports', key: 'nav.reports', fallback: 'Relatórios', module: 'CRM-0' }, // FE-INCR-CRM-REPORT-BUILDER item 1
 ];
 
 /**
