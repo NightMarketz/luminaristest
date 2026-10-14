@@ -68,12 +68,12 @@ describe('upgradeSectorKitsCli', () => {
       return real.call(this, scope, input);
     });
     expect(await runUpgrade({ mode: 'APPLY', deployId: 'd1' })).toBe(1);
-    expect([await versao('u-a'), await versao('u-b')]).toEqual([4, 1]);
+    expect([await versao('u-a'), await versao('u-b')]).toEqual([LATEST, 1]);
     jest.restoreAllMocks();
 
     silencio();
     expect(await runUpgrade({ mode: 'APPLY', deployId: 'd1' })).toBe(0); // u-b, com o dry-run do mesmo deploy
-    expect([await versao('u-a'), await versao('u-b')]).toEqual([4, 4]);
+    expect([await versao('u-a'), await versao('u-b')]).toEqual([LATEST, LATEST]);
     expect(await runUpgrade({ mode: 'APPLY', deployId: 'd1' })).toBe(0); // nada a fazer
   }, T);
 });
