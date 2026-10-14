@@ -150,7 +150,7 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=8192
         run: |
           set -uo pipefail
-          npx jest --selectProjects "${{ matrix.project }}" --shard="${{ matrix.shard }}" --detectOpenHandles --cacheDirectory=.jest-cache 2>&1 | tee jest.log
+          npx jest --selectProjects "${{ matrix.project }}" --shard="${{ matrix.shard }}" --detectOpenHandles --cacheDirectory=.jest-cache --coverage --coverageReporters=json --coverageThreshold='{}' 2>&1 | tee jest.log
           status=${PIPESTATUS[0]}
           if grep -q "Jest has detected the following" jest.log; then
             echo "::error::Open handle vazado — algum teste não fecha um recurso async (TECH-DEBT-TEST-001)."
@@ -159,12 +159,47 @@ jobs:
           fi
           exit "$status"
 
+      # Cobertura por shard é parcial por definição; o piso é aplicado no job `server-coverage`,
+      # sobre a soma dos 7 shards (por isso `--coverageThreshold='{}'` acima).
+      - name: Upload coverage do shard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.project }}-${{ strategy.job-index }}
+          path: server/coverage/coverage-final.json
+          if-no-files-found: error
+          retention-days: 3
+
+  server-coverage:
+    name: Server – coverage gate
+    runs-on: ubuntu-latest
+    needs: [server-tests]
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-*
+          path: server/coverage-shards
+      - name: Piso de cobertura (coverageThreshold.global do jest.config.js)
+        run: node scripts/coverage-gate.js coverage-shards
+
   # Agregador: mantém o nome do required status check da branch protection. `always()` para
   # reprovar (e não ficar "skipped" = pendente eterno) quando algum shard falha.
   server:
     name: Server – typecheck & test
     runs-on: ubuntu-latest
-    needs: [server-static, server-tests]
+    needs: [server-static, server-tests, server-coverage]
     if: always()
     steps:
       - name: All server jobs passed
