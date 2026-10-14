@@ -9,9 +9,8 @@
  * da fronteira; ver `.claude/skills/_REUSE-CRITERION.md` — divergência de POSSE (módulo dono
  * diferente), não de shape, é fork sancionado pelo critério.
  *
- * Mora em `models/` (não em `repositories/`) desde o gate L2 do dependency-cruiser (#665): controller resolve o
- * escopo do request sem importar repositório. `IAccountingBindingRepository.ts` reexporta para os importadores
- * antigos.
+ * Mora em `scope/` (como `AccountingScope`), não em `repositories/`: controller resolve o escopo e não pode importar
+ * repositório (ADR-ARCH-BOUNDARIES, regra L2-controller-not-repository).
  */
 export interface BindingScope {
   /** Dono lógico do binding — vira `userId` na linha. */
@@ -25,4 +24,9 @@ export interface BindingScope {
 /** Resolve um `BindingScope` a partir de um usuário autenticado (owner === actor hoje). */
 export function resolveBindingScope(user: { userId: string }, unitId: string): BindingScope {
   return { ownerUserId: user.userId, actorUserId: user.userId, unitId };
+}
+
+/** Where-clause Prisma-compatível derivado do escopo — mesmo padrão de `accountingScopeWhere`. */
+export function bindingScopeWhere(scope: BindingScope): { userId: string; unitId: string } {
+  return { userId: scope.ownerUserId, unitId: scope.unitId };
 }

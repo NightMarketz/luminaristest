@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveBindingScope } from '../features/accountingBinding/models/bindingScope';
+import { resolveBindingScope } from '../features/accountingBinding/scope/BindingScope';
 import { KitTraceQuerySchema } from '../features/sectorKits/dtos/KitTraceDto';
 
 /**

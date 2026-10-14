@@ -1,15 +1,9 @@
 import type { AccountingBinding, Prisma } from 'generated/prisma';
 import type { AccountingBindingStatus } from '../models/accountingBindingStatus';
 
-/** `BindingScope`/`resolveBindingScope` moram em `../models/bindingScope` (gate L2, #665); reexportados aqui. */
-import type { BindingScope } from '../models/bindingScope';
-export type { BindingScope } from '../models/bindingScope';
-export { resolveBindingScope } from '../models/bindingScope';
+import type { BindingScope } from '../scope/BindingScope';
 
-/** Where-clause Prisma-compatível derivado do escopo — mesmo padrão de `accountingScopeWhere`. */
-export function bindingScopeWhere(scope: BindingScope): { userId: string; unitId: string } {
-  return { userId: scope.ownerUserId, unitId: scope.unitId };
-}
+export { type BindingScope, resolveBindingScope, bindingScopeWhere } from '../scope/BindingScope';
 
 /** Payload de criação de uma nova versão de binding (Draft ou Active — o service decide qual). */
 export interface CreateAccountingBindingInput {
