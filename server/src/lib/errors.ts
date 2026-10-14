@@ -116,8 +116,13 @@ export class RoleOverrideCompileDraftError extends AppError {
     missingEventKeys: string[];
   };
 
-  constructor(details: RoleOverrideCompileDraftError['details']) {
-    super('A recompilação com o ajuste reprovou; o ajuste não foi gravado.', 422, 'ROLE_OVERRIDE_COMPILE_DRAFT');
+  /** PR-4 (aceitar pendência): mesma forma, com mensagem e código próprios (`KIT_PENDING_COMPILE_DRAFT`). */
+  constructor(
+    details: RoleOverrideCompileDraftError['details'],
+    message = 'A recompilação com o ajuste reprovou; o ajuste não foi gravado.',
+    errorCode = 'ROLE_OVERRIDE_COMPILE_DRAFT',
+  ) {
+    super(message, 422, errorCode);
     this.details = details;
     Object.setPrototypeOf(this, RoleOverrideCompileDraftError.prototype);
   }

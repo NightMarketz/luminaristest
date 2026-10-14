@@ -33,5 +33,14 @@ export interface IKitInstallationRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<KitInstallation>;
 
+  /**
+   * PR-4 (item 35): avança a versão instalada, CAS sobre `kitVersion = from` (outra execução que já avançou ⇒ 0).
+   * Só roda quando (a)+(b) foram aplicados, mesmo com pendências abertas.
+   */
+  advanceVersion(scope: BindingScope, id: string, from: number, to: number, tx: Prisma.TransactionClient): Promise<number>;
+
+  /** PR-4 (item 34): todas as instalações `INSTALLED` vivas, de todos os donos — o CLI do deploy filtra as atrasadas. */
+  findAllInstalled(): Promise<KitInstallation[]>;
+
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 }

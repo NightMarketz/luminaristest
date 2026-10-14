@@ -131,6 +131,11 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // usa os mesmos dois eventos.
   'kit.role_override_set':     ['role', 'accountId', 'previousAccountId'],
   'kit.role_override_removed': ['role'],
+  // BE-INCR-KIT-SETOR PR-4 (item 39) — atualização do kit: só versões e contagens; pendência decidida = id, item e
+  // motivo do conflito (código fechado). O `motivo` texto livre da decisão fica só na linha `kit_upgrade_pendings`.
+  'kit.upgrade_applied':          ['fromVersion', 'toVersion', 'additive', 'forward', 'conflicts'],
+  'kit.upgrade_pending_accepted': ['pendingId', 'itemKey', 'reason'],
+  'kit.upgrade_pending_rejected': ['pendingId', 'itemKey', 'reason'],
   // BE-INCR-NFE — a ingestão fiscal NÃO emite evento `nfe.*` próprio (decisão A / T8): auditoria é IN-TX
   // e os serviços de integração (compra/venda) não possuem tx própria. A nota já entra no trilho imutável
   // in-tx pela escrita que de fato ocorre — `payable.created` e a chave como `entry.source_recorded`.

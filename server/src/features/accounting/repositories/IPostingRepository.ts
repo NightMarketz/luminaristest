@@ -59,6 +59,9 @@ export interface IPostingRepository {
   /** Lists one account's legs scoped via AccountingScope, ordered by createdAt. */
   findByAccount(scope: AccountingScope, accountId: string): Promise<Posting[]>;
 
+  /** BE-INCR-KIT-SETOR PR-4 (item 29): the account has at least one posting (any status). Accepts the caller's tx. */
+  existsForAccount(scope: AccountingScope, accountId: string, tx?: Prisma.TransactionClient): Promise<boolean>;
+
   /**
    * Sums debit/credit per account across all postings whose parent entry has one of
    * the given statuses, scoped via AccountingScope. Backs the trial balance.
