@@ -177,7 +177,7 @@ describe('KitPendingService (integração)', () => {
     await factory().getRoleAccountOverrideService(scope(), onlyUpTo(1)).set(scope(), 'receita-serviço', { unitId: UNIT, accountId: id35, motivo: MOTIVO });
     const lookup: KitVersionsLookup = () => [BEAUTY_SALON_KIT_V1, comPapel(BEAUTY_SALON_KIT_V1, 2, 'receita-serviço', '3.3')];
     await atualizar('d1', lookup);
-    expect(await activeCode('receita-serviço')).toBe('3.5');
+    expect(await activeCode('receita-serviço')).toBe('3.9'); // o ajuste (3.9) sobrevive ao upgrade
 
     const p = await pendencia('role:receita-serviço');
     const out = await factory().getKitPendingService(scope(), lookup).accept(scope(), p.id, { unitId: UNIT, motivo: MOTIVO });
