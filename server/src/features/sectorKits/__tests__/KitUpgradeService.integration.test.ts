@@ -12,6 +12,7 @@ import type { BindingScope } from '@/features/accountingBinding/repositories/IAc
 import type { SectorKitV1 } from '@/features/sectorKits/dtos/SectorKitDto';
 import { BEAUTY_SALON_KIT_V1 } from '@/features/sectorKits/kits/beautySalon/kit.v1';
 import { BEAUTY_SALON_KIT_V4 } from '@/features/sectorKits/kits/beautySalon/kit.v4';
+import { BEAUTY_SALON_KIT_V5 } from '@/features/sectorKits/kits/beautySalon/kit.v5';
 import { KIT_REGISTRY } from '@/features/sectorKits/registry';
 import { KitUpgradeDryRunRequiredError } from '@/features/sectorKits/models/kitUpgradeTypes';
 import type { KitVersionsLookup } from '@/features/sectorKits/services/KitInstallService';
@@ -48,7 +49,7 @@ function derived(base: SectorKitV1, kitVersion: number, over: { role?: [string, 
 async function preparar(perfil: Record<string, unknown> = {}) {
   await resetDb();
   ownerId = (await prisma.user.create({ data: { name: 'upg', username: 'upg-dono', email: 'upg@test.local', password: 'x', role: 'USER' } })).id;
-  const codigos = [...new Set(BEAUTY_SALON_KIT_V4.referential.flatMap((b) => b.entries.map((e) => e.referentialCode)))];
+  const codigos = [...new Set([BEAUTY_SALON_KIT_V4, BEAUTY_SALON_KIT_V5].flatMap((k) => k.referential.flatMap((b) => b.entries.map((e) => e.referentialCode))))];
   for (const code of codigos) await prisma.referentialAccount.create({ data: { layoutVersion: '2025', code, name: code, isAnalytic: true } });
   await prisma.fiscalProfile.create({ data: { ...where(), regimeTributario: 'PRESUMIDO', pisCofinsRegime: 'CUMULATIVO', d1fConfirmado: false, ...perfil } });
   await expect(
