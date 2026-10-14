@@ -18,6 +18,8 @@ const repo: IKitInstallationRepository = {
   begin: async () => installed as never,
   saveSteps: async () => installed as never,
   finish: async () => installed as never,
+  advanceVersion: async () => 1, // PR-4 — não exercitado aqui
+  findAllInstalled: async () => [],
   runTransaction: async (fn) => fn({} as never),
 };
 const getKitInstallService = jest.fn(
