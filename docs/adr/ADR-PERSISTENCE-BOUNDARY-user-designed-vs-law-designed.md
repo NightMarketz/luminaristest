@@ -14,7 +14,7 @@ A tese de produto é **um segundo banco por usuário, configurado em DynamicTabl
 ## 1. Contexto: o que foi decidido e quando
 
 - A tese original (pré-contabilidade) era **sem exceção**: todas as tabelas do usuário em DynamicTable, com pastas, camadas e comunicação entre tabelas num padrão único.
-- A primeira exceção entrou em **2026-06-17** (`f5aa501a`, `Opportunity` first-class no CRM) e a segunda, inteira, em **2026-06-23** (`5b1f082d`, módulo contábil de partidas dobradas em Prisma). O plano anterior de fazer contabilidade no motor furou **no planejamento**, pelos limites listados no Contrato §2.2 — limites do motor como está, não do SQLite.
+- A exceção entrou inteira em **2026-06-23** (`5b1f082d`, módulo contábil de partidas dobradas em Prisma). O CRM **não** é exceção: `Opportunity` "first-class" (`f5aa501a`, 17/06) é o preset `crmOpportunities` em DynamicTable; os únicos modelos Prisma de CRM (`CrmReportDefinition`, `CrmAttachment`) são tabelas de **plataforma** (como `SavedTableView`, `DynamicTable`, `User`), não dado do negócio do usuário — plataforma é Prisma por natureza e fica fora dos dois critérios da §2.1. O plano anterior de fazer contabilidade no motor furou **no planejamento**, pelos limites listados no Contrato §2.2 — limites do motor como está, não do SQLite.
 - Desde então, ~35 modelos contábeis e fiscais, 78 serviços, 47 deles com transação multi-passo, 29 pontos de agregação no repositório e 263 arquivos de teste (medidos em 14/10/2026). Foi por recorte, não por migração: o preset continuou como superfície de entrada e só o subconjunto de campos com invariante subiu (estoque valorado, contraparte, atributos fiscais de produto e serviço).
 
 ## 2. Decisão
