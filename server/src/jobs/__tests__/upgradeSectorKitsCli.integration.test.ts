@@ -13,6 +13,8 @@ import { parseArgs, runUpgrade } from '@/jobs/upgradeSectorKitsCli';
 
 const TODAY = new Date().toISOString().slice(0, 10);
 const T = 90000;
+/** O CLI usa o registro publicado: a versão final é a última dele (não um número fixo). */
+const LATEST = KIT_REGISTRY.beautySalon.at(-1)!.kitVersion;
 let ownerId: string;
 
 async function instalarV1(unitId: string) {

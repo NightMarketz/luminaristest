@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { handleApiError } from '../../../lib/apiUtils';
 import { getUserContextFromRequest } from '../../../lib/authUtils';
-import { resolveBindingScope, type BindingScope } from '../../accountingBinding/repositories/IAccountingBindingRepository';
+import { resolveBindingScope, type BindingScope } from '../../accountingBinding/models/bindingScope';
 import {
   DecideKitPendingRequestSchema,
   KitInstallationViewSchema,

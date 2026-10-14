@@ -13,7 +13,7 @@ import type { BindingScope } from '@/features/accountingBinding/repositories/IAc
 import type { SectorKitV1 } from '@/features/sectorKits/dtos/SectorKitDto';
 import { BEAUTY_SALON_KIT_V1 } from '@/features/sectorKits/kits/beautySalon/kit.v1';
 import { BEAUTY_SALON_KIT_V4 } from '@/features/sectorKits/kits/beautySalon/kit.v4';
-import { KIT_REGISTRY } from '@/features/sectorKits/registry';
+import { KIT_REGISTRY, latestKit } from '@/features/sectorKits/registry';
 import type { KitVersionsLookup } from '@/features/sectorKits/services/KitInstallService';
 
 const app = makeApp();
@@ -40,7 +40,8 @@ async function preparar(perfil: Record<string, unknown> = {}) {
 }
 
 const atualizar = async (deployId: string, lookup?: KitVersionsLookup) => {
-  const svc = factory().getKitUpgradeService(scope(), lookup);
+  // Registro preso no v4 (o catálogo semeado e as contagens são do v4; o v5 do #656 publicou depois).
+  const svc = factory().getKitUpgradeService(scope(), lookup ?? onlyUpTo(4));
   await svc.upgrade(scope(), { mode: 'DRY_RUN', deployId, actor: 'deploy-cli' });
   return svc.upgrade(scope(), { mode: 'APPLY', deployId, actor: 'deploy-cli' });
 };
@@ -99,7 +100,8 @@ describe('KitPendingService (integração)', () => {
     expect({ status: fora.status, code: fora.body.code }).toEqual({ status: 404, code: 'KIT_PENDING_NOT_FOUND' });
 
     const kit = await request(app).get('/api/accounting-kit').query({ unitId: UNIT }).set(authHeader(dono));
-    expect(kit.body.data).toMatchObject({ kitVersion: 4, latestVersion: 4, openPendingCount: 0 });
+    // A rota usa o registro publicado: a última versão é a dele, não a do registro preso no v4.
+    expect(kit.body.data).toMatchObject({ kitVersion: 4, latestVersion: latestKit('beautySalon')!.kitVersion, openPendingCount: 0 });
     const semKit = await request(app).get('/api/accounting-kit').query({ unitId: 'outra' }).set(authHeader(dono));
     expect(semKit.body).toEqual({ success: true, data: null });
   }, T);
@@ -170,7 +172,8 @@ describe('KitPendingService (integração)', () => {
 
   it('aceitar override remove o ajuste e recompila no código do kit', async () => {
     await preparar();
-    const id35 = (await prisma.account.create({ data: { ...where(), code: '3.5', name: 'Receita própria', nature: 'Revenue' } })).id;
+    // 3.9: o 3.5 virou conta canônica no #656 (mesma troca que ele fez nos testes do PR-3)
+    const id35 = (await prisma.account.create({ data: { ...where(), code: '3.9', name: 'Receita própria', nature: 'Revenue' } })).id;
     await factory().getRoleAccountOverrideService(scope(), onlyUpTo(1)).set(scope(), 'receita-serviço', { unitId: UNIT, accountId: id35, motivo: MOTIVO });
     const lookup: KitVersionsLookup = () => [BEAUTY_SALON_KIT_V1, comPapel(BEAUTY_SALON_KIT_V1, 2, 'receita-serviço', '3.3')];
     await atualizar('d1', lookup);
@@ -185,7 +188,7 @@ describe('KitPendingService (integração)', () => {
 
   it('aceitar override sem ajuste vivo só fecha a pendência', async () => {
     await preparar();
-    const id35 = (await prisma.account.create({ data: { ...where(), code: '3.5', name: 'Receita própria', nature: 'Revenue' } })).id;
+    const id35 = (await prisma.account.create({ data: { ...where(), code: '3.9', name: 'Receita própria', nature: 'Revenue' } })).id;
     const lookup: KitVersionsLookup = () => [BEAUTY_SALON_KIT_V1, comPapel(BEAUTY_SALON_KIT_V1, 2, 'receita-serviço', '3.3')];
     await factory().getRoleAccountOverrideService(scope(), onlyUpTo(1)).set(scope(), 'receita-serviço', { unitId: UNIT, accountId: id35, motivo: MOTIVO });
     await atualizar('d1', lookup);

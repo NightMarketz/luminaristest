@@ -59,7 +59,8 @@ async function preparar(perfil: Record<string, unknown> = {}) {
 }
 
 const upgrade = (mode: 'DRY_RUN' | 'APPLY', deployId: string, lookup?: KitVersionsLookup) =>
-  factory().getKitUpgradeService(scope(), lookup).upgrade(scope(), { mode, deployId, actor: 'deploy-cli' });
+  // O registro fica preso no v4: as contagens abaixo são do conteúdo v1 → v4 (o v5 do #656 publicou depois).
+  factory().getKitUpgradeService(scope(), lookup ?? onlyUpTo(4)).upgrade(scope(), { mode, deployId, actor: 'deploy-cli' });
 
 const foto = async () => ({
   contas: await prisma.account.count({ where: { ...where(), deletedAt: null } }),
@@ -108,7 +109,7 @@ describe('KitUpgradeService (integração)', () => {
       { fromVersion: '1', toVersion: '4', additive: '39', forward: '0', conflicts: '0' },
     ]);
 
-    const view = await factory().getKitUpgradeService(scope()).view(scope());
+    const view = await factory().getKitUpgradeService(scope(), onlyUpTo(4)).view(scope());
     expect(view).toMatchObject({ kitKey: 'beautySalon', kitVersion: 4, latestVersion: 4, openPendingCount: 0, changelog: [], lastRun: { status: 'APPLIED' } });
   }, T);
 
@@ -124,7 +125,7 @@ describe('KitUpgradeService (integração)', () => {
 
   it('view antes de atualizar: changelog só das versões que faltam', async () => {
     await preparar();
-    const view = await factory().getKitUpgradeService(scope()).view(scope());
+    const view = await factory().getKitUpgradeService(scope(), onlyUpTo(4)).view(scope());
     expect(view!.changelog.map((c) => c.kitVersion)).toEqual([2, 3, 4]);
     expect(view!.changelog.every((c) => c.entries.length === 1)).toBe(true);
     expect(view!.changelog[0].entries[0]).toMatch(/^v2:/);
@@ -132,7 +133,8 @@ describe('KitUpgradeService (integração)', () => {
 
   it('item 36: o ajuste sobrevive à atualização que muda o mesmo papel e vira pendência override', async () => {
     await preparar();
-    const id35 = (await prisma.account.create({ data: { ...where(), code: '3.5', name: 'Receita própria', nature: 'Revenue' } })).id;
+    // 3.9: o 3.5 virou conta canônica no #656 (mesma troca que ele fez nos testes do PR-3)
+    const id35 = (await prisma.account.create({ data: { ...where(), code: '3.9', name: 'Receita própria', nature: 'Revenue' } })).id;
     await factory()
       .getRoleAccountOverrideService(scope(), onlyUpTo(1))
       .set(scope(), 'receita-serviço', { unitId: UNIT, accountId: id35, motivo: MOTIVO });
@@ -192,7 +194,7 @@ describe('KitUpgradeService (integração)', () => {
       changelog: [...BEAUTY_SALON_KIT_V4.changelog, 'v5: kit de teste'],
       chartExtension: BEAUTY_SALON_KIT_V4.chartExtension.map((a) => (a.code === '2.1.3' ? { ...a, name: 'IRPJ a pagar (v5)' } : a)),
     };
-    const lookup: KitVersionsLookup = (k) => [...KIT_REGISTRY[k]!, v5];
+    const lookup: KitVersionsLookup = (k) => [...onlyUpTo(4)(k)!, v5];
     await upgrade('DRY_RUN', 'd2', lookup);
     const out = await upgrade('APPLY', 'd2', lookup);
     expect(out).toMatchObject({ status: 'APPLIED', run: { counts: { forward: 1, conflicts: 0 } } });
