@@ -25,7 +25,6 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { ApplicationFactory } from '@/lib/factory';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
 import { SECTOR_BINDING_REGISTRY } from '@/features/accountingBinding/fixtures/sectorBindingRegistry';
 import { runCli } from '@/jobs/activateAccountingBindingCli';
 
@@ -111,7 +110,15 @@ describe('GUARDA — 2º setor Active na mesma unidade pelo POST /compile e pelo
   it.failing('CLI: salão Active pelo /compile (unidade sem KitInstallation) + clínica pelo CLI ⇒ a unidade segue com UM setor e a recarga não colide', async () => {
     await ApplicationFactory.getInstance()
       .getPostingService()
-      .ensureChartOfAccounts(resolveAccountingScope({ userId: dono.id }, UNIT_CLI));
+      // Escopo literal (mesmo shape do `resolveAccountingScope`): importar de features/accounting fura o importBoundary.test.ts.
+      .ensureChartOfAccounts({
+        ownerUserId: dono.id,
+        actorUserId: dono.id,
+        unitId: UNIT_CLI,
+        ledgerCode: 'DEFAULT',
+        baseCurrencyCode: 'BRL',
+        timeZone: 'America/Sao_Paulo',
+      });
     const { year, month } = hoje();
     await prisma.accountingPeriod.create({ data: { userId: dono.id, unitId: UNIT_CLI, year, month, status: 'OPEN', openedAt: new Date() } });
     await perfilFiscal(UNIT_CLI);
