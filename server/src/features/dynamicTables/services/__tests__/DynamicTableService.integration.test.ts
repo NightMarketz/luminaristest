@@ -180,6 +180,48 @@ describe('Governance: immutableAfter', () => {
     expect(await isSoftDeleted(closed.id)).toBe(false);
     expect(await isSoftDeleted(open.id)).toBe(false);
   });
+
+  /**
+   * ADR-PERSISTENCE-BOUNDARY §5.1 (Nível 3, 2026-10-14) — `isSystem` pula os Guards 2/3 por inteiro
+   * (`updateTableData`: `if (!isSystem)` nos dois guards). Em linha sob `immutableAfter` scope:'all'
+   * (venda Finalized), um write de sistema pode alterar QUALQUER campo — inclusive `totalAmount`, a
+   * base do lançamento contábil. Hoje só `RegisterPaymentService` usa `isSystem` em venda, e só em
+   * campos `readOnly` (`paidAt`, `paidWithPackageId`); a lacuna é o motor não limitar a isso.
+   *
+   * Comportamento esperado (decisão do dono, questionário 14/10/2026, opção "Restringir isSystem a
+   * campos readOnly"): em linha imutável por scope:'all', `isSystem` só escreve campos marcados
+   * `readOnly` no schema; tentar outro campo lança ValidationError e a linha não muda.
+   * Controle: o MESMO write de sistema sobre o campo `readOnly` passa — o cenário está armado.
+   *
+   * Instrumentado VERMELHO 2026-10-14 como `it.failing` ("Received promise resolved instead of
+   * rejected" na asserção final, com os dois controles passando). A sessão de correção troca por `it`.
+   */
+  it.failing('ADR-PB §5.1: isSystem on an immutable row (scope:all) may only write readOnly fields', async () => {
+    const SCHEMA = {
+      fields: [
+        { name: 'title', label: 'Title', type: 'string', required: true },
+        { name: 'status', label: 'Status', type: 'select', required: true, options: ['Open', 'Closed'] },
+        { name: 'paidAt', label: 'Paid at', type: 'string', readOnly: true },
+      ],
+      immutableAfter: [{ condition: { field: 'status', op: 'eq', value: 'Closed' }, scope: 'all' }],
+    };
+    await seedUser('userA');
+    const t = await seedTable('userA', 'sys_immutable_tbl', SCHEMA);
+    const row = await create(ctxFor('userA'), t.id, { title: 'Sale', status: 'Closed' });
+    // Controle 1: usuário comum não edita (regra scope:'all' ativa).
+    await expect(update(ctxFor('userA'), row.id, { title: 'Changed' })).rejects.toBeInstanceOf(ValidationError);
+    // Controle 2: sistema escreve o campo readOnly — é o uso legítimo (RegisterPaymentService).
+    await expect(
+      service.updateTableData(ctxFor('userA'), row.id, { data: { paidAt: '2026-10-14' } } as any, { isSystem: true }),
+    ).resolves.toBeTruthy();
+
+    // Asserção da lacuna: sistema NÃO pode escrever campo que não é readOnly na linha imutável.
+    await expect(
+      service.updateTableData(ctxFor('userA'), row.id, { data: { title: 'Changed by system' } } as any, { isSystem: true }),
+    ).rejects.toBeInstanceOf(ValidationError);
+    const after = await prisma.dynamicTableData.findUnique({ where: { id: row.id } });
+    expect((after?.data as any).title).toBe('Sale');
+  });
 });
 
 describe('Governance: unique', () => {
