@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { useUnitAccountingActivation } from '../useUnitAccountingActivation';
 import { accountingBindingService } from '../../../../lib/services/accountingBinding.service';
 
@@ -40,8 +40,11 @@ describe('useUnitAccountingActivation', () => {
     const { result, rerender } = renderHook(({ unitId }) => useUnitAccountingActivation(unitId), { initialProps: { unitId: 'u-old' } });
     rerender({ unitId: 'u-new' });
     await waitFor(() => expect(result.current.state).toBe('inactive'));
-    resolveOld([row('beautySalon')]);
-    await new Promise((r) => setTimeout(r, 0));
+    // Assenta a resposta atrasada (com 0 ms o teste lia o estado antes do setState e passava sem a guarda — review do #681).
+    await act(async () => {
+      resolveOld([row('beautySalon')]);
+      await new Promise((r) => setTimeout(r, 50));
+    });
     expect(result.current.state).toBe('inactive');
   });
 

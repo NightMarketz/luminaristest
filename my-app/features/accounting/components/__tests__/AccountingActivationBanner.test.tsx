@@ -16,6 +16,12 @@ vi.mock('../../../../lib/services/accountingBinding.service', () => ({
   accountingBindingService: { listActive: vi.fn(), activateDefault: vi.fn() },
 }));
 vi.mock('../../../../lib/notifications/notify', () => ({ notify: vi.fn() }));
+// Sem instância i18next o `t` não interpola o fallback; este dublê interpola, para provar o `{{period}}`/`{{sector}}`.
+vi.mock('../../lib/useAccountingT', () => {
+  const t = (_key: string, fallback: string, opts?: Record<string, string>) =>
+    fallback.replace(/\{\{(\w+)\}\}/g, (_m: string, name: string) => opts?.[name] ?? `{{${name}}}`);
+  return { useAccountingT: () => ({ t, tRef: { current: t } }) };
+});
 
 const active = [{ id: 'b1', sectorKey: 'beautySalon', bindingVersion: 1, status: 'Active' as const }];
 
@@ -64,7 +70,7 @@ describe('AccountingActivationBanner', () => {
     const dialog = await openConfirm();
     expect(dialog.textContent).toMatch(/plano de contas padrão/);
     expect(dialog.textContent).toMatch(/período do mês corrente/);
-    expect(dialog.textContent).toMatch(/Clínica de estética|\{\{sector\}\}/);
+    expect(dialog.textContent).toContain('Setor: Clínica de estética.');
     fireEvent.click(within(dialog).getByRole('button', { name: 'Ativar' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(accountingBindingService.activateDefault).toHaveBeenCalledWith({
@@ -111,7 +117,7 @@ describe('AccountingActivationBanner', () => {
     render(<AccountingActivationBanner unitId="u1" onNavigateToPeriods={onNavigateToPeriods} />);
     fireEvent.click(within(await openConfirm()).getByRole('button', { name: 'Ativar' }));
     const list = await screen.findByTestId('accounting-activation-blocking');
-    expect(within(list).getByText(/está fechado — reabra-o/)).toBeInTheDocument();
+    expect(within(list).getByText('O período 2026-10 está fechado — reabra-o antes de ativar.')).toBeInTheDocument();
     expect(within(list).getByText('A unidade não tem perfil fiscal.')).toBeInTheDocument();
     fireEvent.click(within(list).getByRole('button', { name: 'Ir para Períodos' }));
     expect(onNavigateToPeriods).toHaveBeenCalledTimes(1);
@@ -119,15 +125,20 @@ describe('AccountingActivationBanner', () => {
     expect(notify).not.toHaveBeenCalled();
   });
 
-  it('item 6 + PR-0: 409 BINDING_SECTOR_CONFLICT ⇒ a mensagem do BE na faixa, que continua aberta', async () => {
-    vi.mocked(accountingBindingService.activateDefault).mockRejectedValue({
-      code: 'BINDING_SECTOR_CONFLICT',
-      message: "A unidade 'u1' já tem a contabilidade do setor 'beautySalon'; um setor por unidade — não ativa 'aestheticClinic'.",
-      status: 409,
-    });
+  it('item 6 + PR-0: 409 BINDING_SECTOR_CONFLICT ⇒ a mensagem do BE na faixa, que continua aberta; a lista de um Draft anterior some', async () => {
+    vi.mocked(accountingBindingService.activateDefault)
+      .mockResolvedValueOnce({ status: 'Draft', blocking: [{ code: 'CHART_OF_ACCOUNTS_EMPTY', message: 'vazio' }] })
+      .mockRejectedValueOnce({
+        code: 'BINDING_SECTOR_CONFLICT',
+        message: "A unidade 'u1' já tem a contabilidade do setor 'beautySalon'; um setor por unidade — não ativa 'aestheticClinic'.",
+        status: 409,
+      });
     render(<AccountingActivationBanner unitId="u1" onNavigateToPeriods={vi.fn()} />);
     fireEvent.click(within(await openConfirm()).getByRole('button', { name: 'Ativar' }));
+    await screen.findByTestId('accounting-activation-blocking');
+    fireEvent.click(within(await openConfirm()).getByRole('button', { name: 'Ativar' }));
     expect(await screen.findByRole('alert')).toHaveTextContent(/já tem a contabilidade do setor 'beautySalon'/);
+    expect(screen.queryByTestId('accounting-activation-blocking')).not.toBeInTheDocument();
     expect(screen.getByTestId('accounting-activation-banner')).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });

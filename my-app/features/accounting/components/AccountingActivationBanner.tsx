@@ -81,6 +81,7 @@ export function AccountingActivationBanner({ unitId, onNavigateToPeriods, onNavi
       activation.reload();
     } catch (e: unknown) {
       setConfirmOpen(false);
+      setBlocking([]); // a lista de um Draft anterior não é o estado desta tentativa
       setError(resolveError(e, t('activation.error', 'Não foi possível ativar a contabilidade.')));
     } finally {
       setBusy(false);
