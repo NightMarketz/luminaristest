@@ -133,15 +133,17 @@ function harness(docs: Doc[] = [baseDoc()]) {
     markPendingDone: jest.fn(async (id: string) => {
       pendings.set(id, { ...pendings.get(id)!, status: 'DONE', xmlBytes: null, pdfBytes: null, lastError: null });
     }),
-    listAttachmentBackfillCandidates: jest.fn(async () =>
-      [...docsById.values()].filter(
+    listAttachmentBackfillCandidates: jest.fn(async () => ({
+      candidates: [...docsById.values()].filter(
         (d) =>
           (d.status === 'AUTHORIZED' || d.status === 'AUTHORIZED_DIVERGENT') &&
           d.ambiente === 'producao' &&
           d.xmlAttachmentId == null &&
           d.sourceDocumentId == null &&
           ![...pendings.values()].some((p) => p.documentId === d.id),
-      )),
+      ),
+      nextCursor: null,
+    })),
   };
   const documentAttachmentService = { upload: jest.fn(async (_s: unknown, a: { fileName: string }) => ({ id: `att-${++attSeq}-${a.fileName}` })) };
   const postingService = {
