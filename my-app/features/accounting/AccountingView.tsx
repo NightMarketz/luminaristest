@@ -43,6 +43,7 @@ import { toGovernanceScope } from './governance/GovernanceScope';
 import { AccountantAssignmentSection } from './governance/AccountantAssignmentSection';
 import { ClientModeStrip, PendingInvitesBanner, clientLabel } from './governance/ClientModeBars';
 import { PolicyVersionsPanel } from './governance/PolicyVersionsPanel';
+import { AccountingActivationBanner } from './components/AccountingActivationBanner';
 
 export type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'nfe' | 'compliance' | 'dimensoes' | 'imobilizado' | 'perfil-fiscal' | 'parametros-legais' | 'politica' | 'apuracao';
 
@@ -92,6 +93,12 @@ export const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
  * acrescentada ao `TABS` fica ESCONDIDA por padrão no modo cliente até alguém pô-la aqui de propósito.
  */
 export const DELEGATED_TABS: readonly Tab[] = ['periodos', 'compliance', 'politica'];
+
+/**
+ * Aba Pendências (F-I5-4 a, I5 PR-3) — o link da faixa de ativação só existe quando ela estiver em `TABS`
+ * (FE-INCR-BINDING-ACTIVATION-screen-brief item 8): o PR da tela pode entrar antes do I5 sem link quebrado.
+ */
+export const PENDENCIAS_TAB: Tab | undefined = TABS.find((tab) => (tab.id as string) === 'pendencias')?.id;
 
 const OWN_CONTEXT = 'own';
 
@@ -258,6 +265,17 @@ export function AccountingView() {
 
       <PendingInvitesBanner pending={pendingAssignments} onAccepted={() => void reloadAssignments()} />
       {governance && <ClientModeStrip governance={governance} onEnded={leaveClient} onOpenPolicy={() => setActiveTab('politica')} />}
+
+      {/* ── Ativação da contabilidade (LAC-B, F-BA-1 a): só livro próprio — no modo cliente a ativação gravaria no silo
+           do chamador, não no do cliente (item 4). `key` remonta por unidade. ── */}
+      {!governance && unitId && (
+        <AccountingActivationBanner
+          key={unitId}
+          unitId={unitId}
+          onNavigateToPeriods={() => setActiveTab('periodos')}
+          onNavigateToPendencias={PENDENCIAS_TAB ? () => setActiveTab(PENDENCIAS_TAB) : undefined}
+        />
+      )}
 
       {/* ── Tab bar ────────────────────────────────────────────────────────── */}
       <div

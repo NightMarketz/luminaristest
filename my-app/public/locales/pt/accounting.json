@@ -2823,5 +2823,32 @@
       "detail": "Erro ao carregar o detalhe.",
       "reconcile": "Não foi possível reconciliar a provisão."
     }
+  },
+  "activation": {
+    "regionLabel": "Ativação da contabilidade",
+    "inactive": "A contabilidade automática desta unidade não está ativa — as vendas não geram lançamento.",
+    "sectorLabel": "Setor",
+    "button": "Ativar contabilidade",
+    "sectors": {
+      "beautySalon": "Salão de beleza",
+      "aestheticClinic": "Clínica de estética"
+    },
+    "confirm": {
+      "title": "Ativar a contabilidade desta unidade?",
+      "message": "Setor: {{sector}}. Ao confirmar, (1) o plano de contas padrão é instalado se o da unidade estiver vazio e (2) o período do mês corrente é aberto se ainda não existir.",
+      "confirmLabel": "Ativar",
+      "cancelLabel": "Cancelar"
+    },
+    "blockingTitle": "A ativação não foi concluída:",
+    "blocking": {
+      "CHART_OF_ACCOUNTS_EMPTY": "O plano de contas da unidade está vazio.",
+      "ACCOUNTING_PERIOD_NOT_OPEN": "O período {{period}} está fechado — reabra-o antes de ativar.",
+      "EVENT_COVERAGE_MISSING": "Há evento da operação sem regra contábil."
+    },
+    "goToPeriods": "Ir para Períodos",
+    "success": "Contabilidade automática ativada: as vendas desta unidade passam a gerar lançamento.",
+    "successShort": "Contabilidade automática ativa.",
+    "pendenciasLink": "Ver pendências da unidade",
+    "error": "Não foi possível ativar a contabilidade."
   }
 }

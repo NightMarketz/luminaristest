@@ -13,6 +13,7 @@ import {
 } from '../../../lib/services/accountantAssignments.service';
 import { DynamicTableService } from '../../../lib/services/dynamic-table.service';
 import { policyVersionsService } from '../../../lib/services/policyVersions.service';
+import { accountingBindingService } from '../../../lib/services/accountingBinding.service';
 
 /**
  * FE-INCR-ACCOUNTANT-GOVERNANCE item 13c/13c2 — a mordida do risco principal: o modo cliente (F-FE-GOV-1 b) vive
@@ -38,6 +39,10 @@ vi.mock('../../../lib/services/accountantAssignments.service', () => ({
 // Faixa do modo cliente lê as propostas pendentes (FE-INCR-ACCOUNTING-POLICY-VERSION item 10).
 vi.mock('../../../lib/services/policyVersions.service', () => ({
   policyVersionsService: { list: vi.fn(), get: vi.fn(), propose: vi.fn(), approve: vi.fn(), reject: vi.fn() },
+}));
+// Faixa de ativação (LAC-B item 4): lê o binding Active da unidade — só no livro próprio.
+vi.mock('../../../lib/services/accountingBinding.service', () => ({
+  accountingBindingService: { listActive: vi.fn(), activateDefault: vi.fn() },
 }));
 vi.mock('../governance/PolicyVersionsPanel', () => ({
   PolicyVersionsPanel: (p: { governance?: { ownerUserId: string } }) => (
@@ -109,6 +114,28 @@ describe('AccountingView — modo cliente (F-FE-GOV-1 b)', () => {
     vi.mocked(accountingService.getAccounts).mockResolvedValue({ accounts: [] } as never);
     vi.mocked(dimensionsService.listCatalog).mockResolvedValue([]);
     vi.mocked(policyVersionsService.list).mockResolvedValue([]);
+    vi.mocked(accountingBindingService.listActive).mockResolvedValue([]);
+  });
+
+  it('LAC-B item 4: modo cliente não chama GET /accounting-binding nem mostra a faixa de ativação', async () => {
+    mockUnits([]);
+    vi.mocked(accountantAssignmentsService.listMine).mockResolvedValue([row({})]);
+    render(<AccountingView />);
+    await screen.findByTestId('client-mode-strip');
+    fireEvent.click(screen.getByRole('tab', { name: 'Compliance' }));
+    await waitFor(() => expect(DynamicTableService.getTableData).toHaveBeenCalled());
+    expect(accountingBindingService.listActive).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('accounting-activation-banner')).not.toBeInTheDocument();
+  });
+
+  it('LAC-B item 3: livro próprio com unidade sem binding Active mostra a faixa, acima das abas', async () => {
+    mockUnits(['u1']);
+    vi.mocked(accountantAssignmentsService.listMine).mockResolvedValue([]);
+    render(<AccountingView />);
+    const banner = await screen.findByTestId('accounting-activation-banner');
+    expect(accountingBindingService.listActive).toHaveBeenCalledWith('u1');
+    const tablist = screen.getByRole('tablist');
+    expect(banner.compareDocumentPosition(tablist) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('sem carteira (lista vazia): a tela é a de sempre — 22 abas, select de unidade, nada de seletor de livro', async () => {
