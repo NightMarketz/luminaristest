@@ -43,7 +43,7 @@ Vale para o que já é DynamicTable (venda e CRM carregam dinheiro) e é pré-co
 | # | Garantia | Estado em 14/10 (verificado) |
 |---|---|---|
 | G1 | Coluna travada bloqueia no serviço | `readOnly` é só UI (`DynamicTable.model.ts:47`); `immutableAfter`/`lifecycle` só no update |
-| G2 | `deleteTableData` respeita `immutableAfter`/`lifecycle`/`deleteConstraints` | ignora os dois primeiros (Contrato `[AC-2.2-4]`) |
+| G2 | `deleteTableData` respeita `immutableAfter`/`lifecycle`/`deleteConstraints` | **parcial:** `immutableAfter` scope `'all'` bloqueia delete individual e lote desde #390/#409 (GAP-MAP 8, 26–28/09); `lifecycle` e regras de lista de campos seguem sem guarda no delete. O texto do Contrato `[AC-2.2-4]` estava desatualizado e foi emendado neste PR |
 | G3 | `isSystem` passa por policy, não dribla guards | dribla os 3 guards e o `noOverlap` |
 | G4 | `unique`/`compositeUnique` com lock + re-check **dentro** da tx | só `noOverlap` tem (`93945426`); GAP-MAP Nível 4 |
 | G5 | Dinheiro = centavos inteiros imposto pelo esquema | convenção do caller (`numberFormat:'integer'`) |
@@ -58,9 +58,9 @@ Opção técnica a avaliar junto com G4: índice único parcial do SQLite sobre 
 
 ## 5. Hipóteses abertas a falsificar (sessão de instrumentação, sem código de aplicação)
 
-1. Venda `Finalized` é imutável nos três caminhos (update, delete, `isSystem`)? Previsão: delete passa (G2).
-2. Delete de produto com `StockMovement` vivo deixa órfão? Previsão: sim (sem `deleteConstraints`).
-3. Ponte float→centavos fecha com `unitPrice` 0.1 e 0.2 × 3? Previsão: fecha no razão; display do preset pode somar em float.
+1. Venda `Finalized` é imutável nos três caminhos? **Lido 14/10:** update de usuário bloqueado (`immutableAfter` scope `'all'`, `SalesModule.ts:182`); delete bloqueado (GAP-MAP 8). Resta o caminho `isSystem`: o motor deixa qualquer campo ser escrito (`RegisterPaymentService` usa para `paidAt`/`paidWithPackageId`, por desenho), inclusive `totalAmount` — **fork para o dono:** `isSystem` sobre linha imutável deve ficar restrito a campos `readOnly`/sistema, ou segue confiando no chamador?
+2. Delete de produto com estoque vivo em Prisma deixa órfão? **Lido 14/10:** `ProductModule` tem `RESTRICT_IF_AGGREGATE` sobre `productUnits.stock` (DynamicTable) e `IGNORE` sobre `stockMovements` (preset); `checkDeleteRules` só enxerga relações DynamicTable, então `InventoryItem.qtyOnHand > 0` (Prisma, alimentado por compra AP sem venda) **não** bloqueia. Previsão mantida: órfão. **Fork para o dono:** comportamento esperado (recusar × permitir com leitura resolvendo o apagado) e onde a guarda vive (B1 proíbe `InventoryService` no motor/plugin → controller ou rota).
+3. Ponte float→centavos com 0.1×3 e 0.2×3: **refutada 14/10** — `ratearReceita` + `splitRevenueCredit` dão 30 + 60 = 90 centavos a partir de 0.9000000000000001; sem lacuna.
 
 ## 6. Mudar esta fronteira
 
