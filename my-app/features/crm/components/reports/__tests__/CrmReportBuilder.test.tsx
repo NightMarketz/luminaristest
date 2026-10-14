@@ -14,7 +14,10 @@ vi.mock('../../../hooks/useReportSources', () => ({
   useReportSources: () => ({ sources: ['leads', 'leadProposals'], loading: false, error: false, fieldsOf }),
 }));
 // o resultado tem teste próprio; aqui basta saber que apareceu
-vi.mock('../CrmReportResult', () => ({ CrmReportResult: () => <div data-testid="report-result" /> }));
+vi.mock('../CrmReportResult', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../CrmReportResult')>()),
+  CrmReportResult: () => <div data-testid="report-result" />,
+}));
 
 import { CrmReportBuilder } from '../CrmReportBuilder';
 import type { CrmReportRow } from '../../../../../lib/services/crmReports.service';

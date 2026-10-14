@@ -11,6 +11,7 @@ import DocumentChatWidget from '../chat/components/DocumentChatWidget';
 import GenericChatWidget from '../generic-chat/components/GenericChatWidget';
 import AnalyticsWidget from '../analytics/AnalyticsWidget';
 import ErpViewWidget from '../erp-view/ErpViewWidget';
+import CrmReportWidget from '../crm-report/CrmReportWidget';
 import { DASHBOARD_GRID_CONFIG } from './dashboard-grid.config';
 import useDashboardGrid from './hooks/use-dashboard-grid';
 import { DocumentOption } from '../chat/components/DocumentSelector';
@@ -359,6 +360,16 @@ export default function DashboardGrid() {
             onClose={() => removeWidget(item.id)}
             initialConfig={item.widgetConfig}
             onConfigChange={(config) => updateWidgetConfig(item.id, { ...config })}
+          />
+        );
+
+      case DASHBOARD_GRID_CONFIG.WIDGET_TYPES.CRM_REPORT:
+        return (
+          <CrmReportWidget
+            id={item.id}
+            onClose={() => removeWidget(item.id)}
+            initialConfig={item.widgetConfig}
+            onConfigChange={(config) => updateWidgetConfig(item.id, { reportId: config.reportId })}
           />
         );
 

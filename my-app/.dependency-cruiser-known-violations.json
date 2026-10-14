@@ -225,5 +225,50 @@
         ]
       }
     ]
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/crm-report/CrmReportWidget.tsx",
+    "to": "features/dashboard/components/shared/dynamic-tables.client.ts",
+    "rule": {
+      "severity": "error",
+      "name": "U3-components-not-features"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/crm-report/CrmReportWidget.tsx",
+    "to": "features/crm/lib/reportWidget.ts",
+    "rule": {
+      "severity": "error",
+      "name": "U3-components-not-features"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/crm-report/CrmReportWidget.tsx",
+    "to": "features/crm/lib/reportBuilder.ts",
+    "rule": {
+      "severity": "error",
+      "name": "U3-components-not-features"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/crm-report/CrmReportWidget.tsx",
+    "to": "features/crm/hooks/useReportSources.ts",
+    "rule": {
+      "severity": "error",
+      "name": "U3-components-not-features"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/crm-report/CrmReportWidget.tsx",
+    "to": "features/crm/components/reports/CrmReportResult.tsx",
+    "rule": {
+      "severity": "error",
+      "name": "U3-components-not-features"
+    }
   }
 ]

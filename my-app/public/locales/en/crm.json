@@ -465,5 +465,19 @@
         "FIELD_CONFLICT": "The source already has a field with this name."
       }
     }
+  },
+  "report_widget": {
+    "title": "CRM report",
+    "description": "Show a saved CRM report",
+    "settings": "Pick the report",
+    "close": "Close",
+    "pick": "Pick the saved report:",
+    "loading": "Loading…",
+    "empty": "No saved reports.",
+    "go_builder": "Create a report in the builder",
+    "not_found": "This report no longer exists.",
+    "reconfigure": "Pick another report",
+    "cancel": "Cancel",
+    "retry": "Try again"
   }
 }

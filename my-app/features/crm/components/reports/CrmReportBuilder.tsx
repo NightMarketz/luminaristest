@@ -10,9 +10,7 @@ import {
   browserTimeZone,
   buildPatch,
   combinedFields,
-  currencyIndexes,
   emptyDraft,
-  fieldLabel,
   fromReport,
   itemsLost,
   prunedForFields,
@@ -29,9 +27,9 @@ import {
   type ReportSource,
   type RightFieldsOf,
 } from '../../lib/reportBuilder';
-import { CrmReportEditor, measureText } from './CrmReportEditor';
+import { CrmReportEditor } from './CrmReportEditor';
 import { CrmReportList } from './CrmReportList';
-import { CrmReportResult, type ReportRunSnapshot } from './CrmReportResult';
+import { CrmReportResult, buildRunSnapshot, type ReportRunSnapshot } from './CrmReportResult';
 
 /**
  * Tela do builder de relatórios do CRM (FE-INCR-CRM-REPORT-BUILDER PR-A, itens 2–9, 11–18). Lista ⇄ editor; a
@@ -124,22 +122,7 @@ export function CrmReportBuilder() {
   }, [loadList]);
 
   const snapshotOf = useCallback(
-    (output: CrmRunOutput, d: ReportDraft, flds: ISchemaField[]): ReportRunSnapshot => ({
-      output,
-      kind: d.kind,
-      chartType: d.chartType,
-      dimensions: d.dimensions,
-      moneyIndexes: currencyIndexes(d, flds, output.meta.currency),
-      measureLabels: d.measures.map((m) => measureText(m, flds, t)),
-      groupLabel:
-        d.dimensions
-          .map((dim) => {
-            const name = dim.type === 'field' ? dim.field : dim.dateField;
-            const f = flds.find((x) => x.name === name);
-            return f ? fieldLabel(f) : name;
-          })
-          .join(' | ') || t('report_builder.result.total', 'Total'),
-    }),
+    (output: CrmRunOutput, d: ReportDraft, flds: ISchemaField[]): ReportRunSnapshot => buildRunSnapshot(output, d, flds, t),
     [t],
   );
 

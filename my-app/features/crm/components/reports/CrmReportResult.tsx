@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'next-i18next';
 import ChartRenderer from '../../../dashboard/category-views/finance/components/analytics/charts/ChartRenderer';
 import DashboardKpiCard from '../../../dashboard/category-views/finance/components/analytics/dashboard/DashboardKpiCard';
@@ -7,15 +8,19 @@ import { GenericTable } from '../../../dashboard/category-views/shared/component
 import type { ITableSchema, ISchemaField } from '../../../dashboard/components/shared/dynamic-tables.client';
 import type { CrmReportRunOutput } from '../../../../lib/services/crmReports.service';
 import { formatDate } from '../../lib/dates';
+import { measureText } from './CrmReportEditor';
 import {
   NO_CURRENCY_KEY,
+  currencyIndexes,
   displayPointName,
+  fieldLabel,
   formatReportValue,
   pointCurrency,
   seriesViews,
   type DimensionDraft,
   type PointCurrency,
   type ReportChartType,
+  type ReportDraft,
   type ReportKind,
   type SeriesView,
 } from '../../lib/reportBuilder';
@@ -39,6 +44,34 @@ export interface ReportRunSnapshot {
   measureLabels: string[];
   /** Rótulo da coluna de agrupamento na tabela. */
   groupLabel: string;
+}
+
+/**
+ * Snapshot de um run para o render (builder e widget do dashboard — item 20 reusa o render do item 14): moeda por
+ * medida, rótulos das séries e da coluna de agrupamento, tudo do rascunho que gerou o run.
+ */
+export function buildRunSnapshot(
+  output: CrmReportRunOutput,
+  draft: ReportDraft,
+  fields: readonly ISchemaField[],
+  t: TFunction<'crm'>,
+): ReportRunSnapshot {
+  return {
+    output,
+    kind: draft.kind,
+    chartType: draft.chartType,
+    dimensions: draft.dimensions,
+    moneyIndexes: currencyIndexes(draft, fields, output.meta.currency),
+    measureLabels: draft.measures.map((m) => measureText(m, fields, t)),
+    groupLabel:
+      draft.dimensions
+        .map((dim) => {
+          const name = dim.type === 'field' ? dim.field : dim.dateField;
+          const f = fields.find((x) => x.name === name);
+          return f ? fieldLabel(f) : name;
+        })
+        .join(' | ') || t('report_builder.result.total', 'Total'),
+  };
 }
 
 const PALETTE = ['#3b82f6', '#14b8a6', '#10b981', '#8b5cf6', '#f59e0b', '#ec4899', '#ef4444', '#6366f1'];
