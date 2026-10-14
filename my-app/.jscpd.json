@@ -1,0 +1,18 @@
+{
+  "format": [
+    "typescript",
+    "tsx"
+  ],
+  "ignore": [
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.gen.ts",
+    "**/.next/**"
+  ],
+  "reporters": [
+    "console"
+  ],
+  "absolute": false,
+  "gitignore": true
+}

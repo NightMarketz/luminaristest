@@ -61,6 +61,20 @@ jobs:
       - name: Lint (layer-gate)
         run: npm run lint
 
+      # Fronteiras de camada (dependency-cruiser) — docs/adr/ADR-ARCH-BOUNDARIES.md. Bloqueia só
+      # violação NOVA: as existentes estão no baseline .dependency-cruiser-known-violations.json.
+      - name: Architecture boundaries (check:arch)
+        run: npm run check:arch
+
+      # Código morto (knip) e duplicação (jscpd): só reportam por enquanto (ADR-ARCH-BOUNDARIES).
+      - name: Dead code (check:dead, advisory)
+        continue-on-error: true
+        run: npm run check:dead
+
+      - name: Duplication (check:dup, advisory)
+        continue-on-error: true
+        run: npm run check:dup
+
       # Gate de governança C5 — dívida SUPRIMIDA (medida pelo ESLint) × dívida DECLARADA
       # (bloco debt-ledger do spec). O passo acima barra violação SEM supressão; este barra
       # a supressão que não corresponde mais a nada, o spec que declara dívida já paga, e a
@@ -180,6 +194,18 @@ jobs:
 
       - name: Lint (layer-gate)
         run: npm run lint:gate
+
+      # Metade frontend das fronteiras (dependency-cruiser) — ver o comentário no job `server-static`.
+      - name: Architecture boundaries (check:arch)
+        run: npm run check:arch
+
+      - name: Dead code (check:dead, advisory)
+        continue-on-error: true
+        run: npm run check:dead
+
+      - name: Duplication (check:dup, advisory)
+        continue-on-error: true
+        run: npm run check:dup
 
       # Metade frontend do gate C5 — ver o comentário no job `server`.
       - name: Debt ledger matches spec (governance C5)

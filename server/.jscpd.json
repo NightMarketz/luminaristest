@@ -1,0 +1,15 @@
+{
+  "format": [
+    "typescript"
+  ],
+  "ignore": [
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/generated/**"
+  ],
+  "reporters": [
+    "console"
+  ],
+  "absolute": false,
+  "gitignore": true
+}

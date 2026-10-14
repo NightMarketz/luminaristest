@@ -6,7 +6,7 @@
 >
 > **Convenção:** `ADR-<trilho><n>` = decisão; `D0-*` = registro de ratificação humana (gate G0) de uma fase.
 > Onde uma decisão de módulo **não** tem ADR próprio, o ponteiro para onde ela vive está em §Fora-de-ADR.
-> Última atualização: **2026-09-29** (`ADR-INCR-PAYMENT-PROVIDER-COLLECTION.md`, Proposed; antes: 2026-09-22, primeiro ADR com status `Rejected`: `ADR-DOMAIN-MOTOR-rejected.md`).
+> Última atualização: **2026-10-13** (`ADR-ARCH-BOUNDARIES.md`, Accepted; antes: 2026-09-29, `ADR-INCR-PAYMENT-PROVIDER-COLLECTION.md`, Proposed; antes: 2026-09-22, primeiro ADR com status `Rejected`: `ADR-DOMAIN-MOTOR-rejected.md`).
 
 ## Buildout contábil (INCR-*)
 
@@ -69,6 +69,7 @@ Plano-sequência dos degraus (gates humanos → P1 → P2): `docs/SDD-LUMINARIS.
 | [M2-DEPLOY](ADR-M2-deploy-topology.md) | Topologia de deploy — VPS própria com encaixe CLEAN para PaaS, uma instância por cliente, BYOK por env da instância, migração como etapa separada do pipeline | **Accepted — RATIFICADO PELO DONO 2026-08-22** (via `AskUserQuestion`, sem fork/parecer intermediário): (1) alvo→VPS própria agora + encaixe CLEAN p/ PaaS; (2) topologia→1 instância/cliente; (3) BYOK→chave de IA do cliente, custo zero de código, KMS/BYOC explicitamente fora de escopo; (4) migração→job próprio separado do swap de container, nunca boot/manual. Desbloqueia a pré-condição de alvo do `RUNBOOK-M2-DEPLOY-SMOKE.md`; **aberto:** VPS/provedor concreto, Qdrant gerenciado ou não | 2026-08-22 | DECISÃO ARQUITETURAL (deploy / infraestrutura) |
 
 | [DOMAIN-MOTOR](ADR-DOMAIN-MOTOR-rejected.md) | Motor de domínio genérico (MutationEngine + OrchestrationEngine em DAG + PluginRegistry + AuditLog + fila) × convenção `atomicUntil` (2 commits + reconcile) | **Rejected 2026-09-21 (dono, via sessão)** — motor rejeitado; vencedor = Contrato §2.3 (`AC-2.3-1..3`) + cabeçalho `atomicUntil` cobrado por `SVC-008`/`REV-008`; primitiva `commitThenReconcile` só no próximo incidente (estende o gatilho (b) do ADR-RC); **4 gatilhos de reabertura** no §3; retrofit dos 8 chamadores = PR-B (GAP-MAP fila 9) | 2026-09-21 | DECISÃO ARQUITETURAL (rejeição — teto de atomicidade) |
+| [ARCH-BOUNDARIES](ADR-ARCH-BOUNDARIES.md) | Fronteiras de camada mecanizadas (dependency-cruiser, server L1–L6/B1/F1/X1–X3 + my-app U1–U7) com baseline; knip/jscpd em modo relatório | **Accepted 2026-10-13 (dono, chat)** — `check:arch` bloqueia só violação nova (baseline 35 server / 18 my-app); `check:dead`/`check:dup` advisory; exceção explícita à regra ⛔ do CLAUDE.md raiz (§4) | 2026-10-13 | DECISÃO ARQUITETURAL (gate estático) |
 
 ## Fora-de-ADR — decisões de módulo que vivem em outro lugar
 
