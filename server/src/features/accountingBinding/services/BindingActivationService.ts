@@ -10,6 +10,7 @@ import type { IAccountingBindingPolicy } from '../policies/IAccountingBindingPol
 import type { BindingScope, IAccountingBindingRepository } from '../repositories/IAccountingBindingRepository';
 import type { KitInstallService } from '../../sectorKits/services/KitInstallService';
 import { KitInstallStepFailedError } from '../../sectorKits/models/kitInstallTypes';
+import { BindingSectorConflictError } from '../models/bindingSectorConflict';
 
 /**
  * Plano de contas do escopo, visto pelo módulo do binding. Porta (não import de
@@ -38,6 +39,10 @@ export interface ActivationPeriodPort {
  *
  *   1. policy (item 2) → 403;
  *   2. setor do registry (default = salão) — desconhecido ⇒ 400, nunca compila o binding de outro setor;
+ *   2b. LAC-B PR-0 (F-BA-5 → a): unidade com OUTRO setor — `KitInstallation` de outro kit (qualquer status) ou
+ *      binding `Active` de outro setor ⇒ `BindingSectorConflictError` 409, nada gravado. Esta leitura é o atalho; o
+ *      gate autoritativo roda de novo na tx do `begin` (`install(…, { exclusiveSector: true })`). O `POST /compile` e
+ *      o CLI seguem sem guarda (F-I4-4 a; achado do BRIEF da tela §8);
  *   3. kit já instalado ⇒ `already-active` com a versão Active e o `kit` (idempotência). Unidade sem
  *      `KitInstallation` mas com binding Active (setor fora do backfill da migração) ⇒ `already-active` como antes;
  *   4. PRÉ-CHECK sem efeito colateral: chart vazio sem `installChartIfEmpty` ⇒ `CHART_OF_ACCOUNTS_EMPTY`;
@@ -88,6 +93,11 @@ export class BindingActivationService {
     }
 
     const installation = await this.kitInstaller.findInstallation(scope);
+    if (installation && installation.kitKey !== sectorKey) {
+      throw new BindingSectorConflictError(scope.unitId, installation.kitKey, sectorKey);
+    }
+    const otherActive = (await this.repo.findMany(scope, { status: 'Active' })).find((b) => b.sectorKey !== sectorKey);
+    if (otherActive) throw new BindingSectorConflictError(scope.unitId, otherActive.sectorKey, sectorKey);
     if (installation?.status === 'INSTALLED' && installation.kitKey === sectorKey) {
       const active = await this.repo.findActive(scope, sectorKey);
       return { status: 'already-active', bindingVersion: active?.bindingVersion, kit: installation };
@@ -136,7 +146,7 @@ export class BindingActivationService {
         installChartIfEmpty: input.installChartIfEmpty ?? false,
         openCurrentPeriodIfMissing: input.openCurrentPeriodIfMissing ?? false,
         today,
-      });
+      }, { exclusiveSector: true });
     } catch (error) {
       if (!(error instanceof KitInstallStepFailedError)) throw error;
       const failed = await this.kitInstaller.findInstallation(scope);

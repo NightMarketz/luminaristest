@@ -34,6 +34,8 @@ export const ACTIVATION_PRECONDITION_CODES = [
   // BE-INCR-KIT-SETOR PR-2: pré-check do kit (emenda E-5) e falha por exceção num passo da instalação (item 14).
   'KIT_FISCAL_PROFILE_REQUIRED',
   'KIT_INSTALL_STEP_FAILED',
+  // LAC-B PR-0 (EMENDA-1 item 0b): Active gravado, mas a recarga dos mappers falhou — mesmo código do I4 item 13.
+  'ACCOUNTING_SYNC_RELOAD_FAILED',
 ] as const;
 
 export const ActivationBlockingIssueSchema = z
