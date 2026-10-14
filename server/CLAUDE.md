@@ -12,7 +12,7 @@ Docs de referência (leia sob demanda — não carregam sozinhos):
 
 1. Cadeia obrigatória: `Route → Controller → Service → Repository → Prisma` (+ Policy). Nunca pule uma camada nem inline uma policy.
 2. Injeção via **Factory**; entrada validada por **DTO Zod**; **soft-delete**, não hard-delete.
-3. Módulo novo com invariante financeiro/legal → **Prisma first-class** (Model+Service+Repo+Policy), nunca DynamicTable. Nunca injete serviço Prisma no `DynamicTableService`/`RuleContext`/`RulePlugin`.
+3. Módulo novo: o usuário desenha o esquema → **DynamicTable**; só o núcleo que a lei desenha **e** exige atomicidade multi-tabela/agregação/imutabilidade → **Prisma first-class** (Model+Service+Repo+Policy). "Precisa de consistência" sozinho não decide (`docs/adr/ADR-PERSISTENCE-BOUNDARY-user-designed-vs-law-designed.md`). Nunca injete serviço Prisma no `DynamicTableService`/`RuleContext`/`RulePlugin`.
 4. `tsc` limpo é gate: `cd server && npx tsc --noEmit` — não avance vermelho.
 5. Gate autoritativo (período/saldo/status) re-checado **dentro** do `runTransaction`, com `tx` propagado ao repo; `@@unique` não fecha TOCTOU sozinho.
 6. Service que chama `postEntry` (com ou sem subrazão; sem, `commit 2 — nenhum`): **2 commits + reconcile** (o `postEntry` abre a própria tx raiz — "mesma tx" não existe), cabeçalho `atomicUntil` no primeiro JSDoc e 1 teste por linha (Contrato §2.3). Não invente engine/fila/plugin para isso: motor de domínio é decisão rejeitada (`docs/adr/ADR-DOMAIN-MOTOR-rejected.md`).
