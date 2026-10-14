@@ -22,6 +22,8 @@ import type { IKitInstallationRepository } from '../../../sectorKits/repositorie
  * `routes/__tests__/accountingBinding.activateDefault.integration.test.ts`.
  */
 const scope: BindingScope = { ownerUserId: 'u1', actorUserId: 'u1', unitId: 'unit-1' };
+/** Identidade da tx do dublê: o gate do PR-0 tem de ler o binding COM ela (review do #680, ressalva 1). */
+const TX = { __tx: 'kit-begin' };
 const TODAY = '2026-09-25';
 const CHART = [{ code: '1.1.2', nature: 'Asset', acceptsEntries: true }];
 
@@ -94,7 +96,7 @@ function build(opts: {
     },
     advanceVersion: async () => 1, // PR-4 — não exercitado aqui
     findAllInstalled: async () => [],
-    runTransaction: async (fn) => fn({} as never),
+    runTransaction: async (fn) => fn(TX as never),
   };
   const kitInstaller = new KitInstallService(
     new SectorKitPolicy(),
@@ -284,6 +286,7 @@ describe('BindingActivationService.activateDefault', () => {
       const b = build({ activeRowsByCall: [[], [{ sectorKey: 'beautySalon' }]] });
       await conflito(b);
       expect(b.findMany).toHaveBeenCalledTimes(2);
+      expect((b.findMany.mock.calls[1] as unknown[])[2]).toBe(TX);
       expect(b.begin).not.toHaveBeenCalled();
       nothingWritten(b);
     });
