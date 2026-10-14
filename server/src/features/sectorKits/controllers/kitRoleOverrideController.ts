@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { handleApiError } from '../../../lib/apiUtils';
 import { getUserContextFromRequest } from '../../../lib/authUtils';
-import { resolveBindingScope, type BindingScope } from '../../accountingBinding/repositories/IAccountingBindingRepository';
+import { resolveBindingScope, type BindingScope } from '../../accountingBinding/scope/BindingScope';
 import {
   RemoveRoleOverrideResultSchema,
   RoleAccountOverrideViewSchema,

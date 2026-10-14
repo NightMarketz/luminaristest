@@ -1,33 +1,6 @@
 [
   {
     "type": "dependency",
-    "from": "src/controllers/serviceFiscalSuggestionController.ts",
-    "to": "src/features/accountingBinding/repositories/IAccountingBindingRepository.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L2-controller-not-repository"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/accountingBinding/controllers/accountingBindingController.ts",
-    "to": "src/features/accountingBinding/repositories/IAccountingBindingRepository.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L2-controller-not-repository"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/sectorKits/controllers/kitRoleOverrideController.ts",
-    "to": "src/features/accountingBinding/repositories/IAccountingBindingRepository.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L2-controller-not-repository"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/features/chat/services/ChatService.ts",
     "to": "src/lib/prisma.ts",
     "rule": {
