@@ -171,7 +171,12 @@ export interface IFiscalDocumentRepository {
   markPendingDone(id: string, tx?: Prisma.TransactionClient): Promise<void>;
   /**
    * Candidatos do backfill por reconsulta (BRIEF item 11, F-PA-7 b): AUTHORIZED|AUTHORIZED_DIVERGENT em produção, vivos,
-   * com `xmlAttachmentId` e `sourceDocumentId` nulos e sem pendência. Cross-tenant.
+   * com `xmlAttachmentId` e `sourceDocumentId` nulos e sem pendência. Cross-tenant. Uma página por chamada, em ordem de
+   * `id` depois de `afterId`; `nextCursor` nulo = última página.
    */
-  listAttachmentBackfillCandidates(limit: number, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
+  listAttachmentBackfillCandidates(
+    limit: number,
+    afterId: string | null,
+    tx?: Prisma.TransactionClient,
+  ): Promise<{ candidates: FiscalDocument[]; nextCursor: string | null }>;
 }

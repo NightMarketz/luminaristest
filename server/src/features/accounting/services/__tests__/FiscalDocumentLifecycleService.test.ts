@@ -140,7 +140,7 @@ function makeService(opts: { docs?: Record<string, ReturnType<typeof baseDoc>> }
     createPendingAttachment: jest.fn(async (_scope: unknown, data: { documentId: string; xmlBytes: Buffer | null; pdfBytes: Buffer | null; resultJson: string }) =>
       pendingRow({ documentId: data.documentId, xmlBytes: data.xmlBytes, pdfBytes: data.pdfBytes, resultJson: data.resultJson })),
     listDuePendingAttachments: jest.fn(async () => [] as ReturnType<typeof pendingRow>[]),
-    listAttachmentBackfillCandidates: jest.fn(async () => [] as ReturnType<typeof baseDoc>[]),
+    listAttachmentBackfillCandidates: jest.fn(async () => ({ candidates: [] as ReturnType<typeof baseDoc>[], nextCursor: null })),
     markPendingStep: jest.fn(async () => undefined),
     markPendingDone: jest.fn(async () => undefined),
   };
