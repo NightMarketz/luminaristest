@@ -145,7 +145,7 @@ describe('KitUpgradeService (integração)', () => {
     await upgrade('DRY_RUN', 'd', lookup);
     const out = await upgrade('APPLY', 'd', lookup);
     expect(out).toMatchObject({ status: 'APPLIED', run: { counts: { conflicts: 1 } } });
-    expect(await activeCode('receita-serviço')).toBe('3.5'); // a empresa segue no ajuste
+    expect(await activeCode('receita-serviço')).toBe('3.9'); // a empresa segue no ajuste (3.9, conta do override)
     expect(await prisma.roleAccountOverride.count({ where: { ...where(), deletedAt: null } })).toBe(1);
     expect((await foto()).kitVersion).toBe(2); // a pendência não trava a versão (item 35)
     expect((await pendencias()).map((p) => ({ reason: p.reason, itemKey: p.itemKey, status: p.status }))).toEqual([
