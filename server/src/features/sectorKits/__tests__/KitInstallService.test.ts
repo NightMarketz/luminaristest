@@ -60,7 +60,7 @@ function build(opts: { failOn?: string; compileStatus?: 'Active' | 'Draft'; char
   const service = new KitInstallService(
     { canInstallKit: () => opts.canInstall ?? true, canManageKit: () => true, canReadServiceFiscalSuggestions: () => true, canReadKitTrace: () => true },
     repo,
-    { findActive: async () => null },
+    { findActive: async () => null, findMany: async () => [] },
     { compile },
     {
       listChart: () => hit('listChart', Array.from({ length: opts.chart ?? 0 }, () => ({ code: 'x', nature: 'Asset', acceptsEntries: true }))),

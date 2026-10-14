@@ -131,4 +131,41 @@ describe('POST /api/accounting-binding/activate-default (LAC-B)', () => {
     expect(res.body.data).toEqual({ status: 'already-active', bindingVersion: 1, kit: { kitKey: 'beautySalon', kitVersion: 5, status: 'INSTALLED' } });
     expect(await prisma.accountingBinding.count({ where: { userId: dono.id, unitId: UNIT } })).toBe(1);
   });
+
+  it('LAC-B PR-0 (F-BA-5 a): salão Active + pedido da clínica na MESMA unidade ⇒ 409 BINDING_SECTOR_CONFLICT, nada gravado', async () => {
+    const antes = { ...(await foto(dono.id)), kits: await prisma.kitInstallation.count({ where: { userId: dono.id, unitId: UNIT } }) };
+    const res = await request(app)
+      .post(URL)
+      .set(authHeader(dono))
+      .send({ unitId: UNIT, sectorKey: 'aestheticClinic', installChartIfEmpty: true, openCurrentPeriodIfMissing: true });
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('BINDING_SECTOR_CONFLICT');
+    expect(res.body.message).toContain('beautySalon');
+    expect({ ...(await foto(dono.id)), kits: await prisma.kitInstallation.count({ where: { userId: dono.id, unitId: UNIT } }) }).toEqual(antes);
+    const ativos = await prisma.accountingBinding.findMany({ where: { userId: dono.id, unitId: UNIT, status: 'Active' } });
+    expect(ativos.map((b) => b.sectorKey)).toEqual(['beautySalon']);
+  });
+
+  it('LAC-B PR-0: unidade LEGADA (binding Active do salão, sem KitInstallation) + clínica ⇒ 409, nenhuma KitInstallation criada', async () => {
+    const LEGADA = 'unit-lacb-legada';
+    await prisma.accountingBinding.create({
+      data: {
+        userId: dono.id,
+        unitId: LEGADA,
+        sectorKey: 'beautySalon',
+        bindingVersion: 1,
+        compiledAt: new Date(),
+        compiledFromHash: 'sha256:legada',
+        payload: JSON.stringify(SALE_BINDING_V1),
+        status: 'Active',
+        createdById: dono.id,
+      },
+    });
+    const res = await request(app).post(URL).set(authHeader(dono)).send({ unitId: LEGADA, sectorKey: 'aestheticClinic' });
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('BINDING_SECTOR_CONFLICT');
+    expect(await prisma.kitInstallation.count({ where: { userId: dono.id, unitId: LEGADA } })).toBe(0);
+    expect(await prisma.accountingBinding.count({ where: { userId: dono.id, unitId: LEGADA } })).toBe(1);
+  });
 });

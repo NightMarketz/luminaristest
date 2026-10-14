@@ -36,7 +36,7 @@ const getKitInstallService = jest.fn(
     new KitInstallService(
       new SectorKitPolicy(),
       memoryKitRepo(),
-      { findActive: async () => null },
+      { findActive: async () => null, findMany: async () => [] },
       getAccountingBindingCompileService(scope),
       {
         listChart: async () => ((await lastChart) ?? []).map((a) => ({ code: a.code, nature: a.nature, acceptsEntries: a.acceptsEntries })),

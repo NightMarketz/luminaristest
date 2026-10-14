@@ -13,6 +13,7 @@ jest.mock('../../../../lib/apiUtils', () => ({
   handleApiError: (...args: unknown[]) => handleApiError(...args),
 }));
 
+jest.mock('../../../../lib/logger', () => ({ __esModule: true, default: { error: jest.fn(), warn: jest.fn(), info: jest.fn() } }));
 import { createAccountingBindingController } from '../accountingBindingController';
 
 function mockRes(): Response {
@@ -42,6 +43,7 @@ describe('accountingBindingController — handlers criados por createAccountingB
   const validateOnly = jest.fn();
   const list = jest.fn();
   const activateDefault = jest.fn();
+  const reloadAccountingMappers = jest.fn(async () => {});
   const controller = createAccountingBindingController({
     // buildCompileService(scope) — fábrica por escopo (item 15 do BRIEF, achado da fiação real:
     // ChartLookupPort não recebe scope, então o service real não pode ser uma instância fixa; ver
@@ -49,6 +51,7 @@ describe('accountingBindingController — handlers criados por createAccountingB
     // pra toda chamada — suficiente pra este teste, que só prova delegação de handler.
     buildCompileService: () => ({ compile, validateOnly, list } as never),
     buildActivationService: () => ({ activateDefault } as never),
+    reloadAccountingMappers,
   });
 
   beforeEach(() => {
@@ -180,6 +183,42 @@ describe('accountingBindingController — handlers criados por createAccountingB
         { installChartIfEmpty: true },
       );
       expect(res.json).toHaveBeenCalledWith({ success: true, data: { status: 'Active', bindingVersion: 1 } });
+    });
+
+    it('EMENDA-1 item 0b: Active ⇒ recarrega os mappers DEPOIS do service, uma vez', async () => {
+      activateDefault.mockResolvedValueOnce({ status: 'Active', bindingVersion: 1 });
+      await controller.activateDefaultBinding({ body: { unitId: 'unit-1' } } as unknown as Request, mockRes());
+      expect(reloadAccountingMappers).toHaveBeenCalledTimes(1);
+      expect(activateDefault.mock.invocationCallOrder[0]).toBeLessThan(reloadAccountingMappers.mock.invocationCallOrder[0]);
+    });
+
+    it.each([
+      { status: 'already-active', bindingVersion: 3 },
+      { status: 'Draft', blocking: [{ code: 'CHART_OF_ACCOUNTS_EMPTY', message: 'vazio' }] },
+    ])('EMENDA-1 item 0b: $status ⇒ NÃO recarrega', async (result) => {
+      activateDefault.mockResolvedValueOnce(result);
+      const res = mockRes();
+      await controller.activateDefaultBinding({ body: { unitId: 'unit-1' } } as unknown as Request, res);
+      expect(reloadAccountingMappers).not.toHaveBeenCalled();
+      expect(res.json).toHaveBeenCalledWith({ success: true, data: result });
+    });
+
+    it('EMENDA-1 item 0b: recarga falha ⇒ 200 Draft ACCOUNTING_SYNC_RELOAD_FAILED, versão e kit preservados', async () => {
+      const kit = { kitKey: 'beautySalon', kitVersion: 5, status: 'INSTALLED' };
+      activateDefault.mockResolvedValueOnce({ status: 'Active', bindingVersion: 2, kit });
+      reloadAccountingMappers.mockRejectedValueOnce(new Error('colisão'));
+      const res = mockRes();
+      await controller.activateDefaultBinding({ body: { unitId: 'unit-1' } } as unknown as Request, res);
+      expect(handleApiError).not.toHaveBeenCalled();
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        data: {
+          status: 'Draft',
+          bindingVersion: 2,
+          kit,
+          blocking: [{ code: 'ACCOUNTING_SYNC_RELOAD_FAILED', message: expect.stringContaining('reinício') }],
+        },
+      });
     });
 
     it('erro do service vai para handleApiError (403/400 mapeados lá)', async () => {

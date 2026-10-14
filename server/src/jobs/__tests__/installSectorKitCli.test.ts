@@ -27,7 +27,7 @@ const getKitInstallService = jest.fn(
     new KitInstallService(
       new SectorKitPolicy(),
       repo,
-      { findActive: async () => null },
+      { findActive: async () => null, findMany: async () => [] },
       { compile },
       {
         listChart: async () => [{ code: '1.1.1', nature: 'Asset', acceptsEntries: true }],

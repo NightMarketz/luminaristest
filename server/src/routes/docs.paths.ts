@@ -4474,7 +4474,11 @@
  *         /compile —, padrões fiscais por serviço, referencial), retomando do primeiro não concluído. Kit com
  *         contas-padrão do perfil fiscal e unidade sem perfil ⇒ bloqueante KIT_FISCAL_PROFILE_REQUIRED (nada
  *         gravado). Exceção num passo ⇒ 'Draft' com KIT_INSTALL_STEP_FAILED { step }; compile reprovado ⇒ 'Draft'
- *         com os bloqueantes do validador. 'already-active' = kit já instalado.
+ *         com os bloqueantes do validador. 'already-active' = kit já instalado. LAC-B PR-0: a unidade com OUTRO
+ *         setor (binding Active ou KitInstallation de outro kit) ⇒ 409 BINDING_SECTOR_CONFLICT, nada gravado (um setor
+ *         por unidade). Depois de 'Active' a rota recarrega os mappers contábeis (as vendas da unidade lançam sem
+ *         reiniciar); falha na recarga ⇒ 'Draft' com ACCOUNTING_SYNC_RELOAD_FAILED (o binding fica ativo; lança após o
+ *         próximo reinício). POST /compile e o CLI não têm a guarda nem a recarga.
  *       tags: [AccountingBinding]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -4487,6 +4491,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '409': { description: "BINDING_SECTOR_CONFLICT — a unidade já tem outro setor (binding Active ou kit instalado)" }
  *
  *   /api/accounting-binding:
  *     get:
