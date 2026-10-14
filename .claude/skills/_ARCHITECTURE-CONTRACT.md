@@ -93,12 +93,15 @@ Um módulo first-class Prisma tem **tabelas definidas pelo desenvolvedor com inv
 
 | Pergunta | Sim → |
 |---|---|
-| O usuário cria ou configura o esquema em runtime? | DynamicTable |
-| Tem invariante financeiro/legal que o banco deve garantir? | Prisma first-class |
-| A integridade depende de `@@unique`, FK ou tipos reais? | Prisma first-class |
-| É dado de infraestrutura do negócio (não configurável pelo usuário)? | Prisma first-class |
+| O usuário desenha o esquema (catálogo, agenda, venda, pipeline, formulários, campos próprios)? | **DynamicTable** — tese de produto ("segundo banco por usuário"); sem exceção dentro desse conjunto |
+| A lei desenha o esquema igual para todos **e** a escrita precisa de atomicidade multi-tabela com gate na tx, agregação em volume, imutabilidade por construção ou regra legal tipada? | **Prisma first-class** — razão, períodos, numeração, apuração, SPED, documento fiscal, cadeia de auditoria |
 
-Em caso de dúvida: **Prisma first-class.** DynamicTable é exceção justificada, não default.
+**"Consistência obrigatória" sozinha não decide** — o motor deve entregar consistência (G1–G5 em
+`docs/adr/ADR-PERSISTENCE-BOUNDARY-user-designed-vs-law-designed.md` §3). Em caso de dúvida entre os
+dois critérios: **DynamicTable**, com a ponte `postEntry(sourceType, sourceId)` para o que o razão precisar
+registrar (decisão do dono 2026-10-14; substitui o antigo "em caso de dúvida, Prisma"). A faixa
+operacional-financeira (AP/AR, contraparte, estoque) está em Prisma hoje e é candidata declarada a voltar
+para DynamicTable quando G1–G5 existirem (ADR §2.2) — nunca durante incremento de outro assunto.
 
 #### ANTI-PADRÕES PROIBIDOS — gate reprovado se qualquer um aparecer
 
