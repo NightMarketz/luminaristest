@@ -44,6 +44,10 @@ export class PostingRepository implements IPostingRepository {
     });
   }
 
+  public async existsForAccount(scope: AccountingScope, accountId: string, tx?: Prisma.TransactionClient): Promise<boolean> {
+    return (await (tx ?? prisma).posting.findFirst({ where: { ...accountingScopeWhere(scope), accountId }, select: { id: true } })) !== null;
+  }
+
   public async findByAccount(scope: AccountingScope, accountId: string): Promise<Posting[]> {
     return prisma.posting.findMany({
       where: { ...accountingScopeWhere(scope), accountId },

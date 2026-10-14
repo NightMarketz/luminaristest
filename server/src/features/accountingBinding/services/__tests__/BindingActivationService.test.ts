@@ -75,6 +75,8 @@ function build(opts: {
       installation = { ...installation!, status, steps: JSON.stringify(steps) };
       return installation as never;
     },
+    advanceVersion: async () => 1, // PR-4 — não exercitado aqui
+    findAllInstalled: async () => [],
     runTransaction: async (fn) => fn({} as never),
   };
   const kitInstaller = new KitInstallService(

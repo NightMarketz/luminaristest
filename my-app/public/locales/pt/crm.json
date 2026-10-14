@@ -431,7 +431,9 @@
       "SORT_KEY_REQUIRED": "Com mais de uma medida, escolha por qual medida ordenar.",
       "FILTER_INCOMPLETE": "Complete ou remova os filtros sem campo ou sem valor.",
       "KPI_DIMENSION": "KPI não tem agrupamento, salvo a separação por moeda.",
-      "LIMIT_RANGE": "O limite vai de 1 a 500."
+      "LIMIT_RANGE": "O limite vai de 1 a 500.",
+      "JOIN_INCOMPLETE": "Complete ou remova o cruzamento: escolha a tabela e os dois campos.",
+      "JOIN_ALIAS_INVALID": "Corrija o apelido do cruzamento."
     },
     "confirm": {
       "source_title": "Trocar a fonte?",
@@ -440,7 +442,28 @@
       "cancel": "Cancelar",
       "delete_title": "Apagar relatório?",
       "delete_body": "O relatório \"{{name}}\" será apagado.",
-      "delete_ok": "Apagar"
+      "delete_ok": "Apagar",
+      "join_title": "Mudar o cruzamento?",
+      "join_body": "Medidas, agrupamentos e filtros que usam campos deste cruzamento e deixam de existir serão removidos.",
+      "join_ok": "Mudar e limpar"
+    },
+    "joins": {
+      "title": "Avançado: cruzar com outra tabela",
+      "hint": "Cada linha da fonte pega a primeira linha da outra tabela em que os dois campos têm o mesmo valor. Os campos da outra tabela aparecem como apelido.campo.",
+      "right_source": "Tabela",
+      "pick_source": "Escolha a tabela…",
+      "left_field": "Campo da fonte",
+      "right_field": "Campo da outra tabela",
+      "alias": "Apelido",
+      "add": "Adicionar cruzamento",
+      "alias_problem": {
+        "REQUIRED": "Dê um apelido ao cruzamento.",
+        "CHARS": "O apelido não pode ter ponto nem espaço.",
+        "TOO_LONG": "O apelido pode ter até 40 caracteres.",
+        "RESERVED": "O apelido não pode ser \"id\" nem começar com \"_\".",
+        "DUPLICATE": "Outro cruzamento já usa esse apelido.",
+        "FIELD_CONFLICT": "A fonte já tem um campo com esse nome."
+      }
     }
   }
 }
