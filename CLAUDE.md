@@ -64,7 +64,9 @@ mais; use `git show b617d8f1:<caminho>` se precisar.
 | O dado/módulo é… | Tecnologia |
 |---|---|
 | Tabela que o usuário cria/configura em runtime (CRM, formulários, fluxos customizados) | **DynamicTable** (preset + plugin) |
-| Entidade com invariante financeiro, legal ou regulatório (contabilidade, folha, fiscal, RH) | **Prisma first-class** (Model + Service + Repo + Policy próprios) |
+| Núcleo que a **lei desenha igual para todos** E exige atomicidade multi-tabela / agregação em volume / imutabilidade por construção (razão, períodos, apuração, SPED, documento fiscal) | **Prisma first-class** (Model + Service + Repo + Policy próprios) |
+
+"Precisa de consistência" sozinho **não** manda para Prisma — o motor deve entregá-la (G1–G5). Em dúvida → DynamicTable + ponte `postEntry`. Decisão do dono 14/10: `docs/adr/ADR-PERSISTENCE-BOUNDARY-user-designed-vs-law-designed.md`.
 
 **Se você está prestes a:**
 - Injetar qualquer serviço Prisma (`PostingService`, `PayrollService`…) em `DynamicTableService`, `RuleContext` ou `RulePlugin` → **PARE. Design errado.**

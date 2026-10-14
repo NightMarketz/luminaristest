@@ -240,19 +240,31 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     });
   }
 
-  public async listAttachmentBackfillCandidates(limit: number, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]> {
-    const comPendencia = await this.db(tx).fiscalDocumentPendingAttachment.findMany({ select: { documentId: true } });
-    return this.db(tx).fiscalDocument.findMany({
+  public async listAttachmentBackfillCandidates(
+    limit: number,
+    afterId: string | null,
+    tx?: Prisma.TransactionClient,
+  ): Promise<{ candidates: FiscalDocument[]; nextCursor: string | null }> {
+    const page = await this.db(tx).fiscalDocument.findMany({
       where: {
         status: { in: [...AUTHORIZED_STATUSES] },
         ambiente: 'producao',
         deletedAt: null,
         xmlAttachmentId: null,
         sourceDocumentId: null,
-        id: { notIn: comPendencia.map((p) => p.documentId) },
+        ...(afterId ? { id: { gt: afterId } } : {}),
       },
-      orderBy: [{ authorizedAt: 'asc' }],
+      orderBy: [{ id: 'asc' }],
       take: limit,
     });
+    const comPendencia = await this.db(tx).fiscalDocumentPendingAttachment.findMany({
+      where: { documentId: { in: page.map((d) => d.id) } },
+      select: { documentId: true },
+    });
+    const ids = new Set(comPendencia.map((p) => p.documentId));
+    return {
+      candidates: page.filter((d) => !ids.has(d.id)),
+      nextCursor: page.length === limit ? page[page.length - 1].id : null,
+    };
   }
 }

@@ -10,6 +10,7 @@
  * Run via `npm run test:integration`.
  */
 import request from 'supertest';
+import prisma from '@/lib/prisma';
 import {
   makeApp,
   pushTestSchema,
@@ -192,6 +193,68 @@ describe('PUT/DELETE /api/dynamic-tables/:tableId/data/:dataId (Tier-0)', () => 
     const res = await request(app)
       .delete(`/api/dynamic-tables/${t.id}/data/${row.id}`)
       .set(authHeader({ id: owner.id, username: owner.username }));
+    expect(res.status).toBe(204);
+  });
+});
+
+/**
+ * ADR-PERSISTENCE-BOUNDARY §5.2 (Nível 3, 2026-10-14) — a guarda de delete de `products`
+ * (`ProductModule.deleteConstraints`: RESTRICT_IF_AGGREGATE sobre `productUnits.stock`, IGNORE sobre
+ * `stockMovements`) só enxerga relações DynamicTable; `checkDeleteRules` nunca consulta o subrazão
+ * Prisma `InventoryItem.qtyOnHand` (alimentado por compra via AP — `PayableService → receiveStock`).
+ * Produto comprado e nunca vendido é apagável com saldo vivo em `1.1.6 Estoques`: o `productRef`
+ * (string, sem FK) fica órfão. Decisão do dono (questionário 14/10/2026): recusar o delete; a guarda
+ * vive no controller (fora do motor — `[AC-2.1-B1]` proíbe `InventoryService` em motor/plugin), por
+ * isso o teste-guarda é na ROTA, neutro quanto ao status exato: 4xx e a linha continua viva.
+ *
+ * Instrumentado VERMELHO 2026-10-14 como `it.failing` ("Expected: >= 400 / Received: 204"); corrigido
+ * em 2026-10-14 (guarda `assertNoOpenStock` em `dynamicTablesController`).
+ */
+describe('DELETE /api/dynamic-tables/:tableId/data/:dataId — products × estoque vivo em Prisma (ADR-PB §5.2)', () => {
+  it('refuses to soft-delete a products row while InventoryItem.qtyOnHand > 0 points to it', async () => {
+    const owner = await seedUser({ username: 'owner' });
+    const products = await seedDynamicTable({
+      userId: owner.id,
+      name: 'Products',
+      internalName: 'products',
+      category: 'products',
+      schema: { fields: [{ name: 'name', label: 'Name', type: 'string', required: true }] },
+    });
+    const row = await seedDynamicTableData({ dynamicTableId: products.id, data: { name: 'Shampoo 1L' } });
+    await prisma.inventoryItem.create({
+      data: { userId: owner.id, unitId: 'unit-1', productRef: row.id, qtyOnHand: 3, totalValueCents: 3000n },
+    });
+    // Controle: sem a trava, o mesmo delete de uma linha SEM estoque é 204 (caso "lets the owner
+    // soft-delete their row" acima) — o que distingue este caso é só o InventoryItem.
+
+    const res = await request(app)
+      .delete(`/api/dynamic-tables/${products.id}/data/${row.id}`)
+      .set(authHeader({ id: owner.id, username: owner.username }));
+
+    expect(res.status).toBeGreaterThanOrEqual(400);
+    expect(res.status).toBeLessThan(500);
+    const after = await prisma.dynamicTableData.findUnique({ where: { id: row.id } });
+    expect(after?.deletedAt).toBeNull();
+  });
+
+  it('still deletes a products row whose InventoryItem has qtyOnHand = 0 (204)', async () => {
+    const owner = await seedUser({ username: 'owner' });
+    const products = await seedDynamicTable({
+      userId: owner.id,
+      name: 'Products',
+      internalName: 'products',
+      category: 'products',
+      schema: { fields: [{ name: 'name', label: 'Name', type: 'string', required: true }] },
+    });
+    const row = await seedDynamicTableData({ dynamicTableId: products.id, data: { name: 'Shampoo 1L' } });
+    await prisma.inventoryItem.create({
+      data: { userId: owner.id, unitId: 'unit-1', productRef: row.id, qtyOnHand: 0, totalValueCents: 0n },
+    });
+
+    const res = await request(app)
+      .delete(`/api/dynamic-tables/${products.id}/data/${row.id}`)
+      .set(authHeader({ id: owner.id, username: owner.username }));
+
     expect(res.status).toBe(204);
   });
 });

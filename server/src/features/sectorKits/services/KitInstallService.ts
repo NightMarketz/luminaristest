@@ -25,6 +25,7 @@
 import { ForbiddenError, ValidationError } from '../../../lib/errors';
 import type { BindingScope, IAccountingBindingRepository } from '../../accountingBinding/repositories/IAccountingBindingRepository';
 import type { ActivationPeriodPort } from '../../accountingBinding/services/BindingActivationService';
+import { BindingSectorConflictError } from '../../accountingBinding/models/bindingSectorConflict';
 import type { BindingCompileService, CompileBindingResult } from '../../accountingBinding/services/BindingCompileService';
 import type { SectorKitV1 } from '../dtos/SectorKitDto';
 import { InstallKitInputSchema, KitInstallStepsSchema, type InstallKitInput, type KitInstallSteps, type KitRef } from '../dtos/KitInstallationDto';
@@ -78,7 +79,7 @@ export class KitInstallService {
   constructor(
     private readonly policy: ISectorKitPolicy,
     private readonly repo: IKitInstallationRepository,
-    private readonly bindingRepo: Pick<IAccountingBindingRepository, 'findActive'>,
+    private readonly bindingRepo: Pick<IAccountingBindingRepository, 'findActive' | 'findMany'>,
     private readonly compileService: Pick<BindingCompileService, 'compile'>,
     private readonly chart: KitChartPort,
     private readonly period: ActivationPeriodPort,
@@ -121,12 +122,42 @@ export class KitInstallService {
     ];
   }
 
-  async install(scope: BindingScope, rawInput: InstallKitInput): Promise<KitInstallOutcome> {
+  /** `begin` com o gate de setor único re-checado na mesma tx (ver `install`). */
+  private async beginExclusive(scope: BindingScope, kit: SectorKitV1) {
+    const conflict = (activeSectorKey: string) => new BindingSectorConflictError(scope.unitId, activeSectorKey, kit.kitKey);
+    try {
+      return await this.repo.runTransaction(async (tx) => {
+        const current = await this.repo.findByScope(scope, tx);
+        if (current && current.kitKey !== kit.kitKey) throw conflict(current.kitKey);
+        const other = (await this.bindingRepo.findMany(scope, { status: 'Active' }, tx)).find(
+          (b) => b.sectorKey !== kit.binding.sectorKey,
+        );
+        if (other) throw conflict(other.sectorKey);
+        return this.repo.begin(scope, { kitKey: kit.kitKey, kitVersion: kit.kitVersion }, tx);
+      });
+    } catch (error) {
+      if ((error as { code?: unknown } | null)?.code !== 'P2002') throw error;
+      const winner = await this.repo.findByScope(scope);
+      if (winner && winner.kitKey !== kit.kitKey) throw conflict(winner.kitKey);
+      throw error;
+    }
+  }
+
+  /**
+   * `opts.exclusiveSector` (LAC-B PR-0, F-BA-5 → a; lacunas decididas em 14/10, D-2026-10-14-LAC-B-PR0-LACUNAS): só o
+   * `POST /accounting-binding/activate-default` liga. Outro setor na unidade — `KitInstallation` de outro kit em
+   * qualquer status, ou binding `Active` de outro setor (unidade legada, sem instalação) — vira
+   * `BindingSectorConflictError` (409) em vez do 400, e a checagem roda DE NOVO dentro da tx do `begin` (gate
+   * autoritativo; a leitura do `BindingActivationService` é só o atalho). A corrida que o `@@unique([userId, unitId])`
+   * pega (P2002) também vira 409 quando o vencedor é outro kit. Desligado (CLI do kit), o caminho é o de antes.
+   */
+  async install(scope: BindingScope, rawInput: InstallKitInput, opts: { exclusiveSector?: boolean } = {}): Promise<KitInstallOutcome> {
     if (!this.policy.canInstallKit(scope)) throw new ForbiddenError('Você não tem permissão para instalar o kit de setor.');
     const input = InstallKitInputSchema.parse(rawInput);
 
     const existing = await this.repo.findByScope(scope);
     if (existing && existing.kitKey !== input.kitKey) {
+      if (opts.exclusiveSector) throw new BindingSectorConflictError(scope.unitId, existing.kitKey, input.kitKey);
       // Item 9: um kit por unidade (dois colidiriam no mapper `unitId:sourceType`).
       throw new ValidationError(
         `A unidade já tem o kit '${existing.kitKey}' (status ${existing.status}); um kit por unidade — não instala '${input.kitKey}'.`,
@@ -142,7 +173,9 @@ export class KitInstallService {
       return { status: 'INSTALLED', kit: ref('INSTALLED'), bindingVersion: active?.bindingVersion, warnings: steps.warnings };
     }
 
-    const row = await this.repo.begin(scope, { kitKey: kit.kitKey, kitVersion: kit.kitVersion });
+    const row = opts.exclusiveSector
+      ? await this.beginExclusive(scope, kit)
+      : await this.repo.begin(scope, { kitKey: kit.kitKey, kitVersion: kit.kitVersion });
     let steps = KitInstallStepsSchema.parse(JSON.parse(row.steps));
     let bindingVersion: number | undefined;
 

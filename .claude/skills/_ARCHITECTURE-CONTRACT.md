@@ -66,7 +66,7 @@ Route → Controller → Service → Repository → Prisma
 - [ ] **Resposta padrão:** `{ success: true, data }` (200) ou `.status(201)` em criação. Erro via `handleApiError(error, res)`.
 - [ ] **Registro de rota = 2 toques** (auth é **deny-by-default**: toda rota sob `/api/*` já nasce exigindo JWT — montar não concede acesso; esquecer registro falha **fechado** em 401, nunca aberto):
   1. mount em `server/src/routes/index.ts` (`app.use('/api/<resource>', router)`)
-  2. bloco `@openapi` em `server/src/routes/docs.paths.ts`
+  2. bloco `@openapi` em arquivo coberto pelos globs `apis` de `server/scripts/generate-openapi.js` (`src/controllers/**`, `src/routes/**`, `src/features/**/dtos/*.ts` — `docs.paths.ts` é só um deles). Gate real: `server/src/__tests__/route-spec-wiring.test.ts` (rota Express sem path na spec falha; baseline `KNOWN_UNDOCUMENTED` só encolhe) + `openapi-paths.test.ts` (piso de contagem contra o drop silencioso do swagger-jsdoc)
   - **NÃO edite `middleware/auth.ts` para proteger rota** — o array `protectedApiPaths` não existe mais. Rota **pública** é exceção explícita: regra `{ path, method, match }` no array `publicApiRoutes` do próprio `server/src/middleware/auth.ts` (matching espelha o Express: case-insensitive, whole-segment, SEM percent-decode, HEAD→GET).
 - [ ] **Exclusão de campos sensíveis** (password etc.) via `select` explícito em queries públicas.
 - [ ] **Domínios DynamicTable (leads/ERP/CRM):** service orquestra `DynamicTableService` (não Repository/Policy próprios); resolve tabelas por `internalName` (preset key), nunca por índice `[0]`; o `DynamicTableService` já força `canManageData` em toda escrita.
@@ -93,12 +93,15 @@ Um módulo first-class Prisma tem **tabelas definidas pelo desenvolvedor com inv
 
 | Pergunta | Sim → |
 |---|---|
-| O usuário cria ou configura o esquema em runtime? | DynamicTable |
-| Tem invariante financeiro/legal que o banco deve garantir? | Prisma first-class |
-| A integridade depende de `@@unique`, FK ou tipos reais? | Prisma first-class |
-| É dado de infraestrutura do negócio (não configurável pelo usuário)? | Prisma first-class |
+| O usuário desenha o esquema (catálogo, agenda, venda, pipeline, formulários, campos próprios)? | **DynamicTable** — tese de produto ("segundo banco por usuário"); sem exceção dentro desse conjunto |
+| A lei desenha o esquema igual para todos **e** a escrita precisa de atomicidade multi-tabela com gate na tx, agregação em volume, imutabilidade por construção ou regra legal tipada? | **Prisma first-class** — razão, períodos, numeração, apuração, SPED, documento fiscal, cadeia de auditoria |
 
-Em caso de dúvida: **Prisma first-class.** DynamicTable é exceção justificada, não default.
+**"Consistência obrigatória" sozinha não decide** — o motor deve entregar consistência (G1–G5 em
+`docs/adr/ADR-PERSISTENCE-BOUNDARY-user-designed-vs-law-designed.md` §3). Em caso de dúvida entre os
+dois critérios: **DynamicTable**, com a ponte `postEntry(sourceType, sourceId)` para o que o razão precisar
+registrar (decisão do dono 2026-10-14; substitui o antigo "em caso de dúvida, Prisma"). A faixa
+operacional-financeira (AP/AR, contraparte, estoque) está em Prisma hoje e é candidata declarada a voltar
+para DynamicTable quando G1–G5 existirem (ADR §2.2) — nunca durante incremento de outro assunto.
 
 #### ANTI-PADRÕES PROIBIDOS — gate reprovado se qualquer um aparecer
 
@@ -123,7 +126,7 @@ Toda linha de DynamicTable mora em `DynamicTableData.data Json` sobre **SQLite**
 - [ ] **[AC-2.2-1] Dinheiro = inteiro em centavos** (`numberFormat:'integer'`), nunca decimal/float. Não existe tipo Decimal; `number` é IEEE-754 e `0.1+0.2` deriva. Invariantes monetários (ex.: `Σdébito=Σcrédito` de um razão) são **igualdade inteira exata, sem epsilon**. (A linha "Money/`addMoney()`" da §2 continua valendo para somatórios de **exibição**; centavos é para **armazenamento** e para qualquer **invariante de fechamento**.)
 - [ ] **[AC-2.2-2] `unique`/`compositeUnique` de preset NÃO é constraint de banco.** É SQL `json_extract` em `validateAdvancedRules`, executado **antes** da tx de escrita (`DynamicTableService.createTableData`/`updateTableData`); dentro de `writeCreate`/`writeUpdate` só `enforceNoOverlap` é re-checado (TOCTOU) — pega re-post já commitado, **não** pega dois writes concorrentes da mesma chave. `compositeUnique` é full scan (dívida declarada em `validation-and-governance.md §3`). Para idempotência (ex.: `unique(sourceType,sourceId)`), use `compositeUnique` + check no service e **nomeie o teto** com um comentário `ponytail:`. Dois upgrades possíveis: (a) promover a model Prisma com `@@unique` real — que **porém** perde o path de lentes schema-driven (`@@PRESET_TABLE_KEY::`), trade-off, não grátis; (b) estender a `unique`/`compositeUnique` o padrão que já fecha `noOverlap` no próprio motor — `runSerializedIfNoOverlap` → `withTableWriteLock(table.id)` + re-checagem in-tx com repo tx-bound (`93945426`) — sem perder as lentes; lacuna registrada no GAP-MAP (Nível 4, 2026-09-21). Não trate como garantia de corrida enquanto (b) não existir.
 - [ ] **[AC-2.2-3] Sem self-relation provada.** Nenhum preset aponta uma `relation` para a **própria** tabela; a resolução self-`@@PRESET_TABLE_KEY` é não-testada e não há componente de árvore no frontend (`GenericTable` é plano). Modele hierarquia por **chave codificada** (`1.1.2` → pai = prefixo do code), não por `parentId` auto-relacional; renderize com `GenericTabbedView` plano indentado pela profundidade do code. Relations **cross-table** (por id) continuam normais/provadas.
-- [ ] **[AC-2.2-4] Soft-delete ignora `immutableAfter`/`lifecycle`.** Esses guards declarativos só rodam em `updateTableData`, **não** em `deleteTableData`. Tornar um registro postado/terminal de fato imutável exige guarda de status na **camada de serviço** (ou `deleteConstraints` RESTRICT no pai) — o edit-block sozinho não cobre o delete.
+- [ ] **[AC-2.2-4] Soft-delete cobre só `immutableAfter` scope `'all'`.** Desde #390/#409 (GAP-MAP 8, 2026-09-26/28) `deleteTableData` e `deleteTableDataBatch` recusam linha (e filha CASCADE) com regra `immutableAfter` **scope `'all'`** satisfeita. Regras de **lista de campos** e `lifecycle` seguem rodando só em `updateTableData`; `isSystem` pula os guards do update. Tornar um registro terminal de fato imutável = regra scope `'all'` no preset **mais** guarda de status no serviço para o caminho `isSystem` (ou `deleteConstraints` RESTRICT no pai). *(Redação anterior, "soft-delete ignora `immutableAfter`/`lifecycle`", ficou desatualizada após #390; emendada 2026-10-14.)*
 
 > Evidência de grafo (2026-06-22, corrigida por leitura do motor em 2026-09-21): money em `data Json`/SQLite sem Decimal; `unique` enforced via `countByFieldValue` (SQL `json_extract`) em `validateAdvancedRules`, **antes** da tx — só `noOverlap` tem gate in-tx + lock; `isSystem` dribla os 3 guards e o `noOverlap` (doc §8); zero preset com self-relation; `deleteTableData` não consulta `immutableAfter`/`lifecycle`. Detalhe na memória `dynamictable-money-and-uniqueness-limits`.
 
