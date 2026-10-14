@@ -66,7 +66,7 @@ Route → Controller → Service → Repository → Prisma
 - [ ] **Resposta padrão:** `{ success: true, data }` (200) ou `.status(201)` em criação. Erro via `handleApiError(error, res)`.
 - [ ] **Registro de rota = 2 toques** (auth é **deny-by-default**: toda rota sob `/api/*` já nasce exigindo JWT — montar não concede acesso; esquecer registro falha **fechado** em 401, nunca aberto):
   1. mount em `server/src/routes/index.ts` (`app.use('/api/<resource>', router)`)
-  2. bloco `@openapi` em `server/src/routes/docs.paths.ts`
+  2. bloco `@openapi` em arquivo coberto pelos globs `apis` de `server/scripts/generate-openapi.js` (`src/controllers/**`, `src/routes/**`, `src/features/**/dtos/*.ts` — `docs.paths.ts` é só um deles). Gate real: `server/src/__tests__/route-spec-wiring.test.ts` (rota Express sem path na spec falha; baseline `KNOWN_UNDOCUMENTED` só encolhe) + `openapi-paths.test.ts` (piso de contagem contra o drop silencioso do swagger-jsdoc)
   - **NÃO edite `middleware/auth.ts` para proteger rota** — o array `protectedApiPaths` não existe mais. Rota **pública** é exceção explícita: regra `{ path, method, match }` no array `publicApiRoutes` do próprio `server/src/middleware/auth.ts` (matching espelha o Express: case-insensitive, whole-segment, SEM percent-decode, HEAD→GET).
 - [ ] **Exclusão de campos sensíveis** (password etc.) via `select` explícito em queries públicas.
 - [ ] **Domínios DynamicTable (leads/ERP/CRM):** service orquestra `DynamicTableService` (não Repository/Policy próprios); resolve tabelas por `internalName` (preset key), nunca por índice `[0]`; o `DynamicTableService` já força `canManageData` em toda escrita.
