@@ -31,7 +31,7 @@ have a test that fails if the invariant breaks?*
 | Tool | Role |
 |---|---|
 | **Jest** (`jest@30`) | test runner, assertions, coverage, watch, projects |
-| **ts-jest** | transpiles TypeScript on the fly (no prior build) |
+| **@swc/jest** | transpiles TypeScript on the fly (no prior build, no type-check — types are gated by `tsc --noEmit -p tsconfig.test.json`) |
 | **supertest** | fires real HTTP requests against the Express app (contract layer) |
 | **Prisma + SQLite** | a **real**, isolated database per run (`test-integration.db`) for integration tests |
 | **`@types/jest`, `@types/supertest`** | types for the Jest globals and supertest |
@@ -210,6 +210,6 @@ the unforeseen or the operational. Before production, beyond tests, you still ne
   `listen`), never as an `import` side effect. Importing the app (routes → factory → vector repos)
   must not open an external connection — required for tests and good coupling hygiene.
 - **ESM-only deps** (`uuid` v13, `@qdrant/js-client-rest`) ship no CommonJS build; Jest's
-  `transformIgnorePatterns` lets only those packages through to ts-jest.
+  `transformIgnorePatterns` lets only those packages through to @swc/jest.
 - **The production build excludes tests:** `tsconfig.json` excludes `__tests__/`, `*.test.ts`,
   `*.spec.ts` — `dist/` ships no test code.
