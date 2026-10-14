@@ -12,7 +12,10 @@ process.env.JWT_SECRET = TEST_SECRET;
 
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { authMiddleware } from '../auth';
+// require, não import: imports sobem acima da atribuição do env (semântica ES, que o @swc/jest segue) e
+// lib/jwt.ts congelaria o segredo do jest.setupEnv — os tokens assinados com TEST_SECRET dariam inválidos.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { authMiddleware } = require('../auth') as typeof import('../auth');
 
 // ---------------------------------------------------------------------------
 // Helpers

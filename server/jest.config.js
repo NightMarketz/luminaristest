@@ -1,11 +1,25 @@
-/** @type {import('ts-jest').JestConfigWithTsJest} */
+/** @type {import('jest').Config} */
+
+// @swc/jest só transpila (sem type-check), como o ts-jest com isolatedModules fazia — mas em Rust, o que
+// importa no Stryker: cada worker reciclado (maxTestRunnerReuse) re-transpila tudo. O type-check dos testes
+// continua sendo o passo `tsc --noEmit -p tsconfig.test.json` do CI — NÃO remova aquele passo.
+// @swc/core fixo em 1.16.2: a partir de 1.16.12 o addon nativo recusa carregar quando um ancestral do
+// cache (%LOCALAPPDATA%\swc) concede escrita a um SID de AppContainer — caso desta máquina (14/10).
+// Alias (@/…) e afins resolvem pelo moduleNameMapper abaixo, não pelo `paths` do tsconfig.
+const swc = (syntax) => [
+    '@swc/jest',
+    {
+        jsc: { parser: { syntax }, target: 'es2020' },
+        module: { type: 'commonjs' },
+        sourceMaps: 'inline',
+    },
+];
 
 // Shared config for both projects. Tests are split by Jest "projects":
 //   - unit:        fast, no DB. Everything except *.integration.test.ts.
 //   - integration: hits the real SQLite test DB. Run --runInBand so files never race on the file.
 // Convention: name any test that touches the DB / HTTP stack `*.integration.test.ts`.
 const base = {
-    preset: 'ts-jest',
     testEnvironment: 'node',
     setupFiles: ['<rootDir>/test/jest.setupEnv.ts'],
     moduleNameMapper: {
@@ -20,11 +34,9 @@ const base = {
         '^@qdrant/js-client-rest$': '<rootDir>/test/mocks/qdrantClient.ts',
     },
     transform: {
-        // tsconfig.jest.json = tsconfig.test.json + isolatedModules: ts-jest só transpila. O type-check dos testes
-        // é do passo `tsc --noEmit -p tsconfig.test.json` do CI, não do Jest (era feito em dobro).
-        '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.jest.json' }],
-        // ESM-only deps (uuid v13, qdrant) ship no CJS build; ts-jest down-compiles them.
-        '^.+\\.jsx?$': ['ts-jest', { tsconfig: 'tsconfig.jest.json' }],
+        '^.+\\.tsx?$': swc('typescript'),
+        // ESM-only deps (uuid v13, qdrant) ship no CJS build; swc down-compiles them.
+        '^.+\\.jsx?$': swc('ecmascript'),
     },
     // Default ignores all of node_modules; the negative lookahead lets the ESM deps above through.
     transformIgnorePatterns: ['/node_modules/(?!(uuid|@qdrant/js-client-rest)/)'],

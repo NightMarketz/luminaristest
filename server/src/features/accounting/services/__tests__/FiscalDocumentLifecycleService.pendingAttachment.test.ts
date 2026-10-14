@@ -19,7 +19,8 @@ jest.mock('../../dfe/resolveEmissor', () => ({
   resolveEmissorFor: (partner: string) => (partner === 'manual' ? mockManualPort : mockPort),
 }));
 const mockLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
-jest.mock('../../../../lib/logger', () => ({ __esModule: true, default: mockLogger }));
+// getter: a fábrica roda no import (que sobe acima deste `const`); o mock só é lido quando o serviço loga.
+jest.mock('../../../../lib/logger', () => ({ __esModule: true, get default() { return mockLogger; } }));
 
 import { FiscalDocumentLifecycleService, PENDING_MAX_ATTEMPTS } from '../FiscalDocumentLifecycleService';
 import { PendingAttachmentResultSchema, PendingAttachmentDrainSummarySchema } from '../../dtos/FiscalDocumentPendingAttachmentDto';
