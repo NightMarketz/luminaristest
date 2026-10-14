@@ -64,3 +64,58 @@ A regra "não monte aparato de auditoria novo — nem gate" (bancada desligada e
 ## 5. Mudar uma fronteira
 
 Mexer em regra, severidade ou escopo (inclusive promover `check:dead`/`check:dup`) = ADR novo ou emenda datada aqui, com o número do baseline antes/depois.
+
+## 6. Fase 3 — mutation testing (Stryker, fiscal/contábil) — emenda 2026-10-14
+
+_Pendente: rodada em andamento; resultado entra aqui ao terminar._
+
+## 7. Fase 4 — hook PostToolUse de fronteira (PROPOSTA, não ligada) — emenda 2026-10-14
+
+**Status: proposta.** Nada foi gravado em `.claude/settings.json`; ligar é decisão do dono.
+
+Feedback de fronteira no momento da edição, em vez de só no `check:arch` do CI. O script
+`scripts/arch-hook.mjs` lê o JSON do hook no stdin (`tool_input.file_path`), decide o pacote pelo caminho,
+roda o dependency-cruiser **só nesse arquivo** com a config e o baseline do pacote
+(`--ignore-known`), e devolve as violações novas cujo `from` é o arquivo (ou ciclo que passa por ele) como
+`hookSpecificOutput.additionalContext`. **Sai 0 sempre**, inclusive em erro interno, que vira texto.
+Ignora: arquivo fora de `server/src/` ou de `my-app/{pages,features,components,lib,types}/`, testes
+(`__tests__`, `*.test.*`, `*.spec.*`), `.d.ts` e não-código. Chama o binário com `process.execPath`, sem shell,
+então roda igual no Git Bash/Windows e no Linux.
+
+JSON proposto para `.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/scripts/arch-hook.mjs\"", "timeout": 30 }
+        ]
+      }
+    ]
+  }
+}
+```
+
+**Ponto cego declarado:** cruza a partir do arquivo editado. Vê o que ele importa e o ciclo que passa por ele,
+mas **não** vê quem passou a importá-lo. O gate continua sendo `npm run check:arch`.
+
+**Prova em seco (14/10, `printf '{"tool_name":"Edit","tool_input":{"file_path":"<abs>"}}' | node scripts/arch-hook.mjs`):**
+
+| Caso | Exit | Saída |
+|---|---|---|
+| my-app: `features/__archhook_probe/Probe.ts` plantado importando `lib/api/api-client` | 0 | `U1-no-direct-api-client: features/__archhook_probe/Probe.ts → lib/api/api-client.ts` |
+| my-app: ciclo plantado `A.ts ↔ B.ts` | 0 | `U7-no-circular: …/A.ts → …/B.ts (ciclo: …/B.ts → …/A.ts)` |
+| my-app: `components/ui/feedback/Toast.tsx` (limpo) | 0 | vazio (0 bytes) |
+| my-app: `lib/context/ToastContext.tsx` (U2 **no baseline**) | 0 | vazio |
+| server: `src/controllers/__archhookProbeController.ts` plantado importando `PayableRepository` | 0 | `L2-controller-not-repository: src/controllers/__archhookProbeController.ts → src/features/accounting/repositories/PayableRepository.ts` |
+| server: `src/controllers/accountantAssignmentController.ts` (limpo) | 0 | vazio |
+| server: `AccountingBindingPolicy.ts` (L5 **no baseline**) | 0 | vazio; o mesmo arquivo **sem** `--ignore-known` → depcruise exit 2 com L5 |
+| arquivo de teste / `scripts/plano-vault.mjs` (fora de escopo) | 0 | vazio |
+| stdin não-JSON | 0 | `[arch-hook] erro interno (edição não bloqueada): …` |
+
+Concordância com o gate: com os plantios presentes, `npm run check:arch` deu exit 2 (my-app: U1 + U7) e exit 1
+(server: L2), as mesmas violações que o hook apontou. Tempo por chamada: 1,0–1,5 s. Plantios removidos
+(`git status` limpo).
