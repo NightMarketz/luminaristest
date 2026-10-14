@@ -67,6 +67,14 @@ export class InventoryRepository implements IInventoryRepository {
     return { items, total };
   }
 
+  public async hasOpenStockForProducts(ownerUserId: string, productRefs: string[]): Promise<boolean> {
+    const item = await prisma.inventoryItem.findFirst({
+      where: { userId: ownerUserId, productRef: { in: productRefs }, deletedAt: null, qtyOnHand: { gt: 0 } },
+      select: { id: true },
+    });
+    return item !== null;
+  }
+
   public async findAllActive(
     scope: AccountingScope,
     tx?: Prisma.TransactionClient,

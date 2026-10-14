@@ -207,11 +207,11 @@ describe('PUT/DELETE /api/dynamic-tables/:tableId/data/:dataId (Tier-0)', () => 
  * vive no controller (fora do motor — `[AC-2.1-B1]` proíbe `InventoryService` em motor/plugin), por
  * isso o teste-guarda é na ROTA, neutro quanto ao status exato: 4xx e a linha continua viva.
  *
- * Instrumentado VERMELHO 2026-10-14 como `it.failing` ("Expected: >= 400 / Received: 204"). A sessão
- * de correção troca por `it`.
+ * Instrumentado VERMELHO 2026-10-14 como `it.failing` ("Expected: >= 400 / Received: 204"); corrigido
+ * em 2026-10-14 (guarda `assertNoOpenStock` em `dynamicTablesController`).
  */
 describe('DELETE /api/dynamic-tables/:tableId/data/:dataId — products × estoque vivo em Prisma (ADR-PB §5.2)', () => {
-  it.failing('refuses to soft-delete a products row while InventoryItem.qtyOnHand > 0 points to it', async () => {
+  it('refuses to soft-delete a products row while InventoryItem.qtyOnHand > 0 points to it', async () => {
     const owner = await seedUser({ username: 'owner' });
     const products = await seedDynamicTable({
       userId: owner.id,
@@ -235,6 +235,27 @@ describe('DELETE /api/dynamic-tables/:tableId/data/:dataId — products × estoq
     expect(res.status).toBeLessThan(500);
     const after = await prisma.dynamicTableData.findUnique({ where: { id: row.id } });
     expect(after?.deletedAt).toBeNull();
+  });
+
+  it('still deletes a products row whose InventoryItem has qtyOnHand = 0 (204)', async () => {
+    const owner = await seedUser({ username: 'owner' });
+    const products = await seedDynamicTable({
+      userId: owner.id,
+      name: 'Products',
+      internalName: 'products',
+      category: 'products',
+      schema: { fields: [{ name: 'name', label: 'Name', type: 'string', required: true }] },
+    });
+    const row = await seedDynamicTableData({ dynamicTableId: products.id, data: { name: 'Shampoo 1L' } });
+    await prisma.inventoryItem.create({
+      data: { userId: owner.id, unitId: 'unit-1', productRef: row.id, qtyOnHand: 0, totalValueCents: 0n },
+    });
+
+    const res = await request(app)
+      .delete(`/api/dynamic-tables/${products.id}/data/${row.id}`)
+      .set(authHeader({ id: owner.id, username: owner.username }));
+
+    expect(res.status).toBe(204);
   });
 });
 
