@@ -20,7 +20,7 @@ import type { AccountingEvent } from '../AccountingSyncPort';
  */
 export interface IAccountingEventMapper {
   /** The event.sourceType this mapper handles (registry key). */
-  readonly sourceType: AccountingEvent['sourceType'];
+  readonly sourceType: string;
   /** Build the balanced posting input. Throws ValidationError on bad money. */
   map(event: AccountingEvent): PostEntryInput;
 }

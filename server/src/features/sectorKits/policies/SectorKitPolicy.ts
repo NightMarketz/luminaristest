@@ -19,4 +19,9 @@ export class SectorKitPolicy implements ISectorKitPolicy {
   canReadServiceFiscalSuggestions(scope: BindingScope): boolean {
     return !!scope.actorUserId;
   }
+
+  /** PR-6 (item 50): espelho de `AccountingPolicy.canRead` (`!!actorUserId`) — o rastro só lê o razão e o binding. */
+  canReadKitTrace(scope: BindingScope): boolean {
+    return !!scope.actorUserId;
+  }
 }

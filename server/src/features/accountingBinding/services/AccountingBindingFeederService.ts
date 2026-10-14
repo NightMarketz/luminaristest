@@ -90,7 +90,9 @@ export class AccountingBindingFeederService {
               `catálogo — fiação da Fase B quebrada.`,
           );
         }
-        registrations.push({ unitId: row.unitId, mapper: new InterpretedEventMapper(archetype, binding) });
+        // PR-6 do KIT-SETOR (item 50): o mapper carrega a linha compilada — o lançamento grava a versão que o interpretou.
+        const bindingRef = { bindingId: row.id, bindingVersion: row.bindingVersion };
+        registrations.push({ unitId: row.unitId, mapper: new InterpretedEventMapper(archetype, binding, bindingRef) });
       }
     }
     return registrations;

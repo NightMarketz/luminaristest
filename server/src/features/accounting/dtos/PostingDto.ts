@@ -237,6 +237,12 @@ export type PostEntryInput = z.infer<typeof PostEntrySchema> & {
    * enviar — só código de serviço consegue setá-la, o cliente não descola trilha do lançamento.
    */
   auditDescription?: string;
+  /**
+   * INTERNO — BE-INCR-KIT-SETOR PR-6 (item 50): o binding que interpretou o evento, gravado no `JournalEntry` para o
+   * rastro evento → fato → lançamento. Só o `InterpretedEventMapper` seta; fora do `PostEntrySchema` pelo mesmo motivo
+   * do `auditDescription` (o parse do controller descarta a chave).
+   */
+  bindingRef?: { bindingId: string; bindingVersion: number };
 };
 export type ReverseEntryInput = z.infer<typeof ReverseEntrySchema>;
 export type ReportQueryInput = z.infer<typeof ReportQuerySchema>;

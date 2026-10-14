@@ -352,6 +352,14 @@ export class NoMapperForUnitError extends AppError {
   }
 }
 
+/** BE-INCR-KIT-SETOR PR-6 (item 47): nenhum kit declara este `eventKey` — erro de fiação da origem, não de binding. */
+export class UnknownEventKeyError extends AppError {
+  constructor(sourceType: string) {
+    super(`Evento '${sourceType}' desconhecido: nenhum kit de setor o declara.`, 400, 'UNKNOWN_EVENT_KEY');
+    Object.setPrototypeOf(this, UnknownEventKeyError.prototype);
+  }
+}
+
 /** Item 9.5 (§5.2): faltante para emitir a NFS-e do vencido — pendência transitória; o vencimento fica. */
 export class PackageExpiryNfsePendingError extends AppError {
   constructor(movementKey: string, faltantes: string[]) {
