@@ -95,6 +95,15 @@ morde só no código solto; em dúvida, **o contrato prevalece**.
   (SG-005, #203) em `docs/operating-manual/CLAUDE-RAIZ-DETALHE.md`.
 - Nível de cerimônia por risco (leve × completo): **[OPS-006]** em `.claude/skills/_OPERATING-GATES.md`.
 
+## Higiene de contexto
+- Contexto passou de ~180k tokens, ou fechou um nó/PR → feche a etapa, escreva o handoff (feito · pendente · próximo comando exato · arquivos) e peça sessão nova. Não emende outra tarefa nem espere a compactação.
+- Pausa > 60 min com contexto > 150k → retome em sessão nova a partir do handoff.
+- Arquivo grande já lido e não editado → não releia; cite o trecho que está no contexto.
+
+## Merge só com PR nomeado
+Autorização genérica ("mergeia tudo", "os PRs com CI verde", "executa") **não** autoriza merge: liste os PRs
+(número · título · fiscal/contábil? · CI · revisão) e espere o dono confirmar por número. "Executar" não inclui mergear.
+
 ## Gates de envio [OPS-001] — antes de fechar resposta/relatório/PR
 
 Cinco perguntas binárias; cada uma aponta um artefato **no próprio texto**; qualquer "não" bloqueia:
