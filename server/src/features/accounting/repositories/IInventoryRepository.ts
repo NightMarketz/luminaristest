@@ -75,6 +75,10 @@ export interface IInventoryRepository {
     params: { status?: string; skip: number; limit: number },
   ): Promise<{ items: InventoryItem[]; total: number }>;
 
+  /** Some live item with `qtyOnHand > 0` for any of these products, in ANY unit of the owner
+   *  (ADR-PB §5.2 — guarda de delete de `products` no controller). */
+  hasOpenStockForProducts(ownerUserId: string, productRefs: string[]): Promise<boolean>;
+
   /** Every non-deleted item in scope (reconcile tie-out re-drive input). */
   findAllActive(scope: AccountingScope, tx?: Prisma.TransactionClient): Promise<InventoryItem[]>;
 
