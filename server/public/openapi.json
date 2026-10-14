@@ -16663,6 +16663,234 @@
         }
       }
     },
+    "/api/accounting-kit": {
+      "get": {
+        "summary": "The unit's installed sector kit — version, latest version, last upgrade run, open pendings, changelog (BE-INCR-KIT-SETOR PR-4)",
+        "description": "Item 38. data = null quando a unidade não tem kit. changelog = as entradas novas de cada versão depois da instalada. A atualização em si não tem rota: roda pelo upgradeSectorKitsCli no passo de migração do deploy (dry-run gravado, depois apply do mesmo deploy).",
+        "tags": [
+          "AccountingKit"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ kitKey, kitVersion, latestVersion, status, lastRun: { id, mode, status, fromVersion, toVersion, deployId, startedAt, finishedAt, counts: { additive, forward, conflicts } } | null, openPendingCount, changelog: [{ kitVersion, entries }] } | null"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/accounting-kit/pending": {
+      "get": {
+        "summary": "List the kit upgrade pendings (level c — conflicts the upgrade did not apply)",
+        "tags": [
+          "AccountingKit"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "OPEN",
+                "ACCEPTED",
+                "REJECTED"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "KitUpgradePendingView[] — { id, kitKey, toVersion, runId, itemKey, reason (override | account_deleted_by_user | account_changed_in_use | field_set_by_user | referential_year_frozen | referential_mapped_differently), kitValue, tenantValue, status, decidedById, decidedAt, motivo, createdAt }"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/accounting-kit/pending/{id}/accept": {
+      "post": {
+        "summary": "Accept a kit upgrade pending — applies the kit's value for that item",
+        "description": "Por motivo: override ⇒ remove o ajuste e recompila (Draft ⇒ 422 e nada muda); account_deleted_by_user ⇒ restaura a conta e recompila (Draft ⇒ 422 KIT_PENDING_COMPILE_DRAFT e a conta volta a ser apagada); account_changed_in_use ⇒ renomeia (a natureza nunca muda com partida); field_set_by_user ⇒ grava o valor do kit por cima (regra do contador ativo vale); referential_mapped_differently ⇒ troca o mapeamento; referential_year_frozen ⇒ 422 KIT_PENDING_FROZEN_YEAR (só dá para recusar).",
+        "tags": [
+          "AccountingKit"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "unitId",
+                  "motivo"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "motivo": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 500
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "KitUpgradePendingView (status ACCEPTED)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "KIT_PENDING_NOT_FOUND"
+          },
+          "409": {
+            "description": "KIT_PENDING_NOT_OPEN — já decidida"
+          },
+          "422": {
+            "description": "KIT_PENDING_FROZEN_YEAR | KIT_PENDING_COMPILE_DRAFT | ROLE_OVERRIDE_COMPILE_DRAFT"
+          }
+        }
+      }
+    },
+    "/api/accounting-kit/pending/{id}/reject": {
+      "post": {
+        "summary": "Reject a kit upgrade pending — keeps the tenant's value; it does not come back for the same kit version",
+        "tags": [
+          "AccountingKit"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "unitId",
+                  "motivo"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "motivo": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 500
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "KitUpgradePendingView (status REJECTED)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "KIT_PENDING_NOT_FOUND"
+          },
+          "409": {
+            "description": "KIT_PENDING_NOT_OPEN — já decidida"
+          }
+        }
+      }
+    },
     "/api/accounting-kit/role-overrides": {
       "get": {
         "summary": "List the unit's live role→account adjustments over the installed sector kit (BE-INCR-KIT-SETOR PR-3)",
@@ -24972,7 +25200,7 @@
     },
     {
       "name": "AccountingKit",
-      "description": "Kit de setor (BE-INCR-KIT-SETOR) — ajuste papel→conta do contador sobre o binding do kit instalado; todo caminho que compila aplica os ajustes vivos."
+      "description": "Kit de setor (BE-INCR-KIT-SETOR) — ajuste papel→conta do contador sobre o binding do kit instalado (todo caminho que compila aplica os ajustes vivos) e as pendências da atualização em 3 níveis."
     }
   ]
 }

@@ -50,6 +50,23 @@ export interface IAccountRepository {
   /** Lists all active accounts for the scope, ordered by code. */
   findManyByUnit(scope: AccountingScope): Promise<Account[]>;
 
+  /**
+   * BE-INCR-KIT-SETOR PR-4 (item 26): every account of the scope INCLUDING soft-deleted ones (the @@unique is per
+   * code, so there is at most one row per code). The kit upgrade diff needs "deleted by the tenant" as a state.
+   */
+  findAllByUnitIncludingDeleted(scope: AccountingScope): Promise<Account[]>;
+
+  /**
+   * BE-INCR-KIT-SETOR PR-4 (emenda E-12.2/E-12.3): rewrites the name and/or nature of a live account. The caller
+   * re-checks "no posting" in the same tx when the nature changes (a nature with postings never changes).
+   */
+  updateDefinition(
+    scope: AccountingScope,
+    id: string,
+    data: { name?: string; nature?: string },
+    tx?: Prisma.TransactionClient,
+  ): Promise<Account>;
+
   /** Soft-deletes an account (sets deletedAt). */
   softDelete(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<Account>;
 

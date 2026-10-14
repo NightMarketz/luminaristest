@@ -26,6 +26,8 @@ function memoryKitRepo(): IKitInstallationRepository {
     },
     saveSteps: async (_s: BindingScope, _id: string, steps: unknown) => ({ ...row!, steps: JSON.stringify(steps) }) as never,
     finish: async (_s: BindingScope, _id: string, status: string) => ({ ...row!, status }) as never,
+    advanceVersion: async () => 1, // PR-4 — não exercitado aqui
+    findAllInstalled: async () => [],
     runTransaction: async <T,>(fn: (tx: never) => Promise<T>) => fn({} as never),
   };
 }

@@ -220,6 +220,13 @@ import { SectorKitPolicy } from '../features/sectorKits/policies/SectorKitPolicy
 import { RoleAccountOverrideRepository } from '../features/sectorKits/repositories/RoleAccountOverrideRepository';
 import { RoleOverrideSource } from '../features/sectorKits/services/RoleOverrideSource';
 import { RoleAccountOverrideService } from '../features/sectorKits/services/RoleAccountOverrideService';
+// BE-INCR-KIT-SETOR PR-4 — atualização do kit em 3 níveis (CLI do deploy + rotas de pendência).
+import { KitUpgradeRepository } from '../features/sectorKits/repositories/KitUpgradeRepository';
+import { KitUpgradeService } from '../features/sectorKits/services/KitUpgradeService';
+import { KitPendingService } from '../features/sectorKits/services/KitPendingService';
+import type { KitTenantStatePort, KitUpgradeWritePort } from '../features/sectorKits/services/kitUpgradePorts';
+import type { TenantAccount } from '../features/sectorKits/services/classifyKitDiff';
+import prismaClient from './prisma';
 import { SalesCancellationService } from '../features/sales/services/SalesCancellationService';
 import { RegisterPaymentService } from '../features/sales/services/RegisterPaymentService';
 import { PresetSyncService } from '../features/dynamicTables/services/PresetSyncService';
@@ -485,6 +492,117 @@ function buildKitRegimePort(
     },
     async unitRegime() {
       return ((await fiscalProfileRepo.findByScope(scope))?.regimeTributario as KitRegime | undefined) ?? null;
+    },
+  };
+}
+
+/** `xxxAccountId` da linha → `xxxAccountCode` do kit, com o CÓDIGO da conta (o diff do PR-4 compara códigos). */
+function accountFieldsByCode(row: object | null, codeById: Map<string, string>): Record<string, string | null> {
+  if (!row) return {};
+  return Object.fromEntries(
+    Object.entries(row)
+      .filter(([field]) => field.endsWith('AccountId'))
+      .map(([field, id]) => [field.replace(/AccountId$/, 'AccountCode'), typeof id === 'string' ? (codeById.get(id) ?? null) : null]),
+  );
+}
+
+/**
+ * BE-INCR-KIT-SETOR PR-4 (item 26) — o estado contábil do tenant para o diff: contas (inclusive apagadas, com "tem
+ * partida"), contas-padrão por código, referencial por ano, ano congelado (item 31: `ecfRecibo` ou período
+ * `HARD_CLOSED`) e regime por ano (E-12.5: o da empresa no ano; sem ele, o da unidade). Só leitura.
+ */
+function buildKitTenantStatePort(
+  accountRepo: IAccountRepository,
+  postingRepo: IPostingRepository,
+  settingsRepo: IBankSettlementRepository,
+  fiscalProfileRepo: IFiscalProfileRepository,
+  mappingRepo: IReferentialMappingRepository,
+  companyRepo: ICompanyFiscalProfileRepository,
+  periodRepo: IAccountingPeriodRepository,
+  scope: AccountingScope,
+): KitTenantStatePort {
+  return {
+    async load(years) {
+      const rows = await accountRepo.findAllByUnitIncludingDeleted(scope);
+      const codeById = new Map(rows.map((a) => [a.id, a.code]));
+      const accounts: Record<string, TenantAccount> = {};
+      for (const a of rows) {
+        accounts[a.code] = {
+          code: a.code,
+          name: a.name,
+          nature: a.nature,
+          acceptsEntries: a.acceptsEntries,
+          deleted: a.deletedAt !== null,
+          hasPostings: await postingRepo.existsForAccount(scope, a.id),
+        };
+      }
+      const fiscal = await fiscalProfileRepo.findByScope(scope);
+      const referential: Record<string, Record<string, string>> = {};
+      const frozenYears: string[] = [];
+      const regimeByYear: Record<string, KitRegime | null> = {};
+      for (const year of years) {
+        referential[year] = Object.fromEntries(
+          (await mappingRepo.findManyByVersion(scope, year)).map((m) => [codeById.get(m.accountId) ?? m.accountId, m.referentialCode]),
+        );
+        const company = await companyRepo.findByYear(scope, Number(year));
+        const hardClosed = (await periodRepo.list(scope, Number(year))).some((p) => p.status === 'HARD_CLOSED');
+        if (company?.ecfRecibo || hardClosed) frozenYears.push(year);
+        regimeByYear[year] = ((company?.regime ?? fiscal?.regimeTributario) as KitRegime | undefined) ?? null;
+      }
+      return {
+        accounts,
+        scopeSettings: accountFieldsByCode(await settingsRepo.getSettings(scope), codeById),
+        fiscalProfile: fiscal ? accountFieldsByCode(fiscal, codeById) : null,
+        referential,
+        frozenYears,
+        regimeByYear,
+      };
+    },
+  };
+}
+
+/** BE-INCR-KIT-SETOR PR-4 (E-12.2/E-12.3) — escritas da atualização e do aceitar, cada uma pelo dono do dado. */
+function buildKitUpgradeWritePort(
+  accountRepo: IAccountRepository,
+  postingRepo: IPostingRepository,
+  settingsService: AccountingScopeSettingsService,
+  fiscalProfileService: FiscalProfileService,
+  mappingService: ReferentialMappingService,
+  companyRepo: ICompanyFiscalProfileRepository,
+  periodRepo: IAccountingPeriodRepository,
+  scope: AccountingScope,
+): KitUpgradeWritePort {
+  return {
+    async isYearFrozen(year) {
+      if ((await companyRepo.findByYear(scope, Number(year)))?.ecfRecibo) return true;
+      return (await periodRepo.list(scope, Number(year))).some((p) => p.status === 'HARD_CLOSED');
+    },
+    async updateAccountIfUnused(code, data) {
+      return prismaClient.$transaction(async (tx) => {
+        const account = await accountRepo.findByCode(scope, code, tx);
+        if (!account) return 'missing' as const;
+        if (await postingRepo.existsForAccount(scope, account.id, tx)) return 'in_use' as const; // relido in-tx
+        await accountRepo.updateDefinition(scope, account.id, data, tx);
+        return 'updated' as const;
+      });
+    },
+    async restoreAccount(code) {
+      return (await accountRepo.restoreByCode(scope, code)) !== null;
+    },
+    async deleteAccount(code) {
+      const account = await accountRepo.findByCode(scope, code);
+      if (account) await accountRepo.softDelete(scope, account.id);
+    },
+    async renameAccount(code, name) {
+      const account = await accountRepo.findByCode(scope, code);
+      if (!account) return false;
+      await accountRepo.updateDefinition(scope, account.id, { name });
+      return true;
+    },
+    setScopeSettings: (accountIds) => settingsService.setAccounts(scope, accountIds),
+    setFiscalProfile: (accountIds) => fiscalProfileService.setAccounts(scope, accountIds),
+    async setReferentialMapping(mappingVersion, item) {
+      await mappingService.setMapping(scope, { unitId: scope.unitId, mappingVersion, ...item });
     },
   };
 }
@@ -1803,6 +1921,71 @@ export class ApplicationFactory {
       buildActivationChartPort(this.repositories.account, this.services.posting, accountingScope),
       buildKitAuditPort(this.repositories.audit, this.repositories.posting, this.policies.accounting, this.repositories.counterparty),
       kitVersions,
+    );
+  }
+
+  /**
+   * BE-INCR-KIT-SETOR PR-4 — `KitUpgradeService` por escopo (portas fechadas sobre o escopo). Consumido pelo
+   * `upgradeSectorKitsCli` (item 34) e pelo `GET /accounting-kit` (item 38).
+   */
+  public getKitUpgradeService(scope: BindingScope, kitVersions?: KitVersionsLookup): KitUpgradeService {
+    const accountingScope = bindingScopeToAccountingScope(scope);
+    return new KitUpgradeService(
+      new SectorKitPolicy(),
+      new KitInstallationRepository(),
+      new KitUpgradeRepository(),
+      new RoleAccountOverrideRepository(),
+      new AccountingBindingRepository(),
+      this.getAccountingBindingCompileService(scope),
+      buildKitChartPort(this.repositories.account, this.services.posting, accountingScope),
+      buildKitRoleDefaultsPort(this.repositories.fiscalProfile, this.services.accountingScopeSettings, this.services.fiscalProfile, accountingScope),
+      buildKitReferentialPort(this.repositories.referentialAccount, this.repositories.referentialMapping, this.services.referentialMapping, accountingScope),
+      this.buildKitTenantState(accountingScope),
+      this.buildKitUpgradeWrite(accountingScope),
+      buildKitAuditPort(this.repositories.audit, this.repositories.posting, this.policies.accounting, this.repositories.counterparty),
+      kitVersions,
+    );
+  }
+
+  /** BE-INCR-KIT-SETOR PR-4 — `KitPendingService` por escopo (rotas `/accounting-kit/pending`, item 37). */
+  public getKitPendingService(scope: BindingScope, kitVersions?: KitVersionsLookup): KitPendingService {
+    const accountingScope = bindingScopeToAccountingScope(scope);
+    return new KitPendingService(
+      new SectorKitPolicy(),
+      new KitUpgradeRepository(),
+      new KitInstallationRepository(),
+      this.getRoleAccountOverrideService(scope, kitVersions),
+      this.getAccountingBindingCompileService(scope),
+      buildKitChartPort(this.repositories.account, this.services.posting, accountingScope),
+      this.buildKitUpgradeWrite(accountingScope),
+      buildKitAuditPort(this.repositories.audit, this.repositories.posting, this.policies.accounting, this.repositories.counterparty),
+      kitVersions,
+    );
+  }
+
+  private buildKitTenantState(scope: AccountingScope): KitTenantStatePort {
+    return buildKitTenantStatePort(
+      this.repositories.account,
+      this.repositories.posting,
+      this.repositories.bankSettlement,
+      this.repositories.fiscalProfile,
+      this.repositories.referentialMapping,
+      this.repositories.companyFiscalProfile,
+      this.repositories.accountingPeriod,
+      scope,
+    );
+  }
+
+  private buildKitUpgradeWrite(scope: AccountingScope): KitUpgradeWritePort {
+    return buildKitUpgradeWritePort(
+      this.repositories.account,
+      this.repositories.posting,
+      this.services.accountingScopeSettings,
+      this.services.fiscalProfile,
+      this.services.referentialMapping,
+      this.repositories.companyFiscalProfile,
+      this.repositories.accountingPeriod,
+      scope,
     );
   }
 
