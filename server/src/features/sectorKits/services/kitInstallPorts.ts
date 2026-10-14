@@ -59,8 +59,15 @@ export interface IKitAuditPort {
     tx: Prisma.TransactionClient,
     scope: BindingScope,
     event: {
-      eventType: 'kit.installed' | 'kit.install_failed' | 'kit.role_override_set' | 'kit.role_override_removed';
-      targetType?: 'KitInstallation' | 'RoleAccountOverride';
+      eventType:
+        | 'kit.installed'
+        | 'kit.install_failed'
+        | 'kit.role_override_set'
+        | 'kit.role_override_removed'
+        | 'kit.upgrade_applied'
+        | 'kit.upgrade_pending_accepted'
+        | 'kit.upgrade_pending_rejected';
+      targetType?: 'KitInstallation' | 'RoleAccountOverride' | 'KitUpgradePending';
       targetId: string;
       payload: Record<string, unknown>;
     },

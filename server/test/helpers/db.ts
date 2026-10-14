@@ -69,6 +69,8 @@ export async function resetDb(): Promise<void> {
   await prisma.accountingBinding.deleteMany();
   await prisma.kitInstallation.deleteMany(); // BE-INCR-KIT-SETOR PR-2 — folha (nada a referencia)
   await prisma.roleAccountOverride.deleteMany(); // BE-INCR-KIT-SETOR PR-3 — FK RESTRICT para Account: cai antes de accounts
+  await prisma.kitUpgradePending.deleteMany(); // BE-INCR-KIT-SETOR PR-4 — folha (nada a referencia)
+  await prisma.kitUpgradeRun.deleteMany(); // BE-INCR-KIT-SETOR PR-4 — folha (as pendências guardam só o runId)
   await prisma.reconcilePendingItem.deleteMany();
   // BE-INCR-FIXED-ASSETS (nó C8): nada referencia FixedAsset por FK — folha pura; cai antes de
   // fixedAssetClass/depreciationRate (que ele referencia) e de journalEntry/sourceDocument/payable.

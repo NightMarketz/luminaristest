@@ -3,7 +3,7 @@ name: backend-test-suite-generator
 description: Gera suítes Jest para backend Luminaris (service, repository, KPI processor, middleware, security/tenant-isolation) com mocks padronizados, factory builders `buildService`, `referenceDate` fixo, `toBeCloseTo` para money e asserções de isolamento de tenant (cross-tenant → NotFoundError). Use ao pedir "quero testes para X", ao adicionar suíte de regressão a um KPI processor novo, ao cobrir service/repository recém-gerados, ou ao testar isolamento multi-usuário/middleware de auth. Domínio/arquivos: server/src/**/__tests__/*.test.ts.
 argument-hint: "[tipo: service|repository|kpi-processor|middleware|security] [nome-do-recurso]"
 allowed-tools: Read, Grep, Glob, Write, Edit
-compatibility: Claude Code; requer o monorepo Luminaris (server/ com Jest + ts-jest + tsc). Sem efeitos externos — apenas gera/edita arquivos de teste no repositório; não roda migrations nem toca banco real.
+compatibility: Claude Code; requer o monorepo Luminaris (server/ com Jest + @swc/jest + tsc). Sem efeitos externos — apenas gera/edita arquivos de teste no repositório; não roda migrations nem toca banco real.
 metadata:
   governance-skill-id: "SKL-BACKEND-TEST"
   governance-version: "1.0.0"

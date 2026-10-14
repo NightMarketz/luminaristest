@@ -431,7 +431,9 @@
       "SORT_KEY_REQUIRED": "With more than one measure, choose which measure to sort by.",
       "FILTER_INCOMPLETE": "Complete or remove filters without a field or value.",
       "KPI_DIMENSION": "A KPI has no grouping, except the split by currency.",
-      "LIMIT_RANGE": "The limit goes from 1 to 500."
+      "LIMIT_RANGE": "The limit goes from 1 to 500.",
+      "JOIN_INCOMPLETE": "Complete or remove the join: pick the table and both fields.",
+      "JOIN_ALIAS_INVALID": "Fix the join alias."
     },
     "confirm": {
       "source_title": "Change the source?",
@@ -440,7 +442,42 @@
       "cancel": "Cancel",
       "delete_title": "Delete report?",
       "delete_body": "The report \"{{name}}\" will be deleted.",
-      "delete_ok": "Delete"
+      "delete_ok": "Delete",
+      "join_title": "Change the join?",
+      "join_body": "Measures, groupings and filters using fields of this join that no longer exist will be removed.",
+      "join_ok": "Change and clear"
+    },
+    "joins": {
+      "title": "Advanced: join another table",
+      "hint": "Each source row takes the first row of the other table where both fields have the same value. The other table fields appear as alias.field.",
+      "right_source": "Table",
+      "pick_source": "Pick the table…",
+      "left_field": "Source field",
+      "right_field": "Other table field",
+      "alias": "Alias",
+      "add": "Add join",
+      "alias_problem": {
+        "REQUIRED": "Give the join an alias.",
+        "CHARS": "The alias cannot contain dots or spaces.",
+        "TOO_LONG": "The alias can have up to 40 characters.",
+        "RESERVED": "The alias cannot be \"id\" or start with \"_\".",
+        "DUPLICATE": "Another join already uses this alias.",
+        "FIELD_CONFLICT": "The source already has a field with this name."
+      }
     }
+  },
+  "report_widget": {
+    "title": "CRM report",
+    "description": "Show a saved CRM report",
+    "settings": "Pick the report",
+    "close": "Close",
+    "pick": "Pick the saved report:",
+    "loading": "Loading…",
+    "empty": "No saved reports.",
+    "go_builder": "Create a report in the builder",
+    "not_found": "This report no longer exists.",
+    "reconfigure": "Pick another report",
+    "cancel": "Cancel",
+    "retry": "Try again"
   }
 }

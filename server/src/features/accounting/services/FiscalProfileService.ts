@@ -217,6 +217,22 @@ export class FiscalProfileService {
    * relido DENTRO da tx e o `d1fConfirmado` preservado. Devolve os campos gravados.
    */
   async fillNullAccounts(scope: AccountingScope, accountIds: Partial<Record<FiscalProfileAccountField, string>>): Promise<string[]> {
+    return this.writeAccounts(scope, accountIds, true);
+  }
+
+  /**
+   * BE-INCR-KIT-SETOR PR-4 (item 37; emenda E-12.3): aceitar a pendência `field_set_by_user` grava o valor do kit
+   * POR CIMA do campo preenchido. Mesmo caminho do `fillNullAccounts`, sem o filtro de campo nulo.
+   */
+  async setAccounts(scope: AccountingScope, accountIds: Partial<Record<FiscalProfileAccountField, string>>): Promise<string[]> {
+    return this.writeAccounts(scope, accountIds, false);
+  }
+
+  private async writeAccounts(
+    scope: AccountingScope,
+    accountIds: Partial<Record<FiscalProfileAccountField, string>>,
+    onlyNull: boolean,
+  ): Promise<string[]> {
     if (!this.policy.canManageFiscalProfile(scope)) throw new ForbiddenError('Você não tem permissão para alterar o perfil fiscal.');
     return this.repo.runTransaction(async (tx) => {
       const row = await this.repo.findByScope(scope, tx);
@@ -224,7 +240,7 @@ export class FiscalProfileService {
         throw new ValidationError('fiscal_profile_missing: perfil fiscal da unidade não cadastrado (PUT /api/accounting/fiscal-profile).');
       }
       const patch = Object.fromEntries(
-        Object.entries(accountIds).filter(([field]) => row[field as FiscalProfileAccountField] == null),
+        Object.entries(accountIds).filter(([field]) => !onlyNull || row[field as FiscalProfileAccountField] == null),
       );
       const fields = Object.keys(patch);
       if (fields.length === 0) return [];

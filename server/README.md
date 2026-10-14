@@ -36,7 +36,7 @@ Loaded by `src/config/env.ts` (from `server/.env` or the root). Main ones:
 ## 🛠️ Stack
 
 Express.js · TypeScript · Prisma · SQLite · JWT · bcryptjs · Zod · Helmet · CORS · Compression ·
-OpenAI · Qdrant (vectors). Tests: Jest · ts-jest · supertest.
+OpenAI · Qdrant (vectors). Tests: Jest · @swc/jest · supertest.
 
 ---
 
