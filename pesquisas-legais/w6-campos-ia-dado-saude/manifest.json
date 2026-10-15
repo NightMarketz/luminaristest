@@ -1,0 +1,20 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "L13709compilado",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709compilado.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709compilado.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-15T15:52:32-03:00",
+      "sha256": "eb9d184db1ae20b741a7aac27a01a2e22c568f4ffe66c8f094074cd1fdbca7b3",
+      "arquivo": "docs/D01_l13709compilado-htm.html",
+      "texto": "docs/D01_l13709compilado-htm.txt",
+      "bytes": 230913
+    }
+  ],
+  "buscas": [],
+  "slug": "w6-campos-ia-dado-saude",
+  "pergunta": "Assistente de IA que cria/sugere campos de cadastro (ex.: ficha clínica) que guardarão dado de saúde: o que a LGPD exige do sistema que desenha o campo (dado sensível, necessidade/minimização, RIPD)?",
+  "criado": "2026-10-15T15:52:31-03:00"
+}
