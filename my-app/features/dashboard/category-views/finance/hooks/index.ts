@@ -12,7 +12,7 @@ export * from './analytics/useWidgetAnalyticsData';
 export * from './analytics/useSalesAnalytics';
 
 // Sales
-export * from './sales/useSalesWizard';
+export * from './sales/useSalesCreateForm';
 export * from './sales/useSalesData';
 export * from './sales/useSalesLogic';
 

@@ -18,7 +18,7 @@ import { useTranslation } from 'next-i18next';
 import { HiArrowRight } from 'react-icons/hi';
 import RelationSelector from '@/features/dashboard/components/forms/RelationSelector';
 import { isTableSchema, type IDynamicTable } from '@/features/dashboard/components/shared/dynamic-tables.client';
-import { useSalesWizard } from '../../hooks/sales/useSalesWizard';
+import { useSalesCreateForm } from '../../hooks/sales/useSalesCreateForm';
 import { usePackageCatalog } from '../../hooks/sales/usePackageCatalog';
 import { SaleItemsManager } from './create/SaleItemsManager';
 import { PaymentTermChips } from './create/inputs';
@@ -28,7 +28,7 @@ import { hasValidity, packageAcceptancesService, toAcceptanceInput } from '@/lib
 import { useValidityNotice } from '../../hooks/sales/useValidityNotice';
 import { PackageValidityPrompt, isValidityAcceptable } from './PackageValidityPrompt';
 import type { SaleItemsVariant, SalesCreateModalProps } from './create/types';
-import type { WizardVariant } from '../../types/sales.types';
+import type { SaleVariant } from '../../types/sales.types';
 import type { PackageSaleIssue } from '../../utils/packageSale';
 
 // ─────────────────────────────────────────────────────────────
@@ -53,7 +53,7 @@ function detectSchemaVariant(saleItemsTable?: IDynamicTable | null): SaleItemsVa
 }
 
 /** Pacote só existe na tabela de itens mista (preset `SalesItemsMixed`, V2/V3). */
-export function wizardVariantsFor(saleItemsTable?: IDynamicTable | null): WizardVariant[] {
+export function saleVariantsFor(saleItemsTable?: IDynamicTable | null): SaleVariant[] {
     const schema = saleItemsTable?.schema;
     if (!isTableSchema(schema) || detectSchemaVariant(saleItemsTable) !== 'mixed') return [];
     const hasPackage = schema.fields.some(f => f.name === 'packageId');
@@ -118,7 +118,7 @@ export default function SalesCreateModal({
     // ── Schema analysis ───────────────────────────────────────
 
     const schemaVariant = useMemo(() => detectSchemaVariant(saleItemsTable), [saleItemsTable]);
-    const variantOptions = useMemo(() => wizardVariantsFor(saleItemsTable), [saleItemsTable]);
+    const variantOptions = useMemo(() => saleVariantsFor(saleItemsTable), [saleItemsTable]);
 
     const salesFields = useMemo(
         () => isTableSchema(salesTable?.schema) ? salesTable!.schema.fields : [],
@@ -139,9 +139,9 @@ export default function SalesCreateModal({
     const packageCatalog = usePackageCatalog(packageTargetTable);
     const canFlagAboveCatalog = salesFields.some(f => f.name === 'aboveCatalogPrice');
 
-    // ── Wizard hook — destructure for stable references ──────
+    // ── Hook do formulário — destructure for stable references ──────
     const {
-        state: wizardState,
+        state: formState,
         reset,
         setDate,
         setCustomerId,
@@ -162,17 +162,17 @@ export default function SalesCreateModal({
         canSubmit,
         packageIssue,
         submit,
-    } = useSalesWizard({ packageCatalog, canFlagAboveCatalog });
+    } = useSalesCreateForm({ packageCatalog, canFlagAboveCatalog });
 
-    const isPackageSale = wizardState.variant === 'packages';
+    const isPackageSale = formState.variant === 'packages';
 
     // FE-INCR-PACOTE-VALIDADE (itens 10-11): a validade (texto do servidor) da compra em curso, e o checkbox do operador.
     // Trocar pacote, data ou unidade refaz a busca e desmarca o aceite: o texto mostrado é o da compra de agora.
-    const chosenPackageId = isPackageSale ? wizardState.items.find(i => i.packageId)?.packageId : undefined;
-    const { state: noticeState, reload: reloadNotice } = useValidityNotice(wizardState.unitId, chosenPackageId, wizardState.date);
+    const chosenPackageId = isPackageSale ? formState.items.find(i => i.packageId)?.packageId : undefined;
+    const { state: noticeState, reload: reloadNotice } = useValidityNotice(formState.unitId, chosenPackageId, formState.date);
     const [validityAccepted, setValidityAccepted] = useState(false);
     const noticeKey = noticeState.status === 'ready' ? `${noticeState.notice.saleDate}|${noticeState.notice.textSha256 ?? ''}` : noticeState.status;
-    useEffect(() => { setValidityAccepted(false); }, [noticeKey, chosenPackageId, wizardState.unitId]);
+    useEffect(() => { setValidityAccepted(false); }, [noticeKey, chosenPackageId, formState.unitId]);
     const validityReady = isValidityAcceptable(!!chosenPackageId, noticeState, validityAccepted);
 
     const paymentMethodOptions = useMemo(() => {
@@ -214,7 +214,7 @@ export default function SalesCreateModal({
     // ── Submit ────────────────────────────────────────────────
 
     // Derived primitive — controls redirect-to-tab on validation error (stable in deps)
-    const headerHasMissingFields = !wizardState.unitId || (!wizardState.simpleCustomer && !wizardState.customerId);
+    const headerHasMissingFields = !formState.unitId || (!formState.simpleCustomer && !formState.customerId);
 
     const handleSubmit = useCallback(async (finalize: boolean) => {
         if (!canSubmit) {
@@ -231,7 +231,7 @@ export default function SalesCreateModal({
             // (inclusive 409 PACKAGE_NOTICE_CHANGED) a venda fica criada e o detalhe mostra o selo "aceite não registrado".
             if (noticeState.status === 'ready' && hasValidity(noticeState.notice)) {
                 try {
-                    await packageAcceptancesService.create(toAcceptanceInput(wizardState.unitId, saleId, noticeState.notice));
+                    await packageAcceptancesService.create(toAcceptanceInput(formState.unitId, saleId, noticeState.notice));
                 } catch {
                     notify(
                         t('finance_view:sales.validity.accept_failed', 'A venda foi criada, mas o aceite da validade não foi registrado. Abra a venda e registre o aceite.'),
@@ -248,7 +248,7 @@ export default function SalesCreateModal({
                 : t('common:unknownErrorOccurred', 'Erro desconhecido');
             setSubmitError(msg);
         }
-    }, [canSubmit, packageIssue, headerHasMissingFields, submit, salesTable.id, saleItemsTable.id, onCreated, onClose, t, noticeState, wizardState.unitId]);
+    }, [canSubmit, packageIssue, headerHasMissingFields, submit, salesTable.id, saleItemsTable.id, onCreated, onClose, t, noticeState, formState.unitId]);
 
     const tabs = useMemo(() => [
         { id: 0 as const, label: t('finance_view:sales.modal.tab_general', 'Cabeçalho') },
@@ -361,7 +361,7 @@ export default function SalesCreateModal({
                                                 type="button"
                                                 onClick={() => setVariant(v)}
                                                 className={`px-4 py-1.5 rounded-xl text-sm font-bold transition-all duration-200 ${
-                                                    wizardState.variant === v
+                                                    formState.variant === v
                                                         ? 'bg-white dark:bg-neutral-700 text-blue-600 dark:text-blue-400 shadow-sm'
                                                         : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                                                 }`}
@@ -374,7 +374,7 @@ export default function SalesCreateModal({
                                             </button>
                                         ))}
                                     </div>
-                                    {wizardState.items.length > 0 && (
+                                    {formState.items.length > 0 && (
                                         <p className="mt-2 text-xs text-amber-600 dark:text-amber-400 font-medium">
                                             {t('finance_view:sales.modal.variant_change_warning', 'Alterar o tipo remove os itens adicionados.')}
                                         </p>
@@ -394,7 +394,7 @@ export default function SalesCreateModal({
                                         </label>
                                         <input
                                             type="date"
-                                            value={wizardState.date}
+                                            value={formState.date}
                                             onChange={e => setDate(e.target.value)}
                                             className={FIELD_CLASS}
                                         />
@@ -406,7 +406,7 @@ export default function SalesCreateModal({
                                         </label>
                                         <RelationSelector
                                             name="unitId"
-                                            value={wizardState.unitId}
+                                            value={formState.unitId}
                                             onChange={(_: string, v: string | string[] | null) => setUnitId(Array.isArray(v) ? (v[0] ?? '') : String(v ?? ''))}
                                             targetTable={unitTargetTable}
                                             className={FIELD_CLASS}
@@ -426,15 +426,15 @@ export default function SalesCreateModal({
                                     </p>
                                 ) : (
                                     <Switch
-                                        checked={wizardState.simpleCustomer}
+                                        checked={formState.simpleCustomer}
                                         onChange={setSimpleCustomer}
                                         label={t('finance_view:sales.modal.simple_customer', 'Cliente avulso (sem cadastro)')}
                                     />
                                 )}
-                                {wizardState.simpleCustomer ? (
+                                {formState.simpleCustomer ? (
                                     <input
                                         type="text"
-                                        value={wizardState.simpleCustomerName}
+                                        value={formState.simpleCustomerName}
                                         onChange={e => setSimpleCustomerName(e.target.value)}
                                         placeholder={t('finance_view:sales.modal.customer_name', 'Nome do cliente...')}
                                         className={FIELD_CLASS}
@@ -442,7 +442,7 @@ export default function SalesCreateModal({
                                 ) : (
                                     <RelationSelector
                                         name="customerId"
-                                        value={wizardState.customerId}
+                                        value={formState.customerId}
                                         onChange={(_: string, v: string | string[] | null) => setCustomerId(Array.isArray(v) ? (v[0] ?? '') : String(v ?? ''))}
                                         targetTable={customerTargetTable}
                                         className={FIELD_CLASS}
@@ -462,7 +462,7 @@ export default function SalesCreateModal({
                                                 {t('finance_view:sales.modal.payment_method', 'Forma')}
                                             </label>
                                             <select
-                                                value={wizardState.paymentMethod}
+                                                value={formState.paymentMethod}
                                                 onChange={e => setPaymentMethod(e.target.value)}
                                                 className={FIELD_CLASS}
                                             >
@@ -481,7 +481,7 @@ export default function SalesCreateModal({
                                                 {t('finance_view:sales.modal.payment_term', 'Prazo')}
                                             </label>
                                             <PaymentTermChips
-                                                value={wizardState.paymentTermDays}
+                                                value={formState.paymentTermDays}
                                                 onChange={setPaymentTermDays}
                                             />
                                         </div>
@@ -495,7 +495,7 @@ export default function SalesCreateModal({
                                     {t('finance_view:sales.modal.section_notes', 'Observações')}
                                 </p>
                                 <textarea
-                                    value={wizardState.notes}
+                                    value={formState.notes}
                                     onChange={e => setNotes(e.target.value)}
                                     rows={3}
                                     placeholder={t('finance_view:sales.modal.notes_placeholder', 'Observações sobre a venda...')}
@@ -508,9 +508,9 @@ export default function SalesCreateModal({
                     {/* ══ Tab 1: Itens ══ */}
                     {activeTab === 1 && (
                         <SaleItemsManager
-                            items={wizardState.items}
-                            variant={wizardState.variant}
-                            unitId={wizardState.unitId}
+                            items={formState.items}
+                            variant={formState.variant}
+                            unitId={formState.unitId}
                             saleItemsFields={saleItemsFields}
                             stockIndex={stockIndex}
                             packageCatalog={packageCatalog}
@@ -518,7 +518,7 @@ export default function SalesCreateModal({
                             onAddItem={addItem}
                             onRemoveItem={removeItem}
                             onUpdateItem={updateItem}
-                            discountAmount={wizardState.discountAmount}
+                            discountAmount={formState.discountAmount}
                             onDiscountChange={setDiscount}
                             subtotal={subtotal}
                             totalAmount={totalAmount}
@@ -567,18 +567,18 @@ export default function SalesCreateModal({
                             /* Tab 1 → Salvar Rascunho + Finalizar Venda */
                             <>
                                 <button
-                                    disabled={!canSubmit || !validityReady || wizardState.isSubmitting}
+                                    disabled={!canSubmit || !validityReady || formState.isSubmitting}
                                     onClick={() => handleSubmit(false)}
                                     className="px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-neutral-700 text-gray-700 dark:text-gray-200 text-sm font-semibold hover:bg-gray-200 dark:hover:bg-neutral-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                                 >
                                     {t('finance_view:sales.modal.btn_draft', 'Salvar Rascunho')}
                                 </button>
                                 <button
-                                    disabled={!canSubmit || !validityReady || wizardState.isSubmitting}
+                                    disabled={!canSubmit || !validityReady || formState.isSubmitting}
                                     onClick={() => handleSubmit(true)}
                                     className="px-6 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none transition-all duration-200 flex items-center gap-2"
                                 >
-                                    {wizardState.isSubmitting ? (
+                                    {formState.isSubmitting ? (
                                         <>
                                             <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                             {t('common:savingChangesButton', 'Salvando...')}

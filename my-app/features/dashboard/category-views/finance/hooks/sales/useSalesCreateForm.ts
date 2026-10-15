@@ -1,15 +1,15 @@
 'use client';
 
 /**
- * useSalesWizard Hook - Gerencia estado do wizard de criação de venda
+ * useSalesCreateForm Hook - Gerencia o estado do modal Nova Venda
  *
  * @description
- * Hook principal para gerenciar todo o estado e lógica do wizard de vendas.
+ * Hook principal para gerenciar todo o estado e lógica do modal Nova Venda.
  * Inclui gerenciamento de items, cálculos e submissão.
  */
 
 import { useState, useCallback, useMemo, useRef } from 'react';
-import type { NewSaleItem, SalesWizardState, SaleData, WizardVariant } from '../../types';
+import type { NewSaleItem, SalesCreateFormState, SaleData, SaleVariant } from '../../types';
 import { FinanceService } from '../../services/FinanceService';
 import {
     lineQuantity,
@@ -24,9 +24,9 @@ import { scopeToday } from '../../../../shared/utils/formatters';
 // Types
 // ─────────────────────────────────────────────────────────────
 
-export interface UseSalesWizardReturn {
+export interface UseSalesCreateFormReturn {
     // State
-    state: SalesWizardState;
+    state: SalesCreateFormState;
 
     // Header setters
     setDate: (date: string) => void;
@@ -37,7 +37,7 @@ export interface UseSalesWizardReturn {
     setSimpleCustomerName: (name: string) => void;
     setPaymentMethod: (method: string) => void;
     setPaymentTermDays: (days: number) => void;
-    setVariant: (variant: WizardVariant) => void;
+    setVariant: (variant: SaleVariant) => void;
     setDiscount: (amount: number) => void;
 
     // Item management
@@ -68,7 +68,7 @@ export interface UseSalesWizardReturn {
 // A data da venda vira o dia do RECONHECIMENTO DE RECEITA na ponte contábil: `scopeToday()` (fuso do
 // escopo), nunca `toISOString()` — das 21h às 23h59 BRT o dia UTC já é o de amanhã.
 
-const createInitialState = (): SalesWizardState => ({
+const createInitialState = (): SalesCreateFormState => ({
     date: scopeToday(),
     customerId: '',
     unitId: '',
@@ -88,7 +88,7 @@ const createInitialState = (): SalesWizardState => ({
 // Hook
 // ─────────────────────────────────────────────────────────────
 
-export interface UseSalesWizardOptions {
+export interface UseSalesCreateFormOptions {
     /** Índice do catálogo de pacotes (usePackageCatalog) — preço de referência da variante `packages` */
     packageCatalog?: PackageCatalog;
     /** A tabela de vendas tem o campo `aboveCatalogPrice` (F-FE-VP-1b) */
@@ -98,12 +98,12 @@ export interface UseSalesWizardOptions {
 const EMPTY_CATALOG: PackageCatalog = {};
 
 /**
- * Hook para gerenciar o wizard de criação de vendas
+ * Hook para gerenciar o modal Nova Venda
  */
-export function useSalesWizard(options: UseSalesWizardOptions = {}): UseSalesWizardReturn {
+export function useSalesCreateForm(options: UseSalesCreateFormOptions = {}): UseSalesCreateFormReturn {
     const packageCatalog = options.packageCatalog ?? EMPTY_CATALOG;
     const canFlagAboveCatalog = options.canFlagAboveCatalog ?? false;
-    const [state, setState] = useState<SalesWizardState>(createInitialState);
+    const [state, setState] = useState<SalesCreateFormState>(createInitialState);
 
     // Ref de snapshot — permite que submit leia o estado atual sem dependência estável quebrada
     const stateRef = useRef(state);
@@ -159,7 +159,7 @@ export function useSalesWizard(options: UseSalesWizardOptions = {}): UseSalesWiz
 
     // Variant setter — clears items on change to enforce type homogeneity (backend rule).
     // Pacote desliga o cliente avulso (item 5).
-    const setVariant = useCallback((variant: WizardVariant) => {
+    const setVariant = useCallback((variant: SaleVariant) => {
         setState(prev => ({
             ...prev,
             variant,

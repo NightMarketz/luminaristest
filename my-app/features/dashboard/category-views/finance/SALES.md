@@ -1,26 +1,26 @@
 # Sales Sub-View
 
-> Master-detail view de vendas com wizard modal de 2 abas para criação. **Spoke** do hub-and-spoke da Finance ([← voltar ao README](./README.md)).
+> Master-detail view de vendas com modal Nova Venda de 2 abas para criação. **Spoke** do hub-and-spoke da Finance ([← voltar ao README](./README.md)).
 
 **Status:** ✅ Production-ready · 100% Gold Standard
-**Pattern:** Master-detail (table + side panel) + Wizard modal
+**Pattern:** Master-detail (table + side panel) + Modal Nova Venda
 **Domain:** Sales / Order Management
 
 ---
 
 ## 1. Overview
 
-A Sales sub-view é **intencionalmente diferente** dos category-views convencionais (Products/Services). Onde Products usa inline-edit grid + sub-rows, Sales usa **master-detail + wizard**:
+A Sales sub-view é **intencionalmente diferente** dos category-views convencionais (Products/Services). Onde Products usa inline-edit grid + sub-rows, Sales usa **master-detail + modal Nova Venda**:
 
 - **Master:** Tabela list-style com 2/3 da largura (data, cliente, status, pagamento, totais, ações)
 - **Detail:** Painel lateral com 1/3 da largura mostrando todos os campos da venda selecionada
-- **Wizard:** Modal de 2 abas (Cabeçalho + Itens) para criar nova venda
+- **Modal Nova Venda:** Modal de 2 abas (Cabeçalho + Itens) para criar nova venda
 
 Decisões-chave que moldam tudo aqui:
 
 - **Sales tem cardinalidade `pedido × itens`:** Cada venda agrega N items (produtos ou serviços). Modelagem master-detail é natural.
 - **Flat record pattern:** `SaleRecord = SaleData & { id: string }` — diferente do Products/Services que usam `{ id, data: ... }`. Razão histórica + ergonomia em autocomplete.
-- **Wizard tem state próprio:** `useSalesWizard` encapsula tudo do form. Usa **stateRef pattern** para garantir submit com snapshot atualizado sem stale closures.
+- **Modal Nova Venda tem state próprio:** `useSalesCreateForm` encapsula tudo do form. Usa **stateRef pattern** para garantir submit com snapshot atualizado sem stale closures.
 - **Schema-aware mas com fields canônicos:** Sales tem campos fixos importantes (date, status, paymentStatus, etc.) hardcoded no JSX. Campos extras do schema aparecem dinamicamente no `SaleDetailPanel`.
 
 ---
@@ -34,10 +34,10 @@ graph TD
     A --> D[SalesFilterBar<br/>search + status + period]
     A --> E[SalesTable<br/>master · 2/3 width]
     A --> F[SaleDetailPanel<br/>detail · 1/3 width]
-    A --> G[SalesCreateModal<br/>wizard modal]
+    A --> G[SalesCreateModal<br/>modal Nova Venda]
 
-    G --> H[useSalesWizard<br/>form state + submit]
-    G --> I[SaleItemsManager<br/>items table inside wizard]
+    G --> H[useSalesCreateForm<br/>form state + submit]
+    G --> I[SaleItemsManager<br/>items table inside modal Nova Venda]
     G --> J[inputs.tsx<br/>QuantityInput · CurrencyInput · PaymentTermChips]
 
     B -.uses.-> K[useFinanceData<br/>shared discovery]
@@ -54,10 +54,10 @@ graph TD
 | Orchestrator | `views/SalesView.tsx` | Compor hooks, gerenciar `selectedSale` e modal open state | HTTP, lógica de domínio |
 | Data | `hooks/sales/useSalesData.ts` | 3 useTableData, relation lookups, analytics, stock index, updateSale | Filtragem, UI state |
 | Logic | `hooks/sales/useSalesLogic.ts` | Pure: filter, sort, paginate | HTTP, mutations |
-| Wizard | `hooks/sales/useSalesWizard.ts` | Form state, validation, submit (via FinanceService) | Renderização |
+| Form | `hooks/sales/useSalesCreateForm.ts` | Form state, validation, submit (via FinanceService) | Renderização |
 | Table | `components/sales/SalesTable.tsx` | List rendering, badges, actions inline | Edição inline (delega ao panel/modal) |
 | Detail | `components/sales/SaleDetailPanel.tsx` | Mostrar campos da venda + actions | HTTP (recebe `onUpdateSale` callback) |
-| Modal | `components/sales/SalesCreateModal.tsx` | UI do wizard, navegação entre tabs | State do form (delega ao hook) |
+| Modal | `components/sales/SalesCreateModal.tsx` | UI do modal Nova Venda, navegação entre tabs | State do form (delega ao hook) |
 | Items mgr | `components/sales/create/SaleItemsManager.tsx` | Tabela de items, add/remove | State (recebe handlers) |
 
 ---
@@ -69,7 +69,7 @@ graph TD
 | `views/SalesView.tsx` | ~185 | Orchestrator: data + logic + view layout |
 | `hooks/sales/useSalesData.ts` | ~130 | 3 tables (sales, saleItems, productUnits) + relation lookups + analytics + updateSale |
 | `hooks/sales/useSalesLogic.ts` | ~120 | Filter (query/status/period) + sort by date desc + paginate |
-| `hooks/sales/useSalesWizard.ts` | ~280 | Form state com `stateRef` pattern · 11 setters em `useCallback` · subtotal/totalAmount/canSubmit memoizados · submit que recompute totais do snapshot |
+| `hooks/sales/useSalesCreateForm.ts` | ~280 | Form state com `stateRef` pattern · 11 setters em `useCallback` · subtotal/totalAmount/canSubmit memoizados · submit que recompute totais do snapshot |
 | `components/sales/SalesFilterBar.tsx` | ~125 | Horizontal filter bar com period chips |
 | `components/sales/SalesTable.tsx` | ~270 | List-style table · `StatusBadge` · `PaymentBadge` · 4 actions inline (view/finalize/cancel/pay) |
 | `components/sales/SaleDetailPanel.tsx` | ~250 | Side panel · header com actions · grid de campos · items list · campos extras schema-driven |
@@ -77,7 +77,7 @@ graph TD
 | `components/sales/create/SaleItemsManager.tsx` | ~290 | Tabela de items · stock badge · RelationSelector para product/service/employee |
 | `components/sales/create/inputs.tsx` | ~195 | `QuantityInput` (stepper) · `CurrencyInput` (parseBRL on blur) · `PaymentTermChips` (presets + custom) |
 | `components/sales/create/types.ts` | ~25 | Boundary types: `SaleItemsVariant`, `StockIndexEntry`, `SalesCreateModalProps` |
-| `types/sales.types.ts` | ~135 | `SaleData`, `SaleItemData`, `NewSaleItem`, `SalesWizardState`, `SalesAnalytics`, `RelationMaps` |
+| `types/sales.types.ts` | ~135 | `SaleData`, `SaleItemData`, `NewSaleItem`, `SalesCreateFormState`, `SalesAnalytics`, `RelationMaps` |
 | `components/sales/index.ts` | 12 | Barrel · re-exports `SalesTable`, `SaleDetailPanel`, `SalesFilterBar`, `SalesCreateModal` + `create/*` |
 | `components/sales/create/index.ts` | 3 | Barrel parcial · `SaleItemsManager`, `inputs`, `types` |
 
@@ -93,7 +93,7 @@ sequenceDiagram
     participant V as SalesView
     participant D as useSalesData
     participant L as useSalesLogic
-    participant W as useSalesWizard
+    participant W as useSalesCreateForm
     participant FS as FinanceService
 
     Note over V,D: Initialization
@@ -123,7 +123,7 @@ sequenceDiagram
     Note over U,FS: User creates new sale
     U->>V: clicks "Nova Venda" (in FinanceView root)
     V->>V: isCreateOpen=true
-    V->>W: <SalesCreateModal> mounts → useSalesWizard()
+    V->>W: <SalesCreateModal> mounts → useSalesCreateForm()
     U->>W: fills tab 0 (cabeçalho)
     U->>W: clicks "Próximo"
     U->>W: fills tab 1 (itens)
@@ -138,8 +138,8 @@ sequenceDiagram
 
 **Pontos-chave:**
 - **3 HTTP requests em paralelo** (sales/items/productUnits) via `useTableData`.
-- **`stockIndex`** é construído em `useSalesData` — flat map `${productId}|${unitId}` → `{ stock, reserved, salePrice }`. Lookup O(1) durante o wizard.
-- **`useSalesWizard` usa `stateRef.current`** dentro de `submit()` porque o setter `setState(prev => ...)` é assíncrono. Sem o ref, totals podem ser stale.
+- **`stockIndex`** é construído em `useSalesData` — flat map `${productId}|${unitId}` → `{ stock, reserved, salePrice }`. Lookup O(1) durante o modal Nova Venda.
+- **`useSalesCreateForm` usa `stateRef.current`** dentro de `submit()` porque o setter `setState(prev => ...)` é assíncrono. Sem o ref, totals podem ser stale.
 - **Update flow centralizado:** `updateSale` vive em `useSalesData`, recebido por `SalesTable` e `SaleDetailPanel`. **HTTP único, dois callers.**
 
 ---
@@ -187,13 +187,13 @@ O botão "Nova Venda" vive no header global do FinanceView (próximo ao FAB de E
 | `selectedSale` | `SalesView` | row click |
 | `isFilterOpen` | `useFilterPersistence('finance-sales')` | localStorage |
 | `updating` (sale ID being updated) | `useSalesData` | `updateSale` flow |
-| `wizardState` (form data) | `useSalesWizard` | 11 setters + addItem/removeItem/updateItem |
-| `isSubmitting` (wizard) | `useSalesWizard` (dentro de `wizardState`) | `submit()` flow |
-| `activeTab` (wizard) | `SalesCreateModal` | tab buttons |
-| `submitError` (wizard) | `SalesCreateModal` | submit catch |
+| `formState` (form data) | `useSalesCreateForm` | 11 setters + addItem/removeItem/updateItem |
+| `isSubmitting` (modal Nova Venda) | `useSalesCreateForm` (dentro de `formState`) | `submit()` flow |
+| `activeTab` (modal Nova Venda) | `SalesCreateModal` | tab buttons |
+| `submitError` (modal Nova Venda) | `SalesCreateModal` | submit catch |
 | `isCreateOpen` | `FinanceView` (parent) | botão "Nova Venda" |
 
-**Decisão arquitetural — wizard com `stateRef`:**
+**Decisão arquitetural — modal Nova Venda com `stateRef`:**
 
 O `submit()` é chamado dentro de `handleSubmit` no modal. Se ele lesse `state` direto, **teria stale closure** (o último setState pode não ter aplicado ainda). Em vez disso:
 
@@ -208,7 +208,7 @@ const submit = useCallback(async (...) => {
 }, []); // deps vazias intencionalmente
 ```
 
-Documentado em `useSalesWizard.ts:84-86, 245`.
+Documentado em `useSalesCreateForm.ts:84-86, 245`.
 
 ---
 
@@ -225,7 +225,7 @@ Referências cruzadas com o skill `category-view-standard`:
 | §10 Soft delete + status changes via confirmation modal | `useConfirmModal()` em Table e Panel | `SalesTable.tsx:80, 207-258` |
 | `useTableRelationLookups` | Resolve FK names (customers, products, services, units) | `useSalesData.ts:81-90` |
 | `isTableSchema` guard | Schema access seguro | `SaleDetailPanel.tsx:174` · `SalesCreateModal.tsx:41, 124, 129` |
-| `catch (err: unknown)` + `instanceof Error` | Wizard submit + Modal catch | `useSalesWizard.ts:240-244` · `SalesCreateModal.tsx:185-190` |
+| `catch (err: unknown)` + `instanceof Error` | Modal Nova Venda submit + Modal catch | `useSalesCreateForm.ts:240-244` · `SalesCreateModal.tsx:185-190` |
 | Module-level constants | `LABEL_CLASS`, `FIELD_CLASS`, `SECTION_CARD_CLASS`, `STATUS_COLORS`, `PAYMENT_COLORS`, `PRESETS` | Em vários arquivos |
 | `import type` consistente | Todos os identificadores type-only separados | Após Stage 3 |
 | Zero `as any` | Type narrowing via `isTableSchema` e casts tipados | Verificado |
@@ -254,7 +254,7 @@ Pedidos não são "items independentes" como produtos — são **transações co
 
 Trade-off aceito: inconsistência com Expenses (que usa nested). Documentado em [SHARED.md → Normalizers](./SHARED.md#3-utils--normalizers).
 
-### Por que `useSalesWizard` usa `stateRef` em vez de deps no `useCallback`?
+### Por que `useSalesCreateForm` usa `stateRef` em vez de deps no `useCallback`?
 
 O submit precisa do estado **atual** no momento da chamada, não no momento da criação da closure. Alternativas consideradas:
 
@@ -276,7 +276,7 @@ O schema da tabela `saleItems` pode ter:
 Detectar runtime permite:
 1. Esconder o seletor de tipo quando o schema é fixo
 2. Filtrar o `SaleItemsManager` para mostrar apenas a coluna relevante
-3. Lock automático do `wizardState.variant` quando não-mixed
+3. Lock automático do `formState.variant` quando não-mixed
 
 `detectSchemaVariant()` em `SalesCreateModal.tsx:40-46`.
 
@@ -313,7 +313,7 @@ Para que consumers de `components/sales` possam importar tipos sem ter que desce
 
 **Você não precisa fazer nada no código.** Adicione o campo no schema da tabela `sales`. Ele aparece automaticamente:
 - **No detail panel:** `SaleDetailPanel.tsx:174-201` renderiza campos extras schema-driven via `useRenderTypedValue`
-- **No wizard:** não aparece automaticamente (wizard é hand-coded). Se quiser exposição no form, adicionar manualmente em `SalesCreateModal.tsx`.
+- **No modal Nova Venda:** não aparece automaticamente (modal Nova Venda é hand-coded). Se quiser exposição no form, adicionar manualmente em `SalesCreateModal.tsx`.
 
 ### "Adicionar um filtro novo (ex: por vendedor)"
 
@@ -326,8 +326,8 @@ Para que consumers de `components/sales` possam importar tipos sem ter que desce
 
 ### "Suportar criação de venda com desconto percentual em vez de fixo"
 
-Hoje `useSalesWizard.ts:124` aceita `discountAmount: number`. Para percentual:
-1. Adicionar `discountType: 'fixed' | 'percent'` ao `SalesWizardState`
+Hoje `useSalesCreateForm.ts:124` aceita `discountAmount: number`. Para percentual:
+1. Adicionar `discountType: 'fixed' | 'percent'` ao `SalesCreateFormState`
 2. `totalAmount` calc (L177-180): aplicar conforme tipo
 3. UI: `SaleItemsManager.tsx:264-274` — adicionar toggle entre fixo/percent
 
@@ -337,7 +337,7 @@ Já está implementado! `SalesTable.tsx:152` e `SaleDetailPanel.tsx:115-129` che
 
 ### "Adicionar comissão por venda"
 
-`useSalesWizard.ts:138-148` (`addItem`): `NewSaleItem` já tem campo `commission?: number`. Falta UI exposure:
+`useSalesCreateForm.ts:138-148` (`addItem`): `NewSaleItem` já tem campo `commission?: number`. Falta UI exposure:
 1. Adicionar coluna "Comissão" em `SaleItemsManager.tsx`
 2. Adicionar `CurrencyInput` que chama `onUpdateItem(item.id, { commission: val })`
 3. Backend: garantir que `SaleItemData` aceita o campo no schema
@@ -346,12 +346,12 @@ Já está implementado! `SalesTable.tsx:152` e `SaleDetailPanel.tsx:115-129` che
 
 ## 10. Known Limitations & Tech Debt
 
-- **Wizard não suporta edição** — só cria. Editar uma venda existente abre `RowActionsCell` modal (genérico) → não tem o wizard de 2 tabs. Aceito (UX de wizard só faz sentido na criação inicial).
-- **`SalesCreateModal` é específico de Sales** — Não generalizável para outras views (cada wizard tem semântica própria).
+- **Modal Nova Venda não suporta edição** — só cria. Editar uma venda existente abre `RowActionsCell` modal (genérico) → não tem o modal Nova Venda de 2 tabs. Aceito (UX de modal Nova Venda só faz sentido na criação inicial).
+- **`SalesCreateModal` é específico de Sales** — Não generalizável para outras views (cada modal de criação tem semântica própria).
 - **`useSalesData` faz 3 HTTP requests sequencialmente no mount** — `useTableData × 3` em paralelo é OK, mas a cadeia de useTableRelationLookups adiciona latência. Aceito (não bloqueia render — apenas marca `isLoading`).
 - **`stockIndex` é recalculado a cada mudança de `rawProductUnits`** — para 1000+ unidades pode ser lento. Atualmente OK (escala atual).
-- **Sem testes unitários** — `useSalesLogic` (puro) e `useSalesWizard` (state machine) são candidatos óbvios. Pendente.
-- **Wizard não persiste em rascunho local** — fechar modal antes de submeter perde tudo. Aceito (UX de "preencher e desistir" raramente acontece).
+- **Sem testes unitários** — `useSalesLogic` (puro) e `useSalesCreateForm` (state machine) são candidatos óbvios. Pendente.
+- **Modal Nova Venda não persiste em rascunho local** — fechar modal antes de submeter perde tudo. Aceito (UX de "preencher e desistir" raramente acontece).
 
 ---
 

@@ -39,7 +39,7 @@ export function useSalesData(tables: IDynamicTable[]) {
     // 1. Descoberta de tabelas
     const { salesTable, saleItemsTable } = useFinanceData(tables);
 
-    // 2. Descoberta da tabela de product units (para stock lookup no wizard)
+    // 2. Descoberta da tabela de product units (para stock lookup no modal Nova Venda)
     const productUnitsTable = useMemo(
         () => tables.find(t =>
             t.name === 'Product Units' ||

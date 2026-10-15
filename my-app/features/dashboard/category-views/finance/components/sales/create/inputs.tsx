@@ -85,7 +85,7 @@ export function PaymentTermChips({ value, onChange }: PaymentTermChipsProps) {
         }
     }, [customOpen]);
 
-    // Sync customOpen when value is reset externally (e.g. wizard reset)
+    // Sync customOpen when value is reset externally (e.g. reset do modal Nova Venda)
     useEffect(() => {
         if (PRESETS.includes(value)) {
             setCustomOpen(false);
@@ -106,8 +106,8 @@ export function PaymentTermChips({ value, onChange }: PaymentTermChipsProps) {
                     }`}
                 >
                     {days === 0
-                        ? t('finance_view:sales.wizard.cash', 'À vista')
-                        : t('finance_view:sales.wizard.days', '{{count}} dias', { count: days })}
+                        ? t('finance_view:sales.create.cash', 'À vista')
+                        : t('finance_view:sales.create.days', '{{count}} dias', { count: days })}
                 </button>
             ))}
 
@@ -118,7 +118,7 @@ export function PaymentTermChips({ value, onChange }: PaymentTermChipsProps) {
                     onClick={() => setCustomOpen(true)}
                     className="px-4 py-2 text-sm font-medium rounded-xl border border-dashed border-gray-300 dark:border-gray-600 bg-white dark:bg-neutral-800 text-gray-500 dark:text-gray-400 hover:border-blue-400 hover:text-blue-600 transition"
                 >
-                    {t('finance_view:sales.wizard.other', 'Outro')}
+                    {t('finance_view:sales.create.other', 'Outro')}
                 </button>
             ) : (
                 <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-all ${
@@ -142,7 +142,7 @@ export function PaymentTermChips({ value, onChange }: PaymentTermChipsProps) {
                         }`}
                     />
                     <span className={`text-xs ${isCustomValue ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
-                        {t('finance_view:sales.wizard.days_label', 'dias')}
+                        {t('finance_view:sales.create.days_label', 'dias')}
                     </span>
                 </div>
             )}
