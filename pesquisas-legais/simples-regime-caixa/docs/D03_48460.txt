@@ -1,0 +1,63 @@
+ANEXO IX 
+Registro de Valores a Receber 
+NOME EMPRESARIAL  
+CNPJ   
+ 
+Data da 
+operação ou 
+prestação  
+Número(s) do(s) 
+documento(s) 
+fiscal(is) (1)  
+Valor 
+total  
+Quantidade de 
+parcelas  
+Número da 
+parcela  
+Valor da 
+parcela  
+Data do 
+vencimento 
+Data do 
+recebimento  
+Valor 
+pago  
+Saldo a 
+receber 
+ 
+Valor 
+considerado 
+incobrável  
+1        
+2        
+...        
+    
+n        
+1        
+2        
+...        
+    
+n        
+1        
+2        
+...        
+    
+n        
+1        
+2        
+...        
+    
+n        
+1        
+2        
+...        
+    
+n        
+1        
+2        
+...        
+    
+n        
+(1) observar o disposto no § 1º do art. 77 da Resol ução CGSN nº 140, de 2018 
+ 
