@@ -7,7 +7,7 @@ import { logger } from '@/lib/logger';
  * @param key The string key to convert.
  * @returns The converted PascalCase string.
  */
-function keyToPascalCase(key: string): string {
+export function keyToPascalCase(key: string): string {
   return key
     .split(/[-_]/)
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))

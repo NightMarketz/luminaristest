@@ -1769,6 +1769,7 @@ export class ApplicationFactory {
       systemProvisioning: new SystemProvisioningService(
         dynamicTableService,
         companyFiscalProfileService,
+        fiscalProfileService, // I4 EMENDA 14/10 item 9c: perfil fiscal da UNIDADE (passo 3b)
         this.repositories.actionProposal,
         this.repositories.knowledgeGraph,
         this.policies.systemProvisioning,

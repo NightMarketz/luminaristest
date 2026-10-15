@@ -89,4 +89,5 @@ simplesRegimeApuracao?: ("COMPETENCIA" | "CAIXA")
 export interface OnboardingFiscalInput {
 regime: ("MEI" | "SIMPLES" | "PRESUMIDO" | "REAL" | "NAO_SEI")
 grandePorte?: (boolean | null)
+icmsContribuinte?: (boolean | null)
 }

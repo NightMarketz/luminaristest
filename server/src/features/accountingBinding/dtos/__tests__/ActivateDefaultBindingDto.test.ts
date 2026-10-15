@@ -1,6 +1,8 @@
 import {
   ActivateDefaultBindingRequestSchema,
   ActivateDefaultBindingResultSchema,
+  ONBOARDING_ACCOUNTING_CODES,
+  OnboardingAccountingResultSchema,
 } from '../ActivateDefaultBindingDto';
 
 describe('ActivateDefaultBindingRequestSchema (LAC-B, contrato de entrada)', () => {
@@ -72,5 +74,34 @@ describe('ActivateDefaultBindingResultSchema — kit de setor (BE-INCR-KIT-SETOR
     expect(
       ActivateDefaultBindingResultSchema.safeParse({ status: 'Draft', blocking: [{ code: 'KIT_INSTALL_STEP_FAILED', step: 8, message: 'x' }] }).success,
     ).toBe(false);
+  });
+});
+
+describe('OnboardingAccountingResultSchema (I4 item 14, bloco accounting do POST /dashboard/create)', () => {
+  it('aceita Active com setor e versão, Draft com bloqueantes e not-applicable vazio', () => {
+    expect(OnboardingAccountingResultSchema.safeParse({ status: 'Active', sectorKey: 'beautySalon', bindingVersion: 1 }).success).toBe(true);
+    expect(
+      OnboardingAccountingResultSchema.safeParse({
+        status: 'Draft',
+        sectorKey: 'beautySalon',
+        blocking: [{ code: 'ACCOUNTING_ACTIVATION_FAILED', message: 'x' }],
+      }).success,
+    ).toBe(true);
+    expect(OnboardingAccountingResultSchema.safeParse({ status: 'not-applicable' }).success).toBe(true);
+  });
+
+  it('recusa o already-active cru (o controller o mapeia para Active) e status fora da lista', () => {
+    expect(OnboardingAccountingResultSchema.safeParse({ status: 'already-active', sectorKey: 'beautySalon' }).success).toBe(false);
+    expect(OnboardingAccountingResultSchema.safeParse({ status: 'Pending' }).success).toBe(false);
+  });
+
+  it('.strict(): o kit do activateDefault não vaza para a resposta do onboarding', () => {
+    expect(
+      OnboardingAccountingResultSchema.safeParse({ status: 'Active', sectorKey: 'beautySalon', bindingVersion: 1, kit: { kitKey: 'beautySalon' } }).success,
+    ).toBe(false);
+  });
+
+  it('os dois códigos próprios do onboarding estão declarados', () => {
+    expect(ONBOARDING_ACCOUNTING_CODES).toEqual(['ACCOUNTING_ACTIVATION_FAILED', 'ACCOUNTING_SYNC_RELOAD_FAILED']);
   });
 });

@@ -84,10 +84,15 @@ describe('X13 PR-3 — regime e porte no onboarding', () => {
   it('item 19 (compensação F-I1-4 b): falha ao criar o perfil → 500 ONBOARDING_ROLLED_BACK, sistema desfeito, retry funciona', async () => {
     const u = await novoUsuario();
     jest.spyOn(CompanyFiscalProfileService.prototype, 'upsert').mockRejectedValueOnce(new Error('falha injetada'));
-    const r = await criar(u, { fiscal: { regime: 'REAL' } });
+    // I4 item 16 (EMENDA 14/10): bloco DERIVÁVEL (REAL + salão + icms "não") — sem isso as duas contagens abaixo seriam
+    // zero de qualquer jeito e não provariam a ordem.
+    const r = await criar(u, { fiscal: { regime: 'REAL', icmsContribuinte: false } });
     expect(r.status).toBe(500);
     expect(r.body.errorCode).toBe('ONBOARDING_ROLLED_BACK');
     expect(await prisma.dynamicTable.count({ where: { userId: u.id } })).toBe(0);
+    // I4 item 16: o perfil da unidade (3b) e a ativação contábil vêm DEPOIS do perfil da empresa — nenhum nasceu.
+    expect(await prisma.fiscalProfile.count({ where: { userId: u.id } })).toBe(0);
+    expect(await prisma.accountingBinding.count({ where: { userId: u.id } })).toBe(0);
 
     jest.restoreAllMocks();
     const retry = await criar(u, { fiscal: { regime: 'REAL' } });

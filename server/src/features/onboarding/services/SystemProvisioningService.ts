@@ -8,6 +8,9 @@ import { UpsertCompanyFiscalProfileSchema } from '../../accounting/dtos/CompanyF
 import type { OnboardingFiscalInput } from '../../accounting/dtos/CompanyFiscalProfileDto';
 import { anoCorrente } from '../../accounting/services/CompanyFiscalProfileService';
 import type { CompanyFiscalProfileService } from '../../accounting/services/CompanyFiscalProfileService';
+import { UpsertFiscalProfileSchema } from '../../accounting/dtos/FiscalProfileDto';
+import type { FiscalProfileService } from '../../accounting/services/FiscalProfileService';
+import { deriveUnitFiscalProfile } from './deriveUnitFiscalProfile';
 import type { ObrigacaoResolvida } from '../../accounting/models/obrigacoesPorRegime';
 import { scopeToday } from '../../accounting/models/dates';
 import { resolveAccountingScope } from '../../accounting/scope/AccountingScope';
@@ -22,12 +25,16 @@ export type ProvisioningTableService = Pick<
 >;
 /** O que o serviço usa do perfil fiscal da empresa. */
 export type ProvisioningFiscalService = Pick<CompanyFiscalProfileService, 'upsert' | 'resolverObrigacoesEm'>;
+/** O que o serviço usa do perfil fiscal da UNIDADE (passo 3b). */
+export type ProvisioningUnitFiscalService = Pick<FiscalProfileService, 'upsert'>;
 
 export interface ProvisionInput {
   /** Já montado (Rápido via `buildQuickPreset`, Controle Total pelo controller). */
   preset: { tables: Record<string, PresetTableDefinition> };
   unit: UnitInput;
   fiscal?: OnboardingFiscalInput;
+  /** Setor do binding (I4 item 9; `null` = preset sem setor). Só pesa no Lucro Real do passo 3b (F-I4-8 a). */
+  sectorKey?: string | null;
 }
 
 export interface FiscalDoOnboarding {
@@ -72,6 +79,7 @@ export class SystemProvisioningService implements ISystemProvisioningService {
   constructor(
     private readonly tables: ProvisioningTableService,
     private readonly companyFiscalProfile: ProvisioningFiscalService,
+    private readonly unitFiscalProfile: ProvisioningUnitFiscalService,
     private readonly actionProposals: IActionProposalRepository,
     private readonly knowledgeGraphs: IKnowledgeGraphRepository,
     private readonly policy: ISystemProvisioningPolicy,
@@ -89,6 +97,7 @@ export class SystemProvisioningService implements ISystemProvisioningService {
     const installResult = await this.tables.installPresetAsSystem(ctx.id, input.preset);
     const unitId = await this.createFirstUnitOrRollback(ctx, input.unit);
     const fiscal = await this.createCompanyFiscalProfileOrRollback(ctx, unitId, input.fiscal);
+    await this.createUnitFiscalProfileOrLog(ctx, unitId, input.fiscal, input.sectorKey);
     return { installResult, unitId, fiscal };
   }
 
@@ -128,8 +137,9 @@ export class SystemProvisioningService implements ISystemProvisioningService {
   /**
    * X13 PR-3 itens 19 e 21 (F-OBP-6 → c) — passo 3, DEPOIS da unidade: com regime conhecido, nasce o perfil fiscal da
    * EMPRESA do ano corrente (fuso do escopo) pelo serviço da contabilidade (policy + auditoria + gates dele). `NAO_SEI`
-   * ou bloco ausente ⇒ nada é criado e o resumo diz `pendente`. O `FiscalProfile` da UNIDADE não é criado aqui —
-   * lacuna de spec L-PR3-1 (o F-X6-6 a proíbe inventar `icmsContribuinte`/`pisCofinsRegime`). Falha ⇒ compensação.
+   * ou bloco ausente ⇒ nada é criado e o resumo diz `pendente`. O `FiscalProfile` da UNIDADE nasce no passo 3b
+   * (`createUnitFiscalProfileOrLog`) — a lacuna L-PR3-1 fechou pela EMENDA 14/10 do I4 (F-I4-6 a), sem inventar
+   * `icmsContribuinte`/`pisCofinsRegime` (F-X6-6 a). Falha ⇒ compensação.
    */
   private async createCompanyFiscalProfileOrRollback(
     ctx: UserContext,
@@ -150,6 +160,28 @@ export class SystemProvisioningService implements ISystemProvisioningService {
         rolledBack: (detail) => `Não foi possível criar o perfil fiscal da empresa (${detail}). A instalação foi desfeita; tente novamente.`,
         rollbackFailed: 'O perfil fiscal não foi criado e a limpeza do sistema instalado falhou. Use "Resetar sistema" antes de tentar de novo.',
       });
+    }
+  }
+
+  /**
+   * Passo 3b (BE-INCR-ONBOARDING-ACTIVATION EMENDA 14/10, item 9c; F-I4-6 a): DEPOIS do perfil da empresa, o
+   * `FiscalProfile` da UNIDADE derivado do bloco `fiscal` (`deriveUnitFiscalProfile`, tabela E14.2) pelo serviço
+   * canônico (policy `canManageFiscalProfile` + auditoria `FISCAL_PROFILE_UPDATED`). Sem derivação possível, nada é
+   * criado. Falha (F-I4-10 a): `logger.error` e segue — o tenant fica de pé e a ativação contábil sai `Draft` com
+   * `KIT_FISCAL_PROFILE_REQUIRED`; o perfil da unidade só existe para a contabilidade (mesma assimetria do F-I4-2 b).
+   */
+  private async createUnitFiscalProfileOrLog(
+    ctx: UserContext,
+    unitId: string,
+    fiscal: OnboardingFiscalInput | undefined,
+    sectorKey: string | null | undefined,
+  ): Promise<void> {
+    const derived = deriveUnitFiscalProfile(fiscal?.regime, fiscal?.icmsContribuinte, sectorKey);
+    if (!derived) return;
+    try {
+      await this.unitFiscalProfile.upsert(resolveAccountingScope(ctx, unitId), UpsertFiscalProfileSchema.parse({ unitId, ...derived }));
+    } catch (error) {
+      logger.error(`Onboarding: falha ao criar o perfil fiscal da unidade ${unitId} do usuário ${ctx.userId} — segue sem ele (F-I4-10 a).`, { error });
     }
   }
 

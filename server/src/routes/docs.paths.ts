@@ -666,6 +666,17 @@
  *         the unit fails the install is undone and the answer is 500 ONBOARDING_ROLLED_BACK.
  *         With `fiscal.regime` known, the company fiscal profile of the current year is created after the
  *         unit and `data.fiscal` carries status criado and the resolved SPED obligations (X13 PR-3).
+ *         When the regime (and, for PRESUMIDO/REAL, `fiscal.icmsContribuinte`) allows it, the unit fiscal
+ *         profile is derived and created next (I4 EMENDA 14/10, F-I4-6 a; REAL derives only for beautySalon,
+ *         F-I4-8 a); a failure there is logged and the request goes on (F-I4-10 a).
+ *         Last, `data.accounting` (I4, BE-INCR-ONBOARDING-ACTIVATION) reports the accounting of the unit:
+ *         for a preset with a sector binding (beautySalon, aestheticClinic) the default binding is activated
+ *         with installChartIfEmpty and openCurrentPeriodIfMissing, and the accounting mappers are reloaded so
+ *         the first sale posts without a restart - status Active with sectorKey and bindingVersion. If the
+ *         activation returns Draft or throws, or the reload fails, the system is NOT undone: 201 with status
+ *         Draft and `blocking` (e.g. KIT_FISCAL_PROFILE_REQUIRED, ACCOUNTING_ACTIVATION_FAILED,
+ *         ACCOUNTING_SYNC_RELOAD_FAILED) - unlike unit and fiscal failures, which answer 500 (F-I4-2 b).
+ *         A preset without a sector binding (crmModule) gives status not-applicable and writes nothing.
  *         Returns 403 if the user already has tables configured.
  *       tags: [Dashboard]
  *       security: [{ bearerAuth: [] }]
@@ -696,6 +707,7 @@
  *                       properties:
  *                         regime: { type: string, enum: [MEI, SIMPLES, PRESUMIDO, REAL, NAO_SEI] }
  *                         grandePorte: { type: boolean, nullable: true }
+ *                         icmsContribuinte: { type: boolean, nullable: true, description: 'I4 F-I4-7 a - sells goods with state registration? null/absent = do not know (no unit fiscal profile in PRESUMIDO/REAL)' }
  *                     modules:
  *                       type: array
  *                       description: 'I8 - module keys (flat list, F-CRM-9 b). Summed to the suite default; dependencies come from the registry (CRM-0 implicit). CRM-2 is a group key (BE-INCR-CRM-SUBMODULES F-SUB-2 a) that expands to CRM-2A + CRM-2B; data.modules.installed lists only atomic keys'
@@ -725,6 +737,7 @@
  *                       properties:
  *                         regime: { type: string, enum: [MEI, SIMPLES, PRESUMIDO, REAL, NAO_SEI] }
  *                         grandePorte: { type: boolean, nullable: true }
+ *                         icmsContribuinte: { type: boolean, nullable: true, description: 'I4 F-I4-7 a - sells goods with state registration? null/absent = do not know (no unit fiscal profile in PRESUMIDO/REAL)' }
  *                     removedTables:
  *                       type: array
  *                       items: { type: string }

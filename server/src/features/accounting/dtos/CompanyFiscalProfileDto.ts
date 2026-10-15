@@ -184,11 +184,16 @@ export type UpsertCompanyFiscalProfileInput = z.infer<typeof UpsertCompanyFiscal
  * X13 PR-3 item 19 (F-OBP-6 → c): bloco `fiscal` do `POST /dashboard/create` — o onboarding pergunta SÓ regime e porte,
  * com "não sei" (`NAO_SEI` ⇒ nada é criado; o resto do perfil vem depois, no formulário). Pergunta fechada: o modelo
  * da entrevista não infere o regime (item 20).
+ *
+ * BE-INCR-ONBOARDING-ACTIVATION EMENDA 14/10, item 9a (F-I4-7 a): `icmsContribuinte` — "a empresa vende produtos
+ * (mercadorias) com inscrição estadual?". Fato da empresa (LC 87/1996 art. 4º), não decorre do regime; só pesa em
+ * `PRESUMIDO`/`REAL` (no Simples o perfil da unidade o força a `false`). `null`/ausente = "não sei".
  */
 export const OnboardingFiscalSchema = z
   .object({
     regime: z.enum([...REGIMES_EMPRESA, 'NAO_SEI']),
     grandePorte: z.boolean().nullable().optional(),
+    icmsContribuinte: z.boolean().nullable().optional(),
   })
   .strict();
 export type OnboardingFiscalInput = z.infer<typeof OnboardingFiscalSchema>;
