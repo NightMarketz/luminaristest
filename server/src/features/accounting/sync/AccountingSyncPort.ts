@@ -112,9 +112,21 @@ export const CRM_LEGACY_SOURCE_TYPE = 'crm.opportunity.won';
  *   • ACCOUNTING_PERIOD_NOT_OPEN — transient by admin action (period reopens later);
  *   • MAX_CENTS_EXCEEDED — POISON: the source amount exceeds the MAX_CENTS policy ceiling and the
  *     event can NEVER succeed until the source itself is fixed; retrying it every cycle is the
- *     infinite poison-loop Council 1.5 names.
+ *     infinite poison-loop Council 1.5 names;
+ *   • NO_MAPPER_FOR_UNIT — sem mapper para (unidade, evento): ou a unidade não tem binding `Active` (ativar o
+ *     binding; depois recarga — F-I4-4 — e rescan), ou o binding não cobre o evento (bug de cobertura do
+ *     `compile()`: recompilar). Pulado por decisão do dono (F-I5-3 a) — a pendência é o sinal, não o log
+ *     (BE-INCR-ONBOARDING-ACTIVATION item 3);
+ *   • UNKNOWN_EVENT_KEY — nenhum kit declara o evento (bug de fiação de quem o emite; KIT-SETOR PR-6 item 47). Pulado
+ *     por decisão do dono, contra a recomendação (D-2026-10-14-I4-I5-LACUNAS-EXECUCAO L-2) — mesmo raciocínio do
+ *     F-I5-3 a: a pendência com código próprio é o sinal.
  */
-export const SYNC_SKIP_ERROR_CODES = ['ACCOUNTING_PERIOD_NOT_OPEN', 'MAX_CENTS_EXCEEDED'] as const;
+export const SYNC_SKIP_ERROR_CODES = [
+  'ACCOUNTING_PERIOD_NOT_OPEN',
+  'MAX_CENTS_EXCEEDED',
+  'NO_MAPPER_FOR_UNIT',
+  'UNKNOWN_EVENT_KEY',
+] as const;
 
 /**
  * Returns the skip-listed code carried by `error`, or null when the error must NOT be skipped.

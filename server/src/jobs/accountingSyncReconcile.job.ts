@@ -183,7 +183,9 @@ export interface ReconcileSummary {
    *  - ANY sync pass (Council 1.5): events rejected by a skip-listed deterministic code —
    *    ACCOUNTING_PERIOD_NOT_OPEN (defers until the period reopens) or MAX_CENTS_EXCEEDED
    *    (POISON: can never succeed until the source amount is fixed; classifying it here keeps
-   *    the re-drive from looping it as a retriable failure every cycle).
+   *    the re-drive from looping it as a retriable failure every cycle), or NO_MAPPER_FOR_UNIT
+   *    (F-I5-3 a: no mapper for (unit, event) — the pending row is the signal), or UNKNOWN_EVENT_KEY
+   *    (no kit declares the event; owner decision D-2026-10-14 L-2).
    * Optional so passes without occurrences keep their exact 4-field summary unchanged.
    */
   blocked?: number;
@@ -200,7 +202,7 @@ export interface ReconcileSummary {
 
 /**
  * Shared poison/defer classifier for the sync passes (Council 1.5). Returns the skip-listed
- * code (period-closed / MAX_CENTS) or null. On a hit the pass counts the item as BLOCKED and
+ * code (period-closed / MAX_CENTS / no-mapper / unknown-event) or null. On a hit the pass counts the item as BLOCKED and
  * warns — the batch continues and the item is never spun as a retriable failure.
  */
 function classifyBlockedSyncError(error: unknown): string | null {

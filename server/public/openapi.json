@@ -17337,7 +17337,8 @@
                 "NO_MAPPER_FOR_UNIT",
                 "PACKAGE_CONSUMPTION_PENDING",
                 "PACKAGE_ORIGIN_REVERSED",
-                "PACKAGE_EXPIRY_NFSE_PENDING"
+                "PACKAGE_EXPIRY_NFSE_PENDING",
+                "UNKNOWN_EVENT_KEY"
               ]
             }
           },
