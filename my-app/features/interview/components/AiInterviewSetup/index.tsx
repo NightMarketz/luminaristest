@@ -69,8 +69,8 @@ function AiInterviewSetup() {
     handleSendMessage,
     handleSelectTable,
     handleUpdateTable,
-    logState,
     handleRetry,
+    backToConversation,
     presetKey,
     choicePrompt,
     sendCreationChoice,
@@ -84,6 +84,7 @@ function AiInterviewSetup() {
         isCreating={isCreating}
         creationError={creationError}
         onRetry={handleRetry}
+        onBackToConversation={backToConversation}
       />
     );
   }
@@ -148,12 +149,6 @@ function AiInterviewSetup() {
       <div className="mx-auto w-full max-w-2xl bg-white dark:bg-neutral-800 shadow-lg rounded-xl p-6 border border-gray-200 dark:border-gray-700 flex flex-col h-[600px]">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center flex-grow">Entrevista com IA</h2>
-          <button
-            onClick={logState}
-            className="text-xs bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
-          >
-            Debug
-          </button>
         </div>
         <ChatArea
           messages={messages}
