@@ -3,6 +3,7 @@ import { OpenAIService } from '../../../lib/openai/OpenAIService';
 import { ICustomizationState, IInterviewTurnResult, IMessage } from '../models/InterviewTypes';
 import { presetKnowledgeBase } from '../../dynamicTables/presets/ai/PresetKnowledgeBase';
 import { presetService } from '../../dynamicTables/services/PresetService';
+import { describeTableLock } from '../../dynamicTables/presets/removability';
 import { TableExtractor } from './TableExtractor';
 import { AIInteractions } from './AIInteractions';
 import { StateManager } from './StateManager';
@@ -458,8 +459,15 @@ Você gostaria de:
           };
         }
 
+        // W2 item 6: recusa por trava diz o motivo; "não encontrada" fica separada.
+        const target = session.tables.find(
+          (t) => t.key === tableKey || t.name.toLowerCase() === tableKey.toLowerCase(),
+        );
+        const reason = target?.lock
+          ? describeTableLock(target.key, target.lock)
+          : `Não encontrei a tabela "${tableKey}" neste sistema.`;
         return {
-          response: `Não foi possível remover a tabela "${tableKey}". Ela pode ser essencial para o sistema ou não foi encontrada.\n\nTabelas disponíveis para remoção:\n${removableTables.map(t => `- ${t}`).join('\n')}\n\nPor favor, escolha uma das tabelas listadas ou selecione outra ação.`,
+          response: `${reason}\n\nTabelas disponíveis para remoção:\n${removableTables.map(t => `- ${t}`).join('\n')}\n\nPor favor, escolha uma das tabelas listadas ou selecione outra ação.`,
           nextStage: 'CUSTOMIZATION_IN_PROGRESS',
           sessionId
         };

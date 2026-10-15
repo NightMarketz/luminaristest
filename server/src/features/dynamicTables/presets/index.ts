@@ -54,6 +54,11 @@ export type PresetTableDefinition = {
      * Capacidades necessárias para esta tabela operar (ex.: 'inventory.movements').
      */
     requiresCapabilities?: string[];
+    /**
+     * W2 / F-W2-2 (ratificado 2026-10-15): a tabela é lida pela contabilidade do setor e não pode ser removida no
+     * onboarding. Declarado nas suítes (`lockedByAccounting`), nunca no módulo compartilhado.
+     */
+    lockedBy?: 'accounting';
   };
   /**
    * Optional analytics configurations integrated at the table level.
