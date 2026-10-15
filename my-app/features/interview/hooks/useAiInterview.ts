@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { getCookie } from 'cookies-next';
+import { useTranslation } from 'next-i18next';
 import { IMessage, ICustomizationState, ICreationChoicePrompt, CreationChoice } from '../types/InterviewTypes';
 import { ITable } from '../types/RightSidebarTypes';
-import type { CreateDashboardPayload } from '../../../lib/services/setup.service';
+import type { CreateDashboardPayload, CreateDashboardResult } from '../../../lib/services/setup.service';
+import { notifyAccountingDraft } from '../setup/accountingDraftNotice';
 import type { OnboardingFiscalInput } from '@/types/contracts/accounting/CompanyFiscalProfileDto.gen';
 
 /**
@@ -49,6 +51,7 @@ export function useAiInterview() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const { t } = useTranslation('common');
 
   useEffect(() => {
     async function fetchInitialMessage() {
@@ -118,6 +121,9 @@ export function useAiInterview() {
         const errorData = await response.json().catch(() => ({ message: 'Não foi possível criar o sistema.' }));
         throw new Error(errorData.error || 'Ocorreu uma falha ao criar seu dashboard.');
       }
+      // I4 PR-4 (item 21): contabilidade `Draft` ⇒ aviso que não bloqueia, antes de navegar.
+      const created = (await response.json().catch(() => ({}))) as { data?: CreateDashboardResult };
+      notifyAccountingDraft(created.data?.accounting, t);
       setTimeout(() => {
         router.push('/dashboard');
       }, 2000);

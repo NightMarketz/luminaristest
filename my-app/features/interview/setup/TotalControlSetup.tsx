@@ -3,7 +3,10 @@ import { useRouter } from 'next/router';
 import { getCookie } from 'cookies-next';
 import { useAuth } from '../../../lib/context/AuthContext';
 import { useTranslation } from 'next-i18next';
-import { SetupService, type CustomDashboardPayload } from '../../../lib/services/setup.service';
+import { SetupService, type CreateDashboardPayload } from '../../../lib/services/setup.service';
+import FiscalQuestion from '../components/AiInterviewSetup/FiscalQuestion';
+import type { FiscalOnboarding } from '../hooks/useAiInterview';
+import { notifyAccountingDraft } from './accountingDraftNotice';
 
 // Local lightweight types for frontend-only usage
 interface ISchemaField { name: string; label?: string; type: string; required?: boolean }
@@ -55,6 +58,8 @@ export default function TotalControlSetup() {
   const [isCreating, setIsCreating] = useState(false); // Loading para criação final
   // I1 (F-I1-2 b): nome da primeira unidade — sem default, obrigatório antes do submit.
   const [unitName, setUnitName] = useState('');
+  // I4 PR-4 (F-I4-9 a): antes de criar, a pergunta fechada de regime/porte (+ ICMS em Presumido/Real).
+  const [askFiscal, setAskFiscal] = useState(false);
   const { t } = useTranslation('common');
   const [error, setError] = useState<string | null>(null);
 
@@ -157,7 +162,7 @@ export default function TotalControlSetup() {
     setSelectedTables(newSelectedTables);
   };
 
-  const handleCreateCustomDashboard = async () => {
+  const handleCreateCustomDashboard = async (fiscal: FiscalOnboarding) => {
     if (!presetDetails || !selectedPreset) {
       setError('Os detalhes do preset não foram carregados.');
       return;
@@ -175,15 +180,17 @@ export default function TotalControlSetup() {
 
       const newCustomFields = customFields; // A UI ainda não adiciona campos, mas a estrutura está pronta
 
-      const payload: CustomDashboardPayload = {
+      const payload: CreateDashboardPayload = {
         mode: 'custom',
         presetKey: selectedPreset.key,
         removedTables: removedTableKeys,
         addedFields: newCustomFields,
         unit: { name: unitName.trim() },
+        fiscal,
       };
 
-      await SetupService.createDashboard(payload);
+      const created = await SetupService.createDashboard(payload);
+      notifyAccountingDraft(created.accounting, t);
 
       // 2. Redirecionar para o dashboard em caso de sucesso
       router.push('/dashboard');
@@ -359,6 +366,12 @@ export default function TotalControlSetup() {
           {!unitName.trim() && <p className="mt-2 text-sm italic text-neutral-400">{t('unitNameRequired')}</p>}
         </div>
 
+        {askFiscal && unitName.trim() && (
+          <div className="mx-auto mt-8 w-full max-w-xl">
+            <FiscalQuestion onConfirm={(fiscal) => void handleCreateCustomDashboard(fiscal)} disabled={isCreating} />
+          </div>
+        )}
+
         <footer className="mt-16 flex flex-col sm:flex-row justify-center items-center gap-4">
           <button
             onClick={() => setCurrentStep('selecting_preset')}
@@ -368,8 +381,8 @@ export default function TotalControlSetup() {
             Voltar
           </button>
           <button
-            onClick={handleCreateCustomDashboard}
-            disabled={isCreating || !unitName.trim()}
+            onClick={() => setAskFiscal(true)}
+            disabled={isCreating || !unitName.trim() || askFiscal}
             className="w-full sm:w-auto px-12 py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center justify-center gap-3"
           >
             {isCreating ? (
