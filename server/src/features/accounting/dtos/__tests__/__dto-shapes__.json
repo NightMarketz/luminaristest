@@ -2793,6 +2793,16 @@
               "type": "null"
             }
           ]
+        },
+        "icmsContribuinte": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [

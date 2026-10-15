@@ -5,20 +5,31 @@
  */
 import { resolverObrigacoes, type PerfilParaObrigacoes } from '@/features/accounting/models/obrigacoesPorRegime';
 import { MATRIZ_OBRIGACOES_SEMENTE } from '@test/helpers/legalParams';
+import logger from '../../../lib/logger';
 import { ForbiddenError, OnboardingRolledBackError, OnboardingRollbackFailedError } from '../../../lib/errors';
 import type { UserContext } from '../../../types/UserContext';
 import { Role } from '../../users/models/User.model';
 import { SystemProvisioningPolicy } from '../policies/SystemProvisioningPolicy';
 import { SystemProvisioningService } from '../services/SystemProvisioningService';
-import type { ProvisionInput, ProvisioningFiscalService, ProvisioningTableService } from '../services/SystemProvisioningService';
+import type {
+  ProvisionInput,
+  ProvisioningFiscalService,
+  ProvisioningTableService,
+  ProvisioningUnitFiscalService,
+} from '../services/SystemProvisioningService';
 
 const ctx: UserContext = {
   id: 'u1', userId: 'u1', name: 'U', username: 'u', email: 'u@t.local', role: Role.USER, userRole: 'USER', userEmail: 'u@t.local',
   createdAt: new Date(0), updatedAt: new Date(0),
 };
-const input = (fiscal?: ProvisionInput['fiscal']): ProvisionInput => ({ preset: { tables: {} }, unit: { name: 'Matriz', type: 'Own' }, fiscal });
+const input = (fiscal?: ProvisionInput['fiscal'], sectorKey?: string | null): ProvisionInput => ({
+  preset: { tables: {} },
+  unit: { name: 'Matriz', type: 'Own' },
+  fiscal,
+  sectorKey,
+});
 
-function build(opts: { tablesBefore?: number; unitFails?: boolean; fiscalFails?: boolean; purgeFails?: boolean } = {}) {
+function build(opts: { tablesBefore?: number; unitFails?: boolean; fiscalFails?: boolean; unitFiscalFails?: boolean; purgeFails?: boolean } = {}) {
   const calls: string[] = [];
   let installed = false;
   const tables = {
@@ -50,16 +61,24 @@ function build(opts: { tablesBefore?: number; unitFails?: boolean; fiscalFails?:
     // BE-INCR-LEGAL-PARAMS PR-2: a matriz vem do serviço da contabilidade (fotografia OBRIGACAO_REGIME) — aqui, a semente.
     resolverObrigacoesEm: jest.fn(async (_data: string, perfil: PerfilParaObrigacoes) => resolverObrigacoes(perfil, MATRIZ_OBRIGACOES_SEMENTE)),
   };
+  const unitFiscal = {
+    upsert: jest.fn(async () => {
+      calls.push('unitFiscal');
+      if (opts.unitFiscalFails) throw new Error('perfil da unidade recusado');
+      return {};
+    }),
+  };
   const actionProposals = { deleteByUserId: jest.fn(async () => void calls.push('purge:proposals')) };
   const knowledgeGraphs = { deleteByUserId: jest.fn(async () => void calls.push('purge:graph')) };
   const service = new SystemProvisioningService(
     tables as unknown as ProvisioningTableService,
     fiscal as unknown as ProvisioningFiscalService,
+    unitFiscal as unknown as ProvisioningUnitFiscalService,
     actionProposals as never,
     knowledgeGraphs as never,
     new SystemProvisioningPolicy(),
   );
-  return { service, calls, tables, fiscal, actionProposals, knowledgeGraphs };
+  return { service, calls, tables, fiscal, unitFiscal, actionProposals, knowledgeGraphs };
 }
 
 describe('SystemProvisioningService.provision', () => {
@@ -119,6 +138,50 @@ describe('SystemProvisioningService.provision', () => {
     const e2 = await fisc.service.provision(ctx, input({ regime: 'REAL' })).catch((e) => e);
     expect(e2).toBeInstanceOf(OnboardingRollbackFailedError);
     expect(e2.message).toBe('O perfil fiscal não foi criado e a limpeza do sistema instalado falhou. Use "Resetar sistema" antes de tentar de novo.');
+  });
+});
+
+describe('SystemProvisioningService.provision — passo 3b, perfil fiscal da UNIDADE (I4 EMENDA 14/10, item 9c)', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  it('PRESUMIDO + icmsContribuinte:false ⇒ upsert do perfil da unidade DEPOIS do da empresa, com CUMULATIVO e o escopo da unidade', async () => {
+    const { service, calls, unitFiscal } = build();
+    await service.provision(ctx, input({ regime: 'PRESUMIDO', icmsContribuinte: false }, 'beautySalon'));
+    expect(calls.slice(-2)).toEqual(['fiscal', 'unitFiscal']);
+    expect(unitFiscal.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ ownerUserId: 'u1', unitId: 'unit-1' }),
+      expect.objectContaining({ unitId: 'unit-1', regimeTributario: 'PRESUMIDO', icmsContribuinte: false, pisCofinsRegime: 'CUMULATIVO' }),
+    );
+  });
+
+  it('sem derivação possível (NAO_SEI, ausente, PRESUMIDO "não sei", REAL da clínica) ⇒ nada é criado', async () => {
+    const casos: Array<[ProvisionInput['fiscal'], string | null]> = [
+      [{ regime: 'NAO_SEI' }, 'beautySalon'],
+      [undefined, 'beautySalon'],
+      [{ regime: 'PRESUMIDO', icmsContribuinte: null }, 'beautySalon'],
+      [{ regime: 'REAL', icmsContribuinte: false }, 'aestheticClinic'],
+    ];
+    for (const [fiscalInput, sector] of casos) {
+      const { service, unitFiscal } = build();
+      await service.provision(ctx, input(fiscalInput, sector));
+      expect(unitFiscal.upsert).not.toHaveBeenCalled();
+    }
+  });
+
+  it('falha no upsert da unidade (F-I4-10 a) ⇒ logger.error e segue: provision resolve, nenhuma purga', async () => {
+    const err = jest.spyOn(logger, 'error').mockImplementation(() => undefined as never);
+    const { service, calls } = build({ unitFiscalFails: true });
+    const r = await service.provision(ctx, input({ regime: 'SIMPLES' }, 'beautySalon'));
+    expect(r.unitId).toBe('unit-1');
+    expect(r.fiscal.status).toBe('criado');
+    expect(calls).not.toContain('purge:tables');
+    expect(err).toHaveBeenCalledWith(expect.stringContaining('perfil fiscal da unidade'), expect.anything());
+  });
+
+  it('falha no perfil da EMPRESA ⇒ compensa antes do 3b: o perfil da unidade nem é tentado', async () => {
+    const { service, unitFiscal } = build({ fiscalFails: true });
+    await expect(service.provision(ctx, input({ regime: 'SIMPLES' }, 'beautySalon'))).rejects.toBeInstanceOf(OnboardingRolledBackError);
+    expect(unitFiscal.upsert).not.toHaveBeenCalled();
   });
 });
 

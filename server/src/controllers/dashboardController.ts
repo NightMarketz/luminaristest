@@ -26,7 +26,12 @@ import { ForbiddenError, OnboardingRolledBackError, OnboardingRollbackFailedErro
 import { InstallModuleSchema } from '@/features/dynamicTables/dtos/InstallModule.dto';
 import { Role } from '@/features/users/models/User.model';
 import { ISchemaField } from '@/features/dynamicTables/models/DynamicTable.model';
-import { getPresetByKey } from '@/features/dynamicTables/presets/PresetManager';
+import { getPresetByKey, keyToPascalCase } from '@/features/dynamicTables/presets/PresetManager';
+import { SECTOR_BINDING_REGISTRY } from '@/features/accountingBinding/fixtures/sectorBindingRegistry';
+import { resolveBindingScope } from '@/features/accountingBinding/scope/BindingScope';
+import { reloadAccountingMappersSerialized } from '@/features/accountingBinding/runtime/mapperReload';
+import { OnboardingAccountingResultSchema } from '@/features/accountingBinding/dtos/ActivateDefaultBindingDto';
+import type { ActivateDefaultBindingResult, OnboardingAccountingResult } from '@/features/accountingBinding/dtos/ActivateDefaultBindingDto';
 import { composeModuleTables, expandModuleSelectors, type ModuleSelector } from '@/features/dynamicTables/presets/modules/registry';
 import { applyModuleRemovals, applySelectOverrides, assertAddedFieldsRespectModules, resolveModuleSelection } from '@/features/dynamicTables/presets/modules/moduleSelection';
 import { CoreSystemPreset, PresetTableDefinition } from '@/features/dynamicTables/presets';
@@ -98,6 +103,76 @@ function respondProvisioningError(error: unknown, res: Response): Response | nul
     return res.status(500).json({ success: false, errorCode: error.errorCode, error: error.message });
   }
   return null;
+}
+
+/**
+ * BE-INCR-ONBOARDING-ACTIVATION (nó I4) item 9 (F-I4-3 a) — o setor do binding contábil do preset escolhido: a chave do
+ * `SECTOR_BINDING_REGISTRY` cujo nome, normalizado como o `getPresetByKey` normaliza a chave (`keyToPascalCase`), é o
+ * da suíte pedida. Assim `beautySalon` (Rápido) e `beauty_salon` (Controle Total) dão o mesmo setor. Preset sem
+ * binding (`crmModule`) ⇒ `null`.
+ */
+export function resolveOnboardingSectorKey(presetOrSuiteKey: string): string | null {
+  const id = keyToPascalCase(presetOrSuiteKey);
+  return Object.keys(SECTOR_BINDING_REGISTRY).find((sectorKey) => keyToPascalCase(sectorKey) === id) ?? null;
+}
+
+/**
+ * I4 itens 10–14 — liga a contabilidade da unidade recém-criada, DEPOIS de instalar → unidade → perfil fiscal (F-I4-1 a):
+ * as compensações anteriores (`purgeUserSystem`) não limpam contabilidade, então nada que compensa roda depois de uma
+ * escrita contábil. As duas flags em `true` fazem do onboarding uma chamada só (F-B2 a, F-I3-1 a).
+ *   - preset sem setor ⇒ `not-applicable`; `activateDefault` nem é chamado (item 12).
+ *   - `Draft` do `activateDefault` ou exceção ⇒ 201 com `Draft` e o tenant de pé, sem compensação (F-I4-2 b, item 11) —
+ *     assimetria ratificada: *"a ativação contábil falhar não deve apagar o sistema do cliente"*.
+ *   - `Active` ⇒ recarga serializada dos mappers (F-I4-4 a, item 13), para a 1ª venda lançar sem reiniciar; falha da
+ *     recarga ⇒ `Draft` com `ACCOUNTING_SYNC_RELOAD_FAILED` (binding gravado).
+ * A saída passa pelo `OnboardingAccountingResultSchema` (item 14).
+ */
+async function activateAccountingOrReport(ctx: UserContext, unitId: string, sectorKey: string | null): Promise<OnboardingAccountingResult> {
+  if (!sectorKey) return OnboardingAccountingResultSchema.parse({ status: 'not-applicable' });
+  const scope = resolveBindingScope(ctx, unitId);
+  let result: ActivateDefaultBindingResult;
+  try {
+    result = await getFactory()
+      .getAccountingBindingActivationService(scope)
+      .activateDefault(scope, { sectorKey, installChartIfEmpty: true, openCurrentPeriodIfMissing: true });
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    logger.error(`Onboarding: a ativação contábil da unidade ${unitId} do usuário ${ctx.userId} falhou — o tenant segue de pé (F-I4-2 b).`, { error: detail });
+    return OnboardingAccountingResultSchema.parse({
+      status: 'Draft',
+      sectorKey,
+      blocking: [{ code: 'ACCOUNTING_ACTIVATION_FAILED', message: `A ativação da contabilidade falhou (${detail}). O sistema foi criado; ative a contabilidade pela faixa da Contabilidade.` }],
+    });
+  }
+  const bindingVersion = result.bindingVersion !== undefined ? { bindingVersion: result.bindingVersion } : {};
+  if (result.status === 'Draft') {
+    return OnboardingAccountingResultSchema.parse({ status: 'Draft', sectorKey, ...bindingVersion, blocking: result.blocking ?? [] });
+  }
+  if (result.status === 'Active') {
+    try {
+      await reloadAccountingMappersSerialized();
+    } catch (error) {
+      logger.error('Recarga dos mappers contábeis falhou depois da ativação do onboarding', {
+        unitId,
+        bindingVersion: result.bindingVersion,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return OnboardingAccountingResultSchema.parse({
+        status: 'Draft',
+        sectorKey,
+        ...bindingVersion,
+        blocking: [
+          {
+            code: 'ACCOUNTING_SYNC_RELOAD_FAILED',
+            message:
+              'O binding foi ativado, mas a recarga dos mappers contábeis falhou: as vendas desta unidade só passam a ser lançadas depois do próximo reinício do servidor.',
+          },
+        ],
+      });
+    }
+  }
+  // `already-active` ⇒ `Active`: inalcançável numa unidade virgem; mapeado por completude.
+  return OnboardingAccountingResultSchema.parse({ status: 'Active', sectorKey, ...bindingVersion });
 }
 
 async function handleCustomCreation(
@@ -207,9 +282,11 @@ async function handleCustomCreation(
       }
     }
 
+    const sectorKey = resolveOnboardingSectorKey(presetKey);
     const { installResult: result, unitId, fiscal: fiscalDoOnboarding } = await getFactory()
       .getSystemProvisioningService()
-      .provision(ctx, { preset: finalPayload, unit, fiscal });
+      .provision(ctx, { preset: finalPayload, unit, fiscal, sectorKey });
+    const accounting = await activateAccountingOrReport(ctx, unitId, sectorKey);
 
     const coreTableList = Object.keys(CoreSystemPreset.tables);
     return res.status(201).json({
@@ -220,6 +297,7 @@ async function handleCustomCreation(
         presetKey,
         unitId,
         fiscal: fiscalDoOnboarding,
+        accounting,
         modules: { installed: keptModules },
         tables: {
           core: coreTableList,
@@ -243,7 +321,9 @@ async function handleQuickCreation(
 ) {
   try {
     const { preset, installedModules } = buildQuickPreset(suiteKey, modules, selectOverrides);
-    const { unitId, fiscal: fiscalDoOnboarding } = await getFactory().getSystemProvisioningService().provision(ctx, { preset, unit, fiscal });
+    const sectorKey = resolveOnboardingSectorKey(suiteKey);
+    const { unitId, fiscal: fiscalDoOnboarding } = await getFactory().getSystemProvisioningService().provision(ctx, { preset, unit, fiscal, sectorKey });
+    const accounting = await activateAccountingOrReport(ctx, unitId, sectorKey);
 
     const coreTableList = Object.keys(CoreSystemPreset.tables);
     const businessTableList = Object.keys(preset.tables).filter((k) => !coreTableList.includes(k));
@@ -255,6 +335,7 @@ async function handleQuickCreation(
         suiteKey,
         unitId,
         fiscal: fiscalDoOnboarding,
+        accounting,
         modules: { installed: installedModules },
         tables: {
           core: coreTableList,
