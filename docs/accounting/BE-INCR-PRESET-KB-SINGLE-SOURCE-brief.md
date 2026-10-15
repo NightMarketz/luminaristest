@@ -281,6 +281,8 @@ sugeridos não mudam binding contábil (CRM-3 continua acionando o seam AR do me
    `features/interview/dtos/` e persistir a sessão. Se ele também transformar o **resultado** do turno em Zod, o
    `moduleOptions` do PR-2 entra nesse schema, e quem mergear depois rebaseia. Regra: PR-2 depois do PR de DTO do W4
    se ele vier primeiro; senão, o W4 incorpora o campo. Não mexer no `ChatInterviewSchema` aqui.
+   **Conferido em 15/10 no BRIEF do W4 (PR #705):** *"resposta 200 do turno — inalterada (IInterviewTurnResult)"*. Não há
+   colisão no resultado: só os dois PRs editam `InterviewService.ts`/`InterviewTypes.ts`, e o rebase resolve.
 3. **Ordem com o W2 (`isCore`).** O W2 reformula `isCore` "em termos de módulo". O PR-2 só lê `fixed`/`dependsOn` do
    registro e não toca `TableExtractor`. Sem sobreposição de arquivo esperada; conferir no rebase.
 
