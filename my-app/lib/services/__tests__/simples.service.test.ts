@@ -71,6 +71,34 @@ describe('simplesService — escritas do PR-B', () => {
   });
 });
 
+describe('simplesService — entradas do PR-C', () => {
+  beforeEach(() => {
+    globalThis.fetch = vi.fn();
+  });
+
+  it('obterHistorico/obterSegregacao: GET por competência; 404 NOT_FOUND → null; outro 404 rejeita', async () => {
+    vi.mocked(globalThis.fetch).mockResolvedValue(okResponse({ competencia: '2025-03', receitaBrutaCents: 1 }));
+    expect(await simplesService.obterHistorico('2025-03', { unitId: 'u1' })).toMatchObject({ receitaBrutaCents: 1 });
+    expect(lastCall().url).toMatch(/\/accounting\/simples\/historico\/2025-03\?unitId=u1$/);
+    vi.mocked(globalThis.fetch).mockResolvedValue(errResponse(404, { code: 'NOT_FOUND', message: 'Sem histórico declarado' }));
+    expect(await simplesService.obterHistorico('2025-03', { unitId: 'u1' })).toBeNull();
+    expect(await simplesService.obterSegregacao('2025-03', { unitId: 'u1' })).toBeNull();
+    expect(lastCall().url).toMatch(/\/accounting\/simples\/segregacao\/2025-03\?unitId=u1$/);
+    vi.mocked(globalThis.fetch).mockResolvedValue(errResponse(404, { error: 'Route not found' }));
+    await expect(simplesService.obterHistorico('2025-03', { unitId: 'u1' })).rejects.toMatchObject({ status: 404 });
+  });
+
+  it('salvarHistorico/salvarSegregacao: PUT por competência com o corpo', async () => {
+    vi.mocked(globalThis.fetch).mockResolvedValue(okResponse({}));
+    await simplesService.salvarHistorico('2025-03', { unitId: 'u1', receitaBrutaCents: 10, folhaCents: null });
+    expect(lastCall().url).toMatch(/\/historico\/2025-03$/);
+    expect(lastCall().init.method).toBe('PUT');
+    await simplesService.salvarSegregacao('2025-03', { unitId: 'u1', parcelas: [] });
+    expect(lastCall().url).toMatch(/\/segregacao\/2025-03$/);
+    expect(JSON.parse(String(lastCall().init.body))).toEqual({ unitId: 'u1', parcelas: [] });
+  });
+});
+
 describe('companyFiscalProfileService', () => {
   beforeEach(() => {
     globalThis.fetch = vi.fn();

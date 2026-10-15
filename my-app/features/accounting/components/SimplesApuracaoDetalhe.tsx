@@ -3,6 +3,7 @@ import { ehMei, type AlertaSimples, type ApuracaoMei, type ApuracaoSimples, type
 import { formatCents } from '../lib/formatCents';
 import { formatDate } from '../lib/formatDate';
 import { decimalBR, ehBloqueante, formatBp, formatMilesimos, ordenarAlertas } from '../lib/simplesGrid';
+import { competenciasCitadas } from '../lib/simplesForms';
 import { useAccountingT } from '../lib/useAccountingT';
 
 /** Rótulo pt (fallback do i18n) de cada código de alerta — `CODIGOS_ALERTA_SIMPLES` (SimplesDto.ts:87-104). */
@@ -33,8 +34,11 @@ const h3 = 'mb-1 text-xs font-semibold uppercase tracking-wide text-neutral-500'
 const dl = 'grid grid-cols-2 gap-x-4 gap-y-1 text-neutral-300';
 const dt = 'text-neutral-500';
 
-/** Item 6 — alertas com severidade: WARNING antes de INFO; código traduzido + detalhe do BE verbatim. */
-export function AlertasSimples({ alertas }: { alertas: readonly AlertaSimples[] }) {
+/**
+ * Item 6 — alertas com severidade: WARNING antes de INFO; código traduzido + detalhe do BE verbatim. Item 11: o
+ * `RBT12_INCOMPLETO` ganha um atalho por competência faltante citada no detalhe.
+ */
+export function AlertasSimples({ alertas, onAbrirHistorico }: { alertas: readonly AlertaSimples[]; onAbrirHistorico?: (competencia: string) => void }) {
   const { t } = useAccountingT();
   if (alertas.length === 0) return null;
   return (
@@ -67,6 +71,20 @@ export function AlertasSimples({ alertas }: { alertas: readonly AlertaSimples[] 
                 )}
               </div>
               <p className="mt-1 text-xs">{a.detalhe}</p>
+              {a.codigo === 'RBT12_INCOMPLETO' && onAbrirHistorico && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {competenciasCitadas(a.detalhe).map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => onAbrirHistorico(c)}
+                      className="rounded-lg border border-amber-500/40 px-2 py-0.5 font-mono text-[11px] text-amber-200 hover:bg-amber-500/10"
+                    >
+                      {t('simples.historico.declarar', 'Declarar histórico de')} {c}
+                    </button>
+                  ))}
+                </div>
+              )}
             </li>
           );
         })}
@@ -260,10 +278,10 @@ function DetalheMei({ a }: { a: ApuracaoMei }) {
 }
 
 /** Itens 3–6 — o detalhe escolhe a forma pelo `regime` da resposta. */
-export function SimplesApuracaoDetalhe({ apuracao }: { apuracao: Apuracao }) {
+export function SimplesApuracaoDetalhe({ apuracao, onAbrirHistorico }: { apuracao: Apuracao; onAbrirHistorico?: (competencia: string) => void }) {
   return (
     <div className="space-y-5 text-sm">
-      <AlertasSimples alertas={apuracao.alertas} />
+      <AlertasSimples alertas={apuracao.alertas} onAbrirHistorico={onAbrirHistorico} />
       {ehMei(apuracao) ? <DetalheMei a={apuracao} /> : <DetalheSimples a={apuracao} />}
     </div>
   );

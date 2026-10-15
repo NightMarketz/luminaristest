@@ -10,6 +10,8 @@ import { useAccountingT } from '../lib/useAccountingT';
 import { SimplesApuracaoDetalhe } from './SimplesApuracaoDetalhe';
 import { SimplesDasRegistro, type RegistroErro } from './SimplesDasRegistro';
 import { SimplesParceriasPanel } from './SimplesParceriasPanel';
+import { SimplesHistoricoModal } from './SimplesHistoricoModal';
+import { SimplesSegregacaoSection } from './SimplesSegregacaoSection';
 
 const statusDe = (err: unknown): unknown => (err && typeof err === 'object' ? (err as { status?: unknown }).status : undefined);
 /** 400 do registro traz os bloqueantes em `details.alertas` (SimplesApuracaoService.ts:211). */
@@ -47,6 +49,9 @@ export function SimplesApuracaoPanel({ unitId, ano, perfil, onIrParaEnquadrament
   const [regErro, setRegErro] = useState<RegistroErro | null>(null);
   // 403 esconde as ações de gerir (item 16): a policy é do BE (`canManageTaxAssessment`).
   const [podeGerir, setPodeGerir] = useState(true);
+  // PR-C item 11: histórico pré-adoção em modal próprio (competência livre); gravar recarrega o ano (o RBT12 muda).
+  const [historicoComp, setHistoricoComp] = useState<string | null>(null);
+  const [recarga, setRecarga] = useState(0);
   // Só a última carga do ano aplica as respostas (troca de ano/unidade com GETs em voo).
   const anoReq = useRef(0);
 
@@ -68,7 +73,7 @@ export function SimplesApuracaoPanel({ unitId, ano, perfil, onIrParaEnquadrament
       }
       if (req === anoReq.current) aplicar(c);
     });
-  }, [unitId, ano, tRef, aplicar]);
+  }, [unitId, ano, tRef, aplicar, recarga]);
 
   const celula = aberta ? celulas.find((c) => c.competencia === aberta) : undefined;
 
@@ -125,6 +130,23 @@ export function SimplesApuracaoPanel({ unitId, ano, perfil, onIrParaEnquadrament
     }
   }
 
+  /** PR-C item 12: a segregação mudou as entradas — relê a competência e descarta a prévia (o registro daria 409). */
+  async function recarregarCelula(comp: string) {
+    setPrevias((p) => {
+      const { [comp]: _velha, ...resto } = p;
+      return resto;
+    });
+    const req = anoReq.current;
+    try {
+      const a = await simplesService.obterApuracao(comp, { unitId });
+      if (req === anoReq.current) aplicar(celulaDaApuracao(a));
+    } catch (err: unknown) {
+      if (req === anoReq.current) aplicar(celulaDoErro(comp, err, tRef.current('simples.error.load', 'Erro ao carregar a apuração.')));
+    }
+  }
+
+  const abrirHistorico = (comp: string) => { setAberta(null); setHistoricoComp(comp); };
+
   const meiSemEnquadramento = mei && (perfil.meiContribuinteIcms === null || perfil.meiContribuinteIss === null);
   const th = 'px-3 py-2.5 font-medium';
   const td = 'px-3 py-2';
@@ -145,6 +167,13 @@ export function SimplesApuracaoPanel({ unitId, ano, perfil, onIrParaEnquadrament
 
   return (
     <div>
+      {!mei && (
+        <div className="mb-3 flex justify-end">
+          <button type="button" className={btn} onClick={() => setHistoricoComp(`${ano - 1}-12`)}>
+            {t('simples.historico.title', 'Histórico pré-adoção')}
+          </button>
+        </div>
+      )}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-neutral-800 text-xs uppercase tracking-wide text-neutral-500">
@@ -191,6 +220,9 @@ export function SimplesApuracaoPanel({ unitId, ano, perfil, onIrParaEnquadrament
       </div>
 
       {!mei && <SimplesParceriasPanel unitId={unitId} />}
+      {!mei && (
+        <SimplesHistoricoModal unitId={unitId} competencia={historicoComp} onClose={() => setHistoricoComp(null)} onSalvo={() => setRecarga((n) => n + 1)} />
+      )}
 
       <Modal
         isOpen={!!celula}
@@ -219,7 +251,7 @@ export function SimplesApuracaoPanel({ unitId, ano, perfil, onIrParaEnquadrament
             </div>
             {podeGerir && (celula.apuracao || previas[celula.competencia]) && (
               <SimplesDasRegistro
-                key={celula.competencia}
+                key={`das-${celula.competencia}`}
                 unitId={unitId}
                 competencia={celula.competencia}
                 previa={previas[celula.competencia] ?? null}
@@ -230,7 +262,8 @@ export function SimplesApuracaoPanel({ unitId, ano, perfil, onIrParaEnquadrament
               />
             )}
             {!podeGerir && regErro && <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-red-300">{regErro.mensagem}</div>}
-            {celula.apuracao && <SimplesApuracaoDetalhe apuracao={celula.apuracao} />}
+            {!mei && <SimplesSegregacaoSection key={`seg-${celula.competencia}`} unitId={unitId} competencia={celula.competencia} onSalvo={() => void recarregarCelula(celula.competencia)} />}
+            {celula.apuracao && <SimplesApuracaoDetalhe apuracao={celula.apuracao} onAbrirHistorico={mei ? undefined : abrirHistorico} />}
           </div>
         )}
       </Modal>

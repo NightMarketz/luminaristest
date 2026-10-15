@@ -2994,6 +2994,26 @@
       "registrado": "DAS registrado",
       "semPerfil": "Sem dado de perfil"
     },
+    "fechar": "Fechar",
+    "historico": {
+      "declarado": "Declarado: receita {{receita}}",
+      "declarar": "Declarar histórico de",
+      "erro": {
+        "folhaInvalida": "Folha inválida — use o formato 1.234,56 ou deixe em branco.",
+        "receitaInvalida": "Receita bruta inválida — use o formato 1.234,56."
+      },
+      "error": {
+        "load": "Erro ao carregar o histórico.",
+        "save": "Não foi possível salvar o histórico."
+      },
+      "folha": "Folha de salários (opcional)",
+      "receitaBruta": "Receita bruta do mês",
+      "salvar": "Salvar histórico",
+      "salvo": "Histórico salvo — a grade foi recalculada.",
+      "subtitle": "Receita bruta (e folha, para o fator R) dos meses antes de usar o sistema. O mês com receita no subrazão usa o subrazão; o histórico vale para os meses sem ela.",
+      "title": "Histórico pré-adoção",
+      "vazio": "Sem histórico declarado neste mês."
+    },
     "mei": {
       "ano": "Ano do perfil fiscal",
       "contribuinteIcms": "Contribuinte de ICMS",
@@ -3024,7 +3044,18 @@
       "DOCUMENTO_MUNICIPAL_TRANSICAO": "Documento municipal (transição)",
       "REGIME_CAIXA": "Regime de caixa"
     },
+    "motivoSeg": {
+      "ICMS_ST": "ICMS por substituição tributária",
+      "ISS_RETIDO": "ISS retido",
+      "MONOFASICO": "Monofásico (PIS/COFINS)",
+      "MONOFASICO_E_ICMS_ST": "Monofásico e ICMS-ST"
+    },
     "nao": "Não",
+    "natureza": {
+      "LOCACAO_MOVEL": "Locação de bens móveis",
+      "REVENDA": "Revenda",
+      "SERVICO": "Serviço"
+    },
     "parceria": {
       "cota": "Cota do salão",
       "cotaPct": "Cota do salão (%)",
@@ -3066,6 +3097,29 @@
       "vigencia": "Vigência",
       "vigenteAte": "Vigente até (vazio = sem fim)",
       "vigenteDesde": "Vigente desde"
+    },
+    "segregacao": {
+      "abrir": "Ver / editar segregação",
+      "adicionar": "Adicionar parcela",
+      "erro": {
+        "demais": "No máximo 50 parcelas por mês.",
+        "motivo": "Escolha o motivo da parcela {{n}}.",
+        "natureza": "Escolha a natureza da parcela {{n}}.",
+        "receita": "Receita da parcela {{n}} inválida — maior que zero, no formato 1.234,56."
+      },
+      "error": {
+        "load": "Erro ao carregar a segregação.",
+        "save": "Não foi possível salvar a segregação."
+      },
+      "excluir": "fora do DAS",
+      "issOutroMunicipio": "ISS devido a outro município não é motivo de segregação: continua no DAS (LC 123 art. 18 § 4º-A V). Salvar substitui todas as parcelas do mês.",
+      "motivoN": "Motivo da parcela {{n}}",
+      "naturezaN": "Natureza da parcela {{n}}",
+      "receitaN": "Receita da parcela {{n}}",
+      "removerLinha": "Remover",
+      "salvar": "Salvar segregação",
+      "title": "Segregação manual da receita",
+      "vazia": "Sem segregação manual neste mês."
     },
     "semPerfilAno": "Perfil fiscal de {{ano}} não cadastrado: cadastre o perfil fiscal do ano para apurar os tributos.",
     "severity": {

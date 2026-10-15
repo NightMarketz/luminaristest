@@ -2994,6 +2994,26 @@
       "registrado": "DAS registered",
       "semPerfil": "Missing profile data"
     },
+    "fechar": "Close",
+    "historico": {
+      "declarado": "Declared: revenue {{receita}}",
+      "declarar": "Declare history for",
+      "erro": {
+        "folhaInvalida": "Invalid payroll — use the format 1.234,56 or leave it blank.",
+        "receitaInvalida": "Invalid gross revenue — use the format 1.234,56."
+      },
+      "error": {
+        "load": "Error loading the history.",
+        "save": "Could not save the history."
+      },
+      "folha": "Payroll (optional)",
+      "receitaBruta": "Gross revenue of the month",
+      "salvar": "Save history",
+      "salvo": "History saved — the grid was recalculated.",
+      "subtitle": "Gross revenue (and payroll, for factor R) of the months before using the system. A month with revenue in the subledger uses the subledger; the history applies to months without it.",
+      "title": "Pre-adoption history",
+      "vazio": "No history declared for this month."
+    },
     "mei": {
       "ano": "Tax profile year",
       "contribuinteIcms": "ICMS taxpayer",
@@ -3024,7 +3044,18 @@
       "DOCUMENTO_MUNICIPAL_TRANSICAO": "Municipal document (transition)",
       "REGIME_CAIXA": "Cash basis"
     },
+    "motivoSeg": {
+      "ICMS_ST": "ICMS tax substitution",
+      "ISS_RETIDO": "ISS withheld",
+      "MONOFASICO": "Single-phase (PIS/COFINS)",
+      "MONOFASICO_E_ICMS_ST": "Single-phase and ICMS-ST"
+    },
     "nao": "No",
+    "natureza": {
+      "LOCACAO_MOVEL": "Movable property rental",
+      "REVENDA": "Resale",
+      "SERVICO": "Service"
+    },
     "parceria": {
       "cota": "Salon share",
       "cotaPct": "Salon share (%)",
@@ -3066,6 +3097,29 @@
       "vigencia": "Validity",
       "vigenteAte": "Valid until (empty = no end)",
       "vigenteDesde": "Valid from"
+    },
+    "segregacao": {
+      "abrir": "View / edit segregation",
+      "adicionar": "Add portion",
+      "erro": {
+        "demais": "At most 50 portions per month.",
+        "motivo": "Choose the reason for portion {{n}}.",
+        "natureza": "Choose the nature of portion {{n}}.",
+        "receita": "Invalid revenue for portion {{n}} — greater than zero, format 1.234,56."
+      },
+      "error": {
+        "load": "Error loading the segregation.",
+        "save": "Could not save the segregation."
+      },
+      "excluir": "out of the DAS",
+      "issOutroMunicipio": "ISS owed to another municipality is not a segregation reason: it stays in the DAS (LC 123 art. 18 § 4-A V). Saving replaces all portions of the month.",
+      "motivoN": "Reason for portion {{n}}",
+      "naturezaN": "Nature of portion {{n}}",
+      "receitaN": "Revenue of portion {{n}}",
+      "removerLinha": "Remove",
+      "salvar": "Save segregation",
+      "title": "Manual revenue segregation",
+      "vazia": "No manual segregation this month."
     },
     "semPerfilAno": "Tax profile for {{ano}} not registered: register the year's tax profile to assess taxes.",
     "severity": {
