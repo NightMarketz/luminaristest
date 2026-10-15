@@ -55,7 +55,7 @@ export default function QuickSetup() {
         setPresets(await SetupService.getPresets());
 
       } catch (err) {
-        setError((err instanceof Error ? err.message : String(err)) || 'Ocorreu um erro inesperado ao carregar os modelos.');
+        setError((err instanceof Error ? err.message : String(err)) || t('onboardingQuickLoadError'));
       } finally {
         setIsLoading(false);
       }
@@ -76,7 +76,7 @@ export default function QuickSetup() {
       router.push('/dashboard');
 
     } catch (err) {
-      setError((err instanceof Error ? err.message : String(err)) || 'Ocorreu um erro inesperado ao criar a dashboard.');
+      setError((err instanceof Error ? err.message : String(err)) || t('onboardingQuickCreateError'));
     } finally {
       setIsCreating(false);
     }
@@ -86,7 +86,7 @@ export default function QuickSetup() {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-        <p className="text-slate-500">{t('loading')}</p>
+        <p className="text-neutral-500">{t('loading')}</p>
       </div>
     );
   }
@@ -102,7 +102,7 @@ export default function QuickSetup() {
           <section key={category}>
             <div className="flex items-center gap-3 mb-6">
               <div className="h-8 w-1 bg-blue-600 rounded-full"></div>
-              <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">{category}</h3>
+              <h3 className="text-xl font-bold text-neutral-800 dark:text-neutral-200 uppercase tracking-wider">{category}</h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {categoryPresets.map((preset) => (
@@ -111,19 +111,19 @@ export default function QuickSetup() {
                   onClick={() => setSelectedPreset(preset.key)}
                   className={`group relative flex flex-col items-start p-6 rounded-2xl transition-all duration-300 text-left border-2 ${selectedPreset === preset.key
                       ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-500 shadow-lg shadow-blue-500/5'
-                      : 'bg-white dark:bg-neutral-800 border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700'
+                      : 'bg-white dark:bg-neutral-800 border-neutral-100 dark:border-neutral-800 hover:border-neutral-200 dark:hover:border-neutral-700'
                     }`}
                 >
-                  <div className={`p-3 rounded-xl mb-4 transition-colors ${selectedPreset === preset.key ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-neutral-700 text-slate-500'
+                  <div className={`p-3 rounded-xl mb-4 transition-colors ${selectedPreset === preset.key ? 'bg-blue-600 text-white' : 'bg-neutral-100 dark:bg-neutral-700 text-neutral-500'
                     }`}>
                     {preset.key.includes('retail') ? <FiCpu size={20} /> : preset.key.includes('service') ? <FiActivity size={20} /> : <FiMonitor size={20} />}
                   </div>
-                  <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{preset.name}</h4>
-                  <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-4">{preset.description}</p>
+                  <h4 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">{preset.name}</h4>
+                  <p className="text-neutral-500 dark:text-neutral-400 text-sm leading-relaxed mb-4">{preset.description}</p>
 
                   {selectedPreset === preset.key && (
                     <div className="mt-auto flex items-center text-blue-600 dark:text-blue-400 font-bold text-xs uppercase tracking-widest">
-                      <FiCheck className="mr-2" /> Selecionado
+                      <FiCheck className="mr-2" /> {t('onboardingQuickSelected')}
                     </div>
                   )}
                 </button>
@@ -168,7 +168,7 @@ export default function QuickSetup() {
             {isCreating ? (
               <>
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white"></div>
-                <span>Criando Sistema...</span>
+                <span>{t('onboardingQuickCreating')}</span>
               </>
             ) : (
               <span>{t('createDashboard')}</span>
@@ -177,7 +177,7 @@ export default function QuickSetup() {
         </button>
         )}
         {!selectedPreset && (
-          <p className="mt-4 text-slate-400 text-sm font-medium italic">
+          <p className="mt-4 text-neutral-400 text-sm font-medium italic">
             {t('selectModelToEnable')}
           </p>
         )}

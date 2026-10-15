@@ -51,9 +51,9 @@ async function abrirPerguntaFiscal(wizard: 'quick' | 'total') {
   } else {
     render(<ToastProvider><TotalControlSetup /></ToastProvider>);
     fireEvent.click(await screen.findByText('Salão'));
-    fireEvent.click(screen.getByRole('button', { name: 'Próximo: Customizar Tabelas' }));
+    fireEvent.click(screen.getByRole('button', { name: 'onboardingTotalControlNext' }));
     fireEvent.change(await screen.findByLabelText('unitNameLabel'), { target: { value: 'Unidade Centro' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Finalizar e Criar Sistema' }));
+    fireEvent.click(screen.getByRole('button', { name: 'onboardingTotalControlFinish' }));
   }
   await screen.findByLabelText('fiscalRegime_PRESUMIDO');
 }

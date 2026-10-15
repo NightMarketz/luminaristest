@@ -78,7 +78,7 @@ export function useAiInterview() {
       } catch (error) {
         if (controller.signal.aborted) return;
         console.error('Failed to fetch initial message:', error);
-        setMessages([{ sender: 'ai', text: 'Olá! Houve um problema ao iniciar. Por favor, recarregue a página.' }]);
+        setMessages([{ sender: 'ai', text: t('onboardingGreetingFailed') }]);
       } finally {
         if (!controller.signal.aborted) setIsLoading(false);
       }
@@ -118,7 +118,7 @@ export function useAiInterview() {
         });
       } catch (err) {
         // W7 item 4: falha de rede — o pedido pode ser reenviado (o 403 one-shot barra a criação dupla).
-        setCreationError({ kind: classifyCreationError(null, null), message: (err instanceof Error && err.message) || 'Ocorreu um erro inesperado.' });
+        setCreationError({ kind: classifyCreationError(null, null), message: (err instanceof Error && err.message) || t('onboardingErrorUnexpected') });
         setIsCreating(false);
         return;
       }
@@ -127,7 +127,7 @@ export function useAiInterview() {
         const errorData = (await response.json().catch(() => null)) as { error?: string; errorCode?: string } | null;
         setCreationError({
           kind: classifyCreationError(response.status, errorData),
-          message: errorData?.error || 'Ocorreu uma falha ao criar seu dashboard.',
+          message: errorData?.error || t('onboardingErrorCreateFailed'),
         });
         setIsCreating(false);
         return;
@@ -140,7 +140,7 @@ export function useAiInterview() {
       }, 2000);
 
     } catch (err) {
-      setCreationError({ kind: 'retryable', message: (err instanceof Error ? err.message : String(err)) || 'Ocorreu um erro inesperado.' });
+      setCreationError({ kind: 'retryable', message: (err instanceof Error ? err.message : String(err)) || t('onboardingErrorUnexpected') });
       setIsCreating(false);
     }
   }
@@ -194,7 +194,7 @@ export function useAiInterview() {
 
     } catch (error) {
       console.error('Failed to get response from AI:', error);
-      setMessages(prev => [...prev, { sender: 'ai', text: 'Desculpe, ocorreu um erro de comunicação.' }]);
+      setMessages(prev => [...prev, { sender: 'ai', text: t('onboardingTurnFailed') }]);
     } finally {
       setIsLoading(false);
     }
