@@ -40,6 +40,22 @@ export const putSimplesHistorico = async (req: Request, res: Response) => {
   }
 };
 
+/** GET /api/accounting/simples/historico/:competencia?unitId= — 404 sem registro (BE-INCR-SIMPLES-GET-ENTRADAS, F-GE-1). */
+export const getSimplesHistorico = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const p = CompetenciaParamSchema.safeParse(req.params);
+    if (!p.success) return bad(res, p.error.flatten());
+    const q = SimplesUnitQuerySchema.safeParse(req.query);
+    if (!q.success) return bad(res, q.error.flatten());
+    const data = await service().obterHistorico(resolveAccountingScope(user, q.data.unitId), p.data.competencia);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
 /** PUT /api/accounting/simples/segregacao/:competencia */
 export const putSimplesSegregacao = async (req: Request, res: Response) => {
   try {
@@ -50,6 +66,22 @@ export const putSimplesSegregacao = async (req: Request, res: Response) => {
     const b = SimplesSegregacaoUpsertSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
     const data = await service().upsertSegregacao(resolveAccountingScope(user, b.data.unitId), p.data.competencia, b.data);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** GET /api/accounting/simples/segregacao/:competencia?unitId= — 404 sem registro (BE-INCR-SIMPLES-GET-ENTRADAS, F-GE-1). */
+export const getSimplesSegregacao = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const p = CompetenciaParamSchema.safeParse(req.params);
+    if (!p.success) return bad(res, p.error.flatten());
+    const q = SimplesUnitQuerySchema.safeParse(req.query);
+    if (!q.success) return bad(res, q.error.flatten());
+    const data = await service().obterSegregacao(resolveAccountingScope(user, q.data.unitId), p.data.competencia);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
