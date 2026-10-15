@@ -20,9 +20,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     // SSR guard — createPortal precisa de document.body (não existe no servidor)
     const [mounted, setMounted] = useState(false);
 
+    // Dedupe: um toast igual (tipo + título + texto) já visível não ganha cópia — N requisições paralelas que falham
+    // pelo mesmo motivo (ex.: os 12 GETs da grade do Simples) mostram um aviso só. Decisão do dono, 2026-10-15
+    // (D-2026-10-15-FE-SIMPLES-PR-A-LACUNAS, lacuna 3).
     const showToast = useCallback((message: string, type: ToastType = 'info', title?: string) => {
         const id = Math.random().toString(36).substring(2, 9);
-        setToasts((prev) => [...prev, { id, type, message, title }]);
+        setToasts((prev) =>
+            prev.some((t) => t.type === type && t.message === message && t.title === title)
+                ? prev
+                : [...prev, { id, type, message, title }]
+        );
     }, []);
 
     const removeToast = useCallback((id: string) => {
