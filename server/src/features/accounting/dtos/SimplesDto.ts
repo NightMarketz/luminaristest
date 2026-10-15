@@ -3,6 +3,7 @@ import { isValidDateOnly } from '../models/dates';
 import { MAX_CENTS } from '../models/money';
 import { CNPJ_REGEX, isValidCnpj } from '../../../lib/cnpj';
 import { SEGREGACAO_EXCLUI, type TributoSimples } from '../models/simplesCalc';
+import type { DocumentoRef } from './SourceDocumentUploadDto';
 
 /**
  * BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14, BRIEF itens 10–14; contrato §3) — entradas da apuração. Tudo `.strict()`;
@@ -130,6 +131,8 @@ export type SimplesHistoricoView = {
   receitaBrutaCents: number;
   folhaCents: number | null;
   sourceDocumentId: string | null;
+  /** BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-9 (a): o arquivo para o FE baixar pelo GET /attachments/:id; null sem SD ativo. */
+  documento: DocumentoRef;
   updatedAt: string;
 };
 export type SimplesSegregacaoView = {

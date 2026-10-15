@@ -36,6 +36,8 @@ import {
 import {
   attachSourceDocument,
   listSourceDocuments,
+  sourceDocumentUpload,
+  createSourceDocumentUpload,
 } from '../controllers/sourceDocumentController';
 import {
   bankStatementUpload,
@@ -224,6 +226,8 @@ router.get('/journal-entries/:journalEntryId/attachments', listDocumentAttachmen
 // DOCUMENT identity (SourceDocument + JournalEntrySource + audit), writing no ledger value.
 router.post('/journal-entries/:entryId/source-documents', attachSourceDocument);
 router.get('/journal-entries/:entryId/source-documents', listSourceDocuments);
+// BE-INCR-SOURCE-DOCUMENT-UPLOAD (F-SD-1 a): SourceDocument a partir de arquivo, sem lançamento (PDF do DAS, histórico).
+router.post('/source-documents', sourceDocumentUpload, createSourceDocumentUpload);
 
 // Data Exchange — CSV/XLSX import + report export (BE-INCR-6).
 router.post('/data-exchange/exports', createDataExchangeExport);

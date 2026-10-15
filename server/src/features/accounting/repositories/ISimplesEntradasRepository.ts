@@ -30,7 +30,11 @@ export interface ISimplesEntradasRepository {
   upsertSegregacao(scope: AccountingScope, competencia: string, parcelas: Prisma.InputJsonValue, tx?: Prisma.TransactionClient): Promise<SimplesSegregacaoManual>;
   findSegregacao(scope: AccountingScope, competencia: string, tx?: Prisma.TransactionClient): Promise<SimplesSegregacaoManual | null>;
   /** O `SourceDocument` existe no mesmo escopo? (o extrato anexado ao histórico). */
-  sourceDocumentExists(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<boolean>;
+  /**
+   * SD ativo (deletedAt null) do escopo com o `sourceType` do consumidor (BE-INCR-SOURCE-DOCUMENT-UPLOAD item 6 e F-SD-3 a):
+   * retirado, de outra unidade ou de outra proveniência = false.
+   */
+  sourceDocumentExists(scope: AccountingScope, id: string, sourceType: string, tx?: Prisma.TransactionClient): Promise<boolean>;
 
   createParceria(scope: AccountingScope, data: ParceriaData, tx?: Prisma.TransactionClient): Promise<SalaoParceriaContrato>;
   updateParceria(scope: AccountingScope, id: string, data: Partial<ParceriaData>, tx?: Prisma.TransactionClient): Promise<SalaoParceriaContrato>;

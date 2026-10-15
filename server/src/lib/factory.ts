@@ -118,6 +118,7 @@ import { CashForecastReportService } from '../features/accounting/services/CashF
 import { ReconciliationService } from '../features/accounting/services/ReconciliationService';
 import { ReferentialMappingService } from '../features/accounting/services/ReferentialMappingService';
 import { ReferentialCatalogService } from '../features/accounting/services/ReferentialCatalogService';
+import { SourceDocumentUploadService } from '../features/accounting/services/SourceDocumentUploadService';
 import { DocumentAttachmentService } from '../features/accounting/services/DocumentAttachmentService';
 import { DataExchangeExportService } from '../features/accounting/services/DataExchangeExportService';
 import { ReceiptService } from '../features/accounting/services/ReceiptService';
@@ -804,6 +805,7 @@ export class ApplicationFactory {
     referentialMapping: ReferentialMappingService;
     referentialCatalog: ReferentialCatalogService;
     documentAttachment: DocumentAttachmentService;
+    sourceDocumentUpload: SourceDocumentUploadService;
     dataExchangeExport: DataExchangeExportService;
     dataExchangeImport: DataExchangeImportService;
     receipt: ReceiptService;
@@ -1109,7 +1111,14 @@ export class ApplicationFactory {
     );
     // BE-INCR-TAX-ASSESSMENT (nó X7): hoisted no X8 PR-3 — o PisCofinsAssessmentService reusa a provisão (item 17).
     // BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14): entradas da apuração + subrazão fiscal de receita (lê o contrato de parceria).
-    const simplesEntradasService = new SimplesEntradasService(this.repositories.simplesEntradas, this.policies.accounting);
+    // BE-INCR-SOURCE-DOCUMENT-UPLOAD: SD a partir de arquivo + o documento resolvido para o DAS e o histórico (F-SD-9 a).
+    const sourceDocumentUploadService = new SourceDocumentUploadService(
+      this.repositories.documentAttachment,
+      this.repositories.sourceProvenance,
+      this.policies.accounting,
+      auditService,
+    );
+    const simplesEntradasService = new SimplesEntradasService(this.repositories.simplesEntradas, this.policies.accounting, sourceDocumentUploadService);
     const receitaFiscalService = new ReceitaFiscalService(
       this.repositories.receitaFiscal,
       this.repositories.serviceFiscalProfile,
@@ -1319,6 +1328,7 @@ export class ApplicationFactory {
       auditService,
       this.repositories.journalEntry,
       this.repositories.fiscalDocument, // F-DFE-19 b: gate do alvo por targetType
+      this.repositories.sourceProvenance, // BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-2 a: alvo SOURCE_DOCUMENT
     );
     // BE-INCR-DFE (nó X10b, PR-3): ciclo de vida pós-SENT (Fase D — transição, proveniência,
     // reenvio, cancelamento, job de polling).
@@ -1508,6 +1518,7 @@ export class ApplicationFactory {
       referentialMapping: referentialMappingService,
       referentialCatalog: referentialCatalogService,
       documentAttachment: documentAttachmentService,
+      sourceDocumentUpload: sourceDocumentUploadService,
       dataExchangeExport: new DataExchangeExportService(
         accountingReportService,
         this.policies.accounting,
@@ -1701,6 +1712,7 @@ export class ApplicationFactory {
         this.repositories.fiscalDocument, // X14 PR-4 item 31: conferência NFS-e × receita
         this.repositories.serviceFiscalProfile, // X14 PR-4 F-PR4-4: atividades do cadastro na rota de alíquotas
         this.repositories.issBeneficioMunicipal, // SIMPLES-PISO-ANEXO-XI bloco 1: benefício municipal de ISS
+        sourceDocumentUploadService, // BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-9 a: o PDF do DAS na visão
       ),
       // BE-INCR-SIMPLES-NACIONAL PR-4 (nó X14, itens 27–28): espelhos DASN-SIMEI e DEFIS.
       simplesDeclaracao: new SimplesDeclaracaoService(
@@ -2078,6 +2090,7 @@ export class ApplicationFactory {
   public getReferentialMappingService = (): ReferentialMappingService => this.services.referentialMapping;
   public getReferentialCatalogService = (): ReferentialCatalogService => this.services.referentialCatalog;
   public getDocumentAttachmentService = (): DocumentAttachmentService => this.services.documentAttachment;
+  public getSourceDocumentUploadService = (): SourceDocumentUploadService => this.services.sourceDocumentUpload;
   public getDataExchangeExportService = (): DataExchangeExportService => this.services.dataExchangeExport;
   public getDataExchangeImportService = (): DataExchangeImportService => this.services.dataExchangeImport;
   public getReceiptService = (): ReceiptService => this.services.receipt;

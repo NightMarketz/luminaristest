@@ -3913,6 +3913,108 @@
           }
         }
       },
+      "CreateSourceDocumentUpload": {
+        "type": "object",
+        "required": [
+          "unitId",
+          "sourceType",
+          "file"
+        ],
+        "properties": {
+          "unitId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceType": {
+            "type": "string",
+            "enum": [
+              "tax.simples.das",
+              "tax.simples.historico"
+            ]
+          },
+          "externalRef": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "referência humana (ex.: número do DAS)"
+          },
+          "documentDate": {
+            "type": "string",
+            "description": "date-only YYYY-MM-DD (data real, validada)"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "PDF, PNG ou JPEG (F-SD-6 b), até 50 MB"
+          }
+        }
+      },
+      "SourceDocumentUpload": {
+        "type": "object",
+        "required": [
+          "id",
+          "sourceType",
+          "createdAt",
+          "attachment"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "sourceType": {
+            "type": "string"
+          },
+          "externalRef": {
+            "type": "string",
+            "nullable": true
+          },
+          "documentDate": {
+            "type": "string",
+            "nullable": true,
+            "description": "YYYY-MM-DD"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "attachment": {
+            "type": "object",
+            "required": [
+              "id",
+              "fileName",
+              "mimeType",
+              "fileSize",
+              "sha256"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "fileName": {
+                "type": "string"
+              },
+              "mimeType": {
+                "type": "string"
+              },
+              "fileSize": {
+                "type": "integer"
+              },
+              "sha256": {
+                "type": "string",
+                "description": "64-char hex checksum"
+              }
+            }
+          }
+        }
+      },
       "TaxAssessmentPreviewInput": {
         "type": "object",
         "required": [
@@ -6102,6 +6204,53 @@
           },
           "403": {
             "description": "Sem permissão de leitura"
+          }
+        }
+      }
+    },
+    "/api/accounting/source-documents": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Cria um documento de origem a partir de um arquivo (sem lançamento)",
+        "description": "BE-INCR-SOURCE-DOCUMENT-UPLOAD (F-SD-1 a). Grava o arquivo como anexo do novo SourceDocument e devolve o id, que o cliente passa no `sourceDocumentId` do PUT do DAS ou do histórico do Simples. Nada é escrito no razão.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSourceDocumentUpload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Documento de origem criado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceDocumentUpload"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Sem arquivo",
+            "tipo fora da allowlist ou corpo inválido": null
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem permissão para enviar documentos de origem"
+          },
+          "413": {
+            "description": "Arquivo acima do teto"
+          },
+          "415": {
+            "description": "Conteúdo não confere com o tipo declarado"
           }
         }
       }
