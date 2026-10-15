@@ -36,7 +36,8 @@
       "perfilFiscal": "Perfil fiscal",
       "parametrosLegais": "Parâmetros legais",
       "politica": "Política contábil",
-      "apuracao": "Apuração"
+      "apuracao": "Apuração",
+      "pendencias": "Pendências"
     },
     "error": {
       "units": "Falha ao carregar as unidades.",
@@ -2850,5 +2851,48 @@
     "successShort": "Contabilidade automática ativa.",
     "pendenciasLink": "Ver pendências da unidade",
     "error": "Não foi possível ativar a contabilidade."
+  },
+  "pendencias": {
+    "title": "Pendências",
+    "subtitle": "Eventos que a contabilidade automática não conseguiu lançar nesta unidade. Resolva a causa e use Re-varrer.",
+    "filter": {
+      "reason": "Motivo",
+      "all": "Todos",
+      "includeResolved": "Mostrar resolvidas"
+    },
+    "rescan": "Re-varrer",
+    "summary": {
+      "attempted": "tentada(s)",
+      "resolved": "resolvida(s)",
+      "stillPending": "ainda pendente(s)"
+    },
+    "empty": "Nenhuma pendência nesta unidade.",
+    "loadMore": "Carregar mais",
+    "resolvedAt": "Resolvida em {{when}}",
+    "col": {
+      "source": "Origem",
+      "id": "Id",
+      "reason": "Motivo",
+      "detail": "Detalhe",
+      "firstSeen": "Primeira vez",
+      "lastSeen": "Última vez",
+      "attempts": "Tentativas"
+    },
+    "error": {
+      "load": "Erro ao carregar as pendências.",
+      "rescan": "Não foi possível re-varrer as pendências."
+    },
+    "reason": {
+      "FAILED": "Falha não classificada",
+      "ACCOUNTING_PERIOD_NOT_OPEN": "Período contábil não está aberto — abra o período; depois, Re-varrer",
+      "MAX_CENTS_EXCEEDED": "Valor acima do teto — corrija o valor na origem",
+      "OPENING_ENTRY_MISSING": "Aguardando o lançamento de abertura da venda",
+      "MISSING_PAID_WITH_PACKAGE_ID": "Consumo de pacote sem o pacote de origem registrado",
+      "NO_MAPPER_FOR_UNIT": "Sem regra contábil para este evento nesta unidade — ative a contabilidade da unidade ou recompile o binding; depois, Re-varrer",
+      "PACKAGE_CONSUMPTION_PENDING": "Aguardando o débito do consumo do pacote",
+      "PACKAGE_ORIGIN_REVERSED": "A venda de origem do pacote foi estornada",
+      "PACKAGE_EXPIRY_NFSE_PENDING": "Falta dado para a NFS-e do pacote vencido",
+      "UNKNOWN_EVENT_KEY": "Evento que nenhum kit de setor declara — erro de quem emite o evento; acione o suporte"
+    }
   }
 }

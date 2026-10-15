@@ -44,8 +44,9 @@ import { AccountantAssignmentSection } from './governance/AccountantAssignmentSe
 import { ClientModeStrip, PendingInvitesBanner, clientLabel } from './governance/ClientModeBars';
 import { PolicyVersionsPanel } from './governance/PolicyVersionsPanel';
 import { AccountingActivationBanner } from './components/AccountingActivationBanner';
+import { ReconcilePendingPanel } from './components/ReconcilePendingPanel';
 
-export type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'nfe' | 'compliance' | 'dimensoes' | 'imobilizado' | 'perfil-fiscal' | 'parametros-legais' | 'politica' | 'apuracao';
+export type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'nfe' | 'compliance' | 'dimensoes' | 'imobilizado' | 'perfil-fiscal' | 'parametros-legais' | 'politica' | 'apuracao' | 'pendencias';
 
 // label = i18n fallback (current pt-BR); rendered via t(`view.tabs.<id>`, label)
 export const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
@@ -86,6 +87,9 @@ export const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
   { id: 'politica',       labelKey: 'view.tabs.politica',       label: 'Política contábil' },
   // FE-INCR-TAX-ASSESSMENT PR-1 (F-1 a, dono 08/10): aba "Apuração" — grade do ano X7 + X8, leitura + aviso.
   { id: 'apuracao',       labelKey: 'view.tabs.apuracao',       label: 'Apuração' },
+  // BE-INCR-ONBOARDING-ACTIVATION item 18 (I5 PR-3, F-I5-4 a): pendências do reconcile da unidade, com "Re-varrer".
+  // Fora do `DELEGATED_TABS` (o modo cliente não a vê até alguém decidir).
+  { id: 'pendencias',     labelKey: 'view.tabs.pendencias',     label: 'Pendências' },
 ];
 
 /**
@@ -531,6 +535,8 @@ export function AccountingView() {
 
       {/* ── Apuração (IRPJ/CSLL + PIS/Cofins) tab — FE-INCR-TAX-ASSESSMENT PR-1 ── */}
       {activeTab === 'apuracao' && unitId && <TaxAssessmentPanel unitId={unitId} />}
+
+      {activeTab === 'pendencias' && unitId && <ReconcilePendingPanel key={`pendencias-${unitId}`} unitId={unitId} />}
 
       {/* ── New Entry Modal ────────────────────────────────────────────────── */}
       <JournalEntryModal
