@@ -6,7 +6,7 @@
 >
 > **Convenção:** `ADR-<trilho><n>` = decisão; `D0-*` = registro de ratificação humana (gate G0) de uma fase.
 > Onde uma decisão de módulo **não** tem ADR próprio, o ponteiro para onde ela vive está em §Fora-de-ADR.
-> Última atualização: **2026-10-14** (`ADR-PERSISTENCE-BOUNDARY-user-designed-vs-law-designed.md`, Accepted; antes: 2026-10-13, `ADR-ARCH-BOUNDARIES.md`, Accepted; antes: 2026-09-29, `ADR-INCR-PAYMENT-PROVIDER-COLLECTION.md`, Proposed; antes: 2026-09-22, primeiro ADR com status `Rejected`: `ADR-DOMAIN-MOTOR-rejected.md`).
+> Última atualização: **2026-10-15** (`ADR-W6-field-customization-ai.md`, Proposed; antes: 2026-10-14, `ADR-PERSISTENCE-BOUNDARY-user-designed-vs-law-designed.md`, Accepted; antes: 2026-10-13, `ADR-ARCH-BOUNDARIES.md`, Accepted; antes: 2026-09-29, `ADR-INCR-PAYMENT-PROVIDER-COLLECTION.md`, Proposed; antes: 2026-09-22, primeiro ADR com status `Rejected`: `ADR-DOMAIN-MOTOR-rejected.md`).
 
 ## Buildout contábil (INCR-*)
 
@@ -71,6 +71,7 @@ Plano-sequência dos degraus (gates humanos → P1 → P2): `docs/SDD-LUMINARIS.
 | [DOMAIN-MOTOR](ADR-DOMAIN-MOTOR-rejected.md) | Motor de domínio genérico (MutationEngine + OrchestrationEngine em DAG + PluginRegistry + AuditLog + fila) × convenção `atomicUntil` (2 commits + reconcile) | **Rejected 2026-09-21 (dono, via sessão)** — motor rejeitado; vencedor = Contrato §2.3 (`AC-2.3-1..3`) + cabeçalho `atomicUntil` cobrado por `SVC-008`/`REV-008`; primitiva `commitThenReconcile` só no próximo incidente (estende o gatilho (b) do ADR-RC); **4 gatilhos de reabertura** no §3; retrofit dos 8 chamadores = PR-B (GAP-MAP fila 9) | 2026-09-21 | DECISÃO ARQUITETURAL (rejeição — teto de atomicidade) |
 | [PERSISTENCE-BOUNDARY](ADR-PERSISTENCE-BOUNDARY-user-designed-vs-law-designed.md) | O que vive em DynamicTable (o que o usuário desenha) × Prisma first-class (o que a lei desenha + atomicidade multi-tabela/agregação/imutabilidade) | **Accepted 2026-10-14 (dono, chat)** — dois critérios substituem "em caso de dúvida, Prisma"; motor deve ganhar G1–G5; AP/AR/contraparte/estoque = candidatos declarados a voltar p/ DynamicTable depois de G1–G5; `*Ref String` = 3º tipo de referência, com guarda declarada | 2026-10-14 | DECISÃO ARQUITETURAL (fronteira de persistência) |
 | [ARCH-BOUNDARIES](ADR-ARCH-BOUNDARIES.md) | Fronteiras de camada mecanizadas (dependency-cruiser, server L1–L6/B1/F1/X1–X3 + my-app U1–U7) com baseline; knip/jscpd em modo relatório | **Accepted 2026-10-13 (dono, chat)** — `check:arch` bloqueia só violação nova (baseline 35 server / 18 my-app); `check:dead`/`check:dup` advisory; exceção explícita à regra ⛔ do CLAUDE.md raiz (§4) | 2026-10-13 | DECISÃO ARQUITETURAL (gate estático) |
+| [W6](ADR-W6-field-customization-ai.md) | Customização de campos por IA no painel do wizard: rota própria `POST /dashboard/ai/CustomizeFields`, sessão e histórico no servidor (W4), saída `json_schema` strict em `gpt-4o-mini`, modelo só propõe (aplicar é determinístico), campo sensível (LGPD art. 5º, II) marcado + confirmação explícita | **Proposed 2026-10-15** — exigido pelo F-P2-5; F-W6-1..8 ratificados (F-W6-1 contra a recomendação; F-W6-4/F-W6-8 nesta sessão, [[D-2026-10-15-W6-ADR]]); dependência dura do W4; valor só com o W1; nenhum código | 2026-10-15 | DECISÃO ARQUITETURAL (IA no caminho de configuração) |
 
 ## Fora-de-ADR — decisões de módulo que vivem em outro lugar
 
