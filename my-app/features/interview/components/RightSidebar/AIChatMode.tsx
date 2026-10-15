@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { getCookie } from 'cookies-next';
+import { useTranslation } from 'next-i18next';
 import { IAiMessage, ITable } from '../../types/RightSidebarTypes';
 
 interface AIChatModeProps {
@@ -14,6 +15,7 @@ interface AIChatModeProps {
  * Componente de interação humanizada com IA para customização de tabelas
  */
 function AIChatMode({ tableData, sessionId: externalSessionId, onSaveChanges, onClose, presetKey }: AIChatModeProps) {
+  const { t } = useTranslation('common');
   const [messages, setMessages] = useState<IAiMessage[]>(() => {
     if (tableData.conversationHistory && tableData.conversationHistory.length > 0) {
       return tableData.conversationHistory.map(msg => ({
@@ -25,12 +27,12 @@ function AIChatMode({ tableData, sessionId: externalSessionId, onSaveChanges, on
     return [
       {
         role: 'system',
-        content: 'Bem-vindo à personalização inteligente!',
+        content: t('onboardingFieldsAiWelcome'),
         timestamp: new Date(),
       },
       {
         role: 'assistant',
-        content: `Olá! Estou aqui para ajudar você a personalizar a funcionalidade **${tableData.name}**.\n\nMe conte quais informações você precisa guardar e quais você acha desnecessárias. Você pode usar suas próprias palavras, como:\n\n• "Preciso guardar o endereço completo dos clientes"\n• "Não preciso anotar o telefone das pessoas"\n• "Quero registrar a data de nascimento também"\n• "Não sei o que preciso guardar para uma empresa"\n\nVocê não precisa se preocupar com termos técnicos, apenas me diga o que precisa guardar com suas próprias palavras!`,
+        content: t('onboardingFieldsAiGreeting', { name: tableData.name }),
         timestamp: new Date(),
       },
     ];
@@ -124,11 +126,11 @@ function AIChatMode({ tableData, sessionId: externalSessionId, onSaveChanges, on
       // Se a sessão não for encontrada, exibe uma mensagem de erro clara
       if (response.status === 404) {
         console.warn('[AIChatMode] Sessão não encontrada (404). O backend pode ter reiniciado. Adicionando mensagem de erro para o usuário.');
-        throw new Error('Sua sessão expirou. Por favor, tente enviar sua mensagem novamente.');
+        throw new Error(t('onboardingFieldsAiSessionExpired'));
       }
       
       if (!response.ok) {
-        throw new Error(`Falha ao obter resposta da IA: ${response.status}`);
+        throw new Error(t('onboardingFieldsAiReplyFailed', { status: response.status }));
       }
 
       const data = await response.json();
@@ -139,7 +141,7 @@ function AIChatMode({ tableData, sessionId: externalSessionId, onSaveChanges, on
       // Adicionar mensagem de erro
       const errorMessage: IAiMessage = {
         role: 'assistant',
-        content: 'Desculpe, ocorreu um erro ao processar sua mensagem. Por favor, tente novamente.',
+        content: t('onboardingFieldsAiSendFailed'),
         timestamp: new Date(),
       };
       
@@ -154,7 +156,7 @@ function AIChatMode({ tableData, sessionId: externalSessionId, onSaveChanges, on
     try {
       const userMessage: IAiMessage = {
         role: 'user',
-        content: 'Finalizar customização',
+        content: t('onboardingFieldsAiFinishCommand'),
         timestamp: new Date(),
       };
 
@@ -169,7 +171,7 @@ function AIChatMode({ tableData, sessionId: externalSessionId, onSaveChanges, on
         }));
 
       if (!sessionId) {
-        throw new Error('Sessão inválida. Por favor, tente enviar uma mensagem primeiro.');
+        throw new Error(t('onboardingFieldsAiInvalidSession'));
       }
 
       const token = getCookie('auth_token');
@@ -182,17 +184,17 @@ function AIChatMode({ tableData, sessionId: externalSessionId, onSaveChanges, on
         body: JSON.stringify({
           sessionId: sessionId,
           tableKey: tableData.key,
-          userMessage: 'Finalizar customização',
+          userMessage: t('onboardingFieldsAiFinishCommand'),
           conversationHistory,
         }),
       });
 
       if (response.status === 404) {
-        throw new Error('Sua sessão expirou. Por favor, tente finalizar novamente.');
+        throw new Error(t('onboardingFieldsAiSessionExpiredFinish'));
       }
 
       if (!response.ok) {
-        throw new Error(`Falha ao finalizar a customização: ${response.statusText}`);
+        throw new Error(t('onboardingFieldsAiFinishFailed', { status: response.statusText }));
       }
 
       const data = await response.json();
@@ -201,10 +203,10 @@ function AIChatMode({ tableData, sessionId: externalSessionId, onSaveChanges, on
 
     } catch (error) {
       console.error('Erro ao finalizar a customização:', error);
-      const errorMessageContent = error instanceof Error ? error.message : 'Ocorreu um erro desconhecido.';
+      const errorMessageContent = error instanceof Error ? error.message : t('onboardingFieldsAiUnknownError');
       const errorMessage: IAiMessage = {
         role: 'system',
-        content: `Erro: ${errorMessageContent}`,
+        content: t('onboardingFieldsAiErrorMessage', { message: errorMessageContent }),
         timestamp: new Date(),
         isError: true,
       };
@@ -236,10 +238,10 @@ function AIChatMode({ tableData, sessionId: externalSessionId, onSaveChanges, on
             className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div 
-              className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                message.role === 'assistant' ? 'bg-blue-100 dark:bg-blue-900 text-gray-800 dark:text-gray-100' :
+              className={`max-w-[80%] rounded-2xl px-4 py-2 ${
+                message.role === 'assistant' ? 'bg-blue-100 dark:bg-blue-900 text-neutral-800 dark:text-neutral-100' :
                 message.role === 'user' ? 'bg-blue-500 text-white' : 
-                'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 text-xs italic w-full'
+                'bg-neutral-100 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-100 text-xs italic w-full'
               }`}
             >
               <div 
@@ -259,14 +261,14 @@ function AIChatMode({ tableData, sessionId: externalSessionId, onSaveChanges, on
       </div>
       
       {/* Área de entrada de mensagem */}
-      <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+      <div className="border-t border-neutral-200 dark:border-neutral-700 p-4">
         <div className="flex space-x-2">
           <div className="flex-grow relative">
             <textarea
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              placeholder="Descreva o que você precisa..."
-              className="w-full border border-gray-300 dark:border-gray-600 rounded-md p-3 pr-10 resize-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100"
+              placeholder={t('onboardingFieldsAiInputPlaceholder')}
+              className="w-full border border-neutral-300 dark:border-neutral-600 rounded-md p-3 pr-10 resize-none focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-700 dark:text-neutral-100"
               rows={2}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -275,8 +277,8 @@ function AIChatMode({ tableData, sessionId: externalSessionId, onSaveChanges, on
                 }
               }}
             />
-            <div className="absolute right-3 bottom-3 text-xs text-gray-400">
-              Enter ⏎
+            <div className="absolute right-3 bottom-3 text-xs text-neutral-400">
+              {t('onboardingFieldsAiEnterHint')}
             </div>
           </div>
           <button
@@ -300,7 +302,7 @@ function AIChatMode({ tableData, sessionId: externalSessionId, onSaveChanges, on
           onClick={handleFinishCustomization}
           className="mt-4 w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
         >
-          Concluir Conversa
+          {t('onboardingFieldsAiFinish')}
         </button>
       </div>
     </div>
