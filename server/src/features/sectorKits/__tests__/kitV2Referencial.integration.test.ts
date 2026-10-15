@@ -25,7 +25,14 @@ async function preparar(regime: 'PRESUMIDO' | 'REAL' | 'SIMPLES') {
   const codigos = [...new Set(BEAUTY_SALON_KIT_V6.referential.flatMap((b) => b.entries.map((e) => e.referentialCode)))];
   for (const code of codigos) await prisma.referentialAccount.create({ data: { layoutVersion: '2025', code, name: code, isAnalytic: true } });
   await prisma.fiscalProfile.create({
-    data: { ...where(), regimeTributario: regime, pisCofinsRegime: regime === 'REAL' ? 'NAO_CUMULATIVO' : 'CUMULATIVO', d1fConfirmado: false },
+    // A v6 preenche o perfil fiscal (passo 3), que valida o regime: o Simples exige pisCofinsRegime SIMPLES e sem ICMS.
+    data: {
+      ...where(),
+      regimeTributario: regime,
+      pisCofinsRegime: regime === 'REAL' ? 'NAO_CUMULATIVO' : regime === 'SIMPLES' ? 'SIMPLES' : 'CUMULATIVO',
+      ...(regime === 'SIMPLES' ? { icmsContribuinte: false } : {}),
+      d1fConfirmado: false,
+    },
   });
 }
 

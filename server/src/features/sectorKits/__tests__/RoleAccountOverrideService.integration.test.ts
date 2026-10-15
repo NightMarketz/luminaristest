@@ -127,14 +127,14 @@ describe('ajuste papel→conta do kit (PR-3)', () => {
 
   it('trocar a conta duas vezes: uma linha viva por papel, auditoria com a conta anterior', async () => {
     const id35 = await novaConta('3.9', 'Revenue');
-    const id36 = await novaConta('3.6', 'Revenue');
+    const id36 = await novaConta('3.8', 'Revenue');
     expect((await put('receita-serviço', { accountId: id35 })).status).toBe(200);
     const res = await put('receita-serviço', { accountId: id36 });
 
     expect(res.body.data.binding).toEqual({ status: 'Active', bindingVersion: 3 });
     expect(await vivos()).toEqual([{ role: 'receita-serviço', accountId: id36 }]);
     expect(await prisma.roleAccountOverride.count({ where: where() })).toBe(2); // a anterior fica, soft-deleted
-    expect((await activeBinding()).codes['receita-serviço']).toBe('3.6');
+    expect((await activeBinding()).codes['receita-serviço']).toBe('3.8');
     expect((await payloads())[1]).toEqual({
       eventType: 'kit.role_override_set',
       payload: { role: 'receita-serviço', accountId: id36, previousAccountId: id35 },
@@ -146,10 +146,10 @@ describe('ajuste papel→conta do kit (PR-3)', () => {
     const res = await put('caixa-por-metodo:Pix', { accountId: id117 });
 
     expect(res.status).toBe(200);
-    expect(res.body.data.override).toMatchObject({ role: 'caixa-por-metodo:Pix', accountCode: '1.1.7', kitAccountCode: '1.1.1' });
+    expect(res.body.data.override).toMatchObject({ role: 'caixa-por-metodo:Pix', accountCode: '1.1.7', kitAccountCode: '1.1.1.01' }); // v6: binding V2 (L8)
     const { codes } = await activeBinding();
     expect(codes['caixa-por-metodo:Pix']).toBe('1.1.7');
-    expect(codes['caixa-por-metodo:Cash']).toBe('1.1.3');
+    expect(codes['caixa-por-metodo:Cash']).toBe('1.1.1.02');
   });
 
   it('DELETE recompila de volta ao código do kit', async () => {
@@ -173,7 +173,7 @@ describe('ajuste papel→conta do kit (PR-3)', () => {
 
   it('compile Draft: compensa, audita o desfazer e devolve 422', async () => {
     const id35 = await novaConta('3.9', 'Revenue');
-    const id36 = await novaConta('3.6', 'Revenue');
+    const id36 = await novaConta('3.8', 'Revenue');
     await put('receita-serviço', { accountId: id35 });
     // Mês fechado: o dry-run do validador reprova ⇒ o compile grava Draft.
     const today = new Date().toISOString().slice(0, 10);
@@ -214,7 +214,7 @@ describe('ajuste papel→conta do kit (PR-3)', () => {
   it('compile lança no meio de um PUT concorrente: a compensação não revive a linha antiga', async () => {
     // Review independente (achado 1): P vivo → PUT A grava A → antes do compile de A, PUT B grava B e compila
     // Active → o compile de A lança. Desfazer às cegas reviveria P ao lado de B.
-    const [idP, idA, idB] = [await novaConta('3.9', 'Revenue'), await novaConta('3.6', 'Revenue'), await novaConta('3.7', 'Revenue')];
+    const [idP, idA, idB] = [await novaConta('3.9', 'Revenue'), await novaConta('3.8', 'Revenue'), await novaConta('3.7', 'Revenue')];
     await put('receita-serviço', { accountId: idP });
     const scope = { ownerUserId: dono.id, actorUserId: dono.id, unitId: UNIT };
     const spy = jest.spyOn(BindingCompileService.prototype, 'compile').mockImplementationOnce(async () => {

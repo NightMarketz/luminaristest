@@ -15,6 +15,8 @@ import { ApplicationFactory } from '@/lib/factory';
 import type { BindingScope } from '@/features/accountingBinding/repositories/IAccountingBindingRepository';
 import { BEAUTY_SALON_KIT_V5 } from '@/features/sectorKits/kits/beautySalon/kit.v5';
 import { AESTHETIC_CLINIC_KIT_V5 } from '@/features/sectorKits/kits/aestheticClinic/kit.v5';
+import { CANONICAL_ACCOUNTS_PRE_L8 } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
+import { KIT_REGISTRY } from '@/features/sectorKits/registry';
 
 const UNIT = 'unit-kit-v5';
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -33,11 +35,14 @@ async function preparar(regime: 'PRESUMIDO' | 'REAL', perfil: Record<string, unk
   await prisma.fiscalProfile.create({
     data: { ...where(), regimeTributario: regime, pisCofinsRegime: regime === 'REAL' ? 'NAO_CUMULATIVO' : 'CUMULATIVO', d1fConfirmado: false, ...perfil },
   });
+  // BE-INCR-PLANO-4-NIVEIS (F-L8-9 a): o v5 é do plano de 3 níveis — a unidade nasce no plano da época.
+  await prisma.account.createMany({ data: CANONICAL_ACCOUNTS_PRE_L8.map((a) => ({ ...where(), ...a })) });
 }
 
 const instalar = (kitKey: string) =>
   ApplicationFactory.getInstance()
-    .getKitInstallService(scope())
+    // a v6 (L8) é a vigente; este teste prende o registro no v5 publicado
+    .getKitInstallService(scope(), (k) => KIT_REGISTRY[k]?.filter((v) => v.kitVersion <= 5))
     .install(scope(), { kitKey, ano: 2025, installChartIfEmpty: true, openCurrentPeriodIfMissing: true, today: TODAY });
 
 /** Mesma conta do gate da ECD que o `kitV2Referencial` refaz no banco (a fronteira não deixa importar o serviço). */

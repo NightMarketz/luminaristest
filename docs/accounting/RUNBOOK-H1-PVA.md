@@ -661,7 +661,40 @@ CNPJ/CPF** se este runbook for commitado]
 >
 > **[EMENDA 2026-10-15 — L8 refeito sobre a main de 15/10]** A unidade com o kit v3–v5 também tem as 4 contas a recolher
 > renomeadas (`2.1.3`→`2.1.3.01` … `2.1.6`→`2.1.3.04`, F-L8-10 a), e ganha as sintéticas `2.1.3`, `3.6` e `4.5` (F-L8-11 a).
-> Nesse caso `renomeadas` tem 13 linhas, e `kitAtualizado` termina em `para: 6`.
+> Nesse caso `renomeadas` tem 13 linhas, e `kitAtualizado` termina em `para: 6`. Unidade com kit abaixo do v5 (as 5 do
+> `dev.db` estão no v1) passa antes pelo upgrade real até o v5 (F-L8-12 a): `kitPreparado: {de: 1, para: 5}`, e aí as
+> contas fiscais já existem quando a renomeação roda. Se esse upgrade não aplicar (forward, conflito ou falha de passo),
+> a unidade é listada como `FALHOU`, sem nada renomeado.
+>
+> **[EMENDA 2026-10-15 — F-L8-13 a] De-para de 2025 nas unidades do H1, antes de gerar a ECD.** Com 2025 `HARD_CLOSED`,
+> o upgrade do kit não grava o de-para de 2025 das contas novas (fica como pendência do kit, listada em
+> `kitPreparado.pendenciasAnoCongelado`). A ECD exige de-para de toda folha viva, então grave os 17 abaixo nas duas
+> unidades (`cmuw4yqxg001jcii0iz2yb9rw` e `cmuw4z7zj02ehcii0st3unfr4`) com `POST /api/accounting/referential/mappings/batch`
+> (o mesmo do P5), `mappingVersion: "2025"`, e confira `GET /referential/coverage?unitId=<unidade>&version=2025` →
+> `ready true`. Os códigos são os do kit v6 (`REFERENCIAL_2025_FISCAL_V2` + `REFERENCIAL_2025_EMENDA_3_3`):
+>
+> | Conta | Referencial 2025 | Nome |
+> |---|---|---|
+> | `2.1.3.01` | `2.01.01.09.13` | IRPJ a Recolher  – Circulante |
+> | `2.1.3.02` | `2.01.01.09.14` | CSLL a Recolher  – Circulante |
+> | `2.1.3.03` | `2.01.01.09.04` | PIS a Recolher – Circulante |
+> | `2.1.3.04` | `2.01.01.09.05` | COFINS a Recolher – Circulante |
+> | `3.6.1` | `3.01.01.01.02.05` | (-) PIS/PASEP Sobre Receita Bruta |
+> | `3.6.2` | `3.01.01.01.02.04` | (-) COFINS Sobre Receita Bruta |
+> | `4.5.1` | `3.02.01.01.01.02` | (-) Provisão para Imposto de Renda - Pessoa Jurídica (Atividade Geral e Rural) |
+> | `4.5.2` | `3.02.01.01.01.01` | (-) Provisão para Contribuição Social sobre o Lucro Líquido (Atividade Geral) |
+> | `3.5.1` | `3.01.01.05.01.05` | Outras Receitas Financeiras |
+> | `3.5.2` | `3.01.01.05.01.05` | Outras Receitas Financeiras |
+> | `3.5.3` | `3.01.01.05.01.05` | Outras Receitas Financeiras |
+> | `4.3.1` | `3.01.01.09.01.08` | (-) Outras Despesas Financeiras |
+> | `4.3.2` | `3.01.01.07.01.22` | (-) Multas |
+> | `4.3.3` | `3.01.01.09.01.08` | (-) Outras Despesas Financeiras |
+> | `4.4.1` | `3.01.01.07.01.22` | (-) Multas |
+> | `4.4.2` | `3.01.01.07.01.22` | (-) Multas |
+> | `4.6` | `3.01.01.07.01.04` | (-) Outros Serviços Prestados por Pessoa Física ou Jurídica |
+>
+> Prova na cópia do `dev.db` (15/10, agente): `seed-unit-presumido`, `seed-unit-real` e `cmr2jyirc006oci1kscm61n6n`
+> recusados pela pré-condição (período 2026-10 `FUTURE`; abra o período antes de migrar, se forem usados).
 
 Abra o PVA da ECD → importar o `.txt` gerado. Anote **cada crítica** com o código do registro
 (ex.: I050, J930), não só a mensagem.

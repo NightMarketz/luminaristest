@@ -10,6 +10,17 @@ import type { BindingScope } from '@/features/accountingBinding/repositories/IAc
 import { KitUpgradeService } from '@/features/sectorKits/services/KitUpgradeService';
 import { KIT_REGISTRY } from '@/features/sectorKits/registry';
 import { parseArgs, runUpgrade } from '@/jobs/upgradeSectorKitsCli';
+import { CANONICAL_ACCOUNTS_PRE_L8 } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
+
+// BE-INCR-PLANO-4-NIVEIS (F-L8-12 a): a passagem ao v6 é da migração de dado (migratePlano4NiveisCli), não do upgrade.
+// O CLI de upgrade segue exercitado no plano de 3 níveis: registro preso no v5, unidade nascida no plano da época.
+jest.mock('@/features/sectorKits/registry', () => {
+  const real = jest.requireActual('@/features/sectorKits/registry');
+  const registry = Object.fromEntries(
+    Object.entries(real.KIT_REGISTRY as Record<string, { kitVersion: number }[]>).map(([k, vs]) => [k, vs.filter((v) => v.kitVersion <= 5)]),
+  );
+  return { ...real, KIT_REGISTRY: registry, latestKit: (k: string) => registry[k]?.at(-1) };
+});
 
 const TODAY = new Date().toISOString().slice(0, 10);
 const T = 90000;
@@ -20,6 +31,7 @@ let ownerId: string;
 async function instalarV1(unitId: string) {
   const scope: BindingScope = { ownerUserId: ownerId, actorUserId: ownerId, unitId };
   await prisma.fiscalProfile.create({ data: { userId: ownerId, unitId, regimeTributario: 'PRESUMIDO', pisCofinsRegime: 'CUMULATIVO', d1fConfirmado: false } });
+  await prisma.account.createMany({ data: CANONICAL_ACCOUNTS_PRE_L8.map((a) => ({ userId: ownerId, unitId, ...a })) });
   await ApplicationFactory.getInstance()
     .getKitInstallService(scope, (k) => KIT_REGISTRY[k]?.filter((v) => v.kitVersion <= 1))
     .install(scope, { kitKey: 'beautySalon', ano: Number(TODAY.slice(0, 4)), installChartIfEmpty: true, openCurrentPeriodIfMissing: true, today: TODAY });

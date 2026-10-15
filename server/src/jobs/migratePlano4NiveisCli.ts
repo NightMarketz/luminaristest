@@ -15,8 +15,14 @@
  *       tem filhas delas (F-L8-11 a);
  *   (c) Σ débito e Σ crédito por accountId iguais antes e depois — senão desfaz a unidade inteira.
  * Conta patrimonial PERSONALIZADA (fora do canônico) não é tocada, só listada (F-L8-5 a, item 10).
+ * ANTES da tx (F-L8-12 a, dono 15/10): kit instalado abaixo do v5 (o último do plano de 3 níveis) passa pelo
+ * `KitUpgradeService` real até o v5 (dry-run + apply), para a unidade receber o conteúdo das versões do meio (contas de
+ * imposto e perfil-padrão do v3, catálogo do v4, referencial da emenda 3.3 do v5). Forward ou conflito no dry-run: a
+ * unidade falha e nada é renomeado — exceto o conflito `referential_year_frozen` (F-L8-13 a, dono 15/10): o de-para de
+ * ano congelado (mês HARD_CLOSED ou ECF transmitida) fica como pendência do kit, e o RUNBOOK-H1 o grava à mão. O upgrade comita sozinho; se a renomeação falhar depois, a unidade fica no v5 do
+ * plano de 3 níveis (estado consistente) e a 2ª rodada continua dali.
  * Depois da tx (item 9): se o binding Active ainda usa código antigo, recompila com o binding da versão vigente do kit
- * (o compile supersede o Active atomicamente) e a instalação do kit passa à versão vigente (F-L8-7 a).
+ * (o compile supersede o Active atomicamente) e a instalação do kit passa do v5 à versão vigente (F-L8-7R).
  *
  * Idempotente: rodar de novo encontra tudo migrado e não escreve nada.
  *
@@ -42,6 +48,10 @@ import { RENOMEACAO_FISCAL_L8, SINTETICAS_FISCAIS_L8 } from '../features/sectorK
 import { SECTOR_BINDING_REGISTRY } from '../features/accountingBinding/fixtures/sectorBindingRegistry';
 import type { BindingScope } from '../features/accountingBinding/repositories/IAccountingBindingRepository';
 import type { CompileBindingInput, CompileBindingResult } from '../features/accountingBinding/services/BindingCompileService';
+import type { KitUpgradeOutcome } from '../features/sectorKits/services/KitUpgradeService';
+
+/** Salão e clínica: a v5 é a última versão do plano de 3 níveis (F-L8-9 a; a v6 é a da L8). */
+export const ULTIMA_VERSAO_KIT_PRE_L8 = 5;
 
 export interface RelatorioMigracaoUnidade {
   ownerUserId: string;
@@ -50,12 +60,17 @@ export interface RelatorioMigracaoUnidade {
   renomeadas: { de: string; para: string }[];
   personalizadasNaoTocadas: { code: string; name: string }[];
   bindingRecompilado: { de: number; para: number } | null;
+  /** F-L8-12 (a): upgrade real do kit até o v5 antes de renomear; null se já estava no v5 (ou acima, ou sem kit). */
+  kitPreparado: { kitKey: string; de: number; para: number; pendenciasAnoCongelado: string[] } | null;
   kitAtualizado: { kitKey: string; de: number; para: number } | null;
   saldoAntesDepoisIgual: boolean;
 }
 
 /** O compile real (`BindingCompileService.compile`) — injetado para o teste e para a CLI usar o da factory. */
 export type CompileFn = (scope: BindingScope, input: CompileBindingInput) => Promise<CompileBindingResult>;
+
+/** O upgrade real (`KitUpgradeService.upgrade`) com o registro preso no v5 — injetado como o compile. */
+export type UpgradeAteV5Fn = (scope: BindingScope, mode: 'DRY_RUN' | 'APPLY', deployId: string) => Promise<KitUpgradeOutcome>;
 
 type Tx = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0];
 
@@ -165,16 +180,45 @@ async function migrarBinding(db: PrismaClient, scope: BindingScope, compile: Com
   let kitAtualizado: RelatorioMigracaoUnidade['kitAtualizado'] = null;
   const vigente = instalacao ? latestKit(instalacao.kitKey) : undefined;
   if (instalacao && vigente && instalacao.kitVersion < vigente.kitVersion) {
+    // Só o v5 tem o mesmo conteúdo do v6 (a v6 é o v5 com os códigos novos): pular de versão mais baixa perderia conteúdo.
+    if (instalacao.kitVersion !== ULTIMA_VERSAO_KIT_PRE_L8) {
+      throw new Error(`o kit '${instalacao.kitKey}' está no v${instalacao.kitVersion}; só o v${ULTIMA_VERSAO_KIT_PRE_L8} passa ao v${vigente.kitVersion}.`);
+    }
     await db.kitInstallation.update({ where: { id: instalacao.id }, data: { kitVersion: vigente.kitVersion } });
     kitAtualizado = { kitKey: instalacao.kitKey, de: instalacao.kitVersion, para: vigente.kitVersion };
   }
   return { bindingRecompilado, kitAtualizado };
 }
 
+/** F-L8-12 (a): leva o kit ao v5 pelo upgrade real antes de renomear. Forward/conflito ⇒ lança sem aplicar nada. */
+async function prepararKit(db: PrismaClient, scope: BindingScope, upgrade: UpgradeAteV5Fn, hoje: string) {
+  const instalacao = await db.kitInstallation.findFirst({ where: { userId: scope.ownerUserId, unitId: scope.unitId, deletedAt: null } });
+  if (!instalacao || instalacao.kitVersion >= ULTIMA_VERSAO_KIT_PRE_L8) return null;
+  const deployId = `migrate-plano-4-niveis-${hoje}`;
+  const dry = await upgrade(scope, 'DRY_RUN', deployId);
+  if (dry.status === 'UP_TO_DATE') return null;
+  // F-L8-13 (a): de-para de ano congelado não bloqueia — vira pendência do kit; o resto do conflito para a unidade.
+  const anoCongelado = dry.report.conflict.filter((c) => c.reason === 'referential_year_frozen').map((c) => c.itemKey);
+  const forward = dry.run.counts.forward;
+  const conflicts = dry.run.counts.conflicts - anoCongelado.length;
+  if (forward > 0 || conflicts > 0) {
+    throw new Error(
+      `o upgrade do kit até o v${ULTIMA_VERSAO_KIT_PRE_L8} tem ${forward} forward e ${conflicts} conflito(s) — resolva pelo ` +
+        'upgradeSectorKitsCli/pendências e rode de novo; nada foi alterado.',
+    );
+  }
+  const applied = await upgrade(scope, 'APPLY', deployId);
+  if (applied.status !== 'APPLIED' || applied.run.toVersion !== ULTIMA_VERSAO_KIT_PRE_L8) {
+    throw new Error(`o upgrade do kit até o v${ULTIMA_VERSAO_KIT_PRE_L8} terminou '${applied.status}' — nada foi renomeado.`);
+  }
+  return { kitKey: instalacao.kitKey, de: instalacao.kitVersion, para: ULTIMA_VERSAO_KIT_PRE_L8, pendenciasAnoCongelado: anoCongelado };
+}
+
 export async function migrarUnidade(
   db: PrismaClient,
   scope: BindingScope,
   compile: CompileFn,
+  upgrade: UpgradeAteV5Fn,
   hoje: string = new Date().toISOString().slice(0, 10),
 ): Promise<RelatorioMigracaoUnidade> {
   // Pré-condição ANTES de renomear (nunca plano migrado com binding velho): o recompile do binding faz o dry-run de
@@ -190,6 +234,7 @@ export async function migrarUnidade(
       );
     }
   }
+  const kitPreparado = await prepararKit(db, scope, upgrade, hoje);
   const plano = await migrarPlano(db, scope.ownerUserId, scope.unitId);
   const binding = await migrarBinding(db, scope, compile);
   return {
@@ -199,6 +244,7 @@ export async function migrarUnidade(
     renomeadas: plano.renomeadas,
     personalizadasNaoTocadas: plano.personalizadas,
     bindingRecompilado: binding.bindingRecompilado,
+    kitPreparado,
     kitAtualizado: binding.kitAtualizado,
     saldoAntesDepoisIgual: plano.saldoAntesDepoisIgual,
   };
@@ -232,7 +278,11 @@ export async function runCli(argv: string[] = process.argv.slice(2), db: PrismaC
     const scope: BindingScope = { ownerUserId: alvo.userId, actorUserId: alvo.userId, unitId: alvo.unitId };
     try {
       const compile: CompileFn = (s, input) => ApplicationFactory.getInstance().getAccountingBindingCompileService(s).compile(s, input);
-      const rel = await migrarUnidade(db, scope, compile);
+      const upgrade: UpgradeAteV5Fn = (s, mode, deployId) =>
+        ApplicationFactory.getInstance()
+          .getKitUpgradeService(s, (k) => KIT_REGISTRY[k]?.filter((v) => v.kitVersion <= ULTIMA_VERSAO_KIT_PRE_L8))
+          .upgrade(s, { mode, deployId, actor: 'migratePlano4NiveisCli' });
+      const rel = await migrarUnidade(db, scope, compile, upgrade);
       console.log(`OK ${JSON.stringify(rel)}`);
     } catch (error) {
       falhas++;

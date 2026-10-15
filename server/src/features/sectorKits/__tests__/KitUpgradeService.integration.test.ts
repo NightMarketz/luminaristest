@@ -14,6 +14,7 @@ import { BEAUTY_SALON_KIT_V1 } from '@/features/sectorKits/kits/beautySalon/kit.
 import { BEAUTY_SALON_KIT_V4 } from '@/features/sectorKits/kits/beautySalon/kit.v4';
 import { BEAUTY_SALON_KIT_V5 } from '@/features/sectorKits/kits/beautySalon/kit.v5';
 import { KIT_REGISTRY } from '@/features/sectorKits/registry';
+import { CANONICAL_ACCOUNTS_PRE_L8 } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
 import { KitUpgradeDryRunRequiredError } from '@/features/sectorKits/models/kitUpgradeTypes';
 import type { KitVersionsLookup } from '@/features/sectorKits/services/KitInstallService';
 
@@ -52,6 +53,9 @@ async function preparar(perfil: Record<string, unknown> = {}) {
   const codigos = [...new Set([BEAUTY_SALON_KIT_V4, BEAUTY_SALON_KIT_V5].flatMap((k) => k.referential.flatMap((b) => b.entries.map((e) => e.referentialCode))))];
   for (const code of codigos) await prisma.referentialAccount.create({ data: { layoutVersion: '2025', code, name: code, isAnalytic: true } });
   await prisma.fiscalProfile.create({ data: { ...where(), regimeTributario: 'PRESUMIDO', pisCofinsRegime: 'CUMULATIVO', d1fConfirmado: false, ...perfil } });
+  // BE-INCR-PLANO-4-NIVEIS (F-L8-9 a): v1 → v4 é do plano de 3 níveis — a unidade nasce no plano da época (a L8 leva
+  // a unidade à v6 pela migração de dado, não pelo upgrade).
+  await prisma.account.createMany({ data: CANONICAL_ACCOUNTS_PRE_L8.map((a) => ({ ...where(), ...a })) });
   await expect(
     factory()
       .getKitInstallService(scope(), onlyUpTo(1))

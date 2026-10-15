@@ -9,6 +9,7 @@ import { pushTestSchema, resetDb } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
 import type { BindingScope } from '@/features/accountingBinding/repositories/IAccountingBindingRepository';
 import { AESTHETIC_CLINIC_KIT_V2 } from '@/features/sectorKits/kits/aestheticClinic/kit.v2';
+import { CANONICAL_ACCOUNTS_PRE_L8 } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
 import { AESTHETIC_CLINIC_KIT_V1 } from '@/features/sectorKits/kits/aestheticClinic/kit.v1';
 
 const UNIT = 'unit-kit-v2-clinica';
@@ -27,6 +28,8 @@ async function preparar(regime: 'PRESUMIDO' | 'REAL' | 'SIMPLES') {
   await prisma.fiscalProfile.create({
     data: { ...where(), regimeTributario: regime, pisCofinsRegime: regime === 'REAL' ? 'NAO_CUMULATIVO' : 'CUMULATIVO', d1fConfirmado: false },
   });
+  // BE-INCR-PLANO-4-NIVEIS (F-L8-9 a): kit v1–v5 é do plano de 3 níveis — a unidade nasce no plano da época.
+  await prisma.account.createMany({ data: CANONICAL_ACCOUNTS_PRE_L8.map((a) => ({ ...where(), ...a })) });
 }
 
 const instalar = () =>

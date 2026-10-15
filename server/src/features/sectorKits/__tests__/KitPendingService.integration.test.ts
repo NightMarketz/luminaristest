@@ -13,6 +13,7 @@ import type { BindingScope } from '@/features/accountingBinding/repositories/IAc
 import type { SectorKitV1 } from '@/features/sectorKits/dtos/SectorKitDto';
 import { BEAUTY_SALON_KIT_V1 } from '@/features/sectorKits/kits/beautySalon/kit.v1';
 import { BEAUTY_SALON_KIT_V4 } from '@/features/sectorKits/kits/beautySalon/kit.v4';
+import { CANONICAL_ACCOUNTS_PRE_L8 } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
 import { KIT_REGISTRY, latestKit } from '@/features/sectorKits/registry';
 import type { KitVersionsLookup } from '@/features/sectorKits/services/KitInstallService';
 
@@ -34,6 +35,8 @@ async function preparar(perfil: Record<string, unknown> = {}) {
   const codigos = [...new Set(BEAUTY_SALON_KIT_V4.referential.flatMap((b) => b.entries.map((e) => e.referentialCode)))];
   for (const code of [...codigos, '9.99.99.99.99']) await prisma.referentialAccount.create({ data: { layoutVersion: '2025', code, name: code, isAnalytic: true } });
   await prisma.fiscalProfile.create({ data: { ...where(), regimeTributario: 'PRESUMIDO', pisCofinsRegime: 'CUMULATIVO', d1fConfirmado: false, ...perfil } });
+  // BE-INCR-PLANO-4-NIVEIS (F-L8-9 a): kit v1–v5 é do plano de 3 níveis — a unidade nasce no plano da época.
+  await prisma.account.createMany({ data: CANONICAL_ACCOUNTS_PRE_L8.map((a) => ({ ...where(), ...a })) });
   await factory()
     .getKitInstallService(scope(), onlyUpTo(1))
     .install(scope(), { kitKey: 'beautySalon', ano: Number(TODAY.slice(0, 4)), installChartIfEmpty: true, openCurrentPeriodIfMissing: true, today: TODAY });
