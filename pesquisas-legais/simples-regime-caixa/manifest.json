@@ -1,0 +1,68 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lcp 123",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp123.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp123.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-15T15:44:34-03:00",
+      "sha256": "316d1f9c07ff922f60a048c2dd763ea56c3e7ae607e5d9828a1a37c7a61cbb78",
+      "arquivo": "docs/D01_lcp123-htm.html",
+      "texto": "docs/D01_lcp123-htm.txt",
+      "bytes": 1620693
+    },
+    {
+      "id": "D02",
+      "titulo": "D02_multivigente",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/visao/multivigente",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/visao/multivigente",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-15T15:44:35-03:00",
+      "sha256": "8d9b024965c1568c12560992791181d1560a0c24982d65b451cc407231374d80",
+      "arquivo": "docs/D02_multivigente.html",
+      "texto": "docs/D02_multivigente.txt",
+      "bytes": 1460719
+    },
+    {
+      "id": "D03",
+      "titulo": "Documento4",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48460",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48460",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-15T15:45:00-03:00",
+      "sha256": "ddbae2fb68ef56370731eee82703ac588200ab8d2250c4dbb7c865f04721f11d",
+      "arquivo": "docs/D03_48460.pdf",
+      "texto": "docs/D03_48460.txt",
+      "bytes": 6513
+    },
+    {
+      "id": "D04",
+      "titulo": "D04_multivigente",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/visao/multivigente",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/visao/multivigente",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-15T15:45:58-03:00",
+      "sha256": "f6b9c4986b051322caeec2eeb7e467ea38ae6d4aa2d8b16a5c7d95cbfca0317c",
+      "arquivo": "docs/D04_multivigente.html",
+      "texto": "docs/D04_multivigente.txt",
+      "bytes": 401283
+    },
+    {
+      "id": "D05",
+      "titulo": "Regime de caixa deixa de ser utilizado na apuração do Simples Nacional — Receita Federal",
+      "url": "https://www.gov.br/receitafederal/pt-br/assuntos/noticias/2026/agosto/regime-de-caixa-deixa-de-ser-utilizado-na-apuracao-do-simples-nacional",
+      "url_final": "https://www.gov.br/receitafederal/pt-br/assuntos/noticias/2026/agosto/regime-de-caixa-deixa-de-ser-utilizado-na-apuracao-do-simples-nacional",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-15T15:47:14-03:00",
+      "sha256": "d73993dc3abc74b08328a5a9d1405129850ff9cf06e1c9dca3beb65df63a933f",
+      "arquivo": "docs/D05_regime-de-caixa-deixa-de-ser-utilizado-na-apuracao-do-simple.html",
+      "texto": "docs/D05_regime-de-caixa-deixa-de-ser-utilizado-na-apuracao-do-simple.txt",
+      "bytes": 195066
+    }
+  ],
+  "buscas": [],
+  "slug": "simples-regime-caixa",
+  "pergunta": "ME/EPP no Simples Nacional optante pelo regime de caixa: o que muda na base do DAS (LC 123 art. 18 §3º), quais os gatilhos de inclusão da receita não recebida (Res. CGSN 140 art. 20) e o que o registro de valores a receber (art. 77, Anexo IX) exige?",
+  "criado": "2026-10-15T15:44:33-03:00"
+}
