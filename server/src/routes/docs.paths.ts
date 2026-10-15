@@ -7475,7 +7475,9 @@ export {};
  *       summary: Minimal DEFIS mirror of the year (X14 PR-4 item 28)
  *       description: >-
  *         Só anos ≤ 2026 com mês apurado aqui. Lucro contábil (DRE do ano) e estoques inicial/final (conta de estoques em
- *         31/12) do razão + empregados, sócios e renda variável digitados (manual do PGDAS-D/DEFIS 9.4.3).
+ *         31/12) do razão + os digitados do manual do PGDAS-D/DEFIS 9.4.3.1. `lucroContabil` traz o limite de isenção do
+ *         art. 145 § 1º da Res. CGSN 140 (presunção do IRPJ × receita das apurações − IRPJ calculado; null com aviso quando
+ *         falta presunção) e `informar` (item 4; BE-INCR-SIMPLES-DEFIS-MANUAL).
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -7499,12 +7501,38 @@ export {};
  *             schema:
  *               type: object
  *               additionalProperties: false
- *               required: [unitId, empregadosInicio, empregadosFim, ganhosRendaVariavelCents, socios]
+ *               description: Σ socios.participacaoBp + cotasTesourariaBp = 10000 quando há sócios (manual 9.4.3.1 itens 7.3 e 8).
+ *               required: [unitId, empregadosInicio, empregadosFim, ganhosCapitalCents, ganhosRendaVariavelCents, exportacaoDiretaCents, exportacaoComercial, cotasTesourariaBp, socios, doacoesEleitorais]
  *               properties:
  *                 unitId:                   { type: string, minLength: 1 }
  *                 empregadosInicio:         { type: integer, minimum: 0 }
  *                 empregadosFim:            { type: integer, minimum: 0 }
+ *                 ganhosCapitalCents:       { type: integer, minimum: 0 }
  *                 ganhosRendaVariavelCents: { type: integer, minimum: 0 }
+ *                 exportacaoDiretaCents:    { type: integer, minimum: 0 }
+ *                 cotasTesourariaBp:        { type: integer, minimum: 0, maximum: 10000 }
+ *                 exportacaoComercial:
+ *                   type: array
+ *                   maxItems: 100
+ *                   items:
+ *                     type: object
+ *                     additionalProperties: false
+ *                     required: [cnpj, valorCents]
+ *                     properties:
+ *                       cnpj:       { type: string, pattern: '^[A-Z0-9]{12}[0-9]{2}$' }
+ *                       valorCents: { type: integer, minimum: 1 }
+ *                 doacoesEleitorais:
+ *                   type: array
+ *                   maxItems: 100
+ *                   items:
+ *                     type: object
+ *                     additionalProperties: false
+ *                     required: [cnpj, tipoBeneficiario, formaDoacao, valorCents]
+ *                     properties:
+ *                       cnpj:             { type: string, pattern: '^[A-Z0-9]{12}[0-9]{2}$' }
+ *                       tipoBeneficiario: { type: string, enum: [CANDIDATO, COMITE_FINANCEIRO, PARTIDO_POLITICO] }
+ *                       formaDoacao:      { type: string, enum: [CHEQUE, OUTROS_TITULOS_CREDITO, TRANSFERENCIA_ELETRONICA, DEPOSITO_ESPECIE, DINHEIRO, BENS, SERVICOS] }
+ *                       valorCents:       { type: integer, minimum: 1 }
  *                 socios:
  *                   type: array
  *                   items:

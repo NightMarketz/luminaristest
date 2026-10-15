@@ -81,10 +81,30 @@ rendimentosTributaveisCents: number
 participacaoBp: number
 irrfCents: number
 }
+export interface SimplesDefisExportacaoComercialInput {
+cnpj: string
+valorCents: number
+}
+export interface SimplesDefisDoacaoEleitoralInput {
+cnpj: string
+tipoBeneficiario: ("CANDIDATO" | "COMITE_FINANCEIRO" | "PARTIDO_POLITICO")
+formaDoacao: ("CHEQUE" | "OUTROS_TITULOS_CREDITO" | "TRANSFERENCIA_ELETRONICA" | "DEPOSITO_ESPECIE" | "DINHEIRO" | "BENS" | "SERVICOS")
+valorCents: number
+}
 export interface SimplesDefisDigitadoInput {
 empregadosInicio: number
 empregadosFim: number
+ganhosCapitalCents: number
 ganhosRendaVariavelCents: number
+exportacaoDiretaCents: number
+/**
+ * @maxItems 100
+ */
+exportacaoComercial: {
+cnpj: string
+valorCents: number
+}[]
+cotasTesourariaBp: number
 /**
  * @maxItems 100
  */
@@ -95,12 +115,30 @@ rendimentosTributaveisCents: number
 participacaoBp: number
 irrfCents: number
 }[]
+/**
+ * @maxItems 100
+ */
+doacoesEleitorais: {
+cnpj: string
+tipoBeneficiario: ("CANDIDATO" | "COMITE_FINANCEIRO" | "PARTIDO_POLITICO")
+formaDoacao: ("CHEQUE" | "OUTROS_TITULOS_CREDITO" | "TRANSFERENCIA_ELETRONICA" | "DEPOSITO_ESPECIE" | "DINHEIRO" | "BENS" | "SERVICOS")
+valorCents: number
+}[]
 }
-export interface SimplesDefisUpsertInput {
-unitId: string
+export interface SimplesDefisDigitadoLeituraInput {
 empregadosInicio: number
 empregadosFim: number
+ganhosCapitalCents?: number
 ganhosRendaVariavelCents: number
+exportacaoDiretaCents?: number
+/**
+ * @maxItems 100
+ */
+exportacaoComercial?: {
+cnpj: string
+valorCents: number
+}[]
+cotasTesourariaBp?: number
 /**
  * @maxItems 100
  */
@@ -110,5 +148,49 @@ rendimentosIsentosCents: number
 rendimentosTributaveisCents: number
 participacaoBp: number
 irrfCents: number
+}[]
+/**
+ * @maxItems 100
+ */
+doacoesEleitorais?: {
+cnpj: string
+tipoBeneficiario: ("CANDIDATO" | "COMITE_FINANCEIRO" | "PARTIDO_POLITICO")
+formaDoacao: ("CHEQUE" | "OUTROS_TITULOS_CREDITO" | "TRANSFERENCIA_ELETRONICA" | "DEPOSITO_ESPECIE" | "DINHEIRO" | "BENS" | "SERVICOS")
+valorCents: number
+}[]
+}
+export interface SimplesDefisUpsertInput {
+unitId: string
+empregadosInicio: number
+empregadosFim: number
+ganhosCapitalCents: number
+ganhosRendaVariavelCents: number
+exportacaoDiretaCents: number
+/**
+ * @maxItems 100
+ */
+exportacaoComercial: {
+cnpj: string
+valorCents: number
+}[]
+cotasTesourariaBp: number
+/**
+ * @maxItems 100
+ */
+socios: {
+contactId: string
+rendimentosIsentosCents: number
+rendimentosTributaveisCents: number
+participacaoBp: number
+irrfCents: number
+}[]
+/**
+ * @maxItems 100
+ */
+doacoesEleitorais: {
+cnpj: string
+tipoBeneficiario: ("CANDIDATO" | "COMITE_FINANCEIRO" | "PARTIDO_POLITICO")
+formaDoacao: ("CHEQUE" | "OUTROS_TITULOS_CREDITO" | "TRANSFERENCIA_ELETRONICA" | "DEPOSITO_ESPECIE" | "DINHEIRO" | "BENS" | "SERVICOS")
+valorCents: number
 }[]
 }
