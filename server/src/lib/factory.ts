@@ -1723,6 +1723,7 @@ export class ApplicationFactory {
         this.repositories.receitaFiscal,
         accountingReportService,
         this.policies.accounting,
+        legalParameterService, // BE-INCR-SIMPLES-DEFIS-MANUAL item 7: presunção do IRPJ no limite do art. 145
       ),
       mitExport: new MitExportService(
         this.repositories.mitExport,

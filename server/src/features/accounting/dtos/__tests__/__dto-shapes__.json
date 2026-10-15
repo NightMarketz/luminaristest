@@ -11408,6 +11408,68 @@
       ],
       "additionalProperties": false
     },
+    "SimplesDefisExportacaoComercialSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "cnpj": {
+          "type": "string",
+          "pattern": "^[A-Z0-9]{12}[0-9]{2}$"
+        },
+        "valorCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "cnpj",
+        "valorCents"
+      ],
+      "additionalProperties": false
+    },
+    "SimplesDefisDoacaoEleitoralSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "cnpj": {
+          "type": "string",
+          "pattern": "^[A-Z0-9]{12}[0-9]{2}$"
+        },
+        "tipoBeneficiario": {
+          "type": "string",
+          "enum": [
+            "CANDIDATO",
+            "COMITE_FINANCEIRO",
+            "PARTIDO_POLITICO"
+          ]
+        },
+        "formaDoacao": {
+          "type": "string",
+          "enum": [
+            "CHEQUE",
+            "OUTROS_TITULOS_CREDITO",
+            "TRANSFERENCIA_ELETRONICA",
+            "DEPOSITO_ESPECIE",
+            "DINHEIRO",
+            "BENS",
+            "SERVICOS"
+          ]
+        },
+        "valorCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "cnpj",
+        "tipoBeneficiario",
+        "formaDoacao",
+        "valorCents"
+      ],
+      "additionalProperties": false
+    },
     "SimplesDefisDigitadoSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -11422,10 +11484,48 @@
           "minimum": 0,
           "maximum": 1000000
         },
+        "ganhosCapitalCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
         "ganhosRendaVariavelCents": {
           "type": "integer",
           "minimum": 0,
           "maximum": 2147483647
+        },
+        "exportacaoDiretaCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "exportacaoComercial": {
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "cnpj": {
+                "type": "string",
+                "pattern": "^[A-Z0-9]{12}[0-9]{2}$"
+              },
+              "valorCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              }
+            },
+            "required": [
+              "cnpj",
+              "valorCents"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "cotasTesourariaBp": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
         },
         "socios": {
           "maxItems": 100,
@@ -11464,6 +11564,213 @@
               "rendimentosTributaveisCents",
               "participacaoBp",
               "irrfCents"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "doacoesEleitorais": {
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "cnpj": {
+                "type": "string",
+                "pattern": "^[A-Z0-9]{12}[0-9]{2}$"
+              },
+              "tipoBeneficiario": {
+                "type": "string",
+                "enum": [
+                  "CANDIDATO",
+                  "COMITE_FINANCEIRO",
+                  "PARTIDO_POLITICO"
+                ]
+              },
+              "formaDoacao": {
+                "type": "string",
+                "enum": [
+                  "CHEQUE",
+                  "OUTROS_TITULOS_CREDITO",
+                  "TRANSFERENCIA_ELETRONICA",
+                  "DEPOSITO_ESPECIE",
+                  "DINHEIRO",
+                  "BENS",
+                  "SERVICOS"
+                ]
+              },
+              "valorCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              }
+            },
+            "required": [
+              "cnpj",
+              "tipoBeneficiario",
+              "formaDoacao",
+              "valorCents"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "empregadosInicio",
+        "empregadosFim",
+        "ganhosCapitalCents",
+        "ganhosRendaVariavelCents",
+        "exportacaoDiretaCents",
+        "exportacaoComercial",
+        "cotasTesourariaBp",
+        "socios",
+        "doacoesEleitorais"
+      ],
+      "additionalProperties": false
+    },
+    "SimplesDefisDigitadoLeituraSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "empregadosInicio": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "empregadosFim": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "ganhosCapitalCents": {
+          "default": 0,
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "ganhosRendaVariavelCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "exportacaoDiretaCents": {
+          "default": 0,
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "exportacaoComercial": {
+          "default": [],
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "cnpj": {
+                "type": "string",
+                "pattern": "^[A-Z0-9]{12}[0-9]{2}$"
+              },
+              "valorCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              }
+            },
+            "required": [
+              "cnpj",
+              "valorCents"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "cotasTesourariaBp": {
+          "default": 0,
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "socios": {
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "contactId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "rendimentosIsentosCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "rendimentosTributaveisCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "participacaoBp": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000
+              },
+              "irrfCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              }
+            },
+            "required": [
+              "contactId",
+              "rendimentosIsentosCents",
+              "rendimentosTributaveisCents",
+              "participacaoBp",
+              "irrfCents"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "doacoesEleitorais": {
+          "default": [],
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "cnpj": {
+                "type": "string",
+                "pattern": "^[A-Z0-9]{12}[0-9]{2}$"
+              },
+              "tipoBeneficiario": {
+                "type": "string",
+                "enum": [
+                  "CANDIDATO",
+                  "COMITE_FINANCEIRO",
+                  "PARTIDO_POLITICO"
+                ]
+              },
+              "formaDoacao": {
+                "type": "string",
+                "enum": [
+                  "CHEQUE",
+                  "OUTROS_TITULOS_CREDITO",
+                  "TRANSFERENCIA_ELETRONICA",
+                  "DEPOSITO_ESPECIE",
+                  "DINHEIRO",
+                  "BENS",
+                  "SERVICOS"
+                ]
+              },
+              "valorCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              }
+            },
+            "required": [
+              "cnpj",
+              "tipoBeneficiario",
+              "formaDoacao",
+              "valorCents"
             ],
             "additionalProperties": false
           }
@@ -11495,10 +11802,48 @@
           "minimum": 0,
           "maximum": 1000000
         },
+        "ganhosCapitalCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
         "ganhosRendaVariavelCents": {
           "type": "integer",
           "minimum": 0,
           "maximum": 2147483647
+        },
+        "exportacaoDiretaCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "exportacaoComercial": {
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "cnpj": {
+                "type": "string",
+                "pattern": "^[A-Z0-9]{12}[0-9]{2}$"
+              },
+              "valorCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              }
+            },
+            "required": [
+              "cnpj",
+              "valorCents"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "cotasTesourariaBp": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
         },
         "socios": {
           "maxItems": 100,
@@ -11540,14 +11885,64 @@
             ],
             "additionalProperties": false
           }
+        },
+        "doacoesEleitorais": {
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "cnpj": {
+                "type": "string",
+                "pattern": "^[A-Z0-9]{12}[0-9]{2}$"
+              },
+              "tipoBeneficiario": {
+                "type": "string",
+                "enum": [
+                  "CANDIDATO",
+                  "COMITE_FINANCEIRO",
+                  "PARTIDO_POLITICO"
+                ]
+              },
+              "formaDoacao": {
+                "type": "string",
+                "enum": [
+                  "CHEQUE",
+                  "OUTROS_TITULOS_CREDITO",
+                  "TRANSFERENCIA_ELETRONICA",
+                  "DEPOSITO_ESPECIE",
+                  "DINHEIRO",
+                  "BENS",
+                  "SERVICOS"
+                ]
+              },
+              "valorCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              }
+            },
+            "required": [
+              "cnpj",
+              "tipoBeneficiario",
+              "formaDoacao",
+              "valorCents"
+            ],
+            "additionalProperties": false
+          }
         }
       },
       "required": [
         "unitId",
         "empregadosInicio",
         "empregadosFim",
+        "ganhosCapitalCents",
         "ganhosRendaVariavelCents",
-        "socios"
+        "exportacaoDiretaCents",
+        "exportacaoComercial",
+        "cotasTesourariaBp",
+        "socios",
+        "doacoesEleitorais"
       ],
       "additionalProperties": false
     }

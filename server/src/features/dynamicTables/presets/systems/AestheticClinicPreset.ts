@@ -1,4 +1,5 @@
-import { createTableFromModule } from '../../utils/TableFactory';
+// W2 / F-W2-2: `lockedByAccounting` nas 4 tabelas que a contabilidade lê pelo nome (pontes de venda + emissão fiscal).
+import { createTableFromModule, lockedByAccounting } from '../../utils/TableFactory';
 import { aestheticClinicCustomerModule } from '../modules/people/AestheticClinicCustomerModule';
 import { serviceModule } from '../modules/service/ServiceModule';
 import { productModule, productUnitModule } from '../modules/product/ProductModule';
@@ -48,16 +49,16 @@ const AestheticClinicPreset = {
   // I8, F-I8-COMP3-a (ratificado 2026-09-26): CRM-0 + CRM-1 por padrão, igual ao salão (antes vinham do Core).
   modules: ['CRM-0', 'CRM-1'] as ModuleKey[],
   tables: {
-    customers: createTableFromModule(aestheticClinicCustomerModule),
+    customers: lockedByAccounting(createTableFromModule(aestheticClinicCustomerModule)),
     suppliers: createTableFromModule(suppliersModule),
     services: createTableFromModule(serviceModule),
-    packages: createTableFromModule(packageCatalogModule),
+    packages: lockedByAccounting(createTableFromModule(packageCatalogModule)),
     products: createTableFromModule(productModule),
     productUnits: createTableFromModule(productUnitModule),
     appointments: createTableFromModule(appointmentsModule),
     // Invariante duro — internalName 'sales'/'saleItems', ver docstring acima.
-    sales: createTableFromModule(salesModule),
-    saleItems: createTableFromModule(saleItemsMixedModule),
+    sales: lockedByAccounting(createTableFromModule(salesModule)),
+    saleItems: lockedByAccounting(createTableFromModule(saleItemsMixedModule)),
     goals: createTableFromModule(goalsModule),
     reports: createTableFromModule(reportsModule),
     campaigns: createTableFromModule(campaignsModule),

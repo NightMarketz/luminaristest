@@ -344,16 +344,56 @@ describe('X14 PR-4 item 28 — DEFIS espelho mínimo', () => {
     expect(r.status).toBe(200);
     const dre = await f().getAccountingReportService().incomeStatement(scope(), new Date('2026-12-31T23:59:59.999Z'));
     expect(r.body.data).toMatchObject({ ano: 2026, prazo: '2027-03-31', mesesApurados: ['2026-06'], estoqueInicialCents: 0, estoqueFinalCents: 0, digitado: null });
-    expect(r.body.data.lucroContabilCents).toBe(Number(dre.netResult.amountCents));
+    expect(r.body.data.lucroContabil.valorCents).toBe(Number(dre.netResult.amountCents));
+    expect(r.body.data).not.toHaveProperty('lucroContabilCents'); // F-DM-5 (a)
   });
 
-  it('PUT grava os digitados; participação dos sócios acima de 100% ⇒ 400', async () => {
-    const socio = { contactId: 'ct-1', rendimentosIsentosCents: 100_000, rendimentosTributaveisCents: 50_000, participacaoBp: 10_000, irrfCents: 0 };
-    const corpo = { unitId: UNIT, empregadosInicio: 2, empregadosFim: 3, ganhosRendaVariavelCents: 0 };
+  it('BE-INCR-SIMPLES-DEFIS-MANUAL item 7: limite do art. 145 § 1º = receita da apuração × 32% − IRPJ calculado; informar = lucro > limite', async () => {
+    const ap = await prisma.simplesApuracao.findFirstOrThrow({ where: { userId: user.id, unitId: UNIT, competencia: '2026-06', status: 'CONFIRMED', deletedAt: null } });
+    const ats = (ap.memoria as { atividades: Array<{ natureza: string; receitaCents: number; tributos: { IRPJ?: number } }> }).atividades;
+    expect(ats.every((a) => a.natureza === 'SERVICO')).toBe(true);
+    const receita = ats.reduce((s, a) => s + a.receitaCents, 0);
+    const irpj = ats.reduce((s, a) => s + (a.tributos.IRPJ ?? 0), 0);
+    expect(irpj).toBeGreaterThan(0);
+    const limite = Math.round((receita * 3200) / 10000) - irpj;
+    const { lucroContabil } = (await defis(2026)).body.data;
+    expect(lucroContabil).toEqual({
+      valorCents: lucroContabil.valorCents,
+      limiteIsencaoCents: limite,
+      informar: lucroContabil.valorCents > limite,
+      calculo: 'PRESUNCAO',
+      avisos: [],
+    });
+  });
+
+  it('PUT grava os digitados; sócios + tesouraria ≠ 100% ⇒ 400', async () => {
+    const socio = { contactId: 'ct-1', rendimentosIsentosCents: 100_000, rendimentosTributaveisCents: 50_000, participacaoBp: 9_000, irrfCents: 0 };
+    const corpo = {
+      unitId: UNIT,
+      empregadosInicio: 2,
+      empregadosFim: 3,
+      ganhosCapitalCents: 12_345,
+      ganhosRendaVariavelCents: 0,
+      exportacaoDiretaCents: 50_000,
+      exportacaoComercial: [{ cnpj: '11222333000181', valorCents: 70_000 }],
+      cotasTesourariaBp: 1_000,
+      doacoesEleitorais: [{ cnpj: '11222333000181', tipoBeneficiario: 'PARTIDO_POLITICO', formaDoacao: 'BENS', valorCents: 1_000 }],
+    };
     expect((await request(app).put(`${S}/defis/2026`).set(authHeader(user)).send({ ...corpo, socios: [socio, { ...socio, contactId: 'ct-2', participacaoBp: 1 }] })).status).toBe(400);
+    expect((await request(app).put(`${S}/defis/2026`).set(authHeader(user)).send({ ...corpo, cotasTesourariaBp: 0, socios: [socio] })).status).toBe(400);
     const ok = await request(app).put(`${S}/defis/2026`).set(authHeader(user)).send({ ...corpo, socios: [socio] });
     expect(ok.status).toBe(200);
-    expect(ok.body.data.digitado).toEqual({ empregadosInicio: 2, empregadosFim: 3, ganhosRendaVariavelCents: 0, socios: [socio] });
+    const { unitId: _u, ...digitado } = corpo;
+    expect(ok.body.data.digitado).toEqual({ ...digitado, socios: [socio] });
+  });
+
+  it('BE-INCR-SIMPLES-DEFIS-MANUAL item 8: linha gravada no formato antigo lê com 0 / []', async () => {
+    const socio = { contactId: 'ct-1', rendimentosIsentosCents: 0, rendimentosTributaveisCents: 0, participacaoBp: 10_000, irrfCents: 0 };
+    const antigo = { empregadosInicio: 1, empregadosFim: 1, ganhosRendaVariavelCents: 5, socios: [socio] };
+    await prisma.simplesDeclaracaoAnual.update({ where: { userId_unitId_ano_tipo: { userId: user.id, unitId: UNIT, ano: 2026, tipo: 'DEFIS' } }, data: { dados: antigo } });
+    const r = await defis(2026);
+    expect(r.status).toBe(200);
+    expect(r.body.data.digitado).toEqual({ ...antigo, ganhosCapitalCents: 0, exportacaoDiretaCents: 0, exportacaoComercial: [], cotasTesourariaBp: 0, doacoesEleitorais: [] });
   });
 
   it('2027 (a declaração muda pela LC 214) e ano fora do Simples (2025 = Presumido) ⇒ 400', async () => {
