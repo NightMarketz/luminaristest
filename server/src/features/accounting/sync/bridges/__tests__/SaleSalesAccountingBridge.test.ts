@@ -24,7 +24,7 @@ jest.mock('../../../../../lib/logger', () => ({
 }));
 
 import { maybeSyncSaleFinalized } from '../SaleSalesAccountingBridge';
-import { AccountingPeriodNotOpenError, MaxCentsExceededError } from '../../../../../lib/errors';
+import { AccountingPeriodNotOpenError, MaxCentsExceededError, NoMapperForUnitError, UnknownEventKeyError } from '../../../../../lib/errors';
 import { MAX_CENTS } from '../../../models/money';
 
 const SALES_TABLE_ID = 'tbl-sales-1';
@@ -146,6 +146,32 @@ describe('SaleSalesAccountingBridge.maybeSyncSaleFinalized', () => {
       expect(loggerWarn).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({ code: 'MAX_CENTS_EXCEEDED' }),
+      );
+      expect(loggerError).not.toHaveBeenCalled();
+    });
+
+    // BE-INCR-ONBOARDING-ACTIVATION item 5 (F-I5-1 a / F-I5-3 a): venda de unidade sem mapper é pendência, não falha.
+    it('skips NO_MAPPER_FOR_UNIT (unit without Active binding, or binding that does not cover the event)', async () => {
+      sync.mockRejectedValueOnce(new NoMapperForUnitError('unit-1', 'sale.finalized'));
+      await expect(
+        maybeSyncSaleFinalized(actor, SALES_TABLE_ID, finalizedRow()),
+      ).resolves.toBeUndefined();
+      expect(loggerWarn).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ code: 'NO_MAPPER_FOR_UNIT' }),
+      );
+      expect(loggerError).not.toHaveBeenCalled();
+    });
+
+    // D-2026-10-14-I4-I5-LACUNAS-EXECUCAO L-2 (dono, contra a recomendação): evento que nenhum kit declara também é pulado.
+    it('skips UNKNOWN_EVENT_KEY (no kit declares the event — wiring bug of the emitter, surfaced as a pending row)', async () => {
+      sync.mockRejectedValueOnce(new UnknownEventKeyError('sale.finalized'));
+      await expect(
+        maybeSyncSaleFinalized(actor, SALES_TABLE_ID, finalizedRow()),
+      ).resolves.toBeUndefined();
+      expect(loggerWarn).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ code: 'UNKNOWN_EVENT_KEY' }),
       );
       expect(loggerError).not.toHaveBeenCalled();
     });

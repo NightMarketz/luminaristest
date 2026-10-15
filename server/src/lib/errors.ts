@@ -347,7 +347,13 @@ export class PackageOriginReversedError extends AppError {
  *  Nome e código são os que o I5 (F-I5-1 a) ratificou; quem executar primeiro cria, o outro reusa. */
 export class NoMapperForUnitError extends AppError {
   constructor(unitId: string, sourceType: string) {
-    super(`Nenhum mapper registrado para o evento '${sourceType}' na unidade '${unitId}' (recompile o binding).`, 409, 'NO_MAPPER_FOR_UNIT');
+    // BE-INCR-ONBOARDING-ACTIVATION item 2 (F-I5-3 → a, todo miss): a mensagem vale para as duas causas e não afirma qual.
+    super(
+      `Nenhum mapper registrado para o evento '${sourceType}' na unidade '${unitId}' — ` +
+        'a contabilidade da unidade não está ativa ou o binding não cobre o evento.',
+      409,
+      'NO_MAPPER_FOR_UNIT',
+    );
     Object.setPrototypeOf(this, NoMapperForUnitError.prototype);
   }
 }

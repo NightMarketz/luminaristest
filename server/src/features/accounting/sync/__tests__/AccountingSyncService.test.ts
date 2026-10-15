@@ -313,6 +313,28 @@ describe('AccountingSyncService', () => {
       ).rejects.toBeInstanceOf(NoMapperForUnitError);
       expect(postEntry).not.toHaveBeenCalled();
     });
+
+    // BE-INCR-ONBOARDING-ACTIVATION item 2 (F-I5-3 → a, "todo miss de mapper"): a unidade TEM binding, o binding
+    // não cobre o evento (bug de cobertura do compile()) — mesmo código, e a mensagem não afirma qual das duas causas.
+    it('unit-a registrada, evento sem mapper ⇒ NO_MAPPER_FOR_UNIT com mensagem que nomeia as duas causas', async () => {
+      const postEntry = jest.fn(okEntry);
+      const postingService = { postEntry } as unknown as ConstructorParameters<typeof AccountingSyncService>[0];
+      const svc = new AccountingSyncService(postingService, [{ unitId: 'unit-a', mapper: markedMapper('sale.finalized', 'a') }], {
+        maxAttempts: 3,
+        retryDelayMs: 0,
+      });
+
+      const err = await svc
+        .sync({ ...scope, unitId: 'unit-a' }, { ...finalizedEvent, unitId: 'unit-a', sourceType: 'sale.cogs' })
+        .catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(NoMapperForUnitError);
+      expect((err as NoMapperForUnitError).errorCode).toBe('NO_MAPPER_FOR_UNIT');
+      expect((err as NoMapperForUnitError).message).toBe(
+        "Nenhum mapper registrado para o evento 'sale.cogs' na unidade 'unit-a' — " +
+          'a contabilidade da unidade não está ativa ou o binding não cobre o evento.',
+      );
+      expect(postEntry).not.toHaveBeenCalled();
+    });
   });
 });
 

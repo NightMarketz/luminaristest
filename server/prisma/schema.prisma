@@ -2121,7 +2121,7 @@ model ReconcilePendingItem {
   unitId       String // business unit (scoped string, not a FK)
   sourceType   String // 'crm.opportunity.won' | 'sale.finalized' | 'sale.cancelled' | 'sale.returned' | 'sale.settled' | 'sale.cogs' | 'sale.package.sold' | 'sale.package.consumption' | 'sale.package.expired' (sourceId = 'expiry:<balanceId>:<expiresOn>')
   sourceId     String // origin key (opportunityId | saleId), same identity the reconcile pass already uses
-  reasonCode   String // alfabeto = ReconcilePendingReasonCode (ReconcilePendingDto.ts) — FAILED | ACCOUNTING_PERIOD_NOT_OPEN | MAX_CENTS_EXCEEDED | OPENING_ENTRY_MISSING | MISSING_PAID_WITH_PACKAGE_ID (C7r) | NO_MAPPER_FOR_UNIT | PACKAGE_CONSUMPTION_PENDING | PACKAGE_ORIGIN_REVERSED | PACKAGE_EXPIRY_NFSE_PENDING (BE-INCR-PACOTE-VALIDADE)
+  reasonCode   String // alfabeto = ReconcilePendingReasonCode (ReconcilePendingDto.ts) — FAILED | ACCOUNTING_PERIOD_NOT_OPEN | MAX_CENTS_EXCEEDED | OPENING_ENTRY_MISSING | MISSING_PAID_WITH_PACKAGE_ID (C7r) | NO_MAPPER_FOR_UNIT | PACKAGE_CONSUMPTION_PENDING | PACKAGE_ORIGIN_REVERSED | PACKAGE_EXPIRY_NFSE_PENDING (BE-INCR-PACOTE-VALIDADE) | UNKNOWN_EVENT_KEY (D-2026-10-14 L-2)
   reasonDetail String // error message captured at classification time
   firstSeenAt  DateTime  @default(now())
   lastSeenAt   DateTime  @updatedAt

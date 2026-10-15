@@ -21,10 +21,13 @@ export const ReconcilePendingReasonCode = z.enum([
   'OPENING_ENTRY_MISSING', // transitório — ordering-gate do settlement: resolve quando a abertura da venda postar
   'MISSING_PAID_WITH_PACKAGE_ID', // poison — consumo de pacote sem paidWithPackageId persistido; nunca inferido
   // BE-INCR-PACOTE-VALIDADE (item 15 + §5.2 item 9.5) — guardas do passe de vencimento, código próprio cada uma.
-  'NO_MAPPER_FOR_UNIT', // transitório — o binding Active da unidade não tem o evento; resolve ao recompilar (nome do I5, F-I5-1 a)
+  // sem mapper para (unidade, evento) — transitório: unidade sem binding Active (ativar + recarga + rescan) ou binding
+  // que não cobre o evento (recompilar). F-I5-1 a (nome) + F-I5-3 a (todo miss) — BE-INCR-ONBOARDING-ACTIVATION item 4.
+  'NO_MAPPER_FOR_UNIT',
   'PACKAGE_CONSUMPTION_PENDING', // transitório — resolve quando o débito do consumo aplicar
   'PACKAGE_ORIGIN_REVERSED', // poison — resolve só com a correção do E-1
   'PACKAGE_EXPIRY_NFSE_PENDING', // transitório — falta dado para a NFS-e do vencido; o vencimento e o lançamento ficam
+  'UNKNOWN_EVENT_KEY', // poison até corrigir quem emite — nenhum kit declara o evento (KIT-SETOR PR-6 item 47); skip-listado por decisão do dono (D-2026-10-14-I4-I5-LACUNAS-EXECUCAO L-2)
 ]);
 export type ReconcilePendingReasonCodeValue = z.infer<typeof ReconcilePendingReasonCode>;
 

@@ -46,14 +46,14 @@ const criarUsuario = (username: string) =>
   });
 
 /** Insere a pendência DIRETO na base — o fixture não depende do job real capturá-la. */
-const criarPendencia = (userId: string, sourceId: string) =>
+const criarPendencia = (userId: string, sourceId: string, reasonCode = 'FAILED') =>
   prisma.reconcilePendingItem.create({
     data: {
       userId,
       unitId: UNIT,
       sourceType: 'sale.finalized',
       sourceId,
-      reasonCode: 'FAILED',
+      reasonCode,
       reasonDetail: 'fixture de teste HTTP',
       resolvedAt: null,
       attempts: 1,
@@ -88,6 +88,35 @@ describe('reconcilePendingController — contrato HTTP em SQLite real (tenancy, 
       .query({ unitId: UNIT });
     expect(doA.status).toBe(200);
     expect(doA.body.data.items.map((i: { id: string }) => i.id)).toContain(pendA.id);
+  });
+
+  // BE-INCR-ONBOARDING-ACTIVATION item 7: o filtro por NO_MAPPER_FOR_UNIT passa pelo DTO de query (200, não 400)
+  // e devolve só a pendência desse motivo.
+  it('GET ?reasonCode=NO_MAPPER_FOR_UNIT → 200 com a pendência sem mapper, sem a FAILED da mesma unidade', async () => {
+    const semMapper = await criarPendencia(donoA.id, 'sale-no-mapper-http', 'NO_MAPPER_FOR_UNIT');
+    const falha = await criarPendencia(donoA.id, 'sale-failed-http');
+
+    const res = await request(app)
+      .get('/api/reconcile-pending')
+      .set(authHeader(donoA))
+      .query({ unitId: UNIT, reasonCode: 'NO_MAPPER_FOR_UNIT' });
+    expect(res.status).toBe(200);
+    const ids = res.body.data.items.map((i: { id: string }) => i.id);
+    expect(ids).toContain(semMapper.id);
+    expect(ids).not.toContain(falha.id);
+    expect(res.body.data.items.every((i: { reasonCode: string }) => i.reasonCode === 'NO_MAPPER_FOR_UNIT')).toBe(true);
+  });
+
+  // D-2026-10-14-I4-I5-LACUNAS-EXECUCAO L-2: o valor NOVO do enum passa pelo DTO de query (antes deste PR, 400).
+  it('GET ?reasonCode=UNKNOWN_EVENT_KEY → 200 com a pendência do evento órfão', async () => {
+    const orfao = await criarPendencia(donoA.id, 'sale-unknown-event-http', 'UNKNOWN_EVENT_KEY');
+
+    const res = await request(app)
+      .get('/api/reconcile-pending')
+      .set(authHeader(donoA))
+      .query({ unitId: UNIT, reasonCode: 'UNKNOWN_EVENT_KEY' });
+    expect(res.status).toBe(200);
+    expect(res.body.data.items.map((i: { id: string }) => i.id)).toEqual([orfao.id]);
   });
 
   it('inquilino (POST /rescan): dono B não toca a pendência do dono A — attempted:0, nada gravado do lado de A', async () => {
