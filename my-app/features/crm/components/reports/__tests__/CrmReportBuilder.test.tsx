@@ -152,6 +152,8 @@ describe('CrmReportBuilder', () => {
       expect(svc.create).toHaveBeenCalledWith({ name: 'Cópia', kind: 'chart', chartType: 'bar', spec: saved.spec }),
     );
 
+    // o `saved` da cópia chega num render depois do `create`: espera o modal do "Salvar como" fechar (flake no CI do #700)
+    await waitFor(() => expect(screen.getAllByLabelText('Nome')).toHaveLength(1));
     fireEvent.click(screen.getAllByText('Apagar')[0]);
     expect(screen.getByText('O relatório "Cópia" será apagado.')).toBeInTheDocument();
     expect(svc.remove).not.toHaveBeenCalled();
