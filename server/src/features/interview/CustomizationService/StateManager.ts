@@ -1,6 +1,8 @@
 import { logger } from '../../../lib/logger';
 import { v4 as uuidv4 } from 'uuid';
 import { ICustomizableTable, ICustomizationState, IMessage } from '../models/InterviewTypes';
+import { presetService } from '../../dynamicTables/services/PresetService';
+import { computeTableLocks } from '../../dynamicTables/presets/removability';
 
 /**
  * Classe responsável por gerenciar o estado da customização.
@@ -183,8 +185,24 @@ export class StateManager {
     
     // Remove a tabela
     session.tables.splice(tableIndex, 1);
+    this.refreshLocks(session);
     logger.info(`[StateManager] Tabela ${tableKey} removida da sessão ${sessionId}`);
     return true;
+  }
+
+  /**
+   * W2 item 5 (F-W2-1 → trava dinâmica): recalcula `lock`/`isCore` das tabelas que vieram do preset sobre o que
+   * sobrou na sessão. Tabela adicionada pelo usuário (sem `lock`) não entra.
+   */
+  private refreshLocks(session: ICustomizationState): void {
+    const preset = presetService.getPresetByKey(session.presetKey);
+    if (!preset) return;
+    const fromPreset = session.tables.filter((t) => t.lock !== undefined && t.key in preset.tables);
+    const locks = computeTableLocks(preset.tables, new Set(fromPreset.map((t) => t.key)));
+    for (const t of fromPreset) {
+      t.lock = locks[t.key];
+      t.isCore = t.lock !== null;
+    }
   }
 
   /**

@@ -740,6 +740,7 @@
  *                         icmsContribuinte: { type: boolean, nullable: true, description: 'I4 F-I4-7 a - sells goods with state registration? null/absent = do not know (no unit fiscal profile in PRESUMIDO/REAL)' }
  *                     removedTables:
  *                       type: array
+ *                       description: 'W2 (BE-INCR-WIZARD-REMOVABILITY) - a sector table that stays locked against the final kept set yields 400 with details { reason: TABLE_LOCKED, table, lock: { reason: ACCOUNTING | REQUIRED_RELATION | REQUIRED_TABLE | REQUIRED_CAPABILITY, by? } }; removing the dependents together with the target passes. Module tables follow the I8 module rules; Core tables are ignored'
  *                       items: { type: string }
  *                     addedFields:
  *                       type: object

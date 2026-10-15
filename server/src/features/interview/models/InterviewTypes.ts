@@ -1,4 +1,5 @@
 import { ISchemaField } from '../../dynamicTables/models/DynamicTable.model';
+import type { TableLock } from '../../dynamicTables/presets/removability';
 
 /**
  * Tipos compartilhados entre InterviewService e CustomizationService
@@ -60,7 +61,9 @@ export interface ICustomizableTable {
   key: string;           // Identificador único (ex: "customers")
   description: string;   // Descrição breve (ex: "Cadastro de clientes")
   isSelected: boolean;   // Se está selecionada na customização
-  isCore: boolean;       // Se é uma tabela essencial que não pode ser removida
+  isCore: boolean;       // Se é uma tabela essencial que não pode ser removida (W2: derivado de `lock !== null`)
+  /** W2: por que a tabela do preset não pode sair (`null` = removível); ausente em tabela adicionada pelo usuário. */
+  lock?: TableLock | null;
   fields?: ISchemaField[];        // Campos da tabela quando disponíveis (do preset real)
 }
 
