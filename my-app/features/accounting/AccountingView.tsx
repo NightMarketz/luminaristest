@@ -31,6 +31,7 @@ import { DimensionsPanel } from './components/DimensionsPanel';
 import { FixedAssetsPanel, type FixedAssetsSectionId } from './components/FixedAssetsPanel';
 import { FiscalProfilePanel } from './components/FiscalProfilePanel';
 import { TaxAssessmentPanel } from './components/TaxAssessmentPanel';
+import { MeiEnquadramentoSection } from './components/MeiEnquadramentoSection';
 import { ServiceFiscalProfilesPanel } from './components/ServiceFiscalProfilesPanel';
 import { JournalEntryModal, type AccountOption } from './components/JournalEntryModal';
 import { accountingService } from '../../lib/services/accounting.service';
@@ -157,6 +158,8 @@ export function AccountingView() {
   // Seção em que a aba Imobilizado abre — a NF-e aponta "Classes"/"Taxas"; volta a "Bens" ao sair da aba.
   const [fixedAssetsSection, setFixedAssetsSection] = useState<FixedAssetsSectionId>('bens');
   useEffect(() => { if (activeTab !== 'imobilizado') setFixedAssetsSection('bens'); }, [activeTab]);
+  // Ano em que o enquadramento MEI abre — o atalho da aba Apuração aponta o ano (FE-INCR-SIMPLES item 8).
+  const [meiAno, setMeiAno] = useState<number | undefined>(undefined);
   const visibleTabs = governance ? TABS.filter((tab) => DELEGATED_TABS.includes(tab.id)) : TABS;
 
   function switchContext(next: string) {
@@ -522,6 +525,7 @@ export function AccountingView() {
       {activeTab === 'perfil-fiscal' && unitId && (
         <div className="space-y-8">
           <FiscalProfilePanel unitId={unitId} />
+          <MeiEnquadramentoSection unitId={unitId} anoInicial={meiAno} />
           <ServiceFiscalProfilesPanel unitId={unitId} />
         </div>
       )}
@@ -534,7 +538,9 @@ export function AccountingView() {
       )}
 
       {/* ── Apuração (IRPJ/CSLL + PIS/Cofins) tab — FE-INCR-TAX-ASSESSMENT PR-1 ── */}
-      {activeTab === 'apuracao' && unitId && <TaxAssessmentPanel unitId={unitId} />}
+      {activeTab === 'apuracao' && unitId && (
+        <TaxAssessmentPanel unitId={unitId} onIrParaEnquadramentoMei={(ano) => { setMeiAno(ano); setActiveTab('perfil-fiscal'); }} />
+      )}
 
       {activeTab === 'pendencias' && unitId && <ReconcilePendingPanel key={`pendencias-${unitId}`} unitId={unitId} />}
 
