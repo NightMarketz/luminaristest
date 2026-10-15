@@ -5,6 +5,9 @@ import { useAuth } from '../../../lib/context/AuthContext';
 import { useTranslation } from 'next-i18next';
 import { FiCheck, FiCpu, FiMonitor, FiActivity } from 'react-icons/fi';
 import { SetupService } from '../../../lib/services/setup.service';
+import FiscalQuestion from '../components/AiInterviewSetup/FiscalQuestion';
+import type { FiscalOnboarding } from '../hooks/useAiInterview';
+import { notifyAccountingDraft } from './accountingDraftNotice';
 
 interface Preset {
   category: string;
@@ -25,6 +28,8 @@ export default function QuickSetup() {
   const [isCreating, setIsCreating] = useState(false);
   // I1 (F-I1-2 b): nome da primeira unidade — sem default, obrigatório antes do submit.
   const [unitName, setUnitName] = useState('');
+  // I4 PR-4 (F-I4-9 a): antes de criar, a pergunta fechada de regime/porte (+ ICMS em Presumido/Real).
+  const [askFiscal, setAskFiscal] = useState(false);
 
   const groupedPresets = useMemo(() => {
     return presets.reduce((acc, preset) => {
@@ -59,13 +64,14 @@ export default function QuickSetup() {
     verifyAndLoad();
   }, [user, authLoading, router]);
 
-  async function handleCreateDashboard() {
+  async function handleCreateDashboard(fiscal: FiscalOnboarding) {
     if (!selectedPreset || !unitName.trim()) return;
 
     setIsCreating(true);
     setError(null);
     try {
-      await SetupService.createDashboard({ mode: 'quick', suiteKey: selectedPreset, unit: { name: unitName.trim() } });
+      const created = await SetupService.createDashboard({ mode: 'quick', suiteKey: selectedPreset, unit: { name: unitName.trim() }, fiscal });
+      notifyAccountingDraft(created.accounting, t);
 
       router.push('/dashboard');
 
@@ -148,8 +154,13 @@ export default function QuickSetup() {
             {error}
           </div>
         )}
+        {askFiscal && selectedPreset && unitName.trim() ? (
+          <div className="mb-8 w-full max-w-xl">
+            <FiscalQuestion onConfirm={(fiscal) => void handleCreateDashboard(fiscal)} disabled={isCreating} />
+          </div>
+        ) : (
         <button
-          onClick={handleCreateDashboard}
+          onClick={() => setAskFiscal(true)}
           disabled={!selectedPreset || !unitName.trim() || isCreating}
           className="group relative w-full max-w-sm overflow-hidden rounded-2xl bg-blue-600 p-px font-bold text-white shadow-xl shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-[1.02] active:scale-[0.98]"
         >
@@ -164,6 +175,7 @@ export default function QuickSetup() {
             )}
           </div>
         </button>
+        )}
         {!selectedPreset && (
           <p className="mt-4 text-slate-400 text-sm font-medium italic">
             {t('selectModelToEnable')}
