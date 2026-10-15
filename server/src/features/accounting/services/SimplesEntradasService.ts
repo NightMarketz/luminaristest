@@ -46,6 +46,14 @@ export class SimplesEntradasService {
     return historicoView(row);
   }
 
+  /** BE-INCR-SIMPLES-GET-ENTRADAS item 1 — o histórico gravado da competência; sem registro = 404 (F-GE-1 → a). */
+  async obterHistorico(scope: AccountingScope, competencia: string): Promise<SimplesHistoricoView> {
+    this.assertRead(scope);
+    const [row] = await this.repo.findHistorico(scope, [competencia]);
+    if (!row) throw new NotFoundError(`Sem histórico declarado para a competência ${competencia}.`);
+    return historicoView(row);
+  }
+
   /**
    * Item 10 — meses da janela do RBT12 do PA (`janelaRbt12`, PR-1) sem receita declarada no histórico NEM no subrazão
    * (`mesesComSubrazao`, do `ReceitaFiscalService`) ⇒ `RBT12_INCOMPLETO`; a apuração não confirma (PR-3, item 20).
@@ -77,6 +85,14 @@ export class SimplesEntradasService {
       parcelas,
       alerta: parcelas.length === 0 ? null : { codigo: 'SEGREGACAO_MANUAL', detalhe: `${parcelas.length} parcela(s) segregada(s) por declaração manual` },
     };
+  }
+
+  /** BE-INCR-SIMPLES-GET-ENTRADAS item 2 — a segregação gravada da competência; sem registro = 404 (F-GE-1 → a). */
+  async obterSegregacao(scope: AccountingScope, competencia: string): Promise<SimplesSegregacaoView> {
+    this.assertRead(scope);
+    const row = await this.repo.findSegregacao(scope, competencia);
+    if (!row) throw new NotFoundError(`Sem segregação manual declarada para a competência ${competencia}.`);
+    return { id: row.id, unitId: row.unitId, competencia: row.competencia, parcelas: comExcluir(row.parcelas as SimplesSegregacaoParcela[]), updatedAt: row.updatedAt.toISOString() };
   }
 
   // ---- item 13: contratos de parceria ----

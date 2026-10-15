@@ -3,6 +3,8 @@ import {
   createParceria,
   deleteParceria,
   listParcerias,
+  getSimplesHistorico,
+  getSimplesSegregacao,
   putSimplesHistorico,
   putSimplesSegregacao,
   updateParceria,
@@ -25,6 +27,9 @@ const router = Router();
 
 router.put('/historico/:competencia', putSimplesHistorico);
 router.put('/segregacao/:competencia', putSimplesSegregacao);
+// BE-INCR-SIMPLES-GET-ENTRADAS (itens 1–2) — leitura por competência; 404 sem registro (F-GE-1).
+router.get('/historico/:competencia', getSimplesHistorico);
+router.get('/segregacao/:competencia', getSimplesSegregacao);
 router.post('/parcerias', createParceria);
 router.get('/parcerias', listParcerias);
 router.patch('/parcerias/:id', updateParceria);
