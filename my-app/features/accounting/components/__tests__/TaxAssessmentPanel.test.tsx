@@ -10,6 +10,11 @@ import { formatCentsStr, montarGrade } from '../../lib/taxAssessmentGrid';
 const list = vi.fn();
 const get = vi.fn();
 const reconcileProvisao = vi.fn();
+// FE-INCR-SIMPLES item 1: a aba lê o regime do perfil do ano antes da grade; aqui o ano é Presumido (grade X7/X8).
+const getPerfil = vi.fn();
+vi.mock('../../../../lib/services/companyFiscalProfile.service', () => ({
+  companyFiscalProfileService: { get: (...a: unknown[]) => getPerfil(...a) },
+}));
 vi.mock('../../../../lib/services/taxAssessments.service', () => ({
   taxAssessmentsService: {
     list: (...a: unknown[]) => list(...a),
@@ -69,6 +74,7 @@ describe('helpers da grade (itens 2, 3)', () => {
 
 describe('TaxAssessmentPanel', () => {
   beforeEach(() => {
+    getPerfil.mockImplementation(async (ano: number) => ({ ano, regime: 'PRESUMIDO' }));
     list.mockResolvedValue(linhas);
     get.mockImplementation(async (id: string) => linhas.find((l) => l.id === id));
   });
@@ -95,7 +101,7 @@ describe('TaxAssessmentPanel', () => {
     list.mockResolvedValue([pis]);
     fireEvent.change(screen.getByLabelText('Ano-calendário'), { target: { value: '2025' } });
     await waitFor(() => expect(screen.queryByTestId('celula-T01-IRPJ')).toBeNull());
-    expect(screen.getByTestId('celula-M01-PIS')).toBeInTheDocument();
+    expect(await screen.findByTestId('celula-M01-PIS')).toBeInTheDocument();
     expect(list).toHaveBeenLastCalledWith({ unitId: 'u1', anoCalendario: 2025 });
   });
 
@@ -185,8 +191,9 @@ describe('TaxAssessmentPanel — correções do review do #631', () => {
     const anoAtual = new Date().getFullYear();
     pend.get(2024)!.resolve([ta('y2024', { periodo: 'T02' })]);
     await screen.findByTestId('celula-T02-IRPJ');
-    pend.get(2025)!.resolve([ta('y2025', { periodo: 'T03' })]);
-    pend.get(anoAtual)!.resolve([ta('yAtual', { periodo: 'T04' })]);
+    // FE-INCR-SIMPLES item 1: a lista só sai depois do perfil do ano — os anos abandonados podem nem chegar a pedir.
+    pend.get(2025)?.resolve([ta('y2025', { periodo: 'T03' })]);
+    pend.get(anoAtual)?.resolve([ta('yAtual', { periodo: 'T04' })]);
     await new Promise((r) => setTimeout(r, 20));
     expect(screen.getByTestId('celula-T02-IRPJ')).toBeInTheDocument();
     expect(screen.queryByTestId('celula-T03-IRPJ')).toBeNull();
