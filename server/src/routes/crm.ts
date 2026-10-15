@@ -9,6 +9,7 @@ import {
 } from '../controllers/attachmentsController';
 import {
   listCrmReports,
+  listCrmReportTemplates,
   createCrmReport,
   getCrmReport,
   updateCrmReport,
@@ -36,6 +37,8 @@ router.get('/pipeline-analytics', getCrmAnalytics);
 router.get('/reports', listCrmReports);
 router.post('/reports', createCrmReport);
 router.post('/reports/run', runCrmReportPreview);
+// Modelos prontos (BE-INCR-CRM-REPORT-TEMPLATES) — ANTES de '/reports/:id', senão 'templates' cai no :id (400).
+router.get('/reports/templates', listCrmReportTemplates);
 router.get('/reports/:id', getCrmReport);
 router.put('/reports/:id', updateCrmReport);
 router.delete('/reports/:id', deleteCrmReport);

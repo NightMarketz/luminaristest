@@ -1,4 +1,6 @@
-import type { CreateCrmReportInput } from '../dtos/CrmReportDto';
+import type { CrmReportTemplate } from '../dtos/CrmReportDto';
+
+export type { CrmReportTemplate };
 
 /**
  * Templates iniciais do builder (BE-INCR-CRM-REPORT-BUILDER PR-2, item 13; F-RB7=(a)): gráficos fixos do
@@ -15,10 +17,6 @@ import type { CreateCrmReportInput } from '../dtos/CrmReportDto';
  * O BANT fica de fora: % de leads 'High' em 4 campos diferentes exige fórmula, fora do v1 (F-RB5).
  * Nenhum dos 5 soma dinheiro (item 13: a paridade não depende do F-RB8).
  */
-export interface CrmReportTemplate extends CreateCrmReportInput {
-  key: 'funnel' | 'source' | 'status' | 'proposals' | 'activities';
-}
-
 export const CRM_REPORT_TEMPLATES: readonly CrmReportTemplate[] = [
   {
     key: 'funnel',

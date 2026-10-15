@@ -1541,6 +1541,15 @@
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '409': { description: CRM_MODULE_NOT_INSTALLED — source/join table not installed }
  *
+ *   /api/crm/reports/templates:
+ *     get:
+ *       summary: List the ready-made CRM report templates and the money→currency field pairs (BE-INCR-CRM-REPORT-TEMPLATES)
+ *       tags: [CRM Reports]
+ *       security: [{ bearerAuth: [] }]
+ *       responses:
+ *         '200': { description: "{ templates: CreateCrmReport & { key }[], moneyCurrencyPairs: Record<source, Record<valueField, currencyField>> }" }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *
  *   /api/crm/reports/run:
  *     post:
  *       summary: Run an unsaved report spec (preview) over the caller's CRM tables
