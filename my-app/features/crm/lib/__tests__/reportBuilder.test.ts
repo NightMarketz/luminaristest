@@ -12,6 +12,8 @@ import {
   emptyDraft,
   formatReportValue,
   fromReport,
+  fromTemplate,
+  templateAvailable,
   installedSources,
   measureFieldOptions,
   periodFieldOptions,
@@ -32,6 +34,12 @@ import {
  * Lógica pura do builder de relatórios do CRM — FE-INCR-CRM-REPORT-BUILDER PR-A (BRIEF §1, itens 3–9, 11–18).
  */
 const LABELS = { id: 'ID', createdAt: 'Criado em', updatedAt: 'Atualizado em' };
+/** `moneyCurrencyPairs` como o BE devolve em `GET /api/crm/reports/templates` (PR-C: fonte única dos pares). */
+const PAIRS = {
+  leads: { latestProposalAmount: 'latestProposalCurrency' },
+  leadProposals: { amount: 'currency' },
+  crmOpportunities: { amount: 'currency' },
+};
 const PROPOSAL_FIELDS: ISchemaField[] = reportFields(
   [
     { name: 'title', label: 'Título', type: 'string' },
@@ -43,6 +51,7 @@ const PROPOSAL_FIELDS: ISchemaField[] = reportFields(
     { name: 'secret', label: 'Oculto', type: 'string', hidden: true },
   ],
   LABELS,
+  PAIRS.leadProposals,
 );
 
 const proposalsDraft = (patch: Partial<ReportDraft> = {}): ReportDraft => ({ ...emptyDraft(), source: 'leadProposals', ...patch });
@@ -58,7 +67,7 @@ describe('item 3 — fontes instaladas e troca de fonte', () => {
       dimensions: [{ type: 'field', field: 'status' }],
       filters: [{ field: 'currency', op: 'eq', value: 'BRL' }],
     });
-    const leadFields = reportFields([{ name: 'status', label: 'Status', type: 'select' }], LABELS);
+    const leadFields = reportFields([{ name: 'status', label: 'Status', type: 'select' }], LABELS, PAIRS.leads);
     expect(sourceChangeLosesItems(d, leadFields)).toBe(true);
     const next = prunedForFields(d, leadFields);
     expect(next.measures).toEqual([{ type: 'count', field: '', alias: '' }]);
@@ -297,7 +306,7 @@ describe('review independente do PR-A — regressões', () => {
       ],
       sort: { by: 'measure', measureIndex: 1, dir: 'desc' },
     });
-    const next = reportFields([{ name: 'status', label: 'Status', type: 'select' }], LABELS);
+    const next = reportFields([{ name: 'status', label: 'Status', type: 'select' }], LABELS, PAIRS.leadProposals);
     const pruned = prunedForFields(d, next);
     expect(toSpec(pruned)?.sort).toEqual({ by: 'measure', key: 'Total', dir: 'desc' });
     const lost = prunedForFields({ ...d, sort: { by: 'measure', measureIndex: 0, dir: 'asc' } }, next);
@@ -342,8 +351,50 @@ describe('review independente do PR-A — regressões', () => {
         { name: 'currency', label: 'Moeda', type: 'select', options: ['BRL', 'USD'], hidden: true },
       ],
       LABELS,
+      PAIRS.leadProposals,
     );
     const d = proposalsDraft({ measures: [{ type: 'sum', field: 'amount', alias: '' }] });
     expect(blockReason(d, oculto)).toBe('CURRENCY_CHOICE_REQUIRED');
+  });
+});
+
+describe('item 19 (PR-C) — modelos prontos', () => {
+  const tpl = {
+    key: 'source' as const,
+    name: 'Leads por origem',
+    kind: 'chart' as const,
+    chartType: 'pie' as const,
+    spec: {
+      source: 'leads' as const,
+      dimensions: [{ type: 'field' as const, field: 'source' }],
+      measures: [{ type: 'count' as const }] as [{ type: 'count' }],
+      sort: { by: 'measure' as const, dir: 'desc' as const },
+    },
+  };
+
+  it('fromTemplate: rascunho preenchido (nome, tipo, gráfico, spec) que volta ao mesmo spec', () => {
+    const d = fromTemplate(tpl);
+    expect(d).toMatchObject({ name: 'Leads por origem', kind: 'chart', chartType: 'pie', source: 'leads' });
+    expect(toSpec(d)).toEqual(tpl.spec);
+  });
+
+  it('templateAvailable: exige a fonte e a tabela da direita de cada join instaladas', () => {
+    expect(templateAvailable(tpl, ['leads'])).toBe(true);
+    expect(templateAvailable(tpl, ['leadProposals'])).toBe(false);
+    const withJoin = { ...tpl, spec: { ...tpl.spec, joins: [{ leftField: 'x', rightSource: 'crmAccounts' as const, rightField: 'id', alias: 'acc' }] } };
+    expect(templateAvailable(withJoin, ['leads'])).toBe(false);
+    expect(templateAvailable(withJoin, ['leads', 'crmAccounts'])).toBe(true);
+  });
+
+  it('o par de moeda vem do argumento (BE), não de constante do FE: sem par, soma de dinheiro não exige moeda', () => {
+    const semParDoBe = reportFields(
+      [
+        { name: 'amount', label: 'Valor', type: 'number', numberFormat: 'currency' },
+        { name: 'currency', label: 'Moeda', type: 'select' },
+      ],
+      LABELS,
+      undefined,
+    );
+    expect(blockReason(proposalsDraft({ measures: [{ type: 'sum', field: 'amount', alias: '' }] }), semParDoBe)).toBeNull();
   });
 });

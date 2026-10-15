@@ -279,7 +279,8 @@
       "INVALID_TIME_ZONE": "Invalid time zone.",
       "CRM_MODULE_NOT_INSTALLED": "CRM module {{moduleKey}} is not installed; this source is not available.",
       "SCHEMA_UNAVAILABLE": "Could not load the fields of this source.",
-      "GENERIC": "Could not complete. Try again."
+      "GENERIC": "Could not complete. Try again.",
+      "TEMPLATES_UNAVAILABLE": "Could not load the report templates and currency rules. Reload the page."
     },
     "labels": {
       "NO_CURRENCY": "No currency",
@@ -463,6 +464,18 @@
         "RESERVED": "The alias cannot be \"id\" or start with \"_\".",
         "DUPLICATE": "Another join already uses this alias.",
         "FIELD_CONFLICT": "The source already has a field with this name."
+      }
+    },
+    "templates": {
+      "title": "Start from a template",
+      "unavailable": "This template's table is not installed.",
+      "unavailable_short": "Table not installed",
+      "names": {
+        "funnel": "Funnel by stage",
+        "source": "Leads by source",
+        "status": "Leads by status",
+        "proposals": "Proposals by status",
+        "activities": "Activities by type"
       }
     }
   },

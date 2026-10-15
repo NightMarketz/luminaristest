@@ -279,7 +279,8 @@
       "INVALID_TIME_ZONE": "Fuso horário inválido.",
       "CRM_MODULE_NOT_INSTALLED": "O módulo {{moduleKey}} do CRM não está instalado; esta fonte não está disponível.",
       "SCHEMA_UNAVAILABLE": "Não foi possível carregar os campos desta fonte.",
-      "GENERIC": "Não foi possível concluir. Tente de novo."
+      "GENERIC": "Não foi possível concluir. Tente de novo.",
+      "TEMPLATES_UNAVAILABLE": "Não foi possível carregar os modelos e as regras de moeda dos relatórios. Recarregue a página."
     },
     "labels": {
       "NO_CURRENCY": "Sem moeda",
@@ -463,6 +464,18 @@
         "RESERVED": "O apelido não pode ser \"id\" nem começar com \"_\".",
         "DUPLICATE": "Outro cruzamento já usa esse apelido.",
         "FIELD_CONFLICT": "A fonte já tem um campo com esse nome."
+      }
+    },
+    "templates": {
+      "title": "Começar de um modelo",
+      "unavailable": "A tabela deste modelo não está instalada.",
+      "unavailable_short": "Tabela não instalada",
+      "names": {
+        "funnel": "Funil por etapa",
+        "source": "Leads por origem",
+        "status": "Leads por status",
+        "proposals": "Propostas por status",
+        "activities": "Atividades por tipo"
       }
     }
   },

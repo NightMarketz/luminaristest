@@ -4,12 +4,37 @@ import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/re
 
 vi.mock('next-i18next', async () => (await import('@/features/crm/components/reports/__tests__/i18nPt')).nextI18nextPt());
 
-const { svc, fieldsOf, kpis } = vi.hoisted(() => ({
+const { svc, fieldsOf, kpis, templates } = vi.hoisted(() => ({
   svc: { list: vi.fn(), get: vi.fn(), run: vi.fn() },
   fieldsOf: vi.fn(),
   kpis: [] as { title: string; value: string }[],
+  templates: vi.fn(() =>
+    Promise.resolve({
+      success: true,
+      data: {
+        templates: [
+          { key: 'funnel', name: 'Funil por etapa', kind: 'chart', chartType: 'bar', spec: { source: 'leads', dimensions: [{ type: 'field', field: 'stageId' }], measures: [{ type: 'count' }] } },
+          { key: 'proposals', name: 'Propostas por status', kind: 'chart', chartType: 'bar', spec: { source: 'leadProposals', dimensions: [{ type: 'field', field: 'status' }], measures: [{ type: 'count' }] } },
+          { key: 'activities', name: 'Atividades por tipo', kind: 'chart', chartType: 'bar', spec: { source: 'leadActivities', dimensions: [{ type: 'field', field: 'type' }], measures: [{ type: 'count' }], sort: { by: 'measure', dir: 'desc' } } },
+        ],
+        // `moneyCurrencyPairs` do BE (PR-C: fonte única dos pares — o espelho manual do FE saiu)
+        moneyCurrencyPairs: {
+          leads: { latestProposalAmount: 'latestProposalCurrency' },
+          leadProposals: { amount: 'currency' },
+          crmOpportunities: { amount: 'currency' },
+        },
+      },
+    }),
+  ),
 }));
-vi.mock('@/lib/services/crmReports.service', () => ({ CrmReportsService: svc }));
+// `templates` fora do `svc`: o `beforeEach` zera o `svc` inteiro
+vi.mock('@/lib/services/crmReports.service', async (importOriginal) => {
+  const real = await importOriginal<typeof import('@/lib/services/crmReports.service')>();
+  const CrmReportsService = { ...svc, templates };
+  // o loader real lê `CrmReportsService.templates` do módulo real: reaponta para o mock
+  Object.assign(real.CrmReportsService, CrmReportsService);
+  return { ...real, CrmReportsService };
+});
 vi.mock('@/features/crm/hooks/useReportSources', () => ({
   useReportSources: () => ({ sources: ['leadProposals'], loading: false, error: false, fieldsOf }),
 }));

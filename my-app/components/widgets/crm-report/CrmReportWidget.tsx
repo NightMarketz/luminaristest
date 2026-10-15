@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'next-i18next';
 import { HiOutlineCog, HiOutlinePresentationChartBar, HiX } from 'react-icons/hi';
-import { CrmReportsService, type CrmReportRow } from '@/lib/services/crmReports.service';
+import { CrmReportsService, loadCrmReportTemplates, type CrmReportRow } from '@/lib/services/crmReports.service';
 import type { ISchemaField } from '@/features/dashboard/components/shared/dynamic-tables.client';
 import { useReportSources } from '@/features/crm/hooks/useReportSources';
 import { CrmReportResult, buildRunSnapshot, type ReportRunSnapshot } from '@/features/crm/components/reports/CrmReportResult';
@@ -101,15 +101,19 @@ export default function CrmReportWidget({ onClose, initialConfig, onConfigChange
           updatedAt: tr('report_builder.fields.updated_at', 'Atualizado em'),
         };
         const source = await fieldsOf(got.data.spec.source);
+        // pares valor→moeda do BE (símbolo da moeda por medida); falha → sem símbolo, com o aviso de schema
+        const pairs = await loadCrmReportTemplates()
+          .then((d) => d.moneyCurrencyPairs)
+          .catch(() => null);
         const right: RightRaw = {};
         for (const j of draft.joins) if (j.rightSource && !(j.rightSource in right)) right[j.rightSource] = await fieldsOf(j.rightSource);
-        const fields = combinedFields(reportFields(source ?? [], labels), draft.joins, (s) => {
+        const fields = combinedFields(reportFields(source ?? [], labels, pairs?.[got.data.spec.source]), draft.joins, (s) => {
           const raw = right[s];
-          return raw ? reportFields(raw, labels) : null;
+          return raw ? reportFields(raw, labels, pairs?.[s]) : null;
         });
         if (!alive) return;
         setRow(got.data);
-        setSchemaMissing(!source || Object.values(right).some((x) => !x));
+        setSchemaMissing(!source || !pairs || Object.values(right).some((x) => !x));
         setSnapshot(buildRunSnapshot(run.data, draft, fields, tr));
       } catch (e) {
         if (alive) setViewError(reportError(e));
