@@ -39,6 +39,8 @@ import type { KitInstallStatus } from '../models/kitInstallTypes';
 import {
   KIT_UPGRADE_APPLIED,
   KitUpgradeDryRunRequiredError,
+  KitUpgradePreL8MigrationRequiredError,
+  ULTIMA_VERSAO_KIT_PRE_L8,
   type KitUpgradeMode,
   type KitUpgradeRunStatus,
 } from '../models/kitUpgradeTypes';
@@ -139,6 +141,10 @@ export class KitUpgradeService {
     if (!installed || !target) throw new ValidationError(`KIT_UNKNOWN: kit '${installation.kitKey}' v${installation.kitVersion} não está publicado.`);
     if (target.kitVersion <= installed.kitVersion) {
       return { status: 'UP_TO_DATE', kitKey: installation.kitKey, kitVersion: installation.kitVersion };
+    }
+    // BE-INCR-GUARDA-UPGRADE-PRE-L8: do plano de 3 níveis ao de 4 só pela migração de dado (F-L8-12 a), antes de gravar.
+    if (installed.kitVersion <= ULTIMA_VERSAO_KIT_PRE_L8 && target.kitVersion > ULTIMA_VERSAO_KIT_PRE_L8) {
+      throw new KitUpgradePreL8MigrationRequiredError(scope.unitId, installed.kitVersion, target.kitVersion);
     }
 
     const diff = classifyKitDiff(target, installed, await this.loadState(scope, target));

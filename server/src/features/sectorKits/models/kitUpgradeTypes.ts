@@ -54,6 +54,30 @@ export class KitUpgradeDryRunRequiredError extends AppError {
   }
 }
 
+/**
+ * Salão e clínica: a v5 é a última versão do plano de 3 níveis (F-L8-9 a; a v6 é a da L8). Mora aqui, e não no
+ * `migratePlano4NiveisCli`, porque o `KitUpgradeService` a usa na guarda abaixo (BE-INCR-GUARDA-UPGRADE-PRE-L8).
+ */
+export const ULTIMA_VERSAO_KIT_PRE_L8 = 5;
+
+/**
+ * BE-INCR-GUARDA-UPGRADE-PRE-L8 (F-G1 a, F-G2 a — dono 15/10): upgrade de instalação ≤ v5 a alvo ≥ v6. A passagem do
+ * plano de 3 ao de 4 níveis é a migração de dado (F-L8-12 a), que renomeia as contas por id antes de marcar o v6; o
+ * upgrade criaria contas e binding do plano novo num plano velho. 409.
+ */
+export class KitUpgradePreL8MigrationRequiredError extends AppError {
+  constructor(unitId: string, from: number, to: number) {
+    super(
+      `A unidade '${unitId}' está no kit v${from} (plano de 3 níveis) e o alvo é o v${to} (plano de 4 níveis): rode antes a ` +
+        `migração migratePlano4NiveisCli (servidor parado; npx ts-node -r tsconfig-paths/register src/jobs/migratePlano4NiveisCli.ts --all), ` +
+        `que leva a unidade ao v${to}.`,
+      409,
+      'KIT_UPGRADE_REQUIRES_PLANO_4_NIVEIS_MIGRATION',
+    );
+    Object.setPrototypeOf(this, KitUpgradePreL8MigrationRequiredError.prototype);
+  }
+}
+
 /** Item 37: decidir uma pendência que já não está `OPEN`. 409. */
 export class KitPendingNotOpenError extends AppError {
   constructor(status: string) {

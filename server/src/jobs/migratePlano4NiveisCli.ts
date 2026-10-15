@@ -49,9 +49,10 @@ import { SECTOR_BINDING_REGISTRY } from '../features/accountingBinding/fixtures/
 import type { BindingScope } from '../features/accountingBinding/repositories/IAccountingBindingRepository';
 import type { CompileBindingInput, CompileBindingResult } from '../features/accountingBinding/services/BindingCompileService';
 import type { KitUpgradeOutcome } from '../features/sectorKits/services/KitUpgradeService';
+import { ULTIMA_VERSAO_KIT_PRE_L8 } from '../features/sectorKits/models/kitUpgradeTypes';
 
-/** Salão e clínica: a v5 é a última versão do plano de 3 níveis (F-L8-9 a; a v6 é a da L8). */
-export const ULTIMA_VERSAO_KIT_PRE_L8 = 5;
+/** Salão e clínica: a v5 é a última do plano de 3 níveis — a constante mora no `sectorKits` (guarda do upgrade). */
+export { ULTIMA_VERSAO_KIT_PRE_L8 };
 
 export interface RelatorioMigracaoUnidade {
   ownerUserId: string;
