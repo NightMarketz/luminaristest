@@ -4,6 +4,9 @@ import type {
   SalaoParceriaContratoInput,
   SalaoParceriaContratoPatchInput,
   SimplesDasRegistroInput,
+  SimplesHistoricoUpsertInput,
+  SimplesSegregacaoParcelaInput,
+  SimplesSegregacaoUpsertInput,
   SimplesUnitQueryInput,
 } from '@/types/contracts/accounting/SimplesDto.gen';
 
@@ -124,7 +127,40 @@ export interface SalaoParceriaContrato {
   updatedAt: string;
 }
 
-export type { SalaoParceriaContratoInput, SalaoParceriaContratoPatchInput, SimplesDasRegistroInput };
+// espelha SimplesHistoricoView / SimplesSegregacaoView (server/src/features/accounting/dtos/SimplesDto.ts:125-140)
+export interface SimplesHistorico {
+  id: string;
+  unitId: string;
+  competencia: string;
+  receitaBrutaCents: number;
+  folhaCents: number | null;
+  sourceDocumentId: string | null;
+  updatedAt: string;
+}
+export interface SimplesSegregacao {
+  id: string;
+  unitId: string;
+  competencia: string;
+  /** `excluir` = tributos que a parcela tira do DAS, derivados do motivo no BE (`excluirDoMotivo`) — nunca digitados. */
+  parcelas: Array<SimplesSegregacaoParcelaInput & { excluir: TributoSimples[] }>;
+  updatedAt: string;
+}
+
+export type {
+  SalaoParceriaContratoInput,
+  SalaoParceriaContratoPatchInput,
+  SimplesDasRegistroInput,
+  SimplesHistoricoUpsertInput,
+  SimplesSegregacaoParcelaInput,
+  SimplesSegregacaoUpsertInput,
+};
+
+/** O 404 `NOT_FOUND` dos GETs de entrada = mês sem registro (F-GE-1) → `null`. Outro erro propaga. */
+function semRegistro(e: unknown): boolean {
+  if (!e || typeof e !== 'object') return false;
+  const o = e as { status?: unknown; code?: unknown };
+  return o.status === 404 && o.code === 'NOT_FOUND';
+}
 
 /** `calcular`/`obter` devolvem uma ou outra conforme o perfil do ano (SimplesApuracaoService.ts:182-189). */
 export type Apuracao = ApuracaoSimples | ApuracaoMei;
@@ -149,6 +185,35 @@ export const simplesService = {
   /** PUT …/apuracoes/:competencia/das — registra o DAS oficial (ME/EPP e MEI); 409 = entradas mudaram; 400 = bloqueantes. */
   async registrarDas(competencia: string, body: SimplesDasRegistroInput): Promise<Apuracao> {
     return (await apiClient.put<ApiEnvelope<Apuracao>>(`${base}/apuracoes/${enc(competencia)}/das`, body)).data;
+  },
+
+  /** GET /historico/:competencia — `null` quando o mês não tem histórico (o apiClient ainda mostra o toast do 404). */
+  async obterHistorico(competencia: string, query: SimplesUnitQueryInput): Promise<SimplesHistorico | null> {
+    try {
+      return (await apiClient.get<ApiEnvelope<SimplesHistorico>>(`${base}/historico/${enc(competencia)}?unitId=${enc(query.unitId)}`)).data;
+    } catch (e) {
+      if (semRegistro(e)) return null;
+      throw e;
+    }
+  },
+
+  async salvarHistorico(competencia: string, body: SimplesHistoricoUpsertInput): Promise<SimplesHistorico> {
+    return (await apiClient.put<ApiEnvelope<SimplesHistorico>>(`${base}/historico/${enc(competencia)}`, body)).data;
+  },
+
+  /** GET /segregacao/:competencia — `null` quando o mês não tem segregação manual. */
+  async obterSegregacao(competencia: string, query: SimplesUnitQueryInput): Promise<SimplesSegregacao | null> {
+    try {
+      return (await apiClient.get<ApiEnvelope<SimplesSegregacao>>(`${base}/segregacao/${enc(competencia)}?unitId=${enc(query.unitId)}`)).data;
+    } catch (e) {
+      if (semRegistro(e)) return null;
+      throw e;
+    }
+  },
+
+  /** PUT /segregacao/:competencia — substitui o conjunto inteiro do mês (lista vazia limpa). */
+  async salvarSegregacao(competencia: string, body: SimplesSegregacaoUpsertInput): Promise<SimplesSegregacao> {
+    return (await apiClient.put<ApiEnvelope<SimplesSegregacao>>(`${base}/segregacao/${enc(competencia)}`, body)).data;
   },
 
   /** Contratos salão-parceiro (Lei 12.592) da unidade — item 13 do X14. */
