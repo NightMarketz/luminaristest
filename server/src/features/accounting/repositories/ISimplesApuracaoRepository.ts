@@ -33,6 +33,11 @@ export interface ISimplesApuracaoRepository {
   /** CAS CONFIRMED → SUPERSEDED; devolve quantas mudaram (0 = outra tx chegou antes). */
   supersede(scope: AccountingScope, id: string, tx: Prisma.TransactionClient): Promise<number>;
   create(scope: AccountingScope, data: CreateSimplesApuracaoData, tx: Prisma.TransactionClient): Promise<SimplesApuracao>;
+  /**
+   * BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-8 (a): troca o documento do DAS já registrado (CONFIRMED, não removido); devolve
+   * quantas mudaram (0 = a apuração deixou de ser a vigente).
+   */
+  setSourceDocumentId(scope: AccountingScope, id: string, sourceDocumentId: string, tx: Prisma.TransactionClient): Promise<number>;
   /** CAS do vínculo da provisão (`where provisaoEntryId = null`); devolve quantas mudaram. */
   setProvisaoEntryId(scope: AccountingScope, id: string, entryId: string): Promise<number>;
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;

@@ -45,6 +45,11 @@ export class SimplesApuracaoRepository implements ISimplesApuracaoRepository {
     return tx.simplesApuracao.create({ data: { ...accountingScopeWhere(scope), ...data, status: 'CONFIRMED', createdById: scope.actorUserId } });
   }
 
+  public async setSourceDocumentId(scope: AccountingScope, id: string, sourceDocumentId: string, tx: Prisma.TransactionClient): Promise<number> {
+    const r = await tx.simplesApuracao.updateMany({ where: { id, ...accountingScopeWhere(scope), status: 'CONFIRMED', deletedAt: null }, data: { sourceDocumentId } });
+    return r.count;
+  }
+
   public async setProvisaoEntryId(scope: AccountingScope, id: string, entryId: string): Promise<number> {
     const r = await prisma.simplesApuracao.updateMany({ where: { id, ...accountingScopeWhere(scope), provisaoEntryId: null }, data: { provisaoEntryId: entryId } });
     return r.count;

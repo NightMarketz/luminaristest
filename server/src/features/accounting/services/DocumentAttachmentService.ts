@@ -7,6 +7,7 @@ import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IDocumentAttachmentRepository } from '../repositories/IDocumentAttachmentRepository';
 import type { IJournalEntryRepository } from '../repositories/IJournalEntryRepository';
 import type { IFiscalDocumentRepository } from '../repositories/IFiscalDocumentRepository';
+import type { ISourceProvenanceRepository } from '../repositories/ISourceProvenanceRepository';
 import type { AuditService } from './AuditService';
 import type { DocumentAttachmentTargetType } from '../models/DocumentAttachment.model';
 
@@ -59,6 +60,7 @@ export class DocumentAttachmentService {
     private readonly audit: AuditService,
     private readonly journalEntryRepo: IJournalEntryRepository,
     private readonly fiscalDocumentRepo: IFiscalDocumentRepository,
+    private readonly sourceProvenanceRepo: Pick<ISourceProvenanceRepository, 'findActiveSourceDocumentsByIds'>,
   ) {}
 
   /**
@@ -77,6 +79,11 @@ export class DocumentAttachmentService {
       }
       case 'FISCAL_DOCUMENT_ATTEMPT': {
         if (!(await this.fiscalDocumentRepo.findAttemptById(scope, targetId))) throw new NotFoundError('Tentativa de documento fiscal não encontrada para anexar evidência.');
+        return;
+      }
+      case 'SOURCE_DOCUMENT': {
+        // BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-2 (a): SD ativo no escopo (o upload do próprio SD cria os dois juntos).
+        if ((await this.sourceProvenanceRepo.findActiveSourceDocumentsByIds(scope, [targetId])).length === 0) throw new NotFoundError('Documento de origem não encontrado para anexar evidência.');
         return;
       }
       default: {

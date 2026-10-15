@@ -34,6 +34,13 @@ export interface IDocumentAttachmentRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<DocumentAttachment[]>;
 
+  /** BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-9: os anexos ATIVOS do escopo entre os ids dados (leitura do documento). */
+  findActiveByIds(
+    scope: AccountingScope,
+    ids: readonly string[],
+    tx?: Prisma.TransactionClient,
+  ): Promise<DocumentAttachment[]>;
+
   /** Soft-deletes (sets deletedAt + deletedById) within the scope. Throws if not found. */
   softDelete(
     scope: AccountingScope,

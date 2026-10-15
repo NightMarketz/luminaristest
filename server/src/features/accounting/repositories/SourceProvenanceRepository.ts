@@ -25,6 +25,7 @@ export class SourceProvenanceRepository implements ISourceProvenanceRepository {
   ): Promise<SourceDocument> {
     return (tx ?? prisma).sourceDocument.create({
       data: {
+        ...(data.id ? { id: data.id } : {}),
         userId: data.userId,
         unitId: data.unitId,
         sourceType: data.sourceType,
@@ -80,5 +81,16 @@ export class SourceProvenanceRepository implements ISourceProvenanceRepository {
       throw new Error(`source_document_not_found_or_already_retired: ${sourceDocumentId}`);
     }
     return db.sourceDocument.findFirst({ where: { id: sourceDocumentId } }) as Promise<SourceDocument>;
+  }
+
+  public async findActiveSourceDocumentsByIds(
+    scope: AccountingScope,
+    ids: readonly string[],
+    tx?: Prisma.TransactionClient,
+  ): Promise<SourceDocument[]> {
+    if (ids.length === 0) return [];
+    return (tx ?? prisma).sourceDocument.findMany({
+      where: { id: { in: [...ids] }, ...accountingScopeWhere(scope), deletedAt: null },
+    });
   }
 }

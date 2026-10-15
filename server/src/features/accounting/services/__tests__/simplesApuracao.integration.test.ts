@@ -163,6 +163,59 @@ describe('itens 19–21 — registro do DAS, provisão, substituição', () => {
   });
 });
 
+// BE-INCR-SOURCE-DOCUMENT-UPLOAD itens 6–7, 11 (F-SD-4 a, F-SD-8 a, F-SD-9 a) — o PDF do DAS. Estado herdado: o DAS
+// vigente de 2026-06 é o '…0002' de R$ 5.280,00 (bloco anterior), sem documento.
+describe('PDF do DAS — validação, anexo ao DAS já registrado e leitura', () => {
+  const enviar = async (sourceType: string, unitId = UNIT) =>
+    (
+      await request(app)
+        .post('/api/accounting/source-documents')
+        .set(authHeader(user))
+        .field('unitId', unitId)
+        .field('sourceType', sourceType)
+        .attach('file', Buffer.from('%PDF-1.4 DAS'), { filename: 'das-2026-06.pdf', contentType: 'application/pdf' })
+    ).body.data as { id: string; attachment: { id: string; fileName: string } };
+  const mesmoDas = (sourceDocumentId?: string) => das('2026-06', { numeroDocumento: '07202617000000002', valorCents: 528_000, ...(sourceDocumentId ? { sourceDocumentId } : {}) });
+  const vigente = () => prisma.simplesApuracao.findFirstOrThrow({ where: { userId: user.id, competencia: '2026-06', status: 'CONFIRMED' } });
+  const anexados = () => prisma.auditEvent.findMany({ where: { eventType: 'tax.simples_das.documento_anexado' }, orderBy: { createdAt: 'asc' } });
+
+  it('F-SD-4: SD inexistente, de outra unidade, de outro tipo ou retirado = 404 antes de gravar', async () => {
+    const antes = await vigente();
+    const retirado = await enviar('tax.simples.das');
+    await prisma.sourceDocument.update({ where: { id: retirado.id }, data: { deletedAt: new Date() } });
+    for (const id of ['nao-existe', (await enviar('tax.simples.das', 'outra-unidade')).id, (await enviar('tax.simples.historico')).id, retirado.id]) {
+      expect((await mesmoDas(id)).status).toBe(404);
+      // Também no caminho do registro novo (outro número): nada é gravado.
+      expect((await das('2026-06', { numeroDocumento: '07202617000000009', valorCents: 528_000, sourceDocumentId: id })).status).toBe(404);
+    }
+    expect(await vigente()).toEqual(antes);
+    expect(await anexados()).toHaveLength(0);
+  });
+
+  it('F-SD-8 + F-SD-9: o mesmo DAS de novo com o PDF anexa (sem linha nova), audita e a visão traz o documento', async () => {
+    const linhas = await prisma.simplesApuracao.count({ where: { userId: user.id } });
+    const pdf1 = await enviar('tax.simples.das');
+    const r = await mesmoDas(pdf1.id);
+    expect(r.status).toBe(200);
+    expect(r.body.data.dasOficial.documento).toEqual({ sourceDocumentId: pdf1.id, attachmentId: pdf1.attachment.id, fileName: pdf1.attachment.fileName });
+    const v = await vigente();
+    expect(v.sourceDocumentId).toBe(pdf1.id);
+    expect(await prisma.simplesApuracao.count({ where: { userId: user.id } })).toBe(linhas);
+    expect(JSON.parse((await anexados())[0].payload)).toEqual({ apuracaoId: v.id, competencia: '2026-06', sourceDocumentId: pdf1.id });
+
+    // Trocar o PDF: o evento leva o anterior. Sem sourceDocumentId (ou o mesmo) = mantém, sem evento.
+    const pdf2 = await enviar('tax.simples.das');
+    expect((await mesmoDas(pdf2.id)).body.data.dasOficial.documento.sourceDocumentId).toBe(pdf2.id);
+    expect(JSON.parse((await anexados())[1].payload)).toEqual({ apuracaoId: v.id, competencia: '2026-06', sourceDocumentId: pdf2.id, anteriorSourceDocumentId: pdf1.id });
+    expect((await mesmoDas()).body.data.dasOficial.documento.sourceDocumentId).toBe(pdf2.id);
+    await mesmoDas(pdf2.id);
+    expect(await anexados()).toHaveLength(2);
+    // GET da apuração (item 18) devolve o mesmo documento.
+    const get = await request(app).get(`${S}/apuracoes/2026-06?unitId=${UNIT}`).set(authHeader(user));
+    expect(get.body.data.dasOficial.documento.sourceDocumentId).toBe(pdf2.id);
+  });
+});
+
 describe('lacuna 1 do PR-2 — cancelamento e devolução no subrazão', () => {
   it('devolução: linhas negativas no dia da devolução; tie-out do mês fecha com o D 3.2', async () => {
     const v = await venda('2026-07-05', 1_000);

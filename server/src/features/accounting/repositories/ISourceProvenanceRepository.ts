@@ -3,6 +3,8 @@ import type { AccountingScope } from '../scope/AccountingScope';
 
 /** Input for creating a SourceDocument (the origin descriptor). */
 export interface CreateSourceDocumentInput {
+  /** BE-INCR-SOURCE-DOCUMENT-UPLOAD: id gerado antes (o caminho do arquivo em disco é por id do SD); omitido = cuid. */
+  id?: string;
   userId: string;
   unitId: string;
   sourceType: string;
@@ -74,4 +76,14 @@ export interface ISourceProvenanceRepository {
     sourceDocumentId: string,
     tx?: Prisma.TransactionClient,
   ): Promise<SourceDocument>;
+
+  /**
+   * BE-INCR-SOURCE-DOCUMENT-UPLOAD — os SourceDocuments ATIVOS (deletedAt null) do escopo entre os ids dados.
+   * Id de outro escopo, retirado ou inexistente simplesmente não volta.
+   */
+  findActiveSourceDocumentsByIds(
+    scope: AccountingScope,
+    ids: readonly string[],
+    tx?: Prisma.TransactionClient,
+  ): Promise<SourceDocument[]>;
 }

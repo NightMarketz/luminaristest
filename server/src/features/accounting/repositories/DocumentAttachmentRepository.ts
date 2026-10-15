@@ -57,6 +57,17 @@ export class DocumentAttachmentRepository implements IDocumentAttachmentReposito
     });
   }
 
+  public async findActiveByIds(
+    scope: AccountingScope,
+    ids: readonly string[],
+    tx?: Prisma.TransactionClient,
+  ): Promise<DocumentAttachment[]> {
+    if (ids.length === 0) return [];
+    return (tx ?? prisma).documentAttachment.findMany({
+      where: { id: { in: [...ids] }, ...accountingScopeWhere(scope), deletedAt: null },
+    });
+  }
+
   public async softDelete(
     scope: AccountingScope,
     id: string,

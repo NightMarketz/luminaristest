@@ -83,6 +83,37 @@ describe('itens 10–11 — histórico pré-adoção', () => {
     expect(r.status).toBe(404);
   });
 
+  // BE-INCR-SOURCE-DOCUMENT-UPLOAD itens 6–7, 11 (F-SD-3 a, F-SD-9 a): o id do upload é aceito e a view traz o documento.
+  it('documento enviado pelo POST /source-documents: aceito no PUT e exposto na view; outro tipo, outra unidade ou retirado = 404', async () => {
+    const enviar = (unitId: string, sourceType: string) =>
+      request(app)
+        .post('/api/accounting/source-documents')
+        .set(authHeader(user))
+        .field('unitId', unitId)
+        .field('sourceType', sourceType)
+        .attach('file', Buffer.from('%PDF-1.4 extrato'), { filename: 'extrato-2025-08.pdf', contentType: 'application/pdf' });
+    const doc = (await enviar(UNIT, 'tax.simples.historico')).body.data;
+    const put = (sourceDocumentId: string) => request(app).put(`${S}/historico/2025-08`).set(authHeader(user)).send({ unitId: UNIT, receitaBrutaCents: 10, sourceDocumentId });
+
+    const r = await put(doc.id);
+    expect(r.status).toBe(200);
+    const documento = { sourceDocumentId: doc.id, attachmentId: doc.attachment.id, fileName: doc.attachment.fileName };
+    expect(r.body.data).toMatchObject({ sourceDocumentId: doc.id, documento });
+    expect((await f().getSimplesEntradasService().obterHistorico(scope(), '2025-08')).documento).toEqual(documento);
+
+    expect((await put((await enviar(UNIT, 'tax.simples.das')).body.data.id)).status).toBe(404);
+    expect((await put((await enviar('outra-unidade', 'tax.simples.historico')).body.data.id)).status).toBe(404);
+    await prisma.sourceDocument.update({ where: { id: doc.id }, data: { deletedAt: new Date() } });
+    expect((await put(doc.id)).status).toBe(404);
+    // Retirado depois de gravado: a view não oferece mais o arquivo.
+    expect((await f().getSimplesEntradasService().obterHistorico(scope(), '2025-08')).documento).toBeNull();
+  });
+
+  it('histórico sem documento: documento = null', async () => {
+    const r = await request(app).put(`${S}/historico/2025-09`).set(authHeader(user)).send({ unitId: UNIT, receitaBrutaCents: 10 });
+    expect(r.body.data.documento).toBeNull();
+  });
+
   it('RBT12_INCOMPLETO lista os meses da janela sem histórico nem subrazão; o subrazão conta como declarado', async () => {
     for (let m = 7; m <= 12; m++) await f().getSimplesEntradasService().upsertHistorico(scope(), `2025-${String(m).padStart(2, '0')}`, { unitId: UNIT, receitaBrutaCents: 100 });
     for (let m = 1; m <= 4; m++) await f().getSimplesEntradasService().upsertHistorico(scope(), `2026-0${m}`, { unitId: UNIT, receitaBrutaCents: 100 });

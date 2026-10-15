@@ -30,6 +30,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'entry.source_recorded': ['journalEntryId', 'sourceDocumentId', 'externalRef', 'sourceType'],
   // BE-INCR-DFE (nó X10b, PR-3, F-DFE-18 a) — soft-delete de SourceDocument (ex.: cancelamento).
   'entry.source_retired': ['sourceDocumentId', 'sourceType', 'motivoCodigo'],
+  // BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-7 (a): SD criado a partir de arquivo, sem lançamento. Só ids/hash/MIME/tamanho —
+  // nunca o nome do arquivo nem externalRef/description (texto livre do usuário).
+  'source_document.uploaded': ['sourceDocumentId', 'attachmentId', 'sourceType', 'mimeType', 'sizeBytes', 'sha256'],
   'account.created': ['code', 'name', 'nature', 'acceptsEntries'],
   'account.deleted': ['code'],
   // GOV-CONTADOR (BRIEF item 16): `assignmentId` quando há contador responsável ativo — evento antigo não tem a
@@ -209,6 +212,8 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // como string; o número do DAS e a memória ficam FORA.
   'tax.simples_das.registrado': ['apuracaoId', 'competencia', 'valorOficialCents', 'totalCalculadoCents', 'divergenciaCents'],
   'tax.simples_das.substituido': ['apuracaoId', 'competencia', 'valorOficialCents', 'totalCalculadoCents', 'divergenciaCents', 'supersedesId'],
+  // BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-8 (a): PDF anexado a DAS já registrado (anteriorSourceDocumentId ausente quando não havia).
+  'tax.simples_das.documento_anexado': ['apuracaoId', 'competencia', 'sourceDocumentId', 'anteriorSourceDocumentId'],
   // BE-INCR-LEGAL-PARAMS PR-1 (item 8; emenda §9 L-5: corrente da plataforma) — coeficiente de lei, sem PII.
   'legal_parameter.proposed': ['legalParameterId', 'tabela', 'chave', 'discriminador', 'valorInt', 'valorTexto', 'vigenteDesde', 'vigenteAte', 'supersedesId'],
   'legal_parameter.published': ['legalParameterId', 'tabela', 'chave', 'discriminador', 'vigenteDesde', 'vigenteAte', 'supersedesId'],

@@ -19,7 +19,7 @@
  *              teste: simplesApuracao.integration.test.ts › "item 20: gate dentro da tx — entrada mudou entre o cálculo e o registro ⇒ 409, nada gravado"
  */
 import type { Prisma, SimplesApuracao } from 'generated/prisma';
-import { ConflictError, ForbiddenError, ValidationError } from '../../../lib/errors';
+import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import { ParametroLegalAusenteError, linhaLegalVigente, type LegalParameterTabela } from '../../legalParameters/models/legalParameter';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
@@ -46,11 +46,15 @@ import type { PostingService } from './PostingService';
 import type { ReceitaFiscalService } from './ReceitaFiscalService';
 import type { SimplesEntradasService } from './SimplesEntradasService';
 import { excluirDoMotivo, type AlertaSimples, type CodigoAlertaSimples, type SimplesDasRegistro, type SimplesSegregacaoParcela } from '../dtos/SimplesDto';
+import { SOURCE_TYPE_SIMPLES_DAS, type DocumentoRef } from '../dtos/SourceDocumentUploadDto';
+import type { SourceDocumentUploadService } from './SourceDocumentUploadService';
 
 export const SIMPLES_DAS_PROVISION_SOURCE_TYPE = 'simples.das.provision';
 /** BRIEF item 24: SIMPLES_DAS_REGISTRADO / SIMPLES_DAS_SUBSTITUIDO, no padrão de nome da allowlist. */
 export const SIMPLES_DAS_REGISTRADO = 'tax.simples_das.registrado';
 export const SIMPLES_DAS_SUBSTITUIDO = 'tax.simples_das.substituido';
+/** BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-8 (a): documento anexado a um DAS já registrado (ramo idempotente). */
+export const SIMPLES_DAS_DOCUMENTO_ANEXADO = 'tax.simples_das.documento_anexado';
 
 const TABELAS: readonly LegalParameterTabela[] = ['SIMPLES_ANEXO_FAIXA', 'SIMPLES_ANEXO_REPARTICAO', 'SIMPLES_TETO_ISS', 'SIMPLES_ENQUADRAMENTO', 'SIMPLES_LIMITE'];
 
@@ -63,7 +67,8 @@ const BLOQUEANTES: readonly CodigoAlertaSimples[] = ['TIEOUT_DIVERGENTE', 'RBT12
 /** BRIEF §3 `ApuracaoSimples` — ME/EPP (o MEI é `ApuracaoMei`, PR-4). */
 export interface ApuracaoSimples extends Omit<ApuracaoCalculada, 'mesesFaltantes'> {
   espelho: EspelhoAtividade[];
-  dasOficial: { id: string; numeroDocumento: string; valorCents: number; vencimento: string; provisaoPendente: boolean } | null;
+  /** `documento`: BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-9 (a) — o PDF do DAS para o FE baixar pelo GET /attachments/:id. */
+  dasOficial: { id: string; numeroDocumento: string; valorCents: number; vencimento: string; provisaoPendente: boolean; documento: DocumentoRef } | null;
   divergenciaCents: number | null;
   tieOut: { subrazaoCents: number; razaoCents: number; ok: boolean };
   alertas: AlertaSimples[];
@@ -161,7 +166,7 @@ interface MontagemMei {
 export class SimplesApuracaoService {
   constructor(
     private readonly repo: ISimplesApuracaoRepository,
-    private readonly entradasRepo: Pick<ISimplesEntradasRepository, 'findHistorico' | 'findHistoricoTx' | 'findSegregacao' | 'findParceriaMesmoRemovida'>,
+    private readonly entradasRepo: Pick<ISimplesEntradasRepository, 'findHistorico' | 'findHistoricoTx' | 'findSegregacao' | 'findParceriaMesmoRemovida' | 'sourceDocumentExists'>,
     private readonly receitaRepo: Pick<IReceitaFiscalRepository, 'findByCompetencia' | 'somaPorCompetencia'>,
     private readonly receitaFiscal: Pick<ReceitaFiscalService, 'tieOut'>,
     private readonly entradas: Pick<SimplesEntradasService, 'segregacaoDaCompetencia'>,
@@ -176,6 +181,8 @@ export class SimplesApuracaoService {
     private readonly serviceFiscalRepo: Pick<IServiceFiscalProfileRepository, 'listByScope'>,
     /** SIMPLES-PISO-ANEXO-XI bloco 1 (F-PI-3 b): benefício municipal de ISS na retenção e na parcela ISS do DAS. */
     private readonly beneficioRepo: Pick<IIssBeneficioMunicipalRepository, 'listByScope'>,
+    /** BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-9 (a): o documento do DAS na visão. */
+    private readonly documentos: Pick<SourceDocumentUploadService, 'documentosPorId'>,
   ) {}
 
   /** Item 17 — POST …/apuracoes/:competencia/calcular: calcula sob demanda, nada é gravado (B-2 → a). */
@@ -196,8 +203,16 @@ export class SimplesApuracaoService {
    */
   async registrarDas(scope: AccountingScope, competencia: string, input: SimplesDasRegistro): Promise<ApuracaoSimples | ApuracaoMei> {
     this.assertManage(scope);
+    // BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-4 (a) + F-SD-3 (a): o documento tem de ser um SD ativo desta unidade com
+    // proveniência de DAS — antes da tx (mesma checagem do histórico; retirado/outra unidade/outro tipo = 404).
+    const sourceDocumentId = input.sourceDocumentId ?? null;
+    if (sourceDocumentId && !(await this.entradasRepo.sourceDocumentExists(scope, sourceDocumentId, SOURCE_TYPE_SIMPLES_DAS))) {
+      throw new NotFoundError(`Documento de origem '${sourceDocumentId}' não encontrado nesta unidade.`);
+    }
     const vigente = await this.repo.findConfirmada(scope, competencia);
     if (vigente && vigente.numeroDocumento === input.numeroDocumento && vigente.valorOficialCents === BigInt(input.valorCents)) {
+      // F-SD-8 (a): o ramo idempotente aceita o documento e grava se mudou (ausente/null = mantém o atual).
+      if (sourceDocumentId && sourceDocumentId !== vigente.sourceDocumentId) await this.anexarDocumento(scope, vigente, sourceDocumentId);
       await this.provisionar(scope, vigente, null);
       return this.calcular(scope, competencia);
     }
@@ -227,7 +242,7 @@ export class SimplesApuracaoService {
           valorOficialCents: valorOficial,
           numeroDocumento: input.numeroDocumento,
           vencimento: input.vencimento,
-          sourceDocumentId: input.sourceDocumentId ?? null,
+          sourceDocumentId,
           totalCalculadoCents: total,
           divergenciaCents: valorOficial - total,
           memoria: JSON.parse(JSON.stringify({ ...m.calculada, alertas: m.alertas })) as Prisma.InputJsonValue,
@@ -254,6 +269,34 @@ export class SimplesApuracaoService {
     });
     await this.provisionar(scope, nova, anterior);
     return this.calcular(scope, competencia);
+  }
+
+  /** F-SD-8 (a): troca o documento do DAS vigente + `tax.simples_das.documento_anexado`, na mesma tx. */
+  private async anexarDocumento(scope: AccountingScope, vigente: SimplesApuracao, sourceDocumentId: string): Promise<void> {
+    await this.repo.runTransaction(async (tx) => {
+      if ((await this.repo.setSourceDocumentId(scope, vigente.id, sourceDocumentId, tx)) === 0) {
+        throw new ConflictError('Outra apuração foi registrada para esta competência ao mesmo tempo — tente de novo.');
+      }
+      await this.auditService.append(tx, scope, {
+        actorUserId: scope.actorUserId,
+        eventType: SIMPLES_DAS_DOCUMENTO_ANEXADO,
+        targetType: 'simples_apuracao',
+        targetId: vigente.id,
+        payload: {
+          apuracaoId: vigente.id,
+          competencia: vigente.competencia,
+          sourceDocumentId,
+          ...(vigente.sourceDocumentId ? { anteriorSourceDocumentId: vigente.sourceDocumentId } : {}),
+        },
+      });
+    });
+  }
+
+  /** F-SD-9 (a): o `dasOficial` da visão, com o documento resolvido. */
+  private async dasOficial(scope: AccountingScope, das: SimplesApuracao | null): Promise<ApuracaoSimples['dasOficial']> {
+    if (!das) return null;
+    const documento = das.sourceDocumentId ? ((await this.documentos.documentosPorId(scope, [das.sourceDocumentId])).get(das.sourceDocumentId) ?? null) : null;
+    return { id: das.id, numeroDocumento: das.numeroDocumento, valorCents: Number(das.valorOficialCents), vencimento: das.vencimento, provisaoPendente: das.provisaoEntryId === null, documento };
   }
 
   // ---- montagem da entrada (itens 17, 23) ----
@@ -659,9 +702,7 @@ export class SimplesApuracaoService {
       receitaPaCents: Number(m.receitaPaCents),
       receitaAcumuladaAnoCents: Number(m.acumulado),
       limiteAnoCents: Number(m.limite),
-      dasOficial: das
-        ? { id: das.id, numeroDocumento: das.numeroDocumento, valorCents: Number(das.valorOficialCents), vencimento: das.vencimento, provisaoPendente: das.provisaoEntryId === null }
-        : null,
+      dasOficial: await this.dasOficial(scope, das),
       divergenciaCents: das ? Number(das.valorOficialCents) - m.calculada.totalCalculadoCents : null,
       alertas: m.alertas,
     };
@@ -829,9 +870,7 @@ export class SimplesApuracaoService {
     return {
       ...calc,
       espelho: espelhoPgdas(m.entrada, m.calculada.atividades),
-      dasOficial: das
-        ? { id: das.id, numeroDocumento: das.numeroDocumento, valorCents: Number(das.valorOficialCents), vencimento: das.vencimento, provisaoPendente: das.provisaoEntryId === null }
-        : null,
+      dasOficial: await this.dasOficial(scope, das),
       divergenciaCents: das ? Number(das.valorOficialCents) - m.calculada.totalCalculadoCents : null,
       tieOut: m.tieOut,
       alertas: m.alertas,
