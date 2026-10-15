@@ -4430,7 +4430,9 @@
  *         F-BP-2(b): sem issue bloqueante o validador determinístico aprova e a nova versão nasce
  *         'Active' (a Active anterior, se houver, vira 'Superseded' atomicamente na mesma tx);
  *         com bloqueante, a versão nasce 'Draft' e a Active vigente não é tocada. bindingVersion
- *         é sempre monotônico — recompilar NUNCA edita uma versão existente (invariante 4).
+ *         é sempre monotônico — recompilar NUNCA edita uma versão existente (invariante 4). LAC-B: binding
+ *         Active de OUTRO setor na unidade ⇒ 409 BINDING_SECTOR_CONFLICT, nada gravado; depois de 'Active' os
+ *         mappers recarregam — falha ⇒ 200 com warnings[ACCOUNTING_SYNC_RELOAD_FAILED].
  *       tags: [AccountingBinding]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -4443,6 +4445,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '409': { description: "BINDING_SECTOR_CONFLICT — a unidade já tem binding Active de outro setor" }
  *
  *   /api/accounting-binding/validate:
  *     post:

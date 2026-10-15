@@ -70,6 +70,8 @@ jest.mock('../../lib/prisma', () => ({
 jest.mock('../../lib/factory', () => ({
   __esModule: true,
   ApplicationFactory: { getInstance: () => getInstance() },
+  // LAC-B: o CLI recarrega os mappers depois de instalar (`runtime/mapperReload.ts` lê `getFactory()`).
+  getFactory: () => ({ initializeAccountingSyncFromBindings: async () => {} }),
 }));
 
 import { parseArgs, runCli } from '../activateAccountingBindingCli';

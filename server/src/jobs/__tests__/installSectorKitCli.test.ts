@@ -85,6 +85,6 @@ describe('installSectorKitCli', () => {
     installed = doSalao;
     await expect(runCli(argv('aestheticClinic'))).resolves.toBe(1);
     expect(compile).not.toHaveBeenCalled();
-    expect(String((console.error as jest.Mock).mock.calls[0][0])).toMatch(/um kit por unidade/);
+    expect(String((console.error as jest.Mock).mock.calls[0][0])).toMatch(/um setor por unidade/) // LAC-B: o CLI liga exclusiveSector (409 BINDING_SECTOR_CONFLICT);
   });
 });

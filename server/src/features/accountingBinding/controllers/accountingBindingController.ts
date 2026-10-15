@@ -70,6 +70,32 @@ export function createAccountingBindingController(deps: AccountingBindingControl
         chart: parsed.data.chart,
         eventBindings: parsed.data.eventBindings,
       });
+      // LAC-B (GAP-MAP "2º setor Active pelo POST /compile e pelo CLI"; dono, chat, 2026-10-14): a mesma recarga do
+      // activate-default depois de `Active`. Falha ⇒ 200 com o aviso ao lado do resultado (binding segue Active).
+      if (result.status === 'Active') {
+        try {
+          await reloadAccountingMappers();
+        } catch (error) {
+          logger.error('Recarga dos mappers contábeis falhou depois do compile', {
+            unitId: scope.unitId,
+            bindingVersion: result.binding.bindingVersion,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          return res.json({
+            success: true,
+            data: {
+              ...result,
+              warnings: [
+                {
+                  code: 'ACCOUNTING_SYNC_RELOAD_FAILED',
+                  message:
+                    'O binding foi ativado, mas a recarga dos mappers contábeis falhou: as vendas desta unidade só passam a ser lançadas depois do próximo reinício do servidor.',
+                },
+              ],
+            },
+          });
+        }
+      }
       return res.json({ success: true, data: result });
     } catch (error) {
       return handleApiError(error, res);
