@@ -27,9 +27,7 @@ export const ReconcilePendingReasonCode = z.enum([
   'PACKAGE_CONSUMPTION_PENDING', // transitório — resolve quando o débito do consumo aplicar
   'PACKAGE_ORIGIN_REVERSED', // poison — resolve só com a correção do E-1
   'PACKAGE_EXPIRY_NFSE_PENDING', // transitório — falta dado para a NFS-e do vencido; o vencimento e o lançamento ficam
-  // poison até corrigir quem emite — nenhum kit declara o evento (KIT-SETOR PR-6 item 47). Skip-listado por decisão do
-  // dono (D-2026-10-14-I4-I5-LACUNAS-EXECUCAO L-2).
-  'UNKNOWN_EVENT_KEY',
+  'UNKNOWN_EVENT_KEY', // poison até corrigir quem emite — nenhum kit declara o evento (KIT-SETOR PR-6 item 47); skip-listado por decisão do dono (D-2026-10-14-I4-I5-LACUNAS-EXECUCAO L-2)
 ]);
 export type ReconcilePendingReasonCodeValue = z.infer<typeof ReconcilePendingReasonCode>;
 

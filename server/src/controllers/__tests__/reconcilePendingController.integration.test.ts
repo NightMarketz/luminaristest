@@ -107,6 +107,18 @@ describe('reconcilePendingController — contrato HTTP em SQLite real (tenancy, 
     expect(res.body.data.items.every((i: { reasonCode: string }) => i.reasonCode === 'NO_MAPPER_FOR_UNIT')).toBe(true);
   });
 
+  // D-2026-10-14-I4-I5-LACUNAS-EXECUCAO L-2: o valor NOVO do enum passa pelo DTO de query (antes deste PR, 400).
+  it('GET ?reasonCode=UNKNOWN_EVENT_KEY → 200 com a pendência do evento órfão', async () => {
+    const orfao = await criarPendencia(donoA.id, 'sale-unknown-event-http', 'UNKNOWN_EVENT_KEY');
+
+    const res = await request(app)
+      .get('/api/reconcile-pending')
+      .set(authHeader(donoA))
+      .query({ unitId: UNIT, reasonCode: 'UNKNOWN_EVENT_KEY' });
+    expect(res.status).toBe(200);
+    expect(res.body.data.items.map((i: { id: string }) => i.id)).toEqual([orfao.id]);
+  });
+
   it('inquilino (POST /rescan): dono B não toca a pendência do dono A — attempted:0, nada gravado do lado de A', async () => {
     const pendA = await criarPendencia(donoA.id, 'sale-tenant-http-rescan-a');
 
