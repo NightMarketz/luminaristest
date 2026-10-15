@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiRefreshCw } from 'react-icons/fi';
 import {
   RECONCILE_PENDING_REASON_CODES,
@@ -13,6 +13,12 @@ import { Field, inputClass } from './SpedGenerationPanel';
 
 const isForbidden = (err: unknown) => !!err && typeof err === 'object' && (err as { status?: number }).status === 403;
 const when = (iso: string) => new Date(iso).toLocaleString('pt-BR');
+
+/** Rótulo do motivo; um código que esta tela ainda não conhece (deploy fora de sincronia) aparece cru, sem derrubar a aba. */
+function reasonLabel(t: (key: string, fallback: string) => string, code: string): string {
+  const known = (REASON_LABELS as Record<string, { key: string; fallback: string } | undefined>)[code];
+  return known ? t(known.key, known.fallback) : code;
+}
 
 /**
  * Rótulo por motivo (item 18–19). Fechado sobre o enum do contrato gerado: um código novo sem rótulo quebra o tsc.
@@ -69,9 +75,12 @@ export function ReconcilePendingPanel({ unitId }: ReconcilePendingPanelProps) {
   const [error, setError] = useState<string | null>(null);
   const [forbidden, setForbidden] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Só a requisição mais recente escreve na lista: resposta de filtro/página anterior é descartada (review do #686, B).
+  const lastRequest = useRef(0);
 
   const fetchPage = useCallback(
     async (cursor?: string) => {
+      const requestId = ++lastRequest.current;
       const q = {
         unitId,
         ...(reasonCode ? { reasonCode } : {}),
@@ -80,14 +89,15 @@ export function ReconcilePendingPanel({ unitId }: ReconcilePendingPanelProps) {
       };
       try {
         const page = await reconcilePendingService.list(q);
+        if (requestId !== lastRequest.current) return;
         setItems((prev) => (cursor ? [...prev, ...page.items] : page.items));
         setNextCursor(page.nextCursor);
         setError(null);
+        setLoaded(true);
       } catch (err: unknown) {
+        if (requestId !== lastRequest.current) return;
         if (isForbidden(err)) setForbidden(true);
         setError(resolveErrorWithCode(err, tRef.current('pendencias.error.load', 'Erro ao carregar as pendências.')).message);
-      } finally {
-        setLoaded(true);
       }
     },
     [unitId, reasonCode, includeResolved, tRef],
@@ -169,7 +179,7 @@ export function ReconcilePendingPanel({ unitId }: ReconcilePendingPanelProps) {
 
       {errorBox}
 
-      {loaded && items.length === 0 ? (
+      {loaded && !error && items.length === 0 ? (
         <div className="py-6 text-center text-sm text-neutral-500">{t('pendencias.empty', 'Nenhuma pendência nesta unidade.')}</div>
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-neutral-800">
@@ -191,7 +201,7 @@ export function ReconcilePendingPanel({ unitId }: ReconcilePendingPanelProps) {
                   <td className={`${td} font-mono`}>{it.sourceType}</td>
                   <td className={`${td} font-mono`}>{it.sourceId}</td>
                   <td className={td}>
-                    {t(REASON_LABELS[it.reasonCode].key, REASON_LABELS[it.reasonCode].fallback)}
+                    {reasonLabel(t, it.reasonCode)}
                     {it.resolvedAt && (
                       <div className="mt-1 text-emerald-300">
                         {t('pendencias.resolvedAt', 'Resolvida em {{when}}', { when: when(it.resolvedAt) })}

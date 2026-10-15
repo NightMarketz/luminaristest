@@ -61,6 +61,7 @@ describe('ReconcilePendingPanel', () => {
     vi.mocked(reconcilePendingService.list).mockResolvedValue({ items: [item('p2', { reasonCode: 'FAILED' })], nextCursor: null });
     fireEvent.change(screen.getByLabelText('Motivo'), { target: { value: 'FAILED' } });
     await screen.findByTestId('pending-p2');
+    expect(screen.queryByTestId('pending-p1')).not.toBeInTheDocument(); // filtro novo SUBSTITUI a lista, não acumula
     expect(reconcilePendingService.list).toHaveBeenLastCalledWith({ unitId: 'u1', reasonCode: 'FAILED' });
 
     vi.mocked(reconcilePendingService.list).mockResolvedValue({
@@ -94,6 +95,59 @@ describe('ReconcilePendingPanel', () => {
     expect(await screen.findByText('Nenhuma pendência nesta unidade.')).toBeInTheDocument();
     expect(reconcilePendingService.rescan).toHaveBeenCalledWith({ unitId: 'u1' });
     expect(notify).toHaveBeenCalledWith(expect.stringMatching(/1 tentada.*1 resolvida.*0 ainda pendente/), 'success', expect.any(String));
+  });
+
+  // Review independente do #686 (achado B): resposta velha nunca entra na lista do filtro novo.
+  it('"Carregar mais" em voo + troca de filtro: a página velha é descartada', async () => {
+    vi.mocked(reconcilePendingService.list).mockResolvedValueOnce({ items: [item('a1')], nextCursor: 'a1' });
+    render(<ReconcilePendingPanel unitId="u1" />);
+    await screen.findByTestId('pending-a1');
+    let releaseOld!: (v: { items: ReconcilePendingItemViewDtoInput[]; nextCursor: string | null }) => void;
+    vi.mocked(reconcilePendingService.list)
+      .mockImplementationOnce(() => new Promise((r) => { releaseOld = r; }))
+      .mockResolvedValueOnce({ items: [item('f1', { reasonCode: 'FAILED' })], nextCursor: null });
+    fireEvent.click(screen.getByRole('button', { name: 'Carregar mais' }));
+    fireEvent.change(screen.getByLabelText('Motivo'), { target: { value: 'FAILED' } });
+    await screen.findByTestId('pending-f1');
+    releaseOld({ items: [item('a2')], nextCursor: 'a2' });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(screen.queryByTestId('pending-a2')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Carregar mais' })).not.toBeInTheDocument();
+  });
+
+  it('filtro A lento + filtro B rápido: a resposta de A não sobrescreve a de B', async () => {
+    render(<ReconcilePendingPanel unitId="u1" />);
+    await screen.findByTestId('pending-p1');
+    let releaseA!: (v: { items: ReconcilePendingItemViewDtoInput[]; nextCursor: string | null }) => void;
+    vi.mocked(reconcilePendingService.list)
+      .mockImplementationOnce(() => new Promise((r) => { releaseA = r; }))
+      .mockResolvedValueOnce({ items: [item('b1', { reasonCode: 'MAX_CENTS_EXCEEDED' })], nextCursor: null });
+    fireEvent.change(screen.getByLabelText('Motivo'), { target: { value: 'FAILED' } });
+    fireEvent.change(screen.getByLabelText('Motivo'), { target: { value: 'MAX_CENTS_EXCEEDED' } });
+    await screen.findByTestId('pending-b1');
+    releaseA({ items: [item('n1', { reasonCode: 'FAILED' })], nextCursor: null });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(screen.queryByTestId('pending-n1')).not.toBeInTheDocument();
+    expect(screen.getByTestId('pending-b1')).toBeInTheDocument();
+  });
+
+  // Achado C: código que a tela não conhece (deploy fora de sincronia) mostra o código cru, não derruba a aba.
+  it('motivo fora do enum conhecido mostra o código cru', async () => {
+    vi.mocked(reconcilePendingService.list).mockResolvedValue({
+      items: [item('x1', { reasonCode: 'CODIGO_FUTURO' as unknown as ReconcilePendingItemViewDtoInput['reasonCode'] })],
+      nextCursor: null,
+    });
+    render(<ReconcilePendingPanel unitId="u1" />);
+    const row = await screen.findByTestId('pending-x1');
+    expect(within(row).getByText('CODIGO_FUTURO')).toBeInTheDocument();
+  });
+
+  // Achado D: falha de carga não diz "nenhuma pendência".
+  it('erro de carga (não 403) mostra o erro e NÃO o estado vazio', async () => {
+    vi.mocked(reconcilePendingService.list).mockRejectedValue({ status: 500, error: 'Falhou no servidor.' });
+    render(<ReconcilePendingPanel unitId="u1" />);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Falhou no servidor.');
+    expect(screen.queryByText('Nenhuma pendência nesta unidade.')).not.toBeInTheDocument();
   });
 
   it('403 na lista mostra o aviso e esconde a tela', async () => {

@@ -536,7 +536,7 @@ export function AccountingView() {
       {/* ── Apuração (IRPJ/CSLL + PIS/Cofins) tab — FE-INCR-TAX-ASSESSMENT PR-1 ── */}
       {activeTab === 'apuracao' && unitId && <TaxAssessmentPanel unitId={unitId} />}
 
-      {activeTab === 'pendencias' && unitId && <ReconcilePendingPanel key={unitId} unitId={unitId} />}
+      {activeTab === 'pendencias' && unitId && <ReconcilePendingPanel key={`pendencias-${unitId}`} unitId={unitId} />}
 
       {/* ── New Entry Modal ────────────────────────────────────────────────── */}
       <JournalEntryModal
