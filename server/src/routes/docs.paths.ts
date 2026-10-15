@@ -7146,6 +7146,22 @@ export {};
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *
  *   /api/accounting/simples/historico/{competencia}:
+ *     get:
+ *       summary: Read the pre-adoption revenue/payroll of a month (BE-INCR-SIMPLES-GET-ENTRADAS item 1)
+ *       description: >-
+ *         O histórico gravado pelo PUT da mesma competência, na unidade. 404 - sem registro na competência (F-GE-1);
+ *         o FE trata como formulário em branco.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: competencia, required: true, schema: { type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$' } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'SimplesHistoricoView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
  *     put:
  *       summary: Upsert pre-adoption monthly gross revenue and payroll (BE-INCR-SIMPLES-NACIONAL PR-2, X14 items 10-11)
  *       description: >-
@@ -7177,6 +7193,22 @@ export {};
  *         '404': { $ref: '#/components/responses/NotFoundError' }
  *
  *   /api/accounting/simples/segregacao/{competencia}:
+ *     get:
+ *       summary: Read the manual revenue segregation of a month (BE-INCR-SIMPLES-GET-ENTRADAS item 2)
+ *       description: >-
+ *         As parcelas gravadas pelo PUT da mesma competência, com os tributos excluídos derivados do motivo. 404 - sem
+ *         registro na competência (F-GE-1).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: competencia, required: true, schema: { type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$' } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'SimplesSegregacaoView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
  *     put:
  *       summary: Upsert the manual revenue segregation of a month (X14 item 12)
  *       description: >-
