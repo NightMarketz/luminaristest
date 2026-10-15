@@ -83,6 +83,34 @@ export type SimplesDefisView = {
 | **F-DM-4** Doações eleitorais (item 9) | (a) fora até ler os campos na tela do PGDAS-D/DEFIS (o texto extraído só tem o título) · (b) modelar CNPJ + valor por analogia com o item 6 | **(a)**: não inventar campo sem fonte legível — vai a "Pendente de validação externa"  — ✅ ratificada |
 | **F-DM-5** Mudança de shape do GET | (a) `lucroContabilCents` vira objeto `lucroContabil` (quebra; o FE da DEFIS ainda não existe) · (b) mantém `lucroContabilCents` e acrescenta campos | **(a)**: não há consumidor no FE (grep vazio); evita dois campos para a mesma coisa  — ✅ ratificada |
 
+### 3.1 Emenda de execução (sessao-feature, 2026-10-15)
+
+**Autorização:** dono, chat, 2026-10-15: *"Executa o BE-INCR-SIMPLES-DEFIS-MANUAL — sessao-feature"*, com o item 9 condicionado a
+fonte oficial legível.
+
+- **Item 9 destravado (F-DM-4 → fonte achada):** os campos estão nas **telas** da p. 92 do manual oficial (texto extraído
+  não os traz; imagens extraídas do PDF e lidas na sessão). Mesmo arquivo do corpus: sha256 `e73b2bfc7ede…` =
+  `fontes-oficiais/MANIFEST.md:56`, URL `www8.receita.fazenda.gov.br/simplesnacional/arquivos/manual/manual_pgdas-d_2018_v4.pdf`.
+  Grupo repetível "Doações à Campanha Eleitoral": 9.1 CNPJ beneficiário · 9.2 tipo de beneficiário (Candidato a Cargo
+  Político Eletivo / Comitê Financeiro / Partido Político) · 9.3 forma de doação (Cheque / Outros Títulos de Crédito /
+  Transferência Eletrônica / Depósito em Espécie / Dinheiro / Bens / Serviços) · 9.4 valor (R$). Grau V. (O 2º campo ao
+  lado do CNPJ — provável nome preenchido pelo portal — não é digitado: fora.)
+- **ADI 4650** (STF, julgamento 17/09/2015; vale para as eleições de 2016 em diante —
+  `portal.stf.jus.br/noticias/verNoticiaDetalhe.asp?idConteudo=300015`) e Lei 9.504 art. 81 revogado pela Lei 13.165/2015
+  (`planalto.gov.br/ccivil_03/leis/l9504.htm`) — lidos pelo agente de pesquisa na sessão, grau V por ele, I aqui.
+
+Lacunas da execução, ratificadas no questionário (dono, 2026-10-15, todas na recomendação):
+
+| Fork | Decisão |
+|---|---|
+| **F-DM-6** `informar` quando `limiteIsencaoCents = null` | `true` — sem limite calculável, manda informar e o aviso diz por quê |
+| **F-DM-7** onde vai o alerta do F-DM-1 | `lucroContabil.avisos: string[]` (vazio quando o limite foi calculado) |
+| **F-DM-8** item 9: CNPJ repetido | pode repetir (uma linha por ocorrência: forma diferente ao mesmo beneficiário) |
+| **F-DM-9** item 9 × ADI 4650 | aceitar como o portal — a vedação é do ato de doar, não da declaração; sem 400 |
+
+Leitura sem fork (decidida pela fonte): o limite usa `PRESUNCAO_IRPJ` (32%/8%), não o 16% do art. 15 § 4º da Lei 9.249 —
+a redução é faculdade ("poderão utilizar", IN RFB 1.700 art. 33 § 7º) e só baixaria o limite da isenção.
+
 ## 4. Pendente de validação externa
 
 - **Item 9 (doações eleitorais) — nota de 12/10 (pesquisa colada pelo dono, conferida):** o STF declarou
