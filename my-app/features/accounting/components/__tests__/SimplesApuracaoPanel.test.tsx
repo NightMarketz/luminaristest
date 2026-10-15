@@ -22,8 +22,11 @@ vi.mock('../../../../lib/services/simples.service', async (orig) => ({
   simplesService: {
     obterApuracao: (...a: unknown[]) => obterApuracao(...a),
     calcularApuracao: (...a: unknown[]) => calcularApuracao(...a),
+    listParcerias: async () => [],
   },
 }));
+// PR-B: o sub-painel de parcerias (ano SIMPLES) procura a tabela `employees`.
+vi.mock('../../../../lib/services/dynamic-table.service', () => ({ DynamicTableService: { getTables: async () => ({ data: [] }) } }));
 
 const ANO = new Date().getFullYear();
 const comp = (m: number) => `${ANO}-${String(m).padStart(2, '0')}`;

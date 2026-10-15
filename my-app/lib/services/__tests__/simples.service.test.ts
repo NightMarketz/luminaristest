@@ -41,6 +41,36 @@ describe('simplesService', () => {
   });
 });
 
+describe('simplesService — escritas do PR-B', () => {
+  beforeEach(() => {
+    globalThis.fetch = vi.fn();
+    vi.mocked(globalThis.fetch).mockResolvedValue(okResponse({}));
+  });
+
+  it('registrarDas: PUT …/apuracoes/:competencia/das com o corpo', async () => {
+    await simplesService.registrarDas('2026-03', { unitId: 'u1', numeroDocumento: 'N', valorCents: 100, vencimento: '2026-04-20' });
+    const { url, init } = lastCall();
+    expect(url).toMatch(/\/accounting\/simples\/apuracoes\/2026-03\/das$/);
+    expect(init.method).toBe('PUT');
+    expect(JSON.parse(String(init.body))).toEqual({ unitId: 'u1', numeroDocumento: 'N', valorCents: 100, vencimento: '2026-04-20' });
+  });
+
+  it('parcerias: GET ?unitId, POST, PATCH /:id, DELETE /:id?unitId', async () => {
+    vi.mocked(globalThis.fetch).mockResolvedValue(okResponse([]));
+    await simplesService.listParcerias({ unitId: 'u1' });
+    expect(lastCall().url).toMatch(/\/accounting\/simples\/parcerias\?unitId=u1$/);
+    const body = { unitId: 'u1', profissionalContactId: 'e', cotaSalaoBp: 1, naturezaCota: 'GESTAO' as const, homologadoEm: '2026-01-01', sindicato: 'S', vigenteDesde: '2026-01-01', vigenteAte: null };
+    await simplesService.criarParceria(body);
+    expect(lastCall().init.method).toBe('POST');
+    await simplesService.atualizarParceria('p 1', body);
+    expect(lastCall().url).toMatch(/\/parcerias\/p%201$/);
+    expect(lastCall().init.method).toBe('PATCH');
+    await simplesService.removerParceria('p1', { unitId: 'u1' });
+    expect(lastCall().url).toMatch(/\/parcerias\/p1\?unitId=u1$/);
+    expect(lastCall().init.method).toBe('DELETE');
+  });
+});
+
 describe('companyFiscalProfileService', () => {
   beforeEach(() => {
     globalThis.fetch = vi.fn();

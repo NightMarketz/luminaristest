@@ -2924,6 +2924,7 @@
     },
     "calculando": "Calculating…",
     "calcular": "Calculate",
+    "cancelar": "Cancel",
     "col": {
       "aliquotaEfetiva": "Effective rate",
       "aliquotaNominal": "Nominal rate",
@@ -2940,6 +2941,25 @@
       "receita": "Revenue",
       "situacao": "Status",
       "tributos": "Taxes"
+    },
+    "das": {
+      "abrir": "Register official DAS",
+      "avisoCompleta": "Same number and amount as the DAS already registered: sending only completes the pending provision.",
+      "avisoSubstitui": "A DAS is already registered for this period: the new one replaces it and reverses its provision.",
+      "bloqueada": "The preview has an alert that blocks the DAS registration — resolve it first.",
+      "calculado": "Calculated (preview)",
+      "conflito": "The inputs changed after the calculation — we recalculated; check the preview and register again.",
+      "enviar": "Confirm registration",
+      "erro": {
+        "numeroObrigatorio": "Enter the document number (up to 40 characters).",
+        "registrar": "Could not register the DAS.",
+        "valorInvalido": "Invalid amount — use the format 1.234,56 (greater than zero).",
+        "vencimentoInvalido": "Invalid due date — pick a calendar date."
+      },
+      "precisaPrevia": "Calculate before registering: registration requires this session's preview.",
+      "reRegistrar": "Register another DAS",
+      "sugestaoVencimento": "Suggested due date: the 20th of the following month (LC 123 art. 21 III; CGSN Res. 140 art. 40). It is only a suggestion — check the DAS (extensions and non-business days are not in the calculation).",
+      "title": "Register official DAS"
     },
     "detail": {
       "atividades": "Activities",
@@ -3005,6 +3025,48 @@
       "REGIME_CAIXA": "Cash basis"
     },
     "nao": "No",
+    "parceria": {
+      "cota": "Salon share",
+      "cotaPct": "Salon share (%)",
+      "editar": "Edit",
+      "editarTitulo": "Edit partnership",
+      "erro": {
+        "cota": "Invalid salon share — between 0,01% and 99,99% (up to 2 decimals).",
+        "homologadoEm": "Enter the contract ratification date (required — Law 12.592 art. 1-A § 8).",
+        "natureza": "Choose the nature of the share.",
+        "profissional": "Choose the partner professional.",
+        "sindicato": "Enter the union that ratified it (up to 200 characters).",
+        "vigenteAte": "Invalid end of validity or before the start.",
+        "vigenteDesde": "Enter the start of validity (calendar date)."
+      },
+      "error": {
+        "load": "Error loading partnerships.",
+        "remove": "Could not remove the partnership.",
+        "save": "Could not save the partnership."
+      },
+      "homologacao": "Ratification",
+      "homologadoEm": "Ratified on",
+      "natureza": {
+        "ALUGUEL_BEM_MOVEL": "Movable property rental",
+        "GESTAO": "Management"
+      },
+      "naturezaCota": "Nature of the share",
+      "nova": "New partnership",
+      "profissional": "Professional",
+      "remover": "Remove",
+      "removerMsg": "The contract leaves the assessment from now on (it stays in the system history).",
+      "removerTitulo": "Remove partnership",
+      "salvar": "Save partnership",
+      "semEmployees": "Employees table not found: register the professionals before creating the partnership.",
+      "semFim": "no end",
+      "sindicato": "Union",
+      "subtitle": "Law 12.592 art. 1-A: the partner professional's share leaves the salon's revenue; without ratification the contract has no effect.",
+      "title": "Salon-partner partnerships",
+      "vazio": "No partnership registered for this unit.",
+      "vigencia": "Validity",
+      "vigenteAte": "Valid until (empty = no end)",
+      "vigenteDesde": "Valid from"
+    },
     "semPerfilAno": "Tax profile for {{ano}} not registered: register the year's tax profile to assess taxes.",
     "severity": {
       "INFO": "Informational",

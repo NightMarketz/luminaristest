@@ -1,13 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiAlertTriangle } from 'react-icons/fi';
 import { Modal } from '../../../components/ui/Modal';
-import { simplesService, type Apuracao } from '../../../lib/services/simples.service';
+import { simplesService, type AlertaSimples, type Apuracao, type SimplesDasRegistroInput } from '../../../lib/services/simples.service';
 import type { CompanyFiscalProfileView } from '../../../lib/services/companyFiscalProfile.service';
 import { formatCents } from '../lib/formatCents';
-import { resolveError } from '../lib/resolveError';
+import { resolveError, resolveErrorWithCode } from '../lib/resolveError';
 import { CONCORRENCIA_ANO, celulaCarregando, celulaDaApuracao, celulaDoErro, competenciasDoAno, emLotes, type CelulaSimples } from '../lib/simplesGrid';
 import { useAccountingT } from '../lib/useAccountingT';
 import { SimplesApuracaoDetalhe } from './SimplesApuracaoDetalhe';
+import { SimplesDasRegistro, type RegistroErro } from './SimplesDasRegistro';
+import { SimplesParceriasPanel } from './SimplesParceriasPanel';
+
+const statusDe = (err: unknown): unknown => (err && typeof err === 'object' ? (err as { status?: unknown }).status : undefined);
+/** 400 do registro traz os bloqueantes em `details.alertas` (SimplesApuracaoService.ts:211). */
+function alertasDoErro(err: unknown): AlertaSimples[] | undefined {
+  const d = err && typeof err === 'object' ? (err as { details?: unknown }).details : undefined;
+  const a = d && typeof d === 'object' ? (d as { alertas?: unknown }).alertas : undefined;
+  return Array.isArray(a) ? (a as AlertaSimples[]) : undefined;
+}
 
 export interface SimplesApuracaoPanelProps {
   unitId: string;
@@ -21,7 +31,8 @@ export interface SimplesApuracaoPanelProps {
 /**
  * Grade do ano do Simples Nacional (FE-INCR-SIMPLES PR-A, itens 1–7). 12 competências × uma coluna (DAS ou DAS-MEI,
  * P4-1 a); cada linha é um `GET /simples/apuracoes/{AAAA-MM}` com 3 em voo (F-FS-3 a); o detalhe abre em `Modal`
- * com o botão Calcular (nada gravado). `<table>` + `Modal`: o `GenericTable` é do DynamicTable (precedente do
+ * com o botão Calcular (nada gravado) e o registro do DAS oficial (PR-B item 9); parcerias abaixo da grade em ano
+ * SIMPLES (item 10, P4-4 a). `<table>` + `Modal`: o `GenericTable` é do DynamicTable (precedente do
  * `TaxAssessmentPanel`/`LegalParametersPanel`).
  */
 export function SimplesApuracaoPanel({ unitId, ano, perfil, onIrParaEnquadramentoMei }: SimplesApuracaoPanelProps) {
@@ -31,6 +42,11 @@ export function SimplesApuracaoPanel({ unitId, ano, perfil, onIrParaEnquadrament
   const [aberta, setAberta] = useState<string | null>(null);
   const [calcErro, setCalcErro] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // F-4 (a): prévia = o Calcular feito NESTA sessão, por competência.
+  const [previas, setPrevias] = useState<Record<string, Apuracao>>({});
+  const [regErro, setRegErro] = useState<RegistroErro | null>(null);
+  // 403 esconde as ações de gerir (item 16): a policy é do BE (`canManageTaxAssessment`).
+  const [podeGerir, setPodeGerir] = useState(true);
   // Só a última carga do ano aplica as respostas (troca de ano/unidade com GETs em voo).
   const anoReq = useRef(0);
 
@@ -42,6 +58,7 @@ export function SimplesApuracaoPanel({ unitId, ano, perfil, onIrParaEnquadrament
     const req = ++anoReq.current;
     const comps = competenciasDoAno(ano);
     setCelulas(comps.map(celulaCarregando));
+    setPrevias({});
     void emLotes(comps, CONCORRENCIA_ANO, async (comp) => {
       let c: CelulaSimples;
       try {
@@ -61,9 +78,48 @@ export function SimplesApuracaoPanel({ unitId, ano, perfil, onIrParaEnquadrament
     const req = anoReq.current;
     try {
       const a: Apuracao = await simplesService.calcularApuracao(comp, { unitId });
-      if (req === anoReq.current) aplicar(celulaDaApuracao(a));
+      if (req === anoReq.current) {
+        aplicar(celulaDaApuracao(a));
+        setPrevias((p) => ({ ...p, [comp]: a }));
+      }
     } catch (err: unknown) {
       if (req === anoReq.current) setCalcErro(resolveError(err, tRef.current('simples.error.calcular', 'Não foi possível calcular.')));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function registrar(comp: string, body: SimplesDasRegistroInput) {
+    setBusy(true);
+    setRegErro(null);
+    const req = anoReq.current;
+    try {
+      const a = await simplesService.registrarDas(comp, body);
+      if (req !== anoReq.current) return;
+      aplicar(celulaDaApuracao(a));
+      setPrevias((p) => {
+        const { [comp]: _usada, ...resto } = p;
+        return resto;
+      });
+    } catch (err: unknown) {
+      if (req !== anoReq.current) return;
+      const status = statusDe(err);
+      const { message } = resolveErrorWithCode(err, tRef.current('simples.das.erro.registrar', 'Não foi possível registrar o DAS.'));
+      if (status === 403) {
+        setPodeGerir(false);
+        setRegErro({ mensagem: message });
+      } else if (status === 409) {
+        setRegErro({ mensagem: tRef.current('simples.das.conflito', 'As entradas mudaram depois do cálculo — calculamos de novo; confira a prévia e registre outra vez.') });
+        setPrevias((p) => {
+          const { [comp]: _velha, ...resto } = p;
+          return resto;
+        });
+        setBusy(false);
+        await calcular(comp);
+        return;
+      } else {
+        setRegErro({ mensagem: message, alertas: alertasDoErro(err) });
+      }
     } finally {
       setBusy(false);
     }
@@ -106,7 +162,7 @@ export function SimplesApuracaoPanel({ unitId, ano, perfil, onIrParaEnquadrament
                 key={c.competencia}
                 data-testid={`simples-${c.competencia}`}
                 data-estado={c.estado}
-                onClick={() => { if (c.estado !== 'carregando') { setAberta(c.competencia); setCalcErro(null); } }}
+                onClick={() => { if (c.estado !== 'carregando') { setAberta(c.competencia); setCalcErro(null); setRegErro(null); } }}
                 className={c.estado === 'carregando' ? '' : 'cursor-pointer hover:bg-neutral-800/40'}
               >
                 <td className={`${td} font-mono text-neutral-200`}>{c.competencia}</td>
@@ -134,6 +190,8 @@ export function SimplesApuracaoPanel({ unitId, ano, perfil, onIrParaEnquadrament
         </table>
       </div>
 
+      {!mei && <SimplesParceriasPanel unitId={unitId} />}
+
       <Modal
         isOpen={!!celula}
         onClose={() => setAberta(null)}
@@ -159,6 +217,19 @@ export function SimplesApuracaoPanel({ unitId, ano, perfil, onIrParaEnquadrament
                 {busy ? t('simples.calculando', 'Calculando…') : t('simples.calcular', 'Calcular')}
               </button>
             </div>
+            {podeGerir && (celula.apuracao || previas[celula.competencia]) && (
+              <SimplesDasRegistro
+                key={celula.competencia}
+                unitId={unitId}
+                competencia={celula.competencia}
+                previa={previas[celula.competencia] ?? null}
+                vigente={celula.apuracao?.dasOficial ?? null}
+                busy={busy}
+                erro={regErro}
+                onRegistrar={(body) => void registrar(celula.competencia, body)}
+              />
+            )}
+            {!podeGerir && regErro && <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-red-300">{regErro.mensagem}</div>}
             {celula.apuracao && <SimplesApuracaoDetalhe apuracao={celula.apuracao} />}
           </div>
         )}
