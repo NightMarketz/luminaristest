@@ -326,7 +326,9 @@ o "depois" só o teste garante). Sem fork.
 - **Forks:**
   - **F-W3-1 · confirmação:** (a) resposta estruturada (JSON `{confirmed: boolean}` via `response_format`)
     + parse tolerante (`/^\s*true\b/i`) como fallback; (b) só regex tolerante. **Recomendação: (a)** —
-    elimina a classe; (b) é remendo. **RATIFICAÇÃO PENDENTE.**
+    elimina a classe; (b) é remendo. **RATIFICADO (c) — dono, 15/10:** botões + classificação estruturada
+    (3 saídas, `classifyIntoEnum`); negar refaz o resumo; `IDENTIFYING_ENTITIES` junto
+    (`docs/plano/decisoes/D-2026-10-15-W3-CONFIRMACAO-RESUMO.md`; BRIEF em esboço `WIZARD-W3-CONFIRMACAO-RESUMO-brief.md`).
   - **F-W3-2 · escolha criar/customizar:** (a) três saídas: `create` / `customize` / `unclear` → em
     `unclear` repete a pergunta com as duas opções em negrito; (b) manter binário. **Recomendação: (a).**
     **RATIFICADO (a) — dono, 30/09** (`docs/plano/decisoes/D-2026-09-30-W3-ESCOLHA-CRIACAO.md`); parte (a) corrigida, a tela
