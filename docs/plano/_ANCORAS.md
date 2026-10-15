@@ -32,7 +32,7 @@
 | §IV.1 Fase P2 · §M5.1 Bloco A P2 | [[P2]] |
 | §IV.1 Fase P3 | [[P3]] |
 | §IV.1 Fase P4 | [[P4-fase]] |
-| §IV.1 Fase P5 | [[P5]] |
+| §IV.1 Fase P5 | [[BUILDER-VERTICAIS]] · [[P5]] |
 | §M0 fold 18/09 · §M5 · §III.2 | [[X10b]] |
 | §M1 | [[T1]] · [[T10]] · [[T11]] · [[T12]] · [[T2]] · [[T3]] · [[T4]] · [[T5]] · [[T6]] · [[T7]] · [[T8]] · [[T9]] |
 | §M4 | [[R-contab-preset-dt]] · [[R-motor-dominio]] · [[R-motor-regras]] · [[R-multimoeda]] · [[R-postgresql]] · [[R-torre-multiempresa]] |
