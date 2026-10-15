@@ -105,6 +105,30 @@ export class ReportTooLargeError extends AppError {
 }
 
 /**
+ * BE-INCR-KIT-SETOR PR-3 (item 21; emenda §11 E-11.2 do BRIEF): o ajuste papel→conta foi desfeito porque a
+ * recompilação deu `Draft` — 422 com a versão `Draft` gravada e os bloqueantes do validador/cobertura, como o
+ * `POST /accounting-binding/compile` devolve hoje. A contabilidade não mudou: a versão `Active` segue a anterior.
+ */
+export class RoleOverrideCompileDraftError extends AppError {
+  public readonly details: {
+    binding: { status: string; bindingVersion: number };
+    blocking: unknown[];
+    missingEventKeys: string[];
+  };
+
+  /** PR-4 (aceitar pendência): mesma forma, com mensagem e código próprios (`KIT_PENDING_COMPILE_DRAFT`). */
+  constructor(
+    details: RoleOverrideCompileDraftError['details'],
+    message = 'A recompilação com o ajuste reprovou; o ajuste não foi gravado.',
+    errorCode = 'ROLE_OVERRIDE_COMPILE_DRAFT',
+  ) {
+    super(message, 422, errorCode);
+    this.details = details;
+    Object.setPrototypeOf(this, RoleOverrideCompileDraftError.prototype);
+  }
+}
+
+/**
  * Specific error class for issues within service layer operations.
  */
 export class ServiceError extends AppError {
@@ -323,8 +347,22 @@ export class PackageOriginReversedError extends AppError {
  *  Nome e código são os que o I5 (F-I5-1 a) ratificou; quem executar primeiro cria, o outro reusa. */
 export class NoMapperForUnitError extends AppError {
   constructor(unitId: string, sourceType: string) {
-    super(`Nenhum mapper registrado para o evento '${sourceType}' na unidade '${unitId}' (recompile o binding).`, 409, 'NO_MAPPER_FOR_UNIT');
+    // BE-INCR-ONBOARDING-ACTIVATION item 2 (F-I5-3 → a, todo miss): a mensagem vale para as duas causas e não afirma qual.
+    super(
+      `Nenhum mapper registrado para o evento '${sourceType}' na unidade '${unitId}' — ` +
+        'a contabilidade da unidade não está ativa ou o binding não cobre o evento.',
+      409,
+      'NO_MAPPER_FOR_UNIT',
+    );
     Object.setPrototypeOf(this, NoMapperForUnitError.prototype);
+  }
+}
+
+/** BE-INCR-KIT-SETOR PR-6 (item 47): nenhum kit declara este `eventKey` — erro de fiação da origem, não de binding. */
+export class UnknownEventKeyError extends AppError {
+  constructor(sourceType: string) {
+    super(`Evento '${sourceType}' desconhecido: nenhum kit de setor o declara.`, 400, 'UNKNOWN_EVENT_KEY');
+    Object.setPrototypeOf(this, UnknownEventKeyError.prototype);
   }
 }
 

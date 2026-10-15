@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'next-i18next';
-import { HiOutlinePlus, HiOutlineChatAlt2, HiOutlineDocumentText, HiOutlineChartPie, HiOutlineTrash, HiOutlineTable } from 'react-icons/hi';
+import { HiOutlinePlus, HiOutlineChatAlt2, HiOutlineDocumentText, HiOutlineChartPie, HiOutlineTrash, HiOutlineTable, HiOutlinePresentationChartBar } from 'react-icons/hi';
 import { DASHBOARD_GRID_CONFIG } from './dashboard-grid.config';
 
 interface FloatingAddWidgetButtonProps {
@@ -39,6 +39,12 @@ export default function FloatingAddWidgetButton({ onAddWidget, onClearLayout }: 
             label: t('dashboard.widgets.erpView.title', 'Visualização ERP'),
             description: t('dashboard.widgets.erpView.description', 'Exiba uma tabela do sistema'),
             icon: HiOutlineTable,
+        },
+        {
+            type: DASHBOARD_GRID_CONFIG.WIDGET_TYPES.CRM_REPORT,
+            label: t('crm:report_widget.title', 'Relatório do CRM'),
+            description: t('crm:report_widget.description', 'Exiba um relatório salvo do CRM'),
+            icon: HiOutlinePresentationChartBar,
         },
     ];
 

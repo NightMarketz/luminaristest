@@ -104,6 +104,11 @@ describe('BindingCompileService.compile() — gate de cobertura em SQLite real',
     });
   }, 120000);
 
+  // LAC-B: compile() recusa 2º setor Active na unidade (409) — cada caso começa sem o Active do caso anterior.
+  beforeEach(async () => {
+    await prisma.accountingBinding.updateMany({ where: { userId: DONO_A, unitId: UNIT }, data: { deletedAt: new Date() } });
+  });
+
   afterAll(async () => {
     await prisma.$disconnect();
   });

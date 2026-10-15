@@ -1,4 +1,5 @@
 import { ForbiddenError, ValidationError } from '../../../../lib/errors';
+import { BindingSectorConflictError } from '../../models/bindingSectorConflict';
 import { AccountingBindingPolicy } from '../../policies/AccountingBindingPolicy';
 import type { IAccountingBindingPolicy } from '../../policies/IAccountingBindingPolicy';
 import type { BindingScope, IAccountingBindingRepository } from '../../repositories/IAccountingBindingRepository';
@@ -21,6 +22,8 @@ import type { IKitInstallationRepository } from '../../../sectorKits/repositorie
  * `routes/__tests__/accountingBinding.activateDefault.integration.test.ts`.
  */
 const scope: BindingScope = { ownerUserId: 'u1', actorUserId: 'u1', unitId: 'unit-1' };
+/** Identidade da tx do dublê: o gate do PR-0 tem de ler o binding COM ela (review do #680, ressalva 1). */
+const TX = { __tx: 'kit-begin' };
 const TODAY = '2026-09-25';
 const CHART = [{ code: '1.1.2.01', nature: 'Asset', acceptsEntries: true }];
 
@@ -30,9 +33,21 @@ function build(opts: {
   chart?: typeof CHART;
   period?: ActivationPeriodStatus;
   compileStatus?: 'Active' | 'Draft';
+  /** E-5: o kit vigente (v4) traz contas do perfil fiscal — sem perfil a ativação bloqueia. Padrão: perfil existe. */
+  hasFiscalProfile?: boolean;
+  /** LAC-B PR-0: linhas `Active` do escopo em QUALQUER setor, por chamada (a 1ª é o pré-check, a 2ª a da tx do begin).
+   *  Padrão: o `active` acima, no setor do salão. */
+  activeRowsByCall?: Array<Array<{ sectorKey: string }>>;
+  /** LAC-B PR-0: instalação de kit já existente na unidade. */
+  installation?: { kitKey: string; status: string };
+  /** LAC-B PR-0: o `begin` perde a corrida do `@@unique` (P2002) para este kit. */
+  beginLosesRaceTo?: string;
 } = {}) {
   const findActive = jest.fn(async () => opts.active ?? null);
-  const repo = { findActive } as unknown as IAccountingBindingRepository;
+  const defaultRows = opts.active ? [{ sectorKey: SALE_BINDING_V2.sectorKey }] : [];
+  let findManyCall = 0;
+  const findMany = jest.fn(async () => opts.activeRowsByCall?.[findManyCall++] ?? defaultRows);
+  const repo = { findActive, findMany } as unknown as IAccountingBindingRepository;
   const compile = jest.fn(async () => ({
     status: opts.compileStatus ?? 'Active',
     binding: { bindingVersion: 7 },
@@ -56,15 +71,21 @@ function build(opts: {
   };
   // BE-INCR-KIT-SETOR PR-2 (item 11): o activate-default delega ao KitInstallService — aqui o REAL, sobre os
   // mesmos dublês (compile, chart, período) e um repositório de instalação em memória. Kit v1 = vazio.
-  let installation: { id: string; kitKey: string; kitVersion: number; status: string; steps: string } | null = null;
-  const kitRepo: IKitInstallationRepository = {
-    findByScope: async () => installation as never,
-    begin: async (_s, kit) => {
+  let installation: { id: string; kitKey: string; kitVersion: number; status: string; steps: string } | null =
+    opts.installation ? { id: 'k0', kitVersion: 1, steps: '{"lastCompletedStep":0,"warnings":[]}', ...opts.installation } : null;
+  const begin = jest.fn(async (_s: BindingScope, kit: { kitKey: string; kitVersion: number }) => {
+      if (opts.beginLosesRaceTo) {
+        installation = { id: 'k9', kitKey: opts.beginLosesRaceTo, kitVersion: 1, status: 'INSTALLING', steps: '{"lastCompletedStep":0,"warnings":[]}' };
+        throw Object.assign(new Error('Unique constraint failed'), { code: 'P2002' });
+      }
       installation = installation
         ? { ...installation, status: 'INSTALLING' }
         : { id: 'k1', ...kit, status: 'INSTALLING', steps: '{"lastCompletedStep":0,"warnings":[]}' };
       return installation as never;
-    },
+    });
+  const kitRepo: IKitInstallationRepository = {
+    findByScope: async () => installation as never,
+    begin: begin as never,
     saveSteps: async (_s, _id, steps) => {
       installation = { ...installation!, steps: JSON.stringify(steps) };
       return installation as never;
@@ -73,7 +94,9 @@ function build(opts: {
       installation = { ...installation!, status, steps: JSON.stringify(steps) };
       return installation as never;
     },
-    runTransaction: async (fn) => fn({} as never),
+    advanceVersion: async () => 1, // PR-4 — não exercitado aqui
+    findAllInstalled: async () => [],
+    runTransaction: async (fn) => fn(TX as never),
   };
   const kitInstaller = new KitInstallService(
     new SectorKitPolicy(),
@@ -82,8 +105,7 @@ function build(opts: {
     { compile } as never,
     { ...chartPort, createAccountIfAbsent: async () => 'exists' as const, findLiveAccountId: async () => null },
     periodPort,
-    { hasFiscalProfile: async () => false, fillNullScopeSettings: async () => [], fillNullFiscalProfile: async () => [] },
-    { hasProfile: async () => false, upsert: async () => {} },
+    { hasFiscalProfile: async () => opts.hasFiscalProfile ?? true, fillNullScopeSettings: async () => [], fillNullFiscalProfile: async () => [] },
     { catalogLoaded: async () => false, mappedAccountIds: async () => new Set<string>(), batchSet: async () => {} },
     { companyRegime: async () => null, unitRegime: async () => null },
     { append: async () => {} },
@@ -96,7 +118,7 @@ function build(opts: {
     periodPort,
     () => TODAY,
   );
-  return { service, findActive, compile, chartPort, periodPort };
+  return { service, findActive, findMany, begin, compile, chartPort, periodPort };
 }
 
 const nothingWritten = (b: ReturnType<typeof build>) => {
@@ -106,12 +128,20 @@ const nothingWritten = (b: ReturnType<typeof build>) => {
 };
 
 describe('BindingActivationService.activateDefault', () => {
+  it('E-5 (mantida pelo dono, 13/10): kit vigente com contas do perfil fiscal e unidade sem perfil ⇒ Draft KIT_FISCAL_PROFILE_REQUIRED, nada escrito', async () => {
+    const b = build({ hasFiscalProfile: false });
+    const out = await b.service.activateDefault(scope, {});
+    expect(out.status).toBe('Draft');
+    expect(JSON.stringify(out)).toContain('KIT_FISCAL_PROFILE_REQUIRED');
+    nothingWritten(b);
+  });
+
   it('CONTROLE feliz: chart e período prontos ⇒ compila o binding do SALÃO (default) e devolve Active', async () => {
     const b = build();
     await expect(b.service.activateDefault(scope, {})).resolves.toEqual({
       status: 'Active',
       bindingVersion: 7,
-      kit: { kitKey: 'beautySalon', kitVersion: 3, status: 'INSTALLED' }, // BE-INCR-PLANO-4-NIVEIS: a vigente é a v3
+      kit: { kitKey: 'beautySalon', kitVersion: 6, status: 'INSTALLED' }, // BE-INCR-PLANO-4-NIVEIS: a vigente é a v6
     });
     expect(b.compile).toHaveBeenCalledWith(scope, {
       sectorKey: SALE_BINDING_V2.sectorKey,
@@ -222,6 +252,55 @@ describe('BindingActivationService.activateDefault', () => {
     const r = await partial.service.activateDefault(scope, { installChartIfEmpty: true });
     expect(r.blocking?.map((i) => i.code)).toEqual(['ACCOUNTING_PERIOD_NOT_OPEN']);
     nothingWritten(partial);
+  });
+
+  describe('LAC-B PR-0 — um setor por unidade (F-BA-5 → a; D-2026-10-14-LAC-B-PR0-LACUNAS)', () => {
+    const conflito = async (b: ReturnType<typeof build>, sectorKey = CLINIC_BINDING_V2.sectorKey) => {
+      const err = await b.service.activateDefault(scope, { sectorKey }).catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(BindingSectorConflictError);
+      expect(err).toMatchObject({ statusCode: 409, errorCode: 'BINDING_SECTOR_CONFLICT' });
+      return err as BindingSectorConflictError;
+    };
+
+    it('binding Active do salão (unidade legada, sem KitInstallation) + pedido da clínica ⇒ 409 com o setor ativo, nada escrito', async () => {
+      const b = build({ active: { bindingVersion: 1 } });
+      const err = await conflito(b);
+      expect(err.message).toContain('beautySalon');
+      expect(b.begin).not.toHaveBeenCalled();
+      nothingWritten(b);
+    });
+
+    it.each(['INSTALLED', 'FAILED', 'INSTALLING'])('KitInstallation do salão em %s + pedido da clínica ⇒ 409, nada escrito', async (status) => {
+      const b = build({ installation: { kitKey: 'beautySalon', status } });
+      await conflito(b);
+      expect(b.begin).not.toHaveBeenCalled();
+      nothingWritten(b);
+    });
+
+    it('mesmo setor segue already-active (não é conflito)', async () => {
+      const b = build({ active: { bindingVersion: 3 } });
+      await expect(b.service.activateDefault(scope, { sectorKey: 'beautySalon' })).resolves.toEqual({ status: 'already-active', bindingVersion: 3 });
+    });
+
+    it('gate autoritativo: o pré-check passa, mas na tx do begin já há Active de outro setor ⇒ 409 e o begin não grava', async () => {
+      const b = build({ activeRowsByCall: [[], [{ sectorKey: 'beautySalon' }]] });
+      await conflito(b);
+      expect(b.findMany).toHaveBeenCalledTimes(2);
+      expect((b.findMany.mock.calls[1] as unknown[])[2]).toBe(TX);
+      expect(b.begin).not.toHaveBeenCalled();
+      nothingWritten(b);
+    });
+
+    it('corrida do @@unique: o begin toma P2002 e o vencedor é outro kit ⇒ 409 (não 500)', async () => {
+      const b = build({ beginLosesRaceTo: 'beautySalon' });
+      await conflito(b);
+      expect(b.compile).not.toHaveBeenCalled();
+    });
+
+    it('corrida do @@unique com o MESMO kit ⇒ o P2002 sobe como veio (não é conflito de setor)', async () => {
+      const b = build({ beginLosesRaceTo: 'aestheticClinic' });
+      await expect(b.service.activateDefault(scope, { sectorKey: CLINIC_BINDING_V2.sectorKey })).rejects.toMatchObject({ code: 'P2002' });
+    });
   });
 
   it('compile Draft ⇒ repassa versão + bloqueantes do validador + cobertura ausente', async () => {

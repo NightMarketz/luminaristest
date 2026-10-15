@@ -57,6 +57,12 @@ class FakeInventoryRepo implements IInventoryRepository {
     return this.snapshotItem(item);
   }
 
+  async hasOpenStockForProducts(ownerUserId: string, productRefs: string[]): Promise<boolean> {
+    return [...this.items.values()].some(
+      it => it.userId === ownerUserId && productRefs.includes(it.productRef) && !it.deletedAt && it.qtyOnHand > 0,
+    );
+  }
+
   async findByProductRef(s: typeof scope, productRef: string): Promise<InventoryItem | null> {
     for (const it of this.items.values()) {
       if (it.userId === s.ownerUserId && it.unitId === s.unitId && it.productRef === productRef && !it.deletedAt) {

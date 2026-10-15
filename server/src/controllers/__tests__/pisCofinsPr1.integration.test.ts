@@ -44,8 +44,9 @@ describe('X8 PR-1 — regime coerente, contas da provisão, crédito PIS × Cofi
     await criarConta('2.1.2.01', 'Liability');
     await criarConta('1.1.8', 'Asset');
     await criarConta('1.1.9', 'Asset');
-    await criarConta('4.9.3', 'Expense'); // despesa de PIS
-    await criarConta('4.9.4', 'Expense'); // despesa de COFINS
+    await criarConta('3.6.1', 'Revenue'); // PIS sobre a receita — dedução (F-PCB-1R a)
+    await criarConta('3.6.2', 'Revenue'); // COFINS sobre a receita — dedução (F-PCB-1R a)
+    await criarConta('4.1', 'Expense'); // despesa — o que o F-PCB-1 (b) exigia
     await criarConta('2.1.9.3', 'Liability'); // PIS a recolher
     await criarConta('2.1.9.4', 'Liability'); // COFINS a recolher
     const products = await prisma.dynamicTable.create({
@@ -86,27 +87,31 @@ describe('X8 PR-1 — regime coerente, contas da provisão, crédito PIS × Cofi
     expect(await prisma.payable.count({ where: { userId: dono.id } })).toBe(0);
   });
 
-  it('item 2 (F-PCB-1 b): 4 contas da provisão — despesa Expense, a recolher Liability; natureza trocada ⇒ 400; evento só com ids', async () => {
+  it('item 2 (F-PCB-1R a, dono 13/10): 4 contas da provisão — dedução Revenue, a recolher Liability; natureza trocada ⇒ 400; evento só com ids', async () => {
     const trocadaDespesa = await putProfile({ pisDespesaAccountId: accounts['2.1.9.3'] });
     expect(trocadaDespesa.status).toBe(400);
-    expect(JSON.stringify(trocadaDespesa.body)).toMatch(/despesa de PIS.*esperado Expense/);
-    const trocadaRecolher = await putProfile({ cofinsRecolherAccountId: accounts['4.9.4'] });
+    expect(JSON.stringify(trocadaDespesa.body)).toMatch(/PIS sobre a receita — dedução da receita.*esperado Revenue/);
+    // a conta de despesa (Expense) que o F-PCB-1 (b) exigia passa a ser recusada (F-PCB-1R a)
+    const despesaAntiga = await putProfile({ cofinsDespesaAccountId: accounts['4.1'] });
+    expect(despesaAntiga.status).toBe(400);
+    expect(JSON.stringify(despesaAntiga.body)).toMatch(/COFINS sobre a receita — dedução da receita.*esperado Revenue/);
+    const trocadaRecolher = await putProfile({ cofinsRecolherAccountId: accounts['3.6.2'] });
     expect(trocadaRecolher.status).toBe(400);
     expect(JSON.stringify(trocadaRecolher.body)).toMatch(/COFINS a recolher.*esperado Liability/);
 
     const ok = await putProfile({
       icmsRecuperavelAccountId: accounts['1.1.8'], pisCofinsRecuperavelAccountId: accounts['1.1.9'],
-      pisDespesaAccountId: accounts['4.9.3'], cofinsDespesaAccountId: accounts['4.9.4'],
+      pisDespesaAccountId: accounts['3.6.1'], cofinsDespesaAccountId: accounts['3.6.2'],
       pisRecolherAccountId: accounts['2.1.9.3'], cofinsRecolherAccountId: accounts['2.1.9.4'],
     });
     expect(ok.status).toBe(200);
     expect(ok.body.data).toMatchObject({
-      pisDespesaAccountId: accounts['4.9.3'], cofinsDespesaAccountId: accounts['4.9.4'],
+      pisDespesaAccountId: accounts['3.6.1'], cofinsDespesaAccountId: accounts['3.6.2'],
       pisRecolherAccountId: accounts['2.1.9.3'], cofinsRecolherAccountId: accounts['2.1.9.4'],
     });
     const ev = JSON.parse((await prisma.auditEvent.findFirstOrThrow({ where: { unitId: UNIT, eventType: 'fiscal_profile.updated' }, orderBy: { seq: 'desc' } })).payload);
     expect(ev).toMatchObject({
-      pisDespesaAccountId: accounts['4.9.3'], cofinsDespesaAccountId: accounts['4.9.4'],
+      pisDespesaAccountId: accounts['3.6.1'], cofinsDespesaAccountId: accounts['3.6.2'],
       pisRecolherAccountId: accounts['2.1.9.3'], cofinsRecolherAccountId: accounts['2.1.9.4'],
     });
   });

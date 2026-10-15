@@ -19,6 +19,7 @@
  * distinção, não a grafia.
  */
 import { ReconcilePendingReasonCode } from '../../features/accounting/dtos/ReconcilePendingDto';
+import { SYNC_SKIP_ERROR_CODES } from '../../features/accounting/sync/AccountingSyncPort';
 import {
   reconcileSaleSettlements,
   reconcileSalePackageConsumption,
@@ -95,8 +96,27 @@ describe('C7r — os 2 "blocked" sem reasonCode passam a ser capturados na tabel
     expect(codeB).toBeDefined();
     expect(codeA).not.toBe(codeB);
     // O enum ratificado tinha 3 valores; (a) acrescenta exatamente os 2 (e o BE-INCR-PACOTE-VALIDADE, item 15
-    // + §5.2 item 9.5, mais 4 — os 2 desta guarda continuam lá).
+    // + §5.2 item 9.5, mais 4; D-2026-10-14-I4-I5-LACUNAS-EXECUCAO L-2, mais 1 — os 2 desta guarda continuam lá).
     expect(ReconcilePendingReasonCode.options).toEqual(expect.arrayContaining(['OPENING_ENTRY_MISSING', 'MISSING_PAID_WITH_PACKAGE_ID']));
-    expect(ReconcilePendingReasonCode.options).toHaveLength(9);
+    expect(ReconcilePendingReasonCode.options).toHaveLength(10);
+  });
+});
+
+// BE-INCR-ONBOARDING-ACTIVATION item 3: todo código da skip-list é gravado por
+// `reportPending(skipCode as ReconcilePendingReasonCodeValue)` — o cast não é checado pelo tsc, então um código
+// pulado e ausente do enum só falharia na escrita (Zod) em produção. Este guarda fecha o cast para códigos futuros.
+describe('skip-list ⊆ enum de pendências', () => {
+  it('todo valor de SYNC_SKIP_ERROR_CODES está em ReconcilePendingReasonCode.options', () => {
+    for (const code of SYNC_SKIP_ERROR_CODES) {
+      expect(ReconcilePendingReasonCode.options).toContain(code);
+    }
+  });
+
+  it("NO_MAPPER_FOR_UNIT está na skip-list (F-I5-1 a): venda sem mapper é pendência 'blocked', não falha", () => {
+    expect(SYNC_SKIP_ERROR_CODES).toContain('NO_MAPPER_FOR_UNIT');
+  });
+
+  it('UNKNOWN_EVENT_KEY está na skip-list (D-2026-10-14-I4-I5-LACUNAS-EXECUCAO L-2)', () => {
+    expect(SYNC_SKIP_ERROR_CODES).toContain('UNKNOWN_EVENT_KEY');
   });
 });

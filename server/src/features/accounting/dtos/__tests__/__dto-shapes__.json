@@ -10110,7 +10110,8 @@
         "NO_MAPPER_FOR_UNIT",
         "PACKAGE_CONSUMPTION_PENDING",
         "PACKAGE_ORIGIN_REVERSED",
-        "PACKAGE_EXPIRY_NFSE_PENDING"
+        "PACKAGE_EXPIRY_NFSE_PENDING",
+        "UNKNOWN_EVENT_KEY"
       ]
     },
     "ListReconcilePendingQueryDto": {
@@ -10132,7 +10133,8 @@
             "NO_MAPPER_FOR_UNIT",
             "PACKAGE_CONSUMPTION_PENDING",
             "PACKAGE_ORIGIN_REVERSED",
-            "PACKAGE_EXPIRY_NFSE_PENDING"
+            "PACKAGE_EXPIRY_NFSE_PENDING",
+            "UNKNOWN_EVENT_KEY"
           ]
         },
         "includeResolved": {
@@ -10211,7 +10213,8 @@
             "NO_MAPPER_FOR_UNIT",
             "PACKAGE_CONSUMPTION_PENDING",
             "PACKAGE_ORIGIN_REVERSED",
-            "PACKAGE_EXPIRY_NFSE_PENDING"
+            "PACKAGE_EXPIRY_NFSE_PENDING",
+            "UNKNOWN_EVENT_KEY"
           ]
         },
         "reasonDetail": {
@@ -10281,7 +10284,8 @@
                   "NO_MAPPER_FOR_UNIT",
                   "PACKAGE_CONSUMPTION_PENDING",
                   "PACKAGE_ORIGIN_REVERSED",
-                  "PACKAGE_EXPIRY_NFSE_PENDING"
+                  "PACKAGE_EXPIRY_NFSE_PENDING",
+                  "UNKNOWN_EVENT_KEY"
                 ]
               },
               "reasonDetail": {

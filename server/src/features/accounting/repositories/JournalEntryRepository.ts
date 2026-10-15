@@ -32,6 +32,8 @@ export class JournalEntryRepository implements IJournalEntryRepository {
         status: data.status,
         sourceType: data.sourceType,
         sourceId: data.sourceId ?? null,
+        bindingId: data.bindingId ?? null,
+        bindingVersion: data.bindingVersion ?? null,
         createdById: data.createdById ?? null,
         postedById: data.postedById ?? null,
         fiscalYear: data.fiscalYear,

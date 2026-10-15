@@ -28,7 +28,7 @@ function canonicalJson(value: unknown): string {
 const sha256 = (v: unknown) => createHash('sha256').update(canonicalJson(v)).digest('hex');
 
 describe('KIT_REGISTRY e SECTOR_BINDING_REGISTRY derivado (item 4)', () => {
-  // BE-INCR-PLANO-4-NIVEIS: a versão vigente de cada kit (v3) embute o binding V2 (plano de 4 níveis).
+  // BE-INCR-PLANO-4-NIVEIS: a versão vigente de cada kit (v6) embute o binding V2 (plano de 4 níveis).
   it('o registro derivado é deep-equal ao de antes do kit (mesma ordem de chaves)', () => {
     const before = {
       beautySalon: { binding: SALE_BINDING_V2, operationalSchema: SALE_OPERATIONAL_SCHEMA_SNAPSHOT },
@@ -84,8 +84,8 @@ describe('changelog (item 6)', () => {
 describe('listKits (item 7)', () => {
   it('devolve {kitKey, label, latestVersion} de cada kit', () => {
     expect(listKits()).toEqual([
-      { kitKey: 'beautySalon', label: 'Salão de beleza', latestVersion: 3 },
-      { kitKey: 'aestheticClinic', label: 'Clínica estética', latestVersion: 3 },
+      { kitKey: 'beautySalon', label: 'Salão de beleza', latestVersion: 6 },
+      { kitKey: 'aestheticClinic', label: 'Clínica estética', latestVersion: 6 },
     ]);
   });
 });

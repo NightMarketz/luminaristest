@@ -15,7 +15,7 @@ Esta view é grande demais para um único README. Use os links abaixo conforme s
 | Documento | Conteúdo | Quando ler |
 |---|---|---|
 | **[README.md](./README.md)** *(você está aqui)* | Overview · arquitetura macro · navegação | Primeira vez no Finance, ou para entender como as peças se conectam |
-| **[SALES.md](./SALES.md)** | Sales sub-view · master-detail · wizard modal | Mexendo em vendas, criação, items, payment |
+| **[SALES.md](./SALES.md)** | Sales sub-view · master-detail · modal Nova Venda | Mexendo em vendas, criação, items, payment |
 | **[EXPENSES.md](./EXPENSES.md)** | Expenses sub-view · flat-record pattern | Mexendo em despesas, soft-delete, schema-driven columns |
 | **[SHARED.md](./SHARED.md)** | FinanceService · types · utils · common | Tocando código que afeta múltiplos sub-views |
 | **ANALYTICS.md** ⏳ | Pendente — aguarda auditoria do grupo | Em construção |
@@ -26,7 +26,7 @@ Esta view é grande demais para um único README. Use os links abaixo conforme s
 
 A FinanceView é o **maior módulo do dashboard**. Diferentemente de Products/Services/People que são views auto-contidas, Finance é um **orquestrador de 3 sub-views**:
 
-- **Sales** (Vendas) — master-detail com tabela + painel de detalhes + wizard modal de 2 abas
+- **Sales** (Vendas) — master-detail com tabela + painel de detalhes + modal Nova Venda de 2 abas
 - **Expenses** (Despesas) — single-table com schema-driven columns + GenericDataSidebar
 - **Analytics** (Análises) — KPIs + charts + dashboards (auditoria pendente)
 
@@ -107,15 +107,15 @@ Total: **~66 arquivos · ~5000+ LOC** distribuídos em 4 grupos.
 | `views/SalesView.tsx` | ~185 | Master-detail orchestrator |
 | `hooks/sales/useSalesData.ts` | ~130 | 3 tables + analytics + stock index + updateSale |
 | `hooks/sales/useSalesLogic.ts` | ~120 | Filter/sort/paginate |
-| `hooks/sales/useSalesWizard.ts` | ~280 | Wizard state com stateRef pattern |
+| `hooks/sales/useSalesCreateForm.ts` | ~280 | Modal Nova Venda state com stateRef pattern |
 | `components/sales/SalesFilterBar.tsx` | ~125 | Filtros (search/status/period) |
 | `components/sales/SalesTable.tsx` | ~270 | Tabela list-style + StatusBadge/PaymentBadge |
 | `components/sales/SaleDetailPanel.tsx` | ~250 | Painel lateral de detalhes |
-| `components/sales/SalesCreateModal.tsx` | ~510 | Wizard modal 2 tabs |
-| `components/sales/create/SaleItemsManager.tsx` | ~290 | Tabela de items dentro do wizard |
+| `components/sales/SalesCreateModal.tsx` | ~510 | Modal Nova Venda 2 tabs |
+| `components/sales/create/SaleItemsManager.tsx` | ~290 | Tabela de items dentro do modal Nova Venda |
 | `components/sales/create/inputs.tsx` | ~195 | QuantityInput · CurrencyInput · PaymentTermChips |
-| `components/sales/create/types.ts` | ~25 | Boundary types do wizard |
-| `types/sales.types.ts` | ~135 | SaleData · SaleItemData · SalesWizardState · SalesAnalytics |
+| `components/sales/create/types.ts` | ~25 | Boundary types do modal Nova Venda |
+| `types/sales.types.ts` | ~135 | SaleData · SaleItemData · SalesCreateFormState · SalesAnalytics |
 | 2 barrels | ~10 | Re-exports |
 
 ### 🟧 Expenses (9 arquivos · ~700 LOC) — ver [EXPENSES.md](./EXPENSES.md)
@@ -180,7 +180,7 @@ sequenceDiagram
     FV->>SV: passa isCreateOpen=true
     SV->>U: abre <SalesCreateModal>
 
-    U->>SV: preenche wizard + finaliza
+    U->>SV: preenche modal Nova Venda + finaliza
     SV->>FS: createSaleWithItems()
     FS-->>SV: success
     SV->>SV: refetch + close modal

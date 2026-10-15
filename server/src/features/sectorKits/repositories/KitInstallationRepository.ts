@@ -68,6 +68,24 @@ export class KitInstallationRepository implements IKitInstallationRepository {
     });
   }
 
+  public async advanceVersion(
+    scope: BindingScope,
+    id: string,
+    from: number,
+    to: number,
+    tx: Prisma.TransactionClient,
+  ): Promise<number> {
+    const { count } = await tx.kitInstallation.updateMany({
+      where: { id, ...bindingScopeWhere(scope), kitVersion: from, deletedAt: null },
+      data: { kitVersion: to, updatedById: scope.actorUserId },
+    });
+    return count;
+  }
+
+  public async findAllInstalled(): Promise<KitInstallation[]> {
+    return prisma.kitInstallation.findMany({ where: { status: 'INSTALLED', deletedAt: null }, orderBy: [{ userId: 'asc' }, { unitId: 'asc' }] });
+  }
+
   public async runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
     return prisma.$transaction(fn);
   }

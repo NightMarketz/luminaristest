@@ -9,4 +9,19 @@ export class SectorKitPolicy implements ISectorKitPolicy {
   canInstallKit(scope: BindingScope): boolean {
     return !!scope.actorUserId;
   }
+
+  /** Mesma regra de `AccountingBindingPolicy.canCompile` (`!!actorUserId`) — item 23. */
+  canManageKit(scope: BindingScope): boolean {
+    return !!scope.actorUserId;
+  }
+
+  /** Espelho de `AccountingPolicy.canReadFiscalProfile` (= `canRead`, `!!actorUserId`): a sugestão só lê. */
+  canReadServiceFiscalSuggestions(scope: BindingScope): boolean {
+    return !!scope.actorUserId;
+  }
+
+  /** PR-6 (item 50): espelho de `AccountingPolicy.canRead` (`!!actorUserId`) — o rastro só lê o razão e o binding. */
+  canReadKitTrace(scope: BindingScope): boolean {
+    return !!scope.actorUserId;
+  }
 }

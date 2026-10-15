@@ -20,7 +20,7 @@
 import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
-import { NoActiveAccountingBindingsError, ValidationError } from '@/lib/errors';
+import { NoActiveAccountingBindingsError, NoMapperForUnitError } from '@/lib/errors';
 import { SALE_BINDING_V1 } from '@/features/accountingBinding/fixtures/saleBinding';
 import type { AccountingEvent } from '@/features/accounting/sync/AccountingSyncPort';
 
@@ -86,6 +86,6 @@ describe('ApplicationFactory.initializeAccountingSyncFromBindings — SQLite rea
         { ownerUserId: DONO, actorUserId: DONO, unitId: UNIDADE_SEM_BINDING, ledgerCode: 'DEFAULT', baseCurrencyCode: 'BRL', timeZone: 'America/Sao_Paulo' },
         baseEvent,
       ),
-    ).rejects.toBeInstanceOf(ValidationError);
+    ).rejects.toBeInstanceOf(NoMapperForUnitError); // KIT-SETOR PR-6 item 47: declarado, sem binding na unidade
   });
 });

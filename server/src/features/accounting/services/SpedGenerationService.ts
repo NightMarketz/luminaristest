@@ -609,6 +609,7 @@ export class SpedGenerationService {
     grossRevenue: { accounts: { code: string; name: string; amountCents: string }[]; totalCents: string };
     revenueDeductions: { accounts: { code: string; name: string; amountCents: string }[]; totalCents: string };
     costOfGoodsSold: { accounts: { code: string; name: string; amountCents: string }[]; totalCents: string };
+    financialResult: { accounts: { code: string; name: string; amountCents: string }[]; totalCents: string };
     expenses: { accounts: { code: string; name: string; amountCents: string }[]; totalCents: string };
     netResult: { amountCents: string };
   }): RegJ150Line[] {
@@ -618,20 +619,25 @@ export class SpedGenerationService {
       totCode: string,
       totDescr: string,
       section: { accounts: { code: string; name: string; amountCents: string }[]; totalCents: string },
-      grp: 'R' | 'D',
+      grp: 'R' | 'D' | 'BY_SIGN',
       negate: boolean,
     ) => {
       const sign = negate ? -1 : 1;
+      // 'BY_SIGN' (resultado financeiro, que mistura receita 3.5 e despesa 4.3): o grupo segue o lado da linha — credora
+      // (valor serializado negativo) é Receita, devedora é Despesa.
+      const grupo = (vl: number): 'R' | 'D' => (grp === 'BY_SIGN' ? (vl <= 0 ? 'R' : 'D') : grp);
       // L9 (RUNBOOK-H1, PVA 13/10): só o Resultado do Exercício fica no nível 1 (Manual ECD L9 p. 180) — as seções
       // são nível 2 sob ele e os detalhes nível 3 sob a seção.
       lines.push({
         nuOrdem: ordem++, codAgl: totCode, indCodAgl: 'T', nivelAgl: 2, codAglSup: 'DRE_RESULTADO',
-        descr: totDescr, vlIniCents: 0, vlFinCents: sign * parseInt(section.totalCents, 10), indGrpDre: grp,
+        descr: totDescr, vlIniCents: 0, vlFinCents: sign * parseInt(section.totalCents, 10),
+        indGrpDre: grupo(sign * parseInt(section.totalCents, 10)),
       });
       for (const a of section.accounts) {
         lines.push({
           nuOrdem: ordem++, codAgl: a.code, indCodAgl: 'D', nivelAgl: 3, codAglSup: totCode,
-          descr: a.name, vlIniCents: 0, vlFinCents: sign * parseInt(a.amountCents, 10), indGrpDre: grp,
+          descr: a.name, vlIniCents: 0, vlFinCents: sign * parseInt(a.amountCents, 10),
+          indGrpDre: grupo(sign * parseInt(a.amountCents, 10)),
         });
       }
     };
@@ -645,6 +651,8 @@ export class SpedGenerationService {
     // L9 (RUNBOOK-H1, PVA 13/10): o relatório da DRE traz despesa/CMV/dedução negativas (sinal do resultado); o J150
     // inverte como na receita, para saírem devedoras (D) e o Resultado fechar com as filhas (REGRA_SOMA_NIVEIS_DRE).
     pushSection('DRE_CMV', 'CUSTO DAS MERCADORIAS VENDIDAS', dre.costOfGoodsSold, 'D', true);
+    // Resultado financeiro (emenda 3.3, E4; F-ENC-9 a): sem esta seção, 3.5/4.3 sumiriam da ECD (lição do CMV).
+    pushSection('DRE_FINANCEIRO', 'RESULTADO FINANCEIRO', dre.financialResult, 'BY_SIGN', true);
     pushSection('DRE_DESPESAS', 'DESPESAS', dre.expenses, 'D', true);
     lines.push({
       nuOrdem: ordem++, codAgl: 'DRE_RESULTADO', indCodAgl: 'T', nivelAgl: 1,

@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { getFactory } from '@/lib/factory';
 import { handleApiError } from '@/lib/apiUtils';
 import { getUserContextFromRequest } from '@/lib/authUtils';
-import { ForbiddenError } from '@/lib/errors';
+import { ForbiddenError, ValidationError } from '@/lib/errors';
 import { Role } from '@/features/users/models/User.model';
 import { z } from 'zod';
 import {
@@ -14,6 +14,17 @@ import { maybeSyncSalePackageSold } from '@/features/accounting/sync/bridges/Sal
 import { maybeSyncSaleSettled } from '@/features/accounting/sync/bridges/SaleSettlementBridge';
 
 const cuidSchema = z.string().cuid();
+
+/**
+ * ADR-PB §5.2 (dono, questionário 14/10/2026): produto com saldo vivo no subrazão Prisma
+ * (`InventoryItem.qtyOnHand > 0`, qualquer unidade) não pode ser apagado. A guarda vive aqui, fora do
+ * motor DynamicTable (`[AC-2.1-B1]`). `productRef` só aponta para linha de `products`.
+ */
+async function assertNoOpenStock(ownerUserId: string, dataIds: string[]) {
+  if (await getFactory().getInventoryService().hasOpenStockForProducts(ownerUserId, dataIds)) {
+    throw new ValidationError('Não é possível apagar: produto com estoque em aberto no subrazão de inventário.');
+  }
+}
 
 /** Body schema for POST /api/dynamic-tables/sync-preset (admin-only, schema-mutating). */
 export const SyncPresetDto = z.object({
@@ -162,6 +173,7 @@ export async function deleteTableData(req: Request, res: Response) {
     const dataIdParse = cuidSchema.safeParse(req.params.dataId);
     if (!dataIdParse.success) return res.status(400).json({ success: false, error: dataIdParse.error.flatten() });
 
+    await assertNoOpenStock(ctx.userId, [dataIdParse.data]);
     const service = getFactory().getDynamicTableService();
     await service.deleteTableData(ctx, req.params.dataId);
     return res.status(204).end();
@@ -186,6 +198,7 @@ export async function batchDeleteTableData(req: Request, res: Response) {
     const body = BatchDeleteDto.safeParse(req.body);
     if (!body.success) return res.status(400).json({ success: false, error: body.error.flatten() });
 
+    await assertNoOpenStock(ctx.userId, body.data.ids);
     const service = getFactory().getDynamicTableService();
     const result = await service.deleteTableDataBatch(ctx, tableParse.data, body.data.ids);
     return res.json({ success: true, data: { deleted: result.deleted } });

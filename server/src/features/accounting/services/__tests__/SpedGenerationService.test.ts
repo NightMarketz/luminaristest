@@ -153,7 +153,7 @@ function buildService(m: Mocks = {}) {
     incomeStatement: jest.fn(async () => m.dre ?? ({
       grossRevenue: { accounts: [{ code: '3.1', name: 'Receita', amountCents: '50000' }], totalCents: '50000' },
       revenueDeductions: { accounts: [], totalCents: '0' },
-      costOfGoodsSold: { accounts: [], totalCents: '0' },
+      costOfGoodsSold: { accounts: [], totalCents: '0' }, financialResult: { accounts: [], totalCents: '0' },
       expenses: { accounts: [], totalCents: '0' },
       netResult: { amountCents: '50000' },
     })),
@@ -602,7 +602,7 @@ describe('SpedGenerationService.generate — L9: hierarquia e sinal da DRE no J1
   const dre = {
     grossRevenue: { accounts: [{ code: '3.1', name: 'Receita', amountCents: '50000' }], totalCents: '50000' },
     revenueDeductions: { accounts: [], totalCents: '0' },
-    costOfGoodsSold: { accounts: [{ code: '4.2', name: 'CMV', amountCents: '-5000' }], totalCents: '-5000' },
+    costOfGoodsSold: { accounts: [{ code: '4.2', name: 'CMV', amountCents: '-5000' }], totalCents: '-5000' }, financialResult: { accounts: [], totalCents: '0' },
     expenses: { accounts: [{ code: '4.1', name: 'Despesas', amountCents: '-20000' }], totalCents: '-20000' },
     netResult: { amountCents: '25000' },
   };
@@ -625,6 +625,30 @@ describe('SpedGenerationService.generate — L9: hierarquia e sinal da DRE no J1
     expect([val('4.2'), val('4.1'), val('DRE_CMV'), val('DRE_DESPESAS'), val('3.1'), val('DRE_RESULTADO')]).toEqual([
       '50,00 D', '200,00 D', '50,00 D', '200,00 D', '500,00 C', '250,00 C',
     ]);
+  });
+
+  // Emenda 3.3, E4 (F-ENC-9 a): o resultado financeiro entra no J150 como seção própria, no padrão do CMV; receita
+  // financeira (3.5) sai credora com grupo R, despesa financeira (4.3) devedora com grupo D, e o total segue o saldo.
+  it('emenda 3.3 (E4): seção DRE_FINANCEIRO com 3.5 credora (R) e 4.3 devedora (D), e o Resultado fecha com as seções', async () => {
+    const comFinanceiro = {
+      ...dre,
+      financialResult: {
+        accounts: [
+          { code: '3.5.1', name: 'Juros de Mora Recebidos', amountCents: '5000' },
+          { code: '4.3.1', name: 'Juros de Mora Pagos', amountCents: '-25000' },
+        ],
+        totalCents: '-20000',
+      },
+      netResult: { amountCents: '5000' },
+    };
+    const { service } = buildService({ dre: comFinanceiro });
+    await service.generate(scope, makeDto());
+    const linha = (cod: string) => { const r = j150().find((x) => x[3] === cod)!; return `${r[5]} ${r[6]} ${r[10]} ${r[11]} ${r[12]}`; };
+    expect([linha('DRE_FINANCEIRO'), linha('3.5.1'), linha('4.3.1')]).toEqual([
+      '2 DRE_RESULTADO 200,00 D D', '3 DRE_FINANCEIRO 50,00 C R', '3 DRE_FINANCEIRO 250,00 D D',
+    ]);
+    // 500 C − 50 D (CMV) − 200 D (despesas) − 200 D (financeiro) = 50 C
+    expect(linha('DRE_RESULTADO')).toBe('1  50,00 C R');
   });
 });
 

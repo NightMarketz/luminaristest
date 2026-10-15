@@ -68,12 +68,16 @@ export async function resetDb(): Promise<void> {
   await prisma.packageValidityAcceptance.deleteMany(); // FE-INCR-PACOTE-VALIDADE: prova append-only, sem FK — folha pura
   await prisma.accountingBinding.deleteMany();
   await prisma.kitInstallation.deleteMany(); // BE-INCR-KIT-SETOR PR-2 — folha (nada a referencia)
+  await prisma.roleAccountOverride.deleteMany(); // BE-INCR-KIT-SETOR PR-3 — FK RESTRICT para Account: cai antes de accounts
+  await prisma.kitUpgradePending.deleteMany(); // BE-INCR-KIT-SETOR PR-4 — folha (nada a referencia)
+  await prisma.kitUpgradeRun.deleteMany(); // BE-INCR-KIT-SETOR PR-4 — folha (as pendências guardam só o runId)
   await prisma.reconcilePendingItem.deleteMany();
   // BE-INCR-FIXED-ASSETS (nó C8): nada referencia FixedAsset por FK — folha pura; cai antes de
   // fixedAssetClass/depreciationRate (que ele referencia) e de journalEntry/sourceDocument/payable.
   await prisma.fixedAsset.deleteMany();
   // BE-INCR-BANK-SETTLEMENT (nó F7): item cascade da linha do extrato; settings tem FK RESTRICT para
   // `accounts` — os dois caem ANTES de accounts/statements ou o deleteMany deles falha por violação.
+  await prisma.bankSettlementChargePart.deleteMany(); // emenda 3.3 (E5): FK RESTRICT para o item — cai antes dele
   await prisma.bankSettlementItem.deleteMany();
   await prisma.accountingScopeSettings.deleteMany();
   // BE-INCR-NFE-COST-REGIME (nó X6): perfil fiscal tem FK RESTRICT para as duas contas 'a recuperar' — antes de accounts.

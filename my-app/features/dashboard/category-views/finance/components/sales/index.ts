@@ -7,6 +7,6 @@ export { default as SaleDetailPanel } from './SaleDetailPanel';
 export { SalesFilterBar } from './SalesFilterBar';
 export { default as SalesCreateModal } from './SalesCreateModal';
 
-// Create wizard components
+// Componentes do modal Nova Venda
 export * from './create';
 

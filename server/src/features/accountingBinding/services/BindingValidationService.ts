@@ -83,7 +83,9 @@ import type { AccountingEventLike } from '../interpreter/interpret';
  *                                    classe de bug que `AccountRole.test.ts` (Fase 0) já varre
  *                                    por exaustividade type-level do lado do catálogo de papéis.
  */
-const ROLE_ALLOWED_NATURES: Readonly<Record<AccountRole, readonly string[]>> = {
+export const ROLE_ALLOWED_NATURES: Readonly<Record<AccountRole, readonly string[]>> = {
+  // Exportada (BE-INCR-KIT-SETOR PR-3, item 20): o gate do ajuste papel→conta lê ESTA tabela, a mesma do
+  // validador — congelada em `sectorKits/__tests__/roleNatureTable.test.ts`.
   'controle-recebível': ['Asset'],
   'receita-serviço': ['Revenue'],
   'receita-revenda': ['Revenue'],
@@ -111,7 +113,7 @@ const ROLE_ALLOWED_NATURES: Readonly<Record<AccountRole, readonly string[]>> = {
  * sempre `undefined` em `ROLE_ALLOWED_NATURES`). Sem ':' no role, devolve o próprio role
  * inalterado — nenhum outro papel do catálogo v1 usa esta convenção.
  */
-function baseRole(role: string): string {
+export function baseRole(role: string): string {
   const separatorIndex = role.indexOf(':');
   return separatorIndex === -1 ? role : role.slice(0, separatorIndex);
 }

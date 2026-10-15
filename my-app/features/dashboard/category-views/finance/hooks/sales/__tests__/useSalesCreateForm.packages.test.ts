@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { renderHook, cleanup, act } from '@testing-library/react';
-import { useSalesWizard, type UseSalesWizardOptions } from '../useSalesWizard';
+import { useSalesCreateForm, type UseSalesCreateFormOptions } from '../useSalesCreateForm';
 import { FinanceService } from '../../../services/FinanceService';
 import type { PackageCatalog } from '../../../utils/packageSale';
 import type { SaleData } from '../../../types/sales.types';
@@ -14,8 +14,8 @@ const catalog: PackageCatalog = {
     pkgB: { name: 'Pacote B', price: 500, validityDays: 90, active: true },
 };
 
-function setup(opts: UseSalesWizardOptions = { packageCatalog: catalog, canFlagAboveCatalog: true }) {
-    const hook = renderHook((o: UseSalesWizardOptions) => useSalesWizard(o), { initialProps: opts });
+function setup(opts: UseSalesCreateFormOptions = { packageCatalog: catalog, canFlagAboveCatalog: true }) {
+    const hook = renderHook((o: UseSalesCreateFormOptions) => useSalesCreateForm(o), { initialProps: opts });
     act(() => {
         hook.result.current.setUnitId('u1');
         hook.result.current.setCustomerId('c1');
@@ -32,12 +32,12 @@ function addPackage(hook: ReturnType<typeof setup>, packageId: string, unitPrice
 
 const lastSaleData = (): SaleData => vi.mocked(FinanceService.createSaleWithItems).mock.calls.at(-1)![2];
 
-describe('useSalesWizard — variante packages (FE-INCR-VENDA-PACOTE)', () => {
+describe('useSalesCreateForm — variante packages (FE-INCR-VENDA-PACOTE)', () => {
     beforeEach(() => vi.mocked(FinanceService.createSaleWithItems).mockClear());
     afterEach(() => cleanup());
 
     it('item 1/5: trocar para packages limpa os itens e desliga o cliente avulso', () => {
-        const { result } = renderHook(() => useSalesWizard());
+        const { result } = renderHook(() => useSalesCreateForm());
         act(() => { result.current.setSimpleCustomer(true); result.current.addItem(); });
         act(() => result.current.setVariant('packages'));
         expect(result.current.state.items).toHaveLength(0);
@@ -104,7 +104,7 @@ describe('useSalesWizard — variante packages (FE-INCR-VENDA-PACOTE)', () => {
     });
 
     it('fora da variante packages o campo nunca vai', async () => {
-        const { result } = renderHook(() => useSalesWizard({ packageCatalog: catalog, canFlagAboveCatalog: true }));
+        const { result } = renderHook(() => useSalesCreateForm({ packageCatalog: catalog, canFlagAboveCatalog: true }));
         act(() => { result.current.setUnitId('u1'); result.current.setCustomerId('c1'); result.current.setVariant('services'); });
         await act(() => result.current.submit('sales', 'items', false));
         expect('aboveCatalogPrice' in lastSaleData()).toBe(false);

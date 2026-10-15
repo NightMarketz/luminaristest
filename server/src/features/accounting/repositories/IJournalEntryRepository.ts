@@ -10,6 +10,9 @@ export interface CreateJournalEntryInput {
   status: string;
   sourceType: string;
   sourceId?: string | null;
+  /** BE-INCR-KIT-SETOR PR-6 (item 50): o binding que interpretou o evento; ausente ⇒ null. */
+  bindingId?: string | null;
+  bindingVersion?: number | null;
   createdById?: string | null;
   postedById?: string | null;
   // Nullable since ADR-INCR-APPROVAL: a Draft/PendingApproval entry has NO number — it is

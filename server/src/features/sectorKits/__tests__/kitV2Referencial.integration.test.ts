@@ -1,13 +1,15 @@
 /**
- * BE-INCR-H1-REFERENCIAL-3-4 PR-2 (item 11; F-HR-1 a, F-HR-2 a) — o kit v2 PUBLICADO do salão, instalado pelo registro
- * real, deixa a cobertura referencial 2025 pronta (15/15) em Presumido e em Real: a ECD da unidade nova nasce sem o 400
+ * BE-INCR-H1-REFERENCIAL-3-4 PR-2 (item 11; F-HR-1 a, F-HR-2 a) — o kit PUBLICADO do salão, instalado pelo registro
+ * real, deixa a cobertura referencial 2025 pronta em Presumido e em Real: a ECD da unidade nova nasce sem o 400
  * `unmappedAccounts` que parou o H1 no P5. Sem regime de ECD (Simples) o passo 7 não escreve nada (F-HR-2 a).
+ * BE-INCR-PLANO-4-NIVEIS: o plano instalado é o de 4 níveis, e um kit do plano de 3 níveis (v1–v5) não cabe nele; o
+ * teste passa a prender a v6, que cobre todas as folhas (canônico + conteúdo fiscal + emenda 3.3).
  */
 import prisma from '@/lib/prisma';
 import { pushTestSchema, resetDb } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
 import type { BindingScope } from '@/features/accountingBinding/repositories/IAccountingBindingRepository';
-import { BEAUTY_SALON_KIT_V3 as BEAUTY_SALON_KIT_V2 } from '@/features/sectorKits/kits/beautySalon/kit.v3'; // BE-INCR-PLANO-4-NIVEIS: o kit instalado agora é o v3 (mesmo referencial, códigos novos)
+import { BEAUTY_SALON_KIT_V6 } from '@/features/sectorKits/kits/beautySalon/kit.v6';
 
 const UNIT = 'unit-kit-v2';
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -20,7 +22,7 @@ async function preparar(regime: 'PRESUMIDO' | 'REAL' | 'SIMPLES') {
   await resetDb();
   ownerId = (await prisma.user.create({ data: { name: 'kitv2', username: 'kit-v2-dono', email: 'kitv2@test.local', password: 'x', role: 'USER' } })).id;
   // catálogo 2025: os códigos do kit, analíticos (o passo 7 exige catálogo carregado; o serviço revalida o código)
-  const codigos = [...new Set(BEAUTY_SALON_KIT_V2.referential.flatMap((b) => b.entries.map((e) => e.referentialCode)))];
+  const codigos = [...new Set(BEAUTY_SALON_KIT_V6.referential.flatMap((b) => b.entries.map((e) => e.referentialCode)))];
   for (const code of codigos) await prisma.referentialAccount.create({ data: { layoutVersion: '2025', code, name: code, isAnalytic: true } });
   await prisma.fiscalProfile.create({
     data: { ...where(), regimeTributario: regime, pisCofinsRegime: regime === 'REAL' ? 'NAO_CUMULATIVO' : 'CUMULATIVO', d1fConfirmado: false },
@@ -29,7 +31,8 @@ async function preparar(regime: 'PRESUMIDO' | 'REAL' | 'SIMPLES') {
 
 const instalar = () =>
   ApplicationFactory.getInstance()
-    .getKitInstallService(scope())
+    // a v6 (BE-INCR-PLANO-4-NIVEIS) é a versão vigente; o registro fica preso nela
+    .getKitInstallService(scope(), () => [BEAUTY_SALON_KIT_V6])
     .install(scope(), { kitKey: 'beautySalon', ano: 2025, installChartIfEmpty: true, openCurrentPeriodIfMissing: true, today: TODAY });
 
 /** Cobertura como o gate da ECD conta (`ReferentialMappingService.coverage`): folhas vivas sem mapeamento 2025. A fronteira
@@ -40,15 +43,16 @@ async function cobertura() {
   return { folhas: folhas.length, faltam: folhas.filter((f) => !mapeadas.has(f.id)).map((f) => f.code) };
 }
 
-describe('kit v2 do salão — referencial 2025 (BE-INCR-H1-REFERENCIAL-3-4 PR-2)', () => {
+describe('kit vigente do salão (v6) — referencial 2025 (BE-INCR-H1-REFERENCIAL-3-4 PR-2; BE-INCR-PLANO-4-NIVEIS)', () => {
   beforeAll(() => pushTestSchema(), 120000);
   afterAll(async () => prisma.$disconnect());
 
-  it.each(['PRESUMIDO', 'REAL'] as const)('%s: instalação do registro real ⇒ cobertura 2025 15/15, 3.4 → 3.01.01.01.01.98', async (regime) => {
+  it.each(['PRESUMIDO', 'REAL'] as const)('%s: instalação da v6 publicada ⇒ todas as folhas cobertas, 3.4 → 3.01.01.01.01.98', async (regime) => {
     await preparar(regime);
     await expect(instalar()).resolves.toMatchObject({ status: 'INSTALLED' });
     const c = await cobertura();
-    expect(c).toEqual({ folhas: 15, faltam: [] });
+    // 24 folhas do canônico (15 + as 9 da emenda 3.3) + as 8 do conteúdo fiscal, todas mapeadas.
+    expect(c).toEqual({ folhas: 32, faltam: [] });
     const conta34 = await prisma.account.findFirstOrThrow({ where: { ...where(), code: '3.4' } });
     const m = await prisma.referentialMapping.findFirstOrThrow({ where: { ...where(), accountId: conta34.id, mappingVersion: '2025' } });
     expect(m.referentialCode).toBe('3.01.01.01.01.98');

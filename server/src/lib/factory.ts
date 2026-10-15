@@ -202,6 +202,9 @@ import type {
 // BE-INCR-KIT-SETOR PR-2 — instalação do kit de setor (activate-default + installSectorKitCli).
 import { Prisma } from 'generated/prisma';
 import { KitInstallService, type KitVersionsLookup } from '../features/sectorKits/services/KitInstallService';
+import { ServiceFiscalSuggestionService } from '../features/sectorKits/services/ServiceFiscalSuggestionService';
+import { declaredEventKeys } from '../features/sectorKits/registry';
+import { KitTraceService } from '../features/sectorKits/services/KitTraceService';
 import type {
   IKitAuditPort,
   KitChartPort,
@@ -209,11 +212,21 @@ import type {
   KitRegime,
   KitRegimePort,
   KitRoleDefaultsPort,
-  KitServiceFiscalPort,
+  KitOverrideAccountPort,
 } from '../features/sectorKits/services/kitInstallPorts';
 import { KitInstallationRepository } from '../features/sectorKits/repositories/KitInstallationRepository';
 import { SectorKitPolicy } from '../features/sectorKits/policies/SectorKitPolicy';
-import { UpsertServiceFiscalProfileSchema } from '../features/accounting/dtos/ServiceFiscalProfileDto';
+// BE-INCR-KIT-SETOR PR-3 — ajuste papel→conta do contador (rotas /accounting-kit/role-overrides + compile).
+import { RoleAccountOverrideRepository } from '../features/sectorKits/repositories/RoleAccountOverrideRepository';
+import { RoleOverrideSource } from '../features/sectorKits/services/RoleOverrideSource';
+import { RoleAccountOverrideService } from '../features/sectorKits/services/RoleAccountOverrideService';
+// BE-INCR-KIT-SETOR PR-4 — atualização do kit em 3 níveis (CLI do deploy + rotas de pendência).
+import { KitUpgradeRepository } from '../features/sectorKits/repositories/KitUpgradeRepository';
+import { KitUpgradeService } from '../features/sectorKits/services/KitUpgradeService';
+import { KitPendingService } from '../features/sectorKits/services/KitPendingService';
+import type { KitTenantStatePort, KitUpgradeWritePort } from '../features/sectorKits/services/kitUpgradePorts';
+import type { TenantAccount } from '../features/sectorKits/services/classifyKitDiff';
+import prismaClient from './prisma';
 import { SalesCancellationService } from '../features/sales/services/SalesCancellationService';
 import { RegisterPaymentService } from '../features/sales/services/RegisterPaymentService';
 import { PresetSyncService } from '../features/dynamicTables/services/PresetSyncService';
@@ -450,22 +463,6 @@ function buildKitRoleDefaultsPort(
   };
 }
 
-function buildKitServiceFiscalPort(
-  repo: IServiceFiscalProfileRepository,
-  service: ServiceFiscalProfileService,
-  scope: AccountingScope,
-): KitServiceFiscalPort {
-  return {
-    async hasProfile(serviceRef) {
-      return (await repo.findByServiceRef(scope, serviceRef)) !== null;
-    },
-    async upsert(serviceRef, input) {
-      // Mesma validação do PUT (lista nacional LC 116, Anexo C) — o kit não fura o DTO da rota.
-      await service.upsert(scope, serviceRef, UpsertServiceFiscalProfileSchema.parse({ unitId: scope.unitId, ...input }));
-    },
-  };
-}
-
 function buildKitReferentialPort(
   catalogRepo: IReferentialAccountRepository,
   mappingRepo: IReferentialMappingRepository,
@@ -500,6 +497,127 @@ function buildKitRegimePort(
   };
 }
 
+/** `xxxAccountId` da linha → `xxxAccountCode` do kit, com o CÓDIGO da conta (o diff do PR-4 compara códigos). */
+function accountFieldsByCode(row: object | null, codeById: Map<string, string>): Record<string, string | null> {
+  if (!row) return {};
+  return Object.fromEntries(
+    Object.entries(row)
+      .filter(([field]) => field.endsWith('AccountId'))
+      .map(([field, id]) => [field.replace(/AccountId$/, 'AccountCode'), typeof id === 'string' ? (codeById.get(id) ?? null) : null]),
+  );
+}
+
+/**
+ * BE-INCR-KIT-SETOR PR-4 (item 26) — o estado contábil do tenant para o diff: contas (inclusive apagadas, com "tem
+ * partida"), contas-padrão por código, referencial por ano, ano congelado (item 31: `ecfRecibo` ou período
+ * `HARD_CLOSED`) e regime por ano (E-12.5: o da empresa no ano; sem ele, o da unidade). Só leitura.
+ */
+function buildKitTenantStatePort(
+  accountRepo: IAccountRepository,
+  postingRepo: IPostingRepository,
+  settingsRepo: IBankSettlementRepository,
+  fiscalProfileRepo: IFiscalProfileRepository,
+  mappingRepo: IReferentialMappingRepository,
+  companyRepo: ICompanyFiscalProfileRepository,
+  periodRepo: IAccountingPeriodRepository,
+  scope: AccountingScope,
+): KitTenantStatePort {
+  return {
+    async load(years) {
+      const rows = await accountRepo.findAllByUnitIncludingDeleted(scope);
+      const codeById = new Map(rows.map((a) => [a.id, a.code]));
+      const accounts: Record<string, TenantAccount> = {};
+      for (const a of rows) {
+        accounts[a.code] = {
+          code: a.code,
+          name: a.name,
+          nature: a.nature,
+          acceptsEntries: a.acceptsEntries,
+          deleted: a.deletedAt !== null,
+          hasPostings: await postingRepo.existsForAccount(scope, a.id),
+        };
+      }
+      const fiscal = await fiscalProfileRepo.findByScope(scope);
+      const referential: Record<string, Record<string, string>> = {};
+      const frozenYears: string[] = [];
+      const regimeByYear: Record<string, KitRegime | null> = {};
+      for (const year of years) {
+        referential[year] = Object.fromEntries(
+          (await mappingRepo.findManyByVersion(scope, year)).map((m) => [codeById.get(m.accountId) ?? m.accountId, m.referentialCode]),
+        );
+        const company = await companyRepo.findByYear(scope, Number(year));
+        const hardClosed = (await periodRepo.list(scope, Number(year))).some((p) => p.status === 'HARD_CLOSED');
+        if (company?.ecfRecibo || hardClosed) frozenYears.push(year);
+        regimeByYear[year] = ((company?.regime ?? fiscal?.regimeTributario) as KitRegime | undefined) ?? null;
+      }
+      return {
+        accounts,
+        scopeSettings: accountFieldsByCode(await settingsRepo.getSettings(scope), codeById),
+        fiscalProfile: fiscal ? accountFieldsByCode(fiscal, codeById) : null,
+        referential,
+        frozenYears,
+        regimeByYear,
+      };
+    },
+  };
+}
+
+/** BE-INCR-KIT-SETOR PR-4 (E-12.2/E-12.3) — escritas da atualização e do aceitar, cada uma pelo dono do dado. */
+function buildKitUpgradeWritePort(
+  accountRepo: IAccountRepository,
+  postingRepo: IPostingRepository,
+  settingsService: AccountingScopeSettingsService,
+  fiscalProfileService: FiscalProfileService,
+  mappingService: ReferentialMappingService,
+  companyRepo: ICompanyFiscalProfileRepository,
+  periodRepo: IAccountingPeriodRepository,
+  scope: AccountingScope,
+): KitUpgradeWritePort {
+  return {
+    async isYearFrozen(year) {
+      if ((await companyRepo.findByYear(scope, Number(year)))?.ecfRecibo) return true;
+      return (await periodRepo.list(scope, Number(year))).some((p) => p.status === 'HARD_CLOSED');
+    },
+    async updateAccountIfUnused(code, data) {
+      return prismaClient.$transaction(async (tx) => {
+        const account = await accountRepo.findByCode(scope, code, tx);
+        if (!account) return 'missing' as const;
+        if (await postingRepo.existsForAccount(scope, account.id, tx)) return 'in_use' as const; // relido in-tx
+        await accountRepo.updateDefinition(scope, account.id, data, tx);
+        return 'updated' as const;
+      });
+    },
+    async restoreAccount(code) {
+      return (await accountRepo.restoreByCode(scope, code)) !== null;
+    },
+    async deleteAccount(code) {
+      const account = await accountRepo.findByCode(scope, code);
+      if (account) await accountRepo.softDelete(scope, account.id);
+    },
+    async renameAccount(code, name) {
+      const account = await accountRepo.findByCode(scope, code);
+      if (!account) return false;
+      await accountRepo.updateDefinition(scope, account.id, { name });
+      return true;
+    },
+    setScopeSettings: (accountIds) => settingsService.setAccounts(scope, accountIds),
+    setFiscalProfile: (accountIds) => fiscalProfileService.setAccounts(scope, accountIds),
+    async setReferentialMapping(mappingVersion, item) {
+      await mappingService.setMapping(scope, { unitId: scope.unitId, mappingVersion, ...item });
+    },
+  };
+}
+
+/** PR-3, item 20 — conta do ajuste lida com o `tx` do gate (`findById` já filtra escopo e `deletedAt`). */
+function buildKitOverrideAccountPort(accountRepo: IAccountRepository, scope: AccountingScope): KitOverrideAccountPort {
+  return {
+    async findLiveInScope(accountId, tx) {
+      const account = await accountRepo.findById(scope, accountId, tx);
+      return account ? { id: account.id, code: account.code, nature: account.nature, acceptsEntries: account.acceptsEntries } : null;
+    },
+  };
+}
+
 function buildKitAuditPort(
   auditRepo: IAuditRepository,
   postingRepo: IPostingRepository,
@@ -512,7 +630,7 @@ function buildKitAuditPort(
       await auditService.append(tx, bindingScopeToAccountingScope(scope), {
         actorUserId: scope.actorUserId,
         eventType: event.eventType,
-        targetType: 'KitInstallation',
+        targetType: event.targetType ?? 'KitInstallation',
         targetId: event.targetId,
         payload: event.payload,
       });
@@ -1438,6 +1556,7 @@ export class ApplicationFactory {
         this.repositories.dataExchange,
         auditService,
         legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia LEIAUTE_SPED (ECF)
+        this.repositories.fiscalProfile, // F-PCB-1R: dedução de PIS/COFINS fora do gate de receita bruta
       ),
       // Lucro Real (BRIEF 3B, Fork 6→b + Fork 4→b): o gerador LÊ o e-Lalur do model; o report
       // service SAIU (item 6 — L100/L300 são recuperados pelo PVA do K155/K156, pp.224/232). ECF 3C:
@@ -1702,6 +1821,8 @@ export class ApplicationFactory {
       new AccountingBindingPolicy(),
       validationService,
       auditPort,
+      // BE-INCR-KIT-SETOR PR-3 (item 25): todo caminho que compila lê o ajuste papel→conta vivo da unidade.
+      new RoleOverrideSource(new RoleAccountOverrideRepository()),
     );
   }
 
@@ -1722,6 +1843,48 @@ export class ApplicationFactory {
    * getters acima). Consumido pelo `activate-default` (item 11) e pelo `installSectorKitCli` (item 16).
    * `kitVersions` só é passado por teste: prova os passos com um kit de conteúdo sem publicar um v2 no registro.
    */
+  /**
+   * BE-INCR-KIT-SETOR-EMENDA-1 PR-K3 (7e/7f) — sugestão fiscal por serviço, por escopo. Serviço de integração: lê a tabela
+   * `services` do dono pelo repositório de DynamicTables (molde do `ProductRefPort`) e os perfis fiscais de serviço da
+   * unidade; nenhuma porta de gravação (7d). IA de reserva só com `OPENAI_API_KEY` configurada (7c).
+   */
+  public getServiceFiscalSuggestionService(scope: BindingScope): ServiceFiscalSuggestionService {
+    const accountingScope = bindingScopeToAccountingScope(scope);
+    const serviceFiscalProfileRepo = this.repositories.serviceFiscalProfile;
+    return new ServiceFiscalSuggestionService(
+      new SectorKitPolicy(),
+      new KitInstallationRepository(),
+      this.repositories.dynamicTable,
+      {
+        async serviceRefsComPerfil() {
+          return new Set((await serviceFiscalProfileRepo.listByScope(accountingScope)).map((p) => p.serviceRef));
+        },
+      },
+      process.env.OPENAI_API_KEY ? ChatOpenAIService.getInstance() : null,
+    );
+  }
+
+  /**
+   * BE-INCR-KIT-SETOR PR-6 (item 50) — rastro evento → fato → lançamento, por escopo. A porta do razão fecha sobre o
+   * `JournalEntryRepository.findBySource` (o `sectorKits` não importa `features/accounting`). Só leitura.
+   */
+  public getKitTraceService(scope: BindingScope): KitTraceService {
+    const accountingScope = bindingScopeToAccountingScope(scope);
+    const journalEntryRepo = this.repositories.journalEntry;
+    return new KitTraceService(
+      new SectorKitPolicy(),
+      {
+        async findBySource(sourceType, sourceId) {
+          const entry = await journalEntryRepo.findBySource(accountingScope, sourceType, sourceId);
+          return entry
+            ? { id: entry.id, sourceType: entry.sourceType, bindingId: entry.bindingId, bindingVersion: entry.bindingVersion }
+            : null;
+        },
+      },
+      new AccountingBindingRepository(),
+    );
+  }
+
   public getKitInstallService(scope: BindingScope, kitVersions?: KitVersionsLookup): KitInstallService {
     const accountingScope = bindingScopeToAccountingScope(scope);
     return new KitInstallService(
@@ -1732,7 +1895,6 @@ export class ApplicationFactory {
       buildKitChartPort(this.repositories.account, this.services.posting, accountingScope),
       buildActivationPeriodPort(this.repositories.accountingPeriod, this.services.period, accountingScope),
       buildKitRoleDefaultsPort(this.repositories.fiscalProfile, this.services.accountingScopeSettings, this.services.fiscalProfile, accountingScope),
-      buildKitServiceFiscalPort(this.repositories.serviceFiscalProfile, this.services.serviceFiscalProfile, accountingScope),
       buildKitReferentialPort(
         this.repositories.referentialAccount,
         this.repositories.referentialMapping,
@@ -1742,6 +1904,89 @@ export class ApplicationFactory {
       buildKitRegimePort(this.repositories.companyFiscalProfile, this.repositories.fiscalProfile, accountingScope),
       buildKitAuditPort(this.repositories.audit, this.repositories.posting, this.policies.accounting, this.repositories.counterparty),
       kitVersions,
+    );
+  }
+
+  /**
+   * BE-INCR-KIT-SETOR PR-3 — `RoleAccountOverrideService` por escopo (portas fechadas sobre o escopo, mesmo motivo
+   * dos getters acima). Consumido pelas rotas `/accounting-kit/role-overrides` (item 22).
+   */
+  public getRoleAccountOverrideService(scope: BindingScope, kitVersions?: KitVersionsLookup): RoleAccountOverrideService {
+    const accountingScope = bindingScopeToAccountingScope(scope);
+    return new RoleAccountOverrideService(
+      new SectorKitPolicy(),
+      new RoleAccountOverrideRepository(),
+      new KitInstallationRepository(),
+      this.getAccountingBindingCompileService(scope),
+      buildKitOverrideAccountPort(this.repositories.account, accountingScope),
+      buildActivationChartPort(this.repositories.account, this.services.posting, accountingScope),
+      buildKitAuditPort(this.repositories.audit, this.repositories.posting, this.policies.accounting, this.repositories.counterparty),
+      kitVersions,
+    );
+  }
+
+  /**
+   * BE-INCR-KIT-SETOR PR-4 — `KitUpgradeService` por escopo (portas fechadas sobre o escopo). Consumido pelo
+   * `upgradeSectorKitsCli` (item 34) e pelo `GET /accounting-kit` (item 38).
+   */
+  public getKitUpgradeService(scope: BindingScope, kitVersions?: KitVersionsLookup): KitUpgradeService {
+    const accountingScope = bindingScopeToAccountingScope(scope);
+    return new KitUpgradeService(
+      new SectorKitPolicy(),
+      new KitInstallationRepository(),
+      new KitUpgradeRepository(),
+      new RoleAccountOverrideRepository(),
+      new AccountingBindingRepository(),
+      this.getAccountingBindingCompileService(scope),
+      buildKitChartPort(this.repositories.account, this.services.posting, accountingScope),
+      buildKitRoleDefaultsPort(this.repositories.fiscalProfile, this.services.accountingScopeSettings, this.services.fiscalProfile, accountingScope),
+      buildKitReferentialPort(this.repositories.referentialAccount, this.repositories.referentialMapping, this.services.referentialMapping, accountingScope),
+      this.buildKitTenantState(accountingScope),
+      this.buildKitUpgradeWrite(accountingScope),
+      buildKitAuditPort(this.repositories.audit, this.repositories.posting, this.policies.accounting, this.repositories.counterparty),
+      kitVersions,
+    );
+  }
+
+  /** BE-INCR-KIT-SETOR PR-4 — `KitPendingService` por escopo (rotas `/accounting-kit/pending`, item 37). */
+  public getKitPendingService(scope: BindingScope, kitVersions?: KitVersionsLookup): KitPendingService {
+    const accountingScope = bindingScopeToAccountingScope(scope);
+    return new KitPendingService(
+      new SectorKitPolicy(),
+      new KitUpgradeRepository(),
+      new KitInstallationRepository(),
+      this.getRoleAccountOverrideService(scope, kitVersions),
+      this.getAccountingBindingCompileService(scope),
+      buildKitChartPort(this.repositories.account, this.services.posting, accountingScope),
+      this.buildKitUpgradeWrite(accountingScope),
+      buildKitAuditPort(this.repositories.audit, this.repositories.posting, this.policies.accounting, this.repositories.counterparty),
+      kitVersions,
+    );
+  }
+
+  private buildKitTenantState(scope: AccountingScope): KitTenantStatePort {
+    return buildKitTenantStatePort(
+      this.repositories.account,
+      this.repositories.posting,
+      this.repositories.bankSettlement,
+      this.repositories.fiscalProfile,
+      this.repositories.referentialMapping,
+      this.repositories.companyFiscalProfile,
+      this.repositories.accountingPeriod,
+      scope,
+    );
+  }
+
+  private buildKitUpgradeWrite(scope: AccountingScope): KitUpgradeWritePort {
+    return buildKitUpgradeWritePort(
+      this.repositories.account,
+      this.repositories.posting,
+      this.services.accountingScopeSettings,
+      this.services.fiscalProfile,
+      this.services.referentialMapping,
+      this.repositories.companyFiscalProfile,
+      this.repositories.accountingPeriod,
+      scope,
     );
   }
 
@@ -1795,7 +2040,7 @@ export class ApplicationFactory {
    */
   public async initializeAccountingSyncFromBindings(): Promise<void> {
     const registrations = await this.getAccountingBindingFeederService().buildActiveMapperRegistrations();
-    this.services.accountingSync = new AccountingSyncService(this.services.posting, registrations);
+    this.services.accountingSync = new AccountingSyncService(this.services.posting, registrations, { declaredEventKeys: declaredEventKeys() });
   }
 
   // Service Getters

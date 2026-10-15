@@ -48,6 +48,9 @@ model User {
   inventoryItems             InventoryItem[] // Relation to InventoryItem (perpetual inventory subledger, INCR-INVENTORY)
   accountingBindings         AccountingBinding[] // Relation to AccountingBinding (A Prensa, BE-INCR-BINDING-PRESS)
   kitInstallations           KitInstallation[] // BE-INCR-KIT-SETOR PR-2 — kit de setor instalado por unidade
+  roleAccountOverrides       RoleAccountOverride[] // BE-INCR-KIT-SETOR PR-3 — ajuste papel→conta do contador
+  kitUpgradeRuns             KitUpgradeRun[] // BE-INCR-KIT-SETOR PR-4 — execuções da atualização do kit
+  kitUpgradePendings         KitUpgradePending[] // BE-INCR-KIT-SETOR PR-4 — pendências (nível c) da atualização
   reconcilePendingItems      ReconcilePendingItem[] // Relation to ReconcilePendingItem (BE-INCR-RECONCILE-PENDING, nó C7)
   bankSettlementItems        BankSettlementItem[] // Relation to BankSettlementItem (BE-INCR-BANK-SETTLEMENT, nó F7)
   accountingScopeSettings    AccountingScopeSettings[] // Relation to AccountingScopeSettings (config por escopo, F7 Fase C)
@@ -517,6 +520,7 @@ model Account {
   scopeSettingsDisposalGainOf        AccountingScopeSettings[] @relation("ScopeSettingsDisposalGain") // ganho na baixa de imobilizado
   scopeSettingsDisposalLossOf        AccountingScopeSettings[] @relation("ScopeSettingsDisposalLoss") // perda na baixa de imobilizado
   providerFeeExpenseOf               AccountingScopeSettings[] @relation("ScopeSettingsProviderFeeExpense") // tarifa do provedor (F5 PR-3, P3-11)
+  roleOverrides                      RoleAccountOverride[]     // ajuste papel→conta do binding do kit (BE-INCR-KIT-SETOR PR-3)
   paymentAccountsGl                  PaymentAccount[]          @relation("PaymentAccountGl") // folha do saldo no provedor (BE-INCR-PAYMENT-PROVIDER PR-1, P1-3)
   createdAt                          DateTime                  @default(now())
   updatedAt                          DateTime                  @updatedAt
@@ -612,6 +616,11 @@ model JournalEntry {
   status              String                   @default("Draft") // Draft | PendingApproval | Posted | Reconciled | Reversed
   sourceType          String                   @default("manual")
   sourceId            String?
+  // BE-INCR-KIT-SETOR PR-6 (item 50; dono, chat, 13/10: "Gravar a versão"): o binding que interpretou o evento.
+  // Gravado pelo InterpretedEventMapper; null em lançamento manual, de subrazão ou anterior ao PR-6. Sem FK: o
+  // rastro sobrevive à versão do binding (mesmo padrão de audit/log).
+  bindingId           String?
+  bindingVersion      Int?
   reversedById        String?                  @unique // the reversal entry that estorned this one
   reversedBy          JournalEntry?            @relation("Reversal", fields: [reversedById], references: [id])
   reverses            JournalEntry?            @relation("Reversal")
@@ -1107,6 +1116,7 @@ model PayablePayment {
   paidByUserId String? // actor who registered the payment; plain string
   status       String // ACTIVE | CANCELLED
   entryId      String? // settlement journal entry id (ap.payment) — denormalized convenience; findEntryBySource is authoritative
+  kind         String   @default("PAYMENT") // SETTLEMENT_KINDS — 'DISCOUNT' = baixa sem caixa (emenda 3.3, E13; coluna no PR-1)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -1178,6 +1188,7 @@ model ReceivableReceipt {
   status           String // ACTIVE | CANCELLED
   entryId          String? // receipt journal entry id (ar.receipt) — denormalized convenience; findEntryBySource is authoritative
   debitAccountId   String? // F5 PR-3 (P3-9, F-PPB-3 a): conta de debito do recibo ProviderBalance; null = mapa fechado do metodo (legado)
+  kind             String     @default("PAYMENT") // SETTLEMENT_KINDS — 'DISCOUNT' = baixa sem caixa (emenda 3.3, E13; coluna no PR-1)
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
@@ -1421,6 +1432,79 @@ model KitInstallation {
   @@unique([userId, unitId]) // um kit por unidade (item 9)
   @@index([kitKey, kitVersion])
   @@map("kit_installations")
+}
+
+// BE-INCR-KIT-SETOR PR-3 (BRIEF item 18, §3.2) — ajuste papel→conta do contador sobre o binding do kit. Só papéis do
+// binding (F-KB-3 → b); `role` = AccountRole, com sub-chave 'caixa-por-metodo:<método>'. Unicidade VIVA por
+// (userId, unitId, role) garantida no serviço, in-tx — sem @@unique, porque remover e recriar o mesmo papel morreria
+// em P2002 com a linha soft-deleted (memória unique-de-idempotencia-x-soft-delete). Trocar a conta = soft-delete da
+// linha viva + linha nova (o `motivo` de cada troca fica na sua linha).
+model RoleAccountOverride {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId    String
+  role      String // AccountRole (accountingBinding/models/types.ts), com sub-chave 'caixa-por-metodo:<m>'
+  accountId String
+  account   Account   @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  motivo    String // 10–500 chars (DTO); fica só na linha, nunca no payload de auditoria (item 24)
+  setById   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([userId, unitId, role])
+  @@map("role_account_overrides")
+}
+
+// BE-INCR-KIT-SETOR PR-4 (BRIEF item 32, §3.2) — uma linha por execução da atualização do kit e por unidade. O
+// `--apply` exige um DRY_RUN da MESMA (unidade, from→to) no MESMO `deployId` (item 34). `report` = KitUpgradeReport.
+model KitUpgradeRun {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId      String
+  kitKey      String
+  fromVersion Int
+  toVersion   Int
+  deployId    String
+  mode        String // DRY_RUN | APPLY
+  status      String // PLANNED | APPLIED | PARTIAL | FAILED (models/kitUpgradeTypes.ts)
+  report      String // JSON: KitUpgradeReport (dtos/KitUpgradeDto.ts)
+  actor       String // 'deploy-cli' ou userId
+  startedAt   DateTime  @default(now())
+  finishedAt  DateTime?
+
+  @@index([userId, unitId, kitKey, toVersion])
+  @@index([deployId])
+  @@map("kit_upgrade_runs")
+}
+
+// BE-INCR-KIT-SETOR PR-4 (BRIEF item 33, §3.2) — uma linha por conflito (nível c). A empresa segue na versão atual
+// daquele item até alguém aceitar ou recusar. O @@unique evita pendência duplicada em reexecução; a recusada não
+// reaparece para o mesmo `toVersion` (item 37).
+model KitUpgradePending {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId      String
+  kitKey      String
+  toVersion   Int
+  runId       String
+  itemKey     String // ex.: 'role:receita-serviço', 'account:2.1.3', 'referential:2025:1.1.1'
+  reason      String // ConflictReason (models/kitUpgradeTypes.ts)
+  kitValue    String // JSON
+  tenantValue String // JSON
+  status      String // OPEN | ACCEPTED | REJECTED
+  decidedById String?
+  decidedAt   DateTime?
+  motivo      String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, unitId, kitKey, toVersion, itemKey])
+  @@index([userId, unitId, status])
+  @@map("kit_upgrade_pendings")
 }
 
 // BE-INCR-RECONCILE-PENDING (nó C7) — resíduo F-W2F-3/5 (CEDULA-DECISAO-2026-09-03-modulos.md,
@@ -1838,6 +1922,11 @@ model BankSettlementItem {
   chargeEntryId   String? // journal_entries.id do bank.charge (etapa ii)
   feeCents        BigInt            @default(0) // F5 PR-3 (P3-7, F-PP-6 b): tarifa do provedor = GROSS - NET da linha mp_release
   feeEntryId      String? // journal_entries.id do provider.fee (etapa FEE, P3-8)
+  // Emenda 3.3 (BE-INCR-ENCARGOS-DESCONTOS; colunas no PR-1, E5 — uso no PR-2/PR-3)
+  shortfallCents       BigInt                     @default(0) // E11 — max(0, saldo − |linha|) no scan; re-derivado no pré-cheque
+  shortfallTreatment   String? // E12 — SHORTFALL_TREATMENTS, gravado no confirm
+  discountSettlementId String? // E12 — payable_payments.id | receivable_receipts.id (kind DISCOUNT)
+  chargeParts          BankSettlementChargePart[]
   confirmedById   String?
   confirmedAt     DateTime?
   createdAt       DateTime          @default(now())
@@ -1848,6 +1937,19 @@ model BankSettlementItem {
   @@index([userId, unitId, status])
   @@index([userId, unitId, statementLineId])
   @@map("bank_settlement_items")
+}
+
+// Emenda 3.3, E7 (F-ENC-2 a, dono 13/10): partes do encargo informadas pelo humano no confirm — value-object do item
+// (precedente PostingDimension / LalurProcess), sem deletedAt; substituível até a etapa CHARGE.
+model BankSettlementChargePart {
+  id     String             @id @default(cuid())
+  itemId String
+  item   BankSettlementItem @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  kind   String // BANK_CHARGE_KINDS
+  cents  BigInt
+
+  @@unique([itemId, kind])
+  @@map("bank_settlement_charge_parts")
 }
 
 // Configuração por escopo (decisão do dono 2026-09-15, questionário na sessão do F7): 1 linha por
@@ -2019,7 +2121,7 @@ model ReconcilePendingItem {
   unitId       String // business unit (scoped string, not a FK)
   sourceType   String // 'crm.opportunity.won' | 'sale.finalized' | 'sale.cancelled' | 'sale.returned' | 'sale.settled' | 'sale.cogs' | 'sale.package.sold' | 'sale.package.consumption' | 'sale.package.expired' (sourceId = 'expiry:<balanceId>:<expiresOn>')
   sourceId     String // origin key (opportunityId | saleId), same identity the reconcile pass already uses
-  reasonCode   String // alfabeto = ReconcilePendingReasonCode (ReconcilePendingDto.ts) — FAILED | ACCOUNTING_PERIOD_NOT_OPEN | MAX_CENTS_EXCEEDED | OPENING_ENTRY_MISSING | MISSING_PAID_WITH_PACKAGE_ID (C7r) | NO_MAPPER_FOR_UNIT | PACKAGE_CONSUMPTION_PENDING | PACKAGE_ORIGIN_REVERSED | PACKAGE_EXPIRY_NFSE_PENDING (BE-INCR-PACOTE-VALIDADE)
+  reasonCode   String // alfabeto = ReconcilePendingReasonCode (ReconcilePendingDto.ts) — FAILED | ACCOUNTING_PERIOD_NOT_OPEN | MAX_CENTS_EXCEEDED | OPENING_ENTRY_MISSING | MISSING_PAID_WITH_PACKAGE_ID (C7r) | NO_MAPPER_FOR_UNIT | PACKAGE_CONSUMPTION_PENDING | PACKAGE_ORIGIN_REVERSED | PACKAGE_EXPIRY_NFSE_PENDING (BE-INCR-PACOTE-VALIDADE) | UNKNOWN_EVENT_KEY (D-2026-10-14 L-2)
   reasonDetail String // error message captured at classification time
   firstSeenAt  DateTime  @default(now())
   lastSeenAt   DateTime  @updatedAt
@@ -2244,6 +2346,7 @@ model LalurEntry {
   createdAt      DateTime                 @default(now())
   updatedAt      DateTime                 @updatedAt
   deletedAt      DateTime? // set when archived (soft) — together with the rename-on-key
+  origem         String                   @default("user") // LALUR_ORIGENS — 'system' = adição derivada no fechamento (emenda 3.3, E15; uso no PR-4)
 
   @@unique([userId, unitId, year, quarter, livro, codigo]) // uma linha viva por código × período × livro (D-M2)
   @@index([userId, unitId, year])

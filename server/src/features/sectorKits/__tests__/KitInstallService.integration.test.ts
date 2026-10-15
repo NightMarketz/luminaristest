@@ -3,7 +3,7 @@
  * (plano, settings, perfil fiscal, período, compile, perfis fiscais por serviço, referencial, auditoria).
  *
  * Os kits v1 publicados são vazios (F-KB-6 → a), então os passos 2, 3, 6 e 7 só provam alguma coisa com um kit
- * que TENHA conteúdo. `TEST_KIT` deriva do kit vigente do salão (v3, BE-INCR-PLANO-4-NIVEIS) e acrescenta extensão, contas-padrão, padrão fiscal
+ * que TENHA conteúdo. `TEST_KIT` deriva do kit vigente do salão (v6, BE-INCR-PLANO-4-NIVEIS) e acrescenta extensão, contas-padrão, padrão fiscal
  * por serviço e referencial — injetado pelo parâmetro de teste do `getKitInstallService`, sem publicar um v2.
  */
 import prisma from '@/lib/prisma';
@@ -11,7 +11,7 @@ import { pushTestSchema, resetDb } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
 import type { BindingScope } from '@/features/accountingBinding/repositories/IAccountingBindingRepository';
 import { SectorKitV1Schema, type SectorKitV1 } from '@/features/sectorKits/dtos/SectorKitDto';
-import { BEAUTY_SALON_KIT_V3 } from '@/features/sectorKits/kits/beautySalon/kit.v3';
+import { BEAUTY_SALON_KIT_V6 } from '@/features/sectorKits/kits/beautySalon/kit.v6';
 import { KitInstallStepFailedError } from '@/features/sectorKits/models/kitInstallTypes';
 import { CANONICAL_ACCOUNTS } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
 import type { InstallKitInput } from '@/features/sectorKits/dtos/KitInstallationDto';
@@ -24,25 +24,25 @@ const MONTH = Number(TODAY.slice(5, 7));
 const REF_CODE = '1.01.01.01.01';
 
 const TEST_KIT: SectorKitV1 = SectorKitV1Schema.parse({
-  ...BEAUTY_SALON_KIT_V3,
+  ...BEAUTY_SALON_KIT_V6,
   // BE-INCR-PLANO-4-NIVEIS: base no kit vigente (plano de 4 níveis); versão própria, fora das publicadas.
   kitVersion: 99,
   changelog: ['kit de teste (não publicado): extensão, contas-padrão, padrão fiscal por serviço e referencial'],
   chartExtension: [
-    { code: '4.3', name: 'Despesas Bancárias (kit teste)', nature: 'Expense', acceptsEntries: true },
-    { code: '4.4', name: 'Despesa de IRPJ (kit teste)', nature: 'Expense', acceptsEntries: true },
+    { code: '4.8', name: 'Despesas Bancárias (kit teste)', nature: 'Expense', acceptsEntries: true },
+    { code: '4.9', name: 'Despesa de IRPJ (kit teste)', nature: 'Expense', acceptsEntries: true },
     { code: '2.1.9', name: 'IRPJ a Recolher (kit teste)', nature: 'Liability', acceptsEntries: true },
   ],
   roleDefaults: {
-    scopeSettings: { bankChargeExpenseAccountCode: '4.3', depreciationExpenseAccountCode: '4.3' },
-    fiscalProfile: { irpjDespesaAccountCode: '4.4', irpjRecolherAccountCode: '2.1.9' },
+    scopeSettings: { bankChargeExpenseAccountCode: '4.8', depreciationExpenseAccountCode: '4.8' },
+    fiscalProfile: { irpjDespesaAccountCode: '4.9', irpjRecolherAccountCode: '2.1.9' },
   },
-  serviceFiscalDefaults: [{ serviceRef: 'svc-corte', cTribNac: '060101', cIndOp: '030101' }],
+  serviceFiscalDefaults: [{ key: 'cabeleireiro', label: 'Cabeleireiro', cTribNac: '060101', sinonimos: ['corte'], fonte: 'LC 116 6.01' }], // PR-K3: catálogo de sugestões — não se instala
   referential: [
     {
       regime: 'PRESUMIDO',
       mappingVersion: String(YEAR),
-      entries: [{ accountCode: '4.3', referentialCode: REF_CODE, label: 'Conta referencial (teste)' }],
+      entries: [{ accountCode: '4.8', referentialCode: REF_CODE, label: 'Conta referencial (teste)' }],
     },
   ],
 });
@@ -107,28 +107,26 @@ describe('KitInstallService (integração, kit com conteúdo)', () => {
 
     expect(out).toMatchObject({ status: 'INSTALLED', kit: { kitKey: 'beautySalon', kitVersion: 99, status: 'INSTALLED' }, bindingVersion: 1 });
     // 1 + 2: canônico + extensão
-    for (const code of ['1.1.1.01', '4.3', '4.4', '2.1.9']) expect(await accountId(code)).not.toBeNull();
+    for (const code of ['1.1.1.01', '4.8', '4.9', '2.1.9']) expect(await accountId(code)).not.toBeNull();
     // 3: contas-padrão nos campos nulos (settings criada; perfil fiscal existente, d1f NÃO confirmado pelo kit)
     const f = await foto();
     expect(f.settings).toEqual({
-      bankChargeExpenseAccountId: await accountId('4.3'),
-      depreciationExpenseAccountId: await accountId('4.3'),
+      bankChargeExpenseAccountId: await accountId('4.8'),
+      depreciationExpenseAccountId: await accountId('4.8'),
       bankChargeIncomeAccountId: null,
     });
-    expect(f.perfilFiscal).toEqual({ irpjDespesaAccountId: await accountId('4.4'), irpjRecolherAccountId: await accountId('2.1.9'), d1fConfirmado: false });
+    expect(f.perfilFiscal).toEqual({ irpjDespesaAccountId: await accountId('4.9'), irpjRecolherAccountId: await accountId('2.1.9'), d1fConfirmado: false });
     // 4: período do mês aberto
     expect((await prisma.accountingPeriod.findFirst({ where: { ...where(), year: YEAR, month: MONTH } }))?.status).toBe('OPEN');
     // 5: binding Active
     expect(await prisma.accountingBinding.findMany({ where: where(), select: { status: true, bindingVersion: true } })).toEqual([
       { status: 'Active', bindingVersion: 1 },
     ]);
-    // 6: perfil fiscal do serviço
-    expect(await prisma.serviceFiscalProfile.findFirst({ where: { ...where(), serviceRef: 'svc-corte' }, select: { cTribNac: true } })).toEqual({
-      cTribNac: '060101',
-    });
+    // 6: vazio desde o PR-K3 (7d) — o catálogo do kit não grava perfil fiscal de serviço
+    expect(await prisma.serviceFiscalProfile.count({ where: where() })).toBe(0);
     // 7: referencial do regime (unidade PRESUMIDO) × ano
     expect(await prisma.referentialMapping.findMany({ where: where(), select: { accountId: true, referentialCode: true, mappingVersion: true } })).toEqual([
-      { accountId: await accountId('4.3'), referentialCode: REF_CODE, mappingVersion: String(YEAR) },
+      { accountId: await accountId('4.8'), referentialCode: REF_CODE, mappingVersion: String(YEAR) },
     ]);
     const row = await prisma.kitInstallation.findFirst({ where: where() });
     expect(row).toMatchObject({ kitKey: 'beautySalon', kitVersion: 99, status: 'INSTALLED' });
@@ -148,7 +146,7 @@ describe('KitInstallService (integração, kit com conteúdo)', () => {
 
     const f = await foto();
     expect(f.settings?.bankChargeExpenseAccountId).toBe(escolhida); // preenchido pelo tenant: intocado
-    expect(f.settings?.depreciationExpenseAccountId).toBe(await accountId('4.3')); // nulo: preenchido pelo kit
+    expect(f.settings?.depreciationExpenseAccountId).toBe(await accountId('4.8')); // nulo: preenchido pelo kit
     expect(f.perfilFiscal?.irpjDespesaAccountId).toBe(escolhida);
     expect(f.perfilFiscal?.irpjRecolherAccountId).toBe(await accountId('2.1.9'));
   });
@@ -156,48 +154,48 @@ describe('KitInstallService (integração, kit com conteúdo)', () => {
   it('passo 2 não restaura conta de extensão apagada pelo contador', async () => {
     await seedFiscalProfile();
     await prisma.account.create({
-      data: { ...where(), code: '4.3', name: 'Despesas Bancárias', nature: 'Expense', acceptsEntries: true, deletedAt: new Date() },
+      data: { ...where(), code: '4.8', name: 'Despesas Bancárias', nature: 'Expense', acceptsEntries: true, deletedAt: new Date() },
     });
 
     await kitService().install(scope(), input());
 
-    expect(await accountId('4.3')).toBeNull();
-    expect(await prisma.account.count({ where: { ...where(), code: '4.3' } })).toBe(1); // a linha apagada, só ela
-    expect(await accountId('4.4')).not.toBeNull(); // o resto da extensão entra
+    expect(await accountId('4.8')).toBeNull();
+    expect(await prisma.account.count({ where: { ...where(), code: '4.8' } })).toBe(1); // a linha apagada, só ela
+    expect(await accountId('4.9')).not.toBeNull(); // o resto da extensão entra
     const f = await foto();
     expect(f.settings).toBeNull(); // os dois campos do kit apontavam para 4.3: nada a preencher
     expect(f.referencial).toBe(0); // o referencial do kit era de 4.3
   });
 
-  it('falha injetada no passo 6: FAILED, steps=5, KitInstallStepFailedError e kit.install_failed', async () => {
+  it('falha injetada no passo 7: FAILED, steps=6, KitInstallStepFailedError e kit.install_failed', async () => {
     await seedFiscalProfile();
-    const sfp = ApplicationFactory.getInstance().getServiceFiscalProfileService();
-    const spy = jest.spyOn(sfp, 'upsert').mockRejectedValueOnce(new Error('falha injetada'));
+    const rms = ApplicationFactory.getInstance().getReferentialMappingService();
+    const spy = jest.spyOn(rms, 'batchSet').mockRejectedValueOnce(new Error('falha injetada'));
     try {
-      await expect(kitService().install(scope(), input())).rejects.toMatchObject({ step: 6 });
+      await expect(kitService().install(scope(), input())).rejects.toMatchObject({ step: 7 });
       await expect(kitService().install(scope(), input())).resolves.toMatchObject({ status: 'INSTALLED' });
     } finally {
       spy.mockRestore();
     }
     const [failed] = await eventos('kit.install_failed');
-    expect(JSON.parse(failed.payload)).toEqual({ kitKey: 'beautySalon', kitVersion: '99', step: '6' });
+    expect(JSON.parse(failed.payload)).toEqual({ kitKey: 'beautySalon', kitVersion: '99', step: '7' });
   });
 
-  it('retomada: a 2ª chamada retoma do passo 6 sem duplicar efeito', async () => {
+  it('retomada: a 2ª chamada retoma do passo 7 sem duplicar efeito', async () => {
     await seedFiscalProfile();
-    const sfp = ApplicationFactory.getInstance().getServiceFiscalProfileService();
-    const spy = jest.spyOn(sfp, 'upsert').mockRejectedValueOnce(new Error('falha injetada'));
+    const rms = ApplicationFactory.getInstance().getReferentialMappingService();
+    const spy = jest.spyOn(rms, 'batchSet').mockRejectedValueOnce(new Error('falha injetada'));
     try {
       const erro = await kitService().install(scope(), input()).catch((e: unknown) => e);
       expect(erro).toBeInstanceOf(KitInstallStepFailedError);
       const row = await prisma.kitInstallation.findFirst({ where: where() });
       expect(row?.status).toBe('FAILED');
-      expect(JSON.parse(row!.steps)).toEqual({ lastCompletedStep: 5, warnings: [] });
+      expect(JSON.parse(row!.steps)).toEqual({ lastCompletedStep: 6, warnings: [] });
       const antes = await foto();
-      expect(antes.perfisDeServico).toBe(0);
+      expect(antes.referencial).toBe(0);
 
-      // sonda do passo 3 (contas-padrão) e do passo 1 (plano): na retomada do passo 6 eles NÃO são chamados — os
-      // passos são idempotentes, então só a sonda distingue "retomou do 6" de "refez tudo"
+      // sonda do passo 3 (contas-padrão) e do passo 1 (plano): na retomada do passo 7 eles NÃO são chamados — os
+      // passos são idempotentes, então só a sonda distingue "retomou do 7" de "refez tudo"
       const settings = jest.spyOn(ApplicationFactory.getInstance().getAccountingScopeSettingsService(), 'fillNullAccounts');
       const fiscal = jest.spyOn(ApplicationFactory.getInstance().getFiscalProfileService(), 'fillNullAccounts');
       await expect(kitService().install(scope(), input())).resolves.toMatchObject({ status: 'INSTALLED', bindingVersion: 1 });
@@ -207,10 +205,10 @@ describe('KitInstallService (integração, kit com conteúdo)', () => {
       fiscal.mockRestore();
 
       const depois = await foto();
-      // passos 1–5 NÃO rodaram de novo: nada do que eles escrevem mudou
-      expect({ ...depois, perfisDeServico: 0, referencial: 0 }).toEqual({ ...antes, referencial: 0 });
-      // passos 6–7 rodaram uma vez
-      expect(depois.perfisDeServico).toBe(1);
+      // passos 1–6 NÃO rodaram de novo: nada do que eles escrevem mudou
+      expect({ ...depois, referencial: 0 }).toEqual({ ...antes, referencial: 0 });
+      // passo 7 rodou uma vez; o 6 não grava (PR-K3)
+      expect(depois.perfisDeServico).toBe(0);
       expect(depois.referencial).toBe(1);
       expect(depois.bindings).toBe(1); // o compile não rodou de novo (rodaria uma versão nova)
       expect(JSON.parse((await prisma.kitInstallation.findFirst({ where: where() }))!.steps).lastCompletedStep).toBe(7);
@@ -322,7 +320,7 @@ describe('KitInstallService (integração, kit com conteúdo)', () => {
 
   it('contador ativo e nenhum campo nulo a preencher: o passo 3 não vira parâmetro governado (achado do review)', async () => {
     await contasDoKitVivas();
-    const [c43, c44, c219] = [(await accountId('4.3'))!, (await accountId('4.4'))!, (await accountId('2.1.9'))!];
+    const [c43, c44, c219] = [(await accountId('4.8'))!, (await accountId('4.9'))!, (await accountId('2.1.9'))!];
     await prisma.accountingScopeSettings.create({
       data: { ...where(), bankChargeExpenseAccountId: c43, depreciationExpenseAccountId: c43, updatedById: ownerId },
     });

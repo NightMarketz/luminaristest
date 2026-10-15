@@ -9,6 +9,13 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import * as nfeLib from '../../../../lib/nfe';
+
+// Export de módulo compilado pelo swc não é reconfigurável (jest.spyOn falha): embrulha o parseNfe REAL num
+// jest.fn no registry — preview e import continuam recebendo a mesma função.
+jest.mock('../../../../lib/nfe', () => {
+  const actual = jest.requireActual<typeof import('../../../../lib/nfe')>('../../../../lib/nfe');
+  return { ...actual, parseNfe: jest.fn(actual.parseNfe) };
+});
 import { ForbiddenError, ValidationError } from '../../../../lib/errors';
 import { NfePreviewSchema } from '../../dtos/NfeDto';
 import { NfePreviewService } from '../NfePreviewService';
@@ -61,7 +68,8 @@ describe('NfePreviewService.preview', () => {
   });
 
   it('chama o MESMO parseNfe do import exatamente uma vez (sem segundo parser)', async () => {
-    const spy = jest.spyOn(nfeLib, 'parseNfe');
+    const spy = jest.mocked(nfeLib.parseNfe);
+    spy.mockClear();
     const { service } = build();
     await service.preview(scope, PURCHASE);
     expect(spy).toHaveBeenCalledTimes(1);

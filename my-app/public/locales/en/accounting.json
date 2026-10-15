@@ -36,7 +36,8 @@
       "perfilFiscal": "Tax profile",
       "parametrosLegais": "Legal parameters",
       "politica": "Accounting policy",
-      "apuracao": "Tax assessment"
+      "apuracao": "Tax assessment",
+      "pendencias": "Pending items"
     },
     "error": {
       "units": "Failed to load units.",
@@ -2822,6 +2823,76 @@
       "load": "Failed to load assessments.",
       "detail": "Failed to load the detail.",
       "reconcile": "Could not reconcile the provision."
+    }
+  },
+  "activation": {
+    "regionLabel": "Accounting activation",
+    "inactive": "Automatic accounting is not active for this unit — sales do not generate journal entries.",
+    "sectorLabel": "Sector",
+    "button": "Activate accounting",
+    "sectors": {
+      "beautySalon": "Beauty salon",
+      "aestheticClinic": "Aesthetic clinic"
+    },
+    "confirm": {
+      "title": "Activate accounting for this unit?",
+      "message": "Sector: {{sector}}. On confirm, (1) the default chart of accounts is installed if the unit's chart is empty and (2) the current month's period is opened if it does not exist yet.",
+      "confirmLabel": "Activate",
+      "cancelLabel": "Cancel"
+    },
+    "blockingTitle": "Activation was not completed:",
+    "blocking": {
+      "CHART_OF_ACCOUNTS_EMPTY": "The unit's chart of accounts is empty.",
+      "ACCOUNTING_PERIOD_NOT_OPEN": "Period {{period}} is closed — reopen it before activating.",
+      "EVENT_COVERAGE_MISSING": "An operation event has no accounting rule."
+    },
+    "goToPeriods": "Go to Periods",
+    "success": "Automatic accounting activated: sales of this unit now generate journal entries.",
+    "successShort": "Automatic accounting is active.",
+    "pendenciasLink": "View the unit's pending items",
+    "error": "Could not activate accounting."
+  },
+  "pendencias": {
+    "title": "Pending items",
+    "subtitle": "Events the automatic bookkeeping could not post for this unit. Fix the cause and use Rescan.",
+    "filter": {
+      "reason": "Reason",
+      "all": "All",
+      "includeResolved": "Show resolved"
+    },
+    "rescan": "Rescan",
+    "summary": {
+      "attempted": "attempted",
+      "resolved": "resolved",
+      "stillPending": "still pending"
+    },
+    "empty": "No pending items for this unit.",
+    "loadMore": "Load more",
+    "resolvedAt": "Resolved on {{when}}",
+    "col": {
+      "source": "Source",
+      "id": "Id",
+      "reason": "Reason",
+      "detail": "Detail",
+      "firstSeen": "First seen",
+      "lastSeen": "Last seen",
+      "attempts": "Attempts"
+    },
+    "error": {
+      "load": "Could not load the pending items.",
+      "rescan": "Could not rescan the pending items."
+    },
+    "reason": {
+      "FAILED": "Unclassified failure",
+      "ACCOUNTING_PERIOD_NOT_OPEN": "Accounting period is not open — open the period, then Rescan",
+      "MAX_CENTS_EXCEEDED": "Amount above the ceiling — fix the amount at the source",
+      "OPENING_ENTRY_MISSING": "Waiting for the sale opening entry",
+      "MISSING_PAID_WITH_PACKAGE_ID": "Package consumption without the originating package recorded",
+      "NO_MAPPER_FOR_UNIT": "No accounting rule for this event in this unit — activate the unit bookkeeping or recompile the binding, then Rescan",
+      "PACKAGE_CONSUMPTION_PENDING": "Waiting for the package consumption debit",
+      "PACKAGE_ORIGIN_REVERSED": "The package originating sale was reversed",
+      "PACKAGE_EXPIRY_NFSE_PENDING": "Missing data for the expired package NFS-e",
+      "UNKNOWN_EVENT_KEY": "Event that no sector kit declares — bug in the event emitter; contact support"
     }
   }
 }

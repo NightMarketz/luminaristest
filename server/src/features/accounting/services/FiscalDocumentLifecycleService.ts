@@ -1065,53 +1065,57 @@ export class FiscalDocumentLifecycleService {
    * Item 11 (F-PA-7 b, F-PA-8 b) — documento autorizado em produção sem anexo, sem proveniência e sem pendência: reconsulta
    * o parceiro e, se o retorno trouxer XML, cria a pendência (PENDING) para a varredura drenar. Modo manual ou retorno
    * sem XML: skip + `logger.warn` com o `documentId` (lista para ação humana). Custo declarado no BRIEF: esses
-   * documentos são reconsultados em todo tick.
+   * documentos são reconsultados em todo tick. Dono 2026-10-13: o tick percorre TODOS os candidatos, página a página —
+   * os pulados não escondem os demais.
    */
   private async backfillPendingAttachments(limit: number): Promise<void> {
-    const candidates = await this.repo.listAttachmentBackfillCandidates(limit);
-    if (!candidates.length) return;
     const selection = selectDfeEmissor(process.env);
-    for (const doc of candidates) {
-      try {
-        if (!selection.enabled) {
-          logger.warn('dfe_pending_attachment_backfill: skip — porta desabilitada', { documentId: doc.id });
-          continue;
+    let cursor: string | null = null;
+    do {
+      const page = await this.repo.listAttachmentBackfillCandidates(limit, cursor);
+      cursor = page.nextCursor;
+      for (const doc of page.candidates) {
+        try {
+          if (!selection.enabled) {
+            logger.warn('dfe_pending_attachment_backfill: skip — porta desabilitada', { documentId: doc.id });
+            continue;
+          }
+          const port = resolveEmissorFor(doc.partner);
+          if (!port.capabilities.consultar) {
+            logger.warn('dfe_pending_attachment_backfill: skip — modo manual, sem de onde tirar o XML', { documentId: doc.id });
+            continue;
+          }
+          if (selection.port.name === doc.partner && selection.ambiente !== doc.ambiente) {
+            // F-AMB-2 a: a porta do env fala com o ambiente do env.
+            logger.warn('dfe_pending_attachment_backfill: skip — ambiente divergente', { documentId: doc.id });
+            continue;
+          }
+          const result = await port.consultar(doc.partnerRef ?? attemptRef(doc.id, doc.currentAttemptNo));
+          if (!result.xml) {
+            logger.warn('dfe_pending_attachment_backfill: skip — retorno sem XML', { documentId: doc.id });
+            continue;
+          }
+          const scope = resolveAccountingScope({ userId: doc.userId }, doc.unitId);
+          await this.repo.createPendingAttachment(scope, {
+            documentId: doc.id,
+            xmlBytes: result.xml,
+            pdfBytes: result.pdf ?? null,
+            resultJson: JSON.stringify(
+              PendingAttachmentResultSchema.parse({
+                chaveOuCodigo: doc.chaveOuCodigo ?? result.chaveOuCodigo,
+                nNFSe: doc.nNFSe ?? result.nNFSe ?? null,
+                numero: doc.numero != null ? String(doc.numero) : (result.numero ?? null),
+                valores: result.valores ?? null,
+              }),
+            ),
+          });
+        } catch (error) {
+          logger.error('dfe_pending_attachment_backfill: falha ao reconsultar documento — alerta', {
+            documentId: doc.id,
+            error: error instanceof Error ? error.message : String(error),
+          });
         }
-        const port = resolveEmissorFor(doc.partner);
-        if (!port.capabilities.consultar) {
-          logger.warn('dfe_pending_attachment_backfill: skip — modo manual, sem de onde tirar o XML', { documentId: doc.id });
-          continue;
-        }
-        if (selection.port.name === doc.partner && selection.ambiente !== doc.ambiente) {
-          // F-AMB-2 a: a porta do env fala com o ambiente do env.
-          logger.warn('dfe_pending_attachment_backfill: skip — ambiente divergente', { documentId: doc.id });
-          continue;
-        }
-        const result = await port.consultar(doc.partnerRef ?? attemptRef(doc.id, doc.currentAttemptNo));
-        if (!result.xml) {
-          logger.warn('dfe_pending_attachment_backfill: skip — retorno sem XML', { documentId: doc.id });
-          continue;
-        }
-        const scope = resolveAccountingScope({ userId: doc.userId }, doc.unitId);
-        await this.repo.createPendingAttachment(scope, {
-          documentId: doc.id,
-          xmlBytes: result.xml,
-          pdfBytes: result.pdf ?? null,
-          resultJson: JSON.stringify(
-            PendingAttachmentResultSchema.parse({
-              chaveOuCodigo: doc.chaveOuCodigo ?? result.chaveOuCodigo,
-              nNFSe: doc.nNFSe ?? result.nNFSe ?? null,
-              numero: doc.numero != null ? String(doc.numero) : (result.numero ?? null),
-              valores: result.valores ?? null,
-            }),
-          ),
-        });
-      } catch (error) {
-        logger.error('dfe_pending_attachment_backfill: falha ao reconsultar documento — alerta', {
-          documentId: doc.id,
-          error: error instanceof Error ? error.message : String(error),
-        });
       }
-    }
+    } while (cursor);
   }
 }

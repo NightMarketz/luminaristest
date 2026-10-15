@@ -11,7 +11,8 @@
     "proposals": "Propostas",
     "activities": "Atividades",
     "meetings": "Reuniões",
-    "analytics": "Analytics"
+    "analytics": "Analytics",
+    "reports": "Relatórios"
   },
   "analytics": {
     "title": "CRM — Analytics",
@@ -275,12 +276,208 @@
       "REPORT_SORT_KEY_NOT_FOUND": "A ordenação \"{{key}}\" não corresponde a nenhuma medida.",
       "REPORT_JOIN_ALIAS_DUPLICATE": "Dois cruzamentos com o mesmo apelido \"{{alias}}\".",
       "REPORT_NOT_FOUND": "Relatório não encontrado.",
-      "INVALID_TIME_ZONE": "Fuso horário inválido."
+      "INVALID_TIME_ZONE": "Fuso horário inválido.",
+      "CRM_MODULE_NOT_INSTALLED": "O módulo {{moduleKey}} do CRM não está instalado; esta fonte não está disponível.",
+      "SCHEMA_UNAVAILABLE": "Não foi possível carregar os campos desta fonte.",
+      "GENERIC": "Não foi possível concluir. Tente de novo."
     },
     "labels": {
       "NO_CURRENCY": "Sem moeda",
       "UNDECLARED_CURRENCY": "Moeda não declarada",
       "RATE_UNAVAILABLE": "Cotação indisponível"
+    },
+    "title": "CRM — Relatórios",
+    "subtitle": "Monte, salve e reabra relatórios sobre as tabelas do CRM",
+    "list": {
+      "empty": "Nenhum relatório salvo ainda.",
+      "new": "Novo relatório",
+      "name": "Nome",
+      "kind": "Tipo",
+      "chart": "Gráfico",
+      "updated": "Atualizado em",
+      "other_user": "de outro usuário",
+      "open": "Abrir",
+      "delete": "Apagar"
+    },
+    "kind": {
+      "chart": "Gráfico",
+      "table": "Tabela",
+      "kpi": "KPI"
+    },
+    "chart_type": {
+      "bar": "Barras",
+      "line": "Linha",
+      "area": "Área",
+      "pie": "Pizza",
+      "donut": "Rosca",
+      "table": "Tabela"
+    },
+    "editor": {
+      "money_suffix": "(dinheiro)",
+      "name": "Nome",
+      "description": "Descrição",
+      "kind": "Tipo",
+      "chart_type": "Gráfico",
+      "source": "Fonte",
+      "pick_source": "Escolha a fonte…",
+      "measures": "Medidas",
+      "measure_type": "Cálculo",
+      "measure_field": "Campo",
+      "all_rows": "Todas as linhas",
+      "pick_field": "Escolha o campo…",
+      "alias": "Apelido (opcional)",
+      "remove": "Remover",
+      "add_measure": "Adicionar medida",
+      "kpi_by_currency": "KPI separado por moeda: um card por moeda.",
+      "dimensions": "Agrupar por",
+      "dimension_type": "Agrupar",
+      "by_field": "Por campo",
+      "by_period": "Por período",
+      "dimension_field": "Campo do agrupamento",
+      "date_field": "Campo de data",
+      "period": "Período",
+      "add_dimension": "Adicionar agrupamento",
+      "filters": "Filtros",
+      "filter_field": "Campo do filtro",
+      "filter_op": "Operador",
+      "filter_value": "Valor",
+      "add_filter": "Adicionar filtro",
+      "multi_hint": "Valores separados por vírgula",
+      "yes": "Sim",
+      "no": "Não",
+      "sort_limit": "Ordenação e limite",
+      "sort_by": "Ordenar",
+      "sort_none": "Sem ordenação",
+      "sort_dimension": "Pelo agrupamento",
+      "sort_measure": "Pela medida",
+      "sort_key": "Qual medida",
+      "sort_dir": "Direção",
+      "asc": "Crescente",
+      "desc": "Decrescente",
+      "limit": "Limite",
+      "convert": "Mostrar também convertido para R$ (PTAX)",
+      "convert_unavailable": "Disponível só com soma ou média de valor que tem moeda.",
+      "back": "Voltar à lista",
+      "preview": "Visualizar",
+      "running": "Calculando…",
+      "save": "Salvar",
+      "save_as": "Salvar como",
+      "other_user": "Este relatório é de outro usuário. As mudanças valem para ele.",
+      "kpi_remove_split": "Tirar a separação"
+    },
+    "currency": {
+      "mixed": "O valor de \"{{field}}\" pode estar em moedas diferentes. Separe por moeda ou escolha uma moeda só.",
+      "split": "Separar por moeda",
+      "single": "Só uma moeda"
+    },
+    "sources": {
+      "leads": "Leads",
+      "crmOpportunities": "Oportunidades",
+      "leadActivities": "Atividades",
+      "leadProposals": "Propostas",
+      "crmAccounts": "Contas",
+      "crmContacts": "Contatos"
+    },
+    "measure_type": {
+      "count": "Contagem",
+      "sum": "Soma",
+      "avg": "Média"
+    },
+    "measure_label": {
+      "count_rows": "Contagem",
+      "count": "Contagem de {{field}}",
+      "sum": "Soma de {{field}}",
+      "avg": "Média de {{field}}"
+    },
+    "period": {
+      "day": "Dia",
+      "week": "Semana",
+      "month": "Mês",
+      "quarter": "Trimestre",
+      "year": "Ano"
+    },
+    "op": {
+      "eq": "igual a",
+      "ne": "diferente de",
+      "in": "é um de",
+      "nin": "não é nenhum de",
+      "gt": "maior que",
+      "gte": "maior ou igual a",
+      "lt": "menor que",
+      "lte": "menor ou igual a"
+    },
+    "fields": {
+      "id": "ID",
+      "created_at": "Criado em",
+      "updated_at": "Atualizado em"
+    },
+    "result": {
+      "undeclared": "Moeda não declarada: os valores aparecem sem símbolo de moeda.",
+      "empty": "Sem dados para estes filtros.",
+      "total": "Total",
+      "hint": "Monte o relatório e clique em Visualizar."
+    },
+    "converted": {
+      "title": "Estimativa em R$ pela PTAX de venda de {{date}} — não é número contábil",
+      "rate": "{{currency}}: {{rate}} (taxa de {{date}})",
+      "stale": "taxa com mais de 5 dias",
+      "excluded": "Fora da conversão",
+      "rows": "{{n}} linha(s)"
+    },
+    "block": {
+      "NO_SOURCE": "Escolha a fonte do relatório.",
+      "MEASURE_FIELD_REQUIRED": "Soma e média precisam de um campo.",
+      "CURRENCY_CHOICE_REQUIRED": "Escolha separar por moeda ou uma moeda só antes de visualizar.",
+      "SORT_KEY_REQUIRED": "Com mais de uma medida, escolha por qual medida ordenar.",
+      "FILTER_INCOMPLETE": "Complete ou remova os filtros sem campo ou sem valor.",
+      "KPI_DIMENSION": "KPI não tem agrupamento, salvo a separação por moeda.",
+      "LIMIT_RANGE": "O limite vai de 1 a 500.",
+      "JOIN_INCOMPLETE": "Complete ou remova o cruzamento: escolha a tabela e os dois campos.",
+      "JOIN_ALIAS_INVALID": "Corrija o apelido do cruzamento."
+    },
+    "confirm": {
+      "source_title": "Trocar a fonte?",
+      "source_body": "Medidas, agrupamentos e filtros com campos que não existem na nova fonte serão removidos.",
+      "source_ok": "Trocar e limpar",
+      "cancel": "Cancelar",
+      "delete_title": "Apagar relatório?",
+      "delete_body": "O relatório \"{{name}}\" será apagado.",
+      "delete_ok": "Apagar",
+      "join_title": "Mudar o cruzamento?",
+      "join_body": "Medidas, agrupamentos e filtros que usam campos deste cruzamento e deixam de existir serão removidos.",
+      "join_ok": "Mudar e limpar"
+    },
+    "joins": {
+      "title": "Avançado: cruzar com outra tabela",
+      "hint": "Cada linha da fonte pega a primeira linha da outra tabela em que os dois campos têm o mesmo valor. Os campos da outra tabela aparecem como apelido.campo.",
+      "right_source": "Tabela",
+      "pick_source": "Escolha a tabela…",
+      "left_field": "Campo da fonte",
+      "right_field": "Campo da outra tabela",
+      "alias": "Apelido",
+      "add": "Adicionar cruzamento",
+      "alias_problem": {
+        "REQUIRED": "Dê um apelido ao cruzamento.",
+        "CHARS": "O apelido não pode ter ponto nem espaço.",
+        "TOO_LONG": "O apelido pode ter até 40 caracteres.",
+        "RESERVED": "O apelido não pode ser \"id\" nem começar com \"_\".",
+        "DUPLICATE": "Outro cruzamento já usa esse apelido.",
+        "FIELD_CONFLICT": "A fonte já tem um campo com esse nome."
+      }
     }
+  },
+  "report_widget": {
+    "title": "Relatório do CRM",
+    "description": "Exiba um relatório salvo do CRM",
+    "settings": "Escolher o relatório",
+    "close": "Fechar",
+    "pick": "Escolha o relatório salvo:",
+    "loading": "Carregando…",
+    "empty": "Nenhum relatório salvo.",
+    "go_builder": "Criar um relatório no construtor",
+    "not_found": "Este relatório não existe mais.",
+    "reconfigure": "Escolher outro relatório",
+    "cancel": "Cancelar",
+    "retry": "Tentar de novo"
   }
 }

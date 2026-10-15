@@ -360,6 +360,25 @@ describe('incomeStatement', () => {
     expect(report.revenueDeductions.totalCents).toBe('-1000');
   });
 
+  it('F-PCB-1R (dono 13/10): PIS/COFINS sobre a receita (3.6.x, Revenue, saldo devedor) sai em revenueDeductions, não em grossRevenue', async () => {
+    const accounts = [
+      makeAccount({ code: '3.1', nature: 'Revenue' }),
+      makeAccount({ code: '3.6.1', nature: 'Revenue' }),
+      makeAccount({ code: '3.6.2', nature: 'Revenue' }),
+    ];
+    const { svc } = buildService(accounts, [
+      { accountId: '3.1', debitCents: 0, creditCents: 100000 },
+      { accountId: '3.6.1', debitCents: 650, creditCents: 0 },
+      { accountId: '3.6.2', debitCents: 3000, creditCents: 0 },
+    ]);
+    const report = await svc.incomeStatement(SCOPE, AS_OF);
+    expect(report.grossRevenue.accounts.map((a) => a.code)).toEqual(['3.1']);
+    expect(report.revenueDeductions.accounts.map((a) => [a.code, a.amountCents])).toEqual([
+      ['3.6.1', '650'],
+      ['3.6.2', '3000'],
+    ]);
+  });
+
   it('resale revenue (3.3, ADR-INCR-REVENUE-SPLIT) lands in grossRevenue, combined with 3.1', async () => {
     // Would FAIL before the dre.gross_rev_resale rule: 3.3 matched no rule → dropped by
     // `if (!rule) continue`, so grossRevenue underreported and J150 diverged from I355.

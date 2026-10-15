@@ -11,6 +11,13 @@
 > Escopo: planejar (sem `executa`). Origem: `FE-INCR-BANK-CHARGE-ACCOUNTS-brief.md` (tela **cancelada** pelo mesmo
 > F-ENC-1 a). A emenda está em §3 (bloco "PR-2 — tarifa", E26–E31), §4.1, §5 (F-ENC-11..13 ✅ ratificados 09/10) e §6.8–6.9.
 
+> **Atualização 2026-10-13 (dono, chat, questionário):** **F-ENC-9 → (a)**, **F-ENC-10 → (b)**, **F-ENC-2 → (a)**
+> ratificados; *"Executa só o PR-1"* (E1–E5 + E26 no E1/E2 + F-HR-4). Na execução apareceu uma colisão: o kit v3
+> (KIT-SETOR, #652, F-KE-1 a) usa **4.5.1/4.5.2** para IRPJ/CSLL, então a 4.5 não pode ser folha. Dono: *"4.6 Tarifas
+> (Recomendado)"* → a tarifa é **`4.6`** (`BANK_FEE_CODE = '4.6'`), com o mesmo referencial e a mesma regra de DRE. E o
+> "kit v3" do F-HR-4 vira a próxima versão: *"Kit v4 (Recomendado)"*, salão e clínica — publicado como **v5**, porque o PR-K3 (#655) publicou o v4 durante esta sessão. Onde este
+> BRIEF diz `4.5` para a tarifa, leia `4.6`. F-ENC-4, 5, 7 e 8 seguem pendentes (PR-2 a PR-4, sem "executa").
+
 ## 0. Contexto fixo
 
 - **Item:** Fase 3.3 de [`PLANO-POS-CONTADOR-2026-09-23.md:104`](PLANO-POS-CONTADOR-2026-09-23.md): emenda dos nós
@@ -166,7 +173,7 @@ Fatiamento conforme F-ENC-10 (recomendação: 4 PRs seriais, com a migração no
 Identidade da linha com tarifa (`fee` ≥ 0; `charges` e `shortfall` calculados sobre o **bruto**, como no F-PP-6 b):
 AR → `|linha| = saldo + Σcharges − shortfall − fee` · AP → `|linha| = saldo + Σcharges − shortfall + fee` (F-ENC-12).
 
-- **E26 [direto, F-ENC-1 a]** Folha canônica `4.5 Tarifas Bancárias e de Intermediação` (Expense, `acceptsEntries: true`,
+- **E26 [direto, F-ENC-1 a]** Folha canônica `4.6` (era `4.5`, ver atualização de 13/10) `Tarifas Bancárias e de Intermediação` (Expense, `acceptsEntries: true`,
   constante `BANK_FEE_CODE`). Não é filha de `4.1`, porque `4.1` já é folha com lançamentos (transformá-la em grupo quebra o
   razão existente). A DRE a leva para `expenses` pela regra só por natureza (S8), **não** para `financialResult` (L9).
   Teste: escopo novo tem `4.5`; DRE com movimento em 4.5 → linha em `expenses`, `financialResult` intacto. Entra no E1 e
@@ -314,7 +321,7 @@ export const FINANCIAL_ACCOUNT_CODES = {
 
 // EMENDA T (E26–E27): classe própria, fora de BANK_CHARGE_KINDS e de LALUR_AUTO_ADDITIONS. Valor em item.feeCents.
 export const BANK_FEE_KIND = 'TARIFA_BANCARIA' as const;
-export const BANK_FEE_CODE = '4.5'; // Expense, folha; DRE → expenses (regra por natureza), nunca financialResult
+export const BANK_FEE_CODE = '4.6'; // (era 4.5 — colisão com o kit v3, dono 13/10) Expense, folha; DRE → expenses (regra por natureza), nunca financialResult
 // ConfirmBankSettlementSchema += feeCents: z.number().int().positive().optional()  (E28, regras no serviço)
 
 // Lalur.model.ts — E16. Códigos verificados no catálogo (S19). (lacs, 8.65) fora até §6.3.

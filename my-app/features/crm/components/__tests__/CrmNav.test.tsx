@@ -22,7 +22,8 @@ describe('CrmNav — áreas por módulo (I8 c9)', () => {
     render(<CrmNav />);
     await waitFor(() => expect(getTables).toHaveBeenCalled());
     await waitFor(() => expect(screen.getByText('Pipeline')).toBeInTheDocument());
-    for (const x of ['Visão Geral', 'Atividades', 'Reuniões', 'Analytics']) expect(screen.getByText(x)).toBeInTheDocument();
+    // 'Relatórios' (FE-INCR-CRM-REPORT-BUILDER item 1) é do CRM-0: aparece já com o módulo base
+    for (const x of ['Visão Geral', 'Atividades', 'Reuniões', 'Analytics', 'Relatórios']) expect(screen.getByText(x)).toBeInTheDocument();
     for (const x of ['Propostas', 'Contas', 'Contatos', 'Oportunidades']) expect(screen.queryByText(x)).toBeNull();
   });
 

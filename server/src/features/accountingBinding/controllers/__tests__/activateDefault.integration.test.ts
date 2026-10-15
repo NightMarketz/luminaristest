@@ -56,7 +56,7 @@ describe('POST /api/accounting-binding/activate-default (LAC-B)', () => {
     expect(await foto(dono.id)).toEqual({ bindings: 0, contas: 0, periodos: 0 });
   });
 
-  it('sem chart e sem período, SEM flags ⇒ 200 Draft com os 2 bloqueantes e NADA gravado', async () => {
+  it('sem chart, sem período e sem perfil fiscal, SEM flags ⇒ 200 Draft com os 3 bloqueantes e NADA gravado', async () => {
     const res = await request(app).post(URL).set(authHeader(dono)).send({ unitId: UNIT });
     expect(res.status).toBe(200);
     expect(res.body.data.status).toBe('Draft');
@@ -64,20 +64,36 @@ describe('POST /api/accounting-binding/activate-default (LAC-B)', () => {
     expect(res.body.data.blocking.map((i: { code: string }) => i.code)).toEqual([
       'CHART_OF_ACCOUNTS_EMPTY',
       'ACCOUNTING_PERIOD_NOT_OPEN',
+      'KIT_FISCAL_PROFILE_REQUIRED', // E-5: o kit vigente (v4) traz contas do perfil fiscal
     ]);
     const { year, month } = hoje();
     expect(res.body.data.blocking[1].period).toBe(`${year}-${String(month).padStart(2, '0')}`);
     expect(await foto(dono.id)).toEqual({ bindings: 0, contas: 0, periodos: 0 });
   });
 
+  it('E-5 (mantida pelo dono, 13/10): com as 2 flags mas SEM perfil fiscal ⇒ 200 Draft KIT_FISCAL_PROFILE_REQUIRED, nada gravado', async () => {
+    const res = await request(app)
+      .post(URL)
+      .set(authHeader(dono))
+      .send({ unitId: UNIT, installChartIfEmpty: true, openCurrentPeriodIfMissing: true });
+    expect(res.status).toBe(200);
+    expect(res.body.data.status).toBe('Draft');
+    expect(res.body.data.blocking.map((i: { code: string }) => i.code)).toEqual(['KIT_FISCAL_PROFILE_REQUIRED']);
+    expect(await foto(dono.id)).toEqual({ bindings: 0, contas: 0, periodos: 0 });
+  });
+
   it('feliz: com as 2 flags instala o chart canônico, abre o mês corrente e ativa o binding do salão', async () => {
+    // E-5: o kit vigente (v4) preenche contas do perfil fiscal — o perfil vem antes (PUT /accounting/fiscal-profile).
+    await prisma.fiscalProfile.create({
+      data: { userId: dono.id, unitId: UNIT, regimeTributario: 'PRESUMIDO', pisCofinsRegime: 'CUMULATIVO', d1fConfirmado: false },
+    });
     const res = await request(app)
       .post(URL)
       .set(authHeader(dono))
       .send({ unitId: UNIT, installChartIfEmpty: true, openCurrentPeriodIfMissing: true });
 
     expect(res.status).toBe(200);
-    expect(res.body.data).toEqual({ status: 'Active', bindingVersion: 1, kit: { kitKey: 'beautySalon', kitVersion: 3, status: 'INSTALLED' } });
+    expect(res.body.data).toEqual({ status: 'Active', bindingVersion: 1, kit: { kitKey: 'beautySalon', kitVersion: 6, status: 'INSTALLED' } });
 
     const { year, month } = hoje();
     const periodo = await prisma.accountingPeriod.findFirst({ where: { userId: dono.id, unitId: UNIT, year, month } });
@@ -98,6 +114,11 @@ describe('POST /api/accounting-binding/activate-default (LAC-B)', () => {
       (e) => e.eventType,
     );
     expect(eventos).toEqual(expect.arrayContaining(['period.opened', 'binding.compiled', 'binding.activated']));
+
+    // Kit v3+ (PR-K2): PIS/COFINS do perfil apontam para as deduções 3.6.1/3.6.2 da extensão.
+    const perfil = await prisma.fiscalProfile.findFirstOrThrow({ where: { userId: dono.id, unitId: UNIT } });
+    const codigoDe = async (id: string | null) => (id ? (await prisma.account.findUniqueOrThrow({ where: { id } })).code : null);
+    expect([await codigoDe(perfil.pisDespesaAccountId), await codigoDe(perfil.cofinsDespesaAccountId)]).toEqual(['3.6.1', '3.6.2']);
   });
 
   it('idempotência: 2ª chamada ⇒ already-active com a MESMA versão, nenhuma versão nova', async () => {
@@ -107,7 +128,44 @@ describe('POST /api/accounting-binding/activate-default (LAC-B)', () => {
       .send({ unitId: UNIT, installChartIfEmpty: true, openCurrentPeriodIfMissing: true });
 
     expect(res.status).toBe(200);
-    expect(res.body.data).toEqual({ status: 'already-active', bindingVersion: 1, kit: { kitKey: 'beautySalon', kitVersion: 3, status: 'INSTALLED' } });
+    expect(res.body.data).toEqual({ status: 'already-active', bindingVersion: 1, kit: { kitKey: 'beautySalon', kitVersion: 6, status: 'INSTALLED' } });
     expect(await prisma.accountingBinding.count({ where: { userId: dono.id, unitId: UNIT } })).toBe(1);
+  });
+
+  it('LAC-B PR-0 (F-BA-5 a): salão Active + pedido da clínica na MESMA unidade ⇒ 409 BINDING_SECTOR_CONFLICT, nada gravado', async () => {
+    const antes = { ...(await foto(dono.id)), kits: await prisma.kitInstallation.count({ where: { userId: dono.id, unitId: UNIT } }) };
+    const res = await request(app)
+      .post(URL)
+      .set(authHeader(dono))
+      .send({ unitId: UNIT, sectorKey: 'aestheticClinic', installChartIfEmpty: true, openCurrentPeriodIfMissing: true });
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('BINDING_SECTOR_CONFLICT');
+    expect(res.body.message).toContain('beautySalon');
+    expect({ ...(await foto(dono.id)), kits: await prisma.kitInstallation.count({ where: { userId: dono.id, unitId: UNIT } }) }).toEqual(antes);
+    const ativos = await prisma.accountingBinding.findMany({ where: { userId: dono.id, unitId: UNIT, status: 'Active' } });
+    expect(ativos.map((b) => b.sectorKey)).toEqual(['beautySalon']);
+  });
+
+  it('LAC-B PR-0: unidade LEGADA (binding Active do salão, sem KitInstallation) + clínica ⇒ 409, nenhuma KitInstallation criada', async () => {
+    const LEGADA = 'unit-lacb-legada';
+    await prisma.accountingBinding.create({
+      data: {
+        userId: dono.id,
+        unitId: LEGADA,
+        sectorKey: 'beautySalon',
+        bindingVersion: 1,
+        compiledAt: new Date(),
+        compiledFromHash: 'sha256:legada',
+        payload: JSON.stringify(SALE_BINDING_V2),
+        status: 'Active',
+        createdById: dono.id,
+      },
+    });
+    const res = await request(app).post(URL).set(authHeader(dono)).send({ unitId: LEGADA, sectorKey: 'aestheticClinic' });
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('BINDING_SECTOR_CONFLICT');
+    expect(await prisma.kitInstallation.count({ where: { userId: dono.id, unitId: LEGADA } })).toBe(0);
+    expect(await prisma.accountingBinding.count({ where: { userId: dono.id, unitId: LEGADA } })).toBe(1);
   });
 });

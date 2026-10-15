@@ -501,7 +501,7 @@ export class FiscalDocumentEmissionService {
         pendencias.push('releitura_divergente');
       }
       if (doc.status === 'CANCELLED') {
-        const hasReplacement = siblings.some((d) => d.id !== doc.id && d.cTribNac === doc.cTribNac && d.status !== 'CANCELLED');
+        const hasReplacement = siblings.some((d) => d.id !== doc.id && d.cTribNac === doc.cTribNac && d.status !== 'CANCELLED' && d.status !== 'REJECTED');
         if (!hasReplacement) pendencias.push('cancelled_without_replacement');
         // BE-INCR-DFE-EVENTOS item 14 / F-EVT-6 (a): o fisco autorizou a substituta de uma nota que o Luminaris já tinha
         // como cancelada pelo emitente (cancelMotivo do e101101 gravado) — o registro local está errado ou é de outra nota.

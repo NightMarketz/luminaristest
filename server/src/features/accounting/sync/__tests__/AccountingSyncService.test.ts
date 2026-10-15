@@ -2,7 +2,7 @@ import { Prisma } from 'generated/prisma';
 import { AccountingSyncService } from '../AccountingSyncService';
 import { SaleFinalizedMapper } from '../mappers/SaleFinalizedMapper';
 import { SaleSettledMapper } from '../mappers/SaleSettledMapper';
-import { AccountingEventMapperCollisionError, MaxCentsExceededError, ValidationError } from '../../../../lib/errors';
+import { AccountingEventMapperCollisionError, MaxCentsExceededError, NoMapperForUnitError, UnknownEventKeyError, ValidationError } from '../../../../lib/errors';
 import type { AccountingScope } from '../../scope/AccountingScope';
 import type { AccountingEvent } from '../AccountingSyncPort';
 import type { IAccountingEventMapper } from '../mappers/IAccountingEventMapper';
@@ -11,7 +11,7 @@ import type { PostEntryInput } from '../../dtos/PostingDto';
 /** Fake mapper — its `map()` output carries a `marker` so a test can prove WHICH registration a
  *  given event resolved to (BE-INCR-BINDING-FEEDER, F-FEEDER-3 composite key: two Active bindings
  *  of different units sharing a `sourceType` must never last-write-wins to a single mapper). */
-function markedMapper(sourceType: AccountingEvent['sourceType'], marker: string): IAccountingEventMapper {
+function markedMapper(sourceType: string, marker: string): IAccountingEventMapper {
   return {
     sourceType,
     map: () => ({ marker }) as unknown as PostEntryInput,
@@ -150,13 +150,48 @@ describe('AccountingSyncService', () => {
     expect(postEntry).toHaveBeenCalledTimes(2);
   });
 
-  it('evento inválido: sourceType without a registered mapper (e.g. the retired crm.opportunity.won) is rejected WITHOUT calling postEntry', async () => {
+  it('evento sem mapper e sem registro de chaves (e.g. the retired crm.opportunity.won) ⇒ NO_MAPPER_FOR_UNIT, WITHOUT calling postEntry', async () => {
     const postEntry = jest.fn();
     const { svc } = buildService(postEntry);
-    const unknownEvent = { ...finalizedEvent, sourceType: 'crm.opportunity.won' } as unknown as AccountingEvent;
+    const unknownEvent: AccountingEvent = { ...finalizedEvent, sourceType: 'crm.opportunity.won' };
 
-    await expect(svc.sync(scope, unknownEvent)).rejects.toBeInstanceOf(ValidationError);
+    await expect(svc.sync(scope, unknownEvent)).rejects.toBeInstanceOf(NoMapperForUnitError);
     expect(postEntry).not.toHaveBeenCalled();
+  });
+
+  // BE-INCR-KIT-SETOR PR-6 (itens 46–47): vocabulário aberto, formato fechado; registro distingue os dois "sem mapper".
+  describe('PR-6 — vocabulário de evento aberto', () => {
+    const declared = new Set(['sale.finalized', 'service.subscription.billed']);
+    const build = () => {
+      const postEntry = jest.fn();
+      const svc = new AccountingSyncService({ postEntry } as never, [new SaleFinalizedMapper()], { declaredEventKeys: declared });
+      return { svc, postEntry };
+    };
+
+    it.each(['Sale.finalized', 'sale', 'sale..finalized', 'sale.finalized.', '1sale.x', 'sale.fin-alized'])(
+      "sourceType '%s' fora do formato ⇒ ValidationError, sem postEntry",
+      async (sourceType) => {
+        const { svc, postEntry } = build();
+        await expect(svc.sync(scope, { ...finalizedEvent, sourceType })).rejects.toBeInstanceOf(ValidationError);
+        expect(postEntry).not.toHaveBeenCalled();
+      },
+    );
+
+    it('chave que nenhum kit declara ⇒ UNKNOWN_EVENT_KEY', async () => {
+      const { svc, postEntry } = build();
+      const err = await svc.sync(scope, { ...finalizedEvent, sourceType: 'crm.opportunity.won' }).catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(UnknownEventKeyError);
+      expect((err as UnknownEventKeyError).errorCode).toBe('UNKNOWN_EVENT_KEY');
+      expect(postEntry).not.toHaveBeenCalled();
+    });
+
+    it('chave declarada, mas a unidade não tem binding ⇒ NO_MAPPER_FOR_UNIT', async () => {
+      const { svc, postEntry } = build();
+      const err = await svc.sync(scope, { ...finalizedEvent, sourceType: 'service.subscription.billed' }).catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(NoMapperForUnitError);
+      expect((err as NoMapperForUnitError).errorCode).toBe('NO_MAPPER_FOR_UNIT');
+      expect(postEntry).not.toHaveBeenCalled();
+    });
   });
 
   it('settlement with a missing prepaid account (2.1.1) surfaces a ValidationError and books NOTHING', async () => {
@@ -275,7 +310,29 @@ describe('AccountingSyncService', () => {
       // unit-b has NO registration of its own — must fail loud, never silently reuse unit-a's mapper.
       await expect(
         svc.sync({ ...scope, unitId: 'unit-b' }, { ...finalizedEvent, unitId: 'unit-b' }),
-      ).rejects.toBeInstanceOf(ValidationError);
+      ).rejects.toBeInstanceOf(NoMapperForUnitError);
+      expect(postEntry).not.toHaveBeenCalled();
+    });
+
+    // BE-INCR-ONBOARDING-ACTIVATION item 2 (F-I5-3 → a, "todo miss de mapper"): a unidade TEM binding, o binding
+    // não cobre o evento (bug de cobertura do compile()) — mesmo código, e a mensagem não afirma qual das duas causas.
+    it('unit-a registrada, evento sem mapper ⇒ NO_MAPPER_FOR_UNIT com mensagem que nomeia as duas causas', async () => {
+      const postEntry = jest.fn(okEntry);
+      const postingService = { postEntry } as unknown as ConstructorParameters<typeof AccountingSyncService>[0];
+      const svc = new AccountingSyncService(postingService, [{ unitId: 'unit-a', mapper: markedMapper('sale.finalized', 'a') }], {
+        maxAttempts: 3,
+        retryDelayMs: 0,
+      });
+
+      const err = await svc
+        .sync({ ...scope, unitId: 'unit-a' }, { ...finalizedEvent, unitId: 'unit-a', sourceType: 'sale.cogs' })
+        .catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(NoMapperForUnitError);
+      expect((err as NoMapperForUnitError).errorCode).toBe('NO_MAPPER_FOR_UNIT');
+      expect((err as NoMapperForUnitError).message).toBe(
+        "Nenhum mapper registrado para o evento 'sale.cogs' na unidade 'unit-a' — " +
+          'a contabilidade da unidade não está ativa ou o binding não cobre o evento.',
+      );
       expect(postEntry).not.toHaveBeenCalled();
     });
   });

@@ -7,6 +7,9 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
   só o trilho/rejeitada que ela linka (protocolo em `docs/plano/README.md`). **Não abra o `docs/SDD-LUMINARIS.md`
   inteiro** (snapshot consolidado de 23/09); citação "master map §N" resolve em `docs/plano/_ANCORAS.md`.
 - **Bar de qualidade / camadas:** `.claude/skills/_ARCHITECTURE-CONTRACT.md`
+- **Antes de mudar estrutura ou dependência entre camadas, leia `docs/adr/`** (índice em `docs/adr/INDEX.md`).
+  Fronteiras mecanizadas: `docs/adr/ADR-ARCH-BOUNDARIES.md` — `npm run check:arch` (server/ e my-app/) bloqueia
+  violação nova; o baseline só encolhe.
 - **Critério reuse-vs-bespoke:** `.claude/skills/_REUSE-CRITERION.md`
 - **Scaffolding (nomes/paths por camada):** `docs/claude-skills/GENERATION_CONTRACTS.md`
 - **Disciplina operacional do agente (OPS-001..006):** `.claude/skills/_OPERATING-GATES.md`
@@ -44,6 +47,8 @@ Removidos `docs/audit/`, `bancada-gate.mjs`, `review-ledger-check.mjs` e os pass
 externo** aberto há mais de 14 dias (hoje: **4 de 4**), **não monte aparato de auditoria novo** — nem
 gate, nem rodada, nem mais um revisor. O gargalo é PVA / NF-e real / contador / implantar (medida em
 `docs/operating-manual/CLAUDE-RAIZ-DETALHE.md`).
+Exceção ratificada (dono, 2026-10-13): o gate estático de fronteiras `check:arch` (`ADR-ARCH-BOUNDARIES.md` §4) —
+lê o código como o `tsc`; não reabre bancada, rodada nem revisor.
 
 **Citação a `docs/audit/**` em comentário de teste, ADR ou doc é HISTÓRICA** — o caminho não existe
 mais; use `git show b617d8f1:<caminho>` se precisar.
@@ -59,7 +64,9 @@ mais; use `git show b617d8f1:<caminho>` se precisar.
 | O dado/módulo é… | Tecnologia |
 |---|---|
 | Tabela que o usuário cria/configura em runtime (CRM, formulários, fluxos customizados) | **DynamicTable** (preset + plugin) |
-| Entidade com invariante financeiro, legal ou regulatório (contabilidade, folha, fiscal, RH) | **Prisma first-class** (Model + Service + Repo + Policy próprios) |
+| Núcleo que a **lei desenha igual para todos** E exige atomicidade multi-tabela / agregação em volume / imutabilidade por construção (razão, períodos, apuração, SPED, documento fiscal) | **Prisma first-class** (Model + Service + Repo + Policy próprios) |
+
+"Precisa de consistência" sozinho **não** manda para Prisma — o motor deve entregá-la (G1–G5). Em dúvida → DynamicTable + ponte `postEntry`. Decisão do dono 14/10: `docs/adr/ADR-PERSISTENCE-BOUNDARY-user-designed-vs-law-designed.md`.
 
 **Se você está prestes a:**
 - Injetar qualquer serviço Prisma (`PostingService`, `PayrollService`…) em `DynamicTableService`, `RuleContext` ou `RulePlugin` → **PARE. Design errado.**
@@ -94,6 +101,15 @@ morde só no código solto; em dúvida, **o contrato prevalece**.
   (0 findings é gate). Gate cujo predicado lê ambiente se prova **na condição que falha** — detalhe
   (SG-005, #203) em `docs/operating-manual/CLAUDE-RAIZ-DETALHE.md`.
 - Nível de cerimônia por risco (leve × completo): **[OPS-006]** em `.claude/skills/_OPERATING-GATES.md`.
+
+## Higiene de contexto
+- Contexto passou de ~180k tokens, ou fechou um nó/PR → feche a etapa, escreva o handoff (feito · pendente · próximo comando exato · arquivos) e peça sessão nova. Não emende outra tarefa nem espere a compactação.
+- Pausa > 60 min com contexto > 150k → retome em sessão nova a partir do handoff.
+- Arquivo grande já lido e não editado → não releia; cite o trecho que está no contexto.
+
+## Merge só com PR nomeado
+Autorização genérica ("mergeia tudo", "os PRs com CI verde", "executa") **não** autoriza merge: liste os PRs
+(número · título · fiscal/contábil? · CI · revisão) e espere o dono confirmar por número. "Executar" não inclui mergear.
 
 ## Gates de envio [OPS-001] — antes de fechar resposta/relatório/PR
 

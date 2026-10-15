@@ -66,3 +66,16 @@ PR que talvez não venha primeiro) violam o critério de reuso ou travam a ordem
 
 - `POST /compile` e o CLI seguem sem recarga (consequência do F-I4-4 a, não do F-BA-2). Quem ativar por esses
   caminhos ainda precisa reiniciar. Registrar no GAP-MAP numa sessão própria.
+
+## 7. Lacunas da execução (14/10) — [[D-2026-10-14-LAC-B-PR0-LACUNAS]]
+
+A `main` de 14/10 instala o **kit de setor** no `activate-default` (KIT-SETOR PR-2: 7 passos com commit próprio,
+`KitInstallation` com `@@unique([userId, unitId])`). Três lacunas foram decididas por questionário, todas na recomendação:
+
+- **L-1 (item 0):** o `BindingActivationService` faz o pré-check (409 cedo), e o gate autoritativo roda **de novo** numa
+  tx junto com o `begin` da `KitInstallation`: `KitInstallService.install(…, { exclusiveSector: true })`, que só esta rota
+  liga. A corrida que o `@@unique` pega (P2002) vira 409 quando quem venceu é outro kit.
+- **L-2 (item 0):** o 409 `BINDING_SECTOR_CONFLICT` vale para qualquer outro setor na unidade, seja binding `Active` ou
+  `KitInstallation` em qualquer status.
+- **L-3 (PR-1):** a tela segue BRIEF + esta emenda. Os códigos do kit aparecem pela `message` do BE. Mostrar a versão e
+  as pendências do kit fica como achado para uma emenda futura (`FE-INCR-KIT-SETOR`).

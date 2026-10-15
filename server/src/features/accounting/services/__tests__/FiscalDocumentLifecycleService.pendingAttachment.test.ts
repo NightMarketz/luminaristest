@@ -19,7 +19,8 @@ jest.mock('../../dfe/resolveEmissor', () => ({
   resolveEmissorFor: (partner: string) => (partner === 'manual' ? mockManualPort : mockPort),
 }));
 const mockLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
-jest.mock('../../../../lib/logger', () => ({ __esModule: true, default: mockLogger }));
+// getter: a fábrica roda no import (que sobe acima deste `const`); o mock só é lido quando o serviço loga.
+jest.mock('../../../../lib/logger', () => ({ __esModule: true, get default() { return mockLogger; } }));
 
 import { FiscalDocumentLifecycleService, PENDING_MAX_ATTEMPTS } from '../FiscalDocumentLifecycleService';
 import { PendingAttachmentResultSchema, PendingAttachmentDrainSummarySchema } from '../../dtos/FiscalDocumentPendingAttachmentDto';
@@ -133,15 +134,17 @@ function harness(docs: Doc[] = [baseDoc()]) {
     markPendingDone: jest.fn(async (id: string) => {
       pendings.set(id, { ...pendings.get(id)!, status: 'DONE', xmlBytes: null, pdfBytes: null, lastError: null });
     }),
-    listAttachmentBackfillCandidates: jest.fn(async () =>
-      [...docsById.values()].filter(
+    listAttachmentBackfillCandidates: jest.fn(async () => ({
+      candidates: [...docsById.values()].filter(
         (d) =>
           (d.status === 'AUTHORIZED' || d.status === 'AUTHORIZED_DIVERGENT') &&
           d.ambiente === 'producao' &&
           d.xmlAttachmentId == null &&
           d.sourceDocumentId == null &&
           ![...pendings.values()].some((p) => p.documentId === d.id),
-      )),
+      ),
+      nextCursor: null,
+    })),
   };
   const documentAttachmentService = { upload: jest.fn(async (_s: unknown, a: { fileName: string }) => ({ id: `att-${++attSeq}-${a.fileName}` })) };
   const postingService = {

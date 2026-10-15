@@ -64,6 +64,9 @@ export const REKEY_MODELS = [
   //   Deixá-la no unitId antigo separaria a prova da venda re-chaveada (o `saleId` segue a unidade nova)
   'KitInstallation', // BE-INCR-KIT-SETOR PR-2: o kit instalado na unidade, sem hash → REKEY pelo F-RK-5, como o `AccountingBinding`
   //   que ele instala. Deixá-la no unitId antigo faria a unidade re-chaveada parecer sem kit (e o PR-4 não a atualizaria)
+  'RoleAccountOverride', // BE-INCR-KIT-SETOR PR-3: o ajuste papel→conta da unidade, sem hash → REKEY pelo F-RK-5, como o `KitInstallation`
+  'KitUpgradeRun', // BE-INCR-KIT-SETOR PR-4: execuções da atualização do kit da unidade, sem hash → REKEY (F-RK-5)
+  'KitUpgradePending', // BE-INCR-KIT-SETOR PR-4: pendências da atualização da unidade, sem hash → REKEY (F-RK-5)
   // BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14): entradas da apuração e subrazão de receita, sem hash → REKEY pelo F-RK-5.
   //   Deixá-las no unitId antigo tiraria da unidade re-chaveada o RBT12, a segregação, os contratos e o tie-out.
   'SimplesHistoricoMensal', 'SimplesSegregacaoManual', 'SalaoParceriaContrato', 'ReceitaFiscalLinha',

@@ -9,6 +9,17 @@
  * Constantes de domínio e a REGRA DE CANDIDATURA como função pura (BRIEF item 3) — testável sem banco.
  */
 
+import {
+  DESCONTOS_CONCEDIDOS_CODE,
+  DESCONTOS_OBTIDOS_CODE,
+  JUROS_MORA_PAGOS_CODE,
+  JUROS_MORA_RECEBIDOS_CODE,
+  MULTAS_MORA_PAGAS_CODE,
+  MULTAS_MORA_RECEBIDAS_CODE,
+  MULTAS_NAO_TRIBUTARIAS_CODE,
+  MULTAS_OFICIO_CODE,
+} from '../fixtures/ChartOfAccountsFixture';
+
 export const BANK_SETTLEMENT_ORIGINS = ['STATEMENT_LINE', 'CNAB_RETURN'] as const;
 export type BankSettlementOrigin = (typeof BANK_SETTLEMENT_ORIGINS)[number];
 
@@ -43,6 +54,70 @@ export const TERMINAL_CHARGE_WARNING = 'Cobrança em estado terminal no Luminari
 
 /** `DESCRIPTION` da linha de pagamento no relatório de liberações (M11) — só ela entra no passo novo (P3-6). */
 export const MP_RELEASE_PAYMENT_DESCRIPTION = 'payment';
+
+// ── Emenda 3.3 (BE-INCR-ENCARGOS-DESCONTOS, PR-1, E2 + §4.1) ─────────────────────────────────────────────────────────
+// Classes do encargo (F-ENC-2 a, dono 13/10: o humano informa; o extrato não separa juros de multa). Multa de ofício e
+// multa não tributária só existem no AP (L1–L3); recebidos são receita financeira (triagem do contador, item 6).
+export const BANK_CHARGE_KINDS = ['JUROS_MORA', 'MULTA_MORA', 'MULTA_OFICIO', 'MULTA_NAO_TRIBUTARIA'] as const;
+export type BankChargeKind = (typeof BANK_CHARGE_KINDS)[number];
+export const BANK_CHARGE_KINDS_BY_SIDE: Record<BankSettlementTitleType, readonly BankChargeKind[]> = {
+  PAYABLE: BANK_CHARGE_KINDS,
+  RECEIVABLE: ['JUROS_MORA', 'MULTA_MORA'],
+};
+/** Domínio de `bank_settlement_items.shortfallTreatment` (E12, PR-3). */
+export const SHORTFALL_TREATMENTS = ['PARTIAL', 'DISCOUNT'] as const;
+/** Domínio de `payable_payments.kind` / `receivable_receipts.kind` (E13, PR-3); a coluna nasce no PR-1 (E5). */
+export const SETTLEMENT_KINDS = ['PAYMENT', 'DISCOUNT'] as const;
+/** Tarifa bancária: classe própria, fora de `BANK_CHARGE_KINDS` (E27); valor em `item.feeCents`. */
+export const BANK_FEE_KIND = 'TARIFA_BANCARIA' as const;
+
+export type FinancialAccountClass = BankChargeKind | 'DISCOUNT';
+
+/** F-ENC-1 (a): classe → código canônico (E1); chave ausente = classe que não existe naquele lado. */
+export const FINANCIAL_ACCOUNT_CODES: Record<BankSettlementTitleType, Partial<Record<FinancialAccountClass, string>>> = {
+  PAYABLE: {
+    JUROS_MORA: JUROS_MORA_PAGOS_CODE,
+    MULTA_MORA: MULTAS_MORA_PAGAS_CODE,
+    MULTA_OFICIO: MULTAS_OFICIO_CODE,
+    MULTA_NAO_TRIBUTARIA: MULTAS_NAO_TRIBUTARIAS_CODE,
+    DISCOUNT: DESCONTOS_OBTIDOS_CODE,
+  },
+  RECEIVABLE: {
+    JUROS_MORA: JUROS_MORA_RECEBIDOS_CODE,
+    MULTA_MORA: MULTAS_MORA_RECEBIDAS_CODE,
+    DISCOUNT: DESCONTOS_CONCEDIDOS_CODE,
+  },
+};
+
+export interface ResolvedFinancialAccount {
+  code: string;
+  nature: 'Revenue' | 'Expense';
+}
+
+/**
+ * E2 — resolução pura classe → conta. Natureza esperada pelo prefixo canônico (3.x Revenue, 4.x Expense). `null` quando
+ * a classe não existe no lado (ex.: multa de ofício num recebível). Quem usa RE-LÊ a conta pelo código e confere
+ * `isFinancialAccountUsable` (o `ensureChartOfAccounts` não confere natureza de código pré-existente, S6).
+ */
+export function resolveFinancialAccountCode(
+  side: BankSettlementTitleType,
+  kind: FinancialAccountClass,
+): ResolvedFinancialAccount | null {
+  const code = FINANCIAL_ACCOUNT_CODES[side][kind];
+  if (!code) return null;
+  return { code, nature: code.startsWith('3') ? 'Revenue' : 'Expense' };
+}
+
+/** E2 — a conta re-lida precisa existir, estar viva, aceitar lançamento e ter a natureza esperada; senão 400 no uso. */
+export function isFinancialAccountUsable(
+  account: { nature: string; acceptsEntries: boolean; deletedAt: Date | null } | null,
+  expected: ResolvedFinancialAccount,
+): boolean {
+  return !!account && account.deletedAt === null && account.acceptsEntries && account.nature === expected.nature;
+}
+
+/** Código do 400 quando `isFinancialAccountUsable` falha (E2). */
+export const FINANCIAL_ACCOUNT_INVALID = 'financial_account_invalid';
 
 export const BANK_SETTLEMENT_SCANNED = 'bank_settlement.scanned';
 export const BANK_SETTLEMENT_CONFIRMED = 'bank_settlement.confirmed';

@@ -10,6 +10,9 @@
  *   (a) renomeia NO LUGAR, por id, cada analítica do de-para `RENOMEACAO_CANONICA_L8` (lançamentos, de-para referencial e
  *       subrazões apontam para o id e ficam intactos);
  *   (b) cria as sintéticas do canônico de 4 níveis que faltam (o código antigo pode voltar como sintética, F-L8-3 a);
+ *   (b') o mesmo para o conteúdo fiscal dos kits v3–v5 (#652): as 4 contas a recolher vão para o grupo tributário pelo
+ *       `RENOMEACAO_FISCAL_L8` (F-L8-10 a, dono 15/10), e as sintéticas `2.1.3`/`3.6`/`4.5` são criadas onde a unidade
+ *       tem filhas delas (F-L8-11 a);
  *   (c) Σ débito e Σ crédito por accountId iguais antes e depois — senão desfaz a unidade inteira.
  * Conta patrimonial PERSONALIZADA (fora do canônico) não é tocada, só listada (F-L8-5 a, item 10).
  * Depois da tx (item 9): se o binding Active ainda usa código antigo, recompila com o binding da versão vigente do kit
@@ -35,6 +38,7 @@ import {
   type AccountNature,
 } from '../features/accounting/fixtures/ChartOfAccountsFixture';
 import { KIT_REGISTRY, latestKit } from '../features/sectorKits/registry';
+import { RENOMEACAO_FISCAL_L8, SINTETICAS_FISCAIS_L8 } from '../features/sectorKits/kits/_shared/conteudoFiscalCanonico';
 import { SECTOR_BINDING_REGISTRY } from '../features/accountingBinding/fixtures/sectorBindingRegistry';
 import type { BindingScope } from '../features/accountingBinding/repositories/IAccountingBindingRepository';
 import type { CompileBindingInput, CompileBindingResult } from '../features/accountingBinding/services/BindingCompileService';
@@ -85,8 +89,22 @@ async function migrarPlano(db: PrismaClient, ownerUserId: string, unitId: string
       renomeadas.push({ de, para });
     }
 
+    // (b') conteúdo fiscal do kit: só a analítica Liability que o kit criou com o código antigo.
+    for (const { de, para } of RENOMEACAO_FISCAL_L8) {
+      const conta = vivas.find((a) => a.code === de);
+      if (!conta || !conta.acceptsEntries || conta.nature !== 'Liability') continue;
+      if (ocupado(para)) {
+        throw new Error(`conflito: a unidade já tem uma conta '${para}' (viva ou excluída) — não renomeia '${de}'.`);
+      }
+      await tx.account.update({ where: { id: conta.id }, data: { code: para } });
+      conta.code = para;
+      renomeadas.push({ de, para });
+    }
+
     const criadas: string[] = [];
-    for (const s of CANONICAL_ACCOUNTS.filter((a) => !a.acceptsEntries)) {
+    const comFilha = (code: string) => vivas.some((a) => a.code.startsWith(`${code}.`));
+    const sinteticasFiscais = SINTETICAS_FISCAIS_L8.filter((s) => comFilha(s.code));
+    for (const s of [...CANONICAL_ACCOUNTS.filter((a) => !a.acceptsEntries), ...sinteticasFiscais]) {
       const existente = todas.find((a) => a.code === s.code);
       if (existente && existente.deletedAt === null) continue;
       if (existente) throw new Error(`conflito: a sintética '${s.code}' existe excluída nesta unidade — não recria.`);
@@ -204,7 +222,7 @@ export async function runCli(argv: string[] = process.argv.slice(2), db: PrismaC
     console.error('uso: --all | --owner-user-id <id> --unit-id <id>');
     return 2;
   }
-  void KIT_REGISTRY; // o registro precisa estar carregado (kit v3) antes de recompilar
+  void KIT_REGISTRY; // o registro precisa estar carregado (kit v6) antes de recompilar
   const dbList = (await db.$queryRawUnsafe('PRAGMA database_list')) as { file: string }[];
   console.log(`banco: ${dbList.map((d) => d.file).filter(Boolean).join(', ')}`);
 

@@ -355,6 +355,8 @@ export class PostingService {
             status: 'Posted',
             sourceType,
             sourceId: input.sourceId ?? null,
+            bindingId: input.bindingRef?.bindingId ?? null,
+            bindingVersion: input.bindingRef?.bindingVersion ?? null,
             createdById: scope.actorUserId,
             postedById: scope.actorUserId,
             fiscalYear,
