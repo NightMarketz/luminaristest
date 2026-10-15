@@ -2894,5 +2894,122 @@
       "PACKAGE_EXPIRY_NFSE_PENDING": "Falta dado para a NFS-e do pacote vencido",
       "UNKNOWN_EVENT_KEY": "Evento que nenhum kit de setor declara — erro de quem emite o evento; acione o suporte"
     }
+  },
+  "simples": {
+    "alerta": {
+      "ATIVIDADE_SEM_ANEXO": "Atividade sem anexo",
+      "BENEFICIO_MUNICIPAL_INAPLICAVEL_DESVANTAJOSO": "Benefício municipal não aplicado (desvantajoso)",
+      "HISTORICO_IGNORADO": "Histórico pré-adoção ignorado",
+      "ISS_VALOR_FIXO_MUNICIPAL": "ISS por valor fixo municipal",
+      "LIMITE_EPP_EXCEDIDO": "Limite da EPP excedido",
+      "LIMITE_MEI_EXCEDIDO": "Limite do MEI excedido",
+      "LIMITE_ME_EXCEDIDO": "Limite da ME excedido",
+      "MEI_ENQUADRAMENTO_DIVERGE": "Enquadramento do MEI diverge das ocupações",
+      "MEI_OCUPACAO_EXCLUIDA": "Ocupação fora do MEI",
+      "MEI_TAC_COM_OCUPACAO_A": "Transportador de cargas com ocupação da tabela A",
+      "NFSE_DIVERGE_RECEITA": "NFS-e diverge da receita",
+      "RBT12_INCOMPLETO": "RBT12 incompleto",
+      "SEGREGACAO_MANUAL": "Segregação manual",
+      "SUBLIMITE_ICMS_ISS": "Sublimite do ICMS/ISS",
+      "TIEOUT_DIVERGENTE": "Subrazão × razão divergentes"
+    },
+    "alertas": {
+      "title": "Alertas"
+    },
+    "badge": {
+      "bloqueante": "Bloqueia o registro do DAS",
+      "divergente": "Divergente",
+      "pendente": "Provisão pendente",
+      "warning": "Alerta"
+    },
+    "calculando": "Calculando…",
+    "calcular": "Calcular",
+    "col": {
+      "aliquotaEfetiva": "Alíq. efetiva",
+      "aliquotaNominal": "Alíq. nominal",
+      "anexo": "Anexo",
+      "competencia": "Competência",
+      "das": "DAS",
+      "dasMei": "DAS-MEI",
+      "divergencia": "Divergência",
+      "faixa": "Faixa",
+      "fatorR": "Fator R",
+      "natureza": "Natureza",
+      "oficial": "Oficial",
+      "parcelaDeduzir": "Parcela a deduzir",
+      "receita": "Receita",
+      "situacao": "Situação",
+      "tributos": "Tributos"
+    },
+    "detail": {
+      "atividades": "Atividades",
+      "dasOficial": "DAS oficial",
+      "divergencia": "Divergência (oficial − calculado)",
+      "espelho": "Espelho do PGDAS-D",
+      "janela": "Janela do RBT12",
+      "numeroDocumento": "Número do documento",
+      "provisao": "Provisão",
+      "razao": "Razão",
+      "rbt12": "RBT12",
+      "semDas": "Nenhum DAS oficial registrado nesta competência.",
+      "subrazao": "Subrazão",
+      "tabela": "Tabela de lei usada",
+      "tieOut": "Conferência subrazão × razão",
+      "tieOutOk": "Confere",
+      "total": "Total calculado",
+      "valorOficial": "Valor oficial",
+      "vencimento": "Vencimento",
+      "vigenteDesde": "vigente desde"
+    },
+    "error": {
+      "calcular": "Não foi possível calcular.",
+      "load": "Erro ao carregar a apuração.",
+      "perfil": "Erro ao carregar o perfil fiscal do ano."
+    },
+    "estado": {
+      "calculado": "Calculado (sem DAS)",
+      "carregando": "Carregando…",
+      "erro": "Erro",
+      "naoRegulamentada": "Regra não regulamentada",
+      "registrado": "DAS registrado",
+      "semPerfil": "Sem dado de perfil"
+    },
+    "mei": {
+      "ano": "Ano do perfil fiscal",
+      "contribuinteIcms": "Contribuinte de ICMS",
+      "contribuinteIss": "Contribuinte de ISS",
+      "cppAliquota": "Alíquota da CPP",
+      "error": {
+        "ecdIncompleta": "O perfil do ano tem ECD com campo vazio que o PUT exige — corrija a ECD antes.",
+        "ecfIncompleta": "O perfil do ano tem ECF com campo vazio que o PUT exige — corrija a ECF antes.",
+        "load": "Não foi possível carregar o perfil fiscal do ano.",
+        "naoMei": "O enquadramento do Anexo XI é só do MEI.",
+        "save": "Não foi possível salvar o enquadramento."
+      },
+      "filtro": "Filtrar por ocupação, CNAE ou chave",
+      "irParaEnquadramento": "Declarar o enquadramento do MEI no perfil fiscal",
+      "limite": "Receita acumulada no ano × limite",
+      "naoDeclarado": "— não declarado —",
+      "naoMeiAno": "O perfil de {{ano}} é {{regime}}: o enquadramento do Anexo XI é só do MEI.",
+      "ocupacoes": "Ocupações (Anexo XI)",
+      "receitaPa": "Receita do mês",
+      "salarioMinimo": "Salário mínimo usado",
+      "salvar": "Salvar enquadramento",
+      "semOcupacoes": "Nenhuma ocupação vigente no ano com esse filtro.",
+      "subtitle": "Perfil fiscal da empresa no ano: o SIMEI só calcula com o enquadramento ICMS/ISS declarado (Res. CGSN 140 art. 101 § 1º). Salvar regrava o perfil do ano com estes campos trocados.",
+      "title": "Enquadramento do MEI (Anexo XI)",
+      "transportador": "Transportador autônomo de cargas"
+    },
+    "motivo": {
+      "DOCUMENTO_MUNICIPAL_TRANSICAO": "Documento municipal (transição)",
+      "REGIME_CAIXA": "Regime de caixa"
+    },
+    "nao": "Não",
+    "semPerfilAno": "Perfil fiscal de {{ano}} não cadastrado: cadastre o perfil fiscal do ano para apurar os tributos.",
+    "severity": {
+      "INFO": "Informativo",
+      "WARNING": "Atenção"
+    },
+    "sim": "Sim"
   }
 }

@@ -2894,5 +2894,122 @@
       "PACKAGE_EXPIRY_NFSE_PENDING": "Missing data for the expired package NFS-e",
       "UNKNOWN_EVENT_KEY": "Event that no sector kit declares — bug in the event emitter; contact support"
     }
+  },
+  "simples": {
+    "alerta": {
+      "ATIVIDADE_SEM_ANEXO": "Activity without annex",
+      "BENEFICIO_MUNICIPAL_INAPLICAVEL_DESVANTAJOSO": "Municipal benefit not applied (disadvantageous)",
+      "HISTORICO_IGNORADO": "Pre-adoption history ignored",
+      "ISS_VALOR_FIXO_MUNICIPAL": "ISS as municipal fixed amount",
+      "LIMITE_EPP_EXCEDIDO": "EPP limit exceeded",
+      "LIMITE_MEI_EXCEDIDO": "MEI limit exceeded",
+      "LIMITE_ME_EXCEDIDO": "ME limit exceeded",
+      "MEI_ENQUADRAMENTO_DIVERGE": "MEI classification differs from occupations",
+      "MEI_OCUPACAO_EXCLUIDA": "Occupation outside MEI",
+      "MEI_TAC_COM_OCUPACAO_A": "Cargo carrier with a table A occupation",
+      "NFSE_DIVERGE_RECEITA": "NFS-e differs from revenue",
+      "RBT12_INCOMPLETO": "Incomplete RBT12",
+      "SEGREGACAO_MANUAL": "Manual segregation",
+      "SUBLIMITE_ICMS_ISS": "ICMS/ISS sublimit",
+      "TIEOUT_DIVERGENTE": "Subledger × ledger divergent"
+    },
+    "alertas": {
+      "title": "Alerts"
+    },
+    "badge": {
+      "bloqueante": "Blocks the DAS registration",
+      "divergente": "Divergent",
+      "pendente": "Provision pending",
+      "warning": "Alert"
+    },
+    "calculando": "Calculating…",
+    "calcular": "Calculate",
+    "col": {
+      "aliquotaEfetiva": "Effective rate",
+      "aliquotaNominal": "Nominal rate",
+      "anexo": "Annex",
+      "competencia": "Period",
+      "das": "DAS",
+      "dasMei": "DAS-MEI",
+      "divergencia": "Divergence",
+      "faixa": "Bracket",
+      "fatorR": "Factor R",
+      "natureza": "Nature",
+      "oficial": "Official",
+      "parcelaDeduzir": "Deductible amount",
+      "receita": "Revenue",
+      "situacao": "Status",
+      "tributos": "Taxes"
+    },
+    "detail": {
+      "atividades": "Activities",
+      "dasOficial": "Official DAS",
+      "divergencia": "Divergence (official − calculated)",
+      "espelho": "PGDAS-D mirror",
+      "janela": "RBT12 window",
+      "numeroDocumento": "Document number",
+      "provisao": "Provision",
+      "razao": "Ledger",
+      "rbt12": "RBT12",
+      "semDas": "No official DAS registered for this period.",
+      "subrazao": "Subledger",
+      "tabela": "Law table used",
+      "tieOut": "Subledger × ledger check",
+      "tieOutOk": "Matches",
+      "total": "Calculated total",
+      "valorOficial": "Official amount",
+      "vencimento": "Due date",
+      "vigenteDesde": "in force since"
+    },
+    "error": {
+      "calcular": "Could not calculate.",
+      "load": "Error loading the assessment.",
+      "perfil": "Error loading the year's tax profile."
+    },
+    "estado": {
+      "calculado": "Calculated (no DAS)",
+      "carregando": "Loading…",
+      "erro": "Error",
+      "naoRegulamentada": "Rule not yet regulated",
+      "registrado": "DAS registered",
+      "semPerfil": "Missing profile data"
+    },
+    "mei": {
+      "ano": "Tax profile year",
+      "contribuinteIcms": "ICMS taxpayer",
+      "contribuinteIss": "ISS taxpayer",
+      "cppAliquota": "CPP rate",
+      "error": {
+        "ecdIncompleta": "The year's profile has an ECD with an empty field the PUT requires — fix the ECD first.",
+        "ecfIncompleta": "The year's profile has an ECF with an empty field the PUT requires — fix the ECF first.",
+        "load": "Could not load the year's tax profile.",
+        "naoMei": "The Annex XI classification applies only to MEI.",
+        "save": "Could not save the classification."
+      },
+      "filtro": "Filter by occupation, CNAE or key",
+      "irParaEnquadramento": "Declare the MEI classification in the tax profile",
+      "limite": "Year-to-date revenue × limit",
+      "naoDeclarado": "— not declared —",
+      "naoMeiAno": "The {{ano}} profile is {{regime}}: the Annex XI classification applies only to MEI.",
+      "ocupacoes": "Occupations (Annex XI)",
+      "receitaPa": "Revenue of the month",
+      "salarioMinimo": "Minimum wage used",
+      "salvar": "Save classification",
+      "semOcupacoes": "No occupation in force in the year matches this filter.",
+      "subtitle": "Company tax profile for the year: SIMEI only calculates with the ICMS/ISS classification declared (CGSN Res. 140 art. 101 § 1). Saving rewrites the year's profile with these fields changed.",
+      "title": "MEI classification (Annex XI)",
+      "transportador": "Self-employed cargo carrier"
+    },
+    "motivo": {
+      "DOCUMENTO_MUNICIPAL_TRANSICAO": "Municipal document (transition)",
+      "REGIME_CAIXA": "Cash basis"
+    },
+    "nao": "No",
+    "semPerfilAno": "Tax profile for {{ano}} not registered: register the year's tax profile to assess taxes.",
+    "severity": {
+      "INFO": "Informational",
+      "WARNING": "Warning"
+    },
+    "sim": "Yes"
   }
 }
