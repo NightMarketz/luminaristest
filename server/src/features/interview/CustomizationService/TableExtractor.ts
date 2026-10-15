@@ -1,10 +1,12 @@
 import { logger } from '../../../lib/logger';
 import { ICustomizableTable } from '../models/InterviewTypes';
 import type { ISchemaField } from '../../../features/dynamicTables/models/DynamicTable.model';
+import type { PresetTableDefinition } from '../../../features/dynamicTables/presets';
+import { computeTableLocks } from '../../../features/dynamicTables/presets/removability';
 
 interface IPreset {
   key: string;
-  tables: Record<string, unknown>;
+  tables: Record<string, PresetTableDefinition>;
 }
 
 /**
@@ -12,43 +14,6 @@ interface IPreset {
  */
 export class TableExtractor {
 
-  /**
-   * Extrai tabelas da descrição do preset (método legado, mantido apenas para compatibilidade)
-   */
-  public extractTablesFromDescription(description: string): ICustomizableTable[] {
-    // Usa regex para tentar encontrar tabelas na descrição
-    const tablesPattern = /(\\w+)\\s*(?:\\(([^)]+)\\)|:\\s*([^,\\.]+))/g;
-    
-    // Coleta todas as ocorrências de possíveis tabelas usando exec em vez de matchAll
-    const matches: RegExpExecArray[] = [];
-    let match: RegExpExecArray | null;
-    while ((match = tablesPattern.exec(description)) !== null) {
-      matches.push(match);
-    }
-    
-    return matches
-      .map(match => {
-        // O grupo 1 é o nome da tabela, e o grupo 2 ou 3 (o que estiver definido) é a descrição
-        const descMatch = match[0].match(/(\\w+)\\s*(?:\\(([^)]+)\\)|:\\s*([^,\\.]+))/i);
-        
-        if (descMatch) {
-          const name = descMatch[1].trim();
-          const description = descMatch[2] || descMatch[3] || `Tabela de ${name}`;
-          const key = name.toLowerCase().replace(/\\s+/g, '_');
-          
-          return {
-            name,
-            key,
-            description,
-            isSelected: true, // Por padrão, todas as tabelas do preset estão selecionadas
-            isCore: true      // Tabelas do preset são consideradas essenciais por padrão
-          };
-        }
-        return null;
-      })
-      .filter(Boolean) as ICustomizableTable[];
-  }
-  
   /**
    * Extrai tabelas do preset real usando o PresetService
    */
@@ -60,6 +25,9 @@ export class TableExtractor {
       return [];
     }
     
+    // W2 item 4 (BE-INCR-WIZARD-REMOVABILITY): a trava vem da regra única de remoção, não de um `isCore` fixo.
+    const locks = computeTableLocks(preset.tables, new Set(Object.keys(preset.tables)));
+
     // Extrai as tabelas do objeto do preset
     const customizableTables: ICustomizableTable[] = Object.entries(preset.tables)
       .map(([tableKey, tableSchema]: [string, unknown]) => {
@@ -96,7 +64,8 @@ export class TableExtractor {
           name,
           description,
           isSelected: true,  // Por padrão, todas as tabelas do preset estão selecionadas
-          isCore: true,      // Tabelas do preset são consideradas essenciais por padrão
+          isCore: locks[tableKey] !== null, // derivado da trava (o FE lê `isCore`)
+          lock: locks[tableKey],
           fields: fields
         };
       })
