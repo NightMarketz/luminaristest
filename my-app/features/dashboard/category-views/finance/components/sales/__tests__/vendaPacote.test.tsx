@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Shim obrigatório (jsx "preserve" + runtime clássico) — nunca em código de produção.
 (globalThis as unknown as { React: typeof React }).React = React;
 import { render, screen, cleanup, waitFor, fireEvent } from '@testing-library/react';
-import { wizardVariantsFor } from '../SalesCreateModal';
+import { saleVariantsFor } from '../SalesCreateModal';
 import { SalePaymentModal } from '../SaleActionModals';
 import SaleDetailPanel from '../SaleDetailPanel';
 import SalesTable from '../SalesTable';
@@ -40,9 +40,9 @@ beforeEach(() => { cleanup(); vi.clearAllMocks(); });
 
 describe('item 1 — a opção Pacotes só existe quando a tabela de itens tem packageId', () => {
     it('mista com packageId → 3 variantes; mista sem → 2; não mista → nenhuma', () => {
-        expect(wizardVariantsFor(itemsTable(['productId', 'serviceId', 'packageId']))).toEqual(['products', 'services', 'packages']);
-        expect(wizardVariantsFor(itemsTable(['productId', 'serviceId']))).toEqual(['products', 'services']);
-        expect(wizardVariantsFor(itemsTable(['serviceId']))).toEqual([]);
+        expect(saleVariantsFor(itemsTable(['productId', 'serviceId', 'packageId']))).toEqual(['products', 'services', 'packages']);
+        expect(saleVariantsFor(itemsTable(['productId', 'serviceId']))).toEqual(['products', 'services']);
+        expect(saleVariantsFor(itemsTable(['serviceId']))).toEqual([]);
     });
 });
 

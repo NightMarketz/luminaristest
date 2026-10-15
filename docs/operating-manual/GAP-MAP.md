@@ -271,7 +271,7 @@ suporte/configuração em 759 achados de revisão — é a classe que ninguém e
 >    **8 write-paths** que gravam o dia errado em silêncio (verificado: nenhuma checagem de hoje
 >    no backend fora do `as_of_not_today` do aging): data do lançamento manual (JournalEntryModal),
 >    do estorno (JournalEntriesPanel), da baixa AP e AR (`actionDate`, re-derivada no clique),
->    emissão+vencimento dos 2 modais de criação, data da venda (`useSalesWizard` → ponte contábil
+>    emissão+vencimento dos 2 modais de criação, data da venda (`useSalesCreateForm` → ponte contábil
 >    reconhece receita no dia errado) e o botão "Hoje" do DynamicForm (rótulo promete hoje, grava
 >    amanhã). **Instrumentado vermelho em 2026-09-01**: 13 testes-guarda "guarda: … janela
 >    21h-00h BRT …" (instante fixado por fake timers, determinístico — armadilha
@@ -279,7 +279,7 @@ suporte/configuração em 759 achados de revisão — é a classe que ninguém e
 >    asserção final; em `my-app/features/accounting/components/__tests__/` (BalanceSheetPanel,
 >    IncomeStatementPanel, Nucleo4Panels ×3, JournalEntryModal, JournalEntriesPanel,
 >    AccountsPayablePanel, AccountsReceivablePanel, CreatePayableReceivableModal.echo ×2) +
->    `features/dashboard/category-views/finance/hooks/sales/__tests__/useSalesWizard.dateDefault.test.ts`
+>    `features/dashboard/category-views/finance/hooks/sales/__tests__/useSalesCreateForm.dateDefault.test.ts`
 >    + `features/dashboard/components/forms/__tests__/DynamicForm.todayButton.test.tsx`.
 >    **Não mordem:** seeds de dev (fixture, datas relativas intencionais);
 >    `EditRecordButton.tsx:48` é classe ADJACENTE (rendering round-trip via `new Date(raw)`,
@@ -298,7 +298,7 @@ suporte/configuração em 759 achados de revisão — é a classe que ninguém e
 >    asserção final: `expected '2026-09-01' to be '2026-08-31'`). **CORRIGIDO 2026-09-25** (mesmo PR): o
 >    botão usa `scopeToday()`, agora CENTRALIZADO em `features/dashboard/shared/utils/formatters.ts`
 >    (decisão do dono 2026-09-25, supersede as 2 cópias do F3(b)); `accounting/lib/formatDate.ts`
->    re-exporta, `useSalesWizard` importa. Guarda volta a `it()`; suíte my-app 307/307.
+>    re-exporta, `useSalesCreateForm` importa. Guarda volta a `it()`; suíte my-app 307/307.
 >
 >    **CORRIGIDO 2026-09-02** — os 12 sites do lote (13 menos o DynamicForm, que F4(b) tirou para item
 >    próprio): BP/DRE/DFC pelo backend (`asOf` opcional + `scopeToday` no Service) e os 9 restantes no

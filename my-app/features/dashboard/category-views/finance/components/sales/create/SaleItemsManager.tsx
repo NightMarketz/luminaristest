@@ -6,7 +6,7 @@ import { HiX, HiShoppingCart, HiCog, HiGift } from 'react-icons/hi';
 import RelationSelector from '@/features/dashboard/components/forms/RelationSelector';
 import { QuantityInput, CurrencyInput } from './inputs';
 import type { SchemaField, StockIndexEntry } from './types';
-import type { NewSaleItem, WizardVariant } from '../../../types/sales.types';
+import type { NewSaleItem, SaleVariant } from '../../../types/sales.types';
 import type { IDynamicTableData } from '../../../../../components/shared/dynamic-tables.client';
 import { isBelowCatalog, lineQuantity, type PackageCatalog, type PackageSaleIssue } from '../../../utils/packageSale';
 
@@ -28,7 +28,7 @@ const isActivePackage = (record: IDynamicTableData) => (record.data as Record<st
 
 interface SaleItemsManagerProps {
     items: NewSaleItem[];
-    variant: WizardVariant;
+    variant: SaleVariant;
     unitId: string;
     saleItemsFields: SchemaField[];
     stockIndex: Record<string, StockIndexEntry>;
@@ -114,7 +114,7 @@ export function SaleItemsManager({
                     </div>
                     <div className="text-center">
                         <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">
-                            {t('finance_view:sales.wizard.no_items', 'Nenhum item adicionado')}
+                            {t('finance_view:sales.create.no_items', 'Nenhum item adicionado')}
                         </p>
                         <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                             {t('finance_view:sales.items.empty_hint', 'Clique abaixo para começar')}

@@ -58,3 +58,13 @@ Desde 2026-10-07 o fold entra no PR que faz o trabalho — não há mais PR `doc
 4. Decisão nova do dono → nota em `decisoes/` citando a cédula.
 
 Proposta nova (item PROPOSTO do destino) só vira nota em `nos/` depois de PRE-ADR ratificado.
+
+## Nomenclatura (dono, chat, 2026-10-14)
+
+- **"wizard" = só o wizard de onboarding** (`/dashboard/setup`: Rápido · Controle Total · Entrevista com IA), que
+  monta o sistema antes de existir qualquer tabela ou unidade.
+- **A criação de venda é o "modal Nova Venda"** (Financeiro → Vendas → Nova Venda; `SalesCreateModal` +
+  `useSalesCreateForm`). Nunca a chame de "wizard". O `WizardModal` de `components/ui/wizard` é o padrão visual de
+  modal em etapas, não nome de fluxo.
+- Texto histórico (BRIEF ratificado, `decisoes/`, nó `done`, seção de fold) **não se reescreve**: ali "wizard de
+  venda" e `useSalesWizard` (renomeado para `useSalesCreateForm` no PR desta regra) leem-se como "modal Nova Venda".

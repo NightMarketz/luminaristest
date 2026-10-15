@@ -44,7 +44,7 @@ Cada passo tem três campos. EVIDÊNCIA é obrigatória e é sempre um artefato 
    bloco mostra a data/último dia novos e o checkbox **volta desmarcado** (botões desabilitados de novo).
    EVIDÊNCIA: [screenshot do bloco após a troca de data, checkbox desmarcado]
 
-3. Com o checkbox marcado, **Salvar Rascunho** (ou Finalizar Venda, se o defeito do wizard registrado em "Achados" já estiver
+3. Com o checkbox marcado, **Salvar Rascunho** (ou Finalizar Venda, se o defeito do modal Nova Venda registrado em "Achados" já estiver
    corrigido).
    Resultado esperado: no Network, nesta ordem: `POST` da venda, `POST` do item, `POST /api/package-acceptances` → `201`
    com `textVersion` `v1`. O corpo do `POST` do aceite tem **só** `unitId`, `saleId`, `textVersion`, `textSha256`.
@@ -67,17 +67,17 @@ Cada passo tem três campos. EVIDÊNCIA é obrigatória e é sempre um artefato 
    e nada de "ACEITE NÃO REGISTRADO". Colher a assinatura do cliente no papel (F-FE-PV-3 b) e guardar.
    EVIDÊNCIA: [o PDF anexado + foto/scan da cláusula impressa com a régua do tamanho]
 
-7. Venda sem aceite: o wizard não deixa salvar sem o checkbox, então crie uma venda do pacote com validade **pela tabela
-   genérica** (Sales + Sale Items, sem passar pelo wizard) e abra o detalhe.
+7. Venda sem aceite: o modal Nova Venda não deixa salvar sem o checkbox, então crie uma venda do pacote com validade **pela tabela
+   genérica** (Sales + Sale Items, sem passar pelo modal Nova Venda) e abra o detalhe.
    Resultado esperado: selo vermelho "Aceite não registrado", a validade em destaque e o botão "Registrar aceite". Clicar,
    marcar o checkbox e "Confirmar aceite": o selo some e o aceite aparece. Em **outra** venda igual, ainda sem aceite,
    baixar o PDF: a cláusula leva a marca **ACEITE NÃO REGISTRADO**.
    EVIDÊNCIA: [screenshot do selo + do botão + do aceite depois; o PDF com a marca]
 
-8. Venda do pacote **sem validade**: wizard → pacote sem validade.
+8. Venda do pacote **sem validade**: modal Nova Venda → pacote sem validade.
    Resultado esperado: o bloco mostra "Sem validade", **não há** checkbox e a venda pode ser salva sem aceite; no detalhe, sem
    selo e sem botão de PDF.
-   EVIDÊNCIA: [screenshot do wizard + do detalhe]
+   EVIDÊNCIA: [screenshot do modal Nova Venda + do detalhe]
 
 9. Venda de **serviço** finalizada para o cliente do P6 → **Pagar** → "Saldo de pacote".
    Resultado esperado: cada saldo mostra "vence em DD/MM/AAAA" ou "sem validade"; o saldo **vencido** aparece
