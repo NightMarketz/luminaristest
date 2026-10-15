@@ -1,5 +1,6 @@
 import type { ITableSchema } from '../../models/DynamicTable.model';
-import { createTableFromModule } from '../../utils/TableFactory';
+// W2 / F-W2-2: `lockedByAccounting` nas 4 tabelas que a contabilidade lê pelo nome (pontes de venda + emissão fiscal).
+import { createTableFromModule, lockedByAccounting } from '../../utils/TableFactory';
 import { customerModule } from '../modules/people/CustomerModule';
 import { serviceModule } from '../modules/service/ServiceModule';
 import { productModule, productUnitModule } from '../modules/product/ProductModule';
@@ -35,16 +36,16 @@ const BeautySalonPreset = {
   // I8 comportamento 5 (F-CRM-2 → a, ratificado 2026-09-07): CRM-0 (Funil) + CRM-1 (Propostas); CRM-2/3 OFF.
   modules: ['CRM-0', 'CRM-1'] as ModuleKey[],
   tables: {
-    customers: createTableFromModule(customerModule),
+    customers: lockedByAccounting(createTableFromModule(customerModule)),
     suppliers: createTableFromModule(suppliersModule),
     services: createTableFromModule(serviceModule),
-    packages: createTableFromModule(packageCatalogModule),
+    packages: lockedByAccounting(createTableFromModule(packageCatalogModule)),
     products: createTableFromModule(productModule),
     productUnits: createTableFromModule(productUnitModule),
     appointments: createTableFromModule(appointmentsModule),
-    sales: createTableFromModule(salesModule),
+    sales: lockedByAccounting(createTableFromModule(salesModule)),
     // Defaulta para mixed; o instalador trocará conforme capacidades
-    saleItems: createTableFromModule(saleItemsMixedModule),
+    saleItems: lockedByAccounting(createTableFromModule(saleItemsMixedModule)),
     goals: createTableFromModule(goalsModule),
     reports: createTableFromModule(reportsModule),
     campaigns: createTableFromModule(campaignsModule),
