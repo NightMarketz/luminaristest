@@ -1,0 +1,56 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "L10833",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/2003/l10.833.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/2003/l10.833.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-14T23:36:38-03:00",
+      "sha256": "64e1016345815d7370dddc6c33a1ce1fc564914b78421bce0874300f65e537bc",
+      "arquivo": "docs/D01_l10-833-htm.html",
+      "texto": "docs/D01_l10-833-htm.txt",
+      "bytes": 533449
+    },
+    {
+      "id": "D02",
+      "titulo": "L10637",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/2002/l10637.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/2002/l10637.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-14T23:36:38-03:00",
+      "sha256": "120d65400cb579d5ffb72b98360a323e23303dacd22942544bcd7d7a3e84b7be",
+      "arquivo": "docs/D02_l10637-htm.html",
+      "texto": "docs/D02_l10637-htm.txt",
+      "bytes": 238160
+    },
+    {
+      "id": "D03",
+      "titulo": "Lcp 123",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp123.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp123.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-14T23:36:39-03:00",
+      "sha256": "b1e7af19959dfd03c234852a39e76ccdc3903ab9f40d9b60028ea4691eed16dd",
+      "arquivo": "docs/D03_lcp123-htm.html",
+      "texto": "docs/D03_lcp123-htm.txt",
+      "bytes": 1622252
+    },
+    {
+      "id": "D04",
+      "titulo": "Lcp87",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp87.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp87.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-14T23:37:10-03:00",
+      "sha256": "79dc4998325cb8a34787f16fe568ccd3611f39a66ca558ea4a2ef0f886b5099b",
+      "arquivo": "docs/D04_lcp87-htm.html",
+      "texto": "docs/D04_lcp87-htm.txt",
+      "bytes": 270282
+    }
+  ],
+  "buscas": [],
+  "slug": "pis-cofins-regime-por-tributacao",
+  "pergunta": "O regime de PIS/Cofins (cumulativo × não cumulativo) é determinado pela forma de tributação do IRPJ (Presumido, Real, Simples)?",
+  "criado": "2026-10-14T23:36:33-03:00"
+}
