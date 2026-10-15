@@ -9,11 +9,11 @@ depende_de: ["[[X14]]", "[[D-2026-10-10-X14-PROXIMOS-PASSOS]]", "[[D-2026-10-15-
 autorizacao: "dono, chat, 2026-10-15: \"Autorizo planejar o BRIEF do X14-CAIXA — sessao-planejamento, sem código, sem 'executa'\" — só o BRIEF; forks ratificados no questionário do mesmo dia ([[D-2026-10-15-X14-CAIXA-FORKS]]) — sem executa"
 ancora_sdd: "—"
 atualizado: "2026-10-15"
-prs: []
+prs: ["#711"]
 ---
 # X14-CAIXA — base do DAS por recebimento (regime de caixa)
 
-**Estado:** `planned`. BRIEF escrito em 15/10, forks ratificados, **sem `executa`**.  
+**Estado:** `planned` — 15/10: BRIEF escrito (`BE-INCR-SIMPLES-CAIXA-brief.md`, 22 itens em 3 PRs: recebimento + trava de ano → base caixa + art. 20 → Anexo IX + incobráveis). Fato novo: a Res. CGSN 190/2026 extingue o caixa em 01/01/2027 (revoga arts. 16 § 1º, 19, 20, 77 e 78), e o nó serve só aos PAs até dez/2026. Escopo "caixa completo para 2026" (dono, contra a recomendação de guarda + encerrar). F-CX-1..7 e F-CX-2.1 RATIFICADOS; F-CX-2 (c) D+N e F-CX-7 (a) calcular ICMS/ISS, os dois contra a recomendação. Pendentes de contador: A1 (transição dez/2026) e A2 (dia do recebimento no cartão). Sem executa  
 **Autorização:** dono, chat, 2026-10-15. Planejar o BRIEF só pela `sessao-planejamento`. O código exige `executa`
 próprio por PR.  
 **Depende de:** [[X14]] (cálculo por competência, perfil com `simplesRegimeApuracao`).
