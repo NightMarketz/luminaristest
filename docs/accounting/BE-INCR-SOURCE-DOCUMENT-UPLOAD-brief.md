@@ -2,8 +2,9 @@
 
 > **Sessão:** `sessao-planejamento` — produz decisão, não código.
 > **Autorização:** dono, chat, 2026-10-15, questionário nesta sessão: *"Autorizo só o BRIEF"* (frente "rota que cria
-> `SourceDocument` a partir de arquivo — PDF do DAS + documento do histórico pré-adoção"). **Sem "executa", sem nota de
-> nó** até os forks serem ratificados.
+> `SourceDocument` a partir de arquivo — PDF do DAS + documento do histórico pré-adoção"). **Forks F-SD-1..11
+> RATIFICADOS** (dono, chat, 2026-10-15: *"Ratifico F-SD-1..11 todos na recomendação do BRIEF. Só o BRIEF — sem
+> executa."*). Nota de nó: [`BE-INCR-SOURCE-DOCUMENT-UPLOAD`](../plano/nos/BE-INCR-SOURCE-DOCUMENT-UPLOAD.md). **Sem "executa".**
 > **Por quê:** lacuna do PR-B do [`FE-INCR-SIMPLES-brief.md`](FE-INCR-SIMPLES-brief.md) item 9 —
 > [[D-2026-10-15-FE-SIMPLES-PR-B-LACUNAS]] (branch `feat/fe-incr-simples-pr-b`, PR #718): *"A rota de BE que cria o
 > `SourceDocument` a partir do arquivo vira frente própria … Vale também para o documento do histórico pré-adoção
@@ -95,7 +96,9 @@ type DocumentoRef = { sourceDocumentId: string; attachmentId: string | null; fil
 'tax.simples_das.documento_anexado': ['apuracaoId', 'competencia', 'sourceDocumentId', 'anteriorSourceDocumentId']
 ```
 
-## 3. Forks — RATIFICAÇÃO PENDENTE
+## 3. Forks — RATIFICADOS (dono, chat, 2026-10-15 — todos na recomendação)
+
+Decisão = a coluna "Recomendação" de cada linha (F-SD-6 → (b); F-SD-11 → (b); os demais → (a)).
 
 | Fork | Caminhos | Recomendação |
 |---|---|---|
