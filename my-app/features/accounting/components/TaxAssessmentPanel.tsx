@@ -45,6 +45,9 @@ export function TaxAssessmentPanel({ unitId, onIrParaEnquadramentoMei }: Props) 
   const detalheReq = useRef(0);
   const perfilReq = useRef(0);
   const [perfil, setPerfil] = useState<PerfilDoAno>({ status: 'loading' });
+  // O ano cuja lista X7/X8 já chegou: antes disso a grade mostra "carregando", nunca "nenhuma apuração" (o efeito que
+  // chama a lista roda depois do render em que o perfil PRESUMIDO/REAL chega).
+  const [listaDoAno, setListaDoAno] = useState<number | null>(null);
 
   useEffect(() => {
     const req = ++perfilReq.current;
@@ -67,9 +70,15 @@ export function TaxAssessmentPanel({ unitId, onIrParaEnquadramentoMei }: Props) 
     setError(null);
     try {
       const r = await taxAssessmentsService.list({ unitId, anoCalendario: ano });
-      if (req === listaReq.current) setLinhas(r);
+      if (req === listaReq.current) {
+        setLinhas(r);
+        setListaDoAno(ano);
+      }
     } catch (err: unknown) {
-      if (req === listaReq.current) setError(resolveError(err, tRef.current('taxAssessment.error.load', 'Erro ao carregar as apurações.')));
+      if (req === listaReq.current) {
+        setError(resolveError(err, tRef.current('taxAssessment.error.load', 'Erro ao carregar as apurações.')));
+        setListaDoAno(ano);
+      }
     } finally {
       if (req === listaReq.current) setLoading(false);
     }
@@ -167,7 +176,7 @@ export function TaxAssessmentPanel({ unitId, onIrParaEnquadramentoMei }: Props) 
         </div>
       ) : ehSimplesOuMei(perfilDoAno.view) ? (
         <SimplesApuracaoPanel unitId={unitId} ano={ano} perfil={perfilDoAno.view} onIrParaEnquadramentoMei={onIrParaEnquadramentoMei} />
-      ) : loading ? (
+      ) : loading || listaDoAno !== ano ? (
         <div className="py-8 text-center text-sm text-neutral-500">{t('taxAssessment.loading', 'Carregando…')}</div>
       ) : grade.length === 0 ? (
         <div className="py-8 text-center text-sm text-neutral-500">{t('taxAssessment.empty', 'Nenhuma apuração gravada neste ano.')}</div>
