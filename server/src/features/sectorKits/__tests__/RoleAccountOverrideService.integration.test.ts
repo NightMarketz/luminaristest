@@ -271,7 +271,9 @@ describe('ajuste papel→conta do kit (PR-3)', () => {
     expect(res.body.data.status).toBe('Active');
     expect(await activeBinding()).toMatchObject({ bindingVersion: 3, codes: { 'receita-serviço': '3.9' } });
 
-    // sectorKey que não é de kit: identidade
+    // sectorKey que não é de kit: identidade. LAC-B: o compile recusa 2º setor Active na unidade (409), então o
+    // binding do kit sai antes — o ajuste vivo da unidade continua lá para provar que não é aplicado.
+    await prisma.accountingBinding.updateMany({ where: { ...where(), sectorKey: 'beautySalon' }, data: { deletedAt: new Date() } });
     const outro = await compile('setorSemKit');
     expect(outro.body.data.status).toBe('Active');
     const row = await prisma.accountingBinding.findFirstOrThrow({ where: { ...where(), sectorKey: 'setorSemKit', status: 'Active' } });
