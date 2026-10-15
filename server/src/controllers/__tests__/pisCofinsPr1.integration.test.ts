@@ -40,8 +40,8 @@ describe('X8 PR-1 — regime coerente, contas da provisão, crédito PIS × Cofi
     pushTestSchema();
     dono = await prisma.user.create({ data: { name: 'x8', username: 'x8-dono', email: 'x8@test.local', password: 'x', role: 'USER' } });
     await prisma.accountingPeriod.create({ data: { userId: dono.id, unitId: UNIT, year: 2025, month: 7, status: 'OPEN', openedAt: new Date(), openedById: dono.id } });
-    await criarConta('1.1.6', 'Asset');
-    await criarConta('2.1.2', 'Liability');
+    await criarConta('1.1.3.01', 'Asset');
+    await criarConta('2.1.2.01', 'Liability');
     await criarConta('1.1.8', 'Asset');
     await criarConta('1.1.9', 'Asset');
     await criarConta('3.6.1', 'Revenue'); // PIS sobre a receita — dedução (F-PCB-1R a)
@@ -125,7 +125,7 @@ describe('X8 PR-1 — regime coerente, contas da provisão, crédito PIS × Cofi
     expect((pc.pisCents as number) + (pc.cofinsCents as number)).toBe(pc.amountCents);
     const entry = await prisma.journalEntry.findFirstOrThrow({ where: { sourceType: 'ap.payable', sourceId: payable.id }, include: { postings: { include: { account: true } } } });
     const byCode = Object.fromEntries(entry.postings.map((p) => [p.account.code, { d: Number(p.debitCents), c: Number(p.creditCents) }]));
-    expect(byCode).toEqual({ '1.1.6': { d: 15249, c: 0 }, '1.1.8': { d: 3300, c: 0 }, '1.1.9': { d: 784, c: 0 }, '2.1.2': { d: 0, c: 19333 } });
+    expect(byCode).toEqual({ '1.1.3.01': { d: 15249, c: 0 }, '1.1.8': { d: 3300, c: 0 }, '1.1.9': { d: 784, c: 0 }, '2.1.2.01': { d: 0, c: 19333 } });
   });
 
   it('item 6: crédito do mês — nota nova usa as parcelas; nota antiga ⇒ DERIVADO 165:760; cancelada, apagada, fora do mês e outra unidade ficam fora', async () => {

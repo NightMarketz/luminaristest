@@ -31,17 +31,17 @@ describe('SaleSettledMapper', () => {
 
   // --- D1-QMAP: each paymentMethod → the correct debit account (case by case) ---
   it.each([
-    ['Cash', '1.1.3'],
-    ['Pix', '1.1.1'],
-    ['Debit Card', '1.1.4'],
-    ['Credit Card', '1.1.4'],
-    ['Package Balance', '2.1.1'],
+    ['Cash', '1.1.1.02'],
+    ['Pix', '1.1.1.01'],
+    ['Debit Card', '1.1.2.02'],
+    ['Credit Card', '1.1.2.02'],
+    ['Package Balance', '2.1.1.01'],
   ])('maps paymentMethod %s → debit account %s, credit always 1.1.2', (method, debitCode) => {
     const input = mapper.map(event({ paymentMethod: method, amount: 200 }));
     const debit = input.lines.find((l) => l.debitCents > 0)!;
     const credit = input.lines.find((l) => l.creditCents > 0)!;
     expect(debit.accountCode).toBe(debitCode);
-    expect(credit.accountCode).toBe('1.1.2'); // A Receber — always the credit leg
+    expect(credit.accountCode).toBe('1.1.2.01'); // A Receber — always the credit leg
     expect(debit.debitCents).toBe(credit.creditCents); // balanced
     expect(debit.creditCents).toBe(0);
     expect(credit.debitCents).toBe(0);
@@ -50,9 +50,9 @@ describe('SaleSettledMapper', () => {
   it('Package Balance NEVER lands in cash/bank — it debits the prepaid liability 2.1.1', () => {
     const input = mapper.map(event({ paymentMethod: 'Package Balance', amount: 200 }));
     const debit = input.lines.find((l) => l.debitCents > 0)!;
-    expect(debit.accountCode).toBe('2.1.1');
-    expect(input.lines.some((l) => l.accountCode === '1.1.3')).toBe(false); // not Caixa
-    expect(input.lines.some((l) => l.accountCode === '1.1.1')).toBe(false); // not Banco
+    expect(debit.accountCode).toBe('2.1.1.01');
+    expect(input.lines.some((l) => l.accountCode === '1.1.1.02')).toBe(false); // not Caixa
+    expect(input.lines.some((l) => l.accountCode === '1.1.1.01')).toBe(false); // not Banco
   });
 
   it('books the GROSS amount (card not netted of fees — fee is Incremento F)', () => {

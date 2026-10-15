@@ -78,7 +78,7 @@ describe('etiqueta de dimensão no read que alimenta o editor (SQLite real)', ()
       description: 'Aluguel com centro de custo',
       lines: [
         { accountCode: '4.1', debitCents: 150000, creditCents: 0, dimensions: ['val-loja-a'] },
-        { accountCode: '1.1.1', debitCents: 0, creditCents: 150000 },
+        { accountCode: '1.1.1.01', debitCents: 0, creditCents: 150000 },
       ],
     });
 

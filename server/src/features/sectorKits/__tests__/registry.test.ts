@@ -3,8 +3,8 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { KIT_REGISTRY, latestKit, listKits } from '../registry';
 import { SECTOR_BINDING_REGISTRY, DEFAULT_SECTOR_KEY } from '../../accountingBinding/fixtures/sectorBindingRegistry';
-import { SALE_BINDING_V1, SALE_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../accountingBinding/fixtures/saleBinding';
-import { CLINIC_BINDING_V1, CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../accountingBinding/fixtures/clinicBinding';
+import { SALE_BINDING_V2, SALE_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../accountingBinding/fixtures/saleBinding';
+import { CLINIC_BINDING_V2, CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../accountingBinding/fixtures/clinicBinding';
 
 /**
  * BE-INCR-KIT-SETOR, PR-1 — registro (item 4), trava das versões publicadas (item 5), changelog
@@ -28,14 +28,15 @@ function canonicalJson(value: unknown): string {
 const sha256 = (v: unknown) => createHash('sha256').update(canonicalJson(v)).digest('hex');
 
 describe('KIT_REGISTRY e SECTOR_BINDING_REGISTRY derivado (item 4)', () => {
+  // BE-INCR-PLANO-4-NIVEIS: a versão vigente de cada kit (v6) embute o binding V2 (plano de 4 níveis).
   it('o registro derivado é deep-equal ao de antes do kit (mesma ordem de chaves)', () => {
     const before = {
-      beautySalon: { binding: SALE_BINDING_V1, operationalSchema: SALE_OPERATIONAL_SCHEMA_SNAPSHOT },
-      aestheticClinic: { binding: CLINIC_BINDING_V1, operationalSchema: CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT },
+      beautySalon: { binding: SALE_BINDING_V2, operationalSchema: SALE_OPERATIONAL_SCHEMA_SNAPSHOT },
+      aestheticClinic: { binding: CLINIC_BINDING_V2, operationalSchema: CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT },
     };
     expect(SECTOR_BINDING_REGISTRY).toStrictEqual(before);
     expect(Object.keys(SECTOR_BINDING_REGISTRY)).toEqual(Object.keys(before));
-    expect(DEFAULT_SECTOR_KEY).toBe(SALE_BINDING_V1.sectorKey);
+    expect(DEFAULT_SECTOR_KEY).toBe(SALE_BINDING_V2.sectorKey);
   });
 
   it('versões em ordem crescente e contíguas; kitKey = sectorKey do binding', () => {
@@ -83,8 +84,8 @@ describe('changelog (item 6)', () => {
 describe('listKits (item 7)', () => {
   it('devolve {kitKey, label, latestVersion} de cada kit', () => {
     expect(listKits()).toEqual([
-      { kitKey: 'beautySalon', label: 'Salão de beleza', latestVersion: 5 },
-      { kitKey: 'aestheticClinic', label: 'Clínica estética', latestVersion: 5 },
+      { kitKey: 'beautySalon', label: 'Salão de beleza', latestVersion: 6 },
+      { kitKey: 'aestheticClinic', label: 'Clínica estética', latestVersion: 6 },
     ]);
   });
 });

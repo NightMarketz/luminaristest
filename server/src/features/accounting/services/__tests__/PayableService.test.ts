@@ -403,14 +403,14 @@ describe('PayableService.registerPayment — settlement (D2/D3/D4)', () => {
     expect(input.sourceId).not.toBe('pay-1');
     expect(input.date).toBe('2026-07-05'); // data efetiva do débito
     expect(input.lines).toContainEqual({ accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: 50000, creditCents: 0 });
-    expect(input.lines).toContainEqual({ accountCode: '1.1.1', debitCents: 0, creditCents: 50000 }); // Pix → Banco
+    expect(input.lines).toContainEqual({ accountCode: '1.1.1.01', debitCents: 0, creditCents: 50000 }); // Pix → Banco
   });
 
   it('Cash credits Caixa 1.1.3; unknown method REJECTS (closed map, D2)', async () => {
     const cash = build();
     await cash.service.registerPayment(scope, 'pay-1', { ...payDto, method: 'Cash' } as never);
     const input = (cash.postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
-    expect(input.lines).toContainEqual({ accountCode: '1.1.3', debitCents: 0, creditCents: 50000 });
+    expect(input.lines).toContainEqual({ accountCode: '1.1.1.02', debitCents: 0, creditCents: 50000 });
 
     const bad = build();
     await expect(
@@ -1556,7 +1556,7 @@ describe('PayableService.createPayable — insumoItems (ITEM-DESTINATION)', () =
 
   it.each([
     ['inexistente no escopo', [] as Account[], /não existe/],
-    ['de ATIVO', [expenseAcc({ id: 'acc-insumo', code: '1.1.6', nature: 'Asset' })], /nature=Expense/],
+    ['de ATIVO', [expenseAcc({ id: 'acc-insumo', code: '1.1.3.01', nature: 'Asset' })], /nature=Expense/],
     ['sintética (não folha)', [expenseAcc({ id: 'acc-insumo', acceptsEntries: false })], /analítica/],
   ])('item 11 (defesa em profundidade) — conta de insumo %s → 400, nada é criado', async (_n, accs, msg) => {
     const { service, accountRepo, payableRepo, postEntry } = build();

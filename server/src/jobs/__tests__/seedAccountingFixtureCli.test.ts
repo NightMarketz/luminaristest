@@ -99,7 +99,7 @@ describe('seedAccountingFixtureCli', () => {
     it('reconhece o pacote do mês anterior (D 2.1.1 / C 3.1) só quando há pacote', () => {
       const consumo = plan.entries.find((e) => e.sourceId === '2025-03-pacote-consumo')!;
       expect(consumo.lines).toEqual([
-        { accountCode: '2.1.1', debitCents: 12_345, creditCents: 0 },
+        { accountCode: '2.1.1.01', debitCents: 12_345, creditCents: 0 },
         { accountCode: '3.1', debitCents: 0, creditCents: 12_345 },
       ]);
       expect(buildMonthPlan(7, 0, 2025, 1, 31, 0).entries.some((e) => e.sourceId?.endsWith('pacote-consumo'))).toBe(false);
@@ -108,7 +108,7 @@ describe('seedAccountingFixtureCli', () => {
     it('banco (1.1.1) e estoque (1.1.6) nunca negativos em NENHUM dia — 20 seeds × 2 tenants × 2025..set/2026, partindo de zero', () => {
       for (let seed = 0; seed < 20; seed++) {
         for (const tenant of [0, 1]) {
-          const bal: Record<string, number> = { '1.1.1': 0, '1.1.6': 0 };
+          const bal: Record<string, number> = { '1.1.1.01': 0, '1.1.3.01': 0 };
           let prior = 0;
           for (const [year, lastMonth] of [[2025, 12], [2026, 9]] as const) {
             for (let month = 1; month <= lastMonth; month++) {
@@ -118,12 +118,12 @@ describe('seedAccountingFixtureCli', () => {
               // movimentos datados: lançamentos + pagamentos/recebimentos (Pix → 1.1.1)
               const moves: { date: string; code: string; delta: number }[] = [];
               for (const e of p.entries) for (const l of e.lines) moves.push({ date: e.date, code: l.accountCode, delta: l.debitCents - l.creditCents });
-              for (const ap of p.payables) moves.push({ date: ap.paidAt, code: '1.1.1', delta: -ap.paidCents });
-              for (const ar of p.receivables) if (ar.receivedCents > 0) moves.push({ date: ar.receivedAt, code: '1.1.1', delta: ar.receivedCents });
+              for (const ap of p.payables) moves.push({ date: ap.paidAt, code: '1.1.1.01', delta: -ap.paidCents });
+              for (const ar of p.receivables) if (ar.receivedCents > 0) moves.push({ date: ar.receivedAt, code: '1.1.1.01', delta: ar.receivedCents });
               const days = [...new Set(moves.map((m) => m.date))].sort();
               for (const d of days) {
                 for (const m of moves) if (m.date === d && m.code in bal) bal[m.code] += m.delta;
-                expect({ seed, tenant, d, bank: bal['1.1.1'] >= 0, stock: bal['1.1.6'] >= 0 }).toEqual({ seed, tenant, d, bank: true, stock: true });
+                expect({ seed, tenant, d, bank: bal['1.1.1.01'] >= 0, stock: bal['1.1.3.01'] >= 0 }).toEqual({ seed, tenant, d, bank: true, stock: true });
               }
             }
           }

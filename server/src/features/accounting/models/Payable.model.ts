@@ -5,6 +5,7 @@
  * payment-method → credit-account map, and the rename-on-delete helper.
  */
 import { ValidationError } from '../../../lib/errors';
+import { BANCO_CODE, CAIXA_CODE } from '../fixtures/ChartOfAccountsFixture';
 
 /**
  * Payable lifecycle. `PAYING` is the TRANSIENT DB race-gate of the settlement (D4, kept by F-PS8 → a):
@@ -100,10 +101,10 @@ export const AP_PAYMENT_SOURCE_TYPE = 'ap.payment';
  * The codes are the stable canonical Asset leaves in ChartOfAccountsFixture.
  */
 export const PAYMENT_METHOD_ACCOUNTS: Readonly<Record<string, string>> = {
-  Cash: '1.1.3',
-  Pix: '1.1.1',
-  TED: '1.1.1',
-  Boleto: '1.1.1',
+  Cash: CAIXA_CODE,
+  Pix: BANCO_CODE,
+  TED: BANCO_CODE,
+  Boleto: BANCO_CODE,
 };
 
 /** Accepted payment methods (DTO enum source of truth). */

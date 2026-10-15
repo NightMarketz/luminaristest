@@ -53,3 +53,49 @@ export const REFERENCIAL_2025_FISCAL: readonly { accountCode: string; referentia
   },
   { accountCode: '4.5.2', referentialCode: '3.02.01.01.01.01', label: '(-) Provisão para Contribuição Social sobre o Lucro Líquido (Atividade Geral)' },
 ];
+
+/**
+ * BE-INCR-PLANO-4-NIVEIS (L8), refeito sobre o kit fiscal: o de-para das 4 contas a recolher para o grupo tributário
+ * (F-L8-10 a, dono 15/10). O referencial RFB as põe todas em 2.01.01.09 (Obrigações Tributárias). O código `2.1.3` muda de
+ * papel e vira a sintética, como no F-L8-3 (a). A migração de dado (`jobs/migratePlano4NiveisCli.ts`) renomeia por id.
+ * Nunca edite uma linha publicada.
+ */
+export const RENOMEACAO_FISCAL_L8: ReadonlyArray<{ de: string; para: string }> = [
+  { de: '2.1.3', para: '2.1.3.01' }, // IRPJ a recolher
+  { de: '2.1.4', para: '2.1.3.02' }, // CSLL a recolher
+  { de: '2.1.5', para: '2.1.3.03' }, // PIS a recolher
+  { de: '2.1.6', para: '2.1.3.04' }, // COFINS a recolher
+];
+
+/**
+ * As sintéticas do conteúdo fiscal no plano de 4 níveis. `2.1.3` pelo F-L8-10 (a). `3.6` e `4.5` pelo F-L8-11 (a), dono
+ * 15/10: as folhas 3.6.x/4.5.x do kit v3–v5 não tinham superior, e a ECD sairia com o I050.COD_CTA_SUP vazio no nível 3.
+ * Nomes seguem o referencial (3.01.01.01.02 deduções da receita bruta; 3.02.01.01.01 provisões de IRPJ/CSLL),
+ * provisórios até o contador.
+ */
+export const SINTETICAS_FISCAIS_L8: SectorKitV1['chartExtension'] = [
+  { code: '2.1.3', name: 'Obrigações Tributárias', nature: 'Liability', acceptsEntries: false },
+  { code: '3.6', name: 'Deduções da Receita Bruta', nature: 'Revenue', acceptsEntries: false },
+  { code: '4.5', name: 'Tributos sobre o Lucro', nature: 'Expense', acceptsEntries: false },
+];
+
+const codigoFiscalPosL8 = (code: string) => RENOMEACAO_FISCAL_L8.find((r) => r.de === code)?.para ?? code;
+
+/** As 8 contas fiscais com os códigos de 4 níveis, depois das sintéticas (a instalação cria na ordem do array). */
+export const CONTAS_FISCAIS_V2: SectorKitV1['chartExtension'] = [
+  ...SINTETICAS_FISCAIS_L8,
+  ...CONTAS_FISCAIS.map((c) => ({ ...c, code: codigoFiscalPosL8(c.code) })),
+];
+
+/** As contas-padrão do perfil fiscal com os códigos de 4 níveis. */
+export const PERFIL_FISCAL_PADRAO_V2: SectorKitV1['roleDefaults']['fiscalProfile'] = {
+  ...PERFIL_FISCAL_PADRAO,
+  irpjRecolherAccountCode: '2.1.3.01',
+  csllRecolherAccountCode: '2.1.3.02',
+  pisRecolherAccountCode: '2.1.3.03',
+  cofinsRecolherAccountCode: '2.1.3.04',
+};
+
+/** O referencial 2025 das 8 contas com os códigos de 4 níveis. Os códigos referenciais não mudam. */
+export const REFERENCIAL_2025_FISCAL_V2: readonly { accountCode: string; referentialCode: string; label: string }[] =
+  REFERENCIAL_2025_FISCAL.map((e) => ({ ...e, accountCode: codigoFiscalPosL8(e.accountCode) }));

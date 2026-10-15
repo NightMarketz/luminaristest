@@ -13,7 +13,7 @@ import type { BindingScope } from '@/features/accountingBinding/repositories/IAc
 import { BEAUTY_SALON_KIT_V3 } from '@/features/sectorKits/kits/beautySalon/kit.v3';
 import { AESTHETIC_CLINIC_KIT_V3 } from '@/features/sectorKits/kits/aestheticClinic/kit.v3';
 import { KIT_REGISTRY } from '@/features/sectorKits/registry';
-import { CANONICAL_ACCOUNTS } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
+import { CANONICAL_ACCOUNTS_PRE_L8 } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
 
 const UNIT = 'unit-kit-v3';
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -32,6 +32,8 @@ async function preparar(regime: 'PRESUMIDO' | 'REAL', perfil: Record<string, unk
   await prisma.fiscalProfile.create({
     data: { ...where(), regimeTributario: regime, pisCofinsRegime: regime === 'REAL' ? 'NAO_CUMULATIVO' : 'CUMULATIVO', d1fConfirmado: false, ...perfil },
   });
+  // BE-INCR-PLANO-4-NIVEIS (F-L8-9 a): kit v1–v5 é do plano de 3 níveis — a unidade nasce no plano da época.
+  await prisma.account.createMany({ data: CANONICAL_ACCOUNTS_PRE_L8.map((a) => ({ ...where(), ...a })) });
 }
 
 const instalar = (kitKey: string) =>
@@ -92,8 +94,8 @@ describe('kit v3 — conteúdo fiscal (BE-INCR-KIT-SETOR-EMENDA-1 PR-K2)', () =>
 
   it('item 6 (F13): campo do perfil já escolhido pelo usuário não é sobrescrito; os nulos são preenchidos', async () => {
     await preparar('PRESUMIDO');
-    // plano já existente (o passo 1 só instala o canônico em plano vazio) + a conta que o usuário escolheu
-    for (const c of CANONICAL_ACCOUNTS) await prisma.account.create({ data: { ...where(), ...c } });
+    // plano já existente (o `preparar` semeia o canônico da época; o passo 1 só instala em plano vazio) + a conta que o
+    // usuário escolheu
     const escolhida = (await prisma.account.create({ data: { ...where(), code: '2.1.9', name: 'PIS a recolher (do usuário)', nature: 'Liability', acceptsEntries: true } })).id;
     await prisma.fiscalProfile.update({ where: { userId_unitId: where() }, data: { pisRecolherAccountId: escolhida } });
 

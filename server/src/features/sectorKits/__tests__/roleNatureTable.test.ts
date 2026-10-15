@@ -6,7 +6,10 @@
  */
 import { ACCOUNT_ROLES } from '@/features/accountingBinding/models/types';
 import { ROLE_ALLOWED_NATURES, baseRole } from '@/features/accountingBinding/services/BindingValidationService';
-import { CANONICAL_ACCOUNTS } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
+import { CANONICAL_ACCOUNTS, CANONICAL_ACCOUNTS_PRE_L8 } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
+
+/** BE-INCR-PLANO-4-NIVEIS (F-L8-9 a): salão e clínica v1–v5 são do plano de 3 níveis e se leem contra ele. */
+const ULTIMA_VERSAO_PRE_L8 = 5;
 import { KIT_REGISTRY } from '@/features/sectorKits/registry';
 
 describe('tabela papel → natureza do ajuste (item 20)', () => {
@@ -29,7 +32,8 @@ describe('tabela papel → natureza do ajuste (item 20)', () => {
   it('a conta que cada kit publicado traz para o papel tem natureza aceita pela tabela', () => {
     for (const versions of Object.values(KIT_REGISTRY)) {
       for (const kit of versions) {
-        const chart = new Map([...CANONICAL_ACCOUNTS, ...kit.chartExtension].map((a) => [a.code, a.nature]));
+        const plano = kit.kitVersion <= ULTIMA_VERSAO_PRE_L8 ? CANONICAL_ACCOUNTS_PRE_L8 : CANONICAL_ACCOUNTS;
+        const chart = new Map([...plano, ...kit.chartExtension].map((a) => [a.code, a.nature]));
         for (const eb of kit.binding.eventBindings) {
           for (const slot of eb.roleSlots) {
             const allowed = ROLE_ALLOWED_NATURES[baseRole(slot.role) as keyof typeof ROLE_ALLOWED_NATURES];

@@ -9,8 +9,8 @@ import {
   type ActivationPeriodPort,
   type ActivationPeriodStatus,
 } from '../BindingActivationService';
-import { SALE_BINDING_V1, SALE_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../fixtures/saleBinding';
-import { CLINIC_BINDING_V1 } from '../../fixtures/clinicBinding';
+import { SALE_BINDING_V2, SALE_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../fixtures/saleBinding';
+import { CLINIC_BINDING_V2 } from '../../fixtures/clinicBinding';
 import { KitInstallService } from '../../../sectorKits/services/KitInstallService';
 import { SectorKitPolicy } from '../../../sectorKits/policies/SectorKitPolicy';
 import type { IKitInstallationRepository } from '../../../sectorKits/repositories/IKitInstallationRepository';
@@ -25,7 +25,7 @@ const scope: BindingScope = { ownerUserId: 'u1', actorUserId: 'u1', unitId: 'uni
 /** Identidade da tx do dublê: o gate do PR-0 tem de ler o binding COM ela (review do #680, ressalva 1). */
 const TX = { __tx: 'kit-begin' };
 const TODAY = '2026-09-25';
-const CHART = [{ code: '1.1.2', nature: 'Asset', acceptsEntries: true }];
+const CHART = [{ code: '1.1.2.01', nature: 'Asset', acceptsEntries: true }];
 
 function build(opts: {
   policy?: IAccountingBindingPolicy;
@@ -44,7 +44,7 @@ function build(opts: {
   beginLosesRaceTo?: string;
 } = {}) {
   const findActive = jest.fn(async () => opts.active ?? null);
-  const defaultRows = opts.active ? [{ sectorKey: SALE_BINDING_V1.sectorKey }] : [];
+  const defaultRows = opts.active ? [{ sectorKey: SALE_BINDING_V2.sectorKey }] : [];
   let findManyCall = 0;
   const findMany = jest.fn(async () => opts.activeRowsByCall?.[findManyCall++] ?? defaultRows);
   const repo = { findActive, findMany } as unknown as IAccountingBindingRepository;
@@ -141,22 +141,22 @@ describe('BindingActivationService.activateDefault', () => {
     await expect(b.service.activateDefault(scope, {})).resolves.toEqual({
       status: 'Active',
       bindingVersion: 7,
-      kit: { kitKey: 'beautySalon', kitVersion: 5, status: 'INSTALLED' },
+      kit: { kitKey: 'beautySalon', kitVersion: 6, status: 'INSTALLED' }, // BE-INCR-PLANO-4-NIVEIS: a vigente é a v6
     });
     expect(b.compile).toHaveBeenCalledWith(scope, {
-      sectorKey: SALE_BINDING_V1.sectorKey,
+      sectorKey: SALE_BINDING_V2.sectorKey,
       operationalSchema: SALE_OPERATIONAL_SCHEMA_SNAPSHOT,
       chart: CHART,
-      eventBindings: SALE_BINDING_V1.eventBindings,
+      eventBindings: SALE_BINDING_V2.eventBindings,
     });
   });
 
   it('sectorKey explícito escolhe o binding DAQUELE setor (nunca o do salão sob outro rótulo)', async () => {
     const b = build();
-    await b.service.activateDefault(scope, { sectorKey: CLINIC_BINDING_V1.sectorKey });
+    await b.service.activateDefault(scope, { sectorKey: CLINIC_BINDING_V2.sectorKey });
     expect(b.compile).toHaveBeenCalledWith(scope, expect.objectContaining({
       sectorKey: 'aestheticClinic',
-      eventBindings: CLINIC_BINDING_V1.eventBindings,
+      eventBindings: CLINIC_BINDING_V2.eventBindings,
     }));
   });
 
@@ -255,7 +255,7 @@ describe('BindingActivationService.activateDefault', () => {
   });
 
   describe('LAC-B PR-0 — um setor por unidade (F-BA-5 → a; D-2026-10-14-LAC-B-PR0-LACUNAS)', () => {
-    const conflito = async (b: ReturnType<typeof build>, sectorKey = CLINIC_BINDING_V1.sectorKey) => {
+    const conflito = async (b: ReturnType<typeof build>, sectorKey = CLINIC_BINDING_V2.sectorKey) => {
       const err = await b.service.activateDefault(scope, { sectorKey }).catch((e: unknown) => e);
       expect(err).toBeInstanceOf(BindingSectorConflictError);
       expect(err).toMatchObject({ statusCode: 409, errorCode: 'BINDING_SECTOR_CONFLICT' });
@@ -299,7 +299,7 @@ describe('BindingActivationService.activateDefault', () => {
 
     it('corrida do @@unique com o MESMO kit ⇒ o P2002 sobe como veio (não é conflito de setor)', async () => {
       const b = build({ beginLosesRaceTo: 'aestheticClinic' });
-      await expect(b.service.activateDefault(scope, { sectorKey: CLINIC_BINDING_V1.sectorKey })).rejects.toMatchObject({ code: 'P2002' });
+      await expect(b.service.activateDefault(scope, { sectorKey: CLINIC_BINDING_V2.sectorKey })).rejects.toMatchObject({ code: 'P2002' });
     });
   });
 

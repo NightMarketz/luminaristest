@@ -8,7 +8,7 @@ import { SaleFinalizedMapper } from '../../accounting/sync/mappers/SaleFinalized
 import { SaleReturnedMapper } from '../../accounting/sync/mappers/SaleReturnedMapper';
 import { SaleSettledMapper } from '../../accounting/sync/mappers/SaleSettledMapper';
 import { archetypeCatalog } from '../archetypes/catalog';
-import { SALE_BINDING_V1 } from '../fixtures/saleBinding';
+import { SALE_BINDING_V2 } from '../fixtures/saleBinding';
 import { InterpretedEventMapper } from '../interpreter/InterpretedEventMapper';
 
 /**
@@ -166,7 +166,7 @@ const handMappers = {
 // -------------------------------------------------------------------------------------------
 
 function buildInterpreterFor(eventKey: string): IAccountingEventMapper {
-  const binding = SALE_BINDING_V1.eventBindings.find((b) => b.eventKey === eventKey);
+  const binding = SALE_BINDING_V2.eventBindings.find((b) => b.eventKey === eventKey);
   if (!binding) {
     throw new Error(`Binding do salão não tem eventBinding para '${eventKey}' — fixture incompleta.`);
   }

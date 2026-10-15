@@ -3,5 +3,6 @@
   { "kitVersion": 2, "sha256": "517d20a24c478c3e886fe02d87822f15f6073d05a29f442066c9d9e8e03068d3" },
   { "kitVersion": 3, "sha256": "457e56725bbbefce810ab67de544f0d1bcc8b84860262a1338d5e8d24d7b69d2" },
   { "kitVersion": 4, "sha256": "7712bb5ad40ee9fb74a6bc86ebb4a79ed2989d11bf64f82616e53323e7e39b80" },
-  { "kitVersion": 5, "sha256": "7b98811293d73efd24b020d5ed016d83d0029fdec359334cd042d5fdcea466d1" }
+  { "kitVersion": 5, "sha256": "7b98811293d73efd24b020d5ed016d83d0029fdec359334cd042d5fdcea466d1" },
+  { "kitVersion": 6, "sha256": "cc5171153ec5511e47cfefc1e34513ebb94c544f231ade5f0e4895153dac8ee0" }
 ]

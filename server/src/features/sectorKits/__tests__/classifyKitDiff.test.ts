@@ -5,7 +5,7 @@
  */
 import fc from 'fast-check';
 import type { EventBinding } from '@/features/accountingBinding/dtos/AccountingBindingDto';
-import { CANONICAL_ACCOUNTS } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
+import { CANONICAL_ACCOUNTS_PRE_L8 } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
 import type { SectorKitV1 } from '@/features/sectorKits/dtos/SectorKitDto';
 import type { KitDiff } from '@/features/sectorKits/dtos/KitUpgradeDto';
 import { BEAUTY_SALON_KIT_V1 } from '@/features/sectorKits/kits/beautySalon/kit.v1';
@@ -33,10 +33,10 @@ const conta = (code: string, nature: string, over: Partial<TenantAccount> = {}):
   ...over,
 });
 
-/** Tenant que instalou o v1 e nunca mexeu: canônico vivo, binding Active = o do v1, sem perfil-padrão nem referencial. */
+/** Tenant que instalou o v1 e nunca mexeu: canônico vivo (o de 3 níveis da época, F-L8-9 a), binding Active = o do v1, sem perfil-padrão nem referencial. */
 function tenantV1(over: Partial<TenantKitState> = {}): TenantKitState {
   return {
-    accounts: Object.fromEntries(CANONICAL_ACCOUNTS.map((a) => [a.code, { ...a, deleted: false, hasPostings: false }])),
+    accounts: Object.fromEntries(CANONICAL_ACCOUNTS_PRE_L8.map((a) => [a.code, { ...a, deleted: false, hasPostings: false }])),
     activeEventBindings: V1.binding.eventBindings,
     overrides: {},
     scopeSettings: {},
@@ -223,7 +223,7 @@ describe('classifyKitDiff — avisos', () => {
 const EXT_POOL = V4.chartExtension;
 const FISCAL_FIELDS = Object.keys(V4.roleDefaults.fiscalProfile);
 const ROLES = [...new Set(V1.binding.eventBindings.flatMap((eb) => eb.roleSlots.map((r) => r.role)))];
-const LEAVES = CANONICAL_ACCOUNTS.filter((a) => a.acceptsEntries).map((a) => a.code);
+const LEAVES = CANONICAL_ACCOUNTS_PRE_L8.filter((a) => a.acceptsEntries).map((a) => a.code);
 const REF_ENTRIES = V4.referential.find((b) => b.regime === 'PRESUMIDO')!.entries;
 
 const subset = <T>(xs: readonly T[]) => fc.subarray([...xs]);

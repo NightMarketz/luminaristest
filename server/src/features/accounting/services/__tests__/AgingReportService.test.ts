@@ -89,8 +89,8 @@ function fullPolicy(over: Record<string, unknown> = {}) {
  * plano sem a conta de controle.
  */
 const CONTROL_ACCOUNTS: Record<string, { id: string; code: string; nature: string }> = {
-  '2.1.2': { id: 'acc-ap', code: '2.1.2', nature: 'Liability' },
-  '1.1.5': { id: 'acc-ar', code: '1.1.5', nature: 'Asset' },
+  '2.1.2.01': { id: 'acc-ap', code: '2.1.2.01', nature: 'Liability' },
+  '1.1.2.03': { id: 'acc-ar', code: '1.1.2.03', nature: 'Asset' },
 };
 
 function buildService(
@@ -363,10 +363,10 @@ describe('AgingReportService.aging — tie-out fecha', () => {
       balanceRows: [balanceRow('acc-ap', -60000)],
     });
     const r = await svc.aging(scope, { kind: 'payable', asOf: TODAY });
-    expect(accountRepo.findByCode).toHaveBeenCalledWith(scope, '2.1.2');
+    expect(accountRepo.findByCode).toHaveBeenCalledWith(scope, '2.1.2.01');
     expect(r.tieOutSkippedReason).toBeNull();
     expect(r.tieOut).toEqual({
-      controlAccountCode: '2.1.2',
+      controlAccountCode: '2.1.2.01',
       subledgerTotalCents: '60000',
       controlAccountBalanceCents: '60000', // normalizado: crédito − débito
       differenceCents: '0',
@@ -381,11 +381,11 @@ describe('AgingReportService.aging — tie-out fecha', () => {
       balanceRows: [balanceRow('acc-ar', 60000)],
     });
     const r = await svc.aging(scope, { kind: 'receivable', asOf: TODAY });
-    expect(accountRepo.findByCode).toHaveBeenCalledWith(scope, '1.1.5');
+    expect(accountRepo.findByCode).toHaveBeenCalledWith(scope, '1.1.2.03');
     // A conta do salão JAMAIS é consultada — é por a 1.1.5 ser dedicada que o tie-out fecha (INCR-AR F7).
-    expect(accountRepo.findByCode).not.toHaveBeenCalledWith(scope, '1.1.2');
+    expect(accountRepo.findByCode).not.toHaveBeenCalledWith(scope, '1.1.2.01');
     expect(r.tieOut).toEqual({
-      controlAccountCode: '1.1.5',
+      controlAccountCode: '1.1.2.03',
       subledgerTotalCents: '60000',
       controlAccountBalanceCents: '60000',
       differenceCents: '0',
@@ -591,7 +591,7 @@ describe('AgingReportService.aging — tie-out OMITIDO (null + motivo, nunca um 
   it('conta de controle com natureza fora do BP ⇒ omitido, sem chutar um lado natural', async () => {
     const { svc } = buildService({
       payableRows: [line({ id: 'p1', dueDate: '2026-01-10', amountCents: 60000, counterpartyId: 'cp-A', name: 'Alfa' })],
-      findByCode: jest.fn(async () => ({ id: 'acc-ap', code: '2.1.2', nature: 'Revenue' })), // plano corrompido
+      findByCode: jest.fn(async () => ({ id: 'acc-ap', code: '2.1.2.01', nature: 'Revenue' })), // plano corrompido
     });
     const r = await svc.aging(scope, { kind: 'payable', asOf: TODAY });
     expect(r.tieOut).toBeNull();

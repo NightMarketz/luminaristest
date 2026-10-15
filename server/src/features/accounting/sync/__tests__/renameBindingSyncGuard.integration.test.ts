@@ -82,7 +82,7 @@ const STALE_EVENT_BINDING = {
     { slotName: 'dimension', sourceField: 'event.dimension', transform: 'identity' },
   ],
   roleSlots: [
-    { role: 'controle-recebível', accountCode: '1.1.2' },
+    { role: 'controle-recebível', accountCode: '1.1.2.01' },
     { role: 'receita-serviço', accountCode: '3.1' },
     { role: 'receita-revenda', accountCode: '3.3' },
   ],

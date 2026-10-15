@@ -2,6 +2,7 @@ import type { AccountingBindingV1 } from '../dtos/AccountingBindingDto';
 import { AccountingBindingV1Schema } from '../dtos/AccountingBindingDto';
 import type { ChartAccountSnapshot } from '../dtos/CompileBindingDto';
 import { computeCompiledFromHash } from '../services/BindingCompileService';
+import { bindingPosL8 } from './bindingPosL8';
 
 /**
  * A Prensa (BE-INCR-BINDING-PRESS, Fase P1) — o binding do salão RE-EXPRESSO como
@@ -36,7 +37,7 @@ import { computeCompiledFromHash } from '../services/BindingCompileService';
 
 /** Snapshot dos códigos do `ChartOfAccountsFixture.ts` efetivamente usados pelos 5 arquétipos do
  *  salão — natureza/`acceptsEntries` citados de lá, não reinventados. */
-const SALE_CHART_SNAPSHOT: ChartAccountSnapshot[] = [
+export const SALE_CHART_SNAPSHOT: ChartAccountSnapshot[] = [
   { code: '1.1.1', nature: 'Asset', acceptsEntries: true }, // Banco
   { code: '1.1.2', nature: 'Asset', acceptsEntries: true }, // A Receber
   { code: '1.1.3', nature: 'Asset', acceptsEntries: true }, // Caixa
@@ -200,3 +201,9 @@ const candidate: AccountingBindingV1 = {
 // Falha alto no import se algum dia divergir do shape que a própria Fase 0 fechou — este módulo é
 // insumo de golden test; um fixture inválido não pode passar silenciosamente para o Corpo D.
 export const SALE_BINDING_V1: AccountingBindingV1 = AccountingBindingV1Schema.parse(candidate);
+
+/**
+ * BE-INCR-PLANO-4-NIVEIS (L8; F-L8-7 a): o V1 acima está publicado nos kits v1/v2 e não se edita. O V2 é o mesmo binding
+ * no plano de 4 níveis, derivado pelo de-para `RENOMEACAO_CANONICA_L8` — é o que o kit v3 embute.
+ */
+export const SALE_BINDING_V2: AccountingBindingV1 = bindingPosL8(SALE_BINDING_V1, SALE_CHART_SNAPSHOT, SALE_OPERATIONAL_SCHEMA_SNAPSHOT, '2026-10-13T00:00:00.000Z');

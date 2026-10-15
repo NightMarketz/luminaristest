@@ -5,6 +5,7 @@
  * the rename-on-delete helper.
  */
 import { ValidationError } from '../../../lib/errors';
+import { BANCO_CODE, CAIXA_CODE } from '../fixtures/ChartOfAccountsFixture';
 
 /**
  * Receivable lifecycle. `RECEIVING` is the TRANSIENT DB race-gate of the double-receipt guard (D4):
@@ -58,10 +59,10 @@ export const AR_RECEIPT_SOURCE_TYPE = 'ar.receipt';
  * ChartOfAccountsFixture. (Card → 1.1.4 is OUT of the MVP — AR-avulso is rarely settled by card.)
  */
 export const RECEIPT_METHOD_ACCOUNTS: Readonly<Record<string, string>> = {
-  Cash: '1.1.3',
-  Pix: '1.1.1',
-  TED: '1.1.1',
-  Boleto: '1.1.1',
+  Cash: CAIXA_CODE,
+  Pix: BANCO_CODE,
+  TED: BANCO_CODE,
+  Boleto: BANCO_CODE,
 };
 
 /**

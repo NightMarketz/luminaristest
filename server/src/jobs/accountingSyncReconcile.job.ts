@@ -107,6 +107,7 @@ import type { ProductLine } from '../features/accounting/sync/bridges/saleItems'
 import { JobWatermarkRepository } from './JobWatermarkRepository';
 import { ReconcilePendingRepository } from '../features/accounting/repositories/ReconcilePendingRepository';
 import type { ReconcilePendingReasonCodeValue } from '../features/accounting/dtos/ReconcilePendingDto';
+import { PACOTES_PRE_PAGOS_CODE } from '../features/accounting/fixtures/ChartOfAccountsFixture';
 
 /**
  * BE-INCR-RECONCILE-PENDING (nó C7, Fork 2-b) — one item newly/still pending after a pass'
@@ -2233,7 +2234,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
       },
       getLiabilityCents: async (scope: AccountingScope) => {
         const account = await prisma.account.findFirst({
-          where: { userId: scope.ownerUserId, unitId: scope.unitId, code: '2.1.1', deletedAt: null },
+          where: { userId: scope.ownerUserId, unitId: scope.unitId, code: PACOTES_PRE_PAGOS_CODE, deletedAt: null },
           select: { id: true },
         });
         if (!account) return 0;

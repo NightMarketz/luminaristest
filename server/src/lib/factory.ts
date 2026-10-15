@@ -183,7 +183,7 @@ import { CrmReceivableBridge } from '../features/accounting/sync/bridges/CrmRece
 // existindo em `features/accounting/sync/mappers/*` (são a referência do golden test, Fases 0/1),
 // só não são mais instanciadas em produção por este factory.
 import { archetypeCatalog } from '../features/accountingBinding/archetypes/catalog';
-import { SALE_BINDING_V1 } from '../features/accountingBinding/fixtures/saleBinding';
+import { SALE_BINDING_V2 } from '../features/accountingBinding/fixtures/saleBinding';
 import { InterpretedEventMapper } from '../features/accountingBinding/interpreter/InterpretedEventMapper';
 // A Prensa (BE-INCR-BINDING-PRESS, item 15 do BRIEF, Fase B) — fiação das 3 rotas
 // POST /accounting-binding/compile|validate, GET /accounting-binding.
@@ -327,7 +327,8 @@ import type { IPackageAcceptancePolicy } from '../features/packages/policies/IPa
  * `AccountingSyncPort`/`AccountingSyncService`/bridges.
  */
 function buildSaleAccountingMappers(): IAccountingEventMapper[] {
-  return SALE_BINDING_V1.eventBindings.map((binding) => {
+  // BE-INCR-PLANO-4-NIVEIS (L8): o bootstrap usa o binding do plano de 4 níveis (o mesmo do kit v3 do salão).
+  return SALE_BINDING_V2.eventBindings.map((binding) => {
     const archetype = archetypeCatalog.get(binding.archetypeKey);
     if (!archetype) {
       throw new Error(
@@ -1092,7 +1093,7 @@ export class ApplicationFactory {
     // through the AR subledger via CrmReceivableBridge (ADR-CRM-AR-SEAM).
     //
     // BE-INCR-BINDING-FEEDER (Fatia B) — this is the SYNCHRONOUS BOOTSTRAP value only, built from
-    // the static SALE_BINDING_V1 fixture exactly as before this feature. In production,
+    // the static SALE_BINDING_V2 fixture (SALE_BINDING_V1 before BE-INCR-PLANO-4-NIVEIS). In production,
     // `server.ts` replaces `this.services.accountingSync` via `initializeAccountingSyncFromBindings()`
     // (async, pre-boot, F-FEEDER-5) with the DB-backed instance BEFORE `app.listen()` — no request
     // ever observes this bootstrap value. Kept here unchanged so every test/tool that constructs

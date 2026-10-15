@@ -23,7 +23,7 @@ import {
 } from '@/features/accountingBinding/services/BindingCompileService';
 import type { AccountingBindingV1 } from '@/features/accountingBinding/dtos/AccountingBindingDto';
 import type { BindingValidationResult } from '@/features/accountingBinding/models/validationResult';
-import { CLINIC_BINDING_V1, CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT } from '@/features/accountingBinding/fixtures/clinicBinding';
+import { CLINIC_BINDING_V2, CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT } from '@/features/accountingBinding/fixtures/clinicBinding';
 
 const UNIT = 'unit-coverage';
 const DONO_A = 'u-coverage-a';
@@ -57,40 +57,40 @@ const buildService = (auditPort: IBindingAuditPort = new RecordingAuditPort()) =
   new BindingCompileService(repo, policy, new StubValidationService(OK), auditPort);
 
 const clinicInput = (overrides: Partial<CompileBindingInput> = {}): CompileBindingInput => ({
-  sectorKey: CLINIC_BINDING_V1.sectorKey,
+  sectorKey: CLINIC_BINDING_V2.sectorKey,
   operationalSchema: CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT,
   chart: [
-    { code: '1.1.1', nature: 'Asset', acceptsEntries: true },
-    { code: '1.1.2', nature: 'Asset', acceptsEntries: true },
-    { code: '1.1.3', nature: 'Asset', acceptsEntries: true },
-    { code: '1.1.4', nature: 'Asset', acceptsEntries: true },
-    { code: '1.1.6', nature: 'Asset', acceptsEntries: true },
-    { code: '2.1.1', nature: 'Liability', acceptsEntries: true },
+    { code: '1.1.1.01', nature: 'Asset', acceptsEntries: true },
+    { code: '1.1.2.01', nature: 'Asset', acceptsEntries: true },
+    { code: '1.1.1.02', nature: 'Asset', acceptsEntries: true },
+    { code: '1.1.2.02', nature: 'Asset', acceptsEntries: true },
+    { code: '1.1.3.01', nature: 'Asset', acceptsEntries: true },
+    { code: '2.1.1.01', nature: 'Liability', acceptsEntries: true },
     { code: '3.1', nature: 'Revenue', acceptsEntries: true },
     { code: '3.2', nature: 'Revenue', acceptsEntries: true },
     { code: '3.3', nature: 'Revenue', acceptsEntries: true },
     { code: '4.2', nature: 'Expense', acceptsEntries: true },
   ],
-  eventBindings: CLINIC_BINDING_V1.eventBindings,
+  eventBindings: CLINIC_BINDING_V2.eventBindings,
   ...overrides,
 });
 
 describe('computeEventCoverage — função pura', () => {
   it('missing vazio quando todo emitível está vinculado (binding completo da clínica)', () => {
-    const report = computeEventCoverage(UNIT, 'aestheticClinic', CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT, CLINIC_BINDING_V1.eventBindings);
+    const report = computeEventCoverage(UNIT, 'aestheticClinic', CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT, CLINIC_BINDING_V2.eventBindings);
     expect(report.missing).toEqual([]);
     expect(report.emittableEventKeys.sort()).toEqual(report.boundEventKeys.sort());
   });
 
   it('detecta um eventBinding deliberadamente removido (teste-guarda literal do BRIEF)', () => {
-    const semCogs = CLINIC_BINDING_V1.eventBindings.filter((eb) => eb.eventKey !== 'sale.cogs');
+    const semCogs = CLINIC_BINDING_V2.eventBindings.filter((eb) => eb.eventKey !== 'sale.cogs');
     const report = computeEventCoverage(UNIT, 'aestheticClinic', CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT, semCogs);
     expect(report.missing).toEqual(['sale.cogs']);
   });
 
   it('orphan (bound sem schema correspondente) NÃO entra em missing — informativo, não bloqueante', () => {
     const schemaReduzido = { 'sale.finalized': CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT['sale.finalized'] };
-    const report = computeEventCoverage(UNIT, 'aestheticClinic', schemaReduzido, CLINIC_BINDING_V1.eventBindings);
+    const report = computeEventCoverage(UNIT, 'aestheticClinic', schemaReduzido, CLINIC_BINDING_V2.eventBindings);
     expect(report.missing).toEqual([]);
     expect(report.orphan.sort()).toEqual(['sale.cogs', 'sale.package.expired', 'sale.package.sold', 'sale.returned', 'sale.settled']);
   });
@@ -127,7 +127,7 @@ describe('BindingCompileService.compile() — gate de cobertura em SQLite real',
   it('binding INCOMPLETO (falta sale.cogs) → NUNCA vira Active, mesmo com o validador estrutural OK', async () => {
     const auditPort = new RecordingAuditPort();
     const service = buildService(auditPort);
-    const eventBindingsSemCogs = CLINIC_BINDING_V1.eventBindings.filter((eb) => eb.eventKey !== 'sale.cogs');
+    const eventBindingsSemCogs = CLINIC_BINDING_V2.eventBindings.filter((eb) => eb.eventKey !== 'sale.cogs');
 
     const result = await service.compile(
       escopo(),

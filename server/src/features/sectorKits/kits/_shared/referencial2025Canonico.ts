@@ -1,3 +1,4 @@
+import { codigoPosL8 } from '../../../accounting/fixtures/ChartOfAccountsFixture';
 /**
  * Referencial RFB 2025 (L100A/L300A e P100A/P150A, mesmos códigos nos dois regimes) das 15 folhas do plano CANÔNICO —
  * compartilhado pelos kits porque o de-para é do canônico, não do setor (BE-INCR-KIT-SETOR-EMENDA-1, PR-K1, item 1;
@@ -25,3 +26,12 @@ export const REFERENCIAL_2025_CANONICO: readonly { accountCode: string; referent
   { accountCode: '4.1', referentialCode: '3.01.01.09.01.99', label: '(-) Outras Despesas Operacionais' },
   { accountCode: '4.2', referentialCode: '3.01.01.03.01.02', label: '(-) Custo das Mercadorias Revendidas' },
 ];
+
+/**
+ * BE-INCR-PLANO-4-NIVEIS (L8; F-L8-7 a): o mesmo de-para no plano de 4 níveis — só o `accountCode` muda (pelo
+ * `RENOMEACAO_CANONICA_L8`); o código referencial e o rótulo oficial são os mesmos. É o que o kit v3 embute; a lista
+ * acima segue congelada para os kits v2 publicados.
+ */
+export const REFERENCIAL_2025_CANONICO_V2: readonly { accountCode: string; referentialCode: string; label: string }[] =
+  REFERENCIAL_2025_CANONICO.map((e) => ({ ...e, accountCode: codigoPosL8(e.accountCode) }));
+

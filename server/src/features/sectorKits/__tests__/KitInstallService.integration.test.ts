@@ -3,7 +3,7 @@
  * (plano, settings, perfil fiscal, período, compile, perfis fiscais por serviço, referencial, auditoria).
  *
  * Os kits v1 publicados são vazios (F-KB-6 → a), então os passos 2, 3, 6 e 7 só provam alguma coisa com um kit
- * que TENHA conteúdo. `TEST_KIT` deriva do kit v1 do salão e acrescenta extensão, contas-padrão, padrão fiscal
+ * que TENHA conteúdo. `TEST_KIT` deriva do kit vigente do salão (v6, BE-INCR-PLANO-4-NIVEIS) e acrescenta extensão, contas-padrão, padrão fiscal
  * por serviço e referencial — injetado pelo parâmetro de teste do `getKitInstallService`, sem publicar um v2.
  */
 import prisma from '@/lib/prisma';
@@ -11,7 +11,7 @@ import { pushTestSchema, resetDb } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
 import type { BindingScope } from '@/features/accountingBinding/repositories/IAccountingBindingRepository';
 import { SectorKitV1Schema, type SectorKitV1 } from '@/features/sectorKits/dtos/SectorKitDto';
-import { BEAUTY_SALON_KIT_V1 } from '@/features/sectorKits/kits/beautySalon/kit.v1';
+import { BEAUTY_SALON_KIT_V6 } from '@/features/sectorKits/kits/beautySalon/kit.v6';
 import { KitInstallStepFailedError } from '@/features/sectorKits/models/kitInstallTypes';
 import { CANONICAL_ACCOUNTS } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
 import type { InstallKitInput } from '@/features/sectorKits/dtos/KitInstallationDto';
@@ -24,7 +24,9 @@ const MONTH = Number(TODAY.slice(5, 7));
 const REF_CODE = '1.01.01.01.01';
 
 const TEST_KIT: SectorKitV1 = SectorKitV1Schema.parse({
-  ...BEAUTY_SALON_KIT_V1,
+  ...BEAUTY_SALON_KIT_V6,
+  // BE-INCR-PLANO-4-NIVEIS: base no kit vigente (plano de 4 níveis); versão própria, fora das publicadas.
+  kitVersion: 99,
   changelog: ['kit de teste (não publicado): extensão, contas-padrão, padrão fiscal por serviço e referencial'],
   chartExtension: [
     { code: '4.8', name: 'Despesas Bancárias (kit teste)', nature: 'Expense', acceptsEntries: true },
@@ -103,9 +105,9 @@ describe('KitInstallService (integração, kit com conteúdo)', () => {
     await seedFiscalProfile();
     const out = await kitService().install(scope(), input());
 
-    expect(out).toMatchObject({ status: 'INSTALLED', kit: { kitKey: 'beautySalon', kitVersion: 1, status: 'INSTALLED' }, bindingVersion: 1 });
+    expect(out).toMatchObject({ status: 'INSTALLED', kit: { kitKey: 'beautySalon', kitVersion: 99, status: 'INSTALLED' }, bindingVersion: 1 });
     // 1 + 2: canônico + extensão
-    for (const code of ['1.1.1', '4.8', '4.9', '2.1.9']) expect(await accountId(code)).not.toBeNull();
+    for (const code of ['1.1.1.01', '4.8', '4.9', '2.1.9']) expect(await accountId(code)).not.toBeNull();
     // 3: contas-padrão nos campos nulos (settings criada; perfil fiscal existente, d1f NÃO confirmado pelo kit)
     const f = await foto();
     expect(f.settings).toEqual({
@@ -127,11 +129,11 @@ describe('KitInstallService (integração, kit com conteúdo)', () => {
       { accountId: await accountId('4.8'), referentialCode: REF_CODE, mappingVersion: String(YEAR) },
     ]);
     const row = await prisma.kitInstallation.findFirst({ where: where() });
-    expect(row).toMatchObject({ kitKey: 'beautySalon', kitVersion: 1, status: 'INSTALLED' });
+    expect(row).toMatchObject({ kitKey: 'beautySalon', kitVersion: 99, status: 'INSTALLED' });
     expect(JSON.parse(row!.steps)).toEqual({ lastCompletedStep: 7, warnings: [] });
     expect(row!.installedAt).not.toBeNull();
     const [installed] = await eventos('kit.installed');
-    expect(JSON.parse(installed.payload)).toEqual({ kitKey: 'beautySalon', kitVersion: '1', unitId: UNIT });
+    expect(JSON.parse(installed.payload)).toEqual({ kitKey: 'beautySalon', kitVersion: '99', unitId: UNIT });
   });
 
   it('passo 3 só preenche campo nulo: o que o tenant já escolheu fica', async () => {
@@ -176,7 +178,7 @@ describe('KitInstallService (integração, kit com conteúdo)', () => {
       spy.mockRestore();
     }
     const [failed] = await eventos('kit.install_failed');
-    expect(JSON.parse(failed.payload)).toEqual({ kitKey: 'beautySalon', kitVersion: '1', step: '7' });
+    expect(JSON.parse(failed.payload)).toEqual({ kitKey: 'beautySalon', kitVersion: '99', step: '7' });
   });
 
   it('retomada: a 2ª chamada retoma do passo 7 sem duplicar efeito', async () => {

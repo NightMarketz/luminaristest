@@ -13,25 +13,25 @@ import { AccountingSyncService } from '@/features/accounting/sync/AccountingSync
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 import type { BindingScope } from '@/features/accountingBinding/repositories/IAccountingBindingRepository';
 import { SectorKitV1Schema, type SectorKitV1 } from '@/features/sectorKits/dtos/SectorKitDto';
-import { BEAUTY_SALON_KIT_V1 } from '@/features/sectorKits/kits/beautySalon/kit.v1';
+import { BEAUTY_SALON_KIT_V6 } from '@/features/sectorKits/kits/beautySalon/kit.v6';
 import { declaredEventKeys } from '@/features/sectorKits/registry';
 
 const UNIT = 'unit-evento-aberto';
 const TODAY = new Date().toISOString().slice(0, 10);
 const EVENT_KEY = 'service.subscription.billed';
 
-const saleFinalized = BEAUTY_SALON_KIT_V1.binding.eventBindings.find((b) => b.eventKey === 'sale.finalized')!;
+const saleFinalized = BEAUTY_SALON_KIT_V6.binding.eventBindings.find((b) => b.eventKey === 'sale.finalized')!;
 const TEST_KIT: SectorKitV1 = SectorKitV1Schema.parse({
-  ...BEAUTY_SALON_KIT_V1,
+  ...BEAUTY_SALON_KIT_V6,
   kitKey: 'testKit',
   label: 'Kit de teste — assinatura de serviço',
   changelog: ['kit de teste (não publicado): um evento novo, fora do vocabulário sale.*'],
   binding: {
-    ...BEAUTY_SALON_KIT_V1.binding,
+    ...BEAUTY_SALON_KIT_V6.binding,
     sectorKey: 'testKit',
     eventBindings: [{ ...saleFinalized, eventKey: EVENT_KEY, descriptionTemplate: 'Assinatura — {sourceId}' }],
   },
-  operationalSchema: { [EVENT_KEY]: BEAUTY_SALON_KIT_V1.operationalSchema['sale.finalized'] },
+  operationalSchema: { [EVENT_KEY]: BEAUTY_SALON_KIT_V6.operationalSchema['sale.finalized'] },
 });
 
 let ownerId: string;
@@ -91,7 +91,7 @@ describe('PR-6 — kit novo com evento novo (integração)', () => {
     expect(entry).toMatchObject({ sourceType: EVENT_KEY, sourceId: 'assin-1', status: 'Posted', description: 'Assinatura — assin-1' });
     const pernas = entry.postings.map((p) => [p.account.code, p.debitCents, p.creditCents]).sort();
     expect(pernas).toEqual([
-      ['1.1.2', 15000n, 0n],
+      ['1.1.2.01', 15000n, 0n],
       ['3.1', 0n, 15000n],
     ]);
   });
@@ -120,7 +120,7 @@ describe('PR-6 — kit novo com evento novo (integração)', () => {
       sourceType: 'manual',
       sourceId: 'm-1',
       lines: [
-        { accountCode: '1.1.2', debitCents: 100, creditCents: 0 },
+        { accountCode: '1.1.2.01', debitCents: 100, creditCents: 0 },
         { accountCode: '3.1', debitCents: 0, creditCents: 100 },
       ],
     } as never);

@@ -3,6 +3,7 @@ import type { PostEntryInput } from '../../dtos/PostingDto';
 import type { AccountingEvent } from '../AccountingSyncPort';
 import type { IAccountingEventMapper } from './IAccountingEventMapper';
 import { splitRevenueCredit } from './revenueSplit';
+import { A_RECEBER_CODE } from '../../fixtures/ChartOfAccountsFixture';
 
 /**
  * Maps `sale.finalized` → revenue recognition entry (Incremento C):
@@ -19,7 +20,7 @@ export class SaleFinalizedMapper implements IAccountingEventMapper {
   public readonly sourceType = 'sale.finalized' as const;
 
   /** Leaf account code (canonical chart). Credit codes live in revenueSplit.ts. */
-  private static readonly DEBIT_ACCOUNT = '1.1.2'; // A Receber
+  private static readonly DEBIT_ACCOUNT = A_RECEBER_CODE; // A Receber
 
   public map(event: AccountingEvent): PostEntryInput {
     // MONEY BOUNDARY (Contract §2.1 / AC-2.2-1). The sale `totalAmount` is a JSON float

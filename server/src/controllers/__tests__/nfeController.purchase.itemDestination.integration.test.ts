@@ -44,8 +44,8 @@ describe('ITEM-DESTINATION PR-1 — import/preview/cancel com destinação por i
     pushTestSchema();
     dono = await prisma.user.create({ data: { name: 'id', username: 'item-dest-dono', email: 'item-dest@test.local', password: 'x', role: 'USER' } });
     await prisma.accountingPeriod.create({ data: { userId: dono.id, unitId: UNIT, year: 2025, month: 7, status: 'OPEN', openedAt: new Date(), openedById: dono.id } });
-    await criarConta('1.1.6', 'Estoques', 'Asset');
-    await criarConta('2.1.2', 'Fornecedores a Pagar', 'Liability');
+    await criarConta('1.1.3.01', 'Estoques', 'Asset');
+    await criarConta('2.1.2.01', 'Fornecedores a Pagar', 'Liability');
     await criarConta('1.1.8', 'ICMS a Recuperar', 'Asset');
     await criarConta('1.1.9', 'PIS/COFINS a Recuperar', 'Asset');
     await criarConta('4.1.9', 'Insumos do serviço', 'Expense');
@@ -77,7 +77,7 @@ describe('ITEM-DESTINATION PR-1 — import/preview/cancel com destinação por i
   });
 
   it('item 20 — PUT recusa conta de ATIVO e conta de despesa de OUTRA unidade; aceita a folha Expense do escopo (coluna nova no SQLite real)', async () => {
-    const ativo = await putProfile({ insumoExpenseAccountId: acc('1.1.6') });
+    const ativo = await putProfile({ insumoExpenseAccountId: acc('1.1.3.01') });
     expect(ativo.status).toBe(400);
     expect(JSON.stringify(ativo.body)).toMatch(/esperado Expense/);
     expect((await putProfile({ insumoExpenseAccountId: accounts['unit-outra:4.1.9'] })).status).toBe(400);
@@ -116,11 +116,11 @@ describe('ITEM-DESTINATION PR-1 — import/preview/cancel com destinação por i
     const entry = await prisma.journalEntry.findFirstOrThrow({ where: { sourceType: 'ap.payable', sourceId: payable.id }, include: { postings: { include: { account: true } } } });
     const byCode = Object.fromEntries(entry.postings.map((p) => [p.account.code, { d: Number(p.debitCents), c: Number(p.creditCents) }]));
     expect(byCode).toEqual({
-      '1.1.6': { d: 7961, c: 0 },
+      '1.1.3.01': { d: 7961, c: 0 },
       '1.1.8': { d: 1800, c: 0 },
       '1.1.9': { d: 784, c: 0 },
       '4.1.9': { d: 8788, c: 0 },
-      '2.1.2': { d: 0, c: 19333 },
+      '2.1.2.01': { d: 0, c: 19333 },
     });
     const movs = await prisma.stockMovement.findMany({ where: { sourceId: payable.id } });
     expect(movs.map((m) => [m.kind, Number(m.valueCentsDelta)])).toEqual([['INBOUND', 7961]]);
@@ -136,7 +136,7 @@ describe('ITEM-DESTINATION PR-1 — import/preview/cancel com destinação por i
       return ps.reduce((a, p) => a + Number(p.debitCents) - Number(p.creditCents), 0);
     };
     expect(await saldo('4.1.9')).toBe(0);
-    expect(await saldo('1.1.6')).toBe(0);
+    expect(await saldo('1.1.3.01')).toBe(0);
     const movs = await prisma.stockMovement.findMany({ where: { inventoryItem: { userId: dono.id, unitId: UNIT } }, orderBy: { createdAt: 'asc' } });
     expect(movs.map((m) => m.kind)).toEqual(['INBOUND', 'REVERSAL']);
   });

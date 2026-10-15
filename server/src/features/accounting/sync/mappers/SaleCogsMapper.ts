@@ -3,6 +3,7 @@ import { MAX_CENTS } from '../../models/money';
 import type { PostEntryInput } from '../../dtos/PostingDto';
 import type { AccountingEvent } from '../AccountingSyncPort';
 import type { IAccountingEventMapper } from './IAccountingEventMapper';
+import { ESTOQUES_CODE } from '../../fixtures/ChartOfAccountsFixture';
 
 /**
  * Maps `sale.cogs` → cost-of-goods entry (INCR-INVENTORY, Body 2 / O-2):
@@ -27,7 +28,7 @@ export class SaleCogsMapper implements IAccountingEventMapper {
 
   /** Leaf account codes (canonical chart — ChartOfAccountsFixture, Fase 0). */
   private static readonly DEBIT_ACCOUNT = '4.2'; // Custo das Mercadorias Vendidas (Expense)
-  private static readonly CREDIT_ACCOUNT = '1.1.6'; // Estoques (Asset)
+  private static readonly CREDIT_ACCOUNT = ESTOQUES_CODE; // Estoques (Asset)
 
   public map(event: AccountingEvent): PostEntryInput {
     // MONEY BOUNDARY (Contract §2.1). Unlike the revenue mapper, the value is ALREADY integer
