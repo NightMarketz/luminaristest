@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'next-i18next';
 import { useAiInterview } from '../../hooks/useAiInterview';
 import ChatArea from './ChatArea';
 import InputArea from './InputArea';
@@ -50,6 +51,7 @@ const markdownStyles = `
 `;
 
 function AiInterviewSetup() {
+  const { t } = useTranslation('common');
   const {
     messages,
     userInput,
@@ -113,7 +115,7 @@ function AiInterviewSetup() {
           onClick={() => setShowCustomizationPanel(!showCustomizationPanel)}
           className={`fixed top-1/2 -translate-y-1/2 z-50 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition-all duration-300 ease-in-out focus:outline-none`}
           style={{ left: showCustomizationPanel ? '405px' : '20px' }}
-          aria-label={showCustomizationPanel ? "Ocultar painel de funcionalidades" : "Mostrar painel de funcionalidades"}
+          aria-label={showCustomizationPanel ? t('onboardingHideFeaturesPanel') : t('onboardingShowFeaturesPanel')}
         >
           {showCustomizationPanel ? (
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -132,7 +134,7 @@ function AiInterviewSetup() {
           onClick={() => setShowRightPanel(!showRightPanel)}
           className={`fixed top-1/2 -translate-y-1/2 z-50 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition-all duration-300 ease-in-out focus:outline-none`}
           style={{ right: showRightPanel ? '505px' : '20px' }}
-          aria-label={showRightPanel ? "Ocultar painel de customização" : "Mostrar painel de customização"}
+          aria-label={showRightPanel ? t('onboardingHideCustomizePanel') : t('onboardingShowCustomizePanel')}
         >
           {showRightPanel ? (
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -146,9 +148,9 @@ function AiInterviewSetup() {
         </button>
       )}
 
-      <div className="mx-auto w-full max-w-2xl bg-white dark:bg-neutral-800 shadow-lg rounded-xl p-6 border border-gray-200 dark:border-gray-700 flex flex-col h-[600px]">
+      <div className="mx-auto w-full max-w-2xl bg-white dark:bg-neutral-800 shadow-lg rounded-2xl p-6 border border-neutral-200 dark:border-neutral-700 flex flex-col h-[600px]">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center flex-grow">Entrevista com IA</h2>
+          <h2 className="text-2xl font-bold text-neutral-900 dark:text-white text-center flex-grow">{t('onboardingInterviewTitle')}</h2>
         </div>
         <ChatArea
           messages={messages}

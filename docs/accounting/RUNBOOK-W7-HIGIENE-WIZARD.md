@@ -41,6 +41,16 @@ EVIDÊNCIA é sempre artefato colado/anexado (screenshot, lista do Network, corp
    Resultado esperado: na aba B, modal com **"Seu sistema já foi criado."**, **sem** "Tentar novamente", e o link **"Ir para o painel"** que leva a `/dashboard`.
    EVIDÊNCIA: [screenshot do modal da aba B + resposta 403 no Network]
 
+### PR-2 — i18n e paleta (itens 6–8; código = PR-2 do W7, commit: ______)
+
+5. Trocar o idioma para **inglês** e abrir `/dashboard/setup` nas três abas (**Rápido**, **Controle Total**, **Entrevista com IA**); no Controle Total, escolher um modelo e ir até "Select the tables"; na Entrevista, ir até o painel esquerdo de funcionalidades aparecer.
+   Resultado esperado: nenhum texto em português nas três abas e no painel esquerdo (o painel **direito** fica para o PR-3); a frase de ajuda no rodapé em inglês.
+   EVIDÊNCIA: [um screenshot por aba + o painel esquerdo]
+
+6. Ligar o **modo escuro** e repetir o passo 5 em português.
+   Resultado esperado: fundos e textos em cinza neutro (sem tom azulado de `slate`), cards com cantos arredondados iguais aos das outras telas.
+   EVIDÊNCIA: [um screenshot por aba]
+
 ## Desfecho (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
 [ ] FALHOU — passo __ divergiu; evidência da divergência colada acima; NENHUM passo seguinte foi executado após a falha

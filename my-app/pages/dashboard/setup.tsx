@@ -47,7 +47,7 @@ function SetupDashboardPage() {
   const tabClasses = (tabMode: 'quick' | 'totalControl' | 'aiInterview') =>
     `px-6 py-3 font-semibold text-lg rounded-t-lg transition-colors duration-300 focus:outline-none cursor-pointer border-b-2 ${mode === tabMode
       ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-blue-600 hover:border-blue-300'
+      : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-blue-600 hover:border-blue-300'
     }`;
 
   if (checking) {
@@ -56,8 +56,8 @@ function SetupDashboardPage() {
         <Head>
           <title>{t('appName')} - Setup</title>
         </Head>
-        <div className="min-h-screen bg-gray-50 dark:bg-neutral-900 text-gray-900 dark:text-gray-100 flex items-center justify-center">
-          <div className="text-gray-500 dark:text-gray-400">{t('verifyingEnvironment')}</div>
+        <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 flex items-center justify-center">
+          <div className="text-neutral-500 dark:text-neutral-400">{t('verifyingEnvironment')}</div>
         </div>
       </>
     );
@@ -68,24 +68,24 @@ function SetupDashboardPage() {
       <Head>
         <title>{t('appName')} - Setup</title>
       </Head>
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col">
+      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 flex flex-col">
         <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
           <div className="w-full max-w-5xl">
             <header className="text-center mb-12">
               <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-blue-600 text-white mb-6 shadow-xl shadow-blue-500/20">
                 <FiLayout size={32} />
               </div>
-              <h1 className="text-4xl sm:text-5xl font-black tracking-tight mb-4 bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400">
+              <h1 className="text-4xl sm:text-5xl font-black tracking-tight mb-4 bg-clip-text text-transparent bg-gradient-to-r from-neutral-900 to-neutral-600 dark:from-white dark:to-neutral-400">
                 {t('setupSystem')}
               </h1>
-              <p className="max-w-2xl mx-auto text-lg text-slate-500 dark:text-slate-400 leading-relaxed">
+              <p className="max-w-2xl mx-auto text-lg text-neutral-500 dark:text-neutral-400 leading-relaxed">
                 {t('setupDescription')}
               </p>
             </header>
 
             <div className={`w-full mx-auto transition-all duration-500 ease-in-out ${mode === 'aiInterview' ? 'max-w-7xl' : 'max-w-4xl'}`}>
-              <div className="bg-white dark:bg-neutral-900 rounded-3xl shadow-2xl shadow-slate-200 dark:shadow-none border border-slate-200 dark:border-slate-800 overflow-hidden">
-                <div className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-neutral-800/50 p-2">
+              <div className="bg-white dark:bg-neutral-900 rounded-3xl shadow-2xl shadow-neutral-200 dark:shadow-none border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+                <div className="border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-800/50 p-2">
                   <nav className="flex justify-center gap-2" aria-label="Tabs">
                     {[
                       { id: 'quick', label: t('quickMode') },
@@ -96,8 +96,8 @@ function SetupDashboardPage() {
                         key={tab.id}
                         onClick={() => setMode(tab.id as 'quick' | 'totalControl' | 'aiInterview')}
                         className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all duration-200 ${mode === tab.id
-                          ? 'bg-white dark:bg-neutral-800 text-blue-600 dark:text-blue-400 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700'
-                          : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-neutral-800'
+                          ? 'bg-white dark:bg-neutral-800 text-blue-600 dark:text-blue-400 shadow-sm ring-1 ring-neutral-200 dark:ring-neutral-700'
+                          : 'text-neutral-500 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'
                           }`}
                       >
                         {tab.label}
@@ -118,8 +118,8 @@ function SetupDashboardPage() {
               </div>
 
               <div className="mt-8 text-center">
-                <p className="text-slate-400 dark:text-slate-600 text-sm">
-                  Precisando de ajuda? <button className="text-blue-500 font-semibold hover:underline">Fale com nosso suporte técnico</button>
+                <p className="text-neutral-400 dark:text-neutral-600 text-sm">
+                  {t('onboardingNeedHelp')} <button className="text-blue-500 font-semibold hover:underline">{t('onboardingContactSupport')}</button>
                 </p>
               </div>
             </div>
