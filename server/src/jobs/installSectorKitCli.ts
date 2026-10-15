@@ -22,6 +22,7 @@ import { ApplicationFactory } from '../lib/factory';
 import prisma from '../lib/prisma';
 import { KIT_REGISTRY } from '../features/sectorKits/registry';
 import { KitInstallStepFailedError } from '../features/sectorKits/models/kitInstallTypes';
+import { reloadAccountingMappersSerialized } from '../features/accountingBinding/runtime/mapperReload';
 import type { BindingScope } from '../features/accountingBinding/repositories/IAccountingBindingRepository';
 
 export interface InstallSectorKitArgs {
@@ -118,7 +119,7 @@ export async function runInstall(args: InstallSectorKitArgs): Promise<number> {
       installChartIfEmpty: false,
       openCurrentPeriodIfMissing: false,
       today,
-    });
+    }, { exclusiveSector: true }); // LAC-B (dono, chat, 2026-10-14): outro setor na unidade ⇒ BINDING_SECTOR_CONFLICT, exit 1
 
     if (outcome.status !== 'INSTALLED') {
       const result = outcome.compile;
@@ -126,6 +127,18 @@ export async function runInstall(args: InstallSectorKitArgs): Promise<number> {
         `FALHOU: binding compilou como '${result.status}' (não Active) — bloqueante(s) do validador: ` +
           `${JSON.stringify(result.validation.blocking)}; cobertura de evento ausente: ` +
           `${JSON.stringify(result.coverage.missing)}`,
+      );
+      return 1;
+    }
+
+    // LAC-B (dono, chat, 2026-10-14): a recarga do activate-default. Neste processo ela só prova que o registro de
+    // mappers monta; o servidor já no ar segue pedindo reinício.
+    try {
+      await reloadAccountingMappersSerialized();
+    } catch (error) {
+      console.error(
+        `FALHOU: kit '${outcome.kit.kitKey}' instalado (binding versão ${outcome.bindingVersion} Active), mas a recarga dos ` +
+          `mappers contábeis falhou (ACCOUNTING_SYNC_RELOAD_FAILED): ${error instanceof Error ? error.message : String(error)}`,
       );
       return 1;
     }

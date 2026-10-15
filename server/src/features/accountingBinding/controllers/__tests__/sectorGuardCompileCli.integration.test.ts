@@ -85,7 +85,7 @@ describe('GUARDA — 2º setor Active na mesma unidade pelo POST /compile e pelo
     await prisma.$disconnect();
   });
 
-  it.failing('POST /compile: salão Active (activate-default) + clínica pelo /compile ⇒ a unidade segue com UM setor e a recarga não colide', async () => {
+  it('POST /compile: salão Active (activate-default) + clínica pelo /compile ⇒ a unidade segue com UM setor e a recarga não colide', async () => {
     await perfilFiscal(UNIT_COMPILE);
     const salao = await request(app)
       .post('/api/accounting-binding/activate-default')
@@ -107,7 +107,7 @@ describe('GUARDA — 2º setor Active na mesma unidade pelo POST /compile e pelo
     }
   });
 
-  it.failing('CLI: salão Active pelo /compile (unidade sem KitInstallation) + clínica pelo CLI ⇒ a unidade segue com UM setor e a recarga não colide', async () => {
+  it('CLI: salão Active pelo /compile (unidade sem KitInstallation) + clínica pelo CLI ⇒ a unidade segue com UM setor e a recarga não colide', async () => {
     await ApplicationFactory.getInstance()
       .getPostingService()
       // Escopo literal (mesmo shape do `resolveAccountingScope`): importar de features/accounting fura o importBoundary.test.ts.

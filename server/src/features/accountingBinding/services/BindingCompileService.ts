@@ -8,6 +8,7 @@ import type { AccountingBindingStatus } from '../models/accountingBindingStatus'
 import type { BindingValidationResult } from '../models/validationResult';
 import type { BindingScope, IAccountingBindingRepository } from '../repositories/IAccountingBindingRepository';
 import type { IAccountingBindingPolicy } from '../policies/IAccountingBindingPolicy';
+import { BindingSectorConflictError } from '../models/bindingSectorConflict';
 
 /**
  * A Prensa (BE-INCR-BINDING-PRESS, Fase P1) — porta que o compilador consome para rodar o
@@ -207,6 +208,11 @@ export class BindingCompileService {
     const compiledFromHash = computeCompiledFromHash(input.operationalSchema, input.chart);
 
     return this.repo.runTransaction(async (tx) => {
+      // LAC-B (GAP-MAP "2º setor Active pelo POST /compile e pelo CLI"; dono, chat, 2026-10-14 — guarda em todo
+      // compile): outro setor Active na unidade colidiria no registro de mappers. Re-lido na tx (T6), nada gravado.
+      const otherActive = (await this.repo.findMany(scope, { status: 'Active' }, tx)).find((b) => b.sectorKey !== input.sectorKey);
+      if (otherActive) throw new BindingSectorConflictError(scope.unitId, otherActive.sectorKey, input.sectorKey);
+
       // T6 — versão lida DENTRO da tx, imediatamente antes de escrever.
       const currentMax = await this.repo.findMaxVersion(scope, input.sectorKey, tx);
       const nextVersion = currentMax + 1;
