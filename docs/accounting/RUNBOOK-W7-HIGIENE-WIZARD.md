@@ -3,7 +3,7 @@
 > Preparado por agente em 2026-10-15 contra a branch `claude/w7-pr1-comportamento` (PR-1). **Em branco de propósito:**
 > EVIDÊNCIA, desfecho e assinatura são do executor humano — runbook sem assinatura é nulo
 > (`docs/operating-manual/RUNBOOK-FORMAT.md`). Spec: `docs/accounting/FE-INCR-WIZARD-HYGIENE-brief.md` itens 1–5
-> (PR-1). Os passos do PR-2 (idioma inglês, modo escuro) e do PR-3 (painel direito) entram neste arquivo nos PRs deles.
+> (PR-1), 6–8 (PR-2) e 10–11 (PR-3).
 
 Executor: [nome — humano]           Data: [____]
 Autorização: dono, chat, 2026-10-15 — "executa" sobre o BRIEF do W7 (nota `docs/plano/nos/W7.md`).
@@ -50,6 +50,20 @@ EVIDÊNCIA é sempre artefato colado/anexado (screenshot, lista do Network, corp
 6. Ligar o **modo escuro** e repetir o passo 5 em português.
    Resultado esperado: fundos e textos em cinza neutro (sem tom azulado de `slate`), cards com cantos arredondados iguais aos das outras telas.
    EVIDÊNCIA: [um screenshot por aba]
+
+### PR-3 — painel direito (itens 10–11; código = PR-3 do W7, commit: ______)
+
+7. Em **inglês**, na **Entrevista com IA**, abrir o painel direito ("Show customization panel") com uma tabela selecionada. No modo **Manual**: clicar em **New field** e abrir o seletor de tipo; marcar/desmarcar **Visible** num campo; clicar em **Save changes**.
+   Resultado esperado: nenhum texto em português no cabeçalho, nos campos, no formulário (rótulos, placeholders, as 8 opções de tipo, botões) nem na mensagem "Changes saved successfully!".
+   EVIDÊNCIA: [screenshot do formulário aberto com o seletor de tipo + screenshot após salvar]
+
+8. Ainda em inglês, trocar para **Conversational AI**, digitar uma frase e enviar.
+   Resultado esperado: boas-vindas e saudação em inglês (com o nome da tabela em negrito); placeholder e "Finish conversation" em inglês. Enquanto o FE do W6 não sair, a rota `CustomizeFields` ainda dá **404** (ADR-W6 D1) — o esperado aqui é a bolha de erro **em inglês**, não uma resposta da IA.
+   EVIDÊNCIA: [screenshot da conversa + a linha 404 no Network]
+
+9. Ligar o **modo escuro** e repetir os passos 7–8 em português.
+   Resultado esperado: textos em português, fundos e bordas em cinza neutro, cards dos campos e balões com cantos `rounded-2xl`.
+   EVIDÊNCIA: [um screenshot do modo Manual e um do modo IA]
 
 ## Desfecho (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
