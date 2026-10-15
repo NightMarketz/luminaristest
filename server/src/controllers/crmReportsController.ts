@@ -45,6 +45,17 @@ export async function listCrmReports(req: Request, res: Response) {
   }
 }
 
+/** Modelos prontos (BE-INCR-CRM-REPORT-TEMPLATES item 3). Rota registrada ANTES de `/reports/:id`. */
+export async function listCrmReportTemplates(req: Request, res: Response) {
+  try {
+    requireUser(req);
+    const data = getFactory().getCrmReportService().templates();
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+}
+
 export async function getCrmReport(req: Request, res: Response) {
   try {
     const user = requireUser(req);

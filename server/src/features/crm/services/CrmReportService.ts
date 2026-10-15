@@ -14,12 +14,14 @@ import { CURRENCIES } from '../constants';
 import type { ICrmReportDefinitionRepository } from '../repositories/ICrmReportDefinitionRepository';
 import type { ICrmReportDefinitionPolicy } from '../policies/ICrmReportDefinitionPolicy';
 import type { ICrmReportDefinition } from '../models/CrmReportDefinition.model';
+import { CRM_REPORT_TEMPLATES } from '../models/crmReportTemplates';
 import {
   CRM_MONEY_CURRENCY_PAIRS,
   NO_CURRENCY_KEY,
   type ConvertedView,
   type CreateCrmReportInput,
   type CrmReportSource,
+  type CrmReportTemplatesOutput,
   type CurrencyMode,
   type PtaxRateView,
   type ReportMeasure,
@@ -134,6 +136,14 @@ export class CrmReportService {
   // ---------------------------------------------------------------------------------------------------------------
   // CRUD (itens 1–6)
   // ---------------------------------------------------------------------------------------------------------------
+
+  /**
+   * Modelos prontos + pares valor→moeda (BE-INCR-CRM-REPORT-TEMPLATES item 2). Constantes globais (F-RB7): não lê banco
+   * nem depende do usuário — a fonte instalada é decidida na tela (item 4 do BRIEF).
+   */
+  templates(): CrmReportTemplatesOutput {
+    return { templates: [...CRM_REPORT_TEMPLATES], moneyCurrencyPairs: CRM_MONEY_CURRENCY_PAIRS };
+  }
 
   /** Dono lista os seus; ADMIN lista todos (F-RB4=(c)). */
   async list(actor: UserContext): Promise<ICrmReportDefinition[]> {
