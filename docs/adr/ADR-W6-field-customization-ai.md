@@ -1,8 +1,8 @@
 # ADR-W6 — Customização de campos por IA no painel do wizard (`POST /dashboard/ai/CustomizeFields`)
 
 - **Data:** 2026-10-15
-- **Status:** **Proposed** — escrito sob *"Autorizo escrever o ADR do W6 — Proposed, só docs, sem código, sem
-  'executa'"* (dono, chat, 2026-10-15, questionário). Passa a `Accepted` só com OK do dono; não autoriza código.
+- **Status:** **Accepted 2026-10-15 (dono, chat)** — *"Aceito o ADR-W6: muda para Accepted no PR #715."* Escrito (Proposed) sob *"Autorizo escrever o ADR do W6 — Proposed, só docs, sem código, sem
+  'executa'"* (dono, chat, 2026-10-15, questionário). O `Accepted` não autoriza código: o BE ainda espera o W4 mergeado e o "executa" do dono.
 - **Classe:** DECISÃO ARQUITETURAL (plataforma: IA no caminho de configuração do wizard)
 - **Nó:** [W6](../plano/nos/W6.md) · **BRIEF:** [`WIZARD-W6-CUSTOMIZE-FIELDS-brief.md`](../accounting/WIZARD-W6-CUSTOMIZE-FIELDS-brief.md)
   · **Decisão de 15/10:** [`D-2026-10-15-W6-CUSTOMIZE-FIELDS`](../plano/decisoes/D-2026-10-15-W6-CUSTOMIZE-FIELDS.md)
@@ -124,5 +124,5 @@ deixam o caminho; o `findExactFieldMatch` determinístico continua. O `StateMana
 
 ## 6. Próximos passos (fora deste ADR)
 
-`Accepted` pelo dono → W4 mergeado → "executa" do dono para o BE (`BE-INCR-W6-CUSTOMIZE-FIELDS`, itens 1–12 do BRIEF,
+~~`Accepted` pelo dono~~ (15/10) → W4 mergeado → "executa" do dono para o BE (`BE-INCR-W6-CUSTOMIZE-FIELDS`, itens 1–12 do BRIEF,
 `sessao-feature`) → FE (itens 13–19) → sign-off de browser pelo dono (item 20).
