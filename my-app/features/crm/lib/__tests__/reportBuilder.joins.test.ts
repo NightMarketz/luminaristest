@@ -36,6 +36,12 @@ import {
  * de [[D-2026-10-13-FE-CRM-RB-PR-B-D-LACUNAS]]. Contrato: `ReportJoinSchema` + `CrmReportService.validate/resolveRef`.
  */
 const LABELS = { id: 'ID', createdAt: 'Criado em', updatedAt: 'Atualizado em' };
+/** `moneyCurrencyPairs` como o BE devolve em `GET /api/crm/reports/templates` (PR-C: fonte única dos pares). */
+const PAIRS = {
+  leads: { latestProposalAmount: 'latestProposalCurrency' },
+  leadProposals: { amount: 'currency' },
+  crmOpportunities: { amount: 'currency' },
+};
 const OPP: ISchemaField[] = reportFields(
   [
     { name: 'title', label: 'Título', type: 'string' },
@@ -44,6 +50,7 @@ const OPP: ISchemaField[] = reportFields(
     { name: 'leadId', label: 'Lead', type: 'relation', relation: { targetTable: '@@PRESET_TABLE_KEY::leads' } },
   ],
   LABELS,
+  PAIRS.crmOpportunities,
 );
 const LEADS: ISchemaField[] = reportFields(
   [
@@ -53,6 +60,7 @@ const LEADS: ISchemaField[] = reportFields(
     { name: 'leads', label: 'Campo homônimo', type: 'string' },
   ],
   LABELS,
+  PAIRS.leads,
 );
 const right = (map: Partial<Record<ReportSource, ISchemaField[]>>) => (s: ReportSource) => map[s] ?? null;
 const RF = right({ leads: LEADS, crmOpportunities: OPP });
@@ -182,7 +190,7 @@ describe('item 3 com joins — trocar a fonte', () => {
       joins: [join({ alias: 'a', leftField: 'title', rightField: 'name' }), join({ alias: 'b', leftField: 'leadId' })],
       filters: [{ field: 'b.status', op: 'eq', value: 'Novo' }],
     });
-    const proposal = reportFields([{ name: 'title', label: 'Título', type: 'string' }], LABELS);
+    const proposal = reportFields([{ name: 'title', label: 'Título', type: 'string' }], LABELS, PAIRS.leadProposals);
     const next = prunedForFields({ ...d, source: 'leadProposals' }, proposal, RF);
     expect(next.joins.map((j) => j.alias)).toEqual(['a']);
     expect(next.filters).toEqual([]);
@@ -271,7 +279,7 @@ describe('review do PR-B — regressões', () => {
   });
 
   it('achado 4: campo json da fonte entra na lista oculto — apelido igual a ele é conflito, e ele não é oferecido', () => {
-    const fields = reportFields([{ name: 'payload', label: 'Payload', type: 'json' }, ...OPP.filter((f) => !['id', '_createdAt', '_updatedAt'].includes(f.name))], LABELS);
+    const fields = reportFields([{ name: 'payload', label: 'Payload', type: 'json' }, ...OPP.filter((f) => !['id', '_createdAt', '_updatedAt'].includes(f.name))], LABELS, PAIRS.crmOpportunities);
     expect(aliasProblem('payload', 0, [join({ alias: '' })], fields)).toBe('FIELD_CONFLICT');
     expect(measureOptions('count', fields).map((f) => f.name)).not.toContain('payload');
   });

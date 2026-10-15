@@ -1,15 +1,40 @@
 import React from 'react';
-import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach, onTestFinished } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react';
 
 vi.mock('next-i18next', async () => (await import('./i18nPt')).nextI18nextPt());
 vi.mock('../../../../../lib/context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'eu' } }) }));
 
-const { svc, fieldsOf } = vi.hoisted(() => ({
+const { svc, fieldsOf, templates } = vi.hoisted(() => ({
   svc: { list: vi.fn(), get: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn(), preview: vi.fn(), run: vi.fn() },
   fieldsOf: vi.fn(),
+  templates: vi.fn(() =>
+    Promise.resolve({
+      success: true,
+      data: {
+        templates: [
+          { key: 'funnel', name: 'Funil por etapa', kind: 'chart', chartType: 'bar', spec: { source: 'leads', dimensions: [{ type: 'field', field: 'stageId' }], measures: [{ type: 'count' }] } },
+          { key: 'proposals', name: 'Propostas por status', kind: 'chart', chartType: 'bar', spec: { source: 'leadProposals', dimensions: [{ type: 'field', field: 'status' }], measures: [{ type: 'count' }] } },
+          { key: 'activities', name: 'Atividades por tipo', kind: 'chart', chartType: 'bar', spec: { source: 'leadActivities', dimensions: [{ type: 'field', field: 'type' }], measures: [{ type: 'count' }], sort: { by: 'measure', dir: 'desc' } } },
+        ],
+        // `moneyCurrencyPairs` do BE (PR-C: fonte única dos pares — o espelho manual do FE saiu)
+        moneyCurrencyPairs: {
+          leads: { latestProposalAmount: 'latestProposalCurrency' },
+          leadProposals: { amount: 'currency' },
+          crmOpportunities: { amount: 'currency' },
+        },
+      },
+    }),
+  ),
 }));
-vi.mock('../../../../../lib/services/crmReports.service', () => ({ CrmReportsService: svc }));
+// `templates` fora do `svc`: os `beforeEach` abaixo zeram o `svc` inteiro
+vi.mock('../../../../../lib/services/crmReports.service', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../../../../../lib/services/crmReports.service')>();
+  const CrmReportsService = { ...svc, templates };
+  // o loader real lê `CrmReportsService.templates` do módulo real: reaponta para o mock
+  Object.assign(real.CrmReportsService, CrmReportsService);
+  return { ...real, CrmReportsService };
+});
 vi.mock('../../../hooks/useReportSources', () => ({
   useReportSources: () => ({ sources: ['leads', 'leadProposals'], loading: false, error: false, fieldsOf }),
 }));
@@ -20,6 +45,8 @@ vi.mock('../CrmReportResult', async (importOriginal) => ({
 }));
 
 import { CrmReportBuilder } from '../CrmReportBuilder';
+import { resetCrmReportTemplatesCache } from '../../../../../lib/services/crmReports.service';
+
 import type { CrmReportRow } from '../../../../../lib/services/crmReports.service';
 
 /**
@@ -495,5 +522,62 @@ describe('review do PR-B — 6ª passada no orquestrador', () => {
     await waitFor(() => expect(j1.getByLabelText('Tabela')).toHaveValue('leadProposals'));
     expect(screen.queryByText('Mudar o cruzamento?')).toBeNull();
     expect(screen.queryByTestId('filter-0')).toBeNull();
+  });
+});
+
+describe('item 19 (PR-C) — começar de um modelo', () => {
+  beforeEach(() => {
+    Object.values(svc).forEach((f) => f.mockReset());
+    fieldsOf.mockReset().mockImplementation(async (s: string) =>
+      s === 'leads' ? [{ name: 'stageId', label: 'Etapa', type: 'relation', relation: { targetTable: 'leadStages' } }] : PROPOSAL_SCHEMA,
+    );
+    svc.list.mockImplementation(() => ok([]));
+    resetCrmReportTemplatesCache();
+  });
+  afterEach(() => {
+    cleanup();
+    resetCrmReportTemplatesCache();
+  });
+
+  it('lista os modelos do BE; fonte não instalada → desabilitado; abrir preenche o editor sem salvar nem rodar', async () => {
+    render(<CrmReportBuilder />);
+    const proposals = await screen.findByRole('button', { name: /Propostas por status/ });
+    expect(proposals).toBeEnabled();
+    // leadActivities não está em `sources` (mock do useReportSources)
+    expect(screen.getByRole('button', { name: /Atividades por tipo/ })).toBeDisabled();
+    fireEvent.click(proposals);
+    expect(await screen.findByText('Medidas')).toBeInTheDocument();
+    expect(screen.getByLabelText('Fonte')).toHaveValue('leadProposals');
+    expect(screen.getByLabelText('Nome')).toHaveValue('Propostas por status');
+    expect(fieldsOf).toHaveBeenCalledWith('leadProposals');
+    expect(svc.run).not.toHaveBeenCalled();
+    expect(svc.create).not.toHaveBeenCalled();
+    // o spec do modelo vai inteiro no Visualizar
+    fireEvent.click(screen.getByText('Visualizar'));
+    await waitFor(() => expect(svc.preview).toHaveBeenCalledTimes(1));
+    expect(svc.preview.mock.calls[0][0].spec).toEqual({
+      source: 'leadProposals',
+      dimensions: [{ type: 'field', field: 'status' }],
+      measures: [{ type: 'count' }],
+    });
+  });
+
+  it('a rota de modelos falha → aviso explícito, sem modelos; o editor fica bloqueado (sem os pares de moeda)', async () => {
+    // falha persistente: a do hook e a do handler (`pairsNow`) — a falha sai do cache e a busca é refeita
+    const real = templates.getMockImplementation();
+    templates.mockImplementation(() => Promise.reject({ success: false, status: 500 }));
+    onTestFinished(() => {
+      if (real) templates.mockImplementation(real);
+    });
+    render(<CrmReportBuilder />);
+    expect(await screen.findByText(/Não foi possível carregar os modelos/)).toBeInTheDocument();
+    expect(screen.queryByText('Começar de um modelo')).not.toBeInTheDocument();
+    fireEvent.click(screen.getAllByText('Novo relatório')[0]);
+    fireEvent.change(screen.getByLabelText('Fonte'), { target: { value: 'leadProposals' } });
+    await waitFor(() => expect(fieldsOf).toHaveBeenCalledWith('leadProposals'));
+    expect(await screen.findByTestId('block-reason')).toBeInTheDocument();
+    // review: trocar a fonte sem os pares não poda o rascunho (os joins pareceriam ausentes) — só bloqueia e avisa
+    await waitFor(() => expect(screen.getAllByText(/Não foi possível carregar os modelos/)).toHaveLength(2));
+    expect(screen.getByText('Visualizar')).toBeDisabled();
   });
 });

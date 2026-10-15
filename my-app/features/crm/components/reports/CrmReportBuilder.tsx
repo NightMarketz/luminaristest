@@ -2,9 +2,15 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'next-i18next';
 import { Modal } from '../../../../components/ui/Modal';
 import { useAuth } from '../../../../lib/context/AuthContext';
-import { CrmReportsService, type CrmReportRow } from '../../../../lib/services/crmReports.service';
+import {
+  CrmReportsService,
+  loadCrmReportTemplates,
+  type CrmReportRow,
+  type CrmReportTemplate,
+} from '../../../../lib/services/crmReports.service';
 import type { ISchemaField } from '../../../dashboard/components/shared/dynamic-tables.client';
 import { useReportSources } from '../../hooks/useReportSources';
+import { useReportTemplates } from '../../hooks/useReportTemplates';
 import {
   blockReason,
   browserTimeZone,
@@ -12,6 +18,7 @@ import {
   combinedFields,
   emptyDraft,
   fromReport,
+  fromTemplate,
   itemsLost,
   prunedForFields,
   removeJoin,
@@ -22,6 +29,7 @@ import {
   toSpec,
   withJoinSource,
   type JoinDraft,
+  type MoneyCurrencyPairs,
   type ReportDraft,
   type ReportErrorView,
   type ReportSource,
@@ -30,16 +38,24 @@ import {
 import { CrmReportEditor } from './CrmReportEditor';
 import { CrmReportList } from './CrmReportList';
 import { CrmReportResult, buildRunSnapshot, type ReportRunSnapshot } from './CrmReportResult';
+import { CrmReportTemplates } from './CrmReportTemplates';
 
 /**
  * Tela do builder de relatórios do CRM (FE-INCR-CRM-REPORT-BUILDER PR-A, itens 2–9, 11–18). Lista ⇄ editor; a
  * visualização é por botão (F-FRB2=(a)) com o `timeZone` do navegador (F-RB11); erros nomeados do BE viram texto
  * traduzido (item 16). O BE é a verdade de toda regra — o editor só evita o 400. PR-B (item 10): o schema de cada
  * tabela da direita é carregado aqui; trocar/remover join que tira itens pede confirmação (como a troca de fonte).
+ * PR-C (item 19): "começar de um modelo" abre o editor preenchido; modelos e pares de moeda vêm de `GET /templates`.
  */
 type Mode = 'list' | 'editor';
 type RightRaw = Partial<Record<ReportSource, ISchemaField[] | null>>;
 type CrmRunOutput = ReportRunSnapshot['output'];
+
+/** Pares do BE dentro de um handler async; falha → `null` (o editor fica bloqueado e o aviso aparece). */
+const pairsNow = (): Promise<MoneyCurrencyPairs | null> =>
+  loadCrmReportTemplates()
+    .then((d) => d.moneyCurrencyPairs)
+    .catch(() => null);
 
 const btn = 'rounded-xl px-4 py-2 text-xs font-black transition disabled:cursor-not-allowed disabled:opacity-40';
 const primaryBtn = `${btn} bg-blue-600 text-white hover:bg-blue-700`;
@@ -50,6 +66,7 @@ export function CrmReportBuilder() {
   const { t } = useTranslation('crm');
   const { user } = useAuth();
   const { sources, fieldsOf } = useReportSources();
+  const { templates, pairs, error: templatesError } = useReportTemplates();
   const labels = useMemo(
     () => ({
       id: t('report_builder.fields.id', 'ID'),
@@ -82,16 +99,20 @@ export function CrmReportBuilder() {
   const [toDelete, setToDelete] = useState<CrmReportRow | null>(null);
   const [saveAsName, setSaveAsName] = useState<string | null>(null);
 
+  // sem os pares do BE não há campo: o editor bloqueia (NO_SOURCE) em vez de deixar dinheiro sem a regra de moeda
   const rightFieldsFrom = useCallback(
-    (map: RightRaw): RightFieldsOf =>
+    (map: RightRaw, p: MoneyCurrencyPairs | null = pairs): RightFieldsOf =>
       (s) => {
         const raw = map[s];
-        return raw ? reportFields(raw, labels) : null;
+        return raw && p ? reportFields(raw, labels, p[s]) : null;
       },
-    [labels],
+    [labels, pairs],
   );
   const rightFieldsOf = useMemo(() => rightFieldsFrom(rightRaw), [rightFieldsFrom, rightRaw]);
-  const sourceFields = useMemo(() => (schemaFields ? reportFields(schemaFields, labels) : null), [schemaFields, labels]);
+  const sourceFields = useMemo(
+    () => (schemaFields && pairs && draft.source ? reportFields(schemaFields, labels, pairs[draft.source]) : null),
+    [schemaFields, labels, pairs, draft.source],
+  );
   const fields = useMemo(
     () => (sourceFields ? combinedFields(sourceFields, draft.joins, rightFieldsOf) : null),
     [sourceFields, draft.joins, rightFieldsOf],
@@ -156,6 +177,7 @@ export function CrmReportBuilder() {
       const res = await CrmReportsService.get(id);
       const row = res.data;
       const raw = await fieldsOf(row.spec.source);
+      const p = await pairsNow();
       const d = fromReport(row);
       const rr: RightRaw = {};
       for (const j of d.joins) if (j.rightSource && !(j.rightSource in rr)) rr[j.rightSource] = await fieldsOf(j.rightSource);
@@ -170,7 +192,7 @@ export function CrmReportBuilder() {
       setRunning(true);
       try {
         const run = await CrmReportsService.run(row.id, { timeZone: browserTimeZone() });
-        setResult(snapshotOf(run.data, d, combinedFields(reportFields(raw ?? [], labels), d.joins, rightFieldsFrom(rr))));
+        setResult(snapshotOf(run.data, d, combinedFields(reportFields(raw ?? [], labels, p?.[row.spec.source]), d.joins, rightFieldsFrom(rr, p))));
       } catch (e) {
         const v = reportError(e);
         if (v.code === 'REPORT_NOT_FOUND') backToListWith(v);
@@ -185,9 +207,9 @@ export function CrmReportBuilder() {
     }
   };
 
-  const applySource = (source: ReportSource, raw: ISchemaField[] | null) => {
+  const applySource = (source: ReportSource, raw: ISchemaField[] | null, p: MoneyCurrencyPairs | null) => {
     setSchemaFields(raw);
-    setDraft((d) => prunedForFields({ ...d, source }, reportFields(raw ?? [], labels), rightFieldsOf));
+    setDraft((d) => prunedForFields({ ...d, source }, reportFields(raw ?? [], labels, p?.[source]), rightFieldsFrom(rightRaw, p)));
     setResult(null);
     if (!raw) setError({ key: 'report_builder.errors.SCHEMA_UNAVAILABLE', params: {}, code: null });
     else setError(null);
@@ -196,11 +218,34 @@ export function CrmReportBuilder() {
   const changeSource = async (source: ReportSource) => {
     if (source === draft.source && schemaFields) return;
     const raw = await fieldsOf(source);
-    if (draft.source && sourceChangeLosesItems(draft, reportFields(raw ?? [], labels), rightFieldsOf)) {
-      setPending({ kind: 'source', apply: () => applySource(source, raw) });
+    const p = await pairsNow();
+    // sem os pares não dá para saber o que some (os campos do join viram "ausentes"): não poda nada, só avisa (review)
+    if (!p) {
+      setError({ key: 'report_builder.errors.TEMPLATES_UNAVAILABLE', params: {}, code: null });
       return;
     }
-    applySource(source, raw);
+    if (draft.source && sourceChangeLosesItems(draft, reportFields(raw ?? [], labels, p?.[source]), rightFieldsFrom(rightRaw, p))) {
+      setPending({ kind: 'source', apply: () => applySource(source, raw, p) });
+      return;
+    }
+    applySource(source, raw, p);
+  };
+
+  /** Item 19: modelo → editor preenchido, ainda não salvo (sem rodar: a visualização segue por botão, F-FRB2). */
+  const openTemplate = async (template: CrmReportTemplate) => {
+    setNotice(null);
+    setError(null);
+    const d = fromTemplate(template);
+    const raw = await fieldsOf(template.spec.source);
+    const rr: RightRaw = {};
+    for (const j of d.joins) if (j.rightSource && !(j.rightSource in rr)) rr[j.rightSource] = await fieldsOf(j.rightSource);
+    setSaved(null);
+    setDraft(d);
+    setSchemaFields(raw);
+    setRightRaw(rr);
+    setResult(null);
+    setMode('editor');
+    if (!raw || Object.values(rr).some((x) => !x)) setError({ key: 'report_builder.errors.SCHEMA_UNAVAILABLE', params: {}, code: null });
   };
 
   /** Item 10: aplica a mudança de join; se ela tira medida/agrupamento/filtro, confirma antes (PR-B/D lacunas). */
@@ -356,6 +401,8 @@ export function CrmReportBuilder() {
             </button>
           </div>
           {errorBox(notice)}
+          {errorBox(templatesError ? { key: 'report_builder.errors.TEMPLATES_UNAVAILABLE', params: {}, code: null } : null)}
+          <CrmReportTemplates templates={templates} installed={sources} onPick={(tpl) => void openTemplate(tpl)} />
           {listLoading ? (
             <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">{t('common.loading', 'Carregando…')}</p>
           ) : (
@@ -416,6 +463,7 @@ export function CrmReportBuilder() {
             </p>
           ) : null}
           {errorBox(error)}
+          {errorBox(templatesError ? { key: 'report_builder.errors.TEMPLATES_UNAVAILABLE', params: {}, code: null } : null)}
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
             <CrmReportEditor
               draft={draft}

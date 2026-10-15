@@ -2,6 +2,8 @@ import type {
   CreateCrmReportInput,
   CrmReportRow,
   CrmReportRunOutput,
+  CrmReportTemplate,
+  CrmReportTemplatesOutput,
   UpdateCrmReportInput,
 } from '../../../lib/services/crmReports.service';
 import type { ISchemaField } from '../../dashboard/components/shared/dynamic-tables.client';
@@ -41,14 +43,12 @@ const SOURCES_COVER_CONTRACT: [MissingSource] extends [never] ? true : never = t
 void SOURCES_COVER_CONTRACT;
 
 /**
- * Espelho DECLARADO do par valor→moeda do BE (`CRM_MONEY_CURRENCY_PAIRS`, item 8) — só UX; a verdade é o 400
- * `REPORT_CURRENCY_MIXED`. ponytail: duplicação de constante (não de DTO); o FE não importa o backend (BRIEF §3, §6).
+ * Par valor→moeda por fonte, lido do BE (`GET /api/crm/reports/templates`, `moneyCurrencyPairs` — fonte única desde o
+ * PR-C, D-2026-10-15-CRM-RB-TEMPLATES-ROTA). Só UX; a verdade continua sendo o 400 `REPORT_CURRENCY_MIXED`.
  */
-export const CRM_MONEY_CURRENCY_PAIRS_FE: Partial<Record<ReportSource, Readonly<Record<string, string>>>> = {
-  leads: { latestProposalAmount: 'latestProposalCurrency' },
-  leadProposals: { amount: 'currency' },
-  crmOpportunities: { amount: 'currency' },
-};
+export type MoneyCurrencyPairs = CrmReportTemplatesOutput['moneyCurrencyPairs'];
+/** Pares de UMA fonte: campo de valor → campo de moeda. */
+export type CurrencyPairs = Readonly<Record<string, string>>;
 
 export const NO_CURRENCY_KEY = '__NO_CURRENCY__';
 export const MAX_MEASURES = 4;
@@ -159,10 +159,18 @@ export interface SyntheticLabels {
  * Item 4: campos do schema vivo + `id`, `_createdAt`, `_updatedAt` (sintéticos do agregador). Campo oculto continua na
  * lista (o par de moeda pode estar oculto e o BE o enxerga — `pairFieldOf`), mas não é oferecido (`offeredFields`).
  */
-export function reportFields(schemaFields: readonly ISchemaField[], labels: SyntheticLabels): ISchemaField[] {
+export function reportFields(
+  schemaFields: readonly ISchemaField[],
+  labels: SyntheticLabels,
+  pairs: CurrencyPairs | undefined,
+): ISchemaField[] {
   // json não é oferecido (oculto), mas fica na lista: o apelido de join não pode repetir nome de campo nenhum da fonte
   // (`fieldOf(source, alias)` no BE) — review do PR-B, achado 4
-  const own = schemaFields.map((f): ISchemaField => (f.type === 'json' ? { ...f, hidden: true } : f));
+  const own = schemaFields.map((f): ReportField => {
+    const pair = pairs?.[f.name];
+    const base: ReportField = f.type === 'json' ? { ...f, hidden: true } : f;
+    return pair ? { ...base, currencyField: pair } : base;
+  });
   return [
     ...own,
     { name: 'id', label: labels.id, type: 'string' },
@@ -170,6 +178,13 @@ export function reportFields(schemaFields: readonly ISchemaField[], labels: Synt
     { name: '_updatedAt', label: labels.updatedAt, type: 'datetime' },
   ];
 }
+
+/** Campo do builder: o do schema + o par de moeda declarado pelo BE (`reportFields`), quando é campo de valor. */
+interface ReportField extends ISchemaField {
+  currencyField?: string;
+}
+const currencyFieldOf = (f: ISchemaField | undefined): string | undefined =>
+  f && 'currencyField' in f && typeof f.currencyField === 'string' ? f.currencyField : undefined;
 
 export const fieldLabel = (f: ISchemaField): string => f.label || f.name;
 /** O que o editor oferece nos selects: sem os ocultos. */
@@ -210,7 +225,12 @@ export function joinedFields(joins: readonly JoinDraft[], rightFieldsOf: RightFi
     if (!right) return [];
     return right
       .filter((f) => f.name !== 'id')
-      .map((f): ISchemaField => ({ ...f, name: `${j.alias}.${f.name}`, label: `${j.alias}.${fieldLabel(f)}` }));
+      .map((f): ReportField => {
+        const pair = currencyFieldOf(f);
+        const out: ReportField = { ...f, name: `${j.alias}.${f.name}`, label: `${j.alias}.${fieldLabel(f)}` };
+        // o par do join leva o mesmo prefixo (`apelido.currency`), como o `pairFieldOf` do BE
+        return pair ? { ...out, currencyField: `${j.alias}.${pair}` } : out;
+      });
   });
 }
 
@@ -338,7 +358,7 @@ export function selectOptions(field: ISchemaField | undefined): { value: string;
 export interface CurrencyRequirement {
   measureIndex: number;
   field: string;
-  /** Campo-par de moeda (`CRM_MONEY_CURRENCY_PAIRS_FE`). */
+  /** Campo-par de moeda (`moneyCurrencyPairs` do BE, anexado ao campo por `reportFields`). */
   pairField: string;
   satisfied: boolean;
 }
@@ -366,7 +386,7 @@ export function currencyRequirements(draft: ReportDraft, fields: readonly ISchem
   const out: CurrencyRequirement[] = [];
   draft.measures.forEach((m, measureIndex) => {
     if (!isMoneyMeasure(m, fields)) return;
-    const pairField = pairFieldOf(draft, m.field);
+    const pairField = currencyFieldOf(fieldByName(fields, m.field));
     // sem par, ou par ausente do schema vivo → moeda não declarada (o BE aceita e marca `undeclared`; `pairFieldOf`)
     if (!pairField || !fields.some((f) => f.name === pairField)) return;
     const byDimension = draft.dimensions.some((d) => d.type === 'field' && d.field === pairField);
@@ -374,19 +394,6 @@ export function currencyRequirements(draft: ReportDraft, fields: readonly ISchem
     out.push({ measureIndex, field: m.field, pairField, satisfied: byDimension || byFilter });
   });
   return out;
-}
-
-/**
- * Par de moeda de um campo de dinheiro — na fonte, ou no join com o prefixo do apelido (`apelido.currency`), como o
- * `pairFieldOf` do BE.
- */
-function pairFieldOf(draft: ReportDraft, field: string): string | undefined {
-  const dot = field.indexOf('.');
-  if (dot < 0) return draft.source ? CRM_MONEY_CURRENCY_PAIRS_FE[draft.source]?.[field] : undefined;
-  const alias = field.slice(0, dot);
-  const join = draft.joins.find((j) => j.alias === alias);
-  const pair = join?.rightSource ? CRM_MONEY_CURRENCY_PAIRS_FE[join.rightSource]?.[field.slice(dot + 1)] : undefined;
-  return pair ? `${alias}.${pair}` : undefined;
 }
 
 /** Item 11: a conversão para R$ só existe com medida de dinheiro que tem par de moeda. */
@@ -675,6 +682,23 @@ export function fromReport(row: CrmReportRow): ReportDraft {
     kind: row.kind,
     chartType: row.chartType,
   });
+}
+
+/** Item 19 (PR-C): modelo pronto → rascunho do editor, ainda não salvo. */
+export function fromTemplate(template: CrmReportTemplate): ReportDraft {
+  return fromSpec(template.spec, {
+    ...emptyDraft(),
+    name: template.name,
+    description: template.description ?? '',
+    kind: template.kind,
+    chartType: template.chartType,
+  });
+}
+
+/** Item 19: o modelo só abre se a fonte (e a tabela da direita de cada join) estiver instalada. */
+export function templateAvailable(template: CrmReportTemplate, installed: readonly ReportSource[]): boolean {
+  const needed = [template.spec.source, ...(template.spec.joins ?? []).map((j) => j.rightSource)];
+  return needed.every((s) => installed.includes(s));
 }
 
 // ---------------------------------------------------------------------------------------------------------------

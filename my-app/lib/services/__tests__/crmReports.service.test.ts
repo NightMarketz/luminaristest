@@ -42,6 +42,12 @@ describe('CrmReportsService', () => {
     expect(JSON.parse(String(lastCall().init.body))).toEqual({ name: 'Novo' });
   });
 
+  it('templates (PR-C, item 19): GET /crm/reports/templates', async () => {
+    await CrmReportsService.templates();
+    expect(lastCall().url).toMatch(/\/crm\/reports\/templates$/);
+    expect(lastCall().init.method).toBe('GET');
+  });
+
   it('remove: DELETE no id', async () => {
     await CrmReportsService.remove('r1');
     expect(lastCall().url).toMatch(/\/crm\/reports\/r1$/);

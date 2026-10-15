@@ -30,6 +30,7 @@ const FIELDS: ISchemaField[] = reportFields(
     { name: 'title2', label: 'Código', type: 'string' },
   ],
   { id: 'ID', createdAt: 'Criado em', updatedAt: 'Atualizado em' },
+  { amount: 'currency' }, // `moneyCurrencyPairs.leadProposals` do BE
 );
 
 const LEADS: ISchemaField[] = reportFields(
@@ -39,6 +40,7 @@ const LEADS: ISchemaField[] = reportFields(
     { name: 'ownerId', label: 'Dono', type: 'relation', relation: { targetTable: 'users' } },
   ],
   { id: 'ID', createdAt: 'Criado em', updatedAt: 'Atualizado em' },
+  { latestProposalAmount: 'latestProposalCurrency' }, // `moneyCurrencyPairs.leads` do BE
 );
 const rightFieldsOf = (s: ReportSource) => (s === 'leads' ? LEADS : null);
 
