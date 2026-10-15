@@ -219,6 +219,11 @@ export function CrmReportBuilder() {
     if (source === draft.source && schemaFields) return;
     const raw = await fieldsOf(source);
     const p = await pairsNow();
+    // sem os pares não dá para saber o que some (os campos do join viram "ausentes"): não poda nada, só avisa (review)
+    if (!p) {
+      setError({ key: 'report_builder.errors.TEMPLATES_UNAVAILABLE', params: {}, code: null });
+      return;
+    }
     if (draft.source && sourceChangeLosesItems(draft, reportFields(raw ?? [], labels, p?.[source]), rightFieldsFrom(rightRaw, p))) {
       setPending({ kind: 'source', apply: () => applySource(source, raw, p) });
       return;

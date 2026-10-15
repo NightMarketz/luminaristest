@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach, onTestFinished } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react';
 
 vi.mock('next-i18next', async () => (await import('./i18nPt')).nextI18nextPt());
@@ -561,7 +561,12 @@ describe('item 19 (PR-C) — começar de um modelo', () => {
   });
 
   it('a rota de modelos falha → aviso explícito, sem modelos; o editor fica bloqueado (sem os pares de moeda)', async () => {
-    templates.mockImplementationOnce(() => Promise.reject({ success: false, status: 500 }));
+    // falha persistente: a do hook e a do handler (`pairsNow`) — a falha sai do cache e a busca é refeita
+    const real = templates.getMockImplementation();
+    templates.mockImplementation(() => Promise.reject({ success: false, status: 500 }));
+    onTestFinished(() => {
+      if (real) templates.mockImplementation(real);
+    });
     render(<CrmReportBuilder />);
     expect(await screen.findByText(/Não foi possível carregar os modelos/)).toBeInTheDocument();
     expect(screen.queryByText('Começar de um modelo')).not.toBeInTheDocument();
@@ -569,6 +574,8 @@ describe('item 19 (PR-C) — começar de um modelo', () => {
     fireEvent.change(screen.getByLabelText('Fonte'), { target: { value: 'leadProposals' } });
     await waitFor(() => expect(fieldsOf).toHaveBeenCalledWith('leadProposals'));
     expect(await screen.findByTestId('block-reason')).toBeInTheDocument();
+    // review: trocar a fonte sem os pares não poda o rascunho (os joins pareceriam ausentes) — só bloqueia e avisa
+    await waitFor(() => expect(screen.getAllByText(/Não foi possível carregar os modelos/)).toHaveLength(2));
     expect(screen.getByText('Visualizar')).toBeDisabled();
   });
 });
