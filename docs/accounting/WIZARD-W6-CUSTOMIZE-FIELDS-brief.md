@@ -33,8 +33,8 @@
 
 ## 1. Checklist de comportamentos
 
-Cada item é testável sozinho. A sessão referida em todo o BE é a **`InterviewSession` do W4**: nome final,
-repositório e erro de sessão ausente vêm do BRIEF do W4 (insumo ausente, §7).
+Cada item é testável sozinho. A sessão referida em todo o BE é a **`InterviewSession` do W4** (`IInterviewSessionRepository`, BRIEF
+`BE-INCR-INTERVIEW-SESSION`, §7).
 
 ### BE — `BE-INCR-W6-CUSTOMIZE-FIELDS` (após W4 mergeado e ADR `Accepted`)
 
@@ -244,12 +244,14 @@ W6. O ADR deve dizer isso.
 
 ## 7. Insumos ausentes
 
-- **BRIEF do W4** (sessão `brief-w4`, escrita em paralelo nesta data): nome do model/repositório, forma do
-  `state`, TTL, e o código/forma do 404 de sessão perdida (F-W4-2). Os itens 3 e 2.4 assumem a forma do esboço
-  de 07/09 (`InterviewSession {id, userId, presetKey, state Json, expiresAt, deletedAt}`) e se ajustam ao que o
-  W4 ratificar.
-- Se o W4 mudar a forma de `customizationState.tables` (fonte de `ICustomizableTable`), os itens 5, 7 e 10
-  herdam a mudança.
+- ~~BRIEF do W4~~ **resolvido no merge de `main` (15/10):** [`BE-INCR-INTERVIEW-SESSION-brief.md`](BE-INCR-INTERVIEW-SESSION-brief.md)
+  fixa `IInterviewSessionRepository.findActive(id, userId, now)` / `saveState(id, userId, state, expiresAt)`,
+  `state Json` = `ICustomizationState` serializado, TTL de 24 h deslizante (F-W4-3 a) e
+  `InterviewSessionNotFoundError` → **404 `INTERVIEW_SESSION_NOT_FOUND`** (F-W4-2 b). Os itens 3, 5, 7 e 10 usam
+  esse repositório e esse erro sem forma própria. O `pendingProposal` (§2.4) entra em `state`, então todo
+  `saveState` do W6 renova o TTL. O BRIEF do W4 corrige o de 07/09 (E8): o "404 que o `AIChatMode` espera" era
+  sobre `CustomizeFields`. O item 17 cobre isso.
+- Nenhum outro insumo ausente.
 
 ## 8. Achados fora de escopo
 
