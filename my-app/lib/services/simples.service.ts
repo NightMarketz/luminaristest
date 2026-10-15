@@ -1,5 +1,11 @@
 import { apiClient } from '../api/api-client';
-import type { AlertaSimplesInput, SimplesUnitQueryInput } from '@/types/contracts/accounting/SimplesDto.gen';
+import type {
+  AlertaSimplesInput,
+  SalaoParceriaContratoInput,
+  SalaoParceriaContratoPatchInput,
+  SimplesDasRegistroInput,
+  SimplesUnitQueryInput,
+} from '@/types/contracts/accounting/SimplesDto.gen';
 
 /**
  * Simples Nacional — ME/EPP e MEI (`/api/accounting/simples/*`, nó X14; FE-INCR-SIMPLES). Entrada = contrato GERADO;
@@ -103,6 +109,23 @@ export interface ApuracaoMei {
   alertas: AlertaSimples[];
 }
 
+// espelha SalaoParceriaContratoView (server/src/features/accounting/dtos/SimplesDto.ts:141-153)
+export interface SalaoParceriaContrato {
+  id: string;
+  unitId: string;
+  profissionalContactId: string;
+  cotaSalaoBp: number;
+  naturezaCota: 'ALUGUEL_BEM_MOVEL' | 'GESTAO';
+  homologadoEm: string;
+  sindicato: string;
+  vigenteDesde: string;
+  vigenteAte: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type { SalaoParceriaContratoInput, SalaoParceriaContratoPatchInput, SimplesDasRegistroInput };
+
 /** `calcular`/`obter` devolvem uma ou outra conforme o perfil do ano (SimplesApuracaoService.ts:182-189). */
 export type Apuracao = ApuracaoSimples | ApuracaoMei;
 
@@ -121,5 +144,28 @@ export const simplesService = {
   /** POST …/apuracoes/:competencia/calcular — nada é gravado (B-2 → a). */
   async calcularApuracao(competencia: string, body: SimplesUnitQueryInput): Promise<Apuracao> {
     return (await apiClient.post<ApiEnvelope<Apuracao>>(`${base}/apuracoes/${enc(competencia)}/calcular`, body)).data;
+  },
+
+  /** PUT …/apuracoes/:competencia/das — registra o DAS oficial (ME/EPP e MEI); 409 = entradas mudaram; 400 = bloqueantes. */
+  async registrarDas(competencia: string, body: SimplesDasRegistroInput): Promise<Apuracao> {
+    return (await apiClient.put<ApiEnvelope<Apuracao>>(`${base}/apuracoes/${enc(competencia)}/das`, body)).data;
+  },
+
+  /** Contratos salão-parceiro (Lei 12.592) da unidade — item 13 do X14. */
+  async listParcerias(query: SimplesUnitQueryInput): Promise<SalaoParceriaContrato[]> {
+    return (await apiClient.get<ApiEnvelope<SalaoParceriaContrato[]>>(`${base}/parcerias?unitId=${enc(query.unitId)}`)).data;
+  },
+
+  async criarParceria(body: SalaoParceriaContratoInput): Promise<SalaoParceriaContrato> {
+    return (await apiClient.post<ApiEnvelope<SalaoParceriaContrato>>(`${base}/parcerias`, body)).data;
+  },
+
+  async atualizarParceria(id: string, body: SalaoParceriaContratoPatchInput): Promise<SalaoParceriaContrato> {
+    return (await apiClient.patch<ApiEnvelope<SalaoParceriaContrato>>(`${base}/parcerias/${enc(id)}`, body)).data;
+  },
+
+  /** Soft-delete no BE. */
+  async removerParceria(id: string, query: SimplesUnitQueryInput): Promise<void> {
+    await apiClient.delete(`${base}/parcerias/${enc(id)}?unitId=${enc(query.unitId)}`);
   },
 };

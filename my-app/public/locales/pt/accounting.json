@@ -2924,6 +2924,7 @@
     },
     "calculando": "Calculando…",
     "calcular": "Calcular",
+    "cancelar": "Cancelar",
     "col": {
       "aliquotaEfetiva": "Alíq. efetiva",
       "aliquotaNominal": "Alíq. nominal",
@@ -2940,6 +2941,25 @@
       "receita": "Receita",
       "situacao": "Situação",
       "tributos": "Tributos"
+    },
+    "das": {
+      "abrir": "Registrar DAS oficial",
+      "avisoCompleta": "Mesmo número e valor do DAS já registrado: o envio só completa a provisão pendente.",
+      "avisoSubstitui": "Já há DAS registrado nesta competência: o novo substitui o anterior e estorna a provisão dele.",
+      "bloqueada": "A prévia tem alerta que bloqueia o registro do DAS — resolva antes.",
+      "calculado": "Calculado (prévia)",
+      "conflito": "As entradas mudaram depois do cálculo — calculamos de novo; confira a prévia e registre outra vez.",
+      "enviar": "Confirmar registro",
+      "erro": {
+        "numeroObrigatorio": "Informe o número do documento (até 40 caracteres).",
+        "registrar": "Não foi possível registrar o DAS.",
+        "valorInvalido": "Valor inválido — use o formato 1.234,56 (maior que zero).",
+        "vencimentoInvalido": "Vencimento inválido — escolha uma data do calendário."
+      },
+      "precisaPrevia": "Calcule antes de registrar: o registro exige a prévia desta sessão.",
+      "reRegistrar": "Registrar outro DAS",
+      "sugestaoVencimento": "Vencimento sugerido: dia 20 do mês seguinte (LC 123 art. 21 III; Res. CGSN 140 art. 40). É só sugestão — confira no DAS (prorrogação e dia não útil não estão no cálculo).",
+      "title": "Registrar DAS oficial"
     },
     "detail": {
       "atividades": "Atividades",
@@ -3005,6 +3025,48 @@
       "REGIME_CAIXA": "Regime de caixa"
     },
     "nao": "Não",
+    "parceria": {
+      "cota": "Cota do salão",
+      "cotaPct": "Cota do salão (%)",
+      "editar": "Editar",
+      "editarTitulo": "Editar parceria",
+      "erro": {
+        "cota": "Cota do salão inválida — entre 0,01% e 99,99% (até 2 casas).",
+        "homologadoEm": "Informe a data de homologação do contrato (obrigatória — Lei 12.592 art. 1º-A § 8º).",
+        "natureza": "Escolha a natureza da cota.",
+        "profissional": "Escolha o profissional-parceiro.",
+        "sindicato": "Informe o sindicato que homologou (até 200 caracteres).",
+        "vigenteAte": "Fim da vigência inválido ou antes do início.",
+        "vigenteDesde": "Informe o início da vigência (data do calendário)."
+      },
+      "error": {
+        "load": "Erro ao carregar as parcerias.",
+        "remove": "Não foi possível remover a parceria.",
+        "save": "Não foi possível salvar a parceria."
+      },
+      "homologacao": "Homologação",
+      "homologadoEm": "Homologado em",
+      "natureza": {
+        "ALUGUEL_BEM_MOVEL": "Aluguel de bens móveis",
+        "GESTAO": "Gestão"
+      },
+      "naturezaCota": "Natureza da cota",
+      "nova": "Nova parceria",
+      "profissional": "Profissional",
+      "remover": "Remover",
+      "removerMsg": "O contrato sai da apuração a partir de agora (fica no histórico do sistema).",
+      "removerTitulo": "Remover parceria",
+      "salvar": "Salvar parceria",
+      "semEmployees": "Tabela de funcionários não encontrada: cadastre os profissionais antes de criar a parceria.",
+      "semFim": "sem fim",
+      "sindicato": "Sindicato",
+      "subtitle": "Lei 12.592 art. 1º-A: a cota do profissional-parceiro sai da receita do salão; sem homologação o contrato não produz efeito.",
+      "title": "Parcerias salão-parceiro",
+      "vazio": "Nenhuma parceria cadastrada nesta unidade.",
+      "vigencia": "Vigência",
+      "vigenteAte": "Vigente até (vazio = sem fim)",
+      "vigenteDesde": "Vigente desde"
+    },
     "semPerfilAno": "Perfil fiscal de {{ano}} não cadastrado: cadastre o perfil fiscal do ano para apurar os tributos.",
     "severity": {
       "INFO": "Informativo",
