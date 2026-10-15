@@ -2,22 +2,32 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FiAlertTriangle } from 'react-icons/fi';
 import { Modal } from '../../../components/ui/Modal';
 import { taxAssessmentsService, type TaxAssessment, type TributoApuracao } from '../../../lib/services/taxAssessments.service';
+import { companyFiscalProfileService, type CompanyFiscalProfileView } from '../../../lib/services/companyFiscalProfile.service';
 import { TRIBUTOS_GRADE, formatCentsStr, montarGrade, type CelulaTributo } from '../lib/taxAssessmentGrid';
 import { resolveError } from '../lib/resolveError';
 import { formatScopeDateBR, formatScopeDateTimeBR } from '../../dashboard/shared/utils/formatters';
 import { useAccountingT } from '../lib/useAccountingT';
+import { SimplesApuracaoPanel } from './SimplesApuracaoPanel';
 
 interface Props {
   unitId: string;
+  /** FE-INCR-SIMPLES item 8: atalho do detalhe MEI para o enquadramento no perfil fiscal do ano. */
+  onIrParaEnquadramentoMei?: (ano: number) => void;
 }
+
+type PerfilDoAno = { status: 'loading' } | { status: 'ok'; ano: number; view: CompanyFiscalProfileView | null } | { status: 'error'; message: string };
+const ehSimplesOuMei = (v: CompanyFiscalProfileView): v is CompanyFiscalProfileView & { regime: 'SIMPLES' | 'MEI' } =>
+  v.regime === 'SIMPLES' || v.regime === 'MEI';
 
 /**
  * Aba "Apuração" (FE-INCR-TAX-ASSESSMENT PR-1 — BRIEF §1 itens 1–4 e 7; F-1 a, F-3 a, F-5 a). Leitura da grade do
  * ano (X7 + X8), detalhe com memória/snapshot/histórico, `avisoParametroLegal` nas vivas e nas substituídas e o
- * reconcile da provisão pendente. Prévia/confirmação (PR-2/PR-3), Simples (PR-4) e MIT (PR-5) ficam fora.
+ * reconcile da provisão pendente. Prévia/confirmação (PR-2/PR-3) e MIT (PR-5) ficam fora.
+ * FE-INCR-SIMPLES PR-A item 1 (P4-1 a): o regime do perfil fiscal do ANO decide a grade — SIMPLES/MEI vão para o
+ * `SimplesApuracaoPanel` sem chamar o X7/X8; PRESUMIDO/REAL seguem nesta grade; sem perfil, só o aviso.
  * `<table>` + `Modal` (o `GenericTable` é do DynamicTable — mesmo precedente do `LegalParametersPanel`).
  */
-export function TaxAssessmentPanel({ unitId }: Props) {
+export function TaxAssessmentPanel({ unitId, onIrParaEnquadramentoMei }: Props) {
   const { t, tRef } = useAccountingT();
   const [ano, setAno] = useState(() => new Date().getFullYear());
   // I-2: o texto digitado é local; o ano só é aplicado quando válido (4 dígitos, 2000–2100).
@@ -33,6 +43,26 @@ export function TaxAssessmentPanel({ unitId }: Props) {
   // I-1 / M-3: só a última requisição de cada tipo aplica a resposta (as anteriores chegam fora de ordem e são descartadas).
   const listaReq = useRef(0);
   const detalheReq = useRef(0);
+  const perfilReq = useRef(0);
+  const [perfil, setPerfil] = useState<PerfilDoAno>({ status: 'loading' });
+  // O ano cuja lista X7/X8 já chegou: antes disso a grade mostra "carregando", nunca "nenhuma apuração" (o efeito que
+  // chama a lista roda depois do render em que o perfil PRESUMIDO/REAL chega).
+  const [listaDoAno, setListaDoAno] = useState<number | null>(null);
+
+  useEffect(() => {
+    const req = ++perfilReq.current;
+    setPerfil({ status: 'loading' });
+    companyFiscalProfileService.get(ano, unitId).then(
+      (view) => { if (req === perfilReq.current) setPerfil({ status: 'ok', ano, view }); },
+      (err: unknown) => {
+        if (req === perfilReq.current) setPerfil({ status: 'error', message: resolveError(err, tRef.current('simples.error.perfil', 'Erro ao carregar o perfil fiscal do ano.')) });
+      },
+    );
+  }, [unitId, ano, tRef]);
+
+  // O perfil de outro ano (troca de ano com o GET em voo) conta como carregando: nada de X7/X8 com o regime velho.
+  const perfilDoAno: PerfilDoAno = perfil.status === 'ok' && perfil.ano !== ano ? { status: 'loading' } : perfil;
+  const regimeX7 = perfilDoAno.status === 'ok' && perfilDoAno.view !== null && !ehSimplesOuMei(perfilDoAno.view);
 
   const carregar = useCallback(async () => {
     const req = ++listaReq.current;
@@ -40,15 +70,21 @@ export function TaxAssessmentPanel({ unitId }: Props) {
     setError(null);
     try {
       const r = await taxAssessmentsService.list({ unitId, anoCalendario: ano });
-      if (req === listaReq.current) setLinhas(r);
+      if (req === listaReq.current) {
+        setLinhas(r);
+        setListaDoAno(ano);
+      }
     } catch (err: unknown) {
-      if (req === listaReq.current) setError(resolveError(err, tRef.current('taxAssessment.error.load', 'Erro ao carregar as apurações.')));
+      if (req === listaReq.current) {
+        setError(resolveError(err, tRef.current('taxAssessment.error.load', 'Erro ao carregar as apurações.')));
+        setListaDoAno(ano);
+      }
     } finally {
       if (req === listaReq.current) setLoading(false);
     }
   }, [unitId, ano, tRef]);
 
-  useEffect(() => { void carregar(); }, [carregar]);
+  useEffect(() => { if (regimeX7) void carregar(); }, [carregar, regimeX7]);
 
   const grade = useMemo(() => montarGrade(linhas), [linhas]);
   const aberta: CelulaTributo | undefined = celula ? grade.find((g) => g.periodo === celula.periodo)?.tributos[celula.tributo] : undefined;
@@ -128,9 +164,19 @@ export function TaxAssessmentPanel({ unitId }: Props) {
         </label>
       </div>
 
-      {error && <div className="mb-3 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</div>}
+      {regimeX7 && error && <div className="mb-3 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</div>}
 
-      {loading ? (
+      {perfilDoAno.status === 'loading' ? (
+        <div className="py-8 text-center text-sm text-neutral-500">{t('taxAssessment.loading', 'Carregando…')}</div>
+      ) : perfilDoAno.status === 'error' ? (
+        <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{perfilDoAno.message}</div>
+      ) : perfilDoAno.view === null ? (
+        <div role="status" data-testid="sem-perfil-ano" className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+          {t('simples.semPerfilAno', 'Perfil fiscal de {{ano}} não cadastrado: cadastre o perfil fiscal do ano para apurar os tributos.', { ano: String(ano) })}
+        </div>
+      ) : ehSimplesOuMei(perfilDoAno.view) ? (
+        <SimplesApuracaoPanel unitId={unitId} ano={ano} perfil={perfilDoAno.view} onIrParaEnquadramentoMei={onIrParaEnquadramentoMei} />
+      ) : loading || listaDoAno !== ano ? (
         <div className="py-8 text-center text-sm text-neutral-500">{t('taxAssessment.loading', 'Carregando…')}</div>
       ) : grade.length === 0 ? (
         <div className="py-8 text-center text-sm text-neutral-500">{t('taxAssessment.empty', 'Nenhuma apuração gravada neste ano.')}</div>

@@ -2,10 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { getCookie } from 'cookies-next';
 import { useTranslation } from 'next-i18next';
-import { IMessage, ICustomizationState, ICreationChoicePrompt, CreationChoice } from '../types/InterviewTypes';
+import { IMessage, ICustomizationState, ICreationChoicePrompt, CreationChoice, ICreationError } from '../types/InterviewTypes';
 import { ITable } from '../types/RightSidebarTypes';
 import type { CreateDashboardPayload, CreateDashboardResult } from '../../../lib/services/setup.service';
 import { notifyAccountingDraft } from '../setup/accountingDraftNotice';
+import { classifyCreationError } from '../setup/classifyCreationError';
 import type { OnboardingFiscalInput } from '@/types/contracts/accounting/CompanyFiscalProfileDto.gen';
 
 /**
@@ -37,7 +38,9 @@ export function useAiInterview() {
   const [presetKey, setPresetKey] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [creationError, setCreationError] = useState<string | null>(null);
+  const [creationError, setCreationError] = useState<ICreationError | null>(null);
+  // W7 item 3 (F-W7-2 a): o último pedido de criação — o retry o reenvia igual, sem recarregar a página.
+  const lastCreateRequest = useRef<{ key: string; conversa: IMessage[]; fiscal: FiscalOnboarding } | null>(null);
   // X13 PR-3 item 20: a entrevista terminou; falta a pergunta fechada de regime/porte antes do create.
   const [fiscalPendente, setFiscalPendente] = useState<{ key: string; conversa: IMessage[] } | null>(null);
   // W3 FE item 7: o servidor pede os botões criar × customizar (`choicePrompt` do último turno).
@@ -54,27 +57,34 @@ export function useAiInterview() {
   const { t } = useTranslation('common');
 
   useEffect(() => {
+    // W7 item 1: o cleanup aborta a saudação da 1ª montagem do StrictMode (e a de quem sai antes da resposta) —
+    // uma chamada ao modelo por montagem viva, nunca duas.
+    const controller = new AbortController();
     async function fetchInitialMessage() {
       setIsLoading(true);
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/ai/ChatInterview`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getCookie('auth_token')}` },
-          body: JSON.stringify({ messages: [], stage: 'GREETING' })
+          body: JSON.stringify({ messages: [], stage: 'GREETING' }),
+          signal: controller.signal
         });
         const data = await response.json();
+        if (controller.signal.aborted) return;
         if (data.response) {
           setMessages([{ sender: 'ai', text: data.response }]);
           setCurrentStage(data.nextStage);
         }
       } catch (error) {
+        if (controller.signal.aborted) return;
         console.error('Failed to fetch initial message:', error);
-        setMessages([{ sender: 'ai', text: 'Olá! Houve um problema ao iniciar. Por favor, recarregue a página.' }]);
+        setMessages([{ sender: 'ai', text: t('onboardingGreetingFailed') }]);
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     }
     fetchInitialMessage();
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {
@@ -89,37 +99,38 @@ export function useAiInterview() {
     }
   }, [isLoading]);
 
-  const logState = () => {
-    console.log({
-      stage: currentStage,
-      messages,
-      customizationState,
-      isCreating,
-      creationError,
-      selectedTable,
-      showLeftPanel: showCustomizationPanel,
-      showRightPanel
-    });
-  };
-
   async function handleCreateSystem(key: string, conversa: IMessage[], fiscal: FiscalOnboarding) {
+    lastCreateRequest.current = { key, conversa, fiscal };
     setIsCreating(true);
     setCreationError(null);
     try {
       const token = getCookie('auth_token');
       const body: CreateDashboardPayload = { suiteKey: key, unit: { name: nomeDaUnidadeDaEntrevista(conversa, key) }, fiscal };
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-      });
+      let response: Response;
+      try {
+        response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/create`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(body),
+        });
+      } catch (err) {
+        // W7 item 4: falha de rede — o pedido pode ser reenviado (o 403 one-shot barra a criação dupla).
+        setCreationError({ kind: classifyCreationError(null, null), message: (err instanceof Error && err.message) || t('onboardingErrorUnexpected') });
+        setIsCreating(false);
+        return;
+      }
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Não foi possível criar o sistema.' }));
-        throw new Error(errorData.error || 'Ocorreu uma falha ao criar seu dashboard.');
+        const errorData = (await response.json().catch(() => null)) as { error?: string; errorCode?: string } | null;
+        setCreationError({
+          kind: classifyCreationError(response.status, errorData),
+          message: errorData?.error || t('onboardingErrorCreateFailed'),
+        });
+        setIsCreating(false);
+        return;
       }
       // I4 PR-4 (item 21): contabilidade `Draft` ⇒ aviso que não bloqueia, antes de navegar.
       const created = (await response.json().catch(() => ({}))) as { data?: CreateDashboardResult };
@@ -129,7 +140,7 @@ export function useAiInterview() {
       }, 2000);
 
     } catch (err) {
-      setCreationError((err instanceof Error ? err.message : String(err)) || 'Ocorreu um erro inesperado.');
+      setCreationError({ kind: 'retryable', message: (err instanceof Error ? err.message : String(err)) || t('onboardingErrorUnexpected') });
       setIsCreating(false);
     }
   }
@@ -183,7 +194,7 @@ export function useAiInterview() {
 
     } catch (error) {
       console.error('Failed to get response from AI:', error);
-      setMessages(prev => [...prev, { sender: 'ai', text: 'Desculpe, ocorreu um erro de comunicação.' }]);
+      setMessages(prev => [...prev, { sender: 'ai', text: t('onboardingTurnFailed') }]);
     } finally {
       setIsLoading(false);
     }
@@ -251,9 +262,20 @@ export function useAiInterview() {
     void handleCreateSystem(key, conversa, fiscal);
   }
 
+  /** W7 item 3 (F-W7-2 a): reenvia o último pedido de criação, igual — nunca recarrega a página (perderia a conversa). */
   const handleRetry = () => {
-    window.location.reload();
-  }
+    const last = lastCreateRequest.current;
+    if (!last || isCreating) return;
+    void handleCreateSystem(last.key, last.conversa, last.fiscal);
+  };
+
+  /** W7 item 5: fecha o erro e devolve a pergunta fiscal do pedido que falhou; a conversa fica como estava. */
+  const backToConversation = () => {
+    const last = lastCreateRequest.current;
+    setCreationError(null);
+    setIsCreating(false);
+    if (last) setFiscalPendente({ key: last.key, conversa: last.conversa });
+  };
 
   return {
     messages,
@@ -274,8 +296,8 @@ export function useAiInterview() {
     handleSendMessage,
     handleSelectTable,
     handleUpdateTable,
-    logState,
     handleRetry,
+    backToConversation,
     presetKey,
     choicePrompt,
     sendCreationChoice,

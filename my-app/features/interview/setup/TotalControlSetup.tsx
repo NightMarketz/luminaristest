@@ -146,7 +146,7 @@ export default function TotalControlSetup() {
       if (dependents.length > 0) {
         const dependentNames = dependents.map(d => presetDetails?.tables[d]?.name || d).join(', ');
         const confirmed = window.confirm(
-          `Ao desmarcar esta tabela, as seguintes tabelas que dependem dela também serão desmarcadas: ${dependentNames}. Deseja continuar?`
+          t('onboardingTotalControlConfirmDeselect', { names: dependentNames })
         );
 
         if (confirmed) {
@@ -164,7 +164,7 @@ export default function TotalControlSetup() {
 
   const handleCreateCustomDashboard = async (fiscal: FiscalOnboarding) => {
     if (!presetDetails || !selectedPreset) {
-      setError('Os detalhes do preset não foram carregados.');
+      setError(t('onboardingTotalControlDetailsNotLoaded'));
       return;
     }
     if (!unitName.trim()) return; // o botão já fica desabilitado; o servidor responderia 400
@@ -196,7 +196,7 @@ export default function TotalControlSetup() {
       router.push('/dashboard');
 
     } catch (err) {
-      setError((err instanceof Error ? err.message : String(err)) || 'Ocorreu um erro inesperado.');
+      setError((err instanceof Error ? err.message : String(err)) || t('onboardingErrorUnexpected'));
     } finally {
       setIsCreating(false);
     }
@@ -208,7 +208,7 @@ export default function TotalControlSetup() {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-        <p className="text-slate-500">Carregando modelos...</p>
+        <p className="text-neutral-500">{t('onboardingTotalControlLoadingModels')}</p>
       </div>
     );
   }
@@ -222,15 +222,15 @@ export default function TotalControlSetup() {
       <div className="w-full">
         <div className="flex items-center gap-4 mb-10">
           <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-600 text-white font-bold shadow-lg shadow-blue-500/20">1</div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Escolha um Modelo Base</h2>
+          <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('onboardingTotalControlChooseBase')}</h2>
         </div>
 
         <div className="space-y-12">
           {Object.entries(groupedPresets).map(([category, categoryPresets]) => (
             <section key={category}>
               <div className="flex items-center gap-3 mb-6">
-                <div className="h-8 w-1 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
-                <h3 className="text-lg font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{category}</h3>
+                <div className="h-8 w-1 bg-neutral-300 dark:bg-neutral-700 rounded-full"></div>
+                <h3 className="text-lg font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-widest">{category}</h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {categoryPresets.map((preset) => (
@@ -239,11 +239,11 @@ export default function TotalControlSetup() {
                     onClick={() => handleSelectPreset(preset)}
                     className={`group relative flex flex-col items-start p-6 rounded-2xl transition-all duration-300 text-left border-2 ${selectedPreset?.key === preset.key
                         ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-500 shadow-lg shadow-blue-500/5'
-                        : 'bg-white dark:bg-neutral-800 border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700'
+                        : 'bg-white dark:bg-neutral-800 border-neutral-100 dark:border-neutral-800 hover:border-neutral-200 dark:hover:border-neutral-700'
                       }`}
                   >
-                    <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{preset.name}</h4>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-4">{preset.description}</p>
+                    <h4 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">{preset.name}</h4>
+                    <p className="text-neutral-500 dark:text-neutral-400 text-sm leading-relaxed mb-4">{preset.description}</p>
 
                     {selectedPreset?.key === preset.key && (
                       <div className="mt-auto flex items-center text-blue-600 dark:text-blue-400 font-bold text-xs uppercase tracking-widest">
@@ -257,17 +257,17 @@ export default function TotalControlSetup() {
           ))}
         </div>
 
-        <footer className="mt-16 pt-8 border-t border-slate-100 dark:border-slate-800">
+        <footer className="mt-16 pt-8 border-t border-neutral-100 dark:border-neutral-800">
           <div className="flex flex-col items-center">
             <button
               onClick={handleNextStep}
               disabled={!selectedPreset || isFetchingDetails}
               className="w-full max-w-sm bg-blue-600 text-white font-bold py-4 px-8 rounded-2xl shadow-xl shadow-blue-500/20 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
-              {isFetchingDetails ? 'Carregando detalhes...' : 'Próximo: Customizar Tabelas'}
+              {isFetchingDetails ? t('onboardingTotalControlLoadingDetails') : t('onboardingTotalControlNext')}
             </button>
             {!selectedPreset && (
-              <p className="mt-4 text-slate-400 text-sm italic">Selecione um modelo para continuar.</p>
+              <p className="mt-4 text-neutral-400 text-sm italic">{t('onboardingTotalControlSelectModel')}</p>
             )}
           </div>
         </footer>
@@ -280,12 +280,12 @@ export default function TotalControlSetup() {
       <div className="w-full">
         <div className="flex items-center gap-4 mb-10">
           <div className="flex items-center justify-center w-10 h-10 rounded-full bg-emerald-500 text-white font-bold shadow-lg shadow-emerald-500/20">2</div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Selecione as Tabelas</h2>
+          <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('onboardingTotalControlSelectTables')}</h2>
         </div>
 
-        <div className="p-6 bg-slate-100 dark:bg-neutral-800/50 rounded-2xl mb-8 border border-slate-200 dark:border-slate-800">
-          <p className="text-slate-600 dark:text-slate-400">
-            Personalizando para o sistema de: <strong className="text-slate-900 dark:text-white">{selectedPreset?.name}</strong>. Desmarque as tabelas que não deseja utilizar no seu fluxo de trabalho.
+        <div className="p-6 bg-neutral-100 dark:bg-neutral-800/50 rounded-2xl mb-8 border border-neutral-200 dark:border-neutral-800">
+          <p className="text-neutral-600 dark:text-neutral-400">
+            {t('onboardingTotalControlCustomizingFor')} <strong className="text-neutral-900 dark:text-white">{selectedPreset?.name}</strong>. {t('onboardingTotalControlCustomizingHint')}
           </p>
         </div>
 
@@ -300,8 +300,8 @@ export default function TotalControlSetup() {
               <div
                 key={tableKey}
                 className={`p-6 rounded-2xl transition-all border-2 ${isSelected
-                    ? 'bg-white dark:bg-neutral-900 border-blue-500 shadow-xl shadow-slate-200/50 dark:shadow-none'
-                    : 'bg-slate-50/50 dark:bg-neutral-100/5 border-slate-200 dark:border-slate-800 opacity-60'
+                    ? 'bg-white dark:bg-neutral-900 border-blue-500 shadow-xl shadow-neutral-200/50 dark:shadow-none'
+                    : 'bg-neutral-50/50 dark:bg-neutral-100/5 border-neutral-200 dark:border-neutral-800 opacity-60'
                   }`}
               >
                 <div className="flex items-center justify-between gap-4">
@@ -313,31 +313,31 @@ export default function TotalControlSetup() {
                         id={`table-toggle-${tableKey}`}
                         checked={isSelected}
                         onChange={(e) => handleTableSelection(tableKey, e.target.checked)}
-                        className="h-6 w-6 rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-neutral-800 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        className="h-6 w-6 rounded-lg border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-blue-600 focus:ring-blue-500 cursor-pointer"
                       />
                     </div>
                     <div>
-                      <label htmlFor={`table-toggle-${tableKey}`} className="text-xl font-bold text-slate-900 dark:text-white capitalize cursor-pointer">
+                      <label htmlFor={`table-toggle-${tableKey}`} className="text-xl font-bold text-neutral-900 dark:text-white capitalize cursor-pointer">
                         {tableData.name || tableKey.replace(/_/g, ' ')}
                       </label>
-                      <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">ID: {tableKey}</div>
+                      <div className="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5">ID: {tableKey}</div>
                     </div>
                   </div>
                   <div className="hidden sm:block">
                     {isSelected ? (
-                      <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded-full">Ativado</span>
+                      <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded-full">{t('onboardingTotalControlEnabled')}</span>
                     ) : (
-                      <span className="px-3 py-1 bg-slate-200 dark:bg-slate-800 text-slate-500 text-xs font-bold rounded-full">Ignorado</span>
+                      <span className="px-3 py-1 bg-neutral-200 dark:bg-neutral-800 text-neutral-500 text-xs font-bold rounded-full">{t('onboardingTotalControlIgnored')}</span>
                     )}
                   </div>
                 </div>
 
                 {isSelected && (
-                  <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
-                    <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Campos desta tabela</h4>
+                  <div className="mt-6 pt-6 border-t border-neutral-100 dark:border-neutral-800">
+                    <h4 className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-4">{t('onboardingTotalControlTableFields')}</h4>
                     <div className="flex flex-wrap gap-2">
                       {schema.fields.map((field) => (
-                        <div key={field.name} className="bg-slate-50 dark:bg-neutral-800 text-slate-600 dark:text-slate-400 py-1.5 px-3 rounded-lg text-xs border border-slate-200 dark:border-slate-700">
+                        <div key={field.name} className="bg-neutral-50 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 py-1.5 px-3 rounded-lg text-xs border border-neutral-200 dark:border-neutral-700">
                           {field.label || field.name}
                         </div>
                       ))}
@@ -376,9 +376,9 @@ export default function TotalControlSetup() {
           <button
             onClick={() => setCurrentStep('selecting_preset')}
             disabled={isCreating}
-            className="w-full sm:w-auto px-8 py-4 bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-slate-400 font-bold rounded-2xl hover:bg-slate-200 dark:hover:bg-neutral-700 transition-all disabled:opacity-50"
+            className="w-full sm:w-auto px-8 py-4 bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 font-bold rounded-2xl hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-all disabled:opacity-50"
           >
-            Voltar
+            {t('back')}
           </button>
           <button
             onClick={() => setAskFiscal(true)}
@@ -388,10 +388,10 @@ export default function TotalControlSetup() {
             {isCreating ? (
               <>
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white"></div>
-                <span>Criando Sistema Personalizado...</span>
+                <span>{t('onboardingTotalControlCreating')}</span>
               </>
             ) : (
-              <span>Finalizar e Criar Sistema</span>
+              <span>{t('onboardingTotalControlFinish')}</span>
             )}
           </button>
         </footer>
