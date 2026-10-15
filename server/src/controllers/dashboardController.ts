@@ -34,6 +34,7 @@ import { OnboardingAccountingResultSchema } from '@/features/accountingBinding/d
 import type { ActivateDefaultBindingResult, OnboardingAccountingResult } from '@/features/accountingBinding/dtos/ActivateDefaultBindingDto';
 import { composeModuleTables, expandModuleSelectors, type ModuleSelector } from '@/features/dynamicTables/presets/modules/registry';
 import { applyModuleRemovals, applySelectOverrides, assertAddedFieldsRespectModules, resolveModuleSelection } from '@/features/dynamicTables/presets/modules/moduleSelection';
+import { assertRemovalsAllowed } from '@/features/dynamicTables/presets/removability';
 import { CoreSystemPreset, PresetTableDefinition } from '@/features/dynamicTables/presets';
 import { DYNAMIC_TABLE_CATEGORY_CONFIG, DynamicTableCategoryConfig } from '@/features/dynamicTables/models/TableCategories';
 import { presetService } from '@/features/dynamicTables/services/PresetService';
@@ -200,7 +201,10 @@ async function handleCustomCreation(
     };
 
     const keptModules = applyModuleRemovals(installedModules, removedTables);
+    // W2 item 7 (F-W2-3 → a): a mesma trava da Entrevista com IA, sobre o conjunto final (antes de apagar e antes do
+    // `finalPayload`, que descarta `meta`). Módulos já foram decididos acima; Core em `removedTables` segue ignorado.
     const coreTableKeys = Object.keys(CoreSystemPreset.tables);
+    assertRemovalsAllowed(finalTablesConfig, removedTables.filter((k) => !coreTableKeys.includes(k)));
 
     for (const tableKey of removedTables) {
       if (!coreTableKeys.includes(tableKey)) {
