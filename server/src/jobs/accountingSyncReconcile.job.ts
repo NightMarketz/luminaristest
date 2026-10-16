@@ -101,6 +101,7 @@ import { syncSkipErrorCode } from '../features/accounting/sync/AccountingSyncPor
 import { JournalEntryRepository } from '../features/accounting/repositories/JournalEntryRepository';
 import { PackageBalanceRepository } from '../features/packages/repositories/PackageBalanceRepository';
 import { loadPackageValidityDays, loadSaleRevenueLines, loadSalePackageInfo, loadSaleTomadorTipo } from '../features/accounting/sync/bridges/saleItems';
+import { ledgerDays, reconcileReceitaFiscalRecebimentos, recebimentoSaleFromRow } from '../features/accounting/sync/bridges/ReceitaFiscalRecebimentoBridge';
 import type { PackageCreditCommand } from '../features/packages/services/PackageBalanceService';
 import { saleDayAsWritten } from '../features/accounting/models/dates';
 import type { ProductLine } from '../features/accounting/sync/bridges/saleItems';
@@ -2172,6 +2173,20 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
       recordEstorno: (scope, sale, dia) => factory.getReceitaFiscalService().registrarEstorno(scope, sale.saleId, sale.tipo, dia),
     });
 
+    // X14-CAIXA PR-1 (itens 3–5): recebimento de toda venda liquidada (e o estorno dela) — base do DAS no caixa.
+    const receitaFiscalRecebimentos = await reconcileReceitaFiscalRecebimentos({
+      listSales: async () => {
+        const out = classifiedFinalized
+          .filter(({ row }) => row.data.paymentStatus === 'Paid')
+          .map(({ ownerUserId, row, isAllPackage }) => recebimentoSaleFromRow(ownerUserId, row, isAllPackage));
+        for (const { ownerUserId, row } of await listSalesByStatus('Cancelled')) {
+          out.push(recebimentoSaleFromRow(ownerUserId, row, (await loadSalePackageInfo(ownerUserId, row.id)).kind === 'Package'));
+        }
+        return out;
+      },
+      ...ledgerDays(),
+    });
+
     // Package origin (C 2.1.1 + balance credit) for every all-Package Finalized sale.
     const packageOrigin = await reconcileSalePackageOrigin({
       listPackageSales: async () =>
@@ -2333,7 +2348,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
       });
     }
 
-    return [crm, sale, cancellations, returns, settlements, cogs, receitaFiscal, receitaFiscalEstornos, packageOrigin, packageConsumption].reduce(
+    return [crm, sale, cancellations, returns, settlements, cogs, receitaFiscal, receitaFiscalEstornos, receitaFiscalRecebimentos, packageOrigin, packageConsumption].reduce(
       mergeSummaries,
     );
   };

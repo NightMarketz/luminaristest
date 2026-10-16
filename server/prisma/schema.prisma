@@ -67,6 +67,7 @@ model User {
   simplesSegregacoes         SimplesSegregacaoManual[] // X14 PR-2 item 12
   salaoParcerias             SalaoParceriaContrato[] // X14 PR-2 item 13
   receitaFiscalLinhas        ReceitaFiscalLinha[] // X14 PR-2 item 15
+  receitaFiscalRecebimentos  ReceitaFiscalRecebimento[] // X14-CAIXA PR-1 item 1
   assignmentsOwned           AccountantAssignment[]      @relation("AssignmentOwner") // BE-INCR-ACCOUNTANT-GOVERNANCE (GOV-CONTADOR) — dono do escopo
   assignmentsAsAccountant    AccountantAssignment[]      @relation("AssignmentAccountant") // GOV-CONTADOR — login do contador
   policyVersionsOwned        AccountingPolicyVersion[]   @relation("PolicyVersionOwner") // GOV-CONTADOR — política versionada (F-GOV-6 b)
@@ -1697,6 +1698,13 @@ model CompanyFiscalProfile {
   meiOcupacoes                     Json?
   // X14 F-PR4-12 (b), dono 10/10: regime de apuração da receita no Simples — COMPETENCIA | CAIXA (Res. CGSN 140 art. 16).
   simplesRegimeApuracao            String             @default("COMPETENCIA")
+  // BE-INCR-SIMPLES-CAIXA PR-1 (nó X14-CAIXA, item 7; F-CX-3 a): data de efeitos da exclusão do Simples (YYYY-MM-DD),
+  // gatilho do art. 20 II c da Res. CGSN 140. Só no regime SIMPLES.
+  simplesExclusaoEfeitosEm         String?
+  // Item 7a (F-CX-2 c + F-CX-2.1 a): prazo D+N do recebimento do cartão no caixa. Obrigatórios com CAIXA, null com
+  // COMPETENCIA (0..365 dias).
+  simplesCaixaPrazoCartaoDebitoDias  Int?
+  simplesCaixaPrazoCartaoCreditoDias Int?
   createdById                      String?
   updatedById                      String?
   createdAt                        DateTime           @default(now())
@@ -2842,6 +2850,30 @@ model ReceitaFiscalLinha {
   @@unique([userId, unitId, saleId, itemRef])
   @@index([userId, unitId, competencia])
   @@map("receita_fiscal_linhas")
+}
+
+// BE-INCR-SIMPLES-CAIXA PR-1 (nó X14-CAIXA, item 1; F-CX-1 a) — recebimento da venda, base do DAS no regime de caixa
+// (Res. CGSN 140 art. 16 § 1º, vigente até 31/12/2026). Uma linha por venda × origem; gravada no seam de liquidação
+// (post-commit) e refeita pelo reconcile. Sem soft-delete: o estorno vira status REVERTED com o dia do estorno.
+model ReceitaFiscalRecebimento {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId           String
+  saleId           String
+  dia              String // YYYY-MM-DD do recebimento (paidAt; cartão = paidAt + N; pacote = dia da prestação)
+  competenciaCaixa String // YYYY-MM do dia
+  valorCents       BigInt
+  meio             String // Cash | Pix | Debit Card | Credit Card | Package Balance
+  origem           String // SALE_SETTLED | PACKAGE_BALANCE
+  status           String   @default("ACTIVE") // ACTIVE | REVERTED
+  diaEstorno       String? // YYYY-MM-DD do estorno do `sale.settled` (item 5); null enquanto ACTIVE
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([userId, unitId, saleId, origem])
+  @@index([userId, unitId, competenciaCaixa])
+  @@map("receita_fiscal_recebimentos")
 }
 
 // BE-INCR-LEGAL-PARAMS PR-4 (item 10; emenda §9 L-3, dono 07/10 "Tabela de jobs") — fila do recálculo: publicar ou

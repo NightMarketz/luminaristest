@@ -199,7 +199,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     // SIMPLES-PISO-ANEXO-XI item 12 (F-AX-2 a): chaves do Anexo XI (A-0001…) separadas por vírgula — sem texto livre.
     'meiOcupacoes',
     // X14 F-PR4-12 (b): enum COMPETENCIA | CAIXA do regime de apuração do Simples.
-    'simplesRegimeApuracao'],
+    'simplesRegimeApuracao',
+    // BE-INCR-SIMPLES-CAIXA PR-1 (item 7; F-CX-3 a): data de efeitos da exclusão do Simples (date-only, sem PII).
+    'simplesExclusaoEfeitosEm'],
   'company_fiscal_profile.deleted': ['anoCalendario'],
   // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7, item 22) — só ids, enum e centavos como string; sem PII. O documento
   // da dedução (texto livre) e a memória ficam FORA do evento.
