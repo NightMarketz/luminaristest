@@ -99,6 +99,38 @@ export function parseEnumChoice(content: string | null | undefined, options: rea
   }
 }
 
+/**
+ * Escolha MÚLTIPLA presa a um conjunto fechado — irmã do `buildEnumResponseFormat` (W5 item 9, c12 do I8): `keys` é
+ * uma lista cujos itens só podem ser opções. Lista vazia = nenhuma escolha.
+ */
+export function buildEnumSetResponseFormat(options: readonly string[]) {
+  return {
+    type: 'json_schema' as const,
+    json_schema: {
+      name: 'selecao' as const,
+      strict: true as const,
+      schema: {
+        type: 'object' as const,
+        properties: { keys: { type: 'array' as const, items: { type: 'string' as const, enum: [...options] } } },
+        required: ['keys'] as ['keys'],
+        additionalProperties: false as const,
+      },
+    },
+  };
+}
+
+/** Lê a escolha múltipla; JSON inválido ⇒ `[]`; item fora de `options` é descartado; duplicata conta uma vez. */
+export function parseEnumSetChoice(content: string | null | undefined, options: readonly string[]): string[] {
+  if (!content) return [];
+  try {
+    const keys = (JSON.parse(content) as { keys?: unknown }).keys;
+    if (!Array.isArray(keys)) return [];
+    return [...new Set(keys.filter((k): k is string => typeof k === 'string' && options.includes(k)))];
+  } catch {
+    return [];
+  }
+}
+
 export function tryFixMalformedJson(jsonString: string): string | null {
   try {
     JSON.parse(jsonString);
@@ -256,6 +288,24 @@ export class OpenAIService {
       max_tokens: 50,
     });
     return parseEnumChoice(completion.choices[0]?.message?.content, options);
+  }
+
+  /**
+   * Escolhe ZERO OU MAIS `options` para o `input`, com a saída restrita pelo schema (W5 item 9 — irmão do
+   * `classifyIntoEnum`, mesmo modelo `FALLBACK`). Erro da API sobe para o chamador.
+   */
+  public async classifyIntoEnumSet(input: string, systemPrompt: string, options: readonly string[]): Promise<string[]> {
+    if (options.length === 0) return [];
+    const completion = await this.openai.chat.completions.create({
+      model: CONFIG.MODELS.FALLBACK,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: input },
+      ],
+      response_format: buildEnumSetResponseFormat(options),
+      max_tokens: 100,
+    });
+    return parseEnumSetChoice(completion.choices[0]?.message?.content, options);
   }
 
   /**

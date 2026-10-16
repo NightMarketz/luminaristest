@@ -7,6 +7,7 @@ import type { Request, Response } from 'express';
 import { StageHandlers } from '../StageHandlers';
 import { InterviewService } from '../InterviewService';
 import { PresetMatcher } from '../PresetMatcher';
+import { ModuleSuggester } from '../ModuleSuggester';
 import { presetKnowledgeBase } from '../../../dynamicTables/presets/ai/PresetKnowledgeBase';
 import { postChatInterview } from '../../../../controllers/interviewController';
 import type { OpenAIService } from '../../../../lib/openai/OpenAIService';
@@ -76,6 +77,8 @@ describe('item 3 — choicePrompt.reason em todo turno que pede a escolha de nov
   it('MATCHING_PRESET com preset encontrado → reason initial', async () => {
     jest.spyOn(PresetMatcher.prototype, 'findMatchingPreset').mockResolvedValue(presetKnowledgeBase[0]);
     jest.spyOn(StageHandlers.prototype, 'getAiResponseWithHistory').mockResolvedValue('Encontrei um sistema.');
+    // W5 item 12: a sugestão de módulos chamaria a IA; aqui só interessa o choicePrompt.
+    jest.spyOn(ModuleSuggester.prototype, 'suggest').mockResolvedValue([]);
 
     const result = await InterviewService.getInstance().processTurn('MATCHING_PRESET', said('tenho um salão'));
 

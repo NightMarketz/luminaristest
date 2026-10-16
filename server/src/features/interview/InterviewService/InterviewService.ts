@@ -1,10 +1,13 @@
 import { logger } from '../../../lib/logger';
 import { OpenAIService } from '../../../lib/openai/OpenAIService';
-import { IMessage, InterviewStage, IInterviewTurnResult, ProcessableStage, CreationChoice } from '../models/InterviewTypes';
+import { IMessage, InterviewStage, IInterviewTurnResult, ProcessableStage, CreationChoice, InterviewModuleOption } from '../models/InterviewTypes';
 import { PresetMatcher } from './PresetMatcher';
+import { ModuleSuggester } from './ModuleSuggester';
 import { StageHandlers } from './StageHandlers';
 import { stageConfig } from './PromptConfig';
 import { CustomizationService } from '../CustomizationService/CustomizationService';
+import { presetService } from '../../dynamicTables/services/PresetService';
+import { MODULE_REGISTRY } from '../../dynamicTables/presets/modules/registry';
 
 /**
  * Serviço responsável por orquestrar todo o processo de entrevista com IA
@@ -13,6 +16,7 @@ export class InterviewService {
   private static instance: InterviewService;
   private openaiService: OpenAIService;
   private presetMatcher: PresetMatcher;
+  private moduleSuggester: ModuleSuggester;
   private stageHandlers: StageHandlers;
   private customizationService: CustomizationService;
 
@@ -20,6 +24,7 @@ export class InterviewService {
     this.openaiService = OpenAIService.getInstance();
     this.customizationService = CustomizationService.getInstance();
     this.presetMatcher = new PresetMatcher(this.openaiService);
+    this.moduleSuggester = new ModuleSuggester(this.openaiService);
     this.stageHandlers = new StageHandlers(this.openaiService, this.customizationService);
     logger.info('[InterviewService] Initialized');
   }
@@ -29,6 +34,21 @@ export class InterviewService {
       InterviewService.instance = new InterviewService();
     }
     return InterviewService.instance;
+  }
+
+  /**
+   * W5 item 12: `moduleOptions` do turno MATCHING_PRESET. Suíte fora do registro ou erro inesperado ⇒ sem o campo
+   * (o turno segue como antes).
+   */
+  private async suggestModules(messages: IMessage[], presetKey: string): Promise<InterviewModuleOption[] | undefined> {
+    const suite = presetService.getPresetByKey(presetKey);
+    if (!suite) return undefined;
+    try {
+      return await this.moduleSuggester.suggest(messages, suite);
+    } catch (error) {
+      logger.error(`[InterviewService] Sugestão de módulos falhou para '${presetKey}': ${error}`);
+      return undefined;
+    }
   }
 
   /**
@@ -72,6 +92,20 @@ export class InterviewService {
         const tablesInfo = this.presetMatcher.extractTablesInfo(matchedPreset.aiDescription);
         const tablesFormatted = tablesInfo.length > 0 ? 
           `Ele inclui as seguintes tabelas principais: ${tablesInfo.join(', ')}.` : '';
+
+        // W5 itens 10–12 (c12 do I8): módulos sugeridos para a suíte casada. A sugestão nunca derruba o turno.
+        const moduleOptions = await this.suggestModules(messages, matchedPreset.key);
+        const suggestedNames = (moduleOptions ?? []).filter((m) => m.suggested && !m.locked).map((m) => m.name.pt);
+        // F-W5-4 (sim/não latente): a suíte não traz a base fixa da categoria (ex.: CRM-0) → perguntar se quer CRM.
+        const asksForCrm = (moduleOptions ?? []).some((m) => !m.locked && MODULE_REGISTRY[m.key].fixed);
+        const modulesPrompt = [
+          suggestedNames.length > 0
+            ? `\n\nPela conversa, você também sugere ativar estes módulos: ${suggestedNames.join(', ')}. Cite-os pelo nome e diga que ele pode desmarcá-los antes de criar.`
+            : '',
+          asksForCrm
+            ? '\n\nPergunte também se o negócio quer usar um CRM (funil de vendas para acompanhar clientes em potencial).'
+            : '',
+        ].join('');
         
         // Criar um prompt para a IA gerar uma mensagem amigável
         const systemPrompt = `Você é um assistente especializado em sistemas de gestão para pequenos negócios.
@@ -84,7 +118,7 @@ Crie uma mensagem acolhedora e entusiasmada (em primeira pessoa) explicando ao c
 
 Ao final, pergunte se ele gostaria de criar o sistema diretamente ou customizá-lo primeiro.
 
-Sua mensagem deve ter tom conversacional, ser breve (máximo 5 linhas) e incluir as opções em negrito: **criar o sistema agora** ou **customizar**.`;
+Sua mensagem deve ter tom conversacional, ser breve (máximo 5 linhas) e incluir as opções em negrito: **criar o sistema agora** ou **customizar**.${modulesPrompt}`;
         
         // Obter resposta da IA
         const aiResponse = await this.stageHandlers.getAiResponseWithHistory(systemPrompt, []);
@@ -92,7 +126,7 @@ Sua mensagem deve ter tom conversacional, ser breve (máximo 5 linhas) e incluir
         // Fallback se a IA não responder corretamente
         const response = aiResponse || `Ótimo! Encontrei um sistema de **${matchedPreset.name}** que combina com o que você precisa.
 
-Com ele você poderá gerenciar ${tablesInfo.slice(0, 3).join(', ')} e muito mais.
+Com ele você poderá gerenciar ${tablesInfo.slice(0, 3).join(', ')} e muito mais.${suggestedNames.length > 0 ? `\n\nPelo que você contou, também sugiro os módulos: ${suggestedNames.join(', ')}.` : ''}
 
 Gostaria de **criar o sistema agora** ou prefere **customizar** primeiro?`;
         
@@ -100,7 +134,8 @@ Gostaria de **criar o sistema agora** ou prefere **customizar** primeiro?`;
           response, 
           nextStage: 'AWAITING_CREATION_TYPE_CONFIRMATION', 
           presetKey: matchedPreset.key,
-          choicePrompt: { kind: 'creation_type', reason: 'initial' }
+          choicePrompt: { kind: 'creation_type', reason: 'initial' },
+          ...(moduleOptions ? { moduleOptions } : {}),
         };
       } 
       
