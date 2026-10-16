@@ -108,9 +108,9 @@ function respondProvisioningError(error: unknown, res: Response): Response | nul
 
 /**
  * BE-INCR-ONBOARDING-ACTIVATION (nó I4) item 9 (F-I4-3 a) — o setor do binding contábil do preset escolhido: a chave do
- * `SECTOR_BINDING_REGISTRY` cujo nome, normalizado como o `getPresetByKey` normaliza a chave (`keyToPascalCase`), é o
- * da suíte pedida. Assim `beautySalon` (Rápido) e `beauty_salon` (Controle Total) dão o mesmo setor. Preset sem
- * binding (`crmModule`) ⇒ `null`.
+ * `SECTOR_BINDING_REGISTRY` cujo nome, normalizado por `keyToPascalCase`, é o da suíte pedida. Os dois modos do create
+ * só chegam aqui com a chave do registro (`beautySalon`): desde o W5 (dono, 2026-10-16, "Só a chave do registro") o
+ * Controle Total recusa `beauty_salon` com 404 antes desta função. Preset sem binding (`crmModule`) ⇒ `null`.
  */
 export function resolveOnboardingSectorKey(presetOrSuiteKey: string): string | null {
   const id = keyToPascalCase(presetOrSuiteKey);
@@ -176,20 +176,6 @@ async function activateAccountingOrReport(ctx: UserContext, unitId: string, sect
   return OnboardingAccountingResultSchema.parse({ status: 'Active', sectorKey, ...bindingVersion });
 }
 
-/**
- * W5 item 6, lacuna resolvida pelo dono (2026-10-16, opção a): a suíte do registro cuja chave, normalizada como o
- * `PresetManager` normaliza (`keyToPascalCase`), é a pedida — `beauty_salon` (F-I4-3 a) segue resolvendo para
- * `beautySalon`; chave fora do registro (`coreSystem`, inexistente) ⇒ `null`.
- */
-function resolveRegisteredPreset(presetKey: string) {
-  const id = keyToPascalCase(presetKey);
-  const registryKey = presetService
-    .getAllPresetSummaries()
-    .map((p) => p.key)
-    .find((key) => keyToPascalCase(key) === id);
-  return registryKey ? presetService.getPresetByKey(registryKey) : null;
-}
-
 async function handleCustomCreation(
   ctx: UserContext,
   presetKey: string,
@@ -204,7 +190,8 @@ async function handleCustomCreation(
   try {
     // W5 item 6 (F-W5-2): o Controle Total resolve pelo registro, como o modo Rápido — chave fora de
     // `tablePresetSuites` (inclusive `coreSystem`, que o import dinâmico do `PresetManager` alcançava) → 404.
-    const originalPreset = resolveRegisteredPreset(presetKey);
+    // Só a chave do registro (dono, questionário, 2026-10-16: "Só a chave do registro"): `beauty_salon` → 404.
+    const originalPreset = presetService.getPresetByKey(presetKey);
     if (!originalPreset) throw new UnknownSuiteError(presetKey);
 
     // I8 comportamentos 2–3: as tabelas de lead não vêm mais do Core; entram pelos módulos selecionados
