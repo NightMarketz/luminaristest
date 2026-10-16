@@ -866,13 +866,35 @@
  *       description: >
  *         Deletes the dynamic tables and their data, the knowledge graph, action proposals, dashboard layouts, chat
  *         instances, saved table views, CRM reports and CRM attachments (row + file), and invalidates the KPI cache.
- *         Documents are kept. Idempotent: an empty system also returns 204.
+ *         Documents are kept. Idempotent: an empty system also returns 204. Accounting configuration written by the
+ *         onboarding (chart, period, binding, kit, fiscal profiles) is removed first, in one transaction, with an
+ *         accounting.scope_reset event appended to the audit trail (never deleted). Any accounting movement in any
+ *         unit refuses the reset with 409 and nothing is deleted.
  *       tags: [Dashboard]
  *       security: [{ bearerAuth: [] }]
  *       responses:
  *         '204': { description: System reset (or already empty) }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '409':
+ *           description: SYSTEM_RESET_BLOCKED_BY_ACCOUNTING — the system has accounting movement; nothing was deleted
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   code: { type: string, enum: [SYSTEM_RESET_BLOCKED_BY_ACCOUNTING] }
+ *                   message: { type: string }
+ *                   details:
+ *                     type: object
+ *                     properties:
+ *                       blocking:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             table: { type: string }
+ *                             count: { type: integer, minimum: 1 }
  *
  *   /api/dashboard/ai/ChatInterview:
  *     post:

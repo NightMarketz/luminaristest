@@ -22,6 +22,7 @@ import type { ISavedTableViewRepository } from '../../savedViews/repositories/IS
 import type { ICrmReportDefinitionRepository } from '../../crm/repositories/ICrmReportDefinitionRepository';
 import type { IAttachmentRepository } from '../../attachments/repositories/IAttachmentRepository';
 import type { KpiCacheService } from '../../analytics/services/KpiCacheService';
+import type { IAccountingScopeResetService } from '../../accounting/services/AccountingScopeResetService';
 import type { ISystemProvisioningPolicy } from '../policies/ISystemProvisioningPolicy';
 
 /** O que o serviço usa do motor de tabelas (por interface — os testes injetam fakes). */
@@ -39,6 +40,8 @@ export type ProvisioningUnitFiscalService = Pick<FiscalProfileService, 'upsert'>
  * F-I7-2 → "tudo, menos Documentos"). Por interface — os testes injetam fakes.
  */
 export interface SystemResetOwners {
+  /** Item 12 (F-I7-1): gate de movimento + remoção do SETUP contábil — serviço da contabilidade, por interface. */
+  accountingReset: Pick<IAccountingScopeResetService, 'purgeSetupIfNoMovement'>;
   dashboardLayouts: Pick<IDashboardLayoutRepository, 'deleteByUserId'>;
   chatInstances: Pick<IChatInstanceRepository, 'deleteByUserId'>;
   savedTableViews: Pick<ISavedTableViewRepository, 'softDeleteByUserId'>;
@@ -84,8 +87,9 @@ export interface ISystemProvisioningService {
   provision(ctx: UserContext, input: ProvisionInput): Promise<ProvisionResult>;
   /**
    * "Resetar sistema" (`DELETE /dashboard/system`, nó I7): tabelas + KG + proposals + layouts, chats, visões salvas,
-   * relatórios e anexos do CRM; `Document` fica (F-I7-2). Idempotente: sistema vazio passa sem lançar.
-   * @throws ForbiddenError
+   * relatórios e anexos do CRM; `Document` fica (F-I7-2). Antes de tudo, a configuração contábil sem movimento sai pelo
+   * serviço da contabilidade (F-I7-1). Idempotente: sistema vazio passa sem lançar.
+   * @throws ForbiddenError | SystemResetBlockedByAccountingError
    */
   resetUserSystem(ctx: UserContext): Promise<void>;
 }
@@ -133,7 +137,12 @@ export class SystemProvisioningService implements ISystemProvisioningService {
    * construiu sobre o sistema — cada um pelo dono canônico, nenhum `prisma.*` aqui. Ordem do BRIEF; o binário do anexo
    * sai best-effort (falha ⇒ `logger.warn`, o reset segue). `Document` NÃO é tocado. Por fim, o cache de KPI.
    *
-   * atomicUntil: cada dono é um commit próprio; sem "mesma tx". Reconcile = rodar o reset de novo (idempotente).
+   * Item 12 (F-I7-1): PRIMEIRO o reset contábil (`purgeSetupIfNoMovement`) — se ele lança o 409, nada não contábil foi
+   * apagado. Integração cross-módulo no nível de serviço de integração, nunca pelo motor (Contrato §2.1).
+   *
+   * atomicUntil: commit 1 = o reset contábil (uma tx: gate + evento na trilha + remoção do SETUP); depois, cada dono não
+   * contábil é um commit próprio. Sem "mesma tx". Reconcile = rodar o reset de novo: idempotente (a contabilidade já
+   * vazia passa direto).
    */
   async resetUserSystem(ctx: UserContext): Promise<void> {
     if (!this.policy.canResetSystem(ctx)) {
@@ -141,6 +150,7 @@ export class SystemProvisioningService implements ISystemProvisioningService {
     }
     const userId = ctx.userId;
     const o = this.resetOwners;
+    await o.accountingReset.purgeSetupIfNoMovement(userId);
     await this.compensateProvisioning(userId);
     await o.dashboardLayouts.deleteByUserId(userId);
     await o.chatInstances.deleteByUserId(userId);

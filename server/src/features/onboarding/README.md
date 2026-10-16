@@ -46,7 +46,7 @@ Sem rota própria. Consumidores: `dashboardController.createDashboard` (`POST /a
 |---|---|
 | `assertCanProvision(ctx)` | Só a guarda one-shot. O controller a chama **antes** de montar o preset (o 403 vence qualquer 404/400 de montagem, como antes). |
 | `provision(ctx, { preset, unit, fiscal })` | (i) guarda → (ii) `installPresetAsSystem` → (iii) 1ª linha de `units` pelo `createTableData` (plugins rodam) → (iv) perfil fiscal da empresa se `fiscal.regime ∉ {NAO_SEI, ausente}`. Devolve `{ installResult, unitId, fiscal }`. |
-| `resetUserSystem(ctx)` | "Resetar sistema" (BE-INCR-RESET-CONSISTENTE): policy → tabelas + KG + ActionProposals → layouts (hard) → chats (hard, mensagens em cascata) → visões salvas, relatórios do CRM, anexos do CRM (soft; o arquivo do anexo sai best-effort) → cache de KPI. `Document` fica (F-I7-2). Idempotente. |
+| `resetUserSystem(ctx)` | "Resetar sistema" (BE-INCR-RESET-CONSISTENTE): policy → **contabilidade primeiro** (`IAccountingScopeResetService.purgeSetupIfNoMovement`: 409 `SYSTEM_RESET_BLOCKED_BY_ACCOUNTING` se houver movimento, senão remove o SETUP do onboarding numa tx com evento `accounting.scope_reset`; trilha intacta) → tabelas + KG + ActionProposals → layouts (hard) → chats (hard, mensagens em cascata) → visões salvas, relatórios do CRM, anexos do CRM (soft; o arquivo do anexo sai best-effort) → cache de KPI. `Document` fica (F-I7-2). Idempotente. |
 | `compensateProvisioning(userId)` (privado) | Tabelas + KnowledgeGraph + ActionProposals — só a compensação do `provision`. |
 | `buildQuickPreset(suiteKey, modules, selectOverrides?)` | `{ preset, installedModules }`; `UnknownSuiteError` (404) / `InvalidAnalyticsConfigError` (400) / erros de módulo e de override. |
 

@@ -8,7 +8,12 @@
 import { resolverObrigacoes, type PerfilParaObrigacoes } from '@/features/accounting/models/obrigacoesPorRegime';
 import { MATRIZ_OBRIGACOES_SEMENTE } from '@test/helpers/legalParams';
 import logger from '../../../lib/logger';
-import { ForbiddenError, OnboardingRolledBackError, OnboardingRollbackFailedError } from '../../../lib/errors';
+import {
+  ForbiddenError,
+  OnboardingRolledBackError,
+  OnboardingRollbackFailedError,
+  SystemResetBlockedByAccountingError,
+} from '../../../lib/errors';
 import type { UserContext } from '../../../types/UserContext';
 import { Role } from '../../users/models/User.model';
 import { SystemProvisioningPolicy } from '../policies/SystemProvisioningPolicy';
@@ -40,6 +45,7 @@ function build(opts: {
   purgeFails?: boolean;
   policy?: ISystemProvisioningPolicy;
   deleteFileFails?: boolean;
+  accountingBlocks?: boolean;
 } = {}) {
   const calls: string[] = [];
   let installed = false;
@@ -82,6 +88,13 @@ function build(opts: {
   const actionProposals = { deleteByUserId: jest.fn(async () => void calls.push('purge:proposals')) };
   const knowledgeGraphs = { deleteByUserId: jest.fn(async () => void calls.push('purge:graph')) };
   const resetOwners = {
+    accountingReset: {
+      purgeSetupIfNoMovement: jest.fn(async () => {
+        calls.push('reset:accounting');
+        if (opts.accountingBlocks) throw new SystemResetBlockedByAccountingError({ blocking: [{ table: 'JournalEntry', count: 1 }] });
+        return { removed: [] };
+      }),
+    },
     dashboardLayouts: { deleteByUserId: jest.fn(async () => void calls.push('reset:layouts')) },
     chatInstances: { deleteByUserId: jest.fn(async () => void calls.push('reset:chats')) },
     savedTableViews: { softDeleteByUserId: jest.fn(async () => void calls.push('reset:views')) },
@@ -238,6 +251,7 @@ describe('SystemProvisioningService.resetUserSystem (BE-INCR-RESET-CONSISTENTE i
     const { service, calls, tables, knowledgeGraphs, actionProposals, resetOwners } = build();
     await service.resetUserSystem(ctx9);
     expect(calls).toEqual([
+      'reset:accounting',
       'purge:tables', 'purge:graph', 'purge:proposals',
       'reset:layouts', 'reset:chats', 'reset:views', 'reset:reports', 'reset:attachments',
       'reset:file:k1', 'reset:file:k2',
@@ -252,6 +266,13 @@ describe('SystemProvisioningService.resetUserSystem (BE-INCR-RESET-CONSISTENTE i
     expect(resetOwners.crmReportDefinitions.softDeleteByUserId).toHaveBeenCalledWith('u9');
     expect(resetOwners.attachments.softDeleteByUserId).toHaveBeenCalledWith('u9');
     expect(resetOwners.kpiCache.invalidate).toHaveBeenCalledWith('u9');
+    expect(resetOwners.accountingReset.purgeSetupIfNoMovement).toHaveBeenCalledWith('u9');
+  });
+
+  it('item 12: o reset contábil vem PRIMEIRO — se ele recusa (409), nada não contábil é apagado', async () => {
+    const { service, calls } = build({ accountingBlocks: true });
+    await expect(service.resetUserSystem(ctx9)).rejects.toBeInstanceOf(SystemResetBlockedByAccountingError);
+    expect(calls).toEqual(['reset:accounting']);
   });
 
   it('item 2: falha ao remover o binário de um anexo ⇒ logger.warn e o reset segue (outros arquivos + cache)', async () => {
