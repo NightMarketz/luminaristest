@@ -17,14 +17,20 @@ import type { IMessage } from '../../models/InterviewTypes';
 // O singleton constrói OpenAIService, que exige a chave; o CI injeta esta mesma (ci.yml), o shell local não.
 process.env.OPENAI_API_KEY ??= 'ci-dummy-openai-key';
 
+// W4: o controller resolve o serviço pelo factory; aqui o factory devolve um InterviewService sem sessão real.
+jest.mock('../../../../lib/factory', () => {
+  const { InterviewService: Svc } = jest.requireActual('../InterviewService');
+  const svc = new Svc({}, {});
+  return { getFactory: () => ({ getInterviewService: () => svc }) };
+});
+
 // Contrato §5 (testes): beforeEach(() => jest.clearAllMocks()) sempre.
 beforeEach(() => jest.clearAllMocks());
 afterEach(() => jest.restoreAllMocks());
 
 const handlersWith = (overrides: Partial<Record<keyof CustomizationService, jest.Mock>> = {}) =>
   new StageHandlers({} as OpenAIService, {
-    generateSessionId: jest.fn().mockReturnValue('sess-1'),
-    createCustomizationSession: jest.fn().mockReturnValue({ tables: [] }),
+      createCustomizationSession: jest.fn().mockResolvedValue({ id: 'sess-1', state: { tables: [] } }),
     generateTablesPresentation: jest.fn().mockResolvedValue('tabelas'),
     ...overrides,
   } as unknown as CustomizationService);
@@ -33,17 +39,20 @@ const said = (content: string): IMessage[] => [{ role: 'user', content }];
 
 describe('item 2 — choice decide sem ler o texto', () => {
   it("choice 'create' vence um texto que pede customizar", async () => {
-    const result = await handlersWith().handleCreationTypeConfirmation(said('quero customizar'), 'beautySalon', 'create');
+    const result = await handlersWith().handleCreationTypeConfirmation(said('quero customizar'), 'beautySalon', 'u1', 'create');
 
     expect(result.nextStage).toBe('COMPLETED');
     expect(result.choicePrompt).toBeUndefined();
   });
 
   it("choice 'customize' abre a customização mesmo sem mensagem do usuário", async () => {
-    const result = await handlersWith().handleCreationTypeConfirmation([], 'beautySalon', 'customize');
+    const createCustomizationSession = jest.fn().mockResolvedValue({ id: 'sess-1', state: { tables: [] } });
+    const result = await handlersWith({ createCustomizationSession }).handleCreationTypeConfirmation([], 'beautySalon', 'u1', 'customize');
 
     expect(result.nextStage).toBe('CUSTOMIZATION_IN_PROGRESS');
     expect(result.sessionId).toBe('sess-1');
+    // W4 item 6: a sessão nasce do usuário autenticado — o id é o da linha, não vem do cliente.
+    expect(createCustomizationSession).toHaveBeenCalledWith('beautySalon', 'u1');
   });
 });
 
@@ -52,23 +61,23 @@ describe('item 3 — choicePrompt.reason em todo turno que pede a escolha de nov
     ['hmm, não sei', 'unclear'],
     ['não quero customizar', 'declined_customize'],
   ])('texto "%s" → reason %s', async (content, reason) => {
-    const result = await handlersWith().handleCreationTypeConfirmation(said(content), 'beautySalon');
+    const result = await handlersWith().handleCreationTypeConfirmation(said(content), 'beautySalon', 'u1');
 
     expect(result.nextStage).toBe('AWAITING_CREATION_TYPE_CONFIRMATION');
     expect(result.choicePrompt).toEqual({ kind: 'creation_type', reason });
   });
 
   it('sem mensagem do usuário e sem choice → reason unclear', async () => {
-    const result = await handlersWith().handleCreationTypeConfirmation([], 'beautySalon');
+    const result = await handlersWith().handleCreationTypeConfirmation([], 'beautySalon', 'u1');
 
     expect(result.choicePrompt).toEqual({ kind: 'creation_type', reason: 'unclear' });
   });
 
   it.each([
-    ['sessão nula', { createCustomizationSession: jest.fn().mockReturnValue(null) }],
+    ['sessão nula', { createCustomizationSession: jest.fn().mockResolvedValue(null) }],
     ['exceção', { generateTablesPresentation: jest.fn().mockRejectedValue(new Error('boom')) }],
   ])('erro ao customizar (%s) → reason error', async (_caso, overrides) => {
-    const result = await handlersWith(overrides).handleCreationTypeConfirmation([], 'beautySalon', 'customize');
+    const result = await handlersWith(overrides).handleCreationTypeConfirmation([], 'beautySalon', 'u1', 'customize');
 
     expect(result.nextStage).toBe('AWAITING_CREATION_TYPE_CONFIRMATION');
     expect(result.choicePrompt).toEqual({ kind: 'creation_type', reason: 'error' });
@@ -80,7 +89,7 @@ describe('item 3 — choicePrompt.reason em todo turno que pede a escolha de nov
     // W5 item 12: a sugestão de módulos chamaria a IA; aqui só interessa o choicePrompt.
     jest.spyOn(ModuleSuggester.prototype, 'suggest').mockResolvedValue([]);
 
-    const result = await InterviewService.getInstance().processTurn('MATCHING_PRESET', said('tenho um salão'));
+    const result = await new InterviewService({} as CustomizationService, {} as OpenAIService).processTurn('MATCHING_PRESET', said('tenho um salão'), 'u1');
 
     expect(result.nextStage).toBe('AWAITING_CREATION_TYPE_CONFIRMATION');
     expect(result.choicePrompt).toEqual({ kind: 'creation_type', reason: 'initial' });
@@ -112,6 +121,6 @@ describe('item 1 — contrato do corpo em POST /api/dashboard/ai/ChatInterview',
     const res = await call({ stage: 'AWAITING_CREATION_TYPE_CONFIRMATION', presetKey: 'beautySalon', choice: 'create' });
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(processTurn).toHaveBeenCalledWith('AWAITING_CREATION_TYPE_CONFIRMATION', [], 'beautySalon', undefined, 'create');
+    expect(processTurn).toHaveBeenCalledWith('AWAITING_CREATION_TYPE_CONFIRMATION', [], 'u1', 'beautySalon', undefined, 'create');
   });
 });

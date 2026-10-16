@@ -1,37 +1,15 @@
 import type { Request, Response } from 'express';
-import { z } from 'zod';
 import { handleApiError } from '@/lib/apiUtils';
 import { getUserContextFromRequest } from '@/lib/authUtils';
-import { InterviewService } from '@/features/interview/InterviewService/InterviewService';
+import { getFactory } from '@/lib/factory';
+import { ChatInterviewSchema, InterviewMessageDto } from '@/features/interview/dtos/ChatInterviewDto';
 import { InterviewStage, IMessage } from '@/features/interview/models/InterviewTypes';
-
-/**
- * Schema for the incoming ChatInterview request body.
- * The frontend (useAiInterview.ts) sends: { messages, stage, presetKey?, sessionId? }
- * Note: messages use { sender, text } on the frontend; we map them to { role, content } here.
- */
-const MessageSchema = z.object({
-  // Frontend uses `sender` / `text`; accept both shapes for robustness
-  role: z.enum(['user', 'assistant']).optional(),
-  sender: z.enum(['user', 'ai']).optional(),
-  content: z.string().optional(),
-  text: z.string().optional(),
-});
-
-const ChatInterviewSchema = z.object({
-  stage: z.string().optional().default('GREETING'),
-  messages: z.array(MessageSchema).optional().default([]),
-  presetKey: z.string().optional(),
-  sessionId: z.string().optional(),
-  // W3 (b), F-W3-B1 a: escolha por botão — decide sem ler o texto.
-  choice: z.enum(['create', 'customize']).optional(),
-});
 
 /**
  * Normalises the mixed frontend/backend message shape into the IMessage format
  * expected by InterviewService.
  */
-function normaliseMessages(raw: z.infer<typeof MessageSchema>[]): IMessage[] {
+function normaliseMessages(raw: InterviewMessageDto[]): IMessage[] {
   return raw
     .map((m): IMessage | null => {
       // Determine role
@@ -66,6 +44,9 @@ function normaliseMessages(raw: z.infer<typeof MessageSchema>[]): IMessage[] {
  *   { response: string, nextStage: InterviewStage, presetKey?: string,
  *     sessionId?: string, startCustomization?: boolean, customizationState?: object,
  *     choicePrompt?: { kind: 'creation_type', reason: 'initial' | 'unclear' | 'declined_customize' | 'error' } }
+ *
+ * Erros da sessão (W4): 404 `INTERVIEW_SESSION_NOT_FOUND` (inexistente, expirada ou de outro usuário) e
+ * 409 `INTERVIEW_SESSION_CONFLICT` (outro turno gravou a sessão no meio), via `handleApiError`.
  */
 export async function postChatInterview(req: Request, res: Response) {
   try {
@@ -101,10 +82,11 @@ export async function postChatInterview(req: Request, res: Response) {
 
     const messages = normaliseMessages(rawMessages);
 
-    const interviewService = InterviewService.getInstance();
-    const result = await interviewService.processTurn(
+    // W4 item 6: o dono da sessão é quem está autenticado — `ctx.userId` atravessa a cadeia.
+    const result = await getFactory().getInterviewService().processTurn(
       currentStage,
       messages,
+      ctx.userId,
       presetKey,
       sessionId,
       choice
