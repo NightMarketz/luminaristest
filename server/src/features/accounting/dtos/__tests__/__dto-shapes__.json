@@ -1231,6 +1231,7 @@
                   "ReceitaFiscalLinha",
                   "SimplesDeclaracaoAnual",
                   "SimplesApuracao",
+                  "ReceitaFiscalRecebimento",
                   "AccountingPolicyVersion"
                 ]
               },
@@ -2853,6 +2854,43 @@
           "enum": [
             "COMPETENCIA",
             "CAIXA"
+          ]
+        },
+        "simplesExclusaoEfeitosEm": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "simplesCaixaPrazoCartaoDebitoDias": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 365
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "simplesCaixaPrazoCartaoCreditoDias": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 365
+            },
+            {
+              "type": "null"
+            }
           ]
         }
       },
