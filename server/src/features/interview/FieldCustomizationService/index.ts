@@ -9,6 +9,7 @@ import { promptConfig } from './PromptConfig';
 import { FieldPresetMatcher } from './FieldPresetMatcher';
 import { IFieldCustomizationResult, IFieldModification } from './Types';
 import { StateManager } from '../CustomizationService/StateManager';
+import { isInterviewSessionError } from '../models/InterviewSession.model';
 
 /**
  * @description
@@ -23,7 +24,6 @@ import { StateManager } from '../CustomizationService/StateManager';
  * 5. Retornar a tabela atualizada e uma mensagem amigável para o usuário
  */
 export class FieldCustomizationService {
-  private static instance: FieldCustomizationService;
   private openaiService: OpenAIService;
   private fieldUpdater: FieldUpdater;
   private fieldIntentParser: FieldIntentParser;
@@ -31,25 +31,16 @@ export class FieldCustomizationService {
   private stateManager: StateManager;
 
   /**
-   * Inicializa o serviço com suas dependências
+   * Inicializa o serviço com suas dependências.
+   * W4 item 10: o `StateManager` (sessão persistida) é injetado; sem chamador até o W6 plugar a rota no factory.
    */
-  private constructor() {
+  constructor(stateManager: StateManager) {
     this.openaiService = OpenAIService.getInstance();
     this.fieldIntentParser = new FieldIntentParser();
     this.fieldUpdater = new FieldUpdater();
     this.fieldPresetMatcher = new FieldPresetMatcher();
-    this.stateManager = StateManager.getInstance(); // Adiciona o StateManager singleton
-    logger.info('[FieldCustomizationService] Serviço inicializado com StateManager singleton');
-  }
-
-  /**
-   * Obtém a instância única do serviço (Singleton)
-   */
-  public static getInstance(): FieldCustomizationService {
-    if (!FieldCustomizationService.instance) {
-      FieldCustomizationService.instance = new FieldCustomizationService();
-    }
-    return FieldCustomizationService.instance;
+    this.stateManager = stateManager;
+    logger.info('[FieldCustomizationService] Serviço inicializado');
   }
 
   /**
@@ -61,16 +52,15 @@ export class FieldCustomizationService {
    */
   public async processMessage(
     sessionId: string,
+    userId: string,
     tableKey: string,
     userMessage: string,
     conversationHistory: IMessage[] = []
   ): Promise<IFieldCustomizationResult> {
     // 1. Obter o estado da sessão a partir do StateManager
-    const customizationState = this.stateManager.getSessionState(sessionId);
-    if (!customizationState) {
-      logger.error(`[FieldCustomizationService] Sessão ${sessionId} não encontrada.`);
-      throw new Error(`Sessão não encontrada.`);
-    }
+    // W4: sessão inexistente, expirada ou alheia → InterviewSessionNotFoundError (404).
+    const session = await this.stateManager.loadSession(sessionId, userId);
+    const customizationState = session.state;
 
     // 2. Encontrar a tabela específica dentro da sessão
     const currentTable = customizationState.tables.find((t: ICustomizableTable) => t.key === tableKey);
@@ -130,7 +120,7 @@ export class FieldCustomizationService {
         updatedTable.conversationHistory.push(userMessageEntry, assistantMessageEntry);
 
         // Atualiza o estado da sessão com as tabelas modificadas
-        this.stateManager.updateTables(sessionId, [updatedTable]);
+        await this.stateManager.updateTables(session, [updatedTable]);
       }
 
       // 10. Retornar o resultado da operação com a mensagem adequada
@@ -141,6 +131,7 @@ export class FieldCustomizationService {
         conversationHistory: updatedTable.conversationHistory
       };
     } catch (error) {
+      if (isInterviewSessionError(error)) throw error;
       logger.error(`[FieldCustomizationService] Erro ao processar mensagem: ${error}`);
       return {
         updatedTable: currentTable, // Retorna a tabela antes da falha
@@ -269,6 +260,3 @@ export class FieldCustomizationService {
     }
   }
 }
-
-// Exporta a instância única do serviço para uso em outros módulos
-export const fieldCustomizationService = FieldCustomizationService.getInstance();

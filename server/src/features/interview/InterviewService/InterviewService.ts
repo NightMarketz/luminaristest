@@ -5,30 +5,24 @@ import { PresetMatcher } from './PresetMatcher';
 import { StageHandlers } from './StageHandlers';
 import { stageConfig } from './PromptConfig';
 import { CustomizationService } from '../CustomizationService/CustomizationService';
+import { isInterviewSessionError } from '../models/InterviewSession.model';
 
 /**
- * Serviço responsável por orquestrar todo o processo de entrevista com IA
+ * Serviço responsável por orquestrar todo o processo de entrevista com IA.
+ * W4: construído pelo factory (`getInterviewService`) com o `CustomizationService` sobre a sessão persistida.
  */
 export class InterviewService {
-  private static instance: InterviewService;
   private openaiService: OpenAIService;
   private presetMatcher: PresetMatcher;
   private stageHandlers: StageHandlers;
   private customizationService: CustomizationService;
 
-  private constructor() {
-    this.openaiService = OpenAIService.getInstance();
-    this.customizationService = CustomizationService.getInstance();
+  constructor(customizationService: CustomizationService, openaiService: OpenAIService = OpenAIService.getInstance()) {
+    this.openaiService = openaiService;
+    this.customizationService = customizationService;
     this.presetMatcher = new PresetMatcher(this.openaiService);
     this.stageHandlers = new StageHandlers(this.openaiService, this.customizationService);
     logger.info('[InterviewService] Initialized');
-  }
-
-  public static getInstance(): InterviewService {
-    if (!InterviewService.instance) {
-      InterviewService.instance = new InterviewService();
-    }
-    return InterviewService.instance;
   }
 
   /**
@@ -42,9 +36,10 @@ export class InterviewService {
    * Processa um turno da entrevista, avançando o estágio se necessário
    */
   public async processTurn(
-    stage: InterviewStage, 
-    messages: IMessage[], 
-    presetKey?: string, 
+    stage: InterviewStage,
+    messages: IMessage[],
+    userId: string,
+    presetKey?: string,
     sessionId?: string,
     choice?: CreationChoice
   ): Promise<IInterviewTurnResult> {
@@ -105,11 +100,11 @@ Gostaria de **criar o sistema agora** ou prefere **customizar** primeiro?`;
       } 
       
       else if (stage === 'AWAITING_CREATION_TYPE_CONFIRMATION' && presetKey) {
-        return await this.stageHandlers.handleCreationTypeConfirmation(messages, presetKey, choice);
-      } 
-      
+        return await this.stageHandlers.handleCreationTypeConfirmation(messages, presetKey, userId, choice);
+      }
+
       else if (stage === 'CUSTOMIZATION_IN_PROGRESS' && sessionId) {
-        return await this.customizationService.processCustomizationStep(sessionId, messages);
+        return await this.customizationService.processCustomizationStep(sessionId, userId, messages);
       }
       
       else if (stage === 'CUSTOMIZATION_COMPLETED') {
@@ -155,7 +150,7 @@ Gostaria de **criar o sistema agora** ou prefere **customizar** primeiro?`;
           
           // Para outros estágios completos, avança para o próximo estágio configurado
           // Processa imediatamente o próximo estágio (importante para CONFIRMING_BUSINESS -> MATCHING_PRESET)
-          return this.processTurn(config.nextStage, messages);
+          return this.processTurn(config.nextStage, messages, userId);
         }
 
         return { response: aiResponse, nextStage: stage };
@@ -174,6 +169,8 @@ Gostaria de **criar o sistema agora** ou prefere **customizar** primeiro?`;
         };
       }
     } catch (error) {
+      // W4 item 5/12: 404/409 da sessão saem com o code próprio — não viram 200 CANNOT_PROCEED.
+      if (isInterviewSessionError(error)) throw error;
       logger.error(`[InterviewService] Erro ao processar turno: ${error}`);
       return {
         response: "Desculpe, ocorreu um erro ao processar sua solicitação. Por favor, tente novamente.",
