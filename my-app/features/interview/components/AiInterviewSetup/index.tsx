@@ -6,6 +6,7 @@ import InputArea from './InputArea';
 import CreationArea from './CreationArea';
 import FiscalQuestion from './FiscalQuestion';
 import CreationChoice from './CreationChoice';
+import ModuleChecklist from './ModuleChecklist';
 import LeftSidebar from '../LeftSidebar';
 import RightSidebar from '../RightSidebar';
 
@@ -77,7 +78,10 @@ function AiInterviewSetup() {
     choicePrompt,
     sendCreationChoice,
     fiscalPendente,
-    confirmarFiscal
+    confirmarFiscal,
+    moduleOptions,
+    selectedModules,
+    toggleModule
   } = useAiInterview();
 
   if (isCreating || creationError) {
@@ -157,6 +161,9 @@ function AiInterviewSetup() {
           isLoading={isLoading}
           chatEndRef={chatEndRef}
         />
+        {choicePrompt && !fiscalPendente && moduleOptions.length > 0 && (
+          <ModuleChecklist options={moduleOptions} selected={selectedModules} disabled={isLoading || isCreating} onToggle={toggleModule} />
+        )}
         {choicePrompt && !fiscalPendente && (
           <CreationChoice prompt={choicePrompt} presetKey={presetKey} disabled={isLoading || isCreating} onChoose={sendCreationChoice} />
         )}
