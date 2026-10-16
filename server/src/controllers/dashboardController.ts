@@ -119,7 +119,7 @@ export function resolveOnboardingSectorKey(presetOrSuiteKey: string): string | n
 
 /**
  * I4 itens 10–14 — liga a contabilidade da unidade recém-criada, DEPOIS de instalar → unidade → perfil fiscal (F-I4-1 a):
- * as compensações anteriores (`purgeUserSystem`) não limpam contabilidade, então nada que compensa roda depois de uma
+ * as compensações anteriores (`compensateProvisioning`) não limpam contabilidade, então nada que compensa roda depois de uma
  * escrita contábil. As duas flags em `true` fazem do onboarding uma chamada só (F-B2 a, F-I3-1 a).
  *   - preset sem setor ⇒ `not-applicable`; `activateDefault` nem é chamado (item 12).
  *   - `Draft` do `activateDefault` ou exceção ⇒ 201 com `Draft` e o tenant de pé, sem compensação (F-I4-2 b, item 11) —
@@ -462,10 +462,10 @@ export async function deleteUserSystem(req: Request, res: Response) {
     const ctx = getUserContextFromRequest(req);
     if (!ctx) return res.status(401).json({ success: false, error: 'Authentication required' });
 
-    // Tabelas + KnowledgeGraph + ActionProposals órfãs — o agente não injeta referências a tabelas apagadas (R27).
-    await getFactory().getSystemProvisioningService().purgeUserSystem(ctx.id);
+    // BE-INCR-RESET-CONSISTENTE (nó I7): policy + purga pelos donos canônicos + cache de KPI — no serviço.
+    await getFactory().getSystemProvisioningService().resetUserSystem(ctx);
 
-    logger.info(`User system reset: tables, KnowledgeGraph, and proposals cleaned for user ${ctx.id}`);
+    logger.info(`User system reset for user ${ctx.id}`);
 
     return res.status(204).end();
   } catch (error) {

@@ -54,4 +54,10 @@ export interface IChatInstanceRepository {
    * @returns Deleted instance
    */
   deleteInstance(id: string): Promise<Prisma.ChatInstanceGetPayload<{}>>;
+
+  /**
+   * Hard-deletes every instance of the user — reset do sistema (I7 item 2). As mensagens caem pela FK (cascade).
+   * @param userId - Owner id
+   */
+  deleteByUserId(userId: string): Promise<void>;
 } 

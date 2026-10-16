@@ -43,4 +43,10 @@ export interface ISavedTableViewRepository {
    * @param id - View ID
    */
   softDelete(id: string): Promise<void>;
+
+  /**
+   * Soft-deletes every live view of the user — reset do sistema (I7 item 2).
+   * @param userId - Owner user ID
+   */
+  softDeleteByUserId(userId: string): Promise<void>;
 }

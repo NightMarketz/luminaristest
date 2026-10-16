@@ -43,6 +43,17 @@ os chats, os documentos, os layouts e as visões salvas. O cache de KPI sobreviv
 - **F-I7-4 → "Sim, evento de reset na trilha".** Na mesma tx da remoção contábil, cada unidade que teve
   configuração removida recebe um evento novo com as contagens removidas.
 
+### EMENDA 2026-10-16 (execução, PR-1): prova zero-diff da P2 depois do F-I7-3 (F-DT-2)
+
+O item 6 dizia que a mudança do T0 "não quebra gate nenhum" (E10). É verdade para o CI, mas a prova manual
+`prove:p2-zero-diff` passou a descrever uma linha que não existe mais (análise em `DT-SERVICE-I11-I7-REVISAO-brief.md`
+§2.2, PR #741). Decisões do dono em 2026-10-16. Primeiro, por questionário: F-DT-2 → (b) *"Atualizar a prova e o ADR"*.
+Depois, também por questionário, diante da prova ainda vermelha: *"(b) + exceção da factory"*. No #730:
+- a regex do marco aceita as duas formas exatas, e a prova aceita a **troca** (remover a original só com a condicional
+  no mesmo diff);
+- `server/src/lib/factory.ts` sai do perímetro (ADR-P2, EMENDA 2026-10-16, que supera a de 2026-08-22 nesse ponto);
+- par vermelho→verde em `proveP2ZeroDiffCli.test.ts`.
+
 ## 2. Checklist de comportamentos (cada um testável sozinho)
 
 ### PR-1 — reset não contábil + rota testada (F-I7-2, F-I7-3) · `sonnet-medio`

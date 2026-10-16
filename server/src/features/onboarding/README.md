@@ -20,38 +20,40 @@ empresa; apaga (compensação/reset) tabelas dinâmicas, `KnowledgeGraph` e `Act
 ```
 onboarding/
 ├── policies/
-│   ├── ISystemProvisioningPolicy.ts   # canProvision(ctx, existingTableCount)
+│   ├── ISystemProvisioningPolicy.ts   # canProvision(ctx, existingTableCount) · canResetSystem(ctx)
 │   └── SystemProvisioningPolicy.ts    # setup é one-shot: só com 0 tabelas dinâmicas
 ├── services/
-│   ├── SystemProvisioningService.ts   # assertCanProvision · provision · purgeUserSystem
+│   ├── SystemProvisioningService.ts   # assertCanProvision · provision · resetUserSystem
 │   └── buildQuickPreset.ts            # função pura: suíte → módulos → mescla Core+módulos+suíte → overrides → analytics
 └── README.md
 ```
 
 - **Tier-0:** tudo é escopado ao `ctx.userId`; a purga pelos donos canônicos das tabelas
   (`IActionProposalRepository.deleteByUserId`, `IKnowledgeGraphRepository.deleteByUserId`, em `features/chat`) +
-  `DynamicTableService.deleteAllTablesForUser`.
+  `DynamicTableService.deleteAllTablesForUser`. O reset (I7) soma os donos de layouts, chats, visões salvas, relatórios e
+  anexos do CRM (`deleteByUserId`/`softDeleteByUserId` de cada repositório) e o `kpiCacheService.invalidate`.
 - **Policy:** `canProvision` é a guarda one-shot (o 403 "Setup já foi concluído"). O controller mapeia `ForbiddenError` para o
-  corpo de sempre (`{ success:false, error:'Forbidden', message }`).
+  corpo de sempre (`{ success:false, error:'Forbidden', message }`). `canResetSystem` (I7): o autenticado reseta o próprio sistema.
 - **DI:** `ApplicationFactory.getSystemProvisioningService()`; dependências por interface (`Pick<DynamicTableService, …>`,
   `Pick<CompanyFiscalProfileService, 'upsert'>`, os 2 repositórios, a policy).
 
 ## API
 
 Sem rota própria. Consumidores: `dashboardController.createDashboard` (`POST /api/dashboard/create`),
-`dashboardController.deleteUserSystem` (`DELETE /api/dashboard/system`, via `purgeUserSystem`) e `seedAccountingFixtureCli`.
+`dashboardController.deleteUserSystem` (`DELETE /api/dashboard/system`, via `resetUserSystem`) e `seedAccountingFixtureCli`.
 
 | Método | Ação |
 |---|---|
 | `assertCanProvision(ctx)` | Só a guarda one-shot. O controller a chama **antes** de montar o preset (o 403 vence qualquer 404/400 de montagem, como antes). |
 | `provision(ctx, { preset, unit, fiscal })` | (i) guarda → (ii) `installPresetAsSystem` → (iii) 1ª linha de `units` pelo `createTableData` (plugins rodam) → (iv) perfil fiscal da empresa se `fiscal.regime ∉ {NAO_SEI, ausente}`. Devolve `{ installResult, unitId, fiscal }`. |
-| `purgeUserSystem(userId)` | Tabelas + KnowledgeGraph + ActionProposals. Compensação do onboarding **e** "Resetar sistema" (o nó I7 separa as duas intenções depois). |
+| `resetUserSystem(ctx)` | "Resetar sistema" (BE-INCR-RESET-CONSISTENTE): policy → tabelas + KG + ActionProposals → layouts (hard) → chats (hard, mensagens em cascata) → visões salvas, relatórios do CRM, anexos do CRM (soft; o arquivo do anexo sai best-effort) → cache de KPI. `Document` fica (F-I7-2). Idempotente. |
+| `compensateProvisioning(userId)` (privado) | Tabelas + KnowledgeGraph + ActionProposals — só a compensação do `provision`. |
 | `buildQuickPreset(suiteKey, modules, selectOverrides?)` | `{ preset, installedModules }`; `UnknownSuiteError` (404) / `InvalidAnalyticsConfigError` (400) / erros de módulo e de override. |
 
 ## Invariants
 
 - **atomicUntil:** cada passo é um commit próprio (preset; unidade + plugins; perfil fiscal). Sem "mesma tx". Falha em (iii) ou
-  (iv) ⇒ `purgeUserSystem` ⇒ `OnboardingRolledBackError` (500 `ONBOARDING_ROLLED_BACK`); se a purga falha,
+  (iv) ⇒ `compensateProvisioning` ⇒ `OnboardingRolledBackError` (500 `ONBOARDING_ROLLED_BACK`); se a purga falha,
   `OnboardingRollbackFailedError` (500 `ONBOARDING_ROLLBACK_FAILED`). Um novo create depois da compensação **não** recebe 403.
 - A 1ª unidade nasce pelo caminho de escrita **normal** (F-I1-1 → b): os plugins de `units` (funil de CRM, estoque por unidade)
   só rodam assim.
