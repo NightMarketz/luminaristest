@@ -239,6 +239,8 @@ import { StateManager } from '../features/interview/CustomizationService/StateMa
 import { CustomizationService } from '../features/interview/CustomizationService/CustomizationService';
 import { InterviewService } from '../features/interview/InterviewService/InterviewService';
 import { SystemProvisioningService } from '../features/onboarding/services/SystemProvisioningService';
+import * as attachmentStorage from './attachmentStorage';
+import { kpiCacheService } from '../features/analytics/services/KpiCacheService';
 import { SystemProvisioningPolicy } from '../features/onboarding/policies/SystemProvisioningPolicy';
 
 // Lib - External Services
@@ -1801,6 +1803,16 @@ export class ApplicationFactory {
         this.repositories.actionProposal,
         this.repositories.knowledgeGraph,
         this.policies.systemProvisioning,
+        // BE-INCR-RESET-CONSISTENTE item 2–3 (F-I7-2): donos canônicos do resto do sistema + cache de KPI.
+        {
+          dashboardLayouts: this.repositories.dashboardLayout,
+          chatInstances: this.repositories.chatInstance,
+          savedTableViews: this.repositories.savedTableView,
+          crmReportDefinitions: this.repositories.crmReportDefinition,
+          attachments: this.repositories.attachment,
+          attachmentStorage,
+          kpiCache: kpiCacheService,
+        },
       ),
       ptaxSync: new PtaxSyncService(this.repositories.ptaxRate, this.ptaxClient),
       crmReport: new CrmReportService(

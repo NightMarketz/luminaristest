@@ -502,7 +502,8 @@ export class DynamicTableService {
       // T0 do time-to-first-ECD (P2 comportamento 11; ADR-P2 EMENDA 2026-09-14 R7, F-I2-1 → a): o marco
       // nasce NA MESMA tx do install — se o install reverte, o T0 reverte junto. Única escrita liberada
       // pela exceção nominal da prova zero-diff (`proveP2ZeroDiffCli.SYMBOL_ALLOWLIST`); não cresça isto.
-      await tx.user.update({ where: { id: userId }, data: { onboardingCompletedAt: new Date() } });
+      // F-I7-3 (BE-INCR-RESET-CONSISTENTE item 6): preserva o 1º T0 — reinstalar depois do reset não o sobrescreve.
+      await tx.user.updateMany({ where: { id: userId, onboardingCompletedAt: null }, data: { onboardingCompletedAt: new Date() } });
     }, {
       // Preset installs can involve many tables; allow up to 30 s before timing out.
       timeout: 30000,

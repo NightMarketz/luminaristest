@@ -862,12 +862,17 @@
  *
  *   /api/dashboard/system:
  *     delete:
- *       summary: Delete all tables and data for the current user (reset dashboard)
+ *       summary: Reset the current user's system (reset dashboard)
+ *       description: >
+ *         Deletes the dynamic tables and their data, the knowledge graph, action proposals, dashboard layouts, chat
+ *         instances, saved table views, CRM reports and CRM attachments (row + file), and invalidates the KPI cache.
+ *         Documents are kept. Idempotent: an empty system also returns 204.
  *       tags: [Dashboard]
  *       security: [{ bearerAuth: [] }]
  *       responses:
- *         '204': { description: All user tables deleted }
+ *         '204': { description: System reset (or already empty) }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *
  *   /api/dashboard/ai/ChatInterview:
  *     post:

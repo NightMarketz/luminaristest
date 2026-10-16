@@ -16,6 +16,12 @@ import { scopeToday } from '../../accounting/models/dates';
 import { resolveAccountingScope } from '../../accounting/scope/AccountingScope';
 import type { IActionProposalRepository } from '../../chat/repositories/IActionProposalRepository';
 import type { IKnowledgeGraphRepository } from '../../chat/repositories/IKnowledgeGraphRepository';
+import type { IDashboardLayoutRepository } from '../../dashboardLayout/repositories/IDashboardLayoutRepository';
+import type { IChatInstanceRepository } from '../../chatInstances/repositories/IChatInstanceRepository';
+import type { ISavedTableViewRepository } from '../../savedViews/repositories/ISavedTableViewRepository';
+import type { ICrmReportDefinitionRepository } from '../../crm/repositories/ICrmReportDefinitionRepository';
+import type { IAttachmentRepository } from '../../attachments/repositories/IAttachmentRepository';
+import type { KpiCacheService } from '../../analytics/services/KpiCacheService';
 import type { ISystemProvisioningPolicy } from '../policies/ISystemProvisioningPolicy';
 
 /** O que o serviço usa do motor de tabelas (por interface — os testes injetam fakes). */
@@ -27,6 +33,22 @@ export type ProvisioningTableService = Pick<
 export type ProvisioningFiscalService = Pick<CompanyFiscalProfileService, 'upsert' | 'resolverObrigacoesEm'>;
 /** O que o serviço usa do perfil fiscal da UNIDADE (passo 3b). */
 export type ProvisioningUnitFiscalService = Pick<FiscalProfileService, 'upsert'>;
+
+/**
+ * Donos canônicos do que o "Resetar sistema" purga além das tabelas/KG/proposals (BE-INCR-RESET-CONSISTENTE item 2,
+ * F-I7-2 → "tudo, menos Documentos"). Por interface — os testes injetam fakes.
+ */
+export interface SystemResetOwners {
+  dashboardLayouts: Pick<IDashboardLayoutRepository, 'deleteByUserId'>;
+  chatInstances: Pick<IChatInstanceRepository, 'deleteByUserId'>;
+  savedTableViews: Pick<ISavedTableViewRepository, 'softDeleteByUserId'>;
+  crmReportDefinitions: Pick<ICrmReportDefinitionRepository, 'softDeleteByUserId'>;
+  attachments: Pick<IAttachmentRepository, 'softDeleteByUserId'>;
+  /** Remoção do binário do anexo (`lib/attachmentStorage.deleteFile`). */
+  attachmentStorage: { deleteFile(storageKey: string): Promise<void> };
+  /** Cache de KPI em memória (E4) — invalidado no fim do reset. */
+  kpiCache: Pick<KpiCacheService, 'invalidate'>;
+}
 
 export interface ProvisionInput {
   /** Já montado (Rápido via `buildQuickPreset`, Controle Total pelo controller). */
@@ -60,8 +82,12 @@ export interface ISystemProvisioningService {
   assertCanProvision(ctx: UserContext): Promise<void>;
   /** @throws ForbiddenError | OnboardingRolledBackError | OnboardingRollbackFailedError */
   provision(ctx: UserContext, input: ProvisionInput): Promise<ProvisionResult>;
-  /** Compensação do onboarding + "Resetar sistema" (o nó I7 separa as duas intenções depois). */
-  purgeUserSystem(userId: string): Promise<void>;
+  /**
+   * "Resetar sistema" (`DELETE /dashboard/system`, nó I7): tabelas + KG + proposals + layouts, chats, visões salvas,
+   * relatórios e anexos do CRM; `Document` fica (F-I7-2). Idempotente: sistema vazio passa sem lançar.
+   * @throws ForbiddenError
+   */
+  resetUserSystem(ctx: UserContext): Promise<void>;
 }
 
 /**
@@ -71,7 +97,7 @@ export interface ISystemProvisioningService {
  * nível de serviço de integração, nunca dentro do motor (Contrato §2.1; `no-accounting-imports.boundary.test.ts`).
  *
  * atomicUntil: cada passo é um commit PRÓPRIO — instalação do preset; linha de `units` (+ plugins) pelo caminho normal
- * de escrita (F-I1-1 → b); perfil fiscal. Sem "mesma tx". Reconcile = a compensação (`purgeUserSystem`) que desfaz o
+ * de escrita (F-I1-1 → b); perfil fiscal. Sem "mesma tx". Reconcile = a compensação (`compensateProvisioning`) que desfaz o
  * que foi instalado quando a unidade ou o perfil falham. Janela residual declarada no BRIEF do I1: entre a instalação e
  * a compensação, um 2º create concorrente do mesmo usuário vê o 403.
  */
@@ -83,6 +109,7 @@ export class SystemProvisioningService implements ISystemProvisioningService {
     private readonly actionProposals: IActionProposalRepository,
     private readonly knowledgeGraphs: IKnowledgeGraphRepository,
     private readonly policy: ISystemProvisioningPolicy,
+    private readonly resetOwners: SystemResetOwners,
   ) {}
 
   async assertCanProvision(ctx: UserContext): Promise<void> {
@@ -102,10 +129,40 @@ export class SystemProvisioningService implements ISystemProvisioningService {
   }
 
   /**
-   * Limpa o sistema gerado do usuário: tabelas dinâmicas + KnowledgeGraph + ActionProposals (R27) — pelos donos
-   * canônicos de cada tabela (F-P3 → c). O agente não injeta referências a tabelas apagadas.
+   * BE-INCR-RESET-CONSISTENTE itens 1–3 (F-I7-2): a compensação (passos 1–3) e, depois, o resto do que o usuário
+   * construiu sobre o sistema — cada um pelo dono canônico, nenhum `prisma.*` aqui. Ordem do BRIEF; o binário do anexo
+   * sai best-effort (falha ⇒ `logger.warn`, o reset segue). `Document` NÃO é tocado. Por fim, o cache de KPI.
+   *
+   * atomicUntil: cada dono é um commit próprio; sem "mesma tx". Reconcile = rodar o reset de novo (idempotente).
    */
-  async purgeUserSystem(userId: string): Promise<void> {
+  async resetUserSystem(ctx: UserContext): Promise<void> {
+    if (!this.policy.canResetSystem(ctx)) {
+      throw new ForbiddenError('Você não tem permissão para resetar este sistema.');
+    }
+    const userId = ctx.userId;
+    const o = this.resetOwners;
+    await this.compensateProvisioning(userId);
+    await o.dashboardLayouts.deleteByUserId(userId);
+    await o.chatInstances.deleteByUserId(userId);
+    await o.savedTableViews.softDeleteByUserId(userId);
+    await o.crmReportDefinitions.softDeleteByUserId(userId);
+    const attachments = await o.attachments.softDeleteByUserId(userId);
+    for (const att of attachments) {
+      try {
+        await o.attachmentStorage.deleteFile(att.storageKey);
+      } catch (error) {
+        logger.warn(`Reset: falha ao remover o arquivo do anexo ${att.id} do usuário ${userId} — segue.`, { error });
+      }
+    }
+    o.kpiCache.invalidate(userId);
+  }
+
+  /**
+   * Compensação do onboarding: tabelas dinâmicas + KnowledgeGraph + ActionProposals (R27) — pelos donos canônicos de
+   * cada tabela (F-P3 → c). O agente não injeta referências a tabelas apagadas. Só desfaz o que o `provision` instalou;
+   * o "Resetar sistema" é o `resetUserSystem` (I7 item 1).
+   */
+  private async compensateProvisioning(userId: string): Promise<void> {
     await this.tables.deleteAllTablesForUser(userId);
     await this.knowledgeGraphs.deleteByUserId(userId);
     await this.actionProposals.deleteByUserId(userId);
@@ -192,7 +249,7 @@ export class SystemProvisioningService implements ISystemProvisioningService {
     messages: { rolledBack: (detail: string) => string; rollbackFailed: string },
   ): Promise<OnboardingRolledBackError | OnboardingRollbackFailedError> {
     try {
-      await this.purgeUserSystem(ctx.userId);
+      await this.compensateProvisioning(ctx.userId);
     } catch (purgeError) {
       logger.error(`Onboarding: a compensação falhou para o usuário ${ctx.userId}.`, { purgeError });
       return new OnboardingRollbackFailedError(messages.rollbackFailed);

@@ -35,4 +35,14 @@ export class AttachmentRepository implements IAttachmentRepository {
       data: { deletedAt: new Date() },
     });
   }
+
+  public async softDeleteByUserId(userId: string): Promise<CrmAttachment[]> {
+    const live = await prisma.crmAttachment.findMany({ where: { userId, deletedAt: null } });
+    if (live.length === 0) return [];
+    await prisma.crmAttachment.updateMany({
+      where: { id: { in: live.map((a) => a.id) }, deletedAt: null },
+      data: { deletedAt: new Date() },
+    });
+    return live;
+  }
 }
