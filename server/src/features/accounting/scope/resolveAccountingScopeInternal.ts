@@ -12,7 +12,8 @@ export function resolveAccountingScopeInternal(
   user: { userId: string },
   unitId: string,
 ): AccountingScope {
-  // ponytail: membership check entra quando unidade for compartilhada
+  // Sem checagem de unidade aqui: o unitId dos controllers HTTP é validado pelo AccountingScopeResolver (nó I6).
+  // ponytail: membership check (unidade compartilhada entre usuários) entra quando unidade for compartilhada
   return {
     ownerUserId: user.userId,
     actorUserId: user.userId,

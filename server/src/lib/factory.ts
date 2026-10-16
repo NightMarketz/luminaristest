@@ -346,7 +346,7 @@ function buildSaleAccountingMappers(): IAccountingEventMapper[] {
  * BE-INCR-BINDING-PRESS (item 15 do BRIEF, Fase B) — `BindingScope` (accountingBinding, própria,
  * não importada de `features/accounting` — ver header de `IAccountingBindingRepository.ts`) tem os
  * MESMOS 3 campos de `AccountingScope`, mais os 3 constantes de tenancy de ledger que o domínio
- * contábil fixa hoje (`resolveAccountingScope`). Fora dos DOIS módulos (nem accountingBinding, nem
+ * contábil fixa hoje (`resolveAccountingScopeInternal`). Fora dos DOIS módulos (nem accountingBinding, nem
  * accounting importam um ao outro além dos contratos nomeados) é o único lugar que pode traduzir
  * um pro outro sem violar a fronteira do item 13.
  */
