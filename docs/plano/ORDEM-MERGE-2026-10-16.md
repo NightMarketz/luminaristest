@@ -24,8 +24,8 @@
 | 2 | W4 | #734 → #735 | não | Divide `InterviewService`, `useAiInterview` e os locales com o W5; sai antes porque o W6 depende dele | CI verde (os dois estavam 14/14) |
 | 3 | I11 | #725 → #731 → #736 | não | Divide `OpenAIService` com o W5 e `DynamicTableService`/`factory` com o I7; sai antes dos dois | #736 terminar a CI |
 | 4 | W5 | #726 → #727 → #728 | não | Rebase sobre o W4 (wizard) e o I11 (OpenAIService); divide `dashboardController` com o I7 | #728: confirmar se a falha/cancelados são rodada velha anterior ao reempilhamento; rerodar |
-| 5 | I7 | #730 → PR-2 (ainda não aberto) | PR-2 sim | Rebase sobre I11 e W5 (`DynamicTableService`, `dashboardController`, `factory`) | PR-2 aberto com as 3 decisões de 16/10 (perfil da empresa, APV com/sem contador, evento pela cadeia) |
-| 6 | X14-CAIXA | #729 → #738 → #739 | sim | Migração de schema; divide `schema.prisma`, `simplesController` e o teste de integração do Simples com o I6 | **#729 (2 falhas) e #738 (3 falhas) verdes**; #739 com CI rodada |
+| 5 | I7 | #730 → #740 | #740 sim | Rebase sobre I11 e W5 (`DynamicTableService`, `dashboardController`, `factory`) | #740 traz as 3 decisões de 16/10 (perfil da empresa, APV com/sem contador, evento pela cadeia); a CI dele só roda quando a base virar `main` |
+| 6 | X14-CAIXA | #729 → #738 → #739 | sim | Migração de schema; divide `schema.prisma`, `simplesController` e o teste de integração do Simples com o I6 | #729, #738 e #739 com CI verde (as falhas foram corrigidas e propagadas pela pilha; aguardando a reconfirmação da CI) |
 | 7 | I6 | #732 → #737 → PR-3 → PR-4 → PR-5 | sim | **Por último de propósito:** o PR-5 liga a regra do `check:arch` com baseline zero. Saindo depois, a regra já vê os endpoints novos do X14-CAIXA, W4 e I7 e os cobre no mesmo lote; saindo antes, cada um desses teria de adotar o guard no rebase | PR-3..5 abertos; rebase sobre todos os anteriores |
 
 **Fora deste lote:** #650 (X10i PR-1, nó `blocked`; divide `schema.prisma`, `rekeyLegacyUnitCli` e `auditCanonical`
