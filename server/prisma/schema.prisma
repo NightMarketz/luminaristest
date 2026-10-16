@@ -2579,7 +2579,9 @@ model AccountantAssignment {
 // tabelas vivas: `FiscalProfile`/`AccountingScopeSettings` continuam a fonte dos leitores; aqui ficam propostas,
 // decisões e o snapshot aplicado. "O que valia em T" = a última APPLIED com decidedAt ≤ T (F-POL-5 a). No máximo 1
 // PROPOSED por (userId, unitId, target) = UNIQUE com coluna-slot anulável (precedente accountant_assignments).
-// `payload` NUNCA carrega `unitId` (condição do REKEY no rekeyLegacyUnitCli). FK Restrict: trilha de aprovação.
+// `payload` NUNCA carrega `unitId` (condição do REKEY no rekeyLegacyUnitCli). FK Restrict: trilha de aprovação — que o
+// "Resetar sistema" (I7, BE-INCR-RESET-CONSISTENTE EMENDA 2026-10-16) apaga SÓ as versões sem contador (proposedById e
+// assignmentId nulos — o PUT direto); versão com contador bloqueia o reset com 409 e nada sai.
 model AccountingPolicyVersion {
   id              String                @id @default(cuid())
   userId          String // dono do escopo
@@ -2600,7 +2602,7 @@ model AccountingPolicyVersion {
   supersededById  String?
   createdAt       DateTime              @default(now())
   updatedAt       DateTime              @updatedAt
-  deletedAt       DateTime? // contrato §2; nenhuma rota apaga — trilha de aprovação
+  deletedAt       DateTime? // contrato §2; nenhuma rota de política apaga — o reset (I7) apaga só as versões sem contador
 
   @@unique([userId, unitId, target, version])
   @@unique([userId, unitId, target, pendingSlot])
