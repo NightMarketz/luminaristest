@@ -876,6 +876,8 @@
  *         The client keeps the stage and sends it back each turn. In AWAITING_CREATION_TYPE_CONFIRMATION a
  *         `choice` (button, W3 b) decides create x customize without reading the text; without it only an
  *         explicit text decides. Every turn that asks the choice again carries `choicePrompt.reason`.
+ *         The customization session (W4) is persisted, owned by the caller and expires 24 h after its last write;
+ *         the body is strict (unknown keys are rejected).
  *       tags: [Dashboard]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -896,7 +898,7 @@
  *                       content: { type: string }
  *                       text: { type: string }
  *                 presetKey: { type: string }
- *                 sessionId: { type: string }
+ *                 sessionId: { type: string, format: uuid }
  *                 choice: { type: string, enum: [create, customize] }
  *       responses:
  *         '200':
@@ -921,6 +923,30 @@
  *                       reason: { type: string, enum: [initial, unclear, declined_customize, error] }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404':
+ *           description: >
+ *             INTERVIEW_SESSION_NOT_FOUND — the customization session does not exist, expired, was deleted or belongs
+ *             to another user (same answer in all cases). The client goes back to the create x customize choice.
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 required: [code, message]
+ *                 properties:
+ *                   code: { type: string, enum: [INTERVIEW_SESSION_NOT_FOUND] }
+ *                   message: { type: string }
+ *         '409':
+ *           description: >
+ *             INTERVIEW_SESSION_CONFLICT — another turn (e.g. a second tab) wrote the session after this turn read it;
+ *             nothing from this turn was lost on the server beyond what it had already saved. Resend the message.
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 required: [code, message]
+ *                 properties:
+ *                   code: { type: string, enum: [INTERVIEW_SESSION_CONFLICT] }
+ *                   message: { type: string }
  *
  *   # ─── DASHBOARD LAYOUT: documented inline in controllers/dashboardLayoutController.ts ───
  *

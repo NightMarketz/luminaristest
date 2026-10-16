@@ -34,6 +34,7 @@ model User {
   actionProposals            ActionProposal[] // Relation to ActionProposal
   crmAttachments             CrmAttachment[] // Relation to CrmAttachment
   savedTableViews            SavedTableView[] // Relation to SavedTableView
+  interviewSessions          InterviewSession[] // W4: sessão de customização da Entrevista com IA
   crmReportDefinitions       CrmReportDefinition[] // BE-INCR-CRM-REPORT-BUILDER PR-2 (item 1)
   accounts                   Account[] // Relation to Account (accounting)
   journalEntries             JournalEntry[] // Relation to JournalEntry (accounting)
@@ -96,6 +97,25 @@ model SavedTableView {
 
   @@index([userId, tableId])
   @@map("saved_table_views")
+}
+
+// BE-INCR-INTERVIEW-SESSION PR-1 (nó W4; BRIEF item 1, F-W4-1 a) — sessão de customização da Entrevista com IA.
+// Estado transitório de onboarding (não é trilha de auditoria): cascade com o User. `version` = F-W4-4 a (update
+// condicional; turno concorrente → 409). TTL 24 h deslizante (F-W4-3 a); expurgo em 7 dias (F-W4-5 b).
+model InterviewSession {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  presetKey String
+  state     Json // ICustomizationState serializado
+  version   Int       @default(0)
+  expiresAt DateTime // now + 24h, renovado a cada saveState
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([userId, expiresAt])
+  @@map("interview_sessions")
 }
 
 // BE-INCR-CRM-REPORT-BUILDER PR-2 (nó CRM-RB; BRIEF item 1; F-RB1=(a)) — definição salva de relatório/dashboard do CRM.

@@ -1,4 +1,4 @@
-import type { ApuracaoMei, ApuracaoSimples } from '../../../../lib/services/simples.service';
+import type { AliquotasSimples, ApuracaoMei, ApuracaoSimples } from '../../../../lib/services/simples.service';
 import type { CompanyFiscalProfileView } from '../../../../lib/services/companyFiscalProfile.service';
 
 /** Fixtures do FE-INCR-SIMPLES — shape espelhado do BE (SimplesApuracaoService.ts:63-81). */
@@ -76,5 +76,20 @@ export const perfilAno = (ano: number, extra: Partial<CompanyFiscalProfileView> 
   ibsCbsOpcaoS1: null,
   ibsCbsOpcaoS2: null,
   updatedAt: '2026-01-02T00:00:00.000Z',
+  ...extra,
+});
+
+/** PR-D item 15 — espelha AliquotasSimples (SimplesApuracaoService.ts:92-115); `avisos` = textos fixos do BE. */
+export const aliquotasSimples = (competencia: string, extra: Partial<AliquotasSimples> = {}): AliquotasSimples => ({
+  competencia,
+  mesReferencia: competencia,
+  sugestao: true,
+  regra: 'FAIXA_MES_ANTERIOR',
+  periodoApuracao: null,
+  rbt12Cents: null,
+  janelaRbt12: null,
+  atividades: [],
+  avisos: [],
+  alertas: [],
   ...extra,
 });
