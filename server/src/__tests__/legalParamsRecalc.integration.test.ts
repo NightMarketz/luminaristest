@@ -12,7 +12,7 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { ApplicationFactory } from '@/lib/factory';
 import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { ATOR_PLATAFORMA, AVISO_VALOR_MUDOU_APOS_ENTREGA } from '@/features/accounting/services/TaxAssessmentRecalcService';
 
 const app = makeApp();
@@ -38,6 +38,7 @@ async function cenario(ano: number) {
   seq += 1;
   const dono = await prisma.user.create({ data: { name: `lp4-${seq}`, username: `lp4-${seq}`, email: `lp4-${seq}@test.local`, password: 'x', role: 'USER' } });
   const unitId = `u-lp4-${seq}`;
+  await seedUnit({ userId: dono.id, id: unitId });
   const ids: Record<string, string> = {};
   for (const c of CONTAS) ids[c.code] = (await prisma.account.create({ data: { userId: dono.id, unitId, ...c, acceptsEntries: true } })).id;
   for (let month = 1; month <= 12; month++) {

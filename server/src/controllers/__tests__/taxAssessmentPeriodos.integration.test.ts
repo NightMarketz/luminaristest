@@ -5,13 +5,13 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { AccountingPolicy } from '@/features/accounting/policies/AccountingPolicy';
 
 const app = makeApp();
 const UNIT = 'unit-periodos';
 const URL = '/api/accounting/tax-assessments/periodos';
-type Dono = { id: string; username: string };
+type Dono = { id: string; username: string; unitId: string };
 
 let seq = 0;
 async function novoDono(regime?: string, extra: Record<string, unknown> = {}): Promise<Dono> {
@@ -20,10 +20,13 @@ async function novoDono(regime?: string, extra: Record<string, unknown> = {}): P
   if (regime) {
     await prisma.companyFiscalProfile.create({ data: { userId: u.id, anoCalendario: 2026, regime, createdById: u.id, updatedById: u.id, ...extra } });
   }
-  return u;
+  // I6: unitId tem de ser linha de `units` do dono — id GLOBAL, então cada dono ganha a sua.
+  const unitId = `${UNIT}-${seq}`;
+  await seedUnit({ userId: u.id, id: unitId });
+  return { ...u, unitId };
 }
 
-const ler = (dono: Dono, query: Record<string, string> = { unitId: UNIT, anoCalendario: '2026' }) =>
+const ler = (dono: Dono, query: Record<string, string> = { unitId: dono.unitId, anoCalendario: '2026' }) =>
   request(app).get(URL).query(query).set(authHeader(dono));
 
 describe('GET /api/accounting/tax-assessments/periodos', () => {
@@ -40,8 +43,8 @@ describe('GET /api/accounting/tax-assessments/periodos', () => {
   it('sem token ⇒ 401; chave extra / ano fora da faixa ⇒ 400', async () => {
     expect((await request(app).get(URL).query({ unitId: UNIT, anoCalendario: '2026' })).status).toBe(401);
     const dono = await novoDono();
-    expect((await ler(dono, { unitId: UNIT, anoCalendario: '2026', foo: '1' })).status).toBe(400);
-    expect((await ler(dono, { unitId: UNIT, anoCalendario: '1999' })).status).toBe(400);
+    expect((await ler(dono, { unitId: dono.unitId, anoCalendario: '2026', foo: '1' })).status).toBe(400);
+    expect((await ler(dono, { unitId: dono.unitId, anoCalendario: '1999' })).status).toBe(400);
   });
 
   it('sem canReadTaxAssessment ⇒ 403', async () => {
@@ -63,14 +66,14 @@ describe('GET /api/accounting/tax-assessments/periodos', () => {
     const outro = await novoDono('PRESUMIDO');
     const t1 = await prisma.taxAssessment.create({
       data: {
-        userId: dono.id, unitId: UNIT, anoCalendario: 2026, tributo: 'IRPJ', regime: 'PRESUMIDO', forma: 'TRIMESTRAL', periodo: 'T01',
+        userId: dono.id, unitId: dono.unitId, anoCalendario: 2026, tributo: 'IRPJ', regime: 'PRESUMIDO', forma: 'TRIMESTRAL', periodo: 'T01',
         modo: 'PRESUMIDO', codigoReceita: '208901', baseCents: 0n, devidoCents: 777n, deducoesCents: 0n, aPagarCents: 777n,
         memoria: [], tabelaVersao: 't', status: 'CONFIRMED', confirmedById: dono.id, confirmedAt: new Date(),
       },
     });
     await prisma.taxAssessment.create({
       data: {
-        userId: outro.id, unitId: UNIT, anoCalendario: 2026, tributo: 'CSLL', regime: 'PRESUMIDO', forma: 'TRIMESTRAL', periodo: 'T01',
+        userId: outro.id, unitId: dono.unitId, anoCalendario: 2026, tributo: 'CSLL', regime: 'PRESUMIDO', forma: 'TRIMESTRAL', periodo: 'T01',
         modo: 'PRESUMIDO', codigoReceita: '237201', baseCents: 0n, devidoCents: 1n, deducoesCents: 0n, aPagarCents: 1n,
         memoria: [], tabelaVersao: 't', status: 'CONFIRMED', confirmedById: outro.id, confirmedAt: new Date(),
       },

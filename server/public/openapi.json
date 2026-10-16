@@ -10558,7 +10558,10 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -12039,6 +12042,12 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -12089,6 +12098,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -12301,6 +12313,12 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -12537,6 +12555,12 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -13193,7 +13217,7 @@
     "/api/accounting/reconciliation/statements": {
       "post": {
         "summary": "Import a bank statement (CSV/XLSX/OFX/CNAB) for a bank GL account",
-        "description": "Accepts CSV/XLSX (columns date,amountCents,description[,externalRef], signed integer cents), OFX (normalized from STMTTRN - DTPOSTED→date, TRNAMT→signed cents, NAME/MEMO→description, FITID→externalRef) or CNAB 240 (Segmento E extrato — DDMMAAAA→date, 18-digit value→signed cents by D/C indicator, histórico→description, document number→externalRef). Format is auto-detected. ALL-OR-NOTHING — any invalid row rejects the whole file; a multi-account OFX/CNAB and a CNAB 400 file are rejected. Re-import of the same file (sha256) is idempotent (200, nothing written). No ledger value is written.",
+        "description": "Accepts CSV/XLSX (columns date,amountCents,description[,externalRef], signed integer cents), OFX (normalized from STMTTRN - DTPOSTED→date, TRNAMT→signed cents, NAME/MEMO→description, FITID→externalRef) or CNAB 240 (Segmento E extrato — DDMMAAAA→date, 18-digit value→signed cents by D/C indicator, histórico→description, document number→externalRef). Format is auto-detected. ALL-OR-NOTHING — any invalid row rejects the whole file; a multi-account OFX/CNAB and a CNAB 400 file are rejected. Re-import of the same file (sha256) is idempotent (200, nothing written). No ledger value is written. — 409: release_report_no_payment_account — mp_release on a GL account without a Mercado Pago PaymentAccount",
         "tags": [
           "Accounting"
         ],
@@ -13279,10 +13303,10 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
           },
           "409": {
-            "description": "release_report_no_payment_account — mp_release on a GL account without a Mercado Pago PaymentAccount"
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       },
@@ -13331,6 +13355,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -13385,7 +13412,7 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -13430,7 +13457,10 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -13483,7 +13513,10 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -13525,7 +13558,7 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -13584,7 +13617,10 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -13622,7 +13658,10 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -13681,7 +13720,10 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -13741,7 +13783,7 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -14359,6 +14401,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       },
@@ -14395,6 +14440,12 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -14435,6 +14486,12 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -14476,7 +14533,7 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -14524,7 +14581,10 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -14572,7 +14632,10 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -14620,7 +14683,10 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -14731,7 +14797,10 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -14798,6 +14867,12 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -14857,6 +14932,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -14916,7 +14994,10 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -15025,6 +15106,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       },
@@ -15061,6 +15145,12 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -15101,6 +15191,12 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -15142,7 +15238,7 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -15190,7 +15286,10 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -15238,7 +15337,10 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -15286,7 +15388,10 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -15397,7 +15502,10 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -16184,6 +16292,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -16276,6 +16387,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       },
@@ -16311,7 +16425,10 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -16358,7 +16475,10 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -16402,7 +16522,10 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -16454,6 +16577,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       },
@@ -16487,6 +16613,12 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -16533,7 +16665,10 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -16580,7 +16715,10 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -16664,6 +16802,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       },
@@ -16699,7 +16840,10 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -16746,7 +16890,10 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -16790,7 +16937,10 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -16826,6 +16976,12 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -16862,7 +17018,10 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -16906,6 +17065,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -17524,6 +17686,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -17582,7 +17747,7 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -17590,7 +17755,7 @@
     "/api/package-acceptances": {
       "post": {
         "summary": "Registra o aceite da validade do pacote de uma venda (append-only, um por venda)",
-        "description": "O servidor so confia no FE para textVersion e textSha256. Le a venda, o cliente e a data da venda e o validityDays do catalogo, re-renderiza o texto e compara o hash. Hash diferente e 409 PACKAGE_NOTICE_CHANGED; segundo aceite da mesma venda e 409 PACKAGE_ACCEPTANCE_EXISTS; pacote sem validade e 400 PACKAGE_WITHOUT_VALIDITY. Nao existe PUT nem DELETE - a linha e prova.",
+        "description": "409: PACKAGE_ACCEPTANCE_EXISTS ou PACKAGE_NOTICE_CHANGED O servidor so confia no FE para textVersion e textSha256. Le a venda, o cliente e a data da venda e o validityDays do catalogo, re-renderiza o texto e compara o hash. Hash diferente e 409 PACKAGE_NOTICE_CHANGED; segundo aceite da mesma venda e 409 PACKAGE_ACCEPTANCE_EXISTS; pacote sem validade e 400 PACKAGE_WITHOUT_VALIDITY. Nao existe PUT nem DELETE - a linha e prova.",
         "tags": [
           "Accounting"
         ],
@@ -17623,10 +17788,10 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
           },
           "409": {
-            "description": "PACKAGE_ACCEPTANCE_EXISTS ou PACKAGE_NOTICE_CHANGED"
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       },
@@ -17670,6 +17835,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -17718,7 +17886,7 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -17799,6 +17967,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -17852,6 +18023,12 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -17933,6 +18110,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -17985,7 +18165,10 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -18056,7 +18239,10 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -18120,7 +18306,10 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -18191,7 +18380,10 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -19342,6 +19534,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       },
@@ -19398,6 +19593,12 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -19446,7 +19647,10 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -19707,12 +19911,15 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       },
       "post": {
         "summary": "Register a municipal ISS benefit",
-        "description": "The benefit reduces the effective ISS percentage of the Simples bracket (art. 32 § 1º) and cannot result in less than 2% except for LC 116 subitems 7.02, 7.05 and 16.01 (art. 31 p.ú.). 409 when another benefit of the same Município overlaps in validity and services. Audited as iss_beneficio_municipal.created (codes/dates only; the legislation text stays out).",
+        "description": "409: benefício sobreposto The benefit reduces the effective ISS percentage of the Simples bracket (art. 32 § 1º) and cannot result in less than 2% except for LC 116 subitems 7.02, 7.05 and 16.01 (art. 31 p.ú.). 409 when another benefit of the same Município overlaps in validity and services. Audited as iss_beneficio_municipal.created (codes/dates only; the legislation text stays out).",
         "tags": [
           "Accounting"
         ],
@@ -19796,8 +20003,11 @@
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
           "409": {
-            "description": "benefício sobreposto"
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -19842,12 +20052,13 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       },
       "put": {
         "summary": "Replace a municipal ISS benefit (same body as POST)",
+        "description": "409: benefício sobreposto",
         "tags": [
           "Accounting"
         ],
@@ -19880,10 +20091,10 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
           },
           "409": {
-            "description": "benefício sobreposto"
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       },
@@ -19929,7 +20140,10 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -20713,6 +20927,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -20771,6 +20988,12 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       },
@@ -20838,6 +21061,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -20883,6 +21109,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -20939,6 +21168,12 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -20995,6 +21230,12 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -21002,7 +21243,7 @@
     "/api/nfe/dfe/documents/{id}/cancelar": {
       "post": {
         "summary": "Cancel an AUTHORIZED document (item 29, Anexo II e101101)",
-        "description": "Só de status AUTHORIZED. Nunca toca a venda nem o razão. OUT_OF_WINDOW/REJECTED do parceiro viram 409 tipado; CANCELLED retira a proveniência anexada (F-DFE-18, soft-delete).",
+        "description": "409: OUT_OF_WINDOW (E0822) ou REJECTED pelo parceiro (código do fisco na mensagem) Só de status AUTHORIZED. Nunca toca a venda nem o razão. OUT_OF_WINDOW/REJECTED do parceiro viram 409 tipado; CANCELLED retira a proveniência anexada (F-DFE-18, soft-delete).",
         "tags": [
           "Accounting"
         ],
@@ -21068,8 +21309,11 @@
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
           "409": {
-            "description": "OUT_OF_WINDOW (E0822) ou REJECTED pelo parceiro (código do fisco na mensagem)"
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -21077,7 +21321,7 @@
     "/api/nfe/dfe/documents/{id}/substituir": {
       "post": {
         "summary": "Substitute an authorized NFS-e (BE-INCR-DFE-EVENTOS item 11, DPS with infDPS/subst)",
-        "description": "Cria o documento substituto (DPS nova com o grupo subst apontando a chave da original; Anexo I [113]-[116]). Quando a substituta é autorizada, a original vira CANCELLED na mesma transação (e105102 gerado pelo fisco). Fora do prazo do município configurado no perfil e cMotivo fora de 01/02 só gera aviso (E0050, nível 3).",
+        "description": "409: DFE_STATUS_INVALIDO | DFE_SUBSTITUICAO_EXISTENTE | DFE_SUBST_FORA_DO_TETO | DFE_SUBST_NAO_SUPORTADA Cria o documento substituto (DPS nova com o grupo subst apontando a chave da original; Anexo I [113]-[116]). Quando a substituta é autorizada, a original vira CANCELLED na mesma transação (e105102 gerado pelo fisco). Fora do prazo do município configurado no perfil e cMotivo fora de 01/02 só gera aviso (E0050, nível 3).",
         "tags": [
           "Accounting"
         ],
@@ -21146,8 +21390,11 @@
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
           "409": {
-            "description": "DFE_STATUS_INVALIDO | DFE_SUBSTITUICAO_EXISTENTE | DFE_SUBST_FORA_DO_TETO | DFE_SUBST_NAO_SUPORTADA"
+            "$ref": "#/components/responses/UnitDeleted"
           },
           "422": {
             "description": "SUBSTITUICAO_BLOQUEADA — muda campo congelado por E0060/E0061"
@@ -21197,6 +21444,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -21204,7 +21454,7 @@
     "/api/nfe/dfe/documents/{id}/retorno-manual": {
       "post": {
         "summary": "Register the authorized NFS-e XML downloaded from the public portal (manual mode, item 11)",
-        "description": "Só documento do modo manual (partner=manual) em SENT/PROCESSING. O XML tem a assinatura conferida (E1630/E1634), é relido contra a DPS enviada e autoriza o documento. Identidade divergente (prestador, chave já usada, nota anterior ao documento, origem fora do portal) ⇒ 422 sem escrita. Conteúdo divergente ⇒ AUTHORIZED_DIVERGENT (só sai cancelando).",
+        "description": "409: documento não é do modo manual ou não está SENT/PROCESSING Só documento do modo manual (partner=manual) em SENT/PROCESSING. O XML tem a assinatura conferida (E1630/E1634), é relido contra a DPS enviada e autoriza o documento. Identidade divergente (prestador, chave já usada, nota anterior ao documento, origem fora do portal) ⇒ 422 sem escrita. Conteúdo divergente ⇒ AUTHORIZED_DIVERGENT (só sai cancelando).",
         "tags": [
           "Accounting"
         ],
@@ -21265,8 +21515,11 @@
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
           "409": {
-            "description": "documento não é do modo manual ou não está SENT/PROCESSING"
+            "$ref": "#/components/responses/UnitDeleted"
           },
           "422": {
             "description": "XML inválido, assinatura inválida ou identidade divergente"
@@ -21277,6 +21530,7 @@
     "/api/nfe/dfe/documents/{id}/rejeicao-manual": {
       "post": {
         "summary": "Register that the public portal rejected the data (manual mode, item 12)",
+        "description": "409: documento não é do modo manual ou não está SENT/PROCESSING",
         "tags": [
           "Accounting"
         ],
@@ -21349,8 +21603,11 @@
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
           "409": {
-            "description": "documento não é do modo manual ou não está SENT/PROCESSING"
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -21358,7 +21615,7 @@
     "/api/nfe/dfe/documents/{id}/cancelamento-manual": {
       "post": {
         "summary": "Register a cancellation done on the public portal, with the e101101 event XML (manual mode, item 13)",
-        "description": "Só documento do modo manual autorizado. O evento tem de cancelar esta chave (chNFSe) e o cMotivo tem de ser o do evento; o texto gravado é o do XML. Nunca toca a venda nem o razão; retira a proveniência.",
+        "description": "409: documento não é do modo manual ou não está autorizado Só documento do modo manual autorizado. O evento tem de cancelar esta chave (chNFSe) e o cMotivo tem de ser o do evento; o texto gravado é o do XML. Nunca toca a venda nem o razão; retira a proveniência.",
         "tags": [
           "Accounting"
         ],
@@ -21429,8 +21686,11 @@
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
           "409": {
-            "description": "documento não é do modo manual ou não está autorizado"
+            "$ref": "#/components/responses/UnitDeleted"
           },
           "422": {
             "description": "evento inválido, de outra NFS-e ou com cMotivo diferente"
@@ -23063,6 +23323,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       },
@@ -23099,6 +23362,12 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -23143,12 +23412,13 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       },
       "patch": {
         "summary": "Update label and/or status (ACTIVE to DISABLED, DISABLED to ACTIVE)",
+        "description": "409: payment_account_already_active ou payment_account_invalid_transition",
         "tags": [
           "Accounting"
         ],
@@ -23191,10 +23461,10 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
           },
           "409": {
-            "description": "payment_account_already_active ou payment_account_invalid_transition"
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       },
@@ -23237,7 +23507,10 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -23245,7 +23518,7 @@
     "/api/payment-accounts/{id}/credential": {
       "put": {
         "summary": "Set the provider credential (write-only, encrypted at rest) and activate the account",
-        "description": "AES-256-GCM com AAD = id da conta; chave-mestra no env (PAYMENT_CREDENTIAL_KEYS). Sem a chave, 503 payment_credential_key_missing e nada é gravado.",
+        "description": "409: payment_account_already_active AES-256-GCM com AAD = id da conta; chave-mestra no env (PAYMENT_CREDENTIAL_KEYS). Sem a chave, 503 payment_credential_key_missing e nada é gravado.",
         "tags": [
           "Accounting"
         ],
@@ -23288,10 +23561,10 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
           },
           "409": {
-            "description": "payment_account_already_active"
+            "$ref": "#/components/responses/UnitDeleted"
           },
           "503": {
             "description": "payment_credential_key_missing"
@@ -23354,7 +23627,10 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -23362,7 +23638,7 @@
     "/api/receivables/{receivableId}/charges": {
       "post": {
         "summary": "Create a provider charge (boleto/Pix) for the open balance of a receivable (BE-INCR-PAYMENT-PROVIDER PR-2, P2-2)",
-        "description": "Valor = saldo em aberto relido na tx; conta Mercado Pago ACTIVE do escopo. Nenhum efeito no razão (PP-D5). Campos de juros/multa/desconto ou prazo do tipo errado ⇒ 400 (P2-12).",
+        "description": "409: CHARGE_RECEIVABLE_NOT_CHARGEABLE | CHARGE_LIVE_EXISTS | CHARGE_NOTHING_TO_CHARGE | PAYMENT_ACCOUNT_NOT_ACTIVE Valor = saldo em aberto relido na tx; conta Mercado Pago ACTIVE do escopo. Nenhum efeito no razão (PP-D5). Campos de juros/multa/desconto ou prazo do tipo errado ⇒ 400 (P2-12).",
         "tags": [
           "Accounting"
         ],
@@ -23405,10 +23681,10 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
           },
           "409": {
-            "description": "CHARGE_RECEIVABLE_NOT_CHARGEABLE | CHARGE_LIVE_EXISTS | CHARGE_NOTHING_TO_CHARGE | PAYMENT_ACCOUNT_NOT_ACTIVE"
+            "$ref": "#/components/responses/UnitDeleted"
           },
           "502": {
             "description": "provider_credential_invalid | provider_unavailable (a cobrança fica CREATING e o job reenvia)"
@@ -23457,7 +23733,7 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -23502,7 +23778,7 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -23547,7 +23823,7 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -23555,6 +23831,7 @@
     "/api/collection-charges/{id}/cancel": {
       "post": {
         "summary": "Cancel a PENDING provider charge (P2-10); provider 409 ⇒ re-query and apply the real state",
+        "description": "409: CHARGE_NOT_PENDING",
         "tags": [
           "Accounting"
         ],
@@ -23602,10 +23879,10 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
           },
           "409": {
-            "description": "CHARGE_NOT_PENDING"
+            "$ref": "#/components/responses/UnitDeleted"
           },
           "502": {
             "description": "provider_credential_invalid | provider_unavailable"
@@ -23690,6 +23967,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -23802,12 +24082,15 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       },
       "post": {
         "summary": "Confirm the quarterly IRPJ/CSLL assessment (commit 1, X7 item 14)",
-        "description": "Recalcula e grava as 2 linhas (IRPJ, CSLL) numa tx com os gates - CAS do a pagar (409), um só CONFIRMED por período (409; substituir = supersedesIds), ordem dos trimestres (409), regime igual (409) - e trava a forma de apuração do ano. Substituir um trimestre marca SUPERSEDED os posteriores (reconfirmar). X7 Fase B: nos meses A0m a ordem é mensal e a cascata derruba os meses seguintes e o A00; o balancete exige os meses anteriores em atividade fechados (400). Depois do commit, a provisão no razão é best-effort (pendente fica visível em provisaoPendente).",
+        "description": "409: TAX_ASSESSMENT_CAS, _ALREADY_CONFIRMED, _SUPERSEDES, _ORDER, _REGIME ou _STALE Recalcula e grava as 2 linhas (IRPJ, CSLL) numa tx com os gates - CAS do a pagar (409), um só CONFIRMED por período (409; substituir = supersedesIds), ordem dos trimestres (409), regime igual (409) - e trava a forma de apuração do ano. Substituir um trimestre marca SUPERSEDED os posteriores (reconfirmar). X7 Fase B: nos meses A0m a ordem é mensal e a cascata derruba os meses seguintes e o A00; o balancete exige os meses anteriores em atividade fechados (400). Depois do commit, a provisão no razão é best-effort (pendente fica visível em provisaoPendente).",
         "tags": [
           "Accounting"
         ],
@@ -23839,8 +24122,11 @@
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
           "409": {
-            "description": "TAX_ASSESSMENT_CAS, _ALREADY_CONFIRMED, _SUPERSEDES, _ORDER, _REGIME ou _STALE"
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -23889,6 +24175,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -23928,6 +24217,9 @@
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
           "409": {
             "description": "TAX_ASSESSMENT_ORDER"
           }
@@ -23937,7 +24229,7 @@
     "/api/accounting/tax-assessments/pis-cofins": {
       "post": {
         "summary": "Confirm the monthly PIS/Cofins assessment (commit 1, X8 item 14)",
-        "description": "Recalcula e grava as 2 linhas (PIS, COFINS) numa tx com os gates - CAS do a pagar (409), um só CONFIRMED por (PJ, ano, tributo, mês) (409; substituir = supersedesIds), ordem sequencial dos meses (409). Substituir derruba os meses posteriores confirmados e os devolve em reconfirmar (BE-INCR-LEGAL-PARAMS PR-4); confirmar um mês novo por trás de um posterior confirmado segue 409. Sem provisão no razão neste PR (provisaoPendente = true; a provisão é o PR-3 do X8). Leitura pelos GET de /tax-assessments.",
+        "description": "409: TAX_ASSESSMENT_CAS, _ALREADY_CONFIRMED, _SUPERSEDES, _ORDER ou _STALE Recalcula e grava as 2 linhas (PIS, COFINS) numa tx com os gates - CAS do a pagar (409), um só CONFIRMED por (PJ, ano, tributo, mês) (409; substituir = supersedesIds), ordem sequencial dos meses (409). Substituir derruba os meses posteriores confirmados e os devolve em reconfirmar (BE-INCR-LEGAL-PARAMS PR-4); confirmar um mês novo por trás de um posterior confirmado segue 409. Sem provisão no razão neste PR (provisaoPendente = true; a provisão é o PR-3 do X8). Leitura pelos GET de /tax-assessments.",
         "tags": [
           "Accounting"
         ],
@@ -23969,8 +24261,11 @@
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
           "409": {
-            "description": "TAX_ASSESSMENT_CAS, _ALREADY_CONFIRMED, _SUPERSEDES, _ORDER ou _STALE"
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -23978,7 +24273,7 @@
     "/api/accounting/mit-exports": {
       "post": {
         "summary": "Generate the MIT import JSON file of a month (BE-INCR-MIT-EXPORT PR-2, X9 items 10-12)",
-        "description": "Monta o arquivo JSON de importação do MIT (leiaute 1.0) do PA (ano, mês) a partir das apurações de IRPJ/CSLL confirmadas e registra a geração (hash + ids, sem conteúdo nem CPF). O arquivo só sai nesta resposta. 400 - perfil do ano ausente, SIMPLES/MEI, sem CNPJ do declarante, sem contador ativo. 409 - liminar contra a LC 224 no perfil. 422 - nenhuma apuração confirmada ou nenhum débito no mês.",
+        "description": "409: MIT_LC224_LIMINAR Monta o arquivo JSON de importação do MIT (leiaute 1.0) do PA (ano, mês) a partir das apurações de IRPJ/CSLL confirmadas e registra a geração (hash + ids, sem conteúdo nem CPF). O arquivo só sai nesta resposta. 400 - perfil do ano ausente, SIMPLES/MEI, sem CNPJ do declarante, sem contador ativo. 409 - liminar contra a LC 224 no perfil. 422 - nenhuma apuração confirmada ou nenhum débito no mês.",
         "tags": [
           "Accounting"
         ],
@@ -24031,8 +24326,11 @@
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
           "409": {
-            "description": "MIT_LC224_LIMINAR"
+            "$ref": "#/components/responses/UnitDeleted"
           },
           "422": {
             "description": "MIT_NADA_A_EXPORTAR"
@@ -24081,6 +24379,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -24130,7 +24431,7 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       },
@@ -24204,7 +24505,10 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -24254,7 +24558,7 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       },
@@ -24349,6 +24653,12 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -24356,7 +24666,7 @@
     "/api/accounting/simples/parcerias": {
       "post": {
         "summary": "Create a salon partnership contract (X14 item 13 - Lei 12.592 art. 1º-A)",
-        "description": "Contrato salão-parceiro × profissional-parceiro. A cota do profissional sai da receita bruta do salão (§ 5º) nos itens de serviço feitos por ele, a partir da homologação (§ 8º). 409 - outro contrato do mesmo profissional vigente no período.",
+        "description": "409: Outro contrato do profissional vigente no período Contrato salão-parceiro × profissional-parceiro. A cota do profissional sai da receita bruta do salão (§ 5º) nos itens de serviço feitos por ele, a partir da homologação (§ 8º). 409 - outro contrato do mesmo profissional vigente no período.",
         "tags": [
           "Accounting"
         ],
@@ -24439,8 +24749,11 @@
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
           "409": {
-            "description": "Outro contrato do profissional vigente no período"
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       },
@@ -24476,6 +24789,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -24483,6 +24799,7 @@
     "/api/accounting/simples/parcerias/{id}": {
       "patch": {
         "summary": "Update a partnership contract (X14 item 13)",
+        "description": "409: Outro contrato do profissional vigente no período",
         "tags": [
           "Accounting"
         ],
@@ -24569,10 +24886,10 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
           },
           "409": {
-            "description": "Outro contrato do profissional vigente no período"
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       },
@@ -24618,7 +24935,10 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -24679,6 +24999,9 @@
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
           "422": {
             "description": "SIMPLES_REGRA_NAO_REGULAMENTADA"
           }
@@ -24727,6 +25050,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -24734,7 +25060,7 @@
     "/api/accounting/simples/apuracoes/{competencia}/das": {
       "put": {
         "summary": "Register the official DAS and persist the assessment (X14 items 19-21)",
-        "description": "Grava a apuração (SimplesApuracao) com o DAS oficial e provisiona D dedução da receita / C Simples a recolher pelo valor oficial. Novo registro na mesma competência substitui o anterior e estorna a provisão dele. O mesmo número e valor de novo só completa a provisão pendente. 400 - alerta bloqueante (TIEOUT_DIVERGENTE, RBT12_INCOMPLETO, ATIVIDADE_SEM_ANEXO). 409 - a receita mudou depois do cálculo.",
+        "description": "409: A receita mudou depois do cálculo, ou registro concorrente Grava a apuração (SimplesApuracao) com o DAS oficial e provisiona D dedução da receita / C Simples a recolher pelo valor oficial. Novo registro na mesma competência substitui o anterior e estorna a provisão dele. O mesmo número e valor de novo só completa a provisão pendente. 400 - alerta bloqueante (TIEOUT_DIVERGENTE, RBT12_INCOMPLETO, ATIVIDADE_SEM_ANEXO). 409 - a receita mudou depois do cálculo.",
         "tags": [
           "Accounting"
         ],
@@ -24807,8 +25133,11 @@
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
           "409": {
-            "description": "A receita mudou depois do cálculo, ou registro concorrente"
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -24856,6 +25185,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
@@ -24902,6 +25234,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       },
@@ -24961,6 +25296,12 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -25007,6 +25348,9 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       },
@@ -25200,6 +25544,12 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -25258,7 +25608,10 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
           }
         }
       }
@@ -25306,7 +25659,7 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "$ref": "#/components/responses/NotFoundError"
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }

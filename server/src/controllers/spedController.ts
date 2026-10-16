@@ -2,7 +2,6 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import { SpedEcdRequestSchema } from '../features/accounting/dtos/SpedEcdDto';
 import { SpedEcfRequestSchema } from '../features/accounting/dtos/SpedEcfDto';
 import { SpedEcfRealRequestSchema } from '../features/accounting/dtos/SpedEcfRealDto';
@@ -81,7 +80,7 @@ async function expandCompanyProfile(body: unknown, user: UserContext, target: Sp
   if (!body || typeof body !== 'object' || Array.isArray(body)) return nada;
   const raw = body as Record<string, unknown>;
   if (typeof raw.unitId !== 'string' || raw.unitId.length === 0 || typeof raw.year !== 'number') return nada;
-  const scope = resolveAccountingScopeInternal(user, raw.unitId);
+  const scope = await getFactory().getAccountingScopeResolver().resolve(user, raw.unitId, { access: 'write' });
   const perfis = getFactory().getCompanyFiscalProfileService();
   const perfil = await perfis.perfilParaGeracao(scope, raw.year);
   if (!perfil) {
@@ -124,7 +123,7 @@ async function expandSignerContacts(
     return body; // formato errado: o `.strict()` do DTO recusa a chave desconhecida com 400
   }
   if (typeof raw.unitId !== 'string' || raw.unitId.length === 0) return body;
-  const scope = resolveAccountingScopeInternal(user, raw.unitId);
+  const scope = await getFactory().getAccountingScopeResolver().resolve(user, raw.unitId, { access: 'write' });
   const contacts = getFactory().getAccountingContactService();
   const fromContacts = [];
   // `getContact` (policy-first: canReadAccountingContact), não `requireContact` (sem policy) —
@@ -165,7 +164,7 @@ export const getSpedQualifAssinante = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = SpedQualifAssinanteQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const data = getFactory().getSpedGenerationService().qualifAssinante(scope, parsed.data.layout);
     return res.json({ success: true, data });
   } catch (error) {
@@ -191,7 +190,7 @@ export const generateSpedEcd = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const rtf = uploadedRtf(req);
     const data = await getFactory()
       .getSpedGenerationService()
@@ -220,7 +219,7 @@ export const generateSpedEcf = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getSpedEcfGenerationService().generate(scope, parsed.data);
     return res.status(201).json({ success: true, data, perfilFiscal: perfil.perfilFiscal, avisos: perfil.avisos });
   } catch (error) {
@@ -248,7 +247,7 @@ export const generateSpedEcfReal = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getSpedEcfRealGenerationService().generate(scope, parsed.data);
     return res.status(201).json({ success: true, data, perfilFiscal: perfil.perfilFiscal, avisos: perfil.avisos });
   } catch (error) {

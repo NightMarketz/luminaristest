@@ -12,7 +12,7 @@ import prisma from '@/lib/prisma';
 import { ApplicationFactory } from '@/lib/factory';
 import { TaxAssessmentRepository } from '@/features/accounting/repositories/TaxAssessmentRepository';
 import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 const BASE = '/api/accounting/tax-assessments';
@@ -33,6 +33,7 @@ const CONTAS = [
 
 /** Unidade com plano, 12 períodos abertos, perfil da empresa do ano e receita de serviço no T01. */
 async function cenario(unitId: string, ano: number, opts: { regime?: string; contas?: boolean } = {}) {
+  await seedUnit({ userId: dono.id, id: unitId });
   const ids: Record<string, string> = {};
   for (const c of CONTAS) ids[c.code] = (await prisma.account.create({ data: { userId: dono.id, unitId, ...c, acceptsEntries: true } })).id;
   for (let month = 1; month <= 12; month++) {
