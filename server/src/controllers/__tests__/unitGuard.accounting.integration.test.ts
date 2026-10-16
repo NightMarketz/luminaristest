@@ -90,4 +90,52 @@ describe('I6 guard — /api/accounting (PR-2)', () => {
     expect(gravar.body.code).toBe('UNIT_DELETED');
     expect(await linhasContabeis('unit-guard-apagada')).toEqual({ accounts: 0, entries: 0 });
   });
+
+  // L-I6-2 (dono, questionário, 2026-10-16: "Leitura nas 3"): os 3 GETs que gravam só trilha de auditoria são 'read' —
+  // em unidade apagada respondem 200 e a trilha segue sendo gravada.
+  it('unidade apagada: verify-chain, download do anexo e download do job de exportação → 200 (trilha de auditoria gravada)', async () => {
+    const a = await dono('guard-a');
+    await seedUnit({ userId: a.user.id, id: 'unit-guard-trilha' });
+    const PDF = Buffer.from('%PDF-1.4\n% guard\n%%EOF\n');
+    const doc = await request(app)
+      .post('/api/accounting/source-documents')
+      .set(a.auth)
+      .field('unitId', 'unit-guard-trilha')
+      .field('sourceType', 'tax.simples.historico')
+      .attach('file', PDF, { filename: 'guard.pdf', contentType: 'application/pdf' });
+    expect(doc.status).toBe(201);
+    const exp = await request(app)
+      .post('/api/accounting/data-exchange/exports')
+      .set(a.auth)
+      .send({ kind: 'EXPORT_TRIAL_BALANCE', format: 'csv', unitId: 'unit-guard-trilha' });
+    expect(exp.status).toBe(201);
+    // A unidade é apagada DEPOIS de o anexo e o job existirem.
+    await prisma.dynamicTableData.update({ where: { id: 'unit-guard-trilha' }, data: { deletedAt: new Date() } });
+
+    const flags = { a: process.env.AUDIT_DOWNLOAD_ATTACHMENTS, d: process.env.AUDIT_DATA_EXCHANGE_DOWNLOADS };
+    process.env.AUDIT_DOWNLOAD_ATTACHMENTS = 'true';
+    process.env.AUDIT_DATA_EXCHANGE_DOWNLOADS = 'true';
+    try {
+      const chain = await request(app).get('/api/accounting/audit/verify-chain').query({ unitId: 'unit-guard-trilha' }).set(a.auth);
+      expect(chain.status).toBe(200);
+      const anexo = await request(app)
+        .get(`/api/accounting/attachments/${doc.body.data.attachment.id}`)
+        .query({ unitId: 'unit-guard-trilha' })
+        .set(a.auth);
+      expect(anexo.status).toBe(200);
+      const arquivo = await request(app)
+        .get(`/api/accounting/data-exchange/jobs/${exp.body.data.id}/download`)
+        .query({ unitId: 'unit-guard-trilha' })
+        .set(a.auth);
+      expect(arquivo.status).toBe(200);
+    } finally {
+      process.env.AUDIT_DOWNLOAD_ATTACHMENTS = flags.a;
+      process.env.AUDIT_DATA_EXCHANGE_DOWNLOADS = flags.d;
+      if (flags.a === undefined) delete process.env.AUDIT_DOWNLOAD_ATTACHMENTS;
+      if (flags.d === undefined) delete process.env.AUDIT_DATA_EXCHANGE_DOWNLOADS;
+    }
+    const trilha = (eventType: string) => prisma.auditEvent.count({ where: { unitId: 'unit-guard-trilha', eventType } });
+    expect(await trilha('attachment.downloaded')).toBe(1);
+    expect(await trilha('data_exchange.artifact_downloaded')).toBe(1);
+  });
 });

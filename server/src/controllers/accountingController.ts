@@ -504,7 +504,9 @@ export const getVerifyAuditChain = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
+    // I6 (dono, 2026-10-16, "Leitura nas 3"): 'read' — o getOrCreateHead só grava a cabeça da trilha de auditoria,
+    // não lançamento; em unidade apagada a verificação segue funcionando.
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const result = await getFactory().getAuditService().verifyAuditChain(scope);
     const data = {
       ok:            result.ok,

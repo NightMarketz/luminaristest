@@ -2229,7 +2229,6 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404': { $ref: '#/components/responses/UnitNotFound' }
- *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '500': { $ref: '#/components/responses/InternalServerError' }
  *
  *   # ─── ACCOUNTING ATTACHMENTS / EVIDENCE (BE-INCR-5) ───────────────────────
@@ -2286,7 +2285,6 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404': { $ref: '#/components/responses/UnitNotFound' }
- *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '500': { $ref: '#/components/responses/InternalServerError' }
  *     delete:
  *       summary: Soft-delete an attachment (binary retained for audit)
@@ -2997,7 +2995,6 @@
  *               schema: { type: string, format: binary }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404': { $ref: '#/components/responses/UnitNotFound' }
- *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/data-exchange/imports:
  *     post:

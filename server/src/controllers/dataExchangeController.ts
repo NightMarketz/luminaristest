@@ -203,7 +203,9 @@ export const downloadDataExchangeArtifact = async (req: Request, res: Response) 
     }
 
     // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo do par (contador, ownerUserId).
-    const scope = await getFactory().getAccountingScopeResolver().resolveGovernance(user, parsed.data.unitId, parsed.data.ownerUserId, { access: 'write' });
+    // I6 (dono, 2026-10-16, "Leitura nas 3"): 'read' — o download só grava trilha de auditoria
+    // (data_exchange.artifact_downloaded, com AUDIT_DATA_EXCHANGE_DOWNLOADS), não lançamento.
+    const scope = await getFactory().getAccountingScopeResolver().resolveGovernance(user, parsed.data.unitId, parsed.data.ownerUserId, { access: 'read' });
     const { absPath, fileName, mimeType } = await getFactory()
       .getDataExchangeExportService()
       .getArtifactForDownload(scope, req.params.jobId);

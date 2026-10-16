@@ -228,3 +228,10 @@ natureza muda. **Vazia.**
 - **Chamadores internos** (bridges, reconcile, cobrança, NF-e lifecycle) seguem sem validação por decisão (F-I6-1 d):
   o `unitId` deles vem de linha já gravada. Se uma unidade for apagada, eles continuam escrevendo nela — mesmo
   tema do item anterior.
+
+## 9. Decisões de execução (`sessao-feature`, 16/10)
+
+| Lacuna | Decisão | Origem |
+|---|---|---|
+| **L-I6-1** F-I6-11 × endpoint que já declara `'404'`/`'409'` | **(B) substituir pelo componente**; o que a resposta antiga dizia de específico vai para a `description` da operação | dono, questionário, 2026-10-16 — *"Substituir pelo componente"* |
+| **L-I6-2** (§7.1) GETs que gravam só trilha de auditoria: `GET /audit/verify-chain` (cabeça da cadeia), `GET /attachments/{id}` e `GET /data-exchange/jobs/{jobId}/download` (audit de download, sob flag) | **`read` nos 3** — em unidade apagada respondem 200 e a trilha segue sendo gravada; comentário junto do modo em cada handler | dono, questionário, 2026-10-16 — *"Leitura nas 3"* |
