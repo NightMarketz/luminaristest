@@ -4489,7 +4489,10 @@
           "role",
           "chatInstanceId",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "promptTokens",
+          "completionTokens",
+          "model"
         ],
         "properties": {
           "id": {
@@ -4520,6 +4523,23 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "promptTokens": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true,
+            "description": "Tokens de entrada do turno do ASSISTANT (null = USER ou anterior ao I11; 0 = sem chamada ao LLM)"
+          },
+          "completionTokens": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true,
+            "description": "Tokens de saída do turno do ASSISTANT"
+          },
+          "model": {
+            "type": "string",
+            "nullable": true,
+            "description": "Modelos do turno, unidos por \"+\""
           }
         }
       },
