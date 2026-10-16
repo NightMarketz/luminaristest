@@ -117,6 +117,17 @@ para DynamicTable quando G1–G5 existirem (ADR §2.2) — nunca durante increme
 
 A integração (ex.: "venda finalizada → lançamento contábil") sobe ao **nível de aplicação** — controller, route handler, ou serviço de integração dedicado — nunca dentro do motor DynamicTable. O módulo Prisma first-class expõe sua própria API/rota; quem orquestra decide quando chamá-la.
 
+**O que o B1/B4 NÃO proíbe — capacidade genérica do motor chamada de fora** (dono, questionário, 2026-10-16,
+F-DT-3 → (b); análise em `docs/accounting/DT-SERVICE-I11-I7-REVISAO-brief.md`). Acrescentar a `DynamicTableService`
+um método que serve a **qualquer** tabela de usuário é permitido quando as quatro condições valem: (1) o método não
+conhece o módulo consumidor (sem nome de preset, de tabela ou de domínio no corpo); (2) não importa nem recebe serviço,
+repositório ou model Prisma first-class; (3) passa pela policy do motor (`getTableById`/`canView`, ou
+`canManageData` para escrita) como os métodos existentes; (4) o acesso a dado fica no repositório do motor (os dois:
+`DynamicTableRepository` e `TransactionalDynamicTableRepository`). Quem consome, por exemplo o agente de chat,
+**chama o motor**. O motor nunca chama o consumidor. Precedente: `searchTableData` (BE-INCR-CHAT-AGENT, I11 PR-2,
+#731). Se o método só faz sentido para um consumidor, ou precisa de dado de módulo Prisma para decidir, ele é
+integração e cai no B4.
+
 ---
 
 ### 2.2 Limites da plataforma DynamicTable (caminho de dinheiro / unicidade / hierarquia)

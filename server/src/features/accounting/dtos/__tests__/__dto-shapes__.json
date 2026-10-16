@@ -1162,6 +1162,98 @@
       "additionalProperties": false
     }
   },
+  "AccountingResetDto.ts": {
+    "SystemResetBlockedDetailsSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "blocking": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "table": {
+                "type": "string",
+                "enum": [
+                  "JournalEntry",
+                  "JournalEntrySequence",
+                  "Posting",
+                  "PostingDimension",
+                  "DimensionDefinition",
+                  "DimensionValue",
+                  "JournalEntrySource",
+                  "SourceDocument",
+                  "DocumentAttachment",
+                  "AccountingDataExchangeJob",
+                  "AccountingDataExchangeRow",
+                  "BankStatement",
+                  "BankStatementLine",
+                  "ReconciliationMatch",
+                  "ReconcilePendingItem",
+                  "BankSettlementItem",
+                  "CustomerPackageBalance",
+                  "PackageBalanceMovement",
+                  "PackageValidityAcceptance",
+                  "Payable",
+                  "PayablePayment",
+                  "Receivable",
+                  "ReceivableReceipt",
+                  "Counterparty",
+                  "InventoryItem",
+                  "KitUpgradeRun",
+                  "KitUpgradePending",
+                  "CompanySigner",
+                  "IssBeneficioMunicipal",
+                  "ProductDestinationDefault",
+                  "FiscalDocument",
+                  "FiscalDocumentPendingAttachment",
+                  "FiscalDocumentSequence",
+                  "FixedAssetClass",
+                  "DepreciationRate",
+                  "FixedAsset",
+                  "AccountingContact",
+                  "AccountingDeliveryLog",
+                  "AccountingReview",
+                  "AccountingReviewFinding",
+                  "LalurEntry",
+                  "LalurParteBAccount",
+                  "LalurParteBMovement",
+                  "LalurParteBClosing",
+                  "AccountantAssignment",
+                  "PaymentAccount",
+                  "CollectionCharge",
+                  "TaxAssessment",
+                  "MitExport",
+                  "SimplesHistoricoMensal",
+                  "SimplesSegregacaoManual",
+                  "SalaoParceriaContrato",
+                  "ReceitaFiscalLinha",
+                  "SimplesDeclaracaoAnual",
+                  "SimplesApuracao",
+                  "AccountingPolicyVersion"
+                ]
+              },
+              "count": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "table",
+              "count"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "blocking"
+      ],
+      "additionalProperties": false
+    }
+  },
   "AccountingReviewDto.ts": {
     "OpenReviewSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

@@ -330,6 +330,11 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // I1b (ADR-INCR-UNIT-REKEY item 12, F-RK-6 b) — âncora genesis na cadeia da unidade nova, ligando-a à cadeia selada
   // do unitId legado. Ids/hash/contagens só (sem PII); `tables` é o JSON estável das contagens por tabela.
   'unit.rekeyed': ['fromUnitId', 'fromHeadHash', 'fromNextSeq', 'tables'],
+  // BE-INCR-RESET-CONSISTENTE item 14 (nó I7, F-I7-4) — "Resetar sistema" removeu a configuração contábil da unidade.
+  // `removed` = JSON estável tabela → contagem DAQUELA unidade. `companyLevel` = idem para as tabelas da EMPRESA, sem
+  // unitId (`CompanyFiscalProfile`): é do nível da empresa e SE REPETE, igual, no evento de cada unidade resetada —
+  // nunca some `companyLevel` entre unidades (dono, questionário, 2026-10-16: "Apaga, conta em toda unidade"). Sem PII.
+  'accounting.scope_reset': ['removed', 'companyLevel'],
 };
 
 /**

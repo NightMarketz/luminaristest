@@ -25,11 +25,13 @@ import { ActionProposalRepository } from '../features/chat/repositories/ActionPr
 import { KnowledgeGraphRepository } from '../features/chat/repositories/KnowledgeGraphRepository';
 import { AttachmentRepository } from '../features/attachments/repositories/AttachmentRepository';
 import { SavedTableViewRepository } from '../features/savedViews/repositories/SavedTableViewRepository';
+import { InterviewSessionRepository } from '../features/interview/repositories/InterviewSessionRepository';
 import { AccountRepository } from '../features/accounting/repositories/AccountRepository';
 import { JournalEntryRepository } from '../features/accounting/repositories/JournalEntryRepository';
 import { PostingRepository } from '../features/accounting/repositories/PostingRepository';
 import { AccountingPeriodRepository } from '../features/accounting/repositories/AccountingPeriodRepository';
 import { AuditRepository } from '../features/accounting/repositories/AuditRepository';
+import { AccountingScopeResetRepository } from '../features/accounting/repositories/AccountingScopeResetRepository';
 import { DocumentAttachmentRepository } from '../features/accounting/repositories/DocumentAttachmentRepository';
 import { ReconciliationRepository } from '../features/accounting/repositories/ReconciliationRepository';
 import { DataExchangeRepository } from '../features/accounting/repositories/DataExchangeRepository';
@@ -81,6 +83,8 @@ import { DynamicTablePolicy } from '../features/dynamicTables/policies/DynamicTa
 import { AttachmentPolicy } from '../features/attachments/policies/AttachmentPolicy';
 import { SavedTableViewPolicy } from '../features/savedViews/policies/SavedTableViewPolicy';
 import { AccountingPolicy } from '../features/accounting/policies/AccountingPolicy';
+import { AccountingScopeResetPolicy } from '../features/accounting/policies/AccountingScopeResetPolicy';
+import { AccountingScopeResetService } from '../features/accounting/services/AccountingScopeResetService';
 import { PackageBalancePolicy } from '../features/packages/policies/PackageBalancePolicy';
 import { PackageAcceptancePolicy } from '../features/packages/policies/PackageAcceptancePolicy';
 
@@ -235,7 +239,12 @@ import { PresetSyncService } from '../features/dynamicTables/services/PresetSync
 import { ModuleInstallService } from '../features/dynamicTables/services/ModuleInstallService';
 import { AttachmentService } from '../features/attachments/services/AttachmentService';
 import { SavedTableViewService } from '../features/savedViews/services/SavedTableViewService';
+import { StateManager } from '../features/interview/CustomizationService/StateManager';
+import { CustomizationService } from '../features/interview/CustomizationService/CustomizationService';
+import { InterviewService } from '../features/interview/InterviewService/InterviewService';
 import { SystemProvisioningService } from '../features/onboarding/services/SystemProvisioningService';
+import * as attachmentStorage from './attachmentStorage';
+import { kpiCacheService } from '../features/analytics/services/KpiCacheService';
 import { SystemProvisioningPolicy } from '../features/onboarding/policies/SystemProvisioningPolicy';
 
 // Lib - External Services
@@ -263,6 +272,7 @@ import type { IKnowledgeGraphRepository } from '../features/chat/repositories/IK
 import type { IAttachmentRepository } from '../features/attachments/repositories/IAttachmentRepository';
 import type { IAttachmentPolicy } from '../features/attachments/policies/IAttachmentPolicy';
 import type { ISavedTableViewRepository } from '../features/savedViews/repositories/ISavedTableViewRepository';
+import type { IInterviewSessionRepository } from '../features/interview/repositories/IInterviewSessionRepository';
 import type { ISavedTableViewPolicy } from '../features/savedViews/policies/ISavedTableViewPolicy';
 import type { ISystemProvisioningPolicy } from '../features/onboarding/policies/ISystemProvisioningPolicy';
 import type { IAccountingEventMapper } from '../features/accounting/sync/mappers/IAccountingEventMapper';
@@ -288,6 +298,7 @@ import type { IAccountingReviewRepository } from '../features/accounting/reposit
 import type { IAccountantAssignmentRepository } from '../features/accounting/repositories/IAccountantAssignmentRepository';
 import type { IAccountingPolicyVersionRepository } from '../features/accounting/repositories/IAccountingPolicyVersionRepository';
 import type { IAuditRepository } from '../features/accounting/repositories/IAuditRepository';
+import type { IAccountingScopeResetRepository } from '../features/accounting/repositories/IAccountingScopeResetRepository';
 import type { IDocumentAttachmentRepository } from '../features/accounting/repositories/IDocumentAttachmentRepository';
 import type { IReconciliationRepository } from '../features/accounting/repositories/IReconciliationRepository';
 import type { IDataExchangeRepository } from '../features/accounting/repositories/IDataExchangeRepository';
@@ -313,6 +324,7 @@ import type { IFixedAssetRepository } from '../features/accounting/repositories/
 import type { IFiscalDocumentRepository } from '../features/accounting/repositories/IFiscalDocumentRepository';
 import type { ILalurRepository } from '../features/accounting/repositories/ILalurRepository';
 import type { IAccountingPolicy } from '../features/accounting/policies/IAccountingPolicy';
+import type { IAccountingScopeResetPolicy } from '../features/accounting/policies/IAccountingScopeResetPolicy';
 import type { IPackageBalanceRepository } from '../features/packages/repositories/IPackageBalanceRepository';
 import type { IPackageBalancePolicy } from '../features/packages/policies/IPackageBalancePolicy';
 import type { IPackageAcceptanceRepository } from '../features/packages/repositories/IPackageAcceptanceRepository';
@@ -705,11 +717,13 @@ export class ApplicationFactory {
     knowledgeGraph: IKnowledgeGraphRepository;
     attachment: IAttachmentRepository;
     savedTableView: ISavedTableViewRepository;
+    interviewSession: IInterviewSessionRepository; // W4 (BE-INCR-INTERVIEW-SESSION)
     account: IAccountRepository;
     journalEntry: IJournalEntryRepository;
     posting: IPostingRepository;
     accountingPeriod: IAccountingPeriodRepository;
     audit: IAuditRepository;
+    accountingScopeReset: IAccountingScopeResetRepository; // BE-INCR-RESET-CONSISTENTE item 11 (I7)
     documentAttachment: IDocumentAttachmentRepository;
     reconciliation: IReconciliationRepository;
     dataExchange: IDataExchangeRepository;
@@ -768,6 +782,7 @@ export class ApplicationFactory {
     crmReportDefinition: ICrmReportDefinitionPolicy; // BE-INCR-CRM-REPORT-BUILDER PR-2 (item 3)
     systemProvisioning: ISystemProvisioningPolicy;
     accounting: IAccountingPolicy;
+    accountingScopeReset: IAccountingScopeResetPolicy; // BE-INCR-RESET-CONSISTENTE item 11 (I7)
     packageBalance: IPackageBalancePolicy;
     packageAcceptance: IPackageAcceptancePolicy; // FE-INCR-PACOTE-VALIDADE
     legalParameter: ILegalParameterPolicy; // BE-INCR-LEGAL-PARAMS PR-1 (item 12: policy própria, escopo plataforma)
@@ -861,6 +876,7 @@ export class ApplicationFactory {
     moduleInstall: ModuleInstallService;
     attachment: AttachmentService;
     savedTableView: SavedTableViewService;
+    interview: InterviewService; // W4: entrevista com IA sobre a sessão persistida
     systemProvisioning: SystemProvisioningService;
     ptaxSync: PtaxSyncService; // BE-INCR-CRM-REPORT-BUILDER PR-1 (item 23)
     crmReport: CrmReportService; // BE-INCR-CRM-REPORT-BUILDER PR-2 (item 11)
@@ -895,11 +911,13 @@ export class ApplicationFactory {
       knowledgeGraph: new KnowledgeGraphRepository(),
       attachment: new AttachmentRepository(),
       savedTableView: new SavedTableViewRepository(),
+      interviewSession: new InterviewSessionRepository(),
       account: new AccountRepository(),
       journalEntry: new JournalEntryRepository(),
       posting: new PostingRepository(),
       accountingPeriod: new AccountingPeriodRepository(),
       audit: new AuditRepository(),
+      accountingScopeReset: new AccountingScopeResetRepository(),
       documentAttachment: new DocumentAttachmentRepository(),
       reconciliation: new ReconciliationRepository(),
       dataExchange: new DataExchangeRepository(),
@@ -959,6 +977,7 @@ export class ApplicationFactory {
       crmReportDefinition: new CrmReportDefinitionPolicy(),
       systemProvisioning: new SystemProvisioningPolicy(),
       accounting: new AccountingPolicy(),
+      accountingScopeReset: new AccountingScopeResetPolicy(),
       packageBalance: new PackageBalancePolicy(),
       packageAcceptance: new PackageAcceptancePolicy(),
       legalParameter: new LegalParameterPolicy(),
@@ -983,7 +1002,8 @@ export class ApplicationFactory {
 
     const luminarisAgentService = new LuminarisAgentService(
       dynamicTableService,
-      this.repositories.actionProposal
+      this.repositories.actionProposal,
+      this.policies.dynamicTable
     );
 
     // Shared instance: injected into ChatService (server-side persistence of chat turns)
@@ -1787,6 +1807,11 @@ export class ApplicationFactory {
         this.repositories.savedTableView,
         this.policies.savedTableView
       ),
+      // W4 item 3: StateManager sobre o repositório (injetado, nunca `new` dentro do serviço).
+      interview: new InterviewService(
+        new CustomizationService(new StateManager(this.repositories.interviewSession), chatOpenAIService),
+        chatOpenAIService,
+      ),
       // BE-INCR-SEED-UNIDADE-E-ENV (nó SEED-UNITS): monta o sistema do usuário (onboarding HTTP + seed contábil).
       systemProvisioning: new SystemProvisioningService(
         dynamicTableService,
@@ -1795,6 +1820,22 @@ export class ApplicationFactory {
         this.repositories.actionProposal,
         this.repositories.knowledgeGraph,
         this.policies.systemProvisioning,
+        // BE-INCR-RESET-CONSISTENTE item 2–3 (F-I7-2): donos canônicos do resto do sistema + cache de KPI; item 12: o
+        // reset contábil (gate de movimento + remoção do SETUP) pelo serviço da contabilidade, por interface.
+        {
+          accountingReset: new AccountingScopeResetService(
+            this.repositories.accountingScopeReset,
+            this.policies.accountingScopeReset,
+            auditService,
+          ),
+          dashboardLayouts: this.repositories.dashboardLayout,
+          chatInstances: this.repositories.chatInstance,
+          savedTableViews: this.repositories.savedTableView,
+          crmReportDefinitions: this.repositories.crmReportDefinition,
+          attachments: this.repositories.attachment,
+          attachmentStorage,
+          kpiCache: kpiCacheService,
+        },
       ),
       ptaxSync: new PtaxSyncService(this.repositories.ptaxRate, this.ptaxClient),
       crmReport: new CrmReportService(
@@ -2167,6 +2208,7 @@ export class ApplicationFactory {
   public getModuleInstallService = (): ModuleInstallService => this.services.moduleInstall;
   public getAttachmentService = (): AttachmentService => this.services.attachment;
   public getSavedTableViewService = (): SavedTableViewService => this.services.savedTableView;
+  public getInterviewService = (): InterviewService => this.services.interview;
   public getSystemProvisioningService = (): SystemProvisioningService => this.services.systemProvisioning;
 
   // Repository Getters — composition-root accessors. Some have no caller yet; kept as the consistent

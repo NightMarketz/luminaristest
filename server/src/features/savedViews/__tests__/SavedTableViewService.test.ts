@@ -44,6 +44,7 @@ function buildService(overrides: Partial<jest.Mocked<ISavedTableViewRepository>>
     findById: jest.fn(),
     update: jest.fn(),
     softDelete: jest.fn(),
+    softDeleteByUserId: jest.fn(),
     ...overrides,
   };
   const service = new SavedTableViewService(repo, new SavedTableViewPolicy());

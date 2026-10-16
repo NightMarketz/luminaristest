@@ -6,7 +6,9 @@
 **Base:** `origin/main` `8ba1ed8f`. Plano de origem: [`ONBOARDING-WIZARD-plano-grafo-brief.md`](ONBOARDING-WIZARD-plano-grafo-brief.md) §2 W4
 (07/09) e [[D-2026-09-29-ENTREVISTA-ONDAS-E-1O-CLIENTE]] decisão 12 (nó criado `planned`).
 **Forks:** F-W4-1, F-W4-2, F-W4-3 **ratificados** pelo dono em questionário (2026-10-15, [[D-2026-10-15-W4-SESSAO-ENTREVISTA]]);
-F-W4-4 e F-W4-5 (D2, internos) **pendentes**.
+F-W4-4 → **(a)** e F-W4-5 → **(b)** **ratificados** pelo dono em questionário (2026-10-16), os dois contra a recomendação
+deste BRIEF. **Execução:** dono, chat, 2026-10-16: *"Pode começar agora e disparar as sessões com brief autorizado"* — vale
+como "executa" do W4 (sem merge: cada PR termina com "— não mergear sem OK").
 
 ## 0. Estado medido no código (lido em 2026-10-15, `8ba1ed8f`)
 
@@ -45,6 +47,9 @@ Grau: **V** = lido no arquivo; **I** = inferido da leitura.
    `globalThis`. Padrão **carregar → mutar → salvar** dentro de cada método (E6): cada operação faz `findActive`, aplica a
    mutação no objeto e chama `saveState`. Todos os métodos ganham `userId` e passam a `async`. Injeção do repositório por
    construtor/factory (não `new` dentro do serviço — memória `orchestration-service-tx-repo-smell`).
+   **Consequência de F-W4-4 (a), registrada na execução (16/10):** o serviço carrega a sessão **uma vez por turno**
+   (`loadSession` → handle com a `version` lida) e cada método que muta grava na hora com essa versão (`saveSession`,
+   que avança a versão do handle). Recarregar dentro de cada método leria a versão nova e nunca veria o turno da outra aba.
    *Teste:* unitário com repo falso — `removeTable` persiste a lista sem a tabela; `isCore` continua bloqueando.
 4. **TTL de 24 h deslizante** (F-W4-3 a) — `create` e todo `saveState` gravam `expiresAt = now + 24h`. Constante
    nomeada (`INTERVIEW_SESSION_TTL_MS`), relógio injetável para teste.
@@ -68,14 +73,22 @@ Grau: **V** = lido no arquivo; **I** = inferido da leitura.
 8. **Fim da customização não apaga a sessão** — `CUSTOMIZATION_COMPLETED` só marca `isCompleted` (persistido); o
    consumo/soft-delete depois do `/dashboard/create` é do [[W1]] (fronteira: W1 lê o estado consolidado — F-W1-1).
    *Teste:* após `done`, `findActive` ainda devolve a sessão com `isCompleted: true`.
-9. **Expurgo** — `PurgeDeletedRecords` passa a incluir `InterviewSession` conforme **F-W4-5 (pendente)**; o comentário do
-   job ganha a linha do model novo.
-   *Teste:* unitário do job com prisma falso — `deleteMany` do model com o corte decidido.
+9. **Expurgo** (F-W4-5 **b**) — `PurgeDeletedRecords` passa a incluir `InterviewSession`: hard-delete da sessão com
+   `expiresAt` **ou** `deletedAt` anterior a `now − 7 dias` (constante `INTERVIEW_SESSION_RETENTION_MS`); `DynamicTableData`
+   segue em 90 dias. A janela de 7 dias vale também para a apagada (soft-delete do W1), pelo mesmo motivo de minimização. O
+   comentário do job ganha a linha do model novo.
+   *Teste:* unitário do job com prisma falso — `deleteMany` do model com o corte de 7 dias; constante = 7 dias.
 10. **`FieldCustomizationService` acompanha a assinatura** (`await`, `userId`) só para compilar — sem chamador (E9); plugar a
     rota é W6, fora daqui.
 11. **OpenAPI** — `docs.paths.ts` do `ChatInterview` ganha a resposta 404 com o `code`; `public/openapi.json`
     regenerado (`npm run …` da memória `openapi-wiring-static-artifact`) e guard de path-count verde (path não muda).
-12. **Concorrência** conforme **F-W4-4 (pendente)**.
+12. **Concorrência** (F-W4-4 **a**) — coluna `version Int @default(0)`; `saveState` é `updateMany` condicional
+    (`where { id, userId, version: lida, deletedAt: null, expiresAt > now }`, `version: { increment: 1 }`). Nada gravado →
+    relê: sessão ativa = outro turno gravou antes → `InterviewSessionConflictError` (`AppError`, 409,
+    `errorCode 'INTERVIEW_SESSION_CONFLICT'`); sessão sumiu → 404 do item 5. Relançado pelos `catch` amplos, como o 404.
+    **Muda o contrato público:** o OpenAPI documenta o 409 com o `code`, e o PR-2 trata o 409 (item 14).
+    *Teste:* unitário — duas leituras na mesma versão, a 2ª gravação → 409 e o estado gravado é o da 1ª; outra aba grava
+    durante a chamada à IA → o turno sai 409, não 200; integração — `saveState` com versão velha → `false`.
 
 Gates do PR-1: `npx tsc --noEmit` + `tsc -p tsconfig.test.json` (server), `npm run check:arch`, `npm run test:integration`
 (shards), snapshot de DTO, openapi. Sem evento de auditoria novo (allowlist do `auditCanonical.ts` não muda — **I**:
@@ -91,6 +104,9 @@ estado transitório de onboarding não é evento canônico; se o executor quiser
     customizar de novo ou criar o sistema agora?". Qualquer outro erro segue o caminho atual.
     *Teste:* vitest do hook (`useAiInterview.test.tsx`) — fetch falso 404 com o code → estágio, `sessionId` nulo e botões;
     500 → mensagem genérica, estágio mantido.
+14. **409 `INTERVIEW_SESSION_CONFLICT`** (F-W4-4 a) — mensagem própria (i18n pt/en, chave nova), **sem perder a conversa**:
+    mantém mensagens, estágio, `sessionId` e painel; o usuário reenvia. Nenhum outro estado muda.
+    *Teste:* vitest do hook — fetch falso 409 com o code → mensagem própria, estágio e `sessionId` mantidos, conversa intacta.
 
 Gates do PR-2: paridade i18n pt/en (namespace no `ns` se for JSON novo — memória `i18n-namespace-novo-precisa-entrar-no-ns`),
 `npm run test:types` do my-app, vitest. **Sign-off de browser** do fluxo (customizar → reiniciar o servidor → continuar)
@@ -113,7 +129,7 @@ model InterviewSession {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  // version Int @default(0)   ← só se F-W4-4 = (a)
+  version   Int       @default(0) // F-W4-4 a: update condicional
   @@index([userId, expiresAt])
 }
 ```
@@ -145,8 +161,11 @@ interface IInterviewSessionRepository {
 // erro
 class InterviewSessionNotFoundError extends AppError { statusCode = 404; errorCode = 'INTERVIEW_SESSION_NOT_FOUND' }
 
-// resposta pública — 404 (novo)
+class InterviewSessionConflictError extends AppError { statusCode = 409; errorCode = 'INTERVIEW_SESSION_CONFLICT' }
+
+// resposta pública — 404 e 409 (novos)
 { code: 'INTERVIEW_SESSION_NOT_FOUND', message: string }
+{ code: 'INTERVIEW_SESSION_CONFLICT', message: string }
 // resposta 200 do turno — inalterada (IInterviewTurnResult)
 ```
 
@@ -157,8 +176,8 @@ class InterviewSessionNotFoundError extends AppError { statusCode = 404; errorCo
 | **F-W4-1** armazenamento | (a) tabela Prisma; (b) Redis | (a) | **RATIFICADO (a)** — dono, questionário, 2026-10-15 |
 | **F-W4-2** sessão perdida | (a) 200 "vamos recomeçar" → `MATCHING_PRESET`; (b) 404 estruturado + front volta à escolha | (b) | **RATIFICADO (b)** — dono, questionário, 2026-10-15 (pergunta já trazia a correção E8) |
 | **F-W4-3** TTL | (a) 24 h deslizante; (b) 7 dias deslizante; (c) 2 h fixo | (a) | **RATIFICADO (a)** — dono, questionário, 2026-10-15 |
-| **F-W4-4** turnos concorrentes da mesma sessão (duas abas) | (a) coluna `version` + update condicional; conflito → 409 `INTERVIEW_SESSION_CONFLICT` (muda contrato); (b) último a gravar vence, limitação documentada no repositório | **(b)** — o front já serializa turnos (`isLoading`, `choiceInFlight`); o pior caso é perder um passo da customização numa segunda aba, recuperável na conversa; (a) acrescenta resposta pública e tratamento no FE sem caso real observado | **RATIFICAÇÃO PENDENTE** (D2) |
-| **F-W4-5** expurgo | (a) entra no `PurgeDeletedRecords`: hard-delete com `deletedAt` **ou** `expiresAt` anterior a 90 dias (uma regra, um job); (b) expirada some em 7 dias (minimização LGPD — o `state` guarda a descrição do negócio digitada) | **(a)** — mesma janela e mesmo job que o resto do sistema; a sessão expirada já é invisível pelo `where` do item 2, então o prazo só afeta retenção, não comportamento. Se o dono preferir minimizar retenção de texto livre, (b) custa uma constante | **RATIFICAÇÃO PENDENTE** (D2) |
+| **F-W4-4** turnos concorrentes da mesma sessão (duas abas) | (a) coluna `version` + update condicional; conflito → 409 `INTERVIEW_SESSION_CONFLICT` (muda contrato); (b) último a gravar vence, limitação documentada no repositório | **(b)** — o front já serializa turnos (`isLoading`, `choiceInFlight`); o pior caso é perder um passo da customização numa segunda aba, recuperável na conversa; (a) acrescenta resposta pública e tratamento no FE sem caso real observado | **RATIFICADO (a)** — dono, questionário, 2026-10-16 (contra a recomendação); itens 12 e 14 |
+| **F-W4-5** expurgo | (a) entra no `PurgeDeletedRecords`: hard-delete com `deletedAt` **ou** `expiresAt` anterior a 90 dias (uma regra, um job); (b) expirada some em 7 dias (minimização LGPD — o `state` guarda a descrição do negócio digitada) | **(a)** — mesma janela e mesmo job que o resto do sistema; a sessão expirada já é invisível pelo `where` do item 2, então o prazo só afeta retenção, não comportamento. Se o dono preferir minimizar retenção de texto livre, (b) custa uma constante | **RATIFICADO (b)** — dono, questionário, 2026-10-16 (contra a recomendação; minimização LGPD); item 9 |
 
 ## 4. Pendente de validação externa
 

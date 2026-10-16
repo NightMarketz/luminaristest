@@ -321,6 +321,11 @@ model AccountingPolicyVersion {
 
 **Direto:**
 - **FK Restrict** no dono e na atribuição: é trilha de aprovação (memória `audit-log-no-fk-cascade`), como o #482.
+  **Mudou em 2026-10-16 (nó I7):** o "Resetar sistema" apaga **só as versões sem contador** (`proposedById` e
+  `assignmentId` nulos: o PUT direto, como a do onboarding), junto com a configuração da unidade. Uma versão com
+  contador bloqueia o reset (409) e nada sai. Decisão do dono, no chat: *"Mas ela tbm deve depender de ter contador"*;
+  ver a EMENDA do `BE-INCR-RESET-CONSISTENTE-brief.md`. A FK continua `Restrict`, porque o reset apaga por
+  `deleteMany` explícito, sem cascata.
 - **`appliedSnapshot` em vez de reconstruir por soma de patches:** o `PUT /settings` é parcial (P-4). Sem o snapshot,
   "o que valia no instante T" exigiria refazer a sequência de patches. Com ele, é "a última `APPLIED` com
   `decidedAt ≤ T`".

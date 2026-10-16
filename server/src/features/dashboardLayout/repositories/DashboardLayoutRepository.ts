@@ -101,6 +101,13 @@ export class DashboardLayoutRepository implements IDashboardLayoutRepository {
   }
 
   /**
+   * Hard-deletes every layout (tab) of the user (reset do sistema, I7 item 2).
+   */
+  public async deleteByUserId(userId: string): Promise<void> {
+    await prisma.dashboardLayout.deleteMany({ where: { userId } });
+  }
+
+  /**
    * Maps a persisted row to the domain entity (name/isActive from columns, type/config from JSON).
    */
   private mapToDomain = (layout: {

@@ -3126,6 +3126,119 @@
       "INFO": "Informativo",
       "WARNING": "Atenção"
     },
-    "sim": "Sim"
+    "sim": "Sim",
+    "dasn": {
+      "title": "DASN-SIMEI",
+      "prazo": "Prazo de entrega",
+      "receitaTotal": "Receita bruta total do ano",
+      "receitaIcms": "Receita sujeita ao ICMS",
+      "mesesSemSubrazao": "Meses sem lançamento no subrazão (a receita deles não entra no total):",
+      "contratouEmpregado": "Contratou empregado no ano?",
+      "salvar": "Salvar DASN-SIMEI",
+      "salvo": "DASN-SIMEI salva.",
+      "erro": {
+        "contratou": "Responda se o MEI contratou empregado no ano."
+      },
+      "error": {
+        "load": "Erro ao carregar a DASN-SIMEI.",
+        "save": "Não foi possível salvar a DASN-SIMEI."
+      }
+    },
+    "defis": {
+      "title": "DEFIS",
+      "doRazao": "Do razão (só leitura)",
+      "prazo": "Prazo de entrega",
+      "mesesApurados": "Meses apurados",
+      "lucro": "Lucro contábil",
+      "limiteIsencao": "Limite de isenção (art. 145 § 1º)",
+      "informarLucro": "Informar o lucro na DEFIS",
+      "estoqueInicial": "Estoque inicial",
+      "estoqueFinal": "Estoque final",
+      "empregadosInicio": "Empregados no início do ano",
+      "empregadosFim": "Empregados no fim do ano",
+      "ganhosCapital": "Ganhos de capital",
+      "ganhosRendaVariavel": "Ganhos líquidos em renda variável",
+      "exportacaoDireta": "Receita de exportação direta",
+      "socios": "Sócios e cotas em tesouraria",
+      "soma": "Soma (sócios + tesouraria)",
+      "somaAviso": "Com sócio informado, a soma das participações mais as cotas em tesouraria deve dar 100% (manual da DEFIS, 9.4.3.1 itens 7.3 e 8) — quem confere é o servidor ao salvar.",
+      "tabelaSocios": "Tabela de onde vêm os sócios",
+      "semSocios": "Nenhum sócio informado.",
+      "socioN": "Sócio {{n}}",
+      "escolhaTabela": "Escolha a tabela dos sócios.",
+      "participacao": "Participação (%)",
+      "irrf": "IRRF",
+      "rendimentosIsentos": "Rendimentos isentos",
+      "rendimentosTributaveis": "Rendimentos tributáveis",
+      "cotasTesouraria": "Cotas em tesouraria (%)",
+      "adicionarSocio": "Adicionar sócio",
+      "exportacaoComercial": "Exportação via comercial exportadora",
+      "cnpjExportadoraN": "CNPJ da comercial exportadora {{n}}",
+      "valorExportacaoN": "Valor exportado {{n}}",
+      "adicionarExportadora": "Adicionar comercial exportadora",
+      "doacoes": "Doações a campanha eleitoral",
+      "cnpjBeneficiarioN": "CNPJ do beneficiário {{n}}",
+      "tipoBeneficiarioN": "Tipo de beneficiário {{n}}",
+      "formaDoacaoN": "Forma da doação {{n}}",
+      "valorDoacaoN": "Valor da doação {{n}}",
+      "adicionarDoacao": "Adicionar doação",
+      "salvar": "Salvar DEFIS",
+      "salvo": "DEFIS salva.",
+      "tipo": {
+        "CANDIDATO": "Candidato",
+        "COMITE_FINANCEIRO": "Comitê financeiro",
+        "PARTIDO_POLITICO": "Partido político"
+      },
+      "forma": {
+        "CHEQUE": "Cheque",
+        "OUTROS_TITULOS_CREDITO": "Outros títulos de crédito",
+        "TRANSFERENCIA_ELETRONICA": "Transferência eletrônica",
+        "DEPOSITO_ESPECIE": "Depósito em espécie",
+        "DINHEIRO": "Dinheiro",
+        "BENS": "Bens",
+        "SERVICOS": "Serviços"
+      },
+      "erro": {
+        "empregadosInicio": "Empregados no início do ano: número inteiro de 0 a 1.000.000.",
+        "empregadosFim": "Empregados no fim do ano: número inteiro de 0 a 1.000.000.",
+        "ganhosCapital": "Ganhos de capital inválidos — formato 1.234,56.",
+        "ganhosRendaVariavel": "Ganhos de renda variável inválidos — formato 1.234,56.",
+        "exportacaoDireta": "Exportação direta inválida — formato 1.234,56.",
+        "cotasTesouraria": "Cotas em tesouraria: percentual de 0,00 a 100,00.",
+        "socioContato": "Escolha o sócio da linha {{n}}.",
+        "socioValor": "Valores do sócio da linha {{n}} inválidos — formato 1.234,56.",
+        "socioParticipacao": "Participação do sócio da linha {{n}}: percentual de 0,00 a 100,00.",
+        "exportacaoCnpj": "CNPJ da comercial exportadora da linha {{n}}: 14 posições.",
+        "exportacaoValor": "Valor da exportação da linha {{n}}: maior que zero, formato 1.234,56.",
+        "doacaoCnpj": "CNPJ do beneficiário da doação da linha {{n}}: 14 posições.",
+        "doacaoTipo": "Escolha o tipo de beneficiário da doação da linha {{n}}.",
+        "doacaoForma": "Escolha a forma da doação da linha {{n}}.",
+        "doacaoValor": "Valor da doação da linha {{n}}: maior que zero, formato 1.234,56.",
+        "demais": "No máximo 100 linhas por lista."
+      },
+      "error": {
+        "load": "Erro ao carregar a DEFIS.",
+        "save": "Não foi possível salvar a DEFIS."
+      }
+    },
+    "aliquotas": {
+      "title": "Alíquotas sugeridas do mês",
+      "sugestao": "Sugestão",
+      "regra": "Regra",
+      "mesReferencia": "Mês de referência da faixa",
+      "issRetencao": "ISS a reter",
+      "credito": "Crédito do adquirente",
+      "beneficio": "Benefício municipal",
+      "pisoAplicado": "piso de 2% aplicado",
+      "excecaoPiso": "exceção ao piso",
+      "regraTipo": {
+        "INICIO_ATIVIDADE": "Mês de início de atividade (2%)",
+        "FAIXA_MES_ANTERIOR": "Faixa do mês anterior",
+        "FAIXA_MES_PRESTACAO": "Faixa do mês da prestação"
+      },
+      "error": {
+        "load": "Erro ao carregar as alíquotas sugeridas."
+      }
+    }
   }
 }
