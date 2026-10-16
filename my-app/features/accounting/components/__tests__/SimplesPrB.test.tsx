@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react';
 import { SimplesApuracaoPanel } from '../SimplesApuracaoPanel';
 import type { Apuracao, SalaoParceriaContrato } from '../../../../lib/services/simples.service';
-import { apuracaoMei, apuracaoSimples, perfilAno } from './simplesFixtures';
+import { aliquotasSimples, apuracaoMei, apuracaoSimples, perfilAno } from './simplesFixtures';
 
 (globalThis as unknown as { React: typeof React }).React = React;
 
@@ -21,6 +21,7 @@ vi.mock('../../../../lib/services/simples.service', async (orig) => ({
     calcularApuracao: (...a: unknown[]) => calcularApuracao(...a),
     registrarDas: (...a: unknown[]) => registrarDas(...a),
     listParcerias: (...a: unknown[]) => listParcerias(...a),
+    obterAliquotas: async (c: string) => aliquotasSimples(c), // PR-D item 15: seção do detalhe em ano SIMPLES
     criarParceria: (...a: unknown[]) => criarParceria(...a),
     atualizarParceria: (...a: unknown[]) => atualizarParceria(...a),
     removerParceria: (...a: unknown[]) => removerParceria(...a),
