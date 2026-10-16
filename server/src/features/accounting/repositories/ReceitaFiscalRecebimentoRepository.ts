@@ -1,5 +1,5 @@
 import prisma from '../../../lib/prisma';
-import type { ReceitaFiscalRecebimento } from 'generated/prisma';
+import type { Prisma, ReceitaFiscalRecebimento } from 'generated/prisma';
 import { accountingScopeWhere, type AccountingScope } from '../scope/AccountingScope';
 import type { IReceitaFiscalRecebimentoRepository, ReceitaFiscalRecebimentoData } from './IReceitaFiscalRecebimentoRepository';
 
@@ -25,5 +25,27 @@ export class ReceitaFiscalRecebimentoRepository implements IReceitaFiscalRecebim
       data: { status: 'REVERTED', diaEstorno },
     });
     return r.count;
+  }
+
+  public async findByCompetenciaCaixa(scope: AccountingScope, competencia: string, tx?: Prisma.TransactionClient): Promise<ReceitaFiscalRecebimento[]> {
+    return (tx ?? prisma).receitaFiscalRecebimento.findMany({
+      where: { ...accountingScopeWhere(scope), competenciaCaixa: competencia },
+      orderBy: [{ dia: 'asc' }, { saleId: 'asc' }],
+    });
+  }
+
+  public async findEstornadosNoMes(scope: AccountingScope, competencia: string, tx?: Prisma.TransactionClient): Promise<ReceitaFiscalRecebimento[]> {
+    return (tx ?? prisma).receitaFiscalRecebimento.findMany({
+      where: { ...accountingScopeWhere(scope), status: 'REVERTED', diaEstorno: { startsWith: `${competencia}-` } },
+      orderBy: [{ diaEstorno: 'asc' }, { saleId: 'asc' }],
+    });
+  }
+
+  public async findBySales(scope: AccountingScope, saleIds: readonly string[], tx?: Prisma.TransactionClient): Promise<ReceitaFiscalRecebimento[]> {
+    if (saleIds.length === 0) return [];
+    return (tx ?? prisma).receitaFiscalRecebimento.findMany({
+      where: { ...accountingScopeWhere(scope), saleId: { in: [...saleIds] } },
+      orderBy: [{ saleId: 'asc' }, { dia: 'asc' }],
+    });
   }
 }

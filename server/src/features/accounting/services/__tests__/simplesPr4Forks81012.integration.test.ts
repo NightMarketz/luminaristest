@@ -99,11 +99,15 @@ describe('D-2026-10-10-X14-ALERTA-INFORMATIVO — severidade do NFSE_DIVERGE_REC
     expect(a).not.toHaveProperty('motivoInformativo');
   });
 
-  it('ME optante pelo caixa: com divergência ⇒ INFO / REGIME_CAIXA (também depois de 2026-10); sem divergência ⇒ nenhum alerta', async () => {
+  // X14-CAIXA item 17 (F-CX-6 a, dono 15/10): no caixa a conferência é com a receita auferida — o INFO / REGIME_CAIXA saiu;
+  // a divergência real é WARNING, como na competência.
+  it('ME optante pelo caixa: com divergência ⇒ WARNING, sem motivo (F-CX-6 a); sem divergência ⇒ nenhum alerta', async () => {
     const c = await cenario('alcaixa');
     expect((await perfil(c, 2026, { regime: 'SIMPLES', simplesRegimeApuracao: 'CAIXA', simplesCaixaPrazoCartaoDebitoDias: 1, simplesCaixaPrazoCartaoCreditoDias: 30 })).status).toBe(200);
     await linha(c, '2026-11', 10_000);
-    expect(await nfseDiverge(c, '2026-11')).toMatchObject({ severity: 'INFO', motivoInformativo: 'REGIME_CAIXA' });
+    const a = await nfseDiverge(c, '2026-11');
+    expect(a?.severity).toBe('WARNING');
+    expect(a).not.toHaveProperty('motivoInformativo');
     await nfse(c, '2026-11-10', 10_000);
     expect(await nfseDiverge(c, '2026-11')).toBeUndefined();
   });

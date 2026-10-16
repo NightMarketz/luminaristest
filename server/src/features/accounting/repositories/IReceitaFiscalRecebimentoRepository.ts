@@ -1,4 +1,4 @@
-import type { ReceitaFiscalRecebimento } from 'generated/prisma';
+import type { Prisma, ReceitaFiscalRecebimento } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
 
 export type OrigemRecebimento = 'SALE_SETTLED' | 'PACKAGE_BALANCE';
@@ -24,4 +24,9 @@ export interface IReceitaFiscalRecebimentoRepository {
   findBySale(scope: AccountingScope, saleId: string): Promise<ReceitaFiscalRecebimento[]>;
   /** ACTIVE → REVERTED com o dia do estorno; devolve quantas linhas mudou (0 se já estava estornada ou não existe). */
   markReverted(scope: AccountingScope, saleId: string, diaEstorno: string): Promise<number>;
+  /** X14-CAIXA PR-2 (item 8) — os recebidos no mês (ACTIVE e REVERTED). */
+  findByCompetenciaCaixa(scope: AccountingScope, competencia: string, tx?: Prisma.TransactionClient): Promise<ReceitaFiscalRecebimento[]>;
+  /** X14-CAIXA PR-2 (item 14; L1 a) — os estornados no mês (REVERTED com `diaEstorno` no mês). */
+  findEstornadosNoMes(scope: AccountingScope, competencia: string, tx?: Prisma.TransactionClient): Promise<ReceitaFiscalRecebimento[]>;
+  findBySales(scope: AccountingScope, saleIds: readonly string[], tx?: Prisma.TransactionClient): Promise<ReceitaFiscalRecebimento[]>;
 }
