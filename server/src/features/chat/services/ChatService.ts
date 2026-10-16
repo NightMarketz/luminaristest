@@ -148,7 +148,7 @@ Pergunta Reformulada:
     if (!hasSelectedDocuments) {
       logger.info('No documents selected; using ERP agent mode.');
 
-      const tools = await this.agentService.getTools(user.id);
+      const tools = await this.agentService.getTools();
       const knowledgeGraphPrompt = await this.knowledgeGraphService.getGraphPrompt(user.userId);
 
       const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [

@@ -3,6 +3,8 @@ import { UserContext } from '../../../lib/authUtils';
 import logger from '../../../lib/logger';
 import { NotFoundError, ForbiddenError, ValidationError } from '../../../lib/errors';
 import { IActionProposalRepository } from '../repositories/IActionProposalRepository';
+import { IDynamicTablePolicy } from '../../dynamicTables/policies/IDynamicTablePolicy';
+import { agentToolError } from '../models/AgentTool.model';
 import { ActionProposal, Prisma } from 'generated/prisma';
 import OpenAI from 'openai';
 
@@ -19,14 +21,15 @@ export interface ActionProposalData {
 export class LuminarisAgentService {
     constructor(
         private dynamicTableService: DynamicTableService,
-        private proposalRepository: IActionProposalRepository
+        private proposalRepository: IActionProposalRepository,
+        private policy: IDynamicTablePolicy
     ) { }
 
     /**
      * Generates the list of OpenAI tools exposed to the agent. The tool set is static;
      * per-user scoping happens when each tool is executed in handleToolCall.
      */
-    async getTools(userId: string): Promise<OpenAI.Chat.Completions.ChatCompletionTool[]> {
+    async getTools(): Promise<OpenAI.Chat.Completions.ChatCompletionTool[]> {
         const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
             {
                 type: 'function',
@@ -141,9 +144,14 @@ export class LuminarisAgentService {
             case 'request_record_creation': {
                 const creationData = args.data as Record<string, unknown> | undefined;
                 if (!creationData || Object.keys(creationData).length === 0) {
-                    return { error: 'ERRO: Você deve fornecer o objeto "data" com os campos preenchidos. Não posso criar uma proposta vazia.' };
+                    return agentToolError('DADOS_VAZIOS', 'ERRO: Você deve fornecer o objeto "data" com os campos preenchidos. Não posso criar uma proposta vazia.');
                 }
                 const table = await this.dynamicTableService.getTableById(user, args.tableId as string);
+                // canView (getTableById) não basta: a proposta só é gravada se a confirmação puder
+                // executá-la (tabela `system` e tabela alheia vista por ADMIN falhariam só no modal).
+                if (!this.policy.canManageData(user, table)) {
+                    return agentToolError('SEM_PERMISSAO', `Você não tem permissão para criar registros na tabela "${table.name}".`);
+                }
                 const proposal = await this.proposalRepository.create({
                     userId: user.userId,
                     action: 'CREATE',
@@ -163,9 +171,19 @@ export class LuminarisAgentService {
             case 'request_record_update': {
                 const updateData = args.data as Record<string, unknown> | undefined;
                 if (!updateData || Object.keys(updateData).length === 0) {
-                    return { error: 'ERRO: Você deve fornecer os campos para atualização no argumento "data".' };
+                    return agentToolError('DADOS_VAZIOS', 'ERRO: Você deve fornecer os campos para atualização no argumento "data".');
                 }
                 const table = await this.dynamicTableService.getTableById(user, args.tableId as string);
+                if (!this.policy.canManageData(user, table)) {
+                    return agentToolError('SEM_PERMISSAO', `Você não tem permissão para alterar registros na tabela "${table.name}".`);
+                }
+                // executeProposal resolve a tabela pela linha: sem esta checagem o modal mostraria a
+                // tabela X e a confirmação alteraria uma linha de outra tabela.
+                const recordId = args.recordId as string;
+                const [record] = await this.dynamicTableService.getTableDataByIds(user, table.id, [recordId]);
+                if (!record) {
+                    return agentToolError('REGISTRO_NAO_ENCONTRADO', `O registro "${recordId}" não existe na tabela "${table.name}".`);
+                }
                 const proposal = await this.proposalRepository.create({
                     userId: user.userId,
                     action: 'UPDATE',
@@ -173,7 +191,7 @@ export class LuminarisAgentService {
                     tableName: table.name,
                     tableLabel: table.name,
                     status: 'PENDING',
-                    data: { ...updateData, id: args.recordId as string } as unknown as Prisma.JsonValue
+                    data: { ...updateData, id: recordId } as unknown as Prisma.JsonValue
                 });
                 return { status: 'PROPOSED', proposalId: proposal.id };
             }
