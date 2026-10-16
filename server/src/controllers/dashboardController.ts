@@ -26,7 +26,7 @@ import { ForbiddenError, OnboardingRolledBackError, OnboardingRollbackFailedErro
 import { InstallModuleSchema } from '@/features/dynamicTables/dtos/InstallModule.dto';
 import { Role } from '@/features/users/models/User.model';
 import { ISchemaField } from '@/features/dynamicTables/models/DynamicTable.model';
-import { getPresetByKey, keyToPascalCase } from '@/features/dynamicTables/presets/PresetManager';
+import { keyToPascalCase } from '@/features/dynamicTables/presets/PresetManager';
 import { SECTOR_BINDING_REGISTRY } from '@/features/accountingBinding/fixtures/sectorBindingRegistry';
 import { resolveBindingScope } from '@/features/accountingBinding/scope/BindingScope';
 import { reloadAccountingMappersSerialized } from '@/features/accountingBinding/runtime/mapperReload';
@@ -188,7 +188,10 @@ async function handleCustomCreation(
   res: Response
 ) {
   try {
-    const originalPreset = await getPresetByKey(presetKey);
+    // W5 item 6 (F-W5-2): o Controle Total resolve pelo registro, como o modo Rápido — chave fora de
+    // `tablePresetSuites` (inclusive `coreSystem`, que o import dinâmico do `PresetManager` alcançava) → 404.
+    const originalPreset = presetService.getPresetByKey(presetKey);
+    if (!originalPreset) throw new UnknownSuiteError(presetKey);
 
     // I8 comportamentos 2–3: as tabelas de lead não vêm mais do Core; entram pelos módulos selecionados
     // (body `modules` ∪ default da suíte, fechado pelas dependências do registro).
@@ -310,6 +313,7 @@ async function handleCustomCreation(
       },
     });
   } catch (error) {
+    if (error instanceof UnknownSuiteError) return res.status(404).json({ error: error.message });
     return respondProvisioningError(error, res) ?? handleApiError(error, res);
   }
 }
