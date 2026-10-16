@@ -152,6 +152,8 @@ export async function resetDb(): Promise<void> {
   await prisma.simplesSegregacaoManual.deleteMany();
   await prisma.salaoParceriaContrato.deleteMany();
   await prisma.receitaFiscalLinha.deleteMany();
+  await prisma.receitaFiscalRecebimento.deleteMany(); // X14-CAIXA PR-1
+  await prisma.simplesCreditoIncobravel.deleteMany(); // X14-CAIXA PR-3
   await prisma.simplesApuracao.deleteMany(); // X14 PR-3
   await prisma.simplesDeclaracaoAnual.deleteMany(); // X14 PR-4
   // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7): tax_assessments só referencia User (Cascade) — sem ordem de FK.

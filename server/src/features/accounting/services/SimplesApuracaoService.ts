@@ -18,7 +18,7 @@
  *              desfaz
  *              teste: simplesApuracao.integration.test.ts › "item 20: gate dentro da tx — entrada mudou entre o cálculo e o registro ⇒ 409, nada gravado"
  */
-import type { Prisma, SimplesApuracao } from 'generated/prisma';
+import type { Prisma, ReceitaFiscalLinha, SimplesApuracao } from 'generated/prisma';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import { ParametroLegalAusenteError, linhaLegalVigente, type LegalParameterTabela } from '../../legalParameters/models/legalParameter';
@@ -33,6 +33,8 @@ import type { ICompanyFiscalProfileRepository } from '../repositories/ICompanyFi
 import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRepository';
 import type { IFiscalDocumentRepository } from '../repositories/IFiscalDocumentRepository';
 import type { IReceitaFiscalRepository } from '../repositories/IReceitaFiscalRepository';
+import type { IReceitaFiscalRecebimentoRepository } from '../repositories/IReceitaFiscalRecebimentoRepository';
+import { baseCaixaDoPa, naoRecebidasAte, type BucketCaixa, type ItemBaseCaixa, type PerfilCaixaAno, type RecebimentoCaixa, type VendaCaixa } from '../models/simplesCaixa';
 import type { IServiceFiscalProfileRepository } from '../repositories/IServiceFiscalProfileRepository';
 import type { ISimplesApuracaoRepository } from '../repositories/ISimplesApuracaoRepository';
 import type { ISimplesEntradasRepository } from '../repositories/ISimplesEntradasRepository';
@@ -45,7 +47,7 @@ import type { AuditService } from './AuditService';
 import type { PostingService } from './PostingService';
 import type { ReceitaFiscalService } from './ReceitaFiscalService';
 import type { SimplesEntradasService } from './SimplesEntradasService';
-import { excluirDoMotivo, type AlertaSimples, type CodigoAlertaSimples, type SimplesDasRegistro, type SimplesSegregacaoParcela } from '../dtos/SimplesDto';
+import { excluirDoMotivo, type AlertaSimples, type BaseCaixa, type CodigoAlertaSimples, type ImpedimentoCaixa, type SimplesDasRegistro, type SimplesSegregacaoParcela } from '../dtos/SimplesDto';
 import { SOURCE_TYPE_SIMPLES_DAS, type DocumentoRef } from '../dtos/SourceDocumentUploadDto';
 import type { SourceDocumentUploadService } from './SourceDocumentUploadService';
 
@@ -66,6 +68,12 @@ const BLOQUEANTES: readonly CodigoAlertaSimples[] = ['TIEOUT_DIVERGENTE', 'RBT12
 
 /** BRIEF §3 `ApuracaoSimples` — ME/EPP (o MEI é `ApuracaoMei`, PR-4). */
 export interface ApuracaoSimples extends Omit<ApuracaoCalculada, 'mesesFaltantes'> {
+  /** X14-CAIXA item 15: o regime da receita do PA (perfil do ano). */
+  regimeApuracao: 'COMPETENCIA' | 'CAIXA';
+  /** Só no CAIXA: a base do DAS pela receita recebida (+ art. 20). */
+  baseCaixa: BaseCaixa | null;
+  /** Só no CAIXA, no PA anterior aos efeitos do impedimento (art. 20 IV): fora do DAS. */
+  impedimentoCaixa: ImpedimentoCaixa | null;
   espelho: EspelhoAtividade[];
   /** `documento`: BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-9 (a) — o PDF do DAS para o FE baixar pelo GET /attachments/:id. */
   dasOficial: { id: string; numeroDocumento: string; valorCents: number; vencimento: string; provisaoPendente: boolean; documento: DocumentoRef } | null;
@@ -150,6 +158,61 @@ interface Montagem {
   tieOut: { subrazaoCents: number; razaoCents: number; ok: boolean };
   /** SIMPLES-PISO-ANEXO-XI bloco 1: benefício municipal por atividade (`natureza|cTribNac`). */
   beneficios: Map<string, BeneficioCadastrado>;
+  regimeApuracao: 'COMPETENCIA' | 'CAIXA';
+  baseCaixa: BaseCaixa | null;
+  impedimentoCaixa: ImpedimentoCaixa | null;
+}
+
+/** A linha que vira atividade: a do subrazão (competência) ou a composta da base caixa (X14-CAIXA item 8). */
+type LinhaBase = Pick<ReceitaFiscalLinha, 'natureza' | 'cTribNac' | 'receitaCents' | 'cotaProfissionalCents' | 'parceriaContratoId'>;
+const MEIOS_CARTAO = new Set(['Debit Card', 'Credit Card']);
+const ART20_CHAVE: Partial<Record<BucketCaixa, keyof BaseCaixa['art20Cents']>> = {
+  PARCELA_VENCIDA: 'parcelaVencida',
+  ENCERRAMENTO: 'encerramento',
+  RETORNO_COMPETENCIA: 'retornoCompetencia',
+  EXCLUSAO: 'exclusao',
+};
+
+/**
+ * X14-CAIXA item 8 — compõe o valor de cada item da base caixa pelas linhas VENDA da venda, na proporção valor ÷ receita
+ * da venda (pagamento integral ⇒ a composição da venda vale inteira); a cota do parceiro sai na mesma proporção. O resíduo
+ * de centavo fica na última linha. Recebimento sem linha de receita (venda anterior ao subrazão) vira serviço sem cTribNac,
+ * como a venda sem itens classificáveis (`ratearReceita`).
+ */
+function comporItens(itens: readonly ItemBaseCaixa[], vendasPorId: ReadonlyMap<string, ReceitaFiscalLinha[]>): Array<{ item: ItemBaseCaixa; linhas: LinhaBase[] }> {
+  return itens.map((item) => {
+    const ls = vendasPorId.get(item.saleId) ?? [];
+    const total = ls.reduce((s, l) => s + l.receitaCents, 0n);
+    if (!item.venda || ls.length === 0 || total === 0n) {
+      return { item, linhas: [{ natureza: 'SERVICO', cTribNac: null, receitaCents: item.valorCents, cotaProfissionalCents: 0n, parceriaContratoId: null }] };
+    }
+    let restoR = item.valorCents;
+    let restoC = (ls.reduce((s, l) => s + l.cotaProfissionalCents, 0n) * item.valorCents) / total;
+    const linhas = ls.map((l, i) => {
+      const ultimo = i === ls.length - 1;
+      const r = ultimo ? restoR : (l.receitaCents * item.valorCents) / total;
+      const c = ultimo ? restoC : (l.cotaProfissionalCents * item.valorCents) / total;
+      restoR -= r;
+      restoC -= c;
+      return { natureza: l.natureza, cTribNac: l.cTribNac, receitaCents: r, cotaProfissionalCents: c, parceriaContratoId: l.parceriaContratoId };
+    });
+    return { item, linhas };
+  });
+}
+const liquido = (ls: readonly LinhaBase[]) => ls.reduce((s, l) => s + l.receitaCents - l.cotaProfissionalCents, 0n);
+
+/** O que a base caixa do PA devolve à montagem (X14-CAIXA itens 8–14 e 18; A3). */
+interface MontagemCaixa {
+  linhas: LinhaBase[];
+  baseCents: bigint;
+  baseCaixa: Omit<BaseCaixa, 'receitaAuferidaPaCents'>;
+  cartao: boolean;
+  excluidoCompetenciaCents: bigint;
+  vendas: Map<string, VendaCaixa>;
+  linhasDasVendas: Map<string, ReceitaFiscalLinha[]>;
+  recebimentosDaVenda: Map<string, RecebimentoCaixa[]>;
+  perfil: (ano: number) => PerfilCaixaAno | null;
+  impressao: unknown;
 }
 
 /** X14 PR-4 — o que a montagem do SIMEI devolve (a `impressao` é o gate do item 20, como na do ME/EPP). */
@@ -167,7 +230,7 @@ export class SimplesApuracaoService {
   constructor(
     private readonly repo: ISimplesApuracaoRepository,
     private readonly entradasRepo: Pick<ISimplesEntradasRepository, 'findHistorico' | 'findHistoricoTx' | 'findSegregacao' | 'findParceriaMesmoRemovida' | 'sourceDocumentExists'>,
-    private readonly receitaRepo: Pick<IReceitaFiscalRepository, 'findByCompetencia' | 'somaPorCompetencia'>,
+    private readonly receitaRepo: Pick<IReceitaFiscalRepository, 'findByCompetencia' | 'somaPorCompetencia' | 'findVendasEntre' | 'findLinhasDasVendas'>,
     private readonly receitaFiscal: Pick<ReceitaFiscalService, 'tieOut'>,
     private readonly entradas: Pick<SimplesEntradasService, 'segregacaoDaCompetencia'>,
     private readonly companyProfileRepo: Pick<ICompanyFiscalProfileRepository, 'findByYear'>,
@@ -183,7 +246,16 @@ export class SimplesApuracaoService {
     private readonly beneficioRepo: Pick<IIssBeneficioMunicipalRepository, 'listByScope'>,
     /** BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-9 (a): o documento do DAS na visão. */
     private readonly documentos: Pick<SourceDocumentUploadService, 'documentosPorId'>,
+    /** BE-INCR-SIMPLES-CAIXA PR-2 (item 8): os recebimentos de venda, base do DAS no regime de caixa. */
+    private readonly recebimentoRepo: Pick<IReceitaFiscalRecebimentoRepository, 'findByCompetenciaCaixa' | 'findEstornadosNoMes' | 'findBySales'>,
   ) {}
+
+  /** X14-CAIXA item 4: o controller roda o backfill dos recebimentos sob demanda antes da apuração CAIXA. */
+  async regimeApuracaoDoPa(scope: AccountingScope, competencia: string): Promise<'COMPETENCIA' | 'CAIXA' | null> {
+    this.assertRead(scope);
+    const perfil = await this.companyProfileRepo.findByYear(scope, Number(competencia.slice(0, 4)));
+    return perfil?.regime === 'SIMPLES' ? (perfil.simplesRegimeApuracao as 'COMPETENCIA' | 'CAIXA') : null;
+  }
 
   /** Item 17 — POST …/apuracoes/:competencia/calcular: calcula sob demanda, nada é gravado (B-2 → a). */
   async calcular(scope: AccountingScope, competencia: string): Promise<ApuracaoSimples | ApuracaoMei> {
@@ -218,7 +290,7 @@ export class SimplesApuracaoService {
     }
     // Item 25: o DAS do MEI registra pela mesma rota (regime 'MEI'); o gate dentro da tx relê as entradas do SIMEI.
     const mei = await this.ehMei(scope, competencia);
-    const m: { calculada: ApuracaoCalculada | ApuracaoSimei; impressao: string; alertas: AlertaSimples[] } = mei
+    const m: { calculada: ApuracaoCalculada | ApuracaoSimei; impressao: string; alertas: AlertaSimples[]; regimeApuracao?: 'COMPETENCIA' | 'CAIXA'; baseCaixa?: BaseCaixa | null; impedimentoCaixa?: ImpedimentoCaixa | null } = mei
       ? await this.montarMei(scope, competencia)
       : await this.montar(scope, competencia);
     const bloqueio = m.alertas.filter((a) => BLOQUEANTES.includes(a.codigo));
@@ -245,7 +317,12 @@ export class SimplesApuracaoService {
           sourceDocumentId,
           totalCalculadoCents: total,
           divergenciaCents: valorOficial - total,
-          memoria: JSON.parse(JSON.stringify({ ...m.calculada, alertas: m.alertas })) as Prisma.InputJsonValue,
+          // X14-CAIXA item 16: o regime e a base caixa entram na memória — o DAS registrado sem eles é anterior ao PR-2.
+          memoria: JSON.parse(
+            JSON.stringify(
+              { ...m.calculada, alertas: m.alertas, ...(m.regimeApuracao ? { regimeApuracao: m.regimeApuracao, baseCaixa: m.baseCaixa, impedimentoCaixa: m.impedimentoCaixa } : {}) },
+            ),
+          ) as Prisma.InputJsonValue,
           tabelaVersao: m.calculada.tabela.map((t) => t.legalParameterId),
           supersedesId: atual?.id ?? null,
         },
@@ -341,8 +418,19 @@ export class SimplesApuracaoService {
 
     // Atividades do PA a partir do subrazão (VENDA e linhas negativas de cancelamento/devolução).
     const linhasPa = await this.receitaRepo.findByCompetencia(scope, competencia, tx);
+    // X14-CAIXA item 8: no CAIXA a base mensal é a receita RECEBIDA (Res. CGSN 140 art. 16 § 1º) — as atividades vêm dos
+    // recebimentos do PA (+ art. 20); RBT12, limites, sublimites e faixa seguem pelo mapa `receitas`, por competência
+    // (art. 19 p.ú.).
+    const caixa = perfil.simplesRegimeApuracao === 'CAIXA' ? await this.montarCaixa(scope, competencia, tx) : null;
+    const linhasBase: LinhaBase[] = caixa ? caixa.linhas : linhasPa;
     const contratos = new Map(
-      (await this.entradasRepo.findParceriaMesmoRemovida(scope, [...new Set(linhasPa.map((l) => l.parceriaContratoId).filter((x): x is string => !!x))], tx)).map((c) => [c.id, c]),
+      (
+        await this.entradasRepo.findParceriaMesmoRemovida(
+          scope,
+          [...new Set([...linhasPa, ...(caixa ? [...caixa.linhasDasVendas.values()].flat() : [])].map((l) => l.parceriaContratoId).filter((x): x is string => !!x))],
+          tx,
+        )
+      ).map((c) => [c.id, c]),
     );
     const grupos = new Map<string, { natureza: NaturezaSimples; cTribNac: string | null; receita: bigint }>();
     const somar = (natureza: NaturezaSimples, cTribNac: string | null, v: bigint) => {
@@ -351,7 +439,7 @@ export class SimplesApuracaoService {
       g.receita += v;
       grupos.set(k, g);
     };
-    for (const l of linhasPa) {
+    for (const l of linhasBase) {
       const contrato = l.parceriaContratoId ? contratos.get(l.parceriaContratoId) : undefined;
       if (contrato) {
         // Lei 12.592 art. 1º-A §§ 4º–5º: a receita do salão é a cota dele, a título de aluguel de bem móvel ou de gestão.
@@ -377,6 +465,7 @@ export class SimplesApuracaoService {
       contratos: [...contratos.values()].map((c) => [c.id, c.naturezaCota]).sort(),
       segregacao: seg.parcelas,
       beneficiosIss: { codMun, linhas: cadastrados },
+      caixa: caixa?.impressao ?? null,
     });
     // Review do PR-3 (achado 5): um grupo negativo (devolução/cancelamento de venda de outro mês) é compensado nos grupos
     // positivos — primeiro os da mesma natureza, depois o maior — para que Σ das atividades = receita do PA.
@@ -433,7 +522,7 @@ export class SimplesApuracaoService {
     const sublimiteExcedido = this.limites(linhas, competencia, receitas, inicio, alertas);
 
     let calculada: ApuracaoCalculada;
-    const receitaPa = receitas.get(competencia) ?? 0n;
+    const receitaPa = caixa ? caixa.baseCents : (receitas.get(competencia) ?? 0n);
     const folhaPa = hist.get(competencia)?.folhaCents ?? null;
     try {
       calculada = apurar(
@@ -469,8 +558,176 @@ export class SimplesApuracaoService {
     if (tie.alerta) alertas.push({ ...tie.alerta, severity: 'WARNING' });
     // Review do PR-4 (achado 1): a cota do salão a título de aluguel de bem móvel não é serviço (sem ISS, sem NFS-e).
     const servicosPa = linhasPa.filter((l) => !(l.parceriaContratoId && contratos.get(l.parceriaContratoId)?.naturezaCota === 'ALUGUEL_BEM_MOVEL'));
-    await this.conferirNfse(scope, competencia, servicosPa, alertas, { me: true, caixa: perfil.simplesRegimeApuracao === 'CAIXA' }, tx);
-    return { calculada, entrada, receitas, impressao, alertas, tieOut: { subrazaoCents: tie.subrazaoCents, razaoCents: tie.razaoCents, ok: tie.ok }, beneficios };
+    // X14-CAIXA item 17 (F-CX-6 a): também no caixa a NFS-e é conferida com a receita AUFERIDA do PA (as linhas da
+    // competência), como na competência.
+    await this.conferirNfse(scope, competencia, servicosPa, alertas, { me: true }, tx);
+
+    let baseCaixa: BaseCaixa | null = null;
+    let impedimentoCaixa: ImpedimentoCaixa | null = null;
+    if (caixa) {
+      baseCaixa = { ...caixa.baseCaixa, receitaAuferidaPaCents: Number(receitas.get(competencia) ?? 0n) };
+      // Item 18 (F-CX-2 c; A2 pendente): o dia do recebimento no cartão é estimado pelo D+N do perfil.
+      if (caixa.cartao) {
+        alertas.push({
+          severity: 'INFO',
+          codigo: 'CARTAO_RECEBIMENTO_ESTIMADO',
+          motivoInformativo: 'CARTAO_RECEBIMENTO_ESTIMADO',
+          detalhe: 'prazo D+N informado no perfil; confira com os extratos da administradora — art. 77 § 3º',
+        });
+      }
+      // A3 (L2 a, dono 16/10): recebimento de venda auferida em ano por competência fica fora da base — o contador vê o valor.
+      if (caixa.excluidoCompetenciaCents > 0n) {
+        alertas.push({
+          severity: 'INFO',
+          codigo: 'RECEBIMENTO_DE_VENDA_TRIBUTADA_POR_COMPETENCIA',
+          detalhe: `R$ ${(Number(caixa.excluidoCompetenciaCents) / 100).toFixed(2)} recebidos em ${competencia} de vendas auferidas em ano apurado por competência ficaram fora da base caixa (já tributados na competência) — leitura sem texto expresso na Res. CGSN 140; confirme com o contador (A3)`,
+        });
+      }
+      impedimentoCaixa = this.impedimentoCaixa(linhas, competencia, receitas, inicio, sublimiteExcedido, caixa, contratos, historicoMes, folhaPa === null ? 0 : Number(folhaPa), alertas);
+    }
+    return {
+      calculada,
+      entrada,
+      receitas,
+      impressao,
+      alertas,
+      tieOut: { subrazaoCents: tie.subrazaoCents, razaoCents: tie.razaoCents, ok: tie.ok },
+      beneficios,
+      regimeApuracao: caixa ? 'CAIXA' : 'COMPETENCIA',
+      baseCaixa,
+      impedimentoCaixa,
+    };
+  }
+
+  /**
+   * X14-CAIXA itens 8–12 e 14 — os recebimentos do PA, os estornos/devoluções do PA e os gatilhos do art. 20, compostos
+   * pelas linhas das vendas. Lê as vendas do ano anterior até o PA (alcance do art. 20 I) e as dos recebimentos do PA.
+   */
+  private async montarCaixa(scope: AccountingScope, competencia: string, tx?: Prisma.TransactionClient): Promise<MontagemCaixa> {
+    const ano = Number(competencia.slice(0, 4));
+    const perfis = new Map<number, PerfilCaixaAno | null>();
+    for (const a of [ano - 1, ano, ano + 1]) {
+      const p = await this.companyProfileRepo.findByYear(scope, a, tx);
+      perfis.set(a, p && p.regime === 'SIMPLES' ? { regimeApuracao: p.simplesRegimeApuracao, encerramentoAtividadeEm: p.encerramentoAtividadeEm, simplesExclusaoEfeitosEm: p.simplesExclusaoEfeitosEm } : null);
+    }
+    const perfil = (a: number) => perfis.get(a) ?? null;
+    const toRec = (r: Awaited<ReturnType<IReceitaFiscalRecebimentoRepository['findBySales']>>[number]): RecebimentoCaixa => ({
+      saleId: r.saleId,
+      dia: r.dia,
+      competenciaCaixa: r.competenciaCaixa,
+      valorCents: r.valorCents,
+      meio: r.meio,
+      status: r.status,
+      diaEstorno: r.diaEstorno,
+    });
+    const [recebidos, estornados, vendasDoPeriodo] = await Promise.all([
+      this.recebimentoRepo.findByCompetenciaCaixa(scope, competencia, tx),
+      this.recebimentoRepo.findEstornadosNoMes(scope, competencia, tx),
+      this.receitaRepo.findVendasEntre(scope, `${ano - 1}-01`, competencia, tx),
+    ]);
+    const ids = [...new Set([...vendasDoPeriodo, ...recebidos, ...estornados].map((x) => x.saleId))];
+    const [todasLinhas, todosRecs] = await Promise.all([this.receitaRepo.findLinhasDasVendas(scope, ids, tx), this.recebimentoRepo.findBySales(scope, ids, tx)]);
+    const linhasDasVendas = new Map<string, ReceitaFiscalLinha[]>();
+    const vendas = new Map<string, VendaCaixa>();
+    for (const l of todasLinhas) {
+      const v = vendas.get(l.saleId) ?? { saleId: l.saleId, dia: l.dia, receitaCents: 0n, cancelamentoDia: null, devolucao: null };
+      if (l.tipo === 'VENDA') {
+        v.receitaCents += l.receitaCents;
+        if (l.dia < v.dia) v.dia = l.dia;
+        linhasDasVendas.set(l.saleId, [...(linhasDasVendas.get(l.saleId) ?? []), l]);
+      } else if (l.tipo === 'CANCELAMENTO') v.cancelamentoDia = l.dia;
+      else if (l.tipo === 'DEVOLUCAO') v.devolucao = { dia: l.dia, cents: (v.devolucao?.cents ?? 0n) - l.receitaCents };
+      vendas.set(l.saleId, v);
+    }
+    // Venda só com linhas negativas não tem receita auferida a compor.
+    for (const [id, v] of vendas) if (!linhasDasVendas.has(id)) vendas.delete(id);
+    const recebimentosDaVenda = new Map<string, RecebimentoCaixa[]>();
+    for (const r of todosRecs) recebimentosDaVenda.set(r.saleId, [...(recebimentosDaVenda.get(r.saleId) ?? []), toRec(r)]);
+
+    const pura = baseCaixaDoPa({ competencia, vendas, recebimentosDaVenda, recebidosNoPa: recebidos.map(toRec), estornadosNoPa: estornados.map(toRec), perfil });
+    const compostos = comporItens(pura.itens, linhasDasVendas);
+    const art20: BaseCaixa['art20Cents'] = { parcelaVencida: 0, encerramento: 0, retornoCompetencia: 0, exclusao: 0 };
+    let recebido = 0n;
+    for (const { item, linhas } of compostos) {
+      const k = ART20_CHAVE[item.bucket];
+      if (k) art20[k] += Number(liquido(linhas));
+      else recebido += liquido(linhas);
+    }
+    const linhas = compostos.flatMap((c) => c.linhas);
+    return {
+      linhas,
+      baseCents: liquido(linhas),
+      baseCaixa: { recebidoPaCents: Number(recebido), art20Cents: art20 },
+      cartao: pura.itens.some((i) => i.bucket === 'RECEBIDO' && i.meio !== null && MEIOS_CARTAO.has(i.meio)),
+      excluidoCompetenciaCents: pura.excluidoCompetenciaCents,
+      vendas,
+      linhasDasVendas,
+      recebimentosDaVenda,
+      perfil,
+      impressao: {
+        recebidos: recebidos.map((r) => [r.id, r.status, r.diaEstorno, String(r.valorCents)]),
+        estornados: estornados.map((r) => [r.id, r.diaEstorno]),
+        itens: pura.itens.map((i) => [i.saleId, i.bucket, String(i.valorCents)]),
+        perfis: [...perfis.entries()],
+      },
+    };
+  }
+
+  /**
+   * X14-CAIXA item 13 (F-CX-7 a; Res. CGSN 140 art. 20 IV) — o impedimento do art. 12 produz efeitos no mês seguinte ao PA
+   * (§ 1º: excesso > 20% ⇒ mês seguinte; ≤ 20% ⇒ janeiro do ano seguinte) e o PA ainda não estava impedido: a receita
+   * auferida e não recebida até o PA vai ao ICMS/ISS do ente, fora do DAS. ICMS e ISS = receita × percentual efetivo do
+   * tributo na faixa do PA (art. 21 III; teto do ISS de 5% no art. 21 III a; arts. 22–24), pela mesma `apurar` com
+   * `sublimiteExcedido = false`. O valor é referência: o recolhimento segue "a forma estabelecida" por cada ente.
+   */
+  private impedimentoCaixa(
+    linhas: Awaited<ReturnType<LegalParameterService['fotografia']>>,
+    competencia: string,
+    receitas: Receitas,
+    inicio: string | null,
+    sublimiteExcedido: boolean,
+    caixa: MontagemCaixa,
+    contratos: Map<string, { naturezaCota: string }>,
+    historicoMes: MesReceita[],
+    folhaPaCents: number,
+    alertas: AlertaSimples[],
+  ): ImpedimentoCaixa | null {
+    if (sublimiteExcedido || !this.limites(linhas, proximo(competencia, 1), receitas, inicio, [])) return null;
+    const vendas = naoRecebidasAte(competencia, caixa.vendas, caixa.recebimentosDaVenda, caixa.perfil);
+    const itens: ItemBaseCaixa[] = vendas.map((v) => ({ saleId: v.saleId, bucket: 'PARCELA_VENCIDA', valorCents: v.receitaCents, venda: v, meio: null }));
+    const ls = comporItens(itens, caixa.linhasDasVendas).flatMap((c) => c.linhas);
+    const total = liquido(ls);
+    if (total <= 0n) return null;
+    const grupos = new Map<string, AtividadeInput>();
+    for (const l of ls) {
+      const contrato = l.parceriaContratoId ? contratos.get(l.parceriaContratoId) : undefined;
+      const natureza: NaturezaSimples = contrato ? (contrato.naturezaCota === 'ALUGUEL_BEM_MOVEL' ? 'LOCACAO_MOVEL' : 'PARCERIA_GESTAO') : l.natureza === 'REVENDA' ? 'REVENDA' : 'SERVICO';
+      const cTribNac = contrato || natureza === 'REVENDA' ? null : l.cTribNac;
+      const k = `${natureza}|${cTribNac ?? ''}`;
+      const g = grupos.get(k) ?? { natureza, cTribNac, parcelas: [{ receitaCents: 0, excluir: [] }] };
+      g.parcelas[0].receitaCents += Number(l.receitaCents - l.cotaProfissionalCents);
+      grupos.set(k, g);
+    }
+    const ref = apurar(
+      {
+        competencia,
+        historico: historicoMes,
+        inicioAtividade: inicio && inicio <= competencia ? inicio : null,
+        receitaPaCents: Number(total),
+        folhaPaCents,
+        sublimiteExcedido: false,
+        atividades: [...grupos.values()].filter((g) => g.parcelas[0].receitaCents > 0),
+      },
+      linhas,
+    );
+    const soma = (t: 'ICMS' | 'ISS') => ref.atividades.reduce((s, a) => s + (a.tributos[t] ?? 0), 0);
+    const bloco = { mesBase: competencia, receitaNaoRecebidaCents: Number(total), icmsCents: soma('ICMS'), issCents: soma('ISS') };
+    alertas.push({
+      severity: 'WARNING',
+      codigo: 'IMPEDIMENTO_CAIXA_ICMS_ISS',
+      detalhe: `impedimento do art. 12 com efeitos a partir de ${proximo(competencia, 1)}: receita auferida e não recebida até ${competencia} R$ ${(bloco.receitaNaoRecebidaCents / 100).toFixed(2)} — ICMS R$ ${(bloco.icmsCents / 100).toFixed(2)} e ISS R$ ${(bloco.issCents / 100).toFixed(2)} fora do DAS: recolher direto ao ente, na forma por ele estabelecida (art. 20 IV)`,
+    });
+    return bloco;
   }
 
   /** Item 23. Devolve se o sublimite do ICMS/ISS (e IBS a partir de 2027) está excedido para o PA. */
@@ -588,7 +845,7 @@ export class SimplesApuracaoService {
     const aluguel = new Set((await this.entradasRepo.findParceriaMesmoRemovida(scope, ids, tx)).filter((c) => c.naturezaCota === 'ALUGUEL_BEM_MOVEL').map((c) => c.id));
     // F-PR4-9 (dono 09/10): o MEI só deve NFS-e ao tomador CNPJ (LC 123 art. 26 § 6º II; Res. CGSN 140 art. 106 II).
     const devidas = linhasPa.filter((l) => l.tomadorTipo === 'CNPJ' && !(l.parceriaContratoId && aluguel.has(l.parceriaContratoId)));
-    await this.conferirNfse(scope, competencia, devidas, alertas, { me: false, caixa: false }, tx);
+    await this.conferirNfse(scope, competencia, devidas, alertas, { me: false }, tx);
     const impressao = JSON.stringify({
       enquadramento,
       // SIMEI-TAC-12 item 6: o transportador efetivo (CPP e limite) entra no gate da tx.
@@ -711,8 +968,8 @@ export class SimplesApuracaoService {
   /**
    * Item 31 — conferência das NFS-e autorizadas em produção × receita de serviços da competência (subrazão, líquida da
    * cota do profissional-parceiro). Só alerta, nunca bloqueia (LC 123 art. 26 § 10 e art. 25 §§ 6º–8º, red. 2027).
-   * Severidade (D-2026-10-10-X14-ALERTA-INFORMATIVO, dono, chat, 2026-10-10), só quando há divergência:
-   * - ME/EPP optante pelo caixa: INFO / REGIME_CAIXA (a NFS-e é pela prestação, a receita pelo recebimento; item 2);
+   * Severidade (D-2026-10-10-X14-ALERTA-INFORMATIVO, dono, chat, 2026-10-10), só quando há divergência — o ramo
+   * INFO / REGIME_CAIXA saiu no X14-CAIXA PR-2 (F-CX-6 a): no caixa a conferência é com a receita auferida, como aqui:
    * - ME/EPP com competência até 2026-10: INFO / DOCUMENTO_MUNICIPAL_TRANSIÇÃO (documento municipal ainda aceito,
    *   Res. CGSN 140 art. 59 § 1º; item 3). Base do corte: a Res. CGSN 191/2026 altera os arts. 59 e 79 da Res. CGSN
    *   140 e torna obrigatória a NFS-e nacional para ME/EPP a partir de 01/11/2026 — fonte do dono (chat, 10/10), não
@@ -724,7 +981,7 @@ export class SimplesApuracaoService {
     competencia: string,
     linhasPa: Awaited<ReturnType<IReceitaFiscalRepository['findByCompetencia']>>,
     alertas: AlertaSimples[],
-    contexto: { me: boolean; caixa: boolean },
+    contexto: { me: boolean },
     tx?: Prisma.TransactionClient,
   ): Promise<void> {
     // F-PR4-10 (a), dono 10/10: a locação de bem móvel já chega fora daqui — a linha de receita só é SERVICO | REVENDA, e
@@ -734,9 +991,7 @@ export class SimplesApuracaoService {
     if (nfse === servicos) return;
     const fmt = (v: bigint) => `R$ ${(Number(v) / 100).toFixed(2)}`;
     const detalhe = `NFS-e autorizadas em ${competencia} somam ${fmt(nfse)}; a receita de serviços do subrazão é ${fmt(servicos)}`;
-    if (contexto.me && contexto.caixa) {
-      alertas.push({ codigo: 'NFSE_DIVERGE_RECEITA', severity: 'INFO', motivoInformativo: 'REGIME_CAIXA', detalhe: `${detalhe} (regime de caixa: NFS-e pela data da prestação, receita pelo recebimento)` });
-    } else if (contexto.me && competencia <= FIM_DOCUMENTO_MUNICIPAL) {
+    if (contexto.me && competencia <= FIM_DOCUMENTO_MUNICIPAL) {
       alertas.push({ codigo: 'NFSE_DIVERGE_RECEITA', severity: 'INFO', motivoInformativo: 'DOCUMENTO_MUNICIPAL_TRANSIÇÃO', detalhe: `${detalhe} (documento municipal ainda aceito até 31/10/2026)` });
     } else {
       alertas.push({ codigo: 'NFSE_DIVERGE_RECEITA', severity: 'WARNING', detalhe });
@@ -867,13 +1122,26 @@ export class SimplesApuracaoService {
   private async visao(scope: AccountingScope, competencia: string, m: Montagem): Promise<ApuracaoSimples> {
     const das = await this.repo.findConfirmada(scope, competencia);
     const { mesesFaltantes: _f, ...calc } = m.calculada;
+    const alertas = [...m.alertas];
+    // X14-CAIXA item 16: DAS oficial de PA no caixa registrado antes do PR-2 (memória sem o regime) foi calculado por
+    // competência — o `divergenciaCents` abaixo já compara com a base caixa.
+    if (das && m.regimeApuracao === 'CAIXA' && (das.memoria as { regimeApuracao?: unknown } | null)?.regimeApuracao !== 'CAIXA') {
+      alertas.push({
+        severity: 'WARNING',
+        codigo: 'REGIME_CAIXA_RECALCULO',
+        detalhe: `o DAS oficial de ${competencia} foi registrado com a apuração por competência; a base caixa dá ${(m.calculada.totalCalculadoCents / 100).toFixed(2)} — confira e retifique o PGDAS-D se for o caso`,
+      });
+    }
     return {
       ...calc,
+      regimeApuracao: m.regimeApuracao,
+      baseCaixa: m.baseCaixa,
+      impedimentoCaixa: m.impedimentoCaixa,
       espelho: espelhoPgdas(m.entrada, m.calculada.atividades),
       dasOficial: await this.dasOficial(scope, das),
       divergenciaCents: das ? Number(das.valorOficialCents) - m.calculada.totalCalculadoCents : null,
       tieOut: m.tieOut,
-      alertas: m.alertas,
+      alertas,
     };
   }
 

@@ -66,6 +66,9 @@ export interface CompanyFiscalProfileView {
   meiTransportadorCargas: boolean | null;
   meiOcupacoes: string[] | null; // SIMPLES-PISO-ANEXO-XI item 12
   simplesRegimeApuracao: SimplesRegimeApuracao; // X14 F-PR4-12 (b)
+  simplesExclusaoEfeitosEm: string | null; // X14-CAIXA item 7 (F-CX-3 a)
+  simplesCaixaPrazoCartaoDebitoDias: number | null; // X14-CAIXA item 7a
+  simplesCaixaPrazoCartaoCreditoDias: number | null;
   ibsCbsOpcaoS1: IbsCbsOpcao | null; // X14 PR-2 item 14
   ibsCbsOpcaoS2: IbsCbsOpcao | null;
   updatedAt: string;
@@ -155,6 +158,7 @@ export class CompanyFiscalProfileService {
     if (ano < 2027 && (data.ibsCbsOpcaoS1 !== null || data.ibsCbsOpcaoS2 !== null)) {
       throw new ValidationError(`A opção do IBS/CBS por semestre só existe a partir de 2027 (perfil de ${ano}).`);
     }
+    assertCaixaAte2026(ano, data);
     // SIMPLES-PISO-ANEXO-XI item 12 (decisões 2 e 4 do dono, chat, 10/10): campo opcional, mas chave que veio e não existe
     // no Anexo XI (Res. CGSN 140 art. 100 caput e § 1º-C I) ⇒ 400. A vigência na competência é checada na apuração.
     if (input.meiOcupacoes) {
@@ -314,6 +318,7 @@ export class CompanyFiscalProfileService {
         throw new ConflictError(`company_fiscal_profile_exists: já existe perfil fiscal da empresa para ${ano} — edite pelo PUT.`);
       }
       const data: CompanyFiscalProfileData = { ...rowToData(origem), ecdNumOrd: null };
+      assertCaixaAte2026(ano, data);
       // X7 Fase B PR-4 (item 2 + achado do review, decisão do dono 05/10): o ano sem perfil é TRIMESTRAL no e-Lalur.
       await this.assertTrocaDeFormaSemLalur(scope, ano, null, data, tx);
       await this.assertRefs(scope, data, tx);
@@ -416,6 +421,7 @@ export class CompanyFiscalProfileService {
         meiTransportadorCargas: b(row.meiTransportadorCargas),
         meiOcupacoes: ((row.meiOcupacoes as string[] | null) ?? []).join(','), // SIMPLES-PISO-ANEXO-XI item 12: chaves A-0001…
         simplesRegimeApuracao: row.simplesRegimeApuracao, // X14 F-PR4-12 (b) (enum)
+        simplesExclusaoEfeitosEm: row.simplesExclusaoEfeitosEm ?? '', // X14-CAIXA item 7 (date-only)
         ...(copiadoDe === undefined ? {} : { copiadoDe: String(copiadoDe) }),
       },
     });
@@ -474,6 +480,18 @@ function assertFormaNaoTravada(atual: CompanyFiscalProfile, data: CompanyFiscalP
   }
 }
 
+/**
+ * X14-CAIXA item 2 — o regime de caixa acaba em 01/01/2027: a Res. CGSN 190/2026 dá ao art. 16 caput da Res. CGSN 140 a
+ * redação "receita bruta total mensal auferida" (art. 1º) e revoga o art. 16 § 1º e o art. 19 (art. 8º IX e XII).
+ */
+function assertCaixaAte2026(ano: number, data: CompanyFiscalProfileData): void {
+  if (ano >= 2027 && data.simplesRegimeApuracao === 'CAIXA') {
+    throw new ValidationError(
+      `O regime de caixa do Simples Nacional não existe a partir de 2027 (perfil de ${ano}): a Res. CGSN 190/2026 dá ao art. 16 da Res. CGSN 140 a redação "receita bruta total mensal auferida" (art. 1º) e revoga o art. 16 § 1º e o art. 19 (art. 8º IX e XII).`,
+    );
+  }
+}
+
 function toData(input: UpsertCompanyFiscalProfileInput): CompanyFiscalProfileData {
   return {
     regime: input.regime,
@@ -506,6 +524,9 @@ function toData(input: UpsertCompanyFiscalProfileInput): CompanyFiscalProfileDat
     meiTransportadorCargas: input.meiTransportadorCargas,
     meiOcupacoes: input.meiOcupacoes ?? Prisma.DbNull,
     simplesRegimeApuracao: input.simplesRegimeApuracao,
+    simplesExclusaoEfeitosEm: input.simplesExclusaoEfeitosEm,
+    simplesCaixaPrazoCartaoDebitoDias: input.simplesCaixaPrazoCartaoDebitoDias,
+    simplesCaixaPrazoCartaoCreditoDias: input.simplesCaixaPrazoCartaoCreditoDias,
   };
 }
 
@@ -541,6 +562,9 @@ function rowToData(row: CompanyFiscalProfile): CompanyFiscalProfileData {
     meiTransportadorCargas: row.meiTransportadorCargas,
     meiOcupacoes: row.meiOcupacoes === null ? Prisma.DbNull : (row.meiOcupacoes as Prisma.InputJsonValue),
     simplesRegimeApuracao: row.simplesRegimeApuracao,
+    simplesExclusaoEfeitosEm: row.simplesExclusaoEfeitosEm,
+    simplesCaixaPrazoCartaoDebitoDias: row.simplesCaixaPrazoCartaoDebitoDias,
+    simplesCaixaPrazoCartaoCreditoDias: row.simplesCaixaPrazoCartaoCreditoDias,
   };
 }
 
@@ -578,6 +602,9 @@ function toView(row: CompanyFiscalProfile): CompanyFiscalProfileView {
     meiTransportadorCargas: row.meiTransportadorCargas,
     meiOcupacoes: (row.meiOcupacoes as string[] | null) ?? null,
     simplesRegimeApuracao: row.simplesRegimeApuracao as SimplesRegimeApuracao,
+    simplesExclusaoEfeitosEm: row.simplesExclusaoEfeitosEm,
+    simplesCaixaPrazoCartaoDebitoDias: row.simplesCaixaPrazoCartaoDebitoDias,
+    simplesCaixaPrazoCartaoCreditoDias: row.simplesCaixaPrazoCartaoCreditoDias,
     updatedAt: row.updatedAt.toISOString(),
   };
 }
