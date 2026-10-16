@@ -23,6 +23,9 @@ const NAO_CONTABEIS = [
   'DynamicTable',
   'KnowledgeGraph',
   'ActionProposal',
+  // W4 (BE-INCR-INTERVIEW-SESSION): o reset NÃO a apaga — expira em 24 h e o expurgo a remove em 7 dias
+  // (dono, questionário, 2026-10-16, na integração do lote: "Não contábil e fica").
+  'InterviewSession',
 ];
 
 type ModelInfo = { name: string; fields: Set<string> };
