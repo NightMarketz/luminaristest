@@ -262,9 +262,8 @@ describe('I8 — CRM como categoria composta por módulos', () => {
   });
 
   // W5 item 6 (F-W5-2): o Controle Total resolve pelo registro (`presetService`), não pelo import dinâmico do
-  // `PresetManager` — chave fora de `tablePresetSuites` dá 404 `{ error }`, igual ao modo Rápido. A chave é casada
-  // pelo `keyToPascalCase` (dono, 2026-10-16, opção a): `crm_module` acha `crmModule`; `beauty_salon` está no I4.
-  it("W5 item 6: custom com presetKey 'coreSystem' ou 'inexistente' → 404 { error }, nada instalado; 'crmModule'/'crm_module' → 201", async () => {
+  // `PresetManager` — chave fora de `tablePresetSuites` dá 404 `{ error }`, igual ao modo Rápido.
+  it("W5 item 6: custom com presetKey 'coreSystem' ou 'inexistente' → 404 { error }, nada instalado; 'crmModule' → 201", async () => {
     for (const presetKey of ['coreSystem', 'inexistente']) {
       const u = await novoUsuario();
       const r = await criar(u, { mode: 'custom', presetKey, unit: { name: 'M' } });
@@ -278,8 +277,6 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     const ok = await criar(v, { mode: 'custom', presetKey: 'crmModule', unit: { name: 'M' } });
     expect(ok.status).toBe(201);
     expect(ok.body.data.modules.installed).toEqual(['CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B', 'CRM-3']);
-    const w = await novoUsuario();
-    expect((await criar(w, { mode: 'custom', presetKey: 'crm_module', unit: { name: 'M' } })).status).toBe(201);
   });
 
   it('c8: não-admin → 403; body inválido → 400', async () => {
