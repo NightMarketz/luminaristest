@@ -5,6 +5,20 @@ import { IChatMessageRepository } from './IChatMessageRepository';
 import { IChatMessage, ChatMessageRole } from '../models/ChatMessage.model';
 import { NotFoundError, ServiceError } from '../../../lib/errors'; // For error handling
 
+/** Colunas lidas em toda operação (I11: + uso de tokens do turno do ASSISTANT). */
+const MESSAGE_SELECT = {
+  id: true,
+  content: true,
+  role: true,
+  chatInstanceId: true,
+  createdAt: true,
+  updatedAt: true,
+  promptTokens: true,
+  completionTokens: true,
+  model: true,
+  usageDetail: true,
+} as const;
+
 /**
  * Implementation of the ChatMessage repository.
  * Handles all data access operations for chat messages.
@@ -64,14 +78,7 @@ export class ChatMessageRepository implements IChatMessageRepository {
 
     return prisma.chatMessage.create({
       data: prismaData,
-      select: {
-        id: true,
-        content: true,
-        role: true,
-        chatInstanceId: true,
-        createdAt: true,
-        updatedAt: true
-      }
+      select: MESSAGE_SELECT
     });
   }
 
@@ -83,14 +90,7 @@ export class ChatMessageRepository implements IChatMessageRepository {
   async getMessageById(id: string): Promise<IChatMessage | null> {
     const message = await prisma.chatMessage.findUnique({
       where: { id },
-      select: {
-        id: true,
-        content: true,
-        role: true,
-        chatInstanceId: true,
-        createdAt: true,
-        updatedAt: true
-      }
+      select: MESSAGE_SELECT
     });
     if (!message) return null;
     return {
@@ -107,14 +107,7 @@ export class ChatMessageRepository implements IChatMessageRepository {
   async getMessagesByInstance(chatInstanceId: string): Promise<IChatMessage[]> {
     const messages = await prisma.chatMessage.findMany({
       where: { chatInstanceId },
-      select: {
-        id: true,
-        content: true,
-        role: true,
-        chatInstanceId: true,
-        createdAt: true,
-        updatedAt: true
-      },
+      select: MESSAGE_SELECT,
       orderBy: { createdAt: 'asc' }
     });
     return messages.map(msg => ({
@@ -128,14 +121,7 @@ export class ChatMessageRepository implements IChatMessageRepository {
       where: { chatInstanceId },
       skip,
       take,
-      select: {
-        id: true,
-        content: true,
-        role: true,
-        chatInstanceId: true,
-        createdAt: true,
-        updatedAt: true
-      },
+      select: MESSAGE_SELECT,
       orderBy: { createdAt: 'asc' }
     });
     return messages.map(msg => ({
@@ -164,14 +150,7 @@ export class ChatMessageRepository implements IChatMessageRepository {
       const updatedMessage = await prisma.chatMessage.update({
         where: { id },
         data: prismaData,
-        select: {
-          id: true,
-          content: true,
-          role: true,
-          chatInstanceId: true,
-          createdAt: true,
-          updatedAt: true
-        }
+        select: MESSAGE_SELECT
       });
       return {
         ...updatedMessage,
@@ -194,14 +173,7 @@ export class ChatMessageRepository implements IChatMessageRepository {
     try {
       return await prisma.chatMessage.delete({
         where: { id },
-        select: {
-          id: true,
-          content: true,
-          role: true,
-          chatInstanceId: true,
-          createdAt: true,
-          updatedAt: true
-        }
+        select: MESSAGE_SELECT
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {

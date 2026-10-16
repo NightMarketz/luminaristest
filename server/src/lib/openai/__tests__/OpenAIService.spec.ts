@@ -73,3 +73,66 @@ describe('classifyIntoEnum', () => {
     expect(create).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('uso de tokens por chamada (I11 PR-3, onUsage)', () => {
+  function withCreate(create: jest.Mock) {
+    const anterior = process.env.OPENAI_API_KEY;
+    process.env.OPENAI_API_KEY = anterior ?? 'teste';
+    const service = new OpenAIService();
+    process.env.OPENAI_API_KEY = anterior;
+    Object.assign(service as unknown as { openai: unknown }, { openai: { chat: { completions: { create } } } });
+    // getChatCompletion usa o singleton: aponta-o para a mesma instância falsa.
+    Object.assign(OpenAIService as unknown as { instance: unknown }, { instance: service });
+    return service;
+  }
+  const reply = (model: string, usage?: { prompt_tokens: number; completion_tokens: number }) =>
+    ({ model, usage, choices: [{ message: { content: 'ok' } }] });
+
+  it('as três chamadas do chat devolvem model/prompt/completion da resposta', async () => {
+    const create = jest.fn()
+      .mockResolvedValueOnce(reply('gpt-3.5-turbo-0125', { prompt_tokens: 10, completion_tokens: 2 }))
+      .mockResolvedValueOnce(reply('gpt-3.5-turbo-0125', { prompt_tokens: 20, completion_tokens: 3 }))
+      .mockResolvedValueOnce(reply('gpt-4o-2024-08-06', { prompt_tokens: 30, completion_tokens: 4 }));
+    const service = withCreate(create);
+    const got: unknown[] = [];
+
+    await service.getChatCompletion('q-uso-1', 'sys', u => got.push(u));
+    await service.getChatCompletionWithHistory([{ role: 'user', content: 'x' }], undefined, u => got.push(u));
+    await service.getChatCompletionWithToolsAndHistory([{ role: 'user', content: 'x' }], [], undefined, u => got.push(u));
+
+    expect(got).toEqual([
+      { model: 'gpt-3.5-turbo-0125', promptTokens: 10, completionTokens: 2 },
+      { model: 'gpt-3.5-turbo-0125', promptTokens: 20, completionTokens: 3 },
+      { model: 'gpt-4o-2024-08-06', promptTokens: 30, completionTokens: 4 },
+    ]);
+  });
+
+  it('usage ausente → 0 tokens (com aviso no log)', async () => {
+    const service = withCreate(jest.fn().mockResolvedValue(reply('gpt-3.5-turbo-0125')));
+    const onUsage = jest.fn();
+
+    await service.getChatCompletionWithHistory([{ role: 'user', content: 'x' }], undefined, onUsage);
+
+    expect(onUsage).toHaveBeenCalledWith({ model: 'gpt-3.5-turbo-0125', promptTokens: 0, completionTokens: 0 });
+  });
+
+  it('chamadas coalescidas pelo RequestLock contam uma vez: só quem disparou recebe o uso', async () => {
+    let release!: () => void;
+    const create = jest.fn(() => new Promise(resolve => {
+      release = () => resolve(reply('gpt-3.5-turbo-0125', { prompt_tokens: 7, completion_tokens: 1 }));
+    }));
+    const service = withCreate(create);
+    const first = jest.fn();
+    const second = jest.fn();
+
+    const a = service.getChatCompletion('q-coalesce', 'sys', first);
+    const b = service.getChatCompletion('q-coalesce', 'sys', second);
+    await new Promise(r => setImmediate(r));
+    release();
+    await Promise.all([a, b]);
+
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(first).toHaveBeenCalledTimes(1);
+    expect(second).not.toHaveBeenCalled();
+  });
+});
