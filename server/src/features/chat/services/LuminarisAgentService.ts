@@ -4,9 +4,12 @@ import logger from '../../../lib/logger';
 import { NotFoundError, ForbiddenError, ValidationError } from '../../../lib/errors';
 import { IActionProposalRepository } from '../repositories/IActionProposalRepository';
 import { IDynamicTablePolicy } from '../../dynamicTables/policies/IDynamicTablePolicy';
-import { agentToolError } from '../models/AgentTool.model';
+import { agentToolError, QueryTableDataResult } from '../models/AgentTool.model';
 import { ActionProposal, Prisma } from 'generated/prisma';
 import OpenAI from 'openai';
+
+/** Linhas devolvidas por query_table_data ao modelo (o `total` diz quantas casam no banco). */
+const QUERY_TOOL_LIMIT = 10;
 
 export interface ActionProposalData {
     id: string;
@@ -57,12 +60,12 @@ export class LuminarisAgentService {
                 type: 'function',
                 function: {
                     name: 'query_table_data',
-                    description: 'Search for records in a specific table.',
+                    description: 'Search for records in a specific table by exact equality (igualdade exata) on its fields. Use the field names returned by get_table_schema. Returns at most 10 rows plus the total number of matches.',
                     parameters: {
                         type: 'object',
                         properties: {
                             tableId: { type: 'string', description: 'The unique ID of the table.' },
-                            filters: { type: 'object', description: 'Optional key-value filters.' }
+                            filters: { type: 'object', description: 'Optional { fieldName: value } exact-equality filters; field names MUST come from get_table_schema; values must be string, number, boolean or null.' }
                         },
                         required: ['tableId']
                     }
@@ -127,18 +130,23 @@ export class LuminarisAgentService {
             }
 
             case 'query_table_data': {
-                // ponytail: bounded read (fork feature/back-end) — the agent tool samples the first
-                // 200 rows instead of loading the whole table; rows beyond the sample are invisible
-                // to filters. Upgrade path: push the filter down into the repository query.
-                const SAMPLE_LIMIT = 200;
-                const { data } = await this.dynamicTableService.getTableData(user, args.tableId as string, 1, SAMPLE_LIMIT);
-                let filtered = data;
-                if (args.filters) {
-                    filtered = data.filter((row) => {
-                        return Object.entries(args.filters as Record<string, unknown>).every(([key, val]) => (row.data as Record<string, unknown>)?.[key] === val);
-                    });
+                // Filtro no SQL (F-I11-2 → b): a tabela inteira é buscada; o modelo vê quantas casam.
+                try {
+                    const { rows, total } = await this.dynamicTableService.searchTableData(
+                        user, args.tableId as string, args.filters as Record<string, unknown> | undefined, QUERY_TOOL_LIMIT
+                    );
+                    const result: QueryTableDataResult = {
+                        rows: rows.map(r => ({ id: r.id, data: r.data as Record<string, unknown>, createdAt: r.createdAt.toISOString() })),
+                        total,
+                        returned: rows.length,
+                        truncated: total > rows.length,
+                    };
+                    return result;
+                } catch (error) {
+                    // Só o filtro inválido volta ao modelo; permissão/tabela inexistente seguem como hoje.
+                    if (error instanceof ValidationError) return agentToolError('FILTRO_INVALIDO', error.message);
+                    throw error;
                 }
-                return filtered.slice(0, 10);
             }
 
             case 'request_record_creation': {

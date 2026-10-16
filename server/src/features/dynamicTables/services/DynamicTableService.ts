@@ -5,7 +5,7 @@ import type { UserContext } from '../../../lib/authUtils';
 import { IDynamicTableRepository } from '../repositories/IDynamicTableRepository';
 import { IDynamicTablePolicy } from '../policies/IDynamicTablePolicy';
 import { CreateDynamicTableDtoType, UpdateDynamicTableDtoType, CreateDynamicTableDataDtoType, UpdateDynamicTableDataDtoType, UpdateDynamicTableSchemaDtoType } from '../dtos/DynamicTable.dto';
-import { IDynamicTable, IDynamicTableData, ITableSchema } from '../models/DynamicTable.model';
+import { IDynamicTable, IDynamicTableData, ITableSchema, FieldEquals } from '../models/DynamicTable.model';
 import { DynamicTableCategory } from '../models/TableCategories';
 import { NotFoundError, ForbiddenError, ValidationError } from '../../../lib/errors';
 import { globalRuleRegistry } from '../rules/RuleRegistry';
@@ -633,6 +633,36 @@ export class DynamicTableService {
   public async *getTableDataStream(user: UserContext, tableId: string, batchSize: number = 1000) {
     const table = await this.getTableById(user, tableId);
     yield* this.repository.findDataBatchStreamByTableId(tableId, batchSize);
+  }
+
+  /**
+   * Busca por igualdade exata em campos do schema, empurrada para o SQL (BRIEF BE-INCR-CHAT-AGENT
+   * §2.2, F-I11-2 → b). As chaves de `filters` vêm de fora (o LLM do agente): toda chave tem de ser
+   * campo do schema e todo valor escalar, senão ValidationError. `limit` preso em 1..50.
+   */
+  public async searchTableData(
+    user: UserContext,
+    tableId: string,
+    filters: Record<string, unknown> | undefined,
+    limit: number = 10,
+  ): Promise<{ rows: IDynamicTableData[]; total: number; limit: number }> {
+    const table = await this.getTableById(user, tableId);
+    const fieldNames = (table.schema?.fields ?? []).map(f => f.name);
+    const equals: FieldEquals[] = [];
+    for (const [name, value] of Object.entries(filters ?? {})) {
+      if (!fieldNames.includes(name)) {
+        throw new ValidationError(`Campo de filtro inválido: '${name}'. Campos válidos: ${fieldNames.join(', ')}.`);
+      }
+      const scalar = value === null || typeof value === 'string' || typeof value === 'boolean'
+        || (typeof value === 'number' && Number.isFinite(value));
+      if (!scalar) {
+        throw new ValidationError(`Valor de filtro inválido no campo '${name}': use texto, número, booleano ou null.`);
+      }
+      equals.push({ name, value: value as FieldEquals['value'] });
+    }
+    const safeLimit = Math.min(Math.max(1, Math.trunc(limit) || 1), 50);
+    const { rows, total } = await this.repository.findDataByFieldEquals(table.id, equals, safeLimit);
+    return { rows, total, limit: safeLimit };
   }
 
   public async getTableDataByIds(user: UserContext, tableId: string, recordIds: string[]) {
