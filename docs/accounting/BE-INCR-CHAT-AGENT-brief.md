@@ -8,6 +8,10 @@
 > o fork F-I11-1.
 > **Forks ratificados nesta sessão** (dono, chat, 2026-10-15, questionário): **F-I11-1 → (a)** *"Tokens na ChatMessage
 > (Recomendado)"*; **F-I11-2 → (b)** *"Filtro no repositório"*.
+> **Forks D2 ratificados** (dono, questionário, 2026-10-16, *"Todos na recomendação"*): **F-I11-3 → (a)**,
+> **F-I11-4 → (b)**, **F-I11-5 → (a)**.
+> **Execução:** dono, chat, 2026-10-16: *"Pode começar agora e disparar as sessões com brief autorizado"* — vale como
+> "executa" do I11 (`sessao-feature`, 3 PRs empilhados). Merge **não** autorizado.
 > **Base:** `origin/main` `8ba1ed8f`.
 
 ## 0. Fatos consumados (lidos nesta sessão, no arquivo)
@@ -167,7 +171,7 @@ type TurnUsage = { promptTokens: number; completionTokens: number; model: string
 promptTokens     Int?
 completionTokens Int?
 model            String?
-// + usageDetail Json?  só se F-I11-4 → (b)
+usageDetail      Json?   // F-I11-4 → (b): LlmUsage[] por chamada
 ```
 
 ## 3. Forks
@@ -176,9 +180,9 @@ model            String?
 |---|---|---|---|
 | **F-I11-1 · custo** | (a) tokens na `ChatMessage`; (b) tabela própria por chamada; (c) teto/dia; (d) nada | (a) | **RATIFICADO (a)** — dono, chat, 2026-10-15, questionário |
 | **F-I11-2 · amostra de 200** | (a) sinalizar a amostra; (b) filtro no repositório; (c) fora do I11 | (a) | **RATIFICADO (b)** — dono, chat, 2026-10-15, questionário |
-| **F-I11-3 · como a ferramenta recusa** | (a) devolve `AgentToolError` ao modelo, que explica em texto (HTTP 200, como o erro de "data vazio" de hoje, `LuminarisAgentService.ts:144`); (b) lança `ForbiddenError`/`ValidationError` e o `/api/chat` responde 4xx | **(a)** — mesmo padrão já usado pela ferramenta; o usuário recebe resposta no chat em vez de um erro de requisição; nenhum 4xx novo na rota | RATIFICAÇÃO PENDENTE (D2) |
-| **F-I11-4 · forma da medida** | (a) só as 3 colunas da opção ratificada; turno com 2 modelos grava a soma e `model = "gpt-4o+gpt-3.5-turbo"`; (b) as 3 colunas **+** `usageDetail Json?` com `LlmUsage[]` por chamada | **(b)** — o propósito do F-I11-1 é decidir teto/custo, e o preço por token do `gpt-4o` e do `gpt-3.5` difere em ordem de grandeza: a soma sozinha não vira custo. Custo: 1 coluna JSON anulável | RATIFICAÇÃO PENDENTE (D2) |
-| **F-I11-5 · embedding no RAG** | (a) fora (o `IEmbeddingService.embedText` devolve só o vetor; mudar a interface toca `documents/`); (b) dentro, mudando a interface | **(a)** — embedding é a menor parcela do turno RAG e a mudança sai do chat; fica registrado como limite | RATIFICAÇÃO PENDENTE (D2) |
+| **F-I11-3 · como a ferramenta recusa** | (a) devolve `AgentToolError` ao modelo, que explica em texto (HTTP 200, como o erro de "data vazio" de hoje, `LuminarisAgentService.ts:144`); (b) lança `ForbiddenError`/`ValidationError` e o `/api/chat` responde 4xx | **(a)** — mesmo padrão já usado pela ferramenta; o usuário recebe resposta no chat em vez de um erro de requisição; nenhum 4xx novo na rota | **RATIFICADO (a)** — dono, questionário, 2026-10-16 |
+| **F-I11-4 · forma da medida** | (a) só as 3 colunas da opção ratificada; turno com 2 modelos grava a soma e `model = "gpt-4o+gpt-3.5-turbo"`; (b) as 3 colunas **+** `usageDetail Json?` com `LlmUsage[]` por chamada | **(b)** — o propósito do F-I11-1 é decidir teto/custo, e o preço por token do `gpt-4o` e do `gpt-3.5` difere em ordem de grandeza: a soma sozinha não vira custo. Custo: 1 coluna JSON anulável | **RATIFICADO (b)** — dono, questionário, 2026-10-16 |
+| **F-I11-5 · embedding no RAG** | (a) fora (o `IEmbeddingService.embedText` devolve só o vetor; mudar a interface toca `documents/`); (b) dentro, mudando a interface | **(a)** — embedding é a menor parcela do turno RAG e a mudança sai do chat; fica registrado como limite | **RATIFICADO (a)** — dono, questionário, 2026-10-16 |
 
 ## 4. Pendente de validação externa
 
@@ -211,4 +215,4 @@ Nenhum comportamento depende de regra contábil, fiscal ou legal.
 | PR-2 | 7–11 | repositórios do DynamicTable, `DynamicTableService.ts` (1 método), agente, teste de integração | depois do PR-1 (mesmo arquivo do agente) |
 | PR-3 | 12–17 | `schema.prisma` + migração, `OpenAIService.ts`, `ChatService.ts`, `chatMessages/*`, snapshot, openapi | paralelo aos PRs 1–2; rebase sobre o PR-1 por causa de `ChatService.ts:151` |
 
-Execução exige "executa" do dono (ORCH-006); merge só com PR nomeado.
+Execução autorizada (dono, chat, 2026-10-16); merge só com PR nomeado.

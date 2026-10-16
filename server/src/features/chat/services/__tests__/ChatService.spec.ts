@@ -111,6 +111,24 @@ describe('Agent mode (no documentIds)', () => {
     expect(res.proposal?.id).toBe('p1');
     expect(res.proposal?.tableName).toBe('sales');
   });
+
+  it('a tool that refuses with an AgentToolError lets the turn fall through to a text answer (F-I11-3 a)', async () => {
+    const { service, openai, agent } = makeService();
+    openai.getChatCompletionWithToolsAndHistory.mockResolvedValue({
+      tool_calls: [{ id: 't1', function: { name: 'request_record_creation', arguments: '{"tableId":"tbl","data":{"a":1}}' } }],
+    });
+    agent.handleToolCall.mockResolvedValue({ error: 'SEM_PERMISSAO', message: 'sem permissão' });
+    openai.getChatCompletionWithHistory.mockResolvedValue('Você não tem permissão nessa tabela.');
+
+    const res = await service.generateResponse({ query: 'create a sale', user });
+
+    expect(res.type).toBe('TEXT');
+    expect(res.answer).toBe('Você não tem permissão nessa tabela.');
+    expect(agent.getProposal).not.toHaveBeenCalled();
+    // The refusal reaches the model as the tool message, so it can explain it.
+    const messagesSent = openai.getChatCompletionWithHistory.mock.calls[0][0];
+    expect(messagesSent[messagesSent.length - 1]).toMatchObject({ role: 'tool', tool_call_id: 't1', content: JSON.stringify({ error: 'SEM_PERMISSAO', message: 'sem permissão' }) });
+  });
 });
 
 describe('confirmed proposal', () => {
