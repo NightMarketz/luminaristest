@@ -95,6 +95,8 @@
 > 4. **O que segue fora:** qualquer outra escrita "de onboarding" no motor (flags, eventos, métricas
 >    novas) volta a ser diff não-vazio = defeito da prensa, como o §2 já diz.
 >
+> Forma do marco alterada pelo F-I7-3 (BE-INCR-RESET-CONSISTENTE item 6, 16/10): mesma escrita única, agora condicional (`onboardingCompletedAt: null`); a prova aceita as duas formas.
+>
 > **EMENDA 2026-09-15 (dono, via `AskUserQuestion` na sessão do PR #320 — opção (a) entre (a) isentar
 > `__tests__/`, (b) 2ª exceção nominal, (c) aceitar prova vermelha) — harness de teste NÃO é perímetro.**
 > A coluna sancionada pela emenda R7 quebrou um harness de replay de migração dentro de

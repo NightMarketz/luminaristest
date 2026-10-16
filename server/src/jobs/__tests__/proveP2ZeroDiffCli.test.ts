@@ -69,6 +69,28 @@ describe('SYMBOL_ALLOWLIST — exceção NOMINAL de UM símbolo (ADR-P2 EMENDA 2
     expect(report.allowlistedSymbolEdits).toEqual([SERVICE_FILE]);
   });
 
+  // F-DT-2 (b) (dono, questionário, 2026-10-16): a forma condicional do F-I7-3 é o mesmo marco; variação dela não é.
+  const MARCO_F_I7_3 = '+      await tx.user.updateMany({ where: { id: userId, onboardingCompletedAt: null }, data: { onboardingCompletedAt: new Date() } });';
+  const DIFF_MARCO_F_I7_3 = DIFF_MARCO_ONLY.replace(
+    '+      await tx.user.update({ where: { id: userId }, data: { onboardingCompletedAt: new Date() } });',
+    MARCO_F_I7_3,
+  );
+
+  it('F-DT-2: aceita a forma condicional do F-I7-3 (updateMany … onboardingCompletedAt: null) — 0 violações', () => {
+    expect(DIFF_MARCO_F_I7_3).toContain(MARCO_F_I7_3);
+    expect(classifySymbolDiff(DIFF_MARCO_F_I7_3, HEAD_SOURCE, SYMBOL_ALLOWLIST[0])).toEqual([]);
+  });
+
+  it.each([
+    ['outra condição no where', "+      await tx.user.updateMany({ where: { id: userId, role: 'USER' }, data: { onboardingCompletedAt: new Date() } });"],
+    ['condição a mais no where', '+      await tx.user.updateMany({ where: { id: userId, onboardingCompletedAt: null, deletedAt: null }, data: { onboardingCompletedAt: new Date() } });'],
+    ['outro campo no data', "+      await tx.user.updateMany({ where: { id: userId, onboardingCompletedAt: null }, data: { onboardingCompletedAt: new Date(), role: 'ADMIN' } });"],
+    ['sem o filtro de id', '+      await tx.user.updateMany({ where: { onboardingCompletedAt: null }, data: { onboardingCompletedAt: new Date() } });'],
+  ])('F-DT-2: REPROVA variação da forma nova (%s)', (_caso, linha) => {
+    const diff = DIFF_MARCO_F_I7_3.replace(MARCO_F_I7_3, linha);
+    expect(classifySymbolDiff(diff, HEAD_SOURCE, SYMBOL_ALLOWLIST[0])).toEqual([expect.stringMatching(/linha 10 .*não é o marco/)]);
+  });
+
   it('REPROVA linha adicionada dentro do símbolo que não é o marco', () => {
     const diff = DIFF_MARCO_ONLY.replace(
       '+      // T0 do time-to-first-ECD (ADR-P2 emenda R7)',

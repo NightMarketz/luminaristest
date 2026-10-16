@@ -119,9 +119,11 @@ export function classifySymbolDiff(diff: string, headSource: string, entry: Symb
 
   // O marco CANÔNICO — a linha inteira, não uma substring (review #320 F2: `includes(marker)` aceitava
   // o marker em comentário à direita ou em string literal). Só `//` de linha inteira e linha vazia são
-  // isentos; `/* … */` na mesma linha de código NÃO é (F3).
+  // isentos; `/* … */` na mesma linha de código NÃO é (F3). Duas formas EXATAS, a mesma escrita única: a original
+  // (EMENDA R7) e a condicional do F-I7-3 (BE-INCR-RESET-CONSISTENTE item 6, 16/10 — preserva o 1º T0; dono, F-DT-2 b).
   const marcoLine = new RegExp(
-    `^await tx\\.user\\.update\\(\\{ where: \\{ id: userId \\}, data: \\{ ${entry.marker}: new Date\\(\\) \\} \\}\\);$`,
+    `^await tx\\.user\\.update\\(\\{ where: \\{ id: userId \\}, data: \\{ ${entry.marker}: new Date\\(\\) \\} \\}\\);$` +
+      `|^await tx\\.user\\.updateMany\\(\\{ where: \\{ id: userId, ${entry.marker}: null \\}, data: \\{ ${entry.marker}: new Date\\(\\) \\} \\}\\);$`,
   );
   const isExempt = (body: string): boolean => body === '' || body.startsWith('//');
 
