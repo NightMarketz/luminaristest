@@ -921,6 +921,21 @@
  *                     properties:
  *                       kind: { type: string, enum: [creation_type] }
  *                       reason: { type: string, enum: [initial, unclear, declined_customize, error] }
+ *                   moduleOptions:
+ *                     type: array
+ *                     description: 'W5/I8-c12 - only on MATCHING_PRESET with a matched preset. Registry modules in registry order; locked = the suite already installs it (cannot be unchecked); suggested = locked plus the AI pick, closed by dependencies'
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         key: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3] }
+ *                         name:
+ *                           type: object
+ *                           properties:
+ *                             pt: { type: string }
+ *                             en: { type: string }
+ *                         dependsOn: { type: array, items: { type: string } }
+ *                         locked: { type: boolean }
+ *                         suggested: { type: boolean }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404':
