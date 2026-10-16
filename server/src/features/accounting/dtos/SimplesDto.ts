@@ -104,10 +104,16 @@ export const CODIGOS_ALERTA_SIMPLES = [
   'MEI_ENQUADRAMENTO_DIVERGE',
   'MEI_TAC_COM_OCUPACAO_A',
   'MEI_OCUPACAO_EXCLUIDA',
+  // BE-INCR-SIMPLES-CAIXA PR-2 (nó X14-CAIXA, itens 13, 16 e 18; A3 da decisão do dono de 16/10)
+  'REGIME_CAIXA_RECALCULO',
+  'IMPEDIMENTO_CAIXA_ICMS_ISS',
+  'CARTAO_RECEBIMENTO_ESTIMADO',
+  'RECEBIMENTO_DE_VENDA_TRIBUTADA_POR_COMPETENCIA',
 ] as const;
 /** D-2026-10-10-X14-ALERTA-INFORMATIVO (dono, chat, 2026-10-10), item 1: o código fica estável; o alerta ganha severidade. */
 export const SEVERIDADES_ALERTA_SIMPLES = ['INFO', 'WARNING'] as const;
-export const MOTIVOS_ALERTA_INFORMATIVO = ['DOCUMENTO_MUNICIPAL_TRANSIÇÃO', 'REGIME_CAIXA'] as const;
+// X14-CAIXA item 17 (F-CX-6 a): `REGIME_CAIXA` fica no enum (compatibilidade do snapshot) sem emissor desde o PR-2.
+export const MOTIVOS_ALERTA_INFORMATIVO = ['DOCUMENTO_MUNICIPAL_TRANSIÇÃO', 'REGIME_CAIXA', 'CARTAO_RECEBIMENTO_ESTIMADO'] as const;
 /** Alerta da apuração (saída). `motivoInformativo` só vem com `severity = INFO`. */
 export const AlertaSimplesSchema = z
   .object({
@@ -120,6 +126,41 @@ export const AlertaSimplesSchema = z
   .refine((a) => a.motivoInformativo === undefined || a.severity === 'INFO', { message: 'motivoInformativo só com severity INFO', path: ['motivoInformativo'] });
 export type AlertaSimples = z.infer<typeof AlertaSimplesSchema>;
 export type CodigoAlertaSimples = AlertaSimples['codigo'];
+
+/** Centavos com sinal: no caixa, o estorno do mês pode passar o recebido do mês (L1 a, dono 16/10). */
+const centsComSinal = z.number().int().min(-MAX_CENTS).max(MAX_CENTS);
+
+/**
+ * BE-INCR-SIMPLES-CAIXA PR-2 (nó X14-CAIXA, item 15) — a base caixa do PA, LÍQUIDA da cota do profissional-parceiro (a
+ * mesma régua da receita por competência). `receitaAuferidaPaCents` é a da competência (conferência; o RBT12, os limites e
+ * a faixa seguem por competência — Res. CGSN 140 art. 19 p.ú.).
+ */
+export const BaseCaixaSchema = z
+  .object({
+    recebidoPaCents: centsComSinal,
+    receitaAuferidaPaCents: centsComSinal,
+    art20Cents: z
+      .object({
+        parcelaVencida: cents, // art. 20 I
+        encerramento: cents, // art. 20 II a
+        retornoCompetencia: cents, // art. 20 II b (Y ≤ 2025)
+        exclusao: cents, // art. 20 II c
+      })
+      .strict(),
+  })
+  .strict();
+export type BaseCaixa = z.infer<typeof BaseCaixaSchema>;
+
+/** Item 13 (F-CX-7 a) — art. 20 IV: ICMS/ISS da receita não recebida, recolhidos direto ao ente — fora do DAS. */
+export const ImpedimentoCaixaSchema = z
+  .object({
+    mesBase: z.string().regex(/^\d{4}-\d{2}$/),
+    receitaNaoRecebidaCents: cents,
+    icmsCents: cents,
+    issCents: cents,
+  })
+  .strict();
+export type ImpedimentoCaixa = z.infer<typeof ImpedimentoCaixaSchema>;
 
 export const SimplesUnitQuerySchema = z.object({ unitId: z.string().min(1) }).strict();
 export const SimplesIdParamSchema = z.object({ id: z.string().min(1) }).strict();

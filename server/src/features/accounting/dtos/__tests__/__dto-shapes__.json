@@ -11357,7 +11357,11 @@
             "ISS_VALOR_FIXO_MUNICIPAL",
             "MEI_ENQUADRAMENTO_DIVERGE",
             "MEI_TAC_COM_OCUPACAO_A",
-            "MEI_OCUPACAO_EXCLUIDA"
+            "MEI_OCUPACAO_EXCLUIDA",
+            "REGIME_CAIXA_RECALCULO",
+            "IMPEDIMENTO_CAIXA_ICMS_ISS",
+            "CARTAO_RECEBIMENTO_ESTIMADO",
+            "RECEBIMENTO_DE_VENDA_TRIBUTADA_POR_COMPETENCIA"
           ]
         },
         "detalhe": {
@@ -11374,7 +11378,8 @@
           "type": "string",
           "enum": [
             "DOCUMENTO_MUNICIPAL_TRANSIÇÃO",
-            "REGIME_CAIXA"
+            "REGIME_CAIXA",
+            "CARTAO_RECEBIMENTO_ESTIMADO"
           ]
         }
       },
@@ -11382,6 +11387,92 @@
         "codigo",
         "detalhe",
         "severity"
+      ],
+      "additionalProperties": false
+    },
+    "BaseCaixaSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "recebidoPaCents": {
+          "type": "integer",
+          "minimum": -2147483647,
+          "maximum": 2147483647
+        },
+        "receitaAuferidaPaCents": {
+          "type": "integer",
+          "minimum": -2147483647,
+          "maximum": 2147483647
+        },
+        "art20Cents": {
+          "type": "object",
+          "properties": {
+            "parcelaVencida": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "encerramento": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "retornoCompetencia": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "exclusao": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            }
+          },
+          "required": [
+            "parcelaVencida",
+            "encerramento",
+            "retornoCompetencia",
+            "exclusao"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "recebidoPaCents",
+        "receitaAuferidaPaCents",
+        "art20Cents"
+      ],
+      "additionalProperties": false
+    },
+    "ImpedimentoCaixaSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "mesBase": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}$"
+        },
+        "receitaNaoRecebidaCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "icmsCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "issCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "mesBase",
+        "receitaNaoRecebidaCents",
+        "icmsCents",
+        "issCents"
       ],
       "additionalProperties": false
     },

@@ -2,7 +2,8 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
+import { resolveAccountingScope, type AccountingScope } from '../features/accounting/scope/AccountingScope';
+import { backfillRecebimentos } from '../features/accounting/sync/bridges/ReceitaFiscalRecebimentoBridge';
 import {
   CompetenciaParamSchema,
   SalaoParceriaContratoPatchSchema,
@@ -152,6 +153,14 @@ export const deleteParceria = async (req: Request, res: Response) => {
 
 const apuracao = () => getFactory().getSimplesApuracaoService();
 
+/**
+ * X14-CAIXA item 4 — backfill sob demanda dos recebimentos antes da apuração CAIXA (cobre as vendas pagas antes do PR-1,
+ * fora da janela do job de reconcile). Integração cross-módulo no controller, nunca no motor (Contrato §2.1).
+ */
+async function backfillSeCaixa(scope: AccountingScope, competencia: string): Promise<void> {
+  if ((await apuracao().regimeApuracaoDoPa(scope, competencia)) === 'CAIXA') await backfillRecebimentos(scope);
+}
+
 /** POST /api/accounting/simples/apuracoes/:competencia/calcular — sob demanda, nada é gravado. */
 export const calcularApuracaoSimples = async (req: Request, res: Response) => {
   try {
@@ -161,7 +170,9 @@ export const calcularApuracaoSimples = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const b = SimplesUnitQuerySchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await apuracao().calcular(resolveAccountingScope(user, b.data.unitId), p.data.competencia);
+    const scope = resolveAccountingScope(user, b.data.unitId);
+    await backfillSeCaixa(scope, p.data.competencia);
+    const data = await apuracao().calcular(scope, p.data.competencia);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -177,7 +188,9 @@ export const getApuracaoSimples = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const q = SimplesUnitQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    const data = await apuracao().obter(resolveAccountingScope(user, q.data.unitId), p.data.competencia);
+    const scope = resolveAccountingScope(user, q.data.unitId);
+    await backfillSeCaixa(scope, p.data.competencia);
+    const data = await apuracao().obter(scope, p.data.competencia);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -193,7 +206,9 @@ export const putDasSimples = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const b = SimplesDasRegistroSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await apuracao().registrarDas(resolveAccountingScope(user, b.data.unitId), p.data.competencia, b.data);
+    const scope = resolveAccountingScope(user, b.data.unitId);
+    await backfillSeCaixa(scope, p.data.competencia);
+    const data = await apuracao().registrarDas(scope, p.data.competencia, b.data);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);

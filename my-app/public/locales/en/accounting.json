@@ -2906,6 +2906,10 @@
       "LIMITE_ME_EXCEDIDO": "ME limit exceeded",
       "MEI_ENQUADRAMENTO_DIVERGE": "MEI classification differs from occupations",
       "MEI_OCUPACAO_EXCLUIDA": "Occupation outside MEI",
+      "REGIME_CAIXA_RECALCULO": "DAS filed on accrual basis for a cash-basis period",
+      "IMPEDIMENTO_CAIXA_ICMS_ISS": "Impediment: ICMS/ISS outside the DAS",
+      "CARTAO_RECEBIMENTO_ESTIMADO": "Card receipt date estimated",
+      "RECEBIMENTO_DE_VENDA_TRIBUTADA_POR_COMPETENCIA": "Receipt of a sale already taxed on accrual basis",
       "MEI_TAC_COM_OCUPACAO_A": "Cargo carrier with a table A occupation",
       "NFSE_DIVERGE_RECEITA": "NFS-e differs from revenue",
       "RBT12_INCOMPLETO": "Incomplete RBT12",
@@ -3042,7 +3046,8 @@
     },
     "motivo": {
       "DOCUMENTO_MUNICIPAL_TRANSICAO": "Municipal document (transition)",
-      "REGIME_CAIXA": "Cash basis"
+      "REGIME_CAIXA": "Cash basis",
+      "CARTAO_RECEBIMENTO_ESTIMADO": "Card term estimated"
     },
     "motivoSeg": {
       "ICMS_ST": "ICMS tax substitution",

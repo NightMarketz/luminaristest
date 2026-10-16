@@ -46,10 +46,26 @@ vigenteDesde?: string
 vigenteAte?: (string | null)
 }
 export interface AlertaSimplesInput {
-codigo: ("ATIVIDADE_SEM_ANEXO" | "RBT12_INCOMPLETO" | "LIMITE_ME_EXCEDIDO" | "LIMITE_EPP_EXCEDIDO" | "SUBLIMITE_ICMS_ISS" | "SEGREGACAO_MANUAL" | "TIEOUT_DIVERGENTE" | "HISTORICO_IGNORADO" | "LIMITE_MEI_EXCEDIDO" | "NFSE_DIVERGE_RECEITA" | "BENEFICIO_MUNICIPAL_INAPLICAVEL_DESVANTAJOSO" | "ISS_VALOR_FIXO_MUNICIPAL" | "MEI_ENQUADRAMENTO_DIVERGE" | "MEI_TAC_COM_OCUPACAO_A" | "MEI_OCUPACAO_EXCLUIDA")
+codigo: ("ATIVIDADE_SEM_ANEXO" | "RBT12_INCOMPLETO" | "LIMITE_ME_EXCEDIDO" | "LIMITE_EPP_EXCEDIDO" | "SUBLIMITE_ICMS_ISS" | "SEGREGACAO_MANUAL" | "TIEOUT_DIVERGENTE" | "HISTORICO_IGNORADO" | "LIMITE_MEI_EXCEDIDO" | "NFSE_DIVERGE_RECEITA" | "BENEFICIO_MUNICIPAL_INAPLICAVEL_DESVANTAJOSO" | "ISS_VALOR_FIXO_MUNICIPAL" | "MEI_ENQUADRAMENTO_DIVERGE" | "MEI_TAC_COM_OCUPACAO_A" | "MEI_OCUPACAO_EXCLUIDA" | "REGIME_CAIXA_RECALCULO" | "IMPEDIMENTO_CAIXA_ICMS_ISS" | "CARTAO_RECEBIMENTO_ESTIMADO" | "RECEBIMENTO_DE_VENDA_TRIBUTADA_POR_COMPETENCIA")
 detalhe: string
 severity: ("INFO" | "WARNING")
-motivoInformativo?: ("DOCUMENTO_MUNICIPAL_TRANSIÇÃO" | "REGIME_CAIXA")
+motivoInformativo?: ("DOCUMENTO_MUNICIPAL_TRANSIÇÃO" | "REGIME_CAIXA" | "CARTAO_RECEBIMENTO_ESTIMADO")
+}
+export interface BaseCaixaInput {
+recebidoPaCents: number
+receitaAuferidaPaCents: number
+art20Cents: {
+parcelaVencida: number
+encerramento: number
+retornoCompetencia: number
+exclusao: number
+}
+}
+export interface ImpedimentoCaixaInput {
+mesBase: string
+receitaNaoRecebidaCents: number
+icmsCents: number
+issCents: number
 }
 export interface SimplesUnitQueryInput {
 unitId: string
