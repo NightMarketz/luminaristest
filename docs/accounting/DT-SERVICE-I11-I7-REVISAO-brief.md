@@ -75,7 +75,11 @@ findDataByFieldEquals(tableId, filters: FieldEquals[], limit): Promise<{ rows; t
    16/10) e testes próprios (`DynamicTableService.searchTableData.integration.test.ts`, 131 linhas; rollback do I2
    pelo BRIEF do I7). *(direto)*
 
-## 4. Forks — RATIFICAÇÃO PENDENTE
+## 4. Forks — RATIFICADOS 16/10 (dono, questionário)
+
+> **F-DT-1 → (b)** "Converter pelo tipo do campo" · **F-DT-2 → (b)** "Atualizar a prova e o ADR" ·
+> **F-DT-3 → (b)** "Escrever no contrato" (contra a recomendação). Execução: F-DT-1 no #731 (sessão do I11),
+> F-DT-2 no #730 (sessão do I7), F-DT-3 em `.claude/skills/_ARCHITECTURE-CONTRACT.md §2.1` no PR de docs #741.
 
 ### F-DT-1 · Igualdade tipada do `searchTableData` × igualdade como texto do motor
 
