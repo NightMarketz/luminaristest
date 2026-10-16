@@ -95,7 +95,7 @@
 > 4. **O que segue fora:** qualquer outra escrita "de onboarding" no motor (flags, eventos, métricas
 >    novas) volta a ser diff não-vazio = defeito da prensa, como o §2 já diz.
 >
-> Forma do marco alterada pelo F-I7-3 (BE-INCR-RESET-CONSISTENTE item 6, 16/10): mesma escrita única, agora condicional (`onboardingCompletedAt: null`); a prova aceita as duas formas.
+> Forma do marco alterada pelo F-I7-3 (BE-INCR-RESET-CONSISTENTE item 6, 16/10): mesma escrita única, agora condicional (`onboardingCompletedAt: null`); a prova aceita as duas formas e a troca de uma pela outra (EMENDA 2026-10-16 abaixo).
 >
 > **EMENDA 2026-09-15 (dono, via `AskUserQuestion` na sessão do PR #320 — opção (a) entre (a) isentar
 > `__tests__/`, (b) 2ª exceção nominal, (c) aceitar prova vermelha) — harness de teste NÃO é perímetro.**
@@ -105,6 +105,19 @@
 > `proveP2ZeroDiffCli` passa a isentar o **segmento** `/__tests__/` em qualquer prefixo do perímetro,
 > com teste-guarda de que a isenção não vaza para código de produção ao lado. A R7 item 1 (um símbolo
 > de produção) segue intacta.
+>
+> **EMENDA 2026-10-16 (dono, por questionário, na sessão do I7: *"(b) + exceção da factory"*) — troca do marco
+> aceita; `factory.ts` sai do perímetro.** Rodada no intervalo do I7 (`16fd801f...` #730), a prova reprovou por dois
+> motivos que não são vazamento de vertical no motor:
+> 1. **Troca do marco.** O F-I7-3 trocou a forma original do marco pela condicional (preserva o 1º T0). A remoção da
+>    forma original passa a ser aceita **só** quando a forma condicional entra no mesmo diff, dentro de
+>    `installPresetAsSystem`, uma por uma. Qualquer outra remoção segue violação (a exceção continua aditiva). O
+>    `SYMBOL_ALLOWLIST` continua com UM símbolo.
+> 2. **`server/src/lib/factory.ts` sai do perímetro.** É composição de dependências: muda a cada nó que liga um
+>    repositório ou serviço novo (o I7 liga os donos do reset), e a prova da P2 já fechou. **A EMENDA 2026-08-22, que
+>    a incluiu, fica superada neste ponto.** O resto do perímetro não muda.
+>
+> Os dois vão com par vermelho→verde em `server/src/jobs/__tests__/proveP2ZeroDiffCli.test.ts`.
 >
 > **Origem:** `docs/ROADMAP-PLATAFORMA.md` Fase P2. **Classe:** PROVA DE PRODUTO (preset + binding;
 > zero código de motor/ledger — se exigir código lá, a prova falhou).
@@ -123,7 +136,7 @@ runtime** — só: preset do setor + binding compilado na geração + (se precis
 
 1. O tenant do setor 2 percorre **entrevista → ERP operante → fechamento mensal → gera a própria ECD**.
 2. `git diff` do motor (`features/dynamicTables`), do ledger (`features/accounting` núcleo), do
-   intérprete, de `server/src/lib/factory.ts` (**EMENDA 2026-08-22**) **e de
+   intérprete, de `server/src/lib/factory.ts` (**EMENDA 2026-08-22**; saiu pela **EMENDA 2026-10-16**) **e de
    `server/src/controllers/dynamicTablesController.ts`** (**EMENDA 2026-08-25, F-P2-10 → (c)** — ele
    invoca as pontes de salão incondicionalmente, o acoplamento vertical mais claro que estava fora do
    perímetro) entre antes e depois do vertical é **vazio**. **`presets/ai/PresetKnowledgeBase.ts` fica

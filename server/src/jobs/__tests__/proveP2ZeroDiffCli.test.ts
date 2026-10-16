@@ -2,6 +2,7 @@ const execFileSync = jest.fn();
 jest.mock('child_process', () => ({ execFileSync: (...a: unknown[]) => execFileSync(...a) }));
 
 import {
+  PERIMETER_PREFIXES,
   SYMBOL_ALLOWLIST,
   classifySymbolDiff,
   classifyZeroDiffViolations,
@@ -109,6 +110,55 @@ describe('SYMBOL_ALLOWLIST — exceção NOMINAL de UM símbolo (ADR-P2 EMENDA 2
     ].join('\n');
     const v = classifySymbolDiff(diff, HEAD_SOURCE, SYMBOL_ALLOWLIST[0]);
     expect(v).toEqual([expect.stringMatching(/linha 16 .*fora do corpo de installPresetAsSystem/)]);
+  });
+
+  // TROCA do marco (dono, questionário, 2026-10-16: "(b) + exceção da factory").
+  const DIFF_TROCA = [
+    `diff --git a/${SERVICE_FILE} b/${SERVICE_FILE}`,
+    '@@ -10,1 +10,1 @@',
+    '-      await tx.user.update({ where: { id: userId }, data: { onboardingCompletedAt: new Date() } });',
+    '+      await tx.user.updateMany({ where: { id: userId, onboardingCompletedAt: null }, data: { onboardingCompletedAt: new Date() } });',
+    '',
+  ].join('\n');
+  const HEAD_TROCA = HEAD_SOURCE.replace(
+    '      await tx.user.update({ where: { id: userId }, data: { onboardingCompletedAt: new Date() } });',
+    '      await tx.user.updateMany({ where: { id: userId, onboardingCompletedAt: null }, data: { onboardingCompletedAt: new Date() } });',
+  );
+
+  it('TROCA: forma original → condicional no mesmo diff ⇒ 0 violações', () => {
+    expect(classifySymbolDiff(DIFF_TROCA, HEAD_TROCA, SYMBOL_ALLOWLIST[0])).toEqual([]);
+  });
+
+  it('TROCA: remover a forma original SEM a condicional entrar ⇒ violação', () => {
+    const diff = [`diff --git a/${SERVICE_FILE} b/${SERVICE_FILE}`, '@@ -10,1 +9,0 @@',
+      '-      await tx.user.update({ where: { id: userId }, data: { onboardingCompletedAt: new Date() } });', ''].join('\n');
+    expect(classifySymbolDiff(diff, HEAD_SOURCE, SYMBOL_ALLOWLIST[0])).toEqual([expect.stringMatching(/forma original do marco só sai trocada/)]);
+  });
+
+  it('TROCA: original trocada pela ORIGINAL de novo (sem a condicional) ⇒ violação', () => {
+    const diff = DIFF_TROCA.replace(
+      '+      await tx.user.updateMany({ where: { id: userId, onboardingCompletedAt: null }, data: { onboardingCompletedAt: new Date() } });',
+      '+      await tx.user.update({ where: { id: userId }, data: { onboardingCompletedAt: new Date() } });',
+    );
+    expect(classifySymbolDiff(diff, HEAD_SOURCE, SYMBOL_ALLOWLIST[0])).toEqual([expect.stringMatching(/forma original do marco só sai trocada/)]);
+  });
+
+  it('TROCA + outra linha adicionada no símbolo ⇒ violação', () => {
+    const diff = DIFF_TROCA.replace('@@ -10,1 +10,1 @@', '@@ -10,1 +10,2 @@').replace(
+      /\n$/,
+      "\n+      await tx.user.update({ where: { id: userId }, data: { locale: 'pt' } });\n",
+    );
+    expect(classifySymbolDiff(diff, HEAD_TROCA, SYMBOL_ALLOWLIST[0])).toEqual([expect.stringMatching(/linha 11 .*não é o marco/)]);
+  });
+
+  it('TROCA + outra linha REMOVIDA no símbolo ⇒ violação', () => {
+    const diff = DIFF_TROCA.replace('@@ -10,1 +10,1 @@', '@@ -8,3 +8,1 @@').replace(
+      '-      await tx.user.update(',
+      '-      const txRepo = new TransactionalDynamicTableRepository(tx);\n-      // T0 do time-to-first-ECD (ADR-P2 emenda R7)\n-      await tx.user.update(',
+    );
+    expect(classifySymbolDiff(diff, HEAD_TROCA, SYMBOL_ALLOWLIST[0])).toEqual(
+      expect.arrayContaining([expect.stringMatching(/linha removida .*TransactionalDynamicTableRepository/)]),
+    );
   });
 
   it('REPROVA qualquer linha removida — a exceção é aditiva', () => {
@@ -232,9 +282,10 @@ describe('classifyZeroDiffViolations — função pura (BE-INCR-P2-VERTICAL-CLIN
     expect(report.clean).toBe(false);
   });
 
-  it('detecta diff em server/src/lib/factory.ts (emenda 2026-08-22)', () => {
+  it('server/src/lib/factory.ts SAIU do perímetro (ADR-P2 EMENDA 2026-10-16, "(b) + exceção da factory")', () => {
     const report = classifyZeroDiffViolations(['server/src/lib/factory.ts']);
-    expect(report.clean).toBe(false);
+    expect(report.clean).toBe(true);
+    expect(PERIMETER_PREFIXES).not.toContain('server/src/lib/factory.ts');
   });
 
   it('detecta diff em dynamicTablesController.ts (F-P2-10 → (c))', () => {
