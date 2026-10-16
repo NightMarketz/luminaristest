@@ -25,6 +25,7 @@ import { resolveAccountingScope } from '../../scope/AccountingScope';
 import { saleDayAsWritten, scopeDay } from '../../models/dates';
 import { buildSaleSettledEvent, syncSkipErrorCode } from '../AccountingSyncPort';
 import { isAllPackageSale } from './saleItems';
+import { maybeRecordRecebimento, recebimentoSaleFromRow } from './ReceitaFiscalRecebimentoBridge';
 
 /** The minimal shape this bridge reads from a DynamicTable data row (create/update result). */
 interface SaleRow {
@@ -122,6 +123,8 @@ export async function maybeSyncSaleSettled(
       label: `Liquidação ${row.id}`,
     });
     await getFactory().getAccountingSyncService().sync(scope, event);
+    // X14-CAIXA PR-1 item 3: recebimento da venda (base do DAS no caixa) — commit 2, não fatal; o reconcile refaz.
+    await maybeRecordRecebimento(scope, recebimentoSaleFromRow(scope.ownerUserId, { id: row.id, data }, openingSourceType === 'sale.package.sold'));
   } catch (syncError) {
     // Skip ONLY on the shared specific-code list (period-closed / MAX_CENTS poison) — never on a
     // base error class. syncSkipErrorCode reads AppError.errorCode; the old inline check read a
