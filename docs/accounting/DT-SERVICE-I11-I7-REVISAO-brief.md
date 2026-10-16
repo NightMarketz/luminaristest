@@ -113,6 +113,12 @@ cabe no #730. Observação: a emenda R7 item 1 libera "**uma** escrita a mais �
 escrita só, mudando só a condição. (I) Se o dono entender que mudar a condição do marco exige nova emenda ao ADR-P2,
 isso é decisão dele, e (b) passa a ser a própria emenda.
 
+> **Execução do F-DT-2 (16/10, sessão do I7, commit `e7611000` no #730):** a regex aceita as duas formas, com par
+> vermelho→verde. Mas `prove:p2-zero-diff --base 16fd801f --head HEAD` continuou **vermelha** por dois motivos que este
+> BRIEF não previu (a inferência do §6 subestimou): (1) a prova reprova **toda remoção**, e a linha antiga sai;
+> (2) `lib/factory.ts` está no perímetro (EMENDA 2026-08-22) e o #730 o toca. Dono, questionário, 16/10: **(c)**
+> "(b) + exceção da factory": a prova aceita a TROCA do marco, e a `factory.ts` sai do perímetro por EMENDA nova ao ADR-P2.
+
 ### F-DT-3 · Como a regra STOP do CLAUDE.md lê "método novo no motor"
 
 A regra fala em *integrar dois módulos* dentro do motor. O #731 acrescenta uma leitura genérica que outro módulo
