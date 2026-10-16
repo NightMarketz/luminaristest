@@ -9,4 +9,9 @@ export class SystemProvisioningPolicy implements ISystemProvisioningPolicy {
   canProvision(_ctx: UserContext, existingTableCount: number): boolean {
     return existingTableCount === 0;
   }
+
+  /** BE-INCR-RESET-CONSISTENTE item 4 (E13): o reset só alcança o sistema do próprio `ctx` — todo autenticado pode. */
+  canResetSystem(_ctx: UserContext): boolean {
+    return true;
+  }
 }

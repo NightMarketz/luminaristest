@@ -3,6 +3,7 @@ import { ChatRequestDto as ChatRequest, ChatResponseDto as ChatResponse } from '
 import { IEmbeddingService } from '@/lib/vector/embedding';
 import { IVectorRepository } from '@/features/documents/repositories/IVectorRepository';
 import { OpenAIService } from '@/lib/openai/OpenAIService';
+import { LlmUsage, toTurnUsage } from '@/lib/openai/llmUsage';
 import { LuminarisAgentService } from './LuminarisAgentService';
 import { KnowledgeGraphService } from './KnowledgeGraphService';
 import { ChatMessageService } from '@/features/chatMessages/services/ChatMessageService';
@@ -78,12 +79,15 @@ export class ChatService implements IChatService {
       await this.chatMessageService.createMessage({ content: query, chatInstanceId }, user);
     }
 
-    const response = await this.buildResponse(request);
+    // I11: every LLM call of the turn reports its usage here (embedding excluded — F-I11-5 → a).
+    const calls: LlmUsage[] = [];
+    const response = await this.buildResponse(request, (usage) => calls.push(usage));
 
     // Persist the assistant reply. Best-effort: a write hiccup must not discard a generated answer.
+    // A turn that throws before this point is not persisted, so its usage is lost (accepted limit, BRIEF item 15).
     if (chatInstanceId && response.answer) {
       try {
-        await this.chatMessageService.appendAssistantMessage(chatInstanceId, response.answer, user);
+        await this.chatMessageService.appendAssistantMessage(chatInstanceId, response.answer, user, toTurnUsage(calls));
       } catch (error) {
         logger.warn('Failed to persist assistant message', { error, chatInstanceId });
       }
@@ -92,7 +96,7 @@ export class ChatService implements IChatService {
     return response;
   }
 
-  private async rewriteQueryWithHistory(query: string, history: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>): Promise<string> {
+  private async rewriteQueryWithHistory(query: string, history: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>, onUsage: (usage: LlmUsage) => void): Promise<string> {
     const historyText = history
       .filter(h => h.role !== 'system') // Skip system instructions for query rewriting
       .map(h => `${h.role === 'user' ? 'Usuário' : 'Assistente'}: ${h.content}`)
@@ -112,12 +116,12 @@ Pergunta a ser reformulada: "${query}"
 Pergunta Reformulada:
 `;
 
-    const rewrittenQuery = await this.openaiService.getChatCompletion(rewritePrompt);
+    const rewrittenQuery = await this.openaiService.getChatCompletion(rewritePrompt, undefined, onUsage);
     // Fall back to the original query if the rewrite fails.
     return rewrittenQuery ? rewrittenQuery.trim() : query;
   }
 
-  private async buildResponse(request: ChatRequest & { user: UserContext }): Promise<ChatResponse> {
+  private async buildResponse(request: ChatRequest & { user: UserContext }, onUsage: (usage: LlmUsage) => void): Promise<ChatResponse> {
     const { documentIds, history, confirmedProposalId, user } = request;
     const query = sanitizeUserInput(request.query ?? '');
     logger.info('Iniciando geração de resposta de chat', { queryLength: query.length, documentCount: documentIds?.length, historyLength: history?.length });
@@ -148,7 +152,7 @@ Pergunta Reformulada:
     if (!hasSelectedDocuments) {
       logger.info('No documents selected; using ERP agent mode.');
 
-      const tools = await this.agentService.getTools(user.id);
+      const tools = await this.agentService.getTools();
       const knowledgeGraphPrompt = await this.knowledgeGraphService.getGraphPrompt(user.userId);
 
       const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
@@ -164,7 +168,9 @@ Pergunta Reformulada:
         iterations++;
         const response = await this.openaiService.getChatCompletionWithToolsAndHistory(
           messages,
-          tools
+          tools,
+          undefined,
+          onUsage
         );
 
         if (!response) break;
@@ -212,7 +218,7 @@ Pergunta Reformulada:
             } as { role: 'tool'; tool_call_id: string; content: string });
           }
           // After tool results are appended, ask the LLM for the final text answer.
-          const nextCompletion = await this.openaiService.getChatCompletionWithHistory(messages);
+          const nextCompletion = await this.openaiService.getChatCompletionWithHistory(messages, undefined, onUsage);
           if (nextCompletion) {
             return { answer: nextCompletion, type: 'TEXT', sourceDocuments: [] };
           }
@@ -250,7 +256,7 @@ Pergunta Reformulada:
 
     let contextualQuery = query;
     if (history && history.length > 1) {
-      contextualQuery = await this.rewriteQueryWithHistory(query, history);
+      contextualQuery = await this.rewriteQueryWithHistory(query, history, onUsage);
     }
     const queryEmbedding = await this.embeddingService.embedText(contextualQuery);
     // Pass userId so the vector store enforces tenant isolation at the index level.
@@ -266,7 +272,7 @@ Pergunta Reformulada:
     }
 
     const finalPrompt = `Contexto:\n---\n${context}\n---\nPergunta: "${contextualQuery}"`;
-    const answer = await this.openaiService.getChatCompletion(finalPrompt, wrapSystemPrompt(RAG_SYSTEM_PROMPT, user.id));
+    const answer = await this.openaiService.getChatCompletion(finalPrompt, wrapSystemPrompt(RAG_SYSTEM_PROMPT, user.id), onUsage);
 
     return {
       answer: answer || 'Não foi possível gerar uma resposta.',

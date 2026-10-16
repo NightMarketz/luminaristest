@@ -221,6 +221,13 @@ const LinhaAnexoIx = z.object({
   ao contador:** "No caixa do Simples, venda no cartão de crédito parcelado ou de débito entra na base no mês da
   venda ou no mês do crédito da administradora?" O dono escolheu D+N (F-CX-2 c), que segue a leitura do crédito
   da administradora por estimativa; a resposta confirma ou derruba essa leitura.
+- **A3 — transição competência → caixa** (dono, questionário, 2026-10-16: *"Só vendas de ano no caixa"*;
+  [D-2026-10-16-X14-CAIXA-LACUNAS](../plano/decisoes/D-2026-10-16-X14-CAIXA-LACUNAS.md)). A Res. CGSN 140 arts. 16–20
+  (redação vigente) e o Manual do PGDAS-D de 17/06/2025 (§5.1) não tratam da entrada no caixa. O PR-2 tira da base
+  caixa (e do art. 20) as vendas auferidas em ano por competência e mostra o valor no alerta INFO
+  `RECEBIMENTO_DE_VENDA_TRIBUTADA_POR_COMPETENCIA`. **Pergunta ao contador:** "Empresa no regime de competência em
+  2025 que optou pelo caixa em 2026: o recebimento em 2026 de venda auferida (e já tributada) em 2025 entra na receita
+  recebida do PGDAS-D de 2026?"
 - **F-CX-7 (a) e o "percentual efetivo":** a redação revogada do art. 20 IV falava em "percentuais efetivos máximos"; a
   vigente (Res. CGSN 142/2018) remete aos arts. 21 a 24. O item 13 usa o percentual efetivo da faixa do PA (leitura
   direta dos arts. 21–24, grau I). O recolhimento segue "a forma estabelecida" por cada ente, então o valor calculado

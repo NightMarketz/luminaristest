@@ -2,7 +2,9 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
+import type { AccountingScope } from '../features/accounting/scope/AccountingScope';
 import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
+import { backfillRecebimentos } from '../features/accounting/sync/bridges/ReceitaFiscalRecebimentoBridge';
 import {
   CompetenciaParamSchema,
   SalaoParceriaContratoPatchSchema,
@@ -15,6 +17,8 @@ import {
   AnoParamSchema,
   SimplesDasnUpsertSchema,
   SimplesDefisUpsertSchema,
+  RegistroValoresAReceberQuerySchema,
+  SimplesCreditoIncobravelCreateSchema,
 } from '../features/accounting/dtos/SimplesDto';
 
 /**
@@ -152,6 +156,14 @@ export const deleteParceria = async (req: Request, res: Response) => {
 
 const apuracao = () => getFactory().getSimplesApuracaoService();
 
+/**
+ * X14-CAIXA item 4 — backfill sob demanda dos recebimentos antes da apuração CAIXA (cobre as vendas pagas antes do PR-1,
+ * fora da janela do job de reconcile). Integração cross-módulo no controller, nunca no motor (Contrato §2.1).
+ */
+async function backfillSeCaixa(scope: AccountingScope, competencia: string): Promise<void> {
+  if ((await apuracao().regimeApuracaoDoPa(scope, competencia)) === 'CAIXA') await backfillRecebimentos(scope);
+}
+
 /** POST /api/accounting/simples/apuracoes/:competencia/calcular — sob demanda, nada é gravado. */
 export const calcularApuracaoSimples = async (req: Request, res: Response) => {
   try {
@@ -161,7 +173,9 @@ export const calcularApuracaoSimples = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const b = SimplesUnitQuerySchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await apuracao().calcular(resolveAccountingScopeInternal(user, b.data.unitId), p.data.competencia);
+    const scope = resolveAccountingScopeInternal(user, b.data.unitId);
+    await backfillSeCaixa(scope, p.data.competencia);
+    const data = await apuracao().calcular(scope, p.data.competencia);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -177,7 +191,9 @@ export const getApuracaoSimples = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const q = SimplesUnitQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    const data = await apuracao().obter(resolveAccountingScopeInternal(user, q.data.unitId), p.data.competencia);
+    const scope = resolveAccountingScopeInternal(user, q.data.unitId);
+    await backfillSeCaixa(scope, p.data.competencia);
+    const data = await apuracao().obter(scope, p.data.competencia);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -193,7 +209,9 @@ export const putDasSimples = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const b = SimplesDasRegistroSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await apuracao().registrarDas(resolveAccountingScopeInternal(user, b.data.unitId), p.data.competencia, b.data);
+    const scope = resolveAccountingScopeInternal(user, b.data.unitId);
+    await backfillSeCaixa(scope, p.data.competencia);
+    const data = await apuracao().registrarDas(scope, p.data.competencia, b.data);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -279,6 +297,54 @@ export const putDefis = async (req: Request, res: Response) => {
     if (!b.success) return bad(res, b.error.flatten());
     const data = await declaracao().upsertDefis(resolveAccountingScopeInternal(user, b.data.unitId), p.data.ano, b.data);
     return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+// ---- BE-INCR-SIMPLES-CAIXA PR-3 (nó X14-CAIXA, itens 19–20) ----
+
+const registroCaixa = () => getFactory().getSimplesRegistroCaixaService();
+
+/** GET /api/accounting/simples/registro-valores-a-receber?unitId=&ano= — registro do Anexo IX (ano ≤ 2026). */
+export const getRegistroValoresAReceber = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const q = RegistroValoresAReceberQuerySchema.safeParse(req.query);
+    if (!q.success) return bad(res, q.error.flatten());
+    const data = await registroCaixa().registro(resolveAccountingScopeInternal(user, q.data.unitId), q.data.ano);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** POST /api/accounting/simples/creditos-incobraveis — crédito incobrável (art. 77 VI, §§ 5º–6º). */
+export const createCreditoIncobravel = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const b = SimplesCreditoIncobravelCreateSchema.safeParse(req.body);
+    if (!b.success) return bad(res, b.error.flatten());
+    const data = await registroCaixa().registrarIncobravel(resolveAccountingScopeInternal(user, b.data.unitId), b.data);
+    return res.status(201).json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** DELETE /api/accounting/simples/creditos-incobraveis/:id?unitId= — soft-delete. */
+export const deleteCreditoIncobravel = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const p = SimplesIdParamSchema.safeParse(req.params);
+    if (!p.success) return bad(res, p.error.flatten());
+    const q = SimplesUnitQuerySchema.safeParse(req.query);
+    if (!q.success) return bad(res, q.error.flatten());
+    await registroCaixa().removerIncobravel(resolveAccountingScopeInternal(user, q.data.unitId), p.data.id);
+    return res.status(204).send();
   } catch (error) {
     return handleApiError(error, res);
   }

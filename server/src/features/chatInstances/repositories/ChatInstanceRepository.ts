@@ -164,4 +164,12 @@ export class ChatInstanceRepository implements IChatInstanceRepository {
       throw error;
     }
   }
-} 
+
+  /**
+   * Hard-deletes every instance of the user (reset do sistema, I7 item 2). Messages cascade via FK.
+   * @param userId - Owner id
+   */
+  async deleteByUserId(userId: string): Promise<void> {
+    await prisma.chatInstance.deleteMany({ where: { userId } });
+  }
+}

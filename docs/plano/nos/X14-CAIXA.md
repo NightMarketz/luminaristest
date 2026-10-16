@@ -3,17 +3,17 @@ id: "X14-CAIXA"
 tipo: "regua"
 dominio: "fiscal"
 titulo: "Simples Nacional ME/EPP: base do DAS pela receita recebida (regime de caixa) — registro de recebíveis e gatilhos do art. 20"
-estado: "planned"
-estado_detalhe: "15/10: BRIEF escrito (`BE-INCR-SIMPLES-CAIXA-brief.md`, 22 itens em 3 PRs: recebimento + trava de ano → base caixa + art. 20 → Anexo IX + incobráveis). Fato novo: a Res. CGSN 190/2026 extingue o caixa em 01/01/2027 (revoga arts. 16 § 1º, 19, 20, 77 e 78), e o nó serve só aos PAs até dez/2026. Escopo \"caixa completo para 2026\" (dono, contra a recomendação de guarda + encerrar). F-CX-1..7 e F-CX-2.1 RATIFICADOS; F-CX-2 (c) D+N e F-CX-7 (a) calcular ICMS/ISS, os dois contra a recomendação. Pendentes de contador: A1 (transição dez/2026) e A2 (dia do recebimento no cartão). Sem executa"
+estado: "inflight"
+estado_detalhe: "16/10: execução autorizada (dono, chat, 2026-10-16: \"Pode começar agora e disparar as sessões com brief autorizado\"). 22 itens em 3 PRs empilhados e abertos: #729 (recebimento + trava de ano, itens 1–7a) → #738 (base caixa + art. 20, itens 8–18) → #739 (Anexo IX + incobráveis, itens 19–21). Lacunas L1 (a) e L2 (a) decididas pelo dono em 16/10 ([[D-2026-10-16-X14-CAIXA-LACUNAS]]); A3 nova (transição competência → caixa). Pendentes de contador: A1, A2, A3. Não mergear sem OK"
 depende_de: ["[[X14]]", "[[D-2026-10-10-X14-PROXIMOS-PASSOS]]", "[[D-2026-10-15-X14-CAIXA-FORKS]]"]
 autorizacao: "dono, chat, 2026-10-15: \"Autorizo planejar o BRIEF do X14-CAIXA — sessao-planejamento, sem código, sem 'executa'\" — só o BRIEF; forks ratificados no questionário do mesmo dia ([[D-2026-10-15-X14-CAIXA-FORKS]]) — sem executa"
 ancora_sdd: "—"
-atualizado: "2026-10-15"
-prs: ["#711"]
+atualizado: "2026-10-16"
+prs: ["#711", "#729", "#738", "#739"]
 ---
 # X14-CAIXA — base do DAS por recebimento (regime de caixa)
 
-**Estado:** `planned` — 15/10: BRIEF escrito (`BE-INCR-SIMPLES-CAIXA-brief.md`, 22 itens em 3 PRs: recebimento + trava de ano → base caixa + art. 20 → Anexo IX + incobráveis). Fato novo: a Res. CGSN 190/2026 extingue o caixa em 01/01/2027 (revoga arts. 16 § 1º, 19, 20, 77 e 78), e o nó serve só aos PAs até dez/2026. Escopo "caixa completo para 2026" (dono, contra a recomendação de guarda + encerrar). F-CX-1..7 e F-CX-2.1 RATIFICADOS; F-CX-2 (c) D+N e F-CX-7 (a) calcular ICMS/ISS, os dois contra a recomendação. Pendentes de contador: A1 (transição dez/2026) e A2 (dia do recebimento no cartão). Sem executa  
+**Estado:** `inflight` — 16/10: execução autorizada (dono, chat, 2026-10-16: "Pode começar agora e disparar as sessões com brief autorizado"). 22 itens em 3 PRs empilhados e abertos: #729 (recebimento + trava de ano, itens 1–7a) → #738 (base caixa + art. 20, itens 8–18) → #739 (Anexo IX + incobráveis, itens 19–21). Lacunas L1 (a) e L2 (a) decididas pelo dono em 16/10 ([[D-2026-10-16-X14-CAIXA-LACUNAS]]); A3 nova (transição competência → caixa). Pendentes de contador: A1, A2, A3. Não mergear sem OK  
 **Autorização:** dono, chat, 2026-10-15. Planejar o BRIEF só pela `sessao-planejamento`. O código exige `executa`
 próprio por PR.  
 **Depende de:** [[X14]] (cálculo por competência, perfil com `simplesRegimeApuracao`).

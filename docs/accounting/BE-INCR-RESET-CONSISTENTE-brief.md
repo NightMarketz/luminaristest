@@ -43,6 +43,49 @@ os chats, os documentos, os layouts e as visões salvas. O cache de KPI sobreviv
 - **F-I7-4 → "Sim, evento de reset na trilha".** Na mesma tx da remoção contábil, cada unidade que teve
   configuração removida recebe um evento novo com as contagens removidas.
 
+### EMENDA 2026-10-16 (execução, PR-1): prova zero-diff da P2 depois do F-I7-3 (F-DT-2)
+
+O item 6 dizia que a mudança do T0 "não quebra gate nenhum" (E10). É verdade para o CI, mas a prova manual
+`prove:p2-zero-diff` passou a descrever uma linha que não existe mais (análise em `DT-SERVICE-I11-I7-REVISAO-brief.md`
+§2.2, PR #741). Decisões do dono em 2026-10-16. Primeiro, por questionário: F-DT-2 → (b) *"Atualizar a prova e o ADR"*.
+Depois, também por questionário, diante da prova ainda vermelha: *"(b) + exceção da factory"*. No #730:
+- a regex do marco aceita as duas formas exatas, e a prova aceita a **troca** (remover a original só com a condicional
+  no mesmo diff);
+- `server/src/lib/factory.ts` sai do perímetro (ADR-P2, EMENDA 2026-10-16, que supera a de 2026-08-22 nesse ponto);
+- par vermelho→verde em `proveP2ZeroDiffCli.test.ts`.
+
+### EMENDA 2026-10-16 (execução, PR-2): `CompanyFiscalProfile` sem `unitId`
+
+Lacuna achada na execução. O `CompanyFiscalProfile` está em `SETUP` (E7), mas é chaveado por `(userId, anoCalendario)` e
+não tem `unitId`, enquanto o item 11.3 grava um evento **por unidade**. Decisão do dono, por questionário, em
+2026-10-16: *"Apaga, conta em toda unidade"* (opção a). O perfil da empresa sai junto com o resto do SETUP. A contagem
+dele vai numa chave própria do payload, `companyLevel` (JSON estável tabela → contagem), **repetida igual** no evento
+`accounting.scope_reset` de cada unidade que teve SETUP. Essa chave é do nível da empresa: **nunca some `companyLevel`
+entre unidades.** O allowlist fica `'accounting.scope_reset': ['removed', 'companyLevel']`. As tabelas da empresa
+ficam listadas em `ACCOUNTING_RESET_SETUP_USER_LEVEL`.
+
+Caso medido depois: a clínica no REAL (ativação `Draft`) grava **só** o `CompanyFiscalProfile`, sem SETUP de unidade.
+Decisão do dono, por questionário, em 2026-10-16: *"Evento na trilha da unidade"*. Com `companyLevel`, o evento vai
+também para toda unidade do usuário que já tem cadeia (`AuditChainHead`), com `removed` `{}`. **Nenhum delete sem
+evento:** com `companyLevel` e nenhuma unidade com cadeia, o reset falha fechado (409
+`SYSTEM_RESET_COMPANY_LEVEL_WITHOUT_TRAIL`) e nada sai.
+
+### EMENDA 2026-10-16 (execução, PR-2): `AccountingPolicyVersion` medida no onboarding
+
+O item 10 mediu os 5 onboardings (salão e clínica com PRESUMIDO, SIMPLES e REAL; `crmModule` com PRESUMIDO). A única
+tabela contábil escrita fora dos candidatos a SETUP é a `AccountingPolicyVersion`: o perfil fiscal da unidade grava uma
+versão `APPLIED` "sem contador". O schema a chama de "trilha de aprovação", então a execução parou (item 10). Decisões do
+dono em 2026-10-16. Primeiro, por questionário: *"Configuração: apaga junto"*. Depois, corrigindo no chat: *"Mas ela tbm
+deve depender de ter contador"*. Regra final, **mista** (tabela dividida, `ACCOUNTING_RESET_SPLIT`):
+- versão **com contador** (`proposedById` ou `assignmentId` preenchido) **bloqueia**: entra no 409 como
+  `{ table: 'AccountingPolicyVersion', count }`, e nada sai;
+- versão **sem contador** (os dois nulos: o PUT direto, como a do onboarding) é `SETUP`: sai na mesma tx, depois do gate,
+  contada no evento `accounting.scope_reset`.
+
+O critério é confiável pelo código: o `propose` exige contador ativo e grava `proposedById`, a decisão grava
+`assignmentId`, e o `applyDirectInTx` grava os dois nulos. Os comentários "nenhuma rota apaga" e "trilha de aprovação"
+foram atualizados em `schema.prisma`, `ledgerStatus.ts` e `BE-INCR-ACCOUNTING-POLICY-VERSION-brief.md` §4.
+
 ## 2. Checklist de comportamentos (cada um testável sozinho)
 
 ### PR-1 — reset não contábil + rota testada (F-I7-2, F-I7-3) · `sonnet-medio`

@@ -27,7 +27,7 @@ const ctx = (userId: string): UserContext => ({
 });
 
 const msg = (role: ChatMessageRole, userId = 'owner-1'): IChatMessage =>
-  ({ id: 'm1', content: 'c', role, chatInstanceId: 'ci', userId, createdAt: new Date(), updatedAt: new Date() });
+  ({ id: 'm1', content: 'c', role, chatInstanceId: 'ci', userId, createdAt: new Date(), updatedAt: new Date(), promptTokens: null, completionTokens: null, model: null });
 
 describe('canCreate / canListAll', () => {
   it('allow any authenticated user', () => {
