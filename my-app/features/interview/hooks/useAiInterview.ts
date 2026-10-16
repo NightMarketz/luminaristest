@@ -8,6 +8,7 @@ import type { CreateDashboardPayload, CreateDashboardResult } from '../../../lib
 import { notifyAccountingDraft } from '../setup/accountingDraftNotice';
 import { classifyCreationError } from '../setup/classifyCreationError';
 import type { OnboardingFiscalInput } from '@/types/contracts/accounting/CompanyFiscalProfileDto.gen';
+import type { ChatInterviewInput } from '@/types/contracts/interview/ChatInterviewDto.gen';
 
 /**
  * BE-INCR-ONBOARDING-FIRST-UNIT (I1, BRIEF item 5): na Entrevista o nome da primeira unidade vem do `SUMMARY:` que a IA
@@ -145,6 +146,24 @@ export function useAiInterview() {
     }
   }
 
+  /**
+   * W4 PR-2 (BRIEF item 13): a sessão expirou, sumiu ou não é do usuário — descarta a sessão local e volta à escolha
+   * criar × customizar do mesmo preset (botões do W3, `reason: 'error'`); sem preset, volta à descoberta do negócio.
+   */
+  function handleSessionLost() {
+    setSessionId(null);
+    setCustomizationState(null);
+    setShowCustomizationPanel(false);
+    setMessages(prev => [...prev, { sender: 'ai', text: t('onboardingSessionExpired') }]);
+    if (presetKey) {
+      setCurrentStage('AWAITING_CREATION_TYPE_CONFIRMATION');
+      setChoicePrompt({ kind: 'creation_type', reason: 'error' });
+    } else {
+      setCurrentStage('DISCOVERING_BUSINESS');
+      setChoicePrompt(null);
+    }
+  }
+
   /** Posta um turno da entrevista; `choice` (W3 item 8/9) decide o estágio de criação sem ler o texto. */
   async function postTurn(newMessages: IMessage[], choice?: CreationChoice) {
     setIsLoading(true);
@@ -153,17 +172,31 @@ export function useAiInterview() {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/ai/ChatInterview`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getCookie('auth_token')}` },
-        body: JSON.stringify({ 
-          messages: newMessages, 
-          stage: currentStage, 
+        // W4: `ChatInterviewSchema` é `.strict()` — o corpo é tipado pelo contrato gerado (chave extra = 400).
+        body: JSON.stringify({
+          messages: newMessages,
+          stage: currentStage,
           // `ChatInterviewSchema` aceita string ou ausente, nunca null (400) — omite o que ainda não existe.
           ...(presetKey ? { presetKey } : {}),
           ...(sessionId ? { sessionId } : {}),
           ...(choice ? { choice } : {})
-        })
+        } satisfies ChatInterviewInput)
       });
 
-      if (!response.ok) throw new Error('Failed to get response from AI');
+      if (!response.ok) {
+        // W4 PR-2: a sessão de customização tem dono e TTL no servidor — 404/409 com code próprio não são "erro de comunicação".
+        const errorBody = (await response.json().catch(() => null)) as { code?: string } | null;
+        if (response.status === 404 && errorBody?.code === 'INTERVIEW_SESSION_NOT_FOUND') {
+          handleSessionLost();
+          return;
+        }
+        if (response.status === 409 && errorBody?.code === 'INTERVIEW_SESSION_CONFLICT') {
+          // Outra aba gravou a sessão: nada muda aqui (mensagens, estágio, sessionId, painel); o usuário reenvia.
+          setMessages(prev => [...prev, { sender: 'ai', text: t('onboardingSessionConflict') }]);
+          return;
+        }
+        throw new Error('Failed to get response from AI');
+      }
 
       const result = await response.json();
       const { response: aiResponse, nextStage, presetKey: newPresetKey, sessionId: newSessionId, startCustomization, customizationState: newCustomizationState, choicePrompt: newChoicePrompt } = result;
