@@ -7,7 +7,7 @@
  * (REGRA_MESMO_TRIBUTO, system sem PATCH de valor) e o diagnóstico materializado × recomputado (item 11).
  */
 import { LalurService } from '../LalurService';
-import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import { NotFoundError, ValidationError } from '../../../../lib/errors';
 import { LALUR_PARTE_B_CLOSED, LALUR_PARTE_B_REOPENED, LALUR_QUARTERS } from '../../models/Lalur.model';
 import type { LalurEntry, LalurParteBAccount, LalurParteBMovement } from 'generated/prisma';
@@ -21,7 +21,7 @@ import type {
   LalurMovementWithRelations,
 } from '../../repositories/ILalurRepository';
 
-const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'owner-1' }, 'unit-1');
 const TX = { __tx: true } as never;
 let seq = 0;
 const nid = (p: string) => `${p}-${++seq}`;

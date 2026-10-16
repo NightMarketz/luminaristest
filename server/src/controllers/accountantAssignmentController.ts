@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import {
   AcceptAccountantAssignmentSchema,
   EndAccountantAssignmentSchema,
@@ -24,7 +24,7 @@ export const inviteAccountant = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = InviteAccountantSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getAccountantAssignmentService().invite(scope, parsed.data);
     return res.status(201).json({ success: true, data: toAccountantAssignmentView(data) });
   } catch (error) {
@@ -39,7 +39,7 @@ export const listAccountantAssignments = async (req: Request, res: Response) => 
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = ListAccountantAssignmentsQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const rows = await getFactory().getAccountantAssignmentService().listByScope(scope);
     return res.json({ success: true, data: rows.map(toAccountantAssignmentView) });
   } catch (error) {

@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import {
   TaxAssessmentConfirmSchema,
   TaxAssessmentListQuerySchema,
@@ -25,7 +25,7 @@ export const previewTaxAssessment = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const b = TaxAssessmentPreviewSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await getFactory().getTaxAssessmentService().preview(resolveAccountingScope(user, b.data.unitId), b.data);
+    const data = await getFactory().getTaxAssessmentService().preview(resolveAccountingScopeInternal(user, b.data.unitId), b.data);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -39,7 +39,7 @@ export const confirmTaxAssessment = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const b = TaxAssessmentConfirmSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await getFactory().getTaxAssessmentService().confirm(resolveAccountingScope(user, b.data.unitId), b.data);
+    const data = await getFactory().getTaxAssessmentService().confirm(resolveAccountingScopeInternal(user, b.data.unitId), b.data);
     return res.status(201).json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -53,7 +53,7 @@ export const listTaxAssessments = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const q = TaxAssessmentListQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    const data = await getFactory().getTaxAssessmentService().list(resolveAccountingScope(user, q.data.unitId), q.data);
+    const data = await getFactory().getTaxAssessmentService().list(resolveAccountingScopeInternal(user, q.data.unitId), q.data);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -67,7 +67,7 @@ export const listPeriodos = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const q = TaxAssessmentPeriodosQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    const data = await getFactory().getTaxAssessmentPeriodosService().listar(resolveAccountingScope(user, q.data.unitId), q.data);
+    const data = await getFactory().getTaxAssessmentPeriodosService().listar(resolveAccountingScopeInternal(user, q.data.unitId), q.data);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -81,7 +81,7 @@ export const getTaxAssessment = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const q = TaxAssessmentScopeQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    const data = await getFactory().getTaxAssessmentService().get(resolveAccountingScope(user, q.data.unitId), req.params.id);
+    const data = await getFactory().getTaxAssessmentService().get(resolveAccountingScopeInternal(user, q.data.unitId), req.params.id);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -95,7 +95,7 @@ export const reconcileTaxAssessmentProvisao = async (req: Request, res: Response
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const b = TaxAssessmentScopeQuerySchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await getFactory().getTaxAssessmentService().reconcileProvisao(resolveAccountingScope(user, b.data.unitId), req.params.id);
+    const data = await getFactory().getTaxAssessmentService().reconcileProvisao(resolveAccountingScopeInternal(user, b.data.unitId), req.params.id);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -109,7 +109,7 @@ export const previewPisCofins = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const b = PisCofinsPreviewSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await getFactory().getPisCofinsAssessmentService().preview(resolveAccountingScope(user, b.data.unitId), b.data);
+    const data = await getFactory().getPisCofinsAssessmentService().preview(resolveAccountingScopeInternal(user, b.data.unitId), b.data);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -123,7 +123,7 @@ export const confirmPisCofins = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const b = PisCofinsConfirmSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await getFactory().getPisCofinsAssessmentService().confirm(resolveAccountingScope(user, b.data.unitId), b.data);
+    const data = await getFactory().getPisCofinsAssessmentService().confirm(resolveAccountingScopeInternal(user, b.data.unitId), b.data);
     return res.status(201).json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);

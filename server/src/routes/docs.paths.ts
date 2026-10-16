@@ -1889,6 +1889,24 @@
  *             properties:
  *               success: { type: boolean, example: false }
  *               error: { type: string, example: Not found }
+ *     UnitNotFound:
+ *       description: "Recurso ou unidade não encontrados — UNIT_NOT_FOUND quando o unitId não é linha da tabela `units` do dono (outro dono, outra tabela, string livre ou dono sem `units`; indistinguíveis de propósito — BE-INCR-SCOPE-UNIT-GUARD, nó I6, F-I6-3); o código próprio do endpoint (ex. NOT_FOUND) quando o recurso pedido não existe no escopo"
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               code: { type: string, example: UNIT_NOT_FOUND }
+ *               message: { type: string, example: Unidade não encontrada. }
+ *     UnitDeleted:
+ *       description: "Conflito — UNIT_DELETED quando o endpoint grava e a unidade do dono está soft-deleted (a leitura segue com 200 — nó I6, F-I6-4 b + F-I6-9); o código próprio do endpoint nos demais conflitos descritos nele"
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               code: { type: string, example: UNIT_DELETED }
+ *               message: { type: string, example: Unidade apagada — restaure-a para lançar. }
  *     InternalServerError:
  *       description: Unexpected server error
  *       content:

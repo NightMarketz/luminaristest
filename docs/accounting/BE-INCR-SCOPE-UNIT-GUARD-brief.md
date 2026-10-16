@@ -1,6 +1,8 @@
 # BRIEF — BE-INCR-SCOPE-UNIT-GUARD (nó I6): `unitId` validado contra a tabela `units` do dono
 
-> **Status:** BRIEF pronto. **Forks: 7 ratificados pelo dono em 2026-10-15** por questionário
+> **Status (16/10):** em execução — `executa` do dono, chat, 2026-10-16 (*"Pode começar agora e disparar as sessões com
+> brief autorizado"*), 5 PRs empilhados, merge não autorizado; F-I6-11 → (a) ratificado no mesmo dia.
+> **Status (15/10):** BRIEF pronto. **Forks: 7 ratificados pelo dono em 2026-10-15** por questionário
 > ([`D-2026-10-15-I6-FORKS`](../plano/decisoes/D-2026-10-15-I6-FORKS.md)); **1 fork menor (F-I6-11) PENDENTE**, com
 > recomendação. **Não tem "executa"**: a autorização desta sessão é *"planejar o BRIEF do I6 — sessao-planejamento,
 > sem código, sem 'executa'"*. A `sessao-feature` só roda com autorização de código citável.
@@ -59,7 +61,7 @@
 | **F-I6-8** como cada chamada declara o modo | **explícito por endpoint** (`access: 'read' \| 'write'`, sem default) | dono, 2026-10-15 — *"Explícito, por endpoint (Recomendado)"* |
 | **F-I6-9** escrita em unidade apagada do dono | **409 `UNIT_DELETED`** | dono, 2026-10-15 — *"409 UNIT_DELETED (Recomendado)"* |
 | **F-I6-10** `listAccounts` em unidade apagada | **leitura, sem criar** o plano de contas | dono, 2026-10-15 — *"Leitura, sem criar (Recomendado)"* |
-| **F-I6-11** OpenAPI dos códigos novos | **PENDENTE** — ver §4 | — |
+| **F-I6-11** OpenAPI dos códigos novos | **(a)** componente de resposta compartilhado (`UnitNotFound` 404, `UnitDeleted` 409) referenciado no JSDoc de cada endpoint migrado | dono, questionário, 2026-10-16 — ratificado na abertura da `sessao-feature` (PR-1 cria os componentes em `docs.paths.ts`). **Subcaso (B)** da lacuna L-I6-1 (77 endpoints já declaram `'404'`, 19 já declaram `'409'`): *"Substituir pelo componente"* (dono, questionário, 2026-10-16) — em todo endpoint migrado, 404 e 409 viram `$ref` a `UnitNotFound`/`UnitDeleted`, ocupados ou não; a descrição do componente cobre o caso da unidade e o genérico do código; o que a resposta antiga dizia de específico do endpoint vai para a `description` do endpoint; endpoint sem JSDoc segue sem doc |
 
 (F-I6-5 "chamadores internos" e F-I6-6 "fixtures" não viraram cédula: o primeiro está dentro das opções do F-I6-1
 — a (d) os deixa fora; o segundo é direto, §2 item 6.)
@@ -183,8 +185,9 @@ Resposta HTTP (corpo no formato do middleware de erro de hoje):
 - **F-I6-11 · OpenAPI dos códigos novos.** (a) componente de resposta compartilhado (`UnitNotFound` 404,
   `UnitDeleted` 409) referenciado no JSDoc de cada endpoint migrado — mesmo toque do item 8; (b) documentar uma vez
   na descrição geral da API, sem tocar os endpoints. **Recomendação: (a)** — o cliente gerado do contrato vê o 404/409
-  por rota, e o custo é uma linha por endpoint que o PR já edita. **RATIFICAÇÃO PENDENTE** (D1 — não muda
-  comportamento; pode ser decidido na abertura da `sessao-feature`).
+  por rota, e o custo é uma linha por endpoint que o PR já edita. **RATIFICADO (a)** — dono, questionário,
+  2026-10-16 (abertura da `sessao-feature`); subcaso (B) — substituir o 404/409 já declarado pelo componente — dono,
+  questionário, 2026-10-16 (ver §1).
 
 ## 5. Divisão em PRs
 

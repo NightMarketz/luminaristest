@@ -13,7 +13,7 @@
 import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { AccountingReviewRepository } from '@/features/accounting/repositories/AccountingReviewRepository';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 
 const UNIT = 'unit-rv';
@@ -22,7 +22,7 @@ const DONO_B = 'u-rv-b';
 const DONO_C = 'u-rv-c'; // só para o teste de FK Restrict — é apagado
 
 const escopo = (userId: string, unitId: string = UNIT): AccountingScope =>
-  resolveAccountingScope({ userId }, unitId);
+  resolveAccountingScopeInternal({ userId }, unitId);
 
 const repo = new AccountingReviewRepository();
 

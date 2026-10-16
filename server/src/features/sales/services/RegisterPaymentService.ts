@@ -4,7 +4,7 @@ import logger from '../../../lib/logger';
 import type { DynamicTableService } from '../../dynamicTables/services/DynamicTableService';
 import type { IDynamicTableRepository } from '../../dynamicTables/repositories/IDynamicTableRepository';
 import { maybeSyncSaleSettled } from '../../accounting/sync/bridges/SaleSettlementBridge';
-import { resolveAccountingScope } from '../../accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../accounting/scope/resolveAccountingScopeInternal';
 import type { PackageBalanceService } from '../../packages/services/PackageBalanceService';
 import type { RegisterPaymentInput } from '../dtos/RegisterPaymentDto';
 
@@ -99,7 +99,7 @@ export class RegisterPaymentService {
       if (!unitId) throw new ValidationError('Venda sem unitId — saldo de pacote não pode ser consumido.');
       if (!customerId) throw new ValidationError('Venda sem cliente — saldo de pacote não pode ser consumido.');
       const amountCents = this.toCents(data.totalAmount, input.saleId);
-      const scope = resolveAccountingScope(user, unitId);
+      const scope = resolveAccountingScopeInternal(user, unitId);
       await this.packageBalanceService.assertSufficient(scope, customerId, input.packageId, amountCents);
     }
 
@@ -182,7 +182,7 @@ export class RegisterPaymentService {
         return;
       }
       const amountCents = this.toCents(args.totalAmount, args.saleId);
-      const scope = resolveAccountingScope(user, args.unitId);
+      const scope = resolveAccountingScopeInternal(user, args.unitId);
       await this.packageBalanceService.debitForConsumption(scope, {
         customerId: args.customerId,
         packageId: args.packageId,

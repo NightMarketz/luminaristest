@@ -11,7 +11,7 @@
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { ApplicationFactory } from '@/lib/factory';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { ATOR_PLATAFORMA, AVISO_VALOR_MUDOU_APOS_ENTREGA } from '@/features/accounting/services/TaxAssessmentRecalcService';
 
@@ -50,7 +50,7 @@ async function cenario(ano: number) {
       irpjDespesaAccountId: ids['4.9.1'], csllDespesaAccountId: ids['4.9.2'], irpjRecolherAccountId: ids['2.1.9.1'], csllRecolherAccountId: ids['2.1.9.2'],
     },
   });
-  await factory().getPostingService().postEntry(resolveAccountingScope({ userId: dono.id }, unitId), {
+  await factory().getPostingService().postEntry(resolveAccountingScopeInternal({ userId: dono.id }, unitId), {
     unitId, date: `${ano}-02-10`, sourceType: 'manual', description: 'Serviço',
     lines: [{ accountCode: '1.1.1', debitCents: 10_000_000, creditCents: 0 }, { accountCode: '3.1', debitCents: 0, creditCents: 10_000_000 }],
   });

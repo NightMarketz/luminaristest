@@ -21,7 +21,8 @@
 
 import { getFactory } from '../../../../lib/factory';
 import logger from '../../../../lib/logger';
-import { resolveAccountingScope, type AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import { saleDayAsWritten, scopeDay, scopeToday } from '../../models/dates';
 import { buildSaleReturnedEvent, syncSkipErrorCode } from '../AccountingSyncPort';
 
@@ -68,7 +69,7 @@ export async function maybeReverseSale(
       return;
     }
 
-    const scope = resolveAccountingScope(actor, unitId);
+    const scope = resolveAccountingScopeInternal(actor, unitId);
     const reason = typeof data.reason === 'string' ? data.reason : undefined;
 
     if (status === 'Cancelled') {

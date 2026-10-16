@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import {
   CreatePaymentAccountSchema,
   PaymentAccountScopeQuerySchema,
@@ -24,7 +24,7 @@ export const listPaymentAccounts = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = PaymentAccountScopeQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getPaymentAccountService().list(scope);
     return res.json({ success: true, data });
   } catch (error) {
@@ -39,7 +39,7 @@ export const getPaymentAccount = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = PaymentAccountScopeQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getPaymentAccountService().get(scope, req.params.id);
     return res.json({ success: true, data });
   } catch (error) {
@@ -54,7 +54,7 @@ export const createPaymentAccount = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = CreatePaymentAccountSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getPaymentAccountService().create(scope, parsed.data);
     return res.status(201).json({ success: true, data });
   } catch (error) {
@@ -69,7 +69,7 @@ export const updatePaymentAccount = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = UpdatePaymentAccountSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getPaymentAccountService().update(scope, req.params.id, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -85,7 +85,7 @@ export const setPaymentAccountCredential = async (req: Request, res: Response) =
     const parsed = SetCredentialSchema.safeParse(req.body);
     // O flatten do Zod devolve só a mensagem por campo, nunca o valor recebido — o token não ecoa no 400.
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getPaymentAccountService().setCredential(scope, req.params.id, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -100,7 +100,7 @@ export const unblockPaymentAccountReleaseReport = async (req: Request, res: Resp
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = UnblockReleaseReportSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getPaymentAccountService().unblockReleaseReport(scope, req.params.id);
     return res.json({ success: true, data });
   } catch (error) {
@@ -115,7 +115,7 @@ export const deletePaymentAccount = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = PaymentAccountScopeQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     await getFactory().getPaymentAccountService().remove(scope, req.params.id);
     return res.json({ success: true });
   } catch (error) {

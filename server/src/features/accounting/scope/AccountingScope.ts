@@ -4,7 +4,9 @@
  * Separates the logical data owner (ownerUserId) from the actor performing the
  * operation (actorUserId). Today they are always the same user; the split avoids a
  * tenancy refactor when a unit needs to be shared between users — only
- * resolveAccountingScope() changes, not every table.
+ * resolveAccountingScopeInternal() changes, not every table. Controllers HTTP resolvem pelo
+ * AccountingScopeResolver (valida o unitId contra `units`, nó I6); a função síncrona é só dos chamadores
+ * internos, cujo unitId vem de linha já gravada.
  *
  * ledgerCode, baseCurrencyCode, and timeZone are domain constants for now. Including
  * them in the scope means the future multi-ledger/currency work slots in cleanly.
@@ -22,25 +24,8 @@ export interface AccountingScope {
   baseCurrencyCode: 'BRL';
   /** Locale time zone for period resolution. */
   timeZone: 'America/Sao_Paulo';
-}
-
-/**
- * Resolves an AccountingScope from an authenticated user and a unitId.
- * Today owner === actor === logged-in user.
- */
-export function resolveAccountingScope(
-  user: { userId: string },
-  unitId: string,
-): AccountingScope {
-  // ponytail: membership check entra quando unidade for compartilhada
-  return {
-    ownerUserId: user.userId,
-    actorUserId: user.userId,
-    unitId,
-    ledgerCode: 'DEFAULT',
-    baseCurrencyCode: 'BRL',
-    timeZone: 'America/Sao_Paulo',
-  };
+  /** Marca do resolver: a linha de `units` está soft-deleted (só aparece com access 'read'; F-I6-4 b, nó I6). */
+  unitDeleted?: true;
 }
 
 /** Returns a Prisma-compatible { userId, unitId } where-clause derived from a scope. */

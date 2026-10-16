@@ -25,12 +25,12 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { FiscalDocumentRepository, attemptRef } from '@/features/accounting/repositories/FiscalDocumentRepository';
 import { FiscalDocumentLifecycleService } from '@/features/accounting/services/FiscalDocumentLifecycleService';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import type { EmissaoResult } from '@/features/accounting/dfe/DfeEmissorPort';
 
 const DONO = 'u-dfe-stale';
 const UNIT = 'unit-dfe-stale';
-const scope = resolveAccountingScope({ userId: DONO }, UNIT);
+const scope = resolveAccountingScopeInternal({ userId: DONO }, UNIT);
 const repo = new FiscalDocumentRepository();
 
 const service = new FiscalDocumentLifecycleService(

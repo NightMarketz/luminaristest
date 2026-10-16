@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import {
   ArchiveLalurSchema,
   CreateLalurEntrySchema,
@@ -36,7 +36,7 @@ export const getLalurCatalog = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = LalurCatalogQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = getFactory().getLalurService().catalog(scope, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -52,7 +52,7 @@ export const listLalurEntries = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = ListLalurEntriesQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getLalurService().listEntries(scope, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -67,7 +67,7 @@ export const createLalurEntry = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = CreateLalurEntrySchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getLalurService().createEntry(scope, parsed.data);
     return res.status(201).json({ success: true, data });
   } catch (error) {
@@ -82,7 +82,7 @@ export const updateLalurEntry = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = UpdateLalurEntrySchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getLalurService().updateEntry(scope, req.params.id, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -97,7 +97,7 @@ export const archiveLalurEntry = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = ArchiveLalurSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getLalurService().archiveEntry(scope, req.params.id, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -113,7 +113,7 @@ export const listLalurParteB = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = ListLalurParteBQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getLalurService().listParteB(scope, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -128,7 +128,7 @@ export const createLalurParteB = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = CreateLalurParteBAccountSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getLalurService().createParteB(scope, parsed.data);
     return res.status(201).json({ success: true, data });
   } catch (error) {
@@ -143,7 +143,7 @@ export const updateLalurParteB = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = UpdateLalurParteBAccountSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getLalurService().updateParteB(scope, req.params.id, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -158,7 +158,7 @@ export const archiveLalurParteB = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = ArchiveLalurSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getLalurService().archiveParteB(scope, req.params.id, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -174,7 +174,7 @@ export const listLalurMovements = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = ListLalurParteBMovementsQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getLalurService().listMovements(scope, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -189,7 +189,7 @@ export const createLalurMovement = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = CreateLalurParteBMovementSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getLalurService().createMovement(scope, parsed.data);
     return res.status(201).json({ success: true, data });
   } catch (error) {
@@ -204,7 +204,7 @@ export const updateLalurMovement = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = UpdateLalurParteBMovementSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getLalurService().updateMovement(scope, req.params.id, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -219,7 +219,7 @@ export const archiveLalurMovement = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = ArchiveLalurSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getLalurService().archiveMovement(scope, req.params.id, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -235,7 +235,7 @@ export const closeLalurParteB = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = LalurParteBPeriodSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getLalurService().closeParteB(scope, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -250,7 +250,7 @@ export const reopenLalurParteB = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = LalurParteBPeriodSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getLalurService().reopenParteB(scope, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -265,7 +265,7 @@ export const getLalurParteBBalances = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = LalurParteBBalancesQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getLalurService().parteBBalances(scope, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {

@@ -3,7 +3,7 @@ import { createReadStream } from 'node:fs';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import { makeUploadMiddleware } from '../lib/uploadSecurity';
 import {
   ExportRequestSchema,
@@ -43,7 +43,7 @@ export const createDataExchangeExport = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getDataExchangeExportService().export(scope, parsed.data);
     return res.status(201).json({ success: true, data });
   } catch (error) {
@@ -67,7 +67,7 @@ export const listDataExchangeJobs = async (req: Request, res: Response) => {
     }
 
     const { unitId, ...filter } = parsed.data;
-    const scope = resolveAccountingScope(user, unitId);
+    const scope = resolveAccountingScopeInternal(user, unitId);
     const data = await getFactory().getDataExchangeExportService().listJobs(scope, filter);
     return res.json({ success: true, data });
   } catch (error) {
@@ -89,7 +89,7 @@ export const waiveEcfRectification = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory()
       .getDataExchangeExportService()
       .waiveEcfRectification(scope, req.params.jobId, parsed.data.justification);
@@ -135,7 +135,7 @@ export const createDataExchangeImport = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory()
       .getDataExchangeImportService()
       .uploadAndValidate(scope, parsed.data.kind, {
@@ -162,7 +162,7 @@ export const listDataExchangeRows = async (req: Request, res: Response) => {
     }
 
     const { status } = parsed.data;
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory()
       .getDataExchangeImportService()
       .listRows(scope, req.params.jobId, status ? { status } : undefined);
@@ -184,7 +184,7 @@ export const commitDataExchangeImport = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getDataExchangeImportService().commit(scope, req.params.jobId);
     return res.json({ success: true, data });
   } catch (error) {

@@ -18,7 +18,7 @@
 
 import { getFactory } from '../../../../lib/factory';
 import logger from '../../../../lib/logger';
-import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import { saleDayAsWritten } from '../../models/dates';
 import { buildSalePackageSoldEvent, syncSkipErrorCode } from '../AccountingSyncPort';
 import { loadPackageValidityDays, loadSalePackageInfo } from './saleItems';
@@ -75,7 +75,7 @@ export async function maybeSyncSalePackageSold(
 
     // Scope resolvido ANTES da data: `scopeDay` precisa do fuso (o fallback "agora" postaria em D+1
     // das 21h à meia-noite BRT). `data.date` é 'date' no preset ⇒ já é dia-calendário, passa intacto.
-    const scope = resolveAccountingScope(actor, unitId);
+    const scope = resolveAccountingScopeInternal(actor, unitId);
     const event = buildSalePackageSoldEvent({
       saleId: row.id,
       unitId,

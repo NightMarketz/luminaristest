@@ -9,9 +9,9 @@ import type { IFixedAssetClassRepository } from '@/features/accounting/repositor
 import type { IFixedAssetRepository } from '@/features/accounting/repositories/IFixedAssetRepository';
 import type { IAccountRepository } from '@/features/accounting/repositories/IAccountRepository';
 import type { IAccountingPolicy } from '@/features/accounting/policies/IAccountingPolicy';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 
-const scope = resolveAccountingScope({ userId: 'dono-a' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'dono-a' }, 'unit-1');
 
 const classRow = {
   id: 'class-1',

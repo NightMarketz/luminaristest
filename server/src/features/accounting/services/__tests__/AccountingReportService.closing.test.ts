@@ -1,5 +1,5 @@
 import { AccountingReportService } from '../AccountingReportService';
-import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import type { Account } from 'generated/prisma';
 
 /**
@@ -9,7 +9,7 @@ import type { Account } from 'generated/prisma';
  *     and netResultLine auto-zeroes, so `balanced` (A = P) holds BOTH before and after closing.
  */
 
-const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'owner-1' }, 'unit-1');
 
 function acc(over: Partial<Account>): Account {
   return {

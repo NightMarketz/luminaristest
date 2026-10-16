@@ -1,6 +1,6 @@
 import { CounterpartyService } from '../CounterpartyService';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../../lib/errors';
-import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import {
   COUNTERPARTY_ARCHIVED,
   COUNTERPARTY_CREATED,
@@ -9,7 +9,7 @@ import {
 import { Prisma } from 'generated/prisma';
 import type { Counterparty } from 'generated/prisma';
 
-const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'owner-1' }, 'unit-1');
 
 const P2002 = new Prisma.PrismaClientKnownRequestError('unique', { code: 'P2002', clientVersion: 'x' } as never);
 

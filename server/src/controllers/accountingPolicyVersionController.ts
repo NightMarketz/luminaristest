@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import {
   ApprovePolicyVersionSchema,
   ListPolicyVersionsQuerySchema,
@@ -25,7 +25,7 @@ export const proposePolicyVersion = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = ProposePolicyVersionSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getAccountingPolicyVersionService().propose(scope, parsed.data);
     return res.status(201).json({ success: true, data });
   } catch (error) {

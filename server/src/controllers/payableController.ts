@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import {
   CancelPayableSchema,
   CancelPaymentSchema,
@@ -28,7 +28,7 @@ export const createPayable = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getPayableService().createPayable(scope, parsed.data);
     return res.status(201).json({ success: true, data });
   } catch (error) {
@@ -46,7 +46,7 @@ export const listPayables = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getPayableService().listPayables(scope, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -64,7 +64,7 @@ export const getPayable = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getPayableService().getPayable(scope, req.params.id);
     return res.json({ success: true, data });
   } catch (error) {
@@ -82,7 +82,7 @@ export const registerPayment = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getPayableService().registerPayment(scope, req.params.id, parsed.data);
     return res.status(201).json({ success: true, data });
   } catch (error) {
@@ -100,7 +100,7 @@ export const cancelPayable = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getPayableService().cancelPayable(scope, req.params.id, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -118,7 +118,7 @@ export const cancelPayment = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory()
       .getPayableService()
       .cancelPayment(scope, req.params.id, req.params.paymentId, parsed.data);
@@ -144,7 +144,7 @@ export const reconcilePayables = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getPayableService().reconcilePayables(scope);
     return res.json({ success: true, data });
   } catch (error) {

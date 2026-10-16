@@ -1576,3 +1576,24 @@ describe('PostingService', () => {
   });
   });
 });
+
+// BE-INCR-SCOPE-UNIT-GUARD (nó I6, BRIEF item 7; F-I6-10): unidade apagada lê o plano sem semeá-lo.
+describe('listAccounts × unidade apagada (I6)', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('escopo com unitDeleted → ensureChartOfAccounts NÃO é chamado e a lista é devolvida', async () => {
+    const accounts = [{ id: 'acc-1', code: '1.1.1.01' }];
+    const { svc, accountRepo } = buildService({ accountRepo: { findManyByUnit: jest.fn(async () => accounts) } });
+    const ensure = jest.spyOn(svc, 'ensureChartOfAccounts');
+    await expect(svc.listAccounts({ ...scope, unitDeleted: true })).resolves.toBe(accounts);
+    expect(ensure).not.toHaveBeenCalled();
+    expect(accountRepo.findManyByUnit).toHaveBeenCalledWith({ ...scope, unitDeleted: true });
+  });
+
+  it('escopo sem a marca → ensureChartOfAccounts segue sendo chamado (regressão)', async () => {
+    const { svc } = buildService();
+    const ensure = jest.spyOn(svc, 'ensureChartOfAccounts').mockResolvedValue(undefined);
+    await svc.listAccounts(scope);
+    expect(ensure).toHaveBeenCalledWith(scope);
+  });
+});

@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import {
   AttachSourceDocumentSchema,
   ListSourceDocumentsQuerySchema,
@@ -57,7 +57,7 @@ export const attachSourceDocument = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory()
       .getPostingService()
       .attachSourceDocument(scope, req.params.entryId, {
@@ -106,7 +106,7 @@ export const listSourceDocuments = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory()
       .getPostingService()
       .listSourceDocuments(scope, req.params.entryId);
@@ -172,7 +172,7 @@ export const createSourceDocumentUpload = async (req: Request, res: Response) =>
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getSourceDocumentUploadService().createFromFile(scope, {
       sourceType: parsed.data.sourceType,
       externalRef: parsed.data.externalRef,

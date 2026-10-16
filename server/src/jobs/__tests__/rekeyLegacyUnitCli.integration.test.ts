@@ -13,7 +13,7 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { ApplicationFactory } from '@/lib/factory';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import {
   runCli, buildInventory, tableDigest, REKEY_MODELS, KEEP_MODELS, EXCLUDED_UNIT_IDS, UNIT_REKEYED_EVENT,
@@ -92,7 +92,7 @@ async function seedLegacy(owner: string, unitId: string): Promise<void> {
     data: { userId: owner, unitId, direction: 'EXPORT', kind: 'EXPORT_CHART_OF_ACCOUNTS', status: 'EXPORTED', requestedById: owner, storageKey: `exports/${owner}/${unitId}/job.csv` },
   });
   const audit = ApplicationFactory.getInstance().getAuditService();
-  const scope = resolveAccountingScope({ userId: owner }, unitId);
+  const scope = resolveAccountingScopeInternal({ userId: owner }, unitId);
   for (const code of ['1.1.1', '3.1']) {
     await prisma.$transaction((tx) => audit.append(tx, scope, { actorUserId: owner, eventType: 'account.created', targetType: 'Account', targetId: code, payload: { code } }));
   }
@@ -307,9 +307,9 @@ describe('I1b — rekeyLegacyUnitCli', () => {
 
     // itens 11–12: cadeia legada selada com a mesma cabeça; a nova abre com unit.rekeyed em seq=1 apontando para ela.
     const audit = ApplicationFactory.getInstance().getAuditService();
-    const legacy = await audit.verifyAuditChain(resolveAccountingScope({ userId: o.id }, 'legacy-ok'));
+    const legacy = await audit.verifyAuditChain(resolveAccountingScopeInternal({ userId: o.id }, 'legacy-ok'));
     expect(legacy).toMatchObject({ ok: true, lastSeq: legacyHead.nextSeq - 1n, headHash: legacyHead.headHash });
-    expect((await audit.verifyAuditChain(resolveAccountingScope({ userId: o.id }, to))).ok).toBe(true);
+    expect((await audit.verifyAuditChain(resolveAccountingScopeInternal({ userId: o.id }, to))).ok).toBe(true);
     const anchor = await prisma.auditEvent.findFirstOrThrow({ where: { scopeUserId: o.id, unitId: to } });
     expect(anchor).toMatchObject({ seq: 1n, eventType: UNIT_REKEYED_EVENT, targetType: 'unit', targetId: to });
     expect(JSON.parse(anchor.payload as string)).toMatchObject({ fromUnitId: 'legacy-ok', fromHeadHash: legacyHead.headHash, fromNextSeq: legacyHead.nextSeq.toString() });

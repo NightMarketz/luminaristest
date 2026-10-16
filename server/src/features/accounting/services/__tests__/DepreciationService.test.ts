@@ -18,9 +18,9 @@ import type { AccountingScopeSettingsService } from '@/features/accounting/servi
 import type { PostingService } from '@/features/accounting/services/PostingService';
 import type { AuditService } from '@/features/accounting/services/AuditService';
 import type { IAccountingPolicy } from '@/features/accounting/policies/IAccountingPolicy';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 
-const scope = resolveAccountingScope({ userId: 'dono-a' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'dono-a' }, 'unit-1');
 
 const classRow: FixedAssetClass = {
   id: 'class-1', userId: 'dono-a', unitId: 'unit-1', code: 'MAQ', name: 'Máquinas',

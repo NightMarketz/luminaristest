@@ -17,13 +17,13 @@ import type { IAccountingPolicy } from '@/features/accounting/policies/IAccounti
 import type { AuditService } from '@/features/accounting/services/AuditService';
 import type { AccountingReviewService } from '@/features/accounting/services/AccountingReviewService';
 import { ConflictError } from '@/lib/errors';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import {
   DELIVERY_PACKAGE_BUILT,
   DELIVERY_SENT,
 } from '@/features/accounting/models/AccountingDelivery.model';
 
-const scope = resolveAccountingScope({ userId: 'dono-a' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'dono-a' }, 'unit-1');
 const YEAR = 2026;
 const SHA_ECD = 'a'.repeat(64);
 const SHA_ECF = 'b'.repeat(64);

@@ -1,11 +1,11 @@
 import { ExerciseClosingService } from '../ExerciseClosingService';
 import { ForbiddenError, ValidationError } from '../../../../lib/errors';
-import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import { MAX_CENTS } from '../../models/money';
 import type { Account } from 'generated/prisma';
 import type { PostEntryInput } from '../../dtos/PostingDto';
 
-const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'owner-1' }, 'unit-1');
 
 function acc(over: Partial<Account>): Account {
   return {

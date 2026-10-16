@@ -16,7 +16,7 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { AccountingContactRepository } from '@/features/accounting/repositories/AccountingContactRepository';
 import { AccountingDeliveryRepository } from '@/features/accounting/repositories/AccountingDeliveryRepository';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 
 const UNIT = 'unit-cd';
@@ -24,7 +24,7 @@ const DONO_A = 'u-cd-a';
 const DONO_B = 'u-cd-b';
 
 const escopo = (userId: string, unitId: string = UNIT): AccountingScope =>
-  resolveAccountingScope({ userId }, unitId);
+  resolveAccountingScopeInternal({ userId }, unitId);
 
 const contactRepo = new AccountingContactRepository();
 const deliveryRepo = new AccountingDeliveryRepository();

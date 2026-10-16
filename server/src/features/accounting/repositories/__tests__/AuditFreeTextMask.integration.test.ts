@@ -19,14 +19,14 @@ import { getFactory } from '@/lib/factory';
 import { CounterpartyRepository } from '@/features/accounting/repositories/CounterpartyRepository';
 import { PostingRepository } from '@/features/accounting/repositories/PostingRepository';
 import { normalizeCounterpartyName } from '@/features/accounting/models/Counterparty.model';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 
 const UNIT = 'unit-freetext-mask';
 const DONO = 'u-freetext-mask';
 const NOME_FORNECEDOR = 'Padaria Conceição Ltda';
 
-const escopo = (): AccountingScope => resolveAccountingScope({ userId: DONO }, UNIT);
+const escopo = (): AccountingScope => resolveAccountingScopeInternal({ userId: DONO }, UNIT);
 
 const counterpartyRepo = new CounterpartyRepository();
 const postingRepo = new PostingRepository();

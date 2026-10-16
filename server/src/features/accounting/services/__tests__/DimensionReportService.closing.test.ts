@@ -1,5 +1,5 @@
 import { DimensionReportService } from '../DimensionReportService';
-import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import { CLOSING_SOURCE_TYPE } from '../../models/closing';
 import type { Account, DimensionDefinition, DimensionValue } from 'generated/prisma';
 import type { AccountDimensionTotals } from '../../repositories/IPostingRepository';
@@ -18,7 +18,7 @@ import type { AccountDimensionTotals } from '../../repositories/IPostingReposito
  * (memory: bp-dre-diagnostics-test-must-mix-natures).
  */
 
-const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'owner-1' }, 'unit-1');
 
 function acc(id: string, code: string, nature: string): Account {
   return {

@@ -45,7 +45,7 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { getFactory } from '@/lib/factory';
 import { ReferentialMappingRepository } from '@/features/accounting/repositories/ReferentialMappingRepository';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 import { NotFoundError } from '@/lib/errors';
 
@@ -57,7 +57,7 @@ const V2025 = '2025';
 const V2026 = '2026';
 
 const escopo = (userId: string, unitId: string = UNIT): AccountingScope =>
-  resolveAccountingScope({ userId }, unitId);
+  resolveAccountingScopeInternal({ userId }, unitId);
 
 const repo = new ReferentialMappingRepository();
 

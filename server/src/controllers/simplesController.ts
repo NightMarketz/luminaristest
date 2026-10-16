@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import {
   CompetenciaParamSchema,
   SalaoParceriaContratoPatchSchema,
@@ -33,7 +33,7 @@ export const putSimplesHistorico = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const b = SimplesHistoricoUpsertSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await service().upsertHistorico(resolveAccountingScope(user, b.data.unitId), p.data.competencia, b.data);
+    const data = await service().upsertHistorico(resolveAccountingScopeInternal(user, b.data.unitId), p.data.competencia, b.data);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -49,7 +49,7 @@ export const getSimplesHistorico = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const q = SimplesUnitQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    const data = await service().obterHistorico(resolveAccountingScope(user, q.data.unitId), p.data.competencia);
+    const data = await service().obterHistorico(resolveAccountingScopeInternal(user, q.data.unitId), p.data.competencia);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -65,7 +65,7 @@ export const putSimplesSegregacao = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const b = SimplesSegregacaoUpsertSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await service().upsertSegregacao(resolveAccountingScope(user, b.data.unitId), p.data.competencia, b.data);
+    const data = await service().upsertSegregacao(resolveAccountingScopeInternal(user, b.data.unitId), p.data.competencia, b.data);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -81,7 +81,7 @@ export const getSimplesSegregacao = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const q = SimplesUnitQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    const data = await service().obterSegregacao(resolveAccountingScope(user, q.data.unitId), p.data.competencia);
+    const data = await service().obterSegregacao(resolveAccountingScopeInternal(user, q.data.unitId), p.data.competencia);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -95,7 +95,7 @@ export const createParceria = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const b = SalaoParceriaContratoSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await service().createParceria(resolveAccountingScope(user, b.data.unitId), b.data);
+    const data = await service().createParceria(resolveAccountingScopeInternal(user, b.data.unitId), b.data);
     return res.status(201).json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -109,7 +109,7 @@ export const listParcerias = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const q = SimplesUnitQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    const data = await service().listParcerias(resolveAccountingScope(user, q.data.unitId));
+    const data = await service().listParcerias(resolveAccountingScopeInternal(user, q.data.unitId));
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -125,7 +125,7 @@ export const updateParceria = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const b = SalaoParceriaContratoPatchSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await service().updateParceria(resolveAccountingScope(user, b.data.unitId), p.data.id, b.data);
+    const data = await service().updateParceria(resolveAccountingScopeInternal(user, b.data.unitId), p.data.id, b.data);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -141,7 +141,7 @@ export const deleteParceria = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const q = SimplesUnitQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    await service().deleteParceria(resolveAccountingScope(user, q.data.unitId), p.data.id);
+    await service().deleteParceria(resolveAccountingScopeInternal(user, q.data.unitId), p.data.id);
     return res.status(204).send();
   } catch (error) {
     return handleApiError(error, res);
@@ -161,7 +161,7 @@ export const calcularApuracaoSimples = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const b = SimplesUnitQuerySchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await apuracao().calcular(resolveAccountingScope(user, b.data.unitId), p.data.competencia);
+    const data = await apuracao().calcular(resolveAccountingScopeInternal(user, b.data.unitId), p.data.competencia);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -177,7 +177,7 @@ export const getApuracaoSimples = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const q = SimplesUnitQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    const data = await apuracao().obter(resolveAccountingScope(user, q.data.unitId), p.data.competencia);
+    const data = await apuracao().obter(resolveAccountingScopeInternal(user, q.data.unitId), p.data.competencia);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -193,7 +193,7 @@ export const putDasSimples = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const b = SimplesDasRegistroSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await apuracao().registrarDas(resolveAccountingScope(user, b.data.unitId), p.data.competencia, b.data);
+    const data = await apuracao().registrarDas(resolveAccountingScopeInternal(user, b.data.unitId), p.data.competencia, b.data);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -213,7 +213,7 @@ export const getAliquotasSimples = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const q = SimplesUnitQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    const data = await apuracao().aliquotas(resolveAccountingScope(user, q.data.unitId), p.data.competencia);
+    const data = await apuracao().aliquotas(resolveAccountingScopeInternal(user, q.data.unitId), p.data.competencia);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -229,7 +229,7 @@ export const getDasnSimei = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const q = SimplesUnitQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    const data = await declaracao().dasnSimei(resolveAccountingScope(user, q.data.unitId), p.data.ano);
+    const data = await declaracao().dasnSimei(resolveAccountingScopeInternal(user, q.data.unitId), p.data.ano);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -245,7 +245,7 @@ export const putDasnSimei = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const b = SimplesDasnUpsertSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await declaracao().upsertDasnSimei(resolveAccountingScope(user, b.data.unitId), p.data.ano, b.data);
+    const data = await declaracao().upsertDasnSimei(resolveAccountingScopeInternal(user, b.data.unitId), p.data.ano, b.data);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -261,7 +261,7 @@ export const getDefis = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const q = SimplesUnitQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    const data = await declaracao().defis(resolveAccountingScope(user, q.data.unitId), p.data.ano);
+    const data = await declaracao().defis(resolveAccountingScopeInternal(user, q.data.unitId), p.data.ano);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -277,7 +277,7 @@ export const putDefis = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const b = SimplesDefisUpsertSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await declaracao().upsertDefis(resolveAccountingScope(user, b.data.unitId), p.data.ano, b.data);
+    const data = await declaracao().upsertDefis(resolveAccountingScopeInternal(user, b.data.unitId), p.data.ano, b.data);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);

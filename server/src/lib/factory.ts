@@ -134,10 +134,11 @@ import { DimensionReportService } from '../features/accounting/services/Dimensio
 import { TieOutDiagnosticService } from '../features/accounting/services/TieOutDiagnosticService';
 import { DynamicTableProductRefLookup } from '../features/accounting/services/ProductRefLookup';
 import { DynamicTablePhysicalStockSync } from '../features/accounting/services/PhysicalStockSync';
-import type { ProductRefPort, StockRowPort, StockRowWriterPort } from '../features/accounting/ports/OriginPorts';
+import type { ProductRefPort, StockRowPort, StockRowWriterPort, UnitRowPort } from '../features/accounting/ports/OriginPorts';
 import { CounterpartyService } from '../features/accounting/services/CounterpartyService';
 import { AccountingContactService } from '../features/accounting/services/AccountingContactService';
 import { AccountantAssignmentService } from '../features/accounting/services/AccountantAssignmentService';
+import { AccountingScopeResolver, type IAccountingScopeResolver } from '../features/accounting/scope/AccountingScopeResolver';
 import { AccountingPolicyVersionService } from '../features/accounting/services/AccountingPolicyVersionService';
 import { PaymentAccountService } from '../features/accounting/services/PaymentAccountService';
 import { CollectionChargeService } from '../features/accounting/services/CollectionChargeService';
@@ -850,6 +851,7 @@ export class ApplicationFactory {
     accountingDelivery: AccountingDeliveryService;
     accountingReview: AccountingReviewService;
     accountantAssignment: AccountantAssignmentService; // GOV-CONTADOR
+    accountingScopeResolver: IAccountingScopeResolver; // I6
     accountingPolicyVersion: AccountingPolicyVersionService; // GOV-CONTADOR política versionada
     nfePreview: NfePreviewService;
     packageBalance: PackageBalanceService;
@@ -1412,6 +1414,16 @@ export class ApplicationFactory {
       taxAssessmentService, // X8 PR-3 (item 17): a provisão em 2 commits do X7, reusada
       legalParameterService, // BE-INCR-LEGAL-PARAMS PR-1: fotografia PIS_COFINS
     );
+    // I6: porta de unidades do núcleo sobre o repositório do motor (molde do ProductRefPort).
+    const unitRowPort: UnitRowPort = this.repositories.dynamicTable;
+    // Hoisted no I6: o AccountingScopeResolver também o injeta (resolveGovernance).
+    const accountantAssignmentService = new AccountantAssignmentService(
+      this.repositories.accountantAssignment,
+      this.repositories.accountingContact,
+      this.repositories.user,
+      this.policies.accounting,
+      auditService,
+    );
     this.services = {
       bankSettlement: bankSettlementService,
       accountingScopeSettings: accountingScopeSettingsService,
@@ -1675,13 +1687,9 @@ export class ApplicationFactory {
         this.policies.accounting,
       ),
       // BE-INCR-ACCOUNTANT-GOVERNANCE (nó GOV-CONTADOR): contador responsável por escopo + resolver delegado.
-      accountantAssignment: new AccountantAssignmentService(
-        this.repositories.accountantAssignment,
-        this.repositories.accountingContact,
-        this.repositories.user,
-        this.policies.accounting,
-        auditService,
-      ),
+      accountantAssignment: accountantAssignmentService,
+      // BE-INCR-SCOPE-UNIT-GUARD (nó I6): escopo dos controllers HTTP com o unitId validado contra `units`.
+      accountingScopeResolver: new AccountingScopeResolver(unitRowPort, accountantAssignmentService),
       // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7): prévia/confirmação/leitura da apuração IRPJ/CSLL trimestral.
       taxAssessment: taxAssessmentService,
       // TAX-ASSESSMENT-PERIODOS (BRIEF item 10): só leitura — repositórios existentes + a fotografia legal do X8.
@@ -2122,6 +2130,7 @@ export class ApplicationFactory {
     this.services.accountingDelivery;
   public getAccountingReviewService = (): AccountingReviewService => this.services.accountingReview;
   public getAccountantAssignmentService = (): AccountantAssignmentService => this.services.accountantAssignment;
+  public getAccountingScopeResolver = (): IAccountingScopeResolver => this.services.accountingScopeResolver;
   public getAccountingPolicyVersionService = (): AccountingPolicyVersionService => this.services.accountingPolicyVersion;
   public getInventoryService = (): InventoryService => this.services.inventory;
   public getNfeImportService = (): NfeImportService => this.services.nfeImport;

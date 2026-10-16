@@ -435,3 +435,24 @@ export class OnboardingRollbackFailedError extends AppError {
     Object.setPrototypeOf(this, OnboardingRollbackFailedError.prototype);
   }
 }
+
+// ── BE-INCR-SCOPE-UNIT-GUARD (nó I6, BRIEF item 1) — o `unitId` do cliente é validado contra a tabela `units` do dono.
+
+/**
+ * F-I6-3: id que não é linha de `units` do dono (outro dono, outra tabela, string livre, dono sem `units`) — 404; os
+ * casos são indistinguíveis de propósito (não revela se o id existe em outro dono).
+ */
+export class UnitNotFoundError extends AppError {
+  constructor() {
+    super('Unidade não encontrada.', 404, 'UNIT_NOT_FOUND');
+    Object.setPrototypeOf(this, UnitNotFoundError.prototype);
+  }
+}
+
+/** F-I6-4 (b) + F-I6-9: escrita em linha de `units` soft-deleted do dono — 409 (a leitura segue). */
+export class UnitDeletedError extends ConflictError {
+  constructor() {
+    super('Unidade apagada — restaure-a para lançar.', 'UNIT_DELETED');
+    Object.setPrototypeOf(this, UnitDeletedError.prototype);
+  }
+}

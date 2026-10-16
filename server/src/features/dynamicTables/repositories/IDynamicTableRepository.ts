@@ -60,6 +60,12 @@ export interface IDynamicTableRepository {
   existsByIdInTable(dataId: string, tableId: string): Promise<boolean>;
 
   /**
+   * BE-INCR-SCOPE-UNIT-GUARD (nó I6, BRIEF item 2): estado da linha `unitId` na tabela `internalName === 'units'` do
+   * dono. `null` se a linha não existe, é de outra tabela ou de outro dono; `'deleted'` se soft-deleted; `'live'` senão.
+   */
+  findUnitRowState(ownerUserId: string, unitId: string): Promise<'live' | 'deleted' | null>;
+
+  /**
    * Finds the parent table of a given data entry ID.
    * Useful for permission checks where you only have the dataId.
    */

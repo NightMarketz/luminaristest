@@ -1,6 +1,6 @@
 import { CANONICAL_ACCOUNTS, RECEITA_NAO_USO_CODE } from '../../fixtures/ChartOfAccountsFixture';
 import { SpedEcfGenerationService } from '../SpedEcfGenerationService';
-import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import { ForbiddenError, ValidationError } from '../../../../lib/errors';
 import { logger } from '../../../../lib/logger';
 import type { SpedEcfRequestDto } from '../../dtos/SpedEcfDto';
@@ -23,7 +23,7 @@ jest.mock('../../../../lib/alertWebhook', () => ({
   sendAlertWebhook: (...a: unknown[]) => sendAlertWebhook(...a),
 }));
 
-const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'owner-1' }, 'unit-1');
 
 function makeAccount(over: Partial<Account>): Account {
   return {
