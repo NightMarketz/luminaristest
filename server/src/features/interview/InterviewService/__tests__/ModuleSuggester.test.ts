@@ -7,14 +7,15 @@ import { ModuleSuggester } from '../ModuleSuggester';
 import { InterviewService } from '../InterviewService';
 import { PresetMatcher } from '../PresetMatcher';
 import { StageHandlers } from '../StageHandlers';
-import { OpenAIService } from '../../../../lib/openai/OpenAIService';
+import type { OpenAIService } from '../../../../lib/openai/OpenAIService';
 import { presetService } from '../../../dynamicTables/services/PresetService';
 import { tablePresetSuites, type PresetSuite } from '../../../dynamicTables/presets';
 import { presetKnowledgeBase } from '../../../dynamicTables/presets/ai/PresetKnowledgeBase';
 import { MODULE_REGISTRY, type ModuleDef, type ModuleKey } from '../../../dynamicTables/presets/modules/registry';
 import type { IMessage, InterviewModuleOption } from '../../models/InterviewTypes';
+import type { CustomizationService } from '../../CustomizationService/CustomizationService';
 
-// O singleton constrói OpenAIService, que exige a chave; o CI injeta esta mesma (ci.yml), o shell local não.
+// Defesa: se algum caminho construir o OpenAIService real, ele exige a chave; o CI injeta esta mesma (ci.yml).
 process.env.OPENAI_API_KEY ??= 'ci-dummy-openai-key';
 
 // Contrato §5 (testes): beforeEach(() => jest.clearAllMocks()) sempre.
@@ -27,6 +28,13 @@ const CRM_QUESTION = 'Pergunte também se o negócio quer usar um CRM';
 function suggesterWith(classify: jest.Mock): ModuleSuggester {
   return new ModuleSuggester({ classifyIntoEnumSet: classify } as unknown as OpenAIService);
 }
+
+// W4: o InterviewService é construído pelo factory; aqui, direto, com a IA de sugestão como stub.
+const turn = (picks: string[] | Error) => {
+  const classifyIntoEnumSet = picks instanceof Error ? jest.fn().mockRejectedValue(picks) : jest.fn().mockResolvedValue(picks);
+  const openai = { classifyIntoEnumSet } as unknown as OpenAIService;
+  return new InterviewService({} as CustomizationService, openai).processTurn('MATCHING_PRESET', b2b, 'u1');
+};
 
 const byKey = (options: InterviewModuleOption[]) =>
   Object.fromEntries(options.map((o) => [o.key, { locked: o.locked, suggested: o.suggested }]));
@@ -105,10 +113,9 @@ describe('W5 item 11 — sim/não latente (F-W5-4)', () => {
   it('turno com suíte sem CRM-0: o prompt da mensagem pergunta se o negócio quer CRM', async () => {
     jest.spyOn(PresetMatcher.prototype, 'findMatchingPreset').mockResolvedValue(presetKnowledgeBase[0]);
     jest.spyOn(presetService, 'getPresetByKey').mockReturnValue(semModulos as never);
-    jest.spyOn(OpenAIService.prototype, 'classifyIntoEnumSet').mockResolvedValue([]);
     const ai = jest.spyOn(StageHandlers.prototype, 'getAiResponseWithHistory').mockResolvedValue('Encontrei.');
 
-    const result = await InterviewService.getInstance().processTurn('MATCHING_PRESET', b2b);
+    const result = await turn([]);
 
     expect(result.moduleOptions?.find((o) => o.key === 'CRM-0')).toMatchObject({ locked: false });
     expect(ai.mock.calls[0][0]).toContain(CRM_QUESTION);
@@ -118,10 +125,9 @@ describe('W5 item 11 — sim/não latente (F-W5-4)', () => {
 describe('W5 item 12 — turno MATCHING_PRESET devolve moduleOptions', () => {
   it('com match: presetKey + choicePrompt + moduleOptions; a mensagem cita os sugeridos não-travados', async () => {
     jest.spyOn(PresetMatcher.prototype, 'findMatchingPreset').mockResolvedValue(presetKnowledgeBase[0]);
-    jest.spyOn(OpenAIService.prototype, 'classifyIntoEnumSet').mockResolvedValue(['CRM-3']);
     const ai = jest.spyOn(StageHandlers.prototype, 'getAiResponseWithHistory').mockResolvedValue(null);
 
-    const result = await InterviewService.getInstance().processTurn('MATCHING_PRESET', b2b);
+    const result = await turn(['CRM-3']);
 
     expect(result.presetKey).toBe('beautySalon');
     expect(result.choicePrompt).toEqual({ kind: 'creation_type', reason: 'initial' });
@@ -136,7 +142,7 @@ describe('W5 item 12 — turno MATCHING_PRESET devolve moduleOptions', () => {
     jest.spyOn(PresetMatcher.prototype, 'findMatchingPreset').mockResolvedValue(null);
     const suggest = jest.spyOn(ModuleSuggester.prototype, 'suggest');
 
-    const result = await InterviewService.getInstance().processTurn('MATCHING_PRESET', b2b);
+    const result = await turn([]);
 
     expect(result.nextStage).toBe('IDENTIFYING_ENTITIES');
     expect(result).not.toHaveProperty('moduleOptions');
