@@ -24693,6 +24693,183 @@
         }
       }
     },
+    "/api/accounting/simples/registro-valores-a-receber": {
+      "get": {
+        "summary": "Registro de valores a receber do regime de caixa — Anexo IX da Res. CGSN 140 (X14-CAIXA item 19)",
+        "description": "Uma linha por venda finalizada no ano com saldo em algum momento (arts. 20 III e 77). Venda no cartão vem com dispensadaCartao (art. 77 § 3º). Só até 2026 (o caixa acaba em 01/01/2027, Res. CGSN 190/2026).",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ano",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 2018,
+              "maximum": 2026
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ ano, linhas: LinhaAnexoIx[] }"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/accounting/simples/creditos-incobraveis": {
+      "post": {
+        "summary": "Registra crédito considerado incobrável (Res. CGSN 140 art. 77 VI e §§ 5º–6º; X14-CAIXA item 20)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "unitId",
+                  "saleId",
+                  "valorCents",
+                  "meioCobranca",
+                  "data",
+                  "evidencia"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "saleId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "valorCents": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "meioCobranca": {
+                    "type": "string",
+                    "enum": [
+                      "NOTIFICACAO_EXTRAJUDICIAL",
+                      "PROTESTO",
+                      "COBRANCA_JUDICIAL",
+                      "CADASTRO_PROTECAO_CREDITO"
+                    ]
+                  },
+                  "data": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "evidencia": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "SimplesCreditoIncobravelView"
+          },
+          "400": {
+            "description": "Corpo inválido ou valor maior que o saldo a receber"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/api/accounting/simples/creditos-incobraveis/{id}": {
+      "delete": {
+        "summary": "Soft-delete de crédito incobrável (X14-CAIXA item 20)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removido (soft-delete)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
     "/api/accounting/simples/dasn-simei/{ano}": {
       "get": {
         "summary": "DASN-SIMEI mirror of the year (X14 PR-4 item 27)",

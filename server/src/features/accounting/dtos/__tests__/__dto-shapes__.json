@@ -1232,6 +1232,7 @@
                   "SimplesDeclaracaoAnual",
                   "SimplesApuracao",
                   "ReceitaFiscalRecebimento",
+                  "SimplesCreditoIncobravel",
                   "AccountingPolicyVersion"
                 ]
               },
@@ -11473,6 +11474,168 @@
         "receitaNaoRecebidaCents",
         "icmsCents",
         "issCents"
+      ],
+      "additionalProperties": false
+    },
+    "RegistroValoresAReceberQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ano": {
+          "type": "integer",
+          "minimum": 2018,
+          "maximum": 2026
+        }
+      },
+      "required": [
+        "unitId",
+        "ano"
+      ],
+      "additionalProperties": false
+    },
+    "LinhaAnexoIxSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "saleId": {
+          "type": "string"
+        },
+        "dataOperacao": {
+          "type": "string"
+        },
+        "documentosFiscais": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "valorTotalCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "quantidadeParcelas": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "parcelas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "numero": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "valorCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "vencimento": {
+                "type": "string"
+              },
+              "dataRecebimento": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "valorPagoCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "saldoAReceberCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "incobravelCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              }
+            },
+            "required": [
+              "numero",
+              "valorCents",
+              "vencimento",
+              "dataRecebimento",
+              "valorPagoCents",
+              "saldoAReceberCents",
+              "incobravelCents"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "dispensadaCartao": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "saleId",
+        "dataOperacao",
+        "documentosFiscais",
+        "valorTotalCents",
+        "quantidadeParcelas",
+        "parcelas",
+        "dispensadaCartao"
+      ],
+      "additionalProperties": false
+    },
+    "SimplesCreditoIncobravelCreateSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "saleId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "valorCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "meioCobranca": {
+          "type": "string",
+          "enum": [
+            "NOTIFICACAO_EXTRAJUDICIAL",
+            "PROTESTO",
+            "COBRANCA_JUDICIAL",
+            "CADASTRO_PROTECAO_CREDITO"
+          ]
+        },
+        "data": {
+          "type": "string"
+        },
+        "evidencia": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "unitId",
+        "saleId",
+        "valorCents",
+        "meioCobranca",
+        "data",
+        "evidencia"
       ],
       "additionalProperties": false
     },
