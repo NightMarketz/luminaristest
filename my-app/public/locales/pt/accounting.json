@@ -2906,6 +2906,10 @@
       "LIMITE_ME_EXCEDIDO": "Limite da ME excedido",
       "MEI_ENQUADRAMENTO_DIVERGE": "Enquadramento do MEI diverge das ocupações",
       "MEI_OCUPACAO_EXCLUIDA": "Ocupação fora do MEI",
+      "REGIME_CAIXA_RECALCULO": "DAS registrado por competência num PA do caixa",
+      "IMPEDIMENTO_CAIXA_ICMS_ISS": "Impedimento: ICMS/ISS fora do DAS",
+      "CARTAO_RECEBIMENTO_ESTIMADO": "Recebimento do cartão estimado",
+      "RECEBIMENTO_DE_VENDA_TRIBUTADA_POR_COMPETENCIA": "Recebimento de venda já tributada por competência",
       "MEI_TAC_COM_OCUPACAO_A": "Transportador de cargas com ocupação da tabela A",
       "NFSE_DIVERGE_RECEITA": "NFS-e diverge da receita",
       "RBT12_INCOMPLETO": "RBT12 incompleto",
@@ -3042,7 +3046,8 @@
     },
     "motivo": {
       "DOCUMENTO_MUNICIPAL_TRANSICAO": "Documento municipal (transição)",
-      "REGIME_CAIXA": "Regime de caixa"
+      "REGIME_CAIXA": "Regime de caixa",
+      "CARTAO_RECEBIMENTO_ESTIMADO": "Prazo do cartão estimado"
     },
     "motivoSeg": {
       "ICMS_ST": "ICMS por substituição tributária",
