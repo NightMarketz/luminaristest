@@ -67,6 +67,35 @@ receitaNaoRecebidaCents: number
 icmsCents: number
 issCents: number
 }
+export interface RegistroValoresAReceberQueryInput {
+unitId: string
+ano: number
+}
+export interface LinhaAnexoIxInput {
+saleId: string
+dataOperacao: string
+documentosFiscais: string[]
+valorTotalCents: number
+quantidadeParcelas: number
+parcelas: {
+numero: number
+valorCents: number
+vencimento: string
+dataRecebimento: (string | null)
+valorPagoCents: number
+saldoAReceberCents: number
+incobravelCents: number
+}[]
+dispensadaCartao: boolean
+}
+export interface SimplesCreditoIncobravelCreateInput {
+unitId: string
+saleId: string
+valorCents: number
+meioCobranca: ("NOTIFICACAO_EXTRAJUDICIAL" | "PROTESTO" | "COBRANCA_JUDICIAL" | "CADASTRO_PROTECAO_CREDITO")
+data: string
+evidencia: string
+}
 export interface SimplesUnitQueryInput {
 unitId: string
 }

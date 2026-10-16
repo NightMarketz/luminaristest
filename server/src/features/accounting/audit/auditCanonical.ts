@@ -216,6 +216,10 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'tax.simples_das.substituido': ['apuracaoId', 'competencia', 'valorOficialCents', 'totalCalculadoCents', 'divergenciaCents', 'supersedesId'],
   // BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-8 (a): PDF anexado a DAS já registrado (anteriorSourceDocumentId ausente quando não havia).
   'tax.simples_das.documento_anexado': ['apuracaoId', 'competencia', 'sourceDocumentId', 'anteriorSourceDocumentId'],
+  // BE-INCR-SIMPLES-CAIXA PR-3 (nó X14-CAIXA, itens 20–21): ids, centavos em string, enum e data; a evidência (texto
+  // livre) fica FORA do evento.
+  'tax.simples_incobravel.registrado': ['incobravelId', 'saleId', 'valorCents', 'meioCobranca', 'data'],
+  'tax.simples_incobravel.removido': ['incobravelId', 'saleId'],
   // BE-INCR-LEGAL-PARAMS PR-1 (item 8; emenda §9 L-5: corrente da plataforma) — coeficiente de lei, sem PII.
   'legal_parameter.proposed': ['legalParameterId', 'tabela', 'chave', 'discriminador', 'valorInt', 'valorTexto', 'vigenteDesde', 'vigenteAte', 'supersedesId'],
   'legal_parameter.published': ['legalParameterId', 'tabela', 'chave', 'discriminador', 'vigenteDesde', 'vigenteAte', 'supersedesId'],
