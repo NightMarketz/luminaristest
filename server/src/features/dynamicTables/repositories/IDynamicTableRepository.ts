@@ -1,4 +1,4 @@
-import { IDynamicTable, IDynamicTableData } from '../models/DynamicTable.model';
+import { IDynamicTable, IDynamicTableData, FieldEquals } from '../models/DynamicTable.model';
 import { CreateDynamicTableDtoType, UpdateDynamicTableDtoType, UpdateDynamicTableSchemaDtoType } from '../dtos/DynamicTable.dto';
 
 export interface IDynamicTableRepository {
@@ -57,6 +57,12 @@ export interface IDynamicTableRepository {
     value: string,
     updatedAtFrom: Date,
   ): Promise<IDynamicTableData[]>;
+  /**
+   * Linhas não apagadas cujo JSON casa TODAS as igualdades tipadas de `filters` (sem filtro = todas),
+   * mais recentes primeiro, até `limit`; `total` conta todas as que casam (mesmo WHERE, sem LIMIT).
+   * `filters[].name` tem de vir validado contra o schema (BRIEF BE-INCR-CHAT-AGENT §2.2).
+   */
+  findDataByFieldEquals(tableId: string, filters: FieldEquals[], limit: number): Promise<{ rows: IDynamicTableData[]; total: number }>;
   existsByIdInTable(dataId: string, tableId: string): Promise<boolean>;
 
   /**

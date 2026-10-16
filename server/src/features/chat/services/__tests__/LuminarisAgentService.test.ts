@@ -4,10 +4,12 @@
  * Policy REAL (`DynamicTablePolicy`) e repositório de proposta falso: o que se prova é que a
  * proposta só é gravada quando a confirmação poderia executá-la. Falsificador: remover a checagem
  * de `canManageData` do item 1 deixa (a) e (b) vermelhos.
+ * PR-2 (item 9): `query_table_data` delega ao `searchTableData` e devolve `{ rows, total, returned, truncated }`.
  */
 import { LuminarisAgentService } from '../LuminarisAgentService';
 import { DynamicTablePolicy } from '@/features/dynamicTables/policies/DynamicTablePolicy';
-import { AgentToolErrorSchema } from '../../models/AgentTool.model';
+import { AgentToolErrorSchema, QueryTableDataRowsSchema } from '../../models/AgentTool.model';
+import { ForbiddenError, ValidationError } from '@/lib/errors';
 import type { UserContext } from '@/lib/authUtils';
 import { Role } from '@/features/users/models/User.model';
 
@@ -29,6 +31,7 @@ function makeService(table: Record<string, unknown>, rowsInTable: Array<{ id: st
     getTableById: jest.fn().mockResolvedValue(table),
     getTableDataByIds: jest.fn(async (_u: UserContext, tableId: string, ids: string[]) =>
       rowsInTable.filter(r => ids.includes(r.id) && r.dynamicTableId === tableId)),
+    searchTableData: jest.fn(),
   };
   const proposalRepository = {
     create: jest.fn(async (data: Record<string, unknown>) => ({ ...data, id: 'prop_1' })),
@@ -113,5 +116,50 @@ describe('request_record_update — permissão e pertença do registro', () => {
 
     expect(res).toMatchObject({ status: 'PROPOSED', proposalId: 'prop_1' });
     expect(proposalRepository.create).toHaveBeenCalledWith(expect.objectContaining({ action: 'UPDATE', data: { a: 2, id: 'r1' } }));
+  });
+});
+
+describe('query_table_data — busca no repositório (PR-2)', () => {
+  const row = (id: string) => ({ id, data: { code: id }, createdAt: new Date('2026-10-16T12:00:00.000Z') });
+
+  it('delega ao searchTableData com limite 10 e devolve rows/total/returned/truncated', async () => {
+    const { service, dynamicTableService } = makeService(commonTable);
+    dynamicTableService.searchTableData.mockResolvedValue({ rows: [row('r1'), row('r2')], total: 37, limit: 10 });
+
+    const res = await service.handleToolCall(owner, 'query_table_data', { tableId: 'tbl_sales', filters: { code: 'x' } });
+
+    expect(dynamicTableService.searchTableData).toHaveBeenCalledWith(owner, 'tbl_sales', { code: 'x' }, 10);
+    expect(QueryTableDataRowsSchema.parse(res)).toEqual({
+      rows: [
+        { id: 'r1', data: { code: 'r1' }, createdAt: '2026-10-16T12:00:00.000Z' },
+        { id: 'r2', data: { code: 'r2' }, createdAt: '2026-10-16T12:00:00.000Z' },
+      ],
+      total: 37, returned: 2, truncated: true,
+    });
+  });
+
+  it('truncated = false quando tudo que casa foi devolvido', async () => {
+    const { service, dynamicTableService } = makeService(commonTable);
+    dynamicTableService.searchTableData.mockResolvedValue({ rows: [row('r1')], total: 1, limit: 10 });
+
+    const res = QueryTableDataRowsSchema.parse(await service.handleToolCall(owner, 'query_table_data', { tableId: 'tbl_sales' }));
+
+    expect(res.truncated).toBe(false);
+  });
+
+  it('ValidationError do filtro volta ao modelo como FILTRO_INVALIDO', async () => {
+    const { service, dynamicTableService } = makeService(commonTable);
+    dynamicTableService.searchTableData.mockRejectedValue(new ValidationError("Campo de filtro inválido: 'x'."));
+
+    const res = AgentToolErrorSchema.parse(await service.handleToolCall(owner, 'query_table_data', { tableId: 'tbl_sales', filters: { x: 1 } }));
+
+    expect(res).toEqual({ error: 'FILTRO_INVALIDO', message: "Campo de filtro inválido: 'x'." });
+  });
+
+  it('outros erros (permissão) seguem lançados — só ValidationError vira AgentToolError', async () => {
+    const { service, dynamicTableService } = makeService(commonTable);
+    dynamicTableService.searchTableData.mockRejectedValue(new ForbiddenError('no'));
+
+    await expect(service.handleToolCall(owner, 'query_table_data', { tableId: 'tbl_sales' })).rejects.toBeInstanceOf(ForbiddenError);
   });
 });
