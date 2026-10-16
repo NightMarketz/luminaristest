@@ -1840,7 +1840,8 @@
  *                   data: { type: object }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  * components:
  *   responses:
@@ -3086,7 +3087,7 @@
  *   /api/accounting/reconciliation/statements:
  *     post:
  *       summary: Import a bank statement (CSV/XLSX/OFX/CNAB) for a bank GL account
- *       description: 'Accepts CSV/XLSX (columns date,amountCents,description[,externalRef], signed integer cents), OFX (normalized from STMTTRN - DTPOSTED→date, TRNAMT→signed cents, NAME/MEMO→description, FITID→externalRef) or CNAB 240 (Segmento E extrato — DDMMAAAA→date, 18-digit value→signed cents by D/C indicator, histórico→description, document number→externalRef). Format is auto-detected. ALL-OR-NOTHING — any invalid row rejects the whole file; a multi-account OFX/CNAB and a CNAB 400 file are rejected. Re-import of the same file (sha256) is idempotent (200, nothing written). No ledger value is written.'
+ *       description: 'Accepts CSV/XLSX (columns date,amountCents,description[,externalRef], signed integer cents), OFX (normalized from STMTTRN - DTPOSTED→date, TRNAMT→signed cents, NAME/MEMO→description, FITID→externalRef) or CNAB 240 (Segmento E extrato — DDMMAAAA→date, 18-digit value→signed cents by D/C indicator, histórico→description, document number→externalRef). Format is auto-detected. ALL-OR-NOTHING — any invalid row rejects the whole file; a multi-account OFX/CNAB and a CNAB 400 file are rejected. Re-import of the same file (sha256) is idempotent (200, nothing written). No ledger value is written. — 409: release_report_no_payment_account — mp_release on a GL account without a Mercado Pago PaymentAccount'
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -3110,10 +3111,10 @@
  *         '201': { description: Statement imported (created + staged lines) }
  *         '200': { description: Same file already imported (idempotent hit) }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
- *         '409': { description: 'release_report_no_payment_account — mp_release on a GL account without a Mercado Pago PaymentAccount' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     get:
  *       summary: List imported bank statements (paginated)
  *       tags: [Accounting]
@@ -3125,6 +3126,7 @@
  *       responses:
  *         '200': { description: Statements + total }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/reconciliation/statements/{id}/lines:
  *     get:
@@ -3138,7 +3140,7 @@
  *       responses:
  *         '200': { description: Statement + lines (lineNumber asc) }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/reconciliation/statements/{id}:
  *     delete:
@@ -3152,7 +3154,8 @@
  *         '200': { description: Statement soft-deleted }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/reconciliation/statements/{id}/auto-match:
  *     post:
@@ -3174,7 +3177,8 @@
  *       responses:
  *         '200': { description: 'Summary: processed/matched/zeroCandidates/ambiguous' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/reconciliation/lines/{id}/suggestions:
  *     get:
@@ -3187,7 +3191,7 @@
  *       responses:
  *         '200': { description: Candidates with deltaDays }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/reconciliation/lines/{id}/ignore:
  *     post:
@@ -3210,7 +3214,8 @@
  *         '200': { description: Line status updated }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/reconciliation/matches:
  *     post:
@@ -3228,7 +3233,8 @@
  *         '201': { description: Matches created }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/reconciliation/matches/{id}/unmatch:
  *     post:
@@ -3251,7 +3257,8 @@
  *         '200': { description: Match soft-undone }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/reconciliation/pending:
  *     get:
@@ -3266,7 +3273,7 @@
  *       responses:
  *         '200': { description: 'account + unmatchedLines + unmatchedPostings + totals (integer cents)' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/referential/mappings:
  *     put:
@@ -3472,6 +3479,7 @@
  *       responses:
  *         '200': { description: 'paginated payables with their payments' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     post:
  *       summary: Create a payable and book its recognition entry
  *       description: >-
@@ -3490,6 +3498,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/payables/reconcile:
  *     post:
@@ -3512,6 +3522,8 @@
  *       responses:
  *         '200': { description: 'counts of recognitions/settlements posted and payables finalized' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/payables/{id}:
  *     get:
@@ -3524,7 +3536,7 @@
  *       responses:
  *         '200': { description: 'the payable and its payments' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/payables/{id}/pay:
  *     post:
@@ -3548,7 +3560,8 @@
  *         '201': { description: 'the registered payment' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/payables/{id}/cancel:
  *     post:
@@ -3570,7 +3583,8 @@
  *         '200': { description: 'the cancelled payable' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/payables/{id}/settlements:
  *     post:
@@ -3594,7 +3608,8 @@
  *         '201': { description: 'the registered settlement (PayablePayment row)' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/payables/{id}/settlements/{settlementId}/cancel:
  *     post:
@@ -3636,7 +3651,8 @@
  *         '200': { description: 'the cancelled payment' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/nfe/purchase:
  *     post:
@@ -3731,6 +3747,7 @@
  *       responses:
  *         '200': { description: 'paginated receivables with their receipts' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     post:
  *       summary: Create a receivable and book its recognition entry
  *       description: >-
@@ -3750,6 +3767,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/receivables/reconcile:
  *     post:
@@ -3772,6 +3791,8 @@
  *       responses:
  *         '200': { description: 'counts of recognitions/receipts posted and receivables finalized' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/receivables/{id}:
  *     get:
@@ -3784,7 +3805,7 @@
  *       responses:
  *         '200': { description: 'the receivable and its receipts' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/receivables/{id}/receive:
  *     post:
@@ -3808,7 +3829,8 @@
  *         '201': { description: 'the registered receipt' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/receivables/{id}/cancel:
  *     post:
@@ -3830,7 +3852,8 @@
  *         '200': { description: 'the cancelled receivable' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/receivables/{id}/settlements:
  *     post:
@@ -3853,7 +3876,8 @@
  *         '201': { description: 'the registered settlement (ReceivableReceipt row)' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/receivables/{id}/settlements/{settlementId}/cancel:
  *     post:
@@ -3895,7 +3919,8 @@
  *         '200': { description: 'the cancelled receipt' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/entry-approvals/pending:
  *     get:
@@ -4777,6 +4802,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/package-acceptances/notice:
  *     get:
@@ -4795,12 +4821,13 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/package-acceptances:
  *     post:
  *       summary: Registra o aceite da validade do pacote de uma venda (append-only, um por venda)
  *       description: >-
+ *         409: PACKAGE_ACCEPTANCE_EXISTS ou PACKAGE_NOTICE_CHANGED
  *         O servidor so confia no FE para textVersion e textSha256. Le a venda, o cliente e a data da venda e o
  *         validityDays do catalogo, re-renderiza o texto e compara o hash. Hash diferente e 409 PACKAGE_NOTICE_CHANGED;
  *         segundo aceite da mesma venda e 409 PACKAGE_ACCEPTANCE_EXISTS; pacote sem validade e 400 PACKAGE_WITHOUT_VALIDITY.
@@ -4817,8 +4844,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'PACKAGE_ACCEPTANCE_EXISTS ou PACKAGE_NOTICE_CHANGED' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *     get:
  *       summary: Aceite de uma venda de pacote, ou null
  *       tags: [Accounting]
@@ -4831,6 +4858,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/package-acceptances/{saleId}/receipt:
  *     get:
@@ -4849,7 +4877,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/reconcile-pending:
  *     get:
@@ -4870,6 +4898,7 @@
  *         '200': { description: 'items (ReconcilePendingItemView[]) + nextCursor (null quando não há mais páginas)' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/reconcile-pending/rescan:
  *     post:
@@ -4895,6 +4924,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/bank-settlements:
  *     get:
@@ -4917,6 +4948,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/bank-settlements/scan:
  *     post:
@@ -4945,7 +4977,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/bank-settlements/{id}/confirm:
  *     post:
@@ -4980,7 +5013,8 @@
  *         '400': { description: 'pre-check failed (line_not_unmatched | title_not_open | title_balance | method_account_mismatch | charge_account_not_configured | fee_account_not_configured | provider_balance_requires_payment_account | period_not_open) or item not PENDING' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/bank-settlements/{id}/reject:
  *     post:
@@ -5005,7 +5039,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/bank-settlements/{id}/retry:
  *     post:
@@ -5030,7 +5065,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/settings:
  *     get:
@@ -6879,6 +6915,7 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     post:
  *       summary: Create a payment-provider account (status DRAFT, sem credencial)
  *       description: >-
@@ -6896,6 +6933,8 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/payment-accounts/{id}:
  *     get:
@@ -6909,9 +6948,10 @@ export {};
  *         '200': { description: 'PaymentAccountView' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     patch:
  *       summary: Update label and/or status (ACTIVE to DISABLED, DISABLED to ACTIVE)
+ *       description: "409: payment_account_already_active ou payment_account_invalid_transition"
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -6926,8 +6966,8 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'payment_account_already_active ou payment_account_invalid_transition' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *     delete:
  *       summary: Soft-delete a payment-provider account
  *       tags: [Accounting]
@@ -6939,12 +6979,14 @@ export {};
  *         '200': { description: 'Apagada (deletedAt preenchido)' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/payment-accounts/{id}/credential:
  *     put:
  *       summary: Set the provider credential (write-only, encrypted at rest) and activate the account
  *       description: >-
+ *         409: payment_account_already_active
  *         AES-256-GCM com AAD = id da conta; chave-mestra no env (PAYMENT_CREDENTIAL_KEYS).
  *         Sem a chave, 503 payment_credential_key_missing e nada é gravado.
  *       tags: [Accounting]
@@ -6961,8 +7003,8 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'payment_account_already_active' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '503': { description: 'payment_credential_key_missing' }
  *   /api/payment-accounts/{id}/release-report/unblock:
  *     post:
@@ -6991,7 +7033,8 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  */
 /**
  * @openapi
@@ -7000,6 +7043,7 @@ export {};
  *     post:
  *       summary: Create a provider charge (boleto/Pix) for the open balance of a receivable (BE-INCR-PAYMENT-PROVIDER PR-2, P2-2)
  *       description: >-
+ *         409: CHARGE_RECEIVABLE_NOT_CHARGEABLE | CHARGE_LIVE_EXISTS | CHARGE_NOTHING_TO_CHARGE | PAYMENT_ACCOUNT_NOT_ACTIVE
  *         Valor = saldo em aberto relido na tx; conta Mercado Pago ACTIVE do escopo. Nenhum efeito no razão (PP-D5).
  *         Campos de juros/multa/desconto ou prazo do tipo errado ⇒ 400 (P2-12).
  *       tags: [Accounting]
@@ -7016,8 +7060,8 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'CHARGE_RECEIVABLE_NOT_CHARGEABLE | CHARGE_LIVE_EXISTS | CHARGE_NOTHING_TO_CHARGE | PAYMENT_ACCOUNT_NOT_ACTIVE' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '502': { description: 'provider_credential_invalid | provider_unavailable (a cobrança fica CREATING e o job reenvia)' }
  *         '503': { description: 'payment_credential_key_missing' }
  *     get:
@@ -7031,7 +7075,7 @@ export {};
  *         '200': { description: 'CollectionChargeView[]' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *   /api/receivables/{receivableId}/charges/payer-suggestion:
  *     get:
  *       summary: Suggest the payer from the last charge of the same counterparty (P2-11, F-PP-11 a1)
@@ -7044,7 +7088,7 @@ export {};
  *         '200': { description: 'payer (parcial)' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *   /api/collection-charges/{id}:
  *     get:
  *       summary: Read a provider charge (P2-15) — payer only for who manages receivables
@@ -7057,10 +7101,11 @@ export {};
  *         '200': { description: 'CollectionChargeView' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *   /api/collection-charges/{id}/cancel:
  *     post:
  *       summary: Cancel a PENDING provider charge (P2-10); provider 409 ⇒ re-query and apply the real state
+ *       description: "409: CHARGE_NOT_PENDING"
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -7074,8 +7119,8 @@ export {};
  *         '200': { description: 'CollectionChargeView' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'CHARGE_NOT_PENDING' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '502': { description: 'provider_credential_invalid | provider_unavailable' }
  *   /api/payment-collection/webhook/{provider}/{accountId}:
  *     post:
