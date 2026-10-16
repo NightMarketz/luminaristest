@@ -48,7 +48,8 @@ O estado vive no frontmatter das notas de `docs/plano/` (protocolo em `docs/plan
 1. Edite a nota do nó (`docs/plano/nos/<ID>.md`): `estado`, `estado_detalhe`, `prs`, `atualizado` no
    frontmatter, e as linhas `**Estado:**`/`**PRs:**` do cabeçalho do corpo, que os espelham.
    `done` só com merge em `main` (estado = trabalho por evidência); antes do merge, `inflight` + o PR.
-2. `node scripts/plano-vault.mjs index` — regenera `_INDEX.md`/`_ANCORAS.md` e a régua.
+2. **Não** regenere `_INDEX.md`/`_ANCORAS.md` no PR — o workflow `plano-index` faz isso na `main` depois do
+   merge (dono, 2026-10-16). Para ler a régua atualizada na branch: `node scripts/plano-vault.mjs index --stdout`.
 3. `node scripts/plano-vault.mjs check` — exit 0 real no relatório (IMPL-002).
 4. Decisão nova do dono → nota em `docs/plano/decisoes/` citando a cédula — só se o plano pedir.
 
