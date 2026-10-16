@@ -62,7 +62,7 @@ server/src/features/dynamicTables/repositories/IDynamicTableRepository.ts ← fi
    - `logger.info('...', { context })` ao final.
 3. **DTO** `dtos/<Domain>Transition.dto.ts`: `@openapi`, `<Transition>Schema` (Zod), `z.infer` type, type guard. Datas com `z.coerce.date()`. Zero `z.any()`.
 4. **Controller** `controllers/<domain>Controller.ts`: `Schema.safeParse(req.body)` antes de tudo → `getUserContextFromRequest` → `getFactory().get<Domain>Service().transition(...)` → `{ success: true, data }` → `handleApiError(error, res)`. Zero `prisma.*`, zero regra.
-5. **Rota** `routes/<domain>.ts`: verbos + handlers; **registro = 2 toques** (`routes/index.ts` + bloco `@openapi` em `routes/docs.paths.ts`). Auth deny-by-default — NÃO editar `middleware/auth.ts` (rota `/api/*` já nasce protegida; pública = exceção em `publicApiRoutes`).
+5. **Rota** `routes/<domain>.ts`: verbos + handlers; **registro = 2 toques** (`routes/index.ts` + bloco `@openapi` em `routes/docs/<feature>.paths.ts`). Auth deny-by-default — NÃO editar `middleware/auth.ts` (rota `/api/*` já nasce protegida; pública = exceção em `publicApiRoutes`).
 6. **Factory** `lib/factory.ts`: instanciar o serviço **após** `DynamicTableService` + repository; getter `get<Domain>Service()`.
 7. **Teste** `__tests__/<Domain>WorkflowService.test.ts`: `buildService(overrides?)`, mock de `runInTransaction` (invoca o callback com tx fake) e `findTableByInternalName`; assert atomicidade (`runInTransaction` chamado 1x), efeito colateral disparado só na etapa certa, e **cross-tenant `NotFoundError`** quando a tabela não está instalada.
 
@@ -87,7 +87,7 @@ server/src/features/<domain>/services/__tests__/<Domain>WorkflowService.test.ts 
 server/src/controllers/<domain>Controller.ts                                ← NEW/EDIT
 server/src/routes/<domain>.ts                                               ← NEW/EDIT
 server/src/routes/index.ts                                                  ← EDIT (mount)
-server/src/routes/docs.paths.ts                                            ← EDIT (OpenAPI)
+server/src/routes/docs/<feature>.paths.ts                                            ← EDIT (OpenAPI)
 server/src/lib/factory.ts                                                  ← EDIT (registro + getter)
 ```
 

@@ -1,0 +1,69 @@
+name: OpenAPI – sobe o piso de paths
+
+# O PR não sobe o BASELINE de server/src/__tests__/openapi-paths.test.ts (dono, chat, 2026-10-16): todo PR
+# editava a mesma linha e conflitava com todos os outros. Depois do merge, este job mede a contagem na main
+# e sobe o piso. Só sobe — nunca desce. Push com GITHUB_TOKEN não dispara outro workflow, então não há laço.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/src/**'
+      - 'server/scripts/generate-openapi.js'
+  workflow_dispatch:
+
+concurrency:
+  group: openapi-baseline
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    name: OpenAPI – sobe o BASELINE
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - run: npm ci --ignore-scripts
+
+      - name: Mede e sobe
+        run: node scripts/openapi-baseline.js --write
+
+      - name: Commita na main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          F=src/__tests__/openapi-paths.test.ts
+          if git diff --quiet -- "$F"; then echo "piso já em dia"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -q -m "chore(openapi): sobe o BASELINE de paths depois de ${GITHUB_SHA::8}" -- "$F"
+          if git push origin HEAD:main; then exit 0; fi
+
+          # Recusado. Se a main andou, a run do push seguinte mede de novo.
+          git fetch -q origin main
+          if [ "$(git rev-parse origin/main)" != "$GITHUB_SHA" ]; then
+            echo "main andou desde ${GITHUB_SHA::8}; a próxima run mede"; exit 0
+          fi
+          # Senão é a proteção da main: commit numa branch fixa + PR. Só toca a linha do BASELINE.
+          git push -f origin HEAD:refs/heads/bot/openapi-baseline
+          if ! gh pr view bot/openapi-baseline --json state --jq .state 2>/dev/null | grep -q OPEN; then
+            gh pr create --base main --head bot/openapi-baseline \
+              --title "chore(openapi): sobe o BASELINE de paths" \
+              --body "Gerado pelo workflow openapi-baseline: a main recusou o push direto. Só toca a linha do BASELINE." \
+              || echo "::warning::sem permissão para abrir PR; abra a partir da branch bot/openapi-baseline"
+          fi
+          echo "::warning::push direto na main recusado; o piso novo está na branch bot/openapi-baseline"

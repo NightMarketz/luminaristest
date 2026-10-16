@@ -36,7 +36,7 @@ canônico nas sub-skills — aqui só garantimos a **costura** e as **fronteiras
 - **[FULL-002] Delegar, não copiar** — aplicar os **contratos das sub-skills** (`backend-*-generator`, `frontend-api-service-generator`, `frontend-page-generator`) por referência; não reescrever as instruções delas aqui, e reusar os canônicos (`GenericTable`/`Modal`/`StandardPagination`) em vez de recriar (anti "módulo ilha").
 - **[FULL-003] UI livre de Prisma/DB** — page e frontend service nunca importam `prisma`/`@/lib/prisma` nem acessam o banco; falam **só** com a service layer via `apiClient`.
 - **[FULL-004] Domínio/serviço livre de React e transporte** — `Service`/`Repository` nunca importam React/JSX nem usam `Request`/`Response`/`res.json`; o transporte (HTTP) fica no controller.
-- **[FULL-005] Rota = 2 toques** — mount em `routes/index.ts` + bloco `@openapi` em `routes/docs.paths.ts`. Auth deny-by-default: rota `/api/*` já nasce protegida, NÃO edite `middleware/auth.ts` (pública = exceção explícita em `publicApiRoutes`).
+- **[FULL-005] Rota = 2 toques** — mount em `routes/index.ts` + bloco `@openapi` em `routes/docs/<feature>.paths.ts`. Auth deny-by-default: rota `/api/*` já nasce protegida, NÃO edite `middleware/auth.ts` (pública = exceção explícita em `publicApiRoutes`).
 - **[FULL-006] Contrato compatível ponta-a-ponta** — o **envelope** e os **nomes de campo** que o backend retorna (`res.json({ data, pagination })`, ex. `amountCents`) são **idênticos** aos que o frontend service tipa/consome. Cada lado válido isolado mas discordando = bug de runtime que o `tsc` não pega.
 - **[FULL-007] Testes dos dois lados** — backend (`jest` no Service: policy-first + not-found) **e** frontend, incluindo a compatibilidade de contrato (tipo do service espelha o envelope do backend).
 
@@ -81,7 +81,7 @@ Por que é o par perfeito: é a feature mais limpa do repositório — camadas e
 7. **Factory** — registrar repo, policy e service em `lib/factory.ts`
 8. **Controller** — criar `controllers/<resource>Controller.ts`
 9. **Route** — criar `routes/<resource>.ts` + registrar em `routes/index.ts`. **NÃO editar `middleware/auth.ts`** — auth é deny-by-default, a rota já nasce exigindo JWT (rota pública = exceção explícita em `publicApiRoutes` no middleware)
-10. **OpenAPI** — adicionar bloco em `routes/docs.paths.ts`
+10. **OpenAPI** — adicionar bloco em `routes/docs/<feature>.paths.ts`
 11. **Frontend service** — criar `my-app/lib/services/<resource>.service.ts`
 12. **Frontend page** — criar `my-app/pages/<resource>/index.tsx`
 13. **Typecheck** — `npx tsc --noEmit` em server/ e my-app/
@@ -114,7 +114,7 @@ server/src/lib/factory.ts                                                ← EDI
 server/src/controllers/<resource>Controller.ts                          ← NEW
 server/src/routes/<resource>.ts                                         ← NEW
 server/src/routes/index.ts                                              ← EDIT
-server/src/routes/docs.paths.ts                                         ← EDIT
+server/src/routes/docs/<feature>.paths.ts                                         ← EDIT
 my-app/lib/services/<resource>.service.ts                               ← NEW
 my-app/pages/<resource>/index.tsx                                       ← NEW
 ```
@@ -128,7 +128,7 @@ Um item-chave por camada que NÃO pode faltar na geração ponta-a-ponta. Detalh
 - **Policy** — métodos `can*` retornam `boolean` (zero `throw`, zero acesso a dados); ownership por `actor.id === ownerId || ADMIN`.
 - **Service** — policy-first (`if (!this.policy.canX(actor)) throw new ForbiddenError()` antes de tocar dados); DI por construtor (sem `new Repository()`); `NotFoundError` (incl. cross-tenant); zero `prisma.*`/Express.
 - **Controller** — `Schema.safeParse(req.body)` + `getUserContextFromRequest(req)` + `getFactory().get<X>Service()` + `handleApiError(error, res)`.
-- **Route** — registro = **2 toques**: mount em `routes/index.ts` + bloco `@openapi` em `routes/docs.paths.ts`; auth deny-by-default (zero edição em `middleware/auth.ts`; pública = `publicApiRoutes`).
+- **Route** — registro = **2 toques**: mount em `routes/index.ts` + bloco `@openapi` em `routes/docs/<feature>.paths.ts`; auth deny-by-default (zero edição em `middleware/auth.ts`; pública = `publicApiRoutes`).
 - **Frontend service** — `apiClient`, tipos de retorno explícitos e **locais** (não importar do backend); zero `any`.
 - **Page** — auth guard (`withAuth`/`useAuth`) + `serverSideTranslations` (i18n); detalhe de registro = **modal, não rota**.
 - **Reuse de canônicos** — `GenericTable`/`StandardPagination` (tabela+paginação), `Modal` (detalhe), `AnalyticsDashboard`/`ChartRenderer`/`DashboardKpiCard` (analytics). Não recriar.
