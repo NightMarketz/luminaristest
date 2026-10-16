@@ -10,6 +10,10 @@ export interface IChatMessage {
   userId?: string;
   createdAt: Date;
   updatedAt: Date;
+  /** Uso de tokens do turno (I11). null = USER ou anterior ao I11; 0 = ASSISTANT sem chamada ao LLM. */
+  promptTokens: number | null;
+  completionTokens: number | null;
+  model: string | null;
   // ChatInstance is loaded separately when needed
   // chatInstance?: IChatInstance;
 }

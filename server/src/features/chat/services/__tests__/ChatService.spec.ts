@@ -152,7 +152,7 @@ describe('conversation persistence (server-owned)', () => {
     await service.generateResponse({ query: 'hi', chatInstanceId: 'ci_1', user });
 
     expect(messages.createMessage).toHaveBeenCalledWith({ content: 'hi', chatInstanceId: 'ci_1' }, user);
-    expect(messages.appendAssistantMessage).toHaveBeenCalledWith('ci_1', 'ok', user);
+    expect(messages.appendAssistantMessage).toHaveBeenCalledWith('ci_1', 'ok', user, expect.objectContaining({ calls: [] }));
   });
 
   it('still returns the answer if persisting the assistant reply fails (best-effort)', async () => {
@@ -173,5 +173,86 @@ describe('conversation persistence (server-owned)', () => {
       service.generateResponse({ query: 'hi', chatInstanceId: 'ci_other', user })
     ).rejects.toBeInstanceOf(ForbiddenError);
     expect(openai.getChatCompletionWithToolsAndHistory).not.toHaveBeenCalled();
+  });
+});
+
+describe('token usage per assistant message (I11 PR-3)', () => {
+  type OnUsage = (u: { model: string; promptTokens: number; completionTokens: number }) => void;
+  const gpt4o = { model: 'gpt-4o-2024-08-06', promptTokens: 1200, completionTokens: 40 };
+  const gpt35 = { model: 'gpt-3.5-turbo-0125', promptTokens: 900, completionTokens: 120 };
+
+  it('agent turn with a tool: gpt-4o + gpt-3.5 calls are summed and kept per call', async () => {
+    const { service, openai, agent, messages } = makeService();
+    openai.getChatCompletionWithToolsAndHistory.mockImplementation(async (_m: unknown, _t: unknown, _model: unknown, onUsage: OnUsage) => {
+      onUsage(gpt4o);
+      return { tool_calls: [{ id: 't1', function: { name: 'list_my_tables', arguments: '{}' } }] };
+    });
+    agent.handleToolCall.mockResolvedValue([]);
+    openai.getChatCompletionWithHistory.mockImplementation(async (_m: unknown, _model: unknown, onUsage: OnUsage) => {
+      onUsage(gpt35);
+      return 'Você tem 0 tabelas.';
+    });
+
+    await service.generateResponse({ query: 'tabelas?', chatInstanceId: 'ci_1', user });
+
+    expect(messages.appendAssistantMessage).toHaveBeenCalledWith('ci_1', 'Você tem 0 tabelas.', user, {
+      promptTokens: 2100,
+      completionTokens: 160,
+      model: 'gpt-4o-2024-08-06+gpt-3.5-turbo-0125',
+      calls: [gpt4o, gpt35],
+    });
+  });
+
+  it('action proposal turn records the gpt-4o call that proposed it', async () => {
+    const { service, openai, agent, messages } = makeService();
+    openai.getChatCompletionWithToolsAndHistory.mockImplementation(async (_m: unknown, _t: unknown, _model: unknown, onUsage: OnUsage) => {
+      onUsage(gpt4o);
+      return { tool_calls: [{ id: 't1', function: { name: 'request_record_creation', arguments: '{}' } }] };
+    });
+    agent.handleToolCall.mockResolvedValue({ status: 'PROPOSED', proposalId: 'p1' });
+    agent.getProposal.mockResolvedValue({ id: 'p1', action: 'CREATE', tableName: 'sales', tableLabel: 'Sales', data: {} });
+
+    const res = await service.generateResponse({ query: 'cria', chatInstanceId: 'ci_1', user });
+
+    expect(res.type).toBe('ACTION_PROPOSAL');
+    expect(messages.appendAssistantMessage).toHaveBeenCalledWith('ci_1', expect.any(String), user,
+      { promptTokens: 1200, completionTokens: 40, model: 'gpt-4o-2024-08-06', calls: [gpt4o] });
+  });
+
+  it('confirmation turn makes no LLM call and records 0/0', async () => {
+    const { service, agent, messages } = makeService();
+    agent.executeProposal.mockResolvedValue({ result: { id: 'rec_1' } });
+
+    await service.generateResponse({ confirmedProposalId: 'p1', chatInstanceId: 'ci_1', user });
+
+    expect(messages.appendAssistantMessage).toHaveBeenCalledWith('ci_1', expect.any(String), user,
+      { promptTokens: 0, completionTokens: 0, model: null, calls: [] });
+  });
+
+  it('RAG turn sums the rewrite and the answer (embedding excluded — F-I11-5 a)', async () => {
+    const { service, openai, vector, messages } = makeService();
+    vector.search.mockResolvedValue([
+      { id: 'v1', score: 0.9, payload: { documentId: 'd1', userId: 'user_A', textContent: 'ctx', fileName: 'f', chunkId: 'c', index: 0 } },
+    ]);
+    const rewrite = { model: 'gpt-3.5-turbo-0125', promptTokens: 80, completionTokens: 15 };
+    openai.getChatCompletion
+      .mockImplementationOnce(async (_q: string, _s: unknown, onUsage: OnUsage) => { onUsage(rewrite); return 'pergunta reescrita'; })
+      .mockImplementationOnce(async (_q: string, _s: unknown, onUsage: OnUsage) => { onUsage(gpt35); return 'resposta'; });
+
+    await service.generateResponse({
+      query: 'e o prazo?', documentIds: ['d1'], chatInstanceId: 'ci_1', user,
+      history: [{ role: 'user', content: 'a' }, { role: 'assistant', content: 'b' }],
+    });
+
+    expect(messages.appendAssistantMessage).toHaveBeenCalledWith('ci_1', 'resposta', user,
+      { promptTokens: 980, completionTokens: 135, model: 'gpt-3.5-turbo-0125', calls: [rewrite, gpt35] });
+  });
+
+  it('the USER message is persisted without usage (columns stay null)', async () => {
+    const { service, messages } = makeService();
+
+    await service.generateResponse({ query: 'hi', chatInstanceId: 'ci_1', user });
+
+    expect(messages.createMessage).toHaveBeenCalledWith({ content: 'hi', chatInstanceId: 'ci_1' }, user);
   });
 });

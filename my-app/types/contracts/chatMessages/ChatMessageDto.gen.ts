@@ -12,6 +12,9 @@ role: ("user" | "assistant" | "system")
 chatInstanceId: string
 createdAt: unknown
 updatedAt: unknown
+promptTokens: (number | null)
+completionTokens: (number | null)
+model: (string | null)
 }
 export interface CreateChatMessageInput {
 content: string
