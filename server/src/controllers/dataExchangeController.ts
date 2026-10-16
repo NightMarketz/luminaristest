@@ -3,7 +3,6 @@ import { createReadStream } from 'node:fs';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import { makeUploadMiddleware } from '../lib/uploadSecurity';
 import {
   ExportRequestSchema,
@@ -43,7 +42,7 @@ export const createDataExchangeExport = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getDataExchangeExportService().export(scope, parsed.data);
     return res.status(201).json({ success: true, data });
   } catch (error) {
@@ -67,7 +66,7 @@ export const listDataExchangeJobs = async (req: Request, res: Response) => {
     }
 
     const { unitId, ...filter } = parsed.data;
-    const scope = resolveAccountingScopeInternal(user, unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, unitId, { access: 'read' });
     const data = await getFactory().getDataExchangeExportService().listJobs(scope, filter);
     return res.json({ success: true, data });
   } catch (error) {
@@ -89,7 +88,7 @@ export const waiveEcfRectification = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory()
       .getDataExchangeExportService()
       .waiveEcfRectification(scope, req.params.jobId, parsed.data.justification);
@@ -111,7 +110,7 @@ export const getDataExchangeJob = async (req: Request, res: Response) => {
     }
 
     // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo do par (contador, ownerUserId).
-    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, parsed.data.unitId, parsed.data.ownerUserId);
+    const scope = await getFactory().getAccountingScopeResolver().resolveGovernance(user, parsed.data.unitId, parsed.data.ownerUserId, { access: 'read' });
     const data = await getFactory().getDataExchangeExportService().getJob(scope, req.params.jobId);
     return res.json({ success: true, data });
   } catch (error) {
@@ -135,7 +134,7 @@ export const createDataExchangeImport = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory()
       .getDataExchangeImportService()
       .uploadAndValidate(scope, parsed.data.kind, {
@@ -162,7 +161,7 @@ export const listDataExchangeRows = async (req: Request, res: Response) => {
     }
 
     const { status } = parsed.data;
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const data = await getFactory()
       .getDataExchangeImportService()
       .listRows(scope, req.params.jobId, status ? { status } : undefined);
@@ -184,7 +183,7 @@ export const commitDataExchangeImport = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getDataExchangeImportService().commit(scope, req.params.jobId);
     return res.json({ success: true, data });
   } catch (error) {
@@ -204,7 +203,7 @@ export const downloadDataExchangeArtifact = async (req: Request, res: Response) 
     }
 
     // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo do par (contador, ownerUserId).
-    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, parsed.data.unitId, parsed.data.ownerUserId);
+    const scope = await getFactory().getAccountingScopeResolver().resolveGovernance(user, parsed.data.unitId, parsed.data.ownerUserId, { access: 'write' });
     const { absPath, fileName, mimeType } = await getFactory()
       .getDataExchangeExportService()
       .getArtifactForDownload(scope, req.params.jobId);

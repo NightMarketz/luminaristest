@@ -8,7 +8,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { ProductDestinationDefaultRepository } from '../../features/accounting/repositories/ProductDestinationDefaultRepository';
 import type { AccountingScope } from '../../features/accounting/scope/AccountingScope';
 
@@ -45,6 +45,7 @@ describe('ITEM-DESTINATION PR-2 — default por produto (Prisma real)', () => {
     pushTestSchema();
     dono = await prisma.user.create({ data: { name: 'pd', username: 'prod-dest-dono', email: 'prod-dest@test.local', password: 'x', role: 'USER' } });
     outro = await prisma.user.create({ data: { name: 'pd2', username: 'prod-dest-outro', email: 'prod-dest2@test.local', password: 'x', role: 'USER' } });
+    await seedUnit({ userId: dono.id, id: UNIT });
     refs = await criarProdutos(dono.id, ['Shampoo', 'Condicionador', 'Máscara']);
     [refOutroTenant] = await criarProdutos(outro.id, ['Alheio']);
   }, 120000);

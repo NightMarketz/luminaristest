@@ -2,7 +2,6 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import {
   AccountingDeliveryScopeQuerySchema,
   BuildDeliveryPackageSchema,
@@ -26,7 +25,7 @@ export const buildDeliveryPackage = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = BuildDeliveryPackageSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const data = await getFactory().getAccountingDeliveryService().buildDeliveryPackage(scope, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -41,7 +40,7 @@ export const confirmDelivery = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = ConfirmDeliverySchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getAccountingDeliveryService().confirmDelivery(scope, parsed.data);
     return res.status(201).json({ success: true, data });
   } catch (error) {
@@ -65,7 +64,7 @@ export const retryDelivery = async (req: Request, res: Response) => {
         error: `deliveryId do corpo ('${parsed.data.deliveryId}') diverge do :id da rota ('${req.params.id}').`,
       });
     }
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory()
       .getAccountingDeliveryService()
       .retryDelivery(scope, req.params.id, parsed.data);
@@ -87,7 +86,7 @@ export const getPackageProfile = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = PackageProfileQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const data = await getFactory()
       .getAccountingContactService()
       .getPackageProfile(scope, parsed.data.contactId);
@@ -106,7 +105,7 @@ export const setPackageProfile = async (req: Request, res: Response) => {
     if (!parsedQuery.success) return res.status(400).json({ success: false, error: parsedQuery.error.flatten() });
     const parsedBody = PackageProfileSchema.safeParse(req.body);
     if (!parsedBody.success) return res.status(400).json({ success: false, error: parsedBody.error.flatten() });
-    const scope = resolveAccountingScopeInternal(user, parsedQuery.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsedQuery.data.unitId, { access: 'write' });
     const data = await getFactory()
       .getAccountingContactService()
       .setPackageProfile(scope, parsedQuery.data.contactId, parsedBody.data.kinds);
@@ -125,7 +124,7 @@ export const listDeliveries = async (req: Request, res: Response) => {
     const parsed = ListDeliveriesQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
     const { unitId, ...filter } = parsed.data;
-    const scope = resolveAccountingScopeInternal(user, unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, unitId, { access: 'read' });
     const data = await getFactory().getAccountingDeliveryService().listDeliveries(scope, filter);
     return res.json({ success: true, data });
   } catch (error) {
@@ -139,7 +138,7 @@ export const getDelivery = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = AccountingDeliveryScopeQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const data = await getFactory().getAccountingDeliveryService().getDelivery(scope, req.params.id);
     return res.json({ success: true, data });
   } catch (error) {

@@ -7,7 +7,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 const UNIT = 'unit-delivery-list';
@@ -51,6 +51,7 @@ describe('GET /api/accounting/delivery — contrato HTTP', () => {
   beforeAll(async () => {
     pushTestSchema();
     dono = await criarUsuario('delivery-list-a');
+    await seedUnit({ userId: dono.id, id: UNIT });
     outro = await criarUsuario('delivery-list-b');
     await criarEntrega(dono.id, 2024, 'FAILED');
     recente = await criarEntrega(dono.id, 2025, 'SENT', 2);

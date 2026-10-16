@@ -1,69 +1,6 @@
 [
   {
     "type": "dependency",
-    "from": "src/controllers/accountantAssignmentController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/accountingContactController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/accountingController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/accountingDeliveryController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/accountingPolicyVersionController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/accountingReviewController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/accountingSettingsController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/controllers/bankSettlementController.ts",
     "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
     "rule": {
@@ -73,34 +10,7 @@
   },
   {
     "type": "dependency",
-    "from": "src/controllers/closingController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/controllers/collectionChargeController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/companyFiscalProfileController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/companySignerController.ts",
     "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
     "rule": {
       "severity": "error",
@@ -127,15 +37,6 @@
   },
   {
     "type": "dependency",
-    "from": "src/controllers/dataExchangeController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/controllers/depreciationRateController.ts",
     "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
     "rule": {
@@ -145,43 +46,7 @@
   },
   {
     "type": "dependency",
-    "from": "src/controllers/dimensionController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/documentAttachmentController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/entryApprovalController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/controllers/fiscalDocumentController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/fiscalProfileController.ts",
     "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
     "rule": {
       "severity": "error",
@@ -316,43 +181,7 @@
   },
   {
     "type": "dependency",
-    "from": "src/controllers/referentialCatalogController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/referentialMappingController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/serviceFiscalProfileController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/controllers/simplesController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/sourceDocumentController.ts",
     "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
     "rule": {
       "severity": "error",

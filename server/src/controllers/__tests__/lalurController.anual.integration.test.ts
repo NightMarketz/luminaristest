@@ -7,7 +7,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 const UNIT = 'unit-lalur-anual';
@@ -25,6 +25,7 @@ describe('/api/lalur — forma ANUAL (X7 Fase B PR-2, item 12)', () => {
   beforeAll(async () => {
     pushTestSchema();
     dono = await prisma.user.create({ data: { name: 'anual', username: 'lalur-anual', email: 'lalur-anual@test.local', password: 'x', role: 'USER' } });
+    await seedUnit({ userId: dono.id, id: UNIT });
     await prisma.companyFiscalProfile.create({
       data: { userId: dono.id, anoCalendario: 2025, regime: 'REAL', formaApuracaoIrpjCsll: 'ANUAL', lucroRealObrigatorio: false, createdById: dono.id, updatedById: dono.id },
     });

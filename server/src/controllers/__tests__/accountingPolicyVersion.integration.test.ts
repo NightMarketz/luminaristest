@@ -7,7 +7,7 @@
 import request from 'supertest';
 import { Role } from '@/features/users/models/User.model';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, resetDb, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, resetDb, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 const UNIT = 'unit-pol';
@@ -69,6 +69,7 @@ describe('BE-INCR-ACCOUNTING-POLICY-VERSION — política versionada pelo HTTP',
     dono = await criarUsuario('pol-dono');
     contador = await criarUsuario('pol-contador');
     terceiro = await criarUsuario('pol-terceiro');
+    await seedUnit({ userId: dono.id, id: UNIT });
   });
 
   afterAll(async () => {

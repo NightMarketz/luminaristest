@@ -61,13 +61,16 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 
 /** UNIDADE COMPARTILHADA de propósito — a separação tem de vir do `userId` do token, não de uma
  *  sub-partição diferente que esconderia um filtro de um eixo só. */
 const UNIT = 'unit-acct-per';
+/** I6: `unitId` é linha de `units` do dono e o id é GLOBAL — o dono B não pode ter a unidade do A;
+ *  o seed-year do B usa a SUA unidade, e B mandando `UNIT` (do A) cai no 404 UNIT_NOT_FOUND. */
+const UNIT_B = `${UNIT}-b`;
 /** Ano dos períodos ARRANJADOS (um mês por transição, para os casos não dependerem da ordem). */
 const ANO = 2027;
 /** Ano exercitado pelo `seedYear` — separado do acima para o seed não mexer no arranjo. */
@@ -104,6 +107,8 @@ describe('accountingController — períodos: fronteira de inquilino nas 5 rotas
     pushTestSchema();
     donoA = await criarUsuario('acct-per-a');
     donoB = await criarUsuario('acct-per-b');
+    await seedUnit({ userId: donoA.id, id: UNIT });
+    await seedUnit({ userId: donoB.id, id: UNIT_B });
   }, 120000);
 
   afterAll(async () => {
@@ -137,13 +142,13 @@ describe('accountingController — períodos: fronteira de inquilino nas 5 rotas
 
     // Inquilino: o dono B semeia o MESMO ano na MESMA unidade.
     const doB = await request(app)
-      .post(`/api/accounting/${UNIT}/periods/seed-year`)
+      .post(`/api/accounting/${UNIT_B}/periods/seed-year`)
       .set(authHeader(donoB))
       .send({ year: ANO_SEED });
 
     expect(doB.status).toBe(201);
     const doAnoB = await prisma.accountingPeriod.findMany({
-      where: { userId: donoB.id, unitId: UNIT, year: ANO_SEED },
+      where: { userId: donoB.id, unitId: UNIT_B, year: ANO_SEED },
     });
     expect(doAnoB).toHaveLength(12); // o B ganhou os SEUS, não os do A
     expect(doAnoB.every((p) => p.userId === donoB.id && p.status === 'FUTURE')).toBe(true);
@@ -168,7 +173,9 @@ describe('accountingController — períodos: fronteira de inquilino nas 5 rotas
       .set(authHeader(donoB))
       .send({ unitId: UNIT });
 
-    expect(res.status).toBe(400); // ValidationError escopado — ver nota sobre 400×404 no cabeçalho
+    // I6: outro dono → 404 UNIT_NOT_FOUND (antes: 400 ValidationError escopado — ver nota sobre 400×404 no cabeçalho)
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('UNIT_NOT_FOUND');
     expect(await statusDe(doA.id)).toBe('FUTURE'); // o período do A não abriu
     expect(await statusDe(doB.id)).toBe('FUTURE'); // nem o gêmeo do B foi aberto por tabela
     expect(await fotoDe(donoA.id)).toEqual(antesA);
@@ -200,7 +207,9 @@ describe('accountingController — períodos: fronteira de inquilino nas 5 rotas
       .set(authHeader(donoB))
       .send({ unitId: UNIT, reason: 'cross-tenant' });
 
-    expect(res.status).toBe(400);
+    // I6: outro dono → 404 UNIT_NOT_FOUND (antes: 400 ValidationError escopado)
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('UNIT_NOT_FOUND');
     expect(await statusDe(doA.id)).toBe('OPEN');
     expect(await statusDe(doB.id)).toBe('OPEN');
     expect(await fotoDe(donoA.id)).toEqual(antesA);
@@ -235,7 +244,9 @@ describe('accountingController — períodos: fronteira de inquilino nas 5 rotas
       .set(authHeader(donoB))
       .send({ unitId: UNIT, periodId: doA.id, reason: 'cross-tenant' });
 
-    expect(res.status).toBe(400);
+    // I6: outro dono → 404 UNIT_NOT_FOUND (antes: 400 ValidationError escopado)
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('UNIT_NOT_FOUND');
     expect(await statusDe(doA.id)).toBe('SOFT_CLOSED');
     expect(await statusDe(doB.id)).toBe('SOFT_CLOSED');
     expect(await fotoDe(donoA.id)).toEqual(antesA);
@@ -269,7 +280,9 @@ describe('accountingController — períodos: fronteira de inquilino nas 5 rotas
       .set(authHeader(donoB))
       .send({ unitId: UNIT, reason: 'cross-tenant' });
 
-    expect(res.status).toBe(400);
+    // I6: outro dono → 404 UNIT_NOT_FOUND (antes: 400 ValidationError escopado)
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('UNIT_NOT_FOUND');
     expect(await statusDe(doA.id)).toBe('OPEN');
     expect(await statusDe(doB.id)).toBe('OPEN');
     expect(await fotoDe(donoA.id)).toEqual(antesA);

@@ -8,7 +8,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readdirSync } from 'node:fs';
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import * as storage from '@/lib/attachmentStorage';
 import { AuditService } from '@/features/accounting/services/AuditService';
 import { canonicalizeAuditPayload } from '@/features/accounting/audit/auditCanonical';
@@ -31,6 +31,8 @@ beforeAll(() => pushTestSchema());
 beforeAll(async () => {
   const u = await prisma.user.create({ data: { name: 'sdup', username: 'sdup', email: 'sdup@test.local', password: 'x', role: 'USER' } });
   user = { id: u.id, username: u.username };
+  await seedUnit({ userId: user.id, id: UNIT });
+  await seedUnit({ userId: user.id, id: OUTRA });
 });
 afterAll(() => prisma.$disconnect());
 

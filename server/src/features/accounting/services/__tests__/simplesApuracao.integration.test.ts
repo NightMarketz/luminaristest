@@ -5,7 +5,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { ApplicationFactory } from '@/lib/factory';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
@@ -62,6 +62,7 @@ beforeAll(async () => {
   const byName = async (n: string) => (await prisma.dynamicTable.findFirstOrThrow({ where: { userId: user.id, internalName: n } })).id;
   tables = { sales: await byName('sales'), saleItems: await byName('saleItems'), units: await byName('units') };
   UNIT = (await row('units', { name: 'Matriz', cnpj: CNPJ })).id;
+  await seedUnit({ userId: user.id, id: 'outra-unidade' }); // I6: a "outra unidade" do F-SD-4 é do mesmo dono — linha real de units
   await f().getPostingService().ensureChartOfAccounts(scope());
   const hoje = scopeToday(scope()).slice(0, 7);
   for (const ym of new Set(['2026-06', '2026-07', hoje])) {

@@ -7,22 +7,26 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 const UNIT = 'unit-x7c-memo';
-type Dono = { id: string; username: string };
+type Dono = { id: string; username: string; unitId: string };
 
 let seq = 0;
 async function novoDono(): Promise<Dono> {
   seq += 1;
-  return prisma.user.create({ data: { name: `x7c-${seq}`, username: `x7c-${seq}`, email: `x7c-${seq}@test.local`, password: 'x', role: 'USER' } });
+  const u = await prisma.user.create({ data: { name: `x7c-${seq}`, username: `x7c-${seq}`, email: `x7c-${seq}@test.local`, password: 'x', role: 'USER' } });
+  // I6: id de unidade é chave global — cada dono ganha a sua (`${UNIT}-<seq>`), semeada para ele.
+  const unitId = `${UNIT}-${seq}`;
+  await seedUnit({ userId: u.id, id: unitId });
+  return { ...u, unitId };
 }
 
 async function apuracao(dono: Dono, periodo: string, extra: Record<string, unknown> = {}) {
   return prisma.taxAssessment.create({
     data: {
-      userId: dono.id, unitId: UNIT, anoCalendario: 2026, tributo: 'IRPJ', regime: 'PRESUMIDO', forma: 'TRIMESTRAL', periodo,
+      userId: dono.id, unitId: dono.unitId, anoCalendario: 2026, tributo: 'IRPJ', regime: 'PRESUMIDO', forma: 'TRIMESTRAL', periodo,
       modo: 'PRESUMIDO', codigoReceita: '208901', baseCents: 100000n, devidoCents: 15000n, deducoesCents: 0n, aPagarCents: 15000n,
       memoria: [{ codigo: 'RB', descricao: 'Receita bruta', valorCents: '1250000', fonte: 'razão' }],
       tabelaVersao: 'v-test', status: 'CONFIRMED', confirmedById: dono.id, confirmedAt: new Date('2026-04-10T12:00:00.000Z'), ...extra,
@@ -32,10 +36,10 @@ async function apuracao(dono: Dono, periodo: string, extra: Record<string, unkno
 
 const exportar = (dono: Dono, body: Record<string, unknown>) =>
   request(app).post('/api/accounting/data-exchange/exports').set(authHeader(dono))
-    .send({ kind: 'EXPORT_TAX_ASSESSMENT_MEMO', format: 'csv', unitId: UNIT, ...body });
+    .send({ kind: 'EXPORT_TAX_ASSESSMENT_MEMO', format: 'csv', unitId: dono.unitId, ...body });
 
 async function baixar(dono: Dono, jobId: string): Promise<string[]> {
-  const file = await request(app).get(`/api/accounting/data-exchange/jobs/${jobId}/download`).query({ unitId: UNIT }).set(authHeader(dono));
+  const file = await request(app).get(`/api/accounting/data-exchange/jobs/${jobId}/download`).query({ unitId: dono.unitId }).set(authHeader(dono));
   expect(file.status).toBe(200);
   return String(file.text).replace(/^﻿/, '').split(/\r?\n/).filter((l) => l.length > 0);
 }
@@ -62,7 +66,7 @@ describe('X7 Fase C PR-1 — EXPORT_TAX_ASSESSMENT_MEMO pelo HTTP', () => {
     await apuracao(dono, 'T01', { status: 'SUPERSEDED', tributo: 'CSLL', codigoReceita: '237201' });
     await apuracao(dono, 'T01', { deletedAt: new Date(), tributo: 'CSLL', codigoReceita: '237201' });
     await apuracao(dono, 'T02');
-    await apuracao(outro, 'T01');
+    await apuracao(outro, 'T01', { unitId: dono.unitId }); // outro dono, MESMA unidade do dono (como antes)
 
     const res = await exportar(dono, { periodStart: '2026-01-01', periodEnd: '2026-03-31' });
     expect(res.status).toBe(201);
