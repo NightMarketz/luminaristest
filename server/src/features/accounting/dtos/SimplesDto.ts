@@ -162,6 +162,61 @@ export const ImpedimentoCaixaSchema = z
   .strict();
 export type ImpedimentoCaixa = z.infer<typeof ImpedimentoCaixaSchema>;
 
+/**
+ * BE-INCR-SIMPLES-CAIXA PR-3 (nó X14-CAIXA, item 19) — GET …/registro-valores-a-receber: o registro do Anexo IX da Res.
+ * CGSN 140 (arts. 20 III e 77), só até 2026 (o caixa acaba em 01/01/2027 — Res. CGSN 190/2026 art. 8º XIX e XXII).
+ */
+export const RegistroValoresAReceberQuerySchema = z.object({ unitId: z.string().min(1), ano: z.coerce.number().int().gte(2018).lte(2026) }).strict();
+
+/** Uma linha do registro de valores a receber (colunas do Anexo IX). */
+export const LinhaAnexoIxSchema = z
+  .object({
+    saleId: z.string(),
+    dataOperacao: dateOnly('dataOperacao'),
+    documentosFiscais: z.array(z.string()), // art. 77 § 1º: registrados juntos
+    valorTotalCents: cents,
+    quantidadeParcelas: z.number().int().min(1),
+    parcelas: z.array(
+      z
+        .object({
+          numero: z.number().int().min(1),
+          valorCents: cents,
+          vencimento: dateOnly('vencimento'),
+          dataRecebimento: dateOnly('dataRecebimento').nullable(),
+          valorPagoCents: cents,
+          saldoAReceberCents: cents,
+          incobravelCents: cents,
+        })
+        .strict(),
+    ),
+    dispensadaCartao: z.boolean(), // art. 77 § 3º
+  })
+  .strict();
+export type LinhaAnexoIx = z.infer<typeof LinhaAnexoIxSchema>;
+
+/** Item 20 (F-CX-5 a) — meios de cobrança que provam a tentativa (Res. CGSN 140 art. 77 § 6º). */
+export const MEIOS_COBRANCA_INCOBRAVEL = ['NOTIFICACAO_EXTRAJUDICIAL', 'PROTESTO', 'COBRANCA_JUDICIAL', 'CADASTRO_PROTECAO_CREDITO'] as const;
+export const SimplesCreditoIncobravelCreateSchema = z
+  .object({
+    unitId: z.string().min(1),
+    saleId: z.string().min(1),
+    valorCents: cents.refine((v) => v > 0, 'valorCents deve ser maior que zero'),
+    meioCobranca: z.enum(MEIOS_COBRANCA_INCOBRAVEL),
+    data: dateOnly('data'),
+    evidencia: z.string().trim().min(1).max(500),
+  })
+  .strict();
+export type SimplesCreditoIncobravelCreate = z.infer<typeof SimplesCreditoIncobravelCreateSchema>;
+export interface SimplesCreditoIncobravelView {
+  id: string;
+  saleId: string;
+  valorCents: number;
+  meioCobranca: (typeof MEIOS_COBRANCA_INCOBRAVEL)[number];
+  data: string;
+  evidencia: string;
+  createdAt: string;
+}
+
 export const SimplesUnitQuerySchema = z.object({ unitId: z.string().min(1) }).strict();
 export const SimplesIdParamSchema = z.object({ id: z.string().min(1) }).strict();
 

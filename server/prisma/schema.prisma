@@ -68,6 +68,7 @@ model User {
   salaoParcerias             SalaoParceriaContrato[] // X14 PR-2 item 13
   receitaFiscalLinhas        ReceitaFiscalLinha[] // X14 PR-2 item 15
   receitaFiscalRecebimentos  ReceitaFiscalRecebimento[] // X14-CAIXA PR-1 item 1
+  simplesCreditosIncobraveis SimplesCreditoIncobravel[] // X14-CAIXA PR-3 item 20
   assignmentsOwned           AccountantAssignment[]      @relation("AssignmentOwner") // BE-INCR-ACCOUNTANT-GOVERNANCE (GOV-CONTADOR) — dono do escopo
   assignmentsAsAccountant    AccountantAssignment[]      @relation("AssignmentAccountant") // GOV-CONTADOR — login do contador
   policyVersionsOwned        AccountingPolicyVersion[]   @relation("PolicyVersionOwner") // GOV-CONTADOR — política versionada (F-GOV-6 b)
@@ -2874,6 +2875,27 @@ model ReceitaFiscalRecebimento {
   @@unique([userId, unitId, saleId, origem])
   @@index([userId, unitId, competenciaCaixa])
   @@map("receita_fiscal_recebimentos")
+}
+
+// BE-INCR-SIMPLES-CAIXA PR-3 (nó X14-CAIXA, item 20; F-CX-5 a) — crédito considerado incobrável no registro de valores a
+// receber (Res. CGSN 140 art. 77 VI e §§ 5º–6º: prova da cobrança por um dos meios do § 6º). Soft-delete. Não tira a
+// venda da base do art. 20 I.
+model SimplesCreditoIncobravel {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId       String
+  saleId       String
+  valorCents   BigInt
+  meioCobranca String // NOTIFICACAO_EXTRAJUDICIAL | PROTESTO | COBRANCA_JUDICIAL | CADASTRO_PROTECAO_CREDITO
+  data         String // YYYY-MM-DD da medida de cobrança
+  evidencia    String // referência da evidência (fora do evento de auditoria)
+  createdById  String?
+  createdAt    DateTime  @default(now())
+  deletedAt    DateTime?
+
+  @@index([userId, unitId, saleId])
+  @@map("simples_creditos_incobraveis")
 }
 
 // BE-INCR-LEGAL-PARAMS PR-4 (item 10; emenda §9 L-3, dono 07/10 "Tabela de jobs") — fila do recálculo: publicar ou

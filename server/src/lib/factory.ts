@@ -157,6 +157,9 @@ import { ReceitaFiscalService } from '../features/accounting/services/ReceitaFis
 import { ReceitaFiscalRecebimentoService } from '../features/accounting/services/ReceitaFiscalRecebimentoService';
 import { SimplesApuracaoService } from '../features/accounting/services/SimplesApuracaoService';
 import { SimplesDeclaracaoService } from '../features/accounting/services/SimplesDeclaracaoService';
+import { SimplesRegistroCaixaService } from '../features/accounting/services/SimplesRegistroCaixaService';
+import { SimplesCreditoIncobravelRepository } from '../features/accounting/repositories/SimplesCreditoIncobravelRepository';
+import type { ISimplesCreditoIncobravelRepository } from '../features/accounting/repositories/ISimplesCreditoIncobravelRepository';
 import { PisCofinsAssessmentService } from '../features/accounting/services/PisCofinsAssessmentService';
 import { AccountingDeliveryService } from '../features/accounting/services/AccountingDeliveryService';
 import { AccountingReviewService } from '../features/accounting/services/AccountingReviewService';
@@ -763,6 +766,7 @@ export class ApplicationFactory {
     receitaFiscalRecebimento: IReceitaFiscalRecebimentoRepository; // X14-CAIXA PR-1
     simplesApuracao: ISimplesApuracaoRepository; // X14 PR-3
     simplesDeclaracao: ISimplesDeclaracaoRepository; // X14 PR-4
+    simplesCreditoIncobravel: ISimplesCreditoIncobravelRepository; // X14-CAIXA PR-3
     accountingDelivery: IAccountingDeliveryRepository;
     accountingReview: IAccountingReviewRepository;
     accountantAssignment: IAccountantAssignmentRepository; // GOV-CONTADOR
@@ -865,6 +869,7 @@ export class ApplicationFactory {
     receitaFiscalRecebimento: ReceitaFiscalRecebimentoService; // X14-CAIXA PR-1
     simplesApuracao: SimplesApuracaoService; // X14 PR-3
     simplesDeclaracao: SimplesDeclaracaoService; // X14 PR-4
+    simplesRegistroCaixa: SimplesRegistroCaixaService; // X14-CAIXA PR-3
     pisCofinsAssessment: PisCofinsAssessmentService; // X8 PR-2
     taxAssessmentRecalc: TaxAssessmentRecalcService; // BE-INCR-LEGAL-PARAMS PR-4 (item 10)
     accountingDelivery: AccountingDeliveryService;
@@ -958,6 +963,7 @@ export class ApplicationFactory {
       receitaFiscalRecebimento: new ReceitaFiscalRecebimentoRepository(),
       simplesApuracao: new SimplesApuracaoRepository(),
       simplesDeclaracao: new SimplesDeclaracaoRepository(),
+      simplesCreditoIncobravel: new SimplesCreditoIncobravelRepository(),
       accountingDelivery: new AccountingDeliveryRepository(),
       accountingReview: new AccountingReviewRepository(),
       accountantAssignment: new AccountantAssignmentRepository(),
@@ -1754,6 +1760,22 @@ export class ApplicationFactory {
         this.policies.accounting,
         legalParameterService, // BE-INCR-SIMPLES-DEFIS-MANUAL item 7: presunção do IRPJ no limite do art. 145
       ),
+      // BE-INCR-SIMPLES-CAIXA PR-3 (nó X14-CAIXA, itens 19–21): registro do Anexo IX e créditos incobráveis.
+      simplesRegistroCaixa: new SimplesRegistroCaixaService(
+        this.repositories.simplesCreditoIncobravel,
+        this.repositories.receitaFiscal,
+        this.repositories.receitaFiscalRecebimento,
+        this.repositories.fiscalDocument,
+        // porta do núcleo: só a leitura do `dueDate` da venda (vencimento da parcela)
+        {
+          dueDateBruto: async (saleId: string) => {
+            const due = ((await this.repositories.dynamicTable.findDataById(saleId))?.data as Record<string, unknown> | undefined)?.dueDate;
+            return typeof due === 'string' ? due : null;
+          },
+        },
+        auditService,
+        this.policies.accounting,
+      ),
       mitExport: new MitExportService(
         this.repositories.mitExport,
         this.repositories.taxAssessment,
@@ -2168,6 +2190,7 @@ export class ApplicationFactory {
   public getReceitaFiscalRecebimentoService = (): ReceitaFiscalRecebimentoService => this.services.receitaFiscalRecebimento;
   public getSimplesApuracaoService = (): SimplesApuracaoService => this.services.simplesApuracao;
   public getSimplesDeclaracaoService = (): SimplesDeclaracaoService => this.services.simplesDeclaracao;
+  public getSimplesRegistroCaixaService = (): SimplesRegistroCaixaService => this.services.simplesRegistroCaixa;
   public getPisCofinsAssessmentService = (): PisCofinsAssessmentService => this.services.pisCofinsAssessment;
   public getAccountingDeliveryService = (): AccountingDeliveryService =>
     this.services.accountingDelivery;
