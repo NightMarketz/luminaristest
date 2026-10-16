@@ -1,3 +1,5 @@
+import { tablePresetSuites, type SelectablePresetSuite } from '..';
+
 /**
  * Base de conhecimento para a IA, associando chaves de presets a descrições detalhadas.
  * Essas descrições são otimizadas para busca semântica, permitindo que a IA encontre o preset
@@ -10,26 +12,25 @@ export interface IPresetKnowledge {
   aiDescription: string;
 }
 
-export const presetKnowledgeBase: IPresetKnowledge[] = [
-  {
-    key: 'beautySalon',
-    name: 'Salão de Beleza',
-    // BE-INCR-P2-VERTICAL-CLINICA, comportamento 3: emenda à descrição — este preset reivindicava
-    // literalmente "clínicas de estética" (`PresetKnowledgeBase.ts:17`, verificado no BRIEF §2), o
-    // que faria o matcher resolver qualquer descrição de clínica para `beautySalon` mesmo depois de
-    // `aestheticClinic` existir (as duas entradas competiriam pela mesma descrição). Removido aqui;
-    // "clínicas de estética" migrou para a entrada nova abaixo.
-    aiDescription: 'Um sistema completo de gestão para negócios na área da beleza, como salões, barbearias ou spas. Otimizado para gerenciar o relacionamento com clientes e a agenda. Inclui tabelas para: Clientes (com histórico de visitas), Serviços (catálogo de serviços oferecidos com preço e duração), Agendamentos (para marcar horários, vinculando cliente, serviço e funcionário), Produtos (para venda ou uso interno), Vendas (registrando serviços e produtos), e Funcionários (para comissões e agenda).',
-  },
-  {
-    key: 'aestheticClinic',
-    name: 'Clínica de Estética',
-    // BE-INCR-P2-VERTICAL-CLINICA, comportamento 3: entrada NOVA — sem ela o matcher devolveria
-    // `beautySalon` para qualquer descrição de clínica (a prova mediria o próprio preset do
-    // vertical 1, não o vertical 2). Conteúdo clínico sensível (anamnese/contraindicação/consentimento)
-    // NÃO é mencionado aqui — a ficha clínica só promete um campo administrativo próprio (ver
-    // `AestheticClinicCustomerModule.ts`), a decisão de conteúdo de saúde está pendente de validação
-    // externa (BRIEF §7 item 4).
-    aiDescription: 'Um sistema completo de gestão para clínicas de estética — procedimentos estéticos, protocolos de tratamento e pacotes de sessões pré-pagas. Otimizado para o relacionamento com o paciente/cliente e a agenda de atendimentos. Inclui tabelas para: Clientes (ficha com registro administrativo próprio da clínica), Serviços (catálogo de procedimentos com preço e duração), Agendamentos (marcação de atendimentos vinculando cliente, procedimento e profissional), Produtos (cosméticos/insumos para revenda ou uso interno, com controle de estoque), Pacotes (sessões pré-pagas), Vendas (registrando procedimentos e produtos), e Comissões (por profissional).',
-  },
-];
+/**
+ * W5 item 4 (F-W5-1 → b): o KB é DERIVADO do registro de suítes, na ordem do registro — o perfil mora na suíte
+ * (`aiProfile`), sem lista à mão. Item 5: a chave do mapa tem de ser igual a `suite.key` (o `buildQuickPreset` resolve
+ * pela chave do mapa e o `PresetService` pela `preset.key`; a igualdade faz os dois apontarem para a mesma suíte) — a
+ * divergência lança na carga do módulo.
+ */
+export function deriveKnowledgeBase(
+  suites: Record<string, Record<string, SelectablePresetSuite>>,
+): IPresetKnowledge[] {
+  return Object.values(suites).flatMap((category) =>
+    Object.entries(category).map(([mapKey, suite]) => {
+      if (suite.key !== mapKey) {
+        throw new Error(
+          `Suíte '${suite.key}' registrada sob a chave '${mapKey}': a chave do mapa de tablePresetSuites tem de ser igual a suite.key.`,
+        );
+      }
+      return { key: suite.key, name: suite.aiProfile.name, aiDescription: suite.aiProfile.description };
+    }),
+  );
+}
+
+export const presetKnowledgeBase: IPresetKnowledge[] = deriveKnowledgeBase(tablePresetSuites);

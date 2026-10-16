@@ -26,7 +26,7 @@ import { ForbiddenError, OnboardingRolledBackError, OnboardingRollbackFailedErro
 import { InstallModuleSchema } from '@/features/dynamicTables/dtos/InstallModule.dto';
 import { Role } from '@/features/users/models/User.model';
 import { ISchemaField } from '@/features/dynamicTables/models/DynamicTable.model';
-import { getPresetByKey, keyToPascalCase } from '@/features/dynamicTables/presets/PresetManager';
+import { keyToPascalCase } from '@/features/dynamicTables/presets/PresetManager';
 import { SECTOR_BINDING_REGISTRY } from '@/features/accountingBinding/fixtures/sectorBindingRegistry';
 import { resolveBindingScope } from '@/features/accountingBinding/scope/BindingScope';
 import { reloadAccountingMappersSerialized } from '@/features/accountingBinding/runtime/mapperReload';
@@ -108,9 +108,9 @@ function respondProvisioningError(error: unknown, res: Response): Response | nul
 
 /**
  * BE-INCR-ONBOARDING-ACTIVATION (nó I4) item 9 (F-I4-3 a) — o setor do binding contábil do preset escolhido: a chave do
- * `SECTOR_BINDING_REGISTRY` cujo nome, normalizado como o `getPresetByKey` normaliza a chave (`keyToPascalCase`), é o
- * da suíte pedida. Assim `beautySalon` (Rápido) e `beauty_salon` (Controle Total) dão o mesmo setor. Preset sem
- * binding (`crmModule`) ⇒ `null`.
+ * `SECTOR_BINDING_REGISTRY` cujo nome, normalizado por `keyToPascalCase`, é o da suíte pedida. Os dois modos do create
+ * só chegam aqui com a chave do registro (`beautySalon`): desde o W5 (dono, 2026-10-16, "Só a chave do registro") o
+ * Controle Total recusa `beauty_salon` com 404 antes desta função. Preset sem binding (`crmModule`) ⇒ `null`.
  */
 export function resolveOnboardingSectorKey(presetOrSuiteKey: string): string | null {
   const id = keyToPascalCase(presetOrSuiteKey);
@@ -188,7 +188,11 @@ async function handleCustomCreation(
   res: Response
 ) {
   try {
-    const originalPreset = await getPresetByKey(presetKey);
+    // W5 item 6 (F-W5-2): o Controle Total resolve pelo registro, como o modo Rápido — chave fora de
+    // `tablePresetSuites` (inclusive `coreSystem`, que o import dinâmico do `PresetManager` alcançava) → 404.
+    // Só a chave do registro (dono, questionário, 2026-10-16: "Só a chave do registro"): `beauty_salon` → 404.
+    const originalPreset = presetService.getPresetByKey(presetKey);
+    if (!originalPreset) throw new UnknownSuiteError(presetKey);
 
     // I8 comportamentos 2–3: as tabelas de lead não vêm mais do Core; entram pelos módulos selecionados
     // (body `modules` ∪ default da suíte, fechado pelas dependências do registro).
@@ -310,6 +314,7 @@ async function handleCustomCreation(
       },
     });
   } catch (error) {
+    if (error instanceof UnknownSuiteError) return res.status(404).json({ error: error.message });
     return respondProvisioningError(error, res) ?? handleApiError(error, res);
   }
 }
