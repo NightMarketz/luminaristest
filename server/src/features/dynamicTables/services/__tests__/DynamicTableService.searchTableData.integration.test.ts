@@ -26,6 +26,8 @@ const SCHEMA = {
     { name: 'qty', label: 'Qtd', type: 'number' },
     { name: 'active', label: 'Ativo', type: 'boolean' },
     { name: 'note', label: 'Obs', type: 'string' },
+    { name: 'phone', label: 'Telefone', type: 'string', format: 'phone' },
+    { name: 'price', label: 'Preço', type: 'number', numberFormat: 'currency' },
   ],
 };
 
@@ -58,10 +60,10 @@ beforeEach(async () => {
     data: Array.from({ length: 250 }, (_, i) => ({
       dynamicTableId: tableId,
       createdAt: new Date(base + i * 1000),
-      data: i === 20 ? { code: 'ALVO', qty: 7, active: true } : { code: `C${i}`, qty: i % 2, active: false, note: 'x' },
+      data: i === 20 ? { code: 'ALVO', qty: 7, active: true, phone: '1199999', price: 100 } : { code: `C${i}`, qty: i % 2, active: false, note: 'x' },
     })),
   });
-  targetId = (await prisma.dynamicTableData.findFirstOrThrow({ where: { dynamicTableId: tableId, data: { equals: { code: 'ALVO', qty: 7, active: true } } } })).id;
+  targetId = (await prisma.dynamicTableData.findFirstOrThrow({ where: { dynamicTableId: tableId, data: { equals: { code: 'ALVO', qty: 7, active: true, phone: '1199999', price: 100 } } } })).id;
 }, 60000);
 
 afterEach(() => resetDb());
@@ -76,19 +78,26 @@ describe('searchTableData — busca no SQL, tabela inteira', () => {
 
     expect(res.rows.map(r => r.id)).toEqual([targetId]);
     expect(res.total).toBe(1);
-    expect(res.rows[0].data).toEqual({ code: 'ALVO', qty: 7, active: true });
+    expect(res.rows[0].data).toEqual({ code: 'ALVO', qty: 7, active: true, phone: '1199999', price: 100 });
   });
 
-  it('string × número: "7" não casa com 7; 7 casa', async () => {
-    expect((await service.searchTableData(ctxFor(OWNER), tableId, { qty: '7' })).total).toBe(0);
-    expect((await service.searchTableData(ctxFor(OWNER), tableId, { qty: 7 })).rows.map(r => r.id)).toEqual([targetId]);
+  // F-DT-1 → (b): o valor é convertido para o tipo declarado do campo; a comparação no SQL segue tipada.
+  it('campo texto: número vira texto e acha (telefone 1199999 gravado como "1199999")', async () => {
+    expect((await service.searchTableData(ctxFor(OWNER), tableId, { phone: 1199999 })).rows.map(r => r.id)).toEqual([targetId]);
   });
 
-  it('booleano: true casa com JSON true e não com o número 1', async () => {
-    const res = await service.searchTableData(ctxFor(OWNER), tableId, { active: true });
-    expect(res.rows.map(r => r.id)).toEqual([targetId]);
-    // 124 linhas têm qty = 1 (número); active: true não pode casar com elas nem qty: true com elas.
-    expect((await service.searchTableData(ctxFor(OWNER), tableId, { qty: true })).total).toBe(0);
+  it('campo money (number/currency): "100" vira 100 e acha; "abc" → ValidationError com o tipo esperado', async () => {
+    expect((await service.searchTableData(ctxFor(OWNER), tableId, { price: '100' })).rows.map(r => r.id)).toEqual([targetId]);
+    await expect(service.searchTableData(ctxFor(OWNER), tableId, { price: 'abc' }))
+      .rejects.toThrow(new ValidationError("Valor de filtro inválido no campo 'price': esperado número."));
+  });
+
+  it('campo booleano: "true" vira true e acha; true não casa com o número 1; número em booleano → ValidationError', async () => {
+    expect((await service.searchTableData(ctxFor(OWNER), tableId, { active: 'true' })).rows.map(r => r.id)).toEqual([targetId]);
+    expect((await service.searchTableData(ctxFor(OWNER), tableId, { active: true })).total).toBe(1);
+    await expect(service.searchTableData(ctxFor(OWNER), tableId, { active: 1 })).rejects.toBeInstanceOf(ValidationError);
+    // qty é número: true não converte para número.
+    await expect(service.searchTableData(ctxFor(OWNER), tableId, { qty: true })).rejects.toBeInstanceOf(ValidationError);
   });
 
   it('null casa com campo ausente ou nulo', async () => {
@@ -110,7 +119,7 @@ describe('searchTableData — busca no SQL, tabela inteira', () => {
 
   it('chave fora do schema → ValidationError listando os campos válidos', async () => {
     await expect(service.searchTableData(ctxFor(OWNER), tableId, { codigo: 'ALVO' }))
-      .rejects.toThrow(new ValidationError("Campo de filtro inválido: 'codigo'. Campos válidos: code, qty, active, note."));
+      .rejects.toThrow(new ValidationError("Campo de filtro inválido: 'codigo'. Campos válidos: code, qty, active, note, phone, price."));
   });
 
   it('valor não escalar → ValidationError', async () => {

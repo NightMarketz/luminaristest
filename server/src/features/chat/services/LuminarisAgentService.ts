@@ -65,7 +65,7 @@ export class LuminarisAgentService {
                         type: 'object',
                         properties: {
                             tableId: { type: 'string', description: 'The unique ID of the table.' },
-                            filters: { type: 'object', description: 'Optional { fieldName: value } exact-equality filters; field names MUST come from get_table_schema; values must be string, number, boolean or null.' }
+                            filters: { type: 'object', description: 'Optional { fieldName: value } exact-equality filters; field names MUST come from get_table_schema; values (string, number, boolean or null) are converted to the field type declared in get_table_schema; a value that does not convert returns an error.' }
                         },
                         required: ['tableId']
                     }
