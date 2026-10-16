@@ -35,6 +35,16 @@ const BeautySalonPreset = {
   description: 'Complete management solution for salons with scheduling, inventory, sales, financials, and marketing.',
   // I8 comportamento 5 (F-CRM-2 → a, ratificado 2026-09-07): CRM-0 (Funil) + CRM-1 (Propostas); CRM-2/3 OFF.
   modules: ['CRM-0', 'CRM-1'] as ModuleKey[],
+  // W5 item 2 (F-W5-1 → b): perfil da IA movido byte a byte do `presetKnowledgeBase` escrito à mão (`8ba1ed8f`).
+  aiProfile: {
+    name: 'Salão de Beleza',
+    // BE-INCR-P2-VERTICAL-CLINICA, comportamento 3: emenda à descrição — este preset reivindicava
+    // literalmente "clínicas de estética" (`PresetKnowledgeBase.ts:17`, verificado no BRIEF §2), o
+    // que faria o matcher resolver qualquer descrição de clínica para `beautySalon` mesmo depois de
+    // `aestheticClinic` existir (as duas entradas competiriam pela mesma descrição). Removido aqui;
+    // "clínicas de estética" migrou para a entrada nova abaixo.
+    description: 'Um sistema completo de gestão para negócios na área da beleza, como salões, barbearias ou spas. Otimizado para gerenciar o relacionamento com clientes e a agenda. Inclui tabelas para: Clientes (com histórico de visitas), Serviços (catálogo de serviços oferecidos com preço e duração), Agendamentos (para marcar horários, vinculando cliente, serviço e funcionário), Produtos (para venda ou uso interno), Vendas (registrando serviços e produtos), e Funcionários (para comissões e agenda).',
+  },
   tables: {
     customers: lockedByAccounting(createTableFromModule(customerModule)),
     suppliers: createTableFromModule(suppliersModule),
