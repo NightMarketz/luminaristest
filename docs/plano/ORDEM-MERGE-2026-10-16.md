@@ -36,4 +36,8 @@ com o X14-CAIXA; se destravar, entra depois do X14-CAIXA) e #696 (Stryker, ferra
 - **`DynamicTableService.ts` é tocado pelo I11 PR-2 (#731, +31 linhas, filtro no repositório, F-I11-2 b) e pelo I7 (#730,
   preserva o 1º T0 em `updateMany`).** O CLAUDE.md raiz manda PARAR se o motor estiver sendo usado para integrar
   módulos. Os dois parecem locais (filtro e T0), mas vale um olho antes do merge.
+  **Registrado em [`DT-SERVICE-I11-I7-REVISAO-brief.md`](../accounting/DT-SERVICE-I11-I7-REVISAO-brief.md)** (16/10):
+  as duas mudanças estão previstas nos BRIEFs ratificados do I11 e do I7. Três forks ficam PENDENTES antes do merge
+  do #731 e do #730: F-DT-1 (igualdade tipada do agente), F-DT-2 (prova zero-diff/ADR-P2 depois do F-I7-3) e F-DT-3
+  (leitura da regra STOP).
 - **W6 destrava quando o W4 (#734) entrar.** O código do W6 ainda precisa de 'executa'.
