@@ -2,11 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { getCookie } from 'cookies-next';
 import { useTranslation } from 'next-i18next';
-import { IMessage, ICustomizationState, ICreationChoicePrompt, CreationChoice, ICreationError } from '../types/InterviewTypes';
+import { IMessage, ICustomizationState, ICreationChoicePrompt, CreationChoice, ICreationError, InterviewModuleOption, ModuleKey } from '../types/InterviewTypes';
 import { ITable } from '../types/RightSidebarTypes';
 import type { CreateDashboardPayload, CreateDashboardResult } from '../../../lib/services/setup.service';
 import { notifyAccountingDraft } from '../setup/accountingDraftNotice';
 import { classifyCreationError } from '../setup/classifyCreationError';
+import { toggleModuleSelection } from '../setup/moduleSelection';
 import type { OnboardingFiscalInput } from '@/types/contracts/accounting/CompanyFiscalProfileDto.gen';
 
 /**
@@ -40,11 +41,14 @@ export function useAiInterview() {
   const [isCreating, setIsCreating] = useState(false);
   const [creationError, setCreationError] = useState<ICreationError | null>(null);
   // W7 item 3 (F-W7-2 a): o último pedido de criação — o retry o reenvia igual, sem recarregar a página.
-  const lastCreateRequest = useRef<{ key: string; conversa: IMessage[]; fiscal: FiscalOnboarding } | null>(null);
+  const lastCreateRequest = useRef<{ key: string; conversa: IMessage[]; fiscal: FiscalOnboarding; modules: ModuleKey[] } | null>(null);
   // X13 PR-3 item 20: a entrevista terminou; falta a pergunta fechada de regime/porte antes do create.
   const [fiscalPendente, setFiscalPendente] = useState<{ key: string; conversa: IMessage[] } | null>(null);
   // W3 FE item 7: o servidor pede os botões criar × customizar (`choicePrompt` do último turno).
   const [choicePrompt, setChoicePrompt] = useState<ICreationChoicePrompt | null>(null);
+  // W5 item 14 (FE-INCR-W5-MODULES): módulos do turno MATCHING_PRESET e a seleção (começa pelos `suggested`).
+  const [moduleOptions, setModuleOptions] = useState<InterviewModuleOption[]>([]);
+  const [selectedModules, setSelectedModules] = useState<ModuleKey[]>([]);
   // W3 FE item 12: trava síncrona — `isLoading` só muda no próximo render, então dois cliques rápidos passariam.
   const choiceInFlight = useRef(false);
   const [customizationState, setCustomizationState] = useState<ICustomizationState | null>(null);
@@ -99,13 +103,14 @@ export function useAiInterview() {
     }
   }, [isLoading]);
 
-  async function handleCreateSystem(key: string, conversa: IMessage[], fiscal: FiscalOnboarding) {
-    lastCreateRequest.current = { key, conversa, fiscal };
+  async function handleCreateSystem(key: string, conversa: IMessage[], fiscal: FiscalOnboarding, modules: ModuleKey[]) {
+    lastCreateRequest.current = { key, conversa, fiscal, modules };
     setIsCreating(true);
     setCreationError(null);
     try {
       const token = getCookie('auth_token');
-      const body: CreateDashboardPayload = { suiteKey: key, unit: { name: nomeDaUnidadeDaEntrevista(conversa, key) }, fiscal };
+      // W5 item 16: os módulos escolhidos na entrevista vão no create (somados ao padrão da suíte no servidor).
+      const body: CreateDashboardPayload = { suiteKey: key, unit: { name: nomeDaUnidadeDaEntrevista(conversa, key) }, fiscal, modules };
       let response: Response;
       try {
         response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/create`, {
@@ -171,6 +176,16 @@ export function useAiInterview() {
       setMessages(prev => [...prev, { sender: 'ai', text: aiResponse }]);
       setCurrentStage(nextStage);
       setChoicePrompt(newChoicePrompt ?? null);
+
+      // W5 item 14: o turno do match traz `moduleOptions`; outro preset sem opções zera o que era do anterior.
+      const newModuleOptions = result.moduleOptions as InterviewModuleOption[] | undefined;
+      if (newModuleOptions) {
+        setModuleOptions(newModuleOptions);
+        setSelectedModules(newModuleOptions.filter((o) => o.suggested).map((o) => o.key));
+      } else if (newPresetKey && newPresetKey !== presetKey) {
+        setModuleOptions([]);
+        setSelectedModules([]);
+      }
 
       if (newPresetKey) {
         setPresetKey(newPresetKey);
@@ -259,14 +274,14 @@ export function useAiInterview() {
     if (!fiscalPendente) return;
     const { key, conversa } = fiscalPendente;
     setFiscalPendente(null);
-    void handleCreateSystem(key, conversa, fiscal);
+    void handleCreateSystem(key, conversa, fiscal, selectedModules);
   }
 
   /** W7 item 3 (F-W7-2 a): reenvia o último pedido de criação, igual — nunca recarrega a página (perderia a conversa). */
   const handleRetry = () => {
     const last = lastCreateRequest.current;
     if (!last || isCreating) return;
-    void handleCreateSystem(last.key, last.conversa, last.fiscal);
+    void handleCreateSystem(last.key, last.conversa, last.fiscal, last.modules);
   };
 
   /** W7 item 5: fecha o erro e devolve a pergunta fiscal do pedido que falhou; a conversa fica como estava. */
@@ -275,6 +290,11 @@ export function useAiInterview() {
     setCreationError(null);
     setIsCreating(false);
     if (last) setFiscalPendente({ key: last.key, conversa: last.conversa });
+  };
+
+  /** W5 item 15: marca/desmarca um módulo, fechando pelas dependências; travado não muda. */
+  const toggleModule = (key: ModuleKey) => {
+    setSelectedModules((prev) => toggleModuleSelection(moduleOptions, prev, key));
   };
 
   return {
@@ -302,6 +322,9 @@ export function useAiInterview() {
     choicePrompt,
     sendCreationChoice,
     fiscalPendente: fiscalPendente !== null,
-    confirmarFiscal
+    confirmarFiscal,
+    moduleOptions,
+    selectedModules,
+    toggleModule
   };
 }

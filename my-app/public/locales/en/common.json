@@ -483,6 +483,9 @@
   "choiceConfirm": "Confirm",
   "choiceDeclinedTitle": "You prefer not to customize",
   "choiceDeclinedBody": "You prefer not to customize. Create the system now with the default?",
+  "interviewModulesTitle": "Suggested modules",
+  "interviewModulesHint": "Uncheck what you don't want now; you can install it later.",
+  "interviewModulesIncluded": "(included)",
   "choiceCreateShort": "Create now",
   "choiceCustomizeAnyway": "Customize anyway",
 

@@ -482,6 +482,9 @@
   "choiceConfirm": "Confirmar",
   "choiceDeclinedTitle": "Você prefere não customizar",
   "choiceDeclinedBody": "Você prefere não customizar. Criar o sistema agora com o padrão?",
+  "interviewModulesTitle": "Módulos sugeridos",
+  "interviewModulesHint": "Desmarque o que não quiser agora; dá para instalar depois.",
+  "interviewModulesIncluded": "(incluído)",
   "choiceCreateShort": "Criar agora",
   "choiceCustomizeAnyway": "Customizar mesmo assim",
 
