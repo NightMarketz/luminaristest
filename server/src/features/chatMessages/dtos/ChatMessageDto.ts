@@ -19,7 +19,7 @@ export type ListChatMessagesQuery = z.infer<typeof ListChatMessagesQuerySchema>;
  *   schemas:
  *     ChatMessage:
  *       type: object
- *       required: [id, content, role, chatInstanceId, createdAt, updatedAt]
+ *       required: [id, content, role, chatInstanceId, createdAt, updatedAt, promptTokens, completionTokens, model]
  *       properties:
  *         id: { type: string, format: cuid }
  *         content: { type: string, minLength: 1, maxLength: 4000 }
@@ -27,6 +27,9 @@ export type ListChatMessagesQuery = z.infer<typeof ListChatMessagesQuerySchema>;
  *         chatInstanceId: { type: string, format: cuid }
  *         createdAt: { type: string, format: date-time }
  *         updatedAt: { type: string, format: date-time }
+ *         promptTokens: { type: integer, minimum: 0, nullable: true, description: 'Tokens de entrada do turno do ASSISTANT (null = USER ou anterior ao I11; 0 = sem chamada ao LLM)' }
+ *         completionTokens: { type: integer, minimum: 0, nullable: true, description: 'Tokens de saída do turno do ASSISTANT' }
+ *         model: { type: string, nullable: true, description: 'Modelos do turno, unidos por "+"' }
  */
 export const ChatMessageSchema = z.object({
   id: z.string().cuid({ message: 'chatMessage.validation.idInvalidCuid' }),
@@ -39,6 +42,10 @@ export const ChatMessageSchema = z.object({
   chatInstanceId: z.string().cuid({ message: 'chatMessage.validation.chatInstanceIdInvalidCuid' }),
   createdAt: z.date(),
   updatedAt: z.date(),
+  // I11 (BE-INCR-CHAT-AGENT §2.4): uso de tokens do turno do ASSISTANT.
+  promptTokens: z.number().int().nonnegative().nullable(),
+  completionTokens: z.number().int().nonnegative().nullable(),
+  model: z.string().nullable(),
 });
 
 /**

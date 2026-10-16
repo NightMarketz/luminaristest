@@ -400,6 +400,8 @@
   "onboardingHideCustomizePanel": "Ocultar painel de customização",
   "onboardingGreetingFailed": "Olá! Houve um problema ao iniciar. Por favor, recarregue a página.",
   "onboardingTurnFailed": "Desculpe, ocorreu um erro de comunicação.",
+  "onboardingSessionExpired": "Sua customização expirou ou não foi encontrada. Quer customizar de novo ou criar o sistema agora?",
+  "onboardingSessionConflict": "Esta customização foi alterada em outra aba. Sua conversa continua aqui — envie a mensagem de novo.",
   "onboardingErrorCreateFailed": "Ocorreu uma falha ao criar seu dashboard.",
   "onboardingErrorUnexpected": "Ocorreu um erro inesperado.",
   "onboardingOneMoment": "Um momento...",

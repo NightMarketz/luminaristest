@@ -989,7 +989,8 @@ export class ApplicationFactory {
 
     const luminarisAgentService = new LuminarisAgentService(
       dynamicTableService,
-      this.repositories.actionProposal
+      this.repositories.actionProposal,
+      this.policies.dynamicTable
     );
 
     // Shared instance: injected into ChatService (server-side persistence of chat turns)
