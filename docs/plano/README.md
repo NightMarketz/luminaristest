@@ -44,6 +44,11 @@ de `depende_de`).
   execução" do `.claude/agents/classificador.md` (`opus-medio` · `opus-baixo` · `sonnet-alto` · `sonnet-medio` ·
   `precisa-de-planejamento`). É **previsão, não decisão**; a calibração vem do `perfil-previsto` × `custo` dos
   retornos. Só em nó com BRIEF; em nó `done`, refere-se à emenda aberta citada na evidência.
+- `write_set`: `["server/src/features/x/**", "my-app/features/x/**"]` — globs que o nó vai editar ou criar
+  (caminho literal = arquivo novo). `registros`: `["server/src/lib/factory.ts"]` — choke points da PAR-001 de
+  que precisa. Grava a sessão de planejamento, junto com o BRIEF. Antes de abrir sessões em paralelo:
+  `node scripts/paralelo.mjs plano <NÓ...>` calcula as ondas (PAR-002 em
+  `.claude/skills/_PARALLELIZATION-CONTRACT.md`). Nó sem `write_set` entra serial.
 
 ## Fold (no próprio PR do trabalho, antes do push)
 

@@ -16,17 +16,23 @@ Arquivos de **edição compartilhada**: todo feature novo os toca. Dois trabalho
 | `server/src/lib/factory.ts` | todo service/repo/controller registra aqui | ponto único |
 | `server/prisma/schema.prisma` (+ `migrations/`) | todo model novo + histórico de migração diverge entre worktrees | ponto único — o mais duro |
 | `server/prisma/seed.ts` | fixtures compartilhadas | ponto único |
-| `my-app/public/openapi.json` (+ geração) | artefato derivado; dois regens sempre conflitam | derivado |
+| `server/src/routes/docs.paths.ts` | todo endpoint documentado ganha bloco aqui (registro em 2 toques, contrato §3) | ponto único — 10 de 18 PRs do lote de 16/10 |
+| `server/public/openapi.json` (+ `npm run docs:generate`) | artefato derivado; dois regens sempre conflitam | derivado |
+| `server/src/features/*/dtos/__tests__/__dto-shapes__.json` + `my-app/types/contracts/**/*.gen.ts` | snapshot de DTO e os tipos gerados dele | derivado |
+| `server/.dependency-cruiser-known-violations.json` + `my-app/.dependency-cruiser-known-violations.json` | baseline do `check:arch` (só encolhe) — todo PR que corrige violação reescreve | ponto único — 5 de 18 PRs do lote de 16/10 |
 | `my-app/public/locales/*/<dom>.json` | i18n **por domínio** | **disjunto entre domínios, compartilhado dentro do mesmo domínio** |
 | `docs/plano/_INDEX.md` + `_ANCORAS.md` (+ `node scripts/plano-vault.mjs index`) | índice e régua gerados de todas as notas; dois folds sempre conflitam | derivado — a nota de cada nó é disjunta; o regen vai para a Fase B |
 
-> **A tabela drifta.** Um 6º registro compartilhado adicionado ao repo (ex.: um índice de plugins) é um choke point novo — atualize **este** arquivo, e todo consumidor (orquestrador, integrador, reviewer) herda. `skill-audit` deve checar esta lista contra a realidade do repo. Nunca replique a lista dentro de uma skill.
+> **A tabela drifta.** Um registro compartilhado novo no repo (ex.: um índice de plugins) é um choke point novo — atualize **este** arquivo, e todo consumidor (orquestrador, integrador, reviewer, `scripts/paralelo.mjs`) herda: o script lê a 1ª coluna desta tabela (cada caminho em crase; `<dom>` vira `*`; a linha "disjunto entre domínios" fica de fora). `skill-audit` deve checar esta lista contra a realidade do repo. Nunca replique a lista dentro de uma skill ou script.
+>
+> **Medida (16/10):** nos 18 PRs do lote de 16/10, `_INDEX.md` 11, `docs.paths.ts` 10, `openapi.json` 10, `factory.ts` 8, `schema.prisma` 5, baseline do dependency-cruiser 5, `__dto-shapes__.json` 4 — o lote foi aberto sem esta separação e cada PR fez o próprio registro.
 
 ## [PAR-002] Teste de disjunção (provado por grafo, confirmado no código — CBM-001)
 
 Dois trabalhos são **paralelizáveis** ⟺ seus **write-sets fora dos choke points** não se cruzam.
 
-- Write-set previsto via cbm: `detect_changes` (blast radius do diff planejado) + `trace_path` inbound (quem mais toca esses símbolos). Disjunção é **provada por grafo, não chutada** — e, como todo resultado de grafo, confirmada lendo o arquivo antes de virar decisão (CBM-001).
+- **Write-set declarado na nota do nó, antes de abrir a sessão.** Frontmatter `write_set` (globs que o nó edita ou cria) e `registros` (choke points de que precisa). Quem grava é a sessão de planejamento, junto com o BRIEF; `node scripts/paralelo.mjs sugerir <NÓ>` dá o rascunho a partir dos caminhos citados no BRIEF. Para montar o write-set, cbm: `detect_changes` (blast radius do diff planejado) + `trace_path` inbound (quem mais toca esses símbolos) — confirmado lendo o arquivo (CBM-001).
+- **Cálculo, não chute: `node scripts/paralelo.mjs plano <NÓ...>` antes de abrir qualquer sessão do lote.** Cruza os write-sets entre si (fora dos choke points) e com os arquivos dos PRs abertos (`gh`), e emite a seção PAR-006: ondas paralelas, conflitos com o arquivo, Fase 0, Fase B, nós sem `write_set` (→ serial) e nós que esbarram em PR aberto. É ferramenta de planejamento, não gate de CI (regra ⛔ do CLAUDE.md raiz).
 - **Não é disjunto** (→ serial, PAR-005): dois slices **no mesmo domínio** (ambos tocam `routes/<dom>.ts` + `<dom>.json`); qualquer trabalho que **edita um arquivo já existente** (só slices *novos* disjuntos paralelizam limpo); duas mudanças de schema entre si.
 
 ## [PAR-003] Decomposição em 3 fases
@@ -52,7 +58,8 @@ O grau de paralelismo seguro = nº de slices com write-sets disjuntos (PAR-002).
 
 ## [PAR-006] Contrato de saída (o que o plano DEVE emitir)
 
-Quando o lote é paralelizável, o plano carrega uma seção **Plano de paralelização** com:
+Quando o lote é paralelizável, o plano carrega uma seção **Plano de paralelização** — a saída de
+`node scripts/paralelo.mjs plano <NÓ...>` colada, mais o branch de cada slice — com:
 
 1. **Lote paralelo (Fase A)** — cada slice com: feature, `branch`/worktree, write-set, e a prova de disjunção (sinal de grafo citado: "in-degree 0 fora do domínio", "detect_changes não cruza").
 2. **Delta serial (Fase 0 + Fase B)** — as mudanças de schema (Fase 0) e as linhas de registro nos choke points PAR-001 (Fase B), na ordem de aplicação.
