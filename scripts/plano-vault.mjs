@@ -1,10 +1,14 @@
 #!/usr/bin/env node
 // Vault do plano (docs/plano/): gera o índice a partir do frontmatter das notas e checa a integridade.
-//   node scripts/plano-vault.mjs index   → reescreve docs/plano/_INDEX.md e docs/plano/_ANCORAS.md
-//   node scripts/plano-vault.mjs check   → exit 1 se link [[x]] não resolve, frontmatter inválido,
-//                                          dependência para nó inexistente ou índice desatualizado.
+//   node scripts/plano-vault.mjs index [--stdout]
+//                                        → reescreve docs/plano/_INDEX.md e docs/plano/_ANCORAS.md
+//                                          (--stdout: imprime o _INDEX atual sem gravar — leitura em branch).
+//   node scripts/plano-vault.mjs check [--indice]
+//                                        → exit 1 se link [[x]] não resolve, frontmatter inválido ou
+//                                          dependência para nó inexistente; --indice também exige o índice
+//                                          em dia (só na main: PR não carrega o índice — dono, 16/10).
 //   node scripts/plano-vault.mjs fold <NÓ> --pr <n> [--estado <e>]
-//                                        → grava estado/prs/atualizado (frontmatter + cabeçalho) e reindexa.
+//                                        → grava estado/prs/atualizado (frontmatter + cabeçalho); NÃO reindexa.
 // Frontmatter: uma chave por linha, valor em JSON (JSON é YAML válido; o Obsidian lê como propriedade).
 import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, relative, basename, dirname, resolve } from 'node:path';
@@ -127,7 +131,7 @@ export function buildIndex(notes) {
   return { '_INDEX.md': out.join('\n') + '\n', '_ANCORAS.md': anc.join('\n') + '\n' };
 }
 
-export function check(vault = VAULT) {
+export function check(vault = VAULT, { indice = false } = {}) {
   let notes;
   try { notes = loadVault(vault); } catch (e) { return [`frontmatter: ${e.message}`]; }
   const errs = [];
@@ -155,7 +159,7 @@ export function check(vault = VAULT) {
       }
     }
   }
-  for (const [name, content] of Object.entries(buildIndex(notes))) {
+  if (indice) for (const [name, content] of Object.entries(buildIndex(notes))) {
     const p = join(vault, name);
     const cur = existsSync(p) ? readFileSync(p, 'utf8').replace(/\r\n/g, '\n') : '';
     if (cur !== content) errs.push(`docs/plano/${name} desatualizado — rode: node scripts/plano-vault.mjs index`);
@@ -166,7 +170,8 @@ export function check(vault = VAULT) {
 const ESTADOS = [...OPEN, 'done', 'decided'];
 
 // Fold no próprio PR (OPS-005 / F-2.1): o frontmatter é a fonte; as linhas **Estado:**/**PRs:** do corpo
-// são reescritas a partir dele. Depois regenera o índice.
+// são reescritas a partir dele. Não regenera o índice: o PR leva só a nota, e o workflow plano-index da main
+// reindexa depois do merge — índice em todo PR era conflito em todo PR (dono, chat, 2026-10-16).
 export function fold(vault, id, { pr, estado, hoje = new Date().toISOString().slice(0, 10) }) {
   if (!Number.isInteger(pr) || pr <= 0) throw new Error('--pr <n> obrigatório (inteiro)');
   if (estado && !ESTADOS.includes(estado)) throw new Error(`estado "${estado}" inválido — use ${ESTADOS.join('|')}`);
@@ -186,17 +191,23 @@ export function fold(vault, id, { pr, estado, hoje = new Date().toISOString().sl
     .filter((l) => l.includes(':')).map((l) => [l.slice(0, l.indexOf(':')).trim(), l.slice(l.indexOf(':') + 1).trim()]));
   const head = Object.keys(fm).map((k) => `${k}: ${['estado', 'prs', 'atualizado'].includes(k) ? fmt(fm[k]) : raw[k]}`);
   writeFileSync(n.file, ['---', ...head, '---', ''].join('\n').concat(body).replace(/\n/g, eol));
-  for (const [name, content] of Object.entries(buildIndex(loadVault(vault)))) writeFileSync(join(vault, name), content);
   return fm;
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const cmd = process.argv[2];
   if (cmd === 'index') {
-    for (const [name, content] of Object.entries(buildIndex(loadVault()))) writeFileSync(join(VAULT, name), content);
-    console.log('índice regenerado');
+    const gerados = buildIndex(loadVault());
+    if (process.argv.includes('--stdout')) {
+      process.stdout.on('error', (e) => { if (e.code !== 'EPIPE') throw e; }); // `| head` fecha o pipe cedo
+      process.stdout.write(gerados['_INDEX.md']);
+    }
+    else {
+      for (const [name, content] of Object.entries(gerados)) writeFileSync(join(VAULT, name), content);
+      console.log('índice regenerado');
+    }
   } else if (cmd === 'check') {
-    const errs = check();
+    const errs = check(VAULT, { indice: process.argv.includes('--indice') });
     for (const e of errs) console.error(e);
     console.log(errs.length ? `${errs.length} problema(s)` : 'vault íntegro');
     process.exit(errs.length ? 1 : 0);
@@ -207,7 +218,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       console.log(`fold ${fm.id}: estado=${fm.estado} prs=${fm.prs.join(',')}`);
     } catch (e) { console.error(e.message); process.exit(1); }
   } else {
-    console.error('uso: node scripts/plano-vault.mjs index|check|fold <NÓ> --pr <n> [--estado <e>]');
+    console.error('uso: node scripts/plano-vault.mjs index [--stdout]|check [--indice]|fold <NÓ> --pr <n> [--estado <e>]');
     process.exit(2);
   }
 }

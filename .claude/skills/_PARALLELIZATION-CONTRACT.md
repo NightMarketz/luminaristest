@@ -35,7 +35,7 @@ Todo lote paralelizável se decompõe em três fases — nunca uma:
 
 - **Fase 0 — schema (serial, na main, rápida).** *Todas* as mudanças de `schema.prisma` do lote juntas, **uma** migração, antes do fanout. Schema/migração é o que menos paraleliza (histórico diverge entre worktrees). Depois disso cada worktree nasce com suas tabelas prontas.
 - **Fase A — corpos (paralela, 1 worktree por slice).** O **corpo** de cada feature contra o schema congelado. Corpo = `dtos/`, `repositories/`, `policies/`, `services/`, `controllers/`, o `routes/<feature>.ts` **próprio**, páginas/componentes, o **namespace i18n do domínio**. Write-sets disjuntos → zero contenção. Cada agente commita no seu branch; reviewer roda **por branch antes do merge**.
-- **Fase B — registro (serial, integrador único, fina).** Só as **deltas de registro** nos choke points PAR-001: a linha do `router.use`, os registros no factory, regen do openapi, seed, regen do índice do vault (`plano-vault.mjs index` + `check`). Uma de cada vez, `tsc` verde entre cada. O conflito aqui vira **append trivial de 1 linha em série**, não 3-way merge de feature inteira.
+- **Fase B — registro (serial, integrador único, fina).** Só as **deltas de registro** nos choke points PAR-001: a linha do `router.use`, os registros no factory, regen do openapi, seed, `plano-vault.mjs check` (o índice do vault não entra no PR — regenera na `main`, workflow `plano-index`). Uma de cada vez, `tsc` verde entre cada. O conflito aqui vira **append trivial de 1 linha em série**, não 3-way merge de feature inteira.
 
 ## [PAR-004] Isolamento e ordem
 
