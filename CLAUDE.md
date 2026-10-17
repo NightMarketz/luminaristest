@@ -18,8 +18,9 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
   tuning por modelo — Opus 5.5 ativo: delegar pouco, sem scaffolding de verificação, escopo
   disciplinado + guarda de recall em review: `docs/operating-manual/MODEL-TUNING.md`)
 - **Dúvida legal/fiscal/regulatória → método oficial `docs/operating-manual/VERIFICACAO-LEGAL.md`:**
-  pesquise a norma em fonte oficial (planalto, RFB, tribunais…), confira vigência, conclua citando
-  artigo + link (fetch bloqueado → leia pelo browser embutido); ao dono (ou contador/advogado) só o que for ambíguo, com a ambiguidade explicada.
+  leia a norma no acervo `ctresb/leis` (`legal.py achar`/`acervo`); fonte oficial (planalto, RFB, tribunais…)
+  só com evidência de texto mais novo (versão não compilada, "Vide"/"Redação dada" recente, cópia velha, ausente);
+  confira vigência, conclua citando artigo + link; ao dono (ou contador/advogado) só o que for ambíguo, com a ambiguidade explicada.
 - **Por que auditoria não substitui oráculo:** `docs/operating-manual/ORACLE-DEFICIT.md`.
 - **As 5 sessões de agente (um formulário por tipo de trabalho):** `sessao-planejamento` (produz
   BRIEF, não ratifica fork) → `sessao-feature` (executa a spec) · `sessao-instrumentacao`

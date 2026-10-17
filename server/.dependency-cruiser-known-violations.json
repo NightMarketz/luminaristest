@@ -1,33 +1,6 @@
 [
   {
     "type": "dependency",
-    "from": "src/controllers/depreciationRateController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/fixedAssetClassController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/fixedAssetController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/features/chat/services/ChatService.ts",
     "to": "src/lib/prisma.ts",
     "rule": {

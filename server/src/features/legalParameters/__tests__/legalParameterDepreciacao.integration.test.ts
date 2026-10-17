@@ -9,7 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const MIGRATION = path.resolve(__dirname, '../../../../prisma/migrations/20261007170000_legal_parameters_v3_depreciacao/migration.sql');
 const app = makeApp();
@@ -41,6 +41,7 @@ describe('migração v3 — repoint do imobilizado para o Anexo III de plataform
   beforeAll(async () => {
     pushTestSchema();
     dono = await prisma.user.create({ data: { name: 'lp-dep', username: 'lp-dep', email: 'lp-dep@test.local', password: 'x', role: 'USER' } });
+    await seedUnit({ userId: dono.id, id: UNIT }); // I6: o unitId das rotas é validado contra `units` do dono
     const conta = (code: string) => prisma.account.create({ data: { userId: dono.id, unitId: UNIT, code, name: code, nature: 'Asset', acceptsEntries: true } });
     const custo = await conta('1.2.1');
     const dep = await conta('1.2.9');
