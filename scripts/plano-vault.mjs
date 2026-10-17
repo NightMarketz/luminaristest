@@ -1,12 +1,10 @@
 #!/usr/bin/env node
 // Vault do plano (docs/plano/): gera o índice a partir do frontmatter das notas e checa a integridade.
 //   node scripts/plano-vault.mjs index [--stdout]
-//                                        → reescreve docs/plano/_INDEX.md e docs/plano/_ANCORAS.md
-//                                          (--stdout: imprime o _INDEX atual sem gravar — leitura em branch).
-//   node scripts/plano-vault.mjs check [--indice]
-//                                        → exit 1 se link [[x]] não resolve, frontmatter inválido ou
-//                                          dependência para nó inexistente; --indice também exige o índice
-//                                          em dia (só na main: PR não carrega o índice — dono, 16/10).
+//                                        → gera docs/plano/_INDEX.md e docs/plano/_ANCORAS.md na máquina
+//                                          (NÃO versionados — dono, 16/10; --stdout imprime o _INDEX sem gravar).
+//   node scripts/plano-vault.mjs check   → exit 1 se link [[x]] não resolve, frontmatter inválido ou
+//                                          dependência para nó inexistente.
 //   node scripts/plano-vault.mjs fold <NÓ> --pr <n> [--estado <e>]
 //                                        → grava estado/prs/atualizado (frontmatter + cabeçalho); NÃO reindexa.
 // Frontmatter: uma chave por linha, valor em JSON (JSON é YAML válido; o Obsidian lê como propriedade).
@@ -131,7 +129,7 @@ export function buildIndex(notes) {
   return { '_INDEX.md': out.join('\n') + '\n', '_ANCORAS.md': anc.join('\n') + '\n' };
 }
 
-export function check(vault = VAULT, { indice = false } = {}) {
+export function check(vault = VAULT) {
   let notes;
   try { notes = loadVault(vault); } catch (e) { return [`frontmatter: ${e.message}`]; }
   const errs = [];
@@ -159,19 +157,14 @@ export function check(vault = VAULT, { indice = false } = {}) {
       }
     }
   }
-  if (indice) for (const [name, content] of Object.entries(buildIndex(notes))) {
-    const p = join(vault, name);
-    const cur = existsSync(p) ? readFileSync(p, 'utf8').replace(/\r\n/g, '\n') : '';
-    if (cur !== content) errs.push(`docs/plano/${name} desatualizado — rode: node scripts/plano-vault.mjs index`);
-  }
   return errs;
 }
 
 const ESTADOS = [...OPEN, 'done', 'decided'];
 
 // Fold no próprio PR (OPS-005 / F-2.1): o frontmatter é a fonte; as linhas **Estado:**/**PRs:** do corpo
-// são reescritas a partir dele. Não regenera o índice: o PR leva só a nota, e o workflow plano-index da main
-// reindexa depois do merge — índice em todo PR era conflito em todo PR (dono, chat, 2026-10-16).
+// são reescritas a partir dele. Não regenera o índice: _INDEX/_ANCORAS não são versionados — cada um gera
+// na máquina com `index`; índice em todo PR era conflito em todo PR (dono, chat, 2026-10-16).
 export function fold(vault, id, { pr, estado, hoje = new Date().toISOString().slice(0, 10) }) {
   if (!Number.isInteger(pr) || pr <= 0) throw new Error('--pr <n> obrigatório (inteiro)');
   if (estado && !ESTADOS.includes(estado)) throw new Error(`estado "${estado}" inválido — use ${ESTADOS.join('|')}`);
@@ -207,7 +200,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       console.log('índice regenerado');
     }
   } else if (cmd === 'check') {
-    const errs = check(VAULT, { indice: process.argv.includes('--indice') });
+    const errs = check();
     for (const e of errs) console.error(e);
     console.log(errs.length ? `${errs.length} problema(s)` : 'vault íntegro');
     process.exit(errs.length ? 1 : 0);
@@ -218,7 +211,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       console.log(`fold ${fm.id}: estado=${fm.estado} prs=${fm.prs.join(',')}`);
     } catch (e) { console.error(e.message); process.exit(1); }
   } else {
-    console.error('uso: node scripts/plano-vault.mjs index [--stdout]|check [--indice]|fold <NÓ> --pr <n> [--estado <e>]');
+    console.error('uso: node scripts/plano-vault.mjs index [--stdout]|check|fold <NÓ> --pr <n> [--estado <e>]');
     process.exit(2);
   }
 }

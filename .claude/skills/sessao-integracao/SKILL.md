@@ -114,9 +114,9 @@ cd server && npx tsc --noEmit && npm run test:integration
 toca `docs/plano/`).
 
 **Vault do plano como superfície de conflito.** `docs/plano/_INDEX.md` e `_ANCORAS.md` são gerados
-("nunca edite à mão", `docs/plano/README.md`) e, desde 2026-10-16, **não entram em PR**: o workflow
-`plano-index` os regenera na `main` depois do merge. Branch que ainda os carregue → resolva tomando o lado do
-alvo (`git checkout <alvo> -- docs/plano/_INDEX.md docs/plano/_ANCORAS.md`), gate `check` exit 0. Conflito no frontmatter da **mesma nota** (dois
+("nunca edite à mão", `docs/plano/README.md`) e, desde 2026-10-16, **não são versionados** (`.gitignore`).
+Branch antiga que ainda os carregue → resolva com `git rm --cached docs/plano/_INDEX.md docs/plano/_ANCORAS.md`,
+gate `check` exit 0. Conflito no frontmatter da **mesma nota** (dois
 folds no mesmo nó) é superfície nova (regra 3). O fold já vem no PR do trabalho (`plano-vault.mjs fold`,
 desde 2026-10-07); se faltar, o relatório lista nó + merge — esta sessão não o escreve (regra 1).
 
