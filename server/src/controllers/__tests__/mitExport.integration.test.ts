@@ -7,7 +7,7 @@
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import logger from '@/lib/logger';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { PAYLOAD_ALLOWLIST } from '@/features/accounting/audit/auditCanonical';
 import { AVISOS_MIT_FIXOS } from '@/lib/mit';
 
@@ -16,19 +16,22 @@ const UNIT = 'unit-x9-pr2';
 const BASE = '/api/accounting/mit-exports';
 const CPF = '52998224725';
 const CNPJ = '12345678000195';
-type Dono = { id: string; username: string };
+type Dono = { id: string; username: string; unitId: string };
 
 let seq = 0;
 async function novoDono(regime: string, extra: Record<string, unknown> = {}, opts: { contador?: 'vivo' | 'arquivado' | 'nenhum' } = {}): Promise<Dono> {
   seq += 1;
   const u = await prisma.user.create({ data: { name: `x9p2-${seq}`, username: `x9p2-${seq}`, email: `x9p2-${seq}@test.local`, password: 'x', role: 'USER' } });
+  // I6: unitId tem de ser linha de `units` do dono — id GLOBAL, então cada dono ganha a sua.
+  const unitId = `${UNIT}-${seq}`;
+  await seedUnit({ userId: u.id, id: unitId });
   const modo = opts.contador ?? 'vivo';
   const contato =
     modo === 'nenhum'
       ? null
       : await prisma.accountingContact.create({
           data: {
-            userId: u.id, unitId: UNIT, name: 'Contadora', email: 'contadora@escritorio.com.br', cpf: CPF, phone: '11987654321',
+            userId: u.id, unitId, name: 'Contadora', email: 'contadora@escritorio.com.br', cpf: CPF, phone: '11987654321',
             crcNumber: 'SP-123456/O-3', crcUf: 'SP', deletedAt: modo === 'arquivado' ? new Date() : null,
           },
         });
@@ -38,13 +41,13 @@ async function novoDono(regime: string, extra: Record<string, unknown> = {}, opt
       declarante: { cnpj: CNPJ }, contadorContactId: contato?.id ?? null, ...extra,
     },
   });
-  return u;
+  return { ...u, unitId };
 }
 
 async function apuracao(dono: Dono, tributo: 'IRPJ' | 'CSLL', periodo: string, aPagarCents: bigint, extra: Record<string, unknown> = {}) {
   return prisma.taxAssessment.create({
     data: {
-      userId: dono.id, unitId: UNIT, anoCalendario: 2026, tributo, regime: 'PRESUMIDO', forma: 'TRIMESTRAL', periodo, modo: 'PRESUMIDO',
+      userId: dono.id, unitId: dono.unitId, anoCalendario: 2026, tributo, regime: 'PRESUMIDO', forma: 'TRIMESTRAL', periodo, modo: 'PRESUMIDO',
       codigoReceita: tributo === 'IRPJ' ? '208901' : '237201', baseCents: 0n, devidoCents: aPagarCents, deducoesCents: 0n, aPagarCents,
       memoria: [], tabelaVersao: 't', status: 'CONFIRMED', confirmedById: dono.id, confirmedAt: new Date(), ...extra,
     },
@@ -52,8 +55,8 @@ async function apuracao(dono: Dono, tributo: 'IRPJ' | 'CSLL', periodo: string, a
 }
 
 const gerar = (dono: Dono, mes = 3, extra: Record<string, unknown> = {}) =>
-  request(app).post(BASE).set(authHeader(dono)).send({ unitId: UNIT, anoCalendario: 2026, mes, ...extra });
-const listar = (dono: Dono) => request(app).get(BASE).set(authHeader(dono)).query({ unitId: UNIT, anoCalendario: 2026 });
+  request(app).post(BASE).set(authHeader(dono)).send({ unitId: dono.unitId, anoCalendario: 2026, mes, ...extra });
+const listar = (dono: Dono) => request(app).get(BASE).set(authHeader(dono)).query({ unitId: dono.unitId, anoCalendario: 2026 });
 
 describe('X9 PR-2 — arquivo do MIT: geração, registro, auditoria e defasagem', () => {
   beforeAll(async () => {
@@ -124,7 +127,7 @@ describe('X9 PR-2 — arquivo do MIT: geração, registro, auditoria e defasagem
   describe('17 (f) recusas, na ordem do item 10', () => {
     it('perfil do ano ausente ⇒ 400', async () => {
       const dono = await novoDono('PRESUMIDO');
-      const res = await request(app).post(BASE).set(authHeader(dono)).send({ unitId: UNIT, anoCalendario: 2027, mes: 3 });
+      const res = await request(app).post(BASE).set(authHeader(dono)).send({ unitId: dono.unitId, anoCalendario: 2027, mes: 3 });
       expect(res.status).toBe(400);
     });
 
@@ -171,7 +174,7 @@ describe('X9 PR-2 — arquivo do MIT: geração, registro, auditoria e defasagem
     const dono = await novoDono('PRESUMIDO');
     expect((await gerar(dono, 3, { extra: 1 })).status).toBe(400);
     expect((await gerar(dono, 13)).status).toBe(400);
-    const r = await request(app).get(BASE).set(authHeader(dono)).query({ unitId: UNIT, anoCalendario: 2024 });
+    const r = await request(app).get(BASE).set(authHeader(dono)).query({ unitId: dono.unitId, anoCalendario: 2024 });
     expect(r.status).toBe(400);
   });
 

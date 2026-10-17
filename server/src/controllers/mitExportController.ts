@@ -2,7 +2,6 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import { MitExportListQuerySchema, MitExportRequestSchema } from '../features/accounting/dtos/MitExportDto';
 
 /**
@@ -18,7 +17,7 @@ export const createMitExport = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const b = MitExportRequestSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await getFactory().getMitExportService().gerar(resolveAccountingScopeInternal(user, b.data.unitId), b.data);
+    const data = await getFactory().getMitExportService().gerar(await getFactory().getAccountingScopeResolver().resolve(user, b.data.unitId, { access: 'write' }), b.data);
     return res.status(201).json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -32,7 +31,7 @@ export const listMitExports = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const q = MitExportListQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    const data = await getFactory().getMitExportService().list(resolveAccountingScopeInternal(user, q.data.unitId), q.data);
+    const data = await getFactory().getMitExportService().list(await getFactory().getAccountingScopeResolver().resolve(user, q.data.unitId, { access: 'read' }), q.data);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);

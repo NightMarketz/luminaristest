@@ -2,7 +2,6 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import {
   CancelFiscalDocumentSchema,
   EmitFiscalDocumentSchema,
@@ -42,7 +41,7 @@ export const previewFiscalDocument = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const body = PreviewFiscalDocumentSchema.safeParse(req.body);
     if (!body.success) return res.status(400).json({ success: false, error: body.error.flatten() });
-    const scope = resolveAccountingScopeInternal(user, body.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, body.data.unitId, { access: 'read' });
     const data = await getFactory().getFiscalDocumentEmissionService().preview(scope, body.data.saleId, body.data.kind);
     return res.json({ success: true, data });
   } catch (error) {
@@ -56,7 +55,7 @@ export const emitFiscalDocument = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const body = EmitFiscalDocumentSchema.safeParse(req.body);
     if (!body.success) return res.status(400).json({ success: false, error: body.error.flatten() });
-    const scope = resolveAccountingScopeInternal(user, body.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, body.data.unitId, { access: 'write' });
     const data = await getFactory().getFiscalDocumentEmissionService().emit(scope, body.data.saleId, body.data.kind);
     return res.json({ success: true, data });
   } catch (error) {
@@ -70,7 +69,7 @@ export const listFiscalDocuments = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const query = FiscalDocumentListQuerySchema.safeParse(req.query);
     if (!query.success) return res.status(400).json({ success: false, error: query.error.flatten() });
-    const scope = resolveAccountingScopeInternal(user, query.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, query.data.unitId, { access: 'read' });
     const data = await getFactory()
       .getFiscalDocumentEmissionService()
       .list(scope, { saleId: query.data.saleId, status: query.data.status, pendencias: query.data.pendencias });
@@ -88,7 +87,7 @@ export const getFiscalDocument = async (req: Request, res: Response) => {
     const query = FiscalDocumentScopeQuerySchema.safeParse(req.query);
     if (!params.success) return res.status(400).json({ success: false, error: params.error.flatten() });
     if (!query.success) return res.status(400).json({ success: false, error: query.error.flatten() });
-    const scope = resolveAccountingScopeInternal(user, query.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, query.data.unitId, { access: 'read' });
     const data = await getFactory().getFiscalDocumentEmissionService().getById(scope, params.data.id);
     return res.json({ success: true, data });
   } catch (error) {
@@ -106,7 +105,7 @@ export const consultarFiscalDocument = async (req: Request, res: Response) => {
     const body = FiscalDocumentActionBodySchema.safeParse(req.body);
     if (!params.success) return res.status(400).json({ success: false, error: params.error.flatten() });
     if (!body.success) return res.status(400).json({ success: false, error: body.error.flatten() });
-    const scope = resolveAccountingScopeInternal(user, body.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, body.data.unitId, { access: 'write' });
     const data = await getFactory().getFiscalDocumentLifecycleService().consultarUm(scope, params.data.id);
     return res.json({ success: true, data });
   } catch (error) {
@@ -122,7 +121,7 @@ export const reenviarFiscalDocument = async (req: Request, res: Response) => {
     const body = FiscalDocumentActionBodySchema.safeParse(req.body);
     if (!params.success) return res.status(400).json({ success: false, error: params.error.flatten() });
     if (!body.success) return res.status(400).json({ success: false, error: body.error.flatten() });
-    const scope = resolveAccountingScopeInternal(user, body.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, body.data.unitId, { access: 'write' });
     const data = await getFactory().getFiscalDocumentLifecycleService().reenviar(scope, params.data.id);
     return res.json({ success: true, data });
   } catch (error) {
@@ -138,7 +137,7 @@ export const cancelarFiscalDocument = async (req: Request, res: Response) => {
     const body = CancelFiscalDocumentSchema.safeParse(req.body);
     if (!params.success) return res.status(400).json({ success: false, error: params.error.flatten() });
     if (!body.success) return res.status(400).json({ success: false, error: body.error.flatten() });
-    const scope = resolveAccountingScopeInternal(user, body.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, body.data.unitId, { access: 'write' });
     const data = await getFactory()
       .getFiscalDocumentLifecycleService()
       .cancelar(scope, params.data.id, { cMotivo: body.data.cMotivo, xMotivo: body.data.xMotivo });
@@ -157,7 +156,7 @@ export const substituirFiscalDocument = async (req: Request, res: Response) => {
     const body = SubstituirFiscalDocumentSchema.safeParse(req.body);
     if (!params.success) return res.status(400).json({ success: false, error: params.error.flatten() });
     if (!body.success) return res.status(400).json({ success: false, error: body.error.flatten() });
-    const scope = resolveAccountingScopeInternal(user, body.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, body.data.unitId, { access: 'write' });
     const data = await getFactory()
       .getFiscalDocumentLifecycleService()
       .substituir(scope, params.data.id, { cMotivo: body.data.cMotivo, ...(body.data.xMotivo ? { xMotivo: body.data.xMotivo } : {}) });
@@ -216,7 +215,7 @@ export const retornoManualFiscalDocument = async (req: Request, res: Response) =
     if (!body.success) return res.status(400).json({ success: false, error: body.error.flatten() });
     const xml = uploaded(req, 'file');
     if (!xml) return res.status(400).json({ success: false, error: 'Envie o XML da NFS-e autorizada no campo "file".' });
-    const scope = resolveAccountingScopeInternal(user, body.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, body.data.unitId, { access: 'write' });
     const data = await getFactory().getFiscalDocumentLifecycleService().retornoManual(scope, params.data.id, xml, uploaded(req, 'pdf'));
     return res.json({ success: true, data });
   } catch (error) {
@@ -233,7 +232,7 @@ export const rejeicaoManualFiscalDocument = async (req: Request, res: Response) 
     const body = RejeicaoManualSchema.safeParse(req.body);
     if (!params.success) return res.status(400).json({ success: false, error: params.error.flatten() });
     if (!body.success) return res.status(400).json({ success: false, error: body.error.flatten() });
-    const scope = resolveAccountingScopeInternal(user, body.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, body.data.unitId, { access: 'write' });
     const data = await getFactory().getFiscalDocumentLifecycleService().rejeicaoManual(scope, params.data.id, body.data.errors);
     return res.json({ success: true, data });
   } catch (error) {
@@ -260,7 +259,7 @@ export const cancelamentoManualFiscalDocument = async (req: Request, res: Respon
     if (!body.success) return res.status(400).json({ success: false, error: body.error.flatten() });
     const xml = uploaded(req, 'file');
     if (!xml) return res.status(400).json({ success: false, error: 'Envie o XML do evento de cancelamento no campo "file".' });
-    const scope = resolveAccountingScopeInternal(user, body.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, body.data.unitId, { access: 'write' });
     const data = await getFactory()
       .getFiscalDocumentLifecycleService()
       .cancelamentoManual(scope, params.data.id, { cMotivo: body.data.cMotivo, xMotivo: body.data.xMotivo }, xml);
@@ -279,7 +278,7 @@ export const getFichaFiscalDocument = async (req: Request, res: Response) => {
     const query = FiscalDocumentScopeQuerySchema.safeParse(req.query);
     if (!params.success) return res.status(400).json({ success: false, error: params.error.flatten() });
     if (!query.success) return res.status(400).json({ success: false, error: query.error.flatten() });
-    const scope = resolveAccountingScopeInternal(user, query.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, query.data.unitId, { access: 'read' });
     const data = await getFactory().getFiscalDocumentEmissionService().ficha(scope, params.data.id);
     return res.json({ success: true, data });
   } catch (error) {

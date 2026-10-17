@@ -10,15 +10,6 @@
   },
   {
     "type": "dependency",
-    "from": "src/controllers/fiscalDocumentController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/controllers/fixedAssetClassController.ts",
     "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
     "rule": {
@@ -29,78 +20,6 @@
   {
     "type": "dependency",
     "from": "src/controllers/fixedAssetController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/issBeneficioMunicipalController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/lalurController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/mitExportController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/nfeController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/productDestinationController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/simplesController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/spedController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/taxAssessmentController.ts",
     "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
     "rule": {
       "severity": "error",

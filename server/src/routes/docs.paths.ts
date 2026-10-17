@@ -2712,6 +2712,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/sped/qualif-assinante:
  *     get:
@@ -2731,6 +2733,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/sped/ecf/generate:
  *     post:
@@ -2809,6 +2812,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/sped/ecf/real/generate:
  *     post:
@@ -2904,6 +2909,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/closing/exercise:
  *     post:
@@ -3747,6 +3754,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/nfe/preview:
  *     post:
@@ -3773,6 +3782,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/nfe/sale:
  *     post:
@@ -3796,7 +3806,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/receivables:
  *     get:
@@ -4284,6 +4295,7 @@
  *         '200': { description: '{ rows: [{ codigo, descricao, tipo: E, tipoLanc?, vigencia: { de, ate } }] } or { rows: [{ codigo, descricao, tributo }] }' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/lalur/entries:
  *     get:
@@ -4303,6 +4315,7 @@
  *       responses:
  *         '200': { description: 'adjustment lines' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     post:
  *       summary: Register one adjustment line (validated against the Leiaute 12 catalog)
  *       description: >-
@@ -4326,7 +4339,8 @@
  *         '201': { description: 'the created line' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/lalur/entries/{id}:
  *     patch:
@@ -4344,7 +4358,8 @@
  *         '200': { description: 'the updated line' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/lalur/entries/{id}/archive:
  *     post:
@@ -4361,7 +4376,8 @@
  *       responses:
  *         '200': { description: 'the archived line (idempotent)' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/lalur/parte-b:
  *     get:
@@ -4375,6 +4391,7 @@
  *       responses:
  *         '200': { description: 'Parte B accounts' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     post:
  *       summary: Register a Parte B account (M010 - codCtaB + codTributo is the key)
  *       description: >-
@@ -4392,6 +4409,8 @@
  *         '201': { description: 'the created account' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/lalur/parte-b/{id}:
  *     patch:
@@ -4409,7 +4428,8 @@
  *         '200': { description: 'the updated account' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/lalur/parte-b/{id}/archive:
  *     post:
@@ -4427,7 +4447,8 @@
  *         '200': { description: 'the archived account (idempotent)' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/lalur/parte-b/movements:
  *     get:
@@ -4446,6 +4467,7 @@
  *       responses:
  *         '200': { description: 'movements' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     post:
  *       summary: Register an M410 movement (codTributo derived from the account; origem=user)
  *       description: >-
@@ -4463,7 +4485,8 @@
  *         '201': { description: 'the created movement' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/lalur/parte-b/movements/{id}:
  *     patch:
@@ -4481,7 +4504,8 @@
  *         '200': { description: 'the updated movement' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/lalur/parte-b/movements/{id}/archive:
  *     post:
@@ -4498,7 +4522,8 @@
  *       responses:
  *         '200': { description: 'the archived movement' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/lalur/parte-b/close:
  *     post:
@@ -4523,6 +4548,8 @@
  *         '200': { description: 'the closing with its materialized balances' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/lalur/parte-b/reopen:
  *     post:
@@ -4538,7 +4565,8 @@
  *         '200': { description: '{ year, quarter, reopened: true }' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/lalur/parte-b/balances:
  *     get:
@@ -4560,6 +4588,7 @@
  *         '200': { description: 'diagnostic' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  */
 
 /**
@@ -5596,6 +5625,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     put:
  *       summary: Create or replace the default destination of a product (idempotent; revives a cleared row)
  *       description: >-
@@ -5620,6 +5650,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/product-destinations/{productRef}:
  *     delete:
@@ -5635,7 +5667,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/service-fiscal-profiles:
  *     get:
@@ -5730,9 +5763,11 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     post:
  *       summary: Register a municipal ISS benefit
  *       description: >-
+ *         409: benefício sobreposto
  *         The benefit reduces the effective ISS percentage of the Simples bracket (art. 32 § 1º) and cannot
  *         result in less than 2% except for LC 116 subitems 7.02, 7.05 and 16.01 (art. 31 p.ú.). 409 when
  *         another benefit of the same Município overlaps in validity and services. Audited as
@@ -5760,7 +5795,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '409': { description: 'benefício sobreposto' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/iss-beneficios-municipais/{id}:
  *     get:
@@ -5774,9 +5810,10 @@
  *         '200': { description: 'IssBeneficioMunicipalView' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     put:
  *       summary: Replace a municipal ISS benefit (same body as POST)
+ *       description: "409: benefício sobreposto"
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -5786,8 +5823,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'benefício sobreposto' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *     delete:
  *       summary: Soft-delete a municipal ISS benefit
  *       tags: [Accounting]
@@ -5800,7 +5837,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/company-fiscal-profile/{ano}:
  *     get:
@@ -6093,6 +6131,7 @@
  *         '200': { description: '{ ok, faltantes, competenciaAlerta, payloads, tieOut }' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/nfe/dfe/documents:
  *     post:
@@ -6120,6 +6159,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *     get:
  *       summary: List fiscal documents (filter by saleId and/or status)
  *       tags: [Accounting]
@@ -6134,6 +6175,7 @@
  *         '400': { description: 'nem saleId nem status informados' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/nfe/dfe/documents/{id}:
  *     get:
@@ -6148,6 +6190,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/nfe/dfe/documents/{id}/consultar:
  *     post:
@@ -6169,6 +6212,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/nfe/dfe/documents/{id}/reenviar:
  *     post:
@@ -6190,11 +6235,14 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/nfe/dfe/documents/{id}/cancelar:
  *     post:
  *       summary: Cancel an AUTHORIZED document (item 29, Anexo II e101101)
  *       description: >-
+ *         409: OUT_OF_WINDOW (E0822) ou REJECTED pelo parceiro (código do fisco na mensagem)
  *         Só de status AUTHORIZED. Nunca toca a venda nem o razão. OUT_OF_WINDOW/REJECTED do
  *         parceiro viram 409 tipado; CANCELLED retira a proveniência anexada (F-DFE-18, soft-delete).
  *       tags: [Accounting]
@@ -6217,12 +6265,14 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '409': { description: 'OUT_OF_WINDOW (E0822) ou REJECTED pelo parceiro (código do fisco na mensagem)' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/nfe/dfe/documents/{id}/substituir:
  *     post:
  *       summary: Substitute an authorized NFS-e (BE-INCR-DFE-EVENTOS item 11, DPS with infDPS/subst)
  *       description: >-
+ *         409: DFE_STATUS_INVALIDO | DFE_SUBSTITUICAO_EXISTENTE | DFE_SUBST_FORA_DO_TETO | DFE_SUBST_NAO_SUPORTADA
  *         Cria o documento substituto (DPS nova com o grupo subst apontando a chave da original; Anexo I [113]-[116]).
  *         Quando a substituta é autorizada, a original vira CANCELLED na mesma transação (e105102 gerado pelo fisco).
  *         Fora do prazo do município configurado no perfil e cMotivo fora de 01/02 só gera aviso (E0050, nível 3).
@@ -6246,7 +6296,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '409': { description: 'DFE_STATUS_INVALIDO | DFE_SUBSTITUICAO_EXISTENTE | DFE_SUBST_FORA_DO_TETO | DFE_SUBST_NAO_SUPORTADA' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '422': { description: 'SUBSTITUICAO_BLOQUEADA — muda campo congelado por E0060/E0061' }
  *
  *   /api/nfe/dfe/documents/{id}/ficha:
@@ -6265,11 +6316,13 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/nfe/dfe/documents/{id}/retorno-manual:
  *     post:
  *       summary: Register the authorized NFS-e XML downloaded from the public portal (manual mode, item 11)
  *       description: >-
+ *         409: documento não é do modo manual ou não está SENT/PROCESSING
  *         Só documento do modo manual (partner=manual) em SENT/PROCESSING. O XML tem a assinatura conferida (E1630/E1634),
  *         é relido contra a DPS enviada e autoriza o documento. Identidade divergente (prestador, chave já usada, nota
  *         anterior ao documento, origem fora do portal) ⇒ 422 sem escrita. Conteúdo divergente ⇒ AUTHORIZED_DIVERGENT
@@ -6294,12 +6347,14 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '409': { description: 'documento não é do modo manual ou não está SENT/PROCESSING' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '422': { description: 'XML inválido, assinatura inválida ou identidade divergente' }
  *
  *   /api/nfe/dfe/documents/{id}/rejeicao-manual:
  *     post:
  *       summary: Register that the public portal rejected the data (manual mode, item 12)
+ *       description: "409: documento não é do modo manual ou não está SENT/PROCESSING"
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -6328,12 +6383,14 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '409': { description: 'documento não é do modo manual ou não está SENT/PROCESSING' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/nfe/dfe/documents/{id}/cancelamento-manual:
  *     post:
  *       summary: Register a cancellation done on the public portal, with the e101101 event XML (manual mode, item 13)
  *       description: >-
+ *         409: documento não é do modo manual ou não está autorizado
  *         Só documento do modo manual autorizado. O evento tem de cancelar esta chave (chNFSe) e o cMotivo tem de ser o
  *         do evento; o texto gravado é o do XML. Nunca toca a venda nem o razão; retira a proveniência.
  *       tags: [Accounting]
@@ -6357,7 +6414,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '409': { description: 'documento não é do modo manual ou não está autorizado' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '422': { description: 'evento inválido, de outra NFS-e ou com cMotivo diferente' }
  *
  *   /api/nfe/dfe/webhook/{partner}:
@@ -7230,6 +7288,7 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/tax-assessments:
  *     get:
@@ -7249,9 +7308,11 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     post:
  *       summary: Confirm the quarterly IRPJ/CSLL assessment (commit 1, X7 item 14)
  *       description: >-
+ *         409: TAX_ASSESSMENT_CAS, _ALREADY_CONFIRMED, _SUPERSEDES, _ORDER, _REGIME ou _STALE
  *         Recalcula e grava as 2 linhas (IRPJ, CSLL) numa tx com os gates - CAS do a pagar (409), um só CONFIRMED
  *         por período (409; substituir = supersedesIds), ordem dos trimestres (409), regime igual (409) - e trava
  *         a forma de apuração do ano. Substituir um trimestre marca SUPERSEDED os posteriores (reconfirmar).
@@ -7270,7 +7331,8 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '409': { description: 'TAX_ASSESSMENT_CAS, _ALREADY_CONFIRMED, _SUPERSEDES, _ORDER, _REGIME ou _STALE' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/tax-assessments/periodos:
  *     get:
@@ -7290,6 +7352,7 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/tax-assessments/pis-cofins/preview:
  *     post:
@@ -7312,12 +7375,14 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *         '409': { description: 'TAX_ASSESSMENT_ORDER' }
  *
  *   /api/accounting/tax-assessments/pis-cofins:
  *     post:
  *       summary: Confirm the monthly PIS/Cofins assessment (commit 1, X8 item 14)
  *       description: >-
+ *         409: TAX_ASSESSMENT_CAS, _ALREADY_CONFIRMED, _SUPERSEDES, _ORDER ou _STALE
  *         Recalcula e grava as 2 linhas (PIS, COFINS) numa tx com os gates - CAS do a pagar (409), um só CONFIRMED
  *         por (PJ, ano, tributo, mês) (409; substituir = supersedesIds), ordem sequencial dos meses (409). Substituir
  *         derruba os meses posteriores confirmados e os devolve em reconfirmar (BE-INCR-LEGAL-PARAMS PR-4); confirmar
@@ -7335,12 +7400,14 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '409': { description: 'TAX_ASSESSMENT_CAS, _ALREADY_CONFIRMED, _SUPERSEDES, _ORDER ou _STALE' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/mit-exports:
  *     post:
  *       summary: Generate the MIT import JSON file of a month (BE-INCR-MIT-EXPORT PR-2, X9 items 10-12)
  *       description: >-
+ *         409: MIT_LC224_LIMINAR
  *         Monta o arquivo JSON de importação do MIT (leiaute 1.0) do PA (ano, mês) a partir das apurações de
  *         IRPJ/CSLL confirmadas e registra a geração (hash + ids, sem conteúdo nem CPF). O arquivo só sai nesta
  *         resposta. 400 - perfil do ano ausente, SIMPLES/MEI, sem CNPJ do declarante, sem contador ativo. 409 -
@@ -7364,7 +7431,8 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '409': { description: 'MIT_LC224_LIMINAR' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '422': { description: 'MIT_NADA_A_EXPORTAR' }
  *     get:
  *       summary: List the MIT files generated in a year, with the staleness flag (X9 items 11-12)
@@ -7380,6 +7448,7 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/simples/historico/{competencia}:
  *     get:
@@ -7397,7 +7466,7 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     put:
  *       summary: Upsert pre-adoption monthly gross revenue and payroll (BE-INCR-SIMPLES-NACIONAL PR-2, X14 items 10-11)
  *       description: >-
@@ -7426,7 +7495,8 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/simples/segregacao/{competencia}:
  *     get:
@@ -7444,7 +7514,7 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     put:
  *       summary: Upsert the manual revenue segregation of a month (X14 item 12)
  *       description: >-
@@ -7481,11 +7551,14 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/simples/parcerias:
  *     post:
  *       summary: Create a salon partnership contract (X14 item 13 - Lei 12.592 art. 1º-A)
  *       description: >-
+ *         409: Outro contrato do profissional vigente no período
  *         Contrato salão-parceiro × profissional-parceiro. A cota do profissional sai da receita bruta do salão (§ 5º)
  *         nos itens de serviço feitos por ele, a partir da homologação (§ 8º). 409 - outro contrato do mesmo
  *         profissional vigente no período.
@@ -7513,7 +7586,8 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '409': { description: 'Outro contrato do profissional vigente no período' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *     get:
  *       summary: List the unit's partnership contracts (X14 item 13)
  *       tags: [Accounting]
@@ -7525,10 +7599,12 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/simples/parcerias/{id}:
  *     patch:
  *       summary: Update a partnership contract (X14 item 13)
+ *       description: "409: Outro contrato do profissional vigente no período"
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -7555,8 +7631,8 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'Outro contrato do profissional vigente no período' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *     delete:
  *       summary: Soft-delete a partnership contract (X14 item 13)
  *       tags: [Accounting]
@@ -7569,7 +7645,8 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/simples/apuracoes/{competencia}/calcular:
  *     post:
@@ -7597,6 +7674,7 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *         '422': { description: 'SIMPLES_REGRA_NAO_REGULAMENTADA' }
  *
  *   /api/accounting/simples/apuracoes/{competencia}:
@@ -7612,11 +7690,13 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/simples/apuracoes/{competencia}/das:
  *     put:
  *       summary: Register the official DAS and persist the assessment (X14 items 19-21)
  *       description: >-
+ *         409: A receita mudou depois do cálculo, ou registro concorrente
  *         Grava a apuração (SimplesApuracao) com o DAS oficial e provisiona D dedução da receita / C Simples a recolher
  *         pelo valor oficial. Novo registro na mesma competência substitui o anterior e estorna a provisão dele. O mesmo
  *         número e valor de novo só completa a provisão pendente. 400 - alerta bloqueante (TIEOUT_DIVERGENTE,
@@ -7644,7 +7724,8 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '409': { description: 'A receita mudou depois do cálculo, ou registro concorrente' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/simples/aliquotas/{competencia}:
  *     get:
@@ -7665,6 +7746,7 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/simples/registro-valores-a-receber:
  *     get:
@@ -7682,6 +7764,7 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/simples/creditos-incobraveis:
  *     post:
@@ -7708,7 +7791,8 @@ export {};
  *         '400': { description: 'Corpo inválido ou valor maior que o saldo a receber' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/simples/creditos-incobraveis/{id}:
  *     delete:
@@ -7723,7 +7807,8 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/simples/dasn-simei/{ano}:
  *     get:
@@ -7741,6 +7826,7 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     put:
  *       summary: Save the typed DASN-SIMEI field (X14 PR-4 item 27)
  *       tags: [Accounting]
@@ -7763,6 +7849,8 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/simples/defis/{ano}:
  *     get:
@@ -7782,6 +7870,7 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     put:
  *       summary: Save the typed DEFIS fields (X14 PR-4 item 28)
  *       tags: [Accounting]
@@ -7844,6 +7933,8 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/tax-assessments/{id}/provisao:
  *     post:
@@ -7877,7 +7968,8 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/tax-assessments/{id}:
  *     get:
@@ -7892,7 +7984,7 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/legal-parameters:
  *     get:
