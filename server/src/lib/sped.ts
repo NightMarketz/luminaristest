@@ -554,7 +554,7 @@ export function buildJ900(i: RegJ900Input): string {
 
 /**
  * J801 — Termo de Verificação para Fins de Substituição da ECD (7 campos). Manual ECD L9 pp.
- * 192-194 (transcrição `docs/accounting/BE-INCR-SPED-ECD-layout-transcription-J801-J932.md`).
+ * 193-195 (transcrição `docs/accounting/BE-INCR-SPED-ECD-layout-transcription-J801-J932.md`).
  * TIPO_DOC é sempre "001" (o único valor da tabela do campo 02 — o Anexo não descreve outro).
  * COD_MOT_SUBS: enum de 3 dígitos (001..005, 099 — dono 23/09, A4: valida pelo CONTEÚDO, não pelo
  * Tamanho "010" do manual, que a própria tabela de valores contradiz). HASH_RTF: 40 hex (dono
@@ -572,7 +572,7 @@ export interface RegJ801Input {
 
 /**
  * Tags que o PGE do Sped Contábil proíbe dentro de J801.ARQ_RTF (REGRA_REGISTRO_NAO_DEVE_
- * EXISTIR_NO_RTF, Manual ECD L9 p. 194, transcrição §1.5.III). A transcrição transcreve a regra
+ * EXISTIR_NO_RTF, Manual ECD L9 p. 195, transcrição §1.5.III). A transcrição transcreve a regra
  * como "verifica... se existem as tags" sem descrever o algoritmo de busca (substring vs.
  * ciente da gramática RTF) — grau INFERIDO: mantido como substring simples (comportamento
  * pré-existente) por não haver base na transcrição para outra escolha; se o PVA divergir
@@ -662,7 +662,7 @@ export function sanitizeRtfForSped(rtfText: string): string {
     if (normalized.includes(tag)) {
       throw new Error(
         `RTF_FORBIDDEN_TAG: o .rtf contém a tag proibida '${tag}' ` +
-          '(REGRA_REGISTRO_NAO_DEVE_EXISTIR_NO_RTF, Manual ECD L9 p. 194) — remova-a do texto antes de anexar.',
+          '(REGRA_REGISTRO_NAO_DEVE_EXISTIR_NO_RTF, Manual ECD L9 p. 195) — remova-a do texto antes de anexar.',
       );
     }
   }
@@ -693,7 +693,7 @@ export function buildJ801(i: RegJ801Input): string {
 
 /**
  * IDENT_QUALIF_T (J932 campo 04) — descrição fixa da Tabela de Qualificação do Assinante do
- * Termo (Manual ECD L9 p. 204). Só o código 910 está no escopo (dono 23/09: "920 fora do
+ * Termo (Manual ECD L9 p. 205). Só o código 910 está no escopo (dono 23/09: "920 fora do
  * escopo") — a descrição é DERIVADA aqui, nunca aceita do DTO (mesmo padrão F-C12-1 do J930/
  * `ecdIdentQualifParaEmissao`, para não deixar o campo 04 e o campo 05 divergirem por engano).
  */
@@ -714,7 +714,7 @@ export interface RegJ932Signer {
 
 /**
  * J932 — Signatários do Termo de Verificação para Fins de Substituição da ECD (11 campos).
- * Manual ECD L9 pp. 203-205. Ordem: REG, IDENT_NOM_T, IDENT_CPF_CNPJ_T, IDENT_QUALIF_T,
+ * Manual ECD L9 pp. 204-206. Ordem: REG, IDENT_NOM_T, IDENT_CPF_CNPJ_T, IDENT_QUALIF_T,
  * COD_ASSIN_T, IND_CRC_T, EMAIL_T, FONE_T, UF_CRC_T, NUM_SEQ_CRC_T, DT_CRC_T.
  */
 export function buildJ932(s: RegJ932Signer): string {

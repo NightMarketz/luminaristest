@@ -243,14 +243,14 @@ Achadas na leitura da spec antes do código (sessão de feature, regra 2). Respo
 Por regra do dono (07/10), **nada vai ao contador**. Fica só o oráculo que nenhuma leitura substitui:
 - **Gate humano X14-DAS** (RUNBOOK-FORMAT, agente prepara em branco): para N competências reais do 1º cliente, colar
   o DAS que o portal gerou e a apuração do sistema; desfecho e assinatura do dono.
-- **DEFIS depois de 2026**: a redação de 2027 do art. 25 torna a declaração mensal (inferência sobre o texto). O item
-  28 limita a DEFIS a anos ≤ 2026 até sair a regulamentação.
+- ~~**DEFIS depois de 2026**: a redação de 2027 do art. 25 torna a declaração mensal (inferência sobre o texto). O item
+  28 limita a DEFIS a anos ≤ 2026 até sair a regulamentação.~~ **Atualizado em 17/10/2026:** regulamentado. A Res. CGSN 190 revoga o art. 72 (art. 8º XXI) e põe as informações socioeconômicas do ano anterior no PGDAS-D de jan–mar (art. 38-B) [D16]. O limite do item 28 a anos ≤ 2026 continua certo. O veículo do AC 2026 é a ambiguidade A1 (§ "Estado legal verificado").
 
 ## 6. Insumos ausentes
 
-- **Res. CGSN 191/2026** e 184–190, 192 (compilação lida vai até a 183). Fonte: DOU.
+- ~~**Res. CGSN 191/2026** e 184–190, 192 (compilação lida vai até a 183). Fonte: DOU.~~ **Resolvido em 17/10/2026** (verificação legal, `pesquisas-legais/verif-2026-10-17-simples-mei/relatorio.md` [D15]–[D17]): 184–189, 191 e 193 não mudam o cálculo; a 190 muda o de 2027 (início de atividade, fator r, retenção no 2º mês, fim da DEFIS, fonte do SIMEI), aplicada no PR desta verificação. Seguem abertas: a 192 (não localizada) e o texto integral da 194 (ementa: prazos de opção de 2027).
 - **Regulamentação de 2027** (manual PGDAS-D com IBS/CBS; SIMEI com IBS/CBS, Anexo VII da LC 214 não lido).
-  Até lá, PR-4 implementa o SIMEI de 2026 e o cálculo ME/EPP 2027 pela LC 214 lida.
+  Até lá, PR-4 implementa o SIMEI de 2026 e o cálculo ME/EPP 2027 pela LC 214 lida. **Atualizado em 17/10/2026:** a Res. CGSN 190 regulamentou 2027 (início de atividade, fator r, retenção, fim do caixa, fim da DEFIS, Anexo XIII do SIMEI) [D16][D18]. O Anexo VII já estava lido (SIMEI-TAC-12). Segue não conferido: o manual do PGDAS-D de 2027.
 - **Leiaute da DPS para `pTotTribSN`** (B-4).
 - **Lei 12.592 no disco desta máquina**: o arquivo não está no checkout (o MANIFEST manda repor); os §§ citados vêm da
   leitura registrada no PRE-ADR (V em 29/09).
@@ -264,3 +264,24 @@ Por regra do dono (07/10), **nada vai ao contador**. Fica só o oráculo que nen
 2. `icmsContribuinte` forçado a `false` no Simples — no BRIEF do X10a (decisão 5 de 29/09).
 3. FE (`FE-INCR-SIMPLES`): telas de histórico, segregação, parceria, apuração/espelho, registro do DAS.
 4. Split payment × DAS (LC 123 art. 21 § 3º-A, red. 2027) — PRE-ADR do split.
+
+## Estado legal verificado em 17/10/2026
+
+Verificação legal de 17/10/2026, `pesquisas-legais/verif-2026-10-17-simples-mei/relatorio.md` (dossiê com as fontes [Dnn], hash e data). Correções no PR #759.
+
+- **Até 31/12/2026 o motor confere com a lei**: 312 tabelas dos Anexos I–V regeneradas do Planalto com 0 diferença [D12][D13]; limites, fator R de 28%, CPP do SIMEI, Anexo VII 2027–2033, salário mínimo 2026 [D21] e piso de 2% [D15].
+- **Res. CGSN 190/2026** (DOU 10/08/2026; efeitos em 01/01/2027, art. 9º) lida no Normas RFB [D16]: regula o que este documento tratava como "não regulamentado".
+  - RBT12 no início de atividade (art. 22 §§ 2º e 4º): 1º e 2º mês na 1ª faixa; do 3º ao 13º, a média × 12; do 14º, a regra geral. Fator r = 0,28 nos 2 primeiros meses (art. 26 § 6º). Era 422 `SIMPLES_REGRA_NAO_REGULAMENTADA`; corrigido no PR #759.
+  - Retenção de ISS: 2% no mês de início **e no seguinte** (art. 27 II); corrigido no PR #759.
+  - DEFIS: o art. 72 é revogado e entra o art. 38-B; o seed `sn7-obr-defis-simples` mantém o prazo de 31/03/2027 com a fonte nova.
+  - SIMEI: o art. 101 II/III é revogado; para 2027–2028 valem o art. 101 IV/V e o Anexo XIII, com o mesmo valor (`sn7-simei-icms/iss-2027`).
+  - Já correto para 2027: janela M−13…M−2, retenção pela faixa do mês da prestação, fim do regime de caixa e opção semestral pelo IBS/CBS.
+- **Res. CGSN 191/2026** lida [D17]: NFS-e nacional obrigatória para ME/EPP desde 01/11/2026 (art. 3º I); revoga a 189; não mexe no cálculo nem no Anexo XI (sha256 do id 81177 idêntico ao seed [D20]).
+- Res. 184–189 e 193: não mudam o cálculo ([D04]–[D09] para 185–189 e 193). **Abertas:** a 192 (não localizada) e o texto integral da 194 (ementa: prazos de opção de 2027).
+
+**Ambiguidades abertas (não decididas aqui):**
+
+- **A1 — DEFIS do ano-calendário 2026 (aberta).** O art. 72 é revogado em 01/01/2027 (Res. CGSN 190 art. 8º XXI), antes do prazo de 31/03/2027, e o art. 38-B manda prestar no PGDAS-D de jan–mar as informações do ano anterior [D16]. Pode ser a DEFIS de 2026 ou o PGDAS-D de jan–mar/2027; o prazo e o conteúdo são os mesmos. O seed mantém o espelho anual com prazo de 31/03/2027 (`sn7-obr-defis-simples`). Pergunta ao contador: "A declaração socioeconômica do AC 2026 será feita na DEFIS ou no PGDAS-D de jan–mar/2027 (art. 38-B)?"
+- **A2 — Anexo I, 6ª faixa, de 2029 em diante (aberta).** A LC 214 Anexo XVIII traz 19,00% [D12]; o Anexo I da Res. 190 traz 18,90% [D19]. O projeto segue a lei (hierarquia). Se o PGDAS-D cobrar 18,90%, o DAS oficial diverge do espelho; o efeito fica limitado a revenda com RBT12 acima de R$ 3,6 mi.
+- **A3 — MEI 2027–2028, CBS R$ 0,994 / IBS R$ 0,006 × art. 45-A (aberta).** O art. 45-A (incl. Res. 190) arredonda os valores do DAS a 2 casas, com mínimo de R$ 0,01 [D16]. O projeto guarda milésimos e arredonda só o total (F-TAC-7). O total é o mesmo nas duas leituras (R$ 7,00); as linhas por tributo seriam R$ 0,99 e R$ 0,01.
+- **A4 — teto do ISS na 6ª faixa, de 2029 em diante (aberta, inferida).** A lei manda o excesso "aos tributos federais e IBS"; a repartição da 6ª faixa não tem coluna de IBS (o IBS sai pela fórmula da 5ª, Res. 190 art. 21 IV). O código reparte só entre os federais.

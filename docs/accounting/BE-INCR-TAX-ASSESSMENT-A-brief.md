@@ -419,7 +419,7 @@ type ParametroApuracao = {
 | P-4 | Regra de arredondamento (F-TA-2) | sem fonte primária encontrada | PVA (H1/X5) + contador |
 | P-5 | Contas de provisão, código referencial e o lançamento que baixa as retenções contra o "a recolher" | ADR §9 item 3; a provisão desta fase é pelo **devido** bruto | contador |
 | P-6 | "Demais receitas" do Presumido (Lei 9.430 art. 25 II; IN 1.700 art. 216) | o mapa só cobre 3.1/3.3; o gate continua recusando (400) | contador |
-| P-7 | Serviço com percentual diferente de 32% (hospitalar, transporte etc.) | a conta 3.1 assume "serviço em geral" (Lei 9.249 art. 15 § 1º III a) | contador, por cliente |
+| P-7 | Serviço com percentual diferente de 32% (hospitalar, transporte etc.) | a conta 3.1 assume "serviço em geral" (Lei 9.249 art. 15 § 1º III a) | contador, por cliente **[ATUALIZAÇÃO 17/10 — verificação legal IRPJ/CSLL, `pesquisas-legais/verif-2026-10-17-irpj-csll-correcoes/`]** a IN RFB 2.343/2026 (DOU 18/09/2026, vigente na publicação, art. 3º) reescreveu o art. 33 da IN 1.700: § 1º II a passa a listar serviços hospitalares, auxílio diagnóstico e terapia, **fisioterapia, terapia ocupacional, fonoaudiologia**, patologia clínica, imagenologia, radiologia, anatomia patológica e citopatologia, medicina nuclear, análises clínicas, exames por métodos gráficos, procedimentos endoscópicos, radioterapia, quimioterapia, diálise, oxigenoterapia hiperbárica e **anestesiologia**, sempre com prestadora em **sociedade empresária** que atenda às normas da Anvisa; § 4º I exclui a sociedade simples e o empresário individual; § 4º IV exclui a consulta médica simples; § 4º V exclui a cessão de mão de obra médica a hospital; os incisos II e III do § 4º foram revogados (art. 2º). Efeito no vertical clínica: a clínica **estética** não está na lista; uma clínica com fisioterapia, fonoaudiologia ou procedimento listado, organizada como sociedade empresária e regular na Anvisa, pode cair em 8% (IRPJ) / 12% (CSLL) **só na receita desses serviços**. O P-7 segue como recusa (nada do 8% é implementado); a pergunta ao contador deve citar a redação da IN 2.343 e pedir, por cliente, o tipo societário, a situação na Anvisa e a parcela da receita de cada serviço listado. Texto lido no acervo ctresb/leis (publicação original da IN 2.343; a compilada da IN 1.700 no Sijut é a mesma de 09/10). |
 | P-8 | O MIT aceita a tabela de códigos da DCTF | ADR §9 item 2 (**I**) | 1ª importação no MIT (X9) |
 | P-9 | Oráculo do número: 1ª apuração X7 × PVA × contador | gate humano (RUNBOOK-FORMAT). O agente prepara o passo em branco no runbook H1/X5; não preenche, não marca desfecho, não assina | dono |
 | P-10 | Irretratabilidade do regime Presumido no ano | a trava do item 1 é consistência interna; a lei que a sustenta não foi relida nesta sessão | contador |
@@ -465,3 +465,14 @@ type ParametroApuracao = {
   planejamento.
 - **Fonte legível:** a LC 224 entrou com leitura detalhada porque a IN estava acessível. A regra de quotas e a do
   saldo negativo trimestral ficaram como I, porque não as reli.
+
+## Estado legal verificado em 17/10/2026 (verificação legal IRPJ/CSLL)
+
+Fonte: `pesquisas-legais/verif-2026-10-17-irpj-csll/relatorio.md` (PR #754; as [Dnn] são dele). Correções desta frente
+estão em `pesquisas-legais/verif-2026-10-17-irpj-csll-correcoes/relatorio.md` ([Cnn] = Dnn desse dossiê).
+- **LC 224/2025:** vale como está. A LC 235/2026 art. 11 só alterou o art. 4º § 8º V (entidades sem fins lucrativos),
+  e o art. 1º dela afasta o art. 5º em 2026 [D20]. Nenhuma das 13 LC de 2026 toca os §§ 4º–5º nem o art. 7º [D01, D19, D20].
+- **IN RFB 1.700/2017:** a última alteração é a IN 2.343/2026, vigente desde 18/09/2026 [D18]; a multivigente do Sijut
+  tem o mesmo sha de 09/10 (`faa47fa1…`) [D15]. A IN 2.305/2025 teve a última alteração pela IN 2.307 [D14].
+- **ECF:** o leiaute 13 (AC 2026) **ainda não saiu**; a página do SPED lista o leiaute 12 como o mais recente [D21].
+- **Item 8/10 (adicional):** corrigido em 17/10 — limite × meses do trimestre em atividade, não ×3 fixo [D02; C03]. **P-7:** ver a atualização da IN 2.343 na própria linha [D18; C04].

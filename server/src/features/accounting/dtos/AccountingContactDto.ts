@@ -21,7 +21,7 @@ import { isValidCpf, stripCpfMask } from '../../../lib/cpf';
  *
  * **Máscara em TODOS os campos de identidade** (decisão do dono 2026-09-10, cédula §6, F13 —
  * "pode fazer máscara em todos os campos"): `cpf` com dígitos verificadores, `crcNumber` no
- * formato do CFC normalizado para `UF-NNNNNN/O-D` (+ sufixo ` T-UF`/` S-UF` do transferido/secundário) **e cruzado com `crcUf`**, `phone` só dígitos,
+ * formato do CFC normalizado para `UF-NNNNNN/O-D` (+ sufixo ` T-UF` do transferido) **e cruzado com `crcUf`**, `phone` só dígitos,
  * `crcUf` enum da Tabela de UF, `crcCertificate` `UF/AAAA/NÚMERO`, `crcCertificateValidUntil`
  * date-only real. Fontes: Manual do Leiaute 9 da ECD (J930 03/06/08/09/10/11) e Manual de
  * Registro do Sistema CFC/CRCs (formato do número do CRC).
@@ -96,7 +96,7 @@ function refineCrcUfMatches(
  *         email:     { type: string, format: email, description: "Canal de contato; o ENVIO é do dono (F-CD1-a, zero credencial no servidor)" }
  *         cpf:       { type: string, description: "J930 campo 03 IDENT_CPF_CNPJ — 11 dígitos com DV; máscara aceita e removida" }
  *         phone:     { type: string, description: "J930 campo 08 FONE — 10 ou 11 dígitos com DDD; máscara aceita e removida" }
- *         crcNumber: { type: string, description: "J930 campo 06 IND_CRC no formato do CFC UF-NNNNNN/O-D, transferido/secundário com sufixo (SP-123456/O-3 T-MG); grafias usuais aceitas e normalizadas; crcUf tem de ser a UF de origem ou a do sufixo" }
+ *         crcNumber: { type: string, description: "J930 campo 06 IND_CRC no formato do CFC UF-NNNNNN/O-D, transferido com sufixo (SP-123456/O-3 T-MG); grafias usuais aceitas e normalizadas; crcUf tem de ser a UF de origem ou a do sufixo" }
  *         crcUf:     { type: string, description: "J930 campo 09 UF_CRC — sigla da UF que expediu o CRC (Tabela de UF)" }
  *         crcCertificate: { type: string, description: "J930 campo 10 NUM_SEQ_CRC — Certidão de Regularidade Profissional no formato UF/AAAA/NÚMERO" }
  *         crcCertificateValidUntil: { type: string, description: "J930 campo 11 DT_CRC — data-only YYYY-MM-DD de validade da certidão" }
@@ -129,7 +129,7 @@ export const RegisterContactSchema = z
  *         email:     { type: string, format: email }
  *         cpf:       { type: string, description: "11 dígitos com DV" }
  *         phone:     { type: string, nullable: true, description: "10-11 dígitos — null LIMPA" }
- *         crcNumber: { type: string, description: "UF-NNNNNN/O-D (CFC); transferido/secundário: + ' T-UF'/' S-UF'" }
+ *         crcNumber: { type: string, description: "UF-NNNNNN/O-D (CFC); transferido: + ' T-UF'" }
  *         crcUf:     { type: string, description: "Sigla da UF (Tabela de UF)" }
  *         crcCertificate: { type: string, nullable: true, description: "UF/AAAA/NÚMERO — null LIMPA a certidão" }
  *         crcCertificateValidUntil: { type: string, nullable: true, description: "Data-only YYYY-MM-DD — null LIMPA a validade" }

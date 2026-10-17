@@ -66,7 +66,6 @@ export interface ResultadoApuracao {
   tabelaVersao: string;
 }
 
-const MESES_TRIMESTRE = 3n;
 
 // ─── helpers ────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -89,6 +88,27 @@ export function trimestresEmAtividade(ano: number, inicioAtividadeEm: string | n
     const qIni = `${ano}-${String(q * 3 - 2).padStart(2, '0')}-01`;
     return qIni <= fim && fimDoTrimestre(ano, p) >= ini;
   });
+}
+
+/**
+ * Lei 9.249/1995 art. 3º § 1º: meses do período de apuração = meses do trimestre que tocam [início, encerramento] de
+ * atividade. Premissa (A6, leitura mais segura): o mês fracionado conta inteiro, como no anual (`mesesEmAtividade`).
+ * Trimestre fora da atividade ⇒ 400 (F-TA-4 b).
+ */
+export function mesesDoTrimestreEmAtividade(
+  ano: number,
+  periodo: PeriodoTrimestral,
+  perfil: { inicioAtividadeEm: string | null; encerramentoAtividadeEm: string | null },
+): bigint {
+  const ini = perfil.inicioAtividadeEm ?? `${ano}-01-01`;
+  const fim = perfil.encerramentoAtividadeEm ?? `${ano}-12-31`;
+  const q = indice(periodo);
+  const meses = [q * 3 - 2, q * 3 - 1, q * 3].filter((m) => {
+    const mm = String(m).padStart(2, '0');
+    return `${ano}-${mm}-01` <= fim && new Date(Date.UTC(ano, m, 0)).toISOString().slice(0, 10) >= ini;
+  }).length;
+  if (meses === 0) throw new ValidationError(`${periodo}/${ano} está fora do período de atividade da PJ (F-TA-4 b).`);
+  return BigInt(meses);
 }
 
 export function valorLinha(memoria: MemoriaLinha[], codigo: string, periodo: string): bigint {
@@ -317,6 +337,7 @@ function basePresumido(
   excedente: bigint,
   suspenso: boolean,
   aliqCsll: { valor: number; fonte: string },
+  meses: bigint, // Lei 9.249 art. 3º § 1º: meses do trimestre em atividade
   reduzida16?: ParametroApuracao, // PRESUMIDO-16 item 2: substitui a presunção de serviço do IRPJ
 ): { baseCents: bigint; devidoCents: bigint; memoria: MemoriaLinha[] } {
   const receita = receitaServico + receitaRevenda;
@@ -340,12 +361,12 @@ function basePresumido(
     linha('LC224_ACRESCIMO_REVENDA', `Parcela excedente da revenda (${excRevenda} centavos) × ${pR.valor / 100}% × ${acrescimo / 100}%`, acrR, `${fonteAcr}; IN RFB 2.305/2025 art. 15 §§ 1º II e 6º`),
     linha('BASE', 'Base de cálculo', base, 'Lei 9.430/1996 art. 25 I'),
   ];
-  const imposto = impostoSobreBase(t, tributo, dataFim, base, aliqCsll);
+  const imposto = impostoSobreBase(t, tributo, dataFim, base, aliqCsll, meses);
   return { baseCents: base, devidoCents: imposto.devidoCents, memoria: [...memoria, ...imposto.memoria] };
 }
 
 /**
- * IRPJ = 15% + adicional de 10% sobre o que exceder R$ 20.000 × `meses` (D7: 3 no trimestre; Fase B: 1 na estimativa,
+ * IRPJ = 15% + adicional de 10% sobre o que exceder R$ 20.000 × `meses` (D7: os meses em atividade no trimestre; Fase B: 1 na estimativa,
  * n no balancete, os meses em atividade no ajuste); CSLL = alíquota do perfil (D8). `codigoDevido` = código da linha
  * do devido (o balancete grava `DEVIDO_PERIODO_EM_CURSO`, Fase B item 8).
  */
@@ -355,7 +376,7 @@ export function impostoSobreBase(
   dataFim: string,
   base: bigint,
   aliqCsll: { valor: number; fonte: string } | null,
-  meses: bigint = MESES_TRIMESTRE,
+  meses: bigint,
   codigoDevido = 'DEVIDO',
 ): { devidoCents: bigint; memoria: MemoriaLinha[] } {
   if (tributo === 'CSLL') {
@@ -428,7 +449,8 @@ function diferencaPostergada16Trimestral(e: EntradaPresumido): { total: bigint; 
   for (const a of trimestres) {
     const dataFimK = fimDoTrimestre(e.ano, a.periodo);
     const pS = linhaVigente(e.tabela, 'PRESUNCAO_IRPJ', dataFimK, 'SERVICO')!;
-    const devido32 = impostoSobreBase(e.tabela, 'IRPJ', dataFimK, mulBp(receitaServicoDaMemoria(a.memoria, a.periodo), pS.valor), null).devidoCents;
+    const mesesK = mesesDoTrimestreEmAtividade(e.ano, a.periodo, e.perfil);
+    const devido32 = impostoSobreBase(e.tabela, 'IRPJ', dataFimK, mulBp(receitaServicoDaMemoria(a.memoria, a.periodo), pS.valor), null, mesesK).devidoCents;
     const devido = valorLinha(a.memoria, 'DEVIDO', a.periodo);
     total += devido32 - devido;
     linhas.push(
@@ -488,7 +510,8 @@ export function apurarPresumidoTrimestral(e: EntradaPresumido): ResultadoApuraca
       linha('LC224_SUSPENSO', `Acréscimo da LC 224 suspenso por liminar (processo ${e.perfil.lc224LiminarReferencia ?? '—'}); limite e sobra continuam contados`, 0n, 'F-TA-5 (a) — chave do perfil fiscal da empresa'),
     );
   }
-  const calc = basePresumido(e.tabela, e.tributo, dataFim, servico, e.receitaRevendaCents, lc.excedenteCents, suspenso, aliqCsll, r16.reduzida16);
+  const meses = mesesDoTrimestreEmAtividade(e.ano, e.periodo, e.perfil);
+  const calc = basePresumido(e.tabela, e.tributo, dataFim, servico, e.receitaRevendaCents, lc.excedenteCents, suspenso, aliqCsll, meses, r16.reduzida16);
   memoria.push(...calc.memoria);
 
   // § 5º I-b / II-b: recalcula os trimestres anteriores com a parcela excedente' e deduz a diferença no T04.
@@ -505,6 +528,7 @@ export function apurarPresumidoTrimestral(e: EntradaPresumido): ResultadoApuraca
         r.excedenteCents,
         temLinha(a.memoria, 'LC224_SUSPENSO'), // o trimestre suspenso foi apurado (e é recalculado) sem acréscimo
         aliqCsll,
+        mesesDoTrimestreEmAtividade(e.ano, a.periodo, e.perfil),
       );
       acerto += valorLinha(a.memoria, 'DEVIDO', a.periodo) - recalc.devidoCents;
     }
@@ -538,7 +562,7 @@ export interface EntradaReal {
   linhasParteA: { codigo: string; valorCents: bigint }[];
   /** Existe `LalurParteBClosing` da unidade × ano × trimestre (mesma pré-condição da ECF). */
   parteBFechada: boolean;
-  perfil: { ecfIndAliqCsll: string | null; lucroRealObrigatorio: boolean | null };
+  perfil: { ecfIndAliqCsll: string | null; lucroRealObrigatorio: boolean | null; inicioAtividadeEm: string | null; encerramentoAtividadeEm: string | null };
   deducoes: DeducaoInformada[];
 }
 
@@ -572,7 +596,7 @@ export function apurarRealTrimestral(e: EntradaReal): ResultadoApuracao {
     memoria.push(linha('GUARDA_CIRCULARIDADE', 'guarda de circularidade sem contas configuradas', 0n, 'BRIEF X7 item 7'));
   }
   memoria.push(...ajustes.memoria);
-  const imposto = impostoSobreBase(e.tabela, e.tributo, dataFim, ajustes.base, aliqCsll);
+  const imposto = impostoSobreBase(e.tabela, e.tributo, dataFim, ajustes.base, aliqCsll, mesesDoTrimestreEmAtividade(e.ano, e.periodo, e.perfil));
   memoria.push(...imposto.memoria);
   return fecharComDeducoes(e.tributo, 'REAL_TRIMESTRAL', codigoReceita, ajustes.base, imposto.devidoCents, 0n, e.deducoes, memoria);
 }

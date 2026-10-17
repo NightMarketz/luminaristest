@@ -12,7 +12,7 @@ import { CASH_ACCOUNT_CODE_PREFIXES } from '../../services/CashFlowReportService
 
 /**
  * BE-INCR-PLANO-4-NIVEIS (L8 do RUNBOOK-H1; ADR-PLANO-CONTAS-4-NIVEIS) — itens 1, 2 e 3 do BRIEF.
- * Regra: Manual da ECD L9 (jan/2026) p. 119, REGRA_VALIDA_NIVEL_CONTAS — analítica de COD_NAT 01/02/03 com NIVEL ≥ 4.
+ * Regra: Manual da ECD L9 (maio/2026) p. 120, REGRA_VALIDA_NIVEL_CONTAS — analítica de COD_NAT 01/02/03 com NIVEL ≥ 4.
  */
 
 const segmentos = (code: string) => code.split('.').length;

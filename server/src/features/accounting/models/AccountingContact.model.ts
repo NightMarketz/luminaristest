@@ -10,9 +10,9 @@
  *
  * ── O CRC não é um campo, são quatro ──────────────────────────────────────────────────────────
  * FONTE: **Manual de Orientação do Leiaute 9 da ECD** (Anexo ao Ato Declaratório Executivo Cofis
- * nº 01/2026, atualização de janeiro de 2026), **registro J930 — Signatários da Escrituração**,
- * campos 06, 09, 10 e 11 (p. 199-201) e as respectivas regras de validação (p. 204-205).
- * Disponível em <http://sped.rfb.gov.br/arquivo/show/7990>.
+ * nº 01/2026, **atualização de maio de 2026**, sha256 12 `bc63f0a893ce` — D-2026-10-17-MANUAL-ECD-L9-MAIO), **registro J930 — Signatários da Escrituração**,
+ * campos 06, 09, 10 e 11 (pp. 200-201) e as respectivas regras de validação (pp. 202-203).
+ * Disponível na página de manuais <http://sped.rfb.gov.br/pasta/show/1569>.
  *
  * O cadastro espelha 1:1 o que o J930 exige do signatário `COD_ASSIN = 900` (Contador ou
  * Contabilista), porque é ele que o pré-preenchimento (F-CD8-a) vai alimentar:
@@ -52,32 +52,34 @@ export const ACCOUNTING_CONTACT_CRC_NUMBER_MAX_LENGTH = 30;
 
 /**
  * Número de registro no CRC no formato do CFC, já normalizado: `UF-NNNNNN/O-D`. Grupos: UF, 6
- * dígitos, tipo `O` (originário — o único vigente, Res. CFC 1.494/2015 arts. 3º e 36), dígito
- * verificador, e o sufixo opcional ` T-UF`/` S-UF` do registro transferido/secundário (Manual de
- * Registro CFC pp. 13-14: `SP-123456/O-3 T-MG`; GAP-MAP 15). `T` nunca ocupa o lugar do `O` (F-1 → a).
+ * dígitos, tipo `O` (originário — Res. CFC 1.707/2023 arts. 3º e 5º p.ú.: só há originário e transferido), dígito
+ * verificador, e o sufixo opcional ` T-UF` do registro transferido (Res. CFC 1.707/2023 art. 5º p.ú.;
+ * Manual de Registro CFC pp. 13-14: `SP-123456/O-3 T-MG`; GAP-MAP 15). O secundário ` S-UF` do manual
+ * de 2009 não existe na 1.707 (art. 3º) e é 400 (dono, 17/10/2026). `T` nunca ocupa o lugar do `O` (F-1 → a).
  */
-export const CRC_NUMBER_RE = /^([A-Z]{2})-(\d{6})\/(O)-(\d)(?: ([TS])-([A-Z]{2}))?$/;
+export const CRC_NUMBER_RE = /^([A-Z]{2})-(\d{6})\/(O)-(\d)(?: (T)-([A-Z]{2}))?$/;
 
 /** Formato esperado, para as mensagens de 400 de todas as bordas que recebem número de CRC. */
 export const CRC_NUMBER_FORMAT =
-  'UF-NNNNNN/O-D (ex.: SP-123456/O-1; transferido/secundário com sufixo: SP-123456/O-3 T-MG)';
+  'UF-NNNNNN/O-D (ex.: SP-123456/O-1; transferido com sufixo: SP-123456/O-3 T-MG)';
 
 export type CrcNumberParse =
   | { ok: true; normalized: string }
   | { ok: false; reason: 'formato' | 'provisorio_extinto' | 'sem_dv' };
 
-const CRC_FULL_RE = /^(?:CRC[-\/]?)?1?([A-Z]{2})-?(\d{6})\/([OP])-?(\d)(?:([TS])-?([A-Z]{2}))?$/;
+const CRC_FULL_RE = /^(?:CRC[-\/]?)?1?([A-Z]{2})-?(\d{6})\/([OP])-?(\d)(?:(T)-?([A-Z]{2}))?$/;
 // F-3 → a: `SP1234567`/`1SP1234567` (grafia dos ERPs: 6 dígitos + DV, sem letra de tipo) → tipo `O`.
 const CRC_COMPACT_RE = /^1?([A-Z]{2})(\d{6})(\d)$/;
 // `1SP123456` (exemplo dos manuais ECD/ECF): sem DV, e o DV não é calculável (algoritmo não publicado).
 const CRC_NO_DV_RE = /^(?:CRC[-\/]?)?1?([A-Z]{2})-?(\d{6})(?:\/[OP])?$/;
 
 /**
- * Aceita as grafias usuais e devolve a forma canônica `UF-NNNNNN/O-D[ T-UF|S-UF]`, ou o motivo da
+ * Aceita as grafias usuais e devolve a forma canônica `UF-NNNNNN/O-D[ T-UF]`, ou o motivo da
  * recusa: `SP-123456/O-1` · `SP123456/O-1` · `1SP123456/O-1` (categoria profissional na frente) ·
  * `CRC-SP 123456/O-1` · `CRC/SP 123456/O-1` · `SP-123456/O-3 T-MG` · `SP1234567` · minúsculas e
- * espaços sobrando. Provisório (`/P-`) é recusado com motivo próprio (F-2 → a, Res. CFC 1.494/2015
- * art. 36: provisórios deviam virar originários até dez/2016).
+ * espaços sobrando. Provisório (`/P-`) é recusado com motivo próprio (F-2 → a, Res. CFC 1.707/2023
+ * art. 3º: os tipos de registro vigentes são só originário e transferido; a 1.494/2015, citada antes,
+ * foi revogada pela 1.554/2018, revogada pela 1.707).
  */
 export function parseCrcNumber(value: string): CrcNumberParse {
   const flat = value.toUpperCase().replace(/\s+/g, '');
@@ -105,7 +107,7 @@ function isUf(uf: string): boolean {
 /** Mensagem do 400 por motivo — o prefixo (nome do campo) fica com cada borda. */
 export function crcNumberRejectMessage(reason: Exclude<CrcNumberParse, { ok: true }>['reason']): string {
   if (reason === 'provisorio_extinto') {
-    return `registro provisório foi extinto (Res. CFC 1.494/2015 art. 36) — informe o número originário, ${CRC_NUMBER_FORMAT}`;
+    return `registro provisório foi extinto (Res. CFC 1.707/2023 art. 3º) — informe o número originário, ${CRC_NUMBER_FORMAT}`;
   }
   if (reason === 'sem_dv') {
     return `falta o dígito verificador (está na carteira/certidão do CRC) — ${CRC_NUMBER_FORMAT}`;
@@ -121,7 +123,7 @@ export function normalizeCrcNumber(value: string): string | null {
 
 /**
  * UFs aceitas como UF do CRC para um número já normalizado: a de origem e, se houver sufixo
- * transferido/secundário, também a do sufixo (`SP-123456/O-3 T-MG` → `['SP', 'MG']`; decisão do dono
+ * transferido, também a do sufixo (`SP-123456/O-3 T-MG` → `['SP', 'MG']`; decisão do dono
  * 28/09, GAP-MAP 15). Vazio se o número não casar.
  */
 export function crcNumberUfs(normalized: string): string[] {
@@ -190,7 +192,7 @@ export const ACCOUNTING_CONTACT_ARCHIVED = 'contact.archived';
  * geração expandir `signerContactIds` ANTES do `.strict()` — os serviços e DTOs de geração não
  * mudam. `codAssin = 900` e `identQualif = 'Contador'` são os valores que
  * `REGRA_OBRIGATORIO_ASSIN_CONTADOR` / `REGRA_TABELA_ASSINANTE_DESC` exigem do contabilista
- * (manual da ECD, p. 204); `indRespLegal = 'N'` porque o contador NUNCA é o responsável legal
+ * (manual da ECD, p. 202); `indRespLegal = 'N'` porque o contador NUNCA é o responsável legal
  * (`REGRA_QUALIF_INV_RESP_LEGAL`: COD_ASSIN 900 com IND_RESP_LEGAL = S é erro).
  * Função PURA: o mesmo objeto sai na resposta de `confirmDelivery` (item 13, D7 — contato e
  * signatário lado a lado).

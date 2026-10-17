@@ -1,5 +1,11 @@
 # BE-INCR-H1-REFERENCIAL-3-4: a 3.4 na receita bruta (ECF/X7/X8) + kit v2 do salão com o referencial. BRIEF
 
+> **Estado legal verificado em 17/10/2026** (dossiê `pesquisas-legais/verif-2026-10-17-contabil-ecd/relatorio.md` (PR #754); [Dnn] = fonte do dossiê). Este documento é histórico; onde ele cita outra coisa, vale o que está abaixo.
+>
+> - **Manual da ECD L9:** a edição vigente é a **atualização de maio/2026** (sha `bc63f0a893ce`) [D07], não a de janeiro/2026 (`7ddf47755f61`). Ver [[D-2026-10-17-MANUAL-ECD-L9-MAIO]]. Em geral as páginas avançam 1 ou 2; o mapa está na nota. O conteúdo de J801, J930, J932 e `REGRA_VALIDA_NIVEL_CONTAS` confere.
+> - **Lei 6.404/76** [D03]: grupos do BP no art. 178 §§1º-2º (confere). As deduções da receita bruta estão no **art. 187 I**, não no II; a citação foi corrigida no PR #756.
+> - **IN RFB 2.003/2021** art. 3º (obrigados, dispensas, ECD facultativa): confere na visão vigente do Sijut2; só a IN 2.142/2023 a alterou.
+
 > **Sessão:** `sessao-planejamento`, 2026-10-11, base `origin/main` `3af9a6b5`. **Sem código.**
 >
 > **Em duas linhas:** o H1 está parado no P5 por dois gates.

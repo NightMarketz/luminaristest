@@ -1,0 +1,92 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "AJUSTE SINIEF 7/05 — Conselho Nacional de Política Fazendária CONFAZ",
+      "url": "https://www.confaz.fazenda.gov.br/legislacao/ajustes/2005/AJ007_05",
+      "url_final": "https://www.confaz.fazenda.gov.br/legislacao/ajustes/2005/AJ007_05",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-17T10:52:01-03:00",
+      "sha256": "f44adf45f3e22df040e5dc588c5aa5d944b0a7a468ea90adecc000e405843670",
+      "arquivo": "docs/D01_AJ007_05.html",
+      "texto": "docs/D01_AJ007_05.txt",
+      "bytes": 194604
+    },
+    {
+      "id": "D02",
+      "titulo": "AJUSTE SINIEF 19/16 — Conselho Nacional de Política Fazendária CONFAZ",
+      "url": "https://www.confaz.fazenda.gov.br/legislacao/ajustes/2016/AJ_019_16",
+      "url_final": "https://www.confaz.fazenda.gov.br/legislacao/ajustes/2016/AJ_019_16",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-17T10:52:01-03:00",
+      "sha256": "6692d344259fba1448dcb53b50385d9eb9106cec341af56c09316409feaa3570",
+      "arquivo": "docs/D02_AJ_019_16.html",
+      "texto": "docs/D02_AJ_019_16.txt",
+      "bytes": 126430
+    },
+    {
+      "id": "D03",
+      "titulo": "Portaria SRE 80 de 2025",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/Portaria-SRE-80-de-2025.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/Portaria-SRE-80-de-2025.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-17T10:52:02-03:00",
+      "sha256": "256b5bb3143c6cbcba8fb9fdfcfb83cbf52c75f906cd824d29eeb078fb300b4a",
+      "arquivo": "docs/D03_Portaria-SRE-80-de-2025-aspx.html",
+      "texto": "docs/D03_Portaria-SRE-80-de-2025-aspx.txt",
+      "bytes": 160259
+    },
+    {
+      "id": "D04",
+      "titulo": "Portaria SRE 40 de 2024",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/Portaria-SRE-40-de-2024.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/Portaria-SRE-40-de-2024.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-17T10:52:02-03:00",
+      "sha256": "9e4f405f0da35c9e9bf5a792bd59296046ea9bcf6be14497b2f9f259eac454b8",
+      "arquivo": "docs/D04_Portaria-SRE-40-de-2024-aspx.html",
+      "texto": "docs/D04_Portaria-SRE-40-de-2024-aspx.txt",
+      "bytes": 159552
+    },
+    {
+      "id": "D05",
+      "titulo": "Portaria CAT 162 de 2008\r\n\t\t\t\t\t\t\r\nPortaria CAT- 162, de 29 -12-2008",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/pcat1622008.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/pcat1622008.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-17T10:52:03-03:00",
+      "sha256": "367e5e6b762773200473c39ae0f7dd5450ec51665edf01efa708b503ab119223",
+      "arquivo": "docs/D05_pcat1622008-aspx.html",
+      "texto": "docs/D05_pcat1622008-aspx.txt",
+      "bytes": 504423
+    },
+    {
+      "id": "D06",
+      "titulo": "AJUSTE SINIEF 38/26 — Conselho Nacional de Política Fazendária CONFAZ",
+      "url": "https://www.confaz.fazenda.gov.br/legislacao/ajustes/2026/AJ038_26",
+      "url_final": "https://www.confaz.fazenda.gov.br/legislacao/ajustes/2026/AJ038_26",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-17T10:52:58-03:00",
+      "sha256": "b3cedea480a39557c784366b8f0b969019e8e1e98f473d8e1680477c3d25fe19",
+      "arquivo": "docs/D06_AJ038_26.html",
+      "texto": "docs/D06_AJ038_26.txt",
+      "bytes": 57097
+    },
+    {
+      "id": "D07",
+      "titulo": "AJUSTE SINIEF 40/26 — Conselho Nacional de Política Fazendária CONFAZ",
+      "url": "https://www.confaz.fazenda.gov.br/legislacao/ajustes/2026/AJ040_26",
+      "url_final": "https://www.confaz.fazenda.gov.br/legislacao/ajustes/2026/AJ040_26",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-17T10:52:59-03:00",
+      "sha256": "0e2af6737848d5403b90f2959de10d434781350607274cb82db774f5e56b1dd7",
+      "arquivo": "docs/D07_AJ040_26.html",
+      "texto": "docs/D07_AJ040_26.txt",
+      "bytes": 57179
+    }
+  ],
+  "buscas": [],
+  "slug": "sp-inutilizacao-nfe-nfce-2026-11",
+  "pergunta": "Em SP, a partir de 01/11/2026 (Aj. SINIEF 38/26 e 40/26), o que substitui o Pedido de Inutilização de NF-e/NFC-e?",
+  "criado": "2026-10-17T10:52:00-03:00"
+}

@@ -130,3 +130,14 @@ indAliqCsll: z.enum(['1', '3', '4', '7', '8'])  // CompanyFiscalProfileDto / Spe
 
 - A IN 2.315 (art. 2º) também muda o IRRF sobre JCP para 17,5%. É outra tabela, sem linha na plataforma hoje.
 - IN RFB 2.319/2026 (adicional de CSLL do tributo mínimo global, DCTFWeb): li só a menção (V-web). Fora do público-alvo.
+
+## Estado legal verificado em 17/10/2026 (verificação legal IRPJ/CSLL)
+
+Fonte: `pesquisas-legais/verif-2026-10-17-irpj-csll/relatorio.md` (PR #754; as [Dnn] são dele). Correções desta frente
+estão em `pesquisas-legais/verif-2026-10-17-irpj-csll-correcoes/relatorio.md` ([Cnn] = Dnn desse dossiê).
+- **LC 224/2025:** vale como está. A LC 235/2026 art. 11 só alterou o art. 4º § 8º V (entidades sem fins lucrativos),
+  e o art. 1º dela afasta o art. 5º em 2026 [D20]. Nenhuma das 13 LC de 2026 toca os §§ 4º–5º nem o art. 7º [D01, D19, D20].
+- **IN RFB 1.700/2017:** a última alteração é a IN 2.343/2026, vigente desde 18/09/2026 [D18]; a multivigente do Sijut
+  tem o mesmo sha de 09/10 (`faa47fa1…`) [D15]. A IN 2.305/2025 teve a última alteração pela IN 2.307 [D14].
+- **ECF:** o leiaute 13 (AC 2026) **ainda não saiu**; a página do SPED lista o leiaute 12 como o mais recente [D21].
+- **Resseguradora local:** a Lei 15.525/2026 cria o inciso V (9%) da Lei 7.689 art. 3º com efeito em 01/01/2027 [D06, D17]. Não há linha nem consumidor; é funcionalidade nova, não correção. **JCP:** o IRRF de 17,5% vale desde 01/01/2026 pela LC 224 art. 14 III (não pela IN 2.315) [D01, D02].

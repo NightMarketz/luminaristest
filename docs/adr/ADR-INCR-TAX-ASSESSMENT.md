@@ -167,10 +167,20 @@ Parte B (§2).
 
 **D7 — Adicional de IRPJ** = 10% × máx(0, base − R$ 20.000 × meses do período) (IN 1.700 art. 29 § 1º). Os meses
 do período valem:
-- 3 no trimestre;
+- no trimestre, os meses dele em atividade (3, salvo no trimestre de início ou de encerramento);
 - 1 na estimativa mensal;
 - os meses do período em curso no balancete (art. 49 II, *"acrescido do adicional"*);
-- 12 no ajuste anual.
+- no ajuste anual, os meses em atividade (12 no ano inteiro).
+
+*Revisão de 17/10/2026 (verificação legal, divergência 1 do dossiê IRPJ/CSLL; autorização do dono no chat,
+17/10: "Já dispara as correções que ainda não começaram").* O texto original fixava "3 no trimestre", inclusive no
+trimestre de início ou de encerramento de atividade. A Lei 9.249/1995 art. 3º § 1º manda multiplicar o limite
+*"pelo número de meses do respectivo período de apuração"* (acervo ctresb/leis, compilada, conferida em 17/10).
+Agora o trimestre usa `mesesDoTrimestreEmAtividade` (`taxAssessmentCalc.ts`), como o ajuste anual já fazia com
+`mesesEmAtividade`. **Premissa explícita (ambiguidade A6 / P-B4, pergunta ao contador em aberto):** o mês que a
+atividade toca conta inteiro (PJ aberta em 10/02 ⇒ 2 meses no T01). Não há regra de fração de mês. Trimestre sem
+nenhum mês em atividade ⇒ 400 (F-TA-4 b). Se o contador responder que o mês parcial não conta, a mudança fica
+nessa função.
 
 **D8 — A alíquota da CSLL sai de `CompanyFiscalProfile.ecfIndAliqCsll`** (`'1'` = 9%, `'4'` = 15%). Uma fonte só
 serve a ECF (0020) e a apuração. Campo nulo ⇒ 400 *"perfil incompleto"*. Só `'1'` (9%, Lei 7.689 art. 3º III) e
@@ -520,3 +530,21 @@ Pedido do dono, depois da 1ª versão: *"Se são artigos de lei, precisa ter pes
 **O que continua sem verificação:**
 - se o MIT usa exatamente a tabela de códigos da DCTF (inferido pelo formato);
 - as liminares dos TRFs, que não foram conferidas no tribunal e valem só para quem as obteve.
+
+## Estado legal verificado em 17/10/2026 (verificação legal IRPJ/CSLL)
+
+Fonte: `pesquisas-legais/verif-2026-10-17-irpj-csll/relatorio.md` (PR #754; as [Dnn] são dele). Correções desta frente
+estão em `pesquisas-legais/verif-2026-10-17-irpj-csll-correcoes/relatorio.md` ([Cnn] = Dnn desse dossiê).
+- **LC 224/2025:** vale como está. A LC 235/2026 art. 11 só alterou o art. 4º § 8º V (entidades sem fins lucrativos),
+  e o art. 1º dela afasta o art. 5º em 2026 [D20]. Nenhuma das 13 LC de 2026 toca os §§ 4º–5º nem o art. 7º [D01, D19, D20].
+- **IN RFB 1.700/2017:** a última alteração é a IN 2.343/2026, vigente desde 18/09/2026 [D18]; a multivigente do Sijut
+  tem o mesmo sha de 09/10 (`faa47fa1…`) [D15]. A IN 2.305/2025 teve a última alteração pela IN 2.307 [D14].
+- **ECF:** o leiaute 13 (AC 2026) **ainda não saiu**; a página do SPED lista o leiaute 12 como o mais recente [D21].
+- **D7 revisado em 17/10:** o adicional do trimestre usa os meses em atividade (Lei 9.249 art. 3º § 1º) [D02; C03]. Premissa A6: mês tocado conta inteiro.
+
+## Estado legal verificado em 17/10/2026 (ISS/NFS-e)
+
+`[Dnn]` = fontes do dossiê `pesquisas-legais/verif-2026-10-17-iss-nfse/relatorio.md` (PR #754), com link oficial e sha256 no `manifest.json`. Correções de código no PR #755.
+
+- **P-C2 vira regra de lei (era grau A, assumido).** LC 116 art. 3º caput [D01] LC 116 (acervo ctresb/leis, compilada, cópia 13/10; <https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2003-07-31;116>): *"considera-se prestado, e o imposto, devido, no local do estabelecimento prestador … exceto nas hipóteses previstas nos incisos I a XXV"*. No código, a coluna `li` da `LC116_SERVICO` decide: EP ⇒ `cLocEmi`; LP ⇒ `cLocPrestacao`. ET (17.05), lista vazia (99.01) ou código fora da lista ficam em `cLocPrestacao`. No relatório de ISS do F-X7-12, o F-TC-1 (a), que dizia `cLocPrestacao` para tudo, foi **superado** no PR #755 (`municipioDeIncidencia`, `models/issCompetencia.ts`).
+- **Transição do ISS (não implementada — feature nova, registrada centralmente):** LC 116 art. 8º-B, incluído pelo art. 508 da LC 214 [D04] LC 214 compilada (<https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm>): as alíquotas caem 10/20/30/40% em 2029/2030/2031/2032 e os benefícios caem na mesma proporção (§ 1º). A LC 116 fica revogada em 01/01/2033 (LC 214 art. 543 IV). `ISS_LIMITE` e `issComBeneficio` não têm fim de vigência. Nada muda antes de 2029.

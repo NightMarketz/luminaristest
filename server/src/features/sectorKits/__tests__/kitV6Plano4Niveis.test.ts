@@ -1,6 +1,6 @@
 /**
  * BE-INCR-PLANO-4-NIVEIS refeito sobre o kit v5 (dono, 15/10): a versão vigente de cada kit, somada ao canônico, cumpre a
- * REGRA_VALIDA_NIVEL_CONTAS do Manual da ECD L9 p. 119 (analítica de ativo/passivo/PL no nível ≥ 4) e todo prefixo de
+ * REGRA_VALIDA_NIVEL_CONTAS do Manual da ECD L9 p. 120 (analítica de ativo/passivo/PL no nível ≥ 4) e todo prefixo de
  * código existe como sintética (I050.COD_CTA_SUP; a natureza é por conta no I050, o PL fica sob o grupo `2`). Cobre as contas fiscais (F-L8-10 a) e as
  * sintéticas 3.6/4.5 (F-L8-11 a). Varre o plano; não é uma lista fixa.
  */

@@ -6,7 +6,7 @@
 import fs from 'fs';
 import type { LegalParameter } from 'generated/prisma';
 import path from 'path';
-import type { LinhaLegal } from '@/features/legalParameters/models/legalParameter';
+import { linhasEmVigor, type LinhaLegal } from '@/features/legalParameters/models/legalParameter';
 import { tabelaApuracaoDe, type TabelaApuracao } from '@/features/accounting/models/taxAssessmentParams';
 import { razaoCreditoPisCofins, tabelaPisCofinsDe, type ParametroPisCofins } from '@/features/accounting/models/pisCofinsParams';
 import { tabelaPisCofinsItemDe } from '@/features/accounting/models/pisCofinsMonofasicoNcm';
@@ -26,7 +26,9 @@ export const SIMPLES_SEED_FILE_V3 = path.resolve(__dirname, '../../prisma/data/l
 export const SIMPLES_SEED_FILE_V4 = path.resolve(__dirname, '../../prisma/data/legal_parameters_simples_v4.sql');
 /** SIMEI-TAC-12 — SIMEI_VALOR/CPP_TAC_PCT (12% do transportador) e o Anexo VII da LC 123 (CBS/IBS 2027+, ICMS/ISS 2029–2033). */
 export const SIMPLES_SEED_FILE_V5 = path.resolve(__dirname, '../../prisma/data/legal_parameters_simples_v5.sql');
-export const SIMPLES_SEED_FILES = [SIMPLES_SEED_FILE, SIMPLES_SEED_FILE_V2, SIMPLES_SEED_FILE_V3, SIMPLES_SEED_FILE_V4, SIMPLES_SEED_FILE_V5];
+/** Verificação legal de 17/10/2026: Res. CGSN 190/2026 (DEFIS e SIMEI 2027). Mesma regra de igualdade com o migration.sql. */
+export const SIMPLES_SEED_FILE_V6 = path.resolve(__dirname, '../../prisma/data/legal_parameters_simples_v6.sql');
+export const SIMPLES_SEED_FILES = [SIMPLES_SEED_FILE, SIMPLES_SEED_FILE_V2, SIMPLES_SEED_FILE_V3, SIMPLES_SEED_FILE_V4, SIMPLES_SEED_FILE_V5, SIMPLES_SEED_FILE_V6];
 /** PR-2: as tabelas restantes (exceto DEPRECIACAO_ANEXO_III, PR-3). Mesma regra de igualdade com o migration.sql. */
 export const LEGAL_PARAMS_SEED_FILE_V2 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v2.sql');
 /** PR-3: DEPRECIACAO_ANEXO_III (cópia do fixture do Anexo III). Mesma regra de igualdade com o migration.sql. */
@@ -37,9 +39,11 @@ export const LEGAL_PARAMS_SEED_FILE_V4 = path.resolve(__dirname, '../../prisma/d
 export const LEGAL_PARAMS_SEED_FILE_V5 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v5.sql');
 /** SIMPLES-PISO-ANEXO-XI bloco 2: MEI_ANEXO_XI (cópia do fixture do Anexo XI). Mesma regra de igualdade com o migration.sql. */
 export const LEGAL_PARAMS_SEED_FILE_V6 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v6.sql');
+/** Verificação legal 17/10: lp8-csll-3-a..e substituem a lp5-csll-3-a (25% em 07–12/2021, 21% em 08–12/2022). */
+export const LEGAL_PARAMS_SEED_FILE_V8 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v8.sql');
 /** Verificação legal 17/10 (PIS/Cofins item 9): NCM farmacêutico na TIPI vigente (IN RFB 2.121/2022 art. 452), supersede das linhas de 2011. */
 export const LEGAL_PARAMS_SEED_FILE_LP9_PC = path.resolve(__dirname, '../../prisma/data/legal_parameters_lp9_pis_cofins_ncm.sql');
-export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4, LEGAL_PARAMS_SEED_FILE_V5, LEGAL_PARAMS_SEED_FILE_V6, LEGAL_PARAMS_SEED_FILE_LP9_PC];
+export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4, LEGAL_PARAMS_SEED_FILE_V5, LEGAL_PARAMS_SEED_FILE_V6, LEGAL_PARAMS_SEED_FILE_V8, LEGAL_PARAMS_SEED_FILE_LP9_PC];
 
 type Valor = string | number | null;
 
@@ -115,7 +119,7 @@ export function fotografiaSemente(tabelas?: readonly string[]): LinhaLegal[] {
 
 /** Fotografia TAX_ASSESSMENT + CSLL_ALIQUOTA da semente — o que o serviço passa às funções puras do X7. */
 export function tabelaApuracaoSemente(): TabelaApuracao {
-  return tabelaApuracaoDe(legalParamsSeedRows());
+  return tabelaApuracaoDe(linhasEmVigor(legalParamsSeedRows())); // como o serviço: sem as substituídas (L-7)
 }
 
 /** Fotografia PIS_COFINS da semente — o que o serviço passa à função pura do X8. */

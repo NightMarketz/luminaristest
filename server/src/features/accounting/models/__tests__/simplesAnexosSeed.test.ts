@@ -13,7 +13,7 @@ import { execFileSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { SIMPLES_SEED_FILE, legalParamsSeedRows } from '@test/helpers/legalParams';
+import { SIMPLES_SEED_FILE, SIMPLES_SEED_FILES, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { LEGAL_PARAMETER_TABELAS, TABELAS_MIGRADAS, linhaLegalVigente } from '../../../legalParameters/models/legalParameter';
 import { EnquadramentoJsonSchema, FaixaJsonSchema, ReparticaoJsonSchema, TetoIssJsonSchema } from '../simplesCalc';
 
@@ -237,5 +237,37 @@ describe('semente v5 (SIMEI-TAC-12: CPP_TAC_PCT e Anexo VII da LC 123)', () => {
       expect(r.fonteUrl).toBe('https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm');
       expect(r.fonteSha256).toMatch(/^[0-9a-f]{64}$/);
     }
+  });
+});
+
+// Verificação legal de 17/10/2026 (pesquisas-legais/verif-2026-10-17-simples-mei, conclusão itens 3 e 4): a Res. CGSN
+// 190/2026 [D16] (efeitos em 01/01/2027) regulou o que a semente dizia "não regulamentado" e mudou a fonte do SIMEI.
+describe('Res. CGSN 190/2026 — fontes das linhas de 2027 (DEFIS e SIMEI)', () => {
+  const todas = legalParamsSeedRows(SIMPLES_SEED_FILES);
+  it('semente v6: o migration.sql carrega o texto do arquivo, byte a byte, e só insere', () => {
+    const mig = norm(readFileSync(path.join(REPO_ROOT, 'server/prisma/migrations/20261017153700_seed_simples_res_cgsn_190/migration.sql'), 'utf8'));
+    expect(mig).toContain(norm(readFileSync(path.join(REPO_ROOT, 'server/prisma/data/legal_parameters_simples_v6.sql'), 'utf8')).trimEnd());
+    expect(mig.split('\n').filter((l) => l.trim() && !l.startsWith('--')).every((l) => l.startsWith('INSERT OR IGNORE INTO "legal_parameters"'))).toBe(true);
+  });
+  it('DEFIS do Simples: prazo de 31/03/2027 mantido; a fonte cita a revogação do art. 72 (art. 8º XXI) e o art. 38-B, sem "não regulamentada"', () => {
+    const l = linhaLegalVigente(todas, 'OBRIGACAO_REGIME', 'DEFIS', '2027-03-31', 'SIMPLES');
+    expect(l?.vigenteAte).toBe('2027-03-31');
+    expect(l?.fonte).toContain('Res. CGSN 190/2026');
+    expect(l?.fonte).toContain('art. 8º XXI');
+    expect(l?.fonte).toContain('art. 38-B');
+    expect(l?.fonte).not.toMatch(/não foi regulamentada/);
+    expect(linhaLegalVigente(todas, 'OBRIGACAO_REGIME', 'DEFIS', '2027-04-01', 'SIMPLES')).toBeUndefined();
+  });
+  it('SIMEI ICMS/ISS 2027–2028: R$ 1,00 e R$ 5,00 pelo art. 101 IV/V e Anexo XIII (red. Res. 190); até 2026 segue o art. 101 II/III', () => {
+    for (const d of ['2027-01-01', '2028-12-31']) {
+      const icms = linhaLegalVigente(todas, 'SIMEI_VALOR', 'ICMS', d);
+      const iss = linhaLegalVigente(todas, 'SIMEI_VALOR', 'ISS', d);
+      expect([d, icms?.valorInt, iss?.valorInt]).toEqual([d, 100, 500]);
+      expect(icms?.fonte).toMatch(/art\. 101 V.*Anexo XIII/);
+      expect(iss?.fonte).toMatch(/art\. 101 V.*Anexo XIII/);
+    }
+    expect(linhaLegalVigente(todas, 'SIMEI_VALOR', 'ICMS', '2026-12-31')?.fonte).toBe('Res. CGSN 140/2018 art. 101 II');
+    expect(linhaLegalVigente(todas, 'SIMEI_VALOR', 'ISS', '2026-12-31')?.fonte).toBe('Res. CGSN 140/2018 art. 101 III');
+    expect(linhaLegalVigente(todas, 'SIMEI_VALOR', 'ICMS', '2029-01-01')?.valorInt).toBe(90);
   });
 });

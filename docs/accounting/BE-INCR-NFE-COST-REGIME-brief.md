@@ -1,5 +1,10 @@
 # BRIEF — BE-INCR-NFE-COST-REGIME (custo de aquisição D3 da NF-e por REGIME do tenant) — nó X6
 
+> **ESTADO LEGAL VERIFICADO 2026-10-17** (verificação legal de 17/10; só referência, não muda item nem fork deste documento):
+> - **MOC:** de 01/11/2026 em diante deixa de ser Ato COTEPE; vale o "MOC da NF-e"/"MOC da NFC-e" em versão online mantida pelo Paraná (Aj. SINIEF 07/05 cl. 2ª-A §2º, pelo Aj. 40/26 [V-D07]; Aj. 19/16 cl. 3ª §2º, pelo Aj. 38/26 [V-D04]). As transcrições do MOC 7.0 seguem válidas como texto; conferir divergência com a versão online antes de citar regra nova.
+> - **NT 2025.002:** vigente a **v1.52** (01/10/2026 [V-P1]); grupo `IBSCBS` obrigatório em produção para CRT 3 desde 03/08/2026 e para CRT 1/2/4 a partir de 04/01/2027 (RV UB12-10, rej. 1115).
+> Fontes: `[V-Dnn]`/`[V-Pnn]` = dossiê `pesquisas-legais/verif-2026-10-17-nfe-nfce-dfe/relatorio.md` (PR #754); `[S-Dnn]` = dossiê [`pesquisas-legais/sp-inutilizacao-nfe-nfce-2026-11/relatorio.md`](../../pesquisas-legais/sp-inutilizacao-nfe-nfce-2026-11/relatorio.md). Detalhe e forks: [`BE-INCR-NFCE-EMENDA-3-brief.md`](BE-INCR-NFCE-EMENDA-3-brief.md).
+
 > Produzido em `sessao-planejamento` (2026-09-11), rodada 10 do
 > [plano SDD](PLANO-SDD-SEQUENCIAL-2026-09-07.md), nó **X6** do [grafo 11/09](GRAFO-DEPENDENCIAS-2026-09-11.md).
 > **É a emenda do `ADR-INCR-NFE §D3`** que o próprio ADR exigia antes de qualquer molde não-salão reusar

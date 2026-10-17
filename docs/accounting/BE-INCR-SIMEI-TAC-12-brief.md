@@ -214,8 +214,8 @@ Nenhum campo novo de entrada: `meiTransportadorCargas` e `meiOcupacoes` já exis
 
 ### 9.4 Não lido / pendente externo
 
-- **Resoluções do CGSN posteriores à 183 que regulamentem o MEI em 2027:** a consulta em `normas.receita.fazenda.gov.br`
-  devolveu página sem lista de atos (aplicação JS) — **não lido**. Não afirmo que exista ou não exista.
+- ~~**Resoluções do CGSN posteriores à 183 que regulamentem o MEI em 2027:** a consulta em `normas.receita.fazenda.gov.br`
+  devolveu página sem lista de atos (aplicação JS) — **não lido**. Não afirmo que exista ou não exista.~~ **Resolvido em 17/10/2026:** existe. A Res. CGSN 190/2026 revoga o art. 101 II/III (art. 8º XXVII) e põe ICMS, ISS, IBS e CBS do MEI no Anexo XIII (art. 101 IV/V; art. 7º) [D16][D18]. Os valores do Anexo XIII conferem com o Anexo VII da LC 123 seedado (2027–2028: R$ 1,00 / R$ 5,00 / R$ 0,994 / R$ 0,006). Muda só a citação: `sn7-simei-icms/iss-2027` (PR #759).
 - PGMEI 2027: se a guia arredonda CBS/IBS por parcela ou só o total — oráculo é a guia real (jan/2027).
 
 ### 9.5 Checklist (2027) — condicionado aos forks F-TAC-6..10
@@ -256,3 +256,16 @@ estão registrados como **fonte do dono, não conferida**; o texto legal lido é
 | **F-TAC-8** | ICMS/ISS e CBS/IBS do MEI em 2027 ainda dependem de "ser contribuinte"? | (a) CBS/IBS sempre; ICMS/ISS mantêm o "caso seja contribuinte" (comportamento atual) até o CGSN dizer outra coisa; (b) as quatro sempre (lê o "Total" do Anexo literalmente); (c) as quatro condicionadas | **(a)** — CBS/IBS incidem sobre bens **e** serviços, sem condição no texto; para ICMS/ISS o texto novo é silente (L9-6) e (b) cobraria ICMS de quem só presta serviço. Grau I; reabrir quando a resolução do CGSN for lida. |
 | **F-TAC-9** | MEI pode optar por IBS/CBS no regime regular (fora do DAS)? | (a) não neste nó: MEI sempre recolhe pelo Anexo VII; nenhum campo novo no perfil; (b) reusar o campo semestral do F-SN-11 também para o MEI | **(a)** — a lei separa "Simples Nacional ou MEI" e dá a opção só ao "optante pelo Simples Nacional" (L9-8); sem resolução do CGSN lida, criar a opção seria inventar. Se o CGSN abrir, entra por emenda. |
 | **F-TAC-10** | Lançamento do DAS-MEI a partir de 2027 | (a) inalterado: uma partida pelo `valorOficialCents` total (como hoje, §2); (b) desdobrar CBS/IBS em contas próprias | **(a)** — o MEI não credita IBS/CBS (regime do MEI, LC 214 art. 41 § 2º) e o DAS é um único débito; desdobrar não muda saldo nem obrigação. A memória da apuração já mostra o valor por tributo. |
+
+## Estado legal verificado em 17/10/2026
+
+Verificação legal de 17/10/2026, `pesquisas-legais/verif-2026-10-17-simples-mei/relatorio.md` (dossiê com as fontes [Dnn], hash e data). Correções no PR #759.
+
+- **Res. CGSN 190/2026** (DOU 10/08/2026; efeitos em 01/01/2027, art. 9º) lida no Normas RFB [D16]: regula o que este documento tratava como "não regulamentado".
+  - Art. 101 IV/V + Anexo XIII (vigência de 1º/1/2027 a 31/12/2028; depois, por ano até 2033) [D18]: os mesmos valores do Anexo VII da LC 123 já seedados (`sn5-simei-*`). Não há mudança de cálculo.
+  - Art. 45-A (incl. Res. 190): o DAS é arredondado a 2 casas, com mínimo de R$ 0,01 por valor (ver A3).
+- CPP do SIMEI (5% e 12% do TAC), limite do MEI de R$ 81 mil e do TAC de R$ 251,6 mil: conferem [D01][D13]. Nenhuma lei muda o limite do MEI.
+
+**Ambiguidades abertas (não decididas aqui):**
+
+- **A3 — MEI 2027–2028, CBS R$ 0,994 / IBS R$ 0,006 × art. 45-A (aberta).** O art. 45-A (incl. Res. 190) arredonda os valores do DAS a 2 casas, com mínimo de R$ 0,01 [D16]. O projeto guarda milésimos e arredonda só o total (F-TAC-7). O total é o mesmo nas duas leituras (R$ 7,00); as linhas por tributo seriam R$ 0,99 e R$ 0,01.

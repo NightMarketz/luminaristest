@@ -1,5 +1,9 @@
 # PLANO DA SESSÃO DE INTEGRAÇÃO — BE-INCR-NFE (`claude/nfe-fase-a` → `main`)
 
+> **ESTADO LEGAL VERIFICADO 2026-10-17** (verificação legal de 17/10; só referência, não muda item nem fork deste documento):
+> - **MOC:** de 01/11/2026 em diante deixa de ser Ato COTEPE; vale o "MOC da NF-e"/"MOC da NFC-e" em versão online mantida pelo Paraná (Aj. SINIEF 07/05 cl. 2ª-A §2º, pelo Aj. 40/26 [V-D07]; Aj. 19/16 cl. 3ª §2º, pelo Aj. 38/26 [V-D04]). As transcrições do MOC 7.0 seguem válidas como texto; conferir divergência com a versão online antes de citar regra nova.
+> Fontes: `[V-Dnn]`/`[V-Pnn]` = dossiê `pesquisas-legais/verif-2026-10-17-nfe-nfce-dfe/relatorio.md` (PR #754); `[S-Dnn]` = dossiê [`pesquisas-legais/sp-inutilizacao-nfe-nfce-2026-11/relatorio.md`](../../pesquisas-legais/sp-inutilizacao-nfe-nfce-2026-11/relatorio.md). Detalhe e forks: [`BE-INCR-NFCE-EMENDA-3-brief.md`](BE-INCR-NFCE-EMENDA-3-brief.md).
+
 > **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — **registro de execução** deste incremento; o estado do nó vive na §M5.1 e a fila na Parte III. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
 
 

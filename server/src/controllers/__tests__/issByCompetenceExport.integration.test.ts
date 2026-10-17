@@ -21,7 +21,8 @@ async function novoDono(): Promise<Dono> {
   return prisma.user.create({ data: { name: `x7iss-${seq}`, username: `x7iss-${seq}`, email: `x7iss-${seq}@test.local`, password: 'x', role: 'USER' } });
 }
 
-const payload = (mun: string) => JSON.stringify({ versao: '1.01', infDPS: { serv: { locPrest: { cLocPrestacao: mun } } } });
+// cLocEmi = município do estabelecimento prestador (a unidade); o local da prestação varia por tentativa.
+const payload = (mun: string) => JSON.stringify({ versao: '1.01', infDPS: { cLocEmi: SP, serv: { locPrest: { cLocPrestacao: mun } } } });
 
 let nota = 0;
 async function documento(dono: Dono, over: Record<string, unknown> = {}, attempts: string[] = [SP]) {
@@ -71,7 +72,8 @@ describe('X7 Fase C PR-2 — EXPORT_ISS_BY_COMPETENCE pelo HTTP', () => {
     await documento(dono); // entra: SP próprio
     await documento(dono, { status: 'AUTHORIZED_DIVERGENT' }); // entra (F-TC-4 a), contado
     await documento(dono, { tpRetISSQN: 2, vIssCents: 300n }); // entra: SP retido (linha à parte)
-    await documento(dono, { vIssCents: null, baseIssCents: null }, [SP, RJ]); // tentativa corrente = 2 ⇒ RJ; sem vIss
+    // 12.06 (li = LP, LC 116 art. 3º XIX): o município é o da prestação da tentativa corrente = 2 ⇒ RJ; sem vIss
+    await documento(dono, { cTribNac: '120601', vIssCents: null, baseIssCents: null }, [SP, RJ]);
     // ficam fora:
     await documento(dono, { kind: 'NFE' });
     await documento(dono, { ambiente: 'homologacao' });

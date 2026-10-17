@@ -1,5 +1,12 @@
 # BE-INCR-NFCE — EMENDA 2 (F-NFCE-E1-1..4 e 6..9 ratificados; assinatura pelo PSC; 27 UF)
 
+> **ESTADO LEGAL VERIFICADO 2026-10-17** (verificação legal de 17/10; só referência, não muda item nem fork deste documento):
+> - **MOC:** de 01/11/2026 em diante deixa de ser Ato COTEPE; vale o "MOC da NF-e"/"MOC da NFC-e" em versão online mantida pelo Paraná (Aj. SINIEF 07/05 cl. 2ª-A §2º, pelo Aj. 40/26 [V-D07]; Aj. 19/16 cl. 3ª §2º, pelo Aj. 38/26 [V-D04]). As transcrições do MOC 7.0 seguem válidas como texto; conferir divergência com a versão online antes de citar regra nova.
+> - **Inutilização:** a partir de 01/11/2026 o Pedido de Inutilização da NF-e e da NFC-e "não se aplica aos Estados do Acre, Bahia e São Paulo" (Aj. 07/05 cl. 14ª §6º [V-D02][V-D07]; Aj. 19/16 cl. 16ª §6º [V-D03][V-D04]). Nenhum ato da SEFAZ-SP achado; a Portaria SRE 80/25 (NF-e em SP desde 17/11/2025, revogou a CAT 162/08) só remete ao Ajuste [S-D03]. Forks F-NFCE-E3-1 (c) e E3-2 (a) ratificados em 17/10.
+> - **PAA:** confere (Aj. 9/22 cl. 1ª §§1º–2º, red. Aj. 46/25 [V-D06]; o Aj. 21/26 só muda a cl. 2ª [V-D05]).
+> - **ICP-Brasil:** MP 2.200-2/2001 vigente (art. 10 §1º e art. 11 [V-D01]).
+> Fontes: `[V-Dnn]`/`[V-Pnn]` = dossiê `pesquisas-legais/verif-2026-10-17-nfe-nfce-dfe/relatorio.md` (PR #754); `[S-Dnn]` = dossiê [`pesquisas-legais/sp-inutilizacao-nfe-nfce-2026-11/relatorio.md`](../../pesquisas-legais/sp-inutilizacao-nfe-nfce-2026-11/relatorio.md). Detalhe e forks: [`BE-INCR-NFCE-EMENDA-3-brief.md`](BE-INCR-NFCE-EMENDA-3-brief.md).
+
 > `sessao-planejamento`, 2026-10-13, base `origin/main` `9f6477d8`. **Emenda** à
 > [`BE-INCR-NFCE-EMENDA-1-brief.md`](BE-INCR-NFCE-EMENDA-1-brief.md) (nó [`X10a`](../plano/nos/X10a.md)). Sem código.
 > **Implementação exige "executa" próprio** (ORCH-006); a emissão real exige "executa" de emissão.

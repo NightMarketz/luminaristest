@@ -1,5 +1,12 @@
 # ADR-INCR-FIXED-ASSETS — Imobilizado + depreciação + retificação versionada de ECD/ECF
 
+> **Estado legal verificado em 17/10/2026** (dossiê `pesquisas-legais/verif-2026-10-17-contabil-ecd/relatorio.md` (PR #754); [Dnn] = fonte do dossiê). Este documento é histórico; onde ele cita outra coisa, vale o que está abaixo.
+>
+> - **Anexo III da IN RFB 1.700/2017:** **confere** linha a linha com a visão vigente do Sijut2 [D01]: são 220 linhas vivas iguais. A linha `8517 0%` (tachada) foi descartada e a `8905` foi derivada como 5%, como o ADR documenta. As alterações da IN 1.700 até a **IN RFB 2.343 (17/09/2026)** não mexeram no Anexo III; a 2.343 alterou o art. 33. O art. 124 §1º confere [D01].
+> - **RIR/2018** (Decreto 9.580, compilado no Planalto [D08]; o acervo traz só o original [D02]): art. 313 §1º I-II e §2º (até R$ 1.200 ou vida útil ≤ 1 ano), art. 317 §3º (teto da depreciação acumulada), art. 319 §2º (quota cheia no mês), art. 320 §1º (taxa da RFB) e arts. 331 III e 333 (benfeitoria em bem de terceiro): **conferem**.
+> - **Manual da ECD L9:** a edição vigente é a **atualização de maio/2026** (sha `bc63f0a893ce`) [D07], não a de janeiro/2026 (`7ddf47755f61`). Ver [[D-2026-10-17-MANUAL-ECD-L9-MAIO]]. Em geral as páginas avançam 1 ou 2; o mapa está na nota. O conteúdo de J801, J930, J932 e `REGRA_VALIDA_NIVEL_CONTAS` confere.
+> - Páginas do manual citadas aqui para J801/J932/J935 seguem a edição de janeiro; na de maio, J801 = pp. 193-195 e J932 = pp. 204-206.
+
 - **Data:** 2026-09-15
 - **Status:** **Accepted** (2026-09-18) — parecer anexado 2026-09-15 (§4): D1–D11 confirmados com refinamentos,
   F-FA1..F-FA9 todos com recomendação ⇒ ratificados por delegação (cédula 2026-09-14, C8). EMENDA pós-review
