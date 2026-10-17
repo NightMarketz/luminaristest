@@ -9,7 +9,7 @@ import { LEGAL_PARAMS_SEED_FILE_FERIADO_LOCAL, legalParamsSeedRows } from '@test
 import { LEGAL_PARAMETER_TABELAS } from '../models/legalParameter';
 import { erroDeFormato } from '../models/formatoLinha';
 
-const MIGRATION = path.resolve(__dirname, '../../../../prisma/migrations/20261017134500_legal_parameters_fer_feriado_local/migration.sql');
+const MIGRATION = path.resolve(__dirname, '../../../../prisma/migrations/20261017200000_legal_parameters_fer_feriado_local/migration.sql');
 const norm = (s: string) => s.replace(/\r\n/g, '\n');
 
 describe('FERIADO_LOCAL (F-E4-1 a)', () => {
