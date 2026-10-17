@@ -4,6 +4,9 @@ import type {
   SalaoParceriaContratoInput,
   SalaoParceriaContratoPatchInput,
   SimplesDasRegistroInput,
+  SimplesDasnUpsertInput,
+  SimplesDefisDigitadoInput,
+  SimplesDefisUpsertInput,
   SimplesHistoricoUpsertInput,
   SimplesSegregacaoParcelaInput,
   SimplesSegregacaoUpsertInput,
@@ -146,10 +149,68 @@ export interface SimplesSegregacao {
   updatedAt: string;
 }
 
+// ---- PR-D (itens 13–15) — declarações anuais e alíquotas sugeridas
+
+// espelha AliquotasSimples (server/src/features/accounting/services/SimplesApuracaoService.ts:92-115)
+export interface AliquotasSimples {
+  competencia: string;
+  /** O PA cuja faixa vale; no mês de início, a própria competência. */
+  mesReferencia: string;
+  sugestao: true;
+  regra: 'INICIO_ATIVIDADE' | 'FAIXA_MES_ANTERIOR' | 'FAIXA_MES_PRESTACAO';
+  periodoApuracao: string | null;
+  rbt12Cents: number | null;
+  janelaRbt12: ApuracaoSimples['janelaRbt12'] | null;
+  atividades: Array<{
+    anexo: string | null;
+    natureza: NaturezaSimples;
+    cTribNac: string | null;
+    faixa: number | null;
+    fatorR: string | null;
+    aliquotaEfetiva: string | null;
+    issRetencao: string | null;
+    beneficioMunicipal: { legislacao: string; tipo: string; pisoAplicado: boolean; excecaoPiso: boolean } | null;
+    pTotTribSNSugerido: string | null;
+    creditoAdquirente: { ICMS: string | null; IBS: string | null; CBS: string | null } | null;
+  }>;
+  avisos: string[];
+  alertas: AlertaSimples[];
+}
+
+// espelha SimplesDasnSimeiView (server/src/features/accounting/dtos/SimplesDto.ts:267-274)
+export interface SimplesDasnSimeiView {
+  ano: number;
+  prazo: string;
+  receitaBrutaTotalCents: number;
+  receitaIcmsCents: number;
+  mesesSemSubrazao: string[];
+  digitado: { contratouEmpregado: boolean } | null;
+}
+
+// espelha SimplesDefisView + SimplesDefisLucroContabil (SimplesDto.ts:281-297); `digitado` já vem lido com 0 / [] pelo BE
+export interface SimplesDefisView {
+  ano: number;
+  prazo: string;
+  mesesApurados: string[];
+  lucroContabil: {
+    valorCents: number;
+    limiteIsencaoCents: number | null;
+    informar: boolean;
+    calculo: 'PRESUNCAO' | 'SEM_ESCRITURACAO';
+    avisos: string[];
+  };
+  estoqueInicialCents: number;
+  estoqueFinalCents: number;
+  digitado: SimplesDefisDigitadoInput | null;
+}
+
 export type {
   SalaoParceriaContratoInput,
   SalaoParceriaContratoPatchInput,
   SimplesDasRegistroInput,
+  SimplesDasnUpsertInput,
+  SimplesDefisDigitadoInput,
+  SimplesDefisUpsertInput,
   SimplesHistoricoUpsertInput,
   SimplesSegregacaoParcelaInput,
   SimplesSegregacaoUpsertInput,
@@ -227,6 +288,30 @@ export const simplesService = {
 
   async atualizarParceria(id: string, body: SalaoParceriaContratoPatchInput): Promise<SalaoParceriaContrato> {
     return (await apiClient.patch<ApiEnvelope<SalaoParceriaContrato>>(`${base}/parcerias/${enc(id)}`, body)).data;
+  },
+
+  /** GET /aliquotas/:competencia — SUGESTÃO por atividade (X14 item 29); ano MEI ⇒ 400. */
+  async obterAliquotas(competencia: string, query: SimplesUnitQueryInput): Promise<AliquotasSimples> {
+    return (await apiClient.get<ApiEnvelope<AliquotasSimples>>(`${base}/aliquotas/${enc(competencia)}?unitId=${enc(query.unitId)}`)).data;
+  },
+
+  /** GET /dasn-simei/:ano — ano MEI (Res. CGSN 140 art. 109); outro regime ⇒ 400. */
+  async obterDasnSimei(ano: number, query: SimplesUnitQueryInput): Promise<SimplesDasnSimeiView> {
+    return (await apiClient.get<ApiEnvelope<SimplesDasnSimeiView>>(`${base}/dasn-simei/${ano}?unitId=${enc(query.unitId)}`)).data;
+  },
+
+  async salvarDasnSimei(ano: number, body: SimplesDasnUpsertInput): Promise<SimplesDasnSimeiView> {
+    return (await apiClient.put<ApiEnvelope<SimplesDasnSimeiView>>(`${base}/dasn-simei/${ano}`, body)).data;
+  },
+
+  /** GET /defis/:ano — ano SIMPLES ≤ 2026 com mês apurado; fora disso 400 com o texto do BE. */
+  async obterDefis(ano: number, query: SimplesUnitQueryInput): Promise<SimplesDefisView> {
+    return (await apiClient.get<ApiEnvelope<SimplesDefisView>>(`${base}/defis/${ano}?unitId=${enc(query.unitId)}`)).data;
+  },
+
+  /** PUT /defis/:ano — substitui os campos digitados; sócios + tesouraria = 100% é regra do BE (400 com o texto dele). */
+  async salvarDefis(ano: number, body: SimplesDefisUpsertInput): Promise<SimplesDefisView> {
+    return (await apiClient.put<ApiEnvelope<SimplesDefisView>>(`${base}/defis/${ano}`, body)).data;
   },
 
   /** Soft-delete no BE. */

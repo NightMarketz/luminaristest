@@ -5,7 +5,7 @@ import type { UserContext } from '../../../lib/authUtils';
 import { IDynamicTableRepository } from '../repositories/IDynamicTableRepository';
 import { IDynamicTablePolicy } from '../policies/IDynamicTablePolicy';
 import { CreateDynamicTableDtoType, UpdateDynamicTableDtoType, CreateDynamicTableDataDtoType, UpdateDynamicTableDataDtoType, UpdateDynamicTableSchemaDtoType } from '../dtos/DynamicTable.dto';
-import { IDynamicTable, IDynamicTableData, ITableSchema } from '../models/DynamicTable.model';
+import { IDynamicTable, IDynamicTableData, ITableSchema, ISchemaField, FieldEquals } from '../models/DynamicTable.model';
 import { DynamicTableCategory } from '../models/TableCategories';
 import { NotFoundError, ForbiddenError, ValidationError } from '../../../lib/errors';
 import { globalRuleRegistry } from '../rules/RuleRegistry';
@@ -46,6 +46,41 @@ function withTableWriteLock<T>(tableId: string, fn: () => Promise<T>): Promise<T
   });
   return run;
 }
+
+/**
+ * Converte o valor de um filtro de busca para o tipo declarado do campo (F-DT-1 → b,
+ * docs/accounting/DT-SERVICE-I11-I7-REVISAO-brief.md §4). `null` passa direto. Tipos sem regra clara
+ * (`date`, `datetime`, `relation`, `json`) mantêm o valor como veio.
+ */
+function coerceFilterValue(type: ISchemaField['type'], name: string, value: FieldEquals['value']): FieldEquals['value'] {
+  if (value === null) return null;
+  switch (type) {
+    case 'number': {
+      if (typeof value === 'number') return value;
+      const n = typeof value === 'string' && value.trim() !== '' ? Number(value) : NaN;
+      if (Number.isFinite(n)) return n;
+      break;
+    }
+    case 'string':
+    case 'select':
+    case 'textarea':
+      if (typeof value === 'string') return value;
+      if (typeof value === 'number') return String(value);
+      break;
+    case 'boolean':
+      if (typeof value === 'boolean') return value;
+      if (value === 'true') return true;
+      if (value === 'false') return false;
+      break;
+    default:
+      return value;
+  }
+  throw new ValidationError(`Valor de filtro inválido no campo '${name}': esperado ${FILTER_TYPE_LABEL[type]}.`);
+}
+
+const FILTER_TYPE_LABEL: Record<string, string> = {
+  number: 'número', string: 'texto', select: 'texto (uma das opções)', textarea: 'texto', boolean: 'booleano (true/false)',
+};
 
 export class DynamicTableService {
   private repository: IDynamicTableRepository;
@@ -467,7 +502,8 @@ export class DynamicTableService {
       // T0 do time-to-first-ECD (P2 comportamento 11; ADR-P2 EMENDA 2026-09-14 R7, F-I2-1 → a): o marco
       // nasce NA MESMA tx do install — se o install reverte, o T0 reverte junto. Única escrita liberada
       // pela exceção nominal da prova zero-diff (`proveP2ZeroDiffCli.SYMBOL_ALLOWLIST`); não cresça isto.
-      await tx.user.update({ where: { id: userId }, data: { onboardingCompletedAt: new Date() } });
+      // F-I7-3 (BE-INCR-RESET-CONSISTENTE item 6): preserva o 1º T0 — reinstalar depois do reset não o sobrescreve.
+      await tx.user.updateMany({ where: { id: userId, onboardingCompletedAt: null }, data: { onboardingCompletedAt: new Date() } });
     }, {
       // Preset installs can involve many tables; allow up to 30 s before timing out.
       timeout: 30000,
@@ -633,6 +669,41 @@ export class DynamicTableService {
   public async *getTableDataStream(user: UserContext, tableId: string, batchSize: number = 1000) {
     const table = await this.getTableById(user, tableId);
     yield* this.repository.findDataBatchStreamByTableId(tableId, batchSize);
+  }
+
+  /**
+   * Busca por igualdade exata em campos do schema, empurrada para o SQL (BRIEF BE-INCR-CHAT-AGENT
+   * §2.2, F-I11-2 → b). As chaves de `filters` vêm de fora (o LLM do agente): toda chave tem de ser
+   * campo do schema e todo valor escalar, senão ValidationError. `limit` preso em 1..50.
+   * F-DT-1 → (b) (dono, questionário, 2026-10-16): antes de comparar, o valor é convertido para o tipo
+   * declarado do campo (`coerceFilterValue`) — o modelo errar o tipo vira acerto ou ValidationError, nunca
+   * "zero linhas" silencioso. A comparação no SQL continua tipada.
+   */
+  public async searchTableData(
+    user: UserContext,
+    tableId: string,
+    filters: Record<string, unknown> | undefined,
+    limit: number = 10,
+  ): Promise<{ rows: IDynamicTableData[]; total: number; limit: number }> {
+    const table = await this.getTableById(user, tableId);
+    const fields = table.schema?.fields ?? [];
+    const fieldNames = fields.map(f => f.name);
+    const equals: FieldEquals[] = [];
+    for (const [name, value] of Object.entries(filters ?? {})) {
+      const field = fields.find(f => f.name === name);
+      if (!field) {
+        throw new ValidationError(`Campo de filtro inválido: '${name}'. Campos válidos: ${fieldNames.join(', ')}.`);
+      }
+      const scalar = value === null || typeof value === 'string' || typeof value === 'boolean'
+        || (typeof value === 'number' && Number.isFinite(value));
+      if (!scalar) {
+        throw new ValidationError(`Valor de filtro inválido no campo '${name}': use texto, número, booleano ou null.`);
+      }
+      equals.push({ name, value: coerceFilterValue(field.type, name, value as FieldEquals['value']) });
+    }
+    const safeLimit = Math.min(Math.max(1, Math.trunc(limit) || 1), 50);
+    const { rows, total } = await this.repository.findDataByFieldEquals(table.id, equals, safeLimit);
+    return { rows, total, limit: safeLimit };
   }
 
   public async getTableDataByIds(user: UserContext, tableId: string, recordIds: string[]) {

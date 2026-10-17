@@ -19,8 +19,7 @@ import type { IMessage } from '../../models/InterviewTypes';
 beforeEach(() => jest.clearAllMocks());
 
 const customizationStub = {
-  generateSessionId: jest.fn().mockReturnValue('sess-1'),
-  createCustomizationSession: jest.fn().mockReturnValue({ tables: [] }),
+  createCustomizationSession: jest.fn().mockResolvedValue({ id: 'sess-1', state: { tables: [] } }),
   generateTablesPresentation: jest.fn().mockResolvedValue('tabelas'),
 } as unknown as CustomizationService;
 
@@ -38,7 +37,7 @@ describe('StageHandlers.handleCreationTypeConfirmation — escolha só vale se f
     ['não quero customizar', 'negação'],
     ['sem personalizar, por favor', 'negação'],
   ])('"%s" (%s) não abre a customização nem cria o sistema sem confirmar', async (content) => {
-    const result = await handlers.handleCreationTypeConfirmation(turn(content), 'beautySalon');
+    const result = await handlers.handleCreationTypeConfirmation(turn(content), 'beautySalon', 'u1');
 
     expect(result.nextStage).not.toBe('CUSTOMIZATION_IN_PROGRESS');
     expect(result.nextStage).not.toBe('COMPLETED');
@@ -49,7 +48,7 @@ describe('StageHandlers.handleCreationTypeConfirmation — escolha só vale se f
     ['quero customizar', 'CUSTOMIZATION_IN_PROGRESS'],
     ['criar o sistema agora', 'COMPLETED'],
   ])('"%s" (explícita) → %s', async (content, expected) => {
-    const result = await handlers.handleCreationTypeConfirmation(turn(content), 'beautySalon');
+    const result = await handlers.handleCreationTypeConfirmation(turn(content), 'beautySalon', 'u1');
 
     expect(result.nextStage).toBe(expected);
   });
@@ -60,19 +59,19 @@ describe('StageHandlers.handleCreationTypeConfirmation — escolha só vale se f
 describe('StageHandlers.handleCreationTypeConfirmation — falha ao customizar não cria o sistema', () => {
   const withCustomization = (overrides: Partial<Record<keyof CustomizationService, jest.Mock>>) =>
     new StageHandlers({} as OpenAIService, {
-      generateSessionId: jest.fn().mockReturnValue('sess-1'),
-      createCustomizationSession: jest.fn().mockReturnValue({ tables: [] }),
+          createCustomizationSession: jest.fn().mockResolvedValue({ id: 'sess-1', state: { tables: [] } }),
       generateTablesPresentation: jest.fn().mockResolvedValue('tabelas'),
       ...overrides,
     } as unknown as CustomizationService);
 
   it.each([
-    ['sessão de customização não criada', { createCustomizationSession: jest.fn().mockReturnValue(null) }],
+    ['sessão de customização não criada', { createCustomizationSession: jest.fn().mockResolvedValue(null) }],
     ['exceção ao apresentar as tabelas', { generateTablesPresentation: jest.fn().mockRejectedValue(new Error('boom')) }],
   ])('%s → não sai COMPLETED', async (_caso, overrides) => {
     const result = await withCustomization(overrides).handleCreationTypeConfirmation(
       turn('quero customizar'),
       'beautySalon',
+      'u1',
     );
 
     expect(result.nextStage).not.toBe('COMPLETED');

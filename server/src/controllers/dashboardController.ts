@@ -26,7 +26,7 @@ import { ForbiddenError, OnboardingRolledBackError, OnboardingRollbackFailedErro
 import { InstallModuleSchema } from '@/features/dynamicTables/dtos/InstallModule.dto';
 import { Role } from '@/features/users/models/User.model';
 import { ISchemaField } from '@/features/dynamicTables/models/DynamicTable.model';
-import { getPresetByKey, keyToPascalCase } from '@/features/dynamicTables/presets/PresetManager';
+import { keyToPascalCase } from '@/features/dynamicTables/presets/PresetManager';
 import { SECTOR_BINDING_REGISTRY } from '@/features/accountingBinding/fixtures/sectorBindingRegistry';
 import { resolveBindingScope } from '@/features/accountingBinding/scope/BindingScope';
 import { reloadAccountingMappersSerialized } from '@/features/accountingBinding/runtime/mapperReload';
@@ -108,9 +108,9 @@ function respondProvisioningError(error: unknown, res: Response): Response | nul
 
 /**
  * BE-INCR-ONBOARDING-ACTIVATION (nó I4) item 9 (F-I4-3 a) — o setor do binding contábil do preset escolhido: a chave do
- * `SECTOR_BINDING_REGISTRY` cujo nome, normalizado como o `getPresetByKey` normaliza a chave (`keyToPascalCase`), é o
- * da suíte pedida. Assim `beautySalon` (Rápido) e `beauty_salon` (Controle Total) dão o mesmo setor. Preset sem
- * binding (`crmModule`) ⇒ `null`.
+ * `SECTOR_BINDING_REGISTRY` cujo nome, normalizado por `keyToPascalCase`, é o da suíte pedida. Os dois modos do create
+ * só chegam aqui com a chave do registro (`beautySalon`): desde o W5 (dono, 2026-10-16, "Só a chave do registro") o
+ * Controle Total recusa `beauty_salon` com 404 antes desta função. Preset sem binding (`crmModule`) ⇒ `null`.
  */
 export function resolveOnboardingSectorKey(presetOrSuiteKey: string): string | null {
   const id = keyToPascalCase(presetOrSuiteKey);
@@ -119,7 +119,7 @@ export function resolveOnboardingSectorKey(presetOrSuiteKey: string): string | n
 
 /**
  * I4 itens 10–14 — liga a contabilidade da unidade recém-criada, DEPOIS de instalar → unidade → perfil fiscal (F-I4-1 a):
- * as compensações anteriores (`purgeUserSystem`) não limpam contabilidade, então nada que compensa roda depois de uma
+ * as compensações anteriores (`compensateProvisioning`) não limpam contabilidade, então nada que compensa roda depois de uma
  * escrita contábil. As duas flags em `true` fazem do onboarding uma chamada só (F-B2 a, F-I3-1 a).
  *   - preset sem setor ⇒ `not-applicable`; `activateDefault` nem é chamado (item 12).
  *   - `Draft` do `activateDefault` ou exceção ⇒ 201 com `Draft` e o tenant de pé, sem compensação (F-I4-2 b, item 11) —
@@ -188,7 +188,11 @@ async function handleCustomCreation(
   res: Response
 ) {
   try {
-    const originalPreset = await getPresetByKey(presetKey);
+    // W5 item 6 (F-W5-2): o Controle Total resolve pelo registro, como o modo Rápido — chave fora de
+    // `tablePresetSuites` (inclusive `coreSystem`, que o import dinâmico do `PresetManager` alcançava) → 404.
+    // Só a chave do registro (dono, questionário, 2026-10-16: "Só a chave do registro"): `beauty_salon` → 404.
+    const originalPreset = presetService.getPresetByKey(presetKey);
+    if (!originalPreset) throw new UnknownSuiteError(presetKey);
 
     // I8 comportamentos 2–3: as tabelas de lead não vêm mais do Core; entram pelos módulos selecionados
     // (body `modules` ∪ default da suíte, fechado pelas dependências do registro).
@@ -310,6 +314,7 @@ async function handleCustomCreation(
       },
     });
   } catch (error) {
+    if (error instanceof UnknownSuiteError) return res.status(404).json({ error: error.message });
     return respondProvisioningError(error, res) ?? handleApiError(error, res);
   }
 }
@@ -457,10 +462,10 @@ export async function deleteUserSystem(req: Request, res: Response) {
     const ctx = getUserContextFromRequest(req);
     if (!ctx) return res.status(401).json({ success: false, error: 'Authentication required' });
 
-    // Tabelas + KnowledgeGraph + ActionProposals órfãs — o agente não injeta referências a tabelas apagadas (R27).
-    await getFactory().getSystemProvisioningService().purgeUserSystem(ctx.id);
+    // BE-INCR-RESET-CONSISTENTE (nó I7): policy + purga pelos donos canônicos + cache de KPI — no serviço.
+    await getFactory().getSystemProvisioningService().resetUserSystem(ctx);
 
-    logger.info(`User system reset: tables, KnowledgeGraph, and proposals cleaned for user ${ctx.id}`);
+    logger.info(`User system reset for user ${ctx.id}`);
 
     return res.status(204).end();
   } catch (error) {

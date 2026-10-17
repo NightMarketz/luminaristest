@@ -1,3 +1,5 @@
+import type { SystemResetBlockedDetails } from '../features/accounting/models/accountingResetClassification';
+
 /**
  * Base application error class.
  */
@@ -454,5 +456,25 @@ export class UnitDeletedError extends ConflictError {
   constructor() {
     super('Unidade apagada — restaure-a para lançar.', 'UNIT_DELETED');
     Object.setPrototypeOf(this, UnitDeletedError.prototype);
+  }
+}
+
+/**
+ * BE-INCR-RESET-CONSISTENTE item 13 (nó I7, F-I7-1 → "409 só com movimento") — o "Resetar sistema" foi recusado porque
+ * há movimento contábil (linha em tabela BLOCKING) em alguma unidade do usuário. Nada foi apagado. `details` validado
+ * pelo `SystemResetBlockedDetailsSchema` antes de lançar; `handleApiError` o expõe.
+ */
+export class SystemResetBlockedByAccountingError extends AppError {
+  public readonly details: SystemResetBlockedDetails;
+
+  constructor(details: SystemResetBlockedDetails) {
+    const total = details.blocking.reduce((sum, b) => sum + b.count, 0);
+    super(
+      `O sistema tem movimento contábil (${total} registro(s) em ${details.blocking.length} tipo(s)) e não pode ser resetado: a escrituração precisa ser preservada.`,
+      409,
+      'SYSTEM_RESET_BLOCKED_BY_ACCOUNTING',
+    );
+    this.details = details;
+    Object.setPrototypeOf(this, SystemResetBlockedByAccountingError.prototype);
   }
 }

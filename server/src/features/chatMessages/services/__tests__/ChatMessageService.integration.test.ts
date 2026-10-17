@@ -13,6 +13,8 @@ import { ChatInstanceRepository } from '../../../chatInstances/repositories/Chat
 import { ChatMessagePolicy } from '../../policies/ChatMessagePolicy';
 import { ChatMessageRole } from '../../models/ChatMessage.model';
 import { ForbiddenError, NotFoundError, UnauthorizedError } from '@/lib/errors';
+import { ChatMessageSchema } from '../../dtos/ChatMessageDto';
+import prisma from '@/lib/prisma';
 import {
   pushTestSchema,
   resetDb,
@@ -94,6 +96,39 @@ describe('appendAssistantMessage (server-only)', () => {
     await expect(
       service.appendAssistantMessage(ci.id, 'x', ctxFor({ id: stranger.id, username: stranger.username }))
     ).rejects.toBeInstanceOf(ForbiddenError);
+  });
+});
+
+describe('token usage (I11 PR-3)', () => {
+  it('persists the turn usage on the ASSISTANT message and exposes promptTokens/completionTokens/model', async () => {
+    const u = await seedUser({ username: 'owner' });
+    const ci = await seedChatInstance({ userId: u.id });
+    const ctx = ctxFor({ id: u.id, username: u.username });
+    const calls = [
+      { model: 'gpt-4o-2024-08-06', promptTokens: 1200, completionTokens: 40 },
+      { model: 'gpt-3.5-turbo-0125', promptTokens: 900, completionTokens: 120 },
+    ];
+    await service.appendAssistantMessage(ci.id, 'answer', ctx,
+      { promptTokens: 2100, completionTokens: 160, model: 'gpt-4o-2024-08-06+gpt-3.5-turbo-0125', calls });
+
+    const row = await prisma.chatMessage.findFirstOrThrow({ where: { chatInstanceId: ci.id } });
+    expect(row.usageDetail).toEqual(calls);
+
+    const dto = await service.getMessageById(row.id, ctx);
+    expect(dto).toMatchObject({ promptTokens: 2100, completionTokens: 160, model: 'gpt-4o-2024-08-06+gpt-3.5-turbo-0125' });
+    expect(ChatMessageSchema.parse(dto).promptTokens).toBe(2100);
+  });
+
+  it('a confirmation turn (no LLM call) stores 0/0; the USER message stays null', async () => {
+    const u = await seedUser({ username: 'owner' });
+    const ci = await seedChatInstance({ userId: u.id });
+    const ctx = ctxFor({ id: u.id, username: u.username });
+    const userMsg = await service.createMessage({ content: 'sim', chatInstanceId: ci.id }, ctx);
+    await service.appendAssistantMessage(ci.id, 'pronto', ctx, { promptTokens: 0, completionTokens: 0, model: null, calls: [] });
+
+    expect(await service.getMessageById(userMsg.id, ctx)).toMatchObject({ promptTokens: null, completionTokens: null, model: null });
+    const assistant = await prisma.chatMessage.findFirstOrThrow({ where: { chatInstanceId: ci.id, role: 'ASSISTANT' } });
+    expect(await service.getMessageById(assistant.id, ctx)).toMatchObject({ promptTokens: 0, completionTokens: 0, model: null });
   });
 });
 

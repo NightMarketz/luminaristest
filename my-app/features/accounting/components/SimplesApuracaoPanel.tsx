@@ -12,6 +12,9 @@ import { SimplesDasRegistro, type RegistroErro } from './SimplesDasRegistro';
 import { SimplesParceriasPanel } from './SimplesParceriasPanel';
 import { SimplesHistoricoModal } from './SimplesHistoricoModal';
 import { SimplesSegregacaoSection } from './SimplesSegregacaoSection';
+import { SimplesAliquotasSection } from './SimplesAliquotasSection';
+import { SimplesDasnSimeiModal } from './SimplesDasnSimeiModal';
+import { SimplesDefisModal } from './SimplesDefisModal';
 
 const statusDe = (err: unknown): unknown => (err && typeof err === 'object' ? (err as { status?: unknown }).status : undefined);
 /** 400 do registro traz os bloqueantes em `details.alertas` (SimplesApuracaoService.ts:211). */
@@ -52,6 +55,8 @@ export function SimplesApuracaoPanel({ unitId, ano, perfil, onIrParaEnquadrament
   // PR-C item 11: histórico pré-adoção em modal próprio (competência livre); gravar recarrega o ano (o RBT12 muda).
   const [historicoComp, setHistoricoComp] = useState<string | null>(null);
   const [recarga, setRecarga] = useState(0);
+  // PR-D itens 13–14: declaração anual do regime do ano, no cabeçalho (F-FS-6 a).
+  const [anualAberta, setAnualAberta] = useState(false);
   // Só a última carga do ano aplica as respostas (troca de ano/unidade com GETs em voo).
   const anoReq = useRef(0);
 
@@ -167,12 +172,20 @@ export function SimplesApuracaoPanel({ unitId, ano, perfil, onIrParaEnquadrament
 
   return (
     <div>
-      {!mei && (
-        <div className="mb-3 flex justify-end">
+      <div className="mb-3 flex flex-wrap justify-end gap-2">
+        <button type="button" className={btn} onClick={() => setAnualAberta(true)}>
+          {mei ? t('simples.dasn.title', 'DASN-SIMEI') : t('simples.defis.title', 'DEFIS')}
+        </button>
+        {!mei && (
           <button type="button" className={btn} onClick={() => setHistoricoComp(`${ano - 1}-12`)}>
             {t('simples.historico.title', 'Histórico pré-adoção')}
           </button>
-        </div>
+        )}
+      </div>
+      {mei ? (
+        <SimplesDasnSimeiModal unitId={unitId} ano={ano} isOpen={anualAberta} onClose={() => setAnualAberta(false)} />
+      ) : (
+        <SimplesDefisModal unitId={unitId} ano={ano} isOpen={anualAberta} onClose={() => setAnualAberta(false)} />
       )}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
@@ -262,6 +275,7 @@ export function SimplesApuracaoPanel({ unitId, ano, perfil, onIrParaEnquadrament
               />
             )}
             {!podeGerir && regErro && <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-red-300">{regErro.mensagem}</div>}
+            {!mei && <SimplesAliquotasSection key={`aliq-${celula.competencia}`} unitId={unitId} competencia={celula.competencia} />}
             {!mei && <SimplesSegregacaoSection key={`seg-${celula.competencia}`} unitId={unitId} competencia={celula.competencia} onSalvo={() => void recarregarCelula(celula.competencia)} />}
             {celula.apuracao && <SimplesApuracaoDetalhe apuracao={celula.apuracao} onAbrirHistorico={mei ? undefined : abrirHistorico} />}
           </div>

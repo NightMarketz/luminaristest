@@ -770,6 +770,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
  *
  *   /api/dashboard/modules/install:
  *     post:
@@ -861,12 +862,39 @@
  *
  *   /api/dashboard/system:
  *     delete:
- *       summary: Delete all tables and data for the current user (reset dashboard)
+ *       summary: Reset the current user's system (reset dashboard)
+ *       description: >
+ *         Deletes the dynamic tables and their data, the knowledge graph, action proposals, dashboard layouts, chat
+ *         instances, saved table views, CRM reports and CRM attachments (row + file), and invalidates the KPI cache.
+ *         Documents are kept. Idempotent: an empty system also returns 204. Accounting configuration written by the
+ *         onboarding (chart, period, binding, kit, fiscal profiles) is removed first, in one transaction, with an
+ *         accounting.scope_reset event appended to the audit trail (never deleted). Any accounting movement in any
+ *         unit refuses the reset with 409 and nothing is deleted.
  *       tags: [Dashboard]
  *       security: [{ bearerAuth: [] }]
  *       responses:
- *         '204': { description: All user tables deleted }
+ *         '204': { description: System reset (or already empty) }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '409':
+ *           description: SYSTEM_RESET_BLOCKED_BY_ACCOUNTING — the system has accounting movement; nothing was deleted
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   code: { type: string, enum: [SYSTEM_RESET_BLOCKED_BY_ACCOUNTING] }
+ *                   message: { type: string }
+ *                   details:
+ *                     type: object
+ *                     properties:
+ *                       blocking:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             table: { type: string }
+ *                             count: { type: integer, minimum: 1 }
  *
  *   /api/dashboard/ai/ChatInterview:
  *     post:
@@ -875,6 +903,8 @@
  *         The client keeps the stage and sends it back each turn. In AWAITING_CREATION_TYPE_CONFIRMATION a
  *         `choice` (button, W3 b) decides create x customize without reading the text; without it only an
  *         explicit text decides. Every turn that asks the choice again carries `choicePrompt.reason`.
+ *         The customization session (W4) is persisted, owned by the caller and expires 24 h after its last write;
+ *         the body is strict (unknown keys are rejected).
  *       tags: [Dashboard]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -895,7 +925,7 @@
  *                       content: { type: string }
  *                       text: { type: string }
  *                 presetKey: { type: string }
- *                 sessionId: { type: string }
+ *                 sessionId: { type: string, format: uuid }
  *                 choice: { type: string, enum: [create, customize] }
  *       responses:
  *         '200':
@@ -918,8 +948,47 @@
  *                     properties:
  *                       kind: { type: string, enum: [creation_type] }
  *                       reason: { type: string, enum: [initial, unclear, declined_customize, error] }
+ *                   moduleOptions:
+ *                     type: array
+ *                     description: 'W5/I8-c12 - only on MATCHING_PRESET with a matched preset. Registry modules in registry order; locked = the suite already installs it (cannot be unchecked); suggested = locked plus the AI pick, closed by dependencies'
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         key: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3] }
+ *                         name:
+ *                           type: object
+ *                           properties:
+ *                             pt: { type: string }
+ *                             en: { type: string }
+ *                         dependsOn: { type: array, items: { type: string } }
+ *                         locked: { type: boolean }
+ *                         suggested: { type: boolean }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404':
+ *           description: >
+ *             INTERVIEW_SESSION_NOT_FOUND — the customization session does not exist, expired, was deleted or belongs
+ *             to another user (same answer in all cases). The client goes back to the create x customize choice.
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 required: [code, message]
+ *                 properties:
+ *                   code: { type: string, enum: [INTERVIEW_SESSION_NOT_FOUND] }
+ *                   message: { type: string }
+ *         '409':
+ *           description: >
+ *             INTERVIEW_SESSION_CONFLICT — another turn (e.g. a second tab) wrote the session after this turn read it;
+ *             nothing from this turn was lost on the server beyond what it had already saved. Resend the message.
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 required: [code, message]
+ *                 properties:
+ *                   code: { type: string, enum: [INTERVIEW_SESSION_CONFLICT] }
+ *                   message: { type: string }
  *
  *   # ─── DASHBOARD LAYOUT: documented inline in controllers/dashboardLayoutController.ts ───
  *
@@ -7678,6 +7747,68 @@ export {};
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *
+ *   /api/accounting/simples/registro-valores-a-receber:
+ *     get:
+ *       summary: Registro de valores a receber do regime de caixa — Anexo IX da Res. CGSN 140 (X14-CAIXA item 19)
+ *       description: >-
+ *         Uma linha por venda finalizada no ano com saldo em algum momento (arts. 20 III e 77). Venda no cartão vem com
+ *         dispensadaCartao (art. 77 § 3º). Só até 2026 (o caixa acaba em 01/01/2027, Res. CGSN 190/2026).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: ano, required: true, schema: { type: integer, minimum: 2018, maximum: 2026 } }
+ *       responses:
+ *         '200': { description: '{ ano, linhas: LinhaAnexoIx[] }' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *
+ *   /api/accounting/simples/creditos-incobraveis:
+ *     post:
+ *       summary: Registra crédito considerado incobrável (Res. CGSN 140 art. 77 VI e §§ 5º–6º; X14-CAIXA item 20)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               additionalProperties: false
+ *               required: [unitId, saleId, valorCents, meioCobranca, data, evidencia]
+ *               properties:
+ *                 unitId:       { type: string, minLength: 1 }
+ *                 saleId:       { type: string, minLength: 1 }
+ *                 valorCents:   { type: integer, minimum: 1 }
+ *                 meioCobranca: { type: string, enum: [NOTIFICACAO_EXTRAJUDICIAL, PROTESTO, COBRANCA_JUDICIAL, CADASTRO_PROTECAO_CREDITO] }
+ *                 data:         { type: string, format: date }
+ *                 evidencia:    { type: string, minLength: 1, maxLength: 500 }
+ *       responses:
+ *         '201': { description: 'SimplesCreditoIncobravelView' }
+ *         '400': { description: 'Corpo inválido ou valor maior que o saldo a receber' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
+ *
+ *   /api/accounting/simples/creditos-incobraveis/{id}:
+ *     delete:
+ *       summary: Soft-delete de crédito incobrável (X14-CAIXA item 20)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '204': { description: 'Removido (soft-delete)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/simples/dasn-simei/{ano}:
  *     get:
