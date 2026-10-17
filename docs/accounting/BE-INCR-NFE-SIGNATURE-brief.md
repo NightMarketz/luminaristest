@@ -1,5 +1,10 @@
 # BE-INCR-NFE-SIGNATURE — BRIEF (SIG-NFE, passo 2.3)
 
+> **ESTADO LEGAL VERIFICADO 2026-10-17** (verificação legal de 17/10; só referência, não muda item nem fork deste documento):
+> - **ICP-Brasil:** MP 2.200-2/2001 vigente (art. 10 §1º e art. 11 [V-D01]).
+> - **MOC:** de 01/11/2026 em diante deixa de ser Ato COTEPE; vale o "MOC da NF-e"/"MOC da NFC-e" em versão online mantida pelo Paraná (Aj. SINIEF 07/05 cl. 2ª-A §2º, pelo Aj. 40/26 [V-D07]; Aj. 19/16 cl. 3ª §2º, pelo Aj. 38/26 [V-D04]). As transcrições do MOC 7.0 seguem válidas como texto; conferir divergência com a versão online antes de citar regra nova.
+> Fontes: `[V-Dnn]`/`[V-Pnn]` = dossiê `pesquisas-legais/verif-2026-10-17-nfe-nfce-dfe/relatorio.md` (PR #754); `[S-Dnn]` = dossiê [`pesquisas-legais/sp-inutilizacao-nfe-nfce-2026-11/relatorio.md`](../../pesquisas-legais/sp-inutilizacao-nfe-nfce-2026-11/relatorio.md). Detalhe e forks: [`BE-INCR-NFCE-EMENDA-3-brief.md`](BE-INCR-NFCE-EMENDA-3-brief.md).
+
 **Nó:** [`SIG-NFE`](../plano/nos/SIG-NFE.md) · **Plano:** [`PLANO-POS-CONTADOR-2026-09-23.md`](PLANO-POS-CONTADOR-2026-09-23.md) Fase 2, passo 2.3
 **Autorização deste BRIEF:** dono em chat, 26/09. Depois do relatório que listava *"SIG-NFE: dá para escrever o BRIEF 2.3"*, veio a ordem *"Termina as pendências e depois segue no fiscal"*. A ordem cobre **só o planejamento**. Não é `executa` para o 2.4, e nenhum fork abaixo fica ratificado por ela.
 **Estado:** BRIEF — **5/5 forks RATIFICADOS 26/09** (dono, questionário em sessão): F-SIG-1 → (a) · F-SIG-2 → (a) · F-SIG-3 → (b) · F-SIG-4 → (b) · F-SIG-5 → (a), todos na recomendação. Sem código; o 2.4 ainda exige `executa` e o B0.
