@@ -320,9 +320,9 @@ jobs:
           [ "$fail" = 0 ] && echo "OK: camada de governança OPS-001 presente."
           exit "$fail"
 
-      # _INDEX/_ANCORAS são gerados e o driver `regen` engole conflito neles (.gitattributes);
-      # este passo pega o esquecimento de rodar scripts/regen-generated.sh depois do merge.
-      - name: Plano vault íntegro (_INDEX/_ANCORAS em dia, links resolvem)
+      # Sem --indice: o PR não carrega _INDEX/_ANCORAS (dono, chat, 2026-10-16) — o workflow
+      # plano-index regenera os dois na main depois do merge e é ele quem roda `check --indice`.
+      - name: Plano vault íntegro (links e dependências resolvem)
         run: node scripts/plano-vault.mjs check
 
   # Diff-scoped design gate. A base ainda tem ~33 ocorrências de `zinc-` pré-existentes

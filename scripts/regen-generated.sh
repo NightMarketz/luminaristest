@@ -14,7 +14,8 @@ if [ "${1:-}" = "--setup" ]; then
   exit 0
 fi
 
-node scripts/plano-vault.mjs index
+# _INDEX/_ANCORAS do plano NÃO: branch toma o lado da main e o workflow plano-index regenera lá (dono, 2026-10-16).
+git checkout -q origin/main -- docs/plano/_INDEX.md docs/plano/_ANCORAS.md 2>/dev/null || true
 (
   cd server
   npm run --silent docs:generate
