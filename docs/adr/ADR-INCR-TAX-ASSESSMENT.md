@@ -167,10 +167,20 @@ Parte B (§2).
 
 **D7 — Adicional de IRPJ** = 10% × máx(0, base − R$ 20.000 × meses do período) (IN 1.700 art. 29 § 1º). Os meses
 do período valem:
-- 3 no trimestre;
+- no trimestre, os meses dele em atividade (3, salvo no trimestre de início ou de encerramento);
 - 1 na estimativa mensal;
 - os meses do período em curso no balancete (art. 49 II, *"acrescido do adicional"*);
-- 12 no ajuste anual.
+- no ajuste anual, os meses em atividade (12 no ano inteiro).
+
+*Revisão de 17/10/2026 (verificação legal, divergência 1 do dossiê IRPJ/CSLL; autorização do dono no chat,
+17/10: "Já dispara as correções que ainda não começaram").* O texto original fixava "3 no trimestre", inclusive no
+trimestre de início ou de encerramento de atividade. A Lei 9.249/1995 art. 3º § 1º manda multiplicar o limite
+*"pelo número de meses do respectivo período de apuração"* (acervo ctresb/leis, compilada, conferida em 17/10).
+Agora o trimestre usa `mesesDoTrimestreEmAtividade` (`taxAssessmentCalc.ts`), como o ajuste anual já fazia com
+`mesesEmAtividade`. **Premissa explícita (ambiguidade A6 / P-B4, pergunta ao contador em aberto):** o mês que a
+atividade toca conta inteiro (PJ aberta em 10/02 ⇒ 2 meses no T01). Não há regra de fração de mês. Trimestre sem
+nenhum mês em atividade ⇒ 400 (F-TA-4 b). Se o contador responder que o mês parcial não conta, a mudança fica
+nessa função.
 
 **D8 — A alíquota da CSLL sai de `CompanyFiscalProfile.ecfIndAliqCsll`** (`'1'` = 9%, `'4'` = 15%). Uma fonte só
 serve a ECF (0020) e a apuração. Campo nulo ⇒ 400 *"perfil incompleto"*. Só `'1'` (9%, Lei 7.689 art. 3º III) e

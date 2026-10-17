@@ -6,7 +6,7 @@
 import fs from 'fs';
 import type { LegalParameter } from 'generated/prisma';
 import path from 'path';
-import type { LinhaLegal } from '@/features/legalParameters/models/legalParameter';
+import { linhasEmVigor, type LinhaLegal } from '@/features/legalParameters/models/legalParameter';
 import { tabelaApuracaoDe, type TabelaApuracao } from '@/features/accounting/models/taxAssessmentParams';
 import { razaoCreditoPisCofins, tabelaPisCofinsDe, type ParametroPisCofins } from '@/features/accounting/models/pisCofinsParams';
 import { tabelaPisCofinsItemDe } from '@/features/accounting/models/pisCofinsMonofasicoNcm';
@@ -37,7 +37,9 @@ export const LEGAL_PARAMS_SEED_FILE_V4 = path.resolve(__dirname, '../../prisma/d
 export const LEGAL_PARAMS_SEED_FILE_V5 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v5.sql');
 /** SIMPLES-PISO-ANEXO-XI bloco 2: MEI_ANEXO_XI (cópia do fixture do Anexo XI). Mesma regra de igualdade com o migration.sql. */
 export const LEGAL_PARAMS_SEED_FILE_V6 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v6.sql');
-export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4, LEGAL_PARAMS_SEED_FILE_V5, LEGAL_PARAMS_SEED_FILE_V6];
+/** Verificação legal 17/10: lp8-csll-3-a..e substituem a lp5-csll-3-a (25% em 07–12/2021, 21% em 08–12/2022). */
+export const LEGAL_PARAMS_SEED_FILE_V8 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v8.sql');
+export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4, LEGAL_PARAMS_SEED_FILE_V5, LEGAL_PARAMS_SEED_FILE_V6, LEGAL_PARAMS_SEED_FILE_V8];
 
 type Valor = string | number | null;
 
@@ -113,7 +115,7 @@ export function fotografiaSemente(tabelas?: readonly string[]): LinhaLegal[] {
 
 /** Fotografia TAX_ASSESSMENT + CSLL_ALIQUOTA da semente — o que o serviço passa às funções puras do X7. */
 export function tabelaApuracaoSemente(): TabelaApuracao {
-  return tabelaApuracaoDe(legalParamsSeedRows());
+  return tabelaApuracaoDe(linhasEmVigor(legalParamsSeedRows())); // como o serviço: sem as substituídas (L-7)
 }
 
 /** Fotografia PIS_COFINS da semente — o que o serviço passa à função pura do X8. */

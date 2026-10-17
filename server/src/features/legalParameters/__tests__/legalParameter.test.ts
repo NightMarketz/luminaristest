@@ -4,7 +4,7 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4, LEGAL_PARAMS_SEED_FILE_V5, legalParamsSeedRows, tabelaApuracaoSemente } from '@test/helpers/legalParams';
+import { LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4, LEGAL_PARAMS_SEED_FILE_V5, LEGAL_PARAMS_SEED_FILE_V8, legalParamsSeedRows, tabelaApuracaoSemente } from '@test/helpers/legalParams';
 import anexoFixture from '../../accounting/fixtures/anexo-iii-in-1700-2017.json';
 import { LEGAL_PARAMETER_TABELAS, TABELAS_MIGRADAS, linhaLegalVigente, linhasEmVigor, type LinhaLegal } from '../models/legalParameter';
 import { erroDeFormato, type LinhaParaFormato } from '../models/formatoLinha';
@@ -14,6 +14,7 @@ const MIGRATION = path.resolve(__dirname, '../../../../prisma/migrations/2026100
 const MIGRATION_V2 = path.resolve(__dirname, '../../../../prisma/migrations/20261007160000_add_legal_parameters_v2/migration.sql');
 const MIGRATION_V3 = path.resolve(__dirname, '../../../../prisma/migrations/20261007170000_legal_parameters_v3_depreciacao/migration.sql');
 const MIGRATION_V5 = path.resolve(__dirname, '../../../../prisma/migrations/20261010090000_legal_parameters_v5_csll_bancos/migration.sql');
+const MIGRATION_V8 = path.resolve(__dirname, '../../../../prisma/migrations/20261017180000_legal_parameters_v8_csll_bancos_historico/migration.sql');
 const MIGRATION_V4 = path.resolve(__dirname, '../../../../prisma/migrations/20261009120000_legal_parameters_v4_csll_lc224/migration.sql');
 const norm = (s: string) => s.replace(/\r\n/g, '\n');
 
@@ -163,7 +164,7 @@ describe('BE-INCR-CSLL-BANCOS-Q1 — linha v5 do código 3 antes de 01/04/2026 (
     const DATAS = ['2020-02-29', '2020-03-01', '2025-12-31', '2026-03-31', '2026-04-01', '2028-01-01'];
     expect(DATAS.map((d) => t.aliquotaCsll('3', d)?.valor)).toEqual([undefined, 2000, 2000, 2000, 2000, 2000]);
     expect(DATAS.slice(1).map((d) => t.aliquotaCsll('3', d)?.fonte)).toEqual([
-      ART_30_IV, ART_30_IV, ART_30_IV, 'IN RFB 1.700/2017 art. 30-D II (red. IN RFB 2.315/2026)', 'IN RFB 1.700/2017 art. 30-D II (red. IN RFB 2.315/2026)',
+      ART_30_IV, 'Lei 7.689/1988 art. 3º II-A (red. Lei 14.183/2021 art. 1º: 20% a partir de 01/01/2022)', 'Lei 7.689/1988 art. 3º II-A (red. Lei 14.183/2021 art. 1º: 20% a partir de 01/01/2022)', 'IN RFB 1.700/2017 art. 30-D II (red. IN RFB 2.315/2026)', 'IN RFB 1.700/2017 art. 30-D II (red. IN RFB 2.315/2026)',
     ]);
   });
 });
@@ -208,6 +209,21 @@ describe('LegalParameterPolicy (item 12, F-LP-2 b)', () => {
 describe('verificação legal 17/10 (IRPJ/CSLL, divergência 2) — CSLL de bancos (código 3) de 03/2020 a 03/2026', () => {
   // Lei 7.689/1988 art. 3º II-A: 25% até 31/12/2021 (MP 1.034/2021 art. 1º III, efeitos desde 01/07/2021 — art. 5º II;
   // Lei 14.183/2021 art. 1º) e 20% depois; parágrafo único: 21% até 31/12/2022 (MP 1.115/2022, efeitos desde 01/08/2022).
+  it('o migration.sql v8 carrega o texto de prisma/data/legal_parameters_v8.sql e só insere; 5 linhas, todas substituindo a lp5-csll-3-a', () => {
+    const mig = norm(fs.readFileSync(MIGRATION_V8, 'utf8'));
+    expect(mig).toContain(norm(fs.readFileSync(LEGAL_PARAMS_SEED_FILE_V8, 'utf8')).trimEnd());
+    expect(mig.split('\n').filter((l) => l.trim() && !l.startsWith('--')).every((l) => l.startsWith('INSERT OR IGNORE INTO "legal_parameters" '))).toBe(true);
+    const v8 = legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_V8);
+    expect(v8.map((r) => [r.id, r.valorInt, r.vigenteDesde, r.vigenteAte, r.supersedesId])).toEqual([
+      ['lp8-csll-3-a', 2000, '2020-03-01', '2021-06-30', 'lp5-csll-3-a'],
+      ['lp8-csll-3-b', 2500, '2021-07-01', '2021-12-31', 'lp5-csll-3-a'],
+      ['lp8-csll-3-c', 2000, '2022-01-01', '2022-07-31', 'lp5-csll-3-a'],
+      ['lp8-csll-3-d', 2100, '2022-08-01', '2022-12-31', 'lp5-csll-3-a'],
+      ['lp8-csll-3-e', 2000, '2023-01-01', '2026-03-31', 'lp5-csll-3-a'],
+    ]);
+    for (const r of v8) expect(erroDeFormato({ ...r, valorJson: undefined } as LinhaParaFormato)).toBeNull();
+  });
+
   it('aliquotaCsll(3, d) reflete os 25% de 07–12/2021 e os 21% de 08–12/2022; 20% no resto', () => {
     const t = tabelaApuracaoSemente();
     const DATAS = ['2020-03-01', '2021-06-30', '2021-07-01', '2021-12-31', '2022-01-01', '2022-07-31', '2022-08-01', '2022-12-31', '2023-01-01', '2026-03-31', '2026-04-01'];

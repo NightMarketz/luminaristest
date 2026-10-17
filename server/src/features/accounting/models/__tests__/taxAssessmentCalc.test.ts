@@ -377,7 +377,7 @@ describe('deduções (item 11, F-X7-11 a; F-TA-9 a)', () => {
 describe('Real trimestral (item 10; 23 c/d)', () => {
   const base: EntradaReal = {
     tabela, ano: 2026, periodo: 'T01', tributo: 'IRPJ', resultadoAntesCents: R(100_000), contasProvisaoConfiguradas: true,
-    linhasParteA: [], parteBFechada: true, perfil: { ecfIndAliqCsll: '4', lucroRealObrigatorio: false }, deducoes: [],
+    linhasParteA: [], parteBFechada: true, perfil: { ecfIndAliqCsll: '4', lucroRealObrigatorio: false, inicioAtividadeEm: null, encerramentoAtividadeEm: null }, deducoes: [],
   };
 
   it('L = resultado + A − E; C = linhas P; código 337301 (optante) / 022001 (obrigada) / 601201 (CSLL)', () => {
@@ -398,13 +398,13 @@ describe('Real trimestral (item 10; 23 c/d)', () => {
     expect(csll.devidoCents).toBe(R(15_000)); // 100.000 × 15% (indAliqCsll '4')
   });
 
-  it('BE-INCR-CSLL-BANCOS-Q1 item 4: banco (indAliqCsll 3) no T01/2026 — Presumido e Real a 20%, citando o art. 30 IV', () => {
+  it('BE-INCR-CSLL-BANCOS-Q1 item 4: banco (indAliqCsll 3) no T01/2026 — Presumido e Real a 20%, citando a Lei 7.689 art. 3º II-A (lp8-csll-3-e, verificação legal 17/10)', () => {
     const real = apurarRealTrimestral({ ...base, tributo: 'CSLL', perfil: { ...base.perfil, ecfIndAliqCsll: '3' } });
     expect(real.devidoCents).toBe(R(20_000)); // 100.000 × 20%
-    expect(real.memoria.some((m) => m.fonte.includes('art. 30 IV'))).toBe(true);
+    expect(real.memoria.some((m) => m.fonte.includes('art. 3º II-A'))).toBe(true);
     const pres = apurarAno({ T01: [100_000, 0] }, 'CSLL', { ecfIndAliqCsll: '3' }).T01;
     expect(pres.devidoCents).toBe(R(6_400)); // 32.000 × 20%
-    expect(pres.memoria.some((m) => m.fonte.includes('art. 30 IV'))).toBe(true);
+    expect(pres.memoria.some((m) => m.fonte.includes('art. 3º II-A'))).toBe(true);
   });
 
   it('23(d) D6: compensação = arred(30% × L) passa; um centavo acima ⇒ 400 nomeando a linha P; L ≤ 0 com C > 0 ⇒ 400', () => {
@@ -459,7 +459,7 @@ describe('adicional do IRPJ no trimestre de início/encerramento (verificação 
     const r = apurarRealTrimestral({
       tabela, ano: 2026, periodo: 'T01', tributo: 'IRPJ', resultadoAntesCents: R(100_000), contasProvisaoConfiguradas: true,
       linhasParteA: [], parteBFechada: true, deducoes: [],
-      perfil: { ecfIndAliqCsll: '4', lucroRealObrigatorio: false, inicioAtividadeEm: '2026-02-10', encerramentoAtividadeEm: null } as EntradaReal['perfil'],
+      perfil: { ecfIndAliqCsll: '4', lucroRealObrigatorio: false, inicioAtividadeEm: '2026-02-10', encerramentoAtividadeEm: null },
     });
     expect(v(r, 'ADICIONAL')).toBe(String(R(6_000)));
   });
