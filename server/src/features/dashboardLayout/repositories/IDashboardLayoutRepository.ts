@@ -40,4 +40,9 @@ export interface IDashboardLayoutRepository {
    * Deletes a dashboard layout from the database.
    */
   deleteLayout(id: string): Promise<void>;
+
+  /**
+   * Hard-deletes every layout (tab) of the user — reset do sistema (I7 item 2; o modelo não tem `deletedAt`).
+   */
+  deleteByUserId(userId: string): Promise<void>;
 }

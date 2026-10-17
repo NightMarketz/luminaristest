@@ -2906,6 +2906,10 @@
       "LIMITE_ME_EXCEDIDO": "ME limit exceeded",
       "MEI_ENQUADRAMENTO_DIVERGE": "MEI classification differs from occupations",
       "MEI_OCUPACAO_EXCLUIDA": "Occupation outside MEI",
+      "REGIME_CAIXA_RECALCULO": "DAS filed on accrual basis for a cash-basis period",
+      "IMPEDIMENTO_CAIXA_ICMS_ISS": "Impediment: ICMS/ISS outside the DAS",
+      "CARTAO_RECEBIMENTO_ESTIMADO": "Card receipt date estimated",
+      "RECEBIMENTO_DE_VENDA_TRIBUTADA_POR_COMPETENCIA": "Receipt of a sale already taxed on accrual basis",
       "MEI_TAC_COM_OCUPACAO_A": "Cargo carrier with a table A occupation",
       "NFSE_DIVERGE_RECEITA": "NFS-e differs from revenue",
       "RBT12_INCOMPLETO": "Incomplete RBT12",
@@ -3042,7 +3046,8 @@
     },
     "motivo": {
       "DOCUMENTO_MUNICIPAL_TRANSICAO": "Municipal document (transition)",
-      "REGIME_CAIXA": "Cash basis"
+      "REGIME_CAIXA": "Cash basis",
+      "CARTAO_RECEBIMENTO_ESTIMADO": "Card term estimated"
     },
     "motivoSeg": {
       "ICMS_ST": "ICMS tax substitution",
@@ -3126,6 +3131,119 @@
       "INFO": "Informational",
       "WARNING": "Warning"
     },
-    "sim": "Yes"
+    "sim": "Yes",
+    "dasn": {
+      "title": "DASN-SIMEI",
+      "prazo": "Filing deadline",
+      "receitaTotal": "Total gross revenue for the year",
+      "receitaIcms": "Revenue subject to ICMS",
+      "mesesSemSubrazao": "Months with no sub-ledger entries (their revenue is not in the total):",
+      "contratouEmpregado": "Hired an employee during the year?",
+      "salvar": "Save DASN-SIMEI",
+      "salvo": "DASN-SIMEI saved.",
+      "erro": {
+        "contratou": "Answer whether the MEI hired an employee during the year."
+      },
+      "error": {
+        "load": "Failed to load the DASN-SIMEI.",
+        "save": "Could not save the DASN-SIMEI."
+      }
+    },
+    "defis": {
+      "title": "DEFIS",
+      "doRazao": "From the ledger (read-only)",
+      "prazo": "Filing deadline",
+      "mesesApurados": "Assessed months",
+      "lucro": "Accounting profit",
+      "limiteIsencao": "Exemption limit (art. 145 § 1)",
+      "informarLucro": "Report the profit in the DEFIS",
+      "estoqueInicial": "Opening inventory",
+      "estoqueFinal": "Closing inventory",
+      "empregadosInicio": "Employees at the start of the year",
+      "empregadosFim": "Employees at the end of the year",
+      "ganhosCapital": "Capital gains",
+      "ganhosRendaVariavel": "Net variable-income gains",
+      "exportacaoDireta": "Direct export revenue",
+      "socios": "Partners and treasury shares",
+      "soma": "Total (partners + treasury)",
+      "somaAviso": "With a partner listed, partners' stakes plus treasury shares must total 100% (DEFIS manual, 9.4.3.1 items 7.3 and 8) — the server checks it on save.",
+      "tabelaSocios": "Table the partners come from",
+      "semSocios": "No partner listed.",
+      "socioN": "Partner {{n}}",
+      "escolhaTabela": "Choose the partners' table.",
+      "participacao": "Stake (%)",
+      "irrf": "Withholding income tax",
+      "rendimentosIsentos": "Exempt income",
+      "rendimentosTributaveis": "Taxable income",
+      "cotasTesouraria": "Treasury shares (%)",
+      "adicionarSocio": "Add partner",
+      "exportacaoComercial": "Exports through a trading company",
+      "cnpjExportadoraN": "Trading company CNPJ {{n}}",
+      "valorExportacaoN": "Exported amount {{n}}",
+      "adicionarExportadora": "Add trading company",
+      "doacoes": "Electoral campaign donations",
+      "cnpjBeneficiarioN": "Beneficiary CNPJ {{n}}",
+      "tipoBeneficiarioN": "Beneficiary type {{n}}",
+      "formaDoacaoN": "Donation form {{n}}",
+      "valorDoacaoN": "Donation amount {{n}}",
+      "adicionarDoacao": "Add donation",
+      "salvar": "Save DEFIS",
+      "salvo": "DEFIS saved.",
+      "tipo": {
+        "CANDIDATO": "Candidate",
+        "COMITE_FINANCEIRO": "Finance committee",
+        "PARTIDO_POLITICO": "Political party"
+      },
+      "forma": {
+        "CHEQUE": "Check",
+        "OUTROS_TITULOS_CREDITO": "Other credit instruments",
+        "TRANSFERENCIA_ELETRONICA": "Electronic transfer",
+        "DEPOSITO_ESPECIE": "Cash deposit",
+        "DINHEIRO": "Cash",
+        "BENS": "Goods",
+        "SERVICOS": "Services"
+      },
+      "erro": {
+        "empregadosInicio": "Employees at the start of the year: whole number from 0 to 1,000,000.",
+        "empregadosFim": "Employees at the end of the year: whole number from 0 to 1,000,000.",
+        "ganhosCapital": "Invalid capital gains — format 1.234,56.",
+        "ganhosRendaVariavel": "Invalid variable-income gains — format 1.234,56.",
+        "exportacaoDireta": "Invalid direct exports — format 1.234,56.",
+        "cotasTesouraria": "Treasury shares: percentage from 0,00 to 100,00.",
+        "socioContato": "Choose the partner on row {{n}}.",
+        "socioValor": "Invalid amounts for the partner on row {{n}} — format 1.234,56.",
+        "socioParticipacao": "Stake of the partner on row {{n}}: percentage from 0,00 to 100,00.",
+        "exportacaoCnpj": "Trading company CNPJ on row {{n}}: 14 characters.",
+        "exportacaoValor": "Export amount on row {{n}}: greater than zero, format 1.234,56.",
+        "doacaoCnpj": "Donation beneficiary CNPJ on row {{n}}: 14 characters.",
+        "doacaoTipo": "Choose the beneficiary type of the donation on row {{n}}.",
+        "doacaoForma": "Choose the form of the donation on row {{n}}.",
+        "doacaoValor": "Donation amount on row {{n}}: greater than zero, format 1.234,56.",
+        "demais": "At most 100 rows per list."
+      },
+      "error": {
+        "load": "Failed to load the DEFIS.",
+        "save": "Could not save the DEFIS."
+      }
+    },
+    "aliquotas": {
+      "title": "Suggested rates for the month",
+      "sugestao": "Suggestion",
+      "regra": "Rule",
+      "mesReferencia": "Bracket reference month",
+      "issRetencao": "ISS to withhold",
+      "credito": "Buyer's credit",
+      "beneficio": "Municipal benefit",
+      "pisoAplicado": "2% floor applied",
+      "excecaoPiso": "floor exception",
+      "regraTipo": {
+        "INICIO_ATIVIDADE": "First month of activity (2%)",
+        "FAIXA_MES_ANTERIOR": "Previous month's bracket",
+        "FAIXA_MES_PRESTACAO": "Bracket of the service month"
+      },
+      "error": {
+        "load": "Failed to load the suggested rates."
+      }
+    }
   }
 }

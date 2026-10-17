@@ -13,6 +13,7 @@ import { ChatMessageRole } from '../models/ChatMessage.model';
 import type { IChatMessage } from '../models/ChatMessage.model';
 import type { IChatInstanceRepository } from '../../chatInstances/repositories/IChatInstanceRepository';
 import type { Prisma } from 'generated/prisma';
+import type { TurnUsage } from '@/lib/openai/llmUsage';
 
 /**
  * Service responsible for managing chat messages.
@@ -107,8 +108,9 @@ export class ChatMessageService {
    * @throws {UnauthorizedError} If user is not authenticated
    * @throws {NotFoundError} If chat instance not found
    * @throws {ForbiddenError} If the instance does not belong to the user
+   * `usage` (I11) é gravado no mesmo `create`; ausente → colunas NULL.
    */
-  async appendAssistantMessage(chatInstanceId: string, content: string, userContext: UserContext): Promise<void> {
+  async appendAssistantMessage(chatInstanceId: string, content: string, userContext: UserContext, usage?: TurnUsage): Promise<void> {
     if (!userContext.userId) {
       throw new UnauthorizedError('Authentication required');
     }
@@ -124,7 +126,13 @@ export class ChatMessageService {
     const messageData: Prisma.ChatMessageCreateInput = {
       content,
       role: ChatMessageRole.ASSISTANT as unknown as Prisma.ChatMessageCreateInput['role'],
-      chatInstance: { connect: { id: chatInstanceId } }
+      chatInstance: { connect: { id: chatInstanceId } },
+      ...(usage && {
+        promptTokens: usage.promptTokens,
+        completionTokens: usage.completionTokens,
+        model: usage.model,
+        usageDetail: usage.calls,
+      }),
     };
     await this.chatMessageRepository.createMessage(messageData);
   }
@@ -292,7 +300,10 @@ export class ChatMessageService {
       role: message.role,
       chatInstanceId: message.chatInstanceId,
       createdAt: message.createdAt,
-      updatedAt: message.updatedAt
+      updatedAt: message.updatedAt,
+      promptTokens: message.promptTokens ?? null,
+      completionTokens: message.completionTokens ?? null,
+      model: message.model ?? null
     };
   }
 

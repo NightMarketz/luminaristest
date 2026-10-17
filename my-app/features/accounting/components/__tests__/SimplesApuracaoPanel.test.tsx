@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react';
 import { TaxAssessmentPanel } from '../TaxAssessmentPanel';
 import type { Apuracao } from '../../../../lib/services/simples.service';
-import { apuracaoMei, apuracaoSimples, perfilAno } from './simplesFixtures';
+import { aliquotasSimples, apuracaoMei, apuracaoSimples, perfilAno } from './simplesFixtures';
 
 (globalThis as unknown as { React: typeof React }).React = React;
 
@@ -23,6 +23,7 @@ vi.mock('../../../../lib/services/simples.service', async (orig) => ({
     obterApuracao: (...a: unknown[]) => obterApuracao(...a),
     calcularApuracao: (...a: unknown[]) => calcularApuracao(...a),
     listParcerias: async () => [],
+    obterAliquotas: async (c: string) => aliquotasSimples(c), // PR-D item 15: seção do detalhe em ano SIMPLES
   },
 }));
 // PR-B: o sub-painel de parcerias (ano SIMPLES) procura a tabela `employees`.

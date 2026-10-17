@@ -104,10 +104,16 @@ export const CODIGOS_ALERTA_SIMPLES = [
   'MEI_ENQUADRAMENTO_DIVERGE',
   'MEI_TAC_COM_OCUPACAO_A',
   'MEI_OCUPACAO_EXCLUIDA',
+  // BE-INCR-SIMPLES-CAIXA PR-2 (nó X14-CAIXA, itens 13, 16 e 18; A3 da decisão do dono de 16/10)
+  'REGIME_CAIXA_RECALCULO',
+  'IMPEDIMENTO_CAIXA_ICMS_ISS',
+  'CARTAO_RECEBIMENTO_ESTIMADO',
+  'RECEBIMENTO_DE_VENDA_TRIBUTADA_POR_COMPETENCIA',
 ] as const;
 /** D-2026-10-10-X14-ALERTA-INFORMATIVO (dono, chat, 2026-10-10), item 1: o código fica estável; o alerta ganha severidade. */
 export const SEVERIDADES_ALERTA_SIMPLES = ['INFO', 'WARNING'] as const;
-export const MOTIVOS_ALERTA_INFORMATIVO = ['DOCUMENTO_MUNICIPAL_TRANSIÇÃO', 'REGIME_CAIXA'] as const;
+// X14-CAIXA item 17 (F-CX-6 a): `REGIME_CAIXA` fica no enum (compatibilidade do snapshot) sem emissor desde o PR-2.
+export const MOTIVOS_ALERTA_INFORMATIVO = ['DOCUMENTO_MUNICIPAL_TRANSIÇÃO', 'REGIME_CAIXA', 'CARTAO_RECEBIMENTO_ESTIMADO'] as const;
 /** Alerta da apuração (saída). `motivoInformativo` só vem com `severity = INFO`. */
 export const AlertaSimplesSchema = z
   .object({
@@ -120,6 +126,96 @@ export const AlertaSimplesSchema = z
   .refine((a) => a.motivoInformativo === undefined || a.severity === 'INFO', { message: 'motivoInformativo só com severity INFO', path: ['motivoInformativo'] });
 export type AlertaSimples = z.infer<typeof AlertaSimplesSchema>;
 export type CodigoAlertaSimples = AlertaSimples['codigo'];
+
+/** Centavos com sinal: no caixa, o estorno do mês pode passar o recebido do mês (L1 a, dono 16/10). */
+const centsComSinal = z.number().int().min(-MAX_CENTS).max(MAX_CENTS);
+
+/**
+ * BE-INCR-SIMPLES-CAIXA PR-2 (nó X14-CAIXA, item 15) — a base caixa do PA, LÍQUIDA da cota do profissional-parceiro (a
+ * mesma régua da receita por competência). `receitaAuferidaPaCents` é a da competência (conferência; o RBT12, os limites e
+ * a faixa seguem por competência — Res. CGSN 140 art. 19 p.ú.).
+ */
+export const BaseCaixaSchema = z
+  .object({
+    recebidoPaCents: centsComSinal,
+    receitaAuferidaPaCents: centsComSinal,
+    art20Cents: z
+      .object({
+        parcelaVencida: cents, // art. 20 I
+        encerramento: cents, // art. 20 II a
+        retornoCompetencia: cents, // art. 20 II b (Y ≤ 2025)
+        exclusao: cents, // art. 20 II c
+      })
+      .strict(),
+  })
+  .strict();
+export type BaseCaixa = z.infer<typeof BaseCaixaSchema>;
+
+/** Item 13 (F-CX-7 a) — art. 20 IV: ICMS/ISS da receita não recebida, recolhidos direto ao ente — fora do DAS. */
+export const ImpedimentoCaixaSchema = z
+  .object({
+    mesBase: z.string().regex(/^\d{4}-\d{2}$/),
+    receitaNaoRecebidaCents: cents,
+    icmsCents: cents,
+    issCents: cents,
+  })
+  .strict();
+export type ImpedimentoCaixa = z.infer<typeof ImpedimentoCaixaSchema>;
+
+/**
+ * BE-INCR-SIMPLES-CAIXA PR-3 (nó X14-CAIXA, item 19) — GET …/registro-valores-a-receber: o registro do Anexo IX da Res.
+ * CGSN 140 (arts. 20 III e 77), só até 2026 (o caixa acaba em 01/01/2027 — Res. CGSN 190/2026 art. 8º XIX e XXII).
+ */
+export const RegistroValoresAReceberQuerySchema = z.object({ unitId: z.string().min(1), ano: z.coerce.number().int().gte(2018).lte(2026) }).strict();
+
+/** Uma linha do registro de valores a receber (colunas do Anexo IX). */
+export const LinhaAnexoIxSchema = z
+  .object({
+    saleId: z.string(),
+    dataOperacao: dateOnly('dataOperacao'),
+    documentosFiscais: z.array(z.string()), // art. 77 § 1º: registrados juntos
+    valorTotalCents: cents,
+    quantidadeParcelas: z.number().int().min(1),
+    parcelas: z.array(
+      z
+        .object({
+          numero: z.number().int().min(1),
+          valorCents: cents,
+          vencimento: dateOnly('vencimento'),
+          dataRecebimento: dateOnly('dataRecebimento').nullable(),
+          valorPagoCents: cents,
+          saldoAReceberCents: cents,
+          incobravelCents: cents,
+        })
+        .strict(),
+    ),
+    dispensadaCartao: z.boolean(), // art. 77 § 3º
+  })
+  .strict();
+export type LinhaAnexoIx = z.infer<typeof LinhaAnexoIxSchema>;
+
+/** Item 20 (F-CX-5 a) — meios de cobrança que provam a tentativa (Res. CGSN 140 art. 77 § 6º). */
+export const MEIOS_COBRANCA_INCOBRAVEL = ['NOTIFICACAO_EXTRAJUDICIAL', 'PROTESTO', 'COBRANCA_JUDICIAL', 'CADASTRO_PROTECAO_CREDITO'] as const;
+export const SimplesCreditoIncobravelCreateSchema = z
+  .object({
+    unitId: z.string().min(1),
+    saleId: z.string().min(1),
+    valorCents: cents.refine((v) => v > 0, 'valorCents deve ser maior que zero'),
+    meioCobranca: z.enum(MEIOS_COBRANCA_INCOBRAVEL),
+    data: dateOnly('data'),
+    evidencia: z.string().trim().min(1).max(500),
+  })
+  .strict();
+export type SimplesCreditoIncobravelCreate = z.infer<typeof SimplesCreditoIncobravelCreateSchema>;
+export interface SimplesCreditoIncobravelView {
+  id: string;
+  saleId: string;
+  valorCents: number;
+  meioCobranca: (typeof MEIOS_COBRANCA_INCOBRAVEL)[number];
+  data: string;
+  evidencia: string;
+  createdAt: string;
+}
 
 export const SimplesUnitQuerySchema = z.object({ unitId: z.string().min(1) }).strict();
 export const SimplesIdParamSchema = z.object({ id: z.string().min(1) }).strict();

@@ -156,10 +156,21 @@ describe('I4 PR-2 — POST /dashboard/create ativa a contabilidade da 1ª unidad
     expect(await foto(u.id)).toEqual({ bindings: 0, contas: 0, periodos: 0 });
   }, 120000);
 
-  it('itens 9 e 10: Controle Total beauty_salon resolve o setor do salão ⇒ Active', async () => {
+  it('itens 9 e 10: Controle Total beautySalon resolve o setor do salão ⇒ Active', async () => {
     const u = await novoUsuario();
-    const r = await criar(u, { mode: 'custom', presetKey: 'beauty_salon', fiscal: PRESUMIDO });
+    const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', fiscal: PRESUMIDO });
     expect(r.status).toBe(201);
     expect(r.body.data.accounting).toEqual({ status: 'Active', sectorKey: 'beautySalon', bindingVersion: 1 });
+  }, 120000);
+
+  // W5 item 6 (dono, questionário, 2026-10-16: "Só a chave do registro"): o snake_case não é mais aceito.
+  it('W5: Controle Total beauty_salon (fora do registro) → 404, nada instalado', async () => {
+    const u = await novoUsuario();
+    const r = await criar(u, { mode: 'custom', presetKey: 'beauty_salon', fiscal: PRESUMIDO });
+    expect({ status: r.status, error: r.body.error }).toEqual({
+      status: 404,
+      error: "Preset com chave 'beauty_salon' não encontrado.",
+    });
+    expect(await foto(u.id)).toEqual({ bindings: 0, contas: 0, periodos: 0 });
   }, 120000);
 });

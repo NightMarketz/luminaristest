@@ -40,6 +40,10 @@ export interface IReceitaFiscalRepository {
   findByCompetencia(scope: AccountingScope, competencia: string, tx?: Prisma.TransactionClient): Promise<ReceitaFiscalLinha[]>;
   /** X14 PR-3 — Σ receita e Σ cota do profissional por competência (todas as linhas, com as negativas). */
   somaPorCompetencia(scope: AccountingScope, competencias: readonly string[], tx?: Prisma.TransactionClient): Promise<Map<string, { receitaCents: bigint; cotaCents: bigint }>>;
+  /** X14-CAIXA PR-2 (item 8) — as linhas VENDA com competência no intervalo [de, ate]. */
+  findVendasEntre(scope: AccountingScope, de: string, ate: string, tx?: Prisma.TransactionClient): Promise<ReceitaFiscalLinha[]>;
+  /** X14-CAIXA PR-2 (item 8) — todas as linhas (VENDA e negativas) das vendas pedidas. */
+  findLinhasDasVendas(scope: AccountingScope, saleIds: readonly string[], tx?: Prisma.TransactionClient): Promise<ReceitaFiscalLinha[]>;
   /** Das competências pedidas, as que têm ao menos uma linha. */
   competenciasComLinhas(scope: AccountingScope, competencias: readonly string[]): Promise<string[]>;
 }

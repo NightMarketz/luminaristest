@@ -1,3 +1,5 @@
+import type { QuickCreationInput } from '@/types/contracts/dynamicTables/CreateDashboard.dto.gen';
+
 export interface IMessage {
   sender: 'user' | 'ai';
   text: string;
@@ -43,4 +45,21 @@ export interface ICreationError {
   kind: CreationErrorKind;
   /** texto do servidor quando veio; senão já traduzido via t() */
   message: string;
+}
+
+/** W5 PR-3: chave atômica de módulo — do contrato gerado do create, sem a chave de grupo `CRM-2`. */
+export type ModuleKey = Exclude<NonNullable<QuickCreationInput['modules']>[number], 'CRM-2'>;
+
+/**
+ * W5 PR-3 (FE-INCR-W5-MODULES): espelha `InterviewModuleOption` de `server/.../InterviewTypes.ts` (W5 PR-2) — o turno da
+ * entrevista é interface, sem `.gen.ts`. Só vem no turno MATCHING_PRESET com preset casado.
+ */
+export interface InterviewModuleOption {
+  key: ModuleKey;
+  name: { pt: string; en: string };
+  dependsOn: ModuleKey[];
+  /** a suíte já instala: marcado e desabilitado */
+  locked: boolean;
+  /** começa marcado */
+  suggested: boolean;
 }

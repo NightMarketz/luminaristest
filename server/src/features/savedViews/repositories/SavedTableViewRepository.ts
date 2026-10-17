@@ -84,6 +84,13 @@ export class SavedTableViewRepository implements ISavedTableViewRepository {
     });
   }
 
+  public async softDeleteByUserId(userId: string): Promise<void> {
+    await prisma.savedTableView.updateMany({
+      where: { userId, deletedAt: null },
+      data: { deletedAt: new Date() },
+    });
+  }
+
   private mapToDomain(row: SavedTableViewRow): ISavedTableView {
     return {
       id: row.id,

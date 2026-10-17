@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react';
 import { SimplesApuracaoPanel } from '../SimplesApuracaoPanel';
 import type { Apuracao } from '../../../../lib/services/simples.service';
-import { apuracaoMei, apuracaoSimples, perfilAno } from './simplesFixtures';
+import { aliquotasSimples, apuracaoMei, apuracaoSimples, perfilAno } from './simplesFixtures';
 
 (globalThis as unknown as { React: typeof React }).React = React;
 
@@ -18,6 +18,7 @@ vi.mock('../../../../lib/services/simples.service', async (orig) => ({
     obterApuracao: (...a: unknown[]) => obterApuracao(...a),
     calcularApuracao: vi.fn(),
     listParcerias: async () => [],
+    obterAliquotas: async (c: string) => aliquotasSimples(c), // PR-D item 15: seção do detalhe em ano SIMPLES
     obterHistorico: (...a: unknown[]) => obterHistorico(...a),
     salvarHistorico: (...a: unknown[]) => salvarHistorico(...a),
     obterSegregacao: (...a: unknown[]) => obterSegregacao(...a),

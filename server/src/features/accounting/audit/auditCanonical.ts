@@ -199,7 +199,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     // SIMPLES-PISO-ANEXO-XI item 12 (F-AX-2 a): chaves do Anexo XI (A-0001…) separadas por vírgula — sem texto livre.
     'meiOcupacoes',
     // X14 F-PR4-12 (b): enum COMPETENCIA | CAIXA do regime de apuração do Simples.
-    'simplesRegimeApuracao'],
+    'simplesRegimeApuracao',
+    // BE-INCR-SIMPLES-CAIXA PR-1 (item 7; F-CX-3 a): data de efeitos da exclusão do Simples (date-only, sem PII).
+    'simplesExclusaoEfeitosEm'],
   'company_fiscal_profile.deleted': ['anoCalendario'],
   // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7, item 22) — só ids, enum e centavos como string; sem PII. O documento
   // da dedução (texto livre) e a memória ficam FORA do evento.
@@ -214,6 +216,10 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'tax.simples_das.substituido': ['apuracaoId', 'competencia', 'valorOficialCents', 'totalCalculadoCents', 'divergenciaCents', 'supersedesId'],
   // BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-8 (a): PDF anexado a DAS já registrado (anteriorSourceDocumentId ausente quando não havia).
   'tax.simples_das.documento_anexado': ['apuracaoId', 'competencia', 'sourceDocumentId', 'anteriorSourceDocumentId'],
+  // BE-INCR-SIMPLES-CAIXA PR-3 (nó X14-CAIXA, itens 20–21): ids, centavos em string, enum e data; a evidência (texto
+  // livre) fica FORA do evento.
+  'tax.simples_incobravel.registrado': ['incobravelId', 'saleId', 'valorCents', 'meioCobranca', 'data'],
+  'tax.simples_incobravel.removido': ['incobravelId', 'saleId'],
   // BE-INCR-LEGAL-PARAMS PR-1 (item 8; emenda §9 L-5: corrente da plataforma) — coeficiente de lei, sem PII.
   'legal_parameter.proposed': ['legalParameterId', 'tabela', 'chave', 'discriminador', 'valorInt', 'valorTexto', 'vigenteDesde', 'vigenteAte', 'supersedesId'],
   'legal_parameter.published': ['legalParameterId', 'tabela', 'chave', 'discriminador', 'vigenteDesde', 'vigenteAte', 'supersedesId'],
@@ -330,6 +336,11 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // I1b (ADR-INCR-UNIT-REKEY item 12, F-RK-6 b) — âncora genesis na cadeia da unidade nova, ligando-a à cadeia selada
   // do unitId legado. Ids/hash/contagens só (sem PII); `tables` é o JSON estável das contagens por tabela.
   'unit.rekeyed': ['fromUnitId', 'fromHeadHash', 'fromNextSeq', 'tables'],
+  // BE-INCR-RESET-CONSISTENTE item 14 (nó I7, F-I7-4) — "Resetar sistema" removeu a configuração contábil da unidade.
+  // `removed` = JSON estável tabela → contagem DAQUELA unidade. `companyLevel` = idem para as tabelas da EMPRESA, sem
+  // unitId (`CompanyFiscalProfile`): é do nível da empresa e SE REPETE, igual, no evento de cada unidade resetada —
+  // nunca some `companyLevel` entre unidades (dono, questionário, 2026-10-16: "Apaga, conta em toda unidade"). Sem PII.
+  'accounting.scope_reset': ['removed', 'companyLevel'],
 };
 
 /**

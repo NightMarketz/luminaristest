@@ -23,11 +23,17 @@ export const ALERTA_LABEL: Record<AlertaSimples['codigo'], string> = {
   MEI_ENQUADRAMENTO_DIVERGE: 'Enquadramento do MEI diverge das ocupações',
   MEI_TAC_COM_OCUPACAO_A: 'Transportador de cargas com ocupação da tabela A',
   MEI_OCUPACAO_EXCLUIDA: 'Ocupação fora do MEI',
+  // BE-INCR-SIMPLES-CAIXA PR-2 (nó X14-CAIXA)
+  REGIME_CAIXA_RECALCULO: 'DAS registrado por competência num PA do caixa',
+  IMPEDIMENTO_CAIXA_ICMS_ISS: 'Impedimento: ICMS/ISS fora do DAS',
+  CARTAO_RECEBIMENTO_ESTIMADO: 'Recebimento do cartão estimado',
+  RECEBIMENTO_DE_VENDA_TRIBUTADA_POR_COMPETENCIA: 'Recebimento de venda já tributada por competência',
 };
 
 const MOTIVO: Record<NonNullable<AlertaSimples['motivoInformativo']>, { key: string; label: string }> = {
   'DOCUMENTO_MUNICIPAL_TRANSIÇÃO': { key: 'DOCUMENTO_MUNICIPAL_TRANSICAO', label: 'Documento municipal (transição)' },
   REGIME_CAIXA: { key: 'REGIME_CAIXA', label: 'Regime de caixa' },
+  CARTAO_RECEBIMENTO_ESTIMADO: { key: 'CARTAO_RECEBIMENTO_ESTIMADO', label: 'Prazo do cartão estimado' },
 };
 
 const h3 = 'mb-1 text-xs font-semibold uppercase tracking-wide text-neutral-500';
