@@ -275,6 +275,86 @@
       "arquivo": "docs/D19_stf-prorroga-prazo-para-aprovacao-de-lucros-e-dividendos-ate.html",
       "texto": "docs/D19_stf-prorroga-prazo-para-aprovacao-de-lucros-e-dividendos-ate.txt",
       "bytes": 67320
+    },
+    {
+      "id": "D20",
+      "titulo": "D20_file",
+      "url": "https://www.gov.br/sped/pt-br/assuntos/escrituracoes-digitais/efd-reinf/documento-tecnicos/versao-atual/notas-tecnicas-e-orientativas/notas-tecnicas/nt-2-2026/@@display-file/file",
+      "url_final": "https://www.gov.br/sped/pt-br/assuntos/escrituracoes-digitais/efd-reinf/documento-tecnicos/versao-atual/notas-tecnicas-e-orientativas/notas-tecnicas/nt-2-2026/@@display-file/file",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-17T14:56:27-03:00",
+      "sha256": "5e39d987baa08ee86e1cc7969ae50242f13bbab475ccb23c1564b44aaedf694b",
+      "arquivo": "docs/D20_file.pdf",
+      "texto": "docs/D20_file.txt",
+      "bytes": 564684
+    },
+    {
+      "id": "D21",
+      "titulo": "D21_multivigente",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/143695/visao/multivigente",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/143695/visao/multivigente",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-17T14:58:31-03:00",
+      "sha256": "685d725592429d0b948fab06a345ed266db6062c5d9d50d9d65cc4fd85d24a13",
+      "arquivo": "docs/D21_multivigente.html",
+      "texto": "docs/D21_multivigente.txt",
+      "bytes": 4969
+    },
+    {
+      "id": "D22",
+      "titulo": "Normas",
+      "url": "https://normas.receita.fazenda.gov.br/sijut2consulta/anexoOutros.action?idArquivoBinario=78646",
+      "url_final": "https://normas.receita.fazenda.gov.br/sijut2consulta/anexoOutros.action?idArquivoBinario=78646",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-17T14:58:42-03:00",
+      "sha256": "9f9413e20884b24680269927744a2abbf407243127ba5087a1489fd91fc8153a",
+      "arquivo": "docs/D22_anexoOutros-action.html",
+      "texto": "docs/D22_anexoOutros-action.txt",
+      "bytes": 45247
+    },
+    {
+      "id": "D23",
+      "titulo": "D23_78646",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/143695/anexo/78646",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/143695/anexo/78646",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-17T14:59:29-03:00",
+      "sha256": "b687c7cc130693b3d795a14baa21a77c973282a35a9dce757acd7d31545cc143",
+      "arquivo": "docs/D23_78646.pdf",
+      "texto": "docs/D23_78646.txt",
+      "bytes": 255555
+    },
+    {
+      "id": "D24",
+      "titulo": "Decreto nº 9.580 de 22/11/2018",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos/2018/dec-9580-2018-11-22.md",
+      "url_final": "https://github.com/ctresb/leis/blob/39239e708b021186cea3d407a5fc7984f2c725f5/federal/decretos/2018/dec-9580-2018-11-22.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2018-11-22;9580",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "39239e708b021186cea3d407a5fc7984f2c725f5",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-10-17T15:00:09-03:00",
+      "sha256": "2c328212c1a8408eaa64072debe9860ecb435a731150296702b0583f00acfe6e",
+      "arquivo": "docs/D24_dec-9580-2018-11-22.md",
+      "texto": "docs/D24_dec-9580-2018-11-22.txt",
+      "bytes": 1624
+    },
+    {
+      "id": "D25",
+      "titulo": "D9580",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/d9580.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/d9580.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-17T15:00:32-03:00",
+      "sha256": "ef7721e2b4cebc4608e188ffcb9c9e9df515dca435716aff858dda6cff4d6233",
+      "arquivo": "docs/D25_d9580-htm.html",
+      "texto": "docs/D25_d9580-htm.txt",
+      "bytes": 2944670
     }
   ],
   "buscas": [],

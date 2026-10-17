@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — irrf-distribuicao
 
 **Pergunta:** IRRF na distribuição de lucros/dividendos (Lei 9.250 art. 6º-A, Lei 15.270/2025) e sobre JCP a 17,5% (Lei 9.249 art. 9º, LC 224): regra de retenção, base, exceções, vigência, recolhimento e declaração, para o BRIEF IRRF-DISTRIBUICAO
-**Aberto em:** 2026-10-17T11:07:22-03:00 · **Atualizado em:** 2026-10-17T12:43:09-03:00
+**Aberto em:** 2026-10-17T11:07:22-03:00 · **Atualizado em:** 2026-10-17T15:01:23-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -86,6 +86,18 @@ Achados laterais (oficiais) desta rodada:
 - SC Cosit 131/2026: valor destinado à reserva de incentivos fiscais não entra na base do JCP, nem quando passa depois a capital ou a reserva de capital.
 - SC Cosit 138/2024: o JCP excluído na Parte A conta na apuração do lucro da exploração.
 - Falharam: [D17] PDF da decisão do STF (veio vazio sem a sessão do portal) e [D18] nota da RFB (a página pediu login). A notícia oficial do STF [D19] cobre o conteúdo.
+## 7. Parecer de mercado e doutrina sobre as perguntas ao contador (17/10, 3ª rodada)
+
+A pedido do dono, pesquisei além das normas: artigos de escritórios, portais de contabilidade e blogs técnicos. **Nada disso é fonte normativa** (método do projeto, CLAUDE.md §3). Serve como parecer de mercado, e cada linha diz se a leitura bate com o texto oficial.
+
+| # | Pergunta | O que o mercado diz | Conferência com fonte oficial | Leitura para o BRIEF |
+|---|---|---|---|---|
+| P1 | Deliberação lançada em "dividendos a pagar" = creditamento? | Marcel André Rodrigues (Migalhas, 23/01/2026): a ata sozinha **não** é fato gerador; uma provisão genérica sem individualização também não. Já o **crédito individualizado por sócio, exigível na data pactuada**, configura disponibilidade jurídica (CTN art. 43). O artigo cita o RIR art. 741 ("o que ocorrer primeiro"), o REsp 1.864.227/SP e o ADI RFB 8/2014 (que trata crédito como lançamento nominal) | No RIR, o "o que ocorrer primeiro" está nos arts. 741 p.ú. (não residente) e 732 § 2º (prêmios) [D25], **não** numa regra de dividendos. Aplicar a ideia aos dividendos é analogia | Sustenta o evento `CREDITO` do item 11 **desde que o crédito seja individualizado por sócio**, o que o modelo já exige (`partnerId`). Resta uma nuance para o contador: se a ata fixa pagamento futuro, o fato gerador é a data do lançamento ou a data em que o crédito fica exigível? |
+| P2 | Lucro da transição conta no limite de R$ 50 mil? | **Ninguém responde diretamente.** Portal Contábeis (J. Moratto, 14/09/2026) e TecnoSpeed (D. Zangeroli, 13/05/2026): na EFD-Reinf, o valor da transição vai **individualizado** com o tipo de isenção 12 + natureza 12001, e o limite se apura "por pagadora, beneficiário e mês". Alguns textos (Contabilizei, TecnoSpeed) falam em 10% "sobre o excedente", o que **contraria** a lei ("sobre o total", art. 6º-A caput) | NT EFD-Reinf 02/2026 (gov.br/sped) [D20]: só cria o tipo de isenção 12, sem exemplo do caso misto | Sem parecer. A escolha F-IRD-6 (conta no limite) segue a mais conservadora. **Continua para o contador** |
+| P3 | Limite de 50% do JCP no Real trimestral | Um texto de mercado diz que o limite incide sobre o lucro **do período de apuração (trimestral ou anual) em que os juros são pagos ou creditados**; outros só falam de "exercício". Econet (03/06/2025) calcula o JCP por trimestre (TJLP do trimestre) | SC Cosit 45/2018 (Sijut): a TJLP corre do início do período de apuração até o crédito. É coerente com o mercado | F-IRD-17 sustentado (verificado + mercado). Pergunta ao contador vira confirmação de baixo risco |
+| P7 | Divisor da TJLP diária | Murayama Advogados (17/06/2025): "dividindo a taxa anual por 365 dias". Econet: anual ÷ 12 × meses | **Texto integral da SC Cosit 70/2025** [D23] (anexo do Sijut, idAto 143695): a consulente perguntou por anual ÷ 365 (juros simples), e a Receita respondeu que juros simples serve, fundamentando que a TJLP mensal que ela própria publica é a anual ÷ 12 (6,67% ÷ 12 = 0,5558%, §8) | **Resolvido (verificado):** as duas convenções são juros simples aceitos pela Cosit. F-IRD-18 (mensal publicada ÷ dias do mês) segue o fundamento da própria SC e dá o mesmo total nos meses cheios |
+
+Achado lateral: a jurisprudência do STJ (REsp 1.950.577, citado por J. H. Adabo no Portal Contábeis, 25/03/2024; Conjur, 25/11/2025) admite JCP calculado sobre exercícios anteriores. A IN 1.700 art. 75 § 4º e a SC Cosit 329/2014 vedam. O BRIEF segue a IN, a leitura mais segura. JCP retroativo fica fora do escopo.
 <!-- /ANALISE -->
 
 ## Fontes consultadas
@@ -156,6 +168,26 @@ Achados laterais (oficiais) desta rodada:
 - **[D19]** Supremo Tribunal Federal — STF  
   Link oficial: <https://noticias.stf.jus.br/postsnoticias/stf-prorroga-prazo-para-aprovacao-de-lucros-e-dividendos-ate-janeiro-de-2026/>  
   Baixado em 2026-10-17T12:42:11-03:00 · arquivo local `docs/D19_stf-prorroga-prazo-para-aprovacao-de-lucros-e-dividendos-ate.html` · SHA-256 `83ebed6621e2036ebfa204a84773527fda8ac12ff00588d34c71ff05788a7737`
+- **[D20]** D20_file — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://www.gov.br/sped/pt-br/assuntos/escrituracoes-digitais/efd-reinf/documento-tecnicos/versao-atual/notas-tecnicas-e-orientativas/notas-tecnicas/nt-2-2026/@@display-file/file>  
+  Baixado em 2026-10-17T14:56:27-03:00 · arquivo local `docs/D20_file.pdf` · SHA-256 `5e39d987baa08ee86e1cc7969ae50242f13bbab475ccb23c1564b44aaedf694b`
+- **[D21]** D21_multivigente — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/143695/visao/multivigente>  
+  Baixado em 2026-10-17T14:58:31-03:00 · arquivo local `docs/D21_multivigente.html` · SHA-256 `685d725592429d0b948fab06a345ed266db6062c5d9d50d9d65cc4fd85d24a13`
+- **[D22]** Normas — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://normas.receita.fazenda.gov.br/sijut2consulta/anexoOutros.action?idArquivoBinario=78646>  
+  Baixado em 2026-10-17T14:58:42-03:00 · arquivo local `docs/D22_anexoOutros-action.html` · SHA-256 `9f9413e20884b24680269927744a2abbf407243127ba5087a1489fd91fc8153a`
+- **[D23]** D23_78646 — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/143695/anexo/78646>  
+  Baixado em 2026-10-17T14:59:29-03:00 · arquivo local `docs/D23_78646.pdf` · SHA-256 `b687c7cc130693b3d795a14baa21a77c973282a35a9dce757acd7d31545cc143`
+- **[D24]** Decreto nº 9.580 de 22/11/2018 — Acervo ctresb/leis (espelho de fonte oficial)  
+  Acervo: <https://github.com/ctresb/leis/blob/39239e708b021186cea3d407a5fc7984f2c725f5/federal/decretos/2018/dec-9580-2018-11-22.md>  
+  Fonte oficial declarada: <https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2018-11-22;9580> · versao_texto: original · cópia de 2026-10-15  
+  Lido em 2026-10-17T15:00:09-03:00 · arquivo local `docs/D24_dec-9580-2018-11-22.md` · SHA-256 `2c328212c1a8408eaa64072debe9860ecb435a731150296702b0583f00acfe6e`  
+  ⚠ versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)
+- **[D25]** D9580 — Presidência - legislação federal  
+  Link oficial: <https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/d9580.htm>  
+  Baixado em 2026-10-17T15:00:32-03:00 · arquivo local `docs/D25_d9580-htm.html` · SHA-256 `ef7721e2b4cebc4608e188ffcb9c9e9df515dca435716aff858dda6cff4d6233`
 
 ## Registro de buscas
 _Nenhuma busca registrada._

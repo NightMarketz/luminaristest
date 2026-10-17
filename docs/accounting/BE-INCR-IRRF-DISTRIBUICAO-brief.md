@@ -298,18 +298,18 @@ F-IRD-17 por período de apuração · F-IRD-18 (17/10, 2ª rodada) TJLP diária
 ## 6. Pendente de validação externa
 
 Pesquisa de 17/10, 2ª rodada (dossiê §6): antes de pesquisar, conferi as outras sessões e branches; nenhuma tratava
-destes pontos. Sobram P1 e P2 para o contador, e P3 fica como confirmação.
+destes pontos. Sobram P1 e P2 para o contador, e P3 fica como confirmação. 3ª rodada (pedido do dono): parecer de mercado no dossiê §7, que reforça P1, não responde P2 e resolve P7.
 
 | # | Ponto | Situação | Pergunta exata (contador) | Item afetado |
 |---|---|---|---|---|
-| P1 | Deliberação lançada em "dividendos a pagar" = creditamento? (F-IRD-4) | **aberto**: nenhum P&R nem Solução de Consulta de 2026 trata disso | "Pela Lei 9.250 art. 6º-A, a deliberação de distribuição lançada em 'dividendos a pagar' individualizado ao sócio (por analogia à IN 1.700 art. 75 § 10) já é o creditamento que dispara a retenção no mês da deliberação, mesmo com pagamento posterior?" | 11, 12 |
-| P2 | Lucro da transição conta no limite? (F-IRD-6) | **aberto**: P&R item 7 fala da isenção, não da soma | "Um sócio recebe no mesmo mês R$ 30 mil de lucro de 2025 aprovado até 31/01/2026 (§ 3º + liminar das ADIs 7.912/7.914) e R$ 30 mil de lucro de 2026. Há retenção de 10% sobre os R$ 30 mil de 2026?" | 12, 14 |
-| P3 | Período do JCP no Real trimestral (F-IRD-17) | **resolvido** pela SC Cosit 45/2018 (L14): TJLP do início do período de apuração até o crédito; F-IRD-17 confirmado. Fica só a confirmação do limite de 50% por trimestre | "No Real trimestral, o limite de 50% do lucro (IN 1.700 art. 75 § 2º I) usa o lucro do trimestre do crédito?" | 23, 25 |
+| P1 | Deliberação lançada em "dividendos a pagar" = creditamento? (F-IRD-4) | **aberto, com parecer de mercado a favor** (dossiê §7): o crédito individualizado e exigível é fato gerador; ata ou provisão genérica não. O modelo já individualiza por sócio. Sobra a nuance da ata com pagamento futuro | "Pela Lei 9.250 art. 6º-A, a deliberação de distribuição lançada em 'dividendos a pagar' individualizado ao sócio (por analogia à IN 1.700 art. 75 § 10) já é o creditamento que dispara a retenção no mês da deliberação, mesmo com pagamento posterior? E se a ata fixa a data de pagamento num mês seguinte, o fato gerador é o lançamento ou a data em que o crédito fica exigível?" | 11, 12 |
+| P2 | Lucro da transição conta no limite? (F-IRD-6) | **aberto, sem parecer de mercado**: P&R item 7 fala da isenção, não da soma; a NT EFD-Reinf 02/2026 só individualiza o valor (isenção 12) | "Um sócio recebe no mesmo mês R$ 30 mil de lucro de 2025 aprovado até 31/01/2026 (§ 3º + liminar das ADIs 7.912/7.914) e R$ 30 mil de lucro de 2026. Há retenção de 10% sobre os R$ 30 mil de 2026?" | 12, 14 |
+| P3 | Período do JCP no Real trimestral (F-IRD-17) | **resolvido** pela SC Cosit 45/2018 (L14): TJLP do início do período de apuração até o crédito; F-IRD-17 confirmado. O mercado lê o limite de 50% pelo lucro do período do crédito (dossiê §7). Fica uma confirmação de baixo risco | "No Real trimestral, o limite de 50% do lucro (IN 1.700 art. 75 § 2º I) usa o lucro do trimestre do crédito?" | 23, 25 |
 | P4 | Código DARF do IRRF sobre JCP | **resolvido**: 5706 (L16) | — | 31 |
 | P5 | Série da TJLP 2026 | **resolvido**: L17, carga no PR-1 (item 5). 2027 em diante: o admin carrega a cada trimestre | — | 5, 24 |
 | P6 | Simples (F-IRD-3) | **reforçado**: STF negou a cautelar da OAB para excluir o Simples (ADI 7.917, 26/12/2025) [D19]. Sem mérito julgado | — | 19 |
 | P6b | Prazo da transição | **novo, resolvido no BRIEF**: 31/01/2026 pela liminar das ADIs 7.912/7.914 (L4a, itens 5 e 14). Acompanhar o plenário: se cassar, troca a linha de parâmetro | — | 5, 14 |
-| P7 | Divisor da TJLP diária (F-IRD-18) | decidido pelo dono; vale confirmar | "Para o JCP por juros simples (SC Cosit 70/2025), a taxa diária = TJLP mensal publicada pela RFB ÷ dias do mês está correta?" | 24 |
+| P7 | Divisor da TJLP diária (F-IRD-18) | **resolvido**: o texto integral da SC Cosit 70/2025 aceita juros simples com base na TJLP mensal = anual ÷ 12 que a RFB publica (§8); a consulente usava anual ÷ 365, também aceito (dossiê §7, [D23]) | — | 24 |
 
 ## 7. Insumos ausentes
 
