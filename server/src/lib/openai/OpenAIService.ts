@@ -336,6 +336,23 @@ export class OpenAIService {
   }
 
   /**
+   * Conversa com saída presa a um `json_schema` strict (W6 item 6, F-W6-4 a — mesma técnica do `classifyIntoEnum`,
+   * mesmo modelo `FALLBACK`). Devolve o conteúdo cru; quem chama relê com Zod. Erro da API sobe para o chamador.
+   */
+  public async completeWithJsonSchema(
+    messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[],
+    responseFormat: OpenAI.ResponseFormatJSONSchema,
+  ): Promise<string | null> {
+    const completion = await this.openai.chat.completions.create({
+      model: CONFIG.MODELS.FALLBACK,
+      messages,
+      response_format: responseFormat,
+      max_tokens: MAX_TOKENS_CHAT,
+    });
+    return completion.choices[0]?.message?.content ?? null;
+  }
+
+  /**
    * Validates if the given text content is structured as a table or spreadsheet.
    * @param textContent The text extracted from a document.
    * @returns A boolean indicating if the content is tabular.

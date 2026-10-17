@@ -3,6 +3,7 @@ import { handleApiError } from '@/lib/apiUtils';
 import { getUserContextFromRequest } from '@/lib/authUtils';
 import { getFactory } from '@/lib/factory';
 import { ChatInterviewSchema, InterviewMessageDto } from '@/features/interview/dtos/ChatInterviewDto';
+import { CustomizeFieldsDto } from '@/features/interview/dtos/CustomizeFields.dto';
 import { InterviewStage, IMessage } from '@/features/interview/models/InterviewTypes';
 
 /**
@@ -92,6 +93,38 @@ export async function postChatInterview(req: Request, res: Response) {
       choice
     );
 
+    return res.status(200).json(result);
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+}
+
+/**
+ * POST /api/dashboard/ai/CustomizeFields — painel de campos por IA (W6, BRIEF WIZARD-W6 itens 1–11; ADR-W6).
+ *
+ * Request body (`CustomizeFieldsDto`, união por `kind`, `.strict()`):
+ *   { kind: 'message', sessionId, tableKey, message }
+ *   { kind: 'decision', sessionId, tableKey, proposalId, decision: 'apply' | 'discard', acknowledgeSensitive?: true }
+ *
+ * Response 200: `CustomizeFieldsResult` — { sessionId, tableKey, table, conversationHistory, proposal, discarded,
+ * applied? }. O turno `message` só propõe; quem aplica é o `decision`.
+ *
+ * Erros: 401 sem contexto · 400 DTO ou `SENSITIVE_FIELD_NOT_ACKNOWLEDGED` · 404 `INTERVIEW_SESSION_NOT_FOUND` /
+ * `TABLE_NOT_IN_SESSION` · 409 `PROPOSAL_STALE` / `INTERVIEW_SESSION_CONFLICT`, via `handleApiError`.
+ */
+export async function postCustomizeFields(req: Request, res: Response) {
+  try {
+    const ctx = getUserContextFromRequest(req);
+    if (!ctx) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+
+    const parse = CustomizeFieldsDto.safeParse(req.body);
+    if (!parse.success) {
+      return res.status(400).json({ success: false, error: parse.error.flatten() });
+    }
+
+    const result = await getFactory().getFieldCustomizationService().handle(ctx.userId, parse.data);
     return res.status(200).json(result);
   } catch (error) {
     return handleApiError(error, res);

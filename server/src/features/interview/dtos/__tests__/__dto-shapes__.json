@@ -83,5 +83,81 @@
       },
       "additionalProperties": false
     }
+  },
+  "CustomizeFields.dto.ts": {
+    "CustomizeFieldsDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "message"
+            },
+            "sessionId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "tableKey": {
+              "type": "string",
+              "minLength": 1
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            }
+          },
+          "required": [
+            "kind",
+            "sessionId",
+            "tableKey",
+            "message"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "decision"
+            },
+            "sessionId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "tableKey": {
+              "type": "string",
+              "minLength": 1
+            },
+            "proposalId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "decision": {
+              "type": "string",
+              "enum": [
+                "apply",
+                "discard"
+              ]
+            },
+            "acknowledgeSensitive": {
+              "type": "boolean",
+              "const": true
+            }
+          },
+          "required": [
+            "kind",
+            "sessionId",
+            "tableKey",
+            "proposalId",
+            "decision"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
   }
 }

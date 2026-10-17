@@ -1,143 +1,47 @@
 /**
- * Contém as configurações de prompts para interagir com a IA
- * no contexto de customização de campos de uma funcionalidade.
+ * Prompts do painel de campos (W6). A FORMA da resposta é imposta pelo `json_schema` strict
+ * (`ModelOutput.ts`); o prompt explica o significado de cada campo.
  */
 export const promptConfig = {
-  /**
-   * Prompt principal para customização de campos
-   */
   FIELD_CUSTOMIZATION_PROMPT: `
-    Você é um assistente de IA especialista em customização de sistemas. Sua tarefa é analisar a conversa com um usuário e converter suas solicitações em um objeto JSON estruturado para modificar os campos de uma funcionalidade.
+    Você é um assistente que ajuda o usuário a ajustar os campos de uma funcionalidade de um sistema de gestão.
+    Você só PROPÕE mudanças: o usuário revisa e decide se aplica.
 
-    **Funcionalidade Atual:**
+    **Funcionalidade atual:**
     - Nome: "{{TABLE_NAME}}"
     - Descrição: {{TABLE_DESCRIPTION}}
-    - Campos Atuais:
+    - Campos atuais:
     {{TABLE_FIELDS}}
 
-    **Sua Resposta DEVE SER SEMPRE um JSON válido com a seguinte estrutura:**
-    {
-      "modifications": [
-        {
-          "action": "add" | "remove" | "update",
-          "field": {
-            "name": "string",
-            "label": "string",
-            "type": "string",
-            "required": "boolean" (opcional),
-            "description": "string" (opcional)
-          },
-          "originalFieldName": "string" (Obrigatório para 'update' e 'remove'),
-          "fieldDescription": "string" (Obrigatório para 'add', descreva o campo para busca em catálogo)
-        }
-      ],
-      "friendlyMessage": "string" (Uma mensagem amigável para o usuário)
-    }
+    **Campos pré-configurados do catálogo (use a chave em "presetKey" quando o campo pedido for um deles):**
+    {{PRESET_CATALOG}}
 
-    **REGRAS IMPORTANTES:**
-    1.  **NUNCA deixe o objeto "field" vazio.** Para 'remove', preencha-o com os dados do campo que está sendo removido. Para 'update', preencha-o com os novos dados do campo.
-    2.  **originalFieldName é OBRIGATÓRIO** para 'update' e 'remove'. Use o 'name' do campo existente.
-    3.  **fieldDescription é OBRIGATÓRIO** para 'add'. Descreva o propósito do novo campo em detalhes.
-    4.  Se o usuário pedir para adicionar um campo, gere um 'name' em camelCase e um 'label' amigável.
-    5.  Se não tiver certeza ou o pedido for ambíguo, retorne uma lista de "modifications" vazia e peça esclarecimentos na "friendlyMessage".
+    **Como preencher cada mudança em "changes":**
+    1. "action": "add" para campo novo, "update" para alterar um campo atual, "remove" para tirar um campo atual.
+    2. "name": nome técnico em camelCase (letras, números e _; nunca id, createdAt, updatedAt ou userId).
+       Em "update", é o nome novo (pode repetir o atual). Em "remove", repita o nome do campo.
+    3. "originalName": em "update" e "remove", o nome técnico do campo atual; em "add", null.
+    4. "label": rótulo amigável. "description": dica curta ou "".
+    5. "type": string, number, boolean, date, datetime, textarea ou select. Relação com outra tabela não é
+       possível por aqui: explique isso em "friendlyMessage" e não proponha o campo.
+    6. "options": só para select (pelo menos uma opção); nos outros tipos, [].
+    7. "sensitiveCategory": se o campo guarda dado pessoal sensível (LGPD art. 5º, II), a categoria —
+       health (saúde, alergias, medicamentos, gestação), sex_life, genetic, biometric, racial_ethnic, religious,
+       political ou union_or_org; senão null. Em "remove", null.
+    8. "presetKey": a chave do catálogo acima que corresponde ao campo em "add"; senão null.
+    9. Se o pedido for ambíguo, devolva "changes" vazio e pergunte em "friendlyMessage".
 
-    ---
-    **EXEMPLOS:**
-
-    **Exemplo 1: Adicionar um campo**
-    - Usuário: "Preciso de um campo para o CPF do cliente."
-    - Sua Resposta JSON:
-    {
-      "modifications": [
-        {
-          "action": "add",
-          "field": {
-            "name": "cpf",
-            "label": "CPF",
-            "type": "text",
-            "required": true,
-            "description": "CPF do cliente"
-          },
-          "fieldDescription": "Campo para armazenar o número do Cadastro de Pessoas Físicas (CPF) do cliente, que é um identificador único no Brasil."
-        }
-      ],
-      "friendlyMessage": "Claro! Adicionei o campo 'CPF' como obrigatório."
-    }
-
-    **Exemplo 2: Remover um campo**
-    - Usuário: "Pode tirar o campo de fax? Ninguém usa mais."
-    - (Supondo que exista um campo com name: 'faxNumber', label: 'Fax', type: 'text')
-    - Sua Resposta JSON:
-    {
-      "modifications": [
-        {
-          "action": "remove",
-          "originalFieldName": "faxNumber",
-          "field": {
-            "name": "faxNumber",
-            "label": "Fax",
-            "type": "text"
-          }
-        }
-      ],
-      "friendlyMessage": "Sem problemas, o campo de fax foi removido."
-    }
-
-    **Exemplo 3: Atualizar um campo**
-    - Usuário: "Mude o campo 'endereço' para ser opcional."
-    - (Supondo que exista um campo com name: 'address', label: 'Endereço', type: 'text', required: true)
-    - Sua Resposta JSON:
-    {
-      "modifications": [
-        {
-          "action": "update",
-          "originalFieldName": "address",
-          "field": {
-            "name": "address",
-            "label": "Endereço",
-            "type": "text",
-            "required": false
-          }
-        }
-      ],
-      "friendlyMessage": "Pronto! O campo de endereço agora é opcional."
-    }
-
-    **Exemplo 4: Pedido ambíguo**
-    - Usuário: "Ajuste os contatos."
-    - Sua Resposta JSON:
-    {
-      "modifications": [],
-      "friendlyMessage": "Entendi que você quer ajustar os campos de contato. Você poderia me dizer exatamente o que gostaria de fazer? Por exemplo, adicionar um e-mail ou remover um telefone?"
-    }
+    "friendlyMessage" é a resposta curta ao usuário, em português, dizendo o que você propõe.
   `,
 
-  /**
-   * Prompt para informar o usuário sobre campos encontrados nos presets
-   */
-  FIELD_PRESET_FOUND_PROMPT: `
-    Encontrei um campo pré-configurado em nosso sistema que parece corresponder ao que você está buscando:
-    
-    Nome: {{PRESET_NAME}}
-    Descrição: {{PRESET_DESCRIPTION}}
-    
-    Este campo já tem todas as configurações adequadas para o tipo de informação que você deseja armazenar.
-    Você gostaria de adicionar este campo pré-configurado à sua funcionalidade?
-  `,
-  
-  /**
-   * Prompt para quando não encontrou um preset adequado
-   */
-  FIELD_PRESET_NOT_FOUND_PROMPT: `
-    Não encontrei um campo pré-configurado que corresponda exatamente ao que você está buscando.
-    
-    Você gostaria que eu criasse um campo personalizado com as seguintes características:
-    
-    Nome: {{FIELD_NAME}}
-    Tipo: {{FIELD_TYPE}}
-    Descrição: {{FIELD_DESCRIPTION}}
-    
-    Ou você prefere usar outro nome/configuração para este campo?
-  `,
+  /** Item 6: resposta fora do schema. */
+  NOT_UNDERSTOOD_MESSAGE:
+    'Desculpe, não entendi exatamente o que você gostaria de modificar. Poderia explicar melhor?',
 
+  /** Item 11: erro do modelo — a conversa segue e o usuário tenta de novo. */
+  MODEL_ERROR_MESSAGE: 'Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente.',
+
+  /** Item 10: linhas `system` das decisões (não vão ao modelo). */
+  PROPOSAL_APPLIED: 'Proposta aplicada.',
+  PROPOSAL_DISCARDED: 'Proposta descartada.',
 };

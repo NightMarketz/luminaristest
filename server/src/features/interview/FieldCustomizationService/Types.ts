@@ -1,66 +1,64 @@
-import { ICustomizableTable } from '../models/InterviewTypes';
+import type { z } from 'zod';
+import type { AdvancedFieldSchema } from '../../dynamicTables/dtos/DynamicTable.dto';
 
 /**
- * Define os tipos de dados específicos para o serviço de customização de campos.
+ * Contratos do W6 (BRIEF WIZARD-W6 §2.2–§2.4). A entrada é o `CustomizeFieldsDto`; a saída do modelo é o
+ * `ModelOutputSchema` de `ModelOutput.ts`; a resposta da rota, `CustomizeFieldsResult`, mora no `index.ts` (ela
+ * carrega a tabela da sessão, e o tipo da sessão importa este arquivo — sem ciclo).
  */
 
+/** Campo canônico já validado pelo `AdvancedFieldSchema` (item 8) — a forma que o `/dashboard/create` revalida. */
+export type AdvancedField = z.output<typeof AdvancedFieldSchema>;
+
 /**
- * Interface para um campo em uma tabela customizável
+ * Categorias do LGPD art. 5º, II (F-W6-6; dossiê `pesquisas-legais/w6-campos-ia-dado-saude` [D01]) que o modelo pode
+ * marcar. O enum do §2.3 é este; `health_or_other_unspecified` só nasce da rede de radicais (item 9).
  */
-export interface IField {
-  /** Nome técnico do campo (ex: "customer_email") */
+export const MODEL_SENSITIVE_CATEGORIES = [
+  'health',
+  'sex_life',
+  'genetic',
+  'biometric',
+  'racial_ethnic',
+  'religious',
+  'political',
+  'union_or_org',
+] as const;
+export const UNSPECIFIED_SENSITIVE_CATEGORY = 'health_or_other_unspecified' as const;
+export type SensitiveCategory =
+  | (typeof MODEL_SENSITIVE_CATEGORIES)[number]
+  | typeof UNSPECIFIED_SENSITIVE_CATEGORY;
+
+/** Tipos que a IA pode propor (F-W6-4 a): `relation` e `json` ficam fora. */
+export const AI_FIELD_TYPES = ['string', 'number', 'boolean', 'date', 'datetime', 'textarea', 'select'] as const;
+
+export type FieldChange =
+  | { action: 'add'; field: AdvancedField; sensitiveCategory: SensitiveCategory | null; presetKey: string | null }
+  | { action: 'update'; originalName: string; field: AdvancedField; sensitiveCategory: SensitiveCategory | null }
+  | { action: 'remove'; originalName: string };
+
+export type DiscardReason = 'reserved' | 'type_not_allowed' | 'exists' | 'not_found' | 'invalid';
+export interface DiscardedChange {
   name: string;
-  /** Rótulo amigável para exibição (ex: "E-mail do Cliente") */
-  label: string;
-  /** Tipo de dado (ex: "email", "string", "number", "date") */
-  type: string;
-  /** Se o preenchimento é obrigatório */
-  required?: boolean;
-  /** Indicação se o campo está visível ou oculto */
-  hidden?: boolean;
-  /** Descrição ou dica para o usuário (opcional) */
-  description?: string;
+  reason: DiscardReason;
 }
 
-/**
- * Representa uma única modificação em um campo, conforme interpretado pela IA.
- */
-export interface IFieldModification {
-  /** Tipo de modificação a ser aplicada */
-  action: 'add' | 'remove' | 'update';
-
-  /** Propriedades do campo (utilizado em add/update) */
-  field: IField;
-
-  /** Nome original do campo (usado em update/remove) */
-  originalFieldName?: string;
-
-  /** Descrição do campo, usada para busca de preset (gerada pela IA) */
-  fieldDescription?: string;
+/** Proposta pendente guardada na tabela da sessão (§2.4) — uma por tabela, a nova substitui a anterior. */
+export interface IPendingProposal {
+  id: string;
+  changes: FieldChange[];
+  createdAt: string;
 }
 
-/**
- * Representa a resposta estruturada completa da IA após analisar o pedido do usuário.
- */
-export interface IStructuredAiResponse {
-  /** Lista de modificações a serem aplicadas */
-  modifications: IFieldModification[];
-  
-  /** Mensagem amigável de resposta para o usuário */
-  friendlyMessage: string;
+export interface IFieldProposal {
+  id: string;
+  changes: FieldChange[];
+  requiresSensitiveAck: boolean;
 }
 
-/**
- * Interface para o resultado da customização de campos
- */
-export interface IFieldCustomizationResult {
-  conversationHistory: Array<{ role: string; content: string }>;
-  /** Tabela atualizada com as modificações aplicadas */
-  updatedTable: ICustomizableTable;
-  
-  /** Mensagem da IA para responder ao usuário */
-  aiMessage: string;
-  
-  /** Indica se houve alguma modificação na tabela */
-  modified: boolean;
+export type FieldHistoryRole = 'user' | 'assistant' | 'system';
+export interface IFieldHistoryEntry {
+  role: FieldHistoryRole;
+  content: string;
+  at: string;
 }
