@@ -10,8 +10,8 @@ de folds, snapshot da Parte II/III) — não é mais atualizado.
 Leia **só o que a tarefa pede**, nesta ordem, e pare assim que tiver a resposta:
 
 1. **[[_INDEX]]** — régua calculada, "destravados agora" e a fila aberta por domínio (uma linha por nó).
-   Em worktree de branch o arquivo pode estar atrás da `main` (ele só regenera lá, depois do merge):
-   leia `node scripts/plano-vault.mjs index --stdout`, que calcula na hora sem gravar.
+   **Não é versionado** (nem o `_ANCORAS`): gere com `node scripts/plano-vault.mjs index` antes de ler (worktree novo não
+   tem o arquivo), ou leia direto com `node scripts/plano-vault.mjs index --stdout`.
 2. **A nota do nó** (`nos/`, `gates/`) — estado, autorização, dependências, docs e as linhas de origem.
 3. **Só se a tarefa encostar no assunto:** o trilho travado (`trilhos/T*`), a rejeição (`rejeitadas/`) ou o
    diferido (`diferidos/`) que a nota linka. Colisão com trilho/rejeitada = `DECISÃO ARQUITETURAL` → ADR, não tarefa.
@@ -24,7 +24,7 @@ Citação antiga "master map §5.1" / "§M5.1" / "Bloco A" → [[_ANCORAS]] reso
 
 | Pasta | Conteúdo |
 |---|---|
-| `_INDEX.md`, `_ANCORAS.md` | **gerados** — nunca edite à mão |
+| `_INDEX.md`, `_ANCORAS.md` | **gerados na máquina, fora do git** (`node scripts/plano-vault.mjs index`) — nunca edite à mão |
 | `nos/` | nós de trabalho: régua contábil/financeiro/fiscal, motor, FE, plataforma/onboarding |
 | `gates/` | gates humanos e dado externo — agente prepara, **não fecha** (RUNBOOK-FORMAT) |
 | `decisoes/` | decisões ratificadas do dono (R*, F-M*, F-Z0) |
@@ -58,10 +58,9 @@ Desde 2026-10-07 o fold entra no PR que faz o trabalho — não há mais PR `doc
 2. `estado_detalhe` continua à mão (é texto, não estado).
 3. `node scripts/plano-vault.mjs check` — tem de sair 0 (links e dependências).
 
-**O PR não carrega `_INDEX.md` nem `_ANCORAS.md`** (dono, chat, 2026-10-16): índice em todo PR era conflito
-em todo PR. O workflow `.github/workflows/plano-index.yml` regenera os dois na `main` a cada push que toca
-`docs/plano/` e roda `check --indice`. Se a proteção da `main` recusar o push do bot, o commit fica na branch
-`bot/plano-index` para o dono mergear.
+**`_INDEX.md` e `_ANCORAS.md` não são versionados** (dono, chat, 2026-10-16): índice em todo PR era conflito
+em todo PR, e um bot que regenera na `main` seria um PR extra por merge. Estão no `.gitignore`; cada um gera
+na própria máquina com `node scripts/plano-vault.mjs index` (o Obsidian lê o arquivo gerado).
 4. Decisão nova do dono → nota em `decisoes/` citando a cédula.
 
 Proposta nova (item PROPOSTO do destino) só vira nota em `nos/` depois de PRE-ADR ratificado.
