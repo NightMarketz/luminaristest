@@ -8,7 +8,7 @@ estado_detalhe: "10/10: backlog. A Lei 15.525/2026 cria CSLL de 9% para ressegur
 depende_de: ["[[CSLL-LC224]]"]
 autorizacao: "dono, chat, 2026-10-10: \"Cria o nó CSLL-RESSEGURADORES\" (decisão: \"Crie um nó no backlog (BRIEF-CSLL-RESSEGURADORES) aguardando a publicação do Ato Declaratório Executivo (ADE) da Receita Federal com o novo leiaute da ECF\") — só a nota; sem BRIEF, sem 'executa'"
 ancora_sdd: "—"
-atualizado: "2026-10-10"
+atualizado: "2026-10-17"
 prs: []
 ---
 # CSLL-RESSEGURADORES — CSLL de resseguradora local (Lei 15.525/2026)
@@ -29,3 +29,7 @@ prs: []
 
 - Achado registrado no PR #599 (comentário de 10/10, pesquisa P-CA) e no BRIEF `docs/accounting/BE-INCR-CSLL-BANCOS-Q1-brief.md` §8.
 - Pendente: ler a Lei 15.525/2026 na fonte oficial (só o achado de outra sessão foi registrado).
+
+## Verificação legal 17/10/2026
+
+- A Lei 15.525/2026 foi lida na fonte oficial: CSLL de 9% para resseguradora a partir de **01/01/2027** (dossiê [`verif-2026-10-17-irpj-csll`](../../../pesquisas-legais/verif-2026-10-17-irpj-csll/relatorio.md) [D06][D17]). Fecha o "Pendente" de Docs acima. O leiaute 13 da ECF **ainda não saiu** em 17/10 [D21] — o gatilho continua.
