@@ -1,5 +1,36 @@
 // GERADO por server/src/features/accounting/dtos/__tests__/dtoShapeSnapshot.test.ts — NÃO EDITE.
 // Mudou um DTO? UPDATE_DTO_SNAPSHOT=1 npx jest --selectProjects unit --testPathPatterns dtoShapeSnapshot e comite o diff.
+export interface AdvancedFieldInput {
+name: string
+label: string
+type: ("string" | "number" | "boolean" | "date" | "datetime" | "relation" | "select" | "textarea" | "json")
+required: boolean
+unique?: boolean
+defaultValue?: unknown
+validation?: {
+minLength?: number
+maxLength?: number
+minValue?: number
+maxValue?: number
+}
+relation?: {
+targetTable: string
+allowMultiple?: boolean
+}
+options?: string[]
+format?: ("email" | "phone" | "cpf" | "cnpj" | "url" | "custom")
+numberFormat?: ("currency" | "percentage" | "integer" | "decimal")
+description?: string
+regex?: string
+hidden?: boolean
+readOnly?: boolean
+searchable?: boolean
+requiredIf?: {
+field: string
+op: ("eq" | "neq" | "in")
+value: (string | number | boolean | (string | number | boolean)[])
+}
+}
 export interface CreateDynamicTableDtoInput {
 name: string
 category: ("commercial" | "products" | "services" | "inventory" | "finance" | "people" | "leads" | "planning" | "kanban" | "operations" | "marketing" | "business" | "administrative" | "other")

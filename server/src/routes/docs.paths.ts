@@ -990,6 +990,113 @@
  *                   code: { type: string, enum: [INTERVIEW_SESSION_CONFLICT] }
  *                   message: { type: string }
  *
+ *   /api/dashboard/ai/CustomizeFields:
+ *     post:
+ *       summary: One turn of the AI field panel (W6) — propose, then apply or discard
+ *       description: >
+ *         Works on the customization session of the interview (W4). `kind: message` sends the user's request to the
+ *         model once (output bound to a strict JSON schema) and returns a proposal; it never changes the fields.
+ *         `kind: decision` applies or discards the pending proposal of that table, deterministically. The field
+ *         history lives on the server; system lines (decisions) are not sent to the model. A proposal with a field
+ *         marked as sensitive personal data (LGPD art. 5, II) needs `acknowledgeSensitive: true` to be applied.
+ *         A model error or an answer outside the schema returns 200 with `proposal: null`.
+ *       tags: [Dashboard]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               oneOf:
+ *                 - type: object
+ *                   required: [kind, sessionId, tableKey, message]
+ *                   additionalProperties: false
+ *                   properties:
+ *                     kind: { type: string, enum: [message] }
+ *                     sessionId: { type: string }
+ *                     tableKey: { type: string }
+ *                     message: { type: string, minLength: 1, maxLength: 2000 }
+ *                 - type: object
+ *                   required: [kind, sessionId, tableKey, proposalId, decision]
+ *                   additionalProperties: false
+ *                   properties:
+ *                     kind: { type: string, enum: [decision] }
+ *                     sessionId: { type: string }
+ *                     tableKey: { type: string }
+ *                     proposalId: { type: string }
+ *                     decision: { type: string, enum: [apply, discard] }
+ *                     acknowledgeSensitive: { type: boolean, enum: [true] }
+ *       responses:
+ *         '200':
+ *           description: Turn result
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 required: [sessionId, tableKey, table, conversationHistory, proposal, discarded]
+ *                 properties:
+ *                   sessionId: { type: string }
+ *                   tableKey: { type: string }
+ *                   table: { type: object, description: 'The table in the session after the turn' }
+ *                   conversationHistory:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         role: { type: string, enum: [user, assistant, system] }
+ *                         content: { type: string }
+ *                         at: { type: string, format: date-time }
+ *                   proposal:
+ *                     type: object
+ *                     nullable: true
+ *                     properties:
+ *                       id: { type: string }
+ *                       requiresSensitiveAck: { type: boolean }
+ *                       changes:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             action: { type: string, enum: [add, update, remove] }
+ *                             originalName: { type: string }
+ *                             field: { type: object }
+ *                             sensitiveCategory:
+ *                               type: string
+ *                               nullable: true
+ *                               enum: [health, sex_life, genetic, biometric, racial_ethnic, religious, political, union_or_org, health_or_other_unspecified]
+ *                             presetKey: { type: string, nullable: true }
+ *                   discarded:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         name: { type: string }
+ *                         reason: { type: string, enum: [reserved, type_not_allowed, exists, not_found, invalid] }
+ *                   applied: { type: boolean, description: 'Only on kind decision' }
+ *         '400':
+ *           description: Invalid body, or SENSITIVE_FIELD_NOT_ACKNOWLEDGED (nothing was applied)
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404':
+ *           description: INTERVIEW_SESSION_NOT_FOUND (missing, expired or another user's session) or TABLE_NOT_IN_SESSION
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 required: [code, message]
+ *                 properties:
+ *                   code: { type: string, enum: [INTERVIEW_SESSION_NOT_FOUND, TABLE_NOT_IN_SESSION] }
+ *                   message: { type: string }
+ *         '409':
+ *           description: PROPOSAL_STALE (the proposal id is not the pending one) or INTERVIEW_SESSION_CONFLICT
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 required: [code, message]
+ *                 properties:
+ *                   code: { type: string, enum: [PROPOSAL_STALE, INTERVIEW_SESSION_CONFLICT] }
+ *                   message: { type: string }
+ *
  *   # ─── DASHBOARD LAYOUT: documented inline in controllers/dashboardLayoutController.ts ───
  *
  *   # ─── SAVED VIEWS ────────────────────────────────────────────────────────

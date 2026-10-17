@@ -222,7 +222,7 @@ melhores conhecendo o objetivo, não só a letra do pedido]
 > **[ORCH-007] Closeout do mapa (só tarefas contábeis).** Todo plano que fecha um incremento contábil DEVE
 > incluir, como último passo, **atualizar o vault `docs/plano/`** (master map e SDD consolidado estão congelados
 > desde 2026-09-23): editar o frontmatter da nota do nó (`estado`, `estado_detalhe`, `prs`) com o ADR/merge de
-> referência, rodar `node scripts/plano-vault.mjs check` (exit 0; o índice regenera na `main`), ou registrar a decisão nova em
+> referência, rodar `node scripts/plano-vault.mjs check` (exit 0; o índice não é versionado), ou registrar a decisão nova em
 > `decisoes/`/`trilhos/`/`rejeitadas/`. Esse passo é do
 > **`luminaris-implementer`** (o orquestrador não edita arquivos — ORCH-001); o orquestrador só o coloca no
 > plano. É assim que o progresso fica registrado num lugar só — nunca hardcode progresso nesta skill.

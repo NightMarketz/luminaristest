@@ -320,8 +320,7 @@ jobs:
           [ "$fail" = 0 ] && echo "OK: camada de governança OPS-001 presente."
           exit "$fail"
 
-      # Sem --indice: o PR não carrega _INDEX/_ANCORAS (dono, chat, 2026-10-16) — o workflow
-      # plano-index regenera os dois na main depois do merge e é ele quem roda `check --indice`.
+      # _INDEX/_ANCORAS não são versionados (dono, chat, 2026-10-16): cada um gera na máquina.
       - name: Plano vault íntegro (links e dependências resolvem)
         run: node scripts/plano-vault.mjs check
 

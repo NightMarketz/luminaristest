@@ -13,8 +13,8 @@
 
 | Papel | Leia nesta ordem |
 |---|---|
-| **Dono** (decidir / assinar) | [`plano/_INDEX.md`](plano/_INDEX.md) (régua, destravados, fila; stops humanos em `plano/gates/`) → [`plano/DUVIDAS-INVENTARIO.md`](plano/DUVIDAS-INVENTARIO.md) e [`plano/destino/18-caminho.md`](plano/destino/18-caminho.md) §18.4 (o que espera decisão sua) → `plano/destino/` (visão) |
-| **Orquestrador de agente** | `CLAUDE.md` (raiz) → [`plano/README.md`](plano/README.md) (protocolo) → [`plano/_INDEX.md`](plano/_INDEX.md) → nota do nó → só `trilhos/`/`rejeitadas/` que ela linka → [`operating-manual/GAP-MAP.md`](operating-manual/GAP-MAP.md) |
+| **Dono** (decidir / assinar) | `plano/_INDEX.md` (gerado na máquina, fora do git — [como gerar](plano/README.md#protocolo-de-leitura-para-agentes-economia-de-contexto)) (régua, destravados, fila; stops humanos em `plano/gates/`) → [`plano/DUVIDAS-INVENTARIO.md`](plano/DUVIDAS-INVENTARIO.md) e [`plano/destino/18-caminho.md`](plano/destino/18-caminho.md) §18.4 (o que espera decisão sua) → `plano/destino/` (visão) |
+| **Orquestrador de agente** | `CLAUDE.md` (raiz) → [`plano/README.md`](plano/README.md) (protocolo) → `plano/_INDEX.md` (gerado na máquina, fora do git — [como gerar](plano/README.md#protocolo-de-leitura-para-agentes-economia-de-contexto)) → nota do nó → só `trilhos/`/`rejeitadas/` que ela linka → [`operating-manual/GAP-MAP.md`](operating-manual/GAP-MAP.md) |
 | **Sessão de feature / correção** | BRIEF do nó (índice em `accounting/README.md`) → ADR citado no BRIEF ([`adr/INDEX.md`](adr/INDEX.md)) → [`claude-skills/GENERATION_CONTRACTS.md`](claude-skills/GENERATION_CONTRACTS.md) → `server/CLAUDE.md` / `my-app/CLAUDE.md` |
 | **Revisor independente** | PR + BRIEF + [`operating-manual/CONTRATO-DE-RETORNO.md`](operating-manual/CONTRATO-DE-RETORNO.md) + [`operating-manual/REPORTE-HUMANO-FORMAT.md`](operating-manual/REPORTE-HUMANO-FORMAT.md) |
 | **Contador / parceiro** (via dono) | [`accounting/PEDIDO-CONTADOR-2026-09-03.md`](accounting/PEDIDO-CONTADOR-2026-09-03.md) · [`adr/ADR-CONTADOR-DELIVERY.md`](adr/ADR-CONTADOR-DELIVERY.md) · [`adr/ADR-INCR-DFE-EMISSAO-PARCEIRO.md`](adr/ADR-INCR-DFE-EMISSAO-PARCEIRO.md) |
