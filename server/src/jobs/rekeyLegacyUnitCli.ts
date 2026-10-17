@@ -55,6 +55,7 @@ export const REKEY_MODELS = [
   'LalurParteBAccount', 'LalurParteBMovement', 'LalurParteBClosing',
   'ProductDestinationDefault', // #481 (ITEM-DESTINATION PR-2): parâmetro por unidade, sem hash → REKEY pelo critério do F-RK-5
   'PaymentAccount', // #484 (F5 PR-1): conta do provedor por unidade; AAD da cifra = id, não unitId → REKEY (dono, 03/10)
+  'FiscalCertificate', // X10i PR-1 (BE-INCR-DFE-ADN-EMISSOR): certificado por unidade; AAD da cifra = id, não unitId → REKEY pelo precedente do PaymentAccount
   'AccountantAssignment', // #482 (GOV-CONTADOR): contador responsável do escopo, sem hash → REKEY pelo critério do F-RK-5 (KEEP só para a trilha);
   //   deixá-la no unitId antigo tiraria o contador ativo da unidade re-chaveada e destravaria a reabertura em silêncio
   'TaxAssessment', // X7 Fase A PR-2: apuração IRPJ/CSLL; `unitId` = unidade lida (proveniência), sem hash → REKEY pelo critério do F-RK-5

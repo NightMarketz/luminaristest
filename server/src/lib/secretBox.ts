@@ -29,34 +29,51 @@ export interface SealedSecret {
   keyVersion: number;
 }
 
+/**
+ * Qual keyring ler (BE-INCR-DFE-ADN-EMISSOR item 4, F-ADN-3 b): o certificado fiscal usa um keyring próprio
+ * (`DFE_CERT_KEYS` / `DFE_CERT_KEY_ACTIVE`) no mesmo formato, para rotação e backup separados do F5.
+ */
+export interface KeyringSpec {
+  /** Prefixo das variáveis: `<prefix>_KEYS` e `<prefix>_KEY_ACTIVE`. */
+  prefix: string;
+  /** Código do 503 quando o keyring não está provisionado. */
+  missingCode: string;
+  /** Rótulo da mensagem do 503. */
+  label: string;
+}
+
+export const PAYMENT_CREDENTIAL_KEYRING: KeyringSpec = {
+  prefix: 'PAYMENT_CREDENTIAL',
+  missingCode: PAYMENT_CREDENTIAL_KEY_MISSING,
+  label: 'das credenciais de pagamento',
+};
+
 /** Lê o keyring do env. Sem as duas variáveis ⇒ 503; presentes mas malformadas ⇒ erro (500). */
-export function loadKeyring(env: NodeJS.ProcessEnv = process.env): Keyring {
-  const raw = env.PAYMENT_CREDENTIAL_KEYS?.trim();
-  const active = env.PAYMENT_CREDENTIAL_KEY_ACTIVE?.trim();
+export function loadKeyring(env: NodeJS.ProcessEnv = process.env, spec: KeyringSpec = PAYMENT_CREDENTIAL_KEYRING): Keyring {
+  const keysVar = `${spec.prefix}_KEYS`;
+  const activeVar = `${spec.prefix}_KEY_ACTIVE`;
+  const raw = env[keysVar]?.trim();
+  const active = env[activeVar]?.trim();
   if (!raw || !active) {
-    throw new AppError(
-      'Chave de cifra das credenciais de pagamento não provisionada (PAYMENT_CREDENTIAL_KEYS / PAYMENT_CREDENTIAL_KEY_ACTIVE).',
-      503,
-      PAYMENT_CREDENTIAL_KEY_MISSING,
-    );
+    throw new AppError(`Chave de cifra ${spec.label} não provisionada (${keysVar} / ${activeVar}).`, 503, spec.missingCode);
   }
   const keys = new Map<number, Buffer>();
   for (const entry of raw.split(',')) {
     const sep = entry.indexOf(':');
     const version = Number(entry.slice(0, sep).trim());
     if (sep < 1 || !Number.isInteger(version) || version < 1) {
-      throw new Error('PAYMENT_CREDENTIAL_KEYS malformado: cada entrada é "<versão inteira ≥ 1>:<base64>".');
+      throw new Error(`${keysVar} malformado: cada entrada é "<versão inteira ≥ 1>:<base64>".`);
     }
     const key = Buffer.from(entry.slice(sep + 1).trim(), 'base64');
     if (key.length !== KEY_BYTES) {
-      throw new Error(`PAYMENT_CREDENTIAL_KEYS: a chave da versão ${version} tem ${key.length} bytes; esperado ${KEY_BYTES}.`);
+      throw new Error(`${keysVar}: a chave da versão ${version} tem ${key.length} bytes; esperado ${KEY_BYTES}.`);
     }
-    if (keys.has(version)) throw new Error(`PAYMENT_CREDENTIAL_KEYS: versão ${version} repetida.`);
+    if (keys.has(version)) throw new Error(`${keysVar}: versão ${version} repetida.`);
     keys.set(version, key);
   }
   const activeVersion = Number(active);
   if (!keys.has(activeVersion)) {
-    throw new Error(`PAYMENT_CREDENTIAL_KEY_ACTIVE=${active} não está em PAYMENT_CREDENTIAL_KEYS.`);
+    throw new Error(`${activeVar}=${active} não está em ${keysVar}.`);
   }
   return { activeVersion, keys };
 }
