@@ -1,5 +1,10 @@
 # BE-INCR-DFE-EVENTOS — BRIEF (nó X11): janela de cancelamento, substituição de NFS-e e o que falta no `e101101`
 
+> **ESTADO LEGAL VERIFICADO 2026-10-17** (verificação legal de 17/10; só referência, não muda item nem fork deste documento):
+> - **Cancelamento:** NFC-e em até 30 minutos (Aj. 19/16 cl. 15ª [V-D03]); NF-e em até 24 h (Aj. 07/05 cl. 12ª [V-D02]); por substituição, 168 h (cl. 15ª-A e 12ª-A). CC-e vedada na NFC-e (Aj. 19/16 cl. 8ª §1º [V-D03]).
+> - **MOC:** de 01/11/2026 em diante deixa de ser Ato COTEPE; vale o "MOC da NF-e"/"MOC da NFC-e" em versão online mantida pelo Paraná (Aj. SINIEF 07/05 cl. 2ª-A §2º, pelo Aj. 40/26 [V-D07]; Aj. 19/16 cl. 3ª §2º, pelo Aj. 38/26 [V-D04]). As transcrições do MOC 7.0 seguem válidas como texto; conferir divergência com a versão online antes de citar regra nova.
+> Fontes: `[V-Dnn]`/`[V-Pnn]` = dossiê `pesquisas-legais/verif-2026-10-17-nfe-nfce-dfe/relatorio.md` (PR #754); `[S-Dnn]` = dossiê [`pesquisas-legais/sp-inutilizacao-nfe-nfce-2026-11/relatorio.md`](../../pesquisas-legais/sp-inutilizacao-nfe-nfce-2026-11/relatorio.md). Detalhe e forks: [`BE-INCR-NFCE-EMENDA-3-brief.md`](BE-INCR-NFCE-EMENDA-3-brief.md).
+
 > Sessão de planejamento (`sessao-planejamento`), 2026-10-02. **Não escreve código.** Forks F-EVT-1..7
 > **ratificados pelo dono no mesmo dia** por questionário (§5 "RATIFICAÇÃO", [`D-2026-10-02-X11-EVENTOS-FORKS`](../plano/decisoes/D-2026-10-02-X11-EVENTOS-FORKS.md)); sem "executa".
 > Grau: **V** = verificado (lido na fonte ou no código) · **I** = inferido · **NV** = não verificado.

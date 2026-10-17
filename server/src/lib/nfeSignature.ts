@@ -11,6 +11,9 @@ import { ValidationError } from './errors';
  *
  * Parâmetros transcritos do MOC 7.0 §4.2.3–4.2.5 em
  * `docs/accounting/fontes-oficiais/TRANSCRICAO-MOC70-assinatura-digital-NFe-2026-09-26.md` — chaves `[SIG-…]`.
+ * A partir de 01/11/2026 o MOC deixa de ser Ato COTEPE: vale o "MOC da NF-e" em versão online mantida pelo Paraná
+ * (Aj. SINIEF 07/05 cl. 2ª-A §2º, pelo Aj. SINIEF 40/26; NFC-e: Aj. 19/16 cl. 3ª §2º, pelo Aj. 38/26). A transcrição
+ * do 7.0 segue como texto; conferir divergência com a versão online (BE-INCR-NFCE-EMENDA-3 §3 item 3).
  *
  * LIMITE DECLARADO (F-SIG-3 b + emenda do dono 26/09): confere integridade + titular do certificado × emitente
  * (CNPJ-raiz, rejeição 213; CPF do e-CPF, rejeição 227) + `dhEmi` dentro da validade. NF-e avulsa assinada pela
