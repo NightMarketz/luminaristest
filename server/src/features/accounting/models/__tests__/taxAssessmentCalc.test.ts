@@ -438,3 +438,29 @@ describe('Real trimestral (item 10; 23 c/d)', () => {
     expect(r.memoria.find((m) => m.codigo === 'GUARDA_CIRCULARIDADE')?.descricao).toBe('guarda de circularidade sem contas configuradas');
   });
 });
+
+describe('adicional do IRPJ no trimestre de início/encerramento (verificação legal 17/10, divergência 1)', () => {
+  // Lei 9.249/1995 art. 3º § 1º: o limite do adicional é R$ 20.000 × "o número de meses do respectivo período de
+  // apuração". Premissa (A6 do consolidado, leitura mais segura): conta-se o mês que a atividade toca, como no
+  // anual (`mesesEmAtividade`) — sem regra de fração de mês.
+  it('Presumido: PJ aberta em 10/02/2025 ⇒ T01 com limite de 2 meses (fev–mar), não 3', () => {
+    // serviço 200.000 × 32% = 64.000; adicional = 10% × (64.000 − 40.000) = 2.400 (com × 3 seria 400)
+    const r = apurarAno({ T01: [200_000, 0] }, 'IRPJ', { inicioAtividadeEm: '2025-02-10' }, [], 2025).T01;
+    expect(v(r, 'ADICIONAL')).toBe(String(R(2_400)));
+  });
+
+  it('Presumido: encerramento em 15/11/2025 ⇒ T04 com limite de 2 meses (out–nov)', () => {
+    const r = apurarAno({ T04: [200_000, 0] }, 'IRPJ', { encerramentoAtividadeEm: '2025-11-15' }, [], 2025).T04;
+    expect(v(r, 'ADICIONAL')).toBe(String(R(2_400)));
+  });
+
+  it('Real trimestral: PJ aberta em 10/02/2026 ⇒ T01 com limite de 2 meses', () => {
+    // base 100.000; adicional = 10% × (100.000 − 40.000) = 6.000 (com × 3 seria 4.000)
+    const r = apurarRealTrimestral({
+      tabela, ano: 2026, periodo: 'T01', tributo: 'IRPJ', resultadoAntesCents: R(100_000), contasProvisaoConfiguradas: true,
+      linhasParteA: [], parteBFechada: true, deducoes: [],
+      perfil: { ecfIndAliqCsll: '4', lucroRealObrigatorio: false, inicioAtividadeEm: '2026-02-10', encerramentoAtividadeEm: null } as EntradaReal['perfil'],
+    });
+    expect(v(r, 'ADICIONAL')).toBe(String(R(6_000)));
+  });
+});
