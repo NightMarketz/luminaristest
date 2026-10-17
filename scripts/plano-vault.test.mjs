@@ -31,14 +31,11 @@ function writeIndex(dir) {
 test('vault íntegro com índice regenerado → 0 problemas', () => {
   const dir = vault(base);
   writeIndex(dir);
-  assert.deepEqual(check(dir, { indice: true }), []);
+  assert.deepEqual(check(dir), []);
 });
 
-test('índice desatualizado: pego com --indice (main), ignorado no check de PR', () => {
-  const dir = vault(base);
-  const errs = check(dir, { indice: true });
-  assert.ok(errs.some((e) => e.includes('_INDEX.md desatualizado')), errs.join('\n'));
-  assert.deepEqual(check(dir), []);
+test('sem _INDEX gerado o vault segue íntegro (índice não é versionado)', () => {
+  assert.deepEqual(check(vault(base)), []);
 });
 
 test('link [[x]] quebrado e depende_de inexistente são pegos', () => {
@@ -96,7 +93,6 @@ test('fold grava estado/prs/atualizado no frontmatter e no cabeçalho; não toca
   assert.match(b, /\*\*PRs:\*\* #1, #7/);
   assert.equal(readFileSync(join(dir, '_INDEX.md'), 'utf8'), antes);
   assert.deepEqual(check(dir), []);
-  assert.ok(check(dir, { indice: true }).some((e) => e.includes('_INDEX.md desatualizado')));
 });
 
 test('fold recusa nó inexistente, estado inválido e PR ausente', () => {

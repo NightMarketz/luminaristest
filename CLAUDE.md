@@ -3,7 +3,7 @@
 Monorepo: `server/` (Express + Prisma, **camadas estritas**) e `my-app/` (Next.js Pages Router).
 As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação sempre-ativa que aponta pra eles:
 
-- **Plano (estado, fila, régua, destino):** vault `docs/plano/` — leia `docs/plano/_INDEX.md` → a nota do nó →
+- **Plano (estado, fila, régua, destino):** vault `docs/plano/` — gere e leia `docs/plano/_INDEX.md` (`node scripts/plano-vault.mjs index`; não versionado) → a nota do nó →
   só o trilho/rejeitada que ela linka (protocolo em `docs/plano/README.md`). **Não abra o `docs/SDD-LUMINARIS.md`
   inteiro** (snapshot consolidado de 23/09); citação "master map §N" resolve em `docs/plano/_ANCORAS.md`.
 - **Bar de qualidade / camadas:** `.claude/skills/_ARCHITECTURE-CONTRACT.md`

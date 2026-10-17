@@ -1,262 +1,189 @@
-import OpenAI from 'openai';
+import { randomUUID } from 'crypto';
+import type OpenAI from 'openai';
 import { logger } from '../../../lib/logger';
-import { OpenAIService } from '../../../lib/openai/OpenAIService';
-import { ICustomizableTable, IMessage } from '../models/InterviewTypes';
-import { ISchemaField } from '../../../features/dynamicTables/models/DynamicTable.model';
-import { FieldIntentParser } from './FieldIntentParser';
-import { FieldUpdater } from './FieldUpdater';
-import { promptConfig } from './PromptConfig';
+import type { OpenAIService } from '../../../lib/openai/OpenAIService';
+import { fieldPresetKnowledgeBase } from '../../dynamicTables/presets/fields/FieldPresetKnowledgeBase';
+import type { ICustomizableTable } from '../models/InterviewTypes';
+import type { IInterviewSessionHandle, StateManager } from '../CustomizationService/StateManager';
+import type {
+  CustomizeFieldsDecisionDto,
+  CustomizeFieldsDtoType,
+  CustomizeFieldsMessageDto,
+} from '../dtos/CustomizeFields.dto';
 import { FieldPresetMatcher } from './FieldPresetMatcher';
-import { IFieldCustomizationResult, IFieldModification } from './Types';
-import { StateManager } from '../CustomizationService/StateManager';
-import { isInterviewSessionError } from '../models/InterviewSession.model';
+import { buildFieldChanges, requiresSensitiveAck } from './FieldProposal';
+import { FieldUpdater } from './FieldUpdater';
+import { buildFieldCustomizationResponseFormat, parseModelOutput } from './ModelOutput';
+import { promptConfig } from './PromptConfig';
+import { ProposalStaleError, SensitiveFieldNotAcknowledgedError, TableNotInSessionError } from './errors';
+import type { DiscardedChange, IFieldHistoryEntry, IFieldProposal } from './Types';
+
+/** Item 5: quantas mensagens da tabela vão ao modelo (as `system` nunca vão). */
+const MODEL_HISTORY_LIMIT = 20;
+
+/** Resposta `200` da rota (BRIEF WIZARD-W6 §2.2). */
+export interface CustomizeFieldsResult {
+  sessionId: string;
+  tableKey: string;
+  /** Estado da tabela na sessão DEPOIS do turno (inalterado em `message`). */
+  table: ICustomizableTable;
+  conversationHistory: IFieldHistoryEntry[];
+  proposal: IFieldProposal | null;
+  discarded: DiscardedChange[];
+  /** Só em `kind:'decision'`. */
+  applied?: boolean;
+}
 
 /**
- * @description
- * Este serviço é responsável por processar solicitações de customização de campos
- * de uma funcionalidade (tabela) com base na conversa com o usuário.
- * 
- * O fluxo principal envolve:
- * 1. Receber uma mensagem do usuário sobre customização de campos
- * 2. Analisar a intenção do usuário utilizando IA
- * 3. Extrair as modificações estruturadas (campos a adicionar/remover/modificar)
- * 4. Aplicar estas modificações na tabela atual
- * 5. Retornar a tabela atualizada e uma mensagem amigável para o usuário
+ * BE-INCR-W6-CUSTOMIZE-FIELDS (nó W6; BRIEF WIZARD-W6 itens 1–11; ADR-W6 Accepted 15/10).
+ *
+ * Painel de campos da entrevista sobre a `InterviewSession` do W4: o turno `message` faz UMA chamada ao modelo com
+ * saída presa a schema e devolve uma proposta, nunca aplica; o turno `decision` aplica ou descarta a proposta pendente,
+ * de forma determinística, na mesma gravação da sessão. Invariantes no ADR-W6 §2.2.
  */
 export class FieldCustomizationService {
-  private openaiService: OpenAIService;
-  private fieldUpdater: FieldUpdater;
-  private fieldIntentParser: FieldIntentParser;
-  private fieldPresetMatcher: FieldPresetMatcher;
-  private stateManager: StateManager;
+  constructor(
+    private readonly stateManager: StateManager,
+    private readonly openaiService: OpenAIService,
+    private readonly presetMatcher: FieldPresetMatcher = new FieldPresetMatcher(),
+    private readonly fieldUpdater: FieldUpdater = new FieldUpdater(),
+    private readonly now: () => Date = () => new Date(),
+    private readonly newId: () => string = randomUUID,
+  ) {}
 
-  /**
-   * Inicializa o serviço com suas dependências.
-   * W4 item 10: o `StateManager` (sessão persistida) é injetado; sem chamador até o W6 plugar a rota no factory.
-   */
-  constructor(stateManager: StateManager) {
-    this.openaiService = OpenAIService.getInstance();
-    this.fieldIntentParser = new FieldIntentParser();
-    this.fieldUpdater = new FieldUpdater();
-    this.fieldPresetMatcher = new FieldPresetMatcher();
-    this.stateManager = stateManager;
-    logger.info('[FieldCustomizationService] Serviço inicializado');
+  public handle(userId: string, dto: CustomizeFieldsDtoType): Promise<CustomizeFieldsResult> {
+    return dto.kind === 'message' ? this.processMessage(userId, dto) : this.processDecision(userId, dto);
   }
 
-  /**
-   * Processa uma mensagem do usuário para customizar os campos de uma tabela.
-   * @param userMessage A mensagem enviada pelo usuário
-   * @param currentTable A tabela atual que está sendo customizada
-   * @param conversationHistory Histórico da conversa para contexto
-   * @returns Resultado da customização com tabela atualizada e mensagem
-   */
-  public async processMessage(
-    sessionId: string,
-    userId: string,
-    tableKey: string,
-    userMessage: string,
-    conversationHistory: IMessage[] = []
-  ): Promise<IFieldCustomizationResult> {
-    // 1. Obter o estado da sessão a partir do StateManager
-    // W4: sessão inexistente, expirada ou alheia → InterviewSessionNotFoundError (404).
-    const session = await this.stateManager.loadSession(sessionId, userId);
-    const customizationState = session.state;
+  /** Itens 3–9 e 11. */
+  public async processMessage(userId: string, dto: CustomizeFieldsMessageDto): Promise<CustomizeFieldsResult> {
+    const session = await this.stateManager.loadSession(dto.sessionId, userId);
+    const table = this.findTable(session, dto.tableKey);
 
-    // 2. Encontrar a tabela específica dentro da sessão
-    const currentTable = customizationState.tables.find((t: ICustomizableTable) => t.key === tableKey);
-    if (!currentTable) {
-      logger.error(`[FieldCustomizationService] Tabela ${tableKey} não encontrada na sessão ${sessionId}.`);
-      throw new Error(`Tabela não encontrada na sessão.`);
-    }
-
+    let content: string | null;
     try {
-      logger.info(`[FieldCustomizationService] Processando mensagem para tabela '${currentTable.key}' na sessão ${sessionId}`);
-
-      // 3. Preparar o contexto da conversa para a IA
-      const messages = this.prepareConversationContext(userMessage, currentTable, conversationHistory);
-      
-      // 4. Enviar para OpenAI e obter análise da intenção
-      logger.debug('[FieldCustomizationService] Enviando contexto para análise de intenção');
-      const aiRawResponse = await this.openaiService.getChatCompletionWithHistory(
-        messages,
-        'gpt-4-turbo'
+      content = await this.openaiService.completeWithJsonSchema(
+        this.buildModelMessages(table, dto.message),
+        buildFieldCustomizationResponseFormat(this.presetMatcher.presetKeys()),
       );
-
-      // 5. Analisar e estruturar a resposta da IA
-      const structuredResponse = this.fieldIntentParser.parse(aiRawResponse || '');
-      
-      // 6. Validar se conseguimos extrair a intenção corretamente
-      if (!structuredResponse || !this.fieldIntentParser.hasValidModifications(structuredResponse)) {
-        logger.warn('[FieldCustomizationService] Não foi possível estruturar a resposta da IA ou não há modificações válidas');
-        return {
-          updatedTable: currentTable,
-          aiMessage: structuredResponse?.friendlyMessage || 
-            'Desculpe, não entendi exatamente o que você gostaria de modificar. Poderia explicar melhor?',
-          modified: false,
-          conversationHistory: currentTable.conversationHistory // Adiciona o histórico atual
-        };
-      }
-
-      // 7. Processar as solicitações de adição de campo para buscar presets
-      const processedModifications = await this.processFieldModifications(
-        structuredResponse.modifications,
-        currentTable.fields || []
-      );
-
-      // 8. Aplicar as modificações na tabela
-      logger.debug(`[FieldCustomizationService] Aplicando ${processedModifications.modifications.length} modificações`);
-      const { updatedTable, modified } = this.fieldUpdater.update(currentTable, processedModifications.modifications);
-
-      // 9. Atualizar o estado da tabela no StateManager
-      if (modified) {
-        // Obtém todas as tabelas, substitui a que foi modificada e atualiza o estado
-        const allTables = customizationState.tables.map(t => 
-          t.key === tableKey ? updatedTable : t
-        );
-        
-        // Adiciona a mensagem do usuário e da IA ao histórico
-        const userMessageEntry = { role: 'user', content: userMessage, timestamp: new Date() };
-        const assistantMessageEntry = { role: 'assistant', content: processedModifications.message, timestamp: new Date() };
-        updatedTable.conversationHistory.push(userMessageEntry, assistantMessageEntry);
-
-        // Atualiza o estado da sessão com as tabelas modificadas
-        await this.stateManager.updateTables(session, [updatedTable]);
-      }
-
-      // 10. Retornar o resultado da operação com a mensagem adequada
-      return {
-        updatedTable,
-        aiMessage: processedModifications.message,
-        modified,
-        conversationHistory: updatedTable.conversationHistory
-      };
     } catch (error) {
-      if (isInterviewSessionError(error)) throw error;
-      logger.error(`[FieldCustomizationService] Erro ao processar mensagem: ${error}`);
-      return {
-        updatedTable: currentTable, // Retorna a tabela antes da falha
-        aiMessage: 'Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente.',
-        modified: false,
-        conversationHistory: currentTable.conversationHistory
-      };
+      // Item 11: a conversa segue — 200 sem proposta, nunca 500.
+      logger.error(`[FieldCustomizationService] Erro do modelo na sessão ${session.id}: ${error}`);
+      return this.recordFailedTurn(session, table, dto.message, promptConfig.MODEL_ERROR_MESSAGE);
     }
+
+    const output = parseModelOutput(content);
+    if (!output) {
+      logger.warn(`[FieldCustomizationService] Resposta do modelo fora do schema na sessão ${session.id}`);
+      return this.recordFailedTurn(session, table, dto.message, promptConfig.NOT_UNDERSTOOD_MESSAGE);
+    }
+
+    const { changes, discarded } = buildFieldChanges(output.changes, table.fields ?? [], this.presetMatcher);
+    const at = this.now().toISOString();
+    this.appendHistory(table, { role: 'user', content: dto.message, at }, { role: 'assistant', content: output.friendlyMessage, at });
+
+    // Item 7: a nova proposta substitui a anterior; turno sem mudança válida limpa a pendente (dono, 16/10).
+    let proposal: IFieldProposal | null = null;
+    if (changes.length > 0) {
+      table.pendingProposal = { id: this.newId(), changes, createdAt: at };
+      proposal = { id: table.pendingProposal.id, changes, requiresSensitiveAck: requiresSensitiveAck(changes) };
+    } else {
+      delete table.pendingProposal;
+    }
+
+    await this.stateManager.saveSession(session);
+    return this.result(session, table, proposal, discarded);
+  }
+
+  /** Item 10. */
+  public async processDecision(userId: string, dto: CustomizeFieldsDecisionDto): Promise<CustomizeFieldsResult> {
+    const session = await this.stateManager.loadSession(dto.sessionId, userId);
+    const table = this.findTable(session, dto.tableKey);
+
+    const pending = table.pendingProposal;
+    if (!pending || pending.id !== dto.proposalId) throw new ProposalStaleError();
+
+    const apply = dto.decision === 'apply';
+    if (apply) {
+      if (requiresSensitiveAck(pending.changes) && dto.acknowledgeSensitive !== true) {
+        throw new SensitiveFieldNotAcknowledgedError();
+      }
+      table.fields = this.fieldUpdater.update(table.fields ?? [], pending.changes);
+    }
+    delete table.pendingProposal;
+    this.appendHistory(table, {
+      role: 'system',
+      content: apply ? promptConfig.PROPOSAL_APPLIED : promptConfig.PROPOSAL_DISCARDED,
+      at: this.now().toISOString(),
+    });
+
+    await this.stateManager.saveSession(session);
+    return { ...this.result(session, table, null, []), applied: apply };
+  }
+
+  private findTable(session: IInterviewSessionHandle, tableKey: string): ICustomizableTable {
+    const table = session.state.tables.find((t) => t.key === tableKey);
+    if (!table) throw new TableNotInSessionError();
+    return table;
   }
 
   /**
-   * Prepara o contexto da conversa para a IA analisar a intenção do usuário
+   * Itens 6 e 11 (dono, 16/10): falha do modelo grava a linha do usuário e a mensagem padrão do assistente; campos e
+   * proposta pendente ficam como estavam.
    */
-  private prepareConversationContext(
-    userMessage: string,
-    currentTable: ICustomizableTable,
-    conversationHistory: IMessage[]
-  ): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
-    // Preparar o prompt de sistema com dados da tabela atual
-    const systemPrompt = this.getSystemPrompt(currentTable);
-    
-    // Converter o histórico de conversa para o formato esperado pela OpenAI
-    const formattedHistory = conversationHistory.map(msg => ({
-      role: msg.role,
-      content: msg.content
-    }));
-    
-    // Montar a estrutura completa de mensagens
-    return [
-      { role: 'system', content: systemPrompt },
-      ...formattedHistory,
-      { role: 'user', content: userMessage }
-    ];
+  private async recordFailedTurn(
+    session: IInterviewSessionHandle,
+    table: ICustomizableTable,
+    message: string,
+    assistantMessage: string,
+  ): Promise<CustomizeFieldsResult> {
+    const at = this.now().toISOString();
+    this.appendHistory(table, { role: 'user', content: message, at }, { role: 'assistant', content: assistantMessage, at });
+    await this.stateManager.saveSession(session);
+    return this.result(session, table, null, []);
   }
 
-  /**
-   * Gera o prompt de sistema para a IA, incluindo dados da tabela atual
-   */
-  private getSystemPrompt(currentTable: ICustomizableTable): string {
-    // Formatar os campos de maneira mais legível para a IA
-    const formattedFields = (currentTable.fields || []).map(field => {
-      return `- ${field.label} (${field.name}): Tipo ${field.type}${field.required ? ', obrigatório' : ''}`;
-    }).join('\n');
-
-    // Substituir os marcadores no template do prompt
-    return promptConfig.FIELD_CUSTOMIZATION_PROMPT
-      .replace('{{TABLE_NAME}}', currentTable.name)
-      .replace('{{TABLE_DESCRIPTION}}', currentTable.description)
-      .replace('{{TABLE_FIELDS}}', formattedFields);
+  private appendHistory(table: ICustomizableTable, ...entries: IFieldHistoryEntry[]): void {
+    table.conversationHistory = [...(table.conversationHistory ?? []), ...entries];
   }
 
-  /**
-   * Processa modificações de campos para buscar e usar presets quando disponíveis
-   * @param modifications Lista de modificações solicitadas pelo usuário via IA
-   * @param existingFields Campos existentes na tabela atual
-   * @returns Modificações processadas e mensagem atualizada
-   */
-  private async processFieldModifications(modifications: IFieldModification[], existingFields: ISchemaField[]) {
-    // Resultado final a ser retornado
-    let processedResult = {
-      modifications: [...modifications],
-      message: ""
+  private result(
+    session: IInterviewSessionHandle,
+    table: ICustomizableTable,
+    proposal: IFieldProposal | null,
+    discarded: CustomizeFieldsResult['discarded'],
+  ): CustomizeFieldsResult {
+    return {
+      sessionId: session.id,
+      tableKey: table.key,
+      table,
+      conversationHistory: table.conversationHistory,
+      proposal,
+      discarded,
     };
+  }
 
-    // Apenas processa as adições de campo para buscar presets
-    const addModifications = modifications.filter(mod => mod.action === 'add');
-    
-    if (addModifications.length === 0) {
-      return processedResult; // Não há adições, retorna as modificações originais
-    }
+  /** Item 5: só `user`/`assistant` vão ao modelo, as últimas 20 da tabela, mais a mensagem do turno. */
+  private buildModelMessages(
+    table: ICustomizableTable,
+    userMessage: string,
+  ): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
+    const history = (table.conversationHistory ?? [])
+      .filter((m): m is IFieldHistoryEntry & { role: 'user' | 'assistant' } => m.role === 'user' || m.role === 'assistant')
+      .slice(-MODEL_HISTORY_LIMIT)
+      .map((m) => ({ role: m.role, content: m.content }));
+    return [{ role: 'system', content: this.systemPrompt(table) }, ...history, { role: 'user', content: userMessage }];
+  }
 
-    // Processa apenas a primeira adição para manter a interação mais simples
-    const addMod = addModifications[0];
-    const fieldDescription = addMod.fieldDescription || 
-                            `Campo do tipo ${addMod.field.type} chamado ${addMod.field.label}`;
-
-    try {
-      // Busca o preset que corresponde à descrição
-      const presetResult = await this.fieldPresetMatcher.findFieldPreset(
-        fieldDescription, 
-        existingFields
-      );
-
-      if (presetResult.found && presetResult.preset) {
-        // Encontrou um preset adequado
-        logger.info(`[FieldCustomizationService] Preset encontrado: ${presetResult.matchedKey}`);
-        
-        // Substitui o campo customizado pelo preset
-        const modIndex = processedResult.modifications.findIndex(m => 
-          m.action === 'add' && m.field.name === addMod.field.name
-        );
-
-        if (modIndex >= 0) {
-          // Cria uma cópia do preset para não modificar o original
-          const presetField = { ...presetResult.preset };
-
-          // Preserva o label personalizado se for diferente do padrão
-          if (addMod.field.label && addMod.field.label !== presetField.label) {
-            presetField.label = addMod.field.label;
-          }
-
-          // Substitui a modificação original pelo preset
-          processedResult.modifications[modIndex] = {
-            ...processedResult.modifications[modIndex],
-            field: presetField
-          };
-
-          // Atualiza a mensagem para informar sobre o uso do preset
-          processedResult.message = promptConfig.FIELD_PRESET_FOUND_PROMPT
-            .replace('{{PRESET_NAME}}', presetResult.preset.label)
-            .replace('{{PRESET_DESCRIPTION}}', presetResult.preset.description || 
-              `Campo do tipo ${presetResult.preset.type}`);
-        }
-      } else if (!presetResult.found && !presetResult.exactMatch) {
-        // Não encontrou preset, mantém o campo personalizado e pergunta ao usuário
-        processedResult.message = promptConfig.FIELD_PRESET_NOT_FOUND_PROMPT
-          .replace('{{FIELD_NAME}}', addMod.field.label)
-          .replace('{{FIELD_TYPE}}', addMod.field.type)
-          .replace('{{FIELD_DESCRIPTION}}', addMod.field.description || fieldDescription);
-      }
-
-      return processedResult;
-    } catch (error) {
-      logger.error(`[FieldCustomizationService] Erro ao processar presets de campos: ${error}`);
-      return processedResult; // Em caso de erro, mantém as modificações originais
-    }
+  private systemPrompt(table: ICustomizableTable): string {
+    const fields = (table.fields ?? [])
+      .map((f) => `- ${f.label} (${f.name}): tipo ${f.type}${f.required ? ', obrigatório' : ''}`)
+      .join('\n');
+    const catalog = fieldPresetKnowledgeBase.map((p) => `- ${p.key} (${p.type}): ${p.aiDescription}`).join('\n');
+    // Substituição por função: nome/descrição vêm do usuário, e `$&`/`$'` numa string seriam lidos como padrão.
+    return promptConfig.FIELD_CUSTOMIZATION_PROMPT.replace('{{TABLE_NAME}}', () => table.name)
+      .replace('{{TABLE_DESCRIPTION}}', () => table.description)
+      .replace('{{TABLE_FIELDS}}', () => fields || '(nenhum)')
+      .replace('{{PRESET_CATALOG}}', () => catalog);
   }
 }

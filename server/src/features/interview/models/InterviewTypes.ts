@@ -1,6 +1,7 @@
 import { ISchemaField } from '../../dynamicTables/models/DynamicTable.model';
 import type { TableLock } from '../../dynamicTables/presets/removability';
 import type { ModuleKey } from '../../dynamicTables/presets/modules/registry';
+import type { IFieldHistoryEntry, IPendingProposal } from '../FieldCustomizationService/Types';
 
 /**
  * Tipos compartilhados entre InterviewService e CustomizationService
@@ -72,7 +73,10 @@ export interface InterviewModuleOption {
  * Interface para representar uma tabela que pode ser customizada
  */
 export interface ICustomizableTable {
-  conversationHistory: Array<{ role: string; content: string }>;
+  /** W6: histórico do painel de campos, por tabela, no servidor (F-W6-3 a); `system` = decisão, não vai ao modelo. */
+  conversationHistory: IFieldHistoryEntry[];
+  /** W6 (§2.4): a proposta da IA que espera Aplicar/Descartar — uma por tabela. */
+  pendingProposal?: IPendingProposal;
   name: string;          // Nome amigável da tabela (ex: "Clientes")
   key: string;           // Identificador único (ex: "customers")
   description: string;   // Descrição breve (ex: "Cadastro de clientes")
