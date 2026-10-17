@@ -319,11 +319,15 @@ model DynamicTable {
   /// See: features/dynamicTables/models/TableCategories.ts
   category     String // Category for grouping tables (e.g., "people", "sales", "inventory")
   schema       Json // JSON defining the fields, types, and constraints
+  /// BE-INCR-DT-VERSION-LEDGER item 3: versão do schema vigente; cada updateTableSchema incrementa.
+  schemaVersion Int     @default(1)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   // Relation to the actual data entries
-  dataEntries DynamicTableData[]
+  dataEntries    DynamicTableData[]
+  rowVersions    DynamicTableRowVersion[]
+  schemaVersions DynamicTableSchemaVersion[]
 
   @@index([userId])
   @@map("dynamic_tables")
@@ -338,9 +342,49 @@ model DynamicTableData {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   deletedAt      DateTime? // Used for Soft Deletes across the ERP
+  versions       DynamicTableRowVersion[]
 
   @@index([dynamicTableId])
   @@map("dynamic_table_data")
+}
+
+// BE-INCR-DT-VERSION-LEDGER (D-2026-10-17): ledger de versões das DynamicTables. Append-only — escrito só
+// pelos repositórios de DT, na mesma tx da escrita da linha/schema (D3); sem update/delete no repo.
+// FK com cascade (F-DTV-4 a, LGPD art. 16 caput / art. 18 VI): as versões somem com a linha, a tabela ou a
+// conta. Diferente do AuditEvent (trilha legal, sem cascade): DT é dado desenhado pelo usuário.
+model DynamicTableRowVersion {
+  id                  String           @id @default(cuid())
+  dynamicTableId      String
+  dynamicTable        DynamicTable     @relation(fields: [dynamicTableId], references: [id], onDelete: Cascade)
+  dataId              String
+  row                 DynamicTableData @relation(fields: [dataId], references: [id], onDelete: Cascade)
+  version             Int
+  op                  String // BASELINE | CREATE | UPDATE | DELETE | RESTORE
+  data                Json // snapshot completo após a operação (F-DTV-2 a)
+  schemaVersion       Int
+  actorUserId         String? // sem FK: apagar o usuário apaga as tabelas e, por cascade, isto
+  origin              String // DIRECT | RULE | SYSTEM (F-DTV-1 a)
+  restoredFromVersion Int?
+  createdAt           DateTime         @default(now())
+
+  @@unique([dataId, version])
+  @@index([dynamicTableId, createdAt])
+  @@map("dynamic_table_row_versions")
+}
+
+model DynamicTableSchemaVersion {
+  id             String       @id @default(cuid())
+  dynamicTableId String
+  dynamicTable   DynamicTable @relation(fields: [dynamicTableId], references: [id], onDelete: Cascade)
+  version        Int
+  op             String // BASELINE | CREATE | UPDATE
+  schema         Json
+  actorUserId    String?
+  origin         String // DIRECT | RULE | SYSTEM
+  createdAt      DateTime     @default(now())
+
+  @@unique([dynamicTableId, version])
+  @@map("dynamic_table_schema_versions")
 }
 
 // Model for storing the Knowledge Graph (metadata) of a user's system

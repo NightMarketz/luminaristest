@@ -22,12 +22,23 @@ import type { IDynamicTable, IDynamicTableData, ITableSchema, ISchemaField, Fiel
 import { fieldEqualsWhere } from './fieldEqualsSql';
 import type { CreateDynamicTableDtoType, UpdateDynamicTableDtoType, UpdateDynamicTableSchemaDtoType } from '../dtos/DynamicTable.dto';
 import type { IDynamicTableRepository } from './IDynamicTableRepository';
+import {
+  SYSTEM_VERSION_CONTEXT, createTableVersioned, updateSchemaVersioned, createDataVersioned, updateDataVersioned,
+  softDeleteDataVersioned, type VersionWriteContext,
+} from './versionLedger';
 
 /** Prisma interactive-transaction client type. */
 type PrismaTx = Prisma.TransactionClient;
 
 export class TransactionalDynamicTableRepository implements IDynamicTableRepository {
-  constructor(private readonly tx: PrismaTx) {}
+  /**
+   * `versionCtx` (BE-INCR-DT-VERSION-LEDGER, F-DTV-1 a): quem assina as versões que este repo grava. Sem ele, SYSTEM.
+   */
+  constructor(private readonly tx: PrismaTx, private readonly versionCtx: VersionWriteContext = SYSTEM_VERSION_CONTEXT) {}
+
+  withVersionContext(ctx: VersionWriteContext): TransactionalDynamicTableRepository {
+    return new TransactionalDynamicTableRepository(this.tx, ctx);
+  }
 
   private toDomainTable(row: DynamicTable): IDynamicTable {
     return {
@@ -39,16 +50,14 @@ export class TransactionalDynamicTableRepository implements IDynamicTableReposit
   // ── Table operations ────────────────────────────────────────────────────────
 
   async createTable(userId: string, data: CreateDynamicTableDtoType): Promise<IDynamicTable> {
-    const row = await this.tx.dynamicTable.create({
-      data: {
-        userId,
-        name: data.name,
-        internalName: data.internalName,
-        category: data.category,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prisma InputJsonValue: JSON fields require any cast at persistence boundary
-        schema: data.schema as any,
-      },
-    });
+    const row = await createTableVersioned(this.tx, {
+      userId,
+      name: data.name,
+      internalName: data.internalName,
+      category: data.category,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prisma InputJsonValue: JSON fields require any cast at persistence boundary
+      schema: data.schema as any,
+    }, this.versionCtx);
     return this.toDomainTable(row);
   }
 
@@ -88,11 +97,7 @@ export class TransactionalDynamicTableRepository implements IDynamicTableReposit
   }
 
   async updateTableSchema(tableId: string, data: UpdateDynamicTableSchemaDtoType): Promise<IDynamicTable> {
-    const row = await this.tx.dynamicTable.update({
-      where: { id: tableId },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prisma InputJsonValue: JSON fields require any cast at persistence boundary
-      data: { schema: data.schema as any },
-    });
+    const row = await updateSchemaVersioned(this.tx, tableId, data.schema, this.versionCtx);
     return this.toDomainTable(row);
   }
 
@@ -107,13 +112,7 @@ export class TransactionalDynamicTableRepository implements IDynamicTableReposit
   // ── Data operations ─────────────────────────────────────────────────────────
 
   async createData(tableId: string, data: Record<string, unknown>): Promise<IDynamicTableData> {
-    return this.tx.dynamicTableData.create({
-      data: {
-        dynamicTableId: tableId,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prisma InputJsonValue: JSON fields require any cast at persistence boundary
-        data: data as any,
-      },
-    });
+    return createDataVersioned(this.tx, tableId, data, this.versionCtx);
   }
 
   async findDataById(dataId: string): Promise<IDynamicTableData | null> {
@@ -170,18 +169,11 @@ export class TransactionalDynamicTableRepository implements IDynamicTableReposit
   }
 
   async updateData(dataId: string, data: Record<string, unknown>): Promise<IDynamicTableData> {
-    return this.tx.dynamicTableData.update({
-      where: { id: dataId },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prisma InputJsonValue: JSON fields require any cast at persistence boundary
-      data: { data: data as any },
-    });
+    return updateDataVersioned(this.tx, dataId, data, this.versionCtx);
   }
 
   async deleteData(dataId: string): Promise<void> {
-    await this.tx.dynamicTableData.update({
-      where: { id: dataId },
-      data: { deletedAt: new Date() },
-    });
+    await softDeleteDataVersioned(this.tx, dataId, this.versionCtx);
   }
 
   async deleteAllDataByUserId(userId: string): Promise<void> {

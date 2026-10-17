@@ -1,7 +1,15 @@
 import { IDynamicTable, IDynamicTableData, FieldEquals } from '../models/DynamicTable.model';
 import { CreateDynamicTableDtoType, UpdateDynamicTableDtoType, UpdateDynamicTableSchemaDtoType } from '../dtos/DynamicTable.dto';
+import type { VersionWriteContext } from './versionContext';
 
 export interface IDynamicTableRepository {
+  /**
+   * BE-INCR-DT-VERSION-LEDGER (F-DTV-1 a): o mesmo repo (mesmo client/tx), assinando as versões com `ctx`.
+   * Opcional só para os dublês de teste; os dois repositórios reais implementam. Use `withVersionContext()`
+   * de `versionLedger.ts`, que tolera a ausência.
+   */
+  withVersionContext?(ctx: VersionWriteContext): IDynamicTableRepository;
+
   // Table operations
   createTable(userId: string, data: CreateDynamicTableDtoType): Promise<IDynamicTable>;
   findTableById(tableId: string): Promise<IDynamicTable | null>;

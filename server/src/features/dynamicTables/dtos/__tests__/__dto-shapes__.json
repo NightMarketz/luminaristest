@@ -1521,6 +1521,763 @@
       ]
     }
   },
+  "DynamicTableVersion.dto.ts": {
+    "FieldDiffDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "added",
+            "removed",
+            "changed"
+          ]
+        },
+        "before": {},
+        "after": {}
+      },
+      "required": [
+        "field",
+        "label",
+        "kind",
+        "before",
+        "after"
+      ],
+      "additionalProperties": false
+    },
+    "ListVersionsQueryDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "page": {
+          "default": 1,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "limit": {
+          "default": 50,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200
+        }
+      },
+      "additionalProperties": false
+    },
+    "RowVersionDetailDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "op": {
+          "type": "string",
+          "enum": [
+            "BASELINE",
+            "CREATE",
+            "UPDATE",
+            "DELETE",
+            "RESTORE"
+          ]
+        },
+        "schemaVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "actorUserId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "origin": {
+          "type": "string",
+          "enum": [
+            "DIRECT",
+            "RULE",
+            "SYSTEM"
+          ]
+        },
+        "restoredFromVersion": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "data": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {}
+        },
+        "schema": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {}
+        }
+      },
+      "required": [
+        "version",
+        "op",
+        "schemaVersion",
+        "actorUserId",
+        "origin",
+        "restoredFromVersion",
+        "createdAt",
+        "data",
+        "schema"
+      ],
+      "additionalProperties": false
+    },
+    "RowVersionDiffDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "from": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "to": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "string",
+              "const": "current"
+            }
+          ]
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "field": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "added",
+                  "removed",
+                  "changed"
+                ]
+              },
+              "before": {},
+              "after": {}
+            },
+            "required": [
+              "field",
+              "label",
+              "kind",
+              "before",
+              "after"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "from",
+        "to",
+        "changes"
+      ],
+      "additionalProperties": false
+    },
+    "RowVersionListDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "op": {
+                "type": "string",
+                "enum": [
+                  "BASELINE",
+                  "CREATE",
+                  "UPDATE",
+                  "DELETE",
+                  "RESTORE"
+                ]
+              },
+              "schemaVersion": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "actorUserId": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "origin": {
+                "type": "string",
+                "enum": [
+                  "DIRECT",
+                  "RULE",
+                  "SYSTEM"
+                ]
+              },
+              "restoredFromVersion": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "createdAt": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "version",
+              "op",
+              "schemaVersion",
+              "actorUserId",
+              "origin",
+              "restoredFromVersion",
+              "createdAt"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "data",
+        "total",
+        "page",
+        "limit"
+      ],
+      "additionalProperties": false
+    },
+    "RowVersionMetaDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "op": {
+          "type": "string",
+          "enum": [
+            "BASELINE",
+            "CREATE",
+            "UPDATE",
+            "DELETE",
+            "RESTORE"
+          ]
+        },
+        "schemaVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "actorUserId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "origin": {
+          "type": "string",
+          "enum": [
+            "DIRECT",
+            "RULE",
+            "SYSTEM"
+          ]
+        },
+        "restoredFromVersion": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "version",
+        "op",
+        "schemaVersion",
+        "actorUserId",
+        "origin",
+        "restoredFromVersion",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "RowVersionNumberParamsDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "tableId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "dataId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "tableId",
+        "dataId",
+        "version"
+      ],
+      "additionalProperties": false
+    },
+    "RowVersionOpSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+      "enum": [
+        "BASELINE",
+        "CREATE",
+        "UPDATE",
+        "DELETE",
+        "RESTORE"
+      ]
+    },
+    "RowVersionParamsDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "tableId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "dataId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        }
+      },
+      "required": [
+        "tableId",
+        "dataId"
+      ],
+      "additionalProperties": false
+    },
+    "SchemaVersionDetailDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "op": {
+          "type": "string",
+          "enum": [
+            "BASELINE",
+            "CREATE",
+            "UPDATE"
+          ]
+        },
+        "actorUserId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "origin": {
+          "type": "string",
+          "enum": [
+            "DIRECT",
+            "RULE",
+            "SYSTEM"
+          ]
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "schema": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {}
+        }
+      },
+      "required": [
+        "version",
+        "op",
+        "actorUserId",
+        "origin",
+        "createdAt",
+        "schema"
+      ],
+      "additionalProperties": false
+    },
+    "SchemaVersionDiffDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "from": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "to": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "string",
+              "const": "current"
+            }
+          ]
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "field": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "added",
+                  "removed",
+                  "changed"
+                ]
+              },
+              "before": {},
+              "after": {}
+            },
+            "required": [
+              "field",
+              "label",
+              "kind",
+              "before",
+              "after"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "from",
+        "to",
+        "changes"
+      ],
+      "additionalProperties": false
+    },
+    "SchemaVersionListDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "op": {
+                "type": "string",
+                "enum": [
+                  "BASELINE",
+                  "CREATE",
+                  "UPDATE"
+                ]
+              },
+              "actorUserId": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "origin": {
+                "type": "string",
+                "enum": [
+                  "DIRECT",
+                  "RULE",
+                  "SYSTEM"
+                ]
+              },
+              "createdAt": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "version",
+              "op",
+              "actorUserId",
+              "origin",
+              "createdAt"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "data",
+        "total",
+        "page",
+        "limit"
+      ],
+      "additionalProperties": false
+    },
+    "SchemaVersionMetaDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "op": {
+          "type": "string",
+          "enum": [
+            "BASELINE",
+            "CREATE",
+            "UPDATE"
+          ]
+        },
+        "actorUserId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "origin": {
+          "type": "string",
+          "enum": [
+            "DIRECT",
+            "RULE",
+            "SYSTEM"
+          ]
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "version",
+        "op",
+        "actorUserId",
+        "origin",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "SchemaVersionNumberParamsDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "tableId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "tableId",
+        "version"
+      ],
+      "additionalProperties": false
+    },
+    "SchemaVersionOpSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+      "enum": [
+        "BASELINE",
+        "CREATE",
+        "UPDATE"
+      ]
+    },
+    "SchemaVersionParamsDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "tableId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        }
+      },
+      "required": [
+        "tableId"
+      ],
+      "additionalProperties": false
+    },
+    "VersionDiffQueryDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "against": {
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "current"
+            },
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "VersionOriginSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+      "enum": [
+        "DIRECT",
+        "RULE",
+        "SYSTEM"
+      ]
+    }
+  },
   "InstallModule.dto.ts": {
     "InstallModuleSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

@@ -21,6 +21,8 @@ import { StructuredDataRepository } from '../features/structuredData/repositorie
 import { UserRepository } from '../features/users/repositories/UserRepository';
 import { VectorRepository } from '../features/documents/repositories/VectorRepository';
 import { DynamicTableRepository } from '../features/dynamicTables/repositories/DynamicTableRepository';
+import { DynamicTableVersionRepository, type IDynamicTableVersionRepository } from '../features/dynamicTables/repositories/DynamicTableVersionRepository';
+import { DynamicTableVersionService } from '../features/dynamicTables/services/DynamicTableVersionService';
 import { ActionProposalRepository } from '../features/chat/repositories/ActionProposalRepository';
 import { KnowledgeGraphRepository } from '../features/chat/repositories/KnowledgeGraphRepository';
 import { AttachmentRepository } from '../features/attachments/repositories/AttachmentRepository';
@@ -724,6 +726,7 @@ export class ApplicationFactory {
     chunk: ChunkRepository;
     structuredData: StructuredDataRepository;
     dynamicTable: IDynamicTableRepository;
+    dynamicTableVersion: IDynamicTableVersionRepository;
     actionProposal: IActionProposalRepository;
     knowledgeGraph: IKnowledgeGraphRepository;
     attachment: IAttachmentRepository;
@@ -813,6 +816,7 @@ export class ApplicationFactory {
     report: IReportService;
     structuredData: StructuredDataService;
     dynamicTable: DynamicTableService;
+    dynamicTableVersion: DynamicTableVersionService;
     luminarisAgent: LuminarisAgentService;
     knowledgeGraph: KnowledgeGraphService;
     crmPipeline: CrmPipelineService;
@@ -925,6 +929,7 @@ export class ApplicationFactory {
       user: new UserRepository(),
       vector: new VectorRepository(),
       dynamicTable: new DynamicTableRepository(),
+      dynamicTableVersion: new DynamicTableVersionRepository(),
       actionProposal: new ActionProposalRepository(),
       knowledgeGraph: new KnowledgeGraphRepository(),
       attachment: new AttachmentRepository(),
@@ -1532,6 +1537,13 @@ export class ApplicationFactory {
       structuredData: structuredDataService, // Assigned service
       user: new UserService(this.repositories.user, this.policies.user, this.repositories.vector),
       dynamicTable: dynamicTableService,
+      // BE-INCR-DT-VERSION-LEDGER: leitura/diff/restore do ledger; o restore delega ao DynamicTableService.
+      dynamicTableVersion: new DynamicTableVersionService(
+        this.repositories.dynamicTableVersion,
+        this.repositories.dynamicTable,
+        this.policies.dynamicTable,
+        dynamicTableService,
+      ),
       luminarisAgent: luminarisAgentService,
       knowledgeGraph: knowledgeGraphService,
       crmPipeline: crmPipelineService,
@@ -2172,6 +2184,7 @@ export class ApplicationFactory {
   public getStructuredDataService = (): StructuredDataService => this.services.structuredData;
   public getUserService = (): UserService => this.services.user;
   public getDynamicTableService = (): DynamicTableService => this.services.dynamicTable;
+  public getDynamicTableVersionService = (): DynamicTableVersionService => this.services.dynamicTableVersion;
   public getLuminarisAgentService = (): LuminarisAgentService => this.services.luminarisAgent;
   public getKnowledgeGraphService = (): KnowledgeGraphService => this.services.knowledgeGraph;
   public getCrmPipelineService = (): CrmPipelineService => this.services.crmPipeline;

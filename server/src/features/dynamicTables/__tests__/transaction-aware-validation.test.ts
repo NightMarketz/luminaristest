@@ -100,6 +100,7 @@ const ACCOUNT_TABLE: IDynamicTable = {
   name: 'Accounts',
   internalName: 'accounts',
   category: 'other',
+  schemaVersion: 1,
   createdAt: new Date(),
   updatedAt: new Date(),
   schema: {
@@ -113,6 +114,7 @@ const CONTACT_TABLE: IDynamicTable = {
   name: 'Contacts',
   internalName: 'contacts',
   category: 'other',
+  schemaVersion: 1,
   createdAt: new Date(),
   updatedAt: new Date(),
   schema: {

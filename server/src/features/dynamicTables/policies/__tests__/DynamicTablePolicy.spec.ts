@@ -42,6 +42,7 @@ const tableOf = (ownerId: string, schema: ITableSchema = { fields: [] }): IDynam
   name: 'Products',
   internalName: 'products',
   category: 'inventory',
+  schemaVersion: 1,
   schema,
   createdAt: new Date(),
   updatedAt: new Date(),
