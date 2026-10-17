@@ -185,6 +185,12 @@ import {
   listProductDestinations,
   upsertProductDestination,
 } from '../controllers/productDestinationController';
+import {
+  deleteFiscalCertificate,
+  fiscalCertificateUpload,
+  getFiscalCertificate,
+  putFiscalCertificate,
+} from '../controllers/fiscalCertificateController';
 
 const router = Router();
 
@@ -220,6 +226,11 @@ router.post('/attachments', documentAttachmentUpload, createDocumentAttachment);
 router.get('/attachments/:id', downloadDocumentAttachment);
 router.delete('/attachments/:id', deleteDocumentAttachment);
 router.get('/journal-entries/:journalEntryId/attachments', listDocumentAttachments);
+
+// Certificado fiscal da unidade para o emissor `adn` (BE-INCR-DFE-ADN-EMISSOR PR-1, itens 5–6).
+router.put('/fiscal-certificates/:unitId', fiscalCertificateUpload, putFiscalCertificate);
+router.get('/fiscal-certificates/:unitId', getFiscalCertificate);
+router.delete('/fiscal-certificates/:unitId', deleteFiscalCertificate);
 
 // Formal provenance on an already-posted entry (BE-INCR-PROVENANCE-ATTACH / NFE-X).
 // Distinct from /attachments above: that one stores a FILE; this one records the FISCAL

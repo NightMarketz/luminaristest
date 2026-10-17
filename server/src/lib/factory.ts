@@ -44,6 +44,7 @@ import { DimensionRepository } from '../features/accounting/repositories/Dimensi
 import { CounterpartyRepository } from '../features/accounting/repositories/CounterpartyRepository';
 import { AccountingContactRepository } from '../features/accounting/repositories/AccountingContactRepository';
 import { PaymentAccountRepository } from '../features/accounting/repositories/PaymentAccountRepository';
+import { FiscalCertificateRepository } from '../features/accounting/repositories/FiscalCertificateRepository';
 import { CollectionChargeRepository } from '../features/accounting/repositories/CollectionChargeRepository';
 import { TaxAssessmentRepository } from '../features/accounting/repositories/TaxAssessmentRepository';
 import { MitExportRepository } from '../features/accounting/repositories/MitExportRepository';
@@ -146,6 +147,8 @@ import { AccountantAssignmentService } from '../features/accounting/services/Acc
 import { AccountingScopeResolver, type IAccountingScopeResolver } from '../features/accounting/scope/AccountingScopeResolver';
 import { AccountingPolicyVersionService } from '../features/accounting/services/AccountingPolicyVersionService';
 import { PaymentAccountService } from '../features/accounting/services/PaymentAccountService';
+import { FiscalCertificateService } from '../features/accounting/services/FiscalCertificateService';
+import { resolveUnitCnpjFromUnits } from '../features/accounting/services/unitCnpj';
 import { CollectionChargeService } from '../features/accounting/services/CollectionChargeService';
 import { ReleaseReportService } from '../features/accounting/services/ReleaseReportService';
 import { JobWatermarkRepository } from '../jobs/JobWatermarkRepository';
@@ -292,6 +295,7 @@ import type { IPostingRepository } from '../features/accounting/repositories/IPo
 import type { IAccountingPeriodRepository } from '../features/accounting/repositories/IAccountingPeriodRepository';
 import type { IAccountingContactRepository } from '../features/accounting/repositories/IAccountingContactRepository';
 import type { IPaymentAccountRepository } from '../features/accounting/repositories/IPaymentAccountRepository';
+import type { IFiscalCertificateRepository } from '../features/accounting/repositories/IFiscalCertificateRepository';
 import type { ICollectionChargeRepository } from '../features/accounting/repositories/ICollectionChargeRepository';
 import type { ITaxAssessmentRepository } from '../features/accounting/repositories/ITaxAssessmentRepository';
 import type { IMitExportRepository } from '../features/accounting/repositories/IMitExportRepository';
@@ -760,6 +764,7 @@ export class ApplicationFactory {
     lalur: ILalurRepository;
     accountingContact: IAccountingContactRepository;
     paymentAccount: IPaymentAccountRepository; // BE-INCR-PAYMENT-PROVIDER PR-1
+    fiscalCertificate: IFiscalCertificateRepository; // BE-INCR-DFE-ADN-EMISSOR PR-1
     collectionCharge: ICollectionChargeRepository; // BE-INCR-PAYMENT-PROVIDER PR-2
     taxAssessment: ITaxAssessmentRepository; // X7 Fase A PR-2
     mitExport: IMitExportRepository; // X9 PR-2
@@ -861,6 +866,7 @@ export class ApplicationFactory {
     lalur: LalurService;
     accountingContact: AccountingContactService;
     paymentAccount: PaymentAccountService; // BE-INCR-PAYMENT-PROVIDER PR-1
+    fiscalCertificate: FiscalCertificateService; // BE-INCR-DFE-ADN-EMISSOR PR-1
     collectionCharge: CollectionChargeService; // BE-INCR-PAYMENT-PROVIDER PR-2
     releaseReport: ReleaseReportService; // BE-INCR-PAYMENT-PROVIDER PR-3
     taxAssessment: TaxAssessmentService; // X7 Fase A PR-2
@@ -959,6 +965,7 @@ export class ApplicationFactory {
       lalur: new LalurRepository(),
       accountingContact: new AccountingContactRepository(),
       paymentAccount: new PaymentAccountRepository(),
+      fiscalCertificate: new FiscalCertificateRepository(),
       collectionCharge: new CollectionChargeRepository(),
       taxAssessment: new TaxAssessmentRepository(),
       mitExport: new MitExportRepository(),
@@ -1582,6 +1589,7 @@ export class ApplicationFactory {
         this.repositories.taxAssessment,
         // X7 Fase C PR-2: IIssDocumentReader (findForIssReport) para o ISS por competência.
         this.repositories.fiscalDocument,
+        legalParameterService, // fotografia LC116_SERVICO: município do ISS pelo li (LC 116 art. 3º)
       ),
       dataExchangeImport: new DataExchangeImportService(
         this.repositories.dataExchange,
@@ -1812,6 +1820,13 @@ export class ApplicationFactory {
         this.repositories.account,
         auditService,
         this.policies.accounting,
+      ),
+      // BE-INCR-DFE-ADN-EMISSOR PR-1: o CNPJ da unidade vem do preset `units` (mesma leitura do pré-voo de emissão).
+      fiscalCertificate: new FiscalCertificateService(
+        this.repositories.fiscalCertificate,
+        auditService,
+        this.policies.accounting,
+        resolveUnitCnpjFromUnits,
       ),
       collectionCharge: collectionChargeService,
       releaseReport: releaseReportService, // BE-INCR-PAYMENT-PROVIDER PR-3 (P3-1..P3-5)
@@ -2195,6 +2210,7 @@ export class ApplicationFactory {
   public getCounterpartyService = (): CounterpartyService => this.services.counterparty;
   public getAccountingContactService = (): AccountingContactService => this.services.accountingContact;
   public getPaymentAccountService = (): PaymentAccountService => this.services.paymentAccount;
+  public getFiscalCertificateService = (): FiscalCertificateService => this.services.fiscalCertificate;
   public getCollectionChargeService = (): CollectionChargeService => this.services.collectionCharge;
   public getReleaseReportService = (): ReleaseReportService => this.services.releaseReport;
   public getTaxAssessmentService = (): TaxAssessmentService => this.services.taxAssessment;

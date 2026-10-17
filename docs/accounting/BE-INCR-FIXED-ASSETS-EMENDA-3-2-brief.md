@@ -1,5 +1,10 @@
 # BE-INCR-FIXED-ASSETS — Emenda 3.2 (nó C8) — BRIEF
 
+> **Estado legal verificado em 17/10/2026** (dossiê `pesquisas-legais/verif-2026-10-17-contabil-ecd/relatorio.md` (PR #754); [Dnn] = fonte do dossiê). Este documento é histórico; onde ele cita outra coisa, vale o que está abaixo.
+>
+> - **Anexo III da IN RFB 1.700/2017:** **confere** linha a linha com a visão vigente do Sijut2 [D01]: são 220 linhas vivas iguais. A linha `8517 0%` (tachada) foi descartada e a `8905` foi derivada como 5%, como o ADR documenta. As alterações da IN 1.700 até a **IN RFB 2.343 (17/09/2026)** não mexeram no Anexo III; a 2.343 alterou o art. 33. O art. 124 §1º confere [D01].
+> - **RIR/2018** (Decreto 9.580, compilado no Planalto [D08]; o acervo traz só o original [D02]): art. 313 §1º I-II e §2º (até R$ 1.200 ou vida útil ≤ 1 ano), art. 317 §3º (teto da depreciação acumulada), art. 319 §2º (quota cheia no mês), art. 320 §1º (taxa da RFB) e arts. 331 III e 333 (benfeitoria em bem de terceiro): **conferem**.
+
 > Sessão: `sessao-planejamento` · 2026-09-29 · base `origin/main` `9dd690b3`. **Sem código.**
 > Saída desta sessão = este documento + a linha em `docs/plano/nos/C8.md` §Docs. Nenhum fork é ratificado aqui.
 

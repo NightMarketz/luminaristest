@@ -67,3 +67,25 @@ describe('falha fechada sem chave (P1-2)', () => {
     expect((caught as AppError).errorCode).toBe(PAYMENT_CREDENTIAL_KEY_MISSING);
   });
 });
+
+describe('keyring parametrizado — certificado fiscal (BE-INCR-DFE-ADN-EMISSOR item 4, F-ADN-3 b)', () => {
+  const DFE = { prefix: 'DFE_CERT', missingCode: 'dfe_cert_key_missing', label: 'dos certificados fiscais' };
+  const dfeEnv = (keys?: string, active?: string) => ({ DFE_CERT_KEYS: keys, DFE_CERT_KEY_ACTIVE: active }) as NodeJS.ProcessEnv;
+
+  it('sem DFE_CERT_* ⇒ 503 dfe_cert_key_missing, mesmo com o keyring do F5 presente', () => {
+    let caught: unknown;
+    try {
+      loadKeyring({ ...env(`1:${k1}`, '1'), ...dfeEnv() }, DFE);
+    } catch (e) {
+      caught = e;
+    }
+    expect((caught as AppError).statusCode).toBe(503);
+    expect((caught as AppError).errorCode).toBe('dfe_cert_key_missing');
+  });
+
+  it('ida e volta; versão antiga decifra depois da troca da ativa', () => {
+    const sealed = seal('chave', 'linha-1', loadKeyring(dfeEnv(`1:${k1}`, '1'), DFE));
+    const rotated = loadKeyring(dfeEnv(`1:${k1},2:${k2}`, '2'), DFE);
+    expect(open(sealed.blob, 'linha-1', sealed.keyVersion, rotated)).toBe('chave');
+  });
+});

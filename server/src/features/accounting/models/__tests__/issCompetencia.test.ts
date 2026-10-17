@@ -1,7 +1,8 @@
 /**
  * X7 Fase C PR-2 — função pura do ISS por competência (BRIEF C itens 13, 15, 16, 19; F-TC-1/2/4 a).
  */
-import { agregarIssPorCompetencia, IssLinhaSchema, municipioDoPayload, type IssDocInput } from '../issCompetencia';
+import { agregarIssPorCompetencia, IssLinhaSchema, locaisDoPayload, municipioDeIncidencia, type IssDocInput } from '../issCompetencia';
+import { LISTA_LC116_SEMENTE } from '@test/helpers/legalParams';
 
 const SP = '3550308';
 const RJ = '3304557';
@@ -72,8 +73,24 @@ describe('contratos', () => {
     expect(IssLinhaSchema.safeParse({ ...ok, total: '2' }).success).toBe(false);
   });
 
-  it('municipioDoPayload lê infDPS.serv.locPrest.cLocPrestacao (F-TC-1 a); ausente ⇒ null', () => {
-    expect(municipioDoPayload(JSON.stringify({ infDPS: { serv: { locPrest: { cLocPrestacao: SP } } } }))).toBe(SP);
-    expect(municipioDoPayload(JSON.stringify({ infDPS: {} }))).toBeNull();
+  it('locaisDoPayload lê cLocEmi e infDPS.serv.locPrest.cLocPrestacao; ausente ⇒ null', () => {
+    expect(locaisDoPayload(JSON.stringify({ infDPS: { cLocEmi: SP, serv: { locPrest: { cLocPrestacao: RJ } } } }))).toEqual({ cLocEmi: SP, cLocPrestacao: RJ });
+    expect(locaisDoPayload(JSON.stringify({ infDPS: {} }))).toEqual({ cLocEmi: null, cLocPrestacao: null });
+  });
+});
+
+// Verificação legal 17/10/2026 (pesquisas-legais/verif-2026-10-17-iss-nfse, DIVERGE 2) — LC 116 art. 3º caput [D01]: o ISS
+// é devido no local do estabelecimento prestador, salvo os incisos I a XXV. A lista nacional marca isso no `li`.
+describe('municipioDeIncidencia (LC 116 art. 3º)', () => {
+  it('li = EP (6.01, corte em domicílio no RJ): município do estabelecimento prestador (cLocEmi), não o da prestação', () => {
+    expect(municipioDeIncidencia({ cTribNac: '060101', cLocEmi: SP, cLocPrestacao: RJ }, LISTA_LC116_SEMENTE)).toBe(SP);
+  });
+
+  it('li = LP (12.06, inciso XIX): município do local da prestação', () => {
+    expect(municipioDeIncidencia({ cTribNac: '120601', cLocEmi: SP, cLocPrestacao: RJ }, LISTA_LC116_SEMENTE)).toBe(RJ);
+  });
+
+  it('EP sem cLocEmi no payload ⇒ null (o chamador falha com o id; nunca município inventado)', () => {
+    expect(municipioDeIncidencia({ cTribNac: '060101', cLocEmi: null, cLocPrestacao: RJ }, LISTA_LC116_SEMENTE)).toBeNull();
   });
 });

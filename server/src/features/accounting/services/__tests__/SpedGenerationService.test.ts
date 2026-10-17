@@ -586,7 +586,7 @@ describe('SpedGenerationService.generate — L5: COD_PLAN_REF com mapeamento (RU
 });
 
 describe('SpedGenerationService.generate — L7: registro 0007 (RUNBOOK-H1, PVA 13/10, tentativa 2)', () => {
-  // PVA ECD 10.4.1: "Registro obrigatório não encontrado. → 0007". Manual ECD L9 (jan/2026) pp. 76-77: registro
+  // PVA ECD 10.4.1: "Registro obrigatório não encontrado. → 0007". Manual ECD L9 (maio/2026) pp. 77-78: registro
   // obrigatório, ocorrência 1:N; sem outra inscrição, COD_ENT_REF = "00" (Nenhuma inscrição em outras entidades).
   it('emite o 0007 com COD_ENT_REF 00 quando não há outra inscrição cadastral', async () => {
     const { service } = buildService();
@@ -597,8 +597,8 @@ describe('SpedGenerationService.generate — L7: registro 0007 (RUNBOOK-H1, PVA 
 
 describe('SpedGenerationService.generate — L9: hierarquia e sinal da DRE no J150 (RUNBOOK-H1, PVA 13/10, tentativa 2)', () => {
   // PVA ECD 10.4.1: "Não deve existir mais de uma linha de nível igual a 1 na DRE"; detalhe de CMV/despesa com
-  // IND_DC "C" (esperado devedor); totalizador "Resultado" sem filhas. Manual ECD L9 (jan/2026) p. 180: só uma linha
-  // de nível 1 (o Resultado do Exercício), os demais totalizadores do nível 2 em diante; p. 183 REGRA_SOMA_NIVEIS_DRE.
+  // IND_DC "C" (esperado devedor); totalizador "Resultado" sem filhas. Manual ECD L9 (maio/2026) p. 181: só uma linha
+  // de nível 1 (o Resultado do Exercício), os demais totalizadores do nível 2 em diante; p. 184 REGRA_SOMA_NIVEIS_DRE.
   const dre = {
     grossRevenue: { accounts: [{ code: '3.1', name: 'Receita', amountCents: '50000' }], totalCents: '50000' },
     revenueDeductions: { accounts: [], totalCents: '0' },

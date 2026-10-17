@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { findLc116, type ListaLc116 } from './lc116ListaNacional';
 
 /**
  * X7 Fase C PR-2 — ISS por competência × município (ADR-INCR-TAX-ASSESSMENT F-X7-12 → a: *"relatório somente leitura
@@ -13,7 +14,7 @@ const centsStr = z.string().regex(/^\d+$/);
 export const IssLinhaSchema = z
   .object({
     competencia: z.string().regex(/^\d{4}-\d{2}$/),
-    municipioIbge: z.string().regex(/^\d{7}$/), // F-TC-1 (a): cLocPrestacao do payload enviado
+    municipioIbge: z.string().regex(/^\d{7}$/), // município do ISS (municipioDeIncidencia, LC 116 art. 3º)
     retido: z.boolean(), // tpRetISSQN === 2
     documentos: z.number().int().nonnegative(),
     documentosSemIss: z.number().int().nonnegative(), // F-TC-2 (a)
@@ -77,9 +78,24 @@ export function agregarIssPorCompetencia(docs: readonly IssDocInput[]): IssLinha
     }));
 }
 
-/** Município da prestação na DPS persistida (F-TC-1 a): `infDPS.serv.locPrest.cLocPrestacao` (DpsPayloadDto [192]). */
-export function municipioDoPayload(payloadJson: string): string | null {
-  const p = JSON.parse(payloadJson) as { infDPS?: { serv?: { locPrest?: { cLocPrestacao?: unknown } } } };
-  const v = p.infDPS?.serv?.locPrest?.cLocPrestacao;
-  return typeof v === 'string' ? v : null;
+/** Municípios na DPS persistida: `infDPS.cLocEmi` (estabelecimento emissor, [107]) e `infDPS.serv.locPrest.cLocPrestacao` ([192]). */
+export function locaisDoPayload(payloadJson: string): { cLocEmi: string | null; cLocPrestacao: string | null } {
+  const p = JSON.parse(payloadJson) as { infDPS?: { cLocEmi?: unknown; serv?: { locPrest?: { cLocPrestacao?: unknown } } } };
+  const emi = p.infDPS?.cLocEmi;
+  const prest = p.infDPS?.serv?.locPrest?.cLocPrestacao;
+  return { cLocEmi: typeof emi === 'string' ? emi : null, cLocPrestacao: typeof prest === 'string' ? prest : null };
+}
+
+/**
+ * Município do ISS (LC 116 art. 3º caput): o do estabelecimento prestador, salvo os incisos I a XXV — a lista nacional
+ * marca isso no `li` do `cTribNac`. EP ⇒ `cLocEmi`; LP ⇒ `cLocPrestacao`. ET (domicílio do tomador, que a DPS sem
+ * endereço não traz), lista vazia ou código fora da lista ⇒ `cLocPrestacao`, como no F-TC-1 (a). Verificação legal
+ * 17/10/2026 (pesquisas-legais/verif-2026-10-17-iss-nfse, DIVERGE 2).
+ */
+export function municipioDeIncidencia(
+  doc: { cTribNac: string; cLocEmi: string | null; cLocPrestacao: string | null },
+  lista: ListaLc116,
+): string | null {
+  const li = findLc116(doc.cTribNac, lista)?.li;
+  return li?.length === 1 && li[0] === 'EP' ? doc.cLocEmi : doc.cLocPrestacao;
 }

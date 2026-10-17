@@ -5,7 +5,7 @@
  * cédula F13 (10/09) cita como origem da máscara. O número básico é `UF-NNNNNN/O-D`; no registro
  * transferido "será acrescentada a letra T … acompanhada de um hífen e da sigla designativa da
  * jurisdição do CRC de destino" (ex. oficial `SP-123456/O-3 T-MG`), e no secundário a letra S
- * (`PI-111222/O-5 S-AC`). Res. CFC 1.494/2015 art. 5º mantém o transferido com a mesma forma.
+ * (`PI-111222/O-5 S-AC`). Res. CFC 1.707/2023 art. 5º p.ú. mantém o transferido com a mesma forma.
  *
  * Decisão do dono (28/09/2026, questionário): a UF do CRC (J930 UF_CRC / contato crcUf) de um
  * registro com sufixo aceita a UF de ORIGEM **ou** a do sufixo; qualquer outra continua 400.
@@ -86,7 +86,7 @@ describe('CRC no formato do CFC — registro transferido/secundário (Manual de 
 
 /**
  * BE-INCR-CRC-CFC-FOLLOWUPS itens 1-3 (F-1..F-3 → a, dono 28/09/2026): só o tipo `O` é vigente
- * (Res. CFC 1.494/2015 arts. 3º e 36), a grafia compacta dos ERPs (6 dígitos + DV) normaliza, e
+ * (Res. CFC 1.707/2023 art. 3º), a grafia compacta dos ERPs (6 dígitos + DV) normaliza, e
  * o número sem DV é recusado com motivo próprio.
  */
 describe('CRC — tipo, provisório e grafia compacta (BE-INCR-CRC-CFC-FOLLOWUPS)', () => {
@@ -99,7 +99,7 @@ describe('CRC — tipo, provisório e grafia compacta (BE-INCR-CRC-CFC-FOLLOWUPS
     expect(parseCrcNumber('TO-654321/P-8')).toEqual({ ok: false, reason: 'provisorio_extinto' });
     const r = SpedEcdRequestSchema.safeParse(ecd('TO-654321/P-8', 'TO'));
     expect(r.success).toBe(false);
-    expect(JSON.stringify(r.error?.issues)).toContain('Res. CFC 1.494/2015 art. 36');
+    expect(JSON.stringify(r.error?.issues)).toContain('Res. CFC 1.707/2023 art. 3º');
   });
 
   it('item 3: grafia compacta normaliza para o tipo O; sem DV é 400 com dica; 8 dígitos é formato', () => {

@@ -159,6 +159,11 @@ export class AccountingPolicy implements IAccountingPolicy {
     return this.canClosePeriod(scope);
   }
 
+  // BE-INCR-DFE-ADN-EMISSOR PR-1 (item 6): certificado fiscal da unidade — mesma régua do perfil fiscal.
+  canManageFiscalCertificate(scope: AccountingScope): boolean {
+    return this.canManageFiscalProfile(scope);
+  }
+
   // BE-INCR-DFE (nó X10b, BRIEF item 5)
   canManageServiceFiscalProfile(scope: AccountingScope): boolean {
     return this.canManageFiscalProfile(scope);

@@ -845,7 +845,7 @@ describe('PostingService', () => {
       });
     });
 
-    // BE-INCR-PLANO-4-NIVEIS item 6: a REGRA_VALIDA_NIVEL_CONTAS do PVA (Manual da ECD L9 p. 119) aplicada na origem.
+    // BE-INCR-PLANO-4-NIVEIS item 6: a REGRA_VALIDA_NIVEL_CONTAS do PVA (Manual da ECD L9 p. 120) aplicada na origem.
     describe('createAccount — nível do plano (L8)', () => {
       const plano = (codes: Record<string, boolean>) => ({
         findByCode: jest.fn(async (_s: AccountingScope, code: string) =>

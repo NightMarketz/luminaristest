@@ -51,7 +51,7 @@ andar. A recomendação de F-PI-1 (tabela própria, fora do `CompanyFiscalProfil
 | L5 | O benefício é concedido **como redução do percentual efetivo do ISS** dos Anexos I–V; pode ser diferenciado por ramo de atividade (art. 32 II) e por faixa de receita (§ 2º); a lei municipal traz as condições e o % de redução por faixa ou para todas (§ 3º). | Res. CGSN 140 art. 32 II, §§ 1º–3º | V-corpus |
 | L6 | Na retenção, a prestadora com isenção/redução municipal informa no documento a alíquota aplicável **e a legislação concessiva**. | Res. CGSN 140 art. 27 § 1º | V-corpus |
 | L7 | O piso **não** se aplica ao % efetivo puro da tabela (ex. 1,92%): a regra de 2% do art. 31 p.ú. recai sobre o resultado do **benefício**. | F-PR4-5 (a) ratificado + leitura de L4/L5 | I (ratificado) |
-| L8 | LC 214 inseriu art. 8º-B na LC 116: redução proporcional das alíquotas municipais de 2029 a 2032 (transição ao IBS). Interação com o piso de 2% não lida. | LC 116 art. 8º-B | V-web (existência); I (efeito) → §6 |
+| L8 | **LIDA 17/10/2026 (ver §Estado legal).** LC 214 inseriu art. 8º-B na LC 116: redução proporcional das alíquotas municipais de 2029 a 2032 (transição ao IBS). Interação com o piso de 2% não lida. | LC 116 art. 8º-B | V-web (existência); I (efeito) → §6 |
 
 ### 2.2 Anexo XI (bloco 2)
 
@@ -67,7 +67,7 @@ andar. A recomendação de F-PI-1 (tabela própria, fora do `CompanyFiscalProfil
 | M8 | O Anexo XI vigente é o binário **id 81177** ("Anexo XI.pdf"; 8 versões anteriores marcadas `[REVOGADO]`). Título: *"Ocupações Permitidas ao MEI - Tabelas A e B"*; colunas OCUPAÇÃO · CNAE · DESCRIÇÃO SUBCLASSE CNAE · ISS (S/N) · ICMS (S/N). | corpus `Res-CGSN-140-2018.txt` l.3921-3948 + PDF baixado de `normasinternet2…/ato/92278/anexo/81177` (sha256 `cb3845804f3c14cb9cb1320aee19bf14498cf15988cd9263fd4618d8faaab8b6`, 568.798 bytes) | V-web |
 | M9 | Tabela A ≈ 467 pares ocupação×CNAE (350 CNAEs distintos; a mesma subclasse serve várias ocupações); Tabela B = 2 ocupações agrupadas × 4 CNAEs (4930-2/01..04), com ISS/ICMS por CNAE. Contagem por regex em `pdftotext -layout` — **não** é a contagem do parser final. | PDF id 81177 | V-web (aproximado) |
 | M10 | O PDF tem quebra de linha dentro de células (ocupação e descrição em 2–3 linhas, flags ISS/ICMS deslocados) — transcrição exige parser com regra nominal por anomalia. | PDF id 81177 | V-web |
-| M11 | A compilação RFB do corpus vai até a Res. CGSN 183/2025; **a 191/2026 não está compilada** — se ela mexeu no Anexo XI, o id 81177 pode não ser o vigente. | `fontes-oficiais/MANIFEST.md:54` | V-corpus → §6 |
+| M11 | **RESOLVIDA 17/10/2026 (ver §Estado legal).** A compilação RFB do corpus vai até a Res. CGSN 183/2025; **a 191/2026 não está compilada** — se ela mexeu no Anexo XI, o id 81177 pode não ser o vigente. | `fontes-oficiais/MANIFEST.md:54` | V-corpus → §6 |
 
 ## 3. Checklist numerado de comportamentos
 
@@ -267,6 +267,14 @@ Valores do DAS-MEI por ocupação: inalterados (X14 PR-4); a falta de ocupaçõe
 | Tabela A teto R$ 81.000 | **Confirma com ressalva** — o caput fixa R$ 81.000 para o MEI em geral (não nomeia a Tabela A); a Tabela B é a exceção do § 1º-A. Início de atividade: R$ 6.750 × meses (§ 1º). |
 | Tabela B R$ 251.600 | **Confirma** (§ 1º-A I) e acrescenta R$ 20.966,67 × meses no início (II) e a regra do § 1º-B (qualquer ocupação fora da B ⇒ limite geral). |
 | (não citado pela pesquisa) | Benefício é redução do % efetivo, por ramo e por faixa (art. 32); legislação concessiva no documento (art. 27 § 1º); art. 8º-B LC 116; Res. 191/2026 não compilada. |
+
+## Estado legal verificado em 17/10/2026 (ISS/NFS-e)
+
+`[Dnn]` = fontes do dossiê `pesquisas-legais/verif-2026-10-17-iss-nfse/relatorio.md` (PR #754), com link oficial e sha256 no `manifest.json`. Correções de código no PR #755.
+
+- **M11 RESOLVIDA.** A Res. CGSN 191/2026 está no multivigente da Res. 140 como redação agendada para 01/11/2026 [D06] Res. CGSN 140 multivigente (<https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/visao/multivigente>). O texto próprio dela [D07] Res. CGSN 191/2026 (<https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152781/visao/multivigente>) só altera os arts. 59 e 79 e **não mexe no Anexo XI**. Pelo art. 59 § 1º e art. 3º I, a ME/EPP passa a usar o Emissor Nacional **a partir de** 01/11/2026.
+- **L8 LIDA.** **Transição do ISS (não implementada — feature nova, registrada centralmente):** LC 116 art. 8º-B, incluído pelo art. 508 da LC 214 [D04] LC 214 compilada (<https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm>): as alíquotas caem 10/20/30/40% em 2029/2030/2031/2032 e os benefícios caem na mesma proporção (§ 1º). A LC 116 fica revogada em 01/01/2033 (LC 214 art. 543 IV). `ISS_LIMITE` e `issComBeneficio` não têm fim de vigência. Nada muda antes de 2029.
+- **D-4 FECHADA — não validar o mínimo de 2% no `issAliquotaBp`.** O art. 8º-A da LC 116 [D01] LC 116 (acervo ctresb/leis, compilada, cópia 13/10; <https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2003-07-31;116>) fixa o mínimo que o **Município** pode adotar, não um limite do campo. O leiaute [D12] Anexo I v1.01 do leiaute DPS, sha256[:12] `de5bc492959e` (<https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/documentacao-atual/anexo_i-sefin_adn-dps_nfse-snnfse-v1-01-20260209.xlsx>) aceita até 1,8% no Simples com retenção (E0621/E0628), e no regime normal com município conveniado o `pAliq` nem pode ir (E0617). O piso continua onde a lei o põe: no benefício do Simples (Res. CGSN 140 art. 31 p.ú. [D06] Res. CGSN 140 multivigente (<https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/visao/multivigente>), `issBeneficio.ts`). Dossiê §4, leitura (b).
 
 ## Estado legal verificado em 17/10/2026
 

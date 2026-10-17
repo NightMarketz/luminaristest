@@ -17,6 +17,8 @@ export const ACCOUNTING_RESET_SETUP = [
   // MEDIDO no item 10: o perfil fiscal da unidade grava uma versão APPLIED "sem contador" no onboarding. Tabela DIVIDIDA
   // (ACCOUNTING_RESET_SPLIT): só as versões sem contador são SETUP; as com contador bloqueiam.
   'AccountingPolicyVersion',
+  // X10i PR-1 (dono, questionário, 2026-10-17, na integração do #650: "SETUP (sai no reset)"). Sem FK: posição livre.
+  'FiscalCertificate',
   'ReferentialMapping',
   'RoleAccountOverride',
   'FiscalProfile',
