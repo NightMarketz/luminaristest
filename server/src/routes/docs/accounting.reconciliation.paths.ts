@@ -7,7 +7,7 @@
  *   /api/accounting/reconciliation/statements:
  *     post:
  *       summary: Import a bank statement (CSV/XLSX/OFX/CNAB) for a bank GL account
- *       description: 'Accepts CSV/XLSX (columns date,amountCents,description[,externalRef], signed integer cents), OFX (normalized from STMTTRN - DTPOSTED→date, TRNAMT→signed cents, NAME/MEMO→description, FITID→externalRef) or CNAB 240 (Segmento E extrato — DDMMAAAA→date, 18-digit value→signed cents by D/C indicator, histórico→description, document number→externalRef). Format is auto-detected. ALL-OR-NOTHING — any invalid row rejects the whole file; a multi-account OFX/CNAB and a CNAB 400 file are rejected. Re-import of the same file (sha256) is idempotent (200, nothing written). No ledger value is written.'
+ *       description: 'Accepts CSV/XLSX (columns date,amountCents,description[,externalRef], signed integer cents), OFX (normalized from STMTTRN - DTPOSTED→date, TRNAMT→signed cents, NAME/MEMO→description, FITID→externalRef) or CNAB 240 (Segmento E extrato — DDMMAAAA→date, 18-digit value→signed cents by D/C indicator, histórico→description, document number→externalRef). Format is auto-detected. ALL-OR-NOTHING — any invalid row rejects the whole file; a multi-account OFX/CNAB and a CNAB 400 file are rejected. Re-import of the same file (sha256) is idempotent (200, nothing written). No ledger value is written. — 409: release_report_no_payment_account — mp_release on a GL account without a Mercado Pago PaymentAccount'
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -31,10 +31,10 @@
  *         '201': { description: Statement imported (created + staged lines) }
  *         '200': { description: Same file already imported (idempotent hit) }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
- *         '409': { description: 'release_report_no_payment_account — mp_release on a GL account without a Mercado Pago PaymentAccount' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     get:
  *       summary: List imported bank statements (paginated)
  *       tags: [Accounting]
@@ -46,6 +46,7 @@
  *       responses:
  *         '200': { description: Statements + total }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/reconciliation/statements/{id}/lines:
  *     get:
@@ -59,7 +60,7 @@
  *       responses:
  *         '200': { description: Statement + lines (lineNumber asc) }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/reconciliation/statements/{id}:
  *     delete:
@@ -73,7 +74,8 @@
  *         '200': { description: Statement soft-deleted }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/reconciliation/statements/{id}/auto-match:
  *     post:
@@ -95,7 +97,8 @@
  *       responses:
  *         '200': { description: 'Summary: processed/matched/zeroCandidates/ambiguous' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/reconciliation/lines/{id}/suggestions:
  *     get:
@@ -108,7 +111,7 @@
  *       responses:
  *         '200': { description: Candidates with deltaDays }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/reconciliation/lines/{id}/ignore:
  *     post:
@@ -131,7 +134,8 @@
  *         '200': { description: Line status updated }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/reconciliation/matches:
  *     post:
@@ -149,7 +153,8 @@
  *         '201': { description: Matches created }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/reconciliation/matches/{id}/unmatch:
  *     post:
@@ -172,7 +177,8 @@
  *         '200': { description: Match soft-undone }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/reconciliation/pending:
  *     get:
@@ -187,6 +193,6 @@
  *       responses:
  *         '200': { description: 'account + unmatchedLines + unmatchedPostings + totals (integer cents)' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  */
 export {};

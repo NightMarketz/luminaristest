@@ -22,6 +22,7 @@
  *       responses:
  *         '200': { description: 'paginated receivables with their receipts' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     post:
  *       summary: Create a receivable and book its recognition entry
  *       description: >-
@@ -41,6 +42,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/receivables/reconcile:
  *     post:
@@ -63,6 +66,8 @@
  *       responses:
  *         '200': { description: 'counts of recognitions/receipts posted and receivables finalized' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/receivables/{id}:
  *     get:
@@ -75,7 +80,7 @@
  *       responses:
  *         '200': { description: 'the receivable and its receipts' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/receivables/{id}/receive:
  *     post:
@@ -99,7 +104,8 @@
  *         '201': { description: 'the registered receipt' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/receivables/{id}/cancel:
  *     post:
@@ -121,7 +127,8 @@
  *         '200': { description: 'the cancelled receivable' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/receivables/{id}/settlements:
  *     post:
@@ -144,7 +151,8 @@
  *         '201': { description: 'the registered settlement (ReceivableReceipt row)' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/receivables/{id}/settlements/{settlementId}/cancel:
  *     post:
@@ -186,7 +194,8 @@
  *         '200': { description: 'the cancelled receipt' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  */
 /**
  * @openapi
@@ -195,6 +204,7 @@
  *     post:
  *       summary: Create a provider charge (boleto/Pix) for the open balance of a receivable (BE-INCR-PAYMENT-PROVIDER PR-2, P2-2)
  *       description: >-
+ *         409: CHARGE_RECEIVABLE_NOT_CHARGEABLE | CHARGE_LIVE_EXISTS | CHARGE_NOTHING_TO_CHARGE | PAYMENT_ACCOUNT_NOT_ACTIVE
  *         Valor = saldo em aberto relido na tx; conta Mercado Pago ACTIVE do escopo. Nenhum efeito no razão (PP-D5).
  *         Campos de juros/multa/desconto ou prazo do tipo errado ⇒ 400 (P2-12).
  *       tags: [Accounting]
@@ -211,8 +221,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'CHARGE_RECEIVABLE_NOT_CHARGEABLE | CHARGE_LIVE_EXISTS | CHARGE_NOTHING_TO_CHARGE | PAYMENT_ACCOUNT_NOT_ACTIVE' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '502': { description: 'provider_credential_invalid | provider_unavailable (a cobrança fica CREATING e o job reenvia)' }
  *         '503': { description: 'payment_credential_key_missing' }
  *     get:
@@ -226,7 +236,7 @@
  *         '200': { description: 'CollectionChargeView[]' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *   /api/receivables/{receivableId}/charges/payer-suggestion:
  *     get:
  *       summary: Suggest the payer from the last charge of the same counterparty (P2-11, F-PP-11 a1)
@@ -239,6 +249,6 @@
  *         '200': { description: 'payer (parcial)' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  */
 export {};

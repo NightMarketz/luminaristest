@@ -16,10 +16,11 @@
  *         '200': { description: 'CollectionChargeView' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *   /api/collection-charges/{id}/cancel:
  *     post:
  *       summary: Cancel a PENDING provider charge (P2-10); provider 409 ⇒ re-query and apply the real state
+ *       description: "409: CHARGE_NOT_PENDING"
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -33,8 +34,8 @@
  *         '200': { description: 'CollectionChargeView' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'CHARGE_NOT_PENDING' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '502': { description: 'provider_credential_invalid | provider_unavailable' }
  */
 export {};

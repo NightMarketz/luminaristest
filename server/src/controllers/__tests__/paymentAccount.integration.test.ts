@@ -7,10 +7,11 @@ import { randomBytes } from 'node:crypto';
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { loadKeyring, open } from '@/lib/secretBox';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 const UNIT = 'unit-f5-pr1';
+const UNIT_B = `${UNIT}-b`;
 const BASE = '/api/payment-accounts';
 const TOKEN = 'APP_USR-1234567890-FIXTURE-TOKEN-wxyz';
 const SECRET = 'webhook-secret-FIXTURE-0001';
@@ -31,8 +32,8 @@ const body = (extra: Record<string, unknown> = {}) => ({
 });
 const create = (extra: Record<string, unknown> = {}, who = dono) =>
   request(app).post(BASE).set(authHeader(who)).send(body(extra));
-const putCredential = (id: string, who = dono) =>
-  request(app).put(`${BASE}/${id}/credential`).set(authHeader(who)).send({ unitId: UNIT, accessToken: TOKEN, webhookSecret: SECRET });
+const putCredential = (id: string, who = dono, unitId = UNIT) =>
+  request(app).put(`${BASE}/${id}/credential`).set(authHeader(who)).send({ unitId, accessToken: TOKEN, webhookSecret: SECRET });
 const patch = (id: string, b: Record<string, unknown>) =>
   request(app).patch(`${BASE}/${id}`).set(authHeader(dono)).send({ unitId: UNIT, ...b });
 const eventos = (eventType: string) => prisma.auditEvent.findMany({ where: { eventType }, orderBy: { seq: 'asc' } });
@@ -55,9 +56,11 @@ describe('F5 PR-1 — PaymentAccount + cifra da credencial', () => {
     pushTestSchema();
     dono = await prisma.user.create({ data: { name: 'f5', username: 'f5-dono', email: 'f5@test.local', password: 'x', role: 'USER' } });
     outro = await prisma.user.create({ data: { name: 'f5b', username: 'f5-outro', email: 'f5b@test.local', password: 'x', role: 'USER' } });
+    await seedUnit({ userId: dono.id, id: UNIT });
+    await seedUnit({ userId: outro.id, id: UNIT_B });
     folhaId = (await prisma.account.create({ data: { userId: dono.id, unitId: UNIT, code: '1.1.9', name: 'Saldo MP', nature: 'Asset', acceptsEntries: true } })).id;
     sinteticaId = (await prisma.account.create({ data: { userId: dono.id, unitId: UNIT, code: '1.1', name: 'Circulante', nature: 'Asset', acceptsEntries: false } })).id;
-    folhaDoOutroId = (await prisma.account.create({ data: { userId: outro.id, unitId: UNIT, code: '1.1.9', name: 'Saldo MP', nature: 'Asset', acceptsEntries: true } })).id;
+    folhaDoOutroId = (await prisma.account.create({ data: { userId: outro.id, unitId: UNIT_B, code: '1.1.9', name: 'Saldo MP', nature: 'Asset', acceptsEntries: true } })).id;
     for (const m of ['log', 'info', 'warn', 'error', 'debug'] as const) {
       spies.push(jest.spyOn(console, m).mockImplementation((...args: unknown[]) => { logged.push(dump(args)); }));
     }
@@ -138,9 +141,9 @@ describe('F5 PR-1 — PaymentAccount + cifra da credencial', () => {
     expect(r.body.code).toBe('payment_account_already_active');
     expect((await prisma.paymentAccount.findUniqueOrThrow({ where: { id: a2 } })).status).toBe('DRAFT');
     // outro escopo não conta
-    const doOutro = await create({ glAccountId: folhaDoOutroId }, outro);
+    const doOutro = await create({ glAccountId: folhaDoOutroId, unitId: UNIT_B }, outro);
     expect(doOutro.status).toBe(201);
-    expect((await putCredential(doOutro.body.data.id, outro)).status).toBe(200);
+    expect((await putCredential(doOutro.body.data.id, outro, UNIT_B)).status).toBe(200);
   });
 
   it('PATCH: só ACTIVE↔DISABLED (o resto 409), label ⇒ .updated, glAccountId imutável (P1-9/P1-10)', async () => {
@@ -187,8 +190,12 @@ describe('F5 PR-1 — PaymentAccount + cifra da credencial', () => {
   });
 
   it('cross-tenant ⇒ 404; DELETE é soft e a 2ª chamada é 404; sem evento de audit (P1-9)', async () => {
-    expect((await request(app).get(`${BASE}/${a1}`).set(authHeader(outro)).query({ unitId: UNIT })).status).toBe(404);
-    expect((await request(app).delete(`${BASE}/${a1}`).set(authHeader(outro)).query({ unitId: UNIT })).status).toBe(404);
+    const getOutro = await request(app).get(`${BASE}/${a1}`).set(authHeader(outro)).query({ unitId: UNIT });
+    expect(getOutro.status).toBe(404);
+    expect(getOutro.body.code).toBe('UNIT_NOT_FOUND'); // I6: outro dono → 404 UNIT_NOT_FOUND (antes: 404 da conta pelo escopo)
+    const delOutro = await request(app).delete(`${BASE}/${a1}`).set(authHeader(outro)).query({ unitId: UNIT });
+    expect(delOutro.status).toBe(404);
+    expect(delOutro.body.code).toBe('UNIT_NOT_FOUND'); // I6: outro dono → 404 UNIT_NOT_FOUND (antes: 404 da conta pelo escopo)
     const before = await prisma.auditEvent.count();
     expect((await request(app).delete(`${BASE}/${a1}`).set(authHeader(dono)).query({ unitId: UNIT })).status).toBe(200);
     expect(await prisma.auditEvent.count()).toBe(before);

@@ -3,7 +3,6 @@ import { getUserContextFromRequest } from '../lib/authUtils';
 import { handleApiError } from '../lib/apiUtils';
 import { UnauthorizedError } from '../lib/errors';
 import { getFactory } from '../lib/factory';
-import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import {
   CreatePackageAcceptanceSchema,
   GetPackageAcceptanceQuerySchema,
@@ -22,7 +21,7 @@ export const getValidityNotice = async (req: Request, res: Response) => {
     if (!user) throw new UnauthorizedError();
     const parsed = ValidityNoticeQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const notice = await getFactory().getPackageAcceptanceService().getNotice(scope, parsed.data);
     return res.json({ success: true, data: notice });
   } catch (error) {
@@ -36,7 +35,7 @@ export const createPackageAcceptance = async (req: Request, res: Response) => {
     if (!user) throw new UnauthorizedError();
     const parsed = CreatePackageAcceptanceSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const acceptance = await getFactory().getPackageAcceptanceService().create(scope, parsed.data);
     return res.status(201).json({ success: true, data: acceptance });
   } catch (error) {
@@ -50,7 +49,7 @@ export const getPackageAcceptance = async (req: Request, res: Response) => {
     if (!user) throw new UnauthorizedError();
     const parsed = GetPackageAcceptanceQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const acceptance = await getFactory().getPackageAcceptanceService().getBySale(scope, parsed.data.saleId);
     return res.json({ success: true, data: acceptance });
   } catch (error) {
@@ -64,7 +63,7 @@ export const getPackageSaleReceipt = async (req: Request, res: Response) => {
     if (!user) throw new UnauthorizedError();
     const parsed = PackageSaleReceiptQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const { buffer, fileName, mimeType } = await getFactory()
       .getPackageAcceptanceService()
       .generateReceipt(scope, req.params.saleId);
