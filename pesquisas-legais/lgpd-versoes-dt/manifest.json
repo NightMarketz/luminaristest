@@ -1,0 +1,26 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei nº 13.709 de 14/08/2018",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2018/lei-13709-2018-08-14.md",
+      "url_final": "https://github.com/ctresb/leis/blob/183a6accb5801eb88fe63d57acdd375ae6339401/federal/leis-ordinarias/2018/lei-13709-2018-08-14.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2018-08-14;13709",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "183a6accb5801eb88fe63d57acdd375ae6339401",
+      "alertas": [],
+      "baixado_em": "2026-10-17T17:54:07-03:00",
+      "sha256": "72d32431037ce85955c6f959f50f11d10971a8ec36f93cdae5ee3459ec66a4dd",
+      "arquivo": "docs/D01_lei-13709-2018-08-14.md",
+      "texto": "docs/D01_lei-13709-2018-08-14.txt",
+      "bytes": 84925
+    }
+  ],
+  "buscas": [],
+  "slug": "lgpd-versoes-dt",
+  "pergunta": "Histórico de versões de linhas com dado pessoal: precisa ser eliminado junto com a linha (LGPD arts. 15, 16, 18)?",
+  "criado": "2026-10-17T17:54:01-03:00"
+}
