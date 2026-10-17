@@ -4,7 +4,7 @@ tipo: "fe"
 dominio: "financeiro"
 titulo: "Tarifa do provedor na tela de baixas do F7 (bruto, retido, líquido; aviso G7; método ProviderBalance)"
 estado: "planned"
-estado_detalhe: "10/10: BRIEF canônico #616 (F-FE-FEE-1..3 ratificados 09/10) + EMENDA 1 (#617: itens 10–15, F-FEE-E1/E2 → a ratificados 10/10). Depende do PR de BE da view (#620: feeCents/feeEntryId no BankSettlementItemView, sem merge). #615 mergeado. Sem 'executa'"
+estado_detalhe: "14/10: #620 (feeCents/feeEntryId na view) já está em main (d88ff9cb); o sem merge abaixo está superado. Falta só o FE (sem executa). · 10/10: BRIEF canônico #616 (F-FE-FEE-1..3 ratificados 09/10) + EMENDA 1 (#617: itens 10–15, F-FEE-E1/E2 → a ratificados 10/10). Depende do PR de BE da view (#620: feeCents/feeEntryId no BankSettlementItemView, sem merge). #615 mergeado. Sem 'executa'"
 depende_de: ["[[F5]]", "[[FE-INCR-BANK-SETTLEMENT]]"]
 autorizacao: "dono, chat, 2026-10-09: \"planeja o BRIEF de FE da tarifa no F7\" + \"ratifica os forks com as recomendações\" (#616) · dono, chat, 2026-10-10: \"Autorizo planejar o BRIEF do FE da tarifa no F7 — sessao-planejamento, sem 'executa'.\" + questionário: \"#616 + emenda do #617\" ([[D-2026-10-10-FE-F7-TARIFA-FORKS]]) · dono, chat, 2026-10-10: \"Executa o patch do F-TAR-1 no #615, sem merge\" + \"PR de BE novo\" (só o BE da view) · dono, chat, 2026-10-10: \"As outras pode seguir o que eu enviei, A pra todas\" (F-FEE-E1/E2 → a; sem executa)"
 ancora_sdd: "—"

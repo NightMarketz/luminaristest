@@ -1,7 +1,8 @@
 # Vault do plano — Luminaris
 
 Plano único do projeto em formato de notas (abre como vault no Obsidian; também é markdown comum no repo).
-Estado vivo e fila moram **aqui**, no frontmatter de cada nota. O arquivo
+Estado vivo e fila moram **aqui**, no frontmatter de cada nota. A **ordem de execução** (o que vem primeiro e
+por quê) está em [[FILA-ORDEM]] — ratificada em 14/10/2026 ([[D-2026-10-14-FILA-ORDEM-RATIFICADA]]). O arquivo
 [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) é a **versão consolidada de 23/09** (leitura corrida, histórico
 de folds, snapshot da Parte II/III) — não é mais atualizado.
 
@@ -9,6 +10,7 @@ de folds, snapshot da Parte II/III) — não é mais atualizado.
 
 Leia **só o que a tarefa pede**, nesta ordem, e pare assim que tiver a resposta:
 
+0. **[[FILA-ORDEM]]** — a ordem de execução proposta (prazos, gates em cadeia, código destravado). Só para "o que faço primeiro".
 1. **[[_INDEX]]** — régua calculada, "destravados agora" e a fila aberta por domínio (uma linha por nó).
    **Não é versionado** (nem o `_ANCORAS`): gere com `node scripts/plano-vault.mjs index` antes de ler (worktree novo não
    tem o arquivo), ou leia direto com `node scripts/plano-vault.mjs index --stdout`. Com

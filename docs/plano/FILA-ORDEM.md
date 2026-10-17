@@ -1,0 +1,59 @@
+# Ordem de execução — fila viva (14/10/2026)
+
+> **Estado deste documento:** RATIFICADA pelo dono em 14/10/2026 ([[D-2026-10-14-FILA-ORDEM-RATIFICADA]]), montada a partir do frontmatter dos nós e das cédulas
+> citadas. A ordem vale; cada PR de código ainda precisa de `executa` próprio.
+> Mudança de estado de nó continua sendo feita no frontmatter (`plano-vault.mjs fold`). Este arquivo não
+> substitui o `_INDEX.md` (gerado): ele só responde **o que vem primeiro**.
+
+## Regras da ordem
+
+1. **Prazo legal externo primeiro**, quando bloqueia código ou gate já em curso.
+2. **Gate humano em cadeia** segue a ordem que o dono fixou: H1 → H2 → M2 (`[[H1]]`).
+3. **Código só com `executa` citável** (ORCH-006). Brief pronto sem `executa` não entra como "a fazer agora": entra como "pronto para autorizar".
+4. Dependência explícita (`depende_de`) manda. Sufixo `?` (condicional) não bloqueia, mas sinaliza risco.
+
+## A. Prazos e decisões do dono (só o dono move)
+
+| # | Item | Por que está aqui | Desbloqueia | Ação do dono |
+|---|---|---|---|---|
+| A1 | **Caminho da emissão NFS-e (ADN / PSC / PAA)** — [[D5]], [[X10i]] | NFS-e nacional obrigatória para ME/EPP do Simples em **01/11/2026** (Res. CGSN 191 art. 3º I). A decisão de 13/10 pausou o ADN; a FAQ NFS-e v1.1 17.7 exige certificado do próprio prestador no mTLS, o que não fecha com PSC. | [[X10i]], [[X10a]], [[X11]], [[D5]] | Escolher o caminho (decisão F-ADN-1) e acionar o advogado (L-ADN-5) antes de qualquer certificado de cliente. |
+| A2 | **H1 — PVA Presumido** [[H1]] | Parado no P5. Falta o passo do dono no RUNBOOK-H1 (PUT da conta 3.4 nas 2 unidades; re-semear; ECD/ECF). | [[H2]] → [[M2]] | Executar o passo e colar a evidência. Agente não preenche desfecho nem assinatura. |
+| A3 | **H2 — sign-off de browser** [[H2]] | Depende de H1 (ordem do dono). Inclui o passo de validade do pacote. | [[M2]], deploy do [[PACOTE-VALIDADE]] | Sign-off humano. |
+| A4 | **M2 — host e 1º deploy** [[M2]] | VPS contratada (26/09). Chave do MP no ambiente e conta de emissão por unidade (R8). | [[F5]] em produção, [[PACOTE-VALIDADE]], [[GOV-CONTADOR]] (consulta CFC), [[P4]] (assinatura) | Deploy após H2. |
+| A5 | **D7 — PNCT** (vigilância de comunicações) | Prazo **31/12/2026**. Nasce com a emissão (depende de A1). | — | Corrigir até o prazo, com contador responsável. |
+| A6 | **D1 / D1f / D2 — contador e XML real de NF-e** | Pedido de follow-up de 26/09 não enviado; falta alíquota de ISS e cClassTrib; sem XML real (E9 fica preso). | Fixtures reais ([[E9]]), itens 5a–5f | Enviar o pedido ao contador (o agente só monta). |
+| A7 | **F-GOV-1 — consulta ao CRC-SP** | Dono decidiu enviar agora (10/10). | [[GOV-CONTADOR]] | Confirmar envio. |
+
+## B. Código destravado (precisa de `executa` do dono, por PR)
+
+Ordem sugerida, da menor dependência para a maior:
+
+| # | Nó | Estado de dependência | Próximo passo |
+|---|---|---|---|
+| B1 | [[X9]] — DCTFWeb / MIT (PR-2 e PR-4) | **Destravado em 14/10**: [[X7]] foi fechado (Fases A, B e C em `main`). | `executa` do PR-2 (itens 10–12, 15–17). |
+| B2 | [[I5]] + [[I4]] — venda sem mapper e onboarding | BRIEF conjunto com forks F-I4-4/5 e F-I5-1..4 ratificados. Sem fork pendente. | `executa` do BRIEF I4+I5. |
+| B3 | [[BE-INCR-SIMPLES-DEFIS-MANUAL]] e [[BE-INCR-SIMPLES-GET-ENTRADAS]] | BRIEFs prontos (12/10). Pré-requisitos do FE do Simples. | `executa` de cada um (PRs separados). |
+| B4 | [[FE-INCR-SIMPLES]] — PR-A a PR-D | PR-C depende de GET-ENTRADAS; PR-D depende de DEFIS-MANUAL (F-FS-8 c). | `executa` por PR, depois de B3. |
+| B5 | [[CRM-RB]] / [[FE-INCR-CRM-REPORT-BUILDER]] — PR-C (modelos) | PR-A, PR-B e PR-D em `main`. PR-C precisa do pré-requisito de BE (`GET /api/crm/reports/templates`), que **não existe** em `main`. | Planejar o BE do GET; depois `executa` do PR-C. |
+| B6 | [[F5]] — FE da cobrança (EMENDA-1 pronta) | Mercado Pago em `main` (PR-2 e PR-3). Chave no ambiente só com M2 (A4). | `executa` do FE da cobrança. |
+| B7 | [[FE-INCR-BANK-SETTLEMENT-FEE]] | Depende de F5 (B6). BE da view (#620) já em `main`. | `executa` do FE depois de B6. |
+| B8 | [[LAC-B]] — UI da prensa de binding | **Destravado em 14/10** (estado `ready`): a pausa F-KS-0 caiu com o KIT-SETOR concluído; F-I4-4 (a) e F-BA-2 (b) decididos em 13/10. Acoplamento: PR-0 e I4 PR-2 criam o mesmo `mapperReload.ts` (quem chegar primeiro em `main` cria, o outro importa). | `executa` do PR-0 e depois do PR-1. Coordenar com I4 PR-2. |
+| B9 | [[X14-CAIXA]] | Planejado, sem autorização. Só depois de B4 (D4: o FE do Simples por competência vem antes da variante por caixa). | Planejar depois de B4. |
+
+## C. Backlog sem prioridade (planejado, sem `executa`)
+
+[[W2]], [[W4]], [[W5]], [[W6]], [[W7]], [[I6]], [[I7]], [[I11]]. O [[W3]] tem código mergeado; falta o sign-off de browser (humano) e a decisão F-W3-1.
+
+## D. Bloqueado por gate externo (não entra na fila de código)
+
+- [[X10a]] (NFC-e e NFS-e por tipo) e [[X10i]] (emissão): dependem de A1.
+- [[X11]] PR-2: dependem de [[X10i]].
+- [[CSLL-RESSEGURADORES]]: espera o ADE da Receita com o leiaute novo da ECF.
+- [[F6]] (Pix de saída): gate externo do Mercado Pago (chave ed25519).
+- [[P-IA]]: depende de R10 e D6.
+
+## Pendências de documentação que esta fila expôs
+
+- `LAC-B` estava `blocked` sem motivo atual. Corrigido para `ready` em 14/10 (ver B8). Pendência: `I3` (done) lista LAC-B em `depende_de`.
+- `F5` → `P-IA?`: **não bloqueia o FE do Mercado Pago**. A aresta pertence ao adaptador CNAB (ADR-INCR-PAYMENT-PROVIDER-COLLECTION §6.1). A fase CNAB depende também de D6, que não está em `depende_de` de F5.
+- O índice (`_INDEX.md`) ordena os "Destravados" alfabeticamente, não por esta ordem.
