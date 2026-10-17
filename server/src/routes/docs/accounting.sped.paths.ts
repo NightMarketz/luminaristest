@@ -53,7 +53,7 @@
  *                           identNom:     { type: string }
  *                           identCpfCnpj: { type: string }
  *                           codAssin:     { type: string, enum: ['910'], description: '920 (Auditor Independente) fora do escopo.' }
- *                           indCrc:       { type: string, description: 'CFC format UF-NNNNNN/O-D (transferred/secondary: + " T-UF"/" S-UF")' }
+ *                           indCrc:       { type: string, description: 'CFC format UF-NNNNNN/O-D (transferred: + " T-UF")' }
  *                           email:        { type: string }
  *                           fone:         { type: string }
  *                           ufCrc:        { type: string, description: 'UF embedded in indCrc — for a transferred/secondary number, the origin UF or the suffix UF' }
@@ -87,7 +87,7 @@
  *                       identNom:      { type: string }
  *                       identCpfCnpj:  { type: string, description: 'CPF (11 digits, DV validated) or CNPJ (14 alphanumeric positions, format only)' }
  *                       codAssin:      { type: string, description: '3-digit code from the Manual ECD L9 pp. 201-202 qualification table; 900 = Contador. IDENT_QUALIF (description) is NOT accepted — it is derived from this code' }
- *                       indCrc:        { type: string, description: 'CFC format UF-NNNNNN/O-D (transferred/secondary: + " T-UF"/" S-UF"); required when codAssin=900' }
+ *                       indCrc:        { type: string, description: 'CFC format UF-NNNNNN/O-D (transferred: + " T-UF"); required when codAssin=900' }
  *                       email:         { type: string, description: 'required when codAssin=900' }
  *                       fone:          { type: string, description: 'required when codAssin=900' }
  *                       ufCrc:         { type: string, description: 'required when codAssin=900; UF embedded in indCrc — for a transferred/secondary number, the origin UF or the suffix UF' }
@@ -197,7 +197,7 @@
  *                       identNom:     { type: string }
  *                       identCpfCnpj: { type: string, description: 'CPF (11 digits, DV validated) or CNPJ (14 alphanumeric positions, format only)' }
  *                       identQualif:  { type: string, description: '3-digit code from the SPEDECF_QUALIF_ASSINANTE table (Manual ECF L12 p. 105); 900 = Contador/Contabilista' }
- *                       indCrc:       { type: string, description: 'CFC format UF-NNNNNN/O-D (transferred/secondary: + " T-UF"/" S-UF"); required when identQualif=900; omit when blank (an empty string is 400)' }
+ *                       indCrc:       { type: string, description: 'CFC format UF-NNNNNN/O-D (transferred: + " T-UF"); required when identQualif=900; omit when blank (an empty string is 400)' }
  *                       email:        { type: string }
  *                       fone:         { type: string }
  *       responses:
@@ -294,7 +294,7 @@
  *                       identNom:     { type: string }
  *                       identCpfCnpj: { type: string, description: 'CPF (11 digits, DV validated) or CNPJ (14 alphanumeric positions, format only)' }
  *                       identQualif:  { type: string, description: '3-digit code from the SPEDECF_QUALIF_ASSINANTE table (Manual ECF L12 p. 105); 900 = Contador/Contabilista' }
- *                       indCrc:       { type: string, description: 'CFC format UF-NNNNNN/O-D (transferred/secondary: + " T-UF"/" S-UF"); required when identQualif=900; omit when blank (an empty string is 400)' }
+ *                       indCrc:       { type: string, description: 'CFC format UF-NNNNNN/O-D (transferred: + " T-UF"); required when identQualif=900; omit when blank (an empty string is 400)' }
  *                       email:        { type: string }
  *                       fone:         { type: string }
  *       responses:

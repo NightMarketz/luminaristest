@@ -434,7 +434,7 @@
           },
           "crcNumber": {
             "type": "string",
-            "description": "J930 campo 06 IND_CRC no formato do CFC UF-NNNNNN/O-D, transferido/secundário com sufixo (SP-123456/O-3 T-MG); grafias usuais aceitas e normalizadas; crcUf tem de ser a UF de origem ou a do sufixo"
+            "description": "J930 campo 06 IND_CRC no formato do CFC UF-NNNNNN/O-D, transferido com sufixo (SP-123456/O-3 T-MG); grafias usuais aceitas e normalizadas; crcUf tem de ser a UF de origem ou a do sufixo"
           },
           "crcUf": {
             "type": "string",
@@ -482,7 +482,7 @@
           },
           "crcNumber": {
             "type": "string",
-            "description": "UF-NNNNNN/O-D (CFC); transferido/secundário: + ' T-UF'/' S-UF'"
+            "description": "UF-NNNNNN/O-D (CFC); transferido: + ' T-UF'"
           },
           "crcUf": {
             "type": "string",
@@ -893,7 +893,7 @@
           },
           "reviewerCrc": {
             "type": "string",
-            "description": "Máscara CFC UF-NNNNNN/O-D, transferido/secundário com sufixo ' T-UF'/' S-UF' (mesma do contato, #305)"
+            "description": "Máscara CFC UF-NNNNNN/O-D, transferido com sufixo ' T-UF' (mesma do contato, #305)"
           },
           "statement": {
             "type": "string",
@@ -15808,7 +15808,7 @@
                             },
                             "indCrc": {
                               "type": "string",
-                              "description": "CFC format UF-NNNNNN/O-D (transferred/secondary: + \" T-UF\"/\" S-UF\")"
+                              "description": "CFC format UF-NNNNNN/O-D (transferred: + \" T-UF\")"
                             },
                             "email": {
                               "type": "string"
@@ -15929,7 +15929,7 @@
                         },
                         "indCrc": {
                           "type": "string",
-                          "description": "CFC format UF-NNNNNN/O-D (transferred/secondary: + \" T-UF\"/\" S-UF\"); required when codAssin=900"
+                          "description": "CFC format UF-NNNNNN/O-D (transferred: + \" T-UF\"); required when codAssin=900"
                         },
                         "email": {
                           "type": "string",
@@ -16234,7 +16234,7 @@
                         },
                         "indCrc": {
                           "type": "string",
-                          "description": "CFC format UF-NNNNNN/O-D (transferred/secondary: + \" T-UF\"/\" S-UF\"); required when identQualif=900; omit when blank (an empty string is 400)"
+                          "description": "CFC format UF-NNNNNN/O-D (transferred: + \" T-UF\"); required when identQualif=900; omit when blank (an empty string is 400)"
                         },
                         "email": {
                           "type": "string"
@@ -16476,7 +16476,7 @@
                         },
                         "indCrc": {
                           "type": "string",
-                          "description": "CFC format UF-NNNNNN/O-D (transferred/secondary: + \" T-UF\"/\" S-UF\"); required when identQualif=900; omit when blank (an empty string is 400)"
+                          "description": "CFC format UF-NNNNNN/O-D (transferred: + \" T-UF\"); required when identQualif=900; omit when blank (an empty string is 400)"
                         },
                         "email": {
                           "type": "string"
