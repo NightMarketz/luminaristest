@@ -184,3 +184,48 @@ describe('item 7a — prazo D+N do cartão (F-CX-2 c + F-CX-2.1 a)', () => {
     expect(ok.body.data).toMatchObject(PRAZOS);
   });
 });
+
+// BE-INCR-SCOPE-UNIT-GUARD (nó I6) × X14-CAIXA — dono, questionário, 2026-10-16: "Lê sem gravar". Em unidade apagada, o GET
+// da apuração e o POST /calcular respondem 200 SEM o backfill de recebimentos; PUT /das e o crédito incobrável (POST e
+// DELETE) = 409 UNIT_DELETED. Controle positivo: restaurada a unidade, o mesmo GET grava o recebimento que faltava.
+describe('I6 — unidade apagada no regime de caixa', () => {
+  it('GET e calcular = 200 sem gravar recebimento; PUT /das, POST e DELETE de incobrável = 409; restaurada, o GET grava', async () => {
+    const S = '/api/accounting/simples';
+    const spy = jest.spyOn(ReceitaFiscalRecebimentoService.prototype, 'registrar').mockRejectedValueOnce(new Error('disco cheio'));
+    const v = await vendaPaga('2026-07-01', 90, 'Pix', '2026-07-05');
+    spy.mockRestore();
+    expect(await recebimentos(v.id)).toHaveLength(0);
+
+    await prisma.dynamicTableData.update({ where: { id: UNIT }, data: { deletedAt: new Date() } });
+    try {
+      const ler = await request(app).get(`${S}/apuracoes/2026-07`).set(authHeader(user)).query({ unitId: UNIT });
+      expect(ler.status).toBe(200);
+      const calc = await request(app).post(`${S}/apuracoes/2026-07/calcular`).set(authHeader(user)).send({ unitId: UNIT });
+      expect(calc.status).toBe(200);
+      expect(await recebimentos(v.id)).toHaveLength(0);
+
+      const das = await request(app)
+        .put(`${S}/apuracoes/2026-07/das`)
+        .set(authHeader(user))
+        .send({ unitId: UNIT, numeroDocumento: '07.20.26000.0000001-0', valorCents: 1_000, vencimento: '2026-08-20' });
+      expect(das.status).toBe(409);
+      expect(das.body.code).toBe('UNIT_DELETED');
+      const incob = await request(app)
+        .post(`${S}/creditos-incobraveis`)
+        .set(authHeader(user))
+        .send({ unitId: UNIT, saleId: v.id, valorCents: 1_000, meioCobranca: 'COBRANCA_JUDICIAL', data: '2026-07-10', evidencia: 'processo' });
+      expect(incob.status).toBe(409);
+      expect(incob.body.code).toBe('UNIT_DELETED');
+      const del = await request(app).delete(`${S}/creditos-incobraveis/qualquer`).set(authHeader(user)).query({ unitId: UNIT });
+      expect(del.status).toBe(409);
+      expect(del.body.code).toBe('UNIT_DELETED');
+    } finally {
+      await prisma.dynamicTableData.update({ where: { id: UNIT }, data: { deletedAt: null } });
+    }
+
+    // O status deste GET não é asserido: com o recebimento gravado, o `obter` desta fixture (sem enquadramento da
+    // atividade 'srv-corte') responde 500 — achado do X14, fora do I6. O que o controle prova é o backfill ter gravado.
+    await request(app).get(`${S}/apuracoes/2026-07`).set(authHeader(user)).query({ unitId: UNIT });
+    expect(await recebimentos(v.id)).toHaveLength(1);
+  });
+});

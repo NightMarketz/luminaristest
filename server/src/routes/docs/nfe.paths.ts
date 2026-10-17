@@ -28,6 +28,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/nfe/preview:
  *     post:
@@ -54,6 +56,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/nfe/sale:
  *     post:
@@ -77,7 +80,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  */
 /**
  * @openapi
@@ -114,6 +118,7 @@
  *         '200': { description: '{ ok, faltantes, competenciaAlerta, payloads, tieOut }' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/nfe/dfe/documents:
  *     post:
@@ -141,6 +146,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *     get:
  *       summary: List fiscal documents (filter by saleId and/or status)
  *       tags: [Accounting]
@@ -155,6 +162,7 @@
  *         '400': { description: 'nem saleId nem status informados' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/nfe/dfe/documents/{id}:
  *     get:
@@ -169,6 +177,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/nfe/dfe/documents/{id}/consultar:
  *     post:
@@ -190,6 +199,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/nfe/dfe/documents/{id}/reenviar:
  *     post:
@@ -211,11 +222,14 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/nfe/dfe/documents/{id}/cancelar:
  *     post:
  *       summary: Cancel an AUTHORIZED document (item 29, Anexo II e101101)
  *       description: >-
+ *         409: OUT_OF_WINDOW (E0822) ou REJECTED pelo parceiro (código do fisco na mensagem)
  *         Só de status AUTHORIZED. Nunca toca a venda nem o razão. OUT_OF_WINDOW/REJECTED do
  *         parceiro viram 409 tipado; CANCELLED retira a proveniência anexada (F-DFE-18, soft-delete).
  *       tags: [Accounting]
@@ -238,12 +252,14 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '409': { description: 'OUT_OF_WINDOW (E0822) ou REJECTED pelo parceiro (código do fisco na mensagem)' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/nfe/dfe/documents/{id}/substituir:
  *     post:
  *       summary: Substitute an authorized NFS-e (BE-INCR-DFE-EVENTOS item 11, DPS with infDPS/subst)
  *       description: >-
+ *         409: DFE_STATUS_INVALIDO | DFE_SUBSTITUICAO_EXISTENTE | DFE_SUBST_FORA_DO_TETO | DFE_SUBST_NAO_SUPORTADA
  *         Cria o documento substituto (DPS nova com o grupo subst apontando a chave da original; Anexo I [113]-[116]).
  *         Quando a substituta é autorizada, a original vira CANCELLED na mesma transação (e105102 gerado pelo fisco).
  *         Fora do prazo do município configurado no perfil e cMotivo fora de 01/02 só gera aviso (E0050, nível 3).
@@ -267,7 +283,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '409': { description: 'DFE_STATUS_INVALIDO | DFE_SUBSTITUICAO_EXISTENTE | DFE_SUBST_FORA_DO_TETO | DFE_SUBST_NAO_SUPORTADA' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '422': { description: 'SUBSTITUICAO_BLOQUEADA — muda campo congelado por E0060/E0061' }
  *
  *   /api/nfe/dfe/documents/{id}/ficha:
@@ -286,11 +303,13 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/nfe/dfe/documents/{id}/retorno-manual:
  *     post:
  *       summary: Register the authorized NFS-e XML downloaded from the public portal (manual mode, item 11)
  *       description: >-
+ *         409: documento não é do modo manual ou não está SENT/PROCESSING
  *         Só documento do modo manual (partner=manual) em SENT/PROCESSING. O XML tem a assinatura conferida (E1630/E1634),
  *         é relido contra a DPS enviada e autoriza o documento. Identidade divergente (prestador, chave já usada, nota
  *         anterior ao documento, origem fora do portal) ⇒ 422 sem escrita. Conteúdo divergente ⇒ AUTHORIZED_DIVERGENT
@@ -315,12 +334,14 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '409': { description: 'documento não é do modo manual ou não está SENT/PROCESSING' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '422': { description: 'XML inválido, assinatura inválida ou identidade divergente' }
  *
  *   /api/nfe/dfe/documents/{id}/rejeicao-manual:
  *     post:
  *       summary: Register that the public portal rejected the data (manual mode, item 12)
+ *       description: "409: documento não é do modo manual ou não está SENT/PROCESSING"
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -349,12 +370,14 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '409': { description: 'documento não é do modo manual ou não está SENT/PROCESSING' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/nfe/dfe/documents/{id}/cancelamento-manual:
  *     post:
  *       summary: Register a cancellation done on the public portal, with the e101101 event XML (manual mode, item 13)
  *       description: >-
+ *         409: documento não é do modo manual ou não está autorizado
  *         Só documento do modo manual autorizado. O evento tem de cancelar esta chave (chNFSe) e o cMotivo tem de ser o
  *         do evento; o texto gravado é o do XML. Nunca toca a venda nem o razão; retira a proveniência.
  *       tags: [Accounting]
@@ -378,7 +401,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '409': { description: 'documento não é do modo manual ou não está autorizado' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '422': { description: 'evento inválido, de outra NFS-e ou com cMotivo diferente' }
  *
  *   /api/nfe/dfe/webhook/{partner}:

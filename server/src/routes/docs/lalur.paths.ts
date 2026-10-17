@@ -29,6 +29,7 @@
  *         '200': { description: '{ rows: [{ codigo, descricao, tipo: E, tipoLanc?, vigencia: { de, ate } }] } or { rows: [{ codigo, descricao, tributo }] }' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/lalur/entries:
  *     get:
@@ -48,6 +49,7 @@
  *       responses:
  *         '200': { description: 'adjustment lines' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     post:
  *       summary: Register one adjustment line (validated against the Leiaute 12 catalog)
  *       description: >-
@@ -71,7 +73,8 @@
  *         '201': { description: 'the created line' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/lalur/entries/{id}:
  *     patch:
@@ -89,7 +92,8 @@
  *         '200': { description: 'the updated line' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/lalur/entries/{id}/archive:
  *     post:
@@ -106,7 +110,8 @@
  *       responses:
  *         '200': { description: 'the archived line (idempotent)' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/lalur/parte-b:
  *     get:
@@ -120,6 +125,7 @@
  *       responses:
  *         '200': { description: 'Parte B accounts' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     post:
  *       summary: Register a Parte B account (M010 - codCtaB + codTributo is the key)
  *       description: >-
@@ -137,6 +143,8 @@
  *         '201': { description: 'the created account' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/lalur/parte-b/{id}:
  *     patch:
@@ -154,7 +162,8 @@
  *         '200': { description: 'the updated account' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/lalur/parte-b/{id}/archive:
  *     post:
@@ -172,7 +181,8 @@
  *         '200': { description: 'the archived account (idempotent)' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/lalur/parte-b/movements:
  *     get:
@@ -191,6 +201,7 @@
  *       responses:
  *         '200': { description: 'movements' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     post:
  *       summary: Register an M410 movement (codTributo derived from the account; origem=user)
  *       description: >-
@@ -208,7 +219,8 @@
  *         '201': { description: 'the created movement' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/lalur/parte-b/movements/{id}:
  *     patch:
@@ -226,7 +238,8 @@
  *         '200': { description: 'the updated movement' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/lalur/parte-b/movements/{id}/archive:
  *     post:
@@ -243,7 +256,8 @@
  *       responses:
  *         '200': { description: 'the archived movement' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/lalur/parte-b/close:
  *     post:
@@ -268,6 +282,8 @@
  *         '200': { description: 'the closing with its materialized balances' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/lalur/parte-b/reopen:
  *     post:
@@ -283,7 +299,8 @@
  *         '200': { description: '{ year, quarter, reopened: true }' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/lalur/parte-b/balances:
  *     get:
@@ -305,5 +322,6 @@
  *         '200': { description: 'diagnostic' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  */
 export {};

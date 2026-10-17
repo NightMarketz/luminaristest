@@ -8,6 +8,7 @@
  *     post:
  *       summary: Generate the MIT import JSON file of a month (BE-INCR-MIT-EXPORT PR-2, X9 items 10-12)
  *       description: >-
+ *         409: MIT_LC224_LIMINAR
  *         Monta o arquivo JSON de importação do MIT (leiaute 1.0) do PA (ano, mês) a partir das apurações de
  *         IRPJ/CSLL confirmadas e registra a geração (hash + ids, sem conteúdo nem CPF). O arquivo só sai nesta
  *         resposta. 400 - perfil do ano ausente, SIMPLES/MEI, sem CNPJ do declarante, sem contador ativo. 409 -
@@ -31,7 +32,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '409': { description: 'MIT_LC224_LIMINAR' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '422': { description: 'MIT_NADA_A_EXPORTAR' }
  *     get:
  *       summary: List the MIT files generated in a year, with the staleness flag (X9 items 11-12)
@@ -47,5 +49,6 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  */
 export {};

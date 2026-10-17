@@ -3,7 +3,6 @@ import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
 import type { AccountingScope } from '../features/accounting/scope/AccountingScope';
-import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import { backfillRecebimentos } from '../features/accounting/sync/bridges/ReceitaFiscalRecebimentoBridge';
 import {
   CompetenciaParamSchema,
@@ -37,7 +36,7 @@ export const putSimplesHistorico = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const b = SimplesHistoricoUpsertSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await service().upsertHistorico(resolveAccountingScopeInternal(user, b.data.unitId), p.data.competencia, b.data);
+    const data = await service().upsertHistorico(await getFactory().getAccountingScopeResolver().resolve(user, b.data.unitId, { access: 'write' }), p.data.competencia, b.data);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -53,7 +52,7 @@ export const getSimplesHistorico = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const q = SimplesUnitQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    const data = await service().obterHistorico(resolveAccountingScopeInternal(user, q.data.unitId), p.data.competencia);
+    const data = await service().obterHistorico(await getFactory().getAccountingScopeResolver().resolve(user, q.data.unitId, { access: 'read' }), p.data.competencia);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -69,7 +68,7 @@ export const putSimplesSegregacao = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const b = SimplesSegregacaoUpsertSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await service().upsertSegregacao(resolveAccountingScopeInternal(user, b.data.unitId), p.data.competencia, b.data);
+    const data = await service().upsertSegregacao(await getFactory().getAccountingScopeResolver().resolve(user, b.data.unitId, { access: 'write' }), p.data.competencia, b.data);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -85,7 +84,7 @@ export const getSimplesSegregacao = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const q = SimplesUnitQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    const data = await service().obterSegregacao(resolveAccountingScopeInternal(user, q.data.unitId), p.data.competencia);
+    const data = await service().obterSegregacao(await getFactory().getAccountingScopeResolver().resolve(user, q.data.unitId, { access: 'read' }), p.data.competencia);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -99,7 +98,7 @@ export const createParceria = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const b = SalaoParceriaContratoSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await service().createParceria(resolveAccountingScopeInternal(user, b.data.unitId), b.data);
+    const data = await service().createParceria(await getFactory().getAccountingScopeResolver().resolve(user, b.data.unitId, { access: 'write' }), b.data);
     return res.status(201).json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -113,7 +112,7 @@ export const listParcerias = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const q = SimplesUnitQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    const data = await service().listParcerias(resolveAccountingScopeInternal(user, q.data.unitId));
+    const data = await service().listParcerias(await getFactory().getAccountingScopeResolver().resolve(user, q.data.unitId, { access: 'read' }));
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -129,7 +128,7 @@ export const updateParceria = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const b = SalaoParceriaContratoPatchSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await service().updateParceria(resolveAccountingScopeInternal(user, b.data.unitId), p.data.id, b.data);
+    const data = await service().updateParceria(await getFactory().getAccountingScopeResolver().resolve(user, b.data.unitId, { access: 'write' }), p.data.id, b.data);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -145,7 +144,7 @@ export const deleteParceria = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const q = SimplesUnitQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    await service().deleteParceria(resolveAccountingScopeInternal(user, q.data.unitId), p.data.id);
+    await service().deleteParceria(await getFactory().getAccountingScopeResolver().resolve(user, q.data.unitId, { access: 'write' }), p.data.id);
     return res.status(204).send();
   } catch (error) {
     return handleApiError(error, res);
@@ -161,10 +160,13 @@ const apuracao = () => getFactory().getSimplesApuracaoService();
  * fora da janela do job de reconcile). Integração cross-módulo no controller, nunca no motor (Contrato §2.1).
  */
 async function backfillSeCaixa(scope: AccountingScope, competencia: string): Promise<void> {
+  // I6 (dono, questionário, 2026-10-16: "Lê sem gravar"): unidade apagada lê a apuração sem gravar recebimentos —
+  // molde do F-I6-10 (listAccounts). Só chega aqui com access 'read'; a escrita (PUT /das) já parou no 409.
+  if (scope.unitDeleted) return;
   if ((await apuracao().regimeApuracaoDoPa(scope, competencia)) === 'CAIXA') await backfillRecebimentos(scope);
 }
 
-/** POST /api/accounting/simples/apuracoes/:competencia/calcular — sob demanda, nada é gravado. */
+/** POST /api/accounting/simples/apuracoes/:competencia/calcular — sob demanda; no regime CAIXA grava o backfill de recebimentos (exceto em unidade apagada). */
 export const calcularApuracaoSimples = async (req: Request, res: Response) => {
   try {
     const user = getUserContextFromRequest(req);
@@ -173,7 +175,7 @@ export const calcularApuracaoSimples = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const b = SimplesUnitQuerySchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const scope = resolveAccountingScopeInternal(user, b.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, b.data.unitId, { access: 'read' });
     await backfillSeCaixa(scope, p.data.competencia);
     const data = await apuracao().calcular(scope, p.data.competencia);
     return res.json({ success: true, data });
@@ -191,7 +193,7 @@ export const getApuracaoSimples = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const q = SimplesUnitQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    const scope = resolveAccountingScopeInternal(user, q.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, q.data.unitId, { access: 'read' });
     await backfillSeCaixa(scope, p.data.competencia);
     const data = await apuracao().obter(scope, p.data.competencia);
     return res.json({ success: true, data });
@@ -209,7 +211,7 @@ export const putDasSimples = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const b = SimplesDasRegistroSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const scope = resolveAccountingScopeInternal(user, b.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, b.data.unitId, { access: 'write' });
     await backfillSeCaixa(scope, p.data.competencia);
     const data = await apuracao().registrarDas(scope, p.data.competencia, b.data);
     return res.json({ success: true, data });
@@ -231,7 +233,7 @@ export const getAliquotasSimples = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const q = SimplesUnitQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    const data = await apuracao().aliquotas(resolveAccountingScopeInternal(user, q.data.unitId), p.data.competencia);
+    const data = await apuracao().aliquotas(await getFactory().getAccountingScopeResolver().resolve(user, q.data.unitId, { access: 'read' }), p.data.competencia);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -247,7 +249,7 @@ export const getDasnSimei = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const q = SimplesUnitQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    const data = await declaracao().dasnSimei(resolveAccountingScopeInternal(user, q.data.unitId), p.data.ano);
+    const data = await declaracao().dasnSimei(await getFactory().getAccountingScopeResolver().resolve(user, q.data.unitId, { access: 'read' }), p.data.ano);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -263,7 +265,7 @@ export const putDasnSimei = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const b = SimplesDasnUpsertSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await declaracao().upsertDasnSimei(resolveAccountingScopeInternal(user, b.data.unitId), p.data.ano, b.data);
+    const data = await declaracao().upsertDasnSimei(await getFactory().getAccountingScopeResolver().resolve(user, b.data.unitId, { access: 'write' }), p.data.ano, b.data);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -279,7 +281,7 @@ export const getDefis = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const q = SimplesUnitQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    const data = await declaracao().defis(resolveAccountingScopeInternal(user, q.data.unitId), p.data.ano);
+    const data = await declaracao().defis(await getFactory().getAccountingScopeResolver().resolve(user, q.data.unitId, { access: 'read' }), p.data.ano);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -295,7 +297,7 @@ export const putDefis = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const b = SimplesDefisUpsertSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await declaracao().upsertDefis(resolveAccountingScopeInternal(user, b.data.unitId), p.data.ano, b.data);
+    const data = await declaracao().upsertDefis(await getFactory().getAccountingScopeResolver().resolve(user, b.data.unitId, { access: 'write' }), p.data.ano, b.data);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -313,7 +315,7 @@ export const getRegistroValoresAReceber = async (req: Request, res: Response) =>
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const q = RegistroValoresAReceberQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    const data = await registroCaixa().registro(resolveAccountingScopeInternal(user, q.data.unitId), q.data.ano);
+    const data = await registroCaixa().registro(await getFactory().getAccountingScopeResolver().resolve(user, q.data.unitId, { access: 'read' }), q.data.ano);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -327,7 +329,7 @@ export const createCreditoIncobravel = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const b = SimplesCreditoIncobravelCreateSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await registroCaixa().registrarIncobravel(resolveAccountingScopeInternal(user, b.data.unitId), b.data);
+    const data = await registroCaixa().registrarIncobravel(await getFactory().getAccountingScopeResolver().resolve(user, b.data.unitId, { access: 'write' }), b.data);
     return res.status(201).json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -343,7 +345,7 @@ export const deleteCreditoIncobravel = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const q = SimplesUnitQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    await registroCaixa().removerIncobravel(resolveAccountingScopeInternal(user, q.data.unitId), p.data.id);
+    await registroCaixa().removerIncobravel(await getFactory().getAccountingScopeResolver().resolve(user, q.data.unitId, { access: 'write' }), p.data.id);
     return res.status(204).send();
   } catch (error) {
     return handleApiError(error, res);

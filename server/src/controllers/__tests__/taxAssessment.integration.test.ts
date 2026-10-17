@@ -10,14 +10,14 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { TaxAssessmentRepository } from '@/features/accounting/repositories/TaxAssessmentRepository';
 import { PAYLOAD_ALLOWLIST } from '@/features/accounting/audit/auditCanonical';
 
 const app = makeApp();
 const UNIT = 'unit-x7-pr2';
 const BASE = '/api/accounting/tax-assessments';
-type Dono = { id: string; username: string };
+type Dono = { id: string; username: string; unitId: string };
 
 let seq = 0;
 async function novoDono(regime: string, extra: Record<string, unknown> = {}): Promise<Dono> {
@@ -26,7 +26,10 @@ async function novoDono(regime: string, extra: Record<string, unknown> = {}): Pr
   await prisma.companyFiscalProfile.create({
     data: { userId: u.id, anoCalendario: 2026, regime, ecfIndAliqCsll: '1', ecfIndRecReceita: '2', createdById: u.id, updatedById: u.id, ...extra },
   });
-  return u;
+  // I6: unitId tem de ser linha de `units` do dono — id GLOBAL, então cada dono ganha a sua.
+  const unitId = `${UNIT}-${seq}`;
+  await seedUnit({ userId: u.id, id: unitId });
+  return { ...u, unitId };
 }
 
 async function lancar(dono: Dono, unitId: string, data: string, receitaCents: number, code = '3.1'): Promise<void> {
@@ -41,12 +44,12 @@ async function lancar(dono: Dono, unitId: string, data: string, receitaCents: nu
 }
 
 const preview = (dono: Dono, periodo: string, extra: Record<string, unknown> = {}) =>
-  request(app).post(`${BASE}/preview`).set(authHeader(dono)).send({ unitId: UNIT, anoCalendario: 2026, periodo, ...extra });
+  request(app).post(`${BASE}/preview`).set(authHeader(dono)).send({ unitId: dono.unitId, anoCalendario: 2026, periodo, ...extra });
 const confirm = (dono: Dono, periodo: string, irpj: string, csll: string, extra: Record<string, unknown> = {}) =>
   request(app)
     .post(BASE)
     .set(authHeader(dono))
-    .send({ unitId: UNIT, anoCalendario: 2026, periodo, expectedAPagarCents: { IRPJ: irpj, CSLL: csll }, ...extra });
+    .send({ unitId: dono.unitId, anoCalendario: 2026, periodo, expectedAPagarCents: { IRPJ: irpj, CSLL: csll }, ...extra });
 const linhas = (dono: Dono) => prisma.taxAssessment.findMany({ where: { userId: dono.id }, orderBy: [{ periodo: 'asc' }, { tributo: 'asc' }, { createdAt: 'asc' }] });
 const perfil = (dono: Dono) => prisma.companyFiscalProfile.findFirstOrThrow({ where: { userId: dono.id, anoCalendario: 2026 } });
 const eventos = async (dono: Dono, eventType: string): Promise<Record<string, string>[]> =>
@@ -72,7 +75,7 @@ describe('X7 PR-2 — apuração IRPJ/CSLL: prévia, confirmação, leitura', ()
     expect(await linhas(simples)).toHaveLength(0);
 
     const semPerfil = await novoDono('PRESUMIDO');
-    const r = await request(app).post(`${BASE}/preview`).set(authHeader(semPerfil)).send({ unitId: UNIT, anoCalendario: 2027, periodo: 'T01' });
+    const r = await request(app).post(`${BASE}/preview`).set(authHeader(semPerfil)).send({ unitId: semPerfil.unitId, anoCalendario: 2027, periodo: 'T01' });
     expect(r.status).toBe(400);
     expect(JSON.stringify(r.body)).toContain('perfil fiscal da empresa de 2027 ausente');
 
@@ -84,7 +87,7 @@ describe('X7 PR-2 — apuração IRPJ/CSLL: prévia, confirmação, leitura', ()
 
   it('23 g / item 13: outra unidade da PJ com movimento no período ⇒ 400 listando as unidades; fora do período não conta', async () => {
     const dono = await novoDono('PRESUMIDO');
-    await lancar(dono, UNIT, '2026-02-10', 100_000_00);
+    await lancar(dono, dono.unitId, '2026-02-10', 100_000_00);
     await lancar(dono, 'unit-x7-filial', '2026-03-05', 1_000_00);
     await lancar(dono, 'unit-x7-outra', '2026-05-05', 1_000_00); // T02 — fora da janela do T01
     const r = await preview(dono, 'T01');
@@ -96,7 +99,7 @@ describe('X7 PR-2 — apuração IRPJ/CSLL: prévia, confirmação, leitura', ()
 
   it('itens 13, 14, 17, 22: Presumido T01 — prévia, CAS 409, confirmação 201 com trava e auditoria, segunda confirmação 409', async () => {
     const dono = await novoDono('PRESUMIDO');
-    await lancar(dono, UNIT, '2026-02-10', 1_000_000_00);
+    await lancar(dono, dono.unitId, '2026-02-10', 1_000_000_00);
 
     const p = await preview(dono, 'T01');
     expect(p.status).toBe(200);
@@ -118,8 +121,8 @@ describe('X7 PR-2 — apuração IRPJ/CSLL: prévia, confirmação, leitura', ()
     expect(ok.body.data.reconfirmar).toEqual([]);
     const rows = await linhas(dono);
     expect(rows.map((r) => [r.tributo, r.status, r.regime, r.forma, r.unitId])).toEqual([
-      ['CSLL', 'CONFIRMED', 'PRESUMIDO', 'TRIMESTRAL', UNIT],
-      ['IRPJ', 'CONFIRMED', 'PRESUMIDO', 'TRIMESTRAL', UNIT],
+      ['CSLL', 'CONFIRMED', 'PRESUMIDO', 'TRIMESTRAL', dono.unitId],
+      ['IRPJ', 'CONFIRMED', 'PRESUMIDO', 'TRIMESTRAL', dono.unitId],
     ]);
     expect((await perfil(dono)).formaApuracaoTravadaEm).not.toBeNull();
 
@@ -141,8 +144,8 @@ describe('X7 PR-2 — apuração IRPJ/CSLL: prévia, confirmação, leitura', ()
   // de serviço com linha própria na memória; a 3.2 com movimento continua reprovando o gate de exaustividade.
   it('BE-INCR-H1-REFERENCIAL-3-4: Presumido T01 com 3.4 — base (100.000 + 10.000) × 32%; RECEITA_NAO_USO na memória; 3.2 ⇒ 400', async () => {
     const dono = await novoDono('PRESUMIDO');
-    await lancar(dono, UNIT, '2026-02-10', 100_000_00);
-    await lancar(dono, UNIT, '2026-03-10', 10_000_00, '3.4');
+    await lancar(dono, dono.unitId, '2026-02-10', 100_000_00);
+    await lancar(dono, dono.unitId, '2026-03-10', 10_000_00, '3.4');
     const p = await preview(dono, 'T01');
     expect(p.status).toBe(200);
     // base 35.200,00; IRPJ 15% = 5.280,00 (sem adicional); CSLL 9% = 3.168,00
@@ -153,8 +156,8 @@ describe('X7 PR-2 — apuração IRPJ/CSLL: prévia, confirmação, leitura', ()
     expect(mem.find((m) => m.codigo === 'RECEITA_NAO_USO')?.valorCents).toBe('1000000');
 
     const devol = await novoDono('PRESUMIDO');
-    await lancar(devol, UNIT, '2026-02-10', 100_000_00);
-    await lancar(devol, UNIT, '2026-02-11', 1_000_00, '3.2');
+    await lancar(devol, devol.unitId, '2026-02-10', 100_000_00);
+    await lancar(devol, devol.unitId, '2026-02-11', 1_000_00, '3.2');
     const r = await preview(devol, 'T01');
     expect(r.status).toBe(400);
     expect(JSON.stringify(r.body)).toContain('unmappedRevenueAccounts');
@@ -162,8 +165,8 @@ describe('X7 PR-2 — apuração IRPJ/CSLL: prévia, confirmação, leitura', ()
 
   it('item 14 (F-TA-3 a + cascata): T03 sem T02 ⇒ 409; substituir T01 derruba o T02 confirmado e pede reconfirmação; leitura', async () => {
     const dono = await novoDono('PRESUMIDO');
-    await lancar(dono, UNIT, '2026-02-10', 1_000_000_00);
-    await lancar(dono, UNIT, '2026-05-10', 100_000_00);
+    await lancar(dono, dono.unitId, '2026-02-10', 1_000_000_00);
+    await lancar(dono, dono.unitId, '2026-05-10', 100_000_00);
     expect((await confirm(dono, 'T01', '7400000', '2880000')).status).toBe(201);
 
     const fora = await confirm(dono, 'T03', '0', '0');
@@ -194,22 +197,24 @@ describe('X7 PR-2 — apuração IRPJ/CSLL: prévia, confirmação, leitura', ()
     expect((await confirm(dono, 'T02', '480000', '288000')).status).toBe(201);
 
     // Item 17 — leitura.
-    const lista = await request(app).get(BASE).set(authHeader(dono)).query({ unitId: UNIT, anoCalendario: 2026, status: 'CONFIRMED' });
+    const lista = await request(app).get(BASE).set(authHeader(dono)).query({ unitId: dono.unitId, anoCalendario: 2026, status: 'CONFIRMED' });
     expect(lista.status).toBe(200);
     expect(lista.body.data.map((v: { periodo: string; tributo: string }) => `${v.periodo}/${v.tributo}`)).toEqual(['T01/CSLL', 'T01/IRPJ', 'T02/CSLL', 'T02/IRPJ']);
-    const um = await request(app).get(`${BASE}/${sub.body.data.irpj.id}`).set(authHeader(dono)).query({ unitId: UNIT });
+    const um = await request(app).get(`${BASE}/${sub.body.data.irpj.id}`).set(authHeader(dono)).query({ unitId: dono.unitId });
     expect(um.status).toBe(200);
     expect(um.body.data.memoria.map((m: { codigo: string }) => m.codigo)).toEqual(expect.arrayContaining(['RECEITA_SERVICO', 'BASE', 'DEVIDO', 'DEDUCAO_1', 'A_PAGAR']));
     expect(um.body.data).toMatchObject({ aPagarCents: '7300000', deducoesCents: '100000', provisaoPendente: true });
 
     const outro = await novoDono('PRESUMIDO');
-    expect((await request(app).get(`${BASE}/${sub.body.data.irpj.id}`).set(authHeader(outro)).query({ unitId: UNIT })).status).toBe(404);
+    const alheio = await request(app).get(`${BASE}/${sub.body.data.irpj.id}`).set(authHeader(outro)).query({ unitId: dono.unitId });
+    expect(alheio.status).toBe(404); // I6: outro dono → 404 UNIT_NOT_FOUND (antes: 404 da apuração)
+    expect(alheio.body.code).toBe('UNIT_NOT_FOUND');
     expect((await request(app).get(BASE).set(authHeader(dono)).query({ anoCalendario: 2026 })).status).toBe(400); // unitId obrigatório
   });
 
   it('item 14 (review): supersedesIds parcial ⇒ 409 sem mexer em nada; cascata com 2 posteriores; substituir T04 não pede reconfirmação', async () => {
     const dono = await novoDono('PRESUMIDO');
-    await lancar(dono, UNIT, '2026-02-10', 100_000_00);
+    await lancar(dono, dono.unitId, '2026-02-10', 100_000_00);
     for (const p of ['T01', 'T02', 'T03', 'T04']) {
       const prev = await preview(dono, p);
       expect((await confirm(dono, p, prev.body.data.irpj.aPagarCents, prev.body.data.csll.aPagarCents)).status).toBe(201);
@@ -234,7 +239,7 @@ describe('X7 PR-2 — apuração IRPJ/CSLL: prévia, confirmação, leitura', ()
 
   it('item 10/13 (review): REAL sem lucroRealObrigatorio ⇒ 400 "perfil incompleto"', async () => {
     const dono = await novoDono('REAL');
-    await prisma.lalurParteBClosing.create({ data: { userId: dono.id, unitId: UNIT, year: 2026, quarter: 'T01', balancesSha256: 'x' } });
+    await prisma.lalurParteBClosing.create({ data: { userId: dono.id, unitId: dono.unitId, year: 2026, quarter: 'T01', balancesSha256: 'x' } });
     const r = await preview(dono, 'T01');
     expect(r.status).toBe(400);
     expect(JSON.stringify(r.body)).toContain('perfil incompleto');
@@ -242,7 +247,7 @@ describe('X7 PR-2 — apuração IRPJ/CSLL: prévia, confirmação, leitura', ()
 
   it('23 e / item 14: a trava nasce na tx — falha forçada depois da trava ⇒ nem apuração nem trava', async () => {
     const dono = await novoDono('PRESUMIDO');
-    await lancar(dono, UNIT, '2026-02-10', 1_000_000_00);
+    await lancar(dono, dono.unitId, '2026-02-10', 1_000_000_00);
     jest.spyOn(TaxAssessmentRepository.prototype, 'create').mockRejectedValueOnce(new Error('falha forçada depois da trava'));
     const r = await confirm(dono, 'T01', '7400000', '2880000');
     expect(r.status).toBe(500);
@@ -252,12 +257,12 @@ describe('X7 PR-2 — apuração IRPJ/CSLL: prévia, confirmação, leitura', ()
 
   it('Real T01: Parte B aberta ⇒ 400; fechada ⇒ LAIR na memória, códigos 0220/6012, guarda sem contas sinalizada', async () => {
     const dono = await novoDono('REAL', { lucroRealObrigatorio: true });
-    await lancar(dono, UNIT, '2026-02-10', 100_000_00);
+    await lancar(dono, dono.unitId, '2026-02-10', 100_000_00);
     const aberta = await preview(dono, 'T01');
     expect(aberta.status).toBe(400);
     expect(JSON.stringify(aberta.body)).toContain('Feche a Parte B');
 
-    await prisma.lalurParteBClosing.create({ data: { userId: dono.id, unitId: UNIT, year: 2026, quarter: 'T01', balancesSha256: 'x' } });
+    await prisma.lalurParteBClosing.create({ data: { userId: dono.id, unitId: dono.unitId, year: 2026, quarter: 'T01', balancesSha256: 'x' } });
     const p = await preview(dono, 'T01');
     expect(p.status).toBe(200);
     expect(p.body.data.irpj).toMatchObject({ modo: 'REAL_TRIMESTRAL', codigoReceita: '022001', devidoCents: '1900000' });

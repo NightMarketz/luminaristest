@@ -6,7 +6,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { SPED_ECD_QUALIF_ASSINANTE, SPED_ECF_QUALIF_ASSINANTE } from '@/features/accounting/models/spedQualifAssinante';
 
 const app = makeApp();
@@ -19,6 +19,7 @@ describe('GET /api/accounting/sped/qualif-assinante — contrato HTTP', () => {
   beforeAll(async () => {
     pushTestSchema();
     dono = await prisma.user.create({ data: { name: 'sped-qualif', username: 'sped-qualif', email: 'sped-qualif@test.local', password: 'x', role: 'USER' } });
+    await seedUnit({ userId: dono.id, id: UNIT });
   }, 120000);
 
   afterAll(async () => {
