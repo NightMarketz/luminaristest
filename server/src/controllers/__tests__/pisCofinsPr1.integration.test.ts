@@ -8,7 +8,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { RAZAO_CREDITO_SEMENTE } from '@test/helpers/legalParams';
 import { PayableRepository } from '@/features/accounting/repositories/PayableRepository';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
@@ -39,6 +39,7 @@ describe('X8 PR-1 — regime coerente, contas da provisão, crédito PIS × Cofi
   beforeAll(async () => {
     pushTestSchema();
     dono = await prisma.user.create({ data: { name: 'x8', username: 'x8-dono', email: 'x8@test.local', password: 'x', role: 'USER' } });
+    await seedUnit({ userId: dono.id, id: UNIT });
     await prisma.accountingPeriod.create({ data: { userId: dono.id, unitId: UNIT, year: 2025, month: 7, status: 'OPEN', openedAt: new Date(), openedById: dono.id } });
     await criarConta('1.1.3.01', 'Asset');
     await criarConta('2.1.2.01', 'Liability');

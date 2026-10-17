@@ -4,7 +4,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { ApplicationFactory } from '@/lib/factory';
 import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 
@@ -21,6 +21,7 @@ interface Cenario {
 async function cenario(nome: string, perfis: Record<number, Record<string, unknown>>): Promise<Cenario> {
   const u = await prisma.user.create({ data: { name: nome, username: nome, email: `${nome}@test.local`, password: 'x', role: 'USER' } });
   const c: Cenario = { user: { id: u.id, username: u.username }, unit: `unit-${nome}` };
+  await seedUnit({ userId: u.id, id: c.unit }); // I6: o unitId das rotas é validado contra `units` do dono
   await f().getPostingService().ensureChartOfAccounts(resolveAccountingScopeInternal({ userId: u.id }, c.unit));
   for (const [ano, body] of Object.entries(perfis)) {
     expect((await request(app).put(`${PERFIL}/${ano}`).set(authHeader(c.user)).send({ unitId: c.unit, ...body })).status).toBe(200);

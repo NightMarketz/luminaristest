@@ -7,7 +7,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 const UNIT = 'unit-fixed-assets-http';
@@ -30,6 +30,8 @@ describe('/api/accounting/fixed-asset-classes + /fixed-assets — contrato HTTP'
     pushTestSchema();
     dono = await criarUsuario('fixedasset-http-a');
     outro = await criarUsuario('fixedasset-http-b');
+    await seedUnit({ userId: dono.id, id: UNIT });
+    await seedUnit({ userId: outro.id, id: 'unit-do-outro' });
     await prisma.accountingPeriod.create({
       data: { userId: dono.id, unitId: UNIT, year: 2026, month: 1, status: 'OPEN', openedAt: new Date(), openedById: dono.id },
     });

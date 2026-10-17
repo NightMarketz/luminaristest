@@ -2054,6 +2054,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '500': { $ref: '#/components/responses/InternalServerError' }
  *
  *   /api/accounting/reverse:
@@ -2086,7 +2088,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '500': { $ref: '#/components/responses/InternalServerError' }
  *
  *   /api/accounting/trial-balance:
@@ -2111,6 +2114,7 @@
  *                   data:    { type: object }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *         '500': { $ref: '#/components/responses/InternalServerError' }
  *
  *   /api/accounting/ledger:
@@ -2135,6 +2139,7 @@
  *                   data:    { type: object }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *         '500': { $ref: '#/components/responses/InternalServerError' }
  *
  *   /api/accounting/accounts:
@@ -2159,6 +2164,7 @@
  *                       accounts: { type: array, items: { type: object } }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *         '500': { $ref: '#/components/responses/InternalServerError' }
  *     post:
  *       summary: Create a user-defined account in the chart of accounts
@@ -2193,12 +2199,14 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '500': { $ref: '#/components/responses/InternalServerError' }
  *
  *   /api/accounting/accounts/{id}:
  *     delete:
  *       summary: Soft-delete a user-defined account (unit-scoped)
- *       description: unitId is required so the delete is scoped to its unit. Canonical accounts and accounts with postings cannot be deleted.
+ *       description: "unitId is required so the delete is scoped to its unit. Canonical accounts and accounts with postings cannot be deleted. — 409: Account is canonical or has postings — cannot be deleted"
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -2216,8 +2224,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: Account is canonical or has postings — cannot be deleted }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '500': { $ref: '#/components/responses/InternalServerError' }
  *
  *   /api/accounting/entries:
@@ -2245,6 +2253,7 @@
  *                       total:   { type: integer }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *         '500': { $ref: '#/components/responses/InternalServerError' }
  */
 
@@ -2288,6 +2297,7 @@
  *                             enum: [MISSING_GENESIS, SEQ_GAP, PREV_HASH_MISMATCH, HASH_MISMATCH, HEAD_MISMATCH]
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *         '500': { $ref: '#/components/responses/InternalServerError' }
  *
  *   # ─── ACCOUNTING ATTACHMENTS / EVIDENCE (BE-INCR-5) ───────────────────────
@@ -2321,7 +2331,8 @@
  *                   data:    { $ref: '#/components/schemas/DocumentAttachment' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '413': { description: File too large }
  *         '415': { description: Unsupported media type / content mismatch }
  *         '500': { $ref: '#/components/responses/InternalServerError' }
@@ -2342,7 +2353,7 @@
  *               schema: { type: string, format: binary }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *         '500': { $ref: '#/components/responses/InternalServerError' }
  *     delete:
  *       summary: Soft-delete an attachment (binary retained for audit)
@@ -2363,7 +2374,8 @@
  *                   data: { type: object, properties: { ok: { type: boolean, example: true } } }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '500': { $ref: '#/components/responses/InternalServerError' }
  *
  *   /api/accounting/journal-entries/{journalEntryId}/attachments:
@@ -2386,6 +2398,7 @@
  *                   data: { type: array, items: { $ref: '#/components/schemas/DocumentAttachment' } }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *         '500': { $ref: '#/components/responses/InternalServerError' }
  */
 
@@ -2415,6 +2428,7 @@
  *                   success: { type: boolean, example: true }
  *                   data: { type: array, items: { type: object } }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/{unitId}/periods/seed-year:
  *     post:
@@ -2440,6 +2454,8 @@
  *                   data: { type: array, items: { type: object } }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/periods/{id}/open:
  *     post:
@@ -2463,6 +2479,8 @@
  *         '200': { description: Period opened }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/periods/{id}/soft-close:
  *     post:
@@ -2480,6 +2498,8 @@
  *         '200': { description: Period soft-closed }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/periods/{id}/hard-close:
  *     post:
@@ -2497,6 +2517,8 @@
  *         '200': { description: Period hard-closed }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/periods/{id}/reopen:
  *     post:
@@ -2514,6 +2536,8 @@
  *         '200': { description: Period reopened }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  */
 
 /**
@@ -2575,6 +2599,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/sped/ecd/generate:
  *     post:
@@ -2916,6 +2942,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/data-exchange/jobs:
  *     get:
@@ -2960,6 +2988,7 @@
  *                       limit: { type: integer }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/data-exchange/jobs/{jobId}/waive-ecf-rectification:
  *     post:
@@ -2993,7 +3022,8 @@
  *                   data:    { $ref: '#/components/schemas/DataExchangeJob' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/data-exchange/jobs/{jobId}:
  *     get:
@@ -3015,7 +3045,7 @@
  *                   success: { type: boolean, example: true }
  *                   data:    { $ref: '#/components/schemas/DataExchangeJob' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/data-exchange/jobs/{jobId}/download:
  *     get:
@@ -3033,7 +3063,7 @@
  *             application/octet-stream:
  *               schema: { type: string, format: binary }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/data-exchange/imports:
  *     post:
@@ -3065,6 +3095,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/data-exchange/jobs/{jobId}/rows:
  *     get:
@@ -3086,7 +3118,7 @@
  *                   success: { type: boolean, example: true }
  *                   data:    { type: array, items: { type: object } }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/data-exchange/jobs/{jobId}/commit:
  *     post:
@@ -3117,7 +3149,8 @@
  *                   data:    { $ref: '#/components/schemas/DataExchangeJob' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/reconciliation/statements:
  *     post:
@@ -3326,7 +3359,8 @@
  *         '200': { description: 'the created/updated ReferentialMapping' }
  *         '400': { $ref: '#/components/responses/ValidationError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *     delete:
  *       summary: Unset (hard-delete) the mapping of one account in one version (BE-INCR-9)
  *       tags: [Accounting]
@@ -3338,7 +3372,8 @@
  *       responses:
  *         '200': { description: 'accountId + mappingVersion of the removed mapping' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *     get:
  *       summary: List the referential mappings of a version (BE-INCR-9)
  *       tags: [Accounting]
@@ -3349,6 +3384,7 @@
  *       responses:
  *         '200': { description: 'array of ReferentialMapping for the version' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/referential/mappings/batch:
  *     post:
@@ -3383,7 +3419,8 @@
  *         '200': { description: 'array of upserted ReferentialMapping' }
  *         '400': { $ref: '#/components/responses/ValidationError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/referential/mappings/copy:
  *     post:
@@ -3409,7 +3446,8 @@
  *         '200': { description: 'array of upserted ReferentialMapping in the destination version' }
  *         '400': { $ref: '#/components/responses/ValidationError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/referential/coverage:
  *     get:
@@ -3422,6 +3460,7 @@
  *       responses:
  *         '200': { description: 'mappingVersion + unmappedAccounts[] + totals + ready flag' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/referential/skeleton:
  *     get:
@@ -3437,6 +3476,7 @@
  *       responses:
  *         '200': { description: 'unitId + mappingVersion + items[] (unmapped leaf accounts to author)' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/referential/catalog/import:
  *     post:
@@ -3462,6 +3502,8 @@
  *         '201': { description: 'layoutVersion + totalRows + imported + analyticCount + syntheticCount' }
  *         '400': { description: 'invalid header/rows or empty catalog' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/referential/catalog:
  *     get:
@@ -3479,6 +3521,7 @@
  *       responses:
  *         '200': { description: 'referential accounts of the version (code, name, isAnalytic, parentCode)' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/payables:
  *     get:
@@ -3935,6 +3978,7 @@
  *       responses:
  *         '200': { description: 'paginated PendingApproval entries with their legs' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/entry-approvals/drafts:
  *     post:
@@ -3950,6 +3994,8 @@
  *         '201': { description: 'the created Draft entry' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/entry-approvals/drafts/{id}:
  *     put:
@@ -3967,11 +4013,13 @@
  *         '200': { description: 'the updated Draft entry' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/entry-approvals/drafts/{id}/submit:
  *     post:
  *       summary: Submit a draft for approval (freezes the content hash, moves to PendingApproval)
+ *       description: "409: version conflict (stale expectedVersion)"
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -3985,13 +4033,14 @@
  *         '200': { description: 'the submitted entry (PendingApproval)' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'version conflict (stale expectedVersion)' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/entry-approvals/{id}/approve:
  *     post:
  *       summary: Approve and post a submitted entry (checker; segregation of duties)
  *       description: >-
+ *         409: version conflict (stale expectedVersion)
  *         Approves and posts atomically. The approver must NOT be the creator or submitter
  *         (dynamic SoD, server-side). Assigns the gapless entryNumber inside the tx, re-checks
  *         the period gate and the frozen content hash. Fails 403 on a SoD violation, 409 on a
@@ -4010,12 +4059,13 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { description: 'SoD violation (approver is the creator or submitter)' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'version conflict (stale expectedVersion)' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/entry-approvals/{id}/reject:
  *     post:
  *       summary: Reject a submitted entry back to Draft
+ *       description: "409: version conflict (stale expectedVersion)"
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -4029,8 +4079,8 @@
  *         '200': { description: 'the entry back in Draft' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'version conflict (stale expectedVersion)' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/dimensions:
  *     get:
@@ -4047,6 +4097,7 @@
  *       responses:
  *         '200': { description: 'definitions each with their values' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/dimensions/definitions:
  *     post:
@@ -4068,6 +4119,8 @@
  *         '201': { description: 'the created definition' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/dimensions/definitions/{id}/archive:
  *     post:
@@ -4089,7 +4142,8 @@
  *         '200': { description: 'the archived definition' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/dimensions/values:
  *     post:
@@ -4113,7 +4167,8 @@
  *         '201': { description: 'the created value' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/dimensions/values/{id}/archive:
  *     post:
@@ -4135,7 +4190,8 @@
  *         '200': { description: 'the archived value' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/dimensions/reports/balance:
  *     get:
@@ -4154,7 +4210,7 @@
  *       responses:
  *         '200': { description: 'buckets per dimension value with account rows + rollup' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/dimensions/reports/result:
  *     get:
@@ -4172,7 +4228,7 @@
  *       responses:
  *         '200': { description: 'result buckets per dimension value with rollup' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  */
 
 /**
@@ -5056,9 +5112,11 @@
  *         '200': { description: 'unitId, bankChargeExpenseAccountId, bankChargeIncomeAccountId, depreciationExpenseAccountId, disposalGainAccountId, disposalLossAccountId, depreciationParteBAccountId, providerFeeExpenseAccountId, updatedAt' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     put:
  *       summary: Update the per-scope accounting settings (bank charge + fixed-asset accounts, F7 item 8 + BE-INCR-FIXED-ASSETS item 5/24)
  *       description: >-
+ *         409: POLICY_APPROVAL_REQUIRED — escopo com contador responsável ativo; proponha em POST /api/accounting/policy-versions (F-POL-4 b)
  *         Account ids of this scope; the service validates existence, acceptsEntries and nature
  *         (Expense for the paid charge, Revenue for the received charge; the 2 fixed-asset gain/loss
  *         accounts have no fixed nature). The account CODES are the accountant decision (BRIEF F7 §5) —
@@ -5087,13 +5145,15 @@
  *         '200': { description: 'the updated settings view' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '409': { description: 'POLICY_APPROVAL_REQUIRED — escopo com contador responsável ativo; proponha em POST /api/accounting/policy-versions (F-POL-4 b)' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *
  *   /api/accounting/fiscal-profile:
  *     get:
  *       summary: Read the unit fiscal profile (BE-INCR-NFE-COST-REGIME, nó X6, F-X6-1 a)
  *       description: >-
+ *         404: fiscal_profile_missing
  *         The axes that decide the NF-e acquisition cost (D3): icmsContribuinte (ICMS credit on
  *         purchase for resale), pisCofinsRegime (credit only under NAO_CUMULATIVO), the 3 exception
  *         flags with conservative defaults (F-X6-3 b — cédula 14/09), the recoverable-tax accounts
@@ -5107,10 +5167,11 @@
  *         '200': { description: 'FiscalProfileView' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { description: 'fiscal_profile_missing' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     put:
  *       summary: Create or replace the unit fiscal profile (idempotent upsert, item 4)
  *       description: >-
+ *         409: POLICY_APPROVAL_REQUIRED — escopo com contador responsável ativo; proponha em POST /api/accounting/policy-versions (F-POL-4 b)
  *         Consistency (LC 123/2006 art. 23): SIMPLES cannot combine with icmsContribuinte=true nor
  *         pisCofinsRegime≠SIMPLES; a normal regime cannot use pisCofinsRegime=SIMPLES. Recoverable-tax
  *         account ids must be existing Asset leaves of this scope (the codes are the accountant's).
@@ -5158,7 +5219,8 @@
  *         '200': { description: 'FiscalProfileView (inclui emissao.completo/faltantes/pendingExternalValidation — BE-INCR-DFE item 7)' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '409': { description: 'POLICY_APPROVAL_REQUIRED — escopo com contador responsável ativo; proponha em POST /api/accounting/policy-versions (F-POL-4 b)' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *
  *   /api/accounting/depreciation-rates:
@@ -5555,6 +5617,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/service-fiscal-profiles/{serviceRef}:
  *     get:
@@ -5568,7 +5631,7 @@
  *         '200': { description: 'ServiceFiscalProfileView' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     put:
  *       summary: Create or replace a service fiscal profile (idempotent upsert)
  *       description: >-
@@ -5599,6 +5662,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *     delete:
  *       summary: Soft-delete a service fiscal profile (rename-on-delete frees the key)
  *       tags: [Accounting]
@@ -5611,7 +5676,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/iss-beneficios-municipais:
  *     get:
@@ -5704,6 +5770,7 @@
  *     get:
  *       summary: Read the company fiscal profile of a calendar year (BE-INCR-FISCAL-OBLIGATION-PROFILE, nó X13)
  *       description: >-
+ *         404: company_fiscal_profile_missing
  *         One profile per company (owner = CNPJ raiz, R8) and year (F-OBP-8 a). unitId only resolves the
  *         scope and the policy. 404 company_fiscal_profile_missing when the year has no profile.
  *       tags: [Accounting]
@@ -5716,7 +5783,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { description: 'company_fiscal_profile_missing' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     put:
  *       summary: Create or replace the company fiscal profile of a year (idempotent upsert)
  *       description: >-
@@ -5769,7 +5836,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *     delete:
  *       summary: Soft-delete the company fiscal profile of a year
  *       tags: [Accounting]
@@ -5782,7 +5850,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/company-fiscal-profile/{ano}/ecf-transmitida:
  *     post:
@@ -5811,7 +5880,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/company-fiscal-profile/{ano}/obligations:
  *     get:
@@ -5831,11 +5901,13 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/company-fiscal-profile/{ano}/copiar-de/{anoAnterior}:
  *     post:
  *       summary: Copy the company fiscal profile from a previous year (F-XP-2/3 a)
  *       description: >-
+ *         409: company_fiscal_profile_exists
  *         Copies everything except the book order number (numOrd changes every year) and the ECF receipt and
  *         lock. 404 when the source year has no profile; 409 company_fiscal_profile_exists when the target
  *         year already has one (use PUT to edit).
@@ -5858,8 +5930,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'company_fiscal_profile_exists' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/company-signers:
  *     get:
@@ -5873,6 +5945,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     post:
  *       summary: Register a company signer (legal representative, partner, administrator)
  *       description: >-
@@ -5901,6 +5974,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/company-signers/{id}:
  *     get:
@@ -5914,7 +5989,7 @@
  *         '200': { description: 'CompanySignerView' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     put:
  *       summary: Replace a company signer
  *       tags: [Accounting]
@@ -5933,9 +6008,11 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *     delete:
  *       summary: Soft-delete a company signer; 409 signer_in_use when it is the legal representative of a live profile
+ *       description: "409: signer_in_use"
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -5945,8 +6022,8 @@
  *         '200': { description: 'deleted' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'signer_in_use' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/nfe/dfe/status:
  *     get:
@@ -6274,6 +6351,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     post:
  *       summary: Register an accountant contact (nome, e-mail, CRC)
  *       description: >-
@@ -6291,6 +6369,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/contacts/{id}:
  *     patch:
@@ -6309,7 +6389,8 @@
  *         '400': { description: 'DTO inválido OU contactId do corpo divergente do id da rota' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *     delete:
  *       summary: Archive an accountant contact (soft-delete, nunca hard-delete)
  *       tags: [Accounting]
@@ -6322,12 +6403,14 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/accountant-assignments:
  *     post:
  *       summary: Convida o contador responsável do escopo (BE-INCR-ACCOUNTANT-GOVERNANCE, F-GOV-8 a)
  *       description: >-
+ *         404: Contato não encontrado no escopo · 409: ASSIGNMENT_PENDING_EXISTS
  *         O dono aponta um usuário já cadastrado pelo e-mail e um contato do escopo (fonte do CRC, gravado em
  *         snapshot). Nasce PENDING; só governa depois do aceite do contador.
  *       tags: [Accounting]
@@ -6342,8 +6425,8 @@
  *         '400': { description: 'DTO inválido, ACCOUNTANT_USER_NOT_FOUND ou SELF_ASSIGNMENT' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { description: 'Contato não encontrado no escopo' }
- *         '409': { description: 'ASSIGNMENT_PENDING_EXISTS' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *     get:
  *       summary: Histórico de atribuições do escopo (dono), do mais novo ao mais velho
  *       tags: [Accounting]
@@ -6355,6 +6438,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/accountant-assignments/mine:
  *     get:
@@ -6409,6 +6493,7 @@
  *     post:
  *       summary: O dono propõe mudança de parâmetro governado (BE-INCR-ACCOUNTING-POLICY-VERSION, F-POL-3 a)
  *       description: >-
+ *         409: POLICY_NO_ACCOUNTANT (sem contador ativo — use o PUT)
  *         Com contador responsável ACTIVE, FiscalProfile e AccountingScopeSettings só mudam por proposta aprovada
  *         (F-POL-2 b). O payload é o corpo do PUT do alvo sem unitId (FISCAL_PROFILE = substituição completa;
  *         SCOPE_SETTINGS = patch). Uma PROPOSED anterior do mesmo alvo vira SUPERSEDED (F-POL-6 a).
@@ -6424,7 +6509,8 @@
  *         '400': { description: 'DTO inválido ou conta referenciada inválida no escopo' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '409': { description: 'POLICY_NO_ACCOUNTANT (sem contador ativo — use o PUT)' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *     get:
  *       summary: Histórico de versões de política do escopo, mais nova primeiro (dono ou contador ativo do par)
  *       tags: [Accounting]
@@ -6439,6 +6525,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { description: 'ForbiddenError ou ACCOUNTANT_NOT_ASSIGNED' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/policy-versions/{id}:
  *     get:
@@ -6454,12 +6541,13 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { description: 'ForbiddenError ou ACCOUNTANT_NOT_ASSIGNED' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/policy-versions/{id}/approve:
  *     post:
  *       summary: O contador ativo aprova e aplica a proposta, na mesma transação (F-GOV-7 a+ — decide, não propõe)
  *       description: >-
+ *         409: POLICY_VERSION_STATUS_CHANGED (já decidida ou substituída)
  *         PROPOSED → APPLIED + aplicação no alvo. Se a aplicação falhar (conta apagada, regime da empresa mudado),
  *         nada muda e a proposta segue PROPOSED.
  *       tags: [Accounting]
@@ -6476,12 +6564,13 @@
  *         '400': { description: 'DTO inválido ou payload não aplicável agora' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { description: 'ACCOUNTANT_REQUIRED ou ACCOUNTANT_NOT_ASSIGNED' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'POLICY_VERSION_STATUS_CHANGED (já decidida ou substituída)' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/policy-versions/{id}/reject:
  *     post:
  *       summary: O contador ativo rejeita a proposta, com motivo
+ *       description: "409: POLICY_VERSION_STATUS_CHANGED"
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -6496,8 +6585,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { description: 'ACCOUNTANT_REQUIRED ou ACCOUNTANT_NOT_ASSIGNED' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'POLICY_VERSION_STATUS_CHANGED' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/delivery/build:
  *     post:
@@ -6518,7 +6607,7 @@
  *         '400': { description: 'DTO inválido, job que não é ECD/ECF, job sem sha256 ou ano não fechado' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/delivery/confirm:
  *     post:
@@ -6539,7 +6628,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '429': { description: 'Rate limit por escopo (ator + unidade) excedido - DELIVERY_CONFIRM_RATE_LIMIT por 15 min, padrao 60' }
  *
  *   /api/accounting/delivery:
@@ -6562,11 +6652,13 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/delivery/profile:
  *     get:
  *       summary: Le o perfil de pacote sugerido de um contato (C6b PR-3, F-C6b-2 a)
  *       description: >-
+ *         404: Contato nao encontrado ou arquivado (cross-tenant tambem cai aqui)
  *         kinds que a UI pre-marca no build - SUGESTAO, nao gate. null (nunca salvo) devolve
  *         kinds vazio, nunca 404. Segmento estatico registrado ANTES de /delivery/{id}.
  *       tags: [Accounting]
@@ -6579,10 +6671,11 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { description: 'Contato nao encontrado ou arquivado (cross-tenant tambem cai aqui)' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     put:
  *       summary: Grava o perfil de pacote sugerido de um contato (C6b PR-3, F-C6b-2 a)
  *       description: >-
+ *         404: Contato nao encontrado ou arquivado
  *         Perfil e sugestao, nunca gate - o corpo do build/confirm pode divergir do perfil salvo e
  *         passa normalmente. Quem valida extraJobIds e sempre resolveExtras do build/confirm.
  *       tags: [Accounting]
@@ -6600,7 +6693,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { description: 'Contato nao encontrado ou arquivado' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/delivery/{id}/retry:
  *     post:
@@ -6622,7 +6716,8 @@
  *         '400': { description: 'DTO inválido, deliveryId divergente do id da rota, ou status diferente de FAILED' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/delivery/{id}:
  *     get:
@@ -6637,7 +6732,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  */
 export {};
 
@@ -6650,6 +6745,7 @@ export {};
  *     post:
  *       summary: Abre a revisao profissional sobre um par (ou um) de jobs SPED EXPORTED
  *       description: >-
+ *         409: REVIEW_ALREADY_OPEN
  *         Pelo menos um de ecdJobId/ecfJobId; ambos do escopo, EXPORTED, com periodo gravado e do
  *         mesmo exercicio (year). Uma revisao por par (F-C11-5) - repetir devolve 409 REVIEW_ALREADY_OPEN.
  *       tags: [Accounting]
@@ -6664,8 +6760,8 @@ export {};
  *         '400': { description: 'DTO invalido, job que nao e ECD/ECF, job nao EXPORTED ou de outro ano' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'REVIEW_ALREADY_OPEN' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *     get:
  *       summary: Lista revisoes do escopo (filtros year, status)
  *       tags: [Accounting]
@@ -6680,6 +6776,7 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/reviews/{id}:
  *     get:
@@ -6695,11 +6792,12 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/reviews/{id}/findings:
  *     post:
  *       summary: Registra um achado (BLOCKER | NOTE) em revisao OPEN
+ *       description: "409: REVIEW_NOT_OPEN"
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -6714,12 +6812,13 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'REVIEW_NOT_OPEN' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/reviews/{id}/findings/{findingId}/resolve:
  *     post:
  *       summary: Resolve o achado por DATA_EDIT (ponteiro para o dado editado no servico dono) ou NO_ACTION (nota obrigatoria)
+ *       description: "409: REVIEW_NOT_OPEN | FINDING_ALREADY_RESOLVED"
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -6735,13 +6834,14 @@ export {};
  *         '400': { description: 'DTO invalido ou alvo inexistente no escopo' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'REVIEW_NOT_OPEN | FINDING_ALREADY_RESOLVED' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/reviews/{id}/findings/{findingId}/adjustment:
  *     post:
  *       summary: Lancamento de acerto extemporaneo via PostingService (idempotente por findingId)
  *       description: >-
+ *         409: REVIEW_NOT_OPEN | FINDING_ALREADY_RESOLVED
  *         postingDate em periodo OPEN (F-C11-4 a). sourceType=review_adjustment, sourceId=findingId -
  *         a segunda chamada devolve o MESMO entryId. reverseOriginal so com register=I200 (locator=entryId).
  *       tags: [Accounting]
@@ -6759,13 +6859,14 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'REVIEW_NOT_OPEN | FINDING_ALREADY_RESOLVED' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '422': { description: 'ACCOUNTING_PERIOD_NOT_OPEN' }
  *
  *   /api/accounting/reviews/{id}/jobs:
  *     patch:
  *       summary: Troca o par de jobs pelo regerado (o par antigo fica no evento review.jobs_replaced)
+ *       description: "409: REVIEW_NOT_OPEN | REVIEW_ALREADY_OPEN"
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -6780,13 +6881,14 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'REVIEW_NOT_OPEN | REVIEW_ALREADY_OPEN' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/reviews/{id}/sign-off:
  *     post:
  *       summary: Sign-off do profissional (nome + CRC na mascara CFC + declaracao)
  *       description: >-
+ *         409: REVIEW_NOT_OPEN | REVIEW_STALE
  *         409 REVIEW_STALE se houver BLOCKER sem resolucao ou achado resolvido depois da geracao dos
  *         jobs - regere e troque o par antes. A entrega ao contador (delivery) exige SIGNED_OFF.
  *       tags: [Accounting]
@@ -6803,12 +6905,13 @@ export {};
  *         '400': { description: 'DTO invalido ou CRC fora da mascara' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'REVIEW_NOT_OPEN | REVIEW_STALE' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/reviews/{id}/reject:
  *     post:
  *       summary: Rejeita a revisao - o pacote nao deve ser entregue (delivery devolve REVIEW_REJECTED)
+ *       description: "409: REVIEW_NOT_OPEN"
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -6823,8 +6926,8 @@ export {};
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'REVIEW_NOT_OPEN' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  */
 
 /**

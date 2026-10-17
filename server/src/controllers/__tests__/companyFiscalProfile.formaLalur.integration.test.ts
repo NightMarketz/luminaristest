@@ -7,7 +7,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 const UNIT_PERFIL = 'unit-forma-a';
@@ -31,6 +31,8 @@ describe('perfil fiscal × e-Lalur do ano (X7 Fase B PR-4, itens 1–2; teste 26
   beforeAll(async () => {
     pushTestSchema();
     dono = await prisma.user.create({ data: { name: 'forma', username: 'forma-lalur', email: 'forma-lalur@test.local', password: 'x', role: 'USER' } });
+    await seedUnit({ userId: dono.id, id: UNIT_PERFIL });
+    await seedUnit({ userId: dono.id, id: UNIT_LALUR });
   }, 120000);
 
   afterAll(async () => {

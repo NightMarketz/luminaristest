@@ -3,7 +3,6 @@ import { getUserContextFromRequest } from '../lib/authUtils';
 import { handleApiError } from '../lib/apiUtils';
 import { UnauthorizedError, ValidationError } from '../lib/errors';
 import { getFactory } from '../lib/factory';
-import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import {
   PostEntrySchema,
   ReverseEntrySchema,
@@ -38,7 +37,7 @@ export const postEntry = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getPostingService().postEntry(scope, parsed.data);
     return res.status(201).json({ success: true, data });
   } catch (error) {
@@ -54,7 +53,7 @@ export const reverseEntry = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getPostingService().reverseEntry(scope, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -70,7 +69,7 @@ export const getTrialBalance = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const data = await getFactory().getAccountingReportService().trialBalance(scope);
     return res.json({ success: true, data });
   } catch (error) {
@@ -86,7 +85,7 @@ export const getAccountLedger = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const data = await getFactory()
       .getAccountingReportService()
       .accountLedger(scope, parsed.data.accountCode);
@@ -104,7 +103,7 @@ export const listAccounts = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const accounts = await getFactory().getPostingService().listAccounts(scope);
     return res.json({ success: true, data: { accounts } });
   } catch (error) {
@@ -120,7 +119,7 @@ export const listEntries = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const result = await getFactory().getPostingService().listEntries(scope, {
       page: parsed.data.page,
       limit: parsed.data.limit,
@@ -135,13 +134,14 @@ export const listEntries = async (req: Request, res: Response) => {
  * /api/accounting/journal-entries/{entryId}/receipt:
  *   get:
  *     summary: Comprovante de lançamento (PDF) for a single journal entry
+ *     description: "404: Entry not found in scope"
  *     parameters:
  *       - { in: path, name: entryId, required: true, schema: { type: string } }
  *       - { in: query, name: unitId, required: true, schema: { type: string } }
  *     responses:
  *       200: { description: PDF receipt (application/pdf) }
  *       403: { description: Not authorized to read the ledger }
- *       404: { description: Entry not found in scope }
+ *       '404': { $ref: '#/components/responses/UnitNotFound' }
  */
 export const getEntryReceipt = async (req: Request, res: Response) => {
   try {
@@ -151,7 +151,7 @@ export const getEntryReceipt = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const { buffer, fileName, mimeType } = await getFactory()
       .getReceiptService()
       .generateEntryReceipt(scope, parsed.data.entryId);
@@ -173,7 +173,7 @@ export const createAccount = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const account = await getFactory().getPostingService().createAccount(scope, parsed.data);
     return res.status(201).json({ success: true, data: { account } });
   } catch (error) {
@@ -193,7 +193,7 @@ export const deleteAccount = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     await getFactory().getPostingService().deleteAccount(scope, id);
     return res.json({ success: true });
   } catch (error) {
@@ -215,7 +215,7 @@ export const setAccountRequiresDimension = async (req: Request, res: Response) =
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const account = await getFactory()
       .getPostingService()
       .setAccountRequiresDimension(scope, id, parsed.data.requiresDimension);
@@ -239,6 +239,7 @@ export const setAccountRequiresDimension = async (req: Request, res: Response) =
  *     responses:
  *       200: { description: Balance sheet report }
  *       400: { description: Validation error or FROM_DATE_NOT_SUPPORTED_IN_INCR4 }
+ *       '404': { $ref: '#/components/responses/UnitNotFound' }
  */
 export const getBalanceSheet = async (req: Request, res: Response) => {
   try {
@@ -254,7 +255,7 @@ export const getBalanceSheet = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     // asOf is end-of-day UTC so the full day is included in the snapshot. Ausente ⇒ undefined:
     // quem decide "hoje" é o Service, no fuso do escopo (F1(a), GAP-MAP nº 5).
     const asOf = parsed.data.asOf ? new Date(parsed.data.asOf + 'T23:59:59.999Z') : undefined;
@@ -275,6 +276,7 @@ export const getBalanceSheet = async (req: Request, res: Response) => {
  *     responses:
  *       200: { description: Income statement report }
  *       400: { description: Validation error or FROM_DATE_NOT_SUPPORTED_IN_INCR4 }
+ *       '404': { $ref: '#/components/responses/UnitNotFound' }
  */
 export const getIncomeStatement = async (req: Request, res: Response) => {
   try {
@@ -289,7 +291,7 @@ export const getIncomeStatement = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const asOf = parsed.data.asOf ? new Date(parsed.data.asOf + 'T23:59:59.999Z') : undefined;
     const data = await getFactory().getAccountingReportService().incomeStatement(scope, asOf);
     return res.json({ success: true, data });
@@ -308,6 +310,7 @@ export const getIncomeStatement = async (req: Request, res: Response) => {
  *     responses:
  *       200: { description: Cash-flow statement report }
  *       400: { description: Validation error }
+ *       '404': { $ref: '#/components/responses/UnitNotFound' }
  */
 export const getCashFlow = async (req: Request, res: Response) => {
   try {
@@ -317,7 +320,7 @@ export const getCashFlow = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const asOf = parsed.data.asOf ? new Date(parsed.data.asOf + 'T23:59:59.999Z') : undefined;
     const data = await getFactory().getCashFlowReportService().cashFlowStatement(scope, asOf);
     return res.json({ success: true, data });
@@ -337,6 +340,7 @@ export const getCashFlow = async (req: Request, res: Response) => {
  *     responses:
  *       200: { description: Comparative trial balance report }
  *       400: { description: Validation error }
+ *       '404': { $ref: '#/components/responses/UnitNotFound' }
  */
 export const getPeriodComparison = async (req: Request, res: Response) => {
   try {
@@ -354,7 +358,7 @@ export const getPeriodComparison = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScopeInternal(user, unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, unitId, { access: 'read' });
     const data = await getFactory()
       .getPeriodComparisonReportService()
       .comparativeTrialBalance(scope, parsed.data.asOfCurrent, parsed.data.asOfPrevious);
@@ -375,6 +379,7 @@ export const getPeriodComparison = async (req: Request, res: Response) => {
  *     responses:
  *       200: { description: Daily journal report }
  *       400: { description: Validation error (includes from > to) }
+ *       '404': { $ref: '#/components/responses/UnitNotFound' }
  */
 export const getDailyJournal = async (req: Request, res: Response) => {
   try {
@@ -384,7 +389,7 @@ export const getDailyJournal = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const data = await getFactory()
       .getDailyJournalReportService()
       .dailyJournal(scope, { from: parsed.data.from, to: parsed.data.to });
@@ -405,6 +410,7 @@ export const getDailyJournal = async (req: Request, res: Response) => {
  *     responses:
  *       200: { description: "Aging report (grupos por contraparte com totais por faixa) + bloco tieOut — a prova subledger↔razão: total do aging vs saldo da conta de controle (2.1.2 p/ payable, 1.1.5 p/ receivable) normalizado pela natureza. tieOut é null quando não é emitível (asOf ≠ hoje, ou conta de controle ausente); nesse caso tieOutSkippedReason diz por quê." }
  *       400: { description: Validation error }
+ *       '404': { $ref: '#/components/responses/UnitNotFound' }
  */
 export const getAging = async (req: Request, res: Response) => {
   try {
@@ -414,7 +420,7 @@ export const getAging = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const data = await getFactory()
       .getAgingReportService()
       .aging(scope, { kind: parsed.data.kind, asOf: parsed.data.asOf });
@@ -434,6 +440,7 @@ export const getAging = async (req: Request, res: Response) => {
  *     responses:
  *       200: { description: "Projeção diária de caixa (openingBalanceCents derivado do razão + uma linha por dia, cada uma com inflow/outflow/net/saldo acumulado e o drill de documentos AP/AR que a compõem). NÃO cobre títulos já vencidos (dueDate < asOf) — ver Aging para posição de atraso." }
  *       400: { description: Validation error }
+ *       '404': { $ref: '#/components/responses/UnitNotFound' }
  */
 export const getCashForecast = async (req: Request, res: Response) => {
   try {
@@ -443,7 +450,7 @@ export const getCashForecast = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const data = await getFactory()
       .getCashForecastReportService()
       .forecast(scope, { asOf: parsed.data.asOf });
@@ -462,6 +469,7 @@ export const getCashForecast = async (req: Request, res: Response) => {
  *     responses:
  *       200: { description: "Tie-out report (3 checks com differenceCents inteiro exato e status OK/DIVERGENT)" }
  *       400: { description: "Validation error" }
+ *       '404': { $ref: '#/components/responses/UnitNotFound' }
  */
 export const getTieOutDiagnostic = async (req: Request, res: Response) => {
   try {
@@ -471,7 +479,7 @@ export const getTieOutDiagnostic = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const data = await getFactory().getTieOutDiagnosticService().tieOut(scope);
     return res.json({ success: true, data });
   } catch (error) {
@@ -496,7 +504,9 @@ export const getVerifyAuditChain = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    // I6 (dono, 2026-10-16, "Leitura nas 3"): 'read' — o getOrCreateHead só grava a cabeça da trilha de auditoria,
+    // não lançamento; em unidade apagada a verificação segue funcionando.
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const result = await getFactory().getAuditService().verifyAuditChain(scope);
     const data = {
       ok:            result.ok,
@@ -527,6 +537,7 @@ export const getVerifyAuditChain = async (req: Request, res: Response) => {
  *       - { in: query, name: year, required: true, schema: { type: integer } }
  *     responses:
  *       200: { description: List of periods }
+ *       '404': { $ref: '#/components/responses/UnitNotFound' }
  */
 export const listPeriods = async (req: Request, res: Response) => {
   try {
@@ -539,7 +550,7 @@ export const listPeriods = async (req: Request, res: Response) => {
     const owner = GovernanceOwnerSchema.safeParse(req.query);
     if (!owner.success) return res.status(400).json({ success: false, error: owner.error.flatten() });
     // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo do par (contador, ownerUserId).
-    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, unitId, owner.data.ownerUserId);
+    const scope = await getFactory().getAccountingScopeResolver().resolveGovernance(user, unitId, owner.data.ownerUserId, { access: 'read' });
     const data = await getFactory().getPeriodService().listPeriods(scope, year);
     return res.json({ success: true, data });
   } catch (error) {
@@ -558,6 +569,8 @@ export const listPeriods = async (req: Request, res: Response) => {
  *           schema: { $ref: '#/components/schemas/SeedYearInput' }
  *     responses:
  *       201: { description: Periods seeded }
+ *       '404': { $ref: '#/components/responses/UnitNotFound' }
+ *       '409': { $ref: '#/components/responses/UnitDeleted' }
  */
 export const seedYear = async (req: Request, res: Response) => {
   try {
@@ -567,7 +580,7 @@ export const seedYear = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getPeriodService().seedYear(scope, parsed.data.year);
     return res.status(201).json({ success: true, data });
   } catch (error) {
@@ -588,6 +601,8 @@ export const seedYear = async (req: Request, res: Response) => {
  *           schema: { type: object, required: [unitId], properties: { unitId: { type: string } } }
  *     responses:
  *       200: { description: Period opened }
+ *       '404': { $ref: '#/components/responses/UnitNotFound' }
+ *       '409': { $ref: '#/components/responses/UnitDeleted' }
  */
 export const openPeriod = async (req: Request, res: Response) => {
   try {
@@ -598,7 +613,7 @@ export const openPeriod = async (req: Request, res: Response) => {
     const owner = GovernanceOwnerSchema.safeParse(req.body ?? {});
     if (!owner.success) return res.status(400).json({ success: false, error: owner.error.flatten() });
     // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo do par (contador, ownerUserId).
-    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, unitId, owner.data.ownerUserId);
+    const scope = await getFactory().getAccountingScopeResolver().resolveGovernance(user, unitId, owner.data.ownerUserId, { access: 'write' });
     const data = await getFactory().getPeriodService().openPeriod(scope, req.params.id);
     return res.json({ success: true, data });
   } catch (error) {
@@ -619,6 +634,8 @@ export const openPeriod = async (req: Request, res: Response) => {
  *           schema: { $ref: '#/components/schemas/ClosePeriodInput' }
  *     responses:
  *       200: { description: Period soft-closed }
+ *       '404': { $ref: '#/components/responses/UnitNotFound' }
+ *       '409': { $ref: '#/components/responses/UnitDeleted' }
  */
 export const softClosePeriod = async (req: Request, res: Response) => {
   try {
@@ -628,7 +645,7 @@ export const softClosePeriod = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getPeriodService().softClosePeriod(scope, req.params.id, parsed.data.reason);
     return res.json({ success: true, data });
   } catch (error) {
@@ -649,6 +666,8 @@ export const softClosePeriod = async (req: Request, res: Response) => {
  *           schema: { $ref: '#/components/schemas/ClosePeriodInput' }
  *     responses:
  *       200: { description: Period hard-closed }
+ *       '404': { $ref: '#/components/responses/UnitNotFound' }
+ *       '409': { $ref: '#/components/responses/UnitDeleted' }
  */
 export const hardClosePeriod = async (req: Request, res: Response) => {
   try {
@@ -658,7 +677,7 @@ export const hardClosePeriod = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getPeriodService().hardClosePeriod(scope, req.params.id, parsed.data.reason);
     return res.json({ success: true, data });
   } catch (error) {
@@ -679,6 +698,8 @@ export const hardClosePeriod = async (req: Request, res: Response) => {
  *           schema: { $ref: '#/components/schemas/ReopenPeriodInput' }
  *     responses:
  *       200: { description: Period reopened }
+ *       '404': { $ref: '#/components/responses/UnitNotFound' }
+ *       '409': { $ref: '#/components/responses/UnitDeleted' }
  */
 export const reopenPeriod = async (req: Request, res: Response) => {
   try {
@@ -689,7 +710,7 @@ export const reopenPeriod = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
     // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo do par (contador, ownerUserId).
-    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, parsed.data.unitId, parsed.data.ownerUserId);
+    const scope = await getFactory().getAccountingScopeResolver().resolveGovernance(user, parsed.data.unitId, parsed.data.ownerUserId, { access: 'write' });
     const data = await getFactory().getPeriodService().reopenPeriod(scope, req.params.id, parsed.data.reason);
     return res.json({ success: true, data });
   } catch (error) {

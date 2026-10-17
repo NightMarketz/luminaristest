@@ -6,7 +6,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { ApplicationFactory } from '@/lib/factory';
 import { LegalParameterService } from '@/features/legalParameters/services/LegalParameterService';
@@ -19,6 +19,7 @@ type Cenario = { user: { id: string; username: string }; unit: string };
 const cenario = async (nome: string): Promise<Cenario> => {
   const u = await prisma.user.create({ data: { name: nome, username: nome, email: `${nome}@test.local`, password: 'x', role: 'USER' } });
   const c = { user: { id: u.id, username: u.username }, unit: `unit-${nome}` };
+  await seedUnit({ userId: u.id, id: c.unit });
   await f().getPostingService().ensureChartOfAccounts(resolveAccountingScopeInternal({ userId: u.id }, c.unit));
   return c;
 };

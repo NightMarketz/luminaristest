@@ -25,7 +25,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { signNfeForTest } from '@test/helpers/nfeSignature';
 
 const app = makeApp();
@@ -72,6 +72,7 @@ describe('SIG-NFE — import de compra com <Signature> que não confere', () => 
   beforeAll(async () => {
     pushTestSchema();
     dono = await prisma.user.create({ data: { name: 'sig', username: 'sig-dono', email: 'sig@test.local', password: 'x', role: 'USER' } });
+    await seedUnit({ userId: dono.id, id: UNIT });
     await prisma.accountingPeriod.create({ data: { userId: dono.id, unitId: UNIT, year: 2025, month: 7, status: 'OPEN', openedAt: new Date(), openedById: dono.id } });
     for (const [code, name, nature] of [['1.1.6', 'Estoques', 'Asset'], ['2.1.2', 'Fornecedores a Pagar', 'Liability'], ['4.1', 'Despesas', 'Expense']]) {
       await prisma.account.create({ data: { userId: dono.id, unitId: UNIT, code, name, nature, acceptsEntries: true } });

@@ -24,7 +24,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { normalizeCounterpartyName } from '@/features/accounting/models/Counterparty.model';
 
 const app = makeApp();
@@ -46,6 +46,7 @@ describe('accountingController.getCashForecast — contrato HTTP em SQLite real 
     pushTestSchema();
     donoA = await criarUsuario('cash-forecast-http-a');
     donoB = await criarUsuario('cash-forecast-http-b');
+    await seedUnit({ userId: donoA.id, id: UNIT });
 
     // Fixtures do dono A: conta de despesa/receita + contraparte + 1 payable + 1 receivable, ambos
     // com dueDate dentro da janela [AS_OF, AS_OF+90].
@@ -87,12 +88,11 @@ describe('accountingController.getCashForecast — contrato HTTP em SQLite real 
       .set(authHeader(donoB))
       .query({ unitId: UNIT, asOf: AS_OF });
 
-    expect(doB.status).toBe(200);
-    const idsB = doB.body.data.lines.flatMap((l: { documents: { id: string }[] }) => l.documents.map((d) => d.id));
-    expect(idsB).not.toContain('p-cf-http-a');
-    expect(idsB).not.toContain('r-cf-http-a');
-    expect(doB.body.data.totalInflowCents).toBe('0');
-    expect(doB.body.data.totalOutflowCents).toBe('0');
+    // I6: outro dono → 404 UNIT_NOT_FOUND (antes: 200 com os títulos de A ausentes e totais '0')
+    expect(doB.status).toBe(404);
+    expect(doB.body.code).toBe('UNIT_NOT_FOUND');
+    expect(JSON.stringify(doB.body)).not.toContain('p-cf-http-a');
+    expect(JSON.stringify(doB.body)).not.toContain('r-cf-http-a');
 
     // Controle: o PRÓPRIO dono enxerga — a ausência acima é a guarda, não um endpoint quebrado.
     const doA = await request(app)

@@ -2,7 +2,6 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import {
   AccountingContactScopeQuerySchema,
   RegisterContactSchema,
@@ -22,7 +21,7 @@ export const listAccountingContacts = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = AccountingContactScopeQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const data = await getFactory().getAccountingContactService().listContacts(scope);
     return res.json({ success: true, data });
   } catch (error) {
@@ -37,7 +36,7 @@ export const registerAccountingContact = async (req: Request, res: Response) => 
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = RegisterContactSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getAccountingContactService().registerContact(scope, parsed.data);
     return res.status(201).json({ success: true, data });
   } catch (error) {
@@ -64,7 +63,7 @@ export const updateAccountingContact = async (req: Request, res: Response) => {
         error: `contactId do corpo ('${parsed.data.contactId}') diverge do :id da rota ('${req.params.id}').`,
       });
     }
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory()
       .getAccountingContactService()
       .updateContact(scope, req.params.id, parsed.data);
@@ -81,7 +80,7 @@ export const archiveAccountingContact = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = AccountingContactScopeQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getAccountingContactService().archiveContact(scope, req.params.id);
     return res.json({ success: true, data });
   } catch (error) {

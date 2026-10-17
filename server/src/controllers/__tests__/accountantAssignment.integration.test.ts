@@ -7,13 +7,14 @@
 import request from 'supertest';
 import { Role } from '@/features/users/models/User.model';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, resetDb, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, resetDb, authHeader, seedUnit } from '@test/helpers';
 import { AccountingPeriodRepository } from '@/features/accounting/repositories/AccountingPeriodRepository';
 import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { getFactory } from '@/lib/factory';
 
 const app = makeApp();
 const UNIT = 'unit-gov';
+const UNIT_B = `${UNIT}-b`; // I6: id de unidade é global — o 2º dono tem a sua
 const ANO = 2027;
 
 type Actor = { id: string; username: string; role?: Role };
@@ -28,16 +29,16 @@ const criarUsuario = async (username: string, role: Role = Role.USER): Promise<A
   return { id: u.id, username: u.username, role };
 };
 
-const criarContato = (userId: string) =>
+const criarContato = (userId: string, unitId: string = UNIT) =>
   prisma.accountingContact.create({
     data: {
-      userId, unitId: UNIT, name: 'Maria Contadora', email: 'maria@cont.local', cpf: '52998224725',
+      userId, unitId, name: 'Maria Contadora', email: 'maria@cont.local', cpf: '52998224725',
       crcNumber: 'SP-123456/O-1', crcUf: 'SP',
     },
   });
 
-const periodo = (userId: string, month: number, status: 'FUTURE' | 'OPEN' | 'SOFT_CLOSED' | 'HARD_CLOSED') =>
-  prisma.accountingPeriod.create({ data: { userId, unitId: UNIT, year: ANO, month, status } });
+const periodo = (userId: string, month: number, status: 'FUTURE' | 'OPEN' | 'SOFT_CLOSED' | 'HARD_CLOSED', unitId: string = UNIT) =>
+  prisma.accountingPeriod.create({ data: { userId, unitId, year: ANO, month, status } });
 
 const statusDe = async (id: string) => (await prisma.accountingPeriod.findUnique({ where: { id } }))!.status;
 
@@ -58,9 +59,9 @@ async function atribuir(): Promise<string> {
 }
 
 // `owner` = o dono que o contador atende (o par contador×dono identifica a atribuição — decisão do dono 03/10/2026).
-const reabrir = (actor: Actor, id: string, owner?: Actor) =>
+const reabrir = (actor: Actor, id: string, owner?: Actor, unitId: string = UNIT) =>
   request(app).post(`/api/accounting/periods/${id}/reopen`).set(authHeader(actor))
-    .send({ unitId: UNIT, periodId: id, ...(owner && { ownerUserId: owner.id }) });
+    .send({ unitId, periodId: id, ...(owner && { ownerUserId: owner.id }) });
 const abrir = (actor: Actor, id: string, owner?: Actor) =>
   request(app).post(`/api/accounting/periods/${id}/open`).set(authHeader(actor))
     .send({ unitId: UNIT, ...(owner && { ownerUserId: owner.id }) });
@@ -71,6 +72,7 @@ describe('BE-INCR-ACCOUNTANT-GOVERNANCE — contador responsável pelo HTTP', ()
   beforeEach(async () => {
     await resetDb();
     dono = await criarUsuario('gov-dono');
+    await seedUnit({ userId: dono.id, id: UNIT });
     contador = await criarUsuario('gov-contador');
     terceiro = await criarUsuario('gov-terceiro');
   });
@@ -143,7 +145,8 @@ describe('BE-INCR-ACCOUNTANT-GOVERNANCE — contador responsável pelo HTTP', ()
     expect(doContador.status).toBe(200);
     expect(doContador.body.data.map((x: { userId: string }) => x.userId)).toEqual([dono.id]);
     const doTerceiro = await request(app).get(`/api/accounting/${UNIT}/periods?year=${ANO}`).set(authHeader(terceiro));
-    expect(doTerceiro.body.data).toEqual([]);
+    expect(doTerceiro.status).toBe(404); // I6: outro dono → 404 UNIT_NOT_FOUND (antes: 200 com lista vazia)
+    expect(doTerceiro.body.code).toBe('UNIT_NOT_FOUND');
     const terceiroForcando = await request(app).get(url).set(authHeader(terceiro));
     expect(terceiroForcando.status).toBe(403);
     expect(terceiroForcando.body.code).toBe('ACCOUNTANT_NOT_ASSIGNED');
@@ -153,9 +156,11 @@ describe('BE-INCR-ACCOUNTANT-GOVERNANCE — contador responsável pelo HTTP', ()
     const admin = await criarUsuario('gov-admin', Role.ADMIN);
     const p = await periodo(dono.id, 7, 'SOFT_CLOSED');
     const lista = await request(app).get(`/api/accounting/${UNIT}/periods?year=${ANO}`).set(authHeader(admin));
-    expect(lista.body.data).toEqual([]);
+    expect(lista.status).toBe(404); // I6: outro dono → 404 UNIT_NOT_FOUND (antes: 200 com lista vazia)
+    expect(lista.body.code).toBe('UNIT_NOT_FOUND');
     const r = await reabrir(admin, p.id);
-    expect(r.status).toBe(400); // "não encontrado" no silo do admin (caracterização do PeriodService)
+    expect(r.status).toBe(404); // I6: outro dono → 404 UNIT_NOT_FOUND (antes: 400 "não encontrado" no silo do admin)
+    expect(r.body.code).toBe('UNIT_NOT_FOUND');
     expect(await statusDe(p.id)).toBe('SOFT_CLOSED');
   });
 
@@ -268,24 +273,26 @@ describe('BE-INCR-ACCOUNTANT-GOVERNANCE — contador responsável pelo HTTP', ()
 
   it('um contador atende N donos no mesmo unitId: cada ownerUserId leva ao livro do próprio dono', async () => {
     const dono2 = await criarUsuario('gov-dono-2');
+    await seedUnit({ userId: dono2.id, id: UNIT_B });
+    const unitDe = (d: Actor) => (d === dono2 ? UNIT_B : UNIT);
     const svc = getFactory().getAccountantAssignmentService();
     for (const d of [dono, dono2]) {
-      const contato = await criarContato(d.id);
+      const contato = await criarContato(d.id, unitDe(d));
       await prisma.accountantAssignment.create({
         data: {
-          userId: d.id, unitId: UNIT, accountantUserId: contador.id, accountingContactId: contato.id,
+          userId: d.id, unitId: unitDe(d), accountantUserId: contador.id, accountingContactId: contato.id,
           crcNumber: 'SP-123456/O-1', crcUf: 'SP', createdById: d.id, status: 'ACTIVE', activeSlot: 'ACTIVE',
         },
       });
     }
     for (const d of [dono, dono2]) {
-      expect(await svc.resolveGovernanceScope({ userId: contador.id }, UNIT, d.id)).toEqual({
-        ...resolveAccountingScopeInternal({ userId: d.id }, UNIT), actorUserId: contador.id,
+      expect(await svc.resolveGovernanceScope({ userId: contador.id }, unitDe(d), d.id)).toEqual({
+        ...resolveAccountingScopeInternal({ userId: d.id }, unitDe(d)), actorUserId: contador.id,
       });
     }
     const p1 = await periodo(dono.id, 9, 'SOFT_CLOSED');
-    const p2 = await periodo(dono2.id, 9, 'SOFT_CLOSED');
-    expect((await reabrir(contador, p2.id, dono2)).status).toBe(200);
+    const p2 = await periodo(dono2.id, 9, 'SOFT_CLOSED', UNIT_B);
+    expect((await reabrir(contador, p2.id, dono2, UNIT_B)).status).toBe(200);
     expect(await statusDe(p2.id)).toBe('OPEN');
     expect(await statusDe(p1.id)).toBe('SOFT_CLOSED');
   });

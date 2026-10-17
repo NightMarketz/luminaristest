@@ -8,7 +8,7 @@ import { randomBytes } from 'node:crypto';
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { getFactory } from '@/lib/factory';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { ReleaseReportService } from '@/features/accounting/services/ReleaseReportService';
 import { PaymentAccountRepository } from '@/features/accounting/repositories/PaymentAccountRepository';
 import { ReconciliationRepository } from '@/features/accounting/repositories/ReconciliationRepository';
@@ -71,6 +71,7 @@ describe('F5 PR-3 — relatório de liberações → extrato da PaymentAccount �
     process.env.PAYMENT_CREDENTIAL_KEYS = `1:${randomBytes(32).toString('base64')}`;
     process.env.PAYMENT_CREDENTIAL_KEY_ACTIVE = '1';
     dono = await prisma.user.create({ data: { name: 'f5c', username: 'f5-pr3', email: 'f5pr3@test.local', password: 'x', role: 'USER' } });
+    await seedUnit({ userId: dono.id, id: UNIT });
     await prisma.accountingPeriod.create({ data: { userId: dono.id, unitId: UNIT, year: 2026, month: 10, status: 'OPEN', openedAt: new Date(), openedById: dono.id } });
     const conta = (code: string, nature: string) =>
       prisma.account.create({ data: { userId: dono.id, unitId: UNIT, code, name: `Conta ${code}`, nature, acceptsEntries: true } });

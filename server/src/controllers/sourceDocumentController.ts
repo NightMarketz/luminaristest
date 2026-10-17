@@ -2,7 +2,6 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import {
   AttachSourceDocumentSchema,
   ListSourceDocumentsQuerySchema,
@@ -27,6 +26,7 @@ import { makeUploadMiddleware, validateMagicBytes } from '../lib/uploadSecurity'
  *     tags: [Accounting]
  *     summary: Anexa proveniência formal a um lançamento já postado
  *     description: >
+ *       404: Lançamento não encontrado no escopo
  *       Cria um SourceDocument e o vincula ao lançamento, sem repostar e sem escrever valor no
  *       razão. Idempotente pela `externalRef` humana (a chave de acesso da NF-e): reanexar o
  *       mesmo documento ao mesmo lançamento devolve o SourceDocument existente.
@@ -45,7 +45,8 @@ import { makeUploadMiddleware, validateMagicBytes } from '../lib/uploadSecurity'
  *       400: { description: Corpo inválido }
  *       401: { description: Não autenticado }
  *       403: { description: Sem permissão para anexar proveniência }
- *       404: { description: Lançamento não encontrado no escopo }
+ *       '404': { $ref: '#/components/responses/UnitNotFound' }
+ *       '409': { $ref: '#/components/responses/UnitDeleted' }
  */
 export const attachSourceDocument = async (req: Request, res: Response) => {
   try {
@@ -57,7 +58,7 @@ export const attachSourceDocument = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory()
       .getPostingService()
       .attachSourceDocument(scope, req.params.entryId, {
@@ -95,6 +96,7 @@ export const attachSourceDocument = async (req: Request, res: Response) => {
  *       400: { description: Query inválida }
  *       401: { description: Não autenticado }
  *       403: { description: Sem permissão de leitura }
+ *       '404': { $ref: '#/components/responses/UnitNotFound' }
  */
 export const listSourceDocuments = async (req: Request, res: Response) => {
   try {
@@ -106,7 +108,7 @@ export const listSourceDocuments = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const data = await getFactory()
       .getPostingService()
       .listSourceDocuments(scope, req.params.entryId);
@@ -150,6 +152,8 @@ export const sourceDocumentUpload = makeUploadMiddleware(SOURCE_DOCUMENT_MIME_TY
  *       400: { description: Sem arquivo, tipo fora da allowlist ou corpo inválido }
  *       401: { description: Não autenticado }
  *       403: { description: Sem permissão para enviar documentos de origem }
+ *       '404': { $ref: '#/components/responses/UnitNotFound' }
+ *       '409': { $ref: '#/components/responses/UnitDeleted' }
  *       413: { description: Arquivo acima do teto }
  *       415: { description: Conteúdo não confere com o tipo declarado }
  */
@@ -172,7 +176,7 @@ export const createSourceDocumentUpload = async (req: Request, res: Response) =>
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getSourceDocumentUploadService().createFromFile(scope, {
       sourceType: parsed.data.sourceType,
       externalRef: parsed.data.externalRef,

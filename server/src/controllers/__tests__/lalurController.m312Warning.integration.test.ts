@@ -8,7 +8,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 const UNIT = 'unit-m312';
@@ -38,6 +38,7 @@ describe('X4-14 — aviso M312 para ajuste parcial sem lançamentos', () => {
   beforeAll(async () => {
     pushTestSchema();
     dono = await prisma.user.create({ data: { name: 'm312', username: 'm312-dono', email: 'm312@test.local', password: 'x', role: 'USER' } });
+    await seedUnit({ userId: dono.id, id: UNIT });
     for (const month of [1, 2, 3]) {
       await prisma.accountingPeriod.create({ data: { userId: dono.id, unitId: UNIT, year: 2025, month, status: 'OPEN', openedAt: new Date(), openedById: dono.id } });
     }
