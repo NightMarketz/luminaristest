@@ -401,6 +401,8 @@
   "onboardingHideCustomizePanel": "Hide customization panel",
   "onboardingGreetingFailed": "Hi! Something went wrong while starting. Please reload the page.",
   "onboardingTurnFailed": "Sorry, a communication error occurred.",
+  "onboardingSessionExpired": "Your customization expired or was not found. Do you want to customize again or create the system now?",
+  "onboardingSessionConflict": "This customization was changed in another tab. Your conversation is still here — send the message again.",
   "onboardingErrorCreateFailed": "Something went wrong while creating your dashboard.",
   "onboardingErrorUnexpected": "An unexpected error occurred.",
   "onboardingOneMoment": "One moment...",
@@ -483,6 +485,9 @@
   "choiceConfirm": "Confirm",
   "choiceDeclinedTitle": "You prefer not to customize",
   "choiceDeclinedBody": "You prefer not to customize. Create the system now with the default?",
+  "interviewModulesTitle": "Suggested modules",
+  "interviewModulesHint": "Uncheck what you don't want now; you can install it later.",
+  "interviewModulesIncluded": "(included)",
   "choiceCreateShort": "Create now",
   "choiceCustomizeAnyway": "Customize anyway",
 

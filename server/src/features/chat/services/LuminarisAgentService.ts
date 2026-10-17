@@ -3,8 +3,13 @@ import { UserContext } from '../../../lib/authUtils';
 import logger from '../../../lib/logger';
 import { NotFoundError, ForbiddenError, ValidationError } from '../../../lib/errors';
 import { IActionProposalRepository } from '../repositories/IActionProposalRepository';
+import { IDynamicTablePolicy } from '../../dynamicTables/policies/IDynamicTablePolicy';
+import { agentToolError, QueryTableDataResult } from '../models/AgentTool.model';
 import { ActionProposal, Prisma } from 'generated/prisma';
 import OpenAI from 'openai';
+
+/** Linhas devolvidas por query_table_data ao modelo (o `total` diz quantas casam no banco). */
+const QUERY_TOOL_LIMIT = 10;
 
 export interface ActionProposalData {
     id: string;
@@ -19,14 +24,15 @@ export interface ActionProposalData {
 export class LuminarisAgentService {
     constructor(
         private dynamicTableService: DynamicTableService,
-        private proposalRepository: IActionProposalRepository
+        private proposalRepository: IActionProposalRepository,
+        private policy: IDynamicTablePolicy
     ) { }
 
     /**
      * Generates the list of OpenAI tools exposed to the agent. The tool set is static;
      * per-user scoping happens when each tool is executed in handleToolCall.
      */
-    async getTools(userId: string): Promise<OpenAI.Chat.Completions.ChatCompletionTool[]> {
+    async getTools(): Promise<OpenAI.Chat.Completions.ChatCompletionTool[]> {
         const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
             {
                 type: 'function',
@@ -54,12 +60,12 @@ export class LuminarisAgentService {
                 type: 'function',
                 function: {
                     name: 'query_table_data',
-                    description: 'Search for records in a specific table.',
+                    description: 'Search for records in a specific table by exact equality (igualdade exata) on its fields. Use the field names returned by get_table_schema. Returns at most 10 rows plus the total number of matches.',
                     parameters: {
                         type: 'object',
                         properties: {
                             tableId: { type: 'string', description: 'The unique ID of the table.' },
-                            filters: { type: 'object', description: 'Optional key-value filters.' }
+                            filters: { type: 'object', description: 'Optional { fieldName: value } exact-equality filters; field names MUST come from get_table_schema; values (string, number, boolean or null) are converted to the field type declared in get_table_schema; a value that does not convert returns an error.' }
                         },
                         required: ['tableId']
                     }
@@ -124,26 +130,36 @@ export class LuminarisAgentService {
             }
 
             case 'query_table_data': {
-                // ponytail: bounded read (fork feature/back-end) — the agent tool samples the first
-                // 200 rows instead of loading the whole table; rows beyond the sample are invisible
-                // to filters. Upgrade path: push the filter down into the repository query.
-                const SAMPLE_LIMIT = 200;
-                const { data } = await this.dynamicTableService.getTableData(user, args.tableId as string, 1, SAMPLE_LIMIT);
-                let filtered = data;
-                if (args.filters) {
-                    filtered = data.filter((row) => {
-                        return Object.entries(args.filters as Record<string, unknown>).every(([key, val]) => (row.data as Record<string, unknown>)?.[key] === val);
-                    });
+                // Filtro no SQL (F-I11-2 → b): a tabela inteira é buscada; o modelo vê quantas casam.
+                try {
+                    const { rows, total } = await this.dynamicTableService.searchTableData(
+                        user, args.tableId as string, args.filters as Record<string, unknown> | undefined, QUERY_TOOL_LIMIT
+                    );
+                    const result: QueryTableDataResult = {
+                        rows: rows.map(r => ({ id: r.id, data: r.data as Record<string, unknown>, createdAt: r.createdAt.toISOString() })),
+                        total,
+                        returned: rows.length,
+                        truncated: total > rows.length,
+                    };
+                    return result;
+                } catch (error) {
+                    // Só o filtro inválido volta ao modelo; permissão/tabela inexistente seguem como hoje.
+                    if (error instanceof ValidationError) return agentToolError('FILTRO_INVALIDO', error.message);
+                    throw error;
                 }
-                return filtered.slice(0, 10);
             }
 
             case 'request_record_creation': {
                 const creationData = args.data as Record<string, unknown> | undefined;
                 if (!creationData || Object.keys(creationData).length === 0) {
-                    return { error: 'ERRO: Você deve fornecer o objeto "data" com os campos preenchidos. Não posso criar uma proposta vazia.' };
+                    return agentToolError('DADOS_VAZIOS', 'ERRO: Você deve fornecer o objeto "data" com os campos preenchidos. Não posso criar uma proposta vazia.');
                 }
                 const table = await this.dynamicTableService.getTableById(user, args.tableId as string);
+                // canView (getTableById) não basta: a proposta só é gravada se a confirmação puder
+                // executá-la (tabela `system` e tabela alheia vista por ADMIN falhariam só no modal).
+                if (!this.policy.canManageData(user, table)) {
+                    return agentToolError('SEM_PERMISSAO', `Você não tem permissão para criar registros na tabela "${table.name}".`);
+                }
                 const proposal = await this.proposalRepository.create({
                     userId: user.userId,
                     action: 'CREATE',
@@ -163,9 +179,19 @@ export class LuminarisAgentService {
             case 'request_record_update': {
                 const updateData = args.data as Record<string, unknown> | undefined;
                 if (!updateData || Object.keys(updateData).length === 0) {
-                    return { error: 'ERRO: Você deve fornecer os campos para atualização no argumento "data".' };
+                    return agentToolError('DADOS_VAZIOS', 'ERRO: Você deve fornecer os campos para atualização no argumento "data".');
                 }
                 const table = await this.dynamicTableService.getTableById(user, args.tableId as string);
+                if (!this.policy.canManageData(user, table)) {
+                    return agentToolError('SEM_PERMISSAO', `Você não tem permissão para alterar registros na tabela "${table.name}".`);
+                }
+                // executeProposal resolve a tabela pela linha: sem esta checagem o modal mostraria a
+                // tabela X e a confirmação alteraria uma linha de outra tabela.
+                const recordId = args.recordId as string;
+                const [record] = await this.dynamicTableService.getTableDataByIds(user, table.id, [recordId]);
+                if (!record) {
+                    return agentToolError('REGISTRO_NAO_ENCONTRADO', `O registro "${recordId}" não existe na tabela "${table.name}".`);
+                }
                 const proposal = await this.proposalRepository.create({
                     userId: user.userId,
                     action: 'UPDATE',
@@ -173,7 +199,7 @@ export class LuminarisAgentService {
                     tableName: table.name,
                     tableLabel: table.name,
                     status: 'PENDING',
-                    data: { ...updateData, id: args.recordId as string } as unknown as Prisma.JsonValue
+                    data: { ...updateData, id: recordId } as unknown as Prisma.JsonValue
                 });
                 return { status: 'PROPOSED', proposalId: proposal.id };
             }

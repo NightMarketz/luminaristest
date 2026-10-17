@@ -47,8 +47,9 @@ export class StageHandlers {
    * `choice` (botão, W3 b) decide sem ler o texto; sem ele, só texto explícito decide.
    */
   public async handleCreationTypeConfirmation(
-    messages: IMessage[], 
+    messages: IMessage[],
     presetKey: string,
+    userId: string,
     choice?: CreationChoice
   ): Promise<IInterviewTurnResult> {
     const askAgain = (response: string, reason: CreationChoiceReason): IInterviewTurnResult => ({
@@ -103,28 +104,25 @@ export class StageHandlers {
       // Cria uma sessão de customização
       logger.info('[StageHandlers] Usuário escolheu customizar o sistema');
       
-      // Gera um sessionId para a customização
-      const sessionId = this.customizationService.generateSessionId();
-      
-      // Cria a sessão de customização
-      const customizationState = this.customizationService.createCustomizationSession(presetKey, sessionId);
-      
-      if (!customizationState) {
+      // W4 item 6: a sessão pertence ao usuário; o id é o da linha persistida, nunca vem do cliente.
+      const session = await this.customizationService.createCustomizationSession(presetKey, userId);
+
+      if (!session) {
         logger.error(`[StageHandlers] Falha ao criar sessão de customização para preset ${presetKey}`);
         return askAgain("Desculpe, houve um erro ao preparar a customização. Quer tentar **customizar** de novo ou **criar o sistema agora**?", 'error');
       }
-      
+
       // Gera a apresentação das tabelas e ajusta o prompt
-      const tablesPresentation = await this.customizationService.generateTablesPresentation(sessionId, true);
-      
+      const tablesPresentation = await this.customizationService.generateTablesPresentation(session.state, true);
+
       // Avança para o estágio de customização em andamento
       return {
         response: tablesPresentation,
         nextStage: 'CUSTOMIZATION_IN_PROGRESS',
         presetKey,
         startCustomization: true,
-        sessionId,
-        customizationState
+        sessionId: session.id,
+        customizationState: session.state
       };
     } catch (error) {
       logger.error(`[StageHandlers] Erro ao processar confirmação do tipo de criação: ${error}`);

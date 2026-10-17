@@ -24,4 +24,10 @@ export interface IAttachmentRepository {
 
   /** Soft-deletes an attachment (sets deletedAt). */
   softDelete(id: string): Promise<CrmAttachment>;
+
+  /**
+   * Soft-deletes every active attachment of the user (reset do sistema, I7 item 2) and returns the rows it
+   * soft-deleted, so the caller can remove each binary (`storageKey`) best-effort.
+   */
+  softDeleteByUserId(userId: string): Promise<CrmAttachment[]>;
 }

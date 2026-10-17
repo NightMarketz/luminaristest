@@ -34,7 +34,9 @@ export type AssignmentStatus = (typeof ASSIGNMENT_STATUSES)[number];
 
 /**
  * BE-INCR-ACCOUNTING-POLICY-VERSION (nó GOV-CONTADOR, BRIEF item 1): estados da versão de política. `PROPOSED` é o
- * único que aceita decisão; os outros três são terminais (trilha de aprovação, sem DELETE).
+ * único que aceita decisão; os outros três são terminais (trilha de aprovação, sem DELETE pelas rotas de política — o
+ * "Resetar sistema" apaga só as versões SEM contador, junto com a configuração da unidade: I7, BE-INCR-RESET-CONSISTENTE
+ * EMENDA; versão com contador bloqueia o reset).
  */
 export const POLICY_VERSION_STATUSES = ['PROPOSED', 'APPLIED', 'REJECTED', 'SUPERSEDED'] as const;
 export type PolicyVersionStatus = (typeof POLICY_VERSION_STATUSES)[number];

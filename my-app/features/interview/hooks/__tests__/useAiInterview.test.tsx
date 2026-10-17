@@ -110,6 +110,8 @@ describe('useAiInterview — create da Entrevista manda a primeira unidade (I1)'
       suiteKey: 'beautySalon',
       unit: { name: 'Salão Bela Vista, atende mulheres' },
       fiscal: { regime: 'PRESUMIDO', grandePorte: false },
+      // W5 item 16: sem moduleOptions no turno, a seleção vai vazia (o servidor soma o padrão da suíte).
+      modules: [],
     });
     expect(result.current.fiscalPendente).toBe(false);
   });

@@ -1,4 +1,11 @@
-import type { DasOficial, SalaoParceriaContrato, SalaoParceriaContratoInput, SimplesDasRegistroInput } from '../../../lib/services/simples.service';
+import type {
+  DasOficial,
+  SalaoParceriaContrato,
+  SalaoParceriaContratoInput,
+  SimplesDasRegistroInput,
+  SimplesDefisDigitadoInput,
+  SimplesDefisUpsertInput,
+} from '../../../lib/services/simples.service';
 import { parseBrl } from './parseBrl';
 import { formatPctHundredths, parsePctHundredths } from './fiscalProfileForm';
 
@@ -185,4 +192,193 @@ export function toSegregacaoUpsert(
     parcelas.push({ natureza: l.natureza, receitaCents: cents, motivo: l.motivo });
   }
   return { ok: true, body: { unitId, parcelas } };
+}
+
+// ─────────────────────────────────────────────────────────────── PR-D: DEFIS (item 14)
+
+export type TipoBeneficiario = SimplesDefisDigitadoInput['doacoesEleitorais'][number]['tipoBeneficiario'];
+export type FormaDoacao = SimplesDefisDigitadoInput['doacoesEleitorais'][number]['formaDoacao'];
+/** Manual 9.4.3.1 item 9 (telas 9.2–9.3), na ordem do portal — espelha `DEFIS_TIPOS_BENEFICIARIO`/`DEFIS_FORMAS_DOACAO`. */
+export const TIPOS_BENEFICIARIO: readonly TipoBeneficiario[] = ['CANDIDATO', 'COMITE_FINANCEIRO', 'PARTIDO_POLITICO'];
+export const FORMAS_DOACAO: readonly FormaDoacao[] = ['CHEQUE', 'OUTROS_TITULOS_CREDITO', 'TRANSFERENCIA_ELETRONICA', 'DEPOSITO_ESPECIE', 'DINHEIRO', 'BENS', 'SERVICOS'];
+/** `SimplesDefisDigitadoSchema` — até 100 linhas por lista. */
+export const MAX_LINHAS_DEFIS = 100;
+
+export interface DefisSocioLinha {
+  contactId: string;
+  rendimentosIsentos: string;
+  rendimentosTributaveis: string;
+  /** percentual "60,00" */
+  participacao: string;
+  irrf: string;
+}
+export interface DefisExportacaoLinha {
+  cnpj: string;
+  valor: string;
+}
+export interface DefisDoacaoLinha {
+  cnpj: string;
+  tipoBeneficiario: '' | TipoBeneficiario;
+  formaDoacao: '' | FormaDoacao;
+  valor: string;
+}
+export interface DefisForm {
+  empregadosInicio: string;
+  empregadosFim: string;
+  ganhosCapital: string;
+  ganhosRendaVariavel: string;
+  exportacaoDireta: string;
+  /** percentual "0,00" (manual item 8) */
+  cotasTesouraria: string;
+  exportacaoComercial: DefisExportacaoLinha[];
+  socios: DefisSocioLinha[];
+  doacoesEleitorais: DefisDoacaoLinha[];
+}
+export type DefisCampo = 'empregadosInicio' | 'empregadosFim' | 'ganhosCapital' | 'ganhosRendaVariavel' | 'exportacaoDireta' | 'cotasTesouraria';
+export type DefisLinhaCampo =
+  | 'socioContato' | 'socioValor' | 'socioParticipacao'
+  | 'exportacaoCnpj' | 'exportacaoValor'
+  | 'doacaoCnpj' | 'doacaoTipo' | 'doacaoForma' | 'doacaoValor'
+  | 'demais';
+export type DefisFormError = { campo: DefisCampo; linha?: undefined } | { campo: DefisLinhaCampo; linha: number };
+
+export const socioVazio = (): DefisSocioLinha => ({ contactId: '', rendimentosIsentos: '', rendimentosTributaveis: '', participacao: '', irrf: '' });
+export const exportacaoVazia = (): DefisExportacaoLinha => ({ cnpj: '', valor: '' });
+export const doacaoVazia = (): DefisDoacaoLinha => ({ cnpj: '', tipoBeneficiario: '', formaDoacao: '', valor: '' });
+
+export function toDefisForm(d: SimplesDefisDigitadoInput | null): DefisForm {
+  if (!d) {
+    return {
+      empregadosInicio: '', empregadosFim: '', ganhosCapital: '', ganhosRendaVariavel: '', exportacaoDireta: '', cotasTesouraria: '',
+      exportacaoComercial: [], socios: [], doacoesEleitorais: [],
+    };
+  }
+  return {
+    empregadosInicio: String(d.empregadosInicio),
+    empregadosFim: String(d.empregadosFim),
+    ganhosCapital: centsParaTexto(d.ganhosCapitalCents),
+    ganhosRendaVariavel: centsParaTexto(d.ganhosRendaVariavelCents),
+    exportacaoDireta: centsParaTexto(d.exportacaoDiretaCents),
+    cotasTesouraria: formatPctHundredths(d.cotasTesourariaBp),
+    exportacaoComercial: d.exportacaoComercial.map((e): DefisExportacaoLinha => ({ cnpj: e.cnpj, valor: centsParaTexto(e.valorCents) })),
+    socios: d.socios.map((s): DefisSocioLinha => ({
+      contactId: s.contactId,
+      rendimentosIsentos: centsParaTexto(s.rendimentosIsentosCents),
+      rendimentosTributaveis: centsParaTexto(s.rendimentosTributaveisCents),
+      participacao: formatPctHundredths(s.participacaoBp),
+      irrf: centsParaTexto(s.irrfCents),
+    })),
+    doacoesEleitorais: d.doacoesEleitorais.map((x): DefisDoacaoLinha => ({
+      cnpj: x.cnpj, tipoBeneficiario: x.tipoBeneficiario, formaDoacao: x.formaDoacao, valor: centsParaTexto(x.valorCents),
+    })),
+  };
+}
+
+/** CNPJ sem máscara, maiúsculo (alfanumérico — `server/src/lib/cnpj.ts`); o dígito verificador é conferido pelo BE. */
+export function normalizarCnpj(s: string): string {
+  return s.replace(/[.\-/\s]/g, '').toUpperCase();
+}
+const CNPJ_FORMA = /^[A-Z0-9]{12}\d{2}$/;
+
+/** Dinheiro ≥ 0; vazio = 0 (o portal parte de zero). `null` = formato inválido. */
+function centsOuZero(s: string): number | null {
+  const v = s.trim();
+  if (v === '') return 0;
+  return VALOR_BR.test(v) ? parseBrl(v) : null;
+}
+function inteiroNaoNegativo(s: string): number | null {
+  const v = s.trim();
+  return /^\d{1,7}$/.test(v) && Number(v) <= 1_000_000 ? Number(v) : null;
+}
+/** Percentual → bp (0..10000); vazio vale `vazioVale`. `null` = inválido. */
+function pctBp(s: string, vazioVale: number | null): number | null {
+  const bp = parsePctHundredths(s);
+  if (bp === null) return vazioVale;
+  if (bp === undefined || bp > 10000) return null;
+  return bp;
+}
+
+/**
+ * Soma exibida (sócios + tesouraria, em bp) — só informação: a regra "= 100% quando há sócio" é do BE
+ * (`SimplesDefisUpsertSchema`; manual 9.4.3.1 itens 7.3 e 8; F-FS-8 c). `null` se algum percentual não se lê.
+ */
+export function somaParticipacoesBp(f: Pick<DefisForm, 'socios' | 'cotasTesouraria'>): number | null {
+  let soma = pctBp(f.cotasTesouraria, 0);
+  if (soma === null) return null;
+  for (const s of f.socios) {
+    const bp = pctBp(s.participacao, null);
+    if (bp === null) return null;
+    soma += bp;
+  }
+  return soma;
+}
+
+/** Item 14 — só forma (números, %, CNPJ, escolhas); soma = 100% e DV do CNPJ ficam com o BE. */
+export function toDefisUpsert(unitId: string, f: DefisForm): { ok: true; body: SimplesDefisUpsertInput } | { ok: false; error: DefisFormError } {
+  const empregadosInicio = inteiroNaoNegativo(f.empregadosInicio);
+  if (empregadosInicio === null) return { ok: false, error: { campo: 'empregadosInicio' } };
+  const empregadosFim = inteiroNaoNegativo(f.empregadosFim);
+  if (empregadosFim === null) return { ok: false, error: { campo: 'empregadosFim' } };
+  const ganhosCapitalCents = centsOuZero(f.ganhosCapital);
+  if (ganhosCapitalCents === null) return { ok: false, error: { campo: 'ganhosCapital' } };
+  const ganhosRendaVariavelCents = centsOuZero(f.ganhosRendaVariavel);
+  if (ganhosRendaVariavelCents === null) return { ok: false, error: { campo: 'ganhosRendaVariavel' } };
+  const exportacaoDiretaCents = centsOuZero(f.exportacaoDireta);
+  if (exportacaoDiretaCents === null) return { ok: false, error: { campo: 'exportacaoDireta' } };
+  const cotasTesourariaBp = pctBp(f.cotasTesouraria, 0);
+  if (cotasTesourariaBp === null) return { ok: false, error: { campo: 'cotasTesouraria' } };
+  for (const lista of [f.socios, f.exportacaoComercial, f.doacoesEleitorais]) {
+    if (lista.length > MAX_LINHAS_DEFIS) return { ok: false, error: { campo: 'demais', linha: MAX_LINHAS_DEFIS + 1 } };
+  }
+
+  const socios: SimplesDefisUpsertInput['socios'] = [];
+  for (let i = 0; i < f.socios.length; i++) {
+    const s = f.socios[i];
+    if (!s.contactId) return { ok: false, error: { campo: 'socioContato', linha: i + 1 } };
+    const isentos = centsOuZero(s.rendimentosIsentos);
+    const tributaveis = centsOuZero(s.rendimentosTributaveis);
+    const irrf = centsOuZero(s.irrf);
+    if (isentos === null || tributaveis === null || irrf === null) return { ok: false, error: { campo: 'socioValor', linha: i + 1 } };
+    const participacaoBp = pctBp(s.participacao, null);
+    if (participacaoBp === null) return { ok: false, error: { campo: 'socioParticipacao', linha: i + 1 } };
+    socios.push({ contactId: s.contactId, rendimentosIsentosCents: isentos, rendimentosTributaveisCents: tributaveis, participacaoBp, irrfCents: irrf });
+  }
+
+  const exportacaoComercial: SimplesDefisUpsertInput['exportacaoComercial'] = [];
+  for (let i = 0; i < f.exportacaoComercial.length; i++) {
+    const e = f.exportacaoComercial[i];
+    const cnpj = normalizarCnpj(e.cnpj);
+    if (!CNPJ_FORMA.test(cnpj)) return { ok: false, error: { campo: 'exportacaoCnpj', linha: i + 1 } };
+    const valorCents = centsOuZero(e.valor);
+    if (valorCents === null || valorCents <= 0) return { ok: false, error: { campo: 'exportacaoValor', linha: i + 1 } };
+    exportacaoComercial.push({ cnpj, valorCents });
+  }
+
+  const doacoesEleitorais: SimplesDefisUpsertInput['doacoesEleitorais'] = [];
+  for (let i = 0; i < f.doacoesEleitorais.length; i++) {
+    const d = f.doacoesEleitorais[i];
+    const cnpj = normalizarCnpj(d.cnpj);
+    if (!CNPJ_FORMA.test(cnpj)) return { ok: false, error: { campo: 'doacaoCnpj', linha: i + 1 } };
+    if (d.tipoBeneficiario === '') return { ok: false, error: { campo: 'doacaoTipo', linha: i + 1 } };
+    if (d.formaDoacao === '') return { ok: false, error: { campo: 'doacaoForma', linha: i + 1 } };
+    const valorCents = centsOuZero(d.valor);
+    if (valorCents === null || valorCents <= 0) return { ok: false, error: { campo: 'doacaoValor', linha: i + 1 } };
+    doacoesEleitorais.push({ cnpj, tipoBeneficiario: d.tipoBeneficiario, formaDoacao: d.formaDoacao, valorCents });
+  }
+
+  return {
+    ok: true,
+    body: {
+      unitId,
+      empregadosInicio,
+      empregadosFim,
+      ganhosCapitalCents,
+      ganhosRendaVariavelCents,
+      exportacaoDiretaCents,
+      exportacaoComercial,
+      cotasTesourariaBp,
+      socios,
+      doacoesEleitorais,
+    },
+  };
 }
