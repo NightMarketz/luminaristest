@@ -39,6 +39,8 @@ Conferido em 17/10 no PDF de maio baixado da URL oficial (sha confere):
   regras pp. 202-203, exemplo p. 203) · J932 pp. 204-206.
 - Já estavam na numeração de maio e ficaram: `spedQualifAssinante.ts` (pp. 200-203) e `0000.COD_PLAN_REF` nota 21 (p. 63).
 
-## Lacuna
+## Comparação integral janeiro × maio (17/10, dossiê `pesquisas-legais/verif-2026-10-17-contabil-lacunas/relatorio.md`)
 
-O PDF de janeiro não está no worktree; diferenças entre as duas edições fora dos registros acima não foram comparadas.
+Comparei o texto inteiro das duas edições palavra a palavra, sem cabeçalho e rodapé; o PDF de janeiro é o fornecido pelo dono, sha `7ddf47755f61`. **A única mudança de conteúdo** é o valor **11 – TEF – Tributação Específica do Futebol** no `COD_PLAN_REF` (0000 campo 23, p. 67, e C040, p. 92). O resto é numeração (+1 página do 0007 em diante) e ruído de extração.
+
+O `SpedEcdDto` aceita só `1`..`10`. Aceitar o 11 é **funcionalidade nova** (clube/SAF no TEF), listada à parte e não implementada.
