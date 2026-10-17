@@ -1,11 +1,13 @@
 /**
- * Teste-guarda — número de registro no CRC no formato do CFC, inclusive TRANSFERIDO/SECUNDÁRIO.
+ * Teste-guarda — número de registro no CRC no formato do CFC, inclusive TRANSFERIDO.
  *
  * Fonte: Manual de Registro do Sistema CFC/CRCs, 2ª ed. (2009), pp. 13-14 — o mesmo documento que a
  * cédula F13 (10/09) cita como origem da máscara. O número básico é `UF-NNNNNN/O-D`; no registro
  * transferido "será acrescentada a letra T … acompanhada de um hífen e da sigla designativa da
- * jurisdição do CRC de destino" (ex. oficial `SP-123456/O-3 T-MG`), e no secundário a letra S
- * (`PI-111222/O-5 S-AC`). Res. CFC 1.707/2023 art. 5º p.ú. mantém o transferido com a mesma forma.
+ * jurisdição do CRC de destino" (ex. oficial `SP-123456/O-3 T-MG`). Res. CFC 1.707/2023 (vigente)
+ * art. 3º prevê só originário e transferido, e o art. 5º p.ú. mantém o transferido com a mesma forma.
+ * O secundário (`PI-111222/O-5 S-AC`, só no manual de 2009) não existe mais: decisão do dono
+ * (AskUserQuestion, 17/10/2026) — "Recusar com 400".
  *
  * Decisão do dono (28/09/2026, questionário): a UF do CRC (J930 UF_CRC / contato crcUf) de um
  * registro com sufixo aceita a UF de ORIGEM **ou** a do sufixo; qualquer outra continua 400.
@@ -51,23 +53,41 @@ const contact = (crcNumber: string, crcUf: string) => ({
   crcUf,
 });
 
-describe('CRC no formato do CFC — registro transferido/secundário (Manual de Registro CFC pp. 13-14)', () => {
+describe('CRC no formato do CFC — registro transferido (Manual de Registro CFC pp. 13-14; Res. CFC 1.707/2023)', () => {
   it('CONTROLE: originário segue aceito e a UF divergente segue recusada', () => {
     expect(normalizeCrcNumber('SP-123456/O-3')).toBe('SP-123456/O-3');
     expect(SpedEcdRequestSchema.safeParse(ecd('SP-123456/O-3', 'SP')).success).toBe(true);
     expect(SpedEcdRequestSchema.safeParse(ecd('SP-123456/O-3', 'RJ')).success).toBe(false);
   });
 
-  it('aceita e normaliza os exemplos oficiais com sufixo T-UF / S-UF', () => {
-    const got = ['SP-123456/O-3 T-MG', 'sp123456/o-3 t-mg', 'PI-111222/O-5 S-AC'].map((v) => {
+  it('aceita e normaliza os exemplos oficiais com sufixo T-UF', () => {
+    const got = ['SP-123456/O-3 T-MG', 'sp123456/o-3 t-mg'].map((v) => {
       const n = normalizeCrcNumber(v);
       return [v, n, n !== null && CRC_NUMBER_RE.test(n)];
     });
     expect(got).toEqual([
       ['SP-123456/O-3 T-MG', 'SP-123456/O-3 T-MG', true],
       ['sp123456/o-3 t-mg', 'SP-123456/O-3 T-MG', true],
-      ['PI-111222/O-5 S-AC', 'PI-111222/O-5 S-AC', true],
     ]);
+  });
+
+  it('secundário (sufixo S-UF) é 400 de formato em todas as grafias — Res. CFC 1.707/2023 art. 3º (dono, 17/10)', () => {
+    const grafias = ['PI-111222/O-5 S-AC', 'PI111222/O5SAC', 'pi-111222/o-5 s-ac', 'CRC-PI 111222/O-5 S-AC'];
+    expect(grafias.map((v) => [v, parseCrcNumber(v)])).toEqual(
+      grafias.map((v) => [v, { ok: false, reason: 'formato' }]),
+    );
+    expect(CRC_NUMBER_RE.test('PI-111222/O-5 S-AC')).toBe(false);
+    const bordas = (['PI', 'AC'] as const).map((uf) => [
+      uf,
+      SpedEcdRequestSchema.safeParse(ecd('PI-111222/O-5 S-AC', uf)).success,
+      RegisterContactSchema.safeParse(contact('PI-111222/O-5 S-AC', uf)).success,
+    ]);
+    expect(bordas).toEqual([
+      ['PI', false, false],
+      ['AC', false, false],
+    ]);
+    // controle: o mesmo número sem o sufixo S passa
+    expect(RegisterContactSchema.safeParse(contact('PI-111222/O-5', 'PI')).success).toBe(true);
   });
 
   it('J930 e contato: transferido aceita UF de origem OU de destino; outra UF segue 400', () => {
