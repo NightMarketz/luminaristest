@@ -16,6 +16,8 @@ import {
   AnoParamSchema,
   SimplesDasnUpsertSchema,
   SimplesDefisUpsertSchema,
+  RegistroValoresAReceberQuerySchema,
+  SimplesCreditoIncobravelCreateSchema,
 } from '../features/accounting/dtos/SimplesDto';
 
 /**
@@ -294,6 +296,54 @@ export const putDefis = async (req: Request, res: Response) => {
     if (!b.success) return bad(res, b.error.flatten());
     const data = await declaracao().upsertDefis(resolveAccountingScope(user, b.data.unitId), p.data.ano, b.data);
     return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+// ---- BE-INCR-SIMPLES-CAIXA PR-3 (nó X14-CAIXA, itens 19–20) ----
+
+const registroCaixa = () => getFactory().getSimplesRegistroCaixaService();
+
+/** GET /api/accounting/simples/registro-valores-a-receber?unitId=&ano= — registro do Anexo IX (ano ≤ 2026). */
+export const getRegistroValoresAReceber = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const q = RegistroValoresAReceberQuerySchema.safeParse(req.query);
+    if (!q.success) return bad(res, q.error.flatten());
+    const data = await registroCaixa().registro(resolveAccountingScope(user, q.data.unitId), q.data.ano);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** POST /api/accounting/simples/creditos-incobraveis — crédito incobrável (art. 77 VI, §§ 5º–6º). */
+export const createCreditoIncobravel = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const b = SimplesCreditoIncobravelCreateSchema.safeParse(req.body);
+    if (!b.success) return bad(res, b.error.flatten());
+    const data = await registroCaixa().registrarIncobravel(resolveAccountingScope(user, b.data.unitId), b.data);
+    return res.status(201).json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** DELETE /api/accounting/simples/creditos-incobraveis/:id?unitId= — soft-delete. */
+export const deleteCreditoIncobravel = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const p = SimplesIdParamSchema.safeParse(req.params);
+    if (!p.success) return bad(res, p.error.flatten());
+    const q = SimplesUnitQuerySchema.safeParse(req.query);
+    if (!q.success) return bad(res, q.error.flatten());
+    await registroCaixa().removerIncobravel(resolveAccountingScope(user, q.data.unitId), p.data.id);
+    return res.status(204).send();
   } catch (error) {
     return handleApiError(error, res);
   }

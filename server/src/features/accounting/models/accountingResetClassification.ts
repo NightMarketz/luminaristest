@@ -88,6 +88,8 @@ export const ACCOUNTING_RESET_BLOCKING = [
   'SimplesApuracao',
   // X14-CAIXA PR-1 (dono, questionário, 2026-10-16, na integração do lote: "Os dois bloqueiam o reset").
   'ReceitaFiscalRecebimento',
+  // X14-CAIXA PR-3 (mesma decisão do dono, 2026-10-16).
+  'SimplesCreditoIncobravel',
 ] as const;
 
 /**
