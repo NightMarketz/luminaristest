@@ -1,6 +1,8 @@
 // @ts-check
 // Mutation testing — SÓ os módulos fiscais/contábeis. Fora do CI por decisão (rodada manual:
 // `npm run test:mutation`). Roda contra o projeto Jest `unit` (stryker.jest.config.js).
+// A rodada inteira passa de 40 h (medido 15/10): para fazer em parcelas, `npm run test:mutation:slices`
+// (scripts/mutation-slices.mjs — fatias com orçamento de horas, relatório fundido no fim).
 import os from 'node:os';
 
 // Cada worker é um Jest + ts-jest inteiro e incha a cada rodada (medido 14/10: 1–3,3 GB cada).

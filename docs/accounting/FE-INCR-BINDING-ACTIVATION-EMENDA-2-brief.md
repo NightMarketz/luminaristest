@@ -45,8 +45,9 @@
 
 | PR | Conteúdo | Condição |
 |---|---|---|
-| PR-0 (BE, aditivo) | `KitInstallationView` ganha `steps` (último passo + avisos) | **Só se F-KA-4 → (b)** |
-| PR-1 (FE) | serviço, hook, tira do kit na AccountingView, pendências, retomada | sempre; depois do PR-0 se ele existir |
+| PR-0 (BE, aditivo) | `KitInstallationView` ganha `steps` (último passo + avisos) + teste de integração da retomada pela rota (§10) | F-KA-4 → (b): **sim** |
+| PR-1 (FE) | serviço, hook, aba "Kit de setor", versão, pendências só leitura, retomada, avisos | depois do PR-0 |
+| PR-2 (FE) | aceitar/recusar pendência com `motivo` (§10) | F-KA-2 → (c); depois do PR-1 |
 
 ## 2. Checklist de comportamentos (cada um testável isoladamente)
 
@@ -156,7 +157,7 @@ export const KitInstallationViewSchema = z.object({
 }).strict();
 ```
 
-## 5. Forks — RATIFICAÇÃO PENDENTE (nenhum se auto-ratifica)
+## 5. Forks — ratificados 16/10 por questionário (§10)
 
 ### F-KA-1 — Onde o kit aparece
 - **(a)** A faixa da LAC-B ganha um estado `active` com a tira do kit. Um componente só; muda o contrato ratificado
@@ -165,7 +166,7 @@ export const KitInstallationViewSchema = z.object({
   `KitInstallation`. A faixa fica como está.
 - **(c)** Aba nova "Kit de setor" em `TABS`.
 - **Recomendação: (b).** Não reabre o F-BA-1 e não mexe nos testes do banner. Uma aba (c) é cerimônia demais para
-  quatro informações e repete o caminho que o F-BA-3 rejeitou (só link, sem aba nova). **PENDENTE.**
+  quatro informações e repete o caminho que o F-BA-3 rejeitou (só link, sem aba nova). **RATIFICADO 16/10 → (c)** (fora da recomendação; [D-2026-10-16-LAC-B-EMENDA-2-FORKS](../plano/decisoes/D-2026-10-16-LAC-B-EMENDA-2-FORKS.md)).
 
 ### F-KA-2 — Até onde vão as pendências
 - **(a)** Só o contador ("3 pendências da atualização do kit").
@@ -174,7 +175,7 @@ export const KitInstallationViewSchema = z.object({
 - **Recomendação: (b).** O pedido é *mostrar* as pendências; (a) mostra só que existem. (c) é decidir, e decidir
   pendência muda binding e plano (aceitar `override` recompila; aceitar `account_deleted_by_user` restaura conta).
   Isso é o `FE-INCR-KIT-SETOR` amplo, com fluxo próprio de confirmação e de 422 (`KIT_PENDING_COMPILE_DRAFT`,
-  `KIT_PENDING_FROZEN_YEAR`), fora desta autorização (regra 5). **PENDENTE.**
+  `KIT_PENDING_FROZEN_YEAR`), fora desta autorização (regra 5). **RATIFICADO 16/10 → (c)** (fora da recomendação; vira PR-2, §10).
 
 ### F-KA-3 — Kit `FAILED` (e `INSTALLING`) com binding `Active`
 - **(a)** Aviso + botão "Retomar instalação" que chama o `activate-default` com o mesmo setor (F7).
@@ -184,14 +185,14 @@ export const KitInstallationViewSchema = z.object({
 - **Recomendação: (a) + (ii).** (a) usa uma rota e um caminho de retomada que já existem e são idempotentes por passo
   (F7, lido, **não executado** — o item 8 tem de provar com teste de integração do lado BE, se ainda não houver).
   (ii) porque um clique durante uma instalação em curso cairia no `begin` concorrente. O `INSTALLING` abandonado
-  fica sem saída na tela (achado §8). **PENDENTE.**
+  fica sem saída na tela (achado §8). **RATIFICADO 16/10 → (a) + (ii).**
 
 ### F-KA-4 — A view do kit expõe passo e avisos?
 - **(a)** Só FE. A tela diz "parou no meio" sem dizer onde, e não mostra os avisos de referencial.
 - **(b)** PR-0 BE aditivo: `steps` na `KitInstallationView` (§4).
 - **Recomendação: (b).** O aviso `KIT_REFERENTIAL_SKIPPED_NO_REGIME` é o único sinal acionável que o usuário recebe da
   instalação (o referencial é o que a ECD usa) e hoje não aparece em tela nenhuma: nem na view (F5) nem na resposta do
-  `activate-default` (F8). O PR-0 é pequeno e sem migração. **PENDENTE.**
+  `activate-default` (F8). O PR-0 é pequeno e sem migração. **RATIFICADO 16/10 → (b).**
 
 ### F-KA-5 — Como dizer "há versão mais nova"
 - **(a)** "Versão N instalada · versão M disponível", mais o changelog. Com `lastRun.status === 'FAILED'`: "a última
@@ -200,13 +201,13 @@ export const KitInstallationViewSchema = z.object({
 - **(c)** Não mostrar `latestVersion`.
 - **Recomendação: (a).** A atualização só roda no deploy (F9). Depois de um deploy bem-sucedido as duas versões se
   igualam, então a diferença visível quase sempre significa CLI não rodado ou unidade que falhou, e as duas coisas o
-  dono quer ver. O texto não promete "entra no próximo deploy", porque não há como a tela saber disso. **PENDENTE.**
+  dono quer ver. O texto não promete "entra no próximo deploy", porque não há como a tela saber disso. **RATIFICADO 16/10 → (a).**
 
 ### F-KA-6 — Modo cliente (contador vendo o livro de um cliente)
 - **(a)** Fora, como a faixa (F11).
 - **(b)** Somente leitura para o contador delegado.
 - **Recomendação: (a).** Não li o `resolveBindingScope` em modo cliente (§7.1). Se ele resolve para o silo do
-  chamador, (b) mostraria o kit errado. Igual à faixa até alguém provar o contrário. **PENDENTE.**
+  chamador, (b) mostraria o kit errado. Igual à faixa até alguém provar o contrário. **RATIFICADO 16/10 → (a).**
 
 ## 6. Pendente de validação externa
 
@@ -241,3 +242,79 @@ Os rótulos dos motivos (ex.: `referential_year_frozen`) são texto de produto e
   O custo de (a) é real (o contrato ratificado), mas o viés existe.
 - **Ruído na tela:** quatro estados novos (versão, mais nova, pendências, falha) numa área que já tem faixa, convites e
   modo cliente. O runbook do item 14 é onde o dono julga se ficou poluído.
+
+## 10. Ratificação dos forks (16/10) e o que muda no checklist
+
+> Dono, chat, 2026-10-16: *"Passa os forks F-KA-1..6 da EMENDA-2 por questionário"* + questionário + *"Grava + emenda o
+> BRIEF"*. Respostas literais e insumos fechados em
+> [D-2026-10-16-LAC-B-EMENDA-2-FORKS](../plano/decisoes/D-2026-10-16-LAC-B-EMENDA-2-FORKS.md). **Sem "executa"**: cada
+> PR (0, 1, 2) exige o seu. Onde §2 e §10 divergem, vale o §10.
+
+| Fork | Decisão |
+|---|---|
+| F-KA-1 | **(c)** aba nova "Kit de setor" |
+| F-KA-2 | **(c)** aceitar/recusar com `motivo`, em PR-2 próprio |
+| F-KA-3 | **(a) + (ii)** botão só em `FAILED`; `INSTALLING` = "em andamento" |
+| F-KA-4 | **(b)** PR-0 BE com `steps` |
+| F-KA-5 | **(a)** "versão N instalada · versão M disponível" |
+| F-KA-6 | **(a)** fora do modo cliente |
+
+### §7 fechado por leitura (16/10, `origin/main` `b8a8a160`, não executado)
+
+1. `resolveBindingScope` usa o chamador como dono (`BindingScope.ts:25`) ⇒ em modo cliente o kit lido seria o do
+   contador. Confirma o F-KA-6 (a).
+2. `KitInstallationRepository.begin` sobre linha existente só regrava `INSTALLING`, sem trava ⇒ clique durante
+   instalação em curso roda passos em paralelo. Confirma o F-KA-3 (ii).
+3. Retomada provada em integração no serviço (`KitInstallService.integration.test.ts:184`), **não** pela rota
+   `activate-default`. Entra no PR-0 (item 0b).
+
+### PR-0 — acréscimo
+
+0b. **Teste de integração da retomada pela rota:** unidade com binding `Active` e kit `FAILED` no passo 7 (falha
+    injetada) ⇒ `POST /accounting-binding/activate-default` com o **mesmo** `sectorKey` devolve 2xx, kit `INSTALLED`,
+    `steps.lastCompletedStep: 7`, sem segundo `Active` e sem duplicar o efeito dos passos 1–6. Se falhar, o PR-0 para e
+    volta ao dono (o botão do item 8 depende disso).
+
+### PR-1 — substituições
+
+- **Item 3 (F-KA-1 c):** aba `kit` em `TABS` da AccountingView, rótulo "Kit de setor" (i18n), conteúdo
+  `AccountingKitTab` (substitui o `AccountingKitStatus` irmão). A aba só entra na lista quando o hook devolve
+  `loaded` (unidade com `KitInstallation`); `none`/`error` ⇒ sem aba. A faixa da LAC-B não muda.
+  *Teste:* `none` ⇒ aba ausente; `loaded` ⇒ aba presente e conteúdo renderiza.
+- **Item 4 (F-KA-6 a):** com `governance`, a aba não entra em `TABS` e o hook não chama a rota.
+- **Item 7 (F-KA-2):** no PR-1 a lista é **somente leitura**, carregada ao abrir a aba (não ao expandir); os botões
+  entram no PR-2. *Teste:* abrir a aba chama `listPending(unitId, 'OPEN')` uma vez.
+- **Item 6 (F-KA-5 a)** e **item 9 (F-KA-4 b)** seguem como escritos em §2, agora incondicionais.
+- **Item 8 (F-KA-3 a+ii):** como em §2, com o passo vindo de `steps.lastCompletedStep + 1`; `INSTALLING` ⇒ "instalação
+  em andamento", sem botão.
+- **Contrato:** `AccountingKitStatusProps` → `AccountingKitTabProps` (mesmos campos).
+
+### PR-2 — decidir pendências (F-KA-2 c)
+
+15. **Serviço:** `accountingKitService.acceptPending(id, {unitId, motivo})` e `rejectPending(id, {unitId, motivo})` →
+    `KitUpgradePendingView`, tipos de `DecideKitPendingRequest` do `.gen.ts`. *Teste:* URL com `:id`, corpo com `unitId`
+    e `motivo`.
+16. **Ação por linha:** "Aceitar"/"Recusar" abre `ConfirmModal` com campo `motivo` (10–500 caracteres, validado no
+    cliente igual ao schema; botão desabilitado fora da faixa). O modal **diz o efeito pelo `reason`** antes de
+    confirmar (ex.: aceitar `override` recompila o binding; aceitar `account_deleted_by_user` restaura a conta; recusar
+    mantém o valor do tenant) — texto por código em i18n; código sem texto ⇒ aviso genérico "esta decisão altera o
+    plano ou o binding da unidade". *Teste:* motivo com 9 chars ⇒ confirmar desabilitado; cada `reason` mostra seu efeito.
+17. **Depois de decidir:** sucesso ⇒ `notify`, recarrega a lista e o `useUnitKit` (o `openPendingCount` cai) e, se a
+    decisão recompilou, a ativação da unidade. *Teste:* sucesso recarrega lista e kit.
+18. **Erros pelo `code` do BE** (via `resolveError`, com texto próprio quando houver): `KIT_PENDING_NOT_OPEN` (409,
+    alguém decidiu antes ⇒ recarrega a lista), `KIT_PENDING_NOT_FOUND` (404), `KIT_PENDING_FROZEN_YEAR`,
+    `KIT_PENDING_COMPILE_DRAFT` (lista os bloqueantes com o mesmo render extraído no item 8), `ACCOUNT_NOT_FOUND`.
+    O PR-2 confere a lista de códigos lendo `KitPendingService` e `kitUpgradeTypes.ts` antes de escrever o mapa.
+    *Teste:* cada código vira a mensagem certa; 409 recarrega.
+19. **Pré-condição de leitura (achado da decisão):** antes de expor os botões, ler `KitPendingService.accept/reject`
+    integralmente e registrar se há gate do contador ativo (o passo 3 do install tem). Se não houver, o PR-2 segue
+    (decisão no silo do próprio usuário) e a ausência vai ao GAP-MAP como lacuna — não se conserta dentro do PR-2.
+20. **Gates do PR-2:** os do item 13 + i18n `kit.decide.*` com paridade pt/en + runbook do item 14 ganha a linha
+    "aceitar e recusar uma pendência aberta".
+
+### §8 atualizado
+
+- "Decidir pendências na tela" sai dos achados fora de escopo: é o PR-2. Editor papel→conta e rastro seguem no
+  `FE-INCR-KIT-SETOR` amplo, não aberto.
+- Viés registrado (T8): com a aba (c), o argumento "cerimônia demais para quatro informações" do F-KA-1 perde força —
+  a aba agora também carrega a decisão das pendências.

@@ -31,13 +31,14 @@ function writeIndex(dir) {
 test('vault íntegro com índice regenerado → 0 problemas', () => {
   const dir = vault(base);
   writeIndex(dir);
-  assert.deepEqual(check(dir), []);
+  assert.deepEqual(check(dir, { indice: true }), []);
 });
 
-test('índice desatualizado é pego', () => {
+test('índice desatualizado: pego com --indice (main), ignorado no check de PR', () => {
   const dir = vault(base);
-  const errs = check(dir);
+  const errs = check(dir, { indice: true });
   assert.ok(errs.some((e) => e.includes('_INDEX.md desatualizado')), errs.join('\n'));
+  assert.deepEqual(check(dir), []);
 });
 
 test('link [[x]] quebrado e depende_de inexistente são pegos', () => {
@@ -79,11 +80,12 @@ test('frontmatter com valor não-JSON falha alto', () => {
   assert.throws(() => parseNote('---\nid: sem aspas\n---\n'));
 });
 
-test('fold grava estado/prs/atualizado no frontmatter e no cabeçalho; índice segue íntegro', () => {
+test('fold grava estado/prs/atualizado no frontmatter e no cabeçalho; não toca o índice', () => {
   const body = '# B\n\n**Estado:** `ready`  \n**PRs:** —  \n\nver [[A]]\n';
   const B = { id: 'B', tipo: 'regua', dominio: 'contabil', titulo: 'b', estado: 'ready', estado_detalhe: 'x', depende_de: ['[[A]]'], prs: ['#1'] };
   const dir = vault({ ...base, 'nos/B.md': note(B, body) });
   writeIndex(dir);
+  const antes = readFileSync(join(dir, '_INDEX.md'), 'utf8');
   fold(dir, 'B', { pr: 7, estado: 'done', hoje: '2026-10-07' });
   fold(dir, 'B', { pr: 7, hoje: '2026-10-07' }); // repetir no mesmo PR não duplica
   const { fm, body: b } = parseNote(readFileSync(join(dir, 'nos/B.md'), 'utf8'));
@@ -92,7 +94,9 @@ test('fold grava estado/prs/atualizado no frontmatter e no cabeçalho; índice s
   assert.equal(fm.atualizado, '2026-10-07');
   assert.match(b, /\*\*Estado:\*\* `done` — x/);
   assert.match(b, /\*\*PRs:\*\* #1, #7/);
+  assert.equal(readFileSync(join(dir, '_INDEX.md'), 'utf8'), antes);
   assert.deepEqual(check(dir), []);
+  assert.ok(check(dir, { indice: true }).some((e) => e.includes('_INDEX.md desatualizado')));
 });
 
 test('fold recusa nó inexistente, estado inválido e PR ausente', () => {
