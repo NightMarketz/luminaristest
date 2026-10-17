@@ -1,5 +1,7 @@
 # BRIEF — BE-INCR-NFCE (NFC-e modelo 65 + NF-e 55 própria atrás da porta, seleção por tipo) — nó X10a
 
+> **EMENDA-3 2026-10-17:** ver [`BE-INCR-NFCE-EMENDA-3-brief.md`](BE-INCR-NFCE-EMENDA-3-brief.md) — inutilização deixa de se aplicar a SP em 01/11/2026 (forks F-NFCE-E3-1/2 **pendentes**, reabrem F-NFCE-5 e itens 24–25); `tPag` 91 em `[NFE-PAG]`; MOC online.
+
 > **EMENDA 2026-10-11:** ver [`EMENDAS-BRIEF-2026-10-11.md`](EMENDAS-BRIEF-2026-10-11.md) §3 (cancelamento da NFC-e em 30 minutos, campo em minutos) e §8 (PAA). Sem código; cada item exige 'executa'.
 
 > Produzido em `sessao-planejamento` (2026-10-02), nó [`X10a`](../plano/nos/X10a.md), Fase F do
@@ -147,7 +149,7 @@ Arquivos: `MOC-7.0-Visao-Geral.pdf` (sha256 `f664dcf94b77…`, 150 pp.), `MOC-7.
 | `[NFCE-HOMOLOG]` | em homologação, `xProd` do **1º item** = "NOTA FISCAL EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL" (373) | Anexo I, regra I04-10, p. 89 |
 | `[NFCE-CFOP]` | NFC-e aceita só 5.101, 5.102, 5.103, 5.104, 5.115, 5.405, 5.656, 5.667 (725) | Anexo I, regra I08-150, p. 93 |
 | `[NFCE-PROIBIDOS]` | sem ISUF (730), veicProd (736), arma (738), ICMSPart (741), ICMSUFDest (807), II/PIS-ST/COFINS-ST (743/746/749), transporte sem entrega (754–759), `cobr` (760) | Anexo I, pp. 87–125 |
-| `[NFE-PAG]` | `pag` obrigatório na NF-e e NFC-e; `detPag` 1–100; `tPag` 01 dinheiro, 03 crédito, 04 débito, 17 PIX, 90 sem pagamento, 99 outros…; NFC-e: tPag=90 rejeitado (899), 99 sob regra 436 | Anexo I, YA01–YA03, p. 62; pp. 125–126 |
+| `[NFE-PAG]` | `pag` obrigatório na NF-e e NFC-e; `detPag` 1–100; `tPag` 01 dinheiro, 03 crédito, 04 débito, 17 PIX, 90 sem pagamento, **91 pagamento posterior**, 99 outros…; NFC-e: tPag=90 rejeitado (899), 99 sob regra 436; 90 e 91 fora da rej. 865 (YA03-10, Exceção 2) | Anexo I, YA01–YA03, p. 62; pp. 125–126; **91: NT 2025.001 v1.03, RV YA03-10/YA03-30, pp. 10–11 [EMENDA-3 17/10]** |
 | `[NFE-VNF]` | vNF = vProd − vDesc − vICMSDeson + vST + vFCPST + vFrete + vSeg + vOutro + vII + vIPI + vIPIDevol + vServ (610); limite de valor da NFC-e e de **destinatário não identificado** parametrizável por UF (750–752, 780 — pareamento embaralhado na extração, o PR-0 confirma) | Anexo I, W16, p. 122 |
 | `[NFCE-QRCODE]` | `infNFeSupl/qrCode` com chave, versão, tpAmb, **identificador do CSC** e hash (396–400, 462–464); endereço por UF (395) | Anexo I, ZX02, pp. 129–133 |
 | `[RTC-SIMPLES]` | IBS/CBS: orientações para CRT 1/2/4 "em NT futura", tributação "somente a partir de 2027" (LC 214 art. 348); grupo `IBSCBS` exigido em produção para CRT 1/2/4 **a partir de 04/01/2027**; CRT 3 em produção desde 03/08/2026 | NT 2025.002 v1.51, p. 7 e p. 42 (Obs. 2 e 3) |
