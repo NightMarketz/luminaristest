@@ -63,17 +63,17 @@ interview/
 │   ├── AIInteractions.ts         # AI interactions for table customization
 │   └── README.md
 └── FieldCustomizationService/
-    ├── index.ts                  # the FieldCustomizationService class (singleton)
-    ├── FieldIntentParser.ts      # interprets the user's intent (add/remove/modify field)
-    ├── FieldUpdater.ts           # applies the modifications to the table
-    ├── FieldPresetMatcher.ts     # matches a requested field with a field preset
-    ├── PromptConfig.ts / Types.ts
+    ├── index.ts                  # the FieldCustomizationService class (W6, built by the factory)
+    ├── ModelOutput.ts            # strict json_schema of the model output + Zod re-read
+    ├── FieldProposal.ts          # validation (AdvancedFieldSchema), discard reasons, sensitive marks
+    ├── FieldUpdater.ts           # applies a validated proposal to the table
+    ├── FieldPresetMatcher.ts     # catalog keys + exact name/synonym match
+    ├── PromptConfig.ts / Types.ts / errors.ts
     └── README.md
 ```
 
 > ⚠️ Components that **do not exist** (they were mentioned in old docs): `AIFieldInteraction`,
-> `FieldExtractor`, `RedisStateManager`. The state is in-memory only; the field AI uses
-> `FieldIntentParser` + direct calls to `OpenAIService`.
+> `FieldExtractor`, `RedisStateManager`, `FieldIntentParser` (removed in W6).
 
 ---
 

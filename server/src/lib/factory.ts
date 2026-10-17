@@ -243,6 +243,7 @@ import { SavedTableViewService } from '../features/savedViews/services/SavedTabl
 import { StateManager } from '../features/interview/CustomizationService/StateManager';
 import { CustomizationService } from '../features/interview/CustomizationService/CustomizationService';
 import { InterviewService } from '../features/interview/InterviewService/InterviewService';
+import { FieldCustomizationService } from '../features/interview/FieldCustomizationService';
 import { SystemProvisioningService } from '../features/onboarding/services/SystemProvisioningService';
 import * as attachmentStorage from './attachmentStorage';
 import { kpiCacheService } from '../features/analytics/services/KpiCacheService';
@@ -880,6 +881,7 @@ export class ApplicationFactory {
     attachment: AttachmentService;
     savedTableView: SavedTableViewService;
     interview: InterviewService; // W4: entrevista com IA sobre a sessão persistida
+    fieldCustomization: FieldCustomizationService; // W6: painel de campos por IA sobre a mesma sessão
     systemProvisioning: SystemProvisioningService;
     ptaxSync: PtaxSyncService; // BE-INCR-CRM-REPORT-BUILDER PR-1 (item 23)
     crmReport: CrmReportService; // BE-INCR-CRM-REPORT-BUILDER PR-2 (item 11)
@@ -1813,6 +1815,11 @@ export class ApplicationFactory {
         new CustomizationService(new StateManager(this.repositories.interviewSession), chatOpenAIService),
         chatOpenAIService,
       ),
+      // W6 item 1: instância por factory (sem singleton), sobre o repositório da sessão do W4.
+      fieldCustomization: new FieldCustomizationService(
+        new StateManager(this.repositories.interviewSession),
+        chatOpenAIService,
+      ),
       // BE-INCR-SEED-UNIDADE-E-ENV (nó SEED-UNITS): monta o sistema do usuário (onboarding HTTP + seed contábil).
       systemProvisioning: new SystemProvisioningService(
         dynamicTableService,
@@ -2210,6 +2217,7 @@ export class ApplicationFactory {
   public getAttachmentService = (): AttachmentService => this.services.attachment;
   public getSavedTableViewService = (): SavedTableViewService => this.services.savedTableView;
   public getInterviewService = (): InterviewService => this.services.interview;
+  public getFieldCustomizationService = (): FieldCustomizationService => this.services.fieldCustomization;
   public getSystemProvisioningService = (): SystemProvisioningService => this.services.systemProvisioning;
 
   // Repository Getters — composition-root accessors. Some have no caller yet; kept as the consistent

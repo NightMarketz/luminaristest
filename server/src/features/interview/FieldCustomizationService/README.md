@@ -1,44 +1,43 @@
 ## FieldCustomizationService
 
-The finest customization step: **add/remove/modify fields** of a specific table, via an AI conversation,
-reusing **field presets** when possible. It is a **singleton** — the class lives in
-[`index.ts`](./index.ts) (`FieldCustomizationService.getInstance()`).
+The finest customization step: **add/remove/update fields** of one table of the interview session, through an AI
+conversation in the field panel (`POST /api/dashboard/ai/CustomizeFields`). Node **W6**: BRIEF
+`docs/accounting/WIZARD-W6-CUSTOMIZE-FIELDS-brief.md`, decision `docs/adr/ADR-W6-field-customization-ai.md`.
 
-> Part of the [`interview`](../README.md) feature. Shares the `StateManager` of the
-> [`CustomizationService`](../CustomizationService/README.md).
+> Part of the [`interview`](../README.md) feature. Works on the persisted `InterviewSession` (W4) through the
+> [`StateManager`](../CustomizationService/StateManager.ts). Built by the factory (`getFieldCustomizationService()`),
+> never a singleton.
 
 ## Public API
 
 | Method | Role |
 |---|---|
-| `getInstance()` | Access the singleton. |
-| `processMessage(sessionId, tableKey, userMessage, conversationHistory?)` | Processes a field-customization request for a table and returns `IFieldCustomizationResult` (`updatedTable`, `aiMessage`, `modified`, `conversationHistory`). |
+| `handle(userId, dto)` | Dispatches on `dto.kind` (`CustomizeFieldsDto`). |
+| `processMessage(userId, {sessionId, tableKey, message})` | One model call; returns a **proposal**, never changes the fields. |
+| `processDecision(userId, {sessionId, tableKey, proposalId, decision, acknowledgeSensitive?})` | Applies or discards the pending proposal. |
 
-## `processMessage` flow
+Both return `CustomizeFieldsResult` (`sessionId`, `tableKey`, `table`, `conversationHistory`, `proposal`,
+`discarded`, `applied?`).
 
-1. Retrieves the session state (`StateManager.getSessionState`) and locates the table by `tableKey`.
-2. Builds the context (a system prompt with the current fields + history) and calls
-   `openaiService.getChatCompletionWithHistory(..., 'gpt-4-turbo')`.
-3. **`FieldIntentParser.parse(...)`** interprets the response into structured modifications
-   (`add`/`remove`/`modify`); `hasValidModifications(...)` validates. If invalid, it returns the table
-   unchanged with a friendly message.
-4. **`processFieldModifications(...)`** (private): for additions, it uses **`FieldPresetMatcher`** to
-   match the requested field with a real **field preset**; if found, it substitutes the preset
-   (preserving the requested label) and uses `FIELD_PRESET_FOUND_PROMPT`; if not, it keeps the custom
-   field and uses `FIELD_PRESET_NOT_FOUND_PROMPT`.
-5. **`FieldUpdater.update(table, modifications)`** applies the changes.
-6. If there was a change, it updates the `StateManager` (`updateTables`) and appends the messages to the
-   table's `conversationHistory`.
+## Rules (ADR-W6 §2.2)
+
+1. **The model only proposes.** The output is bound to a strict `json_schema` (`ModelOutput.ts`, model
+   `FALLBACK`), one call per turn; the preset match comes in the same schema (`presetKey`), plus the deterministic
+   `FieldPresetMatcher.findExactFieldMatch`.
+2. **Canonical validation.** Every `add`/`update` goes through `AdvancedFieldSchema` (`dynamicTables`); `relation`
+   and `json` are not offered to the AI. Invalid changes are discarded with a reason (`FieldProposal.ts`).
+3. **Sensitive data is marked** (LGPD art. 5, II): the model's `sensitiveCategory` plus a radical list that only adds
+   marks. Applying a proposal with a sensitive field needs `acknowledgeSensitive: true`.
+4. **History per table on the server**; the last 20 `user`/`assistant` lines go to the model, `system` lines
+   (decisions) never do.
+5. **A model failure keeps the session**: 200 with `proposal: null` and a default assistant message.
 
 ## Module components
 
-- **`FieldIntentParser`** — interprets the user's intent into structured modifications.
-- **`FieldUpdater`** — applies the modifications to the `ICustomizableTable`.
-- **`FieldPresetMatcher`** — `findFieldPreset(description, existingFields)` matches a field with a
-  `dynamicTables` field preset.
-- **`PromptConfig`** — templates (`FIELD_CUSTOMIZATION_PROMPT`, `FIELD_PRESET_FOUND_PROMPT`,
-  `FIELD_PRESET_NOT_FOUND_PROMPT`).
-- **`StateManager`** (singleton, shared) — the source of session state.
-
-> ⚠️ There are no `AIFieldInteraction` nor `FieldExtractor` (mentioned in old docs). The AI is called
-> directly via `OpenAIService` and the structuring is done by `FieldIntentParser`.
+- **`index.ts`** — the service.
+- **`ModelOutput.ts`** — response format and Zod re-read of the model output.
+- **`FieldProposal.ts`** — validation, discard reasons and sensitive marks.
+- **`FieldUpdater`** — applies a validated proposal to the table fields.
+- **`FieldPresetMatcher`** — catalog keys and the exact name/synonym match.
+- **`PromptConfig`** — the system prompt and fixed messages.
+- **`errors.ts`** — `TABLE_NOT_IN_SESSION` (404), `PROPOSAL_STALE` (409), `SENSITIVE_FIELD_NOT_ACKNOWLEDGED` (400).

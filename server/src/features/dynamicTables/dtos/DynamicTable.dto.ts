@@ -15,8 +15,8 @@ const FieldRelationSchema = z.object({
   allowMultiple: z.boolean().optional(),
 }).optional();
 
-// O novo e poderoso FieldSchema
-const AdvancedFieldSchema = z.object({
+// O novo e poderoso FieldSchema. Exportado para o W6 (item 8): a proposta da IA passa por ele, sem cópia.
+export const AdvancedFieldSchema = z.object({
   name: z.string().trim().min(1, { message: 'O nome técnico do campo é obrigatório.' })
     .regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/, { message: 'O nome do campo deve começar com letra ou _ e conter apenas letras, números e _.' })
     .refine((v) => !['id','createdAt','updatedAt','userId'].includes(v), { message: 'Nome de campo reservado. Escolha outro.' }),

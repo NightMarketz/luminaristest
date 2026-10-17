@@ -8,7 +8,7 @@ import {
   deleteUserSystem,
   installModule,
 } from '@/controllers/dashboardController';
-import { postChatInterview } from '@/controllers/interviewController';
+import { postChatInterview, postCustomizeFields } from '@/controllers/interviewController';
 
 const router = Router();
 
@@ -37,6 +37,9 @@ router.delete('/system', deleteUserSystem);
 // POST /api/dashboard/ai/ChatInterview — AI onboarding interview (R28)
 // Auth is enforced inside the controller via getUserContextFromRequest.
 router.post('/ai/ChatInterview', postChatInterview);
+
+// POST /api/dashboard/ai/CustomizeFields — painel de campos por IA (W6). Auth no controller, como o de cima.
+router.post('/ai/CustomizeFields', postCustomizeFields);
 
 export default router;
 
