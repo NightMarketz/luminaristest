@@ -2,9 +2,9 @@
 id: "D-2026-10-17-IRRF-DISTRIBUICAO-FORKS"
 tipo: "decisao"
 dominio: "fiscal"
-titulo: "IRRF-DISTRIBUICAO: dividendos + JCP completo, model próprio de sócios, retenção no Simples, forks F-IRD-1..17 ratificados"
+titulo: "IRRF-DISTRIBUICAO: dividendos + JCP completo, model próprio de sócios, retenção no Simples, forks F-IRD-1..18 ratificados"
 estado: "decided"
-autorizacao: "dono, chat, 2026-10-17, questionário em cinco rodadas na sessão de planejamento do BRIEF (sem 'executa')"
+autorizacao: "dono, chat, 2026-10-17, questionário em seis rodadas na sessão de planejamento do BRIEF (sem 'executa')"
 atualizado: "2026-10-17"
 ---
 # D-2026-10-17-IRRF-DISTRIBUICAO-FORKS — escopo e forks do BRIEF do IRRF-DISTRIBUICAO
@@ -41,6 +41,7 @@ O sistema não modela nem sócio, nem distribuição, nem JCP. Dossiê:
 | F-IRD-15 | Contas do PL na base do JCP | "Mapa no perfil fiscal (Recomendado)" | idem | não |
 | F-IRD-16 | TJLP pro rata die | "Saldo diário (Recomendado)" | idem | não |
 | F-IRD-17 | Período do JCP no Real | "Por período de apuração (Recomendado)" | idem | não |
+| F-IRD-18 | Divisor da TJLP diária (2ª rodada, depois da pesquisa das pendências) | "Mensal ÷ dias do mês (Recomendado)" | idem | não |
 
 ## Efeitos
 

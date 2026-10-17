@@ -1,13 +1,12 @@
 # BE-INCR-IRRF-DISTRIBUICAO — sócios, IRRF de dividendos (Lei 15.270) e JCP completo (BRIEF)
 
 > **Sessão:** `sessao-planejamento`, sem código. Nenhum fork se auto-ratifica. Os forks foram ratificados pelo dono no
-> chat da sessão em 17/10, em cinco rodadas de questionário ([[D-2026-10-17-IRRF-DISTRIBUICAO-FORKS]]).
+> chat da sessão em 17/10, em seis rodadas de questionário (a sexta depois da pesquisa das pendências) ([[D-2026-10-17-IRRF-DISTRIBUICAO-FORKS]]).
 > **Autorização (dono, chat, 2026-10-17):** *"Autorizo planejar o BRIEF de <NÓ> — sessao-planejamento, sem
 > 'executa'"* e, sobre a escolha do nó, *"Pode decidir vc memso"*. O agente escolheu o **IRRF-DISTRIBUICAO**: das quatro
 > notas novas da verificação legal de 17/10 (#754), é a única que já está em vigor (desde 01/01/2026) e não depende de nó
 > aberto. Cobre **este BRIEF**. **Não** cobre código: cada PR exige o seu "executa".
-> **Nó:** [IRRF-DISTRIBUICAO](../plano/nos/IRRF-DISTRIBUICAO.md). **Base:** `origin/claude/legal-decisions-current-laws-981381`
-> `d98ea5d9` (PR #754, ainda fora de `main`; a nota do nó nasce nele).
+> **Nó:** [IRRF-DISTRIBUICAO](../plano/nos/IRRF-DISTRIBUICAO.md). **Base:** `origin/main` (o #754, que criou a nota do nó, entrou em 17/10).
 > **Dossiê legal:** [`pesquisas-legais/irrf-distribuicao/relatorio.md`](../../pesquisas-legais/irrf-distribuicao/relatorio.md) (referências [Dnn] abaixo).
 
 ## 0. Onde vive: Prisma first-class
@@ -47,6 +46,7 @@ no plano-semente (`fixtures/ChartOfAccountsFixture.ts:51-63`). Também não há 
 | L2 | Sem dedução da base | art. 6º-A § 1º [D05] | verificado |
 | L3 | Mais de um evento no mês: a retenção é recalculada pelo total do mês | art. 6º-A § 2º [D05] | verificado |
 | L4 | Fora do imposto: resultado até 2025 **e** aprovação até 31/12/2025 **e** exigível, pago nos termos do ato | art. 6º-A § 3º I–III [D05]; P&R itens 7–9 [D08] | verificado |
+| L4a | **O prazo da aprovação foi prorrogado para 31/01/2026** por liminar ad referendum do STF (ADIs 7.912 e 7.914, Min. Nunes Marques, 26/12/2025). O referendo foi destacado em 25/02/2026 e vai ao plenário presencial, sem resultado até 17/10 | notícia oficial do STF [D19]; portal STF, ADI 7.912 (andamentos) | verificado; inferido: a liminar segue em vigor até o plenário |
 | L5 | Dividendo a PJ domiciliada no País: sem IRRF | Lei 9.249 art. 10 caput [D02] | verificado |
 | L6 | Retém também no Simples (decisão F-IRD-3) | P&R item 10 [D08]; contra: LC 123 art. 14 [D06] e IN 1.500 art. 8º II [D07] | ambíguo, decidido |
 | L7 | Capitalizar lucro é "emprego" | P&R item 12 [D08] | verificado (orientação RFB) |
@@ -56,6 +56,11 @@ no plano-semente (`fixtures/ChartOfAccountsFixture.ts:51-63`). Também não há 
 | L11 | JCP "creditado individualizadamente" = contrapartida em passivo exigível do sócio, no ano | IN 1.700 art. 75 § 10 [D11] | verificado |
 | L12 | Lucros acumulados na base do JCP: só os do exercício anterior | IN 1.700 art. 75 § 1º VI (red. IN 2.296/2025) [D11] | verificado |
 | L13 | Recolhimento do IRRF do JCP: 3º dia útil depois do decêndio do fato gerador | Lei 11.196 art. 70 I b 1 [D10] | verificado |
+| L14 | A parcela dedutível vai até a variação pro rata dia da TJLP "desde o início do período de apuração até a data do pagamento ou crédito", deduzida no ano-calendário a que se referem os limites | SC Cosit 45/2018 (vinculante; ementa lida no Sijut em 17/10) | verificado |
+| L15 | A variação pro rata dia pode ser calculada por juros simples | SC Cosit 70/2025 [D16] | verificado |
+| L16 | DARF do IRRF sobre JCP: **5706** (residente); 9453 (exterior, fora do escopo) | MAFON 2025, p. 58 [D14] (o manual ainda mostra 15%; vale 17,5%, L9) | verificado |
+| L17 | TJLP 2026 (taxa mensal publicada pela RFB): jan–mar 0,7658% · abr–jun 0,7608% · jul–set 0,7617% · out–dez 0,7742% | RFB, página da TJLP, atualizada em 30/09/2026 [D12] | verificado |
+| L18 | Valor destinado à reserva de incentivos fiscais fica fora da base do JCP, mesmo depois de levado a capital ou a reserva de capital | SC Cosit 131/2026 (acervo, `solucoes-de-consulta/2026`) | verificado |
 
 ## 3. Checklist de comportamentos
 
@@ -80,10 +85,14 @@ conforme o caso já usado no X7). Fatiamento sugerido em §3.5.
 5. **Parâmetros legais.** Tabela nova `IRRF_DISTRIBUICAO`: `ALIQUOTA_PF_BP` = 1000, `LIMITE_MENSAL_PF_CENTS` = 5000000,
    `vigenteDesde` 2026-01-01, fonte "Lei 9.250 art. 6º-A (incl. Lei 15.270/2025)" + URL do Planalto [D05] + sha;
    `ALIQUOTA_JCP_BP` = 1750, `vigenteDesde` 2026-01-01, fonte "Lei 9.249 art. 9º § 2º (red. LC 224/2025, art. 14 III)"
-   [D02][D04]. Tabela nova `TJLP` (F-IRD-13): chave = trimestre (`YYYY-T0n`), `valorInt` = taxa anual em bp (a TJLP
-   sai com duas casas: 7,93% a.a. = 793), fonte BCB/CMN obrigatória, **sem carga de valores neste PR**
-   (dado externo, §4). Ambas entram em `LEGAL_PARAMETER_TABELAS` e no formato de linha. Teste: sem linha vigente na data
-   → erro explícito, nunca zero.
+   [D02][D04]. `TRANSICAO_APROVACAO_ATE` (`valorTexto` date-only): uma linha `2025-12-31` (fonte: art. 6º-A § 3º II
+   [D05]) **substituída** (`supersedesId`) por `2026-01-31` (fonte: liminar das ADIs 7.912/7.914, notícia STF
+   [D19]; L4a). Se o plenário cassar a liminar, o admin publica a linha nova e o job de recálculo já existente avisa
+   os eventos afetados. Tabela nova `TJLP` (F-IRD-13, F-IRD-18): chave = trimestre (`YYYY-T0n`), `valorInt` = **taxa
+   mensal** publicada pela RFB em décimos de milésimo de ponto percentual (0,7742% = 7742), fonte obrigatória.
+   **Carga inicial de 2026 no mesmo PR** (L17: 7658 · 7608 · 7617 · 7742, fonte = página da TJLP da RFB [D12] + sha).
+   Todas entram em `LEGAL_PARAMETER_TABELAS` e no formato de linha. Teste: sem linha vigente na data → erro
+   explícito, nunca zero.
 6. **Plano-semente (F-IRD-15).** Folhas novas: `2.1.3` Obrigações com sócios → `2.1.3.01` Dividendos a pagar,
    `2.1.3.02` JCP a pagar; `2.1.4` Tributos retidos → `2.1.4.01` IRRF a recolher; `2.3.2` Capital social → `2.3.2.01`
    Capital social integralizado; `2.3.3` Reservas de lucros → `2.3.3.01` Reserva legal; `4.3.4` Juros sobre o capital
@@ -118,9 +127,11 @@ conforme o caso já usado no X7). Fatiamento sugerido em §3.5.
     (tabela): 49k + 2k; 30k + 30k; 60k num só evento; 30k de transição + 30k corrente (retém 3k); três unidades da mesma
     PJ.
 13. **Pessoa jurídica beneficiária (L5).** Sócio `tipoPessoa = PJ` residente → IRRF 0, sem somar com ninguém. Teste.
-14. **Lucro da transição (L4, F-IRD-6).** `origemLucro = TRANSICAO` exige `anoResultado` ≤ 2025, `aprovadoEm` ≤
-    2025-12-31 e `atoSourceDocumentId` do escopo (o ato de aprovação anexado). Falta qualquer um → 400. O valor sai da
-    base e conta no limite (item 12). Teste: `aprovadoEm` 2026-01-02 → 400.
+14. **Lucro da transição (L4, L4a, F-IRD-6).** `origemLucro = TRANSICAO` exige `anoResultado` ≤ 2025, `aprovadoEm` ≤
+    a linha vigente de `TRANSICAO_APROVACAO_ATE` (hoje 2026-01-31, item 5) e `atoSourceDocumentId` do escopo (o ato de
+    aprovação anexado). Falta qualquer um → 400. A memória grava a linha usada. O valor sai da base e conta no limite
+    (item 12). Teste: `aprovadoEm` 2026-01-20 aceito; 2026-02-02 → 400; com a linha 2025-12-31 republicada, 2026-01-20
+    → 400.
 15. **Teto sem retenção (F-IRD-5R).** `POST /accounting/profit-distributions/preview` devolve, sem gravar,
     `tetoSemRetencaoCents` = limite − `S` atual do mês do sócio (mínimo 0), o IRRF que o evento geraria e a sugestão de
     mover o excedente para o mês seguinte quando o evento cruza o limite. Teste: 40k já no mês → teto 10k.
@@ -153,10 +164,12 @@ conforme o caso já usado no X7). Fatiamento sugerido em §3.5.
     10000 na data do crédito, nenhum sócio não residente (item 4) e TJLP vigente em todos os dias do período (item 5).
 23. **Período (F-IRD-17).** Real trimestral: um cálculo por `T01..T04`. Real anual: um por ano (`A00`). A forma vem do
     perfil, como no X7. Um cálculo vivo por (PJ, ano, período). Teste: trimestral pedindo `A00` → 400.
-24. **Base pro rata die (L10, L12, F-IRD-15, F-IRD-16).** Para cada dia do período: saldo das contas do mapa (item 8) no
-    fim do dia anterior, com `ACOES_TESOURARIA` subtraindo e `LUCROS_ACUMULADOS` limitado ao saldo do exercício anterior
-    (§ 1º VI), × taxa diária da TJLP do dia (taxa anual do trimestre convertida por dia corrido, com a fórmula declarada na
-    memória). `jurosMaxTjlpCents` = Σ diária. A memória guarda faixas de dias com o mesmo saldo e a mesma taxa. Teste:
+24. **Base pro rata die (L10, L12, L14, L15, F-IRD-15, F-IRD-16, F-IRD-18).** Para cada dia **do início do período de
+    apuração até a `dataCredito`** (L14; não até o fim do período): saldo das contas do mapa (item 8) no fim do dia
+    anterior, com `ACOES_TESOURARIA` subtraindo e `LUCROS_ACUMULADOS` limitado ao saldo do exercício anterior (§ 1º VI),
+    × taxa do dia = taxa mensal da TJLP (item 5) ÷ dias corridos daquele mês, por juros simples (L15, F-IRD-18).
+    `jurosMaxTjlpCents` = Σ diária. Teste: mês cheio com saldo constante = saldo × taxa mensal; crédito no dia 15 conta
+    só os dias até 15. A memória guarda faixas de dias com o mesmo saldo e a mesma taxa. Teste:
     aumento de capital no dia 45 do trimestre muda a base a partir do dia 46.
 25. **Limite dedutível (L10).** `limite50LucroCents` = 50% do lucro do período antes do JCP, após a CSLL e antes do IRPJ
     (§§ 2º I e 3º), lido do razão do período. `limite50ReservasCents` = 50% de (lucros acumulados + reservas de lucros).
@@ -184,9 +197,8 @@ conforme o caso já usado no X7). Fatiamento sugerido em §3.5.
     LALUR = o limite.
 30. **Cancelamento do JCP.** Cancela o cálculo do período: estorna o lançamento e arquiva as linhas `system` da Parte A
     na mesma operação de serviço. Período fechado → 409. Um JCP pago (passivo já baixado) → 409.
-31. **Resumo do DARF do JCP (L13).** `GET /accounting/jcp/irrf?competencia=YYYY-MM`: total retido e `vencimento` = 3º
-    dia útil depois do decêndio da `dataCredito`. O código de receita fica **vazio, com aviso**, até ser conferido (§4,
-    item P4). Teste do vencimento nos três decêndios.
+31. **Resumo do DARF do JCP (L13).** `GET /accounting/jcp/irrf?competencia=YYYY-MM`: total retido e `codigoReceita: '5706'`
+    (L16) e `vencimento` = 3º dia útil depois do decêndio da `dataCredito`. Teste do vencimento nos três decêndios.
 
 ### 3.5 Gates que o diff aciona (em todo PR que tocar)
 
@@ -279,31 +291,39 @@ F-IRD-1 JCP completo · F-IRD-2 model próprio de sócios · F-IRD-3 reter sempr
 F-IRD-5/5R teto + recusa · F-IRD-6 sai da base, conta no limite · F-IRD-7 recusa o exterior · F-IRD-8 só o último do
 mês · F-IRD-9 lançamento próprio · F-IRD-10 aviso · F-IRD-11 despesa ou PL, com e-Lalur · F-IRD-12 JCP só no Real ·
 F-IRD-13 TJLP em tabela de plataforma · F-IRD-14 mínimo com % · F-IRD-15 mapa no perfil · F-IRD-16 saldo diário ·
-F-IRD-17 por período de apuração.
+F-IRD-17 por período de apuração · F-IRD-18 (17/10, 2ª rodada) TJLP diária = mensal publicada ÷ dias do mês.
 
 **Pendentes:** nenhum fork do BRIEF. As pendências externas estão no §6.
 
 ## 6. Pendente de validação externa
 
-| # | Ponto | Pergunta exata (contador) | Item afetado |
-|---|---|---|---|
-| P1 | Deliberação lançada em "dividendos a pagar" = creditamento? (F-IRD-4) | "Pela Lei 9.250 art. 6º-A, a deliberação de distribuição lançada em 'dividendos a pagar' individualizado ao sócio (por analogia à IN 1.700 art. 75 § 10) já é o creditamento que dispara a retenção no mês da deliberação, mesmo com pagamento posterior?" | 11, 12 |
-| P2 | Lucro da transição conta no limite? (F-IRD-6) | "Um sócio recebe no mesmo mês R$ 30 mil de lucro de 2025 aprovado em 2025 (§ 3º) e R$ 30 mil de lucro de 2026. Há retenção de 10% sobre os R$ 30 mil de 2026?" | 12, 14 |
-| P3 | Limite do JCP no Real trimestral (F-IRD-17) | "No Real trimestral, o limite de 50% do lucro (IN 1.700 art. 75 § 2º I) e a dedução se medem por trimestre ou pelo exercício?" | 23, 25 |
-| P4 | Código DARF do IRRF sobre JCP (5706?) | conferir na tabela de códigos de receita da RFB (não conferido nesta rodada) | 31 |
-| P5 | Série da TJLP 2026 | dado externo: carga da tabela `TJLP` pelo admin, com fonte BCB/CMN | 5, 24 |
-| P6 | Simples (F-IRD-3) | a decisão está tomada. Se o contador apontar liminar ou norma nova, abre emenda | 19 |
+Pesquisa de 17/10, 2ª rodada (dossiê §6): antes de pesquisar, conferi as outras sessões e branches; nenhuma tratava
+destes pontos. Sobram P1 e P2 para o contador, e P3 fica como confirmação.
+
+| # | Ponto | Situação | Pergunta exata (contador) | Item afetado |
+|---|---|---|---|---|
+| P1 | Deliberação lançada em "dividendos a pagar" = creditamento? (F-IRD-4) | **aberto**: nenhum P&R nem Solução de Consulta de 2026 trata disso | "Pela Lei 9.250 art. 6º-A, a deliberação de distribuição lançada em 'dividendos a pagar' individualizado ao sócio (por analogia à IN 1.700 art. 75 § 10) já é o creditamento que dispara a retenção no mês da deliberação, mesmo com pagamento posterior?" | 11, 12 |
+| P2 | Lucro da transição conta no limite? (F-IRD-6) | **aberto**: P&R item 7 fala da isenção, não da soma | "Um sócio recebe no mesmo mês R$ 30 mil de lucro de 2025 aprovado até 31/01/2026 (§ 3º + liminar das ADIs 7.912/7.914) e R$ 30 mil de lucro de 2026. Há retenção de 10% sobre os R$ 30 mil de 2026?" | 12, 14 |
+| P3 | Período do JCP no Real trimestral (F-IRD-17) | **resolvido** pela SC Cosit 45/2018 (L14): TJLP do início do período de apuração até o crédito; F-IRD-17 confirmado. Fica só a confirmação do limite de 50% por trimestre | "No Real trimestral, o limite de 50% do lucro (IN 1.700 art. 75 § 2º I) usa o lucro do trimestre do crédito?" | 23, 25 |
+| P4 | Código DARF do IRRF sobre JCP | **resolvido**: 5706 (L16) | — | 31 |
+| P5 | Série da TJLP 2026 | **resolvido**: L17, carga no PR-1 (item 5). 2027 em diante: o admin carrega a cada trimestre | — | 5, 24 |
+| P6 | Simples (F-IRD-3) | **reforçado**: STF negou a cautelar da OAB para excluir o Simples (ADI 7.917, 26/12/2025) [D19]. Sem mérito julgado | — | 19 |
+| P6b | Prazo da transição | **novo, resolvido no BRIEF**: 31/01/2026 pela liminar das ADIs 7.912/7.914 (L4a, itens 5 e 14). Acompanhar o plenário: se cassar, troca a linha de parâmetro | — | 5, 14 |
+| P7 | Divisor da TJLP diária (F-IRD-18) | decidido pelo dono; vale confirmar | "Para o JCP por juros simples (SC Cosit 70/2025), a taxa diária = TJLP mensal publicada pela RFB ÷ dias do mês está correta?" | 24 |
 
 ## 7. Insumos ausentes
 
-- Série histórica da TJLP (P5): sem ela, o PR-3 entra com a tabela vazia, e a prévia do JCP responde 400 até a carga.
+- ~~Série histórica da TJLP (P5)~~: resolvida em 17/10 (L17). Os trimestres seguintes dependem de carga trimestral pelo admin.
 - Declaração da retenção: o IRRF de lucros vai à EFD-Reinf (série R-4000) e daí à DCTFWeb
   (`PRE-ADR-PESSOAL-FOLHA-ESOCIAL-REINF.md:34, 191-195, 312-320`). Não há Reinf no código. Este BRIEF entrega o DARF
   (valor, código e vencimento), não a declaração.
 
 ## 8. Achados fora de escopo (registrados, não planejados)
 
-1. **EFD-Reinf R-4010** para lucros/dividendos e JCP: nó da Reinf (PRE-ADR-PESSOAL), não deste.
+1. **EFD-Reinf R-4010** para lucros/dividendos e JCP: nó da Reinf (PRE-ADR-PESSOAL), não deste. A SC Cosit
+   10.001/2026 confirma que a declaração é obrigatória mesmo sem retenção. Isso pesa na prioridade do nó da Reinf.
+9. **Lucro da exploração** (incentivos regionais): o JCP excluído na Parte A conta nele (SC Cosit 138/2024). Não há
+   lucro da exploração no código.
 2. **Sócio no exterior** (Lei 9.249 art. 10 §§ 4º–5º e art. 10-A): recusa explícita por F-IRD-7. Nó futuro se houver cliente.
 3. **PJ imune** como beneficiária de JCP (IN 1.700 art. 75 § 8º-A): sem campo. O JCP retém de toda PJ.
 4. **Limite isento do Simples sem escrituração** (LC 123 art. 14 § 1º; PRE-ADR-SIMPLES-NACIONAL-CALCULO §10 item 5): é

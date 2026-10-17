@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — irrf-distribuicao
 
 **Pergunta:** IRRF na distribuição de lucros/dividendos (Lei 9.250 art. 6º-A, Lei 15.270/2025) e sobre JCP a 17,5% (Lei 9.249 art. 9º, LC 224): regra de retenção, base, exceções, vigência, recolhimento e declaração, para o BRIEF IRRF-DISTRIBUICAO
-**Aberto em:** 2026-10-17T11:07:22-03:00 · **Atualizado em:** 2026-10-17T11:36:13-03:00
+**Aberto em:** 2026-10-17T11:07:22-03:00 · **Atualizado em:** 2026-10-17T12:43:09-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -18,7 +18,7 @@ conferida quando há evidência de texto mais novo. Documentos salvos com hash p
 | Fato e alíquota | Lei 9.250 art. 6º-A caput (incl. Lei 15.270) | [D05] planalto; [D03] | pagamento, creditamento, emprego ou entrega, mesma PJ → mesma PF residente, > R$ 50.000,00 no mês, 10% "sobre o total do valor" | verificado |
 | Sem dedução | art. 6º-A § 1º | [D05] | "São vedadas quaisquer deduções da base de cálculo" | verificado |
 | Recálculo no mês | art. 6º-A § 2º | [D05] | retenção recalculada pelo total pago/creditado/empregado/entregue no mês | verificado |
-| Transição | art. 6º-A § 3º I–III | [D05] | resultados até 2025 **e** aprovação até 31/12/2025 **e** exigíveis, pagos nos termos do ato (cumulativas: "e" no inciso II) | verificado |
+| Transição | art. 6º-A § 3º I–III | [D05] | resultados até 2025 **e** aprovação até 31/12/2025 **e** exigíveis, pagos nos termos do ato (cumulativas: "e" no inciso II). **Prazo da aprovação prorrogado para 31/01/2026** pela cautelar das ADIs 7.912/7.914 (§6) | verificado |
 | Regulamento | IN RFB 1.500/2014 art. 23-A (incl. IN 2.299/2025) | [D07] Sijut multivigente | repete o art. 6º-A | verificado |
 | Dividendo a PJ e regra geral | Lei 9.249 art. 10 caput (red. Lei 15.270) | [D02] | isento na fonte para PF/PJ domiciliada no País, "observado o disposto nos arts. 6º-A e 16-A" | verificado |
 | Exterior | Lei 9.249 art. 10 § 4º e § 5º; art. 10-A | [D02]; [D03] | 10% sobre qualquer valor; exceções do § 5º II; crédito do art. 10-A depende de regulamento | verificado |
@@ -67,6 +67,25 @@ conferida quando há evidência de texto mais novo. Documentos salvos com hash p
 - Natureza de rendimento da EFD-Reinf (R-4010) para lucros e dividendos: só fonte secundária (PRE-ADR-PESSOAL); a declaração fica fora do BRIEF.
 - Série histórica da TJLP: dado externo (CMN/BCB), não baixado.
 - Limite do JCP no Real **trimestral** (por trimestre ou por exercício): a IN fala em "exercício" (§ 2º I) e "ano-calendário" (§ 4º); não li regra específica do trimestral.
+## 6. Pendências do BRIEF pesquisadas (17/10, 2ª rodada)
+
+Antes de pesquisar, conferi se outra sessão já tinha resolvido: `git grep` em todas as branches remotas e nos PRs #755–#763, mais a lista de sessões. Nenhuma tratava de P1–P6. O #763 cuida do IRRF de 1,5% sobre serviços (E7-3), que é outra regra.
+
+| # | Pendência | Resultado | Fonte | Grau |
+|---|---|---|---|---|
+| P4 | Código DARF do IRRF sobre JCP | **5706** para beneficiário residente e **9453** para residente no exterior. O MAFON 2025 ainda traz 15%; a alíquota vigente é 17,5% (LC 224) | [D14] MAFON 2025, índice e p. 58 | verificado (código); a alíquota do MAFON está desatualizada |
+| P5 | Série da TJLP 2026 | Taxa mensal publicada pela RFB: jan–mar 0,7658%; abr–jun 0,7608%; jul–set 0,7617%; out–dez 0,7742% (página atualizada em 30/09/2026). Anual = mensal × 12: 9,19% · 9,13% · 9,14% · 9,29%. O T3 bate com os 9,14% a.a. do Comunicado BCB 45.490, citado por fonte secundária | [D12] RFB | verificado (mensal); inferido (anual × 12) |
+| P3 | Período do JCP no Real trimestral | SC Cosit 45/2018 (vinculante): a parcela dedutível é limitada à variação pro rata dia da TJLP "correspondente ao tempo decorrido desde o início do período de apuração até a data do pagamento ou crédito"; a dedução só se faz "no ano-calendário a que se referem os seus limites". Sustenta F-IRD-17 (por período de apuração) e corrige o BRIEF item 24: os dias correm até a data do crédito, não até o fim do período. SC Cosit 70/2025: a variação pro rata dia "pode ser obtida utilizando-se a sistemática dos juros simples" | SC Cosit 45/2018, ementa lida no Sijut (normas.receita.fazenda.gov.br/pesquisa, 17/10/2026; sem hash: a página é dinâmica); [D16] SC Cosit 70/2025 | verificado (ementas) |
+| P6 | Simples | STF, ADI 7.917 (OAB): cautelar para excluir o Simples **negada** em 26/12/2025. Ainda não há julgamento de mérito. Há liminares de 1º grau dos dois lados, só entre as partes | [D19] notícia oficial do STF; portal do STF, ADI 7.912, andamentos | verificado |
+| P6b (novo) | Prazo da transição | STF, ADIs 7.912 e 7.914: o prazo de **aprovação** dos lucros de 2025 foi prorrogado para **31/01/2026** por liminar ad referendum (26/12/2025). No referendo virtual (13–24/02/2026), relator e Min. Moraes votaram por referendar, e o Min. Fachin pediu destaque (25/02/2026). O caso vai ao plenário presencial, sem resultado até 17/10 | [D19]; portal STF, ADI 7.912, aba Decisões | verificado (decisão e andamento); inferido: a liminar segue em vigor até o plenário |
+| P1 | Deliberação = creditamento? | **Sem resposta oficial.** P&R de dez/2025 [D08, D09], P&R IRPF 2026 [D15] perguntas 176 e 276 e as 267 Soluções de Consulta de 2026 do acervo não tratam disso. A analogia com a IN 1.700 art. 75 § 10 (JCP) continua sendo a melhor pista | — | pendente (contador) |
+| P2 | Lucro da transição no limite | **Sem resposta oficial.** P&R item 7: abaixo de R$ 50 mil/mês não se retém, "independentemente do ano em que foi apurado e/ou distribuído". O texto fala da isenção, não da soma | [D08] item 7 | pendente (contador) |
+
+Achados laterais (oficiais) desta rodada:
+- SC Cosit 10.001/2026 (EFD-Reinf): é obrigatório informar na EFD-Reinf os lucros e dividendos distribuídos a residentes, mesmo sem retenção (acervo, `solucoes-de-consulta/2026/solucao-de-consulta-n-10.001-…`).
+- SC Cosit 131/2026: valor destinado à reserva de incentivos fiscais não entra na base do JCP, nem quando passa depois a capital ou a reserva de capital.
+- SC Cosit 138/2024: o JCP excluído na Parte A conta na apuração do lucro da exploração.
+- Falharam: [D17] PDF da decisão do STF (veio vazio sem a sessão do portal) e [D18] nota da RFB (a página pediu login). A notícia oficial do STF [D19] cobre o conteúdo.
 <!-- /ANALISE -->
 
 ## Fontes consultadas
@@ -111,6 +130,32 @@ conferida quando há evidência de texto mais novo. Documentos salvos com hash p
 - **[D11]** D11_multivigente — Órgãos federais (Receita, ANPD, INSS, etc.)  
   Link oficial: <https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/visao/multivigente>  
   Baixado em 2026-10-17T11:26:14-03:00 · arquivo local `docs/D11_multivigente.html` · SHA-256 `faa47fa18631e4b78931693fb9ef7edabe7a58c6d288c9eee8374397c40940c3`
+- **[D12]** Taxa de Juros de Longo Prazo - TJLP — Receita Federal — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://www.gov.br/receitafederal/pt-br/assuntos/orientacao-tributaria/pagamentos-e-parcelamentos/taxa-de-juros-de-longo-prazo-tjlp>  
+  Baixado em 2026-10-17T12:34:53-03:00 · arquivo local `docs/D12_taxa-de-juros-de-longo-prazo-tjlp.html` · SHA-256 `6767cf34c415ec3ba78724cdfd7758e523e8c44df50dc34070ec0ec36dba8427`
+- **[D13]** Manual do IRRF — Receita Federal — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/manuais/irrf>  
+  Baixado em 2026-10-17T12:34:59-03:00 · arquivo local `docs/D13_irrf.html` · SHA-256 `df61cad0597e829bb33a34f4084294eebc269d7dbd58fb4cdd1e8a4bdb81c357`
+- **[D14]** Mafon 2020 — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/manuais/irrf/mafon-2025.pdf>  
+  Baixado em 2026-10-17T12:35:22-03:00 · arquivo local `docs/D14_mafon-2025-pdf.pdf` · SHA-256 `3b3e72c0ab55d688f6092a61159fefb671173e2e325fd2bf010ccf5748794588`
+- **[D15]** OBRIGATORIEDADE DE ENTREGA — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/perguntas-e-respostas/dirpf/p-r-irpf-2026-v1-00-2026-04-23.pdf>  
+  Baixado em 2026-10-17T12:36:23-03:00 · arquivo local `docs/D15_p-r-irpf-2026-v1-00-2026-04-23-pdf.pdf` · SHA-256 `f3740385c07fa4dc52f8614d009dd5bd038fbeb8bd935f89da4e9bc26ed2a3b0`
+- **[D16]** SOLUÇÃO DE CONSULTA Nº 70, DE 3 DE ABRIL DE 2025 — Acervo ctresb/leis (espelho de fonte oficial)  
+  Acervo: <https://github.com/ctresb/leis/blob/39239e708b021186cea3d407a5fc7984f2c725f5/reguladores/rfb/solucoes-de-consulta/2025/solucao-de-consulta-n-70-de-3-de-abril-de-2025-622871706.md>  
+  Fonte oficial declarada: <https://www.in.gov.br/web/dou/-/solucao-de-consulta-n-70-de-3-de-abril-de-2025-622871706> · versao_texto: publicação original · cópia de 2026-10-15  
+  Lido em 2026-10-17T12:38:39-03:00 · arquivo local `docs/D16_solucao-de-consulta-n-70-de-3-de-abril-de-2025-622871706.md` · SHA-256 `6e7119903d679c2a9e9dc7475831ba39357d627e2293a4920fe45c097f590320`  
+  ⚠ versao_texto = 'publicação original' (não é texto compilado: alterações posteriores não aparecem)
+- **[D17]** D17_downloadPeca-asp — STF  
+  Link oficial: <https://portal.stf.jus.br/processos/downloadPeca.asp?id=15383397719&ext=.pdf>  
+  Baixado em 2026-10-17T12:42:10-03:00 · arquivo local `docs/D17_downloadPeca-asp.pdf` · SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- **[D18]** Receita Federal — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://www.gov.br/receitafederal/acl_users/credentials_cookie_auth/require_login?came_from=https%3A//www.gov.br/receitafederal/pt-br/assuntos/noticias/2025/dezembro/nota-de-esclarecimento-1>  
+  Baixado em 2026-10-17T12:42:11-03:00 · arquivo local `docs/D18_require_login.html` · SHA-256 `b81a4e535e1c41ea4161d8610a6646411c632a1bd1b9e4f2d00bea37dd005443`
+- **[D19]** Supremo Tribunal Federal — STF  
+  Link oficial: <https://noticias.stf.jus.br/postsnoticias/stf-prorroga-prazo-para-aprovacao-de-lucros-e-dividendos-ate-janeiro-de-2026/>  
+  Baixado em 2026-10-17T12:42:11-03:00 · arquivo local `docs/D19_stf-prorroga-prazo-para-aprovacao-de-lucros-e-dividendos-ate.html` · SHA-256 `83ebed6621e2036ebfa204a84773527fda8ac12ff00588d34c71ff05788a7737`
 
 ## Registro de buscas
 _Nenhuma busca registrada._
