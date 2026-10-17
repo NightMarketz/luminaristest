@@ -11,7 +11,9 @@ Leia **só o que a tarefa pede**, nesta ordem, e pare assim que tiver a resposta
 
 1. **[[_INDEX]]** — régua calculada, "destravados agora" e a fila aberta por domínio (uma linha por nó).
    **Não é versionado** (nem o `_ANCORAS`): gere com `node scripts/plano-vault.mjs index` antes de ler (worktree novo não
-   tem o arquivo), ou leia direto com `node scripts/plano-vault.mjs index --stdout`.
+   tem o arquivo), ou leia direto com `node scripts/plano-vault.mjs index --stdout`. Com
+   `scripts/regen-generated.sh --setup` (1x por clone), os hooks `post-checkout`/`post-merge` geram sozinhos
+   a cada `git worktree add`, troca de branch e `git pull`.
 2. **A nota do nó** (`nos/`, `gates/`) — estado, autorização, dependências, docs e as linhas de origem.
 3. **Só se a tarefa encostar no assunto:** o trilho travado (`trilhos/T*`), a rejeição (`rejeitadas/`) ou o
    diferido (`diferidos/`) que a nota linka. Colisão com trilho/rejeitada = `DECISÃO ARQUITETURAL` → ADR, não tarefa.
