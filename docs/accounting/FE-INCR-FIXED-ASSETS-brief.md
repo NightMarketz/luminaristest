@@ -1,5 +1,9 @@
 # BRIEF — FE-INCR-FIXED-ASSETS (tela do C8: imobilizado + fatia NF-e `classId`)
 
+> **Estado legal verificado em 17/10/2026** (dossiê `pesquisas-legais/verif-2026-10-17-contabil-ecd/relatorio.md` (PR #754); [Dnn] = fonte do dossiê). Este documento é histórico; onde ele cita outra coisa, vale o que está abaixo.
+>
+> - **Anexo III da IN RFB 1.700/2017:** **confere** linha a linha com a visão vigente do Sijut2 [D01]: são 220 linhas vivas iguais. A linha `8517 0%` (tachada) foi descartada e a `8905` foi derivada como 5%, como o ADR documenta. As alterações da IN 1.700 até a **IN RFB 2.343 (17/09/2026)** não mexeram no Anexo III; a 2.343 alterou o art. 33. O art. 124 §1º confere [D01].
+
 > **Estado [FOLD 2026-10-02, mesma data]: os 7 forks RATIFICADOS na opção (a)** — dono, chat, por questionário
 > (AskUserQuestion), [[D-2026-10-02-FE-INCR-FIXED-ASSETS-FORKS]]. Produzido por `sessao-planejamento` em
 > 2026-10-02; os forks nasceram PENDENTES. Não contém código de aplicação. Implementar exige "executa" próprio (ORCH-006).

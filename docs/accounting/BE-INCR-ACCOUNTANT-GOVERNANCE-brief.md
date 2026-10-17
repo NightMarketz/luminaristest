@@ -1,5 +1,12 @@
 # BE-INCR-ACCOUNTANT-GOVERNANCE — contador responsável: atribuição por escopo, reabertura e assinatura (PLANO, não executar)
 
+> **Estado legal verificado em 17/10/2026** (dossiê `pesquisas-legais/verif-2026-10-17-contabil-ecd/relatorio.md` (PR #754); [Dnn] = fonte do dossiê). Este documento é histórico; onde ele cita outra coisa, vale o que está abaixo.
+>
+> - **Registro no CRC:** a Res. CFC 1.494/2015 foi revogada (pela 1.554/2018, por sua vez revogada pela **Res. CFC 1.707/2023**, em vigor desde 01/01/2024 e alterada pelas Res. 1.717, 1.726 e 1.731/2024; os arts. 3º e 5º não mudaram). Os tipos vigentes são Originário e Transferido (art. 3º), e o transferido recebe "T" e a sigla do CRC de destino (art. 5º p.ú.). O art. 36 da 1.707 só revoga normas: a extinção do provisório decorre do art. 3º (grau: inferido). Fonte: SRE do CFC, `RES_1707.pdf`, sha `e8f380919d07` (o cfc.org.br não está na lista do `legal.py`, por isso não tem ID D). O código foi corrigido no PR #756.
+> - **DL 9.295/1946** arts. 12 e 25 (registro no CRC) [D06] e **Código Civil** arts. 1.179 §2º, 1.182 e 1.183 [D04]: conferem com o texto compilado de 13/10/2026.
+> - **Manual da ECD L9:** a edição vigente é a **atualização de maio/2026** (sha `bc63f0a893ce`) [D07], não a de janeiro/2026 (`7ddf47755f61`). Ver [[D-2026-10-17-MANUAL-ECD-L9-MAIO]]. Em geral as páginas avançam 1 ou 2; o mapa está na nota. O conteúdo de J801, J930, J932 e `REGRA_VALIDA_NIVEL_CONTAS` confere.
+> - **Não reconferidos em 17/10:** Res. CFC 1.590/2020, NBC PG 01 e o texto da ITG 2000 (R1). O SRE dá a ITG 2000 (R1) como "em vigor", mas o texto não foi relido. As citações deles seguem o que o BRIEF registrou.
+
 ## 0. Cabeçalho
 
 - **Item:** nó [[GOV-CONTADOR]] (`docs/plano/nos/GOV-CONTADOR.md`), passo **5.2** da Fase 5 do

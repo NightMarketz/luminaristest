@@ -1,5 +1,10 @@
 # BE-INCR-PLANO-4-NIVEIS: plano de contas canônico com analítica patrimonial no nível ≥ 4 (L8 do H1). BRIEF
 
+> **Estado legal verificado em 17/10/2026** (dossiê `pesquisas-legais/verif-2026-10-17-contabil-ecd/relatorio.md` (PR #754); [Dnn] = fonte do dossiê). Este documento é histórico; onde ele cita outra coisa, vale o que está abaixo.
+>
+> - **Manual da ECD L9:** a edição vigente é a **atualização de maio/2026** (sha `bc63f0a893ce`) [D07], não a de janeiro/2026 (`7ddf47755f61`). Ver [[D-2026-10-17-MANUAL-ECD-L9-MAIO]]. Em geral as páginas avançam 1 ou 2; o mapa está na nota. O conteúdo de J801, J930, J932 e `REGRA_VALIDA_NIVEL_CONTAS` confere.
+> - **Res. CFC 1.299/2010:** é citada só pela mensagem do PVA e não foi reconferida. A regra do nível ≥ 4 vem do manual (p. 120 na edição de maio).
+
 > **Sessão:** `sessao-planejamento`, 2026-10-13, base `origin/main` `c00e7b8e` (com o #642). **Sem código.**
 > ADR irmão (Proposed): [`ADR-PLANO-CONTAS-4-NIVEIS.md`](../adr/ADR-PLANO-CONTAS-4-NIVEIS.md).
 >
