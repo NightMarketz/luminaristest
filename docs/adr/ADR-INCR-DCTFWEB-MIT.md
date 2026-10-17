@@ -1,5 +1,17 @@
 # ADR-INCR-DCTFWEB-MIT — Arquivo JSON de importação do MIT a partir das apurações confirmadas (X9: DCTFWeb + MIT)
 
+> **Verificação legal de 17/10/2026** (dossiê `pesquisas-legais/verif-2026-10-17-lgpd-cdc-obrigacoes/relatorio.md`, acervo ctresb/leis + fonte oficial; PR #763):
+> - CONFERE (IN RFB 2.237 na visão multivigente da RFB) [D21]:
+>   - DCTFWeb obrigatória para PJ em geral (art. 3º I);
+>   - MEI condicional (art. 3º IX, art. 4º IX);
+>   - inativa entrega o 1º mês sem movimento (art. 6º § 2º II);
+>   - vigência em 01/01/2025 (art. 1º § 1º I);
+>   - prazo no último dia útil do mês seguinte (art. 6º; o "dia 25" está revogado);
+>   - Simples/MEI não informam o que já vai no DAS (art. 8º § 4º);
+>   - retificadora substitui tudo (art. 13 §§ 1º, 7º e 9º);
+>   - multa de 2% ao mês, até 20%, com mínimo de R$ 200/500 (art. 11).
+> - As alterações (IN 2.248/2025, 2.267/2025, 2.319/2026 e 2.325/2026) não tocam os arts. 3º, 4º, 6º § 2º e 8º § 4º.
+
 - **Data:** 2026-10-02
 - **Status:** **Accepted (02/10/2026).** Os forks F-X9-1..6 (§8) foram ratificados pelo dono em 02/10, por
   questionário, todos na recomendação (F-X9-4 → b; F-X9-5 → c; os demais → a). As cédulas estão em

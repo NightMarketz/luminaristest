@@ -43,7 +43,9 @@ export const LEGAL_PARAMS_SEED_FILE_V6 = path.resolve(__dirname, '../../prisma/d
 export const LEGAL_PARAMS_SEED_FILE_V8 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v8.sql');
 /** Verificação legal 17/10 (PIS/Cofins item 9): NCM farmacêutico na TIPI vigente (IN RFB 2.121/2022 art. 452), supersede das linhas de 2011. */
 export const LEGAL_PARAMS_SEED_FILE_LP9_PC = path.resolve(__dirname, '../../prisma/data/legal_parameters_lp9_pis_cofins_ncm.sql');
-export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4, LEGAL_PARAMS_SEED_FILE_V5, LEGAL_PARAMS_SEED_FILE_V6, LEGAL_PARAMS_SEED_FILE_V8, LEGAL_PARAMS_SEED_FILE_LP9_PC];
+/** F-E4-1 (a): FERIADO_LOCAL — feriados estaduais e municipais (SP e São Paulo capital). Mesma regra de igualdade. */
+export const LEGAL_PARAMS_SEED_FILE_FERIADO_LOCAL = path.resolve(__dirname, '../../prisma/data/legal_parameters_feriado_local_v1.sql');
+export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4, LEGAL_PARAMS_SEED_FILE_V5, LEGAL_PARAMS_SEED_FILE_V6, LEGAL_PARAMS_SEED_FILE_V8, LEGAL_PARAMS_SEED_FILE_LP9_PC, LEGAL_PARAMS_SEED_FILE_FERIADO_LOCAL];
 
 type Valor = string | number | null;
 
@@ -136,7 +138,7 @@ export const legalParamsSemente = {
 // ─── BE-INCR-LEGAL-PARAMS PR-2 — as fotografias que os serviços passam às funções puras, montadas da semente ──────
 // (datas ≥ 2025-01-01: emenda §9 L-10 — as tabelas sem vigência em código começam no 1º ano apurável).
 export const LEGAIS_SEMENTE: readonly LinhaLegal[] = fotografiaSemente();
-export const FERIADOS_SEMENTE: readonly LinhaLegal[] = fotografiaSemente(['FERIADO_NACIONAL']);
+export const FERIADOS_SEMENTE: readonly LinhaLegal[] = fotografiaSemente(['FERIADO_NACIONAL', 'FERIADO_LOCAL']);
 export const TABELA_ITEM_SEMENTE = tabelaPisCofinsItemDe(LEGAIS_SEMENTE, '2026-01-01');
 export const CFOPS_IMOBILIZADO_SEMENTE = cfopsImobilizadoDe(LEGAIS_SEMENTE, '2026-01-01');
 export const RAZAO_CREDITO_SEMENTE = razaoCreditoPisCofins(LEGAIS_SEMENTE, '2026-01-31');

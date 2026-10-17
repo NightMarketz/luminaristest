@@ -28,7 +28,8 @@
             "SIMPLES_LIMITE",
             "SIMEI_VALOR",
             "SALARIO_MINIMO",
-            "MEI_ANEXO_XI"
+            "MEI_ANEXO_XI",
+            "FERIADO_LOCAL"
           ]
         },
         "chave": {
@@ -118,7 +119,8 @@
             "SIMPLES_LIMITE",
             "SIMEI_VALOR",
             "SALARIO_MINIMO",
-            "MEI_ANEXO_XI"
+            "MEI_ANEXO_XI",
+            "FERIADO_LOCAL"
           ]
         },
         "status": {
@@ -191,7 +193,8 @@
             "SIMPLES_LIMITE",
             "SIMEI_VALOR",
             "SALARIO_MINIMO",
-            "MEI_ANEXO_XI"
+            "MEI_ANEXO_XI",
+            "FERIADO_LOCAL"
           ]
         },
         "chave": {

@@ -5,8 +5,9 @@
  * `ValidationError` — quem valida fronteira (DTO Zod, parser) decide a mensagem; aqui só há
  * booleanos e cálculo. Erro de PROGRAMAÇÃO (base com tamanho errado) lança `Error` comum.
  *
- * Regra de domínio (BRIEF-CNPJ-ALFA §Cabeçalho; IN RFB 2.229/2024 em produção desde 01/07/2026;
- * NT 2026.004 para a NF-e — fontes secundárias convergentes, primária pendente na triagem T10):
+ * Regra de domínio (BRIEF-CNPJ-ALFA §Cabeçalho; IN RFB 2.229/2024 — previsão de implementação a partir de julho de
+ * 2026, IN RFB 2.119/2022 art. 2º p.ú., compilada; a data efetiva de produção não está na norma; formato e DV conferidos
+ * com o Anexo XV em 17/10, dossiê pesquisas-legais/verif-2026-10-17-lgpd-cdc-obrigacoes [D24][D26]; NT 2026.004 para a NF-e):
  *  - CNPJ = 12 posições `[A-Z0-9]` (8 raiz + 4 ordem) + 2 dígitos verificadores NUMÉRICOS.
  *  - Valor de cada posição = código ASCII − 48 ('0'→0 … '9'→9, 'A'→17 … 'Z'→42).
  *  - DV1: pesos 5,4,3,2,9,8,7,6,5,4,3,2 sobre as 12; DV2: pesos 6,5,4,3,2,9,8,7,6,5,4,3,2 sobre as 13.

@@ -3,6 +3,11 @@
  *
  * Hard-deletes records that were soft-deleted more than 90 days ago.
  *
+ * Guarda fiscal (CTN art. 195 p.ú.: comprovantes dos lançamentos "até que ocorra a prescrição"; LGPD art. 16 I): a venda
+ * lançada no razão nunca chega aqui — o razão só lança venda Finalized (depois Cancelled/Returned), e o immutableAfter
+ * scope:'all' do preset bloqueia o soft-delete desses estados. Guarda: `__tests__/purgeVendaLancada.test.ts`
+ * (verificação legal de 17/10, dossiê verif-2026-10-17-lgpd-cdc-obrigacoes §4.4).
+ *
  * Models with a `deletedAt` column (as of schema inspection):
  *   - DynamicTableData  ✓
  *   - InterviewSession  ✓ — janela própria de 7 dias, e também a sessão EXPIRADA (`expiresAt`), não só a apagada

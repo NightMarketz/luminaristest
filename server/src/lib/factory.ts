@@ -1074,7 +1074,8 @@ export class ApplicationFactory {
     const packageBalanceService = new PackageBalanceService(
       this.repositories.packageBalance,
       this.policies.packageBalance,
-      legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia FERIADO_NACIONAL
+      legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia FERIADO_NACIONAL (+ FERIADO_LOCAL, F-E4-1 a)
+      this.repositories.fiscalProfile, // F-E4-1 (a): codMun da unidade
     );
 
     const registerPaymentService = new RegisterPaymentService(
@@ -1846,7 +1847,8 @@ export class ApplicationFactory {
         this.policies.packageAcceptance,
         this.repositories.dynamicTable,
         this.repositories.user,
-        legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia FERIADO_NACIONAL
+        legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia FERIADO_NACIONAL (+ FERIADO_LOCAL, F-E4-1 a)
+        this.repositories.fiscalProfile, // F-E4-1 (a): codMun da unidade
       ),
       presetSync: presetSyncService,
       moduleInstall: moduleInstallService,

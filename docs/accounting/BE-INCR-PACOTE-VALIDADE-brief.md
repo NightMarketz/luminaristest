@@ -1,5 +1,11 @@
 # BE-INCR-PACOTE-VALIDADE — validade do pacote pré-pago e receita por não uso (PLANO, não executar)
 
+> **Verificação legal de 17/10/2026** (dossiê `pesquisas-legais/verif-2026-10-17-lgpd-cdc-obrigacoes/relatorio.md`, acervo ctresb/leis + fonte oficial; PR #763):
+> - CONFERE: os 9 feriados nacionais fixos (Lei 662 art. 1º, red. Lei 10.607; Lei 6.802; Lei 14.759) [D05][D18][D19]; o domingo de eleição (Código Eleitoral art. 380) [D13]; a contagem que exclui o dia da venda e inclui o último (CC 132 caput) [D03].
+> - DIVERGIA, corrigido no PR #763: a prorrogação só considerava feriado nacional. O CC 132 § 1º não distingue a esfera [D03], e a Lei 9.093 arts. 1º II e 2º cobre a data magna estadual e os feriados religiosos municipais, incluindo a Sexta-feira da Paixão [D04]. Agora há a tabela `FERIADO_LOCAL` (SP e São Paulo capital), lida pelo `codMun` do perfil fiscal da unidade (F-E4-1 a; dossiê `pesquisas-legais/fer-sp-feriados-locais`).
+> - EM ABERTO (dono): sábado como dia útil (dossiê §4.2). A Lei 7.089 só protege o sábado quando quem cobra é banco ou instituição financeira [D20]. O CDC 47 favorece não contar o sábado como útil [D02].
+> - EM ABERTO (dono): o texto v1 do aviso diz só "feriado nacional". A data já considera o feriado local.
+
 ## 0. Cabeçalho
 
 - **Item:** nó [`PACOTE-VALIDADE`](../plano/nos/PACOTE-VALIDADE.md), aberto pela decisão 18 de

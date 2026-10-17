@@ -17,8 +17,8 @@ export function isValidCpf(cpf: string): boolean {
 }
 
 /**
- * Valida um CNPJ: 12 posições alfanuméricas + 2 DV numéricos (IN RFB 2.229/2024, vigente desde
- * 01/07/2026) — delega a `lib/cnpj.ts` (BE-INCR-CNPJ-ALFA #280). F-DFE-17 → (a): a versão anterior
+ * Valida um CNPJ: 12 posições alfanuméricas + 2 DV numéricos (IN RFB 2.229/2024; previsão a partir de julho de
+ * 2026, IN RFB 2.119/2022 art. 2º p.ú.) — delega a `lib/cnpj.ts` (BE-INCR-CNPJ-ALFA #280). F-DFE-17 → (a): a versão anterior
  * fazia `replace(/\D/g, '')` e REMOVIA as letras, rejeitando todo CNPJ alfanumérico no preset `units`
  * (ADR-DFE §9.2 item 10 exigia o teste de que ele cadastra). Campo vazio continua permitido.
  */

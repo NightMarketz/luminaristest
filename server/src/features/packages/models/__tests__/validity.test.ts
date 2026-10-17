@@ -3,6 +3,8 @@ import {
   expiryMovementKey,
   isDueForExpiry,
   isExpiredForConsumption,
+  easterSunday,
+  isHoliday,
   isNationalHoliday,
   lastValidDay,
   parseExpiryMovementKey,
@@ -61,6 +63,44 @@ describe('feriado nacional prorroga o último dia (CC 132 § 1º, F-JUR-6)', () 
     expect(isNationalHoliday('2026-10-11', FERIADOS_SEMENTE)).toBe(false); // domingo do meio
     expect(isNationalHoliday('2027-10-03', FERIADOS_SEMENTE)).toBe(false); // ano ímpar
     expect(lastValidDay('2026-09-04', 30, FERIADOS_SEMENTE)).toBe('2026-10-05'); // vence no domingo de eleição → segunda
+  });
+});
+
+// F-E4-1 (a) — dono, questionário, 2026-10-12; executa: dono, chat, 2026-10-17. CC art. 132 § 1º não distingue a esfera do
+// feriado; Lei 9.093/1995 art. 1º II (data magna estadual) e art. 2º (religiosos municipais, com a Sexta-feira da Paixão).
+// Dossiês: pesquisas-legais/verif-2026-10-17-lgpd-cdc-obrigacoes [D03][D04] e pesquisas-legais/fer-sp-feriados-locais.
+describe('feriado estadual e municipal também prorroga (F-E4-1 a)', () => {
+  const SAO_PAULO = '3550308'; // IBGE: São Paulo capital (UF 35)
+  const CAMPINAS = '3509502'; // outro município de SP: só o estadual vale
+  const RIO = '3304557'; // outra UF: nenhum dos dois
+  it('Páscoa (computus gregoriano): 2024, 2025, 2026, 2027, 2038', () => {
+    expect(['2024', '2025', '2026', '2027', '2038'].map((y) => easterSunday(Number(y)))).toEqual([
+      '2024-03-31', '2025-04-20', '2026-04-05', '2027-03-28', '2038-04-25',
+    ]);
+  });
+  it('SP capital: 09/07/2026 (data magna, quinta) → sexta 10/07', () => {
+    expect(lastValidDay('2026-06-09', 30, FERIADOS_SEMENTE, SAO_PAULO)).toBe('2026-07-10');
+  });
+  it('SP capital: Sexta-feira da Paixão 26/03/2027 → sábado 27/03 (sábado segue útil; ambiguidade do dossiê §4.2 não decidida)', () => {
+    expect(lastValidDay('2027-02-24', 30, FERIADOS_SEMENTE, SAO_PAULO)).toBe('2027-03-27');
+  });
+  it('SP capital: Corpus Christi 04/06/2026 → 05/06; aniversário 25/01/2027 (segunda) → 26/01', () => {
+    expect(lastValidDay('2026-05-05', 30, FERIADOS_SEMENTE, SAO_PAULO)).toBe('2026-06-05');
+    expect(lastValidDay('2026-12-26', 30, FERIADOS_SEMENTE, SAO_PAULO)).toBe('2027-01-26');
+  });
+  it('outro município de SP: o 09/07 prorroga, o 25/01 da capital não', () => {
+    expect(lastValidDay('2026-06-09', 30, FERIADOS_SEMENTE, CAMPINAS)).toBe('2026-07-10');
+    expect(lastValidDay('2026-12-26', 30, FERIADOS_SEMENTE, CAMPINAS)).toBe('2027-01-25');
+  });
+  it('outra UF, ou unidade sem município cadastrado: só o nacional (como antes)', () => {
+    expect(lastValidDay('2026-06-09', 30, FERIADOS_SEMENTE, RIO)).toBe('2026-07-09');
+    expect(lastValidDay('2026-06-09', 30, FERIADOS_SEMENTE, null)).toBe('2026-07-09');
+    expect(lastValidDay('2026-06-09', 30, FERIADOS_SEMENTE)).toBe('2026-07-09');
+  });
+  it('isHoliday: local soma ao nacional; nacional continua valendo sem município', () => {
+    expect(isHoliday('2026-04-03', FERIADOS_SEMENTE, SAO_PAULO)).toBe(true);
+    expect(isHoliday('2026-04-03', FERIADOS_SEMENTE, CAMPINAS)).toBe(false);
+    expect(isHoliday('2026-12-25', FERIADOS_SEMENTE, null)).toBe(true);
   });
 });
 
