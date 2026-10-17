@@ -17,7 +17,9 @@ import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { centsFromDb } from '../models/money';
 import { sampleEntries, type SampleableLeg } from '../models/entrySample';
 import { anosDaJanela, linhaMeta, linhasDaApuracao, MEMO_COLUMNS, selecionarApuracoes } from '../models/taxAssessmentMemoExport';
-import { agregarIssPorCompetencia, ISS_COLUMNS, type IssDocInput } from '../models/issCompetencia';
+import { agregarIssPorCompetencia, ISS_COLUMNS, municipioDeIncidencia, type IssDocInput } from '../models/issCompetencia';
+import { listaLc116De, type ListaLc116 } from '../models/lc116ListaNacional';
+import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import type { FiscalDocumentStatus } from '../repositories/IFiscalDocumentRepository';
 import { toJobResponse, toJobListItem, type DataExchangeJobResponse, type DataExchangeJobListItem } from './dataExchangeMappers';
 import type {
@@ -94,7 +96,7 @@ export interface IIssDocumentReader {
     from: string,
     to: string,
     statuses: readonly FiscalDocumentStatus[],
-  ): Promise<Array<FiscalDocument & { cLocPrestacao: string | null }>>;
+  ): Promise<Array<FiscalDocument & { cLocPrestacao: string | null; cLocEmi: string | null }>>;
 }
 
 /** F-TC-3 (a): vale o status atual — `CANCELLED` sai. F-TC-4 (a): `AUTHORIZED_DIVERGENT` entra, contado à parte. */
@@ -166,6 +168,8 @@ export class DataExchangeExportService {
     private readonly taxAssessments: ITaxAssessmentReader,
     // X7 Fase C PR-2 (BRIEF C item 14): NFS-e autorizadas para EXPORT_ISS_BY_COMPETENCE.
     private readonly issDocuments: IIssDocumentReader,
+    // Verificação legal 17/10/2026: lista LC116_SERVICO (li EP/LP) para o município do ISS (LC 116 art. 3º).
+    private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
   ) {}
 
   /**
@@ -419,12 +423,17 @@ export class DataExchangeExportService {
         const periodStart = dto.periodStart as string;
         const periodEnd = dto.periodEnd as string;
         const docs = await this.issDocuments.findForIssReport(scope, periodStart, periodEnd, ISS_STATUSES);
+        const legais = await this.legalParams.fotografia(['LC116_SERVICO']);
+        const listas = new Map<string, ListaLc116>(); // lista vigente na competência de cada nota
         const inputs: IssDocInput[] = docs.map((d) => {
-          // F-TC-1 (a): o município é o do payload enviado. A DPS exige `locPrest.cLocPrestacao` ([192]); se faltar,
-          // o invariante do payload quebrou — erro com o id (500), nunca município inventado.
-          if (d.cLocPrestacao === null) throw new Error(`Documento fiscal ${d.id} sem cLocPrestacao no payload da tentativa corrente.`);
+          const lista = listas.get(d.dCompet) ?? listaLc116De(legais, d.dCompet);
+          listas.set(d.dCompet, lista);
+          // LC 116 art. 3º: EP ⇒ cLocEmi, LP ⇒ cLocPrestacao, ambos do payload enviado. Se faltar, o invariante do
+          // payload quebrou — erro com o id (500), nunca município inventado.
+          const municipioIbge = municipioDeIncidencia(d, lista);
+          if (municipioIbge === null) throw new Error(`Documento fiscal ${d.id} sem o município de incidência no payload da tentativa corrente.`);
           return {
-            dCompet: d.dCompet, municipioIbge: d.cLocPrestacao, tpRetISSQN: d.tpRetISSQN === 2 ? 2 : 1,
+            dCompet: d.dCompet, municipioIbge, tpRetISSQN: d.tpRetISSQN === 2 ? 2 : 1,
             vServCents: d.vServCents, baseIssCents: d.baseIssCents, vIssCents: d.vIssCents,
             divergente: d.status === 'AUTHORIZED_DIVERGENT',
           };

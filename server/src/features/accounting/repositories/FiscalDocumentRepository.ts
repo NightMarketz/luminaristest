@@ -14,7 +14,7 @@ import type {
   TransitionData,
 } from './IFiscalDocumentRepository';
 import { AUTHORIZED_STATUSES } from './IFiscalDocumentRepository';
-import { municipioDoPayload } from '../models/issCompetencia';
+import { locaisDoPayload } from '../models/issCompetencia';
 
 export function attemptRef(documentId: string, attemptNo: number): string {
   return `${documentId}:${attemptNo}`;
@@ -67,7 +67,7 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     to: string,
     statuses: readonly FiscalDocumentStatus[],
     tx?: Prisma.TransactionClient,
-  ): Promise<Array<FiscalDocument & { cLocPrestacao: string | null }>> {
+  ): Promise<Array<FiscalDocument & { cLocPrestacao: string | null; cLocEmi: string | null }>> {
     const docs = await this.db(tx).fiscalDocument.findMany({
       where: {
         ...accountingScopeWhere(scope),
@@ -82,7 +82,7 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     });
     return docs.map(({ attempts, ...doc }) => {
       const corrente = attempts.find((a) => a.attemptNo === doc.currentAttemptNo);
-      return { ...doc, cLocPrestacao: corrente ? municipioDoPayload(corrente.payloadJson) : null };
+      return { ...doc, ...(corrente ? locaisDoPayload(corrente.payloadJson) : { cLocEmi: null, cLocPrestacao: null }) };
     });
   }
 
