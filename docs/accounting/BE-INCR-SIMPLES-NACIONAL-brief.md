@@ -248,7 +248,7 @@ Por regra do dono (07/10), **nada vai ao contador**. Fica só o oráculo que nen
 
 ## 6. Insumos ausentes
 
-- **Res. CGSN 191/2026** e 184–190, 192 (compilação lida vai até a 183). Fonte: DOU.
+- ~~**Res. CGSN 191/2026** e 184–190, 192 (compilação lida vai até a 183). Fonte: DOU.~~ **Resolvido em 17/10/2026** (verificação legal, `pesquisas-legais/verif-2026-10-17-simples-mei/relatorio.md` [D15]–[D17]): 184–189, 191 e 193 não mudam o cálculo; a 190 muda o de 2027 (início de atividade, fator r, retenção no 2º mês, fim da DEFIS, fonte do SIMEI), aplicada no PR desta verificação. Seguem abertas: a 192 (não localizada) e o texto integral da 194 (ementa: prazos de opção de 2027).
 - **Regulamentação de 2027** (manual PGDAS-D com IBS/CBS; SIMEI com IBS/CBS, Anexo VII da LC 214 não lido).
   Até lá, PR-4 implementa o SIMEI de 2026 e o cálculo ME/EPP 2027 pela LC 214 lida.
 - **Leiaute da DPS para `pTotTribSN`** (B-4).

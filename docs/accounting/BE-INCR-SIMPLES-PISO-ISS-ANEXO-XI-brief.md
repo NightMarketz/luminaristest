@@ -239,7 +239,8 @@ Valores do DAS-MEI por ocupação: inalterados (X14 PR-4); a falta de ocupaçõe
 2. **LC 116 art. 8º-B (LC 214)** — redução das alíquotas municipais 2029–2032; efeito sobre o piso de 2% e sobre o %
    do Simples não lido. Fora do horizonte do incremento até 2029.
 3. **Res. CGSN 191/2026** não compilada no corpus (M11) — conferir se alterou o Anexo XI antes do seed; definir a
-   data de efeito da versão id 81177.
+   data de efeito da versão id 81177. **Resolvido em 17/10/2026** (verificação legal, `pesquisas-legais/verif-2026-10-17-simples-mei/relatorio.md` [D17][D20]): a 191 trata da NFS-e
+   (01/11/2026) e não toca o Anexo XI; o PDF id 81177 tem o mesmo sha256 do seed `lp6-mei-ax-*`.
 4. Formato do `cTribNac` × subitem da LC 116 (item 3) — **I**, conferir no leiaute DPS.
 5. Pesquisa do dono (colada no chat, não conferida) — ver §9.
 
@@ -253,7 +254,7 @@ Valores do DAS-MEI por ocupação: inalterados (X14 PR-4); a falta de ocupaçõe
 
 - **D-4 do LEGAL-PARAMS** (mínimo de 2% em `FiscalProfile.issAliquotaBp`, regime normal) continua aberto; o piso
   do Simples (este BRIEF) não o resolve.
-- **Res. CGSN 191/2026 fora da compilação** afeta todo o X14, não só o Anexo XI.
+- ~~**Res. CGSN 191/2026 fora da compilação** afeta todo o X14, não só o Anexo XI.~~ **Resolvido em 17/10/2026** (`pesquisas-legais/verif-2026-10-17-simples-mei/relatorio.md`): a 191 não muda o cálculo; a 190 (2027) foi aplicada no PR da verificação legal.
 - Art. 8º-B da LC 116 (transição do ISS) não tem nó no vault.
 
 ## 9. Pesquisa do dono × fonte oficial

@@ -1004,7 +1004,8 @@ export class SimplesApuracaoService {
    * GET …/aliquotas/:competencia — sugestão do % efetivo de ISS a reter pelo tomador na prestação da competência M
    * (LC 123 art. 21 § 4º; Res. CGSN 140 art. 27), por atividade do cadastro de serviços e das que tiveram receita no PA
    * (F-PR4-4: a faixa é a do RBT12 GLOBAL; a atividade não precisa de receita para aparecer):
-   * - M = mês de abertura do CNPJ (F-PR4-1/3): 2% (§ 4º II);
+   * - M = mês de abertura do CNPJ (F-PR4-1/3): 2% (§ 4º II); a partir de 2027, também o mês seguinte (Res. CGSN 140
+ *   art. 27 II, red. Res. CGSN 190/2026);
    * - até 2026: faixa do mês anterior, PA = M−1 (§ 4º I red. LC 155) — o 2º mês usa a receita do 1º × 12 (F-PR4-2 a);
    * - a partir de 2027: faixa do mês da prestação, PA = M (red. LC 227 art. 169; efeitos art. 182 I "b"), janela
    *   M−13…M−2 (LC 214 art. 517) e tabelas vigentes em M.
@@ -1018,7 +1019,9 @@ export class SimplesApuracaoService {
     }
     const catalogo = [...new Set((await this.serviceFiscalRepo.listByScope(scope)).map((p) => p.cTribNac))].map((cTribNac) => ({ natureza: 'SERVICO' as const, cTribNac }));
     const perfil = await this.companyProfileRepo.findByYear(scope, Number(competencia.slice(0, 4)));
-    if (perfil?.regime === 'SIMPLES' && perfil.inicioAtividadeEm?.slice(0, 7) === competencia) {
+    const inicio = perfil?.regime === 'SIMPLES' ? perfil.inicioAtividadeEm?.slice(0, 7) : undefined;
+    // Res. CGSN 140 art. 27 II: 2% no mês de início; a partir de 2027, também no mês seguinte (red. Res. CGSN 190/2026).
+    if (inicio && (inicio === competencia || (competencia >= INICIO_LC214 && proximo(inicio, 1) === competencia))) {
       return {
         competencia,
         mesReferencia: competencia,

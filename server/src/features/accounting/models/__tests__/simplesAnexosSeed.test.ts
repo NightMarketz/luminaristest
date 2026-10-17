@@ -244,6 +244,11 @@ describe('semente v5 (SIMEI-TAC-12: CPP_TAC_PCT e Anexo VII da LC 123)', () => {
 // 190/2026 [D16] (efeitos em 01/01/2027) regulou o que a semente dizia "não regulamentado" e mudou a fonte do SIMEI.
 describe('Res. CGSN 190/2026 — fontes das linhas de 2027 (DEFIS e SIMEI)', () => {
   const todas = legalParamsSeedRows(SIMPLES_SEED_FILES);
+  it('semente v6: o migration.sql carrega o texto do arquivo, byte a byte, e só insere', () => {
+    const mig = norm(readFileSync(path.join(REPO_ROOT, 'server/prisma/migrations/20261017153700_seed_simples_res_cgsn_190/migration.sql'), 'utf8'));
+    expect(mig).toContain(norm(readFileSync(path.join(REPO_ROOT, 'server/prisma/data/legal_parameters_simples_v6.sql'), 'utf8')).trimEnd());
+    expect(mig.split('\n').filter((l) => l.trim() && !l.startsWith('--')).every((l) => l.startsWith('INSERT OR IGNORE INTO "legal_parameters"'))).toBe(true);
+  });
   it('DEFIS do Simples: prazo de 31/03/2027 mantido; a fonte cita a revogação do art. 72 (art. 8º XXI) e o art. 38-B, sem "não regulamentada"', () => {
     const l = linhaLegalVigente(todas, 'OBRIGACAO_REGIME', 'DEFIS', '2027-03-31', 'SIMPLES');
     expect(l?.vigenteAte).toBe('2027-03-31');

@@ -221,8 +221,8 @@ export class AtividadeSemAnexoError extends AppError {
 }
 
 /**
- * BE-INCR-SIMPLES-NACIONAL PR-1: caso que a norma lida não regula (início de atividade a partir de 2027 sem a
- * regulamentação do CGSN; teto do ISS na 6ª faixa). O cálculo recusa em vez de inventar a regra. 422.
+ * BE-INCR-SIMPLES-NACIONAL PR-1: caso que a norma lida não regula (teto do ISS excedido fora da 5ª e da 6ª faixa; o
+ * início de atividade de 2027 saiu daqui com a Res. CGSN 190/2026). O cálculo recusa em vez de inventar a regra. 422.
  */
 export class SimplesRegraNaoRegulamentadaError extends AppError {
   constructor(message: string) {
