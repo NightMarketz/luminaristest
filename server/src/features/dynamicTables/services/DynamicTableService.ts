@@ -15,6 +15,7 @@ import { kpiCacheService } from '../../analytics/services/KpiCacheService';
 // eslint-disable-next-line no-restricted-imports -- SANCTIONED: orquestração de prisma.$transaction documentada no contrato §2 (domínio DynamicTable é o orquestrador atômico). Não é dívida — não remover.
 import prisma from '../../../lib/prisma';
 import { TransactionalDynamicTableRepository } from '../repositories/TransactionalDynamicTableRepository';
+import { withVersionContext, ruleContextOf, type VersionWriteContext } from '../repositories/versionLedger';
 import { Prisma } from 'generated/prisma';
 import type { PresetTableDefinition } from '../presets';
 
@@ -599,16 +600,19 @@ export class DynamicTableService {
     const isSystem = !!(options?.isSystem);
     const sanitizedData = { ...(dataDto.data as Record<string, unknown>) };
     delete sanitizedData.__isSystem;
+    // BE-INCR-DT-VERSION-LEDGER (F-DTV-1 a): a escrita pedida é DIRECT; o que os plugins escrevem é RULE.
+    const versionCtx: VersionWriteContext = { actorUserId: user.userId, origin: 'DIRECT' };
+    const ruleCtx = ruleContextOf(versionCtx);
     const validatedData = this.validateDataAgainstSchema(sanitizedData, table.schema as unknown as ITableSchema);
     await this.validateAdvancedRules(table, validatedData, undefined, validationRepo);
     await this.enforceNoOverlap(table, table.schema as unknown as ITableSchema, validatedData, isSystem, validationRepo);
     // Rules: beforeCreate (validation-focused; runs outside transaction to avoid long locks)
-    await this.runRules({ userId: table.userId, table, schema: table.schema as unknown as ITableSchema, operation: 'create', before: null, after: validatedData, repository: validationRepo, isSystem }, 'beforeCreate');
+    await this.runRules({ userId: table.userId, table, schema: table.schema as unknown as ITableSchema, operation: 'create', before: null, after: validatedData, repository: withVersionContext(validationRepo, ruleCtx), isSystem }, 'beforeCreate');
 
     // Wrap the main write + afterCreate side-effects in a single transaction so that
     // a plugin failure (e.g. SalesPlugin stock update) rolls back the record creation.
     const writeCreate = async (tx: Prisma.TransactionClient) => {
-      const txRepo = new TransactionalDynamicTableRepository(tx);
+      const txRepo = new TransactionalDynamicTableRepository(tx, versionCtx);
       // Gate autoritativo dentro da tx — padrão da casa `authoritative-gate-inside-tx`, o mesmo que o
       // razão usa ao postar um lançamento. (O serviço do razão não é nomeado aqui de propósito: o guard
       // de fronteira §2.1 proíbe o token dentro do motor, inclusive em comentário.)
@@ -620,7 +624,7 @@ export class DynamicTableService {
       const record = await txRepo.createData(tableId, validatedData);
       // Include created id in 'after' context so plugins can reference the new entry
       const afterWithId = { ...validatedData, id: record.id };
-      await this.runRules({ userId: table.userId, table, schema: table.schema as unknown as ITableSchema, operation: 'create', before: null, after: afterWithId, repository: txRepo, isSystem }, 'afterCreate');
+      await this.runRules({ userId: table.userId, table, schema: table.schema as unknown as ITableSchema, operation: 'create', before: null, after: afterWithId, repository: withVersionContext(txRepo, ruleCtx), isSystem }, 'afterCreate');
       return record;
     };
     // Reuse the caller's transaction when composing an atomic multi-write (options.tx); otherwise open our own.
@@ -760,7 +764,11 @@ export class DynamicTableService {
     return results;
   }
 
-  async updateTableData(user: UserContext, dataId: string, dataDto: UpdateDynamicTableDataDtoType, options?: { isSystem?: boolean; tx?: Prisma.TransactionClient }) {
+  /**
+   * `options.restoredFromVersion` (BE-INCR-DT-VERSION-LEDGER item 14): só o restore passa — a versão que esta
+   * escrita grava vira `RESTORE` apontando para a versão de origem. Plugins seguem gravando `RULE`.
+   */
+  async updateTableData(user: UserContext, dataId: string, dataDto: UpdateDynamicTableDataDtoType, options?: { isSystem?: boolean; tx?: Prisma.TransactionClient; restoredFromVersion?: number }) {
     const table = await this.findTableForData(user, dataId);
     if (!this.policy.canManageData(user, table)) {
       throw new ForbiddenError('You do not have permission to update data in this table.');
@@ -779,6 +787,8 @@ export class DynamicTableService {
     const isSystem = !!(options?.isSystem);
     const sanitizedDataDto = { ...(dataDto.data as Record<string, unknown>) };
     delete sanitizedDataDto.__isSystem;
+    const versionCtx: VersionWriteContext = { actorUserId: user.userId, origin: 'DIRECT', restoredFromVersion: options?.restoredFromVersion };
+    const ruleCtx = ruleContextOf(versionCtx);
     dataDto = { ...dataDto, data: sanitizedDataDto };
     const schema = table.schema as unknown as ITableSchema;
 
@@ -866,12 +876,12 @@ export class DynamicTableService {
     // the clean data object from afterWithId (minus id) before calling updateData.
     const beforeWithId = { ...(existingData.data as Record<string, unknown>), id: dataId };
     const afterWithId = { ...(mergedData as Record<string, unknown>), id: dataId };
-    await this.runRules({ userId: table.userId, table, schema: table.schema as unknown as ITableSchema, operation: 'update', before: beforeWithId, after: afterWithId, repository: validationRepo, isSystem }, 'beforeUpdate');
+    await this.runRules({ userId: table.userId, table, schema: table.schema as unknown as ITableSchema, operation: 'update', before: beforeWithId, after: afterWithId, repository: withVersionContext(validationRepo, ruleCtx), isSystem }, 'beforeUpdate');
 
     // Wrap the main write + afterUpdate side-effects in a single transaction so that
     // a plugin failure (e.g. SalesPlugin stock/commission update) rolls back the record update.
     const writeUpdate = async (tx: Prisma.TransactionClient) => {
-      const txRepo = new TransactionalDynamicTableRepository(tx);
+      const txRepo = new TransactionalDynamicTableRepository(tx, versionCtx);
       // Gate autoritativo dentro da tx — mesmo motivo do createTableData: a checagem em :746 é
       // preflight; a re-contagem tx-bound (com excludeId, para a linha não colidir consigo mesma)
       // é o que fecha a janela read-then-write de um reagendamento concorrente.
@@ -880,7 +890,7 @@ export class DynamicTableService {
       // Extract the (possibly mutated) data from afterWithId, stripping the synthetic id field.
       const { id: _afterId, ...persistedData } = afterWithId;
       const record = await txRepo.updateData(dataId, persistedData);
-      await this.runRules({ userId: table.userId, table, schema: table.schema as unknown as ITableSchema, operation: 'update', before: beforeWithId, after: afterWithId, repository: txRepo, isSystem }, 'afterUpdate');
+      await this.runRules({ userId: table.userId, table, schema: table.schema as unknown as ITableSchema, operation: 'update', before: beforeWithId, after: afterWithId, repository: withVersionContext(txRepo, ruleCtx), isSystem }, 'afterUpdate');
       return record;
     };
     // Reuse the caller's transaction when composing an atomic multi-write (options.tx); otherwise open our own.
@@ -999,10 +1009,12 @@ export class DynamicTableService {
 
     // Wrap beforeDelete + the main delete + cascade + afterDelete side-effects in a single transaction so
     // that a failure rolls back the soft-delete, any cascade deletions and the beforeDelete effects.
+    const versionCtx: VersionWriteContext = { actorUserId: user.userId, origin: 'DIRECT' };
     await prisma.$transaction(async (tx) => {
-      const txRepo = new TransactionalDynamicTableRepository(tx);
+      const txRepo = new TransactionalDynamicTableRepository(tx, versionCtx);
+      const ruleRepo = withVersionContext(txRepo, ruleContextOf(versionCtx));
       const existing = await txRepo.findDataById(dataId);
-      await this.runRules({ userId: table.userId, table, schema: table.schema as unknown as ITableSchema, operation: 'delete', before: existing?.data as Record<string, unknown> | null, after: null, repository: txRepo }, 'beforeDelete');
+      await this.runRules({ userId: table.userId, table, schema: table.schema as unknown as ITableSchema, operation: 'delete', before: existing?.data as Record<string, unknown> | null, after: null, repository: ruleRepo }, 'beforeDelete');
 
       await txRepo.deleteData(dataId);
 
@@ -1011,7 +1023,7 @@ export class DynamicTableService {
         await txRepo.deleteData(cascade.dataId);
       }
 
-      await this.runRules({ userId: table.userId, table, schema: table.schema as unknown as ITableSchema, operation: 'delete', before: existing?.data as Record<string, unknown> | null, after: null, repository: txRepo }, 'afterDelete');
+      await this.runRules({ userId: table.userId, table, schema: table.schema as unknown as ITableSchema, operation: 'delete', before: existing?.data as Record<string, unknown> | null, after: null, repository: ruleRepo }, 'afterDelete');
     });
 
     kpiCacheService.invalidate(table.userId);
@@ -1049,8 +1061,10 @@ export class DynamicTableService {
     const uniqueIds = Array.from(new Set(ids));
 
     let deleted = 0;
+    const versionCtx: VersionWriteContext = { actorUserId: user.userId, origin: 'DIRECT' };
     await this.runInTransaction(async (tx) => {
-      const txRepo = new TransactionalDynamicTableRepository(tx);
+      const txRepo = new TransactionalDynamicTableRepository(tx, versionCtx);
+      const ruleRepo = withVersionContext(txRepo, ruleContextOf(versionCtx));
       const cascadeIds = new Set<string>();
       for (const dataId of uniqueIds) {
         // Resolve the row's parent table inside the tx. A missing/soft-deleted row,
@@ -1066,7 +1080,7 @@ export class DynamicTableService {
       for (const dataId of uniqueIds) {
         const before = ((await txRepo.findDataById(dataId))?.data ?? null) as Record<string, unknown> | null;
         befores.set(dataId, before);
-        await this.runRules({ userId: table.userId, table, schema: table.schema as unknown as ITableSchema, operation: 'delete', before, after: null, repository: txRepo }, 'beforeDelete');
+        await this.runRules({ userId: table.userId, table, schema: table.schema as unknown as ITableSchema, operation: 'delete', before, after: null, repository: ruleRepo }, 'beforeDelete');
       }
       for (const dataId of uniqueIds) {
         await txRepo.deleteData(dataId);
@@ -1076,7 +1090,7 @@ export class DynamicTableService {
         await txRepo.deleteData(cascadeId);
       }
       for (const dataId of uniqueIds) {
-        await this.runRules({ userId: table.userId, table, schema: table.schema as unknown as ITableSchema, operation: 'delete', before: befores.get(dataId) ?? null, after: null, repository: txRepo }, 'afterDelete');
+        await this.runRules({ userId: table.userId, table, schema: table.schema as unknown as ITableSchema, operation: 'delete', before: befores.get(dataId) ?? null, after: null, repository: ruleRepo }, 'afterDelete');
       }
     });
 

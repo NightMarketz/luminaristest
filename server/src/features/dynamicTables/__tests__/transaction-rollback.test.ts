@@ -117,6 +117,7 @@ const FAKE_TABLE: IDynamicTable = {
   name: 'Test Table',
   internalName: 'testTable',
   category: 'other',
+  schemaVersion: 1,
   createdAt: new Date(),
   updatedAt: new Date(),
   schema: {

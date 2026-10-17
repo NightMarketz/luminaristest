@@ -211,5 +211,177 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/dynamic-tables/{tableId}/data/{dataId}/versions:
+ *     get:
+ *       summary: List the version ledger of a data row (BE-INCR-DT-VERSION-LEDGER)
+ *       description: 'Newest first, without the snapshot. Soft-deleted rows still list their history.'
+ *       tags: [DynamicTables]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - in: path
+ *           name: tableId
+ *           required: true
+ *           schema: { type: string, format: cuid }
+ *         - in: path
+ *           name: dataId
+ *           required: true
+ *           schema: { type: string, format: cuid }
+ *         - in: query
+ *           name: page
+ *           schema: { type: integer, minimum: 1, default: 1 }
+ *         - in: query
+ *           name: limit
+ *           schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+ *       responses:
+ *         '200': { description: 'Returns { data, total, page, limit }' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/dynamic-tables/{tableId}/data/{dataId}/versions/{version}:
+ *     get:
+ *       summary: Get one row version with the table schema of its time
+ *       tags: [DynamicTables]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - in: path
+ *           name: tableId
+ *           required: true
+ *           schema: { type: string, format: cuid }
+ *         - in: path
+ *           name: dataId
+ *           required: true
+ *           schema: { type: string, format: cuid }
+ *         - in: path
+ *           name: version
+ *           required: true
+ *           schema: { type: integer, minimum: 1 }
+ *       responses:
+ *         '200': { description: 'Returns the version metadata, data and schema' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/dynamic-tables/{tableId}/data/{dataId}/versions/{version}/diff:
+ *     get:
+ *       summary: Field-by-field diff of a row version
+ *       tags: [DynamicTables]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - in: path
+ *           name: tableId
+ *           required: true
+ *           schema: { type: string, format: cuid }
+ *         - in: path
+ *           name: dataId
+ *           required: true
+ *           schema: { type: string, format: cuid }
+ *         - in: path
+ *           name: version
+ *           required: true
+ *           schema: { type: integer, minimum: 1 }
+ *         - in: query
+ *           name: against
+ *           description: 'Version number or "current"; default is the previous version'
+ *           schema: { type: string }
+ *       responses:
+ *         '200': { description: 'Returns { from, to, changes }' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/dynamic-tables/{tableId}/data/{dataId}/versions/{version}/restore:
+ *     post:
+ *       summary: Restore a row version as a new RESTORE version
+ *       description: 'Runs the normal update path (current schema, rules, plugins); readOnly fields keep the current value. 409 ROW_DELETED for a soft-deleted row.'
+ *       tags: [DynamicTables]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - in: path
+ *           name: tableId
+ *           required: true
+ *           schema: { type: string, format: cuid }
+ *         - in: path
+ *           name: dataId
+ *           required: true
+ *           schema: { type: string, format: cuid }
+ *         - in: path
+ *           name: version
+ *           required: true
+ *           schema: { type: integer, minimum: 1 }
+ *       responses:
+ *         '200': { description: 'Returns the updated row' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '409': { description: 'Row is soft-deleted (ROW_DELETED)' }
+ *
+ *   /api/dynamic-tables/{tableId}/schema-versions:
+ *     get:
+ *       summary: List the schema versions of a dynamic table
+ *       tags: [DynamicTables]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - in: path
+ *           name: tableId
+ *           required: true
+ *           schema: { type: string, format: cuid }
+ *         - in: query
+ *           name: page
+ *           schema: { type: integer, minimum: 1, default: 1 }
+ *         - in: query
+ *           name: limit
+ *           schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+ *       responses:
+ *         '200': { description: 'Returns { data, total, page, limit }' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/dynamic-tables/{tableId}/schema-versions/{version}:
+ *     get:
+ *       summary: Get one schema version
+ *       tags: [DynamicTables]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - in: path
+ *           name: tableId
+ *           required: true
+ *           schema: { type: string, format: cuid }
+ *         - in: path
+ *           name: version
+ *           required: true
+ *           schema: { type: integer, minimum: 1 }
+ *       responses:
+ *         '200': { description: 'Returns the version metadata and schema' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/dynamic-tables/{tableId}/schema-versions/{version}/diff:
+ *     get:
+ *       summary: Field-by-field diff of a schema version
+ *       tags: [DynamicTables]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - in: path
+ *           name: tableId
+ *           required: true
+ *           schema: { type: string, format: cuid }
+ *         - in: path
+ *           name: version
+ *           required: true
+ *           schema: { type: integer, minimum: 1 }
+ *         - in: query
+ *           name: against
+ *           description: 'Version number or "current"; default is the previous version'
+ *           schema: { type: string }
+ *       responses:
+ *         '200': { description: 'Returns { from, to, changes }' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
  */
 export {};

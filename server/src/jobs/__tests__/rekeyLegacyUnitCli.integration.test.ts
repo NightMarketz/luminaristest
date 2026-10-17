@@ -335,6 +335,16 @@ describe('I1b — rekeyLegacyUnitCli', () => {
     expect(await prisma.auditEvent.count({ where: { eventType: UNIT_REKEYED_EVENT, scopeUserId: o.id } })).toBe(1);
     expect(await pipelinesFor(o.id, to)).toHaveLength(1);
 
+    // L6 (BE-INCR-DT-VERSION-LEDGER, dono 2026-10-17), lado vermelho: versão do ledger que já existia no pré, se
+    // adulterada, reprova o --verify; desfeita, volta a verde.
+    const preVersion = await prisma.dynamicTableRowVersion.findFirstOrThrow({ orderBy: { createdAt: 'asc' } });
+    await prisma.dynamicTableRowVersion.update({ where: { id: preVersion.id }, data: { origin: 'ADULTERADO' } });
+    const badVer = await cli(['--verify', '--against', pre]);
+    expect(badVer.code).toBe(1);
+    expect(badVer.out).toMatch(/dynamic_table_row_versions \S+: versão do pré alterada/);
+    await prisma.dynamicTableRowVersion.update({ where: { id: preVersion.id }, data: { origin: preVersion.origin } });
+    expect((await cli(['--verify', '--against', pre])).code).toBe(0);
+
     // item 17, lado vermelho: mexer numa tabela fora do inventário reprova o --verify.
     await prisma.user.update({ where: { id: o.id }, data: { name: 'adulterado' } });
     const bad = await cli(['--verify', '--against', pre]);

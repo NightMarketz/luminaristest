@@ -11,6 +11,15 @@ import {
   syncPreset,
   installTableFromPreset,
 } from '@/controllers/dynamicTablesController';
+import {
+  listRowVersions,
+  getRowVersion,
+  diffRowVersion,
+  restoreRowVersion,
+  listSchemaVersions,
+  getSchemaVersion,
+  diffSchemaVersion,
+} from '@/controllers/dynamicTableVersionsController';
 
 const router = Router();
 
@@ -38,5 +47,14 @@ router.post('/:tableId/data/batch-delete', batchDeleteTableData);
 // /api/dynamic-tables/:tableId/data/:dataId
 router.put('/:tableId/data/:dataId', updateTableData);
 router.delete('/:tableId/data/:dataId', deleteTableData);
+
+// BE-INCR-DT-VERSION-LEDGER — ledger de versões da linha e do schema
+router.get('/:tableId/data/:dataId/versions', listRowVersions);
+router.get('/:tableId/data/:dataId/versions/:version', getRowVersion);
+router.get('/:tableId/data/:dataId/versions/:version/diff', diffRowVersion);
+router.post('/:tableId/data/:dataId/versions/:version/restore', restoreRowVersion);
+router.get('/:tableId/schema-versions', listSchemaVersions);
+router.get('/:tableId/schema-versions/:version', getSchemaVersion);
+router.get('/:tableId/schema-versions/:version/diff', diffSchemaVersion);
 
 export default router;

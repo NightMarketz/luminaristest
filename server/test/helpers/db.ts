@@ -178,6 +178,9 @@ export async function resetDb(): Promise<void> {
   await prisma.account.deleteMany();
 
   await prisma.jobWatermark.deleteMany();
+  // BE-INCR-DT-VERSION-LEDGER item 9: ledger antes das linhas/tabelas (o cascade faria, mas a ordem fica explícita).
+  await prisma.dynamicTableRowVersion.deleteMany();
+  await prisma.dynamicTableSchemaVersion.deleteMany();
   await prisma.dynamicTableData.deleteMany();
   await prisma.dynamicTable.deleteMany();
   await prisma.dashboardLayout.deleteMany();

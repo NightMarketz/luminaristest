@@ -32,8 +32,12 @@ describe('DynamicTableService.updateTableData — update parcial não aplica def
     // options.tx: a escrita vai direto por este tx (sem prisma.$transaction) e é capturada aqui.
     const tx = {
       dynamicTableData: {
+        findUnique: jest.fn(async () => ({ ...existing })),
         update: jest.fn(async ({ where, data }: any) => ({ id: where.id, dynamicTableId: 'tbl-1', data: data.data })),
       },
+      // BE-INCR-DT-VERSION-LEDGER: a escrita grava a versão no mesmo tx.
+      dynamicTableRowVersion: { findFirst: jest.fn(async () => null), create: jest.fn(async () => ({})) },
+      dynamicTable: { findUnique: jest.fn(async () => ({ schemaVersion: 1 })) },
     };
 
     await svc.updateTableData(user, 'row-1', { data: { amount: 2 } } as any, { tx: tx as any });

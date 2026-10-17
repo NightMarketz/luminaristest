@@ -463,7 +463,9 @@ export async function verify(db: PrismaClient, inv: InventoryEntry[], against: s
   try {
     const rekeyInv = inv.filter((t) => t.cls === 'REKEY');
     const rekeyTables = new Set(rekeyInv.map((t) => t.table));
-    const SPECIAL = new Set(['dynamic_table_data', 'audit_events', 'audit_chain_heads']);
+    // `dynamic_table_row_versions` (BE-INCR-DT-VERSION-LEDGER, L6 — dono, 2026-10-17): o --apply cria a unidade pelo
+    // createTableData, e o ledger grava versão das linhas criadas. Regra própria mais abaixo.
+    const SPECIAL = new Set(['dynamic_table_data', 'dynamic_table_row_versions', 'audit_events', 'audit_chain_heads']);
     const [preTables, postTables] = [await userTables(pre), await userTables(db)];
     if (stable(preTables) !== stable(postTables)) failures.push('conjunto de tabelas difere entre pré e pós');
     const snap = new Map<string, { a: Row[]; b: Row[] }>();
@@ -526,6 +528,23 @@ export async function verify(db: PrismaClient, inv: InventoryEntry[], against: s
       if (prev !== stable(r)) failures.push(`(a) dynamic_table_data ${String(r.id)}: linha do pré alterada`);
     }
     if (seenDtd !== preDtd.size) failures.push(`(a) dynamic_table_data: ${preDtd.size - seenDtd} linha(s) do pré sumiram`);
+
+    // dynamic_table_row_versions (L6): append-only — toda versão do pré intacta; versão nova só de linha que é acréscimo
+    // em dynamic_table_data (o --apply não edita linha existente; se editasse, a regra acima já reprovaria).
+    if (preTables.includes('dynamic_table_row_versions')) {
+      const preVer = new Map((await tableRows(pre, 'dynamic_table_row_versions')).map((r) => [String(r.id), stable(r)]));
+      let seenVer = 0;
+      for (const r of await tableRows(db, 'dynamic_table_row_versions')) {
+        const prev = preVer.get(String(r.id));
+        if (prev === undefined) {
+          if (!addedIds.has(String(r.dataId))) failures.push(`(a) dynamic_table_row_versions ${String(r.id)}: versão nova de linha que não foi criada no pós`);
+          continue;
+        }
+        seenVer++;
+        if (prev !== stable(r)) failures.push(`(a) dynamic_table_row_versions ${String(r.id)}: versão do pré alterada`);
+      }
+      if (seenVer !== preVer.size) failures.push(`(a) dynamic_table_row_versions: ${preVer.size - seenVer} versão(ões) do pré sumiram`);
+    }
 
     // Item 6 — validade de cada par (+ item 10: todo `to` está entre os acréscimos de dynamic_table_data).
     for (const p of pairs) {

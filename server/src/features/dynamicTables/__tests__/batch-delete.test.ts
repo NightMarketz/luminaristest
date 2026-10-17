@@ -79,6 +79,7 @@ const OWNER_TABLE: IDynamicTable = {
   name: 'Leads',
   internalName: 'leads',
   category: 'other',
+  schemaVersion: 1,
   createdAt: referenceDate,
   updatedAt: referenceDate,
   schema: { fields: [] } as unknown as IDynamicTable['schema'],
