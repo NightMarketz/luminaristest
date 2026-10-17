@@ -530,3 +530,14 @@ Pedido do dono, depois da 1ª versão: *"Se são artigos de lei, precisa ter pes
 **O que continua sem verificação:**
 - se o MIT usa exatamente a tabela de códigos da DCTF (inferido pelo formato);
 - as liminares dos TRFs, que não foram conferidas no tribunal e valem só para quem as obteve.
+
+## Estado legal verificado em 17/10/2026 (verificação legal IRPJ/CSLL)
+
+Fonte: `pesquisas-legais/verif-2026-10-17-irpj-csll/relatorio.md` (PR #754; as [Dnn] são dele). Correções desta frente
+estão em `pesquisas-legais/verif-2026-10-17-irpj-csll-correcoes/relatorio.md` ([Cnn] = Dnn desse dossiê).
+- **LC 224/2025:** vale como está. A LC 235/2026 art. 11 só alterou o art. 4º § 8º V (entidades sem fins lucrativos),
+  e o art. 1º dela afasta o art. 5º em 2026 [D20]. Nenhuma das 13 LC de 2026 toca os §§ 4º–5º nem o art. 7º [D01, D19, D20].
+- **IN RFB 1.700/2017:** a última alteração é a IN 2.343/2026, vigente desde 18/09/2026 [D18]; a multivigente do Sijut
+  tem o mesmo sha de 09/10 (`faa47fa1…`) [D15]. A IN 2.305/2025 teve a última alteração pela IN 2.307 [D14].
+- **ECF:** o leiaute 13 (AC 2026) **ainda não saiu**; a página do SPED lista o leiaute 12 como o mais recente [D21].
+- **D7 revisado em 17/10:** o adicional do trimestre usa os meses em atividade (Lei 9.249 art. 3º § 1º) [D02; C03]. Premissa A6: mês tocado conta inteiro.
