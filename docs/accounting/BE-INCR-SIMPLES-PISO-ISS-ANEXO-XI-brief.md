@@ -276,9 +276,9 @@ Valores do DAS-MEI por ocupação: inalterados (X14 PR-4); a falta de ocupaçõe
 - **L8 LIDA.** **Transição do ISS (não implementada — feature nova, registrada centralmente):** LC 116 art. 8º-B, incluído pelo art. 508 da LC 214 [D04] LC 214 compilada (<https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm>): as alíquotas caem 10/20/30/40% em 2029/2030/2031/2032 e os benefícios caem na mesma proporção (§ 1º). A LC 116 fica revogada em 01/01/2033 (LC 214 art. 543 IV). `ISS_LIMITE` e `issComBeneficio` não têm fim de vigência. Nada muda antes de 2029.
 - **D-4 FECHADA — não validar o mínimo de 2% no `issAliquotaBp`.** O art. 8º-A da LC 116 [D01] LC 116 (acervo ctresb/leis, compilada, cópia 13/10; <https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2003-07-31;116>) fixa o mínimo que o **Município** pode adotar, não um limite do campo. O leiaute [D12] Anexo I v1.01 do leiaute DPS, sha256[:12] `de5bc492959e` (<https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/documentacao-atual/anexo_i-sefin_adn-dps_nfse-snnfse-v1-01-20260209.xlsx>) aceita até 1,8% no Simples com retenção (E0621/E0628), e no regime normal com município conveniado o `pAliq` nem pode ir (E0617). O piso continua onde a lei o põe: no benefício do Simples (Res. CGSN 140 art. 31 p.ú. [D06] Res. CGSN 140 multivigente (<https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/visao/multivigente>), `issBeneficio.ts`). Dossiê §4, leitura (b).
 
-## Estado legal verificado em 17/10/2026
+## Estado legal verificado em 17/10/2026 (Simples/MEI)
 
-Verificação legal de 17/10/2026, `pesquisas-legais/verif-2026-10-17-simples-mei/relatorio.md` (dossiê com as fontes [Dnn], hash e data). Correções no PR #759.
+Verificação legal de 17/10/2026, `pesquisas-legais/verif-2026-10-17-simples-mei/relatorio.md` (dossiê com as fontes [Dnn], hash e data; os [Dnn] desta seção são desse dossiê, não do de ISS/NFS-e acima). Correções no PR #759.
 
 - **Res. CGSN 191/2026** lida [D17]: NFS-e nacional obrigatória para ME/EPP desde 01/11/2026 (art. 3º I); revoga a 189; não mexe no cálculo nem no Anexo XI (sha256 do id 81177 idêntico ao seed [D20]).
 - Piso de 2% (Res. 140 art. 31 p.ú.; art. 32 § 1º) e exceções 7.02, 7.05 e 16.01: conferem [D15]. Anexo XI (red. Res. 182/2025): o sha256 `cb3845804f3c…` é igual ao do seed `lp6-mei-ax-*` [D20].
