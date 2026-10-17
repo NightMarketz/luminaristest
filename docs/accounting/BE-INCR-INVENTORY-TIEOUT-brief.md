@@ -1,5 +1,9 @@
 # BRIEF — BE-INCR-INVENTORY-TIEOUT (LAC-E)
 
+> **Estado legal verificado em 17/10/2026** (dossiê `pesquisas-legais/verif-2026-10-17-contabil-ecd/relatorio.md` (PR #754); [Dnn] = fonte do dossiê). Este documento é histórico; onde ele cita outra coisa, vale o que está abaixo.
+>
+> - **RIR/2018 art. 307** (estoque a custo médio) [D08]: confere.
+
 > Produzido em sessão de planejamento, 2026-09-02. **FORKS RATIFICADOS 2026-09-02** — dono, nesta
 > sessão: "ratifico todas as recomendações dos forks". Cada fork abaixo vale na recomendação.
 
