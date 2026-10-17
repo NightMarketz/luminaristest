@@ -31,6 +31,8 @@ export const LEGAL_PARAMETER_TABELAS = [
   'SALARIO_MINIMO',
   // SIMPLES-PISO-ANEXO-XI bloco 2 (BRIEF item 11): ocupações permitidas ao MEI (Res. CGSN 140 Anexo XI, Tabelas A e B).
   'MEI_ANEXO_XI',
+  // F-E4-1 (a) (dono, 12/10; executa 17/10): feriados estaduais e municipais (CC 132 § 1º; Lei 9.093/1995 arts. 1º e 2º).
+  'FERIADO_LOCAL',
 ] as const;
 export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
 

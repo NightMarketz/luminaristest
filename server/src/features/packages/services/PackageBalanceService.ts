@@ -7,6 +7,8 @@ import { centsFromDb } from '../../accounting/models/money';
 import { scopeToday } from '../../accounting/models/dates';
 import type { IPackageBalanceRepository } from '../repositories/IPackageBalanceRepository';
 import type { IPackageBalancePolicy } from '../policies/IPackageBalancePolicy';
+import type { IFiscalProfileRepository } from '../../accounting/repositories/IFiscalProfileRepository';
+import { unitHolidayCalendar } from './unitHolidayCalendar';
 import {
   expiresAtToDb,
   expiresOnFromDb,
@@ -59,8 +61,10 @@ export class PackageBalanceService {
   constructor(
     private readonly repo: IPackageBalanceRepository,
     private readonly policy: IPackageBalancePolicy,
-    /** BE-INCR-LEGAL-PARAMS PR-2 (L-9; F-LP-4 a): fotografia `FERIADO_NACIONAL` para o último dia válido. */
+    /** BE-INCR-LEGAL-PARAMS PR-2 (L-9; F-LP-4 a): fotografia `FERIADO_NACIONAL` + `FERIADO_LOCAL` (F-E4-1 a). */
     private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
+    /** F-E4-1 (a): o município da unidade (`FiscalProfile.codMun`) decide os feriados estaduais e municipais. */
+    private readonly fiscalProfiles: Pick<IFiscalProfileRepository, 'findByScope'>,
   ) {}
 
   /**
@@ -77,7 +81,8 @@ export class PackageBalanceService {
     // Fast path: already applied — skip the transaction entirely.
     const existing = await this.repo.findMovement(scope, cmd.saleId, 'credit');
     if (existing) return;
-    const purchaseLastDay = lastValidDay(cmd.saleDate, cmd.validityDays, await this.legalParams.fotografia(['FERIADO_NACIONAL']));
+    const { feriados, codMun } = await unitHolidayCalendar(this.legalParams, this.fiscalProfiles, scope);
+    const purchaseLastDay = lastValidDay(cmd.saleDate, cmd.validityDays, feriados, codMun);
 
     try {
       await this.repo.runTransaction(async (tx) => {

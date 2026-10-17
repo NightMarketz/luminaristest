@@ -1,6 +1,7 @@
 import { Prisma } from 'generated/prisma';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
-import type { FeriadosNacionais } from '../models/validity';
+import type { IFiscalProfileRepository } from '../../accounting/repositories/IFiscalProfileRepository';
+import { unitHolidayCalendar, type UnitHolidayCalendar } from './unitHolidayCalendar';
 import type { PackageValidityAcceptance } from 'generated/prisma';
 import {
   ForbiddenError,
@@ -57,12 +58,19 @@ export class PackageAcceptanceService {
     private readonly policy: IPackageAcceptancePolicy,
     private readonly dynamicTableRepo: IDynamicTableRepository,
     private readonly userRepo: IUserRepository,
-    /** BE-INCR-LEGAL-PARAMS PR-2 (L-9; F-LP-4 a): fotografia `FERIADO_NACIONAL` para o último dia válido. */
+    /** BE-INCR-LEGAL-PARAMS PR-2 (L-9; F-LP-4 a): fotografia `FERIADO_NACIONAL` + `FERIADO_LOCAL` (F-E4-1 a). */
     private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
+    /** F-E4-1 (a): o município da unidade (`FiscalProfile.codMun`) decide os feriados estaduais e municipais. */
+    private readonly fiscalProfiles: Pick<IFiscalProfileRepository, 'findByScope'>,
   ) {}
 
-  private feriados(): Promise<FeriadosNacionais> {
-    return this.legalParams.fotografia(['FERIADO_NACIONAL']);
+  private calendario(scope: AccountingScope): Promise<UnitHolidayCalendar> {
+    return unitHolidayCalendar(this.legalParams, this.fiscalProfiles, scope);
+  }
+
+  private async notice(scope: AccountingScope, saleDate: string, validityDays: number | null): Promise<ValidityNotice | null> {
+    const { feriados, codMun } = await this.calendario(scope);
+    return buildValidityNotice(saleDate, validityDays, feriados, codMun);
   }
 
   /** Item 3 — the text the screen must show for this package on this date. All-null when the package has no validity. */
@@ -71,7 +79,7 @@ export class PackageAcceptanceService {
     // A package of another tenant (or a made-up id) is not in THIS tenant's catalog → 404 (never a silent "no validity").
     await this.assertPackageInCatalog(scope, query.packageId);
     const validityDays = await loadPackageValidityDays(scope.ownerUserId, query.packageId);
-    const notice = buildValidityNotice(query.saleDate, validityDays, await this.feriados());
+    const notice = await this.notice(scope, query.saleDate, validityDays);
     if (!notice) {
       return { validityDays: null, saleDate: query.saleDate, expiresOn: null, textVersion: PACKAGE_VALIDITY_NOTICE_VERSION, text: null, textSha256: null };
     }
@@ -84,7 +92,7 @@ export class PackageAcceptanceService {
       throw new ForbiddenError('Sem permissão para registrar o aceite da validade do pacote.');
     }
     const facts = await this.loadPackageSaleFacts(scope, input.saleId);
-    const notice = buildValidityNotice(facts.saleDate, facts.validityDays, await this.feriados());
+    const notice = await this.notice(scope, facts.saleDate, facts.validityDays);
     if (!notice) throw new PackageWithoutValidityError(facts.packageId);
 
     if (await this.repo.findBySale(scope, input.saleId)) throw new PackageAcceptanceExistsError(input.saleId);
@@ -139,7 +147,7 @@ export class PackageAcceptanceService {
         textVersion: accepted.textVersion,
       };
     } else {
-      const notice: ValidityNotice | null = buildValidityNotice(facts.saleDate, facts.validityDays, await this.feriados());
+      const notice: ValidityNotice | null = await this.notice(scope, facts.saleDate, facts.validityDays);
       if (!notice) throw new PackageWithoutValidityError(facts.packageId);
       clause = notice.text;
     }

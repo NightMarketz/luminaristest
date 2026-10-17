@@ -162,6 +162,16 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
     valor: 'texto',
     checar: (l) => so(/^\d{2}-\d{2}$/.test(l.chave) && isValidDateOnly(`2024-${l.chave}`) && semDisc(l) && l.valorTexto === 'FIXO', 'chave = MM-DD de calendário; valorTexto FIXO'),
   },
+  // F-E4-1 (a): discriminador = código IBGE da UF (2 dígitos) ou do município (7); data fixa MM-DD ou móvel PASCOA±N.
+  FERIADO_LOCAL: {
+    valor: 'texto',
+    checar: (l) => so(
+      /^(\d{2}|\d{7})$/.test(l.discriminador ?? '') &&
+        ((l.valorTexto === 'FIXO' && /^\d{2}-\d{2}$/.test(l.chave) && isValidDateOnly(`2024-${l.chave}`)) ||
+          (l.valorTexto === 'PASCOA' && /^PASCOA[+-]\d{1,3}$/.test(l.chave))),
+      'discriminador = IBGE da UF (2) ou do município (7); chave MM-DD com valorTexto FIXO, ou PASCOA±N com valorTexto PASCOA',
+    ),
+  },
 };
 
 /** Erro de formato da linha da tabela (ou `null`). Tabela sem regra aqui = o serviço aplica a do PR-1. */

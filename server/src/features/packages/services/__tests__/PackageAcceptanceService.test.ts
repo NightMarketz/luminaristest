@@ -68,7 +68,7 @@ function build(opts: { sale?: unknown; existing?: unknown; policy?: Partial<IPac
     repo as unknown as IPackageAcceptanceRepository,
     policy,
     dt as unknown as IDynamicTableRepository,
-    users as unknown as IUserRepository, legalParamsSemente,
+    users as unknown as IUserRepository, legalParamsSemente, { findByScope: async () => null },
   );
   return { svc, repo, dt };
 }

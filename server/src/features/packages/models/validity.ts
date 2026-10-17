@@ -6,9 +6,10 @@ import { linhasVigentesDaTabela, type LinhaLegal } from '../../legalParameters/m
  * `YYYY-MM-DD`, somadas no número de dia UTC (nunca em `Date` local — memória date-only-rendering-utc-shift).
  *
  * Contagem (F-PV-1 a): último dia válido = data da venda + N dias corridos (venda 01/03, N=30 → usa até
- * 31/03), CC art. 132 caput. Se esse dia cair em feriado nacional, o prazo é prorrogado até o dia útil
- * seguinte (CC art. 132 § 1º; F-JUR-6, D-2026-10-04-PACOTE-VALIDADE-TRIAGEM-JURIDICO: a cláusula "dias
- * corridos" não afasta o § 1º).
+ * 31/03), CC art. 132 caput. Se esse dia cair em feriado, o prazo é prorrogado até o dia útil seguinte (CC art. 132
+ * § 1º; F-JUR-6, D-2026-10-04-PACOTE-VALIDADE-TRIAGEM-JURIDICO: a cláusula "dias corridos" não afasta o § 1º). O § 1º
+ * não distingue a esfera: feriado nacional, estadual e municipal (Lei 9.093/1995 arts. 1º e 2º) — F-E4-1 (a), dono,
+ * questionário, 2026-10-12; executa: dono, chat, 2026-10-17 (dossiê verif-2026-10-17-lgpd-cdc-obrigacoes §1, DIVERGE 2).
  */
 
 /**
@@ -20,7 +21,7 @@ import { linhasVigentesDaTabela, type LinhaLegal } from '../../legalParameters/m
  * MM-DD, fonte e vigência por linha — o 20/11 desde 2024). O serviço monta a fotografia e a passa aqui (F-LP-4 a);
  * feriado novo por lei = linha nova. Os domingos de eleição são REGRA (data móvel), não lista — ficam em código.
  */
-export type FeriadosNacionais = readonly LinhaLegal[];
+export type Feriados = readonly LinhaLegal[];
 
 /** Domingo = 0 (Date.getUTCDay). */
 function weekdayOf(dayNumber: number): number {
@@ -38,11 +39,8 @@ function isElectionSunday(dayNumber: number, dateOnly: string): boolean {
   return d <= 7 || d >= 25; // 1º domingo cai em 1..7; último em 25..31
 }
 
-/**
- * ponytail: só feriado NACIONAL. Estaduais e municipais (inclusive Sexta-feira da Paixão e Corpus Christi)
- * ficam fora; o upgrade é um calendário por unidade (F-JUR-6, opção recusada).
- */
-export function isNationalHoliday(dateOnly: string, feriados: FeriadosNacionais): boolean {
+/** Só a esfera nacional: lista `FERIADO_NACIONAL` + domingos de eleição. */
+export function isNationalHoliday(dateOnly: string, feriados: Feriados): boolean {
   const mmdd = dateOnly.slice(5);
   if (linhasVigentesDaTabela(feriados, 'FERIADO_NACIONAL', dateOnly).some((l) => l.chave === mmdd)) return true;
   return isElectionSunday(dayNumberFromDateOnly(dateOnly), dateOnly);
@@ -67,23 +65,47 @@ export function easterSunday(year: number): string {
   return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
-export function isHoliday(dateOnly: string, feriados: FeriadosNacionais, _codMun: string | null): boolean {
-  return isNationalHoliday(dateOnly, feriados);
+/** `PASCOA±N` → a data do ano de `dateOnly` (Sexta-feira da Paixão = PASCOA-2; Corpus Christi = PASCOA+60). */
+function movelDoAno(chave: string, year: number): string | null {
+  const m = /^PASCOA([+-]\d{1,3})$/.exec(chave);
+  if (!m) return null;
+  return dateOnlyFromDayNumber(dayNumberFromDateOnly(easterSunday(year)) + parseInt(m[1], 10));
+}
+
+/**
+ * F-E4-1 (a): linha `FERIADO_LOCAL` da UF (discriminador = 2 primeiros dígitos do IBGE do município) ou do próprio
+ * município (IBGE de 7 dígitos). Data fixa `MM-DD` ou móvel `PASCOA±N` — a Páscoa é REGRA (computus), não lista.
+ */
+export function isLocalHoliday(dateOnly: string, feriados: Feriados, codMun: string): boolean {
+  const uf = codMun.slice(0, 2);
+  const year = parseInt(dateOnly.slice(0, 4), 10);
+  return linhasVigentesDaTabela(feriados, 'FERIADO_LOCAL', dateOnly).some(
+    (l) => (l.discriminador === uf || l.discriminador === codMun) &&
+      (l.valorTexto === 'PASCOA' ? movelDoAno(l.chave, year) === dateOnly : l.chave === dateOnly.slice(5)),
+  );
+}
+
+/**
+ * Feriado em qualquer esfera para a unidade. `codMun` = IBGE do município da unidade (`FiscalProfile.codMun`); `null` =
+ * município desconhecido → só o nacional (o comportamento anterior ao F-E4-1).
+ */
+export function isHoliday(dateOnly: string, feriados: Feriados, codMun: string | null): boolean {
+  return isNationalHoliday(dateOnly, feriados) || (codMun != null && isLocalHoliday(dateOnly, feriados, codMun));
 }
 
 /** `null`/`0` = sem validade (o preset aceita 0). `N ≥ 1` → `saleDate + N`, prorrogado se cair em feriado. */
-export function lastValidDay(saleDate: string, validityDays: number | null, feriados: FeriadosNacionais, _codMun: string | null = null): string | null {
+export function lastValidDay(saleDate: string, validityDays: number | null, feriados: Feriados, codMun: string | null = null): string | null {
   if (validityDays == null || validityDays === 0) return null;
   if (!Number.isInteger(validityDays) || validityDays < 0) {
     throw new Error(`validityDays inválido: ${validityDays}`);
   }
   if (!isValidDateOnly(saleDate)) throw new Error(`data inválida: '${saleDate}'`);
   let day = dayNumberFromDateOnly(saleDate) + validityDays;
-  if (!isNationalHoliday(dateOnlyFromDayNumber(day), feriados)) return dateOnlyFromDayNumber(day);
-  // CC 132 § 1º: "seguinte dia útil" = o próximo que não é feriado nacional nem domingo (premissa da nota
-  // D-2026-10-04 §Delta D2; sábado conta como útil).
+  if (!isHoliday(dateOnlyFromDayNumber(day), feriados, codMun)) return dateOnlyFromDayNumber(day);
+  // CC 132 § 1º: "seguinte dia útil" = o próximo que não é feriado (nacional, estadual ou municipal) nem domingo
+  // (premissa da nota D-2026-10-04 §Delta D2; sábado conta como útil — o dossiê de 17/10 §4.2 deixa o sábado ao dono).
   do day++;
-  while (isNationalHoliday(dateOnlyFromDayNumber(day), feriados) || weekdayOf(day) === 0);
+  while (isHoliday(dateOnlyFromDayNumber(day), feriados, codMun) || weekdayOf(day) === 0);
   return dateOnlyFromDayNumber(day);
 }
 

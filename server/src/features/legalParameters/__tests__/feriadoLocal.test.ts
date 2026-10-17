@@ -33,12 +33,12 @@ describe('FERIADO_LOCAL (F-E4-1 a)', () => {
     ]);
     for (const r of rows) {
       expect([r.id.startsWith('fer-'), r.tabela, r.status, r.fonteSha256?.length]).toEqual([true, 'FERIADO_LOCAL', 'PUBLISHED', 64]);
-      expect([r.id, erroDeFormato({ ...r, valorJson: undefined })]).toEqual([r.id, null]);
+      expect([r.id, erroDeFormato({ ...r, tabela: 'FERIADO_LOCAL', valorJson: undefined })]).toEqual([r.id, null]);
     }
   });
 
   it('formato recusa discriminador que não é código IBGE de UF (2) ou município (7), data impossível e móvel fora de PASCOA±N', () => {
-    const base = { tabela: 'FERIADO_LOCAL', chave: '07-09', discriminador: '35', valorTexto: 'FIXO' };
+    const base = { tabela: 'FERIADO_LOCAL' as const, chave: '07-09', discriminador: '35', valorTexto: 'FIXO' };
     expect(erroDeFormato(base)).toBeNull();
     expect(erroDeFormato({ ...base, discriminador: 'SP' })).not.toBeNull();
     expect(erroDeFormato({ ...base, discriminador: null })).not.toBeNull();

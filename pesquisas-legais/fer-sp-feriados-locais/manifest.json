@@ -1,0 +1,65 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei nº 9.497, de 05/03/1997",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/estaduais/SP/leis-ordinarias/1997/lei-9497-1997-03-05-id9458.md",
+      "url_final": "https://github.com/ctresb/leis/blob/3c5447730a871b38352a79a11db525a18f361979/estaduais/SP/leis-ordinarias/1997/lei-9497-1997-03-05-id9458.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www.al.sp.gov.br/norma/9458",
+      "versao_texto": "atualizada",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "3c5447730a871b38352a79a11db525a18f361979",
+      "alertas": [
+        "versao_texto = 'atualizada' (não é texto compilado: alterações posteriores não aparecem)",
+        "consta como revogada (situacao='Sem revogação expressa', revogada=false)"
+      ],
+      "baixado_em": "2026-10-17T10:47:22-03:00",
+      "sha256": "f9207515044a51d74cff1d0ef8c246c3a2bc48ec0ec1d7b1b4d76df89ef14371",
+      "arquivo": "docs/D01_lei-9497-1997-03-05-id9458.md",
+      "texto": "docs/D01_lei-9497-1997-03-05-id9458.txt",
+      "bytes": 1777
+    },
+    {
+      "id": "D02",
+      "titulo": "Catálogo de Legislação Municipal",
+      "url": "https://legislacao.prefeitura.sp.gov.br/leis/lei-14485-de-19-de-julho-de-2007",
+      "url_final": "https://legislacao.prefeitura.sp.gov.br/lei-14485-de-19-de-julho-de-2007",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-17T10:47:35-03:00",
+      "sha256": "e5d73650a2f15a3dbbfdf145c3e0dc8050345bc43840baa5ba28ec8168645b95",
+      "arquivo": "docs/D02_lei-14485-de-19-de-julho-de-2007.html",
+      "texto": "docs/D02_lei-14485-de-19-de-julho-de-2007.txt",
+      "bytes": 9240
+    },
+    {
+      "id": "D03",
+      "titulo": "LEI Nº 13",
+      "url": "https://saopaulo.sp.leg.br/iah/fulltext/leis/L13707.pdf",
+      "url_final": "https://www.saopaulo.sp.leg.br/iah/fulltext/leis/L13707.pdf",
+      "orgao": "Casas legislativas",
+      "baixado_em": "2026-10-17T10:48:36-03:00",
+      "sha256": "8c7bb11298a926b0c307041d9520ef05d0a6ca2c481dd99a145470daf1e80e3c",
+      "arquivo": "docs/D03_L13707-pdf.pdf",
+      "texto": "docs/D03_L13707-pdf.txt",
+      "bytes": 13668
+    },
+    {
+      "id": "D04",
+      "titulo": "D04_L7008-pdf",
+      "url": "https://saopaulo.sp.leg.br/iah/fulltext/leis/L7008.pdf",
+      "url_final": "https://www.saopaulo.sp.leg.br/iah/fulltext/leis/L7008.pdf",
+      "orgao": "Casas legislativas",
+      "baixado_em": "2026-10-17T10:48:36-03:00",
+      "sha256": "6670657e1a1cd4958ecfd172ba8715004fbcbf893b6babc9071d04339cec2a6b",
+      "arquivo": "docs/D04_L7008-pdf.pdf",
+      "texto": "docs/D04_L7008-pdf.txt",
+      "bytes": 49861
+    }
+  ],
+  "buscas": [],
+  "slug": "fer-sp-feriados-locais",
+  "pergunta": "Quais são os feriados estaduais de SP e municipais de São Paulo capital vigentes em 2026 (Lei 9.093 arts. 1º II-III e 2º)?",
+  "criado": "2026-10-17T10:46:52-03:00"
+}

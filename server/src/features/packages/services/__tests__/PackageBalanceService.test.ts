@@ -7,6 +7,8 @@ import type { AccountingScope } from '../../../accounting/scope/AccountingScope'
 import { ValidationError, ForbiddenError, PackageBalanceExpiredError } from '../../../../lib/errors';
 
 import { legalParamsSemente } from '@test/helpers/legalParams';
+/** Unidade sem perfil fiscal → município desconhecido → só o feriado nacional (F-E4-1 a). */
+const semPerfilFiscal = { findByScope: async () => null };
 const scope: AccountingScope = {
   ownerUserId: 'u1',
   actorUserId: 'u1',
@@ -65,7 +67,7 @@ describe('PackageBalanceService', () => {
   describe('creditFromSale', () => {
     it('applies a credit: appends the movement then increments the balance', async () => {
       const repo = buildRepo();
-      const svc = new PackageBalanceService(repo, allowPolicy, legalParamsSemente);
+      const svc = new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal);
       await svc.creditFromSale(scope, credit);
       expect(repo.createMovement).toHaveBeenCalledWith(
         expect.objectContaining({ saleId: 'sale-1', kind: 'credit', deltaCents: 20000 }),
@@ -78,7 +80,7 @@ describe('PackageBalanceService', () => {
 
     it('is idempotent: an existing credit movement skips the transaction entirely', async () => {
       const repo = buildRepo({ findMovement: jest.fn(async () => ({ id: 'mv-existing' })) });
-      const svc = new PackageBalanceService(repo, allowPolicy, legalParamsSemente);
+      const svc = new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal);
       await svc.creditFromSale(scope, credit);
       expect(repo.runTransaction).not.toHaveBeenCalled();
       expect(repo.upsertCredit).not.toHaveBeenCalled();
@@ -90,7 +92,7 @@ describe('PackageBalanceService', () => {
           throw p2002();
         }),
       });
-      const svc = new PackageBalanceService(repo, allowPolicy, legalParamsSemente);
+      const svc = new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal);
       await expect(svc.creditFromSale(scope, credit)).resolves.toBeUndefined();
     });
   });
@@ -101,46 +103,54 @@ describe('PackageBalanceService', () => {
 
     it('1ª compra (sem linha): expiresAt = venda + N, lido DENTRO da tx', async () => {
       const repo = buildRepo();
-      await new PackageBalanceService(repo, allowPolicy, legalParamsSemente).creditFromSale(scope, credit);
+      await new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal).creditFromSale(scope, credit);
       expect(repo.findBalance).toHaveBeenCalledWith(scope, 'cust-1', 'pkg-1', expect.anything());
       expect(expiresArg(repo)).toEqual(new Date('2026-03-31T00:00:00.000Z'));
     });
 
     it('recompra com saldo > 0 estende para o MAIOR prazo', async () => {
       const repo = buildRepo({ findBalance: jest.fn(async () => balanceRow(5000n, '2026-03-10')) });
-      await new PackageBalanceService(repo, allowPolicy, legalParamsSemente).creditFromSale(scope, credit);
+      await new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal).creditFromSale(scope, credit);
       expect(expiresArg(repo)).toEqual(new Date('2026-03-31T00:00:00.000Z'));
     });
 
     it('recompra com saldo > 0 não ENCURTA um prazo maior já existente', async () => {
       const repo = buildRepo({ findBalance: jest.fn(async () => balanceRow(5000n, '2026-06-30')) });
-      await new PackageBalanceService(repo, allowPolicy, legalParamsSemente).creditFromSale(scope, credit);
+      await new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal).creditFromSale(scope, credit);
       expect(expiresArg(repo)).toEqual(new Date('2026-06-30T00:00:00.000Z'));
     });
 
     it('recompra com saldo 0 reinicia (mesmo se o prazo antigo era maior)', async () => {
       const repo = buildRepo({ findBalance: jest.fn(async () => balanceRow(0n, '2026-12-31')) });
-      await new PackageBalanceService(repo, allowPolicy, legalParamsSemente).creditFromSale(scope, credit);
+      await new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal).creditFromSale(scope, credit);
       expect(expiresArg(repo)).toEqual(new Date('2026-03-31T00:00:00.000Z'));
     });
 
     it('saldo sem validade (null) com saldo > 0 continua null — null vence', async () => {
       const repo = buildRepo({ findBalance: jest.fn(async () => balanceRow(5000n, null)) });
-      await new PackageBalanceService(repo, allowPolicy, legalParamsSemente).creditFromSale(scope, credit);
+      await new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal).creditFromSale(scope, credit);
       expect(expiresArg(repo)).toBeNull();
     });
 
     it('pacote sem validade (validityDays null/0) → null', async () => {
       for (const validityDays of [null, 0]) {
         const repo = buildRepo();
-        await new PackageBalanceService(repo, allowPolicy, legalParamsSemente).creditFromSale(scope, { ...credit, validityDays });
+        await new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal).creditFromSale(scope, { ...credit, validityDays });
         expect(expiresArg(repo)).toBeNull();
       }
     });
 
+    it('F-E4-1 (a): unidade em São Paulo capital (codMun do perfil fiscal) — 09/07 prorroga para 10/07', async () => {
+      const repo = buildRepo();
+      const emSaoPaulo = { findByScope: jest.fn(async () => ({ codMun: '3550308' }) as never) };
+      await new PackageBalanceService(repo, allowPolicy, legalParamsSemente, emSaoPaulo).creditFromSale(scope, { ...credit, saleDate: '2026-06-09' });
+      expect(emSaoPaulo.findByScope).toHaveBeenCalledWith(scope);
+      expect(expiresArg(repo)).toEqual(new Date('2026-07-10T00:00:00.000Z'));
+    });
+
     it('re-drive do mesmo saleId não move a validade (portão do movimento)', async () => {
       const repo = buildRepo({ findMovement: jest.fn(async () => ({ id: 'mv-existing' })) });
-      await new PackageBalanceService(repo, allowPolicy, legalParamsSemente).creditFromSale(scope, { ...credit, validityDays: 365 });
+      await new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal).creditFromSale(scope, { ...credit, validityDays: 365 });
       expect(repo.upsertCredit).not.toHaveBeenCalled();
     });
   });
@@ -148,7 +158,7 @@ describe('PackageBalanceService', () => {
   describe('debitForConsumption', () => {
     it('debits when the balance is sufficient (atomic decrement succeeds)', async () => {
       const repo = buildRepo({ tryDecrement: jest.fn(async () => true) });
-      const svc = new PackageBalanceService(repo, allowPolicy, legalParamsSemente);
+      const svc = new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal);
       await svc.debitForConsumption(scope, cmd);
       expect(repo.createMovement).toHaveBeenCalledWith(
         expect.objectContaining({ kind: 'debit', deltaCents: 20000 }),
@@ -159,13 +169,13 @@ describe('PackageBalanceService', () => {
 
     it('blocks (ValidationError) when the balance is insufficient — never goes negative', async () => {
       const repo = buildRepo({ tryDecrement: jest.fn(async () => false) });
-      const svc = new PackageBalanceService(repo, allowPolicy, legalParamsSemente);
+      const svc = new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal);
       await expect(svc.debitForConsumption(scope, cmd)).rejects.toBeInstanceOf(ValidationError);
     });
 
     it('is idempotent: an existing debit movement skips the transaction', async () => {
       const repo = buildRepo({ findMovement: jest.fn(async () => ({ id: 'mv-existing' })) });
-      const svc = new PackageBalanceService(repo, allowPolicy, legalParamsSemente);
+      const svc = new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal);
       await svc.debitForConsumption(scope, cmd);
       expect(repo.runTransaction).not.toHaveBeenCalled();
       expect(repo.tryDecrement).not.toHaveBeenCalled();
@@ -175,7 +185,7 @@ describe('PackageBalanceService', () => {
   describe('assertSufficient', () => {
     it('throws when the balance cannot cover the amount', async () => {
       const repo = buildRepo({ findBalance: jest.fn(async () => ({ balanceCents: 100 })) });
-      const svc = new PackageBalanceService(repo, allowPolicy, legalParamsSemente);
+      const svc = new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal);
       await expect(svc.assertSufficient(scope, 'cust-1', 'pkg-1', 200)).rejects.toBeInstanceOf(
         ValidationError,
       );
@@ -183,7 +193,7 @@ describe('PackageBalanceService', () => {
 
     it('passes when the balance covers the amount', async () => {
       const repo = buildRepo({ findBalance: jest.fn(async () => ({ balanceCents: 200 })) });
-      const svc = new PackageBalanceService(repo, allowPolicy, legalParamsSemente);
+      const svc = new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal);
       await expect(svc.assertSufficient(scope, 'cust-1', 'pkg-1', 200)).resolves.toBeUndefined();
     });
   });
@@ -196,13 +206,13 @@ describe('PackageBalanceService', () => {
     it('no último dia válido consome', async () => {
       at('2026-03-31T23:30:00-03:00');
       const repo = buildRepo({ findBalance: jest.fn(async () => balanceRow(20000n, '2026-03-31')) });
-      await expect(new PackageBalanceService(repo, allowPolicy, legalParamsSemente).assertSufficient(scope, 'cust-1', 'pkg-1', 100)).resolves.toBeUndefined();
+      await expect(new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal).assertSufficient(scope, 'cust-1', 'pkg-1', 100)).resolves.toBeUndefined();
     });
 
     it('em expiresOn + 1 (fuso do escopo) recusa com PACKAGE_BALANCE_EXPIRED', async () => {
       at('2026-04-01T00:30:00-03:00');
       const repo = buildRepo({ findBalance: jest.fn(async () => balanceRow(20000n, '2026-03-31')) });
-      const err = await new PackageBalanceService(repo, allowPolicy, legalParamsSemente)
+      const err = await new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal)
         .assertSufficient(scope, 'cust-1', 'pkg-1', 100)
         .catch((e: unknown) => e);
       expect(err).toBeInstanceOf(PackageBalanceExpiredError);
@@ -215,7 +225,7 @@ describe('PackageBalanceService', () => {
     it('21h de 31/03 em BRT ainda é 31/03 (UTC já é 01/04) — consome', async () => {
       at('2026-04-01T00:30:00Z');
       const repo = buildRepo({ findBalance: jest.fn(async () => balanceRow(20000n, '2026-03-31')) });
-      await expect(new PackageBalanceService(repo, allowPolicy, legalParamsSemente).assertSufficient(scope, 'cust-1', 'pkg-1', 100)).resolves.toBeUndefined();
+      await expect(new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal).assertSufficient(scope, 'cust-1', 'pkg-1', 100)).resolves.toBeUndefined();
     });
   });
 
@@ -223,7 +233,7 @@ describe('PackageBalanceService', () => {
   describe('expireDue (item 6)', () => {
     it('vence o saldo inteiro em expiresOn + 2', async () => {
       const repo = buildRepo({ findBalanceById: jest.fn(async () => balanceRow(7000n, '2026-03-31')) });
-      const r = await new PackageBalanceService(repo, allowPolicy, legalParamsSemente).expireDue(scope, 'bal-1', '2026-04-02');
+      const r = await new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal).expireDue(scope, 'bal-1', '2026-04-02');
       expect(r).toEqual({ movementKey: 'expiry:bal-1:2026-03-31', amountCents: 7000, expiresOn: '2026-03-31' });
       expect(repo.findBalanceById).toHaveBeenCalledWith(scope, 'bal-1', expect.anything());
       expect(repo.createMovement).toHaveBeenCalledWith(
@@ -236,7 +246,7 @@ describe('PackageBalanceService', () => {
 
     it('carência: em expiresOn + 1 não vence', async () => {
       const repo = buildRepo({ findBalanceById: jest.fn(async () => balanceRow(7000n, '2026-03-31')) });
-      expect(await new PackageBalanceService(repo, allowPolicy, legalParamsSemente).expireDue(scope, 'bal-1', '2026-04-01')).toBeNull();
+      expect(await new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal).expireDue(scope, 'bal-1', '2026-04-01')).toBeNull();
       expect(repo.createMovement).not.toHaveBeenCalled();
     });
 
@@ -246,7 +256,7 @@ describe('PackageBalanceService', () => {
       ['linha inexistente', null],
     ])('%s → no-op', async (_label, row) => {
       const repo = buildRepo({ findBalanceById: jest.fn(async () => row) });
-      expect(await new PackageBalanceService(repo, allowPolicy, legalParamsSemente).expireDue(scope, 'bal-1', '2026-04-02')).toBeNull();
+      expect(await new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal).expireDue(scope, 'bal-1', '2026-04-02')).toBeNull();
       expect(repo.createMovement).not.toHaveBeenCalled();
     });
 
@@ -255,7 +265,7 @@ describe('PackageBalanceService', () => {
         findBalanceById: jest.fn(async () => balanceRow(500n, '2026-03-31')),
         findMovement: jest.fn(async (_s: unknown, key: string) => (key === 'expiry:bal-1:2026-03-31' ? { id: 'mv-1' } : null)),
       });
-      const r = await new PackageBalanceService(repo, allowPolicy, legalParamsSemente).expireDue(scope, 'bal-1', '2026-04-10');
+      const r = await new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal).expireDue(scope, 'bal-1', '2026-04-10');
       expect(r).toEqual({ movementKey: 'expiry:bal-1:2026-03-31:2', amountCents: 500, expiresOn: '2026-03-31' });
       expect(repo.findMovement).toHaveBeenCalledWith(scope, 'expiry:bal-1:2026-03-31', 'expiry', expect.anything()); // lido NA tx
       expect(repo.createMovement).toHaveBeenCalledWith(expect.objectContaining({ saleId: 'expiry:bal-1:2026-03-31:2', deltaCents: 500 }), expect.anything());
@@ -263,12 +273,12 @@ describe('PackageBalanceService', () => {
 
     it('duplicata (P2002) → no-op', async () => {
       const repo = buildRepo({ runTransaction: jest.fn(async () => { throw p2002(); }) });
-      expect(await new PackageBalanceService(repo, allowPolicy, legalParamsSemente).expireDue(scope, 'bal-1', '2026-04-02')).toBeNull();
+      expect(await new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal).expireDue(scope, 'bal-1', '2026-04-02')).toBeNull();
     });
 
     it('policy canMutate', async () => {
       const deny: IPackageBalancePolicy = { canMutate: () => false, canRead: () => true };
-      await expect(new PackageBalanceService(buildRepo(), deny, legalParamsSemente).expireDue(scope, 'bal-1', '2026-04-02')).rejects.toBeInstanceOf(ForbiddenError);
+      await expect(new PackageBalanceService(buildRepo(), deny, legalParamsSemente, semPerfilFiscal).expireDue(scope, 'bal-1', '2026-04-02')).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 
@@ -283,7 +293,7 @@ describe('PackageBalanceService', () => {
           { saleId: 'origem-1', createdAt: new Date('2026-03-01T10:00:00Z') },
         ]),
       });
-      const ctx = await new PackageBalanceService(repo, allowPolicy, legalParamsSemente).getExpiryContext(scope, 'expiry:bal-1:2026-03-31');
+      const ctx = await new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal).getExpiryContext(scope, 'expiry:bal-1:2026-03-31');
       expect(ctx).toEqual({ customerId: 'cust-1', packageId: 'pkg-1', releasedCents: 7000, originSaleId: 'origem-2' });
     });
   });
@@ -292,7 +302,7 @@ describe('PackageBalanceService', () => {
   describe('debitForConsumption — não confere validade (item 5)', () => {
     it('debita mesmo com o saldo já vencido (consumo legítimo re-dirigido depois)', async () => {
       const repo = buildRepo({ findBalance: jest.fn(async () => balanceRow(20000n, '2020-01-01')) });
-      await new PackageBalanceService(repo, allowPolicy, legalParamsSemente).debitForConsumption(scope, cmd);
+      await new PackageBalanceService(repo, allowPolicy, legalParamsSemente, semPerfilFiscal).debitForConsumption(scope, cmd);
       expect(repo.tryDecrement).toHaveBeenCalled();
       expect(repo.findBalance).not.toHaveBeenCalled();
     });
@@ -300,7 +310,7 @@ describe('PackageBalanceService', () => {
 
   describe('money boundary', () => {
     it.each([0, -5, 10.5, NaN])('rejects non-positive / non-integer amount %p', async (bad) => {
-      const svc = new PackageBalanceService(buildRepo(), allowPolicy, legalParamsSemente);
+      const svc = new PackageBalanceService(buildRepo(), allowPolicy, legalParamsSemente, semPerfilFiscal);
       await expect(svc.assertSufficient(scope, 'cust-1', 'pkg-1', bad as number)).rejects.toBeInstanceOf(
         ValidationError,
       );
@@ -311,10 +321,10 @@ describe('PackageBalanceService', () => {
     it('returns the stored balance, or 0 when no row exists', async () => {
       const withRow = new PackageBalanceService(
         buildRepo({ findBalance: jest.fn(async () => ({ balanceCents: 350 })) }),
-        allowPolicy, legalParamsSemente,
+        allowPolicy, legalParamsSemente, semPerfilFiscal,
       );
       expect(await withRow.getBalanceCents(scope, 'cust-1', 'pkg-1')).toBe(350);
-      const noRow = new PackageBalanceService(buildRepo(), allowPolicy, legalParamsSemente);
+      const noRow = new PackageBalanceService(buildRepo(), allowPolicy, legalParamsSemente, semPerfilFiscal);
       expect(await noRow.getBalanceCents(scope, 'cust-1', 'pkg-1')).toBe(0);
     });
   });
@@ -322,7 +332,7 @@ describe('PackageBalanceService', () => {
   describe('authorization', () => {
     it('denies mutation when policy.canMutate is false', async () => {
       const denyPolicy: IPackageBalancePolicy = { canMutate: () => false, canRead: () => true };
-      const svc = new PackageBalanceService(buildRepo(), denyPolicy, legalParamsSemente);
+      const svc = new PackageBalanceService(buildRepo(), denyPolicy, legalParamsSemente, semPerfilFiscal);
       await expect(svc.creditFromSale(scope, credit)).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
