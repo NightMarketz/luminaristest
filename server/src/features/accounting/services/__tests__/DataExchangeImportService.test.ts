@@ -2,7 +2,7 @@ import { DataExchangeImportService, type IAccountReader, type IPoster } from '..
 import type { IDataExchangeRepository } from '../../repositories/IDataExchangeRepository';
 import type { AuditService } from '../AuditService';
 import { AccountingPolicy } from '../../policies/AccountingPolicy';
-import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import type { AccountingDataExchangeJob, AccountingDataExchangeRow } from 'generated/prisma';
 
 jest.mock('../../../../lib/attachmentStorage', () => ({
@@ -11,7 +11,7 @@ jest.mock('../../../../lib/attachmentStorage', () => ({
   deleteFile: jest.fn(async () => undefined),
 }));
 
-const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'owner-1' }, 'unit-1');
 
 /** Stateful in-memory repo so upload→commit flows end-to-end. */
 function makeRepo() {

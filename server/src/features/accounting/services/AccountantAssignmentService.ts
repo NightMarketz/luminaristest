@@ -18,7 +18,8 @@ import {
   ASSIGNMENT_SUPERSEDED_REASON,
 } from '../models/AccountantAssignment.model';
 import type { AuditService } from './AuditService';
-import { resolveAccountingScope, type AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeInternal';
 
 /** Linha → resposta da API (§4.1): sem slots, ids de autoria nem `deletedAt`. */
 export function toAccountantAssignmentView(a: AccountantAssignment): AccountantAssignmentView {
@@ -39,7 +40,7 @@ export function toAccountantAssignmentView(a: AccountantAssignment): AccountantA
 
 /** Escopo do livro do DONO da atribuição com o ator dado — a auditoria cai na cadeia do dono (item 7). */
 function scopeFromAssignment(a: AccountantAssignment, actorUserId: string): AccountingScope {
-  return { ...resolveAccountingScope({ userId: a.userId }, a.unitId), actorUserId };
+  return { ...resolveAccountingScopeInternal({ userId: a.userId }, a.unitId), actorUserId };
 }
 
 /**
@@ -50,7 +51,7 @@ function scopeFromAssignment(a: AccountantAssignment, actorUserId: string): Acco
  *   contrato escrito, encerramento por qualquer das partes com motivo (F-GOV-10 a).
  * - Toda transição de estado é CAS no repo; o aceite que substitui um contador encerra o anterior NA MESMA tx
  *   (sem janela destravada).
- * - `resolveGovernanceScope` é o resolver delegado dos 9 handlers do F-GOV-7 (a+). `resolveAccountingScope`
+ * - `resolveGovernanceScope` é o resolver delegado dos 9 handlers do F-GOV-7 (a+). `resolveAccountingScopeInternal`
  *   não muda. A atribuição é identificada pelo par (contador, dono) — o cliente informa `ownerUserId`; um
  *   contador atende N donos e não tem livro próprio (decisão do dono, chat 03/10/2026).
  */
@@ -73,12 +74,12 @@ export class AccountantAssignmentService {
     unitId: string,
     ownerUserId?: string,
   ): Promise<AccountingScope> {
-    if (!ownerUserId || ownerUserId === user.userId) return resolveAccountingScope(user, unitId);
+    if (!ownerUserId || ownerUserId === user.userId) return resolveAccountingScopeInternal(user, unitId);
     const active = await this.assignmentRepo.findActiveForPair(user.userId, ownerUserId, unitId);
     if (!active) {
       throw new AppError('Você não é o contador responsável ativo deste dono nesta unidade.', 403, 'ACCOUNTANT_NOT_ASSIGNED');
     }
-    return { ...resolveAccountingScope({ userId: active.ownerUserId }, unitId), actorUserId: user.userId };
+    return { ...resolveAccountingScopeInternal({ userId: active.ownerUserId }, unitId), actorUserId: user.userId };
   }
 
   /** Item 6: convite (dono). */

@@ -7,7 +7,8 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { ApplicationFactory } from '@/lib/factory';
-import { resolveAccountingScope, type AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { LegalParameterService } from '@/features/legalParameters/services/LegalParameterService';
 import { maybeSyncSaleFinalized } from '@/features/accounting/sync/bridges/SaleSalesAccountingBridge';
 
@@ -23,7 +24,7 @@ interface Cenario {
 let n = 0;
 async function cenario(nome: string): Promise<Cenario> {
   const u = await prisma.user.create({ data: { name: nome, username: nome, email: `${nome}@test.local`, password: 'x', role: 'USER' } });
-  const c: Cenario = { user: { id: u.id, username: u.username }, unit: `unit-${nome}`, scope: () => resolveAccountingScope({ userId: u.id }, `unit-${nome}`) };
+  const c: Cenario = { user: { id: u.id, username: u.username }, unit: `unit-${nome}`, scope: () => resolveAccountingScopeInternal({ userId: u.id }, `unit-${nome}`) };
   await f().getPostingService().ensureChartOfAccounts(c.scope());
   return c;
 }
@@ -209,7 +210,7 @@ describe('F-PR4-9 — NFS-e do MEI: só a receita de serviço a tomador CNPJ exi
     const byName = async (nome: string) => (await prisma.dynamicTable.findFirstOrThrow({ where: { userId: u.id, internalName: nome } })).id;
     tables = { sales: await byName('sales'), saleItems: await byName('saleItems'), customers: await byName('customers'), units: await byName('units') };
     const unit = (await prisma.dynamicTableData.create({ data: { dynamicTableId: tables.units, data: { name: 'Matriz', cnpj: '11222333000181' } as never } })).id;
-    c = { user, unit, scope: () => resolveAccountingScope({ userId: u.id }, unit) };
+    c = { user, unit, scope: () => resolveAccountingScopeInternal({ userId: u.id }, unit) };
     await f().getPostingService().ensureChartOfAccounts(c.scope());
     await prisma.accountingPeriod.create({ data: { userId: u.id, unitId: unit, year: 2026, month: 3, status: 'OPEN', openedAt: new Date() } });
     await servico(c, 'srv-corte', '060101');

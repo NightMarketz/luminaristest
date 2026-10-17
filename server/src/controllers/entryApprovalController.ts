@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import {
   ApproveEntrySchema,
   CreateDraftEntrySchema,
@@ -29,7 +29,7 @@ export const createDraft = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getEntryApprovalService().createDraft(scope, parsed.data);
     return res.status(201).json({ success: true, data });
   } catch (error) {
@@ -47,7 +47,7 @@ export const updateDraft = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getEntryApprovalService().updateDraft(scope, req.params.id, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -65,7 +65,7 @@ export const submitEntry = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getEntryApprovalService().submitForApproval(scope, req.params.id, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -83,7 +83,7 @@ export const approveEntry = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getEntryApprovalService().approveEntry(scope, req.params.id, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -101,7 +101,7 @@ export const rejectEntry = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getEntryApprovalService().rejectEntry(scope, req.params.id, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -119,7 +119,7 @@ export const listPendingApproval = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getEntryApprovalService().listPendingApproval(scope, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {

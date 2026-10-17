@@ -9,7 +9,7 @@ import { Role } from '@/features/users/models/User.model';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, resetDb, authHeader } from '@test/helpers';
 import { AccountingPeriodRepository } from '@/features/accounting/repositories/AccountingPeriodRepository';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { getFactory } from '@/lib/factory';
 
 const app = makeApp();
@@ -258,12 +258,12 @@ describe('BE-INCR-ACCOUNTANT-GOVERNANCE — contador responsável pelo HTTP', ()
 
     await prisma.accountantAssignment.create({ data: { ...base, status: 'ACTIVE', activeSlot: 'ACTIVE' } });
     expect(await svc.resolveGovernanceScope({ userId: contador.id }, UNIT, dono.id)).toEqual({
-      ...resolveAccountingScope({ userId: dono.id }, UNIT), actorUserId: contador.id,
+      ...resolveAccountingScopeInternal({ userId: dono.id }, UNIT), actorUserId: contador.id,
     });
     await expect(svc.resolveGovernanceScope({ userId: contador.id }, 'outra-unidade', dono.id)).rejects.toMatchObject(naoAtribuido);
     // Sem ownerUserId (ou = o próprio ator) não há delegação automática: o escopo de sempre.
-    expect(await svc.resolveGovernanceScope({ userId: contador.id }, UNIT)).toEqual(resolveAccountingScope({ userId: contador.id }, UNIT));
-    expect(await svc.resolveGovernanceScope({ userId: dono.id }, UNIT, dono.id)).toEqual(resolveAccountingScope({ userId: dono.id }, UNIT));
+    expect(await svc.resolveGovernanceScope({ userId: contador.id }, UNIT)).toEqual(resolveAccountingScopeInternal({ userId: contador.id }, UNIT));
+    expect(await svc.resolveGovernanceScope({ userId: dono.id }, UNIT, dono.id)).toEqual(resolveAccountingScopeInternal({ userId: dono.id }, UNIT));
   });
 
   it('um contador atende N donos no mesmo unitId: cada ownerUserId leva ao livro do próprio dono', async () => {
@@ -280,7 +280,7 @@ describe('BE-INCR-ACCOUNTANT-GOVERNANCE — contador responsável pelo HTTP', ()
     }
     for (const d of [dono, dono2]) {
       expect(await svc.resolveGovernanceScope({ userId: contador.id }, UNIT, d.id)).toEqual({
-        ...resolveAccountingScope({ userId: d.id }, UNIT), actorUserId: contador.id,
+        ...resolveAccountingScopeInternal({ userId: d.id }, UNIT), actorUserId: contador.id,
       });
     }
     const p1 = await periodo(dono.id, 9, 'SOFT_CLOSED');
@@ -294,7 +294,7 @@ describe('BE-INCR-ACCOUNTANT-GOVERNANCE — contador responsável pelo HTTP', ()
   it('17d: setStatus é CAS — status mudou entre a leitura e a escrita → 409 PERIOD_STATUS_CHANGED; HARD_CLOSED nunca volta a OPEN', async () => {
     const p = await periodo(dono.id, 8, 'HARD_CLOSED'); // um hardClose venceu a corrida
     const repo = new AccountingPeriodRepository();
-    const scope = resolveAccountingScope({ userId: dono.id }, UNIT);
+    const scope = resolveAccountingScopeInternal({ userId: dono.id }, UNIT);
     await expect(
       prisma.$transaction((tx) => repo.setStatus(scope, ANO, 8, 'OPEN', dono.id, 'reabrir', tx, 'SOFT_CLOSED')),
     ).rejects.toMatchObject({ statusCode: 409, errorCode: 'PERIOD_STATUS_CHANGED' });

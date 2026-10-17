@@ -401,6 +401,13 @@ export class DynamicTableRepository implements IDynamicTableRepository {
     return count > 0;
   }
 
+  async findUnitRowState(ownerUserId: string, unitId: string): Promise<'live' | 'deleted' | null> {
+    // Uma consulta por PK com a tabela-mãe (padrão de rekeyLegacyUnitCli.classify): o dono e o internalName vêm dela.
+    const row = await this.client.dynamicTableData.findUnique({ where: { id: unitId }, include: { dynamicTable: true } });
+    if (!row || row.dynamicTable.userId !== ownerUserId || row.dynamicTable.internalName !== 'units') return null;
+    return row.deletedAt ? 'deleted' : 'live';
+  }
+
   // removed duplicate implementation
 
   async findTablesReferencingTableId(targetTableId: string, userId: string): Promise<IDynamicTable[]> {

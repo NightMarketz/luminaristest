@@ -13,7 +13,7 @@ import type { FiscalProfileService } from '../../accounting/services/FiscalProfi
 import { deriveUnitFiscalProfile } from './deriveUnitFiscalProfile';
 import type { ObrigacaoResolvida } from '../../accounting/models/obrigacoesPorRegime';
 import { scopeToday } from '../../accounting/models/dates';
-import { resolveAccountingScope } from '../../accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../accounting/scope/resolveAccountingScopeInternal';
 import type { IActionProposalRepository } from '../../chat/repositories/IActionProposalRepository';
 import type { IKnowledgeGraphRepository } from '../../chat/repositories/IKnowledgeGraphRepository';
 import type { IDashboardLayoutRepository } from '../../dashboardLayout/repositories/IDashboardLayoutRepository';
@@ -213,7 +213,7 @@ export class SystemProvisioningService implements ISystemProvisioningService {
     unitId: string,
     fiscal: OnboardingFiscalInput | undefined,
   ): Promise<FiscalDoOnboarding> {
-    const scope = resolveAccountingScope(ctx, unitId);
+    const scope = resolveAccountingScopeInternal(ctx, unitId);
     const ano = anoCorrente(scope);
     if (!fiscal || fiscal.regime === 'NAO_SEI') return { status: 'pendente', ano };
     const regime = fiscal.regime;
@@ -246,7 +246,7 @@ export class SystemProvisioningService implements ISystemProvisioningService {
     const derived = deriveUnitFiscalProfile(fiscal?.regime, fiscal?.icmsContribuinte, sectorKey);
     if (!derived) return;
     try {
-      await this.unitFiscalProfile.upsert(resolveAccountingScope(ctx, unitId), UpsertFiscalProfileSchema.parse({ unitId, ...derived }));
+      await this.unitFiscalProfile.upsert(resolveAccountingScopeInternal(ctx, unitId), UpsertFiscalProfileSchema.parse({ unitId, ...derived }));
     } catch (error) {
       logger.error(`Onboarding: falha ao criar o perfil fiscal da unidade ${unitId} do usuário ${ctx.userId} — segue sem ele (F-I4-10 a).`, { error });
     }

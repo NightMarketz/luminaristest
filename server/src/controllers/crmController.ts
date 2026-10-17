@@ -4,7 +4,7 @@ import { handleApiError } from '../lib/apiUtils';
 import { UnauthorizedError } from '../lib/errors';
 import logger from '../lib/logger';
 import { getFactory } from '../lib/factory';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import { syncSkipErrorCode } from '../features/accounting/sync/AccountingSyncPort';
 import type { WonOpportunityFact } from '../features/accounting/sync/bridges/CrmReceivableBridge';
 import {
@@ -131,7 +131,7 @@ async function maybeSyncOpportunityWon(
       label: typeof oppData.name === 'string' ? oppData.name : 'Oportunidade',
       accountRef: typeof oppData.accountId === 'string' ? oppData.accountId : undefined,
     };
-    const scope = resolveAccountingScope(user, unitId);
+    const scope = resolveAccountingScopeInternal(user, unitId);
     await getFactory().getCrmReceivableBridge().bookWonOpportunity(scope, fact);
   } catch (syncError) {
     // Same specific-code skip-list as the sale bridges (period-closed / MAX_CENTS poison) —

@@ -20,7 +20,7 @@
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { ApplicationFactory } from '@/lib/factory';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 
 const app = makeApp();
@@ -28,7 +28,7 @@ const BASE = '/api/accounting/tax-assessments';
 const PROVISION = 'tax.assessment.provision';
 
 let dono: { id: string; username: string };
-const scopeOf = (unitId: string) => resolveAccountingScope({ userId: dono.id }, unitId);
+const scopeOf = (unitId: string) => resolveAccountingScopeInternal({ userId: dono.id }, unitId);
 
 const CONTAS = [
   { code: '1.1.1', name: 'Banco', nature: 'Asset' },

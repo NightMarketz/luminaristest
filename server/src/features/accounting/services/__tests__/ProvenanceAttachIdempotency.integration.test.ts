@@ -37,7 +37,7 @@ import { LalurRepository } from '@/features/accounting/repositories/LalurReposit
 import { AuditRepository } from '@/features/accounting/repositories/AuditRepository';
 import { CounterpartyRepository } from '@/features/accounting/repositories/CounterpartyRepository';
 import { AccountingPolicy } from '@/features/accounting/policies/AccountingPolicy';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 
 const OWNER = 'u-prov-idem';
@@ -87,7 +87,7 @@ describe('attachSourceDocument — idempotência pela externalRef, SQLite real',
   beforeAll(() => {
     pushTestSchema();
     svc = buildRealService();
-    scope = resolveAccountingScope({ userId: OWNER }, UNIT);
+    scope = resolveAccountingScopeInternal({ userId: OWNER }, UNIT);
   }, 120000);
 
   // Desde o PR #231 o `resetDb()` cobre as 31 tabelas de contabilidade (guarda derivada do

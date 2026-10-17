@@ -14,7 +14,7 @@ import { PaymentAccountRepository } from '@/features/accounting/repositories/Pay
 import { ReconciliationRepository } from '@/features/accounting/repositories/ReconciliationRepository';
 import { AccountingPolicy } from '@/features/accounting/policies/AccountingPolicy';
 import { CollectionProviderError, type CollectionProviderPort } from '@/features/accounting/collection/CollectionProviderPort';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 
 const app = makeApp();
 const UNIT = 'unit-f5-pr3';
@@ -250,7 +250,7 @@ describe('F5 PR-3 — relatório de liberações → extrato da PaymentAccount �
       data: { userId: dono.id, unitId: UNIT, receivableId: id, amountCents: 5000n, method: 'ProviderBalance', receivedAt: new Date('2026-10-02T00:00:00Z'), status: 'ACTIVE', debitAccountId: glMp },
     });
     await prisma.receivable.update({ where: { id }, data: { status: 'RECEIVING', receivedCents: 5000n } });
-    await getFactory().getReceivableService().reconcileReceivables(resolveAccountingScope({ userId: dono.id }, UNIT));
+    await getFactory().getReceivableService().reconcileReceivables(resolveAccountingScopeInternal({ userId: dono.id }, UNIT));
     const entry = await prisma.journalEntry.findFirstOrThrow({ where: { sourceType: 'ar.receipt', sourceId: receipt.id }, include: { postings: true } });
     expect(entry.postings.find((p) => p.debitCents > 0n)?.accountId).toBe(glMp);
   });

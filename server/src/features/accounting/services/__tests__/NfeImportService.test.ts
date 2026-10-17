@@ -2,14 +2,14 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { NfeImportService } from '../NfeImportService';
 import { ForbiddenError, ValidationError } from '../../../../lib/errors';
-import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import type { CreatePayableInput } from '../../dtos/PayableDto';
 import type { ImportNfePurchaseInput } from '../../dtos/NfeDto';
 import type { Payable } from 'generated/prisma';
 import { signNfeForTest } from '@test/helpers/nfeSignature';
 
 import { legalParamsSemente } from '@test/helpers/legalParams';
-const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'owner-1' }, 'unit-1');
 
 // The multi-item COMPRA fixture (F0-3). Values were chosen so desconto+frete+IPI do NOT divide exact
 // across the 3 itens → exercises the rateio residue (Gate 1). Parsed by the REAL lib/nfe.ts here.

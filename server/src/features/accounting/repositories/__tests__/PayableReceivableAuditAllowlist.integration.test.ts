@@ -35,14 +35,14 @@ import { pushTestSchema } from '@test/helpers/db';
 import { getFactory } from '@/lib/factory';
 import { PayableRepository } from '@/features/accounting/repositories/PayableRepository';
 import { ReceivableRepository } from '@/features/accounting/repositories/ReceivableRepository';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 
 const UNIT = 'unit-ap-ar-allowlist';
 const DONO_A = 'u-ap-ar-allowlist-a';
 
 const escopo = (userId: string, unitId: string = UNIT): AccountingScope =>
-  resolveAccountingScope({ userId }, unitId);
+  resolveAccountingScopeInternal({ userId }, unitId);
 
 const payableRepo = new PayableRepository();
 const receivableRepo = new ReceivableRepository();

@@ -23,7 +23,7 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { getFactory } from '@/lib/factory';
 import { DimensionRepository } from '@/features/accounting/repositories/DimensionRepository';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 import {
   DIMENSION_DEFINITION_ARCHIVED,
@@ -36,7 +36,7 @@ const DONO_A = 'u-dimrepo-a';
 const DONO_B = 'u-dimrepo-b';
 
 const escopo = (userId: string, unitId: string = UNIT): AccountingScope =>
-  resolveAccountingScope({ userId }, unitId);
+  resolveAccountingScopeInternal({ userId }, unitId);
 
 const repo = new DimensionRepository();
 

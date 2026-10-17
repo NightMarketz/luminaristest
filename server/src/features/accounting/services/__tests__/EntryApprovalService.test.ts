@@ -2,12 +2,12 @@ import { EntryApprovalService } from '../EntryApprovalService';
 import { AppError, ForbiddenError, NotFoundError, ValidationError } from '../../../../lib/errors';
 import { AccountingPolicy } from '../../policies/AccountingPolicy';
 import type { AccountingScope } from '../../scope/AccountingScope';
-import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import { computeEntryContentHash } from '../../models/entryContentHash';
 import type { Account, JournalEntry, Posting } from 'generated/prisma';
 
-const maker = resolveAccountingScope({ userId: 'maker-1' }, 'unit-1');
-const checker = resolveAccountingScope({ userId: 'checker-1' }, 'unit-1');
+const maker = resolveAccountingScopeInternal({ userId: 'maker-1' }, 'unit-1');
+const checker = resolveAccountingScopeInternal({ userId: 'checker-1' }, 'unit-1');
 
 function acc(over: Partial<Account> = {}): Account {
   return {
@@ -359,8 +359,8 @@ describe('AccountingPolicy.enforcesSegregationOfDuties — the gate that flips (
   const policy = new AccountingPolicy();
 
   it('is OFF while ownerUserId === actorUserId (single-user reality today)', () => {
-    // resolveAccountingScope collapses owner === actor, so SoD is a no-op — staging usable.
-    expect(policy.enforcesSegregationOfDuties(resolveAccountingScope({ userId: 'u-1' }, 'unit-1'))).toBe(false);
+    // resolveAccountingScopeInternal collapses owner === actor, so SoD is a no-op — staging usable.
+    expect(policy.enforcesSegregationOfDuties(resolveAccountingScopeInternal({ userId: 'u-1' }, 'unit-1'))).toBe(false);
   });
 
   it('is ON when a delegate acts on the owner books (ownerUserId !== actorUserId, future membership)', () => {

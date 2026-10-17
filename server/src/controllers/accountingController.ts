@@ -3,7 +3,7 @@ import { getUserContextFromRequest } from '../lib/authUtils';
 import { handleApiError } from '../lib/apiUtils';
 import { UnauthorizedError, ValidationError } from '../lib/errors';
 import { getFactory } from '../lib/factory';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import {
   PostEntrySchema,
   ReverseEntrySchema,
@@ -38,7 +38,7 @@ export const postEntry = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getPostingService().postEntry(scope, parsed.data);
     return res.status(201).json({ success: true, data });
   } catch (error) {
@@ -54,7 +54,7 @@ export const reverseEntry = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getPostingService().reverseEntry(scope, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -70,7 +70,7 @@ export const getTrialBalance = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getAccountingReportService().trialBalance(scope);
     return res.json({ success: true, data });
   } catch (error) {
@@ -86,7 +86,7 @@ export const getAccountLedger = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory()
       .getAccountingReportService()
       .accountLedger(scope, parsed.data.accountCode);
@@ -104,7 +104,7 @@ export const listAccounts = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const accounts = await getFactory().getPostingService().listAccounts(scope);
     return res.json({ success: true, data: { accounts } });
   } catch (error) {
@@ -120,7 +120,7 @@ export const listEntries = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const result = await getFactory().getPostingService().listEntries(scope, {
       page: parsed.data.page,
       limit: parsed.data.limit,
@@ -151,7 +151,7 @@ export const getEntryReceipt = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const { buffer, fileName, mimeType } = await getFactory()
       .getReceiptService()
       .generateEntryReceipt(scope, parsed.data.entryId);
@@ -173,7 +173,7 @@ export const createAccount = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const account = await getFactory().getPostingService().createAccount(scope, parsed.data);
     return res.status(201).json({ success: true, data: { account } });
   } catch (error) {
@@ -193,7 +193,7 @@ export const deleteAccount = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     await getFactory().getPostingService().deleteAccount(scope, id);
     return res.json({ success: true });
   } catch (error) {
@@ -215,7 +215,7 @@ export const setAccountRequiresDimension = async (req: Request, res: Response) =
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const account = await getFactory()
       .getPostingService()
       .setAccountRequiresDimension(scope, id, parsed.data.requiresDimension);
@@ -254,7 +254,7 @@ export const getBalanceSheet = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     // asOf is end-of-day UTC so the full day is included in the snapshot. Ausente ⇒ undefined:
     // quem decide "hoje" é o Service, no fuso do escopo (F1(a), GAP-MAP nº 5).
     const asOf = parsed.data.asOf ? new Date(parsed.data.asOf + 'T23:59:59.999Z') : undefined;
@@ -289,7 +289,7 @@ export const getIncomeStatement = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const asOf = parsed.data.asOf ? new Date(parsed.data.asOf + 'T23:59:59.999Z') : undefined;
     const data = await getFactory().getAccountingReportService().incomeStatement(scope, asOf);
     return res.json({ success: true, data });
@@ -317,7 +317,7 @@ export const getCashFlow = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const asOf = parsed.data.asOf ? new Date(parsed.data.asOf + 'T23:59:59.999Z') : undefined;
     const data = await getFactory().getCashFlowReportService().cashFlowStatement(scope, asOf);
     return res.json({ success: true, data });
@@ -354,7 +354,7 @@ export const getPeriodComparison = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, unitId);
+    const scope = resolveAccountingScopeInternal(user, unitId);
     const data = await getFactory()
       .getPeriodComparisonReportService()
       .comparativeTrialBalance(scope, parsed.data.asOfCurrent, parsed.data.asOfPrevious);
@@ -384,7 +384,7 @@ export const getDailyJournal = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory()
       .getDailyJournalReportService()
       .dailyJournal(scope, { from: parsed.data.from, to: parsed.data.to });
@@ -414,7 +414,7 @@ export const getAging = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory()
       .getAgingReportService()
       .aging(scope, { kind: parsed.data.kind, asOf: parsed.data.asOf });
@@ -443,7 +443,7 @@ export const getCashForecast = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory()
       .getCashForecastReportService()
       .forecast(scope, { asOf: parsed.data.asOf });
@@ -471,7 +471,7 @@ export const getTieOutDiagnostic = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getTieOutDiagnosticService().tieOut(scope);
     return res.json({ success: true, data });
   } catch (error) {
@@ -496,7 +496,7 @@ export const getVerifyAuditChain = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const result = await getFactory().getAuditService().verifyAuditChain(scope);
     const data = {
       ok:            result.ok,
@@ -567,7 +567,7 @@ export const seedYear = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getPeriodService().seedYear(scope, parsed.data.year);
     return res.status(201).json({ success: true, data });
   } catch (error) {
@@ -628,7 +628,7 @@ export const softClosePeriod = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getPeriodService().softClosePeriod(scope, req.params.id, parsed.data.reason);
     return res.json({ success: true, data });
   } catch (error) {
@@ -658,7 +658,7 @@ export const hardClosePeriod = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getPeriodService().hardClosePeriod(scope, req.params.id, parsed.data.reason);
     return res.json({ success: true, data });
   } catch (error) {

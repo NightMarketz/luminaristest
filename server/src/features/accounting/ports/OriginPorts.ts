@@ -47,3 +47,12 @@ export interface ProductRefPort {
   /** Busca GLOBAL por id — quem chama confere `dynamicTableId` (guarda cross-tenant). */
   findDataById(rowId: string): Promise<OriginRow | null>;
 }
+
+/**
+ * BE-INCR-SCOPE-UNIT-GUARD (nó I6, BRIEF item 2): estado da linha `unitId` na tabela de unidades (`units`) do dono —
+ * `null` se não é linha de unidades dele; `'deleted'` se soft-deleted; `'live'` senão. O `AccountingScopeResolver` a
+ * consulta antes de devolver o escopo de um controller HTTP.
+ */
+export interface UnitRowPort {
+  findUnitRowState(ownerUserId: string, unitId: string): Promise<'live' | 'deleted' | null>;
+}

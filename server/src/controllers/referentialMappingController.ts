@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import {
   SetReferentialMappingSchema,
   UnsetReferentialMappingSchema,
@@ -21,7 +21,7 @@ export const setReferentialMapping = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getReferentialMappingService().setMapping(scope, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -39,7 +39,7 @@ export const batchSetReferentialMappings = async (req: Request, res: Response) =
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getReferentialMappingService().batchSet(scope, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -57,7 +57,7 @@ export const copyReferentialMappingVersion = async (req: Request, res: Response)
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory().getReferentialMappingService().copyVersion(scope, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -75,7 +75,7 @@ export const getReferentialSkeleton = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory()
       .getReferentialMappingService()
       .authoringSkeleton(scope, parsed.data.version);
@@ -95,7 +95,7 @@ export const unsetReferentialMapping = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     await getFactory().getReferentialMappingService().unsetMapping(scope, parsed.data);
     return res.json({
       success: true,
@@ -116,7 +116,7 @@ export const listReferentialMappings = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory()
       .getReferentialMappingService()
       .listMappings(scope, parsed.data.version);
@@ -136,7 +136,7 @@ export const getReferentialCoverage = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = resolveAccountingScopeInternal(user, parsed.data.unitId);
     const data = await getFactory()
       .getReferentialMappingService()
       .coverage(scope, parsed.data.version);

@@ -8,13 +8,13 @@ import { AccountingContactService } from '@/features/accounting/services/Account
 import type { IAccountingContactRepository } from '@/features/accounting/repositories/IAccountingContactRepository';
 import type { IAccountingPolicy } from '@/features/accounting/policies/IAccountingPolicy';
 import type { AuditService } from '@/features/accounting/services/AuditService';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import {
   ACCOUNTING_CONTACT_ARCHIVED,
   ACCOUNTING_CONTACT_REGISTERED,
 } from '@/features/accounting/models/AccountingContact.model';
 
-const scope = resolveAccountingScope({ userId: 'dono-a' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'dono-a' }, 'unit-1');
 
 const contactRow = {
   id: 'contact-1',

@@ -10,11 +10,11 @@ import type { IAccountantAssignmentRepository } from '../../repositories/IAccoun
 import type { IAccountingContactRepository } from '../../repositories/IAccountingContactRepository';
 import type { IUserRepository } from '../../../users/repositories/IUserRepository';
 import type { AuditService } from '../AuditService';
-import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import { ConflictError } from '../../../../lib/errors';
 
 const T0 = new Date('2026-10-03T12:00:00.000Z');
-const owner = resolveAccountingScope({ userId: 'dono' }, 'unit-1');
+const owner = resolveAccountingScopeInternal({ userId: 'dono' }, 'unit-1');
 
 const row = (over: Partial<AccountantAssignment> = {}): AccountantAssignment => ({
   id: 'asg-1', userId: 'dono', unitId: 'unit-1', accountantUserId: 'contador', accountingContactId: 'ct-1',
@@ -185,13 +185,13 @@ describe('AccountantAssignmentService', () => {
   });
 
   describe('resolveGovernanceScope (item 5, 17g)', () => {
-    it('sem ownerUserId (ou = ator): igual a resolveAccountingScope, sem consultar atribuição', async () => {
+    it('sem ownerUserId (ou = ator): igual a resolveAccountingScopeInternal, sem consultar atribuição', async () => {
       const { service, findActiveForPair } = build();
       await expect(service.resolveGovernanceScope({ userId: 'contador' }, 'unit-1')).resolves.toEqual(
-        resolveAccountingScope({ userId: 'contador' }, 'unit-1'),
+        resolveAccountingScopeInternal({ userId: 'contador' }, 'unit-1'),
       );
       await expect(service.resolveGovernanceScope({ userId: 'dono' }, 'unit-1', 'dono')).resolves.toEqual(
-        resolveAccountingScope({ userId: 'dono' }, 'unit-1'),
+        resolveAccountingScopeInternal({ userId: 'dono' }, 'unit-1'),
       );
       expect(findActiveForPair).not.toHaveBeenCalled();
     });
@@ -209,7 +209,7 @@ describe('AccountantAssignmentService', () => {
         forPair: { id: 'asg-1', ownerUserId: 'dono', unitId: 'unit-1', accountantUserId: 'contador', crcNumber: 'SP-123456/O-1' },
       });
       const s = await service.resolveGovernanceScope({ userId: 'contador' }, 'unit-1', 'dono');
-      expect(s).toEqual({ ...resolveAccountingScope({ userId: 'dono' }, 'unit-1'), actorUserId: 'contador' });
+      expect(s).toEqual({ ...resolveAccountingScopeInternal({ userId: 'dono' }, 'unit-1'), actorUserId: 'contador' });
       expect(findActiveForPair).toHaveBeenCalledWith('contador', 'dono', 'unit-1');
     });
   });

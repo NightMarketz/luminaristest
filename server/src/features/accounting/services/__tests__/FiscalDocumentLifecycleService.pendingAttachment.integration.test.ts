@@ -21,12 +21,12 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { FiscalDocumentRepository, attemptRef } from '@/features/accounting/repositories/FiscalDocumentRepository';
 import { FiscalDocumentLifecycleService } from '@/features/accounting/services/FiscalDocumentLifecycleService';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import type { EmissaoResult } from '@/features/accounting/dfe/DfeEmissorPort';
 
 const DONO = 'u-dfe-pend';
 const UNIT = 'unit-dfe-pend';
-const scope = resolveAccountingScope({ userId: DONO }, UNIT);
+const scope = resolveAccountingScopeInternal({ userId: DONO }, UNIT);
 const repo = new FiscalDocumentRepository();
 const upload = jest.fn(async (_s: unknown, a: { fileName: string }) => ({ id: `att-${a.fileName}` }));
 const attachSourceDocument = jest.fn(async () => ({ id: 'src-real' }));

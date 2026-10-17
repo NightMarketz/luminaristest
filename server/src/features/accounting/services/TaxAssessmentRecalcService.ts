@@ -5,7 +5,8 @@
  */
 import type { LegalParameter, LegalParameterRecalcJob, TaxAssessment } from 'generated/prisma';
 import logger from '../../../lib/logger';
-import { resolveAccountingScope, type AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeInternal';
 import type { ITaxAssessmentRepository } from '../repositories/ITaxAssessmentRepository';
 import type { IMitExportRepository } from '../repositories/IMitExportRepository';
 import type { ILegalParameterRepository } from '../../legalParameters/repositories/ILegalParameterRepository';
@@ -231,6 +232,6 @@ export class TaxAssessmentRecalcService {
 
   /** O escopo da reconfirmação: a PJ e a unidade da linha, autor PLATFORM (dono 07/10). */
   private escopoDaPlataforma(owner: string, unitId: string): AccountingScope {
-    return { ...resolveAccountingScope({ userId: owner }, unitId), actorUserId: ATOR_PLATAFORMA };
+    return { ...resolveAccountingScopeInternal({ userId: owner }, unitId), actorUserId: ATOR_PLATAFORMA };
   }
 }
