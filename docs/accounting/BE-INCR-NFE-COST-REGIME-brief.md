@@ -494,7 +494,7 @@ Dossiê `pesquisas-legais/verif-2026-10-17-pis-cofins/relatorio.md` (PR #754); o
 - **Tabela monofásica (F-X6-7):** as linhas de NCM farmacêutico `3002.10.x`, `3002.20.x` e `3002.90.20/92/99` seguiam a TIPI de 2011
   (Lei 10.147 art. 1º [D04]).
   - Com elas, uma NF-e com NCM atual (ex.: vacina 3002.41.xx) não casava com a tabela e gerava crédito indevido no Real.
-  - A migração `20261017140000` (linhas `lp9-pc-ncm-*`) publica os 16 códigos do art. 452 da IN RFB 2.121/2022 vigente [D10] e
+  - A migração `20261017190000` (linhas `lp9-pc-ncm-*`) publica os 16 códigos do art. 452 da IN RFB 2.121/2022 vigente [D10] e
     substitui as 8 linhas antigas.
   - Perfumaria/higiene (IN 2.121 art. 481) e as demais posições farmacêuticas conferem.
 

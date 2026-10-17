@@ -136,7 +136,7 @@ describe('PIS_COFINS_MONOFASICO_NCM — farmacêuticos na TIPI vigente (IN RFB 2
 
   it('a migração lp9 carrega o texto de prisma/data/legal_parameters_lp9_pis_cofins_ncm.sql, só insere, e substitui exatamente as 8 linhas de 2011', () => {
     const norm = (s: string) => s.replace(/\r\n/g, '\n');
-    const mig = norm(fs.readFileSync(path.resolve(__dirname, '../../../../../prisma/migrations/20261017140000_legal_parameters_lp9_pis_cofins_ncm/migration.sql'), 'utf8'));
+    const mig = norm(fs.readFileSync(path.resolve(__dirname, '../../../../../prisma/migrations/20261017190000_legal_parameters_lp9_pis_cofins_ncm/migration.sql'), 'utf8'));
     expect(mig).toContain(norm(fs.readFileSync(LEGAL_PARAMS_SEED_FILE_LP9_PC, 'utf8')).trimEnd());
     expect(mig.split('\n').filter((l) => l.trim() && !l.startsWith('--')).every((l) => l.startsWith('INSERT OR IGNORE INTO "legal_parameters" '))).toBe(true);
     const lp9 = legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_LP9_PC);

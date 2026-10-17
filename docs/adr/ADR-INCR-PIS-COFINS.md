@@ -301,7 +301,7 @@ Dossiê `pesquisas-legais/verif-2026-10-17-pis-cofins/relatorio.md` (PR #754); o
   14.592/2023 [D03]. Não é "Lei 14.592 art. 6º".
 - **NCM farmacêutico (D-monofásico do X6):** a lista da Lei 10.147 art. 1º I "a" [D04] cita a TIPI de 2011.
   - Os códigos vigentes são os do art. 452 da IN 2.121 [D10]: `3002.11.00, 3002.12.1/2/3, 3002.13.00, 3002.14.00, 3002.15, 3002.41.1/2, 3002.49.10/92/99, 3002.59.00, 3002.90.00, 3822.11.00, 3822.19.40`.
-  - Foram publicados em `legal_parameters` pela migração `20261017140000` (linhas `lp9-pc-ncm-*`, que substituem as 8 linhas de 2011).
+  - Foram publicados em `legal_parameters` pela migração `20261017190000` (linhas `lp9-pc-ncm-*`, que substituem as 8 linhas de 2011).
 - **§11 item 3 (CBS/IBS de 2026)** fica assim:
   - a apuração assume a dispensa do recolhimento de CBS/IBS do art. 348 § 1º [D09], declarada na memória (`PREMISSA_CBS_IBS_2026`);
   - a compensação do art. 348 I (para quem não cumpre as obrigações acessórias) não é modelada.
