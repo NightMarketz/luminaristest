@@ -116,6 +116,14 @@ const F_DERIVADO = 'F-X8-7 (a): nota anterior à gravação separada — PIS × 
 const F_SALDO = 'Lei 10.833/2003 art. 3º § 4º (Lei 10.637/2002 art. 3º § 4º no PIS)';
 const F_RETENCAO = 'IN RFB 2.121/2022 art. 120; ADR-INCR-PIS-COFINS D7';
 const F_EXCEDENTE = 'F-TA-9 (a), por analogia — compensação/restituição fora do sistema';
+/**
+ * Verificação legal 17/10 (dossiê verif-2026-10-17-pis-cofins, ambiguidade A): 2026 é o ano-teste da CBS (0,9%) e do IBS
+ * (0,1%) (LC 214/2025 arts. 343, 346 e 348). Quem cumpre as obrigações acessórias fica dispensado de recolher (§ 1º); quem
+ * não cumpre recolhe e compensa com PIS/Cofins (I). Esta apuração não tem a linha de compensação: só vale na dispensa, e a
+ * memória declara isso. Não calcula CBS/IBS (frente M5).
+ */
+const PREMISSA_CBS_IBS_2026 = 'PREMISSA_CBS_IBS_2026';
+const F_PREMISSA_CBS_IBS_2026 = 'LC 214/2025 art. 348 § 1º (dispensa do recolhimento em 2026; sem ela, compensação pelo inciso I, não modelada)';
 
 /**
  * ADR D2 / F-X8-3 (a): o regime da PJ no ano decide a modalidade — `PRESUMIDO` ⇒ cumulativo (IN 2.121 art. 122),
@@ -269,6 +277,16 @@ export function apurarPisCofinsMensal(e: EntradaPisCofins): Record<TributoPisCof
     memoria.push(linha('A_PAGAR', 'Valor a pagar', aPagar, `código de receita ${p.codigoReceita}; ${p.fonte}`));
     if (excedente > 0n) memoria.push(linha('RETENCAO_EXCEDENTE', 'Retenções acima do devido depois do crédito — compensação fora do sistema', excedente, F_EXCEDENTE));
     if (naoCumulativo) memoria.push(linha('SALDO_CREDOR', 'Crédito acima do débito — transportado ao mês seguinte', saldoCredor, F_SALDO));
+    if (e.ano === 2026) {
+      memoria.push(
+        linha(
+          PREMISSA_CBS_IBS_2026,
+          'Premissa: dispensa do recolhimento da CBS (0,9%) e do IBS (0,1%) de 2026, que exige cumprir as obrigações acessórias; sem compensação de CBS/IBS nesta apuração',
+          0n,
+          F_PREMISSA_CBS_IBS_2026,
+        ),
+      );
+    }
 
     out[t] = {
       tributo: t,

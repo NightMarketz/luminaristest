@@ -484,3 +484,18 @@ Três correções no item 11 / tabela `pisCofinsMonofasicoNcm.ts`, todas **verif
 
 Registrado sem finding (revisor): 1,65%/7,6% e exclusão do ICMS conferem no corpus; Anexo I 51/51, Anexo II
 15/15; invariante Σ custo_item = custoEstoque mantida em 4 casos adversariais; re-drive e estorno com 4 linhas.
+
+## Verificação legal de 17/10 (frente PIS/Cofins)
+
+Dossiê `pesquisas-legais/verif-2026-10-17-pis-cofins/relatorio.md` (PR #754); os [Dnn] são as fontes dele.
+
+- **ICMS fora da base do crédito:** onde este BRIEF diz "Lei 14.592/23", o dispositivo vigente é a Lei 10.833 art. 3º § 2º III
+  (redação da Lei 14.592/2023) [D03].
+- **Tabela monofásica (F-X6-7):** as linhas de NCM farmacêutico `3002.10.x`, `3002.20.x` e `3002.90.20/92/99` seguiam a TIPI de 2011
+  (Lei 10.147 art. 1º [D04]).
+  - Com elas, uma NF-e com NCM atual (ex.: vacina 3002.41.xx) não casava com a tabela e gerava crédito indevido no Real.
+  - A migração `20261017190000` (linhas `lp9-pc-ncm-*`) publica os 16 códigos do art. 452 da IN RFB 2.121/2022 vigente [D10] e
+    substitui as 8 linhas antigas.
+  - Perfumaria/higiene (IN 2.121 art. 481) e as demais posições farmacêuticas conferem.
+
+**Fontes:** [D03] Lei 10.833 e [D04] Lei 10.147, compiladas no acervo ctresb/leis · [D10] IN RFB 2.121/2022, visão vigente do Sijut.

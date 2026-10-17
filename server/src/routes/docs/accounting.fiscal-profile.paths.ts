@@ -45,7 +45,7 @@
  *                 regimeTributario: { type: string, enum: [SIMPLES, PRESUMIDO, REAL] }
  *                 icmsContribuinte: { type: boolean }
  *                 pisCofinsRegime: { type: string, enum: [SIMPLES, CUMULATIVO, NAO_CUMULATIVO] }
- *                 pisCofinsCreditExcludesIcms: { type: boolean, default: true, description: 'Lei 14.592/2023 art. 6º' }
+ *                 pisCofinsCreditExcludesIcms: { type: boolean, default: true, description: 'Lei 10.833/2003 art. 3º § 2º III (redação da Lei 14.592/2023)' }
  *                 pisCofinsCreditIncludesIpi: { type: boolean, default: false }
  *                 pisCofinsCreditFromSimplesSupplier: { type: boolean, default: false }
  *                 icmsRecuperavelAccountId: { type: string, nullable: true }

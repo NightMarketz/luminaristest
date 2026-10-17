@@ -41,9 +41,11 @@ export const LEGAL_PARAMS_SEED_FILE_V5 = path.resolve(__dirname, '../../prisma/d
 export const LEGAL_PARAMS_SEED_FILE_V6 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v6.sql');
 /** Verificação legal 17/10: lp8-csll-3-a..e substituem a lp5-csll-3-a (25% em 07–12/2021, 21% em 08–12/2022). */
 export const LEGAL_PARAMS_SEED_FILE_V8 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v8.sql');
+/** Verificação legal 17/10 (PIS/Cofins item 9): NCM farmacêutico na TIPI vigente (IN RFB 2.121/2022 art. 452), supersede das linhas de 2011. */
+export const LEGAL_PARAMS_SEED_FILE_LP9_PC = path.resolve(__dirname, '../../prisma/data/legal_parameters_lp9_pis_cofins_ncm.sql');
 /** F-E4-1 (a): FERIADO_LOCAL — feriados estaduais e municipais (SP e São Paulo capital). Mesma regra de igualdade. */
 export const LEGAL_PARAMS_SEED_FILE_FERIADO_LOCAL = path.resolve(__dirname, '../../prisma/data/legal_parameters_feriado_local_v1.sql');
-export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4, LEGAL_PARAMS_SEED_FILE_V5, LEGAL_PARAMS_SEED_FILE_V6, LEGAL_PARAMS_SEED_FILE_V8, LEGAL_PARAMS_SEED_FILE_FERIADO_LOCAL];
+export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4, LEGAL_PARAMS_SEED_FILE_V5, LEGAL_PARAMS_SEED_FILE_V6, LEGAL_PARAMS_SEED_FILE_V8, LEGAL_PARAMS_SEED_FILE_LP9_PC, LEGAL_PARAMS_SEED_FILE_FERIADO_LOCAL];
 
 type Valor = string | number | null;
 

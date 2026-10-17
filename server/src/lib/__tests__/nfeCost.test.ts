@@ -207,3 +207,13 @@ describe('acquisitionCost — destinação por item (ITEM-DESTINATION)', () => {
     expect(imob.custoInsumoCents).toBe(0);
   });
 });
+
+// Verificação legal 17/10 (dossiê verif-2026-10-17-pis-cofins, item 9): a tabela de NCM farmacêutico seguia a TIPI de 2011
+// (Lei 10.147 art. 1º). A IN RFB 2.121/2022 art. 452 (vigente) usa a TIPI atual: vacina 3002.41 era TRIBUTADO e creditava.
+describe('acquisitionCost — NCM farmacêutico da TIPI vigente (IN RFB 2.121/2022 art. 452)', () => {
+  it('NF-e de compra com vacina NCM 3002.41.29 e CST 01 no Real → MONOFASICO, crédito 0 (era 784, crédito indevido)', () => {
+    const vacina = ITENS.map((it, i) => (i === 0 ? { ...it, ncm: '30024129', cstPis: '01', cstCofins: '01' } : it));
+    const c = acquisitionCost(NFE, vacina, regime({ pisCofinsRegime: 'NAO_CUMULATIVO' }), undefined, LEGAIS_SEMENTE);
+    expect({ classe: c.itens[0].classe, credito: c.itens[0].creditoPisCofinsCents, total: c.creditoPisCofinsCents }).toEqual({ classe: 'MONOFASICO', credito: 0, total: 0 });
+  });
+});

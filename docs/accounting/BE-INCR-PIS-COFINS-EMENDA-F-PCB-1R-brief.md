@@ -28,3 +28,11 @@
    dedução da receita. Sem mudança de lançamento: continua D conta de PIS/COFINS / C a recolher.
 
 Fora: o kit (PR-K2 da EMENDA-1 do KIT-SETOR) é o PR seguinte e preenche os campos com 3.6.1/3.6.2.
+
+## Verificação legal de 17/10
+
+Dossiê `pesquisas-legais/verif-2026-10-17-pis-cofins/relatorio.md` (PR #754); os [Dnn] são as fontes dele.
+
+- A dedução da receita bruta confere com o texto vigente: DL 1.598 art. 12 § 1º III ("tributos sobre ela incidentes"),
+  cópia compilada de 13/10 [D08].
+- Nada muda nesta emenda.
