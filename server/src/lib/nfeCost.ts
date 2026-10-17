@@ -10,7 +10,7 @@
  *  - Lei 10.637/2002 art. 2º/3º (PIS 1,65%) e Lei 10.833/2003 art. 2º/3º (COFINS 7,6%): crédito na
  *    aquisição de bens para revenda, só no regime NÃO-CUMULATIVO (item 10, F-X6-3 b).
  *  - Lei 10.833/2003 art. 3º §2º II: sem crédito em bem sujeito a alíquota zero/monofásico (item 11).
- *  - Lei 14.592/2023 art. 6º: ICMS fora da base do crédito (flag `pisCofinsCreditExcludesIcms`, default true).
+ *  - Lei 10.833/2003 art. 3º § 2º III (redação da Lei 14.592/2023): ICMS fora da base do crédito (flag `pisCofinsCreditExcludesIcms`, default true).
  *  - IPI fora da base do crédito como regra FIXA (STJ Tema 1.373; triagem do contador P1, 23/09) — a flag
  *    `pisCofinsCreditIncludesIpi` não é lida aqui e o DTO só aceita `false`.
  *  - ADI SRF 15/2007 (fornecedor do Simples): [NC] fora do corpus → flag com default CONSERVADOR (sem
@@ -162,7 +162,7 @@ export function acquisitionCost(
       const c = classifyPisCofinsItem({ ncm: it.ncm, cstPis: it.cstPis, cstCofins: it.cstCofins }, tabelaItem);
       classe = c.classe;
       if (c.classe === 'TRIBUTADO') {
-        // base_item = vProd − vDesc + frete/seg/outro do item; − ICMS (Lei 14.592); IPI nunca (P1)
+        // base_item = vProd − vDesc + frete/seg/outro do item; − ICMS (Lei 10.833 art. 3º § 2º III, red. Lei 14.592); IPI nunca (P1)
         base =
           it.vProdCents - it.vDescCents - descRest[i] + it.vFreteCents + freteRest[i] + it.vSegCents + segRest[i] + it.vOutroCents + outroRest[i];
         if (regime.pisCofinsCreditExcludesIcms) base -= it.vICMSCents;

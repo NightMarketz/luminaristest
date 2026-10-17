@@ -287,3 +287,28 @@ Baixado para o scratchpad da sessão (não para o repo nem o corpus):
 | IN RFB 2.121/2022 (multivigente) | API do Sijut, ato `127905` | 3.530.588 | `ba02b35c395f` | só segmentos `compilado` e não `tachado`; fora do MANIFEST |
 | Guia Prático EFD-Contribuições v1.35 | `sped.rfb.gov.br/arquivo/download/5836` | 4.105.830 | `60eace459169` | **igual** ao MANIFEST |
 | Tabelas DCTF PIS/Pasep e Cofins | páginas da Receita (gov.br), via WebFetch | — | — | atualizadas em 27/02/2024 e 27/07/2023 |
+
+## 16. Verificação legal de 17/10 (texto vigente)
+
+Dossiê `pesquisas-legais/verif-2026-10-17-pis-cofins/relatorio.md` (PR #754); os [Dnn] são as fontes dele.
+
+- **§3 segue válido.** As leituras de 02/10 foram refeitas no texto vigente e conferem:
+  - LC 214 compilada com a LC 227/2026 [D09];
+  - IN 2.121 na visão vigente até a IN RFB 2.264/2025 [D10];
+  - Leis 9.718, 10.637, 10.833, 10.147 e 12.592 compiladas em 13/10 ([D01]–[D05]).
+  - A única mudança de 2026 nessas leis é a revogação do art. 38 da Lei 10.637 pela LC 225/2026, que o produto não usa.
+- **ICMS fora do crédito (linha "Sem crédito" do §3):** o dispositivo é a Lei 10.833 art. 3º § 2º III, na redação da Lei
+  14.592/2023 [D03]. Não é "Lei 14.592 art. 6º".
+- **NCM farmacêutico (D-monofásico do X6):** a lista da Lei 10.147 art. 1º I "a" [D04] cita a TIPI de 2011.
+  - Os códigos vigentes são os do art. 452 da IN 2.121 [D10]: `3002.11.00, 3002.12.1/2/3, 3002.13.00, 3002.14.00, 3002.15, 3002.41.1/2, 3002.49.10/92/99, 3002.59.00, 3002.90.00, 3822.11.00, 3822.19.40`.
+  - Foram publicados em `legal_parameters` pela migração `20261017190000` (linhas `lp9-pc-ncm-*`, que substituem as 8 linhas de 2011).
+- **§11 item 3 (CBS/IBS de 2026)** fica assim:
+  - a apuração assume a dispensa do recolhimento de CBS/IBS do art. 348 § 1º [D09], declarada na memória (`PREMISSA_CBS_IBS_2026`);
+  - a compensação do art. 348 I (para quem não cumpre as obrigações acessórias) não é modelada.
+- **2027+:** PIS e Cofins revogados ([D09] art. 542); CBS pela alíquota de referência menos 0,1 p.p. ([D09] art. 347).
+  - O produto responde 400. Isso é coerente com a lei, mas deixa Presumido/Real sem apuração federal sobre receita.
+  - É funcionalidade nova (M5), não correção.
+
+**Fontes ([Dnn] do dossiê):** [D01] Lei 9.718 · [D02] Lei 10.637 · [D03] Lei 10.833 · [D04] Lei 10.147 · [D05] Lei 12.592 —
+compiladas no acervo ctresb/leis (cópia de 13/10) · [D08] DL 1.598 (acervo) · [D09] LC 214/2025 compilada no Planalto, com as
+redações da LC 227/2026 · [D10] IN RFB 2.121/2022, visão vigente do Sijut (ato 127905), com alterações até a IN RFB 2.264/2025.

@@ -345,3 +345,36 @@ Não reabre F-PCB-1..5; a L-2 **altera** o item 17 (antes: só a parte do item 6
 
 Teto da L-3 ajustado para **10 pernas** por lançamento (um por tributo/mês). "a recolher" líquido = DARF.
 **Residual:** saldo credor anterior **informado** no 1º mês nunca passou pelo razão do sistema — validação externa **P-7**.
+
+## 9. Verificação legal de 17/10 — estado do texto vigente
+
+Dossiê `pesquisas-legais/verif-2026-10-17-pis-cofins/relatorio.md` (PR #754); os [Dnn] são as fontes dele. Correção no PR da frente PIS/Cofins (branch `claude/lp9-pis-cofins-ncm`).
+
+- **Confere com o texto vigente:**
+  - alíquotas 0,65%/3% e 1,65%/7,6% ([D10] arts. 128 e 150; [D01] art. 8º; [D02]/[D03] art. 2º);
+  - regime pela forma de tributação ([D10] arts. 122 e 145);
+  - base ([D10] art. 25; [D01] art. 3º);
+  - alíquota zero na revenda ([D04] art. 2º; [D10] art. 487);
+  - créditos e saldo transportado ([D03] art. 3º, § 1º, § 4º);
+  - cota-parte ([D05] art. 1º-A §§ 5º e 8º);
+  - retenção ([D10] art. 120);
+  - regime de caixa ([D10] art. 127);
+  - revogação em 01/01/2027 ([D09] art. 542 X, XI, XVIII, XXI; art. 544 III na redação da LC 227).
+- **A tabela "Fontes legais desta fase" passa a valer com estas leituras:**
+  - LC 214 = texto compilado com a LC 227/2026 [D09];
+  - IN 2.121 = visão vigente até a IN RFB 2.264/2025 [D10].
+- **Citação corrigida:** o ICMS fica fora da base do crédito pela **Lei 10.833/2003 art. 3º § 2º III (redação da Lei
+  14.592/2023)** [D03]. O texto antigo dizia "Lei 14.592 art. 6º". A correção vale em `nfeCost.ts`, na doc da rota do perfil fiscal e no `openapi.json`.
+- **Premissa de 2026:** 2026 é o ano-teste da CBS (0,9%) e do IBS (0,1%) ([D09] arts. 343, 346 e 348).
+  - Esta apuração só está certa para quem fica dispensado do recolhimento por cumprir as obrigações acessórias ([D09] art. 348 § 1º).
+  - Quem não cumpre recolhe CBS/IBS e compensa com PIS/Cofins (art. 348 I). Isso não está modelado.
+  - A memória de 2026 traz a linha `PREMISSA_CBS_IBS_2026` (valor 0) com essa premissa.
+  - A dúvida sobre quais obrigações bastam fica com o contador (dossiê, ambiguidade A).
+- **Fora deste nó (registrado, não planejado):**
+  - CBS/IBS de 2027 (M5);
+  - guia de CBS/IBS de 2026 para quem não fica dispensado;
+  - EFD-Contribuições.
+
+**Fontes ([Dnn] do dossiê):** [D01] Lei 9.718 · [D02] Lei 10.637 · [D03] Lei 10.833 · [D04] Lei 10.147 · [D05] Lei 12.592 —
+compiladas no acervo ctresb/leis (cópia de 13/10) · [D08] DL 1.598 (acervo) · [D09] LC 214/2025 compilada no Planalto, com as
+redações da LC 227/2026 · [D10] IN RFB 2.121/2022, visão vigente do Sijut (ato 127905), com alterações até a IN RFB 2.264/2025.
