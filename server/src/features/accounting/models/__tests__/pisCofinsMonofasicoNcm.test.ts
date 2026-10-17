@@ -4,7 +4,9 @@ import {
   normalizeNcm,
 } from '../pisCofinsMonofasicoNcm';
 
-import { TABELA_ITEM_SEMENTE } from '@test/helpers/legalParams';
+import fs from 'fs';
+import path from 'path';
+import { LEGAL_PARAMS_SEED_FILE_LP9_PC, TABELA_ITEM_SEMENTE, legalParamsSeedRows } from '@test/helpers/legalParams';
 
 // BE-INCR-LEGAL-PARAMS PR-2: a tabela mora em PIS_COFINS_MONOFASICO_NCM; a guarda roda sobre a semente da migração.
 const PIS_COFINS_MONOFASICO_NCM = TABELA_ITEM_SEMENTE.regras;
@@ -13,7 +15,7 @@ describe('PIS_COFINS_MONOFASICO_NCM — guarda da transcrição', () => {
   it('toda entrada cita a lei, o artigo e o arquivo do corpus; prefixo só dígitos (2–8)', () => {
     for (const r of PIS_COFINS_MONOFASICO_NCM) {
       expect(r.fonte).toMatch(
-        /^(Lei (10\.(147|485)\/20(00|02)|13\.097\/2015) art\. \d+º?.*\((Lei-10(147|485)-20(00|02)-monofasico-.*|Lei-13097-2015-bebidas-frias)\.html\)|Tabela 4\.3\.10 EFD-Contribuições v1\.25 código \d{3}(\/\d{3})? — .+ \(TABELA-4310-EFD-CONTRIBUICOES-v1\.25\.txt\))$/,
+        /^(Lei (10\.(147|485)\/20(00|02)|13\.097\/2015) art\. \d+º?.*\((Lei-10(147|485)-20(00|02)-monofasico-.*|Lei-13097-2015-bebidas-frias)\.html\)|IN RFB 2\.121\/2022 art\. 452 \(Sijut, visão vigente, lida em \d{4}-\d{2}-\d{2}\)|Tabela 4\.3\.10 EFD-Contribuições v1\.25 código \d{3}(\/\d{3})? — .+ \(TABELA-4310-EFD-CONTRIBUICOES-v1\.25\.txt\))$/,
       );
       expect(r.prefixo).toMatch(/^\d{2,8}$/);
       for (const ex of r.exceto ?? []) expect(ex).toMatch(/^\d{8}$/);
@@ -130,5 +132,16 @@ describe('PIS_COFINS_MONOFASICO_NCM — farmacêuticos na TIPI vigente (IN RFB 2
     }
     expect(findMonofasicoRule('30024920', TABELA_ITEM_SEMENTE.regras)).toBeNull();
     expect(findMonofasicoRule('38221990', TABELA_ITEM_SEMENTE.regras)).toBeNull();
+  });
+
+  it('a migração lp9 carrega o texto de prisma/data/legal_parameters_lp9_pis_cofins_ncm.sql, só insere, e substitui exatamente as 8 linhas de 2011', () => {
+    const norm = (s: string) => s.replace(/\r\n/g, '\n');
+    const mig = norm(fs.readFileSync(path.resolve(__dirname, '../../../../../prisma/migrations/20261017140000_legal_parameters_lp9_pis_cofins_ncm/migration.sql'), 'utf8'));
+    expect(mig).toContain(norm(fs.readFileSync(LEGAL_PARAMS_SEED_FILE_LP9_PC, 'utf8')).trimEnd());
+    expect(mig.split('\n').filter((l) => l.trim() && !l.startsWith('--')).every((l) => l.startsWith('INSERT OR IGNORE INTO "legal_parameters" '))).toBe(true);
+    const lp9 = legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_LP9_PC);
+    expect(lp9).toHaveLength(16);
+    expect(lp9.map((r) => r.supersedesId).filter((s) => s !== null).sort()).toEqual(['lp2-ncm-004', 'lp2-ncm-005', 'lp2-ncm-006', 'lp2-ncm-007', 'lp2-ncm-008', 'lp2-ncm-011', 'lp2-ncm-012', 'lp2-ncm-013']);
+    expect(lp9.every((r) => r.status === 'PUBLISHED' && r.tabela === 'PIS_COFINS_MONOFASICO_NCM' && r.vigenteDesde === '2025-01-01' && r.vigenteAte === null)).toBe(true);
   });
 });

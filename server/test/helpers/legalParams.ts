@@ -37,7 +37,9 @@ export const LEGAL_PARAMS_SEED_FILE_V4 = path.resolve(__dirname, '../../prisma/d
 export const LEGAL_PARAMS_SEED_FILE_V5 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v5.sql');
 /** SIMPLES-PISO-ANEXO-XI bloco 2: MEI_ANEXO_XI (cópia do fixture do Anexo XI). Mesma regra de igualdade com o migration.sql. */
 export const LEGAL_PARAMS_SEED_FILE_V6 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v6.sql');
-export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4, LEGAL_PARAMS_SEED_FILE_V5, LEGAL_PARAMS_SEED_FILE_V6];
+/** Verificação legal 17/10 (PIS/Cofins item 9): NCM farmacêutico na TIPI vigente (IN RFB 2.121/2022 art. 452), supersede das linhas de 2011. */
+export const LEGAL_PARAMS_SEED_FILE_LP9_PC = path.resolve(__dirname, '../../prisma/data/legal_parameters_lp9_pis_cofins_ncm.sql');
+export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4, LEGAL_PARAMS_SEED_FILE_V5, LEGAL_PARAMS_SEED_FILE_V6, LEGAL_PARAMS_SEED_FILE_LP9_PC];
 
 type Valor = string | number | null;
 

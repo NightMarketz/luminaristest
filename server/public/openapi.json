@@ -10244,7 +10244,7 @@
                   "pisCofinsCreditExcludesIcms": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Lei 14.592/2023 art. 6º"
+                    "description": "Lei 10.833/2003 art. 3º § 2º III (redação da Lei 14.592/2023)"
                   },
                   "pisCofinsCreditIncludesIpi": {
                     "type": "boolean",

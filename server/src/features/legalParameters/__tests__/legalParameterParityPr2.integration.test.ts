@@ -8,6 +8,7 @@
 import { pushTestSchema, resetDb, disconnectDb } from '@test/helpers';
 import { getFactory } from '@/lib/factory';
 import antigas from './__fixtures__/tabelas-antigas-pr2.json';
+import { LegalParameterRepository } from '../repositories/LegalParameterRepository';
 import { SemLinhaVigenteError, type LegalParameterTabela, type LinhaLegal } from '../models/legalParameter';
 import { tabelaApuracaoDe } from '@/features/accounting/models/taxAssessmentParams';
 import { razaoCreditoPisCofins, tabelaPisCofinsDe } from '@/features/accounting/models/pisCofinsParams';
@@ -59,7 +60,7 @@ describe('BE-INCR-LEGAL-PARAMS PR-2 item 6 — paridade tabela em código × ban
     }
   });
 
-  it('PIS_COFINS_MONOFASICO_NCM + CST_PIS_COFINS (itens 15–16): mesma regra (fonte) para todo NCM de borda de cada prefixo, na mesma ordem', () => {
+  it('PIS_COFINS_MONOFASICO_NCM + CST_PIS_COFINS (itens 15–16): mesma regra (fonte) para todo NCM de borda de cada prefixo, na mesma ordem', async () => {
     const velhas = antigas.PIS_COFINS_MONOFASICO_NCM as MonofasicoNcmRule[];
     const ncms = new Set<string>();
     for (const r of velhas) {
@@ -67,8 +68,13 @@ describe('BE-INCR-LEGAL-PARAMS PR-2 item 6 — paridade tabela em código × ban
       ncms.add(r.prefixo.padEnd(8, '9'));
       for (const ex of r.exceto ?? []) ncms.add(ex);
     }
+    // A paridade é do TRANSPORTE do PR-2 (código → banco). As linhas lp9-pc-* (verificação legal 17/10: NCM farmacêutico na
+    // TIPI vigente) substituem 8 das transportadas de propósito. A fotografia já tira as substituídas, então a leitura aqui
+    // é das PUBLISHED brutas sem as lp9-pc-*: assim a tabela do banco volta a ser a do PR-2.
+    const publicadas = await new LegalParameterRepository().findPublished(['PIS_COFINS_MONOFASICO_NCM', 'CST_PIS_COFINS']);
+    const doTransporte = publicadas.filter((l) => !l.id.startsWith('lp9-pc-'));
     for (const d of DATAS) {
-      const t = tabelaPisCofinsItemDe(fot, d);
+      const t = tabelaPisCofinsItemDe(doTransporte, d);
       expect(t.regras).toEqual(velhas);
       for (const ncm of ncms) expect([ncm, findMonofasicoRule(ncm, t.regras)?.fonte]).toEqual([ncm, findMonofasicoRule(ncm, velhas)?.fonte]);
       expect([[...t.cstSemCredito].sort(), [...t.cstTributado].sort()]).toEqual([antigas.CST_SEM_CREDITO, antigas.CST_TRIBUTADO]);
