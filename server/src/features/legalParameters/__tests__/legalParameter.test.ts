@@ -204,3 +204,16 @@ describe('LegalParameterPolicy (item 12, F-LP-2 b)', () => {
     expect(p.canManage({ userId: '', role: 'PLATFORM_ADMIN' })).toBe(false);
   });
 });
+
+describe('verificação legal 17/10 (IRPJ/CSLL, divergência 2) — CSLL de bancos (código 3) de 03/2020 a 03/2026', () => {
+  // Lei 7.689/1988 art. 3º II-A: 25% até 31/12/2021 (MP 1.034/2021 art. 1º III, efeitos desde 01/07/2021 — art. 5º II;
+  // Lei 14.183/2021 art. 1º) e 20% depois; parágrafo único: 21% até 31/12/2022 (MP 1.115/2022, efeitos desde 01/08/2022).
+  it('aliquotaCsll(3, d) reflete os 25% de 07–12/2021 e os 21% de 08–12/2022; 20% no resto', () => {
+    const t = tabelaApuracaoSemente();
+    const DATAS = ['2020-03-01', '2021-06-30', '2021-07-01', '2021-12-31', '2022-01-01', '2022-07-31', '2022-08-01', '2022-12-31', '2023-01-01', '2026-03-31', '2026-04-01'];
+    expect(DATAS.map((d) => [d, t.aliquotaCsll('3', d)?.valor])).toEqual([
+      ['2020-03-01', 2000], ['2021-06-30', 2000], ['2021-07-01', 2500], ['2021-12-31', 2500], ['2022-01-01', 2000], ['2022-07-31', 2000],
+      ['2022-08-01', 2100], ['2022-12-31', 2100], ['2023-01-01', 2000], ['2026-03-31', 2000], ['2026-04-01', 2000],
+    ]);
+  });
+});
