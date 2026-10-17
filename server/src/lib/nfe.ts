@@ -270,7 +270,8 @@ function readTotais(icmsTot: Record<string, unknown>): NfeTotais {
  * `protNFe`, is rejected as "sem autorização").
  */
 /**
- * BE-INCR-LEGAL-PARAMS PR-2 (item 13; F-LP-4 a): `legais` = fotografia com `NFE_CSTAT_AUTORIZADA` (MOC §4.4.1, D5),
+ * BE-INCR-LEGAL-PARAMS PR-2 (item 13; F-LP-4 a): `legais` = fotografia com `NFE_CSTAT_AUTORIZADA` (MOC §4.4.1, D5;
+ * MOC 7.0 — de 01/11/2026 em diante, o MOC online mantido pelo Paraná, Aj. SINIEF 40/26: conferir no PR-0),
  * montada pelo serviço; o cStat é conferido contra a lista vigente na data do protocolo (`dhRecbto`).
  */
 export function parseNfe(input: string | Buffer, legais: readonly LinhaLegal[], options: ParseNfeOptions = {}): ParsedNfe {

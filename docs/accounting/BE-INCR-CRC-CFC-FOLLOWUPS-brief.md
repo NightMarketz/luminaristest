@@ -1,5 +1,11 @@
 # BE-INCR-CRC-CFC-FOLLOWUPS — os 6 achados fora de escopo do GAP-MAP 15
 
+> **Estado legal verificado em 17/10/2026** (dossiê `pesquisas-legais/verif-2026-10-17-contabil-ecd/relatorio.md` (PR #754); [Dnn] = fonte do dossiê). Este documento é histórico; onde ele cita outra coisa, vale o que está abaixo.
+>
+> - **Registro no CRC:** a Res. CFC 1.494/2015 foi revogada (pela 1.554/2018, por sua vez revogada pela **Res. CFC 1.707/2023**, em vigor desde 01/01/2024 e alterada pelas Res. 1.717, 1.726 e 1.731/2024; os arts. 3º e 5º não mudaram). Os tipos vigentes são Originário e Transferido (art. 3º), e o transferido recebe "T" e a sigla do CRC de destino (art. 5º p.ú.). O art. 36 da 1.707 só revoga normas: a extinção do provisório decorre do art. 3º (grau: inferido). Fonte: SRE do CFC, `RES_1707.pdf`, sha `e8f380919d07` (o cfc.org.br não está na lista do `legal.py`, por isso não tem ID D). O código foi corrigido no PR #756.
+> - **Sufixo " S-UF" (secundário):** não tem base na 1.707. **Dono, AskUserQuestion, 17/10: recusar com 400.** É mudança de comportamento e vai em PR próprio.
+> - **Manual da ECD L9:** a edição vigente é a **atualização de maio/2026** (sha `bc63f0a893ce`) [D07], não a de janeiro/2026 (`7ddf47755f61`). Ver [[D-2026-10-17-MANUAL-ECD-L9-MAIO]]. Em geral as páginas avançam 1 ou 2; o mapa está na nota. O conteúdo de J801, J930, J932 e `REGRA_VALIDA_NIVEL_CONTAS` confere.
+
 ## 0. Cabeçalho
 
 - **Nó do vault:** `docs/plano/nos/CRC-CFC.md` (onda 1b da ordem em `docs/plano/decisoes/D-2026-09-28-CRC-CFC-SEED-UNIDADE-E-ORDEM.md`).

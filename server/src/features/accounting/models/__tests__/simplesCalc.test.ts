@@ -4,7 +4,7 @@
  * portal (gate humano X14-DAS).
  */
 import { SIMPLES_SEED_FILES, legalParamsSeedRows } from '@test/helpers/legalParams';
-import { AtividadeSemAnexoError, SimplesRegraNaoRegulamentadaError } from '../../../../lib/errors';
+import { AtividadeSemAnexoError } from '../../../../lib/errors';
 import { SEGREGACAO_EXCLUI, apurar, apurarSimei, janelaRbt12, rbt12, type ApuracaoInput, type MesReceita } from '../simplesCalc';
 
 const LINHAS = legalParamsSeedRows(SIMPLES_SEED_FILES);
@@ -89,8 +89,26 @@ describe('item 5 — RBT12', () => {
     expect(rbt12(h, '2026-05', '2026-03', 0)).toMatchObject({ cents: 1_800_006, metodo: 'INICIO_MEDIA' });
   });
 
-  it('início de atividade a partir de 2027: regra não regulamentada → recusa (não inventa)', () => {
-    expect(() => rbt12([], '2027-03', '2027-02', 400_000)).toThrow(SimplesRegraNaoRegulamentadaError);
+  // Res. CGSN 140 art. 22 §§ 2º e 4º, red. Res. CGSN 190/2026 (efeitos em 01/01/2027, art. 9º) — dossiê
+  // pesquisas-legais/verif-2026-10-17-simples-mei [D16]: 1ª faixa no 1º e no 2º mês; média dos meses antecedentes ao mês
+  // anterior × 12 do 3º ao 13º; regra geral (§ 1º) a partir do 14º.
+  it('início de atividade a partir de 2027: 1º e 2º mês na 1ª faixa, mesmo com receita alta (art. 22 § 2º I, red. Res. 190)', () => {
+    expect(rbt12([], '2027-02', '2027-02', 400_000).metodo).toBe('INICIO_PRIMEIRA_FAIXA');
+    const h = [{ competencia: '2027-02', receitaBrutaCents: 50_000_000 }];
+    expect(rbt12(h, '2027-03', '2027-02', 50_000_000).metodo).toBe('INICIO_PRIMEIRA_FAIXA');
+    const a = apurar(base('2027-03', { historico: h, inicioAtividade: '2027-02', receitaPaCents: 50_000_000, atividades: [servico(50_000_000)] }), LINHAS).atividades[0];
+    expect([a.faixa, a.aliquotaEfetiva]).toEqual([1, '6.0000']);
+    // 2º mês em jan/2027 de quem abriu em dez/2026: a regra é a do PA (2027).
+    expect(rbt12([{ competencia: '2026-12', receitaBrutaCents: 50_000_000 }], '2027-01', '2026-12', 0).metodo).toBe('INICIO_PRIMEIRA_FAIXA');
+  });
+
+  it('início de atividade a partir de 2027: 3º ao 13º mês pela média × 12; 14º mês pela regra geral (art. 22 §§ 2º II e 4º, red. Res. 190)', () => {
+    const h = [{ competencia: '2027-02', receitaBrutaCents: 100_000 }, { competencia: '2027-03', receitaBrutaCents: 99_999_999 }];
+    expect(rbt12(h, '2027-04', '2027-02', 0)).toMatchObject({ cents: 1_200_000, metodo: 'INICIO_MEDIA', meses: ['2027-02'] });
+    const ano = Array.from({ length: 13 }, (_, k) => ({ competencia: somaMeses('2027-02', k), receitaBrutaCents: 100_000 }));
+    expect(rbt12(ano, '2028-02', '2027-02', 0)).toMatchObject({ cents: 1_200_000, metodo: 'INICIO_MEDIA' });
+    expect(rbt12(ano, '2028-02', '2027-02', 0).meses).toHaveLength(11);
+    expect(rbt12(ano, '2028-03', '2027-02', 0)).toMatchObject({ cents: 1_200_000, metodo: 'ACUMULADO' });
   });
 
   it('RBT12 zero conta como R$ 1,00 só para a alíquota (Res. 140 art. 21 p.ú.) — 1ª faixa, alíquota efetiva = nominal', () => {
@@ -133,6 +151,17 @@ describe('item 7 — fator R (Res. 140 art. 26)', () => {
   it('casos de zero (§ 7º): sem folha → 0,01 (Anexo V); folha sem receita → 0,28 (Anexo III)', () => {
     expect(apurar(base('2026-06', { historico: historico('2026-06', 5_000_000, 0), atividades: [servico(100_000)] }), comFatorR).atividades[0].fatorR).toBe('0.0100');
     expect(apurar(base('2026-06', { historico: historico('2026-06', 0, 100), atividades: [servico(100_000)] }), comFatorR).atividades[0].anexo).toBe('III');
+  });
+
+  it('2027: r = 0,28 nos 2 primeiros meses de atividade, mesmo sem folha (art. 26 § 6º, red. Res. 190); 3º mês pela razão das somas', () => {
+    for (const comp of ['2027-02', '2027-03']) {
+      const h = comp === '2027-03' ? [{ competencia: '2027-02', receitaBrutaCents: 100_000, folhaCents: 0 }] : [];
+      const a = apurar(base(comp, { historico: h, inicioAtividade: '2027-02', receitaPaCents: 100_000, folhaPaCents: 0, atividades: [servico(100_000)] }), comFatorR).atividades[0];
+      expect([comp, a.anexo, a.fatorR]).toEqual([comp, 'III', '0.2800']);
+    }
+    const h3 = [{ competencia: '2027-02', receitaBrutaCents: 100_000, folhaCents: 0 }, { competencia: '2027-03', receitaBrutaCents: 100_000, folhaCents: 0 }];
+    const a3 = apurar(base('2027-04', { historico: h3, inicioAtividade: '2027-02', receitaPaCents: 100_000, atividades: [servico(100_000)] }), comFatorR).atividades[0];
+    expect([a3.anexo, a3.fatorR]).toEqual(['V', '0.0100']);
   });
 
   it('mês de início (§ 6º): r = folha do PA / receita do PA', () => {

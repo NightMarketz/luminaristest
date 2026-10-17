@@ -123,6 +123,8 @@ export interface IAccountingPolicy {
   /** BE-INCR-NFE-COST-REGIME (nó X6, item 2): perfil fiscal — escrita = mesma régua de fechar período. */
   canReadFiscalProfile(scope: AccountingScope): boolean;
   canManageFiscalProfile(scope: AccountingScope): boolean;
+  /** BE-INCR-DFE-ADN-EMISSOR PR-1 (item 6): upload/leitura/remoção do certificado fiscal — delega a canManageFiscalProfile. */
+  canManageFiscalCertificate(scope: AccountingScope): boolean;
 
   /**
    * BE-INCR-DFE (nó X10b, BRIEF item 5): perfil fiscal do serviço = régua do perfil fiscal; emissão/cancelamento

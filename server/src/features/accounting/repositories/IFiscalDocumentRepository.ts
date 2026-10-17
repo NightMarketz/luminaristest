@@ -131,7 +131,7 @@ export interface IFiscalDocumentRepository {
    * `statuses` pedidos, cada uma com o `cLocPrestacao` lido do payload da tentativa CORRENTE (F-TC-1 a; null se o
    * payload não o tiver).
    */
-  findForIssReport(scope: AccountingScope, from: string, to: string, statuses: readonly FiscalDocumentStatus[], tx?: Prisma.TransactionClient): Promise<Array<FiscalDocument & { cLocPrestacao: string | null }>>;
+  findForIssReport(scope: AccountingScope, from: string, to: string, statuses: readonly FiscalDocumentStatus[], tx?: Prisma.TransactionClient): Promise<Array<FiscalDocument & { cLocPrestacao: string | null; cLocEmi: string | null }>>;
   /** SENT|PROCESSING mais velhos que `olderThan` — alvo do job de polling (BRIEF item 27). Sem escopo: o job varre todos. */
   listPending(olderThan: Date, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
   /**

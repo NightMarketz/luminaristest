@@ -884,7 +884,7 @@ export class PostingService {
   }
 
   /**
-   * BE-INCR-PLANO-4-NIVEIS (L8, item 6): a regra do PVA aplicada na origem. Manual da ECD L9 (jan/2026) p. 119,
+   * BE-INCR-PLANO-4-NIVEIS (L8, item 6): a regra do PVA aplicada na origem. Manual da ECD L9 (maio/2026) p. 120,
    * REGRA_VALIDA_NIVEL_CONTAS: analítica de ativo/passivo/PL no nível ≥ 4 (o nível do I050 é a profundidade do
    * código); e toda conta abaixo do nível 1 precisa da conta superior (I050.COD_CTA_SUP), que é sintética.
    */

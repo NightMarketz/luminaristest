@@ -993,7 +993,12 @@ export class FiscalDocumentEmissionService {
             tribMun: {
               tribISSQN: 1,
               tpRetISSQN: fp.issRetidoTomadorPj ? 2 : 1,
-              ...(fp.issAliquotaBp ? { pAliq: bpToPctString(fp.issAliquotaBp) } : {}),
+              // Anexo I v1.01 E0625/E0631: ME/EPP com ISS pelo SN e sem retenção NÃO informa pAliq (município ativo
+              // ou não); com retenção é obrigatório (E0621/E0628). Regime normal: issAliquotaBp = município não
+              // conveniado (E0619); vazio omite (E0617). Verificação legal 17/10/2026 (verif-2026-10-17-iss-nfse).
+              ...(fp.issAliquotaBp && !(isSimples && fp.regApTribSN === 1 && !fp.issRetidoTomadorPj)
+                ? { pAliq: bpToPctString(fp.issAliquotaBp) }
+                : {}),
             },
             totTrib: isSimples
               ? { pTotTribSN: bpToPctString(fp.pTotTribSNCent ?? 0) }

@@ -421,7 +421,7 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
               <option value="1">{t('sped.opt.yes', 'Sim')}</option>
             </select>
           </Field>
-          {/* L5 (RUNBOOK-H1, PVA 13/10): 0000.COD_PLAN_REF — tabela do Manual ECD L9 (jan/2026) p. 67. */}
+          {/* L5 (RUNBOOK-H1, PVA 13/10): 0000.COD_PLAN_REF — tabela do Manual ECD L9 (maio/2026) p. 67. */}
           <Field label={t('sped.field.codPlanRef', 'Plano referencial')}>
             <select value={ecdDeclarant.codPlanRef} onChange={(e) => setEcdD('codPlanRef', e.target.value as EcdDeclarantDraft['codPlanRef'])} className={inputClass}>
               <option value="">{t('sped.opt.select', 'Selecione')}</option>

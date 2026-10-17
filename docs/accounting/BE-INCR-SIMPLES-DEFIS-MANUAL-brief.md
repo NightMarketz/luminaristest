@@ -134,4 +134,16 @@ a redução é faculdade ("poderão utilizar", IN RFB 1.700 art. 33 § 7º) e s�
 
 - §9.4.3.2 (por estabelecimento: caixa/banco, aquisições, transferências, devoluções, despesas, interestaduais por UF,
   ISS retido por município, comunicação) e §9.4.3.4 (por município): fora pelo F-SN-9 (a); reabrir exige decisão do dono.
-- DEFIS 2027+ (mensal, LC 214) — segue bloqueada no BE até a regulamentação.
+- ~~DEFIS 2027+ (mensal, LC 214) — segue bloqueada no BE até a regulamentação.~~ **Atualizado em 17/10/2026:** regulamentado. A Res. CGSN 190 revoga o art. 72 (art. 8º XXI): a DEFIS acaba em 01/01/2027, e as informações socioeconômicas do ano anterior vão ao PGDAS-D, uma vez, de jan a mar (art. 38-B) [D16]. O bloqueio do BE para AC ≥ 2027 continua certo. Espelhar o bloco do art. 38-B no PGDAS-D é funcionalidade nova, não implementada aqui.
+
+## Estado legal verificado em 17/10/2026
+
+Verificação legal de 17/10/2026, `pesquisas-legais/verif-2026-10-17-simples-mei/relatorio.md` (dossiê com as fontes [Dnn], hash e data). Correções no PR #759.
+
+- **Res. CGSN 190/2026** (DOU 10/08/2026; efeitos em 01/01/2027, art. 9º) lida no Normas RFB [D16]: regula o que este documento tratava como "não regulamentado".
+  - Art. 72 (DEFIS) revogado pelo art. 8º XXI; art. 38-B § 1º: as informações "do ano-calendário anterior" vão no PGDAS-D, de jan a mar; § 2º: nos eventos especiais (incorporação, cisão, extinção, fusão), vão no PGDAS-D do mês do evento.
+  - O seed `sn7-obr-defis-simples` substitui o `sn2-obr-defis-simples` com o mesmo prazo de 31/03/2027 e a fonte nova (PR #759).
+
+**Ambiguidades abertas (não decididas aqui):**
+
+- **A1 — DEFIS do ano-calendário 2026 (aberta).** O art. 72 é revogado em 01/01/2027 (Res. CGSN 190 art. 8º XXI), antes do prazo de 31/03/2027, e o art. 38-B manda prestar no PGDAS-D de jan–mar as informações do ano anterior [D16]. Pode ser a DEFIS de 2026 ou o PGDAS-D de jan–mar/2027; o prazo e o conteúdo são os mesmos. O seed mantém o espelho anual com prazo de 31/03/2027 (`sn7-obr-defis-simples`). Pergunta ao contador: "A declaração socioeconômica do AC 2026 será feita na DEFIS ou no PGDAS-D de jan–mar/2027 (art. 38-B)?"

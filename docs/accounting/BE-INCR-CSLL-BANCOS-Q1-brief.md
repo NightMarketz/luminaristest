@@ -91,3 +91,14 @@ VALUES ('lp5-csll-3-a','CSLL_ALIQUOTA','3',NULL,2000,NULL,NULL,'IN RFB 1.700/201
 - Agências de fomento também estão no art. 30 IV (20%), mas o leiaute 12 não lhes dá código próprio. Hoje elas cabem
   no `3`; não foi planejado nada para elas.
 - CSLL de resseguradora local (Lei 15.525/2026, 9%) sem código ECF: vira o nó `CSLL-RESSEGURADORES` (dono, 10/10).
+
+## Estado legal verificado em 17/10/2026 (verificação legal IRPJ/CSLL)
+
+Fonte: `pesquisas-legais/verif-2026-10-17-irpj-csll/relatorio.md` (PR #754; as [Dnn] são dele). Correções desta frente
+estão em `pesquisas-legais/verif-2026-10-17-irpj-csll-correcoes/relatorio.md` ([Cnn] = Dnn desse dossiê).
+- **LC 224/2025:** vale como está. A LC 235/2026 art. 11 só alterou o art. 4º § 8º V (entidades sem fins lucrativos),
+  e o art. 1º dela afasta o art. 5º em 2026 [D20]. Nenhuma das 13 LC de 2026 toca os §§ 4º–5º nem o art. 7º [D01, D19, D20].
+- **IN RFB 1.700/2017:** a última alteração é a IN 2.343/2026, vigente desde 18/09/2026 [D18]; a multivigente do Sijut
+  tem o mesmo sha de 09/10 (`faa47fa1…`) [D15]. A IN 2.305/2025 teve a última alteração pela IN 2.307 [D14].
+- **ECF:** o leiaute 13 (AC 2026) **ainda não saiu**; a página do SPED lista o leiaute 12 como o mais recente [D21].
+- **Linha `lp5-csll-3-a` substituída em 17/10** pelas `lp8-csll-3-a..e` (migração `20261017180000`): 25% em 01/07–31/12/2021 e 21% em 01/08–31/12/2022; 20% no resto [D06, D16; C01, C02, C05]. A lp5 não mudou (supersedesId).
