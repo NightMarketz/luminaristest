@@ -8,7 +8,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 const UNIT = 'unit-settle-http';
@@ -38,6 +38,7 @@ describe('/api/payables/{id}/settlements — contrato HTTP da baixa parcial', ()
     pushTestSchema();
     dono = await criarUsuario('settle-http-a');
     outro = await criarUsuario('settle-http-b');
+    await seedUnit({ userId: dono.id, id: UNIT });
     await prisma.accountingPeriod.create({
       data: { userId: dono.id, unitId: UNIT, year: 2026, month: 6, status: 'OPEN', openedAt: new Date(), openedById: dono.id },
     });
@@ -68,6 +69,7 @@ describe('/api/payables/{id}/settlements — contrato HTTP da baixa parcial', ()
   it('outro inquilino não liquida o título do dono (404 pelo escopo), e nada é escrito', async () => {
     const res = await settle(outro, payableId, 10000);
     expect(res.status).toBe(404);
+    expect(res.body.code).toBe('UNIT_NOT_FOUND'); // I6: outro dono → 404 UNIT_NOT_FOUND (antes: 404 do título pelo escopo)
     expect(await prisma.payablePayment.count({ where: { payableId } })).toBe(0);
   });
 

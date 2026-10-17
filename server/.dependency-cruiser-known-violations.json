@@ -1,42 +1,6 @@
 [
   {
     "type": "dependency",
-    "from": "src/controllers/bankSettlementController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/collectionChargeController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/counterpartyController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/crmController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/controllers/depreciationRateController.ts",
     "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
     "rule": {
@@ -109,70 +73,7 @@
   },
   {
     "type": "dependency",
-    "from": "src/controllers/packageAcceptanceController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/packageBalanceController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/payableController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/paymentAccountController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/controllers/productDestinationController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/receivableController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/reconcilePendingController.ts",
-    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
-    "rule": {
-      "severity": "error",
-      "name": "I6-controller-not-internal-scope"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/controllers/reconciliationController.ts",
     "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
     "rule": {
       "severity": "error",

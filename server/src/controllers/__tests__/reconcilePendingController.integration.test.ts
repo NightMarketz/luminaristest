@@ -31,7 +31,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 
@@ -65,6 +65,7 @@ describe('reconcilePendingController — contrato HTTP em SQLite real (tenancy, 
     pushTestSchema();
     donoA = await criarUsuario('reconcile-http-a');
     donoB = await criarUsuario('reconcile-http-b');
+    await seedUnit({ userId: donoA.id, id: UNIT });
   }, 120000);
 
   afterAll(async () => {
@@ -78,8 +79,8 @@ describe('reconcilePendingController — contrato HTTP em SQLite real (tenancy, 
       .get('/api/reconcile-pending')
       .set(authHeader(donoB))
       .query({ unitId: UNIT });
-    expect(doB.status).toBe(200);
-    expect(doB.body.data.items.map((i: { id: string }) => i.id)).not.toContain(pendA.id);
+    expect(doB.status).toBe(404);
+    expect(doB.body.code).toBe('UNIT_NOT_FOUND'); // I6: outro dono → 404 UNIT_NOT_FOUND (antes: 200 sem a pendência de A)
 
     // Controle: o PRÓPRIO dono enxerga — o array vazio acima é a guarda, não um endpoint quebrado.
     const doA = await request(app)
@@ -127,8 +128,8 @@ describe('reconcilePendingController — contrato HTTP em SQLite real (tenancy, 
       .set(authHeader(donoB))
       .send({ unitId: UNIT, ids: [pendA.id] });
 
-    expect(resB.status).toBe(200);
-    expect(resB.body.data).toEqual({ attempted: 0, resolved: 0, stillPending: 0 });
+    expect(resB.status).toBe(404);
+    expect(resB.body.code).toBe('UNIT_NOT_FOUND'); // I6: outro dono → 404 UNIT_NOT_FOUND (antes: 200 attempted:0)
 
     const aindaDeA = await prisma.reconcilePendingItem.findUnique({ where: { id: pendA.id } });
     expect(aindaDeA!.attempts).toBe(1); // não incrementou — o retry do B nunca alcançou a linha

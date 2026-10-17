@@ -11,7 +11,7 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { getFactory } from '@/lib/factory';
 import { CollectionChargeRepository } from '@/features/accounting/repositories/CollectionChargeRepository';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 const UNIT = 'unit-f5-pr2';
@@ -130,6 +130,8 @@ describe('F5 PR-2 — CollectionCharge + adaptador MP + webhook', () => {
     process.env.PAYMENT_CREDENTIAL_KEYS = `1:${randomBytes(32).toString('base64')}`;
     process.env.PAYMENT_CREDENTIAL_KEY_ACTIVE = '1';
     dono = await prisma.user.create({ data: { name: 'f5b', username: 'f5-pr2', email: 'f5pr2@test.local', password: 'x', role: 'USER' } });
+    await seedUnit({ userId: dono.id, id: UNIT });
+    await seedUnit({ userId: dono.id, id: UNIT_SEM_CONTA });
     const folha = await prisma.account.create({ data: { userId: dono.id, unitId: UNIT, code: '1.1.9', name: 'Saldo MP', nature: 'Asset', acceptsEntries: true } });
     const folhaB = await prisma.account.create({ data: { userId: dono.id, unitId: UNIT_SEM_CONTA, code: '1.1.9', name: 'Saldo MP', nature: 'Asset', acceptsEntries: true } });
     revenueId = (await prisma.account.create({ data: { userId: dono.id, unitId: UNIT, code: '3.1.1', name: 'Receita', nature: 'Revenue', acceptsEntries: true } })).id;
