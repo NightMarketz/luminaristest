@@ -5,6 +5,7 @@
     "src/jobs/*Cli.ts",
     "src/scripts/*.ts",
     "src/routes/docs.paths.ts",
+    "src/routes/docs/*.paths.ts",
     "prisma/seed.ts",
     "scripts/**/*.{js,mjs,ts}"
   ],

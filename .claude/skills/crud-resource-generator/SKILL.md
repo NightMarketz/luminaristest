@@ -57,7 +57,7 @@ Por que é o par perfeito: camadas estritas + DI + policy-first + erros tipados,
 3. **[CRUD-001]** Repository: soft-delete em todos os finds (`where: { deletedAt: null }`) e no delete (`update({ data: { deletedAt: new Date() } })`) — nunca `prisma.<model>.delete()`
 4. Policy: ADMIN pode tudo, USER só o que é seu (ownership por `userId`)
 5. Service: métodos simples delegando para repository sem lógica complexa
-6. Controller + Route: GET list (paginado), GET by ID, POST create, PUT update, DELETE (soft) — **[CRUD-006]** registro em 2 toques: mount em `routes/index.ts` + bloco `@openapi` em `routes/docs.paths.ts`. Auth é deny-by-default — NÃO edite `middleware/auth.ts` (rota `/api/*` já nasce protegida; rota pública = exceção explícita em `publicApiRoutes` no middleware)
+6. Controller + Route: GET list (paginado), GET by ID, POST create, PUT update, DELETE (soft) — **[CRUD-006]** registro em 2 toques: mount em `routes/index.ts` + bloco `@openapi` em `routes/docs/<feature>.paths.ts`. Auth é deny-by-default — NÃO edite `middleware/auth.ts` (rota `/api/*` já nasce protegida; rota pública = exceção explícita em `publicApiRoutes` no middleware)
 7. **[CRUD-003]** Frontend: wrapper tipado em `lib/services/` e, na tela, reuso dos canônicos (`GenericTable`/`StandardPagination`, `Modal`, `AnalyticsDashboard`/`ChartRenderer`/`DashboardKpiCard`) — não recriar tabela/modal/analytics bespoke
 
 ## Soft-delete pattern obrigatório — [CRUD-001]
@@ -91,7 +91,7 @@ Um item-chave por camada que NÃO pode faltar na geração ponta-a-ponta. Detalh
 - **Policy** — métodos `can*` retornam `boolean` (zero `throw`, zero acesso a dados); ownership por `actor.id === ownerId || ADMIN`.
 - **Service** — policy-first (`if (!this.policy.canX(actor)) throw new ForbiddenError()` antes de tocar dados); DI por construtor (sem `new Repository()`); `NotFoundError` (incl. cross-tenant); zero `prisma.*`/Express.
 - **Controller** — `Schema.safeParse(req.body)` + `getUserContextFromRequest(req)` + `getFactory().get<X>Service()` + `handleApiError(error, res)`.
-- **Route** — registro = **2 toques**: mount em `routes/index.ts` + bloco `@openapi` em `routes/docs.paths.ts`. Auth deny-by-default: zero edição em `middleware/auth.ts` para rota protegida; pública = `publicApiRoutes`.
+- **Route** — registro = **2 toques**: mount em `routes/index.ts` + bloco `@openapi` em `routes/docs/<feature>.paths.ts`. Auth deny-by-default: zero edição em `middleware/auth.ts` para rota protegida; pública = `publicApiRoutes`.
 - **Frontend service** — `apiClient`, tipos de retorno explícitos e **locais** (não importar do backend); zero `any`.
 - **Page** — auth guard (`withAuth`/`useAuth`) + `serverSideTranslations` (i18n); detalhe de registro = **modal, não rota**.
 - **Reuse de canônicos** — `GenericTable`/`StandardPagination` (tabela+paginação), `Modal` (detalhe), `AnalyticsDashboard`/`ChartRenderer`/`DashboardKpiCard` (analytics). Não recriar.

@@ -52,7 +52,7 @@ rules:
 Regras normativas da camada DTO, cada uma coberta por um caso de eval comportamental:
 
 - `DTO-001` — Update derivado de `Create.partial()` (não redefinir). Regressão conhecida: `UserDto.ts` redefine campo-a-campo → caso `regression-1`.
-- `DTO-002` — `@openapi` acima do schema principal (docs.paths.ts depende).
+- `DTO-002` — `@openapi` acima do schema principal (docs/<feature>.paths.ts depende).
 - `DTO-003` — zero `z.any()`.
 - `DTO-004` — type guards `is<X>` com `safeParse`.
 - `DTO-005` — companion `I<Resource>` com `id/userId/createdAt/updatedAt/deletedAt?`.
