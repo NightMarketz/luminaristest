@@ -208,7 +208,7 @@
  *       description: >-
  *         Calcula a apuração ME/EPP da competência a partir do subrazão fiscal de receita, do histórico pré-adoção, da
  *         segregação manual e dos contratos de parceria. Nada é gravado. 400 - perfil do ano ausente ou fora do Simples.
- *         422 - regra não regulamentada (ex.: início de atividade a partir de 2027).
+ *         422 - regra não regulamentada (ex.: teto do ISS excedido fora da 5ª e da 6ª faixa).
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -286,7 +286,8 @@
  *       summary: Suggested rates for documents issued in the month, with the calculation trail (X14 PR-4 item 29)
  *       description: >-
  *         SUGESTÃO (o prestador responde pela alíquota informada, LC 123 art. 21 § 4º VI) por atividade do cadastro de
- *         serviços e das que tiveram receita no PA, com faixa do RBT12 global: no mês de abertura do CNPJ, 2% (§ 4º II);
+ *         serviços e das que tiveram receita no PA, com faixa do RBT12 global: no mês de abertura do CNPJ, 2% (§ 4º II;
+ *         a partir de 2027, também no mês seguinte, Res. CGSN 140 art. 27 II red. Res. CGSN 190/2026);
  *         até 2026, a faixa do mês anterior (PA = M−1); a partir de 2027, a do mês da prestação (PA = M, LC 227 art. 169;
  *         janela M−13…M−2, LC 214 art. 517). Devolve PA, RBT12, janela, regra e avisos; o pTotTribSN só sugerido (B-4) e,
  *         a partir de 2027, os % de ICMS/IBS/CBS para o crédito do adquirente. 400 - MEI (SIMEI não tem alíquota).

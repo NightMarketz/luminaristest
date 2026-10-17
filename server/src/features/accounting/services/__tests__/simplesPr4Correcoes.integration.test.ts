@@ -78,6 +78,25 @@ describe('F-PR4-1/F-PR4-3 — mês de início de atividade (LC 123 art. 21 § 4�
   });
 });
 
+// Verificação legal de 17/10/2026 (pesquisas-legais/verif-2026-10-17-simples-mei, conclusão item 2): Res. CGSN 140
+// art. 27 II, red. Res. CGSN 190/2026 [D16] (efeitos em 01/01/2027) — 2% no mês de início "ou no mês seguinte".
+describe('Res. CGSN 190/2026 — retenção de 2% também no mês seguinte ao início, a partir de 2027 (art. 27 II)', () => {
+  let c: Cenario;
+  beforeAll(async () => {
+    c = await cenario('r190inicio');
+    expect((await perfil(c, 2027, { regime: 'SIMPLES', inicioAtividadeEm: '2027-03-10' })).status).toBe(200);
+    await servico(c, 'srv-corte', '060101');
+    await linha(c, '2027-03', 1_000_000);
+  });
+
+  it('prestação em 2027-03 (mês de início) e em 2027-04 (mês seguinte): 2%', async () => {
+    for (const m of ['2027-03', '2027-04']) {
+      const r = await aliquotas(c, m);
+      expect([m, r.status, r.status === 200 ? [r.body.data.regra, doServico(r.body)?.issRetencao] : r.body]).toEqual([m, 200, ['INICIO_ATIVIDADE', '2.0000']]);
+    }
+  });
+});
+
 describe('F-PR4-4/F-PR4-6 — atividade do cadastro sem receita no mês anterior; a rota sugere com memória de cálculo', () => {
   let c: Cenario;
   beforeAll(async () => {

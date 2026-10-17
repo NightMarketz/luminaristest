@@ -239,7 +239,8 @@ Valores do DAS-MEI por ocupação: inalterados (X14 PR-4); a falta de ocupaçõe
 2. **LC 116 art. 8º-B (LC 214)** — redução das alíquotas municipais 2029–2032; efeito sobre o piso de 2% e sobre o %
    do Simples não lido. Fora do horizonte do incremento até 2029.
 3. **Res. CGSN 191/2026** não compilada no corpus (M11) — conferir se alterou o Anexo XI antes do seed; definir a
-   data de efeito da versão id 81177.
+   data de efeito da versão id 81177. **Resolvido em 17/10/2026** (verificação legal, `pesquisas-legais/verif-2026-10-17-simples-mei/relatorio.md` [D17][D20]): a 191 trata da NFS-e
+   (01/11/2026) e não toca o Anexo XI; o PDF id 81177 tem o mesmo sha256 do seed `lp6-mei-ax-*`.
 4. Formato do `cTribNac` × subitem da LC 116 (item 3) — **I**, conferir no leiaute DPS.
 5. Pesquisa do dono (colada no chat, não conferida) — ver §9.
 
@@ -253,7 +254,7 @@ Valores do DAS-MEI por ocupação: inalterados (X14 PR-4); a falta de ocupaçõe
 
 - **D-4 do LEGAL-PARAMS** (mínimo de 2% em `FiscalProfile.issAliquotaBp`, regime normal) continua aberto; o piso
   do Simples (este BRIEF) não o resolve.
-- **Res. CGSN 191/2026 fora da compilação** afeta todo o X14, não só o Anexo XI.
+- ~~**Res. CGSN 191/2026 fora da compilação** afeta todo o X14, não só o Anexo XI.~~ **Resolvido em 17/10/2026** (`pesquisas-legais/verif-2026-10-17-simples-mei/relatorio.md`): a 191 não muda o cálculo; a 190 (2027) foi aplicada no PR da verificação legal.
 - Art. 8º-B da LC 116 (transição do ISS) não tem nó no vault.
 
 ## 9. Pesquisa do dono × fonte oficial
@@ -274,3 +275,15 @@ Valores do DAS-MEI por ocupação: inalterados (X14 PR-4); a falta de ocupaçõe
 - **M11 RESOLVIDA.** A Res. CGSN 191/2026 está no multivigente da Res. 140 como redação agendada para 01/11/2026 [D06] Res. CGSN 140 multivigente (<https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/visao/multivigente>). O texto próprio dela [D07] Res. CGSN 191/2026 (<https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152781/visao/multivigente>) só altera os arts. 59 e 79 e **não mexe no Anexo XI**. Pelo art. 59 § 1º e art. 3º I, a ME/EPP passa a usar o Emissor Nacional **a partir de** 01/11/2026.
 - **L8 LIDA.** **Transição do ISS (não implementada — feature nova, registrada centralmente):** LC 116 art. 8º-B, incluído pelo art. 508 da LC 214 [D04] LC 214 compilada (<https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm>): as alíquotas caem 10/20/30/40% em 2029/2030/2031/2032 e os benefícios caem na mesma proporção (§ 1º). A LC 116 fica revogada em 01/01/2033 (LC 214 art. 543 IV). `ISS_LIMITE` e `issComBeneficio` não têm fim de vigência. Nada muda antes de 2029.
 - **D-4 FECHADA — não validar o mínimo de 2% no `issAliquotaBp`.** O art. 8º-A da LC 116 [D01] LC 116 (acervo ctresb/leis, compilada, cópia 13/10; <https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2003-07-31;116>) fixa o mínimo que o **Município** pode adotar, não um limite do campo. O leiaute [D12] Anexo I v1.01 do leiaute DPS, sha256[:12] `de5bc492959e` (<https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/documentacao-atual/anexo_i-sefin_adn-dps_nfse-snnfse-v1-01-20260209.xlsx>) aceita até 1,8% no Simples com retenção (E0621/E0628), e no regime normal com município conveniado o `pAliq` nem pode ir (E0617). O piso continua onde a lei o põe: no benefício do Simples (Res. CGSN 140 art. 31 p.ú. [D06] Res. CGSN 140 multivigente (<https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/visao/multivigente>), `issBeneficio.ts`). Dossiê §4, leitura (b).
+
+## Estado legal verificado em 17/10/2026 (Simples/MEI)
+
+Verificação legal de 17/10/2026, `pesquisas-legais/verif-2026-10-17-simples-mei/relatorio.md` (dossiê com as fontes [Dnn], hash e data; os [Dnn] desta seção são desse dossiê, não do de ISS/NFS-e acima). Correções no PR #759.
+
+- **Res. CGSN 191/2026** lida [D17]: NFS-e nacional obrigatória para ME/EPP desde 01/11/2026 (art. 3º I); revoga a 189; não mexe no cálculo nem no Anexo XI (sha256 do id 81177 idêntico ao seed [D20]).
+- Piso de 2% (Res. 140 art. 31 p.ú.; art. 32 § 1º) e exceções 7.02, 7.05 e 16.01: conferem [D15]. Anexo XI (red. Res. 182/2025): o sha256 `cb3845804f3c…` é igual ao do seed `lp6-mei-ax-*` [D20].
+- **Res. CGSN 190/2026** (DOU 10/08/2026; efeitos em 01/01/2027, art. 9º) lida no Normas RFB [D16]: regula o que este documento tratava como "não regulamentado". Não toca o piso nem o Anexo XI; muda a retenção no início de atividade (art. 27 II), corrigida no PR #759.
+
+**Ambiguidades abertas (não decididas aqui):**
+
+- Nenhuma ambiguidade do dossiê é desta frente (A1–A4 estão no BE-INCR-SIMPLES-NACIONAL).

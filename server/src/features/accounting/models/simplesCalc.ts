@@ -200,7 +200,7 @@ export interface Rbt12 {
   valor: Q;
   cents: number;
   janela: Janela;
-  metodo: 'ACUMULADO' | 'INICIO_PRIMEIRO_MES' | 'INICIO_MEDIA';
+  metodo: 'ACUMULADO' | 'INICIO_PRIMEIRO_MES' | 'INICIO_MEDIA' | 'INICIO_PRIMEIRA_FAIXA';
   mesesFaltantes: string[];
   /** Meses da janela que entram (os de atividade). */
   meses: string[];
@@ -224,12 +224,12 @@ export function rbt12(
   let metodo: Rbt12['metodo'] = 'ACUMULADO';
   if (inicioAtividade && inicioAtividade > janela.de) {
     // Res. CGSN 140 art. 22 §§ 2º–4º: no 1º mês, a receita do PA × 12; depois, a média dos meses anteriores × 12.
-    if (janela.regra === 'LC214-art517') {
-      throw new SimplesRegraNaoRegulamentadaError(
-        `RBT12 de início de atividade em ${comp}: a janela de 2027 (LC 214 art. 517) não tem a regra de início regulamentada (Res. CGSN posterior à 183 não lida)`,
-      );
-    }
-    if (meses.length === 0) {
+    // A partir de 2027 (red. Res. CGSN 190/2026, efeitos pelo art. 9º): 1º e 2º mês na 1ª faixa (§ 2º I) — na janela
+    // M−13…M−2 são os PAs sem mês de atividade; do 3º ao 13º, a média × 12 (§ 2º II); do 14º, a regra geral (§ 4º II).
+    if (janela.regra === 'LC214-art517' && meses.length === 0) {
+      valor = q(0n); // vira R$ 1,00 abaixo: 1ª faixa, alíquota efetiva = nominal
+      metodo = 'INICIO_PRIMEIRA_FAIXA';
+    } else if (meses.length === 0) {
       valor = q(BigInt(receitaPaCents) * 12n);
       metodo = 'INICIO_PRIMEIRO_MES';
     } else {
@@ -262,6 +262,8 @@ export function fatorR(
 ): Q {
   let fs: bigint;
   let rb: bigint;
+  // A partir de 2027: r = 0,28 nos 2 primeiros meses de início de atividades (§ 6º, red. Res. CGSN 190/2026).
+  if (base.metodo === 'INICIO_PRIMEIRA_FAIXA') return R28;
   if (base.metodo === 'INICIO_PRIMEIRO_MES') {
     fs = BigInt(folhaPaCents);
     rb = BigInt(receitaPaCents);
