@@ -1,5 +1,15 @@
 # BE-INCR-NFCE — EMENDA 1 (de "via Focus" para emissor próprio na SEFAZ)
 
+> **ESTADO LEGAL VERIFICADO 2026-10-17** (verificação legal de 17/10; só referência, não muda item nem fork deste documento):
+> - **Inutilização:** a partir de 01/11/2026 o Pedido de Inutilização da NF-e e da NFC-e "não se aplica aos Estados do Acre, Bahia e São Paulo" (Aj. 07/05 cl. 14ª §6º [V-D02][V-D07]; Aj. 19/16 cl. 16ª §6º [V-D03][V-D04]). Nenhum ato da SEFAZ-SP achado; a Portaria SRE 80/25 (NF-e em SP desde 17/11/2025, revogou a CAT 162/08) só remete ao Ajuste [S-D03]. Forks F-NFCE-E3-1 (c) e E3-2 (a) ratificados em 17/10.
+> - **MOC:** de 01/11/2026 em diante deixa de ser Ato COTEPE; vale o "MOC da NF-e"/"MOC da NFC-e" em versão online mantida pelo Paraná (Aj. SINIEF 07/05 cl. 2ª-A §2º, pelo Aj. 40/26 [V-D07]; Aj. 19/16 cl. 3ª §2º, pelo Aj. 38/26 [V-D04]). As transcrições do MOC 7.0 seguem válidas como texto; conferir divergência com a versão online antes de citar regra nova.
+> - **NT 2025.001:** vigente a **v1.03** (Setembro/2025, produção 03/11/2025 [V-P2]); acrescenta o `tPag` 91 (pagamento posterior) nas RV YA03-10/30; o QR v3 não muda.
+> - **NT 2025.002:** vigente a **v1.52** (01/10/2026 [V-P1]); grupo `IBSCBS` obrigatório em produção para CRT 3 desde 03/08/2026 e para CRT 1/2/4 a partir de 04/01/2027 (RV UB12-10, rej. 1115).
+> - **Cancelamento:** NFC-e em até 30 minutos (Aj. 19/16 cl. 15ª [V-D03]); NF-e em até 24 h (Aj. 07/05 cl. 12ª [V-D02]); por substituição, 168 h (cl. 15ª-A e 12ª-A). CC-e vedada na NFC-e (Aj. 19/16 cl. 8ª §1º [V-D03]).
+> - **Contingência da NFC-e em SP:** off-line obrigatória, sem mudança (Aj. 19/16 cl. 11ª [V-D03]; Port. SRE 40/24 art. 6º [V-D10]); SAT vedado desde 01/01/2026 (Port. CAT 147/12 art. 34-D [V-D11]).
+> - **NTs novas fora do inventário anterior:** 2026.010 (DANFE com IBS/CBS, produção 01/12/2026 [V-P3]), 2026.009, 2026.006 (split payment), 2026.003 (DANFE Simplificado Tipo 2), 2014.001 v1.41 (EPEC); só a 2026.010 foi lida.
+> Fontes: `[V-Dnn]`/`[V-Pnn]` = dossiê `pesquisas-legais/verif-2026-10-17-nfe-nfce-dfe/relatorio.md` (PR #754); `[S-Dnn]` = dossiê [`pesquisas-legais/sp-inutilizacao-nfe-nfce-2026-11/relatorio.md`](../../pesquisas-legais/sp-inutilizacao-nfe-nfce-2026-11/relatorio.md). Detalhe e forks: [`BE-INCR-NFCE-EMENDA-3-brief.md`](BE-INCR-NFCE-EMENDA-3-brief.md).
+
 > **EMENDA 2026-10-13:** ver [`BE-INCR-NFCE-EMENDA-2-brief.md`](BE-INCR-NFCE-EMENDA-2-brief.md) — forks decididos em [D-2026-10-13-QUESTIONARIO-BRIEFS-PRONTOS](../plano/decisoes/D-2026-10-13-QUESTIONARIO-BRIEFS-PRONTOS.md). Sem código; cada PR exige 'executa'.
 
 > **EMENDA 2026-10-11:** ver [`EMENDAS-BRIEF-2026-10-11.md`](EMENDAS-BRIEF-2026-10-11.md) §3 (30 minutos) e §8 (F-NFCE-E1-1 respondido pela decisão PAA + PSC de 11/10). Sem código; cada item exige 'executa'.
@@ -31,7 +41,7 @@
 
 | Chave | Fato | Fonte | Grau |
 |---|---|---|---|
-| `[NT2025001-QRV3]` | QR Code **versão 3**: a autenticidade passa a ser "pela assinatura de campos específicos do QR-Code", **só nas NFC-e emitidas em Contingência**; "não será mais necessário o controle do CSC"; eliminação futura do CSC "sem data definida" | NT 2025.001 v1.02 (publicada 02/09/2025), §02.1, p. 5. Portal NF-e, lista de NTs (<https://www.nfe.fazenda.gov.br/portal/listaConteudo.aspx?tipoConteudo=04BIflQt1aY=>), arquivo `exibirArquivo.aspx?conteudo=3NLMgy80wTE=`, sha256 `44b71f16bf11…`, 15 pp. | V |
+| `[NT2025001-QRV3]` | QR Code **versão 3**: a autenticidade passa a ser "pela assinatura de campos específicos do QR-Code", **só nas NFC-e emitidas em Contingência**; "não será mais necessário o controle do CSC"; eliminação futura do CSC "sem data definida" | NT 2025.001 v1.02 (publicada 02/09/2025), §02.1, p. 5. **[EMENDA-3 17/10] vigente: v1.03** (Setembro/2025, produção 03/11/2025, `conteudo=NvuzQGYd6E8=`, sha256 `333b69f71deb…`); QR v3 sem mudança; acrescenta `tPag` 91 (YA03-10/30). Portal NF-e, lista de NTs (<https://www.nfe.fazenda.gov.br/portal/listaConteudo.aspx?tipoConteudo=04BIflQt1aY=>), arquivo `exibirArquivo.aspx?conteudo=3NLMgy80wTE=`, sha256 `44b71f16bf11…`, 15 pp. | V |
 | `[NT2025001-PJ]` | "No caso de emitente Pessoa Jurídica (CNPJ) é **opção** da empresa adotar esse novo leiaute do QR-Code, ou não" | idem, §02.2, pp. 5–6 | V |
 | `[NT2025001-UF]` | ZX02-220/222: "Se QR Code versão 3 e UF não aceita esta versão" ⇒ rejeição **407**; "Parâmetro por UF, enquanto todas as UF não migrarem" | idem, p. 12 | V |
 | `[NT2025001-URL]` | URL do QR v3 on-line: `https://<consulta>?p=<chave>|<versao_qrcode>|<tpAmb>`; off-line: `…|<dia_data_emissao>|<vNF>|<tp_idDest>|<idDest>|<assinatura>`; v2 on-line: `…|<identificador_csc>|<codigo_hash>`. Endereços por UF: "Manual de Padrões Técnicos do DANFE NFC-e e QR-Code" | idem, §04, p. 14 | V |
@@ -39,7 +49,7 @@
 | `[NT2025001-ATRASO]` | NFC-e: "atraso máximo de 5 minutos" entre `dhEmi` e a autorização; NF-e: 7 dias com cStat 100, depois 150 | idem, §02.4, p. 6 | V |
 | `[WS-SP-NFCE]` | SEFAZ-SP, NFC-e 4.00 (NT 2016.002). Homologação `https://homologacao.nfce.fazenda.sp.gov.br/ws/{NFeAutorizacao4, NFeRetAutorizacao4, NFeInutilizacao4, NFeConsultaProtocolo4, NFeRecepcaoEvento4, NFeStatusServico4}.asmx`; produção `https://nfce.fazenda.sp.gov.br/ws/…` (mesmos nomes). **Contingência EPEC** própria: `https://homologacao.nfce.epec.fazenda.sp.gov.br/EPECws/RecepcaoEPEC.asmx` e `https://nfce.epec.fazenda.sp.gov.br/EPECws/…` | <https://portal.fazenda.sp.gov.br/servicos/nfce/Paginas/WebServices.aspx> | V (a página tem erros de digitação nos links: "ttps://", ".asm") |
 | `[WS-NFE]` | NF-e 55: SP é autorizadora própria (`https://nfe.fazenda.sp.gov.br/ws/nfeautorizacao4.asmx` etc.); outras UF usam SVRS/SVAN; contingência SVC-AN/SVC-RS | Portal NF-e, "Relação de Serviços Web": <https://www.nfe.fazenda.gov.br/portal/webServices.aspx> | V |
-| `[NT-NOVAS]` | NTs publicadas **depois** do corpus: NT 2025.002 **v1.52** (01/10/2026; o corpus tem a v1.51); NT 2026.004 v1.01 (08/06/2026, "schema … CNPJ alfanumérico"); NT 2026.001 v1.02b (31/07/2026, "Provedor de Assinatura e Autorização (PAA)"); NT 2026.007 v1.10 e NT 2026.008 v1.00 (01/10/2026) | lista de NTs do Portal NF-e (URL acima) | V (títulos e datas; conteúdo não lido) |
+| `[NT-NOVAS]` | NTs publicadas **depois** do corpus: NT 2025.002 **v1.52** (01/10/2026; o corpus tem a v1.51); NT 2026.004 v1.01 (08/06/2026, "schema … CNPJ alfanumérico"); NT 2026.001 v1.02b (31/07/2026, "Provedor de Assinatura e Autorização (PAA)"); NT 2026.007 v1.10 e NT 2026.008 v1.00 (01/10/2026). **[EMENDA-3 17/10]** + NT 2026.010 (DANFE RTC, produção 01/12/2026), 2026.009, 2026.006, 2026.003, 2014.001 v1.41 — tabela na EMENDA-3 §3 item 4 | lista de NTs do Portal NF-e (URL acima) | V (títulos e datas; conteúdo não lido) |
 | `[MOC-*]`, `[NFCE-*]` | as chaves da §2 do BRIEF original (MOC 7.0 VG + Anexo I, NT 2025.002 v1.51, Portaria SRE 79/2024) | BRIEF original §2 | V (como lá) |
 | `[SIG-*]` | parâmetros de assinatura da NF-e/NFC-e: c14n 2001, rsa-sha1, sha1, enveloped, `Reference URI = #NFe…` | [`TRANSCRICAO-MOC70-assinatura-digital-NFe-2026-09-26.md`](fontes-oficiais/TRANSCRICAO-MOC70-assinatura-digital-NFe-2026-09-26.md) §1–§2 | V |
 
@@ -59,7 +69,7 @@
 
 | Item | Original (resumo) | Destino | O que muda / por quê |
 |---|---|---|---|
-| 1 | PR-0: transcrição do leiaute de saída (grupos + UB) | **MUDA** | Acrescenta: `infNFeSupl` (`qrCode`, `urlChave`) nas versões 2 e 3 (`[NT2025001-URL]`); `enviNFe`/`retEnviNFe` com `indSinc` (`[NT2025001-SINC]`); `protNFe`/`nfeProc`; `consSitNFe`; `inutNFe`/`retInutNFe`; `envEvento` 110111. **Rebaixar a NT 2025.002 v1.52** (`[NT-NOVAS]`; o PR-0 foi planejado sobre a v1.51) e transcrever a NT 2025.001 v1.02 |
+| 1 | PR-0: transcrição do leiaute de saída (grupos + UB) | **MUDA** | Acrescenta: `infNFeSupl` (`qrCode`, `urlChave`) nas versões 2 e 3 (`[NT2025001-URL]`); `enviNFe`/`retEnviNFe` com `indSinc` (`[NT2025001-SINC]`); `protNFe`/`nfeProc`; `consSitNFe`; `inutNFe`/`retInutNFe`; `envEvento` 110111. **Rebaixar a NT 2025.002 v1.52** (`[NT-NOVAS]`; o PR-0 foi planejado sobre a v1.51) e transcrever a NT 2025.001 **v1.03** (EMENDA-3; a v1.02 foi superada) |
 | 2 | Emenda do ADR (§12) | **MUDA** | Junta-se ao item 1 do BRIEF irmão (F-ADN-1): a mesma emenda registra o adaptador `sefaz` |
 | 3 | `DfeKind` com `NFCE` | PERMANECE | — |
 | 4 | `capabilities.kinds` | **MUDA (acréscimo)** | Novo adaptador `SefazNfeEmissor` declara `['NFE','NFCE']`; `AdnEmissor` declara `['NFSE']` |

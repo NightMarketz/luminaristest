@@ -245,7 +245,7 @@ próprio "executa".
 | # | O quê | Por que está aqui | Quem fecha |
 |---|---|---|---|
 | P-C1 | A forma da planilha de memória (longa, resumo + linhas) serve ao contador | Pedido da triagem 23/09 linha 12 (*"memória de cálculo … XLSX para ele"*); forma não validada | contador |
-| P-C2 | Município do ISS = `cLocPrestacao` | Regra geral × exceções de incidência da LC 116 art. 3º **não foram lidas nesta sessão** (**A**, assumido); o ADR não cita a LC 116 | contador |
+| P-C2 | Município do ISS = `cLocPrestacao` — **superada 17/10/2026: regra de lei LC 116 art. 3º (ver §Estado legal)** | Regra geral × exceções de incidência da LC 116 art. 3º **não foram lidas nesta sessão** (**A**, assumido); o ADR não cita a LC 116 | contador |
 | P-C3 | ISS do Simples: o relatório lista o ISS da nota, mas o recolhimento é pelo DAS (exceto retido) | `regApTribSN` é *"pendente contador (5e)"* (`schema.prisma:1398`); regra do Simples não está no ADR (**I**) | contador |
 | P-C4 | Nota cancelada não entra na competência (F-TC-3 a) | Inferido; sem fonte primária lida (**I**) | contador |
 | P-C5 | Oráculo do relatório de ISS: soma × livro/declaração municipal do mês | Gate humano (RUNBOOK-FORMAT); o agente prepara em branco, não preenche nem assina | dono |
@@ -304,3 +304,10 @@ estão em `pesquisas-legais/verif-2026-10-17-irpj-csll-correcoes/relatorio.md` (
 - **IN RFB 1.700/2017:** a última alteração é a IN 2.343/2026, vigente desde 18/09/2026 [D18]; a multivigente do Sijut
   tem o mesmo sha de 09/10 (`faa47fa1…`) [D15]. A IN 2.305/2025 teve a última alteração pela IN 2.307 [D14].
 - **ECF:** o leiaute 13 (AC 2026) **ainda não saiu**; a página do SPED lista o leiaute 12 como o mais recente [D21].
+
+## Estado legal verificado em 17/10/2026 (ISS/NFS-e)
+
+`[Dnn]` = fontes do dossiê `pesquisas-legais/verif-2026-10-17-iss-nfse/relatorio.md` (PR #754), com link oficial e sha256 no `manifest.json`. Correções de código no PR #755.
+
+- **P-C2 vira regra de lei (era grau A, assumido).** LC 116 art. 3º caput [D01] LC 116 (acervo ctresb/leis, compilada, cópia 13/10; <https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2003-07-31;116>): *"considera-se prestado, e o imposto, devido, no local do estabelecimento prestador … exceto nas hipóteses previstas nos incisos I a XXV"*. No código, a coluna `li` da `LC116_SERVICO` decide: EP ⇒ `cLocEmi`; LP ⇒ `cLocPrestacao`. ET (17.05), lista vazia (99.01) ou código fora da lista ficam em `cLocPrestacao`. O F-TC-1 (a), que dizia `cLocPrestacao` para tudo, foi **superado** no PR #755 (`municipioDeIncidencia`, `models/issCompetencia.ts`).
+- **Transição do ISS (não implementada — feature nova, registrada centralmente):** LC 116 art. 8º-B, incluído pelo art. 508 da LC 214 [D04] LC 214 compilada (<https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm>): as alíquotas caem 10/20/30/40% em 2029/2030/2031/2032 e os benefícios caem na mesma proporção (§ 1º). A LC 116 fica revogada em 01/01/2033 (LC 214 art. 543 IV). `ISS_LIMITE` e `issComBeneficio` não têm fim de vigência. Nada muda antes de 2029.

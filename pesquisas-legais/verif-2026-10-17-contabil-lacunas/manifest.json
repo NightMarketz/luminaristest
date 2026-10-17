@@ -1,0 +1,20 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "D01_Manual_de_Orienta-c3-a7-c3-a3o_da_ECD_Leiaute_20_maio_2026-p",
+      "url": "http://sped.rfb.gov.br/estatico/71/1BD273E4A9F51ED8EF01AC3A6BC15812A3481F/Manual_de_Orienta%c3%a7%c3%a3o_da_ECD_Leiaute_20_maio_2026.pdf",
+      "url_final": "http://sped.rfb.gov.br/estatico/71/1BD273E4A9F51ED8EF01AC3A6BC15812A3481F/Manual_de_Orienta%c3%a7%c3%a3o_da_ECD_Leiaute_20_maio_2026.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-17T11:13:11-03:00",
+      "sha256": "bc63f0a893ce4b2262b73426717e1cb5546704db58eaf81791fb296468bacc91",
+      "arquivo": "docs/D01_Manual_de_Orienta-c3-a7-c3-a3o_da_ECD_Leiaute_20_maio_2026-p.pdf",
+      "texto": "docs/D01_Manual_de_Orienta-c3-a7-c3-a3o_da_ECD_Leiaute_20_maio_2026-p.txt",
+      "bytes": 2990432
+    }
+  ],
+  "buscas": [],
+  "slug": "verif-2026-10-17-contabil-lacunas",
+  "pergunta": "As lacunas do dossiê contábil/ECD de 17/10 (Res. CFC 1.590, NBC PG 01, ITG 2000 (R1), Res. CFC 1.299/CTG 2001; manual ECD jan × maio) mudam alguma conclusão?",
+  "criado": "2026-10-17T11:12:40-03:00"
+}

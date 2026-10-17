@@ -19,7 +19,7 @@ export interface CanonicalAccount {
 
 export const CANONICAL_ACCOUNTS: ReadonlyArray<CanonicalAccount> = [
   // ── Patrimonial em 4 níveis (BE-INCR-PLANO-4-NIVEIS, L8 do RUNBOOK-H1; ADR-PLANO-CONTAS-4-NIVEIS) ──
-  // Manual da ECD L9 (jan/2026) p. 119, REGRA_VALIDA_NIVEL_CONTAS: analítica de natureza 01/02/03 (ativo, passivo,
+  // Manual da ECD L9 (maio/2026) p. 120, REGRA_VALIDA_NIVEL_CONTAS: analítica de natureza 01/02/03 (ativo, passivo,
   // PL) com NIVEL >= 4; o nível do I050 é a profundidade do código. Grupos pelo art. 178 da Lei 6.404/1976 (redação
   // da Lei 11.941/2009): ativo circulante; passivo circulante; patrimônio líquido (F-L8-2 a). Os códigos analíticos de
   // antes (1.1.1…2.3.1) foram renomeados no lugar, por id (F-L8-1 a; tabela `RENOMEACAO_CANONICA_L8` abaixo, que a
@@ -166,10 +166,10 @@ export function codigoPosL8(code: string): string {
   return RENOMEACAO_CANONICA_L8.find((r) => r.de === code)?.para ?? code;
 }
 
-/** Natureza que entra na REGRA_VALIDA_NIVEL_CONTAS (Manual ECD L9 p. 119): COD_NAT 01/02/03. */
+/** Natureza que entra na REGRA_VALIDA_NIVEL_CONTAS (Manual ECD L9 p. 120): COD_NAT 01/02/03. */
 export const PATRIMONIAL_NATURES: ReadonlyArray<AccountNature> = ['Asset', 'Liability', 'Equity'];
 
-/** Nível mínimo da analítica patrimonial (Manual ECD L9 p. 119 — a mensagem do PVA cita a Res. CFC 1.299/2010). */
+/** Nível mínimo da analítica patrimonial (Manual ECD L9 p. 120 — a mensagem do PVA cita a Res. CFC 1.299/2010). */
 export const NIVEL_MINIMO_ANALITICA_PATRIMONIAL = 4;
 
 /**

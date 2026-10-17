@@ -1,5 +1,9 @@
 # ADR-INCR-INVENTORY — Estoque (subrazão de inventário perpétuo + CMV)
 
+> **Estado legal verificado em 17/10/2026** (dossiê `pesquisas-legais/verif-2026-10-17-contabil-ecd/relatorio.md` (PR #754); [Dnn] = fonte do dossiê). Este documento é histórico; onde ele cita outra coisa, vale o que está abaixo.
+>
+> - **RIR/2018 art. 307** (estoque a custo médio) [D08]: confere.
+
 - **Data:** 2026-07-20
 - **Status:** **Proposed — FASE 1 (parecer + ADR). Desenho arquitetural DECIDIDO; ratificação fork-a-fork
   COMPLETA (2026-07-20).** Nó ⚫ **DIFERIDO** no master map §5.1 (Bloco B item 12); a regra §1 proíbe rotear

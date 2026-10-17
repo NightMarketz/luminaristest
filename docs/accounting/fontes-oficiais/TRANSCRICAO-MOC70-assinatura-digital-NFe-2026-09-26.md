@@ -1,5 +1,11 @@
 # Transcrição — MOC 7.0 (Visão Geral), padrão de assinatura digital da NF-e 4.00 (2026-09-26)
 
+> **Nota 2026-10-17 (EMENDA-3 do X10a, §3 item 3):** a partir de **01/11/2026** o MOC deixa de ser publicado por Ato
+> COTEPE. Passa a ser o "MOC da NF-e" / "MOC da NFC-e", com versão online mantida pelo Estado do Paraná (Aj. SINIEF
+> 07/05 cl. 2ª-A caput e §2º, pelo Aj. SINIEF 40/26 cl. 1ª I e 2ª I; Aj. SINIEF 19/16 cl. 3ª caput e §2º, pelo Aj.
+> SINIEF 38/26 cl. 1ª e 2ª I). Esta transcrição do 7.0 continua válida como texto; o PR-0 confere se a versão online
+> diverge nos parâmetros `[SIG-…]`. Fonte: `pesquisas-legais/sp-inutilizacao-nfe-nfce-2026-11/relatorio.md` [D06] [D07].
+
 > **B0 do [`BE-INCR-NFE-SIGNATURE-brief.md`](../BE-INCR-NFE-SIGNATURE-brief.md)** (SIG-NFE, passo 2.4; autorização do
 > dono 26/09, *"executa o SIG-NFE 2.4"*). Transcreve os parâmetros que travam os B2–B5. Cada teste do
 > `nfeSignature` cita a **chave** `[SIG-…]` da linha que ele exercita.

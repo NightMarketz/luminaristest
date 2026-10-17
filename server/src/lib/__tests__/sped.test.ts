@@ -166,7 +166,7 @@ describe('register builders', () => {
     expect(buildI010('G', COD_VER_ECD_SEMENTE)).toBe('|I010|G|9.00|');
   });
 
-  it('I030 carries QTD_LIN and DNRC_ABERT fixed text (pp. 113-114)', () => {
+  it('I030 carries QTD_LIN and DNRC_ABERT fixed text (pp. 114-115)', () => {
     const line = buildI030({
       numOrd: '1',
       natLivr: 'DIARIO GERAL',
@@ -275,7 +275,7 @@ describe('register builders', () => {
     expect(f[11]).toBe('R'); // IND_GRP_DRE
   });
 
-  it('J900 = 8 fields with fixed encerramento text (pp. 195-196)', () => {
+  it('J900 = 8 fields with fixed encerramento text (pp. 196-197)', () => {
     const line = buildJ900({
       numOrd: '1', natLivro: 'DIARIO GERAL', nome: 'EMPRESA TESTE LTDA',
       qtdLin: 500, dtIniEscr: '2026-01-01', dtFinEscr: '2026-12-31',
@@ -380,7 +380,7 @@ describe('register builders', () => {
     });
 
     it.each(['C001', 'I001', 'J001', 'K001', 'J800', 'J801', 'J900'])(
-      'rejeita a tag proibida %s (REGRA_REGISTRO_NAO_DEVE_EXISTIR_NO_RTF, Manual ECD L9 p. 194)',
+      'rejeita a tag proibida %s (REGRA_REGISTRO_NAO_DEVE_EXISTIR_NO_RTF, Manual ECD L9 p. 195)',
       (tag) => {
         expect(() => sanitizeRtfForSped(`{\\rtf1 texto ${tag} mais texto}`)).toThrow(/RTF_FORBIDDEN_TAG/);
       },

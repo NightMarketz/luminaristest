@@ -76,7 +76,7 @@ contador. → **F-LP-6** (reescrito).
 Uma mudança no Anexo III não chega a escopo já semeado. Isso contradiz direto o objetivo "mudança de lei adaptada
 imediatamente". Entra no checklist (item 9).
 
-**D-4 — ISS sem mínimo de 2% (inferido).** O DTO aceita `issAliquotaBp` de 0 a 500. A LC 116 art. 8º-A fixa
+**D-4 — ISS sem mínimo de 2% (inferido). FECHADA 17/10/2026: não validar (ver §Estado legal).** O DTO aceita `issAliquotaBp` de 0 a 500. A LC 116 art. 8º-A fixa
 mínimo de 2%, com exceções (subitens 7.02, 7.05 e 16.01) e com a situação do Simples, em que o ISS vai no DAS.
 Não é erro automático, porque 0 pode representar o Simples. → **Pendente de validação externa** (§6, item 2).
 
@@ -298,3 +298,10 @@ estão em `pesquisas-legais/verif-2026-10-17-irpj-csll-correcoes/relatorio.md` (
   tem o mesmo sha de 09/10 (`faa47fa1…`) [D15]. A IN 2.305/2025 teve a última alteração pela IN 2.307 [D14].
 - **ECF:** o leiaute 13 (AC 2026) **ainda não saiu**; a página do SPED lista o leiaute 12 como o mais recente [D21].
 - **Parâmetro novo de 17/10:** `lp8-csll-3-a..e` (CSLL de bancos 2020–2026), em migração nova com supersedesId; nenhuma linha publicada mudou [C01, C02, C05].
+
+## Estado legal verificado em 17/10/2026 (ISS/NFS-e)
+
+`[Dnn]` = fontes do dossiê `pesquisas-legais/verif-2026-10-17-iss-nfse/relatorio.md` (PR #754), com link oficial e sha256 no `manifest.json`. Correções de código no PR #755.
+
+- **D-4 FECHADA — não validar o mínimo de 2% no `issAliquotaBp`.** O art. 8º-A da LC 116 [D01] LC 116 (acervo ctresb/leis, compilada, cópia 13/10; <https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2003-07-31;116>) fixa o mínimo que o **Município** pode adotar, não um limite do campo. O leiaute [D12] Anexo I v1.01 do leiaute DPS, sha256[:12] `de5bc492959e` (<https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/documentacao-atual/anexo_i-sefin_adn-dps_nfse-snnfse-v1-01-20260209.xlsx>) aceita até 1,8% no Simples com retenção (E0621/E0628), e no regime normal com município conveniado o `pAliq` nem pode ir (E0617). O piso continua onde a lei o põe: no benefício do Simples (Res. CGSN 140 art. 31 p.ú. [D06] Res. CGSN 140 multivigente (<https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/visao/multivigente>), `issBeneficio.ts`). Dossiê §4, leitura (b).
+- **Transição do ISS (não implementada — feature nova, registrada centralmente):** LC 116 art. 8º-B, incluído pelo art. 508 da LC 214 [D04] LC 214 compilada (<https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm>): as alíquotas caem 10/20/30/40% em 2029/2030/2031/2032 e os benefícios caem na mesma proporção (§ 1º). A LC 116 fica revogada em 01/01/2033 (LC 214 art. 543 IV). `ISS_LIMITE` e `issComBeneficio` não têm fim de vigência. Nada muda antes de 2029.

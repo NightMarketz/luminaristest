@@ -7,7 +7,7 @@ import type { SectorKitV1 } from '../../dtos/SectorKitDto';
  * - F-KE-1 (a), dono 13/10: a recolher 2.1.3–2.1.6 (passivo); IRPJ/CSLL do resultado em 4.5.1/4.5.2 (fora de 4.3/4.4,
  *   reservados pela emenda 3.3).
  * - F-KE-2 (a), dono 13/10, e F-PCB-1R (a): PIS/COFINS sobre a receita são dedução da receita bruta (natureza Revenue,
- *   3.6.1/3.6.2; DL 1.598/77 art. 12 §1º III; Lei 6.404/76 art. 187 II). O perfil fiscal aceita Revenue nesses campos
+ *   3.6.1/3.6.2; DL 1.598/77 art. 12 §1º III; Lei 6.404/76 art. 187 I). O perfil fiscal aceita Revenue nesses campos
  *   e o gate da receita bruta da ECF ignora exatamente essas duas contas (#649).
  */
 export const CONTAS_FISCAIS: SectorKitV1['chartExtension'] = [

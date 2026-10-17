@@ -1,5 +1,18 @@
 # BRIEF — BE-INCR-NFCE (NFC-e modelo 65 + NF-e 55 própria atrás da porta, seleção por tipo) — nó X10a
 
+> **ESTADO LEGAL VERIFICADO 2026-10-17** (verificação legal de 17/10; só referência, não muda item nem fork deste documento):
+> - **Inutilização:** a partir de 01/11/2026 o Pedido de Inutilização da NF-e e da NFC-e "não se aplica aos Estados do Acre, Bahia e São Paulo" (Aj. 07/05 cl. 14ª §6º [V-D02][V-D07]; Aj. 19/16 cl. 16ª §6º [V-D03][V-D04]). Nenhum ato da SEFAZ-SP achado; a Portaria SRE 80/25 (NF-e em SP desde 17/11/2025, revogou a CAT 162/08) só remete ao Ajuste [S-D03]. Forks F-NFCE-E3-1 (c) e E3-2 (a) ratificados em 17/10.
+> - **MOC:** de 01/11/2026 em diante deixa de ser Ato COTEPE; vale o "MOC da NF-e"/"MOC da NFC-e" em versão online mantida pelo Paraná (Aj. SINIEF 07/05 cl. 2ª-A §2º, pelo Aj. 40/26 [V-D07]; Aj. 19/16 cl. 3ª §2º, pelo Aj. 38/26 [V-D04]). As transcrições do MOC 7.0 seguem válidas como texto; conferir divergência com a versão online antes de citar regra nova.
+> - **NT 2025.001:** vigente a **v1.03** (Setembro/2025, produção 03/11/2025 [V-P2]); acrescenta o `tPag` 91 (pagamento posterior) nas RV YA03-10/30; o QR v3 não muda.
+> - **NT 2025.002:** vigente a **v1.52** (01/10/2026 [V-P1]); grupo `IBSCBS` obrigatório em produção para CRT 3 desde 03/08/2026 e para CRT 1/2/4 a partir de 04/01/2027 (RV UB12-10, rej. 1115).
+> - **Cancelamento:** NFC-e em até 30 minutos (Aj. 19/16 cl. 15ª [V-D03]); NF-e em até 24 h (Aj. 07/05 cl. 12ª [V-D02]); por substituição, 168 h (cl. 15ª-A e 12ª-A). CC-e vedada na NFC-e (Aj. 19/16 cl. 8ª §1º [V-D03]).
+> - **Contingência da NFC-e em SP:** off-line obrigatória, sem mudança (Aj. 19/16 cl. 11ª [V-D03]; Port. SRE 40/24 art. 6º [V-D10]); SAT vedado desde 01/01/2026 (Port. CAT 147/12 art. 34-D [V-D11]).
+> - **CNPJ alfanumérico:** NT 2026.004 v1.01, produção 01/07/2026 [V-P5] (campos CNPJ e chave de acesso).
+> - **NTs novas fora do inventário anterior:** 2026.010 (DANFE com IBS/CBS, produção 01/12/2026 [V-P3]), 2026.009, 2026.006 (split payment), 2026.003 (DANFE Simplificado Tipo 2), 2014.001 v1.41 (EPEC); só a 2026.010 foi lida.
+> Fontes: `[V-Dnn]`/`[V-Pnn]` = dossiê `pesquisas-legais/verif-2026-10-17-nfe-nfce-dfe/relatorio.md` (PR #754); `[S-Dnn]` = dossiê [`pesquisas-legais/sp-inutilizacao-nfe-nfce-2026-11/relatorio.md`](../../pesquisas-legais/sp-inutilizacao-nfe-nfce-2026-11/relatorio.md). Detalhe e forks: [`BE-INCR-NFCE-EMENDA-3-brief.md`](BE-INCR-NFCE-EMENDA-3-brief.md).
+
+> **EMENDA-3 2026-10-17:** ver [`BE-INCR-NFCE-EMENDA-3-brief.md`](BE-INCR-NFCE-EMENDA-3-brief.md) — inutilização deixa de se aplicar a SP em 01/11/2026 (forks F-NFCE-E3-1/2 **pendentes**, reabrem F-NFCE-5 e itens 24–25); `tPag` 91 em `[NFE-PAG]`; MOC online.
+
 > **EMENDA 2026-10-11:** ver [`EMENDAS-BRIEF-2026-10-11.md`](EMENDAS-BRIEF-2026-10-11.md) §3 (cancelamento da NFC-e em 30 minutos, campo em minutos) e §8 (PAA). Sem código; cada item exige 'executa'.
 
 > Produzido em `sessao-planejamento` (2026-10-02), nó [`X10a`](../plano/nos/X10a.md), Fase F do
@@ -147,7 +160,7 @@ Arquivos: `MOC-7.0-Visao-Geral.pdf` (sha256 `f664dcf94b77…`, 150 pp.), `MOC-7.
 | `[NFCE-HOMOLOG]` | em homologação, `xProd` do **1º item** = "NOTA FISCAL EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL" (373) | Anexo I, regra I04-10, p. 89 |
 | `[NFCE-CFOP]` | NFC-e aceita só 5.101, 5.102, 5.103, 5.104, 5.115, 5.405, 5.656, 5.667 (725) | Anexo I, regra I08-150, p. 93 |
 | `[NFCE-PROIBIDOS]` | sem ISUF (730), veicProd (736), arma (738), ICMSPart (741), ICMSUFDest (807), II/PIS-ST/COFINS-ST (743/746/749), transporte sem entrega (754–759), `cobr` (760) | Anexo I, pp. 87–125 |
-| `[NFE-PAG]` | `pag` obrigatório na NF-e e NFC-e; `detPag` 1–100; `tPag` 01 dinheiro, 03 crédito, 04 débito, 17 PIX, 90 sem pagamento, 99 outros…; NFC-e: tPag=90 rejeitado (899), 99 sob regra 436 | Anexo I, YA01–YA03, p. 62; pp. 125–126 |
+| `[NFE-PAG]` | `pag` obrigatório na NF-e e NFC-e; `detPag` 1–100; `tPag` 01 dinheiro, 03 crédito, 04 débito, 17 PIX, 90 sem pagamento, **91 pagamento posterior**, 99 outros…; NFC-e: tPag=90 rejeitado (899), 99 sob regra 436; 90 e 91 fora da rej. 865 (YA03-10, Exceção 2) | Anexo I, YA01–YA03, p. 62; pp. 125–126; **91: NT 2025.001 v1.03, RV YA03-10/YA03-30, pp. 10–11 [EMENDA-3 17/10]** |
 | `[NFE-VNF]` | vNF = vProd − vDesc − vICMSDeson + vST + vFCPST + vFrete + vSeg + vOutro + vII + vIPI + vIPIDevol + vServ (610); limite de valor da NFC-e e de **destinatário não identificado** parametrizável por UF (750–752, 780 — pareamento embaralhado na extração, o PR-0 confirma) | Anexo I, W16, p. 122 |
 | `[NFCE-QRCODE]` | `infNFeSupl/qrCode` com chave, versão, tpAmb, **identificador do CSC** e hash (396–400, 462–464); endereço por UF (395) | Anexo I, ZX02, pp. 129–133 |
 | `[RTC-SIMPLES]` | IBS/CBS: orientações para CRT 1/2/4 "em NT futura", tributação "somente a partir de 2027" (LC 214 art. 348); grupo `IBSCBS` exigido em produção para CRT 1/2/4 **a partir de 04/01/2027**; CRT 3 em produção desde 03/08/2026 | NT 2025.002 v1.51, p. 7 e p. 42 (Obs. 2 e 3) |

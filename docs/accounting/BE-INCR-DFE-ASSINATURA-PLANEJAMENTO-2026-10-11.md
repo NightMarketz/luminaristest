@@ -1,5 +1,11 @@
 # F-E8-1 reaberto: PAA de terceiro × assinatura de NF-e/NFC-e do salão. 2026-10-11
 
+> **ESTADO LEGAL VERIFICADO 2026-10-17** (verificação legal de 17/10; só referência, não muda item nem fork deste documento):
+> - **PAA:** confere (Aj. 9/22 cl. 1ª §§1º–2º, red. Aj. 46/25 [V-D06]; o Aj. 21/26 só muda a cl. 2ª [V-D05]).
+> - **ICP-Brasil:** MP 2.200-2/2001 vigente (art. 10 §1º e art. 11 [V-D01]).
+> - **MOC:** de 01/11/2026 em diante deixa de ser Ato COTEPE; vale o "MOC da NF-e"/"MOC da NFC-e" em versão online mantida pelo Paraná (Aj. SINIEF 07/05 cl. 2ª-A §2º, pelo Aj. 40/26 [V-D07]; Aj. 19/16 cl. 3ª §2º, pelo Aj. 38/26 [V-D04]). As transcrições do MOC 7.0 seguem válidas como texto; conferir divergência com a versão online antes de citar regra nova.
+> Fontes: `[V-Dnn]`/`[V-Pnn]` = dossiê `pesquisas-legais/verif-2026-10-17-nfe-nfce-dfe/relatorio.md` (PR #754); `[S-Dnn]` = dossiê [`pesquisas-legais/sp-inutilizacao-nfe-nfce-2026-11/relatorio.md`](../../pesquisas-legais/sp-inutilizacao-nfe-nfce-2026-11/relatorio.md). Detalhe e forks: [`BE-INCR-NFCE-EMENDA-3-brief.md`](BE-INCR-NFCE-EMENDA-3-brief.md).
+
 > **Sessão:** `sessao-planejamento`. **Sem código.** Saída: este documento. Nenhum fork se ratifica aqui.
 >
 > **Autorização:** dono, chat, 2026-10-11, questionário (AskUserQuestion), opção "Aceito, reabrir". O texto da opção era:
