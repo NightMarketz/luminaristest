@@ -1,7 +1,7 @@
 /**
  * migratePlano4NiveisCli — BE-INCR-PLANO-4-NIVEIS, PR-2 (itens 8–11 do BRIEF; ADR-PLANO-CONTAS-4-NIVEIS). MIGRAÇÃO DE
  * DADO, não de schema: leva o plano de contas de uma unidade do canônico de 3 níveis ao de 4 (L8 do RUNBOOK-H1 — o PVA
- * da ECD exige analítica de ativo/passivo/PL no nível ≥ 4; Manual da ECD L9 jan/2026 p. 119).
+ * da ECD exige analítica de ativo/passivo/PL no nível ≥ 4; Manual da ECD L9 maio/2026 p. 120).
  *
  * Ordem (F-L8-4 a, dono 13/10): roda ANTES de subir o código novo. Se o servidor novo subisse primeiro, o
  * `ensureChartOfAccounts` (create-if-missing por código) criaria a analítica nova VAZIA ao lado da antiga com saldo.

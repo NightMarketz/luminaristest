@@ -24,7 +24,7 @@ const dateOnly = z
   .string()
   .refine(isValidDateOnly, 'Data deve ser uma data real no formato YYYY-MM-DD');
 
-/** Tabela de Unidades da Federação (0000 campo 07, manual p. 67). */
+/** Tabela de Unidades da Federação (0000 campo 07, manual p. 69). */
 export const UF_CODES = [
   'AC', 'AL', 'AM', 'AP', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MG', 'MS', 'MT',
   'PA', 'PB', 'PE', 'PI', 'PR', 'RJ', 'RN', 'RO', 'RR', 'RS', 'SC', 'SE', 'SP', 'TO',
@@ -86,7 +86,7 @@ const crcCertificateField = z.string().transform((value, ctx) => {
   if (!isValidCrcCertificate(normalized)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'J930.NUM_SEQ_CRC deve seguir UF/AAAA/NÚMERO (Manual ECD L9 p. 202), com UF da Tabela de UF.',
+      message: 'J930.NUM_SEQ_CRC deve seguir UF/AAAA/NÚMERO (Manual ECD L9 p. 203), com UF da Tabela de UF.',
     });
     return z.NEVER;
   }
@@ -118,7 +118,7 @@ const DeclarantSchema = z
   })
   .strict();
 
-/** Livro — termo de abertura/encerramento (I030/J900, manual pp. 113/195). */
+/** Livro — termo de abertura/encerramento (I030/J900, manual pp. 114/196). */
 const BookSchema = z
   .object({
     numOrd: z.string().min(1),
@@ -132,7 +132,7 @@ const BookSchema = z
   .strict();
 
 /**
- * Signatário — J930 (Manual ECD L9 pp. 199-203). Campo 04 (IDENT_QUALIF) NÃO é aceito (F-C12-1 → a):
+ * Signatário — J930 (Manual ECD L9 pp. 198-203). Campo 04 (IDENT_QUALIF) NÃO é aceito (F-C12-1 → a):
  * é derivado da tabela de qualificação pelo gerador a partir de COD_ASSIN — quem manda o campo recebe
  * `unrecognized_keys` (`.strict()`), quebra de compat declarada. COD_ASSIN é fechado na Tabela de
  * Qualificação do Assinante (pp. 201-202).
@@ -217,7 +217,7 @@ const SignerSchema = z
     }
   });
 
-/** J801.COD_MOT_SUBS (Manual ECD L9 p. 193, transcrição §1.4) — 3 dígitos, a tabela de valores
+/** J801.COD_MOT_SUBS (Manual ECD L9 p. 194, transcrição §1.4) — 3 dígitos, a tabela de valores
  * (não o "Tamanho 010" do leiaute, que a própria tabela contradiz — dono 23/09, A4). */
 export const COD_MOT_SUBS_CODES = ['001', '002', '003', '004', '005', '099'] as const;
 
@@ -227,10 +227,10 @@ const hash40Hex = z.string().regex(/^[0-9a-fA-F]{40}$/, 'Hash de 40 caracteres h
 
 /**
  * J932 — Signatário do Termo de Verificação para Fins de Substituição da ECD (Manual ECD L9 pp.
- * 203-205, transcrição §2). Dono 23/09: só o código 910 está no escopo (920/Auditor Independente
+ * 204-206, transcrição §2). Dono 23/09: só o código 910 está no escopo (920/Auditor Independente
  * fora); `identQualif` (campo 04) NÃO é aceito — mesmo padrão F-C12-1 do J930, derivado
  * server-side de `codAssin` (`J932_QUALIF_910` em `lib/sped.ts`). REGRA_OBRIGATORIO_ASS_TERMO
- * (p. 204): IND_CRC/EMAIL/FONE/UF_CRC obrigatórios quando COD_ASSIN_T=910 — como todo signatário
+ * (p. 206): IND_CRC/EMAIL/FONE/UF_CRC obrigatórios quando COD_ASSIN_T=910 — como todo signatário
  * aqui é 910, são obrigatórios sempre (nunca opcionais como no leiaute genérico).
  */
 const VerificationTermSignerSchema = z
@@ -263,13 +263,13 @@ const VerificationTermSignerSchema = z
  * Termo de Verificação para Fins de Substituição da ECD (J801 + J932). Presente SÓ quando
  * `declarant.indFinEsc='1'` (substituta). `signers`: 1 a 2, ao menos um 910 (dono 23/09, A13/A10
  * — como só 910 está no escopo, TODOS são 910; a checagem "≥1 910" é trivialmente satisfeita e
- * mantida por legibilidade do contrato). REGRA_IDENT_CPF_CNPJ_COD_ASSIN_DUPLICIDADE (p. 204):
+ * mantida por legibilidade do contrato). REGRA_IDENT_CPF_CNPJ_COD_ASSIN_DUPLICIDADE (p. 205):
  * a dupla CPF/CNPJ+código não pode repetir.
  */
 const VerificationTermSchema = z
   .object({
     codMotSubs: z.enum(COD_MOT_SUBS_CODES, {
-      message: 'J801.COD_MOT_SUBS fora da tabela (Manual ECD L9 p. 193): 001..005 ou 099.',
+      message: 'J801.COD_MOT_SUBS fora da tabela (Manual ECD L9 p. 194): 001..005 ou 099.',
     }),
     descRtf: z.string().optional(),
     signers: z.array(VerificationTermSignerSchema).min(1).max(2),
@@ -285,7 +285,7 @@ const VerificationTermSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['signers'],
-        message: 'REGRA_OBRIGATORIO_CONTADOR_ASS_TERMO: exige ao menos um signatário 910 (Manual ECD L9 p. 204).',
+        message: 'REGRA_OBRIGATORIO_CONTADOR_ASS_TERMO: exige ao menos um signatário 910 (Manual ECD L9 p. 205).',
       });
     }
     const seen = new Set<string>();
@@ -296,7 +296,7 @@ const VerificationTermSchema = z
           code: z.ZodIssueCode.custom,
           path: ['signers', i],
           message:
-            'J932 duplicado: a dupla IDENT_CPF_CNPJ_T + COD_ASSIN_T já aparece em outro signatário (REGRA_IDENT_CPF_CNPJ_COD_ASSIN_DUPLICIDADE, Manual ECD L9 p. 204).',
+            'J932 duplicado: a dupla IDENT_CPF_CNPJ_T + COD_ASSIN_T já aparece em outro signatário (REGRA_IDENT_CPF_CNPJ_COD_ASSIN_DUPLICIDADE, Manual ECD L9 p. 205).',
         });
       }
       seen.add(key);
@@ -393,7 +393,7 @@ export const SpedEcdRequestSchema = z
         });
       }
     }
-    // J930 compliance (REGRA_OBRIGATORIO_ASSIN_CONTADOR / _UM_RESP_LEGAL, p. 200):
+    // J930 compliance (REGRA_OBRIGATORIO_ASSIN_CONTADOR / _UM_RESP_LEGAL, p. 202):
     // exactly one legal responsible, at least one contador (900) and one non-900.
     const respLegal = val.signers.filter((s) => s.indRespLegal === 'S');
     if (respLegal.length !== 1) {

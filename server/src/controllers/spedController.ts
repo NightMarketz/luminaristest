@@ -23,7 +23,7 @@ import type { SpedTarget } from '../features/accounting/models/spedPerfilPrefill
  * entram todos (mesma justificativa O-3 do NF-e: magic bytes OFF, quem valida é o parser/hash).
  */
 const RTF_MIME_TYPES = new Set(['application/rtf', 'text/rtf', 'application/octet-stream', 'text/plain']);
-const MAX_RTF_SIZE_BYTES = 30 * 1024 * 1024; // 30 MB (J801 campo 06, Manual ECD L9 p. 193).
+const MAX_RTF_SIZE_BYTES = 30 * 1024 * 1024; // 30 MB (J801 campo 06, Manual ECD L9 p. 194).
 
 /** Multer middleware for the optional `rtf` field — no-op on a plain JSON request (multer only
  * engages on `multipart/form-data`), então a ECD original continua indo por JSON puro. */

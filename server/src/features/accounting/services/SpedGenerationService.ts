@@ -626,7 +626,7 @@ export class SpedGenerationService {
       // 'BY_SIGN' (resultado financeiro, que mistura receita 3.5 e despesa 4.3): o grupo segue o lado da linha — credora
       // (valor serializado negativo) é Receita, devedora é Despesa.
       const grupo = (vl: number): 'R' | 'D' => (grp === 'BY_SIGN' ? (vl <= 0 ? 'R' : 'D') : grp);
-      // L9 (RUNBOOK-H1, PVA 13/10): só o Resultado do Exercício fica no nível 1 (Manual ECD L9 p. 180) — as seções
+      // L9 (RUNBOOK-H1, PVA 13/10): só o Resultado do Exercício fica no nível 1 (Manual ECD L9 p. 181) — as seções
       // são nível 2 sob ele e os detalhes nível 3 sob a seção.
       lines.push({
         nuOrdem: ordem++, codAgl: totCode, indCodAgl: 'T', nivelAgl: 2, codAglSup: 'DRE_RESULTADO',
