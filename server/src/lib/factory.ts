@@ -1580,6 +1580,7 @@ export class ApplicationFactory {
         this.repositories.taxAssessment,
         // X7 Fase C PR-2: IIssDocumentReader (findForIssReport) para o ISS por competência.
         this.repositories.fiscalDocument,
+        legalParameterService, // fotografia LC116_SERVICO: município do ISS pelo li (LC 116 art. 3º)
       ),
       dataExchangeImport: new DataExchangeImportService(
         this.repositories.dataExchange,
