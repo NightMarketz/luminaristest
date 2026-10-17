@@ -94,3 +94,41 @@ describe('PIS_COFINS_MONOFASICO_NCM — guarda da transcrição', () => {
     }
   });
 });
+
+// Verificação legal 17/10 (dossiê verif-2026-10-17-pis-cofins, item 9; linhas lp9-pc-ncm-*). Os códigos são os do texto
+// do art. 452 da IN RFB 2.121/2022 na visão vigente do Sijut, lida em 2026-10-17; o NCM de 8 dígitos é um exemplo dentro de cada código.
+describe('PIS_COFINS_MONOFASICO_NCM — farmacêuticos na TIPI vigente (IN RFB 2.121/2022 art. 452)', () => {
+  const ART_452: readonly [string, string][] = [
+    ['30021100', '3002.11.00'],
+    ['30021210', '3002.12.1'],
+    ['30021229', '3002.12.2'],
+    ['30021235', '3002.12.3'],
+    ['30021300', '3002.13.00'],
+    ['30021400', '3002.14.00'],
+    ['30021590', '3002.15'],
+    ['30024119', '3002.41.1'],
+    ['30024129', '3002.41.2'],
+    ['30024910', '3002.49.10'],
+    ['30024992', '3002.49.92'],
+    ['30024999', '3002.49.99'],
+    ['30025900', '3002.59.00'],
+    ['30029000', '3002.90.00'],
+    ['38221100', '3822.11.00'],
+    ['38221940', '3822.19.40'],
+  ];
+
+  it.each(ART_452)('NCM %s (código %s) com CST 01 → MONOFASICO pela IN RFB 2.121/2022 art. 452', (ncm) => {
+    expect(classifyPisCofinsItem({ ncm, cstPis: '01', cstCofins: '01' }, TABELA_ITEM_SEMENTE)).toEqual({ classe: 'MONOFASICO', motivo: expect.stringContaining('IN RFB 2.121/2022 art. 452') });
+  });
+
+  it('códigos da TIPI de 2011 (3002.10.x, 3002.20.x, 3002.90.20/92/99) saem da tabela; 3002.49.20 e 3822.19.90 seguem fora', () => {
+    for (const ncm of ['30021011', '30021021', '30021031', '30022011', '30022021', '30029020', '30029092', '30029099']) {
+      expect([ncm, findMonofasicoRule(ncm, TABELA_ITEM_SEMENTE.regras)]).toEqual([ncm, null]);
+    }
+    for (const prefixo of ['3002101', '3002102', '3002103', '3002201', '3002202', '30029020', '30029092', '30029099']) {
+      expect(TABELA_ITEM_SEMENTE.regras.map((r) => r.prefixo)).not.toContain(prefixo);
+    }
+    expect(findMonofasicoRule('30024920', TABELA_ITEM_SEMENTE.regras)).toBeNull();
+    expect(findMonofasicoRule('38221990', TABELA_ITEM_SEMENTE.regras)).toBeNull();
+  });
+});
