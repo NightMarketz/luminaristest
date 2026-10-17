@@ -37,12 +37,12 @@ Entradas mais novas no topo.
 - **Contexto:** `merge=regen` no `_INDEX.md`, `openapi.json` e snapshots de DTO desde o #497.
 - **Aprendizado:** o driver resolve o conflito no rebase/merge local, mas a checagem de mergeabilidade do GitHub, o botão de merge e o "Update branch" não o executam. O PR continua `CONFLICTING` mesmo quando local resolveria sozinho.
 - **Evidência:** consenso da comunidade, sem documentação oficial: GitHub Discussion [#9288](https://github.com/orgs/community/discussions/9288) (citação do suporte: o GitHub não considera `.gitattributes` do usuário). No repo: `.gitattributes` com `merge=regen`; PRs do lote marcados CONFLICTING só no `_INDEX.md`.
-- **Como aplicar:** driver local só ajuda quem rebaseia na própria máquina e dá push. Para o botão do GitHub, tire o arquivo do PR (gerar na `main` depois do merge) ou divida o arquivo para que dois PRs não toquem o mesmo.
+- **Como aplicar:** driver local só ajuda quem rebaseia na própria máquina e dá push. Para o botão do GitHub, tire o arquivo do repositório (gerado na máquina, como o `_INDEX` no #745) ou divida o arquivo para que dois PRs não toquem o mesmo.
 - **Durável?** sim → [[github-ignora-merge-driver]]
 
 ### 2026-10-16 · pitfall · Regra que manda todo PR atualizar um valor compartilhado fabrica conflito
 - **Contexto:** diagnóstico dos conflitos de 09–16/10.
 - **Aprendizado:** a maior parte dos conflitos veio de regras do próprio processo, não de código: o `fold` no PR com o `check` exigindo `_INDEX.md` em dia (65 de 118 commits), a subida manual do `BASELINE` do `openapi-paths.test.ts` (38 commits em 30 dias, todos na mesma linha) e o `docs.paths.ts` central (10 de 18 PRs do lote).
 - **Evidência:** `git log origin/main --since=2026-10-09 --name-only`; `scripts/plano-vault.mjs:161` (check do índice, antes do #745); `server/src/__tests__/openapi-paths.test.ts` (antes do #748).
-- **Como aplicar:** antes de criar regra que todo PR cumpre, pergunte se ela escreve num arquivo comum. Se escreve: o valor é derivado na `main` depois do merge (#745, #748), ou o arquivo é dividido por dono (um por feature).
+- **Como aplicar:** antes de criar regra que todo PR cumpre, pergunte se ela escreve num arquivo comum. Se escreve, em ordem de preferência: (a) o valor deixa de ser guardado — gerado na hora (`_INDEX` fora do git, #745) ou congelado quando outro teste já cobre (BASELINE × `route-spec-wiring`, #748); (b) o arquivo é dividido por dono (um por feature, #748); (c) só em último caso, bot que regenera na `main`. Sozinho, o bot é cerimônia: a proteção da `main` faz dele um PR extra por merge (lição trazida de outro projeto do dono, 16/10).
 - **Durável?** sim → [[valor-derivado-calcula-na-main-nao-no-pr]]
