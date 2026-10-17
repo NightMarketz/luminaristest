@@ -113,3 +113,24 @@ describe('apurarPisCofinsMensal', () => {
     expect([modalidadeDoRegime('PRESUMIDO'), modalidadeDoRegime('REAL')]).toEqual(['CUMULATIVO', 'NAO_CUMULATIVO']);
   });
 });
+
+// Verificação legal 17/10 (dossiê verif-2026-10-17-pis-cofins, §1 e ambiguidade A): 2026 é o ano-teste da CBS (0,9%) e do
+// IBS (0,1%). A apuração só está certa se o contribuinte estiver dispensado do recolhimento (LC 214/2025 art. 348 § 1º). Essa
+// premissa precisa aparecer na memória; ela não calcula a CBS (frente M5).
+describe('apurarPisCofinsMensal — premissa da dispensa de CBS/IBS em 2026', () => {
+  it('2026: os dois tributos trazem a linha PREMISSA_CBS_IBS_2026 (valor 0, LC 214 art. 348 § 1º), nos dois regimes; 2025 não traz', () => {
+    for (const modalidade of ['CUMULATIVO', 'NAO_CUMULATIVO'] as const) {
+      const r = apurarPisCofinsMensal(entrada({ modalidade }));
+      for (const t of ['PIS', 'COFINS'] as const) {
+        expect(r[t].memoria.find((m) => m.codigo === 'PREMISSA_CBS_IBS_2026')).toEqual({
+          codigo: 'PREMISSA_CBS_IBS_2026',
+          descricao: expect.stringMatching(/dispensa.*CBS.*IBS.*obrigações acessórias/),
+          valorCents: '0',
+          fonte: expect.stringContaining('LC 214/2025 art. 348 § 1º'),
+        });
+      }
+    }
+    expect(valor(apurarPisCofinsMensal(entrada({ ano: 2025 })).PIS.memoria, 'PREMISSA_CBS_IBS_2026')).toBeUndefined();
+  });
+});
+
