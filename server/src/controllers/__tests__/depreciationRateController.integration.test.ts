@@ -8,7 +8,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 const UNIT = 'unit-depreciation-rates-http';
@@ -26,6 +26,9 @@ describe('/api/accounting/depreciation-rates — contrato HTTP', () => {
     pushTestSchema();
     dono = await criarUsuario('deprate-http-a');
     outro = await criarUsuario('deprate-http-b');
+    // I6: o unitId das rotas é validado contra `units` do dono — cada ator com a sua unidade.
+    await seedUnit({ userId: dono.id, id: UNIT });
+    await seedUnit({ userId: outro.id, id: 'unit-do-outro' });
   }, 60000);
 
   afterAll(async () => {
