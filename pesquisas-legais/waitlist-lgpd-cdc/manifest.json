@@ -1,0 +1,32 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "L13709compilado",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709compilado.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709compilado.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-15T00:11:22-03:00",
+      "sha256": "c48e8cc696f72234ea5028d6efa0593d0d865f11720c95dd4d0982adb8dcd932",
+      "arquivo": "docs/D01_l13709compilado-htm.html",
+      "texto": "docs/D01_l13709compilado-htm.txt",
+      "bytes": 230913
+    },
+    {
+      "id": "D02",
+      "titulo": "L8078compilado",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/l8078compilado.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/l8078compilado.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-15T00:11:23-03:00",
+      "sha256": "3815d3b64b9957a35cb2e2fd09b24f0deb7be360572ef0e8a77a98ee48781c7a",
+      "arquivo": "docs/D02_l8078compilado-htm.html",
+      "texto": "docs/D02_l8078compilado-htm.txt",
+      "bytes": 170672
+    }
+  ],
+  "buscas": [],
+  "slug": "waitlist-lgpd-cdc",
+  "pergunta": "Abrir lista de espera (coleta de e-mail/dados de salões) antes do lançamento: base legal LGPD, minimização, e se a divulgação da lista vincula como oferta (CDC art. 30)",
+  "criado": "2026-10-15T00:11:22-03:00"
+}

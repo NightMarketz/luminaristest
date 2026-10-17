@@ -169,6 +169,39 @@ export async function seedDynamicTableData(opts: SeedDynamicTableDataOptions) {
   });
 }
 
+export interface SeedUnitOptions {
+  userId: string;
+  /** O id da linha de `units` — os testes mantêm seus literais (`'unit-1'`…). Chave GLOBAL: dois donos, ids distintos. */
+  id: string;
+  name?: string;
+  /** true → a linha nasce soft-deleted (F-I6-4 b: lê sim, grava não). */
+  deleted?: boolean;
+}
+
+/**
+ * BE-INCR-SCOPE-UNIT-GUARD (nó I6, BRIEF item 6): cria (ou reusa) a `DynamicTable` `internalName: 'units'` do dono e a
+ * linha com O id dado, para o `AccountingScopeResolver` aceitar o `unitId` das rotas contábeis.
+ */
+export async function seedUnit(opts: SeedUnitOptions) {
+  const table =
+    (await prisma.dynamicTable.findFirst({ where: { userId: opts.userId, internalName: 'units' } })) ??
+    (await seedDynamicTable({
+      userId: opts.userId,
+      name: 'Unidades',
+      internalName: 'units',
+      category: 'operations',
+      schema: { fields: [{ name: 'name', label: 'Nome', type: 'string', required: true }] },
+    }));
+  return prisma.dynamicTableData.create({
+    data: {
+      id: opts.id,
+      dynamicTableId: table.id,
+      data: { name: opts.name ?? opts.id } as any,
+      deletedAt: opts.deleted ? new Date() : null,
+    },
+  });
+}
+
 export interface SeedStructuredDataOptions {
   documentId: string;
   /** Stored as the `headers` JSON column ([{ name, type }] in the simple case). */

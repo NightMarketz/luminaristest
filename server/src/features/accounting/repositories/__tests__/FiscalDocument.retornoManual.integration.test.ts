@@ -12,12 +12,12 @@ import { signNfseForTest } from '@test/helpers/nfeSignature';
 import { FiscalDocumentRepository } from '@/features/accounting/repositories/FiscalDocumentRepository';
 import { FiscalDocumentEmissionService } from '@/features/accounting/services/FiscalDocumentEmissionService';
 import { FiscalDocumentLifecycleService } from '@/features/accounting/services/FiscalDocumentLifecycleService';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 
 import { legalParamsSemente } from '@test/helpers/legalParams';
 const UNIT = 'unit-retorno';
 const DONO = 'u-retorno';
-const scope = resolveAccountingScope({ userId: DONO }, UNIT);
+const scope = resolveAccountingScopeInternal({ userId: DONO }, UNIT);
 
 const XML_OK = Buffer.from(
   signNfseForTest(readFileSync(join(__dirname, '../../../../lib/__tests__/fixtures/nfse/nfse-autorizada-web.SYNTHETIC.xml'), 'utf8')),

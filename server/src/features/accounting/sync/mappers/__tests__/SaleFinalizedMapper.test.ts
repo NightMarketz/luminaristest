@@ -40,7 +40,7 @@ describe('SaleFinalizedMapper', () => {
     const input = mapper.map(event({ amount: 200 }));
     const debit = input.lines.find((l) => l.debitCents > 0)!;
     const credit = input.lines.find((l) => l.creditCents > 0)!;
-    expect(debit.accountCode).toBe('1.1.2');
+    expect(debit.accountCode).toBe('1.1.2.01');
     expect(credit.accountCode).toBe('3.1');
     expect(debit.debitCents).toBe(credit.creditCents); // balanced
     expect(debit.creditCents).toBe(0);
@@ -107,7 +107,7 @@ describe('SaleFinalizedMapper', () => {
         event({ amount: 200, revenueByNature: { serviceReais: 100, productReais: 100 } }),
       );
       const debit = input.lines.find((l) => l.debitCents > 0)!;
-      expect(debit.accountCode).toBe('1.1.2');
+      expect(debit.accountCode).toBe('1.1.2.01');
       expect(debit.debitCents).toBe(20000);
       expect(creditOn(input, '3.1')).toBe(10000);
       expect(creditOn(input, '3.3')).toBe(10000);

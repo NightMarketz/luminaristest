@@ -1,8 +1,9 @@
 import type { Request, Response } from 'express';
 import { handleApiError } from '../../../lib/apiUtils';
+import logger from '../../../lib/logger';
 import { getUserContextFromRequest } from '../../../lib/authUtils';
-import { resolveBindingScope } from '../repositories/IAccountingBindingRepository';
-import type { BindingScope } from '../repositories/IAccountingBindingRepository';
+import { resolveBindingScope } from '../scope/BindingScope';
+import type { BindingScope } from '../scope/BindingScope';
 import {
   CompileBindingRequestSchema,
   ListBindingsQuerySchema,
@@ -42,10 +43,15 @@ export interface AccountingBindingControllerDeps {
   buildCompileService: (scope: BindingScope) => BindingCompileService;
   /** LAC-B — mesma fábrica-por-escopo, para o `activate-default`. */
   buildActivationService: (scope: BindingScope) => BindingActivationService;
+  /**
+   * LAC-B PR-0 (EMENDA-1 item 0b, F-BA-2 → b): recarga dos mappers depois de `Active`. Na rota, a função serializada de
+   * `runtime/mapperReload.ts` (a mesma do onboarding, I4 item 13).
+   */
+  reloadAccountingMappers: () => Promise<void>;
 }
 
 export function createAccountingBindingController(deps: AccountingBindingControllerDeps) {
-  const { buildCompileService, buildActivationService } = deps;
+  const { buildCompileService, buildActivationService, reloadAccountingMappers } = deps;
 
   /** POST /accounting-binding/compile */
   const compileBinding = async (req: Request, res: Response) => {
@@ -64,6 +70,32 @@ export function createAccountingBindingController(deps: AccountingBindingControl
         chart: parsed.data.chart,
         eventBindings: parsed.data.eventBindings,
       });
+      // LAC-B (GAP-MAP "2º setor Active pelo POST /compile e pelo CLI"; dono, chat, 2026-10-14): a mesma recarga do
+      // activate-default depois de `Active`. Falha ⇒ 200 com o aviso ao lado do resultado (binding segue Active).
+      if (result.status === 'Active') {
+        try {
+          await reloadAccountingMappers();
+        } catch (error) {
+          logger.error('Recarga dos mappers contábeis falhou depois do compile', {
+            unitId: scope.unitId,
+            bindingVersion: result.binding.bindingVersion,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          return res.json({
+            success: true,
+            data: {
+              ...result,
+              warnings: [
+                {
+                  code: 'ACCOUNTING_SYNC_RELOAD_FAILED',
+                  message:
+                    'O binding foi ativado, mas a recarga dos mappers contábeis falhou: as vendas desta unidade só passam a ser lançadas depois do próximo reinício do servidor.',
+                },
+              ],
+            },
+          });
+        }
+      }
       return res.json({ success: true, data: result });
     } catch (error) {
       return handleApiError(error, res);
@@ -127,6 +159,31 @@ export function createAccountingBindingController(deps: AccountingBindingControl
       const { unitId, ...options } = parsed.data;
       const scope = resolveBindingScope(user, unitId);
       const result = await buildActivationService(scope).activateDefault(scope, options);
+      // EMENDA-1 item 0b: só depois de `Active` (nunca em `already-active`/`Draft`) — a guarda de setor (409) já rodou
+      // antes do compile, então uma colisão de setor não chega aqui. Falha ⇒ `Draft` com o bloqueante, binding gravado.
+      if (result.status === 'Active') {
+        try {
+          await reloadAccountingMappers();
+        } catch (error) {
+          logger.error('Recarga dos mappers contábeis falhou depois do activate-default', {
+            unitId,
+            bindingVersion: result.bindingVersion,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          const failed = {
+            ...result,
+            status: 'Draft' as const,
+            blocking: [
+              {
+                code: 'ACCOUNTING_SYNC_RELOAD_FAILED',
+                message:
+                  'O binding foi ativado, mas a recarga dos mappers contábeis falhou: as vendas desta unidade só passam a ser lançadas depois do próximo reinício do servidor.',
+              },
+            ],
+          };
+          return res.json({ success: true, data: ActivateDefaultBindingResultSchema.parse(failed) });
+        }
+      }
       return res.json({ success: true, data: ActivateDefaultBindingResultSchema.parse(result) });
     } catch (error) {
       return handleApiError(error, res);

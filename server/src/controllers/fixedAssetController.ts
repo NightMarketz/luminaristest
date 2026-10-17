@@ -2,7 +2,6 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
 import { ValidationError } from '../lib/errors';
 import {
   ActivateFixedAssetSchema,
@@ -22,7 +21,7 @@ export const listFixedAssets = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = ListFixedAssetsQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const data = await getFactory().getFixedAssetService().listAssets(scope, { status: parsed.data.status, classId: parsed.data.classId });
     return res.json({ success: true, data });
   } catch (error) {
@@ -36,7 +35,7 @@ export const getFixedAsset = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = FixedAssetScopeQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const data = await getFactory().getFixedAssetService().getAsset(scope, req.params.id);
     return res.json({ success: true, data });
   } catch (error) {
@@ -50,7 +49,7 @@ export const createFixedAsset = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = CreateFixedAssetSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getFixedAssetService().createAsset(scope, parsed.data);
     return res.status(201).json({ success: true, data });
   } catch (error) {
@@ -67,7 +66,7 @@ export const updateFixedAsset = async (req: Request, res: Response) => {
     if (parsed.data.assetId !== req.params.id) {
       return res.status(400).json({ success: false, error: `assetId do corpo (${parsed.data.assetId}) diverge do :id (${req.params.id}).` });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getFixedAssetService().updateAsset(scope, req.params.id, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -84,7 +83,7 @@ export const deleteFixedAsset = async (req: Request, res: Response) => {
     if (parsed.data.assetId !== req.params.id) {
       throw new ValidationError(`assetId do corpo (${parsed.data.assetId}) diverge do :id (${req.params.id}).`);
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getFixedAssetService().deleteAsset(scope, req.params.id);
     return res.json({ success: true, data });
   } catch (error) {
@@ -101,7 +100,7 @@ export const activateFixedAsset = async (req: Request, res: Response) => {
     if (parsed.data.assetId !== req.params.id) {
       return res.status(400).json({ success: false, error: `assetId do corpo (${parsed.data.assetId}) diverge do :id (${req.params.id}).` });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getFixedAssetService().activateAsset(scope, req.params.id, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -118,7 +117,7 @@ export const disposeFixedAsset = async (req: Request, res: Response) => {
     if (parsed.data.assetId !== req.params.id) {
       return res.status(400).json({ success: false, error: `assetId do corpo (${parsed.data.assetId}) diverge do :id (${req.params.id}).` });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getFixedAssetService().disposeAsset(scope, req.params.id, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -133,7 +132,7 @@ export const runDepreciation = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = RunDepreciationSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getDepreciationService().runMonth(scope, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -148,7 +147,7 @@ export const reconcileFixedAssets = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = ReconcileFixedAssetsSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getDepreciationService().reconcile(scope, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {

@@ -1,5 +1,5 @@
 import { AccountingReportService } from '../AccountingReportService';
-import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import type { Account } from 'generated/prisma';
 
 /**
@@ -9,7 +9,7 @@ import type { Account } from 'generated/prisma';
  * Fixture mistura naturezas (Revenue credit-normal e Expense debit-normal, ambas encerradas) — memória
  * `bp-dre-diagnostics-test-must-mix-natures`. Mesma técnica do `AccountingReportService.closing.test`.
  */
-const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'owner-1' }, 'unit-1');
 const acc = (code: string, nature: string): Account =>
   ({ id: code, userId: 'owner-1', unitId: 'unit-1', code, name: code, nature, acceptsEntries: true, createdAt: new Date(), updatedAt: new Date(), deletedAt: null }) as Account;
 const ACCOUNTS = [acc('1.1', 'Asset'), acc('2.3.1', 'Equity'), acc('3.1', 'Revenue'), acc('4.1', 'Expense'), acc('4.9.1', 'Expense')];

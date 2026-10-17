@@ -1,10 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { getCookie } from 'cookies-next';
-import { IMessage, ICustomizationState, ICreationChoicePrompt, CreationChoice } from '../types/InterviewTypes';
+import { useTranslation } from 'next-i18next';
+import { IMessage, ICustomizationState, ICreationChoicePrompt, CreationChoice, ICreationError, InterviewModuleOption, ModuleKey } from '../types/InterviewTypes';
 import { ITable } from '../types/RightSidebarTypes';
-import type { CreateDashboardPayload } from '../../../lib/services/setup.service';
+import type { CreateDashboardPayload, CreateDashboardResult } from '../../../lib/services/setup.service';
+import { notifyAccountingDraft } from '../setup/accountingDraftNotice';
+import { classifyCreationError } from '../setup/classifyCreationError';
+import { toggleModuleSelection } from '../setup/moduleSelection';
 import type { OnboardingFiscalInput } from '@/types/contracts/accounting/CompanyFiscalProfileDto.gen';
+import type { ChatInterviewInput } from '@/types/contracts/interview/ChatInterviewDto.gen';
 
 /**
  * BE-INCR-ONBOARDING-FIRST-UNIT (I1, BRIEF item 5): na Entrevista o nome da primeira unidade vem do `SUMMARY:` que a IA
@@ -35,11 +40,16 @@ export function useAiInterview() {
   const [presetKey, setPresetKey] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [creationError, setCreationError] = useState<string | null>(null);
+  const [creationError, setCreationError] = useState<ICreationError | null>(null);
+  // W7 item 3 (F-W7-2 a): o último pedido de criação — o retry o reenvia igual, sem recarregar a página.
+  const lastCreateRequest = useRef<{ key: string; conversa: IMessage[]; fiscal: FiscalOnboarding; modules: ModuleKey[] } | null>(null);
   // X13 PR-3 item 20: a entrevista terminou; falta a pergunta fechada de regime/porte antes do create.
   const [fiscalPendente, setFiscalPendente] = useState<{ key: string; conversa: IMessage[] } | null>(null);
   // W3 FE item 7: o servidor pede os botões criar × customizar (`choicePrompt` do último turno).
   const [choicePrompt, setChoicePrompt] = useState<ICreationChoicePrompt | null>(null);
+  // W5 item 14 (FE-INCR-W5-MODULES): módulos do turno MATCHING_PRESET e a seleção (começa pelos `suggested`).
+  const [moduleOptions, setModuleOptions] = useState<InterviewModuleOption[]>([]);
+  const [selectedModules, setSelectedModules] = useState<ModuleKey[]>([]);
   // W3 FE item 12: trava síncrona — `isLoading` só muda no próximo render, então dois cliques rápidos passariam.
   const choiceInFlight = useRef(false);
   const [customizationState, setCustomizationState] = useState<ICustomizationState | null>(null);
@@ -49,29 +59,37 @@ export function useAiInterview() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const { t } = useTranslation('common');
 
   useEffect(() => {
+    // W7 item 1: o cleanup aborta a saudação da 1ª montagem do StrictMode (e a de quem sai antes da resposta) —
+    // uma chamada ao modelo por montagem viva, nunca duas.
+    const controller = new AbortController();
     async function fetchInitialMessage() {
       setIsLoading(true);
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/ai/ChatInterview`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getCookie('auth_token')}` },
-          body: JSON.stringify({ messages: [], stage: 'GREETING' })
+          body: JSON.stringify({ messages: [], stage: 'GREETING' }),
+          signal: controller.signal
         });
         const data = await response.json();
+        if (controller.signal.aborted) return;
         if (data.response) {
           setMessages([{ sender: 'ai', text: data.response }]);
           setCurrentStage(data.nextStage);
         }
       } catch (error) {
+        if (controller.signal.aborted) return;
         console.error('Failed to fetch initial message:', error);
-        setMessages([{ sender: 'ai', text: 'Olá! Houve um problema ao iniciar. Por favor, recarregue a página.' }]);
+        setMessages([{ sender: 'ai', text: t('onboardingGreetingFailed') }]);
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     }
     fetchInitialMessage();
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {
@@ -86,45 +104,68 @@ export function useAiInterview() {
     }
   }, [isLoading]);
 
-  const logState = () => {
-    console.log({
-      stage: currentStage,
-      messages,
-      customizationState,
-      isCreating,
-      creationError,
-      selectedTable,
-      showLeftPanel: showCustomizationPanel,
-      showRightPanel
-    });
-  };
-
-  async function handleCreateSystem(key: string, conversa: IMessage[], fiscal: FiscalOnboarding) {
+  async function handleCreateSystem(key: string, conversa: IMessage[], fiscal: FiscalOnboarding, modules: ModuleKey[]) {
+    lastCreateRequest.current = { key, conversa, fiscal, modules };
     setIsCreating(true);
     setCreationError(null);
     try {
       const token = getCookie('auth_token');
-      const body: CreateDashboardPayload = { suiteKey: key, unit: { name: nomeDaUnidadeDaEntrevista(conversa, key) }, fiscal };
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-      });
+      // W5 item 16: os módulos escolhidos na entrevista vão no create (somados ao padrão da suíte no servidor).
+      const body: CreateDashboardPayload = { suiteKey: key, unit: { name: nomeDaUnidadeDaEntrevista(conversa, key) }, fiscal, modules };
+      let response: Response;
+      try {
+        response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/create`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(body),
+        });
+      } catch (err) {
+        // W7 item 4: falha de rede — o pedido pode ser reenviado (o 403 one-shot barra a criação dupla).
+        setCreationError({ kind: classifyCreationError(null, null), message: (err instanceof Error && err.message) || t('onboardingErrorUnexpected') });
+        setIsCreating(false);
+        return;
+      }
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Não foi possível criar o sistema.' }));
-        throw new Error(errorData.error || 'Ocorreu uma falha ao criar seu dashboard.');
+        const errorData = (await response.json().catch(() => null)) as { error?: string; errorCode?: string } | null;
+        setCreationError({
+          kind: classifyCreationError(response.status, errorData),
+          message: errorData?.error || t('onboardingErrorCreateFailed'),
+        });
+        setIsCreating(false);
+        return;
       }
+      // I4 PR-4 (item 21): contabilidade `Draft` ⇒ aviso que não bloqueia, antes de navegar.
+      const created = (await response.json().catch(() => ({}))) as { data?: CreateDashboardResult };
+      notifyAccountingDraft(created.data?.accounting, t);
       setTimeout(() => {
         router.push('/dashboard');
       }, 2000);
 
     } catch (err) {
-      setCreationError((err instanceof Error ? err.message : String(err)) || 'Ocorreu um erro inesperado.');
+      setCreationError({ kind: 'retryable', message: (err instanceof Error ? err.message : String(err)) || t('onboardingErrorUnexpected') });
       setIsCreating(false);
+    }
+  }
+
+  /**
+   * W4 PR-2 (BRIEF item 13): a sessão expirou, sumiu ou não é do usuário — descarta a sessão local e volta à escolha
+   * criar × customizar do mesmo preset (botões do W3, `reason: 'error'`); sem preset, volta à descoberta do negócio.
+   */
+  function handleSessionLost() {
+    setSessionId(null);
+    setCustomizationState(null);
+    setShowCustomizationPanel(false);
+    setMessages(prev => [...prev, { sender: 'ai', text: t('onboardingSessionExpired') }]);
+    if (presetKey) {
+      setCurrentStage('AWAITING_CREATION_TYPE_CONFIRMATION');
+      setChoicePrompt({ kind: 'creation_type', reason: 'error' });
+    } else {
+      setCurrentStage('DISCOVERING_BUSINESS');
+      setChoicePrompt(null);
     }
   }
 
@@ -136,17 +177,31 @@ export function useAiInterview() {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/ai/ChatInterview`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getCookie('auth_token')}` },
-        body: JSON.stringify({ 
-          messages: newMessages, 
-          stage: currentStage, 
+        // W4: `ChatInterviewSchema` é `.strict()` — o corpo é tipado pelo contrato gerado (chave extra = 400).
+        body: JSON.stringify({
+          messages: newMessages,
+          stage: currentStage,
           // `ChatInterviewSchema` aceita string ou ausente, nunca null (400) — omite o que ainda não existe.
           ...(presetKey ? { presetKey } : {}),
           ...(sessionId ? { sessionId } : {}),
           ...(choice ? { choice } : {})
-        })
+        } satisfies ChatInterviewInput)
       });
 
-      if (!response.ok) throw new Error('Failed to get response from AI');
+      if (!response.ok) {
+        // W4 PR-2: a sessão de customização tem dono e TTL no servidor — 404/409 com code próprio não são "erro de comunicação".
+        const errorBody = (await response.json().catch(() => null)) as { code?: string } | null;
+        if (response.status === 404 && errorBody?.code === 'INTERVIEW_SESSION_NOT_FOUND') {
+          handleSessionLost();
+          return;
+        }
+        if (response.status === 409 && errorBody?.code === 'INTERVIEW_SESSION_CONFLICT') {
+          // Outra aba gravou a sessão: nada muda aqui (mensagens, estágio, sessionId, painel); o usuário reenvia.
+          setMessages(prev => [...prev, { sender: 'ai', text: t('onboardingSessionConflict') }]);
+          return;
+        }
+        throw new Error('Failed to get response from AI');
+      }
 
       const result = await response.json();
       const { response: aiResponse, nextStage, presetKey: newPresetKey, sessionId: newSessionId, startCustomization, customizationState: newCustomizationState, choicePrompt: newChoicePrompt } = result;
@@ -154,6 +209,16 @@ export function useAiInterview() {
       setMessages(prev => [...prev, { sender: 'ai', text: aiResponse }]);
       setCurrentStage(nextStage);
       setChoicePrompt(newChoicePrompt ?? null);
+
+      // W5 item 14: o turno do match traz `moduleOptions`; outro preset sem opções zera o que era do anterior.
+      const newModuleOptions = result.moduleOptions as InterviewModuleOption[] | undefined;
+      if (newModuleOptions) {
+        setModuleOptions(newModuleOptions);
+        setSelectedModules(newModuleOptions.filter((o) => o.suggested).map((o) => o.key));
+      } else if (newPresetKey && newPresetKey !== presetKey) {
+        setModuleOptions([]);
+        setSelectedModules([]);
+      }
 
       if (newPresetKey) {
         setPresetKey(newPresetKey);
@@ -177,7 +242,7 @@ export function useAiInterview() {
 
     } catch (error) {
       console.error('Failed to get response from AI:', error);
-      setMessages(prev => [...prev, { sender: 'ai', text: 'Desculpe, ocorreu um erro de comunicação.' }]);
+      setMessages(prev => [...prev, { sender: 'ai', text: t('onboardingTurnFailed') }]);
     } finally {
       setIsLoading(false);
     }
@@ -242,12 +307,28 @@ export function useAiInterview() {
     if (!fiscalPendente) return;
     const { key, conversa } = fiscalPendente;
     setFiscalPendente(null);
-    void handleCreateSystem(key, conversa, fiscal);
+    void handleCreateSystem(key, conversa, fiscal, selectedModules);
   }
 
+  /** W7 item 3 (F-W7-2 a): reenvia o último pedido de criação, igual — nunca recarrega a página (perderia a conversa). */
   const handleRetry = () => {
-    window.location.reload();
-  }
+    const last = lastCreateRequest.current;
+    if (!last || isCreating) return;
+    void handleCreateSystem(last.key, last.conversa, last.fiscal, last.modules);
+  };
+
+  /** W7 item 5: fecha o erro e devolve a pergunta fiscal do pedido que falhou; a conversa fica como estava. */
+  const backToConversation = () => {
+    const last = lastCreateRequest.current;
+    setCreationError(null);
+    setIsCreating(false);
+    if (last) setFiscalPendente({ key: last.key, conversa: last.conversa });
+  };
+
+  /** W5 item 15: marca/desmarca um módulo, fechando pelas dependências; travado não muda. */
+  const toggleModule = (key: ModuleKey) => {
+    setSelectedModules((prev) => toggleModuleSelection(moduleOptions, prev, key));
+  };
 
   return {
     messages,
@@ -268,12 +349,15 @@ export function useAiInterview() {
     handleSendMessage,
     handleSelectTable,
     handleUpdateTable,
-    logState,
     handleRetry,
+    backToConversation,
     presetKey,
     choicePrompt,
     sendCreationChoice,
     fiscalPendente: fiscalPendente !== null,
-    confirmarFiscal
+    confirmarFiscal,
+    moduleOptions,
+    selectedModules,
+    toggleModule
   };
 }

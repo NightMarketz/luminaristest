@@ -2,6 +2,7 @@ import { ValidationError } from '../../../../lib/errors';
 import type { PostEntryInput } from '../../dtos/PostingDto';
 import type { AccountingEvent } from '../AccountingSyncPort';
 import type { IAccountingEventMapper } from './IAccountingEventMapper';
+import { A_RECEBER_CODE } from '../../fixtures/ChartOfAccountsFixture';
 
 /**
  * Maps `sale.returned` → contra-revenue entry (Incremento D / devolução):
@@ -19,7 +20,7 @@ export class SaleReturnedMapper implements IAccountingEventMapper {
 
   /** Leaf account codes (canonical chart). */
   private static readonly DEBIT_ACCOUNT = '3.2'; //  Devoluções de Vendas (contra-revenue)
-  private static readonly CREDIT_ACCOUNT = '1.1.2'; // A Receber
+  private static readonly CREDIT_ACCOUNT = A_RECEBER_CODE; // A Receber
 
   public map(event: AccountingEvent): PostEntryInput {
     // MONEY BOUNDARY (Contract §2.1 / AC-2.2-1) — identical to SaleFinalizedMapper. The

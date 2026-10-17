@@ -123,6 +123,9 @@ export class FakeReportRepo implements ICrmReportDefinitionRepository {
   async softDelete(id: string) {
     this.items.get(id)!.deletedAt = new Date();
   }
+  async softDeleteByUserId(userId: string) {
+    for (const r of this.items.values()) if (r.userId === userId && !r.deletedAt) r.deletedAt = new Date();
+  }
 }
 
 export class FakePtaxRepo implements IPtaxRateRepository {

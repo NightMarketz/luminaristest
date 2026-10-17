@@ -24,14 +24,14 @@
 import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { getFactory } from '@/lib/factory';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 
 const UNIT = 'unit-dim-roundtrip';
 const DONO = 'u-dim-roundtrip';
 const DATA = '2026-06-15';
 
-const scope: AccountingScope = resolveAccountingScope({ userId: DONO }, UNIT);
+const scope: AccountingScope = resolveAccountingScopeInternal({ userId: DONO }, UNIT);
 const approval = () => getFactory().getEntryApprovalService();
 const posting = () => getFactory().getPostingService();
 
@@ -78,7 +78,7 @@ describe('etiqueta de dimensão no read que alimenta o editor (SQLite real)', ()
       description: 'Aluguel com centro de custo',
       lines: [
         { accountCode: '4.1', debitCents: 150000, creditCents: 0, dimensions: ['val-loja-a'] },
-        { accountCode: '1.1.1', debitCents: 0, creditCents: 150000 },
+        { accountCode: '1.1.1.01', debitCents: 0, creditCents: 150000 },
       ],
     });
 

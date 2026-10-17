@@ -51,10 +51,10 @@ const POS_ID = 'acc-112';
 const INV_ID = 'acc-116';
 
 const CHART: Record<string, { id: string; code: string; name: string; nature: string }> = {
-  [CLIENTES_A_RECEBER_CODE]: { id: AR_ID, code: '1.1.5', name: 'Clientes a Receber', nature: 'Asset' },
-  [FORNECEDORES_A_PAGAR_CODE]: { id: AP_ID, code: '2.1.2', name: 'Fornecedores a Pagar', nature: 'Liability' },
-  [POS_RECEIVABLE_CODE]: { id: POS_ID, code: '1.1.2', name: 'A Receber', nature: 'Asset' },
-  [ESTOQUES_CODE]: { id: INV_ID, code: '1.1.6', name: 'Estoques', nature: 'Asset' },
+  [CLIENTES_A_RECEBER_CODE]: { id: AR_ID, code: '1.1.2.03', name: 'Clientes a Receber', nature: 'Asset' },
+  [FORNECEDORES_A_PAGAR_CODE]: { id: AP_ID, code: '2.1.2.01', name: 'Fornecedores a Pagar', nature: 'Liability' },
+  [POS_RECEIVABLE_CODE]: { id: POS_ID, code: '1.1.2.01', name: 'A Receber', nature: 'Asset' },
+  [ESTOQUES_CODE]: { id: INV_ID, code: '1.1.3.01', name: 'Estoques', nature: 'Asset' },
 };
 
 interface Totals {
@@ -181,7 +181,7 @@ describe('TieOutDiagnosticService.tieOut — fixture cross-nature balanceada', (
     expect(ar.ledgerCents).toBe('7000');
     expect(ar.differenceCents).toBe('0');
     expect(ar.balanced).toBe(true);
-    expect(ar.controlAccountCode).toBe('1.1.5');
+    expect(ar.controlAccountCode).toBe('1.1.2.03');
     expect(ar.controlAccountName).toBe('Clientes a Receber');
 
     // Liability: fecha pelo saldo CREDOR (crédito − débito) — não pelo devedor.
@@ -189,20 +189,20 @@ describe('TieOutDiagnosticService.tieOut — fixture cross-nature balanceada', (
     expect(ap.subledgerCents).toBe('3000');
     expect(ap.ledgerCents).toBe('3000');
     expect(ap.balanced).toBe(true);
-    expect(ap.controlAccountCode).toBe('2.1.2');
+    expect(ap.controlAccountCode).toBe('2.1.2.01');
 
     const pos = checkById(r.checks, 'pos_receivable');
     expect(pos.subledgerCents).toBe('6000'); // total 6000 − residual 0 = agregado salão+CRM
     expect(pos.ledgerCents).toBe('6000');
     expect(pos.balanced).toBe(true);
-    expect(pos.controlAccountCode).toBe('1.1.2');
+    expect(pos.controlAccountCode).toBe('1.1.2.01');
 
     // Estoque (LAC-E): Σ InventoryItem.totalValueCents vs saldo devedor da 1.1.6.
     const inv = checkById(r.checks, 'inventory');
     expect(inv.subledgerCents).toBe('6500');
     expect(inv.ledgerCents).toBe('6500');
     expect(inv.balanced).toBe(true);
-    expect(inv.controlAccountCode).toBe('1.1.6');
+    expect(inv.controlAccountCode).toBe('1.1.3.01');
     expect(inv.controlAccountName).toBe('Estoques');
   });
 

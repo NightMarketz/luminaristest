@@ -40,7 +40,8 @@ import type { IReceivableRepository } from '../repositories/IReceivableRepositor
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AuditService } from './AuditService';
-import { resolveAccountingScope, type AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeInternal';
 
 /** Projeção pública. `payer` só no detalhe e só para quem gerencia o título (F9, dono 10/10). Nunca credencial. */
 export interface CollectionChargeView {
@@ -342,7 +343,7 @@ export class CollectionChargeService {
   // ── Internos ───────────────────────────────────────────────────────────────
   /** CREATING cujo `expiresAt` já passou ⇒ CAS para EXPIRED (+ audit na mesma tx), sem chamar o provedor. */
   private async expireUnsent(charge: CollectionCharge): Promise<void> {
-    const scope = resolveAccountingScope({ userId: charge.userId }, charge.unitId);
+    const scope = resolveAccountingScopeInternal({ userId: charge.userId }, charge.unitId);
     await this.repo.runTransaction(async (tx) => {
       const n = await this.repo.casStatus(charge.id, 'CREATING', { status: 'EXPIRED' }, tx);
       if (n === 1) {
@@ -353,7 +354,7 @@ export class CollectionChargeService {
 
   /** Chamada externa da criação/re-drive (P2-2/P2-3) e o 2º commit. */
   private async send(charge: CollectionCharge, account: PaymentAccount, keyring: Keyring, expiresIn: string): Promise<CollectionCharge> {
-    const scope = resolveAccountingScope({ userId: charge.userId }, charge.unitId);
+    const scope = resolveAccountingScopeInternal({ userId: charge.userId }, charge.unitId);
     const resolved = this.resolve(account, keyring);
     const port = this.providerFor(account.provider);
     const receivable = await this.receivableRepo.findById(scope, charge.receivableId);
@@ -454,7 +455,7 @@ export class CollectionChargeService {
         tx,
       );
       if (n === 1) {
-        const scope = resolveAccountingScope({ userId: current.userId }, current.unitId);
+        const scope = resolveAccountingScopeInternal({ userId: current.userId }, current.unitId);
         await this.audit(tx, scope, COLLECTION_CHARGE_STATUS_CHANGED, chargeId, {
           from,
           to,
@@ -491,7 +492,7 @@ export class CollectionChargeService {
 
   /** Público desde o PR-3: o job do relatório (P3-5) aplica o mesmo P2-4. */
   async markCredentialInvalid(account: PaymentAccount): Promise<void> {
-    const scope = resolveAccountingScope({ userId: account.userId }, account.unitId);
+    const scope = resolveAccountingScopeInternal({ userId: account.userId }, account.unitId);
     await this.paymentAccountRepo.runTransaction(async (tx) => {
       const fresh = await this.paymentAccountRepo.findById(scope, account.id, tx);
       if (!fresh || fresh.status !== 'ACTIVE') return;

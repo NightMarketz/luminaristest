@@ -5,9 +5,10 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { ApplicationFactory } from '@/lib/factory';
-import { resolveAccountingScope, type AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { maybeSyncSaleFinalized } from '@/features/accounting/sync/bridges/SaleSalesAccountingBridge';
 import { maybeReverseSale } from '@/features/accounting/sync/bridges/SaleReversalBridge';
 import { reconcileReceitaFiscalEstornos } from '@/jobs/accountingSyncReconcile.job';
@@ -22,7 +23,7 @@ const CNPJ = '11222333000181';
 let user: { id: string; username: string };
 let tables: Record<'sales' | 'saleItems' | 'units', string>;
 let UNIT: string;
-const scope = (): AccountingScope => resolveAccountingScope({ userId: user.id }, UNIT);
+const scope = (): AccountingScope => resolveAccountingScopeInternal({ userId: user.id }, UNIT);
 const f = () => ApplicationFactory.getInstance();
 const S = '/api/accounting/simples';
 
@@ -61,6 +62,7 @@ beforeAll(async () => {
   const byName = async (n: string) => (await prisma.dynamicTable.findFirstOrThrow({ where: { userId: user.id, internalName: n } })).id;
   tables = { sales: await byName('sales'), saleItems: await byName('saleItems'), units: await byName('units') };
   UNIT = (await row('units', { name: 'Matriz', cnpj: CNPJ })).id;
+  await seedUnit({ userId: user.id, id: 'outra-unidade' }); // I6: a "outra unidade" do F-SD-4 é do mesmo dono — linha real de units
   await f().getPostingService().ensureChartOfAccounts(scope());
   const hoje = scopeToday(scope()).slice(0, 7);
   for (const ym of new Set(['2026-06', '2026-07', hoje])) {
@@ -160,6 +162,59 @@ describe('itens 19–21 — registro do DAS, provisão, substituição', () => {
     spy.mockRestore();
     expect(r.status).toBe(409);
     expect(await prisma.simplesApuracao.count()).toBe(antes);
+  });
+});
+
+// BE-INCR-SOURCE-DOCUMENT-UPLOAD itens 6–7, 11 (F-SD-4 a, F-SD-8 a, F-SD-9 a) — o PDF do DAS. Estado herdado: o DAS
+// vigente de 2026-06 é o '…0002' de R$ 5.280,00 (bloco anterior), sem documento.
+describe('PDF do DAS — validação, anexo ao DAS já registrado e leitura', () => {
+  const enviar = async (sourceType: string, unitId = UNIT) =>
+    (
+      await request(app)
+        .post('/api/accounting/source-documents')
+        .set(authHeader(user))
+        .field('unitId', unitId)
+        .field('sourceType', sourceType)
+        .attach('file', Buffer.from('%PDF-1.4 DAS'), { filename: 'das-2026-06.pdf', contentType: 'application/pdf' })
+    ).body.data as { id: string; attachment: { id: string; fileName: string } };
+  const mesmoDas = (sourceDocumentId?: string) => das('2026-06', { numeroDocumento: '07202617000000002', valorCents: 528_000, ...(sourceDocumentId ? { sourceDocumentId } : {}) });
+  const vigente = () => prisma.simplesApuracao.findFirstOrThrow({ where: { userId: user.id, competencia: '2026-06', status: 'CONFIRMED' } });
+  const anexados = () => prisma.auditEvent.findMany({ where: { eventType: 'tax.simples_das.documento_anexado' }, orderBy: { createdAt: 'asc' } });
+
+  it('F-SD-4: SD inexistente, de outra unidade, de outro tipo ou retirado = 404 antes de gravar', async () => {
+    const antes = await vigente();
+    const retirado = await enviar('tax.simples.das');
+    await prisma.sourceDocument.update({ where: { id: retirado.id }, data: { deletedAt: new Date() } });
+    for (const id of ['nao-existe', (await enviar('tax.simples.das', 'outra-unidade')).id, (await enviar('tax.simples.historico')).id, retirado.id]) {
+      expect((await mesmoDas(id)).status).toBe(404);
+      // Também no caminho do registro novo (outro número): nada é gravado.
+      expect((await das('2026-06', { numeroDocumento: '07202617000000009', valorCents: 528_000, sourceDocumentId: id })).status).toBe(404);
+    }
+    expect(await vigente()).toEqual(antes);
+    expect(await anexados()).toHaveLength(0);
+  });
+
+  it('F-SD-8 + F-SD-9: o mesmo DAS de novo com o PDF anexa (sem linha nova), audita e a visão traz o documento', async () => {
+    const linhas = await prisma.simplesApuracao.count({ where: { userId: user.id } });
+    const pdf1 = await enviar('tax.simples.das');
+    const r = await mesmoDas(pdf1.id);
+    expect(r.status).toBe(200);
+    expect(r.body.data.dasOficial.documento).toEqual({ sourceDocumentId: pdf1.id, attachmentId: pdf1.attachment.id, fileName: pdf1.attachment.fileName });
+    const v = await vigente();
+    expect(v.sourceDocumentId).toBe(pdf1.id);
+    expect(await prisma.simplesApuracao.count({ where: { userId: user.id } })).toBe(linhas);
+    expect(JSON.parse((await anexados())[0].payload)).toEqual({ apuracaoId: v.id, competencia: '2026-06', sourceDocumentId: pdf1.id });
+
+    // Trocar o PDF: o evento leva o anterior. Sem sourceDocumentId (ou o mesmo) = mantém, sem evento.
+    const pdf2 = await enviar('tax.simples.das');
+    expect((await mesmoDas(pdf2.id)).body.data.dasOficial.documento.sourceDocumentId).toBe(pdf2.id);
+    expect(JSON.parse((await anexados())[1].payload)).toEqual({ apuracaoId: v.id, competencia: '2026-06', sourceDocumentId: pdf2.id, anteriorSourceDocumentId: pdf1.id });
+    expect((await mesmoDas()).body.data.dasOficial.documento.sourceDocumentId).toBe(pdf2.id);
+    await mesmoDas(pdf2.id);
+    expect(await anexados()).toHaveLength(2);
+    // GET da apuração (item 18) devolve o mesmo documento.
+    const get = await request(app).get(`${S}/apuracoes/2026-06?unitId=${UNIT}`).set(authHeader(user));
+    expect(get.body.data.dasOficial.documento.sourceDocumentId).toBe(pdf2.id);
   });
 });
 
@@ -291,16 +346,56 @@ describe('X14 PR-4 item 28 — DEFIS espelho mínimo', () => {
     expect(r.status).toBe(200);
     const dre = await f().getAccountingReportService().incomeStatement(scope(), new Date('2026-12-31T23:59:59.999Z'));
     expect(r.body.data).toMatchObject({ ano: 2026, prazo: '2027-03-31', mesesApurados: ['2026-06'], estoqueInicialCents: 0, estoqueFinalCents: 0, digitado: null });
-    expect(r.body.data.lucroContabilCents).toBe(Number(dre.netResult.amountCents));
+    expect(r.body.data.lucroContabil.valorCents).toBe(Number(dre.netResult.amountCents));
+    expect(r.body.data).not.toHaveProperty('lucroContabilCents'); // F-DM-5 (a)
   });
 
-  it('PUT grava os digitados; participação dos sócios acima de 100% ⇒ 400', async () => {
-    const socio = { contactId: 'ct-1', rendimentosIsentosCents: 100_000, rendimentosTributaveisCents: 50_000, participacaoBp: 10_000, irrfCents: 0 };
-    const corpo = { unitId: UNIT, empregadosInicio: 2, empregadosFim: 3, ganhosRendaVariavelCents: 0 };
+  it('BE-INCR-SIMPLES-DEFIS-MANUAL item 7: limite do art. 145 § 1º = receita da apuração × 32% − IRPJ calculado; informar = lucro > limite', async () => {
+    const ap = await prisma.simplesApuracao.findFirstOrThrow({ where: { userId: user.id, unitId: UNIT, competencia: '2026-06', status: 'CONFIRMED', deletedAt: null } });
+    const ats = (ap.memoria as { atividades: Array<{ natureza: string; receitaCents: number; tributos: { IRPJ?: number } }> }).atividades;
+    expect(ats.every((a) => a.natureza === 'SERVICO')).toBe(true);
+    const receita = ats.reduce((s, a) => s + a.receitaCents, 0);
+    const irpj = ats.reduce((s, a) => s + (a.tributos.IRPJ ?? 0), 0);
+    expect(irpj).toBeGreaterThan(0);
+    const limite = Math.round((receita * 3200) / 10000) - irpj;
+    const { lucroContabil } = (await defis(2026)).body.data;
+    expect(lucroContabil).toEqual({
+      valorCents: lucroContabil.valorCents,
+      limiteIsencaoCents: limite,
+      informar: lucroContabil.valorCents > limite,
+      calculo: 'PRESUNCAO',
+      avisos: [],
+    });
+  });
+
+  it('PUT grava os digitados; sócios + tesouraria ≠ 100% ⇒ 400', async () => {
+    const socio = { contactId: 'ct-1', rendimentosIsentosCents: 100_000, rendimentosTributaveisCents: 50_000, participacaoBp: 9_000, irrfCents: 0 };
+    const corpo = {
+      unitId: UNIT,
+      empregadosInicio: 2,
+      empregadosFim: 3,
+      ganhosCapitalCents: 12_345,
+      ganhosRendaVariavelCents: 0,
+      exportacaoDiretaCents: 50_000,
+      exportacaoComercial: [{ cnpj: '11222333000181', valorCents: 70_000 }],
+      cotasTesourariaBp: 1_000,
+      doacoesEleitorais: [{ cnpj: '11222333000181', tipoBeneficiario: 'PARTIDO_POLITICO', formaDoacao: 'BENS', valorCents: 1_000 }],
+    };
     expect((await request(app).put(`${S}/defis/2026`).set(authHeader(user)).send({ ...corpo, socios: [socio, { ...socio, contactId: 'ct-2', participacaoBp: 1 }] })).status).toBe(400);
+    expect((await request(app).put(`${S}/defis/2026`).set(authHeader(user)).send({ ...corpo, cotasTesourariaBp: 0, socios: [socio] })).status).toBe(400);
     const ok = await request(app).put(`${S}/defis/2026`).set(authHeader(user)).send({ ...corpo, socios: [socio] });
     expect(ok.status).toBe(200);
-    expect(ok.body.data.digitado).toEqual({ empregadosInicio: 2, empregadosFim: 3, ganhosRendaVariavelCents: 0, socios: [socio] });
+    const { unitId: _u, ...digitado } = corpo;
+    expect(ok.body.data.digitado).toEqual({ ...digitado, socios: [socio] });
+  });
+
+  it('BE-INCR-SIMPLES-DEFIS-MANUAL item 8: linha gravada no formato antigo lê com 0 / []', async () => {
+    const socio = { contactId: 'ct-1', rendimentosIsentosCents: 0, rendimentosTributaveisCents: 0, participacaoBp: 10_000, irrfCents: 0 };
+    const antigo = { empregadosInicio: 1, empregadosFim: 1, ganhosRendaVariavelCents: 5, socios: [socio] };
+    await prisma.simplesDeclaracaoAnual.update({ where: { userId_unitId_ano_tipo: { userId: user.id, unitId: UNIT, ano: 2026, tipo: 'DEFIS' } }, data: { dados: antigo } });
+    const r = await defis(2026);
+    expect(r.status).toBe(200);
+    expect(r.body.data.digitado).toEqual({ ...antigo, ganhosCapitalCents: 0, exportacaoDiretaCents: 0, exportacaoComercial: [], cotasTesourariaBp: 0, doacoesEleitorais: [] });
   });
 
   it('2027 (a declaração muda pela LC 214) e ano fora do Simples (2025 = Presumido) ⇒ 400', async () => {

@@ -1,6 +1,7 @@
 ﻿import prisma from '../../../lib/prisma';
 import type { DynamicTable, DynamicTableData } from 'generated/prisma';
-import { IDynamicTable, IDynamicTableData, ITableSchema, ISchemaField } from '../models/DynamicTable.model';
+import { IDynamicTable, IDynamicTableData, ITableSchema, ISchemaField, FieldEquals } from '../models/DynamicTable.model';
+import { fieldEqualsWhere } from './fieldEqualsSql';
 import { CreateDynamicTableDtoType, UpdateDynamicTableDtoType, UpdateDynamicTableSchemaDtoType } from '../dtos/DynamicTable.dto';
 import { Prisma } from 'generated/prisma';
 import { IDynamicTableRepository } from './IDynamicTableRepository';
@@ -374,6 +375,21 @@ export class DynamicTableRepository implements IDynamicTableRepository {
     return rows;
   }
 
+  async findDataByFieldEquals(tableId: string, filters: FieldEquals[], limit: number): Promise<{ rows: IDynamicTableData[]; total: number }> {
+    const where = fieldEqualsWhere(tableId, filters);
+    const [countRow]: [{ count: bigint }] = await this.client.$queryRaw(
+      Prisma.sql`SELECT COUNT(*) as count FROM "dynamic_table_data" WHERE ${where}`
+    );
+    const ids: Array<{ id: string }> = await this.client.$queryRaw(
+      Prisma.sql`SELECT id FROM "dynamic_table_data" WHERE ${where} ORDER BY "createdAt" DESC LIMIT ${limit}`
+    );
+    // Linhas pelo client tipado (data como JSON, datas como Date), na ordem do SELECT acima.
+    const rows = ids.length
+      ? await this.client.dynamicTableData.findMany({ where: { id: { in: ids.map(r => r.id) } }, orderBy: { createdAt: 'desc' } })
+      : [];
+    return { rows, total: Number(countRow.count) };
+  }
+
   async existsByIdInTable(dataId: string, tableId: string): Promise<boolean> {
     const count = await this.client.dynamicTableData.count({
       where: {
@@ -383,6 +399,13 @@ export class DynamicTableRepository implements IDynamicTableRepository {
       },
     });
     return count > 0;
+  }
+
+  async findUnitRowState(ownerUserId: string, unitId: string): Promise<'live' | 'deleted' | null> {
+    // Uma consulta por PK com a tabela-mãe (padrão de rekeyLegacyUnitCli.classify): o dono e o internalName vêm dela.
+    const row = await this.client.dynamicTableData.findUnique({ where: { id: unitId }, include: { dynamicTable: true } });
+    if (!row || row.dynamicTable.userId !== ownerUserId || row.dynamicTable.internalName !== 'units') return null;
+    return row.deletedAt ? 'deleted' : 'live';
   }
 
   // removed duplicate implementation

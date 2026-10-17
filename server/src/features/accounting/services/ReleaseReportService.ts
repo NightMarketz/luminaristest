@@ -26,7 +26,8 @@ import type { IReconciliationRepository } from '../repositories/IReconciliationR
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AuditService } from './AuditService';
 import type { ReconciliationService } from './ReconciliationService';
-import { resolveAccountingScope, type AccountingScope } from '../scope/AccountingScope';
+import type { AccountingScope } from '../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeInternal';
 
 export interface ReleaseReportFetchSummary {
   accounts: number;
@@ -196,7 +197,7 @@ export class ReleaseReportService {
       logger.warn('mp_release_report_fetch: conta sem ator válido (G5) — pulada', { paymentAccountId: account.id });
       return 'skipped';
     }
-    const scope: AccountingScope = { ...resolveAccountingScope({ userId: account.userId }, account.unitId), actorUserId: actor };
+    const scope: AccountingScope = { ...resolveAccountingScopeInternal({ userId: account.userId }, account.unitId), actorUserId: actor };
     if (!this.policy.canReconcile(scope) || !this.policy.canManagePaymentAccounts(scope)) {
       logger.warn('mp_release_report_fetch: ator sem permissão (G5) — pulada', { paymentAccountId: account.id });
       return 'skipped';

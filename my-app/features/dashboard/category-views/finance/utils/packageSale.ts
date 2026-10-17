@@ -2,7 +2,7 @@
  * Regras de tela da venda de pacote pré-pago (FE-INCR-VENDA-PACOTE).
  *
  * Fonte: docs/accounting/FE-INCR-VENDA-PACOTE-brief.md §3 (itens 3–6) e as cédulas de
- * D-2026-10-05-FE-PACOTE-VALIDADE-FORKS (F-FE-VP-1/1b/3). Valem só no wizard: pela tabela
+ * D-2026-10-05-FE-PACOTE-VALIDADE-FORKS (F-FE-VP-1/1b/3). Valem só no modal Nova Venda: pela tabela
  * genérica ou pela API o servidor não as aplica (BRIEF §8).
  */
 

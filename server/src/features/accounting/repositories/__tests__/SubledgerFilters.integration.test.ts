@@ -18,7 +18,7 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { PayableRepository } from '@/features/accounting/repositories/PayableRepository';
 import { ReceivableRepository } from '@/features/accounting/repositories/ReceivableRepository';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 import { scopeToday } from '@/features/accounting/models/dates';
 import { normalizeCounterpartyName } from '@/features/accounting/models/Counterparty.model';
@@ -62,7 +62,7 @@ const CP_NEUTRA_B = 'cp-flt-neutra-b';
 const apRepo = new PayableRepository();
 const arRepo = new ReceivableRepository();
 
-const escopo = (userId: string): AccountingScope => resolveAccountingScope({ userId }, UNIT);
+const escopo = (userId: string): AccountingScope => resolveAccountingScopeInternal({ userId }, UNIT);
 const dia = (d: string) => new Date(`${d}T00:00:00.000Z`);
 
 /** Página inteira — paginação não é o objeto deste arquivo. */

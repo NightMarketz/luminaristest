@@ -38,8 +38,8 @@ describe('SalePackageSoldMapper', () => {
     const input = mapper.map(event({ amount: 200 }));
     const debit = input.lines.find((l) => l.debitCents > 0)!;
     const credit = input.lines.find((l) => l.creditCents > 0)!;
-    expect(debit.accountCode).toBe('1.1.2');
-    expect(credit.accountCode).toBe('2.1.1');
+    expect(debit.accountCode).toBe('1.1.2.01');
+    expect(credit.accountCode).toBe('2.1.1.01');
     expect(debit.debitCents).toBe(credit.creditCents); // balanced
     // never touches the revenue account
     expect(input.lines.some((l) => l.accountCode === '3.1')).toBe(false);

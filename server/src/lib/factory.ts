@@ -25,11 +25,13 @@ import { ActionProposalRepository } from '../features/chat/repositories/ActionPr
 import { KnowledgeGraphRepository } from '../features/chat/repositories/KnowledgeGraphRepository';
 import { AttachmentRepository } from '../features/attachments/repositories/AttachmentRepository';
 import { SavedTableViewRepository } from '../features/savedViews/repositories/SavedTableViewRepository';
+import { InterviewSessionRepository } from '../features/interview/repositories/InterviewSessionRepository';
 import { AccountRepository } from '../features/accounting/repositories/AccountRepository';
 import { JournalEntryRepository } from '../features/accounting/repositories/JournalEntryRepository';
 import { PostingRepository } from '../features/accounting/repositories/PostingRepository';
 import { AccountingPeriodRepository } from '../features/accounting/repositories/AccountingPeriodRepository';
 import { AuditRepository } from '../features/accounting/repositories/AuditRepository';
+import { AccountingScopeResetRepository } from '../features/accounting/repositories/AccountingScopeResetRepository';
 import { DocumentAttachmentRepository } from '../features/accounting/repositories/DocumentAttachmentRepository';
 import { ReconciliationRepository } from '../features/accounting/repositories/ReconciliationRepository';
 import { DataExchangeRepository } from '../features/accounting/repositories/DataExchangeRepository';
@@ -48,6 +50,7 @@ import { TaxAssessmentRepository } from '../features/accounting/repositories/Tax
 import { MitExportRepository } from '../features/accounting/repositories/MitExportRepository';
 import { SimplesEntradasRepository } from '../features/accounting/repositories/SimplesEntradasRepository';
 import { ReceitaFiscalRepository } from '../features/accounting/repositories/ReceitaFiscalRepository';
+import { ReceitaFiscalRecebimentoRepository } from '../features/accounting/repositories/ReceitaFiscalRecebimentoRepository';
 import { SimplesApuracaoRepository } from '../features/accounting/repositories/SimplesApuracaoRepository';
 import { SimplesDeclaracaoRepository } from '../features/accounting/repositories/SimplesDeclaracaoRepository';
 import { AccountingDeliveryRepository } from '../features/accounting/repositories/AccountingDeliveryRepository';
@@ -82,6 +85,8 @@ import { DynamicTablePolicy } from '../features/dynamicTables/policies/DynamicTa
 import { AttachmentPolicy } from '../features/attachments/policies/AttachmentPolicy';
 import { SavedTableViewPolicy } from '../features/savedViews/policies/SavedTableViewPolicy';
 import { AccountingPolicy } from '../features/accounting/policies/AccountingPolicy';
+import { AccountingScopeResetPolicy } from '../features/accounting/policies/AccountingScopeResetPolicy';
+import { AccountingScopeResetService } from '../features/accounting/services/AccountingScopeResetService';
 import { PackageBalancePolicy } from '../features/packages/policies/PackageBalancePolicy';
 import { PackageAcceptancePolicy } from '../features/packages/policies/PackageAcceptancePolicy';
 
@@ -119,6 +124,7 @@ import { CashForecastReportService } from '../features/accounting/services/CashF
 import { ReconciliationService } from '../features/accounting/services/ReconciliationService';
 import { ReferentialMappingService } from '../features/accounting/services/ReferentialMappingService';
 import { ReferentialCatalogService } from '../features/accounting/services/ReferentialCatalogService';
+import { SourceDocumentUploadService } from '../features/accounting/services/SourceDocumentUploadService';
 import { DocumentAttachmentService } from '../features/accounting/services/DocumentAttachmentService';
 import { DataExchangeExportService } from '../features/accounting/services/DataExchangeExportService';
 import { ReceiptService } from '../features/accounting/services/ReceiptService';
@@ -134,10 +140,11 @@ import { DimensionReportService } from '../features/accounting/services/Dimensio
 import { TieOutDiagnosticService } from '../features/accounting/services/TieOutDiagnosticService';
 import { DynamicTableProductRefLookup } from '../features/accounting/services/ProductRefLookup';
 import { DynamicTablePhysicalStockSync } from '../features/accounting/services/PhysicalStockSync';
-import type { ProductRefPort, StockRowPort, StockRowWriterPort } from '../features/accounting/ports/OriginPorts';
+import type { ProductRefPort, StockRowPort, StockRowWriterPort, UnitRowPort } from '../features/accounting/ports/OriginPorts';
 import { CounterpartyService } from '../features/accounting/services/CounterpartyService';
 import { AccountingContactService } from '../features/accounting/services/AccountingContactService';
 import { AccountantAssignmentService } from '../features/accounting/services/AccountantAssignmentService';
+import { AccountingScopeResolver, type IAccountingScopeResolver } from '../features/accounting/scope/AccountingScopeResolver';
 import { AccountingPolicyVersionService } from '../features/accounting/services/AccountingPolicyVersionService';
 import { PaymentAccountService } from '../features/accounting/services/PaymentAccountService';
 import { FiscalCertificateService } from '../features/accounting/services/FiscalCertificateService';
@@ -151,8 +158,12 @@ import { TaxAssessmentPeriodosService } from '../features/accounting/services/Ta
 import { MitExportService } from '../features/accounting/services/MitExportService';
 import { SimplesEntradasService } from '../features/accounting/services/SimplesEntradasService';
 import { ReceitaFiscalService } from '../features/accounting/services/ReceitaFiscalService';
+import { ReceitaFiscalRecebimentoService } from '../features/accounting/services/ReceitaFiscalRecebimentoService';
 import { SimplesApuracaoService } from '../features/accounting/services/SimplesApuracaoService';
 import { SimplesDeclaracaoService } from '../features/accounting/services/SimplesDeclaracaoService';
+import { SimplesRegistroCaixaService } from '../features/accounting/services/SimplesRegistroCaixaService';
+import { SimplesCreditoIncobravelRepository } from '../features/accounting/repositories/SimplesCreditoIncobravelRepository';
+import type { ISimplesCreditoIncobravelRepository } from '../features/accounting/repositories/ISimplesCreditoIncobravelRepository';
 import { PisCofinsAssessmentService } from '../features/accounting/services/PisCofinsAssessmentService';
 import { AccountingDeliveryService } from '../features/accounting/services/AccountingDeliveryService';
 import { AccountingReviewService } from '../features/accounting/services/AccountingReviewService';
@@ -186,7 +197,7 @@ import { CrmReceivableBridge } from '../features/accounting/sync/bridges/CrmRece
 // existindo em `features/accounting/sync/mappers/*` (são a referência do golden test, Fases 0/1),
 // só não são mais instanciadas em produção por este factory.
 import { archetypeCatalog } from '../features/accountingBinding/archetypes/catalog';
-import { SALE_BINDING_V1 } from '../features/accountingBinding/fixtures/saleBinding';
+import { SALE_BINDING_V2 } from '../features/accountingBinding/fixtures/saleBinding';
 import { InterpretedEventMapper } from '../features/accountingBinding/interpreter/InterpretedEventMapper';
 // A Prensa (BE-INCR-BINDING-PRESS, item 15 do BRIEF, Fase B) — fiação das 3 rotas
 // POST /accounting-binding/compile|validate, GET /accounting-binding.
@@ -205,6 +216,9 @@ import type {
 // BE-INCR-KIT-SETOR PR-2 — instalação do kit de setor (activate-default + installSectorKitCli).
 import { Prisma } from 'generated/prisma';
 import { KitInstallService, type KitVersionsLookup } from '../features/sectorKits/services/KitInstallService';
+import { ServiceFiscalSuggestionService } from '../features/sectorKits/services/ServiceFiscalSuggestionService';
+import { declaredEventKeys } from '../features/sectorKits/registry';
+import { KitTraceService } from '../features/sectorKits/services/KitTraceService';
 import type {
   IKitAuditPort,
   KitChartPort,
@@ -212,18 +226,33 @@ import type {
   KitRegime,
   KitRegimePort,
   KitRoleDefaultsPort,
-  KitServiceFiscalPort,
+  KitOverrideAccountPort,
 } from '../features/sectorKits/services/kitInstallPorts';
 import { KitInstallationRepository } from '../features/sectorKits/repositories/KitInstallationRepository';
 import { SectorKitPolicy } from '../features/sectorKits/policies/SectorKitPolicy';
-import { UpsertServiceFiscalProfileSchema } from '../features/accounting/dtos/ServiceFiscalProfileDto';
+// BE-INCR-KIT-SETOR PR-3 — ajuste papel→conta do contador (rotas /accounting-kit/role-overrides + compile).
+import { RoleAccountOverrideRepository } from '../features/sectorKits/repositories/RoleAccountOverrideRepository';
+import { RoleOverrideSource } from '../features/sectorKits/services/RoleOverrideSource';
+import { RoleAccountOverrideService } from '../features/sectorKits/services/RoleAccountOverrideService';
+// BE-INCR-KIT-SETOR PR-4 — atualização do kit em 3 níveis (CLI do deploy + rotas de pendência).
+import { KitUpgradeRepository } from '../features/sectorKits/repositories/KitUpgradeRepository';
+import { KitUpgradeService } from '../features/sectorKits/services/KitUpgradeService';
+import { KitPendingService } from '../features/sectorKits/services/KitPendingService';
+import type { KitTenantStatePort, KitUpgradeWritePort } from '../features/sectorKits/services/kitUpgradePorts';
+import type { TenantAccount } from '../features/sectorKits/services/classifyKitDiff';
+import prismaClient from './prisma';
 import { SalesCancellationService } from '../features/sales/services/SalesCancellationService';
 import { RegisterPaymentService } from '../features/sales/services/RegisterPaymentService';
 import { PresetSyncService } from '../features/dynamicTables/services/PresetSyncService';
 import { ModuleInstallService } from '../features/dynamicTables/services/ModuleInstallService';
 import { AttachmentService } from '../features/attachments/services/AttachmentService';
 import { SavedTableViewService } from '../features/savedViews/services/SavedTableViewService';
+import { StateManager } from '../features/interview/CustomizationService/StateManager';
+import { CustomizationService } from '../features/interview/CustomizationService/CustomizationService';
+import { InterviewService } from '../features/interview/InterviewService/InterviewService';
 import { SystemProvisioningService } from '../features/onboarding/services/SystemProvisioningService';
+import * as attachmentStorage from './attachmentStorage';
+import { kpiCacheService } from '../features/analytics/services/KpiCacheService';
 import { SystemProvisioningPolicy } from '../features/onboarding/policies/SystemProvisioningPolicy';
 
 // Lib - External Services
@@ -251,6 +280,7 @@ import type { IKnowledgeGraphRepository } from '../features/chat/repositories/IK
 import type { IAttachmentRepository } from '../features/attachments/repositories/IAttachmentRepository';
 import type { IAttachmentPolicy } from '../features/attachments/policies/IAttachmentPolicy';
 import type { ISavedTableViewRepository } from '../features/savedViews/repositories/ISavedTableViewRepository';
+import type { IInterviewSessionRepository } from '../features/interview/repositories/IInterviewSessionRepository';
 import type { ISavedTableViewPolicy } from '../features/savedViews/policies/ISavedTableViewPolicy';
 import type { ISystemProvisioningPolicy } from '../features/onboarding/policies/ISystemProvisioningPolicy';
 import type { IAccountingEventMapper } from '../features/accounting/sync/mappers/IAccountingEventMapper';
@@ -270,6 +300,7 @@ import type { ITaxAssessmentRepository } from '../features/accounting/repositori
 import type { IMitExportRepository } from '../features/accounting/repositories/IMitExportRepository';
 import type { ISimplesEntradasRepository } from '../features/accounting/repositories/ISimplesEntradasRepository';
 import type { IReceitaFiscalRepository } from '../features/accounting/repositories/IReceitaFiscalRepository';
+import type { IReceitaFiscalRecebimentoRepository } from '../features/accounting/repositories/IReceitaFiscalRecebimentoRepository';
 import type { ISimplesApuracaoRepository } from '../features/accounting/repositories/ISimplesApuracaoRepository';
 import type { ISimplesDeclaracaoRepository } from '../features/accounting/repositories/ISimplesDeclaracaoRepository';
 import type { IAccountingDeliveryRepository } from '../features/accounting/repositories/IAccountingDeliveryRepository';
@@ -277,6 +308,7 @@ import type { IAccountingReviewRepository } from '../features/accounting/reposit
 import type { IAccountantAssignmentRepository } from '../features/accounting/repositories/IAccountantAssignmentRepository';
 import type { IAccountingPolicyVersionRepository } from '../features/accounting/repositories/IAccountingPolicyVersionRepository';
 import type { IAuditRepository } from '../features/accounting/repositories/IAuditRepository';
+import type { IAccountingScopeResetRepository } from '../features/accounting/repositories/IAccountingScopeResetRepository';
 import type { IDocumentAttachmentRepository } from '../features/accounting/repositories/IDocumentAttachmentRepository';
 import type { IReconciliationRepository } from '../features/accounting/repositories/IReconciliationRepository';
 import type { IDataExchangeRepository } from '../features/accounting/repositories/IDataExchangeRepository';
@@ -302,6 +334,7 @@ import type { IFixedAssetRepository } from '../features/accounting/repositories/
 import type { IFiscalDocumentRepository } from '../features/accounting/repositories/IFiscalDocumentRepository';
 import type { ILalurRepository } from '../features/accounting/repositories/ILalurRepository';
 import type { IAccountingPolicy } from '../features/accounting/policies/IAccountingPolicy';
+import type { IAccountingScopeResetPolicy } from '../features/accounting/policies/IAccountingScopeResetPolicy';
 import type { IPackageBalanceRepository } from '../features/packages/repositories/IPackageBalanceRepository';
 import type { IPackageBalancePolicy } from '../features/packages/policies/IPackageBalancePolicy';
 import type { IPackageAcceptanceRepository } from '../features/packages/repositories/IPackageAcceptanceRepository';
@@ -318,7 +351,8 @@ import type { IPackageAcceptancePolicy } from '../features/packages/policies/IPa
  * `AccountingSyncPort`/`AccountingSyncService`/bridges.
  */
 function buildSaleAccountingMappers(): IAccountingEventMapper[] {
-  return SALE_BINDING_V1.eventBindings.map((binding) => {
+  // BE-INCR-PLANO-4-NIVEIS (L8): o bootstrap usa o binding do plano de 4 níveis (o mesmo do kit v3 do salão).
+  return SALE_BINDING_V2.eventBindings.map((binding) => {
     const archetype = archetypeCatalog.get(binding.archetypeKey);
     if (!archetype) {
       throw new Error(
@@ -334,7 +368,7 @@ function buildSaleAccountingMappers(): IAccountingEventMapper[] {
  * BE-INCR-BINDING-PRESS (item 15 do BRIEF, Fase B) — `BindingScope` (accountingBinding, própria,
  * não importada de `features/accounting` — ver header de `IAccountingBindingRepository.ts`) tem os
  * MESMOS 3 campos de `AccountingScope`, mais os 3 constantes de tenancy de ledger que o domínio
- * contábil fixa hoje (`resolveAccountingScope`). Fora dos DOIS módulos (nem accountingBinding, nem
+ * contábil fixa hoje (`resolveAccountingScopeInternal`). Fora dos DOIS módulos (nem accountingBinding, nem
  * accounting importam um ao outro além dos contratos nomeados) é o único lugar que pode traduzir
  * um pro outro sem violar a fronteira do item 13.
  */
@@ -453,22 +487,6 @@ function buildKitRoleDefaultsPort(
   };
 }
 
-function buildKitServiceFiscalPort(
-  repo: IServiceFiscalProfileRepository,
-  service: ServiceFiscalProfileService,
-  scope: AccountingScope,
-): KitServiceFiscalPort {
-  return {
-    async hasProfile(serviceRef) {
-      return (await repo.findByServiceRef(scope, serviceRef)) !== null;
-    },
-    async upsert(serviceRef, input) {
-      // Mesma validação do PUT (lista nacional LC 116, Anexo C) — o kit não fura o DTO da rota.
-      await service.upsert(scope, serviceRef, UpsertServiceFiscalProfileSchema.parse({ unitId: scope.unitId, ...input }));
-    },
-  };
-}
-
 function buildKitReferentialPort(
   catalogRepo: IReferentialAccountRepository,
   mappingRepo: IReferentialMappingRepository,
@@ -503,6 +521,127 @@ function buildKitRegimePort(
   };
 }
 
+/** `xxxAccountId` da linha → `xxxAccountCode` do kit, com o CÓDIGO da conta (o diff do PR-4 compara códigos). */
+function accountFieldsByCode(row: object | null, codeById: Map<string, string>): Record<string, string | null> {
+  if (!row) return {};
+  return Object.fromEntries(
+    Object.entries(row)
+      .filter(([field]) => field.endsWith('AccountId'))
+      .map(([field, id]) => [field.replace(/AccountId$/, 'AccountCode'), typeof id === 'string' ? (codeById.get(id) ?? null) : null]),
+  );
+}
+
+/**
+ * BE-INCR-KIT-SETOR PR-4 (item 26) — o estado contábil do tenant para o diff: contas (inclusive apagadas, com "tem
+ * partida"), contas-padrão por código, referencial por ano, ano congelado (item 31: `ecfRecibo` ou período
+ * `HARD_CLOSED`) e regime por ano (E-12.5: o da empresa no ano; sem ele, o da unidade). Só leitura.
+ */
+function buildKitTenantStatePort(
+  accountRepo: IAccountRepository,
+  postingRepo: IPostingRepository,
+  settingsRepo: IBankSettlementRepository,
+  fiscalProfileRepo: IFiscalProfileRepository,
+  mappingRepo: IReferentialMappingRepository,
+  companyRepo: ICompanyFiscalProfileRepository,
+  periodRepo: IAccountingPeriodRepository,
+  scope: AccountingScope,
+): KitTenantStatePort {
+  return {
+    async load(years) {
+      const rows = await accountRepo.findAllByUnitIncludingDeleted(scope);
+      const codeById = new Map(rows.map((a) => [a.id, a.code]));
+      const accounts: Record<string, TenantAccount> = {};
+      for (const a of rows) {
+        accounts[a.code] = {
+          code: a.code,
+          name: a.name,
+          nature: a.nature,
+          acceptsEntries: a.acceptsEntries,
+          deleted: a.deletedAt !== null,
+          hasPostings: await postingRepo.existsForAccount(scope, a.id),
+        };
+      }
+      const fiscal = await fiscalProfileRepo.findByScope(scope);
+      const referential: Record<string, Record<string, string>> = {};
+      const frozenYears: string[] = [];
+      const regimeByYear: Record<string, KitRegime | null> = {};
+      for (const year of years) {
+        referential[year] = Object.fromEntries(
+          (await mappingRepo.findManyByVersion(scope, year)).map((m) => [codeById.get(m.accountId) ?? m.accountId, m.referentialCode]),
+        );
+        const company = await companyRepo.findByYear(scope, Number(year));
+        const hardClosed = (await periodRepo.list(scope, Number(year))).some((p) => p.status === 'HARD_CLOSED');
+        if (company?.ecfRecibo || hardClosed) frozenYears.push(year);
+        regimeByYear[year] = ((company?.regime ?? fiscal?.regimeTributario) as KitRegime | undefined) ?? null;
+      }
+      return {
+        accounts,
+        scopeSettings: accountFieldsByCode(await settingsRepo.getSettings(scope), codeById),
+        fiscalProfile: fiscal ? accountFieldsByCode(fiscal, codeById) : null,
+        referential,
+        frozenYears,
+        regimeByYear,
+      };
+    },
+  };
+}
+
+/** BE-INCR-KIT-SETOR PR-4 (E-12.2/E-12.3) — escritas da atualização e do aceitar, cada uma pelo dono do dado. */
+function buildKitUpgradeWritePort(
+  accountRepo: IAccountRepository,
+  postingRepo: IPostingRepository,
+  settingsService: AccountingScopeSettingsService,
+  fiscalProfileService: FiscalProfileService,
+  mappingService: ReferentialMappingService,
+  companyRepo: ICompanyFiscalProfileRepository,
+  periodRepo: IAccountingPeriodRepository,
+  scope: AccountingScope,
+): KitUpgradeWritePort {
+  return {
+    async isYearFrozen(year) {
+      if ((await companyRepo.findByYear(scope, Number(year)))?.ecfRecibo) return true;
+      return (await periodRepo.list(scope, Number(year))).some((p) => p.status === 'HARD_CLOSED');
+    },
+    async updateAccountIfUnused(code, data) {
+      return prismaClient.$transaction(async (tx) => {
+        const account = await accountRepo.findByCode(scope, code, tx);
+        if (!account) return 'missing' as const;
+        if (await postingRepo.existsForAccount(scope, account.id, tx)) return 'in_use' as const; // relido in-tx
+        await accountRepo.updateDefinition(scope, account.id, data, tx);
+        return 'updated' as const;
+      });
+    },
+    async restoreAccount(code) {
+      return (await accountRepo.restoreByCode(scope, code)) !== null;
+    },
+    async deleteAccount(code) {
+      const account = await accountRepo.findByCode(scope, code);
+      if (account) await accountRepo.softDelete(scope, account.id);
+    },
+    async renameAccount(code, name) {
+      const account = await accountRepo.findByCode(scope, code);
+      if (!account) return false;
+      await accountRepo.updateDefinition(scope, account.id, { name });
+      return true;
+    },
+    setScopeSettings: (accountIds) => settingsService.setAccounts(scope, accountIds),
+    setFiscalProfile: (accountIds) => fiscalProfileService.setAccounts(scope, accountIds),
+    async setReferentialMapping(mappingVersion, item) {
+      await mappingService.setMapping(scope, { unitId: scope.unitId, mappingVersion, ...item });
+    },
+  };
+}
+
+/** PR-3, item 20 — conta do ajuste lida com o `tx` do gate (`findById` já filtra escopo e `deletedAt`). */
+function buildKitOverrideAccountPort(accountRepo: IAccountRepository, scope: AccountingScope): KitOverrideAccountPort {
+  return {
+    async findLiveInScope(accountId, tx) {
+      const account = await accountRepo.findById(scope, accountId, tx);
+      return account ? { id: account.id, code: account.code, nature: account.nature, acceptsEntries: account.acceptsEntries } : null;
+    },
+  };
+}
+
 function buildKitAuditPort(
   auditRepo: IAuditRepository,
   postingRepo: IPostingRepository,
@@ -515,7 +654,7 @@ function buildKitAuditPort(
       await auditService.append(tx, bindingScopeToAccountingScope(scope), {
         actorUserId: scope.actorUserId,
         eventType: event.eventType,
-        targetType: 'KitInstallation',
+        targetType: event.targetType ?? 'KitInstallation',
         targetId: event.targetId,
         payload: event.payload,
       });
@@ -588,11 +727,13 @@ export class ApplicationFactory {
     knowledgeGraph: IKnowledgeGraphRepository;
     attachment: IAttachmentRepository;
     savedTableView: ISavedTableViewRepository;
+    interviewSession: IInterviewSessionRepository; // W4 (BE-INCR-INTERVIEW-SESSION)
     account: IAccountRepository;
     journalEntry: IJournalEntryRepository;
     posting: IPostingRepository;
     accountingPeriod: IAccountingPeriodRepository;
     audit: IAuditRepository;
+    accountingScopeReset: IAccountingScopeResetRepository; // BE-INCR-RESET-CONSISTENTE item 11 (I7)
     documentAttachment: IDocumentAttachmentRepository;
     reconciliation: IReconciliationRepository;
     dataExchange: IDataExchangeRepository;
@@ -628,8 +769,10 @@ export class ApplicationFactory {
     mitExport: IMitExportRepository; // X9 PR-2
     simplesEntradas: ISimplesEntradasRepository; // X14 PR-2
     receitaFiscal: IReceitaFiscalRepository; // X14 PR-2
+    receitaFiscalRecebimento: IReceitaFiscalRecebimentoRepository; // X14-CAIXA PR-1
     simplesApuracao: ISimplesApuracaoRepository; // X14 PR-3
     simplesDeclaracao: ISimplesDeclaracaoRepository; // X14 PR-4
+    simplesCreditoIncobravel: ISimplesCreditoIncobravelRepository; // X14-CAIXA PR-3
     accountingDelivery: IAccountingDeliveryRepository;
     accountingReview: IAccountingReviewRepository;
     accountantAssignment: IAccountantAssignmentRepository; // GOV-CONTADOR
@@ -652,6 +795,7 @@ export class ApplicationFactory {
     crmReportDefinition: ICrmReportDefinitionPolicy; // BE-INCR-CRM-REPORT-BUILDER PR-2 (item 3)
     systemProvisioning: ISystemProvisioningPolicy;
     accounting: IAccountingPolicy;
+    accountingScopeReset: IAccountingScopeResetPolicy; // BE-INCR-RESET-CONSISTENTE item 11 (I7)
     packageBalance: IPackageBalancePolicy;
     packageAcceptance: IPackageAcceptancePolicy; // FE-INCR-PACOTE-VALIDADE
     legalParameter: ILegalParameterPolicy; // BE-INCR-LEGAL-PARAMS PR-1 (item 12: policy própria, escopo plataforma)
@@ -690,6 +834,7 @@ export class ApplicationFactory {
     referentialMapping: ReferentialMappingService;
     referentialCatalog: ReferentialCatalogService;
     documentAttachment: DocumentAttachmentService;
+    sourceDocumentUpload: SourceDocumentUploadService;
     dataExchangeExport: DataExchangeExportService;
     dataExchangeImport: DataExchangeImportService;
     receipt: ReceiptService;
@@ -728,13 +873,16 @@ export class ApplicationFactory {
     mitExport: MitExportService; // X9 PR-2
     simplesEntradas: SimplesEntradasService; // X14 PR-2
     receitaFiscal: ReceitaFiscalService; // X14 PR-2
+    receitaFiscalRecebimento: ReceitaFiscalRecebimentoService; // X14-CAIXA PR-1
     simplesApuracao: SimplesApuracaoService; // X14 PR-3
     simplesDeclaracao: SimplesDeclaracaoService; // X14 PR-4
+    simplesRegistroCaixa: SimplesRegistroCaixaService; // X14-CAIXA PR-3
     pisCofinsAssessment: PisCofinsAssessmentService; // X8 PR-2
     taxAssessmentRecalc: TaxAssessmentRecalcService; // BE-INCR-LEGAL-PARAMS PR-4 (item 10)
     accountingDelivery: AccountingDeliveryService;
     accountingReview: AccountingReviewService;
     accountantAssignment: AccountantAssignmentService; // GOV-CONTADOR
+    accountingScopeResolver: IAccountingScopeResolver; // I6
     accountingPolicyVersion: AccountingPolicyVersionService; // GOV-CONTADOR política versionada
     nfePreview: NfePreviewService;
     packageBalance: PackageBalanceService;
@@ -744,6 +892,7 @@ export class ApplicationFactory {
     moduleInstall: ModuleInstallService;
     attachment: AttachmentService;
     savedTableView: SavedTableViewService;
+    interview: InterviewService; // W4: entrevista com IA sobre a sessão persistida
     systemProvisioning: SystemProvisioningService;
     ptaxSync: PtaxSyncService; // BE-INCR-CRM-REPORT-BUILDER PR-1 (item 23)
     crmReport: CrmReportService; // BE-INCR-CRM-REPORT-BUILDER PR-2 (item 11)
@@ -778,11 +927,13 @@ export class ApplicationFactory {
       knowledgeGraph: new KnowledgeGraphRepository(),
       attachment: new AttachmentRepository(),
       savedTableView: new SavedTableViewRepository(),
+      interviewSession: new InterviewSessionRepository(),
       account: new AccountRepository(),
       journalEntry: new JournalEntryRepository(),
       posting: new PostingRepository(),
       accountingPeriod: new AccountingPeriodRepository(),
       audit: new AuditRepository(),
+      accountingScopeReset: new AccountingScopeResetRepository(),
       documentAttachment: new DocumentAttachmentRepository(),
       reconciliation: new ReconciliationRepository(),
       dataExchange: new DataExchangeRepository(),
@@ -818,8 +969,10 @@ export class ApplicationFactory {
       mitExport: new MitExportRepository(),
       simplesEntradas: new SimplesEntradasRepository(),
       receitaFiscal: new ReceitaFiscalRepository(),
+      receitaFiscalRecebimento: new ReceitaFiscalRecebimentoRepository(),
       simplesApuracao: new SimplesApuracaoRepository(),
       simplesDeclaracao: new SimplesDeclaracaoRepository(),
+      simplesCreditoIncobravel: new SimplesCreditoIncobravelRepository(),
       accountingDelivery: new AccountingDeliveryRepository(),
       accountingReview: new AccountingReviewRepository(),
       accountantAssignment: new AccountantAssignmentRepository(),
@@ -843,6 +996,7 @@ export class ApplicationFactory {
       crmReportDefinition: new CrmReportDefinitionPolicy(),
       systemProvisioning: new SystemProvisioningPolicy(),
       accounting: new AccountingPolicy(),
+      accountingScopeReset: new AccountingScopeResetPolicy(),
       packageBalance: new PackageBalancePolicy(),
       packageAcceptance: new PackageAcceptancePolicy(),
       legalParameter: new LegalParameterPolicy(),
@@ -867,7 +1021,8 @@ export class ApplicationFactory {
 
     const luminarisAgentService = new LuminarisAgentService(
       dynamicTableService,
-      this.repositories.actionProposal
+      this.repositories.actionProposal,
+      this.policies.dynamicTable
     );
 
     // Shared instance: injected into ChatService (server-side persistence of chat turns)
@@ -981,7 +1136,7 @@ export class ApplicationFactory {
     // through the AR subledger via CrmReceivableBridge (ADR-CRM-AR-SEAM).
     //
     // BE-INCR-BINDING-FEEDER (Fatia B) — this is the SYNCHRONOUS BOOTSTRAP value only, built from
-    // the static SALE_BINDING_V1 fixture exactly as before this feature. In production,
+    // the static SALE_BINDING_V2 fixture (SALE_BINDING_V1 before BE-INCR-PLANO-4-NIVEIS). In production,
     // `server.ts` replaces `this.services.accountingSync` via `initializeAccountingSyncFromBindings()`
     // (async, pre-boot, F-FEEDER-5) with the DB-backed instance BEFORE `app.listen()` — no request
     // ever observes this bootstrap value. Kept here unchanged so every test/tool that constructs
@@ -997,7 +1152,14 @@ export class ApplicationFactory {
     );
     // BE-INCR-TAX-ASSESSMENT (nó X7): hoisted no X8 PR-3 — o PisCofinsAssessmentService reusa a provisão (item 17).
     // BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14): entradas da apuração + subrazão fiscal de receita (lê o contrato de parceria).
-    const simplesEntradasService = new SimplesEntradasService(this.repositories.simplesEntradas, this.policies.accounting);
+    // BE-INCR-SOURCE-DOCUMENT-UPLOAD: SD a partir de arquivo + o documento resolvido para o DAS e o histórico (F-SD-9 a).
+    const sourceDocumentUploadService = new SourceDocumentUploadService(
+      this.repositories.documentAttachment,
+      this.repositories.sourceProvenance,
+      this.policies.accounting,
+      auditService,
+    );
+    const simplesEntradasService = new SimplesEntradasService(this.repositories.simplesEntradas, this.policies.accounting, sourceDocumentUploadService);
     const receitaFiscalService = new ReceitaFiscalService(
       this.repositories.receitaFiscal,
       this.repositories.serviceFiscalProfile,
@@ -1207,6 +1369,7 @@ export class ApplicationFactory {
       auditService,
       this.repositories.journalEntry,
       this.repositories.fiscalDocument, // F-DFE-19 b: gate do alvo por targetType
+      this.repositories.sourceProvenance, // BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-2 a: alvo SOURCE_DOCUMENT
     );
     // BE-INCR-DFE (nó X10b, PR-3): ciclo de vida pós-SENT (Fase D — transição, proveniência,
     // reenvio, cancelamento, job de polling).
@@ -1289,6 +1452,16 @@ export class ApplicationFactory {
       auditService,
       taxAssessmentService, // X8 PR-3 (item 17): a provisão em 2 commits do X7, reusada
       legalParameterService, // BE-INCR-LEGAL-PARAMS PR-1: fotografia PIS_COFINS
+    );
+    // I6: porta de unidades do núcleo sobre o repositório do motor (molde do ProductRefPort).
+    const unitRowPort: UnitRowPort = this.repositories.dynamicTable;
+    // Hoisted no I6: o AccountingScopeResolver também o injeta (resolveGovernance).
+    const accountantAssignmentService = new AccountantAssignmentService(
+      this.repositories.accountantAssignment,
+      this.repositories.accountingContact,
+      this.repositories.user,
+      this.policies.accounting,
+      auditService,
     );
     this.services = {
       bankSettlement: bankSettlementService,
@@ -1396,6 +1569,7 @@ export class ApplicationFactory {
       referentialMapping: referentialMappingService,
       referentialCatalog: referentialCatalogService,
       documentAttachment: documentAttachmentService,
+      sourceDocumentUpload: sourceDocumentUploadService,
       dataExchangeExport: new DataExchangeExportService(
         accountingReportService,
         this.policies.accounting,
@@ -1444,6 +1618,7 @@ export class ApplicationFactory {
         this.repositories.dataExchange,
         auditService,
         legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia LEIAUTE_SPED (ECF)
+        this.repositories.fiscalProfile, // F-PCB-1R: dedução de PIS/COFINS fora do gate de receita bruta
       ),
       // Lucro Real (BRIEF 3B, Fork 6→b + Fork 4→b): o gerador LÊ o e-Lalur do model; o report
       // service SAIU (item 6 — L100/L300 são recuperados pelo PVA do K155/K156, pp.224/232). ECF 3C:
@@ -1551,13 +1726,9 @@ export class ApplicationFactory {
         this.policies.accounting,
       ),
       // BE-INCR-ACCOUNTANT-GOVERNANCE (nó GOV-CONTADOR): contador responsável por escopo + resolver delegado.
-      accountantAssignment: new AccountantAssignmentService(
-        this.repositories.accountantAssignment,
-        this.repositories.accountingContact,
-        this.repositories.user,
-        this.policies.accounting,
-        auditService,
-      ),
+      accountantAssignment: accountantAssignmentService,
+      // BE-INCR-SCOPE-UNIT-GUARD (nó I6): escopo dos controllers HTTP com o unitId validado contra `units`.
+      accountingScopeResolver: new AccountingScopeResolver(unitRowPort, accountantAssignmentService),
       // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7): prévia/confirmação/leitura da apuração IRPJ/CSLL trimestral.
       taxAssessment: taxAssessmentService,
       // TAX-ASSESSMENT-PERIODOS (BRIEF item 10): só leitura — repositórios existentes + a fotografia legal do X8.
@@ -1571,6 +1742,8 @@ export class ApplicationFactory {
       // BE-INCR-MIT-EXPORT PR-2 (nó X9): arquivo JSON do MIT a partir das apurações confirmadas (só lê o X7).
       simplesEntradas: simplesEntradasService,
       receitaFiscal: receitaFiscalService,
+      // BE-INCR-SIMPLES-CAIXA PR-1 (nó X14-CAIXA): recebimentos de venda, base do DAS no regime de caixa.
+      receitaFiscalRecebimento: new ReceitaFiscalRecebimentoService(this.repositories.receitaFiscalRecebimento, this.repositories.companyFiscalProfile),
       // BE-INCR-SIMPLES-NACIONAL PR-3 (nó X14): apuração ME/EPP, registro do DAS oficial e provisão.
       simplesApuracao: new SimplesApuracaoService(
         this.repositories.simplesApuracao,
@@ -1588,6 +1761,8 @@ export class ApplicationFactory {
         this.repositories.fiscalDocument, // X14 PR-4 item 31: conferência NFS-e × receita
         this.repositories.serviceFiscalProfile, // X14 PR-4 F-PR4-4: atividades do cadastro na rota de alíquotas
         this.repositories.issBeneficioMunicipal, // SIMPLES-PISO-ANEXO-XI bloco 1: benefício municipal de ISS
+        sourceDocumentUploadService, // BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-9 a: o PDF do DAS na visão
+        this.repositories.receitaFiscalRecebimento, // X14-CAIXA PR-2 item 8: recebimentos, base do caixa
       ),
       // BE-INCR-SIMPLES-NACIONAL PR-4 (nó X14, itens 27–28): espelhos DASN-SIMEI e DEFIS.
       simplesDeclaracao: new SimplesDeclaracaoService(
@@ -1597,6 +1772,23 @@ export class ApplicationFactory {
         this.repositories.simplesEntradas,
         this.repositories.receitaFiscal,
         accountingReportService,
+        this.policies.accounting,
+        legalParameterService, // BE-INCR-SIMPLES-DEFIS-MANUAL item 7: presunção do IRPJ no limite do art. 145
+      ),
+      // BE-INCR-SIMPLES-CAIXA PR-3 (nó X14-CAIXA, itens 19–21): registro do Anexo IX e créditos incobráveis.
+      simplesRegistroCaixa: new SimplesRegistroCaixaService(
+        this.repositories.simplesCreditoIncobravel,
+        this.repositories.receitaFiscal,
+        this.repositories.receitaFiscalRecebimento,
+        this.repositories.fiscalDocument,
+        // porta do núcleo: só a leitura do `dueDate` da venda (vencimento da parcela)
+        {
+          dueDateBruto: async (saleId: string) => {
+            const due = ((await this.repositories.dynamicTable.findDataById(saleId))?.data as Record<string, unknown> | undefined)?.dueDate;
+            return typeof due === 'string' ? due : null;
+          },
+        },
+        auditService,
         this.policies.accounting,
       ),
       mitExport: new MitExportService(
@@ -1660,13 +1852,35 @@ export class ApplicationFactory {
         this.repositories.savedTableView,
         this.policies.savedTableView
       ),
+      // W4 item 3: StateManager sobre o repositório (injetado, nunca `new` dentro do serviço).
+      interview: new InterviewService(
+        new CustomizationService(new StateManager(this.repositories.interviewSession), chatOpenAIService),
+        chatOpenAIService,
+      ),
       // BE-INCR-SEED-UNIDADE-E-ENV (nó SEED-UNITS): monta o sistema do usuário (onboarding HTTP + seed contábil).
       systemProvisioning: new SystemProvisioningService(
         dynamicTableService,
         companyFiscalProfileService,
+        fiscalProfileService, // I4 EMENDA 14/10 item 9c: perfil fiscal da UNIDADE (passo 3b)
         this.repositories.actionProposal,
         this.repositories.knowledgeGraph,
         this.policies.systemProvisioning,
+        // BE-INCR-RESET-CONSISTENTE item 2–3 (F-I7-2): donos canônicos do resto do sistema + cache de KPI; item 12: o
+        // reset contábil (gate de movimento + remoção do SETUP) pelo serviço da contabilidade, por interface.
+        {
+          accountingReset: new AccountingScopeResetService(
+            this.repositories.accountingScopeReset,
+            this.policies.accountingScopeReset,
+            auditService,
+          ),
+          dashboardLayouts: this.repositories.dashboardLayout,
+          chatInstances: this.repositories.chatInstance,
+          savedTableViews: this.repositories.savedTableView,
+          crmReportDefinitions: this.repositories.crmReportDefinition,
+          attachments: this.repositories.attachment,
+          attachmentStorage,
+          kpiCache: kpiCacheService,
+        },
       ),
       ptaxSync: new PtaxSyncService(this.repositories.ptaxRate, this.ptaxClient),
       crmReport: new CrmReportService(
@@ -1715,6 +1929,8 @@ export class ApplicationFactory {
       new AccountingBindingPolicy(),
       validationService,
       auditPort,
+      // BE-INCR-KIT-SETOR PR-3 (item 25): todo caminho que compila lê o ajuste papel→conta vivo da unidade.
+      new RoleOverrideSource(new RoleAccountOverrideRepository()),
     );
   }
 
@@ -1735,6 +1951,48 @@ export class ApplicationFactory {
    * getters acima). Consumido pelo `activate-default` (item 11) e pelo `installSectorKitCli` (item 16).
    * `kitVersions` só é passado por teste: prova os passos com um kit de conteúdo sem publicar um v2 no registro.
    */
+  /**
+   * BE-INCR-KIT-SETOR-EMENDA-1 PR-K3 (7e/7f) — sugestão fiscal por serviço, por escopo. Serviço de integração: lê a tabela
+   * `services` do dono pelo repositório de DynamicTables (molde do `ProductRefPort`) e os perfis fiscais de serviço da
+   * unidade; nenhuma porta de gravação (7d). IA de reserva só com `OPENAI_API_KEY` configurada (7c).
+   */
+  public getServiceFiscalSuggestionService(scope: BindingScope): ServiceFiscalSuggestionService {
+    const accountingScope = bindingScopeToAccountingScope(scope);
+    const serviceFiscalProfileRepo = this.repositories.serviceFiscalProfile;
+    return new ServiceFiscalSuggestionService(
+      new SectorKitPolicy(),
+      new KitInstallationRepository(),
+      this.repositories.dynamicTable,
+      {
+        async serviceRefsComPerfil() {
+          return new Set((await serviceFiscalProfileRepo.listByScope(accountingScope)).map((p) => p.serviceRef));
+        },
+      },
+      process.env.OPENAI_API_KEY ? ChatOpenAIService.getInstance() : null,
+    );
+  }
+
+  /**
+   * BE-INCR-KIT-SETOR PR-6 (item 50) — rastro evento → fato → lançamento, por escopo. A porta do razão fecha sobre o
+   * `JournalEntryRepository.findBySource` (o `sectorKits` não importa `features/accounting`). Só leitura.
+   */
+  public getKitTraceService(scope: BindingScope): KitTraceService {
+    const accountingScope = bindingScopeToAccountingScope(scope);
+    const journalEntryRepo = this.repositories.journalEntry;
+    return new KitTraceService(
+      new SectorKitPolicy(),
+      {
+        async findBySource(sourceType, sourceId) {
+          const entry = await journalEntryRepo.findBySource(accountingScope, sourceType, sourceId);
+          return entry
+            ? { id: entry.id, sourceType: entry.sourceType, bindingId: entry.bindingId, bindingVersion: entry.bindingVersion }
+            : null;
+        },
+      },
+      new AccountingBindingRepository(),
+    );
+  }
+
   public getKitInstallService(scope: BindingScope, kitVersions?: KitVersionsLookup): KitInstallService {
     const accountingScope = bindingScopeToAccountingScope(scope);
     return new KitInstallService(
@@ -1745,7 +2003,6 @@ export class ApplicationFactory {
       buildKitChartPort(this.repositories.account, this.services.posting, accountingScope),
       buildActivationPeriodPort(this.repositories.accountingPeriod, this.services.period, accountingScope),
       buildKitRoleDefaultsPort(this.repositories.fiscalProfile, this.services.accountingScopeSettings, this.services.fiscalProfile, accountingScope),
-      buildKitServiceFiscalPort(this.repositories.serviceFiscalProfile, this.services.serviceFiscalProfile, accountingScope),
       buildKitReferentialPort(
         this.repositories.referentialAccount,
         this.repositories.referentialMapping,
@@ -1755,6 +2012,89 @@ export class ApplicationFactory {
       buildKitRegimePort(this.repositories.companyFiscalProfile, this.repositories.fiscalProfile, accountingScope),
       buildKitAuditPort(this.repositories.audit, this.repositories.posting, this.policies.accounting, this.repositories.counterparty),
       kitVersions,
+    );
+  }
+
+  /**
+   * BE-INCR-KIT-SETOR PR-3 — `RoleAccountOverrideService` por escopo (portas fechadas sobre o escopo, mesmo motivo
+   * dos getters acima). Consumido pelas rotas `/accounting-kit/role-overrides` (item 22).
+   */
+  public getRoleAccountOverrideService(scope: BindingScope, kitVersions?: KitVersionsLookup): RoleAccountOverrideService {
+    const accountingScope = bindingScopeToAccountingScope(scope);
+    return new RoleAccountOverrideService(
+      new SectorKitPolicy(),
+      new RoleAccountOverrideRepository(),
+      new KitInstallationRepository(),
+      this.getAccountingBindingCompileService(scope),
+      buildKitOverrideAccountPort(this.repositories.account, accountingScope),
+      buildActivationChartPort(this.repositories.account, this.services.posting, accountingScope),
+      buildKitAuditPort(this.repositories.audit, this.repositories.posting, this.policies.accounting, this.repositories.counterparty),
+      kitVersions,
+    );
+  }
+
+  /**
+   * BE-INCR-KIT-SETOR PR-4 — `KitUpgradeService` por escopo (portas fechadas sobre o escopo). Consumido pelo
+   * `upgradeSectorKitsCli` (item 34) e pelo `GET /accounting-kit` (item 38).
+   */
+  public getKitUpgradeService(scope: BindingScope, kitVersions?: KitVersionsLookup): KitUpgradeService {
+    const accountingScope = bindingScopeToAccountingScope(scope);
+    return new KitUpgradeService(
+      new SectorKitPolicy(),
+      new KitInstallationRepository(),
+      new KitUpgradeRepository(),
+      new RoleAccountOverrideRepository(),
+      new AccountingBindingRepository(),
+      this.getAccountingBindingCompileService(scope),
+      buildKitChartPort(this.repositories.account, this.services.posting, accountingScope),
+      buildKitRoleDefaultsPort(this.repositories.fiscalProfile, this.services.accountingScopeSettings, this.services.fiscalProfile, accountingScope),
+      buildKitReferentialPort(this.repositories.referentialAccount, this.repositories.referentialMapping, this.services.referentialMapping, accountingScope),
+      this.buildKitTenantState(accountingScope),
+      this.buildKitUpgradeWrite(accountingScope),
+      buildKitAuditPort(this.repositories.audit, this.repositories.posting, this.policies.accounting, this.repositories.counterparty),
+      kitVersions,
+    );
+  }
+
+  /** BE-INCR-KIT-SETOR PR-4 — `KitPendingService` por escopo (rotas `/accounting-kit/pending`, item 37). */
+  public getKitPendingService(scope: BindingScope, kitVersions?: KitVersionsLookup): KitPendingService {
+    const accountingScope = bindingScopeToAccountingScope(scope);
+    return new KitPendingService(
+      new SectorKitPolicy(),
+      new KitUpgradeRepository(),
+      new KitInstallationRepository(),
+      this.getRoleAccountOverrideService(scope, kitVersions),
+      this.getAccountingBindingCompileService(scope),
+      buildKitChartPort(this.repositories.account, this.services.posting, accountingScope),
+      this.buildKitUpgradeWrite(accountingScope),
+      buildKitAuditPort(this.repositories.audit, this.repositories.posting, this.policies.accounting, this.repositories.counterparty),
+      kitVersions,
+    );
+  }
+
+  private buildKitTenantState(scope: AccountingScope): KitTenantStatePort {
+    return buildKitTenantStatePort(
+      this.repositories.account,
+      this.repositories.posting,
+      this.repositories.bankSettlement,
+      this.repositories.fiscalProfile,
+      this.repositories.referentialMapping,
+      this.repositories.companyFiscalProfile,
+      this.repositories.accountingPeriod,
+      scope,
+    );
+  }
+
+  private buildKitUpgradeWrite(scope: AccountingScope): KitUpgradeWritePort {
+    return buildKitUpgradeWritePort(
+      this.repositories.account,
+      this.repositories.posting,
+      this.services.accountingScopeSettings,
+      this.services.fiscalProfile,
+      this.services.referentialMapping,
+      this.repositories.companyFiscalProfile,
+      this.repositories.accountingPeriod,
+      scope,
     );
   }
 
@@ -1808,7 +2148,7 @@ export class ApplicationFactory {
    */
   public async initializeAccountingSyncFromBindings(): Promise<void> {
     const registrations = await this.getAccountingBindingFeederService().buildActiveMapperRegistrations();
-    this.services.accountingSync = new AccountingSyncService(this.services.posting, registrations);
+    this.services.accountingSync = new AccountingSyncService(this.services.posting, registrations, { declaredEventKeys: declaredEventKeys() });
   }
 
   // Service Getters
@@ -1844,6 +2184,7 @@ export class ApplicationFactory {
   public getReferentialMappingService = (): ReferentialMappingService => this.services.referentialMapping;
   public getReferentialCatalogService = (): ReferentialCatalogService => this.services.referentialCatalog;
   public getDocumentAttachmentService = (): DocumentAttachmentService => this.services.documentAttachment;
+  public getSourceDocumentUploadService = (): SourceDocumentUploadService => this.services.sourceDocumentUpload;
   public getDataExchangeExportService = (): DataExchangeExportService => this.services.dataExchangeExport;
   public getDataExchangeImportService = (): DataExchangeImportService => this.services.dataExchangeImport;
   public getReceiptService = (): ReceiptService => this.services.receipt;
@@ -1869,13 +2210,16 @@ export class ApplicationFactory {
   public getMitExportService = (): MitExportService => this.services.mitExport;
   public getSimplesEntradasService = (): SimplesEntradasService => this.services.simplesEntradas;
   public getReceitaFiscalService = (): ReceitaFiscalService => this.services.receitaFiscal;
+  public getReceitaFiscalRecebimentoService = (): ReceitaFiscalRecebimentoService => this.services.receitaFiscalRecebimento;
   public getSimplesApuracaoService = (): SimplesApuracaoService => this.services.simplesApuracao;
   public getSimplesDeclaracaoService = (): SimplesDeclaracaoService => this.services.simplesDeclaracao;
+  public getSimplesRegistroCaixaService = (): SimplesRegistroCaixaService => this.services.simplesRegistroCaixa;
   public getPisCofinsAssessmentService = (): PisCofinsAssessmentService => this.services.pisCofinsAssessment;
   public getAccountingDeliveryService = (): AccountingDeliveryService =>
     this.services.accountingDelivery;
   public getAccountingReviewService = (): AccountingReviewService => this.services.accountingReview;
   public getAccountantAssignmentService = (): AccountantAssignmentService => this.services.accountantAssignment;
+  public getAccountingScopeResolver = (): IAccountingScopeResolver => this.services.accountingScopeResolver;
   public getAccountingPolicyVersionService = (): AccountingPolicyVersionService => this.services.accountingPolicyVersion;
   public getInventoryService = (): InventoryService => this.services.inventory;
   public getNfeImportService = (): NfeImportService => this.services.nfeImport;
@@ -1912,6 +2256,7 @@ export class ApplicationFactory {
   public getModuleInstallService = (): ModuleInstallService => this.services.moduleInstall;
   public getAttachmentService = (): AttachmentService => this.services.attachment;
   public getSavedTableViewService = (): SavedTableViewService => this.services.savedTableView;
+  public getInterviewService = (): InterviewService => this.services.interview;
   public getSystemProvisioningService = (): SystemProvisioningService => this.services.systemProvisioning;
 
   // Repository Getters — composition-root accessors. Some have no caller yet; kept as the consistent

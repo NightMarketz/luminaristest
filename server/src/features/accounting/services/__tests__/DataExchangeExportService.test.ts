@@ -4,7 +4,7 @@ import type { IJournalEntryRepository } from '../../repositories/IJournalEntryRe
 import type { CreateJobInput, UpdateJobInput } from '../../models/DataExchange.model';
 import type { AuditService } from '../AuditService';
 import { AccountingPolicy } from '../../policies/AccountingPolicy';
-import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import { parseTable } from '../../../../lib/spreadsheet';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../../lib/errors';
 import { logger } from '../../../../lib/logger';
@@ -22,7 +22,7 @@ jest.mock('../../../../lib/alertWebhook', () => ({
   sendAlertWebhook: (...a: unknown[]) => sendAlertWebhook(...a),
 }));
 
-const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'owner-1' }, 'unit-1');
 
 function makeJob(over: Partial<AccountingDataExchangeJob> = {}): AccountingDataExchangeJob {
   return {
@@ -107,7 +107,7 @@ function makeReports(): IReportReader {
     incomeStatement: jest.fn(async () => ({
       unitId: 'unit-1', periodSemantics: 'year_to_date', fromDate: '2026-01-01', toDate: '2026-12-31', mappingVersion: 'v1',
       grossRevenue: { accounts: [], totalCents: '0' }, revenueDeductions: { accounts: [], totalCents: '0' },
-      costOfGoodsSold: { accounts: [], totalCents: '0' }, expenses: { accounts: [], totalCents: '0' },
+      costOfGoodsSold: { accounts: [], totalCents: '0' }, financialResult: { accounts: [], totalCents: '0' }, expenses: { accounts: [], totalCents: '0' },
       netResult: { amountCents: '0', isComputed: true, computation: 'income_statement_net_result' },
       reportStatus: 'OK',
       diagnostics: { mappingVersion: 'v1', unmappedAccounts: [], removedAccountsReferenced: [], hasUnclosedPriorYearResult: false, priorYearResultCents: 0, warnings: [] },

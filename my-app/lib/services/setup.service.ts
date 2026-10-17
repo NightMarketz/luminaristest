@@ -1,5 +1,6 @@
 import { apiClient } from '../api/api-client';
 import type { OnboardingFiscalInput } from '@/types/contracts/accounting/CompanyFiscalProfileDto.gen';
+import type { OnboardingAccountingResultInput } from '@/types/contracts/accountingBinding/ActivateDefaultBindingDto.gen';
 import type {
   CustomCreationInput,
   QuickCreationInput,
@@ -44,6 +45,15 @@ export type CustomDashboardPayload = CustomCreationInput;
 // extensão explícita (plano §10 linha 4 / D9), nunca `as`. Quem manda é a Entrevista (`useAiInterview`).
 export type CreateDashboardPayload = UnifiedCreationInput & { fiscal?: OnboardingFiscalInput };
 
+/**
+ * I4 PR-4 (item 21): o que os wizards leem do `data` do 201 de POST /dashboard/create. `accounting` é o contrato gerado de
+ * `OnboardingAccountingResultSchema` (PR-2, #693); o resto do `data` não é lido no front e fica fora do tipo.
+ */
+export interface CreateDashboardResult {
+  unitId?: string;
+  accounting?: OnboardingAccountingResultInput;
+}
+
 /** Normalize an unknown API error into an Error with a friendly message. */
 function toError(err: unknown, fallback: string): Error {
   const rec = (err && typeof err === 'object' ? (err as Record<string, unknown>) : null);
@@ -77,9 +87,10 @@ export const SetupService = {
   },
 
   /** POST /dashboard/create — provision the user's dashboard from a preset (quick or custom). */
-  async createDashboard(payload: CreateDashboardPayload): Promise<void> {
+  async createDashboard(payload: CreateDashboardPayload): Promise<CreateDashboardResult> {
     try {
-      await apiClient.post('/dashboard/create', payload);
+      const body = (await apiClient.post('/dashboard/create', payload)) as { data?: CreateDashboardResult };
+      return body.data ?? {};
     } catch (err) {
       throw toError(err, 'Falha ao criar o dashboard.');
     }

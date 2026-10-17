@@ -4,8 +4,10 @@ import type { PolicyTarget } from '../models/AccountingPolicyVersion.model';
 
 /**
  * Implementation of the accounting policy. Any authenticated user operates within their
- * OWN userId silo — a wrong unitId only creates a separate sub-partition under that same
- * userId, never a cross-tenant leak (Contract §2), so unitId is not gated here.
+ * OWN userId silo (Contract §2). unitId is not gated HERE: the HTTP controllers resolve the scope
+ * through AccountingScopeResolver, which validates the client's unitId against the owner's `units`
+ * table before any service runs (BE-INCR-SCOPE-UNIT-GUARD, nó I6 — 404 UNIT_NOT_FOUND / 409
+ * UNIT_DELETED). Internal callers (jobs, bridges) carry a unitId read from a row already written.
  */
 export class AccountingPolicy implements IAccountingPolicy {
   canManage(scope: AccountingScope): boolean {
@@ -243,7 +245,7 @@ export class AccountingPolicy implements IAccountingPolicy {
   // SoD dinâmica (ADR-INCR-APPROVAL F3, re-ratificado fork-a-fork 2026-07-14): OFF enquanto
   // ownerUserId === actorUserId (single-user → staging usável), ativa sozinha quando um delegado
   // opera os livros do dono (ownerUserId !== actorUserId, via membership futuro). Ver
-  // resolveAccountingScope: hoje owner === actor sempre, logo isto é no-op — sem teatro.
+  // resolveAccountingScopeInternal: hoje owner === actor sempre, logo isto é no-op — sem teatro.
   enforcesSegregationOfDuties(scope: AccountingScope): boolean {
     return scope.ownerUserId !== scope.actorUserId;
   }

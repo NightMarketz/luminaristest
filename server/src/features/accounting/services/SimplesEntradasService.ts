@@ -15,6 +15,8 @@ import {
   type SimplesSegregacaoUpsert,
   type SimplesSegregacaoView,
 } from '../dtos/SimplesDto';
+import { SOURCE_TYPE_SIMPLES_HISTORICO, type DocumentoRef } from '../dtos/SourceDocumentUploadDto';
+import type { SourceDocumentUploadService } from './SourceDocumentUploadService';
 
 /** Alertas que as entradas produzem para a apuração (BRIEF §3, `ApuracaoSimples.alertas`). */
 export type AlertaEntradaSimples = { codigo: 'RBT12_INCOMPLETO' | 'SEGREGACAO_MANUAL'; detalhe: string };
@@ -28,6 +30,8 @@ export class SimplesEntradasService {
   constructor(
     private readonly repo: ISimplesEntradasRepository,
     private readonly policy: IAccountingPolicy,
+    /** BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-9 (a): o documento do histórico na view. */
+    private readonly documentos: Pick<SourceDocumentUploadService, 'documentosPorId'>,
   ) {}
 
   // ---- itens 10–11: histórico pré-adoção ----
@@ -35,7 +39,8 @@ export class SimplesEntradasService {
   async upsertHistorico(scope: AccountingScope, competencia: string, input: SimplesHistoricoUpsert): Promise<SimplesHistoricoView> {
     this.assertManage(scope);
     const sourceDocumentId = input.sourceDocumentId ?? null;
-    if (sourceDocumentId && !(await this.repo.sourceDocumentExists(scope, sourceDocumentId))) {
+    // BE-INCR-SOURCE-DOCUMENT-UPLOAD item 6 + F-SD-3 (a): SD ativo, desta unidade e com proveniência de histórico.
+    if (sourceDocumentId && !(await this.repo.sourceDocumentExists(scope, sourceDocumentId, SOURCE_TYPE_SIMPLES_HISTORICO))) {
       throw new NotFoundError(`Documento de origem '${sourceDocumentId}' não encontrado nesta unidade.`);
     }
     const row = await this.repo.upsertHistorico(scope, competencia, {
@@ -43,7 +48,20 @@ export class SimplesEntradasService {
       folhaCents: input.folhaCents === undefined || input.folhaCents === null ? null : BigInt(input.folhaCents),
       sourceDocumentId,
     });
-    return historicoView(row);
+    return this.comDocumento(scope, row);
+  }
+
+  private async comDocumento(scope: AccountingScope, row: SimplesHistoricoMensal): Promise<SimplesHistoricoView> {
+    const docs = row.sourceDocumentId ? await this.documentos.documentosPorId(scope, [row.sourceDocumentId]) : new Map<string, NonNullable<DocumentoRef>>();
+    return historicoView(row, (row.sourceDocumentId && docs.get(row.sourceDocumentId)) || null);
+  }
+
+  /** BE-INCR-SIMPLES-GET-ENTRADAS item 1 — o histórico gravado da competência; sem registro = 404 (F-GE-1 → a). */
+  async obterHistorico(scope: AccountingScope, competencia: string): Promise<SimplesHistoricoView> {
+    this.assertRead(scope);
+    const [row] = await this.repo.findHistorico(scope, [competencia]);
+    if (!row) throw new NotFoundError(`Sem histórico declarado para a competência ${competencia}.`);
+    return this.comDocumento(scope, row);
   }
 
   /**
@@ -77,6 +95,14 @@ export class SimplesEntradasService {
       parcelas,
       alerta: parcelas.length === 0 ? null : { codigo: 'SEGREGACAO_MANUAL', detalhe: `${parcelas.length} parcela(s) segregada(s) por declaração manual` },
     };
+  }
+
+  /** BE-INCR-SIMPLES-GET-ENTRADAS item 2 — a segregação gravada da competência; sem registro = 404 (F-GE-1 → a). */
+  async obterSegregacao(scope: AccountingScope, competencia: string): Promise<SimplesSegregacaoView> {
+    this.assertRead(scope);
+    const row = await this.repo.findSegregacao(scope, competencia);
+    if (!row) throw new NotFoundError(`Sem segregação manual declarada para a competência ${competencia}.`);
+    return { id: row.id, unitId: row.unitId, competencia: row.competencia, parcelas: comExcluir(row.parcelas as SimplesSegregacaoParcela[]), updatedAt: row.updatedAt.toISOString() };
   }
 
   // ---- item 13: contratos de parceria ----
@@ -167,7 +193,7 @@ function parceriaData(v: ParceriaData | SalaoParceriaContratoInput): ParceriaDat
   };
 }
 
-function historicoView(r: SimplesHistoricoMensal): SimplesHistoricoView {
+function historicoView(r: SimplesHistoricoMensal, documento: DocumentoRef): SimplesHistoricoView {
   return {
     id: r.id,
     unitId: r.unitId,
@@ -175,6 +201,7 @@ function historicoView(r: SimplesHistoricoMensal): SimplesHistoricoView {
     receitaBrutaCents: Number(r.receitaBrutaCents),
     folhaCents: r.folhaCents === null ? null : Number(r.folhaCents),
     sourceDocumentId: r.sourceDocumentId,
+    documento,
     updatedAt: r.updatedAt.toISOString(),
   };
 }

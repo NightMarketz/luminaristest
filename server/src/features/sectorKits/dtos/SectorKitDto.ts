@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { AccountingBindingV1Schema } from '../../accountingBinding/dtos/AccountingBindingDto';
-import { CANONICAL_ACCOUNTS } from '../../accounting/fixtures/ChartOfAccountsFixture';
+import { CANONICAL_ACCOUNTS, CANONICAL_ACCOUNTS_PRE_L8 } from '../../accounting/fixtures/ChartOfAccountsFixture';
 
 /**
  * Contrato do kit de setor — `SectorKitV1` (BE-INCR-KIT-SETOR, PR-1, itens 1–2; BRIEF §3.1).
@@ -54,14 +54,23 @@ const RoleDefaultsSchema = z
   })
   .strict();
 
-const ServiceFiscalDefaultSchema = z
+/**
+ * Catálogo de sugestões fiscais por serviço (BE-INCR-KIT-SETOR-EMENDA-1, PR-K3, item 7a; F-KE-3 b, dono 13/10): o kit
+ * não grava enquadramento — o cadastro de serviço oferece estas entradas e o usuário escolhe. Substitui o antigo
+ * "padrão por `serviceRef`" (nenhum kit publicado usava: v1–v3 têm `[]`). "cTribNac ∈ lista LC 116 vigente" é teste de
+ * build do kit (`kitServiceCatalog.test.ts`): a lista vive em `features/accounting`, fora da fronteira (L2 de 13/10).
+ */
+export const ServiceFiscalCatalogItemSchema = z
   .object({
-    serviceRef: z.string().min(1), // chave do serviço no preset do setor
+    key: z.string().regex(/^[a-z][a-z0-9_]+$/),
+    label: z.string().min(1),
     cTribNac: z.string().regex(/^\d{6}$/, 'cTribNac tem 6 dígitos.'),
     cNBS: z.string().regex(/^\d{9}$/).optional(),
-    cIndOp: z.string().regex(/^\d{6}$/).default('030101'),
+    sinonimos: z.array(z.string().min(2)).min(1),
+    fonte: z.string().min(1), // ex.: "LC 116 6.01; Anexo B v1.01"
   })
   .strict();
+export type ServiceFiscalCatalogItem = z.infer<typeof ServiceFiscalCatalogItemSchema>;
 
 const ReferentialSchema = z
   .object({
@@ -82,18 +91,33 @@ const SectorKitBaseSchema = z
     binding: AccountingBindingV1Schema, // ADR-P1, inalterado
     operationalSchema: z.record(z.string(), z.unknown()), // chaves = emittableEventKeys (F4)
     roleDefaults: RoleDefaultsSchema.default({ scopeSettings: {}, fiscalProfile: {} }),
-    serviceFiscalDefaults: z.array(ServiceFiscalDefaultSchema).default([]),
+    serviceFiscalDefaults: z.array(ServiceFiscalCatalogItemSchema).default([]), // PR-K3: catálogo de sugestões
     referential: z.array(ReferentialSchema).default([]),
   })
   .strict();
 
 type SectorKitBase = z.infer<typeof SectorKitBaseSchema>;
 
+/**
+ * BE-INCR-PLANO-4-NIVEIS (F-L8-9 a, dono 13/10): as versões publicadas ANTES da L8 (plano de 3 níveis) são validadas
+ * contra o plano da época, congelado; toda outra versão, contra o plano vigente. Lista explícita, não "versão < 3":
+ * um setor novo publicado depois da L8 na v1 tem de ser validado contra o plano vigente.
+ */
+const KITS_PUBLICADOS_PRE_L8: Readonly<Record<string, readonly number[]>> = {
+  beautySalon: [1, 2, 3, 4, 5],
+  aestheticClinic: [1, 2, 3, 4, 5],
+};
+
+function planoDaEpoca(kit: SectorKitBase) {
+  return KITS_PUBLICADOS_PRE_L8[kit.kitKey]?.includes(kit.kitVersion) ? CANONICAL_ACCOUNTS_PRE_L8 : CANONICAL_ACCOUNTS;
+}
+
 /** Refinamentos do item 2 do BRIEF. */
 function kitRefinements(kit: SectorKitBase, ctx: z.RefinementCtx): void {
   const issue = (path: (string | number)[], message: string) => ctx.addIssue({ code: 'custom', path, message });
+  const plano = planoDaEpoca(kit);
 
-  const canonicalCodes = new Set(CANONICAL_ACCOUNTS.map((a) => a.code));
+  const canonicalCodes = new Set(plano.map((a) => a.code));
   const seen = new Set<string>();
   kit.chartExtension.forEach((acc, i) => {
     if (canonicalCodes.has(acc.code)) issue(['chartExtension', i, 'code'], `Conta ${acc.code} já é do plano canônico.`);
@@ -102,7 +126,7 @@ function kitRefinements(kit: SectorKitBase, ctx: z.RefinementCtx): void {
   });
 
   const leafByCode = new Map<string, boolean>();
-  for (const a of CANONICAL_ACCOUNTS) leafByCode.set(a.code, a.acceptsEntries);
+  for (const a of plano) leafByCode.set(a.code, a.acceptsEntries);
   for (const a of kit.chartExtension) if (!leafByCode.has(a.code)) leafByCode.set(a.code, a.acceptsEntries);
 
   const checkLeaf = (code: string | undefined, path: (string | number)[]) => {
@@ -120,6 +144,13 @@ function kitRefinements(kit: SectorKitBase, ctx: z.RefinementCtx): void {
       checkLeaf(code, ['roleDefaults', group, field]);
     }
   }
+
+  // PR-K3: a `key` identifica a sugestão (e é o enum da IA, 7c) — única no catálogo.
+  const keys = new Set<string>();
+  kit.serviceFiscalDefaults.forEach((item, i) => {
+    if (keys.has(item.key)) issue(['serviceFiscalDefaults', i, 'key'], `Chave ${item.key} repetida no catálogo.`);
+    keys.add(item.key);
+  });
 
   const emittable = new Set(Object.keys(kit.operationalSchema));
   const bound = new Set(kit.binding.eventBindings.map((eb) => eb.eventKey));

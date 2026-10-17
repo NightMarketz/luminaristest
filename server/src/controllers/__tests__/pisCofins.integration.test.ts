@@ -15,7 +15,7 @@
 import { readFile } from 'node:fs/promises';
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { ApplicationFactory } from '@/lib/factory';
 import { resolveReadPath } from '@/lib/attachmentStorage';
 import { PAYLOAD_ALLOWLIST } from '@/features/accounting/audit/auditCanonical';
@@ -25,7 +25,7 @@ import type { SpedEcfRequestDto } from '@/features/accounting/dtos/SpedEcfDto';
 const app = makeApp();
 const UNIT = 'unit-x8-pr2';
 const BASE = '/api/accounting/tax-assessments';
-type Dono = { id: string; username: string };
+type Dono = { id: string; username: string; unitId: string };
 type Linha = { codigo: string; valorCents: string; descricao: string; fonte: string };
 
 let seq = 0;
@@ -36,8 +36,11 @@ async function novoDono(regime: string, opts: { modalidade?: string; empresa?: R
     data: { userId: u.id, anoCalendario: 2026, regime, ecfIndAliqCsll: '1', ecfIndRecReceita: '2', createdById: u.id, updatedById: u.id, ...opts.empresa },
   });
   const modalidade = opts.modalidade ?? (regime === 'REAL' ? 'NAO_CUMULATIVO' : regime === 'PRESUMIDO' ? 'CUMULATIVO' : 'SIMPLES');
-  await prisma.fiscalProfile.create({ data: { userId: u.id, unitId: UNIT, regimeTributario: regime, pisCofinsRegime: modalidade, ...opts.unidade } });
-  return u;
+  // I6: unitId tem de ser linha de `units` do dono — id GLOBAL, então cada dono ganha a sua.
+  const unitId = `${UNIT}-${seq}`;
+  await seedUnit({ userId: u.id, id: unitId });
+  await prisma.fiscalProfile.create({ data: { userId: u.id, unitId, regimeTributario: regime, pisCofinsRegime: modalidade, ...opts.unidade } });
+  return { ...u, unitId };
 }
 
 const conta = async (dono: Dono, unitId: string, code: string, nature: string) =>
@@ -56,12 +59,12 @@ async function lancar(dono: Dono, unitId: string, data: string, cents: number, d
 /** Nota de compra já importada (o PR-1 grava a linha `PIS_COFINS`); `parcelas` ausente = nota antiga (DERIVADO). */
 async function nota(dono: Dono, issueDate: string, amountCents: number, parcelas?: { pisCents: number; cofinsCents: number }): Promise<void> {
   const cp =
-    (await prisma.counterparty.findFirst({ where: { userId: dono.id, unitId: UNIT } })) ??
-    (await prisma.counterparty.create({ data: { userId: dono.id, unitId: UNIT, type: 'SUPPLIER', name: 'Fornecedor', nameNormalized: 'fornecedor' } }));
-  const rec = await conta(dono, UNIT, '1.1.9', 'Asset');
+    (await prisma.counterparty.findFirst({ where: { userId: dono.id, unitId: dono.unitId } })) ??
+    (await prisma.counterparty.create({ data: { userId: dono.id, unitId: dono.unitId, type: 'SUPPLIER', name: 'Fornecedor', nameNormalized: 'fornecedor' } }));
+  const rec = await conta(dono, dono.unitId, '1.1.9', 'Asset');
   await prisma.payable.create({
     data: {
-      userId: dono.id, unitId: UNIT, supplierName: 'Fornecedor', counterpartyId: cp.id, documentNumber: `NF-${issueDate}-${amountCents}`, description: 'compra',
+      userId: dono.id, unitId: dono.unitId, supplierName: 'Fornecedor', counterpartyId: cp.id, documentNumber: `NF-${issueDate}-${amountCents}`, description: 'compra',
       issueDate: new Date(`${issueDate}T00:00:00.000Z`), dueDate: new Date(`${issueDate}T00:00:00.000Z`), amountCents: 100_000n, status: 'OPEN',
       recoverableTaxLines: JSON.stringify([{ accountId: rec.id, accountCode: '1.1.9', amountCents, kind: 'PIS_COFINS', ...parcelas }]),
     },
@@ -69,12 +72,12 @@ async function nota(dono: Dono, issueDate: string, amountCents: number, parcelas
 }
 
 const preview = (dono: Dono, periodo: string, extra: Record<string, unknown> = {}) =>
-  request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(dono)).send({ unitId: UNIT, anoCalendario: 2026, periodo, ...extra });
+  request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(dono)).send({ unitId: dono.unitId, anoCalendario: 2026, periodo, ...extra });
 const confirm = (dono: Dono, periodo: string, pis: string, cofins: string, extra: Record<string, unknown> = {}) =>
   request(app)
     .post(`${BASE}/pis-cofins`)
     .set(authHeader(dono))
-    .send({ unitId: UNIT, anoCalendario: 2026, periodo, expectedAPagarCents: { PIS: pis, COFINS: cofins }, ...extra });
+    .send({ unitId: dono.unitId, anoCalendario: 2026, periodo, expectedAPagarCents: { PIS: pis, COFINS: cofins }, ...extra });
 const linhas = (dono: Dono) => prisma.taxAssessment.findMany({ where: { userId: dono.id }, orderBy: [{ periodo: 'asc' }, { tributo: 'asc' }, { createdAt: 'asc' }] });
 const eventos = async (dono: Dono, eventType: string): Promise<Record<string, string>[]> =>
   (await prisma.auditEvent.findMany({ where: { scopeUserId: dono.id, eventType }, orderBy: { seq: 'asc' } })).map((e) => JSON.parse(e.payload));
@@ -92,7 +95,7 @@ describe('X8 PR-2 — apuração mensal de PIS/Cofins: prévia, confirmação, l
 
   it('23 (a) / itens 13, 14, 16, 22: Presumido M03 — prévia, CAS 409, confirmação 201, auditoria, 2ª 409, leitura, substituição; o X7 não enxerga as linhas', async () => {
     const dono = await novoDono('PRESUMIDO');
-    await lancar(dono, UNIT, '2026-03-10', 100_000_00);
+    await lancar(dono, dono.unitId, '2026-03-10', 100_000_00);
 
     const p = await preview(dono, 'M03');
     expect(p.status).toBe(200);
@@ -113,8 +116,8 @@ describe('X8 PR-2 — apuração mensal de PIS/Cofins: prévia, confirmação, l
     expect(ok.body.data.cofins).toMatchObject({ tributo: 'COFINS', aPagarCents: '300000' });
     const rows = await linhas(dono);
     expect(rows.map((r) => [r.tributo, r.status, r.regime, r.forma, r.periodo, r.modo, r.codigoReceita, r.unitId])).toEqual([
-      ['COFINS', 'CONFIRMED', 'PRESUMIDO', 'MENSAL', 'M03', 'PIS_COFINS_CUMULATIVO', '217201', UNIT],
-      ['PIS', 'CONFIRMED', 'PRESUMIDO', 'MENSAL', 'M03', 'PIS_COFINS_CUMULATIVO', '810902', UNIT],
+      ['COFINS', 'CONFIRMED', 'PRESUMIDO', 'MENSAL', 'M03', 'PIS_COFINS_CUMULATIVO', '217201', dono.unitId],
+      ['PIS', 'CONFIRMED', 'PRESUMIDO', 'MENSAL', 'M03', 'PIS_COFINS_CUMULATIVO', '810902', dono.unitId],
     ]);
     // Sem trava de forma (item 14): PIS/Cofins não travam o perfil.
     expect((await prisma.companyFiscalProfile.findFirstOrThrow({ where: { userId: dono.id } })).formaApuracaoTravadaEm).toBeNull();
@@ -128,22 +131,22 @@ describe('X8 PR-2 — apuração mensal de PIS/Cofins: prévia, confirmação, l
     expect(corpo(await confirm(dono, 'M03', '65000', '300000'))).toContain('TAX_ASSESSMENT_ALREADY_CONFIRMED');
 
     // Item 16: os GET do X7 servem; o filtro tributo aceita PIS/COFINS.
-    const lista = await request(app).get(BASE).query({ unitId: UNIT, anoCalendario: 2026, tributo: 'PIS' }).set(authHeader(dono));
+    const lista = await request(app).get(BASE).query({ unitId: dono.unitId, anoCalendario: 2026, tributo: 'PIS' }).set(authHeader(dono));
     expect(lista.status).toBe(200);
     expect(lista.body.data.map((r: { tributo: string; periodo: string }) => [r.tributo, r.periodo])).toEqual([['PIS', 'M03']]);
-    const um = await request(app).get(`${BASE}/${ok.body.data.cofins.id}`).query({ unitId: UNIT }).set(authHeader(dono));
+    const um = await request(app).get(`${BASE}/${ok.body.data.cofins.id}`).query({ unitId: dono.unitId }).set(authHeader(dono));
     expect(um.status).toBe(200);
     expect(mem(um.body.data.memoria, 'DEBITO')).toBe('300000');
 
     // PR-3 (item 18): o reconcile do X7 serve a linha de PIS; sem as contas de PIS/Cofins no perfil ⇒ 400 nomeando a
     // conta (F-TA-7), nunca as contas da CSLL.
-    const rec = await request(app).post(`${BASE}/${ok.body.data.pis.id}/provisao`).set(authHeader(dono)).send({ unitId: UNIT });
+    const rec = await request(app).post(`${BASE}/${ok.body.data.pis.id}/provisao`).set(authHeader(dono)).send({ unitId: dono.unitId });
     expect(rec.status).toBe(400);
     expect(corpo(rec)).toContain('despesa de PIS');
     expect(await prisma.journalEntry.count({ where: { userId: dono.id, sourceType: 'tax.assessment.provision' } })).toBe(0);
 
     // O X7 não enxerga as linhas de PIS/Cofins: o T01 de IRPJ/CSLL confirma normalmente.
-    const x7 = await request(app).post(BASE).set(authHeader(dono)).send({ unitId: UNIT, anoCalendario: 2026, periodo: 'T01', expectedAPagarCents: { IRPJ: '480000', CSLL: '288000' } });
+    const x7 = await request(app).post(BASE).set(authHeader(dono)).send({ unitId: dono.unitId, anoCalendario: 2026, periodo: 'T01', expectedAPagarCents: { IRPJ: '480000', CSLL: '288000' } });
     expect(x7.status).toBe(201);
 
     // Substituição (item 14): supersedesIds com as 2 linhas vivas.
@@ -157,8 +160,8 @@ describe('X8 PR-2 — apuração mensal de PIS/Cofins: prévia, confirmação, l
 
   it('BE-INCR-H1-REFERENCIAL-3-4 (review #630 achado 5): Presumido M03 com 3.4 — base (100.000 + 10.000) ⇒ PIS 715,00 / Cofins 3.300,00', async () => {
     const dono = await novoDono('PRESUMIDO');
-    await lancar(dono, UNIT, '2026-03-10', 100_000_00);
-    await lancar(dono, UNIT, '2026-03-20', 10_000_00, '1.1', '3.4');
+    await lancar(dono, dono.unitId, '2026-03-10', 100_000_00);
+    await lancar(dono, dono.unitId, '2026-03-20', 10_000_00, '1.1', '3.4');
     const p = await preview(dono, 'M03');
     expect(p.status).toBe(200);
     expect(p.body.data.pis).toMatchObject({ baseCents: '11000000', devidoCents: '71500' });
@@ -168,7 +171,7 @@ describe('X8 PR-2 — apuração mensal de PIS/Cofins: prévia, confirmação, l
 
   it('23 (a)(b)(c) / itens 6, 8, 11: Real — crédito da NF-e (nova + DERIVADO) > débito ⇒ saldo credor; M02 o consome; ordem e "de trás para frente"', async () => {
     const dono = await novoDono('REAL');
-    await lancar(dono, UNIT, '2026-01-15', 100_00);
+    await lancar(dono, dono.unitId, '2026-01-15', 100_00);
     await nota(dono, '2026-01-10', 56_00, { pisCents: 10_00, cofinsCents: 46_00 });
     await nota(dono, '2026-01-31', 9_25); // nota antiga ⇒ 925 × 165/925 = 165 / 760
     await nota(dono, '2026-02-01', 1_000_00, { pisCents: 165_00, cofinsCents: 835_00 }); // fevereiro — fora do M01
@@ -188,7 +191,7 @@ describe('X8 PR-2 — apuração mensal de PIS/Cofins: prévia, confirmação, l
     expect((await confirm(dono, 'M01', '0', '0', saldo)).status).toBe(201);
 
     // M02: o saldo credor é lido de M01 — informar de novo ⇒ 400.
-    await lancar(dono, UNIT, '2026-02-15', 100_000_00);
+    await lancar(dono, dono.unitId, '2026-02-15', 100_000_00);
     const informado = await preview(dono, 'M02', saldo);
     expect(informado.status).toBe(400);
     expect(corpo(informado)).toContain('saldoCredorAnterior só no 1º mês apurado');
@@ -219,7 +222,7 @@ describe('X8 PR-2 — apuração mensal de PIS/Cofins: prévia, confirmação, l
 
   it('item 8 / 23 (d): Real com outros créditos e retenções; cumulativo com outros créditos ⇒ 400; ajuste acima da receita ⇒ 400; aviso de ajustes', async () => {
     const real = await novoDono('REAL');
-    await lancar(real, UNIT, '2026-05-10', 10_000_00);
+    await lancar(real, real.unitId, '2026-05-10', 10_000_00);
     const r = await preview(real, 'M05', {
       outrosCreditos: [{ inciso: 'IV_ALUGUEL_PJ', baseCents: '200000', documento: 'contrato de locação' }],
       retencoes: [{ tributo: 'COFINS', valorCents: '1000' }],
@@ -231,8 +234,8 @@ describe('X8 PR-2 — apuração mensal de PIS/Cofins: prévia, confirmação, l
     expect(r.body.data.pis.memoria.find((m: Linha) => m.codigo === 'CREDITO_IV_ALUGUEL_PJ_1').fonte).toBe('Lei 10.833/2003 art. 3º IV');
 
     const presumido = await novoDono('PRESUMIDO');
-    await lancar(presumido, UNIT, '2026-05-10', 10_000_00);
-    await lancar(presumido, UNIT, '2026-05-11', 2_000_00, '1.1', '3.3'); // revenda
+    await lancar(presumido, presumido.unitId, '2026-05-10', 10_000_00);
+    await lancar(presumido, presumido.unitId, '2026-05-11', 2_000_00, '1.1', '3.3'); // revenda
     const cum = await preview(presumido, 'M05', { outrosCreditos: [{ inciso: 'III_ENERGIA', baseCents: '100' }] });
     expect(cum.status).toBe(400);
     expect(corpo(cum)).toContain('cumulativo não tem crédito');
@@ -250,11 +253,11 @@ describe('X8 PR-2 — apuração mensal de PIS/Cofins: prévia, confirmação, l
 
   it('23 (e) / item 9: 2027 ⇒ 400; SIMPLES ⇒ 400; caixa ⇒ 400; unidade divergente (REAL + CUMULATIVO) ⇒ 400; multiunidade ⇒ 400; perfil ausente ⇒ 400', async () => {
     const dono = await novoDono('PRESUMIDO');
-    const em2027 = await request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(dono)).send({ unitId: UNIT, anoCalendario: 2027, periodo: 'M01' });
+    const em2027 = await request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(dono)).send({ unitId: dono.unitId, anoCalendario: 2027, periodo: 'M01' });
     expect(em2027.status).toBe(400);
     expect(corpo(em2027)).toContain('LC 214/2025 art. 542');
 
-    const semPerfil = await request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(dono)).send({ unitId: UNIT, anoCalendario: 2025, periodo: 'M12' });
+    const semPerfil = await request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(dono)).send({ unitId: dono.unitId, anoCalendario: 2025, periodo: 'M12' });
     expect(semPerfil.status).toBe(400);
     expect(corpo(semPerfil)).toContain('perfil fiscal da empresa de 2025 ausente');
 
@@ -275,7 +278,7 @@ describe('X8 PR-2 — apuração mensal de PIS/Cofins: prévia, confirmação, l
     expect(corpo(d)).toContain('diverge da modalidade');
 
     const multi = await novoDono('PRESUMIDO');
-    await lancar(multi, UNIT, '2026-04-10', 1_000_00);
+    await lancar(multi, multi.unitId, '2026-04-10', 1_000_00);
     await lancar(multi, 'unit-x8-filial', '2026-04-20', 1_000_00);
     await lancar(multi, 'unit-x8-outra', '2026-05-01', 1_000_00); // maio — fora do M04
     const m = await preview(multi, 'M04');
@@ -288,16 +291,16 @@ describe('X8 PR-2 — apuração mensal de PIS/Cofins: prévia, confirmação, l
 
   it('23 (g): a base do Real do X7 (LAIR) inclui a despesa de PIS/Cofins provisionada — fora da guarda de circularidade', async () => {
     const dono = await novoDono('REAL', { empresa: { lucroRealObrigatorio: true } });
-    await lancar(dono, UNIT, '2026-02-10', 100_000_00);
-    await lancar(dono, UNIT, '2026-03-31', 1_650_00, '4.9.3', '2.1.9.3'); // no lugar da provisão do PR-3: D despesa PIS / C PIS a recolher
-    await prisma.lalurParteBClosing.create({ data: { userId: dono.id, unitId: UNIT, year: 2026, quarter: 'T01', balancesSha256: 'x' } });
-    const p = await request(app).post(`${BASE}/preview`).set(authHeader(dono)).send({ unitId: UNIT, anoCalendario: 2026, periodo: 'T01' });
+    await lancar(dono, dono.unitId, '2026-02-10', 100_000_00);
+    await lancar(dono, dono.unitId, '2026-03-31', 1_650_00, '4.9.3', '2.1.9.3'); // no lugar da provisão do PR-3: D despesa PIS / C PIS a recolher
+    await prisma.lalurParteBClosing.create({ data: { userId: dono.id, unitId: dono.unitId, year: 2026, quarter: 'T01', balancesSha256: 'x' } });
+    const p = await request(app).post(`${BASE}/preview`).set(authHeader(dono)).send({ unitId: dono.unitId, anoCalendario: 2026, periodo: 'T01' });
     expect(p.status).toBe(200);
     expect(mem(p.body.data.irpj.memoria, 'LAIR')).toBe(String(100_000_00 - 1_650_00));
   });
 });
 
-describe('X8 PR-2 — 23 (f): a ECF Presumido de um ano com provisão de PIS/Cofins lançada gera (F-PCB-1 b: conta Expense, gate intocado)', () => {
+describe('X8 PR-2 — 23 (f): a ECF Presumido de um ano com provisão de PIS/Cofins lançada gera (F-PCB-1R a, dono 13/10: dedução Revenue, fora do gate só pelo perfil)', () => {
   const DONO = 'u-x8-pr2-ecf';
   const UNIDADE = 'unit-x8-pr2-ecf';
   const scope: AccountingScope = { ownerUserId: DONO, actorUserId: DONO, unitId: UNIDADE, ledgerCode: 'DEFAULT', baseCurrencyCode: 'BRL', timeZone: 'America/Sao_Paulo' };
@@ -324,11 +327,19 @@ describe('X8 PR-2 — 23 (f): a ECF Presumido de um ano com provisão de PIS/Cof
       { code: '2.1.9.4', nature: 'Liability' },
       { code: '2.3.1', nature: 'Equity' },
       { code: '3.1', nature: 'Revenue' },
-      { code: '4.9.3', nature: 'Expense' },
-      { code: '4.9.4', nature: 'Expense' },
+      { code: '3.6.1', nature: 'Revenue' },
+      { code: '3.6.2', nature: 'Revenue' },
     ]) {
       await prisma.account.create({ data: { userId: DONO, unitId: UNIDADE, name: acc.code, ...acc, acceptsEntries: true } });
     }
+    const id = async (code: string) => (await prisma.account.findFirstOrThrow({ where: { userId: DONO, unitId: UNIDADE, code } })).id;
+    await prisma.fiscalProfile.create({
+      data: {
+        userId: DONO, unitId: UNIDADE, regimeTributario: 'PRESUMIDO', pisCofinsRegime: 'CUMULATIVO',
+        pisDespesaAccountId: await id('3.6.1'), cofinsDespesaAccountId: await id('3.6.2'),
+        pisRecolherAccountId: await id('2.1.9.3'), cofinsRecolherAccountId: await id('2.1.9.4'),
+      },
+    });
     await prisma.accountingPeriod.create({ data: { userId: DONO, unitId: UNIDADE, year: 2025, month: 10, status: 'OPEN', openedAt: new Date() } });
   }, 120000);
 
@@ -336,7 +347,7 @@ describe('X8 PR-2 — 23 (f): a ECF Presumido de um ano com provisão de PIS/Cof
     await prisma.$disconnect();
   });
 
-  it('receita de serviço + D despesa de PIS/Cofins / C a recolher ⇒ a ECF sai, com o serviço em P200(8)', async () => {
+  it('receita de serviço + D dedução de PIS/Cofins (3.6.x) / C a recolher ⇒ a ECF sai, com o serviço em P200(8) sem a dedução', async () => {
     const posting = ApplicationFactory.getInstance().getPostingService();
     await posting.postEntry(scope, {
       unitId: UNIDADE, date: '2025-10-15', sourceType: 'manual', description: 'Serviço prestado em outubro',
@@ -348,8 +359,8 @@ describe('X8 PR-2 — 23 (f): a ECF Presumido de um ano com provisão de PIS/Cof
     await posting.postEntry(scope, {
       unitId: UNIDADE, date: '2025-10-31', sourceType: 'manual', description: 'Provisão de PIS/Cofins de outubro (no lugar da do PR-3)',
       lines: [
-        { accountCode: '4.9.3', debitCents: 6_500, creditCents: 0 },
-        { accountCode: '4.9.4', debitCents: 30_000, creditCents: 0 },
+        { accountCode: '3.6.1', debitCents: 6_500, creditCents: 0 },
+        { accountCode: '3.6.2', debitCents: 30_000, creditCents: 0 },
         { accountCode: '2.1.9.3', debitCents: 0, creditCents: 6_500 },
         { accountCode: '2.1.9.4', debitCents: 0, creditCents: 30_000 },
       ],
@@ -358,5 +369,19 @@ describe('X8 PR-2 — 23 (f): a ECF Presumido de um ano com provisão de PIS/Cof
     const row = await prisma.accountingDataExchangeJob.findUniqueOrThrow({ where: { id: job.id } });
     const text = (await readFile(resolveReadPath(row.storageKey!))).toString('latin1');
     expect(text).toContain('|P200|8||10000,00|');
+  });
+
+  it('a mesma dedução, com o perfil sem as contas ⇒ 400 unmappedRevenueAccounts (é o perfil que tira do gate, não o código)', async () => {
+    await prisma.fiscalProfile.update({
+      where: { userId_unitId: { userId: DONO, unitId: UNIDADE } },
+      data: { pisDespesaAccountId: null, cofinsDespesaAccountId: null },
+    });
+    const err = await ApplicationFactory.getInstance().getSpedEcfGenerationService().generate(scope, dto).catch((e: unknown) => e);
+    expect((err as { details?: unknown }).details).toEqual({
+      unmappedRevenueAccounts: [
+        { code: '3.6.1', name: '3.6.1' },
+        { code: '3.6.2', name: '3.6.2' },
+      ],
+    });
   });
 });

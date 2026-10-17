@@ -512,6 +512,44 @@ EVIDÊNCIA: [colar o JSON da resposta 201 — id do lançamento e as pernas]
 > DESFECHO: [dono]   ASSINATURA: [dono]
 > ```
 
+> **[EMENDA 2026-10-13 — emenda 3.3 PR-1, F-HR-4 a (dono, 11/10); tarifa em 4.6 (dono, 13/10)]** Depois do merge do
+> PR-1 da emenda 3.3, o plano canônico ganha 9 folhas (3.5.1–3.5.3, 4.3.1–4.3.3, 4.4.1, 4.4.2, 4.6). Elas nascem nos
+> escopos que já existem na primeira chamada que roda o `ensureChartOfAccounts` (`GET /accounts`, ou qualquer
+> lançamento), e o gate da ECD conta toda folha ativa: **sem o lote abaixo, a ECD volta a dar 400 nas duas unidades**.
+> Instalação nova pelo kit v5 já sai mapeada; o lote é só para as unidades do seed. Mesmos códigos em Presumido e Real
+> (PROPOSTA-REFERENCIAL-D1 §1.2; descrições oficiais conferidas em `referential_accounts` 2025 do dev.db em 13/10).
+>
+> Nas duas unidades (seed-presumido e seed-real):
+>
+> 1. `GET /api/accounting/accounts?unitId=<unidade>`. Cria as 9 folhas, se faltarem, e devolve os ids. Anote o `id`
+>    de cada código da tabela.
+> 2. `GET /api/accounting/referential/coverage?unitId=<unidade>&version=2025`. Esperado: `15/24 · ready false`, e as
+>    9 folhas novas entre as não mapeadas.
+> 3. `POST /api/accounting/referential/mappings/batch` com
+>    `{"unitId":"<unidade>","mappingVersion":"2025","items":[ … 9 itens {accountId, referentialCode, label} … ]}`:
+>
+>    | Conta | referentialCode | label |
+>    |---|---|---|
+>    | 3.5.1, 3.5.2, 3.5.3 | `3.01.01.05.01.05` | Outras Receitas Financeiras |
+>    | 4.3.1, 4.3.3 | `3.01.01.09.01.08` | (-) Outras Despesas Financeiras |
+>    | 4.3.2, 4.4.1, 4.4.2 | `3.01.01.07.01.22` | (-) Multas |
+>    | 4.6 | `3.01.01.07.01.04` | (-) Outros Serviços Prestados por Pessoa Física ou Jurídica |
+>
+>    Esperado: HTTP 200 (lote atômico; um id errado derruba os 9).
+> 4. Repita o passo 2. Esperado: `24/24 · ready true`.
+>
+> Se a unidade já tiver as contas fiscais do kit v3 (2.1.3–2.1.6, 3.6.x, 4.5.x), os totais sobem 8 nos dois
+> lados (23/32 → 32/32). O critério é `ready true` e nenhuma folha não mapeada.
+>
+> Quem executa é o dono, ou o agente sob comando literal dele no chat, colando a saída aqui. Desfecho e assinatura são
+> do dono.
+>
+> ```
+> EVIDÊNCIA (P5, emenda 3.3): [colar a saída dos passos 1–4 nas duas unidades]
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
+> ```
+
 ### 2. Conferir que o encerramento entrou no razão
 
 Na aplicação, aba **Balancete** (e DRE) do ano-calendário: as contas de resultado devem estar zeradas
@@ -606,6 +644,140 @@ CNPJ/CPF** se este runbook for commitado]
 > DESFECHO: [dono]   ASSINATURA: [dono]
 
 ### 4. Importar a ECD no PVA
+
+> **[EMENDA 2026-10-13 — BE-INCR-PLANO-4-NIVEIS (L8), item 12 do BRIEF] Pré-condição da tentativa 3.** O plano canônico
+> passou a 4 níveis (analítica patrimonial `x.y.z.NN`; ADR-PLANO-CONTAS-4-NIVEIS). Antes de subir o build que contém a
+> mudança, com o servidor **parado** e depois do backup do `dev.db` (P2):
+>
+> ```bash
+> cd server && npx ts-node -r tsconfig-paths/register src/jobs/migratePlano4NiveisCli.ts --all
+> ```
+>
+> Esperado: `OK {...}` por unidade, com `saldoAntesDepoisIgual: true` e `renomeadas` com as 9 linhas do de-para na
+> primeira rodada; uma 2ª rodada devolve `renomeadas: []` (idempotente). O período corrente de cada unidade com binding
+> precisa estar **aberto** (o binding é recompilado com dry-run); se não estiver, a CLI recusa sem alterar nada.
+> **Nunca suba o servidor novo antes da migração:** o `ensureChartOfAccounts` criaria a analítica nova vazia ao lado da
+> antiga com saldo.
+>
+> **[EMENDA 2026-10-15 — L8 refeito sobre a main de 15/10]** A unidade com o kit v3–v5 também tem as 4 contas a recolher
+> renomeadas (`2.1.3`→`2.1.3.01` … `2.1.6`→`2.1.3.04`, F-L8-10 a), e ganha as sintéticas `2.1.3`, `3.6` e `4.5` (F-L8-11 a).
+> Nesse caso `renomeadas` tem 13 linhas, e `kitAtualizado` termina em `para: 6`. Unidade com kit abaixo do v5 (as 5 do
+> `dev.db` estão no v1) passa antes pelo upgrade real até o v5 (F-L8-12 a): `kitPreparado: {de: 1, para: 5}`, e aí as
+> contas fiscais já existem quando a renomeação roda. Se esse upgrade não aplicar (forward, conflito ou falha de passo),
+> a unidade é listada como `FALHOU`, sem nada renomeado.
+>
+> **[EMENDA 2026-10-15 — F-L8-13 a] De-para de 2025 nas unidades do H1, antes de gerar a ECD.** Com 2025 `HARD_CLOSED`,
+> o upgrade do kit não grava o de-para de 2025 das contas novas (fica como pendência do kit, listada em
+> `kitPreparado.pendenciasAnoCongelado`). A ECD exige de-para de toda folha viva, então grave os 17 abaixo nas duas
+> unidades (`cmuw4yqxg001jcii0iz2yb9rw` e `cmuw4z7zj02ehcii0st3unfr4`) com `POST /api/accounting/referential/mappings/batch`
+> (o mesmo do P5), `mappingVersion: "2025"`, e confira `GET /referential/coverage?unitId=<unidade>&version=2025` →
+> `ready true`. Os códigos são os do kit v6 (`REFERENCIAL_2025_FISCAL_V2` + `REFERENCIAL_2025_EMENDA_3_3`):
+>
+> | Conta | Referencial 2025 | Nome |
+> |---|---|---|
+> | `2.1.3.01` | `2.01.01.09.13` | IRPJ a Recolher  – Circulante |
+> | `2.1.3.02` | `2.01.01.09.14` | CSLL a Recolher  – Circulante |
+> | `2.1.3.03` | `2.01.01.09.04` | PIS a Recolher – Circulante |
+> | `2.1.3.04` | `2.01.01.09.05` | COFINS a Recolher – Circulante |
+> | `3.6.1` | `3.01.01.01.02.05` | (-) PIS/PASEP Sobre Receita Bruta |
+> | `3.6.2` | `3.01.01.01.02.04` | (-) COFINS Sobre Receita Bruta |
+> | `4.5.1` | `3.02.01.01.01.02` | (-) Provisão para Imposto de Renda - Pessoa Jurídica (Atividade Geral e Rural) |
+> | `4.5.2` | `3.02.01.01.01.01` | (-) Provisão para Contribuição Social sobre o Lucro Líquido (Atividade Geral) |
+> | `3.5.1` | `3.01.01.05.01.05` | Outras Receitas Financeiras |
+> | `3.5.2` | `3.01.01.05.01.05` | Outras Receitas Financeiras |
+> | `3.5.3` | `3.01.01.05.01.05` | Outras Receitas Financeiras |
+> | `4.3.1` | `3.01.01.09.01.08` | (-) Outras Despesas Financeiras |
+> | `4.3.2` | `3.01.01.07.01.22` | (-) Multas |
+> | `4.3.3` | `3.01.01.09.01.08` | (-) Outras Despesas Financeiras |
+> | `4.4.1` | `3.01.01.07.01.22` | (-) Multas |
+> | `4.4.2` | `3.01.01.07.01.22` | (-) Multas |
+> | `4.6` | `3.01.01.07.01.04` | (-) Outros Serviços Prestados por Pessoa Física ou Jurídica |
+>
+> Prova na cópia do `dev.db` (15/10, agente): `seed-unit-presumido`, `seed-unit-real` e `cmr2jyirc006oci1kscm61n6n`
+> recusados pela pré-condição (período 2026-10 `FUTURE`; abra o período antes de migrar, se forem usados).
+>
+> EVIDÊNCIA da pré-condição da tentativa 3 (backup, `migrate deploy`, migração L8 em 2 rodadas e os 17 de-para de 2025;
+> preenchida pelo agente sob comando do dono no chat, 2026-10-15 — *"Preenche a EVIDÊNCIA do RUNBOOK-H1 com a saída
+> literal do backup, da migração (2 rodadas) e dos 17 de-para"*). Banco: `server/prisma/prisma/dev.db` (real), via
+> `DATABASE_URL` absoluto, rodado do worktree `h1-h2-m2-bloqueadores-e477eb` em `main` `f73da6e5` (#691); nenhum servidor
+> do Luminaris no ar (portas 3000/3001 livres). As saídas da migração são os logs completos; as do `migrate deploy` e do
+> `mapear` são as linhas filtradas por `grep` como saíram na sessão.
+>
+> 1. Backup (API de backup do SQLite, origem aberta só para leitura):
+>
+> ```text
+> integrity ok
+> -rw-r--r-- 1 smurf 197609 8929280 Oct 15 01:53 /c/Users/smurf/Downloads/Luminaris/server/prisma/prisma/dev-20261015-pre-l8.db
+> b69b26fe26193b852c5a4303b8a91851a368a6f6ca48a21931993d8c55f702fd */c/Users/smurf/Downloads/Luminaris/server/prisma/prisma/dev-20261015-pre-l8.db
+> ```
+>
+> 2. `npx prisma migrate deploy` (`grep -E "Applying|applied|migrations found|Error"`):
+>
+> ```text
+> 99 migrations found in prisma/migrations
+> Applying migration `20261013120000_add_ptax_rates`
+> Applying migration `20261013150000_add_crm_report_definitions`
+> Applying migration `20261013180000_encargos_descontos_emenda_3_3`
+> Applying migration `20261013200000_add_role_account_overrides`
+> Applying migration `20261013210000_add_kit_upgrade`
+> Applying migration `20261013210000_journal_entry_binding_ref`
+> The following migration(s) have been applied:
+> All migrations have been successfully applied.
+> ```
+>
+> 3. `npx ts-node -r tsconfig-paths/register src/jobs/migratePlano4NiveisCli.ts --all` — 1ª rodada (exit 1: as 3 unidades
+> legadas recusadas pela pré-condição, sem alteração):
+>
+> ```text
+> banco: C:\Users\smurf\Downloads\Luminaris\server\prisma\prisma\dev.db
+> OK {"ownerUserId":"cmr2jfl4v0000ciakz7tduht3","unitId":"unit-incr6-val","criadas":["1.1","1.1.1","1.1.2","1.1.3","2.1","2.1.1","2.1.2","2.3","2.3.1","3.5","4.3","4.4"],"renomeadas":[{"de":"1.1.1","para":"1.1.1.01"},{"de":"1.1.3","para":"1.1.1.02"},{"de":"1.1.2","para":"1.1.2.01"},{"de":"1.1.4","para":"1.1.2.02"},{"de":"1.1.5","para":"1.1.2.03"},{"de":"2.1.1","para":"2.1.1.01"}],"personalizadasNaoTocadas":[{"code":"1.4.1","name":"Estoque de Produtos"}],"bindingRecompilado":null,"kitPreparado":null,"kitAtualizado":null,"saldoAntesDepoisIgual":true}
+> OK {"ownerUserId":"cmr2jfl4v0000ciakz7tduht3","unitId":"unit-incr6-val-1782938879534","criadas":["1.1","1.1.1","1.1.2","1.1.3","2.1","2.1.1","2.1.2","2.3","2.3.1","3.5","4.3","4.4"],"renomeadas":[{"de":"1.1.1","para":"1.1.1.01"},{"de":"1.1.3","para":"1.1.1.02"},{"de":"1.1.2","para":"1.1.2.01"},{"de":"1.1.4","para":"1.1.2.02"},{"de":"1.1.5","para":"1.1.2.03"},{"de":"2.1.1","para":"2.1.1.01"}],"personalizadasNaoTocadas":[{"code":"1.4.1","name":"Estoque de Produtos"}],"bindingRecompilado":null,"kitPreparado":null,"kitAtualizado":null,"saldoAntesDepoisIgual":true}
+> FALHOU unidade cmr2jyirc006oci1kscm61n6n (dono cmr2jfl4v0000ciakz7tduht3): pré-condição: o período 2026-10 da unidade precisa estar aberto (hoje: FUTURE) — o binding é recompilado com dry-run de lançamento. Abra o período e rode de novo; nada foi alterado.
+> FALHOU unidade seed-unit-presumido (dono cmufn7n590000cixkxbls0agh): pré-condição: o período 2026-10 da unidade precisa estar aberto (hoje: FUTURE) — o binding é recompilado com dry-run de lançamento. Abra o período e rode de novo; nada foi alterado.
+> FALHOU unidade seed-unit-real (dono cmufn7te50279cixko3lvgj5x): pré-condição: o período 2026-10 da unidade precisa estar aberto (hoje: FUTURE) — o binding é recompilado com dry-run de lançamento. Abra o período e rode de novo; nada foi alterado.
+> OK {"ownerUserId":"cmufn7n590000cixkxbls0agh","unitId":"cmuw4yqxg001jcii0iz2yb9rw","criadas":["1.1","1.1.1","1.1.2","1.1.3","2.1","2.1.1","2.1.2","2.3.1","3.5","4.3","4.4","2.1.3","3.6","4.5"],"renomeadas":[{"de":"1.1.1","para":"1.1.1.01"},{"de":"1.1.3","para":"1.1.1.02"},{"de":"1.1.2","para":"1.1.2.01"},{"de":"1.1.4","para":"1.1.2.02"},{"de":"1.1.5","para":"1.1.2.03"},{"de":"1.1.6","para":"1.1.3.01"},{"de":"2.1.1","para":"2.1.1.01"},{"de":"2.1.2","para":"2.1.2.01"},{"de":"2.3.1","para":"2.3.1.01"},{"de":"2.1.3","para":"2.1.3.01"},{"de":"2.1.4","para":"2.1.3.02"},{"de":"2.1.5","para":"2.1.3.03"},{"de":"2.1.6","para":"2.1.3.04"}],"personalizadasNaoTocadas":[],"bindingRecompilado":{"de":1,"para":2},"kitPreparado":{"kitKey":"beautySalon","de":1,"para":5,"pendenciasAnoCongelado":["referential:2025:2.1.3","referential:2025:2.1.4","referential:2025:2.1.5","referential:2025:2.1.6","referential:2025:3.6.1","referential:2025:3.6.2","referential:2025:4.5.1","referential:2025:4.5.2"]},"kitAtualizado":{"kitKey":"beautySalon","de":5,"para":6},"saldoAntesDepoisIgual":true}
+> OK {"ownerUserId":"cmufn7te50279cixko3lvgj5x","unitId":"cmuw4z7zj02ehcii0st3unfr4","criadas":["1.1","1.1.1","1.1.2","1.1.3","2.1","2.1.1","2.1.2","2.3.1","3.5","4.3","4.4","2.1.3","3.6","4.5"],"renomeadas":[{"de":"1.1.1","para":"1.1.1.01"},{"de":"1.1.3","para":"1.1.1.02"},{"de":"1.1.2","para":"1.1.2.01"},{"de":"1.1.4","para":"1.1.2.02"},{"de":"1.1.5","para":"1.1.2.03"},{"de":"1.1.6","para":"1.1.3.01"},{"de":"2.1.1","para":"2.1.1.01"},{"de":"2.1.2","para":"2.1.2.01"},{"de":"2.3.1","para":"2.3.1.01"},{"de":"2.1.3","para":"2.1.3.01"},{"de":"2.1.4","para":"2.1.3.02"},{"de":"2.1.5","para":"2.1.3.03"},{"de":"2.1.6","para":"2.1.3.04"}],"personalizadasNaoTocadas":[],"bindingRecompilado":{"de":1,"para":2},"kitPreparado":{"kitKey":"beautySalon","de":1,"para":5,"pendenciasAnoCongelado":["referential:2025:2.1.3","referential:2025:2.1.4","referential:2025:2.1.5","referential:2025:2.1.6","referential:2025:3.6.1","referential:2025:3.6.2","referential:2025:4.5.1","referential:2025:4.5.2"]},"kitAtualizado":{"kitKey":"beautySalon","de":5,"para":6},"saldoAntesDepoisIgual":true}
+> ```
+>
+> 4. Mesmo comando — 2ª rodada (idempotente: `renomeadas: []`, `criadas: []` nas unidades migradas; exit 1 pelas mesmas 3):
+>
+> ```text
+> banco: C:\Users\smurf\Downloads\Luminaris\server\prisma\prisma\dev.db
+> OK {"ownerUserId":"cmr2jfl4v0000ciakz7tduht3","unitId":"unit-incr6-val","criadas":[],"renomeadas":[],"personalizadasNaoTocadas":[{"code":"1.4.1","name":"Estoque de Produtos"}],"bindingRecompilado":null,"kitPreparado":null,"kitAtualizado":null,"saldoAntesDepoisIgual":true}
+> OK {"ownerUserId":"cmr2jfl4v0000ciakz7tduht3","unitId":"unit-incr6-val-1782938879534","criadas":[],"renomeadas":[],"personalizadasNaoTocadas":[{"code":"1.4.1","name":"Estoque de Produtos"}],"bindingRecompilado":null,"kitPreparado":null,"kitAtualizado":null,"saldoAntesDepoisIgual":true}
+> FALHOU unidade cmr2jyirc006oci1kscm61n6n (dono cmr2jfl4v0000ciakz7tduht3): pré-condição: o período 2026-10 da unidade precisa estar aberto (hoje: FUTURE) — o binding é recompilado com dry-run de lançamento. Abra o período e rode de novo; nada foi alterado.
+> FALHOU unidade seed-unit-presumido (dono cmufn7n590000cixkxbls0agh): pré-condição: o período 2026-10 da unidade precisa estar aberto (hoje: FUTURE) — o binding é recompilado com dry-run de lançamento. Abra o período e rode de novo; nada foi alterado.
+> FALHOU unidade seed-unit-real (dono cmufn7te50279cixko3lvgj5x): pré-condição: o período 2026-10 da unidade precisa estar aberto (hoje: FUTURE) — o binding é recompilado com dry-run de lançamento. Abra o período e rode de novo; nada foi alterado.
+> OK {"ownerUserId":"cmufn7n590000cixkxbls0agh","unitId":"cmuw4yqxg001jcii0iz2yb9rw","criadas":[],"renomeadas":[],"personalizadasNaoTocadas":[],"bindingRecompilado":null,"kitPreparado":null,"kitAtualizado":null,"saldoAntesDepoisIgual":true}
+> OK {"ownerUserId":"cmufn7te50279cixko3lvgj5x","unitId":"cmuw4z7zj02ehcii0st3unfr4","criadas":[],"renomeadas":[],"personalizadasNaoTocadas":[],"bindingRecompilado":null,"kitPreparado":null,"kitAtualizado":null,"saldoAntesDepoisIgual":true}
+> ```
+>
+> 5. Os 17 de-para de 2025 (`ensureChartOfAccounts` + `ReferentialMappingService.batchSet` com o DTO
+> `BatchSetReferentialMappingSchema` + `coverage`, os mesmos serviços da rota `POST /referential/mappings/batch`):
+>
+> ```text
+> banco: C:\Users\smurf\Downloads\Luminaris\server\prisma\prisma\dev.db
+> batchSet: 17 de-para gravados em cmuw4yqxg001jcii0iz2yb9rw
+> coverage cmuw4yqxg001jcii0iz2yb9rw 2025: 32/32 · ready true · unmapped []
+> banco: C:\Users\smurf\Downloads\Luminaris\server\prisma\prisma\dev.db
+> batchSet: 17 de-para gravados em cmuw4z7zj02ehcii0st3unfr4
+> coverage cmuw4z7zj02ehcii0st3unfr4 2025: 32/32 · ready true · unmapped []
+> ```
+>
+> 6. Conferência final (leitura do `dev.db`, só leitura):
+>
+> ```text
+> cmuw4yqxg001jcii0iz2yb9rw rasas [] | sem superior sintético [] | kit v 6
+> cmuw4z7zj02ehcii0st3unfr4 rasas [] | sem superior sintético [] | kit v 6
+> ```
+>
+> Fica de fora, por decisão registrada no chat (15/10): as 3 unidades legadas (`seed-unit-presumido`, `seed-unit-real`,
+> `cmr2jyirc006oci1kscm61n6n`) seguem no plano de 3 níveis. Com o período aberto, o upgrade até o v5 delas tem 1 forward
+> (binding do `sale.package.expired`; ensaio na cópia), que o F-L8-12 (a) recusa. Não devem ser abertas no servidor novo.
+> Próximo do dono: subir o build de `f73da6e5`, regerar a ECD (passo 3, com `indNire = '0'` ou o NIRE real — L3) e importar
+> no PVA (tentativa 3).
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
 
 Abra o PVA da ECD → importar o `.txt` gerado. Anote **cada crítica** com o código do registro
 (ex.: I050, J930), não só a mensagem.

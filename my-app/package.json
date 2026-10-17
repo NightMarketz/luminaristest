@@ -10,7 +10,11 @@
     "lint:gate": "eslint . --config eslint.gate.config.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:types": "tsc -p tsconfig.vitest.json --noEmit"
+    "test:types": "tsc -p tsconfig.vitest.json --noEmit",
+    "check:arch": "depcruise pages features components lib types --config .dependency-cruiser.cjs --ignore-known .dependency-cruiser-known-violations.json --output-type err",
+    "check:arch:baseline": "depcruise pages features components lib types --config .dependency-cruiser.cjs --output-type baseline --output-to .dependency-cruiser-known-violations.json",
+    "check:dead": "knip --no-exit-code",
+    "check:dup": "jscpd pages features components lib types --config .jscpd.json --exitCode 0"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -49,9 +53,12 @@
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^6.0.2",
     "autoprefixer": "^10.4.0",
+    "dependency-cruiser": "16.10.4",
     "eslint": "^9",
     "eslint-config-next": "15.3.1",
+    "jscpd": "4.3.0",
     "jsdom": "^29.1.1",
+    "knip": "5.64.0",
     "postcss": "^8.4.0",
     "tailwindcss": "^3.4.0",
     "typescript": "^5",

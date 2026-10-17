@@ -3,14 +3,14 @@
  *
  * atomicUntil: passo do kit (sem tx única — cada serviço orquestrado abre a sua; F-KB-2 → Contrato §2.3)
  *   commit 1 — razão: nenhum postEntry. Os passos 1–7 commitam cada um no serviço dono (plano canônico, extensão,
- *              roleDefaults, período, compile do binding, perfis fiscais por serviço, referencial), em ordem fixa
+ *              roleDefaults, período, compile do binding, [passo 6 vazio desde o PR-K3], referencial), em ordem fixa
  *              teste: KitInstallService.integration.test.ts › "instala o kit com conteúdo: os 7 passos em ordem"
  *   commit 2 — KitInstallation.steps = último passo concluído, gravado depois do commit do passo; no fim,
  *              status INSTALLED + `kit.installed` na mesma tx (falha: FAILED + `kit.install_failed`, steps preservado)
- *              teste: KitInstallService.integration.test.ts › "falha injetada no passo 6: FAILED, steps=5, Draft KIT_INSTALL_STEP_FAILED"
+ *              teste: KitInstallService.integration.test.ts › "falha injetada no passo 7: FAILED, steps=6, KitInstallStepFailedError e kit.install_failed"
  *   reconcile — install() de novo: retoma do primeiro passo não concluído; cada passo é read-first idempotente
- *              (cria-se-falta, só campo nulo, compile só sem Active, upsert só sem perfil, batchSet só sem mapeamento)
- *              teste: KitInstallService.integration.test.ts › "retomada: a 2ª chamada retoma do passo 6 sem duplicar efeito"
+ *              (cria-se-falta, só campo nulo, compile só sem Active, batchSet só sem mapeamento)
+ *              teste: KitInstallService.integration.test.ts › "retomada: a 2ª chamada retoma do passo 7 sem duplicar efeito"
  *              teste: KitInstallService.integration.test.ts › "idempotência: reexecutar os 7 passos sobre o tenant instalado não duplica nada"
  *   fora da tx — nada
  *
@@ -25,6 +25,7 @@
 import { ForbiddenError, ValidationError } from '../../../lib/errors';
 import type { BindingScope, IAccountingBindingRepository } from '../../accountingBinding/repositories/IAccountingBindingRepository';
 import type { ActivationPeriodPort } from '../../accountingBinding/services/BindingActivationService';
+import { BindingSectorConflictError } from '../../accountingBinding/models/bindingSectorConflict';
 import type { BindingCompileService, CompileBindingResult } from '../../accountingBinding/services/BindingCompileService';
 import type { SectorKitV1 } from '../dtos/SectorKitDto';
 import { InstallKitInputSchema, KitInstallStepsSchema, type InstallKitInput, type KitInstallSteps, type KitRef } from '../dtos/KitInstallationDto';
@@ -42,7 +43,6 @@ import {
 import type { ISectorKitPolicy } from '../policies/ISectorKitPolicy';
 import type { IKitInstallationRepository } from '../repositories/IKitInstallationRepository';
 import { KIT_REGISTRY } from '../registry';
-import { applyRoleOverrides } from './applyRoleOverrides';
 import type {
   IKitAuditPort,
   KitChartPort,
@@ -50,7 +50,6 @@ import type {
   KitRegime,
   KitRegimePort,
   KitRoleDefaultsPort,
-  KitServiceFiscalPort,
 } from './kitInstallPorts';
 
 /** Resultado de `install()`. Falha por exceção não volta aqui: vira `KitInstallStepFailedError` (item 14). */
@@ -80,12 +79,11 @@ export class KitInstallService {
   constructor(
     private readonly policy: ISectorKitPolicy,
     private readonly repo: IKitInstallationRepository,
-    private readonly bindingRepo: Pick<IAccountingBindingRepository, 'findActive'>,
+    private readonly bindingRepo: Pick<IAccountingBindingRepository, 'findActive' | 'findMany'>,
     private readonly compileService: Pick<BindingCompileService, 'compile'>,
     private readonly chart: KitChartPort,
     private readonly period: ActivationPeriodPort,
     private readonly roleDefaults: KitRoleDefaultsPort,
-    private readonly serviceFiscal: KitServiceFiscalPort,
     private readonly referential: KitReferentialPort,
     private readonly regime: KitRegimePort,
     private readonly audit: IKitAuditPort,
@@ -124,12 +122,42 @@ export class KitInstallService {
     ];
   }
 
-  async install(scope: BindingScope, rawInput: InstallKitInput): Promise<KitInstallOutcome> {
+  /** `begin` com o gate de setor único re-checado na mesma tx (ver `install`). */
+  private async beginExclusive(scope: BindingScope, kit: SectorKitV1) {
+    const conflict = (activeSectorKey: string) => new BindingSectorConflictError(scope.unitId, activeSectorKey, kit.kitKey);
+    try {
+      return await this.repo.runTransaction(async (tx) => {
+        const current = await this.repo.findByScope(scope, tx);
+        if (current && current.kitKey !== kit.kitKey) throw conflict(current.kitKey);
+        const other = (await this.bindingRepo.findMany(scope, { status: 'Active' }, tx)).find(
+          (b) => b.sectorKey !== kit.binding.sectorKey,
+        );
+        if (other) throw conflict(other.sectorKey);
+        return this.repo.begin(scope, { kitKey: kit.kitKey, kitVersion: kit.kitVersion }, tx);
+      });
+    } catch (error) {
+      if ((error as { code?: unknown } | null)?.code !== 'P2002') throw error;
+      const winner = await this.repo.findByScope(scope);
+      if (winner && winner.kitKey !== kit.kitKey) throw conflict(winner.kitKey);
+      throw error;
+    }
+  }
+
+  /**
+   * `opts.exclusiveSector` (LAC-B PR-0, F-BA-5 → a; lacunas decididas em 14/10, D-2026-10-14-LAC-B-PR0-LACUNAS): só o
+   * `POST /accounting-binding/activate-default` liga. Outro setor na unidade — `KitInstallation` de outro kit em
+   * qualquer status, ou binding `Active` de outro setor (unidade legada, sem instalação) — vira
+   * `BindingSectorConflictError` (409) em vez do 400, e a checagem roda DE NOVO dentro da tx do `begin` (gate
+   * autoritativo; a leitura do `BindingActivationService` é só o atalho). A corrida que o `@@unique([userId, unitId])`
+   * pega (P2002) também vira 409 quando o vencedor é outro kit. Desligado (CLI do kit), o caminho é o de antes.
+   */
+  async install(scope: BindingScope, rawInput: InstallKitInput, opts: { exclusiveSector?: boolean } = {}): Promise<KitInstallOutcome> {
     if (!this.policy.canInstallKit(scope)) throw new ForbiddenError('Você não tem permissão para instalar o kit de setor.');
     const input = InstallKitInputSchema.parse(rawInput);
 
     const existing = await this.repo.findByScope(scope);
     if (existing && existing.kitKey !== input.kitKey) {
+      if (opts.exclusiveSector) throw new BindingSectorConflictError(scope.unitId, existing.kitKey, input.kitKey);
       // Item 9: um kit por unidade (dois colidiriam no mapper `unitId:sourceType`).
       throw new ValidationError(
         `A unidade já tem o kit '${existing.kitKey}' (status ${existing.status}); um kit por unidade — não instala '${input.kitKey}'.`,
@@ -145,7 +173,9 @@ export class KitInstallService {
       return { status: 'INSTALLED', kit: ref('INSTALLED'), bindingVersion: active?.bindingVersion, warnings: steps.warnings };
     }
 
-    const row = await this.repo.begin(scope, { kitKey: kit.kitKey, kitVersion: kit.kitVersion });
+    const row = opts.exclusiveSector
+      ? await this.beginExclusive(scope, kit)
+      : await this.repo.begin(scope, { kitKey: kit.kitKey, kitVersion: kit.kitVersion });
     let steps = KitInstallStepsSchema.parse(JSON.parse(row.steps));
     let bindingVersion: number | undefined;
 
@@ -203,7 +233,7 @@ export class KitInstallService {
       case KIT_INSTALL_STEPS.COMPILE:
         return this.stepCompile(scope, kit);
       case KIT_INSTALL_STEPS.SERVICE_FISCAL_DEFAULTS:
-        return this.stepServiceFiscalDefaults(kit);
+        return this.stepServiceFiscalDefaults();
       case KIT_INSTALL_STEPS.REFERENTIAL:
         return this.stepReferential(kit, input);
     }
@@ -253,7 +283,10 @@ export class KitInstallService {
     return {};
   }
 
-  /** Passo 5 — compile do binding do kit (com o ajuste papel→conta, identidade no PR-2). Pula se já há Active. */
+  /**
+   * Passo 5 — compile do binding do kit. Pula se já há Active. O ajuste papel→conta (PR-3, item 25) não passa por
+   * aqui: o próprio `compile()` o aplica, com o `tx` dele, em todo caminho que compila.
+   */
   private async stepCompile(scope: BindingScope, kit: SectorKitV1): Promise<StepResult> {
     const active = await this.bindingRepo.findActive(scope, kit.binding.sectorKey);
     if (active) return { bindingVersion: active.bindingVersion };
@@ -261,17 +294,17 @@ export class KitInstallService {
       sectorKey: kit.binding.sectorKey,
       operationalSchema: kit.operationalSchema,
       chart: await this.chart.listChart(),
-      eventBindings: applyRoleOverrides(kit.binding.eventBindings),
+      eventBindings: kit.binding.eventBindings,
     });
     return result.status === 'Active' ? { bindingVersion: result.binding.bindingVersion } : { compileDraft: result };
   }
 
-  /** Passo 6 — padrões fiscais por serviço, só onde não há perfil. */
-  private async stepServiceFiscalDefaults(kit: SectorKitV1): Promise<StepResult> {
-    for (const d of kit.serviceFiscalDefaults) {
-      if (await this.serviceFiscal.hasProfile(d.serviceRef)) continue;
-      await this.serviceFiscal.upsert(d.serviceRef, { cTribNac: d.cTribNac, cNBS: d.cNBS, cIndOp: d.cIndOp });
-    }
+  /**
+   * Passo 6 — vazio desde o PR-K3 (EMENDA-1, itens 7a/7d; F-KE-3 b; L2 de 13/10): o `serviceFiscalDefaults` virou
+   * catálogo de SUGESTÕES, que não se instala — o cadastro de serviço oferece, o usuário escolhe, nada é gravado por
+   * palpite. O número do passo fica, para o `steps` gravado das instalações existentes continuar valendo.
+   */
+  private async stepServiceFiscalDefaults(): Promise<StepResult> {
     return {};
   }
 

@@ -13,7 +13,7 @@
 import prisma from '@/lib/prisma';
 import { pushTestSchema, resetDb, disconnectDb } from '@test/helpers/db';
 import { ReconcilePendingRepository } from '@/features/accounting/repositories/ReconcilePendingRepository';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 
 const UNIT = 'unit-rp';
@@ -21,7 +21,7 @@ const DONO_A = 'u-rp-a';
 const DONO_B = 'u-rp-b';
 
 const escopo = (userId: string, unitId: string = UNIT): AccountingScope =>
-  resolveAccountingScope({ userId }, unitId);
+  resolveAccountingScopeInternal({ userId }, unitId);
 
 const repo = new ReconcilePendingRepository();
 

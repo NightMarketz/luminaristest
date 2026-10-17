@@ -27,7 +27,7 @@ export const tablePresetSuites = {
   sales: {
     crmModule: CrmModulePreset,
   },
-};
+} satisfies Record<string, Record<string, SelectablePresetSuite>>;
 
 // --- Utility Types for Working with Presets ---
 
@@ -54,6 +54,11 @@ export type PresetTableDefinition = {
      * Capacidades necessárias para esta tabela operar (ex.: 'inventory.movements').
      */
     requiresCapabilities?: string[];
+    /**
+     * W2 / F-W2-2 (ratificado 2026-10-15): a tabela é lida pela contabilidade do setor e não pode ser removida no
+     * onboarding. Declarado nas suítes (`lockedByAccounting`), nunca no módulo compartilhado.
+     */
+    lockedBy?: 'accounting';
   };
   /**
    * Optional analytics configurations integrated at the table level.
@@ -78,6 +83,18 @@ export type PresetSuite = {
    */
   modules?: ModuleKey[];
 };
+
+/**
+ * W5 / F-W5-1 → (b) (ratificado 2026-10-15): o perfil que a IA da entrevista lê para escolher a suíte. Mora na própria
+ * suíte; o `presetKnowledgeBase` (`./ai/PresetKnowledgeBase.ts`) é DERIVADO de `tablePresetSuites`, sem lista à mão.
+ */
+export type PresetAiProfile = { name: string; description: string };
+
+/**
+ * Suíte selecionável: `key` e `aiProfile` obrigatórios. `tablePresetSuites` é declarado com `satisfies` deste tipo — uma
+ * suíte sem perfil de IA não compila (o `CoreSystemPreset` fica fora: não é selecionável).
+ */
+export type SelectablePresetSuite = PresetSuite & { key: string; aiProfile: PresetAiProfile };
 
 export type PresetSuiteCategory = keyof typeof tablePresetSuites;
 export type PresetSuiteName<T extends PresetSuiteCategory> = keyof (typeof tablePresetSuites)[T];

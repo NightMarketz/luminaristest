@@ -85,8 +85,12 @@ meiContribuinteIss?: (boolean | null)
 meiTransportadorCargas?: (boolean | null)
 meiOcupacoes?: ([string, ...(string)[]] | null)
 simplesRegimeApuracao?: ("COMPETENCIA" | "CAIXA")
+simplesExclusaoEfeitosEm?: (string | null)
+simplesCaixaPrazoCartaoDebitoDias?: (number | null)
+simplesCaixaPrazoCartaoCreditoDias?: (number | null)
 }
 export interface OnboardingFiscalInput {
 regime: ("MEI" | "SIMPLES" | "PRESUMIDO" | "REAL" | "NAO_SEI")
 grandePorte?: (boolean | null)
+icmsContribuinte?: (boolean | null)
 }

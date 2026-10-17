@@ -261,6 +261,24 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     expect(salao.body.data.moduleViews.map((m: { key: string }) => m.key)).toEqual(['CRM-0', 'CRM-1']);
   });
 
+  // W5 item 6 (F-W5-2): o Controle Total resolve pelo registro (`presetService`), não pelo import dinâmico do
+  // `PresetManager` — chave fora de `tablePresetSuites` dá 404 `{ error }`, igual ao modo Rápido.
+  it("W5 item 6: custom com presetKey 'coreSystem' ou 'inexistente' → 404 { error }, nada instalado; 'crmModule' → 201", async () => {
+    for (const presetKey of ['coreSystem', 'inexistente']) {
+      const u = await novoUsuario();
+      const r = await criar(u, { mode: 'custom', presetKey, unit: { name: 'M' } });
+      expect({ status: r.status, error: r.body.error }).toEqual({
+        status: 404,
+        error: `Preset com chave '${presetKey}' não encontrado.`,
+      });
+      expect(await prisma.dynamicTable.count({ where: { userId: u.id } })).toBe(0);
+    }
+    const v = await novoUsuario();
+    const ok = await criar(v, { mode: 'custom', presetKey: 'crmModule', unit: { name: 'M' } });
+    expect(ok.status).toBe(201);
+    expect(ok.body.data.modules.installed).toEqual(['CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B', 'CRM-3']);
+  });
+
   it('c8: não-admin → 403; body inválido → 400', async () => {
     const u = await novoUsuario('USER');
     expect((await request(app).post('/api/dashboard/modules/install').set(authHeader(u as never)).send({ moduleKey: 'CRM-2' })).status).toBe(403);

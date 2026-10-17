@@ -21,9 +21,12 @@
 
 import { getFactory } from '../../../../lib/factory';
 import logger from '../../../../lib/logger';
-import { resolveAccountingScope, type AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import { saleDayAsWritten, scopeDay, scopeToday } from '../../models/dates';
 import { buildSaleReturnedEvent, syncSkipErrorCode } from '../AccountingSyncPort';
+import { maybeRecordRecebimento, recebimentoSaleFromRow } from './ReceitaFiscalRecebimentoBridge';
+import { isAllPackageSale } from './saleItems';
 
 /** The minimal shape this bridge reads from a DynamicTable data row (update result). */
 interface SaleRow {
@@ -68,7 +71,7 @@ export async function maybeReverseSale(
       return;
     }
 
-    const scope = resolveAccountingScope(actor, unitId);
+    const scope = resolveAccountingScopeInternal(actor, unitId);
     const reason = typeof data.reason === 'string' ? data.reason : undefined;
 
     if (status === 'Cancelled') {
@@ -100,6 +103,8 @@ export async function maybeReverseSale(
           reversalPostingDate: scopeToday(scope),
           reason,
         });
+        // X14-CAIXA PR-1 item 5: o recebimento da venda vira REVERTED no dia do estorno — commit 2, não fatal.
+        await maybeRecordRecebimento(scope, recebimentoSaleFromRow(scope.ownerUserId, { id: row.id, data }, await isAllPackageSale(scope.ownerUserId, row.id)));
       }
       return;
     }

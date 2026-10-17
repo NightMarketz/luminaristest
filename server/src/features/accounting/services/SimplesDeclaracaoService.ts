@@ -13,9 +13,13 @@ import type { IReceitaFiscalRepository } from '../repositories/IReceitaFiscalRep
 import type { ISimplesApuracaoRepository } from '../repositories/ISimplesApuracaoRepository';
 import type { ISimplesDeclaracaoRepository } from '../repositories/ISimplesDeclaracaoRepository';
 import type { ISimplesEntradasRepository } from '../repositories/ISimplesEntradasRepository';
+import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import type { AccountingReportService } from './AccountingReportService';
+import { limiteIsencaoDefis } from '../models/simplesDefis';
+import { tabelaApuracaoDe } from '../models/taxAssessmentParams';
 import {
   SimplesDasnDigitadoSchema,
+  SimplesDefisDigitadoLeituraSchema,
   SimplesDefisDigitadoSchema,
   type SimplesDasnDigitado,
   type SimplesDasnSimeiView,
@@ -34,12 +38,13 @@ const fimDoDia = (iso: string): Date => new Date(`${iso}T23:59:59.999Z`);
 export class SimplesDeclaracaoService {
   constructor(
     private readonly repo: ISimplesDeclaracaoRepository,
-    private readonly apuracaoRepo: Pick<ISimplesApuracaoRepository, 'competenciasConfirmadasDoAno'>,
+    private readonly apuracaoRepo: Pick<ISimplesApuracaoRepository, 'competenciasConfirmadasDoAno' | 'findDoAno'>,
     private readonly companyProfileRepo: Pick<ICompanyFiscalProfileRepository, 'findByYear'>,
     private readonly entradasRepo: Pick<ISimplesEntradasRepository, 'findHistorico'>,
     private readonly receitaRepo: Pick<IReceitaFiscalRepository, 'findByCompetencia'>,
     private readonly report: Pick<AccountingReportService, 'incomeStatement' | 'balancesAsOf'>,
     private readonly policy: IAccountingPolicy,
+    private readonly legalParams: Pick<LegalParameterService, 'fotografia'>, // BE-INCR-SIMPLES-DEFIS-MANUAL item 7: PRESUNCAO_IRPJ
   ) {}
 
   /**
@@ -93,25 +98,41 @@ export class SimplesDeclaracaoService {
    * Item 28 — DEFIS espelho mínimo (F-SN-9 → a): só anos ≤ 2026 com ao menos um mês apurado aqui; lucro contábil (manual
    * 9.4.3.1 item 4) = resultado da DRE do ano; estoques inicial/final (9.4.3.2 itens 1–2) = saldo da conta de estoques em
    * 31/12 do ano anterior e do ano. Prazo: 31 de março do ano seguinte (Res. CGSN 140 art. 72 § 1º).
+   * BE-INCR-SIMPLES-DEFIS-MANUAL item 7: o lucro vem com o limite do art. 145 § 1º e `informar` (§ 2º; F-DM-1 a, F-DM-2 a
+   * — quem usa o razão escritura). Item 8: linha gravada antes dos campos novos lê com 0 / [].
    */
   async defis(scope: AccountingScope, ano: number): Promise<SimplesDefisView> {
     this.assertRead(scope);
     const mesesApurados = await this.exigirDefis(scope, ano);
-    const [dre, inicial, final] = await Promise.all([
+    const [dre, inicial, final, apuracoes, linhasLegais] = await Promise.all([
       this.report.incomeStatement(scope, fimDoDia(`${ano}-12-31`)),
       this.report.balancesAsOf(scope, fimDoDia(`${ano - 1}-12-31`)),
       this.report.balancesAsOf(scope, fimDoDia(`${ano}-12-31`)),
+      this.apuracaoRepo.findDoAno(scope, ano),
+      this.legalParams.fotografia(['TAX_ASSESSMENT']),
     ]);
+    const lucro = dre.netResult.amountCents;
+    const limite = limiteIsencaoDefis(
+      ano,
+      apuracoes.filter((a) => a.status === 'CONFIRMED').map((a) => a.memoria),
+      tabelaApuracaoDe(linhasLegais),
+    );
     const estoque = (rows: typeof inicial) => rows.filter((r) => r.code === ESTOQUES_CODE).reduce((s, r) => s + r.balanceCents, 0);
     const row = await this.repo.find(scope, ano, 'DEFIS');
     return {
       ano,
       prazo: `${ano + 1}-03-31`,
       mesesApurados,
-      lucroContabilCents: Number(dre.netResult.amountCents),
+      lucroContabil: {
+        valorCents: Number(lucro),
+        limiteIsencaoCents: limite.limiteCents === null ? null : Number(limite.limiteCents),
+        informar: limite.limiteCents === null || BigInt(lucro) > limite.limiteCents,
+        calculo: 'PRESUNCAO',
+        avisos: limite.avisos,
+      },
       estoqueInicialCents: estoque(inicial),
       estoqueFinalCents: estoque(final),
-      digitado: row ? (SimplesDefisDigitadoSchema.parse(row.dados) as SimplesDefisDigitado) : null,
+      digitado: row ? (SimplesDefisDigitadoLeituraSchema.parse(row.dados) as SimplesDefisDigitado) : null,
     };
   }
 

@@ -1,4 +1,4 @@
-import { IDynamicTable, IDynamicTableData } from '../models/DynamicTable.model';
+import { IDynamicTable, IDynamicTableData, FieldEquals } from '../models/DynamicTable.model';
 import { CreateDynamicTableDtoType, UpdateDynamicTableDtoType, UpdateDynamicTableSchemaDtoType } from '../dtos/DynamicTable.dto';
 
 export interface IDynamicTableRepository {
@@ -57,7 +57,19 @@ export interface IDynamicTableRepository {
     value: string,
     updatedAtFrom: Date,
   ): Promise<IDynamicTableData[]>;
+  /**
+   * Linhas não apagadas cujo JSON casa TODAS as igualdades tipadas de `filters` (sem filtro = todas),
+   * mais recentes primeiro, até `limit`; `total` conta todas as que casam (mesmo WHERE, sem LIMIT).
+   * `filters[].name` tem de vir validado contra o schema (BRIEF BE-INCR-CHAT-AGENT §2.2).
+   */
+  findDataByFieldEquals(tableId: string, filters: FieldEquals[], limit: number): Promise<{ rows: IDynamicTableData[]; total: number }>;
   existsByIdInTable(dataId: string, tableId: string): Promise<boolean>;
+
+  /**
+   * BE-INCR-SCOPE-UNIT-GUARD (nó I6, BRIEF item 2): estado da linha `unitId` na tabela `internalName === 'units'` do
+   * dono. `null` se a linha não existe, é de outra tabela ou de outro dono; `'deleted'` se soft-deleted; `'live'` senão.
+   */
+  findUnitRowState(ownerUserId: string, unitId: string): Promise<'live' | 'deleted' | null>;
 
   /**
    * Finds the parent table of a given data entry ID.

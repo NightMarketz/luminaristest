@@ -1,5 +1,6 @@
 import type { ITableSchema } from '../../models/DynamicTable.model';
-import { createTableFromModule } from '../../utils/TableFactory';
+// W2 / F-W2-2: `lockedByAccounting` nas 4 tabelas que a contabilidade lê pelo nome (pontes de venda + emissão fiscal).
+import { createTableFromModule, lockedByAccounting } from '../../utils/TableFactory';
 import { customerModule } from '../modules/people/CustomerModule';
 import { serviceModule } from '../modules/service/ServiceModule';
 import { productModule, productUnitModule } from '../modules/product/ProductModule';
@@ -34,17 +35,27 @@ const BeautySalonPreset = {
   description: 'Complete management solution for salons with scheduling, inventory, sales, financials, and marketing.',
   // I8 comportamento 5 (F-CRM-2 → a, ratificado 2026-09-07): CRM-0 (Funil) + CRM-1 (Propostas); CRM-2/3 OFF.
   modules: ['CRM-0', 'CRM-1'] as ModuleKey[],
+  // W5 item 2 (F-W5-1 → b): perfil da IA movido byte a byte do `presetKnowledgeBase` escrito à mão (`8ba1ed8f`).
+  aiProfile: {
+    name: 'Salão de Beleza',
+    // BE-INCR-P2-VERTICAL-CLINICA, comportamento 3: emenda à descrição — este preset reivindicava
+    // literalmente "clínicas de estética" (`PresetKnowledgeBase.ts:17`, verificado no BRIEF §2), o
+    // que faria o matcher resolver qualquer descrição de clínica para `beautySalon` mesmo depois de
+    // `aestheticClinic` existir (as duas entradas competiriam pela mesma descrição). Removido aqui;
+    // "clínicas de estética" migrou para a entrada nova abaixo.
+    description: 'Um sistema completo de gestão para negócios na área da beleza, como salões, barbearias ou spas. Otimizado para gerenciar o relacionamento com clientes e a agenda. Inclui tabelas para: Clientes (com histórico de visitas), Serviços (catálogo de serviços oferecidos com preço e duração), Agendamentos (para marcar horários, vinculando cliente, serviço e funcionário), Produtos (para venda ou uso interno), Vendas (registrando serviços e produtos), e Funcionários (para comissões e agenda).',
+  },
   tables: {
-    customers: createTableFromModule(customerModule),
+    customers: lockedByAccounting(createTableFromModule(customerModule)),
     suppliers: createTableFromModule(suppliersModule),
     services: createTableFromModule(serviceModule),
-    packages: createTableFromModule(packageCatalogModule),
+    packages: lockedByAccounting(createTableFromModule(packageCatalogModule)),
     products: createTableFromModule(productModule),
     productUnits: createTableFromModule(productUnitModule),
     appointments: createTableFromModule(appointmentsModule),
-    sales: createTableFromModule(salesModule),
+    sales: lockedByAccounting(createTableFromModule(salesModule)),
     // Defaulta para mixed; o instalador trocará conforme capacidades
-    saleItems: createTableFromModule(saleItemsMixedModule),
+    saleItems: lockedByAccounting(createTableFromModule(saleItemsMixedModule)),
     goals: createTableFromModule(goalsModule),
     reports: createTableFromModule(reportsModule),
     campaigns: createTableFromModule(campaignsModule),

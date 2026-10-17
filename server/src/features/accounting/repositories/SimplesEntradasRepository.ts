@@ -34,8 +34,8 @@ export class SimplesEntradasRepository implements ISimplesEntradasRepository {
     return (tx ?? prisma).simplesSegregacaoManual.findUnique({ where: { userId_unitId_competencia: { ...accountingScopeWhere(scope), competencia } } });
   }
 
-  public async sourceDocumentExists(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<boolean> {
-    return (await (tx ?? prisma).sourceDocument.count({ where: { id, ...accountingScopeWhere(scope) } })) > 0;
+  public async sourceDocumentExists(scope: AccountingScope, id: string, sourceType: string, tx?: Prisma.TransactionClient): Promise<boolean> {
+    return (await (tx ?? prisma).sourceDocument.count({ where: { id, ...accountingScopeWhere(scope), sourceType, deletedAt: null } })) > 0;
   }
 
   public async createParceria(scope: AccountingScope, data: ParceriaData, tx?: Prisma.TransactionClient): Promise<SalaoParceriaContrato> {

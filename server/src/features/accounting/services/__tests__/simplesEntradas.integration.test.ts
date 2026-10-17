@@ -5,20 +5,22 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { ApplicationFactory } from '@/lib/factory';
-import { resolveAccountingScope, type AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { maybeSyncSaleFinalized } from '@/features/accounting/sync/bridges/SaleSalesAccountingBridge';
 import { reconcileReceitaFiscal } from '@/jobs/accountingSyncReconcile.job';
 import { loadSaleRevenueLines } from '@/features/accounting/sync/bridges/saleItems';
 import { ibsCbsNoDas } from '@/features/accounting/services/CompanyFiscalProfileService';
+import { AccountingPolicy } from '@/features/accounting/policies/AccountingPolicy';
 
 const app = makeApp();
 const CNPJ = '11222333000181';
 let user: { id: string; username: string };
 let tables: Record<'sales' | 'saleItems' | 'units', string>;
 let UNIT: string;
-const scope = (): AccountingScope => resolveAccountingScope({ userId: user.id }, UNIT);
+const scope = (): AccountingScope => resolveAccountingScopeInternal({ userId: user.id }, UNIT);
 const f = () => ApplicationFactory.getInstance();
 const S = '/api/accounting/simples';
 
@@ -57,6 +59,8 @@ beforeAll(async () => {
   const byName = async (n: string) => (await prisma.dynamicTable.findFirstOrThrow({ where: { userId: user.id, internalName: n } })).id;
   tables = { sales: await byName('sales'), saleItems: await byName('saleItems'), units: await byName('units') };
   UNIT = (await row('units', { name: 'Matriz', cnpj: CNPJ })).id;
+  // I6: o upload de documento-fonte valida a unidade — a 'outra-unidade' do item 10 é outra unidade DO MESMO dono.
+  await seedUnit({ userId: user.id, id: 'outra-unidade' });
   await f().getPostingService().ensureChartOfAccounts(scope());
   for (const month of [4, 5, 6]) {
     await prisma.accountingPeriod.create({ data: { userId: user.id, unitId: UNIT, year: 2026, month, status: 'OPEN', openedAt: new Date() } });
@@ -80,6 +84,37 @@ describe('itens 10–11 — histórico pré-adoção', () => {
   it('documento de origem de outra unidade = 404', async () => {
     const r = await request(app).put(`${S}/historico/2025-07`).set(authHeader(user)).send({ unitId: UNIT, receitaBrutaCents: 1, sourceDocumentId: 'nao-existe' });
     expect(r.status).toBe(404);
+  });
+
+  // BE-INCR-SOURCE-DOCUMENT-UPLOAD itens 6–7, 11 (F-SD-3 a, F-SD-9 a): o id do upload é aceito e a view traz o documento.
+  it('documento enviado pelo POST /source-documents: aceito no PUT e exposto na view; outro tipo, outra unidade ou retirado = 404', async () => {
+    const enviar = (unitId: string, sourceType: string) =>
+      request(app)
+        .post('/api/accounting/source-documents')
+        .set(authHeader(user))
+        .field('unitId', unitId)
+        .field('sourceType', sourceType)
+        .attach('file', Buffer.from('%PDF-1.4 extrato'), { filename: 'extrato-2025-08.pdf', contentType: 'application/pdf' });
+    const doc = (await enviar(UNIT, 'tax.simples.historico')).body.data;
+    const put = (sourceDocumentId: string) => request(app).put(`${S}/historico/2025-08`).set(authHeader(user)).send({ unitId: UNIT, receitaBrutaCents: 10, sourceDocumentId });
+
+    const r = await put(doc.id);
+    expect(r.status).toBe(200);
+    const documento = { sourceDocumentId: doc.id, attachmentId: doc.attachment.id, fileName: doc.attachment.fileName };
+    expect(r.body.data).toMatchObject({ sourceDocumentId: doc.id, documento });
+    expect((await f().getSimplesEntradasService().obterHistorico(scope(), '2025-08')).documento).toEqual(documento);
+
+    expect((await put((await enviar(UNIT, 'tax.simples.das')).body.data.id)).status).toBe(404);
+    expect((await put((await enviar('outra-unidade', 'tax.simples.historico')).body.data.id)).status).toBe(404);
+    await prisma.sourceDocument.update({ where: { id: doc.id }, data: { deletedAt: new Date() } });
+    expect((await put(doc.id)).status).toBe(404);
+    // Retirado depois de gravado: a view não oferece mais o arquivo.
+    expect((await f().getSimplesEntradasService().obterHistorico(scope(), '2025-08')).documento).toBeNull();
+  });
+
+  it('histórico sem documento: documento = null', async () => {
+    const r = await request(app).put(`${S}/historico/2025-09`).set(authHeader(user)).send({ unitId: UNIT, receitaBrutaCents: 10 });
+    expect(r.body.data.documento).toBeNull();
   });
 
   it('RBT12_INCOMPLETO lista os meses da janela sem histórico nem subrazão; o subrazão conta como declarado', async () => {
@@ -220,5 +255,56 @@ describe('itens 15–16 — subrazão fiscal de receita na finalização + tie-o
 
   it('mesesComSubrazao alimenta o alerta do RBT12', async () => {
     expect([...(await f().getReceitaFiscalService().mesesComSubrazao(scope(), ['2026-04', '2026-05']))]).toEqual(['2026-05']);
+  });
+});
+
+describe('BE-INCR-SIMPLES-GET-ENTRADAS — GET por competência (itens 1–6)', () => {
+  const get = (rota: 'historico' | 'segregacao', c: string, u: { id: string; username: string } = user, unitId: string = UNIT) =>
+    request(app).get(`${S}/${rota}/${c}`).query({ unitId }).set(authHeader(u));
+  afterEach(() => jest.restoreAllMocks());
+
+  it('itens 1 e 6 — PUT → GET do histórico devolve o mesmo; sem registro = 404 (F-GE-1)', async () => {
+    const put = await request(app).put(`${S}/historico/2024-11`).set(authHeader(user)).send({ unitId: UNIT, receitaBrutaCents: 7_700, folhaCents: 2_100 });
+    expect(put.status).toBe(200);
+    const r = await get('historico', '2024-11');
+    expect(r.status).toBe(200);
+    expect(r.body.data).toEqual(put.body.data);
+    expect((await get('historico', '2024-10')).status).toBe(404);
+  });
+
+  it('itens 2 e 6 — PUT → GET da segregação devolve o mesmo, com `excluir` derivado do motivo; sem registro = 404', async () => {
+    const put = await request(app)
+      .put(`${S}/segregacao/2024-11`)
+      .set(authHeader(user))
+      .send({ unitId: UNIT, parcelas: [{ natureza: 'REVENDA', receitaCents: 3_000, motivo: 'MONOFASICO' }] });
+    expect(put.status).toBe(200);
+    const r = await get('segregacao', '2024-11');
+    expect(r.status).toBe(200);
+    expect(r.body.data).toEqual(put.body.data);
+    expect(r.body.data.parcelas[0].excluir).toEqual(['PIS', 'COFINS']);
+    expect((await get('segregacao', '2024-10')).status).toBe(404);
+  });
+
+  it('item 6 — sem canReadTaxAssessment = 403 nos dois', async () => {
+    jest.spyOn(AccountingPolicy.prototype, 'canReadTaxAssessment').mockReturnValue(false);
+    expect((await get('historico', '2024-11')).status).toBe(403);
+    expect((await get('segregacao', '2024-11')).status).toBe(403);
+  });
+
+  it('item 6 — outra unidade do mesmo dono e outro dono com a mesma unidade não veem o registro (404)', async () => {
+    const outraUnidade = (await row('units', { name: 'Filial', cnpj: '11222333000262' })).id;
+    expect((await get('historico', '2024-11', user, outraUnidade)).status).toBe(404);
+    expect((await get('segregacao', '2024-11', user, outraUnidade)).status).toBe(404);
+    const u2 = await prisma.user.create({ data: { name: 'x14ge', username: 'x14ge', email: 'x14ge@test.local', password: 'x', role: 'USER' } });
+    const intruso = { id: u2.id, username: u2.username };
+    expect((await get('historico', '2024-11', intruso)).status).toBe(404);
+    expect((await get('segregacao', '2024-11', intruso)).status).toBe(404);
+  });
+
+  it('item 6 — competência inválida (2026-13), sem unitId ou com chave extra = 400', async () => {
+    expect((await get('historico', '2026-13')).status).toBe(400);
+    expect((await get('segregacao', '2026-13')).status).toBe(400);
+    expect((await request(app).get(`${S}/historico/2024-11`).set(authHeader(user))).status).toBe(400);
+    expect((await request(app).get(`${S}/segregacao/2024-11`).query({ unitId: UNIT, foo: '1' }).set(authHeader(user))).status).toBe(400);
   });
 });

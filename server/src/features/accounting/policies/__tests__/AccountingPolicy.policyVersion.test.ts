@@ -5,10 +5,11 @@
  */
 import { AccountingPolicy } from '../AccountingPolicy';
 import type { ActiveAccountant } from '../IAccountingPolicy';
-import { resolveAccountingScope, type AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 
 const policy = new AccountingPolicy();
-const owner = resolveAccountingScope({ userId: 'dono' }, 'unit-1');
+const owner = resolveAccountingScopeInternal({ userId: 'dono' }, 'unit-1');
 const delegated: AccountingScope = { ...owner, actorUserId: 'contador' };
 const otherPair: AccountingScope = { ...owner, actorUserId: 'contador-2' };
 const third: AccountingScope = { ...owner, actorUserId: 'terceiro' };

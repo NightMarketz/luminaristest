@@ -1,10 +1,10 @@
 import { DimensionReportService } from '../DimensionReportService';
 import { ForbiddenError, NotFoundError } from '../../../../lib/errors';
-import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import type { Account, DimensionDefinition, DimensionValue } from 'generated/prisma';
 import type { AccountDimensionTotals } from '../../repositories/IPostingRepository';
 
-const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'owner-1' }, 'unit-1');
 
 function acc(id: string, code: string, nature: string): Account {
   return {

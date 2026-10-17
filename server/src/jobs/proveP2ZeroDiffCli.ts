@@ -12,7 +12,6 @@
  *   - `presets/PresetManager.ts` + `presets/fields/` (motor de preset)
  *   - `features/accounting/` inteiro (núcleo do ledger + `sync/mappers`/`sync/bridges`)
  *   - o intérprete: `features/accountingBinding/{archetypes,interpreter,models}`
- *   - `server/src/lib/factory.ts` (EMENDA 2026-08-22)
  *   - `server/src/controllers/dynamicTablesController.ts` (EMENDA 2026-08-25, F-P2-10 → (c))
  *
  * EXPLICITAMENTE FORA (não checar, mesmo que um prefixo acima pareça abranger):
@@ -26,6 +25,8 @@
  *     archetypes/interpreter/models são "o intérprete"; o compilador/CLI de ativação estão fora do
  *     perímetro por desenho — F-P2-6/F-P2-7 dependem de poder editá-los)
  *   - `server/src/jobs/` (o CLI de ativação — F-P2-7 → (a) autoriza editar)
+ *   - `server/src/lib/factory.ts` — entrou pela EMENDA 2026-08-22 e SAIU pela EMENDA 2026-10-16 do ADR-P2 (dono,
+ *     questionário: "(b) + exceção da factory"): é composição de dependências, muda a cada nó, e a prova da P2 já fechou
  *
  * `VETOED_SHARED_FILES` é uma checagem SEPARADA do perímetro do motor: `CustomerModule.ts` não
  * mora em nenhum diretório protegido acima (presets/modules/ pode crescer), mas F-P2-5 → (a) VETA
@@ -51,7 +52,6 @@ export const PERIMETER_PREFIXES = [
   'server/src/features/accountingBinding/archetypes/',
   'server/src/features/accountingBinding/interpreter/',
   'server/src/features/accountingBinding/models/',
-  'server/src/lib/factory.ts',
   'server/src/controllers/dynamicTablesController.ts',
 ] as const;
 
@@ -119,16 +119,26 @@ export function classifySymbolDiff(diff: string, headSource: string, entry: Symb
 
   // O marco CANÔNICO — a linha inteira, não uma substring (review #320 F2: `includes(marker)` aceitava
   // o marker em comentário à direita ou em string literal). Só `//` de linha inteira e linha vazia são
-  // isentos; `/* … */` na mesma linha de código NÃO é (F3).
-  const marcoLine = new RegExp(
+  // isentos; `/* … */` na mesma linha de código NÃO é (F3). Duas formas EXATAS, a mesma escrita única: a original
+  // (EMENDA R7) e a condicional do F-I7-3 (BE-INCR-RESET-CONSISTENTE item 6, 16/10 — preserva o 1º T0; dono, F-DT-2 b).
+  const marcoOriginal = new RegExp(
     `^await tx\\.user\\.update\\(\\{ where: \\{ id: userId \\}, data: \\{ ${entry.marker}: new Date\\(\\) \\} \\}\\);$`,
   );
+  const marcoCondicional = new RegExp(
+    `^await tx\\.user\\.updateMany\\(\\{ where: \\{ id: userId, ${entry.marker}: null \\}, data: \\{ ${entry.marker}: new Date\\(\\) \\} \\}\\);$`,
+  );
+  const marcoLine = { test: (body: string): boolean => marcoOriginal.test(body) || marcoCondicional.test(body) };
   const isExempt = (body: string): boolean => body === '' || body.startsWith('//');
 
   const violations: string[] = [];
   let newLine = 0;
   let seenHunk = false;
   let marcoLines = 0;
+  // TROCA do marco (dono, questionário, 2026-10-16: "(b) + exceção da factory"): a remoção da forma ORIGINAL só é aceita
+  // quando a forma condicional entra no mesmo diff — uma por uma. Qualquer outra remoção segue violação (aditiva).
+  let originalRemovidas = 0;
+  let condicionaisAdicionadas = 0;
+  const outrasRemocoes: string[] = [];
   for (const raw of diff.split('\n')) {
     const line = raw.replace(/\r$/, '');
     const hunk = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(line);
@@ -140,7 +150,9 @@ export function classifySymbolDiff(diff: string, headSource: string, entry: Symb
     // Cabeçalho só existe ANTES do primeiro hunk; depois dele, `+++x` é linha adicionada `++x` (F4).
     if (!seenHunk) continue;
     if (line.startsWith('-')) {
-      violations.push(`linha removida em ${entry.file} — a exceção do marco é aditiva: ${line.slice(1).trim()}`);
+      const removed = line.slice(1).trim();
+      if (marcoOriginal.test(removed)) originalRemovidas += 1;
+      else outrasRemocoes.push(`linha removida em ${entry.file} — a exceção do marco é aditiva: ${removed}`);
       continue;
     }
     if (line.startsWith('+')) {
@@ -150,11 +162,18 @@ export function classifySymbolDiff(diff: string, headSource: string, entry: Symb
         violations.push(`linha ${newLine} fora do corpo de ${entry.symbol}: ${body}`);
       } else if (marcoLine.test(body)) {
         marcoLines += 1;
+        if (marcoCondicional.test(body)) condicionaisAdicionadas += 1;
       } else if (!isExempt(body)) {
         violations.push(`linha ${newLine} dentro de ${entry.symbol} não é o marco (${entry.marker}): ${body}`);
       }
       newLine += 1;
     }
+  }
+  violations.push(...outrasRemocoes);
+  if (originalRemovidas > condicionaisAdicionadas) {
+    violations.push(
+      `linha removida em ${entry.file} — a forma original do marco só sai trocada pela condicional no mesmo diff (F-I7-3)`,
+    );
   }
   // Fail-closed (F5): diff que não contém o marco (só mode-change, só comentário) não é "só o marco".
   if (violations.length === 0 && marcoLines === 0) violations.push(`nenhuma linha do marco (${entry.marker}) no diff de ${entry.file}`);

@@ -10,6 +10,8 @@ de folds, snapshot da Parte II/III) — não é mais atualizado.
 Leia **só o que a tarefa pede**, nesta ordem, e pare assim que tiver a resposta:
 
 1. **[[_INDEX]]** — régua calculada, "destravados agora" e a fila aberta por domínio (uma linha por nó).
+   Em worktree de branch o arquivo pode estar atrás da `main` (ele só regenera lá, depois do merge):
+   leia `node scripts/plano-vault.mjs index --stdout`, que calcula na hora sem gravar.
 2. **A nota do nó** (`nos/`, `gates/`) — estado, autorização, dependências, docs e as linhas de origem.
 3. **Só se a tarefa encostar no assunto:** o trilho travado (`trilhos/T*`), a rejeição (`rejeitadas/`) ou o
    diferido (`diferidos/`) que a nota linka. Colisão com trilho/rejeitada = `DECISÃO ARQUITETURAL` → ADR, não tarefa.
@@ -44,6 +46,11 @@ de `depende_de`).
   execução" do `.claude/agents/classificador.md` (`opus-medio` · `opus-baixo` · `sonnet-alto` · `sonnet-medio` ·
   `precisa-de-planejamento`). É **previsão, não decisão**; a calibração vem do `perfil-previsto` × `custo` dos
   retornos. Só em nó com BRIEF; em nó `done`, refere-se à emenda aberta citada na evidência.
+- `write_set`: `["server/src/features/x/**", "my-app/features/x/**"]` — globs que o nó vai editar ou criar
+  (caminho literal = arquivo novo). `registros`: `["server/src/lib/factory.ts"]` — choke points da PAR-001 de
+  que precisa. Grava a sessão de planejamento, junto com o BRIEF. Antes de abrir sessões em paralelo:
+  `node scripts/paralelo.mjs plano <NÓ...>` calcula as ondas (PAR-002 em
+  `.claude/skills/_PARALLELIZATION-CONTRACT.md`). Nó sem `write_set` entra serial.
 
 ## Fold (no próprio PR do trabalho, antes do push)
 
@@ -51,10 +58,25 @@ Desde 2026-10-07 o fold entra no PR que faz o trabalho — não há mais PR `doc
 (F-2.1/F-2.2 de `docs/operating-manual/CERIMONIA-POR-RISCO-brief.md`).
 
 1. `node scripts/plano-vault.mjs fold <NÓ> --pr <n> [--estado <e>]` — grava `estado`, `prs` e `atualizado`
-   no frontmatter e no cabeçalho espelhado (`**Estado:**`/`**PRs:**`), depois regenera índice e régua.
+   no frontmatter e no cabeçalho espelhado (`**Estado:**`/`**PRs:**`). **Não** regenera o índice.
    O PR que fecha o nó já grava `--estado done`: só chega a `main` se for mergeado, então `main` nunca mente.
-2. `estado_detalhe` continua à mão (é texto, não estado), seguido de `node scripts/plano-vault.mjs index`.
-3. `node scripts/plano-vault.mjs check` — tem de sair 0 (links, dependências, índice em dia).
+2. `estado_detalhe` continua à mão (é texto, não estado).
+3. `node scripts/plano-vault.mjs check` — tem de sair 0 (links e dependências).
+
+**O PR não carrega `_INDEX.md` nem `_ANCORAS.md`** (dono, chat, 2026-10-16): índice em todo PR era conflito
+em todo PR. O workflow `.github/workflows/plano-index.yml` regenera os dois na `main` a cada push que toca
+`docs/plano/` e roda `check --indice`. Se a proteção da `main` recusar o push do bot, o commit fica na branch
+`bot/plano-index` para o dono mergear.
 4. Decisão nova do dono → nota em `decisoes/` citando a cédula.
 
 Proposta nova (item PROPOSTO do destino) só vira nota em `nos/` depois de PRE-ADR ratificado.
+
+## Nomenclatura (dono, chat, 2026-10-14)
+
+- **"wizard" = só o wizard de onboarding** (`/dashboard/setup`: Rápido · Controle Total · Entrevista com IA), que
+  monta o sistema antes de existir qualquer tabela ou unidade.
+- **A criação de venda é o "modal Nova Venda"** (Financeiro → Vendas → Nova Venda; `SalesCreateModal` +
+  `useSalesCreateForm`). Nunca a chame de "wizard". O `WizardModal` de `components/ui/wizard` é o padrão visual de
+  modal em etapas, não nome de fluxo.
+- Texto histórico (BRIEF ratificado, `decisoes/`, nó `done`, seção de fold) **não se reescreve**: ali "wizard de
+  venda" e `useSalesWizard` (renomeado para `useSalesCreateForm` no PR desta regra) leem-se como "modal Nova Venda".

@@ -2,7 +2,6 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
 import { makeUploadMiddleware } from '../lib/uploadSecurity';
 import {
   ImportNfePurchaseSchema,
@@ -94,7 +93,7 @@ export const importNfePurchase = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory()
       .getNfeImportService()
       .importPurchase(scope, file.buffer, parsed.data);
@@ -123,7 +122,7 @@ export const reconcileNfeSale = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory()
       .getNfeSaleReconciliationService()
       .reconcileSale(scope, { saleId: parsed.data.saleId, xml: file.buffer });
@@ -165,7 +164,7 @@ export const previewNfe = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const data = await getFactory().getNfePreviewService().preview(scope, file.buffer, parsed.data.itemMappings);
     return res.json({ success: true, data });
   } catch (error) {

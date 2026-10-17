@@ -4,14 +4,14 @@ tipo: "dado-externo"
 dominio: "externo"
 titulo: "Itens 5a-5f do contador (item LC 116, alíquota ISS, cClassTrib)"
 estado: "human-open"
-estado_detalhe: "Item LC 116 recebido (6.01/6.02/6.03; ISS no prestador — triagem 23/09 5a); faltam alíquota (município) e cClassTrib; pedidos no follow-up de 26/09 (item 3), não enviado"
+estado_detalhe: "15/10 (fold): alíquota DECIDIDA por delegação do contador — ISS SP 5% padrão, retenção configurável por nota (D-3 de D-2026-10-10-TRIAGEM-CONTADOR-DELEGACAO); ressalva INFERIDA, não verificada: no Simples o ISS vai no DAS pela faixa do Anexo III (LC 123), então os 5% valem fora do Simples — conferir por fonte oficial · cClassTrib: o contador respondeu 000001 ('tributadas integralmente pelo IBS e CBS') + indOp 030101 em 10/10 (TRIAGEM-RESPOSTA-CONTADOR-2026-10-10 I-1/II-1), grau secundário — falta conferir na tabela oficial (pesquisa do agente pelo método legal, não pergunta ao contador); cTribNac/NBS já conferidos em fonte oficial (pesquisas-legais/ctribnac-salao-clinica: 060101/060201/060301). O follow-up de 26/09 foi SUPERSEDIDO pelo pedido único de 10/10 (enviado e respondido) · 27/09: Item LC 116 recebido (6.01/6.02/6.03; ISS no prestador — triagem 23/09 5a); faltam alíquota (município) e cClassTrib; pedidos no follow-up de 26/09 (item 3), não enviado"
 depende_de: ["[[D1]]"]
 ancora_sdd: "§III.2"
-atualizado: "2026-09-27"
+atualizado: "2026-10-15"
 ---
 # D1f — Itens 5a-5f do contador (item LC 116, alíquota ISS, cClassTrib)
 
-**Estado:** `human-open` — Item LC 116 recebido (6.01/6.02/6.03; ISS no prestador — triagem 23/09 5a); faltam alíquota (município) e cClassTrib; pedidos no follow-up de 26/09 (item 3), não enviado  
+**Estado:** `human-open` — 15/10 (fold): alíquota DECIDIDA por delegação do contador — ISS SP 5% padrão, retenção configurável por nota (D-3 de D-2026-10-10-TRIAGEM-CONTADOR-DELEGACAO); ressalva INFERIDA, não verificada: no Simples o ISS vai no DAS pela faixa do Anexo III (LC 123), então os 5% valem fora do Simples — conferir por fonte oficial · cClassTrib: o contador respondeu 000001 ('tributadas integralmente pelo IBS e CBS') + indOp 030101 em 10/10 (TRIAGEM-RESPOSTA-CONTADOR-2026-10-10 I-1/II-1), grau secundário — falta conferir na tabela oficial (pesquisa do agente pelo método legal, não pergunta ao contador); cTribNac/NBS já conferidos em fonte oficial (pesquisas-legais/ctribnac-salao-clinica: 060101/060201/060301). O follow-up de 26/09 foi SUPERSEDIDO pelo pedido único de 10/10 (enviado e respondido) · 27/09: Item LC 116 recebido (6.01/6.02/6.03; ISS no prestador — triagem 23/09 5a); faltam alíquota (município) e cClassTrib; pedidos no follow-up de 26/09 (item 3), não enviado  
 **Autorização:** **falta** — não roteia sem autorização citável do dono (ORCH-006)  
 **Depende de:** [[D1]]  
 **Desbloqueia:** [[X10b]]  
@@ -26,3 +26,15 @@ atualizado: "2026-09-27"
 ## Fold 25/09 (Fase 6 do PLANO-POS-CONTADOR)
 
 - Fold 25/09 — [triagem 23/09](../../accounting/TRIAGEM-RESPOSTA-CONTADOR-2026-09-23.md) 5a: LC 116 **6.01** cabelo/manicure/barbearia, **6.02** estética/depilação, **6.03** massagem; ISS no estabelecimento prestador. **Faltam:** alíquota municipal e `cClassTrib` (não respondidos).
+
+## Fold 15/10 — o que já chegou
+
+- **Alíquota:** decidida por delegação em 10/10 — D-3 de [[D-2026-10-10-TRIAGEM-CONTADOR-DELEGACAO]]: ISS SP 5%
+  padrão, retenção configurável por nota. Ressalva **inferida, não verificada**: para optante do Simples o ISS é
+  recolhido no DAS pela faixa do Anexo III (LC 123); o 5% municipal vale fora do Simples. Conferir por fonte oficial.
+- **cClassTrib:** resposta do contador em 10/10 = **000001** + indOp **030101**
+  ([`TRIAGEM-RESPOSTA-CONTADOR-2026-10-10.md`](../../accounting/TRIAGEM-RESPOSTA-CONTADOR-2026-10-10.md) I-1/II-1),
+  grau secundário. Falta conferir na tabela oficial — pesquisa do agente, não nova pergunta ao contador.
+- **cTribNac/NBS:** conferidos em fonte oficial (Anexo B v1.01 + LC 116) no dossiê
+  `pesquisas-legais/ctribnac-salao-clinica` — 060101 / 060201 / 060301.
+- O follow-up de 26/09 (item 3) foi supersedido pelo pedido único de 10/10, que foi enviado e respondido.

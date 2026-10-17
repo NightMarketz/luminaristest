@@ -18,6 +18,8 @@ const repo: IKitInstallationRepository = {
   begin: async () => installed as never,
   saveSteps: async () => installed as never,
   finish: async () => installed as never,
+  advanceVersion: async () => 1, // PR-4 — não exercitado aqui
+  findAllInstalled: async () => [],
   runTransaction: async (fn) => fn({} as never),
 };
 const getKitInstallService = jest.fn(
@@ -25,7 +27,7 @@ const getKitInstallService = jest.fn(
     new KitInstallService(
       new SectorKitPolicy(),
       repo,
-      { findActive: async () => null },
+      { findActive: async () => null, findMany: async () => [] },
       { compile },
       {
         listChart: async () => [{ code: '1.1.1', nature: 'Asset', acceptsEntries: true }],
@@ -34,8 +36,7 @@ const getKitInstallService = jest.fn(
         findLiveAccountId: async () => null,
       },
       { status: async () => 'OPEN' as const, seedAndOpen: async () => {} },
-      { hasFiscalProfile: async () => false, fillNullScopeSettings: async () => [], fillNullFiscalProfile: async () => [] },
-      { hasProfile: async () => false, upsert: async () => {} },
+      { hasFiscalProfile: async () => true /* E-5: o kit vigente exige perfil fiscal; aqui ele existe */, fillNullScopeSettings: async () => [], fillNullFiscalProfile: async () => [] },
       { catalogLoaded: async () => false, mappedAccountIds: async () => new Set<string>(), batchSet: async () => {} },
       { companyRegime: async () => null, unitRegime: async () => null },
       { append: async () => {} },
@@ -84,6 +85,6 @@ describe('installSectorKitCli', () => {
     installed = doSalao;
     await expect(runCli(argv('aestheticClinic'))).resolves.toBe(1);
     expect(compile).not.toHaveBeenCalled();
-    expect(String((console.error as jest.Mock).mock.calls[0][0])).toMatch(/um kit por unidade/);
+    expect(String((console.error as jest.Mock).mock.calls[0][0])).toMatch(/um setor por unidade/); // LAC-B: o CLI liga exclusiveSector (409 BINDING_SECTOR_CONFLICT);
   });
 });

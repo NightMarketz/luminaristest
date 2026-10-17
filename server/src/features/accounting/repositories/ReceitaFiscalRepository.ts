@@ -32,6 +32,21 @@ export class ReceitaFiscalRepository implements IReceitaFiscalRepository {
     });
   }
 
+  public async findVendasEntre(scope: AccountingScope, de: string, ate: string, tx?: Prisma.TransactionClient): Promise<ReceitaFiscalLinha[]> {
+    return (tx ?? prisma).receitaFiscalLinha.findMany({
+      where: { ...accountingScopeWhere(scope), tipo: 'VENDA', competencia: { gte: de, lte: ate } },
+      orderBy: [{ dia: 'asc' }, { saleId: 'asc' }, { itemRef: 'asc' }],
+    });
+  }
+
+  public async findLinhasDasVendas(scope: AccountingScope, saleIds: readonly string[], tx?: Prisma.TransactionClient): Promise<ReceitaFiscalLinha[]> {
+    if (saleIds.length === 0) return [];
+    return (tx ?? prisma).receitaFiscalLinha.findMany({
+      where: { ...accountingScopeWhere(scope), saleId: { in: [...saleIds] } },
+      orderBy: [{ saleId: 'asc' }, { tipo: 'asc' }, { itemRef: 'asc' }],
+    });
+  }
+
   public async competenciasComLinhas(scope: AccountingScope, competencias: readonly string[]): Promise<string[]> {
     const rows = await prisma.receitaFiscalLinha.findMany({
       where: { ...accountingScopeWhere(scope), competencia: { in: [...competencias] } },

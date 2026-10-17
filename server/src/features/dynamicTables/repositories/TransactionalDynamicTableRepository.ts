@@ -18,7 +18,8 @@
  */
 import type { DynamicTable } from 'generated/prisma';
 import { Prisma } from 'generated/prisma';
-import type { IDynamicTable, IDynamicTableData, ITableSchema, ISchemaField } from '../models/DynamicTable.model';
+import type { IDynamicTable, IDynamicTableData, ITableSchema, ISchemaField, FieldEquals } from '../models/DynamicTable.model';
+import { fieldEqualsWhere } from './fieldEqualsSql';
 import type { CreateDynamicTableDtoType, UpdateDynamicTableDtoType, UpdateDynamicTableSchemaDtoType } from '../dtos/DynamicTable.dto';
 import type { IDynamicTableRepository } from './IDynamicTableRepository';
 
@@ -317,11 +318,34 @@ export class TransactionalDynamicTableRepository implements IDynamicTableReposit
     return rows;
   }
 
+  /** Interface parity with DynamicTableRepository — see its JSDoc (BRIEF BE-INCR-CHAT-AGENT §2.2). */
+  async findDataByFieldEquals(tableId: string, filters: FieldEquals[], limit: number): Promise<{ rows: IDynamicTableData[]; total: number }> {
+    const where = fieldEqualsWhere(tableId, filters);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prisma InputJsonValue: $queryRaw not exposed on TransactionClient type
+    const [countRow]: [{ count: bigint }] = await (this.tx as any).$queryRaw(
+      Prisma.sql`SELECT COUNT(*) as count FROM "dynamic_table_data" WHERE ${where}`
+    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prisma InputJsonValue: $queryRaw not exposed on TransactionClient type
+    const ids: Array<{ id: string }> = await (this.tx as any).$queryRaw(
+      Prisma.sql`SELECT id FROM "dynamic_table_data" WHERE ${where} ORDER BY "createdAt" DESC LIMIT ${limit}`
+    );
+    const rows = ids.length
+      ? await this.tx.dynamicTableData.findMany({ where: { id: { in: ids.map(r => r.id) } }, orderBy: { createdAt: 'desc' } })
+      : [];
+    return { rows, total: Number(countRow.count) };
+  }
+
   async existsByIdInTable(dataId: string, tableId: string): Promise<boolean> {
     const count = await this.tx.dynamicTableData.count({
       where: { id: dataId, dynamicTableId: tableId, deletedAt: null },
     });
     return count > 0;
+  }
+
+  async findUnitRowState(ownerUserId: string, unitId: string): Promise<'live' | 'deleted' | null> {
+    const row = await this.tx.dynamicTableData.findUnique({ where: { id: unitId }, include: { dynamicTable: true } });
+    if (!row || row.dynamicTable.userId !== ownerUserId || row.dynamicTable.internalName !== 'units') return null;
+    return row.deletedAt ? 'deleted' : 'live';
   }
 
   async findTablesReferencingTableId(targetTableId: string): Promise<IDynamicTable[]> {

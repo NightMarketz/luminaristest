@@ -36,7 +36,8 @@
       "perfilFiscal": "Tax profile",
       "parametrosLegais": "Legal parameters",
       "politica": "Accounting policy",
-      "apuracao": "Tax assessment"
+      "apuracao": "Tax assessment",
+      "pendencias": "Pending items"
     },
     "error": {
       "units": "Failed to load units.",
@@ -2822,6 +2823,427 @@
       "load": "Failed to load assessments.",
       "detail": "Failed to load the detail.",
       "reconcile": "Could not reconcile the provision."
+    }
+  },
+  "activation": {
+    "regionLabel": "Accounting activation",
+    "inactive": "Automatic accounting is not active for this unit — sales do not generate journal entries.",
+    "sectorLabel": "Sector",
+    "button": "Activate accounting",
+    "sectors": {
+      "beautySalon": "Beauty salon",
+      "aestheticClinic": "Aesthetic clinic"
+    },
+    "confirm": {
+      "title": "Activate accounting for this unit?",
+      "message": "Sector: {{sector}}. On confirm, (1) the default chart of accounts is installed if the unit's chart is empty and (2) the current month's period is opened if it does not exist yet.",
+      "confirmLabel": "Activate",
+      "cancelLabel": "Cancel"
+    },
+    "blockingTitle": "Activation was not completed:",
+    "blocking": {
+      "CHART_OF_ACCOUNTS_EMPTY": "The unit's chart of accounts is empty.",
+      "ACCOUNTING_PERIOD_NOT_OPEN": "Period {{period}} is closed — reopen it before activating.",
+      "EVENT_COVERAGE_MISSING": "An operation event has no accounting rule."
+    },
+    "goToPeriods": "Go to Periods",
+    "success": "Automatic accounting activated: sales of this unit now generate journal entries.",
+    "successShort": "Automatic accounting is active.",
+    "pendenciasLink": "View the unit's pending items",
+    "error": "Could not activate accounting."
+  },
+  "pendencias": {
+    "title": "Pending items",
+    "subtitle": "Events the automatic bookkeeping could not post for this unit. Fix the cause and use Rescan.",
+    "filter": {
+      "reason": "Reason",
+      "all": "All",
+      "includeResolved": "Show resolved"
+    },
+    "rescan": "Rescan",
+    "summary": {
+      "attempted": "attempted",
+      "resolved": "resolved",
+      "stillPending": "still pending"
+    },
+    "empty": "No pending items for this unit.",
+    "loadMore": "Load more",
+    "resolvedAt": "Resolved on {{when}}",
+    "col": {
+      "source": "Source",
+      "id": "Id",
+      "reason": "Reason",
+      "detail": "Detail",
+      "firstSeen": "First seen",
+      "lastSeen": "Last seen",
+      "attempts": "Attempts"
+    },
+    "error": {
+      "load": "Could not load the pending items.",
+      "rescan": "Could not rescan the pending items."
+    },
+    "reason": {
+      "FAILED": "Unclassified failure",
+      "ACCOUNTING_PERIOD_NOT_OPEN": "Accounting period is not open — open the period, then Rescan",
+      "MAX_CENTS_EXCEEDED": "Amount above the ceiling — fix the amount at the source",
+      "OPENING_ENTRY_MISSING": "Waiting for the sale opening entry",
+      "MISSING_PAID_WITH_PACKAGE_ID": "Package consumption without the originating package recorded",
+      "NO_MAPPER_FOR_UNIT": "No accounting rule for this event in this unit — activate the unit bookkeeping or recompile the binding, then Rescan",
+      "PACKAGE_CONSUMPTION_PENDING": "Waiting for the package consumption debit",
+      "PACKAGE_ORIGIN_REVERSED": "The package originating sale was reversed",
+      "PACKAGE_EXPIRY_NFSE_PENDING": "Missing data for the expired package NFS-e",
+      "UNKNOWN_EVENT_KEY": "Event that no sector kit declares — bug in the event emitter; contact support"
+    }
+  },
+  "simples": {
+    "alerta": {
+      "ATIVIDADE_SEM_ANEXO": "Activity without annex",
+      "BENEFICIO_MUNICIPAL_INAPLICAVEL_DESVANTAJOSO": "Municipal benefit not applied (disadvantageous)",
+      "HISTORICO_IGNORADO": "Pre-adoption history ignored",
+      "ISS_VALOR_FIXO_MUNICIPAL": "ISS as municipal fixed amount",
+      "LIMITE_EPP_EXCEDIDO": "EPP limit exceeded",
+      "LIMITE_MEI_EXCEDIDO": "MEI limit exceeded",
+      "LIMITE_ME_EXCEDIDO": "ME limit exceeded",
+      "MEI_ENQUADRAMENTO_DIVERGE": "MEI classification differs from occupations",
+      "MEI_OCUPACAO_EXCLUIDA": "Occupation outside MEI",
+      "REGIME_CAIXA_RECALCULO": "DAS filed on accrual basis for a cash-basis period",
+      "IMPEDIMENTO_CAIXA_ICMS_ISS": "Impediment: ICMS/ISS outside the DAS",
+      "CARTAO_RECEBIMENTO_ESTIMADO": "Card receipt date estimated",
+      "RECEBIMENTO_DE_VENDA_TRIBUTADA_POR_COMPETENCIA": "Receipt of a sale already taxed on accrual basis",
+      "MEI_TAC_COM_OCUPACAO_A": "Cargo carrier with a table A occupation",
+      "NFSE_DIVERGE_RECEITA": "NFS-e differs from revenue",
+      "RBT12_INCOMPLETO": "Incomplete RBT12",
+      "SEGREGACAO_MANUAL": "Manual segregation",
+      "SUBLIMITE_ICMS_ISS": "ICMS/ISS sublimit",
+      "TIEOUT_DIVERGENTE": "Subledger × ledger divergent"
+    },
+    "alertas": {
+      "title": "Alerts"
+    },
+    "badge": {
+      "bloqueante": "Blocks the DAS registration",
+      "divergente": "Divergent",
+      "pendente": "Provision pending",
+      "warning": "Alert"
+    },
+    "calculando": "Calculating…",
+    "calcular": "Calculate",
+    "cancelar": "Cancel",
+    "col": {
+      "aliquotaEfetiva": "Effective rate",
+      "aliquotaNominal": "Nominal rate",
+      "anexo": "Annex",
+      "competencia": "Period",
+      "das": "DAS",
+      "dasMei": "DAS-MEI",
+      "divergencia": "Divergence",
+      "faixa": "Bracket",
+      "fatorR": "Factor R",
+      "natureza": "Nature",
+      "oficial": "Official",
+      "parcelaDeduzir": "Deductible amount",
+      "receita": "Revenue",
+      "situacao": "Status",
+      "tributos": "Taxes"
+    },
+    "das": {
+      "abrir": "Register official DAS",
+      "avisoCompleta": "Same number and amount as the DAS already registered: sending only completes the pending provision.",
+      "avisoSubstitui": "A DAS is already registered for this period: the new one replaces it and reverses its provision.",
+      "bloqueada": "The preview has an alert that blocks the DAS registration — resolve it first.",
+      "calculado": "Calculated (preview)",
+      "conflito": "The inputs changed after the calculation — we recalculated; check the preview and register again.",
+      "enviar": "Confirm registration",
+      "erro": {
+        "numeroObrigatorio": "Enter the document number (up to 40 characters).",
+        "registrar": "Could not register the DAS.",
+        "valorInvalido": "Invalid amount — use the format 1.234,56 (greater than zero).",
+        "vencimentoInvalido": "Invalid due date — pick a calendar date."
+      },
+      "precisaPrevia": "Calculate before registering: registration requires this session's preview.",
+      "reRegistrar": "Register another DAS",
+      "sugestaoVencimento": "Suggested due date: the 20th of the following month (LC 123 art. 21 III; CGSN Res. 140 art. 40). It is only a suggestion — check the DAS (extensions and non-business days are not in the calculation).",
+      "title": "Register official DAS"
+    },
+    "detail": {
+      "atividades": "Activities",
+      "dasOficial": "Official DAS",
+      "divergencia": "Divergence (official − calculated)",
+      "espelho": "PGDAS-D mirror",
+      "janela": "RBT12 window",
+      "numeroDocumento": "Document number",
+      "provisao": "Provision",
+      "razao": "Ledger",
+      "rbt12": "RBT12",
+      "semDas": "No official DAS registered for this period.",
+      "subrazao": "Subledger",
+      "tabela": "Law table used",
+      "tieOut": "Subledger × ledger check",
+      "tieOutOk": "Matches",
+      "total": "Calculated total",
+      "valorOficial": "Official amount",
+      "vencimento": "Due date",
+      "vigenteDesde": "in force since"
+    },
+    "error": {
+      "calcular": "Could not calculate.",
+      "load": "Error loading the assessment.",
+      "perfil": "Error loading the year's tax profile."
+    },
+    "estado": {
+      "calculado": "Calculated (no DAS)",
+      "carregando": "Loading…",
+      "erro": "Error",
+      "naoRegulamentada": "Rule not yet regulated",
+      "registrado": "DAS registered",
+      "semPerfil": "Missing profile data"
+    },
+    "fechar": "Close",
+    "historico": {
+      "declarado": "Declared: revenue {{receita}}",
+      "declarar": "Declare history for",
+      "erro": {
+        "folhaInvalida": "Invalid payroll — use the format 1.234,56 or leave it blank.",
+        "receitaInvalida": "Invalid gross revenue — use the format 1.234,56."
+      },
+      "error": {
+        "load": "Error loading the history.",
+        "save": "Could not save the history."
+      },
+      "folha": "Payroll (optional)",
+      "receitaBruta": "Gross revenue of the month",
+      "salvar": "Save history",
+      "salvo": "History saved — the grid was recalculated.",
+      "subtitle": "Gross revenue (and payroll, for factor R) of the months before using the system. A month with revenue in the subledger uses the subledger; the history applies to months without it.",
+      "title": "Pre-adoption history",
+      "vazio": "No history declared for this month."
+    },
+    "mei": {
+      "ano": "Tax profile year",
+      "contribuinteIcms": "ICMS taxpayer",
+      "contribuinteIss": "ISS taxpayer",
+      "cppAliquota": "CPP rate",
+      "error": {
+        "ecdIncompleta": "The year's profile has an ECD with an empty field the PUT requires — fix the ECD first.",
+        "ecfIncompleta": "The year's profile has an ECF with an empty field the PUT requires — fix the ECF first.",
+        "load": "Could not load the year's tax profile.",
+        "naoMei": "The Annex XI classification applies only to MEI.",
+        "save": "Could not save the classification."
+      },
+      "filtro": "Filter by occupation, CNAE or key",
+      "irParaEnquadramento": "Declare the MEI classification in the tax profile",
+      "limite": "Year-to-date revenue × limit",
+      "naoDeclarado": "— not declared —",
+      "naoMeiAno": "The {{ano}} profile is {{regime}}: the Annex XI classification applies only to MEI.",
+      "ocupacoes": "Occupations (Annex XI)",
+      "receitaPa": "Revenue of the month",
+      "salarioMinimo": "Minimum wage used",
+      "salvar": "Save classification",
+      "semOcupacoes": "No occupation in force in the year matches this filter.",
+      "subtitle": "Company tax profile for the year: SIMEI only calculates with the ICMS/ISS classification declared (CGSN Res. 140 art. 101 § 1). Saving rewrites the year's profile with these fields changed.",
+      "title": "MEI classification (Annex XI)",
+      "transportador": "Self-employed cargo carrier"
+    },
+    "motivo": {
+      "DOCUMENTO_MUNICIPAL_TRANSICAO": "Municipal document (transition)",
+      "REGIME_CAIXA": "Cash basis",
+      "CARTAO_RECEBIMENTO_ESTIMADO": "Card term estimated"
+    },
+    "motivoSeg": {
+      "ICMS_ST": "ICMS tax substitution",
+      "ISS_RETIDO": "ISS withheld",
+      "MONOFASICO": "Single-phase (PIS/COFINS)",
+      "MONOFASICO_E_ICMS_ST": "Single-phase and ICMS-ST"
+    },
+    "nao": "No",
+    "natureza": {
+      "LOCACAO_MOVEL": "Movable property rental",
+      "REVENDA": "Resale",
+      "SERVICO": "Service"
+    },
+    "parceria": {
+      "cota": "Salon share",
+      "cotaPct": "Salon share (%)",
+      "editar": "Edit",
+      "editarTitulo": "Edit partnership",
+      "erro": {
+        "cota": "Invalid salon share — between 0,01% and 99,99% (up to 2 decimals).",
+        "homologadoEm": "Enter the contract ratification date (required — Law 12.592 art. 1-A § 8).",
+        "natureza": "Choose the nature of the share.",
+        "profissional": "Choose the partner professional.",
+        "sindicato": "Enter the union that ratified it (up to 200 characters).",
+        "vigenteAte": "Invalid end of validity or before the start.",
+        "vigenteDesde": "Enter the start of validity (calendar date)."
+      },
+      "error": {
+        "load": "Error loading partnerships.",
+        "remove": "Could not remove the partnership.",
+        "save": "Could not save the partnership."
+      },
+      "homologacao": "Ratification",
+      "homologadoEm": "Ratified on",
+      "natureza": {
+        "ALUGUEL_BEM_MOVEL": "Movable property rental",
+        "GESTAO": "Management"
+      },
+      "naturezaCota": "Nature of the share",
+      "nova": "New partnership",
+      "profissional": "Professional",
+      "remover": "Remove",
+      "removerMsg": "The contract leaves the assessment from now on (it stays in the system history).",
+      "removerTitulo": "Remove partnership",
+      "salvar": "Save partnership",
+      "semEmployees": "Employees table not found: register the professionals before creating the partnership.",
+      "semFim": "no end",
+      "sindicato": "Union",
+      "subtitle": "Law 12.592 art. 1-A: the partner professional's share leaves the salon's revenue; without ratification the contract has no effect.",
+      "title": "Salon-partner partnerships",
+      "vazio": "No partnership registered for this unit.",
+      "vigencia": "Validity",
+      "vigenteAte": "Valid until (empty = no end)",
+      "vigenteDesde": "Valid from"
+    },
+    "segregacao": {
+      "abrir": "View / edit segregation",
+      "adicionar": "Add portion",
+      "erro": {
+        "demais": "At most 50 portions per month.",
+        "motivo": "Choose the reason for portion {{n}}.",
+        "natureza": "Choose the nature of portion {{n}}.",
+        "receita": "Invalid revenue for portion {{n}} — greater than zero, format 1.234,56."
+      },
+      "error": {
+        "load": "Error loading the segregation.",
+        "save": "Could not save the segregation."
+      },
+      "excluir": "out of the DAS",
+      "issOutroMunicipio": "ISS owed to another municipality is not a segregation reason: it stays in the DAS (LC 123 art. 18 § 4-A V). Saving replaces all portions of the month.",
+      "motivoN": "Reason for portion {{n}}",
+      "naturezaN": "Nature of portion {{n}}",
+      "receitaN": "Revenue of portion {{n}}",
+      "removerLinha": "Remove",
+      "salvar": "Save segregation",
+      "title": "Manual revenue segregation",
+      "vazia": "No manual segregation this month."
+    },
+    "semPerfilAno": "Tax profile for {{ano}} not registered: register the year's tax profile to assess taxes.",
+    "severity": {
+      "INFO": "Informational",
+      "WARNING": "Warning"
+    },
+    "sim": "Yes",
+    "dasn": {
+      "title": "DASN-SIMEI",
+      "prazo": "Filing deadline",
+      "receitaTotal": "Total gross revenue for the year",
+      "receitaIcms": "Revenue subject to ICMS",
+      "mesesSemSubrazao": "Months with no sub-ledger entries (their revenue is not in the total):",
+      "contratouEmpregado": "Hired an employee during the year?",
+      "salvar": "Save DASN-SIMEI",
+      "salvo": "DASN-SIMEI saved.",
+      "erro": {
+        "contratou": "Answer whether the MEI hired an employee during the year."
+      },
+      "error": {
+        "load": "Failed to load the DASN-SIMEI.",
+        "save": "Could not save the DASN-SIMEI."
+      }
+    },
+    "defis": {
+      "title": "DEFIS",
+      "doRazao": "From the ledger (read-only)",
+      "prazo": "Filing deadline",
+      "mesesApurados": "Assessed months",
+      "lucro": "Accounting profit",
+      "limiteIsencao": "Exemption limit (art. 145 § 1)",
+      "informarLucro": "Report the profit in the DEFIS",
+      "estoqueInicial": "Opening inventory",
+      "estoqueFinal": "Closing inventory",
+      "empregadosInicio": "Employees at the start of the year",
+      "empregadosFim": "Employees at the end of the year",
+      "ganhosCapital": "Capital gains",
+      "ganhosRendaVariavel": "Net variable-income gains",
+      "exportacaoDireta": "Direct export revenue",
+      "socios": "Partners and treasury shares",
+      "soma": "Total (partners + treasury)",
+      "somaAviso": "With a partner listed, partners' stakes plus treasury shares must total 100% (DEFIS manual, 9.4.3.1 items 7.3 and 8) — the server checks it on save.",
+      "tabelaSocios": "Table the partners come from",
+      "semSocios": "No partner listed.",
+      "socioN": "Partner {{n}}",
+      "escolhaTabela": "Choose the partners' table.",
+      "participacao": "Stake (%)",
+      "irrf": "Withholding income tax",
+      "rendimentosIsentos": "Exempt income",
+      "rendimentosTributaveis": "Taxable income",
+      "cotasTesouraria": "Treasury shares (%)",
+      "adicionarSocio": "Add partner",
+      "exportacaoComercial": "Exports through a trading company",
+      "cnpjExportadoraN": "Trading company CNPJ {{n}}",
+      "valorExportacaoN": "Exported amount {{n}}",
+      "adicionarExportadora": "Add trading company",
+      "doacoes": "Electoral campaign donations",
+      "cnpjBeneficiarioN": "Beneficiary CNPJ {{n}}",
+      "tipoBeneficiarioN": "Beneficiary type {{n}}",
+      "formaDoacaoN": "Donation form {{n}}",
+      "valorDoacaoN": "Donation amount {{n}}",
+      "adicionarDoacao": "Add donation",
+      "salvar": "Save DEFIS",
+      "salvo": "DEFIS saved.",
+      "tipo": {
+        "CANDIDATO": "Candidate",
+        "COMITE_FINANCEIRO": "Finance committee",
+        "PARTIDO_POLITICO": "Political party"
+      },
+      "forma": {
+        "CHEQUE": "Check",
+        "OUTROS_TITULOS_CREDITO": "Other credit instruments",
+        "TRANSFERENCIA_ELETRONICA": "Electronic transfer",
+        "DEPOSITO_ESPECIE": "Cash deposit",
+        "DINHEIRO": "Cash",
+        "BENS": "Goods",
+        "SERVICOS": "Services"
+      },
+      "erro": {
+        "empregadosInicio": "Employees at the start of the year: whole number from 0 to 1,000,000.",
+        "empregadosFim": "Employees at the end of the year: whole number from 0 to 1,000,000.",
+        "ganhosCapital": "Invalid capital gains — format 1.234,56.",
+        "ganhosRendaVariavel": "Invalid variable-income gains — format 1.234,56.",
+        "exportacaoDireta": "Invalid direct exports — format 1.234,56.",
+        "cotasTesouraria": "Treasury shares: percentage from 0,00 to 100,00.",
+        "socioContato": "Choose the partner on row {{n}}.",
+        "socioValor": "Invalid amounts for the partner on row {{n}} — format 1.234,56.",
+        "socioParticipacao": "Stake of the partner on row {{n}}: percentage from 0,00 to 100,00.",
+        "exportacaoCnpj": "Trading company CNPJ on row {{n}}: 14 characters.",
+        "exportacaoValor": "Export amount on row {{n}}: greater than zero, format 1.234,56.",
+        "doacaoCnpj": "Donation beneficiary CNPJ on row {{n}}: 14 characters.",
+        "doacaoTipo": "Choose the beneficiary type of the donation on row {{n}}.",
+        "doacaoForma": "Choose the form of the donation on row {{n}}.",
+        "doacaoValor": "Donation amount on row {{n}}: greater than zero, format 1.234,56.",
+        "demais": "At most 100 rows per list."
+      },
+      "error": {
+        "load": "Failed to load the DEFIS.",
+        "save": "Could not save the DEFIS."
+      }
+    },
+    "aliquotas": {
+      "title": "Suggested rates for the month",
+      "sugestao": "Suggestion",
+      "regra": "Rule",
+      "mesReferencia": "Bracket reference month",
+      "issRetencao": "ISS to withhold",
+      "credito": "Buyer's credit",
+      "beneficio": "Municipal benefit",
+      "pisoAplicado": "2% floor applied",
+      "excecaoPiso": "floor exception",
+      "regraTipo": {
+        "INICIO_ATIVIDADE": "First month of activity (2%)",
+        "FAIXA_MES_ANTERIOR": "Previous month's bracket",
+        "FAIXA_MES_PRESTACAO": "Bracket of the service month"
+      },
+      "error": {
+        "load": "Failed to load the suggested rates."
+      }
     }
   }
 }

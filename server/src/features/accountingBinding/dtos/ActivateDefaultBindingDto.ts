@@ -34,6 +34,8 @@ export const ACTIVATION_PRECONDITION_CODES = [
   // BE-INCR-KIT-SETOR PR-2: pré-check do kit (emenda E-5) e falha por exceção num passo da instalação (item 14).
   'KIT_FISCAL_PROFILE_REQUIRED',
   'KIT_INSTALL_STEP_FAILED',
+  // LAC-B PR-0 (EMENDA-1 item 0b): Active gravado, mas a recarga dos mappers falhou — mesmo código do I4 item 13.
+  'ACCOUNTING_SYNC_RELOAD_FAILED',
 ] as const;
 
 export const ActivationBlockingIssueSchema = z
@@ -65,3 +67,26 @@ export const ActivateDefaultBindingResultSchema = z
   })
   .strict();
 export type ActivateDefaultBindingResult = z.infer<typeof ActivateDefaultBindingResultSchema>;
+
+/**
+ * BE-INCR-ONBOARDING-ACTIVATION (nó I4) item 14 — o bloco `accounting` da resposta do `POST /dashboard/create`, validado
+ * pelo controller do onboarding antes de responder (mesmo padrão do `activateDefaultBinding`).
+ *   - `Active`: binding ativo e mappers recarregados (F-I4-4 a). O `already-active` do `activateDefault` vira `Active`
+ *     (inalcançável numa unidade virgem; mapeado por completude).
+ *   - `Draft` (F-I4-2 b): o tenant nasce mesmo assim; `blocking` diz o porquê — os do `activateDefault` ou um dos
+ *     `ONBOARDING_ACCOUNTING_CODES` (a ativação lançou; a recarga falhou depois de `Active`).
+ *   - `not-applicable` (F-I4-3 a): preset sem binding de setor — nada é chamado nem gravado.
+ */
+export const ONBOARDING_ACCOUNTING_STATUSES = ['Active', 'Draft', 'not-applicable'] as const;
+export const ONBOARDING_ACCOUNTING_CODES = ['ACCOUNTING_ACTIVATION_FAILED', 'ACCOUNTING_SYNC_RELOAD_FAILED'] as const;
+export const OnboardingAccountingResultSchema = z
+  .object({
+    status: z.enum(ONBOARDING_ACCOUNTING_STATUSES),
+    /** Ausente em `not-applicable`. */
+    sectorKey: z.string().min(1).optional(),
+    bindingVersion: z.number().int().positive().optional(),
+    /** Presente só em `Draft`. */
+    blocking: z.array(ActivationBlockingIssueSchema).optional(),
+  })
+  .strict();
+export type OnboardingAccountingResult = z.infer<typeof OnboardingAccountingResultSchema>;

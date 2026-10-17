@@ -26,9 +26,15 @@ import { ForbiddenError, OnboardingRolledBackError, OnboardingRollbackFailedErro
 import { InstallModuleSchema } from '@/features/dynamicTables/dtos/InstallModule.dto';
 import { Role } from '@/features/users/models/User.model';
 import { ISchemaField } from '@/features/dynamicTables/models/DynamicTable.model';
-import { getPresetByKey } from '@/features/dynamicTables/presets/PresetManager';
+import { keyToPascalCase } from '@/features/dynamicTables/presets/PresetManager';
+import { SECTOR_BINDING_REGISTRY } from '@/features/accountingBinding/fixtures/sectorBindingRegistry';
+import { resolveBindingScope } from '@/features/accountingBinding/scope/BindingScope';
+import { reloadAccountingMappersSerialized } from '@/features/accountingBinding/runtime/mapperReload';
+import { OnboardingAccountingResultSchema } from '@/features/accountingBinding/dtos/ActivateDefaultBindingDto';
+import type { ActivateDefaultBindingResult, OnboardingAccountingResult } from '@/features/accountingBinding/dtos/ActivateDefaultBindingDto';
 import { composeModuleTables, expandModuleSelectors, type ModuleSelector } from '@/features/dynamicTables/presets/modules/registry';
 import { applyModuleRemovals, applySelectOverrides, assertAddedFieldsRespectModules, resolveModuleSelection } from '@/features/dynamicTables/presets/modules/moduleSelection';
+import { assertRemovalsAllowed } from '@/features/dynamicTables/presets/removability';
 import { CoreSystemPreset, PresetTableDefinition } from '@/features/dynamicTables/presets';
 import { DYNAMIC_TABLE_CATEGORY_CONFIG, DynamicTableCategoryConfig } from '@/features/dynamicTables/models/TableCategories';
 import { presetService } from '@/features/dynamicTables/services/PresetService';
@@ -100,6 +106,76 @@ function respondProvisioningError(error: unknown, res: Response): Response | nul
   return null;
 }
 
+/**
+ * BE-INCR-ONBOARDING-ACTIVATION (nó I4) item 9 (F-I4-3 a) — o setor do binding contábil do preset escolhido: a chave do
+ * `SECTOR_BINDING_REGISTRY` cujo nome, normalizado por `keyToPascalCase`, é o da suíte pedida. Os dois modos do create
+ * só chegam aqui com a chave do registro (`beautySalon`): desde o W5 (dono, 2026-10-16, "Só a chave do registro") o
+ * Controle Total recusa `beauty_salon` com 404 antes desta função. Preset sem binding (`crmModule`) ⇒ `null`.
+ */
+export function resolveOnboardingSectorKey(presetOrSuiteKey: string): string | null {
+  const id = keyToPascalCase(presetOrSuiteKey);
+  return Object.keys(SECTOR_BINDING_REGISTRY).find((sectorKey) => keyToPascalCase(sectorKey) === id) ?? null;
+}
+
+/**
+ * I4 itens 10–14 — liga a contabilidade da unidade recém-criada, DEPOIS de instalar → unidade → perfil fiscal (F-I4-1 a):
+ * as compensações anteriores (`compensateProvisioning`) não limpam contabilidade, então nada que compensa roda depois de uma
+ * escrita contábil. As duas flags em `true` fazem do onboarding uma chamada só (F-B2 a, F-I3-1 a).
+ *   - preset sem setor ⇒ `not-applicable`; `activateDefault` nem é chamado (item 12).
+ *   - `Draft` do `activateDefault` ou exceção ⇒ 201 com `Draft` e o tenant de pé, sem compensação (F-I4-2 b, item 11) —
+ *     assimetria ratificada: *"a ativação contábil falhar não deve apagar o sistema do cliente"*.
+ *   - `Active` ⇒ recarga serializada dos mappers (F-I4-4 a, item 13), para a 1ª venda lançar sem reiniciar; falha da
+ *     recarga ⇒ `Draft` com `ACCOUNTING_SYNC_RELOAD_FAILED` (binding gravado).
+ * A saída passa pelo `OnboardingAccountingResultSchema` (item 14).
+ */
+async function activateAccountingOrReport(ctx: UserContext, unitId: string, sectorKey: string | null): Promise<OnboardingAccountingResult> {
+  if (!sectorKey) return OnboardingAccountingResultSchema.parse({ status: 'not-applicable' });
+  const scope = resolveBindingScope(ctx, unitId);
+  let result: ActivateDefaultBindingResult;
+  try {
+    result = await getFactory()
+      .getAccountingBindingActivationService(scope)
+      .activateDefault(scope, { sectorKey, installChartIfEmpty: true, openCurrentPeriodIfMissing: true });
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    logger.error(`Onboarding: a ativação contábil da unidade ${unitId} do usuário ${ctx.userId} falhou — o tenant segue de pé (F-I4-2 b).`, { error: detail });
+    return OnboardingAccountingResultSchema.parse({
+      status: 'Draft',
+      sectorKey,
+      blocking: [{ code: 'ACCOUNTING_ACTIVATION_FAILED', message: `A ativação da contabilidade falhou (${detail}). O sistema foi criado; ative a contabilidade pela faixa da Contabilidade.` }],
+    });
+  }
+  const bindingVersion = result.bindingVersion !== undefined ? { bindingVersion: result.bindingVersion } : {};
+  if (result.status === 'Draft') {
+    return OnboardingAccountingResultSchema.parse({ status: 'Draft', sectorKey, ...bindingVersion, blocking: result.blocking ?? [] });
+  }
+  if (result.status === 'Active') {
+    try {
+      await reloadAccountingMappersSerialized();
+    } catch (error) {
+      logger.error('Recarga dos mappers contábeis falhou depois da ativação do onboarding', {
+        unitId,
+        bindingVersion: result.bindingVersion,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return OnboardingAccountingResultSchema.parse({
+        status: 'Draft',
+        sectorKey,
+        ...bindingVersion,
+        blocking: [
+          {
+            code: 'ACCOUNTING_SYNC_RELOAD_FAILED',
+            message:
+              'O binding foi ativado, mas a recarga dos mappers contábeis falhou: as vendas desta unidade só passam a ser lançadas depois do próximo reinício do servidor.',
+          },
+        ],
+      });
+    }
+  }
+  // `already-active` ⇒ `Active`: inalcançável numa unidade virgem; mapeado por completude.
+  return OnboardingAccountingResultSchema.parse({ status: 'Active', sectorKey, ...bindingVersion });
+}
+
 async function handleCustomCreation(
   ctx: UserContext,
   presetKey: string,
@@ -112,7 +188,11 @@ async function handleCustomCreation(
   res: Response
 ) {
   try {
-    const originalPreset = await getPresetByKey(presetKey);
+    // W5 item 6 (F-W5-2): o Controle Total resolve pelo registro, como o modo Rápido — chave fora de
+    // `tablePresetSuites` (inclusive `coreSystem`, que o import dinâmico do `PresetManager` alcançava) → 404.
+    // Só a chave do registro (dono, questionário, 2026-10-16: "Só a chave do registro"): `beauty_salon` → 404.
+    const originalPreset = presetService.getPresetByKey(presetKey);
+    if (!originalPreset) throw new UnknownSuiteError(presetKey);
 
     // I8 comportamentos 2–3: as tabelas de lead não vêm mais do Core; entram pelos módulos selecionados
     // (body `modules` ∪ default da suíte, fechado pelas dependências do registro).
@@ -125,7 +205,10 @@ async function handleCustomCreation(
     };
 
     const keptModules = applyModuleRemovals(installedModules, removedTables);
+    // W2 item 7 (F-W2-3 → a): a mesma trava da Entrevista com IA, sobre o conjunto final (antes de apagar e antes do
+    // `finalPayload`, que descarta `meta`). Módulos já foram decididos acima; Core em `removedTables` segue ignorado.
     const coreTableKeys = Object.keys(CoreSystemPreset.tables);
+    assertRemovalsAllowed(finalTablesConfig, removedTables.filter((k) => !coreTableKeys.includes(k)));
 
     for (const tableKey of removedTables) {
       if (!coreTableKeys.includes(tableKey)) {
@@ -207,9 +290,11 @@ async function handleCustomCreation(
       }
     }
 
+    const sectorKey = resolveOnboardingSectorKey(presetKey);
     const { installResult: result, unitId, fiscal: fiscalDoOnboarding } = await getFactory()
       .getSystemProvisioningService()
-      .provision(ctx, { preset: finalPayload, unit, fiscal });
+      .provision(ctx, { preset: finalPayload, unit, fiscal, sectorKey });
+    const accounting = await activateAccountingOrReport(ctx, unitId, sectorKey);
 
     const coreTableList = Object.keys(CoreSystemPreset.tables);
     return res.status(201).json({
@@ -220,6 +305,7 @@ async function handleCustomCreation(
         presetKey,
         unitId,
         fiscal: fiscalDoOnboarding,
+        accounting,
         modules: { installed: keptModules },
         tables: {
           core: coreTableList,
@@ -228,6 +314,7 @@ async function handleCustomCreation(
       },
     });
   } catch (error) {
+    if (error instanceof UnknownSuiteError) return res.status(404).json({ error: error.message });
     return respondProvisioningError(error, res) ?? handleApiError(error, res);
   }
 }
@@ -243,7 +330,9 @@ async function handleQuickCreation(
 ) {
   try {
     const { preset, installedModules } = buildQuickPreset(suiteKey, modules, selectOverrides);
-    const { unitId, fiscal: fiscalDoOnboarding } = await getFactory().getSystemProvisioningService().provision(ctx, { preset, unit, fiscal });
+    const sectorKey = resolveOnboardingSectorKey(suiteKey);
+    const { unitId, fiscal: fiscalDoOnboarding } = await getFactory().getSystemProvisioningService().provision(ctx, { preset, unit, fiscal, sectorKey });
+    const accounting = await activateAccountingOrReport(ctx, unitId, sectorKey);
 
     const coreTableList = Object.keys(CoreSystemPreset.tables);
     const businessTableList = Object.keys(preset.tables).filter((k) => !coreTableList.includes(k));
@@ -255,6 +344,7 @@ async function handleQuickCreation(
         suiteKey,
         unitId,
         fiscal: fiscalDoOnboarding,
+        accounting,
         modules: { installed: installedModules },
         tables: {
           core: coreTableList,
@@ -372,10 +462,10 @@ export async function deleteUserSystem(req: Request, res: Response) {
     const ctx = getUserContextFromRequest(req);
     if (!ctx) return res.status(401).json({ success: false, error: 'Authentication required' });
 
-    // Tabelas + KnowledgeGraph + ActionProposals órfãs — o agente não injeta referências a tabelas apagadas (R27).
-    await getFactory().getSystemProvisioningService().purgeUserSystem(ctx.id);
+    // BE-INCR-RESET-CONSISTENTE (nó I7): policy + purga pelos donos canônicos + cache de KPI — no serviço.
+    await getFactory().getSystemProvisioningService().resetUserSystem(ctx);
 
-    logger.info(`User system reset: tables, KnowledgeGraph, and proposals cleaned for user ${ctx.id}`);
+    logger.info(`User system reset for user ${ctx.id}`);
 
     return res.status(204).end();
   } catch (error) {

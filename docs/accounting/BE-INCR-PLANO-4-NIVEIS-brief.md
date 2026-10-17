@@ -189,6 +189,37 @@ interface RelatorioMigracaoUnidade {
 | **F-L8-5** | Analítica patrimonial **personalizada** pelo tenant (fora do canônico) | (a) **não renomear; listar** no relatório e o dono/contador decide; (b) renomear para `<código>.01` com uma sintética do mesmo nome | **(a)**. Mexer no plano próprio do cliente é decisão contábil dele. Hoje não há cliente real, então a lista do `dev.db` é a prova. |
 | **F-L8-6** | ECD de exercício já entregue com o plano velho | (a) **fora de escopo**: nenhum tenant tem ECD transmitida (o H1 nunca passou; não há cliente real); registrar que a 1ª ECD após a mudança, para quem já tiver entregue, exige `0000.IND_MUDANC_PC = 1` + I157; (b) implementar o I157 agora | **(a)**, condicionado à verificação do insumo ausente §6.1. |
 
+### Forks achados na execução (sessao-feature, 13/10) — RATIFICADOS pelo dono no chat (questionário), todos (a)
+
+| Fork | Lacuna | Decisão |
+|---|---|---|
+| **F-L8-7** | Os kits salão/clínica v1/v2 são versões **publicadas** (`published.json` com sha256 travado por teste) e embutem o binding com os códigos antigos; o item 5 deste BRIEF mandava editar o de-para do v2 no lugar | **(a) Publicar versões novas:** `SALE_BINDING_V2`/`CLINIC_BINDING_V2` derivados dos V1 pelo de-para (`bindingPosL8`) + **kit v3** do salão e da clínica (`REFERENCIAL_2025_CANONICO_V2`). v1/v2 ficam congelados; instalar = a vigente (v3); a migração leva a instalação à v3. Substitui o texto do item 5. |
+| **F-L8-8** | As allowlists de import de `accountingBinding`/`sectorKits` (a de `sectorKits` decidida em 08/10) não permitiam importar o de-para | **(a) Ampliar** só com `codigoPosL8` e `CANONICAL_ACCOUNTS_PRE_L8`. |
+| **F-L8-9** | O schema do kit valida o binding contra o plano **vigente**; com o plano novo, v1/v2 deixam de passar no parse (o boot quebraria) | **(a) Validar contra o plano da época:** lista explícita `KITS_PUBLICADOS_PRE_L8` (não "versão < 3") valida contra `CANONICAL_ACCOUNTS_PRE_L8`; o resto contra o vigente. |
+
+### EMENDA 2026-10-15 — refeito sobre a main de 15/10 (dono, chat: *"Executa a L8 de novo sobre a main atual (sessao-feature): kit v6 herdando o v5, migração cobrindo as contas do #652/#656"*)
+
+O #654 ficou em conflito com a main: enquanto esperava, a main publicou os kits v3 (conteúdo fiscal, #652), v4 (catálogo,
+#655) e v5 (referencial da emenda 3.3, #656). Versão publicada não se edita, então o kit do L8 não pode ser o v3.
+
+| Fork | Lacuna | Decisão |
+|---|---|---|
+| **F-L8-7R** | O kit do plano de 4 níveis colide com o v3 publicado pela main | **Kit v6** do salão e da clínica: o conteúdo de negócio do v5 + binding V2 + referencial com os códigos novos. v1–v5 congelados (hashes do `published.json` idênticos) e validados contra `CANONICAL_ACCOUNTS_PRE_L8`, que passa a ter as 9 folhas da emenda 3.3 (F-L8-9 a); a migração leva a instalação à v6. Substitui o "kit v3" do F-L8-7. |
+| **F-L8-10** | As contas a recolher do #652 (`2.1.3`–`2.1.6`) são analíticas patrimoniais no nível 3 | **(a) Grupo tributário** (dono, questionário, 15/10): `2.1.3` Obrigações Tributárias (S) › `2.1.3.01` IRPJ, `.02` CSLL, `.03` PIS, `.04` COFINS a recolher. O `2.1.3` muda de papel (F-L8-3 a). Bate com o 2.01.01.09 do referencial RFB. De-para em `RENOMEACAO_FISCAL_L8` (`kits/_shared/conteudoFiscalCanonico.ts`). |
+| **F-L8-11** | As folhas `3.6.1`/`3.6.2` e `4.5.1`/`4.5.2` do kit v3–v5 não têm superior; a ECD as emitiria com `COD_CTA_SUP` vazio no nível 3 | **(a) Criar as duas sintéticas** (dono, questionário, 15/10): `3.6` Deduções da Receita Bruta (Revenue) e `4.5` Tributos sobre o Lucro (Expense). Nomes pelo referencial (3.01.01.01.02 e 3.02.01.01.01), provisórios até o contador. |
+| **F-L8-12** | A migração marcava a instalação com a versão vigente sem aplicar o conteúdo das versões do meio. As 5 unidades do `dev.db` (inclusive `seed-unit-presumido`, a do H1) estão no kit **v1**: iriam ao v6 sem as contas de imposto e o perfil-padrão (v3), o catálogo (v4) e o referencial da emenda 3.3 (v5) | **(a) A migração faz o upgrade** (dono, questionário, 15/10): antes de renomear, kit < v5 passa pelo `KitUpgradeService` real até o v5 (dry-run + apply, registro preso no v5). Forward ou conflito no dry-run ⇒ a unidade falha e nada é renomeado. O upgrade comita sozinho; se a renomeação falhar depois, a unidade fica no v5 do plano de 3 níveis e a 2ª rodada continua. A instalação só passa ao v6 a partir do v5. |
+| **F-L8-13** | Prova na cópia do `dev.db` (15/10): nas duas unidades do H1, 2025 está `HARD_CLOSED`, e o upgrade até o v5 deu 8 conflitos `referential_year_frozen` (o de-para de 2025 das contas fiscais); a ECD exige de-para de toda folha viva, inclusive as 9 da emenda 3.3 | **(a) Aceita e o runbook mapeia** (dono, questionário, 15/10): conflito só de ano congelado não para a unidade; vira pendência do kit e o relatório o lista em `kitPreparado.pendenciasAnoCongelado`. O RUNBOOK-H1 grava os 17 de-para de 2025 à mão antes da tentativa 3. Qualquer outro conflito continua parando a unidade. |
+
+Migração (item 8, acréscimo): depois do de-para canônico, renomeia por id as 4 contas a recolher (só a analítica Liability)
+e cria `2.1.3`/`3.6`/`4.5` onde a unidade tem filhas delas. O perfil fiscal aponta por id e não muda. Teste:
+`migratePlano4NiveisCli.integration.test.ts` › "kit v5 (conteúdo fiscal do #652)". Invariante da v6 (nível ≥ 4 e
+todo prefixo sintético, varrendo canônico + extensão): `kitV6Plano4Niveis.test.ts`.
+
+Desvio registrado no item 1: o invariante "sintética da **mesma natureza**" tem a exceção do PL (Equity) sob `2` Passivo,
+que o próprio plano já tinha e o PVA aceitou na tentativa 2. Acréscimo ao item 8: a migração confere o **período corrente
+aberto ANTES de renomear** (o recompile do binding faz dry-run de lançamento) — o 1º teste mostrou o estado parcial
+"plano migrado com binding velho".
+
 ## 5. Pendente de validação externa
 
 - **Nomes e agrupamento da árvore (F-L8-2):** a estrutura segue o art. 178 da Lei 6.404 (grupos) e o Manual da ECD

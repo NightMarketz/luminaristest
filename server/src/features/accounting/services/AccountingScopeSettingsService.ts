@@ -32,6 +32,14 @@ export interface AccountingScopeSettingsView {
   updatedAt: string | null;
 }
 
+/** As contas de `AccountingScopeSettings` que o kit de setor preenche (BE-INCR-KIT-SETOR PR-2 passo 3; PR-4 aceitar). */
+export type ScopeSettingsAccountField =
+  | 'bankChargeExpenseAccountId'
+  | 'bankChargeIncomeAccountId'
+  | 'depreciationExpenseAccountId'
+  | 'disposalGainAccountId'
+  | 'disposalLossAccountId';
+
 /**
  * Configuração por escopo (`AccountingScopeSettings`, decisão do dono 2026-09-15). Nasceu dentro do F7
  * (as 2 contas de encargo bancário) e por isso o repositório é o do F7 — ponytail: divide quando um
@@ -87,9 +95,23 @@ export class AccountingScopeSettingsService {
    * escrita do PUT (policy, gate do contador ativo dentro da tx, versão APPLIED, validação in-tx); o campo nulo é
    * lido DENTRO da tx, então uma escrita concorrente do usuário nunca é sobrescrita. Devolve os campos gravados.
    */
-  async fillNullAccounts(
+  async fillNullAccounts(scope: AccountingScope, accountIds: Partial<Record<ScopeSettingsAccountField, string>>): Promise<string[]> {
+    return this.writeAccounts(scope, accountIds, true);
+  }
+
+  /**
+   * BE-INCR-KIT-SETOR PR-4 (item 37; emenda E-12.3): aceitar a pendência `field_set_by_user` grava o valor do kit
+   * POR CIMA do campo preenchido. Mesmo caminho de escrita do `fillNullAccounts` (policy, gate do contador ativo
+   * dentro da tx, versão APPLIED, validação in-tx), sem o filtro de campo nulo.
+   */
+  async setAccounts(scope: AccountingScope, accountIds: Partial<Record<ScopeSettingsAccountField, string>>): Promise<string[]> {
+    return this.writeAccounts(scope, accountIds, false);
+  }
+
+  private async writeAccounts(
     scope: AccountingScope,
-    accountIds: Partial<Record<'bankChargeExpenseAccountId' | 'bankChargeIncomeAccountId' | 'depreciationExpenseAccountId' | 'disposalGainAccountId' | 'disposalLossAccountId', string>>,
+    accountIds: Partial<Record<ScopeSettingsAccountField, string>>,
+    onlyNull: boolean,
   ): Promise<string[]> {
     if (!this.policy.canManageAccountingSettings(scope)) {
       throw new ForbiddenError('Você não tem permissão para alterar a configuração contábil.');
@@ -97,7 +119,7 @@ export class AccountingScopeSettingsService {
     return this.policyVersionRepo.runTransaction(async (tx) => {
       const current = await this.repo.getSettings(scope, tx);
       const patch = Object.fromEntries(
-        Object.entries(accountIds).filter(([field]) => current?.[field as keyof typeof accountIds] == null),
+        Object.entries(accountIds).filter(([field]) => !onlyNull || current?.[field as keyof typeof accountIds] == null),
       ) as ScopeSettingsPolicyPayload;
       const fields = Object.keys(patch);
       if (fields.length === 0) return [];

@@ -2,7 +2,6 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
 import {
   ServiceFiscalProfileParamsSchema,
   ServiceFiscalProfileScopeQuerySchema,
@@ -16,7 +15,7 @@ export const listServiceFiscalProfiles = async (req: Request, res: Response) => 
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = ServiceFiscalProfileScopeQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const data = await getFactory().getServiceFiscalProfileService().list(scope);
     return res.json({ success: true, data });
   } catch (error) {
@@ -32,7 +31,7 @@ export const getServiceFiscalProfile = async (req: Request, res: Response) => {
     const query = ServiceFiscalProfileScopeQuerySchema.safeParse(req.query);
     if (!params.success) return res.status(400).json({ success: false, error: params.error.flatten() });
     if (!query.success) return res.status(400).json({ success: false, error: query.error.flatten() });
-    const scope = resolveAccountingScope(user, query.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, query.data.unitId, { access: 'read' });
     const data = await getFactory().getServiceFiscalProfileService().get(scope, params.data.serviceRef);
     return res.json({ success: true, data });
   } catch (error) {
@@ -48,7 +47,7 @@ export const upsertServiceFiscalProfile = async (req: Request, res: Response) =>
     const body = UpsertServiceFiscalProfileSchema.safeParse(req.body);
     if (!params.success) return res.status(400).json({ success: false, error: params.error.flatten() });
     if (!body.success) return res.status(400).json({ success: false, error: body.error.flatten() });
-    const scope = resolveAccountingScope(user, body.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, body.data.unitId, { access: 'write' });
     const data = await getFactory().getServiceFiscalProfileService().upsert(scope, params.data.serviceRef, body.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -64,7 +63,7 @@ export const deleteServiceFiscalProfile = async (req: Request, res: Response) =>
     const query = ServiceFiscalProfileScopeQuerySchema.safeParse(req.query);
     if (!params.success) return res.status(400).json({ success: false, error: params.error.flatten() });
     if (!query.success) return res.status(400).json({ success: false, error: query.error.flatten() });
-    const scope = resolveAccountingScope(user, query.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, query.data.unitId, { access: 'write' });
     await getFactory().getServiceFiscalProfileService().delete(scope, params.data.serviceRef);
     return res.json({ success: true });
   } catch (error) {

@@ -3,7 +3,6 @@ import { getUserContextFromRequest } from '../lib/authUtils';
 import { handleApiError } from '../lib/apiUtils';
 import { UnauthorizedError } from '../lib/errors';
 import { getFactory } from '../lib/factory';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
 import { ListPackageBalancesQuerySchema } from '../features/packages/dtos/PackageBalanceDto';
 
 /**
@@ -19,7 +18,7 @@ export const listPackageBalances = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const balances = await getFactory()
       .getPackageBalanceService()
       .listBalances(scope, {

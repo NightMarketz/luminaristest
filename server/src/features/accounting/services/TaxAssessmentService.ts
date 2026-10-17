@@ -632,7 +632,7 @@ export class TaxAssessmentService {
 
   /**
    * BRIEF X8 item 17 (F-X8-4 a, F-PCB-1 b, F-PCB-3 a) — provisão de PIS/COFINS do mês:
-   *  - D despesa (`pis|cofinsDespesaAccountId`, Expense) / C a recolher (`pis|cofinsRecolherAccountId`) = débito bruto;
+   *  - D dedução da receita (`pis|cofinsDespesaAccountId`, Revenue — F-PCB-1R a) / C a recolher (`pis|cofinsRecolherAccountId`) = débito bruto;
    *  - não cumulativo (`consumoPisCofins`, decisões do dono 06/10): + D a recuperar / C redutora de despesa
    *    (`pisCofinsCreditoOutrosAccountId`) = outros créditos do mês (L-5) e + D a recolher / C a recuperar = crédito
    *    consumido (NF-e + outros + saldo anterior; L-1/L-2/L-4); o crédito não consumido (saldo credor) fica no ativo;
@@ -757,7 +757,7 @@ export class TaxAssessmentService {
     let irpj: ResultadoApuracaoAnual;
     let csll: ResultadoApuracaoAnual;
     if (perfil.regime === 'PRESUMIDO') {
-      const rec = await receitaBrutaPorAtividade({ accountRepo: this.accountRepo, postingRepo: this.postingRepo }, scope, w.from, w.to);
+      const rec = await receitaBrutaPorAtividade({ accountRepo: this.accountRepo, postingRepo: this.postingRepo, fiscalProfileRepo: this.fiscalProfileRepo }, scope, w.from, w.to);
       const base = {
         tabela,
         ano,
@@ -830,7 +830,7 @@ export class TaxAssessmentService {
     // Item 9 (e decisão 1 do PR-3): só o IRPJ do prestador exclusivo lê a receita dos meses anteriores do ano.
     const receitaDoMes = async (k: number): Promise<ReceitaMes> => {
       const b = mesBounds(ano, k);
-      const rec = await receitaBrutaPorAtividade({ accountRepo: this.accountRepo, postingRepo: this.postingRepo }, scope, b.from, b.to);
+      const rec = await receitaBrutaPorAtividade({ accountRepo: this.accountRepo, postingRepo: this.postingRepo, fiscalProfileRepo: this.fiscalProfileRepo }, scope, b.from, b.to);
       return { periodo: nomeMes(k), servicoCents: BigInt(rec.servicoCents), revendaCents: BigInt(rec.revendaCents), naoUsoCents: BigInt(rec.naoUsoCents) };
     };
     const receitasAnteriores = async (): Promise<ReceitaMes[]> => {

@@ -1,4 +1,6 @@
 import { ISchemaField } from '../../dynamicTables/models/DynamicTable.model';
+import type { TableLock } from '../../dynamicTables/presets/removability';
+import type { ModuleKey } from '../../dynamicTables/presets/modules/registry';
 
 /**
  * Tipos compartilhados entre InterviewService e CustomizationService
@@ -49,6 +51,21 @@ export interface IInterviewTurnResult {
   customizationState?: ICustomizationState;
   /** Só com nextStage AWAITING_CREATION_TYPE_CONFIRMATION. */
   choicePrompt?: { kind: 'creation_type'; reason: CreationChoiceReason };
+  /** W5/I8-c12: só no turno MATCHING_PRESET com preset casado. */
+  moduleOptions?: InterviewModuleOption[];
+}
+
+/**
+ * W5/I8-c12: um módulo do registro oferecido no turno MATCHING_PRESET, na ordem do registro.
+ */
+export interface InterviewModuleOption {
+  key: ModuleKey;
+  name: { pt: string; en: string };
+  dependsOn: ModuleKey[];
+  /** A suíte já instala (padrão ∪ dependências fixas): o FE não deixa desmarcar. */
+  locked: boolean;
+  /** locked ∪ escolha da IA, fechada pelas dependências. */
+  suggested: boolean;
 }
 
 /**
@@ -60,7 +77,9 @@ export interface ICustomizableTable {
   key: string;           // Identificador único (ex: "customers")
   description: string;   // Descrição breve (ex: "Cadastro de clientes")
   isSelected: boolean;   // Se está selecionada na customização
-  isCore: boolean;       // Se é uma tabela essencial que não pode ser removida
+  isCore: boolean;       // Se é uma tabela essencial que não pode ser removida (W2: derivado de `lock !== null`)
+  /** W2: por que a tabela do preset não pode sair (`null` = removível); ausente em tabela adicionada pelo usuário. */
+  lock?: TableLock | null;
   fields?: ISchemaField[];        // Campos da tabela quando disponíveis (do preset real)
 }
 

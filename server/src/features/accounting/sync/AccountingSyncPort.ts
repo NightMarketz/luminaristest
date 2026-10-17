@@ -20,18 +20,36 @@ import { AppError } from '../../../lib/errors';
  * The RAW source amount (reais, float) is carried here — conversion to integer
  * cents happens in the mapper (the money boundary), never before.
  */
+/**
+ * Vocabulário `sale.*` dos mappers escritos à mão e do golden (BE-INCR-KIT-SETOR PR-6, item 48): segue literal para
+ * quem precisa de exaustividade (`TieOutDiagnosticService`); só a porta (`AccountingEvent.sourceType`) alarga.
+ *  NOTE: 'crm.opportunity.won' was RETIRED from this union (ADR-CRM-AR-SEAM) — CRM Won deals
+ *  now create a Contas a Receber via CrmReceivableBridge instead of posting directly; the
+ *  string survives only as CRM_LEGACY_SOURCE_TYPE (legacy-era guard + old ledger entries).
+ */
+export type SaleSourceType =
+  | 'sale.finalized'
+  | 'sale.cogs'
+  | 'sale.returned'
+  | 'sale.settled'
+  | 'sale.package.sold'
+  | 'sale.package.expired';
+
+/**
+ * Formato de um `sourceType`/`eventKey` de negócio (BE-INCR-KIT-SETOR PR-6, item 46; F-KB-4 → b): o vocabulário é
+ * aberto — quem declara as chaves válidas é o kit (`operationalSchema`), não esta união.
+ */
+export const EVENT_KEY_PATTERN = /^[a-z][a-z0-9]*(\.[a-z0-9_]+)+$/;
+
+/**
+ * A domain fact that should produce a journal entry. Discriminated by `sourceType`.
+ * The RAW source amount (reais, float) is carried here — conversion to integer
+ * cents happens in the mapper (the money boundary), never before.
+ */
 export type AccountingEvent = {
-  /** Stable event-kind key. Also the JournalEntry.sourceType (idempotency axis 1).
-   *  NOTE: 'crm.opportunity.won' was RETIRED from this union (ADR-CRM-AR-SEAM) — CRM Won deals
-   *  now create a Contas a Receber via CrmReceivableBridge instead of posting directly; the
-   *  string survives only as CRM_LEGACY_SOURCE_TYPE (legacy-era guard + old ledger entries). */
-  sourceType:
-    | 'sale.finalized'
-    | 'sale.cogs'
-    | 'sale.returned'
-    | 'sale.settled'
-    | 'sale.package.sold'
-    | 'sale.package.expired';
+  /** Stable event-kind key (formato `EVENT_KEY_PATTERN`). Also the JournalEntry.sourceType (idempotency axis 1).
+   *  Aberto desde o PR-6 do KIT-SETOR: um kit novo declara evento novo sem editar o núcleo (item 49). */
+  sourceType: string;
   /** The source record id. JournalEntry.sourceId (idempotency axis 2). */
   sourceId: string;
   /** Tenancy unit of the SOURCE record — never defaulted or inferred elsewhere. */
@@ -94,9 +112,21 @@ export const CRM_LEGACY_SOURCE_TYPE = 'crm.opportunity.won';
  *   • ACCOUNTING_PERIOD_NOT_OPEN — transient by admin action (period reopens later);
  *   • MAX_CENTS_EXCEEDED — POISON: the source amount exceeds the MAX_CENTS policy ceiling and the
  *     event can NEVER succeed until the source itself is fixed; retrying it every cycle is the
- *     infinite poison-loop Council 1.5 names.
+ *     infinite poison-loop Council 1.5 names;
+ *   • NO_MAPPER_FOR_UNIT — sem mapper para (unidade, evento): ou a unidade não tem binding `Active` (ativar o
+ *     binding; depois recarga — F-I4-4 — e rescan), ou o binding não cobre o evento (bug de cobertura do
+ *     `compile()`: recompilar). Pulado por decisão do dono (F-I5-3 a) — a pendência é o sinal, não o log
+ *     (BE-INCR-ONBOARDING-ACTIVATION item 3);
+ *   • UNKNOWN_EVENT_KEY — nenhum kit declara o evento (bug de fiação de quem o emite; KIT-SETOR PR-6 item 47). Pulado
+ *     por decisão do dono, contra a recomendação (D-2026-10-14-I4-I5-LACUNAS-EXECUCAO L-2) — mesmo raciocínio do
+ *     F-I5-3 a: a pendência com código próprio é o sinal.
  */
-export const SYNC_SKIP_ERROR_CODES = ['ACCOUNTING_PERIOD_NOT_OPEN', 'MAX_CENTS_EXCEEDED'] as const;
+export const SYNC_SKIP_ERROR_CODES = [
+  'ACCOUNTING_PERIOD_NOT_OPEN',
+  'MAX_CENTS_EXCEEDED',
+  'NO_MAPPER_FOR_UNIT',
+  'UNKNOWN_EVENT_KEY',
+] as const;
 
 /**
  * Returns the skip-listed code carried by `error`, or null when the error must NOT be skipped.

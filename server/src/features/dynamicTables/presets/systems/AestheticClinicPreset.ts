@@ -1,4 +1,5 @@
-import { createTableFromModule } from '../../utils/TableFactory';
+// W2 / F-W2-2: `lockedByAccounting` nas 4 tabelas que a contabilidade lê pelo nome (pontes de venda + emissão fiscal).
+import { createTableFromModule, lockedByAccounting } from '../../utils/TableFactory';
 import { aestheticClinicCustomerModule } from '../modules/people/AestheticClinicCustomerModule';
 import { serviceModule } from '../modules/service/ServiceModule';
 import { productModule, productUnitModule } from '../modules/product/ProductModule';
@@ -47,17 +48,28 @@ const AestheticClinicPreset = {
     'inventory of cosmetics/products, service catalog, prepaid packages, sales, and full financials.',
   // I8, F-I8-COMP3-a (ratificado 2026-09-26): CRM-0 + CRM-1 por padrão, igual ao salão (antes vinham do Core).
   modules: ['CRM-0', 'CRM-1'] as ModuleKey[],
+  // W5 item 2 (F-W5-1 → b): perfil da IA movido byte a byte do `presetKnowledgeBase` escrito à mão (`8ba1ed8f`).
+  aiProfile: {
+    name: 'Clínica de Estética',
+    // BE-INCR-P2-VERTICAL-CLINICA, comportamento 3: entrada NOVA — sem ela o matcher devolveria
+    // `beautySalon` para qualquer descrição de clínica (a prova mediria o próprio preset do
+    // vertical 1, não o vertical 2). Conteúdo clínico sensível (anamnese/contraindicação/consentimento)
+    // NÃO é mencionado aqui — a ficha clínica só promete um campo administrativo próprio (ver
+    // `AestheticClinicCustomerModule.ts`), a decisão de conteúdo de saúde está pendente de validação
+    // externa (BRIEF §7 item 4).
+    description: 'Um sistema completo de gestão para clínicas de estética — procedimentos estéticos, protocolos de tratamento e pacotes de sessões pré-pagas. Otimizado para o relacionamento com o paciente/cliente e a agenda de atendimentos. Inclui tabelas para: Clientes (ficha com registro administrativo próprio da clínica), Serviços (catálogo de procedimentos com preço e duração), Agendamentos (marcação de atendimentos vinculando cliente, procedimento e profissional), Produtos (cosméticos/insumos para revenda ou uso interno, com controle de estoque), Pacotes (sessões pré-pagas), Vendas (registrando procedimentos e produtos), e Comissões (por profissional).',
+  },
   tables: {
-    customers: createTableFromModule(aestheticClinicCustomerModule),
+    customers: lockedByAccounting(createTableFromModule(aestheticClinicCustomerModule)),
     suppliers: createTableFromModule(suppliersModule),
     services: createTableFromModule(serviceModule),
-    packages: createTableFromModule(packageCatalogModule),
+    packages: lockedByAccounting(createTableFromModule(packageCatalogModule)),
     products: createTableFromModule(productModule),
     productUnits: createTableFromModule(productUnitModule),
     appointments: createTableFromModule(appointmentsModule),
     // Invariante duro — internalName 'sales'/'saleItems', ver docstring acima.
-    sales: createTableFromModule(salesModule),
-    saleItems: createTableFromModule(saleItemsMixedModule),
+    sales: lockedByAccounting(createTableFromModule(salesModule)),
+    saleItems: lockedByAccounting(createTableFromModule(saleItemsMixedModule)),
     goals: createTableFromModule(goalsModule),
     reports: createTableFromModule(reportsModule),
     campaigns: createTableFromModule(campaignsModule),

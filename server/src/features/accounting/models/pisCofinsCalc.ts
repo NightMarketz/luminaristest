@@ -73,7 +73,7 @@ export interface EntradaPisCofins {
   ano: number;
   periodo: PeriodoPisCofins;
   modalidade: ModalidadePisCofins;
-  /** Item 7 — `receitaBrutaPorAtividade` do mês (o gate de exaustividade do X7 já rodou, sem mudança — F-PCB-1 b). */
+  /** Item 7 — `receitaBrutaPorAtividade` do mês (o gate de exaustividade do X7 já rodou, menos as contas de dedução de PIS/COFINS do perfil — F-PCB-1R a). */
   receitaServicoCents: bigint;
   receitaRevendaCents: bigint;
   /** BE-INCR-H1-REFERENCIAL-3-4 (F-HR-3 b) — conta 3.4 do mês, com sinal; ausente = 0. Entra na base, não no teto da cota-parte. */

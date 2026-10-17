@@ -51,6 +51,7 @@ function buildService(
     entryFound?: boolean;
     fiscalDocFound?: boolean;
     attemptFound?: boolean;
+    sourceDocumentFound?: boolean;
   } = {},
 ) {
   const runTransaction = jest.fn(async (fn: (tx: Prisma.TransactionClient) => Promise<unknown>) =>
@@ -88,8 +89,13 @@ function buildService(
     findAttemptById: jest.fn(async () => (overrides.attemptFound === false ? null : { id: 'fda-1' })),
   } as unknown as jest.Mocked<IFiscalDocumentRepository>;
 
-  const svc = new DocumentAttachmentService(repository, policy, audit, journalEntryRepo, fiscalDocumentRepo);
-  return { svc, repository, policy, append, journalEntryRepo, fiscalDocumentRepo };
+  // BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-2 (a): alvo SOURCE_DOCUMENT = SD ativo no escopo.
+  const sourceProvenanceRepo = {
+    findActiveSourceDocumentsByIds: jest.fn(async () => (overrides.sourceDocumentFound === false ? [] : [{ id: 'sd-1' }])),
+  };
+
+  const svc = new DocumentAttachmentService(repository, policy, audit, journalEntryRepo, fiscalDocumentRepo, sourceProvenanceRepo as never);
+  return { svc, repository, policy, append, journalEntryRepo, fiscalDocumentRepo, sourceProvenanceRepo };
 }
 
 describe('DocumentAttachmentService', () => {
@@ -307,6 +313,19 @@ describe('DocumentAttachmentService — alvos FISCAL_DOCUMENT / FISCAL_DOCUMENT_
     await expect(
       missing.svc.upload(scope, { targetType: 'FISCAL_DOCUMENT_ATTEMPT', targetId: 'fda-x', fileName: 'rej.xml', mimeType: 'application/xml', buffer: Buffer.from('<r/>') }),
     ).rejects.toBeInstanceOf(NotFoundError);
+  });
+
+  it('SOURCE_DOCUMENT (BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-2 a): gate pelo SD ativo no escopo; ausente/retirado → NotFoundError sem disco', async () => {
+    mockedStorage.saveFile.mockResolvedValue({ storageKey: 'u1/unit-1/sd-1/das.pdf', sanitizedName: 'das.pdf' });
+    const ok = buildService();
+    await ok.svc.upload(scope, { targetType: 'SOURCE_DOCUMENT', targetId: 'sd-1', fileName: 'das.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF') });
+    expect(ok.sourceProvenanceRepo.findActiveSourceDocumentsByIds).toHaveBeenCalledWith(scope, ['sd-1']);
+    jest.clearAllMocks();
+    const missing = buildService({ sourceDocumentFound: false });
+    await expect(
+      missing.svc.upload(scope, { targetType: 'SOURCE_DOCUMENT', targetId: 'sd-x', fileName: 'das.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF') }),
+    ).rejects.toBeInstanceOf(NotFoundError);
+    expect(mockedStorage.saveFile).not.toHaveBeenCalled();
   });
 
   it('allowlist: targetType/targetId sobrevivem à canonicalização de attachment.uploaded (na mesma mudança)', () => {

@@ -10,7 +10,7 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { ApplicationFactory } from '@/lib/factory';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { lastValidDay } from '@/features/packages/models/validity';
 
 import { FERIADOS_SEMENTE } from '@test/helpers/legalParams';
@@ -37,7 +37,7 @@ describe('venda de pacote criada pelo motor (date em ISO UTC) — validade do sa
     const byName = async (n: string) => (await prisma.dynamicTable.findFirstOrThrow({ where: { userId: user.id, internalName: n } })).id;
     tables = { sales: await byName('sales'), saleItems: await byName('saleItems'), packages: await byName('packages'), customers: await byName('customers'), units: await byName('units') };
     unitId = (await row('units', { name: 'Filial', cnpj: CNPJ })).id;
-    const scope = resolveAccountingScope({ userId: user.id }, unitId);
+    const scope = resolveAccountingScopeInternal({ userId: user.id }, unitId);
     await ApplicationFactory.getInstance().getPostingService().ensureChartOfAccounts(scope);
     for (const month of [10, 11, 12]) {
       await prisma.accountingPeriod.create({ data: { userId: user.id, unitId, year: 2026, month, status: 'OPEN', openedAt: new Date() } });

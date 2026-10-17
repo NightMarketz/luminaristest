@@ -58,6 +58,10 @@ export class CrmReportDefinitionRepository implements ICrmReportDefinitionReposi
   public async softDelete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
     await (tx ?? prisma).crmReportDefinition.update({ where: { id }, data: { deletedAt: new Date() } });
   }
+
+  public async softDeleteByUserId(userId: string, tx?: Prisma.TransactionClient): Promise<void> {
+    await (tx ?? prisma).crmReportDefinition.updateMany({ where: { userId, deletedAt: null }, data: { deletedAt: new Date() } });
+  }
 }
 
 function toDomain(row: Row): ICrmReportDefinition {

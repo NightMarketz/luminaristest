@@ -26,6 +26,8 @@ function memoryKitRepo(): IKitInstallationRepository {
     },
     saveSteps: async (_s: BindingScope, _id: string, steps: unknown) => ({ ...row!, steps: JSON.stringify(steps) }) as never,
     finish: async (_s: BindingScope, _id: string, status: string) => ({ ...row!, status }) as never,
+    advanceVersion: async () => 1, // PR-4 — não exercitado aqui
+    findAllInstalled: async () => [],
     runTransaction: async <T,>(fn: (tx: never) => Promise<T>) => fn({} as never),
   };
 }
@@ -34,7 +36,7 @@ const getKitInstallService = jest.fn(
     new KitInstallService(
       new SectorKitPolicy(),
       memoryKitRepo(),
-      { findActive: async () => null },
+      { findActive: async () => null, findMany: async () => [] },
       getAccountingBindingCompileService(scope),
       {
         listChart: async () => ((await lastChart) ?? []).map((a) => ({ code: a.code, nature: a.nature, acceptsEntries: a.acceptsEntries })),
@@ -43,8 +45,7 @@ const getKitInstallService = jest.fn(
         findLiveAccountId: async () => null,
       },
       { status: async () => 'OPEN' as const, seedAndOpen: async () => {} },
-      { hasFiscalProfile: async () => false, fillNullScopeSettings: async () => [], fillNullFiscalProfile: async () => [] },
-      { hasProfile: async () => false, upsert: async () => {} },
+      { hasFiscalProfile: async () => true /* E-5: o kit vigente exige perfil fiscal; aqui ele existe */, fillNullScopeSettings: async () => [], fillNullFiscalProfile: async () => [] },
       { catalogLoaded: async () => false, mappedAccountIds: async () => new Set<string>(), batchSet: async () => {} },
       { companyRegime: async () => null, unitRegime: async () => null },
       { append: async () => {} },
@@ -69,6 +70,8 @@ jest.mock('../../lib/prisma', () => ({
 jest.mock('../../lib/factory', () => ({
   __esModule: true,
   ApplicationFactory: { getInstance: () => getInstance() },
+  // LAC-B: o CLI recarrega os mappers depois de instalar (`runtime/mapperReload.ts` lê `getFactory()`).
+  getFactory: () => ({ initializeAccountingSyncFromBindings: async () => {} }),
 }));
 
 import { parseArgs, runCli } from '../activateAccountingBindingCli';

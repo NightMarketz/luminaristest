@@ -36,7 +36,8 @@
       "perfilFiscal": "Perfil fiscal",
       "parametrosLegais": "Parâmetros legais",
       "politica": "Política contábil",
-      "apuracao": "Apuração"
+      "apuracao": "Apuração",
+      "pendencias": "Pendências"
     },
     "error": {
       "units": "Falha ao carregar as unidades.",
@@ -2822,6 +2823,427 @@
       "load": "Erro ao carregar as apurações.",
       "detail": "Erro ao carregar o detalhe.",
       "reconcile": "Não foi possível reconciliar a provisão."
+    }
+  },
+  "activation": {
+    "regionLabel": "Ativação da contabilidade",
+    "inactive": "A contabilidade automática desta unidade não está ativa — as vendas não geram lançamento.",
+    "sectorLabel": "Setor",
+    "button": "Ativar contabilidade",
+    "sectors": {
+      "beautySalon": "Salão de beleza",
+      "aestheticClinic": "Clínica de estética"
+    },
+    "confirm": {
+      "title": "Ativar a contabilidade desta unidade?",
+      "message": "Setor: {{sector}}. Ao confirmar, (1) o plano de contas padrão é instalado se o da unidade estiver vazio e (2) o período do mês corrente é aberto se ainda não existir.",
+      "confirmLabel": "Ativar",
+      "cancelLabel": "Cancelar"
+    },
+    "blockingTitle": "A ativação não foi concluída:",
+    "blocking": {
+      "CHART_OF_ACCOUNTS_EMPTY": "O plano de contas da unidade está vazio.",
+      "ACCOUNTING_PERIOD_NOT_OPEN": "O período {{period}} está fechado — reabra-o antes de ativar.",
+      "EVENT_COVERAGE_MISSING": "Há evento da operação sem regra contábil."
+    },
+    "goToPeriods": "Ir para Períodos",
+    "success": "Contabilidade automática ativada: as vendas desta unidade passam a gerar lançamento.",
+    "successShort": "Contabilidade automática ativa.",
+    "pendenciasLink": "Ver pendências da unidade",
+    "error": "Não foi possível ativar a contabilidade."
+  },
+  "pendencias": {
+    "title": "Pendências",
+    "subtitle": "Eventos que a contabilidade automática não conseguiu lançar nesta unidade. Resolva a causa e use Re-varrer.",
+    "filter": {
+      "reason": "Motivo",
+      "all": "Todos",
+      "includeResolved": "Mostrar resolvidas"
+    },
+    "rescan": "Re-varrer",
+    "summary": {
+      "attempted": "tentada(s)",
+      "resolved": "resolvida(s)",
+      "stillPending": "ainda pendente(s)"
+    },
+    "empty": "Nenhuma pendência nesta unidade.",
+    "loadMore": "Carregar mais",
+    "resolvedAt": "Resolvida em {{when}}",
+    "col": {
+      "source": "Origem",
+      "id": "Id",
+      "reason": "Motivo",
+      "detail": "Detalhe",
+      "firstSeen": "Primeira vez",
+      "lastSeen": "Última vez",
+      "attempts": "Tentativas"
+    },
+    "error": {
+      "load": "Erro ao carregar as pendências.",
+      "rescan": "Não foi possível re-varrer as pendências."
+    },
+    "reason": {
+      "FAILED": "Falha não classificada",
+      "ACCOUNTING_PERIOD_NOT_OPEN": "Período contábil não está aberto — abra o período; depois, Re-varrer",
+      "MAX_CENTS_EXCEEDED": "Valor acima do teto — corrija o valor na origem",
+      "OPENING_ENTRY_MISSING": "Aguardando o lançamento de abertura da venda",
+      "MISSING_PAID_WITH_PACKAGE_ID": "Consumo de pacote sem o pacote de origem registrado",
+      "NO_MAPPER_FOR_UNIT": "Sem regra contábil para este evento nesta unidade — ative a contabilidade da unidade ou recompile o binding; depois, Re-varrer",
+      "PACKAGE_CONSUMPTION_PENDING": "Aguardando o débito do consumo do pacote",
+      "PACKAGE_ORIGIN_REVERSED": "A venda de origem do pacote foi estornada",
+      "PACKAGE_EXPIRY_NFSE_PENDING": "Falta dado para a NFS-e do pacote vencido",
+      "UNKNOWN_EVENT_KEY": "Evento que nenhum kit de setor declara — erro de quem emite o evento; acione o suporte"
+    }
+  },
+  "simples": {
+    "alerta": {
+      "ATIVIDADE_SEM_ANEXO": "Atividade sem anexo",
+      "BENEFICIO_MUNICIPAL_INAPLICAVEL_DESVANTAJOSO": "Benefício municipal não aplicado (desvantajoso)",
+      "HISTORICO_IGNORADO": "Histórico pré-adoção ignorado",
+      "ISS_VALOR_FIXO_MUNICIPAL": "ISS por valor fixo municipal",
+      "LIMITE_EPP_EXCEDIDO": "Limite da EPP excedido",
+      "LIMITE_MEI_EXCEDIDO": "Limite do MEI excedido",
+      "LIMITE_ME_EXCEDIDO": "Limite da ME excedido",
+      "MEI_ENQUADRAMENTO_DIVERGE": "Enquadramento do MEI diverge das ocupações",
+      "MEI_OCUPACAO_EXCLUIDA": "Ocupação fora do MEI",
+      "REGIME_CAIXA_RECALCULO": "DAS registrado por competência num PA do caixa",
+      "IMPEDIMENTO_CAIXA_ICMS_ISS": "Impedimento: ICMS/ISS fora do DAS",
+      "CARTAO_RECEBIMENTO_ESTIMADO": "Recebimento do cartão estimado",
+      "RECEBIMENTO_DE_VENDA_TRIBUTADA_POR_COMPETENCIA": "Recebimento de venda já tributada por competência",
+      "MEI_TAC_COM_OCUPACAO_A": "Transportador de cargas com ocupação da tabela A",
+      "NFSE_DIVERGE_RECEITA": "NFS-e diverge da receita",
+      "RBT12_INCOMPLETO": "RBT12 incompleto",
+      "SEGREGACAO_MANUAL": "Segregação manual",
+      "SUBLIMITE_ICMS_ISS": "Sublimite do ICMS/ISS",
+      "TIEOUT_DIVERGENTE": "Subrazão × razão divergentes"
+    },
+    "alertas": {
+      "title": "Alertas"
+    },
+    "badge": {
+      "bloqueante": "Bloqueia o registro do DAS",
+      "divergente": "Divergente",
+      "pendente": "Provisão pendente",
+      "warning": "Alerta"
+    },
+    "calculando": "Calculando…",
+    "calcular": "Calcular",
+    "cancelar": "Cancelar",
+    "col": {
+      "aliquotaEfetiva": "Alíq. efetiva",
+      "aliquotaNominal": "Alíq. nominal",
+      "anexo": "Anexo",
+      "competencia": "Competência",
+      "das": "DAS",
+      "dasMei": "DAS-MEI",
+      "divergencia": "Divergência",
+      "faixa": "Faixa",
+      "fatorR": "Fator R",
+      "natureza": "Natureza",
+      "oficial": "Oficial",
+      "parcelaDeduzir": "Parcela a deduzir",
+      "receita": "Receita",
+      "situacao": "Situação",
+      "tributos": "Tributos"
+    },
+    "das": {
+      "abrir": "Registrar DAS oficial",
+      "avisoCompleta": "Mesmo número e valor do DAS já registrado: o envio só completa a provisão pendente.",
+      "avisoSubstitui": "Já há DAS registrado nesta competência: o novo substitui o anterior e estorna a provisão dele.",
+      "bloqueada": "A prévia tem alerta que bloqueia o registro do DAS — resolva antes.",
+      "calculado": "Calculado (prévia)",
+      "conflito": "As entradas mudaram depois do cálculo — calculamos de novo; confira a prévia e registre outra vez.",
+      "enviar": "Confirmar registro",
+      "erro": {
+        "numeroObrigatorio": "Informe o número do documento (até 40 caracteres).",
+        "registrar": "Não foi possível registrar o DAS.",
+        "valorInvalido": "Valor inválido — use o formato 1.234,56 (maior que zero).",
+        "vencimentoInvalido": "Vencimento inválido — escolha uma data do calendário."
+      },
+      "precisaPrevia": "Calcule antes de registrar: o registro exige a prévia desta sessão.",
+      "reRegistrar": "Registrar outro DAS",
+      "sugestaoVencimento": "Vencimento sugerido: dia 20 do mês seguinte (LC 123 art. 21 III; Res. CGSN 140 art. 40). É só sugestão — confira no DAS (prorrogação e dia não útil não estão no cálculo).",
+      "title": "Registrar DAS oficial"
+    },
+    "detail": {
+      "atividades": "Atividades",
+      "dasOficial": "DAS oficial",
+      "divergencia": "Divergência (oficial − calculado)",
+      "espelho": "Espelho do PGDAS-D",
+      "janela": "Janela do RBT12",
+      "numeroDocumento": "Número do documento",
+      "provisao": "Provisão",
+      "razao": "Razão",
+      "rbt12": "RBT12",
+      "semDas": "Nenhum DAS oficial registrado nesta competência.",
+      "subrazao": "Subrazão",
+      "tabela": "Tabela de lei usada",
+      "tieOut": "Conferência subrazão × razão",
+      "tieOutOk": "Confere",
+      "total": "Total calculado",
+      "valorOficial": "Valor oficial",
+      "vencimento": "Vencimento",
+      "vigenteDesde": "vigente desde"
+    },
+    "error": {
+      "calcular": "Não foi possível calcular.",
+      "load": "Erro ao carregar a apuração.",
+      "perfil": "Erro ao carregar o perfil fiscal do ano."
+    },
+    "estado": {
+      "calculado": "Calculado (sem DAS)",
+      "carregando": "Carregando…",
+      "erro": "Erro",
+      "naoRegulamentada": "Regra não regulamentada",
+      "registrado": "DAS registrado",
+      "semPerfil": "Sem dado de perfil"
+    },
+    "fechar": "Fechar",
+    "historico": {
+      "declarado": "Declarado: receita {{receita}}",
+      "declarar": "Declarar histórico de",
+      "erro": {
+        "folhaInvalida": "Folha inválida — use o formato 1.234,56 ou deixe em branco.",
+        "receitaInvalida": "Receita bruta inválida — use o formato 1.234,56."
+      },
+      "error": {
+        "load": "Erro ao carregar o histórico.",
+        "save": "Não foi possível salvar o histórico."
+      },
+      "folha": "Folha de salários (opcional)",
+      "receitaBruta": "Receita bruta do mês",
+      "salvar": "Salvar histórico",
+      "salvo": "Histórico salvo — a grade foi recalculada.",
+      "subtitle": "Receita bruta (e folha, para o fator R) dos meses antes de usar o sistema. O mês com receita no subrazão usa o subrazão; o histórico vale para os meses sem ela.",
+      "title": "Histórico pré-adoção",
+      "vazio": "Sem histórico declarado neste mês."
+    },
+    "mei": {
+      "ano": "Ano do perfil fiscal",
+      "contribuinteIcms": "Contribuinte de ICMS",
+      "contribuinteIss": "Contribuinte de ISS",
+      "cppAliquota": "Alíquota da CPP",
+      "error": {
+        "ecdIncompleta": "O perfil do ano tem ECD com campo vazio que o PUT exige — corrija a ECD antes.",
+        "ecfIncompleta": "O perfil do ano tem ECF com campo vazio que o PUT exige — corrija a ECF antes.",
+        "load": "Não foi possível carregar o perfil fiscal do ano.",
+        "naoMei": "O enquadramento do Anexo XI é só do MEI.",
+        "save": "Não foi possível salvar o enquadramento."
+      },
+      "filtro": "Filtrar por ocupação, CNAE ou chave",
+      "irParaEnquadramento": "Declarar o enquadramento do MEI no perfil fiscal",
+      "limite": "Receita acumulada no ano × limite",
+      "naoDeclarado": "— não declarado —",
+      "naoMeiAno": "O perfil de {{ano}} é {{regime}}: o enquadramento do Anexo XI é só do MEI.",
+      "ocupacoes": "Ocupações (Anexo XI)",
+      "receitaPa": "Receita do mês",
+      "salarioMinimo": "Salário mínimo usado",
+      "salvar": "Salvar enquadramento",
+      "semOcupacoes": "Nenhuma ocupação vigente no ano com esse filtro.",
+      "subtitle": "Perfil fiscal da empresa no ano: o SIMEI só calcula com o enquadramento ICMS/ISS declarado (Res. CGSN 140 art. 101 § 1º). Salvar regrava o perfil do ano com estes campos trocados.",
+      "title": "Enquadramento do MEI (Anexo XI)",
+      "transportador": "Transportador autônomo de cargas"
+    },
+    "motivo": {
+      "DOCUMENTO_MUNICIPAL_TRANSICAO": "Documento municipal (transição)",
+      "REGIME_CAIXA": "Regime de caixa",
+      "CARTAO_RECEBIMENTO_ESTIMADO": "Prazo do cartão estimado"
+    },
+    "motivoSeg": {
+      "ICMS_ST": "ICMS por substituição tributária",
+      "ISS_RETIDO": "ISS retido",
+      "MONOFASICO": "Monofásico (PIS/COFINS)",
+      "MONOFASICO_E_ICMS_ST": "Monofásico e ICMS-ST"
+    },
+    "nao": "Não",
+    "natureza": {
+      "LOCACAO_MOVEL": "Locação de bens móveis",
+      "REVENDA": "Revenda",
+      "SERVICO": "Serviço"
+    },
+    "parceria": {
+      "cota": "Cota do salão",
+      "cotaPct": "Cota do salão (%)",
+      "editar": "Editar",
+      "editarTitulo": "Editar parceria",
+      "erro": {
+        "cota": "Cota do salão inválida — entre 0,01% e 99,99% (até 2 casas).",
+        "homologadoEm": "Informe a data de homologação do contrato (obrigatória — Lei 12.592 art. 1º-A § 8º).",
+        "natureza": "Escolha a natureza da cota.",
+        "profissional": "Escolha o profissional-parceiro.",
+        "sindicato": "Informe o sindicato que homologou (até 200 caracteres).",
+        "vigenteAte": "Fim da vigência inválido ou antes do início.",
+        "vigenteDesde": "Informe o início da vigência (data do calendário)."
+      },
+      "error": {
+        "load": "Erro ao carregar as parcerias.",
+        "remove": "Não foi possível remover a parceria.",
+        "save": "Não foi possível salvar a parceria."
+      },
+      "homologacao": "Homologação",
+      "homologadoEm": "Homologado em",
+      "natureza": {
+        "ALUGUEL_BEM_MOVEL": "Aluguel de bens móveis",
+        "GESTAO": "Gestão"
+      },
+      "naturezaCota": "Natureza da cota",
+      "nova": "Nova parceria",
+      "profissional": "Profissional",
+      "remover": "Remover",
+      "removerMsg": "O contrato sai da apuração a partir de agora (fica no histórico do sistema).",
+      "removerTitulo": "Remover parceria",
+      "salvar": "Salvar parceria",
+      "semEmployees": "Tabela de funcionários não encontrada: cadastre os profissionais antes de criar a parceria.",
+      "semFim": "sem fim",
+      "sindicato": "Sindicato",
+      "subtitle": "Lei 12.592 art. 1º-A: a cota do profissional-parceiro sai da receita do salão; sem homologação o contrato não produz efeito.",
+      "title": "Parcerias salão-parceiro",
+      "vazio": "Nenhuma parceria cadastrada nesta unidade.",
+      "vigencia": "Vigência",
+      "vigenteAte": "Vigente até (vazio = sem fim)",
+      "vigenteDesde": "Vigente desde"
+    },
+    "segregacao": {
+      "abrir": "Ver / editar segregação",
+      "adicionar": "Adicionar parcela",
+      "erro": {
+        "demais": "No máximo 50 parcelas por mês.",
+        "motivo": "Escolha o motivo da parcela {{n}}.",
+        "natureza": "Escolha a natureza da parcela {{n}}.",
+        "receita": "Receita da parcela {{n}} inválida — maior que zero, no formato 1.234,56."
+      },
+      "error": {
+        "load": "Erro ao carregar a segregação.",
+        "save": "Não foi possível salvar a segregação."
+      },
+      "excluir": "fora do DAS",
+      "issOutroMunicipio": "ISS devido a outro município não é motivo de segregação: continua no DAS (LC 123 art. 18 § 4º-A V). Salvar substitui todas as parcelas do mês.",
+      "motivoN": "Motivo da parcela {{n}}",
+      "naturezaN": "Natureza da parcela {{n}}",
+      "receitaN": "Receita da parcela {{n}}",
+      "removerLinha": "Remover",
+      "salvar": "Salvar segregação",
+      "title": "Segregação manual da receita",
+      "vazia": "Sem segregação manual neste mês."
+    },
+    "semPerfilAno": "Perfil fiscal de {{ano}} não cadastrado: cadastre o perfil fiscal do ano para apurar os tributos.",
+    "severity": {
+      "INFO": "Informativo",
+      "WARNING": "Atenção"
+    },
+    "sim": "Sim",
+    "dasn": {
+      "title": "DASN-SIMEI",
+      "prazo": "Prazo de entrega",
+      "receitaTotal": "Receita bruta total do ano",
+      "receitaIcms": "Receita sujeita ao ICMS",
+      "mesesSemSubrazao": "Meses sem lançamento no subrazão (a receita deles não entra no total):",
+      "contratouEmpregado": "Contratou empregado no ano?",
+      "salvar": "Salvar DASN-SIMEI",
+      "salvo": "DASN-SIMEI salva.",
+      "erro": {
+        "contratou": "Responda se o MEI contratou empregado no ano."
+      },
+      "error": {
+        "load": "Erro ao carregar a DASN-SIMEI.",
+        "save": "Não foi possível salvar a DASN-SIMEI."
+      }
+    },
+    "defis": {
+      "title": "DEFIS",
+      "doRazao": "Do razão (só leitura)",
+      "prazo": "Prazo de entrega",
+      "mesesApurados": "Meses apurados",
+      "lucro": "Lucro contábil",
+      "limiteIsencao": "Limite de isenção (art. 145 § 1º)",
+      "informarLucro": "Informar o lucro na DEFIS",
+      "estoqueInicial": "Estoque inicial",
+      "estoqueFinal": "Estoque final",
+      "empregadosInicio": "Empregados no início do ano",
+      "empregadosFim": "Empregados no fim do ano",
+      "ganhosCapital": "Ganhos de capital",
+      "ganhosRendaVariavel": "Ganhos líquidos em renda variável",
+      "exportacaoDireta": "Receita de exportação direta",
+      "socios": "Sócios e cotas em tesouraria",
+      "soma": "Soma (sócios + tesouraria)",
+      "somaAviso": "Com sócio informado, a soma das participações mais as cotas em tesouraria deve dar 100% (manual da DEFIS, 9.4.3.1 itens 7.3 e 8) — quem confere é o servidor ao salvar.",
+      "tabelaSocios": "Tabela de onde vêm os sócios",
+      "semSocios": "Nenhum sócio informado.",
+      "socioN": "Sócio {{n}}",
+      "escolhaTabela": "Escolha a tabela dos sócios.",
+      "participacao": "Participação (%)",
+      "irrf": "IRRF",
+      "rendimentosIsentos": "Rendimentos isentos",
+      "rendimentosTributaveis": "Rendimentos tributáveis",
+      "cotasTesouraria": "Cotas em tesouraria (%)",
+      "adicionarSocio": "Adicionar sócio",
+      "exportacaoComercial": "Exportação via comercial exportadora",
+      "cnpjExportadoraN": "CNPJ da comercial exportadora {{n}}",
+      "valorExportacaoN": "Valor exportado {{n}}",
+      "adicionarExportadora": "Adicionar comercial exportadora",
+      "doacoes": "Doações a campanha eleitoral",
+      "cnpjBeneficiarioN": "CNPJ do beneficiário {{n}}",
+      "tipoBeneficiarioN": "Tipo de beneficiário {{n}}",
+      "formaDoacaoN": "Forma da doação {{n}}",
+      "valorDoacaoN": "Valor da doação {{n}}",
+      "adicionarDoacao": "Adicionar doação",
+      "salvar": "Salvar DEFIS",
+      "salvo": "DEFIS salva.",
+      "tipo": {
+        "CANDIDATO": "Candidato",
+        "COMITE_FINANCEIRO": "Comitê financeiro",
+        "PARTIDO_POLITICO": "Partido político"
+      },
+      "forma": {
+        "CHEQUE": "Cheque",
+        "OUTROS_TITULOS_CREDITO": "Outros títulos de crédito",
+        "TRANSFERENCIA_ELETRONICA": "Transferência eletrônica",
+        "DEPOSITO_ESPECIE": "Depósito em espécie",
+        "DINHEIRO": "Dinheiro",
+        "BENS": "Bens",
+        "SERVICOS": "Serviços"
+      },
+      "erro": {
+        "empregadosInicio": "Empregados no início do ano: número inteiro de 0 a 1.000.000.",
+        "empregadosFim": "Empregados no fim do ano: número inteiro de 0 a 1.000.000.",
+        "ganhosCapital": "Ganhos de capital inválidos — formato 1.234,56.",
+        "ganhosRendaVariavel": "Ganhos de renda variável inválidos — formato 1.234,56.",
+        "exportacaoDireta": "Exportação direta inválida — formato 1.234,56.",
+        "cotasTesouraria": "Cotas em tesouraria: percentual de 0,00 a 100,00.",
+        "socioContato": "Escolha o sócio da linha {{n}}.",
+        "socioValor": "Valores do sócio da linha {{n}} inválidos — formato 1.234,56.",
+        "socioParticipacao": "Participação do sócio da linha {{n}}: percentual de 0,00 a 100,00.",
+        "exportacaoCnpj": "CNPJ da comercial exportadora da linha {{n}}: 14 posições.",
+        "exportacaoValor": "Valor da exportação da linha {{n}}: maior que zero, formato 1.234,56.",
+        "doacaoCnpj": "CNPJ do beneficiário da doação da linha {{n}}: 14 posições.",
+        "doacaoTipo": "Escolha o tipo de beneficiário da doação da linha {{n}}.",
+        "doacaoForma": "Escolha a forma da doação da linha {{n}}.",
+        "doacaoValor": "Valor da doação da linha {{n}}: maior que zero, formato 1.234,56.",
+        "demais": "No máximo 100 linhas por lista."
+      },
+      "error": {
+        "load": "Erro ao carregar a DEFIS.",
+        "save": "Não foi possível salvar a DEFIS."
+      }
+    },
+    "aliquotas": {
+      "title": "Alíquotas sugeridas do mês",
+      "sugestao": "Sugestão",
+      "regra": "Regra",
+      "mesReferencia": "Mês de referência da faixa",
+      "issRetencao": "ISS a reter",
+      "credito": "Crédito do adquirente",
+      "beneficio": "Benefício municipal",
+      "pisoAplicado": "piso de 2% aplicado",
+      "excecaoPiso": "exceção ao piso",
+      "regraTipo": {
+        "INICIO_ATIVIDADE": "Mês de início de atividade (2%)",
+        "FAIXA_MES_ANTERIOR": "Faixa do mês anterior",
+        "FAIXA_MES_PRESTACAO": "Faixa do mês da prestação"
+      },
+      "error": {
+        "load": "Erro ao carregar as alíquotas sugeridas."
+      }
     }
   }
 }

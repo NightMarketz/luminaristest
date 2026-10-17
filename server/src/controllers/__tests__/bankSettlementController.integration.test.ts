@@ -9,7 +9,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { ReconciliationService } from '@/features/accounting/services/ReconciliationService';
 import { ValidationError } from '@/lib/errors';
 
@@ -62,16 +62,17 @@ describe('/api/bank-settlements — F7', () => {
   beforeAll(async () => {
     pushTestSchema();
     dono = await criarUsuario('bank-settle-a');
+    await seedUnit({ userId: dono.id, id: UNIT });
     outro = await criarUsuario('bank-settle-b');
     await prisma.accountingPeriod.create({
       data: { userId: dono.id, unitId: UNIT, year: 2026, month: 6, status: 'OPEN', openedAt: new Date(), openedById: dono.id },
     });
     await criarConta('4.1', 'Expense');
-    await criarConta('2.1.2', 'Liability');
+    await criarConta('2.1.2.01', 'Liability');
     await criarConta('3.1', 'Revenue');
-    await criarConta('1.1.5', 'Asset');
-    await criarConta('1.1.3', 'Asset'); // Cash — NÃO é a conta do extrato
-    const bank = await criarConta('1.1.1', 'Asset'); // Pix/TED/Boleto
+    await criarConta('1.1.2.03', 'Asset');
+    await criarConta('1.1.1.02', 'Asset'); // Cash — NÃO é a conta do extrato
+    const bank = await criarConta('1.1.1.01', 'Asset'); // Pix/TED/Boleto
     bankAccountId = bank.id;
     await criarConta('4.9', 'Expense'); // encargo pago (código = decisão do contador; aqui só fixture)
     await criarConta('3.9', 'Revenue'); // encargo recebido
@@ -225,7 +226,7 @@ describe('/api/bank-settlements — F7', () => {
     expect(entry.sourceId).toBe(i3.id);
     const d = entry.postings.find((p) => Number(p.debitCents) > 0)!;
     const c = entry.postings.find((p) => Number(p.creditCents) > 0)!;
-    expect([d.account.code, Number(d.debitCents), c.account.code, Number(c.creditCents)]).toEqual(['4.9', 3000, '1.1.1', 3000]);
+    expect([d.account.code, Number(d.debitCents), c.account.code, Number(c.creditCents)]).toEqual(['4.9', 3000, '1.1.1.01', 3000]);
     expect(await prisma.reconciliationMatch.count({ where: { statementLineId: lines.L3, unmatchedAt: null } })).toBe(2);
     expect((await prisma.bankStatementLine.findUniqueOrThrow({ where: { id: lines.L3 } })).status).toBe('MATCHED');
   });

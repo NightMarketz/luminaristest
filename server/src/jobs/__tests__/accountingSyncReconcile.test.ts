@@ -31,7 +31,7 @@ import {
 import type { AccountingScope } from '../../features/accounting/scope/AccountingScope';
 import type { AccountingEvent } from '../../features/accounting/sync/AccountingSyncPort';
 import type { WonOpportunityFact } from '../../features/accounting/sync/bridges/CrmReceivableBridge';
-import { AccountingPeriodNotOpenError, MaxCentsExceededError } from '../../lib/errors';
+import { AccountingPeriodNotOpenError, MaxCentsExceededError, NoMapperForUnitError, UnknownEventKeyError } from '../../lib/errors';
 
 // Mock heavy/IO module-level imports — the CORE function under test uses none of them
 // (it operates purely over injected deps), but importing the job module loads them.
@@ -259,6 +259,56 @@ describe('reconcileSaleSales', () => {
 
     expect(sync).toHaveBeenCalledTimes(3); // did not stop at the failure
     expect(summary).toEqual({ total: 3, synced: 2, idempotentHits: 0, failed: 1 });
+  });
+
+  // BE-INCR-ONBOARDING-ACTIVATION item 6 (o teste-guarda do plano): venda sem mapper é BLOCKED com código próprio,
+  // gravada na tabela de pendências — nunca FAILED.
+  it('classifies NO_MAPPER_FOR_UNIT as BLOCKED (not failed) and reports it with its own reasonCode', async () => {
+    const reportPending = jest.fn(async () => undefined);
+    const err = new NoMapperForUnitError('unit-1', 'sale.finalized');
+    const deps = buildSaleDeps({
+      listFinalizedSales: jest.fn(async () => [sale({ saleId: 'sale-nm', unitId: 'unit-1' })]),
+      sync: jest.fn(async () => {
+        throw err;
+      }) as jest.Mock,
+      reportPending,
+    });
+
+    const summary = await reconcileSaleSales(deps);
+
+    expect(summary.blocked).toBe(1);
+    expect(summary.failed).toBe(0);
+    expect(summary.pendingWriteFailed).toBeUndefined();
+    expect(reportPending).toHaveBeenCalledTimes(1);
+    expect(reportPending).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceType: 'sale.finalized',
+        sourceId: 'sale-nm',
+        unitId: 'unit-1',
+        reasonCode: 'NO_MAPPER_FOR_UNIT',
+        reasonDetail: expect.stringContaining(err.message),
+      }),
+    );
+  });
+
+  // D-2026-10-14-I4-I5-LACUNAS-EXECUCAO L-2: UNKNOWN_EVENT_KEY também é BLOCKED com o próprio código (não FAILED).
+  it('classifies UNKNOWN_EVENT_KEY as BLOCKED and reports it with its own reasonCode', async () => {
+    const reportPending = jest.fn(async () => undefined);
+    const deps = buildSaleDeps({
+      listFinalizedSales: jest.fn(async () => [sale({ saleId: 'sale-uk', unitId: 'unit-1' })]),
+      sync: jest.fn(async () => {
+        throw new UnknownEventKeyError('sale.finalized');
+      }) as jest.Mock,
+      reportPending,
+    });
+
+    const summary = await reconcileSaleSales(deps);
+
+    expect(summary.blocked).toBe(1);
+    expect(summary.failed).toBe(0);
+    expect(reportPending).toHaveBeenCalledWith(
+      expect.objectContaining({ sourceId: 'sale-uk', reasonCode: 'UNKNOWN_EVENT_KEY' }),
+    );
   });
 
   it('fails a sale with no unitId without calling hasExistingEntry/sync, and continues', async () => {

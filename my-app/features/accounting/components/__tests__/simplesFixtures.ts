@@ -1,0 +1,95 @@
+import type { AliquotasSimples, ApuracaoMei, ApuracaoSimples } from '../../../../lib/services/simples.service';
+import type { CompanyFiscalProfileView } from '../../../../lib/services/companyFiscalProfile.service';
+
+/** Fixtures do FE-INCR-SIMPLES — shape espelhado do BE (SimplesApuracaoService.ts:63-81). */
+export const apuracaoSimples = (competencia: string, extra: Partial<ApuracaoSimples> = {}): ApuracaoSimples => ({
+  competencia,
+  regime: 'SIMPLES',
+  rbt12Cents: 36000000,
+  janelaRbt12: { de: '2025-03', ate: '2026-02', regra: 'LC123-art18-§1' },
+  atividades: [
+    {
+      anexo: 'III', natureza: 'SERVICO', cTribNac: '060101', receitaCents: 3000000, faixa: 2, aliquotaNominal: '11.20',
+      parcelaDeduzirCents: 945000, aliquotaEfetiva: '8.5750', fatorR: null,
+      tributos: { CPP: 111600, ISS: 82065 }, percentuais: { CPP: '3.7200', ISS: '2.7355' },
+    },
+  ],
+  totalCalculadoCents: 257250,
+  tabela: [{ legalParameterId: 'lp-1', fonte: 'LC 123 Anexo III', vigenteDesde: '2018-01-01' }],
+  espelho: [
+    { item: '7', atividade: '7 - Prestação de Serviços, exceto para o exterior', detalhe: 'sem retenção de ISS', anexo: 'III', receitaCents: 3000000, parcelas: [{ receitaCents: 3000000, qualificacoes: {} }] },
+  ],
+  dasOficial: null,
+  divergenciaCents: null,
+  tieOut: { subrazaoCents: 3000000, razaoCents: 3000000, ok: true },
+  alertas: [],
+  ...extra,
+});
+
+export const apuracaoMei = (competencia: string, extra: Partial<ApuracaoMei> = {}): ApuracaoMei => ({
+  competencia,
+  regime: 'MEI',
+  salarioMinimoCents: 151800,
+  transportadorCargas: false,
+  cppAliquotaBp: 500,
+  tributos: { CPP: 7590, ISS: 500 },
+  tributosMilesimos: {},
+  totalCalculadoCents: 8090,
+  tabela: [{ legalParameterId: 'lp-sm', fonte: 'Decreto 12.342/2024', vigenteDesde: '2025-01-01' }],
+  enquadramento: { contribuinteIcms: false, contribuinteIss: true },
+  receitaPaCents: 500000,
+  receitaAcumuladaAnoCents: 4050000,
+  limiteAnoCents: 8100000,
+  dasOficial: null,
+  divergenciaCents: null,
+  alertas: [],
+  ...extra,
+});
+
+export const perfilAno = (ano: number, extra: Partial<CompanyFiscalProfileView> = {}): CompanyFiscalProfileView => ({
+  ano,
+  regime: 'SIMPLES',
+  grandePorte: null,
+  inativa: false,
+  condicoes: { aporteInvestidorAnjo: false, livroCaixaSemEscrituracao: null, distribuicaoAcimaBase: null },
+  declarante: { nome: 'Salão X', cnpj: '12345678000190', uf: 'SP', codMun: '3550308' },
+  ecd: null,
+  ecf: null,
+  contadorContactId: 'c-1',
+  representanteLegalSignerId: null,
+  ecfRecibo: null,
+  regimeTravadoEm: null,
+  formaApuracaoIrpjCsll: null,
+  formaApuracaoTravadaEm: null,
+  lucroRealObrigatorio: null,
+  inicioAtividadeEm: '2020-02-01',
+  encerramentoAtividadeEm: null,
+  lc224AcrescimoSuspenso: false,
+  lc224LiminarReferencia: null,
+  prestadoraExclusivaServicos: false,
+  declaraNaoProfissaoRegulamentada: false,
+  meiContribuinteIcms: null,
+  meiContribuinteIss: null,
+  meiTransportadorCargas: null,
+  meiOcupacoes: null,
+  simplesRegimeApuracao: 'COMPETENCIA',
+  ibsCbsOpcaoS1: null,
+  ibsCbsOpcaoS2: null,
+  updatedAt: '2026-01-02T00:00:00.000Z',
+  ...extra,
+});
+
+/** PR-D item 15 — espelha AliquotasSimples (SimplesApuracaoService.ts:92-115); `avisos` = textos fixos do BE. */
+export const aliquotasSimples = (competencia: string, extra: Partial<AliquotasSimples> = {}): AliquotasSimples => ({
+  competencia,
+  mesReferencia: competencia,
+  sugestao: true,
+  regra: 'FAIXA_MES_ANTERIOR',
+  periodoApuracao: null,
+  rbt12Cents: null,
+  janelaRbt12: null,
+  atividades: [],
+  avisos: [],
+  alertas: [],
+  ...extra,
+});

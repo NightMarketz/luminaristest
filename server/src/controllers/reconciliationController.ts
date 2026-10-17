@@ -2,7 +2,6 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
 import { makeUploadMiddleware } from '../lib/uploadSecurity';
 import type { StatementFormat } from '../lib/ofx';
 import {
@@ -76,7 +75,7 @@ export const importBankStatement = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     // F5 PR-3 (G6): `format = mp_release` explícito vai ao relatório de liberações da conta de provedor; vazio = detecção.
     const data =
       parsed.data.format === 'mp_release'
@@ -103,7 +102,7 @@ export const listBankStatements = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const data = await getFactory()
       .getReconciliationService()
       .listStatements(scope, parsed.data.page, parsed.data.limit);
@@ -123,7 +122,7 @@ export const listBankStatementLines = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const data = await getFactory()
       .getReconciliationService()
       .listLines(scope, req.params.id, parsed.data.status);
@@ -143,7 +142,7 @@ export const deleteBankStatement = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     await getFactory().getReconciliationService().deleteStatement(scope, req.params.id);
     return res.json({ success: true, data: { id: req.params.id } });
   } catch (error) {
@@ -164,7 +163,7 @@ export const autoMatchBankStatement = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory()
       .getReconciliationService()
       .autoMatchStatement(scope, parsed.data.statementId);
@@ -184,7 +183,7 @@ export const getLineSuggestions = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const data = await getFactory().getReconciliationService().suggestions(scope, req.params.id);
     return res.json({ success: true, data });
   } catch (error) {
@@ -202,7 +201,7 @@ export const createManualMatch = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getReconciliationService().manualMatch(scope, {
       statementLineId: parsed.data.statementLineId,
       postingIds: parsed.data.postingIds,
@@ -228,7 +227,7 @@ export const unmatchReconciliation = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     await getFactory().getReconciliationService().unmatch(scope, {
       matchId: parsed.data.matchId,
       reason: parsed.data.reason,
@@ -254,7 +253,7 @@ export const setLineIgnored = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     await getFactory().getReconciliationService().setLineIgnored(scope, {
       statementLineId: parsed.data.statementLineId,
       ignored: parsed.data.ignored,
@@ -275,7 +274,7 @@ export const getPendingReport = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const data = await getFactory().getReconciliationService().pendingReport(scope, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {

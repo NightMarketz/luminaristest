@@ -3,8 +3,10 @@
  * BE-INCR-DFE F-DFE-19 → (b) (2026-09-17): FISCAL_DOCUMENT (XML/PDF autorizado) e
  * FISCAL_DOCUMENT_ATTEMPT (retorno de rejeição/homologação por tentativa). A FK a
  * journal_entries saiu do schema; a existência do alvo no escopo é gate do serviço.
+ * BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-2 → (a) (2026-10-15): SOURCE_DOCUMENT — o arquivo de um SourceDocument
+ * criado a partir do upload (SD e anexo nascem na mesma tx; targetId = id do SD).
  */
-export const DOCUMENT_ATTACHMENT_TARGET_TYPES = ['JOURNAL_ENTRY', 'FISCAL_DOCUMENT', 'FISCAL_DOCUMENT_ATTEMPT'] as const;
+export const DOCUMENT_ATTACHMENT_TARGET_TYPES = ['JOURNAL_ENTRY', 'FISCAL_DOCUMENT', 'FISCAL_DOCUMENT_ATTEMPT', 'SOURCE_DOCUMENT'] as const;
 export type DocumentAttachmentTargetType = (typeof DOCUMENT_ATTACHMENT_TARGET_TYPES)[number];
 
 /**
@@ -22,7 +24,7 @@ export interface IDocumentAttachment {
   unitId: string;
   /** Polymorphic target type (DocumentAttachmentTargetType). */
   targetType: string;
-  /** journal_entries.id | fiscal_documents.id | fiscal_document_attempts.id — plain string, no FK. */
+  /** journal_entries.id | fiscal_documents.id | fiscal_document_attempts.id | source_documents.id — plain string, no FK. */
   targetId: string;
   /** Sanitized display name (what is actually on disk). */
   fileName: string;

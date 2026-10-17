@@ -3,6 +3,7 @@ import type { Account } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IPostingRepository } from '../repositories/IPostingRepository';
+import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRepository';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { CLOSING_SOURCE_TYPE } from '../models/closing';
 import { RECEITA_NAO_USO_CODE } from '../fixtures/ChartOfAccountsFixture';
@@ -30,6 +31,9 @@ export interface ReceitaPorAtividade {
 interface Deps {
   accountRepo: IAccountRepository;
   postingRepo: IPostingRepository;
+  /** F-PCB-1R (dono 13/10): o perfil fiscal diz quais contas são a dedução de PIS/COFINS — obrigatório, para nenhum
+   *  chamador do gate esquecer a exclusão. */
+  fiscalProfileRepo: Pick<IFiscalProfileRepository, 'findByScope'>;
 }
 
 /**
@@ -40,6 +44,11 @@ interface Deps {
  * Gate (ECF D6 corrigido): toda conta natureza `Revenue`, analítica, com movimento na janela e código ∉ {3.1, 3.3}
  * ⇒ `ValidationError` com `unmappedRevenueAccounts` (receita não mapeada que some da base = subtributação).
  * Receita bruta = crédito líquido (devoluções/descontos entram como débito), ≥ 0.
+ *
+ * F-PCB-1R (a) (dono 13/10; DL 1.598/77 art. 12 §1º III): as contas de PIS/COFINS sobre o faturamento do perfil
+ * fiscal (`pis|cofinsDespesaAccountId`) são DEDUÇÃO da receita bruta (natureza `Revenue`, saldo devedor) e saem do
+ * gate — exatamente essas duas, nunca um prefixo: o PIS/COFINS cumulativo não reduz a base presumida (a segregação
+ * continua lendo só 3.1/3.3/3.4).
  */
 export async function receitaBrutaPorAtividade(
   deps: Deps,
@@ -50,8 +59,17 @@ export async function receitaBrutaPorAtividade(
 ): Promise<ReceitaPorAtividade> {
   const accounts = contasJaLidas ?? (await deps.accountRepo.findManyByUnit(scope));
   const netById = await netCreditById(deps.postingRepo, scope, from, to);
+  const perfil = await deps.fiscalProfileRepo.findByScope(scope);
+  const deducaoIds = new Set([perfil?.pisDespesaAccountId, perfil?.cofinsDespesaAccountId].filter((id): id is string => !!id));
   const unmapped = accounts
-    .filter((a) => a.nature === 'Revenue' && a.acceptsEntries && !PRESUNCAO_ACCOUNT_CODES.has(a.code) && (netById.get(a.id) ?? 0) !== 0)
+    .filter(
+      (a) =>
+        a.nature === 'Revenue' &&
+        a.acceptsEntries &&
+        !PRESUNCAO_ACCOUNT_CODES.has(a.code) &&
+        !deducaoIds.has(a.id) &&
+        (netById.get(a.id) ?? 0) !== 0,
+    )
     .map((a) => ({ code: a.code, name: a.name }));
   if (unmapped.length > 0) {
     throw new ValidationError(

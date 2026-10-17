@@ -8,7 +8,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 const XML = readFileSync(join(__dirname, '../../lib/__tests__/fixtures/nfe/purchase-pis-cofins.SYNTHETIC.xml'));
@@ -31,10 +31,11 @@ describe('X6 — perfil fiscal + import de compra por regime', () => {
   beforeAll(async () => {
     pushTestSchema();
     dono = await prisma.user.create({ data: { name: 'x6', username: 'x6-dono', email: 'x6@test.local', password: 'x', role: 'USER' } });
+    await seedUnit({ userId: dono.id, id: UNIT });
     // a nota é de 2025-07-10 (dhEmi do fixture)
     await prisma.accountingPeriod.create({ data: { userId: dono.id, unitId: UNIT, year: 2025, month: 7, status: 'OPEN', openedAt: new Date(), openedById: dono.id } });
-    await criarConta('1.1.6', 'Estoques', 'Asset');
-    await criarConta('2.1.2', 'Fornecedores a Pagar', 'Liability');
+    await criarConta('1.1.3.01', 'Estoques', 'Asset');
+    await criarConta('2.1.2.01', 'Fornecedores a Pagar', 'Liability');
     await criarConta('1.1.8', 'ICMS a Recuperar', 'Asset');
     await criarConta('1.1.9', 'PIS/COFINS a Recuperar', 'Asset');
     await criarConta('4.1', 'Despesas', 'Expense');
@@ -112,10 +113,10 @@ describe('X6 — perfil fiscal + import de compra por regime', () => {
     expect(payable.recoverableTaxLines).toBeTruthy();
     const entry = await prisma.journalEntry.findFirstOrThrow({ where: { sourceType: 'ap.payable', sourceId: payable.id }, include: { postings: { include: { account: true } } } });
     const byCode = Object.fromEntries(entry.postings.map((p) => [p.account.code, { d: Number(p.debitCents), c: Number(p.creditCents) }]));
-    expect(byCode['1.1.6']).toEqual({ d: 15249, c: 0 });
+    expect(byCode['1.1.3.01']).toEqual({ d: 15249, c: 0 });
     expect(byCode['1.1.8']).toEqual({ d: 3300, c: 0 });
     expect(byCode['1.1.9']).toEqual({ d: 784, c: 0 });
-    expect(byCode['2.1.2']).toEqual({ d: 0, c: 19333 });
+    expect(byCode['2.1.2.01']).toEqual({ d: 0, c: 19333 });
     const movs = await prisma.stockMovement.findMany({ where: { sourceId: payable.id } });
     expect(movs.reduce((a, m) => a + Number(m.valueCentsDelta), 0)).toBe(15249);
     const ev = await prisma.auditEvent.findFirstOrThrow({ where: { unitId: UNIT, eventType: 'payable.created' } });

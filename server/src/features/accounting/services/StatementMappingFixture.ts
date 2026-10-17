@@ -1,4 +1,4 @@
-export const STATEMENT_MAPPING_VERSION = 'statement-mapping.v4';
+export const STATEMENT_MAPPING_VERSION = 'statement-mapping.v5';
 
 /**
  * Declarative mapping rules for BP (Balanço Patrimonial) and DRE (Demonstração
@@ -26,10 +26,19 @@ export const STATEMENT_MAPPING_RULES = [
   // (PE-1: receita bruta, outras receitas operacionais ou outra). Sem regra, a conta sumiria da DRE em silêncio.
   { id: 'dre.gross_rev_breakage', statement: 'DRE', match: { nature: 'Revenue', codePrefix: '3.4' }, section: 'grossRevenue', sign: 'credit_positive', order: 106 },
   { id: 'dre.deductions', statement: 'DRE', match: { nature: 'Revenue', codePrefix: '3.2' },  section: 'revenueDeductions', sign: 'credit_negative',  order: 110 },
+  // Tributos sobre a receita (3.6.x: 3.6.1 PIS, 3.6.2 COFINS — F-KE-1/F-KE-2 do KIT-SETOR; F-PCB-1R a, dono 13/10):
+  // dedução da receita bruta (Lei 6.404 art. 187 II). Sem regra, a conta sumiria da DRE em silêncio (só há regra por prefixo para Revenue).
+  { id: 'dre.deductions_taxes', statement: 'DRE', match: { nature: 'Revenue', codePrefix: '3.6' }, section: 'revenueDeductions', sign: 'credit_negative', order: 111 },
   // Custo das Mercadorias Vendidas (4.2, INCR-INVENTORY Body 2). MUST precede the nature-only
   // dre.expenses rule in this array so findMappingRule (first-match) routes 4.2 to costOfGoodsSold
   // instead of the generic expenses bucket — otherwise CMV would inflate expenses and the DRE would
   // report no cost of goods line. Same debit_negative sign as an expense (a cost reduces net).
+  // Resultado financeiro (emenda 3.3, PR-1, E3; F-ENC-9 a, dono 13/10): 3.5 receitas financeiras (crédito positivo) e
+  // 4.3 despesas financeiras (débito negativo) numa seção própria, no precedente do CMV. As duas regras ficam ANTES da
+  // regra só por natureza `dre.expenses` (first-match), senão 4.3 cairia em despesas operacionais. 4.4 (multas
+  // indedutíveis) e 4.6 (tarifa, L9) seguem em `expenses` pela regra por natureza.
+  { id: 'dre.financial_rev', statement: 'DRE', match: { nature: 'Revenue', codePrefix: '3.5' }, section: 'financialResult', sign: 'credit_positive', order: 260 },
+  { id: 'dre.financial_exp', statement: 'DRE', match: { nature: 'Expense', codePrefix: '4.3' }, section: 'financialResult', sign: 'debit_negative', order: 261 },
   { id: 'dre.cogs',       statement: 'DRE', match: { nature: 'Expense', codePrefix: '4.2' },   section: 'costOfGoodsSold',   sign: 'debit_negative',   order: 250 },
   { id: 'dre.expenses',   statement: 'DRE', match: { nature: 'Expense' },                     section: 'expenses',          sign: 'debit_negative',   order: 300 },
 ] as const;

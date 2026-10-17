@@ -15,3 +15,7 @@ logs/
 test-integration.db
 test-integration.db-journal
 .jest-cache/
+
+# Stryker (mutation testing manual — stryker.config.mjs)
+.stryker-tmp/
+reports/mutation/

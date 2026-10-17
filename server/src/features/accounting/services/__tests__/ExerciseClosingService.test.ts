@@ -1,11 +1,11 @@
 import { ExerciseClosingService } from '../ExerciseClosingService';
 import { ForbiddenError, ValidationError } from '../../../../lib/errors';
-import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import { MAX_CENTS } from '../../models/money';
 import type { Account } from 'generated/prisma';
 import type { PostEntryInput } from '../../dtos/PostingDto';
 
-const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'owner-1' }, 'unit-1');
 
 function acc(over: Partial<Account>): Account {
   return {
@@ -18,7 +18,7 @@ const ACCOUNTS: Account[] = [
   acc({ code: '1.1', name: 'Caixa', nature: 'Asset', acceptsEntries: true }),
   acc({ code: '3.1', name: 'Receita', nature: 'Revenue', acceptsEntries: true }),
   acc({ code: '4.1', name: 'Despesa', nature: 'Expense', acceptsEntries: true }),
-  acc({ code: '2.3.1', name: 'Lucros Acumulados', nature: 'Equity', acceptsEntries: true }),
+  acc({ code: '2.3.1.01', name: 'Lucros Acumulados', nature: 'Equity', acceptsEntries: true }),
   acc({ code: '3', name: 'Receita (grupo)', nature: 'Revenue', acceptsEntries: false }),
 ];
 
@@ -69,7 +69,7 @@ describe('ExerciseClosingService.closeExercise', () => {
     expect(input.lines).toContainEqual({ accountCode: '3.1', debitCents: 150000, creditCents: 0 });
     expect(input.lines).toContainEqual({ accountCode: '4.1', debitCents: 0, creditCents: 90000 });
     // Profit 600,00 → credit retained earnings (increases equity).
-    expect(input.lines).toContainEqual({ accountCode: '2.3.1', debitCents: 0, creditCents: 60000 });
+    expect(input.lines).toContainEqual({ accountCode: '2.3.1.01', debitCents: 0, creditCents: 60000 });
     // Balanced.
     const { debit, credit } = sums(input.lines);
     expect(debit).toBe(credit);
@@ -84,7 +84,7 @@ describe('ExerciseClosingService.closeExercise', () => {
     });
     await service.closeExercise(scope, 2026);
     const input = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
-    expect(input.lines).toContainEqual({ accountCode: '2.3.1', debitCents: 60000, creditCents: 0 });
+    expect(input.lines).toContainEqual({ accountCode: '2.3.1.01', debitCents: 60000, creditCents: 0 });
     const { debit, credit } = sums(input.lines);
     expect(debit).toBe(credit);
   });
@@ -96,7 +96,7 @@ describe('ExerciseClosingService.closeExercise', () => {
     });
     await service.closeExercise(scope, 2026);
     const input = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
-    expect(input.lines.find((l) => l.accountCode === '2.3.1')).toBeUndefined();
+    expect(input.lines.find((l) => l.accountCode === '2.3.1.01')).toBeUndefined();
     const { debit, credit } = sums(input.lines);
     expect(debit).toBe(credit);
     expect(debit).toBe(100000);

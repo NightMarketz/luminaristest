@@ -17,4 +17,6 @@ export interface ICrmReportDefinitionRepository {
   create(data: CreateCrmReportDefinitionData, tx?: Prisma.TransactionClient): Promise<ICrmReportDefinition>;
   update(id: string, patch: UpdateCrmReportDefinitionData, tx?: Prisma.TransactionClient): Promise<ICrmReportDefinition>;
   softDelete(id: string, tx?: Prisma.TransactionClient): Promise<void>;
+  /** Soft-delete de todos os relatórios vivos do usuário — reset do sistema (I7 item 2). */
+  softDeleteByUserId(userId: string, tx?: Prisma.TransactionClient): Promise<void>;
 }

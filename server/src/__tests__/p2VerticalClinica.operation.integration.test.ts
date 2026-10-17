@@ -6,7 +6,7 @@
  * uma sequência inteira de gates de PERÍODO/EXERCÍCIO já cobertos por suíte própria
  * (`ExerciseClosingService.test.ts`) e de PVA humano (RUNBOOK-H3-P2-CLINICA.md, passos 4-6 —
  * fechar cada período tocado, `closeExercise`, gerar+importar a ECD no validador oficial). Este
- * arquivo prova o que É automatável e específico deste incremento: que `CLINIC_BINDING_V1`, uma
+ * arquivo prova o que É automatável e específico deste incremento: que `CLINIC_BINDING_V2`, uma
  * vez `Active` no banco (via `AccountingBindingFeederService`, o MESMO caminho que o boot real
  * usa), faz a operação da clínica POSTAR corretamente através dos 5 arquétipos — nunca através dos
  * mappers hardcoded `Sale*Mapper` do vertical 1 (a prova de que é o BINDING da clínica, não um
@@ -19,7 +19,7 @@
 import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
-import { CLINIC_BINDING_V1 } from '@/features/accountingBinding/fixtures/clinicBinding';
+import { CLINIC_BINDING_V2 } from '@/features/accountingBinding/fixtures/clinicBinding';
 import type { AccountingEvent } from '@/features/accounting/sync/AccountingSyncPort';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 
@@ -38,14 +38,14 @@ const scope: AccountingScope = {
   timeZone: 'America/Sao_Paulo',
 };
 
-/** Os mesmos 10 códigos que CLINIC_BINDING_V1 referencia (F-P2-8a — nenhuma conta nova por papel). */
+/** Os mesmos 10 códigos que CLINIC_BINDING_V2 referencia (F-P2-8a — nenhuma conta nova por papel). */
 const CLINIC_CHART = [
-  { code: '1.1.1', name: 'Banco', nature: 'Asset' },
-  { code: '1.1.2', name: 'A Receber', nature: 'Asset' },
-  { code: '1.1.3', name: 'Caixa', nature: 'Asset' },
-  { code: '1.1.4', name: 'A Receber Cartão', nature: 'Asset' },
-  { code: '1.1.6', name: 'Estoques', nature: 'Asset' },
-  { code: '2.1.1', name: 'Pacotes Pré-pagos', nature: 'Liability' },
+  { code: '1.1.1.01', name: 'Banco', nature: 'Asset' },
+  { code: '1.1.2.01', name: 'A Receber', nature: 'Asset' },
+  { code: '1.1.1.02', name: 'Caixa', nature: 'Asset' },
+  { code: '1.1.2.02', name: 'A Receber Cartão', nature: 'Asset' },
+  { code: '1.1.3.01', name: 'Estoques', nature: 'Asset' },
+  { code: '2.1.1.01', name: 'Pacotes Pré-pagos', nature: 'Liability' },
   { code: '3.1', name: 'Receita de Serviços', nature: 'Revenue' },
   { code: '3.2', name: 'Devoluções de Vendas', nature: 'Revenue' },
   { code: '3.3', name: 'Receita de Revenda', nature: 'Revenue' },
@@ -67,7 +67,7 @@ function sumCents(postings: { debitCents: bigint; creditCents: bigint }[]) {
   );
 }
 
-describe('Operação da clínica via CLINIC_BINDING_V1 Active — comportamento 8 (subconjunto automatável)', () => {
+describe('Operação da clínica via CLINIC_BINDING_V2 Active — comportamento 8 (subconjunto automatável)', () => {
   beforeAll(async () => {
     pushTestSchema();
     await prisma.user.create({
@@ -89,11 +89,11 @@ describe('Operação da clínica via CLINIC_BINDING_V1 Active — comportamento 
       data: {
         userId: DONO,
         unitId: UNIT,
-        sectorKey: CLINIC_BINDING_V1.sectorKey,
+        sectorKey: CLINIC_BINDING_V2.sectorKey,
         bindingVersion: 1,
         compiledAt: new Date(),
         compiledFromHash: 'sha256:teste-clinic-operation',
-        payload: JSON.stringify(CLINIC_BINDING_V1),
+        payload: JSON.stringify(CLINIC_BINDING_V2),
         status: 'Active',
         createdById: DONO,
       },
@@ -128,7 +128,7 @@ describe('Operação da clínica via CLINIC_BINDING_V1 Active — comportamento 
     expect(entry!.description).toContain('clínica'); // descriptionTemplate setorial (não "salão")
 
     const codes = entry!.postings.map((p) => p.account.code).sort();
-    expect(codes).toEqual(['1.1.2', '3.1', '3.3']);
+    expect(codes).toEqual(['1.1.2.01', '3.1', '3.3']);
     const totals = sumCents(entry!.postings);
     expect(totals.debit).toBe(50000n); // R$500,00
     expect(totals.debit).toBe(totals.credit); // balanceado
@@ -152,7 +152,7 @@ describe('Operação da clínica via CLINIC_BINDING_V1 Active — comportamento 
     expect(entry).toBeDefined();
 
     const codes = entry!.postings.map((p) => p.account.code).sort();
-    expect(codes).toEqual(['1.1.1', '1.1.2']); // Pix → Banco (1.1.1) / controle-recebível (1.1.2)
+    expect(codes).toEqual(['1.1.1.01', '1.1.2.01']); // Pix → Banco (1.1.1) / controle-recebível (1.1.2)
     const totals = sumCents(entry!.postings);
     expect(totals.debit).toBe(50000n);
     expect(totals.debit).toBe(totals.credit);
@@ -175,7 +175,7 @@ describe('Operação da clínica via CLINIC_BINDING_V1 Active — comportamento 
     expect(entry).toBeDefined();
 
     const codes = entry!.postings.map((p) => p.account.code).sort();
-    expect(codes).toEqual(['1.1.2', '3.2']);
+    expect(codes).toEqual(['1.1.2.01', '3.2']);
     const totals = sumCents(entry!.postings);
     expect(totals.debit).toBe(10000n);
     expect(totals.debit).toBe(totals.credit);
@@ -198,7 +198,7 @@ describe('Operação da clínica via CLINIC_BINDING_V1 Active — comportamento 
     expect(entry).toBeDefined();
 
     const codes = entry!.postings.map((p) => p.account.code).sort();
-    expect(codes).toEqual(['1.1.2', '2.1.1']);
+    expect(codes).toEqual(['1.1.2.01', '2.1.1.01']);
     const totals = sumCents(entry!.postings);
     expect(totals.debit).toBe(30000n);
     expect(totals.debit).toBe(totals.credit);
@@ -222,7 +222,7 @@ describe('Operação da clínica via CLINIC_BINDING_V1 Active — comportamento 
     expect(entry).toBeDefined();
 
     const codes = entry!.postings.map((p) => p.account.code).sort();
-    expect(codes).toEqual(['1.1.6', '4.2']);
+    expect(codes).toEqual(['1.1.3.01', '4.2']);
     const totals = sumCents(entry!.postings);
     expect(totals.debit).toBe(8000n);
     expect(totals.debit).toBe(totals.credit);

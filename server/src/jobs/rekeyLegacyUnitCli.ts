@@ -29,7 +29,7 @@ import prisma from '../lib/prisma';
 import { logger } from '../lib/logger';
 import { ApplicationFactory } from '../lib/factory';
 import { UNIT_TYPE_OPTIONS } from '../features/dynamicTables/presets/modules/core/UnitsModule';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import type { UserContext } from '../types/UserContext';
 import type { Role } from '../features/users/models/User.model';
 
@@ -65,11 +65,16 @@ export const REKEY_MODELS = [
   //   Deixá-la no unitId antigo separaria a prova da venda re-chaveada (o `saleId` segue a unidade nova)
   'KitInstallation', // BE-INCR-KIT-SETOR PR-2: o kit instalado na unidade, sem hash → REKEY pelo F-RK-5, como o `AccountingBinding`
   //   que ele instala. Deixá-la no unitId antigo faria a unidade re-chaveada parecer sem kit (e o PR-4 não a atualizaria)
+  'RoleAccountOverride', // BE-INCR-KIT-SETOR PR-3: o ajuste papel→conta da unidade, sem hash → REKEY pelo F-RK-5, como o `KitInstallation`
+  'KitUpgradeRun', // BE-INCR-KIT-SETOR PR-4: execuções da atualização do kit da unidade, sem hash → REKEY (F-RK-5)
+  'KitUpgradePending', // BE-INCR-KIT-SETOR PR-4: pendências da atualização da unidade, sem hash → REKEY (F-RK-5)
   // BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14): entradas da apuração e subrazão de receita, sem hash → REKEY pelo F-RK-5.
   //   Deixá-las no unitId antigo tiraria da unidade re-chaveada o RBT12, a segregação, os contratos e o tie-out.
   'SimplesHistoricoMensal', 'SimplesSegregacaoManual', 'SalaoParceriaContrato', 'ReceitaFiscalLinha',
   'SimplesApuracao', // X14 PR-3: a apuração e a provisão seguem a unidade (sem hash) → REKEY pelo F-RK-5
   'SimplesDeclaracaoAnual', // X14 PR-4: os digitados da DEFIS/DASN-SIMEI seguem a unidade (sem hash) → REKEY pelo F-RK-5
+  'SimplesCreditoIncobravel', // X14-CAIXA PR-3: o crédito incobrável segue a venda da unidade, sem hash → REKEY pelo F-RK-5
+  'ReceitaFiscalRecebimento', // X14-CAIXA PR-1: o recebimento da venda (base do caixa) segue a unidade, sem hash → REKEY pelo F-RK-5
   'CollectionCharge', // F5 PR-2: cobrança no provedor por unidade, sem hash; o `external_reference` no MP é o id, não o unitId → REKEY pelo F-RK-5
   'FiscalDocumentPendingAttachment', // BE-INCR-DFE-ANEXO-PENDENTE: a pendência segue o `FiscalDocument` dela (sem hash) → REKEY pelo F-RK-5.
   //   Deixá-la no unitId antigo faria a varredura anexar no escopo errado (o documento não seria achado e a pendência iria a FAILED)
@@ -409,7 +414,7 @@ export async function apply(
     let auditAnchor: ApplyResult['auditAnchor'] = null;
     if (head) {
       auditAnchor = { seq: 1, fromHeadHash: head.headHash, fromNextSeq: head.nextSeq.toString() };
-      await audit.append(tx, resolveAccountingScope({ userId: owner }, to), {
+      await audit.append(tx, resolveAccountingScopeInternal({ userId: owner }, to), {
         actorUserId: owner,
         eventType: UNIT_REKEYED_EVENT,
         targetType: 'unit',
@@ -610,12 +615,12 @@ export async function verify(db: PrismaClient, inv: InventoryEntry[], against: s
     const audit = ApplicationFactory.getInstance().getAuditService();
     for (const k of rekeyed) {
       const preHead = preHeads.get(ownerUnit(k.ownerUserId, k.from));
-      const legacy = await audit.verifyAuditChain(resolveAccountingScope({ userId: k.ownerUserId }, k.from));
+      const legacy = await audit.verifyAuditChain(resolveAccountingScopeInternal({ userId: k.ownerUserId }, k.from));
       const expectedLast = preHead ? BigInt(String(preHead.nextSeq).replace(/n$/, '')) - 1n : null;
       if (!legacy.ok || legacy.lastSeq !== expectedLast || legacy.headHash !== (preHead ? String(preHead.headHash) : null)) {
         failures.push(`(e) cadeia legada ${k.from}: ok=${legacy.ok} lastSeq=${String(legacy.lastSeq)} headHash=${legacy.headHash}`);
       }
-      const fresh = await audit.verifyAuditChain(resolveAccountingScope({ userId: k.ownerUserId }, k.to));
+      const fresh = await audit.verifyAuditChain(resolveAccountingScopeInternal({ userId: k.ownerUserId }, k.to));
       if (!fresh.ok) failures.push(`(e) cadeia nova ${k.to}: ${fresh.failure?.reason}`);
     }
     return { ok: failures.length === 0, failures, rekeyed, dynamicTableDataAdded: added, checks };

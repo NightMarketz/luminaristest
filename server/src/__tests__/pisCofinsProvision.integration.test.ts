@@ -4,8 +4,8 @@
  * apuração é da PJ inteira e o DTO só aceita 2025–2026).
  *
  * Conta de mão:
- *  - Presumido M03/2026, serviço R$ 100.000,00 ⇒ PIS 0,65% = 650,00; Cofins 3% = 3.000,00 ⇒ D 4.9.3 / C 2.1.9.3 650,00 e
- *    D 4.9.4 / C 2.1.9.4 3.000,00, em 2026-03-31.
+ *  - Presumido M03/2026, serviço R$ 100.000,00 ⇒ PIS 0,65% = 650,00; Cofins 3% = 3.000,00 ⇒ D 3.6.1 / C 2.1.9.3 650,00 e
+ *    D 3.6.2 / C 2.1.9.4 3.000,00, em 2026-03-31.
  *  - Real M01/2026, serviço R$ 100,00 ⇒ débito PIS 1,65 / Cofins 7,60; NF-e do mês PIS 10,00 / Cofins 46,00 ⇒ crédito da
  *    NF-e aproveitado = min(NF-e, débito) = 1,65 / 7,60 (o resto — saldo credor 8,35 / 38,40 — fica no ativo).
  *    M02, serviço R$ 100.000,00 ⇒ débito 1.650,00 / 7.600,00; NF-e de fevereiro 165,00 / 835,00 ⇒ aproveitado 165,00 /
@@ -21,14 +21,14 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { ApplicationFactory } from '@/lib/factory';
 import { TaxAssessmentRepository } from '@/features/accounting/repositories/TaxAssessmentRepository';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 const BASE = '/api/accounting/tax-assessments';
 const PROVISION = 'tax.assessment.provision';
 const U = 'unit-x8-pr3';
-type Dono = { id: string; username: string };
+type Dono = { id: string; username: string; unitId: string };
 
 const CONTAS = [
   { code: '1.1.1', name: 'Banco', nature: 'Asset' },
@@ -37,8 +37,8 @@ const CONTAS = [
   { code: '1.1.9', name: 'PIS/COFINS a recuperar', nature: 'Asset' },
   { code: '2.3.1', name: 'Lucros ou Prejuízos Acumulados', nature: 'Equity' },
   { code: '3.1', name: 'Receita de Serviços', nature: 'Revenue' },
-  { code: '4.9.3', name: 'PIS', nature: 'Expense' },
-  { code: '4.9.4', name: 'Cofins', nature: 'Expense' },
+  { code: '3.6.1', name: 'PIS sobre a receita', nature: 'Revenue' }, // dedução — F-PCB-1R a (dono 13/10)
+  { code: '3.6.2', name: 'Cofins sobre a receita', nature: 'Revenue' }, // dedução — F-PCB-1R a
   { code: '4.9.5', name: 'Créditos de PIS/Cofins s/ despesas (redutora)', nature: 'Expense' },
   { code: '2.1.9.3', name: 'PIS a recolher', nature: 'Liability' },
   { code: '2.1.9.4', name: 'Cofins a recolher', nature: 'Liability' },
@@ -48,44 +48,48 @@ let seq = 0;
 /** Dono com plano, 12 períodos abertos de 2026, perfil da empresa e da unidade; `contas` decide as da provisão. */
 async function cenario(regime: 'PRESUMIDO' | 'REAL', contas: 'todas' | 'sem-recuperavel' | 'nenhuma' = 'todas') {
   seq += 1;
-  const dono: Dono = await prisma.user.create({ data: { name: `x8p3-${seq}`, username: `x8p3-${seq}`, email: `x8p3-${seq}@test.local`, password: 'x', role: 'USER' } });
+  const u = await prisma.user.create({ data: { name: `x8p3-${seq}`, username: `x8p3-${seq}`, email: `x8p3-${seq}@test.local`, password: 'x', role: 'USER' } });
+  // I6: unitId tem de ser linha de `units` do dono — id GLOBAL, então cada dono ganha a sua.
+  const unitId = `${U}-${seq}`;
+  await seedUnit({ userId: u.id, id: unitId });
+  const dono: Dono = { ...u, unitId };
   const ids: Record<string, string> = {};
-  for (const c of CONTAS) ids[c.code] = (await prisma.account.create({ data: { userId: dono.id, unitId: U, ...c, acceptsEntries: true } })).id;
+  for (const c of CONTAS) ids[c.code] = (await prisma.account.create({ data: { userId: dono.id, unitId, ...c, acceptsEntries: true } })).id;
   for (let month = 1; month <= 12; month++) {
-    await prisma.accountingPeriod.create({ data: { userId: dono.id, unitId: U, year: 2026, month, status: 'OPEN', openedAt: new Date() } });
+    await prisma.accountingPeriod.create({ data: { userId: dono.id, unitId, year: 2026, month, status: 'OPEN', openedAt: new Date() } });
   }
   await prisma.companyFiscalProfile.create({
     data: { userId: dono.id, anoCalendario: 2026, regime, ecfIndAliqCsll: '1', ecfIndRecReceita: '2', lucroRealObrigatorio: regime === 'REAL' ? false : null },
   });
   const provisao = {
-    pisDespesaAccountId: ids['4.9.3'], cofinsDespesaAccountId: ids['4.9.4'], pisRecolherAccountId: ids['2.1.9.3'], cofinsRecolherAccountId: ids['2.1.9.4'],
+    pisDespesaAccountId: ids['3.6.1'], cofinsDespesaAccountId: ids['3.6.2'], pisRecolherAccountId: ids['2.1.9.3'], cofinsRecolherAccountId: ids['2.1.9.4'],
   };
   await prisma.fiscalProfile.create({
     data: {
-      userId: dono.id, unitId: U, regimeTributario: regime, pisCofinsRegime: regime === 'REAL' ? 'NAO_CUMULATIVO' : 'CUMULATIVO',
+      userId: dono.id, unitId, regimeTributario: regime, pisCofinsRegime: regime === 'REAL' ? 'NAO_CUMULATIVO' : 'CUMULATIVO',
       ...(contas === 'nenhuma' ? {} : provisao),
       ...(contas === 'todas'
         ? { pisCofinsRecuperavelAccountId: ids['1.1.9'], pisCofinsCreditoOutrosAccountId: ids['4.9.5'], pisCofinsRetidoCompensarAccountId: ids['1.1.8'], pisCofinsRetencaoConciliarAccountId: ids['1.1.7'] }
         : {}),
     },
   });
-  return { dono, ids, scope: resolveAccountingScope({ userId: dono.id }, U) };
+  return { dono, ids, scope: resolveAccountingScopeInternal({ userId: dono.id }, unitId) };
 }
 
 async function receita(dono: Dono, data: string, cents: number) {
-  await ApplicationFactory.getInstance().getPostingService().postEntry(resolveAccountingScope({ userId: dono.id }, U), {
-    unitId: U, date: data, sourceType: 'manual', description: 'Serviço',
+  await ApplicationFactory.getInstance().getPostingService().postEntry(resolveAccountingScopeInternal({ userId: dono.id }, dono.unitId), {
+    unitId: dono.unitId, date: data, sourceType: 'manual', description: 'Serviço',
     lines: [{ accountCode: '1.1.1', debitCents: cents, creditCents: 0 }, { accountCode: '3.1', debitCents: 0, creditCents: cents }],
   });
 }
 
 /** NF-e de compra já importada (linha `PIS_COFINS` gravada pelo PR-1 com as parcelas). */
 async function nota(dono: Dono, issueDate: string, pisCents: number, cofinsCents: number) {
-  const cp = await prisma.counterparty.create({ data: { userId: dono.id, unitId: U, type: 'SUPPLIER', name: `F-${issueDate}`, nameNormalized: `f-${issueDate}` } });
-  const rec = await prisma.account.findFirstOrThrow({ where: { userId: dono.id, unitId: U, code: '1.1.9' } });
+  const cp = await prisma.counterparty.create({ data: { userId: dono.id, unitId: dono.unitId, type: 'SUPPLIER', name: `F-${issueDate}`, nameNormalized: `f-${issueDate}` } });
+  const rec = await prisma.account.findFirstOrThrow({ where: { userId: dono.id, unitId: dono.unitId, code: '1.1.9' } });
   await prisma.payable.create({
     data: {
-      userId: dono.id, unitId: U, supplierName: 'Fornecedor', counterpartyId: cp.id, documentNumber: `NF-${issueDate}`, description: 'compra',
+      userId: dono.id, unitId: dono.unitId, supplierName: 'Fornecedor', counterpartyId: cp.id, documentNumber: `NF-${issueDate}`, description: 'compra',
       issueDate: new Date(`${issueDate}T00:00:00.000Z`), dueDate: new Date(`${issueDate}T00:00:00.000Z`), amountCents: 100_000n, status: 'OPEN',
       recoverableTaxLines: JSON.stringify([{ accountId: rec.id, accountCode: '1.1.9', amountCents: pisCents + cofinsCents, kind: 'PIS_COFINS', pisCents, cofinsCents }]),
     },
@@ -93,17 +97,17 @@ async function nota(dono: Dono, issueDate: string, pisCents: number, cofinsCents
 }
 
 async function confirmar(dono: Dono, periodo: string, extra: { supersedesIds?: string[] } = {}) {
-  const p = await request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(dono)).send({ unitId: U, anoCalendario: 2026, periodo });
+  const p = await request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(dono)).send({ unitId: dono.unitId, anoCalendario: 2026, periodo });
   expect(p.status).toBe(200);
   const r = await request(app)
     .post(`${BASE}/pis-cofins`)
     .set(authHeader(dono))
-    .send({ unitId: U, anoCalendario: 2026, periodo, expectedAPagarCents: { PIS: p.body.data.pis.aPagarCents, COFINS: p.body.data.cofins.aPagarCents }, ...extra });
+    .send({ unitId: dono.unitId, anoCalendario: 2026, periodo, expectedAPagarCents: { PIS: p.body.data.pis.aPagarCents, COFINS: p.body.data.cofins.aPagarCents }, ...extra });
   expect(r.status).toBe(201);
   return [r.body.data.pis, r.body.data.cofins] as Array<{ id: string; tributo: string; provisaoPendente: boolean; aPagarCents: string }>;
 }
 
-const reconcile = (dono: Dono, id: string) => request(app).post(`${BASE}/${id}/provisao`).set(authHeader(dono)).send({ unitId: U });
+const reconcile = (dono: Dono, id: string) => request(app).post(`${BASE}/${id}/provisao`).set(authHeader(dono)).send({ unitId: dono.unitId });
 const provisoes = (dono: Dono) =>
   prisma.journalEntry.findMany({ where: { userId: dono.id, sourceType: PROVISION }, include: { postings: { include: { account: true } } }, orderBy: { createdAt: 'asc' } });
 const aRecolher = (e: { postings: Array<{ account: { code: string }; debitCents: bigint | number; creditCents: bigint | number }> }, code: string) =>
@@ -121,7 +125,7 @@ describe('X8 PR-3 — provisão de PIS/Cofins (2 commits), reconcile e encerrame
     await prisma.$disconnect();
   });
 
-  it('item 17 (cumulativo): confirmar provisiona D despesa (Expense) / C a recolher = débito, no último dia do mês; provisaoEntryId gravado', async () => {
+  it('item 17 (cumulativo): confirmar provisiona D dedução da receita (Revenue, F-PCB-1R a) / C a recolher = débito, no último dia do mês; provisaoEntryId gravado', async () => {
     const { dono } = await cenario('PRESUMIDO');
     await receita(dono, '2026-03-10', 10_000_000);
     const views = await confirmar(dono, 'M03');
@@ -136,8 +140,8 @@ describe('X8 PR-3 — provisão de PIS/Cofins (2 commits), reconcile e encerrame
     }
     const pis = rows.find((r) => r.tributo === 'PIS')!;
     const cofins = rows.find((r) => r.tributo === 'COFINS')!;
-    expect(pernas(entries.find((e) => e.sourceId === pis.id)!)).toEqual([['2.1.9.3', 0, 65_000], ['4.9.3', 65_000, 0]]);
-    expect(pernas(entries.find((e) => e.sourceId === cofins.id)!)).toEqual([['2.1.9.4', 0, 300_000], ['4.9.4', 300_000, 0]]);
+    expect(pernas(entries.find((e) => e.sourceId === pis.id)!)).toEqual([['2.1.9.3', 0, 65_000], ['3.6.1', 65_000, 0]]);
+    expect(pernas(entries.find((e) => e.sourceId === cofins.id)!)).toEqual([['2.1.9.4', 0, 300_000], ['3.6.2', 300_000, 0]]);
   });
 
   it('item 17 (não cumulativo): + D a recolher / C PIS/COFINS a recuperar = crédito da NF-e aproveitado; saldo credor anterior consumido também é baixado', async () => {
@@ -149,7 +153,7 @@ describe('X8 PR-3 — provisão de PIS/Cofins (2 commits), reconcile e encerrame
     const e01 = await provisoes(dono);
     const pis01 = e01.find((e) => e.sourceId === m01.find((r) => r.tributo === 'PIS')!.id)!;
     // débito 165; NF-e 1.000 > débito ⇒ aproveitado 165; o resto (835) fica no ativo como saldo credor
-    expect(pernas(pis01)).toEqual([['1.1.9', 0, 165], ['2.1.9.3', 0, 165], ['2.1.9.3', 165, 0], ['4.9.3', 165, 0]]);
+    expect(pernas(pis01)).toEqual([['1.1.9', 0, 165], ['2.1.9.3', 0, 165], ['2.1.9.3', 165, 0], ['3.6.1', 165, 0]]);
     expect(m01.find((r) => r.tributo === 'PIS')!.saldoNegativoCents).toBe(835n);
 
     await receita(dono, '2026-02-15', 10_000_000);
@@ -158,7 +162,7 @@ describe('X8 PR-3 — provisão de PIS/Cofins (2 commits), reconcile e encerrame
     expect(pis02.aPagarCents).toBe(String(165_000 - 16_500 - 835));
     const e02 = (await provisoes(dono)).find((e) => e.sourceId === pis02.id)!;
     // L-3: um lançamento — despesa/a recolher e UMA baixa do crédito consumido: NF-e (16.500) + saldo de janeiro (835)
-    expect(pernas(e02)).toEqual([['1.1.9', 0, 17_335], ['2.1.9.3', 0, 165_000], ['2.1.9.3', 17_335, 0], ['4.9.3', 165_000, 0]]);
+    expect(pernas(e02)).toEqual([['1.1.9', 0, 17_335], ['2.1.9.3', 0, 165_000], ['2.1.9.3', 17_335, 0], ['3.6.1', 165_000, 0]]);
     // L-2: o "a recolher" líquido do mês = o DARF (a pagar)
     expect(aRecolher(e02, '2.1.9.3')).toBe(Number(pis02.aPagarCents));
   });
@@ -168,21 +172,21 @@ describe('X8 PR-3 — provisão de PIS/Cofins (2 commits), reconcile e encerrame
     await receita(dono, '2026-01-15', 10_000);
     const outros = { outrosCreditos: [{ inciso: 'IV_ALUGUEL_PJ', baseCents: '100000', documento: 'contrato de locação' }] };
     // item 13 + L-5: sem a redutora, a prévia avisa que a provisão ficará pendente
-    await prisma.fiscalProfile.updateMany({ where: { userId: dono.id, unitId: U }, data: { pisCofinsCreditoOutrosAccountId: null } });
-    const sem = await request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(dono)).send({ unitId: U, anoCalendario: 2026, periodo: 'M01', ...outros });
+    await prisma.fiscalProfile.updateMany({ where: { userId: dono.id, unitId: dono.unitId }, data: { pisCofinsCreditoOutrosAccountId: null } });
+    const sem = await request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(dono)).send({ unitId: dono.unitId, anoCalendario: 2026, periodo: 'M01', ...outros });
     expect(sem.body.data.provisaoContasConfiguradas).toBe(false);
-    await prisma.fiscalProfile.updateMany({ where: { userId: dono.id, unitId: U }, data: { pisCofinsCreditoOutrosAccountId: ids['4.9.5'] } });
+    await prisma.fiscalProfile.updateMany({ where: { userId: dono.id, unitId: dono.unitId }, data: { pisCofinsCreditoOutrosAccountId: ids['4.9.5'] } });
 
-    const p1 = await request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(dono)).send({ unitId: U, anoCalendario: 2026, periodo: 'M01', ...outros });
+    const p1 = await request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(dono)).send({ unitId: dono.unitId, anoCalendario: 2026, periodo: 'M01', ...outros });
     expect(p1.body.data.provisaoContasConfiguradas).toBe(true);
     const c1 = await request(app).post(`${BASE}/pis-cofins`).set(authHeader(dono)).send({
-      unitId: U, anoCalendario: 2026, periodo: 'M01', ...outros, expectedAPagarCents: { PIS: p1.body.data.pis.aPagarCents, COFINS: p1.body.data.cofins.aPagarCents },
+      unitId: dono.unitId, anoCalendario: 2026, periodo: 'M01', ...outros, expectedAPagarCents: { PIS: p1.body.data.pis.aPagarCents, COFINS: p1.body.data.cofins.aPagarCents },
     });
     expect(c1.status).toBe(201);
     expect([c1.body.data.pis.saldoNegativoCents, c1.body.data.cofins.saldoNegativoCents]).toEqual(['1485', '6840']);
     const e1 = await provisoes(dono);
     expect(pernas(e1.find((e) => e.sourceId === c1.body.data.pis.id)!)).toEqual([
-      ['1.1.9', 0, 165], ['1.1.9', 1_650, 0], ['2.1.9.3', 0, 165], ['2.1.9.3', 165, 0], ['4.9.3', 165, 0], ['4.9.5', 0, 1_650],
+      ['1.1.9', 0, 165], ['1.1.9', 1_650, 0], ['2.1.9.3', 0, 165], ['2.1.9.3', 165, 0], ['3.6.1', 165, 0], ['4.9.5', 0, 1_650],
     ]);
 
     await receita(dono, '2026-02-15', 100_000);
@@ -191,7 +195,7 @@ describe('X8 PR-3 — provisão de PIS/Cofins (2 commits), reconcile e encerrame
     const todas = await provisoes(dono);
     const e2pis = todas.find((e) => e.sourceId === pis02.id)!;
     const e2cofins = todas.find((e) => e.sourceId === cofins02.id)!;
-    expect(pernas(e2pis)).toEqual([['1.1.9', 0, 1_485], ['2.1.9.3', 0, 1_650], ['2.1.9.3', 1_485, 0], ['4.9.3', 1_650, 0]]);
+    expect(pernas(e2pis)).toEqual([['1.1.9', 0, 1_485], ['2.1.9.3', 0, 1_650], ['2.1.9.3', 1_485, 0], ['3.6.1', 1_650, 0]]);
     expect(aRecolher(e2pis, '2.1.9.3')).toBe(165);
     expect(aRecolher(e2cofins, '2.1.9.4')).toBe(760);
     // o "a recuperar" (débito − crédito) nunca fica credor: termina em 0 depois de fevereiro
@@ -206,10 +210,10 @@ describe('X8 PR-3 — provisão de PIS/Cofins (2 commits), reconcile e encerrame
       outrosCreditos: [{ inciso: 'IV_ALUGUEL_PJ', baseCents: '200000', documento: 'contrato de locação' }],
       retencoes: [{ tributo: 'PIS', valorCents: '650', documento: 'NFS-e 12' }, { tributo: 'COFINS', valorCents: '1000', documento: 'NFS-e 12' }],
     };
-    const p = await request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(dono)).send({ unitId: U, anoCalendario: 2026, periodo: 'M05', ...extra });
+    const p = await request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(dono)).send({ unitId: dono.unitId, anoCalendario: 2026, periodo: 'M05', ...extra });
     expect(p.body.data.provisaoContasConfiguradas).toBe(true);
     const r = await request(app).post(`${BASE}/pis-cofins`).set(authHeader(dono)).send({
-      unitId: U, anoCalendario: 2026, periodo: 'M05', ...extra, expectedAPagarCents: { PIS: p.body.data.pis.aPagarCents, COFINS: p.body.data.cofins.aPagarCents },
+      unitId: dono.unitId, anoCalendario: 2026, periodo: 'M05', ...extra, expectedAPagarCents: { PIS: p.body.data.pis.aPagarCents, COFINS: p.body.data.cofins.aPagarCents },
     });
     expect(r.status).toBe(201);
     // PIS: débito 16.500 − aluguel 3.300 − retenção 650 = 12.550; Cofins: 76.000 − 15.200 − 1.000 = 59.800
@@ -218,7 +222,7 @@ describe('X8 PR-3 — provisão de PIS/Cofins (2 commits), reconcile e encerrame
     const pis = e.find((x) => x.sourceId === r.body.data.pis.id)!;
     expect(pernas(pis)).toEqual([
       ['1.1.7', 0, 650], ['1.1.8', 0, 650], ['1.1.8', 650, 0], ['1.1.9', 0, 3_300], ['1.1.9', 3_300, 0],
-      ['2.1.9.3', 0, 16_500], ['2.1.9.3', 3_300, 0], ['2.1.9.3', 650, 0], ['4.9.3', 16_500, 0], ['4.9.5', 0, 3_300],
+      ['2.1.9.3', 0, 16_500], ['2.1.9.3', 3_300, 0], ['2.1.9.3', 650, 0], ['3.6.1', 16_500, 0], ['4.9.5', 0, 3_300],
     ]);
     expect(aRecolher(pis, '2.1.9.3')).toBe(12_550);
     expect(aRecolher(e.find((x) => x.sourceId === r.body.data.cofins.id)!, '2.1.9.4')).toBe(59_800);
@@ -230,13 +234,13 @@ describe('X8 PR-3 — provisão de PIS/Cofins (2 commits), reconcile e encerrame
     const pres = await cenario('PRESUMIDO');
     await receita(pres.dono, '2026-05-10', 100_000);
     const ret = { retencoes: [{ tributo: 'PIS', valorCents: '1000' }] };
-    const pp = await request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(pres.dono)).send({ unitId: U, anoCalendario: 2026, periodo: 'M05', ...ret });
+    const pp = await request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(pres.dono)).send({ unitId: pres.dono.unitId, anoCalendario: 2026, periodo: 'M05', ...ret });
     const rr = await request(app).post(`${BASE}/pis-cofins`).set(authHeader(pres.dono)).send({
-      unitId: U, anoCalendario: 2026, periodo: 'M05', ...ret, expectedAPagarCents: { PIS: pp.body.data.pis.aPagarCents, COFINS: pp.body.data.cofins.aPagarCents },
+      unitId: pres.dono.unitId, anoCalendario: 2026, periodo: 'M05', ...ret, expectedAPagarCents: { PIS: pp.body.data.pis.aPagarCents, COFINS: pp.body.data.cofins.aPagarCents },
     });
     expect(rr.body.data.pis.aPagarCents).toBe('0');
     const ePis = (await provisoes(pres.dono)).find((x) => x.sourceId === rr.body.data.pis.id)!;
-    expect(pernas(ePis)).toEqual([['1.1.7', 0, 1_000], ['1.1.8', 0, 650], ['1.1.8', 1_000, 0], ['2.1.9.3', 0, 650], ['2.1.9.3', 650, 0], ['4.9.3', 650, 0]]);
+    expect(pernas(ePis)).toEqual([['1.1.7', 0, 1_000], ['1.1.8', 0, 650], ['1.1.8', 1_000, 0], ['2.1.9.3', 0, 650], ['2.1.9.3', 650, 0], ['3.6.1', 650, 0]]);
     expect(aRecolher(ePis, '2.1.9.3')).toBe(0);
     const retido = ePis.postings.filter((x) => x.account.code === '1.1.8').reduce((s, x) => s + Number(x.debitCents) - Number(x.creditCents), 0);
     expect(retido).toBe(350);
@@ -245,10 +249,10 @@ describe('X8 PR-3 — provisão de PIS/Cofins (2 commits), reconcile e encerrame
   it('item 17 / L-2 (saldo parcialmente consumido): 1º mês com saldo informado — baixa só a parte usada; "a recolher" = DARF nos 2 tributos', async () => {
     const { dono } = await cenario('REAL');
     await receita(dono, '2026-01-15', 10_000);
-    const p = await request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(dono)).send({ unitId: U, anoCalendario: 2026, periodo: 'M01', saldoCredorAnterior: { PIS: '100', COFINS: '1000' } });
+    const p = await request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(dono)).send({ unitId: dono.unitId, anoCalendario: 2026, periodo: 'M01', saldoCredorAnterior: { PIS: '100', COFINS: '1000' } });
     expect(p.status).toBe(200);
     const r = await request(app).post(`${BASE}/pis-cofins`).set(authHeader(dono)).send({
-      unitId: U, anoCalendario: 2026, periodo: 'M01', saldoCredorAnterior: { PIS: '100', COFINS: '1000' },
+      unitId: dono.unitId, anoCalendario: 2026, periodo: 'M01', saldoCredorAnterior: { PIS: '100', COFINS: '1000' },
       expectedAPagarCents: { PIS: p.body.data.pis.aPagarCents, COFINS: p.body.data.cofins.aPagarCents },
     });
     expect(r.status).toBe(201);
@@ -256,8 +260,8 @@ describe('X8 PR-3 — provisão de PIS/Cofins (2 commits), reconcile e encerrame
     const entries = await provisoes(dono);
     const pis = entries.find((e) => e.sourceId === r.body.data.pis.id)!;
     const cofins = entries.find((e) => e.sourceId === r.body.data.cofins.id)!;
-    expect(pernas(pis)).toEqual([['1.1.9', 0, 100], ['2.1.9.3', 0, 165], ['2.1.9.3', 100, 0], ['4.9.3', 165, 0]]);
-    expect(pernas(cofins)).toEqual([['1.1.9', 0, 760], ['2.1.9.4', 0, 760], ['2.1.9.4', 760, 0], ['4.9.4', 760, 0]]);
+    expect(pernas(pis)).toEqual([['1.1.9', 0, 100], ['2.1.9.3', 0, 165], ['2.1.9.3', 100, 0], ['3.6.1', 165, 0]]);
+    expect(pernas(cofins)).toEqual([['1.1.9', 0, 760], ['2.1.9.4', 0, 760], ['2.1.9.4', 760, 0], ['3.6.2', 760, 0]]);
     expect(aRecolher(pis, '2.1.9.3')).toBe(65);
     expect(aRecolher(cofins, '2.1.9.4')).toBe(0);
     // reconcile repetido não duplica (L-3: chave = apuração)
@@ -275,7 +279,7 @@ describe('X8 PR-3 — provisão de PIS/Cofins (2 commits), reconcile e encerrame
     const r = await reconcile(dono, views[0].id);
     expect(r.status).toBe(400);
     expect(JSON.stringify(r.body)).toContain('PIS/COFINS a recuperar');
-    await prisma.fiscalProfile.updateMany({ where: { userId: dono.id, unitId: U }, data: { pisCofinsRecuperavelAccountId: ids['1.1.9'] } });
+    await prisma.fiscalProfile.updateMany({ where: { userId: dono.id, unitId: dono.unitId }, data: { pisCofinsRecuperavelAccountId: ids['1.1.9'] } });
     expect((await reconcile(dono, views[0].id)).body.data.provisaoPendente).toBe(false);
   });
 
@@ -296,8 +300,8 @@ describe('X8 PR-3 — provisão de PIS/Cofins (2 commits), reconcile e encerrame
     expect(JSON.stringify(semConta.body)).not.toContain('PR-3');
 
     await prisma.fiscalProfile.updateMany({
-      where: { userId: dono.id, unitId: U },
-      data: { pisDespesaAccountId: ids['4.9.3'], cofinsDespesaAccountId: ids['4.9.4'], pisRecolherAccountId: ids['2.1.9.3'], cofinsRecolherAccountId: ids['2.1.9.4'] },
+      where: { userId: dono.id, unitId: dono.unitId },
+      data: { pisDespesaAccountId: ids['3.6.1'], cofinsDespesaAccountId: ids['3.6.2'], pisRecolherAccountId: ids['2.1.9.3'], cofinsRecolherAccountId: ids['2.1.9.4'] },
     });
     for (const v of views) {
       const r1 = await reconcile(dono, v.id);
@@ -346,7 +350,7 @@ describe('X8 PR-3 — provisão de PIS/Cofins (2 commits), reconcile e encerrame
     expect(vivas.map((e) => e.sourceId).sort()).toEqual(novas.map((n) => n.id).sort());
 
     // commit 1 intacto quando o razão recusa: março fechado ⇒ a 3ª confirmação grava, a provisão fica pendente
-    await prisma.accountingPeriod.updateMany({ where: { userId: dono.id, unitId: U, year: 2026, month: 3 }, data: { status: 'HARD_CLOSED' } });
+    await prisma.accountingPeriod.updateMany({ where: { userId: dono.id, unitId: dono.unitId, year: 2026, month: 3 }, data: { status: 'HARD_CLOSED' } });
     const terceira = await confirmar(dono, 'M03', { supersedesIds: novas.map((n) => n.id) });
     expect(terceira.map((v) => v.provisaoPendente)).toEqual([true, true]);
     expect(await prisma.taxAssessment.count({ where: { userId: dono.id, status: 'CONFIRMED' } })).toBe(2);

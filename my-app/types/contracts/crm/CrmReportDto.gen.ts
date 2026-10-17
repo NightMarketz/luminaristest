@@ -440,3 +440,162 @@ rows: number
 }[]
 }
 }
+export interface CrmReportTemplateInput {
+name: string
+description?: string
+kind: ("chart" | "table" | "kpi")
+chartType: ("bar" | "line" | "area" | "pie" | "donut" | "table")
+spec: {
+source: ("leads" | "crmOpportunities" | "leadActivities" | "leadProposals" | "crmAccounts" | "crmContacts")
+/**
+ * @maxItems 2
+ */
+joins?: {
+leftField: string
+rightSource: ("leads" | "crmOpportunities" | "leadActivities" | "leadProposals" | "crmAccounts" | "crmContacts")
+rightField: string
+alias?: string
+}[]
+/**
+ * @maxItems 10
+ */
+filters?: {
+field: string
+op: ("eq" | "ne" | "in" | "nin" | "gt" | "gte" | "lt" | "lte")
+value: unknown
+}[]
+/**
+ * @maxItems 2
+ */
+dimensions?: ({
+type: "field"
+field: string
+label?: string
+} | {
+type: "period"
+dateField: string
+period: ("day" | "week" | "month" | "quarter" | "year")
+label?: string
+})[]
+/**
+ * @minItems 1
+ * @maxItems 4
+ */
+measures: [({
+type: "count"
+field?: string
+alias?: string
+} | {
+type: "sum"
+field: string
+alias?: string
+} | {
+type: "avg"
+field: string
+alias?: string
+}), ...(({
+type: "count"
+field?: string
+alias?: string
+} | {
+type: "sum"
+field: string
+alias?: string
+} | {
+type: "avg"
+field: string
+alias?: string
+}))[]]
+sort?: {
+by: ("dimension" | "measure")
+key?: string
+dir?: ("asc" | "desc")
+}
+limit?: number
+convertTo?: "BRL"
+}
+key: ("funnel" | "source" | "status" | "proposals" | "activities")
+}
+export interface CrmReportTemplatesOutputInput {
+templates: {
+name: string
+description?: string
+kind: ("chart" | "table" | "kpi")
+chartType: ("bar" | "line" | "area" | "pie" | "donut" | "table")
+spec: {
+source: ("leads" | "crmOpportunities" | "leadActivities" | "leadProposals" | "crmAccounts" | "crmContacts")
+/**
+ * @maxItems 2
+ */
+joins?: {
+leftField: string
+rightSource: ("leads" | "crmOpportunities" | "leadActivities" | "leadProposals" | "crmAccounts" | "crmContacts")
+rightField: string
+alias?: string
+}[]
+/**
+ * @maxItems 10
+ */
+filters?: {
+field: string
+op: ("eq" | "ne" | "in" | "nin" | "gt" | "gte" | "lt" | "lte")
+value: unknown
+}[]
+/**
+ * @maxItems 2
+ */
+dimensions?: ({
+type: "field"
+field: string
+label?: string
+} | {
+type: "period"
+dateField: string
+period: ("day" | "week" | "month" | "quarter" | "year")
+label?: string
+})[]
+/**
+ * @minItems 1
+ * @maxItems 4
+ */
+measures: [({
+type: "count"
+field?: string
+alias?: string
+} | {
+type: "sum"
+field: string
+alias?: string
+} | {
+type: "avg"
+field: string
+alias?: string
+}), ...(({
+type: "count"
+field?: string
+alias?: string
+} | {
+type: "sum"
+field: string
+alias?: string
+} | {
+type: "avg"
+field: string
+alias?: string
+}))[]]
+sort?: {
+by: ("dimension" | "measure")
+key?: string
+dir?: ("asc" | "desc")
+}
+limit?: number
+convertTo?: "BRL"
+}
+key: ("funnel" | "source" | "status" | "proposals" | "activities")
+}[]
+moneyCurrencyPairs: {
+[k: string]: {
+[k: string]: string
+}
+}
+}

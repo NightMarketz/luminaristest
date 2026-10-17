@@ -2,6 +2,7 @@ import { ValidationError } from '../../../../lib/errors';
 import type { PostEntryInput } from '../../dtos/PostingDto';
 import type { AccountingEvent } from '../AccountingSyncPort';
 import type { IAccountingEventMapper } from './IAccountingEventMapper';
+import { A_RECEBER_CODE, PACOTES_PRE_PAGOS_CODE } from '../../fixtures/ChartOfAccountsFixture';
 
 /**
  * Maps `sale.package.sold` → prepaid-package ORIGIN entry (Incremento G P4):
@@ -18,8 +19,8 @@ export class SalePackageSoldMapper implements IAccountingEventMapper {
   public readonly sourceType = 'sale.package.sold' as const;
 
   /** Leaf account codes (canonical chart). */
-  private static readonly DEBIT_ACCOUNT = '1.1.2'; // A Receber
-  private static readonly CREDIT_ACCOUNT = '2.1.1'; // Pacotes Pré-pagos (liability)
+  private static readonly DEBIT_ACCOUNT = A_RECEBER_CODE; // A Receber
+  private static readonly CREDIT_ACCOUNT = PACOTES_PRE_PAGOS_CODE; // Pacotes Pré-pagos (liability)
 
   public map(event: AccountingEvent): PostEntryInput {
     // MONEY BOUNDARY (Contract §2.1). The sale `totalAmount` is a JSON float in reais;

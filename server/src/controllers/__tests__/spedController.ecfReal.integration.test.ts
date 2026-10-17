@@ -14,11 +14,13 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 
 const UNIT = 'unit-ecf-real';
+/** I6: id de unidade é GLOBAL — o dono B tem a sua própria (o negativo da Parte B aberta é sobre os dados DELE). */
+const UNIT_B = `${UNIT}-b`;
 
 let donoA: { id: string; username: string };
 let donoB: { id: string; username: string };
@@ -57,6 +59,8 @@ describe('POST /api/accounting/sped/ecf/real/generate — contrato HTTP (esquele
     pushTestSchema();
     donoA = await criarUsuario('ecf-real-a');
     donoB = await criarUsuario('ecf-real-b');
+    await seedUnit({ userId: donoA.id, id: UNIT });
+    await seedUnit({ userId: donoB.id, id: UNIT_B });
     // ECF 3C (item 11): a geração exige os 4 trimestres da Parte B FECHADOS — dono A fecha (sem contas: C1);
     // dono B fica aberto de propósito (negativo abaixo).
     for (const quarter of ['T01', 'T02', 'T03', 'T04']) {
@@ -70,10 +74,10 @@ describe('POST /api/accounting/sped/ecf/real/generate — contrato HTTP (esquele
   });
 
   it('ECF 3C item 11: Parte B com trimestre aberto ⇒ 400 nomeando T01/2025 e NENHUM job (dono B nunca fechou)', async () => {
-    const res = await post(donoB, body());
+    const res = await post(donoB, body({ unitId: UNIT_B }));
     expect(res.status).toBe(400);
     expect(JSON.stringify(res.body)).toMatch(/Feche a Parte B .* de T01\/2025/);
-    expect(await prisma.accountingDataExchangeJob.count({ where: { userId: donoB.id, unitId: UNIT } })).toBe(0);
+    expect(await prisma.accountingDataExchangeJob.count({ where: { userId: donoB.id, unitId: UNIT_B } })).toBe(0);
   });
 
   it('sem token: 401 (auth deny-by-default) e nenhum job gravado', async () => {
@@ -131,12 +135,16 @@ describe('POST /api/accounting/sped/ecf/real/generate — contrato HTTP (esquele
       .get(`/api/accounting/data-exchange/jobs/${jobId}/download`)
       .query({ unitId: UNIT })
       .set(authHeader(donoB));
+    // I6: outro dono → 404 UNIT_NOT_FOUND (antes: 404 do job não encontrado)
     expect(theirs.status).toBe(404);
+    expect(theirs.body.code).toBe('UNIT_NOT_FOUND');
     const theirsMeta = await request(app)
       .get(`/api/accounting/data-exchange/jobs/${jobId}`)
       .query({ unitId: UNIT })
       .set(authHeader(donoB));
+    // I6: outro dono → 404 UNIT_NOT_FOUND (antes: 404 do job não encontrado)
     expect(theirsMeta.status).toBe(404);
+    expect(theirsMeta.body.code).toBe('UNIT_NOT_FOUND');
   });
 
   it("fiscal.formaTrib ausente → 201 com FORMA_TRIB='1' no 0010 (default ratificado 2026-09-02); formaTribPer ausente → 400", async () => {

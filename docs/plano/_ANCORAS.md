@@ -4,7 +4,7 @@
 
 | Âncora | Notas |
 | --- | --- |
-| — | [[BE-INCR-SIMPLES-DEFIS-MANUAL]] · [[BE-INCR-SIMPLES-GET-ENTRADAS]] · [[CSLL-LC224]] · [[CSLL-RESSEGURADORES]] · [[DFE-ANEXO-PENDENTE]] · [[FE-FIX-SALES-DATE-D1]] · [[FE-INCR-BANK-SETTLEMENT-FEE]] · [[FE-INCR-PACOTE-VALIDADE]] · [[FE-INCR-SIMPLES]] · [[FE-INCR-VENDA-PACOTE]] · [[FIX-SALE-DATE-AS-WRITTEN]] · [[LEGAL-PARAMS]] · [[PACOTE-VALIDADE]] · [[SIMEI-TAC-12]] · [[SIMPLES-PISO-ANEXO-XI]] · [[TAX-ASSESSMENT-PERIODOS]] · [[X14-CAIXA]] |
+| — | [[BE-INCR-SIMPLES-DEFIS-MANUAL]] · [[BE-INCR-SIMPLES-GET-ENTRADAS]] · [[BE-INCR-SOURCE-DOCUMENT-UPLOAD]] · [[CSLL-LC224]] · [[CSLL-RESSEGURADORES]] · [[DFE-ANEXO-PENDENTE]] · [[FE-FIX-SALES-DATE-D1]] · [[FE-INCR-BANK-SETTLEMENT-FEE]] · [[FE-INCR-PACOTE-VALIDADE]] · [[FE-INCR-SIMPLES]] · [[FE-INCR-VENDA-PACOTE]] · [[FIX-SALE-DATE-AS-WRITTEN]] · [[LEGAL-PARAMS]] · [[PACOTE-VALIDADE]] · [[SIMEI-TAC-12]] · [[SIMPLES-PISO-ANEXO-XI]] · [[TAX-ASSESSMENT-PERIODOS]] · [[X14-CAIXA]] |
 | §18.2 | [[X10i]] |
 | §III.1 · §III.3 §1 | [[GET-DATA-EXCHANGE-JOBS]] |
 | §III.1 · §M5.1 (apontadores) | [[ENVIO-PEDIDO-CONTADOR]] |
@@ -32,7 +32,7 @@
 | §IV.1 Fase P2 · §M5.1 Bloco A P2 | [[P2]] |
 | §IV.1 Fase P3 | [[P3]] |
 | §IV.1 Fase P4 | [[P4-fase]] |
-| §IV.1 Fase P5 | [[P5]] |
+| §IV.1 Fase P5 | [[BUILDER-VERTICAIS]] · [[P5]] |
 | §M0 fold 18/09 · §M5 · §III.2 | [[X10b]] |
 | §M1 | [[T1]] · [[T10]] · [[T11]] · [[T12]] · [[T2]] · [[T3]] · [[T4]] · [[T5]] · [[T6]] · [[T7]] · [[T8]] · [[T9]] |
 | §M4 | [[R-contab-preset-dt]] · [[R-motor-dominio]] · [[R-motor-regras]] · [[R-multimoeda]] · [[R-postgresql]] · [[R-torre-multiempresa]] |
@@ -58,5 +58,5 @@
 | §M7.1 · §M5.1 (apontadores 14/09) | [[C11]] |
 | §M7.1 · §M5.1 item 10 · §III.2 | [[X4]] |
 | §M7.1 · §M5.1 item 11 | [[F1]] |
-| CRM_REMEDIATION_AND_ROADMAP Parte B gap #14 (supersedido → SDD §IV.3) | [[CRM-RB]] |
+| CRM_REMEDIATION_AND_ROADMAP Parte B gap #14 (supersedido → SDD §IV.3) | [[CRM-RB]] · [[FE-INCR-CRM-REPORT-BUILDER]] |
 | fora do SDD consolidado (nó de 28/09) | [[FE-CONTRACT-TYPES]] |

@@ -22,10 +22,10 @@ import type { ActiveAccountant, IAccountingPolicy } from '@/features/accounting/
 import { AccountingPolicy } from '@/features/accounting/policies/AccountingPolicy';
 import type { AuditService } from '@/features/accounting/services/AuditService';
 import type { PostingService } from '@/features/accounting/services/PostingService';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { REVIEW_ADJUSTMENT_SOURCE_TYPE, staleFindings } from '@/features/accounting/models/AccountingReview.model';
 
-const scope = resolveAccountingScope({ userId: 'dono-a' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'dono-a' }, 'unit-1');
 const T0 = new Date('2026-09-10T10:00:00.000Z');
 const T1 = new Date('2026-09-11T10:00:00.000Z');
 const T2 = new Date('2026-09-12T10:00:00.000Z');

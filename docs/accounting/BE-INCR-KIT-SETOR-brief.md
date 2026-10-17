@@ -277,6 +277,10 @@ Dependências: PR-2 depois do PR-1; PR-3 e PR-4 depois do PR-2 (o PR-4 consome o
 50. **Rastro evento → fato → lançamento** (decisão 3): o `JournalEntry` já guarda `sourceType`/`sourceId` (o evento de
     negócio). A linha do binding guarda `eventKey → archetypeKey` (o fato contábil). `GET /accounting-kit/trace?sourceType=&sourceId=`
     devolve `{evento, arquétipo, bindingVersion, journalEntryId}`. Só leitura.
+    *Emenda 13/10 (lacuna levantada na execução; dono, chat, questionário: "Gravar a versão"):* o `JournalEntry` não
+    guardava a versão, e inferir pela data erra porque os mappers só recarregam no boot (F9). O lançamento passa a gravar
+    `bindingId`/`bindingVersion` (colunas nullable, sem backfill; null em manual, subrazão e lançamento anterior ao PR-6),
+    preenchidos pelo `InterpretedEventMapper`; o rastro lê direto.
 51. **Gates:** snapshot de shape dos DTOs (`dtoShapeSnapshot`) para todo DTO novo ou alterado; paridade i18n pt/en
     dos códigos de erro e motivos de pendência; `npm run docs:generate` e o guard de path-count do openapi (rotas novas:
     PR-3 +3, PR-4 +4, PR-6 +1).
@@ -555,3 +559,33 @@ A execução do PR-2 achou 7 decisões que o checklist não cobria. Todas foram 
 | E-5 | Passo 3 sem linha de `AccountingScopeSettings`/`FiscalProfile` | Settings ausente ⇒ cria a linha só com as contas. `FiscalProfile` ausente **e** kit com `roleDefaults.fiscalProfile` ⇒ **pré-check bloqueia sem escrita**, `KIT_FISCAL_PROFILE_REQUIRED`. O cálculo automático do perfil a partir dos dados da empresa fica como lacuna para um nó próprio |
 | E-6 | Qual entrada do `referential[]` instalar | `regime` da empresa **e** `mappingVersion == ano` exato |
 | E-7 | Compile que termina `Draft` (sem exceção) | `status = FAILED`, `steps` no passo anterior, `kit.install_failed {step}`; a resposta é o `Draft` de hoje (versão + bloqueantes do validador), sem `KIT_INSTALL_STEP_FAILED`; uma nova chamada recompila |
+
+## 11. Emenda do PR-3 — lacunas resolvidas pelo dono (chat, 2026-10-13, questionário)
+
+A execução do PR-3 (autorização: dono, chat, 2026-10-13, *"Executa o PR-3 do KIT-SETOR"*) achou 4 decisões que o
+checklist não cobria. Todas foram perguntadas e respondidas (regra 2 da `sessao-feature`); o dono escolheu a
+recomendação nas 4.
+
+| # | Lacuna | Decisão do dono |
+|---|---|---|
+| E-11.1 | O ajuste grava numa tx e o `compile()` abre a sua (SQLite sem tx aninhada); o item 21 manda desfazer o ajuste se o compile der `Draft`, sem dizer o que a auditoria registra | **Compensa e audita.** tx1 = gate + grava + `kit.role_override_set`/`_removed`; `Draft` ou exceção ⇒ tx de compensação volta ao estado anterior e audita o desfazer com os mesmos dois eventos |
+| E-11.2 | Resposta HTTP do PUT/DELETE quando o compile dá `Draft` | **422 `ROLE_OVERRIDE_COMPILE_DRAFT`** com `{binding:{status:'Draft', bindingVersion}, blocking, missingEventKeys}` |
+| E-11.3 | Base da recompilação e unidade sem kit `INSTALLED` | **Base = binding do kit na `kitVersion` da `KitInstallation`** (o DELETE volta ao código do kit, item 22); sem kit `INSTALLED` ⇒ **422 `KIT_NOT_INSTALLED`** (código novo) |
+| E-11.4 | Shape do `RoleAccountOverrideView` (§3.4 não define) | `{id, role, accountId, accountCode, kitAccountCode, motivo, setById, createdAt, updatedAt}`; `kitAccountCode` = código do kit instalado para o papel, ou `null` |
+
+## 12. Emenda do PR-4 — lacunas resolvidas pelo dono (chat, 2026-10-13, questionário)
+
+A execução do PR-4 (autorização: dono, chat, 2026-10-13, *"Executa o PR-4 do KIT-SETOR"*) achou 5 decisões que o
+checklist não cobria. Todas foram perguntadas e respondidas (regra 2 da `sessao-feature`).
+
+| # | Lacuna | Decisão do dono |
+|---|---|---|
+| E-12.1 | O PR-K3 (L2 de [D-2026-10-13-KIT-SETOR-PR-K3-LACUNAS](../plano/decisoes/D-2026-10-13-KIT-SETOR-PR-K3-LACUNAS.md)) fez do `serviceFiscalDefaults` um catálogo de sugestões que o kit nunca grava; os itens 27/28 e o motivo `service_profile_edited` do 29 falavam de perfil por `serviceRef` | **Saem do diff, com aviso.** O catálogo novo vale quando a `kitVersion` avança (a sugestão lê o kit instalado); as mudanças do catálogo entram em `notices`. `service_profile_edited` sai da lista de motivos |
+| E-12.2 | Nome/natureza de conta da extensão que já existe, **sem** partida (o item 29 só cobre "com partida") | **Aplica com aviso (forward `changed_account`)**, relendo "sem partida" dentro da tx. Vale para a conta que veio do kit e segue como o kit a instalou; conta criada ou editada pelo tenant com o mesmo código vira aviso (o kit não sobrescreve conta existente, referência Odoo do §0) |
+| E-12.3 | O que "aceitar" faz para cada motivo além de `override` | **Por motivo:** conta apagada → restaura e recompila (Draft ⇒ a conta volta a ser apagada, 422 `KIT_PENDING_COMPILE_DRAFT`); conta mudada → renomeia (natureza com partida nunca); campo preenchido → grava o valor do kit pelo serviço dono (gate do contador vale); referencial diferente → troca o mapeamento; **ano congelado → 422 `KIT_PENDING_FROZEN_YEAR`**, só recusar |
+| E-12.4 | Forward cujo compile dá `Draft` (ex.: o alvo usa conta apagada pelo tenant) | **A unidade falha:** os aditivos ficam, as pendências são criadas, o binding e a `kitVersion` não mudam, e o CLI sai ≠ 0 |
+| E-12.5 | Quais blocos de referencial (regime × ano) a atualização compara | **Todo ano cujo regime da empresa** (`CompanyFiscalProfile` do ano; sem ele, o da unidade) **é o do bloco.** Ano sem regime conhecido → aviso. Ano congelado → pendência |
+
+Ajuste mecânico, sem decisão nova: a guarda de auditoria trata toda chave `reason` como texto livre; o `reason` dos
+eventos `kit.upgrade_pending_*` (o código fechado do conflito, item 39) foi declarado em `MASKABLE_FREE_TEXT_KEYS`,
+como o precedente `reconciliation.unmatched`.

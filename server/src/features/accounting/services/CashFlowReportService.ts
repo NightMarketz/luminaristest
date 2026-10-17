@@ -10,6 +10,7 @@ import { CLOSING_SOURCE_TYPE } from '../models/closing';
 import { scopeToday } from '../models/dates';
 import { STATEMENT_MAPPING_VERSION } from './StatementMappingFixture';
 import type { AccountingReportService } from './AccountingReportService';
+import { DISPONIVEL_CODE } from '../fixtures/ChartOfAccountsFixture';
 
 // ─── Cash-flow classification (por natureza/code de conta) ──────────────────────
 
@@ -22,7 +23,7 @@ import type { AccountingReportService } from './AccountingReportService';
  * These accounts DEFINE the cash position: their variation IS the ΔCash the three
  * sections reconcile to — so they are excluded from Operating/Investing/Financing.
  */
-export const CASH_ACCOUNT_CODE_PREFIXES: readonly string[] = ['1.1.1', '1.1.3'];
+export const CASH_ACCOUNT_CODE_PREFIXES: readonly string[] = [DISPONIVEL_CODE];
 
 /** Non-current / investment asset prefixes → Investing (buying/selling long-term assets). */
 export const INVESTING_ASSET_CODE_PREFIXES: readonly string[] = ['1.2'];

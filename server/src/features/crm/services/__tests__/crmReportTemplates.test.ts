@@ -6,7 +6,7 @@
  */
 import { CrmAnalyticsService } from '../CrmAnalyticsService';
 import { CRM_REPORT_TEMPLATES } from '../../models/crmReportTemplates';
-import { CreateCrmReportSchema } from '../../dtos/CrmReportDto';
+import { CRM_MONEY_CURRENCY_PAIRS, CRM_REPORT_TEMPLATE_KEYS, CreateCrmReportSchema, CrmReportTemplatesOutputSchema } from '../../dtos/CrmReportDto';
 import { FakeEngine, makeService, user, type FakeRow } from './crmReportFakes';
 import type { DynamicTableService } from '../../../dynamicTables/services/DynamicTableService';
 
@@ -53,5 +53,24 @@ describe('item 13 — templates × bundle fixo (paridade de valores)', () => {
     const out = await makeService(e).service.runPreview(OWNER, { spec: template.spec });
     expect(asMap(out.series[0].points)).toEqual(asMap(bundle[key]));
     expect(out.series[0].points.length).toBeGreaterThan(1);
+  });
+});
+
+/**
+ * BE-INCR-CRM-REPORT-TEMPLATES itens 1–2 — contrato da rota de modelos: a saída do serviço passa no schema `.strict()`
+ * (paridade constante × contrato que o FE recebe tipado) e os pares são os mesmos que o serviço usa para validar moeda.
+ */
+describe('BE-INCR-CRM-REPORT-TEMPLATES — templates()', () => {
+  it('devolve os 5 modelos e os pares valor→moeda, e a saída passa no schema de contrato', () => {
+    const out = makeService(new FakeEngine()).service.templates();
+    expect(() => CrmReportTemplatesOutputSchema.parse(out)).not.toThrow();
+    expect(out.templates.map((t) => t.key)).toEqual([...CRM_REPORT_TEMPLATE_KEYS]);
+    expect(out.moneyCurrencyPairs).toEqual(CRM_MONEY_CURRENCY_PAIRS);
+  });
+
+  it('o schema recusa chave de modelo desconhecida e campo extra (strict)', () => {
+    const [first] = makeService(new FakeEngine()).service.templates().templates;
+    expect(CrmReportTemplatesOutputSchema.safeParse({ templates: [{ ...first, key: 'bant' }], moneyCurrencyPairs: {} }).success).toBe(false);
+    expect(CrmReportTemplatesOutputSchema.safeParse({ templates: [], moneyCurrencyPairs: {}, extra: 1 }).success).toBe(false);
   });
 });

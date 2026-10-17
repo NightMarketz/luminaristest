@@ -1,4 +1,4 @@
-# RUNBOOK: H2-VENDA-PACOTE — Sign-off de browser da venda de pacote pelo wizard (FE-INCR-VENDA-PACOTE)
+# RUNBOOK: H2-VENDA-PACOTE — Sign-off de browser da venda de pacote pelo modal Nova Venda (FE-INCR-VENDA-PACOTE)
 
 > Preparado por agente em 2026-10-05 contra a branch `claude/fe-incr-venda-pacote`. **Em branco de propósito:**
 > EVIDÊNCIA, desfecho e assinatura são do executor humano — runbook sem assinatura é nulo
@@ -20,7 +20,7 @@ Autorização: dono, chat, 2026-10-05 — "executa o FE-INCR-VENDA-PACOTE" (nó 
 | P1 | Código = o PR do FE-INCR-VENDA-PACOTE **mergeado em `main`** (ou a branch checada, se o sign-off for pré-merge — anote qual) | `git log origin/main --oneline -3` ou `git branch --show-current` | [ ] |
 | P2 | Servidor no ar com o `dev.db` populado (`server/prisma/prisma/dev.db` — o `server/prisma/dev.db` é isca de 0 byte) e um `AccountingBinding` `Active` | `curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/api` → `200` | [ ] |
 | P3 | Front em **build de produção** (`cd my-app && npm run build && npm run start`), não `next dev` (a tela está atrás de `withAuth`) | `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/` → `200` | [ ] |
-| P4 | A tabela de itens de venda é a **mista** (tem `packageId`): presets salão/clínica | No wizard "Nova Venda", o seletor "Tipo de Venda" mostra **Produtos / Serviços / Pacotes** | [ ] |
+| P4 | A tabela de itens de venda é a **mista** (tem `packageId`): presets salão/clínica | No modal "Nova Venda", o seletor "Tipo de Venda" mostra **Produtos / Serviços / Pacotes** | [ ] |
 | P5 | Catálogo de pacotes com 1 pacote **ativo** (ex.: "Pacote 10", preço `300,00`) e 1 **inativo** | Tabela "Packages" | [ ] |
 | P6 | A tabela de vendas tem o campo `aboveCatalogPrice` — se a tabela é anterior a este PR, um **admin** roda o sync do preset: `POST /api/dynamic-tables/sync-preset` com `{ "internalName": "<internalName da tabela de vendas>" }` | Resposta do sync com `aboveCatalogPrice` em `added` (ou o campo já no schema) | [ ] |
 | P7 | 1 cliente cadastrado e 1 unidade | Tabelas de clientes e unidades | [ ] |
@@ -52,15 +52,15 @@ Cada passo tem três campos. EVIDÊNCIA é obrigatória e é sempre um artefato 
    (Network sem `POST`). Remover a 2ª linha.
    EVIDÊNCIA: [screenshot da mensagem + Network vazio]
 
-> **[EMENDA 2026-10-05 — dono em chat, 05/10: *"Pode emendar os 4"*] "Finalizar Venda" do wizard quebrado — vale para os passos 5–7.** Na `main`
-> de 05/10 o wizard cria a venda já `Finalized` e só depois os itens, que `assertParentSaleNotFinalized` recusa
-> (`FinanceService.createSaleWithItems` + `useSalesWizard.ts:270`; F11 do `PACOTE-VALIDADE-PENDENCIAS-brief.md`; o fix está
-> em sessão própria). Até ele entrar: no wizard, **Salvar Rascunho**; depois, na lista de vendas ou no detalhe, **Finalizar**
+> **[EMENDA 2026-10-05 — dono em chat, 05/10: *"Pode emendar os 4"*] "Finalizar Venda" do modal Nova Venda quebrado — vale para os passos 5–7.** Na `main`
+> de 05/10 o modal Nova Venda cria a venda já `Finalized` e só depois os itens, que `assertParentSaleNotFinalized` recusa
+> (`FinanceService.createSaleWithItems` + `useSalesCreateForm.ts:270`; F11 do `PACOTE-VALIDADE-PENDENCIAS-brief.md`; o fix está
+> em sessão própria). Até ele entrar: no modal Nova Venda, **Salvar Rascunho**; depois, na lista de vendas ou no detalhe, **Finalizar**
 > (`PUT` com `status: 'Finalized'`, `SalesTable.tsx:240` / `SaleDetailPanel.tsx:116`). No Network aparece o `POST` da venda
 > (`Draft`), os `POST` dos itens e o `PUT` de finalização — o evento de finalização deve sair deste `PUT` (inferido pelo agente; o lançamento no razão é a prova). Se o "Finalizar Venda" do
-> wizard for clicado por engano, a venda órfã (finalizada, sem itens) é **achado**, não falha deste passo: anote e siga.
-> Quando o fix do wizard estiver em `main`, esta emenda cai e vale o texto original.
-> Nos passos 3–4 nada é enviado (a recusa é local), então o botão do wizard pode ser clicado ali.
+> modal Nova Venda for clicado por engano, a venda órfã (finalizada, sem itens) é **achado**, não falha deste passo: anote e siga.
+> Quando o fix do modal Nova Venda estiver em `main`, esta emenda cai e vale o texto original.
+> Nos passos 3–4 nada é enviado (a recusa é local), então o botão do modal Nova Venda pode ser clicado ali.
 
 5. Desconto `0`, quantidade `2`, preço `320,00`; **Finalizar Venda**.
    Resultado esperado: subtotal `640,00`; no Network, `POST` da venda com `"aboveCatalogPrice": true` e `POST` do

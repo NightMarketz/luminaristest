@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'next-i18next';
 import { ITableField } from '../../types/RightSidebarTypes';
 
 interface NewFieldFormProps {
@@ -12,68 +13,69 @@ interface NewFieldFormProps {
  * Componente de formulário para adição de novo campo
  */
 function NewFieldForm({ newField, setNewField, onAddField, onCancel }: NewFieldFormProps) {
+  const { t } = useTranslation('common');
   return (
-    <div className="bg-white dark:bg-gray-700 p-4 rounded-lg shadow mb-4">
-      <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
-        Adicionar Novo Campo
+    <div className="bg-white dark:bg-neutral-700 p-4 rounded-2xl shadow mb-4">
+      <h4 className="text-lg font-medium text-neutral-900 dark:text-white mb-3">
+        {t('onboardingFieldsAddNewField')}
       </h4>
       
       <div className="space-y-3">
         <div>
           <label 
             htmlFor="field-name" 
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1"
           >
-            Nome Técnico
+            {t('onboardingFieldsTechName')}
           </label>
           <input
             id="field-name"
             type="text"
             value={newField.name}
             onChange={(e) => setNewField({ ...newField, name: e.target.value })}
-            placeholder="Ex: customerName"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
+            placeholder={t('onboardingFieldsTechNamePlaceholder')}
+            className="w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:border-neutral-600 dark:text-white"
           />
         </div>
         
         <div>
           <label 
             htmlFor="field-label" 
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1"
           >
-            Rótulo
+            {t('onboardingFieldsLabel')}
           </label>
           <input
             id="field-label"
             type="text"
             value={newField.label}
             onChange={(e) => setNewField({ ...newField, label: e.target.value })}
-            placeholder="Ex: Nome do Cliente"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
+            placeholder={t('onboardingFieldsLabelPlaceholder')}
+            className="w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:border-neutral-600 dark:text-white"
           />
         </div>
         
         <div>
           <label 
             htmlFor="field-type" 
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1"
           >
-            Tipo de Dado
+            {t('onboardingFieldsType')}
           </label>
           <select
             id="field-type"
             value={newField.type}
             onChange={(e) => setNewField({ ...newField, type: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
+            className="w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:border-neutral-600 dark:text-white"
           >
-            <option value="string">Texto</option>
-            <option value="number">Número</option>
-            <option value="boolean">Sim/Não</option>
-            <option value="date">Data</option>
-            <option value="datetime">Data e Hora</option>
-            <option value="email">E-mail</option>
-            <option value="password">Senha</option>
-            <option value="phone">Telefone</option>
+            <option value="string">{t('onboardingFieldsType_string')}</option>
+            <option value="number">{t('onboardingFieldsType_number')}</option>
+            <option value="boolean">{t('onboardingFieldsType_boolean')}</option>
+            <option value="date">{t('onboardingFieldsType_date')}</option>
+            <option value="datetime">{t('onboardingFieldsType_datetime')}</option>
+            <option value="email">{t('onboardingFieldsType_email')}</option>
+            <option value="password">{t('onboardingFieldsType_password')}</option>
+            <option value="phone">{t('onboardingFieldsType_phone')}</option>
           </select>
         </div>
         
@@ -83,13 +85,13 @@ function NewFieldForm({ newField, setNewField, onAddField, onCancel }: NewFieldF
             type="checkbox"
             checked={newField.required}
             onChange={(e) => setNewField({ ...newField, required: e.target.checked })}
-            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+            className="w-4 h-4 text-blue-600 bg-neutral-100 border-neutral-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-neutral-800 dark:focus:ring-offset-neutral-800 focus:ring-2 dark:bg-neutral-700 dark:border-neutral-600"
           />
           <label 
             htmlFor="field-required"
-            className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+            className="ml-2 text-sm font-medium text-neutral-700 dark:text-neutral-300"
           >
-            Campo obrigatório
+            {t('onboardingFieldsRequired')}
           </label>
         </div>
         
@@ -97,9 +99,9 @@ function NewFieldForm({ newField, setNewField, onAddField, onCancel }: NewFieldF
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:bg-gray-600 dark:text-white dark:hover:bg-gray-500"
+            className="px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-200 rounded-md hover:bg-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-500 dark:bg-neutral-600 dark:text-white dark:hover:bg-neutral-500"
           >
-            Cancelar
+            {t('onboardingFieldsCancel')}
           </button>
           <button
             type="button"
@@ -107,7 +109,7 @@ function NewFieldForm({ newField, setNewField, onAddField, onCancel }: NewFieldF
             disabled={!newField.name || !newField.label}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed"
           >
-            Adicionar
+            {t('onboardingFieldsAdd')}
           </button>
         </div>
       </div>

@@ -27,7 +27,7 @@ import { resolveEmissorFor } from '../dfe/resolveEmissor';
 import { ambienteFromTpAmb, assertTpAmb } from '../dfe/DfeEmissorPort';
 import type { DfeAmbiente, DfeEmissorPort, EmissaoResult } from '../dfe/DfeEmissorPort';
 import { DpsManualPayloadSchema, DpsPayloadSchema, toManualDps } from '../dtos/DpsPayloadDto';
-import { resolveAccountingScope } from '../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeInternal';
 import type { AccountingScope } from '../scope/AccountingScope';
 
 /**
@@ -128,7 +128,7 @@ export class FiscalDocumentLifecycleService {
   /**
    * Job `dfe_poll_pending` (item 27, JOB-005, Prisma-direto) — varre `SENT|PROCESSING` mais
    * velhos que `olderThan`, reconstrói o escopo de cada documento (mesmo padrão de
-   * `accountingSyncReconcile.job.ts`: `resolveAccountingScope({userId: doc.userId}, doc.unitId)`)
+   * `accountingSyncReconcile.job.ts`: `resolveAccountingScopeInternal({userId: doc.userId}, doc.unitId)`)
    * e aplica o resultado. Erro de código próprio `dfe_*` = skip+log; qualquer outro = alerta.
    */
   async pollPendingOnce(olderThan: Date): Promise<PollSummary> {
@@ -142,7 +142,7 @@ export class FiscalDocumentLifecycleService {
       return summary;
     }
     for (const doc of pending) {
-      const scope = resolveAccountingScope({ userId: doc.userId }, doc.unitId);
+      const scope = resolveAccountingScopeInternal({ userId: doc.userId }, doc.unitId);
       try {
         // BE-INCR-DFE-MANUAL (itens 9 e 10): o adaptador é o do DOCUMENTO; o que não consulta (modo manual) é pulado.
         const port = resolveEmissorFor(doc.partner);
@@ -383,7 +383,7 @@ export class FiscalDocumentLifecycleService {
       // parceiro não deve reenviar o mesmo webhook por isso).
       return { status: 200 };
     }
-    const scope = resolveAccountingScope({ userId: doc.userId }, doc.unitId);
+    const scope = resolveAccountingScopeInternal({ userId: doc.userId }, doc.unitId);
     try {
       const result = await selection.port.consultar(verification.partnerRef);
       await this.applyResult(scope, doc, result);
@@ -948,7 +948,7 @@ export class FiscalDocumentLifecycleService {
    * (o mesmo ramo do #420 para o cancelamento entre as duas escritas). Em todos os casos a pendência termina DONE.
    */
   private async drainOne(pending: FiscalDocumentPendingAttachment): Promise<void> {
-    const scope = resolveAccountingScope({ userId: pending.userId }, pending.unitId);
+    const scope = resolveAccountingScopeInternal({ userId: pending.userId }, pending.unitId);
     const doc = await this.repo.findById(scope, pending.documentId);
     if (!doc) throw new Error(`fiscal_document_not_found: ${pending.documentId}`);
     const result = PendingAttachmentResultSchema.parse(JSON.parse(pending.resultJson));
@@ -1065,53 +1065,57 @@ export class FiscalDocumentLifecycleService {
    * Item 11 (F-PA-7 b, F-PA-8 b) — documento autorizado em produção sem anexo, sem proveniência e sem pendência: reconsulta
    * o parceiro e, se o retorno trouxer XML, cria a pendência (PENDING) para a varredura drenar. Modo manual ou retorno
    * sem XML: skip + `logger.warn` com o `documentId` (lista para ação humana). Custo declarado no BRIEF: esses
-   * documentos são reconsultados em todo tick.
+   * documentos são reconsultados em todo tick. Dono 2026-10-13: o tick percorre TODOS os candidatos, página a página —
+   * os pulados não escondem os demais.
    */
   private async backfillPendingAttachments(limit: number): Promise<void> {
-    const candidates = await this.repo.listAttachmentBackfillCandidates(limit);
-    if (!candidates.length) return;
     const selection = selectDfeEmissor(process.env);
-    for (const doc of candidates) {
-      try {
-        if (!selection.enabled) {
-          logger.warn('dfe_pending_attachment_backfill: skip — porta desabilitada', { documentId: doc.id });
-          continue;
+    let cursor: string | null = null;
+    do {
+      const page = await this.repo.listAttachmentBackfillCandidates(limit, cursor);
+      cursor = page.nextCursor;
+      for (const doc of page.candidates) {
+        try {
+          if (!selection.enabled) {
+            logger.warn('dfe_pending_attachment_backfill: skip — porta desabilitada', { documentId: doc.id });
+            continue;
+          }
+          const port = resolveEmissorFor(doc.partner);
+          if (!port.capabilities.consultar) {
+            logger.warn('dfe_pending_attachment_backfill: skip — modo manual, sem de onde tirar o XML', { documentId: doc.id });
+            continue;
+          }
+          if (selection.port.name === doc.partner && selection.ambiente !== doc.ambiente) {
+            // F-AMB-2 a: a porta do env fala com o ambiente do env.
+            logger.warn('dfe_pending_attachment_backfill: skip — ambiente divergente', { documentId: doc.id });
+            continue;
+          }
+          const result = await port.consultar(doc.partnerRef ?? attemptRef(doc.id, doc.currentAttemptNo));
+          if (!result.xml) {
+            logger.warn('dfe_pending_attachment_backfill: skip — retorno sem XML', { documentId: doc.id });
+            continue;
+          }
+          const scope = resolveAccountingScopeInternal({ userId: doc.userId }, doc.unitId);
+          await this.repo.createPendingAttachment(scope, {
+            documentId: doc.id,
+            xmlBytes: result.xml,
+            pdfBytes: result.pdf ?? null,
+            resultJson: JSON.stringify(
+              PendingAttachmentResultSchema.parse({
+                chaveOuCodigo: doc.chaveOuCodigo ?? result.chaveOuCodigo,
+                nNFSe: doc.nNFSe ?? result.nNFSe ?? null,
+                numero: doc.numero != null ? String(doc.numero) : (result.numero ?? null),
+                valores: result.valores ?? null,
+              }),
+            ),
+          });
+        } catch (error) {
+          logger.error('dfe_pending_attachment_backfill: falha ao reconsultar documento — alerta', {
+            documentId: doc.id,
+            error: error instanceof Error ? error.message : String(error),
+          });
         }
-        const port = resolveEmissorFor(doc.partner);
-        if (!port.capabilities.consultar) {
-          logger.warn('dfe_pending_attachment_backfill: skip — modo manual, sem de onde tirar o XML', { documentId: doc.id });
-          continue;
-        }
-        if (selection.port.name === doc.partner && selection.ambiente !== doc.ambiente) {
-          // F-AMB-2 a: a porta do env fala com o ambiente do env.
-          logger.warn('dfe_pending_attachment_backfill: skip — ambiente divergente', { documentId: doc.id });
-          continue;
-        }
-        const result = await port.consultar(doc.partnerRef ?? attemptRef(doc.id, doc.currentAttemptNo));
-        if (!result.xml) {
-          logger.warn('dfe_pending_attachment_backfill: skip — retorno sem XML', { documentId: doc.id });
-          continue;
-        }
-        const scope = resolveAccountingScope({ userId: doc.userId }, doc.unitId);
-        await this.repo.createPendingAttachment(scope, {
-          documentId: doc.id,
-          xmlBytes: result.xml,
-          pdfBytes: result.pdf ?? null,
-          resultJson: JSON.stringify(
-            PendingAttachmentResultSchema.parse({
-              chaveOuCodigo: doc.chaveOuCodigo ?? result.chaveOuCodigo,
-              nNFSe: doc.nNFSe ?? result.nNFSe ?? null,
-              numero: doc.numero != null ? String(doc.numero) : (result.numero ?? null),
-              valores: result.valores ?? null,
-            }),
-          ),
-        });
-      } catch (error) {
-        logger.error('dfe_pending_attachment_backfill: falha ao reconsultar documento — alerta', {
-          documentId: doc.id,
-          error: error instanceof Error ? error.message : String(error),
-        });
       }
-    }
+    } while (cursor);
   }
 }

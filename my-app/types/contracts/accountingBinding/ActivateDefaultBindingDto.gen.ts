@@ -31,3 +31,16 @@ kitVersion: number
 status: ("INSTALLING" | "INSTALLED" | "FAILED")
 }
 }
+export interface OnboardingAccountingResultInput {
+status: ("Active" | "Draft" | "not-applicable")
+sectorKey?: string
+bindingVersion?: number
+blocking?: {
+code: string
+message: string
+slot?: string
+accountCode?: string
+period?: string
+step?: number
+}[]
+}

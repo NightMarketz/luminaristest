@@ -121,6 +121,11 @@ export class InventoryService implements IInventoryService {
     return item;
   }
 
+  /** ADR-PB §5.2: algum dos produtos tem estoque em aberto (qtyOnHand > 0) em qualquer unidade do dono? */
+  async hasOpenStockForProducts(ownerUserId: string, productRefs: string[]): Promise<boolean> {
+    return this.inventoryRepo.hasOpenStockForProducts(ownerUserId, productRefs);
+  }
+
   // ---------------------------------------------------------------------------
   // Receive stock (INBOUND) — seed manual or AP purchase bridge (D3)
   // ---------------------------------------------------------------------------

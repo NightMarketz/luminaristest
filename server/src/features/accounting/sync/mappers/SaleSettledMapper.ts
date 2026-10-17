@@ -2,6 +2,7 @@ import { ValidationError } from '../../../../lib/errors';
 import type { PostEntryInput } from '../../dtos/PostingDto';
 import type { AccountingEvent } from '../AccountingSyncPort';
 import type { IAccountingEventMapper } from './IAccountingEventMapper';
+import { A_RECEBER_CODE, BANCO_CODE, CAIXA_CODE, CARTAO_ADQUIRENTE_CODE, PACOTES_PRE_PAGOS_CODE } from '../../fixtures/ChartOfAccountsFixture';
 
 /**
  * Maps `sale.settled` → the receivable-settlement entry (Incremento D / D1):
@@ -24,20 +25,20 @@ export class SaleSettledMapper implements IAccountingEventMapper {
   public readonly sourceType = 'sale.settled' as const;
 
   /** A settlement always credits the receivable leaf — symmetric to the revenue debit. */
-  private static readonly CREDIT_ACCOUNT = '1.1.2'; // A Receber
+  private static readonly CREDIT_ACCOUNT = A_RECEBER_CODE; // A Receber
 
   /** Package Balance debits the prepaid liability (advance consumed), never an asset/cash leaf. */
-  private static readonly PREPAID_LIABILITY_ACCOUNT = '2.1.1'; // Pacotes Pré-pagos
+  private static readonly PREPAID_LIABILITY_ACCOUNT = PACOTES_PRE_PAGOS_CODE; // Pacotes Pré-pagos
 
   /**
    * paymentMethod → debit account. The values mirror SelectPresets.paymentMethod EXACTLY; an
    * unknown/missing method is rejected (no silent default to cash). Card → gross to 1.1.4.
    */
   private static readonly DEBIT_ACCOUNT_BY_METHOD: Readonly<Record<string, string>> = {
-    Cash: '1.1.3', // Caixa
-    Pix: '1.1.1', // Banco
-    'Debit Card': '1.1.4', // A Receber Cartão / Adquirente
-    'Credit Card': '1.1.4', // A Receber Cartão / Adquirente
+    Cash: CAIXA_CODE, // Caixa
+    Pix: BANCO_CODE, // Banco
+    'Debit Card': CARTAO_ADQUIRENTE_CODE, // A Receber Cartão / Adquirente
+    'Credit Card': CARTAO_ADQUIRENTE_CODE, // A Receber Cartão / Adquirente
     'Package Balance': SaleSettledMapper.PREPAID_LIABILITY_ACCOUNT,
   };
 

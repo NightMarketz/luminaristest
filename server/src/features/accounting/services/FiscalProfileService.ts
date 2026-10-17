@@ -217,6 +217,22 @@ export class FiscalProfileService {
    * relido DENTRO da tx e o `d1fConfirmado` preservado. Devolve os campos gravados.
    */
   async fillNullAccounts(scope: AccountingScope, accountIds: Partial<Record<FiscalProfileAccountField, string>>): Promise<string[]> {
+    return this.writeAccounts(scope, accountIds, true);
+  }
+
+  /**
+   * BE-INCR-KIT-SETOR PR-4 (item 37; emenda E-12.3): aceitar a pendência `field_set_by_user` grava o valor do kit
+   * POR CIMA do campo preenchido. Mesmo caminho do `fillNullAccounts`, sem o filtro de campo nulo.
+   */
+  async setAccounts(scope: AccountingScope, accountIds: Partial<Record<FiscalProfileAccountField, string>>): Promise<string[]> {
+    return this.writeAccounts(scope, accountIds, false);
+  }
+
+  private async writeAccounts(
+    scope: AccountingScope,
+    accountIds: Partial<Record<FiscalProfileAccountField, string>>,
+    onlyNull: boolean,
+  ): Promise<string[]> {
     if (!this.policy.canManageFiscalProfile(scope)) throw new ForbiddenError('Você não tem permissão para alterar o perfil fiscal.');
     return this.repo.runTransaction(async (tx) => {
       const row = await this.repo.findByScope(scope, tx);
@@ -224,7 +240,7 @@ export class FiscalProfileService {
         throw new ValidationError('fiscal_profile_missing: perfil fiscal da unidade não cadastrado (PUT /api/accounting/fiscal-profile).');
       }
       const patch = Object.fromEntries(
-        Object.entries(accountIds).filter(([field]) => row[field as FiscalProfileAccountField] == null),
+        Object.entries(accountIds).filter(([field]) => !onlyNull || row[field as FiscalProfileAccountField] == null),
       );
       const fields = Object.keys(patch);
       if (fields.length === 0) return [];
@@ -252,9 +268,10 @@ export class FiscalProfileService {
     if (input.csllDespesaAccountId) await this.assertExpenseAccount(scope, input.csllDespesaAccountId, 'despesa de CSLL', tx);
     if (input.irpjRecolherAccountId) await this.assertLiabilityAccount(scope, input.irpjRecolherAccountId, 'IRPJ a recolher', tx);
     if (input.csllRecolherAccountId) await this.assertLiabilityAccount(scope, input.csllRecolherAccountId, 'CSLL a recolher', tx);
-    // X8 item 2 (F-PCB-1 b): provisão de PIS/Cofins — despesa = Expense (não dedução da receita), a recolher = Liability.
-    if (input.pisDespesaAccountId) await this.assertExpenseAccount(scope, input.pisDespesaAccountId, 'despesa de PIS', tx);
-    if (input.cofinsDespesaAccountId) await this.assertExpenseAccount(scope, input.cofinsDespesaAccountId, 'despesa de COFINS', tx);
+    // F-PCB-1R (a), dono 13/10 (DL 1.598/77 art. 12 §1º III): PIS/Cofins sobre o faturamento é DEDUÇÃO da receita
+    // (folha Revenue, saldo devedor, fora do gate de receita bruta); a recolher = Liability. O nome do campo é histórico.
+    if (input.pisDespesaAccountId) await this.assertRevenueAccount(scope, input.pisDespesaAccountId, 'PIS sobre a receita — dedução da receita', tx);
+    if (input.cofinsDespesaAccountId) await this.assertRevenueAccount(scope, input.cofinsDespesaAccountId, 'COFINS sobre a receita — dedução da receita', tx);
     if (input.pisRecolherAccountId) await this.assertLiabilityAccount(scope, input.pisRecolherAccountId, 'PIS a recolher', tx);
     if (input.cofinsRecolherAccountId) await this.assertLiabilityAccount(scope, input.cofinsRecolherAccountId, 'COFINS a recolher', tx);
     // X8 PR-3 (L-5, dono 06/10): contrapartida dos outros créditos — redutora de despesa (Expense), fora do gate da ECF (F-PCB-1 b).
@@ -376,13 +393,14 @@ export class FiscalProfileService {
     }
   }
 
-  /** X14 PR-3 item 21: a dedução da receita (DAS) é folha de natureza Revenue com saldo devedor, como 3.2 Devoluções. */
+  /** X14 PR-3 item 21 / F-PCB-1R: a dedução da receita (DAS; PIS/COFINS) é folha de natureza Revenue com saldo devedor,
+   *  como 3.2 Devoluções. */
   private async assertRevenueAccount(scope: AccountingScope, id: string, label: string, tx?: Prisma.TransactionClient): Promise<void> {
     const account = await this.accountRepo.findById(scope, id, tx);
     if (!account || account.deletedAt) throw new ValidationError(`Conta de ${label} '${id}' não existe neste escopo.`);
     if (!account.acceptsEntries) throw new ValidationError(`Conta de ${label} '${account.code}' não aceita lançamentos (não é folha).`);
     if (account.nature !== 'Revenue') {
-      throw new ValidationError(`Conta de ${label} '${account.code}' tem natureza ${account.nature}; esperado Revenue (dedução da receita bruta — BRIEF X14 item 21).`);
+      throw new ValidationError(`Conta de ${label} '${account.code}' tem natureza ${account.nature}; esperado Revenue (dedução da receita bruta — BRIEF X14 item 21 / F-PCB-1R).`);
     }
   }
 

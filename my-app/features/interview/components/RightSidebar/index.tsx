@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'next-i18next';
 import { ITable, ITableField, RightSidebarProps, InteractionMode } from '../../types/RightSidebarTypes';
 import FieldList from './FieldList';
 import NewFieldForm from './NewFieldForm';
@@ -8,6 +9,7 @@ import AIChatMode from './AIChatMode';
  * Painel lateral direito para customização de campos das tabelas
  */
 function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, presetKey }: RightSidebarProps) {
+  const { t } = useTranslation('common');
   const [tableData, setTableData] = useState<ITable | null>(selectedTable);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveMessage, setSaveMessage] = useState<string>("");
@@ -117,7 +119,7 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, pres
     
     setTimeout(() => {
       setIsSaving(false);
-      setSaveMessage("Alterações salvas com sucesso!");
+      setSaveMessage(t('onboardingFieldsSaved'));
       
       // Limpa a mensagem após alguns segundos
       setTimeout(() => {
@@ -136,24 +138,24 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, pres
     <div 
       className={`fixed top-0 right-0 h-full z-50 transition-transform duration-300 ease-in-out w-[400px] md:w-[500px] ${isVisible ? 'translate-x-0' : 'translate-x-full'}`}
     >
-      <div className="bg-white dark:bg-neutral-800 h-full shadow-xl flex flex-col border-l border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-neutral-800 h-full shadow-xl flex flex-col border-l border-neutral-200 dark:border-neutral-700">
         {/* Cabeçalho */}
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="p-6 border-b border-neutral-200 dark:border-neutral-700">
           <div className="flex justify-between items-center">
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Customização
+            <h3 className="text-xl font-semibold text-neutral-900 dark:text-white">
+              {t('onboardingFieldsTitle')}
             </h3>
           </div>
           
           {/* Toggle entre modos manual e IA */}
           {tableData && (
             <div className="mt-4">
-              <div className="bg-gray-100 dark:bg-gray-700 p-1 rounded-lg flex">
+              <div className="bg-neutral-100 dark:bg-neutral-700 p-1 rounded-lg flex">
                 <button 
                   className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors duration-200 ${
                     interactionMode === 'manual' 
                       ? 'bg-white dark:bg-neutral-800 text-blue-600 dark:text-blue-400 shadow-sm' 
-                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                      : 'text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white'
                   }`}
                   onClick={() => setInteractionMode('manual')}
                 >
@@ -161,14 +163,14 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, pres
                     <svg className="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
                     </svg>
-                    Manual
+                    {t('onboardingFieldsModeManual')}
                   </div>
                 </button>
                 <button 
                   className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors duration-200 ${
                     interactionMode === 'ai' 
                       ? 'bg-white dark:bg-neutral-800 text-blue-600 dark:text-blue-400 shadow-sm' 
-                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                      : 'text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white'
                   }`}
                   onClick={() => setInteractionMode('ai')}
                 >
@@ -176,7 +178,7 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, pres
                     <svg className="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M11 17a1 1 0 001.447.894l4-2A1 1 0 0017 15V9.236a1 1 0 00-1.447-.894l-4 2a1 1 0 00-.553.894V17zM15.211 6.276a1 1 0 000-1.788l-4.764-2.382a1 1 0 00-.894 0L4.789 4.488a1 1 0 000 1.788l4.764 2.382a1 1 0 00.894 0l4.764-2.382zM4.447 8.342A1 1 0 003 9.236V15a1 1 0 00.553.894l4 2A1 1 0 009 17v-5.764a1 1 0 00-.553-.894l-4-2z" />
                     </svg>
-                    IA Humanizada
+                    {t('onboardingFieldsModeAi')}
                   </div>
                 </button>
               </div>
@@ -199,14 +201,14 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, pres
         ) : (
           // Modo manual (original)
           <div className="flex-grow p-6 overflow-y-auto">
-            <div className="bg-white dark:bg-neutral-800 rounded-lg">
+            <div className="bg-white dark:bg-neutral-800 rounded-2xl">
               <div className="p-4">
                 <div className="flex justify-between items-center mb-3">
-                  <h4 className="text-lg font-medium text-gray-900 dark:text-white">
+                  <h4 className="text-lg font-medium text-neutral-900 dark:text-white">
                     {tableData?.name} 
                     {tableData?.isCore && (
                       <span className="ml-2 text-xs text-white bg-blue-500 px-2 py-1 rounded">
-                        Núcleo
+                        {t('onboardingFieldsCore')}
                       </span>
                     )}
                   </h4>
@@ -220,19 +222,19 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, pres
                         <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                           <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
                         </svg>
-                        Novo Campo
+                        {t('onboardingFieldsNewField')}
                       </span>
                     </button>
                   )}
                 </div>
                 
                 {showNewFieldForm && (
-                  <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="mb-6 p-4 bg-neutral-50 dark:bg-neutral-700 rounded-2xl">
                     <div className="flex justify-between items-center mb-2">
-                      <h5 className="font-medium text-gray-700 dark:text-gray-200">Adicionar Novo Campo</h5>
+                      <h5 className="font-medium text-neutral-700 dark:text-neutral-200">{t('onboardingFieldsAddNewField')}</h5>
                       <button 
                         onClick={() => setShowNewFieldForm(false)}
-                        className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                        className="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300"
                       >
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                           <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -255,8 +257,8 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, pres
                     onToggleFieldVisibility={handleToggleFieldVisibility} 
                   />
                 ) : (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Esta funcionalidade não possui campos configuráveis.
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                    {t('onboardingFieldsEmpty')}
                   </p>
                 )}
               </div>
@@ -266,7 +268,7 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, pres
         
         {/* Rodapé com botão de salvar - Só aparece no modo manual */}
         {tableData && interactionMode === 'manual' && (
-          <div className="p-6 border-t border-gray-200 dark:border-gray-700">
+          <div className="p-6 border-t border-neutral-200 dark:border-neutral-700">
             {saveMessage && (
               <div className="mb-3 text-sm text-center text-green-600 dark:text-green-400">
                 {saveMessage}
@@ -283,9 +285,9 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, pres
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Salvando...
+                  {t('onboardingFieldsSaving')}
                 </>
-              ) : "Salvar Alterações"}
+              ) : t('onboardingFieldsSave')}
             </button>
           </div>
         )}

@@ -6,14 +6,16 @@ export const DASHBOARD_GRID_CONFIG: DashboardGridConfig = {
     DOCUMENT_CHAT: 'document-chat', // Chat para documentos vetorizados (Qdrant)
     GENERIC_CHAT: 'generic-chat', // Chat genérico expansível
     KPI: 'kpi', // Widget para KPIs do motor de Analytics
-    ERP_VIEW: 'erp-view' // Visualização embutida de uma tabela do ERP
+    ERP_VIEW: 'erp-view', // Visualização embutida de uma tabela do ERP
+    CRM_REPORT: 'crm-report' // Relatório salvo do builder do CRM (FE-INCR-CRM-REPORT-BUILDER item 20)
   },
   DIMENSIONS: {
     DEFAULT: { W: 4, H: 6, MIN_W: 2, MIN_H: 2 },
     CHAT: { W: 6, H: 20, MIN_W: 2, MIN_H: 10 },
     GENERIC_CHAT: { W: 6, H: 24, MIN_W: 2, MIN_H: 10 },
     KPI: { W: 4, H: 10, MIN_W: 2, MIN_H: 6 },
-    ERP_VIEW: { W: 12, H: 14, MIN_W: 6, MIN_H: 8 }
+    ERP_VIEW: { W: 12, H: 14, MIN_W: 6, MIN_H: 8 },
+    CRM_REPORT: { W: 6, H: 12, MIN_W: 3, MIN_H: 8 } // D-2026-10-13-FE-CRM-RB-PR-B-D-LACUNAS
   },
   GRID: {
     BREAKPOINTS: { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 },

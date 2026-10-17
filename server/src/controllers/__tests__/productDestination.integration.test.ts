@@ -8,7 +8,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { ProductDestinationDefaultRepository } from '../../features/accounting/repositories/ProductDestinationDefaultRepository';
 import type { AccountingScope } from '../../features/accounting/scope/AccountingScope';
 
@@ -45,6 +45,7 @@ describe('ITEM-DESTINATION PR-2 — default por produto (Prisma real)', () => {
     pushTestSchema();
     dono = await prisma.user.create({ data: { name: 'pd', username: 'prod-dest-dono', email: 'prod-dest@test.local', password: 'x', role: 'USER' } });
     outro = await prisma.user.create({ data: { name: 'pd2', username: 'prod-dest-outro', email: 'prod-dest2@test.local', password: 'x', role: 'USER' } });
+    await seedUnit({ userId: dono.id, id: UNIT });
     refs = await criarProdutos(dono.id, ['Shampoo', 'Condicionador', 'Máscara']);
     [refOutroTenant] = await criarProdutos(outro.id, ['Alheio']);
   }, 120000);
@@ -95,8 +96,8 @@ describe('ITEM-DESTINATION PR-2 — default por produto (Prisma real)', () => {
 
   it('item 9/19 — import com mapeamento SEM destination: itens 2 e 3 = INSUMO_SERVICO/PRODUTO; lançamento igual ao do PR-1; o override não vira default (F-ID-9)', async () => {
     await prisma.accountingPeriod.create({ data: { userId: dono.id, unitId: UNIT, year: 2025, month: 7, status: 'OPEN', openedAt: new Date(), openedById: dono.id } });
-    await criarConta('1.1.6', 'Estoques', 'Asset');
-    await criarConta('2.1.2', 'Fornecedores a Pagar', 'Liability');
+    await criarConta('1.1.3.01', 'Estoques', 'Asset');
+    await criarConta('2.1.2.01', 'Fornecedores a Pagar', 'Liability');
     await criarConta('1.1.8', 'ICMS a Recuperar', 'Asset');
     await criarConta('1.1.9', 'PIS/COFINS a Recuperar', 'Asset');
     await criarConta('4.1.9', 'Insumos do serviço', 'Expense');
@@ -127,11 +128,11 @@ describe('ITEM-DESTINATION PR-2 — default por produto (Prisma real)', () => {
     const entry = await prisma.journalEntry.findFirstOrThrow({ where: { sourceType: 'ap.payable', sourceId: payable.id }, include: { postings: { include: { account: true } } } });
     const byCode = Object.fromEntries(entry.postings.map((p) => [p.account.code, { d: Number(p.debitCents), c: Number(p.creditCents) }]));
     expect(byCode).toEqual({
-      '1.1.6': { d: 7961, c: 0 },
+      '1.1.3.01': { d: 7961, c: 0 },
       '1.1.8': { d: 1800, c: 0 },
       '1.1.9': { d: 784, c: 0 },
       '4.1.9': { d: 8788, c: 0 },
-      '2.1.2': { d: 0, c: 19333 },
+      '2.1.2.01': { d: 0, c: 19333 },
     });
     // F-ID-9 (a): o override REVENDA do item 1 não virou default de refs[0].
     expect(await prisma.productDestinationDefault.count({ where: { unitId: UNIT, productRef: refs[0] } })).toBe(0);

@@ -1,6 +1,6 @@
 import { PayableService } from '../PayableService';
 import { ForbiddenError, MaxCentsExceededError, NotFoundError, ValidationError } from '../../../../lib/errors';
-import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import { ESTOQUES_CODE, FORNECEDORES_A_PAGAR_CODE } from '../../fixtures/ChartOfAccountsFixture';
 import { INVENTORY_INBOUND_SOURCE_TYPE } from '../../models/Inventory.model';
 import { AP_PAYABLE_SOURCE_TYPE, AP_PAYMENT_SOURCE_TYPE } from '../../models/Payable.model';
@@ -10,7 +10,7 @@ import { Prisma } from 'generated/prisma';
 import type { Account, Payable, PayablePayment } from 'generated/prisma';
 import type { PostEntryInput } from '../../dtos/PostingDto';
 
-const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'owner-1' }, 'unit-1');
 
 function expenseAcc(over: Partial<Account> = {}): Account {
   return {
@@ -403,14 +403,14 @@ describe('PayableService.registerPayment — settlement (D2/D3/D4)', () => {
     expect(input.sourceId).not.toBe('pay-1');
     expect(input.date).toBe('2026-07-05'); // data efetiva do débito
     expect(input.lines).toContainEqual({ accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: 50000, creditCents: 0 });
-    expect(input.lines).toContainEqual({ accountCode: '1.1.1', debitCents: 0, creditCents: 50000 }); // Pix → Banco
+    expect(input.lines).toContainEqual({ accountCode: '1.1.1.01', debitCents: 0, creditCents: 50000 }); // Pix → Banco
   });
 
   it('Cash credits Caixa 1.1.3; unknown method REJECTS (closed map, D2)', async () => {
     const cash = build();
     await cash.service.registerPayment(scope, 'pay-1', { ...payDto, method: 'Cash' } as never);
     const input = (cash.postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
-    expect(input.lines).toContainEqual({ accountCode: '1.1.3', debitCents: 0, creditCents: 50000 });
+    expect(input.lines).toContainEqual({ accountCode: '1.1.1.02', debitCents: 0, creditCents: 50000 });
 
     const bad = build();
     await expect(
@@ -1556,7 +1556,7 @@ describe('PayableService.createPayable — insumoItems (ITEM-DESTINATION)', () =
 
   it.each([
     ['inexistente no escopo', [] as Account[], /não existe/],
-    ['de ATIVO', [expenseAcc({ id: 'acc-insumo', code: '1.1.6', nature: 'Asset' })], /nature=Expense/],
+    ['de ATIVO', [expenseAcc({ id: 'acc-insumo', code: '1.1.3.01', nature: 'Asset' })], /nature=Expense/],
     ['sintética (não folha)', [expenseAcc({ id: 'acc-insumo', acceptsEntries: false })], /analítica/],
   ])('item 11 (defesa em profundidade) — conta de insumo %s → 400, nada é criado', async (_n, accs, msg) => {
     const { service, accountRepo, payableRepo, postEntry } = build();

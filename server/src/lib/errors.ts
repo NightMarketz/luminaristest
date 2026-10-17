@@ -1,3 +1,5 @@
+import type { SystemResetBlockedDetails } from '../features/accounting/models/accountingResetClassification';
+
 /**
  * Base application error class.
  */
@@ -101,6 +103,30 @@ export class ReportTooLargeError extends AppError {
     super(`O relatório lê mais de ${cap} linhas.`, 422, 'REPORT_TOO_LARGE');
     this.details = { rowsRead, cap };
     Object.setPrototypeOf(this, ReportTooLargeError.prototype);
+  }
+}
+
+/**
+ * BE-INCR-KIT-SETOR PR-3 (item 21; emenda §11 E-11.2 do BRIEF): o ajuste papel→conta foi desfeito porque a
+ * recompilação deu `Draft` — 422 com a versão `Draft` gravada e os bloqueantes do validador/cobertura, como o
+ * `POST /accounting-binding/compile` devolve hoje. A contabilidade não mudou: a versão `Active` segue a anterior.
+ */
+export class RoleOverrideCompileDraftError extends AppError {
+  public readonly details: {
+    binding: { status: string; bindingVersion: number };
+    blocking: unknown[];
+    missingEventKeys: string[];
+  };
+
+  /** PR-4 (aceitar pendência): mesma forma, com mensagem e código próprios (`KIT_PENDING_COMPILE_DRAFT`). */
+  constructor(
+    details: RoleOverrideCompileDraftError['details'],
+    message = 'A recompilação com o ajuste reprovou; o ajuste não foi gravado.',
+    errorCode = 'ROLE_OVERRIDE_COMPILE_DRAFT',
+  ) {
+    super(message, 422, errorCode);
+    this.details = details;
+    Object.setPrototypeOf(this, RoleOverrideCompileDraftError.prototype);
   }
 }
 
@@ -323,8 +349,22 @@ export class PackageOriginReversedError extends AppError {
  *  Nome e código são os que o I5 (F-I5-1 a) ratificou; quem executar primeiro cria, o outro reusa. */
 export class NoMapperForUnitError extends AppError {
   constructor(unitId: string, sourceType: string) {
-    super(`Nenhum mapper registrado para o evento '${sourceType}' na unidade '${unitId}' (recompile o binding).`, 409, 'NO_MAPPER_FOR_UNIT');
+    // BE-INCR-ONBOARDING-ACTIVATION item 2 (F-I5-3 → a, todo miss): a mensagem vale para as duas causas e não afirma qual.
+    super(
+      `Nenhum mapper registrado para o evento '${sourceType}' na unidade '${unitId}' — ` +
+        'a contabilidade da unidade não está ativa ou o binding não cobre o evento.',
+      409,
+      'NO_MAPPER_FOR_UNIT',
+    );
     Object.setPrototypeOf(this, NoMapperForUnitError.prototype);
+  }
+}
+
+/** BE-INCR-KIT-SETOR PR-6 (item 47): nenhum kit declara este `eventKey` — erro de fiação da origem, não de binding. */
+export class UnknownEventKeyError extends AppError {
+  constructor(sourceType: string) {
+    super(`Evento '${sourceType}' desconhecido: nenhum kit de setor o declara.`, 400, 'UNKNOWN_EVENT_KEY');
+    Object.setPrototypeOf(this, UnknownEventKeyError.prototype);
   }
 }
 
@@ -395,5 +435,46 @@ export class OnboardingRollbackFailedError extends AppError {
   constructor(message: string) {
     super(message, 500, 'ONBOARDING_ROLLBACK_FAILED');
     Object.setPrototypeOf(this, OnboardingRollbackFailedError.prototype);
+  }
+}
+
+// ── BE-INCR-SCOPE-UNIT-GUARD (nó I6, BRIEF item 1) — o `unitId` do cliente é validado contra a tabela `units` do dono.
+
+/**
+ * F-I6-3: id que não é linha de `units` do dono (outro dono, outra tabela, string livre, dono sem `units`) — 404; os
+ * casos são indistinguíveis de propósito (não revela se o id existe em outro dono).
+ */
+export class UnitNotFoundError extends AppError {
+  constructor() {
+    super('Unidade não encontrada.', 404, 'UNIT_NOT_FOUND');
+    Object.setPrototypeOf(this, UnitNotFoundError.prototype);
+  }
+}
+
+/** F-I6-4 (b) + F-I6-9: escrita em linha de `units` soft-deleted do dono — 409 (a leitura segue). */
+export class UnitDeletedError extends ConflictError {
+  constructor() {
+    super('Unidade apagada — restaure-a para lançar.', 'UNIT_DELETED');
+    Object.setPrototypeOf(this, UnitDeletedError.prototype);
+  }
+}
+
+/**
+ * BE-INCR-RESET-CONSISTENTE item 13 (nó I7, F-I7-1 → "409 só com movimento") — o "Resetar sistema" foi recusado porque
+ * há movimento contábil (linha em tabela BLOCKING) em alguma unidade do usuário. Nada foi apagado. `details` validado
+ * pelo `SystemResetBlockedDetailsSchema` antes de lançar; `handleApiError` o expõe.
+ */
+export class SystemResetBlockedByAccountingError extends AppError {
+  public readonly details: SystemResetBlockedDetails;
+
+  constructor(details: SystemResetBlockedDetails) {
+    const total = details.blocking.reduce((sum, b) => sum + b.count, 0);
+    super(
+      `O sistema tem movimento contábil (${total} registro(s) em ${details.blocking.length} tipo(s)) e não pode ser resetado: a escrituração precisa ser preservada.`,
+      409,
+      'SYSTEM_RESET_BLOCKED_BY_ACCOUNTING',
+    );
+    this.details = details;
+    Object.setPrototypeOf(this, SystemResetBlockedByAccountingError.prototype);
   }
 }

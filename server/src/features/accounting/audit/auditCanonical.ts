@@ -30,6 +30,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'entry.source_recorded': ['journalEntryId', 'sourceDocumentId', 'externalRef', 'sourceType'],
   // BE-INCR-DFE (nó X10b, PR-3, F-DFE-18 a) — soft-delete de SourceDocument (ex.: cancelamento).
   'entry.source_retired': ['sourceDocumentId', 'sourceType', 'motivoCodigo'],
+  // BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-7 (a): SD criado a partir de arquivo, sem lançamento. Só ids/hash/MIME/tamanho —
+  // nunca o nome do arquivo nem externalRef/description (texto livre do usuário).
+  'source_document.uploaded': ['sourceDocumentId', 'attachmentId', 'sourceType', 'mimeType', 'sizeBytes', 'sha256'],
   'account.created': ['code', 'name', 'nature', 'acceptsEntries'],
   'account.deleted': ['code'],
   // GOV-CONTADOR (BRIEF item 16): `assignmentId` quando há contador responsável ativo — evento antigo não tem a
@@ -126,6 +129,16 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // sem PII. A trilha `binding.*` do passo de compile continua à parte.
   'kit.installed':             ['kitKey', 'kitVersion', 'unitId'],
   'kit.install_failed':        ['kitKey', 'kitVersion', 'step'],
+  // BE-INCR-KIT-SETOR PR-3 (item 24) — ajuste papel→conta. Papel + ids de conta; o `motivo` (texto livre, risco de
+  // PII) fica só na linha `role_account_overrides`, nunca aqui. O desfazer de um ajuste reprovado (emenda E-11.1)
+  // usa os mesmos dois eventos.
+  'kit.role_override_set':     ['role', 'accountId', 'previousAccountId'],
+  'kit.role_override_removed': ['role'],
+  // BE-INCR-KIT-SETOR PR-4 (item 39) — atualização do kit: só versões e contagens; pendência decidida = id, item e
+  // motivo do conflito (código fechado). O `motivo` texto livre da decisão fica só na linha `kit_upgrade_pendings`.
+  'kit.upgrade_applied':          ['fromVersion', 'toVersion', 'additive', 'forward', 'conflicts'],
+  'kit.upgrade_pending_accepted': ['pendingId', 'itemKey', 'reason'],
+  'kit.upgrade_pending_rejected': ['pendingId', 'itemKey', 'reason'],
   // BE-INCR-NFE — a ingestão fiscal NÃO emite evento `nfe.*` próprio (decisão A / T8): auditoria é IN-TX
   // e os serviços de integração (compra/venda) não possuem tx própria. A nota já entra no trilho imutável
   // in-tx pela escrita que de fato ocorre — `payable.created` e a chave como `entry.source_recorded`.
@@ -186,7 +199,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     // SIMPLES-PISO-ANEXO-XI item 12 (F-AX-2 a): chaves do Anexo XI (A-0001…) separadas por vírgula — sem texto livre.
     'meiOcupacoes',
     // X14 F-PR4-12 (b): enum COMPETENCIA | CAIXA do regime de apuração do Simples.
-    'simplesRegimeApuracao'],
+    'simplesRegimeApuracao',
+    // BE-INCR-SIMPLES-CAIXA PR-1 (item 7; F-CX-3 a): data de efeitos da exclusão do Simples (date-only, sem PII).
+    'simplesExclusaoEfeitosEm'],
   'company_fiscal_profile.deleted': ['anoCalendario'],
   // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7, item 22) — só ids, enum e centavos como string; sem PII. O documento
   // da dedução (texto livre) e a memória ficam FORA do evento.
@@ -199,6 +214,12 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // como string; o número do DAS e a memória ficam FORA.
   'tax.simples_das.registrado': ['apuracaoId', 'competencia', 'valorOficialCents', 'totalCalculadoCents', 'divergenciaCents'],
   'tax.simples_das.substituido': ['apuracaoId', 'competencia', 'valorOficialCents', 'totalCalculadoCents', 'divergenciaCents', 'supersedesId'],
+  // BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-8 (a): PDF anexado a DAS já registrado (anteriorSourceDocumentId ausente quando não havia).
+  'tax.simples_das.documento_anexado': ['apuracaoId', 'competencia', 'sourceDocumentId', 'anteriorSourceDocumentId'],
+  // BE-INCR-SIMPLES-CAIXA PR-3 (nó X14-CAIXA, itens 20–21): ids, centavos em string, enum e data; a evidência (texto
+  // livre) fica FORA do evento.
+  'tax.simples_incobravel.registrado': ['incobravelId', 'saleId', 'valorCents', 'meioCobranca', 'data'],
+  'tax.simples_incobravel.removido': ['incobravelId', 'saleId'],
   // BE-INCR-LEGAL-PARAMS PR-1 (item 8; emenda §9 L-5: corrente da plataforma) — coeficiente de lei, sem PII.
   'legal_parameter.proposed': ['legalParameterId', 'tabela', 'chave', 'discriminador', 'valorInt', 'valorTexto', 'vigenteDesde', 'vigenteAte', 'supersedesId'],
   'legal_parameter.published': ['legalParameterId', 'tabela', 'chave', 'discriminador', 'vigenteDesde', 'vigenteAte', 'supersedesId'],
@@ -318,6 +339,11 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // I1b (ADR-INCR-UNIT-REKEY item 12, F-RK-6 b) — âncora genesis na cadeia da unidade nova, ligando-a à cadeia selada
   // do unitId legado. Ids/hash/contagens só (sem PII); `tables` é o JSON estável das contagens por tabela.
   'unit.rekeyed': ['fromUnitId', 'fromHeadHash', 'fromNextSeq', 'tables'],
+  // BE-INCR-RESET-CONSISTENTE item 14 (nó I7, F-I7-4) — "Resetar sistema" removeu a configuração contábil da unidade.
+  // `removed` = JSON estável tabela → contagem DAQUELA unidade. `companyLevel` = idem para as tabelas da EMPRESA, sem
+  // unitId (`CompanyFiscalProfile`): é do nível da empresa e SE REPETE, igual, no evento de cada unidade resetada —
+  // nunca some `companyLevel` entre unidades (dono, questionário, 2026-10-16: "Apaga, conta em toda unidade"). Sem PII.
+  'accounting.scope_reset': ['removed', 'companyLevel'],
 };
 
 /**

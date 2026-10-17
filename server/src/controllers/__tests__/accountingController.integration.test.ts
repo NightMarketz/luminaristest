@@ -24,13 +24,15 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { MAX_CENTS } from '@/features/accounting/models/money';
 
 const app = makeApp();
 
 const UNIT = 'unit-acctctrl';
 const UNIT_OUTRA = 'unit-acctctrl-outra';
+/** I6: o id de unidade é linha de `units` do dono (chave global) — o dono B tem a sua. */
+const UNIT_B = `${UNIT}-b`;
 const DATA = '2026-06-15';
 
 /** Dono A e dono B — o vazamento entre inquilinos só existe com DOIS donos na mesma base. */
@@ -82,8 +84,9 @@ describe('accountingController — contrato HTTP em SQLite real (subfila ratific
     pushTestSchema();
     donoA = await criarUsuario('acctctrl-a');
     donoB = await criarUsuario('acctctrl-b');
-    for (const dono of [donoA, donoB]) {
-      for (const unidade of [UNIT, UNIT_OUTRA]) {
+    for (const [dono, unidades] of [[donoA, [UNIT, UNIT_OUTRA]], [donoB, [UNIT_B]]] as const) {
+      for (const unidade of unidades) {
+        await seedUnit({ userId: dono.id, id: unidade });
         await abrirPeriodo(dono.id, unidade);
         await criarConta(dono.id, unidade, '4.1', 'Expense');
         await criarConta(dono.id, unidade, '1.1.1', 'Asset');
@@ -201,7 +204,7 @@ describe('accountingController — contrato HTTP em SQLite real (subfila ratific
    */
   it('inquilino: userId no CORPO é ignorado — o dono da linha é o do token', async () => {
     const res = await post(donoB, {
-      ...lancamento('corpo mentiroso', 4200),
+      ...lancamento('corpo mentiroso', 4200, UNIT_B),
       userId: donoA.id,
       ownerUserId: donoA.id,
     });
@@ -237,7 +240,7 @@ describe('accountingController — contrato HTTP em SQLite real (subfila ratific
       .set('x-user-id', donoA.id) // spoof: cópia inbound do header de autoridade
       .set('x-user-username', donoA.username)
       .set('x-user-role', 'ADMIN')
-      .send(lancamento('header forjado', 5100));
+      .send(lancamento('header forjado', 5100, UNIT_B));
 
     expect(res.status).toBe(201);
     const entry = await prisma.journalEntry.findUnique({ where: { id: res.body.data.id } });
@@ -258,8 +261,8 @@ describe('accountingController — contrato HTTP em SQLite real (subfila ratific
       .get('/api/accounting/entries')
       .set(authHeader(donoB))
       .query({ unitId: UNIT });
-    expect(doB.status).toBe(200);
-    expect(doB.body.data.entries.map((e: { id: string }) => e.id)).not.toContain(criado.body.data.id);
+    expect(doB.status).toBe(404); // I6: outro dono → 404 UNIT_NOT_FOUND (antes: 200 sem o lançamento do A)
+    expect(doB.body.code).toBe('UNIT_NOT_FOUND');
 
     // Mesmo dono, OUTRA unidade: a sub-partição também separa.
     const outraUnidade = await request(app)
@@ -284,7 +287,7 @@ describe('accountingController — contrato HTTP em SQLite real (subfila ratific
    */
   it('inquilino: dono B não estorna lançamento do dono A — nada escrito de nenhum lado', async () => {
     const criado = await post(donoA, lancamento('do dono A, intocável', 7700));
-    const antesB = await contagemDe(donoB.id);
+    const antesB = await contagemDe(donoB.id, UNIT_B);
 
     const res = await request(app)
       .post('/api/accounting/reverse')
@@ -292,7 +295,9 @@ describe('accountingController — contrato HTTP em SQLite real (subfila ratific
       .send({ unitId: UNIT, lancamentoId: criado.body.data.id, reversalPostingDate: DATA, reason: 'cross-tenant' });
 
     expect(res.status).toBe(404);
-    expect(await contagemDe(donoB.id)).toEqual(antesB); // nada para o B
+    expect(res.body.code).toBe('UNIT_NOT_FOUND'); // I6: outro dono → 404 UNIT_NOT_FOUND (antes: 404 do lançamento)
+    expect(await contagemDe(donoB.id, UNIT_B)).toEqual(antesB); // nada para o B
+    expect(await contagemDe(donoB.id)).toEqual({ entries: 0, postings: 0 }); // nem na unidade do A
     const original = await prisma.journalEntry.findUnique({ where: { id: criado.body.data.id } });
     expect(original!.reversedById).toBeNull(); // nem no razão do A
     expect(original!.status).toBe('Posted');

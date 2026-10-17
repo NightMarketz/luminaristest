@@ -1,12 +1,14 @@
 import React from 'react';
+import { useTranslation } from 'next-i18next';
 
 interface CreatingAnimationProps {
   message?: string;
 }
 
 export default function CreatingAnimation({ message }: CreatingAnimationProps) {
+  const { t } = useTranslation('common');
   return (
-    <div className="flex flex-col items-center justify-center text-center p-8 bg-white dark:bg-neutral-800 rounded-lg shadow-xl">
+    <div className="flex flex-col items-center justify-center text-center p-8 bg-white dark:bg-neutral-800 rounded-2xl shadow-xl">
       <div className="relative flex items-center justify-center w-24 h-24 mb-6">
         <div className="absolute w-full h-full bg-blue-500 rounded-full animate-ping opacity-75"></div>
         <div className="relative w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center">
@@ -16,11 +18,11 @@ export default function CreatingAnimation({ message }: CreatingAnimationProps) {
           </svg>
         </div>
       </div>
-      <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
-        {message || 'Um momento...'}
+      <h3 className="text-2xl font-bold text-neutral-800 dark:text-white mb-2">
+        {message || t('onboardingOneMoment')}
       </h3>
-      <p className="text-gray-600 dark:text-gray-400">
-        Estou configurando tudo para você. Isso pode levar alguns segundos.
+      <p className="text-neutral-600 dark:text-neutral-400">
+        {t('onboardingSettingUp')}
       </p>
     </div>
   );

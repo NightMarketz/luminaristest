@@ -3,6 +3,8 @@ import {
   createParceria,
   deleteParceria,
   listParcerias,
+  getSimplesHistorico,
+  getSimplesSegregacao,
   putSimplesHistorico,
   putSimplesSegregacao,
   updateParceria,
@@ -14,6 +16,9 @@ import {
   putDasnSimei,
   getDefis,
   putDefis,
+  getRegistroValoresAReceber,
+  createCreditoIncobravel,
+  deleteCreditoIncobravel,
 } from '../controllers/simplesController';
 
 /**
@@ -25,6 +30,9 @@ const router = Router();
 
 router.put('/historico/:competencia', putSimplesHistorico);
 router.put('/segregacao/:competencia', putSimplesSegregacao);
+// BE-INCR-SIMPLES-GET-ENTRADAS (itens 1–2) — leitura por competência; 404 sem registro (F-GE-1).
+router.get('/historico/:competencia', getSimplesHistorico);
+router.get('/segregacao/:competencia', getSimplesSegregacao);
 router.post('/parcerias', createParceria);
 router.get('/parcerias', listParcerias);
 router.patch('/parcerias/:id', updateParceria);
@@ -39,5 +47,9 @@ router.get('/dasn-simei/:ano', getDasnSimei);
 router.put('/dasn-simei/:ano', putDasnSimei);
 router.get('/defis/:ano', getDefis);
 router.put('/defis/:ano', putDefis);
+// BE-INCR-SIMPLES-CAIXA PR-3 (nó X14-CAIXA, itens 19–20): registro do Anexo IX e créditos incobráveis
+router.get('/registro-valores-a-receber', getRegistroValoresAReceber);
+router.post('/creditos-incobraveis', createCreditoIncobravel);
+router.delete('/creditos-incobraveis/:id', deleteCreditoIncobravel);
 
 export default router;

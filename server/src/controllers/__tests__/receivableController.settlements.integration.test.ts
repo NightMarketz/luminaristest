@@ -7,7 +7,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 const UNIT = 'unit-ar-settle-http';
@@ -32,6 +32,7 @@ describe('/api/receivables/{id}/settlements — contrato HTTP da baixa parcial (
     dono = await prisma.user.create({
       data: { name: 'ar-settle', username: 'ar-settle-http', email: 'ar-settle@test.local', password: 'x', role: 'USER' },
     });
+    await seedUnit({ userId: dono.id, id: UNIT });
     await prisma.accountingPeriod.create({
       data: { userId: dono.id, unitId: UNIT, year: 2026, month: 6, status: 'OPEN', openedAt: new Date(), openedById: dono.id },
     });
@@ -82,8 +83,8 @@ describe('/api/receivables/{id}/settlements — contrato HTTP da baixa parcial (
     expect(row.status).toBe('RECEIVING'); // status é do finalize em curso, não do cancel
     // O finalize do recibo em trânsito (simulado pelo repo real) resolve pelo saldo já decrementado.
     const { ReceivableRepository } = await import('@/features/accounting/repositories/ReceivableRepository');
-    const { resolveAccountingScope } = await import('@/features/accounting/scope/AccountingScope');
-    const scope = resolveAccountingScope({ userId: dono.id }, UNIT);
+    const { resolveAccountingScopeInternal } = await import('@/features/accounting/scope/resolveAccountingScopeInternal');
+    const scope = resolveAccountingScopeInternal({ userId: dono.id }, UNIT);
     expect(await new ReceivableRepository().finalizeIfReceiving(scope, receivableId, 50000)).toBe(1);
     row = await prisma.receivable.findUniqueOrThrow({ where: { id: receivableId } });
     expect(row.status).toBe('PARTIALLY_RECEIVED');

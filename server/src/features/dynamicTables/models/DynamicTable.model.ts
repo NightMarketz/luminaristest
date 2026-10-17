@@ -10,6 +10,9 @@ export interface IDynamicTable extends Omit<DynamicTable, 'schema' | 'internalNa
 // Base interface for the DynamicTableData model, extending the Prisma generated type
 export interface IDynamicTableData extends DynamicTableData { }
 
+/** Igualdade exata sobre um campo do JSON `data` (busca do agente — BRIEF BE-INCR-CHAT-AGENT §2.2). */
+export type FieldEquals = { name: string; value: string | number | boolean | null };
+
 export interface IFieldRelation {
   targetTable: string;
   allowMultiple?: boolean;

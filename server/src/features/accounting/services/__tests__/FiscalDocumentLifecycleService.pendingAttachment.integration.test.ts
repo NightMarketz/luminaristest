@@ -21,12 +21,12 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { FiscalDocumentRepository, attemptRef } from '@/features/accounting/repositories/FiscalDocumentRepository';
 import { FiscalDocumentLifecycleService } from '@/features/accounting/services/FiscalDocumentLifecycleService';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import type { EmissaoResult } from '@/features/accounting/dfe/DfeEmissorPort';
 
 const DONO = 'u-dfe-pend';
 const UNIT = 'unit-dfe-pend';
-const scope = resolveAccountingScope({ userId: DONO }, UNIT);
+const scope = resolveAccountingScopeInternal({ userId: DONO }, UNIT);
 const repo = new FiscalDocumentRepository();
 const upload = jest.fn(async (_s: unknown, a: { fileName: string }) => ({ id: `att-${a.fileName}` }));
 const attachSourceDocument = jest.fn(async () => ({ id: 'src-real' }));
@@ -124,4 +124,56 @@ describe('DFE-ANEXO-PENDENTE — pendência em SQLite real', () => {
     upload.mockReset();
     upload.mockImplementation(async (_s: unknown, a: { fileName: string }) => ({ id: `att-${a.fileName}` }));
   });
+
+  // Revisão pós-merge do #602, achado B: o skip (manual / sem XML) não deixa rastro e a query pega os 50 mais
+  // antigos — 50 pulados na frente da fila escondem o documento mais novo para sempre. Dono 2026-10-13: cada tick
+  // varre TODOS os candidatos (leitura literal do F-PA-8 b, "em todo tick").
+  it('backfill: 50 documentos manuais mais antigos na frente não impedem a reconsulta do mais novo', async () => {
+    const antigo = new Date('2026-01-01T00:00:00Z').getTime();
+    for (let i = 0; i < 50; i++) {
+      const manual = await repo.createSent(scope, {
+        kind: 'NFSE',
+        saleId: `sale-manual-${i}`,
+        cTribNac: '060101',
+        anchorEntryId: 'entry-x',
+        ambiente: 'producao',
+        partner: 'manual',
+        serie: 1,
+        numero: BigInt(100 + i),
+        dCompet: '2026-01-01',
+        vServCents: 10000n,
+        tpRetISSQN: 1,
+        payloadJson: '{"v":1}',
+      });
+      await repo.transition(scope, manual.id, { status: 'AUTHORIZED', chaveOuCodigo: `CHAVE-M${i}`, authorizedAt: new Date(antigo + i * 1000) });
+    }
+    const novo = await pendente('sale-pend-4');
+    await repo.transition(scope, novo.id, { status: 'AUTHORIZED', partnerRef: attemptRef(novo.id, 1), chaveOuCodigo: 'CHAVE-P4', authorizedAt: new Date() });
+    mockPort.consultar.mockResolvedValue(auth(novo.id, 'CHAVE-P4'));
+
+    await service.drainPendingAttachmentsOnce();
+
+    expect(await prisma.fiscalDocumentPendingAttachment.count({ where: { documentId: novo.id } })).toBe(1);
+    mockPort.consultar.mockReset();
+  });
+
+  // Revisão pós-merge do #602, achado A: o filtro "sem pendência" virava `notIn` com um parâmetro por pendência já
+  // existente (DONE fica para sempre). Acima do limite de variáveis do SQLite (32 766) a query estoura e, sem try em
+  // volta do backfill, a varredura inteira para.
+  it('backfill: com mais de 32 766 pendências já existentes, a varredura ainda reconsulta o candidato', async () => {
+    const agora = Date.now();
+    await prisma.$executeRawUnsafe(
+      `WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 33000)
+       INSERT INTO "fiscal_document_pending_attachments"
+         ("id", "userId", "unitId", "documentId", "status", "resultJson", "attempts", "nextAttemptAt", "createdAt", "updatedAt")
+       SELECT 'pend-massa-' || i, '${DONO}', '${UNIT}', 'doc-massa-' || i, 'DONE', '{}', 0, ${agora}, ${agora}, ${agora} FROM n`,
+    );
+    const doc = await pendente('sale-pend-5');
+    await repo.transition(scope, doc.id, { status: 'AUTHORIZED', partnerRef: attemptRef(doc.id, 1), chaveOuCodigo: 'CHAVE-P5', authorizedAt: new Date() });
+    mockPort.consultar.mockResolvedValue(auth(doc.id, 'CHAVE-P5'));
+
+    await expect(service.drainPendingAttachmentsOnce()).resolves.toMatchObject({ failed: 0 });
+    expect(await prisma.fiscalDocumentPendingAttachment.count({ where: { documentId: doc.id } })).toBe(1);
+    mockPort.consultar.mockReset();
+  }, 60000);
 });

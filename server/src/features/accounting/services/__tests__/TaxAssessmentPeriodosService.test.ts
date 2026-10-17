@@ -5,14 +5,14 @@
 import type { CompanyFiscalProfile, LegalParameter, SimplesApuracao, TaxAssessment } from 'generated/prisma';
 import { ForbiddenError } from '@/lib/errors';
 import { AccountingPolicy } from '@/features/accounting/policies/AccountingPolicy';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { TaxAssessmentPeriodosService } from '@/features/accounting/services/TaxAssessmentPeriodosService';
 import { trimestresEmAtividade } from '@/features/accounting/models/taxAssessmentCalc';
 import { mesesEmAtividade } from '@/features/accounting/models/taxAssessmentCalcAnual';
 import { TaxAssessmentPeriodosQuerySchema, TaxAssessmentPeriodosViewSchema } from '@/features/accounting/dtos/TaxAssessmentPeriodosDto';
 import { legalParamsSeedRows } from '@test/helpers/legalParams';
 
-const scope = resolveAccountingScope({ userId: 'dono' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'dono' }, 'unit-1');
 const seed = legalParamsSeedRows() as unknown as LegalParameter[];
 
 function perfil(over: Partial<CompanyFiscalProfile>): CompanyFiscalProfile {

@@ -1,6 +1,6 @@
 import { CANONICAL_ACCOUNTS, RECEITA_NAO_USO_CODE } from '../../fixtures/ChartOfAccountsFixture';
 import { SpedEcfGenerationService } from '../SpedEcfGenerationService';
-import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import { ForbiddenError, ValidationError } from '../../../../lib/errors';
 import { logger } from '../../../../lib/logger';
 import type { SpedEcfRequestDto } from '../../dtos/SpedEcfDto';
@@ -23,7 +23,7 @@ jest.mock('../../../../lib/alertWebhook', () => ({
   sendAlertWebhook: (...a: unknown[]) => sendAlertWebhook(...a),
 }));
 
-const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'owner-1' }, 'unit-1');
 
 function makeAccount(over: Partial<Account>): Account {
   return {
@@ -61,6 +61,10 @@ interface Mocks {
   accounts?: Account[];
   extraRevenueMove?: boolean; // add movement on a non-3.1/3.3 revenue account
   extraRevenueAccountId?: string; // which account receives that movement (default rec39)
+  /** F-PCB-1R: débito de PIS/COFINS sobre a receita (ano e trimestre) nestas contas. */
+  deducaoMoveIds?: string[];
+  /** Perfil fiscal do escopo (só os 2 campos que o gate lê); `null` = sem perfil. */
+  perfil?: { pisDespesaAccountId: string | null; cofinsDespesaAccountId: string | null } | null;
 }
 
 function buildService(m: Mocks = {}) {
@@ -79,6 +83,7 @@ function buildService(m: Mocks = {}) {
         { accountId: 'rec31', debitCents: 0, creditCents: isYear ? 60000000 : 15000000 },
         { accountId: 'rec33', debitCents: 0, creditCents: isYear ? 20000000 : 5000000 },
       ];
+      for (const id of m.deducaoMoveIds ?? []) rows.push({ accountId: id, debitCents: isYear ? 2190000 : 547500, creditCents: 0 });
       if (m.extraRevenueMove) {
         rows.push({ accountId: m.extraRevenueAccountId ?? 'rec39', debitCents: 0, creditCents: isYear ? 4000000 : 1000000 });
       }
@@ -99,7 +104,9 @@ function buildService(m: Mocks = {}) {
   const append = jest.fn(async () => undefined);
   const audit = { append } as never;
 
-  const service = new SpedEcfGenerationService(accountRepo, postingRepo, policy, repo, audit, legalParamsSemente);
+  const fiscalProfileRepo = { findByScope: jest.fn(async () => m.perfil ?? null) } as never;
+
+  const service = new SpedEcfGenerationService(accountRepo, postingRepo, policy, repo, audit, legalParamsSemente, fiscalProfileRepo);
   return { service, createJob, updateJob, groupByAccount, append, policy };
 }
 
@@ -171,6 +178,48 @@ describe('SpedEcfGenerationService.generate', () => {
     expect(err).toBeInstanceOf(ValidationError);
     expect((err as ValidationError).details).toEqual({ unmappedRevenueAccounts: [{ code: '3.2', name: 'Devoluções de Vendas' }] });
     expect(createJob).not.toHaveBeenCalled();
+  });
+
+  // F-PCB-1R (a), dono 13/10 — o teste (f) do F-PCB-1: PIS/COFINS sobre a receita é dedução (Revenue, saldo devedor);
+  // as 2 contas do perfil saem do gate e a ECF gera, com a base presumida intacta (a dedução não reduz a receita bruta).
+  describe('F-PCB-1R — contas de dedução de PIS/COFINS do perfil', () => {
+    const PIS = makeAccount({ id: 'rec361', code: '3.6.1', name: 'PIS sobre a receita', nature: 'Revenue', acceptsEntries: true });
+    const COFINS = makeAccount({ id: 'rec362', code: '3.6.2', name: 'COFINS sobre a receita', nature: 'Revenue', acceptsEntries: true });
+    const accounts = [GRUPO_REC, SERVICO, REVENDA, PIS, COFINS];
+
+    it('configuradas no perfil e com movimento ⇒ a ECF gera, P200/P400 sem a dedução', async () => {
+      const { service, createJob } = buildService({
+        accounts,
+        deducaoMoveIds: ['rec361', 'rec362'],
+        perfil: { pisDespesaAccountId: 'rec361', cofinsDespesaAccountId: 'rec362' },
+      });
+      await expect(service.generate(scope, makeDto())).resolves.toBeDefined();
+      expect(createJob).toHaveBeenCalled();
+      expect(producedLines()).toContain('|P200|8||150000,00|');
+      expect(producedLines()).toContain('|P200|4||50000,00|');
+    });
+
+    it('a mesma conta com movimento, fora do perfil ⇒ 400 (exatamente as contas configuradas, não o prefixo)', async () => {
+      const { service } = buildService({
+        accounts,
+        deducaoMoveIds: ['rec361', 'rec362'],
+        perfil: { pisDespesaAccountId: 'rec361', cofinsDespesaAccountId: null },
+      });
+      const err = await service.generate(scope, makeDto()).catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(ValidationError);
+      expect((err as ValidationError).details).toEqual({ unmappedRevenueAccounts: [{ code: '3.6.2', name: 'COFINS sobre a receita' }] });
+    });
+
+    it('sem perfil fiscal ⇒ o gate reprova as duas, como antes', async () => {
+      const { service } = buildService({ accounts, deducaoMoveIds: ['rec361', 'rec362'], perfil: null });
+      const err = await service.generate(scope, makeDto()).catch((e: unknown) => e);
+      expect((err as ValidationError).details).toEqual({
+        unmappedRevenueAccounts: [
+          { code: '3.6.1', name: 'PIS sobre a receita' },
+          { code: '3.6.2', name: 'COFINS sobre a receita' },
+        ],
+      });
+    });
   });
 
   it('does NOT block when the extra Revenue account has ZERO movement', async () => {

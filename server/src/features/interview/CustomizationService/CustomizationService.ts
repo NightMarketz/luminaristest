@@ -3,78 +3,62 @@ import { OpenAIService } from '../../../lib/openai/OpenAIService';
 import { ICustomizationState, IInterviewTurnResult, IMessage } from '../models/InterviewTypes';
 import { presetKnowledgeBase } from '../../dynamicTables/presets/ai/PresetKnowledgeBase';
 import { presetService } from '../../dynamicTables/services/PresetService';
+import { describeTableLock } from '../../dynamicTables/presets/removability';
 import { TableExtractor } from './TableExtractor';
 import { AIInteractions } from './AIInteractions';
-import { StateManager } from './StateManager';
+import { IInterviewSessionHandle, StateManager } from './StateManager';
+import { isInterviewSessionError } from '../models/InterviewSession.model';
 
 /**
  * @description
  * Este serviço é responsável por guiar o usuário através do processo de customização
  * de um preset de sistema. Ele recebe o preset base e interagirá com o usuário
  * para modificar tabelas, campos e outras configurações.
+ *
+ * W4: a sessão é persistida e tem dono (`StateManager` sobre `InterviewSession`, injetado pelo factory). Sessão
+ * perdida → `InterviewSessionNotFoundError` (404); turno concorrente → `InterviewSessionConflictError` (409). Os
+ * `catch` amplos daqui relançam os dois.
  */
 export class CustomizationService {
-  private static instance: CustomizationService;
   private openaiService: OpenAIService;
   private tableExtractor: TableExtractor;
   private aiInteractions: AIInteractions;
   private stateManager: StateManager;
 
-  private constructor() {
-    this.stateManager = StateManager.getInstance();
-    this.openaiService = OpenAIService.getInstance();
+  constructor(stateManager: StateManager, openaiService: OpenAIService = OpenAIService.getInstance()) {
+    this.stateManager = stateManager;
+    this.openaiService = openaiService;
     this.tableExtractor = new TableExtractor();
     this.aiInteractions = new AIInteractions(this.openaiService);
     logger.info('[CustomizationService] Initialized');
   }
 
-  public static getInstance(): CustomizationService {
-    if (!CustomizationService.instance) {
-      CustomizationService.instance = new CustomizationService();
-    }
-    return CustomizationService.instance;
-  }
-
   /**
-   * Gera um novo ID de sessão
+   * Cria uma sessão de customização do usuário para um preset específico. O id da sessão é o da linha persistida.
    */
-  public generateSessionId(): string {
-    return this.stateManager.generateSessionId();
-  }
+  public async createCustomizationSession(presetKey: string, userId: string): Promise<IInterviewSessionHandle | null> {
+    logger.info(`[CustomizationService] Criando sessão de customização para preset ${presetKey}`);
 
-  /**
-   * Cria uma sessão de customização para um preset específico
-   */
-  public createCustomizationSession(presetKey: string, sessionId: string): ICustomizationState | null {
-    logger.info(`[CustomizationService] Criando sessão de customização para preset ${presetKey} com sessionId ${sessionId}`);
-    
     // Encontra o preset usando o PresetService em vez da base de conhecimento da AI
     const preset = presetService.getPresetByKey(presetKey);
     if (!preset) {
       logger.error(`[CustomizationService] Preset com key ${presetKey} não encontrado`);
       return null;
     }
-    
+
     // Obtém a descrição para a IA da base de conhecimento
     const presetKnowledge = presetKnowledgeBase.find(p => p.key === presetKey);
     if (!presetKnowledge) {
       logger.error(`[CustomizationService] Conhecimento do preset com key ${presetKey} não encontrado na base da AI`);
       return null;
     }
-    
+
     // Extrai as tabelas do preset real
     const tables = this.tableExtractor.extractTablesFromRealPreset(preset);
-    
+
     // Cria o estado da customização usando o StateManager
     try {
-      const customizationState = this.stateManager.createSessionState(
-        presetKey,
-        preset.name,
-        tables,
-        sessionId
-      );
-      
-      return customizationState;
+      return await this.stateManager.createSessionState(userId, presetKey, preset.name, tables);
     } catch (error) {
       logger.error(`[CustomizationService] Erro ao criar sessão de customização: ${error}`);
       return null;
@@ -84,20 +68,9 @@ export class CustomizationService {
   /**
    * Gera uma apresentação elegante das tabelas do preset para o usuário
    */
-  public async generateTablesPresentation(sessionId: string, isInteractive = false): Promise<string> {
-    logger.info(`[CustomizationService] Gerando apresentação de tabelas para sessionId ${sessionId}`);
-    
-    if (!this.stateManager.sessionExists(sessionId)) {
-      logger.error(`[CustomizationService] Sessão com ID ${sessionId} não encontrada`);
-      return 'Sessão de customização não encontrada. Por favor, tente novamente.';
-    }
-    
-    const session = this.stateManager.getSessionState(sessionId);
-    if (!session) {
-      logger.error(`[CustomizationService] Estado da sessão ${sessionId} não disponível apesar de existir`);
-      return 'Erro interno ao obter dados da sessão. Por favor, tente novamente.';
-    }
-    
+  public async generateTablesPresentation(session: ICustomizationState, isInteractive = false): Promise<string> {
+    logger.info(`[CustomizationService] Gerando apresentação de tabelas do preset ${session.presetKey}`);
+
     // No modo interativo, geramos uma resposta simples, pois os detalhes serão exibidos no painel lateral
     if (isInteractive) {
       return `# Customização do Sistema "${session.presetName}"
@@ -163,29 +136,13 @@ Você gostaria de:
   /**
    * Processa a resposta do usuário durante a customização
    */
-  public async processCustomizationStep(sessionId: string, messages: IMessage[]): Promise<IInterviewTurnResult> {
+  public async processCustomizationStep(sessionId: string, userId: string, messages: IMessage[]): Promise<IInterviewTurnResult> {
     try {
       logger.info(`[CustomizationService] Processando passo de customização para sessionId ${sessionId}`);
 
-      // Verifica se a sessão existe
-      if (!this.stateManager.sessionExists(sessionId)) {
-        logger.error(`[CustomizationService] Sessão com ID ${sessionId} não encontrada`);
-        return {
-          response: "Desculpe, ocorreu um erro ao processar sua customização. Vamos recomeçar.",
-          nextStage: 'MATCHING_PRESET'
-        };
-      }
-      
-      const session = this.stateManager.getSessionState(sessionId);
-      // TypeScript não consegue inferir que session não é nulo depois da verificação de sessionExists
-      // Por isso, fazemos uma verificação adicional para garantir a type safety
-      if (!session) {
-        logger.error(`[CustomizationService] Estado da sessão ${sessionId} não disponível apesar de existir`);
-        return {
-          response: "Desculpe, ocorreu um erro interno. Vamos recomeçar.",
-          nextStage: 'MATCHING_PRESET'
-        };
-      }
+      // W4 item 5 (F-W4-2 b): sessão perdida, expirada ou alheia → 404 estruturado, não "Vamos recomeçar".
+      const handle = await this.stateManager.loadSession(sessionId, userId);
+      const session = handle.state;
 
       // Obtém a última mensagem do usuário
       const lastUserMessage = messages.filter(m => m.role === 'user').pop();
@@ -199,19 +156,19 @@ Você gostaria de:
       }
 
       // Adiciona a mensagem ao histórico de customização
-      this.stateManager.addCustomizationMessage(sessionId, lastUserMessage);
+      await this.stateManager.addCustomizationMessage(handle, lastUserMessage);
 
       // Prepara o contexto para análise da intenção
-      const customizationContext = this.stateManager.getCustomizationSummary(sessionId);
-      
+      const customizationContext = this.stateManager.getCustomizationSummary(session);
+
       // Se já estamos em um fluxo específico de ação, continue esse fluxo
       if (session.currentAction === 'adding') {
         // Processa a adição de uma nova tabela
-        return await this.processAddingTable(sessionId, lastUserMessage.content);
-      } 
+        return await this.processAddingTable(handle, lastUserMessage.content);
+      }
       else if (session.currentAction === 'removing') {
         // Processa a remoção de uma tabela
-        return await this.processRemovingTable(sessionId, lastUserMessage.content);
+        return await this.processRemovingTable(handle, lastUserMessage.content);
       }
 
       // Se não estamos em um fluxo específico, analisa a intenção do usuário
@@ -224,7 +181,7 @@ Você gostaria de:
       switch (intent.action) {
         case 'add':
           // Inicia o fluxo de adição de tabela
-          this.stateManager.setCurrentAction(sessionId, 'adding');
+          await this.stateManager.setCurrentAction(handle, 'adding');
           const addingGuidance = await this.aiInteractions.generateAddingGuidance();
           return {
             response: addingGuidance,
@@ -234,7 +191,7 @@ Você gostaria de:
 
         case 'remove':
           // Inicia o fluxo de remoção de tabela
-          this.stateManager.setCurrentAction(sessionId, 'removing');
+          await this.stateManager.setCurrentAction(handle, 'removing');
           // Prepara a lista de tabelas não essenciais para apresentar ao usuário
           const removableTables = session.tables
             .filter(t => !t.isCore)
@@ -249,7 +206,7 @@ Você gostaria de:
 
         case 'done':
           // Finaliza a customização
-          this.stateManager.completeCustomization(sessionId);
+          await this.stateManager.completeCustomization(handle);
           return {
             response: `# Customização Concluída!\n\nSeu sistema "${session.presetName}" foi customizado com sucesso e agora inclui todas as funcionalidades e tabelas que você solicitou.\n\nO sistema será criado conforme suas especificações.`,
             nextStage: 'CUSTOMIZATION_COMPLETED',
@@ -260,17 +217,17 @@ Você gostaria de:
           // Para intenção desconhecida, responde com uma mensagem genérica
           const systemPrompt = `
             Você é um assistente de customização de sistemas. O usuário está personalizando um sistema chamado "${session.presetName}".
-            
+
             Estado atual do sistema:
             ${customizationContext}
-            
+
             A mensagem do usuário foi: "${lastUserMessage.content}"
-            
+
             Responda de forma útil e educada, explicando as opções disponíveis para customização:
             1. Adicionar novas funcionalidades/tabelas
             2. Remover funcionalidades/tabelas existentes que não são essenciais
             3. Finalizar a customização e criar o sistema
-            
+
             Use formatação markdown para tornar sua resposta mais legível.
           `;
 
@@ -282,6 +239,7 @@ Você gostaria de:
           };
       }
     } catch (error) {
+      if (isInterviewSessionError(error)) throw error;
       logger.error(`[CustomizationService] Erro ao processar passo de customização: ${error}`);
       return {
         response: "Ocorreu um erro ao processar sua solicitação de customização. Por favor, tente novamente.",
@@ -294,7 +252,8 @@ Você gostaria de:
   /**
    * Processa a adição de uma nova tabela
    */
-  private async processAddingTable(sessionId: string, userMessage: string): Promise<IInterviewTurnResult> {
+  private async processAddingTable(handle: IInterviewSessionHandle, userMessage: string): Promise<IInterviewTurnResult> {
+    const sessionId = handle.id;
     try {
       logger.info(`[CustomizationService] Processando adição de tabela para sessionId ${sessionId}`);
 
@@ -304,15 +263,15 @@ Você gostaria de:
         Analise a mensagem do usuário e extraia:
         1. O nome da tabela a ser criada
         2. Uma breve descrição da finalidade da tabela
-        
+
         A mensagem do usuário foi: "${userMessage}"
-        
+
         Responda APENAS no formato JSON:
         {
           "tableName": "nome da tabela",
           "description": "descrição da tabela"
         }
-        
+
         Se não for possível extrair essas informações, responda com:
         {
           "tableName": "",
@@ -348,14 +307,14 @@ Você gostaria de:
         }
 
         // Adiciona a tabela ao estado
-        const success = this.stateManager.addTable(
-          sessionId,
+        const success = await this.stateManager.addTable(
+          handle,
           tableInfo.tableName,
           tableInfo.description
         );
 
         // Reseta o estado de ação
-        this.stateManager.setCurrentAction(sessionId, null);
+        await this.stateManager.setCurrentAction(handle, null);
 
         if (success) {
           return {
@@ -371,6 +330,7 @@ Você gostaria de:
           };
         }
       } catch (error) {
+        if (isInterviewSessionError(error)) throw error;
         logger.error(`[CustomizationService] Erro ao processar JSON da adição de tabela: ${error}`);
       }
 
@@ -380,8 +340,9 @@ Você gostaria de:
         sessionId
       };
     } catch (error) {
+      if (isInterviewSessionError(error)) throw error;
       logger.error(`[CustomizationService] Erro ao processar adição de tabela: ${error}`);
-      this.stateManager.setCurrentAction(sessionId, null);
+      await this.stateManager.setCurrentAction(handle, null);
       return {
         response: "Ocorreu um erro ao processar a adição da tabela. Por favor, tente novamente.",
         nextStage: 'CUSTOMIZATION_IN_PROGRESS',
@@ -393,31 +354,23 @@ Você gostaria de:
   /**
    * Processa a remoção de uma tabela
    */
-  private async processRemovingTable(sessionId: string, userMessage: string): Promise<IInterviewTurnResult> {
+  private async processRemovingTable(handle: IInterviewSessionHandle, userMessage: string): Promise<IInterviewTurnResult> {
+    const sessionId = handle.id;
     try {
       logger.info(`[CustomizationService] Processando remoção de tabela para sessionId ${sessionId}`);
 
-      // Obtém o estado da customização
-      const session = this.stateManager.getSessionState(sessionId);
-      if (!session) {
-        logger.error(`[CustomizationService] Sessão com ID ${sessionId} não encontrada`);
-        return {
-          response: "Ocorreu um erro ao processar a remoção da tabela. A sessão não foi encontrada.",
-          nextStage: 'CUSTOMIZATION_IN_PROGRESS',
-          sessionId
-        };
-      }
+      const session = handle.state;
 
       // Extrai o nome da tabela a ser removida
       const systemPrompt = `
         Você é um analisador de requisições para remoção de tabelas em um sistema.
         Analise a mensagem do usuário e extraia o nome da tabela a ser removida.
-        
+
         Tabelas disponíveis para remoção:
         ${session.tables.filter(t => !t.isCore).map(t => `- ${t.name} (key: ${t.key})`).join('\n')}
-        
+
         A mensagem do usuário foi: "${userMessage}"
-        
+
         Responda APENAS com o nome ou a chave da tabela a ser removida. Se não for possível identificar, responda com "unknown".
       `;
 
@@ -433,10 +386,10 @@ Você gostaria de:
 
       // Tenta remover a tabela
       const tableKey = aiResponse.trim();
-      const success = this.stateManager.removeTable(sessionId, tableKey);
+      const success = await this.stateManager.removeTable(handle, tableKey);
 
       // Reseta o estado de ação
-      this.stateManager.setCurrentAction(sessionId, null);
+      await this.stateManager.setCurrentAction(handle, null);
 
       if (success) {
         return {
@@ -458,15 +411,23 @@ Você gostaria de:
           };
         }
 
+        // W2 item 6: recusa por trava diz o motivo; "não encontrada" fica separada.
+        const target = session.tables.find(
+          (t) => t.key === tableKey || t.name.toLowerCase() === tableKey.toLowerCase(),
+        );
+        const reason = target?.lock
+          ? describeTableLock(target.key, target.lock)
+          : `Não encontrei a tabela "${tableKey}" neste sistema.`;
         return {
-          response: `Não foi possível remover a tabela "${tableKey}". Ela pode ser essencial para o sistema ou não foi encontrada.\n\nTabelas disponíveis para remoção:\n${removableTables.map(t => `- ${t}`).join('\n')}\n\nPor favor, escolha uma das tabelas listadas ou selecione outra ação.`,
+          response: `${reason}\n\nTabelas disponíveis para remoção:\n${removableTables.map(t => `- ${t}`).join('\n')}\n\nPor favor, escolha uma das tabelas listadas ou selecione outra ação.`,
           nextStage: 'CUSTOMIZATION_IN_PROGRESS',
           sessionId
         };
       }
     } catch (error) {
+      if (isInterviewSessionError(error)) throw error;
       logger.error(`[CustomizationService] Erro ao processar remoção de tabela: ${error}`);
-      this.stateManager.setCurrentAction(sessionId, null);
+      await this.stateManager.setCurrentAction(handle, null);
       return {
         response: "Ocorreu um erro ao processar a remoção da tabela. Por favor, tente novamente.",
         nextStage: 'CUSTOMIZATION_IN_PROGRESS',

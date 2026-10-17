@@ -61,6 +61,20 @@ jobs:
       - name: Lint (layer-gate)
         run: npm run lint
 
+      # Fronteiras de camada (dependency-cruiser) — docs/adr/ADR-ARCH-BOUNDARIES.md. Bloqueia só
+      # violação NOVA: as existentes estão no baseline .dependency-cruiser-known-violations.json.
+      - name: Architecture boundaries (check:arch)
+        run: npm run check:arch
+
+      # Código morto (knip) e duplicação (jscpd): só reportam por enquanto (ADR-ARCH-BOUNDARIES).
+      - name: Dead code (check:dead, advisory)
+        continue-on-error: true
+        run: npm run check:dead
+
+      - name: Duplication (check:dup, advisory)
+        continue-on-error: true
+        run: npm run check:dup
+
       # Gate de governança C5 — dívida SUPRIMIDA (medida pelo ESLint) × dívida DECLARADA
       # (bloco debt-ledger do spec). O passo acima barra violação SEM supressão; este barra
       # a supressão que não corresponde mais a nada, o spec que declara dívida já paga, e a
@@ -136,7 +150,7 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=8192
         run: |
           set -uo pipefail
-          npx jest --selectProjects "${{ matrix.project }}" --shard="${{ matrix.shard }}" --detectOpenHandles --cacheDirectory=.jest-cache 2>&1 | tee jest.log
+          npx jest --selectProjects "${{ matrix.project }}" --shard="${{ matrix.shard }}" --detectOpenHandles --cacheDirectory=.jest-cache --coverage --coverageReporters=json --coverageThreshold='{}' 2>&1 | tee jest.log
           status=${PIPESTATUS[0]}
           if grep -q "Jest has detected the following" jest.log; then
             echo "::error::Open handle vazado — algum teste não fecha um recurso async (TECH-DEBT-TEST-001)."
@@ -145,12 +159,47 @@ jobs:
           fi
           exit "$status"
 
+      # Cobertura por shard é parcial por definição; o piso é aplicado no job `server-coverage`,
+      # sobre a soma dos 7 shards (por isso `--coverageThreshold='{}'` acima).
+      - name: Upload coverage do shard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.project }}-${{ strategy.job-index }}
+          path: server/coverage/coverage-final.json
+          if-no-files-found: error
+          retention-days: 3
+
+  server-coverage:
+    name: Server – coverage gate
+    runs-on: ubuntu-latest
+    needs: [server-tests]
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-*
+          path: server/coverage-shards
+      - name: Piso de cobertura (coverageThreshold.global do jest.config.js)
+        run: node scripts/coverage-gate.js coverage-shards
+
   # Agregador: mantém o nome do required status check da branch protection. `always()` para
   # reprovar (e não ficar "skipped" = pendente eterno) quando algum shard falha.
   server:
     name: Server – typecheck & test
     runs-on: ubuntu-latest
-    needs: [server-static, server-tests]
+    needs: [server-static, server-tests, server-coverage]
     if: always()
     steps:
       - name: All server jobs passed
@@ -180,6 +229,18 @@ jobs:
 
       - name: Lint (layer-gate)
         run: npm run lint:gate
+
+      # Metade frontend das fronteiras (dependency-cruiser) — ver o comentário no job `server-static`.
+      - name: Architecture boundaries (check:arch)
+        run: npm run check:arch
+
+      - name: Dead code (check:dead, advisory)
+        continue-on-error: true
+        run: npm run check:dead
+
+      - name: Duplication (check:dup, advisory)
+        continue-on-error: true
+        run: npm run check:dup
 
       # Metade frontend do gate C5 — ver o comentário no job `server`.
       - name: Debt ledger matches spec (governance C5)
@@ -259,9 +320,9 @@ jobs:
           [ "$fail" = 0 ] && echo "OK: camada de governança OPS-001 presente."
           exit "$fail"
 
-      # _INDEX/_ANCORAS são gerados e o driver `regen` engole conflito neles (.gitattributes);
-      # este passo pega o esquecimento de rodar scripts/regen-generated.sh depois do merge.
-      - name: Plano vault íntegro (_INDEX/_ANCORAS em dia, links resolvem)
+      # Sem --indice: o PR não carrega _INDEX/_ANCORAS (dono, chat, 2026-10-16) — o workflow
+      # plano-index regenera os dois na main depois do merge e é ele quem roda `check --indice`.
+      - name: Plano vault íntegro (links e dependências resolvem)
         run: node scripts/plano-vault.mjs check
 
   # Diff-scoped design gate. A base ainda tem ~33 ocorrências de `zinc-` pré-existentes

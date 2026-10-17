@@ -30,7 +30,11 @@ function tsFiles(dir: string): string[] {
 const ACCOUNTING_SEGMENT = /(^|\/)accounting(\/|$)/;
 const DYNAMIC_TABLES_SEGMENT = /(^|\/)dynamicTables(\/|$)/;
 const ALLOWED_ACCOUNTING_IMPORTS: ReadonlyArray<{ suffix: RegExp; names: readonly string[] }> = [
-  { suffix: /accounting\/fixtures\/ChartOfAccountsFixture$/, names: ['CANONICAL_ACCOUNTS', 'CanonicalAccount', 'AccountNature'] },
+  {
+    suffix: /accounting\/fixtures\/ChartOfAccountsFixture$/,
+    // + o de-para da L8 e o plano de 3 níveis congelado (BE-INCR-PLANO-4-NIVEIS, F-L8-8 a e F-L8-9 a, dono 13/10).
+    names: ['CANONICAL_ACCOUNTS', 'CanonicalAccount', 'AccountNature', 'CANONICAL_ACCOUNTS_PRE_L8', 'codigoPosL8'],
+  },
 ];
 
 function namedImportsOf(statement: string): string[] {

@@ -13,14 +13,14 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { FiscalDocumentRepository, attemptRef } from '@/features/accounting/repositories/FiscalDocumentRepository';
 import { ServiceFiscalProfileRepository, deletedServiceRef } from '@/features/accounting/repositories/ServiceFiscalProfileRepository';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 import type { CreateSentFiscalDocumentData } from '@/features/accounting/repositories/IFiscalDocumentRepository';
 
 const UNIT = 'unit-dfe';
 const DONO_A = 'u-dfe-a';
 const DONO_B = 'u-dfe-b';
-const escopo = (userId: string, unitId: string = UNIT): AccountingScope => resolveAccountingScope({ userId }, unitId);
+const escopo = (userId: string, unitId: string = UNIT): AccountingScope => resolveAccountingScopeInternal({ userId }, unitId);
 
 const docRepo = new FiscalDocumentRepository();
 const svcRepo = new ServiceFiscalProfileRepository();

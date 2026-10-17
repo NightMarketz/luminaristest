@@ -9,6 +9,8 @@ import { pushTestSchema, resetDb } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
 import type { BindingScope } from '@/features/accountingBinding/repositories/IAccountingBindingRepository';
 import { AESTHETIC_CLINIC_KIT_V2 } from '@/features/sectorKits/kits/aestheticClinic/kit.v2';
+import { CANONICAL_ACCOUNTS_PRE_L8 } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
+import { AESTHETIC_CLINIC_KIT_V1 } from '@/features/sectorKits/kits/aestheticClinic/kit.v1';
 
 const UNIT = 'unit-kit-v2-clinica';
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -26,11 +28,14 @@ async function preparar(regime: 'PRESUMIDO' | 'REAL' | 'SIMPLES') {
   await prisma.fiscalProfile.create({
     data: { ...where(), regimeTributario: regime, pisCofinsRegime: regime === 'REAL' ? 'NAO_CUMULATIVO' : 'CUMULATIVO', d1fConfirmado: false },
   });
+  // BE-INCR-PLANO-4-NIVEIS (F-L8-9 a): kit v1–v5 é do plano de 3 níveis — a unidade nasce no plano da época.
+  await prisma.account.createMany({ data: CANONICAL_ACCOUNTS_PRE_L8.map((a) => ({ ...where(), ...a })) });
 }
 
 const instalar = () =>
   ApplicationFactory.getInstance()
-    .getKitInstallService(scope())
+    // o v3 (PR-K2) é a versão vigente; este teste prende o registro no v2 publicado
+    .getKitInstallService(scope(), () => [AESTHETIC_CLINIC_KIT_V1, AESTHETIC_CLINIC_KIT_V2])
     .install(scope(), { kitKey: 'aestheticClinic', ano: 2025, installChartIfEmpty: true, openCurrentPeriodIfMissing: true, today: TODAY });
 
 /** Cobertura como o gate da ECD conta (`ReferentialMappingService.coverage`): folhas vivas sem mapeamento 2025. A fronteira
@@ -45,11 +50,13 @@ describe('kit v2 da clínica — referencial 2025 (BE-INCR-KIT-SETOR-EMENDA-1 PR
   beforeAll(() => pushTestSchema(), 120000);
   afterAll(async () => prisma.$disconnect());
 
-  it.each(['PRESUMIDO', 'REAL'] as const)('%s: instalação do registro real ⇒ cobertura 2025 15/15, 3.4 → 3.01.01.01.01.98', async (regime) => {
+  it.each(['PRESUMIDO', 'REAL'] as const)('%s: instalação do v2 publicado ⇒ as 15 folhas dele cobertas, 3.4 → 3.01.01.01.01.98', async (regime) => {
     await preparar(regime);
     await expect(instalar()).resolves.toMatchObject({ status: 'INSTALLED' });
     const c = await cobertura();
-    expect(c).toEqual({ folhas: 15, faltam: [] });
+    // Desde a emenda 3.3 (PR-1) o canônico tem +9 folhas que só o kit v4 mapeia (F-HR-4 a): o v2 publicado deixa
+    // exatamente elas sem mapeamento; as 15 dele continuam cobertas.
+    expect({ ...c, faltam: [...c.faltam].sort() }).toEqual({ folhas: 24, faltam: ['3.5.1', '3.5.2', '3.5.3', '4.3.1', '4.3.2', '4.3.3', '4.4.1', '4.4.2', '4.6'] });
     const conta34 = await prisma.account.findFirstOrThrow({ where: { ...where(), code: '3.4' } });
     const m = await prisma.referentialMapping.findFirstOrThrow({ where: { ...where(), accountId: conta34.id, mappingVersion: '2025' } });
     expect(m.referentialCode).toBe('3.01.01.01.01.98');

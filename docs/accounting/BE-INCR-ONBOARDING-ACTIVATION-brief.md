@@ -1,5 +1,7 @@
 # BRIEF — BE-INCR-ONBOARDING-ACTIVATION (nós I4 + I5): o onboarding liga a contabilidade; venda sem mapper vira pendência visível
 
+> **EMENDA 2026-10-14 (abaixo):** o PR-2 do I4 ficou pausado na execução (o onboarding sairia sempre `Draft` por `KIT_FISCAL_PROFILE_REQUIRED`). Forks novos **F-I4-6..F-I4-10 RATIFICADOS 14/10, todos na recomendação** ([D-2026-10-14-I4-EMENDA-FISCAL-PROFILE](../plano/decisoes/D-2026-10-14-I4-EMENDA-FISCAL-PROFILE.md)): F-I4-6 a · F-I4-7 a · F-I4-8 a · F-I4-9 a · F-I4-10 a. O I5 (PR-1 e PR-3) foi mergeado (#684, #686).
+>
 > **RATIFICAÇÃO 2026-10-13:** F-I4-4 → (a) e F-I4-5 → (b) ([D-2026-10-13-QUESTIONARIO-BRIEFS-PRONTOS](../plano/decisoes/D-2026-10-13-QUESTIONARIO-BRIEFS-PRONTOS.md)). Nenhum fork deste BRIEF segue pendente. Não é 'executa'.
 
 > Produzido em `sessao-planejamento`, 2026-09-29, sobre `origin/main` `9dd690b3`. Nós [I4](../plano/nos/I4.md) e
@@ -47,6 +49,178 @@
 >    `my-app/types/contracts/accountingBinding/*.gen.ts`. Um `OnboardingAccountingResultSchema` posto em
 >    `ActivateDefaultBindingDto.ts` (item 14) **entra** no snapshot e gera `.gen.ts`; o PR-2 regenera o snapshot e
 >    o PR-4 pode usar `import type` em vez de tipar à mão.
+
+> **EMENDA 14/10 — o perfil fiscal da UNIDADE no onboarding (destrava o PR-2 e o PR-4 do I4).** Produzida em
+> `sessao-planejamento` sobre `origin/main` `503d5917`.
+> - **Autorização:** dono, chat, 2026-10-14. Primeiro, por questionário: *"Pausar PR-2, EMENDA"*
+>   ([D-2026-10-14-I4-I5-LACUNAS-EXECUCAO](../plano/decisoes/D-2026-10-14-I4-I5-LACUNAS-EXECUCAO.md) L-1).
+>   Depois: *"Faça esta tarefa aqui: 'EMENDA do BRIEF I4: FiscalProfile da unidade no onboarding'"*.
+> - **Escopo:** cobre esta EMENDA, mais nada. Código exige *"executa"*.
+> - **Estado:** os forks F-I4-6..F-I4-10 abaixo nasceram PENDENTES e foram **ratificados pelo dono no mesmo dia, por questionário,
+> todos na recomendação** ([D-2026-10-14-I4-EMENDA-FISCAL-PROFILE](../plano/decisoes/D-2026-10-14-I4-EMENDA-FISCAL-PROFILE.md)).
+>
+> **E14.1 — Fatos medidos em `main` (V, por leitura):**
+> 1. **O kit barra a ativação.** `KitInstallService.preconditions` (`features/sectorKits/services/KitInstallService.ts:112-123`)
+>    devolve `KIT_FISCAL_PROFILE_REQUIRED` quando o kit traz `roleDefaults.fiscalProfile` e
+>    `hasFiscalProfile()` é falso.
+>    - `hasFiscalProfile()` lê o `FiscalProfile` **da unidade**, não o da empresa: `fiscalProfileRepo.findByScope`,
+>      em `lib/factory.ts:457-459`.
+>    - Os kits vigentes trazem esse bloco: `beautySalon/kit.v5.ts:34` e `aestheticClinic/kit.v5.ts:35`.
+>    - O `activateDefault` avalia o pré-check antes de escrever e devolve `Draft`
+>      (`BindingActivationService.ts`, passo 4).
+> 2. **O onboarding não cria o perfil da unidade.** `SystemProvisioningService.provision`
+>    (`features/onboarding/services/SystemProvisioningService.ts:87-93`) cria preset → unidade → perfil fiscal **da
+>    empresa**.
+>    - O comentário do passo 3 registra a lacuna L-PR3-1 do X13: o F-X6-6 a proíbe inventar `icmsContribuinte`
+>      e `pisCofinsRegime`.
+>    - **Consequência:** hoje todo onboarding de salão ou clínica sai `Draft`, e os itens 10 e 13 não fecham.
+> 3. **O que o perfil da unidade exige.** `UpsertFiscalProfileSchema` (`features/accounting/dtos/FiscalProfileDto.ts`)
+>    exige `regimeTributario` (`SIMPLES|PRESUMIDO|REAL`, **sem MEI**), `icmsContribuinte` e `pisCofinsRegime`.
+>    - O `superRefine` (f4, LC 123 art. 23) amarra o Simples a `icmsContribuinte=false` e `pisCofinsRegime=SIMPLES`.
+>    - O serviço é `FiscalProfileService.upsert` (`FiscalProfileService.ts:200`): policy `canManageFiscalProfile` e
+>      auditoria `FISCAL_PROFILE_UPDATED`, evento já existente.
+> 4. **O que o onboarding coleta hoje.** O bloco `fiscal` (`OnboardingFiscalSchema`, `CompanyFiscalProfileDto.ts:188-193`)
+>    só tem `regime ∈ {MEI, SIMPLES, PRESUMIDO, REAL, NAO_SEI}` e `grandePorte`.
+>    - Só a **Entrevista com IA** pergunta (`my-app/features/interview/components/AiInterviewSetup/FiscalQuestion.tsx`).
+>    - **Rápido e Controle Total não mandam o bloco:** `FiscalQuestion` só é usado em `AiInterviewSetup`.
+> 5. **Decisões já ratificadas que esta EMENDA respeita:**
+>    - **F-X6-6 (a)**, cédula 14/09 (`CEDULA-DECISAO-2026-09-14-gates-humanos.md:22`): *"H2 (parte NF-e) e
+>      onboarding (I1/W) ganham o passo 'cadastrar perfil fiscal'"*. A direção "o onboarding cria o perfil" já
+>      está decidida; esta EMENDA só dá a forma.
+>    - **F-OBP-6 (c)** (`ADR-FISCAL-OBLIGATION-PROFILE-regime-porte.md:134-140`): o wizard pergunta *só regime e
+>      porte*, e o resto vem depois, no formulário. Trata do perfil da **empresa**. A pergunta nova do F-I4-7 é
+>      **uma** a mais, fechada e com "não sei" — tensão registrada no próprio fork.
+>    - **F-OBP-7** (mesmo ADR, `:104-106`): `FiscalProfile.regimeTributario` é derivado e validado contra o regime
+>      da empresa.
+> 6. **Precedente no código.** O seed contábil já materializa o perfil da unidade a partir do regime
+>    (`jobs/seedAccountingFixtureCli.ts:412-415`, decisão 24/09): `PRESUMIDO/CUMULATIVO` e `REAL/NAO_CUMULATIVO`,
+>    com `icmsContribuinte:false`.
+> 7. **A faixa da LAC-B não guia o usuário.** `AccountingActivationBanner` (`KNOWN_BLOCKING`, `:29-39`) não
+>    conhece `KIT_FISCAL_PROFILE_REQUIRED`: mostra a mensagem crua do BE e não leva à aba "Perfil fiscal".
+>    Ver E14.6.
+>
+> **E14.2 — Regra legal (dossiê [`pesquisas-legais/pis-cofins-regime-por-tributacao/relatorio.md`](../../pesquisas-legais/pis-cofins-regime-por-tributacao/relatorio.md),
+> só fonte oficial, D01–D04 com SHA-256):**
+>
+> | Regime da empresa | `regimeTributario` | `pisCofinsRegime` | Fonte |
+> |---|---|---|---|
+> | `MEI` | `SIMPLES` | `SIMPLES` | LC 123 art. 18-A §1º (MEI é optante do Simples) [D03]; art. 13 IV-V [D03] |
+> | `SIMPLES` | `SIMPLES` | `SIMPLES` | Lei 10.637 art. 8º III [D02]; Lei 10.833 art. 10 III [D01]; LC 123 art. 13 IV-V [D03] |
+> | `PRESUMIDO` | `PRESUMIDO` | `CUMULATIVO` | Lei 10.637 art. 8º II [D02]; Lei 10.833 art. 10 II [D01] |
+> | `REAL` | `REAL` | `NAO_CUMULATIVO` **em regra** | Lei 10.833 art. 1º [D01]; Lei 10.637 art. 1º [D02]. Exceção por receita no art. 10 + art. 15 [D01], ver F-I4-8 |
+> | `NAO_SEI` | — | — | nada é derivado |
+>
+> - `icmsContribuinte` **não** decorre do regime. É fato da empresa: operações de circulação de mercadoria com
+>   habitualidade (LC 87/1996 art. 4º [D04]).
+> - No Simples ele é forçado a `false` pelo `superRefine` (f4, já no código). Nos demais regimes só o dono informa
+>   (F-I4-7).
+> - O art. 10 da Lei 10.833 foi lido inteiro (incisos I–XXX): nenhum inciso cobre serviço de beleza. O inciso
+>   XIII, "a" cobre *"clínica médica"*, e é daí que vem a ambiguidade da clínica estética no Real (F-I4-8).
+>
+> **E14.3 — Itens novos (PR-2 passa a ter 9a–9c antes do item 10):**
+>
+> - **9a. Contrato do bloco fiscal (F-I4-7 a).** `OnboardingFiscalSchema` ganha
+>   `icmsContribuinte: z.boolean().nullable().optional()`. `null` ou ausente significa "não sei".
+>   - Muda o shape: o snapshot de `features/accounting/dtos` e o `CompanyFiscalProfileDto.gen.ts` são regenerados
+>     no mesmo PR.
+>   - *Teste de contrato:* aceita `true`, `false`, `null` e ausente; campo extra continua 400 (`.strict()`).
+> - **9b. Derivação pura (F-I4-6 a + F-I4-8).** A função `deriveUnitFiscalProfile(regime, icmsContribuinte, sectorKey)`
+>   devolve `UpsertFiscalProfileInput | null` conforme a tabela de E14.2. O JSDoc cita a norma de cada linha.
+>   Devolve `null` quando:
+>   - o regime é `NAO_SEI` ou o bloco está ausente;
+>   - o regime é `PRESUMIDO`/`REAL` com `icmsContribuinte` "não sei";
+>   - a linha está bloqueada pelo F-I4-8.
+>   - `MEI` e `SIMPLES` saem com `icmsContribuinte:false`, forçado pelo f4.
+>   - *Teste table-driven:* uma linha por regime × resposta × setor, e o resultado passa no `UpsertFiscalProfileSchema`.
+> - **9c. Passo 3b do provisionamento (F-I4-6 a + F-I4-10).** `SystemProvisioningService.provision`, logo depois do
+>   perfil da empresa e só quando 9b devolve objeto, chama `FiscalProfileService.upsert(scope, input)`.
+>   - A chamada passa pelo serviço canônico (policy + auditoria `FISCAL_PROFILE_UPDATED`) e nunca usa `prisma.*`.
+>   - O serviço entra por injeção via factory.
+>   - O comportamento na falha segue o F-I4-10.
+>   - O comentário L-PR3-1 do passo 3 é atualizado.
+>   - *Testes de integração:*
+>     - `PRESUMIDO` + `icmsContribuinte:false` cria 1 `FiscalProfile` da unidade com `CUMULATIVO`;
+>     - `NAO_SEI` não cria nada;
+>     - uma falha injetada no upsert segue o F-I4-10.
+>
+> **E14.4 — Itens revisados:**
+>
+> - **Item 10 (revisto):** o teste "quick `beautySalon` → `Active`" passa a mandar
+>   `fiscal: { regime: 'PRESUMIDO', icmsContribuinte: false }`. A clínica fica igual com `PRESUMIDO`.
+>   - **Caso novo:** sem bloco `fiscal`, ou com `NAO_SEI`, a resposta é 201 com `accounting.status:'Draft'` e
+>     `blocking[0].code === 'KIT_FISCAL_PROFILE_REQUIRED'` (F-I4-2 b; nenhuma compensação).
+>   - Se a clínica com `PRESUMIDO` compilar `Draft` por outro motivo, **pare e reporte** (regra original do item 10).
+> - **Item 13 (revisto):** a prova do nó usa o mesmo bloco `fiscal` derivável. A recarga **importa**
+>   `reloadAccountingMappersSerialized` de `features/accountingBinding/runtime/mapperReload.ts` (já em `main` desde o
+>   #680); não cria outra cadeia.
+> - **Item 16 (revisto):** a regressão do fiscal (`dashboardCreate.fiscal.integration.test.ts`) também assere
+>   `fiscalProfile.count === 0` depois do 500 do perfil da empresa. Isso prova que o 3b vem depois do 3.
+> - **Item 21 / PR-4 (revisto; F-I4-5 b + F-I4-9):**
+>   - O aviso de `Draft` no wizard nomeia o próximo passo quando o bloqueante é `KIT_FISCAL_PROFILE_REQUIRED`:
+>     *"cadastre o perfil fiscal da unidade na Contabilidade → Perfil fiscal e ative pela faixa da contabilidade"*.
+>     Paridade i18n pt/en.
+>   - `FiscalQuestion` ganha a pergunta do F-I4-7, exibida só para `PRESUMIDO`/`REAL`.
+>   - Sob F-I4-9 (a), Rápido e Controle Total passam a exibir o `FiscalQuestion` antes de criar.
+>   - *Testes vitest:* a pergunta aparece só nos dois regimes, e o payload leva `icmsContribuinte`.
+>
+> **E14.5 — Forks novos — RATIFICADOS 14/10 (todos na recomendação; [D-2026-10-14-I4-EMENDA-FISCAL-PROFILE](../plano/decisoes/D-2026-10-14-I4-EMENDA-FISCAL-PROFILE.md)):**
+>
+> - **F-I4-6 · Onde nasce o `FiscalProfile` da unidade?**
+>   - **(a)** No onboarding (passo 3b), derivado do bloco `fiscal` pela tabela de E14.2. Quando não dá para
+>     derivar, nada é criado e a ativação sai `Draft` com o bloqueante. **Recomendada:** é a forma do F-X6-6 (a),
+>     já ratificado (*"onboarding ganha o passo 'cadastrar perfil fiscal'"*), usa o F-OBP-7 (regime derivado do
+>     da empresa), o seed já faz o mesmo (E14.1.6), e é a única opção em que o I4 chega a `Active` sem passo manual.
+>   - (b) Não criar. O tenant nasce `Draft`; o dono preenche a aba "Perfil fiscal" e ativa pela faixa da LAC-B.
+>     O I4 deixa de ser "uma chamada só" (item 10), e o F-X6-6 (a) fica sem a parte do onboarding.
+>   - (c) O onboarding ativa sem as contas-padrão do perfil fiscal (pula o E-5). Mexe no contrato do KIT-SETOR,
+>     que é outro nó, e exige autorização própria.
+> - **F-I4-7 · Como obter `icmsContribuinte` em `PRESUMIDO`/`REAL`?**
+>   - **(a)** Uma pergunta fechada a mais no bloco fiscal, só nesses dois regimes: *"A empresa vende produtos
+>     (mercadorias) com inscrição estadual?"* — sim / não / não sei. "Não sei" não cria perfil (`Draft`).
+>     **Recomendada:** é fato da empresa (LC 87 art. 4º); o precedente do dono é *"nenhum sistema nasce com dado
+>     inventado"* (F-X6-6 a, F-I1-2 b).
+>     - **Tensão com o F-OBP-6 (c)** ("só regime e porte"), escrita: a pergunta é uma só, fechada, com "não sei", e
+>       só aparece em 2 dos 5 regimes. O dono de salão sabe se revende produto; não sabe o número do livro, que
+>       foi o critério do F-OBP-6.
+>   - (b) Default `false` com aviso, como no seed. Custo de errar: um contribuinte não credita ICMS na compra para
+>     revenda e superestima o custo (conservador). Mas é dado inventado, contra o precedente.
+>   - (c) Não derivar em `PRESUMIDO`/`REAL`: só `MEI`/`SIMPLES` nascem `Active`.
+> - **F-I4-8 · `pisCofinsRegime` no Lucro Real.**
+>   - **(a)** `beautySalon` + `REAL` → `NAO_CUMULATIVO` (art. 1º; o art. 10 lido inteiro não cobre beleza).
+>     `aestheticClinic` + `REAL` → **não deriva**: nada é criado, a ativação sai `Draft` e o contador informa.
+>     O motivo é a ambiguidade do art. 10, XIII, "a" (*"clínica médica"*), em E14.7. **Recomendada:** só deriva
+>     onde a lei é unívoca.
+>   - (b) Os dois setores em `REAL` → `NAO_CUMULATIVO` (como o seed). Risco: crédito indevido de PIS/Cofins na
+>     clínica se a receita for de clínica médica.
+>   - (c) `REAL` nunca deriva, em nenhum setor.
+> - **F-I4-9 · Os wizards Rápido e Controle Total, que não perguntam o regime.**
+>   - **(a)** O PR-4 põe o `FiscalQuestion` (com a pergunta do F-I4-7) também nos dois. **Recomendada:** sem isso,
+>     2 das 3 portas de entrada saem sempre `Draft`.
+>   - (b) Só a Entrevista pergunta. Rápido e Controle Total nascem `Draft`, e o dono ativa depois pela faixa.
+> - **F-I4-10 · Falha ao gravar o perfil da unidade (passo 3b).**
+>   - **(a)** `logger.error` e segue: tenant de pé, a ativação sai `Draft` com `KIT_FISCAL_PROFILE_REQUIRED`.
+>     **Recomendada:** mesma assimetria do F-I4-2 (b) — *"a ativação contábil falhar não deve apagar o sistema do
+>     cliente"* — e o perfil da unidade só existe para a contabilidade.
+>   - (b) Compensar como o passo 3 (`purgeUserSystem` + 500 `ONBOARDING_ROLLED_BACK`).
+>
+> **E14.6 — Achados fora de escopo (registrar, não planejar):**
+> - **A faixa da LAC-B não conhece `KIT_FISCAL_PROFILE_REQUIRED`** (E14.1.7): mostra o texto cru e não leva à aba
+>   "Perfil fiscal". É tela do nó vizinho (FE-INCR-BINDING-ACTIVATION; a EMENDA-2 dele está no PR #687 e não toca
+>   isso). Candidato a item daquele BRIEF.
+> - **O seed contábil cria `REAL/NAO_CUMULATIVO` para qualquer setor** (`seedAccountingFixtureCli.ts:415`). Se o
+>   F-I4-8 sair (a), o seed da clínica no Real diverge da regra do onboarding. Hoje não tem efeito (os tenants do
+>   seed são salão).
+> - **Reforma do consumo:** os dispositivos citados trazem *"Vide LC 214/2025 — Produção de efeitos"*. O campo
+>   `pisCofinsRegime` vale enquanto PIS/Cofins existirem; a transição não foi verificada aqui (dossiê §5).
+>
+> **E14.7 — Pendente de validação externa:**
+> - **Clínica estética no Lucro Real** — a receita é de *"clínica médica"* (Lei 10.833 art. 10, XIII, "a"; art. 15
+>   para o PIS), e portanto cumulativa? Sob F-I4-8 (a) o sistema não deriva e o contador informa no perfil.
+>   - Pergunta exata ao contador: *"Para a clínica estética tributada pelo Lucro Real, as receitas de procedimentos
+>     entram no art. 10, XIII, 'a' da Lei 10.833/2003 (cumulativo) ou no não cumulativo?"*
+>   - Vira linha no pedido ao contador (persona `luminaris-contador-liaison`).
+>
+> **E14.8 — Insumos ausentes:** nenhum. O código tocado e a norma foram lidos; o dossiê fecha a parte legal.
 
 ## 0. Contexto fixo
 

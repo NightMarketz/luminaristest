@@ -11,8 +11,8 @@
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { ApplicationFactory } from '@/lib/factory';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { ATOR_PLATAFORMA, AVISO_VALOR_MUDOU_APOS_ENTREGA } from '@/features/accounting/services/TaxAssessmentRecalcService';
 
 const app = makeApp();
@@ -38,6 +38,7 @@ async function cenario(ano: number) {
   seq += 1;
   const dono = await prisma.user.create({ data: { name: `lp4-${seq}`, username: `lp4-${seq}`, email: `lp4-${seq}@test.local`, password: 'x', role: 'USER' } });
   const unitId = `u-lp4-${seq}`;
+  await seedUnit({ userId: dono.id, id: unitId });
   const ids: Record<string, string> = {};
   for (const c of CONTAS) ids[c.code] = (await prisma.account.create({ data: { userId: dono.id, unitId, ...c, acceptsEntries: true } })).id;
   for (let month = 1; month <= 12; month++) {
@@ -50,7 +51,7 @@ async function cenario(ano: number) {
       irpjDespesaAccountId: ids['4.9.1'], csllDespesaAccountId: ids['4.9.2'], irpjRecolherAccountId: ids['2.1.9.1'], csllRecolherAccountId: ids['2.1.9.2'],
     },
   });
-  await factory().getPostingService().postEntry(resolveAccountingScope({ userId: dono.id }, unitId), {
+  await factory().getPostingService().postEntry(resolveAccountingScopeInternal({ userId: dono.id }, unitId), {
     unitId, date: `${ano}-02-10`, sourceType: 'manual', description: 'Serviço',
     lines: [{ accountCode: '1.1.1', debitCents: 10_000_000, creditCents: 0 }, { accountCode: '3.1', debitCents: 0, creditCents: 10_000_000 }],
   });

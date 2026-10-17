@@ -4,7 +4,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 const UNIT = 'unit-x13';
@@ -32,6 +32,7 @@ describe('X13 PR-1 — perfil fiscal da empresa, signatários e obrigações', (
   beforeAll(async () => {
     pushTestSchema();
     dono = await prisma.user.create({ data: { name: 'x13', username: 'x13-dono', email: 'x13@test.local', password: 'x', role: 'USER' } });
+    await seedUnit({ userId: dono.id, id: UNIT });
     outro = await prisma.user.create({ data: { name: 'x13b', username: 'x13-outro', email: 'x13b@test.local', password: 'x', role: 'USER' } });
     const c = await prisma.accountingContact.create({
       data: { userId: dono.id, unitId: UNIT, name: 'Contabil Silva', email: 'silva@c.com', cpf: '52998224725', phone: '1133334444', crcNumber: 'SP-123456/O-1', crcUf: 'SP' },
@@ -92,7 +93,10 @@ describe('X13 PR-1 — perfil fiscal da empresa, signatários e obrigações', (
     const signerId = (await prisma.companySigner.findFirstOrThrow({ where: { userId: dono.id } })).id;
     expect((await put(2025, { regime: 'PRESUMIDO', contadorContactId: 'nao-existe' })).status).toBe(404);
     // signatário do dono não é visível ao outro usuário
-    expect((await put(2025, { regime: 'PRESUMIDO', representanteLegalSignerId: signerId }, outro)).status).toBe(404);
+    // I6: outro dono → 404 UNIT_NOT_FOUND (antes: 404 do signatário não encontrado)
+    const alheio = await put(2025, { regime: 'PRESUMIDO', representanteLegalSignerId: signerId }, outro);
+    expect(alheio.status).toBe(404);
+    expect(alheio.body.code).toBe('UNIT_NOT_FOUND');
 
     expect((await put(2025, { regime: 'PRESUMIDO' })).status).toBe(200);
     const r = await obrigacoes(2025);
@@ -133,7 +137,10 @@ describe('X13 PR-1 — perfil fiscal da empresa, signatários e obrigações', (
   });
 
   it('outro dono não enxerga o perfil (chave = dono, R8): GET → 404', async () => {
-    expect((await get(2025, outro)).status).toBe(404);
+    // I6: outro dono → 404 UNIT_NOT_FOUND (antes: 404 company_fiscal_profile_missing)
+    const alheio = await get(2025, outro);
+    expect(alheio.status).toBe(404);
+    expect(alheio.body.code).toBe('UNIT_NOT_FOUND');
   });
 
   it('cópia do ano anterior (F-XP-2/3 a): 201 sem numOrd; destino existente → 409; origem ausente → 404', async () => {

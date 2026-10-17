@@ -5,7 +5,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { anoCorrente } from '@/features/accounting/services/CompanyFiscalProfileService';
 
 const app = makeApp();
@@ -18,6 +18,7 @@ describe('ECD substituta multipart × perfil fiscal da empresa (0de76108)', () =
   beforeAll(async () => {
     pushTestSchema();
     dono = await prisma.user.create({ data: { name: 'subst', username: 'ecd-subst-perfil', email: 'esp@test.local', password: 'x', role: 'USER' } });
+    await seedUnit({ userId: dono.id, id: UNIT });
     const c = await prisma.accountingContact.create({
       data: { userId: dono.id, unitId: UNIT, name: 'Contabil Subst', email: 'cs@c.com', cpf: '52998224725', phone: '1133334444', crcNumber: 'SP-000999/O-1', crcUf: 'SP' },
     });

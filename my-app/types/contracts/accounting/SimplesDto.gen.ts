@@ -46,10 +46,55 @@ vigenteDesde?: string
 vigenteAte?: (string | null)
 }
 export interface AlertaSimplesInput {
-codigo: ("ATIVIDADE_SEM_ANEXO" | "RBT12_INCOMPLETO" | "LIMITE_ME_EXCEDIDO" | "LIMITE_EPP_EXCEDIDO" | "SUBLIMITE_ICMS_ISS" | "SEGREGACAO_MANUAL" | "TIEOUT_DIVERGENTE" | "HISTORICO_IGNORADO" | "LIMITE_MEI_EXCEDIDO" | "NFSE_DIVERGE_RECEITA" | "BENEFICIO_MUNICIPAL_INAPLICAVEL_DESVANTAJOSO" | "ISS_VALOR_FIXO_MUNICIPAL" | "MEI_ENQUADRAMENTO_DIVERGE" | "MEI_TAC_COM_OCUPACAO_A" | "MEI_OCUPACAO_EXCLUIDA")
+codigo: ("ATIVIDADE_SEM_ANEXO" | "RBT12_INCOMPLETO" | "LIMITE_ME_EXCEDIDO" | "LIMITE_EPP_EXCEDIDO" | "SUBLIMITE_ICMS_ISS" | "SEGREGACAO_MANUAL" | "TIEOUT_DIVERGENTE" | "HISTORICO_IGNORADO" | "LIMITE_MEI_EXCEDIDO" | "NFSE_DIVERGE_RECEITA" | "BENEFICIO_MUNICIPAL_INAPLICAVEL_DESVANTAJOSO" | "ISS_VALOR_FIXO_MUNICIPAL" | "MEI_ENQUADRAMENTO_DIVERGE" | "MEI_TAC_COM_OCUPACAO_A" | "MEI_OCUPACAO_EXCLUIDA" | "REGIME_CAIXA_RECALCULO" | "IMPEDIMENTO_CAIXA_ICMS_ISS" | "CARTAO_RECEBIMENTO_ESTIMADO" | "RECEBIMENTO_DE_VENDA_TRIBUTADA_POR_COMPETENCIA")
 detalhe: string
 severity: ("INFO" | "WARNING")
-motivoInformativo?: ("DOCUMENTO_MUNICIPAL_TRANSIÇÃO" | "REGIME_CAIXA")
+motivoInformativo?: ("DOCUMENTO_MUNICIPAL_TRANSIÇÃO" | "REGIME_CAIXA" | "CARTAO_RECEBIMENTO_ESTIMADO")
+}
+export interface BaseCaixaInput {
+recebidoPaCents: number
+receitaAuferidaPaCents: number
+art20Cents: {
+parcelaVencida: number
+encerramento: number
+retornoCompetencia: number
+exclusao: number
+}
+}
+export interface ImpedimentoCaixaInput {
+mesBase: string
+receitaNaoRecebidaCents: number
+icmsCents: number
+issCents: number
+}
+export interface RegistroValoresAReceberQueryInput {
+unitId: string
+ano: number
+}
+export interface LinhaAnexoIxInput {
+saleId: string
+dataOperacao: string
+documentosFiscais: string[]
+valorTotalCents: number
+quantidadeParcelas: number
+parcelas: {
+numero: number
+valorCents: number
+vencimento: string
+dataRecebimento: (string | null)
+valorPagoCents: number
+saldoAReceberCents: number
+incobravelCents: number
+}[]
+dispensadaCartao: boolean
+}
+export interface SimplesCreditoIncobravelCreateInput {
+unitId: string
+saleId: string
+valorCents: number
+meioCobranca: ("NOTIFICACAO_EXTRAJUDICIAL" | "PROTESTO" | "COBRANCA_JUDICIAL" | "CADASTRO_PROTECAO_CREDITO")
+data: string
+evidencia: string
 }
 export interface SimplesUnitQueryInput {
 unitId: string
@@ -81,10 +126,30 @@ rendimentosTributaveisCents: number
 participacaoBp: number
 irrfCents: number
 }
+export interface SimplesDefisExportacaoComercialInput {
+cnpj: string
+valorCents: number
+}
+export interface SimplesDefisDoacaoEleitoralInput {
+cnpj: string
+tipoBeneficiario: ("CANDIDATO" | "COMITE_FINANCEIRO" | "PARTIDO_POLITICO")
+formaDoacao: ("CHEQUE" | "OUTROS_TITULOS_CREDITO" | "TRANSFERENCIA_ELETRONICA" | "DEPOSITO_ESPECIE" | "DINHEIRO" | "BENS" | "SERVICOS")
+valorCents: number
+}
 export interface SimplesDefisDigitadoInput {
 empregadosInicio: number
 empregadosFim: number
+ganhosCapitalCents: number
 ganhosRendaVariavelCents: number
+exportacaoDiretaCents: number
+/**
+ * @maxItems 100
+ */
+exportacaoComercial: {
+cnpj: string
+valorCents: number
+}[]
+cotasTesourariaBp: number
 /**
  * @maxItems 100
  */
@@ -95,12 +160,30 @@ rendimentosTributaveisCents: number
 participacaoBp: number
 irrfCents: number
 }[]
+/**
+ * @maxItems 100
+ */
+doacoesEleitorais: {
+cnpj: string
+tipoBeneficiario: ("CANDIDATO" | "COMITE_FINANCEIRO" | "PARTIDO_POLITICO")
+formaDoacao: ("CHEQUE" | "OUTROS_TITULOS_CREDITO" | "TRANSFERENCIA_ELETRONICA" | "DEPOSITO_ESPECIE" | "DINHEIRO" | "BENS" | "SERVICOS")
+valorCents: number
+}[]
 }
-export interface SimplesDefisUpsertInput {
-unitId: string
+export interface SimplesDefisDigitadoLeituraInput {
 empregadosInicio: number
 empregadosFim: number
+ganhosCapitalCents?: number
 ganhosRendaVariavelCents: number
+exportacaoDiretaCents?: number
+/**
+ * @maxItems 100
+ */
+exportacaoComercial?: {
+cnpj: string
+valorCents: number
+}[]
+cotasTesourariaBp?: number
 /**
  * @maxItems 100
  */
@@ -110,5 +193,49 @@ rendimentosIsentosCents: number
 rendimentosTributaveisCents: number
 participacaoBp: number
 irrfCents: number
+}[]
+/**
+ * @maxItems 100
+ */
+doacoesEleitorais?: {
+cnpj: string
+tipoBeneficiario: ("CANDIDATO" | "COMITE_FINANCEIRO" | "PARTIDO_POLITICO")
+formaDoacao: ("CHEQUE" | "OUTROS_TITULOS_CREDITO" | "TRANSFERENCIA_ELETRONICA" | "DEPOSITO_ESPECIE" | "DINHEIRO" | "BENS" | "SERVICOS")
+valorCents: number
+}[]
+}
+export interface SimplesDefisUpsertInput {
+unitId: string
+empregadosInicio: number
+empregadosFim: number
+ganhosCapitalCents: number
+ganhosRendaVariavelCents: number
+exportacaoDiretaCents: number
+/**
+ * @maxItems 100
+ */
+exportacaoComercial: {
+cnpj: string
+valorCents: number
+}[]
+cotasTesourariaBp: number
+/**
+ * @maxItems 100
+ */
+socios: {
+contactId: string
+rendimentosIsentosCents: number
+rendimentosTributaveisCents: number
+participacaoBp: number
+irrfCents: number
+}[]
+/**
+ * @maxItems 100
+ */
+doacoesEleitorais: {
+cnpj: string
+tipoBeneficiario: ("CANDIDATO" | "COMITE_FINANCEIRO" | "PARTIDO_POLITICO")
+formaDoacao: ("CHEQUE" | "OUTROS_TITULOS_CREDITO" | "TRANSFERENCIA_ELETRONICA" | "DEPOSITO_ESPECIE" | "DINHEIRO" | "BENS" | "SERVICOS")
+valorCents: number
 }[]
 }

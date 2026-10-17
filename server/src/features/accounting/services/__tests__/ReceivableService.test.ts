@@ -1,6 +1,6 @@
 import { ReceivableService } from '../ReceivableService';
 import { ForbiddenError, MaxCentsExceededError, NotFoundError, ValidationError } from '../../../../lib/errors';
-import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import { CLIENTES_A_RECEBER_CODE } from '../../fixtures/ChartOfAccountsFixture';
 import { AR_RECEIVABLE_SOURCE_TYPE, AR_RECEIPT_SOURCE_TYPE } from '../../models/Receivable.model';
 import { COUNTERPARTY_NAME_MAX_LENGTH } from '../../models/Counterparty.model';
@@ -8,7 +8,7 @@ import { Prisma } from 'generated/prisma';
 import type { Account, Receivable, ReceivableReceipt } from 'generated/prisma';
 import type { PostEntryInput } from '../../dtos/PostingDto';
 
-const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'owner-1' }, 'unit-1');
 
 function revenueAcc(over: Partial<Account> = {}): Account {
   return {
@@ -298,7 +298,7 @@ describe('ReceivableService.registerReceipt — receipt (D2/D3/D4)', () => {
     expect(input.sourceId).not.toBe('rec-1');
     expect(input.date).toBe('2026-07-05'); // data efetiva do crédito
     // Receipt: debit Banco (Pix), credit the control account 1.1.5 (inverted from AP).
-    expect(input.lines).toContainEqual({ accountCode: '1.1.1', debitCents: 50000, creditCents: 0 }); // Pix → Banco
+    expect(input.lines).toContainEqual({ accountCode: '1.1.1.01', debitCents: 50000, creditCents: 0 }); // Pix → Banco
     expect(input.lines).toContainEqual({ accountCode: CLIENTES_A_RECEBER_CODE, debitCents: 0, creditCents: 50000 });
   });
 
@@ -306,7 +306,7 @@ describe('ReceivableService.registerReceipt — receipt (D2/D3/D4)', () => {
     const cash = build();
     await cash.service.registerReceipt(scope, 'rec-1', { ...receiveDto, method: 'Cash' } as never);
     const input = (cash.postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
-    expect(input.lines).toContainEqual({ accountCode: '1.1.3', debitCents: 50000, creditCents: 0 });
+    expect(input.lines).toContainEqual({ accountCode: '1.1.1.02', debitCents: 50000, creditCents: 0 });
 
     const bad = build();
     await expect(

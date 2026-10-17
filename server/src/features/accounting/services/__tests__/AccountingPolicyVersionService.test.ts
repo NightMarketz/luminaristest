@@ -11,7 +11,8 @@ import type { Prisma } from 'generated/prisma';
 import { AccountantRequiredError, PolicyApprovalRequiredError, PolicyNoAccountantError } from '../../../../lib/errors';
 import { AccountingPolicy } from '../../policies/AccountingPolicy';
 import type { ActiveAccountant } from '../../policies/IAccountingPolicy';
-import { resolveAccountingScope, type AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import type { IAccountantAssignmentRepository } from '../../repositories/IAccountantAssignmentRepository';
 import type { IAccountingPolicyVersionRepository } from '../../repositories/IAccountingPolicyVersionRepository';
 import type { IFiscalProfileRepository } from '../../repositories/IFiscalProfileRepository';
@@ -27,7 +28,7 @@ import { ProposePolicyVersionSchema } from '../../dtos/AccountingPolicyVersionDt
 import { UpsertFiscalProfileSchema } from '../../dtos/FiscalProfileDto';
 
 const policy = new AccountingPolicy();
-const owner = resolveAccountingScope({ userId: 'dono' }, 'unit-1');
+const owner = resolveAccountingScopeInternal({ userId: 'dono' }, 'unit-1');
 const delegated: AccountingScope = { ...owner, actorUserId: 'contador' };
 const active: ActiveAccountant = {
   id: 'asg-1', ownerUserId: 'dono', unitId: 'unit-1', accountantUserId: 'contador', crcNumber: 'SP-123456/O-1',

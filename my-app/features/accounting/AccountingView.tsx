@@ -31,6 +31,7 @@ import { DimensionsPanel } from './components/DimensionsPanel';
 import { FixedAssetsPanel, type FixedAssetsSectionId } from './components/FixedAssetsPanel';
 import { FiscalProfilePanel } from './components/FiscalProfilePanel';
 import { TaxAssessmentPanel } from './components/TaxAssessmentPanel';
+import { MeiEnquadramentoSection } from './components/MeiEnquadramentoSection';
 import { ServiceFiscalProfilesPanel } from './components/ServiceFiscalProfilesPanel';
 import { JournalEntryModal, type AccountOption } from './components/JournalEntryModal';
 import { accountingService } from '../../lib/services/accounting.service';
@@ -43,8 +44,10 @@ import { toGovernanceScope } from './governance/GovernanceScope';
 import { AccountantAssignmentSection } from './governance/AccountantAssignmentSection';
 import { ClientModeStrip, PendingInvitesBanner, clientLabel } from './governance/ClientModeBars';
 import { PolicyVersionsPanel } from './governance/PolicyVersionsPanel';
+import { AccountingActivationBanner } from './components/AccountingActivationBanner';
+import { ReconcilePendingPanel } from './components/ReconcilePendingPanel';
 
-export type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'nfe' | 'compliance' | 'dimensoes' | 'imobilizado' | 'perfil-fiscal' | 'parametros-legais' | 'politica' | 'apuracao';
+export type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'nfe' | 'compliance' | 'dimensoes' | 'imobilizado' | 'perfil-fiscal' | 'parametros-legais' | 'politica' | 'apuracao' | 'pendencias';
 
 // label = i18n fallback (current pt-BR); rendered via t(`view.tabs.<id>`, label)
 export const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
@@ -85,6 +88,9 @@ export const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
   { id: 'politica',       labelKey: 'view.tabs.politica',       label: 'Política contábil' },
   // FE-INCR-TAX-ASSESSMENT PR-1 (F-1 a, dono 08/10): aba "Apuração" — grade do ano X7 + X8, leitura + aviso.
   { id: 'apuracao',       labelKey: 'view.tabs.apuracao',       label: 'Apuração' },
+  // BE-INCR-ONBOARDING-ACTIVATION item 18 (I5 PR-3, F-I5-4 a): pendências do reconcile da unidade, com "Re-varrer".
+  // Fora do `DELEGATED_TABS` (o modo cliente não a vê até alguém decidir).
+  { id: 'pendencias',     labelKey: 'view.tabs.pendencias',     label: 'Pendências' },
 ];
 
 /**
@@ -92,6 +98,12 @@ export const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
  * acrescentada ao `TABS` fica ESCONDIDA por padrão no modo cliente até alguém pô-la aqui de propósito.
  */
 export const DELEGATED_TABS: readonly Tab[] = ['periodos', 'compliance', 'politica'];
+
+/**
+ * Aba Pendências (F-I5-4 a, I5 PR-3) — o link da faixa de ativação só existe quando ela estiver em `TABS`
+ * (FE-INCR-BINDING-ACTIVATION-screen-brief item 8): o PR da tela pode entrar antes do I5 sem link quebrado.
+ */
+export const PENDENCIAS_TAB: Tab | undefined = TABS.find((tab) => (tab.id as string) === 'pendencias')?.id;
 
 const OWN_CONTEXT = 'own';
 
@@ -146,6 +158,8 @@ export function AccountingView() {
   // Seção em que a aba Imobilizado abre — a NF-e aponta "Classes"/"Taxas"; volta a "Bens" ao sair da aba.
   const [fixedAssetsSection, setFixedAssetsSection] = useState<FixedAssetsSectionId>('bens');
   useEffect(() => { if (activeTab !== 'imobilizado') setFixedAssetsSection('bens'); }, [activeTab]);
+  // Ano em que o enquadramento MEI abre — o atalho da aba Apuração aponta o ano (FE-INCR-SIMPLES item 8).
+  const [meiAno, setMeiAno] = useState<number | undefined>(undefined);
   const visibleTabs = governance ? TABS.filter((tab) => DELEGATED_TABS.includes(tab.id)) : TABS;
 
   function switchContext(next: string) {
@@ -258,6 +272,17 @@ export function AccountingView() {
 
       <PendingInvitesBanner pending={pendingAssignments} onAccepted={() => void reloadAssignments()} />
       {governance && <ClientModeStrip governance={governance} onEnded={leaveClient} onOpenPolicy={() => setActiveTab('politica')} />}
+
+      {/* ── Ativação da contabilidade (LAC-B, F-BA-1 a): só livro próprio — no modo cliente a ativação gravaria no silo
+           do chamador, não no do cliente (item 4). `key` remonta por unidade. ── */}
+      {!governance && unitId && (
+        <AccountingActivationBanner
+          key={unitId}
+          unitId={unitId}
+          onNavigateToPeriods={() => setActiveTab('periodos')}
+          onNavigateToPendencias={PENDENCIAS_TAB ? () => setActiveTab(PENDENCIAS_TAB) : undefined}
+        />
+      )}
 
       {/* ── Tab bar ────────────────────────────────────────────────────────── */}
       <div
@@ -500,6 +525,7 @@ export function AccountingView() {
       {activeTab === 'perfil-fiscal' && unitId && (
         <div className="space-y-8">
           <FiscalProfilePanel unitId={unitId} />
+          <MeiEnquadramentoSection unitId={unitId} anoInicial={meiAno} />
           <ServiceFiscalProfilesPanel unitId={unitId} />
         </div>
       )}
@@ -512,7 +538,11 @@ export function AccountingView() {
       )}
 
       {/* ── Apuração (IRPJ/CSLL + PIS/Cofins) tab — FE-INCR-TAX-ASSESSMENT PR-1 ── */}
-      {activeTab === 'apuracao' && unitId && <TaxAssessmentPanel unitId={unitId} />}
+      {activeTab === 'apuracao' && unitId && (
+        <TaxAssessmentPanel unitId={unitId} onIrParaEnquadramentoMei={(ano) => { setMeiAno(ano); setActiveTab('perfil-fiscal'); }} />
+      )}
+
+      {activeTab === 'pendencias' && unitId && <ReconcilePendingPanel key={`pendencias-${unitId}`} unitId={unitId} />}
 
       {/* ── New Entry Modal ────────────────────────────────────────────────── */}
       <JournalEntryModal

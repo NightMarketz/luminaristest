@@ -125,6 +125,13 @@ export const UpsertCompanyFiscalProfileSchema = z
     meiOcupacoes: z.array(z.string().regex(/^[AB]-\d{4}$/, 'Chave do Anexo XI = A-0001 ou B-0001.')).min(1).max(20).nullable().default(null),
     // X14 F-PR4-12 (b), dono 10/10: regime de apuração da receita no Simples. Default COMPETENCIA.
     simplesRegimeApuracao: z.enum(SIMPLES_REGIMES_APURACAO).default('COMPETENCIA'),
+    // BE-INCR-SIMPLES-CAIXA PR-1 (nó X14-CAIXA, item 7; F-CX-3 a): data de efeitos da exclusão do Simples — gatilho do
+    // art. 20 II c da Res. CGSN 140. Só no regime SIMPLES.
+    simplesExclusaoEfeitosEm: dateOnly('simplesExclusaoEfeitosEm').nullable().default(null),
+    // Item 7a (F-CX-2 c + F-CX-2.1 a): prazo D+N do recebimento do cartão no caixa — obrigatório com CAIXA, null com
+    // COMPETENCIA. Sem valor padrão escondido.
+    simplesCaixaPrazoCartaoDebitoDias: z.number().int().min(0).max(365).nullable().default(null),
+    simplesCaixaPrazoCartaoCreditoDias: z.number().int().min(0).max(365).nullable().default(null),
   })
   .strict()
   .superRefine((v, ctx) => {
@@ -167,6 +174,18 @@ export const UpsertCompanyFiscalProfileSchema = z
         if (v[k] !== null) ctx.addIssue({ code: 'custom', path: [k], message: 'O enquadramento ICMS/ISS do Anexo XI é do MEI (Res. CGSN 140 art. 101 § 1º).' });
       }
     }
+    // X14-CAIXA item 7 (F-CX-3 a) — a exclusão é do optante ME/EPP
+    if (v.regime !== 'SIMPLES' && v.simplesExclusaoEfeitosEm !== null) {
+      ctx.addIssue({ code: 'custom', path: ['simplesExclusaoEfeitosEm'], message: 'A data de efeitos da exclusão do Simples só se aplica ao regime SIMPLES (Res. CGSN 140 art. 20 II c).' });
+    }
+    // X14-CAIXA item 7a (F-CX-2 c + F-CX-2.1 a) — prazo do cartão: obrigatório no caixa, ausente na competência
+    for (const k of ['simplesCaixaPrazoCartaoDebitoDias', 'simplesCaixaPrazoCartaoCreditoDias'] as const) {
+      if (v.simplesRegimeApuracao === 'CAIXA' && v[k] === null) {
+        ctx.addIssue({ code: 'custom', path: [k], message: 'No regime de caixa, informe em quantos dias a administradora credita a venda no cartão (D+N).' });
+      } else if (v.simplesRegimeApuracao === 'COMPETENCIA' && v[k] !== null) {
+        ctx.addIssue({ code: 'custom', path: [k], message: 'O prazo do cartão só se aplica ao regime de caixa (simplesRegimeApuracao = CAIXA).' });
+      }
+    }
     // BE-INCR-TAX-PRESUMIDO-16 item 11 (F-P16-1 a)
     if (v.regime === 'PRESUMIDO' && v.prestadoraExclusivaServicos && !v.declaraNaoProfissaoRegulamentada) {
       ctx.addIssue({
@@ -184,11 +203,16 @@ export type UpsertCompanyFiscalProfileInput = z.infer<typeof UpsertCompanyFiscal
  * X13 PR-3 item 19 (F-OBP-6 → c): bloco `fiscal` do `POST /dashboard/create` — o onboarding pergunta SÓ regime e porte,
  * com "não sei" (`NAO_SEI` ⇒ nada é criado; o resto do perfil vem depois, no formulário). Pergunta fechada: o modelo
  * da entrevista não infere o regime (item 20).
+ *
+ * BE-INCR-ONBOARDING-ACTIVATION EMENDA 14/10, item 9a (F-I4-7 a): `icmsContribuinte` — "a empresa vende produtos
+ * (mercadorias) com inscrição estadual?". Fato da empresa (LC 87/1996 art. 4º), não decorre do regime; só pesa em
+ * `PRESUMIDO`/`REAL` (no Simples o perfil da unidade o força a `false`). `null`/ausente = "não sei".
  */
 export const OnboardingFiscalSchema = z
   .object({
     regime: z.enum([...REGIMES_EMPRESA, 'NAO_SEI']),
     grandePorte: z.boolean().nullable().optional(),
+    icmsContribuinte: z.boolean().nullable().optional(),
   })
   .strict();
 export type OnboardingFiscalInput = z.infer<typeof OnboardingFiscalSchema>;

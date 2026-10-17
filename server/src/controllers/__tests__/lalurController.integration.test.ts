@@ -7,11 +7,12 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { ECF_L12_CATALOG } from '@/features/accounting/models/Lalur.model';
 
 const app = makeApp();
 const UNIT = 'unit-lalur-http';
+const UNIT_B = `${UNIT}-b`;
 
 let dono: { id: string; username: string };
 let outro: { id: string; username: string };
@@ -48,7 +49,10 @@ describe('/api/lalur — contrato HTTP', () => {
   beforeAll(async () => {
     pushTestSchema();
     dono = await criarUsuario('lalur-http-a');
+    await seedUnit({ userId: dono.id, id: UNIT });
+    await seedUnit({ userId: dono.id, id: 'unit-lalur-3c' }); // UNIT3 do 2º describe (DELETE /api/accounting/accounts)
     outro = await criarUsuario('lalur-http-b');
+    await seedUnit({ userId: outro.id, id: UNIT_B }); // I6: id de unidade é global — o outro dono tem a sua
     contaResultado = await prisma.account.create({
       data: { userId: dono.id, unitId: UNIT, code: '4.1.1', name: 'Despesas gerais', nature: 'Expense' },
     });
@@ -238,16 +242,16 @@ describe('/api/lalur — contrato HTTP', () => {
     const contas = await request(app).get('/api/lalur/parte-b').set(authHeader(dono)).query({ unitId: UNIT });
     const irpj = contas.body.data.find((a: { codTributo: string }) => a.codTributo === 'I') as { id: string };
 
-    expect((await request(app).patch(`/api/lalur/entries/${id}`).set(authHeader(outro)).send({ unitId: UNIT, valorCents: 1 })).status).toBe(404);
-    expect((await request(app).post(`/api/lalur/entries/${id}/archive`).set(authHeader(outro)).send({ unitId: UNIT })).status).toBe(404);
-    expect((await request(app).post(`/api/lalur/parte-b/${irpj.id}/archive`).set(authHeader(outro)).send({ unitId: UNIT })).status).toBe(404);
+    expect((await request(app).patch(`/api/lalur/entries/${id}`).set(authHeader(outro)).send({ unitId: UNIT_B, valorCents: 1 })).status).toBe(404);
+    expect((await request(app).post(`/api/lalur/entries/${id}/archive`).set(authHeader(outro)).send({ unitId: UNIT_B })).status).toBe(404);
+    expect((await request(app).post(`/api/lalur/parte-b/${irpj.id}/archive`).set(authHeader(outro)).send({ unitId: UNIT_B })).status).toBe(404);
     // referências cross-scope no corpo
-    const refB = await request(app).post('/api/lalur/entries').set(authHeader(outro)).send({ unitId: UNIT, year: 2025, quarter: 'T01', livro: 'lalur', codigo: '7', valorCents: 1, indRelacao: '1', parteBId: irpj.id });
+    const refB = await request(app).post('/api/lalur/entries').set(authHeader(outro)).send({ unitId: UNIT_B, year: 2025, quarter: 'T01', livro: 'lalur', codigo: '7', valorCents: 1, indRelacao: '1', parteBId: irpj.id });
     expect(refB.status).toBe(404);
-    const refA = await request(app).post('/api/lalur/entries').set(authHeader(outro)).send({ unitId: UNIT, year: 2025, quarter: 'T01', livro: 'lalur', codigo: '7', valorCents: 1, indRelacao: '2', accountId: contaResultado.id });
+    const refA = await request(app).post('/api/lalur/entries').set(authHeader(outro)).send({ unitId: UNIT_B, year: 2025, quarter: 'T01', livro: 'lalur', codigo: '7', valorCents: 1, indRelacao: '2', accountId: contaResultado.id });
     expect(refA.status).toBe(404);
     // e o outro escopo não vê nada do dono
-    const theirs = await request(app).get('/api/lalur/entries').set(authHeader(outro)).query({ unitId: UNIT });
+    const theirs = await request(app).get('/api/lalur/entries').set(authHeader(outro)).query({ unitId: UNIT_B });
     expect(theirs.body.data).toEqual([]);
   });
 

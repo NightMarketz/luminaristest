@@ -2,7 +2,6 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
 import {
   ApprovePolicyVersionSchema,
   ListPolicyVersionsQuerySchema,
@@ -25,7 +24,7 @@ export const proposePolicyVersion = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = ProposePolicyVersionSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getAccountingPolicyVersionService().propose(scope, parsed.data);
     return res.status(201).json({ success: true, data });
   } catch (error) {
@@ -41,7 +40,7 @@ export const listPolicyVersions = async (req: Request, res: Response) => {
     const parsed = ListPolicyVersionsQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
     const { unitId, ownerUserId, target, status } = parsed.data;
-    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, unitId, ownerUserId);
+    const scope = await getFactory().getAccountingScopeResolver().resolveGovernance(user, unitId, ownerUserId, { access: 'read' });
     const data = await getFactory().getAccountingPolicyVersionService().list(scope, { target, status });
     return res.json({ success: true, data });
   } catch (error) {
@@ -56,7 +55,7 @@ export const getPolicyVersion = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = PolicyVersionScopeQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, parsed.data.unitId, parsed.data.ownerUserId);
+    const scope = await getFactory().getAccountingScopeResolver().resolveGovernance(user, parsed.data.unitId, parsed.data.ownerUserId, { access: 'read' });
     const data = await getFactory().getAccountingPolicyVersionService().get(scope, req.params.id);
     return res.json({ success: true, data });
   } catch (error) {
@@ -71,7 +70,7 @@ export const approvePolicyVersion = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = ApprovePolicyVersionSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, parsed.data.unitId, parsed.data.ownerUserId);
+    const scope = await getFactory().getAccountingScopeResolver().resolveGovernance(user, parsed.data.unitId, parsed.data.ownerUserId, { access: 'write' });
     const data = await getFactory().getAccountingPolicyVersionService().approve(scope, req.params.id);
     return res.json({ success: true, data });
   } catch (error) {
@@ -86,7 +85,7 @@ export const rejectPolicyVersion = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = RejectPolicyVersionSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, parsed.data.unitId, parsed.data.ownerUserId);
+    const scope = await getFactory().getAccountingScopeResolver().resolveGovernance(user, parsed.data.unitId, parsed.data.ownerUserId, { access: 'write' });
     const data = await getFactory().getAccountingPolicyVersionService().reject(scope, req.params.id, parsed.data.reason);
     return res.json({ success: true, data });
   } catch (error) {

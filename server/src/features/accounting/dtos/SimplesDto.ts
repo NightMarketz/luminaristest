@@ -1,7 +1,9 @@
 import { z } from 'zod';
 import { isValidDateOnly } from '../models/dates';
 import { MAX_CENTS } from '../models/money';
+import { CNPJ_REGEX, isValidCnpj } from '../../../lib/cnpj';
 import { SEGREGACAO_EXCLUI, type TributoSimples } from '../models/simplesCalc';
+import type { DocumentoRef } from './SourceDocumentUploadDto';
 
 /**
  * BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14, BRIEF itens 10–14; contrato §3) — entradas da apuração. Tudo `.strict()`;
@@ -102,10 +104,16 @@ export const CODIGOS_ALERTA_SIMPLES = [
   'MEI_ENQUADRAMENTO_DIVERGE',
   'MEI_TAC_COM_OCUPACAO_A',
   'MEI_OCUPACAO_EXCLUIDA',
+  // BE-INCR-SIMPLES-CAIXA PR-2 (nó X14-CAIXA, itens 13, 16 e 18; A3 da decisão do dono de 16/10)
+  'REGIME_CAIXA_RECALCULO',
+  'IMPEDIMENTO_CAIXA_ICMS_ISS',
+  'CARTAO_RECEBIMENTO_ESTIMADO',
+  'RECEBIMENTO_DE_VENDA_TRIBUTADA_POR_COMPETENCIA',
 ] as const;
 /** D-2026-10-10-X14-ALERTA-INFORMATIVO (dono, chat, 2026-10-10), item 1: o código fica estável; o alerta ganha severidade. */
 export const SEVERIDADES_ALERTA_SIMPLES = ['INFO', 'WARNING'] as const;
-export const MOTIVOS_ALERTA_INFORMATIVO = ['DOCUMENTO_MUNICIPAL_TRANSIÇÃO', 'REGIME_CAIXA'] as const;
+// X14-CAIXA item 17 (F-CX-6 a): `REGIME_CAIXA` fica no enum (compatibilidade do snapshot) sem emissor desde o PR-2.
+export const MOTIVOS_ALERTA_INFORMATIVO = ['DOCUMENTO_MUNICIPAL_TRANSIÇÃO', 'REGIME_CAIXA', 'CARTAO_RECEBIMENTO_ESTIMADO'] as const;
 /** Alerta da apuração (saída). `motivoInformativo` só vem com `severity = INFO`. */
 export const AlertaSimplesSchema = z
   .object({
@@ -119,6 +127,96 @@ export const AlertaSimplesSchema = z
 export type AlertaSimples = z.infer<typeof AlertaSimplesSchema>;
 export type CodigoAlertaSimples = AlertaSimples['codigo'];
 
+/** Centavos com sinal: no caixa, o estorno do mês pode passar o recebido do mês (L1 a, dono 16/10). */
+const centsComSinal = z.number().int().min(-MAX_CENTS).max(MAX_CENTS);
+
+/**
+ * BE-INCR-SIMPLES-CAIXA PR-2 (nó X14-CAIXA, item 15) — a base caixa do PA, LÍQUIDA da cota do profissional-parceiro (a
+ * mesma régua da receita por competência). `receitaAuferidaPaCents` é a da competência (conferência; o RBT12, os limites e
+ * a faixa seguem por competência — Res. CGSN 140 art. 19 p.ú.).
+ */
+export const BaseCaixaSchema = z
+  .object({
+    recebidoPaCents: centsComSinal,
+    receitaAuferidaPaCents: centsComSinal,
+    art20Cents: z
+      .object({
+        parcelaVencida: cents, // art. 20 I
+        encerramento: cents, // art. 20 II a
+        retornoCompetencia: cents, // art. 20 II b (Y ≤ 2025)
+        exclusao: cents, // art. 20 II c
+      })
+      .strict(),
+  })
+  .strict();
+export type BaseCaixa = z.infer<typeof BaseCaixaSchema>;
+
+/** Item 13 (F-CX-7 a) — art. 20 IV: ICMS/ISS da receita não recebida, recolhidos direto ao ente — fora do DAS. */
+export const ImpedimentoCaixaSchema = z
+  .object({
+    mesBase: z.string().regex(/^\d{4}-\d{2}$/),
+    receitaNaoRecebidaCents: cents,
+    icmsCents: cents,
+    issCents: cents,
+  })
+  .strict();
+export type ImpedimentoCaixa = z.infer<typeof ImpedimentoCaixaSchema>;
+
+/**
+ * BE-INCR-SIMPLES-CAIXA PR-3 (nó X14-CAIXA, item 19) — GET …/registro-valores-a-receber: o registro do Anexo IX da Res.
+ * CGSN 140 (arts. 20 III e 77), só até 2026 (o caixa acaba em 01/01/2027 — Res. CGSN 190/2026 art. 8º XIX e XXII).
+ */
+export const RegistroValoresAReceberQuerySchema = z.object({ unitId: z.string().min(1), ano: z.coerce.number().int().gte(2018).lte(2026) }).strict();
+
+/** Uma linha do registro de valores a receber (colunas do Anexo IX). */
+export const LinhaAnexoIxSchema = z
+  .object({
+    saleId: z.string(),
+    dataOperacao: dateOnly('dataOperacao'),
+    documentosFiscais: z.array(z.string()), // art. 77 § 1º: registrados juntos
+    valorTotalCents: cents,
+    quantidadeParcelas: z.number().int().min(1),
+    parcelas: z.array(
+      z
+        .object({
+          numero: z.number().int().min(1),
+          valorCents: cents,
+          vencimento: dateOnly('vencimento'),
+          dataRecebimento: dateOnly('dataRecebimento').nullable(),
+          valorPagoCents: cents,
+          saldoAReceberCents: cents,
+          incobravelCents: cents,
+        })
+        .strict(),
+    ),
+    dispensadaCartao: z.boolean(), // art. 77 § 3º
+  })
+  .strict();
+export type LinhaAnexoIx = z.infer<typeof LinhaAnexoIxSchema>;
+
+/** Item 20 (F-CX-5 a) — meios de cobrança que provam a tentativa (Res. CGSN 140 art. 77 § 6º). */
+export const MEIOS_COBRANCA_INCOBRAVEL = ['NOTIFICACAO_EXTRAJUDICIAL', 'PROTESTO', 'COBRANCA_JUDICIAL', 'CADASTRO_PROTECAO_CREDITO'] as const;
+export const SimplesCreditoIncobravelCreateSchema = z
+  .object({
+    unitId: z.string().min(1),
+    saleId: z.string().min(1),
+    valorCents: cents.refine((v) => v > 0, 'valorCents deve ser maior que zero'),
+    meioCobranca: z.enum(MEIOS_COBRANCA_INCOBRAVEL),
+    data: dateOnly('data'),
+    evidencia: z.string().trim().min(1).max(500),
+  })
+  .strict();
+export type SimplesCreditoIncobravelCreate = z.infer<typeof SimplesCreditoIncobravelCreateSchema>;
+export interface SimplesCreditoIncobravelView {
+  id: string;
+  saleId: string;
+  valorCents: number;
+  meioCobranca: (typeof MEIOS_COBRANCA_INCOBRAVEL)[number];
+  data: string;
+  evidencia: string;
+  createdAt: string;
+}
+
 export const SimplesUnitQuerySchema = z.object({ unitId: z.string().min(1) }).strict();
 export const SimplesIdParamSchema = z.object({ id: z.string().min(1) }).strict();
 
@@ -129,6 +227,8 @@ export type SimplesHistoricoView = {
   receitaBrutaCents: number;
   folhaCents: number | null;
   sourceDocumentId: string | null;
+  /** BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-9 (a): o arquivo para o FE baixar pelo GET /attachments/:id; null sem SD ativo. */
+  documento: DocumentoRef;
   updatedAt: string;
 };
 export type SimplesSegregacaoView = {
@@ -184,6 +284,9 @@ export type SimplesDasnUpsert = z.infer<typeof SimplesDasnUpsertSchema>;
  * Item 28 — DEFIS, campos digitados do manual do PGDAS-D/DEFIS 9.4.3.1 (itens 2, 3, 7, 7.1–7.4 e 8). O sócio é
  * referenciado pelo contato (`contactId`), sem CPF/nome no registro (o portal pede; o FE resolve do cadastro). Lucro
  * contábil (item 4) e estoques (9.4.3.2 itens 1–2) vêm do razão no GET.
+ * BE-INCR-SIMPLES-DEFIS-MANUAL (BRIEF §2, itens 1–5): ganhos de capital (item 1), exportação direta (item 5, F-DM-3 a:
+ * digitada), via comercial exportadora (item 6), cotas em tesouraria (item 8, p. 93) e doações à campanha eleitoral
+ * (item 9 — campos lidos nas telas da p. 92, F-DM-4 destravado 15/10). Manual versão 17/06/2025 (`fontes-oficiais/MANIFEST.md:56`).
  */
 export const SimplesDefisSocioSchema = z
   .object({
@@ -194,21 +297,66 @@ export const SimplesDefisSocioSchema = z
     irrfCents: cents,
   })
   .strict();
+/** CNPJ alfanumérico, sem máscara, DV conferido (`lib/cnpj.ts`). */
+const cnpjComDv = z.string().regex(CNPJ_REGEX, 'CNPJ = 14 posições sem máscara').refine(isValidCnpj, 'CNPJ com dígito verificador inválido');
+/** Item 6 — CNPJ da comercial exportadora + valor. */
+export const SimplesDefisExportacaoComercialSchema = z
+  .object({
+    cnpj: cnpjComDv,
+    valorCents: cents.refine((v) => v > 0, 'valor da exportação via comercial exportadora deve ser maior que zero'),
+  })
+  .strict();
+/** Item 9 (manual p. 92, telas 9.1–9.4) — as opções das listas, na ordem do portal. */
+export const DEFIS_TIPOS_BENEFICIARIO = ['CANDIDATO', 'COMITE_FINANCEIRO', 'PARTIDO_POLITICO'] as const;
+export const DEFIS_FORMAS_DOACAO = ['CHEQUE', 'OUTROS_TITULOS_CREDITO', 'TRANSFERENCIA_ELETRONICA', 'DEPOSITO_ESPECIE', 'DINHEIRO', 'BENS', 'SERVICOS'] as const;
+/**
+ * Item 9 — uma ocorrência de doação: 9.1 CNPJ beneficiário, 9.2 tipo, 9.3 forma, 9.4 valor. O mesmo CNPJ pode repetir
+ * (uma linha por forma — dono, questionário 15/10). Aceito como o portal pede, sem bloqueio pela ADI 4650 (dono, 15/10):
+ * a vedação é do ato de doar, não da declaração.
+ */
+export const SimplesDefisDoacaoEleitoralSchema = z
+  .object({
+    cnpj: cnpjComDv,
+    tipoBeneficiario: z.enum(DEFIS_TIPOS_BENEFICIARIO),
+    formaDoacao: z.enum(DEFIS_FORMAS_DOACAO),
+    valorCents: cents.refine((v) => v > 0, 'valor da doação deve ser maior que zero'),
+  })
+  .strict();
 export const SimplesDefisDigitadoSchema = z
   .object({
     empregadosInicio: z.number().int().min(0).max(1_000_000),
     empregadosFim: z.number().int().min(0).max(1_000_000),
+    ganhosCapitalCents: cents,
     ganhosRendaVariavelCents: cents,
+    exportacaoDiretaCents: cents,
+    exportacaoComercial: z.array(SimplesDefisExportacaoComercialSchema).max(100),
+    cotasTesourariaBp: z.number().int().min(0).max(10000),
     socios: z.array(SimplesDefisSocioSchema).max(100),
+    doacoesEleitorais: z.array(SimplesDefisDoacaoEleitoralSchema).max(100),
   })
   .strict();
 export type SimplesDefisDigitado = z.infer<typeof SimplesDefisDigitadoSchema>;
+/**
+ * BRIEF item 8 — leitura de `SimplesDeclaracaoAnual.dados` gravado antes dos campos novos: a falta vira 0 / [] SÓ aqui
+ * (nunca `.default()` no schema de escrita — memória zod4-partial-aplica-default).
+ */
+export const SimplesDefisDigitadoLeituraSchema = SimplesDefisDigitadoSchema.extend({
+  ganhosCapitalCents: cents.default(0),
+  exportacaoDiretaCents: cents.default(0),
+  exportacaoComercial: z.array(SimplesDefisExportacaoComercialSchema).max(100).default([]),
+  cotasTesourariaBp: z.number().int().min(0).max(10000).default(0),
+  doacoesEleitorais: z.array(SimplesDefisDoacaoEleitoralSchema).max(100).default([]),
+});
 export const SimplesDefisUpsertSchema = z
   .object({ unitId: z.string().min(1), ...SimplesDefisDigitadoSchema.shape })
   .strict()
-  .refine((v) => v.socios.length === 0 || v.socios.reduce((s, x) => s + x.participacaoBp, 0) <= 10000, {
-    message: 'a soma das participações dos sócios não passa de 100% (manual 9.4.3.1 item 7.3)',
+  .refine((v) => v.socios.length === 0 || v.socios.reduce((s, x) => s + x.participacaoBp, 0) + v.cotasTesourariaBp === 10000, {
+    message: 'a soma das participações dos sócios mais as cotas em tesouraria deve ser 100% (manual 9.4.3.1 itens 7.3 e 8)',
     path: ['socios'],
+  })
+  .refine((v) => new Set(v.exportacaoComercial.map((e) => e.cnpj)).size === v.exportacaoComercial.length, {
+    message: 'cada comercial exportadora aparece uma vez só (manual 9.4.3.1 item 6)',
+    path: ['exportacaoComercial'],
   });
 export type SimplesDefisUpsert = z.infer<typeof SimplesDefisUpsertSchema>;
 
@@ -220,11 +368,25 @@ export type SimplesDasnSimeiView = {
   mesesSemSubrazao: string[];
   digitado: SimplesDasnDigitado | null;
 };
+/**
+ * Item 4 — lucro contábil só se informa quando a ME/EPP escritura (F-DM-2 a: o razão do Luminaris é a escrituração) e o
+ * lucro passa do limite do art. 145 § 1º (§ 2º). `limiteIsencaoCents = null` quando alguma atividade do ano não tem
+ * presunção na tabela (F-DM-1 a); então `informar = true` e `avisos` diz por quê (dono, questionário 15/10).
+ * `SEM_ESCRITURACAO` fica no contrato do BRIEF, mas pelo F-DM-2 (a) o serviço não o emite.
+ */
+export type SimplesDefisLucroContabil = {
+  valorCents: number;
+  limiteIsencaoCents: number | null;
+  informar: boolean;
+  calculo: 'PRESUNCAO' | 'SEM_ESCRITURACAO';
+  avisos: string[];
+};
 export type SimplesDefisView = {
   ano: number;
   prazo: string;
   mesesApurados: string[];
-  lucroContabilCents: number;
+  /** Item 4 + Res. CGSN 140 art. 145 §§ 1º–2º (F-DM-1 a, F-DM-5 a). */
+  lucroContabil: SimplesDefisLucroContabil;
   estoqueInicialCents: number;
   estoqueFinalCents: number;
   digitado: SimplesDefisDigitado | null;

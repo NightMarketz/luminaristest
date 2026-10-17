@@ -213,6 +213,24 @@ export const RunCrmReportOutputSchema = z.object({
   converted: ConvertedViewSchema.optional(), // só com spec.convertTo; nunca substitui series
 });
 
+// --- Modelos prontos (BE-INCR-CRM-REPORT-TEMPLATES, itens 1 e 3; F-FRB4=(a)) — GET /api/crm/reports/templates ---
+
+export const CRM_REPORT_TEMPLATE_KEYS = ['funnel', 'source', 'status', 'proposals', 'activities'] as const;
+
+/** Modelo = corpo de criação + chave estável; a tela abre o editor com ele, sem salvar (FE item 19). */
+export const CrmReportTemplateSchema = CreateCrmReportSchema.extend({ key: z.enum(CRM_REPORT_TEMPLATE_KEYS) }).strict();
+
+/**
+ * Saída da rota de modelos. `moneyCurrencyPairs` = `CRM_MONEY_CURRENCY_PAIRS` (cédula "na mesma rota",
+ * D-2026-10-15-CRM-RB-TEMPLATES-ROTA): fonte única do par valor→moeda para a tela, no lugar do espelho manual do FE.
+ */
+export const CrmReportTemplatesOutputSchema = z
+  .object({
+    templates: z.array(CrmReportTemplateSchema),
+    moneyCurrencyPairs: z.partialRecord(SourceEnum, z.record(z.string(), z.string())),
+  })
+  .strict();
+
 export type ReportSpec = z.infer<typeof ReportSpecSchema>;
 export type ReportMeasure = z.infer<typeof ReportMeasureSchema>;
 export type ReportDimension = z.infer<typeof ReportDimensionSchema>;
@@ -226,3 +244,6 @@ export type CurrencyMode = z.infer<typeof CurrencyModeSchema>;
 export type PtaxRateView = z.infer<typeof PtaxRateViewSchema>;
 export type ConvertedView = z.infer<typeof ConvertedViewSchema>;
 export type RunCrmReportOutput = z.infer<typeof RunCrmReportOutputSchema>;
+export type CrmReportTemplateKey = (typeof CRM_REPORT_TEMPLATE_KEYS)[number];
+export type CrmReportTemplate = z.infer<typeof CrmReportTemplateSchema>;
+export type CrmReportTemplatesOutput = z.infer<typeof CrmReportTemplatesOutputSchema>;

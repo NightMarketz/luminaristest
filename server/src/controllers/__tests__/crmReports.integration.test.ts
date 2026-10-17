@@ -43,6 +43,14 @@ describe('BE-INCR-CRM-REPORT-BUILDER — /api/crm/reports', () => {
     expect((await request(app).get('/api/crm/reports')).status).toBe(401);
   });
 
+  it('GET /reports/templates (BE-INCR-CRM-REPORT-TEMPLATES): 401 sem token; 200 com 5 modelos e os pares — não cai no :id', async () => {
+    expect((await request(app).get('/api/crm/reports/templates')).status).toBe(401);
+    const res = await request(app).get('/api/crm/reports/templates').set(authHeader(other));
+    expect(res.status).toBe(200);
+    expect(res.body.data.templates.map((t: { key: string }) => t.key)).toEqual(['funnel', 'source', 'status', 'proposals', 'activities']);
+    expect(res.body.data.moneyCurrencyPairs.leads).toEqual({ latestProposalAmount: 'latestProposalCurrency' });
+  });
+
   it('CRUD do dono: cria, lista, lê, edita, roda e apaga (soft-delete)', async () => {
     const c = await request(app).post('/api/crm/reports').set(authHeader(owner)).send(chart(BY_STATUS));
     expect(c.status).toBe(201);

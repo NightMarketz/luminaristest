@@ -40,7 +40,7 @@ describe('SaleReturnedMapper', () => {
     const debit = input.lines.find((l) => l.debitCents > 0)!;
     const credit = input.lines.find((l) => l.creditCents > 0)!;
     expect(debit.accountCode).toBe('3.2'); // Devoluções de Vendas (contra-revenue)
-    expect(credit.accountCode).toBe('1.1.2'); // A Receber
+    expect(credit.accountCode).toBe('1.1.2.01'); // A Receber
     expect(debit.debitCents).toBe(credit.creditCents); // balanced
     expect(debit.creditCents).toBe(0);
     expect(credit.debitCents).toBe(0);

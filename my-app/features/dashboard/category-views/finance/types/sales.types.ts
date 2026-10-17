@@ -2,7 +2,7 @@
  * Sales Types - Type definitions for sales module
  * 
  * @description
- * Tipos específicos para vendas, itens de venda e wizard de criação.
+ * Tipos específicos para vendas, itens de venda e o modal Nova Venda.
  */
 
 // ─────────────────────────────────────────────────────────────
@@ -12,8 +12,8 @@
 /** Tipos de variante de itens de venda */
 export type SaleItemsVariant = 'products' | 'services' | 'mixed';
 
-/** Tipo de item escolhido no wizard (o servidor exige venda homogênea) */
-export type WizardVariant = 'products' | 'services' | 'packages';
+/** Tipo de item escolhido no modal Nova Venda (o servidor exige venda homogênea) */
+export type SaleVariant = 'products' | 'services' | 'packages';
 
 /** Valores do campo `type` da tabela de itens (preset `itemType`) */
 export type SaleItemKind = 'Product' | 'Service' | 'Package';
@@ -66,12 +66,12 @@ export interface SaleItemData {
 export type SaleItemRecord = SaleItemData & { id: string };
 
 // ─────────────────────────────────────────────────────────────
-// Wizard Types
+// Tipos do modal Nova Venda
 // ─────────────────────────────────────────────────────────────
 
-/** Item temporário no wizard de criação de venda */
+/** Item temporário no modal Nova Venda */
 export interface NewSaleItem {
-    id: string; // ID temporário para gerenciamento no wizard
+    id: string; // ID temporário para gerenciamento no modal Nova Venda
     itemType?: SaleItemKind;
     productId?: string;
     serviceId?: string;
@@ -91,8 +91,8 @@ export interface NewSaleItem {
     serviceName?: string;
 }
 
-/** Estado completo do wizard de criação de venda */
-export interface SalesWizardState {
+/** Estado completo do modal Nova Venda */
+export interface SalesCreateFormState {
     // Header
     date: string;
     customerId: string;
@@ -103,7 +103,7 @@ export interface SalesWizardState {
     paymentMethod: string;
     paymentTermDays: number;
     discountAmount: number;
-    variant: WizardVariant; // User-selected item type (for mixed schemas)
+    variant: SaleVariant; // User-selected item type (for mixed schemas)
     // Items
     items: NewSaleItem[];
     // UI State

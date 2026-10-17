@@ -1,9 +1,9 @@
 import { Prisma } from 'generated/prisma';
-import { AccountingEventMapperCollisionError, ValidationError } from '../../../lib/errors';
+import { AccountingEventMapperCollisionError, NoMapperForUnitError, UnknownEventKeyError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import type { PostingService } from '../services/PostingService';
 import type { AccountingScope } from '../scope/AccountingScope';
-import type { AccountingEvent, AccountingSyncPort, SyncResult } from './AccountingSyncPort';
+import { EVENT_KEY_PATTERN, type AccountingEvent, type AccountingSyncPort, type SyncResult } from './AccountingSyncPort';
 import type { IAccountingEventMapper } from './mappers/IAccountingEventMapper';
 
 /**
@@ -63,11 +63,18 @@ export class AccountingSyncService implements AccountingSyncPort {
   private readonly mappers: Map<string, IAccountingEventMapper>;
   private readonly maxAttempts: number;
   private readonly retryDelayMs: number;
+  private readonly declaredEventKeys: ReadonlySet<string> | null;
 
+  /**
+   * `opts.declaredEventKeys` (BE-INCR-KIT-SETOR PR-6, item 47) — o registro de eventos de negócio: a união das chaves
+   * do `operationalSchema` de todos os kits, montada pela Factory (o núcleo não importa `sectorKits`). Com ele, o
+   * `sync` sem mapper distingue `UNKNOWN_EVENT_KEY` (nenhum kit declara) de `NO_MAPPER_FOR_UNIT` (declarado, sem
+   * binding na unidade). Sem ele (testes desta classe), todo evento sem mapper é `NO_MAPPER_FOR_UNIT`.
+   */
   constructor(
     private readonly postingService: PostingService,
     entries: AccountingMapperEntry[],
-    opts: { maxAttempts?: number; retryDelayMs?: number } = {},
+    opts: { maxAttempts?: number; retryDelayMs?: number; declaredEventKeys?: ReadonlySet<string> } = {},
   ) {
     // F-FEEDER-3 → composite key `unitId:sourceType` (was: `sourceType` alone, AccountingSyncService.ts:45
     // pré-feeder). A SCOPED entry keys on `${unitId}:${sourceType}`; a PLAIN mapper keys on `sourceType`
@@ -86,6 +93,7 @@ export class AccountingSyncService implements AccountingSyncPort {
     }
     this.maxAttempts = opts.maxAttempts ?? 3;
     this.retryDelayMs = opts.retryDelayMs ?? 50;
+    this.declaredEventKeys = opts.declaredEventKeys ?? null;
   }
 
   /**
@@ -93,7 +101,7 @@ export class AccountingSyncService implements AccountingSyncPort {
    * (unit, sourceType)? SAME resolution as `sync()` (composite key, then global). Lets the expiry job skip
    * a unit whose Active binding predates `sale.package.expired` BEFORE touching the balance.
    */
-  hasMapper(unitId: string, sourceType: AccountingEvent['sourceType']): boolean {
+  hasMapper(unitId: string, sourceType: string): boolean {
     return this.mappers.has(`${unitId}:${sourceType}`) || this.mappers.has(sourceType);
   }
 
@@ -122,10 +130,17 @@ export class AccountingSyncService implements AccountingSyncPort {
     // (`buildSaleAccountingMappers()`, plain) — nunca observado por um `sync()` real, porque todo
     // consumidor é lazy e `server.ts` só chama `app.listen()` DEPOIS do pré-boot substituir a
     // instância (ver `initializeAccountingSyncFromBindings()`).
+    // PR-6 (item 46): o vocabulário é aberto, mas o formato não — chave malformada é erro de fiação da origem.
+    if (!EVENT_KEY_PATTERN.test(event.sourceType)) {
+      throw new ValidationError(`sourceType '${event.sourceType}' fora do formato de evento de negócio.`);
+    }
     const mapper = this.mappers.get(`${event.unitId}:${event.sourceType}`) ?? this.mappers.get(event.sourceType);
     if (!mapper) {
-      // Invalid/unknown event kind: a wiring error, not a transient fault. Surface it.
-      throw new ValidationError(`Nenhum mapper registrado para o evento '${event.sourceType}'.`);
+      // PR-6 (item 47): erro de fiação, não falha transitória — nomeado para o chamador distinguir.
+      if (this.declaredEventKeys && !this.declaredEventKeys.has(event.sourceType)) {
+        throw new UnknownEventKeyError(event.sourceType);
+      }
+      throw new NoMapperForUnitError(event.unitId, event.sourceType);
     }
 
     // map() may throw ValidationError (bad money / unbalanced source) — NOT retried.

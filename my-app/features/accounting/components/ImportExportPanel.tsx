@@ -299,7 +299,7 @@ export function ImportExportPanel({
           {needsAccount && (
             <label className="flex items-center gap-2 text-sm text-neutral-400">
               {t('importExport.export.accountLabel', 'Conta')}
-              <input type="text" value={accountCode} onChange={(e) => setAccountCode(e.target.value)} placeholder="1.1.1" className={inputClass} />
+              <input type="text" value={accountCode} onChange={(e) => setAccountCode(e.target.value)} placeholder="1.1.1.01" className={inputClass} />
             </label>
           )}
 

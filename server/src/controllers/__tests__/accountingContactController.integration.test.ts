@@ -11,7 +11,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 const UNIT = 'unit-contact-http';
@@ -37,6 +37,9 @@ describe('/api/accounting/contacts + /delivery — contrato HTTP', () => {
   beforeAll(async () => {
     pushTestSchema();
     dono = await criarUsuario('contact-http-a');
+    for (const id of [UNIT, `${UNIT}-rl`, `${UNIT}-rl-2`, `${UNIT}-rl-nan`, `${UNIT}-alheio`, `${UNIT}-arquivado`]) {
+      await seedUnit({ userId: dono.id, id });
+    }
     // ECF 3C (item 11): a geração da ECF Real exige os 4 trimestres da Parte B fechados (sem contas — C1).
     for (const quarter of ['T01', 'T02', 'T03', 'T04']) {
       const r = await request(app).post('/api/lalur/parte-b/close').set(authHeader(dono)).send({ unitId: UNIT, year: 2025, quarter });
@@ -362,7 +365,8 @@ describe('/api/accounting/contacts + /delivery — contrato HTTP', () => {
 
     it('PUT/.GET em contato de OUTRO escopo (ou arquivado) é 404, nunca 403 (D8/ACC-CD-4)', async () => {
       const outroAtor: { id: string; username: string } = await criarUsuario('contact-http-profile-b');
-      const alheio = await request(app).post('/api/accounting/contacts').set(authHeader(outroAtor)).send(contatoBody({ unitId: `${UNIT}-alheio` }));
+      await seedUnit({ userId: outroAtor.id, id: `${UNIT}-alheio-b` });
+      const alheio = await request(app).post('/api/accounting/contacts').set(authHeader(outroAtor)).send(contatoBody({ unitId: `${UNIT}-alheio-b` }));
       const alheioId = alheio.body.data.id as string;
 
       const getAlheio = await request(app)

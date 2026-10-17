@@ -380,7 +380,8 @@ describe('itens 12 e 13 — detalhe da venda de pacote', () => {
     it('within: o bloco do detalhe fica dentro da seção de validade', async () => {
         vi.mocked(packageAcceptancesService.getBySale).mockResolvedValue(acceptance);
         panel();
+        // a seção monta já em "Carregando…"; o notice só entra depois de o getBySale assentar — espera o DOM, não a seção
         const section = await screen.findByTestId('package-sale-validity');
-        expect(within(section).getByTestId('package-validity-notice')).toBeInTheDocument();
+        expect(await within(section).findByTestId('package-validity-notice')).toBeInTheDocument();
     });
 });

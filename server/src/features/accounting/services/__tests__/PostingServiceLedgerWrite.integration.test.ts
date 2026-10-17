@@ -27,7 +27,7 @@
 import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { getFactory } from '@/lib/factory';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 import { JournalEntryRepository } from '@/features/accounting/repositories/JournalEntryRepository';
 import { NotFoundError } from '@/lib/errors';
@@ -37,7 +37,7 @@ const DONO_A = 'u-ledger-a';
 const DONO_B = 'u-ledger-b';
 const DATA = '2026-06-15';
 
-const scopeDe = (userId: string): AccountingScope => resolveAccountingScope({ userId }, UNIT);
+const scopeDe = (userId: string): AccountingScope => resolveAccountingScopeInternal({ userId }, UNIT);
 const posting = () => getFactory().getPostingService();
 
 /** Lançamento balanceado mínimo: D 4.1 despesa / C 1.1.1 banco, em centavos inteiros. */
@@ -48,7 +48,7 @@ const lancamento = (descricao: string, centavos: number) => ({
   sourceType: 'manual',
   lines: [
     { accountCode: '4.1', debitCents: centavos, creditCents: 0 },
-    { accountCode: '1.1.1', debitCents: 0, creditCents: centavos },
+    { accountCode: '1.1.1.01', debitCents: 0, creditCents: centavos },
   ],
 });
 
