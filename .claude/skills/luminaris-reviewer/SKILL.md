@@ -93,7 +93,7 @@ Agrupar arquivos por camada:
 - `server/src/lib/factory.ts` → Factory
 - `server/src/controllers/` → camada Controller
 - `server/src/routes/` → camada Route
-- `server/src/routes/docs.paths.ts` → OpenAPI
+- `server/src/routes/docs/<feature>.paths.ts` → OpenAPI
 - `my-app/pages/` → Frontend Page
 - `my-app/lib/services/` → Frontend Service
 - `my-app/features/` → Frontend Feature
@@ -196,7 +196,7 @@ grep -n "res\.json\|Response" <arquivo>             # → HTTP no service
   ```bash
   grep -n "protectedApiPaths" server/src/middleware/auth.ts   # deve ser VAZIO (deny-by-default)
   ```
-- [ ] `routes/docs.paths.ts` tem bloco OpenAPI para cada endpoint novo
+- [ ] `routes/docs/<feature>.paths.ts` tem bloco OpenAPI para cada endpoint novo
 - [ ] Router exportado como `export default router`
 - [ ] Nenhuma lógica no arquivo de rota — apenas `router.get/post/put/delete` com handlers
 

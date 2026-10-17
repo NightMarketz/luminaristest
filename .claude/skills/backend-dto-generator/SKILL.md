@@ -29,7 +29,7 @@ Cada item abaixo é uma REGRA DE GERAÇÃO (o `luminaris-reviewer` cobra exatame
 
 ### Arquivo `<Resource>Dto.ts`
 
-- [ ] **[DTO-002]** Comentário `@openapi` JSDoc acima do schema principal (`<Resource>Schema`) — `docs.paths.ts` depende dele para os tipos de request/response.
+- [ ] **[DTO-002]** Comentário `@openapi` JSDoc acima do schema principal (`<Resource>Schema`) — `docs/<feature>.paths.ts` depende dele para os tipos de request/response.
 - [ ] `Create<Resource>Schema` com `z.object({...})`.
 - [ ] **[DTO-001]** `Update<Resource>Schema` derivado via `.partial()` (NÃO redefinir o objeto à mão — `Create<Resource>Schema.partial()`).
 - [ ] Type exportado via `z.infer`: `export type <Resource>Dto = z.infer<typeof <Resource>Schema>` (idem para Create/Update).
@@ -135,7 +135,7 @@ cd server && npx tsc --noEmit
 ## Anti-patterns
 
 - Não reutilize o mesmo schema para Create e Update — Update deve ter todos os campos `.optional()`
-- Não omita o comentário `@openapi` — docs.paths.ts depende dele
+- Não omita o comentário `@openapi` — docs/<feature>.paths.ts depende dele
 - Não use `z.any()` sem justificativa
 - Não exponha campos sensíveis (password, tokens) no schema de resposta
 - Não deixe obrigatoriedade condicional fora do schema — se um campo só é exigido quando outro tem certo valor, use `.superRefine()` ou `z.discriminatedUnion()`; não delegue essa validação ao service em runtime
