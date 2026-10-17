@@ -141,6 +141,11 @@ Ajuste e só fica menor se a UF reduzir.
   original caiu em dia não útil e o pagamento veio no dia útil seguinte.
 
 **F-E4-1: calendário de feriados estadual e municipal.** **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]]). Sem "executa".
+**Executado para a validade do pacote em 17/10** (executa: dono, chat, 2026-10-17, "Já dispara as correções que ainda não
+começaram"): tabela `FERIADO_LOCAL` em `legal_parameters` (SP, UF 35, e São Paulo capital, IBGE 3550308; dossiê
+`pesquisas-legais/fer-sp-feriados-locais`) e `isHoliday(data, feriados, codMun)` em `packages/models/validity.ts`, com o
+`codMun` do `FiscalProfile` da unidade. E4-2 e E4-3 (cobrança MP) seguem sem código. O insumo ausente (lista oficial de SP)
+foi lido: Lei estadual 9.497/1997 e Lei municipal 7.008/1967 art. 1º (red. Lei 13.707/2004).
 - (a) Tabela de feriados por UF e município em `legal_parameters` (publicada pelo dono, como as outras), mais um helper
   `proximoDiaUtil(data, uf, codMun)` que estende o de hoje (nacional).
 - (b) Só nacional e fim de semana. O estadual e o municipal ficam como aviso de texto.
@@ -217,6 +222,9 @@ oferecer o saldo em dez/2026 (pesquisa-juris 4.4, média-baixa).
 
 **Origem.**
 - D-8: o tomador retém IRRF de 1,5% (RIR art. 714), salvo prestador do Simples (IN SRF 765/2007) ou IR ≤ R$ 10.
+  **Correção de 17/10** (verificação legal, `pesquisas-legais/verif-2026-10-17-lgpd-cdc-obrigacoes` §1 DIVERGE 1, [D27]):
+  o 1,5% do art. 714 vale só para os serviços "caracterizadamente de natureza profissional" da lista do § 1º. Outros
+  serviços têm alíquota própria ou não têm retenção. A dispensa até R$ 10 confere (RIR art. 785 II; Lei 9.430 art. 67).
 - Achado do PRE-ADR folha (`PRE-ADR-PESSOAL-FOLHA-ESOCIAL-REINF.md:514`): o AP que paga com retenção registra o bruto
   como líquido.
 - III-8 do pedido único ao contador, ainda sem assinatura.
@@ -233,10 +241,19 @@ insumo ausente aqui.
   bruto − Σ retenções.
 - **E7-2** Lançamento: D despesa (bruto) / C fornecedor (bruto). Na baixa: D fornecedor (bruto) / C banco (líquido)
   / C "IRRF a recolher" (retido). Conta canônica nova ou configurável: F-E7-1.
-- **E7-3** Regra D-8 como sugestão. O IRRF é sugerido a 1,5% quando o prestador **não** é do Simples e o IR é maior
-  que R$ 10. Abaixo disso, 0 com nota "IR ≤ R$ 10 (dispensa)".
+- **E7-3** Regra D-8 como sugestão. O IRRF é sugerido a 1,5% **só** quando o serviço é da lista do RIR art. 714 § 1º
+  (serviço profissional), o prestador **não** é do Simples e o IR é maior que R$ 10. Abaixo de R$ 10, 0 com nota
+  "IR ≤ R$ 10 (dispensa)". Serviço fora da lista: sem sugestão de 1,5% (nota "serviço fora do RIR art. 714 § 1º").
+  Como o sistema sabe que o serviço é da lista: **F-E7-3** (fork aberto). Corrigido em 17/10: a redação anterior
+  sugeria 1,5% para todo prestador fora do Simples, o que contraria o § 1º.
 - **E7-4** DARF: o retido entra no X9/MIT como débito de IRRF (código 1708) do mês do pagamento. Fica dependente do X9
   PR-2.
+
+**F-E7-3: como se sabe que o serviço é profissional (RIR art. 714 § 1º).** Aberto (17/10). Decisão do dono.
+- (a) Marca "serviço profissional (RIR art. 714)" no cadastro do fornecedor. Sem a marca, não sugere o 1,5%.
+- (b) Tabela por tipo de serviço em `legal_parameters` (alíquota 1,5%, 1% ou sem retenção), escolhida no título.
+
+O dossiê não recomenda entre (a) e (b) (§4.3: "a decisão é do dono"). A norma só exclui a sugestão de 1,5% para todos.
 
 **F-E7-1: conta do IRRF a recolher.** **RATIFICADO (a)**: dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]]). Sem "executa".
 - (a) Folha canônica nova `2.1.x IRRF a Recolher`, com referencial `2.01.01.09.28` "Outros Tributos a Recolher", no
