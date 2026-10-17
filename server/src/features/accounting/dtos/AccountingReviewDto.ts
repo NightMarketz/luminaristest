@@ -129,7 +129,7 @@ export const AdjustmentEntrySchema = z
  *       properties:
  *         unitId:       { type: string }
  *         reviewerName: { type: string, minLength: 3, maxLength: 120 }
- *         reviewerCrc:  { type: string, description: "Máscara CFC UF-NNNNNN/O-D, transferido/secundário com sufixo ' T-UF'/' S-UF' (mesma do contato, #305)" }
+ *         reviewerCrc:  { type: string, description: "Máscara CFC UF-NNNNNN/O-D, transferido com sufixo ' T-UF' (mesma do contato, #305)" }
  *         statement:    { type: string, maxLength: 500 }
  *         ownerUserId: { type: string, description: "GOV-CONTADOR: dono que o contador responsável atende; ausente = escopo do próprio usuário" }
  */

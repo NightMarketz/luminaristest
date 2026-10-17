@@ -64,7 +64,7 @@ export function signerCpfOrCnpjSchema(registro: 'J930' | '0930') {
 
 /** J930 campo 06 / 0930 campo 5 (IND_CRC) — mesma máscara CFC do contato (#305, F-C12-3 → a; na ECF,
  * BE-INCR-CRC-CFC-FOLLOWUPS F-4 → a): `parseCrcNumber` aceita as grafias usuais e devolve a forma
- * canônica `UF-NNNNNN/O-D[ T-UF|S-UF]`, ou reprova. Exportado para o DTO da ECF reusar. */
+ * canônica `UF-NNNNNN/O-D[ T-UF]`, ou reprova. Exportado para o DTO da ECF reusar. */
 export function crcNumberFieldFor(registro: 'J930' | '0930') {
   return z.string().transform((value, ctx) => {
     const parsed = parseCrcNumber(value);
