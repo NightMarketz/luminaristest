@@ -856,12 +856,13 @@ export class PostingService {
   /**
    * List all active accounts for the scope. Idempotently seeds the canonical
    * chart of accounts first so the caller always gets a non-empty list on first access.
+   * Unidade apagada (`scope.unitDeleted`, só com access 'read') lê sem semear — F-I6-10, nó I6.
    */
   async listAccounts(scope: AccountingScope): Promise<Account[]> {
     if (!this.policy.canRead(scope)) {
       throw new ForbiddenError('Você não tem permissão para listar contas.');
     }
-    await this.ensureChartOfAccounts(scope);
+    if (scope.unitDeleted !== true) await this.ensureChartOfAccounts(scope);
     return this.accountRepo.findManyByUnit(scope);
   }
 

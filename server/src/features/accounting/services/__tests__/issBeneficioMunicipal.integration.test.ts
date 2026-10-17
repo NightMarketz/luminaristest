@@ -5,9 +5,10 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { ApplicationFactory } from '@/lib/factory';
-import { resolveAccountingScope, type AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { IssBeneficioMunicipalService } from '../IssBeneficioMunicipalService';
 import type { IAccountingPolicy } from '../../policies/IAccountingPolicy';
 import type { IIssBeneficioMunicipalRepository } from '../../repositories/IIssBeneficioMunicipalRepository';
@@ -27,7 +28,8 @@ interface Cenario {
 let n = 0;
 async function cenario(nome: string, codMun: string | null = SP): Promise<Cenario> {
   const u = await prisma.user.create({ data: { name: nome, username: nome, email: `${nome}@test.local`, password: 'x', role: 'USER' } });
-  const c: Cenario = { user: { id: u.id, username: u.username }, unit: `unit-${nome}`, scope: () => resolveAccountingScope({ userId: u.id }, `unit-${nome}`) };
+  const c: Cenario = { user: { id: u.id, username: u.username }, unit: `unit-${nome}`, scope: () => resolveAccountingScopeInternal({ userId: u.id }, `unit-${nome}`) };
+  await seedUnit({ userId: u.id, id: c.unit });
   await f().getPostingService().ensureChartOfAccounts(c.scope());
   await prisma.fiscalProfile.create({ data: { userId: u.id, unitId: c.unit, regimeTributario: 'SIMPLES_NACIONAL', pisCofinsRegime: 'CUMULATIVO', codMun } });
   return c;
@@ -111,7 +113,7 @@ describe('item 1 — policy (canManageIssBeneficioMunicipal / canReadFiscalProfi
   const repo = { listByScope: jest.fn(async () => []), findById: jest.fn(), runTransaction: jest.fn() } as unknown as IIssBeneficioMunicipalRepository;
   const nega = { canReadFiscalProfile: () => false, canManageIssBeneficioMunicipal: () => false } as unknown as IAccountingPolicy;
   const svc = new IssBeneficioMunicipalService(repo, nega, {} as AuditService);
-  const scope = resolveAccountingScope({ userId: 'u' }, 'unit');
+  const scope = resolveAccountingScopeInternal({ userId: 'u' }, 'unit');
   it('sem permissão: 403 em ler, criar, alterar e remover — antes de tocar o repositório', async () => {
     await expect(svc.list(scope)).rejects.toMatchObject({ statusCode: 403 });
     await expect(svc.create(scope, { unitId: 'unit' } as never)).rejects.toMatchObject({ statusCode: 403 });

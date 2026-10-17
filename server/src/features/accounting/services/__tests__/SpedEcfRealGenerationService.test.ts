@@ -11,7 +11,7 @@
  *  - item 17: o job nasce carimbado com o escopo (userId/unitId) — tenancy.
  */
 import { SpedEcfRealGenerationService, SPED_ECF_REAL_JOB_KIND } from '../SpedEcfRealGenerationService';
-import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import { ForbiddenError, ValidationError } from '../../../../lib/errors';
 import { logger } from '../../../../lib/logger';
 import { PAYLOAD_ALLOWLIST } from '../../audit/auditCanonical';
@@ -36,7 +36,7 @@ jest.mock('../../../../lib/alertWebhook', () => ({
   sendAlertWebhook: (...a: unknown[]) => sendAlertWebhook(...a),
 }));
 
-const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'owner-1' }, 'unit-1');
 
 function makeDto(over: Partial<SpedEcfRealRequestDto> = {}): SpedEcfRealRequestDto {
   return {

@@ -23,6 +23,7 @@ dashboardLayout, savedViews, structuredData, analytics, reports}`. Testes (`__te
 | `AccountingEvent` (emitido pela origem) | `features/accounting/sync/AccountingSyncPort.ts` | Os fatos de negócio (venda, compra, recebimento…) que o intérprete + binding transformam em lançamento |
 | `StockRowPort` / `StockRowWriterPort` | `features/accounting/ports/OriginPorts.ts` | Leitura e escrita do estoque físico (`stockMovements`, `productUnits`). A escrita passa pelas regras da origem (aqui, o plugin que aplica o delta) |
 | `ProductRefPort` | `features/accounting/ports/OriginPorts.ts` | Existência de produto no catálogo do dono (`findDataById` é global; o núcleo confere a tabela) |
+| `UnitRowPort` | `features/accounting/ports/OriginPorts.ts` | Estado da linha de unidades (`units`) do dono — viva, apagada ou inexistente — para o `AccountingScopeResolver` validar o `unitId` dos controllers HTTP (nó I6) |
 | `PackageExpiryPort` | — não é porta | `expiryCompetence`/`parseExpiryMovementKey` são puras e só de data: moram em `features/accounting/models/expiryKey.ts` (item 44). `packages` re-exporta |
 | `ActivationChartPort` / `ActivationPeriodPort` | `features/accountingBinding/services/BindingActivationService.ts` | Plano de contas e período do escopo, para a ativação do binding |
 

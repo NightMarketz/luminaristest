@@ -24,6 +24,7 @@
  *                   data: { type: array, items: { $ref: '#/components/schemas/DocumentAttachment' } }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *         '500': { $ref: '#/components/responses/InternalServerError' }
  */
 export {};

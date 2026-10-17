@@ -125,6 +125,12 @@ Decisão é do dono, fora desta sessão.
 - **Gates que o diff aciona** e por isso pertencem ao checklist, não à improvisação do implementador:
   snapshot de shape dos DTOs Zod, paridade i18n pt/en, allowlist do `auditCanonical.ts` (todo eventType
   novo entra na mesma mudança) e o guard de path-count do openapi.
+- **Write-set do nó (dono, chat, 2026-10-16: "write_set nas notas").** O BRIEF fecha com a seção
+  **Write-set**: os arquivos que cada PR vai editar ou criar (globs) e, à parte, os choke points da PAR-001
+  de que precisa (`factory.ts`, `docs.paths.ts`, `schema.prisma`…). A sessão grava os dois no frontmatter da
+  nota do nó — `write_set` e `registros`, e **só esses campos** (`estado` continua com o fold). Rascunho:
+  `node scripts/paralelo.mjs sugerir <NÓ>` lê os caminhos citados no BRIEF; confira e acrescente os arquivos
+  novos. Sem isso o nó entra serial em todo lote (`.claude/skills/_PARALLELIZATION-CONTRACT.md` PAR-002/005).
 - **Padrão de camada é requisito, não over-engineering:** a cadeia `Route → Controller → Service →
   Repository → Prisma` (+ Policy), Factory, DTO Zod `.strict()` e soft-delete entram no checklist mesmo
   quando o item parece pequeno (Contrato §2/§3).

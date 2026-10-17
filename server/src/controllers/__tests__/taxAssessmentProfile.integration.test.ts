@@ -5,7 +5,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 const UNIT = 'unit-x7';
@@ -30,6 +30,7 @@ describe('X7 PR-1 — perfil (itens 1, 2b) e contas da provisão (item 3)', () =
   beforeAll(async () => {
     pushTestSchema();
     dono = await prisma.user.create({ data: { name: 'x7', username: 'x7-dono', email: 'x7@test.local', password: 'x', role: 'USER' } });
+    await seedUnit({ userId: dono.id, id: UNIT });
   }, 120000);
 
   afterAll(async () => {

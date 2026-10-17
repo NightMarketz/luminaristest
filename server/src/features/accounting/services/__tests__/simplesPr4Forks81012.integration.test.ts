@@ -4,9 +4,9 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { ApplicationFactory } from '@/lib/factory';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { LegalParameterService } from '@/features/legalParameters/services/LegalParameterService';
 
 const app = makeApp();
@@ -22,7 +22,8 @@ let n = 0;
 async function cenario(nome: string): Promise<Cenario> {
   const u = await prisma.user.create({ data: { name: nome, username: nome, email: `${nome}@test.local`, password: 'x', role: 'USER' } });
   const c: Cenario = { user: { id: u.id, username: u.username }, unit: `unit-${nome}` };
-  await f().getPostingService().ensureChartOfAccounts(resolveAccountingScope({ userId: u.id }, c.unit));
+  await seedUnit({ userId: u.id, id: c.unit });
+  await f().getPostingService().ensureChartOfAccounts(resolveAccountingScopeInternal({ userId: u.id }, c.unit));
   return c;
 }
 const perfil = (c: Cenario, ano: number, body: Record<string, unknown>) =>

@@ -1,5 +1,5 @@
 import { ForbiddenError } from '../../../../lib/errors';
-import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import type { ReconcilePendingItem } from 'generated/prisma';
 import type { IReconcilePendingRepository } from '../../repositories/IReconcilePendingRepository';
 import type { IAccountingPolicy } from '../../policies/IAccountingPolicy';
@@ -15,7 +15,7 @@ jest.mock('../../../../jobs/accountingSyncReconcile.job', () => ({
 
 import { ReconcilePendingService } from '../ReconcilePendingService';
 
-const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'owner-1' }, 'unit-1');
 
 function pendingRow(over: Partial<ReconcilePendingItem> = {}): ReconcilePendingItem {
   return {

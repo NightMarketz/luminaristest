@@ -16,6 +16,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     post:
  *       summary: Register a company signer (legal representative, partner, administrator)
  *       description: >-
@@ -44,6 +45,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/company-signers/{id}:
  *     get:
@@ -57,7 +60,7 @@
  *         '200': { description: 'CompanySignerView' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     put:
  *       summary: Replace a company signer
  *       tags: [Accounting]
@@ -76,9 +79,11 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *     delete:
  *       summary: Soft-delete a company signer; 409 signer_in_use when it is the legal representative of a live profile
+ *       description: "409: signer_in_use"
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -88,7 +93,7 @@
  *         '200': { description: 'deleted' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'signer_in_use' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  */
 export {};

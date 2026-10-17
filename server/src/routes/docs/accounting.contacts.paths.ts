@@ -16,6 +16,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     post:
  *       summary: Register an accountant contact (nome, e-mail, CRC)
  *       description: >-
@@ -33,6 +34,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/contacts/{id}:
  *     patch:
@@ -51,7 +54,8 @@
  *         '400': { description: 'DTO inválido OU contactId do corpo divergente do id da rota' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *     delete:
  *       summary: Archive an accountant contact (soft-delete, nunca hard-delete)
  *       tags: [Accounting]
@@ -64,6 +68,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  */
 export {};

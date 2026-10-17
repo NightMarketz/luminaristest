@@ -52,7 +52,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 
@@ -60,6 +60,9 @@ const app = makeApp();
  *  que dá aos dois donos a MESMA unidade — a separação tem de vir do `userId` do token, não de
  *  uma sub-partição diferente que esconderia um filtro de um eixo só. */
 const UNIT = 'unit-acct-coa';
+/** I6: o id de unidade é linha GLOBAL de `units` — o dono B não pode ter a mesma; quando ele grava no PRÓPRIO
+ *  plano, usa a sua. Mandando a do A, recebe 404 UNIT_NOT_FOUND. */
+const UNIT_B = `${UNIT}-b`;
 
 let donoA: { id: string; username: string };
 let donoB: { id: string; username: string };
@@ -98,6 +101,8 @@ describe('accountingController — plano de contas: fronteira de inquilino nas 3
     pushTestSchema();
     donoA = await criarUsuario('acct-coa-a');
     donoB = await criarUsuario('acct-coa-b');
+    await seedUnit({ userId: donoA.id, id: UNIT });
+    await seedUnit({ userId: donoB.id, id: UNIT_B });
   }, 120000);
 
   afterAll(async () => {
@@ -120,8 +125,8 @@ describe('accountingController — plano de contas: fronteira de inquilino nas 3
    */
   it('inquilino: conta do dono B nasce do TOKEN, não do corpo — e a homônima do dono A fica intacta', async () => {
     // BE-INCR-PLANO-4-NIVEIS (item 6): conta nova precisa da superior sintética — arranjada na base, para os dois donos.
-    for (const dono of [donoA, donoB]) {
-      await prisma.account.create({ data: { userId: dono.id, unitId: UNIT, code: '9.9', name: 'Grupo 9.9', nature: 'Expense', acceptsEntries: false } });
+    for (const [dono, unitId] of [[donoA, UNIT], [donoB, UNIT_B]] as const) {
+      await prisma.account.create({ data: { userId: dono.id, unitId, code: '9.9', name: 'Grupo 9.9', nature: 'Expense', acceptsEntries: false } });
     }
     // Controle: o dono A cria a sua conta 9.9.1 e ela é dele.
     const doA = await request(app)
@@ -138,7 +143,7 @@ describe('accountingController — plano de contas: fronteira de inquilino nas 3
       .post('/api/accounting/accounts')
       .set(authHeader(donoB))
       .send({
-        unitId: UNIT,
+        unitId: UNIT_B, // I6: unidade própria do B (id de unidade é global)
         code: '9.9.1',
         name: 'Despesa do dono B',
         nature: 'Expense',
@@ -179,6 +184,7 @@ describe('accountingController — plano de contas: fronteira de inquilino nas 3
       .query({ unitId: UNIT });
 
     expect(res.status).toBe(404);
+    expect(res.body.code).toBe('UNIT_NOT_FOUND'); // I6: outro dono → 404 UNIT_NOT_FOUND (antes: 404 da conta não encontrada)
     // A base, não o status: a conta do A continua VIVA e nada foi escrito em nenhuma das trilhas.
     expect((await prisma.account.findUnique({ where: { id: conta.id } }))!.deletedAt).toBeNull();
     expect(await fotoDe(donoA.id)).toEqual(antesA);
@@ -219,6 +225,7 @@ describe('accountingController — plano de contas: fronteira de inquilino nas 3
       .send({ unitId: UNIT, requiresDimension: true });
 
     expect(res.status).toBe(404);
+    expect(res.body.code).toBe('UNIT_NOT_FOUND'); // I6: outro dono → 404 UNIT_NOT_FOUND (antes: 404 da conta não encontrada)
     expect((await prisma.account.findUnique({ where: { id: conta.id } }))!.requiresDimension).toBe(false);
     expect(await fotoDe(donoA.id)).toEqual(antesA);
     expect(await fotoDe(donoB.id)).toEqual(antesB);

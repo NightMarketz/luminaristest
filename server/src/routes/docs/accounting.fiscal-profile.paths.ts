@@ -8,6 +8,7 @@
  *     get:
  *       summary: Read the unit fiscal profile (BE-INCR-NFE-COST-REGIME, nó X6, F-X6-1 a)
  *       description: >-
+ *         404: fiscal_profile_missing
  *         The axes that decide the NF-e acquisition cost (D3): icmsContribuinte (ICMS credit on
  *         purchase for resale), pisCofinsRegime (credit only under NAO_CUMULATIVO), the 3 exception
  *         flags with conservative defaults (F-X6-3 b — cédula 14/09), the recoverable-tax accounts
@@ -21,10 +22,11 @@
  *         '200': { description: 'FiscalProfileView' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { description: 'fiscal_profile_missing' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     put:
  *       summary: Create or replace the unit fiscal profile (idempotent upsert, item 4)
  *       description: >-
+ *         409: POLICY_APPROVAL_REQUIRED — escopo com contador responsável ativo; proponha em POST /api/accounting/policy-versions (F-POL-4 b)
  *         Consistency (LC 123/2006 art. 23): SIMPLES cannot combine with icmsContribuinte=true nor
  *         pisCofinsRegime≠SIMPLES; a normal regime cannot use pisCofinsRegime=SIMPLES. Recoverable-tax
  *         account ids must be existing Asset leaves of this scope (the codes are the accountant's).
@@ -72,7 +74,8 @@
  *         '200': { description: 'FiscalProfileView (inclui emissao.completo/faltantes/pendingExternalValidation — BE-INCR-DFE item 7)' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '409': { description: 'POLICY_APPROVAL_REQUIRED — escopo com contador responsável ativo; proponha em POST /api/accounting/policy-versions (F-POL-4 b)' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  */
 export {};

@@ -7,7 +7,8 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { ApplicationFactory } from '@/lib/factory';
-import { resolveAccountingScope, type AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { maybeSyncSaleFinalized } from '@/features/accounting/sync/bridges/SaleSalesAccountingBridge';
 import { maybeSyncSaleSettled } from '@/features/accounting/sync/bridges/SaleSettlementBridge';
 import { maybeSyncSalePackageSold } from '@/features/accounting/sync/bridges/SalePackageSoldBridge';
@@ -21,7 +22,7 @@ const PRAZOS = { simplesCaixaPrazoCartaoDebitoDias: 1, simplesCaixaPrazoCartaoCr
 let user: { id: string; username: string };
 let tables: Record<'sales' | 'saleItems' | 'units', string>;
 let UNIT: string;
-const scope = (): AccountingScope => resolveAccountingScope({ userId: user.id }, UNIT);
+const scope = (): AccountingScope => resolveAccountingScopeInternal({ userId: user.id }, UNIT);
 const f = () => ApplicationFactory.getInstance();
 
 async function row(table: keyof typeof tables, data: Record<string, unknown>) {

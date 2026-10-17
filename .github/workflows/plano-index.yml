@@ -1,0 +1,67 @@
+name: Plano – regenera índice
+
+# O PR não carrega docs/plano/_INDEX.md nem _ANCORAS.md (dono, chat, 2026-10-16): índice em todo PR
+# era conflito em todo PR. O fold grava só a nota do nó; este job regenera os dois arquivos na main
+# depois do merge. Push com GITHUB_TOKEN não dispara outro workflow, então não há laço.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/plano/**'
+  workflow_dispatch:
+
+# Em fila, sem cancelar: cada run regenera a partir da main inteira, a última sempre fecha em dia.
+concurrency:
+  group: plano-index
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  regen:
+    name: Plano – regenera _INDEX/_ANCORAS
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Regenera
+        run: node scripts/plano-vault.mjs index
+
+      - name: Confere (links, dependências e índice em dia)
+        run: node scripts/plano-vault.mjs check --indice
+
+      - name: Commita na main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- docs/plano/_INDEX.md docs/plano/_ANCORAS.md; then
+            echo "índice já em dia"; exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -q -m "chore(plano): regenera _INDEX/_ANCORAS depois de ${GITHUB_SHA::8}" -- docs/plano/_INDEX.md docs/plano/_ANCORAS.md
+          if git push origin HEAD:main; then exit 0; fi
+
+          # Recusado. Se a main andou, a run do push seguinte regenera — nada a fazer aqui.
+          git fetch -q origin main
+          if [ "$(git rev-parse origin/main)" != "$GITHUB_SHA" ]; then
+            echo "main andou desde ${GITHUB_SHA::8}; a próxima run regenera"; exit 0
+          fi
+          # Senão é a proteção da main (check obrigatório). Deixa o commit numa branch fixa e abre/atualiza
+          # o PR — só toca os dois gerados, então nunca conflita.
+          git push -f origin HEAD:refs/heads/bot/plano-index
+          if ! gh pr view bot/plano-index --json state --jq .state 2>/dev/null | grep -q OPEN; then
+            gh pr create --base main --head bot/plano-index \
+              --title "chore(plano): regenera _INDEX/_ANCORAS" \
+              --body "Gerado pelo workflow plano-index: a main recusou o push direto. Só toca os dois arquivos gerados." \
+              || echo "::warning::sem permissão para abrir PR; abra a partir da branch bot/plano-index"
+          fi
+          echo "::warning::push direto na main recusado; índice regenerado está na branch bot/plano-index"

@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { SpedGenerationService } from '../SpedGenerationService';
-import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import { ForbiddenError, ValidationError, ConflictError, NotFoundError } from '../../../../lib/errors';
 import { Prisma } from 'generated/prisma';
 import { logger } from '../../../../lib/logger';
@@ -24,7 +24,7 @@ jest.mock('../../../../lib/alertWebhook', () => ({
   sendAlertWebhook: (...a: unknown[]) => sendAlertWebhook(...a),
 }));
 
-const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'owner-1' }, 'unit-1');
 
 function makeAccount(over: Partial<Account>): Account {
   return {

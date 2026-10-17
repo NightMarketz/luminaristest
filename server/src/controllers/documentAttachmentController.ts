@@ -3,7 +3,6 @@ import { createReadStream } from 'node:fs';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
 import {
   DEFAULT_ATTACHMENT_MIME_TYPES,
   makeUploadMiddleware,
@@ -51,7 +50,7 @@ export const createDocumentAttachment = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getDocumentAttachmentService().upload(scope, {
       targetType: parsed.data.targetType,
       targetId: parsed.data.targetId,
@@ -77,7 +76,7 @@ export const listDocumentAttachments = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const data = await getFactory()
       .getDocumentAttachmentService()
       .listByTarget(scope, parsed.data.targetType, req.params.journalEntryId);
@@ -99,7 +98,9 @@ export const downloadDocumentAttachment = async (req: Request, res: Response) =>
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    // I6 (dono, 2026-10-16, "Leitura nas 3"): 'read' — o download só grava trilha de auditoria
+    // (attachment.downloaded, com AUDIT_DOWNLOAD_ATTACHMENTS), não lançamento.
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const { meta, absPath } = await getFactory()
       .getDocumentAttachmentService()
       .getForDownload(scope, req.params.id);
@@ -136,7 +137,7 @@ export const deleteDocumentAttachment = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     await getFactory().getDocumentAttachmentService().delete(scope, req.params.id);
     return res.json({ success: true, data: { ok: true } });
   } catch (error) {

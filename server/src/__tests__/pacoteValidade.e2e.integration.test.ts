@@ -14,7 +14,7 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { ApplicationFactory } from '@/lib/factory';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 import { dateOnlyFromDayNumber, dayNumberFromDateOnly, scopeToday } from '@/features/accounting/models/dates';
 import { centsFromDb } from '@/features/accounting/models/money';
@@ -41,7 +41,7 @@ let user: { id: string; username: string };
 let tables: Record<'sales' | 'saleItems' | 'packages' | 'customers' | 'units', string>;
 let today: string;
 const addDays = (d: string, n: number) => dateOnlyFromDayNumber(dayNumberFromDateOnly(d) + n);
-const scopeOf = (unitId: string): AccountingScope => resolveAccountingScope({ userId: user.id }, unitId);
+const scopeOf = (unitId: string): AccountingScope => resolveAccountingScopeInternal({ userId: user.id }, unitId);
 
 /**
  * Grava a linha como o MOTOR a grava: o campo `date` (date-only) vira ISO à meia-noite UTC (`2026-11-25T00:00:00.000Z`). Gravar

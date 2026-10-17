@@ -7,7 +7,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 const UNIT = 'unit-x7c-iss';
@@ -66,6 +66,7 @@ describe('X7 Fase C PR-2 — EXPORT_ISS_BY_COMPETENCE pelo HTTP', () => {
 
   it('item 14 + F-TC-3/4: só NFS-e de produção, vivas, AUTHORIZED/AUTHORIZED_DIVERGENT, da unidade e da janela; município da tentativa corrente; retido separado', async () => {
     const dono = await novoDono();
+    await seedUnit({ userId: dono.id, id: UNIT });
     const outro = await novoDono();
     await documento(dono); // entra: SP próprio
     await documento(dono, { status: 'AUTHORIZED_DIVERGENT' }); // entra (F-TC-4 a), contado

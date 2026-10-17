@@ -10,7 +10,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 const XML = readFileSync(join(__dirname, '../../lib/__tests__/fixtures/nfe/purchase-pis-cofins.SYNTHETIC.xml'));
@@ -43,6 +43,7 @@ describe('ITEM-DESTINATION PR-1 — import/preview/cancel com destinação por i
   beforeAll(async () => {
     pushTestSchema();
     dono = await prisma.user.create({ data: { name: 'id', username: 'item-dest-dono', email: 'item-dest@test.local', password: 'x', role: 'USER' } });
+    await seedUnit({ userId: dono.id, id: UNIT });
     await prisma.accountingPeriod.create({ data: { userId: dono.id, unitId: UNIT, year: 2025, month: 7, status: 'OPEN', openedAt: new Date(), openedById: dono.id } });
     await criarConta('1.1.3.01', 'Estoques', 'Asset');
     await criarConta('2.1.2.01', 'Fornecedores a Pagar', 'Liability');

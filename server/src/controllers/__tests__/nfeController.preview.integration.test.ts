@@ -7,7 +7,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { NfePreviewSchema } from '@/features/accounting/dtos/NfeDto';
 
 const app = makeApp();
@@ -23,6 +23,8 @@ describe('POST /api/nfe/preview — dry-run do parser pela fronteira HTTP', () =
     ator = await prisma.user.create({
       data: { name: 'nfe-preview', username: 'nfe-preview', email: 'nfe-preview@test.local', password: 'x', role: 'USER' },
     });
+    await seedUnit({ userId: ator.id, id: UNIT });
+    await seedUnit({ userId: ator.id, id: 'unit-sem-perfil' }); // unidade existe; o que falta é o perfil fiscal
     // X6 (F-X6-6 a): o preview exige perfil fiscal — neutro (não-contribuinte, CUMULATIVO) mantém o contrato de antes.
     const perfil = await request(app).put('/api/accounting/fiscal-profile').set(authHeader(ator)).send({ unitId: UNIT, regimeTributario: 'PRESUMIDO', icmsContribuinte: false, pisCofinsRegime: 'CUMULATIVO' });
     expect(perfil.status).toBe(200);

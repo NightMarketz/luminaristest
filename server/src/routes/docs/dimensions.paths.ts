@@ -19,6 +19,7 @@
  *       responses:
  *         '200': { description: 'definitions each with their values' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/dimensions/definitions:
  *     post:
@@ -40,6 +41,8 @@
  *         '201': { description: 'the created definition' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/dimensions/definitions/{id}/archive:
  *     post:
@@ -61,7 +64,8 @@
  *         '200': { description: 'the archived definition' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/dimensions/values:
  *     post:
@@ -85,7 +89,8 @@
  *         '201': { description: 'the created value' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/dimensions/values/{id}/archive:
  *     post:
@@ -107,7 +112,8 @@
  *         '200': { description: 'the archived value' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/dimensions/reports/balance:
  *     get:
@@ -126,7 +132,7 @@
  *       responses:
  *         '200': { description: 'buckets per dimension value with account rows + rollup' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/dimensions/reports/result:
  *     get:
@@ -144,6 +150,6 @@
  *       responses:
  *         '200': { description: 'result buckets per dimension value with rollup' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  */
 export {};

@@ -14,7 +14,8 @@
 
 import { getFactory } from '../../../../lib/factory';
 import logger from '../../../../lib/logger';
-import { resolveAccountingScope, type AccountingScope } from '../../scope/AccountingScope';
+import type { AccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import { isAllPackageSale } from './saleItems';
 
 /** Mesmo shape do `ReconcileSummary` do job (a feature não importa de `jobs/`). */
@@ -61,7 +62,7 @@ export async function reconcileReceitaFiscalRecebimentos(deps: RecebimentoReconc
         continue;
       }
       if (!sale.unitId) throw new Error(`Venda '${sale.saleId}' sem unitId — recebimento não reconciliável.`);
-      const scope = resolveAccountingScope({ userId: sale.ownerUserId }, sale.unitId);
+      const scope = resolveAccountingScopeInternal({ userId: sale.ownerUserId }, sale.unitId);
       const diaPagamento = await deps.entryDay(scope, 'sale.settled', sale.saleId);
       if (diaPagamento === null) {
         summary.idempotentHits++;

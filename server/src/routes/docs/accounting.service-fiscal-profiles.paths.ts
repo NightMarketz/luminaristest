@@ -20,6 +20,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/service-fiscal-profiles/{serviceRef}:
  *     get:
@@ -33,7 +34,7 @@
  *         '200': { description: 'ServiceFiscalProfileView' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     put:
  *       summary: Create or replace a service fiscal profile (idempotent upsert)
  *       description: >-
@@ -64,6 +65,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *     delete:
  *       summary: Soft-delete a service fiscal profile (rename-on-delete frees the key)
  *       tags: [Accounting]
@@ -76,6 +79,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  */
 export {};

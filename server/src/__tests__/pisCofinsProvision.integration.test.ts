@@ -21,7 +21,7 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { ApplicationFactory } from '@/lib/factory';
 import { TaxAssessmentRepository } from '@/features/accounting/repositories/TaxAssessmentRepository';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 
 const app = makeApp();
@@ -69,11 +69,11 @@ async function cenario(regime: 'PRESUMIDO' | 'REAL', contas: 'todas' | 'sem-recu
         : {}),
     },
   });
-  return { dono, ids, scope: resolveAccountingScope({ userId: dono.id }, U) };
+  return { dono, ids, scope: resolveAccountingScopeInternal({ userId: dono.id }, U) };
 }
 
 async function receita(dono: Dono, data: string, cents: number) {
-  await ApplicationFactory.getInstance().getPostingService().postEntry(resolveAccountingScope({ userId: dono.id }, U), {
+  await ApplicationFactory.getInstance().getPostingService().postEntry(resolveAccountingScopeInternal({ userId: dono.id }, U), {
     unitId: U, date: data, sourceType: 'manual', description: 'Serviço',
     lines: [{ accountCode: '1.1.1', debitCents: cents, creditCents: 0 }, { accountCode: '3.1', debitCents: 0, creditCents: cents }],
   });

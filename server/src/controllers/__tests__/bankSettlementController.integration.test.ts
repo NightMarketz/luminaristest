@@ -9,7 +9,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { ReconciliationService } from '@/features/accounting/services/ReconciliationService';
 import { ValidationError } from '@/lib/errors';
 
@@ -62,6 +62,7 @@ describe('/api/bank-settlements — F7', () => {
   beforeAll(async () => {
     pushTestSchema();
     dono = await criarUsuario('bank-settle-a');
+    await seedUnit({ userId: dono.id, id: UNIT });
     outro = await criarUsuario('bank-settle-b');
     await prisma.accountingPeriod.create({
       data: { userId: dono.id, unitId: UNIT, year: 2026, month: 6, status: 'OPEN', openedAt: new Date(), openedById: dono.id },

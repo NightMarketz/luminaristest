@@ -26,6 +26,7 @@
  *                       accounts: { type: array, items: { type: object } }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *         '500': { $ref: '#/components/responses/InternalServerError' }
  *     post:
  *       summary: Create a user-defined account in the chart of accounts
@@ -60,12 +61,14 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '500': { $ref: '#/components/responses/InternalServerError' }
  *
  *   /api/accounting/accounts/{id}:
  *     delete:
  *       summary: Soft-delete a user-defined account (unit-scoped)
- *       description: unitId is required so the delete is scoped to its unit. Canonical accounts and accounts with postings cannot be deleted.
+ *       description: "unitId is required so the delete is scoped to its unit. Canonical accounts and accounts with postings cannot be deleted. — 409: Account is canonical or has postings — cannot be deleted"
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -83,8 +86,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: Account is canonical or has postings — cannot be deleted }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '500': { $ref: '#/components/responses/InternalServerError' }
  */
 export {};

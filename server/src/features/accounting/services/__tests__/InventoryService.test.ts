@@ -7,11 +7,11 @@ import type {
   MovementSourceQuery,
 } from '../../repositories/IInventoryRepository';
 import { ForbiddenError, ValidationError } from '../../../../lib/errors';
-import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import { INVENTORY_COGS_SOURCE_TYPE, INVENTORY_INBOUND_SOURCE_TYPE } from '../../models/Inventory.model';
 import type { InventoryItem, StockMovement, Prisma } from 'generated/prisma';
 
-const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'owner-1' }, 'unit-1');
 
 /**
  * Stateful in-memory fake of IInventoryRepository. Models the load-bearing DB semantics the mocked

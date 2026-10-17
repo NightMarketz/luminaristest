@@ -24,14 +24,14 @@
 import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { getFactory } from '@/lib/factory';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 
 const UNIT = 'unit-dim-roundtrip';
 const DONO = 'u-dim-roundtrip';
 const DATA = '2026-06-15';
 
-const scope: AccountingScope = resolveAccountingScope({ userId: DONO }, UNIT);
+const scope: AccountingScope = resolveAccountingScopeInternal({ userId: DONO }, UNIT);
 const approval = () => getFactory().getEntryApprovalService();
 const posting = () => getFactory().getPostingService();
 

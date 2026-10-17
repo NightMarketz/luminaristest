@@ -8,13 +8,13 @@ import { randomBytes } from 'node:crypto';
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { getFactory } from '@/lib/factory';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { ReleaseReportService } from '@/features/accounting/services/ReleaseReportService';
 import { PaymentAccountRepository } from '@/features/accounting/repositories/PaymentAccountRepository';
 import { ReconciliationRepository } from '@/features/accounting/repositories/ReconciliationRepository';
 import { AccountingPolicy } from '@/features/accounting/policies/AccountingPolicy';
 import { CollectionProviderError, type CollectionProviderPort } from '@/features/accounting/collection/CollectionProviderPort';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 
 const app = makeApp();
 const UNIT = 'unit-f5-pr3';
@@ -71,6 +71,7 @@ describe('F5 PR-3 — relatório de liberações → extrato da PaymentAccount �
     process.env.PAYMENT_CREDENTIAL_KEYS = `1:${randomBytes(32).toString('base64')}`;
     process.env.PAYMENT_CREDENTIAL_KEY_ACTIVE = '1';
     dono = await prisma.user.create({ data: { name: 'f5c', username: 'f5-pr3', email: 'f5pr3@test.local', password: 'x', role: 'USER' } });
+    await seedUnit({ userId: dono.id, id: UNIT });
     await prisma.accountingPeriod.create({ data: { userId: dono.id, unitId: UNIT, year: 2026, month: 10, status: 'OPEN', openedAt: new Date(), openedById: dono.id } });
     const conta = (code: string, nature: string) =>
       prisma.account.create({ data: { userId: dono.id, unitId: UNIT, code, name: `Conta ${code}`, nature, acceptsEntries: true } });
@@ -250,7 +251,7 @@ describe('F5 PR-3 — relatório de liberações → extrato da PaymentAccount �
       data: { userId: dono.id, unitId: UNIT, receivableId: id, amountCents: 5000n, method: 'ProviderBalance', receivedAt: new Date('2026-10-02T00:00:00Z'), status: 'ACTIVE', debitAccountId: glMp },
     });
     await prisma.receivable.update({ where: { id }, data: { status: 'RECEIVING', receivedCents: 5000n } });
-    await getFactory().getReceivableService().reconcileReceivables(resolveAccountingScope({ userId: dono.id }, UNIT));
+    await getFactory().getReceivableService().reconcileReceivables(resolveAccountingScopeInternal({ userId: dono.id }, UNIT));
     const entry = await prisma.journalEntry.findFirstOrThrow({ where: { sourceType: 'ar.receipt', sourceId: receipt.id }, include: { postings: true } });
     expect(entry.postings.find((p) => p.debitCents > 0n)?.accountId).toBe(glMp);
   });

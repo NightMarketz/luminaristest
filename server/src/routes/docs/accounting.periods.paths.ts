@@ -26,6 +26,8 @@
  *         '200': { description: Period opened }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/periods/{id}/soft-close:
  *     post:
@@ -43,6 +45,8 @@
  *         '200': { description: Period soft-closed }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/periods/{id}/hard-close:
  *     post:
@@ -60,6 +64,8 @@
  *         '200': { description: Period hard-closed }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/periods/{id}/reopen:
  *     post:
@@ -77,5 +83,7 @@
  *         '200': { description: Period reopened }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  */
 export {};

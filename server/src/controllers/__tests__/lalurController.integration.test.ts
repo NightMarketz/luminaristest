@@ -7,7 +7,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { ECF_L12_CATALOG } from '@/features/accounting/models/Lalur.model';
 
 const app = makeApp();
@@ -48,6 +48,8 @@ describe('/api/lalur — contrato HTTP', () => {
   beforeAll(async () => {
     pushTestSchema();
     dono = await criarUsuario('lalur-http-a');
+    await seedUnit({ userId: dono.id, id: UNIT });
+    await seedUnit({ userId: dono.id, id: 'unit-lalur-3c' }); // UNIT3 do 2º describe (DELETE /api/accounting/accounts)
     outro = await criarUsuario('lalur-http-b');
     contaResultado = await prisma.account.create({
       data: { userId: dono.id, unitId: UNIT, code: '4.1.1', name: 'Despesas gerais', nature: 'Expense' },

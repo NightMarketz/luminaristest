@@ -12,14 +12,14 @@ import prisma from '@/lib/prisma';
 import { Prisma } from 'generated/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { DataExchangeRepository } from '@/features/accounting/repositories/DataExchangeRepository';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { isSupersedesUniqueViolation } from '@/features/accounting/services/spedRectificationGate';
 
 const UNIT = 'unit-dx';
 const DONO = 'u-dx-a';
 
 const repo = new DataExchangeRepository();
-const scope = resolveAccountingScope({ userId: DONO }, UNIT);
+const scope = resolveAccountingScopeInternal({ userId: DONO }, UNIT);
 
 const baseJobData = (over: Record<string, unknown> = {}) => ({
   userId: DONO,

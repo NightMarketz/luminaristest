@@ -26,7 +26,8 @@
  *         '200': { description: 'the created/updated ReferentialMapping' }
  *         '400': { $ref: '#/components/responses/ValidationError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *     delete:
  *       summary: Unset (hard-delete) the mapping of one account in one version (BE-INCR-9)
  *       tags: [Accounting]
@@ -38,7 +39,8 @@
  *       responses:
  *         '200': { description: 'accountId + mappingVersion of the removed mapping' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *     get:
  *       summary: List the referential mappings of a version (BE-INCR-9)
  *       tags: [Accounting]
@@ -49,6 +51,7 @@
  *       responses:
  *         '200': { description: 'array of ReferentialMapping for the version' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/referential/mappings/batch:
  *     post:
@@ -83,7 +86,8 @@
  *         '200': { description: 'array of upserted ReferentialMapping' }
  *         '400': { $ref: '#/components/responses/ValidationError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/referential/mappings/copy:
  *     post:
@@ -109,7 +113,8 @@
  *         '200': { description: 'array of upserted ReferentialMapping in the destination version' }
  *         '400': { $ref: '#/components/responses/ValidationError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/referential/coverage:
  *     get:
@@ -122,6 +127,7 @@
  *       responses:
  *         '200': { description: 'mappingVersion + unmappedAccounts[] + totals + ready flag' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/referential/skeleton:
  *     get:
@@ -137,6 +143,7 @@
  *       responses:
  *         '200': { description: 'unitId + mappingVersion + items[] (unmapped leaf accounts to author)' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/referential/catalog/import:
  *     post:
@@ -162,6 +169,8 @@
  *         '201': { description: 'layoutVersion + totalRows + imported + analyticCount + syntheticCount' }
  *         '400': { description: 'invalid header/rows or empty catalog' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/referential/catalog:
  *     get:
@@ -179,5 +188,6 @@
  *       responses:
  *         '200': { description: 'referential accounts of the version (code, name, isAnalytic, parentCode)' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  */
 export {};

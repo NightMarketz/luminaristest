@@ -27,6 +27,7 @@
  *                   success: { type: boolean, example: true }
  *                   data: { type: array, items: { type: object } }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/{unitId}/periods/seed-year:
  *     post:
@@ -52,5 +53,7 @@
  *                   data: { type: array, items: { type: object } }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  */
 export {};

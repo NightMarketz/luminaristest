@@ -29,7 +29,7 @@ import prisma from '../lib/prisma';
 import { logger } from '../lib/logger';
 import { ApplicationFactory } from '../lib/factory';
 import { UNIT_TYPE_OPTIONS } from '../features/dynamicTables/presets/modules/core/UnitsModule';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import type { UserContext } from '../types/UserContext';
 import type { Role } from '../features/users/models/User.model';
 
@@ -413,7 +413,7 @@ export async function apply(
     let auditAnchor: ApplyResult['auditAnchor'] = null;
     if (head) {
       auditAnchor = { seq: 1, fromHeadHash: head.headHash, fromNextSeq: head.nextSeq.toString() };
-      await audit.append(tx, resolveAccountingScope({ userId: owner }, to), {
+      await audit.append(tx, resolveAccountingScopeInternal({ userId: owner }, to), {
         actorUserId: owner,
         eventType: UNIT_REKEYED_EVENT,
         targetType: 'unit',
@@ -614,12 +614,12 @@ export async function verify(db: PrismaClient, inv: InventoryEntry[], against: s
     const audit = ApplicationFactory.getInstance().getAuditService();
     for (const k of rekeyed) {
       const preHead = preHeads.get(ownerUnit(k.ownerUserId, k.from));
-      const legacy = await audit.verifyAuditChain(resolveAccountingScope({ userId: k.ownerUserId }, k.from));
+      const legacy = await audit.verifyAuditChain(resolveAccountingScopeInternal({ userId: k.ownerUserId }, k.from));
       const expectedLast = preHead ? BigInt(String(preHead.nextSeq).replace(/n$/, '')) - 1n : null;
       if (!legacy.ok || legacy.lastSeq !== expectedLast || legacy.headHash !== (preHead ? String(preHead.headHash) : null)) {
         failures.push(`(e) cadeia legada ${k.from}: ok=${legacy.ok} lastSeq=${String(legacy.lastSeq)} headHash=${legacy.headHash}`);
       }
-      const fresh = await audit.verifyAuditChain(resolveAccountingScope({ userId: k.ownerUserId }, k.to));
+      const fresh = await audit.verifyAuditChain(resolveAccountingScopeInternal({ userId: k.ownerUserId }, k.to));
       if (!fresh.ok) failures.push(`(e) cadeia nova ${k.to}: ${fresh.failure?.reason}`);
     }
     return { ok: failures.length === 0, failures, rekeyed, dynamicTableDataAdded: added, checks };

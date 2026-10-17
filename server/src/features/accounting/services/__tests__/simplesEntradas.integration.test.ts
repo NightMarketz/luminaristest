@@ -5,9 +5,10 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { ApplicationFactory } from '@/lib/factory';
-import { resolveAccountingScope, type AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { maybeSyncSaleFinalized } from '@/features/accounting/sync/bridges/SaleSalesAccountingBridge';
 import { reconcileReceitaFiscal } from '@/jobs/accountingSyncReconcile.job';
 import { loadSaleRevenueLines } from '@/features/accounting/sync/bridges/saleItems';
@@ -19,7 +20,7 @@ const CNPJ = '11222333000181';
 let user: { id: string; username: string };
 let tables: Record<'sales' | 'saleItems' | 'units', string>;
 let UNIT: string;
-const scope = (): AccountingScope => resolveAccountingScope({ userId: user.id }, UNIT);
+const scope = (): AccountingScope => resolveAccountingScopeInternal({ userId: user.id }, UNIT);
 const f = () => ApplicationFactory.getInstance();
 const S = '/api/accounting/simples';
 
@@ -58,6 +59,8 @@ beforeAll(async () => {
   const byName = async (n: string) => (await prisma.dynamicTable.findFirstOrThrow({ where: { userId: user.id, internalName: n } })).id;
   tables = { sales: await byName('sales'), saleItems: await byName('saleItems'), units: await byName('units') };
   UNIT = (await row('units', { name: 'Matriz', cnpj: CNPJ })).id;
+  // I6: o upload de documento-fonte valida a unidade — a 'outra-unidade' do item 10 é outra unidade DO MESMO dono.
+  await seedUnit({ userId: user.id, id: 'outra-unidade' });
   await f().getPostingService().ensureChartOfAccounts(scope());
   for (const month of [4, 5, 6]) {
     await prisma.accountingPeriod.create({ data: { userId: user.id, unitId: UNIT, year: 2026, month, status: 'OPEN', openedAt: new Date() } });

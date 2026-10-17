@@ -39,7 +39,8 @@
     "check:arch:baseline": "depcruise src --config .dependency-cruiser.cjs --output-type baseline --output-to .dependency-cruiser-known-violations.json",
     "check:dead": "knip --no-exit-code",
     "check:dup": "jscpd src --config .jscpd.json --exitCode 0",
-    "test:mutation": "stryker run"
+    "test:mutation": "stryker run",
+    "test:mutation:slices": "node ./scripts/mutation-slices.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",

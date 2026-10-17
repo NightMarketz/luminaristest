@@ -2,7 +2,6 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
 import {
   CompanySignerIdParamSchema,
   CompanySignerScopeSchema,
@@ -19,7 +18,7 @@ export const listCompanySigners = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const q = CompanySignerScopeSchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    const data = await getFactory().getCompanySignerService().list(resolveAccountingScope(user, q.data.unitId));
+    const data = await getFactory().getCompanySignerService().list(await getFactory().getAccountingScopeResolver().resolve(user, q.data.unitId, { access: 'read' }));
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -34,7 +33,7 @@ export const getCompanySigner = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const q = CompanySignerScopeSchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    const data = await getFactory().getCompanySignerService().get(resolveAccountingScope(user, q.data.unitId), p.data.id);
+    const data = await getFactory().getCompanySignerService().get(await getFactory().getAccountingScopeResolver().resolve(user, q.data.unitId, { access: 'read' }), p.data.id);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -47,7 +46,7 @@ export const createCompanySigner = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const b = CreateCompanySignerSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await getFactory().getCompanySignerService().create(resolveAccountingScope(user, b.data.unitId), b.data);
+    const data = await getFactory().getCompanySignerService().create(await getFactory().getAccountingScopeResolver().resolve(user, b.data.unitId, { access: 'write' }), b.data);
     return res.status(201).json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -62,7 +61,7 @@ export const updateCompanySigner = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const b = UpdateCompanySignerSchema.safeParse(req.body);
     if (!b.success) return bad(res, b.error.flatten());
-    const data = await getFactory().getCompanySignerService().update(resolveAccountingScope(user, b.data.unitId), p.data.id, b.data);
+    const data = await getFactory().getCompanySignerService().update(await getFactory().getAccountingScopeResolver().resolve(user, b.data.unitId, { access: 'write' }), p.data.id, b.data);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -77,7 +76,7 @@ export const deleteCompanySigner = async (req: Request, res: Response) => {
     if (!p.success) return bad(res, p.error.flatten());
     const q = CompanySignerScopeSchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    await getFactory().getCompanySignerService().remove(resolveAccountingScope(user, q.data.unitId), p.data.id);
+    await getFactory().getCompanySignerService().remove(await getFactory().getAccountingScopeResolver().resolve(user, q.data.unitId, { access: 'write' }), p.data.id);
     return res.json({ success: true });
   } catch (error) {
     return handleApiError(error, res);

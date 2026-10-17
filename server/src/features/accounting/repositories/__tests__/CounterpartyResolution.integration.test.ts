@@ -23,7 +23,7 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { CounterpartyRepository } from '@/features/accounting/repositories/CounterpartyRepository';
 import { resolveOrCreateCounterpartyId } from '@/features/accounting/services/counterpartyResolution';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 import {
   deletedCounterpartyName,
@@ -38,7 +38,7 @@ const DONO_B = 'u-cpr-b';
 const MSG_TIPO = 'A contraparte de uma conta a pagar deve ser um fornecedor (SUPPLIER).';
 
 const escopo = (userId: string, unitId: string = UNIT): AccountingScope =>
-  resolveAccountingScope({ userId }, unitId);
+  resolveAccountingScopeInternal({ userId }, unitId);
 
 const repo = new CounterpartyRepository();
 const deps = {

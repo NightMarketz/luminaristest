@@ -8,6 +8,7 @@
  *     get:
  *       summary: Read the company fiscal profile of a calendar year (BE-INCR-FISCAL-OBLIGATION-PROFILE, nó X13)
  *       description: >-
+ *         404: company_fiscal_profile_missing
  *         One profile per company (owner = CNPJ raiz, R8) and year (F-OBP-8 a). unitId only resolves the
  *         scope and the policy. 404 company_fiscal_profile_missing when the year has no profile.
  *       tags: [Accounting]
@@ -20,7 +21,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { description: 'company_fiscal_profile_missing' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     put:
  *       summary: Create or replace the company fiscal profile of a year (idempotent upsert)
  *       description: >-
@@ -73,7 +74,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *     delete:
  *       summary: Soft-delete the company fiscal profile of a year
  *       tags: [Accounting]
@@ -86,7 +88,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/company-fiscal-profile/{ano}/ecf-transmitida:
  *     post:
@@ -115,7 +118,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/company-fiscal-profile/{ano}/obligations:
  *     get:
@@ -135,11 +139,13 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/company-fiscal-profile/{ano}/copiar-de/{anoAnterior}:
  *     post:
  *       summary: Copy the company fiscal profile from a previous year (F-XP-2/3 a)
  *       description: >-
+ *         409: company_fiscal_profile_exists
  *         Copies everything except the book order number (numOrd changes every year) and the ECF receipt and
  *         lock. 404 when the source year has no profile; 409 company_fiscal_profile_exists when the target
  *         year already has one (use PUT to edit).
@@ -162,7 +168,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'company_fiscal_profile_exists' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  */
 export {};

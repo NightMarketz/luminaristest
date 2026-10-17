@@ -41,6 +41,7 @@
  *                             enum: [MISSING_GENESIS, SEQ_GAP, PREV_HASH_MISMATCH, HASH_MISMATCH, HEAD_MISMATCH]
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *         '500': { $ref: '#/components/responses/InternalServerError' }
  */
 export {};

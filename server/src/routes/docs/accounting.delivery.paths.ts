@@ -23,7 +23,7 @@
  *         '400': { description: 'DTO inválido, job que não é ECD/ECF, job sem sha256 ou ano não fechado' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/delivery/confirm:
  *     post:
@@ -44,7 +44,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '429': { description: 'Rate limit por escopo (ator + unidade) excedido - DELIVERY_CONFIRM_RATE_LIMIT por 15 min, padrao 60' }
  *
  *   /api/accounting/delivery:
@@ -67,11 +68,13 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/delivery/profile:
  *     get:
  *       summary: Le o perfil de pacote sugerido de um contato (C6b PR-3, F-C6b-2 a)
  *       description: >-
+ *         404: Contato nao encontrado ou arquivado (cross-tenant tambem cai aqui)
  *         kinds que a UI pre-marca no build - SUGESTAO, nao gate. null (nunca salvo) devolve
  *         kinds vazio, nunca 404. Segmento estatico registrado ANTES de /delivery/{id}.
  *       tags: [Accounting]
@@ -84,10 +87,11 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { description: 'Contato nao encontrado ou arquivado (cross-tenant tambem cai aqui)' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *     put:
  *       summary: Grava o perfil de pacote sugerido de um contato (C6b PR-3, F-C6b-2 a)
  *       description: >-
+ *         404: Contato nao encontrado ou arquivado
  *         Perfil e sugestao, nunca gate - o corpo do build/confirm pode divergir do perfil salvo e
  *         passa normalmente. Quem valida extraJobIds e sempre resolveExtras do build/confirm.
  *       tags: [Accounting]
@@ -105,7 +109,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { description: 'Contato nao encontrado ou arquivado' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/delivery/{id}/retry:
  *     post:
@@ -127,7 +132,8 @@
  *         '400': { description: 'DTO inválido, deliveryId divergente do id da rota, ou status diferente de FAILED' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/delivery/{id}:
  *     get:
@@ -142,6 +148,6 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  */
 export {};

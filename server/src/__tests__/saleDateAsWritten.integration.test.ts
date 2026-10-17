@@ -16,7 +16,7 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { ApplicationFactory } from '@/lib/factory';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { reconcileSaleSales } from '@/jobs/accountingSyncReconcile.job';
 import { maybeSyncSaleSettled } from '@/features/accounting/sync/bridges/SaleSettlementBridge';
 import { maybeReverseSale } from '@/features/accounting/sync/bridges/SaleReversalBridge';
@@ -66,7 +66,7 @@ describe('data do lançamento de venda = o dia ESCRITO (motor grava ISO à meia-
     const byName = async (n: string) => (await prisma.dynamicTable.findFirstOrThrow({ where: { userId: user.id, internalName: n } })).id;
     tables = { sales: await byName('sales'), saleItems: await byName('saleItems'), services: await byName('services'), customers: await byName('customers'), units: await byName('units') };
     unitId = (await row('units', { name: 'Filial', cnpj: CNPJ })).id;
-    await ApplicationFactory.getInstance().getPostingService().ensureChartOfAccounts(resolveAccountingScope({ userId: user.id }, unitId));
+    await ApplicationFactory.getInstance().getPostingService().ensureChartOfAccounts(resolveAccountingScopeInternal({ userId: user.id }, unitId));
     for (const [year, month] of [[2026, 10], [2026, 11], [2026, 12], [2027, 1]]) {
       await prisma.accountingPeriod.create({ data: { userId: user.id, unitId, year, month, status: 'OPEN', openedAt: new Date() } });
     }

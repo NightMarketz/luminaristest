@@ -44,6 +44,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/data-exchange/jobs:
  *     get:
@@ -88,6 +90,7 @@
  *                       limit: { type: integer }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/data-exchange/jobs/{jobId}/waive-ecf-rectification:
  *     post:
@@ -121,7 +124,8 @@
  *                   data:    { $ref: '#/components/schemas/DataExchangeJob' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/data-exchange/jobs/{jobId}:
  *     get:
@@ -143,7 +147,7 @@
  *                   success: { type: boolean, example: true }
  *                   data:    { $ref: '#/components/schemas/DataExchangeJob' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/data-exchange/jobs/{jobId}/download:
  *     get:
@@ -161,7 +165,7 @@
  *             application/octet-stream:
  *               schema: { type: string, format: binary }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/data-exchange/imports:
  *     post:
@@ -193,6 +197,8 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/data-exchange/jobs/{jobId}/rows:
  *     get:
@@ -214,7 +220,7 @@
  *                   success: { type: boolean, example: true }
  *                   data:    { type: array, items: { type: object } }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/data-exchange/jobs/{jobId}/commit:
  *     post:
@@ -245,6 +251,7 @@
  *                   data:    { $ref: '#/components/schemas/DataExchangeJob' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  */
 export {};

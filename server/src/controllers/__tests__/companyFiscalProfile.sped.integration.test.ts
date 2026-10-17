@@ -5,7 +5,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { anoCorrente } from '@/features/accounting/services/CompanyFiscalProfileService';
 
 const app = makeApp();
@@ -44,6 +44,7 @@ describe('X13 PR-2 — geração SPED lê o perfil da empresa', () => {
   beforeAll(async () => {
     pushTestSchema();
     dono = await prisma.user.create({ data: { name: 'x13s', username: 'x13-sped', email: 'x13s@test.local', password: 'x', role: 'USER' } });
+    await seedUnit({ userId: dono.id, id: UNIT });
     const c = await prisma.accountingContact.create({
       data: { userId: dono.id, unitId: UNIT, name: 'Contabil Perfil', email: 'cp@c.com', cpf: '52998224725', phone: '1133334444', crcNumber: 'SP-000999/O-1', crcUf: 'SP' },
     });

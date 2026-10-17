@@ -342,6 +342,12 @@ export class TransactionalDynamicTableRepository implements IDynamicTableReposit
     return count > 0;
   }
 
+  async findUnitRowState(ownerUserId: string, unitId: string): Promise<'live' | 'deleted' | null> {
+    const row = await this.tx.dynamicTableData.findUnique({ where: { id: unitId }, include: { dynamicTable: true } });
+    if (!row || row.dynamicTable.userId !== ownerUserId || row.dynamicTable.internalName !== 'units') return null;
+    return row.deletedAt ? 'deleted' : 'live';
+  }
+
   async findTablesReferencingTableId(targetTableId: string): Promise<IDynamicTable[]> {
     const rows = await this.tx.dynamicTable.findMany();
     const result: IDynamicTable[] = [];

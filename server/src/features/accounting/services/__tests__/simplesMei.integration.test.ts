@@ -6,8 +6,9 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
-import { resolveAccountingScope, type AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
+import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { CompanyFiscalProfileRepository } from '@/features/accounting/repositories/CompanyFiscalProfileRepository';
 import { SIMPLES_DAS_PROVISION_SOURCE_TYPE } from '@/features/accounting/services/SimplesApuracaoService';
 import { ApplicationFactory } from '@/lib/factory';
@@ -17,7 +18,7 @@ const app = makeApp();
 let user: { id: string; username: string };
 const UNIT = 'unit-mei';
 const S = '/api/accounting/simples';
-const scope = (): AccountingScope => resolveAccountingScope({ userId: user.id }, UNIT);
+const scope = (): AccountingScope => resolveAccountingScopeInternal({ userId: user.id }, UNIT);
 const f = () => ApplicationFactory.getInstance();
 
 const perfil = (ano: number, extra: Record<string, unknown> = {}) =>
@@ -41,6 +42,7 @@ beforeAll(() => pushTestSchema());
 beforeAll(async () => {
   const u = await prisma.user.create({ data: { name: 'x14p4', username: 'x14p4', email: 'x14p4@test.local', password: 'x', role: 'USER' } });
   user = { id: u.id, username: u.username };
+  await seedUnit({ userId: user.id, id: UNIT });
   await f().getPostingService().ensureChartOfAccounts(scope());
   await prisma.accountingPeriod.create({ data: { userId: user.id, unitId: UNIT, year: 2026, month: 3, status: 'OPEN', openedAt: new Date() } });
 });

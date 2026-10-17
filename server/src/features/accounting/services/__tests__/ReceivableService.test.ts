@@ -1,6 +1,6 @@
 import { ReceivableService } from '../ReceivableService';
 import { ForbiddenError, MaxCentsExceededError, NotFoundError, ValidationError } from '../../../../lib/errors';
-import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import { CLIENTES_A_RECEBER_CODE } from '../../fixtures/ChartOfAccountsFixture';
 import { AR_RECEIVABLE_SOURCE_TYPE, AR_RECEIPT_SOURCE_TYPE } from '../../models/Receivable.model';
 import { COUNTERPARTY_NAME_MAX_LENGTH } from '../../models/Counterparty.model';
@@ -8,7 +8,7 @@ import { Prisma } from 'generated/prisma';
 import type { Account, Receivable, ReceivableReceipt } from 'generated/prisma';
 import type { PostEntryInput } from '../../dtos/PostingDto';
 
-const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
+const scope = resolveAccountingScopeInternal({ userId: 'owner-1' }, 'unit-1');
 
 function revenueAcc(over: Partial<Account> = {}): Account {
   return {

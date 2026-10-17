@@ -31,6 +31,7 @@ lib/factory.ts = composition root (única peça de lib/ que conhece features)
 | X1 | `lib/` (exceto `factory.ts`) não importa lógica de feature (models permitidos) | 0 |
 | X2 | produção não importa teste | 0 |
 | X3 | sem ciclo de import (ciclo que passa por `lib/factory.ts` é isento) | 16 |
+| I6 | `src/controllers/` não importa `features/accounting/scope/resolveAccountingScopeInternal.ts` — controller resolve o escopo pelo `AccountingScopeResolver` (F-I6-7; dono, 2026-10-15, [`D-2026-10-15-I6-FORKS`](../plano/decisoes/D-2026-10-15-I6-FORKS.md)) | 42 em 16/10 (os controllers ainda não migrados; encolhe nos PR-2…PR-5 do I6 até 0) |
 
 **Imports `type`-only contam.** Interface de repository dentro de policy é exatamente o sinal de policy impura que L5 quer ver.
 

@@ -16,6 +16,7 @@
  *       responses:
  *         '200': { description: 'paginated PendingApproval entries with their legs' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/entry-approvals/drafts:
  *     post:
@@ -31,6 +32,8 @@
  *         '201': { description: 'the created Draft entry' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/entry-approvals/drafts/{id}:
  *     put:
@@ -48,11 +51,13 @@
  *         '200': { description: 'the updated Draft entry' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/entry-approvals/drafts/{id}/submit:
  *     post:
  *       summary: Submit a draft for approval (freezes the content hash, moves to PendingApproval)
+ *       description: "409: version conflict (stale expectedVersion)"
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -66,13 +71,14 @@
  *         '200': { description: 'the submitted entry (PendingApproval)' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'version conflict (stale expectedVersion)' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/entry-approvals/{id}/approve:
  *     post:
  *       summary: Approve and post a submitted entry (checker; segregation of duties)
  *       description: >-
+ *         409: version conflict (stale expectedVersion)
  *         Approves and posts atomically. The approver must NOT be the creator or submitter
  *         (dynamic SoD, server-side). Assigns the gapless entryNumber inside the tx, re-checks
  *         the period gate and the frozen content hash. Fails 403 on a SoD violation, 409 on a
@@ -91,12 +97,13 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { description: 'SoD violation (approver is the creator or submitter)' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'version conflict (stale expectedVersion)' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/entry-approvals/{id}/reject:
  *     post:
  *       summary: Reject a submitted entry back to Draft
+ *       description: "409: version conflict (stale expectedVersion)"
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -110,7 +117,7 @@
  *         '200': { description: 'the entry back in Draft' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'version conflict (stale expectedVersion)' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  */
 export {};

@@ -2,7 +2,6 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
 import { CloseExerciseSchema } from '../features/accounting/dtos/ClosingDto';
 
 /**
@@ -24,7 +23,7 @@ export const closeExercise = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getExerciseClosingService().closeExercise(scope, parsed.data.year);
     return res.status(201).json({ success: true, data });
   } catch (error) {

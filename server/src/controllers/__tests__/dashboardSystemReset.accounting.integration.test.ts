@@ -35,7 +35,7 @@ import { AuditRepository } from '@/features/accounting/repositories/AuditReposit
 import { PostingRepository } from '@/features/accounting/repositories/PostingRepository';
 import { CounterpartyRepository } from '@/features/accounting/repositories/CounterpartyRepository';
 import { AccountingPolicy } from '@/features/accounting/policies/AccountingPolicy';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 
 const app = makeApp();
 type Who = { id: string; username: string };
@@ -121,7 +121,7 @@ describe('I7 PR-2 — reset contábil: gate de movimento na tx, SETUP removido, 
     expect(novos).toHaveLength(1);
     expect(novos[0]).toMatchObject({ unitId, eventType: ACCOUNTING_SCOPE_RESET, targetId: unitId, prevHash: antes[antes.length - 1].hash });
     expect(JSON.parse(JSON.parse(novos[0].payload).removed).Account).toBe(setupAntes.Account);
-    const verify = await audit.verifyAuditChain(resolveAccountingScope({ userId: u.id }, unitId));
+    const verify = await audit.verifyAuditChain(resolveAccountingScopeInternal({ userId: u.id }, unitId));
     expect(verify.ok).toBe(true);
     expect(await prisma.auditChainHead.count({ where: { scopeUserId: u.id } })).toBe(1);
 
@@ -151,7 +151,7 @@ describe('I7 PR-2 — reset contábil: gate de movimento na tx, SETUP removido, 
     const doisRemoved = eventos.find((e) => e.unitId === 'unidade-2')!;
     expect(JSON.parse(JSON.parse(doisRemoved.payload).removed)).toEqual({ AccountingPeriod: 1 });
     for (const unitId of [unidade1, 'unidade-2']) {
-      expect((await audit.verifyAuditChain(resolveAccountingScope({ userId: u.id }, unitId))).ok).toBe(true);
+      expect((await audit.verifyAuditChain(resolveAccountingScopeInternal({ userId: u.id }, unitId))).ok).toBe(true);
     }
   }, 120000);
 
@@ -235,7 +235,7 @@ describe('I7 PR-2 — reset contábil: gate de movimento na tx, SETUP removido, 
     const [evento] = await prisma.auditEvent.findMany({ where: { scopeUserId: u.id, eventType: ACCOUNTING_SCOPE_RESET } });
     expect(evento.unitId).toBe(unitId);
     expect(JSON.parse(evento.payload)).toEqual({ removed: '{}', companyLevel: '{"CompanyFiscalProfile":1}' });
-    expect((await audit.verifyAuditChain(resolveAccountingScope({ userId: u.id }, unitId))).ok).toBe(true);
+    expect((await audit.verifyAuditChain(resolveAccountingScopeInternal({ userId: u.id }, unitId))).ok).toBe(true);
   }, 120000);
 
   it('só companyLevel e NENHUMA unidade com cadeia ⇒ falha fechado (409) e o perfil fica — nenhum delete sem evento', async () => {

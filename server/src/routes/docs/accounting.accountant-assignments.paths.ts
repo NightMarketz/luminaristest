@@ -8,6 +8,7 @@
  *     post:
  *       summary: Convida o contador responsável do escopo (BE-INCR-ACCOUNTANT-GOVERNANCE, F-GOV-8 a)
  *       description: >-
+ *         404: Contato não encontrado no escopo · 409: ASSIGNMENT_PENDING_EXISTS
  *         O dono aponta um usuário já cadastrado pelo e-mail e um contato do escopo (fonte do CRC, gravado em
  *         snapshot). Nasce PENDING; só governa depois do aceite do contador.
  *       tags: [Accounting]
@@ -22,8 +23,8 @@
  *         '400': { description: 'DTO inválido, ACCOUNTANT_USER_NOT_FOUND ou SELF_ASSIGNMENT' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '404': { description: 'Contato não encontrado no escopo' }
- *         '409': { description: 'ASSIGNMENT_PENDING_EXISTS' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *     get:
  *       summary: Histórico de atribuições do escopo (dono), do mais novo ao mais velho
  *       tags: [Accounting]
@@ -35,6 +36,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/accountant-assignments/mine:
  *     get:

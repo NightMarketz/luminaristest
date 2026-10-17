@@ -8,6 +8,7 @@
  *     post:
  *       summary: O dono propõe mudança de parâmetro governado (BE-INCR-ACCOUNTING-POLICY-VERSION, F-POL-3 a)
  *       description: >-
+ *         409: POLICY_NO_ACCOUNTANT (sem contador ativo — use o PUT)
  *         Com contador responsável ACTIVE, FiscalProfile e AccountingScopeSettings só mudam por proposta aprovada
  *         (F-POL-2 b). O payload é o corpo do PUT do alvo sem unitId (FISCAL_PROFILE = substituição completa;
  *         SCOPE_SETTINGS = patch). Uma PROPOSED anterior do mesmo alvo vira SUPERSEDED (F-POL-6 a).
@@ -23,7 +24,8 @@
  *         '400': { description: 'DTO inválido ou conta referenciada inválida no escopo' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
- *         '409': { description: 'POLICY_NO_ACCOUNTANT (sem contador ativo — use o PUT)' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *     get:
  *       summary: Histórico de versões de política do escopo, mais nova primeiro (dono ou contador ativo do par)
  *       tags: [Accounting]
@@ -38,6 +40,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { description: 'ForbiddenError ou ACCOUNTANT_NOT_ASSIGNED' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/policy-versions/{id}:
  *     get:
@@ -53,12 +56,13 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { description: 'ForbiddenError ou ACCOUNTANT_NOT_ASSIGNED' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
  *   /api/accounting/policy-versions/{id}/approve:
  *     post:
  *       summary: O contador ativo aprova e aplica a proposta, na mesma transação (F-GOV-7 a+ — decide, não propõe)
  *       description: >-
+ *         409: POLICY_VERSION_STATUS_CHANGED (já decidida ou substituída)
  *         PROPOSED → APPLIED + aplicação no alvo. Se a aplicação falhar (conta apagada, regime da empresa mudado),
  *         nada muda e a proposta segue PROPOSED.
  *       tags: [Accounting]
@@ -75,12 +79,13 @@
  *         '400': { description: 'DTO inválido ou payload não aplicável agora' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { description: 'ACCOUNTANT_REQUIRED ou ACCOUNTANT_NOT_ASSIGNED' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'POLICY_VERSION_STATUS_CHANGED (já decidida ou substituída)' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
  *   /api/accounting/policy-versions/{id}/reject:
  *     post:
  *       summary: O contador ativo rejeita a proposta, com motivo
+ *       description: "409: POLICY_VERSION_STATUS_CHANGED"
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -95,7 +100,7 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { description: 'ACCOUNTANT_REQUIRED ou ACCOUNTANT_NOT_ASSIGNED' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
- *         '409': { description: 'POLICY_VERSION_STATUS_CHANGED' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  */
 export {};

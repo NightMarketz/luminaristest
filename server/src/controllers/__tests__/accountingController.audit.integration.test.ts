@@ -17,7 +17,7 @@
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
-import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
 
@@ -71,6 +71,7 @@ describe('accountingController — GET /api/accounting/audit/verify-chain (BRIEF
   beforeAll(async () => {
     pushTestSchema();
     dono = await criarUsuario('audit-verify-owner');
+    await seedUnit({ userId: dono.id, id: UNIT });
     await abrirPeriodo(dono.id, UNIT);
     await criarConta(dono.id, UNIT, '4.1', 'Expense');
     await criarConta(dono.id, UNIT, '1.1.1', 'Asset');

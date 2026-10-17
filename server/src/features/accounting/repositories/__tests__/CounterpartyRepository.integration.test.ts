@@ -23,7 +23,7 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { getFactory } from '@/lib/factory';
 import { CounterpartyRepository } from '@/features/accounting/repositories/CounterpartyRepository';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 import {
   COUNTERPARTY_ARCHIVED,
@@ -40,7 +40,7 @@ const DONO_A = 'u-cp-a';
 const DONO_B = 'u-cp-b';
 
 const escopo = (userId: string, unitId: string = UNIT): AccountingScope =>
-  resolveAccountingScope({ userId }, unitId);
+  resolveAccountingScopeInternal({ userId }, unitId);
 
 const repo = new CounterpartyRepository();
 

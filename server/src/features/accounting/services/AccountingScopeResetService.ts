@@ -1,5 +1,5 @@
 import { ConflictError, ForbiddenError, SystemResetBlockedByAccountingError } from '../../../lib/errors';
-import { resolveAccountingScope } from '../scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeInternal';
 import { SystemResetBlockedDetailsSchema } from '../dtos/AccountingResetDto';
 import type { AccountingResetOutcome } from '../models/accountingResetClassification';
 import type { IAccountingScopeResetRepository, SetupCounts } from '../repositories/IAccountingScopeResetRepository';
@@ -62,7 +62,7 @@ export class AccountingScopeResetService implements IAccountingScopeResetService
         }
       }
       const units = [...unitSet].sort();
-      const scopes = units.map((unitId) => resolveAccountingScope({ userId }, unitId));
+      const scopes = units.map((unitId) => resolveAccountingScopeInternal({ userId }, unitId));
       for (const scope of scopes) {
         if (!this.policy.canPurgeSetup(scope)) {
           throw new ForbiddenError('Você não tem permissão para remover a configuração contábil desta unidade.');

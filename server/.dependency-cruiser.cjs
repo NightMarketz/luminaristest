@@ -68,6 +68,16 @@ module.exports = {
       from: { path: '^src/features/dynamicTables/', pathNot: TEST },
       to: { path: '^src/features/(accounting|accountingBinding|legalParameters|fx|sectorKits)/' },
     },
+    // ---- BE-INCR-SCOPE-UNIT-GUARD (nó I6, F-I6-7) ----
+    {
+      name: 'I6-controller-not-internal-scope',
+      severity: 'error',
+      comment:
+        'Controller HTTP resolve o escopo contábil pelo AccountingScopeResolver (valida o unitId contra a tabela ' +
+        '`units` do dono). A função síncrona é só dos chamadores internos (F-I6-1 d; dono, 2026-10-15).',
+      from: { path: '^src/controllers/', pathNot: TEST },
+      to: { path: '^src/features/accounting/scope/resolveAccountingScopeInternal\.ts$' },
+    },
     // ---- fiscal/contábil puro ----
     {
       name: 'F1-fiscal-lib-is-pure',

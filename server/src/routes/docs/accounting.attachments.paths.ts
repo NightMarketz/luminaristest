@@ -34,7 +34,8 @@
  *                   data:    { $ref: '#/components/schemas/DocumentAttachment' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '413': { description: File too large }
  *         '415': { description: Unsupported media type / content mismatch }
  *         '500': { $ref: '#/components/responses/InternalServerError' }
@@ -55,7 +56,7 @@
  *               schema: { type: string, format: binary }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *         '500': { $ref: '#/components/responses/InternalServerError' }
  *     delete:
  *       summary: Soft-delete an attachment (binary retained for audit)
@@ -76,7 +77,8 @@
  *                   data: { type: object, properties: { ok: { type: boolean, example: true } } }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *         '500': { $ref: '#/components/responses/InternalServerError' }
  */
 export {};

@@ -179,8 +179,8 @@ describe('/api/payables/{id}/settlements — contrato HTTP da baixa parcial', ()
     expect(Number(row.paidCents)).toBe(15000);
     expect(row.status).toBe('PAYING');
     const { PayableRepository } = await import('@/features/accounting/repositories/PayableRepository');
-    const { resolveAccountingScope } = await import('@/features/accounting/scope/AccountingScope');
-    expect(await new PayableRepository().finalizeIfPaying(resolveAccountingScope({ userId: dono.id }, UNIT), payableId, 50000)).toBe(1);
+    const { resolveAccountingScopeInternal } = await import('@/features/accounting/scope/resolveAccountingScopeInternal');
+    expect(await new PayableRepository().finalizeIfPaying(resolveAccountingScopeInternal({ userId: dono.id }, UNIT), payableId, 50000)).toBe(1);
     row = await prisma.payable.findUniqueOrThrow({ where: { id: payableId } });
     expect(row.status).toBe('PARTIALLY_PAID');
     // Restaura um recibo ACTIVE coerente com o saldo para o caso seguinte (o em-trânsito simulado nunca ganhou linha).

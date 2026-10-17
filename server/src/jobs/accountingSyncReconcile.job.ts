@@ -69,7 +69,7 @@
 import prisma from '../lib/prisma';
 import { logger } from '../lib/logger';
 import { getFactory } from '../lib/factory';
-import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
+import { resolveAccountingScopeInternal } from '../features/accounting/scope/resolveAccountingScopeInternal';
 import type { AccountingScope } from '../features/accounting/scope/AccountingScope';
 import { LEDGER_STATUSES } from '../features/accounting/models/ledgerStatus';
 import { centsFromDb } from '../features/accounting/models/money';
@@ -364,7 +364,7 @@ export async function reconcileCrmReceivables(
       }
       // Owner-as-actor: no HTTP user in a job. The scope is built from the SOURCE
       // record's tenant + unit only — never crossing tenants or units.
-      const scope = resolveAccountingScope({ userId: opp.ownerUserId }, opp.unitId);
+      const scope = resolveAccountingScopeInternal({ userId: opp.ownerUserId }, opp.unitId);
       const result = await deps.book(scope, {
         opportunityId: opp.opportunityId,
         unitId: opp.unitId,
@@ -509,7 +509,7 @@ export async function reconcileSaleSales(deps: SaleReconcileDeps): Promise<Recon
       }
       // Owner-as-actor: no HTTP user in a job. The scope is built from the SOURCE
       // record's tenant + unit only — never crossing tenants or units.
-      const scope = resolveAccountingScope({ userId: sale.ownerUserId }, sale.unitId);
+      const scope = resolveAccountingScopeInternal({ userId: sale.ownerUserId }, sale.unitId);
       const event = buildSaleFinalizedEvent({
         saleId: sale.saleId,
         unitId: sale.unitId,
@@ -634,7 +634,7 @@ export async function reconcileSaleCancellations(
       if (!sale.unitId) {
         throw new Error(`Venda '${sale.saleId}' sem unitId — não reconciliável.`);
       }
-      const scope = resolveAccountingScope({ userId: sale.ownerUserId }, sale.unitId);
+      const scope = resolveAccountingScopeInternal({ userId: sale.ownerUserId }, sale.unitId);
 
       let didReverse = false;
       // Revenue + (adaptive D2-Q4) settlement: reverse each that is still Posted.
@@ -738,7 +738,7 @@ export async function reconcileSaleReturns(deps: SaleReturnReconcileDeps): Promi
       if (!sale.unitId) {
         throw new Error(`Venda '${sale.saleId}' sem unitId — não reconciliável.`);
       }
-      const scope = resolveAccountingScope({ userId: sale.ownerUserId }, sale.unitId);
+      const scope = resolveAccountingScopeInternal({ userId: sale.ownerUserId }, sale.unitId);
       const event = buildSaleReturnedEvent({
         saleId: sale.saleId,
         unitId: sale.unitId,
@@ -854,7 +854,7 @@ export async function reconcileSaleSettlements(
       if (!sale.unitId) {
         throw new Error(`Venda '${sale.saleId}' sem unitId — não reconciliável.`);
       }
-      const scope = resolveAccountingScope({ userId: sale.ownerUserId }, sale.unitId);
+      const scope = resolveAccountingScopeInternal({ userId: sale.ownerUserId }, sale.unitId);
 
       // Already settled? idempotent hit (sync stays the authority even if a race slips past).
       const exists = await deps.hasExistingEntry(scope, 'sale.settled', sale.saleId);
@@ -980,7 +980,7 @@ export async function reconcileReceitaFiscal(deps: ReceitaFiscalReconcileDeps): 
   for (const sale of sales) {
     try {
       if (!sale.unitId) throw new Error(`Venda '${sale.saleId}' sem unitId — subrazão não reconciliável.`);
-      const scope = resolveAccountingScope({ userId: sale.ownerUserId }, sale.unitId);
+      const scope = resolveAccountingScopeInternal({ userId: sale.ownerUserId }, sale.unitId);
       // Sem receita no razão não há o que espelhar: o passe de vendas cuida dela primeiro.
       if (!(await deps.hasExistingEntry(scope, 'sale.finalized', sale.saleId)) || (await deps.alreadyRecorded(scope, sale.saleId))) {
         summary.idempotentHits++;
@@ -1028,7 +1028,7 @@ export async function reconcileReceitaFiscalEstornos(deps: ReceitaFiscalEstornoR
   for (const sale of sales) {
     try {
       if (!sale.unitId) throw new Error(`Venda '${sale.saleId}' sem unitId — subrazão não reconciliável.`);
-      const scope = resolveAccountingScope({ userId: sale.ownerUserId }, sale.unitId);
+      const scope = resolveAccountingScopeInternal({ userId: sale.ownerUserId }, sale.unitId);
       const dia = await deps.eventDay(scope, sale);
       if (dia === null || (await deps.alreadyRecorded(scope, sale.saleId, sale.tipo))) {
         summary.idempotentHits++;
@@ -1113,7 +1113,7 @@ export async function reconcileSaleCogs(deps: SaleCogsReconcileDeps): Promise<Re
         await reportResolvedSafely(deps.reportResolved, { ownerUserId: sale.ownerUserId, unitId: sale.unitId, sourceType: 'sale.cogs', sourceId: sale.saleId });
         continue;
       }
-      const scope = resolveAccountingScope({ userId: sale.ownerUserId }, sale.unitId);
+      const scope = resolveAccountingScopeInternal({ userId: sale.ownerUserId }, sale.unitId);
 
       // Already booked CMV? idempotent hit. sync() stays the authority even if a race slips past
       // this check — postEntry dedupes on ('sale.cogs', saleId).
@@ -1234,7 +1234,7 @@ export async function reconcileSalePackageOrigin(
       if (!sale.unitId) {
         throw new Error(`Venda de pacote '${sale.saleId}' sem unitId — não reconciliável.`);
       }
-      const scope = resolveAccountingScope({ userId: sale.ownerUserId }, sale.unitId);
+      const scope = resolveAccountingScopeInternal({ userId: sale.ownerUserId }, sale.unitId);
 
       // (1) Origin posting (C 2.1.1) — idempotent on (sourceType, sourceId).
       const hasOrigin = await deps.hasExistingEntry(scope, 'sale.package.sold', sale.saleId);
@@ -1358,7 +1358,7 @@ export async function reconcileSalePackageConsumption(
       if (!sale.unitId) {
         throw new Error(`Consumo '${sale.saleId}' sem unitId — não reconciliável.`);
       }
-      const scope = resolveAccountingScope({ userId: sale.ownerUserId }, sale.unitId);
+      const scope = resolveAccountingScopeInternal({ userId: sale.ownerUserId }, sale.unitId);
 
       // C7r (cédula 2026-09-10 §2 resposta 23 → a): 'blocked_missing_paid_with_package_id' ganhou
       // código próprio (MISSING_PAID_WITH_PACKAGE_ID, poison) e entra na tabela de pendências.
@@ -1445,7 +1445,7 @@ export async function reconcilePackageBalanceVsLiability(
 
   for (const row of rows) {
     try {
-      const scope = resolveAccountingScope({ userId: row.ownerUserId }, row.unitId);
+      const scope = resolveAccountingScopeInternal({ userId: row.ownerUserId }, row.unitId);
       const liabilityCents = await deps.getLiabilityCents(scope);
       if (liabilityCents !== row.balanceCents) {
         divergences++;
@@ -1596,7 +1596,7 @@ export async function reconcilePackageExpiry(deps: PackageExpiryReconcileDeps): 
   const candidates = await deps.listCandidates();
   const due: Array<{ c: PackageExpiryCandidate; scope: AccountingScope; today: string }> = [];
   for (const c of candidates) {
-    const scope = resolveAccountingScope({ userId: c.ownerUserId }, c.unitId);
+    const scope = resolveAccountingScopeInternal({ userId: c.ownerUserId }, c.unitId);
     const today = deps.today(scope);
     if (isDueForExpiry(c.expiresOn, today)) due.push({ c, scope, today });
   }
@@ -1667,7 +1667,7 @@ export async function reconcileSalePackageExpiryPosting(deps: PackageExpiryPosti
     try {
       const parsed = parseExpiryMovementKey(m.movementKey);
       if (!parsed) throw new Error(`Movimento de vencimento com chave inválida '${m.movementKey}'.`);
-      const scope = resolveAccountingScope({ userId: m.ownerUserId }, m.unitId);
+      const scope = resolveAccountingScopeInternal({ userId: m.ownerUserId }, m.unitId);
       const needsPosting = !(await deps.hasExistingEntry(scope, PACKAGE_EXPIRED_SOURCE_TYPE, m.movementKey));
       const nfse = await applyPackageExpiryEffects(deps, scope, { movementKey: m.movementKey, amountCents: m.amountCents, expiresOn: parsed.expiresOn }, needsPosting);
       if (needsPosting || nfse === 'emitted') {
@@ -1798,7 +1798,7 @@ export async function reconcilePhysicalInventory(
 
   for (const { ownerUserId, unitId } of scopes) {
     try {
-      const scope = resolveAccountingScope({ userId: ownerUserId }, unitId);
+      const scope = resolveAccountingScopeInternal({ userId: ownerUserId }, unitId);
 
       // F-E1(a): self-repair the subledger first (best-effort; isolated so a repair failure never
       // kills the comparison of the remaining scopes).
@@ -1906,7 +1906,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
     // apply to the Service used by the rescan ROUTE (Fork 3-b), never to this bulk tick.
     const pendingRepo = new ReconcilePendingRepository();
     const reportPending = async (item: ReconcilePendingCaptureItem) => {
-      const scope = resolveAccountingScope({ userId: item.ownerUserId }, item.unitId);
+      const scope = resolveAccountingScopeInternal({ userId: item.ownerUserId }, item.unitId);
       await pendingRepo.upsertPending(scope, {
         sourceType: item.sourceType,
         sourceId: item.sourceId,
@@ -1920,7 +1920,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
       sourceType: string;
       sourceId: string;
     }) => {
-      const scope = resolveAccountingScope({ userId: item.ownerUserId }, item.unitId);
+      const scope = resolveAccountingScopeInternal({ userId: item.ownerUserId }, item.unitId);
       await pendingRepo.resolvePending(scope, item.sourceType, item.sourceId);
     };
 
