@@ -1,5 +1,8 @@
 # BRIEF — BE-INCR-CONTADOR-DELIVERY (envio de ECD/ECF ao contador)
 
+> **Verificação legal de 17/10/2026** (dossiê `pesquisas-legais/verif-2026-10-17-lgpd-cdc-obrigacoes/relatorio.md`, acervo ctresb/leis + fonte oficial; PR #763):
+> - CONFERE, com ressalva: o CTN art. 195 p.ú. manda guardar "até que ocorra a prescrição" (arts. 173 e 174), não "5 anos" [D16]. O log de entrega não é comprovante de lançamento, e por isso os 5 anos ficam como política, não como lei. A LC 236 (04/09/2026) acrescentou incisos de interrupção ao art. 174, mas o prazo de 5 anos não mudou [D16].
+
 > **PRÉ-CONDIÇÃO EXTERNA — a `sessao-feature` NÃO abre antes da resposta do contador.** Isto é regra, não
 > fork: `docs/adr/ADR-CONTADOR-DELIVERY.md` (Status: Accepted por delegação 2026-09-07, condicionado) só
 > autoriza código depois do item 0 do `docs/accounting/PEDIDO-CONTADOR-2026-09-03.md` responder — *"você

@@ -135,6 +135,9 @@ Ajuste e só fica menor se a UF reduzir.
 **Itens.**
 - **E4-1 [direto]** L-COB-2 ganha a resposta parcial: o teto de multa para consumidor PF é **2%** (CDC 52 §1º, leitura
   ampla do STJ). Continua sem campo de encargo na reemissão. Encargo é BE novo (ADR F-PP-10) e fica fora deste BRIEF.
+  Verificação legal de 17/10 [D02]: o texto ("não poderão ser superiores a dois por cento") confere. Na letra, o caput do
+  art. 52 trata de crédito ou financiamento; a extensão a serviço vem do STJ e não foi conferida. Travar em 2% para PF segue
+  sendo a leitura mais segura (dossiê §4.1).
 - **E4-2 [cond: F-E4-1]** Prazo exibido no modal "Cobrar título" (item 12): quando o vencimento cai em dia não útil, a
   tela mostra a data prorrogada com a nota "prorrogado para o próximo dia útil (CC art. 132)".
 - **E4-3 [cond: F-E4-1]** Status `PENDING` com `expiresAt` no passado (F-FE-COB-7) não vira "vencido" se o vencimento
@@ -225,6 +228,12 @@ oferecer o saldo em dez/2026 (pesquisa-juris 4.4, média-baixa).
   **Correção de 17/10** (verificação legal, `pesquisas-legais/verif-2026-10-17-lgpd-cdc-obrigacoes` §1 DIVERGE 1, [D27]):
   o 1,5% do art. 714 vale só para os serviços "caracterizadamente de natureza profissional" da lista do § 1º. Outros
   serviços têm alíquota própria ou não têm retenção. A dispensa até R$ 10 confere (RIR art. 785 II; Lei 9.430 art. 67).
+  Também conferidos em 17/10:
+  - a retenção de INSS de 11% do parceiro PF, recolhida até o dia 20 (Lei 10.666 art. 4º; IN RFB 2.110 arts. 37 II "a", 41 I e
+    165 I) [D09][D23]; a lei também prevê antecipar para o dia útil anterior quando o dia 20 não é útil;
+  - a CSRF de 4,65%, com dispensa até R$ 10 (Lei 10.833 arts. 30, 31 e § 3º) [D11].
+  **Pendência 2027:** o art. 31 § 1º traz "Vide LC 214/2025"; com a CBS, a parcela PIS/Cofins da CSRF tende a mudar. Fica para a
+  frente PIS/Cofins, como funcionalidade nova.
 - Achado do PRE-ADR folha (`PRE-ADR-PESSOAL-FOLHA-ESOCIAL-REINF.md:514`): o AP que paga com retenção registra o bruto
   como líquido.
 - III-8 do pedido único ao contador, ainda sem assinatura.

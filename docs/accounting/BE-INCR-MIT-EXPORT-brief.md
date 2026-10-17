@@ -1,5 +1,17 @@
 # BRIEF — BE-INCR-MIT-EXPORT (arquivo JSON de importação do MIT a partir das apurações confirmadas) — nó X9
 
+> **Verificação legal de 17/10/2026** (dossiê `pesquisas-legais/verif-2026-10-17-lgpd-cdc-obrigacoes/relatorio.md`, acervo ctresb/leis + fonte oficial; PR #763):
+> - CONFERE (IN RFB 2.237 na visão multivigente da RFB) [D21]:
+>   - DCTFWeb obrigatória para PJ em geral (art. 3º I);
+>   - MEI condicional (art. 3º IX, art. 4º IX);
+>   - inativa entrega o 1º mês sem movimento (art. 6º § 2º II);
+>   - vigência em 01/01/2025 (art. 1º § 1º I);
+>   - prazo no último dia útil do mês seguinte (art. 6º; o "dia 25" está revogado);
+>   - Simples/MEI não informam o que já vai no DAS (art. 8º § 4º);
+>   - retificadora substitui tudo (art. 13 §§ 1º, 7º e 9º);
+>   - multa de 2% ao mês, até 20%, com mínimo de R$ 200/500 (art. 11).
+> - As alterações (IN 2.248/2025, 2.267/2025, 2.319/2026 e 2.325/2026) não tocam os arts. 3º, 4º, 6º § 2º e 8º § 4º.
+
 > Produzido em `sessao-planejamento` em 03/10/2026, sobre `origin/main` `d6530790`. Herda o esqueleto da §5 (X9-1..X9-8)
 > e as invariantes da §13 do [`ADR-INCR-DCTFWEB-MIT`](../adr/ADR-INCR-DCTFWEB-MIT.md), **Accepted** em 02/10 (F-X9-1..6
 > ratificados: [`D-2026-10-02-X9-DCTFWEB-MIT-FORKS`](../plano/decisoes/D-2026-10-02-X9-DCTFWEB-MIT-FORKS.md)). **Reusa**,

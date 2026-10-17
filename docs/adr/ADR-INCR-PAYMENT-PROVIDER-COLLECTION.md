@@ -1,5 +1,14 @@
 # ADR-INCR-PAYMENT-PROVIDER-COLLECTION — Cobrança por provedor de pagamento: uma porta, Mercado Pago como 1º adaptador, remessa CNAB 240 como 2º; Pix de saída bloqueado
 
+> **Verificação legal de 17/10/2026** (dossiê `pesquisas-legais/verif-2026-10-17-lgpd-cdc-obrigacoes/relatorio.md`, acervo ctresb/leis + fonte oficial; PR #763):
+> - CONFERE no texto lido:
+>   - documento de cobrança com nome, endereço e CPF/CNPJ do fornecedor (CDC 42-A) [D02];
+>   - juros legais = Selic − IPCA, mínimo 0 (CC 406 §§ 1º–3º, Lei 14.905/2024) [D03];
+>   - a Lei 7.089 alcança banco e instituição financeira (art. 1º) [D20] — instituição de pagamento segue com o advogado;
+>   - teto de multa de 2% (CDC 52 § 1º) [D02] — na letra, o caput trata de crédito ou financiamento; a extensão a serviço vem do STJ, não conferida (dossiê §4.1).
+> - LGPD, base para enviar CPF ao provedor (art. 7º V e IX; art. 9º V; art. 5º VI e VII) [D01][D28]: o texto lido confere, e o enquadramento fica com o advogado. A Lei 15.352/2026 (ANPD vira agência) não muda esses artigos [D28].
+> - NÃO RECONFERIDA: Res. Conjunta BCB/CMN 1/2020 (Open Finance), lida em 10/10 (dossiê §5).
+
 - **Data:** 2026-09-29
 - **Status:** **Accepted 2026-10-02 — forks F-PP-1..11 RATIFICADOS fork a fork pelo dono** (§8.1; cédula
   [D-2026-10-02-PAYMENT-PROVIDER-FORKS](../plano/decisoes/D-2026-10-02-PAYMENT-PROVIDER-FORKS.md)). 11/11 na

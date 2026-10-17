@@ -1,5 +1,9 @@
 # BRIEF — BE-INCR-CNPJ-ALFA (T10: CNPJ alfanumérico transversal — `lib/cnpj.ts` + DTOs ECD/ECF + coerência da chave NF-e)
 
+> **Verificação legal de 17/10/2026** (dossiê `pesquisas-legais/verif-2026-10-17-lgpd-cdc-obrigacoes/relatorio.md`, acervo ctresb/leis + fonte oficial; PR #763):
+> - CONFERE: 14 posições, 12 alfanuméricas e 2 DV numéricos; valor = ASCII − 48; módulo 11. O exemplo oficial 12ABC34501DE dá DV 35, e `lib/cnpj.ts` também devolve 35 (IN RFB 2.119 art. 2º p.ú. + Anexo XV, red. IN 2.229) [D24][D26].
+> - RISCO, corrigido no comentário: a norma diz só "previsão de implementação a partir de julho de 2026" [D24]. A data efetiva de produção não está na norma, e "em produção desde 01/07/2026" saiu do código. As alterações posteriores da IN 2.119 (2.290, 2.333, 2.340, 2.345) não tocam o art. 2º p.ú. nem o Anexo XV [D24][D25].
+
 > Produzido por **sessão de planejamento**, 2026-09-07, sobre `origin/main` `09ae49a2` (+ PR #270 em
 > merge). **Rodada 1** do [PLANO-SDD-SEQUENCIAL-2026-09-07.md](PLANO-SDD-SEQUENCIAL-2026-09-07.md).
 > Não contém código de aplicação, não ratifica fork. Todo fork abaixo está **RATIFICAÇÃO PENDENTE**.
