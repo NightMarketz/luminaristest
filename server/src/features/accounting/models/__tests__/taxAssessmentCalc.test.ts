@@ -377,7 +377,7 @@ describe('deduções (item 11, F-X7-11 a; F-TA-9 a)', () => {
 describe('Real trimestral (item 10; 23 c/d)', () => {
   const base: EntradaReal = {
     tabela, ano: 2026, periodo: 'T01', tributo: 'IRPJ', resultadoAntesCents: R(100_000), contasProvisaoConfiguradas: true,
-    linhasParteA: [], parteBFechada: true, perfil: { ecfIndAliqCsll: '4', lucroRealObrigatorio: false }, deducoes: [],
+    linhasParteA: [], parteBFechada: true, perfil: { ecfIndAliqCsll: '4', lucroRealObrigatorio: false, inicioAtividadeEm: null, encerramentoAtividadeEm: null }, deducoes: [],
   };
 
   it('L = resultado + A − E; C = linhas P; código 337301 (optante) / 022001 (obrigada) / 601201 (CSLL)', () => {
@@ -398,13 +398,13 @@ describe('Real trimestral (item 10; 23 c/d)', () => {
     expect(csll.devidoCents).toBe(R(15_000)); // 100.000 × 15% (indAliqCsll '4')
   });
 
-  it('BE-INCR-CSLL-BANCOS-Q1 item 4: banco (indAliqCsll 3) no T01/2026 — Presumido e Real a 20%, citando o art. 30 IV', () => {
+  it('BE-INCR-CSLL-BANCOS-Q1 item 4: banco (indAliqCsll 3) no T01/2026 — Presumido e Real a 20%, citando a Lei 7.689 art. 3º II-A (lp8-csll-3-e, verificação legal 17/10)', () => {
     const real = apurarRealTrimestral({ ...base, tributo: 'CSLL', perfil: { ...base.perfil, ecfIndAliqCsll: '3' } });
     expect(real.devidoCents).toBe(R(20_000)); // 100.000 × 20%
-    expect(real.memoria.some((m) => m.fonte.includes('art. 30 IV'))).toBe(true);
+    expect(real.memoria.some((m) => m.fonte.includes('art. 3º II-A'))).toBe(true);
     const pres = apurarAno({ T01: [100_000, 0] }, 'CSLL', { ecfIndAliqCsll: '3' }).T01;
     expect(pres.devidoCents).toBe(R(6_400)); // 32.000 × 20%
-    expect(pres.memoria.some((m) => m.fonte.includes('art. 30 IV'))).toBe(true);
+    expect(pres.memoria.some((m) => m.fonte.includes('art. 3º II-A'))).toBe(true);
   });
 
   it('23(d) D6: compensação = arred(30% × L) passa; um centavo acima ⇒ 400 nomeando a linha P; L ≤ 0 com C > 0 ⇒ 400', () => {
@@ -436,5 +436,31 @@ describe('Real trimestral (item 10; 23 c/d)', () => {
   it('guarda de circularidade sem contas configuradas fica registrada na memória (item 7)', () => {
     const r = apurarRealTrimestral({ ...base, contasProvisaoConfiguradas: false });
     expect(r.memoria.find((m) => m.codigo === 'GUARDA_CIRCULARIDADE')?.descricao).toBe('guarda de circularidade sem contas configuradas');
+  });
+});
+
+describe('adicional do IRPJ no trimestre de início/encerramento (verificação legal 17/10, divergência 1)', () => {
+  // Lei 9.249/1995 art. 3º § 1º: o limite do adicional é R$ 20.000 × "o número de meses do respectivo período de
+  // apuração". Premissa (A6 do consolidado, leitura mais segura): conta-se o mês que a atividade toca, como no
+  // anual (`mesesEmAtividade`) — sem regra de fração de mês.
+  it('Presumido: PJ aberta em 10/02/2025 ⇒ T01 com limite de 2 meses (fev–mar), não 3', () => {
+    // serviço 200.000 × 32% = 64.000; adicional = 10% × (64.000 − 40.000) = 2.400 (com × 3 seria 400)
+    const r = apurarAno({ T01: [200_000, 0] }, 'IRPJ', { inicioAtividadeEm: '2025-02-10' }, [], 2025).T01;
+    expect(v(r, 'ADICIONAL')).toBe(String(R(2_400)));
+  });
+
+  it('Presumido: encerramento em 15/11/2025 ⇒ T04 com limite de 2 meses (out–nov)', () => {
+    const r = apurarAno({ T04: [200_000, 0] }, 'IRPJ', { encerramentoAtividadeEm: '2025-11-15' }, [], 2025).T04;
+    expect(v(r, 'ADICIONAL')).toBe(String(R(2_400)));
+  });
+
+  it('Real trimestral: PJ aberta em 10/02/2026 ⇒ T01 com limite de 2 meses', () => {
+    // base 100.000; adicional = 10% × (100.000 − 40.000) = 6.000 (com × 3 seria 4.000)
+    const r = apurarRealTrimestral({
+      tabela, ano: 2026, periodo: 'T01', tributo: 'IRPJ', resultadoAntesCents: R(100_000), contasProvisaoConfiguradas: true,
+      linhasParteA: [], parteBFechada: true, deducoes: [],
+      perfil: { ecfIndAliqCsll: '4', lucroRealObrigatorio: false, inicioAtividadeEm: '2026-02-10', encerramentoAtividadeEm: null },
+    });
+    expect(v(r, 'ADICIONAL')).toBe(String(R(6_000)));
   });
 });

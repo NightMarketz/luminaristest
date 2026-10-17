@@ -1,0 +1,104 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei nº 7.689 de 15/12/1988",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1988/lei-7689-1988-12-15.md",
+      "url_final": "https://github.com/ctresb/leis/blob/109b06481773474599dbf7e4d73a01309b658007/federal/leis-ordinarias/1988/lei-7689-1988-12-15.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1988-12-15;7689",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "109b06481773474599dbf7e4d73a01309b658007",
+      "alertas": [],
+      "baixado_em": "2026-10-17T10:53:39-03:00",
+      "sha256": "7c57b2c916e9d1627edd79bf85758f111d036cbf52c0964fb2527090ac0ed22b",
+      "arquivo": "docs/D01_lei-7689-1988-12-15.md",
+      "texto": "docs/D01_lei-7689-1988-12-15.txt",
+      "bytes": 11412
+    },
+    {
+      "id": "D02",
+      "titulo": "Lei nº 14.183 de 14/07/2021",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2021/lei-14183-2021-07-14.md",
+      "url_final": "https://github.com/ctresb/leis/blob/e3db373dc20968124cc876ee38efba5f3ded5926/federal/leis-ordinarias/2021/lei-14183-2021-07-14.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2021-07-14;14183",
+      "versao_texto": "republicação/retificação",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "e3db373dc20968124cc876ee38efba5f3ded5926",
+      "alertas": [
+        "versao_texto = 'republicação/retificação' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-10-17T10:53:40-03:00",
+      "sha256": "990a572ccdb2d87c36bd9857596758c8468cc326f9501d4585c233140d1f82ca",
+      "arquivo": "docs/D02_lei-14183-2021-07-14.md",
+      "texto": "docs/D02_lei-14183-2021-07-14.txt",
+      "bytes": 13112
+    },
+    {
+      "id": "D03",
+      "titulo": "Lei nº 9.249 de 26/12/1995",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1995/lei-9249-1995-12-26.md",
+      "url_final": "https://github.com/ctresb/leis/blob/d955e7e66c4a7176278ee8ac74513668de7fc989/federal/leis-ordinarias/1995/lei-9249-1995-12-26.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1995-12-26;9249",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "d955e7e66c4a7176278ee8ac74513668de7fc989",
+      "alertas": [],
+      "baixado_em": "2026-10-17T10:53:41-03:00",
+      "sha256": "18cb96b64a850a3f9b738da870044230b76a336068e3fae79cb83f10b14d4699",
+      "arquivo": "docs/D03_lei-9249-1995-12-26.md",
+      "texto": "docs/D03_lei-9249-1995-12-26.txt",
+      "bytes": 45124
+    },
+    {
+      "id": "D04",
+      "titulo": "INStrução normativa rfb Nº 2.343, DE 17 DE setembro DE 2026",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/reguladores/rfb/instrucoes-normativas/2026/instrucao-normativa-rfb-n-2.343-de-17-de-setembro-de-2026-732611655.md",
+      "url_final": "https://github.com/ctresb/leis/blob/808531961ddbb516885d7bb43171ee4f19656b80/reguladores/rfb/instrucoes-normativas/2026/instrucao-normativa-rfb-n-2.343-de-17-de-setembro-de-2026-732611655.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www.in.gov.br/web/dou/-/instrucao-normativa-rfb-n-2.343-de-17-de-setembro-de-2026-732611655",
+      "versao_texto": "publicação original",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "808531961ddbb516885d7bb43171ee4f19656b80",
+      "alertas": [
+        "versao_texto = 'publicação original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-10-17T10:53:42-03:00",
+      "sha256": "5a2d9eaa418c355a526a350487761e906b60837dff62f2285b3f25d19aac37bf",
+      "arquivo": "docs/D04_instrucao-normativa-rfb-n-2-343-de-17-de-setembro-de-2026-73.md",
+      "texto": "docs/D04_instrucao-normativa-rfb-n-2-343-de-17-de-setembro-de-2026-73.txt",
+      "bytes": 5550
+    },
+    {
+      "id": "D05",
+      "titulo": "Medida Provisória nº 1.034 de 01/03/2021",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/medidas-provisorias/2021/mpv-1034-2021-03-01.md",
+      "url_final": "https://github.com/ctresb/leis/blob/ea0d91e6d324be2e3f53149980cb9048e55732da/federal/medidas-provisorias/2021/mpv-1034-2021-03-01.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:medida.provisoria:2021-03-01;1034",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "ea0d91e6d324be2e3f53149980cb9048e55732da",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-10-17T10:54:11-03:00",
+      "sha256": "9879caa402fddbec4f481d843be103d8fdc14a8e888b3f5726869e9d499cf07b",
+      "arquivo": "docs/D05_mpv-1034-2021-03-01.md",
+      "texto": "docs/D05_mpv-1034-2021-03-01.txt",
+      "bytes": 6983
+    }
+  ],
+  "buscas": [],
+  "slug": "verif-2026-10-17-irpj-csll-correcoes",
+  "pergunta": "Correções IRPJ/CSLL de 17/10: adicional trimestral, CSLL de bancos 2020-2026, 8% hospitalar na IN 2.343",
+  "criado": "2026-10-17T10:53:37-03:00"
+}

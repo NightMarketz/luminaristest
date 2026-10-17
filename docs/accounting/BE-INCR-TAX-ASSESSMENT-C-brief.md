@@ -295,6 +295,16 @@ próprio "executa".
 tratei como "direto" o escopo por unidade (item 20) e o filtro genérico por tributo (item 10), que o dono pode querer
 ver como fork; li o fluxo de emissão só nos pontos citados.
 
+## Estado legal verificado em 17/10/2026 (verificação legal IRPJ/CSLL)
+
+Fonte: `pesquisas-legais/verif-2026-10-17-irpj-csll/relatorio.md` (PR #754; as [Dnn] são dele). Correções desta frente
+estão em `pesquisas-legais/verif-2026-10-17-irpj-csll-correcoes/relatorio.md` ([Cnn] = Dnn desse dossiê).
+- **LC 224/2025:** vale como está. A LC 235/2026 art. 11 só alterou o art. 4º § 8º V (entidades sem fins lucrativos),
+  e o art. 1º dela afasta o art. 5º em 2026 [D20]. Nenhuma das 13 LC de 2026 toca os §§ 4º–5º nem o art. 7º [D01, D19, D20].
+- **IN RFB 1.700/2017:** a última alteração é a IN 2.343/2026, vigente desde 18/09/2026 [D18]; a multivigente do Sijut
+  tem o mesmo sha de 09/10 (`faa47fa1…`) [D15]. A IN 2.305/2025 teve a última alteração pela IN 2.307 [D14].
+- **ECF:** o leiaute 13 (AC 2026) **ainda não saiu**; a página do SPED lista o leiaute 12 como o mais recente [D21].
+
 ## Estado legal verificado em 17/10/2026 (ISS/NFS-e)
 
 `[Dnn]` = fontes do dossiê `pesquisas-legais/verif-2026-10-17-iss-nfse/relatorio.md` (PR #754), com link oficial e sha256 no `manifest.json`. Correções de código no PR #755.
