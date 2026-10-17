@@ -267,3 +267,15 @@ Valores do DAS-MEI por ocupação: inalterados (X14 PR-4); a falta de ocupaçõe
 | Tabela A teto R$ 81.000 | **Confirma com ressalva** — o caput fixa R$ 81.000 para o MEI em geral (não nomeia a Tabela A); a Tabela B é a exceção do § 1º-A. Início de atividade: R$ 6.750 × meses (§ 1º). |
 | Tabela B R$ 251.600 | **Confirma** (§ 1º-A I) e acrescenta R$ 20.966,67 × meses no início (II) e a regra do § 1º-B (qualquer ocupação fora da B ⇒ limite geral). |
 | (não citado pela pesquisa) | Benefício é redução do % efetivo, por ramo e por faixa (art. 32); legislação concessiva no documento (art. 27 § 1º); art. 8º-B LC 116; Res. 191/2026 não compilada. |
+
+## Estado legal verificado em 17/10/2026
+
+Verificação legal de 17/10/2026, `pesquisas-legais/verif-2026-10-17-simples-mei/relatorio.md` (dossiê com as fontes [Dnn], hash e data). Correções no PR #759.
+
+- **Res. CGSN 191/2026** lida [D17]: NFS-e nacional obrigatória para ME/EPP desde 01/11/2026 (art. 3º I); revoga a 189; não mexe no cálculo nem no Anexo XI (sha256 do id 81177 idêntico ao seed [D20]).
+- Piso de 2% (Res. 140 art. 31 p.ú.; art. 32 § 1º) e exceções 7.02, 7.05 e 16.01: conferem [D15]. Anexo XI (red. Res. 182/2025): o sha256 `cb3845804f3c…` é igual ao do seed `lp6-mei-ax-*` [D20].
+- **Res. CGSN 190/2026** (DOU 10/08/2026; efeitos em 01/01/2027, art. 9º) lida no Normas RFB [D16]: regula o que este documento tratava como "não regulamentado". Não toca o piso nem o Anexo XI; muda a retenção no início de atividade (art. 27 II), corrigida no PR #759.
+
+**Ambiguidades abertas (não decididas aqui):**
+
+- Nenhuma ambiguidade do dossiê é desta frente (A1–A4 estão no BE-INCR-SIMPLES-NACIONAL).

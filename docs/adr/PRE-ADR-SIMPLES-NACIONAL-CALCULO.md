@@ -521,7 +521,7 @@ Contador e dado do cliente. Vira pedido pela `luminaris-contador-liaison`; quem 
 6. **Contas** para a provisão do DAS e para o mapeamento na DRE. A CPP dentro do DAS é dedução da receita ou despesa?
 7. **Pacote pré-pago**: para o Simples, a receita bruta nasce na venda ou no consumo? (`pacoteFatoGerador`; contexto
    E-1/E-2 da D-2026-09-29.)
-8. **DEFIS**: quem entrega a de 2026? A declaração anual continua depois de 2027? (**I** pela nova redação do art. 25.)
+8. **DEFIS**: quem entrega a de 2026? A declaração anual continua depois de 2027? (**I** pela nova redação do art. 25.) **Atualizado em 17/10/2026:** a declaração anual acaba, porque o art. 72 é revogado (Res. CGSN 190 art. 8º XXI) e as informações vão ao PGDAS-D de jan–mar (art. 38-B) [D16]. Quem entrega a de 2026 segue aberto: é a ambiguidade A1.
 9. **Arredondamento** do PGDAS-D: casas decimais da alíquota efetiva e arredondamento por tributo. A Res. 140 e o
    manual foram buscados por "arredond" e não trazem a regra: só o DAS real responde.
 10. **ISS em SP**: SP adota valor fixo (§ 18)? Há retenção por tomador PJ nos itens 6.xx? **DIFAL** nas compras de outro
@@ -535,10 +535,10 @@ Contador e dado do cliente. Vira pedido pela `luminaris-contador-liaison`; quem 
 
 *2ª passada:* os seis insumos da 1ª versão entraram no corpus (§2.3-b). Sobram:
 
-- **Texto da Res. CGSN 191/2026** e das Res. 184–190 e 192. A compilação da Res. 140 no Normas vai só até a 183/2025,
-  e a consulta do Normas não renderiza fora do navegador. Fonte possível: o DOU.
+- ~~**Texto da Res. CGSN 191/2026** e das Res. 184–190 e 192. A compilação da Res. 140 no Normas vai só até a 183/2025,
+  e a consulta do Normas não renderiza fora do navegador. Fonte possível: o DOU.~~ **Resolvido em 17/10/2026** (`pesquisas-legais/verif-2026-10-17-simples-mei/relatorio.md`, visão multivigente pelo navegador embutido) [D15]–[D17]: lidas a 184–191 e a 193. Abertas: a 192 e o texto integral da 194.
 - **Regulamentação de 2027**: manual do PGDAS-D com IBS/CBS e ato do CGSN sobre a opção semestral. O manual baixado
-  (jun/2025) não trata disso.
+  (jun/2025) não trata disso. **Atualizado em 17/10/2026:** o ato existe, é a Res. CGSN 190/2026 [D16] (ver § "Estado legal verificado"). A opção semestral está na LC 123 art. 13 § 10 (red. LC 227) [D03]. Segue não conferido: o manual de 2027.
 - **Portaria CAT 28/20** (SP): tratamento do estoque que saiu da ST.
 
 ## 10. Achados fora de escopo (registrados, não planejados)
@@ -593,3 +593,23 @@ Contador e dado do cliente. Vira pedido pela `luminaris-contador-liaison`; quem 
 - **Sessões paralelas:** o ADR do X7 foi escrito ao mesmo tempo e terminou (PR #446). Ele não reivindica o Simples; o
   acoplamento que sobra é de modelo (F-SN-13) e de molde de provisão (F-SN-10 × F-X7-4). Se o dono ratificar os dois
   ADRs com escolhas diferentes nesses pontos, o BRIEF do segundo reabre.
+
+## Estado legal verificado em 17/10/2026
+
+Verificação legal de 17/10/2026, `pesquisas-legais/verif-2026-10-17-simples-mei/relatorio.md` (dossiê com as fontes [Dnn], hash e data). Correções no PR #759. Os dispositivos lidos nas passadas acima continuam como registro do que se leu na época; onde a Res. 190 muda a regra a partir de 2027, vale o que segue.
+
+- **Até 31/12/2026 o motor confere com a lei**: 312 tabelas dos Anexos I–V regeneradas do Planalto com 0 diferença [D12][D13]; limites, fator R de 28%, CPP do SIMEI, Anexo VII 2027–2033, salário mínimo 2026 [D21] e piso de 2% [D15].
+- **Res. CGSN 190/2026** (DOU 10/08/2026; efeitos em 01/01/2027, art. 9º) lida no Normas RFB [D16]: regula o que este documento tratava como "não regulamentado".
+  - Art. 22 §§ 2º e 4º (início de atividade, 2027 em diante): 1º e 2º mês na 1ª faixa; do 3º ao 13º, a média dos meses antecedentes ao mês anterior × 12; do 14º, a regra geral. Isso muda o item 3 da tabela de decisões para PA ≥ 2027.
+  - Art. 26 § 6º: r = 0,28 nos 2 primeiros meses. Art. 27 II: 2% no mês de início e no seguinte.
+  - Art. 8º IX–XII: fim do regime de caixa; art. 8º XXI + art. 38-B: fim da DEFIS; art. 8º XXVII + art. 101 IV/V + Anexo XIII: SIMEI.
+  - Art. 45-A (incl.): arredondamento do DAS a 2 casas.
+- **Res. CGSN 191/2026** lida [D17]: NFS-e nacional obrigatória para ME/EPP desde 01/11/2026 (art. 3º I); revoga a 189; não mexe no cálculo nem no Anexo XI (sha256 do id 81177 idêntico ao seed [D20]).
+- Res. 184–189 e 193: não mudam o cálculo ([D04]–[D09] para 185–189 e 193). **Abertas:** a 192 (não localizada) e o texto integral da 194 (ementa: prazos de opção de 2027).
+
+**Ambiguidades abertas (não decididas aqui):**
+
+- **A1 — DEFIS do ano-calendário 2026 (aberta).** O art. 72 é revogado em 01/01/2027 (Res. CGSN 190 art. 8º XXI), antes do prazo de 31/03/2027, e o art. 38-B manda prestar no PGDAS-D de jan–mar as informações do ano anterior [D16]. Pode ser a DEFIS de 2026 ou o PGDAS-D de jan–mar/2027; o prazo e o conteúdo são os mesmos. O seed mantém o espelho anual com prazo de 31/03/2027 (`sn7-obr-defis-simples`). Pergunta ao contador: "A declaração socioeconômica do AC 2026 será feita na DEFIS ou no PGDAS-D de jan–mar/2027 (art. 38-B)?"
+- **A2 — Anexo I, 6ª faixa, de 2029 em diante (aberta).** A LC 214 Anexo XVIII traz 19,00% [D12]; o Anexo I da Res. 190 traz 18,90% [D19]. O projeto segue a lei (hierarquia). Se o PGDAS-D cobrar 18,90%, o DAS oficial diverge do espelho; o efeito fica limitado a revenda com RBT12 acima de R$ 3,6 mi.
+- **A3 — MEI 2027–2028, CBS R$ 0,994 / IBS R$ 0,006 × art. 45-A (aberta).** O art. 45-A (incl. Res. 190) arredonda os valores do DAS a 2 casas, com mínimo de R$ 0,01 [D16]. O projeto guarda milésimos e arredonda só o total (F-TAC-7). O total é o mesmo nas duas leituras (R$ 7,00); as linhas por tributo seriam R$ 0,99 e R$ 0,01.
+- **A4 — teto do ISS na 6ª faixa, de 2029 em diante (aberta, inferida).** A lei manda o excesso "aos tributos federais e IBS"; a repartição da 6ª faixa não tem coluna de IBS (o IBS sai pela fórmula da 5ª, Res. 190 art. 21 IV). O código reparte só entre os federais.
