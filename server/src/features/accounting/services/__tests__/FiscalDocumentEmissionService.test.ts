@@ -581,6 +581,31 @@ describe('FiscalDocumentEmissionService — Simples Nacional (item 22)', () => {
     expect('pTotTribSN' in payload.infDPS.valores.trib.totTrib).toBe(true);
     expect(payload.infDPS.IBSCBS).toBeUndefined();
   });
+
+  // Verificação legal 17/10/2026 (pesquisas-legais/verif-2026-10-17-iss-nfse, DIVERGE 1) — Anexo I v1.01 [D12]:
+  // ME/EPP com ISS pelo SN (opSimpNac 3, regApTribSN 1) SEM retenção NÃO pode informar pAliq, com o município
+  // ATIVO (E0625) ou não (E0631); COM retenção é obrigatório (E0621/E0628). Regime normal: o issAliquotaBp
+  // preenchido é a declaração de município não conveniado (E0619) — vazio omite (E0617). O ramo com retenção não tem
+  // teste aqui: issRetidoTomadorPj=true ainda é recusado antes da montagem (F-DFE-14).
+  async function pAliqDe(perfil: Record<string, unknown>): Promise<string | undefined> {
+    const { service } = makeService({
+      fiscalProfile: baseFiscalProfileView({ pTotTribSNCent: 400, ...perfil }),
+      serviceProfiles: { 'srv-A': { cTribNac: '060101', cTribMun: null, cNBS: null, cIndOp: '030101', cLocPrestacao: null } },
+      ledgerPostings: [{ accountId: 'acc-3.1', debitCents: 0n, creditCents: 10000n }],
+    });
+    const result = await service.preview(SCOPE, SALE_ID, 'NFSE');
+    expect(result.ok).toBe(true);
+    return (result.payloads[0].infDPS.valores.trib.tribMun as { pAliq?: string }).pAliq;
+  }
+
+  it('E0625/E0631: Simples com ISS pelo SN e sem retenção — a DPS sai SEM pAliq mesmo com issAliquotaBp no perfil', async () => {
+    expect(await pAliqDe({ regimeTributario: 'SIMPLES', regApTribSN: 1, issAliquotaBp: 200, issRetidoTomadorPj: false })).toBeUndefined();
+  });
+
+  it('E0619 × E0617: regime normal envia o pAliq só quando o perfil o declara (município não conveniado)', async () => {
+    expect(await pAliqDe({ regimeTributario: 'PRESUMIDO', issAliquotaBp: 500 })).toBe('5.00');
+    expect(await pAliqDe({ regimeTributario: 'PRESUMIDO', issAliquotaBp: null })).toBeUndefined();
+  });
 });
 
 describe('FiscalDocumentEmissionService — Id da DPS [102] (GAP-MAP: tpInsc do Id)', () => {
