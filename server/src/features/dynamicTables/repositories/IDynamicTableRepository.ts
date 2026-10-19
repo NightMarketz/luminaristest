@@ -1,3 +1,4 @@
+import type { Prisma } from 'generated/prisma';
 import { IDynamicTable, IDynamicTableData, FieldEquals } from '../models/DynamicTable.model';
 import { CreateDynamicTableDtoType, UpdateDynamicTableDtoType, UpdateDynamicTableSchemaDtoType } from '../dtos/DynamicTable.dto';
 import type { VersionWriteContext } from './versionContext';
@@ -5,10 +6,27 @@ import type { VersionWriteContext } from './versionContext';
 export interface IDynamicTableRepository {
   /**
    * BE-INCR-DT-VERSION-LEDGER (F-DTV-1 a): o mesmo repo (mesmo client/tx), assinando as versões com `ctx`.
-   * Opcional só para os dublês de teste; os dois repositórios reais implementam. Use `withVersionContext()`
+   * Opcional só para os dublês de teste; o repositório real implementa. Use `withVersionContext()`
    * de `versionLedger.ts`, que tolera a ausência.
    */
   withVersionContext?(ctx: VersionWriteContext): IDynamicTableRepository;
+
+  // ── Transação (seam único do motor — Contrato §2, R4/R9) ─────────────────────
+  /**
+   * O mesmo repositório ligado ao client de transação interativa `tx` (mesmo contexto de versão).
+   * É assim que o service compõe escritas atômicas com uma tx que veio de fora (`options.tx`) sem
+   * instanciar repositório: quem conhece o Prisma é só esta camada.
+   */
+  withTransaction(tx: Prisma.TransactionClient): IDynamicTableRepository;
+  /**
+   * Abre uma transação interativa e entrega a `fn` um repositório ligado a ela mais o próprio `tx`
+   * (para a única escrita fora do motor permitida dentro dela — o marco T0 do `installPresetAsSystem`).
+   * Reentrante: chamado num repositório já ligado a uma tx, reusa essa tx (Prisma/SQLite não aninham).
+   */
+  runInTransaction<T>(
+    fn: (repo: IDynamicTableRepository, tx: Prisma.TransactionClient) => Promise<T>,
+    options?: { timeout?: number; maxWait?: number },
+  ): Promise<T>;
 
   // Table operations
   createTable(userId: string, data: CreateDynamicTableDtoType): Promise<IDynamicTable>;
@@ -18,7 +36,13 @@ export interface IDynamicTableRepository {
   findTablesByUserId(userId: string): Promise<IDynamicTable[]>;
   updateTable(tableId: string, data: UpdateDynamicTableDtoType): Promise<IDynamicTable>;
   updateTableSchema(tableId: string, data: UpdateDynamicTableSchemaDtoType): Promise<IDynamicTable>;
+  /**
+   * Hard delete POR DESENHO (não é dívida de soft-delete): `DynamicTable` não tem `deletedAt`; apagar a
+   * definição é purga, e leva linhas e versões por cascade de FK (F-DTV-4 a — LGPD art. 16 caput / art. 18 VI).
+   * Só os caminhos de sistema chamam (`deleteTableAsSystem`, reset da conta); a policy nega ao usuário.
+   */
   deleteTable(tableId: string): Promise<void>;
+  /** Purga de conta/reset (hard delete por desenho — ver `deleteTable`). */
   deleteTablesByUserId(userId: string): Promise<void>;
 
   // Data operations
@@ -30,9 +54,11 @@ export interface IDynamicTableRepository {
   findAllDataByTableId(tableId: string): Promise<IDynamicTableData[]>;
   findDataBatchStreamByTableId(tableId: string, batchSize?: number): AsyncGenerator<IDynamicTableData[]>;
   updateData(dataId: string, data: Record<string, unknown>): Promise<IDynamicTableData>;
+  /** Soft delete (`deletedAt`) + versão `DELETE` no ledger. */
   deleteData(dataId: string): Promise<void>;
   /**
-   * Deletes all data entries for all dynamic tables that belong to the given user.
+   * Purga de conta/reset: apaga de fato (hard) todas as linhas das tabelas do usuário — inclusive as já
+   * soft-deletadas. Hard delete por desenho (ver `deleteTable`); nunca é caminho de usuário.
    */
   deleteAllDataByUserId(userId: string): Promise<void>;
 
@@ -93,15 +119,16 @@ export interface IDynamicTableRepository {
   countTablesByCategory(userId: string): Promise<{ category: string; count: number }[]>;
 
   /**
-   * Lists tables whose schema contains a relation to the provided tableId.
-   * Used to prevent deleting tables that are referenced by others.
+   * Lists tables of `userId` whose schema contains a relation to the provided tableId.
+   * Used to prevent deleting tables that are referenced by others. Always tenant-scoped.
    */
   findTablesReferencingTableId(targetTableId: string, userId: string): Promise<IDynamicTable[]>;
 
   /**
-   * Returns rows in `tableId` where the JSON field `fieldName` references `targetId`
-   * (exact scalar match OR element inside a JSON array).
-   * Used to scope the delete-constraint scan without loading entire tables.
+   * Returns ALL rows in `tableId` where the JSON field `fieldName` references `targetId`
+   * (exact scalar match OR element inside a JSON array). Unbounded (no LIMIT): it drives the
+   * delete-constraint scan, where truncation would under-count RESTRICT_IF_AGGREGATE or orphan
+   * CASCADE children.
    */
   findRowsReferencingId(tableId: string, fieldName: string, targetId: string): Promise<IDynamicTableData[]>;
 

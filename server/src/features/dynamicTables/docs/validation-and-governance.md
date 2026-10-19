@@ -39,7 +39,10 @@
 | 10 | `runRules('afterUpdate')` | plugins. |
 
 ### Delete (`deleteTableData`)
-`runRules('beforeDelete')` → **deleteConstraints** → soft delete → `runRules('afterDelete')`.
+Inside ONE repository transaction, with the tx-bound repository: **immutableAfter scope `'all'`** (delete
+guard) + **deleteConstraints** → `runRules('beforeDelete')` → soft delete (+ CASCADE children) →
+`runRules('afterDelete')`. Reading the rules in the same transaction closes the read-outside/write-inside
+window (GAP-MAP 8 TOCTOU, fixed 2026-10-19).
 
 > **`isSystem` bypass.** System writes (the `*AsSystem` call paths, or plugins writing via
 > `ctx.repository.*`) **skip** Guard 1, Guard 2, Guard 3 and `enforceNoOverlap`. A client-supplied
@@ -62,13 +65,17 @@
 ## 3. `validateAdvancedRules` — 5 blocks
 
 Runs on create (over `validatedData`) and update (over `mergedData`, so it sees the full record).
-Receives `dataIdToExclude` on update so it does not conflict with itself.
+Receives `dataIdToExclude` on update so it does not conflict with itself. It runs **twice**: as preflight
+(committed-state repo, friendly early failure) and again **inside the write transaction** with the tx-bound
+repository, under the per-table write lock when the schema declares `unique`/`compositeUnique` (GAP-MAP 7,
+2026-09-23) — the in-tx run is the authoritative gate; the lock is in-process (one Node process per SQLite
+file is the declared ceiling), not a database constraint.
 
 | Block | Rule | Implementation |
 |---|---|---|
 | 1 | **unique** (field) | `repository.countByFieldValue(tableId, field, value, excludeId)` — indexed query. |
 | 2 | **relation** (target existence) | `repository.existsByIdInTable(id, targetTable)`. |
-| 3 | **compositeUnique** | scans the table and compares the field combination (debt: full scan; future improvement analogous to noOverlap). |
+| 3 | **compositeUnique** | `repository.countByCompositeFieldValues(tableId, [{name,value}…], excludeId)` — indexed `json_extract` count (text compare; JSON booleans compared as 1/0). Former full scan removed 2026-10-19. |
 | 4 | **requiredIf** | for each field with `requiredIf`, evaluates the condition (`eq`/`neq`/`in`) over the record; if met and the field is empty → error. |
 | 5 | **compare** | for each rule, reads `left`/`right`; **skips if either is missing**; types by `field.type` (date→timestamp, number→Number, otherwise→string); compares per `op`. |
 
@@ -108,8 +115,9 @@ Runs on create and update; **`isSystem` bypass**. For each `noOverlap` rule:
 > `findRowsReferencingId` (used in the delete scan) is **unbounded** — it must return every referencing
 > row so `RESTRICT_IF_AGGREGATE` sums and `CASCADE` are correct (a former `LIMIT 100` was removed, since
 > truncation could under-count an aggregate → wrongly allow a delete, or leave referencers beyond 100 as
-> orphans). The scan runs inside the delete `$transaction`. `countOverlaps`/`findRowsByFieldValue` are
-> likewise unbounded. See [rules-engine.md](./rules-engine.md).
+> orphans). The scan runs inside the delete transaction, with the tx-bound repository — the SAME
+> `DynamicTableRepository` code (a former transactional copy still had the `LIMIT 100`; removed 2026-10-19).
+> `countOverlaps`/`findRowsByFieldValue` are likewise unbounded. See [rules-engine.md](./rules-engine.md).
 
 ---
 

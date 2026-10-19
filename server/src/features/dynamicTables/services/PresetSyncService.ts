@@ -1,8 +1,9 @@
 import type { UserContext } from '../../../lib/authUtils';
-import { NotFoundError, ValidationError } from '../../../lib/errors';
+import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import type { DynamicTableService } from './DynamicTableService';
 import type { IDynamicTableRepository } from '../repositories/IDynamicTableRepository';
+import type { IDynamicTablePolicy } from '../policies/IDynamicTablePolicy';
 import type { ISchemaField, ITableSchema } from '../models/DynamicTable.model';
 import { CoreSystemPreset } from '../presets/systems/CoreSystemPreset';
 import { tablePresetSuites } from '../presets';
@@ -42,7 +43,15 @@ export class PresetSyncService {
   constructor(
     private readonly dynamicTableService: DynamicTableService,
     private readonly repository: IDynamicTableRepository,
+    private readonly policy: IDynamicTablePolicy,
   ) {}
+
+  /** Policy-first (Contrato §2): nada é lido antes desta decisão. */
+  private assertCanAdminister(user: UserContext): void {
+    if (!this.policy.canAdministerPresets(user)) {
+      throw new ForbiddenError('Apenas administradores podem sincronizar ou instalar tabelas de preset.');
+    }
+  }
 
   /**
    * Resolve the preset module schema for a given `internalName` across the Core system
@@ -124,6 +133,7 @@ export class PresetSyncService {
    *  6. Idempotent: an empty delta is a no-op (does not call updateTableSchemaAsSystem).
    */
   async syncInstalledTableFromPreset(user: UserContext, internalName: string): Promise<PresetSyncResult> {
+    this.assertCanAdminister(user);
     // 1) Resolve the installed table.
     const installedTable = await this.repository.findTableByInternalName(user.userId, internalName);
     if (!installedTable) {
@@ -257,6 +267,7 @@ export class PresetSyncService {
     user: UserContext,
     internalName: string,
   ): Promise<{ tableId: string; created: boolean }> {
+    this.assertCanAdminister(user);
     // 1) Idempotent: already installed → no-op.
     const existing = await this.repository.findTableByInternalName(user.userId, internalName);
     if (existing) {

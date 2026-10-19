@@ -88,3 +88,11 @@ describe('DynamicTablePolicy.canManageData (owner-only, system tables locked)', 
     expect(policy.canManageData(owner, standalone)).toBe(true);
   });
 });
+
+describe('DynamicTablePolicy.canAdministerPresets (sync-preset / install-table / modules/install)', () => {
+  it('ADMIN can administer presets', () => expect(policy.canAdministerPresets(admin)).toBe(true));
+  it('a USER cannot — even the owner of the tenant (the controllers add no rule; this is the decision)', () => {
+    expect(policy.canAdministerPresets(owner)).toBe(false);
+    expect(policy.canAdministerPresets(stranger)).toBe(false);
+  });
+});

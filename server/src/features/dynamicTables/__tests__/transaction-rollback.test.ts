@@ -5,11 +5,9 @@
  * rolls back the main record write when a rule plugin throws during afterCreate or
  * afterUpdate.
  *
- * Strategy: mock the prisma module and DynamicTableService's internal dependencies
- * so we can simulate a plugin failure after the record was "created" but before the
- * transaction commits. Because the actual SQLite database is not available in the
- * test environment, we construct a minimal fake $transaction that:
- *   1. Runs the callback with a fake tx client.
+ * Strategy: the transaction is a seam of the REPOSITORY (`runInTransaction` / `withTransaction`,
+ * Contrato §2 R4/R9 — the service never touches Prisma). The fake repository's `runInTransaction`:
+ *   1. Runs the callback with a fake tx-bound repository (+ a fake tx client).
  *   2. If the callback throws, simulates rollback by discarding any writes made to
  *      the fake in-memory store.
  *   3. If the callback succeeds, commits (retains writes in the store).
@@ -26,12 +24,12 @@ import type { IDynamicTable, IDynamicTableData } from '../models/DynamicTable.mo
 import type { RulePlugin, RuleContext } from '../rules/RuleTypes';
 import { globalRuleRegistry } from '../rules/RuleRegistry';
 
-// ── Prisma mock ───────────────────────────────────────────────────────────────
+// ── Fake transaction ──────────────────────────────────────────────────────────
 
 /**
- * Minimal fake implementation of prisma.$transaction.
- * Simulates rollback: if the callback throws, any writes performed via the tx
- * client (tracked in `txWrites`) are discarded; the throw propagates to caller.
+ * Minimal fake of the repository transaction seam.
+ * Simulates rollback: if the callback throws, any writes performed via the tx-bound
+ * repository (tracked in `txWrites`) are discarded; the throw propagates to caller.
  */
 let txWrites: Array<{ op: string; args: any }> = [];
 let persistedWrites: Array<{ op: string; args: any }> = [];
@@ -60,53 +58,46 @@ const fakeTxClient = {
   $queryRaw: jest.fn(async () => [{ count: BigInt(0) }]),
 };
 
-jest.mock('../../../lib/prisma', () => ({
-  __esModule: true,
-  default: {
-    $transaction: jest.fn(async (fn: (tx: any) => Promise<any>) => {
-      // Reset in-flight writes for this transaction attempt
-      txWrites = [];
-      try {
-        const result = await fn(fakeTxClient);
-        // Commit: move tx writes to persisted store
-        persistedWrites.push(...txWrites);
-        txWrites = [];
-        return result;
-      } catch (err) {
-        // Rollback: discard tx writes
-        txWrites = [];
-        throw err;
-      }
-    }),
-  },
-}));
+/** The tx-bound repository the fake `runInTransaction`/`withTransaction` hand to the service. */
+const fakeTxRepo = {
+  // Wrap to match IDynamicTableRepository signature: createData(tableId, data)
+  createData: jest.fn(async (tableId: string, data: Record<string, any>) =>
+    fakeTxClient.dynamicTableData.create({ data: { dynamicTableId: tableId, data } })
+  ),
+  // Wrap to match IDynamicTableRepository signature: updateData(dataId, data)
+  updateData: jest.fn(async (dataId: string, data: Record<string, any>) =>
+    fakeTxClient.dynamicTableData.update({ where: { id: dataId }, data: { data } })
+  ),
+  findDataById: fakeTxClient.dynamicTableData.findFirst,
+  findDataByTableId: jest.fn(async () => ({ data: [], total: 0 })),
+  findDataByIds: fakeTxClient.dynamicTableData.findMany,
+  findRowsByFieldValue: jest.fn(async () => []),
+  existsByIdInTable: jest.fn(async () => true),
+  countByFieldValue: jest.fn(async () => 0),
+  countByCompositeFieldValues: jest.fn(async () => 0),
+  countOverlaps: jest.fn(async () => 0),
+  findTablesByUserId: jest.fn(async () => []),
+  findTableById: fakeTxClient.dynamicTable.findUnique,
+  findTablesReferencingTableId: jest.fn(async () => []),
+  findRowsReferencingId: jest.fn(async () => []),
+  findTableByDataId: jest.fn(async () => null),
+  deleteData: jest.fn(async () => {}),
+};
 
-jest.mock('../repositories/TransactionalDynamicTableRepository', () => {
-  return {
-    TransactionalDynamicTableRepository: jest.fn().mockImplementation(() => ({
-      // Wrap to match IDynamicTableRepository signature: createData(tableId, data)
-      createData: jest.fn(async (tableId: string, data: Record<string, any>) =>
-        fakeTxClient.dynamicTableData.create({ data: { dynamicTableId: tableId, data } })
-      ),
-      // Wrap to match IDynamicTableRepository signature: updateData(dataId, data)
-      updateData: jest.fn(async (dataId: string, data: Record<string, any>) =>
-        fakeTxClient.dynamicTableData.update({ where: { id: dataId }, data: { data } })
-      ),
-      findDataById: fakeTxClient.dynamicTableData.findFirst,
-      findDataByTableId: jest.fn(async () => ({ data: [], total: 0 })),
-      findDataByIds: fakeTxClient.dynamicTableData.findMany,
-      findRowsByFieldValue: jest.fn(async () => []),
-      existsByIdInTable: jest.fn(async () => true),
-      countByFieldValue: jest.fn(async () => 0),
-      countOverlaps: jest.fn(async () => 0),
-      findTablesByUserId: jest.fn(async () => []),
-      findTableById: fakeTxClient.dynamicTable.findUnique,
-      findTablesReferencingTableId: jest.fn(async () => []),
-      findRowsReferencingId: jest.fn(async () => []),
-      findTableByDataId: jest.fn(async () => null),
-      deleteData: jest.fn(async () => {}),
-    })),
-  };
+const fakeRunInTransaction = jest.fn(async (fn: (repo: any, tx: any) => Promise<any>) => {
+  // Reset in-flight writes for this transaction attempt
+  txWrites = [];
+  try {
+    const result = await fn(fakeTxRepo, fakeTxClient);
+    // Commit: move tx writes to persisted store
+    persistedWrites.push(...txWrites);
+    txWrites = [];
+    return result;
+  } catch (err) {
+    // Rollback: discard tx writes
+    txWrites = [];
+    throw err;
+  }
 });
 
 // ── Minimal fakes ─────────────────────────────────────────────────────────────
@@ -136,6 +127,8 @@ const FAKE_USER: UserContext = {
 
 function buildMockRepository(): jest.Mocked<IDynamicTableRepository> {
   return {
+    runInTransaction: fakeRunInTransaction,
+    withTransaction: jest.fn(() => fakeTxRepo),
     createTable: jest.fn(),
     findTableById: jest.fn(async () => FAKE_TABLE),
     findTableByName: jest.fn(async () => null),
@@ -156,6 +149,7 @@ function buildMockRepository(): jest.Mocked<IDynamicTableRepository> {
     countTablesByCategory: jest.fn(async () => []),
     findTableByDataId: jest.fn(async () => FAKE_TABLE),
     countByFieldValue: jest.fn(async () => 0),
+    countByCompositeFieldValues: jest.fn(async () => 0),
     countOverlaps: jest.fn(async () => 0),
     findRowsByFieldValue: jest.fn(async () => []),
     existsByIdInTable: jest.fn(async () => true),
@@ -210,7 +204,7 @@ describe('DynamicTableService — transaction rollback', () => {
 
     const result = await service.createTableData(FAKE_USER, 'table-1', { data: { title: 'hello' } });
 
-    // The TransactionalDynamicTableRepository.createData was called (via fake tx)
+    // The tx-bound repository's createData was called (via fake tx)
     expect(fakeTxClient.dynamicTableData.create).toHaveBeenCalledTimes(1);
     // afterCreate plugin was invoked
     expect(successPlugin.afterCreate).toHaveBeenCalledTimes(1);

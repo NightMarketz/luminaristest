@@ -1,24 +1,28 @@
 import prisma from '../../../lib/prisma';
-import type { DynamicTable, DynamicTableData } from 'generated/prisma';
+import type { DynamicTable, DynamicTableData, PrismaClient } from 'generated/prisma';
+import { Prisma } from 'generated/prisma';
 import { IDynamicTable, IDynamicTableData, ITableSchema, ISchemaField, FieldEquals } from '../models/DynamicTable.model';
 import { fieldEqualsWhere } from './fieldEqualsSql';
 import { CreateDynamicTableDtoType, UpdateDynamicTableDtoType, UpdateDynamicTableSchemaDtoType } from '../dtos/DynamicTable.dto';
-import { Prisma } from 'generated/prisma';
 import { IDynamicTableRepository } from './IDynamicTableRepository';
-import { Prisma as PrismaNs } from 'generated/prisma';
 import {
   SYSTEM_VERSION_CONTEXT, createTableVersioned, updateSchemaVersioned, createDataVersioned, updateDataVersioned,
   softDeleteDataVersioned, type VersionWriteContext,
 } from './versionLedger';
 
+/** O client raiz (abre transações) ou um client de transação interativa (já dentro de uma). */
+type DbClient = PrismaClient | Prisma.TransactionClient;
+
+/**
+ * Único repositório do motor DynamicTable. O MESMO código roda fora e dentro de uma transação: o
+ * construtor aceita o client raiz (padrão, singleton) ou um client de tx interativa, e `withTransaction`
+ * / `runInTransaction` são o seam que o service usa — ele nunca instancia repositório nem vê o Prisma.
+ * (A antiga classe `TransactionalDynamicTableRepository` era uma cópia desta com dois desvios reais —
+ * `LIMIT 100` no scan de referências e `findTablesReferencingTableId` sem tenant — e foi removida.)
+ */
 export class DynamicTableRepository implements IDynamicTableRepository {
-  /**
-   * Accepts a Prisma client or an interactive-transaction client. Defaults to the
-   * singleton, so `new DynamicTableRepository()` keeps working. Passing a `tx` client
-   * makes every method run inside that transaction (used by the service for atomicity).
-   */
   constructor(
-    private readonly client: Prisma.TransactionClient = prisma,
+    private readonly client: DbClient = prisma,
     /** BE-INCR-DT-VERSION-LEDGER (F-DTV-1 a): quem assina as versões gravadas por este repo. */
     private readonly versionCtx: VersionWriteContext = SYSTEM_VERSION_CONTEXT,
   ) {}
@@ -27,13 +31,32 @@ export class DynamicTableRepository implements IDynamicTableRepository {
     return new DynamicTableRepository(this.client, ctx);
   }
 
+  withTransaction(tx: Prisma.TransactionClient): DynamicTableRepository {
+    return new DynamicTableRepository(tx, this.versionCtx);
+  }
+
+  /** O client raiz, ou `null` quando este repo já está ligado a uma transação. */
+  private rootClient(): PrismaClient | null {
+    return '$transaction' in this.client ? this.client : null;
+  }
+
+  async runInTransaction<T>(
+    fn: (repo: IDynamicTableRepository, tx: Prisma.TransactionClient) => Promise<T>,
+    options?: { timeout?: number; maxWait?: number },
+  ): Promise<T> {
+    const root = this.rootClient();
+    // Reentrância: já dentro de uma tx — reusa (Prisma/SQLite não aninham transações interativas).
+    if (!root) return fn(this, this.client as Prisma.TransactionClient);
+    return root.$transaction(tx => fn(this.withTransaction(tx), tx), options);
+  }
+
   /**
    * D3: escrita + versão na mesma tx. Com o client raiz abre uma `$transaction`; com um client de tx
    * (sem `$transaction`) roda nele mesmo.
    */
   private inTx<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
-    const root = this.client as unknown as { $transaction?: (cb: (tx: Prisma.TransactionClient) => Promise<T>) => Promise<T> };
-    return typeof root.$transaction === 'function' ? root.$transaction(fn) : fn(this.client);
+    const root = this.rootClient();
+    return root ? root.$transaction(fn) : fn(this.client as Prisma.TransactionClient);
   }
 
   private toDomainTable(row: DynamicTable): IDynamicTable {
@@ -49,8 +72,7 @@ export class DynamicTableRepository implements IDynamicTableRepository {
       name: data.name,
       internalName: data.internalName,
       category: data.category,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prisma InputJsonValue: JSON fields require any cast at persistence boundary
-      schema: data.schema as any, // Prisma expects JsonValue
+      schema: data.schema as unknown as Prisma.InputJsonValue,
     }, this.versionCtx));
     return this.toDomainTable(row);
   }
@@ -100,10 +122,12 @@ export class DynamicTableRepository implements IDynamicTableRepository {
     return this.toDomainTable(row);
   }
 
+  /** Hard delete por desenho — ver o contrato em `IDynamicTableRepository.deleteTable`. */
   async deleteTable(tableId: string): Promise<void> {
     await this.client.dynamicTable.delete({ where: { id: tableId } });
   }
 
+  /** Hard delete por desenho (purga de conta/reset) — ver `IDynamicTableRepository.deleteTable`. */
   async deleteTablesByUserId(userId: string): Promise<void> {
     await this.client.dynamicTable.deleteMany({ where: { userId } });
   }
@@ -149,21 +173,6 @@ export class DynamicTableRepository implements IDynamicTableRepository {
     });
   }
 
-  async findDataByTableIdPaged(tableId: string, limit: number, offset: number): Promise<IDynamicTableData[]> {
-    return this.client.dynamicTableData.findMany({
-      where: { dynamicTableId: tableId, deletedAt: null },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-      skip: offset,
-    });
-  }
-
-  async countDataByTableId(tableId: string): Promise<number> {
-    return this.client.dynamicTableData.count({
-      where: { dynamicTableId: tableId, deletedAt: null },
-    });
-  }
-
   async *findDataBatchStreamByTableId(tableId: string, batchSize: number = 1000): AsyncGenerator<IDynamicTableData[]> {
     let lastCursorId: string | undefined = undefined;
 
@@ -192,8 +201,8 @@ export class DynamicTableRepository implements IDynamicTableRepository {
     await this.inTx(tx => softDeleteDataVersioned(tx, dataId, this.versionCtx));
   }
 
+  /** Hard delete por desenho (purga de conta/reset) — ver `IDynamicTableRepository.deleteAllDataByUserId`. */
   async deleteAllDataByUserId(userId: string): Promise<void> {
-    // Delete all data entries for tables owned by the user
     await this.client.dynamicTableData.deleteMany({
       where: {
         dynamicTable: {
@@ -214,7 +223,6 @@ export class DynamicTableRepository implements IDynamicTableRepository {
       },
     });
 
-    // O tipo do item retornado pelo groupBy do Prisma é inferido aqui
     return result.map((item: { category: string; _count: { category: number } }) => ({
       category: item.category,
       count: item._count.category,
@@ -262,17 +270,21 @@ export class DynamicTableRepository implements IDynamicTableRepository {
    * Counts rows where ALL provided fields match their values (composite uniqueness).
    * Indexed equivalent of `findDataByTableId(...).filter(...)` filtering in memory.
    * Field names come from the schema (trusted); values are bound parameters.
-   * Compares as TEXT to match the prior `String(a) === String(b)` semantics.
+   * Compares as TEXT to match the prior `String(a) === String(b)` semantics; JSON booleans are
+   * stored by SQLite's json_extract as 1/0, so they are compared as integers.
    */
-  async countByCompositeFieldValues(tableId: string, fields: Array<{ name: string; value: any }>, excludeId?: string): Promise<number> {
+  async countByCompositeFieldValues(tableId: string, fields: Array<{ name: string; value: unknown }>, excludeId?: string): Promise<number> {
     const whereConditions: Prisma.Sql[] = [
       Prisma.sql`"dynamicTableId" = ${tableId}`,
       Prisma.sql`"deletedAt" IS NULL`,
     ];
 
     for (const f of fields) {
+      const path = `$.${f.name}`;
       whereConditions.push(
-        Prisma.sql`CAST(json_extract(data, ${`$.${f.name}`}) AS TEXT) = ${String(f.value)}`,
+        typeof f.value === 'boolean'
+          ? Prisma.sql`json_extract(data, ${path}) = ${f.value ? 1 : 0}`
+          : Prisma.sql`CAST(json_extract(data, ${path}) AS TEXT) = ${String(f.value)}`,
       );
     }
 
@@ -332,7 +344,7 @@ export class DynamicTableRepository implements IDynamicTableRepository {
   /**
    * Returns ALL non-deleted rows of a table whose JSON `fieldName` equals `value`.
    * Indexed equivalent of `findDataByTableId(...).filter(r => r.data[field] === value)`,
-   * without loading the whole table. Unlike `findRowsReferencingId`, it has NO LIMIT â€”
+   * without loading the whole table. Unlike `findRowsReferencingId`, it has NO LIMIT —
    * safe for business collections (sale items, commissions) where truncation would
    * corrupt aggregates. Scalar match only. Preserves `ORDER BY createdAt DESC` for parity.
    */
@@ -411,8 +423,6 @@ export class DynamicTableRepository implements IDynamicTableRepository {
     return row.deletedAt ? 'deleted' : 'live';
   }
 
-  // removed duplicate implementation
-
   async findTablesReferencingTableId(targetTableId: string, userId: string): Promise<IDynamicTable[]> {
     // Busca as tabelas do usuário e filtra por schemas que contenham relação apontando para targetTableId
     const rows = await this.client.dynamicTable.findMany({ where: { userId } });
@@ -435,10 +445,10 @@ export class DynamicTableRepository implements IDynamicTableRepository {
   ): Promise<IDynamicTableData[]> {
     // Uses json_extract (SQLite) to find rows where the JSON field equals targetId
     // OR where the field is a JSON array containing targetId.
-    // NO LIMIT: this drives the delete-constraint scan in DynamicTableService._deleteDataWithin.
+    // NO LIMIT: this drives the delete-constraint scan in DynamicTableService.checkDeleteRules.
     // Truncating would corrupt RESTRICT_IF_AGGREGATE sums (partial total → wrongly allows the
     // delete) and CASCADE (referencing rows beyond the cap left as orphans). The result set is
-    // bounded by real referencing data and the scan already runs inside the delete $transaction.
+    // bounded by real referencing data and the scan already runs inside the delete transaction.
     const jsonScalarPath = `$.${fieldName}`;
     const likePattern = `%"${targetId}"%`;
 
@@ -455,36 +465,5 @@ export class DynamicTableRepository implements IDynamicTableRepository {
       `
     );
     return rows;
-  }
-  async getDataByTableId(tableId: string, userId: string): Promise<Record<string, unknown>[]> {
-    // Primeiro, verifique se a tabela pertence ao usuário para garantir a permissão.
-    const table = await this.client.dynamicTable.findFirst({
-      where: {
-        id: tableId,
-        userId: userId, // Garante que apenas o proprietário possa acessar.
-      },
-    });
-
-    // Se a tabela não for encontrada ou não pertencer ao usuário, retorne um array vazio.
-    if (!table) {
-      return [];
-    }
-
-    // Se a permissão for verificada, busque todos os dados da tabela.
-    const dataEntries = await this.client.dynamicTableData.findMany({
-      where: {
-        dynamicTableId: tableId,
-        deletedAt: null,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-
-    // Mapeia para incluir o ID do registro junto com os dados.
-    return dataEntries.map(entry => ({
-      id: entry.id,
-      ...(entry.data as object), // Espalha o conteúdo do JSON
-    }));
   }
 }

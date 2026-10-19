@@ -2,70 +2,83 @@ import { IDynamicTable, ITableSchema } from '../models/DynamicTable.model';
 import { IDynamicTableRepository } from '../repositories/IDynamicTableRepository';
 import { ValidationError } from '../../../lib/errors';
 
+type Row = Record<string, unknown>;
+
 /**
  * Declarative governance engine for dynamic tables.
  *
- * Holds the schema-driven rule enforcement extracted verbatim from DynamicTableService
- * (Phase C decomposition): the three update guards (readOnly / immutableAfter / lifecycle),
- * the advanced rules (unique / relation / compositeUnique / requiredIf / compare) and the
- * anti-overlap check. The guards are pure; the advanced/overlap checks take a (tx-bound)
- * repository explicitly. Behavior is unchanged.
+ * Holds the schema-driven rule enforcement: the three update guards (readOnly / immutableAfter /
+ * lifecycle), the delete-side immutability guard, the advanced rules (unique / relation /
+ * compositeUnique / requiredIf / compare) and the anti-overlap check. The guards are pure; the
+ * advanced/overlap checks take a (tx-bound) repository explicitly. `DynamicTableService` delegates
+ * here — this is the single implementation (the service keeps no copy).
  */
 export class GovernanceEngine {
   /** Guard 1: reject payloads that try to modify a readOnly field directly. */
-  assertReadOnly(schema: ITableSchema, incomingData: Record<string, any>): void {
+  assertReadOnly(schema: ITableSchema, incomingData: Row): void {
     const readOnlyFields = schema.fields.filter(f => f.readOnly).map(f => f.name);
-    const violations = readOnlyFields.filter(name => (incomingData as any)?.[name] !== undefined);
+    const violations = readOnlyFields.filter(name => incomingData?.[name] !== undefined);
     if (violations.length > 0) {
       throw new ValidationError(`Field(s) [${violations.join(', ')}] are read-only and cannot be modified directly.`);
     }
   }
 
+  private immutableConditionMet(rule: NonNullable<ITableSchema['immutableAfter']>[number], currentData: Row): boolean {
+    const currentFieldValue = currentData[rule.condition.field];
+    return rule.condition.op === 'eq'
+      ? currentFieldValue === rule.condition.value
+      : Array.isArray(rule.condition.value) && rule.condition.value.includes(String(currentFieldValue));
+  }
+
   /** Guard 2: once an immutability condition is met, block changes (whole record or named fields). */
-  assertImmutableAfter(
-    schema: ITableSchema,
-    currentData: Record<string, unknown>,
-    incomingData: Record<string, any>,
-  ): void {
+  assertImmutableAfter(schema: ITableSchema, currentData: Row, incomingData: Row): void {
     const immutableRules = schema.immutableAfter ?? [];
     if (immutableRules.length === 0) return;
     for (const rule of immutableRules) {
+      if (!this.immutableConditionMet(rule, currentData)) continue;
       const currentFieldValue = currentData[rule.condition.field];
-      const conditionMet = rule.condition.op === 'eq'
-        ? currentFieldValue === rule.condition.value
-        : Array.isArray(rule.condition.value) && rule.condition.value.includes(String(currentFieldValue));
-
-      if (conditionMet) {
-        if (rule.scope === 'all') {
-          const changedFields = Object.keys(incomingData || {}).filter(
-            key => JSON.stringify(currentData[key]) !== JSON.stringify((incomingData as any)[key])
+      if (rule.scope === 'all') {
+        const changedFields = Object.keys(incomingData || {}).filter(
+          key => JSON.stringify(currentData[key]) !== JSON.stringify(incomingData[key])
+        );
+        if (changedFields.length > 0) {
+          throw new ValidationError(
+            rule.errorMessage ?? `This record cannot be edited in its current state (${rule.condition.field}: ${currentFieldValue}).`
           );
-          if (changedFields.length > 0) {
-            throw new ValidationError(
-              rule.errorMessage ?? `This record cannot be edited in its current state (${rule.condition.field}: ${currentFieldValue}).`
-            );
-          }
-        } else {
-          const blockedAndChanged = (rule.scope as string[]).filter(
-            fieldName => (incomingData as any)?.[fieldName] !== undefined
-              && JSON.stringify(currentData[fieldName]) !== JSON.stringify((incomingData as any)[fieldName])
+        }
+      } else {
+        const blockedAndChanged = rule.scope.filter(
+          fieldName => incomingData?.[fieldName] !== undefined
+            && JSON.stringify(currentData[fieldName]) !== JSON.stringify(incomingData[fieldName])
+        );
+        if (blockedAndChanged.length > 0) {
+          throw new ValidationError(
+            rule.errorMessage ?? `Fields [${blockedAndChanged.join(', ')}] cannot be changed in this state.`
           );
-          if (blockedAndChanged.length > 0) {
-            throw new ValidationError(
-              rule.errorMessage ?? `Fields [${blockedAndChanged.join(', ')}] cannot be changed in this state.`
-            );
-          }
         }
       }
     }
   }
 
+  /**
+   * Delete-side guard (GAP-MAP 8, fork (a), dono 2026-09-26): a row that an `immutableAfter`
+   * rule with scope `'all'` makes immutable cannot be deleted either (nor CASCADE-deleted as a child).
+   * Field-list scopes keep allowing the delete. `lifecycle` is update-only.
+   */
+  assertNotImmutableForDelete(schema: ITableSchema, data: Row | undefined): void {
+    if (!data) return;
+    for (const rule of schema.immutableAfter ?? []) {
+      if (rule.scope !== 'all') continue;
+      if (this.immutableConditionMet(rule, data)) {
+        throw new ValidationError(
+          rule.errorMessage ?? `This record cannot be deleted in its current state (${rule.condition.field}: ${data[rule.condition.field]}).`
+        );
+      }
+    }
+  }
+
   /** Guard 3: enforce the declared status state machine (only explicitly-allowed transitions). */
-  assertLifecycle(
-    schema: ITableSchema,
-    currentData: Record<string, unknown>,
-    mergedData: Record<string, unknown>,
-  ): void {
+  assertLifecycle(schema: ITableSchema, currentData: Row, mergedData: Row): void {
     const lifecycleRules = schema.lifecycle ?? [];
     for (const rule of lifecycleRules) {
       const prev = currentData[rule.field];
@@ -92,7 +105,7 @@ export class GovernanceEngine {
   async enforceNoOverlap(
     table: IDynamicTable,
     schema: ITableSchema,
-    data: Record<string, any>,
+    data: Row,
     isSystem: boolean,
     repo: IDynamicTableRepository,
     excludeId?: string,
@@ -103,7 +116,9 @@ export class GovernanceEngine {
       const startValue = data[rule.startField];
       const endValue = data[rule.endField];
       if (startValue === undefined || startValue === null || endValue === undefined || endValue === null) continue;
-      if (!isFinite(new Date(startValue).getTime()) || !isFinite(new Date(endValue).getTime())) continue;
+      const start = new Date(startValue as string | number | Date);
+      const end = new Date(endValue as string | number | Date);
+      if (!isFinite(start.getTime()) || !isFinite(end.getTime())) continue;
 
       const scope: Array<{ field: string; value: string }> = [];
       for (const f of rule.scopeFields ?? []) {
@@ -113,15 +128,15 @@ export class GovernanceEngine {
         }
       }
 
-      // Normalize to ISO: validated date fields arrive as Date objects (z.coerce.date), and
-      // `String(date)` yields a non-ISO form (e.g. "Thu Jan 01 2026 ...") that SQLite's
-      // datetime() cannot parse → it returns NULL and the overlap is silently never detected.
+      // Normalize to ISO before binding: validated date fields arrive as Date objects (z.coerce.date),
+      // and `String(date)` yields a non-ISO form ("Thu Jan 01 2026 ...") that SQLite's datetime()
+      // parses as NULL — silently disabling the overlap check.
       const count = await repo.countOverlaps(
         table.id,
         rule.startField,
         rule.endField,
-        new Date(startValue).toISOString(),
-        new Date(endValue).toISOString(),
+        start.toISOString(),
+        end.toISOString(),
         scope,
         excludeId,
       );
@@ -137,7 +152,7 @@ export class GovernanceEngine {
    */
   async validateAdvancedRules(
     table: IDynamicTable,
-    data: Record<string, any>,
+    data: Row,
     repo: IDynamicTableRepository,
     dataIdToExclude?: string,
   ): Promise<void> {
@@ -161,20 +176,21 @@ export class GovernanceEngine {
           if (!Array.isArray(value)) {
             throw new ValidationError(`Field '${field.label}' expects a list of IDs.`);
           }
-          const unique = new Set(value);
-          if (unique.size !== value.length) {
+          const ids = value as string[];
+          const unique = new Set(ids);
+          if (unique.size !== ids.length) {
             throw new ValidationError(`Field '${field.label}' contains duplicate IDs.`);
           }
           // Batch existence check (single query) instead of N serial lookups.
           const targetTable = field.relation.targetTable;
-          const rows = await repo.findDataByIds(value);
+          const rows = await repo.findDataByIds(ids);
           const validIds = new Set(rows.filter(r => r.dynamicTableId === targetTable).map(r => r.id));
-          const missing = value.find(id => !validIds.has(id));
+          const missing = ids.find(id => !validIds.has(id));
           if (missing !== undefined) {
             throw new ValidationError(`Related record with ID '${missing}' in the target table for field '${field.label}' was not found.`);
           }
         } else {
-          const relatedExists = await repo.existsByIdInTable(value, field.relation.targetTable);
+          const relatedExists = await repo.existsByIdInTable(value as string, field.relation.targetTable);
           if (!relatedExists) {
             throw new ValidationError(`Related record with ID '${value}' in the target table for field '${field.label}' was not found.`);
           }
@@ -182,7 +198,7 @@ export class GovernanceEngine {
       }
     }
 
-    // 3. Validate compositeUnique rules
+    // 3. Validate compositeUnique rules — indexed count (`json_extract`), not a table scan.
     const compositeRules = schema.compositeUnique ?? [];
     for (const rule of compositeRules) {
       // Only check if ALL fields in the composite key are present in the payload
@@ -215,8 +231,8 @@ export class GovernanceEngine {
       } else if (op === 'neq') {
         conditionMet = actualCondValue !== condValue;
       } else if (op === 'in') {
-        const arr = Array.isArray(condValue) ? condValue : [condValue];
-        conditionMet = arr.includes(actualCondValue as any);
+        const arr: unknown[] = Array.isArray(condValue) ? condValue : [condValue];
+        conditionMet = arr.includes(actualCondValue);
       }
 
       if (conditionMet) {

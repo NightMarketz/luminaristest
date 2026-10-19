@@ -6,9 +6,9 @@
  *   2. throws NotFoundError and rolls back the WHOLE batch when any id is
  *      cross-tenant / in another table / missing (no partial deletes).
  *
- * Strategy mirrors transaction-rollback.test.ts: the prisma.$transaction wrapper is
- * faked to commit on success and discard writes on throw; the TransactionalDynamic
- * TableRepository is mocked with an in-memory row→table index so findTableByDataId
+ * Strategy mirrors transaction-rollback.test.ts: the repository's `runInTransaction`
+ * seam is faked to commit on success and discard writes on throw; the tx-bound
+ * repository it hands out is backed by an in-memory row→table index so findTableByDataId
  * resolves each row's parent table and deleteData records soft-deletes.
  */
 
@@ -26,47 +26,40 @@ const rowIndex = new Map<string, { tableId: string; userId: string }>();
 let committedDeletes: string[] = [];
 let txDeletes: string[] = [];
 
-jest.mock('../../../lib/prisma', () => ({
-  __esModule: true,
-  default: {
-    $transaction: jest.fn(async (fn: (tx: any) => Promise<any>) => {
-      txDeletes = [];
-      try {
-        const result = await fn({ __fakeTx: true });
-        committedDeletes.push(...txDeletes); // commit
-        txDeletes = [];
-        return result;
-      } catch (err) {
-        txDeletes = []; // rollback
-        throw err;
-      }
-    }),
-  },
-}));
+const fakeTxRepo = {
+  findTableByDataId: jest.fn(async (dataId: string) => {
+    const loc = rowIndex.get(dataId);
+    if (!loc) return null;
+    return {
+      id: loc.tableId,
+      userId: loc.userId,
+      name: 'T',
+      internalName: 'leads',
+      category: 'other',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      schema: { fields: [] },
+    } as unknown as IDynamicTable;
+  }),
+  findDataById: jest.fn(async (dataId: string) => (rowIndex.has(dataId) ? { id: dataId, data: {} } : null)),
+  findTablesByUserId: jest.fn(async () => []),
+  deleteData: jest.fn(async (dataId: string) => {
+    txDeletes.push(dataId);
+  }),
+};
 
-jest.mock('../repositories/TransactionalDynamicTableRepository', () => ({
-  TransactionalDynamicTableRepository: jest.fn().mockImplementation(() => ({
-    findTableByDataId: jest.fn(async (dataId: string) => {
-      const loc = rowIndex.get(dataId);
-      if (!loc) return null;
-      return {
-        id: loc.tableId,
-        userId: loc.userId,
-        name: 'T',
-        internalName: 'leads',
-        category: 'other',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        schema: { fields: [] },
-      } as unknown as IDynamicTable;
-    }),
-    findDataById: jest.fn(async (dataId: string) => (rowIndex.has(dataId) ? { id: dataId, data: {} } : null)),
-    findTablesByUserId: jest.fn(async () => []),
-    deleteData: jest.fn(async (dataId: string) => {
-      txDeletes.push(dataId);
-    }),
-  })),
-}));
+const fakeRunInTransaction = jest.fn(async (fn: (repo: any, tx: any) => Promise<any>) => {
+  txDeletes = [];
+  try {
+    const result = await fn(fakeTxRepo, { __fakeTx: true });
+    committedDeletes.push(...txDeletes); // commit
+    txDeletes = [];
+    return result;
+  } catch (err) {
+    txDeletes = []; // rollback
+    throw err;
+  }
+});
 
 // ── Fakes ──────────────────────────────────────────────────────────────────────
 const referenceDate = new Date('2026-06-17T00:00:00.000Z');
@@ -94,6 +87,8 @@ const user: UserContext = {
 function buildService() {
   const repo = {
     findTableById: jest.fn(async () => OWNER_TABLE),
+    runInTransaction: fakeRunInTransaction,
+    withTransaction: jest.fn(() => fakeTxRepo),
   } as unknown as jest.Mocked<IDynamicTableRepository>;
   const policy: jest.Mocked<IDynamicTablePolicy> = {
     canView: jest.fn(() => true),

@@ -13,7 +13,7 @@
  *
  * A `BarrierRepo` é a mesma técnica do arquivo irmão: segura cada `countOverlaps` até os N terem
  * lido, determinizando o entrelaçamento adversarial. Ela intercepta só o repositório INJETADO
- * (o preflight); o `TransactionalDynamicTableRepository` que o serviço constrói dentro da tx passa
+ * (o preflight); o repositório tx-bound (`repository.withTransaction`) que o serviço constrói dentro da tx passa
  * ao largo dela, de propósito — é ele que rejeita os perdedores.
  */
 import { execSync } from 'child_process';

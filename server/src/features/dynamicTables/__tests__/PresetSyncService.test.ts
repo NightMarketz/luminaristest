@@ -14,6 +14,7 @@
  */
 
 import { PresetSyncService } from '../services/PresetSyncService';
+import { DynamicTablePolicy } from '../policies/DynamicTablePolicy';
 import type { DynamicTableService } from '../services/DynamicTableService';
 import type { IDynamicTableRepository } from '../repositories/IDynamicTableRepository';
 import type { UserContext } from '../../../lib/authUtils';
@@ -114,7 +115,7 @@ function buildService(overrides: BuildOverrides = {}) {
   const dynamicTableService = {
     updateTableSchemaAsSystem,
   } as unknown as DynamicTableService;
-  const service = new PresetSyncService(dynamicTableService, repository);
+  const service = new PresetSyncService(dynamicTableService, repository, new DynamicTablePolicy());
   return { service, repository, updateTableSchemaAsSystem };
 }
 

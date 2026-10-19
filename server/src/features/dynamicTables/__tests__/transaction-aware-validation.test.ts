@@ -14,10 +14,10 @@
  *
  * Strategy (mirrors transaction-rollback.test.ts): the committed-state base repo
  * reports the new rows as NON-existent (existsByIdInTable → false). The tx-bound
- * TransactionalDynamicTableRepository is backed by a shared in-memory store that
- * IS populated by createData within the transaction, so its existsByIdInTable
- * returns true for in-tx ids. The test passes only if validations run against the
- * tx-bound repo (the fix), and would fail if they ran against committed state.
+ * repository (what the base repo's `withTransaction(tx)` returns) is backed by a shared
+ * in-memory store that IS populated by createData within the transaction, so its
+ * existsByIdInTable returns true for in-tx ids. The test passes only if validations run
+ * against the tx-bound repo (the fix), and would fail if they ran against committed state.
  */
 
 import { DynamicTableService } from '../services/DynamicTableService';
@@ -37,61 +37,55 @@ let idCounter = 0;
 // cuid-format id (relation fields validate with z.string().cuid()).
 const nextCuid = () => `c${'l'.repeat(8)}${String(idCounter++).padStart(16, '0')}`;
 
-// ── Prisma mock: fake $transaction that commits/rolls back the in-tx store ─────
-jest.mock('../../../lib/prisma', () => ({
-  __esModule: true,
-  default: {
-    $transaction: jest.fn(async (fn: (tx: any) => Promise<any>) => {
-      inTxRows = new Map();
-      try {
-        const result = await fn({ __fakeTx: true });
-        // Commit: promote in-tx rows to committed.
-        for (const [k, v] of inTxRows) committedRows.set(k, v);
-        inTxRows = new Map();
-        return result;
-      } catch (err) {
-        inTxRows = new Map(); // rollback: discard
-        throw err;
-      }
-    }),
-  },
-}));
+// ── Fake transaction seam: commits/rolls back the in-tx store ──────────────────
+const FAKE_TX = { __fakeTx: true };
 
-// ── Tx repo mock: writes/reads against the shared in-tx store ───────────────────
-jest.mock('../repositories/TransactionalDynamicTableRepository', () => {
-  return {
-    TransactionalDynamicTableRepository: jest.fn().mockImplementation(() => ({
-      createData: jest.fn(async (tableId: string, data: Record<string, unknown>) => {
-        const id = nextCuid();
-        const row: Row = { id, dynamicTableId: tableId, data };
-        inTxRows.set(`${tableId}:${id}`, row);
-        return { ...row, createdAt: new Date(), updatedAt: new Date(), deletedAt: null };
-      }),
-      updateData: jest.fn(async (dataId: string, data: Record<string, unknown>) => ({
-        id: dataId, dynamicTableId: 'unknown', data, createdAt: new Date(), updatedAt: new Date(), deletedAt: null,
-      })),
-      // Tx-aware existence: visible if created in THIS tx OR already committed.
-      existsByIdInTable: jest.fn(async (dataId: string, tableId: string) =>
-        inTxRows.has(`${tableId}:${dataId}`) || committedRows.has(`${tableId}:${dataId}`)
-      ),
-      countByFieldValue: jest.fn(async () => 0),
-      countOverlaps: jest.fn(async () => 0),
-      findAllDataByTableId: jest.fn(async () => []),
-      findTableById: jest.fn(async (tableId: string) =>
-        TABLES.find(t => t.id === tableId) ?? null
-      ),
-      findDataById: jest.fn(async () => null),
-      findDataByTableId: jest.fn(async () => ({ data: [], total: 0 })),
-      findDataByIds: jest.fn(async () => []),
-      findRowsByFieldValue: jest.fn(async () => []),
-      findTablesByUserId: jest.fn(async () => TABLES),
-      findTablesReferencingTableId: jest.fn(async () => []),
-      findRowsReferencingId: jest.fn(async () => []),
-      findTableByDataId: jest.fn(async () => null),
-      deleteData: jest.fn(async () => {}),
-    })),
-  };
+const fakeRunInTransaction = jest.fn(async (fn: (repo: any, tx: any) => Promise<any>) => {
+  inTxRows = new Map();
+  try {
+    const result = await fn(fakeTxRepo, FAKE_TX);
+    // Commit: promote in-tx rows to committed.
+    for (const [k, v] of inTxRows) committedRows.set(k, v);
+    inTxRows = new Map();
+    return result;
+  } catch (err) {
+    inTxRows = new Map(); // rollback: discard
+    throw err;
+  }
 });
+
+// ── Tx-bound repo fake: writes/reads against the shared in-tx store ────────────
+const fakeTxRepo = {
+  createData: jest.fn(async (tableId: string, data: Record<string, unknown>) => {
+    const id = nextCuid();
+    const row: Row = { id, dynamicTableId: tableId, data };
+    inTxRows.set(`${tableId}:${id}`, row);
+    return { ...row, createdAt: new Date(), updatedAt: new Date(), deletedAt: null };
+  }),
+  updateData: jest.fn(async (dataId: string, data: Record<string, unknown>) => ({
+    id: dataId, dynamicTableId: 'unknown', data, createdAt: new Date(), updatedAt: new Date(), deletedAt: null,
+  })),
+  // Tx-aware existence: visible if created in THIS tx OR already committed.
+  existsByIdInTable: jest.fn(async (dataId: string, tableId: string) =>
+    inTxRows.has(`${tableId}:${dataId}`) || committedRows.has(`${tableId}:${dataId}`)
+  ),
+  countByFieldValue: jest.fn(async () => 0),
+  countByCompositeFieldValues: jest.fn(async () => 0),
+  countOverlaps: jest.fn(async () => 0),
+  findAllDataByTableId: jest.fn(async () => []),
+  findTableById: jest.fn(async (tableId: string) =>
+    TABLES.find(t => t.id === tableId) ?? null
+  ),
+  findDataById: jest.fn(async () => null),
+  findDataByTableId: jest.fn(async () => ({ data: [], total: 0 })),
+  findDataByIds: jest.fn(async () => []),
+  findRowsByFieldValue: jest.fn(async () => []),
+  findTablesByUserId: jest.fn(async () => TABLES),
+  findTablesReferencingTableId: jest.fn(async () => []),
+  findRowsReferencingId: jest.fn(async () => []),
+  findTableByDataId: jest.fn(async () => null),
+  deleteData: jest.fn(async () => {}),
+};
 
 // ── Fixtures: two tables, contact has a relation field → account ────────────────
 const ACCOUNT_TABLE: IDynamicTable = {
@@ -140,6 +134,9 @@ const FAKE_USER: UserContext = {
 // ── Committed-state base repository: new in-tx rows DON'T exist here ────────────
 function buildBaseRepository(): jest.Mocked<IDynamicTableRepository> {
   return {
+    runInTransaction: fakeRunInTransaction,
+    // The service composes `options.tx` writes through this seam — the tx-bound fake is what it gets.
+    withTransaction: jest.fn((tx: unknown) => (tx === FAKE_TX ? fakeTxRepo : null)),
     createTable: jest.fn(),
     findTableById: jest.fn(async (id: string) => TABLES.find(t => t.id === id) ?? null),
     findTableByName: jest.fn(async () => null),
@@ -160,6 +157,7 @@ function buildBaseRepository(): jest.Mocked<IDynamicTableRepository> {
     countTablesByCategory: jest.fn(async () => []),
     findTableByDataId: jest.fn(async () => null),
     countByFieldValue: jest.fn(async () => 0),
+    countByCompositeFieldValues: jest.fn(async () => 0),
     countOverlaps: jest.fn(async () => 0),
     findRowsByFieldValue: jest.fn(async () => []),
     // Committed state: an in-tx row is NOT here → relation check would FAIL if used.

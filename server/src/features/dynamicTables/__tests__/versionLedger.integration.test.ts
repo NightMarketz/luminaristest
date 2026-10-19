@@ -15,7 +15,6 @@ import {
 } from '@test/helpers';
 import { Role } from '@/features/users/models/User.model';
 import { DynamicTableRepository } from '../repositories/DynamicTableRepository';
-import { TransactionalDynamicTableRepository } from '../repositories/TransactionalDynamicTableRepository';
 import { globalRuleRegistry } from '../rules/RuleRegistry';
 import type { RuleContext } from '../rules/RuleTypes';
 import { purgeOldDeletedRecords } from '../../../jobs/PurgeDeletedRecords';
@@ -80,17 +79,15 @@ describe('escrita — itens 2–4 (os dois repositórios)', () => {
     'createData', 'createTable', 'deleteAllDataByUserId', 'deleteData', 'deleteTable', 'deleteTablesByUserId',
     'updateData', 'updateTable', 'updateTableSchema',
   ];
-  it.each([
-    ['DynamicTableRepository', DynamicTableRepository.prototype],
-    ['TransactionalDynamicTableRepository', TransactionalDynamicTableRepository.prototype],
-  ])('%s: o conjunto de métodos de escrita é o coberto por esta suíte', (_name, proto) => {
-    const writes = Object.getOwnPropertyNames(proto).filter(m => /^(create|update|delete)/.test(m)).sort();
+  // Um só repositório (2026-10-19): o tx-bound é o MESMO código, ligado ao tx por `withTransaction`.
+  it('DynamicTableRepository: o conjunto de métodos de escrita é o coberto por esta suíte', () => {
+    const writes = Object.getOwnPropertyNames(DynamicTableRepository.prototype).filter(m => /^(create|update|delete)/.test(m)).sort();
     expect(writes).toEqual(WRITE_METHODS_EXPECTED);
   });
 
-  const repos: Array<[string, (fn: (repo: DynamicTableRepository | TransactionalDynamicTableRepository) => Promise<void>) => Promise<void>]> = [
+  const repos: Array<[string, (fn: (repo: DynamicTableRepository) => Promise<void>) => Promise<void>]> = [
     ['sem tx (abre a própria $transaction)', async fn => fn(new DynamicTableRepository())],
-    ['tx do chamador', async fn => prisma.$transaction(async tx => fn(new TransactionalDynamicTableRepository(tx)))],
+    ['tx do chamador', async fn => prisma.$transaction(async tx => fn(new DynamicTableRepository().withTransaction(tx)))],
   ];
 
   it.each(repos)('%s: create → v1 CREATE; update → v2 UPDATE; delete → v3 DELETE; schema v1 → v2', async (_label, run) => {
@@ -126,7 +123,7 @@ describe('escrita — itens 2–4 (os dois repositórios)', () => {
     const repo = new DynamicTableRepository();
     const row = await repo.createData(t.id, { title: 'a' });
     await prisma.$transaction(async tx => {
-      const txRepo = new TransactionalDynamicTableRepository(tx);
+      const txRepo = repo.withTransaction(tx);
       await txRepo.updateData(row.id, { title: 'b' });
       await txRepo.updateData(row.id, { title: 'c' });
     });

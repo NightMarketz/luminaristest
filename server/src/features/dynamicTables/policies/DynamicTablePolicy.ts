@@ -42,4 +42,10 @@ export class DynamicTablePolicy implements IDynamicTablePolicy {
     if (presentation === 'system') return false;
     return user.userId === table.userId;
   }
+
+  // Evoluir/instalar estrutura de preset num tenant existente é operação administrativa: só ADMIN.
+  // Os controllers não repetem este check — a decisão mora aqui (Contrato §2, policy-first).
+  canAdministerPresets(user: UserContext): boolean {
+    return user.role === Role.ADMIN;
+  }
 }

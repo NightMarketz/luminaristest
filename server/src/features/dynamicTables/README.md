@@ -39,9 +39,9 @@ features/dynamicTables/
 ├── dtos/                      # DynamicTable.dto.ts — Zod contracts (validation boundary)
 ├── models/                    # DynamicTable.model.ts — ITableSchema, ISchemaField, governance rules
 ├── policies/                  # IDynamicTablePolicy + DynamicTablePolicy (authorization)
-├── repositories/              # IDynamicTableRepository + DynamicTableRepository (Prisma; indexed queries)
+├── repositories/              # IDynamicTableRepository + DynamicTableRepository (Prisma; indexed queries; ONE class — `withTransaction`/`runInTransaction` are the tx seam)
 ├── validation/                # SchemaValidator (Zod engine) + GovernanceEngine (guards + advanced rules + no-overlap)
-├── services/                  # DynamicTableService (orchestrator) + PresetInstallerService (installation) + PresetService (catalog)
+├── services/                  # DynamicTableService (orchestrator; installPresetAsSystem lives here) + PresetSyncService/ModuleInstallService (admin, policy-first) + PresetService (catalog)
 ├── rules/                     # plugin engine: RuleRegistry, RuleTypes, shared/, plugins/ (+ plugins/sales/)
 ├── utils/                     # TableFactory (composes modules) + ValidationUtils (cpf/cnpj/phone)
 └── presets/                   # fields/ · modules/ · systems/ + README (authoring reference)
@@ -70,7 +70,9 @@ features/dynamicTables/
 
 `policies/DynamicTablePolicy.ts`: create/edit/delete of a table are system operations (blocked by
 default for the direct user); `canManageData` allows **data** CRUD to the owner — except tables with
-`ui.presentation: 'system'`, which are infra and never editable. The `*AsSystem` methods on the service
+`ui.presentation: 'system'`, which are infra and never editable. `canAdministerPresets` (ADMIN) gates the
+preset-administration services (`sync-preset`, `install-table`, `dashboard/modules/install`) — consulted by
+the service **before any read**; the controllers add no role check. The `*AsSystem` methods on the service
 run without a policy for trusted flows (preset installation, seeds).
 
 ---
@@ -100,8 +102,10 @@ All under `/api/dynamic-tables` (prefix protected by `authMiddleware`).
 - **`/lookup` is tenant-filtered:** `resolveRelations` authorizes the `tableId`, then resolves record ids
   via `findDataByIds` (a global PK lookup) and **filters the result to that table** — a caller cannot pass
   their own authorized `tableId` plus another tenant's record ids and read back labels.
-- **Atomicity:** create/update/delete of data run in a single `prisma.$transaction` — a plugin failure
-  rolls everything back (incl. cascades).
+- **Atomicity:** create/update/delete of data run in a single repository transaction
+  (`repository.runInTransaction`) — a plugin failure rolls everything back (incl. cascades). The delete
+  rules (`immutableAfter` scope `'all'`, `deleteConstraints`) are read with the **tx-bound** repository,
+  in the same transaction that writes the soft delete.
 - **Delete-constraint scan is complete:** the referencer scan (`findRowsReferencingId`) is **unbounded**
   so `RESTRICT_IF_AGGREGATE` sums and `CASCADE` see every referencing row.
 - **Safe system bypass:** `isSystem` is derived from the call context (`*AsSystem` paths / plugin writes) — a client-supplied `__isSystem` flag is stripped and NEVER grants privilege (R2).
@@ -114,9 +118,11 @@ All under `/api/dynamic-tables` (prefix protected by `authMiddleware`).
 | Collaborator | Responsibility |
 |---|---|
 | `validation/SchemaValidator` | `buildZodSchema` + `validateDataAgainstSchema` (pure) |
-| `validation/GovernanceEngine` | guards `readOnly`/`immutableAfter`/`lifecycle` + `validateAdvancedRules` + `enforceNoOverlap` |
-| `services/PresetInstallerService` | `installPresetAsSystem` (via the `ITableAuthoring` interface the service implements) |
+| `validation/GovernanceEngine` | guards `readOnly`/`immutableAfter`/`lifecycle` (+ delete-side `assertNotImmutableForDelete`) + `validateAdvancedRules` + `enforceNoOverlap` |
+| `repositories/DynamicTableRepository` | the only Prisma client holder; `runInTransaction`/`withTransaction` are the transaction seam the service composes writes with |
 | `rules/RuleRegistry` | resolves and runs the plugins per hook |
+
+> `installPresetAsSystem` is a method of `DynamicTableService` (there is no `PresetInstallerService`).
 
 ## Design decisions & exclusive variants (read before maintaining)
 
@@ -124,13 +130,17 @@ This feature deliberately diverges from the CRUD mold in several places. Each is
 unless you understand the trade-off you are changing.
 
 - **Orchestrator-engine (not a thin CRUD service).** `DynamicTableService` combines CRUD + authorization
-  + transaction orchestration; the validation/governance/preset logic lives in injected collaborators
-  (`SchemaValidator`, `GovernanceEngine`, `PresetInstallerService`, `RuleRegistry`). *Why:* one generic
-  engine governs every table, including a user's custom one, with zero per-table code.
-- **Prisma in the service.** Data writes open `prisma.$transaction` directly (the service builds a
-  tx-bound `DynamicTableRepository`), a justified exception to "only the repository touches Prisma".
-  *Why:* the insert, the governance checks and the plugins (which may write other tables) must be **one
-  atomic unit** — a plugin failure rolls the whole operation back, cascades included.
+  + transaction orchestration; the validation/governance logic lives in collaborators
+  (`SchemaValidator`, `GovernanceEngine`, `RuleRegistry`) — the service keeps **no copy** of them.
+  *Why:* one generic engine governs every table, including a user's custom one, with zero per-table code.
+- **The transaction is a seam of the repository, not of the service.** The service never imports Prisma
+  nor instantiates a repository: it calls `repository.runInTransaction(fn)` (own tx) or
+  `repository.withTransaction(tx)` (a caller's `options.tx`). The repository is ONE class that runs the
+  same code bound to the root client or to an interactive-transaction client (a former
+  `TransactionalDynamicTableRepository` copy carried a `LIMIT 100` and an unscoped tenant query — removed
+  2026-10-19). *Why:* the insert, the governance checks and the plugins (which may write other tables)
+  must be **one atomic unit** — a plugin failure rolls the whole operation back, cascades included — and
+  only the repository layer may know the client (Contrato §2, R1/R4).
 - **DTO of `data` is intentionally loose** (`z.record(string, z.any())`). *Why:* the real per-record
   validation is **dynamic** — `SchemaValidator.buildZodSchema` compiles a Zod validator from the table's
   own `schema` at runtime. A static DTO cannot know a user-defined table's shape. The *table definition*
@@ -156,7 +166,7 @@ unless you understand the trade-off you are changing.
   user-facing guards. The Zod + advanced-rule validation still applies.
 - **Two-pass preset install + `@@PRESET_TABLE_KEY::`.** A preset's cross-table relations are placeholders
   resolved in a second pass after all tables exist, inside one transaction. See
-  `services/PresetInstallerService.ts` and `docs/architecture.md`.
+  `DynamicTableService.installPresetAsSystem` and `docs/architecture.md`.
 - **Default data read is non-paginated (by choice); pagination is additive.** `GET /:tableId/data`
   without `?page/pageSize` returns the whole table (legacy shape `{ success, data }`) so existing clients
   are unaffected; passing `page/pageSize` switches to `{ success, data, total, page, pageSize }`

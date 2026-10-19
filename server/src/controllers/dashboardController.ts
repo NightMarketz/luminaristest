@@ -477,15 +477,14 @@ export async function deleteUserSystem(req: Request, res: Response) {
 
 /**
  * POST /api/dashboard/modules/install — BE-INCR-CRM-MODULE-COMPOSITION (I8), comportamento 8.
- * Liga UM módulo do registro num tenant existente. ADMIN-ONLY (cria tabelas), como o `install-table`.
+ * Liga UM módulo do registro num tenant existente. ADMIN-ONLY (cria tabelas), como o `install-table` —
+ * decisão na policy (`canAdministerPresets`), consultada pelo service antes de qualquer leitura.
  */
 export async function installModule(req: Request, res: Response) {
   try {
     const ctx = getUserContextFromRequest(req);
     if (!ctx) return res.status(401).json({ success: false, error: 'Authentication required' });
-    if (ctx.role !== Role.ADMIN) {
-      throw new ForbiddenError('Apenas administradores podem instalar módulos.');
-    }
+    // ADMIN-only via `DynamicTablePolicy.canAdministerPresets`, consulted policy-first by the service.
     const body = InstallModuleSchema.safeParse(req.body);
     if (!body.success) return res.status(400).json({ success: false, error: 'Payload inválido', details: body.error.issues });
     const data = await getFactory().getModuleInstallService().installModule(ctx, body.data.moduleKey);
