@@ -4,12 +4,13 @@ tipo: "decisao"
 dominio: "plataforma"
 titulo: "Posicionamento: Luminaris como camada contábil ao lado do sistema de salão (caminho a), não recepção própria"
 estado: "decided"
+estado_detalhe: "Revogada inteira por D-2026-10-19-LANDING-RECADO-GERAL (dono, chat, 2026-10-19)"
 autorizacao: "dono, chat, 2026-10-15: \"Caminho (a): Luminaris como camada contábil ao lado do sistema de salão. Ajusta o texto da lista de espera para isso e inclui a pergunta 'que sistema você usa hoje / usaria junto?'\" — decide o posicionamento e o texto da lista; não cria nó nem autoriza BRIEF/código"
-atualizado: "2026-10-15"
+atualizado: "2026-10-19"
 ---
 # D-2026-10-15-CAMINHO-A-CAMADA-CONTABIL — camada contábil ao lado do sistema do salão
 
-**Estado:** `decided`.
+**Estado:** `decided`. **Revogada inteira** por [[D-2026-10-19-LANDING-RECADO-GERAL]] (dono, chat, 19/10/2026).
 **Autorização:** dono, chat, 15/10/2026 (citação no frontmatter).
 
 ## Contexto
