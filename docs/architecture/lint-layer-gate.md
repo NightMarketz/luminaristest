@@ -27,7 +27,7 @@ O critério **shape+posse** é **detector de candidatos, não decisor**. O lint 
   **Pago desde a redação original:** `authController` e `userController`/`features/users/**` não importam mais
   `lib/prisma` (o único acesso em `features/users/` é `UserRepository.ts`, que é a camada permitida). A lista caiu
   de 5 → 3 por **pagamento de dívida**, não por supressão removida com violação viva — `npx eslint src` verde confirma.
-- **Exceção sancionada (supressão inline `SANCTIONED`):** `DynamicTableService` — orquestração de `prisma.$transaction` documentada no contrato §2.
+- **Exceção sancionada (supressão inline `SANCTIONED`):** nenhuma hoje. A de `DynamicTableService` (orquestração de `prisma.$transaction`) foi paga em 2026-10-19 (PR #769): a transação virou seam do repositório (`runInTransaction`/`withTransaction`) e o service não importa mais o Prisma.
 - `import type` de `generated/prisma` **não** é alvo (tipo, não acesso a dados).
 
 ### R1b — Service não importa `express` (server)
@@ -93,9 +93,7 @@ em silêncio (o script falha se achar mais de um).
     "server/src/features/reports/services/ReportService.ts": 1
   },
   "DEBT: apiClient": {},
-  "SANCTIONED": {
-    "server/src/features/dynamicTables/services/DynamicTableService.ts": 1
-  }
+  "SANCTIONED": {}
 }
 ```
 <!-- debt-ledger:end -->
