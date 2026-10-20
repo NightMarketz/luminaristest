@@ -1,6 +1,12 @@
 
 import { getCookie } from 'cookies-next';
 
+/**
+ * Cliente HTTP do seed de desenvolvimento (features/dev). Os 3 `fetch` ficam `DEBT: fetch` de propósito (R2b, 20/10):
+ * o dump de erro (`logError`/`getErrorMsg`) precisa do status e do corpo cru, que o apiClient descarta em parte
+ * (corpo sem error/message perde o status; não-JSON vira "Failed to parse server response"), e o apiClient soltaria
+ * um toast por linha que falha num seed em lote. Ferramenta de dev, fora do produto: migrar não paga camada nenhuma.
+ */
 export class ApiClient {
     private baseUrl: string;
     private token: string;

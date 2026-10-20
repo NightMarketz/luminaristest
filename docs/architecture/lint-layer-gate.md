@@ -57,6 +57,12 @@ O critério **shape+posse** é **detector de candidatos, não decisor**. O lint 
 - **Fora do escopo (ponto cego próprio):** `lib/context/AuthContext.tsx` (2 `fetch` em `lib/`, fora de `lib/services`).
 - **Prova de que morde (20/10):** antes dos marcadores, `npx eslint . --config eslint.gate.config.mjs` → exit 1 com
   exatamente 27 `no-restricted-globals` (os 24 de produção + 3 em `features/dev/seed`), e nenhum outro erro.
+- **Pagamento (20/10): 27 → 5.** `dashboardLayout.service`, `chat.service`, `interview.service` e
+  `DocumentService.listForSelection` absorveram 22 sites. Os 5 que restam ficam marcados de propósito, cada um com a
+  justificativa no próprio código: `POST /dashboard/create` em `useAiInterview` (1), o SSR de `pages/dashboard` (1)
+  e o cliente do seed de dev (3). O bloqueio comum é o `apiClient`: corpo de erro sem `error`/`message` perde o status,
+  corpo não-JSON vira "Failed to parse server response", ele não tem token explícito para SSR e todo erro dispara toast.
+  Corrigir o `apiClient` é fatia própria, e mexe em todos os chamadores.
 
 ### R3a — `recharts` confinado (frontend, **barra ilha**)
 - `error`; allowlist por glob: `**/analytics/charts/**`, `**/analytics/kpi/**`, `components/widgets/analytics/GoldKpiWidgetView.tsx`. Qualquer outro import = erro.

@@ -294,6 +294,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
   console.log('[Dashboard SSR] Validating token...', { tokenPreview: token.substring(0, 20), tokenLength: token.length });
 
+  // DEBT: fetch fica (R2b, 20/10): o apiClient não tem token explícito para SSR. Ele lê `getCookie('auth_token')`
+  // sem `req` (no servidor dá undefined, então um Authorization passado só sobrevive por acidente), manda o fuso do
+  // Node como x-user-timezone e usa outra base URL padrão (`…/api`). Pagar = serviço com token/req explícitos.
   // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
   const response = await fetch(`${baseUrl}/dynamic-tables`, {
     headers: {
