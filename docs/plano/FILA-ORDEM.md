@@ -52,8 +52,28 @@ Ordem sugerida, da menor dependência para a maior:
 - [[F6]] (Pix de saída): gate externo do Mercado Pago (chave ed25519).
 - [[P-IA]]: depende de R10 e D6.
 
+## E. Correções do molde operacional (achados de 19/10)
+
+> Encaixada a pedido do dono em 19/10 ([[D-2026-10-19-ACHADOS-NA-FILA]]). A **ordem interna é proposta do agente**; não altera A–D
+> ratificadas. Cada PR de código continua exigindo `executa` próprio; merge só por número.
+
+| # | Item | Estado | Por que nesta posição | Ação do dono |
+|---|---|---|---|---|
+| E1 | Merge dos PRs abertos: [[DT-ARQ-CORRECOES]] (#769), [[FIX-ESTOQUE-FINALIZE]] (#771), [[FIX-ANALYTICS-DADO]] (#770), [[FIX-ADDEDFIELDS-VAZAMENTO]] (#772) | inflight; CI verde em #769/#770/#771 | Já prontos. O #771 corrige o fluxo de venda que os passos 6–11 do [[H2]] (A3) exercitam na tela — recomendação: mergear antes do sign-off | OK por número; decisão (a)/(b) do item 3 do #770 |
+| E2 | [[TESTE-ACOPLAMENTO-PRESET]] | planned | Barato e preventivo: é a causa comum de 4 achados (campo lido que o preset não declara) | `executa` |
+| E3 | [[FIX-PLUGINS-VENDA]] | planned | Mudam estoque e receita em silêncio no molde; mesmos arquivos do #771 (depois de E1) | `executa` (pode ser fatiado) |
+| E4 | [[FIX-AUTH-CONTA]] | planned | Delete de usuário 500 com vetores já apagados; logout/JWT; ADMIN desativando o próprio layout | `executa` |
+| E5 | [[FIX-CHAT-AGENTE]] | planned | Injeção de `system` no histórico; PROCESSING eterno; propostas sem TTL | `executa` |
+| E6 | [[FIX-FE-DASHBOARD]] | planned | Datetime com dia anterior, 401 e erros por campo — o que o dono vê ao clicar | `executa` |
+| E7 | [[FIX-ANALYTICS-RESIDUO]] | planned | Período/fuso e validador; depois do #770 | `executa` |
+| E8 | BRIEF `BE-INCR-DT-NO-CONSUMER-CALLS` (branch local `claude/mystifying-ptolemy-65dd7c`, empilhada no #769, não pushada) | BRIEF com forks ratificados | Arquitetura, sem efeito no dado do usuário; depende do #769 | Pedir o push/PR do BRIEF; depois `executa` |
+
+Estruturais (não entram na fila de código; precisam de PRE-ADR): [[BUILDER-VERTICAIS]] (só o CRM é módulo; preset é código)
+e [[W1]] (a entrevista descarta a customização).
+
 ## Pendências de documentação que esta fila expôs
 
 - `LAC-B` estava `blocked` sem motivo atual. Corrigido para `ready` em 14/10 (ver B8). Pendência: `I3` (done) lista LAC-B em `depende_de`.
 - `F5` → `P-IA?`: **não bloqueia o FE do Mercado Pago**. A aresta pertence ao adaptador CNAB (ADR-INCR-PAYMENT-PROVIDER-COLLECTION §6.1). A fase CNAB depende também de D6, que não está em `depende_de` de F5.
 - O índice (`_INDEX.md`) ordena os "Destravados" alfabeticamente, não por esta ordem.
+- Os PRs #769–#772 (19/10) não tinham nó no vault; o fold entrou num PR de docs à parte ([[D-2026-10-19-ACHADOS-NA-FILA]]), porque os PRs já estavam abertos.
