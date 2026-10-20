@@ -5,36 +5,9 @@ export interface WidgetDimensions {
   MIN_H: number;
 }
 
-export interface DashboardGridItem {
-  i: string;
-  id: string;
-  type: string;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  minW?: number;
-  minH?: number;
-  static?: boolean;
-  isDraggable?: boolean;
-  isResizable?: boolean;
-  widgetConfig?: any;
-}
-
-export interface DashboardLayout {
-  id: string;
-  userId: string;
-  name: string;
-  isActive: boolean;
-  type: string;
-  config: {
-    positions?: DashboardGridItem[];
-    columns?: number;
-    widgets?: string[];
-  };
-  createdAt: Date;
-  updatedAt: Date;
-}
+// Persisted shapes live with the service that loads them (lib must not import UI — check:arch U2).
+export type { DashboardGridItem, DashboardLayout } from '@/lib/services/dashboardLayout.service';
+import type { DashboardGridItem } from '@/lib/services/dashboardLayout.service';
 
 export interface DashboardGridConfig {
   WIDGET_TYPES: {

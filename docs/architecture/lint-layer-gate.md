@@ -112,7 +112,6 @@ em silêncio (o script falha se achar mais de um).
     "my-app/components/widgets/chat/hooks/UseChatInstances.ts": 2,
     "my-app/components/widgets/chat/hooks/useChatInstance.ts": 2,
     "my-app/components/widgets/chat/hooks/useChatMessages.ts": 1,
-    "my-app/components/widgets/dashboard-grid/dashboard-layout.api.ts": 6,
     "my-app/components/widgets/shared/hooks/useChatInstance.ts": 2,
     "my-app/components/widgets/shared/hooks/useChatInstances.ts": 3,
     "my-app/components/widgets/shared/hooks/useChatMessages.ts": 1,
