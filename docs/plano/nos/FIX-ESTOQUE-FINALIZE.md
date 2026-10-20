@@ -4,14 +4,14 @@ tipo: "plataforma"
 dominio: "plataforma"
 titulo: "Venda: estoque não baixa no Finalized · comissão grava commissionRate em vez de rate · DynamicForm envia readOnly (400 na edição)"
 estado: "done"
-estado_detalhe: "PR #771 aberto, 3 pares test→fix, GAP-MAP Nível 3 [CORRIGIDO]; mergeado em 20/10 (7180ee3e), squash, CI 14/14; merge autorizado pelo dono em chat: \"Autorizo o merge do #771 e do #769, nessa ordem, com CI verde.\""
+estado_detalhe: "PR #771: 3 pares test→fix, GAP-MAP Nível 3 [CORRIGIDO]; mergeado em 20/10 (7180ee3e), squash, CI 14/14; merge autorizado pelo dono em chat: \"Autorizo o merge do #771 e do #769, nessa ordem, com CI verde.\""
 autorizacao: "dono, chat, 2026-10-19 (questionário): \"Autorizo as duas (Recommended)\" — registrar no GAP-MAP, instrumentar e corrigir; merge NÃO autorizado"
 prs: ["#771"]
 atualizado: "2026-10-20"
 ---
 # FIX-ESTOQUE-FINALIZE — Venda: estoque não baixa no Finalized · comissão grava commissionRate em vez de rate · DynamicForm envia readOnly (400 na edição)
 
-**Estado:** `done` — PR #771 aberto, 3 pares test→fix, GAP-MAP Nível 3 [CORRIGIDO]; mergeado em 20/10 (7180ee3e), squash, CI 14/14; merge autorizado pelo dono em chat: "Autorizo o merge do #771 e do #769, nessa ordem, com CI verde."  
+**Estado:** `done` — PR #771: 3 pares test→fix, GAP-MAP Nível 3 [CORRIGIDO]; mergeado em 20/10 (7180ee3e), squash, CI 14/14; merge autorizado pelo dono em chat: "Autorizo o merge do #771 e do #769, nessa ordem, com CI verde."  
 **Autorização:** dono, chat, 2026-10-19 (questionário): "Autorizo as duas (Recommended)" — registrar no GAP-MAP, instrumentar e corrigir; merge NÃO autorizado  
 **Depende de:** —  
 **PRs:** #771  
