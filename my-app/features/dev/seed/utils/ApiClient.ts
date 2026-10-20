@@ -17,12 +17,14 @@ export class ApiClient {
     }
 
     async getRows(tableId: string): Promise<unknown[]> {
+        // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
         const res = await fetch(`${this.baseUrl}/dynamic-tables/${tableId}/data`, { headers: this.headers });
         const body = await res.json();
         return body?.data || [];
     }
 
     async postRow(tableId: string, data: Record<string, unknown>, tableNameForLog: string = 'Unknown'): Promise<string> {
+        // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
         const res = await fetch(`${this.baseUrl}/dynamic-tables/${tableId}/data`, {
             method: 'POST',
             headers: this.headers,
@@ -44,6 +46,7 @@ export class ApiClient {
     }
 
     async putRow(tableId: string, dataId: string, data: Record<string, unknown>, tableNameForLog: string = 'Unknown'): Promise<void> {
+        // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
         const res = await fetch(`${this.baseUrl}/dynamic-tables/${tableId}/data/${dataId}`, {
             method: 'PUT',
             headers: this.headers,

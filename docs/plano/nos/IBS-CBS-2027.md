@@ -9,7 +9,7 @@ depende_de: ["[[D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS]]", "[[X7]]", "[[LEGAL-PARA
 autorizacao: "dono, chat, 2026-10-20: \"Q1 a, Q2 a. Grava as decisões e pode começar pelo fold R0 (Q3 a).\" — Q2 (a) = PRE-ADRs de F1 (IBS-CBS-2027, RETENCOES-FONTE, EFD-REINF) por sessao-planejamento, sem 'executa' (cédula D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS, sessão de origem). Só o PRE-ADR e esta nota; BRIEF e código exigem pedido próprio"
 ancora_sdd: "§M5"
 atualizado: "2026-10-20"
-prs: []
+prs: ["#777"]
 perfil_previsto: "precisa-de-planejamento"
 perfil_evidencia: "regra 1: 10 forks pendentes (escopo, persistência, fonte do débito, evidência de extinção do crédito, antecipação, split, 2026, classe contábil, fatiamento, cClassTrib por serviço); depois deles: opus-medio (família nova de apuração com CAS + provisão em 2 commits + migração aditiva + parser)"
 write_set: ["server/prisma/schema.prisma", "server/prisma/migrations/**", "server/src/features/accounting/models/ibsCbs*", "server/src/features/accounting/dtos/IbsCbsAssessmentDto.ts", "server/src/features/accounting/dtos/ServiceFiscalProfileDto.ts", "server/src/features/accounting/services/IbsCbsAssessmentService.ts", "server/src/features/accounting/services/FiscalDocumentEmissionService.ts", "server/src/features/accounting/services/BankSettlementService.ts", "server/src/features/accounting/repositories/*IbsCbs*", "server/src/features/accounting/policies/**", "server/src/controllers/*IbsCbs*", "server/src/lib/nfe.ts", "server/src/lib/ibsCbsApuracao.ts", "server/src/features/accounting/models/obrigacoesPorRegime.ts", "server/src/features/legalParameters/models/legalParameter.ts", "server/src/features/accounting/**/__tests__/**", "server/src/lib/__tests__/**", "server/src/controllers/__tests__/**"]
@@ -17,7 +17,7 @@ registros: ["server/src/lib/factory.ts", "server/src/routes/accounting.ts", "ser
 ---
 # IBS-CBS-2027 — IBS/CBS no regime regular (CBS plena em 01/01/2027) — promove [[M5-ibs-cbs]]
 
-**Estado:** `planned` — 20/10: PRE-ADR **Proposed** (ADR-INCR-IBS-CBS-2027); forks F-IBS-1..10 PENDENTES; não roteia até a ratificação; sem BRIEF, sem 'executa'  
+**Estado:** `planned` — 20/10: PRE-ADR **Proposed** (ADR-INCR-IBS-CBS-2027) escrito pela sessao-planejamento sob a Q2 (a) da proposta de 20/10 — forks F-IBS-1..10 PENDENTES, P-IBS-1..7 ao contador/fonte oficial. **Não roteia até a ratificação** (README: nó novo vira nos/ depois de PRE-ADR ratificado; a nota existe por pedido da sessão de origem). Sem BRIEF, sem 'executa'. Prazo legal: 01/01/2027 (LC 214 art. 347/542, efeitos art. 544 III). Verificação legal de 20/10: pesquisas-legais/verif-2026-10-20-f1-retencoes-reinf-ibscbs. Hoje o X8 responde 400 a partir de 01/2027 (pisCofinsParams vigenteAte 2026-12-31) — Presumido/Real ficam sem apuração federal sobre a receita  
 **Autorização:** dono, chat, 2026-10-20: "Q1 a, Q2 a. Grava as decisões e pode começar pelo fold R0 (Q3 a)." — Q2 (a): PRE-ADR por sessao-planejamento, sem 'executa'  
 **Depende de:** [[D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS]] (cédula Q2 (a)), [[X7]] (molde `TaxAssessment`, CAS, provisão), [[LEGAL-PARAMS]] (tabela de vigência), [[F7]] (pontilhada: split payment como parte da baixa), [[D1]] (pontilhada: item 1b do contador — P-IBS-1..4), [[M5-ibs-cbs]] (pontilhada: diferido que este nó promove)  
 **Desbloqueia:** [[ISS-TRANSICAO-IBS]] (2029+), parte do [[NFE-DANFE-IBSCBS]] (totais IBS/CBS que o DANFE exibe)  

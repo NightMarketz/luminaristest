@@ -57,6 +57,25 @@ const RESTRICTED = {
   },
 };
 
+/**
+ * R2b — `fetch()` cru fora da service layer (contrato §3: componentes/hooks chamam
+ * lib/services/*.service.ts, "nunca fetch/apiClient direto"). Ponto cego declarado do
+ * dependency-cruiser (ADR-ARCH-BOUNDARIES §2): `fetch` é global, não import, então só o
+ * lint o enxerga. Cobre as três formas de alcançar o global: `fetch(`, `window.fetch(` e
+ * `globalThis.fetch(`/`self.fetch(`. Vale em pages/, features/ e components/ (fora testes);
+ * lib/** é infraestrutura e fica fora (lib/services e lib/api SÃO o lugar do fetch).
+ */
+const FETCH_MESSAGE =
+  'Service layer (contrato §3): fetch() só em lib/services. Componentes/hooks/páginas chamam um ' +
+  '*.service.ts (apiClient, ou multipart.ts para upload/download) — criar/usar um service aqui.';
+const RAW_FETCH = {
+  'no-restricted-globals': ['error', { name: 'fetch', message: FETCH_MESSAGE }],
+  'no-restricted-properties': [
+    'error',
+    ...['window', 'globalThis', 'self'].map((object) => ({ object, property: 'fetch', message: FETCH_MESSAGE })),
+  ],
+};
+
 /** Re-declara no-restricted-imports com só o subconjunto de bans que vale na região. */
 const restrict = (...keys) => ({
   rules: { 'no-restricted-imports': ['error', { patterns: keys.map((k) => RESTRICTED[k]) }] },
@@ -107,5 +126,12 @@ export default tseslint.config(
   {
     files: ['**/leads/components/MeetingsCalendar.tsx', '**/planning/components/**/*.{ts,tsx}'],
     ...restrict('apiClient', 'recharts', 'dndkit'),
+  },
+  // R2b — fetch() cru barrado na UI. Bloco próprio (regras distintas de no-restricted-imports),
+  // então se SOMA às regiões acima em vez de sobrescrevê-las. Testes stubam o global de propósito.
+  {
+    files: ['pages/**/*.{ts,tsx}', 'features/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}'],
+    ignores: ['**/__tests__/**', '**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
+    rules: RAW_FETCH,
   },
 );

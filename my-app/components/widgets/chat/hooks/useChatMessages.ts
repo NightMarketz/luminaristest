@@ -106,6 +106,7 @@ export function useChatMessages({
       // Send to the chat API. The server persists both the user message and the assistant reply.
       const { getCookie } = await import('cookies-next');
       const token = getCookie('auth_token');
+      // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/chat`, {
         method: 'POST',
         headers: {

@@ -99,6 +99,7 @@ export function useChatInstance({
 
             log('📤 POST /get-or-create com widgetId:', widgetIdToInitialize, 'type:', chatType);
 
+            // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
             const instanceResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/chat-instances/get-or-create`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -129,6 +130,7 @@ export function useChatInstance({
 
             // Carrega mensagens existentes
             try {
+                // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
                 const messagesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/chat-messages?instanceId=${instance.id}`, {
                     headers: { 'Authorization': `Bearer ${token}` },
                 });

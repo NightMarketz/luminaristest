@@ -29,11 +29,13 @@ interface LayoutConfigPayload {
 export const DashboardLayoutApi = {
   /** Lists all of the current user's layouts (tabs). */
   list(): Promise<DashboardLayout[]> {
+    // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
     return fetch(BASE, { headers: authHeaders() }).then(r => unwrap<DashboardLayout[]>(r));
   },
 
   /** Creates a new layout (tab); it becomes the active one. */
   create(name: string, config: LayoutConfigPayload): Promise<DashboardLayout> {
+    // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
     return fetch(BASE, {
       method: 'POST',
       headers: authHeaders(),
@@ -43,6 +45,7 @@ export const DashboardLayoutApi = {
 
   /** Persists the grid configuration of a specific layout. */
   saveConfig(id: string, config: LayoutConfigPayload): Promise<DashboardLayout> {
+    // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
     return fetch(`${BASE}/${id}`, {
       method: 'PATCH',
       headers: authHeaders(),
@@ -52,6 +55,7 @@ export const DashboardLayoutApi = {
 
   /** Renames a layout (tab). */
   rename(id: string, name: string): Promise<DashboardLayout> {
+    // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
     return fetch(`${BASE}/${id}`, {
       method: 'PATCH',
       headers: authHeaders(),
@@ -61,6 +65,7 @@ export const DashboardLayoutApi = {
 
   /** Switches the active layout (tab). */
   activate(id: string): Promise<DashboardLayout> {
+    // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
     return fetch(`${BASE}/${id}/activate`, {
       method: 'POST',
       headers: authHeaders(),
@@ -69,6 +74,7 @@ export const DashboardLayoutApi = {
 
   /** Deletes a layout (tab). */
   async remove(id: string): Promise<void> {
+    // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
     const res = await fetch(`${BASE}/${id}`, { method: 'DELETE', headers: authHeaders() });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
