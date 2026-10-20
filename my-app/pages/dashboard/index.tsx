@@ -294,6 +294,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
   console.log('[Dashboard SSR] Validating token...', { tokenPreview: token.substring(0, 20), tokenLength: token.length });
 
+  // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
   const response = await fetch(`${baseUrl}/dynamic-tables`, {
     headers: {
       'Authorization': `Bearer ${token}`,

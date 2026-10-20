@@ -29,6 +29,7 @@ export function DocumentSelector({ onSelectionChange }: DocumentSelectorProps) {
       setIsLoading(true);
       try {
         const token = (await import('cookies-next')).getCookie('auth_token');
+        // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/documents?mode=list`, {
           headers: {
             'Authorization': `Bearer ${token}`,

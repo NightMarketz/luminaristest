@@ -84,6 +84,7 @@ export function useChatInstances({
         try {
             const { getCookie } = await import('cookies-next');
             const token = getCookie('auth_token');
+            // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/chat-instances?type=${chatType}`, {
                 headers: { 'Authorization': `Bearer ${token}` },
             });
@@ -164,6 +165,7 @@ export function useChatInstances({
         try {
             const { getCookie, deleteCookie } = await import('cookies-next');
             const token = getCookie('auth_token');
+            // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/chat-instances/${instanceId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` },
@@ -208,6 +210,7 @@ export function useChatInstances({
         try {
             const { getCookie } = await import('cookies-next');
             const token = getCookie('auth_token');
+            // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/chat-instances/${instanceId}`, {
                 method: 'PUT',
                 headers: {
