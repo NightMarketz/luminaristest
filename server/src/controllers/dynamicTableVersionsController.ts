@@ -83,6 +83,7 @@ export async function restoreRowVersion(req: Request, res: Response) {
     if (!params.success) return res.status(400).json({ success: false, error: params.error.flatten() });
     const { tableId, dataId, version } = params.data;
     const updated = await getFactory().getDynamicTableVersionService().restoreRowVersion(ctx, tableId, dataId, version);
+    getFactory().getDynamicTableWriteEffects().afterDataWrite(ctx.userId);
     await maybeSyncSaleFinalized(ctx, tableId, updated);
     await maybeSyncSalePackageSold(ctx, tableId, updated);
     return res.json({ success: true, data: updated });

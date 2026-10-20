@@ -48,6 +48,7 @@ export async function createAnalyticsDefinition(req: Request, res: Response) {
 
     const service = getFactory().getDynamicTableService();
     const created = await service.createTableData(ctx, tableId, { data: parsed.data });
+    getFactory().getDynamicTableWriteEffects().afterDataWrite(ctx.userId);
     return res.status(201).json({ success: true, data: created });
   } catch (error) {
     return handleApiError(error, res);
@@ -68,6 +69,7 @@ export async function updateAnalyticsDefinition(req: Request, res: Response) {
     const id = String(req.params.id || '');
     const service = getFactory().getDynamicTableService();
     const updated = await service.updateTableData(ctx, id, { data: parsed.data });
+    getFactory().getDynamicTableWriteEffects().afterDataWrite(ctx.userId);
     return res.status(200).json({ success: true, data: updated });
   } catch (error) {
     return handleApiError(error, res);
@@ -85,6 +87,7 @@ export async function deleteAnalyticsDefinition(req: Request, res: Response) {
     const id = String(req.params.id || '');
     const service = getFactory().getDynamicTableService();
     await service.deleteTableData(ctx, id);
+    getFactory().getDynamicTableWriteEffects().afterDataWrite(ctx.userId);
     return res.status(200).json({ success: true, message: 'Definition deleted' });
   } catch (error) {
     return handleApiError(error, res);

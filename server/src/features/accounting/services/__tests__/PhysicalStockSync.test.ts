@@ -48,9 +48,10 @@ function build(over: {
   };
   const dts = { createTableData: jest.fn(async () => ({ id: 'row-new' })) };
   /* eslint-disable @typescript-eslint/no-explicit-any */
-  const sync = new DynamicTablePhysicalStockSync(dts as any, repo as any);
+  const writeEffects = { afterDataWrite: jest.fn(), afterStructureWrite: jest.fn() };
+  const sync = new DynamicTablePhysicalStockSync(dts as any, repo as any, writeEffects);
   /* eslint-enable @typescript-eslint/no-explicit-any */
-  return { sync, repo, dts };
+  return { sync, repo, dts, writeEffects };
 }
 
 const PU_ROW = { id: 'pu-1', data: { productId: 'prod-1', unitId: 'unit-1', stock: 3 } };

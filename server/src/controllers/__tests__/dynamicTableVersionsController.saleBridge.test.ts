@@ -6,6 +6,7 @@ import type { Request, Response } from 'express';
  * Restore que falha não chama ponte nenhuma.
  */
 const restoreRowVersion = jest.fn();
+const afterDataWrite = jest.fn();
 const maybeSyncSaleFinalized = jest.fn();
 const maybeSyncSalePackageSold = jest.fn();
 const handleApiError = jest.fn();
@@ -20,7 +21,10 @@ jest.mock('@/lib/apiUtils', () => ({
 }));
 jest.mock('@/lib/factory', () => ({
   __esModule: true,
-  getFactory: () => ({ getDynamicTableVersionService: () => ({ restoreRowVersion }) }),
+  getFactory: () => ({
+    getDynamicTableVersionService: () => ({ restoreRowVersion }),
+    getDynamicTableWriteEffects: () => ({ afterDataWrite }),
+  }),
 }));
 jest.mock('@/features/accounting/sync/bridges/SaleSalesAccountingBridge', () => ({
   __esModule: true,
@@ -59,6 +63,8 @@ describe('dynamicTableVersionsController.restoreRowVersion — pontes contábeis
     expect(maybeSyncSalePackageSold).toHaveBeenCalledWith({ id: 'u1', userId: 'u1' }, TABLE_ID, restored);
     expect(restoreRowVersion.mock.invocationCallOrder[0]).toBeLessThan(maybeSyncSaleFinalized.mock.invocationCallOrder[0]);
     expect(res.json).toHaveBeenCalledWith({ success: true, data: restored });
+    // BE-INCR-DT-NO-CONSUMER-CALLS: restore é escrita de linha — invalida o KPI do dono depois do commit.
+    expect(afterDataWrite).toHaveBeenCalledWith('u1');
   });
 
   it('restore que falha não chama ponte', async () => {
@@ -66,6 +72,7 @@ describe('dynamicTableVersionsController.restoreRowVersion — pontes contábeis
     const req = { params: { tableId: TABLE_ID, dataId: DATA_ID, version: '1' } } as unknown as Request;
     await restoreHandler(req, mockRes());
     expect(maybeSyncSaleFinalized).not.toHaveBeenCalled();
+    expect(afterDataWrite).not.toHaveBeenCalled();
     expect(maybeSyncSalePackageSold).not.toHaveBeenCalled();
     expect(handleApiError).toHaveBeenCalledTimes(1);
   });

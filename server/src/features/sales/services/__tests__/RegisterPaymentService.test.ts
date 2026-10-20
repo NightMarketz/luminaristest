@@ -48,6 +48,7 @@ function buildService(over: { dts?: any; repo?: any; pkg?: any } = {}) {
     dynamicTableService as any,
     repository as any,
     packageBalanceService as any,
+    { afterDataWrite: jest.fn(), afterStructureWrite: jest.fn() },
   );
   return { svc, dynamicTableService, repository, packageBalanceService };
 }

@@ -113,6 +113,7 @@ function build(opts: {
     },
     kpiCache: { invalidate: jest.fn(() => void calls.push('reset:kpiCache')) },
   };
+  const writeEffects = { afterDataWrite: jest.fn(), afterStructureWrite: jest.fn() };
   const service = new SystemProvisioningService(
     tables as unknown as ProvisioningTableService,
     fiscal as unknown as ProvisioningFiscalService,
@@ -121,8 +122,9 @@ function build(opts: {
     knowledgeGraphs as never,
     opts.policy ?? new SystemProvisioningPolicy(),
     resetOwners as never,
+    writeEffects,
   );
-  return { service, calls, tables, fiscal, unitFiscal, actionProposals, knowledgeGraphs, resetOwners };
+  return { service, calls, tables, fiscal, unitFiscal, actionProposals, knowledgeGraphs, resetOwners, writeEffects };
 }
 
 describe('SystemProvisioningService.provision', () => {
@@ -136,6 +138,12 @@ describe('SystemProvisioningService.provision', () => {
     expect(r.fiscal.obrigacoes?.length).toBeGreaterThan(0);
     // a unidade nasce pelo caminho de escrita normal, com o nome/tipo do input
     expect(tables.createTableData).toHaveBeenCalledWith(ctx, 't-units', { data: { name: 'Matriz', type: 'Own' } });
+  });
+
+  it('BE-INCR-DT-NO-CONSUMER-CALLS: invalida o KPI do dono depois de provisionar (o motor não chama mais o cache)', async () => {
+    const { service, writeEffects } = build();
+    await service.provision(ctx, input({ regime: 'PRESUMIDO' }));
+    expect(writeEffects.afterDataWrite).toHaveBeenCalledWith(ctx.userId);
   });
 
   it('canProvision falso (já tem tabelas) ⇒ ForbiddenError com a mensagem de hoje e NADA instalado', async () => {

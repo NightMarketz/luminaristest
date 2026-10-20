@@ -27,6 +27,7 @@ lib/factory.ts = composition root (única peça de lib/ que conhece features)
 | L5 | policy não importa repository/service/`lib/prisma` (nem interface) | 5 (todas type-only) |
 | L6 | `models/`, `dtos/` não importam camada executável | 4 |
 | B1 | motor `features/dynamicTables/**` não importa `accounting`, `accountingBinding`, `legalParameters`, `fx`, `sectorKits` (`AC-2.1-B1`) | **0** |
+| B7 | motor `features/dynamicTables/**` não importa `features/(chat\|analytics\|integration)/services/` — "o motor nunca chama o consumidor" (Contrato §2.1). Emenda 2026-10-20, BE-INCR-DT-NO-CONSUMER-CALLS (dono, chat, 19/10: opção (b), F5 → β). Baseline antes/depois: 2 → **0** (as duas arestas `DynamicTableService → KnowledgeGraphService/KpiCacheService` removidas no mesmo PR; nunca entraram no arquivo de known violations). Prova de que morde: import plantado em `DynamicTableService.ts` → `B7` exit 1 | **0** |
 | F1 | libs fiscais puras (`lib/{sped,ecf,ecfReal,nfe*,nfse*,mit,cnab,ofx,cnpj,cpf,referentialCatalog}.ts`) só leem `features/*/models/` — nada de service/repository/Prisma/HTTP | 0 |
 | X1 | `lib/` (exceto `factory.ts`) não importa lógica de feature (models permitidos) | 0 |
 | X2 | produção não importa teste | 0 |

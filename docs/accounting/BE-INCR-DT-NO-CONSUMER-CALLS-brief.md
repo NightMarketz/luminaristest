@@ -243,4 +243,28 @@ Nenhuma. Não há regra contábil, fiscal ou legal neste item.
 
 ---
 
+## 9. Execução (sessao-feature, 2026-10-20) — dono, chat, 19/10: *"Já corrige aqui mesmo"*
+
+Base: empilhado no #769 (`claude/dynamictable-architecture-fixes-9e5ba8`).
+
+| Item | Status | Onde |
+|---|---|---|
+| 1–3 motor sem consumidor | feito | `DynamicTableService.ts`: imports, param do construtor, helper `syncGraph` e as 4 invalidações removidos |
+| 4 helper de integração (F8 → y) | feito | `server/src/features/integration/services/{IDynamicTableWriteEffects,DynamicTableWriteEffects}.ts` + README |
+| 5 chamada pós-commit | feito | controllers `dynamicTables` (4 linha + 2 preset), `analyticsDefinitions` (3), `dynamicTableVersions` (restore), `dashboard` (installModule); serviços CRM (6 métodos, depois da tx), cancelamento/pagamento de venda, espelho físico (3), agente de chat, provisioning |
+| 6 G1/G3 (F3) | feito | sync de schema por preset e instalação de tabela/módulo por preset → `afterStructureWrite` nos controllers |
+| 7 G5/G6 (F4) | feito | erro do grafo logado e propagado; dependência obrigatória em todos os construtores |
+| 8 T1 (F5 → β) | feito | regra `B7` no `server/.dependency-cruiser.cjs`; plantio → exit 1; limpo → exit 0, 31 known (sem crescer) |
+| 9 T2 | feito | `features/integration/__tests__/dynamicTableWritersCallEffects.test.ts` (varredura por arquivo; plantio em `SalesCancellationService` → vermelho com o arquivo nomeado) + ordem pós-commit no CRM (G4) + helper |
+| 10 testes existentes | feito | 9 testes ajustados (construtor/mocks) |
+| 11 gates | ver relatório do PR | `tsc` (src e testes) 0; unit 359/359 suítes |
+| 12 contrato | sem mudança (F6: b não emenda) | ADR-ARCH-BOUNDARIES §1 ganhou a linha B7 (§5 do ADR) |
+
+### Lacunas de spec
+
+- **G2 (KPI na compensação do onboarding) NÃO implementado.** O BRIEF previa (item 9), mas o teste ratificado do I7 item 1
+  diz que a compensação chama *só* tabelas + grafo + propostas — "nada do reset (layouts, chats, anexos, cache)". Conflito
+  com decisão anterior → não escolhi; ficou como estava (antes também não invalidava). Decisão do dono se quiser mudar.
+- `jobs/rekeyLegacyUnitCli.ts` isento: CLI em outro processo, o cache de KPI é em memória do servidor.
+
 *Gerado por `sessao-planejamento` em 2026-10-19. Nenhum fork ratificado; nenhum código de aplicação escrito.*

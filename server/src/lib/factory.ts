@@ -256,6 +256,7 @@ import { FieldCustomizationService } from '../features/interview/FieldCustomizat
 import { SystemProvisioningService } from '../features/onboarding/services/SystemProvisioningService';
 import * as attachmentStorage from './attachmentStorage';
 import { kpiCacheService } from '../features/analytics/services/KpiCacheService';
+import { DynamicTableWriteEffects } from '../features/integration/services/DynamicTableWriteEffects';
 import { SystemProvisioningPolicy } from '../features/onboarding/policies/SystemProvisioningPolicy';
 
 // Lib - External Services
@@ -819,6 +820,7 @@ export class ApplicationFactory {
     dynamicTableVersion: DynamicTableVersionService;
     luminarisAgent: LuminarisAgentService;
     knowledgeGraph: KnowledgeGraphService;
+    dynamicTableWriteEffects: DynamicTableWriteEffects;
     crmPipeline: CrmPipelineService;
     crmAnalytics: CrmAnalyticsService;
     salesCancellation: SalesCancellationService;
@@ -1023,13 +1025,16 @@ export class ApplicationFactory {
     const dynamicTableService = new DynamicTableService(
       this.repositories.dynamicTable,
       this.policies.dynamicTable,
-      knowledgeGraphService
     );
+    // BE-INCR-DT-NO-CONSUMER-CALLS (F1 → b): o motor não chama consumidor; quem orquestra a escrita
+    // (controller ou serviço de integração) chama estes efeitos depois do commit.
+    const dynamicTableWriteEffects = new DynamicTableWriteEffects(knowledgeGraphService, kpiCacheService);
 
     const luminarisAgentService = new LuminarisAgentService(
       dynamicTableService,
       this.repositories.actionProposal,
-      this.policies.dynamicTable
+      this.policies.dynamicTable,
+      dynamicTableWriteEffects,
     );
 
     // Shared instance: injected into ChatService (server-side persistence of chat turns)
@@ -1042,7 +1047,8 @@ export class ApplicationFactory {
 
     const crmPipelineService = new CrmPipelineService(
       dynamicTableService,
-      this.repositories.dynamicTable
+      this.repositories.dynamicTable,
+      dynamicTableWriteEffects,
     );
 
     const crmAnalyticsService = new CrmAnalyticsService(
@@ -1055,7 +1061,8 @@ export class ApplicationFactory {
     // applied inside the service via SaleReversalBridge.
     const salesCancellationService = new SalesCancellationService(
       dynamicTableService,
-      this.repositories.dynamicTable
+      this.repositories.dynamicTable,
+      dynamicTableWriteEffects,
     );
 
     // Sale payment transition (Incremento D / D1) — same orchestration shape as
@@ -1086,7 +1093,8 @@ export class ApplicationFactory {
     const registerPaymentService = new RegisterPaymentService(
       dynamicTableService,
       this.repositories.dynamicTable,
-      packageBalanceService
+      packageBalanceService,
+      dynamicTableWriteEffects,
     );
 
     const postingService = new PostingService(
@@ -1264,7 +1272,7 @@ export class ApplicationFactory {
       // LAC-E F-E2: existence gate for inventoryProductRef against the DT `products` catalog.
       new DynamicTableProductRefLookup(productRefPort),
       // F-D2=(b): espelho físico da compra (movimento DT via escrita isSystem, best-effort).
-      new DynamicTablePhysicalStockSync(stockRowWriterPort, stockRowPort),
+      new DynamicTablePhysicalStockSync(stockRowWriterPort, stockRowPort, dynamicTableWriteEffects),
       // BE-INCR-FIXED-ASSETS PR-5 (F-FA12 → a): modo 4 (fixedAssetItems) resolve class.costAccountId
       // via este repo — mesma instância do resto do módulo C8.
       this.repositories.fixedAssetClass,
@@ -1547,6 +1555,7 @@ export class ApplicationFactory {
       ),
       luminarisAgent: luminarisAgentService,
       knowledgeGraph: knowledgeGraphService,
+      dynamicTableWriteEffects,
       crmPipeline: crmPipelineService,
       crmAnalytics: crmAnalyticsService,
       salesCancellation: salesCancellationService,
@@ -1904,6 +1913,7 @@ export class ApplicationFactory {
           attachmentStorage,
           kpiCache: kpiCacheService,
         },
+        dynamicTableWriteEffects,
       ),
       ptaxSync: new PtaxSyncService(this.repositories.ptaxRate, this.ptaxClient),
       crmReport: new CrmReportService(
@@ -2188,6 +2198,7 @@ export class ApplicationFactory {
   public getDynamicTableVersionService = (): DynamicTableVersionService => this.services.dynamicTableVersion;
   public getLuminarisAgentService = (): LuminarisAgentService => this.services.luminarisAgent;
   public getKnowledgeGraphService = (): KnowledgeGraphService => this.services.knowledgeGraph;
+  public getDynamicTableWriteEffects = (): DynamicTableWriteEffects => this.services.dynamicTableWriteEffects;
   public getCrmPipelineService = (): CrmPipelineService => this.services.crmPipeline;
   public getCrmAnalyticsService = (): CrmAnalyticsService => this.services.crmAnalytics;
   public getSalesCancellationService = (): SalesCancellationService => this.services.salesCancellation;

@@ -35,7 +35,7 @@ function buildService(over: { dts?: any; repo?: any } = {}) {
     findDataById: jest.fn(async () => finalizedSaleRow()),
     ...over.repo,
   };
-  const svc = new SalesCancellationService(dynamicTableService as any, repository as any);
+  const svc = new SalesCancellationService(dynamicTableService as any, repository as any, { afterDataWrite: jest.fn(), afterStructureWrite: jest.fn() });
   return { svc, dynamicTableService, repository };
 }
 

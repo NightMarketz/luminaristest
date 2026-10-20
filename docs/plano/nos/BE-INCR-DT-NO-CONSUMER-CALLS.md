@@ -6,7 +6,7 @@ titulo: "Tirar do motor DynamicTable as chamadas a consumidores (KnowledgeGraph 
 estado: "planned"
 estado_detalhe: "19/10: BRIEF escrito (sessao-planejamento) · forks F1–F8 RATIFICADOS na recomendação pelo dono (F1 = opção b) · execução de código NÃO autorizada (falta 'executa'). Base: claude/dynamictable-architecture-fixes-9e5ba8 (PR #769, OPEN)"
 depende_de: []
-autorizacao: "dono, chat, 2026-10-19: \"Autorizo BE-INCR-DT-NO-CONSUMER-CALLS com a opção (b); ratifico F1 (b) e demais forks na recomendação.\" — cobre planejamento e forks; sem \"executa\", sem código"
+autorizacao: "dono, chat, 2026-10-19: \"Autorizo BE-INCR-DT-NO-CONSUMER-CALLS com a opção (b); ratifico F1 (b) e demais forks na recomendação.\" — cobre planejamento e forks · **EXECUTA** (dono, chat, 2026-10-19): \"Já corrige aqui mesmo\" — implementação nesta sessão, empilhada no #769; sem merge"
 perfil_previsto: "precisa-de-planejamento"
 perfil_evidencia: "forks F1–F8 abertos (mecanismo, tx externa, cobertura de G1/G3, erro silencioso, forma do guard, localização do helper); execução depende da escolha do dono"
 write_set: ["server/src/features/dynamicTables/services/DynamicTableService.ts", "server/src/features/dynamicTables/services/PresetSyncService.ts", "server/src/lib/factory.ts", "server/src/controllers/dynamicTablesController.ts", "server/src/controllers/analyticsDefinitionsController.ts", "server/.dependency-cruiser.cjs"]

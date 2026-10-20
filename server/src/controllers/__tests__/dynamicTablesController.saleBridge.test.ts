@@ -8,6 +8,7 @@ import type { Request, Response } from 'express';
  */
 const createTableData = jest.fn();
 const updateTableData = jest.fn();
+const afterDataWrite = jest.fn();
 const maybeSyncSaleFinalized = jest.fn();
 const getUserContextFromRequest = jest.fn(() => ({ id: 'u1', userId: 'u1' }));
 const handleApiError = jest.fn();
@@ -24,6 +25,7 @@ jest.mock('@/lib/factory', () => ({
   __esModule: true,
   getFactory: () => ({
     getDynamicTableService: () => ({ createTableData, updateTableData }),
+    getDynamicTableWriteEffects: () => ({ afterDataWrite }),
   }),
 }));
 jest.mock('@/features/accounting/sync/bridges/SaleSalesAccountingBridge', () => ({
@@ -63,6 +65,9 @@ describe('dynamicTablesController sale-bridge wiring', () => {
     expect(createTableData.mock.invocationCallOrder[0]).toBeLessThan(
       maybeSyncSaleFinalized.mock.invocationCallOrder[0],
     );
+    // BE-INCR-DT-NO-CONSUMER-CALLS: o KPI do dono é invalidado pelo controller, depois da escrita.
+    expect(afterDataWrite).toHaveBeenCalledWith('u1');
+    expect(createTableData.mock.invocationCallOrder[0]).toBeLessThan(afterDataWrite.mock.invocationCallOrder[0]);
     expect(res.status).toHaveBeenCalledWith(201);
   });
 

@@ -22,6 +22,7 @@ import type { ISavedTableViewRepository } from '../../savedViews/repositories/IS
 import type { ICrmReportDefinitionRepository } from '../../crm/repositories/ICrmReportDefinitionRepository';
 import type { IAttachmentRepository } from '../../attachments/repositories/IAttachmentRepository';
 import type { KpiCacheService } from '../../analytics/services/KpiCacheService';
+import type { IDynamicTableWriteEffects } from '../../integration/services/IDynamicTableWriteEffects';
 import type { IAccountingScopeResetService } from '../../accounting/services/AccountingScopeResetService';
 import type { ISystemProvisioningPolicy } from '../policies/ISystemProvisioningPolicy';
 
@@ -114,6 +115,8 @@ export class SystemProvisioningService implements ISystemProvisioningService {
     private readonly knowledgeGraphs: IKnowledgeGraphRepository,
     private readonly policy: ISystemProvisioningPolicy,
     private readonly resetOwners: SystemResetOwners,
+    /** Efeitos pós-commit de escrita no motor (KPI) — BE-INCR-DT-NO-CONSUMER-CALLS. */
+    private readonly writeEffects: Pick<IDynamicTableWriteEffects, 'afterDataWrite'>,
   ) {}
 
   async assertCanProvision(ctx: UserContext): Promise<void> {
@@ -129,6 +132,7 @@ export class SystemProvisioningService implements ISystemProvisioningService {
     const unitId = await this.createFirstUnitOrRollback(ctx, input.unit);
     const fiscal = await this.createCompanyFiscalProfileOrRollback(ctx, unitId, input.fiscal);
     await this.createUnitFiscalProfileOrLog(ctx, unitId, input.fiscal, input.sectorKey);
+    this.writeEffects.afterDataWrite(ctx.userId);
     return { installResult, unitId, fiscal };
   }
 
