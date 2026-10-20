@@ -291,23 +291,23 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
   console.log('[Dashboard SSR] Validating token...', { tokenPreview: token.substring(0, 20), tokenLength: token.length });
 
-  // DEBT: fetch fica (R2b, 20/10): o apiClient não tem token explícito para SSR. Ele lê `getCookie('auth_token')`
-  // sem `req` (no servidor dá undefined, então um Authorization passado só sobrevive por acidente), manda o fuso do
-  // Node como x-user-timezone e usa outra base URL padrão (`…/api`). Pagar = serviço com token/req explícitos.
-  // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
-  const response = await fetch(`${baseUrl}/dynamic-tables`, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Cookie': req.headers.cookie || '',
-    },
-  });
+  // Token explícito (o apiClient não lê cookie sem `req`) + Cookie repassado; rede fora do ar continua lançando.
+  let body: { data?: unknown[] };
+  let status = 200;
+  try {
+    body = await DynamicTableService.getTablesSsr({ token, cookie: req.headers.cookie || '' });
+  } catch (err) {
+    const errStatus = (err as { status?: unknown } | null)?.status;
+    if (typeof errStatus !== 'number') throw err;
+    status = errStatus;
+    body = {};
+  }
 
-  console.log('[Dashboard SSR] API response status:', response.status);
+  console.log('[Dashboard SSR] API response status:', status);
 
-  if (response.status === 401 || response.status === 403) {
+  if (status === 401 || status === 403) {
     console.log('[Dashboard SSR] Auth failed (401/403), deleting cookie and redirecting');
     deleteCookie('auth_token', { req, res });
     return {
@@ -318,7 +318,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
 
-  if (!response.ok) {
+  if (status >= 400) {
     console.log('[Dashboard SSR] API request failed (not ok), redirecting');
     return {
       redirect: {
@@ -328,7 +328,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
 
-  const body = await response.json().catch(() => ({ data: [] }));
   const tables = body.data || [];
 
   console.log('[Dashboard SSR] Found tables count:', tables.length);

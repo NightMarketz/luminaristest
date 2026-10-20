@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
-import { getCookie } from 'cookies-next';
 import { useTranslation } from 'next-i18next';
 import { IMessage, ICustomizationState, ICreationChoicePrompt, CreationChoice, ICreationError, InterviewModuleOption, ModuleKey } from '../types/InterviewTypes';
 import { ITable } from '../types/RightSidebarTypes';
-import type { CreateDashboardPayload, CreateDashboardResult } from '../../../lib/services/setup.service';
+import { SetupApiError, SetupService, type CreateDashboardPayload, type CreateDashboardResult } from '../../../lib/services/setup.service';
 import { InterviewApiError, InterviewService } from '@/lib/services/interview.service';
 import { notifyAccountingDraft } from '../setup/accountingDraftNotice';
 import { classifyCreationError } from '../setup/classifyCreationError';
@@ -118,42 +117,32 @@ export function useAiInterview() {
     setIsCreating(true);
     setCreationError(null);
     try {
-      const token = getCookie('auth_token');
       // W5 item 16: os módulos escolhidos na entrevista vão no create (somados ao padrão da suíte no servidor).
       const body: CreateDashboardPayload = { suiteKey: key, unit: { name: nomeDaUnidadeDaEntrevista(conversa, key) }, fiscal, modules };
-      let response: Response;
+      let created: CreateDashboardResult;
       try {
-        // DEBT: fetch fica — `SetupService.createDashboard` vai pelo apiClient, que perde o status quando o corpo de erro
-        // não tem `error`/`message` e troca corpo não-JSON por "Failed to parse server response": o fallback traduzido do
-        // W7 item 7 (AiInterviewSetup.i18n.test) e a classificação do W7 item 4 mudariam. Pagar exige corrigir o apiClient.
-        // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
-        response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/create`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify(body),
-        });
+        // `silent`: a falha aparece no `creationError` (com retry), não num toast.
+        created = await SetupService.createDashboard(body, { silent: true });
       } catch (err) {
-        // W7 item 4: falha de rede — o pedido pode ser reenviado (o 403 one-shot barra a criação dupla).
-        setCreationError({ kind: classifyCreationError(null, null), message: (err instanceof Error && err.message) || t('onboardingErrorUnexpected') });
-        setIsCreating(false);
-        return;
-      }
-
-      if (!response.ok) {
-        const errorData = (await response.json().catch(() => null)) as { error?: string; errorCode?: string } | null;
-        setCreationError({
-          kind: classifyCreationError(response.status, errorData),
-          message: errorData?.error || t('onboardingErrorCreateFailed'),
-        });
+        if (err instanceof SetupApiError && err.status !== undefined) {
+          // Corpo de erro como o servidor mandou (vazio ou não-JSON ⇒ `{}` ⇒ fallback traduzido, W7 item 7).
+          const errorData = {
+            error: typeof err.body.error === 'string' ? err.body.error : undefined,
+            errorCode: typeof err.body.errorCode === 'string' ? err.body.errorCode : undefined,
+          };
+          setCreationError({
+            kind: classifyCreationError(err.status, errorData),
+            message: errorData.error || t('onboardingErrorCreateFailed'),
+          });
+        } else {
+          // W7 item 4: falha de rede — o pedido pode ser reenviado (o 403 one-shot barra a criação dupla).
+          setCreationError({ kind: classifyCreationError(null, null), message: (err instanceof Error && err.message) || t('onboardingErrorUnexpected') });
+        }
         setIsCreating(false);
         return;
       }
       // I4 PR-4 (item 21): contabilidade `Draft` ⇒ aviso que não bloqueia, antes de navegar.
-      const created = (await response.json().catch(() => ({}))) as { data?: CreateDashboardResult };
-      notifyAccountingDraft(created.data?.accounting, t);
+      notifyAccountingDraft(created.accounting, t);
       setTimeout(() => {
         router.push('/dashboard');
       }, 2000);

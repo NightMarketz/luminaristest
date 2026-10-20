@@ -1,48 +1,46 @@
 
 import { getCookie } from 'cookies-next';
+import { DynamicTableService } from '@/lib/services/dynamic-table.service';
+
+/** apiClient rejeita resposta não-2xx com `{ ...corpo, status }`; sem status = não houve resposta (erro nativo). */
+function httpFailure(err: unknown): { status: number; body: Record<string, unknown> } | null {
+    if (!err || typeof err !== 'object' || typeof (err as { status?: unknown }).status !== 'number') return null;
+    const { status, ...body } = err as Record<string, unknown> & { status: number };
+    return { status, body };
+}
 
 /**
- * Cliente HTTP do seed de desenvolvimento (features/dev). Os 3 `fetch` ficam `DEBT: fetch` de propósito (R2b, 20/10):
- * o dump de erro (`logError`/`getErrorMsg`) precisa do status e do corpo cru, que o apiClient descarta em parte
- * (corpo sem error/message perde o status; não-JSON vira "Failed to parse server response"), e o apiClient soltaria
- * um toast por linha que falha num seed em lote. Ferramenta de dev, fora do produto: migrar não paga camada nenhuma.
+ * Cliente do seed de desenvolvimento (features/dev), sobre `DynamicTableService` em modo `silent`: um seed em lote
+ * não solta um toast por linha que falha; o dump de erro (`logError`/`getErrorMsg`) recebe o status e o corpo de erro.
  */
 export class ApiClient {
-    private baseUrl: string;
     private token: string;
-    private headers: HeadersInit;
 
     constructor() {
         this.token = getCookie('auth_token') as string;
         if (!this.token) throw new Error('Sem token de autenticação');
-        this.baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL as string) || 'http://localhost:3001';
-        this.headers = {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.token}`,
-        };
     }
 
     async getRows(tableId: string): Promise<unknown[]> {
-        // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
-        const res = await fetch(`${this.baseUrl}/dynamic-tables/${tableId}/data`, { headers: this.headers });
-        const body = await res.json();
-        return body?.data || [];
+        try {
+            const body = await DynamicTableService.getTableData(tableId, '', { silent: true });
+            return body?.data || [];
+        } catch (err) {
+            // Resposta não-2xx: como antes (sem checar `ok`), o corpo de erro não traz `data` ⇒ lista vazia.
+            if (httpFailure(err)) return [];
+            throw err;
+        }
     }
 
     async postRow(tableId: string, data: Record<string, unknown>, tableNameForLog: string = 'Unknown'): Promise<string> {
-        // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
-        const res = await fetch(`${this.baseUrl}/dynamic-tables/${tableId}/data`, {
-            method: 'POST',
-            headers: this.headers,
-            body: JSON.stringify({ data }),
-        });
-
-        let body: Record<string, unknown> = {};
-        try { body = await res.json(); } catch (e) { }
-
-        if (!res.ok) {
-            this.logError(tableNameForLog, data, body, res.status);
-            throw new Error(`[${tableNameForLog}] Falha ao criar: ${this.getErrorMsg(body)}`);
+        let body: Record<string, unknown>;
+        try {
+            body = await DynamicTableService.createRecord(tableId, { data }, { successMessage: null, silent: true });
+        } catch (err) {
+            const failure = httpFailure(err);
+            if (!failure) throw err;
+            this.logError(tableNameForLog, data, failure.body, failure.status);
+            throw new Error(`[${tableNameForLog}] Falha ao criar: ${this.getErrorMsg(failure.body)}`);
         }
 
         const bodyData = body?.data as Record<string, unknown> | string | undefined;
@@ -52,18 +50,13 @@ export class ApiClient {
     }
 
     async putRow(tableId: string, dataId: string, data: Record<string, unknown>, tableNameForLog: string = 'Unknown'): Promise<void> {
-        // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
-        const res = await fetch(`${this.baseUrl}/dynamic-tables/${tableId}/data/${dataId}`, {
-            method: 'PUT',
-            headers: this.headers,
-            body: JSON.stringify({ data }),
-        });
-
-        if (!res.ok) {
-            let body: Record<string, unknown> = {};
-            try { body = await res.json(); } catch (e) { }
-            this.logError(tableNameForLog, data, body, res.status);
-            throw new Error(`[${tableNameForLog}] Falha ao atualizar: ${this.getErrorMsg(body)}`);
+        try {
+            await DynamicTableService.updateRecord(tableId, dataId, { data }, { successMessage: null, silent: true });
+        } catch (err) {
+            const failure = httpFailure(err);
+            if (!failure) throw err;
+            this.logError(tableNameForLog, data, failure.body, failure.status);
+            throw new Error(`[${tableNameForLog}] Falha ao atualizar: ${this.getErrorMsg(failure.body)}`);
         }
     }
 
