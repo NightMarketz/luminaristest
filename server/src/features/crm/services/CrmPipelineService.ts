@@ -4,6 +4,7 @@ import { moduleOfTable } from '../../dynamicTables/presets/modules/registry';
 import logger from '../../../lib/logger';
 import type { DynamicTableService } from '../../dynamicTables/services/DynamicTableService';
 import type { IDynamicTableRepository } from '../../dynamicTables/repositories/IDynamicTableRepository';
+import type { IDynamicTableWriteEffects } from '../../integration/services/IDynamicTableWriteEffects';
 import type { ITableSchema } from '../../dynamicTables/models/DynamicTable.model';
 import type { AdvanceStageInput, ConvertLeadInput, CreateProposalInput, RecordNoShowInput } from '../dtos/CrmPipelineDto';
 import type { AdvanceOpportunityInput, ConvertLeadToOpportunityInput } from '../dtos/CrmOpportunityDto';
@@ -27,6 +28,8 @@ export class CrmPipelineService {
   constructor(
     private readonly dynamicTableService: DynamicTableService,
     private readonly repository: IDynamicTableRepository,
+    /** Efeitos pós-commit (KPI) — o motor não chama consumidor (BE-INCR-DT-NO-CONSUMER-CALLS). */
+    private readonly writeEffects: IDynamicTableWriteEffects,
   ) {}
 
   /**
@@ -97,6 +100,8 @@ export class CrmPipelineService {
       // updateTableData resolves the parent table from the record id internally.
       return this.dynamicTableService.updateTableData(user, input.leadId, { data: leadPatch }, { tx });
     });
+
+    this.writeEffects.afterDataWrite(user.userId);
 
     logger.info('CRM lead advanced stage', { leadId: input.leadId, stageId: input.stageId });
     return updated;
@@ -239,6 +244,8 @@ export class CrmPipelineService {
       return { account, contact, lead: updatedLead };
     });
 
+    this.writeEffects.afterDataWrite(user.userId);
+
     logger.info('Lead converted', { leadId: leadRow.id, accountId: result.account.id });
     return result;
   }
@@ -257,7 +264,7 @@ export class CrmPipelineService {
     }
 
     // Atomic: proposal create + lead snapshot update commit/rollback together.
-    return this.dynamicTableService.runInTransaction(async (tx) => {
+    const created = await this.dynamicTableService.runInTransaction(async (tx) => {
       const proposal = await this.dynamicTableService.createTableData(user, proposalsTableId, {
         data: {
           leadId: input.leadId,
@@ -278,6 +285,8 @@ export class CrmPipelineService {
       }, { tx });
       return proposal;
     });
+    this.writeEffects.afterDataWrite(user.userId);
+    return created;
   }
 
   /** Record a no-show: log an activity and either reschedule or revert the lead's stage. */
@@ -310,6 +319,8 @@ export class CrmPipelineService {
         await this.dynamicTableService.updateTableData(user, input.leadId, { data: { stageId: input.previousStageId } }, { tx });
       }
     });
+
+    this.writeEffects.afterDataWrite(user.userId);
 
     return { ok: true };
   }
@@ -370,6 +381,8 @@ export class CrmPipelineService {
       { data: patch },
       { isSystem: true },
     );
+
+    this.writeEffects.afterDataWrite(user.userId);
 
     logger.info('CRM opportunity advanced stage', {
       opportunityId: input.opportunityId,
@@ -462,6 +475,8 @@ export class CrmPipelineService {
         { tx },
       );
     });
+
+    this.writeEffects.afterDataWrite(user.userId);
 
     logger.info('Lead converted to opportunity', {
       leadId: leadRow.id,

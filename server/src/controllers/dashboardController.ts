@@ -490,6 +490,7 @@ export async function installModule(req: Request, res: Response) {
     const body = InstallModuleSchema.safeParse(req.body);
     if (!body.success) return res.status(400).json({ success: false, error: 'Payload inválido', details: body.error.issues });
     const data = await getFactory().getModuleInstallService().installModule(ctx, body.data.moduleKey);
+    await getFactory().getDynamicTableWriteEffects().afterStructureWrite(ctx.userId);
     return res.status(200).json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);

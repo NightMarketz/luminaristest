@@ -59,7 +59,7 @@ describe('Oportunidade Won/Lost é terminal', () => {
       })),
       findDataById: jest.fn(async () => ({ ...wonOpp })),
     };
-    const svc = new CrmPipelineService({ updateTableData } as any, repository as any);
+    const svc = new CrmPipelineService({ updateTableData } as any, repository as any, { afterDataWrite: jest.fn(), afterStructureWrite: jest.fn() });
 
     await expect(
       svc.advanceOpportunity(user, { opportunityId: 'opp-1', stageId: 's-won', amount: 90000 }),

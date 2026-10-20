@@ -68,6 +68,15 @@ module.exports = {
       from: { path: '^src/features/dynamicTables/', pathNot: TEST },
       to: { path: '^src/features/(accounting|accountingBinding|legalParameters|fx|sectorKits)/' },
     },
+    {
+      name: 'B7-dynamictable-no-consumer-services',
+      severity: 'error',
+      comment:
+        'Contrato §2.1: o motor nunca chama o consumidor (BE-INCR-DT-NO-CONSUMER-CALLS). Cache de KPI e ' +
+        'KnowledgeGraph são efeitos pós-commit de quem orquestra a escrita (features/integration).',
+      from: { path: '^src/features/dynamicTables/', pathNot: TEST },
+      to: { path: '^src/features/(chat|analytics|integration)/services/' },
+    },
     // ---- BE-INCR-SCOPE-UNIT-GUARD (nó I6, F-I6-7) ----
     {
       name: 'I6-controller-not-internal-scope',

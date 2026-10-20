@@ -8,8 +8,6 @@ import { NotFoundError, ForbiddenError, ValidationError } from '../../../lib/err
 import logger from '../../../lib/logger';
 import { globalRuleRegistry } from '../rules/RuleRegistry';
 import type { RuleContext } from '../rules/RuleTypes';
-import { KnowledgeGraphService } from '../../chat/services/KnowledgeGraphService';
-import { kpiCacheService } from '../../analytics/services/KpiCacheService';
 import { withVersionContext, ruleContextOf, type VersionWriteContext } from '../repositories/versionLedger';
 import type { Prisma } from 'generated/prisma';
 import type { PresetTableDefinition } from '../presets';
@@ -99,7 +97,6 @@ export class DynamicTableService {
   constructor(
     repository: IDynamicTableRepository,
     policy: IDynamicTablePolicy,
-    private readonly knowledgeGraphService?: KnowledgeGraphService,
     private readonly schemaValidator: SchemaValidator = new SchemaValidator(),
     private readonly governance: GovernanceEngine = new GovernanceEngine(),
   ) {
@@ -113,13 +110,6 @@ export class DynamicTableService {
   /** O repositório ligado à tx do chamador (`options.tx`), ou o de estado commitado. */
   private repoFor(tx?: Prisma.TransactionClient): IDynamicTableRepository {
     return tx ? this.repository.withTransaction(tx) : this.repository;
-  }
-
-  private async syncGraph(userId: string, what: string): Promise<void> {
-    if (!this.knowledgeGraphService) return;
-    await this.knowledgeGraphService.syncGraph(userId).catch(err =>
-      logger.error(`Error syncing graph after ${what}`, { userId, ...errorContext(err) })
-    );
   }
 
   /**
@@ -170,20 +160,14 @@ export class DynamicTableService {
     // Validate that every relation column's targetTable exists and belongs to this user.
     await this.validateRelationTargetOwnership(userId, data.schema as unknown as ITableSchema);
 
-    const table = await this.repository.createTable(userId, data);
-    await this.syncGraph(userId, 'table creation');
-    return table;
+    return this.repository.createTable(userId, data);
   }
 
   private async _updateTable(tableId: string, data: UpdateDynamicTableDtoType): Promise<IDynamicTable> {
-    const table = await this.repository.updateTable(tableId, data);
-    const updatedTable = await this.repository.findTableById(tableId);
-    if (updatedTable) await this.syncGraph(updatedTable.userId, 'table update');
-    return table;
+    return this.repository.updateTable(tableId, data);
   }
 
   private async _deleteTable(tableId: string): Promise<void> {
-    // Resolve the owner before deletion so we can invalidate the KnowledgeGraph afterward.
     const tableToDelete = await this.repository.findTableById(tableId);
     if (!tableToDelete) throw new NotFoundError('Table not found.');
 
@@ -200,10 +184,6 @@ export class DynamicTableService {
     await this.markBrokenRelationColumns(tableToDelete.userId, tableId).catch(err =>
       logger.error('Error marking broken relation columns after table deletion', { tableId, ...errorContext(err) })
     );
-
-    // Invalidate the KnowledgeGraph so the agent does not "see" the deleted table
-    // on the next chat session. syncGraph will rebuild it from the remaining tables (R27).
-    await this.syncGraph(tableToDelete.userId, 'table deletion');
   }
 
   /**
@@ -632,7 +612,6 @@ export class DynamicTableService {
       ? await writeCreate(validationRepo)
       : await this.runSerializedIfNoOverlap(table, isSystem, () => this.repository.runInTransaction(repo => writeCreate(repo)));
 
-    kpiCacheService.invalidate(table.userId);
     return created;
   }
 
@@ -836,7 +815,6 @@ export class DynamicTableService {
       ? await writeUpdate(validationRepo)
       : await this.runSerializedIfNoOverlap(table, isSystem, () => this.repository.runInTransaction(repo => writeUpdate(repo)));
 
-    kpiCacheService.invalidate(table.userId);
     return updated;
   }
 
@@ -952,7 +930,6 @@ export class DynamicTableService {
       await this.runRules({ userId: table.userId, table, schema, operation: 'delete', before, after: null, repository: ruleRepo }, 'afterDelete');
     });
 
-    kpiCacheService.invalidate(table.userId);
   }
 
   /**
@@ -1021,7 +998,6 @@ export class DynamicTableService {
       }
     });
 
-    kpiCacheService.invalidate(table.userId);
     return { deleted };
   }
 

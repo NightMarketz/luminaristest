@@ -53,14 +53,44 @@ function buildService(over: { dts?: any; repo?: any } = {}) {
         : { id, dynamicTableId: 'leads-table', data: {} }),
     ...over.repo,
   };
-  const svc = new CrmPipelineService(dynamicTableService as any, repository as any);
-  return { svc, dynamicTableService, repository };
+  const writeEffects = { afterDataWrite: jest.fn(), afterStructureWrite: jest.fn() };
+  const svc = new CrmPipelineService(dynamicTableService as any, repository as any, writeEffects);
+  return { svc, dynamicTableService, repository, writeEffects };
 }
 
 const txArg = { tx: { __tx: true } };
 
 describe('CrmPipelineService', () => {
   beforeEach(() => jest.clearAllMocks());
+
+  describe('efeito pós-commit (BE-INCR-DT-NO-CONSUMER-CALLS, G4)', () => {
+    // Antes, o motor invalidava o KPI DENTRO da tx do CRM (antes do commit): um KPI concorrente podia
+    // recalcular com o estado pré-commit e cachear por 5 min. Agora o CRM invalida depois que a tx retorna.
+    it('advanceStage invalida o KPI do dono só depois que a transação terminou', async () => {
+      const seenInsideTx: number[] = [];
+      const { svc, writeEffects } = buildService({
+        dts: {
+          runInTransaction: jest.fn(async (fn: any) => {
+            const r = await fn({ __tx: true });
+            seenInsideTx.push(writeEffects.afterDataWrite.mock.calls.length);
+            return r;
+          }),
+        },
+      });
+      await svc.advanceStage(user, { leadId: 'l1', stageId: 's2', amount: 1000, currency: 'BRL' });
+      expect(seenInsideTx).toEqual([0]);
+      expect(writeEffects.afterDataWrite).toHaveBeenCalledTimes(1);
+      expect(writeEffects.afterDataWrite).toHaveBeenCalledWith(user.userId);
+    });
+
+    it('tx que falha não invalida (nada foi gravado)', async () => {
+      const { svc, writeEffects } = buildService({
+        dts: { runInTransaction: jest.fn(async () => { throw new Error('rollback'); }) },
+      });
+      await expect(svc.createProposal(user, { leadId: 'l1', amount: 10, currency: 'BRL' } as any)).rejects.toThrow('rollback');
+      expect(writeEffects.afterDataWrite).not.toHaveBeenCalled();
+    });
+  });
 
   describe('advanceStage', () => {
     it('cria proposta + atualiza lead na MESMA transação quando a etapa gravada é proposal', async () => {

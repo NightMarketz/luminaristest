@@ -3,6 +3,7 @@ import { NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import type { DynamicTableService } from '../../dynamicTables/services/DynamicTableService';
 import type { IDynamicTableRepository } from '../../dynamicTables/repositories/IDynamicTableRepository';
+import type { IDynamicTableWriteEffects } from '../../integration/services/IDynamicTableWriteEffects';
 import { maybeReverseSale } from '../../accounting/sync/bridges/SaleReversalBridge';
 import type { CancelSaleInput, ReturnSaleInput } from '../dtos/SalesCancellationDto';
 
@@ -27,6 +28,7 @@ export class SalesCancellationService {
   constructor(
     private readonly dynamicTableService: DynamicTableService,
     private readonly repository: IDynamicTableRepository,
+    private readonly writeEffects: IDynamicTableWriteEffects,
   ) {}
 
   /** Cancel a finalized sale: status → Cancelled, then reverse its revenue (+ settlement). */
@@ -86,6 +88,8 @@ export class SalesCancellationService {
       { data: patch },
       { isSystem: true },
     );
+
+    this.writeEffects.afterDataWrite(user.userId);
 
     logger.info('Sale status transitioned', {
       saleId: input.saleId,

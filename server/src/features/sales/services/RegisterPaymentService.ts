@@ -3,6 +3,7 @@ import { NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import type { DynamicTableService } from '../../dynamicTables/services/DynamicTableService';
 import type { IDynamicTableRepository } from '../../dynamicTables/repositories/IDynamicTableRepository';
+import type { IDynamicTableWriteEffects } from '../../integration/services/IDynamicTableWriteEffects';
 import { maybeSyncSaleSettled } from '../../accounting/sync/bridges/SaleSettlementBridge';
 import { resolveAccountingScopeInternal } from '../../accounting/scope/resolveAccountingScopeInternal';
 import type { PackageBalanceService } from '../../packages/services/PackageBalanceService';
@@ -30,6 +31,7 @@ export class RegisterPaymentService {
     private readonly dynamicTableService: DynamicTableService,
     private readonly repository: IDynamicTableRepository,
     private readonly packageBalanceService: PackageBalanceService,
+    private readonly writeEffects: IDynamicTableWriteEffects,
   ) {}
 
   /**
@@ -124,6 +126,8 @@ export class RegisterPaymentService {
       { data: patch },
       { isSystem: true },
     );
+
+    this.writeEffects.afterDataWrite(user.userId);
 
     logger.info('Sale payment registered', {
       saleId: input.saleId,

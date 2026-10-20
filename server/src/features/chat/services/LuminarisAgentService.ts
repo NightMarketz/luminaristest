@@ -4,6 +4,7 @@ import logger from '../../../lib/logger';
 import { NotFoundError, ForbiddenError, ValidationError } from '../../../lib/errors';
 import { IActionProposalRepository } from '../repositories/IActionProposalRepository';
 import { IDynamicTablePolicy } from '../../dynamicTables/policies/IDynamicTablePolicy';
+import type { IDynamicTableWriteEffects } from '../../integration/services/IDynamicTableWriteEffects';
 import { agentToolError, QueryTableDataResult } from '../models/AgentTool.model';
 import { ActionProposal, Prisma } from 'generated/prisma';
 import OpenAI from 'openai';
@@ -25,7 +26,8 @@ export class LuminarisAgentService {
     constructor(
         private dynamicTableService: DynamicTableService,
         private proposalRepository: IActionProposalRepository,
-        private policy: IDynamicTablePolicy
+        private policy: IDynamicTablePolicy,
+        private readonly writeEffects: IDynamicTableWriteEffects,
     ) { }
 
     /**
@@ -235,6 +237,7 @@ export class LuminarisAgentService {
             logger.error(`Failed to execute proposal ${proposalId}`, { error });
             throw error;
         }
+        this.writeEffects.afterDataWrite(user.userId);
 
         // The data write succeeded (and is itself transactional). Cleaning up the proposal is
         // best-effort: a failure here must not turn a successful operation into an error — stale

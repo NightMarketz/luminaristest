@@ -38,8 +38,9 @@ function makeService(table: Record<string, unknown>, rowsInTable: Array<{ id: st
     findById: jest.fn(), delete: jest.fn(), findByUserId: jest.fn(),
     deleteOldProposals: jest.fn(), deleteByUserId: jest.fn(),
   };
-  const service = new LuminarisAgentService(dynamicTableService as any, proposalRepository as any, new DynamicTablePolicy());
-  return { service, dynamicTableService, proposalRepository };
+  const writeEffects = { afterDataWrite: jest.fn(), afterStructureWrite: jest.fn() };
+  const service = new LuminarisAgentService(dynamicTableService as any, proposalRepository as any, new DynamicTablePolicy(), writeEffects);
+  return { service, dynamicTableService, proposalRepository, writeEffects };
 }
 
 describe('request_record_creation — permissão antes de gravar', () => {

@@ -2,6 +2,7 @@ import type { UserContext } from '../../../types/UserContext';
 import type { StockRowPort, StockRowWriterPort } from '../ports/OriginPorts';
 import type { AccountingScope } from '../scope/AccountingScope';
 import logger from '../../../lib/logger';
+import type { IDynamicTableWriteEffects } from '../../integration/services/IDynamicTableWriteEffects';
 
 /**
  * PhysicalStockSync — BE-INCR-PURCHASE-PHYSICAL-SYNC (LAC-D, F-D2=(b) ratificado).
@@ -63,6 +64,7 @@ export class DynamicTablePhysicalStockSync implements IPhysicalStockSync {
   constructor(
     private readonly dynamicTableService: StockRowWriterPort,
     private readonly repo: StockRowPort,
+    private readonly writeEffects: Pick<IDynamicTableWriteEffects, 'afterDataWrite'>,
   ) {}
 
   /**
@@ -116,6 +118,7 @@ export class DynamicTablePhysicalStockSync implements IPhysicalStockSync {
       },
       { isSystem: true },
     );
+    this.writeEffects.afterDataWrite(scope.ownerUserId);
     return 'created';
   }
 
@@ -160,6 +163,7 @@ export class DynamicTablePhysicalStockSync implements IPhysicalStockSync {
       },
       { isSystem: true },
     );
+    this.writeEffects.afterDataWrite(scope.ownerUserId);
     return 'reversed';
   }
 
@@ -186,5 +190,6 @@ export class DynamicTablePhysicalStockSync implements IPhysicalStockSync {
       { data: { productId: productRef, unitId, stock: 0 } },
       { isSystem: true },
     );
+    this.writeEffects.afterDataWrite(scope.ownerUserId);
   }
 }

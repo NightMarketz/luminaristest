@@ -119,6 +119,7 @@ export async function createTableData(req: Request, res: Response) {
 
     const service = getFactory().getDynamicTableService();
     const created = await service.createTableData(ctx, req.params.tableId, body.data);
+    getFactory().getDynamicTableWriteEffects().afterDataWrite(ctx.userId);
 
     // Post-commit accounting integration (§2.1: controller/integration layer, NEVER inside
     // the DynamicTable engine). A sale may be born Finalized — non-fatal, idempotent. Revenue
@@ -149,6 +150,7 @@ export async function updateTableData(req: Request, res: Response) {
 
     const service = getFactory().getDynamicTableService();
     const updated = await service.updateTableData(ctx, req.params.dataId, body.data);
+    getFactory().getDynamicTableWriteEffects().afterDataWrite(ctx.userId);
 
     // Post-commit accounting integration (§2.1: controller/integration layer, NEVER inside
     // the DynamicTable engine). Fires on the Draft→Finalized transition — non-fatal,
@@ -175,6 +177,7 @@ export async function deleteTableData(req: Request, res: Response) {
     await assertNoOpenStock(ctx.userId, [dataIdParse.data]);
     const service = getFactory().getDynamicTableService();
     await service.deleteTableData(ctx, req.params.dataId);
+    getFactory().getDynamicTableWriteEffects().afterDataWrite(ctx.userId);
     return res.status(204).end();
   } catch (error) {
     return handleApiError(error, res);
@@ -200,6 +203,7 @@ export async function batchDeleteTableData(req: Request, res: Response) {
     await assertNoOpenStock(ctx.userId, body.data.ids);
     const service = getFactory().getDynamicTableService();
     const result = await service.deleteTableDataBatch(ctx, tableParse.data, body.data.ids);
+    getFactory().getDynamicTableWriteEffects().afterDataWrite(ctx.userId);
     return res.json({ success: true, data: { deleted: result.deleted } });
   } catch (error) {
     return handleApiError(error, res);
@@ -221,6 +225,7 @@ export async function syncPreset(req: Request, res: Response) {
 
     const service = getFactory().getPresetSyncService();
     const result = await service.syncInstalledTableFromPreset(ctx, body.data.internalName);
+    await getFactory().getDynamicTableWriteEffects().afterStructureWrite(ctx.userId);
     return res.json({ success: true, data: result });
   } catch (error) {
     return handleApiError(error, res);
@@ -242,6 +247,7 @@ export async function installTableFromPreset(req: Request, res: Response) {
 
     const service = getFactory().getPresetSyncService();
     const data = await service.installTableFromPreset(ctx, body.data.internalName);
+    await getFactory().getDynamicTableWriteEffects().afterStructureWrite(ctx.userId);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
