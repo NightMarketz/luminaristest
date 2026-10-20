@@ -3,8 +3,8 @@ id: "BE-INCR-DT-NO-CONSUMER-CALLS"
 tipo: "plataforma"
 dominio: "motor"
 titulo: "Tirar do motor DynamicTable as chamadas a consumidores (KnowledgeGraph e KpiCache)"
-estado: "planned"
-estado_detalhe: "19/10: BRIEF escrito (sessao-planejamento) · forks F1–F8 RATIFICADOS na recomendação pelo dono (F1 = opção b) · execução de código NÃO autorizada (falta 'executa'). Base: claude/dynamictable-architecture-fixes-9e5ba8 (PR #769, OPEN)"
+estado: "done"
+estado_detalhe: "20/10 (executa): feito no #773 (empilhado no #769) — motor sem chat/analytics, efeitos pós-commit em features/integration, B7 + varredura; G2 fica como lacuna (I7 item 1). Merge só com OK do dono · 19/10: BRIEF escrito (sessao-planejamento) · forks F1–F8 RATIFICADOS na recomendação pelo dono (F1 = opção b) · execução de código NÃO autorizada (falta 'executa'). Base: claude/dynamictable-architecture-fixes-9e5ba8 (PR #769, OPEN)"
 depende_de: []
 autorizacao: "dono, chat, 2026-10-19: \"Autorizo BE-INCR-DT-NO-CONSUMER-CALLS com a opção (b); ratifico F1 (b) e demais forks na recomendação.\" — cobre planejamento e forks · **EXECUTA** (dono, chat, 2026-10-19): \"Já corrige aqui mesmo\" — implementação nesta sessão, empilhada no #769; sem merge"
 perfil_previsto: "precisa-de-planejamento"
@@ -12,12 +12,12 @@ perfil_evidencia: "forks F1–F8 abertos (mecanismo, tx externa, cobertura de G1
 write_set: ["server/src/features/dynamicTables/services/DynamicTableService.ts", "server/src/features/dynamicTables/services/PresetSyncService.ts", "server/src/lib/factory.ts", "server/src/controllers/dynamicTablesController.ts", "server/src/controllers/analyticsDefinitionsController.ts", "server/.dependency-cruiser.cjs"]
 registros: ["server/src/lib/factory.ts"]
 ancora_sdd: "—"
-atualizado: "2026-10-19"
-prs: []
+atualizado: "2026-10-20"
+prs: ["#773"]
 ---
 # BE-INCR-DT-NO-CONSUMER-CALLS — tirar do motor DynamicTable as chamadas a consumidores
 
-**Estado:** `planned` — 19/10: BRIEF escrito com checklist de 14 itens, contratos das opções (a)–(d), teste-guarda proposto (T1 gate B7 + T2 comportamental). **Forks F1–F8 ratificados pelo dono na recomendação** (F1 = (b)). **Execução não autorizada**: a autorização não diz "executa"; a sessão de feature só roda com esse comando.
+**Estado:** `done` — 19/10: BRIEF escrito (sessao-planejamento) · forks F1–F8 RATIFICADOS na recomendação pelo dono (F1 = opção b) · execução de código NÃO autorizada (falta 'executa'). Base: claude/dynamictable-architecture-fixes-9e5ba8 (PR #769, OPEN)  
 **Desbloqueia:** —
 
 ## Origem
