@@ -17,7 +17,7 @@ prs: ["#773"]
 ---
 # BE-INCR-DT-NO-CONSUMER-CALLS — tirar do motor DynamicTable as chamadas a consumidores
 
-**Estado:** `done` — 19/10: BRIEF escrito (sessao-planejamento) · forks F1–F8 RATIFICADOS na recomendação pelo dono (F1 = opção b) · execução de código NÃO autorizada (falta 'executa'). Base: claude/dynamictable-architecture-fixes-9e5ba8 (PR #769, OPEN)  
+**Estado:** `done` — 20/10 (executa): feito no #773 (empilhado no #769); G2 fica como lacuna (I7 item 1). Merge só com OK do dono · 19/10: BRIEF escrito; forks F1–F8 ratificados na recomendação (F1 = opção b). Base: claude/dynamictable-architecture-fixes-9e5ba8 (PR #769, OPEN)  
 **Desbloqueia:** —
 
 ## Origem
