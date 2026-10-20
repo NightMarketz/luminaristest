@@ -20,7 +20,7 @@ registros: ["server/src/lib/factory.ts", "server/src/routes/accounting.ts", "ser
 **Estado:** `planned` — 20/10: PRE-ADR **Proposed** (ADR-INCR-RETENCOES-FONTE) pela sessao-planejamento sob a Q2 (a) da proposta de 20/10 — forks F-RET-1..9 PENDENTES, P-RET-1..6 ao contador/fonte oficial. **Não roteia até a ratificação.** Sem BRIEF, sem 'executa'. Achado legal de 20/10: a CSRF 4,65% vale só até 31/12/2026 — LC 214 art. 509 (efeitos art. 544 III) deixa só CSLL 1% a partir de 01/01/2027; o Simples como pagador não retém CSRF (Lei 10.833 art. 30 § 2º) e pagamento a optante não sofre (art. 32 III). Relação com o PES-2 (F-PES-1 a, ratificado 12/10, sem nó em nos/): este nó + EFD-REINF o materializam (F-RET-1). Hoje: Payable sem campo de retenção (grep 0); só retenções sofridas informadas à mão (X7 item 15, X8, ISS tpRetISSQN)  
 **Autorização:** dono, chat, 2026-10-20: "Q1 a, Q2 a. Grava as decisões e pode começar pelo fold R0 (Q3 a)." — Q2 (a): PRE-ADR por sessao-planejamento, sem 'executa'  
 **Depende de:** [[D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS]] (cédula Q2 (a)), [[FIN-01]] (Payable/PayablePayment), [[FIN-02]] (Receivable/ReceivableReceipt), [[LEGAL-PARAMS]] (tabela `RETENCAO` + códigos), [[IRRF-DISTRIBUICAO]] (pontilhada: molde do resumo mensal/DARF, função de vencimento), [[X7]] (pontilhada: item 15 consome as sofridas), [[D1]] (pontilhada: item 1b — P-RET-1..6)  
-**Desbloqueia:** `EFD-REINF` (R-4010/R-4020/R-2010 nascem do resumo mensal D8)  
+**Desbloqueia:** [[EFD-REINF]] (R-4010/R-4020/R-2010 nascem do resumo mensal D8)  
 **Âncora no SDD consolidado:** §M7.1  
 **Régua:** seção **F1** da régua F (Q1 (a), 20/10) — não entra na régua de 63
 
@@ -33,8 +33,8 @@ registros: ["server/src/lib/factory.ts", "server/src/routes/accounting.ts", "ser
 - `WithholdingProfile` por contraparte × natureza do serviço (IRRF/CSRF/INSS/ISS + `codMun` + alíquota informada), com fonte do enquadramento; o título só sobrescreve **para menos**, com motivo.
 - Título de imposto = `Payable` da União/INSS/município por (competência, código), vencimento legal (IRRF/CSRF: último dia útil do 2º decêndio do mês seguinte — Lei 11.196 art. 70 I "e", Lei 10.833 art. 35; INSS: dia 20), na **mesma tx** do título/pagamento de origem.
 - Legs no entry de reconhecimento e de baixa (`kind = WITHHOLDING` em `PayablePayment`/`ReceivableReceipt`, molde `DISCOUNT`).
-- Resumo mensal feito/sofrido por código (molde do IRRF-DISTRIBUICAO) — insumo do `EFD-REINF` e sugestão para X7 item 15 / X8 / ISS Fase C.
-- Fora: PF e eSocial (PRE-ADR de pessoal), dividendos/JCP ([[IRRF-DISTRIBUICAO]]), órgão público pagador, CBS/IBS ([[IBS-CBS-2027]]), transmissão Reinf (`EFD-REINF`).
+- Resumo mensal feito/sofrido por código (molde do IRRF-DISTRIBUICAO) — insumo do [[EFD-REINF]] e sugestão para X7 item 15 / X8 / ISS Fase C.
+- Fora: PF e eSocial (PRE-ADR de pessoal), dividendos/JCP ([[IRRF-DISTRIBUICAO]]), órgão público pagador, CBS/IBS ([[IBS-CBS-2027]]), transmissão Reinf ([[EFD-REINF]]).
 
 ## Gatilho
 
