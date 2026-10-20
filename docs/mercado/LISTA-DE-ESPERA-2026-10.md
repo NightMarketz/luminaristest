@@ -1,5 +1,8 @@
 # Lista de espera — texto e formulário (caminho (a): camada contábil ao lado do sistema do salão)
 
+> **HISTÓRICO.** Revogado por [[D-2026-10-19-LANDING-RECADO-GERAL]] (dono, chat, 19/10/2026): a landing pública
+> usa o recado geral da v0.2. As travas do §3 e o consentimento do §2 continuam valendo como lei.
+
 > **Decisão:** dono, chat, 15/10/2026: *"Caminho (a): Luminaris como camada contábil ao lado do sistema de salão.
 > Ajusta o texto da lista de espera para isso e inclui a pergunta 'que sistema você usa hoje / usaria junto?'"* —
 > registrada em [[D-2026-10-15-CAMINHO-A-CAMADA-CONTABIL]].
