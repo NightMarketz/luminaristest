@@ -18,6 +18,9 @@ atualizado: "2026-10-17"
 
 ## Docs
 
+- **20/10: promovido ao nó [[IBS-CBS-2027]]** (seção F1 da régua F, Q2 (a) da proposta de 20/10) — PRE-ADR
+  [`ADR-INCR-IBS-CBS-2027.md`](../../adr/ADR-INCR-IBS-CBS-2027.md) **Proposed**, forks F-IBS-1..10 pendentes. Este diferido
+  fica como trilha histórica; o estado vivo passa a ser o da nota do nó.
 - [`TRANSCRICAO-LC214-art10-pagamento-antecipado-2026-09-27.md`](../../accounting/fontes-oficiais/TRANSCRICAO-LC214-art10-pagamento-antecipado-2026-09-27.md)
   — V5: art. 10 §§ 4º/5º/7º transcritos; §3 mostra que o razão **já** difere a receita do pacote (V7), então o que falta é fiscal, não contábil
 
