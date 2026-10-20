@@ -11,7 +11,7 @@ import type { ChatInterviewInput } from '@/types/contracts/interview/ChatIntervi
  * Both endpoints answer with a raw body (no `{ success, data }` envelope), returned as-is. Every
  * rejection becomes an `InterviewApiError` carrying the HTTP `status` (absent when no response
  * arrived) and the parsed error `body`, so callers can branch on `status`/`body.code` as they did on
- * the raw `Response`. `apiClient` also toasts the server message on any non-2xx.
+ * the raw `Response`. Calls are `silent` (no apiClient toast): the interview renders its own errors.
  */
 
 export class InterviewApiError extends Error {
@@ -63,11 +63,11 @@ async function call<T>(req: () => Promise<T>): Promise<T> {
 export const InterviewService = {
   /** POST /dashboard/ai/ChatInterview — one interview turn; the reply shape is read by the caller. */
   chatInterview<T>(input: ChatInterviewInput, signal?: AbortSignal): Promise<T> {
-    return call(() => apiClient.post<T>('/dashboard/ai/ChatInterview', input, signal ? { signal } : undefined));
+    return call(() => apiClient.post<T>('/dashboard/ai/ChatInterview', input, { silent: true, ...(signal ? { signal } : {}) }));
   },
 
   /** POST /dashboard/ai/CustomizeFields — the field-customization panel turn. */
   customizeFields(input: LegacyCustomizeFieldsBody): Promise<unknown> {
-    return call(() => apiClient.post<unknown>('/dashboard/ai/CustomizeFields', input));
+    return call(() => apiClient.post<unknown>('/dashboard/ai/CustomizeFields', input, { silent: true }));
   },
 };

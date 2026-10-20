@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { InterviewApiError, InterviewService } from '../interview.service';
+import { notify } from '../../notifications/notify';
 
 /** interview.service — R2b: URL, corpo e signal dos fetch da Entrevista; erro com status + corpo para o hook ramificar. */
 vi.mock('cookies-next', () => ({ getCookie: () => 'tok-1' }));
@@ -37,6 +38,8 @@ describe('InterviewService', () => {
     const err = await InterviewService.chatInterview({ stage: 'X' }).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(InterviewApiError);
     expect(err).toMatchObject({ status: 404, body: { success: false, error: 'sumiu', code: 'INTERVIEW_SESSION_NOT_FOUND' } });
+    // silent: a Entrevista trata 404/409 de sessão na conversa, sem toast do apiClient.
+    expect(notify).not.toHaveBeenCalled();
   });
 
   it('customizeFields: POST /dashboard/ai/CustomizeFields com o corpo legado inalterado', async () => {

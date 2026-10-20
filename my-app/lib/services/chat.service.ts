@@ -17,7 +17,7 @@ import type {
  *
  * Every rejection becomes a `ChatApiError` (an `Error`, so `err instanceof Error ? err.message` in the
  * hooks keeps working) carrying the HTTP `status` (absent on network failure) and the server `message`.
- * `apiClient` also toasts the server message on any non-2xx.
+ * Calls are `silent` (no apiClient toast): the hooks render errors inside the chat.
  */
 
 export class ChatApiError extends Error {
@@ -32,6 +32,8 @@ export class ChatApiError extends Error {
     this.name = 'ChatApiError';
   }
 }
+
+const SILENT = { silent: true } as const;
 
 interface Envelope<T> {
   success?: boolean;
@@ -55,8 +57,7 @@ function toChatError(err: unknown, opts: ErrorOptions): ChatApiError {
       serverMessage,
     );
   }
-  // No status = no response: apiClient rethrows the native error (e.g. TypeError 'Failed to fetch'),
-  // or `{ error }` when the error body carried neither `error` nor `message` (status is lost there).
+  // No status = no response: apiClient rethrows the native error (e.g. TypeError 'Failed to fetch').
   const native = serverMessage ?? (typeof e.error === 'string' && e.error ? e.error : undefined);
   return new ChatApiError(native ?? 'Network request failed');
 }
@@ -73,7 +74,7 @@ export const ChatService = {
   /** GET /chat-instances[?type=] — the caller's chat list. */
   async listInstances<T>(type?: ListChatInstancesQueryInput['type']): Promise<T[]> {
     const query = type ? `?type=${encodeURIComponent(type)}` : '';
-    const body = await call(() => apiClient.get<Envelope<T[]>>(`/chat-instances${query}`), {
+    const body = await call(() => apiClient.get<Envelope<T[]>>(`/chat-instances${query}`, SILENT), {
       fallback: (s) => `Falha ao buscar lista de chats (status ${s})`,
       preferServerMessage: false,
     });
@@ -82,7 +83,7 @@ export const ChatService = {
 
   /** POST /chat-instances/get-or-create — idempotent per widgetInstanceId. */
   async getOrCreateInstance<T>(input: GetOrCreateChatInstanceInput): Promise<T> {
-    const body = await call(() => apiClient.post<Envelope<T>>('/chat-instances/get-or-create', input), {
+    const body = await call(() => apiClient.post<Envelope<T>>('/chat-instances/get-or-create', input, SILENT), {
       fallback: (s) => `Failed to get/create chat instance (status ${s})`,
       preferServerMessage: true,
     });
@@ -91,7 +92,7 @@ export const ChatService = {
 
   /** PUT /chat-instances/:id */
   async updateInstance(id: string, input: UpdateChatInstanceInput): Promise<void> {
-    await call(() => apiClient.put(`/chat-instances/${encodeURIComponent(id)}`, input), {
+    await call(() => apiClient.put(`/chat-instances/${encodeURIComponent(id)}`, input, SILENT), {
       fallback: (s) => `Failed to rename chat instance (status ${s})`,
       preferServerMessage: true,
     });
@@ -99,7 +100,7 @@ export const ChatService = {
 
   /** DELETE /chat-instances/:id */
   async deleteInstance(id: string): Promise<void> {
-    await call(() => apiClient.delete(`/chat-instances/${encodeURIComponent(id)}`), {
+    await call(() => apiClient.delete(`/chat-instances/${encodeURIComponent(id)}`, SILENT), {
       fallback: (s) => `Failed to delete chat instance (status ${s})`,
       preferServerMessage: true,
     });
@@ -108,7 +109,7 @@ export const ChatService = {
   /** GET /chat-messages?instanceId= — the instance's history (`[]` when the server sends no data). */
   async listMessages<T>(instanceId: string): Promise<T[]> {
     const body = await call(
-      () => apiClient.get<Partial<Envelope<T[]>>>(`/chat-messages?instanceId=${encodeURIComponent(instanceId)}`),
+      () => apiClient.get<Partial<Envelope<T[]>>>(`/chat-messages?instanceId=${encodeURIComponent(instanceId)}`, SILENT),
       { fallback: (s) => `Falha ao carregar mensagens (status ${s})`, preferServerMessage: true },
     );
     return body.data || [];
@@ -119,7 +120,7 @@ export const ChatService = {
    * (`data`, or the raw body when the envelope is missing — same fallback the hooks had).
    */
   async sendMessage<T>(input: ChatRequestInput): Promise<T> {
-    const body = await call(() => apiClient.post<Envelope<T> | T>('/chat', input), {
+    const body = await call(() => apiClient.post<Envelope<T> | T>('/chat', input, SILENT), {
       fallback: (s) => `Falha ao enviar mensagem (status ${s})`,
       preferServerMessage: true,
     });

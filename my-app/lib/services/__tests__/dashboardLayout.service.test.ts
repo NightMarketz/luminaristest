@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DashboardLayoutService } from '../dashboardLayout.service';
+import { notify } from '../../notifications/notify';
 
 /** dashboardLayout.service — R2b: mesma URL/método/corpo/headers do antigo dashboard-layout.api.ts; erro vira Error. */
 vi.mock('cookies-next', () => ({ getCookie: () => 'tok-1' }));
@@ -54,11 +55,12 @@ describe('DashboardLayoutService', () => {
   it('erro HTTP vira Error com a message do servidor, ou o fallback com status', async () => {
     vi.mocked(globalThis.fetch).mockResolvedValue(res(403, { message: 'Proibido' }));
     await expect(DashboardLayoutService.list()).rejects.toEqual(new Error('Proibido'));
-    // Corpo sem `error`/`message`: o apiClient perde o status (vira "Network request failed") — divergência
-    // registrada no PR. O caso abaixo (`{ success:false, error }`) é o formato de erro usual do backend.
-    vi.mocked(globalThis.fetch).mockResolvedValue(res(500, { success: false, error: 'boom' }));
+    vi.mocked(globalThis.fetch).mockResolvedValue(res(500, {}));
     await expect(DashboardLayoutService.list()).rejects.toEqual(new Error('Dashboard layout request failed (status 500)'));
+    vi.mocked(globalThis.fetch).mockResolvedValue(res(500, { success: false, error: 'boom' }));
     await expect(DashboardLayoutService.remove('l1')).rejects.toEqual(new Error('Failed to delete layout (status 500)'));
+    // silent: o grid mostra o próprio banner, sem toast do apiClient (o fetch antigo não tinha toast).
+    expect(notify).not.toHaveBeenCalled();
   });
 
   it('falha de rede vira Error com a mensagem nativa', async () => {

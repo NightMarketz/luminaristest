@@ -8,7 +8,7 @@ import { apiClient } from '../api/api-client';
  *
  * Callers branch on `err instanceof Error ? err.message : …`, so every `apiClient` rejection
  * (a plain `{ ...body, status }` object) is rethrown as an `Error` with the same message the
- * old module produced. `apiClient` also toasts the server message on any non-2xx.
+ * old module produced. Calls are `silent` (no apiClient toast): the grid shows its own error banner.
  */
 
 export interface DashboardGridItem {
@@ -54,13 +54,13 @@ interface Envelope<T> {
 }
 
 const BASE = '/dashboard-layout';
+const SILENT = { silent: true } as const;
 
 function toError(err: unknown, fallback: string): Error {
   const e = (err ?? {}) as { message?: unknown; error?: unknown; status?: unknown };
   if (typeof e.message === 'string' && e.message) return new Error(e.message);
   if (typeof e.status === 'number') return new Error(`${fallback} (status ${e.status})`);
-  // No status = no response: apiClient rethrows the native error (handled by `message` above), or
-  // `{ error }` when the error body carried neither `error` nor `message` (status is lost there).
+  // No status = no response: apiClient rethrows the native error (handled by `message` above).
   return new Error(typeof e.error === 'string' && e.error ? e.error : fallback);
 }
 
@@ -76,31 +76,31 @@ async function call<T>(req: () => Promise<Envelope<T>>, fallback = 'Dashboard la
 export const DashboardLayoutService = {
   /** Lists all of the current user's layouts (tabs). */
   list(): Promise<DashboardLayout[]> {
-    return call(() => apiClient.get<Envelope<DashboardLayout[]>>(BASE));
+    return call(() => apiClient.get<Envelope<DashboardLayout[]>>(BASE, SILENT));
   },
 
   /** Creates a new layout (tab); it becomes the active one. */
   create(name: string, config: LayoutConfigPayload): Promise<DashboardLayout> {
-    return call(() => apiClient.post<Envelope<DashboardLayout>>(BASE, { name, type: 'GRID', config }));
+    return call(() => apiClient.post<Envelope<DashboardLayout>>(BASE, { name, type: 'GRID', config }, SILENT));
   },
 
   /** Persists the grid configuration of a specific layout. */
   saveConfig(id: string, config: LayoutConfigPayload): Promise<DashboardLayout> {
-    return call(() => apiClient.patch<Envelope<DashboardLayout>>(`${BASE}/${id}`, { config }));
+    return call(() => apiClient.patch<Envelope<DashboardLayout>>(`${BASE}/${id}`, { config }, SILENT));
   },
 
   /** Renames a layout (tab). */
   rename(id: string, name: string): Promise<DashboardLayout> {
-    return call(() => apiClient.patch<Envelope<DashboardLayout>>(`${BASE}/${id}`, { name }));
+    return call(() => apiClient.patch<Envelope<DashboardLayout>>(`${BASE}/${id}`, { name }, SILENT));
   },
 
   /** Switches the active layout (tab). */
   activate(id: string): Promise<DashboardLayout> {
-    return call(() => apiClient.post<Envelope<DashboardLayout>>(`${BASE}/${id}/activate`, {}));
+    return call(() => apiClient.post<Envelope<DashboardLayout>>(`${BASE}/${id}/activate`, {}, SILENT));
   },
 
   /** Deletes a layout (tab). */
   async remove(id: string): Promise<void> {
-    await call(() => apiClient.delete<Envelope<unknown>>(`${BASE}/${id}`), 'Failed to delete layout');
+    await call(() => apiClient.delete<Envelope<unknown>>(`${BASE}/${id}`, SILENT), 'Failed to delete layout');
   },
 };

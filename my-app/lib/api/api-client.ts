@@ -12,6 +12,17 @@ export function extractErrorMessage(result: Record<string, unknown>, status: num
   return String(result?.message || result?.error || `Erro ${status}: ${statusText}`);
 }
 
+/** Per-call options: `RequestInit` plus two client knobs that are stripped before `fetch`. */
+export interface ApiRequestOptions extends RequestInit {
+  /** Skip the automatic error toast — for callers that render their own error UI. */
+  silent?: boolean;
+  /**
+   * Bearer token to send instead of the `auth_token` cookie. Needed in SSR (`getServerSideProps`), where
+   * `getCookie` has no `req` and reads nothing; pass the token parsed from `req.headers.cookie`.
+   */
+  token?: string;
+}
+
 /**
  * Global API Client for Luminaris Frontend.
  * Centralizes endpoint management, auth headers, and error parsing.
@@ -21,24 +32,28 @@ class ApiClient {
     return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api';
   }
 
-  private getHeaders(customHeaders?: HeadersInit): HeadersInit {
-    const token = getCookie('auth_token');
-
-    // Safety check for SSR/Node environment where Intl.DateTimeFormat might behave differently
-    let timezone = 'UTC';
-    try {
-      if (typeof Intl !== 'undefined') {
-        timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      }
-    } catch (e) {
-      // fallback to UTC
-    }
+  private getHeaders(customHeaders?: HeadersInit, explicitToken?: string): HeadersInit {
+    const token = explicitToken ?? getCookie('auth_token');
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'x-user-timezone': timezone,
-      ...((customHeaders as Record<string, string>) || {}),
     };
+
+    // The user's timezone only exists in the browser; on the server Intl reports the Node host's zone,
+    // which is not the user's — so SSR requests omit the header and the backend applies its default.
+    if (typeof window !== 'undefined') {
+      let timezone = 'UTC';
+      try {
+        if (typeof Intl !== 'undefined') {
+          timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        }
+      } catch (e) {
+        // fallback to UTC
+      }
+      headers['x-user-timezone'] = timezone;
+    }
+
+    Object.assign(headers, (customHeaders as Record<string, string>) || {});
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
@@ -50,47 +65,54 @@ class ApiClient {
   /**
    * Universal request handler with automatic error parsing.
    */
-  private async request<T>(path: string, options: RequestInit): Promise<T> {
+  private async request<T>(path: string, options: ApiRequestOptions): Promise<T> {
     const url = `${this.baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
+    const { silent, token, ...init } = options;
 
     try {
       const response = await fetch(url, {
-        ...options,
-        headers: this.getHeaders(options.headers),
+        ...init,
+        headers: this.getHeaders(init.headers, token),
       });
 
       const bodyText = await response.text();
       let result: Record<string, unknown>;
+      let parsed = true;
 
       try {
         result = bodyText ? JSON.parse(bodyText) : {};
       } catch {
-        result = { error: 'Failed to parse server response' };
+        parsed = false;
+        result = {};
       }
 
       if (!response.ok) {
+        // A non-JSON error body (proxy HTML page, crash) carries no fields: the toast falls back to
+        // "Erro <status>: <statusText>" and the caller gets just `{ status }` — never a made-up `error`.
         const errorMessage = extractErrorMessage(result, response.status, response.statusText);
-        notify(errorMessage, 'error', 'Erro');
+        if (!silent) notify(errorMessage, 'error', 'Erro');
         // Return the parsed error object (usually { success: false, error: '...' }),
         // tagged with the HTTP status so callers can branch (e.g. `if (o.status === 400)`).
         throw { ...result, status: response.status };
       }
 
+      if (!parsed) result = { error: 'Failed to parse server response' };
       return result as T;
     } catch (error) {
-      // Re-throw if it's already our parsed error object, otherwise wrap it
-      if (typeof error === 'object' && error !== null && ('error' in error || 'message' in error)) {
+      // Re-throw our parsed error object (it always has `status`, even when the body was empty) or a native
+      // error with a message (network failure, abort); wrap anything else.
+      if (typeof error === 'object' && error !== null && ('status' in error || 'error' in error || 'message' in error)) {
         throw error;
       }
       throw { error: (error as Error).message || 'Network request failed' };
     }
   }
 
-  public get<T>(path: string, options?: RequestInit): Promise<T> {
+  public get<T>(path: string, options?: ApiRequestOptions): Promise<T> {
     return this.request<T>(path, { ...options, method: 'GET' });
   }
 
-  public post<T>(path: string, body: object, options?: RequestInit): Promise<T> {
+  public post<T>(path: string, body: object, options?: ApiRequestOptions): Promise<T> {
     return this.request<T>(path, {
       ...options,
       method: 'POST',
@@ -98,7 +120,7 @@ class ApiClient {
     });
   }
 
-  public put<T>(path: string, body: object, options?: RequestInit): Promise<T> {
+  public put<T>(path: string, body: object, options?: ApiRequestOptions): Promise<T> {
     return this.request<T>(path, {
       ...options,
       method: 'PUT',
@@ -106,11 +128,11 @@ class ApiClient {
     });
   }
 
-  public delete<T>(path: string, options?: RequestInit): Promise<T> {
+  public delete<T>(path: string, options?: ApiRequestOptions): Promise<T> {
     return this.request<T>(path, { ...options, method: 'DELETE' });
   }
 
-  public patch<T>(path: string, body: object, options?: RequestInit): Promise<T> {
+  public patch<T>(path: string, body: object, options?: ApiRequestOptions): Promise<T> {
     return this.request<T>(path, {
       ...options,
       method: 'PATCH',

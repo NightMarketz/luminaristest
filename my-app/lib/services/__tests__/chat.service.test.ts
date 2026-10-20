@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ChatApiError, ChatService } from '../chat.service';
 import { DocumentService } from '../document.service';
+import { notify } from '../../notifications/notify';
 
 /** chat.service + DocumentService.listForSelection — R2b: mesmas URLs/corpos dos fetch dos hooks; erros normalizados. */
 vi.mock('cookies-next', () => ({ getCookie: () => 'tok-1' }));
@@ -85,8 +86,9 @@ describe('ChatService', () => {
     reply(200, { response: 'R' });
     await expect(ChatService.sendMessage(input)).resolves.toEqual({ response: 'R' });
     reply(502, {});
-    // Corpo sem error/message: o apiClient perde o status (divergência registrada no PR).
-    await expect(ChatService.sendMessage(input)).rejects.toMatchObject({ message: 'Network request failed', status: undefined });
+    await expect(ChatService.sendMessage(input)).rejects.toMatchObject({ message: 'Falha ao enviar mensagem (status 502)', status: 502 });
+    // silent: o erro aparece no chat, sem toast do apiClient.
+    expect(notify).not.toHaveBeenCalled();
   });
 
   it('falha de rede: ChatApiError sem status, com a mensagem nativa', async () => {
@@ -113,6 +115,7 @@ describe('DocumentService.listForSelection', () => {
   it('não-2xx → Error("Falha ao buscar documentos."); rede → mensagem nativa', async () => {
     reply(500, { message: 'x' });
     await expect(DocumentService.listForSelection()).rejects.toEqual(new Error('Falha ao buscar documentos.'));
+    expect(notify).not.toHaveBeenCalled();
     vi.mocked(globalThis.fetch).mockRejectedValue(new TypeError('Failed to fetch'));
     await expect(DocumentService.listForSelection()).rejects.toEqual(new Error('Failed to fetch'));
   });
