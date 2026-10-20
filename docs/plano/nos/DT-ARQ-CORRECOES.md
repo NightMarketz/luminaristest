@@ -3,15 +3,15 @@ id: "DT-ARQ-CORRECOES"
 tipo: "motor"
 dominio: "motor"
 titulo: "Arquitetura do motor DynamicTable: seam de tx no repositório, repo único, engines como implementação única, policy-first nos presets"
-estado: "inflight"
-estado_detalhe: "PR #769 aberto, CI 14/14 verde (19/10); merge só com OK do dono por número. Decisão no próprio PR: docs/plano/decisoes/D-2026-10-19-DT-ARQUITETURA-CORRECOES.md (entra em main com o merge)"
+estado: "done"
+estado_detalhe: "PR #769 mergeado em 20/10 (fdc21b71), squash, CI 14/14 verde sobre a main com o #771; merge autorizado pelo dono em chat: \"Autorizo o merge do #771 e do #769, nessa ordem, com CI verde.\" Decisão no próprio PR: docs/plano/decisoes/D-2026-10-19-DT-ARQUITETURA-CORRECOES.md (entra em main com o merge)"
 autorizacao: "dono, chat, 2026-10-19: \"Verifique a arquitetura e faça todas as correções sugeridas e mais correções necessárias no DynamicTable\" — merge NÃO autorizado"
 prs: ["#769"]
-atualizado: "2026-10-19"
+atualizado: "2026-10-20"
 ---
 # DT-ARQ-CORRECOES — Arquitetura do motor DynamicTable: seam de tx no repositório, repo único, engines como implementação única, policy-first nos presets
 
-**Estado:** `inflight` — PR #769 aberto, CI 14/14 verde (19/10); merge só com OK do dono por número. Decisão no próprio PR: docs/plano/decisoes/D-2026-10-19-DT-ARQUITETURA-CORRECOES.md (entra em main com o merge)  
+**Estado:** `done` — PR #769 mergeado em 20/10 (fdc21b71), squash, CI 14/14 verde sobre a main com o #771; merge autorizado pelo dono em chat: "Autorizo o merge do #771 e do #769, nessa ordem, com CI verde." Decisão no próprio PR: docs/plano/decisoes/D-2026-10-19-DT-ARQUITETURA-CORRECOES.md (entra em main com o merge)  
 **Autorização:** dono, chat, 2026-10-19: "Verifique a arquitetura e faça todas as correções sugeridas e mais correções necessárias no DynamicTable" — merge NÃO autorizado  
 **Depende de:** —  
 **PRs:** #769  

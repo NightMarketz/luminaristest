@@ -59,7 +59,7 @@ Ordem sugerida, da menor dependência para a maior:
 
 | # | Item | Estado | Por que nesta posição | Ação do dono |
 |---|---|---|---|---|
-| E1 | Merge dos PRs abertos: [[DT-ARQ-CORRECOES]] (#769), [[FIX-ESTOQUE-FINALIZE]] (#771), [[FIX-ANALYTICS-DADO]] (#770), [[FIX-ADDEDFIELDS-VAZAMENTO]] (#772) | inflight; CI verde em #769/#770/#771 | Já prontos. O #771 corrige o fluxo de venda que os passos 6–11 do [[H2]] (A3) exercitam na tela — recomendação: mergear antes do sign-off | OK por número; decisão (a)/(b) do item 3 do #770 |
+| E1 | Merge dos PRs: [[DT-ARQ-CORRECOES]] (#769 ✅ 20/10), [[FIX-ESTOQUE-FINALIZE]] (#771 ✅ 20/10), [[FIX-ANALYTICS-DADO]] (#770), [[FIX-ADDEDFIELDS-VAZAMENTO]] (#772) | #769 e #771 mergeados; #770 e #772 abertos | Já prontos. O #771 corrige o fluxo de venda que os passos 6–11 do [[H2]] (A3) exercitam na tela — recomendação: mergear antes do sign-off | OK por número; decisão (a)/(b) do item 3 do #770 |
 | E2 | [[TESTE-ACOPLAMENTO-PRESET]] | planned | Barato e preventivo: é a causa comum de 4 achados (campo lido que o preset não declara) | `executa` |
 | E3 | [[FIX-PLUGINS-VENDA]] | planned | Mudam estoque e receita em silêncio no molde; mesmos arquivos do #771 (depois de E1) | `executa` (pode ser fatiado) |
 | E4 | [[FIX-AUTH-CONTA]] | planned | Delete de usuário 500 com vetores já apagados; logout/JWT; ADMIN desativando o próprio layout | `executa` |
