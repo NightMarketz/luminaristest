@@ -16,7 +16,7 @@ import { DASHBOARD_GRID_CONFIG } from './dashboard-grid.config';
 import useDashboardGrid from './hooks/use-dashboard-grid';
 import { DocumentOption } from '../chat/components/DocumentSelector';
 import { DashboardGridItem, DashboardLayout } from './types/dashboard-grid.types';
-import { DashboardLayoutApi } from './dashboard-layout.api';
+import { DashboardLayoutService } from '@/lib/services/dashboardLayout.service';
 import DashboardTabsBar from './DashboardTabsBar';
 import FloatingAddWidgetButton from './FloatingAddWidgetButton';
 import { getWidgetDimensions } from './utils/dashboard-grid.utils';
@@ -70,11 +70,11 @@ export default function DashboardGrid() {
         setIsLoading(true);
         setError(null);
 
-        let list = await DashboardLayoutApi.list();
+        let list = await DashboardLayoutService.list();
 
         // First-time user: create a default tab.
         if (list.length === 0) {
-          const created = await DashboardLayoutApi.create('Dashboard', { positions: [], columns: 12, widgets: [] });
+          const created = await DashboardLayoutService.create('Dashboard', { positions: [], columns: 12, widgets: [] });
           list = [created];
         }
 
@@ -112,7 +112,7 @@ export default function DashboardGrid() {
     const handler = setTimeout(async () => {
       try {
         setError(null);
-        await DashboardLayoutApi.saveConfig(activeLayoutId, {
+        await DashboardLayoutService.saveConfig(activeLayoutId, {
           positions: items,
           columns: 12,
           widgets: items.map(item => item.type),
@@ -163,7 +163,7 @@ export default function DashboardGrid() {
   const handleClearLayout = useCallback(async () => {
     if (!activeLayoutId) return;
     try {
-      await DashboardLayoutApi.saveConfig(activeLayoutId, {
+      await DashboardLayoutService.saveConfig(activeLayoutId, {
         positions: [],
         columns: DASHBOARD_GRID_CONFIG.GRID.COLS.lg,
         widgets: [],
@@ -180,7 +180,7 @@ export default function DashboardGrid() {
   const handleSwitchLayout = useCallback(async (id: string) => {
     if (id === activeLayoutId) return;
     try {
-      const layout = await DashboardLayoutApi.activate(id);
+      const layout = await DashboardLayoutService.activate(id);
       setActiveLayoutId(id);
       setLayouts(prev => prev.map(l => ({ ...l, isActive: l.id === id })));
       switchingRef.current = true;
@@ -193,7 +193,7 @@ export default function DashboardGrid() {
 
   const handleCreateLayout = useCallback(async () => {
     try {
-      const created = await DashboardLayoutApi.create(`Dashboard ${layouts.length + 1}`, {
+      const created = await DashboardLayoutService.create(`Dashboard ${layouts.length + 1}`, {
         positions: [], columns: 12, widgets: [],
       });
       setLayouts(prev => [...prev.map(l => ({ ...l, isActive: false })), created]);
@@ -208,7 +208,7 @@ export default function DashboardGrid() {
 
   const handleRenameLayout = useCallback(async (id: string, name: string) => {
     try {
-      const updated = await DashboardLayoutApi.rename(id, name);
+      const updated = await DashboardLayoutService.rename(id, name);
       setLayouts(prev => prev.map(l => (l.id === id ? { ...l, name: updated.name } : l)));
     } catch (error) {
       console.error('Error renaming layout:', error);
@@ -218,8 +218,8 @@ export default function DashboardGrid() {
 
   const handleDeleteLayout = useCallback(async (id: string) => {
     try {
-      await DashboardLayoutApi.remove(id);
-      const list = await DashboardLayoutApi.list();
+      await DashboardLayoutService.remove(id);
+      const list = await DashboardLayoutService.list();
       const active = list.find(l => l.isActive) ?? list[0] ?? null;
       setLayouts(list);
       setActiveLayoutId(active?.id ?? null);

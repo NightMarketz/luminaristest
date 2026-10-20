@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { ChatApiError, ChatService } from '@/lib/services/chat.service';
 
 // Shared types for both Document and Generic chats
 export interface ChatInstance {
@@ -94,29 +95,22 @@ export function useChatInstance({
         setChatTitle(null);
 
         try {
-            const { getCookie } = await import('cookies-next');
-            const token = getCookie('auth_token');
-
             log('📤 POST /get-or-create com widgetId:', widgetIdToInitialize, 'type:', chatType);
 
-            // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
-            const instanceResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/chat-instances/get-or-create`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({
+            let instance: ChatInstance;
+            try {
+                instance = await ChatService.getOrCreateInstance<ChatInstance>({
                     widgetInstanceId: widgetIdToInitialize,
                     type: chatType
-                }),
-            });
-
-            if (!instanceResponse.ok) {
-                const errorText = await instanceResponse.text();
-                log('❌ Erro na resposta:', instanceResponse.status, errorText);
-                throw new Error(`Failed to get/create chat instance (status ${instanceResponse.status})`);
+                });
+            } catch (requestError: unknown) {
+                // Este hook mostra só o status, nunca a message do servidor.
+                if (requestError instanceof ChatApiError && requestError.status !== undefined) {
+                    log('❌ Erro na resposta:', requestError.status, requestError.serverMessage);
+                    throw new Error(`Failed to get/create chat instance (status ${requestError.status})`);
+                }
+                throw requestError;
             }
-
-            const instanceJson = await instanceResponse.json();
-            const instance: ChatInstance = instanceJson.data;
 
             log('✅ Instância recebida:', {
                 id: instance.id,
@@ -130,26 +124,19 @@ export function useChatInstance({
 
             // Carrega mensagens existentes
             try {
-                // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
-                const messagesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/chat-messages?instanceId=${instance.id}`, {
-                    headers: { 'Authorization': `Bearer ${token}` },
-                });
+                // Falha não vira erro na UI, só log (antes a resposta não-OK nem logava).
+                const backendMessages = await ChatService.listMessages<BackendMessage>(instance.id);
+                log('📨 Mensagens carregadas:', backendMessages.length);
 
-                if (messagesResponse.ok) {
-                    const messagesJson = await messagesResponse.json();
-                    const backendMessages: BackendMessage[] = messagesJson.data || [];
-                    log('📨 Mensagens carregadas:', backendMessages.length);
-
-                    if (backendMessages.length > 0) {
-                        const formattedMessages: Message[] = backendMessages.map((bm) => ({
-                            id: bm.id,
-                            role: bm.role.toLowerCase() as 'user' | 'assistant',
-                            content: bm.content,
-                            timestamp: new Date(bm.createdAt).getTime(),
-                        }));
-                        formattedMessages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-                        setMessages(formattedMessages);
-                    }
+                if (backendMessages.length > 0) {
+                    const formattedMessages: Message[] = backendMessages.map((bm) => ({
+                        id: bm.id,
+                        role: bm.role.toLowerCase() as 'user' | 'assistant',
+                        content: bm.content,
+                        timestamp: new Date(bm.createdAt).getTime(),
+                    }));
+                    formattedMessages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+                    setMessages(formattedMessages);
                 }
             } catch (error) {
                 log('⚠️ Erro ao carregar mensagens:', error);

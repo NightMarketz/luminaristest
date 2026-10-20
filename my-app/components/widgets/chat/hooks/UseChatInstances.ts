@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { ChatInstanceSummary } from '../types/chat.types';
+import { ChatService } from '@/lib/services/chat.service';
 
 /**
  * Props para o hook useChatInstances.
@@ -75,16 +76,7 @@ export function useChatInstances({
     setIsLoadingInstances(true);
     setLoadInstancesError(null);
     try {
-      const { getCookie } = await import('cookies-next');
-      const token = getCookie('auth_token');
-      // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/chat-instances`, { 
-        headers: { 'Authorization': `Bearer ${token}` },
-        // credentials: 'include' 
-      });
-      if (!response.ok) throw new Error(`Falha ao buscar lista de chats (status ${response.status})`);
-      const json = await response.json();
-      setAllChatInstances(json.data);
+      setAllChatInstances(await ChatService.listInstances<ChatInstanceSummary>());
     } catch (error: unknown) {
       setLoadInstancesError(error instanceof Error ? error.message : 'Erro ao carregar chats.');
     }
@@ -153,18 +145,7 @@ export function useChatInstances({
     setIsDeletingInstance(true);
     setDeleteInstanceError(null);
     try {
-      const { getCookie } = await import('cookies-next');
-      const token = getCookie('auth_token');
-      // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/chat-instances/${instanceId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` },
-        // credentials: 'include',
-      });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({})); // Try to parse error
-        throw new Error(errorData.message || `Failed to delete chat instance (status ${response.status})`);
-      }
+      await ChatService.deleteInstance(instanceId);
       setInstanceIdPendingDelete(null);
       await fetchInstances(); // Refresh the list
 

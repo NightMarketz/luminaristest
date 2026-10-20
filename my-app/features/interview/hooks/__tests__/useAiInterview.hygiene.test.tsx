@@ -13,7 +13,7 @@ import { ToastProvider } from '../../../../lib/context/ToastContext';
 import { useAiInterview } from '../useAiInterview';
 
 const resp = (status: number, body: unknown) =>
-  ({ ok: status >= 200 && status < 300, status, json: async () => body }) as unknown as Response;
+  ({ ok: status >= 200 && status < 300, status, json: async () => body, text: async () => JSON.stringify(body) }) as unknown as Response;
 
 const isGreeting = (call: unknown[]) => {
   const init = call[1] as RequestInit | undefined;

@@ -20,7 +20,7 @@ import { useAiInterview, nomeDaUnidadeDaEntrevista } from '../useAiInterview';
 type FetchMock = ReturnType<typeof vi.fn>;
 
 const jsonResponse = (body: unknown) =>
-  ({ ok: true, status: 200, json: async () => body }) as unknown as Response;
+  ({ ok: true, status: 200, json: async () => body, text: async () => JSON.stringify(body) }) as unknown as Response;
 
 const authHeaderOf = (call: unknown[]): string | undefined => {
   const init = call[1] as RequestInit | undefined;

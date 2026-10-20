@@ -54,15 +54,30 @@ export interface CreateDashboardResult {
   accounting?: OnboardingAccountingResultInput;
 }
 
+/**
+ * An `Error` that keeps what `apiClient` rejected with: the HTTP `status` (absent when no response arrived)
+ * and the parsed error `body`, so the Interview can classify a failed create (`classifyCreationError`).
+ */
+export class SetupApiError extends Error {
+  constructor(message: string, readonly status?: number, readonly body: Record<string, unknown> = {}) {
+    super(message);
+    this.name = 'SetupApiError';
+  }
+}
+
 /** Normalize an unknown API error into an Error with a friendly message. */
-function toError(err: unknown, fallback: string): Error {
+function toError(err: unknown, fallback: string): SetupApiError {
   const rec = (err && typeof err === 'object' ? (err as Record<string, unknown>) : null);
   const message =
     (rec?.['error'] as string) ||
     (rec?.['message'] as string) ||
     (err instanceof Error ? err.message : '') ||
     fallback;
-  return new Error(message);
+  if (typeof rec?.['status'] === 'number') {
+    const { status, ...body } = rec;
+    return new SetupApiError(message, status as number, body);
+  }
+  return new SetupApiError(message);
 }
 
 /**
@@ -86,10 +101,13 @@ export const SetupService = {
     }
   },
 
-  /** POST /dashboard/create — provision the user's dashboard from a preset (quick or custom). */
-  async createDashboard(payload: CreateDashboardPayload): Promise<CreateDashboardResult> {
+  /**
+   * POST /dashboard/create — provision the user's dashboard from a preset (quick or custom).
+   * `silent` skips the apiClient error toast (the Interview renders `creationError` itself).
+   */
+  async createDashboard(payload: CreateDashboardPayload, options?: { silent?: boolean }): Promise<CreateDashboardResult> {
     try {
-      const body = (await apiClient.post('/dashboard/create', payload)) as { data?: CreateDashboardResult };
+      const body = (await apiClient.post('/dashboard/create', payload, { silent: options?.silent })) as { data?: CreateDashboardResult };
       return body.data ?? {};
     } catch (err) {
       throw toError(err, 'Falha ao criar o dashboard.');

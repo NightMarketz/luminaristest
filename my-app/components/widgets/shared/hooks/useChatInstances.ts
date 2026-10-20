@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { ChatService } from '@/lib/services/chat.service';
 
 export interface ChatInstanceSummary {
     id: string;
@@ -82,15 +83,7 @@ export function useChatInstances({
         setIsLoadingInstances(true);
         setLoadInstancesError(null);
         try {
-            const { getCookie } = await import('cookies-next');
-            const token = getCookie('auth_token');
-            // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/chat-instances?type=${chatType}`, {
-                headers: { 'Authorization': `Bearer ${token}` },
-            });
-            if (!response.ok) throw new Error(`Falha ao buscar lista de chats (status ${response.status})`);
-            const json = await response.json();
-            setAllChatInstances(json.data || []);
+            setAllChatInstances((await ChatService.listInstances<ChatInstanceSummary>(chatType)) || []);
         } catch (error: unknown) {
             setLoadInstancesError(error instanceof Error ? error.message : 'Erro ao carregar chats.');
         }
@@ -164,16 +157,7 @@ export function useChatInstances({
         setDeleteInstanceError(null);
         try {
             const { getCookie, deleteCookie } = await import('cookies-next');
-            const token = getCookie('auth_token');
-            // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/chat-instances/${instanceId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` },
-            });
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || `Failed to delete chat instance (status ${response.status})`);
-            }
+            await ChatService.deleteInstance(instanceId);
             setInstanceIdPendingDelete(null);
 
             // Clear cookie if deleting the saved instance
@@ -208,21 +192,7 @@ export function useChatInstances({
         setIsRenamingInstance(true);
         setRenameInstanceError(null);
         try {
-            const { getCookie } = await import('cookies-next');
-            const token = getCookie('auth_token');
-            // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/chat-instances/${instanceId}`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ title: newTitle.trim() || null }),
-            });
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || `Failed to rename chat instance (status ${response.status})`);
-            }
+            await ChatService.updateInstance(instanceId, { title: newTitle.trim() || null });
             setInstanceIdBeingRenamed(null);
             await fetchInstances();
         } catch (error: unknown) {

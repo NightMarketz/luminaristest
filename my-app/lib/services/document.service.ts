@@ -12,6 +12,22 @@ export const DocumentService = {
     return apiClient.get('/documents');
   },
 
+  /**
+   * GET /documents?mode=list (no cache) — the chat document picker's list. Returns the raw body so the
+   * caller validates `data`. Rejects with an `Error`: `Falha ao buscar documentos.` on a non-2xx
+   * response, the native message on a network failure. `silent`: the picker shows its own error.
+   */
+  async listForSelection(): Promise<{ data?: unknown }> {
+    try {
+      return await apiClient.get<{ data?: unknown }>('/documents?mode=list', { cache: 'no-store', silent: true });
+    } catch (err) {
+      const e = (err ?? {}) as { message?: unknown; error?: unknown; status?: unknown };
+      if (typeof e.status === 'number') throw new Error('Falha ao buscar documentos.');
+      // No response: apiClient rethrows the native error (TypeError 'Failed to fetch').
+      throw new Error(typeof e.message === 'string' ? e.message : typeof e.error === 'string' ? e.error : '');
+    }
+  },
+
   async getDocumentById(docId: string): Promise<DocumentResponse> {
     return apiClient.get(`/documents/${docId}`);
   },

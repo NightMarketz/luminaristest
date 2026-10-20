@@ -57,6 +57,13 @@ O critério **shape+posse** é **detector de candidatos, não decisor**. O lint 
 - **Fora do escopo (ponto cego próprio):** `lib/context/AuthContext.tsx` (2 `fetch` em `lib/`, fora de `lib/services`).
 - **Prova de que morde (20/10):** antes dos marcadores, `npx eslint . --config eslint.gate.config.mjs` → exit 1 com
   exatamente 27 `no-restricted-globals` (os 24 de produção + 3 em `features/dev/seed`), e nenhum outro erro.
+- **Pagamento (20/10): 27 → 0.** `dashboardLayout.service`, `chat.service`, `interview.service`,
+  `DocumentService.listForSelection`, `SetupService.createDashboard` (Entrevista) e `DynamicTableService`
+  (`getTablesSsr` no SSR de `pages/dashboard`; o cliente do seed de dev) absorveram os 27 sites. Para isso o `apiClient`
+  mudou: rejeição não-2xx **sempre** leva `status` (antes, corpo sem `error`/`message` virava "Network request
+  failed"); corpo de erro não-JSON vira `{ status }`, sem `error` sintético; opção `silent` (sem toast) e `token`
+  (Bearer explícito para SSR); no servidor não manda `x-user-timezone` (o fuso do Node não é o do usuário).
+  A R2b vira **barra ilha**: zero dívida, o `error` só impede o próximo `fetch` cru na UI.
 
 ### R3a — `recharts` confinado (frontend, **barra ilha**)
 - `error`; allowlist por glob: `**/analytics/charts/**`, `**/analytics/kpi/**`, `components/widgets/analytics/GoldKpiWidgetView.tsx`. Qualquer outro import = erro.
@@ -107,20 +114,7 @@ em silêncio (o script falha se achar mais de um).
     "server/src/features/reports/services/ReportService.ts": 1
   },
   "DEBT: apiClient": {},
-  "DEBT: fetch": {
-    "my-app/components/widgets/chat/components/DocumentSelector.tsx": 1,
-    "my-app/components/widgets/chat/hooks/UseChatInstances.ts": 2,
-    "my-app/components/widgets/chat/hooks/useChatInstance.ts": 2,
-    "my-app/components/widgets/chat/hooks/useChatMessages.ts": 1,
-    "my-app/components/widgets/dashboard-grid/dashboard-layout.api.ts": 6,
-    "my-app/components/widgets/shared/hooks/useChatInstance.ts": 2,
-    "my-app/components/widgets/shared/hooks/useChatInstances.ts": 3,
-    "my-app/components/widgets/shared/hooks/useChatMessages.ts": 1,
-    "my-app/features/dev/seed/utils/ApiClient.ts": 3,
-    "my-app/features/interview/components/RightSidebar/AIChatMode.tsx": 2,
-    "my-app/features/interview/hooks/useAiInterview.ts": 3,
-    "my-app/pages/dashboard/index.tsx": 1
-  },
+  "DEBT: fetch": {},
   "SANCTIONED": {}
 }
 ```

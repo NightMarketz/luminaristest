@@ -1,5 +1,15 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Message, BackendMessage } from './useChatInstance';
+import { ChatService } from '@/lib/services/chat.service';
+
+/** Reply payload of POST /chat as this hook reads it. */
+interface ChatReply {
+    answer?: string;
+    content?: string;
+    response?: string;
+    type?: Message['type'];
+    proposal?: Message['proposal'];
+}
 
 const SCROLL_BEHAVIOR = 'smooth' as const;
 
@@ -82,34 +92,16 @@ export function useChatMessages({
         setSendMessageError(null);
 
         try {
-            const { getCookie } = await import('cookies-next');
-            const token = getCookie('auth_token');
-
             // Send to the chat API. The server persists both the user message and the assistant reply.
             // If there are no documentIds, the backend answers directly with the LLM.
-            // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/chat`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    query: confirmedProposalId ? (trimmedInput || '[Confirmado]') : trimmedInput,
-                    chatInstanceId: chatInstanceId,
-                    documentIds: selectedDocumentIds.length > 0 ? selectedDocumentIds : undefined,
-                    confirmedProposalId,
-                }),
+            // Rejects with the server `message`, or `Falha ao enviar mensagem (status N)`; the service
+            // unwraps { success, data } and falls back to the raw body.
+            const payload = await ChatService.sendMessage<ChatReply>({
+                query: confirmedProposalId ? (trimmedInput || '[Confirmado]') : trimmedInput,
+                chatInstanceId: chatInstanceId,
+                documentIds: selectedDocumentIds.length > 0 ? selectedDocumentIds : undefined,
+                confirmedProposalId,
             });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || `Falha ao enviar mensagem (status ${response.status})`);
-            }
-
-            const responseBody = await response.json();
-            // API wraps responses as { success, data }; fall back to the raw body for safety.
-            const payload = responseBody?.data ?? responseBody;
             const responseContent = payload.answer || payload.content || payload.response || 'Não foi possível obter uma resposta';
 
             const assistantMessage: Message = {

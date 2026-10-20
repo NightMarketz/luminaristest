@@ -9,7 +9,7 @@ vi.mock('next-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k })
 import { useAiInterview } from '../useAiInterview';
 import type { InterviewModuleOption } from '../../types/InterviewTypes';
 
-const jsonResponse = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as unknown as Response;
+const jsonResponse = (body: unknown) => ({ ok: true, status: 200, json: async () => body, text: async () => JSON.stringify(body) }) as unknown as Response;
 const bodyOf = (fetchMock: ReturnType<typeof vi.fn>, i: number) => JSON.parse((fetchMock.mock.calls[i][1] as RequestInit).body as string);
 
 const opt = (key: InterviewModuleOption['key'], locked: boolean, suggested: boolean): InterviewModuleOption => ({

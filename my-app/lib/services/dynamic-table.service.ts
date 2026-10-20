@@ -14,6 +14,14 @@ export const DynamicTableService = {
   async getTables(): Promise<TableListResponse> {
     return apiClient.get('/dynamic-tables');
   },
+  /**
+   * GET /dynamic-tables from `getServerSideProps`: the token parsed from `req.headers.cookie` goes as Bearer
+   * and the raw cookie header is forwarded; no toast (there is no window). Rejects with apiClient's
+   * `{ ...body, status }` — or the native error when no response arrived.
+   */
+  async getTablesSsr(auth: { token: string; cookie: string }): Promise<Partial<TableListResponse>> {
+    return apiClient.get('/dynamic-tables', { token: auth.token, headers: { Cookie: auth.cookie }, silent: true });
+  },
   async getTableById(tableId: string): Promise<TableMeta> {
     return apiClient.get(`/dynamic-tables/${tableId}`);
   },
@@ -25,23 +33,23 @@ export const DynamicTableService = {
   },
 
   // --- Table Data (Records) ---
-  async getTableData(tableId: string, queryParams: string = ''): Promise<TableDataResponse> {
+  async getTableData(tableId: string, queryParams: string = '', options?: { silent?: boolean }): Promise<TableDataResponse> {
     const url = queryParams ? `/dynamic-tables/${tableId}/data?${queryParams}` : `/dynamic-tables/${tableId}/data`;
-    return apiClient.get(url);
+    return apiClient.get(url, { silent: options?.silent });
   },
   async getRecordById(tableId: string, recordId: string): Promise<RecordResponse> {
     return apiClient.get(`/dynamic-tables/${tableId}/data/${recordId}`);
   },
-  async createRecord(tableId: string, payload: Record<string, unknown>, options?: { successMessage?: string | null }): Promise<RecordResponse> {
-    const result = await apiClient.post<RecordResponse>(`/dynamic-tables/${tableId}/data`, payload);
+  async createRecord(tableId: string, payload: Record<string, unknown>, options?: { successMessage?: string | null; silent?: boolean }): Promise<RecordResponse> {
+    const result = await apiClient.post<RecordResponse>(`/dynamic-tables/${tableId}/data`, payload, { silent: options?.silent });
     const msg = options?.successMessage !== undefined
       ? options.successMessage
       : 'Registro criado com sucesso.';
     if (msg) notify(msg, 'success', 'Sucesso');
     return result;
   },
-  async updateRecord(tableId: string, recordId: string, payload: Record<string, unknown>, options?: { successMessage?: string | null }): Promise<RecordResponse> {
-    const result = await apiClient.put<RecordResponse>(`/dynamic-tables/${tableId}/data/${recordId}`, payload);
+  async updateRecord(tableId: string, recordId: string, payload: Record<string, unknown>, options?: { successMessage?: string | null; silent?: boolean }): Promise<RecordResponse> {
+    const result = await apiClient.put<RecordResponse>(`/dynamic-tables/${tableId}/data/${recordId}`, payload, { silent: options?.silent });
     const msg = options?.successMessage !== undefined
       ? options.successMessage
       : 'Registro atualizado com sucesso.';

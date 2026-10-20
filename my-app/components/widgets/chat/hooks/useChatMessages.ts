@@ -1,5 +1,13 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Message, BackendMessage } from '../types/chat.types';
+import { ChatService } from '@/lib/services/chat.service';
+
+/** Reply payload of POST /chat as this hook reads it. */
+interface ChatReply {
+  response?: string;
+  answer?: string;
+  content?: string;
+}
 
 const SCROLL_BEHAVIOR = 'smooth' as const;
 
@@ -104,31 +112,13 @@ export function useChatMessages({
 
     try {
       // Send to the chat API. The server persists both the user message and the assistant reply.
-      const { getCookie } = await import('cookies-next');
-      const token = getCookie('auth_token');
-      // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          query: trimmedInput,
-          chatInstanceId: chatInstanceId,
-          documentIds: selectedDocumentIds,
-        }),
+      // Rejects with the server `message`, or `Falha ao enviar mensagem (status N)`.
+      // The service unwraps { success, data } and falls back to the raw body.
+      const payload = await ChatService.sendMessage<ChatReply>({
+        query: trimmedInput,
+        chatInstanceId: chatInstanceId,
+        documentIds: selectedDocumentIds,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Falha ao enviar mensagem (status ${response.status})`);
-      }
-
-      const responseBody = await response.json();
-
-      // API wraps responses as { success, data }; fall back to the raw body for safety.
-      const payload = responseBody?.data ?? responseBody;
       const responseContent = payload.response || payload.answer || payload.content || 'Não foi possível obter uma resposta';
 
       const assistantMessage: Message = {

@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
-import { getCookie } from 'cookies-next';
 import { useTranslation } from 'next-i18next';
 import { IMessage, ICustomizationState, ICreationChoicePrompt, CreationChoice, ICreationError, InterviewModuleOption, ModuleKey } from '../types/InterviewTypes';
 import { ITable } from '../types/RightSidebarTypes';
-import type { CreateDashboardPayload, CreateDashboardResult } from '../../../lib/services/setup.service';
+import { SetupApiError, SetupService, type CreateDashboardPayload, type CreateDashboardResult } from '../../../lib/services/setup.service';
+import { InterviewApiError, InterviewService } from '@/lib/services/interview.service';
 import { notifyAccountingDraft } from '../setup/accountingDraftNotice';
 import { classifyCreationError } from '../setup/classifyCreationError';
 import { toggleModuleSelection } from '../setup/moduleSelection';
@@ -31,6 +31,18 @@ export function nomeDaUnidadeDaEntrevista(conversa: IMessage[], presetKey: strin
 /** X13 PR-3 item 20: resposta da pergunta fechada de regime/porte — contrato gerado de `OnboardingFiscalSchema` (nunca espelho à mão). */
 export type FiscalOnboarding = OnboardingFiscalInput;
 export type RegimeOnboarding = OnboardingFiscalInput['regime'];
+
+/** Reply of POST /dashboard/ai/ChatInterview as this hook reads it. */
+interface ChatInterviewReply {
+  response: string;
+  nextStage: string;
+  presetKey?: string;
+  sessionId?: string;
+  startCustomization?: boolean;
+  customizationState?: ICustomizationState;
+  choicePrompt?: ICreationChoicePrompt | null;
+  moduleOptions?: InterviewModuleOption[];
+}
 
 export function useAiInterview() {
   const [messages, setMessages] = useState<IMessage[]>([]);
@@ -68,14 +80,7 @@ export function useAiInterview() {
     async function fetchInitialMessage() {
       setIsLoading(true);
       try {
-        // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/ai/ChatInterview`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getCookie('auth_token')}` },
-          body: JSON.stringify({ messages: [], stage: 'GREETING' }),
-          signal: controller.signal
-        });
-        const data = await response.json();
+        const data = await InterviewService.chatInterview<Pick<ChatInterviewReply, 'nextStage'> & { response?: string }>({ messages: [], stage: 'GREETING' }, controller.signal);
         if (controller.signal.aborted) return;
         if (data.response) {
           setMessages([{ sender: 'ai', text: data.response }]);
@@ -83,6 +88,8 @@ export function useAiInterview() {
         }
       } catch (error) {
         if (controller.signal.aborted) return;
+        // Resposta não-OK: o corpo de erro não traz `response`, então nada aparece — como quando o fetch não checava `ok`.
+        if (error instanceof InterviewApiError && error.status !== undefined) return;
         console.error('Failed to fetch initial message:', error);
         setMessages([{ sender: 'ai', text: t('onboardingGreetingFailed') }]);
       } finally {
@@ -110,39 +117,32 @@ export function useAiInterview() {
     setIsCreating(true);
     setCreationError(null);
     try {
-      const token = getCookie('auth_token');
       // W5 item 16: os módulos escolhidos na entrevista vão no create (somados ao padrão da suíte no servidor).
       const body: CreateDashboardPayload = { suiteKey: key, unit: { name: nomeDaUnidadeDaEntrevista(conversa, key) }, fiscal, modules };
-      let response: Response;
+      let created: CreateDashboardResult;
       try {
-        // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
-        response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/create`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify(body),
-        });
+        // `silent`: a falha aparece no `creationError` (com retry), não num toast.
+        created = await SetupService.createDashboard(body, { silent: true });
       } catch (err) {
-        // W7 item 4: falha de rede — o pedido pode ser reenviado (o 403 one-shot barra a criação dupla).
-        setCreationError({ kind: classifyCreationError(null, null), message: (err instanceof Error && err.message) || t('onboardingErrorUnexpected') });
-        setIsCreating(false);
-        return;
-      }
-
-      if (!response.ok) {
-        const errorData = (await response.json().catch(() => null)) as { error?: string; errorCode?: string } | null;
-        setCreationError({
-          kind: classifyCreationError(response.status, errorData),
-          message: errorData?.error || t('onboardingErrorCreateFailed'),
-        });
+        if (err instanceof SetupApiError && err.status !== undefined) {
+          // Corpo de erro como o servidor mandou (vazio ou não-JSON ⇒ `{}` ⇒ fallback traduzido, W7 item 7).
+          const errorData = {
+            error: typeof err.body.error === 'string' ? err.body.error : undefined,
+            errorCode: typeof err.body.errorCode === 'string' ? err.body.errorCode : undefined,
+          };
+          setCreationError({
+            kind: classifyCreationError(err.status, errorData),
+            message: errorData.error || t('onboardingErrorCreateFailed'),
+          });
+        } else {
+          // W7 item 4: falha de rede — o pedido pode ser reenviado (o 403 one-shot barra a criação dupla).
+          setCreationError({ kind: classifyCreationError(null, null), message: (err instanceof Error && err.message) || t('onboardingErrorUnexpected') });
+        }
         setIsCreating(false);
         return;
       }
       // I4 PR-4 (item 21): contabilidade `Draft` ⇒ aviso que não bloqueia, antes de navegar.
-      const created = (await response.json().catch(() => ({}))) as { data?: CreateDashboardResult };
-      notifyAccountingDraft(created.data?.accounting, t);
+      notifyAccountingDraft(created.accounting, t);
       setTimeout(() => {
         router.push('/dashboard');
       }, 2000);
@@ -176,29 +176,26 @@ export function useAiInterview() {
     setIsLoading(true);
 
     try {
-      // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/ai/ChatInterview`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getCookie('auth_token')}` },
+      let result: ChatInterviewReply;
+      try {
         // W4: `ChatInterviewSchema` é `.strict()` — o corpo é tipado pelo contrato gerado (chave extra = 400).
-        body: JSON.stringify({
+        result = await InterviewService.chatInterview<ChatInterviewReply>({
           messages: newMessages,
           stage: currentStage,
           // `ChatInterviewSchema` aceita string ou ausente, nunca null (400) — omite o que ainda não existe.
           ...(presetKey ? { presetKey } : {}),
           ...(sessionId ? { sessionId } : {}),
           ...(choice ? { choice } : {})
-        } satisfies ChatInterviewInput)
-      });
-
-      if (!response.ok) {
+        } satisfies ChatInterviewInput);
+      } catch (requestError) {
+        if (!(requestError instanceof InterviewApiError) || requestError.status === undefined) throw requestError;
         // W4 PR-2: a sessão de customização tem dono e TTL no servidor — 404/409 com code próprio não são "erro de comunicação".
-        const errorBody = (await response.json().catch(() => null)) as { code?: string } | null;
-        if (response.status === 404 && errorBody?.code === 'INTERVIEW_SESSION_NOT_FOUND') {
+        const code = requestError.body.code;
+        if (requestError.status === 404 && code === 'INTERVIEW_SESSION_NOT_FOUND') {
           handleSessionLost();
           return;
         }
-        if (response.status === 409 && errorBody?.code === 'INTERVIEW_SESSION_CONFLICT') {
+        if (requestError.status === 409 && code === 'INTERVIEW_SESSION_CONFLICT') {
           // Outra aba gravou a sessão: nada muda aqui (mensagens, estágio, sessionId, painel); o usuário reenvia.
           setMessages(prev => [...prev, { sender: 'ai', text: t('onboardingSessionConflict') }]);
           return;
@@ -206,7 +203,6 @@ export function useAiInterview() {
         throw new Error('Failed to get response from AI');
       }
 
-      const result = await response.json();
       const { response: aiResponse, nextStage, presetKey: newPresetKey, sessionId: newSessionId, startCustomization, customizationState: newCustomizationState, choicePrompt: newChoicePrompt } = result;
 
       setMessages(prev => [...prev, { sender: 'ai', text: aiResponse }]);
@@ -214,7 +210,7 @@ export function useAiInterview() {
       setChoicePrompt(newChoicePrompt ?? null);
 
       // W5 item 14: o turno do match traz `moduleOptions`; outro preset sem opções zera o que era do anterior.
-      const newModuleOptions = result.moduleOptions as InterviewModuleOption[] | undefined;
+      const newModuleOptions = result.moduleOptions;
       if (newModuleOptions) {
         setModuleOptions(newModuleOptions);
         setSelectedModules(newModuleOptions.filter((o) => o.suggested).map((o) => o.key));

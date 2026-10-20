@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ChatInstance, BackendMessage, Message } from '../types/chat.types'; // Updated import
+import { ChatApiError, ChatService } from '@/lib/services/chat.service';
 // Importação de persistência de chat removida
 
 /**
@@ -95,30 +96,8 @@ export function useChatInstance({
 
     try {
       // Idempotent init: get-or-create returns the existing instance for this widget or creates one.
-      const { getCookie } = await import('cookies-next');
-      const token = getCookie('auth_token');
-      // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
-      const instanceResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/chat-instances/get-or-create`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ widgetInstanceId: widgetIdToInitialize, type: 'DOCUMENT' }),
-        // credentials: 'include',
-      });
-
-      if (!instanceResponse.ok) {
-        let apiErrorMessage = `Failed to get/create chat instance (status ${instanceResponse.status})`;
-        try {
-          const responseText = await instanceResponse.text();
-          if (responseText) {
-            const errorPayload = JSON.parse(responseText);
-            if (errorPayload?.message) apiErrorMessage = errorPayload.message;
-          }
-        } catch (e) { /* console.warn(`useChatInstance (${widgetIdToInitialize}): Could not parse error response body.`); */ }
-        throw new Error(apiErrorMessage);
-      }
-
-      const instanceJson = await instanceResponse.json();
-      const instance: ChatInstance = instanceJson.data;
+      // Rejects with the server `message`, or `Failed to get/create chat instance (status N)`.
+      const instance = await ChatService.getOrCreateInstance<ChatInstance>({ widgetInstanceId: widgetIdToInitialize, type: 'DOCUMENT' });
       newChatInstanceId = instance.id;
       // console.debug(`useChatInstance (${widgetIdToInitialize}): Obtained instance ID ${newChatInstanceId}.`);
 
@@ -153,62 +132,46 @@ export function useChatInstance({
         onInstanceActivatedRef.current?.(newChatInstanceId);
 
         try {
-          // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
-          const messagesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/chat-messages?instanceId=${newChatInstanceId}`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-            // credentials: 'include',
-          });
+          const backendMessages = await ChatService.listMessages<BackendMessage>(newChatInstanceId);
 
-          if (!messagesResponse.ok) {
-            // Tentamos obter uma mensagem de erro estruturada, mas se falhar, criamos uma mensagem genérica
-            const errorMessage = await messagesResponse.text().then(text => {
-              try {
-                const errorData = JSON.parse(text);
-                return errorData.message || `Falha ao carregar mensagens (status ${messagesResponse.status})`;
-              } catch (e) {
-                return `Falha ao carregar mensagens (status ${messagesResponse.status}): ${text.substring(0, 100)}`;
-              }
-            }).catch(() => `Falha ao carregar mensagens (status ${messagesResponse.status})`);
+          if (backendMessages.length === 0) {
+            setMessages([]);
+          } else {
 
-            console.error(`Erro ao carregar mensagens para ${newChatInstanceId}:`, errorMessage);
+            const formattedMessages: Message[] = backendMessages.map(function mapMessage(bm) {
+              return {
+                id: bm.id,
+                role: bm.role.toLowerCase() as 'user' | 'assistant',
+                content: bm.content,
+                timestamp: new Date(bm.createdAt).getTime(),
+              };
+            });
+
+            // Garantimos que as mensagens estão ordenadas por timestamp
+            formattedMessages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+            setMessages(formattedMessages);
+          }
+        } catch (error) {
+          if (error instanceof ChatApiError && error.status !== undefined) {
+            // Resposta não-OK: message do servidor ou `Falha ao carregar mensagens (status N)`.
+            console.error(`Erro ao carregar mensagens para ${newChatInstanceId}:`, error.message);
 
             // Definimos uma mensagem de erro para o usuário, mas continuamos sem lançar erro
             setMessages([{
               role: 'assistant',
-              content: `Erro: ${errorMessage}`,
+              content: `Erro: ${error.message}`,
               timestamp: Date.now()
             }]);
           } else {
-            const messagesJson = await messagesResponse.json();
-            const backendMessages: BackendMessage[] = messagesJson.data || [];
+            console.error(`Erro inesperado ao carregar mensagens para ${newChatInstanceId}:`, error);
 
-            if (backendMessages.length === 0) {
-              setMessages([]);
-            } else {
-
-              const formattedMessages: Message[] = backendMessages.map(function mapMessage(bm) {
-                return {
-                  id: bm.id,
-                  role: bm.role.toLowerCase() as 'user' | 'assistant',
-                  content: bm.content,
-                  timestamp: new Date(bm.createdAt).getTime(),
-                };
-              });
-
-              // Garantimos que as mensagens estão ordenadas por timestamp
-              formattedMessages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-              setMessages(formattedMessages);
-            }
+            // Definimos uma mensagem de erro para o usuário
+            setMessages([{
+              role: 'assistant',
+              content: `Erro: Falha ao carregar o histórico de mensagens. ${error instanceof Error ? error.message : ''}`,
+              timestamp: Date.now()
+            }]);
           }
-        } catch (error) {
-          console.error(`Erro inesperado ao carregar mensagens para ${newChatInstanceId}:`, error);
-
-          // Definimos uma mensagem de erro para o usuário
-          setMessages([{
-            role: 'assistant',
-            content: `Erro: Falha ao carregar o histórico de mensagens. ${error instanceof Error ? error.message : ''}`,
-            timestamp: Date.now()
-          }]);
         }
       }
     } catch (err: unknown) {
