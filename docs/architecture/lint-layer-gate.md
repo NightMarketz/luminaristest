@@ -109,8 +109,7 @@ em silêncio (o script falha se achar mais de um).
   "DEBT: apiClient": {},
   "DEBT: fetch": {
     "my-app/features/dev/seed/utils/ApiClient.ts": 3,
-    "my-app/features/interview/components/RightSidebar/AIChatMode.tsx": 2,
-    "my-app/features/interview/hooks/useAiInterview.ts": 3,
+    "my-app/features/interview/hooks/useAiInterview.ts": 1,
     "my-app/pages/dashboard/index.tsx": 1
   },
   "SANCTIONED": {}

@@ -13,7 +13,7 @@ vi.mock('next-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k })
 import { ToastProvider } from '../../../../lib/context/ToastContext';
 import { useAiInterview } from '../useAiInterview';
 
-const jsonResponse = (body: unknown) => ({ ok: true, status: 201, json: async () => body }) as unknown as Response;
+const jsonResponse = (body: unknown) => ({ ok: true, status: 201, json: async () => body, text: async () => JSON.stringify(body) }) as unknown as Response;
 
 let hook: ReturnType<typeof useAiInterview>;
 function Probe() {

@@ -7,7 +7,7 @@ vi.mock('cookies-next', () => ({ getCookie: () => 'tok' }));
 
 import { useAiInterview } from '../useAiInterview';
 
-const jsonResponse = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as unknown as Response;
+const jsonResponse = (body: unknown) => ({ ok: true, status: 200, json: async () => body, text: async () => JSON.stringify(body) }) as unknown as Response;
 const bodyOf = (fetchMock: ReturnType<typeof vi.fn>, i: number) => JSON.parse((fetchMock.mock.calls[i][1] as RequestInit).body as string);
 
 describe('useAiInterview — escolha criar × customizar (W3 FE)', () => {

@@ -55,7 +55,7 @@ describe('fallback de erro do create traduzido (W7 item 7)', () => {
   it('500 sem corpo ⇒ a chave onboardingErrorCreateFailed; corpo com `error` ⇒ o texto do servidor como veio', async () => {
     vi.stubEnv('NEXT_PUBLIC_API_BASE_URL', 'http://api.test/api');
     const resp = (status: number, body: unknown) =>
-      ({ ok: status < 300, status, json: async () => (body === undefined ? Promise.reject(new Error('sem corpo')) : body) }) as unknown as Response;
+      ({ ok: status < 300, status, json: async () => (body === undefined ? Promise.reject(new Error('sem corpo')) : body), text: async () => (body === undefined ? '' : JSON.stringify(body)) }) as unknown as Response;
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(resp(200, { response: 'Olá!', nextStage: 'DISCOVERING_BUSINESS' }))
       .mockResolvedValueOnce(resp(200, { response: 'SUMMARY: X', nextStage: 'COMPLETED', presetKey: 'beautySalon' }))

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { getCookie } from 'cookies-next';
+import { InterviewApiError, InterviewService } from '@/lib/services/interview.service';
 import { useTranslation } from 'next-i18next';
 import { IAiMessage, ITable } from '../../types/RightSidebarTypes';
 
@@ -108,33 +108,24 @@ function AIChatMode({ tableData, sessionId: externalSessionId, onSaveChanges, on
         }));
       
       // Chamar a API de customização de campos
-      const token = getCookie('auth_token');
-      // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/ai/CustomizeFields`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${String(token)}` } : {}),
-        },
-        body: JSON.stringify({
+      let data: unknown;
+      try {
+        data = await InterviewService.customizeFields({
           sessionId: sessionId, // Envia o sessionId atual, pode ser null na primeira chamada
           tableKey: tableData.key,
           userMessage: inputMessage,
           conversationHistory
-        })
-      });
-
-      // Se a sessão não for encontrada, exibe uma mensagem de erro clara
-      if (response.status === 404) {
-        console.warn('[AIChatMode] Sessão não encontrada (404). O backend pode ter reiniciado. Adicionando mensagem de erro para o usuário.');
-        throw new Error(t('onboardingFieldsAiSessionExpired'));
-      }
-      
-      if (!response.ok) {
-        throw new Error(t('onboardingFieldsAiReplyFailed', { status: response.status }));
+        });
+      } catch (requestError) {
+        if (!(requestError instanceof InterviewApiError) || requestError.status === undefined) throw requestError;
+        // Se a sessão não for encontrada, exibe uma mensagem de erro clara
+        if (requestError.status === 404) {
+          console.warn('[AIChatMode] Sessão não encontrada (404). O backend pode ter reiniciado. Adicionando mensagem de erro para o usuário.');
+          throw new Error(t('onboardingFieldsAiSessionExpired'));
+        }
+        throw new Error(t('onboardingFieldsAiReplyFailed', { status: requestError.status }));
       }
 
-      const data = await response.json();
       processApiResponse(data);
     } catch (error) {
       console.error('Erro ao processar mensagem:', error);
@@ -175,31 +166,23 @@ function AIChatMode({ tableData, sessionId: externalSessionId, onSaveChanges, on
         throw new Error(t('onboardingFieldsAiInvalidSession'));
       }
 
-      const token = getCookie('auth_token');
-      // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/ai/CustomizeFields`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${String(token)}` } : {}),
-        },
-        body: JSON.stringify({
+      let data: unknown;
+      try {
+        data = await InterviewService.customizeFields({
           sessionId: sessionId,
           tableKey: tableData.key,
           userMessage: t('onboardingFieldsAiFinishCommand'),
           conversationHistory,
-        }),
-      });
-
-      if (response.status === 404) {
-        throw new Error(t('onboardingFieldsAiSessionExpiredFinish'));
+        });
+      } catch (requestError) {
+        if (!(requestError instanceof InterviewApiError) || requestError.status === undefined) throw requestError;
+        if (requestError.status === 404) {
+          throw new Error(t('onboardingFieldsAiSessionExpiredFinish'));
+        }
+        // O apiClient não expõe o statusText; vai o código numérico.
+        throw new Error(t('onboardingFieldsAiFinishFailed', { status: String(requestError.status) }));
       }
 
-      if (!response.ok) {
-        throw new Error(t('onboardingFieldsAiFinishFailed', { status: response.statusText }));
-      }
-
-      const data = await response.json();
       processApiResponse(data);
       onClose();
 

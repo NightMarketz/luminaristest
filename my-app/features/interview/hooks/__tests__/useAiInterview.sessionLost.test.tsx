@@ -10,7 +10,7 @@ vi.mock('next-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k })
 import { useAiInterview } from '../useAiInterview';
 
 const resp = (status: number, body: unknown) =>
-  ({ ok: status >= 200 && status < 300, status, json: async () => body }) as unknown as Response;
+  ({ ok: status >= 200 && status < 300, status, json: async () => body, text: async () => JSON.stringify(body) }) as unknown as Response;
 const SESSION = '3f1c2a8e-5b7d-4c1e-9a2f-0e6d8b4c7a91';
 
 describe('useAiInterview — sessão de customização perdida ou concorrente (W4 PR-2)', () => {
