@@ -229,11 +229,13 @@ async function handleCustomCreation(
             return;
           }
         }
-        if (finalTablesConfig[tableKey] && fields.length > 0) {
-          const tableSchema = finalTablesConfig[tableKey].schema;
-          if (tableSchema) {
-            tableSchema.fields.push(...(fields as ISchemaField[]));
-          }
+        const def = finalTablesConfig[tableKey];
+        if (def?.schema && fields.length > 0) {
+          // reatribui, não empurra: `def` pode ser o singleton do preset, compartilhado no processo
+          finalTablesConfig[tableKey] = {
+            ...def,
+            schema: { ...def.schema, fields: [...def.schema.fields, ...(fields as ISchemaField[])] },
+          };
         }
       }
     }
