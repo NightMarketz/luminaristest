@@ -183,6 +183,9 @@ function DynamicForm({ schema, onSubmit, onClose, initialData = {}, fieldErrors 
 
     for (const field of schema.fields) {
       if (TECHNICAL_FIELDS.includes(field.name)) continue;
+      // Campo readOnly nunca vai no payload: o servidor (GovernanceEngine.assertReadOnly) rejeita qualquer chave
+      // readOnly presente, e a initialData da edição traz a linha inteira (GAP-MAP Nível 3, 2026-10-19).
+      if (field.readOnly) continue;
 
       const key = field.name;
       const value = formData[key];
