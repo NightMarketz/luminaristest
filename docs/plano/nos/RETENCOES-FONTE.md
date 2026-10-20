@@ -5,7 +5,7 @@ dominio: "financeiro"
 titulo: "Retenções na fonte feitas e sofridas pelo tenant — IRRF, CSRF (só CSLL em 2027), INSS 11% e ISS retido em AP e AR, perfil por contraparte × natureza, título de imposto por código, resumo mensal (materializa o PES-2)"
 estado: "planned"
 estado_detalhe: "20/10: PRE-ADR **Proposed** (ADR-INCR-RETENCOES-FONTE) pela sessao-planejamento sob a Q2 (a) da proposta de 20/10 — forks F-RET-1..9 PENDENTES, P-RET-1..6 ao contador/fonte oficial. **Não roteia até a ratificação.** Sem BRIEF, sem 'executa'. Achado legal de 20/10: a CSRF 4,65% vale só até 31/12/2026 — LC 214 art. 509 (efeitos art. 544 III) deixa só CSLL 1% a partir de 01/01/2027; o Simples como pagador não retém CSRF (Lei 10.833 art. 30 § 2º) e pagamento a optante não sofre (art. 32 III). Relação com o PES-2 (F-PES-1 a, ratificado 12/10, sem nó em nos/): este nó + EFD-REINF o materializam (F-RET-1). Hoje: Payable sem campo de retenção (grep 0); só retenções sofridas informadas à mão (X7 item 15, X8, ISS tpRetISSQN)"
-depende_de: ["[[FIN-01]]", "[[FIN-02]]", "[[LEGAL-PARAMS]]", "[[IRRF-DISTRIBUICAO]]?", "[[X7]]?", "[[D1]]?"]
+depende_de: ["[[D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS]]", "[[FIN-01]]", "[[FIN-02]]", "[[LEGAL-PARAMS]]", "[[IRRF-DISTRIBUICAO]]?", "[[X7]]?", "[[D1]]?"]
 autorizacao: "dono, chat, 2026-10-20: \"Q1 a, Q2 a. Grava as decisões e pode começar pelo fold R0 (Q3 a).\" — Q2 (a) = PRE-ADRs de F1 por sessao-planejamento, sem 'executa' (cédula D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS, sessão de origem). Antes: F-PES-1 (a) PES-2 e F-PES-5 (b), ratificados em lote (dono, chat, 2026-10-12, [[D-2026-10-12-QUESTIONARIO-DONO]]) — só o PRE-ADR de pessoal, sem nó. Só o PRE-ADR e esta nota"
 ancora_sdd: "§M7.1"
 atualizado: "2026-10-20"
@@ -19,7 +19,7 @@ registros: ["server/src/lib/factory.ts", "server/src/routes/accounting.ts", "ser
 
 **Estado:** `planned` — 20/10: PRE-ADR **Proposed** (ADR-INCR-RETENCOES-FONTE); forks F-RET-1..9 PENDENTES; não roteia até a ratificação; sem BRIEF, sem 'executa'  
 **Autorização:** dono, chat, 2026-10-20: "Q1 a, Q2 a. Grava as decisões e pode começar pelo fold R0 (Q3 a)." — Q2 (a): PRE-ADR por sessao-planejamento, sem 'executa'  
-**Depende de:** [[FIN-01]] (Payable/PayablePayment), [[FIN-02]] (Receivable/ReceivableReceipt), [[LEGAL-PARAMS]] (tabela `RETENCAO` + códigos), [[IRRF-DISTRIBUICAO]] (pontilhada: molde do resumo mensal/DARF, função de vencimento), [[X7]] (pontilhada: item 15 consome as sofridas), [[D1]] (pontilhada: item 1b — P-RET-1..6)  
+**Depende de:** [[D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS]] (cédula Q2 (a)), [[FIN-01]] (Payable/PayablePayment), [[FIN-02]] (Receivable/ReceivableReceipt), [[LEGAL-PARAMS]] (tabela `RETENCAO` + códigos), [[IRRF-DISTRIBUICAO]] (pontilhada: molde do resumo mensal/DARF, função de vencimento), [[X7]] (pontilhada: item 15 consome as sofridas), [[D1]] (pontilhada: item 1b — P-RET-1..6)  
 **Desbloqueia:** `EFD-REINF` (R-4010/R-4020/R-2010 nascem do resumo mensal D8)  
 **Âncora no SDD consolidado:** §M7.1  
 **Régua:** seção **F1** da régua F (Q1 (a), 20/10) — não entra na régua de 63
@@ -47,7 +47,7 @@ registros: ["server/src/lib/factory.ts", "server/src/routes/accounting.ts", "ser
 - [`relatorio.md`](../../../pesquisas-legais/verif-2026-10-20-f1-retencoes-reinf-ibscbs/relatorio.md) — verificação legal de 20/10 (RIR arts. 714–723; Lei 10.833 arts. 29–36 + LC 214 art. 509; Lei 8.212 art. 31; LC 116 art. 6º; Lei 9.430 arts. 64/67; Lei 11.196 art. 70); ambiguidades A–C ao contador
 - [`PRE-ADR-PESSOAL-FOLHA-ESOCIAL-REINF.md`](../../accounting/PRE-ADR-PESSOAL-FOLHA-ESOCIAL-REINF.md) — §2.1 "retenções hoje", F-PES-1 (a) PES-2, F-PES-5 (b) (ratificados 12/10 em [[D-2026-10-12-QUESTIONARIO-DONO]])
 - [`BE-INCR-IRRF-DISTRIBUICAO-brief.md`](../../accounting/BE-INCR-IRRF-DISTRIBUICAO-brief.md) — molde do resumo mensal do DARF (L8, item 21)
-- Decisão que abriu o nó: `D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS` (sessão de origem, 20/10; entra no vault com o fold R0)
+- [[D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS]] — decisão que abriu o nó (20/10): Q2 (a) PRE-ADRs de F1; proposta em [`PROPOSTA-COMPLEMENTO-FIN-CTB-FIS-2026-10-20.md`](../PROPOSTA-COMPLEMENTO-FIN-CTB-FIS-2026-10-20.md) §3.1 (linha "Retenções") e §4 (tabela F1)
 
 ## O que espera o dono
 
