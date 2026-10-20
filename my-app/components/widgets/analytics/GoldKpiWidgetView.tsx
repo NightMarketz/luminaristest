@@ -40,25 +40,14 @@ export default function GoldKpiWidgetView({ kpi, chartPreset }: GoldKpiWidgetVie
         trendStr = `${sign}${deltaPct.toFixed(1)}%`;
     }
 
-    // Sparkline data mapping
+    // Sparkline = série real que o processador manda em `fullRecords.records` ({ id: período, data: { value } }).
+    // Sem série (ou com 1 ponto) não há gráfico — nunca dado inventado (GAP-MAP Nível 5, 2026-10-19).
     const sparklineData = useMemo(() => {
-        if (!kpi.fullRecords?.records || kpi.fullRecords.records.length === 0) return [];
-        // Map 12 months array for AreaChart (this expects basic structure, adapting if necessary)
-        // If the backend already brings a pre-processed array for the chart in "fullRecords", we can map it.
-        // Assuming the backend sends something we can easily map to { name, value }.
-        // If it's pure records, we shouldn't map here unless we do intensive grouping.
-        // Usually, for sparkline, the backend should send something like { timeline: [{date: '..', value: ..}]}
-        return [];
+        const records = kpi.fullRecords?.records ?? [];
+        return records
+            .map((r) => ({ name: String(r.id), value: Number((r.data as { value?: unknown } | undefined)?.value) }))
+            .filter((p) => Number.isFinite(p.value));
     }, [kpi.fullRecords]);
-
-    // Hardcoded sparkline for visual aesthetics if real data not available directly
-    // This provides the Datadog/Stripe feel automatically.
-    const mockSparklineData = useMemo(() => {
-        return Array.from({ length: 12 }).map((_, i) => ({
-            name: `M${i}`,
-            value: Math.random() * 1000 + (trend === 'up' ? i * 100 : (trend === 'down' ? (12 - i) * 100 : 500))
-        }));
-    }, [trend]);
 
     return (
         <div className="flex flex-col h-full w-full relative">
@@ -85,10 +74,11 @@ export default function GoldKpiWidgetView({ kpi, chartPreset }: GoldKpiWidgetVie
                 </div>
             </div>
 
-            {/* Sparkline Baseline - Datadog/Stripe Effect */}
+            {/* Sparkline Baseline — só com série real de pelo menos 2 pontos */}
+            {sparklineData.length >= 2 && (
             <div className="absolute bottom-0 left-0 right-0 h-1/2 opacity-20 pointer-events-none transform translate-y-2">
                 <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={mockSparklineData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                    <AreaChart data={sparklineData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                         <Area
                             type="monotone"
                             dataKey="value"
@@ -99,6 +89,7 @@ export default function GoldKpiWidgetView({ kpi, chartPreset }: GoldKpiWidgetVie
                     </AreaChart>
                 </ResponsiveContainer>
             </div>
+            )}
         </div>
     );
 }

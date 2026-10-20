@@ -574,7 +574,7 @@ export const salesModule = {
         excludeStatuses: ['Cancelled'],
         expensesTableKey: '@@PRESET_TABLE_KEY::expenses',
         expenseAmountField: 'amount',
-        expenseDateField: 'date',
+        expenseDateField: 'paymentDate',
         expenseDueDateField: 'dueDate',
         expensePaymentStatusField: 'paymentStatus',
       },

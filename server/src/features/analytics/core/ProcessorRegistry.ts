@@ -27,6 +27,11 @@ export interface ChartDataPoint {
   name: string;
   value: number;
   previousValue?: number; // Optional previous period value for comparative trend calculation
+  /**
+   * O valor sai de uma CONSTANTE de configuração (ex.: `employeesCount`, `equity` em params), não de dado
+   * medido. KPI assim não é exibido (GAP-MAP Nível 5, 2026-10-19) até existir fonte real.
+   */
+  derivedFromConstants?: boolean;
   recordIds?: string[]; // IDs dos registros que compõem este ponto
   tableSource?: string; // Identificador da tabela de origem (preset key ou tableId). Ex: 'sales', 'expenses', '@@PRESET_TABLE_KEY::expenses', 'mixed' para múltiplas tabelas
   // Dados completos para KPIs pequenos (< 200 registros ou < 500KB)
