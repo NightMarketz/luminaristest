@@ -5,7 +5,7 @@ dominio: "fiscal"
 titulo: "IBS/CBS no regime regular (CBS plena em 01/01/2027): tabela de vigência, débito por documento, crédito por entrada, antecipação do pacote, apuração mensal e split payment — promove M5-ibs-cbs"
 estado: "planned"
 estado_detalhe: "20/10: PRE-ADR **Proposed** (ADR-INCR-IBS-CBS-2027) escrito pela sessao-planejamento sob a Q2 (a) da proposta de 20/10 — forks F-IBS-1..10 PENDENTES, P-IBS-1..7 ao contador/fonte oficial. **Não roteia até a ratificação** (README: nó novo vira nos/ depois de PRE-ADR ratificado; a nota existe por pedido da sessão de origem). Sem BRIEF, sem 'executa'. Prazo legal: 01/01/2027 (LC 214 art. 347/542, efeitos art. 544 III). Verificação legal de 20/10: pesquisas-legais/verif-2026-10-20-f1-retencoes-reinf-ibscbs. Hoje o X8 responde 400 a partir de 01/2027 (pisCofinsParams vigenteAte 2026-12-31) — Presumido/Real ficam sem apuração federal sobre a receita"
-depende_de: ["[[X7]]", "[[LEGAL-PARAMS]]", "[[F7]]?", "[[D1]]?", "[[M5-ibs-cbs]]?"]
+depende_de: ["[[D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS]]", "[[X7]]", "[[LEGAL-PARAMS]]", "[[F7]]?", "[[D1]]?", "[[M5-ibs-cbs]]?"]
 autorizacao: "dono, chat, 2026-10-20: \"Q1 a, Q2 a. Grava as decisões e pode começar pelo fold R0 (Q3 a).\" — Q2 (a) = PRE-ADRs de F1 (IBS-CBS-2027, RETENCOES-FONTE, EFD-REINF) por sessao-planejamento, sem 'executa' (cédula D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS, sessão de origem). Só o PRE-ADR e esta nota; BRIEF e código exigem pedido próprio"
 ancora_sdd: "§M5"
 atualizado: "2026-10-20"
@@ -19,7 +19,7 @@ registros: ["server/src/lib/factory.ts", "server/src/routes/accounting.ts", "ser
 
 **Estado:** `planned` — 20/10: PRE-ADR **Proposed** (ADR-INCR-IBS-CBS-2027); forks F-IBS-1..10 PENDENTES; não roteia até a ratificação; sem BRIEF, sem 'executa'  
 **Autorização:** dono, chat, 2026-10-20: "Q1 a, Q2 a. Grava as decisões e pode começar pelo fold R0 (Q3 a)." — Q2 (a): PRE-ADR por sessao-planejamento, sem 'executa'  
-**Depende de:** [[X7]] (molde `TaxAssessment`, CAS, provisão), [[LEGAL-PARAMS]] (tabela de vigência), [[F7]] (pontilhada: split payment como parte da baixa), [[D1]] (pontilhada: item 1b do contador — P-IBS-1..4), [[M5-ibs-cbs]] (pontilhada: diferido que este nó promove)  
+**Depende de:** [[D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS]] (cédula Q2 (a)), [[X7]] (molde `TaxAssessment`, CAS, provisão), [[LEGAL-PARAMS]] (tabela de vigência), [[F7]] (pontilhada: split payment como parte da baixa), [[D1]] (pontilhada: item 1b do contador — P-IBS-1..4), [[M5-ibs-cbs]] (pontilhada: diferido que este nó promove)  
 **Desbloqueia:** [[ISS-TRANSICAO-IBS]] (2029+), parte do [[NFE-DANFE-IBSCBS]] (totais IBS/CBS que o DANFE exibe)  
 **Âncora no SDD consolidado:** §M5  
 **Régua:** seção **F1** da régua F (Q1 (a), 20/10) — não entra na régua de 63
@@ -50,7 +50,7 @@ registros: ["server/src/lib/factory.ts", "server/src/routes/accounting.ts", "ser
 - [`TRANSCRICAO-LC214-art10-pagamento-antecipado-2026-09-27.md`](../../accounting/fontes-oficiais/TRANSCRICAO-LC214-art10-pagamento-antecipado-2026-09-27.md) — V5: antecipação no pacote pré-pago; o razão já difere a receita (V7)
 - [[M5-ibs-cbs]] — diferido de 03/09 com a trilha (triagem 23/09 P2, verificação 17/10)
 - [[D-2026-10-17-AMBIGUIDADES-A1-A10]] — A2 (dispensa de 2026) em leitura provisória, pergunta ao contador no pacote de 17/10
-- Decisão que abriu o nó: `D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS` (sessão de origem, 20/10; entra no vault com o fold R0) — Q1 (a) régua F, Q2 (a) PRE-ADRs de F1
+- [[D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS]] — decisão que abriu o nó (20/10): Q1 (a) régua F, Q2 (a) PRE-ADRs de F1, Q3 (a) fold R0; proposta em [`PROPOSTA-COMPLEMENTO-FIN-CTB-FIS-2026-10-20.md`](../PROPOSTA-COMPLEMENTO-FIN-CTB-FIS-2026-10-20.md) §4 (tabela F1) — cédula, proposta e referências copiadas idênticas do commit `6ca851d2` da sessão de origem
 
 ## O que espera o dono
 
