@@ -44,6 +44,20 @@ O critério **shape+posse** é **detector de candidatos, não decisor**. O lint 
   confinamento em `lib/services` já é o estado correto e o `error` só impede a próxima regressão — mesmo trabalho
   que R3a faz para `recharts`, e mesmo estado que R1b sempre teve. Reclassifique-a assim ao reler o spec.
 
+### R2b — `fetch()` cru fora da service layer (frontend) — 2026-10-20
+- **Onde:** `my-app/eslint.gate.config.mjs`, bloco próprio em `pages/**`, `features/**` e `components/**` (fora testes):
+  `no-restricted-globals` de `fetch` + `no-restricted-properties` de `window.fetch`/`globalThis.fetch`/`self.fetch`.
+  `lib/**` fica fora: `lib/services` e `lib/api` **são** o lugar do `fetch` (contrato §3).
+- **Por que existe:** ponto cego declarado do dependency-cruiser (`docs/adr/ADR-ARCH-BOUNDARIES.md` §2) — `fetch` é
+  global, não import, então R2 e o `check:arch` (U1) não o veem. Medido em 13/10 e em 20/10: 24 sites de produção.
+- **Trabalho:** **converte dívida oculta em dívida marcada** (3º caso do §Princípio). Cada site vivo carrega
+  `// eslint-disable-next-line no-restricted-globals -- DEBT: fetch` e entra no bloco `debt-ledger`; a regra é
+  `error`, então o próximo `fetch` cru na UI reprova o lint. Pagar = mover a chamada para um `*.service.ts`
+  (`apiClient`, ou `multipart.ts` para upload/download) e apagar o marcador + a entrada.
+- **Fora do escopo (ponto cego próprio):** `lib/context/AuthContext.tsx` (2 `fetch` em `lib/`, fora de `lib/services`).
+- **Prova de que morde (20/10):** antes dos marcadores, `npx eslint . --config eslint.gate.config.mjs` → exit 1 com
+  exatamente 27 `no-restricted-globals` (os 24 de produção + 3 em `features/dev/seed`), e nenhum outro erro.
+
 ### R3a — `recharts` confinado (frontend, **barra ilha**)
 - `error`; allowlist por glob: `**/analytics/charts/**`, `**/analytics/kpi/**`, `components/widgets/analytics/GoldKpiWidgetView.tsx`. Qualquer outro import = erro.
 
@@ -93,6 +107,20 @@ em silêncio (o script falha se achar mais de um).
     "server/src/features/reports/services/ReportService.ts": 1
   },
   "DEBT: apiClient": {},
+  "DEBT: fetch": {
+    "my-app/components/widgets/chat/components/DocumentSelector.tsx": 1,
+    "my-app/components/widgets/chat/hooks/UseChatInstances.ts": 2,
+    "my-app/components/widgets/chat/hooks/useChatInstance.ts": 2,
+    "my-app/components/widgets/chat/hooks/useChatMessages.ts": 1,
+    "my-app/components/widgets/dashboard-grid/dashboard-layout.api.ts": 6,
+    "my-app/components/widgets/shared/hooks/useChatInstance.ts": 2,
+    "my-app/components/widgets/shared/hooks/useChatInstances.ts": 3,
+    "my-app/components/widgets/shared/hooks/useChatMessages.ts": 1,
+    "my-app/features/dev/seed/utils/ApiClient.ts": 3,
+    "my-app/features/interview/components/RightSidebar/AIChatMode.tsx": 2,
+    "my-app/features/interview/hooks/useAiInterview.ts": 3,
+    "my-app/pages/dashboard/index.tsx": 1
+  },
   "SANCTIONED": {}
 }
 ```

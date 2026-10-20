@@ -50,6 +50,14 @@ lib/factory.ts = composition root (única peça de lib/ que conhece features)
 
 **Ponto cego declarado:** `fetch()` cru é global, não import — o dependency-cruiser **não** o vê. Em 13/10 havia 24 chamadas em `features/`/`components/` (fora `features/dev/`). Mecanizar isso é regra ESLint (`no-restricted-globals`), fatia própria.
 
+**Emenda 2026-10-20 (dono, chat: "cria a regra de ESLint contra fetch cru") — ponto cego fechado no lint.** Regra
+**R2b** no `my-app/eslint.gate.config.mjs` (`no-restricted-globals` + `no-restricted-properties` de
+`window`/`globalThis`/`self.fetch`, em `pages/`, `features/`, `components/`, fora testes); spec em
+`docs/architecture/lint-layer-gate.md` §R2b. Baseline antes/depois: 24 sites sem regra (+3 em `features/dev/`, fora da
+contagem de 13/10) → **27 marcados `DEBT: fetch`** e declarados no bloco `debt-ledger` (que passou a contar
+`no-restricted-globals`/`-properties` como regra de camada). Só encolhe. Prova de que morde: sem os marcadores, o
+lint gate dá exit 1 com exatamente esses 27. Fica fora: `lib/context/AuthContext.tsx` (2 `fetch` em `lib/`).
+
 ## 3. Mecânica do gate
 
 - `npm run check:arch` (em `server/` e `my-app/`) — `depcruise … --ignore-known .dependency-cruiser-known-violations.json`. Exit ≠ 0 só com violação fora do baseline.

@@ -68,6 +68,7 @@ export function useAiInterview() {
     async function fetchInitialMessage() {
       setIsLoading(true);
       try {
+        // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/ai/ChatInterview`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getCookie('auth_token')}` },
@@ -114,6 +115,7 @@ export function useAiInterview() {
       const body: CreateDashboardPayload = { suiteKey: key, unit: { name: nomeDaUnidadeDaEntrevista(conversa, key) }, fiscal, modules };
       let response: Response;
       try {
+        // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
         response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/create`, {
           method: 'POST',
           headers: {
@@ -174,6 +176,7 @@ export function useAiInterview() {
     setIsLoading(true);
 
     try {
+      // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/ai/ChatInterview`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getCookie('auth_token')}` },

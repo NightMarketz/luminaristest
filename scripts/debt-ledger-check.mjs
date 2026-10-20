@@ -56,7 +56,9 @@ const ROOTS = {
   server: { args: ['src'] },
   'my-app': { args: ['.', '--config', 'eslint.gate.config.mjs'] },
 };
-const LAYER_RULES = new Set(['no-restricted-imports']);
+// no-restricted-globals/-properties = R2b (fetch cru fora da service layer, my-app). O server não
+// as habilita, então entrar aqui não muda o run do server.
+const LAYER_RULES = new Set(['no-restricted-imports', 'no-restricted-globals', 'no-restricted-properties']);
 const MARKER = /\b(DEBT:\s*\S+|SANCTIONED)\b/;
 
 const rootName = process.argv[process.argv.indexOf('--root') + 1];

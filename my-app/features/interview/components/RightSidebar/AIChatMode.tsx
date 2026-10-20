@@ -109,6 +109,7 @@ function AIChatMode({ tableData, sessionId: externalSessionId, onSaveChanges, on
       
       // Chamar a API de customização de campos
       const token = getCookie('auth_token');
+      // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/ai/CustomizeFields`, {
         method: 'POST',
         headers: {
@@ -175,6 +176,7 @@ function AIChatMode({ tableData, sessionId: externalSessionId, onSaveChanges, on
       }
 
       const token = getCookie('auth_token');
+      // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/ai/CustomizeFields`, {
         method: 'POST',
         headers: {
