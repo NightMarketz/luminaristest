@@ -46,3 +46,15 @@ Ordem combinada no chat (15/10): W5 (fonte única de presets) → fechar o KIT-S
 ## Riscos
 
 - Os gates humanos (Bloco A) seguem como gargalo; um 3º vertical antes do [[H3]] amplia o que fica sem validação.
+
+## Achado 2026-10-19 (sem mudança de estado — [[D-2026-10-19-ACHADOS-NA-FILA]])
+
+- **Só o CRM é "módulo"**: `MODULE_REGISTRY` tem 5 chaves (CRM-0, 1, 2A, 2B, 3). As 17 tabelas do salão são compostas à mão
+  na suíte; "ligar depois", `freeSelects`, `moduleViews` e remoção por módulo só existem para CRM; o resto remove tabela a
+  tabela por `meta`. Dois mecanismos para a mesma pergunta — o PRE-ADR deve decidir se o manifesto unifica.
+- **Customização pós-instalação com perda**: o sync de preset só propaga campos, opções de select e `immutableAfter`
+  (`lifecycle`, `deleteConstraints`, `noOverlap`, `compositeUnique` nunca chegam a tenant instalado; o sync desfaz
+  `selectOverrides` — GAP-MAP #397).
+- **E-commerce de produto físico hoje**: não há vertical; o mais perto é o salão aparado no Controle Total, com o kit
+  contábil do salão. Faltam pedido/frete/rastreio, variantes, canal/marketplace, devolução como fluxo. É o caso de uso
+  que este nó descreve.

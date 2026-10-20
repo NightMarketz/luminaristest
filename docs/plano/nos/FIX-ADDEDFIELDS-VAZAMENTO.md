@@ -1,0 +1,24 @@
+---
+id: "FIX-ADDEDFIELDS-VAZAMENTO"
+tipo: "plataforma"
+dominio: "plataforma"
+titulo: "Onboarding Controle Total: addedFields mutava o preset compartilhado e vazava campo para o tenant seguinte"
+estado: "inflight"
+estado_detalhe: "PR #772 aberto (teste-guarda 90673ae9 → fix 84a2720f); CI 11/12 verde em 19/10, 1 pendente; merge só com OK por número"
+autorizacao: "sessão iniciada pelo dono no app a partir do cartão proposto, 2026-10-19 — o corpo do PR #772 não cita frase de autorização; o dono completa se quiser citação literal. Merge NÃO autorizado"
+prs: ["#772"]
+atualizado: "2026-10-19"
+---
+# FIX-ADDEDFIELDS-VAZAMENTO — Onboarding Controle Total: addedFields mutava o preset compartilhado e vazava campo para o tenant seguinte
+
+**Estado:** `inflight` — PR #772 aberto (teste-guarda 90673ae9 → fix 84a2720f); CI 11/12 verde em 19/10, 1 pendente; merge só com OK por número  
+**Autorização:** sessão iniciada pelo dono no app a partir do cartão proposto, 2026-10-19 — o corpo do PR #772 não cita frase de autorização; o dono completa se quiser citação literal. Merge NÃO autorizado  
+**Depende de:** —  
+**PRs:** #772  
+**Origem:** [[D-2026-10-19-ACHADOS-NA-FILA]] · achados em [`ACHADOS-2026-10-19`](../../operating-manual/ACHADOS-2026-10-19-DYNAMICTABLE-E-MODULOS-ANTIGOS.md)
+
+## Lacuna
+
+`handleCustomCreation` fazia `fields.push` no schema do singleton do preset. Provado: `BeautySalonPreset.tables.customers`
+foi de 20 para 21 campos depois do create do tenant A, e o create rápido do tenant B instalou o campo do A. Correção:
+reatribuir em vez de mutar.
