@@ -12,9 +12,11 @@
 **Em duas linhas.** O exemplo do combo (manter o total e jogar o preço para o item menos tributado) **não é elisão, é
 preço inexato no documento fiscal**: o CTN manda arbitrar (art. 148) e rever por simulação (art. 149 VII), a Lei 8.137
 art. 1º II/IV tipifica como crime, e a LC 214 art. 7º § 3º + art. 13 I "b" já preveem o arbitramento item a item a partir
-de 2027 — não entra no sistema como automação. O que entra é a **versão lícita das mesmas economias**: desconto
-incondicional destacado e rateado, segregação monofásico/ST, fator r, salão-parceiro, escolha de regime e de anexo por
-simulação, créditos e retenções — tudo com a lei como régua e o humano decidindo.
+de 2027 — não entra no sistema como automação. **Esclarecimento do dono no mesmo dia: a ideia é preço de custo, não
+preço fictício** — isso é lícito com guardas (seção 2): o desconto do combo vai primeiro aos itens de maior carga até o
+piso do custo, nenhum item sobe acima do catálogo, tudo destacado na nota. É essa a regra do item 1 do nó. O resto que
+entra é a **versão lícita das mesmas economias**: segregação monofásico/ST, fator r, salão-parceiro, escolha de regime e
+de anexo por simulação, créditos e retenções — tudo com a lei como régua e o humano decidindo.
 
 ---
 
@@ -41,7 +43,8 @@ desconto real, estrutura real de parceria). **Evasão/simulação** (ilícita): 
 |---|---|---|
 | Manter o total do combo e declarar na nota o item de alíquota menor por mais do que vale e o outro por menos | **ILÍCITA** | CTN 148/149 VII, Lei 8.137 art. 1º II/IV, LC 214 art. 7º § 3º + 13 I "b" — V |
 | Itemizar o combo pelos preços reais de catálogo e dar **desconto incondicional** rateado proporcionalmente | **LÍCITA** — padrão do sistema | LC 123 art. 3º § 1º; LC 214 art. 12 § 2º III — V |
-| Mesmo que acima, mas concentrar o desconto no item mais tributado, sem nenhum item abaixo do custo | **CINZENTA** (ambiguidade A1 do dossiê) | política comercial é livre, mas "notoriamente inferior ao valor de mercado" arbitra — só com piso e justificativa, decisão do contador |
+| **Esclarecimento do dono (20/10): item de maior carga a preço de custo (nunca abaixo), item de menor carga no preço de catálogo (nunca acima); a diferença para a soma de catálogo é o desconto incondicional do combo** | **LÍCITA com guardas** (defensável; A1 do dossiê reescrita) | preço de custo é preço real e praticado: a base é "o valor da operação" (LC 87 art. 13 I [D31]; LC 214 art. 12 caput) e o preço corrente só entra "na falta do valor" (LC 87 art. 15); o fisco precisa provar que o documento "não merece fé" (CTN 148) — o que a consistência (mesmo preço em todo combo, tabela publicada, item real, custo documentado no estoque FIN-10) afasta. Risco residual: o fisco tomar o preço avulso como "valor de mercado" (LC 214 art. 13 I "b", 2027+) — mitigado porque o preço do combo passa a ser ele mesmo "operação comparável entre partes não relacionadas" |
+| Concentrar o desconto no item mais tributado **abaixo do custo**, ou inflar o item de menor carga acima do catálogo | **CINZENTA → ILÍCITA** | abaixo do custo deixa de ser preço praticado e vira o caso de arbitramento; acima do catálogo é o preço fictício da linha 1 |
 | Kit em que o produto é aplicado no serviço (condição/meio) → tratamento do serviço | **LÍCITA** (2027+, art. 7º II) | classificação por fornecimento principal; produto levado para casa é fornecimento próprio (A2) |
 | Produto monofásico (perfumaria/toucador 33.03–33.07) vendido dentro do combo, com preço real, **segregado** no Simples | **LÍCITA** | LC 123 art. 18 § 4º-A I; Lei 10.147 art. 2º — V; X14 já segrega |
 
@@ -187,7 +190,7 @@ ponte/validação de DTO. Colisão: nenhuma com trilho; a "regra" é tabela de l
 
 | # | Automação | Tipo | Base legal | Depende de |
 |---|---|---|---|---|
-| 1 | **Combo itemizado**: catálogo de kits com itens e preço de catálogo por item; venda grava cada item com preço real; desconto incondicional rateado proporcional por padrão; alocação diferente só com justificativa e piso (custo + margem mínima configurável); flag incondicional × condicional | cálculo + bloqueio | LC 214 art. 7º/12/13; LC 123 art. 3º § 1º; CTN 148 | SalesItems*, PackageCatalog, X10a/X10i (DF-e itemizada) |
+| 1 | **Combo itemizado com alocação fiscal do desconto** (regra do dono, 20/10): catálogo de kits com itens e preço de catálogo por item; o desconto do combo (soma de catálogo − preço do combo) é alocado **primeiro aos itens de maior carga tributária, até o piso = custo** (custo médio do estoque FIN-10, nunca abaixo), e o resto aos demais; nenhum item sobe acima do catálogo; o rateio proporcional fica como alternativa; cada item vai ao documento fiscal com o seu preço e o desconto incondicional destacado; a ordem de carga por item vem da tabela tributária (anexo/segregação no Simples; CST/NCM; alíquota IBS/CBS por item em 2027) | cálculo + bloqueio | LC 87 art. 13 I; LC 214 arts. 7º, 12 § 2º III, 13; LC 123 art. 3º § 1º e 18 § 4º-A; CTN 148 | SalesItems*, PackageCatalog, FIN-10 (custo), TABELA-TRIBUTARIA-PRODUTO, X10a/X10i (DF-e itemizada) |
 | 2 | **Classificação principal + acessório** do kit (2027+) por regra declarada no catálogo (produto aplicado no serviço = acessório) | classificação | LC 214 art. 7º II/§ 2º | IBS-CBS-2027, TABELA-TRIBUTARIA-PRODUTO |
 | 3 | **Segregação automática** por NCM do produto (monofásico 33.03–33.07 exc. 33.06; ICMS-ST pela UF) em vez de manual | cálculo | LC 123 art. 18 § 4º-A; Lei 10.147 | X14 ✅, TABELA-TRIBUTARIA-PRODUTO (NCM) |
 | 4 | **Simulador de fator r**: folha/receita dos 12 meses, quanto falta para 28 %, custo de elevar folha × economia de Anexo V→III; alerta de cruzamento | simulação + alerta | LC 123 art. 18 §§ 5º-J/K/M | X14 ✅, folha (⚫) ou pró-labore manual |

@@ -499,6 +499,24 @@
       "arquivo": "docs/D30_d9580-htm.html",
       "texto": "docs/D30_d9580-htm.txt",
       "bytes": 2944670
+    },
+    {
+      "id": "D31",
+      "titulo": "Lei Complementar nº 87 de 13/09/1996",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/1996/lcp-87-1996-09-13.md",
+      "url_final": "https://github.com/ctresb/leis/blob/0ee2fd30e01d0fb9cb3fb42d7ede8de312ea77e4/federal/leis-complementares/1996/lcp-87-1996-09-13.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:1996-09-13;87",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "0ee2fd30e01d0fb9cb3fb42d7ede8de312ea77e4",
+      "alertas": [],
+      "baixado_em": "2026-10-20T12:49:34-03:00",
+      "sha256": "9467cc843bf7020babf5400b56dbaadd1b7ee2464dc756c2ba1462afc72f43b8",
+      "arquivo": "docs/D31_lcp-87-1996-09-13.md",
+      "texto": "docs/D31_lcp-87-1996-09-13.txt",
+      "bytes": 66997
     }
   ],
   "buscas": [],

@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — eficiencia-fiscal-praticas
 
 **Pergunta:** Quais práticas de eficiência fiscal (planejamento tributário) são lícitas e automatizáveis num ERP de PME (salão/clínica, Simples/Presumido/Real), e qual o limite legal — em especial realocar o preço dentro de um combo para o produto com tributação menor mantendo o total?
-**Aberto em:** 2026-10-20T11:40:05-03:00 · **Atualizado em:** 2026-10-20T11:57:44-03:00
+**Aberto em:** 2026-10-20T11:40:05-03:00 · **Atualizado em:** 2026-10-20T12:50:16-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -18,6 +18,11 @@ tratamentos tributários diferem, e o § 3º manda tratar cada item como indepen
 a cobrança unificada descumprir isso; art. 13 I "b" [D08] arbitra quando o documento declara "valor notoriamente inferior
 ao valor de mercado". A alíquota uniforme do IBS/CBS também esvazia o ganho: a diferença de alíquota entre itens some para
 a maioria dos produtos de salão/clínica.
+
+**Esclarecimento do dono (20/10): o item de maior carga vai a preço de custo, não a preço fictício.** Isso muda a
+classe: preço de custo é preço real (base = "o valor da operação", LC 87 art. 13 I [D31]; LC 214 art. 12), logo é
+**lícito com guardas** — piso no custo, teto no catálogo para o item de menor carga, desconto incondicional destacado,
+regra aplicada a todos — e o risco residual é só o arbitramento por "valor de mercado" de 2027 (A1).
 
 **O que é lícito e o sistema pode automatizar** (elisão: antes do fato gerador, sem simulação, pela própria lei):
 (a) **desconto incondicional** destacado no documento fiscal — sai da receita bruta do Simples (LC 123 art. 3º § 1º [D04])
@@ -47,6 +52,7 @@ realocação de preço.
 | Fator r | LC 123 art. 18 §§ 5º-J, 5º-K, 5º-M | [D04] | "Anexo III… caso a razão entre a folha de salários e a receita bruta… seja igual ou superior a 28%" |
 | Monofásico na revenda | Lei 10.147 art. 1º I "b", art. 2º | [D05] | "São reduzidas a zero as alíquotas… pelas pessoas jurídicas não enquadradas na condição de industrial ou importador" |
 | Salão-parceiro | Lei 12.592 art. 1º-A § 5º (red. Lei 13.352) | [D07] | "A cota-parte destinada ao profissional-parceiro não será considerada para o cômputo da receita bruta do salão-parceiro ainda que adotado sistema de emissão de nota fiscal unificada" |
+| Base do ICMS = valor da operação | LC 87 art. 13 I e § 1º II "a"; art. 15 | [D31] | "na saída de mercadoria… o valor da operação"; descontos condicionais integram; "Na falta do valor… o preço corrente da mercadoria" |
 | Alíquotas reduzidas 2027 | LC 214 arts. 127, 128 II, 130, 136 + Anexo VIII | [D08] | "reduzidas em 30%… profissionais… atividades intelectuais"; "reduzidas em 60%… serviços de saúde"; Anexo VIII = sabões de toucador 3401.11.90, dentifrícios, escovas, papel higiênico, fraldas |
 | Vedações ao Simples (interdependência) | LC 123 art. 3º § 4º III, IV, IX | [D04] | "sócia de outra empresa que receba tratamento… desde que a receita bruta global ultrapasse o limite"; "mais de 10%… de outra empresa não beneficiada"; "resultante… de cisão… nos 5 anos" |
 
@@ -62,13 +68,17 @@ realocação de preço.
   a segregação decorre da LC 123.
 
 ## 4. Ambiguidades (só o que precisa de decisão humana)
-- **A1 — Desconto incondicional concentrado no item mais tributado.** Leitura 1: o fornecedor fixa o preço de cada
-  item livremente e o desconto é política comercial, logo concentrar o desconto no item de maior carga é lícito se
-  constar do documento. Leitura 2: se o preço líquido do item ficar "notoriamente inferior ao valor de mercado" (LC 214
-  art. 13 I "b") ou o documento "não merecer fé" (CTN 148), o fisco arbitra, e a concentração sistemática é indício de
-  simulação. Leitura mais segura: desconto rateado proporcionalmente por padrão; concentração só com justificativa
-  comercial registrada e piso de preço (custo + margem) por item. Pergunta ao contador: "Aceita desconto incondicional
-  alocado por item fora da proporção, desde que nenhum item fique abaixo do custo? Qual piso vocês defendem?"
+- **A1 — Desconto do combo alocado ao item de maior carga até o preço de custo (esclarecimento do dono, 20/10: "colocar
+  preço de custo em produtos com muito imposto, não precisa ser um preço fora da realidade").** Leitura 1 (mais segura, a
+  adotada): preço de custo é preço real e praticado; a base é "o valor da operação" (LC 87 art. 13 I [D31]; LC 214 art.
+  12) e o preço corrente só se aplica "na falta do valor" (LC 87 art. 15 [D31]); o fisco precisa provar que o documento
+  "não merece fé" (CTN 148 [D01]), o que a consistência (mesmo preço em todo combo, tabela publicada, item real, custo
+  documentado) afasta. Leitura 2 (risco residual): em 2027 o fisco pode tomar o preço avulso do mesmo item como "valor
+  de mercado" (LC 214 art. 13 I "b" [D08]) e tratar o preço de custo como "notoriamente inferior"; a defesa é que o preço
+  do combo é ele mesmo "operação comparável entre partes não relacionadas". Guardas que separam as leituras: piso =
+  custo (nunca abaixo), teto = catálogo (nunca acima no item de menor carga), desconto destacado no documento, regra
+  escrita e aplicada a todos. Pergunta ao contador: "Aceitam desconto de combo alocado ao item mais tributado até o
+  custo, com teto no preço de catálogo para os demais e tudo destacado na nota? Que evidência de custo querem guardar?"
 - **A2 — Kit com fornecimento principal (LC 214 art. 7º II).** O que é "condição ou meio" (§ 2º) para serviço de beleza
   com produto incluído? Leitura: produto aplicado no serviço = acessório (tratamento do serviço); produto levado para casa
   = fornecimento próprio. Pergunta: "Produto entregue ao cliente junto com o serviço é acessório ou fornecimento autônomo?"
@@ -199,6 +209,10 @@ realocação de preço.
 - **[D30]** D9580 — Presidência - legislação federal  
   Link oficial: <https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/d9580.htm>  
   Baixado em 2026-10-20T11:49:46-03:00 · arquivo local `docs/D30_d9580-htm.html` · SHA-256 `3f5df4586671aa0620e4f597b3bdd2dc00f1c26c8ebe8efdcae4845f312d6239`
+- **[D31]** Lei Complementar nº 87 de 13/09/1996 — Acervo ctresb/leis (espelho de fonte oficial)  
+  Acervo: <https://github.com/ctresb/leis/blob/0ee2fd30e01d0fb9cb3fb42d7ede8de312ea77e4/federal/leis-complementares/1996/lcp-87-1996-09-13.md>  
+  Fonte oficial declarada: <https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:1996-09-13;87> · versao_texto: compilada (texto vigente) · cópia de 2026-10-13  
+  Lido em 2026-10-20T12:49:34-03:00 · arquivo local `docs/D31_lcp-87-1996-09-13.md` · SHA-256 `9467cc843bf7020babf5400b56dbaadd1b7ee2464dc756c2ba1462afc72f43b8`
 
 ## Registro de buscas
 _Nenhuma busca registrada._
