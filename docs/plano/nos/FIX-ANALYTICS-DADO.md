@@ -5,14 +5,14 @@ dominio: "plataforma"
 titulo: "Analytics: dado fabricado/errado mostrado como real (Top-10 por nome, contas a pagar 0, KPIs de constante, barra anterior, sparkline, badge flat)"
 estado: "done"
 estado_detalhe: "20/10 (fold): #770 mergeado em main em 20/10 (05:42Z); nó fecha (done). Item 3 entrou com a opção segura (KPIs de constante escondidos); a decisão (a)/(b) continua com o dono · PR #770 aberto, 6 pares vermelho→verde, GAP-MAP Nível 5; CI 14/14 verde (19/10). Pendente do dono: OK por número e decisão do item 3 — (a) esconder os KPIs derivados de constante × (b) ler dado real de funcionários/patrimônio"
-autorizacao: "dono, chat, 2026-10-19 (questionário): \"Autorizo as duas (Recommended)\" — 6 itens, item 3 só a opção segura; merge NÃO autorizado"
+autorizacao: "dono, chat, 2026-10-19 (questionário): \"Autorizo as duas (Recommended)\" — 6 itens, item 3 só a opção segura; merge NÃO autorizado · fold R0 (dono, chat, 2026-10-20): \"Q1 a, Q2 a. Grava as decisões e pode começar pelo fold R0 (Q3 a).\" — D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS (commit 6ca851d2, PR do plano de complemento); só o fold, não é executa"
 prs: ["#770"]
 atualizado: "2026-10-20"
 ---
 # FIX-ANALYTICS-DADO — Analytics: dado fabricado/errado mostrado como real (Top-10 por nome, contas a pagar 0, KPIs de constante, barra anterior, sparkline, badge flat)
 
 **Estado:** `done` — 20/10 (fold): #770 mergeado em main em 20/10 (05:42Z); nó fecha (done). Item 3 entrou com a opção segura (KPIs de constante escondidos); a decisão (a)/(b) continua com o dono · PR #770 aberto, 6 pares vermelho→verde, GAP-MAP Nível 5; CI 14/14 verde (19/10). Pendente do dono: OK por número e decisão do item 3 — (a) esconder os KPIs derivados de constante × (b) ler dado real de funcionários/patrimônio  
-**Autorização:** dono, chat, 2026-10-19 (questionário): "Autorizo as duas (Recommended)" — 6 itens, item 3 só a opção segura; merge NÃO autorizado  
+**Autorização:** dono, chat, 2026-10-19 (questionário): "Autorizo as duas (Recommended)" — 6 itens, item 3 só a opção segura; merge NÃO autorizado **Fold R0:** fold R0 (dono, chat, 2026-10-20): "Q1 a, Q2 a. Grava as decisões e pode começar pelo fold R0 (Q3 a)." — D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS (commit 6ca851d2, PR do plano de complemento); só o fold, não é executa  
 **Depende de:** —  
 **PRs:** #770  
 **Origem:** [[D-2026-10-19-ACHADOS-NA-FILA]] · achados em [`ACHADOS-2026-10-19`](../../operating-manual/ACHADOS-2026-10-19-DYNAMICTABLE-E-MODULOS-ANTIGOS.md)
