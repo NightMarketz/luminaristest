@@ -73,6 +73,12 @@ registros: ["server/src/lib/factory.ts", "server/src/routes/sales.ts", "server/s
   esclarecimento do dono (combo a preço de custo = lícito com guardas; A1 reescrita; LC 87 art. 13 I / 15 [D31])
 - [`relatorio.md`](../../../pesquisas-legais/eficiencia-fiscal-praticas/relatorio.md) — dossiê legal de 20/10 (30
   fontes; ambiguidades A1–A3; lacunas)
+- [`PESQUISA-EFICIENCIA-FISCAL-SERVICOS-2026-10-20.md`](../../accounting/PESQUISA-EFICIENCIA-FISCAL-SERVICOS-2026-10-20.md)
+  — pedido do dono de 20/10 ("pesquise… em serviços tbm"): equiparação hospitalar 8 %/12 % (IN 2.343/2026), fator r em
+  saúde, ISS fixo de sociedade uniprofissional só fora do Simples, salão-parceiro, pré-pago, saúde 60 % em 2027 (estética
+  fora); propostas S-1..S-6 **não aplicadas** a este PRE-ADR (esperam o dono); dossiê
+  [`eficiencia-fiscal-servicos/relatorio.md`](../../../pesquisas-legais/eficiencia-fiscal-servicos/relatorio.md) com
+  S1–S4 ao contador
 - [[D-2026-10-20-EFICIENCIA-FISCAL-PRE-ADR]] — cédula que abriu o nó e fixou "o exemplo do combo não entra"
 - [[D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS]] — régua F; linha F1.5 em [[FILA-ORDEM]] §F
 - [`PRE-ADR-SIMPLES-NACIONAL-CALCULO.md`](../../adr/PRE-ADR-SIMPLES-NACIONAL-CALCULO.md) e
