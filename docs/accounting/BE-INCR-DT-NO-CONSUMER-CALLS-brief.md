@@ -1,14 +1,16 @@
 # BE-INCR-DT-NO-CONSUMER-CALLS — tirar do motor DynamicTable as chamadas a consumidores
 
-> **AUTORIZAÇÃO VAZIA.** Nenhuma decisão citável do dono cobre este item. A nota `docs/plano/nos/BE-INCR-DT-NO-CONSUMER-CALLS.md` tem `autorizacao: ""` e **não roteia**. A citação de 19/10 (`D-2026-10-19-DT-ARQUITETURA-CORRECOES`, branch `claude/dynamictable-architecture-fixes-9e5ba8`) autoriza "correções necessárias no DynamicTable" dentro **daquele** trabalho (PR #769); não nomeia esta inversão, que não está nos 10 achados da decisão nem em "Fora do escopo". Divergência de escopo → registrada, não preenchida. Este BRIEF é análise e opções; não autoriza código.
+> **AUTORIZAÇÃO (dono, chat, 2026-10-19):** *"Autorizo BE-INCR-DT-NO-CONSUMER-CALLS com a opção (b); ratifico F1 (b) e demais forks na recomendação."* Forks F1–F8 **ratificados** na recomendação de cada um (§4). Esta autorização **não diz "executa"**: planejamento e forks estão decididos; a execução de código (`sessao-feature`) depende de comando explícito de execução do dono (regra ORCH-006 / vault: o texto do campo limita o escopo). Sem "executa", nenhum código de aplicação.
+>
+> Citação anterior, para histórico: a decisão de 19/10 do PR #769 (`D-2026-10-19-DT-ARQUITETURA-CORRECOES`) não nomeia esta inversão e não autorizava este nó sozinha.
 
 | Campo | Valor |
 |---|---|
 | Nó | `BE-INCR-DT-NO-CONSUMER-CALLS` (`docs/plano/nos/BE-INCR-DT-NO-CONSUMER-CALLS.md`) |
 | Domínio | motor DynamicTable (backend) |
 | Base de leitura | worktree em `4274f006` (main + ledger #767). **Números de linha abaixo são desta base**; o #769 (`claude/dynamictable-architecture-fixes-9e5ba8`, commit `2c26a274`, PR OPEN, não mergeado) muda as linhas — ver tabela §1.1 (linhas do #769). |
-| Autorização | **vazia** (ver topo) |
-| Estado | planejado; **forks pendentes de ratificação** (§4) |
+| Autorização | dono, chat, 2026-10-19: opção (b) + forks na recomendação — **planejamento e forks**; sem "executa" |
+| Estado | planejado; **forks ratificados pelo dono (19/10)**; execução aguarda "executa" |
 | Gate atual | `cd server && npm run check:arch` → exit 0, "no dependency violations found", 32 known violations ignored (medido 19/10 nesta base) |
 
 ---
@@ -180,7 +182,9 @@ O motor expõe `dataGeneration(userId): number` (contador em memória, como o ca
 
 ---
 
-## 4. Forks pendentes de ratificação (NÃO ratificados)
+## 4. Forks — RATIFICADOS pelo dono em 2026-10-19 na recomendação de cada um
+
+Dono, chat, 2026-10-19: *"ratifico F1 (b) e demais forks na recomendação"*. Decisão final = coluna "Recomendação". A coluna "Status" abaixo é a da escrita do BRIEF e fica como histórico.
 
 | # | Decisão | Caminhos | Recomendação (com justificativa) | Status |
 |---|---|---|---|---|

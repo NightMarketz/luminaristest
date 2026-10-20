@@ -4,9 +4,9 @@ tipo: "plataforma"
 dominio: "motor"
 titulo: "Tirar do motor DynamicTable as chamadas a consumidores (KnowledgeGraph e KpiCache)"
 estado: "planned"
-estado_detalhe: "19/10: BRIEF escrito (planejamento, sessao-planejamento) com 8 forks PENDENTES e recomendação (b). Sem autorização do dono — não roteia. Base: claude/dynamictable-architecture-fixes-9e5ba8 (PR #769, OPEN)"
+estado_detalhe: "19/10: BRIEF escrito (sessao-planejamento) · forks F1–F8 RATIFICADOS na recomendação pelo dono (F1 = opção b) · execução de código NÃO autorizada (falta 'executa'). Base: claude/dynamictable-architecture-fixes-9e5ba8 (PR #769, OPEN)"
 depende_de: []
-autorizacao: ""
+autorizacao: "dono, chat, 2026-10-19: \"Autorizo BE-INCR-DT-NO-CONSUMER-CALLS com a opção (b); ratifico F1 (b) e demais forks na recomendação.\" — cobre planejamento e forks; sem \"executa\", sem código"
 perfil_previsto: "precisa-de-planejamento"
 perfil_evidencia: "forks F1–F8 abertos (mecanismo, tx externa, cobertura de G1/G3, erro silencioso, forma do guard, localização do helper); execução depende da escolha do dono"
 write_set: ["server/src/features/dynamicTables/services/DynamicTableService.ts", "server/src/features/dynamicTables/services/PresetSyncService.ts", "server/src/lib/factory.ts", "server/src/controllers/dynamicTablesController.ts", "server/src/controllers/analyticsDefinitionsController.ts", "server/.dependency-cruiser.cjs"]
@@ -17,7 +17,7 @@ prs: []
 ---
 # BE-INCR-DT-NO-CONSUMER-CALLS — tirar do motor DynamicTable as chamadas a consumidores
 
-**Estado:** `planned` — 19/10: BRIEF escrito com checklist de 14 itens, contratos das opções (a)–(d), 8 forks **PENDENTES** (nenhum ratificado) e teste-guarda proposto (T1 gate B7 + T2 comportamental). **Sem autorização do dono: não roteia** (`autorizacao` vazia).
+**Estado:** `planned` — 19/10: BRIEF escrito com checklist de 14 itens, contratos das opções (a)–(d), teste-guarda proposto (T1 gate B7 + T2 comportamental). **Forks F1–F8 ratificados pelo dono na recomendação** (F1 = (b)). **Execução não autorizada**: a autorização não diz "executa"; a sessão de feature só roda com esse comando.
 **Desbloqueia:** —
 
 ## Origem
