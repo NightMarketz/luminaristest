@@ -416,8 +416,9 @@ export const aggregatePipelineProcessor: AnalyticsProcessor = async (
     }
   }
 
-  // Sort
-  results.sort((a, b) => a.name.localeCompare(b.name));
+  // Sort — `by: 'measure'` ordena pelo valor agregado; `by: 'dimension'` (ou ausente) pelo nome.
+  const byMeasure = compiled.sort?.by === 'measure';
+  results.sort((a, b) => (byMeasure ? a.value - b.value : a.name.localeCompare(b.name)));
   if (compiled.sort?.dir === 'desc') {
     results.reverse();
   }

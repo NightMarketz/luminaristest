@@ -5,7 +5,8 @@ import React from 'react';
 interface ComparisonDataPoint {
     name: string;
     current: number;
-    previous: number;
+    /** Ausente quando o backend não trouxe período anterior — aí não se desenha barra nem legenda. */
+    previous?: number;
 }
 
 interface DashboardBarComparisonProps {
@@ -24,7 +25,8 @@ export default function DashboardBarComparison({
     data,
     isHorizontal = false,
 }: DashboardBarComparisonProps) {
-    const maxValue = Math.max(...data.flatMap(d => [d.current, d.previous]));
+    const hasPrevious = data.some(d => typeof d.previous === 'number');
+    const maxValue = Math.max(...data.flatMap(d => (typeof d.previous === 'number' ? [d.current, d.previous] : [d.current])));
 
     if (isHorizontal) {
         return (
@@ -39,10 +41,12 @@ export default function DashboardBarComparison({
                             <span className="w-2.5 h-2.5 rounded-sm bg-indigo-600"></span>
                             Atual
                         </span>
-                        <span className="flex items-center gap-1">
-                            <span className="w-2.5 h-2.5 rounded-sm bg-indigo-300"></span>
-                            Anterior
-                        </span>
+                        {hasPrevious && (
+                            <span className="flex items-center gap-1">
+                                <span className="w-2.5 h-2.5 rounded-sm bg-indigo-300"></span>
+                                Anterior
+                            </span>
+                        )}
                     </div>
                 </div>
 
@@ -63,15 +67,17 @@ export default function DashboardBarComparison({
                                     </span>
                                 </div>
                                 {/* Previous */}
-                                <div className="flex items-center gap-2">
-                                    <div
-                                        className="h-4 rounded-r bg-indigo-300 transition-all duration-500"
-                                        style={{ width: `${(item.previous / maxValue) * 100}%` }}
-                                    />
-                                    <span className="text-[10px] text-gray-500 shrink-0">
-                                        {(item.previous / 1000).toFixed(0)}k
-                                    </span>
-                                </div>
+                                {typeof item.previous === 'number' && (
+                                    <div className="flex items-center gap-2">
+                                        <div
+                                            className="h-4 rounded-r bg-indigo-300 transition-all duration-500"
+                                            style={{ width: `${(item.previous / maxValue) * 100}%` }}
+                                        />
+                                        <span className="text-[10px] text-gray-500 shrink-0">
+                                            {(item.previous / 1000).toFixed(0)}k
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}
@@ -93,10 +99,12 @@ export default function DashboardBarComparison({
                         <span className="w-2.5 h-2.5 rounded-sm bg-indigo-600"></span>
                         Atual
                     </span>
-                    <span className="flex items-center gap-1">
-                        <span className="w-2.5 h-2.5 rounded-sm bg-indigo-300"></span>
-                        Anterior
-                    </span>
+                    {hasPrevious && (
+                        <span className="flex items-center gap-1">
+                            <span className="w-2.5 h-2.5 rounded-sm bg-indigo-300"></span>
+                            Anterior
+                        </span>
+                    )}
                 </div>
             </div>
 
@@ -104,7 +112,7 @@ export default function DashboardBarComparison({
             <div className="flex items-end justify-between gap-2 h-[160px]">
                 {data.map((item, idx) => {
                     const currentHeight = (item.current / maxValue) * 100;
-                    const previousHeight = (item.previous / maxValue) * 100;
+                    const previousHeight = typeof item.previous === 'number' ? (item.previous / maxValue) * 100 : undefined;
 
                     return (
                         <div key={idx} className="flex-1 flex flex-col items-center gap-1">
@@ -115,10 +123,12 @@ export default function DashboardBarComparison({
                                     style={{ height: `${currentHeight}%` }}
                                 />
                                 {/* Previous bar */}
-                                <div
-                                    className="w-3 bg-indigo-300 rounded-t transition-all duration-300 hover:bg-indigo-400"
-                                    style={{ height: `${previousHeight}%` }}
-                                />
+                                {previousHeight !== undefined && (
+                                    <div
+                                        className="w-3 bg-indigo-300 rounded-t transition-all duration-300 hover:bg-indigo-400"
+                                        style={{ height: `${previousHeight}%` }}
+                                    />
+                                )}
                             </div>
                             <span className="text-[10px] text-gray-400 dark:text-gray-500">
                                 {item.name}

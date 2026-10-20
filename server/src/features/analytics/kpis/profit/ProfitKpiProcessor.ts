@@ -400,26 +400,33 @@ export const profitKpiProcessor: AnalyticsProcessor = async (context): Promise<C
   const expenseTableSource = (params.costSourceTableKey as string | undefined) ?? 'expenses';
   const mixedTableSource = 'mixed'; // For KPIs that use both tables
 
+  // employeesCount / totalHoursWorked / equity / recurringProfit só existem como constantes de params
+  // (SalesModule.ts, bloco profitKpis) — não há fonte real. Os KPIs que dividem por elas ficam marcados
+  // e NÃO saem (GAP-MAP Nível 5; decisão retirar × ler de fonte real é do dono).
+  const derivedFromConstants = true;
+
   // Return all KPIs with recordIds and tableSource
-  return [
+  const kpis: ChartDataPoint[] = [
     { name: 'Lucro Bruto', value: grossProfit, previousValue: prevGrossProfit, recordIds: allProfitIds, tableSource: mixedTableSource, fullRecords: { records: finalSeries.map(s => ({ id: s.name, data: { value: s.grossProfit } as Record<string, unknown> })), timestamp: Date.now() } },
     { name: 'Lucro Operacional', value: operatingProfit, previousValue: prevOperatingProfit, recordIds: allProfitIds, tableSource: mixedTableSource, fullRecords: { records: finalSeries.map(s => ({ id: s.name, data: { value: s.operatingProfit } as Record<string, unknown> })), timestamp: Date.now() } },
     { name: 'Lucro Líquido', value: netProfit, previousValue: prevNetProfit, recordIds: allProfitIds, tableSource: mixedTableSource, fullRecords: { records: finalSeries.map(s => ({ id: s.name, data: { value: s.netProfit } as Record<string, unknown> })), timestamp: Date.now() } },
     { name: 'Lucro Médio por Cliente', value: profitPerCustomer, previousValue: prevProfitPerCustomer, recordIds: currentPeriodRevenueIds, tableSource: mainTableSource },
-    { name: 'Lucro por Funcionário', value: profitPerEmployee, previousValue: prevProfitPerEmployee, recordIds: allProfitIds, tableSource: mixedTableSource, fullRecords: { records: finalSeries.map(s => ({ id: s.name, data: { value: s.netProfit } as Record<string, unknown> })), timestamp: Date.now() } },
-    { name: 'Lucro por Hora Trabalhada', value: profitPerHour, previousValue: prevProfitPerHour, recordIds: allProfitIds, tableSource: mixedTableSource, fullRecords: { records: finalSeries.map(s => ({ id: s.name, data: { value: s.productivity } as Record<string, unknown> })), timestamp: Date.now() } },
+    { name: 'Lucro por Funcionário', derivedFromConstants, value: profitPerEmployee, previousValue: prevProfitPerEmployee, recordIds: allProfitIds, tableSource: mixedTableSource, fullRecords: { records: finalSeries.map(s => ({ id: s.name, data: { value: s.netProfit } as Record<string, unknown> })), timestamp: Date.now() } },
+    { name: 'Lucro por Hora Trabalhada', derivedFromConstants, value: profitPerHour, previousValue: prevProfitPerHour, recordIds: allProfitIds, tableSource: mixedTableSource, fullRecords: { records: finalSeries.map(s => ({ id: s.name, data: { value: s.productivity } as Record<string, unknown> })), timestamp: Date.now() } },
     { name: 'Margem Bruta (%)', value: grossMarginPct, previousValue: prevGrossMarginPct, recordIds: allProfitIds, tableSource: mixedTableSource, fullRecords: { records: finalSeries.map(s => ({ id: s.name, data: { value: s.grossMarginPct } as Record<string, unknown> })), timestamp: Date.now() } },
     { name: 'Margem Operacional (%)', value: operatingMarginPct, previousValue: prevOperatingMarginPct, recordIds: allProfitIds, tableSource: mixedTableSource, fullRecords: { records: finalSeries.map(s => ({ id: s.name, data: { value: s.operatingMarginPct } as Record<string, unknown> })), timestamp: Date.now() } },
     { name: 'Margem Líquida (%)', value: netMarginPct, previousValue: prevNetMarginPct, recordIds: allProfitIds, tableSource: mixedTableSource, fullRecords: { records: finalSeries.map(s => ({ id: s.name, data: { value: s.netMarginPct } as Record<string, unknown> })), timestamp: Date.now() } },
     { name: 'Margem de Contribuição (%)', value: contributionMarginPct, previousValue: prevContributionMarginPct, recordIds: allProfitIds, tableSource: mixedTableSource, fullRecords: { records: finalSeries.map(s => ({ id: s.name, data: { value: s.contributionMarginPct } as Record<string, unknown> })), timestamp: Date.now() } },
-    { name: 'Rentabilidade Geral (%)', value: globalProfitabilityPct, recordIds: allProfitIds, tableSource: mixedTableSource, fullRecords: { records: finalSeries.map(s => ({ id: s.name, data: { value: s.globalProfitabilityPct } as Record<string, unknown> })), timestamp: Date.now() } },
+    { name: 'Rentabilidade Geral (%)', derivedFromConstants, value: globalProfitabilityPct, recordIds: allProfitIds, tableSource: mixedTableSource, fullRecords: { records: finalSeries.map(s => ({ id: s.name, data: { value: s.globalProfitabilityPct } as Record<string, unknown> })), timestamp: Date.now() } },
     { name: 'Crescimento do Lucro (%)', value: profitGrowthPct, previousValue: prevProfitGrowthPct, recordIds: [...currentPeriodRevenueIds, ...prevPeriodRevenueIds], tableSource: mainTableSource, fullRecords: { records: finalSeries.map(s => ({ id: s.name, data: { value: s.profitGrowthPct } as Record<string, unknown> })), timestamp: Date.now() } },
-    { name: 'Produtividade do Lucro', value: productivity, previousValue: prevProductivity, recordIds: allProfitIds, tableSource: mixedTableSource, fullRecords: { records: finalSeries.map(s => ({ id: s.name, data: { value: s.productivity } as Record<string, unknown> })), timestamp: Date.now() } },
+    { name: 'Produtividade do Lucro', derivedFromConstants, value: productivity, previousValue: prevProductivity, recordIds: allProfitIds, tableSource: mixedTableSource, fullRecords: { records: finalSeries.map(s => ({ id: s.name, data: { value: s.productivity } as Record<string, unknown> })), timestamp: Date.now() } },
     { name: 'Eficiência do Lucro (Lucro/Custo)', value: profitEfficiency, previousValue: prevProfitEfficiency, recordIds: allProfitIds, tableSource: mixedTableSource },
-    { name: 'Índice de Qualidade do Lucro', value: profitQualityIndex, previousValue: prevProfitQualityIndex, recordIds: allProfitIds, tableSource: mixedTableSource },
+    { name: 'Índice de Qualidade do Lucro', derivedFromConstants, value: profitQualityIndex, previousValue: prevProfitQualityIndex, recordIds: allProfitIds, tableSource: mixedTableSource },
     { name: 'Resultado Financeiro Final', value: resultadoFinanceiro, previousValue: prevResultadoFinanceiro, recordIds: allProfitIds, tableSource: mixedTableSource, fullRecords: { records: finalSeries.map(s => ({ id: s.name, data: { value: s.netProfit } as Record<string, unknown> })), timestamp: Date.now() } },
     { name: 'Lucro Ajustado', value: adjustedProfit, previousValue: prevAdjustedProfit, recordIds: allProfitIds, tableSource: mixedTableSource },
     { name: 'Lucro Acumulado', value: accumulatedProfit, recordIds: allProfitIds, tableSource: mixedTableSource, fullRecords: { records: finalSeries.map(s => ({ id: s.name, data: { value: s.accumulatedProfit } as Record<string, unknown> })), timestamp: Date.now() } },
   ];
+
+  return kpis.filter((k) => !k.derivedFromConstants);
 };
 

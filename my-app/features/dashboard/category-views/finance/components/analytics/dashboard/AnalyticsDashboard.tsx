@@ -353,7 +353,7 @@ export default function AnalyticsDashboard({ presetKey, tables }: AnalyticsDashb
                                     }
 
                                     if (kpi.type === 'bar') {
-                                        const barData = data.data?.map(d => ({ name: d.name || d.label || '', current: d.value, previous: d.previousValue || d.value * 0.8 })) || [];
+                                        const barData = data.data?.map(d => ({ name: d.name || d.label || '', current: d.value, previous: d.previousValue })) || [];
                                         // A bar chart could occupy 1 column or 2 columns based on available space
                                         return (
                                             <div key={kpi.key} className="col-span-1">
