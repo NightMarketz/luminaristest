@@ -103,7 +103,7 @@ que dê 8 % e está fora da redução de 60 % de 2027 — tratar estética como 
 | NFS-e por sessão consumida do pacote | 🟡 | pacote é passivo no razão (`CustomerPackageBalance`); emissão da NFS-e no consumo não verificada |
 | Alertas de parceria (CNPJ, contrato) | ⬜ | PR-4 do nó EFICIENCIA-FISCAL (comportamento 19) |
 
-## 4. Proposta para o nó EFICIENCIA-FISCAL (não aplicada ao PRE-ADR — espera o dono)
+## 4. Proposta para o nó EFICIENCIA-FISCAL (incluída no PRE-ADR como PR-5 — dono, 20/10)
 
 | # | Automação | Tipo | Base legal | Toca |
 |---|---|---|---|---|
@@ -114,8 +114,9 @@ que dê 8 % e está fora da redução de 60 % de 2027 — tratar estética como 
 | S-5 | **NBS → Anexo III da LC 214** por serviço, com "estética = alíquota cheia" por padrão e decisão humana para procedimento médico estético | classificação | LC 214 art. 130 + Anexo III | IBS-CBS-2027, `ServiceFiscalProfile.cNBS` |
 | S-6 | Alertas de parceria completos (já no comportamento 19 do PRE-ADR) + indícios de vínculo do art. 1º-C | alerta | Lei 12.592 arts. 1º-A § 8º, 1º-C | X14 |
 
-S-1, S-2 e S-5 tocam nós já fechados ou planejados (X7, IBS-CBS-2027) e seriam **comportamentos novos** do PRE-ADR
-`ADR-INCR-EFICIENCIA-FISCAL` — entram só com o OK do dono (a autorização de 20/10 cobre o PRE-ADR como escrito).
+Dono, chat, 20/10: *"Inclua as propostas S-1..S-6 de serviços no PRE-ADR do EFICIENCIA-FISCAL como comportamentos e
+forks pendentes."* — viraram os comportamentos 25–33 (PR-5) e os forks F-EF-10..13 do `ADR-INCR-EFICIENCIA-FISCAL`;
+S1–S4 viraram P-EF-7..10.
 
 ## 5. Para o contador (perguntas exatas)
 

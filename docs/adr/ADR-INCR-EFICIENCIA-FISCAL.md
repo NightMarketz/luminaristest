@@ -7,7 +7,12 @@
 > Lei 10.147 arts. 1º I "b" e 2º [D05]; Lei 12.592 art. 1º-A § 5º (red. Lei 13.352) [D23][D07]; LC 214 arts. 5º, 7º, 12,
 > 13, 127, 128, 130, 136, 341-F, 542 XI [D08] (compilada no Planalto — o acervo [D03] era republicação); LC 87 arts. 13 I
 > e § 1º II "a", 15 [D31] (base do ICMS = "o valor da operação"). Referências `[Dnn]` são do dossiê (atualizado em
-> 20/10 12:50 com o esclarecimento do dono — commit `7f2a7609` do #776).
+> 20/10 12:50 com o esclarecimento do dono — commit `7f2a7609` do #776). **Serviços (PR-5):** dossiê
+> `pesquisas-legais/eficiencia-fiscal-servicos/relatorio.md` (referências `[SV-Dnn]` / `[SIJUT nnn]`) e pesquisa
+> `docs/accounting/PESQUISA-EFICIENCIA-FISCAL-SERVICOS-2026-10-20.md` — Lei 9.249 arts. 15 e 20; Lei 9.250 art. 40;
+> DL 406 art. 9º; LC 116 arts. 7º e 8º-A; LC 123 arts. 13 § 1º-A, 17 XV, 18 §§ 4º V, 5º-B, 5º-M, 22-A, 23; Lei 12.592
+> arts. 1º-A e 1º-C; LC 214 arts. 10, 41, 57, 127, 130 + Anexo III; IN RFB 2.343/2026; SC Cosit 127/2026, 158/2020,
+> 185/2026, 127/2019; Res. CGSN 140 arts. 2º e 25; Lei SP 13.701 arts. 14–16; STJ Temas 217 e 1.323.
 
 - **Data:** 2026-10-20
 - **Status:** **Proposed — RATIFICAÇÃO PENDENTE.** Nenhum fork está decidido e nenhum código está autorizado.
@@ -29,6 +34,10 @@
     do estoque, FIN-10, nunca abaixo); o resto vai aos demais; **nenhum item sobe acima do seu preço de catálogo**; cada
     item vai ao documento fiscal com o seu preço e o desconto incondicional destacado; o rateio proporcional fica como
     alternativa configurável.
+  - **Serviços (PR-5), dono, chat, 2026-10-20:** pedido *"Já pesquise formas de vc ter eficiencia fiscal em serviços
+    tbm"* e, depois da pesquisa, *"Inclua as propostas S-1..S-6 de serviços no PRE-ADR do EFICIENCIA-FISCAL como
+    comportamentos e forks pendentes."* — cobre S-1..S-6 como comportamentos (§6, PR-5) e forks F-EF-10..13 PENDENTES;
+    não cobre BRIEF nem código, e não ratifica fork.
   - **Passo 1 (cobertura):** a autorização cobre exatamente **este PRE-ADR e a nota do nó** — sem BRIEF, sem código.
     **Divergência a reportar (cobre menos que o pedido de origem):** o pedido fala em "instalar… deixarmos automática";
     este PRE-ADR só planeja. Sobre o exemplo: na leitura literal da primeira mensagem (preço "fora da realidade" para
@@ -51,7 +60,8 @@
 ## TLDR (2 linhas)
 
 O sistema passa a **sugerir** a economia lícita disponível (desconto do combo alocado ao item de maior carga até o custo — regra do dono de 20/10 —, segregação monofásico/ST por NCM, fator r, regime, remuneração do sócio, salão-parceiro) **com o artigo citado**, a **registrar** cada sugestão como `TaxOptimizationSuggestion` (proposta → aceita/recusada, por quem, base legal, economia estimada) e a **bloquear** no documento fiscal a variante ilícita (item abaixo do custo, item acima do catálogo, desconto fora da nota, condicional lançado como incondicional).
-**Risco principal:** o preço de custo é "o valor da operação" (LC 87 art. 13 I; LC 214 art. 12), mas em 2027 o fisco pode tomar o preço avulso do mesmo item como "valor de mercado" (LC 214 art. 13 I "b") — **sem posição oficial lida** (nenhuma SC Cosit nem acórdão CARF sobre alocação de desconto em kit). A defesa é a consistência (mesma regra em todo combo, tabela publicada, custo documentado no estoque), e a pergunta P-EF-1 vai ao contador **antes de qualquer `executa` do PR-1**.
+**Serviços (PR-5, S-1..S-6):** presunção por serviço no Presumido com equiparação hospitalar 8 %/12 % (Atribuição 4 da RDC 50, sociedade empresária, alvará), simulador de ISS fixo de sociedade uniprofissional (só fora do Simples), alertas de enquadramento, NFS-e do pacote por sessão consumida, NBS da saúde para o 60 % de 2027 (estética na alíquota cheia) e alertas de parceria.
+**Risco principal:** o preço de custo é "o valor da operação" (LC 87 art. 13 I; LC 214 art. 12), mas em 2027 o fisco pode tomar o preço avulso do mesmo item como "valor de mercado" (LC 214 art. 13 I "b") — **sem posição oficial lida** (nenhuma SC Cosit nem acórdão CARF sobre alocação de desconto em kit). A defesa é a consistência (mesma regra em todo combo, tabela publicada, custo documentado no estoque), e a pergunta P-EF-1 vai ao contador **antes de qualquer `executa` do PR-1**. Em serviços, o risco é tratar procedimento **estético** como saúde: nenhuma SC dá 8 % e a LC 214 o deixa fora dos 60 % (F-EF-11, P-EF-7).
 
 ---
 
@@ -116,6 +126,15 @@ O sistema passa a **sugerir** a economia lícita disponível (desconto do combo 
 | L15 | Multa qualificada | 100% (reincidência 150%) | Lei 9.430 art. 44 § 1º VI–VII; LC 214 art. 341-F | V | texto do alerta de risco (PR-4) |
 | L16 | Alíquotas reduzidas 2027 | saúde 60% só Anexo III (**estética não consta**); profissões 30% (art. 127, lista fechada); higiene 60% só Anexo VIII | LC 214 arts. 127, 128 II, 130, 136 — [D08] | V (lista); estética = NÃO CONFIRMADO | PR-3 simulador 2027 com aviso "enquadramento não confirmado" |
 | L17 | Base do ICMS = preço praticado | "na saída de mercadoria… o valor da operação" (art. 13 I); descontos condicionais integram a base (§ 1º II "a"); "Na falta do valor… o preço corrente da mercadoria" (art. 15) | LC 87 arts. 13 I e § 1º II "a", 15 — [acervo D31](https://github.com/ctresb/leis/blob/0ee2fd30e01d0fb9cb3fb42d7ede8de312ea77e4/federal/leis-complementares/1996/lcp-87-1996-09-13.md) | V | D5: preço de custo é preço real e praticado ⇒ base; o "preço corrente" só entra na falta do valor |
+| L18 | Presunção por atividade (Presumido) | "No caso de atividades diversificadas será aplicado o percentual correspondente a cada atividade." | Lei 9.249 art. 15 § 2º — [acervo SV-D03](https://github.com/ctresb/leis/blob/d955e7e66c4a7176278ee8ac74513668de7fc989/federal/leis-ordinarias/1995/lei-9249-1995-12-26.md) | V | S-1: presunção **por serviço**, não por empresa |
+| L19 | Equiparação hospitalar 8 % (IRPJ) / 12 % (CSLL) | "exceto a de serviços hospitalares e de auxílio diagnóstico e terapia… sociedade empresária e atenda às normas da… Anvisa"; SC Cosit 127/2026: "inobservância de quaisquer desses requisitos… 32%" | Lei 9.249 art. 15 § 1º III "a" e art. 20 — [SV-D03](https://github.com/ctresb/leis/blob/d955e7e66c4a7176278ee8ac74513668de7fc989/federal/leis-ordinarias/1995/lei-9249-1995-12-26.md); IN RFB 1.700 art. 33 (red. IN 2.343/2026); [SC Cosit 127/2026](https://normas.receita.fazenda.gov.br/sijut2consulta/link.action?idAto=152634); STJ Tema 217 | V | S-1: checklist + 32 % sem ele; I-14 |
+| L20 | Presunção de 16 % é da empresa | "não se aplica… às sociedades prestadoras de serviços de profissões legalmente regulamentadas"; ADN Cosit 22/2000 (impedimento da PJ) | Lei 9.250 art. 40 — [acervo SV-D04](https://github.com/ctresb/leis/blob/ec2d052273aea51cd30fac55a779a8d933c11046/federal/leis-ordinarias/1995/lei-9250-1995-12-26.md) | V / V\* | S-3: esteticista ou médico no quadro tira o 16 % (já existe no X7 com confirmação F-P16-1) |
+| L21 | ISS por profissional (SUP) | "calculado em relação a cada profissional habilitado, sócio, empregado ou não, que preste serviços em nome da sociedade" | DL 406 art. 9º §§ 1º e 3º — [acervo SV-D02](https://github.com/ctresb/leis/blob/212a2808baa6dd6847e954081ed6eaeec47c45e0/federal/decretos-lei/1968/del-406-1968-12-31.md); STJ Tema 1.323; Lei SP 13.701 art. 15 [SV-D11] | V | S-2 |
+| L22 | ISS fixo vedado no Simples | "A atividade constante do inciso XIV do § 5º-B… recolherá o ISS em valor fixo" (só contábil); Res. CGSN 140 art. 25: "não se aplica… valor fixo… enquanto não optante" | LC 123 art. 18 § 22-A — [acervo SV-D05](https://github.com/ctresb/leis/blob/394a7e97c8604703a3ea6638df61ab1873cecc6e/federal/leis-complementares/2006/lcp-123-2006-12-14.md); Res. CGSN 140 art. 25 | V | S-2: 400 nomeado para optante; I-16 |
+| L23 | Pré-pago | Simples: receita "por ocasião do faturamento ou na proporção em que os serviços são efetivamente prestados, o que ocorrer primeiro"; IBS/CBS: "na data de pagamento de cada parcela" | [SC Cosit 158/2020](https://normas.receita.fazenda.gov.br/sijut2consulta/link.action?idAto=114933); Res. CGSN 140 art. 2º §§ 8º–9º; LC 214 art. 10 § 4º [SV-D09] | V | S-4: NFS-e por consumo adia a receita do Simples; IBS/CBS não se difere |
+| L24 | Saúde 60 % (2027) e estética | "serviços de saúde relacionados no Anexo III" (lista por NBS, estética não consta); "serviços recreativos, esportivos e estéticos" sem crédito ao tomador | LC 214 arts. 130 + Anexo III e 57 [SV-D09]; Decreto 12.955/2026 art. 205 [SV-D12] | V | S-5; F-EF-11 |
+| L25 | Enquadramento no Simples e vedações de serviço | saúde (§ 5º-B XVI, XIX–XXI) = Anexo III se r ≥ 28 %, senão V (§ 5º-M I); salão/estética = III direto (SC Cosit 127/2019); vedado: locação de imóvel próprio (art. 17 XV, red. LC 214), cessão de mão de obra médica (SC Cosit 185/2026) | LC 123 arts. 17 XV, 18 §§ 5º-B, 5º-M — [SV-D05](https://github.com/ctresb/leis/blob/394a7e97c8604703a3ea6638df61ab1873cecc6e/federal/leis-complementares/2006/lcp-123-2006-12-14.md); [SC 127/2019](https://normas.receita.fazenda.gov.br/sijut2consulta/link.action?idAto=99744); [SC 185/2026](https://normas.receita.fazenda.gov.br/sijut2consulta/link.action?idAto=153818) | V | S-3 |
+| L26 | Parceria: CNPJ e vínculo | "desde que este esteja devidamente inscrito no CNPJ" (CGSN 140 art. 2º § 5º VI); vínculo quando não houver contrato formalizado ou o parceiro exercer função diversa | LC 123 art. 13 § 1º-A [SV-D05]; Lei 12.592 arts. 1º-A § 8º e 1º-C — [acervo SV-D08](https://github.com/ctresb/leis/blob/a31cf3cd12073c7b195933a53e733b85c00cfe02/federal/leis-ordinarias/2012/lei-12592-2012-01-18.md) | V | S-6 |
 
 **Elisão** (lícita, o que o módulo sugere): escolha que a própria lei oferece, antes do fato gerador, com substância —
 regime, anexo, segregação, desconto real destacado, parceria com contrato. **Simulação** (ilícita, o que o módulo
@@ -154,7 +173,7 @@ por tenant. O que o tenant configura é **política comercial** (margem mínima 
 declarar preço diferente do praticado".
 
 **D3 — Model `TaxOptimizationSuggestion` (Prisma first-class).** Uma linha por (escopo, prática, período/venda):
-`practice` (enum fechado das 11 práticas), `status PROPOSED|ACCEPTED|REJECTED|EXPIRED`, `subjectType|subjectId`
+`practice` (enum fechado: as 11 práticas da pesquisa + 5 de serviços, PR-5), `status PROPOSED|ACCEPTED|REJECTED|EXPIRED`, `subjectType|subjectId`
 (venda, competência, ano, sócio), `legalBasis` (artigo + link, texto do dossiê), `estimatedSavingCents`, `calc` (memória
 JSON no molde do X7), `parametrosSha256`, `proposedBy SYSTEM|userId`, `decidedById`, `decidedAt`, `decisionReason`.
 Imutável depois de decidida (nova proposta ⇒ nova linha com `supersedesId`). Sem soft-delete (é trilha). Auditoria
@@ -214,10 +233,17 @@ artigo de cada linha, exportável no pacote do contador (C6b) para assinatura �
 (`IRRF-DISTRIBUICAO`; aqui só o simulador consome); `ProductFiscalProfile` em si (NFC-e / `TABELA-TRIBUTARIA-PRODUTO`);
 emissão do documento (X10a/X10i); FE (nó `FE-INCR-EFICIENCIA-FISCAL`, posterior).
 
-## 6. Esqueleto de comportamentos por PR (os 11 da pesquisa §5)
+**D11 — Serviços: enquadramento é dado por serviço, a economia é sugestão (S-1..S-6, dono 20/10).** O que decide o
+tributo do serviço (presunção, anexo, ISS fixo ou variável, NBS da saúde em 2027, finalidade terapêutica × estética ×
+beleza) é **dado versionado** no `ServiceFiscalProfile` e no perfil da empresa, com fonte e evidência; cada enquadramento
+mais barato que o padrão nasce como `TaxOptimizationSuggestion` e só vale depois de aceito (F-EF-3). O padrão é sempre o
+enquadramento mais caro que a lei permite sem prova (32 %, ISS sobre faturamento, alíquota cheia). Nada disso entra no
+motor DynamicTable: o catálogo de serviços continua preset; o perfil fiscal do serviço já é Prisma (`ServiceFiscalProfile`).
+
+## 6. Esqueleto de comportamentos por PR (os 11 da pesquisa §5 + S-1..S-6 da pesquisa de serviços)
 
 Fatiamento proposto (F-EF-6): **PR-1 combo itemizado + rateio + piso + guarda · PR-2 segregação por NCM · PR-3
-simuladores · PR-4 alertas + relatório**. Numeração `(p-n)` = prática n da pesquisa §5.
+simuladores · PR-4 alertas + relatório · PR-5 serviços (S-1..S-6)**. Numeração `(p-n)` = prática n da pesquisa §5.
 
 | # | Comportamento | Toca | Canônico reusado | Fork |
 |---|---|---|---|---|
@@ -249,6 +275,16 @@ simuladores · PR-4 alertas + relatório**. Numeração `(p-n)` = prática n da 
 | 22 | `(p-7,9)` Linhas do relatório que **só consomem**: retenções sofridas do mês (`RETENCOES-FONTE` D8) e crédito não tomado (`IBS-CBS-2027`) entram como "economia disponível" quando os nós existirem; até lá `NAO_DISPONIVEL` com o nó citado | relatório | — | — |
 | 23 | `(p-11)` `GET /accounting/tax-optimization/report?competencia=` (D9) + `EXPORT_ECONOMIA_FISCAL` no pacote do contador | rota + serviço + C6b | `DataExchangeExportService` | — |
 | 24 | Gates: snapshot de DTOs; allowlist `auditCanonical.ts` (`tax.suggestion.*`, `tax.policy.*`, `sale.fiscal_guard.blocked`); openapi path-count; i18n pt/en dos alertas; `check:arch`; `node scripts/plano-vault.mjs check` | vários | — | — |
+| **PR-5** | **Serviços (S-1..S-6; o item 24 vale também aqui)** | | | |
+| 25 | `(S-1)` `ServiceFiscalProfile` ganha `finalidade TERAPEUTICA\|ESTETICA\|BELEZA` (obrigatória em serviço novo; linhas antigas `null` ⇒ tratadas como ESTETICA para 8 %/60 %) e `elegivelHospitalar` (bool, default false) com `fundamentoHospitalar` (texto: item da Atribuição 4 da RDC 50); `CompanyFiscalProfile` ganha `sociedadeEmpresaria` (bool), `alvaraSanitarioValidoAte` (date-only) e `alvaraSourceDocumentId` | schema + `ServiceFiscalProfileDto`, `CompanyFiscalProfileDto` + serviços | `ServiceFiscalProfile`, `CompanyFiscalProfile`, `SourceDocument` | F-EF-10 |
+| 26 | `(S-1)` X7: `AtividadePresuncao` ganha `HOSPITALAR`; linhas `PRESUNCAO_IRPJ/HOSPITALAR = 800 bp` e `PRESUNCAO_CSLL/HOSPITALAR = 1200 bp` em `legal_parameters`; a receita de serviço é repartida por serviço (L18): HOSPITALAR só com `elegivelHospitalar` **e** `finalidade = TERAPEUTICA` **e** checklist da empresa válido na data (`sociedadeEmpresaria`, alvará vigente); faltou um ⇒ 32 % + aviso `HOSPITALAR_REQUISITO_AUSENTE` com o requisito; `ESTETICA` com `elegivelHospitalar` ⇒ 400 nomeado no perfil | `models/taxAssessmentCalc.ts`, `taxAssessmentParams.ts`, `TaxAssessmentService` | `regra16` (molde de presunção condicional), `ReceitaFiscalLinha.cTribNac` | F-EF-10, F-EF-11 |
+| 27 | `(S-1)` Sugestão `PRESUNCAO_HOSPITALAR` por serviço com receita no período: economia estimada = receita × (32 % − 8 %) × 15 % (IRPJ, mais adicional quando houver) + receita × (32 % − 12 %) × 9 % (CSLL), artigo L19 e checklist do que falta | serviço | D3 | — |
+| 28 | `(S-2)` Tabela `ISS_FIXO_SUP` em `legal_parameters` por `codMun` (valor por profissional, faixas, subitens elegíveis; SP: R$ 1.995,26 × profissional até 5, subitens 4.01, 4.02, 4.06, 4.08, 4.11–4.14, 4.16 — linha `DRAFT` até ler a atualização de 2026) + `GET /accounting/simulacoes/iss-uniprofissional?ano=` → ISS do ano pelo faturamento (Σ X7 Fase C) × ISS fixo (tabela × profissionais informados), checklist do Tema 1.323 (prestação pessoal, responsabilidade técnica individual, sem estrutura empresarial: filiais, sócio só investidor, não habilitados prestando o serviço) e a exigência municipal (SP: responsabilidade ilimitada); regime SIMPLES ⇒ 400 nomeado `SUP_VEDADO_NO_SIMPLES` (L22) | rota + serviço + função pura | `issCompetencia.ts`, `IssBeneficioMunicipal` (molde de tabela por município) | F-EF-12 |
+| 29 | `(S-2)` Se F-EF-12 (a): modo de apuração `ISS_FIXO_SUP` no X7 Fase C, habilitado por perfil com documento da inscrição municipal no regime (SourceDocument) e período de vigência; a NFS-e continua sendo emitida, com o ISS do regime fixo | `TaxAssessmentService` (ISS), `CompanyFiscalProfile` | X7 Fase C | F-EF-12 |
+| 30 | `(S-3)` Alertas de enquadramento de serviço (molde `severity`/`motivoInformativo` do X14): `PROFISSAO_REGULAMENTADA_TIRA_16` (PRESUMIDO-16 ativo e serviço com `cTribNac` de profissão regulamentada — L20), `MEDICO_COM_SERVICO_ESTETICO` (`cTribNac` 4.xx com `finalidade = ESTETICA` — F-EF-11), `LOCACAO_IMOVEL_PROPRIO_NO_SIMPLES` e `CESSAO_MAO_DE_OBRA_MEDICA` (natureza declarada no cadastro — L25) | serviços X14/X7 | alertas do X14 | — |
+| 31 | `(S-4)` Política `nfsePacote POR_CONSUMO\|NA_VENDA` por unidade (default conforme F-EF-13); `POR_CONSUMO` emite a NFS-e de cada sessão consumida do pacote (valor = consumo do saldo) e a receita do Simples segue a emissão (L23); aviso fixo de que, a partir de 2027, o IBS/CBS é devido no recebimento (LC 214 art. 10 § 4º — nó IBS-CBS-2027) | montagem do `FiscalDocument` (`FiscalDocumentEmissionService`), `PackageBalanceService` (leitura) | `CustomerPackageBalance`, X10a/X10i | F-EF-13 |
+| 32 | `(S-5)` Tabela `IBS_CBS_REDUCAO_NBS` em `legal_parameters` (vigência 2027-01-01; 30 itens do Anexo III da LC 214, 6000 bp) + `cargaTributariaDoItem` de 2027 aplica a redução só com `ServiceFiscalProfile.cNBS` na tabela **e** `finalidade ≠ ESTETICA`; estético com NBS de saúde ⇒ alíquota cheia + sugestão `NBS_SAUDE_2027` para decisão humana | migração de dado + função pura | `ServiceFiscalProfile.cNBS`, tabela do nó IBS-CBS-2027 | F-EF-11 |
+| 33 | `(S-6)` Alertas de parceria completos (estende o 19): contrato sem homologação (`homologadoEm`/`sindicato` vazios), profissional sem CNPJ ativo recebendo cota (CGSN 140 art. 2º § 5º VI), contrato vencido, profissional-parceiro em função administrativa declarada (Lei 12.592 art. 1º-A § 6º) e checklist do art. 1º-C (horário imposto, exclusividade, remuneração fixa) **declarado** no contrato — nunca inferido de agenda | serviço + alerta | `SalaoParceriaContrato`, `findParceriasDoProfissional` | — |
 
 ## 7. Contratos esboçados
 
@@ -273,7 +309,7 @@ model TaxOptimizationSuggestion {
   id                   String    @id @default(cuid())
   userId               String
   unitId               String
-  practice             String    // COMBO_DESCONTO_ALOCADO | SEGREGACAO_NCM | FATOR_R_FOLHA | TROCA_DE_REGIME | REMUNERACAO_SOCIO | SALAO_PARCEIRO_CONTRATO | SUBLIMITE | INTERDEPENDENCIA | RETENCAO_SOFRIDA | CREDITO_NAO_TOMADO | PRINCIPAL_ACESSORIO
+  practice             String    // COMBO_DESCONTO_ALOCADO | SEGREGACAO_NCM | FATOR_R_FOLHA | TROCA_DE_REGIME | REMUNERACAO_SOCIO | SALAO_PARCEIRO_CONTRATO | SUBLIMITE | INTERDEPENDENCIA | RETENCAO_SOFRIDA | CREDITO_NAO_TOMADO | PRINCIPAL_ACESSORIO | PRESUNCAO_HOSPITALAR | ISS_UNIPROFISSIONAL | NFSE_PACOTE_POR_CONSUMO | NBS_SAUDE_2027 | ENQUADRAMENTO_SERVICO
   subjectType          String    // SALE | COMPETENCIA | ANO | PARTNER | PROFISSIONAL
   subjectId            String
   status               String    // PROPOSED | ACCEPTED | REJECTED | EXPIRED
@@ -343,6 +379,40 @@ export const FatorRSimulacaoSchema = z.object({
   dasAtualCents: z.bigint(), dasSimuladoCents: z.bigint(), custoFolhaAdicionalCents: z.bigint(),
   economiaLiquidaCents: z.bigint(), avisos: z.array(z.string()), parametrosSha256: z.string(),
 }).strict();
+
+// PR-5 — serviços (S-1..S-6)
+// ServiceFiscalProfileDto — campos novos (.strict())
+export const FINALIDADES_SERVICO = ['TERAPEUTICA', 'ESTETICA', 'BELEZA'] as const;
+export const ServiceFiscalProfileServicosSchema = z.object({
+  finalidade: z.enum(FINALIDADES_SERVICO),
+  elegivelHospitalar: z.boolean().default(false),
+  fundamentoHospitalar: z.string().min(3).max(280).nullable(),   // item da Atribuição 4 da RDC Anvisa 50
+}).strict().refine((v) => !v.elegivelHospitalar || (v.finalidade === 'TERAPEUTICA' && v.fundamentoHospitalar),
+  { message: 'hospitalar só para finalidade TERAPEUTICA com fundamento', path: ['elegivelHospitalar'] });
+
+// CompanyFiscalProfileDto — checklist do 8 %/12 %
+export const ChecklistHospitalarSchema = z.object({
+  sociedadeEmpresaria: z.boolean(),
+  alvaraSanitarioValidoAte: dateOnly.nullable(),
+  alvaraSourceDocumentId: z.string().nullable(),
+}).strict();
+
+// GET /accounting/simulacoes/iss-uniprofissional?ano=YYYY
+export const IssUniprofissionalSimulacaoSchema = z.object({
+  ano: z.number().int(), codMun: z.string(), regime: z.string(),
+  issFaturamentoCents: z.bigint(), issFixoCents: z.bigint().nullable(), profissionais: z.number().int(),
+  economiaCents: z.bigint().nullable(),
+  checklist: z.array(z.object({ requisito: z.enum(['PRESTACAO_PESSOAL', 'RESPONSABILIDADE_TECNICA_INDIVIDUAL',
+    'SEM_ESTRUTURA_EMPRESARIAL', 'SOCIOS_HABILITADOS', 'EXIGENCIA_MUNICIPAL']), atendido: z.boolean().nullable(),
+    fonte: z.string() })),
+  avisos: z.array(z.string()), parametrosSha256: z.string(),
+}).strict();
+
+// taxAssessmentParams — presunção por atividade (L18/L19)
+export type AtividadePresuncao = 'SERVICO' | 'REVENDA' | 'HOSPITALAR';
+export function atividadeDoServico(perfil: { finalidade: 'TERAPEUTICA' | 'ESTETICA' | 'BELEZA' | null; elegivelHospitalar: boolean },
+  empresa: { sociedadeEmpresaria: boolean; alvaraSanitarioValidoAte: string | null }, data: string):
+  { atividade: AtividadePresuncao; avisos: Array<'HOSPITALAR_REQUISITO_AUSENTE'> };
 ```
 
 ## 8. FORKS — RATIFICAÇÃO PENDENTE
@@ -354,10 +424,14 @@ export const FatorRSimulacaoSchema = z.object({
 | **F-EF-3** Quem aceita a sugestão | **(a)** aprovador configurável na política: `CONTADOR_RESPONSAVEL` quando há atribuição ACTIVE (GOV-CONTADOR), senão `ADMIN`; proponente ≠ decisor quando o proponente é humano · (b) só ADMIN · (c) qualquer gestor da unidade | **(a).** Reusa o `AccountingPolicy` do GOV-CONTADOR (F-GOV-3 a: com contador ACTIVE, só ele) e o maker-checker já aceito; sugestões com efeito no documento fiscal são do contador quando ele existe | baixo |
 | **F-EF-4** Kit sem NCM própria (SC Cosit 98048/2026: kit sortido classificado pelas RGI 3(b)) | **(a)** o sistema **não cria** NCM de kit: o kit é sempre explodido em itens (L5), cada um com a NCM do produto; alerta `KIT_SEM_NCM_PROPRIA` quando o tenant cadastrar um "produto kit" sem itens · (b) permitir `ProductFiscalProfile` do kit com NCM própria informada pelo contador, tratando o kit como um bem · (c) ambos, com a classificação do contador por kit | **(c)**, com (a) como padrão: a SC Cosit admite o kit como bem único quando a RGI 3(b) manda; **a decisão por kit é do contador** (A2/P-EF-3), registrada como sugestão `PRINCIPAL_ACESSORIO`/kit. (a) sozinho perde o caso lícito de kit-bem; (b) sozinho deixa o rateio sem controle | médio |
 | **F-EF-5** Fonte da NCM e da ST | **(a)** depender do `ProductFiscalProfile` do BRIEF da NFC-e (X10a, F-NFCE-3 b) e abrir `ICMS_ST_NCM_UF` em LEGAL-PARAMS com linhas `DRAFT` · (b) criar `ncm` direto no preset de produtos (DynamicTable) · (c) esperar o nó F4 `TABELA-TRIBUTARIA-PRODUTO` | **(a).** A NCM é invariante legal (Prisma, §2.1) e o X10a já pediu o model; (b) viola a fronteira; (c) atrasa PR-2 até uma onda sem data | baixo |
-| **F-EF-6** Fatiamento | **(a)** 4 PRs (§6) · (b) 2 PRs (PR-1+2 venda/segregação; PR-3+4 simulação/alertas/relatório) | **(a).** PR-1 é o único com guarda de emissão e migração de preset — isola o risco; PR-2 depende do `ProductFiscalProfile` e pode esperar | baixo |
+| **F-EF-6** Fatiamento | **(a)** 5 PRs (§6; PR-5 = serviços, independente de PR-1..4) · (b) 2 PRs (PR-1+2 venda/segregação; PR-3+4 simulação/alertas/relatório) | **(a).** PR-1 é o único com guarda de emissão e migração de preset — isola o risco; PR-2 depende do `ProductFiscalProfile` e pode esperar | baixo |
 | **F-EF-7** Simulador de regime: Lucro Real | **(a)** Simples × Presumido × Real **completo**, com PIS/COFINS não cumulativo e créditos pelo X8, IRPJ/CSLL pela apuração do X7 · (b) só Simples × Presumido (Real = "consulte o contador") · (c) Simples × Presumido agora, Real quando o H1 estiver assinado | **(a).** O dono fixou Lucro Real como regime-alvo (memória) e o X7/X8 já calculam; (b) deixa o alvo fora; (c) é (a) com data humana — aceitável se o dono quiser reduzir o PR-3 | médio em (b) |
 | **F-EF-8** Estética × Anexo III / saúde 60 % (2027) | **(a)** simulador 2027 trata serviço estético como **sem redução** (fora do Anexo III da LC 214) e procedimento por médico/dentista como 60 % **só** com `cTribNac` de saúde e profissional habilitado informado, com aviso "enquadramento não confirmado" · (b) perguntar ao contador antes de simular 2027 | **(a)**, com P-EF-4 em paralelo. Conservador por construção; o aviso impede decisão sobre número não confirmado | baixo |
 | **F-EF-9** Desconto condicional | **(a)** `discountKind` obrigatório na venda com desconto (default `UNCONDITIONAL` só para linhas antigas, no relatório); `CONDITIONAL` nunca abate a receita bruta nem entra na nota como redutor · (b) só `UNCONDITIONAL`, condicional fica fora do sistema | **(a).** O erro clássico (condicional lançado como incondicional) é a guarda I-4; sem o campo o sistema não consegue bloquear | baixo |
+| **F-EF-10** Onde mora a elegibilidade hospitalar (S-1) | **(a) completo:** por serviço (`elegivelHospitalar` + `finalidade` + fundamento na Atribuição 4) e checklist da empresa (sociedade empresária, alvará com validade e documento anexo); a presunção é repartida por serviço; requisito ausente na data ⇒ 32 % com aviso · (b) flag por empresa (toda a receita de serviço a 8 %) · (c) só sugestão, sem cálculo no X7 | **(a).** A lei é por atividade (L18) e a SC 127/2026 manda 32 % quando falta qualquer requisito (L19); (b) aplica 8 % à consulta simples, que a IN 1.700 art. 33 § 4º exclui; (c) deixa o X7 calculando 32 % para quem tem direito a 8 % | alto em (b): IRPJ/CSLL a menor |
+| **F-EF-11** Procedimento estético (8 % e 60 % em 2027) (S-1, S-5) | **(a)** `finalidade = ESTETICA` ⇒ 32 % e alíquota cheia por padrão; reclassificação por serviço só por sugestão aceita pelo contador (F-EF-3) com fundamento registrado (procedimento terapêutico documentado) · (b) bloqueio sempre, sem reclassificação · (c) o usuário escolhe livremente | **(a).** Conservador por construção e ainda cobre o procedimento terapêutico feito em clínica estética (S1/P-EF-7); (b) nega o caso lícito; (c) é o erro mais caro da lista (L19, L24) | alto em (c) |
+| **F-EF-12** ISS fixo de sociedade uniprofissional (S-2) | **(a) completo:** simulador + checklist (item 28) **e** modo de apuração `ISS_FIXO_SUP` no X7 Fase C (item 29), habilitado só com inscrição municipal no regime anexada · (b) só simulador e checklist; a apuração continua sobre o faturamento · (c) fora do nó | **(a).** Fecha a lacuna por inteiro: a clínica que já está na SUP hoje teria o ISS calculado errado pelo X7; a habilitação por documento evita que o sistema decida a ambiguidade S2 (limitada em SP) — decide a prefeitura e o contador | médio em (b) para quem já é SUP |
+| **F-EF-13** NFS-e do pacote pré-pago (S-4) | **(a)** política por unidade com padrão `POR_CONSUMO` no Simples e `NA_VENDA` fora dele, configurável, com o aviso do IBS/CBS de 2027 · (b) sempre `NA_VENDA` (como hoje se presume) · (c) sempre `POR_CONSUMO` | **(a).** No Simples, emitir na venda antecipa a receita (L23, SC 158/2020); no Presumido por competência a receita já segue a prestação (SC Cosit 15/2026) e o cliente pode exigir a nota na venda; (c) ignora esse caso | baixo |
 
 ## 9. Pendente de validação externa — item 1b do D1 (perguntas exatas ao contador)
 
@@ -369,6 +443,10 @@ export const FatorRSimulacaoSchema = z.object({
 | P-EF-4 | "Procedimento estético feito por médico na clínica: vocês enquadram como serviço de saúde do Anexo III da LC 214 (redução de 60 % em 2027) ou fora? E no fator r / Anexo III do Simples hoje, a clínica estética vai pelo CNAE de medicina ou pelo de estética (caso do salão)?" | L16 / pesquisa §3.2 | F-EF-8, item 16 |
 | P-EF-5 | "Para cruzar o fator r (28 %), vocês consideram seguro elevar o **pró-labore** dentro do mês, desde que efetivamente pago com INSS recolhido? Existe piso/teto que vocês recomendam para não caracterizar remuneração 'de papel' (SC Cosit 228/2023)?" | A3 | item 15/17 (texto do aviso I-5) |
 | P-EF-6 | "A ST de ICMS para cosméticos/perfumaria na UF do tenant: qual protocolo/convênio e quais NCM vocês usam hoje para segregar no PGDAS-D? Têm a tabela que usam?" | L9 (ST) | item 11 (`ICMS_ST_NCM_UF`) |
+| P-EF-7 | "Na clínica, quais procedimentos vocês classificam como Atribuição 4 da RDC Anvisa 50 para o 8 %/12 % no Presumido? Algum procedimento estético (toxina, preenchimento, laser) entra? Em 2027, procedimento estético feito por médico vocês enquadram como 'serviço médico especializado' (60 %) ou alíquota cheia?" | S1 | F-EF-10, F-EF-11 |
+| P-EF-8 | "A clínica é limitada em SP; vocês pleiteariam o ISS fixo de sociedade uniprofissional com base no Tema 1.323 do STJ, ou mantêm o ISS sobre o faturamento? Qual o valor por profissional vigente em 2026?" | S2 | F-EF-12 |
+| P-EF-9 | "Vocês aceitam a parcela de aluguel da cota do salão-parceiro como locação de bem móvel (Anexo III sem ISS)? Que cláusula do contrato querem ver separando aluguel de gestão?" | S3 (o X14 já calcula assim) | confirmação do X14 |
+| P-EF-10 | "Com uma esteticista (ou médico) no quadro, confirmam que a presunção de 16 % da Lei 9.250 art. 40 cai para toda a empresa?" | S4 | item 30 |
 
 ## 10. Insumos ausentes (regra 2)
 
@@ -385,6 +463,11 @@ export const FatorRSimulacaoSchema = z.object({
 7. **Tabela tributária por item antes do nó F4 `TABELA-TRIBUTARIA-PRODUTO`:** a ordem de carga (D5) usa o que existe
    (`ServiceFiscalProfile.cTribNac`, `ProductFiscalProfile.ncm` quando chegar, `PIS_COFINS_MONOFASICO_NCM`, anexo do X14);
    sem isso a alocação cai no proporcional com aviso.
+8. **Lista da "Atribuição 4" da RDC Anvisa 50/2002** (não lida em fonte oficial): é o que decide `fundamentoHospitalar`
+   por serviço (item 25); até lá o fundamento é texto informado pelo contador (P-EF-7).
+9. **Valor 2026 da base da SUP em SP** (atualização do art. 15 § 5º da Lei 13.701) — linha `DRAFT` (item 28).
+10. **Acórdão do STJ sobre desconto incondicional na base do ISS** — bloqueado por verificação humana no SCON; o
+    desconto no ISS de SP se apoia na Lei 13.701 art. 14.
 
 ## 11. Achados fora de escopo (regra 5)
 
@@ -424,6 +507,12 @@ externo; o desenho D1/D3 é próprio e por isso **pequeno** (uma tabela de suges
 Nada é copiado; serve como régua de completude e de "o que o mercado já aceita".
 
 ## 12. Riscos e vieses (T8)
+
+- **Risco — estética como saúde (PR-5).** Nenhuma SC dá 8 % a procedimento estético e a LC 214 o deixa fora dos 60 %.
+  Padrão `ESTETICA` ⇒ alíquota cheia e 32 %; só sugestão aceita pelo contador reclassifica (F-EF-11). Caso adversarial
+  tentado: clínica com 70 % da receita em toxina/preenchimento marcando tudo como `TERAPEUTICA` para ter 8 % — o perfil
+  aceita, mas o `refine` exige fundamento na Atribuição 4 por serviço e a reclassificação de estético passa pela
+  sugestão com decisor contador; o que me derrubaria é o contador aceitar sem fundamento, que é responsabilidade dele.
 
 - **Risco — "piso" vira "preço mínimo do fisco".** Não existe tabela oficial de preço de mercado para serviço de
   salão; o piso é defesa do tenant (custo + margem), não norma. Declarado no texto da violação ("critério interno de
@@ -482,11 +571,23 @@ Nada é copiado; serve como régua de completude e de "o que o mercado já aceit
 11. Relatório de economia soma **só** `ACCEPTED`; `PROPOSED`/`REJECTED` aparecem em contagem, nunca em cents.
 12. Nenhum import de serviço Prisma em `rules/plugins/**` (`check:arch` + teste de fronteira já existente).
 13. Auditoria `tax.suggestion.*` sem nome/CPF de sócio ou profissional.
+14. **I-14 (hospitalar):** receita de serviço a 8 %/12 % só se, na data do fato, o serviço tem `elegivelHospitalar`,
+    `finalidade = TERAPEUTICA` e a empresa tem `sociedadeEmpresaria = true` e alvará com `alvaraSanitarioValidoAte ≥ data`;
+    teste com alvará vencido na véspera ⇒ 32 % + `HOSPITALAR_REQUISITO_AUSENTE`.
+15. **I-15 (por atividade):** na mesma competência, consulta (não elegível) a 32 % e procedimento elegível a 8 % —
+    Σ base = Σ por atividade (L18).
+16. **I-16:** regime SIMPLES ⇒ simulação e apuração SUP respondem 400 `SUP_VEDADO_NO_SIMPLES`.
+17. **I-17:** `finalidade = ESTETICA` nunca recebe 8 % nem a redução de 60 % sem sugestão `ACCEPTED` por decisor
+    permitido; linhas antigas com `finalidade = null` são tratadas como ESTETICA.
+18. **I-18:** com `nfsePacote = POR_CONSUMO`, a venda do pacote não gera `FiscalDocument` nem `ReceitaFiscalLinha`;
+    cada sessão consumida gera um documento com o valor consumido do saldo.
+19. **I-19:** alerta de parceria só a partir de dado declarado (contrato, CNPJ, checklist) — nenhum alerta de vínculo
+    inferido de agenda ou de pagamento.
 
 ## 14. Sinal humano — estado do gate
 
-- **F-EF-1..9:** PENDENTES. **P-EF-1..6:** externos (contador). BRIEF depois da ratificação; código só com `executa`
-  por PR. **O PR-1 não deve receber `executa` antes da resposta de P-EF-1** (piso e rateio são o núcleo dele).
+- **F-EF-1..13:** PENDENTES. **P-EF-1..10:** externos (contador). BRIEF depois da ratificação; código só com `executa`
+  por PR. **O PR-1 não deve receber `executa` antes da resposta de P-EF-1** (piso e rateio são o núcleo dele). O **PR-5** não deve receber `executa` antes de P-EF-7 (o que é Atribuição 4) e da lista da RDC 50 (insumo 8).
 - A nota `docs/plano/nos/EFICIENCIA-FISCAL.md` aponta para cá.
 
 ## 15. Fontes (hash no dossiê)
@@ -500,6 +601,10 @@ Nada é copiado; serve como régua de completude e de "o que o mercado já aceit
 | LC 214 arts. 5º, 7º, 12, 13, 127–136, 341-F, 542 | Planalto [D08], compilada com LC 227/2026 | acervo [D03] = republicação (alerta resolvido) |
 | Lei 12.592 art. 1º-A (red. Lei 13.352) | acervo [D23] compilada; Planalto [D07] | acervo [D06] da 13.352 era original (alerta resolvido) |
 | LC 87 arts. 13, 15 | acervo [D31], compilada, cópia 13/10 (lido 20/10 12:49) | base do ICMS = valor da operação (esclarecimento do dono) |
+| Serviços: Lei 9.249, Lei 9.250, DL 406, LC 116, LC 123, LC 157, Lei 12.546, Lei 12.592 | acervo [SV-D01]–[SV-D08], compilados, cópia 13/10 | dossiê `eficiencia-fiscal-servicos` |
+| Serviços: LC 214 (Planalto), Lei SP 13.701, Decreto 12.955/2026 | [SV-D09], [SV-D11], [SV-D12] (fonte oficial, 20/10) | — |
+| SC Cosit 127/2026, 158/2020, 185/2026, 127/2019, 195/2019, 15/2026; SC Disit 7013/2026, 6032/2025; IN RFB 2.343/2026 | Sijut (API pública) e DOU, cópias com hash no dossiê | download direto do Sijut devolve só o invólucro JS |
+| STJ Temas 217 e 1.323; STF Temas 725, 918, 1.389; SV 31 | portais do STJ/STF (20/10) | pesquisa de serviços §2 |
 | SC Cosit 98048/2026, 137/2024, 111/2015, 127/2019, 17/2021, 81/2025, 228/2023; Res. CGSN 140 arts. 25–26 | Sijut (pesquisa §3) | V (texto); aplicação a kit de cosméticos = I |
 | Decreto 12.955/2026; CONFAZ ST por NCM | **não lidos** | §10 |
 | Odoo / ERPNext | GitHub (20/10) | §11.1 |
