@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../../../ui/Modal';
+import { DocumentService } from '@/lib/services/document.service';
 
 // Interface para a estrutura de um documento na lista
 export interface DocumentOption {
@@ -28,18 +29,8 @@ export function DocumentSelector({ onSelectionChange }: DocumentSelectorProps) {
     async function fetchDocuments() {
       setIsLoading(true);
       try {
-        const token = (await import('cookies-next')).getCookie('auth_token');
-        // eslint-disable-next-line no-restricted-globals -- DEBT: fetch
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/documents?mode=list`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-          cache: 'no-store',
-        });
-        if (!response.ok) {
-          throw new Error('Falha ao buscar documentos.');
-        }
-        const responseData = await response.json();
+        // Rejects with `Falha ao buscar documentos.` on a non-2xx response.
+        const responseData = await DocumentService.listForSelection();
         if (!responseData.data || !Array.isArray(responseData.data)) {
           console.error('API response for documents is not an array:', responseData);
           throw new Error('Formato de dados inválido da API de documentos.');

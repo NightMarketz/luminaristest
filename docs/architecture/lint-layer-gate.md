@@ -108,13 +108,6 @@ em silêncio (o script falha se achar mais de um).
   },
   "DEBT: apiClient": {},
   "DEBT: fetch": {
-    "my-app/components/widgets/chat/components/DocumentSelector.tsx": 1,
-    "my-app/components/widgets/chat/hooks/UseChatInstances.ts": 2,
-    "my-app/components/widgets/chat/hooks/useChatInstance.ts": 2,
-    "my-app/components/widgets/chat/hooks/useChatMessages.ts": 1,
-    "my-app/components/widgets/shared/hooks/useChatInstance.ts": 2,
-    "my-app/components/widgets/shared/hooks/useChatInstances.ts": 3,
-    "my-app/components/widgets/shared/hooks/useChatMessages.ts": 1,
     "my-app/features/dev/seed/utils/ApiClient.ts": 3,
     "my-app/features/interview/components/RightSidebar/AIChatMode.tsx": 2,
     "my-app/features/interview/hooks/useAiInterview.ts": 3,
