@@ -33,12 +33,12 @@ Ordem sugerida, da menor dependência para a maior:
 | B1 | [[X9]] — DCTFWeb / MIT (PR-2 e PR-4) | **Destravado em 14/10**: [[X7]] foi fechado (Fases A, B e C em `main`). | `executa` do PR-2 (itens 10–12, 15–17). |
 | B2 | [[I5]] + [[I4]] — venda sem mapper e onboarding | BRIEF conjunto com forks F-I4-4/5 e F-I5-1..4 ratificados. Sem fork pendente. | `executa` do BRIEF I4+I5. |
 | B3 | [[BE-INCR-SIMPLES-DEFIS-MANUAL]] e [[BE-INCR-SIMPLES-GET-ENTRADAS]] | BRIEFs prontos (12/10). Pré-requisitos do FE do Simples. | `executa` de cada um (PRs separados). |
-| B4 | [[FE-INCR-SIMPLES]] — PR-A a PR-D | PR-C depende de GET-ENTRADAS; PR-D depende de DEFIS-MANUAL (F-FS-8 c). | `executa` por PR, depois de B3. |
+| B4 | [[FE-INCR-SIMPLES]] — PR-A a PR-D | **Em `main`** (fold 20/10): PR-A/B/C mergeados em 15/10 (#714, #718, #720) e PR-D #733 em 16/10. Nó `done`. | Fechado — nada a executar. |
 | B5 | [[CRM-RB]] / [[FE-INCR-CRM-REPORT-BUILDER]] — PR-C (modelos) | PR-A, PR-B e PR-D em `main`. PR-C precisa do pré-requisito de BE (`GET /api/crm/reports/templates`), que **não existe** em `main`. | Planejar o BE do GET; depois `executa` do PR-C. |
 | B6 | [[F5]] — FE da cobrança (EMENDA-1 pronta) | Mercado Pago em `main` (PR-2 e PR-3). Chave no ambiente só com M2 (A4). | `executa` do FE da cobrança. |
 | B7 | [[FE-INCR-BANK-SETTLEMENT-FEE]] | Depende de F5 (B6). BE da view (#620) já em `main`. | `executa` do FE depois de B6. |
 | B8 | [[LAC-B]] — UI da prensa de binding | **Destravado em 14/10** (estado `ready`): a pausa F-KS-0 caiu com o KIT-SETOR concluído; F-I4-4 (a) e F-BA-2 (b) decididos em 13/10. Acoplamento: PR-0 e I4 PR-2 criam o mesmo `mapperReload.ts` (quem chegar primeiro em `main` cria, o outro importa). | `executa` do PR-0 e depois do PR-1. Coordenar com I4 PR-2. |
-| B9 | [[X14-CAIXA]] | Planejado, sem autorização. Só depois de B4 (D4: o FE do Simples por competência vem antes da variante por caixa). | Planejar depois de B4. |
+| B9 | [[X14-CAIXA]] | **Em `main`** (fold 20/10): #729 → #738 → #739 mergeados em 16/10. Nó `done`; as pendências A1–A3 do contador ficam fora da fila de código. | Fechado — nada a executar. |
 
 ## C. Backlog sem prioridade (planejado, sem `executa`)
 
@@ -59,7 +59,7 @@ Ordem sugerida, da menor dependência para a maior:
 
 | # | Item | Estado | Por que nesta posição | Ação do dono |
 |---|---|---|---|---|
-| E1 | Merge dos PRs: [[DT-ARQ-CORRECOES]] (#769 ✅ 20/10), [[FIX-ESTOQUE-FINALIZE]] (#771 ✅ 20/10), [[FIX-ANALYTICS-DADO]] (#770), [[FIX-ADDEDFIELDS-VAZAMENTO]] (#772) | #769 e #771 mergeados; #770 e #772 abertos | Já prontos. O #771 corrige o fluxo de venda que os passos 6–11 do [[H2]] (A3) exercitam na tela — recomendação: mergear antes do sign-off | OK por número; decisão (a)/(b) do item 3 do #770 |
+| E1 | Merge dos PRs: [[DT-ARQ-CORRECOES]] (#769 ✅ 20/10), [[FIX-ESTOQUE-FINALIZE]] (#771 ✅ 20/10), [[FIX-ANALYTICS-DADO]] (#770 ✅ 20/10), [[FIX-ADDEDFIELDS-VAZAMENTO]] (#772 ✅ 20/10) | **Fechado (20/10)**: os quatro mergeados | Já prontos. O #771 corrige o fluxo de venda que os passos 6–11 do [[H2]] (A3) exercitam na tela — entrou antes do sign-off | — (a decisão (a)/(b) do item 3 do #770 continua com o dono) |
 | E2 | [[TESTE-ACOPLAMENTO-PRESET]] | planned | Barato e preventivo: é a causa comum de 4 achados (campo lido que o preset não declara) | `executa` |
 | E3 | [[FIX-PLUGINS-VENDA]] | planned | Mudam estoque e receita em silêncio no molde; mesmos arquivos do #771 (depois de E1) | `executa` (pode ser fatiado) |
 | E4 | [[FIX-AUTH-CONTA]] | planned | Delete de usuário 500 com vetores já apagados; logout/JWT; ADMIN desativando o próprio layout | `executa` |
