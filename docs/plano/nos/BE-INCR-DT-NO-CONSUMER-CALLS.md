@@ -1,0 +1,35 @@
+---
+id: "BE-INCR-DT-NO-CONSUMER-CALLS"
+tipo: "plataforma"
+dominio: "motor"
+titulo: "Tirar do motor DynamicTable as chamadas a consumidores (KnowledgeGraph e KpiCache)"
+estado: "planned"
+estado_detalhe: "19/10: BRIEF escrito (planejamento, sessao-planejamento) com 8 forks PENDENTES e recomendação (b). Sem autorização do dono — não roteia. Base: claude/dynamictable-architecture-fixes-9e5ba8 (PR #769, OPEN)"
+depende_de: []
+autorizacao: ""
+perfil_previsto: "precisa-de-planejamento"
+perfil_evidencia: "forks F1–F8 abertos (mecanismo, tx externa, cobertura de G1/G3, erro silencioso, forma do guard, localização do helper); execução depende da escolha do dono"
+write_set: ["server/src/features/dynamicTables/services/DynamicTableService.ts", "server/src/features/dynamicTables/services/PresetSyncService.ts", "server/src/lib/factory.ts", "server/src/controllers/dynamicTablesController.ts", "server/src/controllers/analyticsDefinitionsController.ts", "server/.dependency-cruiser.cjs"]
+registros: ["server/src/lib/factory.ts"]
+ancora_sdd: "—"
+atualizado: "2026-10-19"
+prs: []
+---
+# BE-INCR-DT-NO-CONSUMER-CALLS — tirar do motor DynamicTable as chamadas a consumidores
+
+**Estado:** `planned` — 19/10: BRIEF escrito com checklist de 14 itens, contratos das opções (a)–(d), 8 forks **PENDENTES** (nenhum ratificado) e teste-guarda proposto (T1 gate B7 + T2 comportamental). **Sem autorização do dono: não roteia** (`autorizacao` vazia).
+**Desbloqueia:** —
+
+## Origem
+Inversão de dependência que sobrou após o #769 (`claude/dynamictable-architecture-fixes-9e5ba8`): `DynamicTableService` importa `KnowledgeGraphService` (chat) e `kpiCacheService` (analytics). Contrato §2.1: "o motor nunca chama o consumidor". O gate B1 não pega (chat/analytics não são Prisma first-class). Probe de regra B7 em config temporária: exatamente 2 violações.
+
+## Docs
+- [`BE-INCR-DT-NO-CONSUMER-CALLS-brief.md`](../../accounting/BE-INCR-DT-NO-CONSUMER-CALLS-brief.md)
+- Contrato: `.claude/skills/_ARCHITECTURE-CONTRACT.md` §2.1 ("O que o B1/B4 NÃO proíbe")
+- ADR de referência: `docs/adr/ADR-DOMAIN-MOTOR-rejected.md` (sem engine/fila genérica)
+- Decisão da casa em que o trabalho nasceu (não deste nó): `D-2026-10-19-DT-ARQUITETURA-CORRECOES` (branch do #769)
+
+## Pendências (dono)
+- Autorização citável do nó (campo `autorizacao`).
+- F1 mecanismo: (a) hook / (b) integração / (c) contrato / (d) geração pull. Recomendação: (b).
+- F2–F8: tx externa, cobertura G1/G3, erro silencioso do sync, forma do guard B7, emenda do §2.1, achado G7, localização do helper.
