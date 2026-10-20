@@ -5,8 +5,9 @@
 > `docs/accounting/PESQUISA-EFICIENCIA-FISCAL-2026-10-20.md`). Artigos conferidos: CTN arts. 116 p.ú., 148, 149 VII [D01];
 > Lei 8.137 art. 1º II e IV [D02]; LC 123 arts. 3º § 1º e § 4º III/IV/IX, 18 § 4º-A e §§ 5º-J/5º-K/5º-M e § 24 [D04];
 > Lei 10.147 arts. 1º I "b" e 2º [D05]; Lei 12.592 art. 1º-A § 5º (red. Lei 13.352) [D23][D07]; LC 214 arts. 5º, 7º, 12,
-> 13, 127, 128, 130, 136, 341-F, 542 XI [D08] (compilada no Planalto — o acervo [D03] era republicação). Referências
-> `[Dnn]` são do dossiê.
+> 13, 127, 128, 130, 136, 341-F, 542 XI [D08] (compilada no Planalto — o acervo [D03] era republicação); LC 87 arts. 13 I
+> e § 1º II "a", 15 [D31] (base do ICMS = "o valor da operação"). Referências `[Dnn]` são do dossiê (atualizado em
+> 20/10 12:50 com o esclarecimento do dono — commit `7f2a7609` do #776).
 
 - **Data:** 2026-10-20
 - **Status:** **Proposed — RATIFICAÇÃO PENDENTE.** Nenhum fork está decidido e nenhum código está autorizado.
@@ -21,12 +22,21 @@
     algumas, por exemplo a mudança na cobrança e lucro em produtos num pacote de produtos, onde vc mantém o valor da
     soma dos produtos no combo, mas muda o valor na nota para o produto que possui uma alíquota menor de imposto … para
     deixarmos automática no sistema"*.
+  - **Esclarecimento do dono, mesmo dia** (chat, 20/10, relatado pela sessão de origem e gravado na pesquisa §0/§2 e na
+    A1 do dossiê, commit `7f2a7609` do #776): *"A ideia era colocar preco de custo em produtos com muito imposto, nao
+    precisa ser um preco fora da realidade"*. Regra que o dono fixou para o item 1: desconto do combo = soma dos preços de
+    catálogo − preço do combo; aloca-se **primeiro aos itens de maior carga tributária, até o piso = custo** (custo médio
+    do estoque, FIN-10, nunca abaixo); o resto vai aos demais; **nenhum item sobe acima do seu preço de catálogo**; cada
+    item vai ao documento fiscal com o seu preço e o desconto incondicional destacado; o rateio proporcional fica como
+    alternativa configurável.
   - **Passo 1 (cobertura):** a autorização cobre exatamente **este PRE-ADR e a nota do nó** — sem BRIEF, sem código.
-    **Divergência a reportar (cobre menos que o pedido de origem):** o pedido fala em "instalar… deixarmos automática",
-    e o exemplo dado (realocar preço no combo) é **ilícito** pela verificação legal (§3) — a cédula já o fixou como
-    "não entra". Este PRE-ADR planeja a **versão lícita** das mesmas economias; a automação do exemplo literal **não
-    será planejada em nenhuma rodada** (invariante I-1). Se o dono quiser rediscutir, é ADR novo com sinal humano, não
-    fork deste.
+    **Divergência a reportar (cobre menos que o pedido de origem):** o pedido fala em "instalar… deixarmos automática";
+    este PRE-ADR só planeja. Sobre o exemplo: na leitura literal da primeira mensagem (preço "fora da realidade" para
+    manter o total) ele é **ilícito** (§3, L1–L6) e a cédula o fixou como "não entra"; na leitura esclarecida pelo dono
+    (item de maior carga **a preço de custo**, nunca abaixo; item de menor carga **no catálogo**, nunca acima; diferença
+    = desconto incondicional destacado) ele é **lícito com guardas** (A1 reescrita; LC 87 art. 13 I / art. 15; LC 214
+    art. 12) e **é a regra padrão do item 1 (D5)**. O que continua fora, como invariante I-1: item abaixo do custo e item
+    acima do catálogo. Rediscutir isso exige ADR novo com sinal humano, não fork deste.
 - **Related:** `PRE-ADR-SIMPLES-NACIONAL-CALCULO` / BRIEF `BE-INCR-SIMPLES-NACIONAL` (X14: `simplesCalc.apurar`,
   `fatorR`, `SEGREGACAO_EXCLUI`, `SimplesSegregacaoManual`, `SalaoParceriaContrato`, `ReceitaFiscalLinha.excluir`) ·
   `ADR-INCR-TAX-ASSESSMENT` (X7: `TaxAssessment`, `entradaInformada`, 2 commits + CAS) · BRIEF
@@ -40,8 +50,8 @@
 
 ## TLDR (2 linhas)
 
-O sistema passa a **sugerir** a economia lícita disponível (desconto incondicional rateado no combo, segregação monofásico/ST por NCM, fator r, regime, remuneração do sócio, salão-parceiro) **com o artigo citado**, a **registrar** cada sugestão como `TaxOptimizationSuggestion` (proposta → aceita/recusada, por quem, base legal, economia estimada) e a **bloquear** no documento fiscal a variante ilícita (preço de item diferente do catálogo sem desconto destacado, item abaixo do piso, desconto fora da nota).
-**Risco principal:** a fronteira entre desconto comercial livre e "valor notoriamente inferior ao valor de mercado" (LC 214 art. 13 I "b") / documento que "não mereça fé" (CTN art. 148) **não tem posição oficial lida** (nenhuma SC Cosit nem acórdão CARF sobre alocação de desconto em kit) — por isso o rateio **proporcional** é o padrão, a concentração é fork (F-EF-2) e a ambiguidade A1 vai ao contador antes de qualquer `executa` do PR-1.
+O sistema passa a **sugerir** a economia lícita disponível (desconto do combo alocado ao item de maior carga até o custo — regra do dono de 20/10 —, segregação monofásico/ST por NCM, fator r, regime, remuneração do sócio, salão-parceiro) **com o artigo citado**, a **registrar** cada sugestão como `TaxOptimizationSuggestion` (proposta → aceita/recusada, por quem, base legal, economia estimada) e a **bloquear** no documento fiscal a variante ilícita (item abaixo do custo, item acima do catálogo, desconto fora da nota, condicional lançado como incondicional).
+**Risco principal:** o preço de custo é "o valor da operação" (LC 87 art. 13 I; LC 214 art. 12), mas em 2027 o fisco pode tomar o preço avulso do mesmo item como "valor de mercado" (LC 214 art. 13 I "b") — **sem posição oficial lida** (nenhuma SC Cosit nem acórdão CARF sobre alocação de desconto em kit). A defesa é a consistência (mesma regra em todo combo, tabela publicada, custo documentado no estoque), e a pergunta P-EF-1 vai ao contador **antes de qualquer `executa` do PR-1**.
 
 ---
 
@@ -105,18 +115,22 @@ O sistema passa a **sugerir** a economia lícita disponível (desconto incondici
 | L14 | Principal + acessório | acessório = "condição ou meio" do principal ⇒ tratamento do principal | LC 214 art. 7º II e § 2º — [D08] | V (texto); aplicação a salão/clínica = A2 | I-7 |
 | L15 | Multa qualificada | 100% (reincidência 150%) | Lei 9.430 art. 44 § 1º VI–VII; LC 214 art. 341-F | V | texto do alerta de risco (PR-4) |
 | L16 | Alíquotas reduzidas 2027 | saúde 60% só Anexo III (**estética não consta**); profissões 30% (art. 127, lista fechada); higiene 60% só Anexo VIII | LC 214 arts. 127, 128 II, 130, 136 — [D08] | V (lista); estética = NÃO CONFIRMADO | PR-3 simulador 2027 com aviso "enquadramento não confirmado" |
+| L17 | Base do ICMS = preço praticado | "na saída de mercadoria… o valor da operação" (art. 13 I); descontos condicionais integram a base (§ 1º II "a"); "Na falta do valor… o preço corrente da mercadoria" (art. 15) | LC 87 arts. 13 I e § 1º II "a", 15 — [acervo D31](https://github.com/ctresb/leis/blob/0ee2fd30e01d0fb9cb3fb42d7ede8de312ea77e4/federal/leis-complementares/1996/lcp-87-1996-09-13.md) | V | D5: preço de custo é preço real e praticado ⇒ base; o "preço corrente" só entra na falta do valor |
 
 **Elisão** (lícita, o que o módulo sugere): escolha que a própria lei oferece, antes do fato gerador, com substância —
 regime, anexo, segregação, desconto real destacado, parceria com contrato. **Simulação** (ilícita, o que o módulo
 bloqueia): documento que não espelha o negócio — preço de item inventado, folha de papel, parceria fictícia.
 Posição oficial sobre **alocação de desconto entre itens de kit**: **não encontrada** (SC Cosit 98048/2026, 137/2024 e
-Disit 138/2011 tratam de classificação do kit, não de rateio) — grau da ambiguidade A1 = "sem fonte", decide o contador.
+Disit 138/2011 tratam de classificação do kit, não de rateio) — grau da ambiguidade A1 = "sem fonte"; a leitura adotada
+(dono, 20/10; dossiê A1 reescrita) é a 1: preço de custo é valor da operação (L17) e o fisco precisa provar que o
+documento "não merece fé" (L1); o contador confirma a evidência de custo a guardar (P-EF-1).
 
 ## 4. Decisões já ratificadas que limitam o desenho
 
 | Decisão | Efeito aqui |
 |---|---|
-| `D-2026-10-20-EFICIENCIA-FISCAL-PRE-ADR` (dono, 20/10) | "O exemplo do combo não entra… O sistema **bloqueia** essa variante"; "Sugere e guarda; o humano decide (maker-checker)"; A1–A3 ao contador. **Não é fork** |
+| `D-2026-10-20-EFICIENCIA-FISCAL-PRE-ADR` (dono, 20/10) | "O exemplo do combo não entra… O sistema **bloqueia** essa variante" (= preço fictício: abaixo do custo ou acima do catálogo); "Sugere e guarda; o humano decide (maker-checker)"; A1–A3 ao contador. **Não é fork** |
+| **Esclarecimento do dono (chat, 20/10, pesquisa §0/§2, commit `7f2a7609`)** — "colocar preco de custo em produtos com muito imposto, nao precisa ser um preco fora da realidade" | Regra do item 1 **decidida pelo dono**: desconto do combo alocado primeiro aos itens de maior carga até o piso = custo; resto aos demais; teto = catálogo; tudo destacado; proporcional só como alternativa configurável. D5/D6 a transcrevem; **não é fork** (F-EF-2 só decide o que o dono não disse) |
 | `ADR-PERSISTENCE-BOUNDARY` (dono, 14/10) + CLAUDE.md §STOP | Sugestão, guarda e relatório são **Prisma first-class** (lei desenha; imutabilidade da trilha; agregação em volume contra razão/subrazão). Venda e catálogo continuam DynamicTable; nenhum serviço Prisma entra em `RuleContext`/`RulePlugin` |
 | `R-motor-regras` (rejeitada) | A "regra" é **tabela** (`legal_parameters`) + função pura nomeada por prática; nada de engine/DSL de otimização |
 | BRIEF `BE-INCR-DT-NO-CONSUMER-CALLS` (#773) | O plugin de vendas não chama a sugestão; a sugestão **lê** a venda (repositório) e é acionada pelo seam Prisma-side (`features/sales`) ou por rota própria |
@@ -163,14 +177,23 @@ em **dois lugares separados por camada**:
 3. O desconto rateado por item alimenta `ReceitaFiscalLinha.receitaCents` (líquido) via o mapper pós-commit existente
    (ADR-INCR-REVENUE-SPLIT), para que a receita bruta do Simples saia certa (L8) sem segunda fonte.
 
-**D5 — Rateio padrão = proporcional ao preço de catálogo**, arredondado por item com o resto no item de maior valor
-(critério objetivo e defensável: "valor praticado em operações comparáveis", L6 p.ú. I por analogia — grau I). Alocação
-diferente é **sugestão** que exige justificativa comercial e passa pelo piso (F-EF-2 decide se é permitida).
+**D5 — Alocação fiscal do desconto do combo (regra do dono, 20/10).** `desconto = Σ preço de catálogo − preço do combo`
+(≥ 0; combo acima da soma ⇒ `aboveCatalogPrice`, sem alocação). A alocação percorre os itens em **ordem decrescente de
+carga tributária** e dá a cada um o máximo até o seu **piso = custo** (D6); o que sobrar vai ao item seguinte; **nenhum
+item recebe desconto negativo** (nunca sobe acima do catálogo). Se o desconto exceder `Σ (catálogo − custo)` de todos os
+itens, o combo está abaixo do custo total ⇒ `COMBO_ABAIXO_DO_CUSTO` (I-3, bloqueio). Arredondamento em centavos, resto
+no último item que recebeu desconto. A **ordem de carga** é dado, não engine: `cargaBp` por item calculado pela tabela
+tributária vigente na data — no Simples, alíquota efetiva do anexo da atividade menos os tributos excluídos pela
+segregação (`SEGREGACAO_EXCLUI`, NCM monofásica/ST); no Presumido/Real, PIS/COFINS + ICMS/ISS por CST/NCM/`cTribNac`; em
+2027, alíquota de IBS/CBS por item (`IBS-CBS-2027`, com as reduções L16). Sem dado suficiente para ordenar (sem NCM, sem
+`cTribNac`) ⇒ aviso `ORDEM_DE_CARGA_INDETERMINADA` e alocação **proporcional** (alternativa configurável em
+`TaxOptimizationPolicy.criterioAlocacao`, também escolhível pelo tenant como padrão — F-EF-2).
 
-**D6 — Piso de preço por item = max(custo médio × (1 + margem mínima), preço mínimo do catálogo)**, parâmetros por
-tenant em `TaxOptimizationPolicy` (Prisma, versionada, com `vigenteDesde`); serviço sem custo de estoque usa só o
-preço mínimo do catálogo. Item abaixo do piso ⇒ **bloqueio** na emissão (I-3), com texto citando L1/L6 (F-EF-1 decide a
-fórmula).
+**D6 — Piso de preço por item = custo (nunca abaixo).** Produto: custo médio do estoque (`InventoryItem.totalValueCents
+/ qtyOnHand`, FIN-10) na data da venda, gravado como snapshot no item (`custoSnapshotCents`) — é a evidência que o
+contador vai querer (P-EF-1). Serviço: não tem custo de estoque — F-EF-1 decide o piso. Pacote (crédito): fora da
+alocação. Item abaixo do piso ⇒ **bloqueio** na emissão (`ITEM_ABAIXO_DO_PISO`, I-3) citando L1/L6/L17; item sem custo
+registrado ⇒ piso indeterminado ⇒ o item **não recebe desconto além do proporcional** e `WARN` `SEM_CUSTO`.
 
 **D7 — Segregação por NCM é derivação, não opção.** PR-2 preenche `ReceitaFiscalLinha.excluir` a partir de
 `ProductFiscalProfile.ncm` × `legal_parameters` tabela `PIS_COFINS_MONOFASICO_NCM` (já existe) + nova `ICMS_ST_NCM_UF`
@@ -199,14 +222,14 @@ simuladores · PR-4 alertas + relatório**. Numeração `(p-n)` = prática n da 
 | # | Comportamento | Toca | Canônico reusado | Fork |
 |---|---|---|---|---|
 | **PR-1** | | | | |
-| 1 | `(p-1)` `saleItems` ganha `catalogUnitPrice` (snapshot) e `discountCents`; `SalesModule` ganha `discountKind`; migração de preset aditiva (linhas antigas: `discountCents = 0`, `discountKind = null` ⇒ tratado como `UNCONDITIONAL` só para relatório, nunca para emissão) | presets `SalesItems*`, `SalesModule`, `NumberPresets` | `unitPrice`, `discountAmount` presets; `aboveCatalogPrice` como precedente de snapshot | — |
-| 2 | `(p-1)` `SalesPlugin` no finalize: `Σ item.discountCents = discountAmount` (±1 centavo por arredondamento) e `unitPrice = catalogUnitPrice` quando `catalogUnitPrice` presente — 400 nomeado; nada de serviço Prisma | `rules/plugins/SalesPlugin.ts` | guarda `discount ≤ subtotal` existente | — |
-| 3 | `(p-1)` Função pura `ratearDesconto(itens, descontoCents, politica)` → `{ porItem[], criterio }`, proporcional por padrão (D5), resto no maior item | `features/sales/models/discountAllocation.ts` | — | F-EF-2 |
-| 4 | `(p-1,10)` Função pura `pisoPorItem(item, custoMedioCents?, politica)` e `verificarItens(itens, piso, catalogo)` → `violations[]` com código (`ITEM_ABAIXO_DO_PISO`, `PRECO_DIFERENTE_DO_CATALOGO_SEM_DESCONTO`, `DESCONTO_FORA_DO_DOCUMENTO`, `DESCONTO_CONDICIONAL_COMO_INCONDICIONAL`) e artigo | `features/sales/models/fiscalGuard.ts` | `InventoryItem` média móvel (leitura) | F-EF-1 |
-| 5 | `(p-1,10)` Model `TaxOptimizationPolicy` (margem mínima bp, rateio padrão, aprovador) versionada por escopo + DTO `.strict()` + repo + policy (`canManageTaxOptimization` delega a `canManageFiscalProfile`) + rotas em 2 toques | Prisma + camadas | molde `IssBeneficioMunicipal` (vigência, soft-delete) | F-EF-3 |
+| 1 | `(p-1)` `saleItems` ganha `catalogUnitPrice` (snapshot), `discountCents` e `custoSnapshotCents?`; `SalesModule` ganha `discountKind`; migração de preset aditiva (linhas antigas: `discountCents = 0`, `discountKind = null` ⇒ tratado como `UNCONDITIONAL` só para relatório, nunca para emissão) | presets `SalesItems*`, `SalesModule`, `NumberPresets` | `unitPrice`, `discountAmount` presets; `aboveCatalogPrice` como precedente de snapshot | — |
+| 2 | `(p-1)` `SalesPlugin` no finalize: `Σ item.discountCents = discountAmount` (±1 centavo por arredondamento), `discountCents ≥ 0` (nunca acima do catálogo) e `unitPrice = catalogUnitPrice` quando `catalogUnitPrice` presente — 400 nomeado; nada de serviço Prisma | `rules/plugins/SalesPlugin.ts` | guarda `discount ≤ subtotal` existente | — |
+| 3 | `(p-1)` Função pura `alocarDescontoFiscal(itens, descontoCents, criterio)` → `{ porItem[], criterio, avisos[] }`: `CARGA_TRIBUTARIA` (padrão, D5: ordem decrescente de `cargaBp`, cada item até o custo, resto ao seguinte) ou `PROPORCIONAL_CATALOGO` (alternativa); `cargaBp` vem de `cargaTributariaDoItem(item, perfil, tabela, data)` pura | `features/sales/models/discountAllocation.ts`, `accounting/models/cargaTributariaItem.ts` | `simplesCalc` (alíquota efetiva do anexo), `SEGREGACAO_EXCLUI`, `pisCofinsCalc`, tabela IBS-CBS | F-EF-2 (só o que o dono não fixou) |
+| 4 | `(p-1,10)` Função pura `pisoPorItem(item, politica)` (produto = custo snapshot; serviço = F-EF-1) e `verificarItens(itens, piso, catalogo)` → `violations[]` com código (`ITEM_ABAIXO_DO_PISO`, `COMBO_ABAIXO_DO_CUSTO`, `ITEM_ACIMA_DO_CATALOGO`, `PRECO_DIFERENTE_DO_CATALOGO_SEM_DESCONTO`, `DESCONTO_FORA_DO_DOCUMENTO`, `DESCONTO_CONDICIONAL_COMO_INCONDICIONAL`, `SEM_CUSTO`) e artigo | `features/sales/models/fiscalGuard.ts` | `InventoryItem` média móvel (leitura) | F-EF-1 |
+| 5 | `(p-1,10)` Model `TaxOptimizationPolicy` (`criterioAlocacao` padrão, piso de serviço, aprovador) versionada por escopo + DTO `.strict()` + repo + policy (`canManageTaxOptimization` delega a `canManageFiscalProfile`) + rotas em 2 toques | Prisma + camadas | molde `IssBeneficioMunicipal` (vigência, soft-delete) | F-EF-3 |
 | 6 | `(p-10)` `SaleFiscalGuardService` + `POST /sales/:id/fiscal-check` (D4.2); chamado pela montagem do `FiscalDocument` como pré-condição (`FISCAL_GUARD_VIOLATION` ⇒ 409 nomeado) | `features/sales/services`, `controllers/salesController.ts`, `FiscalDocument` montagem | `RegisterPaymentService` (molde), `saleItems.ts` (leitor) | — |
 | 7 | `(p-1)` Model `TaxOptimizationSuggestion` (D3) + DTO + repo + policy + rotas (`POST …/suggestions/:id/accept|reject`, `GET …/suggestions?status=`) | Prisma + camadas | `EntryApprovalService` (ciclo e ator ≠ proponente) | F-EF-3 |
-| 8 | `(p-1)` Sugestão `COMBO_DESCONTO_RATEADO` gerada no fiscal-check quando a venda tem desconto sem rateio ou rateio ≠ padrão: mostra rateio padrão, economia estimada (diferença de base por natureza) e artigo (L7/L8) | serviço | `simplesCalc` (alíquota efetiva por anexo) para estimar | — |
+| 8 | `(p-1)` Sugestão `COMBO_DESCONTO_ALOCADO` gerada no fiscal-check quando a venda tem desconto sem alocação, ou alocação ≠ a do critério padrão: mostra a alocação pela regra do dono (D5), a economia estimada contra o proporcional (Σ carga × diferença de base por item) e o artigo (L7/L8/L17); a alocação escolhida pelo tenant no modal Nova Venda vale sem aceite quando coincide com o critério padrão | serviço | `cargaTributariaDoItem` para estimar | — |
 | 9 | `(p-1)` Mapper pós-commit grava `ReceitaFiscalLinha.receitaCents` **líquido** do desconto incondicional rateado (condicional não abate — L7/L8) | `sync/mappers`, `ReceitaFiscalService` | ADR-INCR-REVENUE-SPLIT | — |
 | 10 | `(p-2)` Catálogo de kit: `PackageCatalogModule` **não** muda (é crédito); kit itemizado = `saleItems` com `kitRef` opcional (texto do grupo) + `principalItem` boolean por item — classificação principal/acessório é dado de venda, não de catálogo, até o A2 fechar | preset `SalesItems*` | — | F-EF-4 (kit sem NCM própria) |
 | **PR-2** | | | | |
@@ -234,8 +257,8 @@ model TaxOptimizationPolicy {           // política COMERCIAL do tenant (não l
   id                 String    @id @default(cuid())
   userId             String
   unitId             String
-  margemMinimaBp     Int       // piso = custo médio × (1 + bp/10000); 0 = só preço mínimo do catálogo
-  rateioPadrao       String    // PROPORCIONAL_CATALOGO (único valor até F-EF-2)
+  criterioAlocacao   String    // CARGA_TRIBUTARIA (padrão — regra do dono 20/10) | PROPORCIONAL_CATALOGO (alternativa)
+  pisoServico        String    // F-EF-1: CATALOGO_MINIMO | CUSTO_INFORMADO | SEM_DESCONTO_ALEM_DO_PROPORCIONAL
   aprovador          String    // ADMIN | CONTADOR_RESPONSAVEL | QUALQUER_GESTOR (F-EF-3)
   vigenteDesde       String
   vigenteAte         String?
@@ -250,7 +273,7 @@ model TaxOptimizationSuggestion {
   id                   String    @id @default(cuid())
   userId               String
   unitId               String
-  practice             String    // COMBO_DESCONTO_RATEADO | SEGREGACAO_NCM | FATOR_R_FOLHA | TROCA_DE_REGIME | REMUNERACAO_SOCIO | SALAO_PARCEIRO_CONTRATO | SUBLIMITE | INTERDEPENDENCIA | RETENCAO_SOFRIDA | CREDITO_NAO_TOMADO | PRINCIPAL_ACESSORIO
+  practice             String    // COMBO_DESCONTO_ALOCADO | SEGREGACAO_NCM | FATOR_R_FOLHA | TROCA_DE_REGIME | REMUNERACAO_SOCIO | SALAO_PARCEIRO_CONTRATO | SUBLIMITE | INTERDEPENDENCIA | RETENCAO_SOFRIDA | CREDITO_NAO_TOMADO | PRINCIPAL_ACESSORIO
   subjectType          String    // SALE | COMPETENCIA | ANO | PARTNER | PROFISSIONAL
   subjectId            String
   status               String    // PROPOSED | ACCEPTED | REJECTED | EXPIRED
@@ -276,26 +299,39 @@ export const FiscalCheckResponseSchema = z.object({
   saleId: z.string(),
   ok: z.boolean(),
   violations: z.array(z.object({
-    code: z.enum(['ITEM_ABAIXO_DO_PISO', 'PRECO_DIFERENTE_DO_CATALOGO_SEM_DESCONTO', 'DESCONTO_FORA_DO_DOCUMENTO',
-                  'DESCONTO_CONDICIONAL_COMO_INCONDICIONAL', 'RATEIO_NAO_FECHA', 'KIT_SEM_PRINCIPAL']),
+    code: z.enum(['ITEM_ABAIXO_DO_PISO', 'COMBO_ABAIXO_DO_CUSTO', 'ITEM_ACIMA_DO_CATALOGO',
+                  'PRECO_DIFERENTE_DO_CATALOGO_SEM_DESCONTO', 'DESCONTO_FORA_DO_DOCUMENTO',
+                  'DESCONTO_CONDICIONAL_COMO_INCONDICIONAL', 'RATEIO_NAO_FECHA', 'KIT_SEM_PRINCIPAL',
+                  'SEM_CUSTO', 'ORDEM_DE_CARGA_INDETERMINADA']),
     itemRef: z.string().nullable(),
     severity: z.enum(['BLOCK', 'WARN']),
     legalBasis: z.string(),                 // ex. "CTN art. 148; LC 214 art. 13 I b"
     detail: z.string(),
   })),
-  rateioSugerido: z.array(z.object({ itemRef: z.string(), discountCents: z.coerce.bigint() })).nullable(),
+  alocacaoSugerida: z.array(z.object({ itemRef: z.string(), discountCents: z.coerce.bigint(), cargaBp: z.number().int().nullable(),
+    pisoCents: z.coerce.bigint().nullable() })).nullable(),
+  criterio: z.enum(['CARGA_TRIBUTARIA', 'PROPORCIONAL_CATALOGO']),
   suggestionId: z.string().nullable(),
 }).strict();
 
-// features/sales/models/discountAllocation.ts — pura
-export interface ItemParaRateio { itemRef: string; catalogUnitPriceCents: bigint; quantity: number; }
-export function ratearDesconto(itens: readonly ItemParaRateio[], descontoCents: bigint,
-  criterio: 'PROPORCIONAL_CATALOGO'): { porItem: Array<{ itemRef: string; discountCents: bigint }>; resto: bigint };
+// features/sales/models/discountAllocation.ts — pura (D5)
+export interface ItemParaAlocacao { itemRef: string; catalogUnitPriceCents: bigint; quantity: number;
+  pisoCents: bigint | null;            // custo (produto) | piso de serviço (F-EF-1) | null = indeterminado
+  cargaBp: number | null; }            // carga tributária do item na data (null = indeterminada)
+export function alocarDescontoFiscal(itens: readonly ItemParaAlocacao[], descontoCents: bigint,
+  criterio: 'CARGA_TRIBUTARIA' | 'PROPORCIONAL_CATALOGO'):
+  { porItem: Array<{ itemRef: string; discountCents: bigint }>; criterioAplicado: 'CARGA_TRIBUTARIA' | 'PROPORCIONAL_CATALOGO';
+    avisos: Array<'ORDEM_DE_CARGA_INDETERMINADA' | 'SEM_CUSTO'>; excedenteCents: bigint /* > 0 ⇒ COMBO_ABAIXO_DO_CUSTO */ };
+
+// accounting/models/cargaTributariaItem.ts — pura
+export function cargaTributariaDoItem(item: { natureza: 'SERVICO' | 'REVENDA'; ncm: string | null; cTribNac: string | null },
+  perfil: { regime: 'MEI' | 'SIMPLES' | 'PRESUMIDO' | 'REAL'; anexo?: AnexoSimples; uf: string }, data: string,
+  linhas: readonly LinhaLegal[]): { cargaBp: number | null; memoria: string[] };
 
 // features/sales/models/fiscalGuard.ts — pura
 export interface ItemVendido { itemRef: string; natureza: 'SERVICO' | 'REVENDA' | 'PACOTE'; unitPriceCents: bigint;
-  catalogUnitPriceCents: bigint | null; discountCents: bigint; quantity: number; custoMedioCents: bigint | null; }
-export function verificarItens(itens: readonly ItemVendido[], politica: { margemMinimaBp: number },
+  catalogUnitPriceCents: bigint | null; discountCents: bigint; quantity: number; custoSnapshotCents: bigint | null; }
+export function verificarItens(itens: readonly ItemVendido[], politica: { pisoServico: string },
   cabecalho: { discountCents: bigint; discountKind: 'UNCONDITIONAL' | 'CONDITIONAL' | null }): Violation[];
 
 // accounting/dtos/TaxOptimizationDto.ts
@@ -313,8 +349,8 @@ export const FatorRSimulacaoSchema = z.object({
 
 | Fork | Caminhos | Recomendação e porquê | Custo de errar |
 |---|---|---|---|
-| **F-EF-1** Piso de preço por item | **(a) completo:** `max(custo médio × (1 + margem mínima), preço mínimo do catálogo)`, margem por tenant (`TaxOptimizationPolicy`), serviço sem custo ⇒ só catálogo; bloqueio `BLOCK` na emissão · (b) só preço mínimo do catálogo (sem custo) · (c) só aviso, nunca bloqueio | **(a).** Fecha a lacuna por inteiro: o "notoriamente inferior ao valor de mercado" (L6) e o "não mereça fé" (L1) se defendem com custo + margem registrados; (b) deixa o produto comprado caro e vendido barato sem alarme; (c) ignora a cédula ("bloqueia"). A1 ao contador decide o número da margem, não a existência do piso | alto em (c): documento arbitrável emitido pelo sistema |
-| **F-EF-2** Rateio padrão e alocação diferente | **(a)** proporcional ao catálogo como padrão; alocação diferente **permitida** só como sugestão aceita por humano, com justificativa e piso (A1) · (b) proporcional **obrigatório**, concentração proibida · (c) livre, desde que acima do piso | **(a).** É a leitura mais segura do dossiê (A1): política comercial é livre, mas a concentração sistemática é indício; a trilha (quem justificou) é a defesa. (b) é mais simples mas tira economia lícita; (c) reabre o exemplo ilícito por outra porta | médio |
+| **F-EF-1** Piso do **serviço** (o do produto o dono fixou: custo médio do estoque, nunca abaixo) | **(a) completo:** `pisoServico` na política: `CUSTO_INFORMADO` (custo de mão de obra/insumo informado por serviço no catálogo, com evidência) quando existir, senão `CATALOGO_MINIMO` (preço mínimo publicado por serviço), senão o serviço **não recebe desconto além do proporcional** · (b) serviço sempre `CATALOGO_MINIMO` · (c) serviço nunca recebe o desconto da alocação por carga (só produtos) | **(a).** Fecha a lacuna por inteiro: no salão o item de maior carga costuma ser o **serviço** (Anexo III/V com ISS × revenda monofásica), e sem piso de serviço a regra do dono não alcança o caso principal; (b) usa um número sem lastro de custo; (c) tira a economia do caso típico. P-EF-1 decide a evidência de custo que o contador quer para serviço | médio em (c): regra do dono sem efeito no 1º cliente |
+| **F-EF-2** O que o dono **não** fixou na alocação | **(a)** `criterioAlocacao` por tenant com padrão `CARGA_TRIBUTARIA`; `PROPORCIONAL_CATALOGO` escolhível; mudança de critério gera sugestão a aceitar (trilha) · (b) `CARGA_TRIBUTARIA` fixo, proporcional só como fallback automático (ordem indeterminada) · (c) critério escolhido venda a venda no modal Nova Venda, sem política | **(a).** É o que o dono disse ("o rateio proporcional fica como alternativa configurável") com trilha de quem mudou; (b) tira a alternativa; (c) deixa a regra inconsistente entre vendas — e a **consistência é a defesa** contra o arbitramento (A1). Empate de carga entre itens: ordem pelo maior preço de catálogo (determinístico) | baixo |
 | **F-EF-3** Quem aceita a sugestão | **(a)** aprovador configurável na política: `CONTADOR_RESPONSAVEL` quando há atribuição ACTIVE (GOV-CONTADOR), senão `ADMIN`; proponente ≠ decisor quando o proponente é humano · (b) só ADMIN · (c) qualquer gestor da unidade | **(a).** Reusa o `AccountingPolicy` do GOV-CONTADOR (F-GOV-3 a: com contador ACTIVE, só ele) e o maker-checker já aceito; sugestões com efeito no documento fiscal são do contador quando ele existe | baixo |
 | **F-EF-4** Kit sem NCM própria (SC Cosit 98048/2026: kit sortido classificado pelas RGI 3(b)) | **(a)** o sistema **não cria** NCM de kit: o kit é sempre explodido em itens (L5), cada um com a NCM do produto; alerta `KIT_SEM_NCM_PROPRIA` quando o tenant cadastrar um "produto kit" sem itens · (b) permitir `ProductFiscalProfile` do kit com NCM própria informada pelo contador, tratando o kit como um bem · (c) ambos, com a classificação do contador por kit | **(c)**, com (a) como padrão: a SC Cosit admite o kit como bem único quando a RGI 3(b) manda; **a decisão por kit é do contador** (A2/P-EF-3), registrada como sugestão `PRINCIPAL_ACESSORIO`/kit. (a) sozinho perde o caso lícito de kit-bem; (b) sozinho deixa o rateio sem controle | médio |
 | **F-EF-5** Fonte da NCM e da ST | **(a)** depender do `ProductFiscalProfile` do BRIEF da NFC-e (X10a, F-NFCE-3 b) e abrir `ICMS_ST_NCM_UF` em LEGAL-PARAMS com linhas `DRAFT` · (b) criar `ncm` direto no preset de produtos (DynamicTable) · (c) esperar o nó F4 `TABELA-TRIBUTARIA-PRODUTO` | **(a).** A NCM é invariante legal (Prisma, §2.1) e o X10a já pediu o model; (b) viola a fronteira; (c) atrasa PR-2 até uma onda sem data | baixo |
@@ -327,8 +363,8 @@ export const FatorRSimulacaoSchema = z.object({
 
 | # | Pergunta (texto para enviar) | Ambiguidade | Decide |
 |---|---|---|---|
-| P-EF-1 | "Numa venda de combo (serviço + produto de revenda) com desconto incondicional destacado na NF, vocês aceitam o desconto **alocado por item fora da proporção dos preços de catálogo** (ex.: todo o desconto no serviço), desde que nenhum item fique abaixo do custo? Qual **piso** vocês defendem em fiscalização: custo médio + que margem mínima (%), ou o menor preço praticado em venda avulsa?" | A1 | F-EF-1 (número), F-EF-2 |
-| P-EF-2 | "Para o Simples Nacional, confirmam que a receita bruta de cada item para a segregação (monofásico × serviço) é o preço **líquido do desconto incondicional rateado**, e que o rateio proporcional ao preço de catálogo é critério aceitável?" | A1 / L8 | item 9 |
+| P-EF-1 | "Numa venda de combo (serviço + produto de revenda), vocês aceitam o desconto do combo **alocado ao item mais tributado até o preço de custo** (custo médio do estoque), com **teto no preço de catálogo** para os demais itens e tudo **destacado na nota** como desconto incondicional? Que **evidência de custo** querem que a gente guarde (custo médio na data da venda, NF de compra, ficha de custo do serviço)? Para **serviço**, que piso vocês defendem: custo de mão de obra informado ou preço mínimo publicado?" | A1 (reescrita 20/10) | F-EF-1, I-3 |
+| P-EF-2 | "Para o Simples Nacional, confirmam que a receita bruta de cada item para a segregação (monofásico × serviço) é o preço **líquido do desconto incondicional alocado a esse item**, e que a alocação por carga tributária (até o custo) e a proporcional ao catálogo são ambas critérios aceitáveis no PGDAS-D?" | A1 / L8 | item 9 |
 | P-EF-3 | "Produto **aplicado** durante o serviço (ex.: ampola usada no tratamento) é acessório do serviço (LC 214 art. 7º II e § 2º, tratamento do serviço) e produto **entregue** ao cliente para levar é fornecimento próprio (revenda, NCM própria)? Para kit vendido fechado (ex.: 'kit home care'), vocês classificam como um bem (NCM do kit, RGI 3 b — SC Cosit 98048/2026) ou explodem por item? Em qual caso?" | A2 | F-EF-4 |
 | P-EF-4 | "Procedimento estético feito por médico na clínica: vocês enquadram como serviço de saúde do Anexo III da LC 214 (redução de 60 % em 2027) ou fora? E no fator r / Anexo III do Simples hoje, a clínica estética vai pelo CNAE de medicina ou pelo de estética (caso do salão)?" | L16 / pesquisa §3.2 | F-EF-8, item 16 |
 | P-EF-5 | "Para cruzar o fator r (28 %), vocês consideram seguro elevar o **pró-labore** dentro do mês, desde que efetivamente pago com INSS recolhido? Existe piso/teto que vocês recomendam para não caracterizar remuneração 'de papel' (SC Cosit 228/2023)?" | A3 | item 15/17 (texto do aviso I-5) |
@@ -342,9 +378,13 @@ export const FatorRSimulacaoSchema = z.object({
 3. **Tabela de ICMS-ST por NCM × UF** (CONFAZ/UF) não lida — linhas `DRAFT` até fonte oficial (P-EF-6).
 4. **Decreto 12.955/2026** (regulamento da LC 214, arts. 12 § 4º e 13) não lido — pode mudar a forma do "valor de
    mercado" no arbitramento (L6); conferir antes do `executa` do PR-1.
-5. **Custo do serviço** (para o piso): não existe no sistema; o piso de serviço fica só no preço mínimo de catálogo (D6).
+5. **Custo do serviço** (para o piso): não existe no sistema; F-EF-1 decide o piso de serviço (custo informado, preço
+   mínimo publicado, ou sem desconto além do proporcional).
 6. **Folha real** (para o fator r): `SimplesHistoricoMensal.folhaCents` é informado; o PRE-ADR de pessoal (PES-1) é
    quem traria a folha calculada — até lá a simulação usa o informado + a folha-alvo.
+7. **Tabela tributária por item antes do nó F4 `TABELA-TRIBUTARIA-PRODUTO`:** a ordem de carga (D5) usa o que existe
+   (`ServiceFiscalProfile.cTribNac`, `ProductFiscalProfile.ncm` quando chegar, `PIS_COFINS_MONOFASICO_NCM`, anexo do X14);
+   sem isso a alocação cai no proporcional com aviso.
 
 ## 11. Achados fora de escopo (regra 5)
 
@@ -372,13 +412,14 @@ por arquivo/função, NÃO LIDO onde indicado.
 **O que isto decide aqui.** (i) Os dois ERPs tratam kit como **uma linha com o imposto do kit** — exatamente o que a
 LC 214 art. 7º proíbe quando os tratamentos diferem (L5); logo não há molde a copiar para o combo: **D4.1 (itens
 explodidos com preço de catálogo por item) é exigência da lei brasileira, não escolha de design**, e F-EF-4 (a) é o
-padrão. (ii) O rateio proporcional com correção de arredondamento é o que o ERPNext faz há anos (base `net_amount`;
-aqui base = preço de catálogo, D5) — confirma F-EF-2 (a)/(b) como caminho de mercado; o Odoo mostra a alternativa
-"linha negativa por grupo de imposto", que **não serve** porque a LC 123 art. 3º § 1º e a LC 214 art. 12 exigem o
+padrão. (ii) O rateio proporcional com correção de arredondamento é o que o ERPNext faz (base `net_amount`; aqui base =
+preço de catálogo) — é a **alternativa** configurável do D5; a alocação por carga tributária até o custo (regra do dono)
+**não existe em nenhum dos dois** — é desenho próprio, e por isso a função é pura, determinística e com memória. O Odoo
+mostra "linha negativa por grupo de imposto", que **não serve** porque a LC 123 art. 3º § 1º e a LC 214 art. 12 exigem o
 desconto **no item/documento**, não como item de preço negativo. (iii) O piso bloqueante por custo (última compra ou
-valuation) **existe e é opcional** no ERPNext e é só informativo no Odoo — F-EF-1 (a) é mais exigente (custo médio ×
-margem) porque aqui o piso não é controle gerencial, é defesa contra arbitramento (L1/L6); a comparação com o **net
-rate após rateio** (ERPNext) é a mesma do I-3. (iv) Nenhum dos dois tem sugestão/otimização fiscal — não há canônico
+valuation) **existe e é opcional** no ERPNext e é só informativo no Odoo — aqui é obrigatório (D6) porque não é controle
+gerencial, é defesa contra arbitramento (L1/L6/L17); a comparação com o **net rate após rateio** (ERPNext
+`validate_selling_price`) é a mesma do I-3. (iv) Nenhum dos dois tem sugestão/otimização fiscal — não há canônico
 externo; o desenho D1/D3 é próprio e por isso **pequeno** (uma tabela de sugestão + funções puras), nunca engine.
 Nada é copiado; serve como régua de completude e de "o que o mercado já aceita".
 
@@ -396,12 +437,17 @@ Nada é copiado; serve como régua de completude e de "o que o mercado já aceit
   o de PR-1 cresce em 2027 (L5 exige preço por item).
 - **Viés 2 (reuso do maker-checker):** o `EntryApprovalService` aprova lançamentos; aqui a sugestão aprova um
   **rateio/decisão** — reuso é do ciclo e da policy, não do model.
-- **Caso adversarial tentado contra "proporcional resolve":** combo serviço R$ 100 (Anexo III) + cosmético R$ 100
-  (monofásico, revenda) com R$ 40 de desconto. Proporcional: R$ 80 + R$ 80 — DAS sobre R$ 80 de serviço e R$ 80 de
-  revenda sem PIS/COFINS. Concentrado no serviço: R$ 60 + R$ 100 — base de serviço menor, monofásico intacto;
-  economia real de alguns reais, e o serviço a R$ 60 pode ficar abaixo do piso. O que me derrubaria: o contador dizer
-  que a alocação por item é livre sem piso (P-EF-1) — aí F-EF-2 (c) passa a ser defensável e F-EF-1 vira só aviso.
-  Como não há fonte, a recomendação fica no caminho conservador.
+- **Caso adversarial tentado contra a regra do dono (D5):** combo serviço R$ 100 (Anexo III, carga ~6 % + ISS) +
+  cosmético R$ 100 (revenda monofásica, custo médio R$ 60) vendido por R$ 160 (desconto R$ 40). Ordem de carga: o
+  serviço tem carga maior ⇒ recebe o desconto primeiro, até o seu piso. **Se o serviço não tem piso** (sem custo de
+  serviço — insumo ausente 5), a regra do dono não alcança o caso típico do salão: ou o serviço fica sem piso e pode ir
+  a R$ 0 (abaixo de qualquer custo — ilícito pelo próprio dono), ou cai no proporcional. É por isso que F-EF-1 existe
+  e é o fork que mais importa. Com piso de serviço R$ 70: serviço R$ 70 + cosmético R$ 90; DAS sobre R$ 70 de serviço e
+  R$ 90 de revenda sem PIS/COFINS. Caso-limite: desconto R$ 90 ⇒ serviço R$ 70 (piso), cosmético R$ 80, ok; desconto
+  R$ 150 > Σ(catálogo − custo) = R$ 70 ⇒ `COMBO_ABAIXO_DO_CUSTO`, bloqueio (I-3). O que me derrubaria: o contador
+  dizer que preço de custo em venda sistemática é "notoriamente inferior ao valor de mercado" mesmo com tabela
+  publicada (leitura 2 da A1) — aí D5 volta ao proporcional como padrão e a carga vira só sugestão. Sem fonte, a
+  regra do dono fica com as guardas e a pergunta P-EF-1 na frente do `executa`.
 - **Caso adversarial contra "bloquear só na emissão":** venda `Finalized` sem documento fiscal (cliente sem nota)
   nunca passa pela guarda — o DAS sai pela subrazão com o preço praticado, que é o correto; a guarda existe para o
   **documento**, que é onde L4 morde. A venda interna com item abaixo do piso recebe `WARN`, não `BLOCK` (D4.2).
@@ -409,14 +455,20 @@ Nada é copiado; serve como régua de completude e de "o que o mercado já aceit
 ## 13. Invariantes que a implementação DEVE provar
 
 1. **I-1 (fronteira):** não existe caminho de API que grave em `saleItems.unitPrice` valor ≠ `catalogUnitPrice` **sem**
-   `discountCents` correspondente destacado; teste de mutação: tentar "transferir" R$ 10 do item A para o B mantendo o
-   total ⇒ `PRECO_DIFERENTE_DO_CATALOGO_SEM_DESCONTO` em ambos.
+   `discountCents ≥ 0` correspondente destacado — nenhum item sobe acima do catálogo (`ITEM_ACIMA_DO_CATALOGO`) e
+   nenhum desce abaixo do custo; teste de mutação: tentar "transferir" R$ 10 do item A para o B mantendo o total ⇒
+   `ITEM_ACIMA_DO_CATALOGO` em B e `PRECO_DIFERENTE_DO_CATALOGO_SEM_DESCONTO` em A.
 2. **I-2:** toda venda com ≥ 2 itens de naturezas diferentes emite documento **itemizado** (um valor por item) — nunca
    uma linha "combo" (L5).
-3. **I-3:** item com `unitPrice − discount < piso` ⇒ `ITEM_ABAIXO_DO_PISO` `BLOCK` na emissão; com piso = 0 (sem custo,
-   sem mínimo) ⇒ `WARN`.
+3. **I-3:** item com `unitPrice − discount < piso` ⇒ `ITEM_ABAIXO_DO_PISO` `BLOCK` na emissão; desconto do combo >
+   `Σ (catálogo − piso)` ⇒ `COMBO_ABAIXO_DO_CUSTO` `BLOCK`; item sem piso determinável ⇒ não recebe desconto além do
+   proporcional e `WARN` `SEM_CUSTO`.
 4. **I-4:** `discountKind = CONDITIONAL` ⇒ `ReceitaFiscalLinha.receitaCents` bruto e sem redutor no documento;
-   `UNCONDITIONAL` ⇒ líquido e `Σ discountCents = discountAmount` (±1 centavo, resto no maior item).
+   `UNCONDITIONAL` ⇒ líquido e `Σ discountCents = discountAmount` (±1 centavo, resto no último item que recebeu).
+4b. **I-4b (determinismo da alocação):** `alocarDescontoFiscal` com os mesmos itens, carga, pisos e critério devolve a
+   mesma alocação (propriedade testada); `CARGA_TRIBUTARIA` percorre em ordem decrescente de `cargaBp` (empate: maior
+   catálogo) e cada item recebe `min(restante, catálogo − piso)`; `custoSnapshotCents` do item é o custo médio **na data
+   da venda**, nunca recalculado depois.
 5. **I-5:** toda resposta de simulação de fator r carrega o aviso de folha real; `folhaAlvoCents` nunca é persistido
    como histórico.
 6. **I-6:** sugestão `ACCEPTED` fora do padrão (rateio ≠ proporcional) exige `decisionReason` e decisor permitido pela
@@ -447,6 +499,7 @@ Nada é copiado; serve como régua de completude e de "o que o mercado já aceit
 | Lei 10.147 | acervo [D05], compilada | revogada em 01/01/2027 (LC 214 art. 542 XI) |
 | LC 214 arts. 5º, 7º, 12, 13, 127–136, 341-F, 542 | Planalto [D08], compilada com LC 227/2026 | acervo [D03] = republicação (alerta resolvido) |
 | Lei 12.592 art. 1º-A (red. Lei 13.352) | acervo [D23] compilada; Planalto [D07] | acervo [D06] da 13.352 era original (alerta resolvido) |
+| LC 87 arts. 13, 15 | acervo [D31], compilada, cópia 13/10 (lido 20/10 12:49) | base do ICMS = valor da operação (esclarecimento do dono) |
 | SC Cosit 98048/2026, 137/2024, 111/2015, 127/2019, 17/2021, 81/2025, 228/2023; Res. CGSN 140 arts. 25–26 | Sijut (pesquisa §3) | V (texto); aplicação a kit de cosméticos = I |
 | Decreto 12.955/2026; CONFAZ ST por NCM | **não lidos** | §10 |
 | Odoo / ERPNext | GitHub (20/10) | §11.1 |
