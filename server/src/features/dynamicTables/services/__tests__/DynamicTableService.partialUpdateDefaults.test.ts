@@ -1,4 +1,5 @@
 import { DynamicTableService } from '../DynamicTableService';
+import { DynamicTableRepository } from '../../repositories/DynamicTableRepository';
 
 /**
  * Lacuna (teste vivo 2026-09-25): no Zod 4, `.partial()` APLICA o `.default()` de campo ausente.
@@ -26,10 +27,12 @@ describe('DynamicTableService.updateTableData — update parcial não aplica def
     const repository = {
       findTableByDataId: jest.fn(async () => ({ id: 'tbl-1', userId: 'u1', name: 'Deals', category: 'custom', schema })),
       findDataById: jest.fn(async () => ({ ...existing, data: { ...existing.data } })),
+      // Seam da tx (Contrato §2 R4): o repositório real ligado ao tx falso abaixo.
+      withTransaction: (tx: unknown) => new DynamicTableRepository(tx as never),
     };
     const policy = { canView: jest.fn(() => true), canManageData: jest.fn(() => true) };
     const svc = new DynamicTableService(repository as any, policy as any);
-    // options.tx: a escrita vai direto por este tx (sem prisma.$transaction) e é capturada aqui.
+    // options.tx: a escrita vai direto por este tx (sem abrir transação própria) e é capturada aqui.
     const tx = {
       dynamicTableData: {
         findUnique: jest.fn(async () => ({ ...existing })),

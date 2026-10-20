@@ -1,10 +1,3 @@
-// A gravação do caminho genérico abre prisma.$transaction: aqui ela "sucede" sem banco, para que
-// sem a trava o update RESOLVA e a asserção (rejeitar) seja o que falha.
-jest.mock('../../../../lib/prisma', () => ({
-  __esModule: true,
-  default: { $transaction: jest.fn(async () => ({ id: 'opp-1', data: {} })) },
-}));
-
 import { DynamicTableService } from '../../../dynamicTables/services/DynamicTableService';
 import { CrmPipelineService } from '../CrmPipelineService';
 import { opportunitiesModule } from '../../../dynamicTables/presets/modules/crm/OpportunitiesModule';
@@ -44,6 +37,9 @@ describe('Oportunidade Won/Lost é terminal', () => {
       findTableById: jest.fn(async () => null),
       existsByIdInTable: jest.fn(async () => true),
       updateData: jest.fn(async () => ({ ...wonOpp })),
+      // A gravação do caminho genérico abre a tx pelo seam do repositório: aqui ela "sucede" sem banco,
+      // para que sem a trava o update RESOLVA e a asserção (rejeitar) seja o que falha.
+      runInTransaction: jest.fn(async () => ({ id: 'opp-1', data: {} })),
     };
     const policy = { canView: jest.fn(() => true), canManageData: jest.fn(() => true) };
     const svc = new DynamicTableService(repository as any, policy as any);

@@ -8,24 +8,30 @@ import logger from '../../../lib/logger';
  * Pure schema-validation engine for dynamic tables.
  *
  * Builds a Zod schema from an `ITableSchema` and validates record payloads against it.
- * Has NO dependency on the repository or policy — extracted verbatim from DynamicTableService
- * (Phase C decomposition) so the field-level validation can be reasoned about and unit-tested
- * in isolation. Behavior is unchanged.
+ * Has NO dependency on the repository or policy. `DynamicTableService` delegates here (it is the
+ * single implementation — the service keeps no copy).
  */
 export class SchemaValidator {
   /**
    * Validates a data payload against the table schema. When `isPartial` is true (updates),
-   * every field becomes optional so only the provided fields are checked.
+   * every field becomes optional so only the provided fields are checked — and field defaults are
+   * NOT applied: Zod 4's `.partial()` still fills `.default()` for absent keys, which would reset
+   * a field the update did not touch (#385, `DynamicTableService.partialUpdateDefaults.test.ts`).
    */
-  public validateDataAgainstSchema(data: Record<string, any>, tableSchema: ITableSchema, isPartial = false) {
+  public validateDataAgainstSchema(data: Record<string, unknown>, tableSchema: ITableSchema, isPartial = false) {
     try {
-      let schema = this.buildZodSchema(tableSchema);
+      let schema = this.buildZodSchema(tableSchema, !isPartial);
       if (isPartial) schema = schema.partial();
       return schema.parse(data);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        logger.debug('[SchemaValidator] Validation failed', { data, fieldErrors: error.flatten().fieldErrors });
-        throw new ValidationError('Invalid data provided.', error.flatten().fieldErrors);
+        const fieldErrors = error.flatten().fieldErrors;
+        // Só nomes de campo: o payload pode carregar PII (C4 — camada de redação de logs).
+        logger.debug('[SchemaValidator] Validation failed', {
+          fieldCount: Object.keys(data || {}).length,
+          fields: Object.keys(fieldErrors),
+        });
+        throw new ValidationError('Invalid data provided.', fieldErrors);
       }
       throw new ValidationError('Data validation failed.');
     }
@@ -33,16 +39,16 @@ export class SchemaValidator {
 
   /**
    * Compiles an `ITableSchema` into a Zod object schema, applying per-field type, format,
-   * range and required/default/nullable rules.
+   * range and required/default/nullable rules. `applyDefaults=false` skips `.default()` (partial updates).
    */
-  public buildZodSchema(tableSchema: ITableSchema): z.ZodObject<any> {
-    const shape: { [key: string]: z.ZodType<any, any> } = {};
+  public buildZodSchema(tableSchema: ITableSchema, applyDefaults = true): z.ZodObject<z.ZodRawShape> {
+    const shape: { [key: string]: z.ZodTypeAny } = {};
     if (!tableSchema || !Array.isArray(tableSchema.fields)) {
       throw new ValidationError('Invalid table schema definition.');
     }
 
     for (const field of tableSchema.fields) {
-      let zodField: z.ZodType<any, any>;
+      let zodField: z.ZodTypeAny;
       // Normaliza tipos equivalentes
       const fieldType = (field.type === 'datetime') ? 'date' : field.type;
 
@@ -83,7 +89,7 @@ export class SchemaValidator {
                   try {
                     const customRegex = new RegExp(field.regex);
                     finalStringValidation = stringField.regex(customRegex, { message: `O valor não corresponde ao formato exigido para o campo '${field.label || field.name}'.` });
-                  } catch (e) {
+                  } catch {
                     throw new ValidationError(`Regex inválida fornecida para o campo '${field.name}'.`);
                   }
                 }
@@ -137,7 +143,7 @@ export class SchemaValidator {
           throw new ValidationError(`Tipo de campo desconhecido: ${field.type}`);
       }
 
-      if (field.defaultValue !== undefined) {
+      if (applyDefaults && field.defaultValue !== undefined) {
         zodField = zodField.default(field.defaultValue);
       }
 

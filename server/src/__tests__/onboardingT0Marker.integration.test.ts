@@ -12,7 +12,6 @@ import { pushTestSchema, disconnectDb } from '@test/helpers/db';
 import { DynamicTableRepository } from '@/features/dynamicTables/repositories/DynamicTableRepository';
 import { DynamicTablePolicy } from '@/features/dynamicTables/policies/DynamicTablePolicy';
 import { DynamicTableService } from '@/features/dynamicTables/services/DynamicTableService';
-import { TransactionalDynamicTableRepository } from '@/features/dynamicTables/repositories/TransactionalDynamicTableRepository';
 
 const service = new DynamicTableService(new DynamicTableRepository(), new DynamicTablePolicy());
 const USERS = ['t0-ok', 't0-rollback'];
@@ -67,7 +66,7 @@ describe('T0 do time-to-first-ECD — User.onboardingCompletedAt na tx de instal
     // `prisma.$transaction` (0 chamadas — provado com spy). Para provar a tx, a falha tem de nascer
     // DEPOIS de o Pass 1 ter criado linhas: derruba-se o updateTableSchema do Pass 2.
     const spy = jest
-      .spyOn(TransactionalDynamicTableRepository.prototype, 'updateTableSchema')
+      .spyOn(DynamicTableRepository.prototype, 'updateTableSchema')
       .mockRejectedValueOnce(new Error('pass-2 boom (simulado)'));
     try {
       await expect(

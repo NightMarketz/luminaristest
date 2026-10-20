@@ -19,7 +19,7 @@
  *
  * CONSERTADO — o `it.failing` cumpriu o papel e virou `it`: o gate autoritativo do padrão da casa
  * (`authoritative-gate-inside-tx`) foi acrescentado em `writeCreate`/`writeUpdate`, re-contando com o
- * `TransactionalDynamicTableRepository` que o serviço constrói internamente — que este harness NÃO
+ * repositório tx-bound (`repository.withTransaction`) que o serviço constrói internamente — que este harness NÃO
  * intercepta, de propósito. A re-contagem in-tx roda sem barreira, rejeita os perdedores, o corpo do
  * teste passou a passar e o marcador REPROVOU ("passing test marked as failing"), obrigando a removê-lo.
  * Daqui em diante este caso é barreira de regressão permanente: se alguém devolver a decisão para a

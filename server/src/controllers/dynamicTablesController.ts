@@ -2,8 +2,7 @@ import type { Request, Response } from 'express';
 import { getFactory } from '@/lib/factory';
 import { handleApiError } from '@/lib/apiUtils';
 import { getUserContextFromRequest } from '@/lib/authUtils';
-import { ForbiddenError, ValidationError } from '@/lib/errors';
-import { Role } from '@/features/users/models/User.model';
+import { ValidationError } from '@/lib/errors';
 import { z } from 'zod';
 import {
   CreateDynamicTableDataDto,
@@ -209,18 +208,13 @@ export async function batchDeleteTableData(req: Request, res: Response) {
 
 /**
  * POST /api/dynamic-tables/sync-preset — additively evolve an installed table's schema
- * from its preset module. ADMIN-ONLY: this mutates installed table schemas, so it is
- * guarded by an explicit role check (ForbiddenError otherwise) on top of route auth.
+ * from its preset module. ADMIN-ONLY: the decision is `DynamicTablePolicy.canAdministerPresets`,
+ * consulted policy-first by the service (ForbiddenError → 403); the controller adds no rule.
  */
 export async function syncPreset(req: Request, res: Response) {
   try {
     const ctx = getUserContextFromRequest(req);
     if (!ctx) return res.status(401).json({ success: false, error: 'Unauthorized' });
-
-    // Admin-only: schema-mutating operation.
-    if (ctx.role !== Role.ADMIN) {
-      throw new ForbiddenError('Apenas administradores podem sincronizar schemas de preset.');
-    }
 
     const body = SyncPresetDto.safeParse(req.body);
     if (!body.success) return res.status(400).json({ success: false, error: body.error.flatten() });
@@ -235,18 +229,13 @@ export async function syncPreset(req: Request, res: Response) {
 
 /**
  * POST /api/dynamic-tables/install-table — install ONE new table from its preset into an
- * already-installed tenant (idempotent). ADMIN-ONLY: this creates a table, so it is guarded
- * by an explicit role check (ForbiddenError otherwise) on top of route auth.
+ * already-installed tenant (idempotent). ADMIN-ONLY via `DynamicTablePolicy.canAdministerPresets`,
+ * consulted policy-first by the service (ForbiddenError → 403); the controller adds no rule.
  */
 export async function installTableFromPreset(req: Request, res: Response) {
   try {
     const ctx = getUserContextFromRequest(req);
     if (!ctx) return res.status(401).json({ success: false, error: 'Unauthorized' });
-
-    // Admin-only: table-creating operation.
-    if (ctx.role !== Role.ADMIN) {
-      throw new ForbiddenError('Apenas administradores podem instalar tabelas de preset.');
-    }
 
     const body = InstallTableDto.safeParse(req.body);
     if (!body.success) return res.status(400).json({ success: false, error: body.error.flatten() });

@@ -1,7 +1,8 @@
 import type { UserContext } from '../../../lib/authUtils';
-import { ValidationError } from '../../../lib/errors';
+import { ForbiddenError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import type { IDynamicTableRepository } from '../repositories/IDynamicTableRepository';
+import type { IDynamicTablePolicy } from '../policies/IDynamicTablePolicy';
 import type { PresetSyncService } from './PresetSyncService';
 import { MODULE_REGISTRY, expandModuleSelectors, type ModuleKey, type ModuleSelector } from '../presets/modules/registry';
 import type { InstallModuleResult } from '../dtos/InstallModule.dto';
@@ -23,6 +24,7 @@ export class ModuleInstallService {
   constructor(
     private readonly presetSyncService: PresetSyncService,
     private readonly repository: IDynamicTableRepository,
+    private readonly policy: IDynamicTablePolicy,
   ) {}
 
   private async isInstalled(user: UserContext, internalName: string): Promise<boolean> {
@@ -35,6 +37,10 @@ export class ModuleInstallService {
    * `synced` concatenados (sem repetição); `modules` = membros atômicos.
    */
   async installModule(user: UserContext, selector: ModuleSelector): Promise<InstallModuleResult> {
+    // Policy-first (Contrato §2): nada é lido antes desta decisão.
+    if (!this.policy.canAdministerPresets(user)) {
+      throw new ForbiddenError('Apenas administradores podem instalar módulos.');
+    }
     const keys = expandModuleSelectors([selector]);
     if (keys.length === 1 && keys[0] === selector) return this.installAtomicModule(user, keys[0]);
     const results: InstallModuleResult[] = [];

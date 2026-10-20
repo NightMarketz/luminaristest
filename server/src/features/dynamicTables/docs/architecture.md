@@ -68,10 +68,12 @@ policy.canManageData
 
 ### `deleteTableData`
 ```
-runRules('beforeDelete')
- → deleteConstraints           (RESTRICT / CASCADE / RESTRICT_IF_AGGREGATE / IGNORE)
- → repository.deleteData (soft delete)
- → runRules('afterDelete')
+policy.canManageData
+ → repository.runInTransaction (everything below runs with the tx-bound repository)
+    → immutableAfter scope 'all' (delete guard) + deleteConstraints (RESTRICT / CASCADE / RESTRICT_IF_AGGREGATE / IGNORE)
+    → runRules('beforeDelete')
+    → repository.deleteData (soft delete) + cascade soft deletes
+    → runRules('afterDelete')
 ```
 
 > **System bypass (`isSystem`):** writes originated by the system itself (plugins via
@@ -124,15 +126,15 @@ custom tables.
 
 ## 4. Preset installation (2 passes)
 
-`installPresetAsSystem` (delegated to `services/PresetInstallerService` via the `ITableAuthoring`
-interface the service implements) assembles a complete ERP from modules (see
+`DynamicTableService.installPresetAsSystem` assembles a complete ERP from modules, inside ONE
+repository transaction (`repository.runInTransaction`; the caller's preset object is never mutated) (see
 [`../presets/README.md`](../presets/README.md)). Since tables reference one another, installation runs
 in two passes to resolve circular relations:
 
 1. **Creation:** creates each `DynamicTable` with a **partial** schema (without the `relation` fields),
    and maps `preset-key → real-id`. Here `internalName = preset-key`.
 2. **Resolution:** replaces each `@@PRESET_TABLE_KEY::<key>` with the real id and writes the full schema
-   via `updateTableSchemaAsSystem`.
+   with the tx-bound repository (`updateTableSchema`).
 
 > The installation flow **passes the schema straight to the repository** (it does not re-parse via the
 > DTO), so the governance defined in the modules (in TypeScript) is preserved in full.
@@ -162,9 +164,9 @@ features/dynamicTables/
 ├── dtos/                      # Zod contracts (validation boundary)
 ├── models/                    # TS interfaces (ITableSchema, ISchemaField, governance rules)
 ├── policies/                  # authorization (interface + impl)
-├── repositories/              # data access (interface + Prisma impl; indexed queries)
+├── repositories/              # data access (interface + ONE Prisma impl; `withTransaction`/`runInTransaction` = tx seam)
 ├── validation/                # SchemaValidator + GovernanceEngine (engines extracted from the service)
-├── services/                  # DynamicTableService (orchestrator) + PresetInstallerService + PresetService
+├── services/                  # DynamicTableService (orchestrator, incl. installPresetAsSystem) + PresetSyncService/ModuleInstallService + PresetService
 ├── rules/                     # plugin engine (RuleRegistry, RuleTypes, shared/, plugins/)
 ├── utils/                     # TableFactory (composes modules) + ValidationUtils (cpf/cnpj/phone)
 └── presets/                   # fields → modules → systems + README (authoring reference)

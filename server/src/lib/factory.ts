@@ -1206,10 +1206,11 @@ export class ApplicationFactory {
 
     const presetSyncService = new PresetSyncService(
       dynamicTableService,
-      this.repositories.dynamicTable
+      this.repositories.dynamicTable,
+      this.policies.dynamicTable
     );
     // I8 comportamento 8 — ligar módulo depois (orquestra install + sync do PresetSyncService).
-    const moduleInstallService = new ModuleInstallService(presetSyncService, this.repositories.dynamicTable);
+    const moduleInstallService = new ModuleInstallService(presetSyncService, this.repositories.dynamicTable, this.policies.dynamicTable);
 
     const referentialMappingService = new ReferentialMappingService(
       this.repositories.referentialMapping,

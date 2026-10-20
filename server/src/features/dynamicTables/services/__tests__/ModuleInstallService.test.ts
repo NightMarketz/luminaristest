@@ -6,6 +6,7 @@ import { ModuleInstallService } from '../ModuleInstallService';
 import { ValidationError } from '../../../../lib/errors';
 import { composeModuleTables } from '../../presets/modules/registry';
 import { CoreSystemPreset } from '../../presets/systems/CoreSystemPreset';
+import { DynamicTablePolicy } from '../../policies/DynamicTablePolicy';
 
 beforeEach(() => jest.clearAllMocks());
 
@@ -26,7 +27,7 @@ function build(installed: string[]) {
     syncInstalledTableFromPreset: jest.fn(async () => ({ added: ['x'], optionsAdded: {} })),
     getPresetDefinitionForInternalName: jest.fn((n: string) => DEFS[n] ?? null),
   };
-  const svc = new ModuleInstallService(presetSyncService as any, repository as any);
+  const svc = new ModuleInstallService(presetSyncService as any, repository as any, new DynamicTablePolicy());
   return { svc, presetSyncService };
 }
 

@@ -12,7 +12,7 @@ import { CoreSystemPreset } from '../../presets/systems/CoreSystemPreset';
 beforeEach(() => jest.clearAllMocks());
 
 describe('PresetSyncService — definição pelo registro de módulos (F-I8-COMP3-b)', () => {
-  const svc = new PresetSyncService({} as any, {} as any);
+  const svc = new PresetSyncService({} as any, {} as any, {} as any);
 
   it.each(['leadPipelines', 'leadStages', 'leads', 'leadActivities', 'leadProposals', 'crmAccounts', 'crmContacts', 'crmOpportunities'])(
     '%s resolve pelo registro, com o mesmo schema do módulo',
