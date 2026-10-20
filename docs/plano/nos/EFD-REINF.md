@@ -9,7 +9,7 @@ depende_de: ["[[D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS]]", "[[RETENCOES-FONTE]]", 
 autorizacao: "dono, chat, 2026-10-20: \"Q1 a, Q2 a. Grava as decisões e pode começar pelo fold R0 (Q3 a).\" — Q2 (a) = PRE-ADRs de F1 por sessao-planejamento, sem 'executa' (cédula D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS, sessão de origem). Antes: F-PES-4 e F-PES-5 (b), ratificados em lote (dono, chat, 2026-10-12, [[D-2026-10-12-QUESTIONARIO-DONO]]) — só o PRE-ADR de pessoal, sem nó. Só o PRE-ADR e esta nota"
 ancora_sdd: "§M5 · §M7.1"
 atualizado: "2026-10-20"
-prs: []
+prs: ["#779"]
 perfil_previsto: "precisa-de-planejamento"
 perfil_evidencia: "regra 1: 5 forks pendentes (forma da saída, transmissão com o FiscalCertificate, fatiamento, dividendos isentos, tabela de natureza do rendimento) e o leiaute oficial ainda não lido; depois deles: opus-medio (serializer puro no molde do ECD + gate de cobertura + ReinfBatch; o adaptador de transmissão, se F-REINF-2 a, é PR próprio)"
 write_set: ["server/prisma/schema.prisma", "server/prisma/migrations/**", "server/src/lib/reinf.ts", "server/src/lib/__tests__/reinf*", "server/src/features/accounting/models/reinf*", "server/src/features/accounting/dtos/ReinfDto.ts", "server/src/features/accounting/services/ReinfService.ts", "server/src/features/accounting/services/DataExchangeExportService.ts", "server/src/features/accounting/repositories/*Reinf*", "server/src/features/accounting/policies/**", "server/src/controllers/*Reinf*", "server/src/features/accounting/models/obrigacoesPorRegime.ts", "server/src/features/accounting/**/__tests__/**", "server/src/controllers/__tests__/**"]
@@ -17,7 +17,7 @@ registros: ["server/src/lib/factory.ts", "server/src/routes/accounting.ts", "ser
 ---
 # EFD-REINF — EFD-Reinf a partir das retenções do tenant (série R-4000 + R-2010)
 
-**Estado:** `planned` — 20/10: PRE-ADR **Proposed** (ADR-INCR-EFD-REINF); forks F-REINF-1..5 PENDENTES; não roteia até a ratificação; sem BRIEF, sem 'executa'  
+**Estado:** `planned` — 20/10: PRE-ADR **Proposed** (ADR-INCR-EFD-REINF) pela sessao-planejamento sob a Q2 (a) da proposta de 20/10 — forks F-REINF-1..5 PENDENTES, P-REINF-1..5 (runbook do 1º lote, tabela de natureza do rendimento, contador). **Não roteia até a ratificação.** Sem BRIEF, sem 'executa'. Depende em conteúdo do RETENCOES-FONTE (consome o resumo mensal D8) e do IRRF-DISTRIBUICAO (dividendos 1841, JCP 5706). IN RFB 2.043 lida na visão vigente do Sijut (série R-4000 substitui a DIRF para fatos desde 01/01/2025, art. 3º § 1º I; sem fato ⇒ dispensada, art. 4º; prazo dia 15, art. 6º). Leiaute 2.1.2 e Manual NÃO lidos em fonte oficial (portal SPED ECONNREFUSED) — insumo ausente. Hoje: 0 linhas de Reinf no código  
 **Autorização:** dono, chat, 2026-10-20: "Q1 a, Q2 a. Grava as decisões e pode começar pelo fold R0 (Q3 a)." — Q2 (a): PRE-ADR por sessao-planejamento, sem 'executa'  
 **Depende de:** [[D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS]] (cédula Q2 (a)), [[RETENCOES-FONTE]] (dura: resumo mensal D8, `TaxWithholding` MADE), [[IRRF-DISTRIBUICAO]] (dura: dividendos 1841 e JCP 5706, sócios com CPF), [[X9]] (pontilhada: a DCTFWeb consome a Reinf — IN 2.237 art. 5º), [[X10i]] (pontilhada: `FiscalCertificate` para a transmissão, F-REINF-2)  
 **Desbloqueia:** linha `REINF` da matriz de obrigações; `AGENDA-FISCAL` (F4) mostra o prazo  
