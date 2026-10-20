@@ -53,7 +53,9 @@ export async function materializeCommissions(
       saleId,
       saleItemId: it.id,
       amount: commissionAmount,
-      commissionRate: Math.round(commissionRate * 100) / 100,
+      // O campo do CommissionsModule é o preset `commissionRate`, cujo `name` é 'rate' (NumberPresets.ts);
+      // a chave `commissionRate` era removida pelo strip do schema (GAP-MAP Nível 3, 2026-10-19).
+      rate: Math.round(commissionRate * 100) / 100,
       status: 'Pending',
     };
 

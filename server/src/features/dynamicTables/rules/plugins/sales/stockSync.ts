@@ -207,19 +207,14 @@ export async function processSaleStockUpdate(ctx: RuleContext, items: Array<{ id
   if (!hasInventory) return;
   const unitId = String(saleUnitId || '');
 
-  // Idempotency guard: if this sale was already Finalized in the database, a retry or
-  // double-apply (e.g. from a transaction rollback/retry scenario) must not re-apply
-  // stock deltas. We re-read the persisted record rather than trusting ctx.before, which
-  // may reflect the in-memory state before this transaction began.
-  if (nextStatus === 'Finalized') {
-    const saleId = String(ctx.after?.id || ctx.before?.id || '');
-    if (saleId) {
-      const currentSale = await ctx.repository.findDataById(saleId);
-      if ((currentSale?.data as Record<string, unknown>)?.status === 'Finalized') {
-        // Already processed — skip to avoid double stock deduction.
-        return;
-      }
-    }
+  // Idempotency guard: a re-finalization (Finalized → Finalized) must not re-apply stock deltas.
+  // Decide by the TRANSITION (prevStatus = ctx.before), never by re-reading the persisted row:
+  // in afterUpdate the row is ALREADY Finalized (the engine persists before the hook, and
+  // SalesPlugin.afterUpdate re-writes `merged` with the status before calling here), so a
+  // re-read always said "already processed" and `stock -= qty` never ran (GAP-MAP Nível 3,
+  // 2026-10-19 — guarda: SalesPlugin.finalizeStock.integration.test.ts).
+  if (nextStatus === 'Finalized' && prevStatus === 'Finalized') {
+    return;
   }
 
   for (const it of items) {
