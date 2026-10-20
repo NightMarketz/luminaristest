@@ -77,3 +77,22 @@ e [[W1]] (a entrevista descarta a customização).
 - `F5` → `P-IA?`: **não bloqueia o FE do Mercado Pago**. A aresta pertence ao adaptador CNAB (ADR-INCR-PAYMENT-PROVIDER-COLLECTION §6.1). A fase CNAB depende também de D6, que não está em `depende_de` de F5.
 - O índice (`_INDEX.md`) ordena os "Destravados" alfabeticamente, não por esta ordem.
 - Os PRs #769–#772 (19/10) não tinham nó no vault; o fold entrou num PR de docs à parte ([[D-2026-10-19-ACHADOS-NA-FILA]]), porque os PRs já estavam abertos.
+
+## F. Complemento pela régua TOTVS / Salesforce / Power BI (ratificado 20/10)
+
+> Régua **própria** de 22 nós, separada da régua de 63 ([[D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS]], Q1 a). Detalhe,
+> dependências e fronteira em [`PROPOSTA-COMPLEMENTO-FIN-CTB-FIS-2026-10-20`](PROPOSTA-COMPLEMENTO-FIN-CTB-FIS-2026-10-20.md)
+> §4. Entra **depois** de A–E; nó só vira `nos/` com PRE-ADR ratificado; código só com `executa` por PR.
+
+| # | Onda | Nós | Estado | Ação do dono |
+|---|---|---|---|---|
+| F1 | Prazo legal (01/12/2026 · 01/01/2027) | `IBS-CBS-2027` (promove [[M5-ibs-cbs]]) · `RETENCOES-FONTE` · `EFD-REINF` · [[NFE-DANFE-IBSCBS]] · [[PRESUMIDO-TETO-78MI]] | PRE-ADRs **autorizados** (Q2 a, só planejamento) | ratificar forks; `executa` por PR |
+| F5.1 | Pré-requisito | `EMAIL-TRANSPORT` | proposta | Q7 (BYOK) + PRE-ADR |
+| F1.5 | Eficiência fiscal lícita (sugestão + guarda) | [[EFICIENCIA-FISCAL]] — combo itemizado com desconto incondicional rateado e piso por item; segregação por NCM; simuladores de fator r, regime e remuneração do sócio; guarda anti-simulação; relatório de economia ([pesquisa 20/10](../accounting/PESQUISA-EFICIENCIA-FISCAL-2026-10-20.md)) | PRE-ADR **Proposed** 20/10 ([[D-2026-10-20-EFICIENCIA-FISCAL-PRE-ADR]]; `ADR-INCR-EFICIENCIA-FISCAL`); forks F-EF-1..9 pendentes | ratificar forks; P-EF-1..6 ao contador (A1–A3); `executa` por PR, PR-1 só depois do P-EF-1 |
+| F2 | Financeiro nível TOTVS | `TESOURARIA` · `REGUA-COBRANCA` · `CONC-ADQUIRENTE` · `CONTRATOS-RECORRENTES` · `ALCADA-PAGAMENTO` (portão P3) · `ORCAMENTO` | proposta | Q6 + PRE-ADR cada |
+| F3 | Contábil nível TOTVS | `RATEIO-DIMENSOES` · `PROVISOES-AGENDADAS` (ADR × [[R-motor-regras]]) · `FECHAMENTO-ASSISTIDO` · `RB-CONTABIL` | proposta | Q5 + PRE-ADR cada |
+| F5 | Analytics nível Power BI | `EXPORT-RELATORIOS` · `ALERTAS-ASSINATURAS` · `IA-ANALYTICS` (promove [[M5-ia-analytics]], depois do [[H1]]) | proposta | PRE-ADR cada |
+| F4 | Fiscal de comércio (gate: contribuinte de ICMS) | `TABELA-TRIBUTARIA-PRODUTO` · `MANIFESTACAO-DFE` · `EFD-ICMS-IPI` · `AGENDA-FISCAL` · `NFSE-PAULISTANA` | proposta | Q9 |
+
+Fechado em 20/10 (R0, Q3 a): E1 inteiro mergeado (#769 · #771 · #770 · #772); X14-CAIXA (#729/#738/#739), FE-INCR-SIMPLES
+PR-D (#733) e X11 PR-1 (#633) em `main` — fold em sessão própria.
