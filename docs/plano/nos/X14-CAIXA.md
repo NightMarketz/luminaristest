@@ -3,17 +3,17 @@ id: "X14-CAIXA"
 tipo: "regua"
 dominio: "fiscal"
 titulo: "Simples Nacional ME/EPP: base do DAS pela receita recebida (regime de caixa) — registro de recebíveis e gatilhos do art. 20"
-estado: "inflight"
-estado_detalhe: "16/10: execução autorizada (dono, chat, 2026-10-16: \"Pode começar agora e disparar as sessões com brief autorizado\"). 22 itens em 3 PRs empilhados e abertos: #729 (recebimento + trava de ano, itens 1–7a) → #738 (base caixa + art. 20, itens 8–18) → #739 (Anexo IX + incobráveis, itens 19–21). Lacunas L1 (a) e L2 (a) decididas pelo dono em 16/10 ([[D-2026-10-16-X14-CAIXA-LACUNAS]]); A3 nova (transição competência → caixa). Pendentes de contador: A1, A2, A3. Não mergear sem OK"
+estado: "done"
+estado_detalhe: "20/10 (fold): os 3 PRs mergeados em main em 16/10 — #729 (22:58Z), #738 (23:25Z), #739 (23:36Z); nó fecha (done). Pendentes de contador continuam abertas: A1, A2, A3 (transição competência → caixa) · 16/10: execução autorizada (dono, chat, 2026-10-16: \"Pode começar agora e disparar as sessões com brief autorizado\"). 22 itens em 3 PRs empilhados e abertos: #729 (recebimento + trava de ano, itens 1–7a) → #738 (base caixa + art. 20, itens 8–18) → #739 (Anexo IX + incobráveis, itens 19–21). Lacunas L1 (a) e L2 (a) decididas pelo dono em 16/10 ([[D-2026-10-16-X14-CAIXA-LACUNAS]]); A3 nova (transição competência → caixa). Pendentes de contador: A1, A2, A3. Não mergear sem OK"
 depende_de: ["[[X14]]", "[[D-2026-10-10-X14-PROXIMOS-PASSOS]]", "[[D-2026-10-15-X14-CAIXA-FORKS]]"]
 autorizacao: "dono, chat, 2026-10-15: \"Autorizo planejar o BRIEF do X14-CAIXA — sessao-planejamento, sem código, sem 'executa'\" — só o BRIEF; forks ratificados no questionário do mesmo dia ([[D-2026-10-15-X14-CAIXA-FORKS]]) — sem executa"
 ancora_sdd: "—"
-atualizado: "2026-10-16"
+atualizado: "2026-10-20"
 prs: ["#711", "#729", "#738", "#739"]
 ---
 # X14-CAIXA — base do DAS por recebimento (regime de caixa)
 
-**Estado:** `inflight` — 16/10: execução autorizada (dono, chat, 2026-10-16: "Pode começar agora e disparar as sessões com brief autorizado"). 22 itens em 3 PRs empilhados e abertos: #729 (recebimento + trava de ano, itens 1–7a) → #738 (base caixa + art. 20, itens 8–18) → #739 (Anexo IX + incobráveis, itens 19–21). Lacunas L1 (a) e L2 (a) decididas pelo dono em 16/10 ([[D-2026-10-16-X14-CAIXA-LACUNAS]]); A3 nova (transição competência → caixa). Pendentes de contador: A1, A2, A3. Não mergear sem OK  
+**Estado:** `done` — 20/10 (fold): os 3 PRs mergeados em main em 16/10 — #729 (22:58Z), #738 (23:25Z), #739 (23:36Z); nó fecha (done). Pendentes de contador continuam abertas: A1, A2, A3 (transição competência → caixa) · 16/10: execução autorizada (dono, chat, 2026-10-16: "Pode começar agora e disparar as sessões com brief autorizado"). 22 itens em 3 PRs empilhados e abertos: #729 (recebimento + trava de ano, itens 1–7a) → #738 (base caixa + art. 20, itens 8–18) → #739 (Anexo IX + incobráveis, itens 19–21). Lacunas L1 (a) e L2 (a) decididas pelo dono em 16/10 ([[D-2026-10-16-X14-CAIXA-LACUNAS]]); A3 nova (transição competência → caixa). Pendentes de contador: A1, A2, A3. Não mergear sem OK  
 **Autorização:** dono, chat, 2026-10-15. Planejar o BRIEF só pela `sessao-planejamento`. O código exige `executa`
 próprio por PR.  
 **Depende de:** [[X14]] (cálculo por competência, perfil com `simplesRegimeApuracao`).
