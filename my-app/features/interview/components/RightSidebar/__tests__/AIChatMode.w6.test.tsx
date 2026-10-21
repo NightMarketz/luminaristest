@@ -208,3 +208,53 @@ describe('AIChatMode — W6 FE', () => {
     expect(onSessionLost).not.toHaveBeenCalled();
   });
 });
+
+// Achados fora de escopo do #785, corrigidos por ordem do dono (chat, 2026-10-21: "Corrija os 4"). GAP-MAP Nível 3.
+describe('AIChatMode — achados do #785 (testes-guarda)', () => {
+  beforeEach(() => {
+    globalThis.fetch = vi.fn();
+  });
+
+  it('achado 2: a proposta pendente da sessão reaparece ao remontar, com a ciência exigida', async () => {
+    fetchMock().mockResolvedValue(res(200, resultado({ applied: true })));
+    // A tabela do servidor guarda a pendente sem `requiresSensitiveAck` (§2.4); o painel deriva pela regra do servidor.
+    const comPendente = {
+      ...tabela,
+      conversationHistory: historico,
+      pendingProposal: { id: 'p1', changes: propostaSensivel.changes, createdAt: '2026-10-20T12:00:01.000Z' },
+    };
+    montar({ tableData: comPendente });
+    expect(screen.queryByTestId('ai-proposal')).not.toBeNull();
+    expect(screen.getByText('onboardingFieldsAiApply')).toBeDisabled();
+    fireEvent.click(screen.getByLabelText('onboardingFieldsAiSensitiveAck'));
+    fireEvent.click(screen.getByText('onboardingFieldsAiApply'));
+    await waitFor(() => expect(fetchMock()).toHaveBeenCalledTimes(1));
+    expect(bodyOf(0)).toMatchObject({ kind: 'decision', proposalId: 'p1', decision: 'apply', acknowledgeSensitive: true });
+  });
+
+  it('achado 3: o que o servidor descartou aparece com nome e motivo', async () => {
+    fetchMock().mockResolvedValue(res(200, resultado({
+      proposal: propostaComum,
+      discarded: [{ name: 'id', reason: 'reserved' }, { name: 'cliente', reason: 'type_not_allowed' }],
+    })));
+    montar();
+    await enviar('quero um campo id e uma relação com cliente');
+    const bloco = await screen.findByTestId('ai-discarded');
+    expect(bloco.textContent).toContain('onboardingFieldsAiDiscardedTitle');
+    expect(bloco.textContent).toContain('id');
+    expect(bloco.textContent).toContain('onboardingFieldsAiDiscardedReserved');
+    expect(bloco.textContent).toContain('cliente');
+    expect(bloco.textContent).toContain('onboardingFieldsAiDiscardedTypeNotAllowed');
+  });
+
+  it('achado 4: HTML no conteúdo vira texto; só a formatação simples (negrito) vira marcação', () => {
+    const injetado = [
+      { role: 'user', content: '<img src=x onerror="window.__w6xss=1"> **alergias**', at: '2026-10-20T12:00:00.000Z' },
+    ];
+    const { container } = montar({ tableData: { ...tabela, conversationHistory: injetado } });
+    expect(container.querySelector('img')).toBeNull();
+    expect(textos()[0]).toContain('<img src=x onerror="window.__w6xss=1">');
+    expect(container.querySelector('strong')?.textContent).toBe('alergias');
+  });
+});
+
