@@ -142,7 +142,7 @@ describe('item 5 — campo sensível exige a ciência (F-MS-3 a)', () => {
 
   it('setHidden de campo existente não pede ciência', async () => {
     const { manual } = await setup();
-    await expect(manual([{ action: 'setHidden', name: 'nome', hidden: true }])).resolves.toMatchObject({ applied: true });
+    await expect(manual([{ action: 'setHidden', name: 'telefone', hidden: true }])).resolves.toMatchObject({ applied: true });
   });
 });
 
@@ -163,5 +163,35 @@ describe('item 6 — o manual descarta a proposta pendente da IA (F-MS-4 a)', ()
     await expect(
       service.handle(USER, { kind: 'decision', sessionId: session.id, tableKey: 'clientes', proposalId: 'p-1', decision: 'apply' }),
     ).rejects.toBeInstanceOf(ProposalStaleError);
+  });
+});
+
+// Revisão do #786 (dono, chat e questionário, 2026-10-21: "Corrige todos, nos PRs certos").
+describe('revisão do #786', () => {
+  it('esconder campo obrigatório → 400 MANUAL_CHANGE_INVALID required_hidden, nada gravado; mostrar de novo é livre', async () => {
+    const { manual, reload } = await setup();
+    const erro = await manual([{ action: 'setHidden', name: 'nome', hidden: true }]).catch((e: unknown) => e);
+    expect(erro).toMatchObject({ errorCode: 'MANUAL_CHANGE_INVALID', details: { changes: [{ index: 0, name: 'nome', reason: 'required_hidden' }] } });
+    expect((await reload()).fields).toEqual(CAMPOS);
+    await expect(manual([{ action: 'setHidden', name: 'nome', hidden: false }])).resolves.toMatchObject({ applied: true });
+  });
+
+  it('o 400 SENSITIVE_FIELD_NOT_ACKNOWLEDGED do manual diz quais campos pedem a ciência', async () => {
+    const { manual } = await setup();
+    const erro = await manual([add('apelido'), add('alergias', { label: 'Alergias' })]).catch((e: unknown) => e);
+    expect(erro).toBeInstanceOf(SensitiveFieldNotAcknowledgedError);
+    expect(erro).toMatchObject({ statusCode: 400, details: { fields: ['alergias'] } });
+  });
+
+  it('a pendente guardada na sessão leva requiresSensitiveAck (o front não recalcula a regra)', async () => {
+    const { service, session, completeWithJsonSchema, reload } = await setup();
+    completeWithJsonSchema.mockResolvedValue(
+      JSON.stringify({
+        friendlyMessage: 'Proponho alergias.',
+        changes: [{ action: 'add', name: 'alergias', originalName: null, label: 'Alergias', type: 'textarea', required: false, options: [], description: '', sensitiveCategory: null, presetKey: null }],
+      }),
+    );
+    await service.handle(USER, { kind: 'message', sessionId: session.id, tableKey: 'clientes', message: 'alergias' });
+    expect((await reload()).pendingProposal).toMatchObject({ id: 'p-1', requiresSensitiveAck: true });
   });
 });

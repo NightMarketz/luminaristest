@@ -159,21 +159,29 @@ describe('modo manual grava na sessão (W6 emenda)', () => {
     await waitFor(() => expect(screen.getByTestId('manual-save-error').textContent).toContain('onboardingFieldsManualSaveFailed'));
   });
 
-  it('item 11 (F-MS-3 a): campo novo sensível tem selo; Salvar desabilitado até a ciência, que vai como acknowledgeSensitive:true', async () => {
-    fetchMock().mockResolvedValue(res(200, ok(tabela)));
-    montar();
+  it('item 11 (F-MS-3 a; revisão do #786 → o servidor decide): o 400 diz os campos sensíveis; selo e ciência aparecem, e o 2º Salvar leva acknowledgeSensitive:true', async () => {
+    fetchMock()
+      .mockResolvedValueOnce(res(400, { code: 'SENSITIVE_FIELD_NOT_ACKNOWLEDGED', message: 'x', details: { fields: ['alergias'] } }))
+      .mockResolvedValueOnce(res(200, ok(tabela)));
+    const { onUpdateTable } = montar();
     adicionar('alergias', 'Alergias');
-    const bloco = screen.getByTestId('manual-sensitive');
+    expect(screen.queryByTestId('manual-sensitive')).toBeNull(); // o front não adivinha: quem decide é o servidor
+    fireEvent.click(salvar());
+
+    const bloco = await screen.findByTestId('manual-sensitive');
     expect(bloco.textContent).toContain('onboardingFieldsAiSensitiveBadge');
     expect(bloco.textContent).toContain('Alergias');
     expect(bloco.textContent).toContain('onboardingFieldsAiSensitiveNotice');
+    expect(screen.queryByTestId('manual-save-error')).toBeNull();
+    expect(onUpdateTable).not.toHaveBeenCalled();
     expect(salvar()).toBeDisabled();
 
     fireEvent.click(screen.getByLabelText('onboardingFieldsAiSensitiveAck'));
     expect(salvar()).not.toBeDisabled();
     fireEvent.click(salvar());
-    await waitFor(() => expect(fetchMock()).toHaveBeenCalledTimes(1));
-    expect(bodyOf(0)).toMatchObject({ kind: 'manual', acknowledgeSensitive: true });
+    await waitFor(() => expect(fetchMock()).toHaveBeenCalledTimes(2));
+    expect(bodyOf(0)).not.toHaveProperty('acknowledgeSensitive');
+    expect(bodyOf(1)).toMatchObject({ kind: 'manual', acknowledgeSensitive: true });
   });
 
   it('item 11: sem campo sensível, o corpo não leva acknowledgeSensitive', async () => {
@@ -184,5 +192,48 @@ describe('modo manual grava na sessão (W6 emenda)', () => {
     fireEvent.click(salvar());
     await waitFor(() => expect(fetchMock()).toHaveBeenCalledTimes(1));
     expect(bodyOf(0)).not.toHaveProperty('acknowledgeSensitive');
+  });
+});
+
+// Revisão do #786 (dono, chat e questionário, 2026-10-21: "Corrige todos, nos PRs certos").
+describe('modo manual — revisão do #786', () => {
+  beforeEach(() => {
+    globalThis.fetch = vi.fn();
+  });
+
+  it('Adicionar fica desabilitado com nome ou rótulo em branco', () => {
+    montar();
+    fireEvent.click(screen.getByText('onboardingFieldsNewField'));
+    const adicionarBtn = () => screen.getByText('onboardingFieldsAdd').closest('button')!;
+    expect(adicionarBtn()).toBeDisabled();
+    fireEvent.change(document.getElementById('field-name')!, { target: { value: 'apelido' } });
+    fireEvent.change(document.getElementById('field-label')!, { target: { value: '   ' } });
+    expect(adicionarBtn()).toBeDisabled();
+    fireEvent.change(document.getElementById('field-label')!, { target: { value: 'Apelido' } });
+    expect(adicionarBtn()).not.toBeDisabled();
+  });
+
+  it('campo obrigatório não pode ser escondido: a caixa Visível fica desabilitada', () => {
+    montar();
+    expect(document.getElementById('visible-field-0')).toBeDisabled(); // nome (required)
+    expect(document.getElementById('visible-field-1')).not.toBeDisabled(); // telefone
+  });
+
+  it('turno da IA no meio não esconde do Salvar a edição manual pendente', async () => {
+    fetchMock()
+      .mockResolvedValueOnce(res(200, { ...ok(tabela), applied: undefined }))
+      .mockResolvedValueOnce(res(200, ok(tabela)));
+    montar();
+    adicionar('apelido', 'Apelido');
+    fireEvent.click(screen.getByText('onboardingFieldsModeAi'));
+    const caixa = screen.getByPlaceholderText('onboardingFieldsAiInputPlaceholder');
+    fireEvent.change(caixa, { target: { value: 'oi' } });
+    fireEvent.keyDown(caixa, { key: 'Enter' });
+    await waitFor(() => expect(fetchMock()).toHaveBeenCalledTimes(1));
+    fireEvent.click(screen.getByText('onboardingFieldsModeManual'));
+    expect(salvar()).not.toBeDisabled();
+    fireEvent.click(salvar());
+    await waitFor(() => expect(fetchMock()).toHaveBeenCalledTimes(2));
+    expect(bodyOf(1)).toMatchObject({ kind: 'manual', changes: [{ action: 'add', field: { name: 'apelido' } }] });
   });
 });

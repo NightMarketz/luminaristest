@@ -60,3 +60,13 @@ describe('CustomizeFieldsDto — kind manual', () => {
   });
 });
 
+// Revisão do #786 (dono, questionário, 2026-10-21): `format` só com `type: 'string'`.
+describe('CustomizeFieldsDto — format só em campo texto', () => {
+  it('number/date/boolean com format → rejeita; string com format → aceita', () => {
+    const campo = (type: string) => ({ name: 'contato', label: 'Contato', type, format: 'phone', required: false });
+    for (const type of ['number', 'date', 'datetime', 'boolean']) {
+      expect(CustomizeFieldsDto.safeParse({ kind: 'manual', ...ref, changes: [{ action: 'add', field: campo(type) }] }).success).toBe(false);
+    }
+    expect(CustomizeFieldsDto.safeParse({ kind: 'manual', ...ref, changes: [{ action: 'add', field: campo('string') }] }).success).toBe(true);
+  });
+});

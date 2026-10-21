@@ -260,3 +260,16 @@ describe('AIChatMode — achados do #785 (testes-guarda)', () => {
   });
 });
 
+// Revisão do #786 (dono, questionário, 2026-10-21: o servidor decide a ciência).
+describe('AIChatMode — revisão do #786', () => {
+  it('a pendente restaurada usa requiresSensitiveAck da sessão, sem recalcular pela categoria', () => {
+    const comPendente = {
+      ...tabela,
+      conversationHistory: historico,
+      pendingProposal: { id: 'p9', requiresSensitiveAck: true, createdAt: 'x', changes: propostaComum.changes },
+    };
+    montar({ tableData: comPendente });
+    expect(screen.getByText('onboardingFieldsAiApply')).toBeDisabled();
+    expect(screen.getByLabelText('onboardingFieldsAiSensitiveAck')).toBeInTheDocument();
+  });
+});
