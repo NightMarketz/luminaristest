@@ -9,12 +9,12 @@
 > escrito (D dedução da receita / C IBS·CBS a recolher, marca `PROVISORIO_P_IBS_4`, campo `classeProvisoria`) **não roda**:
 > com (c) o passivo nasce no lançamento do documento, e a provisão da apuração vira conferência (saldo do passivo × apuração).
 > **Item 12 reescrito em 21/10** (pedido do dono: "reescreve o item 12 do BRIEF do IBS"): reclassificação receita → passivo
-> na apuração mensal; o momento é o **F-IBS-14, RATIFICAÇÃO PENDENTE** (§5.1) — o `executa` do PR-2 espera essa ratificação. Contas do referencial seguem DRAFT (não conferidas).
+> na apuração mensal; o momento é o **F-IBS-14 (a), ratificado 21/10** (§5.1). Próximo: `executa` do PR-2. Contas do referencial seguem DRAFT (não conferidas).
 
 ## TLDR (2 linhas)
 
 Cinco PRs fecham IBS/CBS no regime regular para 01/01/2027: **PR-1** (tabela de vigência + `cClassTrib` por serviço + parser) e **PR-2** (apuração mensal com débito por documento, CAS e provisão) cabem antes do prazo; PR-3 (crédito + antecipação), PR-4 (split no F7) e PR-5 (matriz + superfície) seguem.
-**Risco principal:** em 01/2027 a apuração da CBS responde **400 nomeado** até a resolução do Senado (linha `DRAFT`); o item 12 reclassifica a receita para o passivo na apuração mensal (F-IBS-8 c), com o momento em **F-IBS-14 PENDENTE**; e o início em 2027 (F-IBS-7 b) **volta ao dono** se o contador não confirmar a P-IBS-1 antes de 01/01/2027.
+**Risco principal:** em 01/2027 a apuração da CBS responde **400 nomeado** até a resolução do Senado (linha `DRAFT`); o item 12 reclassifica a receita para o passivo na apuração mensal (F-IBS-8 c), com o momento ratificado em **F-IBS-14 (a)**; e o início em 2027 (F-IBS-7 b) **volta ao dono** se o contador não confirmar a P-IBS-1 antes de 01/01/2027.
 
 ---
 
@@ -66,7 +66,7 @@ A matriz (item 21) **não** ganha linha `CONDICIONAL` de 2026 — vale a leitura
 | PR | Conteúdo | Itens | Antes de 01/01/2027? | Depende de |
 |---|---|---|---|---|
 | **PR-1** dado e leitura | tabela `IBS_CBS` (CBS 2027 em `DRAFT`), `cClassTrib` por serviço, parser `IBSCBS` | 1–5 | **sim** — sem fork nem contador aberto | — |
-| **PR-2** apuração | competência por documento, `ConsumptionTaxAssessment`, prévia/confirmação CAS, memória, provisão 2 commits, rotas, 400 de Simples/2026 | 6–13 | **sim** — F-IBS-14 pendente (momento da reclassificação) | PR-1 |
+| **PR-2** apuração | competência por documento, `ConsumptionTaxAssessment`, prévia/confirmação CAS, memória, provisão 2 commits, rotas, 400 de Simples/2026 | 6–13 | não — F-IBS-14 (a) ratificado | PR-1 |
 | **PR-3** crédito e antecipação | crédito `PENDENTE/APROPRIADO`, lista de uso/consumo, antecipação do pacote | 14–18 | desejável; a lista de uso/consumo nasce `DRAFT` até P-IBS-2 | PR-2 |
 | **PR-4** split no F7 | `SPLIT_IBS_CBS` como parte do encargo | 19–20 | desejável | PR-2 |
 | **PR-5** matriz e superfície | matriz de obrigações, resumo com vencimento, porta de envio, export do contador, job de recálculo | 21–24 | não bloqueia 01/2027 | PR-2 (PR-3/4 para a memória completa) |
@@ -135,7 +135,7 @@ Prisma + Policy, Factory, DTO Zod `.strict()`, soft-delete, rota em 2 toques.
     / **C `IBS a recolher`** · **C `CBS a recolher`** (contas do mapeamento no perfil fiscal, papéis novos
     `ibs-a-recolher` e `cbs-a-recolher`); commit 2 CAS no assessment (`provisaoEntryId`); `reconcileIbsCbsProvisao()`
     read-first idempotente (assere a 2ª chamada). A soma dos débitos é igual ao `debitosCents` do assessment (teste).
-    **Momento = apuração mensal** pela recomendação do **F-IBS-14 (PENDENTE)** — até a confirmação, o balancete intramensal
+    **Momento = apuração mensal** pelo **F-IBS-14 (a), ratificado 21/10** — o balancete intramensal
     mostra a receita bruta do mês corrente (declarado na memória como `RECEITA_BRUTA_ATE_APURACAO`). Sem linha de
     dedução, sem `PROVISORIO_P_IBS_4`, sem `classeProvisoria`. Substituição de apuração = estorno + novo lançamento (CAS),
     como no X7. *Ponto aberto:* códigos do plano referencial das duas contas novas — DRAFT (P-IBS-4 respondida sem
@@ -308,7 +308,7 @@ export const IbsCbsResumoSchema = z.object({
 | **F-IBS-12** Onde mora a apropriação do crédito (item 16) | (a) rota própria `POST /api/accounting/payables/:id/ibs-cbs-credits/apropriar` no serviço de AP · (b) campo `creditosApropriados[]` dentro da prévia/confirmação da apuração (esboço do ADR §7) | **(a).** O status pertence ao crédito do `Payable`, não à apuração do mês; (b) faz a apuração escrever em outro agregado e mistura dois CAS na mesma chamada | médio em (b) |
 | **F-IBS-13** Reabertura se P-IBS-1 voltar negativa | (a) volta ao dono como o F-IBS-7 manda e o PR-2 só recebe `executa` depois · (b) o PR-2 sai assim mesmo e 2026 vira emenda | **(a)** — é o texto da cédula ("se não for, o fork volta ao dono"); listado só para que o `executa` do PR-2 cite o estado da P-IBS-1 | baixo |
 
-### 5.1 Fork novo — **RATIFICAÇÃO PENDENTE**
+### 5.1 Fork novo — **RATIFICADO 21/10: F-IBS-14 (a)** ([[D-2026-10-21-F-IBS-14]])
 
 | Fork | Caminhos | Recomendação e porquê | Custo de errar |
 |---|---|---|---|
