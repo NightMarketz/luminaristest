@@ -94,8 +94,9 @@ export class FieldCustomizationService {
     // Item 7: a nova proposta substitui a anterior; turno sem mudança válida limpa a pendente (dono, 16/10).
     let proposal: IFieldProposal | null = null;
     if (changes.length > 0) {
-      table.pendingProposal = { id: this.newId(), changes, createdAt: at };
-      proposal = { id: table.pendingProposal.id, changes, requiresSensitiveAck: requiresSensitiveAck(changes) };
+      const ack = requiresSensitiveAck(changes);
+      table.pendingProposal = { id: this.newId(), changes, createdAt: at, requiresSensitiveAck: ack };
+      proposal = { id: table.pendingProposal.id, changes, requiresSensitiveAck: ack };
     } else {
       delete table.pendingProposal;
     }
@@ -115,7 +116,9 @@ export class FieldCustomizationService {
     const apply = dto.decision === 'apply';
     if (apply) {
       if (requiresSensitiveAck(pending.changes) && dto.acknowledgeSensitive !== true) {
-        throw new SensitiveFieldNotAcknowledgedError();
+        throw new SensitiveFieldNotAcknowledgedError(
+          pending.changes.flatMap((c) => (c.action !== 'remove' && c.sensitiveCategory !== null ? [c.field.name] : [])),
+        );
       }
       table.fields = this.fieldUpdater.update(table.fields ?? [], pending.changes);
     }
@@ -141,7 +144,9 @@ export class FieldCustomizationService {
 
     const outcome = applyManualChanges(table.fields ?? [], dto.changes);
     if (!outcome.ok) throw new ManualChangeInvalidError(outcome.issues);
-    if (outcome.sensitive && dto.acknowledgeSensitive !== true) throw new SensitiveFieldNotAcknowledgedError();
+    if (outcome.sensitiveFields.length > 0 && dto.acknowledgeSensitive !== true) {
+      throw new SensitiveFieldNotAcknowledgedError(outcome.sensitiveFields);
+    }
 
     table.fields = outcome.fields;
     delete table.pendingProposal;

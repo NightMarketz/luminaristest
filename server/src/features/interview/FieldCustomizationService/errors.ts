@@ -17,10 +17,13 @@ export class ProposalStaleError extends AppError {
   }
 }
 
-/** W6 item 10 (F-W6-6 a): proposta com campo sensível exige `acknowledgeSensitive: true` — 400, nada aplicado. */
-export class SensitiveFieldNotAcknowledgedError extends AppError {
-  constructor() {
-    super('A proposta tem campo de dado sensível: confirme antes de aplicar.', 400, 'SENSITIVE_FIELD_NOT_ACKNOWLEDGED');
+/**
+ * W6 item 10 (F-W6-6 a): proposta com campo sensível exige `acknowledgeSensitive: true` — 400, nada aplicado.
+ * `details.fields` diz quais campos pedem a ciência (revisão do #786: o servidor decide, o front não recalcula).
+ */
+export class SensitiveFieldNotAcknowledgedError extends ValidationError {
+  constructor(fields: string[] = []) {
+    super('A proposta tem campo de dado sensível: confirme antes de aplicar.', { fields }, 'SENSITIVE_FIELD_NOT_ACKNOWLEDGED');
     Object.setPrototypeOf(this, SensitiveFieldNotAcknowledgedError.prototype);
   }
 }

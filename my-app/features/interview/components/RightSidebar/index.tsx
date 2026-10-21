@@ -8,7 +8,7 @@ import { ITable, ITableField, RightSidebarProps, InteractionMode } from '../../t
 import FieldList from './FieldList';
 import NewFieldForm from './NewFieldForm';
 import AIChatMode from './AIChatMode';
-import { diffManualChanges, fromFormType, sensitiveAdds } from './manualChanges';
+import { diffManualChanges, fromFormType } from './manualChanges';
 
 /** Motivos do 400 `MANUAL_CHANGE_INVALID` (BRIEF WIZARD-W6-MANUAL-SESSION §2.2) → chave de texto. */
 const MANUAL_REASON_KEY: Record<string, string> = {
@@ -16,6 +16,7 @@ const MANUAL_REASON_KEY: Record<string, string> = {
   exists: 'onboardingFieldsAiDiscardedExists',
   not_found: 'onboardingFieldsAiDiscardedNotFound',
   duplicate: 'onboardingFieldsManualDuplicate',
+  required_hidden: 'onboardingFieldsManualRequiredHidden',
   invalid: 'onboardingFieldsAiDiscardedInvalid',
 };
 
@@ -40,6 +41,8 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, onSe
   const [saveMessage, setSaveMessage] = useState<string>("");
   const [saveError, setSaveError] = useState<string | null>(null);
   const [acknowledged, setAcknowledged] = useState(false);
+  // Revisão do #786: o servidor decide quais campos pedem a ciência (`details.fields` do 400).
+  const [sensitiveNames, setSensitiveNames] = useState<string[]>([]);
   const [showNewFieldForm, setShowNewFieldForm] = useState<boolean>(false);
   const [interactionMode, setInteractionMode] = useState<InteractionMode>('manual');
   const [newField, setNewField] = useState<ITableField>({
@@ -145,14 +148,17 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, onSe
     });
     
     setShowNewFieldForm(false);
+    // O lote mudou: a ciência dada valia para o anterior; o servidor decide de novo no próximo Salvar.
+    setSensitiveNames([]);
+    setAcknowledged(false);
   };
 
   // W6 emenda (BRIEF WIZARD-W6-MANUAL-SESSION item 9): o diff entre a tabela do hook e a editada é o que vai à sessão
   const pendingChanges = selectedTable && tableData ? diffManualChanges(selectedTable, tableData) : [];
-  const sensitiveFields = sensitiveAdds(pendingChanges);
+  const sensitiveFields = (tableData?.fields ?? []).filter(f => sensitiveNames.includes(f.name));
 
   /** Item 10: ramifica pelo `code` do corpo; a edição local fica na tela para o usuário corrigir. */
-  const saveErrorMessage = (error: unknown): string => {
+  const saveErrorMessage = (error: unknown): string | null => {
     const body = error instanceof InterviewApiError ? error.body : {};
     if (body.code === 'INTERVIEW_SESSION_NOT_FOUND') {
       onSessionLost?.();
@@ -163,6 +169,14 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, onSe
       return [t('onboardingFieldsManualInvalid'), ...lines].join('\n');
     }
     if (body.code === 'INTERVIEW_SESSION_CONFLICT') return t('onboardingFieldsManualConflict');
+    if (body.code === 'SENSITIVE_FIELD_NOT_ACKNOWLEDGED') {
+      const details = body.details;
+      const fields = typeof details === 'object' && details !== null && 'fields' in details && Array.isArray(details.fields)
+        ? details.fields.filter((f: unknown): f is string => typeof f === 'string')
+        : [];
+      setSensitiveNames(fields);
+      return null; // não é erro: o bloco de ciência aparece
+    }
     console.error('[RightSidebar] Falha ao salvar o modo manual:', error);
     return t('onboardingFieldsManualSaveFailed');
   };
@@ -176,13 +190,15 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, onSe
     setSaveError(null);
     try {
       const tableKey = tableData.key;
-      // Item 11 (F-MS-3 a): a ciência só vai quando um campo novo casa a rede de dado sensível.
-      const body: CustomizeFieldsDtoInput = sensitiveFields.length > 0 && acknowledged
+      // Item 11 (F-MS-3 a): a ciência só vai depois que o servidor apontou campo sensível e a caixa foi marcada.
+      const body: CustomizeFieldsDtoInput = sensitiveNames.length > 0 && acknowledged
         ? { kind: 'manual', sessionId, tableKey, changes, acknowledgeSensitive: true }
         : { kind: 'manual', sessionId, tableKey, changes };
       const data = await InterviewService.customizeFields(body);
-      onUpdateTable?.(data.table);
+      setTableData(data.table);
+      onUpdateTable(data.table);
       setAcknowledged(false);
+      setSensitiveNames([]);
       setSaveMessage(t('onboardingFieldsSaved'));
       setTimeout(() => setSaveMessage(""), 3000);
     } catch (error) {
@@ -349,7 +365,7 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, onSe
                 {saveError}
               </div>
             )}
-            {sensitiveFields.length > 0 && (
+            {sensitiveNames.length > 0 && (
               <div data-testid="manual-sensitive" className="mb-3 rounded-2xl border border-neutral-200 dark:border-neutral-700 p-3 space-y-2">
                 <div className="flex flex-wrap items-center gap-2 text-sm text-neutral-800 dark:text-neutral-100">
                   <span className="rounded-md bg-amber-100 dark:bg-amber-900 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-100">
@@ -363,7 +379,7 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, onSe
             )}
             <button
               onClick={handleSave}
-              disabled={isSaving || !sessionId || pendingChanges.length === 0 || (sensitiveFields.length > 0 && !acknowledged)}
+              disabled={isSaving || !sessionId || pendingChanges.length === 0 || (sensitiveNames.length > 0 && !acknowledged)}
               className="w-full flex justify-center items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed"
             >
               {isSaving ? (

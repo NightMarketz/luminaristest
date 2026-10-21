@@ -404,7 +404,7 @@
  *                                   name: { type: string }
  *                                   label: { type: string }
  *                                   type: { type: string, enum: [string, number, boolean, date, datetime] }
- *                                   format: { type: string, enum: [email, phone] }
+ *                                   format: { type: string, enum: [email, phone], description: 'Only with type string' }
  *                                   required: { type: boolean }
  *                           - type: object
  *                             required: [action, name, hidden]
@@ -463,7 +463,9 @@
  *         '400':
  *           description: >-
  *             Invalid body, SENSITIVE_FIELD_NOT_ACKNOWLEDGED, or MANUAL_CHANGE_INVALID with
- *             details.changes [{ index, name, reason: reserved|exists|not_found|duplicate|invalid }] (nothing was applied)
+ *             details.changes [{ index, name, reason: reserved|exists|not_found|duplicate|invalid|required_hidden }].
+ *             SENSITIVE_FIELD_NOT_ACKNOWLEDGED carries details.fields (the names that need the acknowledgement).
+ *             Nothing was applied
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404':
  *           description: INTERVIEW_SESSION_NOT_FOUND (missing, expired or another user's session) or TABLE_NOT_IN_SESSION

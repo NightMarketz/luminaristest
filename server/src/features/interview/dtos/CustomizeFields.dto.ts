@@ -19,7 +19,9 @@ const ManualFieldSchema = z
     format: z.enum(['email', 'phone']).optional(),
     required: z.boolean(),
   })
-  .strict();
+  .strict()
+  // Revisão do #786 (dono, 21/10): e-mail e telefone são formato de texto; em número/data/booleano não fazem sentido.
+  .refine((f) => f.format === undefined || f.type === 'string', { message: '`format` só vale para campo texto.', path: ['format'] });
 
 /** F-MS-1 (a): só o que o modo manual sabe fazer — acrescentar campo e trocar a visibilidade. */
 const ManualChangeSchema = z.discriminatedUnion('action', [

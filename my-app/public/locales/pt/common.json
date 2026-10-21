@@ -442,6 +442,7 @@
   "onboardingFieldsSaved": "Alterações salvas com sucesso!",
   "onboardingFieldsManualInvalid": "Corrija antes de salvar:",
   "onboardingFieldsManualDuplicate": "repetido nas alterações",
+  "onboardingFieldsManualRequiredHidden": "campo obrigatório não pode ser escondido",
   "onboardingFieldsManualConflict": "Esta customização foi alterada em outra aba ao mesmo tempo. Nada foi salvo; tente salvar de novo.",
   "onboardingFieldsManualSaveFailed": "Não foi possível salvar as alterações. Tente novamente.",
   "onboardingFieldsSaving": "Salvando...",

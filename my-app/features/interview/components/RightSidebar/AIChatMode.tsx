@@ -37,11 +37,13 @@ const DISCARD_REASON_KEY: Record<Discarded[number]['reason'], string> = {
   invalid: 'onboardingFieldsAiDiscardedInvalid',
 };
 
-/** A pendente guardada na sessão volta como cartão; a ciência segue a regra do servidor (`FieldProposal.requiresSensitiveAck`). */
+/**
+ * A pendente guardada na sessão volta como cartão, com a ciência que o servidor decidiu (revisão do #786). Sessão
+ * anterior sem a flag: o servidor ainda recusa (400) e o `handleError` mostra a caixa.
+ */
 function toProposal(pending: ITable['pendingProposal']): Proposal | null {
   if (!pending) return null;
-  const requiresSensitiveAck = pending.changes.some(c => c.action !== 'remove' && c.sensitiveCategory !== null);
-  return { id: pending.id, changes: pending.changes, requiresSensitiveAck };
+  return { id: pending.id, changes: pending.changes, requiresSensitiveAck: pending.requiresSensitiveAck ?? false };
 }
 
 /** O conteúdo (fala do usuário e do modelo) é texto: escapa antes da formatação simples, que é a única marcação. */
@@ -103,6 +105,10 @@ function AIChatMode({ tableData, sessionId, onSaveChanges, onSync, onClose, onSe
       setProposal(null);
       addNote(t('onboardingFieldsAiSessionLost'));
       onSessionLost?.();
+      return;
+    }
+    if (code === 'SENSITIVE_FIELD_NOT_ACKNOWLEDGED' && proposal) {
+      setProposal({ ...proposal, requiresSensitiveAck: true }); // o servidor decidiu: a caixa aparece
       return;
     }
     if (code === 'PROPOSAL_STALE') {

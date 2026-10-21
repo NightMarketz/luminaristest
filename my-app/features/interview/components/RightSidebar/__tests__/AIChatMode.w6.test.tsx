@@ -219,11 +219,11 @@ describe('AIChatMode — achados do #785 (testes-guarda)', () => {
 
   it('achado 2: a proposta pendente da sessão reaparece ao remontar, com a ciência exigida', async () => {
     fetchMock().mockResolvedValue(res(200, resultado({ applied: true })));
-    // A tabela do servidor guarda a pendente sem `requiresSensitiveAck` (§2.4); o painel deriva pela regra do servidor.
+    // Revisão do #786: a sessão guarda `requiresSensitiveAck` na pendente; o painel lê, não recalcula.
     const comPendente = {
       ...tabela,
       conversationHistory: historico,
-      pendingProposal: { id: 'p1', changes: propostaSensivel.changes, createdAt: '2026-10-20T12:00:01.000Z' },
+      pendingProposal: { id: 'p1', changes: propostaSensivel.changes, createdAt: '2026-10-20T12:00:01.000Z', requiresSensitiveAck: true },
     };
     montar({ tableData: comPendente });
     expect(screen.queryByTestId('ai-proposal')).not.toBeNull();

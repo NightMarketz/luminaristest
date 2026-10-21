@@ -45,27 +45,3 @@ export function diffManualChanges(before: ITable, after: ITable): ManualChangeIn
   }
   return changes;
 }
-
-/**
- * Espelho da rede de radicais do servidor (`FieldProposal.SENSITIVE_RADICALS`, W6 item 9) — o servidor é quem
- * decide (400 sem a ciência); aqui só se mostra o selo e a caixa antes. O teste `manualChanges.test.ts` compara as
- * duas listas.
- */
-export const SENSITIVE_RADICALS = [
-  'saude', 'alerg', 'diagnost', 'medica', 'gestant', 'biometr', 'religi', 'etnia', 'raca', 'sexual', 'sindic', 'genetic',
-] as const;
-
-const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-
-export function matchesSensitiveRadical(...texts: string[]): boolean {
-  const haystack = texts.map(fold).join(' ');
-  return SENSITIVE_RADICALS.some((r) => haystack.includes(r));
-}
-
-/** Campos novos do lote que casam a rede (F-MS-3 a: pedem a ciência, como no modo IA). */
-export function sensitiveAdds(changes: ManualChangeInput[]): ManualField[] {
-  return changes
-    .filter((c): c is Extract<ManualChangeInput, { action: 'add' }> => c.action === 'add')
-    .map((c): ManualField => c.field)
-    .filter((f) => matchesSensitiveRadical(f.name, f.label));
-}

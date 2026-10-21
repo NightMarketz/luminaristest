@@ -443,6 +443,7 @@
   "onboardingFieldsSaved": "Changes saved successfully!",
   "onboardingFieldsManualInvalid": "Fix before saving:",
   "onboardingFieldsManualDuplicate": "repeated in the changes",
+  "onboardingFieldsManualRequiredHidden": "a required field cannot be hidden",
   "onboardingFieldsManualConflict": "This customization was changed in another tab at the same time. Nothing was saved; try saving again.",
   "onboardingFieldsManualSaveFailed": "The changes could not be saved. Please try again.",
   "onboardingFieldsSaving": "Saving...",
