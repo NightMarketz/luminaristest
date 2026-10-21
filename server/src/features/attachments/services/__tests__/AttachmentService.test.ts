@@ -2,6 +2,7 @@ import { AttachmentService } from '../AttachmentService';
 import { NotFoundError } from '../../../../lib/errors';
 import type { IAttachmentRepository } from '../../repositories/IAttachmentRepository';
 import type { IAttachmentPolicy } from '../../policies/IAttachmentPolicy';
+import type { IDynamicTableRepository } from '../../../dynamicTables/repositories/IDynamicTableRepository';
 import type { IUser } from '../../../users/models/User.model';
 import { Role } from '../../../users/models/User.model';
 import * as storage from '../../../../lib/attachmentStorage';
@@ -54,7 +55,12 @@ function buildService(
     ...overrides.policy,
   } as jest.Mocked<IAttachmentPolicy>;
 
-  const svc = new AttachmentService(repository, policy);
+  const dynamicTableRepository = {
+    findTableByInternalName: jest.fn(async () => ({ id: 'table-1' })),
+    findDataById: jest.fn(async () => ({ id: 'lead-1', dynamicTableId: 'table-1' })),
+  } as unknown as IDynamicTableRepository;
+
+  const svc = new AttachmentService(repository, policy, dynamicTableRepository);
   return { svc, repository, policy };
 }
 

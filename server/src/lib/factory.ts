@@ -1889,7 +1889,7 @@ export class ApplicationFactory {
       ),
       presetSync: presetSyncService,
       moduleInstall: moduleInstallService,
-      attachment: new AttachmentService(this.repositories.attachment, this.policies.attachment),
+      attachment: new AttachmentService(this.repositories.attachment, this.policies.attachment, this.repositories.dynamicTable),
       savedTableView: new SavedTableViewService(
         this.repositories.savedTableView,
         this.policies.savedTableView
