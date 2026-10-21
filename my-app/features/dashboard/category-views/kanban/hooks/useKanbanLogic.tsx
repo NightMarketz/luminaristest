@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 import { DynamicTableService } from '../../../../../lib/services/dynamic-table.service';
 import { SortOption, sortRecords } from '../../shared/SortSelect';
 import type { Task, TaskStatus } from '../../../../../types/Task.types';
 import type { ISchemaField, ITableSchema } from '../../../components/shared/dynamic-tables.client';
+import { computeDropOrder, sortByManualOrder, type OrderWrite } from './kanbanOrder';
 
 interface UseKanbanLogicProps {
     tasks: Task[];
@@ -70,10 +72,15 @@ export function useKanbanLogic({ tasks, activeTabId, schema, onTabChangeCallback
             result = result.filter(t => t.priority === priorityFilter);
         }
 
-        result = sortRecords(result, sortConfig);
+        // Sem ordenação escolhida, vale a ordem manual (FE-INCR-KANBAN-REORDER item 1)
+        result = sortConfig ? sortRecords(result, sortConfig) : sortByManualOrder(result);
 
         return result;
     }, [localTasks, activeTabId, query, priorityFilter, sortConfig]);
+
+    // Reordenar exige o campo `order` no schema (F-KR-6) e nenhuma ordenação escolhida pelo usuário
+    const hasOrderField = useMemo(() => !!schema?.fields?.some((f: ISchemaField) => f.name === 'order'), [schema]);
+    const canReorder = hasOrderField && !sortConfig;
 
     // --- Stats ---
     const tabStats = useMemo(() => {
@@ -117,25 +124,65 @@ export function useKanbanLogic({ tasks, activeTabId, schema, onTabChangeCallback
 
         const activeId = String(active.id);
         const overId = String(over.id);
+        const moved = localTasks.find(t => t.id === activeId);
+        if (!moved || activeId === overId) return;
 
-        if (columns.some(c => c.status === overId)) {
-            // Dropped over a column
-            const newStatus = overId as TaskStatus;
-            const originalTasks = [...localTasks];
+        const overIsColumn = columns.some(c => c.status === overId);
+        const overTask = overIsColumn ? undefined : localTasks.find(t => t.id === overId);
+        if (!overIsColumn && !overTask) return;
+        const newStatus = (overIsColumn ? overId : overTask!.status) as TaskStatus;
+        const sameColumn = newStatus === moved.status;
 
-            // Optimistic update
-            setLocalTasks(prev => prev.map(t => t.id === activeId ? { ...t, status: newStatus } : t));
+        // Coluna inteira (sem filtro de busca), na ordem manual
+        const columnOf = (status: string) =>
+            sortByManualOrder(localTasks.filter(t => t.dynamicTableId === activeTabId && t.status === status));
 
-            try {
-                await DynamicTableService.updateRecord(activeTabId, activeId, { data: { status: newStatus } });
-                refetch();
-            } catch (error) {
-                console.error(error);
-                setLocalTasks(originalTasks); // Rollback
+        let writes: OrderWrite[] = [];
+        if (canReorder) {
+            let rest: Task[];
+            let targetIndex: number;
+            if (sameColumn) {
+                if (overIsColumn) return; // soltar na área da própria coluna: nada muda
+                const full = columnOf(newStatus);
+                const reordered = arrayMove(full, full.findIndex(t => t.id === activeId), full.findIndex(t => t.id === overId));
+                targetIndex = reordered.findIndex(t => t.id === activeId);
+                rest = reordered.filter(t => t.id !== activeId);
+            } else {
+                rest = columnOf(newStatus);
+                // F-KR-4: sobre um card entra na posição dele; na área da coluna, vai para o fim
+                targetIndex = overIsColumn ? rest.length : rest.findIndex(t => t.id === overId);
             }
+            writes = computeDropOrder(rest, activeId, targetIndex);
+        } else if (sameColumn) {
+            return; // F-KR-6 / ordenação escolhida: drag só muda de coluna
         }
-        // Soltar sobre outro card não reordena: a ordem dentro da coluna não é persistida (decisão do dono, 2026-10-21)
-    }, [localTasks, columns, activeTabId, refetch]);
+
+        const orderById = new Map(writes.map(w => [w.id, w.order]));
+        const originalTasks = [...localTasks];
+
+        // Optimistic update
+        setLocalTasks(prev => prev.map(t => {
+            const order = orderById.get(t.id);
+            if (t.id === activeId) return { ...t, status: newStatus, ...(order !== undefined ? { order } : {}) };
+            return order !== undefined ? { ...t, order } : t;
+        }));
+
+        try {
+            // Card movido primeiro, num único update (status + order); depois o rebalanceio, sem toast
+            const movedData: Record<string, unknown> = sameColumn ? {} : { status: newStatus };
+            if (orderById.has(activeId)) movedData.order = orderById.get(activeId);
+            await DynamicTableService.updateRecord(activeTabId, activeId, { data: movedData });
+            for (const w of writes) {
+                if (w.id === activeId) continue;
+                await DynamicTableService.updateRecord(activeTabId, w.id, { data: { order: w.order } }, { successMessage: null });
+            }
+            refetch();
+        } catch (error) {
+            console.error(error);
+            setLocalTasks(originalTasks); // Rollback
+            if (writes.length > 1) refetch(); // rebalanceio parcial: o servidor manda
+        }
+    }, [localTasks, columns, activeTabId, canReorder, refetch]);
 
     return {
         // State
@@ -151,6 +198,8 @@ export function useKanbanLogic({ tasks, activeTabId, schema, onTabChangeCallback
         columns,
         activeTask,
         tabStats,
+        canReorder,
+        hasOrderField,
 
         // Handlers
         handleTabChange,

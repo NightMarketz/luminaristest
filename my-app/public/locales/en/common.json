@@ -221,7 +221,8 @@
     "empty_state": "No tasks found.",
     "search_placeholder": "Search tasks...",
     "total": "Total",
-    "done": "Completed"
+    "done": "Completed",
+    "reorder_unavailable": "Card order is not saved in this table: dragging only moves the card to another column."
   },
   "planning_view": {
     "no_tables_found": "No Calendars Found",

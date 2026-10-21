@@ -6,7 +6,7 @@ titulo: "Reordenar cards dentro da coluna do Kanban, com a ordem salva no servid
 estado: "brief"
 estado_detalhe: "21/10: BRIEF escrito (sessao-planejamento). 21/10: forks F-KR-1..6 RATIFICADOS na recomendação (dono, chat, 2026-10-21: \"Pode tomar as decisões de acordo com o recomendado\"). Sem código, sem executa"
 depende_de: []
-autorizacao: "dono, chat, 2026-10-21, sobre o item 22 do §3.5 retirado no #813: \"Esse nao pode voltar?\" + clique no cartão da sessão de planejamento — só o BRIEF (sessao-planejamento); sem código, sem executa · dono, chat, 2026-10-21: \"Pode tomar as decisões de acordo com o recomendado\" — forks F-KR-1..6 ratificados na recomendação; sem executa"
+autorizacao: "dono, chat, 2026-10-21, sobre o item 22 do §3.5 retirado no #813: \"Esse nao pode voltar?\" + clique no cartão da sessão de planejamento — só o BRIEF (sessao-planejamento); sem código, sem executa · dono, chat, 2026-10-21: \"Pode tomar as decisões de acordo com o recomendado\" — forks F-KR-1..6 ratificados na recomendação; sem executa · **EXECUTA** (dono, chat, 2026-10-21): \"Executa o FE-INCR-KANBAN-REORDER — sessao-feature, sem merge.\" — sem merge"
 prs: []
 ancora_sdd: "—"
 perfil_previsto: "opus-medio"

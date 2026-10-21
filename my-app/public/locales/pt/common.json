@@ -221,7 +221,8 @@
     "empty_state": "Nenhuma tarefa encontrada.",
     "search_placeholder": "Buscar tarefas...",
     "total": "Total",
-    "done": "Concluídas"
+    "done": "Concluídas",
+    "reorder_unavailable": "A ordem dos cards nesta tabela não é salva: arrastar só muda o card de coluna."
   },
   "planning_view": {
     "no_tables_found": "Nenhuma Agenda Encontrada",
