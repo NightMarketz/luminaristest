@@ -51,7 +51,7 @@ export function CommandConfirmationModal({ isOpen, onClose, onConfirm, proposal 
 
     // Portal para renderizar fora do container do chat
     const modalContent = (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-zinc-950/80 backdrop-blur-md animate-in fade-in duration-300 p-4">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-[99999] flex items-center justify-center bg-zinc-950/80 backdrop-blur-md animate-in fade-in duration-300 p-4">
             <div className="w-full max-w-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
                 {/* Header */}
                 <div className="px-6 py-5 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-900/50">

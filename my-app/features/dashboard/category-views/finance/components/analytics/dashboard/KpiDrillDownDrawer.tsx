@@ -35,7 +35,7 @@ export default function KpiDrillDownDrawer({ isOpen, onClose, tableId, recordIds
     const schemaFields = schema?.schema?.fields || [];
 
     return (
-        <div className="fixed inset-0 z-[60] flex justify-end">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-[60] flex justify-end">
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/20 dark:bg-black/60 backdrop-blur-sm transition-opacity"

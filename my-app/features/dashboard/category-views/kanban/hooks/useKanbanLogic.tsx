@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { DynamicTableService } from '../../../../../lib/services/dynamic-table.service';
-import { arrayMove } from '@dnd-kit/sortable';
 import { SortOption, sortRecords } from '../../shared/SortSelect';
 import type { Task, TaskStatus } from '../../../../../types/Task.types';
 import type { ISchemaField, ITableSchema } from '../../../components/shared/dynamic-tables.client';
@@ -134,12 +133,8 @@ export function useKanbanLogic({ tasks, activeTabId, schema, onTabChangeCallback
                 console.error(error);
                 setLocalTasks(originalTasks); // Rollback
             }
-        } else if (activeId !== overId) {
-            // Reordering within column
-            const oldIndex = localTasks.findIndex(t => t.id === activeId);
-            const newIndex = localTasks.findIndex(t => t.id === overId);
-            setLocalTasks(arrayMove(localTasks, oldIndex, newIndex));
         }
+        // Soltar sobre outro card não reordena: a ordem dentro da coluna não é persistida (decisão do dono, 2026-10-21)
     }, [localTasks, columns, activeTabId, refetch]);
 
     return {
