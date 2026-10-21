@@ -41,15 +41,13 @@ function toEcf(e: CompanyFiscalProfileView['ecf']): UpsertCompanyFiscalProfileIn
 }
 
 /**
- * O perfil inteiro de volta, com o enquadramento novo. Recusa (sem enviar) o que o GET não deixa remontar sem perda:
+ * O perfil lido, remontado como corpo do PUT. Recusa (sem enviar) o que o GET não deixa remontar sem perda:
  * ECD/ECF gravados com campo nulo que o PUT exige.
  */
-export function toUpsertComEnquadramentoMei(
+function corpoDoPerfil(
   unitId: string,
   v: CompanyFiscalProfileView,
-  f: MeiEnquadramentoForm,
-): { ok: true; body: UpsertCompanyFiscalProfileInput } | { ok: false; error: MeiEnquadramentoError } {
-  if (v.regime !== 'MEI') return { ok: false, error: 'naoMei' };
+): { ok: true; body: UpsertCompanyFiscalProfileInput } | { ok: false; error: 'ecdIncompleta' | 'ecfIncompleta' } {
   const ecd = toEcd(v.ecd);
   if (ecd === undefined) return { ok: false, error: 'ecdIncompleta' };
   const ecf = toEcf(v.ecf);
@@ -79,11 +77,80 @@ export function toUpsertComEnquadramentoMei(
     declaraNaoProfissaoRegulamentada: v.declaraNaoProfissaoRegulamentada,
     ibsCbsOpcaoS1: v.ibsCbsOpcaoS1,
     ibsCbsOpcaoS2: v.ibsCbsOpcaoS2,
-    meiContribuinteIcms: deTriEstado(f.contribuinteIcms),
-    meiContribuinteIss: deTriEstado(f.contribuinteIss),
-    meiTransportadorCargas: deTriEstado(f.transportadorCargas),
-    meiOcupacoes: nonEmpty(f.ocupacoes),
+    meiContribuinteIcms: v.meiContribuinteIcms,
+    meiContribuinteIss: v.meiContribuinteIss,
+    meiTransportadorCargas: v.meiTransportadorCargas,
+    meiOcupacoes: nonEmpty(v.meiOcupacoes ?? []),
     simplesRegimeApuracao: v.simplesRegimeApuracao,
   };
   return { ok: true, body };
+}
+
+/** O perfil inteiro de volta, com o enquadramento novo. */
+export function toUpsertComEnquadramentoMei(
+  unitId: string,
+  v: CompanyFiscalProfileView,
+  f: MeiEnquadramentoForm,
+): { ok: true; body: UpsertCompanyFiscalProfileInput } | { ok: false; error: MeiEnquadramentoError } {
+  if (v.regime !== 'MEI') return { ok: false, error: 'naoMei' };
+  const base = corpoDoPerfil(unitId, v);
+  if (!base.ok) return base;
+  return {
+    ok: true,
+    body: {
+      ...base.body,
+      meiContribuinteIcms: deTriEstado(f.contribuinteIcms),
+      meiContribuinteIss: deTriEstado(f.contribuinteIss),
+      meiTransportadorCargas: deTriEstado(f.transportadorCargas),
+      meiOcupacoes: nonEmpty(f.ocupacoes),
+    },
+  };
+}
+
+/**
+ * Prestador exclusivo de serviços no Presumido/Real (FE-INCR-PERFIL-FISCAL-PRESUMIDO; F-PP-1 b) — os 2 booleans do
+ * perfil fiscal do ano (`CompanyFiscalProfileDto.ts:111-112`). Mesmo padrão do MEI: o PUT é o perfil lido com só
+ * estes 2 campos trocados.
+ */
+export interface PresumidoServicosForm {
+  prestadoraExclusivaServicos: boolean;
+  declaraNaoProfissaoRegulamentada: boolean;
+}
+
+export type PresumidoServicosError = 'ecdIncompleta' | 'ecfIncompleta' | 'regimeNaoSuportado' | 'confirmacaoAusente';
+
+export const regimeComPresumidoServicos = (r: CompanyFiscalProfileView['regime']): boolean => r === 'PRESUMIDO' || r === 'REAL';
+
+export function toPresumidoServicosForm(v: CompanyFiscalProfileView): PresumidoServicosForm {
+  return { prestadoraExclusivaServicos: v.prestadoraExclusivaServicos, declaraNaoProfissaoRegulamentada: v.declaraNaoProfissaoRegulamentada };
+}
+
+/** F-PP-3 (a): desligar a flag zera a confirmação junto. */
+export function setPrestadoraExclusiva(f: PresumidoServicosForm, on: boolean): PresumidoServicosForm {
+  return on ? { ...f, prestadoraExclusivaServicos: true } : { prestadoraExclusivaServicos: false, declaraNaoProfissaoRegulamentada: false };
+}
+
+/**
+ * O perfil inteiro de volta, com os 2 campos novos. Espelha o refine do DTO (`CompanyFiscalProfileDto.ts:190-196`):
+ * PRESUMIDO + flag sem a confirmação da Lei 9.250/1995 art. 40 p.ú. não envia. No REAL o BE não exige (F-PP-1 b).
+ */
+export function toUpsertComPresumidoServicos(
+  unitId: string,
+  v: CompanyFiscalProfileView,
+  f: PresumidoServicosForm,
+): { ok: true; body: UpsertCompanyFiscalProfileInput } | { ok: false; error: PresumidoServicosError } {
+  if (!regimeComPresumidoServicos(v.regime)) return { ok: false, error: 'regimeNaoSuportado' };
+  if (v.regime === 'PRESUMIDO' && f.prestadoraExclusivaServicos && !f.declaraNaoProfissaoRegulamentada) {
+    return { ok: false, error: 'confirmacaoAusente' };
+  }
+  const base = corpoDoPerfil(unitId, v);
+  if (!base.ok) return base;
+  return {
+    ok: true,
+    body: {
+      ...base.body,
+      prestadoraExclusivaServicos: f.prestadoraExclusivaServicos,
+      declaraNaoProfissaoRegulamentada: f.prestadoraExclusivaServicos && f.declaraNaoProfissaoRegulamentada,
+    },
+  };
 }

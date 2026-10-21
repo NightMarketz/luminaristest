@@ -32,6 +32,7 @@ import { FixedAssetsPanel, type FixedAssetsSectionId } from './components/FixedA
 import { FiscalProfilePanel } from './components/FiscalProfilePanel';
 import { TaxAssessmentPanel } from './components/TaxAssessmentPanel';
 import { MeiEnquadramentoSection } from './components/MeiEnquadramentoSection';
+import { PresumidoServicosSection } from './components/PresumidoServicosSection';
 import { ServiceFiscalProfilesPanel } from './components/ServiceFiscalProfilesPanel';
 import { JournalEntryModal, type AccountOption } from './components/JournalEntryModal';
 import { accountingService } from '../../lib/services/accounting.service';
@@ -526,6 +527,7 @@ export function AccountingView() {
         <div className="space-y-8">
           <FiscalProfilePanel unitId={unitId} />
           <MeiEnquadramentoSection unitId={unitId} anoInicial={meiAno} />
+          <PresumidoServicosSection unitId={unitId} />
           <ServiceFiscalProfilesPanel unitId={unitId} />
         </div>
       )}
