@@ -160,12 +160,15 @@ export async function resetDb(): Promise<void> {
   await prisma.simplesDeclaracaoAnual.deleteMany(); // X14 PR-4
   // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7): tax_assessments só referencia User (Cascade) — sem ordem de FK.
   await prisma.taxAssessment.deleteMany();
+  await prisma.consumptionTaxAssessment.deleteMany(); // IBS-CBS-2027 PR-2 (item 8)
   await prisma.legalParameterRecalcJob.deleteMany(); // BE-INCR-LEGAL-PARAMS PR-4 (item 14): a fila do recálculo
   // BE-INCR-LEGAL-PARAMS PR-1: sem FK — volta ao estado da migração (linhas criadas/revogadas pelo teste somem).
   // PR-2: 529 INSERTs um a um por teste estouravam o hook de 5 s. Linha semeada só muda de STATUS (emenda §9 L-6),
   // então basta apagar as que o teste criou e devolver as semeadas a PUBLISHED; ids fixos = a semente.
   await prisma.legalParameter.deleteMany({ where: { id: { notIn: legalParamsSeedIds() } } });
-  await prisma.legalParameter.updateMany({ where: { status: { not: 'PUBLISHED' } }, data: { status: 'PUBLISHED', revokedById: null, revokedAt: null } });
+  // IBS-CBS-2027 PR-2: a semente também tem linha DRAFT (CBS 2027 sem valor) — volta ao status semeado, não a PUBLISHED.
+  await prisma.legalParameter.updateMany({ where: { status: { not: 'PUBLISHED' }, id: { notIn: legalParamsDraftSeedIds() } }, data: { status: 'PUBLISHED', revokedById: null, revokedAt: null } });
+  await prisma.legalParameter.updateMany({ where: { id: { in: legalParamsDraftSeedIds() } }, data: { status: 'DRAFT', revokedById: null, revokedAt: null } });
   if ((await prisma.legalParameter.count()) !== legalParamsSeedIds().length) {
     for (const stmt of legalParamsSeedStatements()) await prisma.$executeRawUnsafe(stmt); // banco sem a semente: reaplica
   }
@@ -197,6 +200,13 @@ export async function resetDb(): Promise<void> {
 let seedIds: string[] | undefined;
 function legalParamsSeedIds(): string[] {
   return (seedIds ??= legalParamsSeedStatements().map((l) => /VALUES \('([^']+)'/.exec(l)![1]));
+}
+
+let draftSeedIds: string[] | undefined;
+function legalParamsDraftSeedIds(): string[] {
+  return (draftSeedIds ??= legalParamsSeedStatements()
+    .filter((l) => l.includes(", 'DRAFT', "))
+    .map((l) => /VALUES \('([^']+)'/.exec(l)![1]));
 }
 
 function legalParamsSeedStatements(): string[] {

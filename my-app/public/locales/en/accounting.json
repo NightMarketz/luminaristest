@@ -2797,6 +2797,13 @@
     "title": "Accounting policy"
   },
   "taxAssessment": {
+    "ibsCbsErro": {
+      "IBS_CBS_ANTES_DE_2027": "IBS/CBS assessment starts in 01/2027.",
+      "IBS_CBS_SIMPLES_MEI": "Simples Nacional and MEI taxpayers pay IBS/CBS through the DAS.",
+      "IBS_CBS_ASSESSMENT_CAS": "This month's assessment changed since the preview. Run the preview again.",
+      "IBS_CBS_ASSESSMENT_ORDER": "A later month is already confirmed. Confirm in order or replace the later month.",
+      "IBS_CBS_ASSESSMENT_STALE": "The tax profile or the assessment changed during confirmation. Run the preview again."
+    },
     "title": "Tax assessment",
     "ano": "Calendar year",
     "loading": "Loading…",

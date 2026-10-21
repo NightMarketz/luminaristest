@@ -1224,6 +1224,7 @@
                   "PaymentAccount",
                   "CollectionCharge",
                   "TaxAssessment",
+                  "ConsumptionTaxAssessment",
                   "MitExport",
                   "SimplesHistoricoMensal",
                   "SimplesSegregacaoManual",
@@ -6914,6 +6915,185 @@
       "required": [
         "unitId",
         "assetId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "IbsCbsAssessmentDto.ts": {
+    "IbsCbsAssessmentConfirmSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "anoCalendario": {
+          "type": "integer",
+          "minimum": 2027,
+          "maximum": 9007199254740991
+        },
+        "mes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        },
+        "tributo": {
+          "type": "string",
+          "enum": [
+            "IBS",
+            "CBS"
+          ]
+        },
+        "expectedSupersedesId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "anoCalendario",
+        "mes",
+        "tributo",
+        "expectedSupersedesId"
+      ],
+      "additionalProperties": false
+    },
+    "IbsCbsAssessmentListQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "anoCalendario": {
+          "type": "integer",
+          "minimum": 2027,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "unitId",
+        "anoCalendario"
+      ],
+      "additionalProperties": false
+    },
+    "IbsCbsAssessmentPreviewSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "anoCalendario": {
+          "type": "integer",
+          "minimum": 2027,
+          "maximum": 9007199254740991
+        },
+        "mes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        },
+        "tributo": {
+          "type": "string",
+          "enum": [
+            "IBS",
+            "CBS"
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "anoCalendario",
+        "mes",
+        "tributo"
+      ],
+      "additionalProperties": false
+    },
+    "MemoriaIbsCbsSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "descricao": {
+            "type": "string"
+          },
+          "valorCents": {
+            "type": "string",
+            "pattern": "^-?\\d+$"
+          },
+          "fonte": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "codigo",
+          "descricao",
+          "valorCents",
+          "fonte"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "MemoriaLinhaIbsCbsKind": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+      "enum": [
+        "DEBITO_DOC",
+        "DIVERGENCIA_DOC",
+        "VENDA_SEM_DOCUMENTO",
+        "DOCUMENTOS_SEM_GRUPO",
+        "CREDITOS_NAO_IMPLEMENTADOS_PR3",
+        "CONFERENCIA_SEM_ALIQUOTA",
+        "PROVISAO_PENDENTE_ITEM_12",
+        "CREDITO_ENTRADA",
+        "CREDITO_NAO_APROPRIADO",
+        "USO_CONSUMO_PESSOAL",
+        "ANTECIPACAO_ART10",
+        "ACERTO_ART10",
+        "PAGAMENTO_INDEVIDO_ART38",
+        "SPLIT_EXTINCAO",
+        "CLASSE_PROVISORIA_P_IBS_4",
+        "SALDO"
+      ]
+    },
+    "MemoriaLinhaIbsCbsSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "codigo": {
+          "type": "string"
+        },
+        "descricao": {
+          "type": "string"
+        },
+        "valorCents": {
+          "type": "string",
+          "pattern": "^-?\\d+$"
+        },
+        "fonte": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "codigo",
+        "descricao",
+        "valorCents",
+        "fonte"
       ],
       "additionalProperties": false
     }

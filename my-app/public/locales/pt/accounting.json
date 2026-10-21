@@ -2797,6 +2797,13 @@
     "title": "Política contábil"
   },
   "taxAssessment": {
+    "ibsCbsErro": {
+      "IBS_CBS_ANTES_DE_2027": "A apuração de IBS/CBS começa em 01/2027.",
+      "IBS_CBS_SIMPLES_MEI": "Optante pelo Simples Nacional ou MEI recolhe IBS/CBS no DAS.",
+      "IBS_CBS_ASSESSMENT_CAS": "A apuração deste mês mudou desde a prévia. Refaça a prévia.",
+      "IBS_CBS_ASSESSMENT_ORDER": "Há mês posterior já confirmado. Confirme na ordem ou substitua o posterior.",
+      "IBS_CBS_ASSESSMENT_STALE": "O perfil fiscal ou a apuração mudou durante a confirmação. Refaça a prévia."
+    },
     "title": "Apuração de tributos",
     "ano": "Ano-calendário",
     "loading": "Carregando…",

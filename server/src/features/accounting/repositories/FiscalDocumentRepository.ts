@@ -86,6 +86,13 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     });
   }
 
+  public async findForIbsCbs(scope: AccountingScope, from: string, to: string, statuses: readonly FiscalDocumentStatus[], tx?: Prisma.TransactionClient): Promise<FiscalDocument[]> {
+    return this.db(tx).fiscalDocument.findMany({
+      where: { ...accountingScopeWhere(scope), ambiente: 'producao', status: { in: [...statuses] }, dCompet: { gte: from, lte: to }, deletedAt: null },
+      orderBy: [{ dCompet: 'asc' }, { createdAt: 'asc' }],
+    });
+  }
+
   public async somaNfseAutorizadaNaCompetencia(scope: AccountingScope, competencia: string, tx?: Prisma.TransactionClient): Promise<bigint> {
     const r = await this.db(tx).fiscalDocument.aggregate({
       where: {
