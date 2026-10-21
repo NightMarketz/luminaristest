@@ -88,3 +88,19 @@ PROVA:
 4. Checagem que falharia se eu estivesse errado: `migrate diff` (schema × migração), teste byte a byte migração × arquivo de
    dados, `erroDeFormato` sobre a carga, e o snapshot de DTO (verde só depois de inserir os campos).
 5. As duas primeiras linhas do relatório dizem: parcial (6/9 bloqueados por L-1) e não mergear sem OK.
+
+## Rodada 2 (2026-10-21): destrave do coordenador, PARADO de novo na colisão
+Destrave (dono, chat da sessão-mãe, 2026-10-21): "2.1.7 e 2.1.3.05, plano padrão, referencial pesquisa você".
+Regra do coordenador: "Se 2.1.7 ou 2.1.3.05 colidir com conta já usada num kit, PARE e traga."
+- **Colide (V, execução):** `2.1.3.05` no plano padrão exige a sintética-pai `2.1.3` também no plano padrão
+  (`ChartOfAccountsFixture.plano4niveis.test.ts:34-36`: "falta <pai>"). Com `2.1.3` + `2.1.3.05` no fixture, importar
+  `kits/beautySalon/kit.v6.ts` e `kits/aestheticClinic/kit.v6.ts` lança `"Conta 2.1.3 já é do plano canônico."`
+  (refinamento de `SectorKitDto.ts`; o `2.1.3` vem de `CONTAS_FISCAIS_V2`, `conteudoFiscalCanonico.ts:77`). Os kits são
+  parseados no import → o servidor não sobe. Fixture revertido; nada commitado nesta rodada.
+- `2.1.7` sozinho não colide (nenhum kit usa 2.1.7), mas não segui: a ordem era parar na colisão, e os itens 6 e 9 andam juntos.
+- A pesquisa do referencial não foi iniciada.
+- Saídas possíveis (decisão do dono, não escolhi):
+  (a) IRRF a recolher também fora do 2.1.3 no plano padrão (ex.: 2.1.7.03 ou 2.1.8.01). Não colide;
+  (b) 2.1.3.05 como extensão de um kit v7 (contradiz "plano padrão"; escopo sem kit fica sem a conta);
+  (c) mover o `2.1.3` sintético para o plano padrão e tirá-lo da extensão. Exige mudar a validação dos kits v6 já publicados
+  (ex.: pular a sintética que já existe no canônico), e os publicados não se editam.
