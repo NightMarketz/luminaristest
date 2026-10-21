@@ -4,9 +4,9 @@ tipo: "fe"
 dominio: "motor"
 titulo: "Reordenar cards dentro da coluna do Kanban, com a ordem salva no servidor"
 estado: "brief"
-estado_detalhe: "21/10: BRIEF escrito (sessao-planejamento). Forks F-KR-1..6 PENDENTES de ratificação. Sem código, sem executa"
+estado_detalhe: "21/10: BRIEF escrito (sessao-planejamento). 21/10: forks F-KR-1..6 RATIFICADOS na recomendação (dono, chat, 2026-10-21: \"Pode tomar as decisões de acordo com o recomendado\"). Sem código, sem executa"
 depende_de: []
-autorizacao: "dono, chat, 2026-10-21, sobre o item 22 do §3.5 retirado no #813: \"Esse nao pode voltar?\" + clique no cartão da sessão de planejamento — só o BRIEF (sessao-planejamento); sem código, sem executa"
+autorizacao: "dono, chat, 2026-10-21, sobre o item 22 do §3.5 retirado no #813: \"Esse nao pode voltar?\" + clique no cartão da sessão de planejamento — só o BRIEF (sessao-planejamento); sem código, sem executa · dono, chat, 2026-10-21: \"Pode tomar as decisões de acordo com o recomendado\" — forks F-KR-1..6 ratificados na recomendação; sem executa"
 prs: []
 ancora_sdd: "—"
 perfil_previsto: "opus-medio"
@@ -15,7 +15,7 @@ atualizado: "2026-10-21"
 ---
 # FE-INCR-KANBAN-REORDER — reordenar cards na coluna, ordem persistida
 
-**Estado:** `brief`. Forks pendentes; código exige "executa" do dono.
+**Estado:** `brief`. Forks F-KR-1..6 ratificados 21/10 na recomendação; código exige "executa" do dono.
 **Autorização:** dono, chat, 2026-10-21: "Esse nao pode voltar?" (sobre a reordenação retirada no item 22 do §3.5, PR #813). Cobre só este BRIEF.
 **Depende de:** —
 **Desbloqueia:** —
@@ -84,16 +84,18 @@ function computeDropOrder(                                                  // i
 DynamicTableService.updateRecord(tableId, recordId, { data: { order /*, status*/ } });
 ```
 
-## 3. Forks — RATIFICAÇÃO PENDENTE
+## 3. Forks — RATIFICADOS 21/10 na recomendação
 
-**F-KR-1 · Tipo do campo.** (a) reusar o `order` inteiro que já existe, com **lacunas** (passo 1000;
+Dono, chat, 2026-10-21: "Pode tomar as decisões de acordo com o recomendado". Cada fork abaixo fica com a opção marcada *Recomendação* ✅. Não autoriza implementar.
+
+**F-KR-1 ✅ · Tipo do campo.** (a) reusar o `order` inteiro que já existe, com **lacunas** (passo 1000;
 inserção no meio = média; sem espaço → rebalanceia a coluna); (b) trocar para fracionário (`decimal`,
 média sempre; rebalanceio raro por precisão); (c) campo novo `position`.
 *Recomendação: (a).* O campo já está no preset e escondido no modal; inteiro com lacunas cobre o uso
 humano (rebalanceio só depois de ~10 inserções no mesmo vão) sem mudar schema nem criar segundo campo de
 ordem. (c) duplicaria semântica com `order`.
 
-**F-KR-2 · Backfill das linhas existentes** (todas `order = 0`/ausente). (a) preguiçoso no FE: ao primeiro
+**F-KR-2 ✅ · Backfill das linhas existentes** (todas `order = 0`/ausente). (a) preguiçoso no FE: ao primeiro
 drag numa coluna em que há empate, grava a coluna inteira com lacunas na ordem visível atual; (b) script
 de migração de dado no servidor (ordem por `createdAt`), uma vez; (c) nada — empate desempata por
 `createdAt` e só o card movido recebe valor.
@@ -101,23 +103,23 @@ de migração de dado no servidor (ordem por `createdAt`), uma vez; (c) nada —
 reprova backfill); a ordem gravada é a que o usuário está vendo. (c) parece mais barato mas quebra: card
 movido para o meio de cards com 0 não tem vão inteiro.
 
-**F-KR-3 · Escopo da gravação.** (a) só o card movido (1 `updateRecord`), e N chamadas só quando
+**F-KR-3 ✅ · Escopo da gravação.** (a) só o card movido (1 `updateRecord`), e N chamadas só quando
 rebalancear/backfill; (b) sempre a coluna inteira; (c) endpoint novo de update em lote no motor.
 *Recomendação: (a).* 1 request no caso comum; rebalanceio em N `updateRecord` sequenciais, com rollback
 total do estado local em falha e `refetch` no fim. (c) é atômico mas cria rota + write-path no motor
 (frente BE própria); se o dono quiser atomicidade no rebalanceio, (c) vira nó BE vizinho.
 
-**F-KR-4 · Soltar em outra coluna.** (a) soltar sobre card → entra **naquela posição**; soltar sobre a
+**F-KR-4 ✅ · Soltar em outra coluna.** (a) soltar sobre card → entra **naquela posição**; soltar sobre a
 área da coluna → vai **para o fim**; (b) sempre para o fim, ignorando o card alvo; (c) sempre para o topo.
 *Recomendação: (a)* — é o que o dnd-kit já entrega (`over.id` = card ou coluna) e o que o usuário espera
 de um Kanban; grava `status` + `order` num só update.
 
-**F-KR-5 · Card novo.** (a) fim da coluna (`max(order)+1000`, calculado no FE ao criar pelo Kanban;
+**F-KR-5 ✅ · Card novo.** (a) fim da coluna (`max(order)+1000`, calculado no FE ao criar pelo Kanban;
 criado fora do Kanban fica com 0 → topo, empate por `createdAt`); (b) topo; (c) mudar o default do preset.
 *Recomendação: (a)* sem mexer no preset. **Insumo ausente:** não li o fluxo de criação de card do Kanban
 (onde o create é montado); a sessão de feature confirma.
 
-**F-KR-6 · Tabela kanban criada pelo usuário sem `order`.** (a) desabilita a reordenação nessa tabela (drag
+**F-KR-6 ✅ · Tabela kanban criada pelo usuário sem `order`.** (a) desabilita a reordenação nessa tabela (drag
 só muda coluna) com dica na UI; (b) o FE adiciona o campo ao schema na primeira reordenação; (c) o motor
 garante o campo para toda tabela da categoria `kanban`.
 *Recomendação: (a).* (b) muta schema do usuário por efeito colateral de drag; (c) é regra de categoria no
