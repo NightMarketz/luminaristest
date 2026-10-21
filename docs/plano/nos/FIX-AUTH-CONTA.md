@@ -4,7 +4,7 @@ tipo: "plataforma"
 dominio: "plataforma"
 titulo: "Conta e infraestrutura: delete de usuário dá 500 após apagar vetores, ADMIN desativa o próprio layout, logout não invalida JWT, senha sem confirmação…"
 estado: "inflight"
-estado_detalhe: "Lote 1 (§3.4 #1 #2 #3 #6 #21) corrigido no PR #808 — 7 guardas verdes; forks #3 (tokenVersion) e #6 (currentPassword, admin isento) ratificados pelo dono, chat, 2026-10-21. Pendente: #9, #10/#11 (decisão do dono), #12 (lote 2); e-mail fora"
+estado_detalhe: "Lote 1 (§3.4 #1 #2 #3 #6 #21) corrigido no PR #808 — 7 guardas verdes; forks #3 (tokenVersion) e #6 (currentPassword, admin isento) ratificados pelo dono, chat, 2026-10-21. Lote 2 (#9 #12 #22 #23) instrumentado — 4 guardas vermelhos; #10/#11 e #20 aguardam decisão do dono; e-mail fora"
 write_set: ["server/src/features/users/**", "server/src/features/dashboardLayout/**", "server/src/middleware/auth.ts", "server/src/lib/jwt.ts", "server/src/server.ts", "server/src/jobs/PurgeDeletedRecords.ts", "server/src/features/attachments/**"]
 atualizado: "2026-10-21"
 prs: ["#808"]
