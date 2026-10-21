@@ -105,10 +105,10 @@ describe('DocumentService.listForSelection', () => {
     globalThis.fetch = vi.fn();
   });
 
-  it('GET /documents?mode=list com cache no-store; devolve o corpo cru', async () => {
+  it('GET /documents/list com cache no-store; devolve o corpo cru', async () => {
     reply(200, { success: true, data: [{ id: 'd1', fileName: 'a.pdf' }] });
     await expect(DocumentService.listForSelection()).resolves.toEqual({ success: true, data: [{ id: 'd1', fileName: 'a.pdf' }] });
-    expect(lastCall().url).toMatch(/\/documents\?mode=list$/);
+    expect(lastCall().url).toMatch(/\/documents\/list$/);
     expect(lastCall().init.cache).toBe('no-store');
   });
 
