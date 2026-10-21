@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — dl1598-art12-receita-bruta
 
 **Pergunta:** DL 1.598 art. 12: receita bruta/líquida e tributos incidentes — classe contábil do IBS/CBS (F-IBS-8)
-**Aberto em:** 2026-10-21T16:25:09-03:00 · **Atualizado em:** 2026-10-21T17:00:56-03:00
+**Aberto em:** 2026-10-21T16:25:09-03:00 · **Atualizado em:** 2026-10-21T18:04:46-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -17,7 +17,7 @@ IBS/CBS é não cumulativo e destacado na nota. Se o prestador for "mero deposit
 
 ## 3. Lacunas
 - LC 214 art. 542 LX [D02] conferido: revoga, a partir de 01/01/2027, só os arts. 56, 57 e 69 § 2º da Lei 12.973 [D03] — PIS/Cofins em concessão pública e arrendamento mercantil. Não toca o art. 2º da Lei 12.973 (que deu a redação ao DL 1.598 art. 12). Sem efeito no F-IBS-8.
-- SHA do lcp214.htm hoje (beefc9af…) difere do de 20/10 (e728c970…); diferença não investigada (pode ser só marcação).
+- SHA do lcp214.htm hoje (beefc9af…) × 20/10 (e728c970…, worktree lucid-bhabha-aaaf3d): texto extraído **byte a byte idêntico** (`cmp`, 989.911 bytes). A diferença do HTML é só de marcação — duas âncoras vazias novas (`art16§1`, `art26§1-2`) e o token do script anti-robô F5. Sem alteração de texto entre 20/10 e 21/10.
 - Lei 9.249 [D04] (acervo compilado 13/10, sem alerta) conferida: art. 15 caput (IRPJ presumido) aplica o percentual "sobre a receita bruta auferida mensalmente, observado o disposto no art. 12 do Decreto-Lei nº 1.598", deduzida só de devoluções, vendas canceladas e descontos incondicionais; art. 20 caput (CSLL) idem, "receita bruta definida pelo art. 12". Os tributos sobre a receita (§ 1º III do art. 12) **não** são deduzidos. Consequência: se IBS/CBS cair no § 4º (fora da receita bruta), a base do Presumido exclui IBS/CBS; se for tratado pelo § 1º III / § 5º (dentro da bruta), entra na base presumida e eleva IRPJ/CSLL. Não há "Vide LC 214" no art. 15/20 do acervo.
 <!-- /ANALISE -->
 
