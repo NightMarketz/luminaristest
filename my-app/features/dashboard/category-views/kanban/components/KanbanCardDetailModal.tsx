@@ -13,6 +13,8 @@ import { RelationLookups } from '../hooks/useRelationLookups';
 import RelationSelector from '@/features/dashboard/components/forms/RelationSelector';
 import InputField from '@/features/dashboard/components/forms/dynamic-form-fields/InputField';
 import { MdCheck } from 'react-icons/md';
+import { useFormatCurrency } from '@/lib/context/CurrencyContext';
+import { formatDateNumericBR } from '@/features/dashboard/shared/utils/formatters';
 
 interface KanbanCardDetailModalProps {
     isOpen: boolean;
@@ -37,6 +39,7 @@ export function KanbanCardDetailModal({
 }: KanbanCardDetailModalProps) {
     const { t } = useTranslation(['common', 'database']);
     const { confirmNode, confirm } = useConfirmModal();
+    const formatCurrency = useFormatCurrency();
 
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [titleValue, setTitleValue] = useState('');
@@ -300,7 +303,7 @@ export function KanbanCardDetailModal({
                                                                     onClick={() => setEditingFieldName(field.name)}
                                                                     className="w-full cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 px-2 py-1 -ml-2 rounded transition-colors flex items-center justify-between"
                                                                 >
-                                                                    {renderFieldValue(field, value, relationLookups)}
+                                                                    {renderFieldValue(field, value, formatCurrency, relationLookups)}
                                                                 </div>
                                                             )}
                                                         </div>
@@ -384,7 +387,7 @@ function SidebarButton({ icon: Icon, label, onClick, className = '' }: SidebarBu
     );
 }
 
-function renderFieldValue(field: ISchemaField, value: unknown, relationLookups?: RelationLookups) {
+function renderFieldValue(field: ISchemaField, value: unknown, formatCurrency: (v: number) => string, relationLookups?: RelationLookups) {
     if (value === null || value === undefined || value === '') return <span className="opacity-40 italic font-normal">Vazio</span>;
 
     if (field.type === 'relation') {
@@ -405,11 +408,11 @@ function renderFieldValue(field: ISchemaField, value: unknown, relationLookups?:
     }
 
     if (field.type === 'date') {
-        return new Date(value as string | number | Date).toLocaleDateString();
+        return formatDateNumericBR(value as string | Date);
     }
 
     if (field.type === 'number' && (/price|valor|amount|salary/i.test(field.name))) {
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value as number);
+        return formatCurrency(value as number);
     }
 
     return String(value);

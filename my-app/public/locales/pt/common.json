@@ -514,6 +514,7 @@
 
   "processing": "Processando...",
   "invalid_number": "Valor numérico inválido",
+  "invalid_url": "URL inválida",
 
   "selected_count_one": "{{count}} selecionado",
   "selected_count_other": "{{count}} selecionados",
