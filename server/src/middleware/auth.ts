@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { verifyToken, getAuthToken } from '@/lib/jwt';
+import { getFactory } from '@/lib/factory';
 
 /**
  * Identity headers this middleware injects for downstream handlers (getUserContext,
@@ -102,7 +103,7 @@ function isAdminOnly(pathname: string, method: string): boolean {
   );
 }
 
-export function authMiddleware(req: Request, res: Response, next: NextFunction): void {
+export async function authMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
   // Strip spoofable identity headers up front, before any routing decision. Runs for every
   // request, including public and non-/api ones — nothing downstream may trust a header this
   // middleware did not itself set.
@@ -128,6 +129,14 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
 
   try {
     const payload = verifyToken(token);
+
+    // §3.4 #3 — a token issued before the last logout carries an older version. A user that no
+    // longer exists is left to the downstream handlers (unchanged behavior).
+    const currentVersion = await getFactory().getUserService().getTokenVersion(String(payload.id || payload.userId || ''));
+    if (currentVersion !== null && (payload.tokenVersion ?? 0) !== currentVersion) {
+      res.status(401).json({ code: 'UNAUTHORIZED', message: 'Invalid or expired token' });
+      return;
+    }
 
     // Inject user context headers for downstream handlers
     req.headers['x-user-id'] = String(payload.id || payload.userId || '');

@@ -12,6 +12,7 @@ import { Role } from '../models/User.model';
  *         name: { type: string, maxLength: 100 }
  *         password: { type: string, minLength: 6 }
  *         role: { type: string, enum: [USER, ADMIN] }
+ *         currentPassword: { type: string, description: Required to change one's own password or email }
  */
 export const UpdateUserSchema = z.object({
   name: z.string()
@@ -33,6 +34,7 @@ export const UpdateUserSchema = z.object({
   role: z.nativeEnum(Role, { message: 'Invalid role' }).optional(),
   locale: z.enum(['en', 'pt']).optional(),
   currency: z.enum(['BRL', 'USD', 'EUR']).optional(),
+  currentPassword: z.string().optional(),
 });
 
 /**

@@ -118,4 +118,16 @@ export interface IUserRepository {
    * @returns Number of users holding that role
    */
   countByRole(role: Role): Promise<number>;
+
+  /**
+   * Whether any `onDelete: Restrict` dependent (accounting trail) references the user.
+   * @param id - User ID
+   */
+  hasRestrictedDependents(id: string): Promise<boolean>;
+
+  /** Current token version, or null when the user does not exist. */
+  getTokenVersion(id: string): Promise<number | null>;
+
+  /** Bumps the token version, invalidating every previously issued JWT. */
+  incrementTokenVersion(id: string): Promise<void>;
 }

@@ -172,13 +172,13 @@ describe('deleteLayout', () => {
 });
 
 describe('getLayoutById / getLayoutsByUser (Tier-0 + fail-soft)', () => {
-  it('forbids reading another user layout (ForbiddenError)', async () => {
+  it('hides another user layout (NotFoundError, §3.4 #21)', async () => {
     const owner = await seedUser({ username: 'owner' });
     const stranger = await seedUser({ username: 'stranger' });
     const l = await seedDashboardLayout({ userId: owner.id });
     await expect(
       service.getLayoutById(l.id, ctxFor({ id: stranger.id, username: stranger.username }))
-    ).rejects.toBeInstanceOf(ForbiddenError);
+    ).rejects.toBeInstanceOf(NotFoundError);
   });
 
   it('fail-soft list: a malformed row is skipped, the valid ones are still returned', async () => {
