@@ -3,11 +3,11 @@ id: "FE-INCR-KANBAN-REORDER"
 tipo: "fe"
 dominio: "motor"
 titulo: "Reordenar cards dentro da coluna do Kanban, com a ordem salva no servidor"
-estado: "brief"
+estado: "inflight"
 estado_detalhe: "21/10: BRIEF escrito (sessao-planejamento). 21/10: forks F-KR-1..6 RATIFICADOS na recomendação (dono, chat, 2026-10-21: \"Pode tomar as decisões de acordo com o recomendado\"). Sem código, sem executa"
 depende_de: []
 autorizacao: "dono, chat, 2026-10-21, sobre o item 22 do §3.5 retirado no #813: \"Esse nao pode voltar?\" + clique no cartão da sessão de planejamento — só o BRIEF (sessao-planejamento); sem código, sem executa · dono, chat, 2026-10-21: \"Pode tomar as decisões de acordo com o recomendado\" — forks F-KR-1..6 ratificados na recomendação; sem executa · **EXECUTA** (dono, chat, 2026-10-21): \"Executa o FE-INCR-KANBAN-REORDER — sessao-feature, sem merge.\" — sem merge"
-prs: []
+prs: ["#824"]
 ancora_sdd: "—"
 perfil_previsto: "opus-medio"
 perfil_evidencia: "FE de um hook + leitura de um campo de preset que já existe; risco no backfill de linhas com order=0 e em tabelas kanban criadas pelo usuário sem o campo"
@@ -15,7 +15,7 @@ atualizado: "2026-10-21"
 ---
 # FE-INCR-KANBAN-REORDER — reordenar cards na coluna, ordem persistida
 
-**Estado:** `brief`. Forks F-KR-1..6 ratificados 21/10 na recomendação; código exige "executa" do dono.
+**Estado:** `inflight` — 21/10: BRIEF escrito (sessao-planejamento). 21/10: forks F-KR-1..6 RATIFICADOS na recomendação (dono, chat, 2026-10-21: "Pode tomar as decisões de acordo com o recomendado"). Sem código, sem executa  
 **Autorização:** dono, chat, 2026-10-21: "Esse nao pode voltar?" (sobre a reordenação retirada no item 22 do §3.5, PR #813). Cobre só este BRIEF.
 **Depende de:** —
 **Desbloqueia:** —
