@@ -74,7 +74,7 @@ export function useKanbanData(tables: IDynamicTable[]) {
                             name: (data.name || data.title || 'Untitled') as string,
                             description: (data.description || '') as string,
                             status: (data.status || defaultStatus) as 'To_Do' | 'In_Progress' | 'Done' | 'Archived',
-                            priority: (data.priority || 'Low') as 'Low' | 'Medium' | 'High' | 'Urgent' | null,
+                            priority: (data.priority || null) as 'Low' | 'Medium' | 'High' | 'Urgent' | null,
                             createdAt: record.createdAt ?? '',
                             updatedAt: record.updatedAt ?? '',
                             dynamicTableId: table.id,
