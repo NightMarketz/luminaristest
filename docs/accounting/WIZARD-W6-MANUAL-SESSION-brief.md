@@ -35,7 +35,7 @@
    `sessionId` de A → 404 e a sessão de A intacta.
 3. **Validação canônica, tudo ou nada.** Cada `add` passa pelo `AdvancedFieldSchema` (o mesmo do item 8, sem
    cópia). Nome reservado, nome já existente, `setHidden` de nome inexistente ou nome repetido no lote → **400**
-   `{ code: 'MANUAL_CHANGE_INVALID', details: [{ index, name, reason }] }` e **nada** é gravado. Motivos:
+   `{ code: 'MANUAL_CHANGE_INVALID', details: { changes: [{ index, name, reason }] } }` e **nada** é gravado. Motivos:
    `reserved | exists | not_found | duplicate | invalid`. *Teste:* lote com 1 válido + 1 reservado → 400 e
    `fields` da sessão idêntico ao de antes.
 4. **Aplica e grava numa escrita só.** `add` acrescenta o campo validado (com `format` quando o F-MS-2 mapear);
@@ -109,7 +109,7 @@ O `ManualFieldSchema` é a borda da rota; a regra do campo continua sendo o `Adv
 
 `200` → `CustomizeFieldsResult` (inalterado), com `applied: true`, `proposal: null`, `discarded: []`.
 
-Erros: `400` DTO · `400 MANUAL_CHANGE_INVALID` `{ details: Array<{ index: number; name: string; reason: 'reserved'|'exists'|'not_found'|'duplicate'|'invalid' }> }` ·
+Erros: `400` DTO · `400 MANUAL_CHANGE_INVALID` `{ details: { changes: Array<{ index: number; name: string; reason: 'reserved'|'exists'|'not_found'|'duplicate'|'invalid' }> } }` (objeto, não array: é o `details` do `ValidationError` canônico, que o `handleApiError` já devolve — ajuste da execução, 21/10) ·
 `400 SENSITIVE_FIELD_NOT_ACKNOWLEDGED` (F-MS-3 a) · `404 INTERVIEW_SESSION_NOT_FOUND | TABLE_NOT_IN_SESSION` ·
 `409 INTERVIEW_SESSION_CONFLICT`.
 

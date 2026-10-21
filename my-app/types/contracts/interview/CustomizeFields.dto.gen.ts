@@ -12,4 +12,40 @@ tableKey: string
 proposalId: string
 decision: ("apply" | "discard")
 acknowledgeSensitive?: true
+} | {
+kind: "manual"
+sessionId: string
+tableKey: string
+/**
+ * @minItems 1
+ * @maxItems 50
+ */
+changes: [({
+action: "add"
+field: {
+name: string
+label: string
+type: ("string" | "number" | "boolean" | "date" | "datetime")
+format?: ("email" | "phone")
+required: boolean
+}
+} | {
+action: "setHidden"
+name: string
+hidden: boolean
+}), ...(({
+action: "add"
+field: {
+name: string
+label: string
+type: ("string" | "number" | "boolean" | "date" | "datetime")
+format?: ("email" | "phone")
+required: boolean
+}
+} | {
+action: "setHidden"
+name: string
+hidden: boolean
+}))[]]
+acknowledgeSensitive?: true
 })

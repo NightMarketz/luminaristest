@@ -105,11 +105,13 @@ export async function postChatInterview(req: Request, res: Response) {
  * Request body (`CustomizeFieldsDto`, união por `kind`, `.strict()`):
  *   { kind: 'message', sessionId, tableKey, message }
  *   { kind: 'decision', sessionId, tableKey, proposalId, decision: 'apply' | 'discard', acknowledgeSensitive?: true }
+ *   { kind: 'manual', sessionId, tableKey, changes: [{ action: 'add', field } | { action: 'setHidden', name, hidden }],
+ *     acknowledgeSensitive?: true }  — "Salvar Alterações" do modo manual (BRIEF WIZARD-W6-MANUAL-SESSION)
  *
  * Response 200: `CustomizeFieldsResult` — { sessionId, tableKey, table, conversationHistory, proposal, discarded,
- * applied? }. O turno `message` só propõe; quem aplica é o `decision`.
+ * applied? }. O turno `message` só propõe; quem aplica é o `decision` (IA) ou o `manual` (lote tudo ou nada).
  *
- * Erros: 401 sem contexto · 400 DTO ou `SENSITIVE_FIELD_NOT_ACKNOWLEDGED` · 404 `INTERVIEW_SESSION_NOT_FOUND` /
+ * Erros: 401 sem contexto · 400 DTO, `SENSITIVE_FIELD_NOT_ACKNOWLEDGED` ou `MANUAL_CHANGE_INVALID` · 404 `INTERVIEW_SESSION_NOT_FOUND` /
  * `TABLE_NOT_IN_SESSION` · 409 `PROPOSAL_STALE` / `INTERVIEW_SESSION_CONFLICT`, via `handleApiError`.
  */
 export async function postCustomizeFields(req: Request, res: Response) {
