@@ -187,7 +187,7 @@ function DashboardPage({ allTables }: DashboardPageProps) {
       return viewLoading();
     }
 
-    if (selectedCategory && filteredTables.length === 0 && selectedCategory.toLowerCase() !== 'sales') {
+    if (selectedCategory && filteredTables.length === 0) {
       return (
         <div className="text-center py-10">
           <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{t('emptyCategoryTitle')}</h3>
