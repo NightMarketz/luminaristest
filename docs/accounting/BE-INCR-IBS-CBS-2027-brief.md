@@ -4,6 +4,13 @@
 > **Base:** `origin/claude/forks-ibs-cbs-2027` (PR #792, ainda fora de `main`) — de onde vêm a cédula
 > `D-2026-10-21-FORKS-IBS-CBS-2027` e o ADR `ADR-INCR-IBS-CBS-2027` (D1–D13, §8, §9, §10).
 
+> **EMENDA 1 (21/10, [[D-2026-10-21-TRIAGEM-CONTADOR-F1]]):** F-IBS-8 deixa o provisório (a) e passa a **(c) fora do
+> resultado** — receita reconhecida líquida e IBS/CBS direto no passivo (resposta do contador à P-IBS-4). O **item 12** como
+> escrito (D dedução da receita / C IBS·CBS a recolher, marca `PROVISORIO_P_IBS_4`, campo `classeProvisoria`) **não roda**:
+> com (c) o passivo nasce no lançamento do documento, e a provisão da apuração vira conferência (saldo do passivo × apuração).
+> Onde nasce esse lançamento (emissão do documento × baixa do AR) é decisão de desenho nova — **o `executa` do PR-2 exige
+> antes a reescrita do item 12 pela `sessao-planejamento`**. Contas do referencial seguem DRAFT (não conferidas).
+
 ## TLDR (2 linhas)
 
 Cinco PRs fecham IBS/CBS no regime regular para 01/01/2027: **PR-1** (tabela de vigência + `cClassTrib` por serviço + parser) e **PR-2** (apuração mensal com débito por documento, CAS e provisão) cabem antes do prazo; PR-3 (crédito + antecipação), PR-4 (split no F7) e PR-5 (matriz + superfície) seguem.
