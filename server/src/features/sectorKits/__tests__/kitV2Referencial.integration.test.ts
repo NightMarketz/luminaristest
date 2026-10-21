@@ -90,4 +90,18 @@ describe('kit vigente do salão (v6) — referencial 2025 (BE-INCR-H1-REFERENCIA
       expect(m.referentialCode).toBe('2.01.01.09.28');
     }
   });
+
+  // Lacuna #826-1 (dono 21/10, opção (a)): a instalação preenche IBS/CBS a recolher do perfil fiscal pelo plano padrão
+  // (o kit v6 publicado não traz os papéis); campo já preenchido não é sobrescrito.
+  it.each([
+    ['salão', BEAUTY_SALON_KIT_V6],
+    ['clínica', AESTHETIC_CLINIC_KIT_V6],
+  ] as const)('%s: instalação da v6 ⇒ perfil fiscal com IBS/CBS a recolher = 2.1.8.01 / 2.1.8.02', async (_nome, kit) => {
+    await preparar('PRESUMIDO', kit);
+    await expect(instalar(kit)).resolves.toMatchObject({ status: 'INSTALLED' });
+    const fp = await prisma.fiscalProfile.findFirstOrThrow({ where: where() });
+    const id = async (code: string) => (await prisma.account.findFirstOrThrow({ where: { ...where(), code } })).id;
+    expect(fp.ibsRecolherAccountId).toBe(await id('2.1.8.01'));
+    expect(fp.cbsRecolherAccountId).toBe(await id('2.1.8.02'));
+  });
 });
