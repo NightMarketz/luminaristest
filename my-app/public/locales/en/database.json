@@ -245,6 +245,24 @@
             "on_request": "On Request"
         }
     },
+    "kanban_card": {
+        "in_list": "In list",
+        "priority": "Priority",
+        "description": "Description",
+        "edit": "Edit",
+        "save": "Save",
+        "cancel": "Cancel",
+        "details": "Detailed Information",
+        "quick_actions": "Quick Actions",
+        "archive": "Archive",
+        "delete": "Delete",
+        "utilities": "Utilities",
+        "copy": "Copy",
+        "share": "Share",
+        "follow": "Follow",
+        "created_at": "Created at",
+        "empty": "Empty"
+    },
     "field_descriptions": {
         "validityDays": "Term in calendar days from the purchase. A validity of 12 months or more is the most defensible; 0 or empty = no validity."
     }
