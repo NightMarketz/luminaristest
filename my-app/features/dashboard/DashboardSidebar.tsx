@@ -23,6 +23,7 @@ import {
 } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 import { useTranslation } from 'next-i18next';
+import { useConfirmModal } from '@/components/ui/feedback/useConfirmModal';
 
 // Define o tipo de dados que esperamos da nossa API
 interface SidebarCategory {
@@ -68,6 +69,7 @@ export function DashboardSidebar({
   seedDataText
 }: DashboardSidebarProps) {
   const { t } = useTranslation('common');
+  const { confirmNode, confirm } = useConfirmModal();
   const [categories, setCategories] = useState<SidebarCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -123,17 +125,22 @@ export function DashboardSidebar({
 
   const handleDeleteSystem = useCallback(async () => {
     if (isDeleting) return;
-    if (!confirm(t('confirmDeleteSystem', 'Are you sure you want to delete the system? This action cannot be undone.'))) return;
-    try {
-      setIsDeleting(true);
-      await DynamicTableService.deleteSystem();
-      window.location.href = '/dashboard/setup';
-    } catch {
-      // Error already handled automatically by apiClient.
-    } finally {
-      setIsDeleting(false);
-    }
-  }, [isDeleting, t]);
+    await confirm({
+      message: t('confirmDeleteSystem', 'Are you sure you want to delete the system? This action cannot be undone.'),
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          setIsDeleting(true);
+          await DynamicTableService.deleteSystem();
+          window.location.href = '/dashboard/setup';
+        } catch {
+          // Error already handled automatically by apiClient.
+        } finally {
+          setIsDeleting(false);
+        }
+      },
+    });
+  }, [isDeleting, t, confirm]);
 
   if (isLoading) {
     return <div className={`p-4 ${isCollapsed ? 'w-20' : 'w-64'} transition-all text-gray-500 dark:text-gray-400`}>{t('loading')}...</div>;
@@ -261,6 +268,7 @@ export function DashboardSidebar({
           {isCollapsed ? <HiOutlineTrash size={20} /> : (isDeleting ? t('deleting', 'Deleting') + '…' : t('deleteSystem', 'Delete System'))}
         </button>
       </div>
+      {confirmNode}
     </aside>
   );
 }
