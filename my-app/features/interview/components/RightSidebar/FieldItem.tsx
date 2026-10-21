@@ -18,7 +18,7 @@ function FieldItem({ field, index, onToggleVisibility }: FieldItemProps) {
       <div className="flex justify-between items-center mb-2">
         <h5 className="font-medium text-neutral-900 dark:text-white">{field.label}</h5>
         <div className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 py-0.5 px-2 rounded">
-          {field.type}
+          {field.format ?? field.type}
         </div>
       </div>
       

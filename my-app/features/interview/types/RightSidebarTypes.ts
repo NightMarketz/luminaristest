@@ -4,6 +4,8 @@ export interface ITableField {
   name: string;
   label: string;
   type: string;
+  /** W6 emenda (F-MS-2 a): `email`/`phone` do formulário manual são `format` de um campo `string`. */
+  format?: string;
   required?: boolean;
   hidden?: boolean;
 }

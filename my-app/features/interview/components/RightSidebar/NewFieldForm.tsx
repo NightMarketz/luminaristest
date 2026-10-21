@@ -74,7 +74,6 @@ function NewFieldForm({ newField, setNewField, onAddField, onCancel }: NewFieldF
             <option value="date">{t('onboardingFieldsType_date')}</option>
             <option value="datetime">{t('onboardingFieldsType_datetime')}</option>
             <option value="email">{t('onboardingFieldsType_email')}</option>
-            <option value="password">{t('onboardingFieldsType_password')}</option>
             <option value="phone">{t('onboardingFieldsType_phone')}</option>
           </select>
         </div>
