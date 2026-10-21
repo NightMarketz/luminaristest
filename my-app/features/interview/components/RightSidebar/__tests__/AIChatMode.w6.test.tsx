@@ -105,7 +105,7 @@ describe('AIChatMode — W6 FE', () => {
     montar();
     expect(textos().join('|')).toContain('onboardingFieldsAiWelcome'); // sem histórico: boas-vindas locais
     await enviar('oi');
-    await waitFor(() => expect(textos()).toHaveLength(3));
+    await waitFor(() => expect(textos()[2]).toContain('Proposta aplicada.'));
     const linhas = screen.getAllByTestId('ai-message');
     expect(linhas.map((el) => el.getAttribute('data-role'))).toEqual(['user', 'assistant', 'system']);
     expect(textos()[0]).toContain('preciso guardar alergias');
