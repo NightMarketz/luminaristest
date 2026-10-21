@@ -434,7 +434,7 @@
           },
           "crcNumber": {
             "type": "string",
-            "description": "J930 campo 06 IND_CRC no formato do CFC UF-NNNNNN/O-D, transferido/secundário com sufixo (SP-123456/O-3 T-MG); grafias usuais aceitas e normalizadas; crcUf tem de ser a UF de origem ou a do sufixo"
+            "description": "J930 campo 06 IND_CRC no formato do CFC UF-NNNNNN/O-D, transferido com sufixo (SP-123456/O-3 T-MG); grafias usuais aceitas e normalizadas; crcUf tem de ser a UF de origem ou a do sufixo"
           },
           "crcUf": {
             "type": "string",
@@ -482,7 +482,7 @@
           },
           "crcNumber": {
             "type": "string",
-            "description": "UF-NNNNNN/O-D (CFC); transferido/secundário: + ' T-UF'/' S-UF'"
+            "description": "UF-NNNNNN/O-D (CFC); transferido: + ' T-UF'"
           },
           "crcUf": {
             "type": "string",
@@ -893,7 +893,7 @@
           },
           "reviewerCrc": {
             "type": "string",
-            "description": "Máscara CFC UF-NNNNNN/O-D, transferido/secundário com sufixo ' T-UF'/' S-UF' (mesma do contato, #305)"
+            "description": "Máscara CFC UF-NNNNNN/O-D, transferido com sufixo ' T-UF' (mesma do contato, #305)"
           },
           "statement": {
             "type": "string",
@@ -8618,282 +8618,6 @@
         }
       }
     },
-    "/api/accounting/partners": {
-      "get": {
-        "summary": "List the partners in force on a date and the sum of their shares (F-IRD-14)",
-        "description": "data defaults to today in the scope time zone. somaParticipacaoBp different from 10000 does not block the registry; it only returns a warning (it blocks the interest on equity later).",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "unitId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "data",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "{ data, socios: PartnerView[], somaParticipacaoBp, aviso }"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/UnitNotFound"
-          }
-        }
-      },
-      "post": {
-        "summary": "Register a partner (CPF or CNPJ with check digits; tipoPessoa derived from the length)",
-        "description": "Non-resident partners are accepted here (F-IRD-7). Two validity ranges of the same taxId in the same company that overlap → 409 VIGENCIA_SOBREPOSTA. Audited as partner.created without name or taxId.",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "unitId",
-                  "nome",
-                  "taxId",
-                  "residenteBrasil",
-                  "participacaoBp",
-                  "entradaEm"
-                ],
-                "properties": {
-                  "unitId": {
-                    "type": "string"
-                  },
-                  "nome": {
-                    "type": "string"
-                  },
-                  "taxId": {
-                    "type": "string",
-                    "description": "11 or 14 digits"
-                  },
-                  "residenteBrasil": {
-                    "type": "boolean"
-                  },
-                  "participacaoBp": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 10000
-                  },
-                  "entradaEm": {
-                    "type": "string",
-                    "format": "date"
-                  },
-                  "saidaEm": {
-                    "type": "string",
-                    "format": "date",
-                    "nullable": true
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "PartnerView"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/UnitNotFound"
-          },
-          "409": {
-            "description": "VIGENCIA_SOBREPOSTA or deleted unit"
-          }
-        }
-      }
-    },
-    "/api/accounting/partners/{id}": {
-      "get": {
-        "summary": "Read one partner",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "unitId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "PartnerView"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/UnitNotFound"
-          }
-        }
-      },
-      "put": {
-        "summary": "Replace a partner (same body as POST; the overlap gate skips the row itself)",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "unitId",
-                  "nome",
-                  "taxId",
-                  "residenteBrasil",
-                  "participacaoBp",
-                  "entradaEm"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "PartnerView"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/UnitNotFound"
-          },
-          "409": {
-            "description": "VIGENCIA_SOBREPOSTA or deleted unit"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Soft-delete a partner",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "unitId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "deleted"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/UnitNotFound"
-          }
-        }
-      }
-    },
     "/api/accounting/contacts": {
       "get": {
         "summary": "List the accountant contacts of a scope (BE-INCR-CONTADOR-DELIVERY)",
@@ -10438,6 +10162,240 @@
         }
       }
     },
+    "/api/accounting/fiscal-certificates/{unitId}": {
+      "put": {
+        "summary": "Upload the unit's fiscal certificate (PFX/P12 + password); stored encrypted, never returned",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file",
+                  "senha"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "senha": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Public view (no key, certificate or password)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "unitId": {
+                          "type": "string"
+                        },
+                        "cnpjCertificado": {
+                          "type": "string"
+                        },
+                        "notBefore": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "notAfter": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "diasParaVencer": {
+                          "type": "integer"
+                        },
+                        "fingerprintSha256": {
+                          "type": "string"
+                        },
+                        "setAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "413": {
+            "description": "File too large"
+          },
+          "422": {
+            "description": "certificado_senha_invalida | certificado_ilegivel | certificado_chave_nao_corresponde | certificado_sem_cnpj | certificado_cnpj_divergente | certificado_vencido | unidade_sem_cnpj"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "dfe_cert_key_missing (DFE_CERT_KEYS not provisioned)"
+          }
+        }
+      },
+      "get": {
+        "summary": "Public view of the unit's fiscal certificate (no secret)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public view (no key, certificate or password)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "unitId": {
+                          "type": "string"
+                        },
+                        "cnpjCertificado": {
+                          "type": "string"
+                        },
+                        "notBefore": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "notAfter": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "diasParaVencer": {
+                          "type": "integer"
+                        },
+                        "fingerprintSha256": {
+                          "type": "string"
+                        },
+                        "setAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Soft-delete the unit's fiscal certificate (ciphertext wiped)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
     "/api/accounting/fiscal-profile": {
       "get": {
         "summary": "Read the unit fiscal profile (BE-INCR-NFE-COST-REGIME, nó X6, F-X6-1 a)",
@@ -11297,6 +11255,248 @@
         }
       }
     },
+    "/api/accounting/ibs-cbs-assessments/preview": {
+      "post": {
+        "summary": "Preview the monthly IBS or CBS assessment (IBS-CBS-2027 PR-2, items 6-11)",
+        "description": "Débito = IBS/CBS destacado nos documentos autorizados do mês (dia escrito; LC 214 art. 60 § 1º). A conferência pela tabela só gera aviso. Créditos = 0 até o PR-3. Não persiste. 400 nomeado para SIMPLES/MEI e anoCalendario anterior a 2027 (F-IBS-7 b).",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "unitId",
+                  "anoCalendario",
+                  "mes",
+                  "tributo"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "anoCalendario": {
+                    "type": "integer",
+                    "minimum": 2027
+                  },
+                  "mes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12
+                  },
+                  "tributo": {
+                    "type": "string",
+                    "enum": [
+                      "IBS",
+                      "CBS"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "IbsCbsPreviewView (debitosCents, creditosCents, saldoCents, documentosSemGrupo, memoria)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      }
+    },
+    "/api/accounting/ibs-cbs-assessments": {
+      "post": {
+        "summary": "Confirm the monthly IBS or CBS assessment (IBS-CBS-2027 PR-2, item 9)",
+        "description": "Grava a linha CONFIRMED. expectedSupersedesId = id CONFIRMED vivo do mês (null na 1ª); divergente ⇒ 409. Substituir o mês derruba os meses posteriores do tributo (reconfirmar). A provisão (item 12) ainda não é lançada: provisaoEntryId fica null e a memória traz PROVISAO_PENDENTE_ITEM_12.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "unitId",
+                  "anoCalendario",
+                  "mes",
+                  "tributo",
+                  "expectedSupersedesId"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "anoCalendario": {
+                    "type": "integer",
+                    "minimum": 2027
+                  },
+                  "mes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12
+                  },
+                  "tributo": {
+                    "type": "string",
+                    "enum": [
+                      "IBS",
+                      "CBS"
+                    ]
+                  },
+                  "expectedSupersedesId": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "IbsCbsConfirmView (assessment, reconfirmar)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "description": "CAS de expectedSupersedesId, ordem ou perfil alterado durante a confirmação"
+          }
+        }
+      },
+      "get": {
+        "summary": "List the IBS/CBS assessments of the company in a year (IBS-CBS-2027 PR-2, item 13)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "anoCalendario",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 2027
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "IbsCbsAssessmentView[]"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      }
+    },
+    "/api/accounting/ibs-cbs-assessments/{id}/provisao": {
+      "post": {
+        "summary": "Reconcile the revenue → IBS/CBS payable reclassification of an assessment (IBS-CBS-2027 PR-2, item 12)",
+        "description": "Completa o que faltar (estorno da substituída, lançamento D receita / C a recolher no último dia do mês, vínculo provisaoEntryId). Idempotente. 400 se a conta de IBS/CBS a recolher não estiver no perfil fiscal ou o período estiver fechado.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "IbsCbsAssessmentView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      }
+    },
     "/api/accounting/iss-beneficios-municipais": {
       "get": {
         "summary": "List the municipal ISS benefits of a unit (SIMPLES-PISO-ANEXO-XI bloco 1, F-PI-1 a)",
@@ -11818,6 +12018,282 @@
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      }
+    },
+    "/api/accounting/partners": {
+      "get": {
+        "summary": "List the partners in force on a date and the sum of their shares (F-IRD-14)",
+        "description": "data defaults to today in the scope time zone. somaParticipacaoBp different from 10000 does not block the registry; it only returns a warning (it blocks the interest on equity later).",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "data",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ data, socios: PartnerView[], somaParticipacaoBp, aviso }"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      },
+      "post": {
+        "summary": "Register a partner (CPF or CNPJ with check digits; tipoPessoa derived from the length)",
+        "description": "Non-resident partners are accepted here (F-IRD-7). Two validity ranges of the same taxId in the same company that overlap → 409 VIGENCIA_SOBREPOSTA. Audited as partner.created without name or taxId.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "nome",
+                  "taxId",
+                  "residenteBrasil",
+                  "participacaoBp",
+                  "entradaEm"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "nome": {
+                    "type": "string"
+                  },
+                  "taxId": {
+                    "type": "string",
+                    "description": "11 or 14 digits"
+                  },
+                  "residenteBrasil": {
+                    "type": "boolean"
+                  },
+                  "participacaoBp": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 10000
+                  },
+                  "entradaEm": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "saidaEm": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "PartnerView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "description": "VIGENCIA_SOBREPOSTA or deleted unit"
+          }
+        }
+      }
+    },
+    "/api/accounting/partners/{id}": {
+      "get": {
+        "summary": "Read one partner",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PartnerView"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      },
+      "put": {
+        "summary": "Replace a partner (same body as POST; the overlap gate skips the row itself)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "nome",
+                  "taxId",
+                  "residenteBrasil",
+                  "participacaoBp",
+                  "entradaEm"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "PartnerView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "description": "VIGENCIA_SOBREPOSTA or deleted unit"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Soft-delete a partner",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "deleted"
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
@@ -14957,7 +15433,7 @@
     "/api/accounting/simples/apuracoes/{competencia}/calcular": {
       "post": {
         "summary": "Compute the Simples Nacional assessment of a month on demand (BE-INCR-SIMPLES-NACIONAL PR-3, X14 item 17)",
-        "description": "Calcula a apuração ME/EPP da competência a partir do subrazão fiscal de receita, do histórico pré-adoção, da segregação manual e dos contratos de parceria. Nada é gravado. 400 - perfil do ano ausente ou fora do Simples. 422 - regra não regulamentada (ex.: início de atividade a partir de 2027).",
+        "description": "Calcula a apuração ME/EPP da competência a partir do subrazão fiscal de receita, do histórico pré-adoção, da segregação manual e dos contratos de parceria. Nada é gravado. 400 - perfil do ano ausente ou fora do Simples. 422 - regra não regulamentada (ex.: teto do ISS excedido fora da 5ª e da 6ª faixa).",
         "tags": [
           "Accounting"
         ],
@@ -15156,7 +15632,7 @@
     "/api/accounting/simples/aliquotas/{competencia}": {
       "get": {
         "summary": "Suggested rates for documents issued in the month, with the calculation trail (X14 PR-4 item 29)",
-        "description": "SUGESTÃO (o prestador responde pela alíquota informada, LC 123 art. 21 § 4º VI) por atividade do cadastro de serviços e das que tiveram receita no PA, com faixa do RBT12 global: no mês de abertura do CNPJ, 2% (§ 4º II); até 2026, a faixa do mês anterior (PA = M−1); a partir de 2027, a do mês da prestação (PA = M, LC 227 art. 169; janela M−13…M−2, LC 214 art. 517). Devolve PA, RBT12, janela, regra e avisos; o pTotTribSN só sugerido (B-4) e, a partir de 2027, os % de ICMS/IBS/CBS para o crédito do adquirente. 400 - MEI (SIMEI não tem alíquota).",
+        "description": "SUGESTÃO (o prestador responde pela alíquota informada, LC 123 art. 21 § 4º VI) por atividade do cadastro de serviços e das que tiveram receita no PA, com faixa do RBT12 global: no mês de abertura do CNPJ, 2% (§ 4º II; a partir de 2027, também no mês seguinte, Res. CGSN 140 art. 27 II red. Res. CGSN 190/2026); até 2026, a faixa do mês anterior (PA = M−1); a partir de 2027, a do mês da prestação (PA = M, LC 227 art. 169; janela M−13…M−2, LC 214 art. 517). Devolve PA, RBT12, janela, regra e avisos; o pTotTribSN só sugerido (B-4) e, a partir de 2027, os % de ICMS/IBS/CBS para o crédito do adquirente. 400 - MEI (SIMEI não tem alíquota).",
         "tags": [
           "Accounting"
         ],
@@ -15854,7 +16330,7 @@
                             },
                             "indCrc": {
                               "type": "string",
-                              "description": "CFC format UF-NNNNNN/O-D (transferred/secondary: + \" T-UF\"/\" S-UF\")"
+                              "description": "CFC format UF-NNNNNN/O-D (transferred: + \" T-UF\")"
                             },
                             "email": {
                               "type": "string"
@@ -15975,7 +16451,7 @@
                         },
                         "indCrc": {
                           "type": "string",
-                          "description": "CFC format UF-NNNNNN/O-D (transferred/secondary: + \" T-UF\"/\" S-UF\"); required when codAssin=900"
+                          "description": "CFC format UF-NNNNNN/O-D (transferred: + \" T-UF\"); required when codAssin=900"
                         },
                         "email": {
                           "type": "string",
@@ -16280,7 +16756,7 @@
                         },
                         "indCrc": {
                           "type": "string",
-                          "description": "CFC format UF-NNNNNN/O-D (transferred/secondary: + \" T-UF\"/\" S-UF\"); required when identQualif=900; omit when blank (an empty string is 400)"
+                          "description": "CFC format UF-NNNNNN/O-D (transferred: + \" T-UF\"); required when identQualif=900; omit when blank (an empty string is 400)"
                         },
                         "email": {
                           "type": "string"
@@ -16522,7 +16998,7 @@
                         },
                         "indCrc": {
                           "type": "string",
-                          "description": "CFC format UF-NNNNNN/O-D (transferred/secondary: + \" T-UF\"/\" S-UF\"); required when identQualif=900; omit when blank (an empty string is 400)"
+                          "description": "CFC format UF-NNNNNN/O-D (transferred: + \" T-UF\"); required when identQualif=900; omit when blank (an empty string is 400)"
                         },
                         "email": {
                           "type": "string"
@@ -20366,6 +20842,125 @@
                         ]
                       }
                     }
+                  },
+                  {
+                    "type": "object",
+                    "description": "Manual-mode save (add field / toggle visibility), all or nothing",
+                    "required": [
+                      "kind",
+                      "sessionId",
+                      "tableKey",
+                      "changes"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "manual"
+                        ]
+                      },
+                      "sessionId": {
+                        "type": "string"
+                      },
+                      "tableKey": {
+                        "type": "string"
+                      },
+                      "acknowledgeSensitive": {
+                        "type": "boolean",
+                        "enum": [
+                          true
+                        ],
+                        "description": "Required when a new field matches the sensitive-data net"
+                      },
+                      "changes": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 50,
+                        "items": {
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "required": [
+                                "action",
+                                "field"
+                              ],
+                              "additionalProperties": false,
+                              "properties": {
+                                "action": {
+                                  "type": "string",
+                                  "enum": [
+                                    "add"
+                                  ]
+                                },
+                                "field": {
+                                  "type": "object",
+                                  "required": [
+                                    "name",
+                                    "label",
+                                    "type",
+                                    "required"
+                                  ],
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "label": {
+                                      "type": "string"
+                                    },
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "string",
+                                        "number",
+                                        "boolean",
+                                        "date",
+                                        "datetime"
+                                      ]
+                                    },
+                                    "format": {
+                                      "type": "string",
+                                      "enum": [
+                                        "email",
+                                        "phone"
+                                      ],
+                                      "description": "Only with type string"
+                                    },
+                                    "required": {
+                                      "type": "boolean"
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "action",
+                                "name",
+                                "hidden"
+                              ],
+                              "additionalProperties": false,
+                              "properties": {
+                                "action": {
+                                  "type": "string",
+                                  "enum": [
+                                    "setHidden"
+                                  ]
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "hidden": {
+                                  "type": "boolean"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
                   }
                 ]
               }
@@ -20497,7 +21092,7 @@
                     },
                     "applied": {
                       "type": "boolean",
-                      "description": "Only on kind decision"
+                      "description": "Only on kind decision or manual"
                     }
                   }
                 }
@@ -20505,7 +21100,7 @@
             }
           },
           "400": {
-            "description": "Invalid body, or SENSITIVE_FIELD_NOT_ACKNOWLEDGED (nothing was applied)"
+            "description": "Invalid body, SENSITIVE_FIELD_NOT_ACKNOWLEDGED, or MANUAL_CHANGE_INVALID with details.changes [{ index, name, reason: reserved|exists|not_found|duplicate|invalid|required_hidden }]. SENSITIVE_FIELD_NOT_ACKNOWLEDGED carries details.fields (the names that need the acknowledgement). Nothing was applied"
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"

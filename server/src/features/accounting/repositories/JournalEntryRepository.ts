@@ -65,6 +65,22 @@ export class JournalEntryRepository implements IJournalEntryRepository {
     });
   }
 
+  public async findSourceIdsInWindow(
+    scope: AccountingScope,
+    sourceType: string,
+    statuses: readonly string[],
+    window: { from: Date; to: Date },
+    tx?: Prisma.TransactionClient,
+  ): Promise<string[]> {
+    const rows = await (tx ?? prisma).journalEntry.findMany({
+      where: { ...accountingScopeWhere(scope), sourceType, status: { in: [...statuses] }, reversedById: null, date: { gte: window.from, lte: window.to } },
+      select: { sourceId: true },
+      distinct: ['sourceId'],
+      orderBy: { sourceId: 'asc' },
+    });
+    return rows.map((r) => r.sourceId).filter((s): s is string => s !== null);
+  }
+
   public async setStatus(
     scope: AccountingScope,
     id: string,

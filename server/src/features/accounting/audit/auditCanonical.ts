@@ -166,6 +166,7 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     'simplesDasDeducaoAccountId', 'simplesRecolherAccountId', // X14 PR-3 item 21
     'irpjSaldoNegativoAccountId', 'csllSaldoNegativoAccountId', // X7 Fase B item 16 (F-TB-3 a)
     'dividendosPagarAccountId', 'jcpPagarAccountId', 'irrfRecolherAccountId', 'jcpDespesaAccountId', // IRRF-DISTRIBUICAO item 7
+    'ibsRecolherAccountId', 'cbsRecolherAccountId', // IBS-CBS-2027 PR-2 item 12
     // BE-INCR-DFE (item 9): enum/boolean/int como string — IM/CNAE (texto livre) ficam FORA do evento
     'codMun', 'dpsSerie', 'regEspTrib', 'regApTribSN', 'issAliquotaBp', 'issRetidoTomadorPj', 'pacoteFatoGerador', 'pacoteCTribNac', 'pacoteCNBS', 'ibsCbsInformar', 'ibsCbsCst', 'ibsCbsClassTrib', 'pTotTribFedCent', 'pTotTribEstCent', 'pTotTribMunCent', 'pTotTribSNCent', 'emissaoForaDoMes',
     'policyVersionId'], // GOV-CONTADOR política versionada (item 14): a versão que aplicou esta escrita
@@ -210,6 +211,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'tax.assessment.confirmed': ['assessmentId', 'tributo', 'periodo', 'anoCalendario', 'aPagarCents', 'devidoCents', 'tabelaVersao',
     'modo', 'diferencaPostergadaCents', 'parametrosSha256'], // X7 Fase B item 25: enum + centavos em string; LEGAL-PARAMS PR-4 (item 7): sha256 do snapshot
   'tax.assessment.superseded': ['assessmentId', 'supersededById', 'tributo', 'periodo', 'anoCalendario'],
+  // IBS-CBS-2027 PR-2 (item 13) — ids, ano, mês, tributo e saldo em string; a memória fica FORA. Sem PII.
+  'tax.ibs_cbs_assessment.confirmed': ['assessmentId', 'anoCalendario', 'mes', 'tributo', 'saldoCents'],
+  'tax.ibs_cbs_assessment.superseded': ['assessmentId', 'supersededById', 'anoCalendario', 'mes', 'tributo', 'saldoCents'],
   // BE-INCR-MIT-EXPORT PR-2 (nó X9, item 16; D12, invariante 9) — sem CPF, e-mail, telefone nem conteúdo do arquivo.
   'tax.mit_export.generated': ['mitExportId', 'anoCalendario', 'mes', 'sha256', 'apuracaoIds'],
   // BE-INCR-SIMPLES-NACIONAL PR-3 (nó X14, item 24): SIMPLES_DAS_REGISTRADO / _SUBSTITUIDO — ids, competência e centavos

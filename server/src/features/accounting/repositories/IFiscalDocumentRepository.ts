@@ -132,6 +132,13 @@ export interface IFiscalDocumentRepository {
    * payload não o tiver).
    */
   findForIssReport(scope: AccountingScope, from: string, to: string, statuses: readonly FiscalDocumentStatus[], tx?: Prisma.TransactionClient): Promise<Array<FiscalDocument & { cLocPrestacao: string | null; cLocEmi: string | null }>>;
+  /**
+   * IBS-CBS-2027 PR-2 (BRIEF item 6) — documentos vivos em produção do escopo (NFS-e e NF-e), `dCompet` em [from, to]
+   * (AAAA-MM-DD, o dia escrito), nos `statuses` pedidos.
+   */
+  findForIbsCbs(scope: AccountingScope, from: string, to: string, statuses: readonly FiscalDocumentStatus[], tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
+  /** IBS-CBS-2027 PR-2 (item 7; dono 21/10): das vendas pedidas, as que têm documento AUTHORIZED/AUTHORIZED_DIVERGENT vivo em produção, em qualquer mês. */
+  saleIdsWithAuthorizedDocument(scope: AccountingScope, saleIds: readonly string[], tx?: Prisma.TransactionClient): Promise<string[]>;
   /** SENT|PROCESSING mais velhos que `olderThan` — alvo do job de polling (BRIEF item 27). Sem escopo: o job varre todos. */
   listPending(olderThan: Date, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
   /**

@@ -82,7 +82,8 @@ describe('BE-INCR-LEGAL-PARAMS PR-1 — /api/legal-parameters', () => {
       const r = await request(app).post(BASE).set(authHeader(PADMIN)).send(proposta(c));
       expect([JSON.stringify(c), r.status]).toEqual([JSON.stringify(c), 400]);
     }
-    expect(await prisma.legalParameter.count({ where: { status: 'DRAFT' } })).toBe(0);
+    // A semente já traz uma linha DRAFT (CBS 2027, IBS-CBS-2027 PR-1): nenhuma proposta recusada pode ter gravado outra.
+    expect(await prisma.legalParameter.count({ where: { status: 'DRAFT', proposedById: PADMIN.id } })).toBe(0);
   });
 
   it('item 8 + item 5 — publicar faz a linha valer no lookup E na fotografia dos cálculos (cache invalidado); revogar volta', async () => {
