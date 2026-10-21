@@ -48,8 +48,10 @@ interface ErrorOptions {
 }
 
 function toChatError(err: unknown, opts: ErrorOptions): ChatApiError {
-  const e = (err ?? {}) as { message?: unknown; error?: unknown; status?: unknown };
-  const serverMessage = typeof e.message === 'string' && e.message ? e.message : undefined;
+  const e = (err ?? {}) as { message?: unknown; error?: unknown; status?: unknown; body?: { message?: unknown } };
+  // HTTP rejection: the server's `message` lives in `body` (the Error's own message is the toast text).
+  const raw = typeof e.status === 'number' ? e.body?.message : e.message;
+  const serverMessage = typeof raw === 'string' && raw ? raw : undefined;
   if (typeof e.status === 'number') {
     return new ChatApiError(
       opts.preferServerMessage && serverMessage ? serverMessage : opts.fallback(e.status),

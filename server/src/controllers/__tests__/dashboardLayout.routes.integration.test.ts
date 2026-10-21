@@ -83,14 +83,14 @@ describe('GET /api/dashboard-layout/:id', () => {
     expect(res.body.data.name).toBe('Mine');
   });
 
-  it('403s for another user', async () => {
+  it('404s for another user (§3.4 #21)', async () => {
     const owner = await seedUser({ username: 'owner' });
     const stranger = await seedUser({ username: 'stranger' });
     const l = await seedDashboardLayout({ userId: owner.id });
     const res = await request(app)
       .get(`/api/dashboard-layout/${l.id}`)
       .set(authHeader({ id: stranger.id, username: stranger.username }));
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(404);
   });
 
   it('404s for a missing layout', async () => {

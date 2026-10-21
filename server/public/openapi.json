@@ -5260,6 +5260,10 @@
               "USER",
               "ADMIN"
             ]
+          },
+          "currentPassword": {
+            "type": "string",
+            "description": "Required to change one's own password or email"
           }
         }
       },

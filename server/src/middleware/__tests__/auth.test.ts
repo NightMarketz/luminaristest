@@ -17,6 +17,11 @@ import jwt from 'jsonwebtoken';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { authMiddleware } = require('../auth') as typeof import('../auth');
 
+// §3.4 #3 — the middleware reads User.tokenVersion; null = user not in the DB, version check skipped.
+jest.mock('@/lib/factory', () => ({
+  getFactory: () => ({ getUserService: () => ({ getTokenVersion: async () => null }) }),
+}));
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -54,10 +59,10 @@ function signToken(payload: object, options: jwt.SignOptions = {}): string {
 }
 
 /** Runs the middleware and returns what happened. */
-function run(req: Partial<Request>) {
+async function run(req: Partial<Request>) {
   const { ctx, res } = makeCtx();
   const next: NextFunction = jest.fn();
-  authMiddleware(req as Request, res as Response, next);
+  await authMiddleware(req as Request, res as Response, next);
   return { ctx, next };
 }
 
@@ -67,11 +72,11 @@ function run(req: Partial<Request>) {
 
 describe('authMiddleware', () => {
   describe('valid JWT on a protected route', () => {
-    it('calls next() and sets x-user-id header when Bearer token is valid', () => {
+    it('calls next() and sets x-user-id header when Bearer token is valid', async () => {
       const token = signToken({ id: 'user-123', username: 'alice', role: 'USER' });
       const req = makeReq('/api/chat', 'GET', `Bearer ${token}`);
 
-      const { ctx, next } = run(req);
+      const { ctx, next } = await run(req);
 
       expect(next).toHaveBeenCalledTimes(1);
       expect(next).toHaveBeenCalledWith();
@@ -81,9 +86,9 @@ describe('authMiddleware', () => {
   });
 
   describe('expired JWT', () => {
-    it('returns 401 when the token is expired', () => {
+    it('returns 401 when the token is expired', async () => {
       const token = signToken({ id: 'user-456', username: 'bob', role: 'USER' }, { expiresIn: -1 });
-      const { ctx, next } = run(makeReq('/api/chat', 'GET', `Bearer ${token}`));
+      const { ctx, next } = await run(makeReq('/api/chat', 'GET', `Bearer ${token}`));
 
       expect(next).not.toHaveBeenCalled();
       expect(ctx.statusCode).toBe(401);
@@ -92,8 +97,8 @@ describe('authMiddleware', () => {
   });
 
   describe('missing JWT on a protected route', () => {
-    it('returns 401 when no Authorization header is present', () => {
-      const { ctx, next } = run(makeReq('/api/documents', 'GET'));
+    it('returns 401 when no Authorization header is present', async () => {
+      const { ctx, next } = await run(makeReq('/api/documents', 'GET'));
 
       expect(next).not.toHaveBeenCalled();
       expect(ctx.statusCode).toBe(401);
@@ -113,8 +118,8 @@ describe('authMiddleware', () => {
       ['/api/Accounting/post', 'POST'],
       ['/API/accounting/post', 'POST'],
       ['/api/DOCUMENTS', 'GET'],
-    ])('returns 401 for %s %s with no token', (path, method) => {
-      const { ctx, next } = run(makeReq(path, method));
+    ])('returns 401 for %s %s with no token', async (path, method) => {
+      const { ctx, next } = await run(makeReq(path, method));
 
       expect(next).not.toHaveBeenCalled();
       expect(ctx.statusCode).toBe(401);
@@ -122,40 +127,40 @@ describe('authMiddleware', () => {
   });
 
   describe('unlisted routes fail closed', () => {
-    it('returns 401 for /api/package-balances, which no allowlist ever named', () => {
-      const { ctx, next } = run(makeReq('/api/package-balances', 'GET'));
+    it('returns 401 for /api/package-balances, which no allowlist ever named', async () => {
+      const { ctx, next } = await run(makeReq('/api/package-balances', 'GET'));
 
       expect(next).not.toHaveBeenCalled();
       expect(ctx.statusCode).toBe(401);
     });
 
-    it('returns 401 for a route that does not exist yet', () => {
-      const { ctx, next } = run(makeReq('/api/some-future-module', 'POST'));
+    it('returns 401 for a route that does not exist yet', async () => {
+      const { ctx, next } = await run(makeReq('/api/some-future-module', 'POST'));
 
       expect(next).not.toHaveBeenCalled();
       expect(ctx.statusCode).toBe(401);
     });
 
-    it('returns 401 despite a trailing slash', () => {
-      const { ctx, next } = run(makeReq('/api/accounting/', 'POST'));
+    it('returns 401 despite a trailing slash', async () => {
+      const { ctx, next } = await run(makeReq('/api/accounting/', 'POST'));
 
       expect(next).not.toHaveBeenCalled();
       expect(ctx.statusCode).toBe(401);
     });
 
-    it('returns 401 for a percent-encoded protected path', () => {
+    it('returns 401 for a percent-encoded protected path', async () => {
       // Kept from the #118 hardening. Under deny-by-default it passes for a different reason:
       // this guard does NOT decode (Express does not decode when matching a mount path, so
       // /api/%61ccounting/post 404s rather than reaching the router). The encoded path simply
       // matches no public rule and is denied. The property holds either way — pin it.
-      const { ctx, next } = run(makeReq('/api/%61ccounting/post', 'POST'));
+      const { ctx, next } = await run(makeReq('/api/%61ccounting/post', 'POST'));
 
       expect(next).not.toHaveBeenCalled();
       expect(ctx.statusCode).toBe(401);
     });
 
-    it('a query string never affects the routing decision', () => {
-      const { ctx, next } = run(makeReq('/api/accounting/post?unit=1', 'POST'));
+    it('a query string never affects the routing decision', async () => {
+      const { ctx, next } = await run(makeReq('/api/accounting/post?unit=1', 'POST'));
 
       expect(next).not.toHaveBeenCalled();
       expect(ctx.statusCode).toBe(401);
@@ -163,12 +168,12 @@ describe('authMiddleware', () => {
   });
 
   describe('ingress stripping of forgeable identity headers', () => {
-    it('rejects a tokenless request carrying forged identity headers', () => {
+    it('rejects a tokenless request carrying forged identity headers', async () => {
       const req = makeReq('/api/accounting/post', 'POST', undefined, {
         'x-user-id': 'victim-tenant',
         'x-user-role': 'ADMIN',
       });
-      const { ctx, next } = run(req);
+      const { ctx, next } = await run(req);
 
       expect(next).not.toHaveBeenCalled();
       expect(ctx.statusCode).toBe(401);
@@ -176,45 +181,45 @@ describe('authMiddleware', () => {
       expect(req.headers!['x-user-role']).toBeUndefined();
     });
 
-    it('strips forged identity headers even on a public route', () => {
+    it('strips forged identity headers even on a public route', async () => {
       const req = makeReq('/api/auth/login', 'POST', undefined, {
         'x-user-id': 'victim-tenant',
         'x-user-role': 'ADMIN',
       });
-      const { next } = run(req);
+      const { next } = await run(req);
 
       expect(next).toHaveBeenCalledTimes(1); // login stays public
       expect(req.headers!['x-user-id']).toBeUndefined();
       expect(req.headers!['x-user-role']).toBeUndefined();
     });
 
-    it('strips forged identity headers on non-/api routes too', () => {
+    it('strips forged identity headers on non-/api routes too', async () => {
       const req = makeReq('/health', 'GET', undefined, { 'x-user-id': 'victim-tenant' });
-      const { next } = run(req);
+      const { next } = await run(req);
 
       expect(next).toHaveBeenCalledTimes(1);
       expect(req.headers!['x-user-id']).toBeUndefined();
     });
 
-    it('a forged identity header cannot survive alongside a valid token', () => {
+    it('a forged identity header cannot survive alongside a valid token', async () => {
       const token = signToken({ id: 'real-user', username: 'alice', role: 'USER' });
       const req = makeReq('/api/chat', 'GET', `Bearer ${token}`, {
         'x-user-id': 'victim-tenant',
         'x-user-role': 'ADMIN',
       });
-      const { next } = run(req);
+      const { next } = await run(req);
 
       expect(next).toHaveBeenCalledTimes(1);
       expect(req.headers!['x-user-id']).toBe('real-user'); // token wins, not the header
       expect(req.headers!['x-user-role']).toBe('USER');
     });
 
-    it('does NOT strip x-user-timezone — it is client-supplied and carries no authority', () => {
+    it('does NOT strip x-user-timezone — it is client-supplied and carries no authority', async () => {
       const token = signToken({ id: 'user-123', username: 'alice', role: 'USER' });
       const req = makeReq('/api/analytics', 'GET', `Bearer ${token}`, {
         'x-user-timezone': 'America/Sao_Paulo',
       });
-      const { next } = run(req);
+      const { next } = await run(req);
 
       expect(next).toHaveBeenCalledTimes(1);
       expect(req.headers!['x-user-timezone']).toBe('America/Sao_Paulo');
@@ -229,8 +234,8 @@ describe('authMiddleware', () => {
       ['/api/users', 'POST'],
       ['/api/docs', 'GET'],
       ['/api/docs/openapi.json', 'GET'],
-    ])('calls next() without a token for %s %s', (path, method) => {
-      const { ctx, next } = run(makeReq(path, method));
+    ])('calls next() without a token for %s %s', async (path, method) => {
+      const { ctx, next } = await run(makeReq(path, method));
 
       expect(next).toHaveBeenCalledTimes(1);
       expect(ctx.statusCode).toBeUndefined();
@@ -239,37 +244,37 @@ describe('authMiddleware', () => {
     it.each([
       ['/api/docs/openapi.json'],
       ['/api'],
-    ])('keeps HEAD %s public, because Express serves HEAD from the GET handler', (path) => {
-      const { ctx, next } = run(makeReq(path, 'HEAD'));
+    ])('keeps HEAD %s public, because Express serves HEAD from the GET handler', async (path) => {
+      const { ctx, next } = await run(makeReq(path, 'HEAD'));
 
       expect(next).toHaveBeenCalledTimes(1);
       expect(ctx.statusCode).toBeUndefined();
     });
 
-    it('does not let HEAD reach a protected route without a token', () => {
-      const { ctx, next } = run(makeReq('/api/accounting/post', 'HEAD'));
+    it('does not let HEAD reach a protected route without a token', async () => {
+      const { ctx, next } = await run(makeReq('/api/accounting/post', 'HEAD'));
 
       expect(next).not.toHaveBeenCalled();
       expect(ctx.statusCode).toBe(401);
     });
 
-    it('calls next() for non-/api paths such as /health', () => {
-      const { ctx, next } = run(makeReq('/health', 'GET'));
+    it('calls next() for non-/api paths such as /health', async () => {
+      const { ctx, next } = await run(makeReq('/health', 'GET'));
 
       expect(next).toHaveBeenCalledTimes(1);
       expect(ctx.statusCode).toBeUndefined();
     });
 
-    it('does not let a public rule leak to a neighbouring segment', () => {
+    it('does not let a public rule leak to a neighbouring segment', async () => {
       // '/api/docs' is public by prefix; '/api/docsomething' must not inherit that.
-      const { ctx, next } = run(makeReq('/api/docsomething', 'GET'));
+      const { ctx, next } = await run(makeReq('/api/docsomething', 'GET'));
 
       expect(next).not.toHaveBeenCalled();
       expect(ctx.statusCode).toBe(401);
     });
 
-    it('keeps public rules method-scoped: GET /api/users still needs a token', () => {
-      const { ctx, next } = run(makeReq('/api/users', 'GET'));
+    it('keeps public rules method-scoped: GET /api/users still needs a token', async () => {
+      const { ctx, next } = await run(makeReq('/api/users', 'GET'));
 
       expect(next).not.toHaveBeenCalled();
       expect(ctx.statusCode).toBe(401);
@@ -277,26 +282,26 @@ describe('authMiddleware', () => {
   });
 
   describe('admin-only route with non-admin token', () => {
-    it('returns 403 when GET /api/users is accessed with a USER role token', () => {
+    it('returns 403 when GET /api/users is accessed with a USER role token', async () => {
       const token = signToken({ id: 'user-789', username: 'carol', role: 'USER' });
-      const { ctx, next } = run(makeReq('/api/users', 'GET', `Bearer ${token}`));
+      const { ctx, next } = await run(makeReq('/api/users', 'GET', `Bearer ${token}`));
 
       expect(next).not.toHaveBeenCalled();
       expect(ctx.statusCode).toBe(403);
       expect(ctx.body).toMatchObject({ code: 'FORBIDDEN' });
     });
 
-    it('calls next() when GET /api/users is accessed with an ADMIN role token', () => {
+    it('calls next() when GET /api/users is accessed with an ADMIN role token', async () => {
       const token = signToken({ id: 'admin-001', username: 'admin', role: 'ADMIN' });
-      const { ctx, next } = run(makeReq('/api/users', 'GET', `Bearer ${token}`));
+      const { ctx, next } = await run(makeReq('/api/users', 'GET', `Bearer ${token}`));
 
       expect(next).toHaveBeenCalledTimes(1);
       expect(ctx.statusCode).toBeUndefined();
     });
 
-    it('returns 403 for DELETE /api/users/:id with a USER role token', () => {
+    it('returns 403 for DELETE /api/users/:id with a USER role token', async () => {
       const token = signToken({ id: 'user-789', username: 'carol', role: 'USER' });
-      const { ctx, next } = run(makeReq('/api/users/other-id', 'DELETE', `Bearer ${token}`));
+      const { ctx, next } = await run(makeReq('/api/users/other-id', 'DELETE', `Bearer ${token}`));
 
       expect(next).not.toHaveBeenCalled();
       expect(ctx.statusCode).toBe(403);
@@ -305,28 +310,28 @@ describe('authMiddleware', () => {
     it.each([
       ['/api/users'],
       ['/api/users/other-id'],
-    ])('returns 403 for HEAD %s with a USER token — HEAD must not skip the admin gate', (path) => {
+    ])('returns 403 for HEAD %s with a USER token — HEAD must not skip the admin gate', async (path) => {
       // Express serves HEAD from the GET handler, so a raw `rule.method === method` check let
       // HEAD sail past isAdminOnly and run the ADMIN-only handler for a non-admin (content-length
       // then leaks as a user-enumeration oracle). isAdminOnly folds HEAD→GET like isPublic does.
       const token = signToken({ id: 'user-789', username: 'carol', role: 'USER' });
-      const { ctx, next } = run(makeReq(path, 'HEAD', `Bearer ${token}`));
+      const { ctx, next } = await run(makeReq(path, 'HEAD', `Bearer ${token}`));
 
       expect(next).not.toHaveBeenCalled();
       expect(ctx.statusCode).toBe(403);
     });
 
-    it('allows HEAD /api/users with an ADMIN token', () => {
+    it('allows HEAD /api/users with an ADMIN token', async () => {
       const token = signToken({ id: 'admin-001', username: 'admin', role: 'ADMIN' });
-      const { ctx, next } = run(makeReq('/api/users', 'HEAD', `Bearer ${token}`));
+      const { ctx, next } = await run(makeReq('/api/users', 'HEAD', `Bearer ${token}`));
 
       expect(next).toHaveBeenCalledTimes(1);
       expect(ctx.statusCode).toBeUndefined();
     });
 
-    it('admin-only matching is case-folded too', () => {
+    it('admin-only matching is case-folded too', async () => {
       const token = signToken({ id: 'user-789', username: 'carol', role: 'USER' });
-      const { ctx, next } = run(makeReq('/api/USERS', 'GET', `Bearer ${token}`));
+      const { ctx, next } = await run(makeReq('/api/USERS', 'GET', `Bearer ${token}`));
 
       expect(next).not.toHaveBeenCalled();
       expect(ctx.statusCode).toBe(403);
@@ -334,26 +339,26 @@ describe('authMiddleware', () => {
   });
 
   describe('self-update rule', () => {
-    it('allows a user to update their own profile', () => {
+    it('allows a user to update their own profile', async () => {
       const token = signToken({ id: 'user-abc', username: 'alice', role: 'USER' });
-      const { ctx, next } = run(makeReq('/api/users/user-abc', 'PUT', `Bearer ${token}`));
+      const { ctx, next } = await run(makeReq('/api/users/user-abc', 'PUT', `Bearer ${token}`));
 
       expect(next).toHaveBeenCalledTimes(1);
       expect(ctx.statusCode).toBeUndefined();
     });
 
-    it('returns 403 when a user targets someone else', () => {
+    it('returns 403 when a user targets someone else', async () => {
       const token = signToken({ id: 'user-abc', username: 'alice', role: 'USER' });
-      const { ctx, next } = run(makeReq('/api/users/user-xyz', 'PUT', `Bearer ${token}`));
+      const { ctx, next } = await run(makeReq('/api/users/user-xyz', 'PUT', `Bearer ${token}`));
 
       expect(next).not.toHaveBeenCalled();
       expect(ctx.statusCode).toBe(403);
     });
 
-    it('compares the user id byte-for-byte, not case-folded', () => {
+    it('compares the user id byte-for-byte, not case-folded', async () => {
       // Routing folds case; identity must not. A mixed-case id has to still match itself.
       const token = signToken({ id: 'User-AbC', username: 'alice', role: 'USER' });
-      const { ctx, next } = run(makeReq('/api/users/User-AbC', 'PUT', `Bearer ${token}`));
+      const { ctx, next } = await run(makeReq('/api/users/User-AbC', 'PUT', `Bearer ${token}`));
 
       expect(next).toHaveBeenCalledTimes(1);
       expect(ctx.statusCode).toBeUndefined();
@@ -363,19 +368,19 @@ describe('authMiddleware', () => {
       ['/api/users/me/preferences'],
       ['/api/users/ME/preferences'],
       ['/api/USERS/me/preferences'],
-    ])('allows PATCH %s — Express routes them all to the same handler', (path) => {
+    ])('allows PATCH %s — Express routes them all to the same handler', async (path) => {
       const token = signToken({ id: 'user-abc', username: 'alice', role: 'USER' });
-      const { ctx, next } = run(makeReq(path, 'PATCH', `Bearer ${token}`));
+      const { ctx, next } = await run(makeReq(path, 'PATCH', `Bearer ${token}`));
 
       expect(next).toHaveBeenCalledTimes(1);
       expect(ctx.statusCode).toBeUndefined();
     });
 
-    it('a mixed-case id still cannot target someone else via the me-route check', () => {
+    it('a mixed-case id still cannot target someone else via the me-route check', async () => {
       // The `me` segment check folds case; the id comparison must not — otherwise
       // `PUT /api/users/User-AbC` by `user-abc` would escalate (the latent bug in #118).
       const token = signToken({ id: 'user-abc', username: 'alice', role: 'USER' });
-      const { ctx, next } = run(makeReq('/api/users/User-AbC', 'PUT', `Bearer ${token}`));
+      const { ctx, next } = await run(makeReq('/api/users/User-AbC', 'PUT', `Bearer ${token}`));
 
       expect(next).not.toHaveBeenCalled();
       expect(ctx.statusCode).toBe(403);

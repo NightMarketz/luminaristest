@@ -14,4 +14,5 @@ cNBS?: (string | null)
 cIndOp?: string
 cLocPrestacao?: (string | null)
 xDescServ?: (string | null)
+cClassTrib?: (string | null)
 }

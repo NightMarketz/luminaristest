@@ -57,8 +57,10 @@ const BASE = '/dashboard-layout';
 const SILENT = { silent: true } as const;
 
 function toError(err: unknown, fallback: string): Error {
-  const e = (err ?? {}) as { message?: unknown; error?: unknown; status?: unknown };
-  if (typeof e.message === 'string' && e.message) return new Error(e.message);
+  const e = (err ?? {}) as { message?: unknown; error?: unknown; status?: unknown; body?: { message?: unknown } };
+  // HTTP rejection: the server's `message` lives in `body` (the Error's own message is the toast text).
+  const message = typeof e.status === 'number' ? e.body?.message : e.message;
+  if (typeof message === 'string' && message) return new Error(message);
   if (typeof e.status === 'number') return new Error(`${fallback} (status ${e.status})`);
   // No status = no response: apiClient rethrows the native error (handled by `message` above).
   return new Error(typeof e.error === 'string' && e.error ? e.error : fallback);

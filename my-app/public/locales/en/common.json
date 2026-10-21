@@ -26,12 +26,8 @@
   "day": "Day",
   "yes": "Yes",
   "no": "No",
-  "status": {
-    "scheduled": "Scheduled",
-    "completed": "Completed",
-    "no_show": "No-Show",
-    "cancelled": "Cancelled"
-  },
+  "delete_confirmation_title": "Confirm Inactivation?",
+  "confirm_inactivate": "Yes, Inactivate",
   "table_not_found": "Table not found",
   "associatedProducts": "Associated Products",
   "qualifiedEmployees": "Qualified Employees",
@@ -262,7 +258,6 @@
   "calculating_explorer_data": "Calculating Explorer data...",
   "search_all_columns": "Search in all columns...",
   "records_found": "{{count}} records found",
-  "actions": "Actions",
   "grid": "Grid",
   "list": "List",
   "default": "Default",
@@ -286,7 +281,6 @@
   "no_records_in_table": "No records in this table.",
   "clear_filters": "Clear filters",
   "contact": "Contact",
-  "filters": "Filters",
   "search_label": "Search",
   "filter_status_all": "All Profiles",
   "filter_status_active": "Active Only",
@@ -515,6 +509,7 @@
 
   "processing": "Processing...",
   "invalid_number": "Invalid numeric value",
+  "invalid_url": "Invalid URL",
 
   "selected_count_one": "{{count}} selected",
   "selected_count_other": "{{count}} selected",
@@ -564,6 +559,7 @@
   "confirm_delete_title": "Inactivate Record?",
   "confirm_delete_generic_msg": "This record will be inactivated. History will be preserved.",
   "error_deleting_record": "An error occurred while inactivating the record.",
+  "error_saving_record": "Failed to save the record.",
   "relation_cell_items": "{{count}} items",
 
   "unsavedChangesConfirm": "There are unsaved changes. Are you sure you want to close?",
@@ -597,6 +593,10 @@
     "back": "Back"
   },
   "status": {
+    "scheduled": "Scheduled",
+    "completed": "Completed",
+    "no_show": "No-Show",
+    "cancelled": "Cancelled",
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",

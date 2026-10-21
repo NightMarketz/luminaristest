@@ -243,3 +243,44 @@ describe('parseNfe — compra com leiaute completo (fictícia, E9 reescopado)', 
       .toEqual([nfe.totais.vProdCents, nfe.totais.vDescCents, nfe.totais.vFreteCents, nfe.totais.vIPICents, nfe.totais.vSTCents]);
   });
 });
+
+// IBS-CBS-2027 PR-1 (BRIEF item 4; ADR D10). Não há NF-e REAL com o grupo IBSCBS no repo (Insumo ausente 5 do BRIEF):
+// a variante abaixo segue o leiaute da NT 2025.002 v1.52 (Portal NF-e, sha256 54ed8933…, campos UB12–UB67 e W34–W60),
+// inserida no fixture de leiaute completo. Prova a MECÂNICA da leitura, não uma nota autorizada.
+describe('parseNfe — grupo IBSCBS (NT 2025.002 v1.52, IBS-CBS-2027 PR-1)', () => {
+  const FULL = readFixture('purchase-full-layout.SYNTHETIC.xml');
+  const UB12 =
+    '<IBSCBS><CST>000</CST><cClassTrib>000001</cClassTrib><gIBSCBS><vBC>216.00</vBC>' +
+    '<gIBSUF><pIBSUF>0.0500</pIBSUF><vIBSUF>0.11</vIBSUF></gIBSUF><gIBSMun><pIBSMun>0.0500</pIBSMun><vIBSMun>0.11</vIBSMun></gIBSMun>' +
+    '<vIBS>0.22</vIBS><gCBS><pCBS>8.8000</pCBS><vCBS>19.01</vCBS></gCBS></gIBSCBS></IBSCBS>';
+  const W34 =
+    '<IBSCBSTot><vBCIBSCBS>216.00</vBCIBSCBS><gIBS><gIBSUF><vDif>0.00</vDif><vDevTrib>0.00</vDevTrib><vIBSUF>0.11</vIBSUF></gIBSUF>' +
+    '<gIBSMun><vDif>0.00</vDif><vDevTrib>0.00</vDevTrib><vIBSMun>0.11</vIBSMun></gIBSMun><vIBS>0.22</vIBS><vCredPres>0.00</vCredPres>' +
+    '<vCredPresCondSus>0.00</vCredPresCondSus></gIBS><gCBS><vDif>0.00</vDif><vDevTrib>0.00</vDevTrib><vCBS>19.01</vCBS>' +
+    '<vCredPres>0.00</vCredPres><vCredPresCondSus>0.00</vCredPresCondSus></gCBS></IBSCBSTot><vNFTot>564.12</vNFTot>';
+  // só o 1º item ganha o grupo; os outros dois ficam sem ele (nota mista continua válida)
+  const COM_IBSCBS = signNfeForTest(FULL.replace('</imposto>', `${UB12}</imposto>`).replace('</ICMSTot>', `</ICMSTot>${W34}`));
+
+  it('lê CST, cClassTrib, vBC, vIBS e vCBS do item (centavos bigint)', () => {
+    const [primeiro, segundo] = parseNfe(COM_IBSCBS, LEGAIS_SEMENTE).itens;
+    expect(primeiro.ibsCbs).toEqual({ cst: '000', cClassTrib: '000001', vBCCents: 21600n, vIBSCents: 22n, vCBSCents: 1901n });
+    expect(segundo.ibsCbs).toBeUndefined();
+  });
+
+  it('lê os totais W34 (gIBS/vIBS, gCBS/vCBS) e W60 vNFTot', () => {
+    const nfe = parseNfe(COM_IBSCBS, LEGAIS_SEMENTE);
+    expect(nfe.totais.ibsCbs).toEqual({ vIBSCents: 22n, vCBSCents: 1901n, vNFTotCents: 56412n });
+    expect(nfe.totais.vNFCents).toBe(54489); // ICMSTot/vNF intacto
+  });
+
+  it('nota sem o grupo: ibsCbs ausente no item e nos totais, sem erro', () => {
+    const nfe = parseNfe(FULL, LEGAIS_SEMENTE);
+    expect(nfe.itens.every((i) => i.ibsCbs === undefined)).toBe(true);
+    expect(nfe.totais.ibsCbs).toBeUndefined();
+  });
+
+  it('grupo sem gIBSCBS (ex.: só CST/cClassTrib) devolve valores null, não zero', () => {
+    const SO_CLASSE = signNfeForTest(FULL.replace('</imposto>', '<IBSCBS><CST>410</CST><cClassTrib>410001</cClassTrib></IBSCBS></imposto>'));
+    expect(parseNfe(SO_CLASSE, LEGAIS_SEMENTE).itens[0].ibsCbs).toEqual({ cst: '410', cClassTrib: '410001', vBCCents: null, vIBSCents: null, vCBSCents: null });
+  });
+});

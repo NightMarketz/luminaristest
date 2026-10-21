@@ -31,6 +31,6 @@ describe('apiClient em SSR', () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false, status: 401, statusText: 'Unauthorized', text: async () => '',
     } as unknown as Response);
-    await expect(apiClient.get('/dynamic-tables', { token: 'tok', silent: true })).rejects.toEqual({ status: 401 });
+    await expect(apiClient.get('/dynamic-tables', { token: 'tok', silent: true })).rejects.toMatchObject({ status: 401 });
   });
 });

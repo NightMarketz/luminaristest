@@ -5,9 +5,9 @@ interface TableMeta { id: string; name?: string; columns?: unknown[]; [key: stri
 interface TableListResponse { data: TableMeta[]; success?: boolean; [key: string]: unknown }
 interface TableDataResponse { data?: unknown[]; total?: number; page?: number; [key: string]: unknown }
 interface RecordResponse { id?: string; [key: string]: unknown }
+interface LookupSpec { targetTableId: string; displayField?: string; keys: string[] }
 interface LookupResponse { results?: unknown[]; [key: string]: unknown }
 interface SidebarResponse { tables?: unknown[]; [key: string]: unknown }
-interface SystemResponse { status?: string; [key: string]: unknown }
 
 export const DynamicTableService = {
   // --- Table Meta ---
@@ -28,17 +28,11 @@ export const DynamicTableService = {
   async getSubTables(parentId: string): Promise<TableListResponse> {
     return apiClient.get(`/dynamic-tables?parentTableId=${parentId}`);
   },
-  async createTable(payload: Record<string, unknown>): Promise<TableMeta> {
-    return apiClient.post('/dynamic-tables', payload);
-  },
 
   // --- Table Data (Records) ---
   async getTableData(tableId: string, queryParams: string = '', options?: { silent?: boolean }): Promise<TableDataResponse> {
     const url = queryParams ? `/dynamic-tables/${tableId}/data?${queryParams}` : `/dynamic-tables/${tableId}/data`;
     return apiClient.get(url, { silent: options?.silent });
-  },
-  async getRecordById(tableId: string, recordId: string): Promise<RecordResponse> {
-    return apiClient.get(`/dynamic-tables/${tableId}/data/${recordId}`);
   },
   async createRecord(tableId: string, payload: Record<string, unknown>, options?: { successMessage?: string | null; silent?: boolean }): Promise<RecordResponse> {
     const result = await apiClient.post<RecordResponse>(`/dynamic-tables/${tableId}/data`, payload, { silent: options?.silent });
@@ -76,16 +70,19 @@ export const DynamicTableService = {
     if (msg) notify(msg, 'success', 'Sucesso');
     return { deleted };
   },
-  async performLookup(payload: { targetTableId: string; displayField: string; keys: string[] }): Promise<LookupResponse> {
-    return apiClient.post('/dynamic-tables/lookup', payload as Record<string, unknown>);
+  // Corpo no contrato do ResolveRelationsDto do servidor: `{ lookups: [{ tableId, recordIds, displayField }] }`.
+  async performLookup(payload: LookupSpec | LookupSpec[]): Promise<LookupResponse> {
+    const lookups = (Array.isArray(payload) ? payload : [payload]).map((l) => ({
+      tableId: l.targetTableId,
+      recordIds: l.keys,
+      displayField: l.displayField,
+    }));
+    return apiClient.post('/dynamic-tables/lookup', { lookups });
   },
 
   // --- Dashboard Specific Layouts ---
   async getSidebar(): Promise<SidebarResponse> {
     return apiClient.get('/dashboard/sidebar');
-  },
-  async getSystem(): Promise<SystemResponse> {
-    return apiClient.get('/dashboard/system');
   },
   async deleteSystem(): Promise<unknown> {
     return apiClient.delete('/dashboard/system');

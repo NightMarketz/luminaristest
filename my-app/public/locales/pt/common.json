@@ -26,12 +26,8 @@
   "day": "Dia",
   "yes": "Sim",
   "no": "Não",
-  "status": {
-    "scheduled": "Agendado",
-    "completed": "Concluído",
-    "no_show": "No-Show",
-    "cancelled": "Cancelado"
-  },
+  "delete_confirmation_title": "Confirmar inativação?",
+  "confirm_inactivate": "Sim, inativar",
   "table_not_found": "Tabela não encontrada",
   "associatedProducts": "Produtos Associados",
   "qualifiedEmployees": "Funcionários Qualificados",
@@ -262,7 +258,6 @@
   "calculating_explorer_data": "Calculando dados do Explorer...",
   "search_all_columns": "Pesquisar em todas as colunas...",
   "records_found": "{{count}} registros encontrados",
-  "actions": "Ações",
   "grid": "Grid",
   "list": "Lista",
   "default": "Padrão",
@@ -286,7 +281,6 @@
   "no_records_in_table": "Nenhum registro nesta tabela.",
   "clear_filters": "Limpar filtros",
   "contact": "Contato",
-  "filters": "Filtros",
   "search_label": "Buscar",
   "filter_status_all": "Todos os Perfis",
   "filter_status_active": "Apenas Ativos",
@@ -514,6 +508,7 @@
 
   "processing": "Processando...",
   "invalid_number": "Valor numérico inválido",
+  "invalid_url": "URL inválida",
 
   "selected_count_one": "{{count}} selecionado",
   "selected_count_other": "{{count}} selecionados",
@@ -563,6 +558,7 @@
   "confirm_delete_title": "Inativar Registro?",
   "confirm_delete_generic_msg": "Este registro será inativado. O histórico será preservado.",
   "error_deleting_record": "Ocorreu um erro ao tentar inativar o registro.",
+  "error_saving_record": "Erro ao salvar o registro.",
   "relation_cell_items": "{{count}} itens",
 
   "unsavedChangesConfirm": "Existem alterações não salvas. Tem certeza que deseja fechar?",
@@ -596,6 +592,10 @@
     "back": "Voltar"
   },
   "status": {
+    "scheduled": "Agendado",
+    "completed": "Concluído",
+    "no_show": "No-Show",
+    "cancelled": "Cancelado",
     "loading": "Carregando...",
     "error": "Erro",
     "success": "Sucesso",

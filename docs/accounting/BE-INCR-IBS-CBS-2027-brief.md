@@ -4,10 +4,17 @@
 > **Base:** `origin/claude/forks-ibs-cbs-2027` (PR #792, ainda fora de `main`) — de onde vêm a cédula
 > `D-2026-10-21-FORKS-IBS-CBS-2027` e o ADR `ADR-INCR-IBS-CBS-2027` (D1–D13, §8, §9, §10).
 
+> **EMENDA 1 (21/10, [[D-2026-10-21-TRIAGEM-CONTADOR-F1]]):** F-IBS-8 deixa o provisório (a) e passa a **(c) fora do
+> resultado** — receita reconhecida líquida e IBS/CBS direto no passivo (resposta do contador à P-IBS-4). O **item 12** como
+> escrito (D dedução da receita / C IBS·CBS a recolher, marca `PROVISORIO_P_IBS_4`, campo `classeProvisoria`) **não roda**:
+> com (c) o passivo nasce no lançamento do documento, e a provisão da apuração vira conferência (saldo do passivo × apuração).
+> **Item 12 reescrito em 21/10** (pedido do dono: "reescreve o item 12 do BRIEF do IBS"): reclassificação receita → passivo
+> na apuração mensal; o momento é o **F-IBS-14 (a), ratificado 21/10** (§5.1). Próximo: `executa` do PR-2. Contas do referencial seguem DRAFT (não conferidas).
+
 ## TLDR (2 linhas)
 
 Cinco PRs fecham IBS/CBS no regime regular para 01/01/2027: **PR-1** (tabela de vigência + `cClassTrib` por serviço + parser) e **PR-2** (apuração mensal com débito por documento, CAS e provisão) cabem antes do prazo; PR-3 (crédito + antecipação), PR-4 (split no F7) e PR-5 (matriz + superfície) seguem.
-**Risco principal:** em 01/2027 a apuração da CBS responde **400 nomeado** até a resolução do Senado (linha `DRAFT`); a provisão do PR-2 usa a classe contábil **provisória** (dedução da receita, F-IBS-8) até a P-IBS-4; e o início em 2027 (F-IBS-7 b) **volta ao dono** se o contador não confirmar a P-IBS-1 antes de 01/01/2027.
+**Risco principal:** em 01/2027 a apuração da CBS responde **400 nomeado** até a resolução do Senado (linha `DRAFT`); o item 12 reclassifica a receita para o passivo na apuração mensal (F-IBS-8 c), com o momento ratificado em **F-IBS-14 (a)**; e o início em 2027 (F-IBS-7 b) **volta ao dono** se o contador não confirmar a P-IBS-1 antes de 01/01/2027.
 
 ---
 
@@ -46,7 +53,7 @@ plugin. Toda integração (F7, Payable, eventos de venda) é por serviço nomead
 | F-IBS-5 | (a) antecipar já | itens 17–18 |
 | F-IBS-6 | (a) split digitado no confirm do F7 | itens 19–20; leitura do evento 110300 = emenda futura |
 | F-IBS-7 | **(b) começar em 2027** (contra a recomendação) | item 10 — **condicionado à P-IBS-1** (ver §5) |
-| F-IBS-8 | **provisório (a)** dedução da receita — fora do questionário, do contador | item 12 — marcado `PROVISORIO_P_IBS_4` |
+| F-IBS-8 | **(c) fora do resultado** — resposta do contador à P-IBS-4 ([[D-2026-10-21-TRIAGEM-CONTADOR-F1]]) | item 12 — reclassificação receita → passivo |
 | F-IBS-9 | (a) 5 PRs | §2 |
 | F-IBS-10 | (a) por serviço | item 3 |
 
@@ -59,7 +66,7 @@ A matriz (item 21) **não** ganha linha `CONDICIONAL` de 2026 — vale a leitura
 | PR | Conteúdo | Itens | Antes de 01/01/2027? | Depende de |
 |---|---|---|---|---|
 | **PR-1** dado e leitura | tabela `IBS_CBS` (CBS 2027 em `DRAFT`), `cClassTrib` por serviço, parser `IBSCBS` | 1–5 | **sim** — sem fork nem contador aberto | — |
-| **PR-2** apuração | competência por documento, `ConsumptionTaxAssessment`, prévia/confirmação CAS, memória, provisão 2 commits, rotas, 400 de Simples/2026 | 6–13 | **sim** — provisão com classe provisória (F-IBS-8) | PR-1 |
+| **PR-2** apuração | competência por documento, `ConsumptionTaxAssessment`, prévia/confirmação CAS, memória, provisão 2 commits, rotas, 400 de Simples/2026 | 6–13 | não — F-IBS-14 (a) ratificado | PR-1 |
 | **PR-3** crédito e antecipação | crédito `PENDENTE/APROPRIADO`, lista de uso/consumo, antecipação do pacote | 14–18 | desejável; a lista de uso/consumo nasce `DRAFT` até P-IBS-2 | PR-2 |
 | **PR-4** split no F7 | `SPLIT_IBS_CBS` como parte do encargo | 19–20 | desejável | PR-2 |
 | **PR-5** matriz e superfície | matriz de obrigações, resumo com vencimento, porta de envio, export do contador, job de recálculo | 21–24 | não bloqueia 01/2027 | PR-2 (PR-3/4 para a memória completa) |
@@ -119,12 +126,20 @@ Prisma + Policy, Factory, DTO Zod `.strict()`, soft-delete, rota em 2 toques.
     **Condição:** se a P-IBS-1 voltar "não basta" (§5), este item é reaberto pelo dono antes do `executa` do PR-2.
 11. **Memória** (`MemoriaLinha[]`, schema do X7): `DEBITO_DOC_n`, `DIVERGENCIA_DOC_n`, `VENDA_SEM_DOCUMENTO`,
     `DOCUMENTOS_SEM_GRUPO`, `SALDO`; IBS guarda os dois bp (UF/mun) na memória e um só saldo (ADR D4).
-12. **Provisão em 2 commits** (Contrato §2.3, cabeçalho `atomicUntil` com os 3 testes): commit 1 `postEntry(sourceType=
-    'ibs_cbs_assessment', sourceId)`: D dedução da receita IBS/CBS / C IBS a recolher · C CBS a recolher; commit 2 CAS no
-    assessment (`provisaoEntryId`); `reconcileIbsCbsProvisao()` read-first idempotente (assere a 2ª chamada). Contas vêm do
-    mapeamento no perfil fiscal. **Classe provisória (F-IBS-8 a):** a memória e o histórico do lançamento levam
-    `PROVISORIO_P_IBS_4`; trocar a classe depois da resposta do contador é substituição (CAS), não migração de razão.
-    *Ponto aberto:* quais contas do referencial — Insumo ausente 6 / P-IBS-4.
+12. **Reclassificação da receita em 2 commits** (F-IBS-8 = (c), [[D-2026-10-21-TRIAGEM-CONTADOR-F1]]; Contrato §2.3,
+    cabeçalho `atomicUntil` com os 3 testes). Fato no código: a venda posta **bruto** — `sale.finalized` D
+    `controle-recebível` / C `receita-serviço` · C `receita-revenda` (`RevenueRecognitionArchetype.ts:29,61-63`), com o
+    IBS/CBS do documento dentro do valor. Com (c) o IBS/CBS sai da receita e vai ao passivo **sem conta de dedução**:
+    commit 1 `postEntry(sourceType='ibs_cbs_assessment', sourceId)`: **D `receita-serviço`** e **D `receita-revenda`**
+    (repartidos pelo `vIBS/vCBS` dos itens de serviço × mercadoria de cada `FiscalDocument` do mês, a mesma base do item 6)
+    / **C `IBS a recolher`** · **C `CBS a recolher`** (contas do mapeamento no perfil fiscal, papéis novos
+    `ibs-a-recolher` e `cbs-a-recolher`); commit 2 CAS no assessment (`provisaoEntryId`); `reconcileIbsCbsProvisao()`
+    read-first idempotente (assere a 2ª chamada). A soma dos débitos é igual ao `debitosCents` do assessment (teste).
+    **Momento = apuração mensal** pelo **F-IBS-14 (a), ratificado 21/10** — o balancete intramensal
+    mostra a receita bruta do mês corrente (declarado na memória como `RECEITA_BRUTA_ATE_APURACAO`). Sem linha de
+    dedução, sem `PROVISORIO_P_IBS_4`, sem `classeProvisoria`. Substituição de apuração = estorno + novo lançamento (CAS),
+    como no X7. *Ponto aberto:* códigos do plano referencial das duas contas novas — DRAFT (P-IBS-4 respondida sem
+    conferência; §7 item 6).
 13. **Rotas + gates do PR-2:** `POST /api/accounting/ibs-cbs-assessments/preview`, `POST /api/accounting/ibs-cbs-assessments`,
     `GET /api/accounting/ibs-cbs-assessments?anoCalendario=` (2 toques: `routes/accounting.ts` + factory); doc
     `routes/docs/accounting.ibs-cbs-assessments.paths.ts` + `docs.paths.ts` + `public/openapi.json` (guard de path-count);
@@ -187,7 +202,6 @@ model ConsumptionTaxAssessment {
   debitosCents        BigInt
   creditosCents       BigInt    // só APROPRIADO
   saldoCents          BigInt    // débitos − créditos; negativo = saldo credor
-  classeProvisoria    Boolean   @default(true) // F-IBS-8 até P-IBS-4
   memoria             Json
   parametrosIds       Json
   parametrosSha256    String
@@ -294,6 +308,12 @@ export const IbsCbsResumoSchema = z.object({
 | **F-IBS-12** Onde mora a apropriação do crédito (item 16) | (a) rota própria `POST /api/accounting/payables/:id/ibs-cbs-credits/apropriar` no serviço de AP · (b) campo `creditosApropriados[]` dentro da prévia/confirmação da apuração (esboço do ADR §7) | **(a).** O status pertence ao crédito do `Payable`, não à apuração do mês; (b) faz a apuração escrever em outro agregado e mistura dois CAS na mesma chamada | médio em (b) |
 | **F-IBS-13** Reabertura se P-IBS-1 voltar negativa | (a) volta ao dono como o F-IBS-7 manda e o PR-2 só recebe `executa` depois · (b) o PR-2 sai assim mesmo e 2026 vira emenda | **(a)** — é o texto da cédula ("se não for, o fork volta ao dono"); listado só para que o `executa` do PR-2 cite o estado da P-IBS-1 | baixo |
 
+### 5.1 Fork novo — **RATIFICADO 21/10: F-IBS-14 (a)** ([[D-2026-10-21-F-IBS-14]])
+
+| Fork | Caminhos | Recomendação e porquê | Custo de errar |
+|---|---|---|---|
+| **F-IBS-14** Momento da reclassificação receita → passivo (item 12) | **(a)** na **apuração mensal** (um lançamento por tributo e mês, estrutura de 2 commits já desenhada) · **(b)** por **documento autorizado** (um lançamento por `FiscalDocument`, sourceType novo, estorno no cancelamento) · **(c)** na **venda** — `sale.finalized` passa a creditar receita líquida + passivo (muda o arquétipo `reconhecimento-receita`, extraído 1:1 e com teste de balanceamento) | **(a).** Cabe no PR-2 antes de 01/01/2027 sem tocar o motor de binding; o número do mês fecha igual ao do documento (F-IBS-3 a). (b) dá balancete diário certo, mas cria um evento por nota e o caminho de cancelamento; (c) mexe no sync de vendas (outro nó) e a venda pode ser finalizada antes da nota existir | baixo em (a): só o balancete **intramensal** fica bruto |
+
 ## 6. Pendente de validação externa (contador / fonte oficial — não são forks)
 
 | # | Pergunta | Trava | Quem |
@@ -301,7 +321,7 @@ export const IbsCbsResumoSchema = z.object({
 | **P-IBS-1** — **respondida 21/10: basta o DF-e com o grupo IBS/CBS** (confirmação; [triagem](TRIAGEM-RESPOSTA-CONTADOR-2026-10-21-AMBIGUIDADES.md)) | 2026: as NFS-e/NF-e com `gIBSCBS` bastam para a dispensa do art. 348 § 1º? | condição do F-IBS-7 b (item 10) | contador |
 | **P-IBS-2** | `cClassTrib`/`cst` do salão e da clínica; lista de uso/consumo pessoal (art. 57) | valores dos itens 3 e 15 | contador |
 | **P-IBS-3** | o art. 10 § 4º se aplica ao pacote de sessões? há hipótese dos 5 dias? | enquadramento dos itens 17–18 | contador |
-| **P-IBS-4** | classe contábil do IBS/CBS (dedução × fora do resultado) e contas do referencial | item 12 (hoje provisório a) | contador |
+| **P-IBS-4** | ~~classe contábil~~ respondida 21/10: (c) fora do resultado. Resta conferir os códigos do referencial (`2.01.01.02.xx`) | item 12 | fonte oficial (tabela do referencial) |
 | **P-IBS-5** | alíquota de referência da CBS 2027 (Res. SF) e vencimento do saldo mensal | linha `DRAFT` (item 1) e item 22 | fonte oficial |
 | **P-IBS-6** | apuração assistida RFB/CG-IBS do 1º mês real | oráculo do número | runbook humano |
 | **P-IBS-7** | o Mercado Pago faz o split nas vendas do salão? como aparece no extrato? | item 19–20 na prática | dono + doc do MP |
@@ -313,7 +333,7 @@ export const IbsCbsResumoSchema = z.object({
 3. Regulamento do IBS (CG-IBS) e hipótese dos 5 dias.
 4. Texto dos arts. 44–45 do Decreto 12.955 (prazos/vencimento) — o dossiê cita, não extrai.
 5. **NF-e real com grupo `IBSCBS`** para a fixture do item 4 — não verificado se há uma no repo (não varrido, regra 2).
-6. Contas do referencial para a provisão (item 12) — dependem da P-IBS-4.
+6. Códigos do plano referencial de `IBS a recolher` / `CBS a recolher` (item 12): o contador indicou `2.01.01.02.xx`, não conferido na tabela oficial — DRAFT.
 
 ## 8. Achados fora de escopo (não planejados)
 

@@ -8,6 +8,7 @@ import { isIndOp, IND_OP_DEFAULT_SALAO } from '../models/indOp';
  *  - `cTribNac` 6 dígitos [195] e ∈ lista nacional (models/lc116ListaNacional.ts, aba MUN.INCID_INFO.SERV.)
  *  - `cTribMun` 3 dígitos [196] · `cNBS` 9 dígitos [198] (Anexo B) · `cIndOp` ∈ Anexo C [339]
  *  - `cLocPrestacao` IBGE 7 [192]; null => FiscalProfile.codMun · `xDescServ` ≤ 1000 [197]
+ *  - `cClassTrib` 6 dígitos (IBS-CBS-2027 PR-1, F-IBS-10 a); null => FiscalProfile.ibsCbsClassTrib na emissão
  */
 export const ServiceFiscalProfileScopeQuerySchema = z.object({ unitId: z.string().min(1) }).strict();
 
@@ -22,6 +23,7 @@ export const UpsertServiceFiscalProfileSchema = z
     cIndOp: z.string().regex(/^\d{6}$/).refine(isIndOp, 'cIndOp fora da tabela de indicadores de operação (Anexo C)').default(IND_OP_DEFAULT_SALAO),
     cLocPrestacao: z.string().regex(/^\d{7}$/).nullable().optional(),
     xDescServ: z.string().min(1).max(1000).nullable().optional(),
+    cClassTrib: z.string().regex(/^\d{6}$/).nullable().optional(),
   })
   .strict();
 export type UpsertServiceFiscalProfileInput = z.infer<typeof UpsertServiceFiscalProfileSchema>;

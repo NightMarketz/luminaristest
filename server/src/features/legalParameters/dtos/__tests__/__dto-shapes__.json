@@ -29,7 +29,8 @@
             "SIMEI_VALOR",
             "SALARIO_MINIMO",
             "MEI_ANEXO_XI",
-            "FERIADO_LOCAL"
+            "FERIADO_LOCAL",
+            "IBS_CBS"
           ]
         },
         "chave": {
@@ -120,7 +121,8 @@
             "SIMEI_VALOR",
             "SALARIO_MINIMO",
             "MEI_ANEXO_XI",
-            "FERIADO_LOCAL"
+            "FERIADO_LOCAL",
+            "IBS_CBS"
           ]
         },
         "status": {
@@ -194,7 +196,8 @@
             "SIMEI_VALOR",
             "SALARIO_MINIMO",
             "MEI_ANEXO_XI",
-            "FERIADO_LOCAL"
+            "FERIADO_LOCAL",
+            "IBS_CBS"
           ]
         },
         "chave": {

@@ -102,6 +102,7 @@ export default function GenericTabbedView({
     // --- Reset state on table set change (category navigation) ---
     // Reseta também fieldFilters (paridade com handleTabChange) para evitar filtros
     // fantasmas de uma categoria persistirem ao navegar para outra com schema diferente.
+    const tableIdsKey = tables.map((t) => t.id).join('|');
     useEffect(() => {
         if (tables.length > 0) {
             setActiveTableId(tables[0].id);
@@ -112,7 +113,8 @@ export default function GenericTabbedView({
         } else {
             setActiveTableId('');
         }
-    }, [tables]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- reseta só quando o conjunto de ids muda
+    }, [tableIdsKey]);
 
     // --- Data Hook (Gold Standard Pattern A) ---
     const {
