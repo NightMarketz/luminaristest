@@ -7,6 +7,7 @@
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { ConsumptionTaxAssessmentRepository } from '@/features/accounting/repositories/ConsumptionTaxAssessmentRepository';
+import { SALE_BINDING_V2 } from '@/features/accountingBinding/fixtures/saleBinding';
 import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();
@@ -134,5 +135,28 @@ describe('IBS-CBS-2027 PR-2 item 12 — reclassificação receita → IBS/CBS a 
     expect(r2.status).toBe(200);
     expect(r2.body.data.provisaoEntryId).toBe(r1.body.data.provisaoEntryId);
     expect(await lancamentos(dono)).toHaveLength(1);
+  });
+
+  it('lacuna #826-2: unidade com receita em outra conta (binding ativo) ⇒ debita as contas dos papéis receita-serviço / receita-revenda, não 3.1/3.3', async () => {
+    const dono = await cenario();
+    for (const c of [{ code: '3.1.9', name: 'Receita de Serviços (própria)' }, { code: '3.3.9', name: 'Receita de Revenda (própria)' }]) {
+      await prisma.account.create({ data: { userId: dono.id, unitId: dono.unitId, ...c, nature: 'Revenue', acceptsEntries: true } });
+    }
+    const payload = {
+      ...SALE_BINDING_V2,
+      eventBindings: SALE_BINDING_V2.eventBindings.map((b) => ({
+        ...b,
+        roleSlots: b.roleSlots.map((r) => (r.role === 'receita-serviço' ? { ...r, accountCode: '3.1.9' } : r.role === 'receita-revenda' ? { ...r, accountCode: '3.3.9' } : r)),
+      })),
+    };
+    await prisma.accountingBinding.create({
+      data: { userId: dono.id, unitId: dono.unitId, sectorKey: payload.sectorKey, bindingVersion: 1, compiledAt: new Date(), compiledFromHash: 'h', payload: JSON.stringify(payload), status: 'Active' },
+    });
+    await documento(dono, 'NFSE', 10_00n);
+    await documento(dono, 'NFE', 4_00n);
+    expect((await confirm(dono, null)).status).toBe(201);
+    const [e] = await lancamentos(dono);
+    const pernas = e.postings.map((p) => `${p.account.code}:${p.debitCents}:${p.creditCents}`).sort();
+    expect(pernas).toEqual(['2.1.8.01:0:1400', '3.1.9:1000:0', '3.3.9:400:0']);
   });
 });
