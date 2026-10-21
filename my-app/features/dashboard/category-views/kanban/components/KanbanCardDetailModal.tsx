@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'next-i18next';
-import { MdClose, MdOutlineDescription, MdFormatListBulleted, MdOutlineLabel, MdOutlineAccessTime, MdDeleteOutline, MdOutlineContentCopy, MdOutlineRemoveRedEye, MdShare, MdArchive, MdOutlineDashboard, MdLabel } from 'react-icons/md';
+import { MdClose, MdOutlineDescription, MdFormatListBulleted, MdOutlineLabel, MdOutlineAccessTime, MdDeleteOutline, MdOutlineDashboard, MdLabel } from 'react-icons/md';
 import { Task } from '@/types/Task.types';
 import { ITableSchema } from '@/features/dashboard/components/shared/dynamic-tables.client';
 import { DynamicTableService } from '@/lib/services/dynamic-table.service';
@@ -323,21 +323,12 @@ export function KanbanCardDetailModal({
                             {/* Add to Card Section */}
                             <div className="flex flex-col gap-2">
                                 <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Ações Rápidas</span>
-                                <SidebarButton icon={MdArchive} label="Arquivar" />
                                 <SidebarButton
                                     icon={MdDeleteOutline}
                                     label="Excluir"
                                     onClick={handleDeleteTask}
                                     className="hover:bg-red-500/10 hover:text-red-500 dark:hover:bg-red-500/20"
                                 />
-                            </div>
-
-                            {/* Utility Section */}
-                            <div className="flex flex-col gap-2">
-                                <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Utilitários</span>
-                                <SidebarButton icon={MdOutlineContentCopy} label="Copiar" />
-                                <SidebarButton icon={MdShare} label="Compartilhar" />
-                                <SidebarButton icon={MdOutlineRemoveRedEye} label="Seguir" />
                             </div>
 
                             {/* Metadata Info */}
