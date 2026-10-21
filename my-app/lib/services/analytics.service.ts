@@ -2,7 +2,6 @@ import { apiClient } from '../api/api-client';
 
 interface AnalyticsDataResponse { rows?: unknown[]; schema?: unknown; [key: string]: unknown }
 interface SidebarResponse { tables?: unknown[]; [key: string]: unknown }
-interface SystemStatusResponse { status?: string; [key: string]: unknown }
 
 export const AnalyticsService = {
   async getDiscoverData(tableId: string, queryParams: string = ''): Promise<AnalyticsDataResponse> {
@@ -16,9 +15,5 @@ export const AnalyticsService = {
 
   async getDashboardSidebar(): Promise<SidebarResponse> {
     return apiClient.get('/dashboard/sidebar');
-  },
-
-  async getSystemStatus(): Promise<SystemStatusResponse> {
-    return apiClient.get('/dashboard/system');
   }
 };
