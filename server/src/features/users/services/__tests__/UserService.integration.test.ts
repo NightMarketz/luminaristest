@@ -178,9 +178,9 @@ describe('updateUser', () => {
   });
 
   it('hashes a new password on update', async () => {
-    const u = await seedUser({ username: 'self' });
+    const u = await seedUser({ username: 'self', password: await bcrypt.hash('OldPass1', 4) });
     const ctx = ctxFor({ id: u.id, username: u.username, role: Role.USER });
-    await service.updateUser(u.id, { password: 'NewPass1' }, ctx);
+    await service.updateUser(u.id, { password: 'NewPass1', currentPassword: 'OldPass1' }, ctx);
     const stored = await repo.getUserByUsername('self');
     expect(await bcrypt.compare('NewPass1', stored!.password)).toBe(true);
   });

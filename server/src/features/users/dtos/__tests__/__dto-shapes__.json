@@ -45,6 +45,9 @@
             "USD",
             "EUR"
           ]
+        },
+        "currentPassword": {
+          "type": "string"
         }
       }
     },

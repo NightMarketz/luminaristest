@@ -73,6 +73,7 @@ function buildService(overrides: {
 
   const mockUserRepository = {
     getUserById: jest.fn().mockResolvedValue(EXISTING_USER),
+    hasRestrictedDependents: jest.fn().mockResolvedValue(false),
     deleteUser,
     createUser: jest.fn(),
     getAllUsers: jest.fn(),
