@@ -6,6 +6,8 @@ import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { AuditService } from './AuditService';
+import { logger } from '../../../lib/logger';
+import { REFERENCIAL_PLANO_PADRAO } from '../fixtures/ChartOfAccountsFixture';
 import type {
   SetReferentialMappingDto,
   UnsetReferentialMappingDto,
@@ -170,6 +172,46 @@ export class ReferentialMappingService {
    * handle (ACC-011), the mapping upserted with the tx handle, and the audit appended
    * with the same handle (ACC-019) — every write receives `tx` so the atomicity is real.
    */
+  /**
+   * BE-INCR-IRRF-DISTRIBUICAO PR-1 (item 6; dono 21/10, opção (b), PROVISÓRIA): o referencial das folhas do PLANO PADRÃO
+   * que os kits publicados não trazem (`REFERENCIAL_PLANO_PADRAO`), em toda versão que o escopo já mapeia — sem isso, a
+   * folha nova derrubaria a prontidão da ECD (`coverage`). Só preenche o que falta: mapeamento existente (do kit ou do
+   * usuário) nunca é sobrescrito. Mesmo gate por item do `batchSet` (`applySet`, dentro de uma tx). Sem checagem de
+   * policy: é o complemento de sistema do `ensureChartOfAccounts`, que cria as contas para qualquer leitor do escopo.
+   */
+  async ensureCanonicalMappings(scope: AccountingScope): Promise<number> {
+    const versions = await this.repo.findDistinctVersions(scope);
+    if (versions.length === 0) return 0;
+    const accounts = await this.accountRepo.findManyByUnit(scope);
+    const pendentes: Array<{ accountId: string; referentialCode: string; label: string; mappingVersion: string }> = [];
+    for (const mappingVersion of versions) {
+      const mapped = new Set((await this.repo.findManyByVersion(scope, mappingVersion)).map((m) => m.accountId));
+      for (const entry of REFERENCIAL_PLANO_PADRAO) {
+        const account = accounts.find((a) => a.code === entry.accountCode && a.acceptsEntries);
+        if (!account || mapped.has(account.id)) continue;
+        // Catálogo da versão carregado sem o código (ou com ele sintético): não inventa nem derruba quem chamou (a
+        // instalação do kit) — a folha fica fora e a `coverage` a mostra como não mapeada.
+        if (!(await this.destinoAceito(mappingVersion, entry.referentialCode))) {
+          logger.warn('Referencial do plano padrão fora do catálogo da versão — folha não mapeada', { mappingVersion, accountCode: entry.accountCode, referentialCode: entry.referentialCode });
+          continue;
+        }
+        pendentes.push({ accountId: account.id, referentialCode: entry.referentialCode, label: entry.label, mappingVersion });
+      }
+    }
+    if (pendentes.length === 0) return 0;
+    await this.repo.runTransaction(async (tx) => {
+      for (const item of pendentes) await this.applySet(tx, scope, item);
+    });
+    return pendentes.length;
+  }
+
+  /** Destino aceito pelo catálogo da versão: analítico, ou versão sem catálogo (comportamento INCR-9 do `applySet`). */
+  private async destinoAceito(mappingVersion: string, referentialCode: string): Promise<boolean> {
+    const conta = await this.catalogRepo.findByVersionAndCode(mappingVersion, referentialCode);
+    if (conta) return conta.isAnalytic;
+    return (await this.catalogRepo.countByVersion(mappingVersion)) === 0;
+  }
+
   private async applySet(
     tx: Prisma.TransactionClient,
     scope: AccountingScope,

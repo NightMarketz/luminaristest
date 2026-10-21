@@ -27,6 +27,10 @@ export interface FiscalProfileData {
   simplesRecolherAccountId?: string | null;
   irpjSaldoNegativoAccountId?: string | null; // X7 Fase B item 16
   csllSaldoNegativoAccountId?: string | null;
+  dividendosPagarAccountId?: string | null; // IRRF-DISTRIBUICAO item 7
+  jcpPagarAccountId?: string | null;
+  irrfRecolherAccountId?: string | null;
+  jcpDespesaAccountId?: string | null;
   partnerAccountRef?: string | null;
   // BE-INCR-DFE (BRIEF item 1) — emitente + D1f configurável
   codMun?: string | null;

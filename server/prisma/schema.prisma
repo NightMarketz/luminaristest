@@ -60,6 +60,7 @@ model User {
   accountingContacts         AccountingContact[] // Relation to AccountingContact (contador destinatário, BE-INCR-CONTADOR-DELIVERY)
   companyFiscalProfiles      CompanyFiscalProfile[] // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13) — perfil da empresa por ano
   companySigners             CompanySigner[] // X13 (F-OBP-9 a) — representante legal / signatários não-contador
+  partners                   Partner[] // IRRF-DISTRIBUICAO PR-1 (F-IRD-2, F-IRD-14) — sócios beneficiários da distribuição
   taxAssessments             TaxAssessment[] // BE-INCR-TAX-ASSESSMENT Fase A (nó X7, item 12) — apuração IRPJ/CSLL da PJ
   mitExports                 MitExport[] // BE-INCR-MIT-EXPORT PR-2 (nó X9, item 11) — arquivos do MIT gerados
   simplesHistorico           SimplesHistoricoMensal[] // BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14, itens 10–11)
@@ -579,6 +580,10 @@ model Account {
   cofinsRecolherOf                   FiscalProfile[]           @relation("FiscalProfileCofinsRecolher") // X8 item 2
   irpjSaldoNegativoOf                FiscalProfile[]           @relation("FiscalProfileIrpjSaldoNegativo") // X7 Fase B item 16 (F-TB-3 a)
   csllSaldoNegativoOf                FiscalProfile[]           @relation("FiscalProfileCsllSaldoNegativo") // X7 Fase B item 16 (F-TB-3 a)
+  dividendosPagarOf                  FiscalProfile[]           @relation("FiscalProfileDividendosPagar") // IRRF-DISTRIBUICAO item 7
+  jcpPagarOf                         FiscalProfile[]           @relation("FiscalProfileJcpPagar") // IRRF-DISTRIBUICAO item 7
+  irrfRecolherOf                     FiscalProfile[]           @relation("FiscalProfileIrrfRecolher") // IRRF-DISTRIBUICAO item 7
+  jcpDespesaOf                       FiscalProfile[]           @relation("FiscalProfileJcpDespesa") // IRRF-DISTRIBUICAO item 7
   pisCofinsRecuperavelOf             FiscalProfile[]           @relation("FiscalProfilePisCofinsRecuperavel") // X6 F-X6-8 a: crédito de PIS/COFINS a recuperar
   pisCofinsCreditoOutrosOf           FiscalProfile[]           @relation("FiscalProfilePisCofinsCreditoOutros") // X8 PR-3 (L-5)
   pisCofinsRetidoCompensarOf         FiscalProfile[]           @relation("FiscalProfilePisCofinsRetidoCompensar") // X8 PR-3 (retenções)
@@ -1649,6 +1654,15 @@ model FiscalProfile {
   irpjSaldoNegativoAccount            Account?  @relation("FiscalProfileIrpjSaldoNegativo", fields: [irpjSaldoNegativoAccountId], references: [id], onDelete: Restrict)
   csllSaldoNegativoAccountId          String? // Asset
   csllSaldoNegativoAccount            Account?  @relation("FiscalProfileCsllSaldoNegativo", fields: [csllSaldoNegativoAccountId], references: [id], onDelete: Restrict)
+  // BE-INCR-IRRF-DISTRIBUICAO PR-1 (item 7, molde F-TA-7): contas da distribuição de lucros e do JCP — código do contador
+  dividendosPagarAccountId            String? // Liability
+  dividendosPagarAccount              Account?  @relation("FiscalProfileDividendosPagar", fields: [dividendosPagarAccountId], references: [id], onDelete: Restrict)
+  jcpPagarAccountId                   String? // Liability
+  jcpPagarAccount                     Account?  @relation("FiscalProfileJcpPagar", fields: [jcpPagarAccountId], references: [id], onDelete: Restrict)
+  irrfRecolherAccountId               String? // Liability
+  irrfRecolherAccount                 Account?  @relation("FiscalProfileIrrfRecolher", fields: [irrfRecolherAccountId], references: [id], onDelete: Restrict)
+  jcpDespesaAccountId                 String? // Expense
+  jcpDespesaAccount                   Account?  @relation("FiscalProfileJcpDespesa", fields: [jcpDespesaAccountId], references: [id], onDelete: Restrict)
   partnerAccountRef                   String? // R8 item 2: conta de emissão no parceiro POR UNIDADE — reservado; BE-INCR-DFE preenche
   // BE-INCR-DFE (nó X10b, BRIEF item 1) — emitente (ADR-DFE D5) + itens 5a–5f do contador como CONFIG
   // (D-X10b-2: default = recomendação do ADR, ambos os ramos implementados). Nullable/default => a linha X6
@@ -1751,6 +1765,9 @@ model CompanyFiscalProfile {
   // COMPETENCIA (0..365 dias).
   simplesCaixaPrazoCartaoDebitoDias  Int?
   simplesCaixaPrazoCartaoCreditoDias Int?
+  // BE-INCR-IRRF-DISTRIBUICAO PR-1 (item 8, F-IRD-15): mapa das contas do PL na base do JCP (IN 1.700 art. 75 I–V) —
+  // { CAPITAL_INTEGRALIZADO, RESERVAS_CAPITAL, RESERVAS_LUCROS, ACOES_TESOURARIA, LUCROS_ACUMULADOS: accountId[] }.
+  jcpBaseContas                    Json?
   createdById                      String?
   updatedById                      String?
   createdAt                        DateTime           @default(now())
@@ -1761,6 +1778,30 @@ model CompanyFiscalProfile {
   @@index([contadorContactId])
   @@index([representanteLegalSignerId])
   @@map("company_fiscal_profiles")
+}
+
+// BE-INCR-IRRF-DISTRIBUICAO PR-1 (itens 1–4; F-IRD-2, F-IRD-14) — sócio beneficiário da distribuição de lucros e do JCP.
+// PJ-wide (userId = PJ, R8; sem unitId). Vigência [entradaEm, saidaEm] (date-only; saidaEm null = em aberto) sem
+// sobreposição por taxId na mesma PJ — gate do serviço DENTRO da tx (SQLite não tem exclusion constraint).
+// nome/taxId são PII — nunca em auditoria (BRIEF item 33).
+model Partner {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nome            String
+  taxId           String // CPF (11) ou CNPJ (14) só dígitos, com DV validado
+  tipoPessoa      String // PF | PJ — derivado do tamanho do taxId
+  residenteBrasil Boolean
+  participacaoBp  Int // 0..10000
+  entradaEm       String // YYYY-MM-DD
+  saidaEm         String? // YYYY-MM-DD inclusive; null = em aberto
+  createdById     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  @@index([userId, taxId])
+  @@map("partners")
 }
 
 // X13 (F-OBP-9 a) — signatário da empresa que NÃO é o contador (sócio/administrador, responsável legal). O contador

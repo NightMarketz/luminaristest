@@ -14,7 +14,9 @@ import { LALUR_MESES, LALUR_QUARTERS } from '../models/Lalur.model';
 import { scopeToday } from '../models/dates';
 import { regimeUnidadeEsperado } from '../models/regimeEmpresa';
 import type { PerfilParaPrefill } from '../models/spedPerfilPrefill';
-import type { CompanyDeclarante, IBS_CBS_OPCOES, SIMPLES_REGIMES_APURACAO, UpsertCompanyFiscalProfileInput } from '../dtos/CompanyFiscalProfileDto';
+import type { CompanyDeclarante, IBS_CBS_OPCOES, JcpBaseContas, SIMPLES_REGIMES_APURACAO, UpsertCompanyFiscalProfileInput } from '../dtos/CompanyFiscalProfileDto';
+import { JCP_BASE_GRUPOS } from '../dtos/CompanyFiscalProfileDto';
+import type { IAccountRepository } from '../repositories/IAccountRepository';
 
 export type IbsCbsOpcao = (typeof IBS_CBS_OPCOES)[number];
 export type SimplesRegimeApuracao = (typeof SIMPLES_REGIMES_APURACAO)[number];
@@ -69,6 +71,7 @@ export interface CompanyFiscalProfileView {
   simplesExclusaoEfeitosEm: string | null; // X14-CAIXA item 7 (F-CX-3 a)
   simplesCaixaPrazoCartaoDebitoDias: number | null; // X14-CAIXA item 7a
   simplesCaixaPrazoCartaoCreditoDias: number | null;
+  jcpBaseContas: JcpBaseContas | null; // IRRF-DISTRIBUICAO item 8 (F-IRD-15)
   ibsCbsOpcaoS1: IbsCbsOpcao | null; // X14 PR-2 item 14
   ibsCbsOpcaoS2: IbsCbsOpcao | null;
   updatedAt: string;
@@ -128,6 +131,8 @@ export class CompanyFiscalProfileService {
     private readonly lalurRepo: Pick<ILalurRepository, 'countByOwnerYearPeriods'>,
     /** BE-INCR-LEGAL-PARAMS PR-2 (F-LP-4 a): fotografia `OBRIGACAO_REGIME` (matriz regime × obrigação). */
     private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
+    /** BE-INCR-IRRF-DISTRIBUICAO PR-1 (item 8): contas do mapa do PL na base do JCP — escopo e natureza. */
+    private readonly accountRepo: Pick<IAccountRepository, 'findById'>,
   ) {}
 
   /**
@@ -385,6 +390,19 @@ export class CompanyFiscalProfileService {
     if (data.representanteLegalSignerId && !(await this.signerRepo.findById(scope, data.representanteLegalSignerId, tx))) {
       throw new NotFoundError(`Signatário '${data.representanteLegalSignerId}' não encontrado.`);
     }
+    // IRRF-DISTRIBUICAO item 8 (F-IRD-15): toda conta do mapa é do escopo (senão 404) e de natureza Equity (senão 400).
+    if (data.jcpBaseContas !== Prisma.DbNull) {
+      const mapa = data.jcpBaseContas as JcpBaseContas;
+      for (const grupo of JCP_BASE_GRUPOS) {
+        for (const id of mapa[grupo]) {
+          const conta = await this.accountRepo.findById(scope, id, tx);
+          if (!conta || conta.deletedAt) throw new NotFoundError(`Conta '${id}' do mapa do PL (${grupo}) não encontrada neste escopo.`);
+          if (conta.nature !== 'Equity') {
+            throw new ValidationError(`Conta '${conta.code}' do mapa do PL (${grupo}) tem natureza ${conta.nature}; esperado Equity (IN 1.700 art. 75 I–V).`);
+          }
+        }
+      }
+    }
   }
 
   private async auditUpdated(tx: Prisma.TransactionClient, scope: AccountingScope, row: CompanyFiscalProfile, copiadoDe?: number): Promise<void> {
@@ -422,6 +440,7 @@ export class CompanyFiscalProfileService {
         meiOcupacoes: ((row.meiOcupacoes as string[] | null) ?? []).join(','), // SIMPLES-PISO-ANEXO-XI item 12: chaves A-0001…
         simplesRegimeApuracao: row.simplesRegimeApuracao, // X14 F-PR4-12 (b) (enum)
         simplesExclusaoEfeitosEm: row.simplesExclusaoEfeitosEm ?? '', // X14-CAIXA item 7 (date-only)
+        jcpBaseContas: row.jcpBaseContas === null ? '' : JSON.stringify(row.jcpBaseContas), // IRRF-DISTRIBUICAO item 8: só ids de conta
         ...(copiadoDe === undefined ? {} : { copiadoDe: String(copiadoDe) }),
       },
     });
@@ -527,6 +546,7 @@ function toData(input: UpsertCompanyFiscalProfileInput): CompanyFiscalProfileDat
     simplesExclusaoEfeitosEm: input.simplesExclusaoEfeitosEm,
     simplesCaixaPrazoCartaoDebitoDias: input.simplesCaixaPrazoCartaoDebitoDias,
     simplesCaixaPrazoCartaoCreditoDias: input.simplesCaixaPrazoCartaoCreditoDias,
+    jcpBaseContas: input.jcpBaseContas ?? Prisma.DbNull,
   };
 }
 
@@ -565,6 +585,7 @@ function rowToData(row: CompanyFiscalProfile): CompanyFiscalProfileData {
     simplesExclusaoEfeitosEm: row.simplesExclusaoEfeitosEm,
     simplesCaixaPrazoCartaoDebitoDias: row.simplesCaixaPrazoCartaoDebitoDias,
     simplesCaixaPrazoCartaoCreditoDias: row.simplesCaixaPrazoCartaoCreditoDias,
+    jcpBaseContas: row.jcpBaseContas === null ? Prisma.DbNull : (row.jcpBaseContas as Prisma.InputJsonValue),
   };
 }
 
@@ -605,6 +626,7 @@ function toView(row: CompanyFiscalProfile): CompanyFiscalProfileView {
     simplesExclusaoEfeitosEm: row.simplesExclusaoEfeitosEm,
     simplesCaixaPrazoCartaoDebitoDias: row.simplesCaixaPrazoCartaoDebitoDias,
     simplesCaixaPrazoCartaoCreditoDias: row.simplesCaixaPrazoCartaoCreditoDias,
+    jcpBaseContas: (row.jcpBaseContas as JcpBaseContas | null) ?? null,
     updatedAt: row.updatedAt.toISOString(),
   };
 }
