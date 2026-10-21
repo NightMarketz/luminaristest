@@ -9,7 +9,7 @@ depende_de: ["[[D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS]]", "[[D-2026-10-21-FORKS-I
 autorizacao: "dono, chat, 2026-10-20: \"Q1 a, Q2 a. Grava as decisões e pode começar pelo fold R0 (Q3 a).\" — Q2 (a) = PRE-ADRs de F1 (IBS-CBS-2027, RETENCOES-FONTE, EFD-REINF) por sessao-planejamento, sem 'executa' (cédula D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS, sessão de origem). Só o PRE-ADR e esta nota; BRIEF e código exigem pedido próprio"
 ancora_sdd: "§M5"
 atualizado: "2026-10-21"
-prs: ["#777"]
+prs: ["#777", "#812"]
 perfil_previsto: "precisa-de-planejamento"
 perfil_evidencia: "regra 1: 10 forks pendentes (escopo, persistência, fonte do débito, evidência de extinção do crédito, antecipação, split, 2026, classe contábil, fatiamento, cClassTrib por serviço); depois deles: opus-medio (família nova de apuração com CAS + provisão em 2 commits + migração aditiva + parser)"
 write_set: ["server/prisma/schema.prisma", "server/prisma/migrations/**", "server/src/features/accounting/models/ibsCbs*", "server/src/features/accounting/dtos/IbsCbsAssessmentDto.ts", "server/src/features/accounting/dtos/ServiceFiscalProfileDto.ts", "server/src/features/accounting/services/IbsCbsAssessmentService.ts", "server/src/features/accounting/services/FiscalDocumentEmissionService.ts", "server/src/features/accounting/services/BankSettlementService.ts", "server/src/features/accounting/repositories/*IbsCbs*", "server/src/features/accounting/policies/**", "server/src/controllers/*IbsCbs*", "server/src/lib/nfe.ts", "server/src/lib/ibsCbsApuracao.ts", "server/src/features/accounting/models/obrigacoesPorRegime.ts", "server/src/features/legalParameters/models/legalParameter.ts", "server/src/features/accounting/**/__tests__/**", "server/src/lib/__tests__/**", "server/src/controllers/__tests__/**"]

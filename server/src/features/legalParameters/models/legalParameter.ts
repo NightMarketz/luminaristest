@@ -33,6 +33,8 @@ export const LEGAL_PARAMETER_TABELAS = [
   'MEI_ANEXO_XI',
   // F-E4-1 (a) (dono, 12/10; executa 17/10): feriados estaduais e municipais (CC 132 § 1º; Lei 9.093/1995 arts. 1º e 2º).
   'FERIADO_LOCAL',
+  // IBS-CBS-2027 PR-1 (BRIEF item 1): alíquotas de IBS/CBS por vigência (LC 214 arts. 343, 344, 346, 347).
+  'IBS_CBS',
 ] as const;
 export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
 

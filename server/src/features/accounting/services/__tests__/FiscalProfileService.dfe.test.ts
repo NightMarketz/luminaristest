@@ -9,7 +9,7 @@ import { ServiceFiscalProfileService } from '../ServiceFiscalProfileService';
 import { UpsertFiscalProfileSchema } from '../../dtos/FiscalProfileDto';
 import { UpsertServiceFiscalProfileSchema } from '../../dtos/ServiceFiscalProfileDto';
 import { canonicalizeAuditPayload } from '../../audit/auditCanonical';
-import { ForbiddenError, NotFoundError } from '../../../../lib/errors';
+import { ForbiddenError, NotFoundError, ValidationError } from '../../../../lib/errors';
 import type { AccountingScope } from '../../scope/AccountingScope';
 import type { IFiscalProfileRepository, FiscalProfileData } from '../../repositories/IFiscalProfileRepository';
 import type { IServiceFiscalProfileRepository, ServiceFiscalProfileData } from '../../repositories/IServiceFiscalProfileRepository';
@@ -132,7 +132,7 @@ describe('FiscalProfileService — BE-INCR-DFE (itens 6/7/9)', () => {
 });
 
 describe('ServiceFiscalProfileService (BRIEF item 8/9)', () => {
-  function buildSvc(opts: { canManage?: boolean } = {}) {
+  function buildSvc(opts: { canManage?: boolean; ibsCbsCst?: string | null } = {}) {
     const rows = new Map<string, ServiceFiscalProfile>();
     const repo: IServiceFiscalProfileRepository = {
       findByServiceRef: jest.fn(async (_s, ref: string) => rows.get(ref) ?? null),
@@ -148,7 +148,8 @@ describe('ServiceFiscalProfileService (BRIEF item 8/9)', () => {
     } as unknown as IServiceFiscalProfileRepository;
     const policy = { canReadFiscalProfile: jest.fn(() => true), canManageServiceFiscalProfile: jest.fn(() => opts.canManage ?? true) } as unknown as IAccountingPolicy;
     const append = jest.fn(async () => undefined);
-    return { svc: new ServiceFiscalProfileService(repo, policy, { append } as unknown as AuditService, legalParamsSemente), repo, append };
+    const fiscalProfiles = { findByScope: jest.fn(async () => (opts.ibsCbsCst === undefined ? null : { ibsCbsCst: opts.ibsCbsCst })) } as never;
+    return { svc: new ServiceFiscalProfileService(repo, policy, { append } as unknown as AuditService, legalParamsSemente, fiscalProfiles), repo, append };
   }
 
   it('upsert idempotente devolve a view com a descrição da lista nacional e audita só códigos', async () => {
@@ -158,8 +159,29 @@ describe('ServiceFiscalProfileService (BRIEF item 8/9)', () => {
     expect(v.cIndOp).toBe('030101');
     const call = (append as jest.Mock).mock.calls[0][2];
     expect(call.eventType).toBe('service_fiscal_profile.updated');
-    expect(call.payload).toEqual({ serviceRef: 'svc-corte', cTribNac: '060101', cTribMun: '', cNBS: '126021000', cIndOp: '030101', cLocPrestacao: '' });
+    expect(call.payload).toEqual({ serviceRef: 'svc-corte', cTribNac: '060101', cTribMun: '', cNBS: '126021000', cIndOp: '030101', cLocPrestacao: '', cClassTrib: '' });
     expect(JSON.parse(canonicalizeAuditPayload('service_fiscal_profile.updated', call.payload))).toMatchObject({ cTribNac: '060101' });
+  });
+
+  // IBS-CBS-2027 PR-1 — L1 (dono, questionário, 21/10: E0959 ao salvar) e L2 (cClassTrib na trilha).
+  it('cClassTrib com prefixo ≠ CST do perfil → 400 (RN E0959) e nada é gravado', async () => {
+    const { svc, repo } = buildSvc({ ibsCbsCst: '000' });
+    await expect(svc.upsert(scope, 'svc-corte', UpsertServiceFiscalProfileSchema.parse({ unitId: 'unit-1', cTribNac: '060101', cClassTrib: '410001' }))).rejects.toBeInstanceOf(ValidationError);
+    expect(repo.upsert).not.toHaveBeenCalled();
+  });
+
+  it('cClassTrib coerente com o CST grava e entra no payload da auditoria (canônico aceita)', async () => {
+    const { svc, append } = buildSvc({ ibsCbsCst: '000' });
+    const v = await svc.upsert(scope, 'svc-corte', UpsertServiceFiscalProfileSchema.parse({ unitId: 'unit-1', cTribNac: '060101', cClassTrib: '000001' }));
+    expect(v.cClassTrib).toBe('000001');
+    const payload = (append as jest.Mock).mock.calls[0][2].payload;
+    expect(payload.cClassTrib).toBe('000001');
+    expect(JSON.parse(canonicalizeAuditPayload('service_fiscal_profile.updated', payload))).toMatchObject({ cClassTrib: '000001' });
+  });
+
+  it('perfil sem CST (ou sem perfil): cClassTrib não tem com o que conferir e grava', async () => {
+    await expect(buildSvc({ ibsCbsCst: null }).svc.upsert(scope, 'a', UpsertServiceFiscalProfileSchema.parse({ unitId: 'unit-1', cTribNac: '060101', cClassTrib: '410001' }))).resolves.toMatchObject({ cClassTrib: '410001' });
+    await expect(buildSvc().svc.upsert(scope, 'b', UpsertServiceFiscalProfileSchema.parse({ unitId: 'unit-1', cTribNac: '060101', cClassTrib: '410001' }))).resolves.toMatchObject({ cClassTrib: '410001' });
   });
 
   it('get de serviceRef sem perfil → NotFoundError; delete audita service_fiscal_profile.deleted', async () => {
