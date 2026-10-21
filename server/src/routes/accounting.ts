@@ -191,6 +191,12 @@ import {
   getFiscalCertificate,
   putFiscalCertificate,
 } from '../controllers/fiscalCertificateController';
+import {
+  confirmIbsCbsAssessment,
+  listIbsCbsAssessments,
+  previewIbsCbsAssessment,
+  reconcileIbsCbsProvisao,
+} from '../controllers/ibsCbsAssessmentController';
 
 const router = Router();
 
@@ -402,6 +408,12 @@ router.post('/company-signers', createCompanySigner);
 router.get('/company-signers/:id', getCompanySigner);
 router.put('/company-signers/:id', updateCompanySigner);
 router.delete('/company-signers/:id', deleteCompanySigner);
+// IBS-CBS-2027 PR-2 (BRIEF item 13) — apuração mensal de IBS/CBS; /preview estático antes de /:id. /:id/provisao =
+// reconcile da reclassificação (dono 21/10).
+router.post('/ibs-cbs-assessments/preview', previewIbsCbsAssessment);
+router.get('/ibs-cbs-assessments', listIbsCbsAssessments);
+router.post('/ibs-cbs-assessments', confirmIbsCbsAssessment);
+router.post('/ibs-cbs-assessments/:id/provisao', reconcileIbsCbsProvisao);
 
 // BE-INCR-FIXED-ASSETS (nó C8, Bloco A) — tabela de taxas de depreciação; segmento estático, antes
 // de /:unitId/periods. /:id/hide antes de qualquer /:id genérico futuro (nenhum hoje neste recurso).

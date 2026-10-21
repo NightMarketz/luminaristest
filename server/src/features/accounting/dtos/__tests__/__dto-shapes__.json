@@ -713,6 +713,28 @@
                     }
                   ]
                 },
+                "ibsRecolherAccountId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "cbsRecolherAccountId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
                 "partnerAccountRef": {
                   "anyOf": [
                     {
@@ -5785,6 +5807,28 @@
             }
           ]
         },
+        "ibsRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cbsRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "partnerAccountRef": {
           "anyOf": [
             {
@@ -6251,6 +6295,28 @@
           ]
         },
         "csllSaldoNegativoAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ibsRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cbsRecolherAccountId": {
           "anyOf": [
             {
               "type": "string",
@@ -6914,6 +6980,122 @@
       "required": [
         "unitId",
         "assetId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "IbsCbsAssessmentDto.ts": {
+    "IbsCbsAssessmentConfirmSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "anoCalendario": {
+          "type": "integer",
+          "minimum": 2027,
+          "maximum": 9007199254740991
+        },
+        "mes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        },
+        "tributo": {
+          "type": "string",
+          "enum": [
+            "IBS",
+            "CBS"
+          ]
+        },
+        "expectedSupersedesId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "anoCalendario",
+        "mes",
+        "tributo",
+        "expectedSupersedesId"
+      ],
+      "additionalProperties": false
+    },
+    "IbsCbsAssessmentListQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "anoCalendario": {
+          "type": "integer",
+          "minimum": 2027,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "unitId",
+        "anoCalendario"
+      ],
+      "additionalProperties": false
+    },
+    "IbsCbsAssessmentPreviewSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "anoCalendario": {
+          "type": "integer",
+          "minimum": 2027,
+          "maximum": 9007199254740991
+        },
+        "mes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        },
+        "tributo": {
+          "type": "string",
+          "enum": [
+            "IBS",
+            "CBS"
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "anoCalendario",
+        "mes",
+        "tributo"
+      ],
+      "additionalProperties": false
+    },
+    "IbsCbsAssessmentScopeSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
       ],
       "additionalProperties": false
     }

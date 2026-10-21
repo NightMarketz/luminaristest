@@ -167,6 +167,8 @@ import { SimplesRegistroCaixaService } from '../features/accounting/services/Sim
 import { SimplesCreditoIncobravelRepository } from '../features/accounting/repositories/SimplesCreditoIncobravelRepository';
 import type { ISimplesCreditoIncobravelRepository } from '../features/accounting/repositories/ISimplesCreditoIncobravelRepository';
 import { PisCofinsAssessmentService } from '../features/accounting/services/PisCofinsAssessmentService';
+import { IbsCbsAssessmentService } from '../features/accounting/services/IbsCbsAssessmentService';
+import { ConsumptionTaxAssessmentRepository } from '../features/accounting/repositories/ConsumptionTaxAssessmentRepository';
 import { AccountingDeliveryService } from '../features/accounting/services/AccountingDeliveryService';
 import { AccountingReviewService } from '../features/accounting/services/AccountingReviewService';
 import { InventoryService } from '../features/accounting/services/InventoryService';
@@ -301,6 +303,7 @@ import type { IPaymentAccountRepository } from '../features/accounting/repositor
 import type { IFiscalCertificateRepository } from '../features/accounting/repositories/IFiscalCertificateRepository';
 import type { ICollectionChargeRepository } from '../features/accounting/repositories/ICollectionChargeRepository';
 import type { ITaxAssessmentRepository } from '../features/accounting/repositories/ITaxAssessmentRepository';
+import type { IConsumptionTaxAssessmentRepository } from '../features/accounting/repositories/IConsumptionTaxAssessmentRepository';
 import type { IMitExportRepository } from '../features/accounting/repositories/IMitExportRepository';
 import type { ISimplesEntradasRepository } from '../features/accounting/repositories/ISimplesEntradasRepository';
 import type { IReceitaFiscalRepository } from '../features/accounting/repositories/IReceitaFiscalRepository';
@@ -771,6 +774,7 @@ export class ApplicationFactory {
     fiscalCertificate: IFiscalCertificateRepository; // BE-INCR-DFE-ADN-EMISSOR PR-1
     collectionCharge: ICollectionChargeRepository; // BE-INCR-PAYMENT-PROVIDER PR-2
     taxAssessment: ITaxAssessmentRepository; // X7 Fase A PR-2
+    consumptionTaxAssessment: IConsumptionTaxAssessmentRepository; // IBS-CBS-2027 PR-2 (item 8)
     mitExport: IMitExportRepository; // X9 PR-2
     simplesEntradas: ISimplesEntradasRepository; // X14 PR-2
     receitaFiscal: IReceitaFiscalRepository; // X14 PR-2
@@ -885,6 +889,7 @@ export class ApplicationFactory {
     simplesDeclaracao: SimplesDeclaracaoService; // X14 PR-4
     simplesRegistroCaixa: SimplesRegistroCaixaService; // X14-CAIXA PR-3
     pisCofinsAssessment: PisCofinsAssessmentService; // X8 PR-2
+    ibsCbsAssessment: IbsCbsAssessmentService; // IBS-CBS-2027 PR-2
     taxAssessmentRecalc: TaxAssessmentRecalcService; // BE-INCR-LEGAL-PARAMS PR-4 (item 10)
     accountingDelivery: AccountingDeliveryService;
     accountingReview: AccountingReviewService;
@@ -975,6 +980,7 @@ export class ApplicationFactory {
       fiscalCertificate: new FiscalCertificateRepository(),
       collectionCharge: new CollectionChargeRepository(),
       taxAssessment: new TaxAssessmentRepository(),
+      consumptionTaxAssessment: new ConsumptionTaxAssessmentRepository(), // IBS-CBS-2027 PR-2
       mitExport: new MitExportRepository(),
       simplesEntradas: new SimplesEntradasRepository(),
       receitaFiscal: new ReceitaFiscalRepository(),
@@ -1829,6 +1835,20 @@ export class ApplicationFactory {
       ),
       // BE-INCR-PIS-COFINS PR-2 (nó X8): prévia/confirmação da apuração mensal de PIS/Cofins (reusa o TaxAssessment do X7).
       pisCofinsAssessment: pisCofinsAssessmentService,
+      // IBS-CBS-2027 PR-2 (BRIEF itens 6–13): apuração mensal de IBS/CBS — família própria, reclassificação em 2 commits.
+      ibsCbsAssessment: new IbsCbsAssessmentService(
+        this.repositories.consumptionTaxAssessment,
+        this.repositories.companyFiscalProfile,
+        this.repositories.fiscalProfile,
+        this.repositories.fiscalDocument, // débito por documento + venda sem documento (itens 6–7), só leitura
+        this.repositories.journalEntry, // `sale.settled` do mês (item 7), só leitura
+        this.repositories.posting,
+        this.repositories.account,
+        postingService, // item 12: reclassificação + estorno na substituição
+        this.policies.accounting,
+        auditService,
+        legalParameterService, // fotografia IBS_CBS (PR-1)
+      ),
       // BE-INCR-LEGAL-PARAMS PR-4 (item 10): recálculo das apurações quando uma linha de lei é publicada/revogada.
       taxAssessmentRecalc: new TaxAssessmentRecalcService(
         this.repositories.legalParameterRecalcJob,
@@ -2251,6 +2271,7 @@ export class ApplicationFactory {
   public getSimplesDeclaracaoService = (): SimplesDeclaracaoService => this.services.simplesDeclaracao;
   public getSimplesRegistroCaixaService = (): SimplesRegistroCaixaService => this.services.simplesRegistroCaixa;
   public getPisCofinsAssessmentService = (): PisCofinsAssessmentService => this.services.pisCofinsAssessment;
+  public getIbsCbsAssessmentService = (): IbsCbsAssessmentService => this.services.ibsCbsAssessment;
   public getAccountingDeliveryService = (): AccountingDeliveryService =>
     this.services.accountingDelivery;
   public getAccountingReviewService = (): AccountingReviewService => this.services.accountingReview;

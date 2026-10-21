@@ -127,6 +127,13 @@ export interface IFiscalDocumentRepository {
    */
   somaNfseAutorizadaNaCompetencia(scope: AccountingScope, competencia: string, tx?: Prisma.TransactionClient): Promise<bigint>;
   /**
+   * IBS-CBS-2027 PR-2 (BRIEF item 6) — NFS-e e NF-e vivas em produção do escopo, AUTORIZADAS (com ou sem divergência),
+   * `dCompet` em [from, to] (AAAA-MM-DD). Leitura do débito por documento (F-IBS-3 a).
+   */
+  findAuthorizedForIbsCbs(scope: AccountingScope, from: string, to: string, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
+  /** IBS-CBS-2027 PR-2 (item 7, `VENDA_SEM_DOCUMENTO`) — das `saleIds`, as que têm documento AUTORIZADO vivo em produção (qualquer mês). */
+  saleIdsWithAuthorizedDocument(scope: AccountingScope, saleIds: readonly string[], tx?: Prisma.TransactionClient): Promise<string[]>;
+  /**
    * X7 Fase C PR-2 (BRIEF C item 14) — NFS-e vivas em produção do escopo, `dCompet` em [from, to] (AAAA-MM-DD), nos
    * `statuses` pedidos, cada uma com o `cLocPrestacao` lido do payload da tentativa CORRENTE (F-TC-1 a; null se o
    * payload não o tiver).

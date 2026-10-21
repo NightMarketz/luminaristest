@@ -67,6 +67,9 @@ const FiscalProfileFields = z
     // X7 Fase B (BRIEF B item 16, F-TB-3 a): saldo negativo a compensar do ajuste anual (Asset) — código do contador (P-B8).
     irpjSaldoNegativoAccountId: z.string().min(1).nullable().optional(),
     csllSaldoNegativoAccountId: z.string().min(1).nullable().optional(),
+    // IBS-CBS-2027 PR-2 (BRIEF item 12; F-IBS-8 c): IBS/CBS a recolher (Liability) — referencial DRAFT (§7 item 6).
+    ibsRecolherAccountId: z.string().min(1).nullable().optional(),
+    cbsRecolherAccountId: z.string().min(1).nullable().optional(),
     partnerAccountRef: z.string().min(1).max(120).nullable().optional(),
     // BE-INCR-DFE — emitente (ADR-DFE D5)
     codMun: ibge7.nullable().optional(),

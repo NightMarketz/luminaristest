@@ -101,6 +101,29 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     return r._sum.vServCents ?? 0n;
   }
 
+  public async findAuthorizedForIbsCbs(scope: AccountingScope, from: string, to: string, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]> {
+    return this.db(tx).fiscalDocument.findMany({
+      where: {
+        ...accountingScopeWhere(scope),
+        ambiente: 'producao',
+        status: { in: [...AUTHORIZED_STATUSES] },
+        dCompet: { gte: from, lte: to },
+        deletedAt: null,
+      },
+      orderBy: [{ dCompet: 'asc' }, { createdAt: 'asc' }],
+    });
+  }
+
+  public async saleIdsWithAuthorizedDocument(scope: AccountingScope, saleIds: readonly string[], tx?: Prisma.TransactionClient): Promise<string[]> {
+    if (saleIds.length === 0) return [];
+    const rows = await this.db(tx).fiscalDocument.findMany({
+      where: { ...accountingScopeWhere(scope), ambiente: 'producao', status: { in: [...AUTHORIZED_STATUSES] }, saleId: { in: [...saleIds] }, deletedAt: null },
+      select: { saleId: true },
+      distinct: ['saleId'],
+    });
+    return rows.map((r) => r.saleId);
+  }
+
   public async listPending(olderThan: Date, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]> {
     return this.db(tx).fiscalDocument.findMany({
       where: { status: { in: ['SENT', 'PROCESSING'] }, deletedAt: null, updatedAt: { lt: olderThan } },

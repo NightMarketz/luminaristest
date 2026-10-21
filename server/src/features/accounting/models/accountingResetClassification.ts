@@ -81,6 +81,7 @@ export const ACCOUNTING_RESET_BLOCKING = [
   'PaymentAccount',
   'CollectionCharge',
   'TaxAssessment',
+  'ConsumptionTaxAssessment', // IBS-CBS-2027 PR-2 — tabela nova nasce BLOCKING (regra do cabeçalho)
   'MitExport',
   'SimplesHistoricoMensal',
   'SimplesSegregacaoManual',
