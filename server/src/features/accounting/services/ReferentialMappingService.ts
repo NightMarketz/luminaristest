@@ -6,6 +6,7 @@ import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { AuditService } from './AuditService';
+import { logger } from '../../../lib/logger';
 import { REFERENCIAL_PLANO_PADRAO } from '../fixtures/ChartOfAccountsFixture';
 import type {
   SetReferentialMappingDto,
@@ -187,7 +188,14 @@ export class ReferentialMappingService {
       const mapped = new Set((await this.repo.findManyByVersion(scope, mappingVersion)).map((m) => m.accountId));
       for (const entry of REFERENCIAL_PLANO_PADRAO) {
         const account = accounts.find((a) => a.code === entry.accountCode && a.acceptsEntries);
-        if (account && !mapped.has(account.id)) pendentes.push({ accountId: account.id, referentialCode: entry.referentialCode, label: entry.label, mappingVersion });
+        if (!account || mapped.has(account.id)) continue;
+        // Catálogo da versão carregado sem o código (ou com ele sintético): não inventa nem derruba quem chamou (a
+        // instalação do kit) — a folha fica fora e a `coverage` a mostra como não mapeada.
+        if (!(await this.destinoAceito(mappingVersion, entry.referentialCode))) {
+          logger.warn('Referencial do plano padrão fora do catálogo da versão — folha não mapeada', { mappingVersion, accountCode: entry.accountCode, referentialCode: entry.referentialCode });
+          continue;
+        }
+        pendentes.push({ accountId: account.id, referentialCode: entry.referentialCode, label: entry.label, mappingVersion });
       }
     }
     if (pendentes.length === 0) return 0;
@@ -195,6 +203,13 @@ export class ReferentialMappingService {
       for (const item of pendentes) await this.applySet(tx, scope, item);
     });
     return pendentes.length;
+  }
+
+  /** Destino aceito pelo catálogo da versão: analítico, ou versão sem catálogo (comportamento INCR-9 do `applySet`). */
+  private async destinoAceito(mappingVersion: string, referentialCode: string): Promise<boolean> {
+    const conta = await this.catalogRepo.findByVersionAndCode(mappingVersion, referentialCode);
+    if (conta) return conta.isAnalytic;
+    return (await this.catalogRepo.countByVersion(mappingVersion)) === 0;
   }
 
   private async applySet(

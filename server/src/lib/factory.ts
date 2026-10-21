@@ -509,6 +509,9 @@ function buildKitReferentialPort(
     },
     async batchSet(mappingVersion, items) {
       await mappingService.batchSet(scope, { unitId: scope.unitId, mappingVersion, items });
+      // IRRF-DISTRIBUICAO PR-1 item 6 (opção (b), provisória): a versão que o kit acabou de abrir também recebe o
+      // referencial das folhas do plano padrão que o kit publicado não traz — senão a instalação nasce "não pronta".
+      await mappingService.ensureCanonicalMappings(scope);
     },
   };
 }

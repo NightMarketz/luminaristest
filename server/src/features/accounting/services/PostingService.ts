@@ -161,9 +161,11 @@ export class PostingService {
    */
   public async ensureChartOfAccounts(scope: AccountingScope): Promise<void> {
     const { userId, unitId } = accountingScopeWhere(scope);
+    let criou = false;
     for (const account of CANONICAL_ACCOUNTS) {
       const existing = await this.accountRepo.findByCode(scope, account.code);
       if (existing) continue;
+      criou = true;
       try {
         await this.accountRepo.create({
           userId,
@@ -189,7 +191,9 @@ export class PostingService {
         throw error;
       }
     }
-    await this.canonicalReferential?.ensureCanonicalMappings(scope);
+    // Só quando alguma conta do plano padrão nasceu (ou voltou) agora: este método roda em todo lançamento, e o referencial
+    // de uma versão aberta depois chega pelo passo 7 do kit (adaptador da factory).
+    if (criou) await this.canonicalReferential?.ensureCanonicalMappings(scope);
   }
 
   /** Resolve a leaf account by code, asserting it exists and accepts ledger lines. */

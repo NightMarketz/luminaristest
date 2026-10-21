@@ -144,6 +144,40 @@ PROVA-rodada-4:
     exit_code: 0
     log: "5052 passed"
   - command: cd server && npm run test:integration
+    exit_code: 1
+    log: "CORREÇÃO: o commit 7b945f32 declarou 0 por engano — a rodada falhou (migratePlano4NiveisCli e kitV2Referencial, 4 testes). Ver rodada 4b."
+```
+
+## Rodada 4b (2026-10-21): correção do que a integração pegou
+1. `kitV2Referencial`: a instalação do kit v6 deixava as 6 folhas novas sem mapeamento. O passo 7 do kit abre a versão depois do
+   `ensureChartOfAccounts`. Correção: o adaptador `buildKitReferentialPort.batchSet` (factory) também chama
+   `ensureCanonicalMappings`. O teste agora espera 38 folhas cobertas (antes 32).
+2. `KitInstallService` (9 testes): com o passo acima, catálogo carregado SEM os códigos abortava a instalação no passo 7
+   ("não existe no catálogo da versão 2026"). Correção: `ensureCanonicalMappings` pula o código que o catálogo carregado não
+   reconhece (ou é sintético), registra `logger.warn` e não aborta; a folha aparece como não mapeada na `coverage`. Não
+   inventa código. Teste: "catálogo da versão carregado sem os códigos".
+3. `migratePlano4NiveisCli`: a migração L8 cria as sintéticas novas (2.1.7/2.3.2/2.3.3), mas não as folhas novas (não são
+   renomeação; nascem no próximo `ensureChartOfAccounts`). O teste exclui as `FOLHAS_POS_L8`.
+4. `importBoundary`: o teste do sectorKits não importa de `features/accounting`; os 6 códigos entram como literais.
+Arquivos fora do write_set tocados nesta rodada: `lib/factory.ts` (registro), `jobs/__tests__/migratePlano4NiveisCli…`,
+`sectorKits/__tests__/kitV2Referencial…`, `fixtures/__tests__/…plano4niveis…`, `PostingService.ts`,
+`ReferentialMappingService.ts` + repo (o mecanismo da opção (b)).
+
+5. Performance: chamar `ensureCanonicalMappings` em TODO `ensureChartOfAccounts` (que roda em todo lançamento) deu timeout
+   de hook (PostingDimension, taxAssessmentAnual/Provision, reproduzido isolado). Agora roda só quando o ensure cria (ou
+   restaura) alguma conta do plano padrão; a versão aberta depois chega pelo passo 7 do kit. Teste do item 6 refeito para
+   simular o escopo de antes do deploy (folhas novas apagadas → recriadas e mapeadas).
+
+```yaml
+PROVA-rodada-4b:
+  - command: cd server && npx tsc --noEmit && npx tsc --noEmit -p tsconfig.test.json
     exit_code: 0
-    log: "4/4 shards verdes"
+  - command: cd server && npm run check:arch
+    exit_code: 0
+  - command: cd server && npm run test:unit
+    exit_code: 0
+    log: "5052 passed"
+  - command: cd server && npm run test:integration
+    exit_code: 0
+    log: "4/4 shards verdes (380+349+349+389)"
 ```
