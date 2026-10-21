@@ -67,4 +67,27 @@ describe('RightSidebar — histórico do modo IA ao alternar de modo (achado 1 d
     fireEvent.click(screen.getByText('onboardingFieldsModeAi'));
     expect(textos().join('|')).toContain('Proponho o campo Alergias.');
   });
+
+  it('turno sem Aplicar não apaga o que o modo manual editou (só o Aplicar troca os campos)', async () => {
+    // O servidor não conhece a edição manual: a tabela dele volta sem o campo novo.
+    const resposta: CustomizeFieldsResult = {
+      sessionId: 's1',
+      tableKey: 'clientes',
+      table: { ...tabela, conversationHistory: historico },
+      conversationHistory: historico,
+      proposal: null,
+      discarded: [],
+    };
+    vi.mocked(globalThis.fetch).mockResolvedValue(res(200, resposta));
+    const editada: ITable = { ...tabela, fields: [...(tabela.fields ?? []), { name: 'apelido', label: 'Apelido', type: 'string' }] };
+    const onUpdateTable = vi.fn();
+    render(<RightSidebar selectedTable={editada} isVisible sessionId="s1" onUpdateTable={onUpdateTable} presetKey={null} />);
+
+    fireEvent.click(screen.getByText('onboardingFieldsModeAi'));
+    const caixa = screen.getByPlaceholderText('onboardingFieldsAiInputPlaceholder');
+    fireEvent.change(caixa, { target: { value: 'preciso guardar alergias' } });
+    fireEvent.keyDown(caixa, { key: 'Enter' });
+    await waitFor(() => expect(onUpdateTable).toHaveBeenCalledTimes(1));
+    expect(onUpdateTable).toHaveBeenCalledWith(expect.objectContaining({ fields: editada.fields, conversationHistory: historico }));
+  });
 });

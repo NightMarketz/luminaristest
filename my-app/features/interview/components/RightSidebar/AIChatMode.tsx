@@ -73,14 +73,19 @@ function AIChatMode({ tableData, sessionId, onSaveChanges, onClose, onSessionLos
     }
   }, [history, notes, pendingMessage, proposal]);
 
-  const applyResult = (data: CustomizeFieldsResult) => {
+  const applyResult = (data: CustomizeFieldsResult, applied = false) => {
     setHistory(data.conversationHistory.map(toMessage));
     setNotes([]);
     setProposal(data.proposal);
     setDiscarded(data.discarded);
     setAcknowledged(false);
-    // O hook guarda a tabela do servidor depois de todo turno: ao remontar, histórico e pendente são os da sessão.
-    onSaveChanges(data.table);
+    // O hook é sincronizado depois de todo turno: ao remontar, histórico e pendente são os da sessão. Só o Aplicar
+    // muda campos (item 15: a tabela do servidor); nos outros turnos os campos do hook ficam — o modo manual edita só ali.
+    onSaveChanges(applied ? data.table : {
+      ...tableData,
+      conversationHistory: data.table.conversationHistory,
+      pendingProposal: data.table.pendingProposal,
+    });
   };
 
   const addNote = (content: string) => {
@@ -135,7 +140,8 @@ function AIChatMode({ tableData, sessionId, onSaveChanges, onClose, onSessionLos
         ? { kind: 'decision', sessionId, tableKey, proposalId, decision, acknowledgeSensitive: true }
         : { kind: 'decision', sessionId, tableKey, proposalId, decision };
       // Item 15: sobe a tabela que o servidor devolveu (no `applyResult`), não uma montada no cliente.
-      applyResult(await InterviewService.customizeFields(body));
+      const data = await InterviewService.customizeFields(body);
+      applyResult(data, decision === 'apply' && data.applied === true);
     } catch (error) {
       handleError(error, t('onboardingFieldsAiDecisionFailed'));
     } finally {
