@@ -26,3 +26,18 @@
 ## O que esta triagem NÃO faz
 
 Não altera dado nem código (A3 vai a trilho próprio); não assina gate; não envia nada ao contador.
+
+## 21/10 — réplica do contador sobre a A5 (2ª mensagem colada pelo dono) — conferida
+
+| Afirmação do contador | Texto conferido | Confere? |
+|---|---|---|
+| LC 123 art. 18 § 20 permite ao município isentar/reduzir o ISS do optante | § 20: "concedam isenção ou redução ... do ISS ... será realizada redução proporcional ou ajuste do valor a ser recolhido" [D04, acervo, compilada 13/10] | **sim** |
+| § 20-A lista "isenção total / redução percentual / valor fixo" | § 20-A diz outra coisa: I "deliberação exclusiva e unilateral" do ente; II "de modo diferenciado para cada ramo de atividade" [D04] | **não** (citação errada) |
+| Res. CGSN 140 arts. 31–35 mandam zerar o ISS isento no PGDAS-D sem travar no piso | **Art. 31 p.ú.:** "Quanto ao ISS, os benefícios de que tratam os incisos I e II do caput [I = isenção ou redução] não poderão resultar em percentual menor do que 2% ..., exceto ... 7.02, 7.05 e 16.01 ... (LC 116, art. 8º-A, § 1º)". Art. 32 § 1º: isenção/redução "na forma de redução do percentual efetivo" (Sijut, idAto 92278, visão vigente, lido no navegador em 21/10) | **não** — o próprio regulamento citado aplica o piso à isenção |
+| LC 123 prevalece por especialidade (CF art. 146 III "d", 179) | argumento doutrinário; nenhum texto lido o positiva; o CGSN, órgão competente pelo § 20, incorporou o 8º-A § 1º | **não verificável no texto** (sem precedente citado) |
+
+**Conclusão da triagem (A5):** a ambiguidade se resolve pelo texto do regulamento — **isenção ou redução municipal do ISS do optante
+não pode levar o percentual abaixo de 2%** (exceto subitens 7.02, 7.05 e 16.01), Res. CGSN 140 art. 31 p.ú. c/c LC 116 art. 8º-A § 1º.
+A leitura do contador ("isenção total zera") contraria o art. 31 p.ú. Classe: **crítica do contador rejeitada por texto** — o
+produto **não muda** (o piso de 2% já confere, dossiê 17/10). Se o contador tiver precedente judicial (nº do processo/tema), ele
+entra como insumo novo, conferido no site do tribunal antes de qualquer mudança.

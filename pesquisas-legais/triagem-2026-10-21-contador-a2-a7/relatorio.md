@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — triagem-2026-10-21-contador-a2-a7
 
 **Pergunta:** Triagem da resposta do contador às ambiguidades A2,A3,A5,A6,A7: as citações conferem?
-**Aberto em:** 2026-10-21T15:43:09-03:00 · **Atualizado em:** 2026-10-21T15:48:46-03:00
+**Aberto em:** 2026-10-21T15:43:09-03:00 · **Atualizado em:** 2026-10-21T16:05:08-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -38,6 +38,13 @@ _O que não foi encontrado em fonte oficial._
 - **[D03]** Lcp 214 — Presidência - legislação federal  
   Link oficial: <https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm>  
   Baixado em 2026-10-21T15:43:20-03:00 · arquivo local `docs/D03_lcp214-htm.html` · SHA-256 `04dcc798298e0295c265ad980a77a5ab39be9d98baa199ec81eab136d7564ef7`
+- **[D04]** Lei Complementar nº 123 de 14/12/2006 — Acervo ctresb/leis (espelho de fonte oficial)  
+  Acervo: <https://github.com/ctresb/leis/blob/394a7e97c8604703a3ea6638df61ab1873cecc6e/federal/leis-complementares/2006/lcp-123-2006-12-14.md>  
+  Fonte oficial declarada: <https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2006-12-14;123> · versao_texto: compilada (texto vigente) · cópia de 2026-10-13  
+  Lido em 2026-10-21T15:59:48-03:00 · arquivo local `docs/D04_lcp-123-2006-12-14.md` · SHA-256 `62ae5f126e5d6a0bf1e149614362aeca97730684067c128251c92cc1f732bdd9`
+- **[D05]** Normas — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://normas.receita.fazenda.gov.br/sijut2consulta/link.action?idAto=92278&visao=compilado>  
+  Baixado em 2026-10-21T15:59:59-03:00 · arquivo local `docs/D05_link-action.html` · SHA-256 `9f9413e20884b24680269927744a2abbf407243127ba5087a1489fd91fc8153a`
 
 ## Registro de buscas
 _Nenhuma busca registrada._
