@@ -13,6 +13,13 @@ pelo barrel `@/components/ui` (`index.ts`).
 > O modo claro/escuro é persistido em `localStorage` e aplicado por um script inline em
 > `pages/_document.tsx` (evita flash de tema).
 
+## Formulário
+
+| Componente | Export | Papel |
+|---|---|---|
+| `Button` | `@/components/ui` | Botão canônico, variantes `primary`/`secondary`; `type="button"` por padrão. |
+| `Checkbox` | `@/components/ui` | Caixa de seleção com rótulo clicável; `onChange(checked)`. |
+
 ## Modais e feedback
 
 | Componente | Export | Papel |
@@ -34,8 +41,8 @@ Fluxo passo-a-passo (ex.: onboarding/setup), com barrel próprio `./wizard`:
 
 ```
 ui/
-├── index.ts                 # barrel: Galaxy*, Modal, ConfirmModal, useConfirmModal, Toast, Alert
-├── GalaxyBackground.tsx · GalaxyCard.tsx · Modal.tsx
+├── index.ts                 # barrel: Galaxy*, Modal, Button, Checkbox, ConfirmModal, useConfirmModal, Toast, Alert
+├── GalaxyBackground.tsx · GalaxyCard.tsx · Modal.tsx · Button.tsx · Checkbox.tsx
 ├── feedback/                # Alert · ConfirmModal · useConfirmModal · Toast · LoadingSpinner
 └── wizard/                  # WizardModal · WizardTabBar (+ index.ts)
 ```
@@ -43,6 +50,6 @@ ui/
 ## Uso
 
 ```tsx
-import { GalaxyBackground, GalaxyCard, Modal, ConfirmModal, useConfirmModal, Toast, Alert } from '@/components/ui';
+import { GalaxyBackground, GalaxyCard, Modal, Button, Checkbox, ConfirmModal, useConfirmModal, Toast, Alert } from '@/components/ui';
 import { WizardModal, WizardTabBar } from '@/components/ui/wizard';
 ```

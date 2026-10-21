@@ -73,6 +73,18 @@ describe('useAiInterview — sessão de customização perdida ou concorrente (W
     expect(body).not.toHaveProperty('sessionId');
   });
 
+  it('achado da revisão do #785: 404 também fecha o painel direito e solta a tabela selecionada', async () => {
+    const hook = await customizando();
+    act(() => hook.result.current.handleSelectTable({ key: 'clientes', name: 'Clientes', description: '', conversationHistory: [], fields: [] }));
+    expect(hook.result.current.showRightPanel).toBe(true);
+    fetchMock.mockResolvedValueOnce(resp(404, { code: 'INTERVIEW_SESSION_NOT_FOUND', message: 'x' }));
+
+    await enviar(hook, 'quero adicionar estoque');
+
+    expect(hook.result.current.showRightPanel).toBe(false);
+    expect(hook.result.current.selectedTable).toBeNull();
+  });
+
   it('item 14: 409 com o code → mensagem própria; conversa, estágio, sessionId e painel ficam como estavam', async () => {
     const hook = await customizando();
     const antes = hook.result.current.messages.length;
