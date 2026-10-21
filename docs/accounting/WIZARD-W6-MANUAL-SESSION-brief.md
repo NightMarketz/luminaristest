@@ -35,7 +35,7 @@
    `sessionId` de A → 404 e a sessão de A intacta.
 3. **Validação canônica, tudo ou nada.** Cada `add` passa pelo `AdvancedFieldSchema` (o mesmo do item 8, sem
    cópia). Nome reservado, nome já existente, `setHidden` de nome inexistente ou nome repetido no lote → **400**
-   `{ code: 'MANUAL_CHANGE_INVALID', details: [{ index, name, reason }] }` e **nada** é gravado. Motivos:
+   `{ code: 'MANUAL_CHANGE_INVALID', details: { changes: [{ index, name, reason }] } }` e **nada** é gravado. Motivos:
    `reserved | exists | not_found | duplicate | invalid`. *Teste:* lote com 1 válido + 1 reservado → 400 e
    `fields` da sessão idêntico ao de antes.
 4. **Aplica e grava numa escrita só.** `add` acrescenta o campo validado (com `format` quando o F-MS-2 mapear);
@@ -109,7 +109,7 @@ O `ManualFieldSchema` é a borda da rota; a regra do campo continua sendo o `Adv
 
 `200` → `CustomizeFieldsResult` (inalterado), com `applied: true`, `proposal: null`, `discarded: []`.
 
-Erros: `400` DTO · `400 MANUAL_CHANGE_INVALID` `{ details: Array<{ index: number; name: string; reason: 'reserved'|'exists'|'not_found'|'duplicate'|'invalid' }> }` ·
+Erros: `400` DTO · `400 MANUAL_CHANGE_INVALID` `{ details: { changes: Array<{ index: number; name: string; reason: 'reserved'|'exists'|'not_found'|'duplicate'|'invalid' }> } }` (objeto, não array: é o `details` do `ValidationError` canônico, que o `handleApiError` já devolve — ajuste da execução, 21/10) ·
 `400 SENSITIVE_FIELD_NOT_ACKNOWLEDGED` (F-MS-3 a) · `404 INTERVIEW_SESSION_NOT_FOUND | TABLE_NOT_IN_SESSION` ·
 `409 INTERVIEW_SESSION_CONFLICT`.
 
@@ -132,6 +132,17 @@ Erros: `400` DTO · `400 MANUAL_CHANGE_INVALID` `{ details: Array<{ index: numbe
 
 Decidido sem fork (um caminho só razoável): tudo ou nada no lote (item 3) — gravar metade de um "Salvar" deixa a
 tela e a sessão divergentes; nenhuma linha no histórico da conversa (o prompt da IA já lê os campos atuais).
+
+## 4.1 Revisão do #786 — decisões do dono (questionário, 2026-10-21)
+
+A revisão do #785/#786 achou pontos que mudam o contrato acima. O dono decidiu (todas as recomendações):
+
+| Ponto | Decisão | Efeito no contrato |
+|---|---|---|
+| Esconder campo obrigatório | Recusar no servidor e travar na tela | `setHidden` com `hidden:true` em campo `required` → 400 `MANUAL_CHANGE_INVALID`, motivo novo `required_hidden`; a caixa "Visível" de obrigatório fica desabilitada (mostrar de novo continua livre) |
+| `format` em campo não-texto | DTO recusa | `ManualFieldSchema` ganha `refine`: `format` só com `type: 'string'` |
+| Regra da ciência copiada no front | Servidor decide | a pendente guardada na sessão leva `requiresSensitiveAck` (§2.4 do BRIEF do W6); `SENSITIVE_FIELD_NOT_ACKNOWLEDGED` traz `details: { fields: string[] }`; no manual, o 1º Salvar recebe os nomes e só então aparecem selo e caixa (item 11 muda: o front não tem mais a rede de radicais) |
+| Sessão perdida com o painel aberto | Fechar o painel direito | `handleSessionLost` fecha o painel e solta a tabela selecionada (PR #785) |
 
 ## 5. Pendente de validação externa
 

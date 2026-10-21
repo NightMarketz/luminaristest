@@ -42,13 +42,21 @@ function sensitiveCategoryOf(change: ModelChange): SensitiveCategory | null {
   return matchesSensitiveRadical(change.name, change.label) ? UNSPECIFIED_SENSITIVE_CATEGORY : null;
 }
 
-type FieldCheck = { ok: true; field: AdvancedField } | { ok: false; reason: DiscardedChange['reason'] };
+export type FieldCheck = { ok: true; field: AdvancedField } | { ok: false; reason: 'reserved' | 'invalid' };
+
+/** O campo candidato passa pelo `AdvancedFieldSchema` canônico; o motivo distingue nome reservado do resto. */
+export function parseCanonicalField(candidate: Record<string, unknown>): FieldCheck {
+  const parsed = AdvancedFieldSchema.safeParse(candidate);
+  if (parsed.success) return { ok: true, field: parsed.data };
+  const reserved = parsed.error.issues.some((i) => i.path[0] === 'name' && /reservado/i.test(i.message));
+  return { ok: false, reason: reserved ? 'reserved' : 'invalid' };
+}
 
 /**
  * Item 8: o candidato passa pelo `AdvancedFieldSchema` canônico. Tipos fora da lista da IA (F-W6-4 a) são
  * descartados antes; o resto do schema decide o nome reservado e o `select` sem opção.
  */
-function checkField(change: ModelChange): FieldCheck {
+function checkField(change: ModelChange): FieldCheck | { ok: false; reason: 'type_not_allowed' } {
   if (!(AI_FIELD_TYPES as readonly string[]).includes(change.type)) return { ok: false, reason: 'type_not_allowed' };
   const candidate = {
     name: change.name,
@@ -58,10 +66,7 @@ function checkField(change: ModelChange): FieldCheck {
     ...(change.description ? { description: change.description } : {}),
     ...(change.type === 'select' ? { options: change.options } : {}),
   };
-  const parsed = AdvancedFieldSchema.safeParse(candidate);
-  if (parsed.success) return { ok: true, field: parsed.data };
-  const reserved = parsed.error.issues.some((i) => i.path[0] === 'name' && /reservado/i.test(i.message));
-  return { ok: false, reason: reserved ? 'reserved' : 'invalid' };
+  return parseCanonicalField(candidate);
 }
 
 /**

@@ -113,6 +113,18 @@ Rastreio: nota [`docs/plano/nos/W6.md`](../plano/nos/W6.md) e [`docs/plano/gates
    Resultado esperado: `decision:"discard"` → 200; o cartão some; a lista do modo manual **não** muda.
    EVIDÊNCIA: [linha do Network + screenshot do modo manual]
 
+7. W6-7 — Modo manual grava na sessão (emenda de 21/10, BRIEF `WIZARD-W6-MANUAL-SESSION-brief.md`): no modo **Manual**, clicar **Novo Campo**, criar "Apelido" (tipo Texto), desmarcar "Visível" de um campo existente e clicar **Salvar Alterações**.
+   Resultado esperado: `POST /api/dashboard/ai/CustomizeFields` → **200**, corpo `{kind:"manual", …, changes:[{action:"setHidden",…},{action:"add",…}]}`; aparece "Alterações salvas com sucesso!" e o Salvar fica cinza (nada pendente). O tipo **Senha** não aparece no formulário.
+   EVIDÊNCIA: [linha do Network + aba Payload + screenshot do painel]
+
+8. W6-8 — O manual sobrevive à IA: voltar ao modo **IA**, pedir "quero também a data de nascimento" e clicar **Aplicar** na proposta.
+   Resultado esperado: a proposta não reapresenta o "Apelido"; depois do Aplicar, o modo manual mostra "Apelido", a data de nascimento e o campo escondido continua escondido.
+   EVIDÊNCIA: [screenshot do modo manual depois do Aplicar]
+
+9. W6-9 — Campo sensível no manual: criar "Alergias" no modo manual.
+   Resultado esperado: selo **"Dado sensível (LGPD)"**, o texto do art. 5º, II e a caixa "Entendo que este campo guarda dado sensível"; Salvar cinza até marcar; com a caixa marcada, o corpo leva `acknowledgeSensitive:true` → 200.
+   EVIDÊNCIA: [screenshot do bloco com o Salvar cinza + linha do Network com o Payload]
+
 ## Desfecho W6 (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
 [ ] FALHOU — passo __ divergiu; evidência da divergência colada acima; NENHUM passo seguinte foi executado após a falha

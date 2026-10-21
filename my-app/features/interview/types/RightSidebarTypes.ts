@@ -4,6 +4,8 @@ export interface ITableField {
   name: string;
   label: string;
   type: string;
+  /** W6 emenda (F-MS-2 a): `email`/`phone` do formulário manual são `format` de um campo `string`. */
+  format?: string;
   required?: boolean;
   hidden?: boolean;
 }
@@ -32,7 +34,7 @@ export interface RightSidebarProps {
   selectedTable: ITable | null;
   isVisible: boolean;
   sessionId: string | null;
-  onUpdateTable?: (updatedTable: ITable) => void;
+  onUpdateTable: (updatedTable: ITable) => void;
   /** W6 item 17: a sessão de customização sumiu (404 `INTERVIEW_SESSION_NOT_FOUND`) — o hook volta a entrevista à escolha. */
   onSessionLost?: () => void;
   presetKey: string | null;

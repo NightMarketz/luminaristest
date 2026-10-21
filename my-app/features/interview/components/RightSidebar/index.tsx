@@ -1,9 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'next-i18next';
+import { Checkbox } from '@/components/ui';
+import { InterviewApiError, InterviewService } from '@/lib/services/interview.service';
+import { nonEmpty } from '@/lib/utils/nonEmpty';
+import type { CustomizeFieldsDtoInput } from '@/types/contracts/interview/CustomizeFields.dto.gen';
 import { ITable, ITableField, RightSidebarProps, InteractionMode } from '../../types/RightSidebarTypes';
 import FieldList from './FieldList';
 import NewFieldForm from './NewFieldForm';
 import AIChatMode from './AIChatMode';
+import { diffManualChanges, fromFormType } from './manualChanges';
+
+/** Motivos do 400 `MANUAL_CHANGE_INVALID` (BRIEF WIZARD-W6-MANUAL-SESSION §2.2) → chave de texto. */
+const MANUAL_REASON_KEY: Record<string, string> = {
+  reserved: 'onboardingFieldsAiDiscardedReserved',
+  exists: 'onboardingFieldsAiDiscardedExists',
+  not_found: 'onboardingFieldsAiDiscardedNotFound',
+  duplicate: 'onboardingFieldsManualDuplicate',
+  required_hidden: 'onboardingFieldsManualRequiredHidden',
+  invalid: 'onboardingFieldsAiDiscardedInvalid',
+};
+
+/** `details.changes` do 400, lido sem confiar na forma. */
+function manualIssues(body: Record<string, unknown>): Array<{ name: string; reason: string }> {
+  const details = body.details;
+  if (typeof details !== 'object' || details === null || !('changes' in details) || !Array.isArray(details.changes)) return [];
+  return details.changes.flatMap((c: unknown) =>
+    typeof c === 'object' && c !== null && 'name' in c && 'reason' in c && typeof c.name === 'string' && typeof c.reason === 'string'
+      ? [{ name: c.name, reason: c.reason }]
+      : [],
+  );
+}
 
 /**
  * Painel lateral direito para customização de campos das tabelas
@@ -13,6 +39,10 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, onSe
   const [tableData, setTableData] = useState<ITable | null>(selectedTable);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveMessage, setSaveMessage] = useState<string>("");
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [acknowledged, setAcknowledged] = useState(false);
+  // Revisão do #786: o servidor decide quais campos pedem a ciência (`details.fields` do 400).
+  const [sensitiveNames, setSensitiveNames] = useState<string[]>([]);
   const [showNewFieldForm, setShowNewFieldForm] = useState<boolean>(false);
   const [interactionMode, setInteractionMode] = useState<InteractionMode>('manual');
   const [newField, setNewField] = useState<ITableField>({
@@ -56,8 +86,7 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, onSe
     }
     
     setTableData(selectedTable);
-    setSaveMessage(""); // Limpa mensagem de salvamento ao mudar de tabela
-    
+
     // Definir um timeout para forçar rerender após 100ms
     setTimeout(() => {
       console.log("RightSidebar: Estado atualizado após timeout");
@@ -65,6 +94,14 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, onSe
     // W6 (revisão do #785): só ao trocar de TABELA ou de visibilidade. A sincronização do modo IA atualiza a mesma
     // tabela no hook e não pode apagar a edição manual ainda não salva da cópia local.
   }, [selectedTable?.key, isVisible]);
+
+  // Limpa mensagem de salvamento, erro e ciência ao mudar de TABELA — não quando o hook devolve a mesma tabela
+  // gravada (W6 emenda: o Salvar sobe a tabela do servidor, e isso apagaria o "salvo" na hora).
+  useEffect(() => {
+    setSaveMessage("");
+    setSaveError(null);
+    setAcknowledged(false);
+  }, [selectedTable?.key]);
 
   // Toggle de visibilidade de um campo
   const handleToggleFieldVisibility = (index: number) => {
@@ -86,9 +123,12 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, onSe
   const handleAddField = () => {
     if (!tableData) return;
     
-    // Adiciona o hidden=false por padrão
-    const fieldToAdd = {
-      ...newField,
+    // Adiciona o hidden=false por padrão; F-MS-2 (a): email/telefone viram `format` de um campo texto
+    const fieldToAdd: ITableField = {
+      name: newField.name,
+      label: newField.label,
+      required: newField.required,
+      ...fromFormType(newField.type),
       hidden: false
     };
     
@@ -108,26 +148,64 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, onSe
     });
     
     setShowNewFieldForm(false);
+    // O lote mudou: a ciência dada valia para o anterior; o servidor decide de novo no próximo Salvar.
+    setSensitiveNames([]);
+    setAcknowledged(false);
   };
 
-  // Salva as alterações
-  const handleSave = () => {
-    if (!tableData || !onUpdateTable) return;
-    
+  // W6 emenda (BRIEF WIZARD-W6-MANUAL-SESSION item 9): o diff entre a tabela do hook e a editada é o que vai à sessão
+  const pendingChanges = selectedTable && tableData ? diffManualChanges(selectedTable, tableData) : [];
+  const sensitiveFields = (tableData?.fields ?? []).filter(f => sensitiveNames.includes(f.name));
+
+  /** Item 10: ramifica pelo `code` do corpo; a edição local fica na tela para o usuário corrigir. */
+  const saveErrorMessage = (error: unknown): string | null => {
+    const body = error instanceof InterviewApiError ? error.body : {};
+    if (body.code === 'INTERVIEW_SESSION_NOT_FOUND') {
+      onSessionLost?.();
+      return t('onboardingFieldsAiSessionLost');
+    }
+    if (body.code === 'MANUAL_CHANGE_INVALID') {
+      const lines = manualIssues(body).map(i => `${i.name}: ${t(MANUAL_REASON_KEY[i.reason] ?? 'onboardingFieldsAiDiscardedInvalid')}`);
+      return [t('onboardingFieldsManualInvalid'), ...lines].join('\n');
+    }
+    if (body.code === 'INTERVIEW_SESSION_CONFLICT') return t('onboardingFieldsManualConflict');
+    if (body.code === 'SENSITIVE_FIELD_NOT_ACKNOWLEDGED') {
+      const details = body.details;
+      const fields = typeof details === 'object' && details !== null && 'fields' in details && Array.isArray(details.fields)
+        ? details.fields.filter((f: unknown): f is string => typeof f === 'string')
+        : [];
+      setSensitiveNames(fields);
+      return null; // não é erro: o bloco de ciência aparece
+    }
+    console.error('[RightSidebar] Falha ao salvar o modo manual:', error);
+    return t('onboardingFieldsManualSaveFailed');
+  };
+
+  // Salva as alterações na sessão do servidor e sobe ao hook a tabela que ele devolveu
+  const handleSave = async () => {
+    const changes = nonEmpty(pendingChanges);
+    if (!tableData || !sessionId || !changes) return;
+
     setIsSaving(true);
-    
-    // Atualiza o estado global através do callback
-    onUpdateTable(tableData);
-    
-    setTimeout(() => {
-      setIsSaving(false);
+    setSaveError(null);
+    try {
+      const tableKey = tableData.key;
+      // Item 11 (F-MS-3 a): a ciência só vai depois que o servidor apontou campo sensível e a caixa foi marcada.
+      const body: CustomizeFieldsDtoInput = sensitiveNames.length > 0 && acknowledged
+        ? { kind: 'manual', sessionId, tableKey, changes, acknowledgeSensitive: true }
+        : { kind: 'manual', sessionId, tableKey, changes };
+      const data = await InterviewService.customizeFields(body);
+      setTableData(data.table);
+      onUpdateTable(data.table);
+      setAcknowledged(false);
+      setSensitiveNames([]);
       setSaveMessage(t('onboardingFieldsSaved'));
-      
-      // Limpa a mensagem após alguns segundos
-      setTimeout(() => {
-        setSaveMessage("");
-      }, 3000);
-    }, 500); // Simula um pequeno delay de processamento
+      setTimeout(() => setSaveMessage(""), 3000);
+    } catch (error) {
+      setSaveError(saveErrorMessage(error));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Só retornamos null se não houver tabela selecionada, caso contrário, renderizamos
@@ -282,9 +360,26 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, onSe
                 {saveMessage}
               </div>
             )}
+            {saveError && (
+              <div data-testid="manual-save-error" role="alert" className="mb-3 whitespace-pre-line rounded-2xl bg-red-50 dark:bg-red-900/30 p-3 text-sm text-red-700 dark:text-red-300">
+                {saveError}
+              </div>
+            )}
+            {sensitiveNames.length > 0 && (
+              <div data-testid="manual-sensitive" className="mb-3 rounded-2xl border border-neutral-200 dark:border-neutral-700 p-3 space-y-2">
+                <div className="flex flex-wrap items-center gap-2 text-sm text-neutral-800 dark:text-neutral-100">
+                  <span className="rounded-md bg-amber-100 dark:bg-amber-900 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-100">
+                    {t('onboardingFieldsAiSensitiveBadge')}
+                  </span>
+                  {sensitiveFields.map(f => <span key={f.name} className="font-medium">{f.label}</span>)}
+                </div>
+                <p className="text-xs text-neutral-600 dark:text-neutral-300">{t('onboardingFieldsAiSensitiveNotice')}</p>
+                <Checkbox checked={acknowledged} onChange={setAcknowledged} label={t('onboardingFieldsAiSensitiveAck')} />
+              </div>
+            )}
             <button
               onClick={handleSave}
-              disabled={isSaving}
+              disabled={isSaving || !sessionId || pendingChanges.length === 0 || (sensitiveNames.length > 0 && !acknowledged)}
               className="w-full flex justify-center items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed"
             >
               {isSaving ? (
