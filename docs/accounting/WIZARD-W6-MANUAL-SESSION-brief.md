@@ -133,6 +133,17 @@ Erros: `400` DTO · `400 MANUAL_CHANGE_INVALID` `{ details: { changes: Array<{ i
 Decidido sem fork (um caminho só razoável): tudo ou nada no lote (item 3) — gravar metade de um "Salvar" deixa a
 tela e a sessão divergentes; nenhuma linha no histórico da conversa (o prompt da IA já lê os campos atuais).
 
+## 4.1 Revisão do #786 — decisões do dono (questionário, 2026-10-21)
+
+A revisão do #785/#786 achou pontos que mudam o contrato acima. O dono decidiu (todas as recomendações):
+
+| Ponto | Decisão | Efeito no contrato |
+|---|---|---|
+| Esconder campo obrigatório | Recusar no servidor e travar na tela | `setHidden` com `hidden:true` em campo `required` → 400 `MANUAL_CHANGE_INVALID`, motivo novo `required_hidden`; a caixa "Visível" de obrigatório fica desabilitada (mostrar de novo continua livre) |
+| `format` em campo não-texto | DTO recusa | `ManualFieldSchema` ganha `refine`: `format` só com `type: 'string'` |
+| Regra da ciência copiada no front | Servidor decide | a pendente guardada na sessão leva `requiresSensitiveAck` (§2.4 do BRIEF do W6); `SENSITIVE_FIELD_NOT_ACKNOWLEDGED` traz `details: { fields: string[] }`; no manual, o 1º Salvar recebe os nomes e só então aparecem selo e caixa (item 11 muda: o front não tem mais a rede de radicais) |
+| Sessão perdida com o painel aberto | Fechar o painel direito | `handleSessionLost` fecha o painel e solta a tabela selecionada (PR #785) |
+
 ## 5. Pendente de validação externa
 
 - **F-MS-3** se apoia na mesma leitura do dossiê do W6 (LGPD art. 5º, II; art. 46, §2º): a lei não obriga marcar
