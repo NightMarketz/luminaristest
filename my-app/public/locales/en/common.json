@@ -26,12 +26,8 @@
   "day": "Day",
   "yes": "Yes",
   "no": "No",
-  "status": {
-    "scheduled": "Scheduled",
-    "completed": "Completed",
-    "no_show": "No-Show",
-    "cancelled": "Cancelled"
-  },
+  "delete_confirmation_title": "Confirm Inactivation?",
+  "confirm_inactivate": "Yes, Inactivate",
   "table_not_found": "Table not found",
   "associatedProducts": "Associated Products",
   "qualifiedEmployees": "Qualified Employees",
@@ -262,7 +258,6 @@
   "calculating_explorer_data": "Calculating Explorer data...",
   "search_all_columns": "Search in all columns...",
   "records_found": "{{count}} records found",
-  "actions": "Actions",
   "grid": "Grid",
   "list": "List",
   "default": "Default",
@@ -286,7 +281,6 @@
   "no_records_in_table": "No records in this table.",
   "clear_filters": "Clear filters",
   "contact": "Contact",
-  "filters": "Filters",
   "search_label": "Search",
   "filter_status_all": "All Profiles",
   "filter_status_active": "Active Only",
@@ -597,6 +591,10 @@
     "back": "Back"
   },
   "status": {
+    "scheduled": "Scheduled",
+    "completed": "Completed",
+    "no_show": "No-Show",
+    "cancelled": "Cancelled",
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",

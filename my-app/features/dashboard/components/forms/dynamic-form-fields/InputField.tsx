@@ -8,7 +8,7 @@ import React from 'react';
  * before passing `format` through.
  */
 interface InputFieldProps {
-  type: 'text' | 'number' | 'date' | 'email' | 'tel';
+  type: 'text' | 'number' | 'date' | 'datetime-local' | 'email' | 'tel';
   name: string;
   value: unknown;
   onChange: (name: string, value: unknown) => void;

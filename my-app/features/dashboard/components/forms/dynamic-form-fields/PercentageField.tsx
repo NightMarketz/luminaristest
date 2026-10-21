@@ -22,10 +22,13 @@ function formatPercent(value: number | undefined, locale: string) {
  * Parses a percent string back to number, accepting both decimal separators.
  * Clamps to [0, 100].
  */
-function parsePercent(input: string): number {
+function parsePercent(input: string, locale: string): number {
   if (!input) return 0;
-  // Strip non-numeric, normalize separators to dot
-  const cleaned = input.replace(/[^0-9,.-]/g, '').replace(/\./g, '').replace(',', '.');
+  // Strip non-numeric and the locale's group separator, normalize the decimal separator to dot
+  const stripped = input.replace(/[^0-9,.-]/g, '');
+  const cleaned = (1.5).toLocaleString(locale).includes(',')
+    ? stripped.replace(/\./g, '').replace(',', '.')
+    : stripped.replace(/,/g, '');
   const num = parseFloat(cleaned);
   if (!Number.isFinite(num)) return 0;
   return Math.max(0, Math.min(100, num));
@@ -39,7 +42,7 @@ function PercentageField({ name, value, onChange, className, required }: Percent
   }, [currency]);
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const parsed = parsePercent(event.target.value);
+    const parsed = parsePercent(event.target.value, activeLocale);
     const clamped = Math.max(0, Math.min(100, parsed));
     onChange(name, clamped);
   }
@@ -50,7 +53,7 @@ function PercentageField({ name, value, onChange, className, required }: Percent
       inputMode="decimal"
       id={name}
       name={name}
-      value={formatPercent(typeof value === 'number' ? value : parsePercent(String(value || '')), activeLocale)}
+      value={formatPercent(typeof value === 'number' ? value : parsePercent(String(value || ''), activeLocale), activeLocale)}
       onChange={handleChange}
       className={className}
       required={required}

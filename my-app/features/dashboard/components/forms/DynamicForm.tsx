@@ -145,9 +145,18 @@ const fieldComponentMap: Record<string, ComponentType<FieldComponentProps>> = {
       readOnly={props.readOnly}
       disabled={props.disabled}
       label={props.label}
-      type="date"
+      type="datetime-local"
     />
-  ), // Fallback to date for now
+  ),
+  json: (props) => (
+    <TextareaField
+      name={props.name}
+      value={typeof props.value === 'object' && props.value !== null ? JSON.stringify(props.value, null, 2) : props.value}
+      onChange={props.onChange}
+      className={asInputClass(props.className)}
+      required={props.required}
+    />
+  ),
   textarea: TextareaField as ComponentType<FieldComponentProps>,
   select: SelectField as ComponentType<FieldComponentProps>,
   boolean: CheckboxField as ComponentType<FieldComponentProps>,

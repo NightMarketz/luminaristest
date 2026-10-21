@@ -26,12 +26,8 @@
   "day": "Dia",
   "yes": "Sim",
   "no": "Não",
-  "status": {
-    "scheduled": "Agendado",
-    "completed": "Concluído",
-    "no_show": "No-Show",
-    "cancelled": "Cancelado"
-  },
+  "delete_confirmation_title": "Confirmar inativação?",
+  "confirm_inactivate": "Sim, inativar",
   "table_not_found": "Tabela não encontrada",
   "associatedProducts": "Produtos Associados",
   "qualifiedEmployees": "Funcionários Qualificados",
@@ -262,7 +258,6 @@
   "calculating_explorer_data": "Calculando dados do Explorer...",
   "search_all_columns": "Pesquisar em todas as colunas...",
   "records_found": "{{count}} registros encontrados",
-  "actions": "Ações",
   "grid": "Grid",
   "list": "Lista",
   "default": "Padrão",
@@ -286,7 +281,6 @@
   "no_records_in_table": "Nenhum registro nesta tabela.",
   "clear_filters": "Limpar filtros",
   "contact": "Contato",
-  "filters": "Filtros",
   "search_label": "Buscar",
   "filter_status_all": "Todos os Perfis",
   "filter_status_active": "Apenas Ativos",
@@ -596,6 +590,10 @@
     "back": "Voltar"
   },
   "status": {
+    "scheduled": "Agendado",
+    "completed": "Concluído",
+    "no_show": "No-Show",
+    "cancelled": "Cancelado",
     "loading": "Carregando...",
     "error": "Erro",
     "success": "Sucesso",
