@@ -21,6 +21,27 @@ interface AIChatModeProps {
 }
 
 type Proposal = NonNullable<CustomizeFieldsResult['proposal']>;
+type Discarded = CustomizeFieldsResult['discarded'];
+
+const DISCARD_REASON_KEY: Record<Discarded[number]['reason'], string> = {
+  reserved: 'onboardingFieldsAiDiscardedReserved',
+  type_not_allowed: 'onboardingFieldsAiDiscardedTypeNotAllowed',
+  exists: 'onboardingFieldsAiDiscardedExists',
+  not_found: 'onboardingFieldsAiDiscardedNotFound',
+  invalid: 'onboardingFieldsAiDiscardedInvalid',
+};
+
+/** A pendente guardada na sessão volta como cartão; a ciência segue a regra do servidor (`FieldProposal.requiresSensitiveAck`). */
+function toProposal(pending: ITable['pendingProposal']): Proposal | null {
+  if (!pending) return null;
+  const requiresSensitiveAck = pending.changes.some(c => c.action !== 'remove' && c.sensitiveCategory !== null);
+  return { id: pending.id, changes: pending.changes, requiresSensitiveAck };
+}
+
+/** O conteúdo (fala do usuário e do modelo) é texto: escapa antes da formatação simples, que é a única marcação. */
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 
 /** W6 item 14: a linha do histórico do servidor vira mensagem; `system` (decisão) é nota, não fala. */
 function toMessage(entry: ITable['conversationHistory'][number]): IAiMessage {
@@ -38,7 +59,8 @@ function AIChatMode({ tableData, sessionId, onSaveChanges, onClose, onSessionLos
   const [history, setHistory] = useState<IAiMessage[]>(() => (tableData.conversationHistory ?? []).map(toMessage));
   const [notes, setNotes] = useState<IAiMessage[]>([]);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
-  const [proposal, setProposal] = useState<Proposal | null>(null);
+  const [proposal, setProposal] = useState<Proposal | null>(() => toProposal(tableData.pendingProposal));
+  const [discarded, setDiscarded] = useState<Discarded>([]);
   const [acknowledged, setAcknowledged] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -55,7 +77,10 @@ function AIChatMode({ tableData, sessionId, onSaveChanges, onClose, onSessionLos
     setHistory(data.conversationHistory.map(toMessage));
     setNotes([]);
     setProposal(data.proposal);
+    setDiscarded(data.discarded);
     setAcknowledged(false);
+    // O hook guarda a tabela do servidor depois de todo turno: ao remontar, histórico e pendente são os da sessão.
+    onSaveChanges(data.table);
   };
 
   const addNote = (content: string) => {
@@ -109,10 +134,8 @@ function AIChatMode({ tableData, sessionId, onSaveChanges, onClose, onSessionLos
       const body: CustomizeFieldsDtoInput = decision === 'apply' && proposal.requiresSensitiveAck && acknowledged
         ? { kind: 'decision', sessionId, tableKey, proposalId, decision, acknowledgeSensitive: true }
         : { kind: 'decision', sessionId, tableKey, proposalId, decision };
-      const data = await InterviewService.customizeFields(body);
-      applyResult(data);
-      // Item 15: sobe a tabela que o servidor devolveu, não uma montada no cliente.
-      if (decision === 'apply' && data.applied) onSaveChanges(data.table);
+      // Item 15: sobe a tabela que o servidor devolveu (no `applyResult`), não uma montada no cliente.
+      applyResult(await InterviewService.customizeFields(body));
     } catch (error) {
       handleError(error, t('onboardingFieldsAiDecisionFailed'));
     } finally {
@@ -125,7 +148,7 @@ function AIChatMode({ tableData, sessionId, onSaveChanges, onClose, onSessionLos
       return ''; // Retorna string vazia se o conteúdo for nulo ou indefinido
     }
     // Formatação simples para negrito e listas
-    return content
+    return escapeHtml(content)
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/• (.*?)$/gm, '<li>$1</li>')
       .replace(/\n\n/g, '<br/><br/>')
@@ -171,6 +194,17 @@ function AIChatMode({ tableData, sessionId, onSaveChanges, onClose, onSessionLos
             </div>
           </div>
         ))}
+
+        {discarded.length > 0 && (
+          <div data-testid="ai-discarded" className="rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 p-3 text-xs text-neutral-700 dark:text-neutral-200">
+            <p className="font-medium">{t('onboardingFieldsAiDiscardedTitle')}</p>
+            <ul className="mt-1 list-disc pl-4">
+              {discarded.map((d, i) => (
+                <li key={`${d.name}-${i}`}>{d.name} — {t(DISCARD_REASON_KEY[d.reason])}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {proposal && (
           <ProposalCard

@@ -131,14 +131,13 @@ describe('AIChatMode — W6 FE', () => {
     expect(cartao.textContent).toContain('string');
 
     fireEvent.click(screen.getByText('onboardingFieldsAiApply'));
-    await waitFor(() => expect(onSaveChanges).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onSaveChanges).toHaveBeenLastCalledWith(tabelaDoServidor));
     const esperado: CustomizeFieldsDtoInput = { kind: 'decision', sessionId: 's1', tableKey: 'clientes', proposalId: 'p2', decision: 'apply' };
     expect(bodyOf(1)).toEqual(esperado);
-    expect(onSaveChanges).toHaveBeenCalledWith(tabelaDoServidor);
     expect(screen.queryByTestId('ai-proposal')).toBeNull();
   });
 
-  it('item 15: Descartar manda decision:"discard" e não sobe tabela', async () => {
+  it('item 15: Descartar manda decision:"discard"; o hook recebe a tabela do servidor com os campos intactos', async () => {
     fetchMock()
       .mockResolvedValueOnce(res(200, resultado({ proposal: propostaComum })))
       .mockResolvedValueOnce(res(200, resultado({ applied: false })));
@@ -148,7 +147,8 @@ describe('AIChatMode — W6 FE', () => {
     fireEvent.click(screen.getByText('onboardingFieldsAiDiscard'));
     await waitFor(() => expect(screen.queryByTestId('ai-proposal')).toBeNull());
     expect(bodyOf(1)).toMatchObject({ kind: 'decision', proposalId: 'p2', decision: 'discard' });
-    expect(onSaveChanges).not.toHaveBeenCalled();
+    // Achado 1 do #785: todo turno sincroniza o hook (senão a pendente descartada voltaria ao remontar).
+    expect(onSaveChanges).toHaveBeenLastCalledWith(expect.objectContaining({ fields: tabela.fields }));
   });
 
   it('item 16: campo sensível tem selo; Aplicar desabilitado até marcar a ciência, que vai como acknowledgeSensitive:true', async () => {
@@ -196,7 +196,7 @@ describe('AIChatMode — W6 FE', () => {
     fireEvent.click(screen.getByText('onboardingFieldsAiApply'));
     await waitFor(() => expect(textos().join('|')).toContain('onboardingFieldsAiProposalStale'));
     expect(screen.queryByTestId('ai-proposal')).toBeNull();
-    expect(onSaveChanges).not.toHaveBeenCalled();
+    expect(onSaveChanges).toHaveBeenCalledTimes(1); // só o turno da mensagem; o 409 não sobe tabela
     expect(onSessionLost).not.toHaveBeenCalled();
   });
 

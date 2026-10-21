@@ -1,3 +1,5 @@
+import type { CustomizeFieldsTable } from '@/lib/services/interview.service';
+
 export interface ITableField {
   name: string;
   label: string;
@@ -9,6 +11,7 @@ export interface ITableField {
 export interface ITable {
   /** W6: histórico do painel de campos, gravado pelo servidor (`at` = ISO do turno). */
   conversationHistory: Array<{ role: string; content: string; at?: string }>;
+  pendingProposal?: CustomizeFieldsTable['pendingProposal'];
   key: string;
   name: string;
   description: string;

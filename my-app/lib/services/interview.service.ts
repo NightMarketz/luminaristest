@@ -62,6 +62,8 @@ export interface CustomizeFieldsTable {
   isCore?: boolean;
   fields?: CustomizeFieldsField[];
   conversationHistory: CustomizeFieldsHistoryEntry[];
+  /** A proposta que espera Aplicar/Descartar (§2.4) — sem `requiresSensitiveAck`, que só vem no turno. */
+  pendingProposal?: { id: string; changes: CustomizeFieldsChange[]; createdAt: string };
 }
 
 /**
