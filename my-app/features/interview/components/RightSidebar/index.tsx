@@ -8,7 +8,7 @@ import AIChatMode from './AIChatMode';
 /**
  * Painel lateral direito para customização de campos das tabelas
  */
-function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, presetKey }: RightSidebarProps) {
+function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, onSessionLost }: RightSidebarProps) {
   const { t } = useTranslation('common');
   const [tableData, setTableData] = useState<ITable | null>(selectedTable);
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -62,7 +62,9 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, pres
     setTimeout(() => {
       console.log("RightSidebar: Estado atualizado após timeout");
     }, 100);
-  }, [selectedTable, isVisible]);
+    // W6 (revisão do #785): só ao trocar de TABELA ou de visibilidade. A sincronização do modo IA atualiza a mesma
+    // tabela no hook e não pode apagar a edição manual ainda não salva da cópia local.
+  }, [selectedTable?.key, isVisible]);
 
   // Toggle de visibilidade de um campo
   const handleToggleFieldVisibility = (index: number) => {
@@ -189,13 +191,19 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, pres
         {/* Área de conteúdo com scroll */}
         {tableData && interactionMode === 'ai' ? (
           // Modo de IA humanizada
+          // W6: `key` por tabela — o histórico do modo IA é o da tabela aberta, não o da anterior.
           <AIChatMode 
-            tableData={tableData} 
+            key={tableData.key}
+            tableData={selectedTable ?? tableData}
             sessionId={sessionId}
-            presetKey={presetKey}
             onSaveChanges={(updatedTable) => {
+              setTableData(updatedTable);
               if (onUpdateTable) onUpdateTable(updatedTable);
             }}
+            onSync={(sync) => {
+              if (selectedTable && onUpdateTable) onUpdateTable({ ...selectedTable, ...sync });
+            }}
+            onSessionLost={onSessionLost}
             onClose={() => setInteractionMode('manual')}
           />
         ) : (
