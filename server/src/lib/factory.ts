@@ -1849,7 +1849,7 @@ export class ApplicationFactory {
       ),
       // BE-INCR-PIS-COFINS PR-2 (nó X8): prévia/confirmação da apuração mensal de PIS/Cofins (reusa o TaxAssessment do X7).
       pisCofinsAssessment: pisCofinsAssessmentService,
-      // IBS-CBS-2027 PR-2 (itens 6–11, 13): apuração mensal de IBS/CBS; o item 12 (provisão) aguarda o #794.
+      // IBS-CBS-2027 PR-2 (itens 6–13): apuração mensal de IBS/CBS + reclassificação receita → a recolher (item 12).
       ibsCbsAssessment: new IbsCbsAssessmentService(
         this.repositories.consumptionTaxAssessment,
         this.repositories.companyFiscalProfile,
@@ -1858,6 +1858,9 @@ export class ApplicationFactory {
         this.policies.accounting,
         auditService,
         legalParameterService, // fotografia IBS_CBS (PR-1)
+        this.repositories.fiscalProfile, // item 12: contas de IBS/CBS a recolher
+        this.repositories.account,
+        postingService, // item 12: reclassificação em 2 commits
       ),
       // BE-INCR-LEGAL-PARAMS PR-4 (item 10): recálculo das apurações quando uma linha de lei é publicada/revogada.
       taxAssessmentRecalc: new TaxAssessmentRecalcService(

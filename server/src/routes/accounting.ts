@@ -192,7 +192,7 @@ import {
   getFiscalCertificate,
   putFiscalCertificate,
 } from '../controllers/fiscalCertificateController';
-import { confirmIbsCbsAssessment, listIbsCbsAssessments, previewIbsCbsAssessment } from '../controllers/ibsCbsAssessmentController';
+import { confirmIbsCbsAssessment, listIbsCbsAssessments, previewIbsCbsAssessment, reconcileIbsCbsProvisao } from '../controllers/ibsCbsAssessmentController';
 
 const router = Router();
 
@@ -439,6 +439,7 @@ router.post('/fixed-assets/:id/dispose', disposeFixedAsset);
 router.post('/ibs-cbs-assessments/preview', previewIbsCbsAssessment);
 router.post('/ibs-cbs-assessments', confirmIbsCbsAssessment);
 router.get('/ibs-cbs-assessments', listIbsCbsAssessments);
+router.post('/ibs-cbs-assessments/:id/provisao', reconcileIbsCbsProvisao); // item 12: reconcile (dono 21/10)
 
 // Accounting period management (INCR-1).
 // NOTE: /:unitId/periods must come before /periods/:id routes to avoid param clash.

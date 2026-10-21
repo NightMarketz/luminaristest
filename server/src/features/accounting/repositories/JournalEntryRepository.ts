@@ -73,7 +73,7 @@ export class JournalEntryRepository implements IJournalEntryRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<string[]> {
     const rows = await (tx ?? prisma).journalEntry.findMany({
-      where: { ...accountingScopeWhere(scope), sourceType, status: { in: [...statuses] }, date: { gte: window.from, lte: window.to } },
+      where: { ...accountingScopeWhere(scope), sourceType, status: { in: [...statuses] }, reversedById: null, date: { gte: window.from, lte: window.to } },
       select: { sourceId: true },
       distinct: ['sourceId'],
       orderBy: { sourceId: 'asc' },

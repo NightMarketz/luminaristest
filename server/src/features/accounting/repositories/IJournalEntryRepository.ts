@@ -94,8 +94,8 @@ export interface IJournalEntryRepository {
   ): Promise<JournalEntryWithPostings | null>;
 
   /**
-   * IBS-CBS-2027 PR-2 (BRIEF item 7) — `sourceId`s distintos das entries com `sourceType` cujo `date` cai na janela e cujo
-   * status está em `statuses` (ex.: as vendas `sale.finalized` do mês). Read-only.
+   * IBS-CBS-2027 PR-2 (BRIEF item 7) — `sourceId`s distintos das entries NÃO estornadas com `sourceType` cujo `date` cai
+   * na janela e cujo status está em `statuses` (ex.: as vendas `sale.settled` do mês). Read-only.
    */
   findSourceIdsInWindow(
     scope: AccountingScope,

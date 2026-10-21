@@ -61,6 +61,11 @@ export const CANONICAL_ACCOUNTS: ReadonlyArray<CanonicalAccount> = [
   { code: '2.1.7.01', name: 'Dividendos a Pagar', nature: 'Liability', acceptsEntries: true },
   { code: '2.1.7.02', name: 'Juros sobre o Capital Próprio a Pagar', nature: 'Liability', acceptsEntries: true },
   { code: '2.1.7.03', name: 'IRRF a Recolher', nature: 'Liability', acceptsEntries: true },
+  // IBS-CBS-2027 PR-2 (item 12, F-IBS-8 c; dono 21/10: "2.1.8.01 / 2.1.8.02" — fora do 2.1.3 "Obrigações Tributárias" dos
+  // kits v6, que colidiu no IRRF): o passivo da reclassificação mensal receita → IBS/CBS a recolher.
+  { code: '2.1.8', name: 'Tributos sobre o Consumo a Recolher', nature: 'Liability', acceptsEntries: false },
+  { code: '2.1.8.01', name: 'IBS a Recolher', nature: 'Liability', acceptsEntries: true },
+  { code: '2.1.8.02', name: 'CBS a Recolher', nature: 'Liability', acceptsEntries: true },
   // Patrimônio Líquido (BE-INCR-SPED-APURACAO / D4): the closing entry (encerramento do
   // resultado) posts the exercise's net result here. `2.3` is the synthetic PL branch under the
   // `2` Passivo group (COD_NAT is per-account in I050, so a PL leaf under Passivo is conforme).
@@ -268,4 +273,8 @@ export const REFERENCIAL_PLANO_PADRAO: ReadonlyArray<{ accountCode: string; refe
   { accountCode: '2.3.2.01', referentialCode: '2.03.01.01.01', label: 'Capital Subscrito de Domiciliados e Residentes no País' },
   { accountCode: '2.3.3.01', referentialCode: '2.03.02.03.01', label: 'Reserva Legal' },
   { accountCode: '4.3.4', referentialCode: '3.01.01.09.01.04', label: '(-) Despesas de Juros sobre o Capital Próprio' },
+  // IBS-CBS-2027 PR-2 (item 12; dono 21/10: "usa 2.01.01.09.28 para IBS e CBS a recolher"): a tabela da ECF (AC 2025) não tem
+  // conta própria de IBS/CBS (dossiê pesquisas-legais/ibs-cbs-referencial-sped [D01]); folha "Outros Tributos" até a RFB publicar.
+  { accountCode: '2.1.8.01', referentialCode: '2.01.01.09.28', label: 'Outros Tributos a Recolher – Circulante' },
+  { accountCode: '2.1.8.02', referentialCode: '2.01.01.09.28', label: 'Outros Tributos a Recolher – Circulante' },
 ];

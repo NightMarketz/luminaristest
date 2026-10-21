@@ -31,3 +31,8 @@ CREATE TABLE IF NOT EXISTS "consumption_tax_assessments" (
 
 -- CreateIndex
 CREATE INDEX IF NOT EXISTS "consumption_tax_assessments_userId_anoCalendario_mes_tributo_idx" ON "consumption_tax_assessments"("userId", "anoCalendario", "mes", "tributo");
+
+-- Item 12 (F-IBS-8 c): contas de IBS e CBS a recolher no perfil fiscal da unidade (FK Restrict, nullable = "não configurado",
+-- molde F-TA-7). ALTER TABLE ... ADD COLUMN, como no IRRF-DISTRIBUICAO PR-1 (sem RedefineTables).
+ALTER TABLE "fiscal_profiles" ADD COLUMN "ibsRecolherAccountId" TEXT REFERENCES "accounts" ("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "fiscal_profiles" ADD COLUMN "cbsRecolherAccountId" TEXT REFERENCES "accounts" ("id") ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -75,5 +75,24 @@
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *
+ *   /api/accounting/ibs-cbs-assessments/{id}/provisao:
+ *     post:
+ *       summary: Reconcile the revenue → IBS/CBS payable reclassification of an assessment (IBS-CBS-2027 PR-2, item 12)
+ *       description: >-
+ *         Completa o que faltar (estorno da substituída, lançamento D receita / C a recolher no último dia do mês, vínculo
+ *         provisaoEntryId). Idempotente. 400 se a conta de IBS/CBS a recolher não estiver no perfil fiscal ou o período
+ *         estiver fechado.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'IbsCbsAssessmentView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  */
 export {};

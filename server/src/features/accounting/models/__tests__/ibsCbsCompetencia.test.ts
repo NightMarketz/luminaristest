@@ -9,7 +9,7 @@ import { agregarIbsCbsPorCompetencia, apurarIbsCbsMes, IbsCbsDocumentoSchema, ty
 const tabela = tabelaIbsCbsDe(legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_IBS_CBS));
 
 function doc(over: Partial<IbsCbsDocumento>): IbsCbsDocumento {
-  return { fiscalDocumentId: 'fd1', dataEmissaoLocal: '2027-03-10', status: 'AUTHORIZED', ibsCents: 10n, cbsCents: 900n, baseCents: 10000n, cClassTrib: null, ...over };
+  return { fiscalDocumentId: 'fd1', dataEmissaoLocal: '2027-03-10', status: 'AUTHORIZED', ibsCents: 10n, cbsCents: 900n, baseCents: 10000n, cClassTrib: null, natureza: 'SERVICO', ...over };
 }
 
 const codigos = (m: { codigo: string }[]) => m.map((l) => l.codigo);
@@ -79,6 +79,26 @@ describe('item 7 — conferência só avisa', () => {
   });
 });
 
+describe('item 12 — reclassificação por natureza do documento', () => {
+  it('NFS-e vai para serviço, NF-e para revenda; a soma é o débito', () => {
+    const r = apurarIbsCbsMes({
+      ano: 2027, mes: 3, tributo: 'IBS', tabela,
+      documentos: [doc({ fiscalDocumentId: 'a', ibsCents: 10n }), doc({ fiscalDocumentId: 'b', ibsCents: 4n, baseCents: 4000n, natureza: 'MERCADORIA' })],
+      vendasSemDocumento: [],
+    });
+    expect([r.servicoCents, r.revendaCents, r.debitosCents]).toEqual([10n, 4n, 14n]);
+    expect(r.memoria.find((l) => l.codigo === 'RECLASSIFICACAO_SERVICO')?.valorCents).toBe('10');
+    expect(r.memoria.find((l) => l.codigo === 'RECLASSIFICACAO_REVENDA')?.valorCents).toBe('4');
+  });
+
+  it('documento sem base ⇒ CONFERENCIA_SEM_BASE, débito inalterado (dono 21/10)', () => {
+    const r = apurarIbsCbsMes({ ano: 2027, mes: 3, tributo: 'IBS', tabela, documentos: [doc({ ibsCents: 99n, baseCents: null })], vendasSemDocumento: [] });
+    expect(r.debitosCents).toBe(99n);
+    expect(codigos(r.memoria)).toContain('CONFERENCIA_SEM_BASE');
+    expect(codigos(r.memoria).some((c) => c.startsWith('DIVERGENCIA_DOC'))).toBe(false);
+  });
+});
+
 describe('itens 9 e 11 — saldo e memória', () => {
   it('saldo = débitos − créditos; créditos 0 declarados; provisão do item 12 declarada pendente', () => {
     const r = apurarIbsCbsMes({
@@ -89,7 +109,10 @@ describe('itens 9 e 11 — saldo e memória', () => {
     expect(r.creditosCents).toBe(0n);
     expect(r.saldoCents).toBe(r.debitosCents - r.creditosCents);
     expect(r.documentosSemGrupo).toBe(1);
-    expect(codigos(r.memoria)).toEqual(['DEBITO_DOC_1', 'DEBITO_DOC_2', 'DOCUMENTOS_SEM_GRUPO', 'CREDITOS_NAO_IMPLEMENTADOS_PR3', 'PROVISAO_PENDENTE_ITEM_12', 'SALDO']);
+    expect(codigos(r.memoria)).toEqual([
+      'DEBITO_DOC_1', 'DEBITO_DOC_2', 'CONFERENCIA_SEM_BASE', 'DOCUMENTOS_SEM_GRUPO', 'CREDITOS_NAO_IMPLEMENTADOS_PR3',
+      'RECLASSIFICACAO_SERVICO', 'RECLASSIFICACAO_REVENDA', 'RECEITA_BRUTA_ATE_APURACAO', 'SALDO',
+    ]);
     expect(r.memoria.at(-1)?.valorCents).toBe('10');
   });
 });

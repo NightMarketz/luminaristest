@@ -30,7 +30,7 @@ describe('IbsCbsAssessmentDto', () => {
 
   it('memória: códigos do enum; _n só em DEBITO_DOC/DIVERGENCIA_DOC', () => {
     const l = (codigo: string) => [{ codigo, descricao: '', valorCents: '0', fonte: '' }];
-    for (const ok of ['DEBITO_DOC_3', 'DIVERGENCIA_DOC_1', 'PROVISAO_PENDENTE_ITEM_12', 'CREDITOS_NAO_IMPLEMENTADOS_PR3', 'SALDO']) {
+    for (const ok of ['DEBITO_DOC_3', 'DIVERGENCIA_DOC_1', 'RECLASSIFICACAO_SERVICO', 'CONFERENCIA_SEM_BASE', 'CREDITOS_NAO_IMPLEMENTADOS_PR3', 'SALDO']) {
       expect(MemoriaIbsCbsSchema.safeParse(l(ok)).success).toBe(true);
     }
     for (const ko of ['SALDO_1', 'DEBITO', 'QUALQUER']) expect(MemoriaIbsCbsSchema.safeParse(l(ko)).success).toBe(false);

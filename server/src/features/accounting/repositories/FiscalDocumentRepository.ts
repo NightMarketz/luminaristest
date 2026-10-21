@@ -93,6 +93,16 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     });
   }
 
+  public async saleIdsWithAuthorizedDocument(scope: AccountingScope, saleIds: readonly string[], tx?: Prisma.TransactionClient): Promise<string[]> {
+    if (saleIds.length === 0) return [];
+    const rows = await this.db(tx).fiscalDocument.findMany({
+      where: { ...accountingScopeWhere(scope), ambiente: 'producao', status: { in: [...AUTHORIZED_STATUSES] }, saleId: { in: [...saleIds] }, deletedAt: null },
+      select: { saleId: true },
+      distinct: ['saleId'],
+    });
+    return rows.map((r) => r.saleId);
+  }
+
   public async somaNfseAutorizadaNaCompetencia(scope: AccountingScope, competencia: string, tx?: Prisma.TransactionClient): Promise<bigint> {
     const r = await this.db(tx).fiscalDocument.aggregate({
       where: {

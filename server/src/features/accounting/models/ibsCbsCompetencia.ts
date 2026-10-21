@@ -20,6 +20,8 @@ export const IbsCbsDocumentoSchema = z
     cbsCents: z.bigint().nullable(),
     baseCents: z.bigint().nullable(),
     cClassTrib: z.string().regex(/^\d{6}$/).nullable(),
+    /** Item 12: a perna da reclassificação — NFS-e = serviço (`receita-serviço`), NF-e = mercadoria (`receita-revenda`). */
+    natureza: z.enum(['SERVICO', 'MERCADORIA']),
   })
   .strict();
 export type IbsCbsDocumento = z.infer<typeof IbsCbsDocumentoSchema>;
@@ -32,8 +34,13 @@ export const MEMORIA_IBS_CBS = {
   DOCUMENTOS_SEM_GRUPO: 'DOCUMENTOS_SEM_GRUPO',
   CREDITOS_NAO_IMPLEMENTADOS_PR3: 'CREDITOS_NAO_IMPLEMENTADOS_PR3',
   CONFERENCIA_SEM_ALIQUOTA: 'CONFERENCIA_SEM_ALIQUOTA',
-  /** Item 12 fora do PR até o #794 (dono, 21/10, sessão-mãe): a confirmação grava sem provisão e declara isso. */
-  PROVISAO_PENDENTE_ITEM_12: 'PROVISAO_PENDENTE_ITEM_12',
+  /** Item 7 (dono 21/10): documento sem a base de IBS/CBS ⇒ conferência pulada com aviso; o débito não muda (F-IBS-3). */
+  CONFERENCIA_SEM_BASE: 'CONFERENCIA_SEM_BASE',
+  /** Item 12: quanto do débito sai de cada receita (serviço × mercadoria) na reclassificação mensal. */
+  RECLASSIFICACAO_SERVICO: 'RECLASSIFICACAO_SERVICO',
+  RECLASSIFICACAO_REVENDA: 'RECLASSIFICACAO_REVENDA',
+  /** Item 12 (F-IBS-14 a): o balancete intramensal mostra a receita bruta até a apuração do mês. */
+  RECEITA_BRUTA_ATE_APURACAO: 'RECEITA_BRUTA_ATE_APURACAO',
   SALDO: 'SALDO',
 } as const;
 
@@ -88,6 +95,9 @@ export interface ResultadoIbsCbs {
   debitosCents: bigint;
   creditosCents: bigint;
   saldoCents: bigint;
+  /** Item 12: o débito repartido pela natureza do documento (soma = `debitosCents`). */
+  servicoCents: bigint;
+  revendaCents: bigint;
   documentosSemGrupo: number;
   memoria: MemoriaLinha[];
 }
@@ -127,13 +137,17 @@ export function apurarIbsCbsMes(input: ApuracaoIbsCbsInput): ResultadoIbsCbs {
   const memoria: MemoriaLinha[] = [];
   const aliq = aliquotasDoMes(input.tabela, tributo, `${competencia}-01`);
   let debitos = 0n;
+  let servico = 0n;
   let semGrupo = 0;
+  let semBase = 0;
   docs.forEach((d, i) => {
     const n = i + 1;
     const v = valorDo(d, tributo);
     if (v === null) semGrupo += 1;
     debitos += v ?? 0n;
+    if (d.natureza === 'SERVICO') servico += v ?? 0n;
     memoria.push({ codigo: `${MEMORIA_IBS_CBS.DEBITO_DOC}_${n}`, descricao: `${tributo} do documento ${d.fiscalDocumentId} (${d.dataEmissaoLocal})`, valorCents: (v ?? 0n).toString(), fonte: FONTE_DEBITO });
+    if (aliq && d.baseCents === null) semBase += 1;
     if (aliq && d.baseCents !== null) {
       const esperado = aplicarBp(d.baseCents, aliq.totalBp);
       if (esperado !== (v ?? 0n)) {
@@ -149,6 +163,9 @@ export function apurarIbsCbsMes(input: ApuracaoIbsCbsInput): ResultadoIbsCbs {
   if (!aliq) {
     memoria.push({ codigo: MEMORIA_IBS_CBS.CONFERENCIA_SEM_ALIQUOTA, descricao: `sem alíquota ${tributo} publicada em ${competencia}: conferência pulada`, valorCents: '0', fonte: 'F-IBS-11 (a); LC 214/2025 art. 349 I' });
   }
+  if (semBase > 0) {
+    memoria.push({ codigo: MEMORIA_IBS_CBS.CONFERENCIA_SEM_BASE, descricao: `${semBase} documento(s) sem a base de ${tributo}: conferência pulada; o débito segue o documento`, valorCents: '0', fonte: 'BRIEF IBS-CBS-2027 item 7; dono 21/10' });
+  }
   if (semGrupo > 0) {
     memoria.push({ codigo: MEMORIA_IBS_CBS.DOCUMENTOS_SEM_GRUPO, descricao: `${semGrupo} documento(s) sem o grupo ${tributo}: somam 0`, valorCents: '0', fonte: 'ADR-INCR-IBS-CBS-2027 §13.2' });
   }
@@ -156,13 +173,17 @@ export function apurarIbsCbsMes(input: ApuracaoIbsCbsInput): ResultadoIbsCbs {
     memoria.push({ codigo: MEMORIA_IBS_CBS.VENDA_SEM_DOCUMENTO, descricao: `venda ${saleId} finalizada em ${competencia} sem documento fiscal autorizado`, valorCents: '0', fonte: 'ADR-INCR-IBS-CBS-2027 F-IBS-3 (a)' });
   }
   memoria.push({ codigo: MEMORIA_IBS_CBS.CREDITOS_NAO_IMPLEMENTADOS_PR3, descricao: 'créditos ainda não implementados (PR-3): 0', valorCents: '0', fonte: 'BRIEF IBS-CBS-2027 item 9' });
+  const revenda = debitos - servico;
+  const FONTE_RECLASS = 'F-IBS-8 (c) — IBS/CBS fora do resultado; BRIEF IBS-CBS-2027 item 12';
+  memoria.push({ codigo: MEMORIA_IBS_CBS.RECLASSIFICACAO_SERVICO, descricao: `D receita de serviços / C ${tributo} a recolher (NFS-e do mês)`, valorCents: servico.toString(), fonte: FONTE_RECLASS });
+  memoria.push({ codigo: MEMORIA_IBS_CBS.RECLASSIFICACAO_REVENDA, descricao: `D receita de revenda / C ${tributo} a recolher (NF-e do mês)`, valorCents: revenda.toString(), fonte: FONTE_RECLASS });
   memoria.push({
-    codigo: MEMORIA_IBS_CBS.PROVISAO_PENDENTE_ITEM_12,
-    descricao: 'reclassificação receita → passivo (item 12) ainda não implementada: nenhum lançamento é feito na confirmação',
+    codigo: MEMORIA_IBS_CBS.RECEITA_BRUTA_ATE_APURACAO,
+    descricao: `até a apuração de ${competencia}, o balancete mostra a receita bruta com o ${tributo} dentro; a reclassificação é lançada no último dia do mês`,
     valorCents: '0',
-    fonte: 'dono, 2026-10-21 (item 12 aguarda o PR #794)',
+    fonte: 'F-IBS-14 (a), ratificado 21/10',
   });
   const saldo = debitos; // créditos APROPRIADO = 0 no PR-2 (art. 45 [D08])
   memoria.push({ codigo: MEMORIA_IBS_CBS.SALDO, descricao: `saldo = débitos − créditos${aliq ? ` (${aliq.descricao})` : ''}`, valorCents: saldo.toString(), fonte: 'LC 214/2025 art. 45' });
-  return { tributo, debitosCents: debitos, creditosCents: 0n, saldoCents: saldo, documentosSemGrupo: semGrupo, memoria };
+  return { tributo, debitosCents: debitos, creditosCents: 0n, saldoCents: saldo, servicoCents: servico, revendaCents: revenda, documentosSemGrupo: semGrupo, memoria };
 }

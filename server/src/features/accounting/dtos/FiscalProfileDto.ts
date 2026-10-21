@@ -73,6 +73,9 @@ const FiscalProfileFields = z
     jcpPagarAccountId: z.string().min(1).nullable().optional(),
     irrfRecolherAccountId: z.string().min(1).nullable().optional(),
     jcpDespesaAccountId: z.string().min(1).nullable().optional(),
+    // IBS-CBS-2027 PR-2 (item 12, F-IBS-8 c): IBS e CBS a recolher (Liability).
+    ibsRecolherAccountId: z.string().min(1).nullable().optional(),
+    cbsRecolherAccountId: z.string().min(1).nullable().optional(),
     partnerAccountRef: z.string().min(1).max(120).nullable().optional(),
     // BE-INCR-DFE — emitente (ADR-DFE D5)
     codMun: ibge7.nullable().optional(),

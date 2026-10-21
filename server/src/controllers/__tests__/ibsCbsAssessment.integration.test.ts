@@ -1,7 +1,8 @@
 /**
  * IBS-CBS-2027 PR-2 (BRIEF `docs/accounting/BE-INCR-IBS-CBS-2027-brief.md` itens 6–11 e 13; invariantes §10.2–10.5,
  * 10.9, 10.10) — prévia, confirmação e leitura da apuração mensal de IBS/CBS pelo HTTP. Cada cenário usa um dono próprio.
- * Item 12 (provisão) fora do PR até o #794 (dono, 21/10): a confirmação não lança e declara PROVISAO_PENDENTE_ITEM_12.
+ * O item 12 (reclassificação) está em src/__tests__/ibsCbsProvision.integration.test.ts; aqui o perfil da unidade não existe e a
+ * reclassificação fica pendente.
  *
  * Números (fevereiro/2027, IBS UF 5 bp + Mun 5 bp, art. 344): nota A IBS 10,00 / CBS 87,00; nota B IBS 5,00 / sem CBS;
  * nota cancelada IBS 99,00 (fora); nota de homologação (fora). Débito IBS = 15,00; CBS = 87,00 (1 sem grupo).
@@ -40,7 +41,7 @@ async function documento(dono: Dono, dCompet: string, ibs: bigint | null, cbs: b
 }
 
 async function venda(dono: Dono, saleId: string, dia: string): Promise<void> {
-  await prisma.journalEntry.create({ data: { userId: dono.id, unitId: dono.unitId, date: new Date(`${dia}T12:00:00.000Z`), description: 'venda', status: 'Posted', sourceType: 'sale.finalized', sourceId: saleId } });
+  await prisma.journalEntry.create({ data: { userId: dono.id, unitId: dono.unitId, date: new Date(`${dia}T12:00:00.000Z`), description: 'venda', status: 'Posted', sourceType: 'sale.settled', sourceId: saleId } });
 }
 
 const body = (dono: Dono, extra: Record<string, unknown> = {}) => ({ unitId: dono.unitId, anoCalendario: 2027, mes: 2, tributo: 'IBS', ...extra });
@@ -74,9 +75,10 @@ describe('IBS-CBS-2027 PR-2 — apuração mensal de IBS/CBS', () => {
     expect(ibs.status).toBe(200);
     expect(ibs.body.data).toMatchObject({ debitosCents: '1500', creditosCents: '0', saldoCents: '1500', documentosSemGrupo: 0 });
     const m: Linha[] = ibs.body.data.memoria;
-    expect(m.map((l) => l.codigo)).toEqual(expect.arrayContaining(['DEBITO_DOC_1', 'DEBITO_DOC_2', 'CREDITOS_NAO_IMPLEMENTADOS_PR3', 'PROVISAO_PENDENTE_ITEM_12', 'SALDO']));
+    expect(m.map((l) => l.codigo)).toEqual(expect.arrayContaining(['DEBITO_DOC_1', 'DEBITO_DOC_2', 'CONFERENCIA_SEM_BASE', 'CREDITOS_NAO_IMPLEMENTADOS_PR3', 'RECLASSIFICACAO_SERVICO', 'SALDO']));
     expect(m.filter((l) => l.codigo === 'VENDA_SEM_DOCUMENTO').map((l) => (l as unknown as { descricao: string }).descricao).join()).toContain('sale-sem-nota');
-    // As vendas canceladas/homologação aparecem como "sem documento autorizado" — o aviso é sobre a venda, não muda o débito.
+    // Venda liquidada no mês sem documento autorizado vivo em nenhum mês (dono 21/10) — o aviso não muda o débito.
+    // A venda de março tem documento (em março): não é aviso de fevereiro nem de outro mês.
     expect(mem(m, 'SALDO')).toBe('1500');
 
     const cbs = await preview(dono, { tributo: 'CBS' });
@@ -95,8 +97,8 @@ describe('IBS-CBS-2027 PR-2 — apuração mensal de IBS/CBS', () => {
     expect(c1.status).toBe(201);
     const a1 = c1.body.data.assessment;
     expect(a1).toMatchObject({ status: 'CONFIRMED', saldoCents: '1000', regime: 'REAL', provisaoEntryId: null, supersedesId: null });
-    expect(mem(a1.memoria, 'PROVISAO_PENDENTE_ITEM_12')).toBe('0');
-    expect(await prisma.journalEntry.count({ where: { userId: dono.id, sourceType: { not: 'sale.finalized' } } })).toBe(0);
+    // Sem perfil fiscal da unidade ⇒ conta de IBS a recolher não configurada ⇒ a confirmação fica, reclassificação pendente.
+    expect(await prisma.journalEntry.count({ where: { userId: dono.id, sourceType: 'ibs_cbs_assessment' } })).toBe(0);
 
     // 2ª confirmação de fevereiro sem nomear a viva ⇒ 409 (CAS).
     const dup = await confirm(dono, null);

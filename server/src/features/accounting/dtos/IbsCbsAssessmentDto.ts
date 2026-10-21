@@ -28,10 +28,14 @@ export const IbsCbsAssessmentListQuerySchema = z
   .strict();
 export type IbsCbsAssessmentListQuery = z.infer<typeof IbsCbsAssessmentListQuerySchema>;
 
-/** Códigos da memória (BRIEF §4.2). PROVISAO_PENDENTE_ITEM_12 sai quando o item 12 entrar (dono, 21/10). */
+/** Query do reconcile (item 12): só a unidade do escopo. */
+export const IbsCbsAssessmentScopeQuerySchema = z.object({ unitId: z.string().min(1) }).strict();
+
+/** Códigos da memória (BRIEF §4.2) + as linhas da reclassificação do item 12 (RECLASSIFICACAO_*, RECEITA_BRUTA_ATE_APURACAO). */
 export const MemoriaLinhaIbsCbsKind = z.enum([
   'DEBITO_DOC', 'DIVERGENCIA_DOC', 'VENDA_SEM_DOCUMENTO', 'DOCUMENTOS_SEM_GRUPO',
-  'CREDITOS_NAO_IMPLEMENTADOS_PR3', 'CONFERENCIA_SEM_ALIQUOTA', 'PROVISAO_PENDENTE_ITEM_12',
+  'CREDITOS_NAO_IMPLEMENTADOS_PR3', 'CONFERENCIA_SEM_ALIQUOTA', 'CONFERENCIA_SEM_BASE',
+  'RECLASSIFICACAO_SERVICO', 'RECLASSIFICACAO_REVENDA', 'RECEITA_BRUTA_ATE_APURACAO',
   'CREDITO_ENTRADA', 'CREDITO_NAO_APROPRIADO', 'USO_CONSUMO_PESSOAL',
   'ANTECIPACAO_ART10', 'ACERTO_ART10', 'PAGAMENTO_INDEVIDO_ART38',
   'SPLIT_EXTINCAO',

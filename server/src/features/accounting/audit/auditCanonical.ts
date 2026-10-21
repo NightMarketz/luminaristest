@@ -166,6 +166,7 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     'simplesDasDeducaoAccountId', 'simplesRecolherAccountId', // X14 PR-3 item 21
     'irpjSaldoNegativoAccountId', 'csllSaldoNegativoAccountId', // X7 Fase B item 16 (F-TB-3 a)
     'dividendosPagarAccountId', 'jcpPagarAccountId', 'irrfRecolherAccountId', 'jcpDespesaAccountId', // IRRF-DISTRIBUICAO item 7
+    'ibsRecolherAccountId', 'cbsRecolherAccountId', // IBS-CBS-2027 PR-2 item 12
     // BE-INCR-DFE (item 9): enum/boolean/int como string — IM/CNAE (texto livre) ficam FORA do evento
     'codMun', 'dpsSerie', 'regEspTrib', 'regApTribSN', 'issAliquotaBp', 'issRetidoTomadorPj', 'pacoteFatoGerador', 'pacoteCTribNac', 'pacoteCNBS', 'ibsCbsInformar', 'ibsCbsCst', 'ibsCbsClassTrib', 'pTotTribFedCent', 'pTotTribEstCent', 'pTotTribMunCent', 'pTotTribSNCent', 'emissaoForaDoMes',
     'policyVersionId'], // GOV-CONTADOR política versionada (item 14): a versão que aplicou esta escrita

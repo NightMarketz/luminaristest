@@ -8,6 +8,19 @@ export class ConsumptionTaxAssessmentRepository implements IConsumptionTaxAssess
     return (tx ?? prisma).consumptionTaxAssessment.create({ data });
   }
 
+  public async findById(ownerUserId: string, id: string, tx?: Prisma.TransactionClient): Promise<ConsumptionTaxAssessment | null> {
+    return (tx ?? prisma).consumptionTaxAssessment.findFirst({ where: { id, userId: ownerUserId, deletedAt: null } });
+  }
+
+  public async findSuperseded(ownerUserId: string, anoCalendario: number, mes: number, tributo: string): Promise<ConsumptionTaxAssessment[]> {
+    return prisma.consumptionTaxAssessment.findMany({ where: { userId: ownerUserId, anoCalendario, mes, tributo, status: 'SUPERSEDED', deletedAt: null } });
+  }
+
+  public async setProvisaoEntryId(ownerUserId: string, id: string, entryId: string): Promise<boolean> {
+    const r = await prisma.consumptionTaxAssessment.updateMany({ where: { id, userId: ownerUserId, deletedAt: null, provisaoEntryId: null }, data: { provisaoEntryId: entryId } });
+    return r.count === 1;
+  }
+
   public async findMany(ownerUserId: string, anoCalendario: number, tx?: Prisma.TransactionClient): Promise<ConsumptionTaxAssessment[]> {
     return (tx ?? prisma).consumptionTaxAssessment.findMany({
       where: { userId: ownerUserId, anoCalendario, deletedAt: null },

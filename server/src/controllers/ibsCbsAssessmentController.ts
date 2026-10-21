@@ -6,6 +6,7 @@ import {
   IbsCbsAssessmentConfirmSchema,
   IbsCbsAssessmentListQuerySchema,
   IbsCbsAssessmentPreviewSchema,
+  IbsCbsAssessmentScopeQuerySchema,
 } from '../features/accounting/dtos/IbsCbsAssessmentDto';
 
 /**
@@ -50,6 +51,20 @@ export const listIbsCbsAssessments = async (req: Request, res: Response) => {
     const q = IbsCbsAssessmentListQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
     const data = await getFactory().getIbsCbsAssessmentService().list(await getFactory().getAccountingScopeResolver().resolve(user, q.data.unitId, { access: 'read' }), q.data);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** POST /api/accounting/ibs-cbs-assessments/:id/provisao?unitId= — reconcile da reclassificação (item 12; dono 21/10, molde X7). */
+export const reconcileIbsCbsProvisao = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const q = IbsCbsAssessmentScopeQuerySchema.safeParse(req.query);
+    if (!q.success) return bad(res, q.error.flatten());
+    const data = await getFactory().getIbsCbsAssessmentService().reconcileIbsCbsProvisao(await getFactory().getAccountingScopeResolver().resolve(user, q.data.unitId, { access: 'write' }), req.params.id);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
