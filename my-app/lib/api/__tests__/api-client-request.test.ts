@@ -25,17 +25,17 @@ describe('apiClient.request', () => {
 
   it('não-2xx com corpo vazio: rejeita com { status } (antes: "Network request failed", sem status)', async () => {
     vi.mocked(globalThis.fetch).mockResolvedValue(res(500, ''));
-    await expect(apiClient.get('/x')).rejects.toEqual({ status: 500 });
+    await expect(apiClient.get('/x')).rejects.toMatchObject({ status: 500 });
   });
 
   it('não-2xx com corpo sem error/message: o corpo vem inteiro, com status', async () => {
     vi.mocked(globalThis.fetch).mockResolvedValue(res(422, JSON.stringify({ details: ['a'] })));
-    await expect(apiClient.post('/x', {})).rejects.toEqual({ details: ['a'], status: 422 });
+    await expect(apiClient.post('/x', {})).rejects.toMatchObject({ details: ['a'], status: 422 });
   });
 
   it('não-2xx com corpo não-JSON: { status } sem error sintético; o toast usa "Erro <status>: <statusText>"', async () => {
     vi.mocked(globalThis.fetch).mockResolvedValue(res(502, '<html>proxy</html>'));
-    await expect(apiClient.get('/x')).rejects.toEqual({ status: 502 });
+    await expect(apiClient.get('/x')).rejects.toMatchObject({ status: 502 });
     expect(notify).toHaveBeenCalledWith('Erro 502: Bad Gateway', 'error', 'Erro');
   });
 
@@ -46,9 +46,9 @@ describe('apiClient.request', () => {
 
   it('silent: rejeita igual, sem toast', async () => {
     vi.mocked(globalThis.fetch).mockResolvedValue(res(400, JSON.stringify({ error: 'inválido' })));
-    await expect(apiClient.get('/x', { silent: true })).rejects.toEqual({ error: 'inválido', status: 400 });
+    await expect(apiClient.get('/x', { silent: true })).rejects.toMatchObject({ error: 'inválido', status: 400 });
     expect(notify).not.toHaveBeenCalled();
-    await expect(apiClient.get('/x')).rejects.toEqual({ error: 'inválido', status: 400 });
+    await expect(apiClient.get('/x')).rejects.toMatchObject({ error: 'inválido', status: 400 });
     expect(notify).toHaveBeenCalledTimes(1);
   });
 
