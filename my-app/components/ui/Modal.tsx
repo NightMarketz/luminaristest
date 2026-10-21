@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'next-i18next';
+import { useConfirmModal } from './feedback/useConfirmModal';
 
 interface ModalProps {
   isOpen: boolean;
@@ -28,19 +29,29 @@ export function Modal({
   const { t } = useTranslation(['common', 'database']);
   const modalRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
+  const { confirmNode, confirm } = useConfirmModal();
+  const confirmingRef = useRef(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   const handleClose = useCallback(() => {
+    // While the unsaved-changes confirmation is open, Escape/click-outside belong to it, not to this modal.
+    if (confirmingRef.current) return;
     if (isDirty) {
-      if (!window.confirm(t('common:unsavedChangesConfirm', 'There are unsaved changes. Are you sure you want to close?'))) {
-        return;
-      }
+      confirmingRef.current = true;
+      void confirm({
+        message: t('common:unsavedChangesConfirm', 'There are unsaved changes. Are you sure you want to close?'),
+        variant: 'warning',
+        onConfirm: async () => onClose(),
+      }).finally(() => {
+        confirmingRef.current = false;
+      });
+      return;
     }
     onClose();
-  }, [isDirty, onClose, t]);
+  }, [isDirty, onClose, t, confirm]);
 
   // Focus trap: trap Tab/Shift+Tab inside the modal
   useEffect(() => {
@@ -174,6 +185,7 @@ export function Modal({
           </div>
         )}
       </div>
+      {confirmNode}
     </div>,
     document.body
   );

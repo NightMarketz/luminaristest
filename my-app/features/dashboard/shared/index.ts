@@ -11,13 +11,6 @@
  * used across multiple category-views. For intra-view-only imports (e.g. a
  * component that lives inside `finance/` and is only used there) continue to
  * use direct relative imports to keep bundle splits clean.
- *
- * Deprecated exports
- * ------------------
- * `useRelationLookups` — still exported for the single Finance Analytics
- * caller (`KpiDrillDownDrawer`). Migration to `useTableRelationLookups` is
- * deferred to the Finance Analytics Gold Standard stage. Do NOT add new
- * callers.
  */
 
 // ─── Components ─────────────────────────────────────────────────────────────
@@ -63,12 +56,6 @@ export { useRenderTypedValue } from './hooks/useRenderTypedValue';
  */
 export { useTableRelationLookups } from './hooks/useTableRelationLookups';
 
-/**
- * @deprecated Use `useTableRelationLookups` instead.
- * Kept only for `KpiDrillDownDrawer` in Finance Analytics — do not add
- * new callers.
- */
-export { useRelationLookups } from './hooks/useRelationLookups';
 
 // ─── Utils ───────────────────────────────────────────────────────────────────
 
