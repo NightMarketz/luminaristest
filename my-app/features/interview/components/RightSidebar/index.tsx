@@ -65,32 +65,8 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, onSe
 
   // Atualizamos o estado local quando o selectedTable mudar
   useEffect(() => {
-    console.log("RightSidebar: selectedTable changed:", selectedTable?.name || "null");
-    console.log("RightSidebar: isVisible=", isVisible);
-    
-    // Log detalhado da tabela selecionada para debug
-    if (selectedTable) {
-      console.log("RightSidebar: Detalhes da tabela:", {
-        name: selectedTable.name,
-        hasFields: Boolean(selectedTable.fields),
-        fieldsCount: selectedTable.fields?.length || 0,
-        isCore: selectedTable.isCore
-      });
-      
-      // Log dos campos da tabela, se existirem
-      if (selectedTable.fields && selectedTable.fields.length > 0) {
-        console.log("RightSidebar: Campos da tabela:", selectedTable.fields);
-      } else {
-        console.log("RightSidebar: A tabela não possui campos definidos.");
-      }
-    }
-    
     setTableData(selectedTable);
 
-    // Definir um timeout para forçar rerender após 100ms
-    setTimeout(() => {
-      console.log("RightSidebar: Estado atualizado após timeout");
-    }, 100);
     // W6 (revisão do #785): só ao trocar de TABELA ou de visibilidade. A sincronização do modo IA atualiza a mesma
     // tabela no hook e não pode apagar a edição manual ainda não salva da cópia local.
   }, [selectedTable?.key, isVisible]);
