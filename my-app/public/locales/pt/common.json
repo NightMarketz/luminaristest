@@ -558,6 +558,7 @@
   "confirm_delete_title": "Inativar Registro?",
   "confirm_delete_generic_msg": "Este registro será inativado. O histórico será preservado.",
   "error_deleting_record": "Ocorreu um erro ao tentar inativar o registro.",
+  "error_saving_record": "Erro ao salvar o registro.",
   "relation_cell_items": "{{count}} itens",
 
   "unsavedChangesConfirm": "Existem alterações não salvas. Tem certeza que deseja fechar?",
