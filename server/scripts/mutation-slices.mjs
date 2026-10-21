@@ -13,14 +13,19 @@
 // --hours é orçamento para COMEÇAR fatias: fatia já iniciada termina (não matamos o Stryker — inPlace
 // deixaria o src instrumentado). Uma fatia só começa se a última duração dela (ou a média) cabe no
 // que sobra. Ctrl+C interrompe a fatia corrente: o Stryker restaura os arquivos e ela fica pendente.
-import { spawn, execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-
-const SERVER = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const BASE_CONFIG = path.join(SERVER, 'stryker.config.mjs');
-const OUT = path.join(SERVER, 'reports', 'mutation');
+import {
+  OUT,
+  RECOVERY_HINT,
+  SERVER,
+  expandMutate,
+  headCommit,
+  loadBaseConfig,
+  runStryker,
+  srcIsClean,
+  writeDerivedConfig,
+} from './mutation-common.mjs';
 const SLICES_DIR = path.join(OUT, 'slices');
 const STATE = path.join(SLICES_DIR, 'state.json');
 const DEFAULT_SLICES = 14;
@@ -46,21 +51,6 @@ function positiveNumber(raw, name) {
   const n = Number(raw);
   if (!Number.isFinite(n) || n <= 0) throw new Error(`--${name} precisa ser número > 0 (recebi "${raw}")`);
   return n;
-}
-
-async function loadBaseConfig() {
-  return (await import(pathToFileURL(BASE_CONFIG).href)).default;
-}
-
-/** Expande os globs do `mutate` (com exclusões `!`) na lista de arquivos, caminhos relativos a server/. */
-function expandMutate(patterns) {
-  const include = patterns.filter((p) => !p.startsWith('!'));
-  const exclude = patterns.filter((p) => p.startsWith('!')).map((p) => p.slice(1));
-  const files = new Set();
-  for (const p of include) {
-    for (const f of fs.globSync(p, { cwd: SERVER, exclude })) files.add(f.split(path.sep).join('/'));
-  }
-  return [...files].sort();
 }
 
 /** Bin-packing guloso por tamanho (proxy de nº de mutantes): maior arquivo → fatia mais leve. */
@@ -150,63 +140,6 @@ function fmtDuration(ms) {
   return `${h}h${String(m).padStart(2, '0')}`;
 }
 
-function srcIsClean() {
-  const out = execFileSync('git', ['status', '--porcelain', '--', 'src'], { cwd: SERVER, encoding: 'utf8' });
-  return out.trim() === '';
-}
-
-function headCommit() {
-  return execFileSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: SERVER, encoding: 'utf8' }).trim();
-}
-
-/** Config da fatia: herda o stryker.config.mjs e troca só `mutate` e os caminhos de saída. */
-function writeSliceConfig(slice) {
-  const dir = sliceDir(slice.id);
-  fs.mkdirSync(dir, { recursive: true });
-  const rel = (p) => path.relative(SERVER, path.join(dir, p)).split(path.sep).join('/');
-  const configPath = path.join(dir, 'stryker.slice.config.mjs');
-  const body = `// Gerado por scripts/mutation-slices.mjs — não editar.
-import base from ${JSON.stringify(pathToFileURL(BASE_CONFIG).href)};
-export default {
-  ...base,
-  mutate: ${JSON.stringify(slice.files, null, 2)},
-  reporters: ['clear-text', 'progress', 'html', 'json'],
-  htmlReporter: { fileName: ${JSON.stringify(rel('mutation.html'))} },
-  jsonReporter: { fileName: ${JSON.stringify(rel('mutation.json'))} },
-  incrementalFile: ${JSON.stringify(rel('stryker-incremental.json'))},
-};
-`;
-  fs.writeFileSync(configPath, body);
-  return configPath;
-}
-
-function runStryker(configPath, logPath) {
-  return new Promise((resolve) => {
-    const log = fs.createWriteStream(logPath, { flags: 'a' });
-    const bin = path.join(SERVER, 'node_modules', '@stryker-mutator', 'core', 'bin', 'stryker.js');
-    const child = spawn(process.execPath, [bin, 'run', configPath], {
-      cwd: SERVER,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    const tee = (chunk) => {
-      process.stdout.write(chunk);
-      log.write(chunk);
-    };
-    child.stdout.on('data', tee);
-    child.stderr.on('data', tee);
-    // Ctrl+C já chega ao Stryker (mesmo grupo de processo/console). O pai só não pode morrer antes
-    // dele: o Stryker precisa restaurar o src (inPlace) e o estado da fatia precisa ser gravado.
-    // Não repassamos com child.kill — no Windows isso é TerminateProcess e o src ficaria instrumentado.
-    const wait = () => console.log('\nCtrl+C: esperando o Stryker restaurar os arquivos…');
-    process.on('SIGINT', wait);
-    child.on('close', (code) => {
-      process.off('SIGINT', wait);
-      log.end();
-      resolve(code ?? 1);
-    });
-  });
-}
-
 async function cmdRun(opts) {
   if (!srcIsClean()) {
     throw new Error(
@@ -246,7 +179,7 @@ async function cmdRun(opts) {
     console.log(
       `\n=== Fatia ${slice.id}/${state.slices.length} — ${slice.files.length} arquivos (estimativa ${fmtDuration(estimate || null)}) ===`,
     );
-    const configPath = writeSliceConfig(slice);
+    const configPath = writeDerivedConfig(sliceDir(slice.id), 'stryker.slice.config.mjs', slice.files);
     const t0 = Date.now();
     const code = await runStryker(configPath, path.join(sliceDir(slice.id), 'stryker.log'));
     const durationMs = Date.now() - t0;
@@ -255,9 +188,7 @@ async function cmdRun(opts) {
     if (ok) slice.doneInRound = state.round;
     writeState(state);
     if (!srcIsClean()) {
-      throw new Error(
-        'server/src ficou alterado depois do Stryker (instrumentado). Recupere com: git checkout -- src && rm -rf .stryker-tmp',
-      );
+      throw new Error(RECOVERY_HINT);
     }
     if (!ok)
       throw new Error(
