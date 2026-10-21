@@ -798,6 +798,7 @@ export class FiscalDocumentEmissionService {
       cIndOp: IND_OP_DEFAULT_SALAO,
       cLocPrestacao: null,
       xDescServ: null,
+      cClassTrib: null, // IBS-CBS-2027 PR-1: pacote sem serviço ⇒ cClassTrib do perfil (F-IBS-10 a, fallback)
       updatedAt: '',
     };
   }
@@ -1011,13 +1012,14 @@ export class FiscalDocumentEmissionService {
                 },
           },
         },
-        ...(fp.ibsCbsInformar && fp.ibsCbsCst && fp.ibsCbsClassTrib
+        // IBS-CBS-2027 PR-1 (BRIEF item 3; F-IBS-10 a): cClassTrib do serviço, com fallback no do perfil.
+        ...(fp.ibsCbsInformar && fp.ibsCbsCst && (group.profile.cClassTrib ?? fp.ibsCbsClassTrib)
           ? {
               IBSCBS: {
                 finNFSe: 0,
                 cIndOp: group.profile.cIndOp,
                 indDest: 0,
-                valores: { trib: { gIBSCBS: { CST: fp.ibsCbsCst, cClassTrib: fp.ibsCbsClassTrib } } },
+                valores: { trib: { gIBSCBS: { CST: fp.ibsCbsCst, cClassTrib: (group.profile.cClassTrib ?? fp.ibsCbsClassTrib) as string } } },
               },
             }
           : {}),

@@ -22,6 +22,8 @@ export interface ServiceFiscalProfileView {
   cIndOp: string;
   cLocPrestacao: string | null;
   xDescServ: string | null;
+  /** IBS-CBS-2027 PR-1 (F-IBS-10 a): null => a emissão usa FiscalProfile.ibsCbsClassTrib. */
+  cClassTrib: string | null;
   updatedAt: string;
 }
 
@@ -108,6 +110,7 @@ export class ServiceFiscalProfileService {
       cIndOp: row.cIndOp,
       cLocPrestacao: row.cLocPrestacao,
       xDescServ: row.xDescServ,
+      cClassTrib: row.cClassTrib,
       updatedAt: row.updatedAt.toISOString(),
     };
   }

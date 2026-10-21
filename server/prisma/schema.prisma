@@ -1801,6 +1801,7 @@ model ServiceFiscalProfile {
   cIndOp        String    @default("030101") // Anexo C (models/indOp.ts) [339]
   cLocPrestacao String? // IBGE 7 [192]; null => FiscalProfile.codMun (EP — grupo 6 da lista, MUN.INCID l.73-78)
   xDescServ     String? // [197]; null => services.name
+  cClassTrib    String? // IBS-CBS-2027 PR-1 (F-IBS-10 a): 6 dígitos; null => FiscalProfile.ibsCbsClassTrib
   createdById   String?
   updatedById   String?
   createdAt     DateTime  @default(now())

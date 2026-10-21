@@ -78,7 +78,7 @@ function baseFiscalProfileView(overrides: Partial<Record<string, unknown>> = {})
 
 function makeService(opts: {
   fiscalProfile?: ReturnType<typeof baseFiscalProfileView> | null;
-  serviceProfiles?: Record<string, { cTribNac: string; cTribMun: string | null; cNBS: string | null; cIndOp: string; cLocPrestacao: string | null }>;
+  serviceProfiles?: Record<string, { cTribNac: string; cTribMun: string | null; cNBS: string | null; cIndOp: string; cLocPrestacao: string | null; cClassTrib?: string | null }>;
   ledgerPostings?: Array<{ accountId: string; debitCents: bigint; creditCents: bigint }>;
   liveDocs?: Array<{ id: string; status: string; cTribNac: string }>;
   emitir?: jest.Mock;
@@ -580,6 +580,27 @@ describe('FiscalDocumentEmissionService — Simples Nacional (item 22)', () => {
     expect(payload.infDPS.prest.regTrib.opSimpNac).toBe(3);
     expect('pTotTribSN' in payload.infDPS.valores.trib.totTrib).toBe(true);
     expect(payload.infDPS.IBSCBS).toBeUndefined();
+  });
+
+  // IBS-CBS-2027 PR-1 (BRIEF item 3; F-IBS-10 a): cClassTrib do SERVIÇO no gIBSCBS, com fallback no do perfil.
+  async function cClassTribDe(cClassTribServico: string | null | undefined): Promise<string | undefined> {
+    const { service } = makeService({
+      fiscalProfile: baseFiscalProfileView({ ibsCbsInformar: true, ibsCbsCst: '000', ibsCbsClassTrib: '000001' }),
+      serviceProfiles: { 'srv-A': { cTribNac: '060101', cTribMun: null, cNBS: '126021000', cIndOp: '030101', cLocPrestacao: null, cClassTrib: cClassTribServico } },
+      ledgerPostings: [{ accountId: 'acc-3.1', debitCents: 0n, creditCents: 10000n }],
+    });
+    const result = await service.preview(SCOPE, SALE_ID, 'NFSE');
+    expect(result.ok).toBe(true);
+    return (result.payloads[0].infDPS.IBSCBS as { valores: { trib: { gIBSCBS: { cClassTrib: string } } } } | undefined)?.valores.trib.gIBSCBS.cClassTrib;
+  }
+
+  it('serviço com cClassTrib próprio ⇒ o DPS leva o do serviço', async () => {
+    expect(await cClassTribDe('000002')).toBe('000002');
+  });
+
+  it('serviço sem cClassTrib ⇒ o DPS leva o do perfil (fallback)', async () => {
+    expect(await cClassTribDe(null)).toBe('000001');
+    expect(await cClassTribDe(undefined)).toBe('000001');
   });
 
   // Verificação legal 17/10/2026 (pesquisas-legais/verif-2026-10-17-iss-nfse, DIVERGE 1) — Anexo I v1.01 [D12]:

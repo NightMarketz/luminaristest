@@ -83,6 +83,13 @@ describe('UpsertServiceFiscalProfileSchema (BRIEF item 8)', () => {
     expect(UpsertServiceFiscalProfileSchema.safeParse({ ...base, cTribNac: '60101' }).success).toBe(false); // zero à esquerda obrigatório
   });
 
+  it('cClassTrib por serviço (IBS-CBS-2027 PR-1, F-IBS-10 a): 6 dígitos ou null; fora do formato → 400', () => {
+    expect(UpsertServiceFiscalProfileSchema.safeParse({ ...base, cClassTrib: '000001' }).success).toBe(true);
+    expect(UpsertServiceFiscalProfileSchema.safeParse({ ...base, cClassTrib: null }).success).toBe(true);
+    expect(UpsertServiceFiscalProfileSchema.safeParse({ ...base, cClassTrib: '00001' }).success).toBe(false);
+    expect(UpsertServiceFiscalProfileSchema.safeParse({ ...base, cClassTrib: '0000AB' }).success).toBe(false);
+  });
+
   it('cIndOp fora do Anexo C → 400; cNBS exige 9 dígitos [198]; cLocPrestacao 7 dígitos [192]', () => {
     expect(UpsertServiceFiscalProfileSchema.safeParse({ ...base, cIndOp: '999999' }).success).toBe(false);
     expect(UpsertServiceFiscalProfileSchema.safeParse({ ...base, cNBS: '12602100' }).success).toBe(false);

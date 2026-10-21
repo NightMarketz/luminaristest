@@ -70,6 +70,24 @@ export interface NfeItem {
   vIPICents: number; // imposto/IPI/IPITrib/vIPI — 0 se ausente/IPINT
   cstPis: string | null; // imposto/PIS/PIS{Aliq,Qtde,NT,Outr}/CST — null quando o grupo Q não existe
   cstCofins: string | null; // imposto/COFINS/COFINS{Aliq,Qtde,NT,Outr}/CST — null quando o grupo S não existe
+  // ── IBS-CBS-2027 PR-1 (BRIEF item 4; ADR D10): grupo UB12 `imposto/IBSCBS` (NT 2025.002 v1.52). Ausente = undefined ──
+  ibsCbs?: NfeItemIbsCbs;
+}
+
+/** NT 2025.002 v1.52: UB13 CST, UB14 cClassTrib, UB15 gIBSCBS { UB16 vBC, UB54a vIBS, UB55 gCBS/UB67 vCBS }. */
+export interface NfeItemIbsCbs {
+  cst: string;
+  cClassTrib: string;
+  vBCCents: bigint | null; // null quando o item não traz gIBSCBS (ex.: só monofasia/transferência)
+  vIBSCents: bigint | null;
+  vCBSCents: bigint | null;
+}
+
+/** NT 2025.002 v1.52: W34 total/IBSCBSTot { W36 gIBS/W47 vIBS, W50 gCBS/W56 vCBS } e W60 total/vNFTot. */
+export interface NfeTotaisIbsCbs {
+  vIBSCents: bigint | null;
+  vCBSCents: bigint | null;
+  vNFTotCents: bigint | null;
 }
 
 export interface NfeTotais {
@@ -82,6 +100,7 @@ export interface NfeTotais {
   vSTCents: number; // W06 (Σ vICMSST)
   vICMSCents: number; // W04 (ICMS próprio — NÃO subtrai no custo D3, risco ALTO nomeado)
   vNFCents: number; // W16 (tie-out)
+  ibsCbs?: NfeTotaisIbsCbs; // IBS-CBS-2027 PR-1: W34 IBSCBSTot / W60 vNFTot; ausentes = undefined
 }
 
 export interface NfeProtocolo {
@@ -222,6 +241,41 @@ function readItemTaxes(det: Record<string, unknown>): Pick<NfeItem, 'vICMSCents'
   };
 }
 
+/** Campo `13v2` opcional como bigint: ausente -> null (IBS-CBS-2027 PR-1 — o grupo é 0-1, ausência não é zero). */
+function moneyToBigCentsOpt(v: unknown, field: string): bigint | null {
+  const s = str(v);
+  return s ? BigInt(moneyToCents(s, field)) : null;
+}
+
+/** IBS-CBS-2027 PR-1 (BRIEF item 4): grupo UB12 do item. Nota sem o grupo ⇒ undefined, nunca erro. */
+function readItemIbsCbs(det: Record<string, unknown>): NfeItemIbsCbs | undefined {
+  const imposto = (det.imposto ?? {}) as Record<string, unknown>;
+  const g = imposto.IBSCBS as Record<string, unknown> | undefined;
+  if (!g) return undefined;
+  const ibscbs = (g.gIBSCBS ?? null) as Record<string, unknown> | null;
+  const cbs = (ibscbs?.gCBS ?? null) as Record<string, unknown> | null;
+  return {
+    cst: reqStr(g.CST, 'det/imposto/IBSCBS/CST'),
+    cClassTrib: reqStr(g.cClassTrib, 'det/imposto/IBSCBS/cClassTrib'),
+    vBCCents: moneyToBigCentsOpt(ibscbs?.vBC, 'det/imposto/IBSCBS/gIBSCBS/vBC'),
+    vIBSCents: moneyToBigCentsOpt(ibscbs?.vIBS, 'det/imposto/IBSCBS/gIBSCBS/vIBS'),
+    vCBSCents: moneyToBigCentsOpt(cbs?.vCBS, 'det/imposto/IBSCBS/gIBSCBS/gCBS/vCBS'),
+  };
+}
+
+/** IBS-CBS-2027 PR-1 (BRIEF item 4): W34 `total/IBSCBSTot` e W60 `total/vNFTot`. Sem os dois ⇒ undefined. */
+function readTotaisIbsCbs(totalNode: Record<string, unknown>): NfeTotaisIbsCbs | undefined {
+  const tot = totalNode.IBSCBSTot as Record<string, unknown> | undefined;
+  if (!tot && !str(totalNode.vNFTot)) return undefined;
+  const gIbs = (tot?.gIBS ?? null) as Record<string, unknown> | null;
+  const gCbs = (tot?.gCBS ?? null) as Record<string, unknown> | null;
+  return {
+    vIBSCents: moneyToBigCentsOpt(gIbs?.vIBS, 'total/IBSCBSTot/gIBS/vIBS'),
+    vCBSCents: moneyToBigCentsOpt(gCbs?.vCBS, 'total/IBSCBSTot/gCBS/vCBS'),
+    vNFTotCents: moneyToBigCentsOpt(totalNode.vNFTot, 'total/vNFTot'),
+  };
+}
+
 function readItem(det: Record<string, unknown>): NfeItem {
   const prod = (det.prod ?? {}) as Record<string, unknown>;
   const nItemRaw = str(det['@_nItem']);
@@ -229,6 +283,7 @@ function readItem(det: Record<string, unknown>): NfeItem {
   if (!nItemRaw || !Number.isInteger(nItem) || nItem < 1) {
     throw new ValidationError(`NF-e inválida: det/@nItem "${nItemRaw}" inválido.`);
   }
+  const ibsCbs = readItemIbsCbs(det);
   return {
     nItem,
     cProd: reqStr(prod.cProd, 'det/prod/cProd'),
@@ -246,6 +301,7 @@ function readItem(det: Record<string, unknown>): NfeItem {
     vSegCents: moneyToCentsOpt(prod.vSeg, 'det/prod/vSeg'),
     vOutroCents: moneyToCentsOpt(prod.vOutro, 'det/prod/vOutro'),
     ...readItemTaxes(det),
+    ...(ibsCbs ? { ibsCbs } : {}),
   };
 }
 
@@ -364,6 +420,8 @@ export function parseNfe(input: string | Buffer, legais: readonly LinhaLegal[], 
   const icmsTot = totalNode?.ICMSTot as Record<string, unknown> | undefined;
   if (!icmsTot) throw new ValidationError('NF-e inválida: grupo <total/ICMSTot> não encontrado.');
 
+  const totaisIbsCbs = totalNode ? readTotaisIbsCbs(totalNode) : undefined;
+
   // det é sempre array (isArray). Nota sem item = rejeita.
   const dets = (infNFe.det ?? []) as Record<string, unknown>[];
   if (!Array.isArray(dets) || dets.length === 0) {
@@ -383,7 +441,7 @@ export function parseNfe(input: string | Buffer, legais: readonly LinhaLegal[], 
     emit: readParty(infNFe.emit),
     dest: readParty(infNFe.dest),
     itens: dets.map(readItem),
-    totais: readTotais(icmsTot),
+    totais: { ...readTotais(icmsTot), ...(totaisIbsCbs ? { ibsCbs: totaisIbsCbs } : {}) },
     protocolo: {
       cStat,
       chNFe,
