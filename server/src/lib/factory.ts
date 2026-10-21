@@ -68,6 +68,7 @@ import { IssBeneficioMunicipalRepository } from '../features/accounting/reposito
 import { ProductDestinationDefaultRepository } from '../features/accounting/repositories/ProductDestinationDefaultRepository';
 import { CompanyFiscalProfileRepository } from '../features/accounting/repositories/CompanyFiscalProfileRepository';
 import { CompanySignerRepository } from '../features/accounting/repositories/CompanySignerRepository';
+import { PartnerRepository } from '../features/accounting/repositories/PartnerRepository';
 import { DepreciationRateRepository } from '../features/accounting/repositories/DepreciationRateRepository';
 import { FixedAssetClassRepository } from '../features/accounting/repositories/FixedAssetClassRepository';
 import { FixedAssetRepository } from '../features/accounting/repositories/FixedAssetRepository';
@@ -182,6 +183,7 @@ import { IssBeneficioMunicipalService } from '../features/accounting/services/Is
 import { ProductDestinationService } from '../features/accounting/services/ProductDestinationService';
 import { CompanyFiscalProfileService } from '../features/accounting/services/CompanyFiscalProfileService';
 import { CompanySignerService } from '../features/accounting/services/CompanySignerService';
+import { PartnerService } from '../features/accounting/services/PartnerService';
 import { DepreciationRateService } from '../features/accounting/services/DepreciationRateService';
 import { FixedAssetClassService } from '../features/accounting/services/FixedAssetClassService';
 import { FixedAssetService } from '../features/accounting/services/FixedAssetService';
@@ -332,6 +334,7 @@ import type { IIssBeneficioMunicipalRepository } from '../features/accounting/re
 import type { IProductDestinationDefaultRepository } from '../features/accounting/repositories/IProductDestinationDefaultRepository';
 import type { ICompanyFiscalProfileRepository } from '../features/accounting/repositories/ICompanyFiscalProfileRepository';
 import type { ICompanySignerRepository } from '../features/accounting/repositories/ICompanySignerRepository';
+import type { IPartnerRepository } from '../features/accounting/repositories/IPartnerRepository';
 import type { IDepreciationRateRepository } from '../features/accounting/repositories/IDepreciationRateRepository';
 import type { IFixedAssetClassRepository } from '../features/accounting/repositories/IFixedAssetClassRepository';
 import type { IFixedAssetRepository } from '../features/accounting/repositories/IFixedAssetRepository';
@@ -764,6 +767,7 @@ export class ApplicationFactory {
     productDestinationDefault: IProductDestinationDefaultRepository; // ITEM-DESTINATION PR-2
     companyFiscalProfile: ICompanyFiscalProfileRepository; // X13
     companySigner: ICompanySignerRepository; // X13
+    partner: IPartnerRepository; // IRRF-DISTRIBUICAO PR-1
     fiscalDocument: IFiscalDocumentRepository;
     lalur: ILalurRepository;
     accountingContact: IAccountingContactRepository;
@@ -867,6 +871,7 @@ export class ApplicationFactory {
     productDestination: ProductDestinationService; // ITEM-DESTINATION PR-2
     companyFiscalProfile: CompanyFiscalProfileService; // X13
     companySigner: CompanySignerService; // X13
+    partner: PartnerService; // IRRF-DISTRIBUICAO PR-1
     fiscalDocumentEmission: FiscalDocumentEmissionService;
     fiscalDocumentLifecycle: FiscalDocumentLifecycleService;
     lalur: LalurService;
@@ -968,6 +973,7 @@ export class ApplicationFactory {
       productDestinationDefault: new ProductDestinationDefaultRepository(),
       companyFiscalProfile: new CompanyFiscalProfileRepository(),
       companySigner: new CompanySignerRepository(),
+      partner: new PartnerRepository(),
       fiscalDocument: new FiscalDocumentRepository(),
       lalur: new LalurRepository(),
       accountingContact: new AccountingContactRepository(),
@@ -1456,6 +1462,7 @@ export class ApplicationFactory {
       accountingReportService, // PR-2: aviso de grande porte (F-XP-6 a)
       this.repositories.lalur, // X7 Fase B PR-4 item 2 (F-TB-6 a): troca de forma com o e-Lalur do ano preenchido
       legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia OBRIGACAO_REGIME
+      this.repositories.account, // IRRF-DISTRIBUICAO PR-1 item 8: contas do mapa do PL (escopo + Equity)
     );
     // Hoisted no LEGAL-PARAMS PR-4: o TaxAssessmentRecalcService também o injeta.
     const pisCofinsAssessmentService = new PisCofinsAssessmentService(
@@ -1510,6 +1517,7 @@ export class ApplicationFactory {
       // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13, PR-1): perfil da EMPRESA por ano + signatários não-contador.
       companyFiscalProfile: companyFiscalProfileService,
       companySigner: new CompanySignerService(this.repositories.companySigner, this.policies.accounting, auditService),
+      partner: new PartnerService(this.repositories.partner, this.policies.accounting, auditService), // IRRF-DISTRIBUICAO PR-1
       depreciationRate: depreciationRateService,
       fixedAssetClass: fixedAssetClassService,
       fixedAsset: fixedAssetService,
@@ -2270,6 +2278,7 @@ export class ApplicationFactory {
   public getProductDestinationService = (): ProductDestinationService => this.services.productDestination;
   public getCompanyFiscalProfileService = (): CompanyFiscalProfileService => this.services.companyFiscalProfile;
   public getCompanySignerService = (): CompanySignerService => this.services.companySigner;
+  public getPartnerService = (): PartnerService => this.services.partner;
   public getDepreciationRateService = (): DepreciationRateService => this.services.depreciationRate;
   public getFixedAssetClassService = (): FixedAssetClassService => this.services.fixedAssetClass;
   public getFixedAssetService = (): FixedAssetService => this.services.fixedAsset;

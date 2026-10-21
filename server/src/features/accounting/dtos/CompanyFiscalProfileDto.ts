@@ -36,6 +36,24 @@ export const CompanyFiscalProfileCopyParamSchema = z
 
 export const FORMAS_APURACAO_IRPJ_CSLL = ['TRIMESTRAL', 'ANUAL'] as const;
 
+/**
+ * BE-INCR-IRRF-DISTRIBUICAO PR-1 (item 8, F-IRD-15): grupos das contas do PL na base do JCP (IN 1.700 art. 75 I–V).
+ * `ACOES_TESOURARIA` subtrai; `LUCROS_ACUMULADOS` entra só com o saldo do exercício anterior (§ 1º VI) — regra do PR-3.
+ */
+export const JCP_BASE_GRUPOS = ['CAPITAL_INTEGRALIZADO', 'RESERVAS_CAPITAL', 'RESERVAS_LUCROS', 'ACOES_TESOURARIA', 'LUCROS_ACUMULADOS'] as const;
+export type JcpBaseGrupo = (typeof JCP_BASE_GRUPOS)[number];
+const contasDoGrupo = z.array(z.string().min(1)).max(50);
+export const JcpBaseContasSchema = z
+  .object({
+    CAPITAL_INTEGRALIZADO: contasDoGrupo,
+    RESERVAS_CAPITAL: contasDoGrupo,
+    RESERVAS_LUCROS: contasDoGrupo,
+    ACOES_TESOURARIA: contasDoGrupo,
+    LUCROS_ACUMULADOS: contasDoGrupo,
+  })
+  .strict();
+export type JcpBaseContas = z.infer<typeof JcpBaseContasSchema>;
+
 const dateOnly = (field: string) => z.string().refine(isValidDateOnly, `${field} deve ser uma data real YYYY-MM-DD`);
 
 export const CompanyFiscalProfileScopeSchema = z.object({ unitId: z.string().min(1) }).strict();
@@ -132,6 +150,9 @@ export const UpsertCompanyFiscalProfileSchema = z
     // COMPETENCIA. Sem valor padrão escondido.
     simplesCaixaPrazoCartaoDebitoDias: z.number().int().min(0).max(365).nullable().default(null),
     simplesCaixaPrazoCartaoCreditoDias: z.number().int().min(0).max(365).nullable().default(null),
+    // BE-INCR-IRRF-DISTRIBUICAO PR-1 (item 8, F-IRD-15): mapa das contas do PL na base do JCP. Conta de outra PJ → 404,
+    // conta que não é Equity → 400 (serviço, dentro da tx).
+    jcpBaseContas: JcpBaseContasSchema.nullable().default(null),
   })
   .strict()
   .superRefine((v, ctx) => {
