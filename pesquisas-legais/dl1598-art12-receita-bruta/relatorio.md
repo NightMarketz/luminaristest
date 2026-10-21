@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — dl1598-art12-receita-bruta
 
 **Pergunta:** DL 1.598 art. 12: receita bruta/líquida e tributos incidentes — classe contábil do IBS/CBS (F-IBS-8)
-**Aberto em:** 2026-10-21T16:25:09-03:00 · **Atualizado em:** 2026-10-21T16:58:42-03:00
+**Aberto em:** 2026-10-21T16:25:09-03:00 · **Atualizado em:** 2026-10-21T17:00:56-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -18,7 +18,7 @@ IBS/CBS é não cumulativo e destacado na nota. Se o prestador for "mero deposit
 ## 3. Lacunas
 - LC 214 art. 542 LX [D02] conferido: revoga, a partir de 01/01/2027, só os arts. 56, 57 e 69 § 2º da Lei 12.973 [D03] — PIS/Cofins em concessão pública e arrendamento mercantil. Não toca o art. 2º da Lei 12.973 (que deu a redação ao DL 1.598 art. 12). Sem efeito no F-IBS-8.
 - SHA do lcp214.htm hoje (beefc9af…) difere do de 20/10 (e728c970…); diferença não investigada (pode ser só marcação).
-- Impacto na base do Presumido (Lei 9.249 art. 15 remete à receita bruta do art. 12) não lido.
+- Lei 9.249 [D04] (acervo compilado 13/10, sem alerta) conferida: art. 15 caput (IRPJ presumido) aplica o percentual "sobre a receita bruta auferida mensalmente, observado o disposto no art. 12 do Decreto-Lei nº 1.598", deduzida só de devoluções, vendas canceladas e descontos incondicionais; art. 20 caput (CSLL) idem, "receita bruta definida pelo art. 12". Os tributos sobre a receita (§ 1º III do art. 12) **não** são deduzidos. Consequência: se IBS/CBS cair no § 4º (fora da receita bruta), a base do Presumido exclui IBS/CBS; se for tratado pelo § 1º III / § 5º (dentro da bruta), entra na base presumida e eleva IRPJ/CSLL. Não há "Vide LC 214" no art. 15/20 do acervo.
 <!-- /ANALISE -->
 
 ## Fontes consultadas
@@ -33,6 +33,10 @@ IBS/CBS é não cumulativo e destacado na nota. Se o prestador for "mero deposit
   Acervo: <https://github.com/ctresb/leis/blob/5a77b1ed480d4b4fc20fabaac59f6674b120d7ec/federal/leis-ordinarias/2014/lei-12973-2014-05-13.md>  
   Fonte oficial declarada: <https://normas.leg.br/?urn=urn:lex:br:federal:lei:2014-05-13;12973> · versao_texto: compilada (texto vigente) · cópia de 2026-10-13  
   Lido em 2026-10-21T16:58:30-03:00 · arquivo local `docs/D03_lei-12973-2014-05-13.md` · SHA-256 `d73a401dbbd14ab1feb1c8bce8daa51c3cfcb0cbc264e87b9023fc875f1b89cf`
+- **[D04]** Lei nº 9.249 de 26/12/1995 — Acervo ctresb/leis (espelho de fonte oficial)  
+  Acervo: <https://github.com/ctresb/leis/blob/d955e7e66c4a7176278ee8ac74513668de7fc989/federal/leis-ordinarias/1995/lei-9249-1995-12-26.md>  
+  Fonte oficial declarada: <https://normas.leg.br/?urn=urn:lex:br:federal:lei:1995-12-26;9249> · versao_texto: compilada (texto vigente) · cópia de 2026-10-13  
+  Lido em 2026-10-21T17:00:26-03:00 · arquivo local `docs/D04_lei-9249-1995-12-26.md` · SHA-256 `18cb96b64a850a3f9b738da870044230b76a336068e3fae79cb83f10b14d4699`
 
 ## Registro de buscas
 _Nenhuma busca registrada._
