@@ -1,7 +1,7 @@
-# BRIEF (ESBOÇO) — W3 F-W3-1: confirmação do resumo do negócio sem `=== 'true'`
+# BRIEF — W3 F-W3-1: confirmação do resumo do negócio sem `=== 'true'`
 
-> **ESBOÇO — não executável.** A autorização de 15/10 cobre **decidir** o F-W3-1 e esboçar este BRIEF, não
-> implementar (sem "executa"). A `sessao-feature` só roda depois de nova autorização citável do dono **e** da
+> **BRIEF fechado em 21/10 (só docs).** Não executável ainda: a autorização de 21/10 cobre **fechar** este BRIEF,
+> não implementar (sem "executa"). A `sessao-feature` só roda depois de nova autorização citável do dono **e** da
 > ratificação dos forks F-W3-C1..C3 (§3).
 
 - **Nó:** [W3](../plano/nos/W3.md) — Gates determinísticos da entrevista (parte F-W3-1).
@@ -9,6 +9,8 @@
   — sessao-planejamento, sem código"*. Decisão: [`D-2026-10-15-W3-CONFIRMACAO-RESUMO`](../plano/decisoes/D-2026-10-15-W3-CONFIRMACAO-RESUMO.md)
   — F-W3-1 = **(c) botões + classificação estruturada (3 saídas)**; negar **refaz o resumo**; `IDENTIFYING_ENTITIES`
   **entra junto**.
+- **Fechamento:** dono, chat, 2026-10-21 — *"Autorizo ... fechar o BRIEF WIZARD-W3-CONFIRMACAO-RESUMO ... —
+  sessao-planejamento, só docs, sem código, sem 'executa'"*. Referências de linha re-conferidas em `origin/main` 7c063e39.
 - **Estado de partida (fato consumado, `origin/main` 8ba1ed8f):** parte (b) do W3 mergeada (#455 BE, #477 FE) —
   `choice` enum no corpo, `choicePrompt { kind: 'creation_type', reason }` na resposta, componente `CreationChoice`.
 - **Sessão executora (quando autorizada):** `sessao-feature`, dois incrementos seriais: **BE** (itens 1–8) → **FE**
@@ -18,12 +20,12 @@
 
 | Artefato | O que fixa |
 |---|---|
-| `server/src/features/interview/InterviewService/InterviewService.ts:130-160` | turno de estágio processável: resposta da IA, depois 2ª chamada com `completionCheckPrompt` e `checkResult?.toLowerCase() === 'true'` (l. 144), compartilhada por `CONFIRMING_BUSINESS` e `IDENTIFYING_ENTITIES`; ao completar, `processTurn(config.nextStage)` na hora (a resposta de reconhecimento é descartada) |
-| `server/src/features/interview/InterviewService/PromptConfig.ts:21-31` | `CONFIRMING_BUSINESS.systemPrompt` só reconhece ("Obrigado"); `completionCheckPrompt` pede `'true'`/`'false'`; idem `IDENTIFYING_ENTITIES` ("pelo menos duas entidades") |
-| `server/src/lib/openai/OpenAIService.ts:72-96, 241-259` | canônico `classifyIntoEnum(input, systemPrompt, options)` — `json_schema` strict, `gpt-4o-mini`, devolve uma das `options` ou `null`; **erro da API sobe** ao chamador |
-| `server/src/controllers/interviewController.ts:21-28` | `ChatInterviewSchema` com `choice: z.enum(['create','customize']).optional()` |
-| `server/src/features/interview/models/InterviewTypes.ts:40,51` | `choicePrompt?: { kind: 'creation_type'; reason }` — discriminador `kind` já pensado para extensão |
-| `server/src/routes/docs.paths.ts:870` | `POST /api/dashboard/ai/ChatInterview` documentado (#455) — muda junto |
+| `server/src/features/interview/InterviewService/InterviewService.ts:~150-190` | turno de estágio processável: resposta da IA, depois 2ª chamada com `completionCheckPrompt` e `checkResult?.toLowerCase() === 'true'` (l. 174), compartilhada por `CONFIRMING_BUSINESS` e `IDENTIFYING_ENTITIES`; ao completar, `processTurn(config.nextStage)` na hora (a resposta de reconhecimento é descartada) |
+| `server/src/features/interview/InterviewService/PromptConfig.ts:20-29` | `CONFIRMING_BUSINESS.systemPrompt` só reconhece ("Obrigado"); `completionCheckPrompt` pede `'true'`/`'false'`; idem `IDENTIFYING_ENTITIES` ("pelo menos duas entidades") |
+| `server/src/lib/openai/OpenAIService.ts:306-322` | canônico `classifyIntoEnum(input, systemPrompt, options)` — `json_schema` strict, `gpt-4o-mini`, devolve uma das `options` ou `null`; **erro da API sobe** ao chamador |
+| `server/src/features/interview/dtos/ChatInterviewDto.ts:25` (consumido em `interviewController.ts:59`) | `ChatInterviewSchema` com `choice: z.enum(['create','customize']).optional()` |
+| `server/src/features/interview/models/InterviewTypes.ts:54` | `choicePrompt?: { kind: 'creation_type'; reason }` — discriminador `kind` já pensado para extensão |
+| `server/src/routes/docs/dashboard.paths.ts` | `POST /api/dashboard/ai/ChatInterview` documentado (#455) — muda junto |
 | `my-app/features/interview/components/AiInterviewSetup/CreationChoice.tsx` (75 l.) + `index.tsx:163` + `hooks/useAiInterview.ts` | botões da parte (b), `sendCreationChoice`, estado `choicePrompt` |
 
 ## 1. Checklist de comportamentos
@@ -51,7 +53,7 @@
 7. **`IDENTIFYING_ENTITIES` na mesma correção** (decisão #3): `classifyIntoEnum` com `['enough','not_enough']`;
    `null` ⇒ `not_enough` (continua perguntando). Sem botões (pergunta aberta). *Teste:* `enough` → `COMPLETED`;
    `null` → permanece.
-8. **Contrato e gates:** `docs.paths.ts` + `public/openapi.json` regenerado (corpo e `choicePrompt.kind` novos);
+8. **Contrato e gates:** `docs/dashboard.paths.ts` + `public/openapi.json` regenerado (corpo e `choicePrompt.kind` novos);
    snapshot de shape dos DTOs atualizado só com o schema tocado (memória: UPDATE do snapshot no Windows reordena);
    `cd server && npx tsc --noEmit` + `tsc -p tsconfig.test.json`; suíte unit; a guarda da parte (a)/(b)
    (`StageHandlers.creationType.test.ts`, `StageHandlers.choice.test.ts`) segue verde.
@@ -83,7 +85,7 @@ export interface IInterviewTurnResult { /* … */ choicePrompt?: ChoicePrompt; }
 export const SUMMARY_CONFIRMATION = ['confirmed', 'rejected', 'unclear'] as const;
 export const ENTITIES_SUFFICIENCY = ['enough', 'not_enough'] as const;
 
-// server — corpo do POST /api/dashboard/ai/ChatInterview (forma depende do F-W3-C1; recomendação (a))
+// server — ChatInterviewDto.ts, corpo do POST /api/dashboard/ai/ChatInterview (forma depende do F-W3-C1; recomendação (a))
 const ChatInterviewSchema = z.object({
   /* stage, messages, presetKey, sessionId, choice — existentes */
   summaryChoice: z.enum(['confirm', 'correct']).optional(), // novo; só lido em CONFIRMING_BUSINESS
@@ -133,5 +135,5 @@ Direto (sem fork): entrega BE → FE (escolhida com a opção (c) da decisão #1
    de texto ainda chama. Remover é otimização, não correção — fica fora.
 2. **`IDENTIFYING_ENTITIES` → `COMPLETED` sem `presetKey`.** O que o front faz ao completar sem preset não foi lido
    (fora do F-W3-1); o item 7 só troca o gate.
-3. **`isTextTabular`** (`OpenAIService.ts:266`) usa o mesmo padrão `=== 'true'` fora da entrevista — mesma classe,
+3. **`isTextTabular`** (`OpenAIService.ts:378`) usa o mesmo padrão `=== 'true'` fora da entrevista — mesma classe,
    outro módulo.
