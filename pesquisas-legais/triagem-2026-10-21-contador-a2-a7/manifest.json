@@ -1,0 +1,56 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei nº 9.430 de 27/12/1996",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1996/lei-9430-1996-12-27.md",
+      "url_final": "https://github.com/ctresb/leis/blob/6c8aa8aa7d6126d14c332df3ab07f956b17f4bf2/federal/leis-ordinarias/1996/lei-9430-1996-12-27.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1996-12-27;9430",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "6c8aa8aa7d6126d14c332df3ab07f956b17f4bf2",
+      "alertas": [],
+      "baixado_em": "2026-10-21T15:43:16-03:00",
+      "sha256": "6e8e20371d0e7796244402441b7e3fc72df83a7bbe640029d4919359a6115bcc",
+      "arquivo": "docs/D01_lei-9430-1996-12-27.md",
+      "texto": "docs/D01_lei-9430-1996-12-27.txt",
+      "bytes": 117629
+    },
+    {
+      "id": "D02",
+      "titulo": "Lei Complementar nº 116 de 31/07/2003",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/2003/lcp-116-2003-07-31.md",
+      "url_final": "https://github.com/ctresb/leis/blob/ae234474cd3e1e3f6e871eaa102aeb862ec17541/federal/leis-complementares/2003/lcp-116-2003-07-31.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2003-07-31;116",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "ae234474cd3e1e3f6e871eaa102aeb862ec17541",
+      "alertas": [],
+      "baixado_em": "2026-10-21T15:43:18-03:00",
+      "sha256": "ee5663cd6f75d06dc795b4b9b49b52e4a9d7ad9c2575d817375088a5ed3098b9",
+      "arquivo": "docs/D02_lcp-116-2003-07-31.md",
+      "texto": "docs/D02_lcp-116-2003-07-31.txt",
+      "bytes": 48020
+    },
+    {
+      "id": "D03",
+      "titulo": "Lcp 214",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-21T15:43:20-03:00",
+      "sha256": "04dcc798298e0295c265ad980a77a5ab39be9d98baa199ec81eab136d7564ef7",
+      "arquivo": "docs/D03_lcp214-htm.html",
+      "texto": "docs/D03_lcp214-htm.txt",
+      "bytes": 5403613
+    }
+  ],
+  "buscas": [],
+  "slug": "triagem-2026-10-21-contador-a2-a7",
+  "pergunta": "Triagem da resposta do contador às ambiguidades A2,A3,A5,A6,A7: as citações conferem?",
+  "criado": "2026-10-21T15:43:09-03:00"
+}

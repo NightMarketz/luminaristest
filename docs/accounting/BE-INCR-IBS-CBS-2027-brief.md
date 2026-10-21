@@ -298,7 +298,7 @@ export const IbsCbsResumoSchema = z.object({
 
 | # | Pergunta | Trava | Quem |
 |---|---|---|---|
-| **P-IBS-1** (urgente, prazo 01/01/2027) | 2026: as NFS-e/NF-e com `gIBSCBS` bastam para a dispensa do art. 348 § 1º? | condição do F-IBS-7 b (item 10) | contador |
+| **P-IBS-1** — **respondida 21/10: basta o DF-e com o grupo IBS/CBS** (confirmação; [triagem](TRIAGEM-RESPOSTA-CONTADOR-2026-10-21-AMBIGUIDADES.md)) | 2026: as NFS-e/NF-e com `gIBSCBS` bastam para a dispensa do art. 348 § 1º? | condição do F-IBS-7 b (item 10) | contador |
 | **P-IBS-2** | `cClassTrib`/`cst` do salão e da clínica; lista de uso/consumo pessoal (art. 57) | valores dos itens 3 e 15 | contador |
 | **P-IBS-3** | o art. 10 § 4º se aplica ao pacote de sessões? há hipótese dos 5 dias? | enquadramento dos itens 17–18 | contador |
 | **P-IBS-4** | classe contábil do IBS/CBS (dedução × fora do resultado) e contas do referencial | item 12 (hoje provisório a) | contador |
