@@ -68,7 +68,7 @@ A matriz (item 21) **não** ganha linha `CONDICIONAL` de 2026 — vale a leitura
 "LC 214 art. 347 + Res. SF nº ___"`. Enquanto não houver linha `PUBLISHED`, qualquer apuração/conferência de CBS com data ≥
 2027-01-01 que precise da alíquota ⇒ **400 nomeado**. Publicar a linha é ato do operador da plataforma (fluxo LEGAL-PARAMS
 existente), não PR deste nó. Como o débito vem do documento (F-IBS-3), o 400 só atinge o que **precisa** da alíquota
-(conferência do item 7 e antecipação do item 17) — ver fork novo **F-IBS-11**.
+(conferência do item 7 e antecipação do item 17) — F-IBS-11 (a): conferência pulada com aviso.
 
 ## 3. Checklist numerado (cada item = ≥ 1 teste)
 
@@ -106,7 +106,7 @@ Prisma + Policy, Factory, DTO Zod `.strict()`, soft-delete, rota em 2 toques.
    teste com ISO real às 00:30 −03:00).
 7. **Conferência** pela tabela (base × alíquota vigente) gera aviso `DIVERGENCIA_DOC_n` na memória, **nunca** muda o débito.
    Venda liquidada sem documento fiscal no mês ⇒ aviso `VENDA_SEM_DOCUMENTO` (ADR F-IBS-3). Conferência sem alíquota publicada ⇒
-   comportamento do fork **F-IBS-11** (pendente).
+   pulada com aviso `CONFERENCIA_SEM_ALIQUOTA` (F-IBS-11 a, ratificado 21/10).
 8. **Model `ConsumptionTaxAssessment`** (contrato §4.1) + migração aditiva + `ConsumptionTaxAssessmentRepository` (seam de tx:
    `runInTransaction`/`withTransaction`, memória "serviço não instancia tx-repo") + policy reusando `canManageTaxAssessment` +
    factory. `@@index([userId, anoCalendario, mes, tributo])`; `resetDb` (`test/helpers/db.ts`) limpa a tabela nova.
@@ -142,7 +142,7 @@ Prisma + Policy, Factory, DTO Zod `.strict()`, soft-delete, rota em 2 toques.
 16. **`PENDENTE → APROPRIADO`** (F-IBS-4 a): por (i) split informado (item 19 do lado do fornecedor não existe — aqui é o
     comprovante do evento de vinculação quando houver) ou (ii) declaração do operador com `SourceDocument` (comprovante)
     obrigatório; CAS no status. Apuração soma só `APROPRIADO`; `PENDENTE` vira linha `CREDITO_NAO_APROPRIADO_n` e **nunca**
-    entra em `creditosCents` (invariante §13.3). Rota de apropriação: fork **F-IBS-12** (pendente) decide onde mora.
+    entra em `creditosCents` (invariante §13.3). Rota própria `POST /api/accounting/payables/:id/ibs-cbs-credits/apropriar` (F-IBS-12 a, ratificado 21/10).
 17. **Antecipação do pacote** (art. 10 § 4º [D08]; Dec. 12.955 art. 11 § 5º [D10]; F-IBS-5 a): venda de pacote no mês M ⇒ linha
     `ANTECIPACAO_ART10_n` na apuração de M, base = parcela paga, alíquota da data do documento ou do pagamento (o que vier
     primeiro). Lê os eventos já mapeados (`sale.package.sold`/`SaleSettled`) por serviço nomeado — o razão **não** muda (V7).
@@ -247,7 +247,7 @@ export const IbsCbsAssessmentListQuerySchema = z.object({ anoCalendario: z.coerc
 
 export const MemoriaLinhaIbsCbsKind = z.enum([
   'DEBITO_DOC', 'DIVERGENCIA_DOC', 'VENDA_SEM_DOCUMENTO', 'DOCUMENTOS_SEM_GRUPO',
-  'CREDITOS_NAO_IMPLEMENTADOS_PR3',                                        // some no PR-3
+  'CREDITOS_NAO_IMPLEMENTADOS_PR3', 'CONFERENCIA_SEM_ALIQUOTA',                                        // some no PR-3
   'CREDITO_ENTRADA', 'CREDITO_NAO_APROPRIADO', 'USO_CONSUMO_PESSOAL',       // PR-3
   'ANTECIPACAO_ART10', 'ACERTO_ART10', 'PAGAMENTO_INDEVIDO_ART38',          // PR-3
   'SPLIT_EXTINCAO',                                                         // PR-4
@@ -283,10 +283,10 @@ export const IbsCbsResumoSchema = z.object({
 | `POST /api/accounting/ibs-cbs-assessments/preview` | 2 | `canManageTaxAssessment` |
 | `POST /api/accounting/ibs-cbs-assessments` | 2 | idem |
 | `GET /api/accounting/ibs-cbs-assessments?anoCalendario=` | 2 | idem (leitura) |
-| apropriação de crédito (forma em F-IBS-12) | 3 | `canManageData` de AP |
+| `POST /api/accounting/payables/:id/ibs-cbs-credits/apropriar` (F-IBS-12 a) | 3 | `canManageData` de AP |
 | `GET /api/accounting/ibs-cbs-assessments/:id/resumo` | 5 | idem |
 
-## 5. Forks pendentes (RATIFICAÇÃO PENDENTE — não decididos nesta sessão)
+## 5. Forks do BRIEF — **RATIFICADOS 21/10** ([[D-2026-10-21-FORKS-IBS-CBS-2027-BRIEF]]): F-IBS-11 (a), F-IBS-12 (a), F-IBS-13 (a)
 
 | Fork | Caminhos | Recomendação | Custo de errar |
 |---|---|---|---|
@@ -327,11 +327,11 @@ export const IbsCbsResumoSchema = z.object({
 ## 9. Fold desta sessão
 
 `docs/plano/nos/IBS-CBS-2027.md`: `estado` continua `planned`; `estado_detalhe` ganha a entrada de 21/10 (BRIEF escrito, PR deste
-BRIEF, forks novos F-IBS-11..13 pendentes, próximo = `executa` do PR-1); "Docs" aponta para este arquivo. `autorizacao` não muda.
+BRIEF, forks F-IBS-11..13 ratificados em 21/10, próximo = `executa` do PR-1); "Docs" aponta para este arquivo. `autorizacao` não muda.
 
 ## 10. Invariantes (cada uma vira teste; herdadas do ADR §13 com a 5 trocada)
 
-1. Data ≥ 2027-01-01 sem linha CBS `PUBLISHED` ⇒ 400 nomeado onde a alíquota é necessária (F-IBS-11 define a conferência).
+1. Data ≥ 2027-01-01 sem linha CBS `PUBLISHED` ⇒ 400 nomeado onde a alíquota é necessária (a conferência é pulada com aviso — F-IBS-11 a).
 2. Só documentos `AUTHORIZED`/`AUTHORIZED_DIVERGENT` vivos; sem grupo soma 0 e conta.
 3. `saldoCents = debitosCents − creditosCents`; `PENDENTE` nunca soma.
 4. CAS divergente ⇒ 409; substituição em cascata.
