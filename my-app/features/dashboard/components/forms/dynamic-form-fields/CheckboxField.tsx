@@ -5,9 +5,10 @@ interface CheckboxFieldProps {
   value: unknown;
   onChange: (name: string, value: unknown) => void;
   className?: string;
+  disabled?: boolean;
 }
 
-function CheckboxField({ name, value, onChange }: CheckboxFieldProps) {
+function CheckboxField({ name, value, onChange, disabled }: CheckboxFieldProps) {
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     onChange(name, event.target.checked);
   }
@@ -20,6 +21,7 @@ function CheckboxField({ name, value, onChange }: CheckboxFieldProps) {
         name={name}
         checked={!!value}
         onChange={handleChange}
+        disabled={disabled}
         className="sr-only peer"
       />
       <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 transition-colors peer-checked:bg-blue-600" />

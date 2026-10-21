@@ -97,13 +97,8 @@ export function useRelationLookups(schema?: ITableSchema | null, records?: Recor
     const fetchLookups = async () => {
       setIsLoading(true);
       try {
-        // Legacy contract drift — the deprecated hook sends a `{ lookups: [...] }`
-        // batch payload that doesn't match the service's per-table signature, but
-        // matches what the runtime backend accepts. KpiDrillDownDrawer is the only
-        // caller and works against production. The cast will disappear when this
-        // hook is removed (see Finance Analytics audit stage).
         const body = await DynamicTableService.performLookup(
-          { lookups: lookupsArray } as unknown as Parameters<typeof DynamicTableService.performLookup>[0]
+          lookupsArray.map((l) => ({ targetTableId: l.tableId, keys: l.recordIds, displayField: l.displayField })),
         );
         if (body.success && body.data) {
             if (isMounted) {

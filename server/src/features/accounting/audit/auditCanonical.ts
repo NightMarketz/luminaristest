@@ -170,7 +170,7 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     'codMun', 'dpsSerie', 'regEspTrib', 'regApTribSN', 'issAliquotaBp', 'issRetidoTomadorPj', 'pacoteFatoGerador', 'pacoteCTribNac', 'pacoteCNBS', 'ibsCbsInformar', 'ibsCbsCst', 'ibsCbsClassTrib', 'pTotTribFedCent', 'pTotTribEstCent', 'pTotTribMunCent', 'pTotTribSNCent', 'emissaoForaDoMes',
     'policyVersionId'], // GOV-CONTADOR política versionada (item 14): a versão que aplicou esta escrita
   // BE-INCR-DFE (nó X10b, item 9) — perfil fiscal do serviço: só códigos (lista nacional/NBS/INDOP/IBGE) + serviceRef (id)
-  'service_fiscal_profile.updated': ['serviceRef', 'cTribNac', 'cTribMun', 'cNBS', 'cIndOp', 'cLocPrestacao'],
+  'service_fiscal_profile.updated': ['serviceRef', 'cTribNac', 'cTribMun', 'cNBS', 'cIndOp', 'cLocPrestacao', 'cClassTrib'], // cClassTrib: IBS-CBS-2027 PR-1, L2
   'service_fiscal_profile.deleted': ['serviceRef', 'cTribNac'],
   // SIMPLES-PISO-ANEXO-XI bloco 1 (BRIEF item 1) — benefício municipal de ISS: códigos/enum/datas; a legislação
   // concessiva (texto livre) fica FORA do evento.

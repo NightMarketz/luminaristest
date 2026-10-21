@@ -105,11 +105,19 @@ describe('DocumentService.listForSelection', () => {
     globalThis.fetch = vi.fn();
   });
 
-  it('GET /documents?mode=list com cache no-store; devolve o corpo cru', async () => {
+  it('GET /documents/list com cache no-store; devolve o corpo cru', async () => {
     reply(200, { success: true, data: [{ id: 'd1', fileName: 'a.pdf' }] });
     await expect(DocumentService.listForSelection()).resolves.toEqual({ success: true, data: [{ id: 'd1', fileName: 'a.pdf' }] });
-    expect(lastCall().url).toMatch(/\/documents\?mode=list$/);
+    expect(lastCall().url).toMatch(/\/documents\/list$/);
     expect(lastCall().init.cache).toBe('no-store');
+  });
+
+  // Guarda FIX-CHAT-AGENTE §3.3 #4 (ACHADOS-2026-10-19): a rota GET /documents ignora `mode` e devolve a página
+  // paginada (não um array) → o seletor sempre mostra "formato inválido". A lista do seletor é GET /documents/list.
+  it('o seletor busca GET /documents/list (a rota que devolve a lista do usuário)', async () => {
+    reply(200, { success: true, data: [{ id: 'd1', fileName: 'a.pdf' }] });
+    await DocumentService.listForSelection();
+    expect(lastCall().url).toMatch(/\/documents\/list$/);
   });
 
   it('não-2xx → Error("Falha ao buscar documentos."); rede → mensagem nativa', async () => {

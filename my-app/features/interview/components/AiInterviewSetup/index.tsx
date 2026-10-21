@@ -72,6 +72,7 @@ function AiInterviewSetup() {
     handleSendMessage,
     handleSelectTable,
     handleUpdateTable,
+    handleSessionLost,
     handleRetry,
     backToConversation,
     presetKey,
@@ -111,6 +112,7 @@ function AiInterviewSetup() {
         isVisible={showRightPanel}
         sessionId={sessionId}
         onUpdateTable={handleUpdateTable}
+        onSessionLost={handleSessionLost}
         presetKey={presetKey}
       />
 

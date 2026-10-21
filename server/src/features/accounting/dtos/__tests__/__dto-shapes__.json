@@ -11385,6 +11385,17 @@
               "type": "null"
             }
           ]
+        },
+        "cClassTrib": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{6}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [

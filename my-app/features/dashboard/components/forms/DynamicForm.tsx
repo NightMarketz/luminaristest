@@ -145,9 +145,18 @@ const fieldComponentMap: Record<string, ComponentType<FieldComponentProps>> = {
       readOnly={props.readOnly}
       disabled={props.disabled}
       label={props.label}
-      type="date"
+      type="datetime-local"
     />
-  ), // Fallback to date for now
+  ),
+  json: (props) => (
+    <TextareaField
+      name={props.name}
+      value={typeof props.value === 'object' && props.value !== null ? JSON.stringify(props.value, null, 2) : props.value}
+      onChange={props.onChange}
+      className={asInputClass(props.className)}
+      required={props.required}
+    />
+  ),
   textarea: TextareaField as ComponentType<FieldComponentProps>,
   select: SelectField as ComponentType<FieldComponentProps>,
   boolean: CheckboxField as ComponentType<FieldComponentProps>,
@@ -160,7 +169,13 @@ const currencyFieldNames = new Set(['price', 'salePrice', 'unitPrice', 'cost', '
 
 function DynamicForm({ schema, onSubmit, onClose, initialData = {}, fieldErrors = {}, formError, onChange, isSubmitting }: DynamicFormProps) {
   const { t, i18n } = useTranslation(['database', 'common']);
-  const [formData, setFormData] = useState<Record<string, unknown>>(initialData);
+  // Criação (sem initialData): campo vazio nasce com o `defaultValue` do schema.
+  const [formData, setFormData] = useState<Record<string, unknown>>(() => {
+    if (Object.keys(initialData).length > 0) return initialData;
+    const defaults: Record<string, unknown> = {};
+    for (const f of schema.fields) if (f.defaultValue !== undefined) defaults[f.name] = f.defaultValue;
+    return defaults;
+  });
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
 
   const handleFieldChange = useCallback((name: string, value: unknown) => {
@@ -191,8 +206,18 @@ function DynamicForm({ schema, onSubmit, onClose, initialData = {}, fieldErrors 
       const value = formData[key];
 
       // Validation logic
-      if (field.required && (value === null || value === undefined || value === '')) {
+      const isEmpty = value === null || value === undefined || value === '';
+      if (field.required && isEmpty) {
         errors[key] = t('common:field_required', 'This field is required');
+      }
+      // Espelha o GovernanceEngine (requiredIf sobre o registro inteiro).
+      if (field.requiredIf && isEmpty) {
+        const { field: condField, op, value: condValue } = field.requiredIf;
+        const actual = formData[condField];
+        const met = op === 'eq' ? actual === condValue
+          : op === 'neq' ? actual !== condValue
+          : (Array.isArray(condValue) ? condValue : [condValue]).includes(actual);
+        if (met) errors[key] = t('common:field_required', 'This field is required');
       }
 
       if (field.type === 'boolean') {
@@ -207,11 +232,17 @@ function DynamicForm({ schema, onSubmit, onClose, initialData = {}, fieldErrors 
       switch (field.type) {
         case 'number': {
           const num = parseFloat(String(value));
+          const { minValue, maxValue } = field.validation ?? {};
           if (isNaN(num)) errors[key] = t('common:invalid_number', 'Invalid numeric value');
+          else if ((minValue !== undefined && num < minValue) || (maxValue !== undefined && num > maxValue)) errors[key] = t('common:invalid_number', 'Invalid numeric value');
           else payload[key] = num;
           break;
         }
         default:
+          if (field.format === 'url' && !URL.canParse(String(value))) {
+            errors[key] = t('common:invalid_url', 'Invalid URL');
+            break;
+          }
           payload[key] = value;
           break;
       }

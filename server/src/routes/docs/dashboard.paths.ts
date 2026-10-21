@@ -376,6 +376,43 @@
  *                     proposalId: { type: string }
  *                     decision: { type: string, enum: [apply, discard] }
  *                     acknowledgeSensitive: { type: boolean, enum: [true] }
+ *                 - type: object
+ *                   description: Manual-mode save (add field / toggle visibility), all or nothing
+ *                   required: [kind, sessionId, tableKey, changes]
+ *                   additionalProperties: false
+ *                   properties:
+ *                     kind: { type: string, enum: [manual] }
+ *                     sessionId: { type: string }
+ *                     tableKey: { type: string }
+ *                     acknowledgeSensitive: { type: boolean, enum: [true], description: 'Required when a new field matches the sensitive-data net' }
+ *                     changes:
+ *                       type: array
+ *                       minItems: 1
+ *                       maxItems: 50
+ *                       items:
+ *                         oneOf:
+ *                           - type: object
+ *                             required: [action, field]
+ *                             additionalProperties: false
+ *                             properties:
+ *                               action: { type: string, enum: [add] }
+ *                               field:
+ *                                 type: object
+ *                                 required: [name, label, type, required]
+ *                                 additionalProperties: false
+ *                                 properties:
+ *                                   name: { type: string }
+ *                                   label: { type: string }
+ *                                   type: { type: string, enum: [string, number, boolean, date, datetime] }
+ *                                   format: { type: string, enum: [email, phone], description: 'Only with type string' }
+ *                                   required: { type: boolean }
+ *                           - type: object
+ *                             required: [action, name, hidden]
+ *                             additionalProperties: false
+ *                             properties:
+ *                               action: { type: string, enum: [setHidden] }
+ *                               name: { type: string }
+ *                               hidden: { type: boolean }
  *       responses:
  *         '200':
  *           description: Turn result
@@ -422,9 +459,13 @@
  *                       properties:
  *                         name: { type: string }
  *                         reason: { type: string, enum: [reserved, type_not_allowed, exists, not_found, invalid] }
- *                   applied: { type: boolean, description: 'Only on kind decision' }
+ *                   applied: { type: boolean, description: 'Only on kind decision or manual' }
  *         '400':
- *           description: Invalid body, or SENSITIVE_FIELD_NOT_ACKNOWLEDGED (nothing was applied)
+ *           description: >-
+ *             Invalid body, SENSITIVE_FIELD_NOT_ACKNOWLEDGED, or MANUAL_CHANGE_INVALID with
+ *             details.changes [{ index, name, reason: reserved|exists|not_found|duplicate|invalid|required_hidden }].
+ *             SENSITIVE_FIELD_NOT_ACKNOWLEDGED carries details.fields (the names that need the acknowledgement).
+ *             Nothing was applied
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404':
  *           description: INTERVIEW_SESSION_NOT_FOUND (missing, expired or another user's session) or TABLE_NOT_IN_SESSION

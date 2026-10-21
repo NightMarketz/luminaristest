@@ -36,6 +36,8 @@ export const LEGAL_PARAMETER_TABELAS = [
   // BE-INCR-IRRF-DISTRIBUICAO PR-1 (item 5; F-IRD-13, F-IRD-18): IRRF na distribuição de lucros e no JCP; TJLP trimestral.
   'IRRF_DISTRIBUICAO',
   'TJLP',
+  // IBS-CBS-2027 PR-1 (BRIEF item 1): alíquotas de IBS/CBS por vigência (LC 214 arts. 343, 344, 346, 347).
+  'IBS_CBS',
 ] as const;
 export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
 

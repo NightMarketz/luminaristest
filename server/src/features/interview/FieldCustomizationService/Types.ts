@@ -48,6 +48,8 @@ export interface IPendingProposal {
   id: string;
   changes: FieldChange[];
   createdAt: string;
+  /** Revisão do #786: a sessão guarda a decisão do servidor; o front lê, não recalcula. Ausente em sessão anterior. */
+  requiresSensitiveAck?: boolean;
 }
 
 export interface IFieldProposal {

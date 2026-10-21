@@ -61,6 +61,6 @@ describe('painel direito sem texto PT fixo (W7 itens 10–11)', () => {
     fireEvent.click(getByText('onboardingFieldsModeAi'));
     semPortuguesFixo(container);
     expect(container.textContent).toContain('onboardingFieldsAiWelcome');
-    expect(container.textContent).toContain('onboardingFieldsAiFinish');
+    expect(container.textContent).toContain('onboardingFieldsAiClose');
   });
 });

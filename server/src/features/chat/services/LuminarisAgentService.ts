@@ -247,6 +247,11 @@ export class LuminarisAgentService {
         } catch (cleanupError) {
             logger.warn('Failed to delete consumed proposal', { proposalId, error: cleanupError });
         }
+        try {
+            await this.proposalRepository.deleteOldProposals(24);
+        } catch (reapError) {
+            logger.warn('Failed to reap stale proposals', { error: reapError });
+        }
 
         return { success: true, result };
     }

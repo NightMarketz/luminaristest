@@ -8,14 +8,21 @@ import type { IInterviewSessionHandle, StateManager } from '../CustomizationServ
 import type {
   CustomizeFieldsDecisionDto,
   CustomizeFieldsDtoType,
+  CustomizeFieldsManualDto,
   CustomizeFieldsMessageDto,
 } from '../dtos/CustomizeFields.dto';
 import { FieldPresetMatcher } from './FieldPresetMatcher';
 import { buildFieldChanges, requiresSensitiveAck } from './FieldProposal';
 import { FieldUpdater } from './FieldUpdater';
+import { applyManualChanges } from './ManualChanges';
 import { buildFieldCustomizationResponseFormat, parseModelOutput } from './ModelOutput';
 import { promptConfig } from './PromptConfig';
-import { ProposalStaleError, SensitiveFieldNotAcknowledgedError, TableNotInSessionError } from './errors';
+import {
+  ManualChangeInvalidError,
+  ProposalStaleError,
+  SensitiveFieldNotAcknowledgedError,
+  TableNotInSessionError,
+} from './errors';
 import type { DiscardedChange, IFieldHistoryEntry, IFieldProposal } from './Types';
 
 /** Item 5: quantas mensagens da tabela vão ao modelo (as `system` nunca vão). */
@@ -52,7 +59,9 @@ export class FieldCustomizationService {
   ) {}
 
   public handle(userId: string, dto: CustomizeFieldsDtoType): Promise<CustomizeFieldsResult> {
-    return dto.kind === 'message' ? this.processMessage(userId, dto) : this.processDecision(userId, dto);
+    if (dto.kind === 'message') return this.processMessage(userId, dto);
+    if (dto.kind === 'decision') return this.processDecision(userId, dto);
+    return this.processManual(userId, dto);
   }
 
   /** Itens 3–9 e 11. */
@@ -85,8 +94,9 @@ export class FieldCustomizationService {
     // Item 7: a nova proposta substitui a anterior; turno sem mudança válida limpa a pendente (dono, 16/10).
     let proposal: IFieldProposal | null = null;
     if (changes.length > 0) {
-      table.pendingProposal = { id: this.newId(), changes, createdAt: at };
-      proposal = { id: table.pendingProposal.id, changes, requiresSensitiveAck: requiresSensitiveAck(changes) };
+      const ack = requiresSensitiveAck(changes);
+      table.pendingProposal = { id: this.newId(), changes, createdAt: at, requiresSensitiveAck: ack };
+      proposal = { id: table.pendingProposal.id, changes, requiresSensitiveAck: ack };
     } else {
       delete table.pendingProposal;
     }
@@ -106,7 +116,9 @@ export class FieldCustomizationService {
     const apply = dto.decision === 'apply';
     if (apply) {
       if (requiresSensitiveAck(pending.changes) && dto.acknowledgeSensitive !== true) {
-        throw new SensitiveFieldNotAcknowledgedError();
+        throw new SensitiveFieldNotAcknowledgedError(
+          pending.changes.flatMap((c) => (c.action !== 'remove' && c.sensitiveCategory !== null ? [c.field.name] : [])),
+        );
       }
       table.fields = this.fieldUpdater.update(table.fields ?? [], pending.changes);
     }
@@ -119,6 +131,27 @@ export class FieldCustomizationService {
 
     await this.stateManager.saveSession(session);
     return { ...this.result(session, table, null, []), applied: apply };
+  }
+
+  /**
+   * W6 emenda (BRIEF WIZARD-W6-MANUAL-SESSION itens 2–6): o "Salvar Alterações" do modo manual. Lote tudo ou nada,
+   * validado pelo `AdvancedFieldSchema`; campo novo sensível exige a ciência (F-MS-3 a); a pendente da IA foi
+   * calculada sobre campos que mudaram e sai (F-MS-4 a). Uma gravação da sessão.
+   */
+  public async processManual(userId: string, dto: CustomizeFieldsManualDto): Promise<CustomizeFieldsResult> {
+    const session = await this.stateManager.loadSession(dto.sessionId, userId);
+    const table = this.findTable(session, dto.tableKey);
+
+    const outcome = applyManualChanges(table.fields ?? [], dto.changes);
+    if (!outcome.ok) throw new ManualChangeInvalidError(outcome.issues);
+    if (outcome.sensitiveFields.length > 0 && dto.acknowledgeSensitive !== true) {
+      throw new SensitiveFieldNotAcknowledgedError(outcome.sensitiveFields);
+    }
+
+    table.fields = outcome.fields;
+    delete table.pendingProposal;
+    await this.stateManager.saveSession(session);
+    return { ...this.result(session, table, null, []), applied: true };
   }
 
   private findTable(session: IInterviewSessionHandle, tableKey: string): ICustomizableTable {
