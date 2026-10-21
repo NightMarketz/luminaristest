@@ -68,3 +68,11 @@
 Não conferidos: tabela cClassTrib, Tabela 01 da Reinf, códigos do plano referencial, IN 765/2007, IN 2.110/2022 arts. 112 e
 115, Conv. ICMS 142/2018, RDC Anvisa 50, Lei SP 13.701 art. 15 (valores 2026), Lei 13.643/2018. Cada um fica DRAFT até leitura
 em fonte oficial.
+
+## Respostas do dono (chat, 21/10, questionário)
+
+- **A (combo):** "Proporcional como padrão" — `criterioAlocacao` padrão passa a `PROPORCIONAL_CATALOGO`; `CARGA_TRIBUTARIA`
+  continua disponível só com aceite do contador (F-EF-3). Emenda a D-2026-10-20 (leitura 1 da A1) e o padrão do F-EF-2 (a).
+- **B (16%):** "Texto: recorte por empresa" — mantém o ADR (L20); a pergunta da base e da Lei 13.643/2018 volta ao contador.
+
+Gravar em `docs/plano/decisoes/` fica com a sessão de origem (esta triagem não ratifica).
