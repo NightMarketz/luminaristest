@@ -18,6 +18,8 @@ interface JWTPayload {
   userId?: string;
   email?: string;
   name?: string;
+  /** User.tokenVersion at issue time; absent = 0 (tokens issued before §3.4 #3). */
+  tokenVersion?: number;
 }
 
 export function generateToken(payload: JWTPayload): string {

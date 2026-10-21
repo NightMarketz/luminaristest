@@ -70,8 +70,7 @@ export class DashboardLayoutService {
   /**
    * Retrieves a dashboard layout by ID (owner only).
    * @throws {UnauthorizedError} If user is not authenticated
-   * @throws {NotFoundError} If layout not found
-   * @throws {ForbiddenError} If the layout does not belong to the user
+   * @throws {NotFoundError} If layout not found or does not belong to the user
    */
   public async getLayoutById(id: string, userContext: UserContext): Promise<DashboardLayoutDto> {
     if (!userContext.userId) {
@@ -83,7 +82,7 @@ export class DashboardLayoutService {
       throw new NotFoundError('Layout not found');
     }
     if (!this.dashboardLayoutPolicy.canView(userContext, layout)) {
-      throw new ForbiddenError('User not permitted to view this layout');
+      throw new NotFoundError('Layout not found');
     }
 
     return this.mapToDto(layout);
@@ -143,7 +142,7 @@ export class DashboardLayoutService {
       throw new ForbiddenError('User not permitted to switch to this layout');
     }
 
-    await this.dashboardLayoutRepository.setActive(userContext.userId, id);
+    await this.dashboardLayoutRepository.setActive(layout.userId, id);
     return this.mapToDto({ ...layout, isActive: true });
   }
 
@@ -171,9 +170,9 @@ export class DashboardLayoutService {
 
     // Keep one active tab: promote the most recent remaining layout if we deleted the active one.
     if (layout.isActive) {
-      const remaining = await this.dashboardLayoutRepository.getLayoutsByUser(userContext.userId);
+      const remaining = await this.dashboardLayoutRepository.getLayoutsByUser(layout.userId);
       if (remaining.length > 0) {
-        await this.dashboardLayoutRepository.setActive(userContext.userId, remaining[0].id);
+        await this.dashboardLayoutRepository.setActive(layout.userId, remaining[0].id);
       }
     }
   }

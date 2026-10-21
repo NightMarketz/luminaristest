@@ -84,6 +84,11 @@ export interface FiscalProfileView extends CostRegime {
   simplesRecolherAccountId: string | null;
   irpjSaldoNegativoAccountId: string | null;
   csllSaldoNegativoAccountId: string | null;
+  // IRRF-DISTRIBUICAO PR-1 (item 7)
+  dividendosPagarAccountId: string | null;
+  jcpPagarAccountId: string | null;
+  irrfRecolherAccountId: string | null;
+  jcpDespesaAccountId: string | null;
   partnerAccountRef: string | null;
   codMun: string | null;
   inscricaoMunicipal: string | null;
@@ -285,6 +290,11 @@ export class FiscalProfileService {
     // X7 Fase B item 16 (F-TB-3 a): o ajuste anual negativo debita o saldo negativo a compensar — ativo (Asset).
     if (input.irpjSaldoNegativoAccountId) await this.assertAssetAccount(scope, input.irpjSaldoNegativoAccountId, 'saldo negativo de IRPJ a compensar', tx);
     if (input.csllSaldoNegativoAccountId) await this.assertAssetAccount(scope, input.csllSaldoNegativoAccountId, 'saldo negativo de CSLL a compensar', tx);
+    // IRRF-DISTRIBUICAO PR-1 (item 7, molde F-TA-7): passivos com o sócio e o IRRF retido (Liability); despesa de JCP (Expense).
+    if (input.dividendosPagarAccountId) await this.assertLiabilityAccount(scope, input.dividendosPagarAccountId, 'dividendos a pagar', tx);
+    if (input.jcpPagarAccountId) await this.assertLiabilityAccount(scope, input.jcpPagarAccountId, 'JCP a pagar', tx);
+    if (input.irrfRecolherAccountId) await this.assertLiabilityAccount(scope, input.irrfRecolherAccountId, 'IRRF a recolher', tx);
+    if (input.jcpDespesaAccountId) await this.assertExpenseAccount(scope, input.jcpDespesaAccountId, 'despesa de juros sobre o capital próprio', tx);
     // X13 PR-2 item 15 (F-OBP-1 a): a unidade segue o regime da EMPRESA no ano corrente (MEI/SIMPLES → SIMPLES).
     const regimeEmpresa = await this.regimeEmpresaHoje(scope, tx);
     if (regimeEmpresa && regimeUnidadeEsperado(regimeEmpresa) !== input.regimeTributario) {
@@ -348,6 +358,10 @@ export class FiscalProfileService {
         simplesRecolherAccountId: row.simplesRecolherAccountId ?? '',
         irpjSaldoNegativoAccountId: row.irpjSaldoNegativoAccountId ?? '',
         csllSaldoNegativoAccountId: row.csllSaldoNegativoAccountId ?? '',
+        dividendosPagarAccountId: row.dividendosPagarAccountId ?? '', // IRRF-DISTRIBUICAO item 7
+        jcpPagarAccountId: row.jcpPagarAccountId ?? '',
+        irrfRecolherAccountId: row.irrfRecolherAccountId ?? '',
+        jcpDespesaAccountId: row.jcpDespesaAccountId ?? '',
         // BE-INCR-DFE (item 9): enum/boolean/int como string — sem texto livre (IM/CNAE ficam fora do evento)
         codMun: row.codMun ?? '',
         dpsSerie: String(row.dpsSerie),
@@ -441,6 +455,10 @@ export class FiscalProfileService {
       simplesRecolherAccountId: row.simplesRecolherAccountId,
       irpjSaldoNegativoAccountId: row.irpjSaldoNegativoAccountId,
       csllSaldoNegativoAccountId: row.csllSaldoNegativoAccountId,
+      dividendosPagarAccountId: row.dividendosPagarAccountId, // IRRF-DISTRIBUICAO item 7
+      jcpPagarAccountId: row.jcpPagarAccountId,
+      irrfRecolherAccountId: row.irrfRecolherAccountId,
+      jcpDespesaAccountId: row.jcpDespesaAccountId,
       partnerAccountRef: row.partnerAccountRef,
       codMun: row.codMun,
       inscricaoMunicipal: row.inscricaoMunicipal,

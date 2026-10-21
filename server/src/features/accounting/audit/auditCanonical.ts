@@ -165,6 +165,7 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     'pisCofinsCreditoOutrosAccountId', 'pisCofinsRetidoCompensarAccountId', 'pisCofinsRetencaoConciliarAccountId', // X8 PR-3 (L-5, retenções; dono 06/10)
     'simplesDasDeducaoAccountId', 'simplesRecolherAccountId', // X14 PR-3 item 21
     'irpjSaldoNegativoAccountId', 'csllSaldoNegativoAccountId', // X7 Fase B item 16 (F-TB-3 a)
+    'dividendosPagarAccountId', 'jcpPagarAccountId', 'irrfRecolherAccountId', 'jcpDespesaAccountId', // IRRF-DISTRIBUICAO item 7
     // BE-INCR-DFE (item 9): enum/boolean/int como string — IM/CNAE (texto livre) ficam FORA do evento
     'codMun', 'dpsSerie', 'regEspTrib', 'regApTribSN', 'issAliquotaBp', 'issRetidoTomadorPj', 'pacoteFatoGerador', 'pacoteCTribNac', 'pacoteCNBS', 'ibsCbsInformar', 'ibsCbsCst', 'ibsCbsClassTrib', 'pTotTribFedCent', 'pTotTribEstCent', 'pTotTribMunCent', 'pTotTribSNCent', 'emissaoForaDoMes',
     'policyVersionId'], // GOV-CONTADOR política versionada (item 14): a versão que aplicou esta escrita
@@ -201,7 +202,8 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     // X14 F-PR4-12 (b): enum COMPETENCIA | CAIXA do regime de apuração do Simples.
     'simplesRegimeApuracao',
     // BE-INCR-SIMPLES-CAIXA PR-1 (item 7; F-CX-3 a): data de efeitos da exclusão do Simples (date-only, sem PII).
-    'simplesExclusaoEfeitosEm'],
+    'simplesExclusaoEfeitosEm',
+    'jcpBaseContas'], // IRRF-DISTRIBUICAO item 8 (F-IRD-15): JSON só com ids de conta
   'company_fiscal_profile.deleted': ['anoCalendario'],
   // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7, item 22) — só ids, enum e centavos como string; sem PII. O documento
   // da dedução (texto livre) e a memória ficam FORA do evento.
@@ -234,6 +236,10 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'company_signer.created': ['signerId', 'qualifEcd', 'qualifEcf'],
   'company_signer.updated': ['signerId', 'qualifEcd', 'qualifEcf'],
   'company_signer.deleted': ['signerId'],
+  // BE-INCR-IRRF-DISTRIBUICAO PR-1 (item 33): sócio — só o id e os valores; nome e CPF/CNPJ (PII) ficam FORA.
+  'partner.created': ['partnerId', 'tipoPessoa', 'residenteBrasil', 'participacaoBp', 'entradaEm', 'saidaEm'],
+  'partner.updated': ['partnerId', 'tipoPessoa', 'residenteBrasil', 'participacaoBp', 'entradaEm', 'saidaEm'],
+  'partner.deleted': ['partnerId'],
   // BE-INCR-DFE (nó X10b, PR-2, item 40) — ciclo SENT (Fase D acrescenta authorized/rejected/cancelled).
   'dfe.emitted': ['documentId', 'kind', 'attemptNo', 'ref', 'vServCents', 'ambiente'],
   // BE-INCR-DFE (nó X10b, PR-3, item 40) — ciclo de vida do documento após o SENT.

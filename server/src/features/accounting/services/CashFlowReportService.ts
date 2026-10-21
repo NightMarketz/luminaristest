@@ -28,8 +28,12 @@ export const CASH_ACCOUNT_CODE_PREFIXES: readonly string[] = [DISPONIVEL_CODE];
 /** Non-current / investment asset prefixes → Investing (buying/selling long-term assets). */
 export const INVESTING_ASSET_CODE_PREFIXES: readonly string[] = ['1.2'];
 
-/** Financing-liability prefixes (empréstimos/financiamentos, Passivo Não Circulante) → Financing. */
-export const FINANCING_LIABILITY_CODE_PREFIXES: readonly string[] = ['2.2'];
+/**
+ * Financing-liability prefixes (empréstimos/financiamentos, Passivo Não Circulante) → Financing. IRRF-DISTRIBUICAO PR-1
+ * (item 9): dividendos e JCP a pagar (2.1.7.01/.02) — a baixa é pagamento ao sócio. O IRRF retido (2.1.7.03) fica no
+ * operacional, como os demais tributos a recolher.
+ */
+export const FINANCING_LIABILITY_CODE_PREFIXES: readonly string[] = ['2.2', '2.1.7.01', '2.1.7.02'];
 
 export type CashFlowSectionId = 'operating' | 'investing' | 'financing';
 
@@ -61,10 +65,9 @@ export function isCashAccount(code: string): boolean {
  *     Operating (no double count);
  *   • DISTRIBUIÇÃO (pagamento de dividendos) debits 2.3.1 against cash → a Financing
  *     outflow. Correct section.
- * ponytail: no dividendos-a-pagar leaf exists yet, so no code branch for it. If one is
- * added as a CURRENT liability (2.1.x), it would default to Operating here — wrong: its
- * settlement is a Financing outflow. Route it then by adding its prefix to
- * FINANCING_LIABILITY_CODE_PREFIXES (or a dedicated dividends-payable prefix), not now.
+ * Dividendos a pagar (2.1.7.01) and JCP a pagar (2.1.7.02) are CURRENT liabilities routed to
+ * Financing through FINANCING_LIABILITY_CODE_PREFIXES (IRRF-DISTRIBUICAO item 9): their
+ * settlement is a payment to the partner, not an operating outflow.
  */
 export function classifyCashFlowSection(nature: string, code: string): CashFlowSectionId {
   if (nature === 'Revenue' || nature === 'Expense') return 'operating';

@@ -93,7 +93,7 @@ export function FloatingActionButton({
     }
 
     try {
-      await DynamicTableService.createRecord(tableId, { data: formData });
+      await DynamicTableService.createRecord(tableId, { data: formData }, { silent: true });
       setIsModalOpen(false);
       if (onSuccess) onSuccess();
       return true;
@@ -109,7 +109,7 @@ export function FloatingActionButton({
       }
 
       const msg = String(responseData.message || responseData.error || '');
-      if (msg) setError(msg);
+      setError(msg || t('common:error_saving_record', 'Erro ao salvar o registro.'));
 
       return false;
     } finally {

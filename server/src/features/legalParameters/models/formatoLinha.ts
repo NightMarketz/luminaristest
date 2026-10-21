@@ -81,7 +81,8 @@ export const MeiAnexoXiJson = z
 
 type Valor = 'int' | 'texto' | 'json';
 interface Regra {
-  valor: Valor;
+  /** Função quando a tabela mistura chaves de valor inteiro e de texto (IRRF_DISTRIBUICAO). */
+  valor: Valor | ((l: LinhaParaFormato) => Valor);
   /** Erro em português ou `null` quando a linha está no formato. */
   checar: (l: LinhaParaFormato) => string | null;
 }
@@ -89,6 +90,10 @@ interface Regra {
 const so = (cond: boolean, msg: string): string | null => (cond ? null : msg);
 const semDisc = (l: LinhaParaFormato) => l.discriminador === undefined || l.discriminador === null;
 const jsonOk = (schema: z.ZodType, v: unknown, msg: string): string | null => (schema.safeParse(v).success ? null : msg);
+
+const bp = (l: LinhaParaFormato) => (l.valorInt ?? -1) >= 0 && (l.valorInt ?? 0) <= 10_000;
+/** BE-INCR-IRRF-DISTRIBUICAO item 5 — chaves da tabela e o tipo de valor de cada uma. */
+const IRRF_DISTRIBUICAO_CHAVES_INT = ['ALIQUOTA_PF_BP', 'LIMITE_MENSAL_PF_CENTS', 'ALIQUOTA_JCP_BP'];
 
 const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
   CODIGO_RECEITA: {
@@ -172,6 +177,24 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
       'discriminador = IBGE da UF (2) ou do município (7); chave MM-DD com valorTexto FIXO, ou PASCOA±N com valorTexto PASCOA',
     ),
   },
+  // BE-INCR-IRRF-DISTRIBUICAO item 5: alíquotas em bp, limite mensal em centavos (Lei 9.250 art. 6º-A; Lei 9.249 art. 9º
+  // § 2º) e o prazo de aprovação do lucro da transição (date-only, art. 6º-A § 3º II; liminar das ADIs 7.912/7.914).
+  IRRF_DISTRIBUICAO: {
+    valor: (l) => (l.chave === 'TRANSICAO_APROVACAO_ATE' ? 'texto' : 'int'),
+    checar: (l) =>
+      so(semDisc(l), 'sem discriminador') ??
+      (l.chave === 'TRANSICAO_APROVACAO_ATE'
+        ? so(isValidDateOnly(l.valorTexto ?? ''), 'TRANSICAO_APROVACAO_ATE: valorTexto = data YYYY-MM-DD de calendário')
+        : l.chave === 'LIMITE_MENSAL_PF_CENTS'
+          ? so((l.valorInt ?? 0) > 0, 'LIMITE_MENSAL_PF_CENTS: valorInt = centavos > 0')
+          : so(IRRF_DISTRIBUICAO_CHAVES_INT.includes(l.chave) && bp(l), 'chave ALIQUOTA_PF_BP|ALIQUOTA_JCP_BP (valorInt em bp 0..10000), LIMITE_MENSAL_PF_CENTS ou TRANSICAO_APROVACAO_ATE')),
+  },
+  // F-IRD-13/F-IRD-18: chave = trimestre YYYY-T0n; valorInt = taxa MENSAL publicada pela RFB em décimos de milésimo de ponto
+  // percentual (0,7742% = 7742).
+  TJLP: {
+    valor: 'int',
+    checar: (l) => so(/^\d{4}-T0[1-4]$/.test(l.chave) && semDisc(l) && (l.valorInt ?? 0) > 0, 'chave = trimestre YYYY-T01..T04; valorInt = taxa mensal (0,7742% = 7742) > 0'),
+  },
 };
 
 /** Erro de formato da linha da tabela (ou `null`). Tabela sem regra aqui = o serviço aplica a do PR-1. */
@@ -179,7 +202,8 @@ export function erroDeFormato(l: LinhaParaFormato): string | null {
   const regra = REGRAS[l.tabela];
   if (!regra) return null;
   const tem = { int: l.valorInt !== undefined && l.valorInt !== null, texto: l.valorTexto !== undefined && l.valorTexto !== null, json: l.valorJson !== undefined && l.valorJson !== null };
-  if (!tem[regra.valor]) return `${l.tabela}: o valor desta tabela é ${regra.valor === 'int' ? 'valorInt' : regra.valor === 'texto' ? 'valorTexto' : 'valorJson'}.`;
+  const valor = typeof regra.valor === 'function' ? regra.valor(l) : regra.valor;
+  if (!tem[valor]) return `${l.tabela}: o valor desta tabela é ${valor === 'int' ? 'valorInt' : valor === 'texto' ? 'valorTexto' : 'valorJson'}.`;
   const erro = regra.checar(l);
   return erro ? `${l.tabela}/${l.chave}: ${erro}.` : null;
 }

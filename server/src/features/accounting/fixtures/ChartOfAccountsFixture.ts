@@ -55,12 +55,23 @@ export const CANONICAL_ACCOUNTS: ReadonlyArray<CanonicalAccount> = [
   // Contas a Pagar (INCR-AP / ADR-INCR-AP D2): the recognition of a supplier obligation credits
   // this Liability leaf; the settlement debits it. BP maps it automatically (nature-only).
   { code: '2.1.2.01', name: 'Fornecedores a Pagar', nature: 'Liability', acceptsEntries: true },
+  // BE-INCR-IRRF-DISTRIBUICAO PR-1 (item 6, F-IRD-15; dono 21/10: "2.1.7 e 2.1.3.05, plano padrão" → "(a) com 2.1.7.03" —
+  // o 2.1.3 é a sintética "Obrigações Tributárias" dos kits v6). Passivo do sócio (L11) e o IRRF retido na distribuição.
+  { code: '2.1.7', name: 'Obrigações com Sócios', nature: 'Liability', acceptsEntries: false },
+  { code: '2.1.7.01', name: 'Dividendos a Pagar', nature: 'Liability', acceptsEntries: true },
+  { code: '2.1.7.02', name: 'Juros sobre o Capital Próprio a Pagar', nature: 'Liability', acceptsEntries: true },
+  { code: '2.1.7.03', name: 'IRRF a Recolher', nature: 'Liability', acceptsEntries: true },
   // Patrimônio Líquido (BE-INCR-SPED-APURACAO / D4): the closing entry (encerramento do
   // resultado) posts the exercise's net result here. `2.3` is the synthetic PL branch under the
   // `2` Passivo group (COD_NAT is per-account in I050, so a PL leaf under Passivo is conforme).
   { code: '2.3', name: 'Patrimônio Líquido', nature: 'Equity', acceptsEntries: false },
   { code: '2.3.1', name: 'Lucros ou Prejuízos Acumulados', nature: 'Equity', acceptsEntries: false },
   { code: '2.3.1.01', name: 'Lucros ou Prejuízos Acumulados', nature: 'Equity', acceptsEntries: true },
+  // BE-INCR-IRRF-DISTRIBUICAO PR-1 (item 6): contas do PL que a base do JCP lê (IN 1.700 art. 75 I e IV).
+  { code: '2.3.2', name: 'Capital Social', nature: 'Equity', acceptsEntries: false },
+  { code: '2.3.2.01', name: 'Capital Social Integralizado', nature: 'Equity', acceptsEntries: true },
+  { code: '2.3.3', name: 'Reservas de Lucros', nature: 'Equity', acceptsEntries: false },
+  { code: '2.3.3.01', name: 'Reserva Legal', nature: 'Equity', acceptsEntries: true },
   // ── Resultado: fora da REGRA_VALIDA_NIVEL_CONTAS (COD_NAT 04) — inalterado ──
   { code: '3', name: 'Receita', nature: 'Revenue', acceptsEntries: false },
   // Revenue split by NATURE (ADR-INCR-REVENUE-SPLIT): the ECF-Presumido Bloco P applies a
@@ -94,6 +105,8 @@ export const CANONICAL_ACCOUNTS: ReadonlyArray<CanonicalAccount> = [
   { code: '4.3.1', name: 'Juros de Mora Pagos', nature: 'Expense', acceptsEntries: true },
   { code: '4.3.2', name: 'Multas de Mora Pagas', nature: 'Expense', acceptsEntries: true },
   { code: '4.3.3', name: 'Descontos Financeiros Concedidos', nature: 'Expense', acceptsEntries: true },
+  // BE-INCR-IRRF-DISTRIBUICAO PR-1 (item 6): despesa de JCP (forma DESPESA, F-IRD-11; Lei 9.249 art. 9º).
+  { code: '4.3.4', name: 'Juros sobre o Capital Próprio', nature: 'Expense', acceptsEntries: true },
   // Multas indedutíveis (IN 1.700 arts. 132 e 133; Lei 8.981 art. 41 § 5º; RIR/2018 art. 352 § 5º): ficam em `expenses`
   // pela regra só por natureza; a adição na Parte A é o PR-4 (X4). Nome e grupo provisórios até o contador (BRIEF §6.2).
   { code: '4.4', name: 'Multas Indedutíveis', nature: 'Expense', acceptsEntries: false },
@@ -238,3 +251,21 @@ export const MULTAS_OFICIO_CODE = '4.4.1';
 export const MULTAS_NAO_TRIBUTARIAS_CODE = '4.4.2';
 /** Tarifa bancária/de intermediação (E26). `4.6` por decisão do dono de 13/10 (o `4.5` é do kit fiscal). */
 export const BANK_FEE_CODE = '4.6';
+
+/**
+ * BE-INCR-IRRF-DISTRIBUICAO PR-1 (item 6; dono 21/10, opção (b): "mapear as contas do plano padrão fora dos kits") —
+ * referencial RFB das folhas novas do plano padrão, gravado em todo escopo por
+ * `ReferentialMappingService.ensureCanonicalMappings` (os kits v6 publicados não se editam). Mesmos códigos em Presumido
+ * (P100A/P150A) e Real (L100A/L300A), conferidos na tabela dinâmica oficial da ECF (leiaute 12, AC 2025; dossiê
+ * pesquisas-legais/irrf-referencial-sped [D01]). PROVISÓRIO por decisão do dono (21/10): a revisar com usuários e
+ * contador depois do app completo. Lacuna conhecida: capital de sócio no exterior (2.03.01.02.01) pede a subconta
+ * 2.3.2.01.02 quando houver empresa-alvo com sócio estrangeiro / RDE-IED.
+ */
+export const REFERENCIAL_PLANO_PADRAO: ReadonlyArray<{ accountCode: string; referentialCode: string; label: string }> = [
+  { accountCode: '2.1.7.01', referentialCode: '2.01.01.17.13.10', label: 'Dividendos a Pagar – Circulante - Brasil' },
+  { accountCode: '2.1.7.02', referentialCode: '2.01.01.17.12.10', label: 'Juros sobre o Capital Próprio a Pagar - Circulante - Brasil' },
+  { accountCode: '2.1.7.03', referentialCode: '2.01.01.09.01', label: 'IRRF a Recolher – Circulante' },
+  { accountCode: '2.3.2.01', referentialCode: '2.03.01.01.01', label: 'Capital Subscrito de Domiciliados e Residentes no País' },
+  { accountCode: '2.3.3.01', referentialCode: '2.03.02.03.01', label: 'Reserva Legal' },
+  { accountCode: '4.3.4', referentialCode: '3.01.01.09.01.04', label: '(-) Despesas de Juros sobre o Capital Próprio' },
+];

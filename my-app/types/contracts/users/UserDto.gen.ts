@@ -8,6 +8,7 @@ password?: string
 role?: ("USER" | "ADMIN")
 locale?: ("en" | "pt")
 currency?: ("BRL" | "USD" | "EUR")
+currentPassword?: string
 }
 export interface CreateUserInput {
 name?: string

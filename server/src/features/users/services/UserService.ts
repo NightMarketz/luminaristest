@@ -191,6 +191,16 @@ export class UserService {
       throw new NotFoundError('User not found');
     }
 
+    // §3.4 #6 — changing one's own password or email requires the current password.
+    // An ADMIN editing another user is exempt.
+    const isSelf = actor.userId === id;
+    if (isSelf && (data.password || data.email !== undefined)) {
+      const withHash = await this.userRepository.getUserByUsername(existingUser.username);
+      if (!data.currentPassword || !withHash || !(await bcrypt.compare(data.currentPassword, withHash.password))) {
+        throw new UnauthorizedError('Current password is required to change password or email');
+      }
+    }
+
     const updateData: Prisma.UserUpdateInput = {};
 
     // Handle name update
@@ -289,9 +299,24 @@ export class UserService {
     // delete.  If Qdrant fails we abort here and the user record is still intact
     // so the operation can be retried.  True distributed transactions are not
     // available between Qdrant and Postgres, so this ordering is the safest choice.
+    // §3.4 #1 — a Restrict FK (accounting trail) would fail the SQL delete AFTER the purge.
+    if (await this.userRepository.hasRestrictedDependents(id)) {
+      throw new ConflictError('User has accounting records and cannot be deleted', 'USER_HAS_DEPENDENTS');
+    }
+
     logger.info('Deleting Qdrant vectors before user deletion (LGPD art.18 VI)', { userId: id });
     await this.vectorRepository.deleteVectorsByUserId(id);
 
     await this.userRepository.deleteUser(id);
   }
-} 
+
+  /** Current token version for JWT issue/verification; null when the user does not exist (§3.4 #3). */
+  public async getTokenVersion(userId: string): Promise<number | null> {
+    return this.userRepository.getTokenVersion(userId);
+  }
+
+  /** Logout: invalidates every JWT issued to the user so far (§3.4 #3). */
+  public async revokeTokens(userId: string): Promise<void> {
+    await this.userRepository.incrementTokenVersion(userId);
+  }
+}

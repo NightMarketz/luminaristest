@@ -145,6 +145,7 @@ import {
   listCompanySigners,
   updateCompanySigner,
 } from '../controllers/companySignerController';
+import { createPartner, deletePartner, getPartner, listPartners, updatePartner } from '../controllers/partnerController';
 import {
   listDepreciationRates,
   createDepreciationRate,
@@ -403,6 +404,12 @@ router.post('/company-signers', createCompanySigner);
 router.get('/company-signers/:id', getCompanySigner);
 router.put('/company-signers/:id', updateCompanySigner);
 router.delete('/company-signers/:id', deleteCompanySigner);
+// BE-INCR-IRRF-DISTRIBUICAO PR-1 (itens 1–4): sócios da empresa.
+router.get('/partners', listPartners);
+router.post('/partners', createPartner);
+router.get('/partners/:id', getPartner);
+router.put('/partners/:id', updatePartner);
+router.delete('/partners/:id', deletePartner);
 
 // BE-INCR-FIXED-ASSETS (nó C8, Bloco A) — tabela de taxas de depreciação; segmento estático, antes
 // de /:unitId/periods. /:id/hide antes de qualquer /:id genérico futuro (nenhum hoje neste recurso).
