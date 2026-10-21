@@ -76,3 +76,15 @@ em fonte oficial.
 - **B (16%):** "Texto: recorte por empresa" — mantém o ADR (L20); a pergunta da base e da Lei 13.643/2018 volta ao contador.
 
 Gravar em `docs/plano/decisoes/` fica com a sessão de origem (esta triagem não ratifica).
+
+## Adendo — 2ª resposta (colada pelo dono no chat, 21/10)
+
+| Ponto | Resposta | Confere? | Efeito |
+|---|---|---|---|
+| Item 5 (acumular) | O acúmulo vem do art. 68 § 1º da Lei 9.430 e vale para o **recolhimento** (DARF), não para a retenção | **Sim.** Art. 68 caput veda DARF < R$ 10; § 1º soma o valor ao mesmo código nos períodos seguintes até chegar a R$ 10 [D03] | Regra nova e distinta do F-RET-6: o título de imposto por código < R$ 10 no mês **rola** para o mês seguinte (não vence isolado). Entra no BRIEF do RETENCOES-FONTE (título por código) |
+| Item 4 (citação) | Base correta: IN RFB 765/2007 art. 1º c/c IN SRF 480/2004 art. 6º + RIR art. 714 | INs **não lidas** (fonte RFB) | Corrige a citação; conclusão inalterada |
+| Item 6 (citação) | Base correta: RIR art. 714, Lei 8.981 art. 63, PN CST 121/1973 | **Não lidos** hoje | Corrige a citação; conclusão inalterada |
+| A (combo) | Recomenda a opção (2): proporcional como padrão, carga só com aprovação formal; cita CTN 148, 149 VII e CC art. 167 | Coerente com a escolha do dono | Fecha o ponto: **dono e contador alinhados** em PROPORCIONAL_CATALOGO |
+| B (16%) | Recorte é subjetivo (da PJ); ADN Cosit 22/2000 e IN 1.700 art. 34; esteticista é regulamentada pela Lei 13.643/2018, o que pode tirar os 16% do próprio salão | Art. 40 p.ú. confere [D02]; ADN/IN/Lei 13.643 **não lidos** | Fecha o ponto: **contador recua** e se alinha ao texto e ao ADR. Novo risco: salão só de estética também pode perder os 16% — o X7 já trava por confirmação (F-P16-1) |
+
+**Perguntas a devolver ao contador:** nenhuma — A e B fecharam nesta 2ª resposta.
