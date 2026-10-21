@@ -104,3 +104,15 @@ Regra do coordenador: "Se 2.1.7 ou 2.1.3.05 colidir com conta já usada num kit,
   (b) 2.1.3.05 como extensão de um kit v7 (contradiz "plano padrão"; escopo sem kit fica sem a conta);
   (c) mover o `2.1.3` sintético para o plano padrão e tirá-lo da extensão. Exige mudar a validação dos kits v6 já publicados
   (ex.: pular a sintética que já existe no canônico), e os publicados não se editam.
+
+## Rodada 3 (2026-10-21): "(a) com 2.1.7.03". Referencial pesquisado, PARADO por ambiguidade e veículo do mapeamento
+Destrave: dono, chat da sessão-mãe, 2026-10-21: "(a) com 2.1.7.03". Dossiê: `pesquisas-legais/irrf-referencial-2025/relatorio.md`
+(catálogo `referential_accounts` 2025 do dev.db real, sha256 da cópia `4bfcdbfc…20bdbe`).
+- Leitura única (V, catálogo): 2.1.7.01 → 2.01.01.17.13.10 · 2.1.7.02 → 2.01.01.17.12.10 · 2.1.7.03 → 2.01.01.09.01 ·
+  2.3.3.01 → 2.03.02.03.01 · 4.3.4 → 3.01.01.09.01.04.
+- **Ambíguo:** 2.3.2.01 Capital social integralizado → 2.03.01.01.01 (residentes no país) **ou** 2.03.01.02.01 (exterior). O
+  cadastro aceita sócio não residente (F-IRD-7). Pela regra do coordenador ("mais de uma leitura → pare e traga"), não escolhi.
+- **Veículo do mapeamento (lacuna nova):** a prontidão da ECD exige toda folha mapeada (`ReferentialMappingService.coverage`), e
+  só a instalação/upgrade de kit grava mapeamento (`KitInstallService`). Os kits v6 não se editam. As folhas no plano padrão sem
+  um kit v7 (só com o referencial) deixam todo escopo existente "não pronto". Não escolhi entre publicar um kit v7 do salão e
+  da clínica ou criar outra via de mapeamento. Nenhum código desta rodada.
