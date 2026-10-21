@@ -59,6 +59,7 @@ export const REKEY_MODELS = [
   'AccountantAssignment', // #482 (GOV-CONTADOR): contador responsável do escopo, sem hash → REKEY pelo critério do F-RK-5 (KEEP só para a trilha);
   //   deixá-la no unitId antigo tiraria o contador ativo da unidade re-chaveada e destravaria a reabertura em silêncio
   'TaxAssessment', // X7 Fase A PR-2: apuração IRPJ/CSLL; `unitId` = unidade lida (proveniência), sem hash → REKEY pelo critério do F-RK-5
+  'ConsumptionTaxAssessment', // IBS-CBS-2027 PR-2: apuração mensal de IBS/CBS; mesmo critério do TaxAssessment → REKEY (F-RK-5)
   'AccountingPolicyVersion', // GOV-CONTADOR (BE-INCR-ACCOUNTING-POLICY-VERSION item 2): parâmetro do escopo, sem hash; o payload não
   //   carrega `unitId` (item 7) → REKEY pelo F-RK-5. Deixá-la no unitId antigo tiraria do escopo re-chaveado o histórico de quem aprovou
   'PackageValidityAcceptance', // FE-INCR-PACOTE-VALIDADE (F-JUR-4): prova do aceite por venda; o `textSha256` cobre só o texto (sem unitId) → REKEY pelo F-RK-5.
