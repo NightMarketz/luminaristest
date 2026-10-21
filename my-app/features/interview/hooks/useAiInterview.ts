@@ -161,6 +161,9 @@ export function useAiInterview() {
     setSessionId(null);
     setCustomizationState(null);
     setShowCustomizationPanel(false);
+    // Revisão do #785 (dono, 21/10): o painel de campos fecha junto — a tabela dele era da sessão que sumiu.
+    setShowRightPanel(false);
+    setSelectedTable(null);
     setMessages(prev => [...prev, { sender: 'ai', text: t('onboardingSessionExpired') }]);
     if (presetKey) {
       setCurrentStage('AWAITING_CREATION_TYPE_CONFIRMATION');

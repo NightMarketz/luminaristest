@@ -68,11 +68,12 @@ const propostaComum: NonNullable<CustomizeFieldsResult['proposal']> = {
 
 function montar(props: Partial<React.ComponentProps<typeof AIChatMode>> = {}) {
   const onSaveChanges = vi.fn();
+  const onSync = vi.fn();
   const onSessionLost = vi.fn();
   const view = render(
-    <AIChatMode tableData={tabela} sessionId="s1" presetKey={null} onSaveChanges={onSaveChanges} onClose={vi.fn()} onSessionLost={onSessionLost} {...props} />,
+    <AIChatMode tableData={tabela} sessionId="s1" onSaveChanges={onSaveChanges} onSync={onSync} onClose={vi.fn()} onSessionLost={onSessionLost} {...props} />,
   );
-  return { ...view, onSaveChanges, onSessionLost };
+  return { ...view, onSaveChanges, onSync, onSessionLost };
 }
 
 async function enviar(texto: string) {
@@ -137,18 +138,19 @@ describe('AIChatMode — W6 FE', () => {
     expect(screen.queryByTestId('ai-proposal')).toBeNull();
   });
 
-  it('item 15: Descartar manda decision:"discard"; o hook recebe a tabela do servidor com os campos intactos', async () => {
+  it('item 15: Descartar manda decision:"discard"; o hook recebe só histórico e pendente, nenhuma tabela', async () => {
     fetchMock()
       .mockResolvedValueOnce(res(200, resultado({ proposal: propostaComum })))
       .mockResolvedValueOnce(res(200, resultado({ applied: false })));
-    const { onSaveChanges } = montar();
+    const { onSaveChanges, onSync } = montar();
     await enviar('quero o nome completo');
     await screen.findByTestId('ai-proposal');
     fireEvent.click(screen.getByText('onboardingFieldsAiDiscard'));
     await waitFor(() => expect(screen.queryByTestId('ai-proposal')).toBeNull());
     expect(bodyOf(1)).toMatchObject({ kind: 'decision', proposalId: 'p2', decision: 'discard' });
     // Achado 1 do #785: todo turno sincroniza o hook (senão a pendente descartada voltaria ao remontar).
-    expect(onSaveChanges).toHaveBeenLastCalledWith(expect.objectContaining({ fields: tabela.fields }));
+    expect(onSync).toHaveBeenLastCalledWith({ conversationHistory: historico, pendingProposal: undefined });
+    expect(onSaveChanges).not.toHaveBeenCalled();
   });
 
   it('item 16: campo sensível tem selo; Aplicar desabilitado até marcar a ciência, que vai como acknowledgeSensitive:true', async () => {
@@ -196,7 +198,7 @@ describe('AIChatMode — W6 FE', () => {
     fireEvent.click(screen.getByText('onboardingFieldsAiApply'));
     await waitFor(() => expect(textos().join('|')).toContain('onboardingFieldsAiProposalStale'));
     expect(screen.queryByTestId('ai-proposal')).toBeNull();
-    expect(onSaveChanges).toHaveBeenCalledTimes(1); // só o turno da mensagem; o 409 não sobe tabela
+    expect(onSaveChanges).not.toHaveBeenCalled(); // o 409 não sobe tabela
     expect(onSessionLost).not.toHaveBeenCalled();
   });
 

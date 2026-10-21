@@ -10,14 +10,20 @@ import {
 import type { CustomizeFieldsDtoInput } from '@/types/contracts/interview/CustomizeFields.dto.gen';
 import { IAiMessage, ITable, ITableField } from '../../types/RightSidebarTypes';
 
+/** O que um turno sem Aplicar muda na tabela da sessão: histórico e proposta pendente — nunca os campos. */
+export type SessionSync = Partial<Pick<ITable, 'conversationHistory' | 'pendingProposal'>>;
+
 interface AIChatModeProps {
+  /** A tabela como o hook a tem (a salva) — não a cópia local do painel, que pode ter edição manual não salva. */
   tableData: ITable;
   sessionId: string | null;
+  /** Item 15: Aplicar sobe a tabela que o servidor devolveu. */
   onSaveChanges: (updatedTable: ITable) => void;
+  /** Os outros turnos (e o 409 da proposta vencida) só sincronizam histórico e pendente no hook. */
+  onSync: (sync: SessionSync) => void;
   onClose: () => void;
   /** W6 item 17: 404 `INTERVIEW_SESSION_NOT_FOUND` — a entrevista volta à escolha criar × customizar (F-W4-2 b). */
   onSessionLost?: () => void;
-  presetKey: string | null;
 }
 
 type Proposal = NonNullable<CustomizeFieldsResult['proposal']>;
@@ -53,7 +59,7 @@ function toMessage(entry: ITable['conversationHistory'][number]): IAiMessage {
  * Modo IA do painel de campos (W6, BRIEF WIZARD-W6 itens 13–18; ADR-W6). O turno `message` só traz uma proposta;
  * quem muda a tabela é o `decision:'apply'`, e a tabela que sobe é a que o servidor devolveu.
  */
-function AIChatMode({ tableData, sessionId, onSaveChanges, onClose, onSessionLost }: AIChatModeProps) {
+function AIChatMode({ tableData, sessionId, onSaveChanges, onSync, onClose, onSessionLost }: AIChatModeProps) {
   const { t } = useTranslation('common');
   // Item 14: o histórico é o do servidor; o cliente só acrescenta notas locais de erro até a próxima resposta.
   const [history, setHistory] = useState<IAiMessage[]>(() => (tableData.conversationHistory ?? []).map(toMessage));
@@ -80,12 +86,9 @@ function AIChatMode({ tableData, sessionId, onSaveChanges, onClose, onSessionLos
     setDiscarded(data.discarded);
     setAcknowledged(false);
     // O hook é sincronizado depois de todo turno: ao remontar, histórico e pendente são os da sessão. Só o Aplicar
-    // muda campos (item 15: a tabela do servidor); nos outros turnos os campos do hook ficam — o modo manual edita só ali.
-    onSaveChanges(applied ? data.table : {
-      ...tableData,
-      conversationHistory: data.table.conversationHistory,
-      pendingProposal: data.table.pendingProposal,
-    });
+    // muda campos (item 15: a tabela do servidor); nos outros turnos vão só histórico e pendente.
+    if (applied) onSaveChanges(data.table);
+    else onSync({ conversationHistory: data.table.conversationHistory, pendingProposal: data.table.pendingProposal });
   };
 
   const addNote = (content: string) => {
@@ -94,6 +97,7 @@ function AIChatMode({ tableData, sessionId, onSaveChanges, onClose, onSessionLos
 
   /** Item 17: ramifica pelo `code` do corpo, não pelo status. */
   const handleError = (error: unknown, fallback: string) => {
+    setDiscarded([]); // o "ficou fora" era do turno anterior
     const code = error instanceof InterviewApiError ? error.body.code : undefined;
     if (code === 'INTERVIEW_SESSION_NOT_FOUND') {
       setProposal(null);
@@ -103,6 +107,7 @@ function AIChatMode({ tableData, sessionId, onSaveChanges, onClose, onSessionLos
     }
     if (code === 'PROPOSAL_STALE') {
       setProposal(null);
+      onSync({ pendingProposal: undefined }); // senão o cartão vencido volta ao remontar
       addNote(t('onboardingFieldsAiProposalStale'));
       return;
     }
@@ -112,7 +117,7 @@ function AIChatMode({ tableData, sessionId, onSaveChanges, onClose, onSessionLos
 
   const handleSendMessage = async () => {
     const message = inputMessage.trim();
-    if (!message || !sessionId) return;
+    if (!message || !sessionId || isSending) return; // o Enter não passa pelo `disabled` do botão
 
     setInputMessage('');
     setPendingMessage(message);
