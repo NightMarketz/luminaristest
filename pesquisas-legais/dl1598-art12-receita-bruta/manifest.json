@@ -29,6 +29,24 @@
       "arquivo": "docs/D02_lcp214-htm.html",
       "texto": "docs/D02_lcp214-htm.txt",
       "bytes": 5403667
+    },
+    {
+      "id": "D03",
+      "titulo": "Lei nº 12.973 de 13/05/2014",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2014/lei-12973-2014-05-13.md",
+      "url_final": "https://github.com/ctresb/leis/blob/5a77b1ed480d4b4fc20fabaac59f6674b120d7ec/federal/leis-ordinarias/2014/lei-12973-2014-05-13.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2014-05-13;12973",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "5a77b1ed480d4b4fc20fabaac59f6674b120d7ec",
+      "alertas": [],
+      "baixado_em": "2026-10-21T16:58:30-03:00",
+      "sha256": "d73a401dbbd14ab1feb1c8bce8daa51c3cfcb0cbc264e87b9023fc875f1b89cf",
+      "arquivo": "docs/D03_lei-12973-2014-05-13.md",
+      "texto": "docs/D03_lei-12973-2014-05-13.txt",
+      "bytes": 169254
     }
   ],
   "buscas": [],
