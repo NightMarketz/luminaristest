@@ -434,7 +434,7 @@
           },
           "crcNumber": {
             "type": "string",
-            "description": "J930 campo 06 IND_CRC no formato do CFC UF-NNNNNN/O-D, transferido/secundário com sufixo (SP-123456/O-3 T-MG); grafias usuais aceitas e normalizadas; crcUf tem de ser a UF de origem ou a do sufixo"
+            "description": "J930 campo 06 IND_CRC no formato do CFC UF-NNNNNN/O-D, transferido com sufixo (SP-123456/O-3 T-MG); grafias usuais aceitas e normalizadas; crcUf tem de ser a UF de origem ou a do sufixo"
           },
           "crcUf": {
             "type": "string",
@@ -482,7 +482,7 @@
           },
           "crcNumber": {
             "type": "string",
-            "description": "UF-NNNNNN/O-D (CFC); transferido/secundário: + ' T-UF'/' S-UF'"
+            "description": "UF-NNNNNN/O-D (CFC); transferido: + ' T-UF'"
           },
           "crcUf": {
             "type": "string",
@@ -893,7 +893,7 @@
           },
           "reviewerCrc": {
             "type": "string",
-            "description": "Máscara CFC UF-NNNNNN/O-D, transferido/secundário com sufixo ' T-UF'/' S-UF' (mesma do contato, #305)"
+            "description": "Máscara CFC UF-NNNNNN/O-D, transferido com sufixo ' T-UF' (mesma do contato, #305)"
           },
           "statement": {
             "type": "string",
@@ -10158,6 +10158,240 @@
         }
       }
     },
+    "/api/accounting/fiscal-certificates/{unitId}": {
+      "put": {
+        "summary": "Upload the unit's fiscal certificate (PFX/P12 + password); stored encrypted, never returned",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file",
+                  "senha"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "senha": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Public view (no key, certificate or password)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "unitId": {
+                          "type": "string"
+                        },
+                        "cnpjCertificado": {
+                          "type": "string"
+                        },
+                        "notBefore": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "notAfter": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "diasParaVencer": {
+                          "type": "integer"
+                        },
+                        "fingerprintSha256": {
+                          "type": "string"
+                        },
+                        "setAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "413": {
+            "description": "File too large"
+          },
+          "422": {
+            "description": "certificado_senha_invalida | certificado_ilegivel | certificado_chave_nao_corresponde | certificado_sem_cnpj | certificado_cnpj_divergente | certificado_vencido | unidade_sem_cnpj"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "dfe_cert_key_missing (DFE_CERT_KEYS not provisioned)"
+          }
+        }
+      },
+      "get": {
+        "summary": "Public view of the unit's fiscal certificate (no secret)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public view (no key, certificate or password)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "unitId": {
+                          "type": "string"
+                        },
+                        "cnpjCertificado": {
+                          "type": "string"
+                        },
+                        "notBefore": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "notAfter": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "diasParaVencer": {
+                          "type": "integer"
+                        },
+                        "fingerprintSha256": {
+                          "type": "string"
+                        },
+                        "setAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Soft-delete the unit's fiscal certificate (ciphertext wiped)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
     "/api/accounting/fiscal-profile": {
       "get": {
         "summary": "Read the unit fiscal profile (BE-INCR-NFE-COST-REGIME, nó X6, F-X6-1 a)",
@@ -14677,7 +14911,7 @@
     "/api/accounting/simples/apuracoes/{competencia}/calcular": {
       "post": {
         "summary": "Compute the Simples Nacional assessment of a month on demand (BE-INCR-SIMPLES-NACIONAL PR-3, X14 item 17)",
-        "description": "Calcula a apuração ME/EPP da competência a partir do subrazão fiscal de receita, do histórico pré-adoção, da segregação manual e dos contratos de parceria. Nada é gravado. 400 - perfil do ano ausente ou fora do Simples. 422 - regra não regulamentada (ex.: início de atividade a partir de 2027).",
+        "description": "Calcula a apuração ME/EPP da competência a partir do subrazão fiscal de receita, do histórico pré-adoção, da segregação manual e dos contratos de parceria. Nada é gravado. 400 - perfil do ano ausente ou fora do Simples. 422 - regra não regulamentada (ex.: teto do ISS excedido fora da 5ª e da 6ª faixa).",
         "tags": [
           "Accounting"
         ],
@@ -14876,7 +15110,7 @@
     "/api/accounting/simples/aliquotas/{competencia}": {
       "get": {
         "summary": "Suggested rates for documents issued in the month, with the calculation trail (X14 PR-4 item 29)",
-        "description": "SUGESTÃO (o prestador responde pela alíquota informada, LC 123 art. 21 § 4º VI) por atividade do cadastro de serviços e das que tiveram receita no PA, com faixa do RBT12 global: no mês de abertura do CNPJ, 2% (§ 4º II); até 2026, a faixa do mês anterior (PA = M−1); a partir de 2027, a do mês da prestação (PA = M, LC 227 art. 169; janela M−13…M−2, LC 214 art. 517). Devolve PA, RBT12, janela, regra e avisos; o pTotTribSN só sugerido (B-4) e, a partir de 2027, os % de ICMS/IBS/CBS para o crédito do adquirente. 400 - MEI (SIMEI não tem alíquota).",
+        "description": "SUGESTÃO (o prestador responde pela alíquota informada, LC 123 art. 21 § 4º VI) por atividade do cadastro de serviços e das que tiveram receita no PA, com faixa do RBT12 global: no mês de abertura do CNPJ, 2% (§ 4º II; a partir de 2027, também no mês seguinte, Res. CGSN 140 art. 27 II red. Res. CGSN 190/2026); até 2026, a faixa do mês anterior (PA = M−1); a partir de 2027, a do mês da prestação (PA = M, LC 227 art. 169; janela M−13…M−2, LC 214 art. 517). Devolve PA, RBT12, janela, regra e avisos; o pTotTribSN só sugerido (B-4) e, a partir de 2027, os % de ICMS/IBS/CBS para o crédito do adquirente. 400 - MEI (SIMEI não tem alíquota).",
         "tags": [
           "Accounting"
         ],
@@ -15574,7 +15808,7 @@
                             },
                             "indCrc": {
                               "type": "string",
-                              "description": "CFC format UF-NNNNNN/O-D (transferred/secondary: + \" T-UF\"/\" S-UF\")"
+                              "description": "CFC format UF-NNNNNN/O-D (transferred: + \" T-UF\")"
                             },
                             "email": {
                               "type": "string"
@@ -15695,7 +15929,7 @@
                         },
                         "indCrc": {
                           "type": "string",
-                          "description": "CFC format UF-NNNNNN/O-D (transferred/secondary: + \" T-UF\"/\" S-UF\"); required when codAssin=900"
+                          "description": "CFC format UF-NNNNNN/O-D (transferred: + \" T-UF\"); required when codAssin=900"
                         },
                         "email": {
                           "type": "string",
@@ -16000,7 +16234,7 @@
                         },
                         "indCrc": {
                           "type": "string",
-                          "description": "CFC format UF-NNNNNN/O-D (transferred/secondary: + \" T-UF\"/\" S-UF\"); required when identQualif=900; omit when blank (an empty string is 400)"
+                          "description": "CFC format UF-NNNNNN/O-D (transferred: + \" T-UF\"); required when identQualif=900; omit when blank (an empty string is 400)"
                         },
                         "email": {
                           "type": "string"
@@ -16242,7 +16476,7 @@
                         },
                         "indCrc": {
                           "type": "string",
-                          "description": "CFC format UF-NNNNNN/O-D (transferred/secondary: + \" T-UF\"/\" S-UF\"); required when identQualif=900; omit when blank (an empty string is 400)"
+                          "description": "CFC format UF-NNNNNN/O-D (transferred: + \" T-UF\"); required when identQualif=900; omit when blank (an empty string is 400)"
                         },
                         "email": {
                           "type": "string"
