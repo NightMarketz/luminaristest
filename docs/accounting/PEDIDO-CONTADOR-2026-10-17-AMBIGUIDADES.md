@@ -5,6 +5,8 @@
 > [`D-2026-10-17-AMBIGUIDADES-A1-A10`](../plano/decisoes/D-2026-10-17-AMBIGUIDADES-A1-A10.md).
 > **Complementa** o [`PEDIDO-CONTADOR-2026-10-10-UNICO.md`](PEDIDO-CONTADOR-2026-10-10-UNICO.md). Se a 2ª mensagem dele
 > ainda não saiu, dá para juntar as perguntas abaixo à Parte III ("regras gerais").
+> **21/10:** a pergunta 1 (A2) é a P-IBS-1 do IBS-CBS-2027, com prazo — versão urgente avulsa em
+> [`PEDIDO-CONTADOR-2026-10-21-P-IBS-1.md`](PEDIDO-CONTADOR-2026-10-21-P-IBS-1.md). Envie uma das duas, não as duas.
 
 ---
 
