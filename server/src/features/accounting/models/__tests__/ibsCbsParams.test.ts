@@ -28,7 +28,7 @@ describe('IBS_CBS — semente (item 1)', () => {
 
   it('a CBS de 2027–2028 nasce DRAFT e sem valor (art. 347 + resolução do Senado, art. 349 I)', () => {
     const cbs2027 = linhas.find((l) => l.id === 'ibscbs-cbs-2027');
-    expect(cbs2027).toMatchObject({ status: 'DRAFT', valorInt: null, vigenteDesde: '2027-01-01', vigenteAte: '2028-12-31' });
+    expect(cbs2027).toMatchObject({ status: 'DRAFT', valorInt: null, vigenteDesde: '2027-01-01', vigenteAte: null }); // L3 (dono, 21/10): sem data final
     expect(tabela.some((p) => p.tributo === 'CBS' && p.vigenteDesde === '2027-01-01')).toBe(false);
   });
 });

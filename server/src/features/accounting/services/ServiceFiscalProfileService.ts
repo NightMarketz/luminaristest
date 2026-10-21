@@ -1,8 +1,9 @@
-import { ForbiddenError, NotFoundError } from '../../../lib/errors';
+import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import type { ServiceFiscalProfile } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IServiceFiscalProfileRepository } from '../repositories/IServiceFiscalProfileRepository';
+import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRepository';
 import type { AuditService } from './AuditService';
 import type { UpsertServiceFiscalProfileInput } from '../dtos/ServiceFiscalProfileDto';
 import { findLc116, listaLc116De, type ListaLc116 } from '../models/lc116ListaNacional';
@@ -40,6 +41,8 @@ export class ServiceFiscalProfileService {
     private readonly auditService: AuditService,
     /** BE-INCR-LEGAL-PARAMS PR-2 (F-LP-4 a): fotografia `LC116_SERVICO` (descrição do cTribNac na view). */
     private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
+    /** IBS-CBS-2027 PR-1 (L1 ratificada 21/10: E0959 ao salvar) — o CST do IBS/CBS mora no perfil da unidade. */
+    private readonly fiscalProfiles: Pick<IFiscalProfileRepository, 'findByScope'>,
   ) {}
 
   private async lc116(scope: AccountingScope): Promise<ListaLc116> {
@@ -65,6 +68,15 @@ export class ServiceFiscalProfileService {
     const { unitId: _unitId, ...data } = input;
     const lista = await this.lc116(scope);
     return this.repo.runTransaction(async (tx) => {
+      // IBS-CBS-2027 PR-1, L1 (dono, questionário, 21/10: conferir ao salvar) — RN E0959 do leiaute da DPS: os 3
+      // primeiros dígitos do cClassTrib = CST do IBS/CBS do perfil da unidade. Perfil sem CST: nada a conferir (o grupo
+      // IBSCBS só sai com CST — FiscalDocumentEmissionService). Lido dentro da tx (gate autoritativo).
+      if (data.cClassTrib) {
+        const cst = (await this.fiscalProfiles.findByScope(scope, tx))?.ibsCbsCst ?? null;
+        if (cst && !data.cClassTrib.startsWith(cst)) {
+          throw new ValidationError(`Os 3 primeiros dígitos de cClassTrib (${data.cClassTrib}) devem ser iguais ao CST do IBS/CBS do perfil fiscal (${cst}) (RN E0959).`);
+        }
+      }
       const row = await this.repo.upsert(scope, serviceRef, data, tx);
       await this.auditService.append(tx, scope, {
         actorUserId: scope.actorUserId,
@@ -78,6 +90,7 @@ export class ServiceFiscalProfileService {
           cNBS: row.cNBS ?? '',
           cIndOp: row.cIndOp,
           cLocPrestacao: row.cLocPrestacao ?? '',
+          cClassTrib: row.cClassTrib ?? '', // IBS-CBS-2027 PR-1, L2 (dono, 21/10): a troca entra na trilha
         },
       });
       return this.toView(row, lista);

@@ -1366,6 +1366,7 @@ export class ApplicationFactory {
       this.policies.accounting,
       auditService,
       legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia LC116_SERVICO
+      this.repositories.fiscalProfile, // IBS-CBS-2027 PR-1, L1: CST do perfil para a RN E0959
     );
     // BE-INCR-DFE (nó X10b, PR-2): porta+adaptadores e montagem/envio da DPS (Fase B+C).
     const fiscalDocumentEmissionService = new FiscalDocumentEmissionService(
