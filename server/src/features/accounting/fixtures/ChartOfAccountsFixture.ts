@@ -274,7 +274,8 @@ export const REFERENCIAL_PLANO_PADRAO: ReadonlyArray<{ accountCode: string; refe
   { accountCode: '2.3.3.01', referentialCode: '2.03.02.03.01', label: 'Reserva Legal' },
   { accountCode: '4.3.4', referentialCode: '3.01.01.09.01.04', label: '(-) Despesas de Juros sobre o Capital Próprio' },
   // IBS-CBS-2027 PR-2 (item 12; dono 21/10: "usa 2.01.01.09.28 para IBS e CBS a recolher"): a tabela da ECF (AC 2025) não tem
-  // conta própria de IBS/CBS (dossiê pesquisas-legais/ibs-cbs-referencial-sped [D01]); folha "Outros Tributos" até a RFB publicar.
+  // conta própria de IBS/CBS (dossiê pesquisas-legais/ibs-cbs-referencial-sped [D01]). PROVISÓRIO por decisão do dono: revisar
+  // quando a RFB publicar a tabela do ano-calendário 2027.
   { accountCode: '2.1.8.01', referentialCode: '2.01.01.09.28', label: 'Outros Tributos a Recolher – Circulante' },
   { accountCode: '2.1.8.02', referentialCode: '2.01.01.09.28', label: 'Outros Tributos a Recolher – Circulante' },
 ];

@@ -12,6 +12,12 @@ conta de IBS nem de CBS nas abas L100A (Lucro Real) e P100A (Presumido): a busca
 achou nada. O grupo `2.01.01.02`, que o contador indicou (`2.01.01.02.xx`), **não existe** nessas abas. Os tributos a
 recolher ficam em `2.01.01.09 OBRIGAÇÕES FISCAIS – CIRCULANTE`, com as folhas .01 a .14 e .28.
 
+## Escolha PROVISÓRIA (dono, 2026-10-21)
+"usa 2.01.01.09.28 para IBS e CBS a recolher" e "(a) Criar as contas e mapear provisoriamente em 2.01.01.09.28,
+revisando quando sair a tabela do ano-calendário 2027". Contas do plano padrão: 2.1.8.01 IBS a Recolher e 2.1.8.02 CBS a
+Recolher (sintética 2.1.8, fora do 2.1.3 dos kits v6), mapeadas pelo `ensureCanonicalMappings`. Revisar quando a RFB
+publicar a tabela do AC 2027.
+
 ## Leituras possíveis (ambiguidade, para o dono e o contador)
 1. **`2.01.01.09.28 Outros Tributos a Recolher – Circulante`** (folha "A", existe nas duas abas desde 2015) para IBS e para
    CBS até a RFB publicar contas próprias. Única folha atual que comporta os dois tributos.
