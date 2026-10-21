@@ -3,8 +3,11 @@
 export interface ChatRequestInput {
 query?: string
 documentIds?: string[]
+/**
+ * @maxItems 50
+ */
 history?: {
-role: ("user" | "assistant" | "system")
+role: ("user" | "assistant")
 content: string
 }[]
 chatInstanceId?: string

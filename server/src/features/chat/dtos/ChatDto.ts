@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 // Schema for a single history item.
 const HistoryItemSchema = z.object({
-  role: z.enum(['user', 'assistant', 'system']),
+  role: z.enum(['user', 'assistant']),
   content: z.string(),
 });
 
@@ -12,7 +12,7 @@ const HistoryItemSchema = z.object({
 export const ChatRequestSchema = z.object({
   query: z.string().max(4000).optional(),
   documentIds: z.array(z.string()).optional(),
-  history: z.array(HistoryItemSchema).optional(),
+  history: z.array(HistoryItemSchema).max(50).optional(),
   // Target chat instance: when present, the server persists the user message and the assistant reply.
   chatInstanceId: z.string().optional(),
   // Id of a confirmed action proposal sent back by the frontend.
