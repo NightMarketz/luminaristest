@@ -8,7 +8,7 @@ import AIChatMode from './AIChatMode';
 /**
  * Painel lateral direito para customização de campos das tabelas
  */
-function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, presetKey }: RightSidebarProps) {
+function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, onSessionLost, presetKey }: RightSidebarProps) {
   const { t } = useTranslation('common');
   const [tableData, setTableData] = useState<ITable | null>(selectedTable);
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -189,13 +189,16 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, pres
         {/* Área de conteúdo com scroll */}
         {tableData && interactionMode === 'ai' ? (
           // Modo de IA humanizada
+          // W6: `key` por tabela — o histórico do modo IA é o da tabela aberta, não o da anterior.
           <AIChatMode 
+            key={tableData.key}
             tableData={tableData} 
             sessionId={sessionId}
             presetKey={presetKey}
             onSaveChanges={(updatedTable) => {
               if (onUpdateTable) onUpdateTable(updatedTable);
             }}
+            onSessionLost={onSessionLost}
             onClose={() => setInteractionMode('manual')}
           />
         ) : (

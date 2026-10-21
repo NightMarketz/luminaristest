@@ -1,5 +1,6 @@
 import { apiClient } from '../api/api-client';
 import type { ChatInterviewInput } from '@/types/contracts/interview/ChatInterviewDto.gen';
+import type { CustomizeFieldsDtoInput } from '@/types/contracts/interview/CustomizeFields.dto.gen';
 
 /**
  * interview.service.ts
@@ -27,16 +28,55 @@ export class InterviewApiError extends Error {
   }
 }
 
+/** LGPD art. 5º, II — categorias que o servidor marca num campo proposto (W6 F-W6-6; `FieldCustomizationService/Types.ts`). */
+export type SensitiveCategory =
+  | 'health' | 'sex_life' | 'genetic' | 'biometric' | 'racial_ethnic'
+  | 'religious' | 'political' | 'union_or_org' | 'health_or_other_unspecified';
+
+/** Campo como o servidor o devolve (`AdvancedFieldSchema` canônico; só o que o painel lê). */
+export interface CustomizeFieldsField {
+  name: string;
+  label: string;
+  type: string;
+  required?: boolean;
+  hidden?: boolean;
+  options?: string[];
+}
+
+export type CustomizeFieldsChange =
+  | { action: 'add'; field: CustomizeFieldsField; sensitiveCategory: SensitiveCategory | null; presetKey: string | null }
+  | { action: 'update'; originalName: string; field: CustomizeFieldsField; sensitiveCategory: SensitiveCategory | null }
+  | { action: 'remove'; originalName: string };
+
+export interface CustomizeFieldsHistoryEntry {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  at: string;
+}
+
+/** Tabela da sessão depois do turno (`ICustomizableTable` do servidor; só o que o painel lê). */
+export interface CustomizeFieldsTable {
+  key: string;
+  name: string;
+  description: string;
+  isCore?: boolean;
+  fields?: CustomizeFieldsField[];
+  conversationHistory: CustomizeFieldsHistoryEntry[];
+}
+
 /**
- * Body `AIChatMode` posts to `/dashboard/ai/CustomizeFields`. NOTE: it does not match the generated
- * `CustomizeFieldsDtoInput` (`kind`-discriminated, `.strict()` on the server) — kept verbatim because
- * this move must not change behavior; aligning the component with W6 is separate work.
+ * Resposta 200 de `/dashboard/ai/CustomizeFields` (W6, BRIEF §2.2; `CustomizeFieldsResult` em
+ * `server/src/features/interview/FieldCustomizationService/index.ts`). Não é DTO de entrada, então não há `.gen.ts`.
  */
-export interface LegacyCustomizeFieldsBody {
-  sessionId: string | null;
+export interface CustomizeFieldsResult {
+  sessionId: string;
   tableKey: string;
-  userMessage: string;
-  conversationHistory: { role: string; content: string }[];
+  table: CustomizeFieldsTable;
+  conversationHistory: CustomizeFieldsHistoryEntry[];
+  proposal: { id: string; changes: CustomizeFieldsChange[]; requiresSensitiveAck: boolean } | null;
+  discarded: Array<{ name: string; reason: 'reserved' | 'type_not_allowed' | 'exists' | 'not_found' | 'invalid' }>;
+  /** Só em `kind:'decision'`. */
+  applied?: boolean;
 }
 
 function toInterviewError(err: unknown): InterviewApiError {
@@ -66,8 +106,11 @@ export const InterviewService = {
     return call(() => apiClient.post<T>('/dashboard/ai/ChatInterview', input, { silent: true, ...(signal ? { signal } : {}) }));
   },
 
-  /** POST /dashboard/ai/CustomizeFields — the field-customization panel turn. */
-  customizeFields(input: LegacyCustomizeFieldsBody): Promise<unknown> {
-    return call(() => apiClient.post<unknown>('/dashboard/ai/CustomizeFields', input, { silent: true }));
+  /**
+   * POST /dashboard/ai/CustomizeFields — a turn of the field-customization panel (W6): `kind:'message'` gets a
+   * proposal, `kind:'decision'` applies or discards it. Body typed by the generated `.strict()` DTO.
+   */
+  customizeFields(input: CustomizeFieldsDtoInput): Promise<CustomizeFieldsResult> {
+    return call(() => apiClient.post<CustomizeFieldsResult>('/dashboard/ai/CustomizeFields', input, { silent: true }));
   },
 };

@@ -348,6 +348,7 @@ export function useAiInterview() {
     handleSendMessage,
     handleSelectTable,
     handleUpdateTable,
+    handleSessionLost,
     handleRetry,
     backToConversation,
     presetKey,
