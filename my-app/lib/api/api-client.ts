@@ -91,9 +91,11 @@ class ApiClient {
         // "Erro <status>: <statusText>" and the caller gets just `{ status }` — never a made-up `error`.
         const errorMessage = extractErrorMessage(result, response.status, response.statusText);
         if (!silent) notify(errorMessage, 'error', 'Erro');
-        // Return the parsed error object (usually { success: false, error: '...' }),
-        // tagged with the HTTP status so callers can branch (e.g. `if (o.status === 400)`).
-        throw { ...result, status: response.status };
+        // Reject with an Error (message = the toast text) carrying the parsed body's fields, the raw `body`
+        // (non-enumerable, so `{ ...err }` stays body + status) and the HTTP status so callers can branch.
+        const httpError = Object.assign(new Error(errorMessage), result, { status: response.status });
+        Object.defineProperty(httpError, 'body', { value: result });
+        throw httpError;
       }
 
       if (!parsed) result = { error: 'Failed to parse server response' };
