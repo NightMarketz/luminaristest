@@ -7,6 +7,10 @@ interface CurrencyFieldProps {
   onChange: (name: string, value: unknown) => void;
   className: string;
   required?: boolean;
+  readOnly?: boolean;
+  disabled?: boolean;
+  'aria-invalid'?: boolean;
+  'aria-describedby'?: string;
 }
 
 /**
@@ -17,7 +21,7 @@ interface CurrencyFieldProps {
  * underlying stored value is always a plain decimal number — formatting only
  * affects the rendered text.
  */
-function CurrencyField({ name, value, onChange, className, required }: CurrencyFieldProps) {
+function CurrencyField({ name, value, onChange, className, required, readOnly, disabled, 'aria-invalid': ariaInvalid, 'aria-describedby': ariaDescribedBy }: CurrencyFieldProps) {
   const { currency } = useCurrency();
   const currencyInfo = useMemo(
     () => SUPPORTED_CURRENCIES.find(c => c.code === currency) ?? SUPPORTED_CURRENCIES[0],
@@ -77,6 +81,10 @@ function CurrencyField({ name, value, onChange, className, required }: CurrencyF
         onChange={handleChange}
         className={`${className} !pl-12 font-mono font-medium tracking-tight`}
         required={required}
+        readOnly={readOnly}
+        disabled={disabled}
+        aria-invalid={ariaInvalid}
+        aria-describedby={ariaDescribedBy}
         placeholder="0,00"
       />
     </div>

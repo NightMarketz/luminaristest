@@ -8,9 +8,12 @@ interface SelectFieldProps {
   className: string;
   options: Array<string | { label: string; value: string }>;
   required?: boolean;
+  disabled?: boolean;
+  'aria-invalid'?: boolean;
+  'aria-describedby'?: string;
 }
 
-function SelectField({ name, value, onChange, className, options, required }: SelectFieldProps) {
+function SelectField({ name, value, onChange, className, options, required, disabled, 'aria-invalid': ariaInvalid, 'aria-describedby': ariaDescribedBy }: SelectFieldProps) {
   const { t } = useTranslation(['database', 'common']);
 
   function renderOption(option: string | { label: string; value: string }) {
@@ -41,6 +44,9 @@ function SelectField({ name, value, onChange, className, options, required }: Se
       onChange={handleChange}
       className={`${className} appearance-none bg-white dark:bg-neutral-900/80 text-gray-900 dark:text-gray-100 border border-gray-200/70 dark:border-gray-700 rounded-xl text-sm px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
       required={required}
+      disabled={disabled}
+      aria-invalid={ariaInvalid}
+      aria-describedby={ariaDescribedBy}
     >
       <option value="" className="text-gray-400 bg-white dark:bg-neutral-900">{t('common:select_placeholder', 'Select...')}</option>
       {options.map(renderOption)}

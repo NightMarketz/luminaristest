@@ -7,7 +7,7 @@ export interface IDynamicTableData {
   data: Record<string, unknown>;
 }
 
-export interface ISchemaField { name: string; label?: string; type: string; required?: boolean; hidden?: boolean; readOnly?: boolean; options?: Array<string | { label: string; value: string }>; numberFormat?: 'currency' | 'percentage' | 'integer' | 'decimal'; relation?: { targetTable?: string; allowMultiple?: boolean } }
+export interface ISchemaField { name: string; label?: string; type: string; required?: boolean; hidden?: boolean; readOnly?: boolean; format?: string; defaultValue?: unknown; validation?: { minValue?: number; maxValue?: number }; requiredIf?: { field: string; op: 'eq' | 'neq' | 'in'; value: unknown }; options?: Array<string | { label: string; value: string }>; numberFormat?: 'currency' | 'percentage' | 'integer' | 'decimal'; relation?: { targetTable?: string; allowMultiple?: boolean } }
 export interface ITableSchema { defaultDisplayField?: string; fields: ISchemaField[]; ui?: { presentation?: 'standalone' | 'embedded' | 'system' } }
 
 export interface IDynamicTable {

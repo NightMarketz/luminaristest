@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'next-i18next';
-import { MdClose, MdOutlineDescription, MdFormatListBulleted, MdOutlineLabel, MdOutlineAccessTime, MdDeleteOutline, MdOutlineContentCopy, MdOutlineRemoveRedEye, MdShare, MdArchive, MdOutlineDashboard, MdLabel } from 'react-icons/md';
+import { MdClose, MdOutlineDescription, MdFormatListBulleted, MdOutlineLabel, MdOutlineAccessTime, MdDeleteOutline, MdOutlineDashboard, MdLabel } from 'react-icons/md';
 import { Task } from '@/types/Task.types';
 import { ITableSchema } from '@/features/dashboard/components/shared/dynamic-tables.client';
 import { DynamicTableService } from '@/lib/services/dynamic-table.service';
@@ -13,6 +13,8 @@ import { RelationLookups } from '../hooks/useRelationLookups';
 import RelationSelector from '@/features/dashboard/components/forms/RelationSelector';
 import InputField from '@/features/dashboard/components/forms/dynamic-form-fields/InputField';
 import { MdCheck } from 'react-icons/md';
+import { useFormatCurrency } from '@/lib/context/CurrencyContext';
+import { formatDateNumericBR } from '@/features/dashboard/shared/utils/formatters';
 
 interface KanbanCardDetailModalProps {
     isOpen: boolean;
@@ -37,6 +39,7 @@ export function KanbanCardDetailModal({
 }: KanbanCardDetailModalProps) {
     const { t } = useTranslation(['common', 'database']);
     const { confirmNode, confirm } = useConfirmModal();
+    const formatCurrency = useFormatCurrency();
 
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [titleValue, setTitleValue] = useState('');
@@ -300,7 +303,7 @@ export function KanbanCardDetailModal({
                                                                     onClick={() => setEditingFieldName(field.name)}
                                                                     className="w-full cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 px-2 py-1 -ml-2 rounded transition-colors flex items-center justify-between"
                                                                 >
-                                                                    {renderFieldValue(field, value, relationLookups)}
+                                                                    {renderFieldValue(field, value, formatCurrency, relationLookups)}
                                                                 </div>
                                                             )}
                                                         </div>
@@ -320,21 +323,12 @@ export function KanbanCardDetailModal({
                             {/* Add to Card Section */}
                             <div className="flex flex-col gap-2">
                                 <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Ações Rápidas</span>
-                                <SidebarButton icon={MdArchive} label="Arquivar" />
                                 <SidebarButton
                                     icon={MdDeleteOutline}
                                     label="Excluir"
                                     onClick={handleDeleteTask}
                                     className="hover:bg-red-500/10 hover:text-red-500 dark:hover:bg-red-500/20"
                                 />
-                            </div>
-
-                            {/* Utility Section */}
-                            <div className="flex flex-col gap-2">
-                                <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Utilitários</span>
-                                <SidebarButton icon={MdOutlineContentCopy} label="Copiar" />
-                                <SidebarButton icon={MdShare} label="Compartilhar" />
-                                <SidebarButton icon={MdOutlineRemoveRedEye} label="Seguir" />
                             </div>
 
                             {/* Metadata Info */}
@@ -384,7 +378,7 @@ function SidebarButton({ icon: Icon, label, onClick, className = '' }: SidebarBu
     );
 }
 
-function renderFieldValue(field: ISchemaField, value: unknown, relationLookups?: RelationLookups) {
+function renderFieldValue(field: ISchemaField, value: unknown, formatCurrency: (v: number) => string, relationLookups?: RelationLookups) {
     if (value === null || value === undefined || value === '') return <span className="opacity-40 italic font-normal">Vazio</span>;
 
     if (field.type === 'relation') {
@@ -405,11 +399,11 @@ function renderFieldValue(field: ISchemaField, value: unknown, relationLookups?:
     }
 
     if (field.type === 'date') {
-        return new Date(value as string | number | Date).toLocaleDateString();
+        return formatDateNumericBR(value as string | Date);
     }
 
     if (field.type === 'number' && (/price|valor|amount|salary/i.test(field.name))) {
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value as number);
+        return formatCurrency(value as number);
     }
 
     return String(value);

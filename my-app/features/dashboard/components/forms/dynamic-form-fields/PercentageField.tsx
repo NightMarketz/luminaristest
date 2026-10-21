@@ -7,6 +7,10 @@ interface PercentageFieldProps {
   onChange: (name: string, value: unknown) => void;
   className: string;
   required?: boolean;
+  readOnly?: boolean;
+  disabled?: boolean;
+  'aria-invalid'?: boolean;
+  'aria-describedby'?: string;
 }
 
 /**
@@ -34,7 +38,7 @@ function parsePercent(input: string, locale: string): number {
   return Math.max(0, Math.min(100, num));
 }
 
-function PercentageField({ name, value, onChange, className, required }: PercentageFieldProps) {
+function PercentageField({ name, value, onChange, className, required, readOnly, disabled, 'aria-invalid': ariaInvalid, 'aria-describedby': ariaDescribedBy }: PercentageFieldProps) {
   const { currency } = useCurrency();
   const activeLocale = useMemo(() => {
     const info = SUPPORTED_CURRENCIES.find(c => c.code === currency) ?? SUPPORTED_CURRENCIES[0];
@@ -57,6 +61,10 @@ function PercentageField({ name, value, onChange, className, required }: Percent
       onChange={handleChange}
       className={className}
       required={required}
+      readOnly={readOnly}
+      disabled={disabled}
+      aria-invalid={ariaInvalid}
+      aria-describedby={ariaDescribedBy}
     />
   );
 }
