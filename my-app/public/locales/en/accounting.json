@@ -2359,6 +2359,25 @@
     "unit": {
       "subtitle": "Feeds the purchase NF-e (cost) and the sales NFS-e. Saving replaces the whole profile.",
       "title": "Unit tax profile"
+    },
+    "presumido": {
+      "title": "Exclusive service provider (Presumed/Actual profit)",
+      "ano": "Tax profile year (Presumed/Actual)",
+      "naoSuportado": "The {{ano}} profile is {{regime}}: the exclusive service provider rule only applies to Presumed or Actual profit.",
+      "travada": "Assessment method locked since {{data}}: these fields can no longer change for the year.",
+      "prestadora": "Exclusive service provider",
+      "prestadoraAjuda": "Annual gross revenue up to R$ 120k, services only: 16% IRPJ presumption (IN RFB 1.700/2017 art. 215 § 10).",
+      "declara": "I declare the company does not practice a legally regulated profession",
+      "declaraAjuda": "The company is not a partnership of a legally regulated profession and does not provide hospital or transport services (Law 9.250/1995 art. 40 sole paragraph). The system does not verify the profession: the declaration is the responsibility of the company and its accountant.",
+      "salvar": "Save service provider settings",
+      "error": {
+        "load": "Could not load the year's tax profile.",
+        "save": "Could not save the tax profile.",
+        "ecdIncompleta": "The year's profile has an ECD with an empty field the PUT requires — fix the ECD first.",
+        "ecfIncompleta": "The year's profile has an ECF with an empty field the PUT requires — fix the ECF first.",
+        "regimeNaoSuportado": "The exclusive service provider rule only applies to Presumed or Actual profit.",
+        "confirmacaoAusente": "To use 16% as an exclusive service provider under Presumed profit, confirm the company does not practice a regulated profession (Law 9.250/1995 art. 40 sole paragraph)."
+      }
     }
   },
   "dfe": {

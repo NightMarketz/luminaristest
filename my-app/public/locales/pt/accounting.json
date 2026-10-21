@@ -2359,6 +2359,25 @@
       "pTotTribMunCent": "Tributos aproximados — municipal (%)",
       "ibsCbsCst": "IBS/CBS — CST",
       "ibsCbsClassTrib": "IBS/CBS — cClassTrib"
+    },
+    "presumido": {
+      "title": "Prestadora exclusiva de serviços (Presumido/Real)",
+      "ano": "Ano do perfil fiscal (Presumido/Real)",
+      "naoSuportado": "O perfil de {{ano}} é {{regime}}: a prestação exclusiva de serviços só vale no Lucro Presumido ou Real.",
+      "travada": "Forma de apuração travada desde {{data}}: estes campos não podem mais mudar no ano.",
+      "prestadora": "Prestadora exclusiva de serviços",
+      "prestadoraAjuda": "Receita bruta anual até R$ 120 mil, só de serviços: presunção de 16% no IRPJ (IN RFB 1.700/2017 art. 215 § 10).",
+      "declara": "Declaro que a empresa não exerce profissão legalmente regulamentada",
+      "declaraAjuda": "A empresa não é sociedade de profissão legalmente regulamentada nem presta serviço hospitalar ou de transporte (Lei 9.250/1995 art. 40 parágrafo único). O sistema não verifica a profissão: a declaração é responsabilidade da empresa e do contador.",
+      "salvar": "Salvar prestação de serviços",
+      "error": {
+        "load": "Não foi possível carregar o perfil fiscal do ano.",
+        "save": "Não foi possível salvar o perfil fiscal.",
+        "ecdIncompleta": "O perfil do ano tem ECD com campo vazio que o PUT exige — corrija a ECD antes.",
+        "ecfIncompleta": "O perfil do ano tem ECF com campo vazio que o PUT exige — corrija a ECF antes.",
+        "regimeNaoSuportado": "A prestação exclusiva de serviços só vale no Lucro Presumido ou Real.",
+        "confirmacaoAusente": "Para usar 16% como prestadora exclusiva de serviços no Presumido, confirme que a empresa não exerce profissão regulamentada (Lei 9.250/1995 art. 40 parágrafo único)."
+      }
     }
   },
   "dfe": {

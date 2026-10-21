@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toMeiEnquadramentoForm, toUpsertComEnquadramentoMei } from '../companyFiscalProfileForm';
+import { setPrestadoraExclusiva, toMeiEnquadramentoForm, toPresumidoServicosForm, toUpsertComEnquadramentoMei, toUpsertComPresumidoServicos } from '../companyFiscalProfileForm';
 import { perfilAno } from '../../components/__tests__/simplesFixtures';
 
 /** FE-INCR-SIMPLES item 8 — o PUT do perfil do ano é substituição total: só os 4 campos MEI mudam. */
@@ -60,5 +60,42 @@ describe('toUpsertComEnquadramentoMei', () => {
     const f = toMeiEnquadramentoForm(mei);
     const r = toUpsertComEnquadramentoMei('u1', { ...mei, ecd: { indNire: '1', nire: '35200000000', numOrd: '1', natLivr: 'Diário' } }, f);
     expect(r.ok && r.body.ecd).toEqual({ indNire: '1', nire: '35200000000', numOrd: '1', natLivr: 'Diário' });
+  });
+});
+
+/** FE-INCR-PERFIL-FISCAL-PRESUMIDO itens 4, 5 e F-PP-3 — só os 2 campos do prestador exclusivo mudam. */
+describe('toUpsertComPresumidoServicos', () => {
+  const presumido = perfilAno(2026, { regime: 'PRESUMIDO' });
+  const on = { prestadoraExclusivaServicos: true, declaraNaoProfissaoRegulamentada: true };
+
+  it('devolve o perfil inteiro, trocando só os 2 campos', () => {
+    const r = toUpsertComPresumidoServicos('u1', presumido, on);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const esperado = toUpsertComEnquadramentoMei('u1', { ...presumido, regime: 'MEI' }, toMeiEnquadramentoForm(presumido));
+    if (!esperado.ok) throw new Error('fixture');
+    expect(r.body).toEqual({ ...esperado.body, regime: 'PRESUMIDO', prestadoraExclusivaServicos: true, declaraNaoProfissaoRegulamentada: true });
+  });
+
+  it('PRESUMIDO + flag sem confirmação não envia (refine do DTO, Lei 9.250 art. 40)', () => {
+    expect(toUpsertComPresumidoServicos('u1', presumido, { ...on, declaraNaoProfissaoRegulamentada: false })).toEqual({ ok: false, error: 'confirmacaoAusente' });
+  });
+
+  it('REAL + flag sem confirmação envia (o BE só exige no Presumido; F-PP-1 b)', () => {
+    const r = toUpsertComPresumidoServicos('u1', perfilAno(2026, { regime: 'REAL' }), { ...on, declaraNaoProfissaoRegulamentada: false });
+    expect(r.ok && r.body.prestadoraExclusivaServicos).toBe(true);
+  });
+
+  it('regime fora de Presumido/Real é recusado', () => {
+    expect(toUpsertComPresumidoServicos('u1', perfilAno(2026, { regime: 'SIMPLES' }), on)).toEqual({ ok: false, error: 'regimeNaoSuportado' });
+  });
+
+  it('F-PP-3 (a): desligar a flag zera a confirmação', () => {
+    expect(setPrestadoraExclusiva(on, false)).toEqual({ prestadoraExclusivaServicos: false, declaraNaoProfissaoRegulamentada: false });
+    expect(setPrestadoraExclusiva({ prestadoraExclusivaServicos: false, declaraNaoProfissaoRegulamentada: false }, true).prestadoraExclusivaServicos).toBe(true);
+  });
+
+  it('form nasce do GET', () => {
+    expect(toPresumidoServicosForm({ ...presumido, prestadoraExclusivaServicos: true, declaraNaoProfissaoRegulamentada: true })).toEqual(on);
   });
 });
