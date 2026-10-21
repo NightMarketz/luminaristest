@@ -1113,6 +1113,9 @@ export class ApplicationFactory {
       this.repositories.sourceProvenance,
       this.repositories.dimension,
       this.repositories.lalur,
+      // IRRF-DISTRIBUICAO PR-1 item 6 (opção (b) do dono, 21/10): referencial das folhas do plano padrão. Adaptador tardio —
+      // o ReferentialMappingService é construído mais abaixo; a chamada só acontece em runtime.
+      { ensureCanonicalMappings: (scope) => referentialMappingService.ensureCanonicalMappings(scope) },
     );
 
     // BE-INCR-REVIEW-LAYER (nó C11): revisão profissional editável. Consome PostingService (acerto

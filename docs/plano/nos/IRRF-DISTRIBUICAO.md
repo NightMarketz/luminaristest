@@ -37,3 +37,9 @@ registros: ["server/src/lib/factory.ts", "server/src/routes/accounting.ts", "ser
 - Dossiê [`verif-2026-10-17-irpj-csll`](../../../pesquisas-legais/verif-2026-10-17-irpj-csll/relatorio.md) e consolidado [`VERIFICACAO-2026-10-17-CONSOLIDADO.md`](../../../pesquisas-legais/VERIFICACAO-2026-10-17-CONSOLIDADO.md).
 - BRIEF [`BE-INCR-IRRF-DISTRIBUICAO-brief.md`](../../accounting/BE-INCR-IRRF-DISTRIBUICAO-brief.md) (17/10) e dossiê [`irrf-distribuicao`](../../../pesquisas-legais/irrf-distribuicao/relatorio.md).
 - Forks: [[D-2026-10-17-IRRF-DISTRIBUICAO-FORKS]].
+- 21/10 (PR-1, #794): plano padrão com 2.1.7 Obrigações com Sócios (.01 dividendos, .02 JCP, .03 IRRF a recolher), 2.3.2.01 capital,
+  2.3.3.01 reserva legal e 4.3.4 JCP (dono, chat, 21/10: "(a) com 2.1.7.03"). Referencial conferido na tabela dinâmica da ECF
+  ([`irrf-referencial-sped`](../../../pesquisas-legais/irrf-referencial-sped/relatorio.md)). **PROVISÓRIO por decisão do dono
+  (21/10), a revisar com usuários e contador depois do app completo:** (1) o capital social é uma conta única, ligada a
+  2.03.01.01.01 (residentes); falta a subconta 2.3.2.01.02 → 2.03.01.02.01 para sócio estrangeiro / RDE-IED; (2) o referencial
+  do plano padrão é mapeado fora dos kits, em todo escopo (`ReferentialMappingService.ensureCanonicalMappings`).

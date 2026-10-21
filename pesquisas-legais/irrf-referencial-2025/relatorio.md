@@ -7,7 +7,7 @@ BE-INCR-IRRF-DISTRIBUICAO?
 (`server/prisma/prisma/dev.db`). SHA-256 da cópia em 2026-10-21: `4bfcdbfcdbda08d6167de7cfada72b5faf9a51689d01029ca451032f7a20bdbe`.
 É a mesma tabela de onde saíram os referenciais já publicados (`referencial2025Canonico.ts`, PROPOSTA-REFERENCIAL-D1 §0).
 O acervo ctresb/leis não tem tabela do plano referencial (é tabela do SPED, não norma).
-**Não conferido contra a tabela dinâmica do SPED no portal da RFB.**
+**Conferido em 2026-10-21 contra a tabela dinâmica oficial da ECF (leiaute 12, AC 2025): os 6 códigos batem. Ver o dossiê [`irrf-referencial-sped`](../irrf-referencial-sped/relatorio.md) [D01].**
 
 ## Linhas do catálogo (2025)
 | Código | Analítica | Nome oficial |

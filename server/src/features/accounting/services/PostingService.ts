@@ -86,6 +86,11 @@ export class PostingService {
     private readonly dimensionRepo: IDimensionRepository,
     /** ECF 3C item 19: ajustes vivos do e-Lalur apontando para a conta travam o soft-delete dela. */
     private readonly lalurRepo: Pick<ILalurRepository, 'countLiveEntriesByAccount'>,
+    /**
+     * IRRF-DISTRIBUICAO PR-1 (item 6; dono 21/10, opção (b)): referencial das folhas do plano padrão que os kits não trazem,
+     * gravado logo depois de as contas existirem (`ReferentialMappingService.ensureCanonicalMappings`; adaptador na factory).
+     */
+    private readonly canonicalReferential?: { ensureCanonicalMappings(scope: AccountingScope): Promise<number> },
   ) {}
 
   /** Derive year+month from an ISO date string using UTC (no tz shift for date-only strings). */
@@ -184,6 +189,7 @@ export class PostingService {
         throw error;
       }
     }
+    await this.canonicalReferential?.ensureCanonicalMappings(scope);
   }
 
   /** Resolve a leaf account by code, asserting it exists and accepts ledger lines. */

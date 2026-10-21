@@ -7,7 +7,7 @@ agente: sessão filha do Chat A (sessao-feature), worktree optimistic-hofstadter
 base: `origin/main` `7c063e39`
 modelo: degrau 1 (Opus 5.5 low)
 rodadas-de-review: 0. Review independente NÃO despachado (regra ⛔ do CLAUDE.md: Bloco A com oráculo aberto)
-veredicto: fatia PARCIAL. Itens 1–5, 7 e 8 feitos com gates verdes. Itens 6 e 9 PAUSADOS por lacuna de spec (L-1). NÃO mergear sem OK do dono.
+veredicto: fatia COMPLETA (itens 1–9) depois das rodadas 2–4 de destrave; gates verdes. As escolhas 1 e 2 da rodada 4 são PROVISÓRIAS por decisão do dono. NÃO mergear sem OK do dono.
 
 ## Checklist (BRIEF §3.1)
 | Item | Estado | Onde / teste |
@@ -116,3 +116,34 @@ Destrave: dono, chat da sessão-mãe, 2026-10-21: "(a) com 2.1.7.03". Dossiê: `
   só a instalação/upgrade de kit grava mapeamento (`KitInstallService`). Os kits v6 não se editam. As folhas no plano padrão sem
   um kit v7 (só com o referencial) deixam todo escopo existente "não pronto". Não escolhi entre publicar um kit v7 do salão e
   da clínica ou criar outra via de mapeamento. Nenhum código desta rodada.
+
+## Rodada 4 (2026-10-21): itens 6 e 9 FEITOS
+Destrave: dono, chat da sessão-mãe, 2026-10-21: "Acredito que a gente pode seguir assim, inclusive com as suas recomendações,
+de fato. […] Isso vai ser revisado após o app estiver completo […]". Leitura do coordenador: capital → 2.03.01.01.01, conta
+única; mapeamento pela opção (b), fora dos kits; as duas escolhas são **PROVISÓRIAS**.
+| Item | Estado | Onde / teste |
+|---|---|---|
+| 6 plano padrão: 2.1.7 Obrigações com Sócios (.01 Dividendos, .02 JCP a pagar, .03 IRRF a recolher), 2.3.2/2.3.2.01 Capital, 2.3.3/2.3.3.01 Reserva legal, 4.3.4 JCP | feito | `ChartOfAccountsFixture.ts`; `irrfPlanoPadrao.integration.test.ts` "o seed cria" |
+| 6 referencial das folhas novas, em todo escopo, fora dos kits | feito | `REFERENCIAL_PLANO_PADRAO` + `ReferentialMappingService.ensureCanonicalMappings` (reusa `applySet`; só as versões que o escopo já mapeia; nunca sobrescreve), chamado no fim do `PostingService.ensureChartOfAccounts` (adaptador tardio na factory); testes "escopo que já mapeia 2025" (cobertura `ready`) e "idempotente" |
+| 6 referencial conferido na fonte oficial | feito | `pesquisas-legais/irrf-referencial-sped` [D01] = tabela dinâmica da ECF (leiaute 12, AC 2025; sha256 `366b8d90…`). Os 6 códigos são analíticos em L100A/L300A e P100A/P150A; sem divergência |
+| 6 kits v6 continuam aceitos | feito | import dos dois `kit.v6` sem erro; servidor sobe sobre a cópia do `dev.db` real migrada (porta escutando, HTTP 401 sem token) |
+| 9 dividendos e JCP a pagar → Financiamento | feito | `FINANCING_LIABILITY_CODE_PREFIXES` + `2.1.7.01`, `2.1.7.02`; `cashFlowIrrfDistribuicao.test.ts`. O IRRF a recolher (2.1.7.03) fica no operacional, como os outros tributos a recolher (leitura minha, I) |
+| teste-guarda L8 | ajustado | `plano4niveis.test.ts`: o 4.3.4 nasceu depois da L8 e não é renomeação |
+
+Lacuna conhecida (registrada, provisória): subconta 2.3.2.01.02 → 2.03.01.02.01 quando houver sócio estrangeiro / RDE-IED.
+
+```yaml
+PROVA-rodada-4:
+  - command: cd server && npx tsc --noEmit && npx tsc --noEmit -p tsconfig.test.json
+    exit_code: 0
+  - command: cd my-app && npx tsc --noEmit
+    exit_code: 0
+  - command: cd server && npm run check:arch
+    exit_code: 0
+  - command: cd server && npm run test:unit
+    exit_code: 0
+    log: "5052 passed"
+  - command: cd server && npm run test:integration
+    exit_code: 0
+    log: "4/4 shards verdes"
+```
