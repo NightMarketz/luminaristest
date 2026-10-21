@@ -4,19 +4,24 @@ tipo: "plataforma"
 dominio: "plataforma"
 titulo: "Builder de verticais — preset como manifesto serializável, montado pelos módulos canônicos; ponte para o marketplace do P5"
 estado: "planned"
-estado_detalhe: "Registrado a pedido do dono (15/10), sem PRE-ADR e sem autorização de código. Próximo passo, quando pedido: PRE-ADR (preset TS → manifesto; verticais fora do molde 'venda'; separação camada operacional × kit contábil)"
+estado_detalhe: "21/10: PRE-ADR escrito (docs/adr/PRE-ADR-BUILDER-VERTICAIS.md, Proposed) — forks F-BV-1..7 PENDENTES; sem BRIEF, sem código · Registrado a pedido do dono (15/10), sem PRE-ADR e sem autorização de código. Próximo passo, quando pedido: PRE-ADR (preset TS → manifesto; verticais fora do molde 'venda'; separação camada operacional × kit contábil)"
 depende_de: ["[[W5]]", "[[KIT-SETOR]]"]
 ancora_sdd: "§IV.1 Fase P5"
-atualizado: "2026-10-15"
+autorizacao: "dono, chat, 2026-10-21: \"dispara os chats A, C e F agora\" — escopo: PRE-ADR, sessao-planejamento, só docs, sem código, sem 'executa'"
+atualizado: "2026-10-21"
 ---
 # BUILDER-VERTICAIS — Builder de verticais (ponte para o marketplace do P5)
 
-**Estado:** `planned` — Registrado a pedido do dono (15/10), sem PRE-ADR e sem autorização de código. Próximo passo, quando pedido: PRE-ADR (preset TS → manifesto; verticais fora do molde 'venda'; separação camada operacional × kit contábil)  
-**Autorização:** **falta** — não roteia sem autorização citável do dono (ORCH-006). O registro do nó foi pedido no chat
+**Estado:** `planned` — 21/10: PRE-ADR escrito (Proposed), forks F-BV-1..7 PENDENTES; sem BRIEF, sem código · Registrado a pedido do dono (15/10), sem PRE-ADR e sem autorização de código. Próximo passo, quando pedido: PRE-ADR (preset TS → manifesto; verticais fora do molde 'venda'; separação camada operacional × kit contábil)  
+**Autorização:** dono, chat, 2026-10-21: "dispara os chats A, C e F agora" — só o PRE-ADR (só docs, sem código, sem 'executa'). BRIEF e código seguem sem autorização. Antes: o registro do nó foi pedido no chat
 em 15/10: *"Registra o builder de verticais como nó no vault (depende de W5 e KIT-SETOR), sem autorizar código ainda."*  
 **Depende de:** [[W5]], [[KIT-SETOR]]  
 **Desbloqueia:** [[P5]] (marketplace de presets — horizonte)  
 **Âncora no SDD consolidado:** §IV.1 Fase P5
+
+## Docs
+
+- [`PRE-ADR-BUILDER-VERTICAIS.md`](../../adr/PRE-ADR-BUILDER-VERTICAIS.md) — 21/10, Proposed: manifesto Zod por referência a módulos (F-BV-1), unificação módulo×tabela (F-BV-2), vertical fora de 'venda' = ponte em código (F-BV-3), operacional × kit separados (F-BV-4), onde mora (F-BV-5), quem publica (F-BV-6), upgrade (F-BV-7) — todos PENDENTES
 
 ## O que é
 
