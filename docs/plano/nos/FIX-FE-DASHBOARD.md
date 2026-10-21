@@ -6,7 +6,7 @@ titulo: "Frontend antigo do dashboard: datetime mostra o dia anterior, sem inter
 estado: "planned"
 estado_detalhe: "Registrado 19/10; §3.5 do documento de achados (30 itens). O item 1 (readOnly na edição) está no #771"
 depende_de: ["[[FIX-ESTOQUE-FINALIZE]]"]
-write_set: ["my-app/features/dashboard/**", "my-app/lib/api/**", "my-app/lib/context/**", "my-app/public/locales/**", "my-app/components/ui/**"]
+write_set: ["my-app/features/dashboard/**", "my-app/lib/api/**", "my-app/lib/context/**", "my-app/public/locales/**", "my-app/components/ui/**", "my-app/components/widgets/generic-chat/components/CommandConfirmationModal.tsx"]
 atualizado: "2026-10-19"
 ---
 # FIX-FE-DASHBOARD — Frontend antigo do dashboard: datetime mostra o dia anterior, sem interceptor de 401, erros da API não são Error, chaves i18n duplicadas, json como [object Object]…
