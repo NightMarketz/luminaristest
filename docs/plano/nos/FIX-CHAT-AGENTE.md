@@ -3,15 +3,16 @@ id: "FIX-CHAT-AGENTE"
 tipo: "plataforma"
 dominio: "plataforma"
 titulo: "Chat, agente ERP e documentos: role system injetável no histórico, agente sem memória, documento preso em PROCESSING, propostas sem TTL, PII em log…"
-estado: "planned"
-estado_detalhe: "Registrado 19/10; §3.3 do documento de achados (25 itens)"
+estado: "inflight"
+estado_detalhe: "§3.3 #1 #7 corrigidos (#803) e #4 (c7218b59); os 22 restantes seguem em série, lotes de até 8 (dono, 22/10, [[D-2026-10-22-FIX-AUTH-CHAT-DASHBOARD]])"
+autorizacao: "dono, chat, 2026-10-21: \"Autorizo instrumentar e corrigir os achados de FIX-AUTH-CONTA (§3.4), FIX-CHAT-AGENTE (§3.3) e FIX-FE-DASHBOARD (§3.5) do ACHADOS-2026-10-19 — sessao-instrumentacao → sessao-correcao, lotes de até 8 itens por PR, sem merge. Itens que dependem de transporte de e-mail ficam fora.\" · dono, chat, 2026-10-22: \"Todos os 22 em série\""
 write_set: ["server/src/features/chat/**", "server/src/features/documents/**", "server/src/features/chatMessages/**", "server/src/features/chatInstances/**", "my-app/features/chat/**", "my-app/lib/services/document.service.ts"]
-atualizado: "2026-10-19"
+atualizado: "2026-10-22"
 ---
 # FIX-CHAT-AGENTE — Chat, agente ERP e documentos: role system injetável no histórico, agente sem memória, documento preso em PROCESSING, propostas sem TTL, PII em log…
 
-**Estado:** `planned` — Registrado 19/10; §3.3 do documento de achados (25 itens)  
-**Autorização:** **falta** — não roteia sem autorização citável do dono (ORCH-006)  
+**Estado:** `inflight` — #1 #4 #7 corrigidos; 22 restantes em série, lotes de até 8  
+**Autorização:** dono, chat, 2026-10-21 (instrumentar e corrigir §3.3 em lotes de até 8, sem merge) e 2026-10-22 ("Todos os 22 em série")  
 **Depende de:** —  
 **Origem:** [[D-2026-10-19-ACHADOS-NA-FILA]] · achados em [`ACHADOS-2026-10-19`](../../operating-manual/ACHADOS-2026-10-19-DYNAMICTABLE-E-MODULOS-ANTIGOS.md)
 
