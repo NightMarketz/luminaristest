@@ -347,6 +347,7 @@ function buildCancelDeps(over: Partial<SaleCancellationReconcileDeps> = {}): Sal
       type === 'sale.finalized' ? { id: 'entry-1', status: 'Posted' } : null,
     ),
     reverse: jest.fn(async () => undefined),
+    reversePackageCredit: jest.fn(async () => 'no_credit' as const),
     ...over,
   };
 }

@@ -1077,7 +1077,7 @@ model PackageBalanceMovement {
   customerId String
   packageId  String
   saleId     String // the sale (DynamicTable row id) that originated this movement; for 'expiry' the key 'expiry:<balanceId>:<expiresOn>'
-  kind       String // 'credit' (package-sale origin) | 'debit' (Package Balance consumption) | 'expiry' (remaining balance released)
+  kind       String // 'credit' (package-sale origin) | 'debit' (Package Balance consumption) | 'expiry' (remaining balance released) | 'reversal' (origin credit taken back on cancellation, E-1)
   deltaCents BigInt // always > 0; direction is given by `kind`
   createdAt  DateTime @default(now())
 

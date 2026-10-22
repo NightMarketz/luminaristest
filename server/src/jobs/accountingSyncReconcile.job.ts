@@ -615,6 +615,8 @@ export interface SaleCancellationReconcileDeps extends ReconcileOutcomeReporter 
   ) => Promise<{ id: string; status: string } | null>;
   /** Reverse a posted entry (idempotent in PostingService). */
   reverse: (scope: AccountingScope, unitId: string, entryId: string) => Promise<void>;
+  /** E-1: take back the package balance credit (PackageBalanceService.reverseCreditFromSale, idempotent). */
+  reversePackageCredit: (scope: AccountingScope, saleId: string) => Promise<'reversed' | 'no_credit' | 'consumed'>;
 }
 
 /**
@@ -637,8 +639,12 @@ export async function reconcileSaleCancellations(
       const scope = resolveAccountingScopeInternal({ userId: sale.ownerUserId }, sale.unitId);
 
       let didReverse = false;
-      // Revenue + (adaptive D2-Q4) settlement: reverse each that is still Posted.
-      for (const sourceType of ['sale.finalized', 'sale.settled']) {
+      // E-1: the package balance before its 2.1.1 liability; a consumed package keeps both (owner, 22/10/2026).
+      const pkg = await deps.reversePackageCredit(scope, sale.saleId);
+      // Revenue + (adaptive D2-Q4) settlement + CMV (+ package liability): reverse each that is still Posted.
+      const sourceTypes = ['sale.finalized', 'sale.settled', 'sale.cogs'];
+      if (pkg !== 'consumed') sourceTypes.push('sale.package.sold');
+      for (const sourceType of sourceTypes) {
         const entry = await deps.findEntry(scope, sourceType, sale.saleId);
         if (entry && entry.status === 'Posted') {
           await deps.reverse(scope, sale.unitId, entry.id);
@@ -653,6 +659,18 @@ export async function reconcileSaleCancellations(
         }
       }
 
+      if (pkg === 'consumed') {
+        summary.blocked = (summary.blocked ?? 0) + 1;
+        await reportPendingSafely(deps.reportPending, summary, {
+          ownerUserId: sale.ownerUserId,
+          unitId: sale.unitId,
+          sourceType: 'sale.cancelled',
+          sourceId: sale.saleId,
+          reasonCode: 'PACKAGE_ORIGIN_REVERSED',
+          reasonDetail: 'Pacote da venda cancelada já foi consumido — estorno do pacote aguarda decisão (E-1).',
+        });
+        continue;
+      }
       if (didReverse) {
         summary.synced++;
         logger.info('Reconcile reversed cancelled sale', { saleId: sale.saleId });
@@ -1735,11 +1753,14 @@ export function buildPackageExpiryDeps(opts: {
       const credits = await pkgRepo.listCreditMovements(scope, c.customerId, c.packageId);
       if (credits.length === 0) return null;
       const rows = await dtRepo.findDataByIds(credits.map((m) => m.saleId));
-      const reversed = rows.find((r) => {
+      for (const r of rows) {
         const status = ((r.data ?? {}) as Record<string, unknown>).status;
-        return status === 'Cancelled' || status === 'Returned';
-      });
-      return reversed ? reversed.id : null;
+        if (status !== 'Cancelled' && status !== 'Returned') continue;
+        // E-1: a cancellation whose credit was already taken back no longer blocks the expiry.
+        if (status === 'Cancelled' && (await pkgRepo.findMovement(scope, r.id, 'reversal'))) continue;
+        return r.id;
+      }
+      return null;
     },
     hasMapper: (unitId, sourceType) => factory.getAccountingSyncService().hasMapper(unitId, sourceType),
     isPeriodOpen: async (scope, dateOnly) => {
@@ -2040,6 +2061,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
       },
       findEntry,
       reverse,
+      reversePackageCredit: (scope, saleId) => factory.getPackageBalanceService().reverseCreditFromSale(scope, saleId),
       reportPending,
       reportResolved,
     });
@@ -2488,6 +2510,7 @@ export async function retryOneReconcilePendingItem(
         ],
         findEntry,
         reverse,
+        reversePackageCredit: (s, saleId) => pkgService.reverseCreditFromSale(s, saleId),
       });
       return resolvedIfAny(summary);
     }
