@@ -156,7 +156,8 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // (classe accounting-audit-allowlist-guards); `reason` (reject) é texto do operador → mascarado.
   'bank_settlement.scanned':   ['statementId', 'created', 'skippedExisting', 'ambiguous', 'none', 'stale'],
   // F5 PR-3 (P3-12): + tarifa do provedor.
-  'bank_settlement.confirmed': ['itemId', 'titleType', 'titleId', 'proposedCents', 'chargeCents', 'settlementId', 'chargeEntryId', 'feeCents', 'feeEntryId'],
+  'bank_settlement.confirmed': ['itemId', 'titleType', 'titleId', 'proposedCents', 'chargeCents', 'settlementId', 'chargeEntryId', 'feeCents', 'feeEntryId',
+    'splitIbsCents', 'splitCbsCents', 'splitCompetencia', 'splitIbsReceiptId', 'splitCbsReceiptId'], // IBS-CBS-2027 PR-4 (item 19d)
   'bank_settlement.rejected':  ['itemId', 'reason'],
   'bank_settlement.failed':    ['itemId', 'step', 'failReason'],
   // BE-INCR-NFE-COST-REGIME (nó X6, item 5): perfil fiscal — só enum/boolean/id, zero texto livre.

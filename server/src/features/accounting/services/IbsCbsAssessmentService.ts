@@ -39,6 +39,7 @@ import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRep
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IPayableRepository } from '../repositories/IPayableRepository';
 import type { IIbsCbsPacoteRepository } from '../repositories/IIbsCbsPacoteRepository';
+import type { IBankSettlementRepository } from '../repositories/IBankSettlementRepository';
 import { antecipacaoIbsCbsMes, CBS_RATE_PENDING_MESSAGE, CBS_RATE_PENDING_SENATE_RES } from '../models/ibsCbsAntecipacao';
 import type { AuditService } from './AuditService';
 import type { PostingService } from './PostingService';
@@ -129,6 +130,8 @@ export class IbsCbsAssessmentService {
     /** PR-3 (item 16): créditos das notas de entrada; (itens 17–18): pacote pré-pago (razão + subrazão do saldo). */
     private readonly payableRepo: Pick<IPayableRepository, 'findIbsCbsCredits'>,
     private readonly pacoteRepo: IIbsCbsPacoteRepository,
+    /** PR-4 (item 20): recibos de split da competência (F7). O razão já recebeu o D a recolher no recibo — aqui só memória. */
+    private readonly splitRepo: Pick<IBankSettlementRepository, 'findIbsCbsSplits'>,
   ) {}
 
   /** Item 9 — calcula e não persiste. */
@@ -372,7 +375,8 @@ export class IbsCbsAssessmentService {
     const creditos = await this.payableRepo.findIbsCbsCredits(scope, ate);
     const pacote = await this.pacoteRepo.dadosDoMes(scope, de, ate);
     const antecipacao = antecipacaoIbsCbsMes({ ano, mes, tributo, tabela, ...pacote, ...(opts.taxaProvisoria ? { tabelaProvisoria: tabelaProvisoriaCbsDe(linhasLegais) } : {}) });
-    const resultado = apurarIbsCbsMes({ ano, mes, tributo, tabela, documentos, vendasSemDocumento, creditos, antecipacao });
+    const splits = await this.splitRepo.findIbsCbsSplits(scope, `${ano}-${mm(mes)}`, tributo);
+    const resultado = apurarIbsCbsMes({ ano, mes, tributo, tabela, documentos, vendasSemDocumento, creditos, antecipacao, splits });
     return { perfil, resultado, parametros, provisoria: antecipacao.provisoria };
   }
 

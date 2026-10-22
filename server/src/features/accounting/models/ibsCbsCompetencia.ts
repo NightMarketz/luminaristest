@@ -10,6 +10,8 @@ import type { ResultadoAntecipacao } from './ibsCbsAntecipacao';
  * Débito = soma do IBS/CBS **destacado no documento** autorizado (LC 214 art. 60 § 1º [D08]; F-IBS-3 a). A conferência
  * pela tabela só gera aviso e nunca muda o débito (item 7). PR-3 (itens 16–18): créditos `APROPRIADO` no mês somam
  * (art. 45), `PENDENTE` e uso/consumo só aparecem na memória; a antecipação do pacote soma ao débito (art. 10 § 4º).
+ * PR-4 (item 20): o split payment da competência entra como `SPLIT_EXTINCAO_n` — extinção do débito (Dec. 12.955 arts. 26
+ * III e 44 § 3º); `saldoCents` segue débitos − créditos e o saldo a recolher do item 22 desconta.
  * Puro: sem I/O, sem `new Date`.
  */
 
@@ -47,8 +49,20 @@ export const MEMORIA_IBS_CBS = {
   RECLASSIFICACAO_REVENDA: 'RECLASSIFICACAO_REVENDA',
   /** Item 12 (F-IBS-14 a): o balancete intramensal mostra a receita bruta até a apuração do mês. */
   RECEITA_BRUTA_ATE_APURACAO: 'RECEITA_BRUTA_ATE_APURACAO',
+  /** PR-4 (item 20): um recibo de split ATIVO da competência (o operador informou a competência no confirm do F7). */
+  SPLIT_EXTINCAO: 'SPLIT_EXTINCAO',
   SALDO: 'SALDO',
 } as const;
+
+/** PR-4 (item 20): recibo de split do tributo cuja competência informada no F7 é a do mês. */
+export interface IbsCbsSplitDoMes {
+  receiptId: string;
+  receivableId: string;
+  receivedAt: string; // AAAA-MM-DD
+  amountCents: bigint;
+}
+
+const FONTE_SPLIT = 'Decreto 12.955/2026 arts. 26 III, 27 § 1º e 44 § 3º (split payment; competência informada no F7 — EMENDA PR-4, dono 22/10)';
 
 /** Item 6: competência = `YYYY-MM` do dia escrito. */
 export const competenciaDe = (dataEmissaoLocal: string): string => dataEmissaoLocal.slice(0, 7);
@@ -98,6 +112,8 @@ export interface ApuracaoIbsCbsInput {
   creditos?: readonly IbsCbsCreditoNota[];
   /** PR-3 (itens 17–18): antecipação e acerto do pacote já calculados para o tributo/mês (`antecipacaoIbsCbsMes`). */
   antecipacao?: ResultadoAntecipacao;
+  /** PR-4 (item 20): recibos de split do tributo com a competência do mês. */
+  splits?: readonly IbsCbsSplitDoMes[];
 }
 
 export interface ResultadoIbsCbs {
@@ -108,6 +124,8 @@ export interface ResultadoIbsCbs {
   documentosCents: bigint;
   creditosCents: bigint;
   saldoCents: bigint;
+  /** PR-4 (item 20): Σ split extinto na competência — só memória; não entra em `saldoCents` (invariante §10.3). */
+  splitCents: bigint;
   /** Item 12: o débito repartido pela natureza do documento (soma = `debitosCents`). */
   servicoCents: bigint;
   revendaCents: bigint;
@@ -201,9 +219,21 @@ export function apurarIbsCbsMes(input: ApuracaoIbsCbsInput): ResultadoIbsCbs {
     valorCents: '0',
     fonte: 'F-IBS-14 (a), ratificado 21/10',
   });
+  let split = 0n;
+  [...(input.splits ?? [])]
+    .sort((a, b) => a.receivedAt.localeCompare(b.receivedAt) || a.receiptId.localeCompare(b.receiptId))
+    .forEach((s, i) => {
+      split += s.amountCents;
+      memoria.push({
+        codigo: `${MEMORIA_IBS_CBS.SPLIT_EXTINCAO}_${i + 1}`,
+        descricao: `${tributo} extinto por split payment na liquidação de ${s.receivedAt} (recibo ${s.receiptId}, título ${s.receivableId})`,
+        valorCents: s.amountCents.toString(),
+        fonte: FONTE_SPLIT,
+      });
+    });
   const saldo = debitos - creditos; // art. 45 [D08]; negativo = saldo credor
   memoria.push({ codigo: MEMORIA_IBS_CBS.SALDO, descricao: `saldo = débitos − créditos${aliq ? ` (${aliq.descricao})` : ''}`, valorCents: saldo.toString(), fonte: 'LC 214/2025 art. 45' });
-  return { tributo, debitosCents: debitos, documentosCents: documentos, creditosCents: creditos, saldoCents: saldo, servicoCents: servico, revendaCents: revenda, documentosSemGrupo: semGrupo, memoria };
+  return { tributo, debitosCents: debitos, documentosCents: documentos, creditosCents: creditos, saldoCents: saldo, splitCents: split, servicoCents: servico, revendaCents: revenda, documentosSemGrupo: semGrupo, memoria };
 }
 
 const FONTE_CREDITO = 'LC 214/2025 art. 47 (crédito na extinção; § 1º I segregado por tributo); F-IBS-4 a';

@@ -35,6 +35,8 @@ export interface CreateReceiptData {
   status: string;
   /** P3-9 (F-PPB-3 a): conta de débito do recibo ProviderBalance; null/ausente = mapa fechado do método. */
   debitAccountId?: string | null;
+  /** SETTLEMENT_KINDS; ausente = 'PAYMENT' (default da coluna). IBS-CBS-2027 PR-4: 'SPLIT_IBS_CBS'. */
+  kind?: string;
 }
 
 /**

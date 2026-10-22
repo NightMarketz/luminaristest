@@ -71,6 +71,11 @@
  *         (ii) bank.charge entry when chargeCents > 0, (ii-b) provider.fee entry when feeCents > 0
  *         (F5 PR-3, P3-8: D providerFeeExpenseAccountId / C PaymentAccount GL), (iii) manualMatch of the
  *         statement-account legs (signed Σ == line), (iv) CONFIRMED. Failure in (ii)/(iii) → FAILED with the ids kept.
+ *         IBS-CBS-2027 PR-4 (split payment): optional `split` on a RECEIVABLE — the provider withheld IBS/CBS, so
+ *         |line| + feeCents + ibsCents + cbsCents must equal the open balance (else 400 split_mismatch). Step (i-b)
+ *         books one cashless receipt per tax (kind SPLIT_IBS_CBS: D IBS|CBS a recolher of the unit fiscal profile / C
+ *         customer), never a fee. 400 split_not_allowed_payable (Payable), IBS_CBS_SIMPLES_MEI (Simples/MEI in the
+ *         competence year), IBS_CBS_ANTES_DE_2027, split_account_not_configured. The retry re-reads the saved split.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -85,6 +90,14 @@
  *               properties:
  *                 unitId: { type: string }
  *                 method: { type: string, enum: [Cash, Pix, TED, Boleto, ProviderBalance], description: 'closed map PAYMENT_METHOD_ACCOUNTS — must resolve to the statement bank account. ProviderBalance (F5 PR-3, P3-9): only on a PaymentAccount statement (ACTIVE, same GL) for a RECEIVABLE — else 400 provider_balance_requires_payment_account' }
+ *                 split:
+ *                   type: object
+ *                   required: [ibsCents, cbsCents]
+ *                   description: 'IBS-CBS-2027 PR-4 — IBS and CBS withheld by split payment (integer cents, sum > 0); RECEIVABLE only'
+ *                   properties:
+ *                     ibsCents: { type: integer, minimum: 0 }
+ *                     cbsCents: { type: integer, minimum: 0 }
+ *                     competencia: { type: string, pattern: '^\d{4}-(0[1-9]|1[0-2])$', description: 'YYYY-MM of the extinguished debit (Dec. 12.955 arts. 27 § 1º, 44 § 3º); default = month of the statement line; ≥ 2027-01' }
  *       responses:
  *         '200': { description: 'BankSettlementItemView (status CONFIRMED)' }
  *         '400': { description: 'pre-check failed (line_not_unmatched | title_not_open | title_balance | method_account_mismatch | charge_account_not_configured | fee_account_not_configured | provider_balance_requires_payment_account | period_not_open) or item not PENDING' }
