@@ -98,6 +98,7 @@ export const LoginSchema = z
     username: z.string().trim().min(1).optional(),
     email: z.string().trim().min(1).optional(),
     password: z.string().min(1, 'Password is required'),
+    rememberMe: z.boolean().optional(),
   })
   .refine((d) => Boolean(d.identifier || d.username || d.email), {
     message: 'identifier, username or email is required',

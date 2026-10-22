@@ -471,7 +471,8 @@ const AuthenticatedEditUserPage: React.FC<PageProps> = (props) => {
 
 // Configuração do withAuth
 const withAuthConfig = {
-  allowedRoles: [Roles.USER, Roles.ADMIN],
+  // §3.4 #7 (dono, 2026-10-22): só admin — GET /users/:id é admin-only no middleware.
+  allowedRoles: [Roles.ADMIN],
 };
 
 // Aplicar o HOC withAuth por último

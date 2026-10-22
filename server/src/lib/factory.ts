@@ -103,7 +103,6 @@ import { ChatService } from '../features/chat/services/ChatService';
 import { DashboardLayoutService } from '../features/dashboardLayout/services/DashboardLayoutService';
 import { DocumentProcessingService } from '../features/documents/services/DocumentProcessingService';
 import { DocumentService } from '../features/documents/services/DocumentService';
-import { ReportService } from '../features/reports/services/ReportService';
 import { StructuredDataService } from '../features/structuredData/services/StructuredDataService';
 import { UserService } from '../features/users/services/UserService';
 import { DynamicTableService } from '../features/dynamicTables/services/DynamicTableService';
@@ -284,7 +283,6 @@ import type { IDocumentPolicy } from '../features/documents/policies/IDocumentPo
 import type { IUserPolicy } from '../features/users/policies/IUserPolicy';
 import type { IDynamicTablePolicy } from '../features/dynamicTables/policies/IDynamicTablePolicy';
 import type { IChatService } from '../features/chat/services/IChatService';
-import type { IReportService } from '../features/reports/services/IReportService';
 import type { IActionProposalRepository } from '../features/chat/repositories/IActionProposalRepository';
 import type { IKnowledgeGraphRepository } from '../features/chat/repositories/IKnowledgeGraphRepository';
 import type { IAttachmentRepository } from '../features/attachments/repositories/IAttachmentRepository';
@@ -859,7 +857,6 @@ export class ApplicationFactory {
     dashboardLayout: DashboardLayoutService;
     document: DocumentService;
     chat: IChatService;
-    report: IReportService;
     structuredData: StructuredDataService;
     dynamicTable: DynamicTableService;
     dynamicTableVersion: DynamicTableVersionService;
@@ -1597,7 +1594,6 @@ export class ApplicationFactory {
         structuredDataService, // Injected dependency
         this.repositories.user
       ),
-      report: new ReportService(embeddingOpenAIService, this.repositories.vector, chatOpenAIService),
       structuredData: structuredDataService, // Assigned service
       user: new UserService(this.repositories.user, this.policies.user, this.repositories.vector),
       dynamicTable: dynamicTableService,
@@ -2262,7 +2258,6 @@ export class ApplicationFactory {
   public getAnalyticsService = (): AnalyticsService => this.services.analytics;
   public getDashboardLayoutService = (): DashboardLayoutService => this.services.dashboardLayout;
   public getDocumentService = (): DocumentService => this.services.document;
-  public getReportService = (): IReportService => this.services.report;
   public getStructuredDataService = (): StructuredDataService => this.services.structuredData;
   public getUserService = (): UserService => this.services.user;
   public getDynamicTableService = (): DynamicTableService => this.services.dynamicTable;

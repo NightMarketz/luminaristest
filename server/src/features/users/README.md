@@ -29,8 +29,9 @@ touches Prisma. The two authorization layers have **distinct jobs** (no overlap)
    - `canChangeRole` — **admin-only**.
    - `canDelete` — **admin-only** (see below).
 
-> **Self-service vs admin surface.** A user reads/edits their **own** profile via `GET /api/users/:id`
-> / `PUT /api/users/:id` (owner-or-admin) or via `GET /api/auth/me`. Listing all users is admin-only.
+> **Self-service vs admin surface.** A user reads their **own** profile via `GET /api/auth/me` and edits it via
+> `PUT /api/users/:id` (owner-or-admin). `GET /api/users/:id` and listing all users are admin-only (the
+> middleware gate; §3.4 #7, dono 2026-10-22) — so is the `/users/edit/:id` screen.
 > There is intentionally **no** cross-tenant "public profile" view.
 >
 > **Delete is admin-only — and self-delete is disallowed by design.** A `User` row cascade-deletes
@@ -41,9 +42,9 @@ touches Prisma. The two authorization layers have **distinct jobs** (no overlap)
 
 | Method | Path | Who | Action |
 |---|---|---|---|
-| POST | `/` | Public | Sign up. Non-admin (or anonymous) callers cannot self-assign `ADMIN`. |
+| POST | `/` | Public | Sign up. Non-admin (or anonymous) callers cannot self-assign `ADMIN`. Rate-limited (10/min per IP, same as `POST /api/auth/register`). |
 | GET | `/` | Admin | Paginated list. Query `page`/`limit` (`limit` capped at 100). |
-| GET | `/:id` | Self or Admin | Get one user (full `SafeUserProfile`). |
+| GET | `/:id` | Admin | Get one user (full `SafeUserProfile`). |
 | PUT | `/:id` | Self or Admin | Update. Only admins may change `role`. |
 | DELETE | `/:id` | Admin | Delete a user (self-delete disallowed). |
 | PATCH | `/me/preferences` | Self | Update own `locale`/`currency`. |
