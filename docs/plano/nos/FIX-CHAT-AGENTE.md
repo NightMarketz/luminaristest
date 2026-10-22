@@ -8,7 +8,7 @@ estado_detalhe: "Lote A (§3.3 #2 #3 #5 #8 #13 #14 #22) corrigido — 10 guardas
 write_set: ["server/src/features/chat/**", "server/src/features/documents/**", "server/src/features/chatMessages/**", "server/src/features/chatInstances/**", "my-app/features/chat/**", "my-app/lib/services/document.service.ts", "my-app/components/widgets/chat/**", "my-app/features/documents/**", "my-app/pages/documents/**", "server/src/routes/documents.ts", "server/src/lib/vector/**", "server/src/lib/openai/OpenAIService.ts", "server/src/controllers/documentsController.ts"]
 atualizado: "2026-10-22"
 autorizacao: "dono, chat, 2026-10-21: \"Autorizo instrumentar e corrigir os achados de FIX-AUTH-CONTA (§3.4), FIX-CHAT-AGENTE (§3.3) e FIX-FE-DASHBOARD (§3.5) do ACHADOS-2026-10-19 — sessao-instrumentacao → sessao-correcao, lotes de até 8 itens por PR, sem merge. Itens que dependem de transporte de e-mail ficam fora.\" · dono, chat, 2026-10-22: \"Todos os 22 em série\" (D-2026-10-22-FIX-AUTH-CHAT-DASHBOARD) — sem merge; item que se revelar decisão de produto volta ao dono"
-prs: ["#835"]
+prs: ["#835", "#836"]
 ---
 # FIX-CHAT-AGENTE — Chat, agente ERP e documentos: role system injetável no histórico, agente sem memória, documento preso em PROCESSING, propostas sem TTL, PII em log…
 
