@@ -1,6 +1,7 @@
 import type { Payable, PayablePayment, Prisma } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { CreditoPisCofinsNota, RazaoCreditoPisCofins } from '../models/pisCofinsParams';
+import type { IbsCbsCreditoNota } from '../models/ibsCbsCredito';
 
 /** A Payable with its payment children eagerly loaded (used by the cancel/remaining guards). */
 export type PayableWithPayments = Payable & { payments: PayablePayment[] };
@@ -113,6 +114,19 @@ export interface IPayableRepository {
    * em `recoverableTaxLines`. Uma entrada por nota, ordenada por `issueDate`; nota sem as parcelas ⇒ `derivado`.
    */
   findPisCofinsCredits(scope: AccountingScope, from: string, to: string, razao: RazaoCreditoPisCofins, tx?: Prisma.TransactionClient): Promise<CreditoPisCofinsNota[]>;
+
+  /**
+   * IBS-CBS-2027 PR-3 (item 16) — só leitura: uma entrada por linha de crédito de IBS/CBS (`recoverableTaxLines`, variante
+   * `tributo`) das notas da unidade com `issueDate <= ate` (date-only), `status ≠ CANCELLED`, `deletedAt` nulo. A apuração
+   * filtra por mês (APROPRIADO pelo `apropriadoEm`, PENDENTE e uso/consumo pela nota).
+   */
+  findIbsCbsCredits(scope: AccountingScope, ate: string, tx?: Prisma.TransactionClient): Promise<IbsCbsCreditoNota[]>;
+
+  /**
+   * IBS-CBS-2027 PR-3 (item 16, F-IBS-4 a): CAS do JSON de `recoverableTaxLines` — `updateMany` onde o texto gravado é o
+   * lido. Devolve o número de linhas (1 = esta chamada mudou; 0 = outra mudou antes ⇒ 409). Dentro da tx.
+   */
+  casRecoverableTaxLines(scope: AccountingScope, id: string, expected: string, next: string, tx?: Prisma.TransactionClient): Promise<number>;
 
   /**
    * Sum-CAS of BE-INCR-PARTIAL-SETTLEMENT (ADR §3, corrected form): ONE `updateMany` where

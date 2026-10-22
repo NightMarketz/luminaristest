@@ -14,13 +14,14 @@
  *   fora da tx — entrada de estoque (receiveStock; falha não compensa, o reconcile re-dirige) e rascunho de imobilizado (modo 4)
  *              teste: PayableService.test.ts › "does NOT compensate the recognition when the INBOUND fails (reconcile re-drives)"
  */
-import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
+import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import { Prisma } from 'generated/prisma';
 import type { Account, Payable, PayablePayment } from 'generated/prisma';
 import { ESTOQUES_CODE, FORNECEDORES_A_PAGAR_CODE } from '../fixtures/ChartOfAccountsFixture';
 import { aggregateInventoryItems, INVENTORY_INBOUND_SOURCE_TYPE } from '../models/Inventory.model';
 import { centsFromDb } from '../models/money';
+import { scopeToday } from '../models/dates';
 import {
   AP_PAYABLE_SOURCE_TYPE,
   AP_PAYMENT_SOURCE_TYPE,
@@ -32,12 +33,14 @@ import {
   resolvePaymentMethodAccount,
 } from '../models/Payable.model';
 import type {
+  ApropriarCreditoInput,
   CancelPayableInput,
   CancelPaymentInput,
   CreatePayableInput,
   ListPayablesQueryInput,
   RegisterPaymentInput,
 } from '../dtos/PayableDto';
+import { isIbsCbsCreditLine } from '../dtos/PayableDto';
 import type { IPayableRepository, PayableWithPayments } from '../repositories/IPayableRepository';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IFixedAssetClassRepository } from '../repositories/IFixedAssetClassRepository';
@@ -88,6 +91,26 @@ type RecoverableLineRow = {
   pisCents?: number;
   cofinsCents?: number;
 };
+
+/**
+ * IBS-CBS-2027 PR-3 (itens 14 e 16): linha de crédito de IBS/CBS — mesma coluna JSON, discriminada por `tributo` (união; o
+ * formato X6 acima não muda). `apropriadoEm` = dia escrito em que o crédito virou `APROPRIADO` (a apuração do mês o soma).
+ */
+export type IbsCbsCreditRow = {
+  tributo: 'IBS' | 'CBS';
+  accountId: string | null;
+  accountCode: string | null;
+  amountCents: number;
+  status: 'PENDENTE' | 'APROPRIADO';
+  sourceDocumentId: string | null;
+  apropriadoEm?: string;
+  usoConsumoCents?: number;
+};
+
+type StoredRecoverableLine = RecoverableLineRow | IbsCbsCreditRow;
+const isIbsCbsRow = (l: StoredRecoverableLine): l is IbsCbsCreditRow => 'tributo' in l;
+
+export const PAYABLE_IBS_CBS_CREDIT_APPROPRIATED = 'payable.ibs_cbs_credit.appropriated';
 
 /** Read shape of a title with its balance (BRIEF §2): `remainingCents` is DERIVED, never persisted twice. */
 export type PayableWithBalance = PayableWithPayments & { remainingCents: bigint };
@@ -294,8 +317,10 @@ export class PayableService implements IFixedAssetDraftRedriver {
             supplierRef: dto.supplierRef,
             amountCents: String(dto.amountCents),
             // X6 F-X6-8 (a): o que foi RECONHECIDO como crédito a recuperar (derivado das linhas, nunca do perfil).
-            recoverableIcmsCents: String(recoverableLines.filter((l) => l.kind === 'ICMS').reduce((acc, l) => acc + l.amountCents, 0)),
-            recoverablePisCofinsCents: String(recoverableLines.filter((l) => l.kind === 'PIS_COFINS').reduce((acc, l) => acc + l.amountCents, 0)),
+            recoverableIcmsCents: String(recoverableLines.filter((l) => !isIbsCbsRow(l) && l.kind === 'ICMS').reduce((acc, l) => acc + l.amountCents, 0)),
+            recoverablePisCofinsCents: String(recoverableLines.filter((l) => !isIbsCbsRow(l) && l.kind === 'PIS_COFINS').reduce((acc, l) => acc + l.amountCents, 0)),
+            // IBS-CBS-2027 PR-3 (item 14): crédito de IBS + CBS reconhecido a recuperar (PENDENTE).
+            recoverableIbsCbsCents: String(recoverableLines.filter(isIbsCbsRow).reduce((acc, l) => acc + l.amountCents, 0)),
             // ITEM-DESTINATION item 13: o que foi para DESPESA de insumo (precedente do X6 item 13).
             insumoCents: String(insumoLines.reduce((acc, l) => acc + l.costCents, 0)),
             dueDate: dto.dueDate,
@@ -641,6 +666,54 @@ export class PayableService implements IFixedAssetDraftRedriver {
    * gate, T5) and flip the row to CANCELLED (terminal) with rename-on-delete freeing the business
    * key. Re-runnable: reverseEntry is idempotent, so a crash mid-cancel completes on retry.
    */
+  /**
+   * IBS-CBS-2027 PR-3 (item 16; F-IBS-4 a, F-IBS-12 a; LC 214 art. 47 [D03]): o crédito de IBS/CBS da nota passa de
+   * `PENDENTE` a `APROPRIADO` com o comprovante da extinção do débito da entrada — `SourceDocument` ativo do escopo,
+   * obrigatório. Gates DENTRO da tx (memória `authoritative-gate-inside-tx`): nota viva e não cancelada, comprovante,
+   * linha do tributo com crédito > 0 no `expectedStatus`, e CAS do JSON lido (outra chamada mudou ⇒ 409). Sem lançamento:
+   * o crédito está em IBS/CBS a recuperar desde a entrada; a apuração do mês de `apropriadoEm` o soma e o compensa.
+   */
+  async apropriarCreditoIbsCbs(scope: AccountingScope, input: ApropriarCreditoInput): Promise<IbsCbsCreditRow> {
+    if (!this.policy.canManagePayable(scope)) {
+      throw new ForbiddenError('Você não tem permissão para apropriar créditos de contas a pagar.');
+    }
+    if (!this.sourceProvenanceRepo) {
+      throw new ValidationError('Apropriação de crédito requer o repositório de documentos de origem configurado (wiring pendente).');
+    }
+    const sourceRepo = this.sourceProvenanceRepo;
+    return this.payableRepo.runTransaction(async (tx) => {
+      const payable = await this.payableRepo.findById(scope, input.payableId, tx);
+      if (!payable || payable.deletedAt) throw new NotFoundError(`Conta a pagar '${input.payableId}' não foi encontrada.`);
+      if (payable.status === 'CANCELLED') throw new ValidationError('Conta a pagar cancelada — o crédito não pode ser apropriado.');
+      const [comprovante] = await sourceRepo.findActiveSourceDocumentsByIds(scope, [input.sourceDocumentId], tx);
+      if (!comprovante) {
+        throw new ValidationError(`Comprovante '${input.sourceDocumentId}' não existe neste escopo — a apropriação exige o documento da extinção (F-IBS-4 a).`);
+      }
+      const raw = (payable as Payable & { recoverableTaxLines?: string | null }).recoverableTaxLines ?? null;
+      const lines = raw ? (JSON.parse(raw) as StoredRecoverableLine[]) : [];
+      const idx = lines.findIndex((l) => isIbsCbsRow(l) && l.tributo === input.tributo && l.amountCents > 0);
+      if (idx < 0) throw new ValidationError(`A nota não tem crédito de ${input.tributo} a apropriar.`, null, 'IBS_CBS_CREDITO_AUSENTE');
+      const line = lines[idx] as IbsCbsCreditRow;
+      if (line.status !== input.expectedStatus) {
+        throw new ConflictError(`crédito de ${input.tributo} da nota está ${line.status}, diferente de expectedStatus (${input.expectedStatus}).`, 'IBS_CBS_CREDITO_CAS');
+      }
+      const apropriada: IbsCbsCreditRow = { ...line, status: 'APROPRIADO', sourceDocumentId: comprovante.id, apropriadoEm: scopeToday(scope) };
+      const next = lines.map((l, i) => (i === idx ? apropriada : l));
+      if ((await this.payableRepo.casRecoverableTaxLines(scope, payable.id, raw!, JSON.stringify(next), tx)) !== 1) {
+        throw new ConflictError(`crédito de ${input.tributo} da nota mudou em paralelo — releia a nota.`, 'IBS_CBS_CREDITO_CAS');
+      }
+      // Sem PII: ids, tributo, valor e dia.
+      await this.auditService.append(tx, scope, {
+        actorUserId: scope.actorUserId,
+        eventType: PAYABLE_IBS_CBS_CREDIT_APPROPRIATED,
+        targetType: 'payable',
+        targetId: payable.id,
+        payload: { payableId: payable.id, tributo: input.tributo, amountCents: String(line.amountCents), sourceDocumentId: comprovante.id, apropriadoEm: apropriada.apropriadoEm! },
+      });
+      return apropriada;
+    });
+  }
+
   async cancelPayable(scope: AccountingScope, payableId: string, dto: CancelPayableInput): Promise<Payable> {
     if (!this.policy.canManagePayable(scope)) {
       throw new ForbiddenError('Você não tem permissão para cancelar contas a pagar.');
@@ -1223,8 +1296,9 @@ export class PayableService implements IFixedAssetDraftRedriver {
   private parseRecoverableLines(payable: Payable): { accountCode: string; amountCents: number }[] {
     const raw = (payable as Payable & { recoverableTaxLines?: string | null }).recoverableTaxLines;
     if (!raw) return [];
-    const parsed = JSON.parse(raw) as { accountCode: string; amountCents: number }[];
-    return parsed.map((l) => ({ accountCode: l.accountCode, amountCents: l.amountCents }));
+    const parsed = JSON.parse(raw) as StoredRecoverableLine[];
+    // IBS-CBS-2027 PR-3: a linha de IBS/CBS só de memória (crédito 0, só uso/consumo) não vira débito.
+    return parsed.filter((l) => l.amountCents > 0 && l.accountCode !== null).map((l) => ({ accountCode: l.accountCode!, amountCents: l.amountCents }));
   }
 
   /** Groups the item-level breakdown by `accountCode` (Σ per class' costAccountId) into the recognition
@@ -1261,18 +1335,30 @@ export class PayableService implements IFixedAssetDraftRedriver {
   private async resolveRecoverableLines(
     scope: AccountingScope,
     dto: CreatePayableInput,
-  ): Promise<RecoverableLineRow[]> {
-    const out: RecoverableLineRow[] = [];
+  ): Promise<StoredRecoverableLine[]> {
+    const out: StoredRecoverableLine[] = [];
     for (const line of dto.recoverableTaxLines ?? []) {
-      const account = await this.accountRepo.findById(scope, line.accountId);
-      if (!account || account.deletedAt) throw new ValidationError(`Conta a recuperar '${line.accountId}' não existe neste escopo.`);
-      if (!account.acceptsEntries || account.nature !== 'Asset') {
-        throw new ValidationError(`Conta a recuperar '${account.code}' precisa ser folha de ATIVO (natureza ${account.nature}).`);
+      if (isIbsCbsCreditLine(line)) {
+        // IBS-CBS-2027 PR-3 (item 14): mesma regra da conta X6 (folha de ATIVO do escopo); nasce PENDENTE.
+        const accountCode = line.accountId === null ? null : (await this.resolveAssetLeaf(scope, line.accountId)).code;
+        out.push({ tributo: line.tributo, accountId: line.accountId, accountCode, amountCents: line.amountCents, status: 'PENDENTE', sourceDocumentId: null, ...(line.usoConsumoCents ? { usoConsumoCents: line.usoConsumoCents } : {}) });
+        continue;
       }
+      const account = await this.resolveAssetLeaf(scope, line.accountId);
       const { baseCents, pisCents, cofinsCents } = line; // X8 item 5: persistidos quando presentes (JSON, sem migração)
       out.push({ accountId: account.id, accountCode: account.code, amountCents: line.amountCents, kind: line.kind, ...(pisCents !== undefined ? { baseCents, pisCents, cofinsCents } : {}) });
     }
     return out;
+  }
+
+  /** X6: conta a recuperar existe no escopo, é folha e de natureza Asset (IBS/CBS a recuperar segue a mesma regra). */
+  private async resolveAssetLeaf(scope: AccountingScope, accountId: string): Promise<Account> {
+    const account = await this.accountRepo.findById(scope, accountId);
+    if (!account || account.deletedAt) throw new ValidationError(`Conta a recuperar '${accountId}' não existe neste escopo.`);
+    if (!account.acceptsEntries || account.nature !== 'Asset') {
+      throw new ValidationError(`Conta a recuperar '${account.code}' precisa ser folha de ATIVO (natureza ${account.nature}).`);
+    }
+    return account;
   }
 
   /**

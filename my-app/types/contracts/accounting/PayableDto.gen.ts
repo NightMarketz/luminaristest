@@ -1,5 +1,13 @@
 // GERADO por server/src/features/accounting/dtos/__tests__/dtoShapeSnapshot.test.ts — NÃO EDITE.
 // Mudou um DTO? UPDATE_DTO_SNAPSHOT=1 npx jest --selectProjects unit --testPathPatterns dtoShapeSnapshot e comite o diff.
+export interface IbsCbsCreditLineInput {
+tributo: ("IBS" | "CBS")
+accountId: (string | null)
+amountCents: number
+status: "PENDENTE"
+sourceDocumentId: null
+usoConsumoCents?: number
+}
 export interface CreatePayableInput {
 unitId: string
 supplierName: string
@@ -37,16 +45,23 @@ costCents: number
 description?: string
 }[]
 /**
- * @maxItems 2
+ * @maxItems 4
  */
-recoverableTaxLines?: {
+recoverableTaxLines?: ({
 accountId: string
 amountCents: number
 kind: ("ICMS" | "PIS_COFINS")
 baseCents?: number
 pisCents?: number
 cofinsCents?: number
-}[]
+} | {
+tributo: ("IBS" | "CBS")
+accountId: (string | null)
+amountCents: number
+status: "PENDENTE"
+sourceDocumentId: null
+usoConsumoCents?: number
+})[]
 attachmentId?: string
 }
 export interface RegisterPaymentInput {
@@ -54,6 +69,13 @@ unitId: string
 method: ("Cash" | "Pix" | "TED" | "Boleto")
 paidAt: string
 amountCents: number
+}
+export interface ApropriarCreditoInput {
+unitId: string
+payableId: string
+tributo: ("IBS" | "CBS")
+sourceDocumentId: string
+expectedStatus: "PENDENTE"
 }
 export interface CancelPayableInput {
 unitId: string

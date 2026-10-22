@@ -67,34 +67,6 @@ export async function createLayout(req: Request, res: Response) {
 
 /** @openapi
  * /api/dashboard-layout/{id}:
- *   get:
- *     summary: Get a dashboard layout by ID
- *     tags: [DashboardLayout]
- *     security: [{ bearerAuth: [] }]
- *     parameters:
- *       - { in: path, name: id, required: true, schema: { type: string, format: cuid } }
- *     responses:
- *       '200': { description: Layout }
- *       '401': { $ref: '#/components/responses/UnauthorizedError' }
- *       '404': { $ref: '#/components/responses/NotFoundError' }
- */
-export async function getLayoutById(req: Request, res: Response) {
-  try {
-    const ctx = getUserContextFromRequest(req);
-    if (!ctx) return res.status(401).json({ success: false, error: 'Authentication required' });
-
-    const parsed = LayoutIdSchema.safeParse(req.params);
-    if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-
-    const layout = await getFactory().getDashboardLayoutService().getLayoutById(parsed.data.id, ctx);
-    return res.status(200).json({ success: true, data: layout });
-  } catch (error) {
-    return handleApiError(error, res);
-  }
-}
-
-/** @openapi
- * /api/dashboard-layout/{id}:
  *   patch:
  *     summary: Update a dashboard layout
  *     tags: [DashboardLayout]

@@ -33,6 +33,8 @@ export interface FiscalProfileData {
   jcpDespesaAccountId?: string | null;
   ibsRecolherAccountId?: string | null; // IBS-CBS-2027 PR-2 item 12
   cbsRecolherAccountId?: string | null;
+  ibsRecuperarAccountId?: string | null; // IBS-CBS-2027 PR-3 item 14
+  cbsRecuperarAccountId?: string | null;
   partnerAccountRef?: string | null;
   // BE-INCR-DFE (BRIEF item 1) — emitente + D1f configurável
   codMun?: string | null;

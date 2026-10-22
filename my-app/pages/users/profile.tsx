@@ -16,7 +16,6 @@ import {
   IoShieldCheckmarkOutline,
   IoCheckmarkCircleOutline,
   IoCloseCircleOutline,
-  IoWarningOutline,
   IoAtOutline,
   IoCalendarOutline,
   IoFingerPrintOutline,
@@ -105,7 +104,6 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [formLoading, setFormLoading] = useState(false);
-  const [adminLoading, setAdminLoading] = useState(false);
 
   // Preferences state
   const [preferencesLocale, setPreferencesLocale] = useState(actor?.locale || 'en');
@@ -223,33 +221,6 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
       setPrefError(resolveErrorMessage(err, t));
     } finally {
       setPrefLoading(false);
-    }
-  };
-
-  // ⚠️ TEMPORARY: Make user an admin for testing
-  const handleMakeAdmin = async () => {
-    if (!actor) return;
-    setAdminLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      // Use centralized UserService
-      const updatedUser = await UserService.changeRole(actor.id, 'ADMIN');
-      setSuccess('Role updated to ADMIN! Refreshing...');
-
-      if (updateAuthContext) {
-        updateAuthContext({
-          ...actor,
-          role: updatedUser.role || 'ADMIN',
-        });
-      }
-
-      setTimeout(() => router.reload(), 1000);
-    } catch (err) {
-      setError(resolveErrorMessage(err, t));
-    } finally {
-      setAdminLoading(false);
     }
   };
 
@@ -388,27 +359,6 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
               </div>
             </div>
 
-            {/* ⚠️ TEMP: Make Admin Button */}
-            {actor.role !== 'ADMIN' && (
-              <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200/60 dark:border-amber-800/30 rounded-2xl p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <IoWarningOutline size={16} className="text-amber-500" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">
-                    {t('makeAdminDevOnly')}
-                  </span>
-                </div>
-                <p className="text-xs text-amber-700 dark:text-amber-300/80 mb-3">
-                  {t('makeAdminWarning')}
-                </p>
-                <button
-                  onClick={handleMakeAdmin}
-                  disabled={adminLoading}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-[11px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/20 hover:bg-amber-200 dark:hover:bg-amber-900/30 rounded-xl transition-all disabled:opacity-50"
-                >
-                  {adminLoading ? t('makeAdminUpdating') : t('makeAdminButtonText')}
-                </button>
-              </div>
-            )}
           </div>
 
           {/* ═══════════════════════════════════════════════════════ */}
