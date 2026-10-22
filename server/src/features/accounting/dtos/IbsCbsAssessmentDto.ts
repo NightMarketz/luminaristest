@@ -31,21 +31,28 @@ export type IbsCbsAssessmentListQuery = z.infer<typeof IbsCbsAssessmentListQuery
 /** Query do reconcile (item 12): só a unidade do escopo. */
 export const IbsCbsAssessmentScopeQuerySchema = z.object({ unitId: z.string().min(1) }).strict();
 
-/** Códigos da memória (BRIEF §4.2) + as linhas da reclassificação do item 12 (RECLASSIFICACAO_*, RECEITA_BRUTA_ATE_APURACAO). */
+/**
+ * Códigos da memória (BRIEF §4.2) + as linhas da reclassificação do item 12 (RECLASSIFICACAO_*, RECEITA_BRUTA_ATE_APURACAO).
+ * PR-3: sai `CREDITOS_NAO_IMPLEMENTADOS_PR3`; entram `ANTECIPACAO_SEM_REDUCAO` (dono 21/10, alíquota cheia + aviso) e
+ * `CBS_ALIQUOTA_PROVISORIA` (dono 22/10, taxa provisória só na prévia).
+ */
 export const MemoriaLinhaIbsCbsKind = z.enum([
   'DEBITO_DOC', 'DIVERGENCIA_DOC', 'VENDA_SEM_DOCUMENTO', 'DOCUMENTOS_SEM_GRUPO',
-  'CREDITOS_NAO_IMPLEMENTADOS_PR3', 'CONFERENCIA_SEM_ALIQUOTA', 'CONFERENCIA_SEM_BASE',
+  'CONFERENCIA_SEM_ALIQUOTA', 'CONFERENCIA_SEM_BASE',
   'RECLASSIFICACAO_SERVICO', 'RECLASSIFICACAO_REVENDA', 'RECEITA_BRUTA_ATE_APURACAO',
   'CREDITO_ENTRADA', 'CREDITO_NAO_APROPRIADO', 'USO_CONSUMO_PESSOAL',
-  'ANTECIPACAO_ART10', 'ACERTO_ART10', 'PAGAMENTO_INDEVIDO_ART38',
+  'ANTECIPACAO_ART10', 'ANTECIPACAO_SEM_REDUCAO', 'ACERTO_ART10', 'PAGAMENTO_INDEVIDO_ART38', 'CBS_ALIQUOTA_PROVISORIA',
   'SPLIT_EXTINCAO',
   'CLASSE_PROVISORIA_P_IBS_4', 'SALDO',
 ]);
 
+/** Códigos que levam sufixo `_n` (um por documento, nota, pagamento ou consumo). */
+const SUFIXO_POR_LINHA = /^(DEBITO_DOC|DIVERGENCIA_DOC|CREDITO_ENTRADA|CREDITO_NAO_APROPRIADO|USO_CONSUMO_PESSOAL|ANTECIPACAO_ART10|ACERTO_ART10|PAGAMENTO_INDEVIDO_ART38)_\d+$/;
+
 /** Linha da memória (schema do X7) com o código restrito ao enum (sufixo `_n` por documento). */
 export const MemoriaLinhaIbsCbsSchema = z
   .object({
-    codigo: z.string().refine((c) => MemoriaLinhaIbsCbsKind.safeParse(c.replace(/^(DEBITO_DOC|DIVERGENCIA_DOC)_\d+$/, '$1')).success, { message: 'código de memória fora do enum' }),
+    codigo: z.string().refine((c) => MemoriaLinhaIbsCbsKind.safeParse(c.replace(SUFIXO_POR_LINHA, '$1')).success, { message: 'código de memória fora do enum' }),
     descricao: z.string(),
     valorCents: z.string().regex(/^-?\d+$/),
     fonte: z.string(),

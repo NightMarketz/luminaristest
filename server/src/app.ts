@@ -23,6 +23,10 @@ import prisma from './lib/prisma';
 export function createApp(): express.Express {
   const app = express();
 
+  // §3.4 #18 (dono, 2026-10-22): um proxy na frente no deploy — `req.ip` (rate limit) vem do
+  // X-Forwarded-For dele. Revisar se a topologia do deploy for outra.
+  app.set('trust proxy', 1);
+
   // BE-INCR-MONEY-BIGINT (F-W2B-3) — last-resort net so a raw bigint `*Cents` value reaching
   // res.json() (any CRUD passthrough that didn't already convert at a service read boundary)
   // gets converted to `number` (safe-integer guarded) instead of crashing JSON.stringify.
@@ -33,14 +37,7 @@ export function createApp(): express.Express {
   app.use(helmet());
   // CORS restricted to the frontend origin (R21) — never open cors() in production.
   app.use(cors({ origin: process.env.ALLOWED_ORIGIN || 'http://localhost:3000', credentials: true }));
-  app.use(compression({
-    filter: (req, res) => {
-      if (req.path.startsWith('/api/reports/generate-chart-data')) {
-        return false;
-      }
-      return compression.filter(req, res);
-    }
-  }));
+  app.use(compression());
   // BRIEF-W2-D (F4, layer 2 / F-W2D-2): measures the WHOLE route — body parsing, auth, and the
   // route handler — so it must sit before json()/urlencoded()/authMiddleware/routes, not after.
   app.use(httpTimingMiddleware);

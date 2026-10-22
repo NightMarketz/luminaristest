@@ -50,7 +50,7 @@ function LoginPage(props: InferGetServerSidePropsType<typeof getServerSideProps>
     setShowCreatedMessage(false);
 
     try {
-      const result = await AuthService.login(formData);
+      const result = await AuthService.login({ ...formData, rememberMe });
 
       setCookie('auth_token', result.data.token, {
         maxAge: rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24, // 30 dias se lembrar, senão 24h

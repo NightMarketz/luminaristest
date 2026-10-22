@@ -6,6 +6,7 @@ import { PAYABLE_OUTSTANDING_STATUSES, PAYABLE_SETTLEABLE_STATUSES } from '../mo
 import { scopeToday } from '../models/dates';
 import { buildSubledgerFilterWhere } from './subledgerFilters';
 import { separarCreditoPisCofins, type CreditoPisCofinsNota, type RazaoCreditoPisCofins } from '../models/pisCofinsParams';
+import type { IbsCbsCreditoNota } from '../models/ibsCbsCredito';
 import type {
   CreatePayableData,
   CreatePaymentData,
@@ -148,6 +149,45 @@ export class PayableRepository implements IPayableRepository {
       });
     }
     return out;
+  }
+
+  public async findIbsCbsCredits(scope: AccountingScope, ate: string, tx?: Prisma.TransactionClient): Promise<IbsCbsCreditoNota[]> {
+    const rows = await (tx ?? prisma).payable.findMany({
+      where: {
+        ...accountingScopeWhere(scope),
+        deletedAt: null,
+        status: { not: 'CANCELLED' },
+        issueDate: { lte: `${ate}T00:00:00.000Z` },
+        recoverableTaxLines: { contains: '"tributo"' },
+      },
+      orderBy: [{ issueDate: 'asc' }, { createdAt: 'asc' }],
+    });
+    const out: IbsCbsCreditoNota[] = [];
+    for (const row of rows) {
+      const lines = JSON.parse(row.recoverableTaxLines!) as Array<{ tributo?: 'IBS' | 'CBS'; amountCents: number; status?: 'PENDENTE' | 'APROPRIADO'; apropriadoEm?: string; usoConsumoCents?: number }>;
+      for (const l of lines) {
+        if (!l.tributo || !l.status) continue;
+        out.push({
+          payableId: row.id,
+          documentNumber: row.documentNumber,
+          issueDate: row.issueDate.toISOString().slice(0, 10),
+          tributo: l.tributo,
+          amountCents: BigInt(l.amountCents),
+          status: l.status,
+          apropriadoEm: l.apropriadoEm ?? null,
+          usoConsumoCents: BigInt(l.usoConsumoCents ?? 0),
+        });
+      }
+    }
+    return out;
+  }
+
+  public async casRecoverableTaxLines(scope: AccountingScope, id: string, expected: string, next: string, tx?: Prisma.TransactionClient): Promise<number> {
+    const r = await (tx ?? prisma).payable.updateMany({
+      where: { ...accountingScopeWhere(scope), id, deletedAt: null, recoverableTaxLines: expected },
+      data: { recoverableTaxLines: next },
+    });
+    return r.count;
   }
 
   public async claimForPayment(

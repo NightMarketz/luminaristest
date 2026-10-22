@@ -260,7 +260,11 @@ export async function qdrantStatus(req: Request, res: Response) {
     const ctx = getUserContextFromRequest(req);
     if (!ctx) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-    const countResponse = await qdrant.api().countPoints({ collection_name: 'documents' });
+    // Só os pontos do chamador: sem o filtro a rota devolvia a contagem da coleção inteira (todos os usuários).
+    const countResponse = await qdrant.api().countPoints({
+      collection_name: 'documents',
+      filter: { must: [{ key: 'userId', match: { value: ctx.userId } }] },
+    } as Parameters<ReturnType<typeof qdrant.api>['countPoints']>[0]);
     const count = (countResponse.data as { result?: { count?: number } })?.result?.count ?? 0;
 
     const sampleResponse = await qdrant.api().getPoints({

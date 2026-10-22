@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { createHash } from 'crypto';
 import { logger } from '../logger';
 import type { LlmUsage } from './llmUsage';
 
@@ -230,15 +231,8 @@ export class OpenAIService {
    * Cria um hash simples para identificar unicamente uma requisição
    */
   private createRequestHash(userMessage: string, systemPrompt: string): string {
-    // Simplificado - em produção pode-se usar um algoritmo de hash mais robusto
-    const text = `${systemPrompt}:${userMessage}`;
-    let hash = 0;
-    for (let i = 0; i < text.length; i++) {
-      const char = text.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Converte para 32bit integer
-    }
-    return `request-${hash}`;
+    // SHA-256: um hash de 32 bits colidia ("Aa" × "BB") e entregava a resposta de outro pedido.
+    return `request-${createHash('sha256').update(JSON.stringify([systemPrompt, userMessage])).digest('hex')}`;
   }
 
   public async getChatCompletionWithHistory(
@@ -489,7 +483,8 @@ export class OpenAIService {
       try {
         return JSON.parse(responseContent);
       } catch (e) {
-        logger.warn('Failed to parse original JSON, attempting to fix.', { error: e, rawJson: responseContent });
+        // Só o tamanho: o JSON é o conteúdo extraído do documento (PII).
+        logger.warn('Failed to parse original JSON, attempting to fix.', { error: e, rawJsonLength: responseContent.length });
         const repaired = tryFixMalformedJson(responseContent);
         if (repaired) {
           logger.info('Successfully repaired and parsed malformed JSON.');
