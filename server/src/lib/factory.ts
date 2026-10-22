@@ -522,7 +522,11 @@ function buildKitRoleDefaultsPort(
       return (await fiscalProfileRepo.findByScope(scope)) !== null;
     },
     fillNullScopeSettings: (accountIds) => settingsService.fillNullAccounts(scope, accountIds),
-    fillNullFiscalProfile: (accountIds) => fiscalProfileService.fillNullAccounts(scope, accountIds),
+    // Lacuna #826-1 (opção (a)): depois dos papéis do kit, os do plano padrão que o kit publicado não traz (IBS/CBS a recolher).
+    fillNullFiscalProfile: async (accountIds) => [
+      ...(await fiscalProfileService.fillNullAccounts(scope, accountIds)),
+      ...(await fiscalProfileService.ensureCanonicalAccounts(scope)),
+    ],
   };
 }
 

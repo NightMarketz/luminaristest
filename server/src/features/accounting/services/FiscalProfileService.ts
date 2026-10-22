@@ -1,4 +1,6 @@
-import { ForbiddenError, ValidationError } from '../../../lib/errors';
+import { PERFIL_FISCAL_PLANO_PADRAO } from '../fixtures/ChartOfAccountsFixture';
+import { ForbiddenError, PolicyApprovalRequiredError, ValidationError } from '../../../lib/errors';
+import logger from '../../../lib/logger';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
@@ -29,7 +31,9 @@ export type FiscalProfileAccountField =
   | 'pisDespesaAccountId'
   | 'cofinsDespesaAccountId'
   | 'pisRecolherAccountId'
-  | 'cofinsRecolherAccountId';
+  | 'cofinsRecolherAccountId'
+  | 'ibsRecolherAccountId'
+  | 'cbsRecolherAccountId';
 
 /**
  * BE-INCR-DFE (BRIEF item 7) — campos cujo valor vem de resposta pendente do contador (D1f, itens 5a–5f
@@ -226,6 +230,28 @@ export class FiscalProfileService {
    */
   async fillNullAccounts(scope: AccountingScope, accountIds: Partial<Record<FiscalProfileAccountField, string>>): Promise<string[]> {
     return this.writeAccounts(scope, accountIds, true);
+  }
+
+  /**
+   * Lacuna #826-1 (dono 21/10, opção (a)): IBS/CBS a recolher pelas folhas do plano padrão (`PERFIL_FISCAL_PLANO_PADRAO`),
+   * só nos campos nulos — complemento do `fillNullAccounts` do kit, como o `ensureCanonicalMappings` é do referencial.
+   * Folha ausente/apagada ou que não aceita lançamento ⇒ o campo fica (configuração manual). Contador ativo ⇒ não grava
+   * (o complemento de sistema não vira parâmetro governado; o contador configura pela proposta).
+   */
+  async ensureCanonicalAccounts(scope: AccountingScope): Promise<string[]> {
+    const ids: Partial<Record<FiscalProfileAccountField, string>> = {};
+    for (const { field, accountCode } of PERFIL_FISCAL_PLANO_PADRAO) {
+      const account = await this.accountRepo.findByCode(scope, accountCode);
+      if (account && !account.deletedAt && account.acceptsEntries) ids[field] = account.id;
+    }
+    if (Object.keys(ids).length === 0) return [];
+    try {
+      return await this.writeAccounts(scope, ids, true);
+    } catch (error) {
+      if (!(error instanceof PolicyApprovalRequiredError)) throw error;
+      logger.warn('IBS/CBS a recolher do plano padrão não preenchidos: contador ativo (configuração pela proposta)', { unitId: scope.unitId });
+      return [];
+    }
   }
 
   /**
