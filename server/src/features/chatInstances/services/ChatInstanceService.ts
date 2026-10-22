@@ -147,9 +147,9 @@ export class ChatInstanceService {
       throw new ForbiddenError('Instance access forbidden by policy');
     }
 
-    // First, try to find existing instance
-    const existingInstances = await this.chatInstanceRepository.getInstancesByUser(userContext.userId, type);
-    const existing = existingInstances.find(inst => inst.widgetInstanceId === widgetInstanceId);
+    // First, try to find existing instance (by the unique key — no scan of the user's instances)
+    const found = await this.chatInstanceRepository.findByWidgetInstanceId(userContext.userId, widgetInstanceId);
+    const existing = found?.type === type ? found : null;
 
     if (existing) {
       return mapToDto(existing);
@@ -172,8 +172,8 @@ export class ChatInstanceService {
       return mapToDto(createdInstance);
     } catch (error) {
       // If unique constraint violation, try to fetch again (race condition)
-      const retryInstances = await this.chatInstanceRepository.getInstancesByUser(userContext.userId, type);
-      const retryExisting = retryInstances.find(inst => inst.widgetInstanceId === widgetInstanceId);
+      const retryFound = await this.chatInstanceRepository.findByWidgetInstanceId(userContext.userId, widgetInstanceId);
+      const retryExisting = retryFound?.type === type ? retryFound : null;
       if (retryExisting) {
         return mapToDto(retryExisting);
       }
