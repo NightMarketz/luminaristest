@@ -2,6 +2,8 @@
 
 > **Sessão:** `sessao-planejamento`, sem código. Nenhum fork se auto-ratificou.
 > **[EMENDA 2026-10-22 — FORKS RATIFICADOS]** Dono, chat, 2026-10-22: *"Ratifico F-Y600-1..10 nas recomendações (a)."*
+> e, na sessão-mãe do H1: *"Ratifica os forks F-Y600-1 a F-Y600-10 do BRIEF do #840 na recomendação, sem 'executa'."*
+> Todos RATIFICADOS na alternativa (a); o F-Y600-1 estende o L11 ao Real.
 > Registro em [`D-2026-10-22-ECF-Y600-FORKS`](../plano/decisoes/D-2026-10-22-ECF-Y600-FORKS.md). O checklist do §2 já
 > segue as recomendações e vale como está. **A ratificação não dá `executa`:** a `sessao-feature` exige autorização própria.
 > **Item:** L11 do H1 (`docs/accounting/RUNBOOK-H1-PVA.md`, passo 6, "Tentativa 2 — validação", tabela de diagnóstico,
