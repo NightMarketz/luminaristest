@@ -149,7 +149,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(null);
     try {
       // Call API to clear cookie server-side
-      await fetch(`${API_BASE_URL}/auth/logout`, { method: 'POST' });
+      const token = getCookie('auth_token');
+      await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: 'POST',
+        headers: typeof token === 'string' && token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
     } catch (error) {
       console.error('Logout API call failed:', error);
     }
