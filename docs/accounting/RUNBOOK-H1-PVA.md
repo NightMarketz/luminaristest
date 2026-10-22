@@ -1293,6 +1293,27 @@ EVIDÊNCIA: [tela/protocolo do PVA + lista de críticas, se houver]
 > 4 trimestres, com o PVA arredondando a soma, não cada parcela (T02 CSLL: 14.217,7216 + 877,4844 = 15.095,21). Desfecho desta validação pela regra acima: **FALHOU no passo 6** (marcação do dono). Próximo: recuperar a
 > ECD no PVA da ECF e validar de novo; o L11 segue para planejamento.
 >
+> **Recuperação da ECD — 2026-10-22 (telas coladas pelo dono, transcritas pelo agente).** Na escrituração aberta, a
+> função "Recuperar Dados de ECD" lista a ECD da tentativa 3 e não deixa selecioná-la:
+>
+> ```text
+> RECUPERAR DADOS DE ECD
+> "As ECDs serão validadas na transmissão. Evite Transtornos, utilize somente as ECDs ativas na Base do SPED"
+> Período da ECF 01/01/2025 a 31/12/2025 · Período a ser recuperado T00
+> Selecionado | Data Inicial | Data Final | Estado   | Nº de Ordem | Forma        | Hash | Aviso
+> [ ]         | 01/01/2025   | 31/12/2025 | Validada | 1           | Livro Diário |      | Esta ECD não pode ser recuperada por não estar assinada.
+> ```
+>
+> (Antes disso, a função "Recuperar Recibo de Transmissão" → "Importar Escrituração" com o `.txt` da ECD deu "Formato do
+> arquivo de escrituração não é válido. Data inválida - usar formato "ddmmaaaa". (0000 DT_FIN)": é a função errada, que lê
+> a ECD como se fosse ECF. Não diz nada do arquivo.)
+>
+> **R1 é bloqueio de assinatura (verificado pelo PVA):** o PVA da ECF só recupera ECD **assinada**. Com o P6 de dados
+> públicos, assinar está fora de cogitação (CNPJ real de terceiro; signatários fictícios, sem certificado), então nesta
+> passada o passo 6 não chega à validação completa da ECF. O que ficou provado pelo PVA: a ECF importa (L10 fechado) e a
+> presunção de IRPJ/CSLL que o PVA calcula fecha com a receita do Luminaris nos 4 trimestres. Fecha só com uma ECD
+> assinada: dado do dono (CNPJ e certificado próprios, sem transmitir) ou do 1º cliente. A escolha é do dono.
+>
 > DESFECHO: [dono]   ASSINATURA: [dono]
 
 ---
