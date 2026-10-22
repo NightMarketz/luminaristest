@@ -13892,6 +13892,137 @@
       ],
       "additionalProperties": false
     },
+    "DirigenteEcfSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "nome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "cpf": {
+          "type": "string",
+          "pattern": "^\\d{11}$"
+        },
+        "qualif": {
+          "type": "string",
+          "enum": [
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16",
+            "17"
+          ]
+        },
+        "dtAltSoc": {
+          "type": "string"
+        },
+        "dtFimSoc": {
+          "type": "string"
+        },
+        "representanteLegal": {
+          "type": "object",
+          "properties": {
+            "cpf": {
+              "type": "string",
+              "pattern": "^\\d{11}$"
+            },
+            "qualif": {
+              "type": "string",
+              "enum": [
+                "01",
+                "02",
+                "03",
+                "04",
+                "05",
+                "06"
+              ]
+            }
+          },
+          "required": [
+            "cpf",
+            "qualif"
+          ],
+          "additionalProperties": false
+        },
+        "valores": {
+          "type": "object",
+          "properties": {
+            "remTrabCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "lucDivCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "jurCapCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "demRendCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "irRetCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            }
+          },
+          "required": [
+            "remTrabCents",
+            "lucDivCents",
+            "jurCapCents",
+            "demRendCents",
+            "irRetCents"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "nome",
+        "cpf",
+        "qualif",
+        "dtAltSoc",
+        "valores"
+      ],
+      "additionalProperties": false
+    },
+    "RepresentanteLegalSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "cpf": {
+          "type": "string",
+          "pattern": "^\\d{11}$"
+        },
+        "qualif": {
+          "type": "string",
+          "enum": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
+        }
+      },
+      "required": [
+        "cpf",
+        "qualif"
+      ],
+      "additionalProperties": false
+    },
     "SignerSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -13945,6 +14076,116 @@
         "identQualif",
         "email",
         "fone"
+      ],
+      "additionalProperties": false
+    },
+    "SocioEcfSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "partnerId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "qualif": {
+          "type": "string",
+          "enum": [
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16",
+            "17",
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09"
+          ]
+        },
+        "pais": {
+          "type": "string",
+          "pattern": "^\\d{3}$"
+        },
+        "percCapVotBp": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "representanteLegal": {
+          "type": "object",
+          "properties": {
+            "cpf": {
+              "type": "string",
+              "pattern": "^\\d{11}$"
+            },
+            "qualif": {
+              "type": "string",
+              "enum": [
+                "01",
+                "02",
+                "03",
+                "04",
+                "05",
+                "06"
+              ]
+            }
+          },
+          "required": [
+            "cpf",
+            "qualif"
+          ],
+          "additionalProperties": false
+        },
+        "valores": {
+          "type": "object",
+          "properties": {
+            "remTrabCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "lucDivCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "jurCapCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "demRendCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "irRetCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            }
+          },
+          "required": [
+            "remTrabCents",
+            "lucDivCents",
+            "jurCapCents",
+            "demRendCents",
+            "irRetCents"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "partnerId",
+        "qualif",
+        "valores"
       ],
       "additionalProperties": false
     },
@@ -14153,6 +14394,228 @@
             "additionalProperties": false
           }
         },
+        "socios": {
+          "maxItems": 999,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "partnerId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "qualif": {
+                "type": "string",
+                "enum": [
+                  "10",
+                  "11",
+                  "12",
+                  "13",
+                  "14",
+                  "15",
+                  "16",
+                  "17",
+                  "01",
+                  "02",
+                  "03",
+                  "04",
+                  "05",
+                  "06",
+                  "07",
+                  "08",
+                  "09"
+                ]
+              },
+              "pais": {
+                "type": "string",
+                "pattern": "^\\d{3}$"
+              },
+              "percCapVotBp": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000
+              },
+              "representanteLegal": {
+                "type": "object",
+                "properties": {
+                  "cpf": {
+                    "type": "string",
+                    "pattern": "^\\d{11}$"
+                  },
+                  "qualif": {
+                    "type": "string",
+                    "enum": [
+                      "01",
+                      "02",
+                      "03",
+                      "04",
+                      "05",
+                      "06"
+                    ]
+                  }
+                },
+                "required": [
+                  "cpf",
+                  "qualif"
+                ],
+                "additionalProperties": false
+              },
+              "valores": {
+                "type": "object",
+                "properties": {
+                  "remTrabCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "lucDivCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "jurCapCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "demRendCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "irRetCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  }
+                },
+                "required": [
+                  "remTrabCents",
+                  "lucDivCents",
+                  "jurCapCents",
+                  "demRendCents",
+                  "irRetCents"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "partnerId",
+              "qualif",
+              "valores"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "dirigentes": {
+          "default": [],
+          "maxItems": 999,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "nome": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "cpf": {
+                "type": "string",
+                "pattern": "^\\d{11}$"
+              },
+              "qualif": {
+                "type": "string",
+                "enum": [
+                  "10",
+                  "11",
+                  "12",
+                  "13",
+                  "14",
+                  "15",
+                  "16",
+                  "17"
+                ]
+              },
+              "dtAltSoc": {
+                "type": "string"
+              },
+              "dtFimSoc": {
+                "type": "string"
+              },
+              "representanteLegal": {
+                "type": "object",
+                "properties": {
+                  "cpf": {
+                    "type": "string",
+                    "pattern": "^\\d{11}$"
+                  },
+                  "qualif": {
+                    "type": "string",
+                    "enum": [
+                      "01",
+                      "02",
+                      "03",
+                      "04",
+                      "05",
+                      "06"
+                    ]
+                  }
+                },
+                "required": [
+                  "cpf",
+                  "qualif"
+                ],
+                "additionalProperties": false
+              },
+              "valores": {
+                "type": "object",
+                "properties": {
+                  "remTrabCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "lucDivCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "jurCapCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "demRendCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "irRetCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  }
+                },
+                "required": [
+                  "remTrabCents",
+                  "lucDivCents",
+                  "jurCapCents",
+                  "demRendCents",
+                  "irRetCents"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "nome",
+              "cpf",
+              "qualif",
+              "dtAltSoc",
+              "valores"
+            ],
+            "additionalProperties": false
+          }
+        },
         "retificadora": {
           "default": "N",
           "type": "string",
@@ -14177,7 +14640,47 @@
         "unitId",
         "year",
         "declarant",
-        "signers"
+        "signers",
+        "socios"
+      ],
+      "additionalProperties": false
+    },
+    "Y600ValoresSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "remTrabCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "lucDivCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "jurCapCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "demRendCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "irRetCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "remTrabCents",
+        "lucDivCents",
+        "jurCapCents",
+        "demRendCents",
+        "irRetCents"
       ],
       "additionalProperties": false
     }
@@ -14407,6 +14910,228 @@
             "additionalProperties": false
           }
         },
+        "socios": {
+          "maxItems": 999,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "partnerId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "qualif": {
+                "type": "string",
+                "enum": [
+                  "10",
+                  "11",
+                  "12",
+                  "13",
+                  "14",
+                  "15",
+                  "16",
+                  "17",
+                  "01",
+                  "02",
+                  "03",
+                  "04",
+                  "05",
+                  "06",
+                  "07",
+                  "08",
+                  "09"
+                ]
+              },
+              "pais": {
+                "type": "string",
+                "pattern": "^\\d{3}$"
+              },
+              "percCapVotBp": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000
+              },
+              "representanteLegal": {
+                "type": "object",
+                "properties": {
+                  "cpf": {
+                    "type": "string",
+                    "pattern": "^\\d{11}$"
+                  },
+                  "qualif": {
+                    "type": "string",
+                    "enum": [
+                      "01",
+                      "02",
+                      "03",
+                      "04",
+                      "05",
+                      "06"
+                    ]
+                  }
+                },
+                "required": [
+                  "cpf",
+                  "qualif"
+                ],
+                "additionalProperties": false
+              },
+              "valores": {
+                "type": "object",
+                "properties": {
+                  "remTrabCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "lucDivCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "jurCapCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "demRendCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "irRetCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  }
+                },
+                "required": [
+                  "remTrabCents",
+                  "lucDivCents",
+                  "jurCapCents",
+                  "demRendCents",
+                  "irRetCents"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "partnerId",
+              "qualif",
+              "valores"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "dirigentes": {
+          "default": [],
+          "maxItems": 999,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "nome": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "cpf": {
+                "type": "string",
+                "pattern": "^\\d{11}$"
+              },
+              "qualif": {
+                "type": "string",
+                "enum": [
+                  "10",
+                  "11",
+                  "12",
+                  "13",
+                  "14",
+                  "15",
+                  "16",
+                  "17"
+                ]
+              },
+              "dtAltSoc": {
+                "type": "string"
+              },
+              "dtFimSoc": {
+                "type": "string"
+              },
+              "representanteLegal": {
+                "type": "object",
+                "properties": {
+                  "cpf": {
+                    "type": "string",
+                    "pattern": "^\\d{11}$"
+                  },
+                  "qualif": {
+                    "type": "string",
+                    "enum": [
+                      "01",
+                      "02",
+                      "03",
+                      "04",
+                      "05",
+                      "06"
+                    ]
+                  }
+                },
+                "required": [
+                  "cpf",
+                  "qualif"
+                ],
+                "additionalProperties": false
+              },
+              "valores": {
+                "type": "object",
+                "properties": {
+                  "remTrabCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "lucDivCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "jurCapCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "demRendCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "irRetCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  }
+                },
+                "required": [
+                  "remTrabCents",
+                  "lucDivCents",
+                  "jurCapCents",
+                  "demRendCents",
+                  "irRetCents"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "nome",
+              "cpf",
+              "qualif",
+              "dtAltSoc",
+              "valores"
+            ],
+            "additionalProperties": false
+          }
+        },
         "retificadora": {
           "default": "N",
           "type": "string",
@@ -14432,7 +15157,8 @@
         "year",
         "declarant",
         "fiscal",
-        "signers"
+        "signers",
+        "socios"
       ],
       "additionalProperties": false
     }

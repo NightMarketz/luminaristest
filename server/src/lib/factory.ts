@@ -1696,6 +1696,7 @@ export class ApplicationFactory {
         auditService,
         legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia LEIAUTE_SPED (ECF)
         this.repositories.fiscalProfile, // F-PCB-1R: dedução de PIS/COFINS fora do gate de receita bruta
+        this.repositories.partner, // BE-INCR-ECF-Y600: sócios do Y600
       ),
       // Lucro Real (BRIEF 3B, Fork 6→b + Fork 4→b): o gerador LÊ o e-Lalur do model; o report
       // service SAIU (item 6 — L100/L300 são recuperados pelo PVA do K155/K156, pp.224/232). ECF 3C:
@@ -1710,6 +1711,7 @@ export class ApplicationFactory {
         this.repositories.companyFiscalProfile,
         this.repositories.taxAssessment,
         legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia LEIAUTE_SPED (ECF)
+        this.repositories.partner, // BE-INCR-ECF-Y600: sócios do Y600
       ),
       exerciseClosing: new ExerciseClosingService(
         this.repositories.account,

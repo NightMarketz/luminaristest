@@ -1061,6 +1061,26 @@ EVIDÊNCIA: [tela/protocolo do PVA com o resultado do import + lista de crítica
 
 ### 5. Gerar a ECF
 
+> **[EMENDA 2026-10-22 — L11, Y600]** (BE-INCR-ECF-Y600 item 16; preparada pelo agente, executada pelo dono).
+> A ECF agora sai com o registro Y600 (sócios, titular, dirigentes) e a geração **exige** o campo `socios` no corpo.
+> O formulário da tela ainda não o manda (incremento de FE próprio) e dá 400, então gere pela API:
+>
+> 1. Cadastre 1 sócio fictício: `POST /api/accounting/partners` com `{ "unitId": "<unidade>", "nome": "SOCIO TESTE H1",
+>    "taxId": "<CPF de 11 dígitos com DV válido>", "residenteBrasil": true, "participacaoBp": 10000,
+>    "entradaEm": "2020-01-01" }` (100%, entrada antes de 2025). Guarde o `data.id` da resposta.
+> 2. No `POST /api/accounting/sped/ecf/generate`, acrescente ao corpo de sempre:
+>    `"socios": [{ "partnerId": "<data.id>", "qualif": "02", "valores": { "remTrabCents": 0, "lucDivCents": 0,
+>    "jurCapCents": 0, "demRendCents": 0, "irRetCents": 0 } }]` (QUALIF 02 = sócio administrador, Manual ECF L12
+>    p. 572; os cinco valores são obrigatórios e o zero é explícito).
+> 3. Conferir no `.txt` antes de importar: `|Y001|0|`, uma linha `|Y600|01012020||105|PF|<CPF>|SOCIO TESTE H1|02|100|100|||0,00|0,00|0,00|0,00|0,00|`
+>    e `|Y990|3|`.
+>
+> **Oráculo, disponível já, sem ECD assinada:** na validação da ECF (passo 6), o erro "Registro obrigatório não
+> preenchido → Y600" some e ficam só os 18 do R1 (ECD não recuperada). Se o PVA recusar a linha de 17 campos, o
+> suspeito é o campo 3 (`DT_FIM_SOC`): o exemplo do Manual (p. 575) tem 16 campos e a tabela tem 17 (BRIEF §5, P1).
+>
+> EVIDÊNCIA (Y600): [linhas Y001/Y600/Y990 do `.txt` + lista de críticas do PVA na validação]
+
 Só depois que a ECD importou limpa. Mesma aba **Compliance** → formulário **ECF**: ano, declarante,
 dados fiscais e signatários (P6). Clique em gerar — gera e baixa.
 

@@ -23,6 +23,8 @@ const UNIT = 'unit-ecf-real';
 const UNIT_B = `${UNIT}-b`;
 
 let donoA: { id: string; username: string };
+/** BE-INCR-ECF-Y600 item 13: vigência do sócio do dono A, criada pela rota do cadastro (repositório Prisma real). */
+let partnerIdA = '';
 let donoB: { id: string; username: string };
 
 const criarUsuario = (username: string) =>
@@ -46,6 +48,7 @@ const body = (over: Record<string, unknown> = {}) => ({
     { identNom: 'CONTADOR', identCpfCnpj: '11122233396', identQualif: '900', indCrc: 'DF-123456/O-1', email: 'c@d.com', fone: '6133334444' },
     { identNom: 'SOCIO', identCpfCnpj: '98765432100', identQualif: '205', email: 's@d.com', fone: '6133335555' },
   ],
+  socios: [{ partnerId: partnerIdA, qualif: '02', valores: { remTrabCents: 1200000, lucDivCents: 0, jurCapCents: 0, demRendCents: 0, irRetCents: 0 } }],
   ...over,
 });
 
@@ -67,6 +70,12 @@ describe('POST /api/accounting/sped/ecf/real/generate — contrato HTTP (esquele
       const r = await request(app).post('/api/lalur/parte-b/close').set(authHeader(donoA)).send({ unitId: UNIT, year: 2025, quarter });
       expect(r.status).toBe(200);
     }
+    const partner = await request(app)
+      .post('/api/accounting/partners')
+      .set(authHeader(donoA))
+      .send({ unitId: UNIT, nome: 'SOCIO REAL', taxId: '52998224725', residenteBrasil: true, participacaoBp: 10000, entradaEm: '2020-01-01' });
+    expect(partner.status).toBe(201);
+    partnerIdA = partner.body.data.id as string;
   }, 120000);
 
   afterAll(async () => {
@@ -130,6 +139,9 @@ describe('POST /api/accounting/sped/ecf/real/generate — contrato HTTP (esquele
       .query({ unitId: UNIT })
       .set(authHeader(donoA));
     expect(mine.status).toBe(200);
+    // BE-INCR-ECF-Y600 item 13: o sócio do cadastro (repositório Prisma real) sai no Y600 do arquivo baixado.
+    const texto = Buffer.from(mine.body instanceof Buffer ? mine.body : String(mine.text ?? '')).toString('latin1');
+    expect(texto).toContain('|Y001|0|\r\n|Y600|01012020||105|PF|52998224725|SOCIO REAL|02|100|100|||12000,00|0,00|0,00|0,00|0,00|\r\n|Y990|3|');
 
     const theirs = await request(app)
       .get(`/api/accounting/data-exchange/jobs/${jobId}/download`)

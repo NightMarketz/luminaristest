@@ -2,6 +2,9 @@ import { z } from 'zod';
 import { UF_CODES, crcNumberFieldFor, signerCpfOrCnpjSchema } from './SpedEcdDto';
 import { CNPJ_REGEX } from '../../../lib/cnpj';
 import { SPED_ECF_QUALIF_ASSINANTE_CODES } from '../models/spedQualifAssinante';
+import { isValidCpf } from '../../../lib/cpf';
+import { isValidDateOnly } from '../models/dates';
+import { MAX_CENTS } from '../models/money';
 
 /**
  * Zod DTO for SPED ECF generation (ADR-INCR-SPED-ECF, D4 — TRANSIENTE).
@@ -161,6 +164,97 @@ export const refineEcfRectification = (
   }
 };
 
+// ─── Y600 — sócios, titular, dirigentes (BE-INCR-ECF-Y600, L11 do H1; forks F-Y600-1..10 → (a), D-2026-10-22) ───
+// Fonte: Manual de Orientação do Leiaute 12 da ECF (maio/2026), pp. 570–575. A pessoa do sócio vem do cadastro
+// `Partner` (F-Y600-2); o request traz só o que é da ECF. Os 5 valores são obrigatórios, sem default (F-Y600-3).
+
+const y600Cents = z.number().int().nonnegative().max(MAX_CENTS);
+const y600Date = (f: string) => z.string().refine(isValidDateOnly, `${f} deve ser uma data real YYYY-MM-DD`);
+const y600Cpf = z
+  .string()
+  .regex(/^\d{11}$/, 'CPF = 11 dígitos sem máscara')
+  .refine(isValidCpf, 'CPF com dígito verificador inválido');
+
+/** Y600 campos 13–17 (p. 573) — todos obrigatórios, zero explícito (p. 570). */
+export const Y600ValoresSchema = z
+  .object({
+    remTrabCents: y600Cents, // VL_REM_TRAB: pró-labore, aluguéis… antes do IRRF
+    lucDivCents: y600Cents, // VL_LUC_DIV: lucros/dividendos efetivamente pagos no ano
+    jurCapCents: y600Cents, // VL_JUR_CAP: JCP pagos ou creditados, antes do IRRF
+    demRendCents: y600Cents, // VL_DEM_REND: demais rendimentos
+    irRetCents: y600Cents, // VL_IR_RET
+  })
+  .strict();
+
+/** Campos 11–12 (p. 573). M12: os dois juntos (o objeto garante). Faixa PF {01..06}; PJ só {01,06} — serviço (tipo vem do cadastro). */
+export const RepresentanteLegalSchema = z
+  .object({ cpf: y600Cpf, qualif: z.enum(['01', '02', '03', '04', '05', '06']) })
+  .strict();
+
+/** QUALIF aceito pela REGRA_Y600_QUALIF (p. 574); o 18 da descrição (p. 572) fica de fora (F-Y600-9). */
+export const Y600_QUALIF = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17'] as const;
+
+/** Complemento ECF de UMA vigência do cadastro (`partnerId` = id da linha `Partner`, F-Y600-4). */
+export const SocioEcfSchema = z
+  .object({
+    partnerId: z.string().min(1),
+    qualif: z.enum(Y600_QUALIF),
+    // Só para não residente (F-Y600-10): código da tabela de países do Sped (p. 571) — o DTO valida o formato.
+    pais: z
+      .string()
+      .regex(/^\d{3}$/, 'PAIS = 3 dígitos (tabela de países do Sped)')
+      .refine((p) => p !== '105', 'PAIS 105 (Brasil) não se informa: o sócio residente sai com 105 pelo cadastro')
+      .optional(),
+    percCapVotBp: z.number().int().min(0).max(10000).optional(), // default = participacaoBp (F-Y600-3)
+    representanteLegal: RepresentanteLegalSchema.optional(),
+    valores: Y600ValoresSchema,
+  })
+  .strict();
+
+/** Administrador/diretor/conselheiro fora do cadastro de sócios (F-Y600-5): sai PAIS 105, PF, percentuais 0. */
+export const DirigenteEcfSchema = z
+  .object({
+    nome: z.string().trim().min(1).max(200),
+    cpf: y600Cpf,
+    qualif: z.enum(['10', '11', '12', '13', '14', '15', '16', '17']),
+    dtAltSoc: y600Date('dtAltSoc'),
+    dtFimSoc: y600Date('dtFimSoc').optional(),
+    representanteLegal: RepresentanteLegalSchema.optional(),
+    valores: Y600ValoresSchema,
+  })
+  .strict();
+
+/**
+ * Regras locais do Y600 (BRIEF item 6): `partnerId` único; dirigente com `dtFimSoc ≥ dtAltSoc` e, pela
+ * REGRA_DATA_FIM_SOC (Erro, p. 574), `dtFimSoc` dentro do ano. O que depende do cadastro (M11 do sócio, PJ só
+ * 01/06 no representante, país × residência) é do serviço (item 9). Exportado para o DTO do Real (item 7).
+ */
+export const refineEcfY600 = (
+  val: { year: number; socios: Array<z.infer<typeof SocioEcfSchema>>; dirigentes: Array<z.infer<typeof DirigenteEcfSchema>> },
+  ctx: z.RefinementCtx,
+): void => {
+  const seen = new Set<string>();
+  val.socios.forEach((s, i) => {
+    if (seen.has(s.partnerId)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['socios', i, 'partnerId'], message: `partnerId '${s.partnerId}' repetido em socios.` });
+    }
+    seen.add(s.partnerId);
+  });
+  val.dirigentes.forEach((d, i) => {
+    if (!d.dtFimSoc) return;
+    if (d.dtFimSoc < d.dtAltSoc) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['dirigentes', i, 'dtFimSoc'], message: 'dtFimSoc não pode ser anterior a dtAltSoc.' });
+    }
+    if (d.dtFimSoc < `${val.year}-01-01` || d.dtFimSoc > `${val.year}-12-31`) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['dirigentes', i, 'dtFimSoc'],
+        message: `Y600.DT_FIM_SOC deve cair no ano ${val.year} (REGRA_DATA_FIM_SOC, Manual ECF L12 p. 574).`,
+      });
+    }
+  });
+};
+
 export const SpedEcfRequestSchema = z
   .object({
     unitId: z.string().min(1),
@@ -168,6 +262,9 @@ export const SpedEcfRequestSchema = z
     declarant: DeclarantSchema,
     fiscal: FiscalSchema.default({ indAliqCsll: '1', indRecReceita: '2' }),
     signers: z.array(SignerSchema).min(1).max(2),
+    // Y600 (BRIEF itens 4–5): obrigatório; o serviço exige ≥ 1 ocorrência no total (item 11).
+    socios: z.array(SocioEcfSchema).max(999),
+    dirigentes: z.array(DirigenteEcfSchema).max(999).default([]),
     retificadora: z.enum(['N', 'S']).default('N'),
     numRec: z.string().optional(),
     supersedesJobId: z.string().min(1).optional(),
@@ -175,8 +272,11 @@ export const SpedEcfRequestSchema = z
   })
   .strict()
   .superRefine(refineEcfSigners)
-  .superRefine((val, ctx) => refineEcfRectification(val, ctx));
+  .superRefine((val, ctx) => refineEcfRectification(val, ctx))
+  .superRefine((val, ctx) => refineEcfY600(val, ctx));
 
 export type SpedEcfRequestDto = z.infer<typeof SpedEcfRequestSchema>;
 export type SpedEcfDeclarantDto = z.infer<typeof DeclarantSchema>;
 export type SpedEcfSignerDto = z.infer<typeof SignerSchema>;
+export type SocioEcfDto = z.infer<typeof SocioEcfSchema>;
+export type DirigenteEcfDto = z.infer<typeof DirigenteEcfSchema>;

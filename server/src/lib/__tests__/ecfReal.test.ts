@@ -31,7 +31,7 @@ import {
   type EcfRealParteBBalance,
   type EcfRealParteBMovement,
 } from '../ecfReal';
-import { serializeEcf, build0010 } from '../ecf';
+import { serializeEcf, build0010, buildY600, type Y600Row } from '../ecf';
 import { ECF_L12_CATALOG, linhasDoLivro, vigenteNoAno } from '../../features/accounting/models/Lalur.model';
 import { SpedEcfRealGenerationService } from '../../features/accounting/services/SpedEcfRealGenerationService';
 import type { LalurEntryWithRelations } from '../../features/accounting/repositories/ILalurRepository';
@@ -72,6 +72,7 @@ const sampleInput = (over: Partial<EcfRealFileInput> = {}): EcfRealFileInput => 
     { codCtaB: 'BC-2024', descricao: 'BC negativa 2024', dtApLal: '2025-03-31', codPbRfb: '1003', dtLimLal: '2030-12-31', codTributo: 'C', saldoIniCents: 0, indSaldoIni: 'D', cnpjSitEsp: '11111111000191' },
   ],
   codVer: '0012',
+  y600: [],
   ...over,
 });
 
@@ -390,6 +391,23 @@ describe('ecfReal — 3C: M312/M362 (p.254/266) e M315/M365 (p.255/267) como fil
     const counts = Object.fromEntries(lines.filter((l) => l.startsWith('|9900|')).map((l) => l.split('|').slice(2, 4)));
     expect(counts).toMatchObject({ M312: '1', M315: '1', M410: '2', M415: '1', M500: '3', M510: '2' });
     expect(sha(serializeEcf(lines))).toBe(sha(serializeEcf(buildEcfRealFile(input))));
+    expect(lines[lines.length - 1]).toBe(`|9999|${lines.length}|`);
+  });
+});
+
+// ─── L11 / BE-INCR-ECF-Y600 item 13 (F-Y600-1 → a): o Real emite o Y600 pelo mesmo `buildY600` ─────────────
+describe('ecfReal — Bloco Y (Y600, BE-INCR-ECF-Y600 item 13)', () => {
+  const row: Y600Row = {
+    dtAltSoc: '2020-01-01', pais: '105', indQualifSocio: 'PF', cpfCnpj: '52998224725', nome: 'SOCIO REAL', qualif: '02',
+    percCapTotBp: 10000, percCapVotBp: 10000, remTrabCents: 120000, lucDivCents: 0, jurCapCents: 0, demRendCents: 0, irRetCents: 0,
+  };
+
+  it('Y001 IND_DAD=0 + linhas do buildY600 do Presumido + Y990 auto-inclusivo, depois de X; 9900|Y600 conta', () => {
+    const lines = buildEcfRealFile(sampleInput({ y600: [row] }));
+    const y001 = lines.indexOf('|Y001|0|');
+    expect(y001).toBe(lines.indexOf('|X990|2|') + 1);
+    expect(lines.slice(y001, y001 + 3)).toEqual(['|Y001|0|', buildY600(row), '|Y990|3|']);
+    expect(lines).toContain('|9900|Y600|1|||');
     expect(lines[lines.length - 1]).toBe(`|9999|${lines.length}|`);
   });
 });

@@ -45,6 +45,47 @@ indCrc?: string
 email: string
 fone: string
 })[]]
+/**
+ * @maxItems 999
+ */
+socios: {
+partnerId: string
+qualif: ("10" | "11" | "12" | "13" | "14" | "15" | "16" | "17" | "01" | "02" | "03" | "04" | "05" | "06" | "07" | "08" | "09")
+pais?: string
+percCapVotBp?: number
+representanteLegal?: {
+cpf: string
+qualif: ("01" | "02" | "03" | "04" | "05" | "06")
+}
+valores: {
+remTrabCents: number
+lucDivCents: number
+jurCapCents: number
+demRendCents: number
+irRetCents: number
+}
+}[]
+/**
+ * @maxItems 999
+ */
+dirigentes?: {
+nome: string
+cpf: string
+qualif: ("10" | "11" | "12" | "13" | "14" | "15" | "16" | "17")
+dtAltSoc: string
+dtFimSoc?: string
+representanteLegal?: {
+cpf: string
+qualif: ("01" | "02" | "03" | "04" | "05" | "06")
+}
+valores: {
+remTrabCents: number
+lucDivCents: number
+jurCapCents: number
+demRendCents: number
+irRetCents: number
+}
+}[]
 retificadora?: ("N" | "S")
 numRec?: string
 supersedesJobId?: string
