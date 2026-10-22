@@ -8,7 +8,8 @@
 ## Regras da ordem
 
 1. **Prazo legal externo primeiro**, quando bloqueia código ou gate já em curso.
-2. **Gate humano em cadeia** segue a ordem que o dono fixou: H1 → H2 → M2 (`[[H1]]`).
+2. **Gate humano em cadeia** segue a ordem que o dono fixou: H1 → H2 → M2 (`[[H1]]`). **Desde 22/10:** H1 (passos 1–5) → H2 → M2 →
+   1º cliente → H1 passo 6 + assinaturas — o fechamento de ECD/ECF é o último passo ([[D-2026-10-22-NFSE-PORTAL-E-H1-POR-ULTIMO]] §2).
 3. **Código só com `executa` citável** (ORCH-006). Brief pronto sem `executa` não entra como "a fazer agora": entra como "pronto para autorizar".
 4. Dependência explícita (`depende_de`) manda. Sufixo `?` (condicional) não bloqueia, mas sinaliza risco.
 
@@ -16,9 +17,9 @@
 
 | # | Item | Por que está aqui | Desbloqueia | Ação do dono |
 |---|---|---|---|---|
-| A1 | **Caminho da emissão NFS-e (ADN / PSC / PAA)** — [[D5]], [[X10i]] | NFS-e nacional obrigatória para ME/EPP do Simples em **01/11/2026** (Res. CGSN 191 art. 3º I). A decisão de 13/10 pausou o ADN; a FAQ NFS-e v1.1 17.7 exige certificado do próprio prestador no mTLS, o que não fecha com PSC. | [[X10i]], [[X10a]], [[X11]], [[D5]] | Escolher o caminho (decisão F-ADN-1) e acionar o advogado (L-ADN-5) antes de qualquer certificado de cliente. |
-| A2 | **H1 — PVA Presumido** [[H1]] | Parado no P5. Falta o passo do dono no RUNBOOK-H1 (PUT da conta 3.4 nas 2 unidades; re-semear; ECD/ECF). | [[H2]] → [[M2]] | Executar o passo e colar a evidência. Agente não preenche desfecho nem assinatura. |
-| A3 | **H2 — sign-off de browser** [[H2]] | Depende de H1 (ordem do dono). Inclui o passo de validade do pacote. | [[M2]], deploy do [[PACOTE-VALIDADE]] | Sign-off humano. |
+| A1 | **Caminho da emissão NFS-e (ADN / PSC / PAA)** — [[D5]], [[X10i]] | NFS-e nacional obrigatória para ME/EPP do Simples em **01/11/2026** (Res. CGSN 191 art. 3º I). A decisão de 13/10 pausou o ADN; a FAQ NFS-e v1.1 17.7 exige certificado do próprio prestador no mTLS, o que não fecha com PSC. **Decidido 22/10** ([[D-2026-10-22-NFSE-PORTAL-E-H1-POR-ULTIMO]] §1): NFS-e pelo portal desde 01/11 (relida pelo ManualEmissor), automática só com o PAA da NFS-e; sem guarda de certificado, L-ADN-5 não acionada. | [[X10i]], [[X10a]], [[X11]], [[D5]] | ~~Escolher o caminho e acionar o advogado~~ (fechado 22/10). Resta: quem contrata o PSC + e-CNPJ do Luminaris (NF-e/NFC-e). |
+| A2 | **H1 — PVA Presumido** [[H1]] | Passos 1–5 provados na tentativa 3 (22/10). **Desde 22/10 é o último passo do plano** ([[D-2026-10-22-NFSE-PORTAL-E-H1-POR-ULTIMO]] §2): o passo 6 (ECF com ECD assinada), o desfecho e as assinaturas (H1 e P4) ficam para perto de fechar o 1º cliente. | — (não trava mais H2/M2) | Por último: assinar a ECD do cliente real no PVA, validar a ECF e assinar o runbook. Agente não preenche desfecho nem assinatura. |
+| A3 | **H2 — sign-off de browser** [[H2]] | Não espera mais o H1 (22/10). Inclui o passo de validade do pacote. | [[M2]], deploy do [[PACOTE-VALIDADE]] | Sign-off humano. |
 | A4 | **M2 — host e 1º deploy** [[M2]] | VPS contratada (26/09). Chave do MP no ambiente e conta de emissão por unidade (R8). | [[F5]] em produção, [[PACOTE-VALIDADE]], [[GOV-CONTADOR]] (consulta CFC), [[P4]] (assinatura) | Deploy após H2. |
 | A5 | **D7 — PNCT** (vigilância de comunicações) | Prazo **31/12/2026**. Nasce com a emissão (depende de A1). | — | Corrigir até o prazo, com contador responsável. |
 | A6 | **D1 / D1f / D2 — contador e XML real de NF-e** | Pedido de follow-up de 26/09 não enviado; falta alíquota de ISS e cClassTrib; sem XML real (E9 fica preso). | Fixtures reais ([[E9]]), itens 5a–5f | Enviar o pedido ao contador (o agente só monta). |
