@@ -5,6 +5,8 @@
 > planejamento), Q3 (a) fold R0. Q4–Q9 seguem abertas. Nada roteia código sem `executa` citável (ORCH-006). Nó novo
 > só entra em `nos/` depois de PRE-ADR ratificado ([[README]]); a ordem A–E da [[FILA-ORDEM]] (ratificada em 14/10)
 > **não muda** — a seção **F** entra depois dela.
+> **Emenda 22/10** ([[D-2026-10-22-LISTA-BRIEFS-ODOO]]): §4b grava a lista de BRIEFs para passar o Odoo na régua de 32
+> capacidades e **propõe** 6 nós novos na régua F (Q10–Q12). Só docs; nada ratificado, nenhum `executa`.
 > Régua de referência pedida pelo dono (chat, 20/10): TOTVS Protheus (Financeiro, Contabilidade, Fiscal),
 > Salesforce (Revenue Cloud/Billing e Reports & Dashboards) e Power BI (analytics embutido).
 > Medição: vault regenerado em 20/10 + `git log origin/main` + `gh pr view` + grep no código. Grau por claim:
@@ -271,6 +273,62 @@ F2 → F3 → F5 → F4**; F4 pode correr antes se aparecer cliente contribuinte
 
 ---
 
+## 4b. Emenda 22/10 — BRIEFs para passar o Odoo (régua de 32 capacidades)
+
+> Pedido do dono (chat, 22/10): *"Crie a lista de briefs que precisamos fazer para ultrapassar o melhor dos erp"* e,
+> depois, *"Grava a lista no vault (fold na PROPOSTA-COMPLEMENTO e na FILA-ORDEM) e propõe os 6 nós novos na régua F,
+> só docs, sem executa."* Lista publicada no artifact <https://claude.ai/artifact/3PLp8QYpPNYAb3qNrheQ5Q>.
+
+**Régua usada.** As 32 capacidades da seção "Comparado com ERPs maduros" do painel *Fluxo da Venda Luminaris*
+(22/10, medido em `a4f96b02`): "tem" = 1, "parcial" = 0,5. Odoo 18 + OCA **25,5**; ERPNext v15 **19,5**; Luminaris
+**14,5**. Pontos **copiados do painel, não re-medidos no código** (grau **I** para esta emenda). A régua de 32 saiu do
+fluxo da venda: mede bem esse caminho, não o ERP inteiro — por isso os nós de F4/F5 fora dela continuam na lista.
+
+**Em duas linhas.** As ondas 1 e 2 abaixo, **em `main`**, levam o Luminaris a 26,5 e passam o Odoo; ondas 0 a 3, a
+31/32 (o ponto que falta é o meio do CNAB, D6, e o meio da emissão, D5). Risco: o `CONTINGENCIA-EMISSOR` depende do
+D5; sem ele as ondas 1 e 2 dão 25,5 (empate) e só a onda 0 desempata (27,5). BRIEF escrito não move a régua.
+
+| Onda | O quê | Capacidades (pontos) | Soma |
+|---|---|---|---|
+| 0 | BRIEFs **já escritos**, falta `executa`/forks: [[F5]] FE (16), `RETENCOES-FONTE` (28), `IBS-CBS-2027` PR-5 (30), [[EFD-REINF]] (31) | 4 × 0,5 | +2 |
+| 1 | Venda e recebível: `EMAIL-TRANSPORT` (pré-requisito, 0) · `VENDA-PARCELADA` (02: 1) · `PAGAMENTO-MISTO` (03: 1) · `TESOURARIA` (04: 0,5 · 09: 1 · 10: 0,5 · 13: 0,5) · `REGUA-COBRANCA` (07: 1 · 08: 0,5) · `ESTORNO-PAGAMENTO` (06: 1) · `CONTRATOS-RECORRENTES` (12: 1) · `GORJETA-TAXA-SERVICO` (32: 1) · lacuna devolução (05: 0,5) · lacuna cancelamento → título (0) | — | +9,5 |
+| 2 | Onde nenhum dos dois resolve: `CONCILIACAO-QUATRO-VIAS` (26: 1) · `CONC-ADQUIRENTE` (15: 0,5) · `CONTINGENCIA-EMISSOR` (29: 1) | — | +2,5 |
+| 3 | Contábil e gerencial: `RATEIO-DIMENSOES` (22: 0,5) · `ORCAMENTO` (23: 1) · `RB-CONTABIL` (25: 0,5) · `ALCADA-PAGAMENTO` (19: 0,5) · `PROVISOES-AGENDADAS` (0) · `FECHAMENTO-ASSISTIDO` (0) | — | +2,5 |
+| fora | Fora da régua de 32 (já na régua F): `EXPORT-RELATORIOS` · `ALERTAS-ASSINATURAS` · `AGENDA-FISCAL` · `IA-ANALYTICS` · `TABELA-TRIBUTARIA-PRODUTO` · `MANIFESTACAO-DFE` · `NFSE-PAULISTANA` · `EFD-ICMS-IPI` | — | 0 |
+
+Conta: 14,5 + 9,5 + 2,5 = **26,5** · + 2 + 2,5 = **31**. BRIEFs novos a escrever: **25** (8 + 3 + 6 + 8).
+
+### 4b.1 Nós novos propostos (fora da régua F de 20/10 — Q10)
+
+Nascem das lacunas do "caminho de volta" e da tabela de capacidades do painel de 22/10. Mesma regra da §4: cada um
+exige PRE-ADR ratificado antes de virar `nos/`; IDs provisórios.
+
+| ID | Onda F | Domínio | Entrega | Fronteira | Depende de | Colisão / risco | Perfil |
+|---|---|---|---|---|---|---|---|
+| `VENDA-PARCELADA` | F2 | financeiro | condição de pagamento na venda (entrada, N parcelas, vencimentos, juros); uma venda gera N títulos no AR e N cobranças | Prisma (`Receivable`); condição de pagamento pelo `module-boundary-selector` | [[FIN-02]], [[F5]] | V (painel): `installment` = 0 no backend; parcela só existe no AP | opus-medio |
+| `PAGAMENTO-MISTO` | F2 | financeiro | vários meios na mesma venda, parcial, a maior, troco, crédito do cliente; a liquidação deixa de ler um único `paymentMethod` | Prisma | [[F7]], saldo do pacote (FIN-12) | crédito do cliente genérico × `PackageBalance` — decidir no PRE-ADR se é o mesmo saldo | opus-medio |
+| `ESTORNO-PAGAMENTO` | F2 | financeiro | chargeback, MED do Pix e reembolso: webhook do provedor, estorno da liquidação ([[T5]]), título reaberto, disputa com prazo, efeito na base do DAS no caixa | Prisma | [[F5]], [[F7]] | V (painel): sem código; o caixa mostra dinheiro que voltou — **número errado quando o fluxo rodar**; MED pelo método legal | opus-medio |
+| `GORJETA-TAXA-SERVICO` | F2 | financeiro↔fiscal | gorjeta e taxa de serviço na venda, repasse ao profissional, tratamento na base de ISS, Simples e IBS/CBS | `module-boundary-selector` (campo de venda é DT; repasse e base são Prisma) | [[X7]] | verificação legal pelo acervo antes do BRIEF; colide com a cota-parte do salão-parceiro | opus-medio |
+| `CONCILIACAO-QUATRO-VIAS` | F3 | contábil↔financeiro↔fiscal | prova por período que AR = conta 1.1.2 = notas emitidas = base do imposto; pendência por divergência (inclui nota rejeitada com receita lançada); item do checklist do `FECHAMENTO-ASSISTIDO` | Prisma (leitura) | [[X7]], [[X10b]] | nenhum dos dois ERPs tem; cada ponte é idempotente sozinha, ninguém confere as quatro | opus-medio |
+| `CONTINGENCIA-EMISSOR` | F4 sem o gate de ICMS | fiscal | modo de contingência quando o emissor ou a prefeitura cai, fila de reenvio com prazo, aviso | Prisma (adaptador por tipo, [[X10a]]) | [[X10a]], [[X10i]] (D5) | só roda depois do D5; MOC/NTs pelo método legal | opus-medio |
+
+Denominador da régua F se Q10 (a): **28 nós** — financeiro 7 → 11 · contábil 4 → 5 · fiscal 7 → 8 · analytics/plataforma 4.
+
+### 4b.2 Lacunas que não viram BRIEF
+
+- **Instrumentação → correção (Q12):** `DEVOLUCAO-VENDA` — a devolução (Returned) não estorna o CMV, o pacote devolvido
+  lança D 3.2 contra receita nunca reconhecida e o subrazão `InventoryItem` não volta (GAP-MAP, grau do painel:
+  conferido); `CANCELAMENTO-TITULO` — o `SalesCancellationService` só chama a ponte contábil; título do AR e cobrança do
+  Mercado Pago parecem ficar abertos (grau **I**: o teste-guarda confirma ou derruba).
+- **Emenda de nó existente:** salão-parceiro na NFS-e e no lançamento → [[X10b]] e [[EFICIENCIA-FISCAL]]; NFS-e do pacote
+  na venda ou no consumo → [[PACOTE-VALIDADE]] e `IBS-CBS-2027` (verificação legal); venda de 2026 paga em 2027 →
+  `IBS-CBS-2027` (o split do #842 recusa competência anterior a 2027); fato em período fechado → `FECHAMENTO-ASSISTIDO`
+  e PR-4 da [[EFD-REINF]].
+- **Espera a folha:** comissão de empregado CLT ([[M5-subrazoes-restantes]]); o `TESOURARIA` leva ao AP só a comissão
+  de parceiro.
+
+---
+
 ## 5. O que o dono decide (questionário)
 
 Responda no chat "Q1 a, Q2 b…". Cada resposta vira decisão em `decisoes/` e só então o PRE-ADR correspondente é escrito.
@@ -315,6 +373,20 @@ Responda no chat "Q1 a, Q2 b…". Cada resposta vira decisão em `decisoes/` e s
 - [ ] **(a) PRE-ADR de `TABELA-TRIBUTARIA-PRODUTO` e `MANIFESTACAO-DFE` agora (servem a NFC-e e à entrada); `EFD-ICMS-IPI` e `NFSE-PAULISTANA` só com cliente contribuinte/SP normal** — *recomendado*.
 - [ ] (b) Tudo de F4 já na régua.
 - [ ] (c) Tudo de F4 como gatilho.
+
+### Q10 — Os 6 nós da §4b.1 entram na régua F? (emenda 22/10)
+- [ ] **(a) Sim, os 6: régua F vai a 28 nós (financeiro 11 · contábil 5 · fiscal 8 · analytics/plataforma 4)** — *recomendado*: sem eles a régua F fecha em 100 % e o Luminaris continua atrás do Odoo em 02, 03, 06, 26, 29 e 32.
+- [ ] (b) Só os 4 de venda e recebível (`VENDA-PARCELADA`, `PAGAMENTO-MISTO`, `ESTORNO-PAGAMENTO`, `GORJETA-TAXA-SERVICO`).
+- [ ] (c) Nenhum; ficam só como lista.
+
+### Q11 — Ordem de escrita dos BRIEFs dentro de F (emenda 22/10)?
+- [ ] **(a) Pela §4b: onda 0 (executa) → onda 1 (venda e recebível) → onda 2 (diferencial) → onda 3 (contábil) → F5 → F4; F1 continua antes de tudo** — *recomendado*: venda e recebível é o bloco mais atrás (4/12 contra 10,5) e o que o cliente do salão sente primeiro.
+- [ ] (b) Manter a ordem de 20/10 (F2 → F3 → F5 → F4), com os nós novos no fim de cada onda.
+
+### Q12 — Instrumentar as duas lacunas da §4b.2 (devolução e cancelamento → título)?
+- [ ] **(a) Sim: `sessao-instrumentacao` → `sessao-correcao`, sem merge** — *recomendado*: a devolução já tem achado conferido no GAP-MAP; o cancelamento → título é inferido e o teste-guarda decide.
+- [ ] (b) Só a devolução.
+- [ ] (c) Esperar.
 
 ---
 

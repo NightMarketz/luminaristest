@@ -89,10 +89,21 @@ e [[W1]] (a entrevista descarta a customização).
 | F1 | Prazo legal (01/12/2026 · 01/01/2027) | `IBS-CBS-2027` (promove [[M5-ibs-cbs]]) · `RETENCOES-FONTE` · `EFD-REINF` · [[NFE-DANFE-IBSCBS]] · [[PRESUMIDO-TETO-78MI]] | PRE-ADRs **autorizados** (Q2 a, só planejamento) | ratificar forks; `executa` por PR |
 | F5.1 | Pré-requisito | `EMAIL-TRANSPORT` | proposta | Q7 (BYOK) + PRE-ADR |
 | F1.5 | Eficiência fiscal lícita (sugestão + guarda) | [[EFICIENCIA-FISCAL]] — combo itemizado com desconto incondicional rateado e piso por item; segregação por NCM; simuladores de fator r, regime e remuneração do sócio; guarda anti-simulação; relatório de economia ([pesquisa 20/10](../accounting/PESQUISA-EFICIENCIA-FISCAL-2026-10-20.md)) | PRE-ADR **Proposed** 20/10 ([[D-2026-10-20-EFICIENCIA-FISCAL-PRE-ADR]]; `ADR-INCR-EFICIENCIA-FISCAL`); forks F-EF-1..9 pendentes | ratificar forks; P-EF-1..6 ao contador (A1–A3); `executa` por PR, PR-1 só depois do P-EF-1 |
-| F2 | Financeiro nível TOTVS | `TESOURARIA` · `REGUA-COBRANCA` · `CONC-ADQUIRENTE` · `CONTRATOS-RECORRENTES` · `ALCADA-PAGAMENTO` (portão P3) · `ORCAMENTO` | proposta | Q6 + PRE-ADR cada |
-| F3 | Contábil nível TOTVS | `RATEIO-DIMENSOES` · `PROVISOES-AGENDADAS` (ADR × [[R-motor-regras]]) · `FECHAMENTO-ASSISTIDO` · `RB-CONTABIL` | proposta | Q5 + PRE-ADR cada |
+| F2 | Financeiro nível TOTVS | `TESOURARIA` · `REGUA-COBRANCA` · `CONC-ADQUIRENTE` · `CONTRATOS-RECORRENTES` · `ALCADA-PAGAMENTO` (portão P3) · `ORCAMENTO` · *proposto 22/10:* `VENDA-PARCELADA` · `PAGAMENTO-MISTO` · `ESTORNO-PAGAMENTO` · `GORJETA-TAXA-SERVICO` | proposta (os 4 de 22/10: Q10) | Q6 + Q10 + PRE-ADR cada |
+| F3 | Contábil nível TOTVS | `RATEIO-DIMENSOES` · `PROVISOES-AGENDADAS` (ADR × [[R-motor-regras]]) · `FECHAMENTO-ASSISTIDO` · `RB-CONTABIL` · *proposto 22/10:* `CONCILIACAO-QUATRO-VIAS` | proposta (22/10: Q10) | Q5 + Q10 + PRE-ADR cada |
 | F5 | Analytics nível Power BI | `EXPORT-RELATORIOS` · `ALERTAS-ASSINATURAS` · `IA-ANALYTICS` (promove [[M5-ia-analytics]], depois do [[H1]]) | proposta | PRE-ADR cada |
-| F4 | Fiscal de comércio (gate: contribuinte de ICMS) | `TABELA-TRIBUTARIA-PRODUTO` · `MANIFESTACAO-DFE` · `EFD-ICMS-IPI` · `AGENDA-FISCAL` · `NFSE-PAULISTANA` | proposta | Q9 |
+| F4 | Fiscal de comércio (gate: contribuinte de ICMS) | `TABELA-TRIBUTARIA-PRODUTO` · `MANIFESTACAO-DFE` · `EFD-ICMS-IPI` · `AGENDA-FISCAL` · `NFSE-PAULISTANA` · *proposto 22/10, sem o gate de ICMS:* `CONTINGENCIA-EMISSOR` (depende do [[D5]]) | proposta (22/10: Q10) | Q9 + Q10 |
+
+**Emenda 22/10 — lista de BRIEFs para passar o Odoo** ([[D-2026-10-22-LISTA-BRIEFS-ODOO]]; detalhe na §4b da
+[`PROPOSTA-COMPLEMENTO-FIN-CTB-FIS-2026-10-20`](PROPOSTA-COMPLEMENTO-FIN-CTB-FIS-2026-10-20.md)). Na régua de 32
+capacidades do painel de 22/10 (Odoo 25,5 · Luminaris 14,5), a ordem **proposta** dentro de F (Q11) é: onda 0
+(`executa` dos BRIEFs prontos: F5 FE, RETENCOES-FONTE, IBS-CBS-2027 PR-5, EFD-REINF) → onda 1 venda e recebível
+(`EMAIL-TRANSPORT` → `VENDA-PARCELADA` → `PAGAMENTO-MISTO` → `TESOURARIA` → `REGUA-COBRANCA` → `ESTORNO-PAGAMENTO`
+→ `CONTRATOS-RECORRENTES` → `GORJETA-TAXA-SERVICO`) → onda 2 (`CONCILIACAO-QUATRO-VIAS` · `CONC-ADQUIRENTE` ·
+`CONTINGENCIA-EMISSOR`) → onda 3 (`RATEIO-DIMENSOES` · `ORCAMENTO` · `RB-CONTABIL` · `ALCADA-PAGAMENTO` ·
+`PROVISOES-AGENDADAS` · `FECHAMENTO-ASSISTIDO`) → F5 → F4. Ondas 1 e 2 em `main` = 26,5 (passa o Odoo); 0 a 3 = 31/32.
+Lacunas fora de BRIEF (Q12): devolução de venda e cancelamento → título, por instrumentação → correção. **Nada
+ratificado; a ordem de 20/10 vale até o dono responder Q10–Q12.**
 
 Fechado em 20/10 (R0, Q3 a): E1 inteiro mergeado (#769 · #771 · #770 · #772); X14-CAIXA (#729/#738/#739), FE-INCR-SIMPLES
 PR-D (#733) e X11 PR-1 (#633) em `main` — fold em sessão própria.
