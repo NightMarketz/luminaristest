@@ -2,11 +2,14 @@ import { z } from 'zod';
 import { SemLinhaVigenteError } from '../../legalParameters/models/legalParameter';
 import { parametroIbsCbsVigente, type ParametroIbsCbs, type TributoConsumo } from './ibsCbsParams';
 import type { MemoriaLinha } from './taxAssessmentCalc';
+import type { IbsCbsCreditoNota } from './ibsCbsCredito';
+import type { ResultadoAntecipacao } from './ibsCbsAntecipacao';
 
 /**
  * IBS-CBS-2027 PR-2 (BRIEF `docs/accounting/BE-INCR-IBS-CBS-2027-brief.md` itens 6, 7, 9 e 11; molde `issCompetencia.ts`).
  * Débito = soma do IBS/CBS **destacado no documento** autorizado (LC 214 art. 60 § 1º [D08]; F-IBS-3 a). A conferência
- * pela tabela só gera aviso e nunca muda o débito (item 7). Créditos = 0 no PR-2 (item 9, `CREDITOS_NAO_IMPLEMENTADOS_PR3`).
+ * pela tabela só gera aviso e nunca muda o débito (item 7). PR-3 (itens 16–18): créditos `APROPRIADO` no mês somam
+ * (art. 45), `PENDENTE` e uso/consumo só aparecem na memória; a antecipação do pacote soma ao débito (art. 10 § 4º).
  * Puro: sem I/O, sem `new Date`.
  */
 
@@ -32,7 +35,10 @@ export const MEMORIA_IBS_CBS = {
   DIVERGENCIA_DOC: 'DIVERGENCIA_DOC',
   VENDA_SEM_DOCUMENTO: 'VENDA_SEM_DOCUMENTO',
   DOCUMENTOS_SEM_GRUPO: 'DOCUMENTOS_SEM_GRUPO',
-  CREDITOS_NAO_IMPLEMENTADOS_PR3: 'CREDITOS_NAO_IMPLEMENTADOS_PR3',
+  /** PR-3 (item 16): crédito APROPRIADO no mês (soma), PENDENTE (não soma — §10.3) e uso/consumo pessoal (art. 57, fora). */
+  CREDITO_ENTRADA: 'CREDITO_ENTRADA',
+  CREDITO_NAO_APROPRIADO: 'CREDITO_NAO_APROPRIADO',
+  USO_CONSUMO_PESSOAL: 'USO_CONSUMO_PESSOAL',
   CONFERENCIA_SEM_ALIQUOTA: 'CONFERENCIA_SEM_ALIQUOTA',
   /** Item 7 (dono 21/10): documento sem a base de IBS/CBS ⇒ conferência pulada com aviso; o débito não muda (F-IBS-3). */
   CONFERENCIA_SEM_BASE: 'CONFERENCIA_SEM_BASE',
@@ -88,11 +94,18 @@ export interface ApuracaoIbsCbsInput {
   documentos: readonly IbsCbsDocumento[];
   /** Ids das vendas finalizadas no mês sem documento autorizado (item 7, aviso). */
   vendasSemDocumento: readonly string[];
+  /** PR-3 (item 16): linhas de crédito das notas de entrada até o fim do mês (todas as do tributo e de outro — filtra aqui). */
+  creditos?: readonly IbsCbsCreditoNota[];
+  /** PR-3 (itens 17–18): antecipação e acerto do pacote já calculados para o tributo/mês (`antecipacaoIbsCbsMes`). */
+  antecipacao?: ResultadoAntecipacao;
 }
 
 export interface ResultadoIbsCbs {
   tributo: TributoConsumo;
+  /** Documentos + antecipações + acertos a maior (ADR §7: "Σ documentos autorizados + antecipações"). */
   debitosCents: bigint;
+  /** Item 12: só a parte dos documentos — a que a reclassificação tira da receita (a antecipação não muda o razão, V7). */
+  documentosCents: bigint;
   creditosCents: bigint;
   saldoCents: bigint;
   /** Item 12: o débito repartido pela natureza do documento (soma = `debitosCents`). */
@@ -172,8 +185,13 @@ export function apurarIbsCbsMes(input: ApuracaoIbsCbsInput): ResultadoIbsCbs {
   for (const saleId of input.vendasSemDocumento) {
     memoria.push({ codigo: MEMORIA_IBS_CBS.VENDA_SEM_DOCUMENTO, descricao: `venda ${saleId} finalizada em ${competencia} sem documento fiscal autorizado`, valorCents: '0', fonte: 'ADR-INCR-IBS-CBS-2027 F-IBS-3 (a)' });
   }
-  memoria.push({ codigo: MEMORIA_IBS_CBS.CREDITOS_NAO_IMPLEMENTADOS_PR3, descricao: 'créditos ainda não implementados (PR-3): 0', valorCents: '0', fonte: 'BRIEF IBS-CBS-2027 item 9' });
-  const revenda = debitos - servico;
+  const documentos = debitos;
+  if (input.antecipacao) {
+    memoria.push(...input.antecipacao.memoria);
+    debitos += input.antecipacao.debitosCents;
+  }
+  const creditos = creditosDoMes(memoria, tributo, competencia, `${competencia}-31`, input.creditos ?? []);
+  const revenda = documentos - servico;
   const FONTE_RECLASS = 'F-IBS-8 (c) — IBS/CBS fora do resultado; BRIEF IBS-CBS-2027 item 12';
   memoria.push({ codigo: MEMORIA_IBS_CBS.RECLASSIFICACAO_SERVICO, descricao: `D receita de serviços / C ${tributo} a recolher (NFS-e do mês)`, valorCents: servico.toString(), fonte: FONTE_RECLASS });
   memoria.push({ codigo: MEMORIA_IBS_CBS.RECLASSIFICACAO_REVENDA, descricao: `D receita de revenda / C ${tributo} a recolher (NF-e do mês)`, valorCents: revenda.toString(), fonte: FONTE_RECLASS });
@@ -183,7 +201,35 @@ export function apurarIbsCbsMes(input: ApuracaoIbsCbsInput): ResultadoIbsCbs {
     valorCents: '0',
     fonte: 'F-IBS-14 (a), ratificado 21/10',
   });
-  const saldo = debitos; // créditos APROPRIADO = 0 no PR-2 (art. 45 [D08])
+  const saldo = debitos - creditos; // art. 45 [D08]; negativo = saldo credor
   memoria.push({ codigo: MEMORIA_IBS_CBS.SALDO, descricao: `saldo = débitos − créditos${aliq ? ` (${aliq.descricao})` : ''}`, valorCents: saldo.toString(), fonte: 'LC 214/2025 art. 45' });
-  return { tributo, debitosCents: debitos, creditosCents: 0n, saldoCents: saldo, servicoCents: servico, revendaCents: revenda, documentosSemGrupo: semGrupo, memoria };
+  return { tributo, debitosCents: debitos, documentosCents: documentos, creditosCents: creditos, saldoCents: saldo, servicoCents: servico, revendaCents: revenda, documentosSemGrupo: semGrupo, memoria };
+}
+
+const FONTE_CREDITO = 'LC 214/2025 art. 47 (crédito na extinção; § 1º I segregado por tributo); F-IBS-4 a';
+
+/**
+ * Item 16 — créditos do tributo no mês. Soma só `APROPRIADO` com `apropriadoEm` no mês (`CREDITO_ENTRADA_n`); o que no fim
+ * do mês ainda estava pendente (status PENDENTE, ou apropriado depois) vira `CREDITO_NAO_APROPRIADO_n` e **nunca** soma
+ * (invariante §10.3); nota do mês com item de uso/consumo pessoal ⇒ `USO_CONSUMO_PESSOAL_n` (art. 57, fora do crédito).
+ */
+function creditosDoMes(memoria: MemoriaLinha[], tributo: TributoConsumo, competencia: string, fimDoMes: string, notas: readonly IbsCbsCreditoNota[]): bigint {
+  const doTributo = notas.filter((c) => c.tributo === tributo).sort((a, b) => a.issueDate.localeCompare(b.issueDate) || a.payableId.localeCompare(b.payableId));
+  const rotulo = (c: IbsCbsCreditoNota) => `nota ${c.documentNumber ?? c.payableId} (${c.issueDate})`;
+  let total = 0n;
+  let nE = 0;
+  let nP = 0;
+  let nU = 0;
+  for (const c of doTributo) {
+    if (c.amountCents > 0n && c.status === 'APROPRIADO' && c.apropriadoEm !== null && competenciaDe(c.apropriadoEm) === competencia) {
+      total += c.amountCents;
+      memoria.push({ codigo: `${MEMORIA_IBS_CBS.CREDITO_ENTRADA}_${++nE}`, descricao: `crédito de ${tributo} apropriado em ${c.apropriadoEm}: ${rotulo(c)}`, valorCents: c.amountCents.toString(), fonte: FONTE_CREDITO });
+    } else if (c.amountCents > 0n && c.issueDate <= fimDoMes && (c.status === 'PENDENTE' || (c.apropriadoEm !== null && c.apropriadoEm > fimDoMes))) {
+      memoria.push({ codigo: `${MEMORIA_IBS_CBS.CREDITO_NAO_APROPRIADO}_${++nP}`, descricao: `crédito de ${tributo} pendente de extinção (não soma): ${rotulo(c)}`, valorCents: c.amountCents.toString(), fonte: FONTE_CREDITO });
+    }
+    if (c.usoConsumoCents > 0n && competenciaDe(c.issueDate) === competencia) {
+      memoria.push({ codigo: `${MEMORIA_IBS_CBS.USO_CONSUMO_PESSOAL}_${++nU}`, descricao: `${tributo} de item de uso ou consumo pessoal, sem crédito (custo do item): ${rotulo(c)}`, valorCents: c.usoConsumoCents.toString(), fonte: 'LC 214/2025 art. 57; lista IBS_CBS_USO_CONSUMO (P-IBS-2)' });
+    }
+  }
+  return total;
 }

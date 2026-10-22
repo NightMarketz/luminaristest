@@ -60,8 +60,10 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'referential.mapping.set':   ['accountId', 'referentialCode', 'mappingVersion'],
   'referential.mapping.unset': ['accountId', 'referentialCode', 'mappingVersion'],
   // INCR-AP — Contas a Pagar. Id-only / money-as-string; NEVER the supplier name (PII-safe, D6).
-  'payable.created':            ['payableId', 'supplierRef', 'amountCents', 'dueDate', 'expenseAccountCode', 'recoverableIcmsCents', 'recoverablePisCofinsCents', 'insumoCents'], // X6 item 13 + ITEM-DESTINATION item 13
+  'payable.created':            ['payableId', 'supplierRef', 'amountCents', 'dueDate', 'expenseAccountCode', 'recoverableIcmsCents', 'recoverablePisCofinsCents', 'insumoCents', 'recoverableIbsCbsCents'], // X6 item 13 + ITEM-DESTINATION item 13 + IBS-CBS-2027 PR-3 item 14
   'payable.cancelled':          ['payableId', 'reversalEntryId', 'reason'],
+  // IBS-CBS-2027 PR-3 (item 16): PENDENTE → APROPRIADO do crédito de IBS/CBS — ids, tributo, valor e dia; sem PII.
+  'payable.ibs_cbs_credit.appropriated': ['payableId', 'tributo', 'amountCents', 'sourceDocumentId', 'apropriadoEm'],
   // BE-INCR-PARTIAL-SETTLEMENT (F-PS9 → a): `payment_*` → `settlement_*`; payload ganha o saldo após o
   // recibo (money-as-string, id-only, sem PII — mesmo padrão dos 8 eventos originais).
   'payable.settlement_registered': ['payableId', 'paymentId', 'amountCents', 'method', 'entryId', 'paidCentsAfter', 'remainingCents'],
@@ -167,6 +169,7 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     'irpjSaldoNegativoAccountId', 'csllSaldoNegativoAccountId', // X7 Fase B item 16 (F-TB-3 a)
     'dividendosPagarAccountId', 'jcpPagarAccountId', 'irrfRecolherAccountId', 'jcpDespesaAccountId', // IRRF-DISTRIBUICAO item 7
     'ibsRecolherAccountId', 'cbsRecolherAccountId', // IBS-CBS-2027 PR-2 item 12
+    'ibsRecuperarAccountId', 'cbsRecuperarAccountId', // IBS-CBS-2027 PR-3 item 14
     // BE-INCR-DFE (item 9): enum/boolean/int como string — IM/CNAE (texto livre) ficam FORA do evento
     'codMun', 'dpsSerie', 'regEspTrib', 'regApTribSN', 'issAliquotaBp', 'issRetidoTomadorPj', 'pacoteFatoGerador', 'pacoteCTribNac', 'pacoteCNBS', 'ibsCbsInformar', 'ibsCbsCst', 'ibsCbsClassTrib', 'pTotTribFedCent', 'pTotTribEstCent', 'pTotTribMunCent', 'pTotTribSNCent', 'emissaoForaDoMes',
     'policyVersionId'], // GOV-CONTADOR política versionada (item 14): a versão que aplicou esta escrita

@@ -2802,7 +2802,10 @@
       "IBS_CBS_SIMPLES_MEI": "Optante pelo Simples Nacional ou MEI recolhe IBS/CBS no DAS.",
       "IBS_CBS_ASSESSMENT_CAS": "A apuração deste mês mudou desde a prévia. Refaça a prévia.",
       "IBS_CBS_ASSESSMENT_ORDER": "Há mês posterior já confirmado. Confirme na ordem ou substitua o posterior.",
-      "IBS_CBS_ASSESSMENT_STALE": "O perfil fiscal ou a apuração mudou durante a confirmação. Refaça a prévia."
+      "IBS_CBS_ASSESSMENT_STALE": "O perfil fiscal ou a apuração mudou durante a confirmação. Refaça a prévia.",
+      "IBS_CBS_ANTECIPACAO_SEM_ALIQUOTA": "Há pacote pago no mês e a alíquota de IBS/CBS da data ainda não foi publicada. A antecipação precisa da alíquota.",
+      "IBS_CBS_CREDITO_CAS": "Este crédito de IBS/CBS não está mais pendente. Recarregue a nota.",
+      "IBS_CBS_CREDITO_AUSENTE": "Esta nota não tem crédito de IBS/CBS a apropriar."
     },
     "title": "Apuração de tributos",
     "ano": "Ano-calendário",

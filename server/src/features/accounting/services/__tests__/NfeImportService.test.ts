@@ -49,6 +49,8 @@ interface Opts {
   createResults?: Array<'ok' | 'dup'>;
   /** X6: perfil fiscal do escopo; `null` = ausente (F-X6-6 a → 400). Default neutro: não-contribuinte, CUMULATIVO. */
   profile?: Partial<FiscalProfileStub> | null;
+  /** IBS-CBS-2027 PR-3: fotografia de parâmetros legais (default = semente). */
+  legalParams?: { fotografia: (t: readonly string[]) => Promise<unknown[]> };
 }
 
 interface FiscalProfileStub {
@@ -60,6 +62,10 @@ interface FiscalProfileStub {
   icmsRecuperavelAccountId: string | null;
   pisCofinsRecuperavelAccountId: string | null;
   insumoExpenseAccountId: string | null;
+  // IBS-CBS-2027 PR-3 (item 14)
+  regimeTributario?: 'SIMPLES' | 'PRESUMIDO' | 'REAL';
+  ibsRecuperarAccountId?: string | null;
+  cbsRecuperarAccountId?: string | null;
 }
 const NEUTRAL_PROFILE: FiscalProfileStub = {
   icmsContribuinte: false, pisCofinsRegime: 'CUMULATIVO', pisCofinsCreditExcludesIcms: true, pisCofinsCreditIncludesIpi: false,
@@ -89,7 +95,7 @@ function build(opts: Opts = {}) {
       if (opts.profile === null) {
         throw new ValidationError('fiscal_profile_missing: perfil fiscal da unidade não cadastrado');
       }
-      return { ...NEUTRAL_PROFILE, ...(opts.profile ?? {}) };
+      return { regimeTributario: 'PRESUMIDO', ibsRecuperarAccountId: null, cbsRecuperarAccountId: null, ...NEUTRAL_PROFILE, ...(opts.profile ?? {}) };
     }),
   };
   const service = new NfeImportService(
@@ -97,7 +103,7 @@ function build(opts: Opts = {}) {
     counterpartyRepo as never,
     policy as never,
     fiscalProfile as never,
-    { findManyByProductRefs: async () => [] } as never, legalParamsSemente,
+    { findManyByProductRefs: async () => [] } as never, (opts.legalParams ?? legalParamsSemente) as never,
   );
   return { service, createPayable, counterpartyRepo };
 }
@@ -113,8 +119,8 @@ function dto(over: Partial<ImportNfePurchaseInput> = {}): ImportNfePurchaseInput
  * test key (SIG-NFE, F-SIG-4 b) — `parseNfe` verifies the XMLDSig before anything else.
  */
 function inlineNfe(
-  items: Array<{ cProd: string; xProd: string; qCom: string; vProd: string; indTot?: string; cfop?: string; ncm?: string }>,
-  totals: { vProd: string; vFrete?: string; vSeg?: string; vDesc?: string; vIPI?: string; vNF: string },
+  items: Array<{ cProd: string; xProd: string; qCom: string; vProd: string; indTot?: string; cfop?: string; ncm?: string; ibsCbs?: { vIBS: string; vCBS: string } }>,
+  totals: { vProd: string; vFrete?: string; vSeg?: string; vDesc?: string; vIPI?: string; vNF: string; dhEmi?: string; vNFTot?: string },
 ): string {
   const chave = '35250712345678000195550010000000021000000028';
   const dets = items
@@ -130,7 +136,12 @@ function inlineNfe(
           <vUnCom>1.0000000000</vUnCom>
           <vProd>${it.vProd}</vProd>
           <indTot>${it.indTot ?? '1'}</indTot>
-        </prod>
+        </prod>${
+          it.ibsCbs
+            ? `
+        <imposto><IBSCBS><CST>000</CST><cClassTrib>000001</cClassTrib><gIBSCBS><vBC>${it.vProd}</vBC><vIBS>${it.ibsCbs.vIBS}</vIBS><gCBS><pCBS>8.8000</pCBS><vCBS>${it.ibsCbs.vCBS}</vCBS></gCBS></gIBSCBS></IBSCBS></imposto>`
+            : ''
+        }
       </det>`,
     )
     .join('\n');
@@ -140,7 +151,7 @@ function inlineNfe(
     <infNFe Id="NFe${chave}" versao="4.00">
       <ide>
         <natOp>COMPRA</natOp><mod>55</mod><serie>1</serie><nNF>2</nNF>
-        <dhEmi>2025-07-11T09:30:00-03:00</dhEmi><tpNF>1</tpNF><tpAmb>1</tpAmb>
+        <dhEmi>${totals.dhEmi ?? '2025-07-11'}T09:30:00-03:00</dhEmi><tpNF>1</tpNF><tpAmb>1</tpAmb>
       </ide>
       <emit><CNPJ>12345678000195</CNPJ><xNome>FORNECEDOR EXEMPLO LTDA</xNome></emit>
       <dest><CNPJ>98765432000198</CNPJ><xNome>SALAO EXEMPLO LTDA</xNome></dest>
@@ -153,7 +164,7 @@ ${dets}
           <vIPI>${totals.vIPI ?? '0.00'}</vIPI>
           <vST>0.00</vST><vSeg>${totals.vSeg ?? '0.00'}</vSeg><vOutro>0.00</vOutro><vICMS>0.00</vICMS>
           <vNF>${totals.vNF}</vNF>
-        </ICMSTot>
+        </ICMSTot>${totals.vNFTot ? `<vNFTot>${totals.vNFTot}</vNFTot>` : ''}
       </total>
     </infNFe>
   </NFe>
@@ -627,5 +638,76 @@ describe('ITEM-DESTINATION — rota por destinação no import', () => {
     // rateio do bruto [10545, 5272, 3516] (X6): insumo = bruto, revenda = bruto − 1800
     expect(input.inventoryItems!.map((i) => i.valueCents)).toEqual([10545 - 1800]);
     expect(input.insumoItems!.map((i) => i.costCents)).toEqual([5272, 3516]);
+  });
+});
+
+// IBS-CBS-2027 PR-3 (BRIEF itens 14–15; dono 21/10 "razão completo"): no regime regular, desde 2027, o IBS/CBS destacado
+// entra no que se deve ao fornecedor — creditável como linha PENDENTE a recuperar, uso/consumo como custo do item.
+describe('IBS-CBS-2027 PR-3 — crédito de IBS/CBS na NF-e de entrada', () => {
+  const ITENS = [
+    { cProd: 'SHAMP-500', xProd: 'Shampoo', qCom: '1', vProd: '100.00', ncm: '33051000', ibsCbs: { vIBS: '0.10', vCBS: '8.80' } },
+    { cProd: 'COND-500', xProd: 'Condicionador', qCom: '1', vProd: '50.00', ncm: '22030000', ibsCbs: { vIBS: '0.05', vCBS: '4.40' } },
+  ];
+  const NOTA_2027 = inlineNfe(ITENS, { vProd: '150.00', vNF: '150.00', dhEmi: '2027-02-10', vNFTot: '163.35' });
+  const MAPS: ImportNfePurchaseInput['itemMappings'] = [
+    { cProd: 'SHAMP-500', productRef: 'prod-shamp' },
+    { cProd: 'COND-500', productRef: 'prod-cond' },
+  ];
+  const CONTAS = { ibsRecuperarAccountId: 'acc-ibs-rec', cbsRecuperarAccountId: 'acc-cbs-rec' };
+
+  it('item 14 — regime regular em 2027: amountCents = vNF + IBS + CBS; uma linha PENDENTE por tributo, na conta a recuperar', async () => {
+    const { service, createPayable } = build({ profile: CONTAS });
+    await service.importPurchase(scope, NOTA_2027, dto({ itemMappings: MAPS }));
+    const input = createPayable.mock.calls[0][1];
+    expect(input.amountCents).toBe(15000 + 15 + 1320);
+    expect(input.recoverableTaxLines).toEqual([
+      { tributo: 'IBS', accountId: 'acc-ibs-rec', amountCents: 15, status: 'PENDENTE', sourceDocumentId: null },
+      { tributo: 'CBS', accountId: 'acc-cbs-rec', amountCents: 1320, status: 'PENDENTE', sourceDocumentId: null },
+    ]);
+    // o estoque recebe o líquido (Σ itens = vNF), o crédito fica fora do custo
+    expect(input.inventoryItems!.reduce((a, it) => a + it.valueCents, 0)).toBe(15000);
+  });
+
+  it('item 14 — crédito sem a conta a recuperar no perfil ⇒ 400 nomeado, nada é criado', async () => {
+    const { service, createPayable } = build();
+    await expect(service.importPurchase(scope, NOTA_2027, dto({ itemMappings: MAPS }))).rejects.toThrow(/recoverable_account_not_configured.*IBS.*ibsRecuperarAccountId/);
+    expect(createPayable).not.toHaveBeenCalled();
+  });
+
+  it('item 14 — Simples (fora do regime regular) e nota de 2026 ⇒ comportamento de hoje (sem linha, amountCents = vNF)', async () => {
+    const simples = build({ profile: { ...CONTAS, regimeTributario: 'SIMPLES' } });
+    await simples.service.importPurchase(scope, NOTA_2027, dto({ itemMappings: MAPS }));
+    expect(simples.createPayable.mock.calls[0][1]).toMatchObject({ amountCents: 15000 });
+    expect(simples.createPayable.mock.calls[0][1].recoverableTaxLines).toBeUndefined();
+
+    const nota2026 = inlineNfe(ITENS, { vProd: '150.00', vNF: '150.00', dhEmi: '2026-12-31' });
+    const regular = build({ profile: CONTAS });
+    await regular.service.importPurchase(scope, nota2026, dto({ itemMappings: MAPS }));
+    expect(regular.createPayable.mock.calls[0][1].recoverableTaxLines).toBeUndefined();
+  });
+
+  it('item 15 — item na lista de uso/consumo (prefixo de NCM): o IBS/CBS dele vai ao custo do próprio item, a linha guarda usoConsumoCents', async () => {
+    const lista = {
+      id: 'uc-1', tabela: 'IBS_CBS_USO_CONSUMO', chave: '2203', discriminador: null, valorInt: null, valorTexto: null, valorJson: null,
+      fonte: 'fixture — LC 214 art. 57 I c', vigenteDesde: '2027-01-01', vigenteAte: null, status: 'PUBLISHED', supersedesId: null,
+    };
+    const legalParams = { fotografia: async (t: readonly string[]) => [...(await legalParamsSemente.fotografia(t)), ...(t.includes('IBS_CBS_USO_CONSUMO') ? [lista] : [])] };
+    const { service, createPayable } = build({ profile: CONTAS, legalParams });
+    const r = await service.importPurchase(scope, NOTA_2027, dto({ itemMappings: MAPS }));
+    const input = createPayable.mock.calls[0][1];
+    expect(input.amountCents).toBe(15000 + 15 + 1320);
+    expect(input.recoverableTaxLines).toEqual([
+      { tributo: 'IBS', accountId: 'acc-ibs-rec', amountCents: 10, status: 'PENDENTE', sourceDocumentId: null, usoConsumoCents: 5 },
+      { tributo: 'CBS', accountId: 'acc-cbs-rec', amountCents: 880, status: 'PENDENTE', sourceDocumentId: null, usoConsumoCents: 440 },
+    ]);
+    const cond = input.inventoryItems!.find((it) => it.productRef === 'prod-cond')!;
+    expect(cond.valueCents).toBe(5000 + 445);
+    expect(r.warnings.some((w) => /vNFTot/.test(w))).toBe(false); // 15000 + 1335 = 16335 = vNFTot
+  });
+
+  it('item 15 — lista vazia (P-IBS-2): nada excluído e a resposta avisa', async () => {
+    const { service } = build({ profile: CONTAS });
+    const r = await service.importPurchase(scope, NOTA_2027, dto({ itemMappings: MAPS }));
+    expect(r.warnings.some((w) => /uso ou consumo pessoal.*P-IBS-2/.test(w))).toBe(true);
   });
 });

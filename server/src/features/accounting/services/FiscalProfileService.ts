@@ -96,6 +96,9 @@ export interface FiscalProfileView extends CostRegime {
   // IBS-CBS-2027 PR-2 (item 12)
   ibsRecolherAccountId: string | null;
   cbsRecolherAccountId: string | null;
+  // IBS-CBS-2027 PR-3 (item 14)
+  ibsRecuperarAccountId: string | null;
+  cbsRecuperarAccountId: string | null;
   partnerAccountRef: string | null;
   codMun: string | null;
   inscricaoMunicipal: string | null;
@@ -327,6 +330,9 @@ export class FiscalProfileService {
     // IBS-CBS-2027 PR-2 (item 12): o passivo da reclassificação receita → IBS/CBS a recolher.
     if (input.ibsRecolherAccountId) await this.assertLiabilityAccount(scope, input.ibsRecolherAccountId, 'IBS a recolher', tx);
     if (input.cbsRecolherAccountId) await this.assertLiabilityAccount(scope, input.cbsRecolherAccountId, 'CBS a recolher', tx);
+    // IBS-CBS-2027 PR-3 (item 14): o crédito da NF-e de entrada (ativo), compensado na apuração mensal.
+    if (input.ibsRecuperarAccountId) await this.assertAssetAccount(scope, input.ibsRecuperarAccountId, 'IBS a recuperar', tx);
+    if (input.cbsRecuperarAccountId) await this.assertAssetAccount(scope, input.cbsRecuperarAccountId, 'CBS a recuperar', tx);
     // X13 PR-2 item 15 (F-OBP-1 a): a unidade segue o regime da EMPRESA no ano corrente (MEI/SIMPLES → SIMPLES).
     const regimeEmpresa = await this.regimeEmpresaHoje(scope, tx);
     if (regimeEmpresa && regimeUnidadeEsperado(regimeEmpresa) !== input.regimeTributario) {
@@ -396,6 +402,8 @@ export class FiscalProfileService {
         jcpDespesaAccountId: row.jcpDespesaAccountId ?? '',
         ibsRecolherAccountId: row.ibsRecolherAccountId ?? '', // IBS-CBS-2027 PR-2 item 12
         cbsRecolherAccountId: row.cbsRecolherAccountId ?? '',
+        ibsRecuperarAccountId: row.ibsRecuperarAccountId ?? '', // IBS-CBS-2027 PR-3 item 14
+        cbsRecuperarAccountId: row.cbsRecuperarAccountId ?? '',
         // BE-INCR-DFE (item 9): enum/boolean/int como string — sem texto livre (IM/CNAE ficam fora do evento)
         codMun: row.codMun ?? '',
         dpsSerie: String(row.dpsSerie),
@@ -495,6 +503,8 @@ export class FiscalProfileService {
       jcpDespesaAccountId: row.jcpDespesaAccountId,
       ibsRecolherAccountId: row.ibsRecolherAccountId, // IBS-CBS-2027 PR-2 item 12
       cbsRecolherAccountId: row.cbsRecolherAccountId,
+      ibsRecuperarAccountId: row.ibsRecuperarAccountId, // IBS-CBS-2027 PR-3 item 14
+      cbsRecuperarAccountId: row.cbsRecuperarAccountId,
       partnerAccountRef: row.partnerAccountRef,
       codMun: row.codMun,
       inscricaoMunicipal: row.inscricaoMunicipal,

@@ -38,6 +38,9 @@ export const LEGAL_PARAMETER_TABELAS = [
   'TJLP',
   // IBS-CBS-2027 PR-1 (BRIEF item 1): alíquotas de IBS/CBS por vigência (LC 214 arts. 343, 344, 346, 347).
   'IBS_CBS',
+  // IBS-CBS-2027 PR-3 (BRIEF item 15): lista de uso ou consumo pessoal (LC 214 art. 57), chave = prefixo de NCM (dono 21/10).
+  // Nasce vazia — o conteúdo é do contador (P-IBS-2); consumidor = NfeImportService (models/ibsCbsCredito.ts).
+  'IBS_CBS_USO_CONSUMO',
 ] as const;
 export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
 

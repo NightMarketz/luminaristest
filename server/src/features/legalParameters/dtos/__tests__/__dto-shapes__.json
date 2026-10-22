@@ -32,7 +32,8 @@
             "FERIADO_LOCAL",
             "IRRF_DISTRIBUICAO",
             "TJLP",
-            "IBS_CBS"
+            "IBS_CBS",
+            "IBS_CBS_USO_CONSUMO"
           ]
         },
         "chave": {
@@ -126,7 +127,8 @@
             "FERIADO_LOCAL",
             "IRRF_DISTRIBUICAO",
             "TJLP",
-            "IBS_CBS"
+            "IBS_CBS",
+            "IBS_CBS_USO_CONSUMO"
           ]
         },
         "status": {
@@ -203,7 +205,8 @@
             "FERIADO_LOCAL",
             "IRRF_DISTRIBUICAO",
             "TJLP",
-            "IBS_CBS"
+            "IBS_CBS",
+            "IBS_CBS_USO_CONSUMO"
           ]
         },
         "chave": {

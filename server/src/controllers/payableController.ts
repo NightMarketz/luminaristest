@@ -3,6 +3,7 @@ import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
 import {
+  ApropriarCreditoSchema,
   CancelPayableSchema,
   CancelPaymentSchema,
   CreatePayableSchema,
@@ -16,6 +17,31 @@ import {
  * delegate to PayableService → handleApiError. State changes are COMMANDS (create/pay/cancel),
  * never a generic PATCH status (ACC-016). All writes are scoped by the authenticated user.
  */
+
+/**
+ * POST /api/accounting/payables/:id/ibs-cbs-credits/apropriar — IBS-CBS-2027 PR-3 (item 16; F-IBS-12 a, rota ratificada):
+ * `PENDENTE → APROPRIADO` do crédito de IBS/CBS da nota. `payableId` do corpo é opcional; quando vem, tem de ser o `:id`.
+ */
+export const apropriarCreditoIbsCbs = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    if (body.payableId !== undefined && body.payableId !== req.params.id) {
+      return res.status(400).json({ success: false, error: 'payableId do corpo difere do :id da rota.' });
+    }
+    const parsed = ApropriarCreditoSchema.safeParse({ ...body, payableId: req.params.id });
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, error: parsed.error.flatten() });
+    }
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
+    const data = await getFactory().getPayableService().apropriarCreditoIbsCbs(scope, parsed.data);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
 
 /** POST /api/payables — create a payable and book its recognition entry. */
 export const createPayable = async (req: Request, res: Response) => {
