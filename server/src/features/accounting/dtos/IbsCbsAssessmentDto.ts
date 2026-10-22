@@ -47,7 +47,7 @@ export const MemoriaLinhaIbsCbsKind = z.enum([
 ]);
 
 /** Códigos que levam sufixo `_n` (um por documento, nota, pagamento ou consumo). */
-const SUFIXO_POR_LINHA = /^(DEBITO_DOC|DIVERGENCIA_DOC|CREDITO_ENTRADA|CREDITO_NAO_APROPRIADO|USO_CONSUMO_PESSOAL|ANTECIPACAO_ART10|ACERTO_ART10|PAGAMENTO_INDEVIDO_ART38)_\d+$/;
+const SUFIXO_POR_LINHA = /^(DEBITO_DOC|DIVERGENCIA_DOC|CREDITO_ENTRADA|CREDITO_NAO_APROPRIADO|USO_CONSUMO_PESSOAL|ANTECIPACAO_ART10|ACERTO_ART10|PAGAMENTO_INDEVIDO_ART38|SPLIT_EXTINCAO)_\d+$/;
 
 /** Linha da memória (schema do X7) com o código restrito ao enum (sufixo `_n` por documento). */
 export const MemoriaLinhaIbsCbsSchema = z

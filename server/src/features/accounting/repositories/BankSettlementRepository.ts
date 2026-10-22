@@ -11,6 +11,7 @@ import type {
   BankSettlementItemWithLine,
   CreateBankSettlementItemData,
   IBankSettlementRepository,
+  IbsCbsSplitExtinto,
 } from './IBankSettlementRepository';
 
 /**
@@ -84,7 +85,7 @@ export class BankSettlementRepository implements IBankSettlementRepository {
 
   public async update(scope: AccountingScope, id: string, patch: BankSettlementItemPatch, tx?: Prisma.TransactionClient): Promise<BankSettlementItem> {
     // updateMany + re-read: `update` não aceita where composto por escopo (tenancy no where, sempre).
-    const { proposedCents, chargeCents, feeCents, ...rest } = patch;
+    const { proposedCents, chargeCents, feeCents, splitIbsCents, splitCbsCents, ...rest } = patch;
     await this.db(tx).bankSettlementItem.updateMany({
       where: { id, ...accountingScopeWhere(scope), deletedAt: null },
       data: {
@@ -92,6 +93,8 @@ export class BankSettlementRepository implements IBankSettlementRepository {
         ...(proposedCents !== undefined ? { proposedCents: BigInt(proposedCents) } : {}),
         ...(chargeCents !== undefined ? { chargeCents: BigInt(chargeCents) } : {}),
         ...(feeCents !== undefined ? { feeCents: BigInt(feeCents) } : {}),
+        ...(splitIbsCents !== undefined ? { splitIbsCents: BigInt(splitIbsCents) } : {}),
+        ...(splitCbsCents !== undefined ? { splitCbsCents: BigInt(splitCbsCents) } : {}),
       },
     });
     const row = await this.db(tx).bankSettlementItem.findFirst({ where: { id, ...accountingScopeWhere(scope), deletedAt: null } });
@@ -221,6 +224,33 @@ export class BankSettlementRepository implements IBankSettlementRepository {
       create: { userId, unitId, updatedById: scope.actorUserId, ...data },
       update: { updatedById: scope.actorUserId, ...data },
     });
+  }
+
+  public async findIbsCbsSplits(scope: AccountingScope, competencia: string, tributo: 'IBS' | 'CBS', tx?: Prisma.TransactionClient): Promise<IbsCbsSplitExtinto[]> {
+    const items = await this.db(tx).bankSettlementItem.findMany({
+      where: {
+        ...accountingScopeWhere(scope),
+        deletedAt: null,
+        status: 'CONFIRMED',
+        splitCompetencia: competencia,
+        ...(tributo === 'IBS' ? { splitIbsReceiptId: { not: null } } : { splitCbsReceiptId: { not: null } }),
+      },
+      orderBy: [{ confirmedAt: 'asc' }, { id: 'asc' }],
+      select: { id: true, splitIbsReceiptId: true, splitCbsReceiptId: true },
+    });
+    const receiptIds = items.map((i) => (tributo === 'IBS' ? i.splitIbsReceiptId : i.splitCbsReceiptId)!);
+    if (receiptIds.length === 0) return [];
+    const receipts = await this.db(tx).receivableReceipt.findMany({
+      where: { id: { in: receiptIds }, ...accountingScopeWhere(scope), status: 'ACTIVE' },
+    });
+    const byId = new Map(receipts.map((r) => [r.id, r]));
+    const out: IbsCbsSplitExtinto[] = [];
+    for (const item of items) {
+      const r = byId.get((tributo === 'IBS' ? item.splitIbsReceiptId : item.splitCbsReceiptId)!);
+      if (!r) continue;
+      out.push({ itemId: item.id, receiptId: r.id, receivableId: r.receivableId, receivedAt: r.receivedAt.toISOString().slice(0, 10), amountCents: r.amountCents });
+    }
+    return out;
   }
 
   public async runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {

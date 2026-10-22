@@ -1371,6 +1371,8 @@ export class ApplicationFactory {
       auditService,
       this.repositories.paymentAccount, // BE-INCR-PAYMENT-PROVIDER PR-3 (P3-9)
       this.repositories.collectionCharge, // BE-INCR-PAYMENT-PROVIDER PR-3 (P3-6)
+      this.repositories.companyFiscalProfile, // IBS-CBS-2027 PR-4 (item 19a): regime da competência do split
+      this.repositories.fiscalProfile, // IBS-CBS-2027 PR-4 (item 19a): contas de IBS/CBS a recolher
     );
     // BE-INCR-PAYMENT-PROVIDER PR-2: o adaptador sai do `provider` da conta — MP é o único da porta hoje (P2-1).
     const collectionChargeService = new CollectionChargeService(
@@ -1896,6 +1898,7 @@ export class ApplicationFactory {
         buildIbsCbsRevenueAccounts(new AccountingBindingRepository()), // lacuna #826-2: papéis de receita do binding
         this.repositories.payable, // PR-3 item 16: créditos de IBS/CBS das notas de entrada
         new IbsCbsPacoteRepository(), // PR-3 itens 17–18: pacote pré-pago (razão + subrazão do saldo)
+        this.repositories.bankSettlement, // PR-4 item 20: recibos de split da competência
       ),
       // BE-INCR-LEGAL-PARAMS PR-4 (item 10): recálculo das apurações quando uma linha de lei é publicada/revogada.
       taxAssessmentRecalc: new TaxAssessmentRecalcService(

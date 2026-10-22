@@ -175,6 +175,32 @@ Prisma + Policy, Factory, DTO Zod `.strict()`, soft-delete, rota em 2 toques.
     `SPLIT_EXTINCAO_n` na memória; o saldo a recolher do item 22 desconta. Leitura automática do evento 110300 = emenda
     futura (NT 2026.006 não lida; P-IBS-7).
 
+#### EMENDA PR-4 (22/10) — o split é tratamento da FALTA, não parte do encargo
+
+Lacunas achadas na abertura do PR-4 (sessao-feature) e respondidas pelo dono no chat em 22/10, por questionário:
+
+- **Mecanismo** — "Tratamento da falta (Recomendado)". No F7, encargo é o EXCESSO (|linha| > saldo) e as partes somam esse
+  excesso (Emenda 3.3, E6); no split a linha chega MENOR que o título. O confirm recebe o split, que quita o resto do
+  título: D IBS/CBS a recolher / C cliente. Exige `|linha| + tarifa + split = saldo aberto` (re-lido). Sem split, a baixa é
+  a de hoje (invariante §10.7). Não usa `bank_settlement_charge_parts`; `SHORTFALL_TREATMENTS` ganha `SPLIT_IBS_CBS`.
+- **IBS × CBS** — "Dois valores (Recomendado)": `split.ibsCents` e `split.cbsCents`, cada um contra a sua conta a recolher
+  do perfil fiscal (as mesmas do item 12).
+- **Mês** — "Operador informa (Recomendado)": `split.competencia` (AAAA-MM) do débito extinto, padrão = mês da linha do
+  extrato. Base legal lida: Decreto 12.955/2026 arts. 26 III, 27 § 1º e 44 § 3º (planalto compilado, 22/10, dossiê
+  `pesquisas-legais/verif-2026-10-22-ibs-cbs-split`): o split é deduzido do saldo do período do débito, mesmo ocorrendo
+  depois do fim do período. Apuração já confirmada daquele mês ⇒ a linha aparece na próxima prévia; a substituição é o CAS
+  do item 9.
+- **AR vizinho** — "Pode estender (Recomendado)": `ReceivableService.registerReceipt` aceita recibo `kind = SPLIT_IBS_CBS`
+  com conta de débito explícita (um recibo por tributo). O título fecha e o AR continua batendo com o razão.
+
+Checklist do PR-4 depois da emenda: **19a** contrato `split` no confirm (só RECEIVABLE; soma > 0; competência ≥ 2027-01;
+regime da competência ≠ Simples/MEI; contas a recolher configuradas; |linha| + tarifa + split = saldo) · **19b** o split é
+gravado no item no pré-cheque do 1º confirm e o retry o relê · **19c** etapa `SPLIT` depois da `SETTLE`: recibo por
+tributo, idempotente pelo id gravado; D a recolher / C cliente; nunca `feeCents` · **19d** auditoria e view expõem o split ·
+**20** a apuração do (competência, tributo) lê os recibos de split ATIVOS e gera `SPLIT_EXTINCAO_n`; `saldoCents` segue
+débitos − créditos (o saldo a recolher do item 22 desconta) e a reclassificação não muda (o razão já recebeu o D a recolher
+no recibo).
+
 ### PR-5 — matriz e superfície
 
 21. **Matriz `OBRIGACAO_REGIME`** ganha `IBS_CBS_APURACAO`: REAL/PRESUMIDO `OBRIGATORIA` desde 2027-01-01 (arts. 41 § 1º, 43,

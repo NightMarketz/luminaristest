@@ -2062,6 +2062,13 @@ model BankSettlementItem {
   shortfallCents       BigInt                     @default(0) // E11 — max(0, saldo − |linha|) no scan; re-derivado no pré-cheque
   shortfallTreatment   String? // E12 — SHORTFALL_TREATMENTS, gravado no confirm
   discountSettlementId String? // E12 — payable_payments.id | receivable_receipts.id (kind DISCOUNT)
+  // IBS-CBS-2027 PR-4 (itens 19–20, EMENDA PR-4 dono 22/10): split informado no 1º confirm, relido pelo retry;
+  // shortfallTreatment = 'SPLIT_IBS_CBS'. Recibos sem caixa D IBS|CBS a recolher / C cliente, um por tributo.
+  splitIbsCents        BigInt                     @default(0)
+  splitCbsCents        BigInt                     @default(0)
+  splitCompetencia     String? // AAAA-MM do débito extinto (Dec. 12.955 arts. 27 § 1º e 44 § 3º)
+  splitIbsReceiptId    String? // receivable_receipts.id (kind SPLIT_IBS_CBS) — etapa SPLIT, idempotente pelo id gravado
+  splitCbsReceiptId    String?
   chargeParts          BankSettlementChargePart[]
   confirmedById   String?
   confirmedAt     DateTime?

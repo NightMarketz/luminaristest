@@ -2,8 +2,9 @@
  * BankSettlementService — baixa bancária (F7). FIRST-CLASS PRISMA.
  *
  * atomicUntil: postEntry
- *   commit 1 — razão: baixa via PayableService.registerPayment / ReceivableService.registerReceipt (2 commits deles) + postEntry(sourceType='bank.charge', sourceId=itemId) do encargo + postEntry(sourceType='provider.fee', sourceId=itemId) da tarifa do provedor (F5 PR-3, P3-8); gate de período dentro da tx
+ *   commit 1 — razão: baixa via PayableService.registerPayment / ReceivableService.registerReceipt (2 commits deles) + recibos de split IBS/CBS pelo mesmo ReceivableService.registerReceipt (IBS-CBS-2027 PR-4, item 19c: D IBS|CBS a recolher / C cliente, um por tributo) + postEntry(sourceType='bank.charge', sourceId=itemId) do encargo + postEntry(sourceType='provider.fee', sourceId=itemId) da tarifa do provedor (F5 PR-3, P3-8); gate de período dentro da tx
  *              teste: controllers/__tests__/bankSettlementController.integration.test.ts — "confirm exato (item 6/7)", "confirm com encargo (L3 …)", "linha em período FECHADO…" (integração, via HTTP; sem teste unitário de serviço — predicado puro em models/__tests__/bankSettlementCandidacy.test.ts)
+ *              teste: controllers/__tests__/bankSettlementSplit.integration.test.ts — "item 19c: split quita o título — D IBS a recolher / D CBS a recolher / C cliente, nunca tarifa"
  *   commit 2 — subrazão: settlementId/chargeEntryId gravados no item a cada etapa + CONFIRMING → CONFIRMED com auditoria, runTransaction próprio
  *              teste: controllers/__tests__/bankSettlementController.integration.test.ts — "confirm exato (item 6/7)" (CONFIRMED + settlementId + evento na trilha)
  *   reconcile — retry(): FAILED (ou CONFIRMING preso além da janela) → CONFIRMING; etapas já feitas são puladas pelos ids gravados
@@ -37,6 +38,10 @@ import { mpReleaseFeeCents } from '../../../lib/mpReleaseReport';
 import type { BankStatementLine } from 'generated/prisma';
 import type { IPaymentAccountRepository } from '../repositories/IPaymentAccountRepository';
 import type { ICollectionChargeRepository } from '../repositories/ICollectionChargeRepository';
+import type { ICompanyFiscalProfileRepository } from '../repositories/ICompanyFiscalProfileRepository';
+import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRepository';
+import { IBS_CBS_ANTES_DE_2027 } from '../dtos/IbsCbsAssessmentDto';
+import { IBS_CBS_SIMPLES_MEI } from './IbsCbsAssessmentService';
 import {
   BANK_CHARGE_SOURCE_TYPE,
   MP_RELEASE_PAYMENT_DESCRIPTION,
@@ -50,10 +55,18 @@ import {
   BANK_SETTLEMENT_SCANNED,
   BANK_SETTLEMENT_CONFIRMING_STALE_MS,
   pickCandidate,
+  competenciaPadraoDoSplit,
+  diferencaDoSplit,
+  SPLIT_ACCOUNT_NOT_CONFIGURED,
+  SPLIT_IBS_CBS_KIND,
+  SPLIT_IBS_CBS_METHOD,
+  SPLIT_MISMATCH,
+  SPLIT_NOT_ALLOWED_PAYABLE,
   type BankSettlementStep,
   type BankSettlementTitleType,
 } from '../models/BankSettlement.model';
 import type {
+  BankSettlementSplitInput,
   ConfirmBankSettlementInput,
   ListBankSettlementsQueryInput,
   RejectBankSettlementInput,
@@ -90,6 +103,17 @@ export interface BankSettlementItemView {
   reason: string | null;
   failedStep: string | null;
   confirmedAt: string | null;
+  /** IBS-CBS-2027 PR-4 (item 19d): split informado no confirm; null = item sem split. */
+  split: { ibsCents: number; cbsCents: number; competencia: string | null; ibsReceiptId: string | null; cbsReceiptId: string | null } | null;
+}
+
+/** Split resolvido no pré-cheque (item 19a): valores, competência e contas a recolher do perfil fiscal. */
+interface SplitCtx {
+  ibsCents: number;
+  cbsCents: number;
+  competencia: string;
+  ibsAccountId: string | null;
+  cbsAccountId: string | null;
 }
 
 const toDateOnly = (d: Date): string => dateOnlyFromDayNumber(toUtcDayNumber(d));
@@ -123,6 +147,9 @@ export class BankSettlementService {
     // F5 PR-3 (P3-6/P3-9): leituras da conta de provedor e da cobrança — o F5 continua dono da escrita.
     private readonly paymentAccountRepo: Pick<IPaymentAccountRepository, 'findById'>,
     private readonly collectionChargeRepo: Pick<ICollectionChargeRepository, 'findForReleaseLine'>,
+    // IBS-CBS-2027 PR-4 (item 19a): regime da competência do split e contas de IBS/CBS a recolher (as mesmas do item 12).
+    private readonly companyProfileRepo: Pick<ICompanyFiscalProfileRepository, 'findByYear'>,
+    private readonly fiscalProfileRepo: Pick<IFiscalProfileRepository, 'findByScope'>,
   ) {}
 
   // ── Scan (itens 2, 3, 10) ─────────────────────────────────────────────────────────────────────
@@ -329,6 +356,16 @@ export class BankSettlementService {
       reason: item.reason,
       failedStep: item.failedStep,
       confirmedAt: item.confirmedAt ? item.confirmedAt.toISOString() : null,
+      split:
+        item.shortfallTreatment === SPLIT_IBS_CBS_KIND
+          ? {
+              ibsCents: centsFromDb(item.splitIbsCents),
+              cbsCents: centsFromDb(item.splitCbsCents),
+              competencia: item.splitCompetencia,
+              ibsReceiptId: item.splitIbsReceiptId,
+              cbsReceiptId: item.splitCbsReceiptId,
+            }
+          : null,
     };
   }
 
@@ -361,7 +398,7 @@ export class BankSettlementService {
     // CAS primeiro (item 15: 2 confirms concorrentes → 1 efeito). Perdedor = 400, sem efeito.
     const won = await this.repo.compareAndSetStatus(scope, id, 'PENDING', 'CONFIRMING');
     if (won === 0) throw new ValidationError(`Item não está PENDING (status atual: ${item.status}).`);
-    return this.runConfirm(scope, id, input.method, 'PENDING');
+    return this.runConfirm(scope, id, input.method, 'PENDING', input.split);
   }
 
   async retry(scope: AccountingScope, id: string, method: string): Promise<BankSettlementItemView> {
@@ -382,10 +419,16 @@ export class BankSettlementService {
    * anterior (`releaseTo`) e responde 400 SEM efeito. Depois, as etapas (item 7) fora de tx — o AP/AR
    * tem protocolo próprio que não aceita `tx` externa (F-F7-4 a, verificado no BRIEF).
    */
-  private async runConfirm(scope: AccountingScope, id: string, method: string, releaseTo: 'PENDING' | 'FAILED'): Promise<BankSettlementItemView> {
+  private async runConfirm(
+    scope: AccountingScope,
+    id: string,
+    method: string,
+    releaseTo: 'PENDING' | 'FAILED',
+    split?: BankSettlementSplitInput,
+  ): Promise<BankSettlementItemView> {
     let ctx: Awaited<ReturnType<BankSettlementService['precheck']>>;
     try {
-      ctx = await this.repo.runTransaction((tx) => this.precheck(scope, id, method, tx));
+      ctx = await this.repo.runTransaction((tx) => this.precheck(scope, id, method, tx, split));
     } catch (error) {
       // Review-delta #326 nit: no retry, a causa REAL do precheck vai para `reason` (não o texto do claim).
       await this.repo.runTransaction(async (tx) => {
@@ -406,6 +449,8 @@ export class BankSettlementService {
     let settlementId = item.settlementId;
     let chargeEntryId = item.chargeEntryId;
     let feeEntryId = item.feeEntryId;
+    let splitIbsReceiptId = item.splitIbsReceiptId;
+    let splitCbsReceiptId = item.splitCbsReceiptId;
     let step: BankSettlementStep = 'SETTLE';
 
     try {
@@ -423,6 +468,20 @@ export class BankSettlementService {
               );
         settlementId = settlement.id;
         await this.repo.update(scope, id, { settlementId });
+      }
+
+      // (i-b) IBS-CBS-2027 PR-4 (item 19c): split — um recibo SEM caixa por tributo (D IBS|CBS a recolher / C cliente),
+      // pelo protocolo do AR; idempotente pelo id gravado e, se o crash veio antes do id, pelo recibo órfão de mesma assinatura.
+      step = 'SPLIT';
+      if (ctx.split) {
+        if (ctx.split.ibsCents > 0 && !splitIbsReceiptId) {
+          splitIbsReceiptId = await this.splitReceipt(scope, item.titleId, lineDate, ctx.split.ibsCents, ctx.split.ibsAccountId!);
+          await this.repo.update(scope, id, { splitIbsReceiptId });
+        }
+        if (ctx.split.cbsCents > 0 && !splitCbsReceiptId) {
+          splitCbsReceiptId = await this.splitReceipt(scope, item.titleId, lineDate, ctx.split.cbsCents, ctx.split.cbsAccountId!);
+          await this.repo.update(scope, id, { splitCbsReceiptId });
+        }
       }
 
       // (ii) encargo `bank.charge` (item 8) — idempotente por (sourceType, sourceId = item.id) no PostingService.
@@ -499,6 +558,12 @@ export class BankSettlementService {
             chargeEntryId: chargeEntryId ?? '',
             feeCents: String(feeCents),
             feeEntryId: feeEntryId ?? '',
+            // IBS-CBS-2027 PR-4 (item 19d): valores e ids, sem PII.
+            splitIbsCents: String(ctx.split?.ibsCents ?? 0),
+            splitCbsCents: String(ctx.split?.cbsCents ?? 0),
+            splitCompetencia: ctx.split?.competencia ?? '',
+            splitIbsReceiptId: splitIbsReceiptId ?? '',
+            splitCbsReceiptId: splitCbsReceiptId ?? '',
           },
         });
       });
@@ -506,7 +571,7 @@ export class BankSettlementService {
       const failReason = error instanceof Error ? error.message : String(error);
       logger.warn('bank settlement confirm failed — ids preserved, retry available', { itemId: id, step, failReason });
       await this.repo.runTransaction(async (tx) => {
-        await this.repo.update(scope, id, { status: 'FAILED', failedStep: step, reason: failReason, settlementId, chargeEntryId, feeEntryId }, tx);
+        await this.repo.update(scope, id, { status: 'FAILED', failedStep: step, reason: failReason, settlementId, chargeEntryId, feeEntryId, splitIbsReceiptId, splitCbsReceiptId }, tx);
         await this.auditService.append(tx, scope, {
           actorUserId: scope.actorUserId,
           eventType: BANK_SETTLEMENT_FAILED,
@@ -521,10 +586,20 @@ export class BankSettlementService {
     return this.toView(scope, fresh!);
   }
 
-  private async precheck(scope: AccountingScope, id: string, method: string, tx: Prisma.TransactionClient) {
+  private async precheck(scope: AccountingScope, id: string, method: string, tx: Prisma.TransactionClient, splitInput?: BankSettlementSplitInput) {
     const item = await this.repo.findById(scope, id, tx);
     if (!item) throw new NotFoundError('Item de baixa não encontrado.');
     if (item.status !== 'CONFIRMING') throw new ValidationError(`Item não está em confirmação (status atual: ${item.status}).`);
+    // IBS-CBS-2027 PR-4 (item 19b): o split vem do 1º confirm; o retry relê o gravado no item.
+    const persisted = item.shortfallTreatment === SPLIT_IBS_CBS_KIND;
+    const splitValues = splitInput
+      ? { ibsCents: splitInput.ibsCents, cbsCents: splitInput.cbsCents, competencia: splitInput.competencia ?? null }
+      : persisted
+        ? { ibsCents: centsFromDb(item.splitIbsCents), cbsCents: centsFromDb(item.splitCbsCents), competencia: item.splitCompetencia }
+        : null;
+    if (splitValues && item.titleType !== 'RECEIVABLE') {
+      throw new ValidationError(`${SPLIT_NOT_ALLOWED_PAYABLE}: split payment só na baixa de título a receber (o IBS/CBS retido é o desta venda).`);
+    }
 
     const line = await this.reconciliationRepo.findLineById(scope, item.statementLineId, tx);
     if (!line) throw new NotFoundError('Linha de extrato não encontrada.');
@@ -556,6 +631,15 @@ export class BankSettlementService {
       // Re-deriva do saldo atual e exige igualdade exata; o scan seguinte re-avalia (STALE → PENDING).
       // P3-7: com tarifa, o pré-cheque re-deriva sobre o BRUTO (gross = |linha| + feeCents).
       const abs = Math.abs(centsFromDb(line.amountCents)) + centsFromDb(item.feeCents);
+      // Item 19a (EMENDA PR-4): com split, |linha| + tarifa + IBS + CBS quita o saldo inteiro.
+      if (splitValues) {
+        const sobra = diferencaDoSplit(abs, title.openCents, splitValues);
+        if (sobra !== 0) {
+          throw new ValidationError(
+            `${SPLIT_MISMATCH}: linha + tarifa (${abs}) + IBS (${splitValues.ibsCents}) + CBS (${splitValues.cbsCents}) não fecha o saldo aberto (${title.openCents}) — diferença ${sobra}.`,
+          );
+        }
+      }
       const expectedProposed = Math.min(abs, title.openCents);
       const expectedCharge = Math.max(0, abs - title.openCents);
       if (expectedProposed !== proposedCents || expectedCharge !== centsFromDb(item.chargeCents)) {
@@ -623,7 +707,42 @@ export class BankSettlementService {
       chargeAccountCode = chargeAccount.code;
     }
 
-    return { item, line, statement, bankAccountId: statement.glAccountId, bankAccountCode, chargeAccountCode, feeAccountCode, providerDebitAccountId };
+    // Item 19a: competência ≥ 2027-01 (F-IBS-7 b), regime regular na competência (LC 214 art. 41 § 1º) e as contas a
+    // recolher do perfil fiscal — tudo antes de qualquer efeito; o 1º confirm grava o split na MESMA tx (19b).
+    let split: SplitCtx | null = null;
+    if (splitValues) {
+      const competencia = splitValues.competencia ?? competenciaPadraoDoSplit(day);
+      if (competencia < '2027-01') throw new ValidationError(IBS_CBS_ANTES_DE_2027, null, 'IBS_CBS_ANTES_DE_2027');
+      const ano = Number(competencia.slice(0, 4));
+      const perfil = await this.companyProfileRepo.findByYear(scope, ano, tx);
+      if (!perfil) throw new ValidationError(`perfil fiscal da empresa de ${ano} ausente — cadastre-o antes de informar o split.`);
+      if (perfil.regime === 'SIMPLES' || perfil.regime === 'MEI') throw new ValidationError(IBS_CBS_SIMPLES_MEI, null, 'IBS_CBS_SIMPLES_MEI');
+      const fp = await this.fiscalProfileRepo.findByScope(scope, tx);
+      const conta = async (cents: number, accountId: string | null | undefined, rotulo: string): Promise<string | null> => {
+        if (cents === 0) return null;
+        const account = accountId ? await this.accountRepo.findById(scope, accountId, tx) : null;
+        if (!account || account.deletedAt) {
+          throw new ValidationError(`${SPLIT_ACCOUNT_NOT_CONFIGURED}: conta de ${rotulo} a recolher não configurada no perfil fiscal da unidade (F-TA-7).`);
+        }
+        return account.id;
+      };
+      split = {
+        ...splitValues,
+        competencia,
+        ibsAccountId: await conta(splitValues.ibsCents, fp?.ibsRecolherAccountId, 'IBS'),
+        cbsAccountId: await conta(splitValues.cbsCents, fp?.cbsRecolherAccountId, 'CBS'),
+      };
+      if (splitInput) {
+        await this.repo.update(
+          scope,
+          id,
+          { shortfallTreatment: SPLIT_IBS_CBS_KIND, splitIbsCents: split.ibsCents, splitCbsCents: split.cbsCents, splitCompetencia: competencia },
+          tx,
+        );
+      }
+    }
+
+    return { item, line, statement, bankAccountId: statement.glAccountId, bankAccountCode, chargeAccountCode, feeAccountCode, providerDebitAccountId, split };
   }
 
   /** Review #326 F6 — recibo ACTIVE do título igual a (data, valor, método) que NÃO está ligado a nenhum item. */
@@ -646,6 +765,25 @@ export class BankSettlementService {
     const row = await this.receivableRepo.findByIdWithReceipts(scope, titleId, tx);
     const hit = row?.receipts.find((r) => r.status === 'ACTIVE' && !linked.has(r.id) && r.method === method && centsFromDb(r.amountCents) === amountCents && toDateOnly(r.receivedAt) === dateOnly);
     return hit?.id ?? null;
+  }
+
+  /**
+   * Item 19c: recibo de split de UM tributo. Crash entre o recibo e a gravação do id ⇒ o retry adota o recibo ATIVO de
+   * mesma assinatura (kind SPLIT, conta a recolher, valor) em vez de tentar um 2º (o saldo do título já não comportaria).
+   */
+  private async splitReceipt(scope: AccountingScope, titleId: string, receivedAt: string, amountCents: number, debitAccountId: string): Promise<string> {
+    const row = await this.receivableRepo.findByIdWithReceipts(scope, titleId);
+    const orphan = row?.receipts.find(
+      (r) => r.status === 'ACTIVE' && r.kind === SPLIT_IBS_CBS_KIND && r.debitAccountId === debitAccountId && centsFromDb(r.amountCents) === amountCents,
+    );
+    if (orphan) return orphan.id;
+    const receipt = await this.receivables.registerReceipt(
+      scope,
+      titleId,
+      { unitId: scope.unitId, method: SPLIT_IBS_CBS_METHOD, receivedAt, amountCents },
+      { kind: SPLIT_IBS_CBS_KIND, debitAccountId },
+    );
+    return receipt.id;
   }
 
   /** Postings do lado do banco: o da baixa (entry do pagamento/recebimento) e, se houver, o do encargo. */
