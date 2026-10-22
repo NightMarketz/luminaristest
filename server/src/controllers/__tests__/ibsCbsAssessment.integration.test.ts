@@ -75,7 +75,9 @@ describe('IBS-CBS-2027 PR-2 — apuração mensal de IBS/CBS', () => {
     expect(ibs.status).toBe(200);
     expect(ibs.body.data).toMatchObject({ debitosCents: '1500', creditosCents: '0', saldoCents: '1500', documentosSemGrupo: 0 });
     const m: Linha[] = ibs.body.data.memoria;
-    expect(m.map((l) => l.codigo)).toEqual(expect.arrayContaining(['DEBITO_DOC_1', 'DEBITO_DOC_2', 'CONFERENCIA_SEM_BASE', 'CREDITOS_NAO_IMPLEMENTADOS_PR3', 'RECLASSIFICACAO_SERVICO', 'SALDO']));
+    expect(m.map((l) => l.codigo)).toEqual(expect.arrayContaining(['DEBITO_DOC_1', 'DEBITO_DOC_2', 'CONFERENCIA_SEM_BASE', 'RECLASSIFICACAO_SERVICO', 'SALDO']));
+    // PR-3 (BRIEF §4.2): a linha CREDITOS_NAO_IMPLEMENTADOS_PR3 saiu — sem nota de entrada, créditos 0 sem aviso.
+    expect(m.map((l) => l.codigo)).not.toContain('CREDITOS_NAO_IMPLEMENTADOS_PR3');
     expect(m.filter((l) => l.codigo === 'VENDA_SEM_DOCUMENTO').map((l) => (l as unknown as { descricao: string }).descricao).join()).toContain('sale-sem-nota');
     // Venda liquidada no mês sem documento autorizado vivo em nenhum mês (dono 21/10) — o aviso não muda o débito.
     // A venda de março tem documento (em março): não é aviso de fevereiro nem de outro mês.
