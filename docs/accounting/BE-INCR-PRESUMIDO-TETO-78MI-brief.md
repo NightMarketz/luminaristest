@@ -208,7 +208,7 @@ apuração, e a confirmação ganha um 400.
 ## 9. Fold desta sessão
 
 `docs/plano/nos/PRESUMIDO-TETO-78MI.md`: `estado` continua `planned`; `estado_detalhe` ganha a entrada de 22/10 (BRIEF
-escrito, PR deste BRIEF, forks F-PT-1..7 pendentes, P-PT-1..3 com o contador, próximo = ratificar forks e depois `executa`);
+escrito, PR deste BRIEF (#844), forks F-PT-1..7 pendentes, P-PT-1..3 com o contador, próximo = ratificar forks e depois `executa`);
 `autorizacao` ganha a citação de 22/10 (só BRIEF); "Docs" aponta para este arquivo e para o dossiê.
 
 ## 10. Invariantes (cada uma vira teste)
