@@ -156,6 +156,21 @@ describe('ecf file assembler', () => {
     expect(lines).toContain('|P400|2||50000,00|'); // revenda CSLL 12%
   });
 
+  it('L10: dentro de cada P030, todos os P200 vêm antes de qualquer P400', () => {
+    // PVA ECF 12.2.7, 22/10 (RUNBOOK-H1 passo 6, tentativa 1): com P200 e P400 intercalados por atividade, as 8 linhas
+    // de revenda (P200 depois de um P400) deram "Organização hierárquica ... fora dos padrões" (esperado: P500).
+    const lines = buildEcfFile(sampleInput());
+    const regs = lines.map((l) => l.split('|')[1]);
+    const periods = regs.flatMap((r, i) => (r === 'P030' ? [i] : []));
+    const p990 = regs.indexOf('P990');
+    const bad = periods.flatMap((start, k) => {
+      const block = regs.slice(start + 1, periods[k + 1] ?? p990);
+      const firstP400 = block.indexOf('P400');
+      return firstP400 >= 0 && block.lastIndexOf('P200') > firstP400 ? [`${lines[start]} → ${block.join(',')}`] : [];
+    });
+    expect(bad).toEqual([]);
+  });
+
   it('omits receita lines when the activity has zero movement (0:N)', () => {
     const lines = buildEcfFile(sampleInput());
     const t02Idx = lines.indexOf('|P030|01042025|30062025|T02|');
