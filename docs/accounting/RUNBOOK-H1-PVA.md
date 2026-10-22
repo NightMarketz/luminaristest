@@ -1238,6 +1238,29 @@ EVIDÊNCIA: [tela/protocolo do PVA + lista de críticas, se houver]
 >
 > DESFECHO: [dono]   ASSINATURA: [dono]
 
+> **Tentativa 2 — 2026-10-22, importação.** O dono importou no PVA da ECF o arquivo do passo 5, tentativa 2
+> (`ecf_08845676000198_2025-tentativa2.txt`, sha256 `4ef7345d…71e1c`), e colou o "Relatório de Importação" em PDF (3 páginas,
+> sha256 `a5c9a3e89b91b816…`). O agente o transcreveu:
+>
+> ```text
+> Relatório de Importação — "No relatório abaixo estão descritas as advertências encontradas durante a importação."
+> Versões - PVA: 12.2.7 / Descritor: 12003.1 / Java: 21.0.3 (64 bits)
+> (sem a seção ERROS)
+> Total de Advertências 16
+>  16  Dados atualizados na Linha de acordo com a tabela da RFB.  (campo 2 - CODIGO)
+>      linhas 25 |P200|8| |37671,94|   26 |P200|4| |9112,00|    27 |P400|4| |37671,94|   28 |P400|2| |9112,00|
+>             30 |P200|8| |44430,38|   31 |P200|4| |7312,37|    32 |P400|4| |44430,38|   33 |P400|2| |7312,37|
+>             35 |P200|8| |37838,21|   36 |P200|4| |16006,73|   37 |P400|4| |37838,21|   38 |P400|2| |16006,73|
+>             40 |P200|8| |42547,37|   41 |P200|4| |16508,86|   42 |P400|4| |42547,37|   43 |P400|2| |16508,86|
+> ```
+>
+> **L10 fechado (verificado pelo PVA):** a escrituração importou sem erro de hierarquia nem de QTD_LIN. As 16 advertências
+> são uma por linha `E` enviada: o PVA completa a descrição da linha pela tabela dinâmica da RFB, que o gerador manda vazia
+> por desenho (`|P200|8||…|`, `src/lib/ecf.ts`). Não impedem nada. Falta a **validação de conteúdo** do PVA (o relatório
+> acima é só da importação): é ela que confere a presunção e o IRPJ/CSLL que o PVA calcula a partir dessas receitas.
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
+
 ---
 
 ## Desfecho (marcar UM)
