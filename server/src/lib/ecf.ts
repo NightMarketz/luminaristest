@@ -507,15 +507,12 @@ export function buildEcfFile(input: EcfFileInput): string[] {
   blockP.push(buildBlockOpen('P001', true));
   for (const q of input.quarters) {
     blockP.push(buildP030(q.dtIni, q.dtFin, q.perApur));
-    // Linhas `E` de receita bruta — só quando > 0 (ocorrência 0:N).
-    if (q.servicoCents > 0) {
-      blockP.push(buildPLine('P200', P_LINE.servico.p200, q.servicoCents));
-      blockP.push(buildPLine('P400', P_LINE.servico.p400, q.servicoCents));
-    }
-    if (q.revendaCents > 0) {
-      blockP.push(buildPLine('P200', P_LINE.revenda.p200, q.revendaCents));
-      blockP.push(buildPLine('P400', P_LINE.revenda.p400, q.revendaCents));
-    }
+    // Linhas `E` de receita bruta — só quando > 0 (ocorrência 0:N). Todos os P200 do período antes dos P400:
+    // o PVA recusa P200 depois de P400 no mesmo P030 (L10 do RUNBOOK-H1).
+    if (q.servicoCents > 0) blockP.push(buildPLine('P200', P_LINE.servico.p200, q.servicoCents));
+    if (q.revendaCents > 0) blockP.push(buildPLine('P200', P_LINE.revenda.p200, q.revendaCents));
+    if (q.servicoCents > 0) blockP.push(buildPLine('P400', P_LINE.servico.p400, q.servicoCents));
+    if (q.revendaCents > 0) blockP.push(buildPLine('P400', P_LINE.revenda.p400, q.revendaCents));
   }
   blockP.push(buildBlockClose('P990', 0));
   blockP[blockP.length - 1] = buildBlockClose('P990', blockP.length);
