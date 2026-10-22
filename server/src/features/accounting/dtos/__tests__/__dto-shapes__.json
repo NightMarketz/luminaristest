@@ -849,6 +849,28 @@
                     }
                   ]
                 },
+                "ibsRecuperarAccountId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "cbsRecuperarAccountId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
                 "partnerAccountRef": {
                   "anyOf": [
                     {
@@ -6016,6 +6038,28 @@
             }
           ]
         },
+        "ibsRecuperarAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cbsRecuperarAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "partnerAccountRef": {
           "anyOf": [
             {
@@ -6565,6 +6609,28 @@
           ]
         },
         "cbsRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ibsRecuperarAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cbsRecuperarAccountId": {
           "anyOf": [
             {
               "type": "string",
@@ -7385,7 +7451,6 @@
         "DIVERGENCIA_DOC",
         "VENDA_SEM_DOCUMENTO",
         "DOCUMENTOS_SEM_GRUPO",
-        "CREDITOS_NAO_IMPLEMENTADOS_PR3",
         "CONFERENCIA_SEM_ALIQUOTA",
         "CONFERENCIA_SEM_BASE",
         "RECLASSIFICACAO_SERVICO",
@@ -7395,8 +7460,10 @@
         "CREDITO_NAO_APROPRIADO",
         "USO_CONSUMO_PESSOAL",
         "ANTECIPACAO_ART10",
+        "ANTECIPACAO_SEM_REDUCAO",
         "ACERTO_ART10",
         "PAGAMENTO_INDEVIDO_ART38",
+        "CBS_ALIQUOTA_PROVISORIA",
         "SPLIT_EXTINCAO",
         "CLASSE_PROVISORIA_P_IBS_4",
         "SALDO"
@@ -9215,6 +9282,55 @@
     }
   },
   "PayableDto.ts": {
+    "IbsCbsCreditLineSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "tributo": {
+          "type": "string",
+          "enum": [
+            "IBS",
+            "CBS"
+          ]
+        },
+        "accountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "amountCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "status": {
+          "type": "string",
+          "const": "PENDENTE"
+        },
+        "sourceDocumentId": {
+          "type": "null"
+        },
+        "usoConsumoCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "tributo",
+        "accountId",
+        "amountCents",
+        "status",
+        "sourceDocumentId"
+      ],
+      "additionalProperties": false
+    },
     "CreatePayableSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -9386,49 +9502,101 @@
           }
         },
         "recoverableTaxLines": {
-          "maxItems": 2,
+          "maxItems": 4,
           "type": "array",
           "items": {
-            "type": "object",
-            "properties": {
-              "accountId": {
-                "type": "string",
-                "minLength": 1
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "accountId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "amountCents": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "ICMS",
+                      "PIS_COFINS"
+                    ]
+                  },
+                  "baseCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "pisCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "cofinsCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  }
+                },
+                "required": [
+                  "accountId",
+                  "amountCents",
+                  "kind"
+                ],
+                "additionalProperties": false
               },
-              "amountCents": {
-                "type": "integer",
-                "exclusiveMinimum": 0,
-                "maximum": 2147483647
-              },
-              "kind": {
-                "type": "string",
-                "enum": [
-                  "ICMS",
-                  "PIS_COFINS"
-                ]
-              },
-              "baseCents": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 2147483647
-              },
-              "pisCents": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 2147483647
-              },
-              "cofinsCents": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 2147483647
+              {
+                "type": "object",
+                "properties": {
+                  "tributo": {
+                    "type": "string",
+                    "enum": [
+                      "IBS",
+                      "CBS"
+                    ]
+                  },
+                  "accountId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "amountCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "status": {
+                    "type": "string",
+                    "const": "PENDENTE"
+                  },
+                  "sourceDocumentId": {
+                    "type": "null"
+                  },
+                  "usoConsumoCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  }
+                },
+                "required": [
+                  "tributo",
+                  "accountId",
+                  "amountCents",
+                  "status",
+                  "sourceDocumentId"
+                ],
+                "additionalProperties": false
               }
-            },
-            "required": [
-              "accountId",
-              "amountCents",
-              "kind"
-            ],
-            "additionalProperties": false
+            ]
           }
         },
         "attachmentId": {
@@ -9477,6 +9645,43 @@
         "method",
         "paidAt",
         "amountCents"
+      ],
+      "additionalProperties": false
+    },
+    "ApropriarCreditoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "payableId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tributo": {
+          "type": "string",
+          "enum": [
+            "IBS",
+            "CBS"
+          ]
+        },
+        "sourceDocumentId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expectedStatus": {
+          "type": "string",
+          "const": "PENDENTE"
+        }
+      },
+      "required": [
+        "unitId",
+        "payableId",
+        "tributo",
+        "sourceDocumentId",
+        "expectedStatus"
       ],
       "additionalProperties": false
     },

@@ -96,6 +96,36 @@ const recoverableTaxLine = z
     }
   });
 
+/**
+ * IBS-CBS-2027 PR-3 (BRIEF item 14; F-IBS-4 a; dono 21/10 "razão completo"): crédito de IBS/CBS da NF-e de entrada — D conta
+ * de IBS/CBS a recuperar no MESMO entry, nasce `PENDENTE` (a apropriação, item 16, tem rota própria — F-IBS-12 a). Só no
+ * regime regular, desde 2027 (LC 214 art. 47). `amountCents` = 0 com `usoConsumoCents` > 0 quando todo o IBS/CBS da nota é
+ * de uso/consumo pessoal (art. 57, item 15): a linha só guarda a memória e não vira lançamento.
+ */
+export const IbsCbsCreditLineSchema = z
+  .object({
+    tributo: z.enum(['IBS', 'CBS']),
+    accountId: z.string().min(1).nullable(),
+    amountCents: z.number().int().min(0).max(MAX_CENTS),
+    status: z.literal('PENDENTE'),
+    sourceDocumentId: z.null(),
+    usoConsumoCents: z.number().int().min(0).max(MAX_CENTS).optional(),
+  })
+  .strict()
+  .superRefine((l, ctx) => {
+    if (l.amountCents > 0 && l.accountId === null) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: `crédito de ${l.tributo} > 0 exige a conta de ${l.tributo} a recuperar.`, path: ['accountId'] });
+    }
+    if (l.amountCents === 0 && !l.usoConsumoCents) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: `linha de ${l.tributo} sem crédito nem uso/consumo — omita a linha.`, path: ['amountCents'] });
+    }
+  });
+
+/** X6 (linha por `kind`) ∪ IBS/CBS (linha por `tributo`) — união, o formato X6 não muda (BRIEF §4.2). */
+const recoverableTaxLineUnion = z.union([recoverableTaxLine, IbsCbsCreditLineSchema]);
+export type RecoverableTaxLineInput = z.infer<typeof recoverableTaxLineUnion>;
+export const isIbsCbsCreditLine = (l: RecoverableTaxLineInput): l is z.infer<typeof IbsCbsCreditLineSchema> => 'tributo' in l;
+
 const inventoryItem = z
   .object({
     productRef: z.string().min(1),
@@ -166,7 +196,8 @@ export const CreatePayableSchema = z
     // X6 F-X6-8 (a): só com inventoryMultiItem; `amountCents` (o que se deve ao fornecedor) = Σ itens (estoque
     // líquido) + Σ fixedAssetItems (imobilizado) + Σ recoverableTaxLines (créditos). Ausente = comportamento
     // anterior (Σ itens === amountCents).
-    recoverableTaxLines: z.array(recoverableTaxLine).max(2).optional(),
+    // IBS-CBS-2027 PR-3 (item 14): até 2 linhas X6 (ICMS, PIS_COFINS) + 1 por tributo de IBS/CBS.
+    recoverableTaxLines: z.array(recoverableTaxLineUnion).max(4).optional(),
     attachmentId: z.string().min(1).optional(),
   })
   .strict()
@@ -186,6 +217,12 @@ export const CreatePayableSchema = z
     const hasFixedAssetItems = val.fixedAssetItems != null && val.fixedAssetItems.length > 0;
     const hasInsumoItems = val.insumoItems != null && val.insumoItems.length > 0;
 
+    // IBS-CBS-2027 PR-3 (item 14): no máximo uma linha por kind X6 e uma por tributo.
+    const lineKeys = (val.recoverableTaxLines ?? []).map((l) => (isIbsCbsCreditLine(l) ? `tributo:${l.tributo}` : `kind:${l.kind}`));
+    if (new Set(lineKeys).size !== lineKeys.length) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'recoverableTaxLines: linha repetida (um kind X6 ou um tributo IBS/CBS por linha).', path: ['recoverableTaxLines'] });
+      return;
+    }
     // Mode 3 — multi-item NF-e purchase: the flag is set; items required; NO expense / single-SKU fields.
     if (!isMultiItem && val.recoverableTaxLines && val.recoverableTaxLines.length > 0) {
       ctx.addIssue({
@@ -346,6 +383,22 @@ export const RegisterPaymentSchema = z
  *         reversalDate: { type: string, description: "Data-only YYYY-MM-DD do estorno do reconhecimento (gate de período na data do estorno, T5)" }
  *         reason:       { type: string }
  */
+/**
+ * IBS-CBS-2027 PR-3 (BRIEF item 16, §4.2 `ApropriarCreditoSchema`; F-IBS-4 a, F-IBS-12 a): `PENDENTE → APROPRIADO` do
+ * crédito de IBS/CBS de uma nota, com o comprovante da extinção (`SourceDocument` do escopo) obrigatório e CAS no status.
+ * `unitId` = escopo de escrita, como nos outros comandos de AP; `payableId` = o `:id` da rota (divergente ⇒ 400).
+ */
+export const ApropriarCreditoSchema = z
+  .object({
+    unitId: z.string().min(1),
+    payableId: z.string().min(1),
+    tributo: z.enum(['IBS', 'CBS']),
+    sourceDocumentId: z.string().min(1),
+    expectedStatus: z.literal('PENDENTE'),
+  })
+  .strict();
+export type ApropriarCreditoInput = z.infer<typeof ApropriarCreditoSchema>;
+
 export const CancelPayableSchema = z
   .object({
     unitId: z.string().min(1),
