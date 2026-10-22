@@ -6083,39 +6083,6 @@
       }
     },
     "/api/dashboard-layout/{id}": {
-      "get": {
-        "summary": "Get a dashboard layout by ID",
-        "tags": [
-          "DashboardLayout"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "cuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Layout"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          }
-        }
-      },
       "patch": {
         "summary": "Update a dashboard layout",
         "tags": [
@@ -27280,44 +27247,6 @@
           },
           "409": {
             "$ref": "#/components/responses/UnitDeleted"
-          }
-        }
-      }
-    },
-    "/api/reports/generate-chart-data": {
-      "post": {
-        "summary": "Generate chart data via Server-Sent Events stream",
-        "tags": [
-          "Reports"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "SSE stream of progress events and final chart data",
-            "content": {
-              "text/event-stream": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
           }
         }
       }
