@@ -10,7 +10,6 @@ jest.mock('@/features/documents/services/DocumentProcessingService', () => ({
   DocumentProcessingService: jest.fn().mockImplementation(() => ({ extractText: jest.fn().mockResolvedValue('abcdefgh') })),
 }));
 
-// eslint-disable-next-line import/first -- os mocks acima valem no import
 import { computeTokenCost } from '@/controllers/documentsController';
 
 const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';

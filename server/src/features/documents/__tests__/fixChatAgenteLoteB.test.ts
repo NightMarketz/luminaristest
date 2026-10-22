@@ -30,7 +30,6 @@ jest.mock('@/controllers/documentsController', () => {
   };
 });
 
-// eslint-disable-next-line import/first -- os mocks acima valem no import
 import documentRoutes from '@/routes/documents';
 import { initializeQdrant } from '@/lib/vector/qdrant-initializer';
 import { extractStructuredDataFromExcel } from '@/lib/vector/extractors/ExcelStructuredExtractor';
