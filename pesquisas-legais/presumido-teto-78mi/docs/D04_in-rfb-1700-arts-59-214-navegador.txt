@@ -1,0 +1,18 @@
+IN RFB nº 1.700/2017 — lida em 2026-10-22 no navegador embutido (normasinternet2.receita.fazenda.gov.br/#/consulta/externa/81268,
+visão padrão "Multivigente"; o download automático [D04] trouxe só a casca JS da página). Trechos literais:
+
+Art. 59. São obrigadas ao regime de tributação do IRPJ com base no lucro real as pessoas jurídicas:
+I - cuja receita total no ano-calendário anterior tenha excedido o limite de R$ 78.000.000,00 (setenta e oito milhões de reais) ou de R$ 6.500.000,00 (seis milhões e quinhentos mil reais) multiplicado pelo número de meses de atividade no período, quando inferior a 12 (doze) meses;
+[II–VII: atividades financeiras, lucros do exterior, benefício fiscal, estimativa mensal, factoring, securitização]
+§ 1º Considera-se receita total o somatório:
+I - da receita bruta mensal;
+II - dos ganhos líquidos obtidos em operações realizadas em bolsa de valores, de mercadorias e futuros e em mercado de balcão organizado;
+III - dos rendimentos produzidos por aplicações financeiras de renda fixa e de renda variável;
+IV - das demais receitas e ganhos de capital;
+V - das parcelas de receitas auferidas nas exportações às pessoas vinculadas ou aos países com tributação favorecida que excederem o valor já apropriado na escrituração da empresa, na forma prevista na Instrução Normativa RFB nº 1.312, de 28 de dezembro de 2012; e
+VI - dos juros sobre o capital próprio que não tenham sido contabilizados como receita, conforme disposto no parágrafo único do art. 76.
+
+Art. 214. As pessoas jurídicas não enquadradas nas disposições contidas no art. 59, cuja receita total no ano-calendário anterior tenha sido igual ou inferior a R$ 78.000.000,00 (setenta e oito milhões de reais) ou a R$ 6.500.000,00 (seis milhões e quinhentos mil reais) multiplicado pelo número de meses de atividade no ano-calendário anterior, quando for inferior a 12 (doze) meses, poderão optar pelo regime de tributação com base no lucro presumido.
+§ 1º Sem prejuízo do disposto no art. 236, a opção pela tributação com base no lucro presumido será aplicada em relação a todo o período de atividade da empresa em cada ano-calendário.
+§ 2º A opção de que trata este artigo será manifestada com o pagamento da 1ª (primeira) ou única quota do IRPJ devido correspondente ao 1º (primeiro) período de apuração de cada ano-calendário.
+§ 3º A pessoa jurídica que houver iniciado atividade a partir do 2º (segundo) trimestre manifestará a opção de que trata este artigo com o pagamento da 1ª (primeira) ou única quota do IRPJ devido relativa ao período de apuração do início de atividade.
