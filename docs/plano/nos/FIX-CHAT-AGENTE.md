@@ -13,7 +13,7 @@ prs: ["#835", "#836"]
 # FIX-CHAT-AGENTE — Chat, agente ERP e documentos: role system injetável no histórico, agente sem memória, documento preso em PROCESSING, propostas sem TTL, PII em log…
 
 **Estado:** `inflight` — Lote A (§3.3 #2 #3 #5 #8 #13 #14 #22) corrigido — 10 guardas verdes; #6 não reproduz como descrito (watchdog R18 já tira de PROCESSING em ≤15 min; reprocessar exige guardar os bytes = decisão do dono); parte 'COMPLETED com erro silencioso' do #14 = decisão do dono. Lote B (#9 #12 #15 #21 #23) corrigido — 8 guardas verdes; #10, #11 (= G1 do BE-INCR-DT-NO-CONSUMER-CALLS), #16 e a metade R26 do #9 = decisão do dono. Pendente: lote C  
-**Autorização:** dono, chat, 2026-10-21 — instrumentar e corrigir §3.3 em lotes de até 8 itens por PR, sem merge; 2026-10-22 — os 22 restantes em série  
+**Autorização:** dono, chat, 2026-10-21 — instrumentar e corrigir §3.3 em lotes de até 8 itens por PR, sem merge; 2026-10-22 — os 22 restantes em série ([[D-2026-10-22-FIX-AUTH-CHAT-DASHBOARD]])  
 **Depende de:** —  
 **Origem:** [[D-2026-10-19-ACHADOS-NA-FILA]] · achados em [`ACHADOS-2026-10-19`](../../operating-manual/ACHADOS-2026-10-19-DYNAMICTABLE-E-MODULOS-ANTIGOS.md)
 
