@@ -2,7 +2,6 @@ import { Router } from 'express';
 import {
   listLayouts,
   createLayout,
-  getLayoutById,
   updateLayout,
   activateLayout,
   deleteLayout,
@@ -15,9 +14,6 @@ router.get('/', listLayouts);
 
 // POST /api/dashboard-layout
 router.post('/', createLayout);
-
-// GET /api/dashboard-layout/:id
-router.get('/:id', getLayoutById);
 
 // PATCH /api/dashboard-layout/:id
 router.patch('/:id', updateLayout);
