@@ -1,7 +1,9 @@
 # BE-INCR-ECF-Y600 — registro Y600 (sócios, titular, dirigentes) na ECF (BRIEF)
 
-> **Sessão:** `sessao-planejamento`, sem código. Nenhum fork se auto-ratifica: todos os F-Y600-n abaixo estão
-> **RATIFICAÇÃO PENDENTE**.
+> **Sessão:** `sessao-planejamento`, sem código. Nenhum fork se auto-ratificou.
+> **[EMENDA 2026-10-22 — FORKS RATIFICADOS]** Dono, chat, 2026-10-22: *"Ratifico F-Y600-1..10 nas recomendações (a)."*
+> Registro em [`D-2026-10-22-ECF-Y600-FORKS`](../plano/decisoes/D-2026-10-22-ECF-Y600-FORKS.md). O checklist do §2 já
+> segue as recomendações e vale como está. **A ratificação não dá `executa`:** a `sessao-feature` exige autorização própria.
 > **Item:** L11 do H1 (`docs/accounting/RUNBOOK-H1-PVA.md`, passo 6, "Tentativa 2 — validação", tabela de diagnóstico,
 > linha **L11**; PR #837, branch `claude/h1-l10-ecf-ordem-bloco-p`, ainda sem merge).
 > **Autorização (dono, chat, 2026-10-22):** *"Pausa o passo 6 do H1 até haver ECD assinada (M2 ou 1º cliente) e
@@ -73,8 +75,8 @@ os campos que só a ECF usa, no mesmo padrão transiente do declarante e dos sig
 
 ## 2. Checklist de comportamentos
 
-Cada item é testável sozinho. Os marcados *(F-Y600-n)* dependem do fork; o texto segue a **recomendação** e muda se o
-dono escolher outro caminho.
+Cada item é testável sozinho. Os marcados *(F-Y600-n)* vêm do fork indicado; o texto segue a recomendação (a), que o
+dono ratificou em 22/10.
 
 ### 2.1 Serializador (`lib/ecf.ts`, função pura)
 
@@ -129,7 +131,7 @@ dono escolher outro caminho.
     "Allowlist de auditoria (PII)"); se ganhar algo, só a contagem de Y600, e o campo novo entra na allowlist com teste
     na mesma mudança. Teste: o payload auditado não contém o `taxId` do sócio.
 
-### 2.4 Real *(F-Y600-1, recomendação (a))*
+### 2.4 Real *(F-Y600-1 → (a), ratificado)*
 
 13. `ecfReal.ts` usa o mesmo `buildY600` e a mesma ordem (item 3) e tira o Y de `EMPTY_BLOCKS_AFTER_N`;
     `SpedEcfRealDto` ganha `socios`/`dirigentes` pelos schemas do item 7; `SpedEcfRealGenerationService` lê o cadastro
@@ -227,7 +229,7 @@ export function buildY600(r: Y600Row): string;
 Erros novos (400, `ValidationError`): `ECF_Y600_SEM_SOCIOS`, `ECF_Y600_COMPLEMENTO_FALTANDO` (lista de `partnerId`),
 `ECF_Y600_PARTNER_FORA_DO_ANO`, `ECF_Y600_PAIS_INCOERENTE`, `ECF_Y600_QUALIF_INCOERENTE`, `ECF_Y600_LIMITE`.
 
-## 4. Forks — RATIFICAÇÃO PENDENTE
+## 4. Forks — RATIFICADOS em 2026-10-22, todos em (a) ([`D-2026-10-22-ECF-Y600-FORKS`](../plano/decisoes/D-2026-10-22-ECF-Y600-FORKS.md))
 
 | Fork | Pergunta | Caminhos | Recomendação |
 |---|---|---|---|
