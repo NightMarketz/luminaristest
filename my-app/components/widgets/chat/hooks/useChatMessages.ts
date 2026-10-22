@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Message, BackendMessage } from '../types/chat.types';
+import { Message, BackendMessage, ChatProposal } from '../types/chat.types';
 import { ChatService } from '@/lib/services/chat.service';
 
 /** Reply payload of POST /chat as this hook reads it. */
@@ -7,6 +7,8 @@ interface ChatReply {
   response?: string;
   answer?: string;
   content?: string;
+  type?: 'TEXT' | 'ACTION_PROPOSAL';
+  proposal?: ChatProposal;
 }
 
 const SCROLL_BEHAVIOR = 'smooth' as const;
@@ -28,7 +30,7 @@ interface UseChatMessagesProps {
  */
 interface UseChatMessagesReturn {
   /** Função para processar e enviar uma nova mensagem. Recebe o valor do input. */
-  handleSendMessage: (inputValue: string) => Promise<void>;
+  handleSendMessage: (inputValue: string, confirmedProposalId?: string) => Promise<void>;
   /** Booleano indicando se uma mensagem está atualmente sendo enviada. */
   isSendingMessage: boolean;
   /** Mensagem de erro relacionada ao envio da última mensagem. Null se não houver erro. */
@@ -84,10 +86,10 @@ export function useChatMessages({
    * Adiciona a mensagem do usuário à UI optimisticamente, envia para a API,
    * e então adiciona a resposta do assistente ou uma mensagem de erro.
    */
-  const handleSendMessage = useCallback(async function handleSendMessage(inputValue: string) {
+  const handleSendMessage = useCallback(async function handleSendMessage(inputValue: string, confirmedProposalId?: string) {
     const trimmedInput = inputValue.trim();
-    // Não envia se não houver input, se já estiver enviando, ou se a instância não estiver pronta.
-    if (!trimmedInput || isSendingMessage || !chatInstanceId || isInstanceLoading) return;
+    // Não envia se não houver input (nem proposta a confirmar), se já estiver enviando, ou se a instância não estiver pronta.
+    if ((!trimmedInput && !confirmedProposalId) || isSendingMessage || !chatInstanceId || isInstanceLoading) return;
 
     // Safeguard: Prevent sending if chatInstanceId looks like a temporary frontend ID
     if (chatInstanceId.startsWith('new-chat-')) {
@@ -115,9 +117,10 @@ export function useChatMessages({
       // Rejects with the server `message`, or `Falha ao enviar mensagem (status N)`.
       // The service unwraps { success, data } and falls back to the raw body.
       const payload = await ChatService.sendMessage<ChatReply>({
-        query: trimmedInput,
+        query: confirmedProposalId ? (trimmedInput || '[Confirmado]') : trimmedInput,
         chatInstanceId: chatInstanceId,
         documentIds: selectedDocumentIds,
+        confirmedProposalId,
       });
       const responseContent = payload.response || payload.answer || payload.content || 'Não foi possível obter uma resposta';
 
@@ -125,6 +128,8 @@ export function useChatMessages({
         role: 'assistant',
         content: responseContent,
         timestamp: Date.now(),
+        type: payload.type,
+        proposal: payload.proposal,
       };
       setMessages(prevMessages => [...prevMessages, assistantMessage]);
     } catch (error: unknown) {

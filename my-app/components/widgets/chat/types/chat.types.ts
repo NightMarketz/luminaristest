@@ -4,6 +4,17 @@ export interface Message {
   content: string;
   timestamp?: number;
   name?: string;
+  /** Resposta do agente que pede confirmação (`ACTION_PROPOSAL`) e a proposta que o modal mostra. */
+  type?: 'TEXT' | 'ACTION_PROPOSAL';
+  proposal?: ChatProposal;
+}
+
+export interface ChatProposal {
+  id: string;
+  action: 'CREATE' | 'UPDATE' | 'DELETE';
+  tableName: string;
+  tableLabel: string;
+  data: Record<string, unknown>;
 }
 
 export interface BackendMessage {

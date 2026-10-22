@@ -47,7 +47,11 @@ function makeService() {
     getProposal: jest.fn(),
   };
   const graph = { getGraphPrompt: jest.fn().mockResolvedValue('GRAPH PROMPT') };
-  const messages = { createMessage: jest.fn().mockResolvedValue(undefined), appendAssistantMessage: jest.fn().mockResolvedValue(undefined) };
+  const messages = {
+    createMessage: jest.fn().mockResolvedValue(undefined),
+    appendAssistantMessage: jest.fn().mockResolvedValue(undefined),
+    getMessagesByInstance: jest.fn().mockResolvedValue({ messages: [], total: 0 }),
+  };
 
   const service = new ChatService(
     embedding as any, vector as any, openai as any, agent as any, graph as any, messages as any
@@ -114,11 +118,12 @@ describe('Agent mode (no documentIds)', () => {
 
   it('a tool that refuses with an AgentToolError lets the turn fall through to a text answer (F-I11-3 a)', async () => {
     const { service, openai, agent } = makeService();
-    openai.getChatCompletionWithToolsAndHistory.mockResolvedValue({
-      tool_calls: [{ id: 't1', function: { name: 'request_record_creation', arguments: '{"tableId":"tbl","data":{"a":1}}' } }],
-    });
+    openai.getChatCompletionWithToolsAndHistory
+      .mockResolvedValueOnce({
+        tool_calls: [{ id: 't1', function: { name: 'request_record_creation', arguments: '{"tableId":"tbl","data":{"a":1}}' } }],
+      })
+      .mockResolvedValueOnce({ content: 'Você não tem permissão nessa tabela.', tool_calls: [] });
     agent.handleToolCall.mockResolvedValue({ error: 'SEM_PERMISSAO', message: 'sem permissão' });
-    openai.getChatCompletionWithHistory.mockResolvedValue('Você não tem permissão nessa tabela.');
 
     const res = await service.generateResponse({ query: 'create a sale', user });
 
@@ -126,7 +131,7 @@ describe('Agent mode (no documentIds)', () => {
     expect(res.answer).toBe('Você não tem permissão nessa tabela.');
     expect(agent.getProposal).not.toHaveBeenCalled();
     // The refusal reaches the model as the tool message, so it can explain it.
-    const messagesSent = openai.getChatCompletionWithHistory.mock.calls[0][0];
+    const messagesSent = openai.getChatCompletionWithToolsAndHistory.mock.calls[1][0];
     expect(messagesSent[messagesSent.length - 1]).toMatchObject({ role: 'tool', tool_call_id: 't1', content: JSON.stringify({ error: 'SEM_PERMISSAO', message: 'sem permissão' }) });
   });
 });
@@ -183,15 +188,16 @@ describe('token usage per assistant message (I11 PR-3)', () => {
 
   it('agent turn with a tool: gpt-4o + gpt-3.5 calls are summed and kept per call', async () => {
     const { service, openai, agent, messages } = makeService();
-    openai.getChatCompletionWithToolsAndHistory.mockImplementation(async (_m: unknown, _t: unknown, _model: unknown, onUsage: OnUsage) => {
-      onUsage(gpt4o);
-      return { tool_calls: [{ id: 't1', function: { name: 'list_my_tables', arguments: '{}' } }] };
-    });
+    openai.getChatCompletionWithToolsAndHistory
+      .mockImplementationOnce(async (_m: unknown, _t: unknown, _model: unknown, onUsage: OnUsage) => {
+        onUsage(gpt4o);
+        return { tool_calls: [{ id: 't1', function: { name: 'list_my_tables', arguments: '{}' } }] };
+      })
+      .mockImplementationOnce(async (_m: unknown, _t: unknown, _model: unknown, onUsage: OnUsage) => {
+        onUsage(gpt35);
+        return { content: 'Você tem 0 tabelas.', tool_calls: [] };
+      });
     agent.handleToolCall.mockResolvedValue([]);
-    openai.getChatCompletionWithHistory.mockImplementation(async (_m: unknown, _model: unknown, onUsage: OnUsage) => {
-      onUsage(gpt35);
-      return 'Você tem 0 tabelas.';
-    });
 
     await service.generateResponse({ query: 'tabelas?', chatInstanceId: 'ci_1', user });
 
