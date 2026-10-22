@@ -1119,6 +1119,86 @@ EVIDÊNCIA: [nome do arquivo + primeiras linhas do 0000, tarjadas]
 >
 > DESFECHO: [dono]   ASSINATURA: [dono]
 
+> **Tentativa 2 — 2026-10-22, depois da correção do L10 (#837, branch `claude/h1-l10-ecf-ordem-bloco-p` em `62c9d255`).**
+> Preenchida pelo agente sob comando do dono no chat (2026-10-22: *"faz o backup do dev.db real, aplica a migração nova, sobe
+> o build deste branch, regera a ECF do passo 5 e preenche a EVIDÊNCIA com a saída literal"*). Banco
+> `server/prisma/prisma/dev.db` (real), mesmo `DATABASE_URL` absoluto; backend na porta 3101 (a 3001 segue com o servidor de
+> outra sessão). Mesmo P6 da tentativa 1, sem alteração.
+>
+> 1. Backup. A WAL tinha 82.432 bytes (o backend anterior foi encerrado à força, sem checkpoint), então a cópia byte a byte
+> do `dev.db` sozinha ficaria incompleta. Ela foi descartada, e o backup foi feito pela API do SQLite (origem só leitura,
+> lê a WAL):
+>
+> ```text
+> -rw-r--r-- 1 smurf 197609   82432 Oct 22 01:58 C:/Users/smurf/Downloads/Luminaris/server/prisma/prisma/dev.db-wal
+> integrity ok
+> jobs ECF no backup: 1
+> migracoes: 114
+> -rw-r--r-- 1 smurf 197609 9326592 Oct 22 02:04 C:/Users/smurf/Downloads/Luminaris/server/prisma/prisma/dev-20261022-pre-h1-ecf-t2.db
+> 7c293dedb5675a46a12cca89a0bd0e4a5b115133dc0c47c9088ad201f33a9707 *C:/Users/smurf/Downloads/Luminaris/server/prisma/prisma/dev-20261022-pre-h1-ecf-t2.db
+> ```
+>
+> 2. `npx prisma migrate deploy` (exit 0) e conferência:
+>
+> ```text
+> Datasource "db": SQLite database "dev.db" at "file:C:/Users/smurf/Downloads/Luminaris/server/prisma/prisma/dev.db"
+> 115 migrations found in prisma/migrations
+> Applying migration `20261021130000_add_consumption_tax_assessments`
+> The following migration(s) have been applied:
+> All migrations have been successfully applied.
+> integrity ok | fk 0 | migracoes 115
+> ```
+>
+> 3. Build do `server` em `62c9d255` (`npm run build`, exit 0); a correção está no `dist`:
+>
+> ```text
+> 177:            blockP.push(buildPLine('P200', exports.P_LINE.revenda.p200, q.revendaCents));
+> 179:            blockP.push(buildPLine('P400', exports.P_LINE.servico.p400, q.servicoCents));
+> Luminaris Server running on http://localhost:3101
+> {"status":"degraded","uptime":6.9528651,"checks":{"database":"ok","qdrant":"error"}}
+> ```
+>
+> 4. Geração (saída literal) e o bloco P do arquivo:
+>
+> ```text
+> POST /accounting/sped/ecf/generate → HTTP 201
+>   job cmvj2v1gv0000ci2k61c4ku45 · EXPORT_SPED_ECF · EXPORTED · fileName ecf_08845676XXXXXX_2025.txt · sizeBytes 2102
+>   sha256 4ef7345d3fe5ca43711b5ae2288debe74d193d4d763d5e37fde5b86be8871e1c · totalRows 109
+> GET /accounting/data-exchange/jobs/cmvj2v1gv0000ci2k61c4ku45/download?unitId=… → HTTP 200 · text/plain
+>   2102 bytes · 109 linhas · CRLF · 0 byte(s) de controle · 3 bytes > 0x7F (Latin-1) · sha256 4ef7345d3fe5ca43711b5ae2288debe74d193d4d763d5e37fde5b86be8871e1c
+> |0000|LECF|0012|08845676XXXXXX|CORPÓREOS - SERVIÇOS TERAPÊUTICOS S.A.|0|0|||01012025|31122025|N||0||
+> |0010||N|5|T|01|PPPP||C||||2|
+>  23 |P001|0|
+>  24 |P030|01012025|31032025|T01|
+>  25 |P200|8||37671,94|
+>  26 |P200|4||9112,00|
+>  27 |P400|4||37671,94|
+>  28 |P400|2||9112,00|
+>  29 |P030|01042025|30062025|T02|
+>  30 |P200|8||44430,38|
+>  31 |P200|4||7312,37|
+>  32 |P400|4||44430,38|
+>  33 |P400|2||7312,37|
+>  34 |P030|01072025|30092025|T03|
+>  35 |P200|8||37838,21|
+>  36 |P200|4||16006,73|
+>  37 |P400|4||37838,21|
+>  38 |P400|2||16006,73|
+>  39 |P030|01102025|31122025|T04|
+>  40 |P200|8||42547,37|
+>  41 |P200|4||16508,86|
+>  42 |P400|4||42547,37|
+>  43 |P400|2||16508,86|
+>  44 |P990|22|
+> registros: 9001 9900×46 9990 9999 0000 0001 0010 0020 0030 0930×2 0990 C001 C990 E001 E990 J001 J990 K001 K990 L001 L990 M001 M990 N001 N990 P001 P030×4 P200×8 P400×8 P990 Q001 Q990 S001 S990 T001 T990 U001 U990 V001 V990 W001 W990 X001 X990 Y001 Y990
+> ```
+>
+> Em cada P030, os dois P200 vêm antes dos dois P400; valores, contagens e tamanho iguais aos da tentativa 1. Para o
+> passo 6: excluir antes a ECF da tentativa 1 da base do PVA da ECF. Arquivo para importar:
+> `C:\Users\smurf\Downloads\H1-PVA\ecf_08845676000198_2025-tentativa2.txt` (não abra nem salve em editor).
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
+
 ### 6. Importar a ECF no PVA
 
 Abra o PVA da ECF → importar o `.txt`. Anote cada crítica com o código do registro.
