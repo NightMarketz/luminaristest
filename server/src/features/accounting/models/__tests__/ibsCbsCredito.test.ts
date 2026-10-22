@@ -4,6 +4,8 @@
  */
 import type { LinhaLegal } from '../../../legalParameters/models/legalParameter';
 import { creditoIbsCbsEntrada, listaUsoConsumoDe, usoConsumoDoNcm, type ItemEntradaIbsCbs } from '../ibsCbsCredito';
+import { tabelaProvisoriaCbsDe } from '../ibsCbsParams';
+import { erroDeFormato } from '../../../legalParameters/models/formatoLinha';
 
 const linha = (over: Partial<LinhaLegal>): LinhaLegal => ({
   id: 'l1', tabela: 'IBS_CBS_USO_CONSUMO', chave: '2203', discriminador: null, valorInt: null, valorTexto: null, valorJson: null,
@@ -60,5 +62,24 @@ describe('item 15 — lista de uso/consumo pessoal (prefixo de NCM, dono 21/10)'
 
   it('chave fora do formato de NCM ⇒ erro (dado corrompido, nunca casa em silêncio)', () => {
     expect(() => listaUsoConsumoDe([linha({ chave: 'BEBIDAS' })])).toThrow(/prefixo de NCM/);
+  });
+});
+
+// IBS-CBS-2027 PR-3: formato das linhas das tabelas novas (o operador publica pelo fluxo LEGAL-PARAMS) e leitura da provisória.
+describe('formato de IBS_CBS_USO_CONSUMO e IBS_CBS_PROVISORIA', () => {
+  it('uso/consumo: chave = prefixo de NCM com descrição; provisória: CBS/ALIQUOTA em bp', () => {
+    expect(erroDeFormato({ tabela: 'IBS_CBS_USO_CONSUMO', chave: '2203', valorTexto: 'bebidas alcoólicas (art. 57 I c)' })).toBeNull();
+    expect(erroDeFormato({ tabela: 'IBS_CBS_USO_CONSUMO', chave: 'CAFE', valorTexto: 'x' })).not.toBeNull();
+    expect(erroDeFormato({ tabela: 'IBS_CBS_PROVISORIA', chave: 'CBS', discriminador: 'ALIQUOTA', valorInt: 880 })).toBeNull();
+    expect(erroDeFormato({ tabela: 'IBS_CBS_PROVISORIA', chave: 'IBS', discriminador: 'ALIQUOTA', valorInt: 880 })).not.toBeNull();
+    expect(erroDeFormato({ tabela: 'IBS_CBS_PROVISORIA', chave: 'CBS', discriminador: 'ALIQUOTA', valorInt: 0 })).not.toBeNull();
+  });
+
+  it('tabelaProvisoriaCbsDe lê só PUBLISHED da tabela provisória', () => {
+    const p = tabelaProvisoriaCbsDe([
+      linha({ id: 'p1', tabela: 'IBS_CBS_PROVISORIA', chave: 'CBS', discriminador: 'ALIQUOTA', valorInt: 880 }),
+      linha({ id: 'p2', tabela: 'IBS_CBS_PROVISORIA', chave: 'CBS', discriminador: 'ALIQUOTA', valorInt: 900, status: 'DRAFT' }),
+    ]);
+    expect(p.map((x) => x.aliquotaBp)).toEqual([880]);
   });
 });

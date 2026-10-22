@@ -6,12 +6,16 @@
  * - Pagamento antes do fornecimento ⇒ antecipação na data de cada parcela: base = parcela paga; alíquota da data do
  *   documento ou do pagamento, o que vier primeiro (LC 214 art. 10 § 4º [D03]; Dec. 12.955 art. 11 § 5º [D04 do dossiê
  *   verif-2026-10-21-ibs-cbs-pr3]). Hipótese dos 5 dias (§ 7º) não aplicada.
- * - Alíquota de referência cheia + aviso `ANTECIPACAO_SEM_REDUCAO` (dono 21/10): a tabela não tem as reduções por
- *   `cClassTrib`. Sem linha publicada ⇒ 400 nomeado (F-IBS-11: a antecipação precisa da alíquota).
- * - Acerto no consumo, literal do item 18 (dono 21/10): base = total do fornecimento; valor definitivo − antecipado da
- *   mesma porção (FIFO por cliente × pacote): a maior ⇒ débito (`ACERTO_ART10_n`); a menor ⇒ aviso
- *   `PAGAMENTO_INDEVIDO_ART38_n`, sem restituição automática. Vencimento sem uso ou cancelamento ⇒ aviso das regras do
- *   cancelamento, sem débito (invariante §10.6).
+ * - Venda de pacote com documento fiscal autorizado (pacoteFatoGerador VENDA): o documento é o "documento fiscal que
+ *   corresponda ao pagamento" (§ 5º I a 2) e o débito dele já entra (DEBITO_DOC) — sem linha de antecipação a mais (dono 22/10).
+ * - Alíquota de referência cheia + aviso `ANTECIPACAO_SEM_REDUCAO` (dono 21/10 e 22/10): a lei reduz a saúde em 60% (LC 214
+ *   art. 130 [D03]) e o decreto manda a alíquota "aplicável à operação" [D04], mas o produto não tem a redução por serviço do
+ *   pacote — lacuna registrada; a dedução no consumo devolve a diferença. CBS sem linha publicada: a prévia usa a taxa
+ *   PROVISÓRIA (`IBS_CBS_PROVISORIA`, aviso `CBS_ALIQUOTA_PROVISORIA`) quando houver; sem ela, 400 nomeado (F-IBS-11).
+ * - No fornecimento (§ 5º II [D04]; dono 22/10): consumo COM documento autorizado ⇒ a NFS-e do consumo entra cheia e a
+ *   antecipação da porção é deduzida (`ACERTO_ART10_n` negativo, até o definitivo; o excedente ⇒ `PAGAMENTO_INDEVIDO_ART38_n`);
+ *   consumo SEM documento ⇒ só a diferença de alíquota (a maior = débito; a menor = aviso). FIFO por cliente × pacote.
+ *   Vencimento sem uso ou cancelamento ⇒ aviso das regras do cancelamento, sem débito (invariante §10.6).
  */
 import { SemLinhaVigenteError } from '../../legalParameters/models/legalParameter';
 import { parametroIbsCbsVigente, type ParametroIbsCbs, type TributoConsumo } from './ibsCbsParams';
@@ -54,12 +58,18 @@ export interface AntecipacaoInput {
   pagamentoDaVenda: Readonly<Record<string, { pagoEm: string; dataDocumento: string | null }>>;
   /** Vendas de pacote cujo lançamento de origem foi estornado no mês (cancelamento). */
   cancelamentos: readonly { saleId: string; dia: string }[];
+  /** Vendas de consumo (movimento `debit`) do mês que têm documento fiscal autorizado — a nota declara o definitivo. */
+  consumosComDocumento?: readonly string[];
+  /** Taxa PROVISÓRIA da CBS (`tabelaProvisoriaCbsDe`), só para a prévia; ausente = sem fallback. */
+  tabelaProvisoria?: readonly ParametroIbsCbs[];
 }
 
 export interface ResultadoAntecipacao {
-  /** Antecipações + acertos a maior do mês (somam ao débito da apuração). */
+  /** Antecipações + acertos do mês (somam ao débito da apuração; a dedução no consumo entra negativa). */
   debitosCents: bigint;
   memoria: MemoriaLinha[];
+  /** Alguma alíquota veio da tabela PROVISÓRIA — a confirmação recusa (dono 22/10). */
+  provisoria: boolean;
 }
 
 export const MEMORIA_ANTECIPACAO = {
@@ -67,7 +77,12 @@ export const MEMORIA_ANTECIPACAO = {
   ANTECIPACAO_SEM_REDUCAO: 'ANTECIPACAO_SEM_REDUCAO',
   ACERTO_ART10: 'ACERTO_ART10',
   PAGAMENTO_INDEVIDO_ART38: 'PAGAMENTO_INDEVIDO_ART38',
+  CBS_ALIQUOTA_PROVISORIA: 'CBS_ALIQUOTA_PROVISORIA',
 } as const;
+
+/** Aviso do texto do dono (22/10) quando a prévia usa a taxa provisória da CBS. */
+export const CBS_RATE_PENDING_SENATE_RES = 'CBS_RATE_PENDING_SENATE_RES';
+export const CBS_RATE_PENDING_MESSAGE = 'Alíquota definitiva da CBS para 2027 pendente de Resolução do Senado Federal. Cálculo efetuado com a taxa de referência provisória.';
 
 export const IBS_CBS_ANTECIPACAO_SEM_ALIQUOTA = 'IBS_CBS_ANTECIPACAO_SEM_ALIQUOTA';
 const FONTE_ANTECIPACAO = 'LC 214/2025 art. 10 § 4º; Decreto 12.955/2026 art. 11 § 5º (F-IBS-5 a)';
@@ -98,18 +113,38 @@ export function antecipacaoIbsCbsMes(input: AntecipacaoInput): ResultadoAntecipa
   const doMes = (dia: string) => dia.slice(0, 7) === competencia;
   const memoria: MemoriaLinha[] = [];
   let debitos = 0n;
+  let provisoria = false;
+  const aliquota = (data: string): number => {
+    try {
+      return aliquotaAntecipacaoBp(tabela, tributo, data);
+    } catch (e) {
+      const prov = tributo === 'CBS' && input.tabelaProvisoria && e instanceof SemLinhaVigenteError
+        ? input.tabelaProvisoria.find((p) => p.vigenteDesde <= data && (p.vigenteAte === null || data <= p.vigenteAte))
+        : undefined;
+      if (!prov) throw e;
+      provisoria = true;
+      return prov.aliquotaBp;
+    }
+  };
+  const comDocumento = new Set(input.consumosComDocumento ?? []);
 
-  // Item 17 — antecipação na data de cada parcela paga no mês.
+  // Item 17 — antecipação na data de cada parcela paga no mês. Venda com documento autorizado: a nota é a antecipação.
   const pagamentos = input.pagamentos.filter((p) => doMes(p.pagoEm)).sort((a, b) => a.pagoEm.localeCompare(b.pagoEm) || a.saleId.localeCompare(b.saleId));
+  let calculadas = 0;
   pagamentos.forEach((p, i) => {
-    const data = menorData(p.pagoEm, p.dataDocumento);
-    const bp = aliquotaAntecipacaoBp(tabela, tributo, data);
+    const codigo = `${MEMORIA_ANTECIPACAO.ANTECIPACAO_ART10}_${i + 1}`;
+    if (p.dataDocumento !== null) {
+      memoria.push({ codigo, descricao: `venda de pacote ${p.saleId} com documento fiscal autorizado em ${p.dataDocumento}: o débito do documento é a antecipação (sem linha a mais)`, valorCents: '0', fonte: 'Decreto 12.955/2026 art. 11 § 5º I a 2; dono 22/10' });
+      return;
+    }
+    const bp = aliquota(p.pagoEm);
     const valor = aplicarBp(p.parcelaCents, bp);
     debitos += valor;
-    memoria.push({ codigo: `${MEMORIA_ANTECIPACAO.ANTECIPACAO_ART10}_${i + 1}`, descricao: `${tributo} antecipado na venda de pacote ${p.saleId}: parcela ${p.parcelaCents} × ${bp} bp (alíquota de ${data})`, valorCents: valor.toString(), fonte: FONTE_ANTECIPACAO });
+    calculadas += 1;
+    memoria.push({ codigo, descricao: `${tributo} antecipado na venda de pacote ${p.saleId}: parcela ${p.parcelaCents} × ${bp} bp (alíquota de ${p.pagoEm})`, valorCents: valor.toString(), fonte: FONTE_ANTECIPACAO });
   });
-  if (pagamentos.length > 0) {
-    memoria.push({ codigo: MEMORIA_ANTECIPACAO.ANTECIPACAO_SEM_REDUCAO, descricao: `antecipação pela alíquota de referência cheia de ${tributo}: reduções por cClassTrib não aplicadas (P-IBS-2/P-IBS-3); o acerto no consumo corrige`, valorCents: '0', fonte: 'dono 21/10 (lacuna da alíquota da antecipação)' });
+  if (calculadas > 0) {
+    memoria.push({ codigo: MEMORIA_ANTECIPACAO.ANTECIPACAO_SEM_REDUCAO, descricao: `antecipação pela alíquota de referência cheia de ${tributo}: a redução do serviço (ex.: saúde, 60% — LC 214 art. 130) não é aplicada porque o produto não tem a redução por serviço do pacote; a dedução no consumo corrige`, valorCents: '0', fonte: 'dono 21/10 e 22/10; Decreto 12.955 art. 11 § 5º I a 2 ("aplicáveis à operação")' });
   }
 
   // Item 18 — acerto no fornecimento (FIFO por cliente × pacote).
@@ -142,12 +177,23 @@ export function antecipacaoIbsCbsMes(input: AntecipacaoInput): ResultadoAntecipa
         // Só a porção paga ANTES do fornecimento foi antecipada (art. 10 § 4º).
         if (!doMes(m.dia) || c.pagoEm === null || c.pagoEm > m.dia || c.dataAliquota === null) continue;
         antecipadoBase += porcao;
-        antecipado += aplicarBp(porcao, aliquotaAntecipacaoBp(tabela, tributo, c.dataAliquota));
-        if (m.kind === 'debit') definitivo += aplicarBp(porcao, aliquotaAntecipacaoBp(tabela, tributo, m.dia));
+        antecipado += aplicarBp(porcao, aliquota(c.dataAliquota));
+        if (m.kind === 'debit') definitivo += aplicarBp(porcao, aliquota(m.dia));
       }
       if (antecipadoBase === 0n) continue;
       if (m.kind === 'expiry') {
         pushAcerto(`pacote vencido sem fornecimento (${s.customerId}/${s.packageId}, ${m.dia}): ${antecipado} de ${tributo} antecipado sobre ${antecipadoBase} — regras do cancelamento (Decreto 12.955 art. 11 § 6º → art. 57), sem débito e sem restituição automática`, 0n);
+        continue;
+      }
+      if (comDocumento.has(m.saleId)) {
+        // § 5º II (dono 22/10): a nota do consumo declara o definitivo inteiro; deduz-se o antecipado da porção (até o definitivo).
+        const deducao = antecipado < definitivo ? antecipado : definitivo;
+        debitos -= deducao;
+        pushAcerto(`consumo de pacote em ${m.dia} com documento fiscal (venda ${m.saleId}): base ${antecipadoBase}; o documento declara o definitivo ${definitivo}, deduz-se o antecipado ${deducao}`, -deducao);
+        if (antecipado > definitivo) {
+          nIndevido += 1;
+          memoria.push({ codigo: `${MEMORIA_ANTECIPACAO.PAGAMENTO_INDEVIDO_ART38}_${nIndevido}`, descricao: `consumo de pacote em ${m.dia} (venda ${m.saleId}): antecipado ${antecipado} > definitivo ${definitivo} — pagamento indevido (Decreto 12.955 art. 11 § 5º II c → arts. 38 e 491), sem restituição automática`, valorCents: (antecipado - definitivo).toString(), fonte: FONTE_ACERTO });
+        }
         continue;
       }
       const diferenca = definitivo - antecipado;
@@ -163,5 +209,8 @@ export function antecipacaoIbsCbsMes(input: AntecipacaoInput): ResultadoAntecipa
   for (const c of [...input.cancelamentos].filter((x) => doMes(x.dia)).sort((a, b) => a.dia.localeCompare(b.dia) || a.saleId.localeCompare(b.saleId))) {
     pushAcerto(`venda de pacote ${c.saleId} cancelada em ${c.dia}: regras do cancelamento (Decreto 12.955 art. 11 § 6º → art. 57), sem lançamento`, 0n);
   }
-  return { debitosCents: debitos, memoria };
+  if (provisoria) {
+    memoria.push({ codigo: MEMORIA_ANTECIPACAO.CBS_ALIQUOTA_PROVISORIA, descricao: CBS_RATE_PENDING_MESSAGE, valorCents: '0', fonte: 'IBS_CBS_PROVISORIA (sem fonte oficial; LC 214 art. 349 I) — dono 22/10: só a prévia' });
+  }
+  return { debitosCents: debitos, memoria, provisoria };
 }

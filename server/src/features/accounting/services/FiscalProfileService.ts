@@ -33,7 +33,9 @@ export type FiscalProfileAccountField =
   | 'pisRecolherAccountId'
   | 'cofinsRecolherAccountId'
   | 'ibsRecolherAccountId'
-  | 'cbsRecolherAccountId';
+  | 'cbsRecolherAccountId'
+  | 'ibsRecuperarAccountId'
+  | 'cbsRecuperarAccountId';
 
 /**
  * BE-INCR-DFE (BRIEF item 7) — campos cujo valor vem de resposta pendente do contador (D1f, itens 5a–5f
@@ -252,7 +254,7 @@ export class FiscalProfileService {
       return await this.writeAccounts(scope, ids, true);
     } catch (error) {
       if (!(error instanceof PolicyApprovalRequiredError)) throw error;
-      logger.warn('IBS/CBS a recolher do plano padrão não preenchidos: contador ativo (configuração pela proposta)', { unitId: scope.unitId });
+      logger.warn('IBS/CBS a recolher/a recuperar do plano padrão não preenchidos: contador ativo (configuração pela proposta)', { unitId: scope.unitId });
       return [];
     }
   }

@@ -2805,7 +2805,8 @@
       "IBS_CBS_ASSESSMENT_STALE": "The tax profile or the assessment changed during confirmation. Run the preview again.",
       "IBS_CBS_ANTECIPACAO_SEM_ALIQUOTA": "A prepaid package was paid this month and the IBS/CBS rate for the date is not published yet. The advance payment needs the rate.",
       "IBS_CBS_CREDITO_CAS": "This IBS/CBS credit is no longer pending. Reload the purchase note.",
-      "IBS_CBS_CREDITO_AUSENTE": "This purchase note has no IBS/CBS credit to appropriate."
+      "IBS_CBS_CREDITO_AUSENTE": "This purchase note has no IBS/CBS credit to appropriate.",
+      "CBS_RATE_PENDING_SENATE_RES": "The final 2027 CBS rate awaits a Federal Senate resolution. This preview uses the provisional reference rate and cannot be confirmed."
     },
     "title": "Tax assessment",
     "ano": "Calendar year",

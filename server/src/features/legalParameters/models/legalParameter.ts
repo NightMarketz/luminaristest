@@ -41,6 +41,9 @@ export const LEGAL_PARAMETER_TABELAS = [
   // IBS-CBS-2027 PR-3 (BRIEF item 15): lista de uso ou consumo pessoal (LC 214 art. 57), chave = prefixo de NCM (dono 21/10).
   // Nasce vazia — o conteúdo é do contador (P-IBS-2); consumidor = NfeImportService (models/ibsCbsCredito.ts).
   'IBS_CBS_USO_CONSUMO',
+  // IBS-CBS-2027 PR-3 (dono 22/10): taxa de referência PROVISÓRIA da CBS para a prévia enquanto a linha IBS_CBS/CBS de 2027 for
+  // DRAFT (sem fonte oficial — o operador da plataforma publica; a confirmação nunca a usa). Nasce vazia.
+  'IBS_CBS_PROVISORIA',
 ] as const;
 export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
 

@@ -2805,7 +2805,8 @@
       "IBS_CBS_ASSESSMENT_STALE": "O perfil fiscal ou a apuração mudou durante a confirmação. Refaça a prévia.",
       "IBS_CBS_ANTECIPACAO_SEM_ALIQUOTA": "Há pacote pago no mês e a alíquota de IBS/CBS da data ainda não foi publicada. A antecipação precisa da alíquota.",
       "IBS_CBS_CREDITO_CAS": "Este crédito de IBS/CBS não está mais pendente. Recarregue a nota.",
-      "IBS_CBS_CREDITO_AUSENTE": "Esta nota não tem crédito de IBS/CBS a apropriar."
+      "IBS_CBS_CREDITO_AUSENTE": "Esta nota não tem crédito de IBS/CBS a apropriar.",
+      "CBS_RATE_PENDING_SENATE_RES": "A alíquota definitiva da CBS de 2027 depende de Resolução do Senado. Esta prévia usa a taxa de referência provisória e não pode ser confirmada."
     },
     "title": "Apuração de tributos",
     "ano": "Ano-calendário",

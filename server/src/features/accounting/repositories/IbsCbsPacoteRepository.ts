@@ -63,7 +63,9 @@ export class IbsCbsPacoteRepository implements IIbsCbsPacoteRepository {
       .filter((e) => e.sourceId !== null && e.reversedBy !== null && dia(e.reversedBy.date) >= de && dia(e.reversedBy.date) <= ate)
       .map((e) => ({ saleId: e.sourceId!, dia: dia(e.reversedBy!.date) }));
 
-    return { pagamentos, saldos, pagamentoDaVenda, cancelamentos };
+    const consumosComDocumento = [...(await this.diaDoDocumento(scope, doMes.filter((m) => m.kind === 'debit').map((m) => m.saleId))).keys()];
+
+    return { pagamentos, saldos, pagamentoDaVenda, cancelamentos, consumosComDocumento };
   }
 
   /** Valor do pacote (Σ débitos do `sale.package.sold` vivo) por venda. */

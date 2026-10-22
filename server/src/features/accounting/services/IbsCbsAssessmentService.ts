@@ -39,7 +39,7 @@ import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRep
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IPayableRepository } from '../repositories/IPayableRepository';
 import type { IIbsCbsPacoteRepository } from '../repositories/IIbsCbsPacoteRepository';
-import { antecipacaoIbsCbsMes } from '../models/ibsCbsAntecipacao';
+import { antecipacaoIbsCbsMes, CBS_RATE_PENDING_MESSAGE, CBS_RATE_PENDING_SENATE_RES } from '../models/ibsCbsAntecipacao';
 import type { AuditService } from './AuditService';
 import type { PostingService } from './PostingService';
 import { REVENDA_ACCOUNT_CODE, SERVICO_ACCOUNT_CODE } from './receitaBrutaPorAtividade';
@@ -53,7 +53,7 @@ import {
   type IbsCbsAssessmentPreviewInput,
 } from '../dtos/IbsCbsAssessmentDto';
 import { apurarIbsCbsMes, type IbsCbsDocumento, type ResultadoIbsCbs } from '../models/ibsCbsCompetencia';
-import { tabelaIbsCbsDe } from '../models/ibsCbsParams';
+import { tabelaIbsCbsDe, tabelaProvisoriaCbsDe } from '../models/ibsCbsParams';
 import { fimDoMes } from '../models/taxAssessmentCalcAnual';
 import { mesBounds } from '../models/Lalur.model';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
@@ -68,6 +68,9 @@ export const IBS_CBS_PROVISION_SOURCE_TYPE = 'ibs_cbs_assessment';
 export const IBS_CBS_SIMPLES_MEI = 'IBS/CBS de optante pelo Simples Nacional/MEI é recolhido no DAS — apuração do regime regular não se aplica (LC 214/2025 art. 41 § 1º; ADR-INCR-IBS-CBS-2027 D1)';
 
 export interface IbsCbsPreviewView {
+  /** `CALCULATED_PROVISIONAL` quando alguma alíquota veio da tabela provisória (só na prévia). */
+  status: 'CALCULATED' | 'CALCULATED_PROVISIONAL';
+  warnings: { code: string; message: string }[];
   anoCalendario: number;
   mes: number;
   tributo: string;
@@ -78,7 +81,7 @@ export interface IbsCbsPreviewView {
   memoria: MemoriaLinha[];
 }
 
-export interface IbsCbsAssessmentView extends Omit<IbsCbsPreviewView, 'documentosSemGrupo'> {
+export interface IbsCbsAssessmentView extends Omit<IbsCbsPreviewView, 'documentosSemGrupo' | 'status' | 'warnings'> {
   id: string;
   unitId: string;
   regime: string;
@@ -105,6 +108,8 @@ interface Calculo {
   perfil: CompanyFiscalProfile;
   resultado: ResultadoIbsCbs;
   parametros: ParametrosUsados;
+  /** A antecipação usou a taxa provisória da CBS (só possível na prévia). */
+  provisoria: boolean;
 }
 
 export class IbsCbsAssessmentService {
@@ -129,8 +134,8 @@ export class IbsCbsAssessmentService {
   /** Item 9 — calcula e não persiste. */
   async preview(scope: AccountingScope, input: IbsCbsAssessmentPreviewInput): Promise<IbsCbsPreviewView> {
     this.assertRead(scope);
-    const c = await this.calcular(scope, input);
-    return toPreview(input, c.resultado);
+    const c = await this.calcular(scope, input, { taxaProvisoria: true });
+    return toPreview(input, c.resultado, c.provisoria);
   }
 
   /** Item 13 — GET por ano (todas as linhas vivas, CONFIRMED e SUPERSEDED). */
@@ -332,7 +337,7 @@ export class IbsCbsAssessmentService {
   }
 
   /** Lê perfil da PJ, documentos e vendas do mês e chama a função pura. Recusas do item 10 (400). */
-  private async calcular(scope: AccountingScope, input: IbsCbsAssessmentPreviewInput): Promise<Calculo> {
+  private async calcular(scope: AccountingScope, input: IbsCbsAssessmentPreviewInput, opts: { taxaProvisoria?: boolean } = {}): Promise<Calculo> {
     const { anoCalendario: ano, mes, tributo } = input;
     assertAno(ano);
     const perfil = await this.companyProfileRepo.findByYear(scope, ano);
@@ -341,7 +346,8 @@ export class IbsCbsAssessmentService {
 
     const de = `${ano}-${mm(mes)}-01`;
     const ate = fimDoMes(ano, mes);
-    const linhasLegais = await this.legalParams.fotografia(['IBS_CBS']);
+    // Dono 22/10: a prévia também lê a taxa PROVISÓRIA da CBS; a confirmação não (a fotografia nem a carrega).
+    const linhasLegais = await this.legalParams.fotografia(opts.taxaProvisoria ? ['IBS_CBS', 'IBS_CBS_PROVISORIA'] : ['IBS_CBS']);
     const parametros = parametrosUsados(linhasLegais, de, ate);
     const tabela = tabelaIbsCbsDe(linhasLegais);
 
@@ -365,9 +371,9 @@ export class IbsCbsAssessmentService {
     // houver pacote e faltar a alíquota (F-IBS-11 a; CBS 2027 DRAFT).
     const creditos = await this.payableRepo.findIbsCbsCredits(scope, ate);
     const pacote = await this.pacoteRepo.dadosDoMes(scope, de, ate);
-    const antecipacao = antecipacaoIbsCbsMes({ ano, mes, tributo, tabela, ...pacote });
+    const antecipacao = antecipacaoIbsCbsMes({ ano, mes, tributo, tabela, ...pacote, ...(opts.taxaProvisoria ? { tabelaProvisoria: tabelaProvisoriaCbsDe(linhasLegais) } : {}) });
     const resultado = apurarIbsCbsMes({ ano, mes, tributo, tabela, documentos, vendasSemDocumento, creditos, antecipacao });
-    return { perfil, resultado, parametros };
+    return { perfil, resultado, parametros, provisoria: antecipacao.provisoria };
   }
 
   private assertRead(scope: AccountingScope): void {
@@ -389,8 +395,10 @@ function assertRegime(regime: string): void {
   if (regime === 'SIMPLES' || regime === 'MEI') throw new ValidationError(IBS_CBS_SIMPLES_MEI, null, 'IBS_CBS_SIMPLES_MEI');
 }
 
-function toPreview(input: IbsCbsAssessmentPreviewInput, r: ResultadoIbsCbs): IbsCbsPreviewView {
+function toPreview(input: IbsCbsAssessmentPreviewInput, r: ResultadoIbsCbs, provisoria: boolean): IbsCbsPreviewView {
   return {
+    status: provisoria ? 'CALCULATED_PROVISIONAL' : 'CALCULATED',
+    warnings: provisoria ? [{ code: CBS_RATE_PENDING_SENATE_RES, message: CBS_RATE_PENDING_MESSAGE }] : [],
     anoCalendario: input.anoCalendario,
     mes: input.mes,
     tributo: r.tributo,

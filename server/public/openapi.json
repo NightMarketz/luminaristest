@@ -11258,7 +11258,7 @@
     "/api/accounting/ibs-cbs-assessments/preview": {
       "post": {
         "summary": "Preview the monthly IBS or CBS assessment (IBS-CBS-2027 PR-2, items 6-11)",
-        "description": "Débito = IBS/CBS destacado nos documentos autorizados do mês (dia escrito; LC 214 art. 60 § 1º). A conferência pela tabela só gera aviso. PR-3: créditos = Σ créditos APROPRIADO no mês (art. 47; PENDENTE só na memória); a antecipação do pacote pago no mês soma ao débito (art. 10 § 4º). Não persiste. 400 nomeado para SIMPLES/MEI, anoCalendario anterior a 2027 (F-IBS-7 b) e pacote no mês sem alíquota publicada (IBS_CBS_ANTECIPACAO_SEM_ALIQUOTA).",
+        "description": "Débito = IBS/CBS destacado nos documentos autorizados do mês (dia escrito; LC 214 art. 60 § 1º). A conferência pela tabela só gera aviso. PR-3: créditos = Σ créditos APROPRIADO no mês (art. 47; PENDENTE só na memória); a antecipação do pacote pago no mês soma ao débito (art. 10 § 4º). Não persiste. 400 nomeado para SIMPLES/MEI, anoCalendario anterior a 2027 (F-IBS-7 b) e pacote no mês sem alíquota publicada (IBS_CBS_ANTECIPACAO_SEM_ALIQUOTA). CBS sem linha publicada e com taxa PROVISÓRIA (tabela IBS_CBS_PROVISORIA, dono 22/10): 200 com status CALCULATED_PROVISIONAL e warnings [CBS_RATE_PENDING_SENATE_RES] — só na prévia; a confirmação segue 400.",
         "tags": [
           "Accounting"
         ],
@@ -11307,7 +11307,7 @@
         },
         "responses": {
           "200": {
-            "description": "IbsCbsPreviewView (debitosCents, creditosCents, saldoCents, documentosSemGrupo, memoria)"
+            "description": "IbsCbsPreviewView (status CALCULATED|CALCULATED_PROVISIONAL, warnings, debitosCents, creditosCents, saldoCents, documentosSemGrupo, memoria)"
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"

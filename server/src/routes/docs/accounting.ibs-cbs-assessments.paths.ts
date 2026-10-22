@@ -12,6 +12,8 @@
  *         pela tabela só gera aviso. PR-3: créditos = Σ créditos APROPRIADO no mês (art. 47; PENDENTE só na memória);
  *         a antecipação do pacote pago no mês soma ao débito (art. 10 § 4º). Não persiste. 400 nomeado para SIMPLES/MEI,
  *         anoCalendario anterior a 2027 (F-IBS-7 b) e pacote no mês sem alíquota publicada (IBS_CBS_ANTECIPACAO_SEM_ALIQUOTA).
+ *         CBS sem linha publicada e com taxa PROVISÓRIA (tabela IBS_CBS_PROVISORIA, dono 22/10): 200 com status
+ *         CALCULATED_PROVISIONAL e warnings [CBS_RATE_PENDING_SENATE_RES] — só na prévia; a confirmação segue 400.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -28,7 +30,7 @@
  *                 mes: { type: integer, minimum: 1, maximum: 12 }
  *                 tributo: { type: string, enum: [IBS, CBS] }
  *       responses:
- *         '200': { description: 'IbsCbsPreviewView (debitosCents, creditosCents, saldoCents, documentosSemGrupo, memoria)' }
+ *         '200': { description: 'IbsCbsPreviewView (status CALCULATED|CALCULATED_PROVISIONAL, warnings, debitosCents, creditosCents, saldoCents, documentosSemGrupo, memoria)' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }

@@ -33,7 +33,8 @@
             "IRRF_DISTRIBUICAO",
             "TJLP",
             "IBS_CBS",
-            "IBS_CBS_USO_CONSUMO"
+            "IBS_CBS_USO_CONSUMO",
+            "IBS_CBS_PROVISORIA"
           ]
         },
         "chave": {
@@ -128,7 +129,8 @@
             "IRRF_DISTRIBUICAO",
             "TJLP",
             "IBS_CBS",
-            "IBS_CBS_USO_CONSUMO"
+            "IBS_CBS_USO_CONSUMO",
+            "IBS_CBS_PROVISORIA"
           ]
         },
         "status": {
@@ -206,7 +208,8 @@
             "IRRF_DISTRIBUICAO",
             "TJLP",
             "IBS_CBS",
-            "IBS_CBS_USO_CONSUMO"
+            "IBS_CBS_USO_CONSUMO",
+            "IBS_CBS_PROVISORIA"
           ]
         },
         "chave": {

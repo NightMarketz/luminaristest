@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — verif-2026-10-21-ibs-cbs-pr3
 
 **Pergunta:** IBS/CBS PR-3: momento do crédito (art. 47), uso/consumo (art. 57), antecipação (art. 10 § 4º) — LC 214 e Dec. 12.955
-**Aberto em:** 2026-10-21T23:18:10-03:00 · **Atualizado em:** 2026-10-21T23:52:19-03:00
+**Aberto em:** 2026-10-21T23:18:10-03:00 · **Atualizado em:** 2026-10-22T01:56:48-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -43,10 +43,27 @@ conferida quando há evidência de texto mais novo. Documentos salvos com hash p
   redução do `cClassTrib` (ex.: saúde); (b) referência cheia. O dono escolheu 21/10 a referência cheia + aviso
   `ANTECIPACAO_SEM_REDUCAO`, com o acerto no consumo corrigindo pela diferença. Pergunta ao contador (junto da P-IBS-3):
   "a antecipação do pacote de serviço com redução de alíquota usa a alíquota reduzida já na parcela?"
-- **Acerto no consumo × documento do consumo** — item 18 literal (dono 21/10): o acerto é a diferença de alíquota da porção;
-  o débito do documento emitido no consumo também entra (F-IBS-3). Leitura alternativa: o acerto deduz a antecipação do
-  débito do documento. Pergunta ao contador (P-IBS-3): "no salão com NFS-e no consumo, o IBS/CBS antecipado no pagamento
-  do pacote deduz o débito da nota do consumo?"
+- **Acerto no consumo × documento do consumo** — resolvido em 22/10 pelo dono, pelo decreto: consumo com nota ⇒ a nota
+  entra cheia e a antecipação da porção é deduzida (§ 5º II [D04]); venda com nota (pacoteFatoGerador VENDA) ⇒ a nota é a
+  antecipação, sem linha a mais (§ 5º I a 2).
+
+## 4-A. Conferência do texto colado pelo dono em 22/10 (origem não identificada — tratado como pista, não fonte)
+| Claim colado | Veredito | Fonte |
+|---|---|---|
+| 1. Antecipado deduz o débito do documento do consumo | **Confere**: no fornecimento, o definitivo usa o total e só a diferença vira débito; a maior ⇒ arts. 38/491 | Dec. 12.955 art. 11 § 5º II a–c [D04] |
+| 1. A NFS-e do consumo deve referenciar o documento da antecipação | **Não localizado**: nem o decreto nem as transcrições da NFS-e nacional no corpus trazem isso. É emissão (fora do PR-3) | [D04]; `docs/accounting/fontes-oficiais/TRANSCRICAO-NFSe-*` |
+| 2. Saúde com redução de 60% | **Confere** (serviços do Anexo III) | LC 214 arts. 128 II e 130 [D03] |
+| 2. Antecipação já com a alíquota reduzida | **Confere em tese**: alíquotas "vigentes e aplicáveis à operação" | Dec. 12.955 art. 11 § 5º I a 2 [D04] |
+| 2. Pacote misto: alíquota proporcional ao contrato; parte indefinida pela padrão | **Sem fonte**: não localizado na LC nem no decreto | — |
+| 3(1) Café/copa/lanche de funcionários são uso/consumo | **Diverge**: alimentação e bebida não alcoólica para empregados no estabelecimento, durante a jornada, NÃO é uso pessoal; o art. 57 não lista item de cliente | LC 214 art. 57 § 3º IV c [D03] |
+| 3(2) Veículos leves: aquisição, locação, combustível, seguro, manutenção | **Confere em parte**: só quando fornecidos sem contraprestação às pessoas do inciso II (sócio, empregado, parente) | LC 214 art. 57 II e § 1º II [D03] |
+| 3(3) Uniforme que não seja EPI é consumo | **Diverge**: uniformes e fardamentos e EPI NÃO são uso pessoal | LC 214 art. 57 § 3º IV a–b [D03] |
+| 3(4) Cosmético de uso interno dos profissionais/sócios | **Confere em parte**: bens estéticos são do inciso I f, salvo usados só pelos clientes no estabelecimento (§ 3º III); fornecidos a sócios/empregados ⇒ inciso II | LC 214 art. 57 I f, II, § 3º III [D03] |
+| 3(5) Brindes e cortesias a clientes | **Diverge**: o art. 57 não alcança terceiros; o fornecimento não oneroso é tratado em outro artigo | LC 214 art. 57 [D03] |
+| 3. Referencial CBS `1.01.03.02.99` / IBS `1.01.03.03.99` | **Diverge**: `1.01.03.02` = ESTOQUES DE PRODUTOS, `1.01.03.03` = ESTOQUES – ATIVIDADE IMOBILIÁRIA, sem folha .99. O grupo de tributos é `1.01.02.03 TRIBUTOS A RECUPERAR`, com folha `1.01.02.03.40 Outros Impostos e Contribuições a Recuperar` (L100A e P100A) | ECF leiaute 12 AC 2025 — `pesquisas-legais/ibs-cbs-referencial-sped` [D01] |
+| 4. Taxa provisória da CBS de 8,8% a 9,0% | **Sem fonte oficial**: a resolução do Senado não saiu. Implementado como parâmetro editável PROVISÓRIO (nasce vazio), só na prévia | LC 214 art. 349 I [D03] |
+
+Nada da lista de uso/consumo colada entra na tabela `IBS_CBS_USO_CONSUMO`: o texto dá categorias, não prefixos de NCM, e três delas contrariam o § 3º.
 
 ## 5. Lacunas
 - Regulamento do CG-IBS (IBS) e a hipótese dos 5 dias (art. 10 § 7º): não localizados em fonte oficial.

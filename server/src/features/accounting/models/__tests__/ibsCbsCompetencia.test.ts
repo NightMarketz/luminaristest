@@ -163,7 +163,7 @@ describe('itens 17–18 — antecipação entra no débito, não na reclassifica
   it('debitosCents = documentos + antecipação; documentosCents = servico + revenda', () => {
     const r = apurarIbsCbsMes({
       ano: 2027, mes: 3, tributo: 'IBS', tabela, documentos: [doc({ ibsCents: 10n })], vendasSemDocumento: [],
-      antecipacao: { debitosCents: 5n, memoria: [{ codigo: 'ANTECIPACAO_ART10_1', descricao: '', valorCents: '5', fonte: '' }] },
+      antecipacao: { debitosCents: 5n, memoria: [{ codigo: 'ANTECIPACAO_ART10_1', descricao: '', valorCents: '5', fonte: '' }], provisoria: false },
     });
     expect(r.debitosCents).toBe(15n);
     expect(r.documentosCents).toBe(10n);

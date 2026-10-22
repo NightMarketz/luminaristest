@@ -201,4 +201,66 @@ describe('IBS-CBS-2027 PR-3 — crédito de IBS/CBS (itens 14, 16) e antecipaç�
     // V7: a apuração (prévia) não lança nada
     expect(await prisma.journalEntry.count({ where: { userId: dono.id } })).toBe(lancamentosAntes);
   });
+
+  // Dono 22/10 (texto colado conferido no Decreto 12.955 art. 11 § 5º II [D04]): consumo com NFS-e ⇒ a nota entra cheia e a
+  // antecipação da porção é deduzida; venda com documento ⇒ o documento é a antecipação (sem linha a mais).
+  it('item 18 (dedução): consumo com documento autorizado ⇒ ACERTO_ART10 negativo; venda com documento ⇒ ANTECIPACAO_ART10 = 0', async () => {
+    const dono = await cenario();
+    const scope = resolveAccountingScopeInternal({ userId: dono.id }, dono.unitId);
+    const posting = getFactory().getPostingService();
+    for (const [saleId, date] of [['pac-cons', '2027-03-10'], ['pac-venda', '2027-03-11']] as const) {
+      await posting.postEntry(scope, { unitId: dono.unitId, date, description: 'pacote', sourceType: 'sale.package.sold', sourceId: saleId, lines: [{ accountCode: '1.1.2.01', debitCents: 100_000, creditCents: 0 }, { accountCode: '2.1.1.01', debitCents: 0, creditCents: 100_000 }] });
+      await posting.postEntry(scope, { unitId: dono.unitId, date, description: 'liquidação', sourceType: 'sale.settled', sourceId: saleId, lines: [{ accountCode: '1.1.1.01', debitCents: 100_000, creditCents: 0 }, { accountCode: '1.1.2.01', debitCents: 0, creditCents: 100_000 }] });
+    }
+    // pacoteFatoGerador VENDA: a NFS-e sai na venda do pacote (é o documento da antecipação)
+    await nfse(dono, 100n, '2027-03-11');
+    await prisma.fiscalDocument.updateMany({ where: { userId: dono.id, dCompet: '2027-03-11' }, data: { saleId: 'pac-venda', saleKey: 'pac-venda' } });
+    const mov = { userId: dono.id, unitId: dono.unitId, customerId: 'cli-1', packageId: 'pk-1' };
+    await prisma.packageBalanceMovement.create({ data: { ...mov, saleId: 'pac-cons', kind: 'credit', deltaCents: 100_000n, createdAt: new Date('2027-03-10T15:00:00.000Z') } });
+    await prisma.packageBalanceMovement.create({ data: { ...mov, saleId: 'consumo-com-nota', kind: 'debit', deltaCents: 40_000n, createdAt: new Date('2027-04-15T15:00:00.000Z') } });
+    // a NFS-e do consumo (pacoteFatoGerador CONSUMO) declara o definitivo inteiro: 400,00 × 10 bp = 40
+    await nfse(dono, 40n, '2027-04-15');
+    await prisma.fiscalDocument.updateMany({ where: { userId: dono.id, dCompet: '2027-04-15' }, data: { saleId: 'consumo-com-nota', saleKey: 'consumo-com-nota' } });
+
+    const preview = (mes: number) => request(app).post(`${IBS_BASE}/preview`).set(authHeader(dono)).send({ unitId: dono.unitId, anoCalendario: 2027, mes, tributo: 'IBS' });
+    const marco = (await preview(3)).body.data;
+    const linhas = (d: { memoria: { codigo: string; valorCents: string }[] }) => d.memoria.filter((l) => /^(ANTECIPACAO_ART10|ACERTO_ART10|DEBITO_DOC)_/.test(l.codigo)).map((l) => `${l.codigo}:${l.valorCents}`);
+    // março: NFS-e da venda (100) + antecipação só da venda SEM nota (1.000,00 × 10 bp = 100)
+    expect(linhas(marco)).toEqual(['DEBITO_DOC_1:100', 'ANTECIPACAO_ART10_1:100', 'ANTECIPACAO_ART10_2:0']);
+    expect(marco.debitosCents).toBe('200');
+    // abril: NFS-e do consumo (40) − antecipado da porção (400,00 × 10 bp = 40) ⇒ 0
+    const abril = (await preview(4)).body.data;
+    expect(linhas(abril)).toEqual(['DEBITO_DOC_1:40', 'ACERTO_ART10_1:-40']);
+    expect(abril.debitosCents).toBe('0');
+  });
+
+  // Dono 22/10: CBS 2027 DRAFT ⇒ a prévia calcula com a taxa PROVISÓRIA (200 + aviso); a confirmação segue bloqueada (400).
+  it('CBS DRAFT: com taxa provisória publicada, prévia 200 CALCULATED_PROVISIONAL; confirmação 400 nomeado', async () => {
+    const dono = await cenario();
+    const scope = resolveAccountingScopeInternal({ userId: dono.id }, dono.unitId);
+    const posting = getFactory().getPostingService();
+    await posting.postEntry(scope, { unitId: dono.unitId, date: '2027-03-10', description: 'pacote', sourceType: 'sale.package.sold', sourceId: 'pac-prov', lines: [{ accountCode: '1.1.2.01', debitCents: 100_000, creditCents: 0 }, { accountCode: '2.1.1.01', debitCents: 0, creditCents: 100_000 }] });
+    await posting.postEntry(scope, { unitId: dono.unitId, date: '2027-03-12', description: 'liquidação', sourceType: 'sale.settled', sourceId: 'pac-prov', lines: [{ accountCode: '1.1.1.01', debitCents: 100_000, creditCents: 0 }, { accountCode: '1.1.2.01', debitCents: 0, creditCents: 100_000 }] });
+    const prov = await prisma.legalParameter.create({
+      data: { tabela: 'IBS_CBS_PROVISORIA', chave: 'CBS', discriminador: 'ALIQUOTA', valorInt: 880, fonte: 'teste — taxa provisória sem fonte oficial', vigenteDesde: '2027-01-01', status: 'PUBLISHED', motivo: 'teste', proposedById: dono.id },
+    });
+    const legal = getFactory().getLegalParameterService();
+    try {
+      await legal.aquecer();
+      const r = await request(app).post(`${IBS_BASE}/preview`).set(authHeader(dono)).send({ unitId: dono.unitId, anoCalendario: 2027, mes: 3, tributo: 'CBS' });
+      expect(r.status).toBe(200);
+      expect(r.body.data.status).toBe('CALCULATED_PROVISIONAL');
+      expect(r.body.data.warnings).toEqual([{ code: 'CBS_RATE_PENDING_SENATE_RES', message: expect.stringContaining('Resolução do Senado') }]);
+      expect(r.body.data.debitosCents).toBe('8800'); // 1.000,00 × 880 bp (provisória)
+
+      const c = await request(app).post(IBS_BASE).set(authHeader(dono)).send({ unitId: dono.unitId, anoCalendario: 2027, mes: 3, tributo: 'CBS', expectedSupersedesId: null });
+      expect(c.status).toBe(400);
+      expect(c.body.code).toBe('IBS_CBS_ANTECIPACAO_SEM_ALIQUOTA');
+      expect(await prisma.consumptionTaxAssessment.count({ where: { userId: dono.id } })).toBe(0);
+    } finally {
+      await prisma.legalParameter.delete({ where: { id: prov.id } });
+      await legal.aquecer();
+    }
+  });
 });
+

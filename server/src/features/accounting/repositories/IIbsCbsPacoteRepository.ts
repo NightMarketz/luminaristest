@@ -14,6 +14,8 @@ export interface DadosPacoteIbsCbs {
   pagamentoDaVenda: Record<string, { pagoEm: string; dataDocumento: string | null }>;
   /** Vendas de pacote cujo `sale.package.sold` foi estornado com data no mês. */
   cancelamentos: { saleId: string; dia: string }[];
+  /** Vendas de consumo (movimento `debit` no mês) com documento fiscal autorizado vivo. */
+  consumosComDocumento: string[];
 }
 
 export interface IIbsCbsPacoteRepository {

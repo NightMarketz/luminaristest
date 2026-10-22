@@ -26,9 +26,12 @@ describe('item 17 — antecipação na data de cada parcela paga', () => {
     expect(codigos(r.memoria)).toEqual(['ANTECIPACAO_ART10_1', 'ANTECIPACAO_SEM_REDUCAO']);
   });
 
-  it('alíquota da data do documento ou do pagamento, o que vier primeiro', () => {
-    const r = antecipacaoIbsCbsMes(entrada({ mes: 4, tributo: 'CBS', tabela: comCbs, pagamentos: [{ saleId: 'v1', pagoEm: '2027-04-02', dataDocumento: '2027-03-30', parcelaCents: 10_000n }] }));
-    expect(r.debitosCents).toBe(800n); // documento em 30/03 (800 bp), não o pagamento em 02/04 (900 bp)
+  it('venda com documento autorizado (pacoteFatoGerador VENDA): o documento é a antecipação — linha 0, sem alíquota (dono 22/10)', () => {
+    // CBS DRAFT na semente: se a linha pedisse alíquota, daria 400 — não pede.
+    const r = antecipacaoIbsCbsMes(entrada({ tributo: 'CBS', pagamentos: [{ saleId: 'v1', pagoEm: '2027-03-10', dataDocumento: '2027-03-10', parcelaCents: 10_000n }] }));
+    expect(r.debitosCents).toBe(0n);
+    expect(r.memoria.map((l) => [l.codigo, l.valorCents])).toEqual([['ANTECIPACAO_ART10_1', '0']]);
+    expect(r.memoria[0].descricao).toMatch(/documento fiscal autorizado.*é a antecipação/);
   });
 
   it('pagamento de outro mês não entra', () => {
@@ -43,7 +46,7 @@ describe('item 17 — antecipação na data de cada parcela paga', () => {
   });
 
   it('sem pacote no mês, CBS DRAFT não atrapalha (nenhuma alíquota é pedida)', () => {
-    expect(antecipacaoIbsCbsMes(entrada({ tributo: 'CBS' }))).toEqual({ debitosCents: 0n, memoria: [] });
+    expect(antecipacaoIbsCbsMes(entrada({ tributo: 'CBS' }))).toEqual({ debitosCents: 0n, memoria: [], provisoria: false });
   });
 });
 
@@ -122,3 +125,56 @@ describe('item 18 — acerto no consumo (literal: definitivo − antecipado da m
     expect(r.memoria.map((l) => l.descricao)).toEqual([expect.stringMatching(/v9 cancelada em 2027-03-15/)]);
   });
 });
+
+// Dono 22/10 (texto colado conferido no Decreto 12.955 art. 11 § 5º II [D04]): no fornecimento com documento, a nota entra
+// cheia e a antecipação da porção é deduzida — só a diferença fica no mês do consumo.
+describe('item 18 — consumo com documento fiscal: dedução da antecipação (§ 5º II)', () => {
+  const saldo = (movimentos: MovimentoPacote[]) => [{ customerId: 'c1', packageId: 'pk1', movimentos }];
+  const base = {
+    mes: 4, tributo: 'CBS' as const, tabela: comCbs,
+    saldos: saldo([mov('m1', 'v1', 'credit', 10_000n, '2027-03-10'), mov('m2', 'v2', 'debit', 4_000n, '2027-04-15')]),
+    pagamentoDaVenda: { v1: { pagoEm: '2027-03-10', dataDocumento: null } },
+    consumosComDocumento: ['v2'],
+  };
+
+  it('deduz o antecipado da porção (ACERTO_ART10_n negativo); o débito do documento fica cheio na apuração', () => {
+    const r = antecipacaoIbsCbsMes(entrada(base));
+    expect(r.debitosCents).toBe(-320n); // 4.000 × 800 bp antecipados em março
+    expect(r.memoria.map((l) => [l.codigo, l.valorCents])).toEqual([['ACERTO_ART10_1', '-320']]);
+  });
+
+  it('antecipado > definitivo ⇒ deduz só até o definitivo; o excedente é PAGAMENTO_INDEVIDO_ART38_n (aviso)', () => {
+    const tabela = [...semente, cbs(900, '2027-01-01', '2027-03-31'), cbs(800, '2027-04-01', null)];
+    const r = antecipacaoIbsCbsMes(entrada({ ...base, tabela }));
+    expect(r.debitosCents).toBe(-320n); // definitivo 4.000 × 800 bp
+    expect(r.memoria.map((l) => [l.codigo, l.valorCents])).toEqual([['ACERTO_ART10_1', '-320'], ['PAGAMENTO_INDEVIDO_ART38_1', '40']]);
+  });
+
+  it('alíquota antecipada = data do documento ou do pagamento, o que vier primeiro', () => {
+    const r = antecipacaoIbsCbsMes(entrada({ ...base, pagamentoDaVenda: { v1: { pagoEm: '2027-04-02', dataDocumento: '2027-03-30' } }, saldos: saldo([mov('m1', 'v1', 'credit', 10_000n, '2027-03-10'), mov('m2', 'v2', 'debit', 4_000n, '2027-04-15')]) }));
+    expect(r.debitosCents).toBe(-320n); // documento em 30/03 (800 bp), não o pagamento em 02/04 (900 bp)
+  });
+});
+
+// Dono 22/10: CBS sem linha publicada ⇒ a prévia usa a taxa PROVISÓRIA (IBS_CBS_PROVISORIA) com aviso; sem ela, 400 nomeado.
+describe('CBS 2027 DRAFT — taxa provisória só na prévia', () => {
+  const pagamento = { saleId: 'v1', pagoEm: '2027-03-10', dataDocumento: null, parcelaCents: 100_000n };
+
+  it('com a taxa provisória: calcula, marca provisoria e põe o aviso CBS_ALIQUOTA_PROVISORIA', () => {
+    const r = antecipacaoIbsCbsMes(entrada({ tributo: 'CBS', pagamentos: [pagamento], tabelaProvisoria: [cbs(880, '2027-01-01', null)] }));
+    expect(r.provisoria).toBe(true);
+    expect(r.debitosCents).toBe(8_800n);
+    expect(r.memoria.at(-1)).toMatchObject({ codigo: 'CBS_ALIQUOTA_PROVISORIA', valorCents: '0' });
+  });
+
+  it('a linha oficial publicada vence a provisória', () => {
+    const r = antecipacaoIbsCbsMes(entrada({ tributo: 'CBS', tabela: comCbs, pagamentos: [pagamento], tabelaProvisoria: [cbs(880, '2027-01-01', null)] }));
+    expect(r.provisoria).toBe(false);
+    expect(r.debitosCents).toBe(8_000n);
+  });
+
+  it('sem a provisória (a confirmação nunca a passa) ⇒ 400 nomeado', () => {
+    expect(() => antecipacaoIbsCbsMes(entrada({ tributo: 'CBS', pagamentos: [pagamento] }))).toThrow(SemLinhaVigenteError);
+  });
+});
+
