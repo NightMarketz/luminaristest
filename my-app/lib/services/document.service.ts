@@ -57,7 +57,9 @@ export const DocumentService = {
       body: formData,
     });
     if (!response.ok) throw await response.json();
-    return response.json();
+    // The server answers { success, data: { tokens, charCount } }.
+    const body = await response.json() as { data?: TokenCostResponse } & TokenCostResponse;
+    return body.data ?? body;
   },
 
   async getQdrantStatus(): Promise<QdrantStatusResponse> {

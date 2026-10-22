@@ -316,7 +316,9 @@ export async function computeTokenCost(req: Request, res: Response) {
     const mime = file.mimetype || '';
     const excelMimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
-    if (mime === 'application/pdf' || mime === excelMimeType) {
+    const docxMimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+    if (mime === 'application/pdf' || mime === excelMimeType || mime === docxMimeType) {
       const arrayBuffer = data.buffer.slice(0, data.byteLength) as ArrayBuffer;
       const processingService = new DocumentProcessingService();
       text = await processingService.extractText(arrayBuffer, mime);
