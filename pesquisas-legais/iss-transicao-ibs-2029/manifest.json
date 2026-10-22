@@ -1,0 +1,58 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei Complementar nº 116 de 31/07/2003",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/2003/lcp-116-2003-07-31.md",
+      "url_final": "https://github.com/ctresb/leis/blob/ae234474cd3e1e3f6e871eaa102aeb862ec17541/federal/leis-complementares/2003/lcp-116-2003-07-31.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2003-07-31;116",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "ae234474cd3e1e3f6e871eaa102aeb862ec17541",
+      "alertas": [],
+      "baixado_em": "2026-10-22T13:19:22-03:00",
+      "sha256": "ee5663cd6f75d06dc795b4b9b49b52e4a9d7ad9c2575d817375088a5ed3098b9",
+      "arquivo": "docs/D01_lcp-116-2003-07-31.md",
+      "texto": "docs/D01_lcp-116-2003-07-31.txt",
+      "bytes": 48020
+    },
+    {
+      "id": "D02",
+      "titulo": "Lei Complementar nº 214 de 16/01/2025",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/2025/lcp-214-2025-01-16.md",
+      "url_final": "https://github.com/ctresb/leis/blob/571468687b4dc8d8f1a3b1dbd5f958ff85fad0cf/federal/leis-complementares/2025/lcp-214-2025-01-16.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2025-01-16;214",
+      "versao_texto": "republicação/retificação",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "571468687b4dc8d8f1a3b1dbd5f958ff85fad0cf",
+      "alertas": [
+        "versao_texto = 'republicação/retificação' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-10-22T13:19:24-03:00",
+      "sha256": "f1f80d77a11f96d8eaf7777d647e577d04abd0fc28420ec22664be7a76ed8851",
+      "arquivo": "docs/D02_lcp-214-2025-01-16.md",
+      "texto": "docs/D02_lcp-214-2025-01-16.txt",
+      "bytes": 1880
+    },
+    {
+      "id": "D03",
+      "titulo": "Lcp 214",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-22T13:19:25-03:00",
+      "sha256": "fbaed60b0a0c2af306a108ea584e4246cb60e60128d380108b3d71660aff5735",
+      "arquivo": "docs/D03_lcp214-htm.html",
+      "texto": "docs/D03_lcp214-htm.txt",
+      "bytes": 5403667
+    }
+  ],
+  "buscas": [],
+  "slug": "iss-transicao-ibs-2029",
+  "pergunta": "Transição ISS→IBS 2029–2032: o que a LC 214/2025 muda no ISS (alíquotas, benefícios, piso, Simples, NFS-e) e o fim da LC 116 em 2033",
+  "criado": "2026-10-22T13:19:16-03:00"
+}
