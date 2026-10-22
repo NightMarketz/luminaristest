@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'next-i18next';
 import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
 
@@ -32,12 +32,13 @@ export function StandardPagination({
     scrollToTop = true,
 }: StandardPaginationProps) {
     const { t } = useTranslation(['database', 'common']);
+    const rootRef = useRef<HTMLDivElement>(null);
 
     // Scroll to top effect
     useEffect(() => {
         if (scrollToTop) {
             // Find the nearest scrollable parent or scroll window
-            const scrollContainer = document.querySelector('.overflow-auto') ||
+            const scrollContainer = rootRef.current?.closest('.overflow-auto') ||
                 document.querySelector('main') ||
                 window;
 
@@ -55,7 +56,7 @@ export function StandardPagination({
     const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
     return (
-        <div className={`px-4 py-3 bg-white dark:bg-neutral-900 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4 ${className}`}>
+        <div ref={rootRef} className={`px-4 py-3 bg-white dark:bg-neutral-900 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4 ${className}`}>
             {/* Items Range Info */}
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
                 {t('database:pagination.showing', {

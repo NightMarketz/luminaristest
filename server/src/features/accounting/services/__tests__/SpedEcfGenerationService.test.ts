@@ -4,7 +4,7 @@ import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingSco
 import { ForbiddenError, ValidationError } from '../../../../lib/errors';
 import { logger } from '../../../../lib/logger';
 import type { SpedEcfRequestDto } from '../../dtos/SpedEcfDto';
-import type { Account, AccountingDataExchangeJob } from 'generated/prisma';
+import type { Account, AccountingDataExchangeJob, Partner } from 'generated/prisma';
 
 // Capture the bytes handed to the disk store so we can assert on the produced file.
 const savedBuffers: Buffer[] = [];
@@ -38,7 +38,18 @@ const SERVICO = makeAccount({ id: 'rec31', code: '3.1', name: 'Receita de Servi�
 const REVENDA = makeAccount({ id: 'rec33', code: '3.3', name: 'Receita de Revenda', nature: 'Revenue', acceptsEntries: true });
 const REC_FIN = makeAccount({ id: 'rec39', code: '3.9', name: 'Receita Financeira', nature: 'Revenue', acceptsEntries: true });
 
-function makeDto(over: Partial<SpedEcfRequestDto> = {}): SpedEcfRequestDto {
+/** BE-INCR-ECF-Y600: uma vigência do cadastro de sócios (IRRF-DISTRIBUICAO PR-1). CPF com DV válido. */
+function makePartner(over: Partial<Partner> = {}): Partner {
+  return {
+    id: 'p-1', userId: 'owner-1', nome: 'SOCIA UNICA', taxId: '52998224725', tipoPessoa: 'PF', residenteBrasil: true,
+    participacaoBp: 10000, entradaEm: '2020-01-01', saidaEm: null, createdById: 'owner-1',
+    createdAt: new Date('2026-01-01'), updatedAt: new Date('2026-01-01'), deletedAt: null, ...over,
+  } as Partner;
+}
+const Y600_ZEROS = { remTrabCents: 0, lucDivCents: 0, jurCapCents: 0, demRendCents: 0, irRetCents: 0 };
+
+// Y600: `over` aceita literais soltos (qualif como string) — o cast final é o mesmo de antes.
+function makeDto(over: Partial<Record<keyof SpedEcfRequestDto, unknown>> = {}): SpedEcfRequestDto {
   return {
     unitId: 'unit-1',
     year: 2025,
@@ -52,6 +63,9 @@ function makeDto(over: Partial<SpedEcfRequestDto> = {}): SpedEcfRequestDto {
       { identNom: 'CONTADOR', identCpfCnpj: '12345678900', identQualif: '900', indCrc: '1DF123', email: 'c@d.com', fone: '6133334444' },
       { identNom: 'SOCIO', identCpfCnpj: '98765432100', identQualif: '205', email: 's@d.com', fone: '6133335555' },
     ],
+    // BE-INCR-ECF-Y600: complemento ECF da vigência default do cadastro (`makePartner`), valores zero explícitos.
+    socios: [{ partnerId: 'p-1', qualif: '02', valores: Y600_ZEROS }],
+    dirigentes: [],
     ...over,
   } as SpedEcfRequestDto;
 }
@@ -65,6 +79,8 @@ interface Mocks {
   deducaoMoveIds?: string[];
   /** Perfil fiscal do escopo (só os 2 campos que o gate lê); `null` = sem perfil. */
   perfil?: { pisDespesaAccountId: string | null; cofinsDespesaAccountId: string | null } | null;
+  /** BE-INCR-ECF-Y600: vigências vivas do cadastro de sócios (default: uma, `makePartner()`). */
+  partners?: Partner[];
 }
 
 function buildService(m: Mocks = {}) {
@@ -106,8 +122,10 @@ function buildService(m: Mocks = {}) {
 
   const fiscalProfileRepo = { findByScope: jest.fn(async () => m.perfil ?? null) } as never;
 
-  const service = new SpedEcfGenerationService(accountRepo, postingRepo, policy, repo, audit, legalParamsSemente, fiscalProfileRepo);
-  return { service, createJob, updateJob, groupByAccount, append, policy };
+  const partnerList = jest.fn(async (_s: unknown) => m.partners ?? [makePartner()]);
+
+  const service = new SpedEcfGenerationService(accountRepo, postingRepo, policy, repo, audit, legalParamsSemente, fiscalProfileRepo, { list: partnerList });
+  return { service, createJob, updateJob, groupByAccount, append, policy, partnerList };
 }
 
 /** Decode the produced file back to its lines (latin1, CRLF). */
@@ -368,3 +386,139 @@ describe('SpedEcfGenerationService.generate — L6: texto fora do Latin-1 (RUNBO
   });
 });
 
+// ─── L11 / BE-INCR-ECF-Y600 itens 8–12 (forks F-Y600-1..10 → a; Manual ECF L12 pp. 56, 570–575) ─────────────
+
+describe('SpedEcfGenerationService.generate — Y600 (BE-INCR-ECF-Y600)', () => {
+  const y600Lines = () => producedLines().filter((l) => l.startsWith('|Y600|'));
+  const complemento = (partnerId: string, over: Record<string, unknown> = {}) => ({ partnerId, qualif: '02', valores: Y600_ZEROS, ...over });
+
+  it('item 8: lê o cadastro pelo repositório e só as vigências vivas que cruzam o ano entram', async () => {
+    const partners = [
+      makePartner({ id: 'p-1' }),
+      makePartner({ id: 'p-antes', taxId: '11144477735', nome: 'SAIU EM 2024', saidaEm: '2024-12-31' }),
+      makePartner({ id: 'p-depois', taxId: '39053344705', nome: 'ENTRA EM 2026', entradaEm: '2026-01-01' }),
+    ];
+    const { service, partnerList } = buildService({ partners });
+    await service.generate(scope, makeDto({ socios: [complemento('p-1')] }));
+    expect(partnerList).toHaveBeenCalledWith(scope);
+    expect(y600Lines()).toEqual(['|Y600|01012020||105|PF|52998224725|SOCIA UNICA|02|100|100|||0,00|0,00|0,00|0,00|0,00|']);
+    expect(producedLines()).toContain('|Y001|0|');
+    expect(producedLines()).toContain('|Y990|3|');
+  });
+
+  it('item 9: complemento de partnerId inexistente ou fora do ano → 400 ECF_Y600_PARTNER_FORA_DO_ANO, sem job', async () => {
+    const partners = [makePartner({ id: 'p-1' }), makePartner({ id: 'p-antes', taxId: '11144477735', saidaEm: '2024-12-31' })];
+    for (const id of ['nao-existe', 'p-antes']) {
+      const { service, createJob } = buildService({ partners });
+      const err = await service.generate(scope, makeDto({ socios: [complemento('p-1'), complemento(id)] })).catch((e) => e);
+      expect(err).toBeInstanceOf(ValidationError);
+      expect(err.errorCode).toBe('ECF_Y600_PARTNER_FORA_DO_ANO');
+      expect(err.message).toContain(id);
+      expect(createJob).not.toHaveBeenCalled();
+    }
+  });
+
+  it('item 9: vigência do ano sem complemento → 400 ECF_Y600_COMPLEMENTO_FALTANDO listando o partnerId, sem nome nem CPF', async () => {
+    const partners = [makePartner({ id: 'p-1' }), makePartner({ id: 'p-2', taxId: '11144477735', nome: 'SEM COMPLEMENTO' })];
+    const err = await buildService({ partners }).service.generate(scope, makeDto({ socios: [complemento('p-1')] })).catch((e) => e);
+    expect(err.errorCode).toBe('ECF_Y600_COMPLEMENTO_FALTANDO');
+    expect(err.message).toContain('p-2');
+    expect(err.message).not.toContain('SEM COMPLEMENTO');
+    expect(err.message).not.toContain('11144477735');
+  });
+
+  it('item 9 (F-Y600-10): residente com pais, ou não residente sem pais → 400 ECF_Y600_PAIS_INCOERENTE', async () => {
+    const r1 = await buildService().service.generate(scope, makeDto({ socios: [complemento('p-1', { pais: '249' })] })).catch((e) => e);
+    expect(r1.errorCode).toBe('ECF_Y600_PAIS_INCOERENTE');
+    const ext = [makePartner({ residenteBrasil: false })];
+    const r2 = await buildService({ partners: ext }).service.generate(scope, makeDto({ socios: [complemento('p-1', { qualif: '05' })] })).catch((e) => e);
+    expect(r2.errorCode).toBe('ECF_Y600_PAIS_INCOERENTE');
+  });
+
+  it('item 9 (M11): QUALIF incompatível com tipo de pessoa × residência → 400 ECF_Y600_QUALIF_INCOERENTE; os 4 casos válidos passam', async () => {
+    const pj = { taxId: '11222333000181', tipoPessoa: 'PJ', nome: 'HOLDING SA' };
+    const casos: Array<[Record<string, unknown>, Record<string, unknown>, boolean]> = [
+      [{}, { qualif: '03' }, false], // Brasil PF não aceita 03
+      [{}, { qualif: '09' }, true],
+      [pj, { qualif: '01' }, false], // Brasil PJ só 03/04
+      [pj, { qualif: '04' }, true],
+      [{ residenteBrasil: false }, { qualif: '02', pais: '249' }, false], // exterior PF só 05/06/14
+      [{ residenteBrasil: false }, { qualif: '14', pais: '249' }, true],
+      [{ ...pj, residenteBrasil: false }, { qualif: '05', pais: '249' }, false], // exterior PJ só 07/08
+      [{ ...pj, residenteBrasil: false }, { qualif: '08', pais: '249' }, true],
+      [pj, { qualif: '03', representanteLegal: { cpf: '52998224725', qualif: '03' } }, false], // rep. de PJ só 01/06
+      [pj, { qualif: '03', representanteLegal: { cpf: '52998224725', qualif: '06' } }, true],
+    ];
+    for (const [p, c, ok] of casos) {
+      const res = await buildService({ partners: [makePartner(p)] }).service.generate(scope, makeDto({ socios: [complemento('p-1', c)] })).then(() => 'ok', (e) => e.errorCode);
+      expect([p, c, res]).toEqual([p, c, ok ? 'ok' : 'ECF_Y600_QUALIF_INCOERENTE']);
+    }
+  });
+
+  it('item 10 (F-Y600-4): uma ocorrência por vigência; mudança de participação não é saída; saída de fato preenche DT_FIM_SOC', async () => {
+    const partners = [
+      makePartner({ id: 'v1', participacaoBp: 6000, saidaEm: '2025-06-30' }), // muda para 40% em 01/07
+      makePartner({ id: 'v2', participacaoBp: 4000, entradaEm: '2025-07-01' }),
+      makePartner({ id: 'x1', taxId: '11144477735', nome: 'SAIU', participacaoBp: 6000, entradaEm: '2019-05-10', saidaEm: '2025-09-15' }),
+    ];
+    const socios = [
+      complemento('v1', { valores: { ...Y600_ZEROS, lucDivCents: 100 } }),
+      complemento('v2', { valores: { ...Y600_ZEROS, lucDivCents: 300 } }),
+      complemento('x1', { qualif: '01', percCapVotBp: 0 }),
+    ];
+    await buildService({ partners }).service.generate(scope, makeDto({ socios }));
+    expect(y600Lines()).toEqual([
+      // vigente em DT_FIN primeiro; depois as demais por DT_ALT_SOC decrescente (item 3)
+      '|Y600|01072025||105|PF|52998224725|SOCIA UNICA|02|40,00|40,00|||0,00|3,00|0,00|0,00|0,00|',
+      '|Y600|01012020||105|PF|52998224725|SOCIA UNICA|02|60,00|60,00|||0,00|1,00|0,00|0,00|0,00|',
+      '|Y600|10052019|15092025|105|PF|11144477735|SAIU|01|60,00|0,00|||0,00|0,00|0,00|0,00|0,00|',
+    ]);
+  });
+
+  it('item 10: não residente sai com o PAIS do complemento e CPF_CNPJ vazio; representante legal no par 11–12', async () => {
+    const partners = [makePartner({ residenteBrasil: false })];
+    await buildService({ partners }).service.generate(
+      scope,
+      makeDto({ socios: [complemento('p-1', { qualif: '06', pais: '249', representanteLegal: { cpf: '11144477735', qualif: '01' } })] }),
+    );
+    expect(y600Lines()).toEqual(['|Y600|01012020||249|PF||SOCIA UNICA|06|100|100|11144477735|01|0,00|0,00|0,00|0,00|0,00|']);
+  });
+
+  it('item 5: dirigente não sócio sai com PAIS 105, PF e percentuais 0', async () => {
+    const dirigentes = [{ nome: 'DIRETORA', cpf: '11144477735', qualif: '10', dtAltSoc: '2023-02-01', valores: { ...Y600_ZEROS, remTrabCents: 500000 } }];
+    await buildService().service.generate(scope, makeDto({ socios: [complemento('p-1')], dirigentes }));
+    expect(y600Lines()).toEqual([
+      '|Y600|01022023||105|PF|11144477735|DIRETORA|10|0,00|0,00|||5000,00|0,00|0,00|0,00|0,00|',
+      '|Y600|01012020||105|PF|52998224725|SOCIA UNICA|02|100|100|||0,00|0,00|0,00|0,00|0,00|',
+    ]);
+  });
+
+  it('item 11 (F-Y600-7): cadastro vazio no ano e sem dirigentes → 400 ECF_Y600_SEM_SOCIOS antes de gerar', async () => {
+    const { service, createJob } = buildService({ partners: [] });
+    const err = await service.generate(scope, makeDto({ socios: [] })).catch((e) => e);
+    expect(err).toBeInstanceOf(ValidationError);
+    expect(err.errorCode).toBe('ECF_Y600_SEM_SOCIOS');
+    expect(createJob).not.toHaveBeenCalled();
+    expect(savedBuffers).toHaveLength(0);
+  });
+
+  it('item 11 (F-Y600-8): soma das participações ≠ 100% em DT_FIN não bloqueia', async () => {
+    const partners = [makePartner({ participacaoBp: 3000 })];
+    await expect(buildService({ partners }).service.generate(scope, makeDto({ socios: [complemento('p-1')] }))).resolves.toBeDefined();
+    expect(y600Lines()).toHaveLength(1);
+  });
+
+  it('item 3 (F-Y600-6): mais de 500 vigentes → 400 ECF_Y600_LIMITE, sem truncar', async () => {
+    const dirigentes = Array.from({ length: 501 }, (_, i) => ({ nome: `D${i}`, cpf: '11144477735', qualif: '10', dtAltSoc: '2023-02-01', valores: Y600_ZEROS }));
+    const err = await buildService({ partners: [] }).service.generate(scope, makeDto({ socios: [], dirigentes })).catch((e) => e);
+    expect(err.errorCode).toBe('ECF_Y600_LIMITE');
+  });
+
+  it('item 12: o payload auditado não ganha nome nem CPF/CNPJ de sócio', async () => {
+    const { service, append } = buildService();
+    await service.generate(scope, makeDto());
+    const payloads = JSON.stringify((append.mock.calls as unknown[][]).map((c) => (c[2] as { payload: unknown }).payload));
+    expect(payloads).not.toContain('52998224725');
+    expect(payloads).not.toContain('SOCIA UNICA');
+  });
+});

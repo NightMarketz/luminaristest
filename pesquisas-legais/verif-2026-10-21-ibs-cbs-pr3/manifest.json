@@ -1,0 +1,72 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Decreto nº 12.955 de 29/04/2026",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos/2026/dec-12955-2026-04-29.md",
+      "url_final": "https://github.com/ctresb/leis/blob/517db958cd0ae2ba36c1f0b524b3cc55fe4198c6/federal/decretos/2026/dec-12955-2026-04-29.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2026-04-29;12955",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "517db958cd0ae2ba36c1f0b524b3cc55fe4198c6",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-10-21T23:18:17-03:00",
+      "sha256": "5527dbfe923a984a86c22b27ef1c5c0b6f4f0c2996bbe14315e8804afd08bbd9",
+      "arquivo": "docs/D01_dec-12955-2026-04-29.md",
+      "texto": "docs/D01_dec-12955-2026-04-29.txt",
+      "bytes": 779823
+    },
+    {
+      "id": "D02",
+      "titulo": "Lei Complementar nº 214 de 16/01/2025",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/2025/lcp-214-2025-01-16.md",
+      "url_final": "https://github.com/ctresb/leis/blob/571468687b4dc8d8f1a3b1dbd5f958ff85fad0cf/federal/leis-complementares/2025/lcp-214-2025-01-16.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2025-01-16;214",
+      "versao_texto": "republicação/retificação",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "571468687b4dc8d8f1a3b1dbd5f958ff85fad0cf",
+      "alertas": [
+        "versao_texto = 'republicação/retificação' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-10-21T23:18:18-03:00",
+      "sha256": "f1f80d77a11f96d8eaf7777d647e577d04abd0fc28420ec22664be7a76ed8851",
+      "arquivo": "docs/D02_lcp-214-2025-01-16.md",
+      "texto": "docs/D02_lcp-214-2025-01-16.txt",
+      "bytes": 1880
+    },
+    {
+      "id": "D03",
+      "titulo": "Lcp 214",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-21T23:18:23-03:00",
+      "sha256": "568f48d881d66f9c1ab691f859c994b6d6a1b0f282dce9c2f853620b0e16634e",
+      "arquivo": "docs/D03_lcp214-htm.html",
+      "texto": "docs/D03_lcp214-htm.txt",
+      "bytes": 5403667
+    },
+    {
+      "id": "D04",
+      "titulo": "d12955",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/d12955.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/d12955.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-21T23:51:46-03:00",
+      "sha256": "6e92bcd8bf682ef7982249e54391bdb4c31c1fa57e4fee8c09d9305e7a73c483",
+      "arquivo": "docs/D04_d12955-htm.html",
+      "texto": "docs/D04_d12955-htm.txt",
+      "bytes": 3184515
+    }
+  ],
+  "buscas": [],
+  "slug": "verif-2026-10-21-ibs-cbs-pr3",
+  "pergunta": "IBS/CBS PR-3: momento do crédito (art. 47), uso/consumo (art. 57), antecipação (art. 10 § 4º) — LC 214 e Dec. 12.955",
+  "criado": "2026-10-21T23:18:10-03:00"
+}

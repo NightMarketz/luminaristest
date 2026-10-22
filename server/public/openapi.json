@@ -1817,58 +1817,6 @@
           }
         }
       },
-      "IbsCbsAssessmentPreviewInput": {
-        "type": "object",
-        "required": [
-          "unitId",
-          "anoCalendario",
-          "mes",
-          "tributo"
-        ],
-        "properties": {
-          "unitId": {
-            "type": "string",
-            "description": "Unidade lida (proveniência; outra unidade da PJ com movimento no mês ⇒ 400)"
-          },
-          "anoCalendario": {
-            "type": "integer",
-            "minimum": 2027,
-            "description": "< 2027 ⇒ 400 (F-IBS-7 b — dispensa do art. 348 § 1º)"
-          },
-          "mes": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 12
-          },
-          "tributo": {
-            "type": "string",
-            "enum": [
-              "IBS",
-              "CBS"
-            ]
-          }
-        }
-      },
-      "IbsCbsAssessmentConfirmInput": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/IbsCbsAssessmentPreviewInput"
-          },
-          {
-            "type": "object",
-            "required": [
-              "expectedSupersedesId"
-            ],
-            "properties": {
-              "expectedSupersedesId": {
-                "type": "string",
-                "nullable": true,
-                "description": "CAS — id da apuração CONFIRMED viva do mês/tributo (null = 1ª confirmação); divergente ⇒ 409"
-              }
-            }
-          }
-        ]
-      },
       "LalurProcessoInput": {
         "type": "object",
         "required": [
@@ -11309,8 +11257,8 @@
     },
     "/api/accounting/ibs-cbs-assessments/preview": {
       "post": {
-        "summary": "Preview the monthly IBS or CBS assessment of the regular regime (IBS-CBS-2027 PR-2, items 6-11)",
-        "description": "Soma o IBS ou a CBS declarado nas NFS-e/NF-e autorizadas do mês (LC 214 art. 60 § 1º - nunca alíquota x base) e não persiste. Créditos ficam para o PR-3 (saldo = débitos). A memória avisa documento sem o tributo, venda liquidada sem documento, conferência pulada (sem base gravada ou alíquota não publicada). 400 para SIMPLES/MEI (art. 41 § 1º), ano < 2027 (F-IBS-7 b), perfil do ano ausente e outra unidade da PJ com movimento no mês.",
+        "summary": "Preview the monthly IBS or CBS assessment (IBS-CBS-2027 PR-2, items 6-11)",
+        "description": "Débito = IBS/CBS destacado nos documentos autorizados do mês (dia escrito; LC 214 art. 60 § 1º). A conferência pela tabela só gera aviso. PR-3: créditos = Σ créditos APROPRIADO no mês (art. 47; PENDENTE só na memória); a antecipação do pacote pago no mês soma ao débito (art. 10 § 4º). Não persiste. 400 nomeado para SIMPLES/MEI, anoCalendario anterior a 2027 (F-IBS-7 b) e pacote no mês sem alíquota publicada (IBS_CBS_ANTECIPACAO_SEM_ALIQUOTA). CBS sem linha publicada e com taxa PROVISÓRIA (tabela IBS_CBS_PROVISORIA, dono 22/10): 200 com status CALCULATED_PROVISIONAL e warnings [CBS_RATE_PENDING_SENATE_RES] — só na prévia; a confirmação segue 400.",
         "tags": [
           "Accounting"
         ],
@@ -11324,14 +11272,42 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/IbsCbsAssessmentPreviewInput"
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "unitId",
+                  "anoCalendario",
+                  "mes",
+                  "tributo"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "anoCalendario": {
+                    "type": "integer",
+                    "minimum": 2027
+                  },
+                  "mes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12
+                  },
+                  "tributo": {
+                    "type": "string",
+                    "enum": [
+                      "IBS",
+                      "CBS"
+                    ]
+                  }
+                }
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "IbsCbsPreviewView (débitos, créditos, saldo, memória, expectedSupersedesId, avisos)"
+            "description": "IbsCbsPreviewView (status CALCULATED|CALCULATED_PROVISIONAL, warnings, debitosCents, creditosCents, saldoCents, documentosSemGrupo, memoria)"
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"
@@ -11349,9 +11325,83 @@
       }
     },
     "/api/accounting/ibs-cbs-assessments": {
+      "post": {
+        "summary": "Confirm the monthly IBS or CBS assessment (IBS-CBS-2027 PR-2, item 9)",
+        "description": "Grava a linha CONFIRMED. expectedSupersedesId = id CONFIRMED vivo do mês (null na 1ª); divergente ⇒ 409. Substituir o mês derruba os meses posteriores do tributo (reconfirmar). A provisão (item 12) ainda não é lançada: provisaoEntryId fica null e a memória traz PROVISAO_PENDENTE_ITEM_12.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "unitId",
+                  "anoCalendario",
+                  "mes",
+                  "tributo",
+                  "expectedSupersedesId"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "anoCalendario": {
+                    "type": "integer",
+                    "minimum": 2027
+                  },
+                  "mes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12
+                  },
+                  "tributo": {
+                    "type": "string",
+                    "enum": [
+                      "IBS",
+                      "CBS"
+                    ]
+                  },
+                  "expectedSupersedesId": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "IbsCbsConfirmView (assessment, reconfirmar)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "description": "CAS de expectedSupersedesId, ordem ou perfil alterado durante a confirmação"
+          }
+        }
+      },
       "get": {
         "summary": "List the IBS/CBS assessments of the company in a year (IBS-CBS-2027 PR-2, item 13)",
-        "description": "Lista da PJ inteira (CONFIRMED e SUPERSEDED); unitId só resolve escopo/policy. Ano < 2027 ⇒ 400.",
         "tags": [
           "Accounting"
         ],
@@ -11396,10 +11446,12 @@
             "$ref": "#/components/responses/UnitNotFound"
           }
         }
-      },
+      }
+    },
+    "/api/accounting/ibs-cbs-assessments/{id}/provisao": {
       "post": {
-        "summary": "Confirm the monthly IBS or CBS assessment (IBS-CBS-2027 PR-2, items 9 and 12)",
-        "description": "409: IBS_CBS_ASSESSMENT_CAS, _ORDER ou _STALE Recalcula e grava numa tx com os gates - CAS do expectedSupersedesId (409), mês novo atrás de um posterior confirmado (409) - e, ao substituir, derruba os meses posteriores do mesmo tributo (reconfirmar). Depois do commit, a reclassificação receita -> IBS/CBS a recolher (F-IBS-8 c) é best-effort (provisaoPendente).",
+        "summary": "Reconcile the revenue → IBS/CBS payable reclassification of an assessment (IBS-CBS-2027 PR-2, item 12)",
+        "description": "Completa o que faltar (estorno da substituída, lançamento D receita / C a recolher no último dia do mês, vínculo provisaoEntryId). Idempotente. 400 se a conta de IBS/CBS a recolher não estiver no perfil fiscal ou o período estiver fechado.",
         "tags": [
           "Accounting"
         ],
@@ -11408,19 +11460,27 @@
             "bearerAuth": []
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/IbsCbsAssessmentConfirmInput"
-              }
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
-        },
+        ],
         "responses": {
-          "201": {
-            "description": "IbsCbsConfirmView (apuracao, reconfirmar)"
+          "200": {
+            "description": "IbsCbsAssessmentView"
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"
@@ -11433,17 +11493,14 @@
           },
           "404": {
             "$ref": "#/components/responses/UnitNotFound"
-          },
-          "409": {
-            "description": "IBS_CBS_ASSESSMENT_CAS, _ORDER ou _STALE"
           }
         }
       }
     },
-    "/api/accounting/ibs-cbs-assessments/{id}/provisao": {
+    "/api/accounting/payables/{id}/ibs-cbs-credits/apropriar": {
       "post": {
-        "summary": "Reconcile the revenue-to-liability reclassification of an IBS/CBS assessment (IBS-CBS-2027 PR-2, item 12)",
-        "description": "Idempotente: completa o que faltar (estorno da substituída, lançamento, vínculo) sem refazer nada. Período fechado ou conta a recolher não configurada ⇒ 400.",
+        "summary": "Appropriate the IBS or CBS credit of a purchase note (IBS-CBS-2027 PR-3, item 16)",
+        "description": "PENDENTE → APROPRIADO do crédito de IBS/CBS da nota (LC 214 art. 47; F-IBS-4 a), com o comprovante da extinção (SourceDocument do escopo) obrigatório. CAS: a linha tem de estar em expectedStatus (PENDENTE) — senão 409 IBS_CBS_CREDITO_CAS. Sem lançamento: o crédito está em IBS/CBS a recuperar desde a entrada; a apuração do mês de apropriadoEm o soma e o compensa. payableId no corpo é opcional e, quando vem, tem de ser o id da rota.",
         "tags": [
           "Accounting"
         ],
@@ -11468,12 +11525,35 @@
             "application/json": {
               "schema": {
                 "type": "object",
+                "additionalProperties": false,
                 "required": [
-                  "unitId"
+                  "unitId",
+                  "tributo",
+                  "sourceDocumentId",
+                  "expectedStatus"
                 ],
                 "properties": {
                   "unitId": {
                     "type": "string"
+                  },
+                  "payableId": {
+                    "type": "string"
+                  },
+                  "tributo": {
+                    "type": "string",
+                    "enum": [
+                      "IBS",
+                      "CBS"
+                    ]
+                  },
+                  "sourceDocumentId": {
+                    "type": "string"
+                  },
+                  "expectedStatus": {
+                    "type": "string",
+                    "enum": [
+                      "PENDENTE"
+                    ]
                   }
                 }
               }
@@ -11482,7 +11562,7 @@
         },
         "responses": {
           "200": {
-            "description": "IbsCbsAssessmentView"
+            "description": "linha de crédito (tributo, amountCents, status APROPRIADO, sourceDocumentId, apropriadoEm)"
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"
@@ -11495,6 +11575,9 @@
           },
           "404": {
             "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "description": "IBS_CBS_CREDITO_CAS — o crédito não está mais PENDENTE"
           }
         }
       }
@@ -12020,6 +12103,282 @@
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      }
+    },
+    "/api/accounting/partners": {
+      "get": {
+        "summary": "List the partners in force on a date and the sum of their shares (F-IRD-14)",
+        "description": "data defaults to today in the scope time zone. somaParticipacaoBp different from 10000 does not block the registry; it only returns a warning (it blocks the interest on equity later).",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "data",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ data, socios: PartnerView[], somaParticipacaoBp, aviso }"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      },
+      "post": {
+        "summary": "Register a partner (CPF or CNPJ with check digits; tipoPessoa derived from the length)",
+        "description": "Non-resident partners are accepted here (F-IRD-7). Two validity ranges of the same taxId in the same company that overlap → 409 VIGENCIA_SOBREPOSTA. Audited as partner.created without name or taxId.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "nome",
+                  "taxId",
+                  "residenteBrasil",
+                  "participacaoBp",
+                  "entradaEm"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "nome": {
+                    "type": "string"
+                  },
+                  "taxId": {
+                    "type": "string",
+                    "description": "11 or 14 digits"
+                  },
+                  "residenteBrasil": {
+                    "type": "boolean"
+                  },
+                  "participacaoBp": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 10000
+                  },
+                  "entradaEm": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "saidaEm": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "PartnerView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "description": "VIGENCIA_SOBREPOSTA or deleted unit"
+          }
+        }
+      }
+    },
+    "/api/accounting/partners/{id}": {
+      "get": {
+        "summary": "Read one partner",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PartnerView"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      },
+      "put": {
+        "summary": "Replace a partner (same body as POST; the overlap gate skips the row itself)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "nome",
+                  "taxId",
+                  "residenteBrasil",
+                  "participacaoBp",
+                  "entradaEm"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "PartnerView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "description": "VIGENCIA_SOBREPOSTA or deleted unit"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Soft-delete a partner",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "deleted"
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
@@ -16340,7 +16699,8 @@
                   "unitId",
                   "year",
                   "declarant",
-                  "signers"
+                  "signers",
+                  "socios"
                 ],
                 "properties": {
                   "unitId": {
@@ -16376,6 +16736,154 @@
                   "deadlineJustification": {
                     "type": "string",
                     "description": "Obrigatória quando o exercício está no limite do prazo de retificação (ano-2, art. 8º §4)."
+                  },
+                  "socios": {
+                    "type": "array",
+                    "maxItems": 999,
+                    "description": "Y600 (BE-INCR-ECF-Y600, L11 of H1) - one ECF complement per partner VALIDITY (partnerId = id of the /accounting/partners row) living in the year. The person (name, CPF/CNPJ, PF/PJ, residence, share, dates) comes from the partners registry; a validity of the year with no complement, an id outside the year, pais incoherent with residence or QUALIF incompatible with person type and residence (REGRA_Y600_QUALIF, p. 574) are 400 (ECF_Y600_*). No occurrence at all (no partner and no dirigente) is 400 ECF_Y600_SEM_SOCIOS; more than 500 current / 499 other occurrences is 400 ECF_Y600_LIMITE. The file lists current ones by total paid, then the others by DT_ALT_SOC (p. 570).",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "partnerId",
+                        "qualif",
+                        "valores"
+                      ],
+                      "properties": {
+                        "partnerId": {
+                          "type": "string"
+                        },
+                        "qualif": {
+                          "type": "string",
+                          "description": "01..17 (18 is refused - REGRA_Y600_QUALIF)"
+                        },
+                        "pais": {
+                          "type": "string",
+                          "description": "3-digit Sped country code, only for a non-resident partner (never 105)"
+                        },
+                        "percCapVotBp": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 10000,
+                          "description": "voting share in basis points; default = the registry share"
+                        },
+                        "representanteLegal": {
+                          "type": "object",
+                          "required": [
+                            "cpf",
+                            "qualif"
+                          ],
+                          "properties": {
+                            "cpf": {
+                              "type": "string"
+                            },
+                            "qualif": {
+                              "type": "string",
+                              "enum": [
+                                "01",
+                                "02",
+                                "03",
+                                "04",
+                                "05",
+                                "06"
+                              ]
+                            }
+                          },
+                          "description": "CPF_REP_LEG + QUALIF_REP_LEG, together or none; a PJ partner only takes 01 or 06"
+                        },
+                        "valores": {
+                          "type": "object",
+                          "required": [
+                            "remTrabCents",
+                            "lucDivCents",
+                            "jurCapCents",
+                            "demRendCents",
+                            "irRetCents"
+                          ],
+                          "description": "Y600 fields 13-17 in cents, all required, zero must be explicit (Manual ECF L12 p. 570)"
+                        }
+                      }
+                    }
+                  },
+                  "dirigentes": {
+                    "type": "array",
+                    "maxItems": 999,
+                    "description": "Y600 - officers/board members who are not in the partners registry (default []). Emitted with PAIS 105, PF and 0 percent shares.",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "nome",
+                        "cpf",
+                        "qualif",
+                        "dtAltSoc",
+                        "valores"
+                      ],
+                      "properties": {
+                        "nome": {
+                          "type": "string"
+                        },
+                        "cpf": {
+                          "type": "string",
+                          "description": "11 digits, DV validated"
+                        },
+                        "qualif": {
+                          "type": "string",
+                          "enum": [
+                            "10",
+                            "11",
+                            "12",
+                            "13",
+                            "14",
+                            "15",
+                            "16",
+                            "17"
+                          ]
+                        },
+                        "dtAltSoc": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "dtFimSoc": {
+                          "type": "string",
+                          "format": "date",
+                          "description": "must fall within the year (REGRA_DATA_FIM_SOC, p. 574)"
+                        },
+                        "representanteLegal": {
+                          "type": "object",
+                          "required": [
+                            "cpf",
+                            "qualif"
+                          ],
+                          "properties": {
+                            "cpf": {
+                              "type": "string"
+                            },
+                            "qualif": {
+                              "type": "string",
+                              "enum": [
+                                "01",
+                                "02",
+                                "03",
+                                "04",
+                                "05",
+                                "06"
+                              ]
+                            }
+                          },
+                          "description": "CPF_REP_LEG + QUALIF_REP_LEG, together or none; a PJ partner only takes 01 or 06"
+                        },
+                        "valores": {
+                          "type": "object",
+                          "required": [
+                            "remTrabCents",
+                            "lucDivCents",
+                            "jurCapCents",
+                            "demRendCents",
+                            "irRetCents"
+                          ],
+                          "description": "Y600 fields 13-17 in cents, all required, zero must be explicit (Manual ECF L12 p. 570)"
+                        }
+                      }
+                    }
                   },
                   "declarant": {
                     "type": "object",
@@ -16559,7 +17067,8 @@
                   "year",
                   "declarant",
                   "fiscal",
-                  "signers"
+                  "signers",
+                  "socios"
                 ],
                 "properties": {
                   "unitId": {
@@ -16595,6 +17104,154 @@
                   "deadlineJustification": {
                     "type": "string",
                     "description": "Obrigatória quando o exercício está no limite do prazo de retificação (ano-2, art. 8º §4)."
+                  },
+                  "socios": {
+                    "type": "array",
+                    "maxItems": 999,
+                    "description": "Y600 (BE-INCR-ECF-Y600, L11 of H1) - one ECF complement per partner VALIDITY (partnerId = id of the /accounting/partners row) living in the year. The person (name, CPF/CNPJ, PF/PJ, residence, share, dates) comes from the partners registry; a validity of the year with no complement, an id outside the year, pais incoherent with residence or QUALIF incompatible with person type and residence (REGRA_Y600_QUALIF, p. 574) are 400 (ECF_Y600_*). No occurrence at all (no partner and no dirigente) is 400 ECF_Y600_SEM_SOCIOS; more than 500 current / 499 other occurrences is 400 ECF_Y600_LIMITE. The file lists current ones by total paid, then the others by DT_ALT_SOC (p. 570).",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "partnerId",
+                        "qualif",
+                        "valores"
+                      ],
+                      "properties": {
+                        "partnerId": {
+                          "type": "string"
+                        },
+                        "qualif": {
+                          "type": "string",
+                          "description": "01..17 (18 is refused - REGRA_Y600_QUALIF)"
+                        },
+                        "pais": {
+                          "type": "string",
+                          "description": "3-digit Sped country code, only for a non-resident partner (never 105)"
+                        },
+                        "percCapVotBp": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 10000,
+                          "description": "voting share in basis points; default = the registry share"
+                        },
+                        "representanteLegal": {
+                          "type": "object",
+                          "required": [
+                            "cpf",
+                            "qualif"
+                          ],
+                          "properties": {
+                            "cpf": {
+                              "type": "string"
+                            },
+                            "qualif": {
+                              "type": "string",
+                              "enum": [
+                                "01",
+                                "02",
+                                "03",
+                                "04",
+                                "05",
+                                "06"
+                              ]
+                            }
+                          },
+                          "description": "CPF_REP_LEG + QUALIF_REP_LEG, together or none; a PJ partner only takes 01 or 06"
+                        },
+                        "valores": {
+                          "type": "object",
+                          "required": [
+                            "remTrabCents",
+                            "lucDivCents",
+                            "jurCapCents",
+                            "demRendCents",
+                            "irRetCents"
+                          ],
+                          "description": "Y600 fields 13-17 in cents, all required, zero must be explicit (Manual ECF L12 p. 570)"
+                        }
+                      }
+                    }
+                  },
+                  "dirigentes": {
+                    "type": "array",
+                    "maxItems": 999,
+                    "description": "Y600 - officers/board members who are not in the partners registry (default []). Emitted with PAIS 105, PF and 0 percent shares.",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "nome",
+                        "cpf",
+                        "qualif",
+                        "dtAltSoc",
+                        "valores"
+                      ],
+                      "properties": {
+                        "nome": {
+                          "type": "string"
+                        },
+                        "cpf": {
+                          "type": "string",
+                          "description": "11 digits, DV validated"
+                        },
+                        "qualif": {
+                          "type": "string",
+                          "enum": [
+                            "10",
+                            "11",
+                            "12",
+                            "13",
+                            "14",
+                            "15",
+                            "16",
+                            "17"
+                          ]
+                        },
+                        "dtAltSoc": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "dtFimSoc": {
+                          "type": "string",
+                          "format": "date",
+                          "description": "must fall within the year (REGRA_DATA_FIM_SOC, p. 574)"
+                        },
+                        "representanteLegal": {
+                          "type": "object",
+                          "required": [
+                            "cpf",
+                            "qualif"
+                          ],
+                          "properties": {
+                            "cpf": {
+                              "type": "string"
+                            },
+                            "qualif": {
+                              "type": "string",
+                              "enum": [
+                                "01",
+                                "02",
+                                "03",
+                                "04",
+                                "05",
+                                "06"
+                              ]
+                            }
+                          },
+                          "description": "CPF_REP_LEG + QUALIF_REP_LEG, together or none; a PJ partner only takes 01 or 06"
+                        },
+                        "valores": {
+                          "type": "object",
+                          "required": [
+                            "remTrabCents",
+                            "lucDivCents",
+                            "jurCapCents",
+                            "demRendCents",
+                            "irRetCents"
+                          ],
+                          "description": "Y600 fields 13-17 in cents, all required, zero must be explicit (Manual ECF L12 p. 570)"
+                        }
+                      }
+                    }
                   },
                   "declarant": {
                     "type": "object",
@@ -18161,7 +18818,7 @@
     "/api/bank-settlements/{id}/confirm": {
       "post": {
         "summary": "Confirm a proposal — the ONLY financial effect (items 6–8, F-F7-3/4 a)",
-        "description": "CAS PENDING→CONFIRMING closes the race (two confirms = one effect). Authoritative pre-check in a read transaction BEFORE any effect: item PENDING, line UNMATCHED with no active match, statement active, title balance re-read ≥ proposedCents, the account the method resolves to must be the statement's bank account, and — when chargeCents > 0 — a charge account configured (PUT /api/accounting/settings) and the line's period OPEN. Any failure = 400 with no effect. Then idempotent steps with state saved on the item: (i) AP/AR registerPayment/registerReceipt (their own claim→book→finalize protocol), (ii) bank.charge entry when chargeCents > 0, (ii-b) provider.fee entry when feeCents > 0 (F5 PR-3, P3-8: D providerFeeExpenseAccountId / C PaymentAccount GL), (iii) manualMatch of the statement-account legs (signed Σ == line), (iv) CONFIRMED. Failure in (ii)/(iii) → FAILED with the ids kept.",
+        "description": "CAS PENDING→CONFIRMING closes the race (two confirms = one effect). Authoritative pre-check in a read transaction BEFORE any effect: item PENDING, line UNMATCHED with no active match, statement active, title balance re-read ≥ proposedCents, the account the method resolves to must be the statement's bank account, and — when chargeCents > 0 — a charge account configured (PUT /api/accounting/settings) and the line's period OPEN. Any failure = 400 with no effect. Then idempotent steps with state saved on the item: (i) AP/AR registerPayment/registerReceipt (their own claim→book→finalize protocol), (ii) bank.charge entry when chargeCents > 0, (ii-b) provider.fee entry when feeCents > 0 (F5 PR-3, P3-8: D providerFeeExpenseAccountId / C PaymentAccount GL), (iii) manualMatch of the statement-account legs (signed Σ == line), (iv) CONFIRMED. Failure in (ii)/(iii) → FAILED with the ids kept. IBS-CBS-2027 PR-4 (split payment): optional `split` on a RECEIVABLE — the provider withheld IBS/CBS, so |line| + feeCents + ibsCents + cbsCents must equal the open balance (else 400 split_mismatch). Step (i-b) books one cashless receipt per tax (kind SPLIT_IBS_CBS: D IBS|CBS a recolher of the unit fiscal profile / C customer), never a fee. 400 split_not_allowed_payable (Payable), IBS_CBS_SIMPLES_MEI (Simples/MEI in the competence year), IBS_CBS_ANTES_DE_2027, split_account_not_configured. The retry re-reads the saved split.",
         "tags": [
           "Accounting"
         ],
@@ -18204,6 +18861,29 @@
                       "ProviderBalance"
                     ],
                     "description": "closed map PAYMENT_METHOD_ACCOUNTS — must resolve to the statement bank account. ProviderBalance (F5 PR-3, P3-9): only on a PaymentAccount statement (ACTIVE, same GL) for a RECEIVABLE — else 400 provider_balance_requires_payment_account"
+                  },
+                  "split": {
+                    "type": "object",
+                    "required": [
+                      "ibsCents",
+                      "cbsCents"
+                    ],
+                    "description": "IBS-CBS-2027 PR-4 — IBS and CBS withheld by split payment (integer cents, sum > 0); RECEIVABLE only",
+                    "properties": {
+                      "ibsCents": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "cbsCents": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "competencia": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                        "description": "YYYY-MM of the extinguished debit (Dec. 12.955 arts. 27 § 1º, 44 § 3º); default = month of the statement line; ≥ 2027-01"
+                      }
+                    }
                   }
                 }
               }

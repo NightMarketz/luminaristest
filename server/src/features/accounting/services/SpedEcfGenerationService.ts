@@ -17,6 +17,7 @@ import type { SpedEcfRequestDto } from '../dtos/SpedEcfDto';
 import { receitaBrutaPorAtividade, receitaBrutaPorAtividadeSemGate } from './receitaBrutaPorAtividade';
 import { buildEcfFile, resolveEcfCodVer, serializeEcf, type EcfFileInput, type EcfQuarter } from '../../../lib/ecf';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
+import { montarY600, type Y600PartnerReader } from './y600FromPartners';
 
 /** Quarter windows (T01..T04) for a calendar year. */
 export function quarterWindows(year: number): Array<{ perApur: string; dtIni: string; dtFin: string; from: Date; to: Date }> {
@@ -63,6 +64,8 @@ export class SpedEcfGenerationService {
     private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
     /** F-PCB-1R (dono 13/10): as contas de dedução de PIS/COFINS do perfil saem do gate de receita bruta. */
     private readonly fiscalProfileRepo: Pick<IFiscalProfileRepository, 'findByScope'>,
+    /** BE-INCR-ECF-Y600 item 8: vigências do cadastro de sócios (IRRF-DISTRIBUICAO PR-1) para o Y600. */
+    private readonly partners: Y600PartnerReader,
   ) {}
 
   public async generate(scope: AccountingScope, dto: SpedEcfRequestDto): Promise<DataExchangeJobResponse> {
@@ -98,6 +101,9 @@ export class SpedEcfGenerationService {
       // BE-INCR-H1-REFERENCIAL-3-4: o P200/P400 não tem linha própria para a 3.4 — entra na base de serviço.
       quarters.push({ perApur: w.perApur, dtIni: w.dtIni, dtFin: w.dtFin, servicoCents: Math.max(0, servicoCents + naoUsoCents), revendaCents });
     }
+
+    // ── Y600 (BE-INCR-ECF-Y600 itens 8–11): cadastro × complemento do request, já ordenado (item 3) ──
+    const y600 = await montarY600(this.partners, scope, year, dto.socios, dto.dirigentes);
 
     // Item 25: ano sem leiaute é 400 explícito (a lib lança Error puro — mesmo tratamento do SpedEcfRealGenerationService).
     let codVer: string;
@@ -141,6 +147,7 @@ export class SpedEcfGenerationService {
         fone: s.fone,
       })),
       quarters,
+      y600,
     };
 
     const lines = buildEcfFile(input);

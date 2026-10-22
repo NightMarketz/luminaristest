@@ -9,6 +9,7 @@ import { pushTestSchema, resetDb } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
 import {
   CANONICAL_ACCOUNTS,
+  REFERENCIAL_PLANO_PADRAO,
   CANONICAL_ACCOUNTS_PRE_L8,
   RENOMEACAO_CANONICA_L8,
 } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
@@ -70,6 +71,10 @@ const saldo = async (accountId: string) => {
   return `${r._sum.debitCents}/${r._sum.creditCents}`;
 };
 
+// Folhas novas do plano padrão criadas DEPOIS da L8 (IRRF-DISTRIBUICAO PR-1 item 6): não são renomeação, a migração não as
+// cria — nascem no próximo `ensureChartOfAccounts` (create-if-missing). As sintéticas delas a migração cria (item b).
+const FOLHAS_POS_L8 = new Set(REFERENCIAL_PLANO_PADRAO.map((e) => e.accountCode));
+
 describe('migratePlano4NiveisCli (integração)', () => {
   beforeAll(async () => {
     pushTestSchema();
@@ -101,7 +106,7 @@ describe('migratePlano4NiveisCli (integração)', () => {
     // O plano vivo é exatamente o canônico de 4 níveis (sem conta nova vazia ao lado da antiga).
     const vivo = await prisma.account.findMany({ where: { userId: t.userId, unitId: UNIT, deletedAt: null }, orderBy: { code: 'asc' } });
     expect(vivo.map((a) => `${a.code}:${a.acceptsEntries}`).sort()).toEqual(
-      [...CANONICAL_ACCOUNTS, ...CONTAS_FISCAIS_V2].map((a) => `${a.code}:${a.acceptsEntries}`).sort(),
+      [...CANONICAL_ACCOUNTS.filter((a) => !FOLHAS_POS_L8.has(a.code)), ...CONTAS_FISCAIS_V2].map((a) => `${a.code}:${a.acceptsEntries}`).sort(),
     );
     // O perfil fiscal recebeu as contas-padrão do v3 (campo nulo) e segue nelas depois da renomeação.
     const perfil = await prisma.fiscalProfile.findFirstOrThrow({ where: { userId: t.userId, unitId: UNIT } });
@@ -148,7 +153,7 @@ describe('migratePlano4NiveisCli (integração)', () => {
     expect([perfil.irpjRecolherAccountId, perfil.pisRecolherAccountId]).toEqual([t.ids['2.1.3'], t.ids['2.1.5']]);
     // O plano vivo é o canônico de 4 níveis + a extensão fiscal da v6, nada mais.
     const vivo = await prisma.account.findMany({ where: { userId: t.userId, unitId: UNIT, deletedAt: null } });
-    const esperado = [...CANONICAL_ACCOUNTS, ...CONTAS_FISCAIS_V2].map((a) => `${a.code}:${a.acceptsEntries}`).sort();
+    const esperado = [...CANONICAL_ACCOUNTS.filter((a) => !FOLHAS_POS_L8.has(a.code)), ...CONTAS_FISCAIS_V2].map((a) => `${a.code}:${a.acceptsEntries}`).sort();
     expect(vivo.map((a) => `${a.code}:${a.acceptsEntries}`).sort()).toEqual(esperado);
     expect(rel.personalizadasNaoTocadas).toEqual([]);
     expect(rel.kitPreparado).toBeNull();

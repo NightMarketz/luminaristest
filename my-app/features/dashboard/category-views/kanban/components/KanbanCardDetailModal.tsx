@@ -134,7 +134,7 @@ export function KanbanCardDetailModal({
     const extraFields = tableSchema.fields.filter((f: ISchemaField) => !handledFields.includes(f.name) && !f.hidden);
 
     return createPortal(
-        <div className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto p-4 sm:p-6 md:p-12 lg:p-20">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto p-4 sm:p-6 md:p-12 lg:p-20">
             {/* Backdrop */}
             <div className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
 
@@ -172,7 +172,7 @@ export function KanbanCardDetailModal({
                                 </h2>
                             )}
                             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                Na lista <span className="underline font-medium">{columnTitle || task.status}</span>
+                                {t('database:kanban_card.in_list', 'Na lista')} <span className="underline font-medium">{columnTitle || task.status}</span>
                             </p>
                         </div>
                     </div>
@@ -188,7 +188,7 @@ export function KanbanCardDetailModal({
                                 <div className="flex flex-wrap gap-4 pl-10">
                                     {task.priority && (
                                         <div className="flex flex-col gap-1.5">
-                                            <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 tracking-tight uppercase">Prioridade</span>
+                                            <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 tracking-tight uppercase">{t('database:kanban_card.priority', 'Prioridade')}</span>
                                             <div className={`px-3 py-1.5 rounded text-sm font-semibold flex items-center gap-2 ${task.priority === 'High' || task.priority === 'Urgent' ? 'bg-red-500 text-white' :
                                                 task.priority === 'Medium' ? 'bg-amber-500 text-white' : 'bg-blue-500 text-white'
                                                 }`}>
@@ -205,13 +205,13 @@ export function KanbanCardDetailModal({
                                 <MdOutlineDescription className="mt-1 text-gray-600 dark:text-gray-400" size={24} />
                                 <div className="flex-1">
                                     <div className="flex items-center justify-between mb-2">
-                                        <h3 className="font-bold text-gray-800 dark:text-gray-100 uppercase tracking-tight text-sm">Descrição</h3>
+                                        <h3 className="font-bold text-gray-800 dark:text-gray-100 uppercase tracking-tight text-sm">{t('database:kanban_card.description', 'Descrição')}</h3>
                                         {!isEditingDescription && descriptionValue && (
                                             <button
                                                 onClick={() => setIsEditingDescription(true)}
                                                 className="px-3 py-1 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-gray-600 dark:text-gray-400 rounded text-xs transition-colors"
                                             >
-                                                Editar
+                                                {t('database:kanban_card.edit', 'Editar')}
                                             </button>
                                         )}
                                     </div>
@@ -230,13 +230,13 @@ export function KanbanCardDetailModal({
                                                     onClick={handleDescriptionSave}
                                                     className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-semibold transition-colors"
                                                 >
-                                                    Salvar
+                                                    {t('database:kanban_card.save', 'Salvar')}
                                                 </button>
                                                 <button
                                                     onClick={() => setIsEditingDescription(false)}
                                                     className="px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5 text-gray-600 dark:text-gray-400 rounded text-sm transition-colors"
                                                 >
-                                                    Cancelar
+                                                    {t('database:kanban_card.cancel', 'Cancelar')}
                                                 </button>
                                             </div>
                                         </div>
@@ -259,7 +259,7 @@ export function KanbanCardDetailModal({
                                 <div className="flex gap-4">
                                     <MdFormatListBulleted className="mt-1 text-gray-600 dark:text-gray-400" size={24} />
                                     <div className="flex-1">
-                                        <h3 className="font-bold text-gray-800 dark:text-gray-100 uppercase tracking-tight text-sm mb-4">Informações Detalhadas</h3>
+                                        <h3 className="font-bold text-gray-800 dark:text-gray-100 uppercase tracking-tight text-sm mb-4">{t('database:kanban_card.details', 'Informações Detalhadas')}</h3>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-black/5 dark:bg-white/5 p-4 rounded-lg">
                                             {extraFields.map((field: ISchemaField) => {
                                                 const value = task[field.name as keyof typeof task];
@@ -303,7 +303,7 @@ export function KanbanCardDetailModal({
                                                                     onClick={() => setEditingFieldName(field.name)}
                                                                     className="w-full cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 px-2 py-1 -ml-2 rounded transition-colors flex items-center justify-between"
                                                                 >
-                                                                    {renderFieldValue(field, value, formatCurrency, relationLookups)}
+                                                                    {renderFieldValue(field, value, formatCurrency, relationLookups, t('database:kanban_card.empty', 'Vazio'))}
                                                                 </div>
                                                             )}
                                                         </div>
@@ -322,10 +322,10 @@ export function KanbanCardDetailModal({
 
                             {/* Add to Card Section */}
                             <div className="flex flex-col gap-2">
-                                <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Ações Rápidas</span>
+                                <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">{t('database:kanban_card.quick_actions', 'Ações Rápidas')}</span>
                                 <SidebarButton
                                     icon={MdDeleteOutline}
-                                    label="Excluir"
+                                    label={t('database:kanban_card.delete', 'Excluir')}
                                     onClick={handleDeleteTask}
                                     className="hover:bg-red-500/10 hover:text-red-500 dark:hover:bg-red-500/20"
                                 />
@@ -335,7 +335,7 @@ export function KanbanCardDetailModal({
                             <div className="mt-auto pt-6 border-t border-gray-200 dark:border-gray-800 flex flex-col gap-1.5 opacity-60">
                                 <div className="flex items-center gap-2 text-[10px] text-gray-500 uppercase font-bold tracking-tight">
                                     <MdOutlineAccessTime size={14} />
-                                    Criado em
+                                    {t('database:kanban_card.created_at', 'Criado em')}
                                 </div>
                                 <span className="text-xs text-gray-700 dark:text-gray-300">
                                     {task.createdAt ? new Date(task.createdAt).toLocaleDateString() : '—'}
@@ -378,8 +378,8 @@ function SidebarButton({ icon: Icon, label, onClick, className = '' }: SidebarBu
     );
 }
 
-function renderFieldValue(field: ISchemaField, value: unknown, formatCurrency: (v: number) => string, relationLookups?: RelationLookups) {
-    if (value === null || value === undefined || value === '') return <span className="opacity-40 italic font-normal">Vazio</span>;
+function renderFieldValue(field: ISchemaField, value: unknown, formatCurrency: (v: number) => string, relationLookups: RelationLookups | undefined, emptyLabel: string) {
+    if (value === null || value === undefined || value === '') return <span className="opacity-40 italic font-normal">{emptyLabel}</span>;
 
     if (field.type === 'relation') {
         const lookupMap = relationLookups?.[field.name];

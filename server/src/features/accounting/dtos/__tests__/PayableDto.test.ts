@@ -312,3 +312,34 @@ describe('CreatePayableSchema — insumoItems (ITEM-DESTINATION, só com invento
     expect(p({ ...insumo, description: 'Tinta 7.0' })).toBe(true);
   });
 });
+
+// IBS-CBS-2027 PR-3 (BRIEF item 14, §4.2): recoverableTaxLines vira união — X6 (kind) ∪ IBS/CBS (tributo), formato X6 intacto.
+describe('CreatePayableSchema — linha de crédito de IBS/CBS (IBS-CBS-2027 PR-3 item 14)', () => {
+  const base = {
+    unitId: 'unit-1', supplierName: 'ACME', documentNumber: 'NF-1', description: 'x', issueDate: '2027-03-05', dueDate: '2027-04-05',
+    inventoryMultiItem: true, insumoItems: [{ accountId: 'exp', productRef: 'p', cProd: 'C', nItem: 1, costCents: 10000 }],
+  };
+  const ibs = { tributo: 'IBS', accountId: 'rec-ibs', amountCents: 5, status: 'PENDENTE', sourceDocumentId: null };
+  const cbs = { ...ibs, tributo: 'CBS', accountId: 'rec-cbs', amountCents: 440 };
+
+  it('X6 + IBS + CBS na mesma nota; o crédito entra no tie-out', () => {
+    const lines = [{ accountId: 'rec-1', amountCents: 1000, kind: 'ICMS' }, ibs, cbs];
+    expect(CreatePayableSchema.safeParse({ ...base, amountCents: 10000 + 1000 + 5 + 440, insumoItems: [{ ...base.insumoItems[0], costCents: 10000 }], recoverableTaxLines: lines }).success).toBe(true);
+    expect(CreatePayableSchema.safeParse({ ...base, amountCents: 10000 + 1000, recoverableTaxLines: lines }).success).toBe(false);
+  });
+
+  it('nasce PENDENTE sem comprovante: APROPRIADO ou sourceDocumentId na criação ⇒ 400 (a apropriação tem rota própria)', () => {
+    expect(CreatePayableSchema.safeParse({ ...base, amountCents: 10005, recoverableTaxLines: [{ ...ibs, status: 'APROPRIADO' }] }).success).toBe(false);
+    expect(CreatePayableSchema.safeParse({ ...base, amountCents: 10005, recoverableTaxLines: [{ ...ibs, sourceDocumentId: 'sd-1' }] }).success).toBe(false);
+  });
+
+  it('crédito > 0 exige a conta a recuperar; linha só de uso/consumo (crédito 0) dispensa a conta', () => {
+    expect(CreatePayableSchema.safeParse({ ...base, amountCents: 10005, recoverableTaxLines: [{ ...ibs, accountId: null }] }).success).toBe(false);
+    expect(CreatePayableSchema.safeParse({ ...base, amountCents: 10000, recoverableTaxLines: [{ ...ibs, accountId: null, amountCents: 0, usoConsumoCents: 7 }] }).success).toBe(true);
+    expect(CreatePayableSchema.safeParse({ ...base, amountCents: 10000, recoverableTaxLines: [{ ...ibs, amountCents: 0 }] }).success).toBe(false);
+  });
+
+  it('uma linha por tributo', () => {
+    expect(CreatePayableSchema.safeParse({ ...base, amountCents: 10010, recoverableTaxLines: [ibs, ibs] }).success).toBe(false);
+  });
+});

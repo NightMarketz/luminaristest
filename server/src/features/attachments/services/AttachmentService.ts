@@ -3,11 +3,19 @@ import type { IUser } from '../../users/models/User.model';
 import { Role } from '../../users/models/User.model';
 import type { IAttachmentRepository } from '../repositories/IAttachmentRepository';
 import type { IAttachmentPolicy } from '../policies/IAttachmentPolicy';
+import type { IDynamicTableRepository } from '../../dynamicTables/repositories/IDynamicTableRepository';
 import type { AttachmentEntityType } from '../models/Attachment.model';
 import { ForbiddenError, NotFoundError, UnauthorizedError } from '../../../lib/errors';
 import * as storage from '../../../lib/attachmentStorage';
 
 /** Input for an upload — file metadata + buffer are derived server-side in the controller. */
+/** Preset internalName of the DynamicTable that holds each attachable parent type. */
+const PARENT_TABLE: Record<AttachmentEntityType, string> = {
+  lead: 'leads',
+  account: 'crmAccounts',
+  contact: 'crmContacts',
+};
+
 export interface UploadAttachmentInput {
   entityType: AttachmentEntityType;
   entityId: string;
@@ -46,6 +54,7 @@ export class AttachmentService {
   constructor(
     private readonly repository: IAttachmentRepository,
     private readonly policy: IAttachmentPolicy,
+    private readonly dynamicTableRepository: IDynamicTableRepository,
   ) {}
 
   /** Maps a stored row to the client-safe response (drops storageKey + userId). */
@@ -68,6 +77,13 @@ export class AttachmentService {
    */
   public async upload(actor: IUser | null, input: UploadAttachmentInput): Promise<AttachmentResponse> {
     if (!actor) throw new UnauthorizedError('Authentication required to upload attachments');
+
+    // §3.4 #22 — the parent must be an active row of the actor's own table for that entityType.
+    const table = await this.dynamicTableRepository.findTableByInternalName(actor.id, PARENT_TABLE[input.entityType]);
+    const parent = table ? await this.dynamicTableRepository.findDataById(input.entityId) : null;
+    if (!table || !parent || parent.dynamicTableId !== table.id) {
+      throw new NotFoundError('Parent record not found');
+    }
 
     const { storageKey, sanitizedName } = await storage.saveFile(
       actor.id,

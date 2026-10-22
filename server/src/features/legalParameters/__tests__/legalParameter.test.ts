@@ -90,8 +90,8 @@ describe('semente da migração (item 6)', () => {
     }
   });
 
-  it('o catálogo tem as 14 tabelas do item 2 (o item 27 do inventário fica fora) + as 7 do Simples (X14 PR-1) + MEI_ANEXO_XI (SIMPLES-PISO-ANEXO-XI) + FERIADO_LOCAL (F-E4-1 a) + IBS_CBS (IBS-CBS-2027 PR-1)', () => {
-    expect(LEGAL_PARAMETER_TABELAS).toHaveLength(24);
+  it('o catálogo tem as 14 tabelas do item 2 (o item 27 do inventário fica fora) + as 7 do Simples (X14 PR-1) + MEI_ANEXO_XI (SIMPLES-PISO-ANEXO-XI) + FERIADO_LOCAL (F-E4-1 a) + IBS_CBS (IBS-CBS-2027 PR-1) + IRRF_DISTRIBUICAO e TJLP (IRRF-DISTRIBUICAO PR-1) + IBS_CBS_USO_CONSUMO e IBS_CBS_PROVISORIA (IBS-CBS-2027 PR-3)', () => {
+    expect(LEGAL_PARAMETER_TABELAS).toHaveLength(28);
   });
 });
 

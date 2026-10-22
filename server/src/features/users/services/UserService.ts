@@ -9,6 +9,7 @@ import type { UserContext } from '../../../types/UserContext';
 import { Prisma } from 'generated/prisma';
 import { ForbiddenError, NotFoundError, UnauthorizedError, ValidationError, ConflictError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
+import * as storage from '../../../lib/attachmentStorage';
 
 /**
  * Public user profile type - minimal user information for public viewing
@@ -307,7 +308,12 @@ export class UserService {
     logger.info('Deleting Qdrant vectors before user deletion (LGPD art.18 VI)', { userId: id });
     await this.vectorRepository.deleteVectorsByUserId(id);
 
+    const storageKeys = await this.userRepository.getAttachmentStorageKeys(id);
     await this.userRepository.deleteUser(id);
+    // §3.4 #12 — the CrmAttachment rows went by Cascade; remove their binaries (best-effort).
+    for (const key of storageKeys) {
+      await storage.deleteFile(key).catch((err) => logger.warn('Orphan attachment binary left on disk', { userId: id, err }));
+    }
   }
 
   /** Current token version for JWT issue/verification; null when the user does not exist (§3.4 #3). */

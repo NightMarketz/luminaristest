@@ -364,6 +364,8 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
       declarant: toEcfDeclarantPayload(ecfDeclarant),
       fiscal: { indAliqCsll: ecfCsll, indRecReceita: '2' },
       signers,
+      // Y600 (BE-INCR-ECF-Y600): a tela ainda não coleta sócios — o servidor devolve 400 ECF_Y600_*; FE próprio pendente.
+      socios: [],
     };
     if (ecfContactId) body.signerContactIds = [ecfContactId];
     setEcfBusy(true);

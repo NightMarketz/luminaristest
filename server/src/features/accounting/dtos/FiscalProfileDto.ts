@@ -67,9 +67,18 @@ const FiscalProfileFields = z
     // X7 Fase B (BRIEF B item 16, F-TB-3 a): saldo negativo a compensar do ajuste anual (Asset) — código do contador (P-B8).
     irpjSaldoNegativoAccountId: z.string().min(1).nullable().optional(),
     csllSaldoNegativoAccountId: z.string().min(1).nullable().optional(),
-    // IBS-CBS-2027 PR-2 (BRIEF item 12; F-IBS-8 c): IBS/CBS a recolher (Liability) — referencial DRAFT (§7 item 6).
+    // BE-INCR-IRRF-DISTRIBUICAO PR-1 (item 7, molde F-TA-7): dividendos e JCP a pagar e IRRF a recolher (Liability), despesa
+    // de JCP (Expense) — código do contador.
+    dividendosPagarAccountId: z.string().min(1).nullable().optional(),
+    jcpPagarAccountId: z.string().min(1).nullable().optional(),
+    irrfRecolherAccountId: z.string().min(1).nullable().optional(),
+    jcpDespesaAccountId: z.string().min(1).nullable().optional(),
+    // IBS-CBS-2027 PR-2 (item 12, F-IBS-8 c): IBS e CBS a recolher (Liability).
     ibsRecolherAccountId: z.string().min(1).nullable().optional(),
     cbsRecolherAccountId: z.string().min(1).nullable().optional(),
+    // IBS-CBS-2027 PR-3 (item 14; dono 21/10, razão completo): IBS e CBS a recuperar (Asset) — crédito da NF-e de entrada.
+    ibsRecuperarAccountId: z.string().min(1).nullable().optional(),
+    cbsRecuperarAccountId: z.string().min(1).nullable().optional(),
     partnerAccountRef: z.string().min(1).max(120).nullable().optional(),
     // BE-INCR-DFE — emitente (ADR-DFE D5)
     codMun: ibge7.nullable().optional(),

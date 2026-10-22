@@ -110,8 +110,7 @@ em silêncio (o script falha se achar mais de um).
 ```json
 {
   "DEBT: prisma": {
-    "server/src/features/chat/services/ChatService.ts": 1,
-    "server/src/features/reports/services/ReportService.ts": 1
+    "server/src/features/chat/services/ChatService.ts": 1
   },
   "DEBT: apiClient": {},
   "DEBT: fetch": {},

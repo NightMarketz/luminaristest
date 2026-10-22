@@ -1,5 +1,62 @@
 // GERADO por server/src/features/accounting/dtos/__tests__/dtoShapeSnapshot.test.ts — NÃO EDITE.
 // Mudou um DTO? UPDATE_DTO_SNAPSHOT=1 npx jest --selectProjects unit --testPathPatterns dtoShapeSnapshot e comite o diff.
+export interface FiscalProfilePolicyPayloadInput {
+regimeTributario: ("SIMPLES" | "PRESUMIDO" | "REAL")
+icmsContribuinte: boolean
+pisCofinsRegime: ("SIMPLES" | "CUMULATIVO" | "NAO_CUMULATIVO")
+pisCofinsCreditExcludesIcms?: boolean
+pisCofinsCreditIncludesIpi?: boolean
+pisCofinsCreditFromSimplesSupplier?: boolean
+icmsRecuperavelAccountId?: (string | null)
+pisCofinsRecuperavelAccountId?: (string | null)
+insumoExpenseAccountId?: (string | null)
+irpjDespesaAccountId?: (string | null)
+csllDespesaAccountId?: (string | null)
+irpjRecolherAccountId?: (string | null)
+csllRecolherAccountId?: (string | null)
+pisDespesaAccountId?: (string | null)
+cofinsDespesaAccountId?: (string | null)
+pisRecolherAccountId?: (string | null)
+cofinsRecolherAccountId?: (string | null)
+pisCofinsCreditoOutrosAccountId?: (string | null)
+pisCofinsRetidoCompensarAccountId?: (string | null)
+pisCofinsRetencaoConciliarAccountId?: (string | null)
+simplesDasDeducaoAccountId?: (string | null)
+simplesRecolherAccountId?: (string | null)
+irpjSaldoNegativoAccountId?: (string | null)
+csllSaldoNegativoAccountId?: (string | null)
+dividendosPagarAccountId?: (string | null)
+jcpPagarAccountId?: (string | null)
+irrfRecolherAccountId?: (string | null)
+jcpDespesaAccountId?: (string | null)
+ibsRecolherAccountId?: (string | null)
+cbsRecolherAccountId?: (string | null)
+ibsRecuperarAccountId?: (string | null)
+cbsRecuperarAccountId?: (string | null)
+partnerAccountRef?: (string | null)
+codMun?: (string | null)
+inscricaoMunicipal?: (string | null)
+cnae?: (string | null)
+dpsSerie?: number
+regEspTrib?: number
+regApTribSN?: (number | null)
+issAliquotaBp?: (number | null)
+issRetidoTomadorPj?: boolean
+pacoteFatoGerador?: ("CONSUMO" | "VENDA")
+pacoteCTribNac?: (string | null)
+pacoteCNBS?: (string | null)
+ibsCbsInformar?: boolean
+ibsCbsCst?: (string | null)
+ibsCbsClassTrib?: (string | null)
+pTotTribFedCent?: (number | null)
+pTotTribEstCent?: (number | null)
+pTotTribMunCent?: (number | null)
+pTotTribSNCent?: (number | null)
+emissaoForaDoMes?: ("AVISAR" | "BLOQUEAR")
+cancelPrazoDias?: (number | null)
+substPrazoDias?: (number | null)
+prazoFonte?: (string | null)
+}
 export interface FiscalProfileScopeQueryInput {
 unitId: string
 }
@@ -29,59 +86,14 @@ simplesDasDeducaoAccountId?: (string | null)
 simplesRecolherAccountId?: (string | null)
 irpjSaldoNegativoAccountId?: (string | null)
 csllSaldoNegativoAccountId?: (string | null)
+dividendosPagarAccountId?: (string | null)
+jcpPagarAccountId?: (string | null)
+irrfRecolherAccountId?: (string | null)
+jcpDespesaAccountId?: (string | null)
 ibsRecolherAccountId?: (string | null)
 cbsRecolherAccountId?: (string | null)
-partnerAccountRef?: (string | null)
-codMun?: (string | null)
-inscricaoMunicipal?: (string | null)
-cnae?: (string | null)
-dpsSerie?: number
-regEspTrib?: number
-regApTribSN?: (number | null)
-issAliquotaBp?: (number | null)
-issRetidoTomadorPj?: boolean
-pacoteFatoGerador?: ("CONSUMO" | "VENDA")
-pacoteCTribNac?: (string | null)
-pacoteCNBS?: (string | null)
-ibsCbsInformar?: boolean
-ibsCbsCst?: (string | null)
-ibsCbsClassTrib?: (string | null)
-pTotTribFedCent?: (number | null)
-pTotTribEstCent?: (number | null)
-pTotTribMunCent?: (number | null)
-pTotTribSNCent?: (number | null)
-emissaoForaDoMes?: ("AVISAR" | "BLOQUEAR")
-cancelPrazoDias?: (number | null)
-substPrazoDias?: (number | null)
-prazoFonte?: (string | null)
-}
-export interface FiscalProfilePolicyPayloadInput {
-regimeTributario: ("SIMPLES" | "PRESUMIDO" | "REAL")
-icmsContribuinte: boolean
-pisCofinsRegime: ("SIMPLES" | "CUMULATIVO" | "NAO_CUMULATIVO")
-pisCofinsCreditExcludesIcms?: boolean
-pisCofinsCreditIncludesIpi?: boolean
-pisCofinsCreditFromSimplesSupplier?: boolean
-icmsRecuperavelAccountId?: (string | null)
-pisCofinsRecuperavelAccountId?: (string | null)
-insumoExpenseAccountId?: (string | null)
-irpjDespesaAccountId?: (string | null)
-csllDespesaAccountId?: (string | null)
-irpjRecolherAccountId?: (string | null)
-csllRecolherAccountId?: (string | null)
-pisDespesaAccountId?: (string | null)
-cofinsDespesaAccountId?: (string | null)
-pisRecolherAccountId?: (string | null)
-cofinsRecolherAccountId?: (string | null)
-pisCofinsCreditoOutrosAccountId?: (string | null)
-pisCofinsRetidoCompensarAccountId?: (string | null)
-pisCofinsRetencaoConciliarAccountId?: (string | null)
-simplesDasDeducaoAccountId?: (string | null)
-simplesRecolherAccountId?: (string | null)
-irpjSaldoNegativoAccountId?: (string | null)
-csllSaldoNegativoAccountId?: (string | null)
-ibsRecolherAccountId?: (string | null)
-cbsRecolherAccountId?: (string | null)
+ibsRecuperarAccountId?: (string | null)
+cbsRecuperarAccountId?: (string | null)
 partnerAccountRef?: (string | null)
 codMun?: (string | null)
 inscricaoMunicipal?: (string | null)

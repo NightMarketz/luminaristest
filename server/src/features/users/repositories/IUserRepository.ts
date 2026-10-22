@@ -113,6 +113,13 @@ export interface IUserRepository {
   deleteUser(id: string): Promise<Prisma.UserGetPayload<{}>>;
 
   /**
+   * Storage keys of every CRM attachment of the user (active or soft-deleted) — the rows go by
+   * Cascade with the user, the binaries must be removed by the caller (§3.4 #12).
+   * @param id - User ID
+   */
+  getAttachmentStorageKeys(id: string): Promise<string[]>;
+
+  /**
    * Counts users with the given role.
    * @param role - Role to count
    * @returns Number of users holding that role

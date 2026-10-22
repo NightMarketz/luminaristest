@@ -38,6 +38,13 @@ jest.mock('../../../../lib/alertWebhook', () => ({
 
 const scope = resolveAccountingScopeInternal({ userId: 'owner-1' }, 'unit-1');
 
+/** BE-INCR-ECF-Y600 item 13: uma vigência do cadastro de sócios (CPF com DV válido), 100% desde 2020. */
+const PARTNER_REAL = {
+  id: 'p-1', userId: 'owner-1', nome: 'SOCIO REAL', taxId: '52998224725', tipoPessoa: 'PF', residenteBrasil: true,
+  participacaoBp: 10000, entradaEm: '2020-01-01', saidaEm: null, createdById: 'owner-1',
+  createdAt: new Date('2026-01-01'), updatedAt: new Date('2026-01-01'), deletedAt: null,
+};
+
 function makeDto(over: Partial<SpedEcfRealRequestDto> = {}): SpedEcfRealRequestDto {
   return {
     unitId: 'unit-1',
@@ -53,6 +60,8 @@ function makeDto(over: Partial<SpedEcfRealRequestDto> = {}): SpedEcfRealRequestD
       { identNom: 'CONTADOR', identCpfCnpj: '12345678900', identQualif: '900', indCrc: '1DF123', email: 'c@d.com', fone: '6133334444' },
       { identNom: 'SOCIO', identCpfCnpj: '98765432100', identQualif: '205', email: 's@d.com', fone: '6133335555' },
     ],
+    socios: [{ partnerId: 'p-1', qualif: '02', valores: { remTrabCents: 0, lucDivCents: 0, jurCapCents: 0, demRendCents: 0, irRetCents: 0 } }],
+    dirigentes: [],
     ...over,
   } as SpedEcfRealRequestDto;
 }
@@ -92,6 +101,8 @@ interface Mocks {
   /** X7 Fase B PR-4: perfil fiscal do ano (default: sem perfil ⇒ trimestral) e apurações confirmadas. */
   perfil?: Record<string, unknown> | null;
   confirmados?: Array<{ periodo: string; tributo: string; modo: string }>;
+  /** BE-INCR-ECF-Y600 item 13: vigências do cadastro de sócios (default: `PARTNER_REAL`). */
+  partners?: Array<typeof PARTNER_REAL>;
 }
 
 /** 4 fechamentos vazios (tenant sem saldo materializado) — C1: o fato "fechado" é a linha-pai. */
@@ -130,8 +141,10 @@ function buildService(m: Mocks = {}) {
   const profiles = { findByYear: jest.fn(async () => m.perfil ?? null) } as never;
   const assessments = { findConfirmedByYear: jest.fn(async () => m.confirmados ?? []) } as never;
 
-  const service = new SpedEcfRealGenerationService(lalurRepo, policy, repo, audit, lalurService, profiles, assessments, legalParamsSemente);
-  return { service, createJob, updateJob, findEntriesForYear, findManyParteB, findClosingsForYear, findMovementsForYear, diagnoseYear, openingBalances, append, policy };
+  const partnerList = jest.fn(async (_s: unknown) => (m.partners ?? [PARTNER_REAL]) as never);
+
+  const service = new SpedEcfRealGenerationService(lalurRepo, policy, repo, audit, lalurService, profiles, assessments, legalParamsSemente, { list: partnerList });
+  return { service, partnerList, createJob, updateJob, findEntriesForYear, findManyParteB, findClosingsForYear, findMovementsForYear, diagnoseYear, openingBalances, append, policy };
 }
 
 function producedLines(): string[] {
@@ -481,7 +494,10 @@ describe('X7 Fase B PR-4 — teste 26 k: a ECF trimestral sai byte a byte igual 
     return [comAjustes, sha()];
   }
   // sha256 dos 2 arquivos gerados pelo código de origin/main (0b26abc5) com estes mesmos fixtures, antes do PR-4.
-  const ANTES = ['249625b5c36cb3904c63ccb39291425c2beee5e48be1ccbc63538e3fa94979b4', '57dbea7f64ce04ada05802e0dc930faa68fc29fca1cdbe7a613205360832fd2d'];
+  // Re-pinado no BE-INCR-ECF-Y600 (item 13): o bloco Y passou a ter o Y600 do sócio default. Os pins anteriores
+  // ('249625b5…', '57dbea7f…') foram conferidos de novo com o serviço emitindo `y600: []` — bateram; a única
+  // diferença é o bloco Y (+ 9900/9999).
+  const ANTES = ['212db3f2169faa228c9bf8fde140f2ee5673a59dcad0854d79bb58d829d87c9b', 'ca53519514883ddfcb9637c5ba7c1aad83ea88718b04cfe8768ad9c56f46a088'];
 
   it('sem perfil, com perfil REAL trimestral (forma nula ou TRIMESTRAL) e com formaApur omitido: os mesmos bytes de antes', async () => {
     expect(await regressaoTrimestral(null)).toEqual(ANTES);
@@ -618,3 +634,26 @@ describe('SpedEcfRealGenerationService.generate — L6: texto fora do Latin-1 (R
   });
 });
 
+// ─── BE-INCR-ECF-Y600 item 13 (F-Y600-1 → a): o Real lê o cadastro e aplica os itens 8–11 pelo mesmo módulo ────
+describe('SpedEcfRealGenerationService.generate — Y600 (BE-INCR-ECF-Y600 item 13)', () => {
+  it('emite o Y600 do cadastro + complemento, no bloco Y com dados', async () => {
+    const { service, partnerList } = buildService();
+    await service.generate(scope, makeDto());
+    expect(partnerList).toHaveBeenCalledWith(scope);
+    const lines = producedLines();
+    expect(lines.filter((l) => l.startsWith('|Y'))).toEqual([
+      '|Y001|0|',
+      '|Y600|01012020||105|PF|52998224725|SOCIO REAL|02|100|100|||0,00|0,00|0,00|0,00|0,00|',
+      '|Y990|3|',
+    ]);
+  });
+
+  it('itens 9 e 11: as mesmas recusas do Presumido (complemento faltando, sem sócios), antes do job', async () => {
+    const semComplemento = buildService();
+    await expect(semComplemento.service.generate(scope, makeDto({ socios: [] }))).rejects.toMatchObject({ errorCode: 'ECF_Y600_COMPLEMENTO_FALTANDO' });
+    expect(semComplemento.createJob).not.toHaveBeenCalled();
+    const vazio = buildService({ partners: [] });
+    await expect(vazio.service.generate(scope, makeDto({ socios: [] }))).rejects.toMatchObject({ errorCode: 'ECF_Y600_SEM_SOCIOS' });
+    expect(vazio.createJob).not.toHaveBeenCalled();
+  });
+});

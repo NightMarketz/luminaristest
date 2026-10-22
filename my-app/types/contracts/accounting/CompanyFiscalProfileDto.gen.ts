@@ -88,9 +88,53 @@ simplesRegimeApuracao?: ("COMPETENCIA" | "CAIXA")
 simplesExclusaoEfeitosEm?: (string | null)
 simplesCaixaPrazoCartaoDebitoDias?: (number | null)
 simplesCaixaPrazoCartaoCreditoDias?: (number | null)
+jcpBaseContas?: ({
+/**
+ * @maxItems 50
+ */
+CAPITAL_INTEGRALIZADO: string[]
+/**
+ * @maxItems 50
+ */
+RESERVAS_CAPITAL: string[]
+/**
+ * @maxItems 50
+ */
+RESERVAS_LUCROS: string[]
+/**
+ * @maxItems 50
+ */
+ACOES_TESOURARIA: string[]
+/**
+ * @maxItems 50
+ */
+LUCROS_ACUMULADOS: string[]
+} | null)
 }
 export interface OnboardingFiscalInput {
 regime: ("MEI" | "SIMPLES" | "PRESUMIDO" | "REAL" | "NAO_SEI")
 grandePorte?: (boolean | null)
 icmsContribuinte?: (boolean | null)
+}
+export interface JcpBaseContasInput {
+/**
+ * @maxItems 50
+ */
+CAPITAL_INTEGRALIZADO: string[]
+/**
+ * @maxItems 50
+ */
+RESERVAS_CAPITAL: string[]
+/**
+ * @maxItems 50
+ */
+RESERVAS_LUCROS: string[]
+/**
+ * @maxItems 50
+ */
+ACOES_TESOURARIA: string[]
+/**
+ * @maxItems 50
+ */
+LUCROS_ACUMULADOS: string[]
 }

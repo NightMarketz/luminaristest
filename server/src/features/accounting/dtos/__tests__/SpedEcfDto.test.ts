@@ -50,7 +50,8 @@ const socio = {
   fone: '1199998888',
 };
 
-const valid = { unitId: 'unit-1', year: 2026, declarant, signers: [contador, socio] };
+// BE-INCR-ECF-Y600 item 4: `socios` é obrigatório (lista vazia é forma válida; o serviço exige ≥ 1 ocorrência).
+const valid = { unitId: 'unit-1', year: 2026, declarant, signers: [contador, socio], socios: [] };
 
 /** Toda issue do superRefine é emitida em path ['signers'] — a asserção prova QUAL regra caiu. */
 const failsOnSigners = (payload: unknown) => {
@@ -189,5 +190,80 @@ describe('SpedEcfRequestSchema — retificação versionada (RETIFICADORA)', () 
 
   it('RETIFICADORA=N (default) com numRec informado é 400', () => {
     expect(SpedEcfRequestSchema.safeParse({ ...valid, numRec: 'a'.repeat(40) }).success).toBe(false);
+  });
+});
+
+// ─── Y600 (BE-INCR-ECF-Y600 itens 4–6; Manual ECF L12 pp. 570–574) ─────────────────────────────────────────
+
+const zeros = { remTrabCents: 0, lucDivCents: 0, jurCapCents: 0, demRendCents: 0, irRetCents: 0 };
+const socioY600 = { partnerId: 'p-1', qualif: '02', valores: zeros };
+const dirigente = { nome: 'Diretora Não Sócia', cpf: '52998224725', qualif: '10', dtAltSoc: '2024-03-01', valores: zeros };
+const comY600 = { ...valid, socios: [socioY600], dirigentes: [dirigente] };
+
+const issuePaths = (payload: unknown): string[] => {
+  const parsed = SpedEcfRequestSchema.safeParse(payload);
+  expect(parsed.success).toBe(false);
+  return parsed.success ? [] : parsed.error.issues.map((i) => i.path.join('.'));
+};
+
+describe('SpedEcfRequestSchema — Y600: socios e dirigentes', () => {
+  it('accepts socios + dirigentes válidos (CONTROLE); dirigentes ausente vira [] (item 5)', () => {
+    expect(SpedEcfRequestSchema.safeParse(comY600).success).toBe(true);
+    const semDirigentes = SpedEcfRequestSchema.parse({ ...valid, socios: [socioY600] });
+    expect(semDirigentes.dirigentes).toEqual([]);
+  });
+
+  it('item 4: socios é obrigatório (sem default)', () => {
+    const { socios: _s, ...semSocios } = valid;
+    expect(issuePaths(semSocios)).toContain('socios');
+  });
+
+  it('item 4 (F-Y600-3): os 5 valores são obrigatórios, sem default zero; centavos inteiros ≥ 0', () => {
+    for (const k of Object.keys(zeros) as Array<keyof typeof zeros>) {
+      const falta: Record<string, number> = { ...zeros };
+      delete falta[k];
+      expect(issuePaths({ ...comY600, socios: [{ ...socioY600, valores: falta }] })).toContain(`socios.0.valores.${k}`);
+    }
+    expect(issuePaths({ ...comY600, socios: [{ ...socioY600, valores: { ...zeros, lucDivCents: -1 } }] })).toContain('socios.0.valores.lucDivCents');
+    expect(issuePaths({ ...comY600, socios: [{ ...socioY600, valores: { ...zeros, lucDivCents: 1.5 } }] })).toContain('socios.0.valores.lucDivCents');
+  });
+
+  it('item 4: partnerId repetido → 400; chave desconhecida no complemento → 400 (.strict())', () => {
+    expect(issuePaths({ ...comY600, socios: [socioY600, { ...socioY600, qualif: '01' }] })).toContain('socios.1.partnerId');
+    expect(issuePaths({ ...comY600, socios: [{ ...socioY600, nome: 'X' }] })).toContain('socios.0');
+  });
+
+  it('item 6 (F-Y600-9): QUALIF 18 recusado; fora de 01..17 recusado', () => {
+    expect(issuePaths({ ...comY600, socios: [{ ...socioY600, qualif: '18' }] })).toContain('socios.0.qualif');
+    expect(issuePaths({ ...comY600, socios: [{ ...socioY600, qualif: '00' }] })).toContain('socios.0.qualif');
+  });
+
+  it('item 6 (F-Y600-10): pais = 3 dígitos e ≠ 105; percCapVotBp em 0..10000', () => {
+    expect(SpedEcfRequestSchema.safeParse({ ...comY600, socios: [{ ...socioY600, pais: '249' }] }).success).toBe(true);
+    expect(issuePaths({ ...comY600, socios: [{ ...socioY600, pais: '105' }] })).toContain('socios.0.pais');
+    expect(issuePaths({ ...comY600, socios: [{ ...socioY600, pais: '24' }] })).toContain('socios.0.pais');
+    expect(issuePaths({ ...comY600, socios: [{ ...socioY600, percCapVotBp: 10001 }] })).toContain('socios.0.percCapVotBp');
+  });
+
+  it('item 6 (M12): representante legal com CPF de DV válido e QUALIF_REP_LEG 01..06, os dois juntos', () => {
+    const rep = { cpf: '52998224725', qualif: '03' };
+    expect(SpedEcfRequestSchema.safeParse({ ...comY600, socios: [{ ...socioY600, representanteLegal: rep }] }).success).toBe(true);
+    expect(issuePaths({ ...comY600, socios: [{ ...socioY600, representanteLegal: { cpf: '52998224725' } }] })).toContain('socios.0.representanteLegal.qualif');
+    expect(issuePaths({ ...comY600, socios: [{ ...socioY600, representanteLegal: { qualif: '01' } }] })).toContain('socios.0.representanteLegal.cpf');
+    expect(issuePaths({ ...comY600, socios: [{ ...socioY600, representanteLegal: { ...rep, cpf: '52998224726' } }] })).toContain('socios.0.representanteLegal.cpf');
+    expect(issuePaths({ ...comY600, socios: [{ ...socioY600, representanteLegal: { ...rep, qualif: '07' } }] })).toContain('socios.0.representanteLegal.qualif');
+  });
+
+  it('item 5: dirigente com CPF de DV válido e QUALIF 10..17 (sócio/titular fora)', () => {
+    expect(issuePaths({ ...comY600, dirigentes: [{ ...dirigente, cpf: '52998224726' }] })).toContain('dirigentes.0.cpf');
+    expect(issuePaths({ ...comY600, dirigentes: [{ ...dirigente, qualif: '01' }] })).toContain('dirigentes.0.qualif');
+    expect(issuePaths({ ...comY600, dirigentes: [{ ...dirigente, dtAltSoc: '2024-02-30' }] })).toContain('dirigentes.0.dtAltSoc');
+  });
+
+  it('item 6: dtFimSoc ≥ dtAltSoc e dentro do ano (REGRA_DATA_FIM_SOC, p. 574)', () => {
+    expect(SpedEcfRequestSchema.safeParse({ ...comY600, dirigentes: [{ ...dirigente, dtFimSoc: '2026-06-30' }] }).success).toBe(true);
+    expect(issuePaths({ ...comY600, dirigentes: [{ ...dirigente, dtAltSoc: '2026-07-01', dtFimSoc: '2026-06-30' }] })).toContain('dirigentes.0.dtFimSoc');
+    expect(issuePaths({ ...comY600, dirigentes: [{ ...dirigente, dtFimSoc: '2025-12-31' }] })).toContain('dirigentes.0.dtFimSoc');
+    expect(issuePaths({ ...comY600, dirigentes: [{ ...dirigente, dtFimSoc: '2027-01-01' }] })).toContain('dirigentes.0.dtFimSoc');
   });
 });

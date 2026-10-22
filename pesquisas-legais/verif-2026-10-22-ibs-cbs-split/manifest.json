@@ -1,0 +1,52 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Decreto nº 12.955 de 29/04/2026",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos/2026/dec-12955-2026-04-29.md",
+      "url_final": "https://github.com/ctresb/leis/blob/517db958cd0ae2ba36c1f0b524b3cc55fe4198c6/federal/decretos/2026/dec-12955-2026-04-29.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2026-04-29;12955",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "517db958cd0ae2ba36c1f0b524b3cc55fe4198c6",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-10-22T12:39:41-03:00",
+      "sha256": "5527dbfe923a984a86c22b27ef1c5c0b6f4f0c2996bbe14315e8804afd08bbd9",
+      "arquivo": "docs/D01_dec-12955-2026-04-29.md",
+      "texto": "docs/D01_dec-12955-2026-04-29.txt",
+      "bytes": 779823
+    },
+    {
+      "id": "D02",
+      "titulo": "Lcp 214",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-22T12:39:43-03:00",
+      "sha256": "f7e4b86017043a08e1eddc8e578c9de6e289d0462a517ade7ea2e0987774f866",
+      "arquivo": "docs/D02_lcp214-htm.html",
+      "texto": "docs/D02_lcp214-htm.txt",
+      "bytes": 5403667
+    },
+    {
+      "id": "D03",
+      "titulo": "d12955",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/D12955.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/d12955.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-22T12:42:56-03:00",
+      "sha256": "900041c80d9c8d73367d0c439576ab63fd9de4508cd871d2789dd8cf1c7de635",
+      "arquivo": "docs/D03_d12955-htm.html",
+      "texto": "docs/D03_d12955-htm.txt",
+      "bytes": 3184515
+    }
+  ],
+  "buscas": [],
+  "slug": "verif-2026-10-22-ibs-cbs-split",
+  "pergunta": "Split payment do IBS/CBS (LC 214 arts. 27-33; Dec. 12.955 arts. 25-35): o valor segregado na liquidação extingue o débito de qual período de apuração — o da liquidação ou o do fato gerador/documento?",
+  "criado": "2026-10-22T12:39:33-03:00"
+}

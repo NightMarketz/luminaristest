@@ -61,6 +61,7 @@ export function InternalKanbanView({
         handleDragStart,
         handleDragEnd,
         tabStats,
+        hasOrderField,
         handleTabChange
     } = useKanbanLogic({
         tasks,
@@ -191,6 +192,12 @@ export function InternalKanbanView({
                             </p>
                         </div>
                     ) : (
+                        <>
+                        {!hasOrderField && (
+                            <p className="px-6 pt-4 text-xs text-neutral-500 dark:text-neutral-400">
+                                {t('common:kanban_view.reorder_unavailable', 'A ordem dos cards nesta tabela não é salva: arrastar só muda o card de coluna.')}
+                            </p>
+                        )}
                         <DndContext
                             sensors={sensors}
                             collisionDetection={closestCenter}
@@ -229,6 +236,7 @@ export function InternalKanbanView({
                                 ) : null}
                             </DragOverlay>
                         </DndContext>
+                        </>
                     )}
                     {/* Task Detail Modal */}
                     {selectedTask && (

@@ -467,6 +467,76 @@
     }
   },
   "AccountingPolicyVersionDto.ts": {
+    "ApprovePolicyVersionSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ownerUserId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "ListPolicyVersionsQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target": {
+          "type": "string",
+          "enum": [
+            "FISCAL_PROFILE",
+            "SCOPE_SETTINGS"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "PROPOSED",
+            "APPLIED",
+            "REJECTED",
+            "SUPERSEDED"
+          ]
+        },
+        "ownerUserId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "PolicyVersionScopeQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ownerUserId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
     "ProposePolicyVersionSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "anyOf": [
@@ -713,6 +783,50 @@
                     }
                   ]
                 },
+                "dividendosPagarAccountId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "jcpPagarAccountId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "irrfRecolherAccountId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "jcpDespesaAccountId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
                 "ibsRecolherAccountId": {
                   "anyOf": [
                     {
@@ -725,6 +839,28 @@
                   ]
                 },
                 "cbsRecolherAccountId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "ibsRecuperarAccountId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "cbsRecuperarAccountId": {
                   "anyOf": [
                     {
                       "type": "string",
@@ -1089,76 +1225,6 @@
         }
       ]
     },
-    "ListPolicyVersionsQuerySchema": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "unitId": {
-          "type": "string",
-          "minLength": 1
-        },
-        "target": {
-          "type": "string",
-          "enum": [
-            "FISCAL_PROFILE",
-            "SCOPE_SETTINGS"
-          ]
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "PROPOSED",
-            "APPLIED",
-            "REJECTED",
-            "SUPERSEDED"
-          ]
-        },
-        "ownerUserId": {
-          "type": "string",
-          "minLength": 1
-        }
-      },
-      "required": [
-        "unitId"
-      ],
-      "additionalProperties": false
-    },
-    "PolicyVersionScopeQuerySchema": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "unitId": {
-          "type": "string",
-          "minLength": 1
-        },
-        "ownerUserId": {
-          "type": "string",
-          "minLength": 1
-        }
-      },
-      "required": [
-        "unitId"
-      ],
-      "additionalProperties": false
-    },
-    "ApprovePolicyVersionSchema": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "unitId": {
-          "type": "string",
-          "minLength": 1
-        },
-        "ownerUserId": {
-          "type": "string",
-          "minLength": 1
-        }
-      },
-      "required": [
-        "unitId"
-      ],
-      "additionalProperties": false
-    },
     "RejectPolicyVersionSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1226,6 +1292,7 @@
                   "KitUpgradeRun",
                   "KitUpgradePending",
                   "CompanySigner",
+                  "Partner",
                   "IssBeneficioMunicipal",
                   "ProductDestinationDefault",
                   "FiscalDocument",
@@ -1246,6 +1313,7 @@
                   "PaymentAccount",
                   "CollectionCharge",
                   "TaxAssessment",
+                  "ConsumptionTaxAssessment",
                   "MitExport",
                   "SimplesHistoricoMensal",
                   "SimplesSegregacaoManual",
@@ -1839,6 +1907,31 @@
       ],
       "additionalProperties": false
     },
+    "BankSettlementSplitSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "ibsCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "cbsCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "competencia": {
+          "type": "string",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+        }
+      },
+      "required": [
+        "ibsCents",
+        "cbsCents"
+      ],
+      "additionalProperties": false
+    },
     "ConfirmBankSettlementSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1856,6 +1949,30 @@
             "Boleto",
             "ProviderBalance"
           ]
+        },
+        "split": {
+          "type": "object",
+          "properties": {
+            "ibsCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "cbsCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "competencia": {
+              "type": "string",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+            }
+          },
+          "required": [
+            "ibsCents",
+            "cbsCents"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -2915,6 +3032,67 @@
               "type": "null"
             }
           ]
+        },
+        "jcpBaseContas": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "CAPITAL_INTEGRALIZADO": {
+                  "maxItems": 50,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "RESERVAS_CAPITAL": {
+                  "maxItems": 50,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "RESERVAS_LUCROS": {
+                  "maxItems": 50,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "ACOES_TESOURARIA": {
+                  "maxItems": 50,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "LUCROS_ACUMULADOS": {
+                  "maxItems": 50,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "required": [
+                "CAPITAL_INTEGRALIZADO",
+                "RESERVAS_CAPITAL",
+                "RESERVAS_LUCROS",
+                "ACOES_TESOURARIA",
+                "LUCROS_ACUMULADOS"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -2960,6 +3138,60 @@
       },
       "required": [
         "regime"
+      ],
+      "additionalProperties": false
+    },
+    "JcpBaseContasSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "CAPITAL_INTEGRALIZADO": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "RESERVAS_CAPITAL": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "RESERVAS_LUCROS": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "ACOES_TESOURARIA": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "LUCROS_ACUMULADOS": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": [
+        "CAPITAL_INTEGRALIZADO",
+        "RESERVAS_CAPITAL",
+        "RESERVAS_LUCROS",
+        "ACOES_TESOURARIA",
+        "LUCROS_ACUMULADOS"
       ],
       "additionalProperties": false
     }
@@ -5556,6 +5788,569 @@
     }
   },
   "FiscalProfileDto.ts": {
+    "FiscalProfilePolicyPayloadSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "regimeTributario": {
+          "type": "string",
+          "enum": [
+            "SIMPLES",
+            "PRESUMIDO",
+            "REAL"
+          ]
+        },
+        "icmsContribuinte": {
+          "type": "boolean"
+        },
+        "pisCofinsRegime": {
+          "type": "string",
+          "enum": [
+            "SIMPLES",
+            "CUMULATIVO",
+            "NAO_CUMULATIVO"
+          ]
+        },
+        "pisCofinsCreditExcludesIcms": {
+          "default": true,
+          "type": "boolean"
+        },
+        "pisCofinsCreditIncludesIpi": {
+          "default": false,
+          "type": "boolean"
+        },
+        "pisCofinsCreditFromSimplesSupplier": {
+          "default": false,
+          "type": "boolean"
+        },
+        "icmsRecuperavelAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pisCofinsRecuperavelAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "insumoExpenseAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "irpjDespesaAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "csllDespesaAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "irpjRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "csllRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pisDespesaAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cofinsDespesaAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pisRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cofinsRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pisCofinsCreditoOutrosAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pisCofinsRetidoCompensarAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pisCofinsRetencaoConciliarAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "simplesDasDeducaoAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "simplesRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "irpjSaldoNegativoAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "csllSaldoNegativoAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "dividendosPagarAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jcpPagarAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "irrfRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jcpDespesaAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ibsRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cbsRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ibsRecuperarAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cbsRecuperarAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "partnerAccountRef": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "codMun": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{7}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "inscricaoMunicipal": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 15
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cnae": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "dpsSerie": {
+          "default": 1,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 49999
+        },
+        "regEspTrib": {
+          "default": 0,
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9
+        },
+        "regApTribSN": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "issAliquotaBp": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "issRetidoTomadorPj": {
+          "default": false,
+          "type": "boolean"
+        },
+        "pacoteFatoGerador": {
+          "default": "CONSUMO",
+          "type": "string",
+          "enum": [
+            "CONSUMO",
+            "VENDA"
+          ]
+        },
+        "pacoteCTribNac": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{6}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pacoteCNBS": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{9}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ibsCbsInformar": {
+          "type": "boolean"
+        },
+        "ibsCbsCst": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{3}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ibsCbsClassTrib": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{6}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pTotTribFedCent": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9999
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pTotTribEstCent": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9999
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pTotTribMunCent": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9999
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pTotTribSNCent": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9999
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "emissaoForaDoMes": {
+          "default": "AVISAR",
+          "type": "string",
+          "enum": [
+            "AVISAR",
+            "BLOQUEAR"
+          ]
+        },
+        "cancelPrazoDias": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "substPrazoDias": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 730
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "prazoFonte": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "regimeTributario",
+        "icmsContribuinte",
+        "pisCofinsRegime"
+      ],
+      "additionalProperties": false
+    },
     "FiscalProfileScopeQuerySchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -5807,6 +6602,50 @@
             }
           ]
         },
+        "dividendosPagarAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jcpPagarAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "irrfRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jcpDespesaAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "ibsRecolherAccountId": {
           "anyOf": [
             {
@@ -5819,6 +6658,28 @@
           ]
         },
         "cbsRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ibsRecuperarAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cbsRecuperarAccountId": {
           "anyOf": [
             {
               "type": "string",
@@ -6066,503 +6927,6 @@
       },
       "required": [
         "unitId",
-        "regimeTributario",
-        "icmsContribuinte",
-        "pisCofinsRegime"
-      ],
-      "additionalProperties": false
-    },
-    "FiscalProfilePolicyPayloadSchema": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "regimeTributario": {
-          "type": "string",
-          "enum": [
-            "SIMPLES",
-            "PRESUMIDO",
-            "REAL"
-          ]
-        },
-        "icmsContribuinte": {
-          "type": "boolean"
-        },
-        "pisCofinsRegime": {
-          "type": "string",
-          "enum": [
-            "SIMPLES",
-            "CUMULATIVO",
-            "NAO_CUMULATIVO"
-          ]
-        },
-        "pisCofinsCreditExcludesIcms": {
-          "default": true,
-          "type": "boolean"
-        },
-        "pisCofinsCreditIncludesIpi": {
-          "default": false,
-          "type": "boolean"
-        },
-        "pisCofinsCreditFromSimplesSupplier": {
-          "default": false,
-          "type": "boolean"
-        },
-        "icmsRecuperavelAccountId": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "pisCofinsRecuperavelAccountId": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "insumoExpenseAccountId": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "irpjDespesaAccountId": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "csllDespesaAccountId": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "irpjRecolherAccountId": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "csllRecolherAccountId": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "pisDespesaAccountId": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "cofinsDespesaAccountId": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "pisRecolherAccountId": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "cofinsRecolherAccountId": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "pisCofinsCreditoOutrosAccountId": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "pisCofinsRetidoCompensarAccountId": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "pisCofinsRetencaoConciliarAccountId": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "simplesDasDeducaoAccountId": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "simplesRecolherAccountId": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "irpjSaldoNegativoAccountId": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "csllSaldoNegativoAccountId": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "ibsRecolherAccountId": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "cbsRecolherAccountId": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "partnerAccountRef": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 120
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "codMun": {
-          "anyOf": [
-            {
-              "type": "string",
-              "pattern": "^\\d{7}$"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "inscricaoMunicipal": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 15
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "cnae": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 10
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "dpsSerie": {
-          "default": 1,
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 49999
-        },
-        "regEspTrib": {
-          "default": 0,
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 9
-        },
-        "regApTribSN": {
-          "anyOf": [
-            {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 3
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "issAliquotaBp": {
-          "anyOf": [
-            {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9007199254740991
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "issRetidoTomadorPj": {
-          "default": false,
-          "type": "boolean"
-        },
-        "pacoteFatoGerador": {
-          "default": "CONSUMO",
-          "type": "string",
-          "enum": [
-            "CONSUMO",
-            "VENDA"
-          ]
-        },
-        "pacoteCTribNac": {
-          "anyOf": [
-            {
-              "type": "string",
-              "pattern": "^\\d{6}$"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "pacoteCNBS": {
-          "anyOf": [
-            {
-              "type": "string",
-              "pattern": "^\\d{9}$"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "ibsCbsInformar": {
-          "type": "boolean"
-        },
-        "ibsCbsCst": {
-          "anyOf": [
-            {
-              "type": "string",
-              "pattern": "^\\d{3}$"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "ibsCbsClassTrib": {
-          "anyOf": [
-            {
-              "type": "string",
-              "pattern": "^\\d{6}$"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "pTotTribFedCent": {
-          "anyOf": [
-            {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9999
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "pTotTribEstCent": {
-          "anyOf": [
-            {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9999
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "pTotTribMunCent": {
-          "anyOf": [
-            {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9999
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "pTotTribSNCent": {
-          "anyOf": [
-            {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9999
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "emissaoForaDoMes": {
-          "default": "AVISAR",
-          "type": "string",
-          "enum": [
-            "AVISAR",
-            "BLOQUEAR"
-          ]
-        },
-        "cancelPrazoDias": {
-          "anyOf": [
-            {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9007199254740991
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "substPrazoDias": {
-          "anyOf": [
-            {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 730
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "prazoFonte": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 500
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      },
-      "required": [
         "regimeTributario",
         "icmsContribuinte",
         "pisCofinsRegime"
@@ -7085,7 +7449,7 @@
       ],
       "additionalProperties": false
     },
-    "IbsCbsAssessmentScopeSchema": {
+    "IbsCbsAssessmentScopeQuerySchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
@@ -7096,6 +7460,87 @@
       },
       "required": [
         "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "MemoriaIbsCbsSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "descricao": {
+            "type": "string"
+          },
+          "valorCents": {
+            "type": "string",
+            "pattern": "^-?\\d+$"
+          },
+          "fonte": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "codigo",
+          "descricao",
+          "valorCents",
+          "fonte"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "MemoriaLinhaIbsCbsKind": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+      "enum": [
+        "DEBITO_DOC",
+        "DIVERGENCIA_DOC",
+        "VENDA_SEM_DOCUMENTO",
+        "DOCUMENTOS_SEM_GRUPO",
+        "CONFERENCIA_SEM_ALIQUOTA",
+        "CONFERENCIA_SEM_BASE",
+        "RECLASSIFICACAO_SERVICO",
+        "RECLASSIFICACAO_REVENDA",
+        "RECEITA_BRUTA_ATE_APURACAO",
+        "CREDITO_ENTRADA",
+        "CREDITO_NAO_APROPRIADO",
+        "USO_CONSUMO_PESSOAL",
+        "ANTECIPACAO_ART10",
+        "ANTECIPACAO_SEM_REDUCAO",
+        "ACERTO_ART10",
+        "PAGAMENTO_INDEVIDO_ART38",
+        "CBS_ALIQUOTA_PROVISORIA",
+        "SPLIT_EXTINCAO",
+        "CLASSE_PROVISORIA_P_IBS_4",
+        "SALDO"
+      ]
+    },
+    "MemoriaLinhaIbsCbsSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "codigo": {
+          "type": "string"
+        },
+        "descricao": {
+          "type": "string"
+        },
+        "valorCents": {
+          "type": "string",
+          "pattern": "^-?\\d+$"
+        },
+        "fonte": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "codigo",
+        "descricao",
+        "valorCents",
+        "fonte"
       ],
       "additionalProperties": false
     }
@@ -8886,6 +9331,55 @@
     }
   },
   "PayableDto.ts": {
+    "IbsCbsCreditLineSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "tributo": {
+          "type": "string",
+          "enum": [
+            "IBS",
+            "CBS"
+          ]
+        },
+        "accountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "amountCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "status": {
+          "type": "string",
+          "const": "PENDENTE"
+        },
+        "sourceDocumentId": {
+          "type": "null"
+        },
+        "usoConsumoCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "tributo",
+        "accountId",
+        "amountCents",
+        "status",
+        "sourceDocumentId"
+      ],
+      "additionalProperties": false
+    },
     "CreatePayableSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -9057,49 +9551,101 @@
           }
         },
         "recoverableTaxLines": {
-          "maxItems": 2,
+          "maxItems": 4,
           "type": "array",
           "items": {
-            "type": "object",
-            "properties": {
-              "accountId": {
-                "type": "string",
-                "minLength": 1
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "accountId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "amountCents": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "ICMS",
+                      "PIS_COFINS"
+                    ]
+                  },
+                  "baseCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "pisCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "cofinsCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  }
+                },
+                "required": [
+                  "accountId",
+                  "amountCents",
+                  "kind"
+                ],
+                "additionalProperties": false
               },
-              "amountCents": {
-                "type": "integer",
-                "exclusiveMinimum": 0,
-                "maximum": 2147483647
-              },
-              "kind": {
-                "type": "string",
-                "enum": [
-                  "ICMS",
-                  "PIS_COFINS"
-                ]
-              },
-              "baseCents": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 2147483647
-              },
-              "pisCents": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 2147483647
-              },
-              "cofinsCents": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 2147483647
+              {
+                "type": "object",
+                "properties": {
+                  "tributo": {
+                    "type": "string",
+                    "enum": [
+                      "IBS",
+                      "CBS"
+                    ]
+                  },
+                  "accountId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "amountCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "status": {
+                    "type": "string",
+                    "const": "PENDENTE"
+                  },
+                  "sourceDocumentId": {
+                    "type": "null"
+                  },
+                  "usoConsumoCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  }
+                },
+                "required": [
+                  "tributo",
+                  "accountId",
+                  "amountCents",
+                  "status",
+                  "sourceDocumentId"
+                ],
+                "additionalProperties": false
               }
-            },
-            "required": [
-              "accountId",
-              "amountCents",
-              "kind"
-            ],
-            "additionalProperties": false
+            ]
           }
         },
         "attachmentId": {
@@ -9148,6 +9694,43 @@
         "method",
         "paidAt",
         "amountCents"
+      ],
+      "additionalProperties": false
+    },
+    "ApropriarCreditoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "payableId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tributo": {
+          "type": "string",
+          "enum": [
+            "IBS",
+            "CBS"
+          ]
+        },
+        "sourceDocumentId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expectedStatus": {
+          "type": "string",
+          "const": "PENDENTE"
+        }
+      },
+      "required": [
+        "unitId",
+        "payableId",
+        "tributo",
+        "sourceDocumentId",
+        "expectedStatus"
       ],
       "additionalProperties": false
     },
@@ -13358,6 +13941,137 @@
       ],
       "additionalProperties": false
     },
+    "DirigenteEcfSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "nome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "cpf": {
+          "type": "string",
+          "pattern": "^\\d{11}$"
+        },
+        "qualif": {
+          "type": "string",
+          "enum": [
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16",
+            "17"
+          ]
+        },
+        "dtAltSoc": {
+          "type": "string"
+        },
+        "dtFimSoc": {
+          "type": "string"
+        },
+        "representanteLegal": {
+          "type": "object",
+          "properties": {
+            "cpf": {
+              "type": "string",
+              "pattern": "^\\d{11}$"
+            },
+            "qualif": {
+              "type": "string",
+              "enum": [
+                "01",
+                "02",
+                "03",
+                "04",
+                "05",
+                "06"
+              ]
+            }
+          },
+          "required": [
+            "cpf",
+            "qualif"
+          ],
+          "additionalProperties": false
+        },
+        "valores": {
+          "type": "object",
+          "properties": {
+            "remTrabCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "lucDivCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "jurCapCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "demRendCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "irRetCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            }
+          },
+          "required": [
+            "remTrabCents",
+            "lucDivCents",
+            "jurCapCents",
+            "demRendCents",
+            "irRetCents"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "nome",
+        "cpf",
+        "qualif",
+        "dtAltSoc",
+        "valores"
+      ],
+      "additionalProperties": false
+    },
+    "RepresentanteLegalSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "cpf": {
+          "type": "string",
+          "pattern": "^\\d{11}$"
+        },
+        "qualif": {
+          "type": "string",
+          "enum": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
+        }
+      },
+      "required": [
+        "cpf",
+        "qualif"
+      ],
+      "additionalProperties": false
+    },
     "SignerSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -13411,6 +14125,116 @@
         "identQualif",
         "email",
         "fone"
+      ],
+      "additionalProperties": false
+    },
+    "SocioEcfSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "partnerId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "qualif": {
+          "type": "string",
+          "enum": [
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16",
+            "17",
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09"
+          ]
+        },
+        "pais": {
+          "type": "string",
+          "pattern": "^\\d{3}$"
+        },
+        "percCapVotBp": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "representanteLegal": {
+          "type": "object",
+          "properties": {
+            "cpf": {
+              "type": "string",
+              "pattern": "^\\d{11}$"
+            },
+            "qualif": {
+              "type": "string",
+              "enum": [
+                "01",
+                "02",
+                "03",
+                "04",
+                "05",
+                "06"
+              ]
+            }
+          },
+          "required": [
+            "cpf",
+            "qualif"
+          ],
+          "additionalProperties": false
+        },
+        "valores": {
+          "type": "object",
+          "properties": {
+            "remTrabCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "lucDivCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "jurCapCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "demRendCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "irRetCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            }
+          },
+          "required": [
+            "remTrabCents",
+            "lucDivCents",
+            "jurCapCents",
+            "demRendCents",
+            "irRetCents"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "partnerId",
+        "qualif",
+        "valores"
       ],
       "additionalProperties": false
     },
@@ -13619,6 +14443,228 @@
             "additionalProperties": false
           }
         },
+        "socios": {
+          "maxItems": 999,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "partnerId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "qualif": {
+                "type": "string",
+                "enum": [
+                  "10",
+                  "11",
+                  "12",
+                  "13",
+                  "14",
+                  "15",
+                  "16",
+                  "17",
+                  "01",
+                  "02",
+                  "03",
+                  "04",
+                  "05",
+                  "06",
+                  "07",
+                  "08",
+                  "09"
+                ]
+              },
+              "pais": {
+                "type": "string",
+                "pattern": "^\\d{3}$"
+              },
+              "percCapVotBp": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000
+              },
+              "representanteLegal": {
+                "type": "object",
+                "properties": {
+                  "cpf": {
+                    "type": "string",
+                    "pattern": "^\\d{11}$"
+                  },
+                  "qualif": {
+                    "type": "string",
+                    "enum": [
+                      "01",
+                      "02",
+                      "03",
+                      "04",
+                      "05",
+                      "06"
+                    ]
+                  }
+                },
+                "required": [
+                  "cpf",
+                  "qualif"
+                ],
+                "additionalProperties": false
+              },
+              "valores": {
+                "type": "object",
+                "properties": {
+                  "remTrabCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "lucDivCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "jurCapCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "demRendCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "irRetCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  }
+                },
+                "required": [
+                  "remTrabCents",
+                  "lucDivCents",
+                  "jurCapCents",
+                  "demRendCents",
+                  "irRetCents"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "partnerId",
+              "qualif",
+              "valores"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "dirigentes": {
+          "default": [],
+          "maxItems": 999,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "nome": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "cpf": {
+                "type": "string",
+                "pattern": "^\\d{11}$"
+              },
+              "qualif": {
+                "type": "string",
+                "enum": [
+                  "10",
+                  "11",
+                  "12",
+                  "13",
+                  "14",
+                  "15",
+                  "16",
+                  "17"
+                ]
+              },
+              "dtAltSoc": {
+                "type": "string"
+              },
+              "dtFimSoc": {
+                "type": "string"
+              },
+              "representanteLegal": {
+                "type": "object",
+                "properties": {
+                  "cpf": {
+                    "type": "string",
+                    "pattern": "^\\d{11}$"
+                  },
+                  "qualif": {
+                    "type": "string",
+                    "enum": [
+                      "01",
+                      "02",
+                      "03",
+                      "04",
+                      "05",
+                      "06"
+                    ]
+                  }
+                },
+                "required": [
+                  "cpf",
+                  "qualif"
+                ],
+                "additionalProperties": false
+              },
+              "valores": {
+                "type": "object",
+                "properties": {
+                  "remTrabCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "lucDivCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "jurCapCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "demRendCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "irRetCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  }
+                },
+                "required": [
+                  "remTrabCents",
+                  "lucDivCents",
+                  "jurCapCents",
+                  "demRendCents",
+                  "irRetCents"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "nome",
+              "cpf",
+              "qualif",
+              "dtAltSoc",
+              "valores"
+            ],
+            "additionalProperties": false
+          }
+        },
         "retificadora": {
           "default": "N",
           "type": "string",
@@ -13643,7 +14689,47 @@
         "unitId",
         "year",
         "declarant",
-        "signers"
+        "signers",
+        "socios"
+      ],
+      "additionalProperties": false
+    },
+    "Y600ValoresSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "remTrabCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "lucDivCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "jurCapCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "demRendCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "irRetCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "remTrabCents",
+        "lucDivCents",
+        "jurCapCents",
+        "demRendCents",
+        "irRetCents"
       ],
       "additionalProperties": false
     }
@@ -13873,6 +14959,228 @@
             "additionalProperties": false
           }
         },
+        "socios": {
+          "maxItems": 999,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "partnerId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "qualif": {
+                "type": "string",
+                "enum": [
+                  "10",
+                  "11",
+                  "12",
+                  "13",
+                  "14",
+                  "15",
+                  "16",
+                  "17",
+                  "01",
+                  "02",
+                  "03",
+                  "04",
+                  "05",
+                  "06",
+                  "07",
+                  "08",
+                  "09"
+                ]
+              },
+              "pais": {
+                "type": "string",
+                "pattern": "^\\d{3}$"
+              },
+              "percCapVotBp": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000
+              },
+              "representanteLegal": {
+                "type": "object",
+                "properties": {
+                  "cpf": {
+                    "type": "string",
+                    "pattern": "^\\d{11}$"
+                  },
+                  "qualif": {
+                    "type": "string",
+                    "enum": [
+                      "01",
+                      "02",
+                      "03",
+                      "04",
+                      "05",
+                      "06"
+                    ]
+                  }
+                },
+                "required": [
+                  "cpf",
+                  "qualif"
+                ],
+                "additionalProperties": false
+              },
+              "valores": {
+                "type": "object",
+                "properties": {
+                  "remTrabCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "lucDivCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "jurCapCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "demRendCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "irRetCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  }
+                },
+                "required": [
+                  "remTrabCents",
+                  "lucDivCents",
+                  "jurCapCents",
+                  "demRendCents",
+                  "irRetCents"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "partnerId",
+              "qualif",
+              "valores"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "dirigentes": {
+          "default": [],
+          "maxItems": 999,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "nome": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "cpf": {
+                "type": "string",
+                "pattern": "^\\d{11}$"
+              },
+              "qualif": {
+                "type": "string",
+                "enum": [
+                  "10",
+                  "11",
+                  "12",
+                  "13",
+                  "14",
+                  "15",
+                  "16",
+                  "17"
+                ]
+              },
+              "dtAltSoc": {
+                "type": "string"
+              },
+              "dtFimSoc": {
+                "type": "string"
+              },
+              "representanteLegal": {
+                "type": "object",
+                "properties": {
+                  "cpf": {
+                    "type": "string",
+                    "pattern": "^\\d{11}$"
+                  },
+                  "qualif": {
+                    "type": "string",
+                    "enum": [
+                      "01",
+                      "02",
+                      "03",
+                      "04",
+                      "05",
+                      "06"
+                    ]
+                  }
+                },
+                "required": [
+                  "cpf",
+                  "qualif"
+                ],
+                "additionalProperties": false
+              },
+              "valores": {
+                "type": "object",
+                "properties": {
+                  "remTrabCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "lucDivCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "jurCapCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "demRendCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  },
+                  "irRetCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647
+                  }
+                },
+                "required": [
+                  "remTrabCents",
+                  "lucDivCents",
+                  "jurCapCents",
+                  "demRendCents",
+                  "irRetCents"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "nome",
+              "cpf",
+              "qualif",
+              "dtAltSoc",
+              "valores"
+            ],
+            "additionalProperties": false
+          }
+        },
         "retificadora": {
           "default": "N",
           "type": "string",
@@ -13898,7 +15206,8 @@
         "year",
         "declarant",
         "fiscal",
-        "signers"
+        "signers",
+        "socios"
       ],
       "additionalProperties": false
     }
@@ -14828,6 +16137,151 @@
       },
       "required": [
         "unitId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "PartnerDto.ts": {
+    "CreatePartnerSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "taxId": {
+          "type": "string",
+          "pattern": "^(\\d{11}|\\d{14})$"
+        },
+        "residenteBrasil": {
+          "type": "boolean"
+        },
+        "participacaoBp": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "entradaEm": {
+          "type": "string"
+        },
+        "saidaEm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "nome",
+        "taxId",
+        "residenteBrasil",
+        "participacaoBp",
+        "entradaEm"
+      ],
+      "additionalProperties": false
+    },
+    "ListPartnersQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "data": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "PartnerIdParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "PartnerScopeSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "UpdatePartnerSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "taxId": {
+          "type": "string",
+          "pattern": "^(\\d{11}|\\d{14})$"
+        },
+        "residenteBrasil": {
+          "type": "boolean"
+        },
+        "participacaoBp": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "entradaEm": {
+          "type": "string"
+        },
+        "saidaEm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "nome",
+        "taxId",
+        "residenteBrasil",
+        "participacaoBp",
+        "entradaEm"
       ],
       "additionalProperties": false
     }

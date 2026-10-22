@@ -30,7 +30,11 @@
             "SALARIO_MINIMO",
             "MEI_ANEXO_XI",
             "FERIADO_LOCAL",
-            "IBS_CBS"
+            "IRRF_DISTRIBUICAO",
+            "TJLP",
+            "IBS_CBS",
+            "IBS_CBS_USO_CONSUMO",
+            "IBS_CBS_PROVISORIA"
           ]
         },
         "chave": {
@@ -122,7 +126,11 @@
             "SALARIO_MINIMO",
             "MEI_ANEXO_XI",
             "FERIADO_LOCAL",
-            "IBS_CBS"
+            "IRRF_DISTRIBUICAO",
+            "TJLP",
+            "IBS_CBS",
+            "IBS_CBS_USO_CONSUMO",
+            "IBS_CBS_PROVISORIA"
           ]
         },
         "status": {
@@ -197,7 +205,11 @@
             "SALARIO_MINIMO",
             "MEI_ANEXO_XI",
             "FERIADO_LOCAL",
-            "IBS_CBS"
+            "IRRF_DISTRIBUICAO",
+            "TJLP",
+            "IBS_CBS",
+            "IBS_CBS_USO_CONSUMO",
+            "IBS_CBS_PROVISORIA"
           ]
         },
         "chave": {

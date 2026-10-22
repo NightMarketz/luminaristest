@@ -127,18 +127,18 @@ export interface IFiscalDocumentRepository {
    */
   somaNfseAutorizadaNaCompetencia(scope: AccountingScope, competencia: string, tx?: Prisma.TransactionClient): Promise<bigint>;
   /**
-   * IBS-CBS-2027 PR-2 (BRIEF item 6) — NFS-e e NF-e vivas em produção do escopo, AUTORIZADAS (com ou sem divergência),
-   * `dCompet` em [from, to] (AAAA-MM-DD). Leitura do débito por documento (F-IBS-3 a).
-   */
-  findAuthorizedForIbsCbs(scope: AccountingScope, from: string, to: string, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
-  /** IBS-CBS-2027 PR-2 (item 7, `VENDA_SEM_DOCUMENTO`) — das `saleIds`, as que têm documento AUTORIZADO vivo em produção (qualquer mês). */
-  saleIdsWithAuthorizedDocument(scope: AccountingScope, saleIds: readonly string[], tx?: Prisma.TransactionClient): Promise<string[]>;
-  /**
    * X7 Fase C PR-2 (BRIEF C item 14) — NFS-e vivas em produção do escopo, `dCompet` em [from, to] (AAAA-MM-DD), nos
    * `statuses` pedidos, cada uma com o `cLocPrestacao` lido do payload da tentativa CORRENTE (F-TC-1 a; null se o
    * payload não o tiver).
    */
   findForIssReport(scope: AccountingScope, from: string, to: string, statuses: readonly FiscalDocumentStatus[], tx?: Prisma.TransactionClient): Promise<Array<FiscalDocument & { cLocPrestacao: string | null; cLocEmi: string | null }>>;
+  /**
+   * IBS-CBS-2027 PR-2 (BRIEF item 6) — documentos vivos em produção do escopo (NFS-e e NF-e), `dCompet` em [from, to]
+   * (AAAA-MM-DD, o dia escrito), nos `statuses` pedidos.
+   */
+  findForIbsCbs(scope: AccountingScope, from: string, to: string, statuses: readonly FiscalDocumentStatus[], tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
+  /** IBS-CBS-2027 PR-2 (item 7; dono 21/10): das vendas pedidas, as que têm documento AUTHORIZED/AUTHORIZED_DIVERGENT vivo em produção, em qualquer mês. */
+  saleIdsWithAuthorizedDocument(scope: AccountingScope, saleIds: readonly string[], tx?: Prisma.TransactionClient): Promise<string[]>;
   /** SENT|PROCESSING mais velhos que `olderThan` — alvo do job de polling (BRIEF item 27). Sem escopo: o job varre todos. */
   listPending(olderThan: Date, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
   /**

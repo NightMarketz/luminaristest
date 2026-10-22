@@ -1,0 +1,20 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "D01_Tabelas_Dinamicas_ECF_Leiaute_12_28_05_2026_AC_2025_SIT_ESP_",
+      "url": "http://sped.rfb.gov.br/arquivo/download/8002",
+      "url_final": "http://sped.rfb.gov.br/estatico/E1/20FDEEE25CAA9F998AC2AD3045DE0E9C631D3C/Tabelas_Dinamicas_ECF_Leiaute_12_28_05_2026_AC_2025_SIT_ESP_2026.xlsx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-21T15:18:43-03:00",
+      "sha256": "366b8d9030a04e9f6203b6ae29ace49d3ffa3fa0c1f5a7a18b0c967b9a5a3cac",
+      "arquivo": "docs/D01_Tabelas_Dinamicas_ECF_Leiaute_12_28_05_2026_AC_2025_SIT_ESP_.html",
+      "texto": "docs/D01_Tabelas_Dinamicas_ECF_Leiaute_12_28_05_2026_AC_2025_SIT_ESP_.txt",
+      "bytes": 1724077
+    }
+  ],
+  "buscas": [],
+  "slug": "irrf-referencial-sped",
+  "pergunta": "Códigos do plano referencial RFB 2025 (L100A/P100) das folhas novas do IRRF-DISTRIBUICAO",
+  "criado": "2026-10-21T15:18:42-03:00"
+}

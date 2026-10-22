@@ -119,6 +119,8 @@ export function SpedEcfRealPanel({ unitId, qualifOptions, qualifLoading, contact
         indRecReceita: '2',
       },
       signers: payloadSigners,
+      // Y600 (BE-INCR-ECF-Y600): a tela ainda não coleta sócios — o servidor devolve 400 ECF_Y600_*; FE próprio pendente.
+      socios: [],
     };
     if (contactId) body.signerContactIds = [contactId];
     setBusy(true);

@@ -1,0 +1,132 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "D01_Manual-20da-20EFD-Reinf-20vers-c3-a3o-202-1-2-1-pdf",
+      "url": "http://sped.rfb.gov.br/arquivo/download/7261",
+      "url_final": "http://sped.rfb.gov.br/estatico/28/40FAAC1C636CC110D4C12D2790B43C641C6BCA/Manual%20da%20EFD-Reinf%20vers%c3%a3o%202.1.2.1.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-22T13:20:16-03:00",
+      "sha256": "563e771cf0b48dec156c44bc3582a469c8a7203b2e415a89da7bba1ee27f5977",
+      "arquivo": "docs/D01_Manual-20da-20EFD-Reinf-20vers-c3-a3o-202-1-2-1-pdf.pdf",
+      "texto": "docs/D01_Manual-20da-20EFD-Reinf-20vers-c3-a3o-202-1-2-1-pdf.txt",
+      "bytes": 3044983
+    },
+    {
+      "id": "D02",
+      "titulo": "D02_EFD-REINF-20-20Tabelas-2015012026-zip",
+      "url": "http://sped.rfb.gov.br/arquivo/download/7994",
+      "url_final": "http://sped.rfb.gov.br/estatico/56/02690B8D5DE8904DFAB98799195B016052E4F5/EFD-REINF%20-%20Tabelas%2015012026.zip",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-22T13:20:17-03:00",
+      "sha256": "31c04713b92a965c7413190a21dfc1b8eab4b10002a58371506da758e770b1a7",
+      "arquivo": "docs/D02_EFD-REINF-20-20Tabelas-2015012026-zip.html",
+      "texto": "docs/D02_EFD-REINF-20-20Tabelas-2015012026-zip.txt",
+      "bytes": 416773
+    },
+    {
+      "id": "D03",
+      "titulo": "D03_Nota-20t-c3-a9cnica-20EFD-Reinf-201-2026-20v2-pdf",
+      "url": "http://sped.rfb.gov.br/arquivo/download/8070",
+      "url_final": "http://sped.rfb.gov.br/estatico/0F/0508F1D4C64E67C775110FFEF7C49015CA7619/Nota%20t%c3%a9cnica%20EFD-Reinf%201-2026%20v2.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-22T13:20:17-03:00",
+      "sha256": "d827692f54643eca0aa08babe50723f5be676531c44d5a701d3f376e87ed7c05",
+      "arquivo": "docs/D03_Nota-20t-c3-a9cnica-20EFD-Reinf-201-2026-20v2-pdf.pdf",
+      "texto": "docs/D03_Nota-20t-c3-a9cnica-20EFD-Reinf-201-2026-20v2-pdf.txt",
+      "bytes": 523421
+    },
+    {
+      "id": "D04",
+      "titulo": "D04_Nota-20t-c3-a9cnica-20EFD-Reinf-202-2026-pdf",
+      "url": "http://sped.rfb.gov.br/arquivo/download/8180",
+      "url_final": "http://sped.rfb.gov.br/estatico/20/CF34CCA6DFAE45E4E000EF345534FCA35D4C0A/Nota%20t%c3%a9cnica%20EFD-Reinf%202-2026.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-22T13:20:18-03:00",
+      "sha256": "5e39d987baa08ee86e1cc7969ae50242f13bbab475ccb23c1564b44aaedf694b",
+      "arquivo": "docs/D04_Nota-20t-c3-a9cnica-20EFD-Reinf-202-2026-pdf.pdf",
+      "texto": "docs/D04_Nota-20t-c3-a9cnica-20EFD-Reinf-202-2026-pdf.txt",
+      "bytes": 564684
+    },
+    {
+      "id": "D05",
+      "titulo": "D05_Nota-20t-c3-a9cnica-20EFD-Reinf-203-2026-pdf",
+      "url": "http://sped.rfb.gov.br/arquivo/download/8194",
+      "url_final": "http://sped.rfb.gov.br/estatico/B7/BDEE3C166C56E714C5452408793CE51CC25E5F/Nota%20t%c3%a9cnica%20EFD-Reinf%203-2026.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-22T13:20:19-03:00",
+      "sha256": "25cd52e70d21bce9b970477d51fe194e7b58b7b5cd4085a85e1981cce9f0ffd0",
+      "arquivo": "docs/D05_Nota-20t-c3-a9cnica-20EFD-Reinf-203-2026-pdf.pdf",
+      "texto": "docs/D05_Nota-20t-c3-a9cnica-20EFD-Reinf-203-2026-pdf.txt",
+      "bytes": 614223
+    },
+    {
+      "id": "D06",
+      "titulo": "D06_XSD-20EFD-Reinf-20v2-1-2-20-20CNPJ-20Alfanum-c3-a9rico-zip",
+      "url": "http://sped.rfb.gov.br/arquivo/download/8193",
+      "url_final": "http://sped.rfb.gov.br/estatico/74/6A2EE4D441E3A9536B5BC35CB282735B479423/XSD%20EFD-Reinf%20v2.1.2%20-%20CNPJ%20Alfanum%c3%a9rico.zip",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-22T13:20:19-03:00",
+      "sha256": "26a82d92bdccc4dddc56150e08080e60043315964b9f7e6800a3402f6218d4b9",
+      "arquivo": "docs/D06_XSD-20EFD-Reinf-20v2-1-2-20-20CNPJ-20Alfanum-c3-a9rico-zip.html",
+      "texto": "docs/D06_XSD-20EFD-Reinf-20v2-1-2-20-20CNPJ-20Alfanum-c3-a9rico-zip.txt",
+      "bytes": 64550
+    },
+    {
+      "id": "D07",
+      "titulo": "Lei nº 9.250 de 26/12/1995",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1995/lei-9250-1995-12-26.md",
+      "url_final": "https://github.com/ctresb/leis/blob/ec2d052273aea51cd30fac55a779a8d933c11046/federal/leis-ordinarias/1995/lei-9250-1995-12-26.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1995-12-26;9250",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "ec2d052273aea51cd30fac55a779a8d933c11046",
+      "alertas": [],
+      "baixado_em": "2026-10-22T13:22:19-03:00",
+      "sha256": "aa9eedaae0195205b7f5bcde33c46572d4f1f5352de3cf92ec1e36342e88befd",
+      "arquivo": "docs/D07_lei-9250-1995-12-26.md",
+      "texto": "docs/D07_lei-9250-1995-12-26.txt",
+      "bytes": 49701
+    },
+    {
+      "id": "D08",
+      "titulo": "L9250",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/l9250.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/l9250.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-22T13:22:32-03:00",
+      "sha256": "9177f9d77b6091d7623f2b166fe69f7574da1a61e0073e4a783bf9a4500d42ad",
+      "arquivo": "docs/D08_l9250-htm.html",
+      "texto": "docs/D08_l9250-htm.txt",
+      "bytes": 269117
+    }
+  ],
+  "buscas": [
+    {
+      "quando": "2026-10-22T13:18:46-03:00",
+      "fonte": "LexML SRU",
+      "termos": [
+        "EFD-Reinf"
+      ],
+      "consulta": "https://www.lexml.gov.br/busca/SRU?operation=searchRetrieve&version=1.1&query=dc.title+any+%22EFD-Reinf%22+or+dc.description+any+%22EFD-Reinf%22&maximumRecords=10",
+      "n": 0,
+      "obs": "bloqueado por verificação anti-robô"
+    },
+    {
+      "quando": "2026-10-22T13:18:47-03:00",
+      "fonte": "LexML SRU",
+      "termos": [
+        "2.043",
+        "Reinf"
+      ],
+      "consulta": "https://www.lexml.gov.br/busca/SRU?operation=searchRetrieve&version=1.1&query=dc.title+any+%222.043+Reinf%22+or+dc.description+any+%222.043+Reinf%22&maximumRecords=10",
+      "n": 0,
+      "obs": "bloqueado por verificação anti-robô"
+    }
+  ],
+  "slug": "verif-2026-10-22-efd-reinf-brief",
+  "pergunta": "Leiaute EFD-Reinf 2.1.x (eventos R-1000, R-2010/R-2099, R-4010/R-4020/R-4099, R-9000), Manual, tabela 01 natureza do rendimento e IN RFB 2.043 vigente — insumos do BRIEF EFD-REINF",
+  "criado": "2026-10-22T13:18:41-03:00"
+}

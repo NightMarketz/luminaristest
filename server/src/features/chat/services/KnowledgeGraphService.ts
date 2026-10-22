@@ -16,6 +16,8 @@ export interface KnowledgeGraphData {
             label: string;
             type: string;
             required: boolean;
+            readOnly?: boolean;
+            hidden?: boolean;
             options?: string[];
             relation?: {
                 targetTable: string;
@@ -55,6 +57,8 @@ export class KnowledgeGraphService {
                         label: f.label,
                         type: f.type,
                         required: f.required,
+                        readOnly: f.readOnly,
+                        hidden: f.hidden,
                         options: f.options,
                         relation: f.relation ? {
                             targetTable: f.relation.targetTable,
@@ -127,7 +131,9 @@ export class KnowledgeGraphService {
             for (const field of table.fields) {
                 const relInfo = field.relation ? ` (Relaciona com: ${field.relation.targetTable})` : "";
                 const optionsInfo = (field.options && field.options.length > 0) ? ` [Opções permitidas: ${field.options.join(', ')}]` : "";
-                prompt += `    * ${field.name}: ${field.type}${field.required ? " (Obrigatório)" : ""}${relInfo}${optionsInfo}\n`;
+                // readOnly: o GovernanceEngine rejeita (400) qualquer escrita nele — o agente não pode propor.
+                const accessInfo = `${field.readOnly ? " (Somente leitura — não envie em data)" : ""}${field.hidden ? " (Oculto na tela)" : ""}`;
+                prompt += `    * ${field.name}: ${field.type}${field.required ? " (Obrigatório)" : ""}${accessInfo}${relInfo}${optionsInfo}\n`;
             }
         }
 

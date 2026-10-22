@@ -25,7 +25,12 @@ import {
   __selfCheck,
   P_LINE,
   resolveEcfCodVer,
+  buildY600,
+  ordenarY600,
+  Y600_MAX_VIGENTES,
+  Y600_MAX_ALTERACOES,
   type EcfFileInput,
+  type Y600Row,
 } from '../ecf';
 import { LEGAIS_SEMENTE } from '@test/helpers/legalParams';
 
@@ -57,6 +62,7 @@ const sampleInput = (): EcfFileInput => ({
     { perApur: 'T03', dtIni: '2025-07-01', dtFin: '2025-09-30', servicoCents: 20000000, revendaCents: 7000000 },
     { perApur: 'T04', dtIni: '2025-10-01', dtFin: '2025-12-31', servicoCents: 22000000, revendaCents: 8000000 },
   ],
+  y600: [],
 });
 
 describe('ecf serializer — self-check', () => {
@@ -156,6 +162,21 @@ describe('ecf file assembler', () => {
     expect(lines).toContain('|P400|2||50000,00|'); // revenda CSLL 12%
   });
 
+  it('L10: dentro de cada P030, todos os P200 vêm antes de qualquer P400', () => {
+    // PVA ECF 12.2.7, 22/10 (RUNBOOK-H1 passo 6, tentativa 1): com P200 e P400 intercalados por atividade, as 8 linhas
+    // de revenda (P200 depois de um P400) deram "Organização hierárquica ... fora dos padrões" (esperado: P500).
+    const lines = buildEcfFile(sampleInput());
+    const regs = lines.map((l) => l.split('|')[1]);
+    const periods = regs.flatMap((r, i) => (r === 'P030' ? [i] : []));
+    const p990 = regs.indexOf('P990');
+    const bad = periods.flatMap((start, k) => {
+      const block = regs.slice(start + 1, periods[k + 1] ?? p990);
+      const firstP400 = block.indexOf('P400');
+      return firstP400 >= 0 && block.lastIndexOf('P200') > firstP400 ? [`${lines[start]} → ${block.join(',')}`] : [];
+    });
+    expect(bad).toEqual([]);
+  });
+
   it('omits receita lines when the activity has zero movement (0:N)', () => {
     const lines = buildEcfFile(sampleInput());
     const t02Idx = lines.indexOf('|P030|01042025|30062025|T02|');
@@ -185,3 +206,105 @@ describe('ecf file assembler', () => {
 function sha(s: string): string {
   return createHash('sha256').update(Buffer.from(s, 'latin1')).digest('hex');
 }
+
+// ─── L11 (RUNBOOK-H1): Y600 — BE-INCR-ECF-Y600 itens 1–3; Manual ECF L12 (maio/2026) pp. 570–575 ───────────
+
+/** Linha do exemplo da p. 575 (FULANO SÓCIO, 60%, valores do exemplo). */
+const fulano = (over: Partial<Y600Row> = {}): Y600Row => ({
+  dtAltSoc: '2012-01-01',
+  pais: '105',
+  indQualifSocio: 'PF',
+  cpfCnpj: '00000000000',
+  nome: 'FULANO SÓCIO',
+  qualif: '01',
+  percCapTotBp: 6000,
+  percCapVotBp: 6000,
+  remTrabCents: 10000000,
+  lucDivCents: 1000000,
+  jurCapCents: 500000,
+  demRendCents: 300000,
+  irRetCents: 900000,
+  ...over,
+});
+
+describe('L11: Y600', () => {
+  it('item 1: exemplo da p. 575 acrescido do campo 3 (DT_FIM_SOC) vazio — 17 campos na ordem da tabela (P1 do BRIEF)', () => {
+    // Exemplo do Manual (16 campos): |Y600|01012012|105|PF|00000000000|FULANO SÓCIO|01|60,00|60,00|||100000,00|10000,00|5000,00|3000,00|9000,00|
+    const line = buildY600(fulano());
+    expect(line).toBe('|Y600|01012012||105|PF|00000000000|FULANO SÓCIO|01|60,00|60,00|||100000,00|10000,00|5000,00|3000,00|9000,00|');
+    expect(line.split('|').length - 2).toBe(17);
+  });
+
+  it('item 1: saída no ano preenche DT_FIM_SOC (campo 3) em ddmmaaaa', () => {
+    expect(buildY600(fulano({ dtFimSoc: '2025-07-31' })).split('|')[3]).toBe('31072025');
+  });
+
+  it('item 1: 100% sai "100" (pp. 572–573) nos dois percentuais; valores zero saem 0,00 (p. 570)', () => {
+    const f = buildY600(
+      fulano({ percCapTotBp: 10000, percCapVotBp: 10000, remTrabCents: 0, lucDivCents: 0, jurCapCents: 0, demRendCents: 0, irRetCents: 0 }),
+    ).split('|');
+    expect(f[9]).toBe('100');
+    expect(f[10]).toBe('100');
+    expect(f.slice(13, 18)).toEqual(['0,00', '0,00', '0,00', '0,00', '0,00']);
+  });
+
+  it('item 1: não residente sai com o PAIS informado e CPF_CNPJ vazio (REGRA_OBRIGATORIO_BRASIL, p. 574)', () => {
+    const f = buildY600(fulano({ pais: '249', qualif: '05', cpfCnpj: '52998224725' })).split('|');
+    expect(f[4]).toBe('249');
+    expect(f[6]).toBe('');
+  });
+
+  it('item 1: CPF_REP_LEG e QUALIF_REP_LEG saem juntos ou nenhum (REGRA_QUALIF_REP_LEG_OBRIGATORIO, p. 574)', () => {
+    const com = buildY600(fulano({ cpfRepLeg: '52998224725', qualifRepLeg: '01' })).split('|');
+    expect([com[11], com[12]]).toEqual(['52998224725', '01']);
+    const meio = buildY600(fulano({ cpfRepLeg: '52998224725' })).split('|');
+    expect([meio[11], meio[12]]).toEqual(['', '']);
+  });
+
+  it('item 2: com Y600, Y001 IND_DAD=0, Y990 auto-inclusivo, 9900|Y600 e 9999 consistentes; Y sai depois de X', () => {
+    const rows = [fulano(), fulano({ nome: 'BELTRANA', cpfCnpj: '52998224725', percCapTotBp: 4000, percCapVotBp: 4000 })];
+    const lines = buildEcfFile({ ...sampleInput(), y600: rows });
+    const y001 = lines.indexOf('|Y001|0|');
+    expect(y001).toBe(lines.indexOf('|X990|2|') + 1);
+    expect(lines.slice(y001 + 1, y001 + 3)).toEqual(rows.map(buildY600));
+    expect(lines[y001 + 3]).toBe('|Y990|4|');
+    expect(lines).not.toContain('|Y001|1|');
+    expect(lines).toContain('|9900|Y600|2|||');
+    expect(lines[lines.length - 1]).toBe(`|9999|${lines.length}|`);
+    const types = lines.filter((l) => l.startsWith('|9900|')).length;
+    expect(lines).toContain(`|9900|9900|${types}|||`);
+  });
+
+  it('item 2: determinismo estendido com Y600 (mesma entrada ⇒ mesmo sha256)', () => {
+    const input = (): EcfFileInput => ({ ...sampleInput(), y600: [fulano(), fulano({ nome: 'BELTRANA', cpfCnpj: '52998224725' })] });
+    expect(sha(serializeEcf(buildEcfFile(input())))).toBe(sha(serializeEcf(buildEcfFile(input()))));
+  });
+
+  it('item 3 (F-Y600-6): vigentes por total decrescente, depois as demais por DT_ALT_SOC decrescente; desempate NOM_EMP, CPF_CNPJ', () => {
+    const zero = { remTrabCents: 0, lucDivCents: 0, jurCapCents: 0, demRendCents: 0, irRetCents: 0 };
+    const a = fulano({ ...zero, nome: 'A', cpfCnpj: '2', remTrabCents: 100 });
+    const b = fulano({ ...zero, nome: 'B', cpfCnpj: '1', lucDivCents: 300, irRetCents: 999999 }); // IR não entra no total
+    const c1 = fulano({ ...zero, nome: 'C', cpfCnpj: '2', jurCapCents: 100 });
+    const c0 = fulano({ ...zero, nome: 'C', cpfCnpj: '1', demRendCents: 100 });
+    const velha = fulano({ ...zero, nome: 'Z', dtAltSoc: '2020-01-01', remTrabCents: 999999 });
+    const nova = fulano({ ...zero, nome: 'Y', dtAltSoc: '2025-03-01' });
+    const novaB = fulano({ ...zero, nome: 'X', dtAltSoc: '2025-03-01' });
+    const out = ordenarY600([
+      { row: velha, vigenteNoFim: false },
+      { row: c1, vigenteNoFim: true },
+      { row: a, vigenteNoFim: true },
+      { row: nova, vigenteNoFim: false },
+      { row: b, vigenteNoFim: true },
+      { row: novaB, vigenteNoFim: false },
+      { row: c0, vigenteNoFim: true },
+    ]);
+    expect(out).toEqual([b, a, c0, c1, novaB, nova, velha]);
+  });
+
+  it('item 3 (F-Y600-6): acima de 500 vigentes ou 499 demais lança ECF_Y600_LIMITE — nunca trunca', () => {
+    const n = (k: number, vigenteNoFim: boolean) => Array.from({ length: k }, (_, i) => ({ row: fulano({ nome: `S${i}` }), vigenteNoFim }));
+    expect(ordenarY600([...n(Y600_MAX_VIGENTES, true), ...n(Y600_MAX_ALTERACOES, false)])).toHaveLength(999);
+    expect(() => ordenarY600(n(Y600_MAX_VIGENTES + 1, true))).toThrow(/ECF_Y600_LIMITE/);
+    expect(() => ordenarY600(n(Y600_MAX_ALTERACOES + 1, false))).toThrow(/ECF_Y600_LIMITE/);
+  });
+});

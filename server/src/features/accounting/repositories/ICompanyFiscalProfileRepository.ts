@@ -43,6 +43,7 @@ export interface CompanyFiscalProfileData {
   simplesExclusaoEfeitosEm: string | null; // X14-CAIXA item 7 (F-CX-3 a)
   simplesCaixaPrazoCartaoDebitoDias: number | null; // X14-CAIXA item 7a
   simplesCaixaPrazoCartaoCreditoDias: number | null;
+  jcpBaseContas: Prisma.InputJsonValue | typeof Prisma.DbNull; // IRRF-DISTRIBUICAO item 8 (F-IRD-15): JcpBaseContas
 }
 
 /**

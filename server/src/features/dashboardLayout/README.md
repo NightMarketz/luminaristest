@@ -28,7 +28,6 @@ touches Prisma.
 |---|---|---|
 | GET | `/` | List the user's layouts (tabs), most recent first. Envelope `{ success, data: [...] }`. |
 | POST | `/` | Create a new layout (tab) → it becomes the active one. |
-| GET | `/:id` | Get one layout (owner only). |
 | PATCH | `/:id` | Update a layout. **Partial updates are merged** with the stored record (never wipes `type`/`config`). Also used to rename via `name`. |
 | POST | `/:id/activate` | Switch the active layout (tab). |
 | DELETE | `/:id` | Delete a layout; if it was active, the most recently updated remaining one becomes active. |

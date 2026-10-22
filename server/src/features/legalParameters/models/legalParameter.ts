@@ -33,8 +33,17 @@ export const LEGAL_PARAMETER_TABELAS = [
   'MEI_ANEXO_XI',
   // F-E4-1 (a) (dono, 12/10; executa 17/10): feriados estaduais e municipais (CC 132 § 1º; Lei 9.093/1995 arts. 1º e 2º).
   'FERIADO_LOCAL',
+  // BE-INCR-IRRF-DISTRIBUICAO PR-1 (item 5; F-IRD-13, F-IRD-18): IRRF na distribuição de lucros e no JCP; TJLP trimestral.
+  'IRRF_DISTRIBUICAO',
+  'TJLP',
   // IBS-CBS-2027 PR-1 (BRIEF item 1): alíquotas de IBS/CBS por vigência (LC 214 arts. 343, 344, 346, 347).
   'IBS_CBS',
+  // IBS-CBS-2027 PR-3 (BRIEF item 15): lista de uso ou consumo pessoal (LC 214 art. 57), chave = prefixo de NCM (dono 21/10).
+  // Nasce vazia — o conteúdo é do contador (P-IBS-2); consumidor = NfeImportService (models/ibsCbsCredito.ts).
+  'IBS_CBS_USO_CONSUMO',
+  // IBS-CBS-2027 PR-3 (dono 22/10): taxa de referência PROVISÓRIA da CBS para a prévia enquanto a linha IBS_CBS/CBS de 2027 for
+  // DRAFT (sem fonte oficial — o operador da plataforma publica; a confirmação nunca a usa). Nasce vazia.
+  'IBS_CBS_PROVISORIA',
 ] as const;
 export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
 
@@ -132,6 +141,22 @@ export class ParametroLegalAusenteError extends SemLinhaVigenteError {
     Object.setPrototypeOf(this, ParametroLegalAusenteError.prototype);
     this.name = 'ParametroLegalAusenteError';
   }
+}
+
+/**
+ * BE-INCR-IRRF-DISTRIBUICAO PR-1 (item 5): a linha vigente que o cálculo EXIGE — sem ela, 400 `PARAMETRO_LEGAL_AUSENTE`
+ * (F-PR4-7), nunca o zero silencioso.
+ */
+export function exigirLinhaVigente<T extends LinhaLegal>(
+  linhas: readonly T[],
+  tabela: LegalParameterTabela,
+  chave: string,
+  data: string,
+  discriminador: string | null = null,
+): T {
+  const linha = linhaLegalVigente(linhas, tabela, chave, data, discriminador);
+  if (!linha) throw new ParametroLegalAusenteError(tabela, data, chave);
+  return linha;
 }
 
 /** PR-4 (item 7, §4 `ParametrosUsados`) — as linhas de lei que valeram no período de uma apuração + o hash delas. */

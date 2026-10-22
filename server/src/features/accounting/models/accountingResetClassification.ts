@@ -61,6 +61,7 @@ export const ACCOUNTING_RESET_BLOCKING = [
   'KitUpgradeRun',
   'KitUpgradePending',
   'CompanySigner',
+  'Partner', // IRRF-DISTRIBUICAO PR-1: o onboarding não escreve sócio ⇒ bloqueia
   'IssBeneficioMunicipal',
   'ProductDestinationDefault',
   'FiscalDocument',
@@ -81,7 +82,7 @@ export const ACCOUNTING_RESET_BLOCKING = [
   'PaymentAccount',
   'CollectionCharge',
   'TaxAssessment',
-  'ConsumptionTaxAssessment', // IBS-CBS-2027 PR-2 — tabela nova nasce BLOCKING (regra do cabeçalho)
+  'ConsumptionTaxAssessment', // IBS-CBS-2027 PR-2 — tabela nova nasce BLOCKING
   'MitExport',
   'SimplesHistoricoMensal',
   'SimplesSegregacaoManual',

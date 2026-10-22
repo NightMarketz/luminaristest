@@ -1,4 +1,4 @@
-export type DocumentStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'ERROR';
+export type DocumentStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'ERROR' | 'FAILED';
 export type DocumentPurpose = 'DATA_ANALYSIS' | 'KNOWLEDGE_BASE';
 
 export interface DocumentResponseDto {

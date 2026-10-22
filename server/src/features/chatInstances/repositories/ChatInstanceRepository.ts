@@ -108,6 +108,21 @@ export class ChatInstanceRepository implements IChatInstanceRepository {
     });
   }
 
+  async findByWidgetInstanceId(userId: string, widgetInstanceId: string): Promise<IChatInstance | null> {
+    return prisma.chatInstance.findUnique({
+      where: { userId_widgetInstanceId: { userId, widgetInstanceId } },
+      select: {
+        id: true,
+        title: true,
+        type: true,
+        widgetInstanceId: true,
+        userId: true,
+        createdAt: true,
+        updatedAt: true
+      },
+    });
+  }
+
   /**
    * Updates an instance
    * @param id - Instance ID

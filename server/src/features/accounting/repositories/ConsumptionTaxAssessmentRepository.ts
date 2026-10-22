@@ -12,24 +12,32 @@ export class ConsumptionTaxAssessmentRepository implements IConsumptionTaxAssess
     return (tx ?? prisma).consumptionTaxAssessment.findFirst({ where: { id, userId: ownerUserId, deletedAt: null } });
   }
 
-  public async findByYear(ownerUserId: string, anoCalendario: number, tx?: Prisma.TransactionClient): Promise<ConsumptionTaxAssessment[]> {
+  public async findSuperseded(ownerUserId: string, anoCalendario: number, mes: number, tributo: string): Promise<ConsumptionTaxAssessment[]> {
+    return prisma.consumptionTaxAssessment.findMany({ where: { userId: ownerUserId, anoCalendario, mes, tributo, status: 'SUPERSEDED', deletedAt: null } });
+  }
+
+  public async setProvisaoEntryId(ownerUserId: string, id: string, entryId: string): Promise<boolean> {
+    const r = await prisma.consumptionTaxAssessment.updateMany({ where: { id, userId: ownerUserId, deletedAt: null, provisaoEntryId: null }, data: { provisaoEntryId: entryId } });
+    return r.count === 1;
+  }
+
+  public async findMany(ownerUserId: string, anoCalendario: number, tx?: Prisma.TransactionClient): Promise<ConsumptionTaxAssessment[]> {
     return (tx ?? prisma).consumptionTaxAssessment.findMany({
       where: { userId: ownerUserId, anoCalendario, deletedAt: null },
       orderBy: [{ mes: 'asc' }, { tributo: 'asc' }, { confirmedAt: 'asc' }],
     });
   }
 
-  public async findConfirmed(ownerUserId: string, anoCalendario: number, tributo: string, tx?: Prisma.TransactionClient): Promise<ConsumptionTaxAssessment[]> {
+  public async findConfirmedFrom(ownerUserId: string, tributo: string, anoCalendario: number, mes: number, tx?: Prisma.TransactionClient): Promise<ConsumptionTaxAssessment[]> {
     return (tx ?? prisma).consumptionTaxAssessment.findMany({
-      where: { userId: ownerUserId, anoCalendario, tributo, status: 'CONFIRMED', deletedAt: null },
-      orderBy: { mes: 'asc' },
-    });
-  }
-
-  public async findSuperseded(ownerUserId: string, anoCalendario: number, mes: number, tributo: string): Promise<ConsumptionTaxAssessment[]> {
-    return prisma.consumptionTaxAssessment.findMany({
-      where: { userId: ownerUserId, anoCalendario, mes, tributo, status: 'SUPERSEDED', deletedAt: null },
-      orderBy: { confirmedAt: 'asc' },
+      where: {
+        userId: ownerUserId,
+        tributo,
+        status: 'CONFIRMED',
+        deletedAt: null,
+        OR: [{ anoCalendario, mes: { gte: mes } }, { anoCalendario: { gt: anoCalendario } }],
+      },
+      orderBy: [{ anoCalendario: 'asc' }, { mes: 'asc' }],
     });
   }
 
@@ -40,14 +48,6 @@ export class ConsumptionTaxAssessmentRepository implements IConsumptionTaxAssess
       data: { status: 'SUPERSEDED' },
     });
     return r.count;
-  }
-
-  public async setProvisaoEntryId(ownerUserId: string, id: string, entryId: string): Promise<boolean> {
-    const r = await prisma.consumptionTaxAssessment.updateMany({
-      where: { id, userId: ownerUserId, deletedAt: null, provisaoEntryId: null },
-      data: { provisaoEntryId: entryId },
-    });
-    return r.count === 1;
   }
 
   public async runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {

@@ -221,7 +221,8 @@
     "empty_state": "No tasks found.",
     "search_placeholder": "Search tasks...",
     "total": "Total",
-    "done": "Completed"
+    "done": "Completed",
+    "reorder_unavailable": "Card order is not saved in this table: dragging only moves the card to another column."
   },
   "planning_view": {
     "no_tables_found": "No Calendars Found",
@@ -340,10 +341,6 @@
   "personalInfoDescription": "Update your name, username, and email address.",
   "securitySection": "Security",
   "securityDescription": "Change your password. Leave blank to keep the current one.",
-  "makeAdminDevOnly": "DEV ONLY",
-  "makeAdminWarning": "Promote your account to ADMIN to access the Management Panel.",
-  "makeAdminButtonText": "⚡ Make Admin",
-  "makeAdminUpdating": "Updating...",
   "rememberMe": "Remember me",
   "forgotPassword": "Forgot password?",
   "welcomeToLuminaris": "Welcome to {{appName}}",

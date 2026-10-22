@@ -221,7 +221,8 @@
     "empty_state": "Nenhuma tarefa encontrada.",
     "search_placeholder": "Buscar tarefas...",
     "total": "Total",
-    "done": "Concluídas"
+    "done": "Concluídas",
+    "reorder_unavailable": "A ordem dos cards nesta tabela não é salva: arrastar só muda o card de coluna."
   },
   "planning_view": {
     "no_tables_found": "Nenhuma Agenda Encontrada",
@@ -340,10 +341,6 @@
   "personalInfoDescription": "Atualize seu nome, nome de usuário e endereço de e-mail.",
   "securitySection": "Segurança",
   "securityDescription": "Altere sua senha. Deixe em branco para manter a atual.",
-  "makeAdminDevOnly": "SOMENTE DEV",
-  "makeAdminWarning": "Promova sua conta a ADMIN para acessar o Painel de Gerenciamento.",
-  "makeAdminButtonText": "⚡ Tornar Admin",
-  "makeAdminUpdating": "Atualizando...",
   "rememberMe": "Lembrar-me",
   "forgotPassword": "Esqueceu a senha?",
   "welcomeToLuminaris": "Bem-vindo ao {{appName}}",

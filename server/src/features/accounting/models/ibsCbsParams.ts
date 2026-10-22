@@ -33,6 +33,16 @@ export function tabelaIbsCbsDe(linhas: readonly LinhaLegal[]): readonly Parametr
     });
 }
 
+/**
+ * IBS-CBS-2027 PR-3 (dono 22/10): taxa de referência PROVISÓRIA da CBS (tabela `IBS_CBS_PROVISORIA`, só PUBLISHED) — sem fonte
+ * oficial; só a prévia da apuração a usa quando a linha oficial falta (art. 349 I). Mesmo formato de `ParametroIbsCbs`.
+ */
+export function tabelaProvisoriaCbsDe(linhas: readonly LinhaLegal[]): readonly ParametroIbsCbs[] {
+  return linhasEmVigor(linhas)
+    .filter((l) => l.tabela === 'IBS_CBS_PROVISORIA' && l.chave === 'CBS' && l.discriminador === 'ALIQUOTA' && l.valorInt !== null)
+    .map((l) => ({ tributo: 'CBS' as const, chave: 'ALIQUOTA' as const, aliquotaBp: l.valorInt!, fonte: l.fonte, vigenteDesde: l.vigenteDesde, vigenteAte: l.vigenteAte }));
+}
+
 /** Linha vigente em `data` (date-only), a de `vigenteDesde` mais recente; sem linha ⇒ `SemLinhaVigenteError` (400). */
 export function parametroIbsCbsVigente(tabela: readonly ParametroIbsCbs[], tributo: TributoConsumo, chave: ChaveIbsCbs, data: string): ParametroIbsCbs {
   let melhor: ParametroIbsCbs | undefined;

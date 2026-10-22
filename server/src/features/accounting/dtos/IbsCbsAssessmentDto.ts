@@ -1,59 +1,61 @@
 import { z } from 'zod';
 
 /**
- * IBS-CBS-2027 PR-2 (BRIEF `docs/accounting/BE-INCR-IBS-CBS-2027-brief.md` itens 9, 10, 13; contrato §4.2) — `.strict()`.
- * `unitId` = unidade lida (escopo/policy + proveniência), como em todo DTO de apuração (X7/X8; o esboço do §4.2 não o
- * listava). `anoCalendario < 2027` ⇒ 400 nomeado (F-IBS-7 b; o serviço repete a recusa).
+ * IBS-CBS-2027 PR-2 (BRIEF `docs/accounting/BE-INCR-IBS-CBS-2027-brief.md` §4.2, itens 9, 10, 13) — `.strict()`.
+ * `unitId` = unidade lida (escopo/policy + proveniência), como nos DTOs do X7/X8: o resolver de escopo exige a unidade.
+ * `anoCalendario < 2027` ⇒ 400 nomeado já na borda (F-IBS-7 b; o serviço repete).
  */
-export const IBS_CBS_INICIO_MSG = 'apuração de IBS/CBS começa em 01/2027 — F-IBS-7 (b), dispensa do art. 348 § 1º';
+export const IBS_CBS_ANTES_DE_2027 = 'apuração de IBS/CBS começa em 01/2027 — F-IBS-7 (b), dispensa do art. 348 § 1º';
 
-const Ano = z.number().int().min(2027, { message: IBS_CBS_INICIO_MSG });
+const AnoCalendario = z.number().int().min(2027, { message: IBS_CBS_ANTES_DE_2027 });
 
-/** @openapi
- * components:
- *   schemas:
- *     IbsCbsAssessmentPreviewInput:
- *       type: object
- *       required: [unitId, anoCalendario, mes, tributo]
- *       properties:
- *         unitId:        { type: string, description: "Unidade lida (proveniência; outra unidade da PJ com movimento no mês ⇒ 400)" }
- *         anoCalendario: { type: integer, minimum: 2027, description: "< 2027 ⇒ 400 (F-IBS-7 b — dispensa do art. 348 § 1º)" }
- *         mes:           { type: integer, minimum: 1, maximum: 12 }
- *         tributo:       { type: string, enum: [IBS, CBS] }
- */
-export const IbsCbsAssessmentPreviewSchema = z
-  .object({
-    unitId: z.string().min(1),
-    anoCalendario: Ano,
-    mes: z.number().int().min(1).max(12),
-    tributo: z.enum(['IBS', 'CBS']),
-  })
-  .strict();
+const PreviewFields = {
+  unitId: z.string().min(1),
+  anoCalendario: AnoCalendario,
+  mes: z.number().int().min(1).max(12),
+  tributo: z.enum(['IBS', 'CBS']),
+};
+
+export const IbsCbsAssessmentPreviewSchema = z.object(PreviewFields).strict();
 export type IbsCbsAssessmentPreviewInput = z.infer<typeof IbsCbsAssessmentPreviewSchema>;
 
-/** @openapi
- * components:
- *   schemas:
- *     IbsCbsAssessmentConfirmInput:
- *       allOf:
- *         - $ref: '#/components/schemas/IbsCbsAssessmentPreviewInput'
- *         - type: object
- *           required: [expectedSupersedesId]
- *           properties:
- *             expectedSupersedesId: { type: string, nullable: true, description: "CAS — id da apuração CONFIRMED viva do mês/tributo (null = 1ª confirmação); divergente ⇒ 409" }
- */
-export const IbsCbsAssessmentConfirmSchema = IbsCbsAssessmentPreviewSchema.extend({
-  expectedSupersedesId: z.string().min(1).nullable(),
-}).strict();
+/** `expectedSupersedesId` = o id CONFIRMED vivo do (mês, tributo) que esta substitui, ou null para a 1ª — divergente ⇒ 409. */
+export const IbsCbsAssessmentConfirmSchema = z.object({ ...PreviewFields, expectedSupersedesId: z.string().min(1).nullable() }).strict();
 export type IbsCbsAssessmentConfirmInput = z.infer<typeof IbsCbsAssessmentConfirmSchema>;
 
 export const IbsCbsAssessmentListQuerySchema = z
-  .object({
-    unitId: z.string().min(1),
-    anoCalendario: z.coerce.number().int().min(2027, { message: IBS_CBS_INICIO_MSG }),
-  })
+  .object({ unitId: z.string().min(1), anoCalendario: z.coerce.number().int().min(2027, { message: IBS_CBS_ANTES_DE_2027 }) })
   .strict();
 export type IbsCbsAssessmentListQuery = z.infer<typeof IbsCbsAssessmentListQuerySchema>;
 
-/** Corpo do reconcile (`POST /:id/provisao`, dono 21/10): só o escopo. */
-export const IbsCbsAssessmentScopeSchema = z.object({ unitId: z.string().min(1) }).strict();
+/** Query do reconcile (item 12): só a unidade do escopo. */
+export const IbsCbsAssessmentScopeQuerySchema = z.object({ unitId: z.string().min(1) }).strict();
+
+/**
+ * Códigos da memória (BRIEF §4.2) + as linhas da reclassificação do item 12 (RECLASSIFICACAO_*, RECEITA_BRUTA_ATE_APURACAO).
+ * PR-3: sai `CREDITOS_NAO_IMPLEMENTADOS_PR3`; entram `ANTECIPACAO_SEM_REDUCAO` (dono 21/10, alíquota cheia + aviso) e
+ * `CBS_ALIQUOTA_PROVISORIA` (dono 22/10, taxa provisória só na prévia).
+ */
+export const MemoriaLinhaIbsCbsKind = z.enum([
+  'DEBITO_DOC', 'DIVERGENCIA_DOC', 'VENDA_SEM_DOCUMENTO', 'DOCUMENTOS_SEM_GRUPO',
+  'CONFERENCIA_SEM_ALIQUOTA', 'CONFERENCIA_SEM_BASE',
+  'RECLASSIFICACAO_SERVICO', 'RECLASSIFICACAO_REVENDA', 'RECEITA_BRUTA_ATE_APURACAO',
+  'CREDITO_ENTRADA', 'CREDITO_NAO_APROPRIADO', 'USO_CONSUMO_PESSOAL',
+  'ANTECIPACAO_ART10', 'ANTECIPACAO_SEM_REDUCAO', 'ACERTO_ART10', 'PAGAMENTO_INDEVIDO_ART38', 'CBS_ALIQUOTA_PROVISORIA',
+  'SPLIT_EXTINCAO',
+  'CLASSE_PROVISORIA_P_IBS_4', 'SALDO',
+]);
+
+/** Códigos que levam sufixo `_n` (um por documento, nota, pagamento ou consumo). */
+const SUFIXO_POR_LINHA = /^(DEBITO_DOC|DIVERGENCIA_DOC|CREDITO_ENTRADA|CREDITO_NAO_APROPRIADO|USO_CONSUMO_PESSOAL|ANTECIPACAO_ART10|ACERTO_ART10|PAGAMENTO_INDEVIDO_ART38|SPLIT_EXTINCAO)_\d+$/;
+
+/** Linha da memória (schema do X7) com o código restrito ao enum (sufixo `_n` por documento). */
+export const MemoriaLinhaIbsCbsSchema = z
+  .object({
+    codigo: z.string().refine((c) => MemoriaLinhaIbsCbsKind.safeParse(c.replace(SUFIXO_POR_LINHA, '$1')).success, { message: 'código de memória fora do enum' }),
+    descricao: z.string(),
+    valorCents: z.string().regex(/^-?\d+$/),
+    fonte: z.string(),
+  })
+  .strict();
+export const MemoriaIbsCbsSchema = z.array(MemoriaLinhaIbsCbsSchema);

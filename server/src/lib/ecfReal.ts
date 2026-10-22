@@ -9,11 +9,13 @@ import {
   build0930,
   build9900,
   build9999,
+  buildY600,
   type BlockOpenReg,
   type BlockCloseReg,
   type Reg0000Input,
   type Reg0030Input,
   type Reg0930Signer,
+  type Y600Row,
 } from './ecf';
 
 /**
@@ -52,7 +54,9 @@ import {
  *    (A00 + meses `B`) e N030 = `periodsN` (A00 + meses `B` ou `E`) — Manual pp.222, 242 e 278. N620/N660 saem sob
  *    o N030 do mês; N630/N670 sob o A00 (pp.47–48).
  *    Nenhuma alíquota aqui (o teste faz grep neste arquivo).
- *  - Bloco P: marcador vazio — é do Presumido, "outro regime" para o Real (p.41). Q/S/T/U/V/W/X/Y: idem.
+ *  - Bloco P: marcador vazio — é do Presumido, "outro regime" para o Real (p.41). Q/S/T/U/V/W/X: idem.
+ *  - Bloco Y (BE-INCR-ECF-Y600 item 13, F-Y600-1 → a): Y600 pelo mesmo `buildY600` do Presumido (OC "Se
+ *    0010.FORMA_TRIB = 1 a 7", p.56), na ordem já resolvida pelo serviço (`ordenarY600`).
  *  - Bloco 9: contagem em 2ª passada, auto-referente (mesma regra da ECD/Presumido).
  */
 
@@ -179,6 +183,8 @@ export interface EcfRealFileInput {
   balances?: EcfRealParteBBalance[];
   /** 0000.COD_VER resolvido fora do serializer (Fork 7→(a), `resolveEcfCodVer`). */
   codVer: string;
+  /** Y600 já ordenado pelo serviço (`ordenarY600`); vazio ⇒ bloco Y sem dados (BE-INCR-ECF-Y600 item 13). */
+  y600: Y600Row[];
 }
 
 // ─── Builders (Manual do Leiaute 12 — página na transcrição do Passo A) ───────
@@ -402,7 +408,7 @@ const EMPTY_BLOCKS_AFTER_N: Array<{ open: BlockOpenReg; close: BlockCloseReg }> 
   { open: 'V001', close: 'V990' },
   { open: 'W001', close: 'W990' },
   { open: 'X001', close: 'X990' },
-  { open: 'Y001', close: 'Y990' },
+  // Y sai daqui: bloco com dados (Y600) — BE-INCR-ECF-Y600 item 13.
 ];
 
 function emptyBlock(open: BlockOpenReg, close: BlockCloseReg): string[] {
@@ -498,12 +504,15 @@ export function buildEcfRealFile(input: EcfRealFileInput): string[] {
   }
   const blockN = dataBlock('N001', 'N990', bodyN);
 
-  // ── P/Q/S/T/U/V/W/X/Y (outros regimes / condicionais) ──
+  // ── P/Q/S/T/U/V/W/X (outros regimes / condicionais) ──
   const after: string[] = [];
   for (const b of EMPTY_BLOCKS_AFTER_N) after.push(...emptyBlock(b.open, b.close));
 
+  // ── Bloco Y (Y600, BE-INCR-ECF-Y600 item 13) ──
+  const blockY = input.y600.length === 0 ? emptyBlock('Y001', 'Y990') : dataBlock('Y001', 'Y990', input.y600.map(buildY600));
+
   // ── Bloco 9 (contagem, 2ª passada — mesma regra de `ecf.ts`/`sped.ts`) ──
-  const preceding = [...block0, ...before, ...blockL, ...blockM, ...blockN, ...after];
+  const preceding = [...block0, ...before, ...blockL, ...blockM, ...blockN, ...after, ...blockY];
   const nine001 = buildBlockOpen('9001', true);
   const { byRegister: counts } = countRegisters([...preceding, nine001]);
   const types = new Set<string>([...counts.keys(), '9900', '9990', '9999']);

@@ -643,6 +643,50 @@ CNPJ/CPF** se este runbook for commitado]
 >
 > DESFECHO: [dono]   ASSINATURA: [dono]
 
+> **Tentativa 3 — 2026-10-21.** Preenchida pelo agente sob comando do dono no chat (2026-10-21: *"gera a ECD do passo 3
+> como seed-presumido com o P6 de dados públicos, codPlanRef = '1' e indNire = '0', e preenche a EVIDÊNCIA com a saída
+> literal"*), tenant `seed-presumido`, unidade `cmuw4yqxg001jcii0iz2yb9rw`, build de produção de `3ddd33dc` (ambiente na
+> tentativa 3 do passo 4). Gerado pela API (o mesmo endpoint que a tela chama), com o P6 de
+> [`H1-P6-DADOS-PUBLICOS-2026-10-13`](H1-P6-DADOS-PUBLICOS-2026-10-13.md), trocando `indNire` para `'0'` (L3) e com
+> `codPlanRef = '1'` (L5). CNPJ tarjado; os CPFs são fictícios. Saída literal:
+>
+> ```text
+> POST /accounting/sped/ecd/generate → HTTP 201
+>   job cmviryahj0000ciwcjo9lpkw4 · EXPORT_SPED_ECD · EXPORTED · fileName ecd_08845676XXXXXX_2025.txt · sizeBytes 52221
+>   sha256 924f32cc0b23aade2d78fb9ad943b28a7c445741f42c716c44cf17125a764ad6 · totalRows 956
+> GET /accounting/data-exchange/jobs/cmviryahj0000ciwcjo9lpkw4/download?unitId=… → HTTP 200 · text/plain
+>   52221 bytes · 956 linhas · CRLF · 0 byte(s) de controle · 250 bytes > 0x7F (Latin-1) · sha256 924f32cc0b23aade2d78fb9ad943b28a7c445741f42c716c44cf17125a764ad6
+> |0000|LECD|01012025|31122025|CORPÓREOS - SERVIÇOS TERAPÊUTICOS S.A.|08845676XXXXXX|SP||3550308|||0|0|0||0|0||N|N|0|0|1|
+> |0007|00||
+> |I030|TERMO DE ABERTURA|1|LIVRO DIARIO|956|CORPÓREOS - SERVIÇOS TERAPÊUTICOS S.A.||08845676XXXXXX||||31122025|
+> |I051||1.01.01.02.01|
+> |J150|1|DRE_RECEITA|T|2|DRE_RESULTADO|RECEITA BRUTA|0,00|D|211427,86|C|R||
+> |J150|2|3.1|D|3|DRE_RECEITA|Receita de Serviços|0,00|D|162487,90|C|R||
+> |J150|3|3.3|D|3|DRE_RECEITA|Receita de Revenda de Mercadorias|0,00|D|48939,96|C|R||
+> |J150|4|DRE_DEDUCOES|T|2|DRE_RESULTADO|DEDUÇÕES DA RECEITA|0,00|D|0,00|D|D||
+> |J150|5|DRE_CMV|T|2|DRE_RESULTADO|CUSTO DAS MERCADORIAS VENDIDAS|0,00|D|25508,07|D|D||
+> |J150|6|4.2|D|3|DRE_CMV|Custo das Mercadorias Vendidas|0,00|D|25508,07|D|D||
+> |J150|7|DRE_FINANCEIRO|T|2|DRE_RESULTADO|RESULTADO FINANCEIRO|0,00|D|0,00|D|R||
+> |J150|8|DRE_DESPESAS|T|2|DRE_RESULTADO|DESPESAS|0,00|D|75153,45|D|D||
+> |J150|9|4.1|D|3|DRE_DESPESAS|Despesas Operacionais|0,00|D|75153,45|D|D||
+> |J150|10|DRE_RESULTADO|T|1||RESULTADO LÍQUIDO DO EXERCÍCIO|0,00|D|110766,34|C|R||
+> |9999|956|
+> registros: 9001 9900×28 9990 9999 0000 0001 0007 0990 I001 I010 I030 I050×51 I051×32 I052×32 I150×12 I155×144 I200×204 I250×411 I350 I355×4 I990 J001 J005 J100×10 J150×10 J900 J930×2 J990
+> I050: 51 contas · analíticas (A) por nível: {"2":7,"3":12,"4":13} · COD_CTA_SUP vazio fora do nível 1: 0
+> nat 01 nivel 4: 1.1.1.01 1.1.1.02 1.1.2.01 1.1.2.02 1.1.2.03 1.1.3.01
+> nat 02 nivel 4: 2.1.1.01 2.1.2.01 2.1.3.01 2.1.3.02 2.1.3.03 2.1.3.04
+> nat 03 nivel 4: 2.3.1.01
+> nat 04 nivel 2: 3.1 3.2 3.3 3.4 4.1 4.2 4.6
+> nat 04 nivel 3: 3.5.1 3.5.2 3.5.3 3.6.1 3.6.2 4.3.1 4.3.2 4.3.3 4.4.1 4.4.2 4.5.1 4.5.2
+> ```
+>
+> Leitura para o passo 4 (inferida; o oráculo é o PVA): a tentativa 2 tinha 23 erros em L3/L7/L8/L9. No arquivo,
+> `IND_NIRE = 0` (L3); o 0007 está presente (L7); as analíticas patrimoniais estão todas no nível 4, sem `COD_CTA_SUP` vazio
+> (L8); e o J150 tem um único nível 1 (o Resultado, com as filhas no nível 2), com CMV e despesas em `D` (L9). Arquivo
+> para importar: `C:\Users\smurf\Downloads\H1-PVA\ecd_08845676000198_2025-tentativa3.txt` (não abra nem salve em editor).
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
+
 ### 4. Importar a ECD no PVA
 
 > **[EMENDA 2026-10-13 — BE-INCR-PLANO-4-NIVEIS (L8), item 12 do BRIEF] Pré-condição da tentativa 3.** O plano canônico
@@ -854,10 +898,188 @@ EVIDÊNCIA: [tela/protocolo do PVA com o resultado do import + lista de crítica
 >
 > DESFECHO: [dono]   ASSINATURA: [dono]
 
+> **Tentativa 3 — ambiente (2026-10-21).** L7 e L9 corrigidos no #645 (`d9519f45`), L8 no #691 (`f73da6e5`), ambos em
+> `main`. A `main` andou até `3ddd33dc`, com 15 migrações a mais que o `dev.db` de 15/10, e a ensaiei antes numa cópia do
+> banco (exit 0, `integrity_check ok`, sem violação de FK).
+>
+> EVIDÊNCIA do ambiente da tentativa 3 (backup, `migrate deploy` e build de produção; preenchida pelo agente sob comando
+> do dono no chat, 2026-10-21 — *"faz o backup do dev.db real, aplica as 15 migrações, sobe o build de produção da main e
+> preenche a EVIDÊNCIA com a saída literal"*). Banco: `server/prisma/prisma/dev.db` (real), via `DATABASE_URL` absoluto
+> no `server/.env` do worktree `goofy-heisenberg-91171d`, em `main` `3ddd33dc`; portas 3000/3001 livres antes do passo 1.
+> As saídas do `migrate deploy` e dos builds são as linhas filtradas por `grep`/`tail` como saíram na sessão.
+>
+> 1. Backup. Primeiro pela API de backup do SQLite (origem aberta só para leitura); como a API reescreve as páginas e o hash
+> sai diferente, fiz também a cópia byte a byte (WAL com 0 byte, nenhum processo escrevendo). O rollback usa a cópia exata.
+>
+> ```text
+> integrity ok
+> -rw-r--r-- 1 smurf 197609 9187328 Oct 21 20:12 C:/Users/smurf/Downloads/Luminaris/server/prisma/prisma/dev-20261021-pre-h1-t3.db
+> 4bfcdbfcdbda08d6167de7cfada72b5faf9a51689d01029ca451032f7a20bdbe *C:/Users/smurf/Downloads/Luminaris/server/prisma/prisma/dev.db
+> cb2f84ee6514ade770c414dc58f227df9fcfced5479339c236d942970ab291c7 *C:/Users/smurf/Downloads/Luminaris/server/prisma/prisma/dev-20261021-pre-h1-t3.db
+> -rw-r--r-- 1 smurf 197609       0 Oct 15 01:56 C:/Users/smurf/Downloads/Luminaris/server/prisma/prisma/dev.db-wal
+> 4bfcdbfcdbda08d6167de7cfada72b5faf9a51689d01029ca451032f7a20bdbe *C:/Users/smurf/Downloads/Luminaris/server/prisma/prisma/dev.db
+> 4bfcdbfcdbda08d6167de7cfada72b5faf9a51689d01029ca451032f7a20bdbe *C:/Users/smurf/Downloads/Luminaris/server/prisma/prisma/dev-20261021-pre-h1-t3.copia-exata.db
+> ```
+>
+> 2. `npx prisma migrate deploy` (exit 0; `grep -E "Datasource|Applying|applied|migrations found|Error"`):
+>
+> ```text
+> Datasource "db": SQLite database "dev.db" at "file:C:/Users/smurf/Downloads/Luminaris/server/prisma/prisma/dev.db"
+> 114 migrations found in prisma/migrations
+> Applying migration `20261013120000_add_fiscal_certificates`
+> Applying migration `20261016120000_add_interview_session`
+> Applying migration `20261016120000_add_receita_fiscal_recebimentos`
+> Applying migration `20261016120000_chat_message_usage`
+> Applying migration `20261016150000_add_simples_creditos_incobraveis`
+> Applying migration `20261017153700_seed_simples_res_cgsn_190`
+> Applying migration `20261017180000_legal_parameters_v8_csll_bancos_historico`
+> Applying migration `20261017190000_legal_parameters_lp9_pis_cofins_ncm`
+> Applying migration `20261017200000_legal_parameters_fer_feriado_local`
+> Applying migration `20261017210000_add_dynamic_table_schema_version`
+> Applying migration `20261017210100_add_dynamic_table_version_ledger`
+> Applying migration `20261021120000_add_partners_irrf_distribuicao`
+> Applying migration `20261021120000_add_user_token_version`
+> Applying migration `20261021120000_legal_parameters_ibs_cbs`
+> Applying migration `20261021120100_service_fiscal_profile_cclasstrib`
+> The following migration(s) have been applied:
+> All migrations have been successfully applied.
+> ```
+>
+> 3. Conferência depois da migração (leitura do `dev.db`, só leitura):
+>
+> ```text
+> integrity ok | fk 0 | migracoes aplicadas 114
+> cmuw4yqxg001jcii0iz2yb9rw | folhas 32 | sem de-para 2025 0 | kit v 6 | 2025 HARD_CLOSED 12
+> cmuw4z7zj02ehcii0st3unfr4 | folhas 32 | sem de-para 2025 0 | kit v 6 | 2025 HARD_CLOSED 12
+> ```
+>
+> 4. Build de produção de `3ddd33dc`: `server` com `npm run build` (inclui `prisma generate`; exit 0) e `my-app` com
+> `npm run build` (exit 0):
+>
+> ```text
+> -rw-r--r-- 1 smurf 197609 5290 Oct 21 20:21 dist/server.js
+>  ✓ Compiled successfully in 10.0s
+> ```
+>
+> 5. No ar (`npm run start` nos dois, configurações `backend-prod`/`frontend-prod`):
+>
+> ```text
+> Luminaris Server running on http://localhost:3001
+> {"status":"degraded","uptime":24.1505263,"checks":{"database":"ok","qdrant":"error"}}
+> HTTP 503
+> front / HTTP 200
+> POST /api/auth/login (seed-presumido) → HTTP 200 | token true | chaves [ 'user', 'token' ]
+> ```
+>
+> O 503 vem só do Qdrant fora do ar (RAG do chat; o H1 não usa). O login confere que a migração `add_user_token_version` não
+> quebrou a autenticação do seed. Próximo do dono: passo 3 (gerar a ECD como `seed-presumido`, unidade
+> `cmuw4yqxg001jcii0iz2yb9rw`, P6 com `codPlanRef = '1'` e `indNire = '0'` ou o NIRE real — L3) e importar no PVA (tentativa 3).
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
+
+> **Tentativa 3 — 2026-10-21, resultado do PVA.** O dono importou no PVA da ECD o arquivo do passo 3 (tentativa 3,
+> sha256 `924f32cc…764ad6`) e colou no chat a página "Pendências de Validação" (1 página). O agente a transcreveu.
+>
+> ```text
+> Pendências de Validação
+> Contribuinte: CORPÓREOS - SERVIÇOS TERAPÊUTICOS S.A.        CNPJ: 08.845.676/XXXX-XX
+> Período da Escrituração: 01/01/2025 a 31/12/2025
+> Arquivo de referência: C:/Users/smurf/Downloads/H1-PVA/ecd_08845676000198_2025-tentativa3.txt
+> Data / Hora Avaliação: 21/10/2026 21:22:15
+> Total de Erros 1
+>   1  O campo NIRE é obrigatório quando a escrituração possui registro na Junta Comercial. Caso contrário, o campo não deve ser preenchido.
+> Total de Advertências 13
+>  11  Pelo menos um dos campos (saldo inicial, total de débitos, total de créditos ou saldo final) deve conter valor diferente de zero.
+>   1  Não houve recuperação da ECD anterior. Verifique se a situação está correta.
+>   1  A data do arquivamento dos atos constitutivos ou a data de arquivamento dos atos de conversão devem ser informados. Verifique se esta situação está correta.
+> ```
+>
+> **Diagnóstico (achado, não hotfix; GHC-003).** De 23 erros na tentativa 2 para 1: L7, L8 e L9 sumiram do relatório
+> (**verificado pelo PVA**). As 13 advertências não impedem (as 11 de I155 zerado e a da ECD anterior já vinham da
+> tentativa 2; a do `DT_ARQ` também).
+>
+> | # | Erros | Causa | Grau | Trilho |
+> |---|---|---|---|---|
+> | **L3b** | 1 | O PVA acusa a regra do NIRE com `IND_NIRE = 0` (0000 campo 13) e NIRE vazio (I030 campo 07). Pelo Manual ECD L9 jan/2026 (ADE Cofis 01/2026, sha256 `7ddf4775…`), p. 115, `REGRA_CAMPO_OBRIGATORIO_NIRE` só dá erro em `IND_NIRE = 0` **com** NIRE preenchido, ou em `IND_NIRE = 1` **sem** NIRE. O arquivo está no caso que passa. | erro **verificado pelo PVA**; causa **em aberto**: a página colada não traz registro/linha | 1º: o detalhe da pendência (registro, linha, campo) colado pelo dono. Saída por dado que satisfaz a regra nos dois ramos: `indNire = '1'` com o NIRE real da JUCESP (11 dígitos, começando por 35, `REGRA_NIRE_UF`) |
+>
+> **Detalhe da pendência (2026-10-22).** O dono colou o relatório detalhado da mesma validação (3 páginas, avaliação de
+> 22/10/2026 01:30:55, sha256 `ec284efd0316bdab…`). O agente o transcreveu e o cruzou com o arquivo:
+>
+> ```text
+> ERRO  O campo NIRE é obrigatório quando a escrituração possui registro na Junta Comercial. ...
+>       I030 · campo 7 - NIRE · linha 7
+>       |I030|TERMO DE ABERTURA|1|LIVRO DIARIO|960|CORPÓREOS - SERVIÇOS TERAPÊUTICOS S.A.||08845676XXXXXX| | | |31122025|
+> ADV   Não houve recuperação da ECD anterior. → 0000 · linha 1
+>       |0000|LECD|01012025|31122025|CORPÓREOS - SERVIÇOS TERAPÊUTICOS S.A.|08845676XXXXXX|SP| |3550308| | |0|1|0| |0|0| |N|N|0|0|1|
+> ADV   DT_ARQ → I030 · campo 9 · linha 7
+> ADV   ×11 I155 2.3.1.01 zerado → linhas 131, 144, 157, 170, 183, 196, 209, 222, 235, 248, 261
+> o arquivo importado (tentativa 3, sha256 924f32cc…):
+>       |0000|...|SP||3550308|||0|0|0||0|0||N|N|0|0|1|      ← IND_NIRE (campo 13) = 0
+>       |I030|TERMO DE ABERTURA|1|LIVRO DIARIO|956|...      ← 956 linhas
+> o arquivo da tentativa 2 (sha256 ea7cb533…): 0000 com |0|1|0| (IND_NIRE = 1) e I030 com 888
+> ```
+>
+> **O PVA valida um 0000 com `IND_NIRE = 1`, e o arquivo da tentativa 3 tem `IND_NIRE = 0`** (verificado: bytes do arquivo
+> × relatório). A regra do NIRE, portanto, disparou corretamente sobre o que o PVA tem na base. O defeito não está no
+> gerador. O `QTD_LIN` 960 contra 956 sugere que o PVA reescreve o I030 com as próprias linhas (inferido). A causa mais
+> provável do `IND_NIRE = 1` é a base local do PVA: as três tentativas têm a mesma identificação (CNPJ, período, livro G,
+> `NUM_ORD` 1), e o indicador da tentativa 2 ficou na escrituração gravada (**inferido**). Teste que decide: excluir da base
+> do PVA as escriturações desse CNPJ, importar a tentativa 3 de novo e validar. Se o erro sumir, o L3b fecha sem código.
+>
+> **Revalidação com a base limpa (2026-10-22).** O dono excluiu da base do PVA as escriturações desse CNPJ, importou de
+> novo o mesmo arquivo (tentativa 3, sha256 `924f32cc…`) e colou o relatório detalhado (3 páginas, avaliação de
+> 22/10/2026 01:42:00, sha256 `5f4a14b8e73816b6…`). O agente o transcreveu:
+>
+> ```text
+> Pendências de Validação — "No relatório abaixo estão descritas as advertências encontradas durante a validação."
+> (sem a seção ERROS)
+> Total de Advertências 13
+>  11  Pelo menos um dos campos (saldo inicial, total de débitos, total de créditos ou saldo final) deve conter valor diferente de zero.
+>      → I155 2.3.1.01 nas linhas 131, 144, 157, 170, 183, 196, 209, 222, 235, 248, 261
+>   1  Não houve recuperação da ECD anterior. → 0000 linha 1
+>      |0000|LECD|01012025|31122025|CORPÓREOS - SERVIÇOS TERAPÊUTICOS S.A.|08845676XXXXXX|SP| |3550308| | |0|0|0| |0|0| |N|N|0|0|1|
+>   1  A data do arquivamento dos atos constitutivos ou a data de arquivamento dos atos de conversão devem ser informados.
+>      → I030 campo 9 (DT_ARQ), linha 7
+>      |I030|TERMO DE ABERTURA|1|LIVRO DIARIO|960|CORPÓREOS - SERVIÇOS TERAPÊUTICOS S.A.||08845676XXXXXX| | | |31122025|
+> ```
+>
+> **L3b fechado sem código (verificado pelo PVA):** o 0000 agora sai com `IND_NIRE = 0` (`|0|0|0|`), igual ao arquivo, e o
+> erro do NIRE sumiu. A causa era a escrituração da tentativa 2 gravada na base local do PVA, com a mesma identificação.
+> Lição para as próximas reimportações (inclusive a ECF do passo 6): excluir antes a escrituração anterior da base do PVA.
+> O `QTD_LIN` 960 persiste com a base limpa, então é o PVA reescrevendo o I030, não resíduo (verificado).
+>
+> As 13 advertências não impedem a importação. As 11 de I155 vêm da 2.3.1.01, sem movimento nos meses. A da ECD anterior
+> é esperada: não há ECD de 2024 no PVA. A do `DT_ARQ` sai por dado (`book.dtArq`, já aceito pelo DTO) se o dono quiser.
+>
+> Desfecho desta tentativa pela regra acima: na 1ª validação, **FALHOU no passo 4** (1 erro). Na revalidação com a base
+> limpa, **resultado esperado atingido: import sem críticas impeditivas** — o passo 5 está liberado. A marcação é do dono.
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
+
 > **Se houver crítica:** desfecho **FALHOU**, e **pare aqui — não execute os passos 5 e 6.**
 > Crítica do PVA é **achado de domínio**: vira ADR ou emenda do ADR existente, **nunca hotfix**.
 
 ### 5. Gerar a ECF
+
+> **[EMENDA 2026-10-22 — L11, Y600]** (BE-INCR-ECF-Y600 item 16; preparada pelo agente, executada pelo dono).
+> A ECF agora sai com o registro Y600 (sócios, titular, dirigentes) e a geração **exige** o campo `socios` no corpo.
+> O formulário da tela ainda não o manda (incremento de FE próprio) e dá 400, então gere pela API:
+>
+> 1. Cadastre 1 sócio fictício: `POST /api/accounting/partners` com `{ "unitId": "<unidade>", "nome": "SOCIO TESTE H1",
+>    "taxId": "<CPF de 11 dígitos com DV válido>", "residenteBrasil": true, "participacaoBp": 10000,
+>    "entradaEm": "2020-01-01" }` (100%, entrada antes de 2025). Guarde o `data.id` da resposta.
+> 2. No `POST /api/accounting/sped/ecf/generate`, acrescente ao corpo de sempre:
+>    `"socios": [{ "partnerId": "<data.id>", "qualif": "02", "valores": { "remTrabCents": 0, "lucDivCents": 0,
+>    "jurCapCents": 0, "demRendCents": 0, "irRetCents": 0 } }]` (QUALIF 02 = sócio administrador, Manual ECF L12
+>    p. 572; os cinco valores são obrigatórios e o zero é explícito).
+> 3. Conferir no `.txt` antes de importar: `|Y001|0|`, uma linha `|Y600|01012020||105|PF|<CPF>|SOCIO TESTE H1|02|100|100|||0,00|0,00|0,00|0,00|0,00|`
+>    e `|Y990|3|`.
+>
+> **Oráculo, disponível já, sem ECD assinada:** na validação da ECF (passo 6), o erro "Registro obrigatório não
+> preenchido → Y600" some e ficam só os 18 do R1 (ECD não recuperada). Se o PVA recusar a linha de 17 campos, o
+> suspeito é o campo 3 (`DT_FIM_SOC`): o exemplo do Manual (p. 575) tem 16 campos e a tabela tem 17 (BRIEF §5, P1).
+>
+> EVIDÊNCIA (Y600): [linhas Y001/Y600/Y990 do `.txt` + lista de críticas do PVA na validação]
 
 Só depois que a ECD importou limpa. Mesma aba **Compliance** → formulário **ECF**: ano, declarante,
 dados fiscais e signatários (P6). Clique em gerar — gera e baixa.
@@ -867,6 +1089,136 @@ existe conta de receita com movimento fora de {3.1, 3.3} — achado de domínio,
 
 EVIDÊNCIA: [nome do arquivo + primeiras linhas do 0000, tarjadas]
 
+> Preenchida pelo agente sob comando do dono no chat (2026-10-22: *"gera a ECF do passo 5 como seed-presumido com o P6 de
+> dados públicos e preenche a EVIDÊNCIA com a saída literal"*), tenant `seed-presumido`, unidade `cmuw4yqxg001jcii0iz2yb9rw`,
+> build de produção de `3ddd33dc`, depois de a ECD da tentativa 3 importar sem crítica impeditiva (passo 4). Gerado pela API
+> (o mesmo endpoint que a tela chama), com o bloco `ecf` do P6 de
+> [`H1-P6-DADOS-PUBLICOS-2026-10-13`](H1-P6-DADOS-PUBLICOS-2026-10-13.md), sem alteração. CNPJ tarjado; os CPFs são fictícios.
+>
+> Ambiente: o app tinha parado o backend desta sessão, e a porta 3001 estava ocupada por um `node dist/server.js` de outra
+> sessão, que não enxerga o `dev.db` real (o job da ECD da tentativa 3 dava 404 nele). Não foi derrubado. O backend deste
+> worktree subiu na porta **3101** (o `PORT` do `server/.env` vence a variável de ambiente), com o mesmo `DATABASE_URL`
+> absoluto, e o job da ECD da tentativa 3 aparece nele (`200 cmviryahj0000ciwcjo9lpkw4 EXPORTED`). Saída literal:
+>
+> ```text
+> POST /accounting/sped/ecf/generate → HTTP 201
+>   job cmvj286120000ciss7xqbk271 · EXPORT_SPED_ECF · EXPORTED · fileName ecf_08845676XXXXXX_2025.txt · sizeBytes 2102
+>   sha256 6aa2d41e4f09a207f8c2a1afe11438be54992556d90076c7512526131cfde09f · totalRows 109
+> GET /accounting/data-exchange/jobs/cmvj286120000ciss7xqbk271/download?unitId=… → HTTP 200 · text/plain
+>   2102 bytes · 109 linhas · CRLF · 0 byte(s) de controle · 3 bytes > 0x7F (Latin-1) · sha256 6aa2d41e4f09a207f8c2a1afe11438be54992556d90076c7512526131cfde09f
+> |0000|LECF|0012|08845676XXXXXX|CORPÓREOS - SERVIÇOS TERAPÊUTICOS S.A.|0|0|||01012025|31122025|N||0||
+> |0010||N|5|T|01|PPPP||C||||2|
+> |0020|1|0|N|N|N|N|N|N|N|N|N|N|N|N|N|N|N|N|N|N|N|N|N|N|N|N|N|N|N|N||
+> |0030|2046|8650004|AVENIDA DOS EUCALIPTOS|762||INDIANOPOLIS|SP|3550308|04517050|1148583340|dri@espacolaser.com.br|
+> |P200|8||37671,94|
+> |P200|4||9112,00|
+> |P200|8||44430,38|
+> |P200|4||7312,37|
+> |P200|8||37838,21|
+> |P200|4||16006,73|
+> |P200|8||42547,37|
+> |P200|4||16508,86|
+> |P400|4||37671,94|
+> |P400|2||9112,00|
+> |P400|4||44430,38|
+> |P400|2||7312,37|
+> |P400|4||37838,21|
+> |P400|2||16006,73|
+> |P400|4||42547,37|
+> |P400|2||16508,86|
+> |9999|109|
+> registros: 9001 9900×46 9990 9999 0000 0001 0010 0020 0030 0930×2 0990 C001 C990 E001 E990 J001 J990 K001 K990 L001 L990 M001 M990 N001 N990 P001 P030×4 P200×8 P400×8 P990 Q001 Q990 S001 S990 T001 T990 U001 U990 V001 V990 W001 W990 X001 X990 Y001 Y990
+> ```
+>
+> Conferência (agente): a receita de serviço nos 4 trimestres (P200 linha 8 / P400 linha 4) soma 162.487,90, e a de revenda
+> (P200 linha 4 / P400 linha 2) soma 48.939,96. As duas são iguais às linhas 3.1 e 3.3 do J150 da ECD da tentativa 3
+> (verificado). O arquivo não traz P300/P500 nem os blocos C/E/J/K preenchidos, por desenho (`src/lib/ecf.ts:25-31`, ADR
+> §Emenda FASE 2): o PVA da ECF calcula a presunção e o imposto pelas fórmulas da RFB e recupera C/E/J/K da ECD
+> (`0010.TIP_ESC_PRE = 'C'`). Para o passo 6: o PVA da ECF vai pedir a ECD de 2025 para a recuperação. Arquivo para
+> importar: `C:\Users\smurf\Downloads\H1-PVA\ecf_08845676000198_2025.txt` (não abra nem salve em editor).
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
+
+> **Tentativa 2 — 2026-10-22, depois da correção do L10 (#837, branch `claude/h1-l10-ecf-ordem-bloco-p` em `62c9d255`).**
+> Preenchida pelo agente sob comando do dono no chat (2026-10-22: *"faz o backup do dev.db real, aplica a migração nova, sobe
+> o build deste branch, regera a ECF do passo 5 e preenche a EVIDÊNCIA com a saída literal"*). Banco
+> `server/prisma/prisma/dev.db` (real), mesmo `DATABASE_URL` absoluto; backend na porta 3101 (a 3001 segue com o servidor de
+> outra sessão). Mesmo P6 da tentativa 1, sem alteração.
+>
+> 1. Backup. A WAL tinha 82.432 bytes (o backend anterior foi encerrado à força, sem checkpoint), então a cópia byte a byte
+> do `dev.db` sozinha ficaria incompleta. Ela foi descartada, e o backup foi feito pela API do SQLite (origem só leitura,
+> lê a WAL):
+>
+> ```text
+> -rw-r--r-- 1 smurf 197609   82432 Oct 22 01:58 C:/Users/smurf/Downloads/Luminaris/server/prisma/prisma/dev.db-wal
+> integrity ok
+> jobs ECF no backup: 1
+> migracoes: 114
+> -rw-r--r-- 1 smurf 197609 9326592 Oct 22 02:04 C:/Users/smurf/Downloads/Luminaris/server/prisma/prisma/dev-20261022-pre-h1-ecf-t2.db
+> 7c293dedb5675a46a12cca89a0bd0e4a5b115133dc0c47c9088ad201f33a9707 *C:/Users/smurf/Downloads/Luminaris/server/prisma/prisma/dev-20261022-pre-h1-ecf-t2.db
+> ```
+>
+> 2. `npx prisma migrate deploy` (exit 0) e conferência:
+>
+> ```text
+> Datasource "db": SQLite database "dev.db" at "file:C:/Users/smurf/Downloads/Luminaris/server/prisma/prisma/dev.db"
+> 115 migrations found in prisma/migrations
+> Applying migration `20261021130000_add_consumption_tax_assessments`
+> The following migration(s) have been applied:
+> All migrations have been successfully applied.
+> integrity ok | fk 0 | migracoes 115
+> ```
+>
+> 3. Build do `server` em `62c9d255` (`npm run build`, exit 0); a correção está no `dist`:
+>
+> ```text
+> 177:            blockP.push(buildPLine('P200', exports.P_LINE.revenda.p200, q.revendaCents));
+> 179:            blockP.push(buildPLine('P400', exports.P_LINE.servico.p400, q.servicoCents));
+> Luminaris Server running on http://localhost:3101
+> {"status":"degraded","uptime":6.9528651,"checks":{"database":"ok","qdrant":"error"}}
+> ```
+>
+> 4. Geração (saída literal) e o bloco P do arquivo:
+>
+> ```text
+> POST /accounting/sped/ecf/generate → HTTP 201
+>   job cmvj2v1gv0000ci2k61c4ku45 · EXPORT_SPED_ECF · EXPORTED · fileName ecf_08845676XXXXXX_2025.txt · sizeBytes 2102
+>   sha256 4ef7345d3fe5ca43711b5ae2288debe74d193d4d763d5e37fde5b86be8871e1c · totalRows 109
+> GET /accounting/data-exchange/jobs/cmvj2v1gv0000ci2k61c4ku45/download?unitId=… → HTTP 200 · text/plain
+>   2102 bytes · 109 linhas · CRLF · 0 byte(s) de controle · 3 bytes > 0x7F (Latin-1) · sha256 4ef7345d3fe5ca43711b5ae2288debe74d193d4d763d5e37fde5b86be8871e1c
+> |0000|LECF|0012|08845676XXXXXX|CORPÓREOS - SERVIÇOS TERAPÊUTICOS S.A.|0|0|||01012025|31122025|N||0||
+> |0010||N|5|T|01|PPPP||C||||2|
+>  23 |P001|0|
+>  24 |P030|01012025|31032025|T01|
+>  25 |P200|8||37671,94|
+>  26 |P200|4||9112,00|
+>  27 |P400|4||37671,94|
+>  28 |P400|2||9112,00|
+>  29 |P030|01042025|30062025|T02|
+>  30 |P200|8||44430,38|
+>  31 |P200|4||7312,37|
+>  32 |P400|4||44430,38|
+>  33 |P400|2||7312,37|
+>  34 |P030|01072025|30092025|T03|
+>  35 |P200|8||37838,21|
+>  36 |P200|4||16006,73|
+>  37 |P400|4||37838,21|
+>  38 |P400|2||16006,73|
+>  39 |P030|01102025|31122025|T04|
+>  40 |P200|8||42547,37|
+>  41 |P200|4||16508,86|
+>  42 |P400|4||42547,37|
+>  43 |P400|2||16508,86|
+>  44 |P990|22|
+> registros: 9001 9900×46 9990 9999 0000 0001 0010 0020 0030 0930×2 0990 C001 C990 E001 E990 J001 J990 K001 K990 L001 L990 M001 M990 N001 N990 P001 P030×4 P200×8 P400×8 P990 Q001 Q990 S001 S990 T001 T990 U001 U990 V001 V990 W001 W990 X001 X990 Y001 Y990
+> ```
+>
+> Em cada P030, os dois P200 vêm antes dos dois P400; valores, contagens e tamanho iguais aos da tentativa 1. Para o
+> passo 6: excluir antes a ECF da tentativa 1 da base do PVA da ECF. Arquivo para importar:
+> `C:\Users\smurf\Downloads\H1-PVA\ecf_08845676000198_2025-tentativa2.txt` (não abra nem salve em editor).
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
+
 ### 6. Importar a ECF no PVA
 
 Abra o PVA da ECF → importar o `.txt`. Anote cada crítica com o código do registro.
@@ -874,6 +1226,121 @@ Abra o PVA da ECF → importar o `.txt`. Anote cada crítica com o código do re
 Resultado esperado: import sem críticas impeditivas.
 
 EVIDÊNCIA: [tela/protocolo do PVA + lista de críticas, se houver]
+
+> **Tentativa 1 — 2026-10-22.** O dono importou no PVA da ECF o arquivo do passo 5 (`ecf_08845676000198_2025.txt`,
+> sha256 `6aa2d41e…cfde09f`) e colou o "Relatório de Erros de Importação" em PDF (2 páginas, sha256 `d08cf1804e2b90da…`).
+> O agente o transcreveu e o cruzou com o arquivo, sob o comando do dono.
+>
+> ```text
+> Relatório de Erros de Importação          Versões - PVA: 12.2.7 / Descritor: 12003.1 / Java: 21.0.3 (64 bits)
+> Total de Erros 9
+>  8  Organização hierárquica dos blocos/registros do arquivo está fora dos padrões estabelecidos.
+>     campo 1 - REG · valor esperado P500:
+>     linha 27 |P200|4||9112,00|      linha 28 |P400|2||9112,00|
+>     linha 32 |P200|4||7312,37|      linha 33 |P400|2||7312,37|
+>     linha 37 |P200|4||16006,73|     linha 38 |P400|2||16006,73|
+>     linha 42 |P200|4||16508,86|     linha 43 |P400|2||16508,86|
+>  1  Quantidade de linhas do bloco P informada não confere com a calculada pelo sistema.
+>     linha 44 · campo 2 - QTD_LIN_P · informado 22 · calculado 14 · |P990|22|
+> ordem no arquivo (agente), igual nos 4 trimestres:
+>     24 |P030|01012025|31032025|T01|
+>     25 |P200|8||37671,94|   26 |P400|4||37671,94|   27 |P200|4||9112,00|   28 |P400|2||9112,00|
+> ```
+>
+> **Diagnóstico (achado, não hotfix; GHC-003):**
+>
+> | # | Erros | Causa | Grau | Trilho |
+> |---|---|---|---|---|
+> | **L10** | 8 + 1 | Dentro de cada P030, o gerador intercala os registros por atividade: P200 + P400 de serviço, depois P200 + P400 de revenda (`src/lib/ecf.ts:416-424`). Depois do primeiro P400, o PVA só aceita P500 ou o próximo P030, e rejeita as 8 linhas de revenda. O P990 é consequência: 22 informadas, 14 aceitas (22 − 8). | ordem: **verificado** (PVA + linhas do arquivo + leitura do código); ordem dos códigos de linha dentro do mesmo registro (4 antes de 8, 2 antes de 4): **inferido** | instrumentação → correção (emitir, por período, todos os P200 e depois todos os P400). **Exige o "executa" do dono.** Sem saída por dado: com receita só de serviço o arquivo passaria, mas o seed tem as duas atividades |
+>
+> Desfecho desta tentativa pela regra acima: **FALHOU no passo 6** (erro de importação; a escrituração não entrou no PVA, sem
+> validação de conteúdo). A marcação é do dono. Reexecução depois da correção de L10: regerar a ECF (passo 5) e importar de novo.
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
+
+> **Tentativa 2 — 2026-10-22, importação.** O dono importou no PVA da ECF o arquivo do passo 5, tentativa 2
+> (`ecf_08845676000198_2025-tentativa2.txt`, sha256 `4ef7345d…71e1c`), e colou o "Relatório de Importação" em PDF (3 páginas,
+> sha256 `a5c9a3e89b91b816…`). O agente o transcreveu:
+>
+> ```text
+> Relatório de Importação — "No relatório abaixo estão descritas as advertências encontradas durante a importação."
+> Versões - PVA: 12.2.7 / Descritor: 12003.1 / Java: 21.0.3 (64 bits)
+> (sem a seção ERROS)
+> Total de Advertências 16
+>  16  Dados atualizados na Linha de acordo com a tabela da RFB.  (campo 2 - CODIGO)
+>      linhas 25 |P200|8| |37671,94|   26 |P200|4| |9112,00|    27 |P400|4| |37671,94|   28 |P400|2| |9112,00|
+>             30 |P200|8| |44430,38|   31 |P200|4| |7312,37|    32 |P400|4| |44430,38|   33 |P400|2| |7312,37|
+>             35 |P200|8| |37838,21|   36 |P200|4| |16006,73|   37 |P400|4| |37838,21|   38 |P400|2| |16006,73|
+>             40 |P200|8| |42547,37|   41 |P200|4| |16508,86|   42 |P400|4| |42547,37|   43 |P400|2| |16508,86|
+> ```
+>
+> **L10 fechado (verificado pelo PVA):** a escrituração importou sem erro de hierarquia nem de QTD_LIN. As 16 advertências
+> são uma por linha `E` enviada: o PVA completa a descrição da linha pela tabela dinâmica da RFB, que o gerador manda vazia
+> por desenho (`|P200|8||…|`, `src/lib/ecf.ts`). Não impedem nada. Falta a **validação de conteúdo** do PVA (o relatório
+> acima é só da importação): é ela que confere a presunção e o IRPJ/CSLL que o PVA calcula a partir dessas receitas.
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
+
+> **Tentativa 2 — 2026-10-22, validação.** O dono abriu a escrituração no PVA da ECF, rodou a verificação de pendências
+> **sem recuperar a ECD** e colou o relatório detalhado (5 páginas, avaliação de 22/10/2026 10:17:00, sha256
+> `aa1f0891c878e318…`). O agente o transcreveu:
+>
+> ```text
+> Pendências de Validação — PVA 12.2.7 / Descritor 12003.1
+> Total de Erros 19
+>   1  Deve haver recuperação de ECD pois a pessoa jurídica indicou possuir contabilidade.  → C040 (|C001|1|)
+>  10  Registro obrigatório não preenchido.
+>      → J050 (|J001|1|) · K155 e K355 nos 4 K030 (T01..T04) · Y600 (|Y001|1|)
+>   4  Total das receitas brutas informadas (P200(2)+P200(4)+P200(6)+P200(8)+P200(9)+P300(16)) diferente da receita
+>      calculada [P150("3.01.01.01.01")-P150("3.01.01.01.02.01")-P150("3.01.01.01.02.02")-P150("3.01.01.01.01.35")]
+>      → P200 linha 10 (RESULTADO DA APLICAÇÃO DOS PERCENTUAIS ...): 12783,98 · 14802,71 · 13388,77 · 14935,87
+>   4  idem para a CSLL (P400(2)+P400(4)+P400(5)+P500(14))
+>      → P400 linha 6: 13148,46 · 15095,21 · 14029,03 · 15596,22
+> Total de Advertências 4
+>   4  A RECEITA BRUTA da atividade geral (Linha 3.01.01.01.01) está com saldo zero (0).
+>      → |P150|3.01.01.01.01|RECEITA BRUTA|S|5|04|3.01.01.01|0,00|C|V|  (nos 4 trimestres)
+> ```
+>
+> **Diagnóstico (achado, não hotfix; GHC-003):**
+>
+> | # | Erros | Causa | Grau | Trilho |
+> |---|---|---|---|---|
+> | **R1** | 18 + 4 adv. | A ECD não foi recuperada na ECF (`0010.TIP_ESC_PRE = 'C'`: C, J050/J051, K155/K355 e o P150 vêm da ECD). Sem ela, o P150 tem receita 0 e o PVA acusa diferença entre a receita do P200/P400 e a "calculada". | C040: **verificado pelo PVA** (mensagem explícita); que os outros 17 erros e as 4 advertências somem com a recuperação: **inferido** | operação, sem código: recuperar a ECD da tentativa 3 no PVA da ECF e validar de novo. Risco a conferir: se o PVA exigir a ECD **assinada** para recuperar, o H1 com dados públicos esbarra nisso (a regra do P6 é não assinar) |
+> | **L11** | 1 | O bloco Y sai vazio, e o PVA exige o **Y600** (identificação e remuneração de sócios ou titular). O gerador não emite Y600 (`src/lib/ecf.ts:381`, Y entre os blocos vazios), e o P6 não tem dado de sócio. | erro **verificado pelo PVA**; causa no código: **verificada** (leitura de `ecf.ts:381`) | domínio/feature: exige dado de sócio no request ou vindo do cadastro de sócios (o IRRF-DISTRIBUICAO cria `partners`). Vai a planejamento, não a correção mínima |
+>
+> Conferência (agente): o PVA calculou a presunção a partir das receitas enviadas e fechou com elas. T01: 37.671,94 × 32% +
+> 9.112,00 × 8% = 12.783,98 (P200 linha 10) e 37.671,94 × 32% + 9.112,00 × 12% = 13.148,46 (P400 linha 6); verificado nos
+> 4 trimestres, com o PVA arredondando a soma, não cada parcela (T02 CSLL: 14.217,7216 + 877,4844 = 15.095,21). Desfecho desta validação pela regra acima: **FALHOU no passo 6** (marcação do dono). Próximo: recuperar a
+> ECD no PVA da ECF e validar de novo; o L11 segue para planejamento.
+>
+> **Recuperação da ECD — 2026-10-22 (telas coladas pelo dono, transcritas pelo agente).** Na escrituração aberta, a
+> função "Recuperar Dados de ECD" lista a ECD da tentativa 3 e não deixa selecioná-la:
+>
+> ```text
+> RECUPERAR DADOS DE ECD
+> "As ECDs serão validadas na transmissão. Evite Transtornos, utilize somente as ECDs ativas na Base do SPED"
+> Período da ECF 01/01/2025 a 31/12/2025 · Período a ser recuperado T00
+> Selecionado | Data Inicial | Data Final | Estado   | Nº de Ordem | Forma        | Hash | Aviso
+> [ ]         | 01/01/2025   | 31/12/2025 | Validada | 1           | Livro Diário |      | Esta ECD não pode ser recuperada por não estar assinada.
+> ```
+>
+> (Antes disso, a função "Recuperar Recibo de Transmissão" → "Importar Escrituração" com o `.txt` da ECD deu "Formato do
+> arquivo de escrituração não é válido. Data inválida - usar formato "ddmmaaaa". (0000 DT_FIN)": é a função errada, que lê
+> a ECD como se fosse ECF. Não diz nada do arquivo.)
+>
+> **R1 é bloqueio de assinatura (verificado pelo PVA):** o PVA da ECF só recupera ECD **assinada**. Com o P6 de dados
+> públicos, assinar está fora de cogitação (CNPJ real de terceiro; signatários fictícios, sem certificado), então nesta
+> passada o passo 6 não chega à validação completa da ECF. O que ficou provado pelo PVA: a ECF importa (L10 fechado) e a
+> presunção de IRPJ/CSLL que o PVA calcula fecha com a receita do Luminaris nos 4 trimestres. Fecha só com uma ECD
+> assinada: dado do dono (CNPJ e certificado próprios, sem transmitir) ou do 1º cliente. A escolha é do dono.
+>
+> **Passo 6 PAUSADO (dono, chat, 2026-10-22):** *"Pausa o passo 6 do H1 até haver ECD assinada (M2 ou 1º cliente) e
+> registra isso; segue para o L11 em planejamento."* Decisão em
+> [`D-2026-10-22-H1-PASSO6-ESPERA-ECD-ASSINADA`](../plano/decisoes/D-2026-10-22-H1-PASSO6-ESPERA-ECD-ASSINADA.md).
+> Retomada: ECD do tenant real, assinada pelo dono no PVA da ECD → "Recuperar Dados de ECD" no PVA da ECF → verificar
+> pendências. O L11 (Y600) vai a `sessao-planejamento`.
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
 
 ---
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { MdClose, MdLayers } from 'react-icons/md';
 import { useDrillDownData } from '../../../hooks/analytics/useDrillDownData';
-import { useRelationLookups } from '../../../../../shared/hooks/useRelationLookups';
+import { useTableRelationLookups } from '../../../../../shared/hooks/useTableRelationLookups';
 import TableView from './TableView';
 import type { IDynamicTableData } from '../../../../../components/shared/dynamic-tables.client';
 
@@ -26,7 +26,7 @@ export default function KpiDrillDownDrawer({ isOpen, onClose, tableId, recordIds
         limit
     );
 
-    const { relationLookup } = useRelationLookups(schema?.schema, data);
+    const { relationLookups } = useTableRelationLookups(isOpen ? schema : null);
 
     if (!isOpen) return null;
 
@@ -35,7 +35,7 @@ export default function KpiDrillDownDrawer({ isOpen, onClose, tableId, recordIds
     const schemaFields = schema?.schema?.fields || [];
 
     return (
-        <div className="fixed inset-0 z-[60] flex justify-end">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-[60] flex justify-end">
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/20 dark:bg-black/60 backdrop-blur-sm transition-opacity"
@@ -102,7 +102,7 @@ export default function KpiDrillDownDrawer({ isOpen, onClose, tableId, recordIds
                             <TableView
                                 schemaFields={schemaFields}
                                 records={data as IDynamicTableData[]}
-                                relationLookups={relationLookup}
+                                relationLookups={relationLookups}
                             />
 
                             {/* We handle pagination overriding the generic one since we do server-side pagination */}

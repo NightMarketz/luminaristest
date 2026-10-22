@@ -27,6 +27,7 @@ jest.mock('@/lib/logger', () => ({
     error: jest.fn(),
   },
 }));
+jest.mock('@/lib/attachmentStorage', () => ({ deleteFile: jest.fn() }));
 
 // ---------------------------------------------------------------------------
 // Shared test data
@@ -74,6 +75,7 @@ function buildService(overrides: {
   const mockUserRepository = {
     getUserById: jest.fn().mockResolvedValue(EXISTING_USER),
     hasRestrictedDependents: jest.fn().mockResolvedValue(false),
+    getAttachmentStorageKeys: jest.fn().mockResolvedValue([]),
     deleteUser,
     createUser: jest.fn(),
     getAllUsers: jest.fn(),

@@ -1,4 +1,6 @@
-import { ForbiddenError, ValidationError } from '../../../lib/errors';
+import { PERFIL_FISCAL_PLANO_PADRAO } from '../fixtures/ChartOfAccountsFixture';
+import { ForbiddenError, PolicyApprovalRequiredError, ValidationError } from '../../../lib/errors';
+import logger from '../../../lib/logger';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
@@ -29,7 +31,11 @@ export type FiscalProfileAccountField =
   | 'pisDespesaAccountId'
   | 'cofinsDespesaAccountId'
   | 'pisRecolherAccountId'
-  | 'cofinsRecolherAccountId';
+  | 'cofinsRecolherAccountId'
+  | 'ibsRecolherAccountId'
+  | 'cbsRecolherAccountId'
+  | 'ibsRecuperarAccountId'
+  | 'cbsRecuperarAccountId';
 
 /**
  * BE-INCR-DFE (BRIEF item 7) — campos cujo valor vem de resposta pendente do contador (D1f, itens 5a–5f
@@ -84,8 +90,17 @@ export interface FiscalProfileView extends CostRegime {
   simplesRecolherAccountId: string | null;
   irpjSaldoNegativoAccountId: string | null;
   csllSaldoNegativoAccountId: string | null;
+  // IRRF-DISTRIBUICAO PR-1 (item 7)
+  dividendosPagarAccountId: string | null;
+  jcpPagarAccountId: string | null;
+  irrfRecolherAccountId: string | null;
+  jcpDespesaAccountId: string | null;
+  // IBS-CBS-2027 PR-2 (item 12)
   ibsRecolherAccountId: string | null;
   cbsRecolherAccountId: string | null;
+  // IBS-CBS-2027 PR-3 (item 14)
+  ibsRecuperarAccountId: string | null;
+  cbsRecuperarAccountId: string | null;
   partnerAccountRef: string | null;
   codMun: string | null;
   inscricaoMunicipal: string | null;
@@ -223,6 +238,28 @@ export class FiscalProfileService {
   }
 
   /**
+   * Lacuna #826-1 (dono 21/10, opção (a)): IBS/CBS a recolher pelas folhas do plano padrão (`PERFIL_FISCAL_PLANO_PADRAO`),
+   * só nos campos nulos — complemento do `fillNullAccounts` do kit, como o `ensureCanonicalMappings` é do referencial.
+   * Folha ausente/apagada ou que não aceita lançamento ⇒ o campo fica (configuração manual). Contador ativo ⇒ não grava
+   * (o complemento de sistema não vira parâmetro governado; o contador configura pela proposta).
+   */
+  async ensureCanonicalAccounts(scope: AccountingScope): Promise<string[]> {
+    const ids: Partial<Record<FiscalProfileAccountField, string>> = {};
+    for (const { field, accountCode } of PERFIL_FISCAL_PLANO_PADRAO) {
+      const account = await this.accountRepo.findByCode(scope, accountCode);
+      if (account && !account.deletedAt && account.acceptsEntries) ids[field] = account.id;
+    }
+    if (Object.keys(ids).length === 0) return [];
+    try {
+      return await this.writeAccounts(scope, ids, true);
+    } catch (error) {
+      if (!(error instanceof PolicyApprovalRequiredError)) throw error;
+      logger.warn('IBS/CBS a recolher/a recuperar do plano padrão não preenchidos: contador ativo (configuração pela proposta)', { unitId: scope.unitId });
+      return [];
+    }
+  }
+
+  /**
    * BE-INCR-KIT-SETOR PR-4 (item 37; emenda E-12.3): aceitar a pendência `field_set_by_user` grava o valor do kit
    * POR CIMA do campo preenchido. Mesmo caminho do `fillNullAccounts`, sem o filtro de campo nulo.
    */
@@ -287,9 +324,17 @@ export class FiscalProfileService {
     // X7 Fase B item 16 (F-TB-3 a): o ajuste anual negativo debita o saldo negativo a compensar — ativo (Asset).
     if (input.irpjSaldoNegativoAccountId) await this.assertAssetAccount(scope, input.irpjSaldoNegativoAccountId, 'saldo negativo de IRPJ a compensar', tx);
     if (input.csllSaldoNegativoAccountId) await this.assertAssetAccount(scope, input.csllSaldoNegativoAccountId, 'saldo negativo de CSLL a compensar', tx);
-    // IBS-CBS-2027 PR-2 item 12 (F-IBS-8 c): a reclassificação mensal credita o IBS/CBS a recolher — passivo (Liability).
+    // IRRF-DISTRIBUICAO PR-1 (item 7, molde F-TA-7): passivos com o sócio e o IRRF retido (Liability); despesa de JCP (Expense).
+    if (input.dividendosPagarAccountId) await this.assertLiabilityAccount(scope, input.dividendosPagarAccountId, 'dividendos a pagar', tx);
+    if (input.jcpPagarAccountId) await this.assertLiabilityAccount(scope, input.jcpPagarAccountId, 'JCP a pagar', tx);
+    if (input.irrfRecolherAccountId) await this.assertLiabilityAccount(scope, input.irrfRecolherAccountId, 'IRRF a recolher', tx);
+    if (input.jcpDespesaAccountId) await this.assertExpenseAccount(scope, input.jcpDespesaAccountId, 'despesa de juros sobre o capital próprio', tx);
+    // IBS-CBS-2027 PR-2 (item 12): o passivo da reclassificação receita → IBS/CBS a recolher.
     if (input.ibsRecolherAccountId) await this.assertLiabilityAccount(scope, input.ibsRecolherAccountId, 'IBS a recolher', tx);
     if (input.cbsRecolherAccountId) await this.assertLiabilityAccount(scope, input.cbsRecolherAccountId, 'CBS a recolher', tx);
+    // IBS-CBS-2027 PR-3 (item 14): o crédito da NF-e de entrada (ativo), compensado na apuração mensal.
+    if (input.ibsRecuperarAccountId) await this.assertAssetAccount(scope, input.ibsRecuperarAccountId, 'IBS a recuperar', tx);
+    if (input.cbsRecuperarAccountId) await this.assertAssetAccount(scope, input.cbsRecuperarAccountId, 'CBS a recuperar', tx);
     // X13 PR-2 item 15 (F-OBP-1 a): a unidade segue o regime da EMPRESA no ano corrente (MEI/SIMPLES → SIMPLES).
     const regimeEmpresa = await this.regimeEmpresaHoje(scope, tx);
     if (regimeEmpresa && regimeUnidadeEsperado(regimeEmpresa) !== input.regimeTributario) {
@@ -353,8 +398,14 @@ export class FiscalProfileService {
         simplesRecolherAccountId: row.simplesRecolherAccountId ?? '',
         irpjSaldoNegativoAccountId: row.irpjSaldoNegativoAccountId ?? '',
         csllSaldoNegativoAccountId: row.csllSaldoNegativoAccountId ?? '',
-        ibsRecolherAccountId: row.ibsRecolherAccountId ?? '',
+        dividendosPagarAccountId: row.dividendosPagarAccountId ?? '', // IRRF-DISTRIBUICAO item 7
+        jcpPagarAccountId: row.jcpPagarAccountId ?? '',
+        irrfRecolherAccountId: row.irrfRecolherAccountId ?? '',
+        jcpDespesaAccountId: row.jcpDespesaAccountId ?? '',
+        ibsRecolherAccountId: row.ibsRecolherAccountId ?? '', // IBS-CBS-2027 PR-2 item 12
         cbsRecolherAccountId: row.cbsRecolherAccountId ?? '',
+        ibsRecuperarAccountId: row.ibsRecuperarAccountId ?? '', // IBS-CBS-2027 PR-3 item 14
+        cbsRecuperarAccountId: row.cbsRecuperarAccountId ?? '',
         // BE-INCR-DFE (item 9): enum/boolean/int como string — sem texto livre (IM/CNAE ficam fora do evento)
         codMun: row.codMun ?? '',
         dpsSerie: String(row.dpsSerie),
@@ -448,8 +499,14 @@ export class FiscalProfileService {
       simplesRecolherAccountId: row.simplesRecolherAccountId,
       irpjSaldoNegativoAccountId: row.irpjSaldoNegativoAccountId,
       csllSaldoNegativoAccountId: row.csllSaldoNegativoAccountId,
-      ibsRecolherAccountId: row.ibsRecolherAccountId,
+      dividendosPagarAccountId: row.dividendosPagarAccountId, // IRRF-DISTRIBUICAO item 7
+      jcpPagarAccountId: row.jcpPagarAccountId,
+      irrfRecolherAccountId: row.irrfRecolherAccountId,
+      jcpDespesaAccountId: row.jcpDespesaAccountId,
+      ibsRecolherAccountId: row.ibsRecolherAccountId, // IBS-CBS-2027 PR-2 item 12
       cbsRecolherAccountId: row.cbsRecolherAccountId,
+      ibsRecuperarAccountId: row.ibsRecuperarAccountId, // IBS-CBS-2027 PR-3 item 14
+      cbsRecuperarAccountId: row.cbsRecuperarAccountId,
       partnerAccountRef: row.partnerAccountRef,
       codMun: row.codMun,
       inscricaoMunicipal: row.inscricaoMunicipal,

@@ -38,10 +38,9 @@ async function ensureCollectionExists() {
 }
 
 /**
- * Garante que um índice de payload para 'documentId' exista na coleção.
+ * Garante que um índice de payload para `fieldName` exista na coleção.
  */
-async function ensurePayloadIndexExists() {
-  const fieldName = 'documentId';
+async function ensurePayloadIndexExists(fieldName: string) {
 
   try {
     const collectionInfo = await qdrant.getCollection(COLLECTION_NAME);
@@ -77,7 +76,9 @@ export async function initializeQdrant() {
   logger.info('Iniciando a inicialização do Qdrant...');
   try {
     await ensureCollectionExists();
-    await ensurePayloadIndexExists();
+    await ensurePayloadIndexExists('documentId');
+    // Toda busca filtra por userId (isolamento de tenant): sem índice, o filtro varre a coleção.
+    await ensurePayloadIndexExists('userId');
     logger.info('Inicialização do Qdrant concluída com sucesso.');
   } catch (error) {
     logger.error('Ocorreu um erro crítico durante a inicialização do Qdrant. A aplicação pode não funcionar corretamente.', {

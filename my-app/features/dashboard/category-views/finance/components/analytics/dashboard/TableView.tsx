@@ -8,7 +8,7 @@ import { useTranslation } from 'next-i18next';
 interface TableViewProps {
   schemaFields: ITableSchema['fields'];
   records: IDynamicTableData[];
-  relationLookups?: Map<string, string>;
+  relationLookups?: Record<string, Map<string, string>>;
 }
 
 function TableView({ schemaFields, records, relationLookups }: TableViewProps) {
@@ -46,7 +46,7 @@ function TableView({ schemaFields, records, relationLookups }: TableViewProps) {
                   <tr key={record.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                     {schemaFields.map(field => (
                       <td key={`${record.id}-${field.name}`} className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                        {renderTypedValue((record.data as Record<string, unknown>)[field.name], field.type, { t: (k, d) => t(k, d as string), relationLookup: relationLookups })}
+                        {renderTypedValue((record.data as Record<string, unknown>)[field.name], field.type, { t: (k, d) => t(k, d as string), relationLookup: relationLookups?.[field.name] })}
                       </td>
                     ))}
                   </tr>

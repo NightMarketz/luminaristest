@@ -145,6 +145,7 @@ import {
   listCompanySigners,
   updateCompanySigner,
 } from '../controllers/companySignerController';
+import { createPartner, deletePartner, getPartner, listPartners, updatePartner } from '../controllers/partnerController';
 import {
   listDepreciationRates,
   createDepreciationRate,
@@ -191,12 +192,8 @@ import {
   getFiscalCertificate,
   putFiscalCertificate,
 } from '../controllers/fiscalCertificateController';
-import {
-  confirmIbsCbsAssessment,
-  listIbsCbsAssessments,
-  previewIbsCbsAssessment,
-  reconcileIbsCbsProvisao,
-} from '../controllers/ibsCbsAssessmentController';
+import { confirmIbsCbsAssessment, listIbsCbsAssessments, previewIbsCbsAssessment, reconcileIbsCbsProvisao } from '../controllers/ibsCbsAssessmentController';
+import { apropriarCreditoIbsCbs } from '../controllers/payableController';
 
 const router = Router();
 
@@ -408,12 +405,12 @@ router.post('/company-signers', createCompanySigner);
 router.get('/company-signers/:id', getCompanySigner);
 router.put('/company-signers/:id', updateCompanySigner);
 router.delete('/company-signers/:id', deleteCompanySigner);
-// IBS-CBS-2027 PR-2 (BRIEF item 13) — apuração mensal de IBS/CBS; /preview estático antes de /:id. /:id/provisao =
-// reconcile da reclassificação (dono 21/10).
-router.post('/ibs-cbs-assessments/preview', previewIbsCbsAssessment);
-router.get('/ibs-cbs-assessments', listIbsCbsAssessments);
-router.post('/ibs-cbs-assessments', confirmIbsCbsAssessment);
-router.post('/ibs-cbs-assessments/:id/provisao', reconcileIbsCbsProvisao);
+// BE-INCR-IRRF-DISTRIBUICAO PR-1 (itens 1–4): sócios da empresa.
+router.get('/partners', listPartners);
+router.post('/partners', createPartner);
+router.get('/partners/:id', getPartner);
+router.put('/partners/:id', updatePartner);
+router.delete('/partners/:id', deletePartner);
 
 // BE-INCR-FIXED-ASSETS (nó C8, Bloco A) — tabela de taxas de depreciação; segmento estático, antes
 // de /:unitId/periods. /:id/hide antes de qualquer /:id genérico futuro (nenhum hoje neste recurso).
@@ -438,6 +435,14 @@ router.put('/fixed-assets/:id', updateFixedAsset);
 router.delete('/fixed-assets/:id', deleteFixedAsset);
 router.post('/fixed-assets/:id/activate', activateFixedAsset);
 router.post('/fixed-assets/:id/dispose', disposeFixedAsset);
+
+// IBS-CBS-2027 PR-2 (BRIEF item 13): apuração mensal de IBS/CBS. `/preview` estático antes de `/`.
+router.post('/ibs-cbs-assessments/preview', previewIbsCbsAssessment);
+router.post('/ibs-cbs-assessments', confirmIbsCbsAssessment);
+router.get('/ibs-cbs-assessments', listIbsCbsAssessments);
+router.post('/ibs-cbs-assessments/:id/provisao', reconcileIbsCbsProvisao); // item 12: reconcile (dono 21/10)
+// IBS-CBS-2027 PR-3 (item 16; F-IBS-12 a — caminho ratificado): apropriação do crédito de IBS/CBS de uma nota (serviço de AP).
+router.post('/payables/:id/ibs-cbs-credits/apropriar', apropriarCreditoIbsCbs);
 
 // Accounting period management (INCR-1).
 // NOTE: /:unitId/periods must come before /periods/:id routes to avoid param clash.

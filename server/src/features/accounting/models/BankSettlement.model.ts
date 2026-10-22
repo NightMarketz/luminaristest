@@ -29,8 +29,8 @@ export type BankSettlementStatus = (typeof BANK_SETTLEMENT_STATUSES)[number];
 export const BANK_SETTLEMENT_TITLE_TYPES = ['PAYABLE', 'RECEIVABLE'] as const;
 export type BankSettlementTitleType = (typeof BANK_SETTLEMENT_TITLE_TYPES)[number];
 
-/** F5 PR-3 (P3-8): `FEE` (tarifa do provedor) entre `CHARGE` e `MATCH`. */
-export const BANK_SETTLEMENT_STEPS = ['SETTLE', 'CHARGE', 'FEE', 'MATCH'] as const;
+/** F5 PR-3 (P3-8): `FEE` (tarifa do provedor) entre `CHARGE` e `MATCH`. IBS-CBS-2027 PR-4: `SPLIT` logo depois da `SETTLE`. */
+export const BANK_SETTLEMENT_STEPS = ['SETTLE', 'SPLIT', 'CHARGE', 'FEE', 'MATCH'] as const;
 export type BankSettlementStep = (typeof BANK_SETTLEMENT_STEPS)[number];
 
 /** F-F7-5 (a): cap RELATIVO do encargo — 20% do saldo aberto (basis points). Por escopo depois, se pedirem. */
@@ -64,10 +64,34 @@ export const BANK_CHARGE_KINDS_BY_SIDE: Record<BankSettlementTitleType, readonly
   PAYABLE: BANK_CHARGE_KINDS,
   RECEIVABLE: ['JUROS_MORA', 'MULTA_MORA'],
 };
-/** Domínio de `bank_settlement_items.shortfallTreatment` (E12, PR-3). */
-export const SHORTFALL_TREATMENTS = ['PARTIAL', 'DISCOUNT'] as const;
+/** Domínio de `bank_settlement_items.shortfallTreatment` (E12, PR-3). IBS-CBS-2027 PR-4: `SPLIT_IBS_CBS` (EMENDA PR-4, dono 22/10). */
+export const SHORTFALL_TREATMENTS = ['PARTIAL', 'DISCOUNT', 'SPLIT_IBS_CBS'] as const;
 /** Domínio de `payable_payments.kind` / `receivable_receipts.kind` (E13, PR-3); a coluna nasce no PR-1 (E5). */
-export const SETTLEMENT_KINDS = ['PAYMENT', 'DISCOUNT'] as const;
+export const SETTLEMENT_KINDS = ['PAYMENT', 'DISCOUNT', 'SPLIT_IBS_CBS'] as const;
+
+// ── IBS-CBS-2027 PR-4 (BRIEF itens 19–20 + EMENDA PR-4, dono 22/10) ─────────────────────────────────────────────────
+// Split payment (LC 214/2025 arts. 31–33; Decreto 12.955/2026 art. 26 III): o provedor retém o IBS/CBS na liquidação e a
+// linha chega MENOR que o título. O resto do título é quitado por recibos sem caixa: D IBS|CBS a recolher / C cliente.
+/** `receivable_receipts.kind` e `bank_settlement_items.shortfallTreatment` do split. */
+export const SPLIT_IBS_CBS_KIND = 'SPLIT_IBS_CBS' as const;
+/** `receivable_receipts.method` do recibo de split — fora de `RECEIPT_METHODS` (o recibo avulso não aceita); a conta vem do perfil fiscal. */
+export const SPLIT_IBS_CBS_METHOD = 'SplitPayment' as const;
+export const SPLIT_NOT_ALLOWED_PAYABLE = 'split_not_allowed_payable';
+export const SPLIT_MISMATCH = 'split_mismatch';
+export const SPLIT_ACCOUNT_NOT_CONFIGURED = 'split_account_not_configured';
+
+/** Competência padrão do split (EMENDA PR-4): o mês da linha do extrato (`AAAA-MM-DD` → `AAAA-MM`). */
+export function competenciaPadraoDoSplit(lineDate: string): string {
+  return lineDate.slice(0, 7);
+}
+
+/**
+ * Item 19a (pura): com split, a linha (+ tarifa) mais o split quita o saldo inteiro — `abs + ibs + cbs = saldo`.
+ * Devolve a falta que sobra (≠ 0 ⇒ `split_mismatch`).
+ */
+export function diferencaDoSplit(grossCents: number, openCents: number, split: { ibsCents: number; cbsCents: number }): number {
+  return openCents - grossCents - split.ibsCents - split.cbsCents;
+}
 /** Tarifa bancária: classe própria, fora de `BANK_CHARGE_KINDS` (E27); valor em `item.feeCents`. */
 export const BANK_FEE_KIND = 'TARIFA_BANCARIA' as const;
 
