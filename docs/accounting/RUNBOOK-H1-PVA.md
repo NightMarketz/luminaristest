@@ -1314,6 +1314,12 @@ EVIDÊNCIA: [tela/protocolo do PVA + lista de críticas, se houver]
 > presunção de IRPJ/CSLL que o PVA calcula fecha com a receita do Luminaris nos 4 trimestres. Fecha só com uma ECD
 > assinada: dado do dono (CNPJ e certificado próprios, sem transmitir) ou do 1º cliente. A escolha é do dono.
 >
+> **Passo 6 PAUSADO (dono, chat, 2026-10-22):** *"Pausa o passo 6 do H1 até haver ECD assinada (M2 ou 1º cliente) e
+> registra isso; segue para o L11 em planejamento."* Decisão em
+> [`D-2026-10-22-H1-PASSO6-ESPERA-ECD-ASSINADA`](../plano/decisoes/D-2026-10-22-H1-PASSO6-ESPERA-ECD-ASSINADA.md).
+> Retomada: ECD do tenant real, assinada pelo dono no PVA da ECD → "Recuperar Dados de ECD" no PVA da ECF → verificar
+> pendências. O L11 (Y600) vai a `sessao-planejamento`.
+>
 > DESFECHO: [dono]   ASSINATURA: [dono]
 
 ---
