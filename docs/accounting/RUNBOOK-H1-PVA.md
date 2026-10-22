@@ -1261,6 +1261,40 @@ EVIDÊNCIA: [tela/protocolo do PVA + lista de críticas, se houver]
 >
 > DESFECHO: [dono]   ASSINATURA: [dono]
 
+> **Tentativa 2 — 2026-10-22, validação.** O dono abriu a escrituração no PVA da ECF, rodou a verificação de pendências
+> **sem recuperar a ECD** e colou o relatório detalhado (5 páginas, avaliação de 22/10/2026 10:17:00, sha256
+> `aa1f0891c878e318…`). O agente o transcreveu:
+>
+> ```text
+> Pendências de Validação — PVA 12.2.7 / Descritor 12003.1
+> Total de Erros 19
+>   1  Deve haver recuperação de ECD pois a pessoa jurídica indicou possuir contabilidade.  → C040 (|C001|1|)
+>  10  Registro obrigatório não preenchido.
+>      → J050 (|J001|1|) · K155 e K355 nos 4 K030 (T01..T04) · Y600 (|Y001|1|)
+>   4  Total das receitas brutas informadas (P200(2)+P200(4)+P200(6)+P200(8)+P200(9)+P300(16)) diferente da receita
+>      calculada [P150("3.01.01.01.01")-P150("3.01.01.01.02.01")-P150("3.01.01.01.02.02")-P150("3.01.01.01.01.35")]
+>      → P200 linha 10 (RESULTADO DA APLICAÇÃO DOS PERCENTUAIS ...): 12783,98 · 14802,71 · 13388,77 · 14935,87
+>   4  idem para a CSLL (P400(2)+P400(4)+P400(5)+P500(14))
+>      → P400 linha 6: 13148,46 · 15095,21 · 14029,03 · 15596,22
+> Total de Advertências 4
+>   4  A RECEITA BRUTA da atividade geral (Linha 3.01.01.01.01) está com saldo zero (0).
+>      → |P150|3.01.01.01.01|RECEITA BRUTA|S|5|04|3.01.01.01|0,00|C|V|  (nos 4 trimestres)
+> ```
+>
+> **Diagnóstico (achado, não hotfix; GHC-003):**
+>
+> | # | Erros | Causa | Grau | Trilho |
+> |---|---|---|---|---|
+> | **R1** | 18 + 4 adv. | A ECD não foi recuperada na ECF (`0010.TIP_ESC_PRE = 'C'`: C, J050/J051, K155/K355 e o P150 vêm da ECD). Sem ela, o P150 tem receita 0 e o PVA acusa diferença entre a receita do P200/P400 e a "calculada". | C040: **verificado pelo PVA** (mensagem explícita); que os outros 17 erros e as 4 advertências somem com a recuperação: **inferido** | operação, sem código: recuperar a ECD da tentativa 3 no PVA da ECF e validar de novo. Risco a conferir: se o PVA exigir a ECD **assinada** para recuperar, o H1 com dados públicos esbarra nisso (a regra do P6 é não assinar) |
+> | **L11** | 1 | O bloco Y sai vazio, e o PVA exige o **Y600** (identificação e remuneração de sócios ou titular). O gerador não emite Y600 (`src/lib/ecf.ts:381`, Y entre os blocos vazios), e o P6 não tem dado de sócio. | erro **verificado pelo PVA**; causa no código: **verificada** (leitura de `ecf.ts:381`) | domínio/feature: exige dado de sócio no request ou vindo do cadastro de sócios (o IRRF-DISTRIBUICAO cria `partners`). Vai a planejamento, não a correção mínima |
+>
+> Conferência (agente): o PVA calculou a presunção a partir das receitas enviadas e fechou com elas. T01: 37.671,94 × 32% +
+> 9.112,00 × 8% = 12.783,98 (P200 linha 10) e 37.671,94 × 32% + 9.112,00 × 12% = 13.148,46 (P400 linha 6); verificado nos
+> 4 trimestres, com o PVA arredondando a soma, não cada parcela (T02 CSLL: 14.217,7216 + 877,4844 = 15.095,21). Desfecho desta validação pela regra acima: **FALHOU no passo 6** (marcação do dono). Próximo: recuperar a
+> ECD no PVA da ECF e validar de novo; o L11 segue para planejamento.
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
+
 ---
 
 ## Desfecho (marcar UM)
