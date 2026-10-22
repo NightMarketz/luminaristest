@@ -28,7 +28,6 @@ jest.mock('@/lib/authUtils', () => ({
   getUserContextFromRequest: () => ({ id: 'user_A', userId: 'user_A' }),
 }));
 
-// eslint-disable-next-line import/first -- o controller lê os mocks acima no import
 import { qdrantStatus } from '@/controllers/documentsController';
 
 const user: UserContext = {
