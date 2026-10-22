@@ -107,7 +107,8 @@ function DocumentListPage() {
     return {
       completed: filtered.filter(doc => doc.status === 'COMPLETED'),
       processing: filtered.filter(doc => doc.status === 'PROCESSING' || doc.status === 'PENDING'),
-      error: filtered.filter(doc => doc.status === 'ERROR'),
+      // O servidor grava FAILED (upload assíncrono, watchdog de PROCESSING) e ERROR (pipeline): os dois são falha.
+      error: filtered.filter(doc => doc.status === 'ERROR' || doc.status === 'FAILED'),
     };
   }, [getFilteredDocuments]);
 
@@ -268,7 +269,7 @@ function DocumentListPage() {
                           {t('documents.statusProcessing', 'Processing')}
                         </span>
                       )}
-                      {doc.status === 'ERROR' && (
+                      {(doc.status === 'ERROR' || doc.status === 'FAILED') && (
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
                           {t('status.error', 'Error')}
                         </span>

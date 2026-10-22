@@ -45,6 +45,11 @@ export const CANONICAL_ACCOUNTS: ReadonlyArray<CanonicalAccount> = [
   // perpetual inventory subledger. An INBOUND (seed or AP purchase) debits this Asset leaf; a sale's
   // CMV credits it. Σ InventoryItem.totalValueCents == saldo(leaf) is the tie-out (mirrors AR).
   { code: '1.1.3.01', name: 'Mercadorias para Revenda', nature: 'Asset', acceptsEntries: true },
+  // IBS-CBS-2027 PR-3 (item 14; dono 22/10: "Folhas + 1.01.02.03.40 provisório"): o crédito de IBS/CBS da NF-e de entrada
+  // (D na entrada, C na compensação da apuração mensal). 1.1.9 fica fora do 1.1.4–1.1.6 legados dos kits.
+  { code: '1.1.9', name: 'Tributos sobre o Consumo a Recuperar', nature: 'Asset', acceptsEntries: false },
+  { code: '1.1.9.01', name: 'IBS a Recuperar', nature: 'Asset', acceptsEntries: true },
+  { code: '1.1.9.02', name: 'CBS a Recuperar', nature: 'Asset', acceptsEntries: true },
   // Liability tower (Incremento D / D1-Q10): a Package Balance settlement debits the prepaid
   // liability (service delivered against an advance), NEVER cash. `2` is the synthetic root.
   { code: '2', name: 'Passivo', nature: 'Liability', acceptsEntries: false },
@@ -278,6 +283,12 @@ export const REFERENCIAL_PLANO_PADRAO: ReadonlyArray<{ accountCode: string; refe
   // quando a RFB publicar a tabela do ano-calendário 2027.
   { accountCode: '2.1.8.01', referentialCode: '2.01.01.09.28', label: 'Outros Tributos a Recolher – Circulante' },
   { accountCode: '2.1.8.02', referentialCode: '2.01.01.09.28', label: 'Outros Tributos a Recolher – Circulante' },
+  // IBS-CBS-2027 PR-3 (dono 22/10: "Folhas + 1.01.02.03.40 provisório"): sem conta própria de IBS/CBS no referencial da ECF
+  // (AC 2025), o crédito vai em 1.01.02.03.40 Outros Impostos e Contribuições a Recuperar (L100A e P100A — dossiê
+  // pesquisas-legais/ibs-cbs-referencial-sped [D01]). Os códigos 1.01.03.02.99 / 1.01.03.03.99 do texto colado em 22/10 não
+  // existem (1.01.03.02 = Estoques de Produtos). PROVISÓRIO: revisar com a tabela do ano-calendário 2027.
+  { accountCode: '1.1.9.01', referentialCode: '1.01.02.03.40', label: 'Outros Impostos e Contribuições a Recuperar' },
+  { accountCode: '1.1.9.02', referentialCode: '1.01.02.03.40', label: 'Outros Impostos e Contribuições a Recuperar' },
 ];
 
 /**
@@ -285,7 +296,13 @@ export const REFERENCIAL_PLANO_PADRAO: ReadonlyArray<{ accountCode: string; refe
  * papéis do perfil fiscal que os kits v6 publicados não trazem, preenchidos pelas folhas do plano padrão por
  * `FiscalProfileService.ensureCanonicalAccounts` (só campo nulo; unidade sem a folha fica manual).
  */
-export const PERFIL_FISCAL_PLANO_PADRAO: ReadonlyArray<{ field: 'ibsRecolherAccountId' | 'cbsRecolherAccountId'; accountCode: string }> = [
+export const PERFIL_FISCAL_PLANO_PADRAO: ReadonlyArray<{
+  field: 'ibsRecolherAccountId' | 'cbsRecolherAccountId' | 'ibsRecuperarAccountId' | 'cbsRecuperarAccountId';
+  accountCode: string;
+}> = [
   { field: 'ibsRecolherAccountId', accountCode: '2.1.8.01' },
   { field: 'cbsRecolherAccountId', accountCode: '2.1.8.02' },
+  // IBS-CBS-2027 PR-3 (dono 22/10): IBS/CBS a recuperar pelo mesmo caminho (só campo nulo).
+  { field: 'ibsRecuperarAccountId', accountCode: '1.1.9.01' },
+  { field: 'cbsRecuperarAccountId', accountCode: '1.1.9.02' },
 ];

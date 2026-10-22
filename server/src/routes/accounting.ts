@@ -193,6 +193,7 @@ import {
   putFiscalCertificate,
 } from '../controllers/fiscalCertificateController';
 import { confirmIbsCbsAssessment, listIbsCbsAssessments, previewIbsCbsAssessment, reconcileIbsCbsProvisao } from '../controllers/ibsCbsAssessmentController';
+import { apropriarCreditoIbsCbs } from '../controllers/payableController';
 
 const router = Router();
 
@@ -440,6 +441,8 @@ router.post('/ibs-cbs-assessments/preview', previewIbsCbsAssessment);
 router.post('/ibs-cbs-assessments', confirmIbsCbsAssessment);
 router.get('/ibs-cbs-assessments', listIbsCbsAssessments);
 router.post('/ibs-cbs-assessments/:id/provisao', reconcileIbsCbsProvisao); // item 12: reconcile (dono 21/10)
+// IBS-CBS-2027 PR-3 (item 16; F-IBS-12 a — caminho ratificado): apropriação do crédito de IBS/CBS de uma nota (serviço de AP).
+router.post('/payables/:id/ibs-cbs-credits/apropriar', apropriarCreditoIbsCbs);
 
 // Accounting period management (INCR-1).
 // NOTE: /:unitId/periods must come before /periods/:id routes to avoid param clash.

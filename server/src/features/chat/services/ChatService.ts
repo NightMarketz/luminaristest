@@ -46,6 +46,9 @@ Sua missão:
 7. Use a linguagem do usuário (Português) para conversar, mas mantenha os valores técnicos (IDs e Enums) idênticos ao Graph.
 `;
 
+/** Same ceiling as the client `history` (ChatDto `.max(50)`). */
+const MAX_PERSISTED_HISTORY = 50;
+
 export class ChatService implements IChatService {
   private embeddingService: IEmbeddingService;
   private vectorRepository: IVectorRepository;
@@ -72,6 +75,19 @@ export class ChatService implements IChatService {
    */
   async generateResponse(request: ChatRequest & { user: UserContext }): Promise<ChatResponse> {
     const { query = '', chatInstanceId, user } = request;
+
+    // No client history → the turn remembers what this instance already persisted (read before the
+    // new message is stored, so the current query isn't duplicated). Ownership is checked by the read.
+    if (chatInstanceId && !request.history?.length) {
+      const { messages } = await this.chatMessageService.getMessagesByInstance(chatInstanceId, user);
+      request = {
+        ...request,
+        history: messages.slice(-MAX_PERSISTED_HISTORY).map(m => ({
+          role: m.role === ChatMessageRole.ASSISTANT ? 'assistant' : 'user',
+          content: m.content,
+        })),
+      };
+    }
 
     // Persist the user's message first (ownership is validated here → 403/404 if the instance isn't theirs).
     // The DTO has no `role` field — the service always stores client-created messages as USER.
@@ -217,12 +233,7 @@ Pergunta Reformulada:
               content: JSON.stringify(result)
             } as { role: 'tool'; tool_call_id: string; content: string });
           }
-          // After tool results are appended, ask the LLM for the final text answer.
-          const nextCompletion = await this.openaiService.getChatCompletionWithHistory(messages, undefined, onUsage);
-          if (nextCompletion) {
-            return { answer: nextCompletion, type: 'TEXT', sourceDocuments: [] };
-          }
-          break;
+          // Tool results appended: the next iteration lets the model call another tool or answer.
         } else {
           return {
             answer: response.content || 'Não foi possível gerar uma resposta.',
