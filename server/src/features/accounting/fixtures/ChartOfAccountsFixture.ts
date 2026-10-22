@@ -279,3 +279,13 @@ export const REFERENCIAL_PLANO_PADRAO: ReadonlyArray<{ accountCode: string; refe
   { accountCode: '2.1.8.01', referentialCode: '2.01.01.09.28', label: 'Outros Tributos a Recolher – Circulante' },
   { accountCode: '2.1.8.02', referentialCode: '2.01.01.09.28', label: 'Outros Tributos a Recolher – Circulante' },
 ];
+
+/**
+ * Lacuna #826-1 (dono 21/10, opção (a): "preencher pelo plano padrão, como o ensureCanonicalMappings faz com o referencial") —
+ * papéis do perfil fiscal que os kits v6 publicados não trazem, preenchidos pelas folhas do plano padrão por
+ * `FiscalProfileService.ensureCanonicalAccounts` (só campo nulo; unidade sem a folha fica manual).
+ */
+export const PERFIL_FISCAL_PLANO_PADRAO: ReadonlyArray<{ field: 'ibsRecolherAccountId' | 'cbsRecolherAccountId'; accountCode: string }> = [
+  { field: 'ibsRecolherAccountId', accountCode: '2.1.8.01' },
+  { field: 'cbsRecolherAccountId', accountCode: '2.1.8.02' },
+];

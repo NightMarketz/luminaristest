@@ -170,7 +170,7 @@ import { SimplesRegistroCaixaService } from '../features/accounting/services/Sim
 import { SimplesCreditoIncobravelRepository } from '../features/accounting/repositories/SimplesCreditoIncobravelRepository';
 import type { ISimplesCreditoIncobravelRepository } from '../features/accounting/repositories/ISimplesCreditoIncobravelRepository';
 import { PisCofinsAssessmentService } from '../features/accounting/services/PisCofinsAssessmentService';
-import { IbsCbsAssessmentService } from '../features/accounting/services/IbsCbsAssessmentService';
+import { IbsCbsAssessmentService, type RevenueAccountsPort } from '../features/accounting/services/IbsCbsAssessmentService';
 import { AccountingDeliveryService } from '../features/accounting/services/AccountingDeliveryService';
 import { AccountingReviewService } from '../features/accounting/services/AccountingReviewService';
 import { InventoryService } from '../features/accounting/services/InventoryService';
@@ -295,7 +295,9 @@ import type { ISystemProvisioningPolicy } from '../features/onboarding/policies/
 import type { IAccountingEventMapper } from '../features/accounting/sync/mappers/IAccountingEventMapper';
 import type { PostEntryInput } from '../features/accounting/dtos/PostingDto';
 import type { AccountingScope } from '../features/accounting/scope/AccountingScope';
-import type { BindingScope } from '../features/accountingBinding/repositories/IAccountingBindingRepository';
+import type { BindingScope, IAccountingBindingRepository } from '../features/accountingBinding/repositories/IAccountingBindingRepository';
+import { AccountingBindingV1Schema } from '../features/accountingBinding/dtos/AccountingBindingDto';
+import { ValidationError } from './errors';
 import type { ChartLookupPort, PostingValidatePort } from '../features/accountingBinding/models/types';
 import type { IAccountRepository } from '../features/accounting/repositories/IAccountRepository';
 import type { IJournalEntryRepository } from '../features/accounting/repositories/IJournalEntryRepository';
@@ -411,6 +413,33 @@ function buildAccountingBindingChartLookup(accountRepo: IAccountRepository, scop
 }
 
 /**
+ * Lacuna #826-2 — `RevenueAccountsPort` real: lê os papéis `receita-serviço` / `receita-revenda` do evento
+ * `revenue_recognition` dos bindings ATIVOS da unidade (a mesma fonte que o RevenueRecognitionArchetype credita).
+ * Aqui, fora dos dois módulos, pelo mesmo motivo do `bindingScopeToAccountingScope`. Dois bindings ativos com
+ * contas diferentes para o mesmo papel ⇒ 400 (não há como escolher); sem binding ⇒ null (o serviço cai no plano padrão).
+ */
+function buildIbsCbsRevenueAccounts(bindingRepo: IAccountingBindingRepository): RevenueAccountsPort {
+  return {
+    async contasDeReceita(scope) {
+      const rows = await bindingRepo.findMany({ ownerUserId: scope.ownerUserId, actorUserId: scope.actorUserId, unitId: scope.unitId }, { status: 'Active' });
+      const achado: Record<'receita-serviço' | 'receita-revenda', Set<string>> = { 'receita-serviço': new Set(), 'receita-revenda': new Set() };
+      for (const row of rows) {
+        for (const b of AccountingBindingV1Schema.parse(JSON.parse(row.payload)).eventBindings) {
+          if (b.archetypeKey !== 'revenue_recognition') continue;
+          for (const r of b.roleSlots) if (r.role === 'receita-serviço' || r.role === 'receita-revenda') achado[r.role].add(r.accountCode);
+        }
+      }
+      const unico = (role: keyof typeof achado) => {
+        const codes = [...achado[role]];
+        if (codes.length > 1) throw new ValidationError(`bindings ativos da unidade divergem no papel '${role}' (${codes.join(', ')}) — reclassificação IBS/CBS não sabe qual debitar.`);
+        return codes[0] ?? null;
+      };
+      return { servico: unico('receita-serviço'), revenda: unico('receita-revenda') };
+    },
+  };
+}
+
+/**
  * LAC-B — portas de pré-condição do `activate-default` (`BindingActivationService`), fechadas sobre o
  * escopo pelo mesmo motivo do `ChartLookupPort` acima. O chart instala pelo canônico
  * `PostingService.ensureChartOfAccounts` (cria-se-faltar, restaura soft-deleted); o período passa
@@ -493,7 +522,11 @@ function buildKitRoleDefaultsPort(
       return (await fiscalProfileRepo.findByScope(scope)) !== null;
     },
     fillNullScopeSettings: (accountIds) => settingsService.fillNullAccounts(scope, accountIds),
-    fillNullFiscalProfile: (accountIds) => fiscalProfileService.fillNullAccounts(scope, accountIds),
+    // Lacuna #826-1 (opção (a)): depois dos papéis do kit, os do plano padrão que o kit publicado não traz (IBS/CBS a recolher).
+    fillNullFiscalProfile: async (accountIds) => [
+      ...(await fiscalProfileService.fillNullAccounts(scope, accountIds)),
+      ...(await fiscalProfileService.ensureCanonicalAccounts(scope)),
+    ],
   };
 }
 
@@ -1861,6 +1894,7 @@ export class ApplicationFactory {
         this.repositories.fiscalProfile, // item 12: contas de IBS/CBS a recolher
         this.repositories.account,
         postingService, // item 12: reclassificação em 2 commits
+        buildIbsCbsRevenueAccounts(new AccountingBindingRepository()), // lacuna #826-2: papéis de receita do binding
       ),
       // BE-INCR-LEGAL-PARAMS PR-4 (item 10): recálculo das apurações quando uma linha de lei é publicada/revogada.
       taxAssessmentRecalc: new TaxAssessmentRecalcService(

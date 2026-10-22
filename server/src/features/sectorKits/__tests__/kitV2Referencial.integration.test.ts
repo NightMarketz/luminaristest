@@ -10,6 +10,8 @@ import { pushTestSchema, resetDb } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
 import type { BindingScope } from '@/features/accountingBinding/repositories/IAccountingBindingRepository';
 import { BEAUTY_SALON_KIT_V6 } from '@/features/sectorKits/kits/beautySalon/kit.v6';
+import { AESTHETIC_CLINIC_KIT_V6 } from '@/features/sectorKits/kits/aestheticClinic/kit.v6';
+import type { SectorKitV1 } from '@/features/sectorKits/dtos/SectorKitDto';
 
 // Literais: a fronteira do sectorKits não importa de features/accounting (importBoundary.test). Mesmos de REFERENCIAL_PLANO_PADRAO.
 const REFERENCIAL_PLANO_PADRAO_CODIGOS = ['2.01.01.17.13.10', '2.01.01.17.12.10', '2.01.01.09.01', '2.03.01.01.01', '2.03.02.03.01', '3.01.01.09.01.04', '2.01.01.09.28'];
@@ -20,12 +22,12 @@ let ownerId: string;
 const scope = (): BindingScope => ({ ownerUserId: ownerId, actorUserId: ownerId, unitId: UNIT });
 const where = () => ({ userId: ownerId, unitId: UNIT });
 
-async function preparar(regime: 'PRESUMIDO' | 'REAL' | 'SIMPLES') {
+async function preparar(regime: 'PRESUMIDO' | 'REAL' | 'SIMPLES', kit: SectorKitV1 = BEAUTY_SALON_KIT_V6) {
   await resetDb();
   ownerId = (await prisma.user.create({ data: { name: 'kitv2', username: 'kit-v2-dono', email: 'kitv2@test.local', password: 'x', role: 'USER' } })).id;
   // catálogo 2025: os códigos do kit, analíticos (o passo 7 exige catálogo carregado; o serviço revalida o código)
   // + o referencial das folhas do plano padrão que o kit não traz (IRRF-DISTRIBUICAO PR-1 item 6, `ensureCanonicalMappings`).
-  const codigos = [...new Set([...BEAUTY_SALON_KIT_V6.referential.flatMap((b) => b.entries.map((e) => e.referentialCode)), ...REFERENCIAL_PLANO_PADRAO_CODIGOS])];
+  const codigos = [...new Set([...kit.referential.flatMap((b) => b.entries.map((e) => e.referentialCode)), ...REFERENCIAL_PLANO_PADRAO_CODIGOS])];
   for (const code of codigos) await prisma.referentialAccount.create({ data: { layoutVersion: '2025', code, name: code, isAnalytic: true } });
   await prisma.fiscalProfile.create({
     // A v6 preenche o perfil fiscal (passo 3), que valida o regime: o Simples exige pisCofinsRegime SIMPLES e sem ICMS.
@@ -39,11 +41,11 @@ async function preparar(regime: 'PRESUMIDO' | 'REAL' | 'SIMPLES') {
   });
 }
 
-const instalar = () =>
+const instalar = (kit: SectorKitV1 = BEAUTY_SALON_KIT_V6) =>
   ApplicationFactory.getInstance()
     // a v6 (BE-INCR-PLANO-4-NIVEIS) é a versão vigente; o registro fica preso nela
-    .getKitInstallService(scope(), () => [BEAUTY_SALON_KIT_V6])
-    .install(scope(), { kitKey: 'beautySalon', ano: 2025, installChartIfEmpty: true, openCurrentPeriodIfMissing: true, today: TODAY });
+    .getKitInstallService(scope(), () => [kit])
+    .install(scope(), { kitKey: kit.kitKey, ano: 2025, installChartIfEmpty: true, openCurrentPeriodIfMissing: true, today: TODAY });
 
 /** Cobertura como o gate da ECD conta (`ReferentialMappingService.coverage`): folhas vivas sem mapeamento 2025. A fronteira
  * do sectorKits não deixa importar o serviço de `features/accounting`, então a conta é refeita no banco. */
@@ -74,5 +76,32 @@ describe('kit vigente do salão (v6) — referencial 2025 (BE-INCR-H1-REFERENCIA
     await preparar('SIMPLES');
     await expect(instalar()).resolves.toMatchObject({ status: 'INSTALLED' });
     expect(await prisma.referentialMapping.count({ where: where() })).toBe(0);
+  });
+
+  // Lacuna #826-3: o kit v6 da clínica também cobre as folhas novas (2.1.8.01/02 IBS/CBS a recolher → 2.01.01.09.28).
+  it.each(['PRESUMIDO', 'REAL'] as const)('clínica %s: instalação da v6 publicada ⇒ todas as folhas cobertas, inclusive IBS/CBS a recolher', async (regime) => {
+    await preparar(regime, AESTHETIC_CLINIC_KIT_V6);
+    await expect(instalar(AESTHETIC_CLINIC_KIT_V6)).resolves.toMatchObject({ status: 'INSTALLED' });
+    const c = await cobertura();
+    expect(c.faltam).toEqual([]);
+    for (const code of ['2.1.8.01', '2.1.8.02']) {
+      const conta = await prisma.account.findFirstOrThrow({ where: { ...where(), code } });
+      const m = await prisma.referentialMapping.findFirstOrThrow({ where: { ...where(), accountId: conta.id, mappingVersion: '2025' } });
+      expect(m.referentialCode).toBe('2.01.01.09.28');
+    }
+  });
+
+  // Lacuna #826-1 (dono 21/10, opção (a)): a instalação preenche IBS/CBS a recolher do perfil fiscal pelo plano padrão
+  // (o kit v6 publicado não traz os papéis); campo já preenchido não é sobrescrito.
+  it.each([
+    ['salão', BEAUTY_SALON_KIT_V6],
+    ['clínica', AESTHETIC_CLINIC_KIT_V6],
+  ] as const)('%s: instalação da v6 ⇒ perfil fiscal com IBS/CBS a recolher = 2.1.8.01 / 2.1.8.02', async (_nome, kit) => {
+    await preparar('PRESUMIDO', kit);
+    await expect(instalar(kit)).resolves.toMatchObject({ status: 'INSTALLED' });
+    const fp = await prisma.fiscalProfile.findFirstOrThrow({ where: where() });
+    const id = async (code: string) => (await prisma.account.findFirstOrThrow({ where: { ...where(), code } })).id;
+    expect(fp.ibsRecolherAccountId).toBe(await id('2.1.8.01'));
+    expect(fp.cbsRecolherAccountId).toBe(await id('2.1.8.02'));
   });
 });

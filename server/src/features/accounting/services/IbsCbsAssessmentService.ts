@@ -17,8 +17,10 @@
  * BRIEF `docs/accounting/BE-INCR-IBS-CBS-2027-brief.md` itens 6–13 (F-IBS-2 a). Molde X7 Fase A / X8: a confirmação
  * recalcula FORA da tx e abre UMA `runTransaction` com os gates autoritativos dentro (memória `authoritative-gate-inside-tx`,
  * `tx` propagado ao repo): perfil da PJ igual ao lido, CAS de `expectedSupersedesId` (409), cascata (substituir M derruba
- * M+1.. do tributo, devolvidos em `reconfirmar`). Contas da receita: as do plano padrão que o `receitaBrutaPorAtividade`
- * segrega (3.1 serviço, 3.3 revenda).
+ * M+1.. do tributo, devolvidos em `reconfirmar`). Contas da receita: as dos papéis `receita-serviço` / `receita-revenda`
+ * do binding ativo da unidade (mesma fonte do RevenueRecognitionArchetype; porta `RevenueAccountsPort`, adaptada no
+ * factory — accounting não importa accountingBinding); sem binding, as do plano padrão (3.1 serviço, 3.3 revenda).
+ *   teste: ibsCbsProvision.integration.test.ts › "lacuna #826-2: unidade com receita em outra conta (binding ativo) ⇒ debita as contas dos papéis receita-serviço / receita-revenda, não 3.1/3.3"
  */
 import type { CompanyFiscalProfile, ConsumptionTaxAssessment, Prisma } from 'generated/prisma';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
@@ -87,6 +89,11 @@ export interface IbsCbsConfirmView {
   reconfirmar: string[];
 }
 
+/** Lacuna #826-2: códigos das contas dos papéis `receita-serviço` / `receita-revenda` do binding ativo da unidade (null = sem binding). */
+export interface RevenueAccountsPort {
+  contasDeReceita(scope: AccountingScope): Promise<{ servico: string | null; revenda: string | null }>;
+}
+
 interface Calculo {
   perfil: CompanyFiscalProfile;
   resultado: ResultadoIbsCbs;
@@ -106,6 +113,7 @@ export class IbsCbsAssessmentService {
     private readonly fiscalProfileRepo: Pick<IFiscalProfileRepository, 'findByScope'>,
     private readonly accountRepo: Pick<IAccountRepository, 'findById'>,
     private readonly postingService: Pick<PostingService, 'postEntry' | 'reverseEntry' | 'findEntryBySource'>,
+    private readonly revenueAccounts: RevenueAccountsPort,
   ) {}
 
   /** Item 9 — calcula e não persiste. */
@@ -238,7 +246,7 @@ export class IbsCbsAssessmentService {
 
   /**
    * Item 12: (1) estorna a reclassificação viva das SUPERSEDED do mesmo (PJ, ano, mês, tributo) — nunca duas vivas;
-   * (2) pendente ⇒ reaproveita o lançamento achado pela fonte (crash entre post e CAS) ou posta D 3.1 / D 3.3 / C a recolher
+   * (2) pendente ⇒ reaproveita o lançamento achado pela fonte (crash entre post e CAS) ou posta D receita-serviço / D receita-revenda (binding; sem binding 3.1 / 3.3) / C a recolher
    * pelas linhas RECLASSIFICACAO_* da memória (soma = `debitosCents`) no último dia do mês; (3) CAS do `provisaoEntryId`.
    * Débito 0 ⇒ nada a reclassificar.
    */
@@ -263,9 +271,10 @@ export class IbsCbsAssessmentService {
       if (servico + revenda !== row.debitosCents) {
         throw new ValidationError(`apuração '${row.id}': reclassificação (${servico} + ${revenda}) difere dos débitos (${row.debitosCents}).`);
       }
+      const receita = await this.revenueAccounts.contasDeReceita(s);
       const lines = [
-        ...(servico !== 0n ? [{ accountCode: SERVICO_ACCOUNT_CODE, debitCents: Number(servico), creditCents: 0 }] : []),
-        ...(revenda !== 0n ? [{ accountCode: REVENDA_ACCOUNT_CODE, debitCents: Number(revenda), creditCents: 0 }] : []),
+        ...(servico !== 0n ? [{ accountCode: receita.servico ?? SERVICO_ACCOUNT_CODE, debitCents: Number(servico), creditCents: 0 }] : []),
+        ...(revenda !== 0n ? [{ accountCode: receita.revenda ?? REVENDA_ACCOUNT_CODE, debitCents: Number(revenda), creditCents: 0 }] : []),
         { accountCode: recolher, debitCents: 0, creditCents: Number(row.debitosCents) },
       ];
       entry = await this.postingService.postEntry(s, {
