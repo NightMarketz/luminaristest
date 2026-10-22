@@ -113,7 +113,8 @@ export class LuminarisAgentService {
      * Handles a tool call from the LLM.
      */
     async handleToolCall(user: UserContext, functionName: string, args: Record<string, unknown>): Promise<unknown> {
-        logger.info(`Agent Tool Call: ${functionName}`, { userId: user.userId, args });
+        // Só as chaves: os valores de `args.data` são dados de registro (PII).
+        logger.info(`Agent Tool Call: ${functionName}`, { userId: user.userId, argKeys: Object.keys(args) });
 
         switch (functionName) {
             case 'list_my_tables': {

@@ -69,8 +69,8 @@ describe('#2 — agente com memória entre turnos', () => {
     const { service, openai, messages } = makeChatService();
     messages.getMessagesByInstance.mockResolvedValue({
       messages: [
-        { id: 'm1', role: 'USER', content: 'Meu cliente se chama Joana', createdAt: new Date() },
-        { id: 'm2', role: 'ASSISTANT', content: 'Anotado, Joana.', createdAt: new Date() },
+        { id: 'm1', role: 'user', content: 'Meu cliente se chama Joana', createdAt: new Date() },
+        { id: 'm2', role: 'assistant', content: 'Anotado, Joana.', createdAt: new Date() },
       ],
       total: 2,
     });

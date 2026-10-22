@@ -11,6 +11,8 @@ import { ChatHeader } from './ChatHeader';
 import { ChatMessageList } from './ChatMessageList';
 import { ChatMessageInput } from './ChatMessageInput';
 import { DocumentSelector, DocumentOption } from './DocumentSelector';
+import { CommandConfirmationModal } from '../../generic-chat/components/CommandConfirmationModal';
+import type { ChatProposal } from '../types/chat.types';
 
 interface DocumentChatWidgetProps {
   id: string;
@@ -40,6 +42,7 @@ function DocumentChatWidget({
 
   const [unifiedError, setUnifiedError] = useState<string | null>(null);
   const [selectedDocuments, setSelectedDocuments] = useState<DocumentOption[]>([]);
+  const [proposalToConfirm, setProposalToConfirm] = useState<ChatProposal | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Refs para estabilizar callbacks
@@ -112,6 +115,21 @@ function DocumentChatWidget({
     inputRef,
     selectedDocumentIds: selectedDocuments.map(doc => doc.id),
   });
+
+  // Resposta ACTION_PROPOSAL abre o modal de confirmação (mesmo fluxo do GenericChatWidget).
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === 'assistant' && lastMessage.type === 'ACTION_PROPOSAL' && lastMessage.proposal) {
+      setProposalToConfirm(lastMessage.proposal);
+    }
+  }, [messages]);
+
+  const handleConfirmProposal = useCallback(async function confirmProposal() {
+    if (!proposalToConfirm) return;
+    const proposalId = proposalToConfirm.id;
+    setProposalToConfirm(null);
+    await handleSendMessage('', proposalId);
+  }, [proposalToConfirm, handleSendMessage]);
 
   // Hook para o campo de entrada de texto
   const {
@@ -208,6 +226,15 @@ function DocumentChatWidget({
           documentSelector={
             <DocumentSelector onSelectionChange={handleDocumentSelectionChange} />
           }
+        />
+      )}
+
+      {proposalToConfirm && (
+        <CommandConfirmationModal
+          isOpen={!!proposalToConfirm}
+          proposal={proposalToConfirm}
+          onClose={() => setProposalToConfirm(null)}
+          onConfirm={handleConfirmProposal}
         />
       )}
 
