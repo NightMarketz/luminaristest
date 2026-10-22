@@ -14,6 +14,7 @@ import type { IProductDestinationDefaultRepository } from '../repositories/IProd
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { Payable } from 'generated/prisma';
+import { TABELA_USO_CONSUMO, creditoIbsCbsEntrada, listaUsoConsumoDe, type CreditoIbsCbsEntrada } from '../models/ibsCbsCredito';
 
 /**
  * NfeImportService — fiscal NF-e de COMPRA (BE-INCR-NFE / A2). Integration service (Contract §2.1 / T10):
@@ -98,7 +99,8 @@ export class NfeImportService {
     }
 
     // Parse (PURE) — rejects loud on cStat∉{100,150}, mod≠55, homologação, DTD/XXE, chave mismatch (D5).
-    const legais = await this.legalParams.fotografia(TABELAS_LEGAIS_NFE);
+    // IBS-CBS-2027 PR-3 (item 15): + a lista de uso/consumo pessoal (art. 57).
+    const legais = await this.legalParams.fotografia([...TABELAS_LEGAIS_NFE, TABELA_USO_CONSUMO]);
     const nfe = parseNfe(xml, legais);
 
     // Counterparty D6 — NEVER auto-create the emitente. If the operator confirmed a counterpartyId,
@@ -122,8 +124,17 @@ export class NfeImportService {
     // ITEM-DESTINATION PR-2 (item 9, F-ID-2 a): UMA query de defaults por unidade + productRefs mapeados.
     const defaults = await this.productDestinationDefaults.findManyByProductRefs(scope, mappedProductRefs(dto.itemMappings));
     const resolved = resolveDestinations(costed, mappingByCProd, defaultByProductRefFrom(defaults), cfopsImobilizadoDe(legais, nfe.ide.dhEmiDate));
-    const custo = acquisitionCost(nfe, costed, regime, resolved.byNItem, legais);
-    const custoTotalCents = custo.custoBrutoCents;
+    // IBS-CBS-2027 PR-3 (itens 14–15; dono 21/10 "razão completo"): no regime regular, desde 2027, o IBS/CBS destacado
+    // (por fora do vNF) entra no que se deve ao fornecedor — o creditável como crédito a recuperar PENDENTE (art. 47), o de
+    // uso/consumo pessoal (art. 57) como custo do próprio item.
+    const creditoIbsCbs = creditoIbsCbsEntrada({
+      dataEmissao: nfe.ide.dhEmiDate,
+      regimeRegular: regime.regimeTributario !== 'SIMPLES',
+      itens: costed,
+      lista: listaUsoConsumoDe(legais),
+    });
+    const custo = this.incorporarIbsCbsNaoCreditavel(acquisitionCost(nfe, costed, regime, resolved.byNItem, legais), creditoIbsCbs);
+    const custoTotalCents = custo.custoBrutoCents + creditoIbsCbs.ibsCents + creditoIbsCbs.cbsCents;
     if (custoTotalCents <= 0) {
       throw new ValidationError('NF-e de compra com custo de aquisição não positivo — rejeitada.');
     }
@@ -132,7 +143,12 @@ export class NfeImportService {
         `NF-e de compra excede o teto de centavos suportado (${custoTotalCents} > ${MAX_CENTS}).`,
       );
     }
-    const recoverableTaxLines = this.recoverableLines(custo, regime);
+    const recoverableTaxLines = [...this.recoverableLines(custo, regime), ...this.ibsCbsCreditLines(creditoIbsCbs, regime)];
+    const ibsCbsWarnings = [...creditoIbsCbs.avisos];
+    const vNFTot = nfe.totais.ibsCbs?.vNFTotCents ?? null;
+    if (recoverableTaxLines.some((l) => 'tributo' in l) && vNFTot !== null && BigInt(custoTotalCents) !== vNFTot) {
+      ibsCbsWarnings.push(`custo com IBS/CBS (${custoTotalCents}) ≠ vNFTot (${vNFTot}) — confira a nota (IS ou outra parcela fora da fórmula?)`);
+    }
     const { inventoryItems, fixedAssetItems, insumoItems, ignoredItems } = this.allocate(
       nfe.itens,
       custo,
@@ -172,7 +188,7 @@ export class NfeImportService {
     // externalRef HUMANO). Um evento em 2ª tx poderia falhar DEPOIS do dinheiro commitar → `Payable`
     // sem evento e sem reemissão possível (bate no @@unique no reimport). O que se perde é só o
     // `itemCount` informativo, recuperável do próprio `Payable`.
-    return { payable, ignoredItems, destinacoes: resolved.destinacoes, warnings: [...resolved.warnings, ...custo.warnings] };
+    return { payable, ignoredItems, destinacoes: resolved.destinacoes, warnings: [...resolved.warnings, ...custo.warnings, ...ibsCbsWarnings] };
   }
 
   // ---------------------------------------------------------------------------
@@ -217,6 +233,45 @@ export class NfeImportService {
       });
     }
     return lines;
+  }
+
+  /**
+   * IBS-CBS-2027 PR-3 (item 14): uma linha por tributo com crédito ou uso/consumo; crédito > 0 sem a conta de IBS/CBS a
+   * recuperar no perfil ⇒ 400 nomeado (o código é do contador, molde X6 F-X6-8 a). A linha nasce PENDENTE (item 16).
+   */
+  private ibsCbsCreditLines(
+    credito: CreditoIbsCbsEntrada,
+    regime: { ibsRecuperarAccountId: string | null; cbsRecuperarAccountId: string | null },
+  ): NonNullable<CreatePayableInput['recoverableTaxLines']> {
+    const lines: NonNullable<CreatePayableInput['recoverableTaxLines']> = [];
+    const porTributo = [
+      { tributo: 'IBS' as const, cents: credito.ibsCents, uso: credito.usoConsumo.reduce((a, u) => a + u.ibsCents, 0), accountId: regime.ibsRecuperarAccountId, campo: 'ibsRecuperarAccountId' },
+      { tributo: 'CBS' as const, cents: credito.cbsCents, uso: credito.usoConsumo.reduce((a, u) => a + u.cbsCents, 0), accountId: regime.cbsRecuperarAccountId, campo: 'cbsRecuperarAccountId' },
+    ];
+    for (const t of porTributo) {
+      if (t.cents === 0 && t.uso === 0) continue;
+      if (t.cents > 0 && !t.accountId) {
+        throw new ValidationError(
+          `recoverable_account_not_configured: a nota gera ${t.cents} centavos de crédito de ${t.tributo} e o perfil fiscal não tem ${t.campo} (PUT /api/accounting/fiscal-profile — código é do contador).`,
+        );
+      }
+      lines.push({ tributo: t.tributo, accountId: t.cents > 0 ? t.accountId : null, amountCents: t.cents, status: 'PENDENTE', sourceDocumentId: null, ...(t.uso > 0 ? { usoConsumoCents: t.uso } : {}) });
+    }
+    return lines;
+  }
+
+  /** Item 15: o IBS/CBS do item de uso/consumo pessoal é custo do PRÓPRIO item (bruto e líquido), e entra nos totais. */
+  private incorporarIbsCbsNaoCreditavel(custo: AcquisitionCost, credito: CreditoIbsCbsEntrada): AcquisitionCost {
+    if (credito.naoCreditavelPorItem.size === 0) return custo;
+    let total = 0;
+    let insumo = 0;
+    const itens = custo.itens.map((it) => {
+      const extra = credito.naoCreditavelPorItem.get(it.nItem) ?? 0;
+      total += extra;
+      if (it.destination === 'INSUMO_SERVICO') insumo += extra;
+      return extra === 0 ? it : { ...it, custoBrutoCents: it.custoBrutoCents + extra, custoLiquidoCents: it.custoLiquidoCents + extra };
+    });
+    return { ...custo, custoBrutoCents: custo.custoBrutoCents + total, custoEstoqueCents: custo.custoEstoqueCents + total, custoInsumoCents: custo.custoInsumoCents + insumo, itens };
   }
 
   /**

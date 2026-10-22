@@ -195,6 +195,17 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
     valor: 'int',
     checar: (l) => so(/^\d{4}-T0[1-4]$/.test(l.chave) && semDisc(l) && (l.valorInt ?? 0) > 0, 'chave = trimestre YYYY-T01..T04; valorInt = taxa mensal (0,7742% = 7742) > 0'),
   },
+  // IBS-CBS-2027 PR-3 (item 15; dono 21/10): lista de uso ou consumo pessoal (LC 214 art. 57) — chave = prefixo de NCM.
+  IBS_CBS_USO_CONSUMO: {
+    valor: 'texto',
+    checar: (l) => so(/^\d{2,8}$/.test(l.chave) && semDisc(l), 'chave = prefixo de NCM (2 a 8 dígitos); valorTexto = categoria do art. 57'),
+  },
+  // IBS-CBS-2027 PR-3 (dono 22/10): taxa de referência PROVISÓRIA da CBS enquanto a Res. SF não sai (art. 349 I) — só a prévia
+  // a lê; a confirmação continua bloqueada. chave CBS, discriminador ALIQUOTA, valorInt em bp.
+  IBS_CBS_PROVISORIA: {
+    valor: 'int',
+    checar: (l) => so(l.chave === 'CBS' && l.discriminador === 'ALIQUOTA' && bp(l) && (l.valorInt ?? 0) > 0, 'chave CBS, discriminador ALIQUOTA; valorInt em bp (1..10000)'),
+  },
 };
 
 /** Erro de formato da linha da tabela (ou `null`). Tabela sem regra aqui = o serviço aplica a do PR-1. */

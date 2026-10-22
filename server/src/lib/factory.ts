@@ -170,6 +170,7 @@ import { SimplesCreditoIncobravelRepository } from '../features/accounting/repos
 import type { ISimplesCreditoIncobravelRepository } from '../features/accounting/repositories/ISimplesCreditoIncobravelRepository';
 import { PisCofinsAssessmentService } from '../features/accounting/services/PisCofinsAssessmentService';
 import { IbsCbsAssessmentService, type RevenueAccountsPort } from '../features/accounting/services/IbsCbsAssessmentService';
+import { IbsCbsPacoteRepository } from '../features/accounting/repositories/IbsCbsPacoteRepository';
 import { AccountingDeliveryService } from '../features/accounting/services/AccountingDeliveryService';
 import { AccountingReviewService } from '../features/accounting/services/AccountingReviewService';
 import { InventoryService } from '../features/accounting/services/InventoryService';
@@ -1891,6 +1892,8 @@ export class ApplicationFactory {
         this.repositories.account,
         postingService, // item 12: reclassificação em 2 commits
         buildIbsCbsRevenueAccounts(new AccountingBindingRepository()), // lacuna #826-2: papéis de receita do binding
+        this.repositories.payable, // PR-3 item 16: créditos de IBS/CBS das notas de entrada
+        new IbsCbsPacoteRepository(), // PR-3 itens 17–18: pacote pré-pago (razão + subrazão do saldo)
       ),
       // BE-INCR-LEGAL-PARAMS PR-4 (item 10): recálculo das apurações quando uma linha de lei é publicada/revogada.
       taxAssessmentRecalc: new TaxAssessmentRecalcService(

@@ -28,11 +28,17 @@ describe('IbsCbsAssessmentDto', () => {
     expect(IbsCbsAssessmentConfirmSchema.safeParse({ ...base, expectedSupersedesId: 'x' }).success).toBe(true);
   });
 
-  it('memória: códigos do enum; _n só em DEBITO_DOC/DIVERGENCIA_DOC', () => {
+  it('memória: códigos do enum; _n só nas linhas por documento/nota/pagamento/consumo', () => {
     const l = (codigo: string) => [{ codigo, descricao: '', valorCents: '0', fonte: '' }];
-    for (const ok of ['DEBITO_DOC_3', 'DIVERGENCIA_DOC_1', 'RECLASSIFICACAO_SERVICO', 'CONFERENCIA_SEM_BASE', 'CREDITOS_NAO_IMPLEMENTADOS_PR3', 'SALDO']) {
+    for (const ok of [
+      'DEBITO_DOC_3', 'DIVERGENCIA_DOC_1', 'RECLASSIFICACAO_SERVICO', 'CONFERENCIA_SEM_BASE', 'SALDO',
+      // PR-3 (itens 16–18)
+      'CREDITO_ENTRADA_2', 'CREDITO_NAO_APROPRIADO_1', 'USO_CONSUMO_PESSOAL_1', 'ANTECIPACAO_ART10_4', 'ANTECIPACAO_SEM_REDUCAO',
+      'ACERTO_ART10_1', 'PAGAMENTO_INDEVIDO_ART38_1',
+    ]) {
       expect(MemoriaIbsCbsSchema.safeParse(l(ok)).success).toBe(true);
     }
-    for (const ko of ['SALDO_1', 'DEBITO', 'QUALQUER']) expect(MemoriaIbsCbsSchema.safeParse(l(ko)).success).toBe(false);
+    // PR-3: CREDITOS_NAO_IMPLEMENTADOS_PR3 sai do enum (BRIEF §4.2).
+    for (const ko of ['SALDO_1', 'DEBITO', 'QUALQUER', 'CREDITOS_NAO_IMPLEMENTADOS_PR3', 'ANTECIPACAO_SEM_REDUCAO_1']) expect(MemoriaIbsCbsSchema.safeParse(l(ko)).success).toBe(false);
   });
 });

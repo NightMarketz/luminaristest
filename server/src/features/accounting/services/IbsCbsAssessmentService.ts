@@ -4,10 +4,14 @@
  * atomicUntil: postEntry
  *   commit 1 — razão: reverseEntry da reclassificação viva de cada linha SUPERSEDED do (PJ, ano, mês, tributo) e depois
  *              postEntry(sourceType='ibs_cbs_assessment', sourceId=<id da apuração>) no último dia do mês: D receita de
- *              serviços (3.1) / D receita de revenda (3.3) / C IBS|CBS a recolher do perfil fiscal = débitos (BRIEF item 12,
- *              F-IBS-8 c, F-IBS-14 a); gate de período dentro da tx do postEntry; a reclassificação é achada pela FONTE
+ *              serviços (3.1) / D receita de revenda (3.3) / C IBS|CBS a recolher do perfil fiscal = débitos dos documentos
+ *              (BRIEF item 12, F-IBS-8 c, F-IBS-14 a) e, no MESMO lançamento, a compensação dos créditos APROPRIADO do mês:
+ *              D a recolher / C IBS|CBS a recuperar (PR-3 item 16; dono 21/10 "razão completo") — o a recolher sai líquido;
+ *              a antecipação do pacote (itens 17–18) fica só na apuração (V7); gate de período dentro da tx do postEntry;
+ *              a reclassificação é achada pela FONTE
  *              teste: ibsCbsProvision.integration.test.ts › "item 12 (commit 1 — razão): D receita de serviços + D receita de revenda / C a recolher = débitos; período fechado ⇒ a confirmação fica, pendente, nenhum lançamento"
  *              teste: ibsCbsProvision.integration.test.ts › "item 12 (substituição): estorna a reclassificação da substituída e posta a da nova — 1 viva por tributo"
+ *              teste: ibsCbsCredito.integration.test.ts › "item 16 (compensação): crédito APROPRIADO no mês ⇒ D a recolher / C a recuperar no lançamento da apuração; saldo = débitos − créditos"
  *   commit 2 — subrazão: CAS provisaoEntryId `where null`, sem tx de razão
  *              teste: ibsCbsProvision.integration.test.ts › "item 12 (commit 2 — CAS): crash entre o postEntry e o CAS ⇒ pendente; reconcile reaproveita o lançamento (sem 2º)"
  *   reconcile — reconcileIbsCbsProvisao(): read-first, idempotente; fecha "commit 1 ok, commit 2 falhou" e a reclassificação pendente
@@ -33,6 +37,9 @@ import { AUTHORIZED_STATUSES, type IFiscalDocumentRepository } from '../reposito
 import type { IJournalEntryRepository } from '../repositories/IJournalEntryRepository';
 import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRepository';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
+import type { IPayableRepository } from '../repositories/IPayableRepository';
+import type { IIbsCbsPacoteRepository } from '../repositories/IIbsCbsPacoteRepository';
+import { antecipacaoIbsCbsMes, CBS_RATE_PENDING_MESSAGE, CBS_RATE_PENDING_SENATE_RES } from '../models/ibsCbsAntecipacao';
 import type { AuditService } from './AuditService';
 import type { PostingService } from './PostingService';
 import { REVENDA_ACCOUNT_CODE, SERVICO_ACCOUNT_CODE } from './receitaBrutaPorAtividade';
@@ -46,7 +53,7 @@ import {
   type IbsCbsAssessmentPreviewInput,
 } from '../dtos/IbsCbsAssessmentDto';
 import { apurarIbsCbsMes, type IbsCbsDocumento, type ResultadoIbsCbs } from '../models/ibsCbsCompetencia';
-import { tabelaIbsCbsDe } from '../models/ibsCbsParams';
+import { tabelaIbsCbsDe, tabelaProvisoriaCbsDe } from '../models/ibsCbsParams';
 import { fimDoMes } from '../models/taxAssessmentCalcAnual';
 import { mesBounds } from '../models/Lalur.model';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
@@ -61,6 +68,9 @@ export const IBS_CBS_PROVISION_SOURCE_TYPE = 'ibs_cbs_assessment';
 export const IBS_CBS_SIMPLES_MEI = 'IBS/CBS de optante pelo Simples Nacional/MEI é recolhido no DAS — apuração do regime regular não se aplica (LC 214/2025 art. 41 § 1º; ADR-INCR-IBS-CBS-2027 D1)';
 
 export interface IbsCbsPreviewView {
+  /** `CALCULATED_PROVISIONAL` quando alguma alíquota veio da tabela provisória (só na prévia). */
+  status: 'CALCULATED' | 'CALCULATED_PROVISIONAL';
+  warnings: { code: string; message: string }[];
   anoCalendario: number;
   mes: number;
   tributo: string;
@@ -71,7 +81,7 @@ export interface IbsCbsPreviewView {
   memoria: MemoriaLinha[];
 }
 
-export interface IbsCbsAssessmentView extends Omit<IbsCbsPreviewView, 'documentosSemGrupo'> {
+export interface IbsCbsAssessmentView extends Omit<IbsCbsPreviewView, 'documentosSemGrupo' | 'status' | 'warnings'> {
   id: string;
   unitId: string;
   regime: string;
@@ -98,6 +108,8 @@ interface Calculo {
   perfil: CompanyFiscalProfile;
   resultado: ResultadoIbsCbs;
   parametros: ParametrosUsados;
+  /** A antecipação usou a taxa provisória da CBS (só possível na prévia). */
+  provisoria: boolean;
 }
 
 export class IbsCbsAssessmentService {
@@ -114,13 +126,16 @@ export class IbsCbsAssessmentService {
     private readonly accountRepo: Pick<IAccountRepository, 'findById'>,
     private readonly postingService: Pick<PostingService, 'postEntry' | 'reverseEntry' | 'findEntryBySource'>,
     private readonly revenueAccounts: RevenueAccountsPort,
+    /** PR-3 (item 16): créditos das notas de entrada; (itens 17–18): pacote pré-pago (razão + subrazão do saldo). */
+    private readonly payableRepo: Pick<IPayableRepository, 'findIbsCbsCredits'>,
+    private readonly pacoteRepo: IIbsCbsPacoteRepository,
   ) {}
 
   /** Item 9 — calcula e não persiste. */
   async preview(scope: AccountingScope, input: IbsCbsAssessmentPreviewInput): Promise<IbsCbsPreviewView> {
     this.assertRead(scope);
-    const c = await this.calcular(scope, input);
-    return toPreview(input, c.resultado);
+    const c = await this.calcular(scope, input, { taxaProvisoria: true });
+    return toPreview(input, c.resultado, c.provisoria);
   }
 
   /** Item 13 — GET por ano (todas as linhas vivas, CONFIRMED e SUPERSEDED). */
@@ -132,7 +147,7 @@ export class IbsCbsAssessmentService {
     return (await this.repo.findMany(scope.ownerUserId, q.anoCalendario)).map(toView);
   }
 
-  /** Item 9 — confirmação (commit único; o item 12 fica fora até o #794). */
+  /** Item 9 — confirmação (commit único); a reclassificação do item 12 vem depois, em 2 commits. */
   async confirm(scope: AccountingScope, input: IbsCbsAssessmentConfirmInput): Promise<IbsCbsConfirmView> {
     this.assertManage(scope);
     const c = await this.calcular(scope, input);
@@ -247,13 +262,17 @@ export class IbsCbsAssessmentService {
   /**
    * Item 12: (1) estorna a reclassificação viva das SUPERSEDED do mesmo (PJ, ano, mês, tributo) — nunca duas vivas;
    * (2) pendente ⇒ reaproveita o lançamento achado pela fonte (crash entre post e CAS) ou posta D receita-serviço / D receita-revenda (binding; sem binding 3.1 / 3.3) / C a recolher
-   * pelas linhas RECLASSIFICACAO_* da memória (soma = `debitosCents`) no último dia do mês; (3) CAS do `provisaoEntryId`.
-   * Débito 0 ⇒ nada a reclassificar.
+   * pelas linhas RECLASSIFICACAO_* da memória (soma = Σ DEBITO_DOC_n) e, com crédito APROPRIADO (PR-3 item 16), D a recolher
+   * / C a recuperar = `creditosCents` — o a recolher sai líquido — no último dia do mês; (3) CAS do `provisaoEntryId`.
+   * Documentos 0 e créditos 0 ⇒ nada a lançar.
    */
   private async provisionar(scope: AccountingScope, row: ConsumptionTaxAssessment): Promise<ConsumptionTaxAssessment> {
     const owner = scope.ownerUserId;
     for (const sub of await this.repo.findSuperseded(owner, row.anoCalendario, row.mes, row.tributo)) await this.estornarViva(scope, sub);
-    if (row.provisaoEntryId || row.debitosCents === 0n) return row;
+    const memoriaRow = MemoriaIbsCbsSchema.parse(row.memoria);
+    // PR-3: a reclassificação tira da receita só o débito dos DOCUMENTOS — a antecipação do pacote não muda o razão (V7).
+    const documentos = memoriaRow.filter((l) => /^DEBITO_DOC_\d+$/.test(l.codigo)).reduce((a, l) => a + BigInt(l.valorCents), 0n);
+    if (row.provisaoEntryId || (documentos === 0n && row.creditosCents === 0n)) return row;
 
     const s: AccountingScope = { ...scope, unitId: row.unitId };
     let entry = await this.postingService.findEntryBySource(s, IBS_CBS_PROVISION_SOURCE_TYPE, row.id);
@@ -264,18 +283,24 @@ export class IbsCbsAssessmentService {
       const fp = await this.fiscalProfileRepo.findByScope(s);
       const rotulo = `${row.tributo} a recolher`;
       const recolher = await this.contaDoPerfil(s, row.tributo === 'IBS' ? fp?.ibsRecolherAccountId : fp?.cbsRecolherAccountId, rotulo);
-      const memoria = MemoriaIbsCbsSchema.parse(row.memoria);
-      const valor = (codigo: string) => BigInt(memoria.find((l) => l.codigo === codigo)?.valorCents ?? '0');
+      const valor = (codigo: string) => BigInt(memoriaRow.find((l) => l.codigo === codigo)?.valorCents ?? '0');
       const servico = valor('RECLASSIFICACAO_SERVICO');
       const revenda = valor('RECLASSIFICACAO_REVENDA');
-      if (servico + revenda !== row.debitosCents) {
-        throw new ValidationError(`apuração '${row.id}': reclassificação (${servico} + ${revenda}) difere dos débitos (${row.debitosCents}).`);
+      if (servico + revenda !== documentos) {
+        throw new ValidationError(`apuração '${row.id}': reclassificação (${servico} + ${revenda}) difere dos débitos dos documentos (${documentos}).`);
       }
+      const creditos = row.creditosCents;
+      const recuperar = creditos > 0n
+        ? await this.contaDoPerfil(s, row.tributo === 'IBS' ? fp?.ibsRecuperarAccountId : fp?.cbsRecuperarAccountId, `${row.tributo} a recuperar`)
+        : null;
       const receita = await this.revenueAccounts.contasDeReceita(s);
+      const recolherLiquido = documentos - creditos; // < 0 ⇒ saldo credor: o a recolher fica devedor
       const lines = [
         ...(servico !== 0n ? [{ accountCode: receita.servico ?? SERVICO_ACCOUNT_CODE, debitCents: Number(servico), creditCents: 0 }] : []),
         ...(revenda !== 0n ? [{ accountCode: receita.revenda ?? REVENDA_ACCOUNT_CODE, debitCents: Number(revenda), creditCents: 0 }] : []),
-        { accountCode: recolher, debitCents: 0, creditCents: Number(row.debitosCents) },
+        ...(recolherLiquido > 0n ? [{ accountCode: recolher, debitCents: 0, creditCents: Number(recolherLiquido) }] : []),
+        ...(recolherLiquido < 0n ? [{ accountCode: recolher, debitCents: Number(-recolherLiquido), creditCents: 0 }] : []),
+        ...(recuperar ? [{ accountCode: recuperar, debitCents: 0, creditCents: Number(creditos) }] : []),
       ];
       entry = await this.postingService.postEntry(s, {
         unitId: s.unitId,
@@ -312,7 +337,7 @@ export class IbsCbsAssessmentService {
   }
 
   /** Lê perfil da PJ, documentos e vendas do mês e chama a função pura. Recusas do item 10 (400). */
-  private async calcular(scope: AccountingScope, input: IbsCbsAssessmentPreviewInput): Promise<Calculo> {
+  private async calcular(scope: AccountingScope, input: IbsCbsAssessmentPreviewInput, opts: { taxaProvisoria?: boolean } = {}): Promise<Calculo> {
     const { anoCalendario: ano, mes, tributo } = input;
     assertAno(ano);
     const perfil = await this.companyProfileRepo.findByYear(scope, ano);
@@ -321,7 +346,8 @@ export class IbsCbsAssessmentService {
 
     const de = `${ano}-${mm(mes)}-01`;
     const ate = fimDoMes(ano, mes);
-    const linhasLegais = await this.legalParams.fotografia(['IBS_CBS']);
+    // Dono 22/10: a prévia também lê a taxa PROVISÓRIA da CBS; a confirmação não (a fotografia nem a carrega).
+    const linhasLegais = await this.legalParams.fotografia(opts.taxaProvisoria ? ['IBS_CBS', 'IBS_CBS_PROVISORIA'] : ['IBS_CBS']);
     const parametros = parametrosUsados(linhasLegais, de, ate);
     const tabela = tabelaIbsCbsDe(linhasLegais);
 
@@ -341,8 +367,13 @@ export class IbsCbsAssessmentService {
     const comDocumento = new Set(await this.fiscalDocumentRepo.saleIdsWithAuthorizedDocument(scope, liquidadas));
     const vendasSemDocumento = liquidadas.filter((s) => !comDocumento.has(s));
 
-    const resultado = apurarIbsCbsMes({ ano, mes, tributo, tabela, documentos, vendasSemDocumento });
-    return { perfil, resultado, parametros };
+    // PR-3 (item 16): créditos das notas até o fim do mês; (itens 17–18) antecipação e acerto do pacote — 400 nomeado se
+    // houver pacote e faltar a alíquota (F-IBS-11 a; CBS 2027 DRAFT).
+    const creditos = await this.payableRepo.findIbsCbsCredits(scope, ate);
+    const pacote = await this.pacoteRepo.dadosDoMes(scope, de, ate);
+    const antecipacao = antecipacaoIbsCbsMes({ ano, mes, tributo, tabela, ...pacote, ...(opts.taxaProvisoria ? { tabelaProvisoria: tabelaProvisoriaCbsDe(linhasLegais) } : {}) });
+    const resultado = apurarIbsCbsMes({ ano, mes, tributo, tabela, documentos, vendasSemDocumento, creditos, antecipacao });
+    return { perfil, resultado, parametros, provisoria: antecipacao.provisoria };
   }
 
   private assertRead(scope: AccountingScope): void {
@@ -364,8 +395,10 @@ function assertRegime(regime: string): void {
   if (regime === 'SIMPLES' || regime === 'MEI') throw new ValidationError(IBS_CBS_SIMPLES_MEI, null, 'IBS_CBS_SIMPLES_MEI');
 }
 
-function toPreview(input: IbsCbsAssessmentPreviewInput, r: ResultadoIbsCbs): IbsCbsPreviewView {
+function toPreview(input: IbsCbsAssessmentPreviewInput, r: ResultadoIbsCbs, provisoria: boolean): IbsCbsPreviewView {
   return {
+    status: provisoria ? 'CALCULATED_PROVISIONAL' : 'CALCULATED',
+    warnings: provisoria ? [{ code: CBS_RATE_PENDING_SENATE_RES, message: CBS_RATE_PENDING_MESSAGE }] : [],
     anoCalendario: input.anoCalendario,
     mes: input.mes,
     tributo: r.tributo,
