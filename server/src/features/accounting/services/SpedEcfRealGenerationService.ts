@@ -23,6 +23,7 @@ import { mesesEmAtividade } from '../models/taxAssessmentCalcAnual';
 import { formaEfetiva } from './CompanyFiscalProfileService';
 import { LalurService } from './LalurService';
 import { toMagnitude } from './lalurParteBBalances';
+import { montarY600, type Y600PartnerReader } from './y600FromPartners';
 import {
   buildEcfRealFile,
   type EcfRealFileInput,
@@ -133,6 +134,8 @@ export class SpedEcfRealGenerationService {
     private readonly assessments: EcfRealAssessmentReader,
     /** BE-INCR-LEGAL-PARAMS PR-2 (F-LP-4 a): fotografia `LEIAUTE_SPED` (0000.COD_VER do ano). */
     private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
+    /** BE-INCR-ECF-Y600 item 13: vigências do cadastro de sócios para o Y600 (mesmo `montarY600` do Presumido). */
+    private readonly partners: Y600PartnerReader,
   ) {}
 
   /**
@@ -457,6 +460,7 @@ export class SpedEcfRealGenerationService {
       movements,
       balances,
       codVer,
+      y600: await montarY600(this.partners, scope, year, dto.socios, dto.dirigentes),
     };
 
     // BRIEF 3C item 17: `spedLine` lança Error puro em campo com '|' (dado pré-existente ao DTO que hoje recusa).

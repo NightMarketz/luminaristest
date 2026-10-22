@@ -13,7 +13,7 @@
  * afirma que o DTO Real aceita exatamente o que eles aceitam — não redeclara os campos.
  */
 import { SpedEcfRealRequestSchema } from '../SpedEcfRealDto';
-import { DeclarantSchema, SignerSchema } from '../SpedEcfDto';
+import { DeclarantSchema, SignerSchema, SpedEcfRequestSchema } from '../SpedEcfDto';
 
 const declarant = {
   cnpj: '12345678000199',
@@ -50,7 +50,8 @@ const socio = {
 /** `formaTribPer` = 'RRRR' (Real nos 4 trimestres, alfabeto pp.71-72); `formaTrib` default '1' é o ratificado. */
 const fiscal = { formaTrib: '1', formaTribPer: 'RRRR' };
 
-const valid = { unitId: 'unit-1', year: 2026, declarant, fiscal, signers: [contador, socio] };
+// BE-INCR-ECF-Y600 item 13: `socios` é obrigatório também no Real.
+const valid = { unitId: 'unit-1', year: 2026, declarant, fiscal, signers: [contador, socio], socios: [] };
 
 const failsOn = (payload: unknown, pathHead: string) => {
   const parsed = SpedEcfRealRequestSchema.safeParse(payload);
@@ -197,5 +198,29 @@ describe('SpedEcfRealRequestSchema — CNPJ alfanumérico herdado do DeclarantSc
   it('aceita CNPJ alfanumérico MAIÚSCULO e rejeita minúscula (mesmo objeto de domínio da ECF Presumido)', () => {
     expect(SpedEcfRealRequestSchema.safeParse({ ...valid, declarant: { ...declarant, cnpj: '12ABC34501DE35' } }).success).toBe(true);
     expect(SpedEcfRealRequestSchema.safeParse({ ...valid, declarant: { ...declarant, cnpj: '12abc34501de35' } }).success).toBe(false);
+  });
+});
+
+// ─── BE-INCR-ECF-Y600 item 7 (F-Y600-1 → a): o Real reusa os schemas e o refine do Y600 do Presumido ────────
+describe('SpedEcfRealRequestSchema — Y600 pelo ponto único do Presumido (item 7)', () => {
+  const zeros = { remTrabCents: 0, lucDivCents: 0, jurCapCents: 0, demRendCents: 0, irRetCents: 0 };
+  const socioY600 = { partnerId: 'p-1', qualif: '02', valores: zeros };
+  const dirigente = { nome: 'Diretor', cpf: '52998224725', qualif: '11', dtAltSoc: '2024-01-01', dtFimSoc: '2026-05-31', valores: zeros };
+  const presumido = { unitId: 'unit-1', year: 2026, declarant, signers: [contador, socio] };
+
+  it('aceita e recusa os mesmos socios/dirigentes que o Presumido', () => {
+    const casos: Array<Record<string, unknown>> = [
+      { socios: [socioY600], dirigentes: [dirigente] },
+      { socios: [{ ...socioY600, qualif: '18' }] },
+      { socios: [socioY600, socioY600] },
+      { socios: [], dirigentes: [{ ...dirigente, dtFimSoc: '2025-12-31' }] },
+      { socios: [{ ...socioY600, valores: { ...zeros, irRetCents: undefined } }] },
+      {},
+    ];
+    const resultados = casos.map((c) => [
+      SpedEcfRealRequestSchema.safeParse({ ...valid, socios: undefined, ...c }).success,
+      SpedEcfRequestSchema.safeParse({ ...presumido, ...c }).success,
+    ]);
+    expect(resultados).toEqual([[true, true], [false, false], [false, false], [false, false], [false, false], [false, false]]);
   });
 });

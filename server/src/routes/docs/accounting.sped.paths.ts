@@ -158,7 +158,7 @@
  *           application/json:
  *             schema:
  *               type: object
- *               required: [unitId, year, declarant, signers]
+ *               required: [unitId, year, declarant, signers, socios]
  *               properties:
  *                 unitId: { type: string }
  *                 signerContactIds: { type: array, items: { type: string }, description: 'Via barata (F-CD8-a) - ids de AccountingContact expandidos em signatarios do contador (J930 na ECD, 0930 na ECF) ANTES da validacao; cross-tenant e 404; contato sem telefone e 400 na ECF' }
@@ -167,6 +167,42 @@
  *                 numRec: { type: string, description: 'Obrigatório (40 caracteres) quando retificadora=S — hash do recibo da ECF anterior.' }
  *                 supersedesJobId: { type: string, description: 'Obrigatório quando retificadora=S — id do job ECF EXPORTED sendo retificado.' }
  *                 deadlineJustification: { type: string, description: 'Obrigatória quando o exercício está no limite do prazo de retificação (ano-2, art. 8º §4).' }
+ *                 socios:
+ *                   type: array
+ *                   maxItems: 999
+ *                   description: >-
+ *                     Y600 (BE-INCR-ECF-Y600, L11 of H1) - one ECF complement per partner VALIDITY (partnerId = id of
+ *                     the /accounting/partners row) living in the year. The person (name, CPF/CNPJ, PF/PJ, residence,
+ *                     share, dates) comes from the partners registry; a validity of the year with no complement, an id
+ *                     outside the year, pais incoherent with residence or QUALIF incompatible with person type and
+ *                     residence (REGRA_Y600_QUALIF, p. 574) are 400 (ECF_Y600_*). No occurrence at all (no partner and
+ *                     no dirigente) is 400 ECF_Y600_SEM_SOCIOS; more than 500 current / 499 other occurrences is 400
+ *                     ECF_Y600_LIMITE. The file lists current ones by total paid, then the others by DT_ALT_SOC (p. 570).
+ *                   items:
+ *                     type: object
+ *                     required: [partnerId, qualif, valores]
+ *                     properties:
+ *                       partnerId:          { type: string }
+ *                       qualif:             { type: string, description: '01..17 (18 is refused - REGRA_Y600_QUALIF)' }
+ *                       pais:               { type: string, description: '3-digit Sped country code, only for a non-resident partner (never 105)' }
+ *                       percCapVotBp:       { type: integer, minimum: 0, maximum: 10000, description: 'voting share in basis points; default = the registry share' }
+ *                       representanteLegal: { type: object, required: [cpf, qualif], properties: { cpf: { type: string }, qualif: { type: string, enum: ['01', '02', '03', '04', '05', '06'] } }, description: 'CPF_REP_LEG + QUALIF_REP_LEG, together or none; a PJ partner only takes 01 or 06' }
+ *                       valores:            { type: object, required: [remTrabCents, lucDivCents, jurCapCents, demRendCents, irRetCents], description: 'Y600 fields 13-17 in cents, all required, zero must be explicit (Manual ECF L12 p. 570)' }
+ *                 dirigentes:
+ *                   type: array
+ *                   maxItems: 999
+ *                   description: 'Y600 - officers/board members who are not in the partners registry (default []). Emitted with PAIS 105, PF and 0 percent shares.'
+ *                   items:
+ *                     type: object
+ *                     required: [nome, cpf, qualif, dtAltSoc, valores]
+ *                     properties:
+ *                       nome:               { type: string }
+ *                       cpf:                { type: string, description: '11 digits, DV validated' }
+ *                       qualif:             { type: string, enum: ['10', '11', '12', '13', '14', '15', '16', '17'] }
+ *                       dtAltSoc:           { type: string, format: date }
+ *                       dtFimSoc:           { type: string, format: date, description: 'must fall within the year (REGRA_DATA_FIM_SOC, p. 574)' }
+ *                       representanteLegal: { type: object, required: [cpf, qualif], properties: { cpf: { type: string }, qualif: { type: string, enum: ['01', '02', '03', '04', '05', '06'] } }, description: 'CPF_REP_LEG + QUALIF_REP_LEG, together or none; a PJ partner only takes 01 or 06' }
+ *                       valores:            { type: object, required: [remTrabCents, lucDivCents, jurCapCents, demRendCents, irRetCents], description: 'Y600 fields 13-17 in cents, all required, zero must be explicit (Manual ECF L12 p. 570)' }
  *                 declarant:
  *                   type: object
  *                   required: [cnpj, nome, codNat, cnaeFiscal, endereco, bairro, uf, codMun, cep, email]
@@ -250,7 +286,7 @@
  *           application/json:
  *             schema:
  *               type: object
- *               required: [unitId, year, declarant, fiscal, signers]
+ *               required: [unitId, year, declarant, fiscal, signers, socios]
  *               properties:
  *                 unitId: { type: string }
  *                 signerContactIds: { type: array, items: { type: string }, description: 'Via barata (F-CD8-a) - ids de AccountingContact expandidos em signatarios do contador (J930 na ECD, 0930 na ECF) ANTES da validacao; cross-tenant e 404; contato sem telefone e 400 na ECF' }
@@ -259,6 +295,42 @@
  *                 numRec: { type: string, description: 'Obrigatório (40 caracteres) quando retificadora=S — hash do recibo da ECF anterior.' }
  *                 supersedesJobId: { type: string, description: 'Obrigatório quando retificadora=S — id do job ECF EXPORTED sendo retificado.' }
  *                 deadlineJustification: { type: string, description: 'Obrigatória quando o exercício está no limite do prazo de retificação (ano-2, art. 8º §4).' }
+ *                 socios:
+ *                   type: array
+ *                   maxItems: 999
+ *                   description: >-
+ *                     Y600 (BE-INCR-ECF-Y600, L11 of H1) - one ECF complement per partner VALIDITY (partnerId = id of
+ *                     the /accounting/partners row) living in the year. The person (name, CPF/CNPJ, PF/PJ, residence,
+ *                     share, dates) comes from the partners registry; a validity of the year with no complement, an id
+ *                     outside the year, pais incoherent with residence or QUALIF incompatible with person type and
+ *                     residence (REGRA_Y600_QUALIF, p. 574) are 400 (ECF_Y600_*). No occurrence at all (no partner and
+ *                     no dirigente) is 400 ECF_Y600_SEM_SOCIOS; more than 500 current / 499 other occurrences is 400
+ *                     ECF_Y600_LIMITE. The file lists current ones by total paid, then the others by DT_ALT_SOC (p. 570).
+ *                   items:
+ *                     type: object
+ *                     required: [partnerId, qualif, valores]
+ *                     properties:
+ *                       partnerId:          { type: string }
+ *                       qualif:             { type: string, description: '01..17 (18 is refused - REGRA_Y600_QUALIF)' }
+ *                       pais:               { type: string, description: '3-digit Sped country code, only for a non-resident partner (never 105)' }
+ *                       percCapVotBp:       { type: integer, minimum: 0, maximum: 10000, description: 'voting share in basis points; default = the registry share' }
+ *                       representanteLegal: { type: object, required: [cpf, qualif], properties: { cpf: { type: string }, qualif: { type: string, enum: ['01', '02', '03', '04', '05', '06'] } }, description: 'CPF_REP_LEG + QUALIF_REP_LEG, together or none; a PJ partner only takes 01 or 06' }
+ *                       valores:            { type: object, required: [remTrabCents, lucDivCents, jurCapCents, demRendCents, irRetCents], description: 'Y600 fields 13-17 in cents, all required, zero must be explicit (Manual ECF L12 p. 570)' }
+ *                 dirigentes:
+ *                   type: array
+ *                   maxItems: 999
+ *                   description: 'Y600 - officers/board members who are not in the partners registry (default []). Emitted with PAIS 105, PF and 0 percent shares.'
+ *                   items:
+ *                     type: object
+ *                     required: [nome, cpf, qualif, dtAltSoc, valores]
+ *                     properties:
+ *                       nome:               { type: string }
+ *                       cpf:                { type: string, description: '11 digits, DV validated' }
+ *                       qualif:             { type: string, enum: ['10', '11', '12', '13', '14', '15', '16', '17'] }
+ *                       dtAltSoc:           { type: string, format: date }
+ *                       dtFimSoc:           { type: string, format: date, description: 'must fall within the year (REGRA_DATA_FIM_SOC, p. 574)' }
+ *                       representanteLegal: { type: object, required: [cpf, qualif], properties: { cpf: { type: string }, qualif: { type: string, enum: ['01', '02', '03', '04', '05', '06'] } }, description: 'CPF_REP_LEG + QUALIF_REP_LEG, together or none; a PJ partner only takes 01 or 06' }
+ *                       valores:            { type: object, required: [remTrabCents, lucDivCents, jurCapCents, demRendCents, irRetCents], description: 'Y600 fields 13-17 in cents, all required, zero must be explicit (Manual ECF L12 p. 570)' }
  *                 declarant:
  *                   type: object
  *                   required: [cnpj, nome, codNat, cnaeFiscal, endereco, bairro, uf, codMun, cep, email]

@@ -297,6 +297,97 @@ export function buildPLine(
   return spedLine([reg, codigo, EMPTY, centsToSpedDecimal(valorCents)]);
 }
 
+// ── Bloco Y (Y600 — sócios, titular, dirigentes) ──
+//
+// BE-INCR-ECF-Y600 (L11 do H1). Manual de Orientação do Leiaute 12 da ECF (maio/2026): obrigatoriedade p. 56 (OC
+// "Se 0010.FORMA_TRIB = 1 a 7" — Presumido 5, Real 1); campos pp. 570–573; regras de validação p. 574.
+
+/** Uma ocorrência do Y600 já resolvida pelo serviço (o serializador não sabe de `Partner`). */
+export interface Y600Row {
+  dtAltSoc: string; // YYYY-MM-DD
+  dtFimSoc?: string; // YYYY-MM-DD, só saída de fato no ano (REGRA_DATA_FIM_SOC, p. 574)
+  pais: string; // '105' = Brasil
+  indQualifSocio: 'PF' | 'PJ';
+  cpfCnpj?: string; // só sai quando pais = '105' (REGRA_OBRIGATORIO_BRASIL, p. 574)
+  nome: string;
+  qualif: string;
+  percCapTotBp: number; // 0..10000
+  percCapVotBp: number; // 0..10000
+  cpfRepLeg?: string;
+  qualifRepLeg?: string;
+  remTrabCents: number;
+  lucDivCents: number;
+  jurCapCents: number;
+  demRendCents: number;
+  irRetCents: number;
+}
+
+/** Percentual N 8,4 em bp: 100% sai "100" (pp. 572–573); os demais "n,dd" (6000 → "60,00", exemplo p. 575). */
+function y600Perc(bp: number): string {
+  return bp === 10000 ? '100' : centsToSpedDecimal(bp);
+}
+
+/**
+ * Y600 (17 campos, pp. 570–573): REG, DT_ALT_SOC, DT_FIM_SOC, PAIS, IND_QUALIF_SOCIO, CPF_CNPJ, NOM_EMP, QUALIF,
+ * PERC_CAP_TOT, PERC_CAP_VOT, CPF_REP_LEG, QUALIF_REP_LEG, VL_REM_TRAB, VL_LUC_DIV, VL_JUR_CAP, VL_DEM_REND, VL_IR_RET.
+ * O exemplo da p. 575 tem 16 campos (sem DT_FIM_SOC); segue-se a tabela (BRIEF §5 P1 — o PVA confirma). Valores
+ * sempre informados, inclusive zero (p. 570). CPF_REP_LEG/QUALIF_REP_LEG juntos ou nenhum (p. 574).
+ */
+export function buildY600(r: Y600Row): string {
+  const temRep = !!(r.cpfRepLeg && r.qualifRepLeg);
+  return spedLine([
+    'Y600',
+    spedDate(r.dtAltSoc),
+    r.dtFimSoc ? spedDate(r.dtFimSoc) : EMPTY,
+    r.pais,
+    r.indQualifSocio,
+    r.pais === '105' ? (r.cpfCnpj ?? EMPTY) : EMPTY,
+    r.nome,
+    r.qualif,
+    y600Perc(r.percCapTotBp),
+    y600Perc(r.percCapVotBp),
+    temRep ? r.cpfRepLeg! : EMPTY,
+    temRep ? r.qualifRepLeg! : EMPTY,
+    centsToSpedDecimal(r.remTrabCents),
+    centsToSpedDecimal(r.lucDivCents),
+    centsToSpedDecimal(r.jurCapCents),
+    centsToSpedDecimal(r.demRendCents),
+    centsToSpedDecimal(r.irRetCents),
+  ]);
+}
+
+/** Limites da p. 570: os 500 maiores vigentes na data final + as 499 maiores alterações do período. */
+export const Y600_MAX_VIGENTES = 500;
+export const Y600_MAX_ALTERACOES = 499;
+
+/** Ocorrência candidata ao Y600 com a marca de vigência em 0000.DT_FIN (entrada de `ordenarY600`). */
+export interface Y600Candidate {
+  row: Y600Row;
+  vigenteNoFim: boolean;
+}
+
+/**
+ * Ordem do Y600 (p. 570; F-Y600-6 → a): primeiro as vigentes em DT_FIN, por total (rem+luc+jur+dem) decrescente;
+ * depois as demais, por DT_ALT_SOC decrescente. Desempate por NOM_EMP e depois CPF_CNPJ crescentes. Acima de
+ * 500 vigentes / 499 demais lança — truncar esconderia gente da declaração (o serviço traduz em 400).
+ */
+export function ordenarY600(candidates: Y600Candidate[]): Y600Row[] {
+  const total = (r: Y600Row) => r.remTrabCents + r.lucDivCents + r.jurCapCents + r.demRendCents;
+  const tie = (a: Y600Row, b: Y600Row) =>
+    a.nome < b.nome ? -1 : a.nome > b.nome ? 1 : (a.cpfCnpj ?? '') < (b.cpfCnpj ?? '') ? -1 : (a.cpfCnpj ?? '') > (b.cpfCnpj ?? '') ? 1 : 0;
+  const vigentes = candidates.filter((c) => c.vigenteNoFim).map((c) => c.row);
+  const demais = candidates.filter((c) => !c.vigenteNoFim).map((c) => c.row);
+  if (vigentes.length > Y600_MAX_VIGENTES || demais.length > Y600_MAX_ALTERACOES) {
+    throw new Error(
+      `ECF_Y600_LIMITE: o Y600 aceita até ${Y600_MAX_VIGENTES} ocorrências vigentes em DT_FIN e ${Y600_MAX_ALTERACOES} alterações ` +
+        `do período (Manual ECF L12 p. 570); recebidas ${vigentes.length} e ${demais.length}.`,
+    );
+  }
+  vigentes.sort((a, b) => total(b) - total(a) || tie(a, b));
+  demais.sort((a, b) => (a.dtAltSoc < b.dtAltSoc ? 1 : a.dtAltSoc > b.dtAltSoc ? -1 : tie(a, b)));
+  return [...vigentes, ...demais];
+}
+
 // ── Bloco 9 ──
 
 /**
@@ -344,6 +435,8 @@ export interface EcfFileInput {
   params?: Reg0020Input;
   signers: Reg0930Signer[]; // ≥1 contador (900) + ≥1 não-contador
   quarters: EcfQuarter[]; // trimestres Presumido (ordenados T01→T04)
+  /** Y600 já ordenado pelo serviço (`ordenarY600`); vazio ⇒ bloco Y sem dados. BE-INCR-ECF-Y600 item 2. */
+  y600: Y600Row[];
 }
 
 /**
@@ -378,7 +471,7 @@ const EMPTY_BLOCKS_TAIL: Array<{ open: BlockOpenReg; close: BlockCloseReg }> = [
   { open: 'V001', close: 'V990' },
   { open: 'W001', close: 'W990' },
   { open: 'X001', close: 'X990' },
-  { open: 'Y001', close: 'Y990' },
+  // Y sai daqui: bloco com dados (Y600) montado em `buildEcfFile` (BE-INCR-ECF-Y600 item 2).
 ];
 
 function emptyBlock(open: BlockOpenReg, close: BlockCloseReg): string[] {
@@ -431,8 +524,15 @@ export function buildEcfFile(input: EcfFileInput): string[] {
   const tailEmpty: string[] = [];
   for (const b of EMPTY_BLOCKS_TAIL) tailEmpty.push(...emptyBlock(b.open, b.close));
 
+  // ── Bloco Y (Y600, BE-INCR-ECF-Y600 item 2): IND_DAD=0 com ≥ 1 linha; Y990 auto-inclusivo ──
+  const blockY: string[] =
+    input.y600.length === 0
+      ? emptyBlock('Y001', 'Y990')
+      : [buildBlockOpen('Y001', true), ...input.y600.map(buildY600)];
+  if (input.y600.length > 0) blockY.push(buildBlockClose('Y990', blockY.length + 1));
+
   // ── Bloco 9 (contagem) ──
-  const preceding = [...block0, ...middleEmpty, ...blockP, ...tailEmpty];
+  const preceding = [...block0, ...middleEmpty, ...blockP, ...tailEmpty, ...blockY];
   const nine001 = buildBlockOpen('9001', true);
   const counts = new Map<string, number>();
   for (const line of [...preceding, nine001]) {
@@ -495,6 +595,7 @@ export function __selfCheck(): void {
     quarters: [
       { perApur: 'T01', dtIni: '2025-01-01', dtFin: '2025-03-31', servicoCents: 15000000, revendaCents: 5000000 },
     ],
+    y600: [],
   };
   const a = serializeEcf(buildEcfFile(input));
   const b = serializeEcf(buildEcfFile(input));
