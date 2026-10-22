@@ -5,16 +5,36 @@
 > **Base:** `origin/main` `882cd0fb` (22/10). O PRE-ADR `ADR-INCR-EFD-REINF` (D1–D9, §6, §7) e a cédula
 > `D-2026-10-21-FORKS-EFD-REINF` (F-REINF-1..5) estão em `main`.
 
+> **EMENDA 22/10: cruzamento com o BRIEF de retenções** (`BE-INCR-RETENCOES-FONTE-brief.md`, PR #843, branch
+> `claude/brief-retencoes-fonte-a93e46`, §5.4 = contrato de saída). Aprovação do dono (chat, 2026-10-22), relayed pela sessão
+> de origem: *"Manda as correções para as sessões de retenções e da Reinf: tabela única com dono no RETENCOES-FONTE carregada
+> com a leitura oficial da Reinf, porta de leitura no backend, código AGREGADO nas 3 linhas da CSRF, filtro de tributo na
+> invariante 4 e o R-4010 de PF por serviço como lacuna até o nó de pes[soal]"*. Escopo: este BRIEF e a nota do nó. Não ratifica
+> fork. O que mudou:
+> 1. **Tabela única (item 1).** A Reinf não cria tabela. Ela **consome** `NATUREZA_RENDIMENTO` e `RETENCAO_CODIGO`, que nascem no
+>    PR-1 do RETENCOES-FONTE carregadas com a leitura oficial deste dossiê (grupo 15, 12001, 12016; `fonteSha256` do zip [D02]),
+>    `PUBLISHED`. O PR-1 daqui passa a depender do PR-1 de retenções (§3). O vocabulário do discriminador de tributo (`IRRF` ×
+>    `IRPJ`/`IRPF` da tabela oficial) é fixado lá. Aqui fica a dependência.
+> 2. **Porta de leitura no backend (item 7, §5.1).** As retenções são lidas por uma porta de serviço que o RETENCOES-FONTE declara
+>    (forma `WithholdingLineViewSchema` + `settlementId`/`originSettlementId`), não pelas rotas HTTP nem pelo Prisma direto. E1,
+>    E2, E3 e E6 ficam **resolvidos contra o §5.4**.
+> 3. **CSRF (F-REINF-8).** Fato do contrato: até 2026-12-31 as 3 linhas da CSRF chegam com `codigoReceita` = código `AGREGADO`.
+>    O F-REINF-8 (a) decide pelo código da linha, que nesse período leva ao agregado. O fork segue pendente.
+> 4. **Invariante 4 (§11)** soma só as linhas `MADE` `ACTIVE` com `tributo` ∈ {IRRF, CSLL, COFINS, PIS}. O INSS vai ao R-2010
+>    (invariante 13 nova). O ISS não entra na Reinf.
+> 5. **R-4010 de PF por serviço (item 19, E5) vira lacuna até o nó de pessoal.** O §5.4 entrega só a quantidade e o valor de
+>    dependentes, não `cpfDep`/`relDep`. F-REINF-9 continua PENDENTE, com a lacuna citada na linha dele.
+
 ## TLDR (2 linhas)
 
 Quatro PRs geram a EFD-Reinf do tenant a partir das retenções que ele **fez**: **PR-1** monta o serializer `lib/reinf.ts` (R-1000,
-R-4020, R-4099, lote), as tabelas oficiais de natureza do rendimento e o `ReinfBatch` imutável com rotas; **PR-2** traz R-4010
-(dividendos, JCP e, se F-REINF-9 (a), PF de serviço) e R-2010/R-2099; **PR-3** liga a matriz de obrigações, o relatório de
+R-4020, R-4099, lote), lê as tabelas de natureza do rendimento do RETENCOES-FONTE e grava o `ReinfBatch` imutável com rotas;
+**PR-2** traz R-4010 (dividendos e JCP; PF de serviço é lacuna até o nó de pessoal) e R-2010/R-2099; **PR-3** liga a matriz de obrigações, o relatório de
 conferência e o pacote do contador; **PR-4** (condicionado, F-REINF-2 a) assina e transmite.
 **Risco principal:** o leiaute oficial **2.1.2b** foi lido hoje e mostra que o XSD **exige** a assinatura e que o R-4020 é **por
-pagamento** (`dtFG`, natureza, bruto), não por código de receita. O "resumo mensal D8" do RETENCOES-FONTE **não basta** e o
-BRIEF daquele nó (em escrita agora, em paralelo) ainda não fixou os campos de que a Reinf precisa. Os contratos de entrada estão
-marcados **"a confirmar contra o BRIEF de RETENCOES-FONTE"**, e 7 forks novos ficam **PENDENTES**.
+pagamento** (`dtFG`, natureza, bruto), não por código de receita. O "resumo mensal D8" do RETENCOES-FONTE **não basta**. Depois da
+emenda de 22/10, os contratos de entrada E1, E2, E3 e E6 estão resolvidos contra o §5.4 do BRIEF de retenções (PR #843). E4
+(dividendos/JCP) espera o código do IRRF-DISTRIBUICAO, e E5 (PF de serviço) é lacuna. 8 forks novos ficam **PENDENTES**.
 
 ---
 
@@ -31,7 +51,7 @@ marcados **"a confirmar contra o BRIEF de RETENCOES-FONTE"**, e 7 forks novos fi
   `BE-INCR-IRRF-DISTRIBUICAO-brief.md` (dividendos e JCP); dossiê de 20/10 `verif-2026-10-20-f1-retencoes-reinf-ibscbs` (IN RFB
   2.043 no Sijut); **dossiê novo de 22/10 `pesquisas-legais/verif-2026-10-22-efd-reinf-brief/relatorio.md`** (leiaute 2.1.2b,
   XSD, tabelas, MOU 2.1.2.1, NT 01–03/2026, Lei 9.250 art. 6º-A); molde `docs/accounting/BE-INCR-IBS-CBS-2027-brief.md`.
-- **Nós vizinhos:** consome [[RETENCOES-FONTE]] (`TaxWithholding` MADE; **BRIEF em escrita**), [[IRRF-DISTRIBUICAO]] (`Partner` em
+- **Nós vizinhos:** consome [[RETENCOES-FONTE]] (`TaxWithholding` MADE; BRIEF no PR #843, §5.4 = contrato de saída), [[IRRF-DISTRIBUICAO]] (`Partner` em
   `main`; `ProfitDistributionEvent` e JCP **ainda não** em `main`), X10i (`FiscalCertificate`, em `main`), X13/LEGAL-PARAMS
   (`OBRIGACAO_REGIME`, `FERIADO_NACIONAL`, em `main`), C6b (pacote do contador). É consumido por [[X9]] (DCTFWeb lê os totais da
   Reinf, fora daqui) e AGENDA-FISCAL (F4, mostra o prazo).
@@ -56,7 +76,7 @@ residenteBrasil }` em `schema.prisma:1802`.
 | F-REINF-2 | (a) porta já; adaptador só no PR-4, condicionado | item 12 (porta); itens 25–28 (PR-4) |
 | F-REINF-3 | (a) 4 PRs, R-4020 primeiro | §2 |
 | F-REINF-4 | (a) informar os dividendos isentos | item 16; **forma de informar = P-REINF-6** |
-| F-REINF-5 | (a) tabela em `legal_parameters`, `DRAFT` até leitura oficial | item 1. **A Tabela 01 oficial foi lida hoje [D02]:** as linhas da tabela nascem `PUBLISHED` com a fonte; o **mapa** perfil → natureza continua `DRAFT` até P-REINF-2 |
+| F-REINF-5 | (a) tabela em `legal_parameters`, `DRAFT` até leitura oficial | item 1. **A Tabela 01 oficial foi lida hoje [D02].** Pela emenda de 22/10, a tabela é `NATUREZA_RENDIMENTO` do RETENCOES-FONTE, carregada com esta leitura em `PUBLISHED`. O `natRend` de cada serviço vem do `WithholdingProfile` (F-RET-16 a), conferido pelo contador (P-REINF-2) |
 | F-RET-7 (RETENCOES-FONTE) | **(b) incluir PF** (contra a recomendação) | reabre o D1 do PRE-ADR ("outras retenções de PF ficam fora"): **F-REINF-9** |
 | F-RET-2/3/4 | 4 PRs; escopo completo (IRRF + CSRF + INSS + ISS); CSRF proporcional por baixa | R-4020 recebe IRRF e CSRF de várias baixas (itens 6–7); R-2010 tem fonte (itens 17–18) |
 | F-PES-4 / F-PES-5 (b) | fase 1 sem transmissão; eventos R-1000, R-4010, R-4020, R-4099, R-2010/R-2099 | escopo de eventos (item 3) |
@@ -81,8 +101,8 @@ o XSD e as tabelas. Correções que este BRIEF já incorpora (sem fork, porque �
 
 | PR | Conteúdo | Itens | Depende de |
 |---|---|---|---|
-| **PR-1** serializer, R-4020 e lote | tabelas oficiais, `lib/reinf.ts` (R-1000, R-4020, R-4099, lote), cobertura, `montarReinf` só R-4020, `ReinfBatch`, rotas, relatório mínimo, porta nomeada | 1–14 | RETENCOES-FONTE **PR-2** em `main` (retenções feitas gravadas); F-REINF-6, 7, 8, 11 ratificados |
-| **PR-2** R-4010 e R-2010 | R-4010 de dividendos e JCP (e de PF de serviço, se F-REINF-9 a), R-2010/R-2099 | 15–19 | IRRF-DISTRIBUICAO PR-2/PR-4 em `main`; RETENCOES-FONTE PR-2 (INSS); F-REINF-9 ratificado |
+| **PR-1** serializer, R-4020 e lote | leitura das tabelas de retenções, `lib/reinf.ts` (R-1000, R-4020, R-4099, lote), cobertura, `montarReinf` só R-4020, `ReinfBatch`, rotas, relatório mínimo, porta nomeada | 1–14 | RETENCOES-FONTE **PR-1** (tabelas `NATUREZA_RENDIMENTO`/`RETENCAO_CODIGO`; emenda 22/10) e **PR-2** (retenções feitas gravadas + porta de leitura) em `main`; F-REINF-6, 7, 8, 11 ratificados |
+| **PR-2** R-4010 e R-2010 | R-4010 de dividendos e JCP, R-2010/R-2099; item 19 (PF de serviço) só registra o aviso da lacuna | 15–19 | IRRF-DISTRIBUICAO PR-2/PR-4 em `main`; RETENCOES-FONTE PR-2 (INSS + porta) |
 | **PR-3** matriz e superfície | linha `REINF` da matriz, prazo, relatório completo, `EXPORT_REINF`, `defasado` + marcação `REABRIR/RETIFICAR` | 20–24 | PR-1 (PR-2 para o relatório completo) |
 | **PR-4** transmissão (F-REINF-2 a) | assinatura com `FiscalCertificate`, lote assíncrono, consulta, recibos, R-9000, reabertura | 25–28 | condições do F-REINF-2: Manual do Desenvolvedor lido + tenant real que retenha; F-REINF-10 ratificado |
 
@@ -90,18 +110,20 @@ o XSD e as tabelas. Correções que este BRIEF já incorpora (sem fork, porque �
 
 ### PR-1: serializer, R-4020 e lote
 
-1. **Tabelas oficiais em `legal_parameters` (F-REINF-5 a).** Migração de dado (molde `legal_parameters_ibs_cbs_v1.sql`):
-   - tabela `REINF_NATUREZA_RENDIMENTO`: chave = código da Tabela 01 (5 dígitos), `valorJson = { descricao, grupo, declarante,
-     tributos[], tiposIsencao[] }`, vigência da tabela. Carga: grupo 15 inteiro (15001–15099), 12001 (duas linhas: até 2025-12-31
-     sem tributo; desde 2026-01-01 com IR) e 12016. `PUBLISHED`, `fonte = "EFD-Reinf Tabela 01 (Tabelas de 15/01/2026)"`,
-     `fonteSha256` do zip [D02]. (A 10002 entra no PR-2 se F-REINF-9 (a).)
-   - tabela `REINF_CODIGO_RECEITA`: chave = natureza, discriminador = tributo (`IRPJ|IRPF|CSLL|COFINS|PIS|AGREGADO`),
-     `valorTexto` = código de 6 dígitos, `valorJson = { periodicidade }`, só residentes no Brasil. Fonte: tabelas "R-4020" e
-     "R-4010" [D02]. Teste: 15022 × IRPJ = `170806`, × AGREGADO = `595207`; 15052 só IRPJ `804506`; 12016 × IRPF = `570602`
-     (decendial); 12001 × IRPF em 2026-03 = `184101`.
-   - **mapa perfil → natureza** (`REINF_NATUREZA_POR_PERFIL`, chave = `naturezaServico` do `WithholdingProfile`): linhas
-     `DRAFT` até P-REINF-2. **Contrato de entrada a confirmar contra o BRIEF de RETENCOES-FONTE**: se aquele BRIEF puser `natRend`
-     direto no perfil, este mapa não nasce e o item 6 lê o campo (§5.1 E2).
+1. **Tabelas oficiais: consumidas, não criadas (emenda 22/10; F-REINF-5 a).** A Reinf **não** tem migração de dado. Ela lê
+   `NATUREZA_RENDIMENTO` (chave = `natRend`, 5 dígitos) e `RETENCAO_CODIGO` (chave = `natRend`, discriminador = tributo,
+   `valorTexto` = código de 6 dígitos), que nascem no **PR-1 do RETENCOES-FONTE** (itens 2 e 7 daquele BRIEF). Essas tabelas são
+   carregadas com a leitura oficial deste dossiê em `PUBLISHED`: grupo 15 (15001–15099), 12001 (até 2025-12-31 sem tributo;
+   desde 2026-01-01 com IR), 12016, `fonte` = Tabela 01 e tabelas "R-4020"/"R-4010" de 15/01/2026, `fonteSha256` do zip [D02].
+   - **Dependência:** o vocabulário do discriminador de tributo (`IRRF` no BRIEF de retenções × `IRPJ`/`IRPF` nas tabelas oficiais
+     [D02]) é fixado no BRIEF de RETENCOES-FONTE. O builder daqui usa o que estiver lá.
+   - **O código de receita só serve ao relatório (item 14).** O XML não leva código (L2). O `natRend` de cada linha vem pronto
+     da porta (§5.1 E2).
+   - Teste (contra as tabelas de lá, com a fotografia de `legal_parameters` do teste): 15022 × IRRF = `170806`, × AGREGADO =
+     `595207`; 15052 só IRRF `804506`; 12016 = `570602` (decendial); 12001 em 2026-03 = `184101`. Uma linha cujo `natRend` não
+     existe em `NATUREZA_RENDIMENTO` `PUBLISHED` ⇒ 400 `NATUREZA_RENDIMENTO_SEM_MAPA` com o `natRend` e o id da linha.
+   - Os códigos da carga (10002 entra só se F-REINF-9 for (a) e o nó de pessoal fechar a lacuna) são decididos no BRIEF de
+     retenções.
 2. **`lib/reinf.ts`: base pura.** Sem Prisma, sem `Date.now()` implícito (relógio injetado). Funções: `idEvento(cnpjRaiz, agora,
    seq)` (L8), `ideContri(cnpjRaiz)` (`tpInsc = 1`, `nrInsc` = 8 dígitos, L5), escape XML, montagem com namespace por evento
    (`http://www.reinf.esocial.gov.br/schemas/<evt>/v2_01_02`), `tpAmb` vindo da configuração (`1` produção, `2` produção
@@ -124,11 +146,14 @@ o XSD e as tabelas. Correções que este BRIEF já incorpora (sem fork, porque �
 6. **`buildR4020(contribuinte, estab, beneficiario, pagamentos, periodo, retifica?)`: um evento por beneficiário (L2).** Agrupa
    por `natRend` (≤ 100) e, dentro, uma `infoPgto` por `dtFG` (≤ 999). Cada `infoPgto`: `dtFG`, `vlrBruto` e o grupo `retencoes`
    com `vlrBaseIR/vlrIR`, CSRF **agregada** (`vlrBaseAgreg/vlrAgreg`) ou separada (`vlrBaseCSLL/vlrCSLL`, `vlrBaseCofins/vlrCofins`,
-   `vlrBasePP/vlrPP`) **conforme F-REINF-8**. `isenImun` só se o perfil de retenção marcar isenção (contrato a confirmar).
+   `vlrBasePP/vlrPP`) **conforme F-REINF-8**. `isenImun` fica fora do PR-1: o §5.4 de retenções não traz isenção do beneficiário (a dispensa por optante aparece como `dispensa`, sem valor retido, e a linha não entra no R-4020).
    Teste (tabela): 1 beneficiário com IRRF no reconhecimento (dtFG = `issueDate`, bruto = documento) + CSRF em 2 baixas (dtFG =
    cada `paidAt`, bruto = parcela) ⇒ 3 `infoPgto` (L7); 2 beneficiários ⇒ 2 eventos; 101 naturezas ⇒ 400 nomeado.
-7. **`montarReinf(userId, competencia)` só R-4020 no PR-1.** Lê as retenções `MADE`, `ACTIVE`, beneficiário CNPJ, competência =
-   mês do `dtFG` (**contrato de entrada E1, a confirmar**), resolve `natRend` (item 1) e agrupa por beneficiário. Valida o DV do
+7. **`montarReinf(userId, competencia)` só R-4020 no PR-1.** Lê as retenções pela **porta de leitura de backend** que o
+   RETENCOES-FONTE declara (emenda 22/10; forma `WithholdingLineViewSchema` do §5.4 de lá + `settlementId`/`originSettlementId`).
+   Não lê pelas rotas HTTP nem pelo Prisma direto. Filtra `MADE`, `ACTIVE`, `tributo` ∈ {IRRF, CSLL, COFINS, PIS}, beneficiário
+   `kind = CNPJ`. O `dtFG` é `dataFatoGerador` da linha (E1). O `natRend` é o da linha (E2), conferido contra a tabela do item 1.
+   Agrupa por beneficiário. Valida o DV do
    CNPJ do beneficiário **antes** de montar (PRE-ADR D8; `Counterparty.taxId` não tem DV): inválido ⇒ 400 nomeado com o
    `counterpartyId`. Natureza sem mapa `PUBLISHED` ⇒ 400 `NATUREZA_RENDIMENTO_SEM_MAPA` com a chave. Teste com retenções gravadas
    pelo serviço real do RETENCOES-FONTE (memória "sintético ≠ formato real"), não com SQL cru.
@@ -169,13 +194,16 @@ o XSD e as tabelas. Correções que este BRIEF já incorpora (sem fork, porque �
 17. **`buildR2010(contribuinte, estabObra, prestador, nfs, periodo, retifica?)`.** Um evento por prestador (CNPJ): `indObra = 0`,
     `indCPRB` do prestador, totais (`vlrTotalBruto`, `vlrTotalBaseRet`, `vlrTotalRetPrinc`) e `nfs[]` com `serie`, `numDocto`,
     `dtEmissaoNF`, `vlrBruto`, `infoTpServ[]` (`tpServico` da Tabela 06 [L01], `vlrBaseRet`, `vlrRetencao`). Fonte: retenções `MADE`
-    `tributo = INSS` do RETENCOES-FONTE. **Contrato de entrada a confirmar (E3):** série da NF, `tpServico` e `indCPRB` não existem
-    no `Payable` nem no PRE-ADR de retenções. Sem eles ⇒ 400 nomeado, sem inventar valor.
+    `tributo = INSS` do RETENCOES-FONTE. Série, tipo de serviço e CPRB vêm da porta (E3, resolvido na
+    emenda 22/10): `titulo.documentoSerie`, `inss.tpServico`, `inss.cprb`. Qualquer um `null` ⇒ 400 nomeado com o id da linha, sem inventar valor.
 18. **`buildR2099(contribuinte, periodo, flags)`.** Fechamento da série R-2000 com os 7 indicadores `S/N` do `infoFech`
     (`evtServTm = S` quando houver R-2010; os demais `N`). Teste.
-19. **R-4010 de PF por serviço (só se F-REINF-9 a).** Retenções `MADE` com beneficiário PF do RETENCOES-FONTE (F-RET-7 b),
-    natureza 10002 (código 0588-07), `ideDep`/`detDed` vindos do registro de dependentes daquele nó. **Contrato a confirmar (E5)**
-    e condicionado a P-REINF-8 (sobreposição com o eSocial S-1210).
+19. **R-4010 de PF por serviço: LACUNA até o nó de pessoal (emenda 22/10).** Fica fora do PR-2. O §5.4 do RETENCOES-FONTE
+    entrega em `pf` só a quantidade de dependentes e os valores de dedução. O XSD R-4010 exige `ideDep/cpfDep` e `relDep` por
+    dependente [D06], e esses dados não existem em nenhum nó planejado. Sem eles, o evento não valida. Quando o nó de pessoal
+    trouxer o cadastro de dependentes, este item vira: natureza 10002 (código 0588-07), `ideDep`/`detDed` da porta, condicionado a
+    F-REINF-9 (a) e a P-REINF-8 (sobreposição com o eSocial S-1210). Até lá, `montarReinf` lista as linhas `MADE` de beneficiário
+    `CPF` no relatório com o aviso `PF_SERVICO_FORA_DA_REINF` ("declarar fora do sistema"), sem gerar evento. Teste do aviso.
 
 ### PR-3: matriz e superfície
 
@@ -190,7 +218,7 @@ o XSD e as tabelas. Correções que este BRIEF já incorpora (sem fork, porque �
 22. **Relatório completo + `EXPORT_REINF` no pacote do contador (C6b).** XML do lote + relatório do item 14, todos os eventos.
     Teste: o pacote contém os dois artefatos e o `sha256` do `ReinfBatch`.
 23. **Avisos do relatório.** `PERFIL_SEM_NATUREZA`, `CONTATO_SEM_CPF`, `DEFASADO_RETIFICAR`, `REABRIR_ANTES` (L4),
-    `NATUREZA_DRAFT` (mapa ainda não conferido pelo contador). i18n pt/en.
+    `NATUREZA_NAO_CONFERIDA` (`natRend` do perfil ainda não conferido pelo contador, P-REINF-2), `PF_SERVICO_FORA_DA_REINF` (item 19). i18n pt/en.
 24. **Gates do PR-3.** Paridade i18n; snapshot dos DTOs novos; openapi path-count (rotas novas do PR-1 contadas lá).
 
 ### PR-4: transmissão (só com F-REINF-2 a cumprido)
@@ -212,19 +240,21 @@ o XSD e as tabelas. Correções que este BRIEF já incorpora (sem fork, porque �
 
 ## 5. Contratos esboçados
 
-### 5.1 Contratos de entrada: **a confirmar contra o BRIEF de RETENCOES-FONTE** (em escrita, sessão paralela)
+### 5.1 Contratos de entrada: **conferidos contra o §5.4 do BRIEF de RETENCOES-FONTE** (emenda 22/10)
 
-O PRE-ADR de retenções (§7) é a base. Nenhum campo abaixo é inventado: o que o leiaute exige e o PRE-ADR não tem vira **E-n**,
-uma pergunta ao BRIEF irmão. Nota com o detalhe deixada na pasta compartilhada das sessões (`efd-reinf-para-retencoes-fonte.md`).
+A Reinf lê as retenções pela **porta de leitura de backend** que o RETENCOES-FONTE declara. A forma é a do
+`WithholdingLineViewSchema` (§5.4 de lá) mais `settlementId`/`originSettlementId`. Não lê pelas rotas HTTP
+(`GET /accounting/withholdings…`, que servem à tela) nem pelo Prisma direto. O nome e a assinatura da porta são fixados naquele
+BRIEF. Aqui só se usa a forma. A nota de 22/10 na pasta compartilhada (`efd-reinf-para-retencoes-fonte.md`) originou o §5.4.
 
-| # | O que a Reinf lê | Campo no PRE-ADR de retenções | Lacuna para o leiaute |
+| # | O que a Reinf lê | Campo no §5.4 de retenções | Estado |
 |---|---|---|---|
-| E1 | linhas `TaxWithholding` `MADE`/`ACTIVE` da competência | `direction`, `tributo`, `event`, `baseCents`, `amountCents`, `codigoReceita`, `competencia`, `status`, `titleId`, `settlementId`, `dispensa` | **data do fato gerador** (`dtFG`) por linha: `issueDate` do título (RECOGNITION) ou `paidAt` do pagamento (SETTLEMENT) — derivável por join, mas o BRIEF deve dizer qual; **bruto da parcela** para CSRF (= `amountCents` do `PayablePayment`?) |
-| E2 | natureza do rendimento | `WithholdingProfile.naturezaServico` (5 chaves: SERVICO_PROFISSIONAL, LIMPEZA_…, COMISSAO_…, CESSAO_MAO_DE_OBRA, OUTRO) | a Tabela 01 tem 52 naturezas no grupo 15; `SERVICO_PROFISSIONAL` mapeia para várias (15022 fisioterapia, 15026 medicina, 15099 demais…). Precisa de `natRend` no perfil ou o mapa do item 1 |
-| E3 | INSS 11% (R-2010) por NF | `tributo = INSS`, `baseCents`, `amountCents`; `Payable.documentNumber`, `issueDate` | `serie`, `tpServico` (Tabela 06), `indCPRB` do prestador |
-| E4 | dividendos e JCP | BRIEF IRRF-DISTRIBUICAO itens 10, 21, 31 (models fora de `main`) | nada a mais: `dataEvento`, `brutoCents`, `irrfCents`, `origemLucro`, `partnerId` bastam |
-| E5 | PF de serviço (F-RET-7 b) | não existe no PRE-ADR (era F-RET-7 a) | `cpf`, dependentes (`cpfDep`, `relDep`), deduções por tipo |
-| E6 | beneficiário | `Counterparty.taxId` (sem DV), `regimeTributario` (F-RET-5 a) | nada a mais; o DV é validado aqui (item 7) |
+| E1 | linhas `MADE`/`ACTIVE` da competência, por pagamento | `id`, `tributo`, `event`, `dataFatoGerador` (dtFG), `competencia`, `brutoCents` (bruto do documento no IR, da parcela na CSRF), `baseCents`, `amountCents`, `dispensa`, `codigoReceita`, + `settlementId`/`originSettlementId` | **resolvido** |
+| E2 | natureza do rendimento | `natRend` (5 dígitos) por linha, vindo do `WithholdingProfile.natRend` (F-RET-16 a) | **resolvido** (`null` ⇒ 400 do item 1) |
+| E3 | INSS 11% (R-2010) por NF | `titulo.documentNumber`, `titulo.documentoSerie`, `titulo.issueDate`, `inss.tpServico`, `inss.cprb` | **resolvido** (`null` em `documentoSerie`/`tpServico`/`cprb` ⇒ 400 nomeado no item 17) |
+| E4 | dividendos e JCP | BRIEF IRRF-DISTRIBUICAO itens 10, 21, 31 (models fora de `main`) | **a confirmar** contra o código do IRRF-DISTRIBUICAO quando o PR-2 dele estiver em `main` |
+| E5 | PF de serviço (F-RET-7 b) | `pf { dependentes (quantidade), deducaoDependentesCents, previdenciaCents, pensaoCents, descontoSimplificadoCents, reducaoArt3ACents }` | **lacuna até o nó de pessoal:** faltam `cpfDep`/`relDep` por dependente (item 19) |
+| E6 | beneficiário | `beneficiario { counterpartyId, nome, taxId, kind CPF\|CNPJ, regime }` | **resolvido** (o DV é validado aqui, item 7) |
 
 ### 5.2 Prisma (PR-1)
 
@@ -318,8 +348,8 @@ export const ReinfBatchView = z.object({
 |---|---|---|---|
 | **F-REINF-6** Assinatura × XSD (L3). O F-REINF-1 (a) diz "XML não assinado testado contra o XSD", mas o XSD exige `ds:Signature` | **(a)** o download da fase 1 sai **sem** assinatura (como ratificado); o **teste** assina o XML com a chave de teste do helper existente e valida no XSD oficial · (b) validar contra uma cópia do XSD com `Signature` opcional (XSD alterado no repo) · (c) assinar já na fase 1 com o `FiscalCertificate` (XML pronto para um transmissor de terceiro, sem transmitir) | **(a).** Mantém a letra do F-REINF-1 (a saída não é assinada) e o objetivo dele (prova contra o XSD **oficial**, sem alterar). (b) testa contra um esquema que não é o da RFB. (c) antecipa o uso do certificado, que o F-REINF-2 deixou para o PR-4 | médio em (b): falso verde |
 | **F-REINF-7** Como validar XSD no Node | **(a)** devDependency `xmllint-wasm` (libxml2 em WebAssembly, sem build nativo), só nos testes · (b) `libxmljs2` (binding nativo; `node-gyp` no Windows) · (c) sem XSD: só asserções estruturais com `fast-xml-parser` | **(a).** Dependência só de teste, sem compilação nativa no Windows do dono; (c) não prova o leiaute (é o "teste prova o lido" do PRE-ADR §12). Dependência nova pede o OK do dono (ADR-ARCH-BOUNDARIES não cobre devDependency, mas é decisão) | médio em (c) |
-| **F-REINF-8** CSRF no R-4020: agregada × separada | **(a)** até 31/12/2026, CSRF em `vlrBaseAgreg/vlrAgreg` (código 5952-07) quando a retenção foi feita pelo código agregado; separada quando o RETENCOES-FONTE gravar códigos separados (5987/5960/5979); 2027: só CSLL separada (LC 214 art. 509) · (b) sempre separada · (c) sempre agregada | **(a).** O MOU (item 7 e) diz que "empresas em geral" informam o agregado **sem** o IR, e o D3 das retenções já fala em 5952; o XML espelha o DARF recolhido, e a DCTFWeb confere os dois. **Depende do D3 do BRIEF de RETENCOES-FONTE**: se ele fixar só 5952, o fork fecha em (c) até 2026 | médio: divergência DARF × Reinf na DCTFWeb |
-| **F-REINF-9** R-4010 de PF por serviço, depois de F-RET-7 (b) | **(a)** o R-4010 também declara as retenções de PF do RETENCOES-FONTE (natureza 10002, dependentes e deduções), no PR-2, **condicionado** a P-REINF-8 · (b) o R-4010 fica só com dividendos/JCP (D1 do PRE-ADR); a retenção de PF é declarada fora do sistema | **(a).** F-RET-7 (b) pôs o dado no sistema; sem (a) o tenant retém e não declara (IN 2.043 art. 3º VIII). A condição evita declarar em dobro se o autônomo for do eSocial S-1210 | alto em (b): retenção sem declaração |
+| **F-REINF-8** CSRF no R-4020: agregada × separada | **(a)** até 31/12/2026, CSRF em `vlrBaseAgreg/vlrAgreg` (código 5952-07) quando a retenção foi feita pelo código agregado; separada quando o RETENCOES-FONTE gravar códigos separados (5987/5960/5979); 2027: só CSLL separada (LC 214 art. 509) · (b) sempre separada · (c) sempre agregada | **(a).** O MOU (item 7 e) diz que "empresas em geral" informam o agregado **sem** o IR, e o D3 das retenções já fala em 5952; o XML espelha o DARF recolhido, e a DCTFWeb confere os dois. **Fato do contrato (emenda 22/10, §5.4 de retenções):** até 2026-12-31 as 3 linhas da CSRF (CSLL/COFINS/PIS) chegam com `codigoReceita` = código `AGREGADO` (5952 + variação). Com (a), a regra "decide pelo código da linha" leva ao agregado em 2026. Desde 2027 há só a linha CSLL, separada. O fork segue **PENDENTE** para o dono | médio: divergência DARF × Reinf na DCTFWeb |
+| **F-REINF-9** R-4010 de PF por serviço, depois de F-RET-7 (b) | **(a)** o R-4010 também declara as retenções de PF do RETENCOES-FONTE (natureza 10002, dependentes e deduções), no PR-2, **condicionado** a P-REINF-8 · (b) o R-4010 fica só com dividendos/JCP (D1 do PRE-ADR); a retenção de PF é declarada fora do sistema | **(a).** F-RET-7 (b) pôs o dado no sistema; sem (a) o tenant retém e não declara (IN 2.043 art. 3º VIII). A condição evita declarar em dobro se o autônomo for do eSocial S-1210. **Lacuna (emenda 22/10):** mesmo com (a), o R-4010 de PF por serviço só sai quando o nó de pessoal trouxer `cpfDep`/`relDep`, porque o §5.4 de retenções entrega só a quantidade de dependentes e o XSD exige CPF e relação (item 19) | alto em (b): retenção sem declaração |
 | **F-REINF-10** Reabertura (L4) | **(a)** R-4099 de reabertura e R-2098 entram em `EVENTOS_SUPORTADOS` no PR-4, junto da retificação; na fase 1 o relatório marca `REABRIR_ANTES` · (b) fora; o operador reabre e retifica na Reinf Web | **(a).** Sem reabertura o retificador do PR-4 é rejeitado pela regra `REGRA_EVE_PERMITE_EXCLUSAO`; custa um builder | médio em (b): PR-4 não retifica |
 | **F-REINF-11** Estabelecimento (`ideEstab`) | **(a)** centralizado: `nrInscEstab` = CNPJ completo da matriz (`CompanyFiscalProfile.declarante.cnpj`) para todas as unidades · (b) descentralizado: um evento por unidade com CNPJ próprio | **(a).** O MOU permite os dois (p. 106 item 2); as unidades do Luminaris não têm CNPJ próprio garantido, e (a) dá um evento por beneficiário, como o MOU recomenda | baixo |
 | **F-REINF-12** Campos opcionais de identificação | **(a)** `softHouse` (CNPJ do Luminaris) no R-1000 e `ideRespInf` (contador) no R-2099/R-4099 só quando houver dado cadastrado · (b) nunca · (c) sempre, com 400 se faltar | **(a).** São opcionais no XSD; (c) bloqueia o lote por dado que a RFB não exige | baixo |
@@ -330,7 +360,7 @@ export const ReinfBatchView = z.object({
 | # | Pergunta | Trava | Quem |
 |---|---|---|---|
 | **P-REINF-1** | Oráculo do leiaute: 1º lote aceito na produção restrita (ou a Reinf Web conferindo o relatório) | aceite × leitura | runbook humano (`RUNBOOK-FORMAT`); agente prepara, não assina |
-| **P-REINF-2** | Natureza do rendimento (Tabela 01) de cada serviço que o salão/clínica contrata de PJ (ex.: fisioterapia 15022, limpeza 15043, demais 15099) | mapa do item 1 sai de `DRAFT` | contador |
+| **P-REINF-2** | Natureza do rendimento (Tabela 01) de cada serviço que o salão/clínica contrata de PJ (ex.: fisioterapia 15022, limpeza 15043, demais 15099) | `natRend` de cada `WithholdingProfile` (F-RET-16 a) conferido; a tabela já é oficial (item 1) | contador |
 | **P-REINF-3** | O Simples tomador que retém só IRRF declara R-4020 do mesmo jeito? (ambiguidade A do RETENCOES-FONTE) | item 8 (há fato?) | contador |
 | **P-REINF-4** | O salão contrata limpeza/vigilância **por cessão de mão de obra**? (decide se há R-2010) — mesmo ponto da P-RET-5 | PR-2 itens 17–18 | contador |
 | **P-REINF-5** | A Reinf Web permite digitar os eventos R-4000 na fase 1? | uso do relatório | leitura do e-CAC (dono) |
@@ -342,7 +372,9 @@ export const ReinfBatchView = z.object({
 ## 8. Insumos ausentes
 
 1. **Manual de Orientação ao Desenvolvedor 2.7** e o XSD de retorno do lote assíncrono: não lidos em detalhe (só para o PR-4).
-2. **BRIEF de RETENCOES-FONTE**: em escrita em paralelo; E1–E6 (§5.1) aguardam. Nada no PR-1 começa antes dele.
+2. **Porta de leitura de backend do RETENCOES-FONTE:** a forma está no §5.4 do BRIEF de lá (PR #843). O nome e a assinatura da porta
+   são fixados lá (emenda 22/10). **Cadastro de dependentes PF** (`cpfDep`/`relDep`): não existe em nó planejado, fica para o nó de
+   pessoal (item 19).
 3. **Models do IRRF-DISTRIBUICAO** (`ProfitDistributionEvent`, JCP) fora de `main`: o PR-2 cita o BRIEF daquele nó, não o código.
 4. Leiaute 2.1.2b em PDF com colunas desalinhadas na Tabela 08 (classificação tributária): a leitura do código do Simples
    foi conferida pelo texto da descrição, não pela tabela formatada; a P-REINF-7 decide o valor.
@@ -371,8 +403,9 @@ forks novos. `autorizacao` não muda.
 1. Período sem retenção `MADE` e sem dividendo/JCP ⇒ 422; com fato ⇒ R-1000 de `inclusao` no 1º lote do tenant.
 2. Cada um dos 23 tipos do pacote XSD está em exatamente um conjunto: suportados, não aplicáveis (com fonte) ou retorno.
 3. R-4020 só com CNPJ de DV válido; R-4010 só com CPF de DV válido; inválido ⇒ 400 nomeado com o id da contraparte/sócio.
-4. Σ (`vlrIR` + `vlrAgreg` + `vlrCSLL` + `vlrCofins` + `vlrPP`) do R-4020 do período = Σ `TaxWithholding` `MADE` `ACTIVE`
-   (IRRF/CSLL/COFINS/PIS, beneficiário CNPJ) da competência; Σ por código derivado = resumo D8 por `codigoReceita`.
+4. Σ (`vlrIR` + `vlrAgreg` + `vlrCSLL` + `vlrCofins` + `vlrPP`) do R-4020 do período = Σ `amountCents` das linhas `MADE`
+   `ACTIVE` com `tributo` ∈ {IRRF, CSLL, COFINS, PIS} e beneficiário CNPJ da competência (emenda 22/10). INSS e ISS ficam fora
+   dessa soma. Σ por código derivado = resumo D8 por `codigoReceita`.
 5. Competência ≥ 2027-01 ⇒ nenhum `vlrCofins`/`vlrPP`/`vlrAgreg` no R-4020 (só IR e CSLL; RETENCOES-FONTE invariante 1).
 6. Um evento R-4020/R-4010 por beneficiário e estabelecimento no lote; `infoPgto` com `dtFG` do fato gerador de cada tributo (L7).
 7. Todo evento gerado, assinado com a chave de teste, valida no XSD oficial [D06]; sem `ds:Signature` não valida (F-REINF-6 a).
@@ -381,11 +414,13 @@ forks novos. `autorizacao` não muda.
 10. Prazo = dia 15 do mês seguinte, **avançado** ao dia útil seguinte; isentos de dividendos = dia 15 do 2º mês após o trimestre.
 11. Matriz: `REINF` = `CONDICIONAL` em MEI/SIMPLES/PRESUMIDO/REAL; inativa `NAO_SE_APLICA`.
 12. Id do evento com 36 caracteres no formato `REGRA_VALIDA_ID_EVENTO`; `nrInsc` com 8 dígitos.
+13. (emenda 22/10) Σ `vlrTotalRetPrinc` dos R-2010 do período = Σ `amountCents` das linhas `MADE` `ACTIVE` com `tributo = INSS`
+    da competência. Nenhuma linha `tributo = ISS` aparece em evento algum da Reinf.
 
 ## 12. Riscos e caso adversarial (T8)
 
-- **Risco: BRIEF irmão diverge.** Se o BRIEF de RETENCOES-FONTE fixar a retenção só por resumo mensal (sem linha por pagamento),
-  o R-4020 não tem `dtFG` e o PR-1 trava. Defesa: E1 está na nota compartilhada antes de aquele BRIEF fechar.
+- **Risco: BRIEF irmão diverge.** Fechado na emenda de 22/10: o §5.4 de retenções entrega linha por pagamento com `dataFatoGerador`
+  e `natRend`. Resta a dependência de ordem: o PR-1 daqui só depois dos PR-1 e PR-2 de lá.
 - **Risco: leiaute aceito ≠ lido.** O XSD prova forma, não regra de negócio do validador da RFB (ex.: `REGRA_EXISTE_INFO_CONTRIBUINTE`,
   `REGRA_DTFG_12001`). Só o P-REINF-1 fecha.
 - **Viés: herdar o PRE-ADR.** O PRE-ADR foi escrito sem o leiaute; tratei cada contrato dele como hipótese e corrigi 8 pontos
@@ -403,4 +438,4 @@ forks novos. `autorizacao` não muda.
 | Dossiê de 22/10 `verif-2026-10-22-efd-reinf-brief` | `pesquisas-legais/verif-2026-10-22-efd-reinf-brief/relatorio.md` | [L01] leiaute 2.1.2b (sha256 `d08ad69c…`), [D01] MOU 2.1.2.1, [D02] Tabelas 15/01/2026, [D03–D05] NT 01–03/2026, [D06] XSD v2.1.2 CNPJ alfanumérico, [D07] Lei 9.250 (acervo, sem o art. 6º-A), [D08] Lei 9.250 (Planalto) |
 | Dossiê de 20/10 `verif-2026-10-20-f1-retencoes-reinf-ibscbs` | `pesquisas-legais/…/relatorio.md` | IN RFB 2.043 arts. 1º–10 (Sijut, visão vigente); Lei 10.833, LC 214 art. 509 |
 | PRE-ADR e cédula | `docs/adr/ADR-INCR-EFD-REINF.md`; `docs/plano/decisoes/D-2026-10-21-FORKS-EFD-REINF.md` | D1–D9; F-REINF-1..5 |
-| Retenções | `docs/adr/ADR-INCR-RETENCOES-FONTE.md`; `D-2026-10-21-FORKS-RETENCOES-FONTE.md` | contratos de entrada E1–E6 |
+| Retenções | `docs/adr/ADR-INCR-RETENCOES-FONTE.md`; `D-2026-10-21-FORKS-RETENCOES-FONTE.md` | contratos de entrada E1–E6 (§5.4 do BRIEF `BE-INCR-RETENCOES-FONTE-brief.md`, PR #843) |
