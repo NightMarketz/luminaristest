@@ -77,7 +77,7 @@ describe('#21 — inferType do Excel', () => {
 describe('#23 — embeddings em lotes', () => {
   it('250 textos saem em requests de no máximo 100 entradas, na ordem', async () => {
     const svc = new EmbeddingService({ apiKey: 'ci-dummy-openai-key', expectedDimension: 2 });
-    const create = jest.fn(async ({ input }: { input: string[] }) => ({ data: input.map((t) => ({ embedding: [Number(t), 0] })) }));
+    const create = jest.fn(async ({ input }: { input: string[] }) => ({ data: input.map((t, index) => ({ index, embedding: [Number(t), 0] })) }));
     (svc as unknown as { client: unknown }).client = { embeddings: { create } };
     const texts = Array.from({ length: 250 }, (_, i) => String(i));
 

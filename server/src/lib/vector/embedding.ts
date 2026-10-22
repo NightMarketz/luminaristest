@@ -32,6 +32,9 @@ export interface EmbeddingOptions {
   maxRetries?: number;
 }
 
+/** Entradas por request de embeddings (o endpoint limita entradas e tokens por request). */
+const EMBEDDING_BATCH_SIZE = 100;
+
 /**
  * Embedding service backed by OpenAI. Resilience (timeout + bounded retries) uses the OpenAI SDK's
  * built-in options — no custom retry code. (Formerly named `OpenAIService`; renamed to avoid the
@@ -107,25 +110,29 @@ export class EmbeddingService implements IEmbeddingService {
     });
 
     try {
-      const response = await this.client.embeddings.create({
-        model: this.model,
-        input: texts,
-      });
-
-      // OpenAI returns embeddings in the same order as the input array
-      const embeddings = response.data
-        .sort((a, b) => a.index - b.index)
-        .map(item => {
-          if (!item.embedding || !Array.isArray(item.embedding)) {
-            throw new Error('Invalid embedding response format');
-          }
-          if (item.embedding.length !== this.expectedDimension) {
-            throw new Error(
-              `Invalid embedding dimension: expected ${this.expectedDimension}, got ${item.embedding.length}`
-            );
-          }
-          return item.embedding;
+      // Lotes de EMBEDDING_BATCH_SIZE: um documento grande num request só estoura o limite de entradas/tokens do endpoint.
+      const embeddings: number[][] = [];
+      for (let start = 0; start < texts.length; start += EMBEDDING_BATCH_SIZE) {
+        const response = await this.client.embeddings.create({
+          model: this.model,
+          input: texts.slice(start, start + EMBEDDING_BATCH_SIZE),
         });
+
+        // OpenAI returns embeddings in the same order as the input array
+        embeddings.push(...response.data
+          .sort((a, b) => a.index - b.index)
+          .map(item => {
+            if (!item.embedding || !Array.isArray(item.embedding)) {
+              throw new Error('Invalid embedding response format');
+            }
+            if (item.embedding.length !== this.expectedDimension) {
+              throw new Error(
+                `Invalid embedding dimension: expected ${this.expectedDimension}, got ${item.embedding.length}`
+              );
+            }
+            return item.embedding;
+          }));
+      }
 
       logger.debug('Successfully generated batch embeddings', {
         count: embeddings.length,
