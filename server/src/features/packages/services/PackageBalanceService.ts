@@ -227,6 +227,51 @@ export class PackageBalanceService {
   }
 
   /**
+   * E-1 (cancelamento) — takes back the origin credit of a CANCELLED package sale. Idempotent per saleId through
+   * the `reversal` movement. Reads the balance IN the tx: when it holds less than the credit (the package was
+   * consumed), nothing is written and the outcome is `consumed` — partial consumption is a decision of the owner
+   * (22/10/2026), left as a pending item. `no_credit`: the sale never credited a balance.
+   */
+  public async reverseCreditFromSale(
+    scope: AccountingScope,
+    saleId: string,
+  ): Promise<'reversed' | 'no_credit' | 'consumed'> {
+    if (!this.policy.canMutate(scope)) {
+      throw new ForbiddenError('Sem permissão para estornar saldo de pacote.');
+    }
+    const credit = await this.repo.findMovement(scope, saleId, 'credit');
+    if (!credit) return 'no_credit';
+    if (await this.repo.findMovement(scope, saleId, 'reversal')) return 'reversed';
+    const amountCents = centsFromDb(credit.deltaCents);
+
+    try {
+      return await this.repo.runTransaction(async (tx) => {
+        const balance = await this.repo.findBalance(scope, credit.customerId, credit.packageId, tx);
+        if (centsFromDb(balance?.balanceCents ?? 0n) < amountCents) return 'consumed';
+        await this.repo.createMovement(
+          {
+            userId: scope.ownerUserId,
+            unitId: scope.unitId,
+            customerId: credit.customerId,
+            packageId: credit.packageId,
+            saleId,
+            kind: 'reversal',
+            deltaCents: amountCents,
+          },
+          tx,
+        );
+        if (!(await this.repo.tryDecrement(scope, credit.customerId, credit.packageId, amountCents, tx))) {
+          throw new ValidationError(`Saldo de pacote insuficiente para estornar a venda ${saleId}.`);
+        }
+        return 'reversed' as const;
+      });
+    } catch (error) {
+      if (this.isUniqueViolation(error)) return 'reversed'; // concurrent reversal already applied
+      throw error;
+    }
+  }
+
+  /**
    * The key the NEXT expiry of this balance on `expiresOn` would take (review #483, achado 3) — the job uses it as
    * the pending-row identity while a guard blocks, so a 2nd expiry never shares the row of the 1st (already done).
    */

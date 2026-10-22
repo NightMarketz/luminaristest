@@ -106,6 +106,24 @@ export async function maybeReverseSale(
         // X14-CAIXA PR-1 item 5: o recebimento da venda vira REVERTED no dia do estorno — commit 2, não fatal.
         await maybeRecordRecebimento(scope, recebimentoSaleFromRow(scope.ownerUserId, { id: row.id, data }, await isAllPackageSale(scope.ownerUserId, row.id)));
       }
+
+      // E-1 / GAP-MAP N5 (CMV): the cost-of-goods of the sale's product lines.
+      const cogs = await posting.findEntryBySource(scope, 'sale.cogs', row.id);
+      if (cogs) {
+        await posting.reverseEntry(scope, { unitId, lancamentoId: cogs.id, reversalPostingDate: scopeToday(scope), reason });
+      }
+
+      // E-1 (pacote): the balance credit first (tx1), then the 2.1.1 liability (tx2) — a crash between the two is
+      // re-driven by reconcileSaleCancellations. A consumed package keeps both (owner, 22/10/2026: out of scope).
+      const pkg = await getFactory().getPackageBalanceService().reverseCreditFromSale(scope, row.id);
+      if (pkg === 'consumed') {
+        logger.warn('Cancelled package sale already consumed — package reversal left pending', { saleId: row.id });
+        return;
+      }
+      const packageSold = await posting.findEntryBySource(scope, 'sale.package.sold', row.id);
+      if (packageSold) {
+        await posting.reverseEntry(scope, { unitId, lancamentoId: packageSold.id, reversalPostingDate: scopeToday(scope), reason });
+      }
       return;
     }
 
