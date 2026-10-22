@@ -197,6 +197,11 @@ export class UserRepository implements IUserRepository {
     });
   }
 
+  public async getAttachmentStorageKeys(id: string): Promise<string[]> {
+    const rows = await prisma.crmAttachment.findMany({ where: { userId: id }, select: { storageKey: true } });
+    return rows.map((r) => r.storageKey);
+  }
+
   public async countByRole(role: Role): Promise<number> {
     return prisma.user.count({ where: { role } });
   }
