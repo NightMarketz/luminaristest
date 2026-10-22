@@ -6,6 +6,43 @@
 > cédula [[D-2026-10-21-FORKS-RETENCOES-FONTE]] (F-RET-1..8) e triagem [[D-2026-10-21-TRIAGEM-CONTADOR-F1]] (F-RET-6, F-RET-9,
 > acúmulo do DARF < R$ 10).
 
+## Emenda 22/10 — cruzamento com a Reinf (PR #848)
+
+> **Aprovação do dono** (chat, 2026-10-22, repassada pela sessão de origem): *"Manda as correções para as sessões de
+> retenções e da Reinf: tabela única com dono no RETENCOES-FONTE carregada com a leitura oficial da Reinf, porta de leitura
+> no backend, código AGREGADO nas 3 linhas da CSRF, filtro de tributo na invariante 4 e o R-4010 de PF por serviço como
+> lacuna até o nó de pes[soal]"*. Escopo: só o BRIEF e a nota do nó. **Nenhum fork é ratificado por esta emenda.**
+
+1. **Uma tabela de cada, com dono aqui.** `NATUREZA_RENDIMENTO` (item 7) e `RETENCAO_CODIGO` (item 2) são as **únicas**
+   tabelas e nascem no PR-1 deste nó. As tabelas `REINF_NATUREZA_RENDIMENTO` e `REINF_CODIGO_RECEITA` do BRIEF da Reinf
+   deixam de existir; a Reinf lê estas.
+   - **Carga:** a leitura oficial que a sessão da Reinf fez: Tabela 01 e tabelas "R-4020"/"R-4010" de 15/01/2026, dossiê
+     `pesquisas-legais/verif-2026-10-22-efd-reinf-brief` [D02] (branch `claude/brief-efd-reinf-b0063b`), zip
+     `EFD-REINF - Tabelas 15012026.zip` do portal SPED, SHA-256 `31c04713b92a965c7413190a21dfc1b8eab4b10002a58371506da758e770b1a7`.
+     Ela cobre o grupo 15 inteiro (15001–15099), a 12001 (duas linhas por vigência: até 2025-12-31 sem tributo; desde
+     2026-01-01 com IR) e a 12016.
+   - **Status:** `PUBLISHED` onde há leitura oficial citada. `DRAFT` só no que não tem fonte: o código GPS/DCTFWeb do INSS
+     retido (P-RET-6) e o `INSS/CPRB` (P-RET-8).
+   - **10002** (trabalho sem vínculo, IRPF `058807`, lido no mesmo [D02]) **não** entra na carga listada. Entra na mesma
+     condição do BRIEF da Reinf (F-REINF-9 a) e do F-RET-17 (a). Até lá, a retenção de PF grava `codigoReceita = null` com
+     aviso (item 2).
+   - **Vocabulário do discriminador (um só):** `IRPJ | IRPF | CSLL | COFINS | PIS | AGREGADO | INSS`, o mesmo das tabelas
+     "R-4020"/"R-4010", que separam o IR de PJ do IR de PF. A coluna `TaxWithholding.tributo` continua `IRRF`. A busca do
+     código mapeia `IRRF` + beneficiário CNPJ ⇒ `IRPJ` e `IRRF` + beneficiário CPF ⇒ `IRPF`, pelo `taxId` (item 5). Esse
+     mapa é determinístico, então **não abre fork**.
+2. **Porta de leitura no backend** (item 23, §5.4): `ITaxWithholdingReadPort.findMadeForReinf(scope, competencia)`,
+   implementada pelo `TaxWithholdingRepository` e injetada pela factory. A Reinf consome a porta sem HTTP. O formato é
+   `WithholdingLineViewSchema` + `settlementId` + `originSettlementId`, usados para agrupar por pagamento.
+3. **CSRF até 2026-12-31:** **cada uma das 3 linhas** (CSLL, COFINS, PIS) grava `codigoReceita` = o código **AGREGADO**
+   (`595207`, "5952" + variação, linha `AGREGADO` da `RETENCAO_CODIGO`). O título de imposto é um só. A Reinf decide entre
+   informar agregado ou separado pelo código de cada linha (F-REINF-8 a). Desde 2027-01-01 há uma linha CSLL com o código
+   do discriminador `CSLL` (`598707` na tabela de 15/01/2026). Se a RFB publicar uma tabela nova para 2027, ela substitui
+   esta pela vigência.
+4. **Dependentes:** o §5.4 entrega só a **quantidade** de dependentes (`pf.dependentes`). O **R-4010 de PF por serviço**
+   (`ideDep` com CPF e relação) fica como **lacuna até o nó de pessoal**, que é dono do cadastro de dependentes (§8 item 5).
+
+Itens afetados: 2, 7 e 23, §5.4, §6 (F-RET-16) e §8.
+
 ## TLDR (2 linhas)
 
 Quatro PRs: **PR-1** grava as tabelas (alíquotas com a vigência de 2027, mínimos, códigos, natureza do rendimento,
@@ -124,10 +161,13 @@ reconstrói a tabela).
    (RIR 785 I–II [D09], triagem 21/10); `MINIMO/DARF` 1000 centavos (Lei 9.430 art. 68 [D05]). Todas `PUBLISHED` com
    `fonte`, menos a de `INSS/CPRB` (3,5%, não lida), que nasce `DRAFT` sem valor (§7). Teste: leitura por data em 2026-12-31
    e 2027-01-01 (invariante 1); proposta fora do formato ⇒ 400.
-2. **Tabela `RETENCAO_CODIGO`** (C7): chave = `natRend` (5 dígitos), discriminador = tributo
-   (`IRRF|CSLL|COFINS|PIS|AGREGADO|INSS`), `valorTexto` = código de 6 dígitos. Valores do contador e da Tabela "R-4020" lida
-   pela sessão da Reinf (15022 fisioterapia: 170806 / AGREGADO 595207…; 15043/15045/15046; 15052 só IR 804506). **Todas
-   `DRAFT`** até uma leitura oficial citada neste dossiê (P-RET-6). `INSS` ⇒ código GPS/DCTFWeb `DRAFT` (o ADR cita 2631, grau I, tabela não lida). `familiasDaLinha`
+2. **Tabela `RETENCAO_CODIGO`** (C7; **única**, Emenda 22/10 item 1): chave = `natRend` (5 dígitos), discriminador =
+   tributo (`IRPJ|IRPF|CSLL|COFINS|PIS|AGREGADO|INSS`), `valorTexto` = código de 6 dígitos, `valorJson = { periodicidade }`.
+   Carga das tabelas "R-4020"/"R-4010" de 15/01/2026 (zip SHA-256 `31c04713…`, dossiê da Reinf [D02]), **`PUBLISHED`** com
+   `fonteSha256`. Testes: 15022 × IRPJ = `170806`, × AGREGADO = `595207`; 15052 só IRPJ `804506`; 12016 × IRPF = `570602`;
+   12001 × IRPF em 2026-03 = `184101`. `INSS` ⇒ código GPS/DCTFWeb **`DRAFT`** sem valor (o ADR cita 2631, grau I, tabela
+   não lida; P-RET-6). A busca mapeia `IRRF` + CNPJ ⇒ `IRPJ` e `IRRF` + CPF ⇒ `IRPF`. Até 2026-12-31, CSLL/COFINS/PIS buscam
+   o discriminador `AGREGADO` (Emenda item 3). `familiasDaLinha`
    devolve `[]` (não reabre X7/X8). Teste: sem linha `PUBLISHED`, a retenção grava `codigoReceita = null` com aviso
    `CODIGO_RECEITA_DRAFT` e o título de imposto fica `null` (item 19). **O cálculo não bloqueia**: reter é obrigação, o código
    só agrupa o DARF.
@@ -153,10 +193,11 @@ reconstrói a tabela).
    `inss` exige `inssTpServico` (9 dígitos, F-RET-16); `natRend` 5 dígitos, que precisa existir em `NATUREZA_RENDIMENTO`
    (`DRAFT` aceito, com aviso); `fonte` não vazia. Perfil da contraparte `PF` só aceita `irrf` (CSRF/INSS 11%/ISS ⇒ 400).
    Vigência sem sobreposição por `(counterpartyId, naturezaServico)`. Soft-delete. `resetDb` limpa a tabela.
-7. **Tabela `NATUREZA_RENDIMENTO`** (F-REINF-5 a; dono da criação = **F-RET-16**): chave = `natRend`, `valorJson
-   {descricao, naturezaServico, beneficiario: 'PJ'|'PF'}` ligando o código à chave de alíquota do item 1. Nasce **`DRAFT`**
-   com os códigos que a nota da Reinf cita (10002, 15022, 15043, 15045, 15046, 15052) e a fonte "Tabela 01 da EFD-Reinf —
-   leitura da sessão EFD-REINF 22/10, conferir". Teste: perfil com `natRend` fora da tabela ⇒ 400.
+7. **Tabela `NATUREZA_RENDIMENTO`** (F-REINF-5 a; **única e com dono aqui**, Emenda 22/10 item 1): chave = `natRend`,
+   `valorJson = { descricao, grupo, declarante, tributos[], tiposIsencao[] }` (forma do BRIEF da Reinf). Carga = grupo 15
+   inteiro (15001–15099), 12001 (duas linhas por vigência) e 12016, da Tabela 01 de 15/01/2026, **`PUBLISHED`**, `fonte =
+   "EFD-Reinf Tabela 01 (Tabelas de 15/01/2026)"` com o `fonteSha256` do zip. 10002 só na condição da Emenda item 1. A
+   alíquota continua vindo da `naturezaServico` do perfil (item 1). Teste: perfil com `natRend` fora da tabela ⇒ 400.
 8. **Contas** (F-RET-19): folhas do plano padrão em `ChartOfAccountsFixture.ts` + `REFERENCIAL_PLANO_PADRAO` (só se o
    F-RET-19 ratificar códigos) + papéis novos no perfil fiscal (`FiscalProfileDto`/`IFiscalProfileRepository`/`FiscalProfileService`):
    `retencaoIrrfRecolherAccountId`, `retencaoCsrfRecolherAccountId`, `retencaoInssRecolherAccountId`,
@@ -234,7 +275,9 @@ reconstrói a tabela).
     + WITHHOLDING 46,50, sem shortfall.
 23. **Leitura das feitas — contrato da Reinf** (§5.4; posição no PR-2 = **F-RET-18**): `GET /api/accounting/withholdings?
     direction=MADE&competencia=YYYY-MM` (linhas) e `GET /api/accounting/withholdings/summary?competencia=` (feitas por
-    código, com vencimento e `taxPayableId`). PII: `taxId` sai **só** na rota de linhas, com policy de leitura contábil; a
+    código, com vencimento e `taxPayableId`), mais a **porta** `ITaxWithholdingReadPort.findMadeForReinf(scope,
+    competencia)` (Emenda item 2), implementada no `TaxWithholdingRepository` e registrada na factory. A rota e a porta
+    usam o mesmo mapeador, e um teste garante que as duas devolvem o mesmo conjunto. PII: `taxId` sai **só** na rota de linhas, com policy de leitura contábil; a
     auditoria nunca o carrega. Gates: auditoria `ap.withholding.recorded|reversed`, `tax_payable.upserted` (ids, tributo,
     cents, competência); doc + openapi + path-count; snapshot de shape; i18n.
 
@@ -427,6 +470,15 @@ export const WithholdingLineViewSchema = z.object({
   taxPayableId: z.string().nullable(),
 }).strict();
 
+// Porta de leitura no backend (Emenda 22/10 item 2) — a Reinf consome sem HTTP
+export const WithholdingLineForReinfSchema = WithholdingLineViewSchema.extend({
+  settlementId: z.string(),                    // baixa WITHHOLDING da linha
+  originSettlementId: z.string().nullable(),   // PAYMENT que gerou a CSRF (agrupa por pagamento)
+}).strict();
+export interface ITaxWithholdingReadPort {
+  findMadeForReinf(scope: AccountingScope, competencia: string): Promise<z.infer<typeof WithholdingLineForReinfSchema>[]>; // só MADE ACTIVE
+}
+
 // GET /api/accounting/withholdings/summary?competencia=YYYY-MM          — título de imposto por código (DARF/GPS/ISS)
 export const WithholdingSummarySchema = z.object({
   competencia: z.string(),
@@ -440,11 +492,11 @@ export const WithholdingSummarySchema = z.object({
 }).strict();
 ```
 
-**Fixado aqui para a Reinf (item 4 da nota dela):** até 2026-12-31 a CSRF fica em **3 linhas `TaxWithholding`**
-(CSLL/COFINS/PIS, uma por tributo) e **um título de imposto pelo código `AGREGADO`** da `RETENCAO_CODIGO` (5952 + variação,
-**DRAFT**). Isso segue a resposta do contador (item 9 da triagem, "5952") e o MOU ("empresas em geral informam Agregado").
-Desde 2027-01-01 há uma linha CSLL, com código `CSLL` (**DRAFT**, P-RET-6). Se a Reinf precisar dos valores separados por
-tributo, eles estão nas linhas. **A Reinf não precisa abrir fork de agregação por conta deste nó.**
+**Fixado aqui para a Reinf (item 4 da nota dela; Emenda 22/10 item 3):** até 2026-12-31 a CSRF fica em **3 linhas
+`TaxWithholding`** (CSLL/COFINS/PIS, uma por tributo). **Cada uma** carrega `codigoReceita = 595207` (`AGREGADO` da
+`RETENCAO_CODIGO`, `PUBLISHED`), e há **um título de imposto** com esse código. Isso segue a resposta do contador (item 9 da triagem, "5952") e o MOU ("empresas em geral informam Agregado").
+Desde 2027-01-01 há uma linha CSLL, com o código do discriminador `CSLL` (`598707` na tabela de 15/01/2026; uma tabela
+nova da RFB substitui esta pela vigência). Se a Reinf precisar dos valores separados por tributo, eles estão nas linhas. **A Reinf não precisa abrir fork de agregação por conta deste nó.**
 
 ### 5.5 Rotas
 
@@ -465,7 +517,7 @@ tributo, eles estão nas linhas. **A Reinf não precisa abrir fork de agregaçã
 | **F-RET-13** F7 em título AR com retenção sofrida | **(a)** `SHORTFALL_TREATMENTS` ganha `WITHHOLDING`, com partes por tributo digitadas no confirm (`BankSettlementWithholdingPart`) · **(b)** só pelo AR manual (o F7 trata como `PARTIAL`) | **(a).** O cliente PJ deposita o líquido. Sem (a), o F7 propõe "parcial" e o título fica aberto com o valor retido | baixo |
 | **F-RET-14** Sofridas × X7/X8 já lançando (C5) | **(a)** o recebimento debita a **transitória "retenções a conciliar"**: PIS/Cofins na conta existente `pisCofinsRetencaoConciliarAccountId`, IRRF/CSLL/INSS em papel novo. As provisões seguem como estão (D retido a compensar / C conciliar a partir do informado), a transitória zera quando o informado bate e o X7 ganha a baixa do retido (item 31) · **(b)** o recebimento debita direto "retido a compensar" e X7/X8 deixam de lançar o reconhecimento das retenções vindas do AR (emenda de dois serviços mergeados, deduplicação por origem) · (c) o recebimento debita "a compensar" e X7/X8 não mudam ⇒ **dupla contagem** (listado só para descartar) | **(a).** Não reabre o F-PCB-3 nem a emenda de 06/10, e a divergência fica visível (saldo na transitória) em vez de silenciosa. (b) exige que o informado manual e o AR nunca se cruzem | alto em (c) |
 | **F-RET-15** Contrapartida do ISS retido sofrido sem passivo de ISS (C6; F-RET-9 decidido) | **(a)** D **"ISS sobre serviços"** (conta de dedução da receita, papel novo `issDeducaoAccountId`): o imposto se extingue pela retenção e vira custo do serviço, sem ativo, como o contador mandou. No Simples, o ISS faz parte do DAS e a retenção é informada no PGDAS (`simplesEspelho.ts:31`), então vale a mesma conta · **(b)** D **"ISS a recolher"** (papel novo), deixando saldo devedor no passivo até um nó de ISS próprio provisionar o devido · **(c)** transitória "ISS retido a conciliar" | **(a).** É a única que não deixa saldo esperando um nó que não existe. Pergunta ao contador junto: *"sem provisão de ISS próprio no razão, o ISS retido pelo tomador vai a 'ISS sobre serviços' (dedução) no regime normal e no Simples?"* | médio |
-| **F-RET-16** `natRend` e a tabela `NATUREZA_RENDIMENTO` (C9) | **(a)** o perfil ganha `natRend` (5 dígitos) e os campos do R-2010 (`inssTpServico`, `inssCprb`); a tabela `NATUREZA_RENDIMENTO` (F-REINF-5 a) **nasce no PR-1 deste nó** (DRAFT), e o BRIEF da Reinf consome · **(b)** só `naturezaServico` aqui, e a Reinf mapeia natureza → `natRend` numa tabela dela · (c) as duas sessões criam a tabela (colisão de migração) | **(a).** O PR-1 daqui vem antes do PR-1 da Reinf, e o código de receita depende do `natRend` (Tabela "R-4020"). Com (b) o código só existiria na Reinf e o título de imposto ficaria sem código. **Avisar a sessão do EFD-REINF do que for ratificado** | médio em (c) |
+| **F-RET-16** `natRend` e a tabela `NATUREZA_RENDIMENTO` (C9). **Emenda 22/10:** onde nasce a tabela foi fixado pelo dono ("tabela única com dono no RETENCOES-FONTE"), e por isso o caminho (c) sai. Segue PENDENTE a escolha entre `natRend` no perfil (a) e o mapa natureza → `natRend` (b) | **(a)** o perfil ganha `natRend` (5 dígitos) e os campos do R-2010 (`inssTpServico`, `inssCprb`); a tabela `NATUREZA_RENDIMENTO` (F-REINF-5 a) **nasce no PR-1 deste nó** (DRAFT), e o BRIEF da Reinf consome · **(b)** só `naturezaServico` aqui, e a Reinf mapeia natureza → `natRend` numa tabela dela · (c) as duas sessões criam a tabela (colisão de migração) | **(a).** O PR-1 daqui vem antes do PR-1 da Reinf, e o código de receita depende do `natRend` (Tabela "R-4020"). Com (b) o código só existiria na Reinf e o título de imposto ficaria sem código. **Avisar a sessão do EFD-REINF do que for ratificado** | médio em (c) |
 | **F-RET-17** Desenho do IRRF de PF (F-RET-7 b reabriu o F-PES-0) | **(a)** neste nó: tabela mensal + redução do art. 3º-A + deduções do art. 4º **informadas no pagamento** (dependentes, previdência, pensão; ou desconto simplificado, o que for melhor). Vários pagamentos no mês ao mesmo CPF **somam** (retenção pela diferença; P-RET-7). Fica no **nó de pessoal**: cadastro de dependentes, INSS do contribuinte individual (Lei 10.666 art. 4º), eSocial S-1200/S-1210, pró-labore, aluguel PF, 13º · **(b)** igual a (a), mas cada pagamento é calculado isolado · **(c)** só o serviço PF sem dedução (base = bruto) | **(a).** É o que a tabela "mensal" pede e o que a Reinf R-4010 declara (`ideDep`/`detDed`). (b) retém a menor quando há dois pagamentos no mês. (c) retém a maior e não fecha o R-4010 | médio |
 | **F-RET-18** Onde nasce a leitura das feitas | **(a)** no **PR-2** (com o AP), para a Reinf começar o PR-1 dela antes do AR · **(b)** no PR-3, junto do resumo das sofridas, como no ADR §6 item 11 | **(a).** A Reinf só lê MADE, e (b) prende o PR-1 dela ao PR-3 daqui sem motivo | baixo |
 | **F-RET-19** Folhas do plano padrão e referencial | **(a)** IRRF retido de serviço **reusa** `2.1.7.03 IRRF a Recolher` (já mapeada ao referencial 2.01.01.09.01); torre nova **`2.1.9` Tributos Retidos a Recolher** (CSRF, INSS, ISS) e **`1.1.8` Tributos Retidos a Compensar** (IRRF, CSLL, INSS; o PIS/Cofins segue no papel do X8); referencial **DRAFT** até o contador conferir (P-RET-4) · **(b)** folha própria para o IRRF de serviço em 2.1.9 (o 2.1.7 é "Obrigações com Sócios") · (c) só papéis no perfil, sem folha no plano padrão (cada unidade configura) | **(a)** com o porém de (b) dito: o 2.1.7.03 está sob "Obrigações com Sócios" por decisão de 21/10 (IRRF-DISTRIBUICAO). Os dois IRRF vão ao mesmo passivo, mas a agregação no balanço fica estranha. Se o dono preferir a semântica, é (b) | baixo |
@@ -479,7 +531,7 @@ tributo, eles estão nas linhas. **A Reinf não precisa abrir fork de agregaçã
 | P-RET-3 | ~~fato gerador por tributo~~ **Respondida 21/10:** confirma o D2; o MOU da Reinf também | — | — |
 | P-RET-4 | Códigos do referencial das folhas do F-RET-19 e a pergunta do F-RET-15 | itens 8, 25 | contador |
 | P-RET-5 | ~~cessão de mão de obra~~ **respondida 21/10** (limpeza, vigilância, recepcionista = cessão; manutenção depende). IN 2.110 arts. 112/115 **não lidos** | perfil (dado do usuário) | fonte oficial |
-| P-RET-6 | Códigos de 6 dígitos por `natRend` × tributo (Tabela "R-4020") e o da CSLL retida sozinha em 2027 | item 2 (DRAFT) | fonte oficial (portal SPED) |
+| P-RET-6 | ~~Códigos por `natRend` × tributo~~ resolvidos pela leitura oficial da Reinf (Emenda 22/10). Restam o código GPS/DCTFWeb do INSS retido e uma eventual tabela nova para 2027 | item 2 (`INSS` DRAFT) | fonte oficial |
 | **P-RET-7** (nova) | Pagando duas vezes no mês ao mesmo autônomo PF, a tabela incide sobre a soma do mês? | F-RET-17 | contador |
 | **P-RET-8** (nova) | Prestador na CPRB: retenção de 3,5% em vez de 11%? Base legal? | item 1 (`INSS/CPRB` DRAFT) | contador + fonte oficial |
 | **P-RET-9** (nova) | O pagamento a contribuinte individual também vai ao eSocial S-1210 (pendência que a sessão da Reinf deixou)? | fronteira do F-RET-17 | contador |
@@ -489,9 +541,12 @@ tributo, eles estão nas linhas. **A Reinf não precisa abrir fork de agregaçã
 1. **IN SRF 459/2004 e IN RFB 765/2007** (Simples nos dois sentidos, declaração de optante): não lidas. O item 10 usa a
    leitura segura (sem declaração ⇒ retém IRRF).
 2. **IN RFB 2.110/2022** (lista de cessão de mão de obra): não lida. A natureza é escolha do usuário no perfil, com `fonte`.
-3. **Tabela 01 e Tabela "R-4020" da Reinf**: lidas pela sessão EFD-REINF em 22/10 (dossiê `verif-2026-10-22-efd-reinf-brief`,
-   branch `claude/brief-efd-reinf-b0063b`), **não** neste dossiê. Por isso nascem DRAFT.
+3. **Tabela 01 e tabelas "R-4020"/"R-4010" da Reinf**: lidas em fonte oficial pela sessão EFD-REINF em 22/10 (dossiê
+   `verif-2026-10-22-efd-reinf-brief` [D02], branch `claude/brief-efd-reinf-b0063b`), não neste dossiê. Pela Emenda 22/10
+   nascem `PUBLISHED`, com o `fonteSha256` do zip daquele dossiê.
 4. **Lei municipal de ISS** do município do tenant: alíquota, vencimento e lista de retidos são informados no perfil.
+5. **Dependentes com CPF e relação** (R-4010 `ideDep`): o nó só recebe a quantidade. O **R-4010 de PF por serviço** fica
+   como **lacuna até o nó de pessoal**, dono do cadastro de dependentes (Emenda 22/10 item 4).
 
 ## 9. Achados fora de escopo (não planejados)
 
