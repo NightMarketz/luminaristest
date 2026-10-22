@@ -4,11 +4,11 @@ tipo: "regua-f"
 dominio: "fiscal"
 titulo: "Eficiência fiscal lícita como sugestão e guarda: combo itemizado com desconto incondicional rateado e piso por item, segregação por NCM, simuladores (fator r, regime, remuneração do sócio), alertas (sublimite, salão-parceiro, interdependência), guarda anti-simulação no documento fiscal e relatório de economia"
 estado: "planned"
-estado_detalhe: "20/10: PRE-ADR **Proposed** (ADR-INCR-EFICIENCIA-FISCAL) pela sessao-planejamento sob a cédula D-2026-10-20-EFICIENCIA-FISCAL-PRE-ADR — forks F-EF-1..13 PENDENTES, P-EF-1..10 ao contador (A1–A3 do dossiê de produto e S1–S4 do de serviços como perguntas exatas); PR-5 de serviços (S-1..S-6) incluído por pedido do dono de 20/10. **Não roteia até a ratificação.** Sem BRIEF, sem 'executa'. Regra do item 1 fixada pelo dono no mesmo dia (\"colocar preco de custo em produtos com muito imposto, nao precisa ser um preco fora da realidade\"): desconto do combo alocado primeiro aos itens de maior carga até o piso = custo (nunca abaixo), teto = catálogo (nunca acima), tudo destacado na nota, proporcional como alternativa configurável — D5/D6 do ADR; **preço fictício (abaixo do custo ou acima do catálogo) continua fora, invariante I-1** — CTN 148/149 VII, Lei 8.137 art. 1º II/IV, LC 214 art. 7º § 3º + 13 I b; LC 87 art. 13 I / 15 funda o preço de custo como base. Hoje: desconto por venda sem rateio por item (SalesModule.discountAmount); PackageCatalogModule não é combo itemizado; sem custo de serviço (F-EF-1 é o fork que mais importa); segregação do Simples manual por parcela; fator r sem simulação; `grep simula` em server/src = só testes. Posição oficial sobre alocação de desconto em kit: não encontrada — PR-1 só recebe 'executa' depois do P-EF-1 · 21/10: forks RATIFICADOS por questionário ([[D-2026-10-21-FORKS-EFICIENCIA-FISCAL]]). Próximo: BRIEF por pedido próprio"
+estado_detalhe: "20/10: PRE-ADR **Proposed** (ADR-INCR-EFICIENCIA-FISCAL) pela sessao-planejamento sob a cédula D-2026-10-20-EFICIENCIA-FISCAL-PRE-ADR — forks F-EF-1..13 PENDENTES, P-EF-1..10 ao contador (A1–A3 do dossiê de produto e S1–S4 do de serviços como perguntas exatas); PR-5 de serviços (S-1..S-6) incluído por pedido do dono de 20/10. **Não roteia até a ratificação.** Sem BRIEF, sem 'executa'. Regra do item 1 fixada pelo dono no mesmo dia (\"colocar preco de custo em produtos com muito imposto, nao precisa ser um preco fora da realidade\"): desconto do combo alocado primeiro aos itens de maior carga até o piso = custo (nunca abaixo), teto = catálogo (nunca acima), tudo destacado na nota, proporcional como alternativa configurável — D5/D6 do ADR; **preço fictício (abaixo do custo ou acima do catálogo) continua fora, invariante I-1** — CTN 148/149 VII, Lei 8.137 art. 1º II/IV, LC 214 art. 7º § 3º + 13 I b; LC 87 art. 13 I / 15 funda o preço de custo como base. Hoje: desconto por venda sem rateio por item (SalesModule.discountAmount); PackageCatalogModule não é combo itemizado; sem custo de serviço (F-EF-1 é o fork que mais importa); segregação do Simples manual por parcela; fator r sem simulação; `grep simula` em server/src = só testes. Posição oficial sobre alocação de desconto em kit: não encontrada — PR-1 só recebe 'executa' depois do P-EF-1 · 21/10: forks RATIFICADOS por questionário ([[D-2026-10-21-FORKS-EFICIENCIA-FISCAL]]). Próximo: BRIEF por pedido próprio · 22/10: BRIEF escrito (BE-INCR-EFICIENCIA-FISCAL-brief.md, 33 itens em 5 PRs) pela sessao-planejamento sob o pedido do dono de 22/10 (\"Precisamos agora de sessões para a falta de brief\" — só BRIEF, sem 'executa'); padrão do combo = PROPORCIONAL_CATALOGO pela triagem [[D-2026-10-21-TRIAGEM-CONTADOR-F1]] (CARGA só com aceite do contador); forks novos F-EF-14..17 PENDENTES (piso sob proporcional, razão/DPS pelo desconto por item, destaque vDescIncond reabre F-DFE-15, padrão do pacote sobre pacoteFatoGerador); PR-2 bloqueado por X10a (ProductFiscalProfile fora de main). Próximo: ratificar F-EF-14..17, depois 'executa' do PR-1"
 depende_de: ["[[D-2026-10-21-FORKS-EFICIENCIA-FISCAL]]", "[[D-2026-10-20-EFICIENCIA-FISCAL-PRE-ADR]]", "[[D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS]]", "[[X14]]", "[[X7]]", "[[X13]]", "[[LEGAL-PARAMS]]", "[[IRRF-DISTRIBUICAO]]?", "[[RETENCOES-FONTE]]?", "[[IBS-CBS-2027]]?", "[[X10a]]?", "[[GOV-CONTADOR]]?", "[[D1]]?"]
 autorizacao: "dono, chat, 2026-10-20: \"Commita a pesquisa e a linha F1.5 no PR #776. Autorizo planejar o PRE-ADR do EFICIENCIA-FISCAL — sessao-planejamento, sem 'executa'.\" — só o PRE-ADR e esta nota (cédula [[D-2026-10-20-EFICIENCIA-FISCAL-PRE-ADR]]). Pedido de origem no mesmo dia: \"precisamos ter uma sessão de instalar práticas de eficiência fiscal, pesquise aqui algumas… para deixarmos automática no sistema\" — a cédula fixou que o exemplo do combo (preço fictício) não entra; esclarecimento do dono no mesmo dia (pesquisa §0, commit 7f2a7609 do #776): \"A ideia era colocar preco de custo em produtos com muito imposto, nao precisa ser um preco fora da realidade\" — regra do item 1 (D5/D6), não é fork. BRIEF e código exigem pedido próprio"
 ancora_sdd: "—"
-atualizado: "2026-10-21"
+atualizado: "2026-10-22"
 prs: []
 perfil_previsto: "precisa-de-planejamento"
 perfil_evidencia: "regra 1: 13 forks pendentes (piso do serviço, critério de alocação, aprovador, kit sem NCM, fonte da NCM/ST, fatiamento, Lucro Real no simulador, estética × Anexo III, desconto condicional; serviços: elegibilidade hospitalar, procedimento estético, ISS fixo SUP, NFS-e do pacote) e uma ambiguidade sem fonte oficial (A1) ao contador; depois deles: opus-medio (2 models novos, campos novos em 2 presets + guarda no SalesPlugin, serviço Prisma-side no molde do RegisterPaymentService, 3 simuladores puros sobre simplesCalc/X7, relatório)"
@@ -68,6 +68,9 @@ registros: ["server/src/lib/factory.ts", "server/src/routes/sales.ts", "server/s
 
 ## Docs
 
+- [`BE-INCR-EFICIENCIA-FISCAL-brief.md`](../../accounting/BE-INCR-EFICIENCIA-FISCAL-brief.md) — **BRIEF (22/10)**:
+  33 itens em 5 PRs contra o código de `main` `65e1dd6b`; padrão proporcional (triagem 21/10); forks novos F-EF-14..17
+  PENDENTES (§5); P-EF residuais (§6); dossiê [`brief-eficiencia-fiscal/relatorio.md`](../../../pesquisas-legais/brief-eficiencia-fiscal/relatorio.md)
 - [`ADR-INCR-EFICIENCIA-FISCAL.md`](../../adr/ADR-INCR-EFICIENCIA-FISCAL.md) — **PRE-ADR Proposed (20/10)**: fronteira
   do lícito com artigo + link do acervo por guarda (§3, L1–L26), D1–D11, esqueleto de 33 comportamentos em 5 PRs (PR-5 = serviços)
   cobrindo as 11 práticas (§6), contratos (`TaxOptimizationPolicy`, `TaxOptimizationSuggestion`, `FiscalCheckResponse`,
@@ -96,16 +99,15 @@ registros: ["server/src/lib/factory.ts", "server/src/routes/sales.ts", "server/s
 
 ## O que espera o dono
 
-- Ratificar F-EF-1..9 do produto (recomendação = opção que fecha a lacuna por inteiro: piso de **serviço** completo (custo
-  informado → preço mínimo publicado → sem desconto além do proporcional) — o fork que mais importa, porque no salão o
-  item de maior carga é o serviço; critério de alocação por tenant com padrão carga tributária e proporcional
-  escolhível; aprovador = contador responsável quando houver; kit explodido com classificação do contador por kit; NCM
-  do `ProductFiscalProfile`; 5 PRs; simulador com Lucro Real; 2027 conservador; desconto condicional como campo).
-- Enviar P-EF-1..10 ao contador (item 1b do [[D1]]) — **o PR-1 não recebe `executa` antes do P-EF-1** (piso e rateio).
-- Serviços: F-EF-10 (elegibilidade hospitalar por serviço + checklist), F-EF-11 (estético ⇒ 32 % e alíquota cheia,
-  reclassificação só por sugestão aceita), F-EF-12 (ISS fixo SUP com simulador **e** apuração, habilitada por documento),
-  F-EF-13 (NFS-e do pacote por consumo no Simples); P-EF-7..10 ao contador; o PR-5 espera P-EF-7 e a lista da RDC 50.
-- Depois: BRIEF e `executa` por PR (F-EF-6: 5 PRs).
+- **22/10 — BRIEF escrito.** Ratificar os forks novos F-EF-14..17 (BRIEF §5): **F-EF-14** severidade do piso sob o
+  proporcional (rec. WARN no proporcional, BLOCK na carga); **F-EF-15** razão e DPS seguem o desconto por item (rec. sim —
+  toca o ADR-INCR-REVENUE-SPLIT D5); **F-EF-16** destacar `vDescIncond` na NFS-e (rec. sim — reabre F-DFE-15 a);
+  **F-EF-17** padrão do pacote por regime só como alerta sobre `pacoteFatoGerador` (rec. não mudar o default).
+- Depois: `executa` por PR (F-EF-6 a). PR-1, PR-3 (menos o item 17), PR-4 e PR-5 não têm trava externa; **PR-2 espera o
+  `ProductFiscalProfile` (X10a)**; item 17 espera o cálculo de dividendos/JCP do IRRF-DISTRIBUICAO.
+- F-EF-1..13 ratificados em 21/10 ([[D-2026-10-21-FORKS-EFICIENCIA-FISCAL]]); padrão do combo emendado para
+  PROPORCIONAL_CATALOGO em 21/10 ([[D-2026-10-21-TRIAGEM-CONTADOR-F1]]); P-EF-1..10 respondidas — restam a evidência de
+  custo sob CARGA (P-EF-1), valores DRAFT (P-EF-6, P-EF-8) e as fontes não lidas (BRIEF §6).
 
 ## Evidência
 
