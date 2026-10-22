@@ -10,15 +10,6 @@
   },
   {
     "type": "dependency",
-    "from": "src/features/reports/services/ReportService.ts",
-    "to": "src/lib/prisma.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L3-service-not-http-or-prisma"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/features/accounting/repositories/AccountantAssignmentRepository.ts",
     "to": "src/features/accounting/policies/IAccountingPolicy.ts",
     "rule": {
@@ -519,31 +510,6 @@
       },
       {
         "name": "src/features/dynamicTables/presets/systems/CrmModulePreset.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      }
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/features/reports/services/IReportService.ts",
-    "to": "src/features/reports/services/ReportService.ts",
-    "rule": {
-      "severity": "error",
-      "name": "X3-no-circular"
-    },
-    "cycle": [
-      {
-        "name": "src/features/reports/services/ReportService.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/reports/services/IReportService.ts",
         "dependencyTypes": [
           "local",
           "import"

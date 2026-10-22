@@ -587,6 +587,8 @@ model Account {
   jcpDespesaOf                       FiscalProfile[]           @relation("FiscalProfileJcpDespesa") // IRRF-DISTRIBUICAO item 7
   ibsRecolherOf                      FiscalProfile[]           @relation("FiscalProfileIbsRecolher") // IBS-CBS-2027 PR-2 item 12
   cbsRecolherOf                      FiscalProfile[]           @relation("FiscalProfileCbsRecolher") // IBS-CBS-2027 PR-2 item 12
+  ibsRecuperarOf                     FiscalProfile[]           @relation("FiscalProfileIbsRecuperar") // IBS-CBS-2027 PR-3 item 14
+  cbsRecuperarOf                     FiscalProfile[]           @relation("FiscalProfileCbsRecuperar") // IBS-CBS-2027 PR-3 item 14
   pisCofinsRecuperavelOf             FiscalProfile[]           @relation("FiscalProfilePisCofinsRecuperavel") // X6 F-X6-8 a: crédito de PIS/COFINS a recuperar
   pisCofinsCreditoOutrosOf           FiscalProfile[]           @relation("FiscalProfilePisCofinsCreditoOutros") // X8 PR-3 (L-5)
   pisCofinsRetidoCompensarOf         FiscalProfile[]           @relation("FiscalProfilePisCofinsRetidoCompensar") // X8 PR-3 (retenções)
@@ -1671,6 +1673,11 @@ model FiscalProfile {
   ibsRecolherAccount                  Account?  @relation("FiscalProfileIbsRecolher", fields: [ibsRecolherAccountId], references: [id], onDelete: Restrict)
   cbsRecolherAccountId                String? // Liability
   cbsRecolherAccount                  Account?  @relation("FiscalProfileCbsRecolher", fields: [cbsRecolherAccountId], references: [id], onDelete: Restrict)
+  // IBS-CBS-2027 PR-3 (item 14; dono 21/10 "razão completo"): IBS e CBS a recuperar (Asset) — o crédito da NF-e de entrada
+  ibsRecuperarAccountId               String? // Asset
+  ibsRecuperarAccount                 Account?  @relation("FiscalProfileIbsRecuperar", fields: [ibsRecuperarAccountId], references: [id], onDelete: Restrict)
+  cbsRecuperarAccountId               String? // Asset
+  cbsRecuperarAccount                 Account?  @relation("FiscalProfileCbsRecuperar", fields: [cbsRecuperarAccountId], references: [id], onDelete: Restrict)
   partnerAccountRef                   String? // R8 item 2: conta de emissão no parceiro POR UNIDADE — reservado; BE-INCR-DFE preenche
   // BE-INCR-DFE (nó X10b, BRIEF item 1) — emitente (ADR-DFE D5) + itens 5a–5f do contador como CONFIG
   // (D-X10b-2: default = recomendação do ADR, ambos os ramos implementados). Nullable/default => a linha X6
