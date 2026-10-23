@@ -37,7 +37,8 @@
       "parametrosLegais": "Legal parameters",
       "politica": "Accounting policy",
       "apuracao": "Tax assessment",
-      "pendencias": "Pending items"
+      "pendencias": "Pending items",
+      "cobranca": "Collections"
     },
     "error": {
       "units": "Failed to load units.",
@@ -169,7 +170,8 @@
       "OPEN": "Open",
       "RECEIVING": "Receiving",
       "RECEIVED": "Received",
-      "CANCELLED": "Cancelled"
+      "CANCELLED": "Cancelled",
+      "PARTIALLY_RECEIVED": "Partially received"
     },
     "col": {
       "expand": "Expand",
@@ -187,7 +189,12 @@
       "cancelTitle": "Cancel the invoice",
       "undo": "Undo receipt",
       "undoTitle": "Undo the receipt (reopens the invoice)",
-      "receiving": "Processing…"
+      "receiving": "Processing…",
+      "charge": "Charge",
+      "chargeDisabled": "No active Mercado Pago account in this unit — register one in the Collections tab.",
+      "chargeTitle": "Issue a Pix or boleto charge through Mercado Pago",
+      "charges": "Charges",
+      "chargesTitle": "View the charges issued for this receivable"
     },
     "receipts": {
       "date": "Received on",
@@ -199,7 +206,8 @@
     },
     "error": {
       "load": "Failed to load accounts receivable.",
-      "action": "Could not complete the operation."
+      "action": "Could not complete the operation.",
+      "liveCharge": "Cancel the receivable charge first."
     },
     "createModal": {
       "title": "New Invoice",
@@ -248,7 +256,8 @@
       "undoConfirm": "Confirm",
       "undoing": "Undoing…",
       "undoNote": "The receipt will be reversed and the invoice will return to “Open”."
-    }
+    },
+    "viewCharges": "View receivable charges"
   },
   "aging": {
     "title": "Aging (Payable/Receivable)",
@@ -909,7 +918,11 @@
       "needPeriod": "Enter the period start and end.",
       "tooLarge": "File too large.",
       "success": "Statement imported: {{count}} line(s).",
-      "idempotent": "File already imported — nothing changed ({{count}} line(s))."
+      "idempotent": "File already imported — nothing changed ({{count}} line(s)).",
+      "format": "Format",
+      "formatAuto": "Detect from content",
+      "formatMpRelease": "Mercado Pago release report",
+      "mpNoPaymentAccount": "This GL account has no Mercado Pago account; register one in the Collections tab."
     },
     "statements": {
       "loading": "Loading statements…",
@@ -924,7 +937,8 @@
         "ref": "Reference",
         "imported": "Imported at",
         "actions": "Actions"
-      }
+      },
+      "mercadoPago": "Mercado Pago"
     },
     "lines": {
       "loading": "Loading lines…",
@@ -3274,6 +3288,214 @@
       "error": {
         "load": "Failed to load the suggested rates."
       }
+    }
+  },
+  "collectionCharge": {
+    "action": {
+      "cancel": "Cancel charge",
+      "detail": "Details"
+    },
+    "address": {
+      "city": "City",
+      "neighborhood": "Neighborhood",
+      "state": "State",
+      "streetName": "Street",
+      "streetNumber": "Number",
+      "zipCode": "ZIP (8 digits)"
+    },
+    "badge": {
+      "overdue": "Overdue — waiting for the provider",
+      "paidAwaiting": "Paid at provider, awaiting confirmation"
+    },
+    "banner": {
+      "noLedgerEffect": "No ledger effect; the accounting treatment of refunds and chargebacks is pending with the accountant (P4) — reconcile manually.",
+      "overdue": "Cancel it so the charge does not stay open.",
+      "paidAwaiting": "Settlement comes through Reconciliation → Return settlements, after the MP release report is imported.",
+      "terminal": "If the payer pays anyway, the amount shows up in the report and settlement is proposed in Reconciliation with a warning."
+    },
+    "cancel": {
+      "cancelling": "Cancelling…",
+      "confirm": "Yes, cancel",
+      "done": "Charge cancelled.",
+      "message": "The cancellation request goes to Mercado Pago. If the charge was already paid or expired, the state reported by the provider prevails.",
+      "notPending": "The charge is no longer pending; the list was refreshed.",
+      "providerState": "The provider reported the charge was already {{status}}.",
+      "title": "Cancel charge?"
+    },
+    "col": {
+      "actions": "Actions",
+      "amount": "Amount",
+      "expiresAt": "Due",
+      "kind": "Type",
+      "provider": "Provider",
+      "status": "Status",
+      "updatedAt": "Updated at"
+    },
+    "detail": {
+      "expiresAt": "due {{date}}",
+      "failReason": "Failure reason",
+      "paidAt": "Seen paid at",
+      "providerStatus": "Provider state",
+      "refreshNote": "Updated by notification or by a re-check every 15 min.",
+      "title": "Charge",
+      "updatedAt": "Updated at"
+    },
+    "drawer": {
+      "empty": "No charge issued for this receivable.",
+      "loading": "Loading charges…",
+      "title": "Receivable charges"
+    },
+    "error": {
+      "cancel": "Could not cancel the charge.",
+      "create": "Could not issue the charge.",
+      "credentialInvalid": "MP rejected the credential; save it again in the Collections tab.",
+      "detail": "Error loading the charge.",
+      "keyMissing": "The instance encryption key is not provisioned (deploy precondition, M2). No charge was issued.",
+      "liveExists": "This receivable already has a charge in progress.",
+      "noActiveAccount": "There is no active Mercado Pago account in this unit. Register or activate it in the Collections tab.",
+      "notChargeable": "This receivable is not in a state that allows charging.",
+      "nothingToCharge": "This receivable has no open balance to charge.",
+      "openCobranca": "Open the Collections tab",
+      "showCharges": "View receivable charges"
+    },
+    "instrument": {
+      "copyDigitableLine": "Copy boleto line",
+      "copyPix": "Copy Pix code",
+      "digitableLine": "Boleto line",
+      "openBoleto": "Open boleto",
+      "openPix": "Open Pix page",
+      "pixCode": "Pix copy-and-paste",
+      "qrAlt": "Pix QR code"
+    },
+    "kind": {
+      "BOLETO": "Boleto",
+      "PIX": "Pix"
+    },
+    "modal": {
+      "address": "Address",
+      "addressNotSent": "(not sent for Pix)",
+      "addressRequired": "(required for boleto)",
+      "amount": "Amount",
+      "amountNote": "The amount is the open balance, re-read by the server when issuing.",
+      "boletoDays": "Due in days (1 to 30)",
+      "boletoDaysHint": "Mercado Pago recommends at least 3 days because of clearing.",
+      "boletoDaysPlaceholder": "Empty = 3 business days",
+      "cancel": "Back",
+      "close": "Close",
+      "confirm": "Issue charge",
+      "kind": "Type",
+      "payer": "Payer",
+      "pixValidity": "Validity",
+      "sending": "Issuing…",
+      "title": "Charge receivable"
+    },
+    "payer": {
+      "docNumber": "Document",
+      "docType": "Document type",
+      "email": "Email",
+      "firstName": "First name",
+      "lastName": "Last name"
+    },
+    "pixPreset": {
+      "1h": "1 hour",
+      "24h": "24 hours (default)",
+      "30d": "30 days",
+      "30m": "30 minutes",
+      "3d": "3 days",
+      "7d": "7 days"
+    },
+    "result": {
+      "requeued": "The charge was recorded and will be resent automatically.",
+      "summary": "{{amount}} · due {{date}}"
+    },
+    "status": {
+      "CANCELLED": "Cancelled",
+      "CHARGED_BACK": "Charged back",
+      "CREATING": "Sending to provider",
+      "EXPIRED": "Expired",
+      "FAILED": "Failed",
+      "PAID": "Paid at provider",
+      "PARTIALLY_REFUNDED": "Partially refunded",
+      "PENDING": "Pending",
+      "REFUNDED": "Refunded"
+    }
+  },
+  "paymentProvider": {
+    "action": {
+      "activate": "Activate",
+      "credential": "Save credential",
+      "deactivate": "Deactivate",
+      "delete": "Delete",
+      "rename": "Rename"
+    },
+    "copied": "Copied",
+    "copy": "Copy",
+    "create": {
+      "confirm": "Register",
+      "glAccount": "GL account for the Mercado Pago balance",
+      "glAccountHelp": "The code and name of this account are pending with the accountant (\"to be released\" × \"available\" balance).",
+      "glAccountPlaceholder": "Select the leaf account",
+      "glAccountRequired": "Select the GL account.",
+      "immutable": "The GL account cannot be changed later; to change it, create another account.",
+      "label": "Label",
+      "labelInvalid": "Enter a label from 1 to 80 characters.",
+      "title": "Register Mercado Pago account"
+    },
+    "createCta": "Register Mercado Pago account",
+    "credential": {
+      "accessToken": "Access token",
+      "alreadyActive": "There is already an active account in this unit; deactivate it first.",
+      "confirm": "Save",
+      "keyMissing": "The instance encryption key is not provisioned (deploy precondition, M2). Nothing was saved.",
+      "note": "The credential is encrypted on the server and never shown again; the screen keeps only the last 4 digits.",
+      "title": "Save credential",
+      "tooShort": "The access token has at least 20 characters and the webhook secret, 16.",
+      "webhookSecret": "Webhook secret"
+    },
+    "credentialInvalid": "Mercado Pago rejected the credential. Save the credential again to resume charging.",
+    "credentialNotSet": "No credential saved",
+    "credentialSet": "Credential saved on {{date}} · •••• {{last4}}",
+    "delete": {
+      "confirm": "Yes, delete",
+      "message": "Delete the account \"{{label}}\"?",
+      "title": "Delete account?"
+    },
+    "empty": "No payment provider account in this unit.",
+    "error": {
+      "action": "Could not complete the operation.",
+      "forbidden": "You are not allowed to manage the provider account."
+    },
+    "heading": "Collections — provider account",
+    "loading": "Loading accounts…",
+    "modal": {
+      "cancel": "Back",
+      "saving": "Sending…"
+    },
+    "newAccount": "New account",
+    "openReconciliation": "View statements and settlements",
+    "provider": {
+      "MERCADO_PAGO": "Mercado Pago"
+    },
+    "releaseBlocked": {
+      "hint": "Resolve the overlap — for example, delete the manual statement that covers the range — and unblock.",
+      "title": "Release report blocked",
+      "unblock": "Unblock"
+    },
+    "rename": {
+      "confirm": "Save",
+      "title": "Rename account"
+    },
+    "status": {
+      "ACTIVE": "Active",
+      "CREDENTIAL_INVALID": "Credential rejected",
+      "DISABLED": "Disabled",
+      "DRAFT": "Draft"
+    },
+    "webhook": {
+      "copy": "Copy webhook URL",
+      "hint": "Paste this URL in the Mercado Pago panel (Notifications/Webhooks). The webhook is only configured there, on a production HTTPS URL.",
+      "notProduction": "Warning: the API base is not public HTTPS (or points to localhost). Mercado Pago cannot reach this URL.",
+      "title": "Webhook URL"
     }
   }
 }
