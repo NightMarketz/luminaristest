@@ -1,0 +1,108 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei nº 8.078 de 11/09/1990",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1990/lei-8078-1990-09-11.md",
+      "url_final": "https://github.com/ctresb/leis/blob/b7ec7b79cc380cc70b633c8b6c303c25c5b1825c/federal/leis-ordinarias/1990/lei-8078-1990-09-11.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1990-09-11;8078",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "b7ec7b79cc380cc70b633c8b6c303c25c5b1825c",
+      "alertas": [],
+      "baixado_em": "2026-10-22T22:14:16-03:00",
+      "sha256": "fc47a9f4f9647c0bc86ab9399165653c70c0042d5b749b0558c6691a002b7d69",
+      "arquivo": "docs/D01_lei-8078-1990-09-11.md",
+      "texto": "docs/D01_lei-8078-1990-09-11.txt",
+      "bytes": 87892
+    },
+    {
+      "id": "D02",
+      "titulo": "Lei nº 10.406 de 10/01/2002",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2002/lei-10406-2002-01-10.md",
+      "url_final": "https://github.com/ctresb/leis/blob/40fe0ecf521a6ae5e22077bcc927c90a9477d3a5/federal/leis-ordinarias/2002/lei-10406-2002-01-10.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2002-01-10;10406",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "40fe0ecf521a6ae5e22077bcc927c90a9477d3a5",
+      "alertas": [],
+      "baixado_em": "2026-10-22T22:14:17-03:00",
+      "sha256": "be0cd7d8a1eaacb21cb64f07086929db91f43ad3149b3c721cd33873d328c32c",
+      "arquivo": "docs/D02_lei-10406-2002-01-10.md",
+      "texto": "docs/D02_lei-10406-2002-01-10.txt",
+      "bytes": 678720
+    },
+    {
+      "id": "D03",
+      "titulo": "Lei nº 14.905 de 28/06/2024",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2024/lei-14905-2024-06-28.md",
+      "url_final": "https://github.com/ctresb/leis/blob/ff2927c6704033a03bb36dc832912f6355e27b5e/federal/leis-ordinarias/2024/lei-14905-2024-06-28.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2024-06-28;14905",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "ff2927c6704033a03bb36dc832912f6355e27b5e",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-10-22T22:14:18-03:00",
+      "sha256": "28ab523183efe08da417209709ede5deefe14a4406ffa68f5331703851b1b198",
+      "arquivo": "docs/D03_lei-14905-2024-06-28.md",
+      "texto": "docs/D03_lei-14905-2024-06-28.txt",
+      "bytes": 5428
+    },
+    {
+      "id": "D04",
+      "titulo": "Lei nº 13.455 de 26/06/2017",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2017/lei-13455-2017-06-26.md",
+      "url_final": "https://github.com/ctresb/leis/blob/ed6efe70e14985bc252e830f1554c18b65a7afae/federal/leis-ordinarias/2017/lei-13455-2017-06-26.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2017-06-26;13455",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "ed6efe70e14985bc252e830f1554c18b65a7afae",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-10-22T22:14:56-03:00",
+      "sha256": "ed5032dd6bf7f799d868c55de93765796a45acbe771319ad5ff679b2fb7b7252",
+      "arquivo": "docs/D04_lei-13455-2017-06-26.md",
+      "texto": "docs/D04_lei-13455-2017-06-26.txt",
+      "bytes": 1939
+    },
+    {
+      "id": "D05",
+      "titulo": "D22626",
+      "url": "https://www.planalto.gov.br/ccivil_03/decreto/d22626.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/decreto/d22626.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-22T22:15:02-03:00",
+      "sha256": "dc74e8e4e3913a46f46b2c6fdbf8fb8ffd5d243a10e28c7d396bd8b31e23d28d",
+      "arquivo": "docs/D05_d22626-htm.html",
+      "texto": "docs/D05_d22626-htm.txt",
+      "bytes": 15643
+    },
+    {
+      "id": "D06",
+      "titulo": "Resolução Nº 1",
+      "url": "https://www.bcb.gov.br/api/conteudo/app/normativos/exibenormativo?p1=Resolu%C3%A7%C3%A3o%20BCB&p2=1",
+      "url_final": "https://www.bcb.gov.br/api/conteudo/app/normativos/exibenormativo?p1=Resolu%C3%A7%C3%A3o%20BCB&p2=1",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-22T22:15:04-03:00",
+      "sha256": "3a59a56dd6def207418ab11b0842680c5042ce8f214102c6387589233062f0e0",
+      "arquivo": "docs/D06_exibenormativo.html",
+      "texto": "docs/D06_exibenormativo.txt",
+      "bytes": 1114129
+    }
+  ],
+  "buscas": [],
+  "slug": "venda-recebivel",
+  "pergunta": "CDC na cobrança (art. 42, 42-A, 52 §1º, 71), juros e multa de mora (CC 395/397/406 pós Lei 14.905/2024), compensação (CC 368-380) e MED do Pix (Regulamento do Pix, Res. BCB 1/2020) para o PRE-ADR venda e recebível",
+  "criado": "2026-10-22T22:11:35-03:00"
+}
