@@ -186,6 +186,20 @@ export class MaxCentsExceededError extends AppError {
  * Raised when a posting is attempted against a period that is not OPEN.
  * Bridge/reconcile jobs must catch this specific code to skip+log (not fatal).
  */
+/**
+ * BE-INCR-IRRF-DISTRIBUICAO PR-2 (BRIEF item 16; F-IRD-5R) — o IRRF do mês que cabe a este evento passa do bruto: 422
+ * `RETENCAO_EXCEDE_PAGAMENTO` com `brutoMinimoCents` (o menor bruto que cobre a retenção). A PJ nunca assume o imposto.
+ */
+export class RetencaoExcedePagamentoError extends AppError {
+  public readonly details: { brutoMinimoCents: number; irrfEventoCents: number };
+
+  constructor(message: string, details: { brutoMinimoCents: number; irrfEventoCents: number }) {
+    super(message, 422, 'RETENCAO_EXCEDE_PAGAMENTO');
+    this.details = details;
+    Object.setPrototypeOf(this, RetencaoExcedePagamentoError.prototype);
+  }
+}
+
 export class AccountingPeriodNotOpenError extends AppError {
   constructor(year: number, month: number) {
     super(

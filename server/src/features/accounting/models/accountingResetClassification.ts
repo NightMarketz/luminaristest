@@ -62,6 +62,7 @@ export const ACCOUNTING_RESET_BLOCKING = [
   'KitUpgradePending',
   'CompanySigner',
   'Partner', // IRRF-DISTRIBUICAO PR-1: o onboarding não escreve sócio ⇒ bloqueia
+  'ProfitDistributionEvent', // IRRF-DISTRIBUICAO PR-2: evento com lançamento e IRRF ⇒ bloqueia
   'IssBeneficioMunicipal',
   'ProductDestinationDefault',
   'FiscalDocument',

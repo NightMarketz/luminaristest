@@ -1294,6 +1294,7 @@
                   "KitUpgradePending",
                   "CompanySigner",
                   "Partner",
+                  "ProfitDistributionEvent",
                   "IssBeneficioMunicipal",
                   "ProductDestinationDefault",
                   "FiscalDocument",
@@ -10905,6 +10906,389 @@
         "productRef",
         "destination",
         "updatedAt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "ProfitDistributionDto.ts": {
+    "CancelProfitDistributionSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "motivo": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "IrrfMensalQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "competencia": {
+          "type": "string",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+        }
+      },
+      "required": [
+        "unitId",
+        "competencia"
+      ],
+      "additionalProperties": false
+    },
+    "IrrfMensalView": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "competencia": {
+          "type": "string",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+        },
+        "codigoReceita": {
+          "type": "string",
+          "const": "1841"
+        },
+        "totalCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "vencimento": {
+          "type": "string"
+        },
+        "eventos": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "competencia",
+        "codigoReceita",
+        "totalCents",
+        "vencimento",
+        "eventos"
+      ]
+    },
+    "MemoriaDistribuicaoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "competencia": {
+          "type": "string",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+        },
+        "tipoPessoa": {
+          "type": "string",
+          "enum": [
+            "PF",
+            "PJ"
+          ]
+        },
+        "eventos": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "brutoCents": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "irrfCents": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "origemLucro": {
+                "type": "string",
+                "enum": [
+                  "CORRENTE",
+                  "TRANSICAO"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "brutoCents",
+              "irrfCents",
+              "origemLucro"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "somaMesCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "limiteMensalCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "aliquotaBp": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "baseMesCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "devidoMesCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "jaRetidoCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "irrfEventoCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "transicaoAprovacaoAte": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "linhaId": {
+                  "type": "string"
+                },
+                "valor": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "linhaId",
+                "valor"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "competencia",
+        "tipoPessoa",
+        "eventos",
+        "somaMesCents",
+        "limiteMensalCents",
+        "aliquotaBp",
+        "baseMesCents",
+        "devidoMesCents",
+        "jaRetidoCents",
+        "irrfEventoCents",
+        "transicaoAprovacaoAte"
+      ],
+      "additionalProperties": false
+    },
+    "ProfitDistributionIdParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "ProfitDistributionInputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "partnerId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evento": {
+          "type": "string",
+          "enum": [
+            "CREDITO",
+            "PAGAMENTO",
+            "EMPREGO",
+            "ENTREGA"
+          ]
+        },
+        "dataEvento": {
+          "type": "string"
+        },
+        "brutoCents": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "debitoAccountId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "contraAccountId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "origemLucro": {
+          "type": "string",
+          "enum": [
+            "CORRENTE",
+            "TRANSICAO"
+          ]
+        },
+        "anoResultado": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "aprovadoEm": {
+          "type": "string"
+        },
+        "atoSourceDocumentId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId",
+        "partnerId",
+        "evento",
+        "dataEvento",
+        "brutoCents",
+        "debitoAccountId",
+        "origemLucro"
+      ],
+      "additionalProperties": false
+    },
+    "ProfitDistributionPreviewView": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "competencia": {
+          "type": "string",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+        },
+        "somaMesCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "baseMesCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "devidoMesCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "jaRetidoCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "irrfEventoCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "liquidoCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "tetoSemRetencaoCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "brutoMinimoCents": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sugestao": {
+          "type": "string",
+          "enum": [
+            "NENHUMA",
+            "MOVER_EXCEDENTE_MES_SEGUINTE",
+            "AUMENTAR_BRUTO"
+          ]
+        },
+        "avisoSaldoLucro": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "competencia",
+        "somaMesCents",
+        "baseMesCents",
+        "devidoMesCents",
+        "jaRetidoCents",
+        "irrfEventoCents",
+        "liquidoCents",
+        "tetoSemRetencaoCents",
+        "brutoMinimoCents",
+        "sugestao",
+        "avisoSaldoLucro"
+      ]
+    },
+    "ProfitDistributionScopeSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
       ],
       "additionalProperties": false
     }

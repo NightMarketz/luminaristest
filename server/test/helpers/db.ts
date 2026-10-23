@@ -137,6 +137,7 @@ export async function resetDb(): Promise<void> {
   // signatário — cai ANTES dos dois; o signatário cai antes do User.
   await prisma.companyFiscalProfile.deleteMany();
   await prisma.companySigner.deleteMany();
+  await prisma.profitDistributionEvent.deleteMany(); // IRRF-DISTRIBUICAO PR-2 (antes de partners: FK Restrict)
   await prisma.partner.deleteMany(); // IRRF-DISTRIBUICAO PR-1
   await prisma.accountingContact.deleteMany(); // depois do accountingDeliveryLog (FK Restrict)
 

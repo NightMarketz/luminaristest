@@ -61,6 +61,7 @@ model User {
   companyFiscalProfiles      CompanyFiscalProfile[] // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13) — perfil da empresa por ano
   companySigners             CompanySigner[] // X13 (F-OBP-9 a) — representante legal / signatários não-contador
   partners                   Partner[] // IRRF-DISTRIBUICAO PR-1 (F-IRD-2, F-IRD-14) — sócios beneficiários da distribuição
+  profitDistributionEvents   ProfitDistributionEvent[] // IRRF-DISTRIBUICAO PR-2 (BRIEF item 10)
   taxAssessments             TaxAssessment[] // BE-INCR-TAX-ASSESSMENT Fase A (nó X7, item 12) — apuração IRPJ/CSLL da PJ
   consumptionTaxAssessments  ConsumptionTaxAssessment[] // IBS-CBS-2027 PR-2 (item 8) — apuração mensal de IBS/CBS
   mitExports                 MitExport[] // BE-INCR-MIT-EXPORT PR-2 (nó X9, item 11) — arquivos do MIT gerados
@@ -1814,9 +1815,54 @@ model Partner {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   deletedAt       DateTime?
+  profitDistributionEvents ProfitDistributionEvent[]
 
   @@index([userId, taxId])
   @@map("partners")
+}
+
+// BE-INCR-IRRF-DISTRIBUICAO PR-2 (BRIEF itens 10–21; F-IRD-4, F-IRD-6, F-IRD-8, F-IRD-9) — evento de distribuição de
+// lucros com o IRRF do art. 6º-A da Lei 9.250. PJ = `userId`; a soma do mês é por `taxId` em TODAS as unidades. Imutável
+// depois de postado: correção = cancelamento com estorno (só o último do mês, F-IRD-8). Lançamento em 2 commits + CAS
+// (`entryId`) + reconcile, molde X7. `memoria` = MemoriaDistribuicao (dto); nome/CPF do sócio nunca aqui nem na auditoria.
+model ProfitDistributionEvent {
+  id                  String    @id @default(cuid())
+  userId              String // a PJ
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId              String // unidade do lançamento (proveniência)
+  partnerId           String
+  partner             Partner   @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+  taxId               String // cópia do taxId do sócio: a soma do mês é por CPF, não por linha de sócio
+  evento              String // CREDITO | PAGAMENTO | EMPREGO | ENTREGA (F-IRD-4)
+  dataEvento          String // YYYY-MM-DD
+  competencia         String // YYYY-MM (derivada de dataEvento)
+  debitoAccountId     String // Equity: lucros acumulados ou reserva
+  contraAccountId     String // CREDITO = dividendos a pagar do perfil; PAGAMENTO/ENTREGA = Asset; EMPREGO = Equity
+  brutoCents          BigInt
+  irrfCents           BigInt
+  liquidoCents        BigInt
+  origemLucro         String // CORRENTE | TRANSICAO (F-IRD-6)
+  anoResultado        Int?
+  aprovadoEm          String? // YYYY-MM-DD
+  atoSourceDocumentId String?
+  memoria             Json
+  parametrosIds       Json
+  parametrosSha256    String
+  avisoSaldoLucro     String?
+  status              String // PENDING_POST | POSTED | CANCELLED
+  entryId             String?
+  cancelledAt         DateTime?
+  cancelledById       String?
+  cancelReason        String?
+  createdById         String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime?
+
+  @@index([userId, competencia])
+  @@index([userId, partnerId, competencia])
+  @@index([userId, taxId, competencia])
+  @@map("profit_distribution_events")
 }
 
 // X13 (F-OBP-9 a) — signatário da empresa que NÃO é o contador (sócio/administrador, responsável legal). O contador

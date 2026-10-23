@@ -147,6 +147,14 @@ import {
 } from '../controllers/companySignerController';
 import { createPartner, deletePartner, getPartner, listPartners, updatePartner } from '../controllers/partnerController';
 import {
+  cancelProfitDistribution,
+  createProfitDistribution,
+  getProfitDistribution,
+  getProfitDistributionIrrf,
+  previewProfitDistribution,
+  reconcileProfitDistribution,
+} from '../controllers/profitDistributionController';
+import {
   listDepreciationRates,
   createDepreciationRate,
   hideDepreciationRate,
@@ -411,6 +419,13 @@ router.post('/partners', createPartner);
 router.get('/partners/:id', getPartner);
 router.put('/partners/:id', updatePartner);
 router.delete('/partners/:id', deletePartner);
+// BE-INCR-IRRF-DISTRIBUICAO PR-2 (itens 10–21): distribuição de lucros com IRRF. `preview` e `irrf` antes de `:id`.
+router.post('/profit-distributions/preview', previewProfitDistribution);
+router.get('/profit-distributions/irrf', getProfitDistributionIrrf);
+router.post('/profit-distributions', createProfitDistribution);
+router.get('/profit-distributions/:id', getProfitDistribution);
+router.post('/profit-distributions/:id/lancamento', reconcileProfitDistribution);
+router.post('/profit-distributions/:id/cancel', cancelProfitDistribution);
 
 // BE-INCR-FIXED-ASSETS (nó C8, Bloco A) — tabela de taxas de depreciação; segmento estático, antes
 // de /:unitId/periods. /:id/hide antes de qualquer /:id genérico futuro (nenhum hoje neste recurso).
