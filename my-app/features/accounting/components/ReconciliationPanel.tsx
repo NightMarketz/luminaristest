@@ -26,7 +26,7 @@ import {
 import { formatCents } from '../lib/formatCents';
 import { formatDate } from '../lib/formatDate';
 import { ReconciliationMatchModal } from './ReconciliationMatchModal';
-import { resolveError } from '../lib/resolveError';
+import { resolveError, resolveErrorWithCode } from '../lib/resolveError';
 import { useAccountingT } from '../lib/useAccountingT';
 import { BankSettlementPanel } from './BankSettlementPanel';
 
@@ -144,6 +144,11 @@ function StatementRow({
         </td>
         <td className="px-4 py-2.5 text-neutral-300">
           <span className="font-mono text-xs text-neutral-500">{accountLabel(statement.glAccountId)}</span>
+          {statement.paymentAccountId && (
+            <span className="ml-2 inline-flex items-center rounded-full bg-sky-900/40 px-2 py-0.5 text-xs font-medium text-sky-300">
+              {t('reconciliation.statements.mercadoPago', 'Mercado Pago')}
+            </span>
+          )}
         </td>
         <td className="px-4 py-2.5 text-neutral-400">{statement.statementRef ?? '—'}</td>
         <td className="px-4 py-2.5 tabular-nums text-neutral-500">{formatDate(statement.createdAt)}</td>
@@ -334,6 +339,9 @@ function StatementsSubView({ unitId, glAccountId, accountLabel, onLedgerChange }
   const [statementRef, setStatementRef] = useState('');
   const [openingBalance, setOpeningBalance] = useState('');
   const [closingBalance, setClosingBalance] = useState('');
+  // G6/G2 (FE-INCR-PAYMENT-PROVIDER item 22): '' = detectar pelo conteúdo (não envia `format`).
+  const [format, setFormat] = useState<'' | 'mp_release'>('');
+  const isMpRelease = format === 'mp_release';
   const [uploading, setUploading] = useState(false);
 
   const [autoMatchingId, setAutoMatchingId] = useState<string | null>(null);
@@ -383,8 +391,10 @@ function StatementsSubView({ unitId, glAccountId, accountLabel, onLedgerChange }
           periodStart,
           periodEnd,
           statementRef: statementRef.trim() || undefined,
-          openingBalanceCents: openingBalance.trim() ? Number(openingBalance) : undefined,
-          closingBalanceCents: closingBalance.trim() ? Number(closingBalance) : undefined,
+          // No modo MP o saldo vem do arquivo: nunca enviado (G2).
+          openingBalanceCents: !isMpRelease && openingBalance.trim() ? Number(openingBalance) : undefined,
+          closingBalanceCents: !isMpRelease && closingBalance.trim() ? Number(closingBalance) : undefined,
+          format: isMpRelease ? 'mp_release' : undefined,
         },
         file,
       );
@@ -399,8 +409,14 @@ function StatementsSubView({ unitId, glAccountId, accountLabel, onLedgerChange }
       await fetchStatements();
     } catch (err) {
       const status = (err as { status?: number })?.status;
+      const { message, code } = resolveErrorWithCode(err, t('reconciliation.error.generic', 'Ocorreu um erro. Tente novamente.'));
       if (status === 413) setError(t('reconciliation.import.tooLarge', 'Arquivo muito grande.'));
-      else setError(resolveError(err, t('reconciliation.error.generic', 'Ocorreu um erro. Tente novamente.')));
+      else if (code === 'release_report_no_payment_account') {
+        setError(t('reconciliation.import.mpNoPaymentAccount', 'Esta conta contábil não tem conta Mercado Pago; cadastre na aba Cobrança.'));
+      } else if (code === 'release_report_overlap') {
+        // F-PPB-4 (a): a mensagem do BE lista os SOURCE_ID repetidos — verbatim.
+        setError(`${message} ${t('reconciliation.import.mpNothingImported', 'Nada foi importado.')}`);
+      } else setError(message);
     } finally {
       setUploading(false);
     }
@@ -468,6 +484,25 @@ function StatementsSubView({ unitId, glAccountId, accountLabel, onLedgerChange }
 
         <div className="flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1 text-xs text-neutral-400">
+            {t('reconciliation.import.format', 'Formato')}
+            <select
+              aria-label={t('reconciliation.import.format', 'Formato')}
+              value={format}
+              onChange={(e) => {
+                const next = e.target.value === 'mp_release' ? 'mp_release' : '';
+                setFormat(next);
+                if (next === 'mp_release') {
+                  setOpeningBalance('');
+                  setClosingBalance('');
+                }
+              }}
+              className={inputClass}
+            >
+              <option value="">{t('reconciliation.import.formatAuto', 'Detectar pelo conteúdo')}</option>
+              <option value="mp_release">{t('reconciliation.import.formatMpRelease', 'Relatório de liberações do Mercado Pago')}</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-neutral-400">
             {t('reconciliation.import.periodStart', 'Início do período')}
             <input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} className={inputClass} />
           </label>
@@ -491,6 +526,7 @@ function StatementsSubView({ unitId, glAccountId, accountLabel, onLedgerChange }
               type="number"
               value={openingBalance}
               onChange={(e) => setOpeningBalance(e.target.value)}
+              disabled={isMpRelease}
               className={inputClass}
             />
           </label>
@@ -500,6 +536,7 @@ function StatementsSubView({ unitId, glAccountId, accountLabel, onLedgerChange }
               type="number"
               value={closingBalance}
               onChange={(e) => setClosingBalance(e.target.value)}
+              disabled={isMpRelease}
               className={inputClass}
             />
           </label>
@@ -854,6 +891,11 @@ interface ReconciliationPanelProps {
   unitId: string;
   /** Refetch the ledger views (balancete) when a match flips an entry status (D5/W1). */
   onLedgerChange?: () => void;
+  /**
+   * Folha em que o select abre (FE-INCR-PAYMENT-PROVIDER item 24 — atalho da aba Cobrança). Lida só na montagem;
+   * sem a prop, abre na primeira folha (comportamento de antes).
+   */
+  initialGlAccountId?: string;
 }
 
 type SubTab = 'extratos' | 'pendentes' | 'baixas';
@@ -864,11 +906,11 @@ type SubTab = 'extratos' | 'pendentes' | 'baixas';
  * delete statements) and "Fila pendente" (UNMATCHED lines → suggest/match/ignore).
  * Money is INTEGER CENTS; the UI only formats.
  */
-export function ReconciliationPanel({ unitId, onLedgerChange }: ReconciliationPanelProps) {
+export function ReconciliationPanel({ unitId, onLedgerChange, initialGlAccountId }: ReconciliationPanelProps) {
   const { t } = useTranslation('accounting');
   const [sub, setSub] = useState<SubTab>('extratos');
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [glAccountId, setGlAccountId] = useState('');
+  const [glAccountId, setGlAccountId] = useState(() => initialGlAccountId ?? '');
   const [loadingAccounts, setLoadingAccounts] = useState(true);
 
   useEffect(() => {

@@ -29,7 +29,7 @@ const item = (status: BankSettlementStatus, o: Partial<BankSettlementItemView> =
   title: { openCents: 10000, dueDate: '2025-03-10', counterpartyName: 'Fornecedor A', status: 'OPEN' },
   settlementId: null, chargeEntryId: null, reason: null, failedStep: null, confirmedAt: null, ...o,
 });
-const statement = { id: 's1', userId: 'o', unitId: 'u1', glAccountId: 'g1', statementRef: 'EXT-03', periodStart: '2025-03-01', periodEnd: '2025-03-31', openingBalanceCents: null, closingBalanceCents: null, sha256: 'x', attachmentId: null, importedById: null, createdAt: '', updatedAt: '', deletedAt: null };
+const statement = { id: 's1', userId: 'o', unitId: 'u1', glAccountId: 'g1', statementRef: 'EXT-03', periodStart: '2025-03-01', periodEnd: '2025-03-31', openingBalanceCents: null, closingBalanceCents: null, sha256: 'x', attachmentId: null, importedById: null, paymentAccountId: null, createdAt: '', updatedAt: '', deletedAt: null };
 
 describe('BankSettlementPanel', () => {
   beforeEach(() => {

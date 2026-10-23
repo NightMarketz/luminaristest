@@ -5,13 +5,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // and does not `import React` — expose it globally for the render, like the
 // AccountsPayablePanel test.
 (globalThis as unknown as { React: typeof React }).React = React;
-import { render, screen, cleanup, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, cleanup, waitFor, fireEvent, within } from '@testing-library/react';
 import { AccountsReceivablePanel } from '../AccountsReceivablePanel';
 import {
   accountsReceivableService,
   type ReceivableWithReceipts,
 } from '../../../../lib/services/accountsReceivable.service';
 import { counterpartiesService } from '../../../../lib/services/counterparties.service';
+import { paymentAccountsService, type PaymentAccountView } from '../../../../lib/services/paymentAccounts.service';
+import { collectionChargesService } from '../../../../lib/services/collectionCharges.service';
 
 vi.mock('../../../../lib/services/accountsReceivable.service', () => ({
   accountsReceivableService: {
@@ -22,7 +24,27 @@ vi.mock('../../../../lib/services/accountsReceivable.service', () => ({
     cancelReceipt: vi.fn(),
   },
   RECEIPT_METHODS: ['Cash', 'Pix', 'TED', 'Boleto'],
+  CHARGEABLE_RECEIVABLE_STATUSES: ['OPEN', 'PARTIALLY_RECEIVED', 'RECEIVING'],
 }));
+
+// FE-INCR-PAYMENT-PROVIDER PR-2: o painel lê as contas do provedor no mount (item 20) e a sugestão do pagador ao
+// clicar em "Cobrar" (item 13). O drawer e o modal (componentes reais) usam o mesmo serviço de cobrança mockado.
+vi.mock('../../../../lib/services/paymentAccounts.service', () => ({
+  paymentAccountsService: { list: vi.fn() },
+}));
+vi.mock('../../../../lib/services/collectionCharges.service', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../lib/services/collectionCharges.service')>();
+  return {
+    ...actual,
+    collectionChargesService: {
+      create: vi.fn(),
+      listByReceivable: vi.fn(),
+      get: vi.fn(),
+      cancel: vi.fn(),
+      payerSuggestion: vi.fn(),
+    },
+  };
+});
 
 // The filter bar's counterparty select is fed by the same fetch the create modal
 // uses — mock it so the panel never fires a real network call on mount.
@@ -58,11 +80,19 @@ const receivedReceivable: ReceivableWithReceipts = {
   }],
 };
 
+const activeAccount: PaymentAccountView = {
+  id: 'pa1', unitId: 'u1', provider: 'MERCADO_PAGO', label: 'MP', glAccountId: 'g1', providerAccountRef: null,
+  config: { provider: 'MERCADO_PAGO', credentialSource: 'OWN' }, status: 'ACTIVE', credentialSetAt: '2026-10-01T00:00:00Z',
+  credentialExpiresAt: null, accessTokenLast4: '1234', releaseReportBlockedReason: null,
+  createdAt: '2026-10-01T00:00:00Z', updatedAt: '2026-10-01T00:00:00Z',
+};
+
 describe('AccountsReceivablePanel (render)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     cleanup();
     vi.mocked(counterpartiesService.listCounterparties).mockResolvedValue(customerOptions);
+    vi.mocked(paymentAccountsService.list).mockResolvedValue([activeAccount]);
   });
 
   it('shows the empty state when there are no receivables', async () => {
@@ -192,5 +222,134 @@ describe('AccountsReceivablePanel (render)', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+// ── FE-INCR-PAYMENT-PROVIDER PR-2 — cobrança a partir do título (itens 11, 13, 16, 18–21) ──────────────────────
+describe('AccountsReceivablePanel — cobrança por provedor', () => {
+  const forbidden = Object.assign(new Error('Forbidden'), { status: 403 });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    cleanup();
+    vi.mocked(counterpartiesService.listCounterparties).mockResolvedValue(customerOptions);
+    vi.mocked(paymentAccountsService.list).mockResolvedValue([activeAccount]);
+    vi.mocked(collectionChargesService.payerSuggestion).mockResolvedValue({});
+    vi.mocked(collectionChargesService.listByReceivable).mockResolvedValue([]);
+  });
+
+  const withStatus = (status: ReceivableWithReceipts['status'], id: string): ReceivableWithReceipts => ({
+    ...openReceivable, id, customerName: `Cliente ${status}`, status,
+  });
+
+  it('item 11: "Cobrar" aparece em OPEN, PARTIALLY_RECEIVED e RECEIVING, e não em RECEIVED nem CANCELLED', async () => {
+    vi.mocked(accountsReceivableService.listReceivables).mockResolvedValue({
+      receivables: [
+        withStatus('OPEN', 'r1'), withStatus('PARTIALLY_RECEIVED', 'r2'), withStatus('RECEIVING', 'r3'),
+        withStatus('RECEIVED', 'r4'), withStatus('CANCELLED', 'r5'),
+      ],
+      total: 5,
+    });
+    render(<AccountsReceivablePanel unitId="u1" />);
+    await waitFor(() => expect(screen.getByText('Cliente OPEN')).toBeInTheDocument());
+    const rowOf = (name: string) => screen.getByText(name).closest('tr') as HTMLElement;
+    for (const st of ['OPEN', 'PARTIALLY_RECEIVED', 'RECEIVING']) {
+      expect(within(rowOf(`Cliente ${st}`)).getByRole('button', { name: /^Cobrar$/ })).toBeInTheDocument();
+    }
+    for (const st of ['RECEIVED', 'CANCELLED']) {
+      expect(within(rowOf(`Cliente ${st}`)).queryByRole('button', { name: /^Cobrar$/ })).toBeNull();
+    }
+    // Rótulo próprio do status novo no StatusBadge.
+    expect(screen.getByText('Recebida em parte')).toBeInTheDocument();
+  });
+
+  it('item 20: sem conta ACTIVE ⇒ "Cobrar" desabilitado com dica; 403 na leitura das contas ⇒ habilitado', async () => {
+    vi.mocked(accountsReceivableService.listReceivables).mockResolvedValue({ receivables: [openReceivable], total: 1 });
+    vi.mocked(paymentAccountsService.list).mockResolvedValue([]);
+    render(<AccountsReceivablePanel unitId="u1" />);
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Cobrar$/ })).toBeDisabled());
+    expect(screen.getByRole('button', { name: /^Cobrar$/ })).toHaveAttribute('title', expect.stringMatching(/aba Cobrança/));
+
+    cleanup();
+    vi.mocked(paymentAccountsService.list).mockRejectedValue(forbidden);
+    render(<AccountsReceivablePanel unitId="u1" />);
+    await waitFor(() => expect(screen.getByText('Cliente X')).toBeInTheDocument());
+    await waitFor(() => expect(paymentAccountsService.list).toHaveBeenCalledWith('u1', { silent: true }));
+    expect(screen.getByRole('button', { name: /^Cobrar$/ })).toBeEnabled();
+  });
+
+  it('item 13: 403 na sugestão do pagador ⇒ o modal não abre e o botão some (quem só lê)', async () => {
+    vi.mocked(accountsReceivableService.listReceivables).mockResolvedValue({ receivables: [openReceivable], total: 1 });
+    vi.mocked(collectionChargesService.payerSuggestion).mockRejectedValue(forbidden);
+    render(<AccountsReceivablePanel unitId="u1" />);
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Cobrar$/ })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: /^Cobrar$/ }));
+    await waitFor(() => expect(screen.queryByRole('button', { name: /^Cobrar$/ })).toBeNull());
+    expect(screen.queryByText('Cobrar título')).toBeNull();
+  });
+
+  it('item 13: erro (não-403) na sugestão ⇒ abre com formulário vazio; sugestão preenche os campos', async () => {
+    vi.mocked(accountsReceivableService.listReceivables).mockResolvedValue({ receivables: [openReceivable], total: 1 });
+    vi.mocked(collectionChargesService.payerSuggestion).mockRejectedValue(Object.assign(new Error('x'), { status: 500 }));
+    render(<AccountsReceivablePanel unitId="u1" />);
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Cobrar$/ })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: /^Cobrar$/ }));
+    await waitFor(() => expect(screen.getByText('Cobrar título')).toBeInTheDocument());
+    expect((screen.getByLabelText('Nome') as HTMLInputElement).value).toBe('');
+    // Valor só leitura = saldo aberto (1.500,00), sem campo de valor.
+    expect(screen.getByTestId('charge-amount')).toHaveTextContent('1.500,00');
+  });
+
+  it('item 16: "Cobranças" carrega a lista do título só ao abrir', async () => {
+    vi.mocked(accountsReceivableService.listReceivables).mockResolvedValue({ receivables: [openReceivable], total: 1 });
+    render(<AccountsReceivablePanel unitId="u1" />);
+    await waitFor(() => expect(screen.getByText('Cliente X')).toBeInTheDocument());
+    expect(collectionChargesService.listByReceivable).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /^Cobranças$/ }));
+    await waitFor(() => expect(collectionChargesService.listByReceivable).toHaveBeenCalledWith('ar1', 'u1'));
+    await waitFor(() => expect(screen.getByText('Nenhuma cobrança emitida para este título.')).toBeInTheDocument());
+  });
+
+  it('item 18: 409 receivable_has_live_charge no cancelamento ⇒ mensagem + atalho, sem fechar o modal', async () => {
+    vi.mocked(accountsReceivableService.listReceivables).mockResolvedValue({ receivables: [openReceivable], total: 1 });
+    vi.mocked(accountsReceivableService.cancelReceivable).mockRejectedValue(
+      Object.assign(new Error('x'), { status: 409, code: 'receivable_has_live_charge', message: 'receivable_has_live_charge: ...' }),
+    );
+    render(<AccountsReceivablePanel unitId="u1" />);
+    await waitFor(() => expect(screen.getByText('Cliente X')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /^Cancelar$/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar cancelamento' }));
+    await waitFor(() => expect(screen.getByText(/Cancele a cobrança do título antes/)).toBeInTheDocument());
+    expect(screen.getByText('Cancelar conta a receber')).toBeInTheDocument(); // o modal segue aberto
+    fireEvent.click(screen.getByRole('button', { name: 'Ver cobranças do título' }));
+    await waitFor(() => expect(collectionChargesService.listByReceivable).toHaveBeenCalledWith('ar1', 'u1'));
+  });
+
+  it('item 19: o modal "Receber" continua com os 4 métodos — sem ProviderBalance', async () => {
+    vi.mocked(accountsReceivableService.listReceivables).mockResolvedValue({ receivables: [openReceivable], total: 1 });
+    render(<AccountsReceivablePanel unitId="u1" />);
+    await waitFor(() => expect(screen.getByText('Cliente X')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /Receber/ }));
+    const select = screen.getByText('Forma de recebimento').parentElement?.querySelector('select') as HTMLSelectElement;
+    expect(Array.from(select.options).map((o) => o.value)).toEqual(['Cash', 'Pix', 'TED', 'Boleto']);
+  });
+
+  it('item 21: emitir cobrança não chama onLedgerChange', async () => {
+    vi.mocked(accountsReceivableService.listReceivables).mockResolvedValue({ receivables: [openReceivable], total: 1 });
+    vi.mocked(collectionChargesService.create).mockResolvedValue({
+      id: 'c1', unitId: 'u1', receivableId: 'ar1', paymentAccountId: 'pa1', kind: 'PIX', amountCents: '150000',
+      expiresAt: '2026-10-24T00:00:00Z', status: 'PENDING', providerRef: 'o1', providerPaymentRef: null,
+      providerStatus: 'action_required', providerStatusDetail: 'waiting_transfer', paidAt: null, failReason: null,
+      instrument: { qrCode: 'pix-code' }, createdAt: '2026-10-23T00:00:00Z', updatedAt: '2026-10-23T00:00:00Z',
+    });
+    const onLedgerChange = vi.fn();
+    render(<AccountsReceivablePanel unitId="u1" onLedgerChange={onLedgerChange} />);
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Cobrar$/ })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: /^Cobrar$/ }));
+    await waitFor(() => expect(screen.getByText('Cobrar título')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: 'Emitir cobrança' }));
+    await waitFor(() => expect(screen.getByTestId('charge-result')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar' }));
+    expect(onLedgerChange).not.toHaveBeenCalled();
   });
 });

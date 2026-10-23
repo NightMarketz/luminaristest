@@ -47,6 +47,25 @@ describe('accountingService.importBankStatement (multipart helpers movidos)', ()
     expect(Array.from(lastCall().form.keys()).sort()).toEqual(['file', 'glAccountId', 'periodEnd', 'periodStart', 'unitId']);
   });
 
+  it('FE-INCR-PAYMENT-PROVIDER item 22: `format=mp_release` só no modo MP; o modo padrão não manda `format`', async () => {
+    vi.mocked(globalThis.fetch).mockResolvedValue({
+      ok: true,
+      status: 201,
+      json: async () => ({ success: true, data: { created: true, lineCount: 1 } }),
+    } as unknown as Response);
+    await accountingService.importBankStatement(
+      { unitId: 'u1', glAccountId: 'gl1', periodStart: '2026-09-01', periodEnd: '2026-09-30', format: 'mp_release' },
+      file,
+    );
+    const { form } = lastCall();
+    expect(form.get('format')).toBe('mp_release');
+    expect(form.has('openingBalanceCents')).toBe(false);
+    expect(form.has('closingBalanceCents')).toBe(false);
+
+    await accountingService.importBankStatement({ unitId: 'u1', glAccountId: 'gl1', periodStart: '2026-09-01', periodEnd: '2026-09-30' }, file);
+    expect(lastCall().form.has('format')).toBe(false);
+  });
+
   it('não-2xx lança o corpo do servidor com status (o que resolveError lê)', async () => {
     vi.mocked(globalThis.fetch).mockResolvedValue({
       ok: false,
