@@ -1,5 +1,6 @@
 import { apiClient } from '../api/api-client';
 import { notify } from '../notifications/notify';
+import type { BankStatement } from './accounting.service';
 import type {
   ConfirmBankSettlementInput,
   ListBankSettlementsQueryInput,
@@ -24,7 +25,18 @@ interface Envelope<T> {
 export type BankSettlementStatus = NonNullable<ListBankSettlementsQueryInput['status']>;
 export type BankSettlementMethod = ConfirmBankSettlementInput['method'];
 export const BANK_SETTLEMENT_STATUSES: readonly BankSettlementStatus[] = ['PENDING', 'CONFIRMING', 'CONFIRMED', 'REJECTED', 'FAILED', 'STALE'];
-export const BANK_SETTLEMENT_METHODS: readonly BankSettlementMethod[] = ['Cash', 'Pix', 'TED', 'Boleto'];
+export const BANK_SETTLEMENT_METHODS = ['Cash', 'Pix', 'TED', 'Boleto', 'ProviderBalance'] as const satisfies readonly BankSettlementMethod[];
+const BANK_METHODS: readonly BankSettlementMethod[] = ['Cash', 'Pix', 'TED', 'Boleto'];
+const PROVIDER_METHODS: readonly BankSettlementMethod[] = ['ProviderBalance'];
+
+/**
+ * FE-INCR-BANK-SETTLEMENT-FEE EMENDA 1 item 11 (F-TAR-3 → a): extrato de conta de provedor (`paymentAccountId`) só
+ * aceita `ProviderBalance` (fora disso o BE dá 400 `provider_balance_requires_payment_account`); extrato bancário
+ * segue com os 4 de hoje.
+ */
+export function methodsFor(st?: Pick<BankStatement, 'paymentAccountId'> | null): readonly BankSettlementMethod[] {
+  return st?.paymentAccountId ? PROVIDER_METHODS : BANK_METHODS;
+}
 
 export interface BankSettlementItemView {
   id: string;
@@ -34,14 +46,31 @@ export interface BankSettlementItemView {
   titleId: string;
   proposedCents: number;
   chargeCents: number;
+  /** Retido pelo provedor (GROSS − NET: tarifas e, até a P3 do contador, `TAXES_AMOUNT`); 0 = item bancário (#620). */
+  feeCents: number;
   line: { id: string; date: string; amountCents: number; description: string; externalRef: string | null };
   /** Saldo RECALCULADO na leitura; `null` = título indisponível. */
   title: { openCents: number; dueDate: string; counterpartyName: string; status: string } | null;
   settlementId: string | null;
   chargeEntryId: string | null;
+  /** Lançamento `provider.fee` (etapa FEE do confirm); null até a etapa rodar. */
+  feeEntryId: string | null;
+  /** Em PENDING, só o aviso G7 (cobrança em estado terminal no scan) escreve aqui. */
   reason: string | null;
-  failedStep: 'SETTLE' | 'CHARGE' | 'MATCH' | null;
+  failedStep: 'SETTLE' | 'CHARGE' | 'FEE' | 'MATCH' | null;
   confirmedAt: string | null;
+}
+
+/**
+ * EMENDA 1 item 12 (F-TAR-5 → a): bruto do #616 (`|linha| + feeCents`) conferido contra `proposedCents + chargeCents`.
+ * `null` sem tarifa. Só aviso: o pré-cheque do BE re-deriva sobre o bruto e é a autoridade.
+ */
+export function feeCheck(
+  it: Pick<BankSettlementItemView, 'feeCents' | 'proposedCents' | 'chargeCents' | 'line'>,
+): { grossCents: number; consistent: boolean } | null {
+  if (it.feeCents <= 0) return null;
+  const grossCents = Math.abs(it.line.amountCents) + it.feeCents;
+  return { grossCents, consistent: grossCents === it.proposedCents + it.chargeCents };
 }
 
 export interface ScanSummary {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toFiscalProfileProposal, toPolicyDiffRows, toScopeSettingsProposal, type TFn } from '../policyPayload';
+import { toFiscalProfileProposal, toPolicyDiffRows, toProviderFeeProposal, toScopeSettingsProposal, type TFn } from '../policyPayload';
 import { toFiscalProfileForm, toUpsertFiscalProfile } from '../fiscalProfileForm';
 import type { FiscalProfileView } from '../../../../lib/services/fiscalProfile.service';
 
@@ -84,5 +84,13 @@ describe('toPolicyDiffRows (12e)', () => {
     const labels = { a1: 'A1', a2: 'A2' };
     const rows = toPolicyDiffRows('SCOPE_SETTINGS', payload, snapshot, labels, t);
     expect(rows[0]).toMatchObject({ label: 'Despesa de depreciação', current: 'A1', proposed: 'A2', changed: true });
+  });
+});
+
+describe('toProviderFeeProposal', () => {
+  it('proposta da conta da tarifa do provedor leva SÓ essa chave (FE-INCR-BANK-SETTLEMENT-FEE item 7)', () => {
+    expect(toProviderFeeProposal({ unitId: 'u1', providerFeeExpenseAccountId: 'a-tarifa' })).toEqual({
+      unitId: 'u1', target: 'SCOPE_SETTINGS', payload: { providerFeeExpenseAccountId: 'a-tarifa' },
+    });
   });
 });

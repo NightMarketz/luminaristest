@@ -56,7 +56,7 @@ describe('FixedAssetsPanel', () => {
     vi.mocked(accountingService.getAccounts).mockResolvedValue({ accounts });
     vi.mocked(accountingService.getSettings).mockResolvedValue({
       unitId: 'u1', bankChargeExpenseAccountId: 'a-banco-tarifa', bankChargeIncomeAccountId: null, depreciationExpenseAccountId: 'a-desp',
-      disposalGainAccountId: null, disposalLossAccountId: null, depreciationParteBAccountId: null, updatedAt: null,
+      disposalGainAccountId: null, disposalLossAccountId: null, depreciationParteBAccountId: null, providerFeeExpenseAccountId: null, updatedAt: null,
     });
   });
   // Dreno: respostas em voo não podem aterrissar depois do teardown do jsdom.
