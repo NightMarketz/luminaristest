@@ -1,0 +1,56 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei nº 6.404 de 15/12/1976",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1976/lei-6404-1976-12-15.md",
+      "url_final": "https://github.com/ctresb/leis/blob/93b36bd206c427bbc1105b9d267654e75e7e6f56/federal/leis-ordinarias/1976/lei-6404-1976-12-15.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1976-12-15;6404",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "93b36bd206c427bbc1105b9d267654e75e7e6f56",
+      "alertas": [],
+      "baixado_em": "2026-10-22T22:10:26-03:00",
+      "sha256": "5d16d68dae24463ba09ac3b4557d4a2b4b2004d0abee18d0783446f79e6fcb27",
+      "arquivo": "docs/D01_lei-6404-1976-12-15.md",
+      "texto": "docs/D01_lei-6404-1976-12-15.txt",
+      "bytes": 319134
+    },
+    {
+      "id": "D02",
+      "titulo": "Lei nº 10.406 de 10/01/2002",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2002/lei-10406-2002-01-10.md",
+      "url_final": "https://github.com/ctresb/leis/blob/40fe0ecf521a6ae5e22077bcc927c90a9477d3a5/federal/leis-ordinarias/2002/lei-10406-2002-01-10.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2002-01-10;10406",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "40fe0ecf521a6ae5e22077bcc927c90a9477d3a5",
+      "alertas": [],
+      "baixado_em": "2026-10-22T22:10:28-03:00",
+      "sha256": "be0cd7d8a1eaacb21cb64f07086929db91f43ad3149b3c721cd33873d328c32c",
+      "arquivo": "docs/D02_lei-10406-2002-01-10.md",
+      "texto": "docs/D02_lei-10406-2002-01-10.txt",
+      "bytes": 678720
+    },
+    {
+      "id": "D03",
+      "titulo": "D03_Manual_de_Orienta-c3-a7-c3-a3o_da_ECD_Leiaute_20_maio_2026-p",
+      "url": "http://sped.rfb.gov.br/arquivo/download/7990",
+      "url_final": "http://sped.rfb.gov.br/estatico/71/1BD273E4A9F51ED8EF01AC3A6BC15812A3481F/Manual_de_Orienta%c3%a7%c3%a3o_da_ECD_Leiaute_20_maio_2026.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-22T22:11:09-03:00",
+      "sha256": "bc63f0a893ce4b2262b73426717e1cb5546704db58eaf81791fb296468bacc91",
+      "arquivo": "docs/D03_Manual_de_Orienta-c3-a7-c3-a3o_da_ECD_Leiaute_20_maio_2026-p.pdf",
+      "texto": "docs/D03_Manual_de_Orienta-c3-a7-c3-a3o_da_ECD_Leiaute_20_maio_2026-p.txt",
+      "bytes": 2990432
+    }
+  ],
+  "buscas": [],
+  "slug": "fechamento-assistido-dlpa-dmpl-notas",
+  "pergunta": "DLPA/DMPL e notas explicativas: obrigatoriedade por porte/regime; leiaute ECD J210/J215/J800; conciliação de contas como dever do contador",
+  "criado": "2026-10-22T22:09:56-03:00"
+}
