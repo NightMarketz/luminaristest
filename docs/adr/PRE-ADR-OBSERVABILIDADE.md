@@ -1,8 +1,11 @@
 # PRE-ADR — Observabilidade do server (OBS)
 
-> **Status: PROPOSTO, com os forks F-OBS-0..9 em RATIFICAÇÃO PENDENTE.** Produzido em 23/10/2026 pela
-> **sessão de planejamento**. Não tem código de aplicação. Até os forks serem ratificados, nada deste
-> documento se executa.
+> **Status: Accepted (forks ratificados), 23/10/2026.** Produzido pela **sessão de planejamento**, sem código
+> de aplicação. **Os 10 forks F-OBS-0..9 foram RATIFICADOS em 23/10 pelo dono, todos pela recomendada**
+> (chat: *"Pode ratificar tudo"*, em resposta à tabela das recomendações). Cédula:
+> [`D-2026-10-23-OBSERVABILIDADE-FORKS`](../plano/decisoes/D-2026-10-23-OBSERVABILIDADE-FORKS.md). Nó:
+> [`OBS`](../plano/nos/OBS.md). **Ratificar não é `executa`:** a Fase A espera o `executa` por PR, e a Fase B
+> espera a Onda 0.
 >
 > **Autorização:** dono em chat, 23/10/2026: *"Planeja e mapeia se há uma forma de cobrir tudo, temos que
 > ter um brief para não se perder depois"*. A frase responde à medição de cobertura de log feita na mesma
@@ -212,7 +215,7 @@ interface AccessLogRecord {
 }
 ```
 
-## 7. Forks — RATIFICAÇÃO PENDENTE
+## 7. Forks — RATIFICADOS em 23/10/2026, todos pela recomendada
 
 **F-OBS-0: quando.**
 - (a) Tudo na Onda 0.
@@ -222,7 +225,7 @@ interface AccessLogRecord {
 **Recomendo (b).** A Fase A não depende de host, é barata (cerca de 10 arquivos) e já paga em dev e nos
 runbooks H1/H2: um erro passa a vir com rota, usuário e id. A Fase B depende de topologia, volume e
 agregador, e decidi-la sem produção é palpite (o mesmo raciocínio da linha 16 de [§19](../plano/destino/19-riscos-e-premissas.md)).
-(c) é pior porque obrigaria a escolher o agregador às cegas. **Status: PENDENTE.**
+(c) é pior porque obrigaria a escolher o agregador às cegas. **Status: RATIFICADO 23/10 pela recomendada.**
 
 **F-OBS-1: biblioteca de log.**
 - (a) Manter o logger próprio e injetar contexto em `formatLog`.
@@ -230,7 +233,7 @@ agregador, e decidi-la sem produção é palpite (o mesmo raciocínio da linha 1
 
 **Recomendo (a).** As 460 chamadas usam a assinatura `logger.x(msg, ctx)`, que já é estruturada, e o
 próprio logger registra que a troca só se justifica por volume (comentário em `appendToErrorLog`). Volume
-só existe com produção. **Status: PENDENTE.**
+só existe com produção. **Status: RATIFICADO 23/10 pela recomendada.**
 
 **F-OBS-2: nível do 4xx.**
 - (a) Todo 4xx em `info` (não persiste).
@@ -238,7 +241,7 @@ só existe com produção. **Status: PENDENTE.**
 - (c) 401/403 em `warn`, demais 4xx em `info`.
 
 **Recomendo (c).** Negação de acesso é sinal de segurança e vale guardar. Erro de validação do usuário é
-ruído e hoje enche o arquivo como `error` (M4). **Status: PENDENTE.**
+ruído e hoje enche o arquivo como `error` (M4). **Status: RATIFICADO 23/10 pela recomendada.**
 
 **F-OBS-3: proteção de dado pessoal no log.**
 - (a) Lista de chaves negadas no `logReplacer`, mais path sem query.
@@ -248,7 +251,7 @@ ruído e hoje enche o arquivo como `error` (M4). **Status: PENDENTE.**
 **Recomendo (a).** (b) exigiria revisar as 460 chamadas. (a) cobre o vazamento provável: um `Error` com
 campo próprio (M2) e uma busca por CPF na URL (M5). Fica o limite conhecido: valor sensível sob chave
 inocente (ex.: `{ q: '123.456.789-00' }`) passa. A trilha de auditoria tem allowlist própria e não muda.
-**Status: PENDENTE.**
+**Status: RATIFICADO 23/10 pela recomendada.**
 
 **F-OBS-4: agregador remoto do log de erro.**
 - (a) Sentry (ou serviço de erro equivalente).
@@ -257,7 +260,7 @@ inocente (ex.: `{ q: '123.456.789-00' }`) passa. A trilha de auditoria tem allow
 
 **Recomendo decidir junto com o host da Onda 0.** O critério é: o erro chega com stack e `requestId`, há
 alerta por taxa e o dado fica em região aceitável para a LGPD. Não comparei preço nem plano de nenhum
-fornecedor. **Status: PENDENTE (insumo ausente: host).**
+fornecedor. **Status: RATIFICADO 23/10 pela recomendada: a escolha fica para quando o host da Onda 0 for definido.**
 
 **F-OBS-5: onde guardar o registro de acesso (6 meses).**
 - (a) Tabela Prisma `AccessLog` no SQLite.
@@ -267,7 +270,7 @@ fornecedor. **Status: PENDENTE (insumo ausente: host).**
 **Recomendo (b) provisório.** (a) põe uma escrita por requisição no mesmo SQLite do razão (memória "ficar
 no SQLite"; Windows serializa escrita). (c) amarra o prazo legal a configuração de fornecedor. (b) reaproveita
 o molde do `errors-*.ndjson` e atende o "formato interoperável e estruturado". O inventário de leitura
-(art. 13, III) sai do controle de acesso do volume. Reavaliar quando houver host. **Status: PENDENTE.**
+(art. 13, III) sai do controle de acesso do volume. Reavaliar quando houver host. **Status: RATIFICADO 23/10 pela recomendada.**
 
 **F-OBS-6: porta lógica de origem.**
 - (a) Registrar `req.socket.remotePort` direto.
@@ -276,8 +279,8 @@ o molde do `errors-*.ndjson` e atende o "formato interoperável e estruturado". 
 
 **Recomendo (b).** Com `trust proxy = 1` (M12), a porta do socket é a do proxy e não identifica ninguém. O
 art. 15-A pede a porta "sempre que necessário", o que depende de haver NAT/CGNAT do lado do usuário e do
-balanceador escolhido. Sem topologia, (b) é o único desenho que não registra porta falsa. **Status: PENDENTE
-(insumo ausente: topologia).**
+balanceador escolhido. Sem topologia, (b) é o único desenho que não registra porta falsa. **Status: RATIFICADO 23/10 pela recomendada. A forma final da porta se confirma com a topologia (insumo
+ausente).**
 
 **F-OBS-7: o que gera alerta remoto.**
 - (a) Falha de qualquer scheduler, mais `uncaughtException`.
@@ -286,7 +289,7 @@ balanceador escolhido. Sem topologia, (b) é o único desenho que não registra 
 
 **Recomendo (a).** Job em processo que falha em silêncio é o caso que o arquivo de erro foi criado para
 pegar (comentário de `errorLogDir`). Taxa de 5xx precisa de janela e de tráfego real, o que é Fase B.
-**Status: PENDENTE.**
+**Status: RATIFICADO 23/10 pela recomendada.**
 
 **F-OBS-8: impedir `console.*` novo.**
 - (a) `no-console` no ESLint do server, com as exceções do item 9.
@@ -295,14 +298,14 @@ pegar (comentário de `errorLogDir`). Taxa de 5xx precisa de janela e de tráfeg
 **Recomendo (a)**, com a ressalva da regra ⛔ do `CLAUDE.md`, que proíbe "aparato de auditoria novo". O
 `no-console` é regra de lint lida como o `tsc`, no mesmo job que já roda (M13), e não cria bancada, rodada
 nem revisor. Ainda assim é gate novo, e o precedente de exceção ratificada é só o `check:arch` (13/10). Por
-isso pede ratificação explícita. Se o dono negar, o item 9 sai e o 8 fica. **Status: PENDENTE.**
+isso pede ratificação explícita. Se o dono negar, o item 9 sai e o 8 fica. **Status: RATIFICADO 23/10 pela recomendada.**
 
 **F-OBS-9: métricas (contadores, percentis).**
 - (a) Nada além do log (logs como métrica).
 - (b) Endpoint de métricas (ex.: formato Prometheus).
 
 **Recomendo (a)** até existir produção. O `Metrics` atual (`lib/monitoring.ts`) só registra log, e não há
-quem consuma um endpoint. **Status: PENDENTE.**
+quem consuma um endpoint. **Status: RATIFICADO 23/10 pela recomendada.**
 
 ## 8. Pendente de validação externa
 

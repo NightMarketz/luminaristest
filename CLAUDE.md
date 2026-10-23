@@ -49,7 +49,8 @@ externo** aberto há mais de 14 dias (hoje: **4 de 4**), **não monte aparato de
 gate, nem rodada, nem mais um revisor. O gargalo é PVA / NF-e real / contador / implantar (medida em
 `docs/operating-manual/CLAUDE-RAIZ-DETALHE.md`).
 Exceção ratificada (dono, 2026-10-13): o gate estático de fronteiras `check:arch` (`ADR-ARCH-BOUNDARIES.md` §4) —
-lê o código como o `tsc`; não reabre bancada, rodada nem revisor.
+lê o código como o `tsc`; não reabre bancada, rodada nem revisor. Idem (dono, 2026-10-23, F-OBS-8 de
+`PRE-ADR-OBSERVABILIDADE.md`): `no-console` no ESLint do server, no job de lint que já roda.
 
 **Citação a `docs/audit/**` em comentário de teste, ADR ou doc é HISTÓRICA** — o caminho não existe
 mais; use `git show b617d8f1:<caminho>` se precisar.

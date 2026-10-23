@@ -1,0 +1,64 @@
+---
+id: "OBS"
+tipo: "plataforma"
+dominio: "plataforma"
+titulo: "Observabilidade do server pelos 6 portões: contexto por requisição, 4xx×5xx, redação de PII, alertas dos jobs (Fase A) e registro de acesso do Marco Civil (Fase B, Onda 0)"
+estado: "planned"
+estado_detalhe: "23/10: PRE-ADR-OBSERVABILIDADE Accepted, forks F-OBS-0..9 RATIFICADOS, todos pela recomendada ([[D-2026-10-23-OBSERVABILIDADE-FORKS]]). Sem fork pendente. O §5 do PRE-ADR é o checklist: 10 itens na Fase A e 5 na Fase B. A Fase A espera o 'executa'; a Fase B espera a Onda 0 (host, que decide F-OBS-4 e confirma F-OBS-5/6)"
+depende_de: ["[[D-2026-10-23-OBSERVABILIDADE-FORKS]]"]
+autorizacao: "dono, chat, 2026-10-23: \"Planeja e mapeia se há uma forma de cobrir tudo, temos que ter um brief para não se perder depois\" + \"Pode ratificar tudo\" — PRE-ADR e forks; sem 'executa'"
+ancora_sdd: "§14 · §19"
+atualizado: "2026-10-23"
+prs: ["#867"]
+perfil_previsto: "opus-medio"
+perfil_evidencia: "Fase A: ~10 arquivos de infraestrutura (requestContext novo, middleware, logger, apiUtils, httpTiming, auth, 5 schedulers, alertWebhook, eslint.config) com teste por item, sem DTO nem migração; o raio é largo porque o logger toca toda linha, mas o contrato é aditivo"
+write_set: ["server/src/lib/requestContext.ts", "server/src/lib/__tests__/requestContext*", "server/src/middleware/requestContext.ts", "server/src/middleware/__tests__/requestContext*", "server/src/middleware/httpTiming.ts", "server/src/middleware/auth.ts", "server/src/lib/logger.ts", "server/src/lib/apiUtils.ts", "server/src/lib/alertWebhook.ts", "server/src/lib/jwt.ts", "server/src/lib/prisma.ts", "server/src/lib/__tests__/**", "server/src/features/dynamicTables/utils/RelationUtils.ts", "server/src/jobs/*Scheduler.ts", "server/src/jobs/__tests__/**", "server/src/server.ts", "server/eslint.config.mjs"]
+registros: ["server/src/app.ts"]
+---
+# OBS — Observabilidade do server
+
+**Estado:** `planned`. 23/10: PRE-ADR Accepted e forks F-OBS-0..9 ratificados, todos pela recomendada
+([[D-2026-10-23-OBSERVABILIDADE-FORKS]]). A Fase A espera o `executa`. A Fase B espera a Onda 0.
+
+**Autorização:** dono, chat, 2026-10-23: "Planeja e mapeia se há uma forma de cobrir tudo, temos que ter um brief
+para não se perder depois" e "Pode ratificar tudo". Cobre o PRE-ADR e os forks, sem `executa`.
+
+**Depende de:** [[D-2026-10-23-OBSERVABILIDADE-FORKS]]. A Fase B depende da Onda 0, que não tem nó: é a implantação de
+[[19-riscos-e-premissas]].
+
+**Desbloqueia:** a linha "Observabilidade" de [[14-requisitos-nao-funcionais-do-estado-completo]] e o registro de
+acesso exigido pelo Marco Civil quando houver operação.
+
+**Âncora no SDD consolidado:** §14 · §19.
+
+## Escopo
+
+- **Fase A** (itens 1–10 do PRE-ADR §5):
+  - `AsyncLocalStorage` com `requestId`, `userId`, `method` e `route` injetados em toda linha de log;
+  - `X-Request-Id` na resposta;
+  - 4xx×5xx classificados no `handleApiError`;
+  - chaves de PII redigidas e path sem query;
+  - 9 `console.*` passam ao logger;
+  - `no-console` no ESLint;
+  - alerta nos 5 schedulers sem alerta e no `uncaughtException`.
+- **Fase B** (itens 11–15):
+  - registro de acesso de 6 meses (IP, porta, usuário, rota) em sink separado, encriptado e com expurgo;
+  - agregador remoto do log de erro;
+  - `ALERT_WEBHOOK_URL` obrigatória em produção.
+- **Fora:**
+  - FE (`FE-INCR-OBS`, a abrir);
+  - CLIs;
+  - trilha de auditoria contábil;
+  - métricas com endpoint (F-OBS-9).
+
+## Gatilho
+
+Pergunta do dono em 23/10 ("varrer o código e pensar em observabilidade já?") e medição da mesma data: o erro de
+API sai sem contexto, 5 de 6 jobs não alertam e não existe registro de acesso (PRE-ADR §2, M1–M16).
+
+## Docs
+
+- [`PRE-ADR-OBSERVABILIDADE.md`](../../adr/PRE-ADR-OBSERVABILIDADE.md): mapa dos 6 portões, fatos medidos, checklist em
+  2 fases, contratos e forks ratificados.
+- [`pesquisas-legais/marco-civil-guarda-registros`](../../../pesquisas-legais/marco-civil-guarda-registros/relatorio.md):
+  Lei 12.965 art. 15 e Dec. 8.771 arts. 13, 15 e 15-A (redação de 2026).
