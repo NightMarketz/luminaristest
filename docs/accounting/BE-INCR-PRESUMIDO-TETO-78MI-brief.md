@@ -3,10 +3,14 @@
 > **Sessão:** `sessao-planejamento` (agente), 22/10/2026. Saída = este documento + dossiê legal + fold da nota do nó.
 > **Sem código, sem `executa`, sem merge.** Base: `origin/main` em `65e1dd6b`.
 
+> **RATIFICAÇÃO 22/10/2026** ([[D-2026-10-22-PRESUMIDO-TETO-78MI-FORKS]]; dono, chat, 2026-10-22: "Dispara 1 pra ratificar os forks", respostas no
+> AskUserQuestion): F-PT-1 (c), 2 (c), 3 (a), 4 (a), 5 (a), 6 (a), 7 (a), todas a recomendação do BRIEF. F-PT-3 e
+> F-PT-4 seguem sujeitos a P-PT-1/P-PT-2 do contador. **Não é `executa`.**
+
 ## TLDR (2 linhas)
 
 Um PR confere a receita total do ano anterior contra o teto do Presumido (R$ 78 mi, ou R$ 6,5 mi × meses de atividade) e
-avisa no perfil e na prévia; a forma (avisar × bloquear), a fonte da receita e a medida são forks **PENDENTES** (F-PT-1..7).
+avisa no perfil e na prévia; a forma (avisar × bloquear), a fonte da receita e a medida são forks F-PT-1..7, ~~PENDENTES~~ **ratificados em 22/10/2026** (quadro acima).
 **Risco principal:** "receita bruta total" (art. 13, opção) × "receita total" (art. 14 I, obrigação) é ambíguo na lei; a
 recomendação segue a IN 1.700 (receita total nos dois) e espera a confirmação do contador (P-PT-1).
 
@@ -168,17 +172,17 @@ sumRevenueNetByOwner(ownerUserId: string, statuses: string[], from: Date, to: Da
 Nenhuma nova. Mudam só o conteúdo de `avisos` em `GET .../company-fiscal-profile/:ano/obligations` e na prévia da
 apuração, e a confirmação ganha um 400.
 
-## 5. Forks — **RATIFICAÇÃO PENDENTE** (nenhum se auto-ratifica)
+## 5. Forks — **RATIFICADOS em 22/10/2026** ([[D-2026-10-22-PRESUMIDO-TETO-78MI-FORKS]])
 
 | Fork | Caminhos | Recomendação | Por quê |
 |---|---|---|---|
-| **F-PT-1** Forma | (a) só avisar (perfil/obrigações + prévia); (b) 400 no `PUT` do perfil PRESUMIDO; (c) avisar no perfil/obrigações e na prévia **+ 400 na confirmação** da apuração Presumido | **(c)** | A confirmação é o efeito irreversível (provisão e DARF com código de Presumido) — memória "efeito irreversível antes do gate". Bloquear o `PUT` (b) trava o cadastro de dezembro, quando Y−1 ainda não fechou, e lançamentos retroativos de Y−1 mudam o número depois. (a) segue o precedente do Simples (`WARNING`), mas lá a exclusão depende de ato; aqui a obrigação é direta da lei (art. 14 I). |
-| **F-PT-2** Fonte da receita de Y−1 | (a) só o razão; (b) só o valor declarado no perfil de Y; (c) o **maior** dos dois, com aviso se divergem; (d) declarado prevalece sobre o razão | **(c)** | O razão sozinho falha para quem migrou no meio de Y−1 (subestima); o declarado sozinho falha para quem esquece de preencher. O maior dos dois é conservador e não deixa o declarado esconder o razão (d). O histórico mensal do Simples (`SimplesHistoricoMensal`) não é reuso: é objeto do Simples, por mês (critério reuso × divergência). |
-| **F-PT-3** Medida | (a) **receita total** (todas as contas `Revenue` analíticas, sem dedução de PIS/COFINS, sem encerramento); (b) só receita bruta (3.1/3.3/3.4, `receitaBrutaPorAtividade`) | **(a)** | É a leitura da RFB nos dois artigos (IN 1.700 arts. 59 I e 214) e a mais segura (ambiguidade 1 do dossiê). Fica sujeita a P-PT-1. (b) deixa fora receita financeira e ganho de capital. |
-| **F-PT-4** Meses no ano de início em Y−1 | (a) mês de início conta inteiro (`13 − mês`, como o Simples); (b) só meses completos | **(a)** | Mesma regra que o código já usa no Simples; o efeito é nulo para salão/clínica (R$ 6,5 mi por mês). Sujeita a P-PT-2. |
-| **F-PT-5** REAL × `lucroRealObrigatorio` | (a) avisar quando REAL + `false` + receita `EXCEDIDO`; (b) fora deste nó | **(a)** | Mesmo número, mesma leitura; o código de receita errado (3373 em vez de 0220) sai no DARF. Só aviso: a obrigação pode vir de outros incisos do art. 14. |
-| **F-PT-7** Guardar R$ 78 mi na tabela legal (`valorInt` é `Int` 32 bits) | (a) chave em **reais** (`..._REAIS`, × 100n na leitura); (b) `valorTexto` com o `bigint` em string; (c) migrar `valorInt` para `BigInt` na tabela inteira | **(a)** | Valor redondo em reais, sem perda; (b) cria um segundo formato de número na tabela; (c) mexe em toda leitura de parâmetro legal (Simples, X7, PIS/COFINS) por causa de duas linhas. |
-| **F-PT-6** Leitura multi-unidade | (a) método novo no repositório por **dono** (`sumRevenueNetByOwner`); (b) laço por unidade montando um `AccountingScope` para cada uma | **(a)** | O teto é da PJ (todas as unidades). Precedente de leitura por dono: `unitIdsWithMovement` (F-X7-7 a). (b) monta escopo de outra unidade fora do fluxo de autenticação. |
+| **F-PT-1** — **RATIFICADO 22/10/2026: (c)** ([[D-2026-10-22-PRESUMIDO-TETO-78MI-FORKS]]) · Forma | (a) só avisar (perfil/obrigações + prévia); (b) 400 no `PUT` do perfil PRESUMIDO; (c) avisar no perfil/obrigações e na prévia **+ 400 na confirmação** da apuração Presumido | **(c)** | A confirmação é o efeito irreversível (provisão e DARF com código de Presumido) — memória "efeito irreversível antes do gate". Bloquear o `PUT` (b) trava o cadastro de dezembro, quando Y−1 ainda não fechou, e lançamentos retroativos de Y−1 mudam o número depois. (a) segue o precedente do Simples (`WARNING`), mas lá a exclusão depende de ato; aqui a obrigação é direta da lei (art. 14 I). |
+| **F-PT-2** — **RATIFICADO 22/10/2026: (c)** ([[D-2026-10-22-PRESUMIDO-TETO-78MI-FORKS]]) · Fonte da receita de Y−1 | (a) só o razão; (b) só o valor declarado no perfil de Y; (c) o **maior** dos dois, com aviso se divergem; (d) declarado prevalece sobre o razão | **(c)** | O razão sozinho falha para quem migrou no meio de Y−1 (subestima); o declarado sozinho falha para quem esquece de preencher. O maior dos dois é conservador e não deixa o declarado esconder o razão (d). O histórico mensal do Simples (`SimplesHistoricoMensal`) não é reuso: é objeto do Simples, por mês (critério reuso × divergência). |
+| **F-PT-3** — **RATIFICADO 22/10/2026: (a)** ([[D-2026-10-22-PRESUMIDO-TETO-78MI-FORKS]]) · Medida | (a) **receita total** (todas as contas `Revenue` analíticas, sem dedução de PIS/COFINS, sem encerramento); (b) só receita bruta (3.1/3.3/3.4, `receitaBrutaPorAtividade`) | **(a)** | É a leitura da RFB nos dois artigos (IN 1.700 arts. 59 I e 214) e a mais segura (ambiguidade 1 do dossiê). Fica sujeita a P-PT-1. (b) deixa fora receita financeira e ganho de capital. |
+| **F-PT-4** — **RATIFICADO 22/10/2026: (a)** ([[D-2026-10-22-PRESUMIDO-TETO-78MI-FORKS]]) · Meses no ano de início em Y−1 | (a) mês de início conta inteiro (`13 − mês`, como o Simples); (b) só meses completos | **(a)** | Mesma regra que o código já usa no Simples; o efeito é nulo para salão/clínica (R$ 6,5 mi por mês). Sujeita a P-PT-2. |
+| **F-PT-5** — **RATIFICADO 22/10/2026: (a)** ([[D-2026-10-22-PRESUMIDO-TETO-78MI-FORKS]]) · REAL × `lucroRealObrigatorio` | (a) avisar quando REAL + `false` + receita `EXCEDIDO`; (b) fora deste nó | **(a)** | Mesmo número, mesma leitura; o código de receita errado (3373 em vez de 0220) sai no DARF. Só aviso: a obrigação pode vir de outros incisos do art. 14. |
+| **F-PT-7** — **RATIFICADO 22/10/2026: (a)** ([[D-2026-10-22-PRESUMIDO-TETO-78MI-FORKS]]) · Guardar R$ 78 mi na tabela legal (`valorInt` é `Int` 32 bits) | (a) chave em **reais** (`..._REAIS`, × 100n na leitura); (b) `valorTexto` com o `bigint` em string; (c) migrar `valorInt` para `BigInt` na tabela inteira | **(a)** | Valor redondo em reais, sem perda; (b) cria um segundo formato de número na tabela; (c) mexe em toda leitura de parâmetro legal (Simples, X7, PIS/COFINS) por causa de duas linhas. |
+| **F-PT-6** — **RATIFICADO 22/10/2026: (a)** ([[D-2026-10-22-PRESUMIDO-TETO-78MI-FORKS]]) · Leitura multi-unidade | (a) método novo no repositório por **dono** (`sumRevenueNetByOwner`); (b) laço por unidade montando um `AccountingScope` para cada uma | **(a)** | O teto é da PJ (todas as unidades). Precedente de leitura por dono: `unitIdsWithMovement` (F-X7-7 a). (b) monta escopo de outra unidade fora do fluxo de autenticação. |
 
 ## 6. Pendente de validação externa (contador — não são forks)
 

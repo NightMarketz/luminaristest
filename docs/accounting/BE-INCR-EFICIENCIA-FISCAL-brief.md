@@ -4,6 +4,10 @@
 > **Base:** `origin/main` `65e1dd6b` (22/10). A cédula `D-2026-10-21-FORKS-EFICIENCIA-FISCAL`, a triagem
 > `D-2026-10-21-TRIAGEM-CONTADOR-F1` e o PRE-ADR `ADR-INCR-EFICIENCIA-FISCAL` (D1–D11, §6, §7, §13) já estão em `main`.
 
+> **RATIFICAÇÃO 22/10/2026** ([[D-2026-10-22-EFICIENCIA-FISCAL-FORKS]]; dono, chat, 2026-10-22: "Dispara 1 pra ratificar os forks", respostas no
+> AskUserQuestion): **F-EF-14..17 todos (a)**, a recomendação do BRIEF. F-EF-16 (a) reabre o F-DFE-15 (a) com o destaque do
+> desconto na NFS-e. **Não é `executa`.**
+
 ## TLDR (2 linhas)
 
 O nó entra em cinco PRs. Os PRs 1 e 4 já podem receber `executa`:
@@ -285,7 +289,7 @@ model TaxOptimizationPolicy {            // política COMERCIAL (D2): não liga/
   criterioAlocacao  String    @default("PROPORCIONAL_CATALOGO") // | CARGA_TRIBUTARIA (só via sugestão aceita pelo contador)
   pisoServico       String    @default("CUSTO_INFORMADO")       // F-EF-1 a: CUSTO_INFORMADO → CATALOGO_MINIMO → SEM_DESCONTO_ALEM_DO_PROPORCIONAL
   aprovador         String    @default("CONTADOR_SENAO_ADMIN")  // F-EF-3 a
-  severidadePisoProporcional String @default("WARN")            // F-EF-14 — PENDENTE (recomendação (a))
+  severidadePisoProporcional String @default("WARN")            // F-EF-14 — RATIFICADO (a) em 22/10/2026
   vigenteDesde      String    // YYYY-MM-DD
   vigenteAte        String?
   createdById       String
@@ -372,16 +376,16 @@ export const DecideSuggestionSchema = z.object({ reason: z.string().min(3).max(2
 | `GET /api/accounting/simulacoes/regime` · `…/remuneracao-socio` · `…/iss-uniprofissional` | 3 / 3 / 5 | idem |
 | `GET /api/accounting/tax-optimization/report` | 4 | idem |
 
-## 5. FORKS NOVOS — RATIFICAÇÃO PENDENTE
+## 5. FORKS NOVOS — RATIFICADOS em 22/10/2026 ([[D-2026-10-22-EFICIENCIA-FISCAL-FORKS]])
 
 Abertos ao ler o código atual contra a emenda de 21/10. **Nenhum se auto-ratifica.**
 
 | Fork | Caminhos | Recomendação e porquê | Custo de errar |
 |---|---|---|---|
-| **F-EF-14** Piso sob o critério **proporcional** (padrão desde 21/10) | **(a)** `ITEM_ABAIXO_DO_PISO` / `COMBO_ABAIXO_DO_CUSTO` = **WARN** sob PROPORCIONAL e **BLOCK** sob CARGA · (b) BLOCK nos dois (D6 literal) · (c) WARN nos dois | **(a).** D6 nasceu para a alocação **por carga**, que é escolha do contribuinte (é ela que o fisco pode ler como manobra). No proporcional, o item abaixo do custo é efeito de promoção real e o preço declarado **é** o praticado (LC 87 art. 13 I; CTN 148 exige que o documento "não mereça fé"). Bloquear em (b) impede emitir a nota de uma venda real, e a não emissão é ela mesma infração (LC 214 art. 13 I "a"). (c) tira a defesa de onde ela importa. O valor fica em `TaxOptimizationPolicy.severidadePisoProporcional` (fixo por enquanto, sem PUT) | **alto em (b):** queima de estoque sem nota |
-| **F-EF-15** O razão (3.1 × 3.3) e as DPS seguem o desconto **por item**? | **(a)** `splitRevenueCredit` e o `splitCents` da DPS passam a usar o peso **líquido** por natureza/grupo (`Σ quantity × catalogUnitPrice − discountCents`) quando a venda tem `discountCents`; venda legada continua no bruto · (b) só a subrazão (`ratearReceita`) usa o líquido; o razão e a DPS seguem proporcionais ao bruto | **(a).** Uma fonte só (`saleItems.discountCents`): com o proporcional, o resultado é igual ao de hoje, salvo arredondamento; com CARGA, (b) faria o razão creditar 3.1/3.3 numa proporção e a NFS-e e a subrazão noutra, e o tie-out por natureza quebra. Toca o contrato do `ADR-INCR-REVENUE-SPLIT` D5 ("proporção dos subtotais brutos"), por isso é fork e não item direto | médio em (b): divergência razão × documento sob CARGA |
-| **F-EF-16** Destaque do desconto na NFS-e (reabre **F-DFE-15 a**) | **(a)** `vServ` = Σ catálogo do grupo, `vDescIncond` = Σ `discountCents` do grupo; o tie-out passa a ser `Σ (vServ − vDescIncond) = crédito 3.1`; preenche `FiscalDocument.vDescIncondCents` · (b) manter F-DFE-15 (a): `vServ` líquido, sem destaque | **(a).** O motivo do F-DFE-15 (a) era o float→centavos fora do mapper; com `discountCents` inteiro por item o motivo some. O destaque é o que torna o desconto **incondicional** no IBS/CBS (LC 214 art. 12 § 3º: "que conste do respectivo documento fiscal") e mostra preço de catálogo × desconto (I-1). Em 2026 a base do ISS é a mesma nos dois | médio em (b) a partir de 2027 |
-| **F-EF-17** Padrão do pacote por regime (F-EF-13 a) sobre `pacoteFatoGerador` existente | **(a)** não mudar o default do campo (`CONSUMO`, F-DFE-9 a); o padrão por regime vira só o alerta do item 31 e uma sugestão aceita pelo decisor · (b) default derivado do regime (`CONSUMO` no SIMPLES, `VENDA` fora) quando o campo não foi gravado explicitamente | **(a).** O campo é de outro nó e já é decisão ratificada, e o default `CONSUMO` é o padrão do Simples, que é o regime do 1º cliente. (b) muda em silêncio a emissão de quem está no Presumido | baixo |
+| **F-EF-14** — **RATIFICADO 22/10/2026: (a)** ([[D-2026-10-22-EFICIENCIA-FISCAL-FORKS]]) · Piso sob o critério **proporcional** (padrão desde 21/10) | **(a)** `ITEM_ABAIXO_DO_PISO` / `COMBO_ABAIXO_DO_CUSTO` = **WARN** sob PROPORCIONAL e **BLOCK** sob CARGA · (b) BLOCK nos dois (D6 literal) · (c) WARN nos dois | **(a).** D6 nasceu para a alocação **por carga**, que é escolha do contribuinte (é ela que o fisco pode ler como manobra). No proporcional, o item abaixo do custo é efeito de promoção real e o preço declarado **é** o praticado (LC 87 art. 13 I; CTN 148 exige que o documento "não mereça fé"). Bloquear em (b) impede emitir a nota de uma venda real, e a não emissão é ela mesma infração (LC 214 art. 13 I "a"). (c) tira a defesa de onde ela importa. O valor fica em `TaxOptimizationPolicy.severidadePisoProporcional` (fixo por enquanto, sem PUT) | **alto em (b):** queima de estoque sem nota |
+| **F-EF-15** — **RATIFICADO 22/10/2026: (a)** ([[D-2026-10-22-EFICIENCIA-FISCAL-FORKS]]) · O razão (3.1 × 3.3) e as DPS seguem o desconto **por item**? | **(a)** `splitRevenueCredit` e o `splitCents` da DPS passam a usar o peso **líquido** por natureza/grupo (`Σ quantity × catalogUnitPrice − discountCents`) quando a venda tem `discountCents`; venda legada continua no bruto · (b) só a subrazão (`ratearReceita`) usa o líquido; o razão e a DPS seguem proporcionais ao bruto | **(a).** Uma fonte só (`saleItems.discountCents`): com o proporcional, o resultado é igual ao de hoje, salvo arredondamento; com CARGA, (b) faria o razão creditar 3.1/3.3 numa proporção e a NFS-e e a subrazão noutra, e o tie-out por natureza quebra. Toca o contrato do `ADR-INCR-REVENUE-SPLIT` D5 ("proporção dos subtotais brutos"), por isso é fork e não item direto | médio em (b): divergência razão × documento sob CARGA |
+| **F-EF-16** — **RATIFICADO 22/10/2026: (a)** ([[D-2026-10-22-EFICIENCIA-FISCAL-FORKS]]) · Destaque do desconto na NFS-e (reabre **F-DFE-15 a**) | **(a)** `vServ` = Σ catálogo do grupo, `vDescIncond` = Σ `discountCents` do grupo; o tie-out passa a ser `Σ (vServ − vDescIncond) = crédito 3.1`; preenche `FiscalDocument.vDescIncondCents` · (b) manter F-DFE-15 (a): `vServ` líquido, sem destaque | **(a).** O motivo do F-DFE-15 (a) era o float→centavos fora do mapper; com `discountCents` inteiro por item o motivo some. O destaque é o que torna o desconto **incondicional** no IBS/CBS (LC 214 art. 12 § 3º: "que conste do respectivo documento fiscal") e mostra preço de catálogo × desconto (I-1). Em 2026 a base do ISS é a mesma nos dois | médio em (b) a partir de 2027 |
+| **F-EF-17** — **RATIFICADO 22/10/2026: (a)** ([[D-2026-10-22-EFICIENCIA-FISCAL-FORKS]]) · Padrão do pacote por regime (F-EF-13 a) sobre `pacoteFatoGerador` existente | **(a)** não mudar o default do campo (`CONSUMO`, F-DFE-9 a); o padrão por regime vira só o alerta do item 31 e uma sugestão aceita pelo decisor · (b) default derivado do regime (`CONSUMO` no SIMPLES, `VENDA` fora) quando o campo não foi gravado explicitamente | **(a).** O campo é de outro nó e já é decisão ratificada, e o default `CONSUMO` é o padrão do Simples, que é o regime do 1º cliente. (b) muda em silêncio a emissão de quem está no Presumido | baixo |
 
 ## 6. Pendente de validação externa (contador / fonte oficial; não são forks)
 

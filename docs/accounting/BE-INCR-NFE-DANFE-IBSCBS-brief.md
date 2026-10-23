@@ -4,6 +4,11 @@
 > legal [`pesquisas-legais/nfe-danfe-ibscbs-nt2026010/`](../../pesquisas-legais/nfe-danfe-ibscbs-nt2026010/relatorio.md)
 > e o fold da nota do nó. **Sem código, sem `executa`, sem merge.** Nenhum fork ratificado aqui.
 
+> **RATIFICAÇÃO 22/10/2026** ([[D-2026-10-22-NFE-DANFE-IBSCBS-FORKS]]; dono, chat, 2026-10-22: "Dispara 1 pra ratificar os forks", respostas no
+> AskUserQuestion): F-DANFE-1 (a), 2 (a), 3 (b), **4 (b) — contra a recomendação** (biblioteca de código de barras em vez
+> de encoder próprio: o item 13 e o contrato `lib/danfe/code128.ts` passam a usar dependência nova; o nome do pacote vai
+> no PR-2 e a simbologia continua a do MOC, item 2), 5 (a), 6 (a), 7 (a, condicionado), 8 (b). **Não é `executa`.**
+
 ## TLDR (2 linhas)
 
 A NT 2026.010 muda **só o DANFE da NF-e modelo 55** (bloco "Total do IBS/CBS/IS", CRT no emitente, IBS UF/IBS Mun/CBS/IS
@@ -244,7 +249,7 @@ export const DanfeParamsDto = z.object({ id: z.string().min(1) }).strict();
 **Rota:** `GET /dfe/documents/:id/danfe` → 200 `application/pdf` · 401 · 403 · 404 (outro tenant ou inexistente) ·
 409 `DANFE_DOCUMENTO_NAO_AUTORIZADO` / `DANFE_SEM_XML` · 422 `DANFE_SO_NFE` / `DANFE_NFCE_NO_FE`.
 
-## 5. Forks — RATIFICAÇÃO PENDENTE (nenhum decidido nesta sessão)
+## 5. Forks — RATIFICADOS em 22/10/2026 ([[D-2026-10-22-NFE-DANFE-IBSCBS-FORKS]]; o BRIEF original os deixou pendentes)
 
 ### F-DANFE-1 — Quem gera o DANFE 55
 - **(a)** Backend: HTML puro + `htmlToPdf`, como os comprovantes (`ReceiptService`), servido pela rota do item 19.
@@ -253,7 +258,7 @@ export const DanfeParamsDto = z.object({ id: z.string().min(1) }).strict();
 - **Recomendação: (a).** O DANFE é documento legal com leiaute fixo `[DANFE-BASE]`, e o mesmo PDF serve para download,
   e-mail e impressão. O canônico (`lib/pdf` + HTML testável) já existe no BE. Em (b), o leiaute ficaria no navegador,
   sem teste de servidor. Em (c), o prazo de 01/12 seria perdido no dia em que a 1ª NF-e sair. Efeito colateral: o
-  texto do ADR-DFE §3 D1 ("DANFE … no parceiro") precisa de correção (§9 item 1). **PENDENTE.**
+  texto do ADR-DFE §3 D1 ("DANFE … no parceiro") precisa de correção (§9 item 1). **RATIFICADO (22/10/2026, (a)).**
 
 ### F-DANFE-2 — DANFE NFC-e neste nó
 - **(a)** Fora: a NT 2026.010 só trata do modelo 55 `[NT10-MOD55]`, e o F-NFCE-E1-6 (b), ratificado em 13/10, pôs o
@@ -261,7 +266,7 @@ export const DanfeParamsDto = z.object({ id: z.string().min(1) }).strict();
 - **(b)** Dentro: o BE gera também o DANFE NFC-e (80 mm) com IBS/CBS. Isso **reabre o E1-6 (b)**, decisão do dono, e
   depende do Manual do DANFE NFC-e (insumo ausente 2) e da L-NFCE-4.
 - **Recomendação: (a).** Não há norma lida que mande pôr IBS/CBS no DANFE NFC-e, e (b) reabre uma decisão ratificada
-  sem fato novo. **PENDENTE.**
+  sem fato novo. **RATIFICADO (22/10/2026, (a)).**
 
 ### F-DANFE-3 — Como ler os campos novos do XML
 - **(a)** Estender `ParsedNfe` (o tipo da ingestão) com todos os campos do DANFE.
@@ -269,27 +274,27 @@ export const DanfeParamsDto = z.object({ id: z.string().min(1) }).strict();
   não muda.
 - **Recomendação: (b).** O `ParsedNfe` é o contrato da ingestão e do custo (X6, IBS-CBS-2027). Acrescentar ~60 campos
   de impressão a ele cria acoplamento sem consumidor. Com (b), as guardas (XXE, assinatura, `cStat`) ficam num lugar só.
-  **PENDENTE.**
+  **RATIFICADO (22/10/2026, (b)).**
 
 ### F-DANFE-4 — Código de barras da chave
 - **(a)** Função própria (Code 128, conjunto C, 44 dígitos pares), testada contra vetor.
 - **(b)** Dependência nova (ex.: `bwip-js`).
 - **Recomendação: (a), condicionada ao item 2** confirmar que o padrão do MOC é Code 128C (inferido, não lido). Uma
   chave numérica de 44 dígitos usa só o conjunto C, então o encoder é pequeno e determinístico, e (a) evita dependência
-  nova no servidor. Se o MOC pedir outra simbologia, (b) passa a ser a recomendação. **PENDENTE.**
+  nova no servidor. Se o MOC pedir outra simbologia, (b) passa a ser a recomendação. **RATIFICADO (22/10/2026, (b)).** Escolha **contra a recomendação**.
 
 ### F-DANFE-5 — Quando gerar
 - **(a)** Sob demanda, a cada pedido, sem gravar.
 - **(b)** Gerar ao autorizar e gravar em `pdfAttachmentId`.
 - **Recomendação: (a).** O DANFE deriva inteiro do XML (I1), e gravar cria um segundo artefato que pode divergir (leiaute
-  corrigido depois, evento). O custo é ~1 s de Chromium por pedido, aceitável para documento avulso. **PENDENTE.**
+  corrigido depois, evento). O custo é ~1 s de Chromium por pedido, aceitável para documento avulso. **RATIFICADO (22/10/2026, (a)).**
 
 ### F-DANFE-6 — Orientação e canhoto
 - **(a)** Só retrato (o leiaute principal), com canhoto sempre.
 - **(b)** Retrato e paisagem, com o canhoto configurável por unidade.
 - **Recomendação: (a).** A NT trata a paisagem como alternativa "para os casos em que o emitente disponha de mais
   largura útil" [D03] §3, e a supressão do canhoto é faculdade [D03] §4.4. Configuração nova sem pedido é escopo novo.
-  **PENDENTE.**
+  **RATIFICADO (22/10/2026, (a)).**
 
 ### F-DANFE-7 — Um leiaute ou dois (antes/depois de 01/12/2026)
 - **(a)** Só o leiaute novo, para qualquer data.
@@ -297,13 +302,13 @@ export const DanfeParamsDto = z.object({ id: z.string().min(1) }).strict();
 - **Recomendação: (a), condicionada.** Hoje o Luminaris não emite NF-e 55. Se o X10a PR-7 só entrar em produção depois
   de 01/12, toda nota sua cai no leiaute novo, e (b) seria código sem uso. A NT acrescenta quadros e preserva "ao
   máximo a estrutura do DANFE atual" [D03] §1. Se o PR-7 for a produção antes de 01/12, o fork volta ao dono com a
-  pendência P4. **PENDENTE.**
+  pendência P4. **RATIFICADO (22/10/2026, (a)).** Segue a condição: se o X10a PR-7 for à produção antes de 01/12/2026, o fork volta ao dono.
 
 ### F-DANFE-8 — QR Code no DANFE 55
 - **(a)** Desenhar o QR quando `infNFeSupl/qrCode` vier no XML (exige um encoder de QR: dependência ou código próprio).
 - **(b)** Área vazia até a NT do `[NT10-QR]`, com aviso no model.
 - **Recomendação: (b).** O emissor do X10a só monta `infNFeSupl` na NFC-e (EMENDA-1 E-3), então nenhuma NF-e 55 do
-  Luminaris trará o grupo. A regra de formação para o 55 ainda não foi publicada. **PENDENTE.**
+  Luminaris trará o grupo. A regra de formação para o 55 ainda não foi publicada. **RATIFICADO (22/10/2026, (b)).**
 
 ## 6. Pendente de validação externa (não são forks)
 

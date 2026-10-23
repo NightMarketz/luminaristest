@@ -4,11 +4,11 @@ tipo: "plataforma"
 dominio: "plataforma"
 titulo: "Teste de acoplamento preset↔schema: campos lidos por plugins e KPIs ⊆ campos declarados; regras de governança apontam para campo/tabela existente"
 estado: "planned"
-estado_detalhe: "21/10: BRIEF em docs/accounting/TESTE-ACOPLAMENTO-PRESET-brief.md, forks F-TAP-1..5 pendentes · Registrado 19/10. A varredura de hoje deu zero inconsistência nas regras de governança, mas não há teste — typo num módulo vira regra silenciosa (REVIEW_BACKLOG, junho). O #770 cobre só expenses"
+estado_detalhe: "22/10: forks F-TAP-1..5 já estavam RATIFICADOS em 21/10 ([[D-2026-10-21-CHAT-C-FORKS]], #793: 1b, 2a, 3a, 4a, 5a); registro levado ao BRIEF nesta data. Sem fork pendente; espera o 'executa' (e o FIX-ANALYTICS-DADO de que depende) · 21/10: BRIEF em docs/accounting/TESTE-ACOPLAMENTO-PRESET-brief.md, forks F-TAP-1..5 pendentes · Registrado 19/10. A varredura de hoje deu zero inconsistência nas regras de governança, mas não há teste — typo num módulo vira regra silenciosa (REVIEW_BACKLOG, junho). O #770 cobre só expenses"
 depende_de: ["[[FIX-ANALYTICS-DADO]]"]
 autorizacao: "dono, chat, 2026-10-21: \"dispara os chats A, C e F agora\" — escopo: planejar o BRIEF, sessao-planejamento, só docs, sem código, sem 'executa'"
 write_set: ["server/src/features/dynamicTables/presets/__tests__/**", "server/src/features/analytics/**/__tests__/**"]
-atualizado: "2026-10-21"
+atualizado: "2026-10-22"
 ---
 # TESTE-ACOPLAMENTO-PRESET — Teste de acoplamento preset↔schema: campos lidos por plugins e KPIs ⊆ campos declarados; regras de governança apontam para campo/tabela existente
 

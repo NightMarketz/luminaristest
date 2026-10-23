@@ -1,6 +1,7 @@
 # BRIEF — TESTE-ACOPLAMENTO-PRESET (teste de acoplamento preset↔schema)
 
-**Status:** BRIEF — forks F-TAP-1..5 em **RATIFICAÇÃO PENDENTE**. Sem código; sem "executa".
+**Status:** BRIEF — forks F-TAP-1..5 **RATIFICADOS em 21/10/2026** ([[D-2026-10-21-CHAT-C-FORKS]], PR #793; registro no BRIEF em 22/10/2026).
+Sem código; sem "executa".
 
 ## Contexto fixo
 
@@ -69,24 +70,24 @@ type KnownGap = { key: string /* `${source}:${suite}.${table}:${ref}` */; owner:
 ```
 Saída de cada `it`: `expect(report).toEqual([])` com uma linha legível por finding (padrão do teste do #770).
 
-## Forks — RATIFICAÇÃO PENDENTE (nenhum decidido aqui)
+## Forks — RATIFICADOS em 21/10/2026 ([[D-2026-10-21-CHAT-C-FORKS]]; o BRIEF original os deixou pendentes)
 
-- **F-TAP-1 — Universo varrido.** (a) só `tablePresetSuites` (3 suítes); (b) (a) + Core + cada módulo do `MODULE_REGISTRY`
+- **F-TAP-1 — Universo varrido.** **RATIFICADO 21/10/2026: (b).** (a) só `tablePresetSuites` (3 suítes); (b) (a) + Core + cada módulo do `MODULE_REGISTRY`
   isolado (CRM-0..3), já que módulo instalável sozinho pode citar tabela que só existe com outro. **Rec.: (b)** — o nó
   diz "Core + módulos default + suíte", e a combinação parcial é onde o alvo de relação some. Custo: depende de como
   `moduleSelection` monta o conjunto (Insumo ausente 1).
-- **F-TAP-2 — Fonte da lista de campos escritos por plugin.** (a) manifesto estático escrito à mão no teste;
+- **F-TAP-2 — Fonte da lista de campos escritos por plugin.** **RATIFICADO 21/10/2026: (a).** (a) manifesto estático escrito à mão no teste;
   (b) espiar em runtime (`repository.create/update` mockado, rodar cada plugin com o preset real e coletar chaves);
   (c) manifesto exportado pelo próprio plugin. **Rec.: (a)** — o nó pede "lista explícita por plugin", cabe no
   write_set (só testes); (b) é mais fiel mas exige fixture de cada plugin; (c) toca código de aplicação, fora do write_set.
   Risco de (a): manifesto desatualiza — mitigação: o item 7 + revisão do manifesto no FIX-PLUGINS-VENDA.
-- **F-TAP-3 — Exceções por desenho.** (a) allowlist nomeada no teste, com motivo; (b) marcar no preset (`optional: true`
+- **F-TAP-3 — Exceções por desenho.** **RATIFICADO 21/10/2026: (a).** (a) allowlist nomeada no teste, com motivo; (b) marcar no preset (`optional: true`
   já existe?) e o teste respeitar o marcador. **Rec.: (a)**, pelo write_set; (b) se o marcador já existir (Insumo ausente 2).
-- **F-TAP-4 — Divergência real encontrada (ex.: `sourceType`, `reason`, `importantFields.status`).** (a) teste nasce
+- **F-TAP-4 — Divergência real encontrada (ex.: `sourceType`, `reason`, `importantFields.status`).** **RATIFICADO 21/10/2026: (a).** (a) teste nasce
   com `KNOWN_GAPS` (verde, lista que só encolhe) e o fix fica no nó dono; (b) teste nasce vermelho e o nó só fecha com
   os fixes (invade write_set de FIX-PLUGINS-VENDA/presets); (c) `it.failing` por gap. **Rec.: (a)** — mantém o nó
   só-teste e dá aos dois FIX um critério de pronto mecânico (esvaziar a sua fatia de `KNOWN_GAPS`).
-- **F-TAP-5 — Validador de runtime (§3.2 #15: `AnalyticsValidator` só loga).** (a) fora deste nó — fica em
+- **F-TAP-5 — Validador de runtime (§3.2 #15: `AnalyticsValidator` só loga).** **RATIFICADO 21/10/2026: (a).** (a) fora deste nó — fica em
   FIX-ANALYTICS-RESIDUO; (b) incluir aqui um teste que exige que o `AnalyticsService` rejeite config inválida.
   **Rec.: (a)** — mudar o validador é código de aplicação; este nó cobre o lado estático (preset), o resíduo cobre o runtime.
 
