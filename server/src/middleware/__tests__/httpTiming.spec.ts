@@ -47,6 +47,7 @@ describe('httpTimingMiddleware', () => {
 
     expect(endTimer).toHaveBeenCalledTimes(1);
     expect(endTimer).toHaveBeenCalledWith({
+      event: 'http.request',
       success: true,
       warnThresholdMs: HTTP_WARN_THRESHOLD_MS,
       method: 'POST',

@@ -9,7 +9,7 @@ import { MpReleaseReportScheduler } from '../MpReleaseReportScheduler';
 import { PtaxRateScheduler } from '../PtaxRateScheduler';
 
 const boom = () => Promise.reject(new Error('upstream down'));
-const silentLog = () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn() });
+const silentLog = () => ({ event: jest.fn() });
 
 const cases: { source: string; build: (alert: jest.Mock) => { runOnce(): Promise<unknown> } }[] = [
   { source: 'collection_charge_poll', build: (alert) => new CollectionChargePollScheduler({ poll: boom, log: silentLog(), alert }) },

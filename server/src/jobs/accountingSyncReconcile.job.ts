@@ -423,8 +423,7 @@ export async function reconcileCrmReceivables(
       // (e.g. Won sem unitId) re-surfaces every cycle; `failedSoFar` makes a stuck item visible.
       const reason = error instanceof Error ? error.message : String(error);
       summary.failed++;
-      logger.error('Reconcile failed for opportunity — continuing', {
-        event: 'reconcile_item_failed',
+      logger.event('error', 'job.reconcile_item_failed', 'Reconcile failed for opportunity — continuing', {
         sourceType: 'crm.opportunity.won',
         sourceId: opp.opportunityId,
         opportunityId: opp.opportunityId,
@@ -562,8 +561,7 @@ export async function reconcileSaleSales(deps: SaleReconcileDeps): Promise<Recon
       // (e.g. venda sem unitId) re-surfaces every cycle; `failedSoFar` makes a stuck item visible.
       const reason = error instanceof Error ? error.message : String(error);
       summary.failed++;
-      logger.error('Reconcile failed for sale — continuing', {
-        event: 'reconcile_item_failed',
+      logger.event('error', 'job.reconcile_item_failed', 'Reconcile failed for sale — continuing', {
         sourceType: 'sale.finalized',
         sourceId: sale.saleId,
         saleId: sale.saleId,

@@ -8,7 +8,7 @@
 import { handleApiError } from '../apiUtils';
 import { AppError, ValidationError, NotFoundError, ForbiddenError } from '../errors';
 import { ZodError, z } from 'zod';
-import { logger } from '../logger';
+import { LogEntrySchema } from '../logEvents';
 
 /** Minimal Express `res` double capturing status + json. */
 function mockRes() {
@@ -81,40 +81,54 @@ describe('handleApiError', () => {
   });
 });
 
-/** Nó OBS, item 6 (F-OBS-2 c): the log level follows the classified status, and a 4xx never carries the error. */
+/**
+ * Nó OBS, item 6 (F-OBS-2 c): the log level follows the classified status, and a 4xx never carries the error.
+ * ADR-OBSERVABILIDADE item 3: every line is the P2 gate event `api.error`. Asserted on the console line as
+ * written (parsed against LogEntrySchema), not on a logger spy — the request context is merged inside formatLog.
+ */
 describe('handleApiError log level', () => {
-  let spies: Record<'error' | 'warn' | 'info', jest.SpyInstance>;
+  let out: jest.SpyInstance;
+  let err: jest.SpyInstance;
   beforeEach(() => {
-    spies = {
-      error: jest.spyOn(logger, 'error').mockImplementation(() => {}),
-      warn: jest.spyOn(logger, 'warn').mockImplementation(() => {}),
-      info: jest.spyOn(logger, 'info').mockImplementation(() => {}),
-    };
+    out = jest.spyOn(console, 'log').mockImplementation(() => {});
+    err = jest.spyOn(console, 'error').mockImplementation(() => {});
   });
-  afterEach(() => Object.values(spies).forEach((s) => s.mockRestore()));
+  afterEach(() => {
+    out.mockRestore();
+    err.mockRestore();
+  });
+  const lines = (spy: jest.SpyInstance) => spy.mock.calls.map((c) => LogEntrySchema.parse(JSON.parse(c[0] as string)));
 
   it('an unknown error (500) is logged as error, with the error', () => {
-    const err = new Error('db is gone');
-    handleApiError(err, mockRes() as any);
-    expect(spies.error).toHaveBeenCalledWith('[API Error Handler]', { statusCode: 500, code: 'INTERNAL_SERVER_ERROR', error: err });
+    handleApiError(new Error('db is gone'), mockRes() as any);
+    expect(lines(err)).toEqual([
+      expect.objectContaining({
+        level: 'error', event: 'api.error', message: '[API Error Handler]', statusCode: 500, code: 'INTERNAL_SERVER_ERROR',
+        error: expect.objectContaining({ message: 'db is gone' }),
+      }),
+    ]);
   });
 
   it('a ZodError (400) is info with code and status only — never an error line', () => {
     const parsed = z.object({ a: z.string() }).safeParse({});
     handleApiError((parsed as { error: ZodError }).error, mockRes() as any);
-    expect(spies.error).not.toHaveBeenCalled();
-    expect(spies.info).toHaveBeenCalledWith('[API Error Handler]', { statusCode: 400, code: 'VALIDATION_ERROR' });
+    expect(err).not.toHaveBeenCalled();
+    const [line] = lines(out);
+    expect(line).toMatchObject({ level: 'info', event: 'api.error', statusCode: 400, code: 'VALIDATION_ERROR' });
+    expect(line).not.toHaveProperty('error');
   });
 
   it('a 403 is warn with code and status only', () => {
     handleApiError(new ForbiddenError('nope'), mockRes() as any);
-    expect(spies.error).not.toHaveBeenCalled();
-    expect(spies.warn).toHaveBeenCalledWith('[API Error Handler]', { statusCode: 403, code: 'FORBIDDEN' });
+    expect(err).not.toHaveBeenCalled();
+    const [line] = lines(out);
+    expect(line).toMatchObject({ level: 'warn', event: 'api.error', statusCode: 403, code: 'FORBIDDEN' });
+    expect(line).not.toHaveProperty('error');
   });
 
   it('a 404 is info', () => {
     handleApiError(new NotFoundError('gone'), mockRes() as any);
-    expect(spies.info).toHaveBeenCalledWith('[API Error Handler]', { statusCode: 404, code: expect.any(String) });
-    expect(spies.error).not.toHaveBeenCalled();
+    expect(err).not.toHaveBeenCalled();
+    expect(lines(out)).toEqual([expect.objectContaining({ level: 'info', event: 'api.error', statusCode: 404 })]);
   });
 });

@@ -152,7 +152,7 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
 
     // Admin-only enforcement
     if (isAdminOnly(pathname, method) && payload.role !== 'ADMIN') {
-      logger.warn('[authMiddleware] 403: Admin access required', { method, route: pathname });
+      logger.event('warn', 'auth.denied', '[authMiddleware] 403: Admin access required', { method, route: pathname });
       res.status(403).json({ code: 'FORBIDDEN', message: 'Admin access required' });
       return;
     }
@@ -171,7 +171,7 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
         const targetUserId = pathParts.pop();
         const currentUserId = String(payload.id || payload.userId || '');
         if (targetUserId !== currentUserId) {
-          logger.warn('[authMiddleware] 403: Self-update only', { method, route: pathname });
+          logger.event('warn', 'auth.denied', '[authMiddleware] 403: Self-update only', { method, route: pathname });
           res.status(403).json({ code: 'FORBIDDEN', message: 'You can only update your own profile' });
           return;
         }
@@ -182,7 +182,7 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
   } catch {
     // warn, not error: a bad token is a client condition (F-OBS-2). The raw JWT error message is left
     // out on purpose (item 8) — the route is enough to investigate.
-    logger.warn('[authMiddleware] 401: Invalid or expired token', { method, route: pathname });
+    logger.event('warn', 'auth.denied', '[authMiddleware] 401: Invalid or expired token', { method, route: pathname });
     res.status(401).json({ code: 'UNAUTHORIZED', message: 'Invalid or expired token' });
   }
 }

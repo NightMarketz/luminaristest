@@ -4,7 +4,7 @@
 import { PtaxRateScheduler } from '../PtaxRateScheduler';
 import type { PtaxSyncSummary } from '../../features/fx/services/PtaxSyncService';
 
-const log = () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn() });
+const log = () => ({ event: jest.fn() });
 const summary = (failed: number): PtaxSyncSummary => ({ calls: 2, saved: 2 - failed, failed, currencies: [] });
 
 describe('PtaxRateScheduler', () => {
@@ -12,20 +12,20 @@ describe('PtaxRateScheduler', () => {
     const l = log();
     const s = new PtaxRateScheduler({ sync: async () => summary(1), log: l });
     await expect(s.runOnce()).resolves.toMatchObject({ failed: 1 });
-    expect(l.warn).toHaveBeenCalledWith('ptax_rate_sync', expect.objectContaining({ event: 'complete', failed: 1 }));
+    expect(l.event).toHaveBeenCalledWith('warn', 'job.completed', 'ptax_rate_sync', expect.objectContaining({ failed: 1 }));
   });
 
   it('sem falha → info', async () => {
     const l = log();
     await new PtaxRateScheduler({ sync: async () => summary(0), log: l }).runOnce();
-    expect(l.info).toHaveBeenCalledWith('ptax_rate_sync', expect.objectContaining({ event: 'complete', failed: 0 }));
+    expect(l.event).toHaveBeenCalledWith('info', 'job.completed', 'ptax_rate_sync', expect.objectContaining({ failed: 0 }));
   });
 
   it('erro inesperado (ex.: banco) é logado como failed; o tick do start() engole', async () => {
     const l = log();
     const s = new PtaxRateScheduler({ sync: async () => { throw new Error('db'); }, log: l });
     await expect(s.runOnce()).rejects.toThrow('db');
-    expect(l.error).toHaveBeenCalledWith('ptax_rate_sync', expect.objectContaining({ event: 'failed', error: 'db' }));
+    expect(l.event).toHaveBeenCalledWith('error', 'job.failed', 'ptax_rate_sync', expect.objectContaining({ error: 'db' }));
   });
 
   it('lock: execução concorrente é pulada', async () => {
@@ -40,6 +40,6 @@ describe('PtaxRateScheduler', () => {
   it('não agenda timer sob NODE_ENV=test', () => {
     const l = log();
     new PtaxRateScheduler({ sync: async () => summary(0), log: l }).start();
-    expect(l.info).toHaveBeenCalledWith('ptax_rate_sync', expect.objectContaining({ reason: 'disabled_in_test' }));
+    expect(l.event).toHaveBeenCalledWith('info', 'job.skipped', 'ptax_rate_sync', expect.objectContaining({ reason: 'disabled_in_test' }));
   });
 });

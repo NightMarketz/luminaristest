@@ -57,10 +57,10 @@ export function sendAlertWebhook(payload: AlertPayload): void {
         // chain, rather than asserting `instanceof Error`.
         const hasNameAndMessage =
           typeof error === 'object' && error !== null && 'name' in error && 'message' in error;
-        logger.warn('alert webhook failed', {
+        logger.event('warn', 'alert.failed', 'alert webhook failed', {
           url,
           source: payload.source,
-          event: payload.event,
+          alertEvent: payload.event,
           errorName: hasNameAndMessage
             ? String((error as { name: unknown }).name)
             : 'UnknownError',
@@ -74,10 +74,10 @@ export function sendAlertWebhook(payload: AlertPayload): void {
     clearTimeout(timeoutId);
     const hasNameAndMessage =
       typeof error === 'object' && error !== null && 'name' in error && 'message' in error;
-    logger.warn('alert webhook failed', {
+    logger.event('warn', 'alert.failed', 'alert webhook failed', {
       url,
       source: payload.source,
-      event: payload.event,
+      alertEvent: payload.event,
       errorName: hasNameAndMessage ? String((error as { name: unknown }).name) : 'UnknownError',
       errorMessage: hasNameAndMessage
         ? String((error as { message: unknown }).message)

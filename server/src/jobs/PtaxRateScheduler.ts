@@ -7,7 +7,7 @@
  * ⚠️ Lock PROCESS-LOCAL — mesma ressalva de `AccountingSyncScheduler` (não protege multi-réplica); duas réplicas gravando
  * a mesma cotação não duplicam (o `@@unique([currency, rateDate])` + upsert), só fazem uma chamada a mais ao BCB.
  */
-import logger from '../lib/logger';
+import logger, { type EventLogger } from '../lib/logger';
 import { sendAlertWebhook, type AlertPayload } from '../lib/alertWebhook';
 import { getFactory } from '../lib/factory';
 import type { PtaxSyncSummary } from '../features/fx/services/PtaxSyncService';
@@ -16,11 +16,8 @@ const JOB = 'ptax_rate_sync';
 const DEFAULT_INTERVAL_MS = 1_800_000; // 30 minutos — sem lacuna o tick não chama o BCB
 const DEFAULT_INITIAL_DELAY_MS = 30_000;
 
-interface JobLogger {
-  info(message: string, context?: Record<string, unknown>): void;
-  warn(message: string, context?: Record<string, unknown>): void;
-  error(message: string, context?: Record<string, unknown>): void;
-}
+/** Gate P4 (ADR-OBSERVABILIDADE OBS-R9): every scheduler line carries a `job.*` catalog event. */
+type JobLogger = EventLogger;
 
 export interface PtaxRateSchedulerDeps {
   sync?: () => Promise<PtaxSyncSummary>;
@@ -59,18 +56,18 @@ export class PtaxRateScheduler {
 
   async runOnce(): Promise<PtaxSyncSummary | { skipped: 'lock' }> {
     if (this.running) {
-      this.log.warn(JOB, { job: JOB, event: 'skipped', reason: 'skipped_due_to_lock' });
+      this.log.event('warn', 'job.skipped', JOB, { job: JOB, reason: 'skipped_due_to_lock' });
       return { skipped: 'lock' };
     }
     this.running = true;
     try {
       const summary = await this.sync();
-      if (summary.failed > 0) this.log.warn(JOB, { job: JOB, event: 'complete', ...summary });
-      else this.log.info(JOB, { job: JOB, event: 'complete', ...summary });
+      if (summary.failed > 0) this.log.event('warn', 'job.completed', JOB, { job: JOB, ...summary });
+      else this.log.event('info', 'job.completed', JOB, { job: JOB, ...summary });
       return summary;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      this.log.error(JOB, { job: JOB, event: 'failed', error: message });
+      this.log.event('error', 'job.failed', JOB, { job: JOB, error: message });
       this.alert({ source: 'ptax_rate', event: 'job_failed', timestamp: new Date().toISOString(), job: JOB, error: message });
       throw error;
     } finally {
@@ -80,11 +77,11 @@ export class PtaxRateScheduler {
 
   start(options: PtaxRateSchedulerStartOptions = {}): void {
     if (process.env.NODE_ENV === 'test' && !options.allowInTest) {
-      this.log.info(JOB, { job: JOB, event: 'skipped', reason: 'disabled_in_test' });
+      this.log.event('info', 'job.skipped', JOB, { job: JOB, reason: 'disabled_in_test' });
       return;
     }
     if (this.initialTimer || this.intervalTimer) {
-      this.log.warn(JOB, { job: JOB, event: 'skipped', reason: 'already_started' });
+      this.log.event('warn', 'job.skipped', JOB, { job: JOB, reason: 'already_started' });
       return;
     }
     const intervalMs = options.intervalMs ?? readMsEnv('PTAX_SYNC_INTERVAL_MS', DEFAULT_INTERVAL_MS, 1);
@@ -92,7 +89,7 @@ export class PtaxRateScheduler {
 
     const tick = (): void => {
       void this.runOnce().catch(() => {
-        /* já logado em runOnce(event:'failed') */
+        /* já logado em runOnce (job.failed) */
       });
     };
     this.initialTimer = setTimeout(() => {
@@ -101,7 +98,7 @@ export class PtaxRateScheduler {
       this.intervalTimer.unref?.();
     }, initialDelayMs);
     this.initialTimer.unref?.();
-    this.log.info(JOB, { job: JOB, event: 'scheduled', intervalMs, initialDelayMs });
+    this.log.event('info', 'job.scheduled', JOB, { job: JOB, intervalMs, initialDelayMs });
   }
 
   stop(): void {

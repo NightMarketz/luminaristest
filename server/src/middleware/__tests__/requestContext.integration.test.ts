@@ -66,6 +66,7 @@ describe('requestContextMiddleware (real app, supertest)', () => {
     const denied = lines.find((l) => l.message === '[authMiddleware] 403: Self-update only');
     expect(denied).toMatchObject({
       level: 'warn',
+      event: 'auth.denied',
       requestId,
       method: 'PUT',
       route: '/api/users/someone-else',
@@ -73,7 +74,7 @@ describe('requestContextMiddleware (real app, supertest)', () => {
     });
 
     const timing = lines.find((l) => l.message === 'Metric: http_request');
-    expect(timing).toMatchObject({ requestId, path: '/api/users/someone-else', userId: 'obs-user-1' });
+    expect(timing).toMatchObject({ event: 'http.request', requestId, path: '/api/users/someone-else', userId: 'obs-user-1' });
     expect(JSON.stringify(lines)).not.toContain('12345678900');
   });
 
@@ -83,7 +84,7 @@ describe('requestContextMiddleware (real app, supertest)', () => {
       expect(res.status).toBe(401);
     });
     const line = lines.find((l) => l.message === '[authMiddleware] 401: Invalid or expired token');
-    expect(line).toMatchObject({ level: 'warn', route: '/api/dynamic-tables' });
+    expect(line).toMatchObject({ level: 'warn', event: 'auth.denied', route: '/api/dynamic-tables' });
     expect(JSON.stringify(line)).not.toContain('jwt malformed');
   });
 });

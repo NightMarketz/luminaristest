@@ -71,11 +71,11 @@ export function handleApiError(error: unknown, res: Response): void {
   // Nó OBS, item 6 (F-OBS-2 c): logged AFTER classifying, so a user's 400 is not filed as a defect.
   // Only a 5xx carries the full error; a 4xx carries code + status, never stack or details.
   if (statusCode >= 500) {
-    logger.error('[API Error Handler]', { statusCode, code: responseBody.code, error });
+    logger.event('error', 'api.error', '[API Error Handler]', { statusCode, code: responseBody.code, error });
   } else if (statusCode === 401 || statusCode === 403) {
-    logger.warn('[API Error Handler]', { statusCode, code: responseBody.code });
+    logger.event('warn', 'api.error', '[API Error Handler]', { statusCode, code: responseBody.code });
   } else {
-    logger.info('[API Error Handler]', { statusCode, code: responseBody.code });
+    logger.event('info', 'api.error', '[API Error Handler]', { statusCode, code: responseBody.code });
   }
 
   res.status(statusCode).json(responseBody);

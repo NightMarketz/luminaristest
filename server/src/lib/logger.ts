@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { requestContext } from './requestContext';
+import type { LogEvent } from './logEvents';
 
 interface LogContext {
   [key: string]: unknown;
@@ -100,10 +101,11 @@ function logReplacer(key: string, value: unknown): unknown {
   return value;
 }
 
-function formatLog(level: string, message: string, context: LogContext = {}): void {
+function formatLog(level: string, message: string, context: LogContext = {}, event?: LogEvent): void {
   const timestamp = new Date().toISOString();
   // Nó OBS, item 4: the request's identity rides on every line; the caller's own keys win on a clash.
-  const logEntry = { timestamp, level, message, ...requestContext.get(), ...context };
+  // The catalog event is the one exception: a gate line's `event` is never overwritten by its context.
+  const logEntry = { timestamp, level, message, ...requestContext.get(), ...context, ...(event ? { event } : {}) };
 
   // The compact form is always computed: it is what the file sink writes, so a dev run's
   // pretty-printed console output never turns the NDJSON file into multi-line JSON.
@@ -139,6 +141,20 @@ export const logger = {
       formatLog('debug', message, context);
     }
   },
+
+  /**
+   * A gate line (ADR-OBSERVABILIDADE OBS-R9, F-OBS-11 a): same line as `logger.<level>`, plus `event` from
+   * the closed catalog in logEvents.ts — a name outside it does not compile. Lines outside the 6 gates keep
+   * using info/warn/error.
+   */
+  event(level: EventLevel, event: LogEvent, message: string, context: LogContext = {}) {
+    formatLog(level, message, context, event);
+  },
 };
+
+export type EventLevel = 'info' | 'warn' | 'error';
+
+/** What a gate that takes its logger by injection (the schedulers) needs from it. */
+export type EventLogger = Pick<typeof logger, 'event'>;
 
 export default logger;

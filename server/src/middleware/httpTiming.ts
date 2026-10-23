@@ -21,6 +21,7 @@ export function httpTimingMiddleware(req: Request, res: Response, next: NextFunc
 
   res.on('finish', () => {
     endTimer({
+      event: 'http.request',
       success: true,
       warnThresholdMs: HTTP_WARN_THRESHOLD_MS,
       method: req.method,
