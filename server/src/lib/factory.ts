@@ -1666,6 +1666,7 @@ export class ApplicationFactory {
         // X7 Fase C PR-2: IIssDocumentReader (findForIssReport) para o ISS por competência.
         this.repositories.fiscalDocument,
         legalParameterService, // fotografia LC116_SERVICO: município do ISS pelo li (LC 116 art. 3º)
+        this.repositories.consumptionTaxAssessment, // IBS-CBS-2027 PR-5 (item 24): EXPORT_IBS_CBS_MEMO
       ),
       dataExchangeImport: new DataExchangeImportService(
         this.repositories.dataExchange,
@@ -1908,6 +1909,7 @@ export class ApplicationFactory {
         this.repositories.mitExport, // aviso "valor mudou depois da entrega" (dono 07/10)
         taxAssessmentService,
         pisCofinsAssessmentService,
+        this.repositories.consumptionTaxAssessment, // IBS-CBS-2027 PR-5 (item 24): só aviso
       ),
       legalParameter: legalParameterService,
       paymentAccount: new PaymentAccountService(

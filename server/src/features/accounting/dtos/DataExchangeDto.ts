@@ -25,6 +25,8 @@ export const IMPLEMENTED_EXPORT_KINDS = [
   'EXPORT_TAX_ASSESSMENT_MEMO',
   // X7 Fase C PR-2 (BRIEF C item 17, F-TC-7 b): ISS por competência × município, janela obrigatória.
   'EXPORT_ISS_BY_COMPETENCE',
+  // IBS-CBS-2027 PR-5 (BRIEF item 24): memória das apurações mensais de IBS/CBS, janela obrigatória (molde EXPORT_TAX_ASSESSMENT_MEMO).
+  'EXPORT_IBS_CBS_MEMO',
 ] as const;
 
 /** Kinds cujo `periodStart`/`periodEnd` são OPCIONAIS (razão: single-account window é opcional,
@@ -34,7 +36,7 @@ const PERIOD_OPTIONAL_KINDS = new Set<string>(['EXPORT_GENERAL_LEDGER']);
 /** Kinds cujo `periodStart`/`periodEnd` são OBRIGATÓRIOS já na fronteira do DTO (C6b PR-2 Passo
  *  8/9): sem janela explícita, conciliação e amostra não têm o que exportar — nunca um scan
  *  sem fim ou um kind "all-time" silencioso (mesma classe que F-C6b-6 a fechou p/ o balancete). */
-const PERIOD_REQUIRED_KINDS = new Set<string>(['EXPORT_BANK_RECONCILIATION', 'EXPORT_ENTRY_SAMPLE', 'EXPORT_TAX_ASSESSMENT_MEMO', 'EXPORT_ISS_BY_COMPETENCE']);
+const PERIOD_REQUIRED_KINDS = new Set<string>(['EXPORT_BANK_RECONCILIATION', 'EXPORT_ENTRY_SAMPLE', 'EXPORT_TAX_ASSESSMENT_MEMO', 'EXPORT_ISS_BY_COMPETENCE', 'EXPORT_IBS_CBS_MEMO']);
 
 /**
  * POST /exports body — which report/template to render and in which format.
