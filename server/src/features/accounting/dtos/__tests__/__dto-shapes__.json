@@ -1294,6 +1294,7 @@
                   "CompanySigner",
                   "Partner",
                   "ProfitDistributionEvent",
+                  "InterestOnEquityCalculation",
                   "IssBeneficioMunicipal",
                   "ProductDestinationDefault",
                   "FiscalDocument",
@@ -7547,6 +7548,177 @@
     }
   },
   "InterestOnEquityDto.ts": {
+    "JcpConfirmInputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "anoCalendario": {
+          "type": "integer",
+          "minimum": 2026,
+          "maximum": 9007199254740991
+        },
+        "periodo": {
+          "type": "string",
+          "enum": [
+            "T01",
+            "T02",
+            "T03",
+            "T04",
+            "A00"
+          ]
+        },
+        "dataCredito": {
+          "type": "string"
+        },
+        "forma": {
+          "type": "string",
+          "enum": [
+            "DESPESA",
+            "PL"
+          ]
+        },
+        "totalCents": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "debitoPlAccountId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rateio": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "partnerId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "brutoCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              }
+            },
+            "required": [
+              "partnerId",
+              "brutoCents"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "previaSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "unitId",
+        "anoCalendario",
+        "periodo",
+        "dataCredito",
+        "forma",
+        "totalCents",
+        "previaSha256"
+      ],
+      "additionalProperties": false
+    },
+    "JcpIdParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "JcpIrrfQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "competencia": {
+          "type": "string",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+        }
+      },
+      "required": [
+        "unitId",
+        "competencia"
+      ],
+      "additionalProperties": false
+    },
+    "JcpIrrfView": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "competencia": {
+          "type": "string"
+        },
+        "codigoReceita": {
+          "type": "string",
+          "const": "5706"
+        },
+        "totalCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "darfs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "decendio": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "vencimento": {
+                "type": "string"
+              },
+              "totalCents": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "calculos": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "decendio",
+              "vencimento",
+              "totalCents",
+              "calculos"
+            ]
+          }
+        }
+      },
+      "required": [
+        "competencia",
+        "codigoReceita",
+        "totalCents",
+        "darfs"
+      ]
+    },
     "JcpPreviewInputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -7757,6 +7929,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "previaSha256": {
+          "type": "string"
         }
       },
       "required": [
@@ -7768,8 +7943,23 @@
         "excessoIndedutivelCents",
         "alocacoes",
         "lalurPrevisto",
-        "avisos"
+        "avisos",
+        "previaSha256"
       ]
+    },
+    "JcpScopeSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
     }
   },
   "InventoryDto.ts": {

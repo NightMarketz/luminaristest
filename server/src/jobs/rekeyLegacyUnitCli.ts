@@ -81,6 +81,7 @@ export const REKEY_MODELS = [
   //   Deixá-la no unitId antigo faria a varredura anexar no escopo errado (o documento não seria achado e a pendência iria a FAILED)
   'IssBeneficioMunicipal', // SIMPLES-PISO-ANEXO-XI bloco 1: benefício municipal de ISS por unidade, sem hash → REKEY pelo F-RK-5
   'ProfitDistributionEvent', // IRRF-DISTRIBUICAO PR-2: `unitId` = unidade do lançamento (proveniência), sem hash → REKEY pelo F-RK-5, como o TaxAssessment
+  'InterestOnEquityCalculation', // IRRF-DISTRIBUICAO PR-4: `unitId` = unidade do lançamento e do razão lido, sem hash → REKEY pelo F-RK-5
 ] as const;
 
 /**

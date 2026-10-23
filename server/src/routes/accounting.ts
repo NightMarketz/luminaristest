@@ -154,7 +154,7 @@ import {
   previewProfitDistribution,
   reconcileProfitDistribution,
 } from '../controllers/profitDistributionController';
-import { previewJcp } from '../controllers/interestOnEquityController';
+import { cancelJcp, confirmJcp, getJcp, getJcpIrrf, previewJcp, reconcileJcp } from '../controllers/interestOnEquityController';
 import {
   listDepreciationRates,
   createDepreciationRate,
@@ -429,6 +429,12 @@ router.post('/profit-distributions/:id/lancamento', reconcileProfitDistribution)
 router.post('/profit-distributions/:id/cancel', cancelProfitDistribution);
 // BE-INCR-IRRF-DISTRIBUICAO PR-3 (itens 22–26): juros sobre o capital próprio — prévia (nada grava).
 router.post('/jcp/preview', previewJcp);
+// BE-INCR-IRRF-DISTRIBUICAO PR-4 (itens 27–31): confirmação, lançamento + e-Lalur, cancelamento e DARF 5706. `irrf` antes de `:id`.
+router.post('/jcp', confirmJcp);
+router.get('/jcp/irrf', getJcpIrrf);
+router.get('/jcp/:id', getJcp);
+router.post('/jcp/:id/lancamento', reconcileJcp);
+router.post('/jcp/:id/cancel', cancelJcp);
 
 // BE-INCR-FIXED-ASSETS (nó C8, Bloco A) — tabela de taxas de depreciação; segmento estático, antes
 // de /:unitId/periods. /:id/hide antes de qualquer /:id genérico futuro (nenhum hoje neste recurso).
