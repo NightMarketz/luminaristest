@@ -4,16 +4,16 @@ tipo: "plataforma"
 dominio: "fiscal"
 titulo: "Validar o teto de R$ 78 mi do Lucro Presumido (Lei 9.718 arts. 13–14)"
 estado: "planned"
-estado_detalhe: "22/10: **BRIEF escrito no #844** — `BE-INCR-PRESUMIDO-TETO-78MI-brief.md`, 11 itens em 1 PR: teto em reais na tabela `TAX_ASSESSMENT`, receita total de Y−1 do razão (todas as unidades, sem encerramento) e declarada no perfil, aviso nas obrigações e na prévia, 400 na confirmação do Presumido. Forks **F-PT-1..7 PENDENTES**; P-PT-1..3 com o contador (receita bruta × total, mês parcial, ano de início). Dossiê `pesquisas-legais/presumido-teto-78mi`. Próximo: ratificar forks; código exige 'executa' · 17/10: registrado pela verificação legal (frente IRPJ/CSLL, item 19). O perfil tem `lucroRealObrigatorio`, mas o sistema não confere a receita do ano anterior contra o teto. Sem BRIEF"
+estado_detalhe: "22/10 (ratificação): forks F-PT-1..7 RATIFICADOS pelo dono, todos pela recomendação ([[D-2026-10-22-PRESUMIDO-TETO-78MI-FORKS]]): 1c, 2c, 3a, 4a, 5a, 6a, 7a. Sem fork pendente; o PR único espera o 'executa' (F-PT-3/4 sujeitos a P-PT-1/2) · 22/10: **BRIEF escrito no #844** — `BE-INCR-PRESUMIDO-TETO-78MI-brief.md`, 11 itens em 1 PR: teto em reais na tabela `TAX_ASSESSMENT`, receita total de Y−1 do razão (todas as unidades, sem encerramento) e declarada no perfil, aviso nas obrigações e na prévia, 400 na confirmação do Presumido. Forks **F-PT-1..7 PENDENTES**; P-PT-1..3 com o contador (receita bruta × total, mês parcial, ano de início). Dossiê `pesquisas-legais/presumido-teto-78mi`. Próximo: ratificar forks; código exige 'executa' · 17/10: registrado pela verificação legal (frente IRPJ/CSLL, item 19). O perfil tem `lucroRealObrigatorio`, mas o sistema não confere a receita do ano anterior contra o teto. Sem BRIEF"
 depende_de: ["[[X7]]"]
 autorizacao: "dono, chat, 2026-10-22: 'Precisamos agora de sessões para a falta de brief' — só o BRIEF (sessao-planejamento), só docs; sem 'executa', sem merge; antes: dono, chat, 2026-10-17: \"Atualiza tbm briefs e documenta em features novas\" — só a nota (registro de feature nova revelada pela verificação legal de 17/10); sem BRIEF, sem 'executa'"
 ancora_sdd: "—"
-atualizado: "2026-10-22"
-prs: ["#844"]
+atualizado: "2026-10-23"
+prs: ["#844", "#859"]
 ---
 # PRESUMIDO-TETO-78MI — Validar o teto de R$ 78 mi do Lucro Presumido (Lei 9.718 arts. 13–14)
 
-**Estado:** `planned` — 22/10: **BRIEF escrito** — `BE-INCR-PRESUMIDO-TETO-78MI-brief.md`, 11 itens em 1 PR: teto em reais na tabela `TAX_ASSESSMENT`, receita total de Y−1 do razão (todas as unidades, sem encerramento) e declarada no perfil, aviso nas obrigações e na prévia, 400 na confirmação do Presumido. Forks **F-PT-1..7 PENDENTES**; P-PT-1..3 com o contador (receita bruta × total, mês parcial, ano de início). Dossiê `pesquisas-legais/presumido-teto-78mi`. Próximo: ratificar forks; código exige 'executa' · 17/10: registrado pela verificação legal (frente IRPJ/CSLL, item 19). O perfil tem `lucroRealObrigatorio`, mas o sistema não confere a receita do ano anterior contra o teto. Sem BRIEF  
+**Estado:** `planned` — 22/10 (ratificação): forks F-PT-1..7 RATIFICADOS pelo dono, todos pela recomendação ([[D-2026-10-22-PRESUMIDO-TETO-78MI-FORKS]]): 1c, 2c, 3a, 4a, 5a, 6a, 7a. Sem fork pendente; o PR único espera o 'executa' (F-PT-3/4 sujeitos a P-PT-1/2) · 22/10: **BRIEF escrito no #844** — `BE-INCR-PRESUMIDO-TETO-78MI-brief.md`, 11 itens em 1 PR: teto em reais na tabela `TAX_ASSESSMENT`, receita total de Y−1 do razão (todas as unidades, sem encerramento) e declarada no perfil, aviso nas obrigações e na prévia, 400 na confirmação do Presumido. Forks **F-PT-1..7 PENDENTES**; P-PT-1..3 com o contador (receita bruta × total, mês parcial, ano de início). Dossiê `pesquisas-legais/presumido-teto-78mi`. Próximo: ratificar forks; código exige 'executa' · 17/10: registrado pela verificação legal (frente IRPJ/CSLL, item 19). O perfil tem `lucroRealObrigatorio`, mas o sistema não confere a receita do ano anterior contra o teto. Sem BRIEF  
 
 ## Escopo
 

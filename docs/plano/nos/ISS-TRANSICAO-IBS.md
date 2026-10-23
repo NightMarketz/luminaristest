@@ -4,16 +4,16 @@ tipo: "plataforma"
 dominio: "fiscal"
 titulo: "Transição ISS → IBS (2029–2032) e fim da LC 116 em 2033"
 estado: "planned"
-estado_detalhe: "22/10: **BRIEF escrito** (sessao-planejamento; dono, chat, 22/10: \"Precisamos agora de sessões para a falta de brief\" — só o BRIEF) no #847 (`docs/accounting/BE-INCR-ISS-TRANSICAO-IBS-brief.md`): PR-1 sem dependência externa (fim de ISS_LIMITE em 2032-12-31, tabela ISS_TRANSICAO 10–40%, linhas DRAFT do IBS 2029–2032, 400 nomeado em 2033) e PR-2 depois de P-ISS-1..3 (fator, piso, benefício). Forks F-ISS-1..7 PENDENTES; P-ISS-1 (piso de 2% cai?), P-ISS-2 (§ 3º no Simples) e P-ISS-3 (pacote que cruza o ano) ao contador. Sem PRE-ADR. Dossiê pesquisas-legais/iss-transicao-ibs-2029. Próximo: ratificar os forks; depois `executa` do PR-1 · 17/10: registrado pela verificação legal (frente ISS). ISS_LIMITE e issComBeneficio não têm fim de vigência; nada muda antes de 01/2029"
+estado_detalhe: "22/10 (ratificação): forks F-ISS-1..7 RATIFICADOS pelo dono, todos (a) ([[D-2026-10-22-ISS-TRANSICAO-IBS-FORKS]]). PR-1 espera só o 'executa'; PR-2 espera também P-ISS-1..3 do contador · 22/10: **BRIEF escrito** (sessao-planejamento; dono, chat, 22/10: \"Precisamos agora de sessões para a falta de brief\" — só o BRIEF) no #847 (`docs/accounting/BE-INCR-ISS-TRANSICAO-IBS-brief.md`): PR-1 sem dependência externa (fim de ISS_LIMITE em 2032-12-31, tabela ISS_TRANSICAO 10–40%, linhas DRAFT do IBS 2029–2032, 400 nomeado em 2033) e PR-2 depois de P-ISS-1..3 (fator, piso, benefício). Forks F-ISS-1..7 PENDENTES; P-ISS-1 (piso de 2% cai?), P-ISS-2 (§ 3º no Simples) e P-ISS-3 (pacote que cruza o ano) ao contador. Sem PRE-ADR. Dossiê pesquisas-legais/iss-transicao-ibs-2029. Próximo: ratificar os forks; depois `executa` do PR-1 · 17/10: registrado pela verificação legal (frente ISS). ISS_LIMITE e issComBeneficio não têm fim de vigência; nada muda antes de 01/2029"
 depende_de: ["[[M5-ibs-cbs]]"]
 autorizacao: "dono, chat, 2026-10-17: \"Atualiza tbm briefs e documenta em features novas\" — só a nota (registro de feature nova revelada pela verificação legal de 17/10); sem BRIEF, sem 'executa'"
 ancora_sdd: "—"
-atualizado: "2026-10-22"
-prs: ["#847"]
+atualizado: "2026-10-23"
+prs: ["#847", "#859"]
 ---
 # ISS-TRANSICAO-IBS — Transição ISS → IBS (2029–2032) e fim da LC 116 em 2033
 
-**Estado:** `planned` — 22/10: **BRIEF escrito** (sessao-planejamento; dono, chat, 22/10: "Precisamos agora de sessões para a falta de brief" — só o BRIEF) no #847 (`docs/accounting/BE-INCR-ISS-TRANSICAO-IBS-brief.md`): PR-1 sem dependência externa (fim de ISS_LIMITE em 2032-12-31, tabela ISS_TRANSICAO 10–40%, linhas DRAFT do IBS 2029–2032, 400 nomeado em 2033) e PR-2 depois de P-ISS-1..3 (fator, piso, benefício). Forks F-ISS-1..7 PENDENTES; P-ISS-1 (piso de 2% cai?), P-ISS-2 (§ 3º no Simples) e P-ISS-3 (pacote que cruza o ano) ao contador. Sem PRE-ADR. Dossiê pesquisas-legais/iss-transicao-ibs-2029. Próximo: ratificar os forks; depois `executa` do PR-1 · 17/10: registrado pela verificação legal (frente ISS). ISS_LIMITE e issComBeneficio não têm fim de vigência; nada muda antes de 01/2029  
+**Estado:** `planned` — 22/10 (ratificação): forks F-ISS-1..7 RATIFICADOS pelo dono, todos (a) ([[D-2026-10-22-ISS-TRANSICAO-IBS-FORKS]]). PR-1 espera só o 'executa'; PR-2 espera também P-ISS-1..3 do contador · 22/10: **BRIEF escrito** (sessao-planejamento; dono, chat, 22/10: "Precisamos agora de sessões para a falta de brief" — só o BRIEF) no #847 (`docs/accounting/BE-INCR-ISS-TRANSICAO-IBS-brief.md`): PR-1 sem dependência externa (fim de ISS_LIMITE em 2032-12-31, tabela ISS_TRANSICAO 10–40%, linhas DRAFT do IBS 2029–2032, 400 nomeado em 2033) e PR-2 depois de P-ISS-1..3 (fator, piso, benefício). Forks F-ISS-1..7 PENDENTES; P-ISS-1 (piso de 2% cai?), P-ISS-2 (§ 3º no Simples) e P-ISS-3 (pacote que cruza o ano) ao contador. Sem PRE-ADR. Dossiê pesquisas-legais/iss-transicao-ibs-2029. Próximo: ratificar os forks; depois `executa` do PR-1 · 17/10: registrado pela verificação legal (frente ISS). ISS_LIMITE e issComBeneficio não têm fim de vigência; nada muda antes de 01/2029  
 
 ## Escopo
 
