@@ -60,5 +60,9 @@ API sai sem contexto, 5 de 6 jobs não alertam e não existe registro de acesso 
 
 - [`PRE-ADR-OBSERVABILIDADE.md`](../../adr/PRE-ADR-OBSERVABILIDADE.md): mapa dos 6 portões, fatos medidos, checklist em
   2 fases, contratos e forks ratificados.
+- [`ADR-OBSERVABILIDADE.md`](../../adr/ADR-OBSERVABILIDADE.md) — **política definitiva (Proposed, 23/10)**: regras OBS-R1..R14, catálogo de
+  eventos, `LogEntrySchema`, gates de `catch` silencioso e de scheduler sem alerta, propagação ao contrato e às skills
+  (Fase C, itens 1–11), forks F-OBS-10..17 PENDENTES. Pedido do dono, chat, 23/10: "Precisamos de mais estrutura, pq essa
+  vai ser a politica definitiva".
 - [`pesquisas-legais/marco-civil-guarda-registros`](../../../pesquisas-legais/marco-civil-guarda-registros/relatorio.md):
   Lei 12.965 art. 15 e Dec. 8.771 arts. 13, 15 e 15-A (redação de 2026).
