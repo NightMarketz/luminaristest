@@ -8,12 +8,12 @@ estado_detalhe: "22/10 (ratificação): forks F-DANFE-1..8 RATIFICADOS pelo dono
 depende_de: ["[[X10a]]?"]
 autorizacao: "dono, chat, 2026-10-17: \"Atualiza tbm briefs e documenta em features novas\" — só a nota (registro de feature nova revelada pela verificação legal de 17/10); sem BRIEF, sem 'executa' · dono, chat, 2026-10-22: \"Precisamos agora de sessões para a falta de brief\" — só o BRIEF (sessao-planejamento); sem código, sem 'executa', sem merge"
 ancora_sdd: "—"
-atualizado: "2026-10-22"
-prs: []
+atualizado: "2026-10-23"
+prs: ["#859"]
 ---
 # NFE-DANFE-IBSCBS — DANFE/DANFE-NFC-e com IBS/CBS (NT 2026.010, produção 01/12/2026)
 
-**Estado:** `planned` — feature nova registrada pela verificação legal de 17/10/2026. Planejar exige pedido do dono; código exige `executa`.
+**Estado:** `planned` — 22/10 (ratificação): forks F-DANFE-1..8 RATIFICADOS pelo dono ([[D-2026-10-22-NFE-DANFE-IBSCBS-FORKS]]): 1a, 2a, 3b, 4b (biblioteca nova, contra a recomendação), 5a, 6a, 7a (condicionado ao X10a PR-7 depois de 01/12), 8b. Sem fork pendente; PR-0..PR-3 esperam só o 'executa' de cada um (alvo até 30/11) · 22/10: BRIEF BE-INCR-NFE-DANFE-IBSCBS escrito (sessao-planejamento): NT 2026.010 é só do DANFE 55; não há DANFE no código; PR-0..PR-3 rodam sem o X10a, alvo até 30/11; F-DANFE-1..8 PENDENTES; sem executa · 17/10: registrado pela verificação legal (frente NF-e). NT 2026.010 muda o DANFE para exibir IBS/CBS; produção em 01/12/2026  
 
 ## Escopo
 
