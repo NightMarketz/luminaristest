@@ -1889,14 +1889,16 @@
       "line": "Statement line",
       "proposed": "Proposed",
       "status": "Status",
-      "title": "Title"
+      "title": "Title",
+      "fee": "Withheld by provider"
     },
     "due": "due",
     "empty": "No settlements in this selection — scan the statement.",
     "entry": "entry",
     "error": {
       "generic": "The operation could not be completed.",
-      "load": "Error loading the settlements."
+      "load": "Error loading the settlements.",
+      "providerBalance": "This statement is not from an active provider account: ProviderBalance does not apply here."
     },
     "filter": {
       "all": "All",
@@ -1930,6 +1932,28 @@
       "REJECTED": "rejected",
       "FAILED": "failed",
       "STALE": "stale"
+    },
+    "fee": {
+      "tooltip": "Fees and, until the accountant answers (P3), taxes withheld by the provider."
+    },
+    "gross": "gross",
+    "feeEntry": "withheld",
+    "feeAccountHint": "Configure the provider fee account in the \"Provider fee account\" section at the top of this sub-tab (the account code is pending with the accountant).",
+    "terminalCharge": {
+      "label": "Warning — charge"
+    },
+    "feeCheck": {
+      "ok": "matches proposed + charge",
+      "mismatch": "does not match proposed + charge"
+    },
+    "feeAccount": {
+      "label": "Provider fee account",
+      "help": "Expense account for the amount withheld by the provider. Today it is required to confirm a settlement with a withheld amount; once the default account 4.5 lands, empty will fall back to 4.5. The account code is pending with the accountant.",
+      "saved": "Fee account saved.",
+      "error": {
+        "load": "Error loading the fee account.",
+        "save": "Could not save the fee account."
+      }
     }
   },
   "fixedAssets": {

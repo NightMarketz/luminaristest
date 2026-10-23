@@ -1889,14 +1889,16 @@
       "line": "Linha do extrato",
       "proposed": "Proposto",
       "status": "Status",
-      "title": "Título"
+      "title": "Título",
+      "fee": "Retido pelo provedor"
     },
     "due": "vence",
     "empty": "Nenhuma baixa neste recorte — varra o extrato.",
     "entry": "lançamento",
     "error": {
       "generic": "Não foi possível concluir a operação.",
-      "load": "Erro ao carregar as baixas."
+      "load": "Erro ao carregar as baixas.",
+      "providerBalance": "Este extrato não é de uma conta de provedor ativa: ProviderBalance não vale aqui."
     },
     "filter": {
       "all": "Todos",
@@ -1930,6 +1932,28 @@
       "REJECTED": "rejeitada",
       "FAILED": "falhou",
       "STALE": "desatualizada"
+    },
+    "fee": {
+      "tooltip": "Tarifas e, até a resposta do contador (P3), impostos retidos pelo provedor."
+    },
+    "gross": "bruto",
+    "feeEntry": "retido",
+    "feeAccountHint": "Configure a conta da tarifa do provedor na seção \"Conta da tarifa do provedor\", no topo desta sub-aba (o código da conta é pendência do contador).",
+    "terminalCharge": {
+      "label": "Atenção — cobrança"
+    },
+    "feeCheck": {
+      "ok": "confere com proposto + encargo",
+      "mismatch": "não confere com proposto + encargo"
+    },
+    "feeAccount": {
+      "label": "Conta da tarifa do provedor",
+      "help": "Despesa onde entra o valor retido pelo provedor. Hoje é obrigatória para confirmar baixa com valor retido; quando a conta padrão 4.5 entrar, vazio passará a usar a 4.5. O código da conta é pendência do contador.",
+      "saved": "Conta da tarifa salva.",
+      "error": {
+        "load": "Erro ao carregar a conta da tarifa.",
+        "save": "Não foi possível salvar a conta da tarifa."
+      }
     }
   },
   "fixedAssets": {

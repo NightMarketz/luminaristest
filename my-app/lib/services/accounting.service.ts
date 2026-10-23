@@ -184,6 +184,8 @@ export interface AccountingScopeSettings {
   disposalGainAccountId: string | null;
   disposalLossAccountId: string | null;
   depreciationParteBAccountId: string | null;
+  /** F5 PR-3 (P3-11): conta da tarifa do provedor; sem ela o confirm com `feeCents > 0` dá 400. */
+  providerFeeExpenseAccountId: string | null;
   updatedAt: string | null;
 }
 
@@ -192,6 +194,9 @@ export type FixedAssetAccountsPatch = Pick<
   UpdateAccountingScopeSettingsInput,
   'unitId' | 'depreciationExpenseAccountId' | 'disposalGainAccountId' | 'disposalLossAccountId'
 >;
+
+/** PATCH parcial da conta da tarifa do provedor (FE-INCR-BANK-SETTLEMENT-FEE item 7, F-FEE-E1 → a) — só ela. */
+export type ProviderFeeAccountPatch = Pick<UpdateAccountingScopeSettingsInput, 'unitId' | 'providerFeeExpenseAccountId'>;
 
 export interface Account {
   id: string;
@@ -737,6 +742,13 @@ export const accountingService = {
   async updateSettings(input: FixedAssetAccountsPatch): Promise<AccountingScopeSettings> {
     const res = await apiClient.put<ApiEnvelope<AccountingScopeSettings>>('/accounting/settings', input);
     notify('Contas do imobilizado salvas.', 'success', 'Contabilidade');
+    return res.data;
+  },
+
+  /** PUT parcial só com a conta da tarifa do provedor (F-FEE-E1 → a). */
+  async updateProviderFeeAccount(input: ProviderFeeAccountPatch): Promise<AccountingScopeSettings> {
+    const res = await apiClient.put<ApiEnvelope<AccountingScopeSettings>>('/accounting/settings', input);
+    notify('Conta da tarifa do provedor salva.', 'success', 'Contabilidade');
     return res.data;
   },
 
