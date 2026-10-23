@@ -245,6 +245,10 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'partner.created': ['partnerId', 'tipoPessoa', 'residenteBrasil', 'participacaoBp', 'entradaEm', 'saidaEm'],
   'partner.updated': ['partnerId', 'tipoPessoa', 'residenteBrasil', 'participacaoBp', 'entradaEm', 'saidaEm'],
   'partner.deleted': ['partnerId'],
+  // BE-INCR-IRRF-DISTRIBUICAO PR-2 (item 33): distribuição — ids e valores; nome e CPF/CNPJ do sócio ficam FORA, e o
+  // motivo do cancelamento (texto livre) também.
+  'profit_distribution.created': ['distributionId', 'partnerId', 'evento', 'dataEvento', 'origemLucro', 'brutoCents', 'irrfCents', 'liquidoCents'],
+  'profit_distribution.cancelled': ['distributionId', 'partnerId', 'entryId', 'irrfCents'],
   // BE-INCR-DFE (nó X10b, PR-2, item 40) — ciclo SENT (Fase D acrescenta authorized/rejected/cancelled).
   'dfe.emitted': ['documentId', 'kind', 'attemptNo', 'ref', 'vServCents', 'ambiente'],
   // BE-INCR-DFE (nó X10b, PR-3, item 40) — ciclo de vida do documento após o SENT.

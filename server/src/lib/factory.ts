@@ -71,6 +71,7 @@ import { ProductDestinationDefaultRepository } from '../features/accounting/repo
 import { CompanyFiscalProfileRepository } from '../features/accounting/repositories/CompanyFiscalProfileRepository';
 import { CompanySignerRepository } from '../features/accounting/repositories/CompanySignerRepository';
 import { PartnerRepository } from '../features/accounting/repositories/PartnerRepository';
+import { ProfitDistributionRepository } from '../features/accounting/repositories/ProfitDistributionRepository';
 import { DepreciationRateRepository } from '../features/accounting/repositories/DepreciationRateRepository';
 import { FixedAssetClassRepository } from '../features/accounting/repositories/FixedAssetClassRepository';
 import { FixedAssetRepository } from '../features/accounting/repositories/FixedAssetRepository';
@@ -187,6 +188,7 @@ import { ProductDestinationService } from '../features/accounting/services/Produ
 import { CompanyFiscalProfileService } from '../features/accounting/services/CompanyFiscalProfileService';
 import { CompanySignerService } from '../features/accounting/services/CompanySignerService';
 import { PartnerService } from '../features/accounting/services/PartnerService';
+import { ProfitDistributionService } from '../features/accounting/services/ProfitDistributionService';
 import { DepreciationRateService } from '../features/accounting/services/DepreciationRateService';
 import { FixedAssetClassService } from '../features/accounting/services/FixedAssetClassService';
 import { FixedAssetService } from '../features/accounting/services/FixedAssetService';
@@ -339,6 +341,7 @@ import type { IProductDestinationDefaultRepository } from '../features/accountin
 import type { ICompanyFiscalProfileRepository } from '../features/accounting/repositories/ICompanyFiscalProfileRepository';
 import type { ICompanySignerRepository } from '../features/accounting/repositories/ICompanySignerRepository';
 import type { IPartnerRepository } from '../features/accounting/repositories/IPartnerRepository';
+import type { IProfitDistributionRepository } from '../features/accounting/repositories/IProfitDistributionRepository';
 import type { IDepreciationRateRepository } from '../features/accounting/repositories/IDepreciationRateRepository';
 import type { IFixedAssetClassRepository } from '../features/accounting/repositories/IFixedAssetClassRepository';
 import type { IFixedAssetRepository } from '../features/accounting/repositories/IFixedAssetRepository';
@@ -806,6 +809,7 @@ export class ApplicationFactory {
     companyFiscalProfile: ICompanyFiscalProfileRepository; // X13
     companySigner: ICompanySignerRepository; // X13
     partner: IPartnerRepository; // IRRF-DISTRIBUICAO PR-1
+    profitDistribution: IProfitDistributionRepository; // IRRF-DISTRIBUICAO PR-2
     fiscalDocument: IFiscalDocumentRepository;
     lalur: ILalurRepository;
     accountingContact: IAccountingContactRepository;
@@ -910,6 +914,7 @@ export class ApplicationFactory {
     companyFiscalProfile: CompanyFiscalProfileService; // X13
     companySigner: CompanySignerService; // X13
     partner: PartnerService; // IRRF-DISTRIBUICAO PR-1
+    profitDistribution: ProfitDistributionService; // IRRF-DISTRIBUICAO PR-2
     fiscalDocumentEmission: FiscalDocumentEmissionService;
     fiscalDocumentLifecycle: FiscalDocumentLifecycleService;
     lalur: LalurService;
@@ -1013,6 +1018,7 @@ export class ApplicationFactory {
       companyFiscalProfile: new CompanyFiscalProfileRepository(),
       companySigner: new CompanySignerRepository(),
       partner: new PartnerRepository(),
+      profitDistribution: new ProfitDistributionRepository(),
       fiscalDocument: new FiscalDocumentRepository(),
       lalur: new LalurRepository(),
       accountingContact: new AccountingContactRepository(),
@@ -1564,6 +1570,16 @@ export class ApplicationFactory {
       companyFiscalProfile: companyFiscalProfileService,
       companySigner: new CompanySignerService(this.repositories.companySigner, this.policies.accounting, auditService),
       partner: new PartnerService(this.repositories.partner, this.policies.accounting, auditService), // IRRF-DISTRIBUICAO PR-1
+      profitDistribution: new ProfitDistributionService( // IRRF-DISTRIBUICAO PR-2
+        this.repositories.profitDistribution,
+        this.repositories.partner,
+        this.repositories.account,
+        this.repositories.fiscalProfile,
+        postingService,
+        legalParameterService,
+        auditService,
+        this.policies.accounting,
+      ),
       depreciationRate: depreciationRateService,
       fixedAssetClass: fixedAssetClassService,
       fixedAsset: fixedAssetService,
@@ -2343,6 +2359,7 @@ export class ApplicationFactory {
   public getCompanyFiscalProfileService = (): CompanyFiscalProfileService => this.services.companyFiscalProfile;
   public getCompanySignerService = (): CompanySignerService => this.services.companySigner;
   public getPartnerService = (): PartnerService => this.services.partner;
+  public getProfitDistributionService = (): ProfitDistributionService => this.services.profitDistribution;
   public getDepreciationRateService = (): DepreciationRateService => this.services.depreciationRate;
   public getFixedAssetClassService = (): FixedAssetClassService => this.services.fixedAssetClass;
   public getFixedAssetService = (): FixedAssetService => this.services.fixedAsset;

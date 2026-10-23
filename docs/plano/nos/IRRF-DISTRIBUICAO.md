@@ -5,8 +5,8 @@ dominio: "fiscal"
 titulo: "IRRF na distribuição: dividendos (Lei 15.270/2025) e JCP a 17,5% (LC 224)"
 estado: "planned"
 estado_detalhe: "17/10: BRIEF escrito (BE-INCR-IRRF-DISTRIBUICAO-brief.md, 36 itens em 4 PRs: sócios + parâmetros → dividendos com IRRF → JCP cálculo → JCP lançamento + e-Lalur). Forks F-IRD-1..18 ratificados no mesmo dia ([[D-2026-10-17-IRRF-DISTRIBUICAO-FORKS]]); 4 contra a recomendação (JCP completo, model próprio de sócios, reter sempre no Simples, lucro da transição conta no limite). 17/10, 2ª rodada (pesquisa das pendências): resolvidos o DARF do JCP (5706, MAFON 2025), a TJLP 2026 (tabela RFB) e o período do JCP (SC Cosit 45/2018). Novo: o STF prorrogou para 31/01/2026 o prazo de aprovação dos lucros de 2025 (ADIs 7.912/7.914) e negou a cautelar do Simples (ADI 7.917). F-IRD-18 ratificado. Para o contador: P1 (deliberação = creditamento?) e P2 (transição no limite), mais as confirmações P3 e P7. Sem 'executa'"
-depende_de: ["[[D-2026-10-17-IRRF-DISTRIBUICAO-FORKS]]"]
-autorizacao: "dono, chat, 2026-10-17: \"Autorizo planejar o BRIEF de <NÓ> — sessao-planejamento, sem 'executa'\" + \"Pode decidir vc memso\" (o agente escolheu este nó) — só o BRIEF; forks ratificados no questionário do mesmo dia ([[D-2026-10-17-IRRF-DISTRIBUICAO-FORKS]]) — sem 'executa' · antes: dono, chat, 2026-10-17: \"Atualiza tbm briefs e documenta em features novas\" — só a nota"
+depende_de: ["[[D-2026-10-17-IRRF-DISTRIBUICAO-FORKS]]", "[[D-2026-10-23-IRRF-DISTRIBUICAO-LACUNAS]]"]
+autorizacao: "dono, chat, 2026-10-23: \"Executa todas\" (sobre a lista cujo item 4 era \"IRRF-DISTRIBUICAO PR-2 a PR-4\") — executa os PR-2, PR-3 e PR-4, sem merge · antes: dono, chat, 2026-10-21: \"dispara os chats A, C e F agora\" — executa só o PR-1 · dono, chat, 2026-10-17: \"Autorizo planejar o BRIEF de <NÓ> — sessao-planejamento, sem 'executa'\" + \"Pode decidir vc memso\" (o agente escolheu este nó) — só o BRIEF; forks ratificados no questionário do mesmo dia ([[D-2026-10-17-IRRF-DISTRIBUICAO-FORKS]]) — sem 'executa' · antes: dono, chat, 2026-10-17: \"Atualiza tbm briefs e documenta em features novas\" — só a nota"
 ancora_sdd: "—"
 atualizado: "2026-10-21"
 prs: ["#761", "#794"]
@@ -36,7 +36,7 @@ registros: ["server/src/lib/factory.ts", "server/src/routes/accounting.ts", "ser
 
 - Dossiê [`verif-2026-10-17-irpj-csll`](../../../pesquisas-legais/verif-2026-10-17-irpj-csll/relatorio.md) e consolidado [`VERIFICACAO-2026-10-17-CONSOLIDADO.md`](../../../pesquisas-legais/VERIFICACAO-2026-10-17-CONSOLIDADO.md).
 - BRIEF [`BE-INCR-IRRF-DISTRIBUICAO-brief.md`](../../accounting/BE-INCR-IRRF-DISTRIBUICAO-brief.md) (17/10) e dossiê [`irrf-distribuicao`](../../../pesquisas-legais/irrf-distribuicao/relatorio.md).
-- Forks: [[D-2026-10-17-IRRF-DISTRIBUICAO-FORKS]].
+- Forks: [[D-2026-10-17-IRRF-DISTRIBUICAO-FORKS]]. Lacunas do PR-2 ao PR-4 (23/10): [[D-2026-10-23-IRRF-DISTRIBUICAO-LACUNAS]].
 - 21/10 (PR-1, #794): plano padrão com 2.1.7 Obrigações com Sócios (.01 dividendos, .02 JCP, .03 IRRF a recolher), 2.3.2.01 capital,
   2.3.3.01 reserva legal e 4.3.4 JCP (dono, chat, 21/10: "(a) com 2.1.7.03"). Referencial conferido na tabela dinâmica da ECF
   ([`irrf-referencial-sped`](../../../pesquisas-legais/irrf-referencial-sped/relatorio.md)). **PROVISÓRIO por decisão do dono

@@ -203,6 +203,14 @@ export const NIVEL_MINIMO_ANALITICA_PATRIMONIAL = 4;
 export const RETAINED_EARNINGS_CODE = '2.3.1.01';
 
 /**
+ * BE-INCR-IRRF-DISTRIBUICAO PR-2 (item 18; dono, questionário de 2026-10-23: "Plano padrão") — grupos sintéticos de
+ * lucros acumulados e de reservas de lucros: o aviso de distribuição acima do lucro soma o saldo credor de toda conta
+ * debaixo deles.
+ */
+export const LUCROS_ACUMULADOS_GRUPO_CODE = '2.3.1';
+export const RESERVAS_LUCROS_GRUPO_CODE = '2.3.3';
+
+/**
  * Canonical "Fornecedores a Pagar" leaf (INCR-AP). The AP recognition credits this account and
  * the settlement debits it. Resolved by CODE (stable), never by name.
  */
