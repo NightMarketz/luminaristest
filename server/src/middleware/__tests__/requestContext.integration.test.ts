@@ -4,9 +4,13 @@
  * `logger.warn` would see the call without the context and prove nothing.
  */
 import request from 'supertest';
-import { makeApp, disconnectDb, authHeader } from '@test/helpers';
+import { makeApp, disconnectDb, authHeader, pushTestSchema } from '@test/helpers';
 
 const app = makeApp();
+
+// The authenticated case reads the users table (token version) — without the schema a fresh CI DB
+// answers 401 instead of reaching the self-update check.
+beforeAll(() => pushTestSchema(), 120000);
 
 afterAll(async () => {
   await disconnectDb();
