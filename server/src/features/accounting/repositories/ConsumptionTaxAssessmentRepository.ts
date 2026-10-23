@@ -50,6 +50,17 @@ export class ConsumptionTaxAssessmentRepository implements IConsumptionTaxAssess
     return r.count;
   }
 
+  public async findConfirmedByTributo(tributo: string): Promise<ConsumptionTaxAssessment[]> {
+    return prisma.consumptionTaxAssessment.findMany({
+      where: { tributo, status: 'CONFIRMED', deletedAt: null },
+      orderBy: [{ userId: 'asc' }, { anoCalendario: 'asc' }, { mes: 'asc' }],
+    });
+  }
+
+  public async setAvisoParametroLegal(ownerUserId: string, id: string, aviso: string): Promise<void> {
+    await prisma.consumptionTaxAssessment.updateMany({ where: { id, userId: ownerUserId, deletedAt: null }, data: { avisoParametroLegal: aviso } });
+  }
+
   public async runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
     return prisma.$transaction(fn);
   }

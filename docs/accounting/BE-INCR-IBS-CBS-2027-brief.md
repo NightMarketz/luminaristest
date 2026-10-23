@@ -211,6 +211,23 @@ no recibo).
 24. **Export do contador** `EXPORT_IBS_CBS_MEMO` (molde `EXPORT_TAX_ASSESSMENT_MEMO`) e **job de recálculo** do LEGAL-PARAMS
     cobre a família nova (parâmetro publicado depois da confirmação ⇒ `avisoParametroLegal`; invariante §13.10).
 
+#### EMENDA PR-5 (23/10) — vencimento da CBS publicado, inativa, saldo ≤ 0, recálculo só com aviso
+
+Lacunas achadas na abertura do PR-5 (sessao-feature) e respondidas pelo dono no chat em 23/10, por questionário
+([[D-2026-10-23-IBS-CBS-PR5-LACUNAS]]; verificação legal `pesquisas-legais/verif-2026-10-23-ibs-cbs-vencimento`):
+
+- **Vencimento (item 22)**: "CBS publicada (Recomendado)". O Decreto 12.955/2026 art. 45 (Planalto compilado, 23/10) responde à
+  P-IBS-5 para a CBS: o saldo vence no último dia útil do mês seguinte, pelo calendário do domicílio da matriz. A linha
+  `IBS_CBS/CBS/VENCIMENTO` nasce PUBLISHED (`valorTexto = ULTIMO_DIA_UTIL_MES_SEGUINTE`). O dia não útil é sábado, domingo ou
+  feriado nacional, estadual ou municipal do `codMun` da unidade, usado no lugar da matriz. `IBS_CBS/IBS/VENCIMENTO` fica DRAFT
+  sem valor (regulamento do CG-IBS não localizado) ⇒ `vencimento: null` + aviso, como no texto original.
+- **Inativa (item 21)**: "OBRIGATORIA (Recomendado)". PRESUMIDO/REAL inativos = OBRIGATORIA (Dec. 12.955 art. 44 § 6º).
+- **Saldo ≤ 0 (item 22)**: "0 + aviso (Recomendado)". `saldoARecolherCents = max(0, saldoCents − Σ SPLIT_EXTINCAO_n)`, com aviso
+  `SALDO_CREDOR` ou `SPLIT_EXCEDENTE` (art. 27 § 1º devolve o excesso).
+- **Recálculo (item 24)**: "Só aviso (Recomendado)". Linha `IBS_CBS` (menos VENCIMENTO) publicada ou revogada ⇒
+  `avisoParametroLegal` nas apurações CONFIRMED vivas do tributo cujo mês ela alcança. Nada é reconfirmado.
+- **Resumo (item 22 × §4.2)**: o `IbsCbsResumoSchema` ganha `memoria`, porque o item 22 a lista.
+
 ## 4. Contratos esboçados
 
 ### 4.1 Prisma (PR-2)

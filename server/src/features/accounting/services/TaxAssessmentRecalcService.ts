@@ -8,15 +8,19 @@ import logger from '../../../lib/logger';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeInternal';
 import type { ITaxAssessmentRepository } from '../repositories/ITaxAssessmentRepository';
+import type { IConsumptionTaxAssessmentRepository } from '../repositories/IConsumptionTaxAssessmentRepository';
 import type { IMitExportRepository } from '../repositories/IMitExportRepository';
 import type { ILegalParameterRepository } from '../../legalParameters/repositories/ILegalParameterRepository';
 import type { ILegalParameterRecalcJobRepository, RecalcResumo } from '../../legalParameters/repositories/ILegalParameterRecalcJobRepository';
 import { chaveCronologica, janelaDoPeriodo } from '../models/janelaApuracao';
+import { fimDoMes } from '../models/taxAssessmentCalcAnual';
 import type { RecalculoView, TaxAssessmentService } from './TaxAssessmentService';
 import type { PisCofinsAssessmentService } from './PisCofinsAssessmentService';
 
 type Familia = 'X7' | 'X8';
 const TRIBUTOS: Record<Familia, readonly string[]> = { X7: ['IRPJ', 'CSLL'], X8: ['PIS', 'COFINS'] };
+/** IBS-CBS-2027 PR-5 (item 24): a família de IBS/CBS (`ConsumptionTaxAssessment`) — só aviso, nunca reconfirma (dono 23/10). */
+type FamiliaJob = Familia | 'IBS_CBS';
 
 /** Item 10 — o autor das reconfirmações automáticas (dono 07/10: "Ator PLATFORM"). */
 export const ATOR_PLATAFORMA = 'PLATFORM';
@@ -32,7 +36,7 @@ export const avisoReconfirme = (motivo: string): string => `Parâmetro legal mud
  * Item 10 — quais famílias de apuração uma tabela alimenta. CODIGO_RECEITA se divide pela chave (PIS/COFINS ⇒ X8).
  * As demais tabelas não entram em nenhuma apuração confirmada (são lidas na hora: NF-e, LC 116, SPED…).
  */
-export function familiasDaLinha(linha: Pick<LegalParameter, 'tabela' | 'chave'>): Familia[] {
+export function familiasDaLinha(linha: Pick<LegalParameter, 'tabela' | 'chave'> & { discriminador?: string | null }): FamiliaJob[] {
   switch (linha.tabela) {
     case 'TAX_ASSESSMENT':
     case 'CSLL_ALIQUOTA':
@@ -41,6 +45,9 @@ export function familiasDaLinha(linha: Pick<LegalParameter, 'tabela' | 'chave'>)
       return ['X8'];
     case 'CODIGO_RECEITA':
       return ['PIS', 'COFINS'].includes(linha.chave) ? ['X8'] : ['X7'];
+    case 'IBS_CBS':
+      // PR-5 (item 24): as alíquotas entram na conferência e na antecipação da apuração; o VENCIMENTO só no resumo (lido na hora).
+      return linha.discriminador === 'VENCIMENTO' ? [] : ['IBS_CBS'];
     default:
       return [];
   }
@@ -90,6 +97,8 @@ export class TaxAssessmentRecalcService {
     private readonly mitRepo: Pick<IMitExportRepository, 'findByYear'>,
     private readonly x7: Pick<TaxAssessmentService, 'recalcularPeloSistema' | 'confirmarPeloSistema'>,
     private readonly x8: Pick<PisCofinsAssessmentService, 'recalcularPeloSistema' | 'confirmarPeloSistema'>,
+    /** IBS-CBS-2027 PR-5 (item 24): apurações mensais de IBS/CBS. */
+    private readonly consumoRepo: Pick<IConsumptionTaxAssessmentRepository, 'findConfirmedByTributo' | 'setAvisoParametroLegal'>,
   ) {}
 
   /** O que o agendador chama: processa os jobs PENDING mais antigos. Um job que estoura fica PENDING para a próxima. */
@@ -119,6 +128,10 @@ export class TaxAssessmentRecalcService {
     const motivo = `${job.evento === 'PUBLISHED' ? 'publicada' : 'revogada'} a linha ${linha.tabela}/${linha.chave} de ${linha.vigenteDesde}`;
 
     for (const familia of familiasDaLinha(linha)) {
+      if (familia === 'IBS_CBS') {
+        await this.avisarIbsCbs(linha, ate, motivo, resumo);
+        continue;
+      }
       // Período fora do formato conhecido (dado antigo) não derruba o job inteiro: fica de fora da varredura.
       const vivas = (await this.taxRepo.findConfirmedByTributos(TRIBUTOS[familia])).filter((r) => {
         try {
@@ -223,6 +236,20 @@ export class TaxAssessmentRecalcService {
       }
     }
     return null;
+  }
+
+  /**
+   * PR-5 item 24 (invariante §10.10; dono 23/10 "Só aviso"): o débito vem do documento (F-IBS-3 a) e a tabela só entra na
+   * conferência e na antecipação — o job grava `avisoParametroLegal` em cada apuração CONFIRMED viva do tributo cujo mês a
+   * linha alcança, e o operador refaz a prévia e confirma pelo CAS. Nada é reconfirmado.
+   */
+  private async avisarIbsCbs(linha: LegalParameter, ate: string, motivo: string, resumo: RecalcResumo): Promise<void> {
+    const alcancadas = (await this.consumoRepo.findConfirmedByTributo(linha.chave)).filter((r) => {
+      const de = `${r.anoCalendario}-${String(r.mes).padStart(2, '0')}-01`;
+      return de <= ate && fimDoMes(r.anoCalendario, r.mes) >= linha.vigenteDesde;
+    });
+    for (const r of alcancadas) await this.consumoRepo.setAvisoParametroLegal(r.userId, r.id, avisoReconfirme(motivo));
+    resumo.avisos += alcancadas.length;
   }
 
   private async avisar(owner: string, linhas: TaxAssessment[], aviso: string, resumo: RecalcResumo): Promise<void> {

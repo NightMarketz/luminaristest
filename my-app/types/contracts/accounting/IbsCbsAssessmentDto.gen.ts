@@ -20,6 +20,21 @@ tributo: ("IBS" | "CBS")
 export interface IbsCbsAssessmentScopeQueryInput {
 unitId: string
 }
+export interface IbsCbsResumoInput {
+id: string
+tributo: ("IBS" | "CBS")
+anoCalendario: number
+mes: number
+saldoARecolherCents: unknown
+vencimento: (string | null)
+avisos: string[]
+memoria: {
+codigo: string
+descricao: string
+valorCents: string
+fonte: string
+}[]
+}
 export type MemoriaIbsCbsInput = {
 codigo: string
 descricao: string

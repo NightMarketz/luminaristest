@@ -28,7 +28,7 @@ export const IbsCbsAssessmentListQuerySchema = z
   .strict();
 export type IbsCbsAssessmentListQuery = z.infer<typeof IbsCbsAssessmentListQuerySchema>;
 
-/** Query do reconcile (item 12): só a unidade do escopo. */
+/** Query do reconcile (item 12) e do resumo (PR-5 item 22): só a unidade do escopo. */
 export const IbsCbsAssessmentScopeQuerySchema = z.object({ unitId: z.string().min(1) }).strict();
 
 /**
@@ -59,3 +59,21 @@ export const MemoriaLinhaIbsCbsSchema = z
   })
   .strict();
 export const MemoriaIbsCbsSchema = z.array(MemoriaLinhaIbsCbsSchema);
+
+/**
+ * PR-5 (item 22; BRIEF §4.2 `IbsCbsResumoSchema`) — contrato de saída do resumo. `memoria` entra porque o item 22 a lista
+ * ("saldo a recolher por tributo, vencimento, memória"). `vencimento` null = linha de vencimento sem valor publicado (aviso).
+ */
+export const IbsCbsResumoSchema = z
+  .object({
+    id: z.string(),
+    tributo: z.enum(['IBS', 'CBS']),
+    anoCalendario: z.number(),
+    mes: z.number(),
+    saldoARecolherCents: z.bigint().nonnegative(),
+    vencimento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+    avisos: z.array(z.string()),
+    memoria: MemoriaIbsCbsSchema,
+  })
+  .strict();
+export type IbsCbsResumo = z.infer<typeof IbsCbsResumoSchema>;

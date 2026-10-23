@@ -1,6 +1,6 @@
 /**
  * OpenAPI de /api/accounting/ibs-cbs-assessments (IBS-CBS-2027 PR-2, BRIEF item 13) e da apropriação do crédito de IBS/CBS
- * de uma nota (PR-3, item 16 — rota ratificada no F-IBS-12 a).
+ * de uma nota (PR-3, item 16 — rota ratificada no F-IBS-12 a); resumo com saldo a recolher e vencimento (PR-5, item 22).
  * Um arquivo por feature (dono, 2026-10-16); o gerador lê a pasta src/routes inteira.
  * @openapi
  * paths:
@@ -94,6 +94,27 @@
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
  *       responses:
  *         '200': { description: 'IbsCbsAssessmentView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *
+ *   /api/accounting/ibs-cbs-assessments/{id}/resumo:
+ *     get:
+ *       summary: Amount due and due date of an IBS or CBS assessment (IBS-CBS-2027 PR-5, item 22)
+ *       description: >-
+ *         saldoARecolherCents = saldoCents − split extinto (SPLIT_EXTINCAO_n; Decreto 12.955 art. 44 § 3º), nunca negativo
+ *         (≤ 0 ⇒ 0 com aviso SALDO_CREDOR ou SPLIT_EXCEDENTE). vencimento pela linha IBS_CBS/<tributo>/VENCIMENTO: CBS =
+ *         último dia útil do mês seguinte (Decreto 12.955 art. 45; sábado, domingo e feriados do município da unidade);
+ *         sem linha publicada (IBS, P-IBS-5) ⇒ null + aviso VENCIMENTO_NAO_PUBLICADO, não 400. Só leitura; a guia não é
+ *         emitida (R5). 400 para SIMPLES/MEI.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'IbsCbsResumo (id, tributo, anoCalendario, mes, saldoARecolherCents, vencimento, avisos, memoria)' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
