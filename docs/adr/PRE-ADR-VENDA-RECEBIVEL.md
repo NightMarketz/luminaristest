@@ -310,8 +310,10 @@ não cumprir, o salão pode reter [D02] art. 418 I. Se o contrato der direito de
   LC 227; [D13] art. 11 §6º).
 - **Exceção de 5 dias:** a LC permite que o regulamento deixe a antecipação com até **5 dias** entre pagamento e
   fornecimento entrar como débito no período do fornecimento ([D11] art. 10 §7º, incluído pela LC 227). Esse é o caso
-  típico do sinal de agendamento. O texto **original** do Decreto 12.955 (cópia do acervo de 15/10) **não** traz essa
-  hipótese, e a compilada não foi conferida (P-VR-5).
+  típico do sinal de agendamento. **A CBS não regulamenta essa exceção:** o art. 11 do Decreto 12.955 não traz a
+  hipótese nem no texto original [D13] nem na versão do Planalto baixada em 22/10, que já tem os Decretos 13.075,
+  13.133 e 13.140 de 2026 [D14]. Hoje, portanto, **todo** sinal sofre antecipação de CBS, inclusive o de agendamento
+  em menos de 5 dias. O regulamento do **IBS** (Comitê Gestor) não foi lido.
 - **Simples Nacional:** o adiantamento é reconhecido no faturamento, na entrega ou na prestação, o que ocorrer
   primeiro, "ainda que no regime de caixa" (Res. CGSN 140 art. 2º §§8º–9º, dossiê `simples-regime-caixa` item 5). Ou
   seja: o sinal recebido **não** entra no DAS até a prestação ou a emissão da nota.
@@ -367,7 +369,13 @@ prazo.
   abre o MED do Pix original, e o lojista perde duas vezes (blog do MP, "Segurança no Pix: devolução da conta
   jurídica"; grau I, é blog do provedor e não doc da API). **Guarda de desenho:** reembolso de venda paga por Pix só sai
   como **devolução do Pix original** (pacs.004), nunca como transferência nova para chave informada pelo cliente.
-- **MED no MP:** a doc pública da API **não** descreve como o MED aparece (status próprio ou `refunded`). Fica em I-4.
+- **Reembolso pela API do MP** (`.../refunds-cancellations.md`): vale até **180 dias** da aprovação; no Pix, o valor
+  volta **para a conta do pagador**; exige saldo disponível; pode ser parcial, por transação. Ou seja: o reembolso do
+  MP já é a devolução do Pix original, e a guarda anti-golpe se cumpre usando só essa rota.
+- **MED no MP:** a doc pública da API **não** descreve como o MED aparece (status próprio ou `refunded`). A
+  **Claims API** (`/post-purchase/v1/claims`) **não** é o MED: os motivos dela são só `PNR` (produto não recebido),
+  `PDD` (produto diferente ou defeituoso) e `CS` (cancelamento da compra) (`reference/claims/get-reason-for-claim`).
+  Fica em I-4.
 
 **Regra legal (MED do Pix, Regulamento anexo à Res. BCB 1/2020, versão 43 no BCB [D06]):** o PSP do recebedor bloqueia
 cautelarmente quando há suspeita de fraude (art. 39-B). O MED cobre fraude, falha operacional e Pix Automático
@@ -623,7 +631,7 @@ Todos com **status: RATIFICAÇÃO PENDENTE**. Responder no chat "F-VR-0 a, F-VR-
 | **F-VR-6** | Chave do lançamento de liquidação | (a) por pagamento (`sale.payment`/`salePaymentId`), legado `sale.settled` intocado · (b) por venda com N pernas | **(a)**: pagamento parcial em dias diferentes cai em datas e períodos diferentes, e o `@@unique(sourceType, sourceId)` já resolve a idempotência por pagamento. |
 | **F-VR-7** | Troco no razão | (a) lança o líquido; entregue e troco ficam na linha para o fechamento de caixa · (b) débito bruto e crédito de troco | **(a)**: o razão não ganha nada com o bruto; a conferência de caixa (`TESOURARIA`) usa a linha. ERPNext usa conta de troco própria, mas só para separar o caixa do PDV. |
 | **F-VR-8** | Pagamento a maior sem troco | (a) vira crédito do cliente, com escolha explícita do operador · (b) recusa | **(a)**: é o caso do Pix com valor errado. Recusar empurra o problema para fora do sistema. |
-| **F-VR-9** | Crédito do cliente × `CustomerPackageBalance` (ponto aberto da proposta §4b.1) | (a) saldo monetário separado, conta `2.1.1.02` · (b) reusar o saldo de pacote com pacote "sentinela" | **(a)**: o saldo de pacote é por pacote, tem validade e quebra em `3.4` (PACOTE-VALIDADE). Crédito monetário não tem pacote nem validade (validade = P-VR-5). |
+| **F-VR-9** | Crédito do cliente × `CustomerPackageBalance` (ponto aberto da proposta §4b.1) | (a) saldo monetário separado, conta `2.1.1.02` · (b) reusar o saldo de pacote com pacote "sentinela" | **(a)**, **sem validade** na v1: o saldo de pacote é por pacote, tem validade e quebra em `3.4` (PACOTE-VALIDADE, decidido com o jurídico em 04/10). O crédito monetário é dinheiro do cliente sem serviço comprado. Fazê-lo expirar esbarra no art. 51 II do CDC (tirar a opção de reembolso), e não achei norma nem precedente que autorize (P-VR-5 c). |
 | **F-VR-10** | Sinal = movimento `ADVANCE` do crédito do cliente? | (a) sim, com `advanceForRef` · (b) documento próprio | **(a)**: mesmo passivo, mesma aplicação (padrão APL do ERPNext). Um instrumento só. |
 | **F-VR-11** | O produto suporta reter o sinal (no-show)? | (a) sim, só com cláusula registrada no agendamento/venda · (b) só devolução | **(a)**, desligado por padrão: CC arts. 418 I e 420 [D02] permitem com contrato. Conta de receita e efeito fiscal = P-VR-4. |
 | **F-VR-12** | Canal da régua na v1 | (a) e-mail (`EMAIL-TRANSPORT`) + tarefa manual · (b) WhatsApp junto | **(a)**: WhatsApp já é gatilho na proposta §4/F2. Depende da **Q7** (BYOK). |
@@ -648,7 +656,7 @@ Todos com **status: RATIFICAÇÃO PENDENTE**. Responder no chat "F-VR-0 a, F-VR-
 | P-VR-2 | Juros de mora convencionados com PF (ambiguidade B) | A Lei de Usura vale para PJ × PF (Lei 14.905 art. 3º só exclui PJ × PJ e afins): teto = 2 × taxa legal [D05] art. 1º, e a taxa legal muda todo mês (Selic − IPCA). Leitura segura: taxa legal por padrão. | Advogado: "Salão com cliente PF: posso cobrar 1% a.m. de mora fixo, ou fico limitado a 2 × (Selic − IPCA) do mês?" Contador: "Juros e multa por competência ou no recebimento?" |
 | P-VR-3 | Compensação AP × AR no Simples pelo caixa (ambiguidade C) — **só 2026** | Compensar extingue as duas obrigações sem passar dinheiro. Nenhuma norma lida diz se isso é "recebimento" na data. O caixa do Simples acaba em 01/01/2027 (Res. CGSN 190/2026), então a pergunta só vale para compensação feita em 2026. | Contador, só se a compensação for implementada ainda em 2026: "No Simples pelo regime de caixa, o valor compensado entre o que o parceiro me deve e o que eu devo a ele entra na receita do mês da compensação?" |
 | P-VR-4 | Sinal retido em no-show: conta e tributo | Receita de serviço (base de ISS/Simples) ou indenização (arras com função indenizatória, CC 420)? | Contador: "Sinal retido por falta do cliente é receita de serviço ou outra receita? Entra no DAS?" |
-| P-VR-5 | (a) Exceção de 5 dias da antecipação de IBS/CBS no sinal; (b) crédito do cliente **sem** serviço definido é "pagamento antes do fornecimento"?; (c) validade do crédito monetário | **Lido:** a regra geral da antecipação ([D11] LC 214 art. 10 §§4º–7º, red. LC 227/2026; [D13] Dec. 12.955 art. 11 §§5º–6º). **Aberto:** (a) o regulamento da exceção de 5 dias não está no texto original do Decreto 12.955, e a compilada não foi conferida; (b) o excedente de um Pix a maior não se refere a fornecimento definido; (c) não pesquisado. | (a) conferir a compilada do Dec. 12.955 no dossiê do `IBS-CBS-2027`; (b) contador: "Crédito do cliente gerado por pagamento a maior, sem serviço agendado, sofre antecipação de IBS/CBS?" |
+| P-VR-5 | (a) Exceção de 5 dias da antecipação no sinal; (b) crédito do cliente **sem** serviço definido é "pagamento antes do fornecimento"?; (c) validade do crédito monetário | **(a) CBS resolvido:** não regulamentada (Dec. 12.955 art. 11, versão do Planalto de 22/10 [D14]); IBS não lido. **(b) Aberto:** o excedente de um Pix a maior não se refere a fornecimento definido. **(c) Lido em parte:** o CDC anula cláusula que "subtraia ao consumidor a opção de reembolso da quantia já paga" (art. 51 II [D01]), que imponha "desvantagem exagerada" (art. 51 IV) ou que preveja perda total das prestações pagas em compra a prestação (art. 53). **Não achei precedente do STJ** sobre validade de crédito de serviço. O único caso de validade no STJ é de telefonia pré-paga, que é setor regulado pela Anatel, e lá a validade foi **mantida**. A pretensão de ressarcimento por enriquecimento sem causa prescreve em 3 anos (CC art. 206 §3º IV [D02]). | (a) IBS: no dossiê do `IBS-CBS-2027`; (b) contador: "Crédito do cliente gerado por pagamento a maior, sem serviço agendado, sofre antecipação de IBS/CBS?"; (c) ver F-VR-9: crédito monetário **sem validade** na v1. A baixa só acontece por reembolso ou uso, e por isso não há pergunta a fazer. |
 | P-VR-6 | Chargeback ou MED perdido na base do DAS no caixa — **só 2026** | **Lido:** no caixa, devolução e cancelamento deduzem "o valor efetivamente devolvido ao adquirente" (Res. 140 arts. 17 p.ú. e 18 §1º, revogados a partir de 2027). **Aberto:** se chargeback e MED (dinheiro volta sem o serviço ser desfeito) são "devolução" para esse fim. | Contador: "Venda recebida em setembro/2026 com chargeback perdido em novembro/2026: abato o valor da receita de novembro no Simples pelo caixa?" |
 | ~~P-VR-7~~ | ~~Perda com crédito dedutível no Lucro Real~~ | **Resolvido em 22/10:** Lei 9.430 arts. 9º–12 [D10] lidos (limites do §7º, §2º, §6º, art. 10 e art. 12). Entrou na §7 e no F-VR-14. | — |
 | P-VR-8 | Contas novas no plano referencial (`2.1.1.02`, `1.1.2.04`, `4.5`) | Toda conta nova precisa de mapeamento referencial na ECD. Códigos são proposta: o BRIEF confere colisão no `ChartOfAccountsFixture` e no binding. | Contador: validar a natureza e o referencial das três contas. |
@@ -707,6 +715,23 @@ Todos com **status: RATIFICAÇÃO PENDENTE**. Responder no chat "F-VR-0 a, F-VR-
 - **Caso tentado contra M10:** talvez o `CHARGED_BACK` já estorne o recibo em outro serviço. Checagem: grep
   `CHARGED_BACK|REFUNDED` em `server/src` → só `CollectionCharge.model.ts` e `CollectionChargeService.ts` (transição
   de status), mais o ADR F5 L376 dizendo que o F7 não estorna. Nenhum `reverseEntry` ligado a esses status.
+
+## 16. Pesquisa externa colada no chat (22/10) — conferência
+
+O dono colou uma pesquisa sobre MED no MP, a exceção de 5 dias e a validade de crédito. Cada afirmação foi conferida
+na fonte primária antes de entrar aqui:
+
+| Afirmação | Resultado | Fonte conferida |
+|---|---|---|
+| MED dispara os tópicos `claims`/`chargebacks`; `/v1/claims/{id}` traz o motivo | **Não confere.** A Claims API (`/post-purchase/v1/claims`) só tem os motivos PNR, PDD e CS. Não há doc pública ligando MED a ela. A integração do Luminaris usa a Orders API, não `/v1/payments`. | MP `reference/claims/get-reason-for-claim` |
+| MED na base Res. BCB 1/2020 e 103/2021 | Confere: o MED entrou pela Res. BCB 103/2021 no Regulamento | [D06] arts. 41-A a 41-G |
+| "Art. 10 do Decreto 12.955" espelha a antecipação | **Artigo errado:** o art. 10 trata de imunidade; a antecipação está no art. 11 §5º | [D13], [D14] |
+| A exceção de 5 dias depende de regulamento e o decreto não a usa | Confere (só para a CBS) | [D11] art. 10 §7º; [D14] art. 11 |
+| CDC art. 51 IV e XI; art. 49 (7 dias fora do estabelecimento) | Confere o texto. O art. 51 II (opção de reembolso) e o art. 53 servem mais ao caso. | [D01] |
+| "STJ e Procons entendem abusiva a validade curta" | **Sem precedente achado.** O único caso de validade no STJ é de telefonia pré-paga, e lá a validade foi mantida (setor Anatel) | busca em stj.jus.br, 22/10 |
+| Validade "razoável de 6 a 12 meses"; multa de "10% a 20% de praxe" | **Sem fonte.** Não entra como regra. | — |
+| Prescrição: 3 anos (CC 206 §3º IV) e 5 anos (CDC 27) | Confere o texto. O art. 27 é sobre dano por fato do serviço, não sobre crédito não usado. | [D01], [D02] |
+| "Não cancelar o saldo sem aviso prévio" (validade do pacote) | Já decidido pelo dono com o jurídico em 04/10 (aviso ativo **não** obrigatório; validade em destaque + aceite). Nada novo para reabrir. | `docs/plano/nos/PACOTE-VALIDADE.md` |
 
 ## Fontes
 

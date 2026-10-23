@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — venda-recebivel
 
 **Pergunta:** CDC na cobrança (art. 42, 42-A, 52 §1º, 71), juros e multa de mora (CC 395/397/406 pós Lei 14.905/2024), compensação (CC 368-380) e MED do Pix (Regulamento do Pix, Res. BCB 1/2020) para o PRE-ADR venda e recebível
-**Aberto em:** 2026-10-22T22:11:35-03:00 · **Atualizado em:** 2026-10-22T22:35:53-03:00
+**Aberto em:** 2026-10-22T22:11:35-03:00 · **Atualizado em:** 2026-10-22T22:56:17-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -45,6 +45,10 @@ conferida quando há evidência de texto mais novo. Documentos salvos com hash p
    aplicam-se as regras do cancelamento. Antecipação com até 5 dias pode ir ao período do fornecimento **se o
    regulamento disser** (§7º), e o texto original do decreto não diz. No Simples, o adiantamento entra no faturamento ou
    na prestação, o que vier primeiro (Res. CGSN 140 art. 2º §§8º–9º, dossiê `simples-regime-caixa`).
+10. **Validade de crédito do consumidor:** o CDC anula cláusula que tire a opção de reembolso da quantia paga (art. 51
+   II), que imponha desvantagem exagerada (art. 51 IV) e a perda total das prestações pagas (art. 53) [D01]. Não
+   achei precedente do STJ específico. Ressarcimento por enriquecimento sem causa prescreve em 3 anos (CC art. 206
+   §3º IV [D02]).
 9. **Desconto por meio de pagamento** precisa ser informado de forma visível: Lei 10.962 art. 5º-A, incluído pela
    Lei 13.455 art. 2º [D12] (compilada no Planalto, sem alteração).
 
@@ -97,9 +101,10 @@ conferida quando há evidência de texto mais novo. Documentos salvos com hash p
 - Chargeback de cartão: não há norma legal. A regra está no contrato com a adquirente e no regulamento da bandeira, que
   não são fonte oficial. O PRE-ADR usa a doc da API do MP (prazo = `date_documentation_deadline`).
 - Como o MED aparece na API do Mercado Pago: não documentado publicamente (PRE-ADR I-4).
-- Compilada do Decreto 12.955/2026: só li a cópia original do acervo (15/10). A exceção de 5 dias da LC 214 art. 10 §7º
-  não está nela.
-- Validade de crédito monetário do consumidor (vale-crédito): não pesquisado.
+- Decreto 12.955/2026: conferida a versão do Planalto de 22/10 [D14] (com os Decs. 13.075, 13.133 e 13.140/2026). O
+  art. 11 não regulamenta a exceção de 5 dias da LC 214 art. 10 §7º. Regulamento do IBS (Comitê Gestor): não lido.
+- Validade de crédito monetário: sem precedente do STJ achado (só telefonia pré-paga, setor Anatel, validade mantida).
+  Normas aplicáveis: CDC arts. 51 II e IV e 53 [D01]; CC art. 206 §3º IV [D02].
 
 <!-- /ANALISE -->
 
@@ -152,6 +157,9 @@ conferida quando há evidência de texto mais novo. Documentos salvos com hash p
   Fonte oficial declarada: <https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2026-04-29;12955> · versao_texto: original · cópia de 2026-10-15  
   Lido em 2026-10-22T22:32:27-03:00 · arquivo local `docs/D13_dec-12955-2026-04-29.md` · SHA-256 `5527dbfe923a984a86c22b27ef1c5c0b6f4f0c2996bbe14315e8804afd08bbd9`  
   ⚠ versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)
+- **[D14]** d12955 — Presidência - legislação federal  
+  Link oficial: <https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/d12955.htm>  
+  Baixado em 2026-10-22T22:40:55-03:00 · arquivo local `docs/D14_d12955-htm.html` · SHA-256 `e24943487f47854f7f02bd4d3af7fff1755926aa9ac44ad1c95e24d2b8607a75`
 
 ## Registro de buscas
 _Nenhuma busca registrada._

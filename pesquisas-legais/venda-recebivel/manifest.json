@@ -197,6 +197,18 @@
       "arquivo": "docs/D13_dec-12955-2026-04-29.md",
       "texto": "docs/D13_dec-12955-2026-04-29.txt",
       "bytes": 779823
+    },
+    {
+      "id": "D14",
+      "titulo": "d12955",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/d12955.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/d12955.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-22T22:40:55-03:00",
+      "sha256": "e24943487f47854f7f02bd4d3af7fff1755926aa9ac44ad1c95e24d2b8607a75",
+      "arquivo": "docs/D14_d12955-htm.html",
+      "texto": "docs/D14_d12955-htm.txt",
+      "bytes": 3184515
     }
   ],
   "buscas": [],
