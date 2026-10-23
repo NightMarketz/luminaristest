@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — venda-recebivel
 
 **Pergunta:** CDC na cobrança (art. 42, 42-A, 52 §1º, 71), juros e multa de mora (CC 395/397/406 pós Lei 14.905/2024), compensação (CC 368-380) e MED do Pix (Regulamento do Pix, Res. BCB 1/2020) para o PRE-ADR venda e recebível
-**Aberto em:** 2026-10-22T22:11:35-03:00 · **Atualizado em:** 2026-10-22T22:16:51-03:00
+**Aberto em:** 2026-10-22T22:11:35-03:00 · **Atualizado em:** 2026-10-22T22:35:53-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -30,6 +30,24 @@ conferida quando há evidência de texto mais novo. Documentos salvos com hash p
    A devolução comum, iniciada pelo recebedor, pode ser parcial e repetida [D06] art. 40 §§1º–2º. Os prazos do bloqueio e da
    devolução estão no **Manual Operacional do DICT**, que não foi lido [D06] art. 41-E.
 
+6. **Prazos do MED (Manual do DICT v8.5 [D09], IN BCB 766/2026 [D07], em vigor desde 01/09/2026):** o pagador
+   abre a notificação em até **80 dias corridos** da transação (§20.1.1, §10.1). O PSP analisa em até 7 dias. O
+   bloqueio é imediato, até o saldo (§20.1.4). A devolução começa em até 72 h (§20.1.6). O **recebedor pode contestar
+   a devolução em até 80 dias** (§20.1.9), e só cabe uma Recuperação de Valores por transação (§20.1.1). Convive com os
+   30 dias para pedir o cancelamento da devolução, do Regulamento ([D06] art. 41-G).
+7. **Perda com crédito no Lucro Real** [D10] Lei 9.430 art. 9º §7º: sem garantia, até R$ 15 mil vencido há mais de 6
+   meses; de R$ 15 mil a R$ 100 mil vencido há mais de 1 ano "mantida a cobrança administrativa"; acima disso, só com
+   ação judicial. Parcelas com vencimento antecipado somam por operação (§2º). Não vale contra sócio, administrador ou
+   parente (§6º). Lançamento em conta de resultado contra a conta do crédito (art. 10); o recuperado volta ao lucro
+   real (art. 12).
+8. **Adiantamento e IBS/CBS** [D11] LC 214 art. 10 §§4º–7º (red. LC 227/2026), [D13] Dec. 12.955 art. 11 §§5º–6º:
+   cada parcela paga antes do fornecimento gera antecipação. No fornecimento ajusta-se ao definitivo. Sem fornecimento,
+   aplicam-se as regras do cancelamento. Antecipação com até 5 dias pode ir ao período do fornecimento **se o
+   regulamento disser** (§7º), e o texto original do decreto não diz. No Simples, o adiantamento entra no faturamento ou
+   na prestação, o que vier primeiro (Res. CGSN 140 art. 2º §§8º–9º, dossiê `simples-regime-caixa`).
+9. **Desconto por meio de pagamento** precisa ser informado de forma visível: Lei 10.962 art. 5º-A, incluído pela
+   Lei 13.455 art. 2º [D12] (compilada no Planalto, sem alteração).
+
 ## 2. Fundamentação
 | Ponto | Norma (art.) | Fonte | Trecho literal |
 |---|---|---|---|
@@ -49,10 +67,13 @@ conferida quando há evidência de texto mais novo. Documentos salvos com hash p
 - D03 (Lei 14.905) com alerta "original". O que este dossiê usa dela (art. 3º, usura) é dispositivo autônomo, não
   alteração do CC. Não há "Vide" posterior no CC compilado. Não conferi a compilada no normas.leg.br, porque o trecho
   citado não muda o desenho.
-- D04 (Lei 13.455) com alerta "original": lei curta, só art. 1º citado. Não conferida na compilada (lacuna menor).
+- D04 (Lei 13.455) com alerta "original": conferida na compilada do Planalto [D12], sem alteração.
 - D05 (Dec. 22.626) não está no acervo, que só tem decretos a partir de 1945. Baixado do planalto.gov.br.
 - D06 (Res. BCB 1/2020, Regulamento do Pix) não está no acervo: a pasta de 2020 só tem resoluções CMN até julho.
   Baixado da API oficial do BCB, versão 43 do normativo, que já traz a Res. BCB 402/2024, a 493/2025 e a 506/2025.
+- D10 (Lei 9.430): compilada, cópia de 13/10, sem alerta.
+- D11 (LC 214): o acervo tem só a promulgação dos vetos, então usei a compilada do Planalto, que já traz a LC 227/2026.
+- D13 (Dec. 12.955) com alerta "original": usado só o art. 11; compilada não conferida (lacuna).
 
 ## 4. Ambiguidades (só o que precisa de decisão humana)
 - **A — Os 2% do art. 52 §1º valem para venda a prazo sem juros?** O caput do art. 52 fala em "outorga de crédito ou
@@ -72,11 +93,14 @@ conferida quando há evidência de texto mais novo. Documentos salvos com hash p
   encontro. Não li norma que responda, então fica com o contador (P-VR-3 no PRE-ADR).
 
 ## 5. Lacunas
-- Manual Operacional do DICT (prazos do MED): não lido. Não é norma; o BCB publica à parte.
+- ~~Manual Operacional do DICT~~: **lido** em 22/10 ([D09] v8.5, divulgado pela IN BCB 766/2026 [D07]). Ver conclusão 6.
 - Chargeback de cartão: não há norma legal. A regra está no contrato com a adquirente e no regulamento da bandeira, que
-  não são fonte oficial. O PRE-ADR trata o chargeback como fato vindo do provedor (webhook/relatório), sem prazo legal.
-- Tratamento fiscal do estorno (devolução de receita na base do DAS e do IBS/CBS): fora deste dossiê. Fica como pendência
-  de validação externa no PRE-ADR.
+  não são fonte oficial. O PRE-ADR usa a doc da API do MP (prazo = `date_documentation_deadline`).
+- Como o MED aparece na API do Mercado Pago: não documentado publicamente (PRE-ADR I-4).
+- Compilada do Decreto 12.955/2026: só li a cópia original do acervo (15/10). A exceção de 5 dias da LC 214 art. 10 §7º
+  não está nela.
+- Validade de crédito monetário do consumidor (vale-crédito): não pesquisado.
+
 <!-- /ANALISE -->
 
 ## Fontes consultadas
@@ -104,6 +128,30 @@ conferida quando há evidência de texto mais novo. Documentos salvos com hash p
 - **[D06]** Resolução Nº 1 — Órgãos federais (Receita, ANPD, INSS, etc.)  
   Link oficial: <https://www.bcb.gov.br/api/conteudo/app/normativos/exibenormativo?p1=Resolu%C3%A7%C3%A3o%20BCB&p2=1>  
   Baixado em 2026-10-22T22:15:04-03:00 · arquivo local `docs/D06_exibenormativo.html` · SHA-256 `3a59a56dd6def207418ab11b0842680c5042ce8f214102c6387589233062f0e0`
+- **[D07]** D07_exibenormativo — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://www.bcb.gov.br/api/conteudo/app/normativos/exibenormativo?p1=Instru%C3%A7%C3%A3o%20Normativa%20BCB&p2=766>  
+  Baixado em 2026-10-22T22:28:27-03:00 · arquivo local `docs/D07_exibenormativo.html` · SHA-256 `4288e12f7ae0bbb50946b6806bea90709f5855e0a2556d702045d5603002ce2f`
+- **[D08]** D08_Guia_MED-pdf — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://www.bcb.gov.br/content/estabilidadefinanceira/pix/Guia_MED.pdf>  
+  Baixado em 2026-10-22T22:28:28-03:00 · arquivo local `docs/D08_Guia_MED-pdf.pdf` · SHA-256 `6cf10117fa8484e50da77c00e168a044d6d46693a76672eaa765b62040184e89`
+- **[D09]** D09_X_ManualOperacionaldoDICT-pdf — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://www.bcb.gov.br/content/estabilidadefinanceira/pix/Regulamento_Pix/X_ManualOperacionaldoDICT.pdf>  
+  Baixado em 2026-10-22T22:28:56-03:00 · arquivo local `docs/D09_X_ManualOperacionaldoDICT-pdf.pdf` · SHA-256 `b97a2ae8ec2086ccf74c6b23d7caac84c46913c3e153df2509629955983eb713`
+- **[D10]** Lei nº 9.430 de 27/12/1996 — Acervo ctresb/leis (espelho de fonte oficial)  
+  Acervo: <https://github.com/ctresb/leis/blob/6c8aa8aa7d6126d14c332df3ab07f956b17f4bf2/federal/leis-ordinarias/1996/lei-9430-1996-12-27.md>  
+  Fonte oficial declarada: <https://normas.leg.br/?urn=urn:lex:br:federal:lei:1996-12-27;9430> · versao_texto: compilada (texto vigente) · cópia de 2026-10-13  
+  Lido em 2026-10-22T22:31:54-03:00 · arquivo local `docs/D10_lei-9430-1996-12-27.md` · SHA-256 `6e8e20371d0e7796244402441b7e3fc72df83a7bbe640029d4919359a6115bcc`
+- **[D11]** Lcp 214 — Presidência - legislação federal  
+  Link oficial: <https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm>  
+  Baixado em 2026-10-22T22:31:56-03:00 · arquivo local `docs/D11_lcp214-htm.html` · SHA-256 `c2cbdbd1ce22648d728411eed589299e6c39f31b6e443739a67dbb8aa81fc301`
+- **[D12]** L13455 — Presidência - legislação federal  
+  Link oficial: <https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2017/lei/l13455.htm>  
+  Baixado em 2026-10-22T22:31:56-03:00 · arquivo local `docs/D12_l13455-htm.html` · SHA-256 `0b0b207051e5a26cfa3c2a5fee558d730dac519662e1a6f575cbd57e109bd7eb`
+- **[D13]** Decreto nº 12.955 de 29/04/2026 — Acervo ctresb/leis (espelho de fonte oficial)  
+  Acervo: <https://github.com/ctresb/leis/blob/517db958cd0ae2ba36c1f0b524b3cc55fe4198c6/federal/decretos/2026/dec-12955-2026-04-29.md>  
+  Fonte oficial declarada: <https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2026-04-29;12955> · versao_texto: original · cópia de 2026-10-15  
+  Lido em 2026-10-22T22:32:27-03:00 · arquivo local `docs/D13_dec-12955-2026-04-29.md` · SHA-256 `5527dbfe923a984a86c22b27ef1c5c0b6f4f0c2996bbe14315e8804afd08bbd9`  
+  ⚠ versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)
 
 ## Registro de buscas
 _Nenhuma busca registrada._

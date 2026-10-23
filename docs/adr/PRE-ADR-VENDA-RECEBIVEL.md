@@ -49,6 +49,9 @@ estorno → régua → compensação.**
 | M13 | `Counterparty.type ∈ {SUPPLIER, CUSTOMER}`, com unicidade por tipo: o mesmo CNPJ como fornecedor e como cliente são **duas** identidades sem vínculo. | V | `schema.prisma:1384-1402` |
 | M14 | As contas de mora já existem: `3.5.1 Juros de Mora Recebidos`, `3.5.2 Multas de Mora Recebidas`, `4.3.3 Descontos Concedidos`. **Não existem** conta de adiantamento genérico de cliente, de recebível em contestação nem de perda com crédito. | V | `ChartOfAccountsFixture.ts:28-135, 254-263` |
 | M15 | A comissão de empregado CLT entra no razão **só pela folha** (F-FOL-6 a, proposto). A comissão de parceiro vai para AP pelo `TESOURARIA`. | I (nota da sessão irmã) | `side-session-notes/.../folha-contabil.md` item 3 |
+| M16 | O motor DynamicTable faz tabela filha por campo `relation`. O precedente é `saleItems.saleId` → `sales`. Também existe o tipo `json`. | V | `dynamicTables/models/DynamicTable.model.ts:28`; `presets/modules/finance/SalesItemsMixed.ts:2, 48-50` |
+| M17 | O modal Nova Venda **sempre** cria a venda `Pending`, com um `paymentMethod` e `paymentTermDays`. O pagamento é registrado depois pelo `SalePaymentModal`, que manda **um** meio. | V | `my-app/.../hooks/sales/useSalesCreateForm.ts:78-79, 271-276`; `components/sales/SaleActionModals.tsx:14-30, 90` |
+| M18 | O mapa de status do MP junta todos os `charged_back/*` em `CHARGED_BACK`. A doc do MP no nível de **transação** distingue `in_process` (disputa aberta), `settled` (devolvido ao comprador: o vendedor perdeu) e `reimbursed` (creditado ao vendedor: ganhou). A página de **order** descreve `reimbursed` ao contrário, então a fonte confiável é a transação. | V | `models/CollectionCharge.model.ts:73, 90-91`; MP `checkout-api-orders/payment-management/status/transaction-status.md` e `.../order-status.md` (lidos em 22/10) |
 
 **Correções ao pedido.** (1) "Uma venda gera um único título": na verdade gera **nenhum** título no subrazão. O
 "título" é a própria linha da venda contra `1.1.2.01`, sem vencimento por parcela, aging nem cobrança (M5–M7).
@@ -128,6 +131,14 @@ parcela.
    último recebimento fecha. **Toca o preset**: a opção `Partial` entra em `SelectPresets.paymentStatus`.
 5. **Fora:** cartão de crédito parcelado. O salão recebe da adquirente, não do cliente, então isso é recebível de
    adquirente (`1.1.2.02`, agenda D+30), assunto do `CONC-ADQUIRENTE` (F-VR-4).
+6. **Preço diferente por prazo ou meio:** é permitido [D04] art. 1º, mas o desconto tem de estar informado "em local e
+   formato visíveis" (Lei 10.962 art. 5º-A, incluído pela Lei 13.455 art. 2º [D12], conferida no Planalto). Se o
+   catálogo de condição tiver desconto à vista, o FE mostra o desconto na tela da venda.
+7. **Simples pelo caixa em 2026:** a venda a prazo exige o registro de valores a receber (Res. CGSN 140 art. 77 +
+   Anexo IX: parcelas, vencimento, recebimento, saldo e incobrável). O `Receivable` por parcela já tem esses dados.
+   O caixa do Simples **acaba em 01/01/2027** (Res. CGSN 190/2026), conforme o dossiê
+   [`simples-regime-caixa`](../../pesquisas-legais/simples-regime-caixa/relatorio.md) itens 3 e 6. Não vale construir
+   relatório só para isso.
 
 **Lançamentos (D/C) — venda R$ 300,00, "entrada + 2×", Pix na entrada:**
 
@@ -146,7 +157,8 @@ CDC obriga a informar juros, taxa efetiva anual, número de parcelas e total com
 **Contrato esboçado.**
 
 ```ts
-// DT — preset "paymentTerms" (usuário desenha; F-VR-1 a). Linhas como preset filho com relação (ver Insumo ausente I-1).
+// DT — preset "paymentTerms" (usuário desenha; F-VR-1 a). Linhas como preset filho "paymentTermLines" com campo
+// relation paymentTermId → paymentTerms, no padrão saleItems.saleId (M16).
 PaymentTermLine = { sequence: int, kind: 'PERCENT' | 'FIXED' | 'BALANCE', valueBps?: int /*0..10000*/, valueCents?: int,
                     days: int /*≥0*/, delayType: 'DAYS' | 'DAYS_AFTER_END_OF_MONTH' }
 // Prisma — Receivable ganha (migração ALTER ADD COLUMN, prólogo defensivo SQLite):
@@ -264,8 +276,11 @@ reservar uma noiva) não tem onde entrar.
   `against_voucher_type/no`, `amount`, `event`, `delinked`):
   <https://github.com/frappe/erpnext/blob/version-15/erpnext/accounts/doctype/advance_payment_ledger_entry/advance_payment_ledger_entry.json#L20-L76>.
 - Odoo 18 — o pagamento sem fatura fica em aberto na conta do parceiro (`outstanding_account_id`,
-  <https://github.com/odoo/odoo/blob/18.0/addons/account/models/account_payment.py#L127>) e é conciliado depois com a
-  fatura. Não há documento "sinal" próprio.
+  <https://github.com/odoo/odoo/blob/18.0/addons/account/models/account_payment.py#L127>). A fatura mostra os créditos
+  em aberto do cliente para o operador aplicar (`invoice_outstanding_credits_debits_widget` e
+  `_compute_payments_widget_to_reconcile_info`,
+  <https://github.com/odoo/odoo/blob/18.0/addons/account/models/account_move.py#L451>, `#L1403-L1464`). Não há
+  documento "sinal" próprio.
 
 **Desenho proposto.** O sinal é um **movimento `ADVANCE` do crédito do cliente** (§4), com `advanceForRef` apontando
 para o agendamento ou a venda (F-VR-10). Na finalização da venda vinculada, a ponte aplica o sinal como pagamento
@@ -283,9 +298,28 @@ para o agendamento ou a venda (F-VR-10). Na finalização da venda vinculada, a 
 
 **Regra legal.** Arras (sinal) são computadas na prestação quando o contrato é cumprido [D02] art. 417. Se quem pagou
 não cumprir, o salão pode reter [D02] art. 418 I. Se o contrato der direito de arrependimento, o sinal só indeniza
-[D02] art. 420. **Reter exige cláusula registrada** (F-VR-11). O efeito fiscal do sinal retido e da antecipação de
-IBS/CBS sobre adiantamento (LC 214 art. 10 §4º, citado na proposta §4/F2) fica em **Pendente de validação externa**
-(P-VR-4, P-VR-5).
+[D02] art. 420. **Reter exige cláusula registrada** (F-VR-11).
+
+**Regra fiscal do adiantamento (lida):**
+
+- **IBS/CBS (regime regular, a partir de 2027):** pagamento antes do fornecimento gera **antecipação** dos tributos em
+  cada parcela paga. A base é a parcela e a alíquota é a da emissão do documento ou do pagamento, o que vier primeiro.
+  No fornecimento, o valor definitivo é calculado sobre o total, e a diferença vira débito ou segue as regras de
+  pagamento a maior ([D11] LC 214 art. 10 §4º, redação da **LC 227/2026**; [D13] Decreto 12.955/2026 art. 11 §5º).
+  Se o serviço não for prestado (inclusive distrato), aplicam-se as regras do cancelamento ([D11] art. 10 §5º, red.
+  LC 227; [D13] art. 11 §6º).
+- **Exceção de 5 dias:** a LC permite que o regulamento deixe a antecipação com até **5 dias** entre pagamento e
+  fornecimento entrar como débito no período do fornecimento ([D11] art. 10 §7º, incluído pela LC 227). Esse é o caso
+  típico do sinal de agendamento. O texto **original** do Decreto 12.955 (cópia do acervo de 15/10) **não** traz essa
+  hipótese, e a compilada não foi conferida (P-VR-5).
+- **Simples Nacional:** o adiantamento é reconhecido no faturamento, na entrega ou na prestação, o que ocorrer
+  primeiro, "ainda que no regime de caixa" (Res. CGSN 140 art. 2º §§8º–9º, dossiê `simples-regime-caixa` item 5). Ou
+  seja: o sinal recebido **não** entra no DAS até a prestação ou a emissão da nota.
+- **Desenho que sai disso:** o movimento `ADVANCE` grava a data do pagamento e o `advanceForRef`. Isso basta para o
+  `IBS-CBS-2027` calcular a antecipação quando a venda tiver regime regular. Este PRE-ADR não calcula tributo: o débito
+  da antecipação é item do `IBS-CBS-2027`.
+
+O efeito fiscal do sinal **retido** continua em **Pendente de validação externa** (P-VR-4).
 
 **Contrato esboçado:** `CustomerCreditMovement.kind='ADVANCE'` + `advanceForType: 'APPOINTMENT' | 'SALE'`,
 `advanceForRef: string` (*Ref para DT). Rota: `POST /api/customer-credits/:counterpartyId/advances`
@@ -301,34 +335,88 @@ IBS/CBS sobre adiantamento (LC 214 art. 10 §4º, citado na proposta §4/F2) fic
 que o dinheiro está no banco. O recibo do AR continua `ACTIVE` e o título continua `RECEIVED`. A base do DAS no caixa
 (X14-CAIXA, `ReceitaFiscalRecebimento`) também não se mexe.
 
-**Referência.** Nenhum dos dois ERPs tem "disputa" nativa nos arquivos lidos: o estorno é uma nota de crédito
-(Odoo `out_refund`; ERPNext fatura `is_return`) mais um pagamento ao cliente. O `payment_entry` aceita referência a
-documento de devolução com saldo ≤ 0 (<https://github.com/frappe/erpnext/blob/version-15/erpnext/accounts/doctype/payment_entry/payment_entry.py#L671-L674>).
-**Grau I:** não varri os repositórios inteiros atrás de "chargeback". Aqui o Luminaris vai **além** da referência,
-porque o fato chega do provedor (webhook ou relatório de liberação) e tem prazo.
+**Referência.** **Nenhum dos dois ERPs trata chargeback.** A busca de código no GitHub por "chargeback" deu **0
+arquivos** em `odoo/odoo` e em `frappe/erpnext` (branch padrão, 22/10). Para validar a busca, o mesmo método achou
+`_compute_terms` e `dunning_fee`. O estorno nos dois é nota de crédito mais pagamento ao cliente:
+
+- Odoo 18: `out_refund` (<https://github.com/odoo/odoo/blob/18.0/addons/account/models/account_move.py#L65-L69>) e, no
+  provedor de pagamento, `payment.transaction` com `operation='refund'`, criado como transação filha da original
+  (<https://github.com/odoo/odoo/blob/18.0/addons/payment/models/payment_transaction.py#L70-L83>; `action_refund`
+  L289, `_create_child_transaction` L600).
+- ERPNext v15: o `payment_entry` aceita referência a documento de devolução (`is_return`) com saldo ≤ 0
+  (<https://github.com/frappe/erpnext/blob/version-15/erpnext/accounts/doctype/payment_entry/payment_entry.py#L671-L674>).
+- OCA: "chargeback" só aparece em conectores. No Shopify, o chargeback do repasse vai para uma **conta de ajuste
+  própria**, o mesmo padrão da `1.1.2.04` proposta aqui
+  (<https://github.com/OCA/connector-shopify/blob/19.0/shopify_connector_account/models/payout_sync.py#L314-L323>).
+
+Aqui o Luminaris vai **além** da referência, porque o fato chega do provedor (webhook ou relatório de liberação) e tem
+prazo.
+
+**Mercado Pago (doc oficial, lida em 22/10):**
+
+- Durante o chargeback, *"the disputed amount remains on hold in the seller's account until the process is
+  completed"* (`checkout-api-orders/payment-management/chargebacks.md`). O dinheiro fica preso na abertura, e isso apoia
+  o F-VR-16 (a).
+- O webhook do tópico Chargebacks manda `action: "order.charged_back"`, com `status_detail` e uma lista `chargebacks[]`
+  (`id`, `case_id`, `status`, `amount`) (`.../chargebacks/notifications.md`).
+- `GET /v1/chargebacks/{id}` traz `coverage_applied`/`coverage_eligible` (o MP cobre o vendedor),
+  `documentation_status` e `date_documentation_deadline`. A documentação é enviada **uma vez só** por caso
+  (`.../chargebacks/management.md`).
+- O `status_detail` da **transação** separa disputa aberta, perda e ganho (M18). O mapeador atual perde isso.
+- **Golpe documentado pelo próprio MP:** a pessoa paga, pede o reembolso por uma **nova** transferência e, em paralelo,
+  abre o MED do Pix original, e o lojista perde duas vezes (blog do MP, "Segurança no Pix: devolução da conta
+  jurídica"; grau I, é blog do provedor e não doc da API). **Guarda de desenho:** reembolso de venda paga por Pix só sai
+  como **devolução do Pix original** (pacs.004), nunca como transferência nova para chave informada pelo cliente.
+- **MED no MP:** a doc pública da API **não** descreve como o MED aparece (status próprio ou `refunded`). Fica em I-4.
 
 **Regra legal (MED do Pix, Regulamento anexo à Res. BCB 1/2020, versão 43 no BCB [D06]):** o PSP do recebedor bloqueia
 cautelarmente quando há suspeita de fraude (art. 39-B). O MED cobre fraude, falha operacional e Pix Automático
 indevido (art. 41-B, redação Res. BCB 402/2024). A devolução bloqueia o saldo do recebedor até o valor pedido, mesmo
 em partes (art. 41-D II e par. único, redação Res. BCB 493/2025). O recebedor é avisado do bloqueio e da devolução
-(art. 41-F) e **pode pedir o cancelamento da devolução em 30 dias** a partir do aviso (art. 41-G). Os prazos de bloqueio
-e devolução estão no Manual Operacional do DICT (art. 41-E), **não lido** (Insumo ausente I-3). Chargeback de cartão
-não tem norma legal: vem do contrato com a adquirente e da bandeira.
+(art. 41-F) e pode pedir o cancelamento da devolução em 30 dias a partir do aviso (art. 41-G).
+
+**Prazos do MED (Manual Operacional do DICT v8.5, divulgado pela IN BCB 766/2026, DOU 29/07/2026 [D07][D09]):**
+
+| Etapa | Prazo | Onde |
+|---|---|---|
+| Cliente (pagador) abre a notificação de fraude | até **80 dias corridos** da transação | [D09] §20.1.1 e §10.1, em vigor desde 01/09/2026 (IN 766 art. 3º, red. IN 767) |
+| PSP do recebedor analisa a notificação | até **7 dias** | [D09] §10.1 etapa 7 (histórico de versões) |
+| Bloqueio no saldo do recebedor | imediato, até o saldo; novos bloqueios se entrar dinheiro | [D09] §20.1.4 |
+| PSP recuperador inicia a devolução | **72 horas** depois da análise; sem isso, o DICT encerra | [D09] §20.1.6 |
+| Desbloqueio | só depois de rejeitar, de concluir a devolução ou de cancelar | [D09] §20.1.7 |
+| **Recebedor (o salão) contesta uma devolução** feita por fraude do pagador | até **80 dias** depois da devolução | [D09] §20.1.9 |
+
+**Dois prazos convivem.** O Regulamento diz 30 dias para pedir o cancelamento da devolução (art. 41-G), e o Manual
+(que "compõe o Regulamento", IN 766 art. 1º) abre a contestação por nova Recuperação de Valores em 80 dias
+(§20.1.9). Para o desenho vale o **maior**, com os dois gravados. A contestação que o salão pode abrir tem uma regra
+de produto: **cada transação admite uma só Recuperação de Valores**, mesmo cancelada (§20.1.1). Por isso a tela tem
+de avisar antes de o operador pedir a contestação ao banco.
+
+Chargeback de cartão não tem norma legal: vem do contrato com a adquirente e da bandeira. No MP, o prazo é o
+`date_documentation_deadline` do caso.
 
 **Desenho proposto.**
 
 1. **`PaymentDispute` first-class**: uma linha por evento do provedor (chargeback, MED, reembolso) sobre o
    `SalePayment`/`ReceivableReceipt`, com `OPEN → WON | LOST | CANCELLED`, valor, prazo e referência do provedor.
    Quem cria: o `CollectionChargeService` na transição para `CHARGED_BACK`/`REFUNDED`/`PARTIALLY_REFUNDED`, o F7 ao ler
-   refund/chargeback no relatório, ou o operador à mão (adquirente sem integração).
+   refund/chargeback no relatório, ou o operador à mão (adquirente sem integração). O desfecho sai do `status_detail` da
+   **transação** do MP (`in_process` → `OPEN`, `settled` → `LOST`, `reimbursed` → `WON`, M18), confirmado por
+   `GET /v1/chargebacks/{id}`. O mapa do `CollectionCharge.model.ts` tem de deixar de juntar os três (item do BRIEF).
+   Com `coverage_applied = true`, o MP cobre o vendedor: a disputa fecha `WON` mesmo com `settled`.
 2. **Na abertura** (dinheiro debitado ou bloqueado): reclassifica para `1.1.2.04 Recebíveis em Contestação` (F-VR-16).
 3. **Perdeu:** o recibo é estornado (T5, recibo `CANCELLED`), o título **reabre** (`OPEN`/`PARTIALLY_RECEIVED`) e entra
    na régua (F-VR-17). Ou vai para perda, por decisão do operador.
 4. **Ganhou ou o MED foi cancelado (art. 41-G):** estorna a reclassificação.
 5. **Reembolso voluntário depois de pago** (cliente insatisfeito): é **devolução de venda**, com lado receita
    (`3.2 Devoluções`). Pertence ao `DEVOLUCAO-VENDA` (Q12, sessão irmã). Aqui fica só o lado dinheiro (F-VR-18).
-6. **Base do DAS no caixa:** a perda definitiva gera um recebimento **negativo** no `ReceitaFiscalRecebimento` do mês do
-   débito. É desenho proposto, com tratamento fiscal em **Pendente de validação externa** (P-VR-6).
+6. **Base do DAS no caixa (só fatos de 2026):** devolução e cancelamento deduzem "o valor efetivamente devolvido ao
+   adquirente" (Res. CGSN 140 arts. 17 p.ú. e 18 §1º, dossiê `simples-regime-caixa` item 4). A perda definitiva gera um
+   recebimento **negativo** no `ReceitaFiscalRecebimento` do mês do débito. Esses dispositivos foram **revogados a
+   partir de 01/01/2027** junto com o regime de caixa (Res. CGSN 190/2026), então esse ramo só existe para chargeback e
+   MED de recebimentos de 2026. Se chargeback se equipara a "devolução ao adquirente" continua em P-VR-6.
+7. **Guarda anti-golpe:** reembolso de venda paga por Pix só sai como devolução do Pix original. A rota não aceita chave
+   de destino informada pelo cliente.
 
 **Lançamentos (D/C) — venda de R$ 200 paga no cartão, adquirente já repassou:**
 
@@ -341,7 +429,8 @@ não tem norma legal: vem do contrato com a adquirente e da bandeira.
 | Perdeu → perda | `4.5 Perdas com Créditos de Clientes` *(nova)* 200,00 | `1.1.2.04` 200,00 | `payment.dispute.writeoff` / disputeId |
 | Tarifa de chargeback | `4.6 Tarifas` | `1.1.1.01 Banco` | pelo F7 / FEE (já existe) |
 | MED: bloqueio cautelar | `1.1.2.04` | `1.1.1.01 Banco` | `payment.dispute.opened` (F-VR-16) |
-| MED: devolução cancelada (art. 41-G) | `1.1.1.01 Banco` | `1.1.2.04` | `payment.dispute.won` |
+| MED: notificação rejeitada ou devolução cancelada (art. 41-G; Manual §20.1.7 e §20.1.9) | `1.1.1.01 Banco` | `1.1.2.04` | `payment.dispute.won` |
+| Chargeback com cobertura do MP (`coverage_applied`) | `1.1.1.01 Banco` | `1.1.2.04` | `payment.dispute.won` |
 
 **Contrato esboçado.**
 
@@ -352,9 +441,12 @@ model PaymentDispute {
   salePaymentId String?    // ou
   receivableReceiptId String?
   collectionChargeId String?
-  providerRef String?      // id da disputa/devolução no provedor
+  providerRef String?      // id da disputa no provedor (MP: chargebacks[].id / case_id; MED: id da Recuperação de Valores)
   amountCents BigInt       // ≤ valor do pagamento; múltiplas parciais permitidas (art. 41-D par. único) até o total
-  openedAt DateTime; contestDeadline DateTime? // MED: aviso + 30 dias (art. 41-G); chargeback: do contrato
+  openedAt DateTime
+  contestDeadline DateTime? // MED: devolução + 80 dias (Manual DICT §20.1.9); chargeback MP: date_documentation_deadline
+  coverageApplied Boolean @default(false) // MP coverage_applied — o provedor absorve a perda
+  documentationSentAt DateTime? // MP aceita documentação uma vez por caso
   status String            // OPEN | WON | LOST | CANCELLED
   resolution String?       // REOPEN_TITLE | WRITE_OFF (só em LOST)
   openEntryId String?; closeEntryId String?
@@ -381,11 +473,12 @@ salão sem o F-VR-0 (M5).
   `Dunning Type` traz `dunning_fee`, `rate_of_interest`, texto da carta e `income_account`
   (<https://github.com/frappe/erpnext/blob/version-15/erpnext/accounts/doctype/dunning_type/dunning_type.json#L34-L76>).
   O pagamento resolve a cobrança sozinho (`update_dunnings_linked_to_payment`, `dunning.py#L285-L294`).
-- Odoo 18 — `account_followup` é **Enterprise**: o arquivo não existe no repositório Community 18.0 (HTTP 404 em
-  22/10). A referência aberta é a OCA `account_credit_control`: política com níveis, cada nível com `delay_days`,
-  `computation_mode` e `channel`
-  (<https://github.com/OCA/credit-control/blob/17.0/account_credit_control/models/credit_control_policy.py#L292-L323>).
-  **Grau I sobre a 18.0:** não havia esse arquivo no branch 18.0 em 22/10, então li o 17.0.
+- Odoo 18 — `account_followup` é **Enterprise**: `addons/account_followup` não existe no `odoo/odoo` 18.0 (API do
+  GitHub: 404 em 22/10). A referência aberta é a OCA `account_credit_control` **18.0**: política com níveis, cada
+  nível com `delay_days`, `computation_mode` e `channel`
+  (<https://github.com/OCA/credit-control/blob/18.0/account_credit_control/models/credit_control_policy.py#L292-L323>;
+  mesmas linhas no 17.0). O mesmo repositório traz `account_invoice_overdue_reminder` (lembrete simples) e
+  `account_financial_risk` (bloqueio de venda por risco), ambos 18.0.
 
 **Desenho proposto.**
 
@@ -402,7 +495,17 @@ salão sem o F-VR-0 (M5).
    CNPJ do salão (art. 42-A).
 6. **Inadimplência visível:** flag por cliente (maior atraso, saldo vencido) lida pela venda e pelo CRM **por consulta**,
    nunca por plugin do motor (Contrato §2.1).
-7. **Baixa por perda** fecha a régua (F-VR-14).
+7. **Baixa por perda** fecha a régua (F-VR-14). No **Lucro Real**, a dedução segue a Lei 9.430 [D10] (cópia compilada,
+   sem alerta). Para inadimplência a partir de 07/10/2014 (§7º), sem garantia, o crédito pode ser registrado como perda:
+   - até R$ 15 mil por operação, vencido há mais de 6 meses;
+   - de R$ 15 mil a R$ 100 mil, vencido há mais de 1 ano, **"mantida a cobrança administrativa"**;
+   - acima de R$ 100 mil, só com ação judicial.
+
+   Venda parcelada com vencimento antecipado de todas as parcelas soma o total por operação (§2º). Não há perda com
+   sócio, administrador ou parente até o 3º grau (§6º). O lançamento é débito em conta de resultado e crédito na conta
+   do crédito (art. 10). O crédito recuperado volta ao lucro real (art. 12). **O histórico de `CollectionEvent` é a prova
+   da "cobrança administrativa mantida"**, e é por isso que a baixa mora na régua. Fora do Lucro Real (Presumido,
+   Simples), a perda não muda o imposto: o gate fiscal vale só quando `FiscalProfile.regime = REAL`.
 
 **Lançamentos (D/C):** a régua em si **não lança**. Ela só gera evento. Os lançamentos aparecem no recebimento e na
 perda:
@@ -452,7 +555,9 @@ receber (AP do salão) e às vezes deve ao salão (produto comprado, adiantament
 
 **Regra legal.** Só entre dívidas líquidas, vencidas e fungíveis de quem é credor e devedor ao mesmo tempo [D02]
 arts. 368–369. Não vale contra direito de terceiro, como crédito penhorado [D02] art. 380. No Simples pelo regime de
-caixa, **não está decidido** se a compensação conta como recebimento na data (ambiguidade C → P-VR-3).
+caixa, **não está decidido** se a compensação conta como recebimento na data (ambiguidade C → P-VR-3). A dúvida **só
+existe para 2026**: o regime de caixa do Simples acaba em 01/01/2027 (Res. CGSN 190/2026, dossiê
+`simples-regime-caixa` item 6). Como este item é o 6º da ordem, o P-VR-3 provavelmente perde objeto antes do código.
 
 **Desenho proposto.**
 
@@ -523,9 +628,9 @@ Todos com **status: RATIFICAÇÃO PENDENTE**. Responder no chat "F-VR-0 a, F-VR-
 | **F-VR-11** | O produto suporta reter o sinal (no-show)? | (a) sim, só com cláusula registrada no agendamento/venda · (b) só devolução | **(a)**, desligado por padrão: CC arts. 418 I e 420 [D02] permitem com contrato. Conta de receita e efeito fiscal = P-VR-4. |
 | **F-VR-12** | Canal da régua na v1 | (a) e-mail (`EMAIL-TRANSPORT`) + tarefa manual · (b) WhatsApp junto | **(a)**: WhatsApp já é gatilho na proposta §4/F2. Depende da **Q7** (BYOK). |
 | **F-VR-13** | Quando reconhecer multa e juros | (a) no recebimento · (b) provisão mensal por competência | **(a)**: no varejo de serviço a mora é muitas vezes perdoada. Provisionar cria receita que vira estorno. *Sob o regime de competência pleno o contador pode preferir (b): P-VR-2.* |
-| **F-VR-14** | Baixa por perda | (a) na régua, com `ar.writeoff` em `4.5` (nova) · (b) só manual no AR | **(a)**: fecha o ciclo da cobrança. Dedutibilidade no Lucro Real (Lei 9.430 art. 9º) = P-VR-7. |
+| **F-VR-14** | Baixa por perda | (a) na régua, com `ar.writeoff` em `4.5` (nova) e, no Lucro Real, gate dos limites do art. 9º §7º da Lei 9.430 · (b) só manual no AR | **(a)**: fecha o ciclo da cobrança, e o histórico da régua é a prova da "cobrança administrativa mantida" que o art. 9º §7º II b exige [D10]. |
 | **F-VR-15** | Compensação: vínculo e disparo | (a) `CounterpartyLink` 1↔1 sugerido por `taxId` + compensação **explícita** (OCA) · (b) automática a cada título (ERPNext common party) | **(a)**: a compensação extingue obrigação (CC 368); automática no salão-parceiro misturaria repasse e dívida sem o operador ver. |
-| **F-VR-16** | Quando lançar chargeback e MED | (a) na abertura (débito ou bloqueio), reclassificando para `1.1.2.04` · (b) só no desfecho | **(a)**: o dinheiro sai ou fica bloqueado na abertura (art. 41-D II [D06]). Lançar só no fim é o "caixa mostra dinheiro que voltou" de hoje. |
+| **F-VR-16** | Quando lançar chargeback e MED | (a) na abertura (débito ou bloqueio), reclassificando para `1.1.2.04` · (b) só no desfecho | **(a)**: o dinheiro sai ou fica bloqueado na abertura. Vale para o MED (art. 41-D II [D06]; Manual §20.1.4 [D09]) e para o chargeback no MP ("remains on hold", doc do MP). Lançar só no fim é o "caixa mostra dinheiro que voltou" de hoje. |
 | **F-VR-17** | Perdeu a disputa: o que acontece com o título | (a) estorna o recibo (T5) e reabre o título, que volta à régua · (b) cria título novo | **(a)**: o recibo `CANCELLED` + estorno já existe (M8). Título novo duplicaria o histórico do cliente. |
 | **F-VR-18** | Reembolso voluntário depois de pago | (a) lado receita no `DEVOLUCAO-VENDA` (Q12), lado dinheiro aqui · (b) tudo aqui | **(a)**: a sessão irmã de devolução cuida de `3.2`, CMV e pacote. Dividir pelo lado evita dois donos para o mesmo lançamento. |
 | **F-VR-19** | Onde ficam sinal e compensação na régua F | (a) sinal no `PAGAMENTO-MISTO`; compensação e adiantamento a fornecedor no `TESOURARIA` · (b) como na proposta (tudo no `TESOURARIA`) · (c) nós próprios | **(a)**: o sinal é o crédito do cliente. A compensação mexe em AP, que é tesouraria. |
@@ -541,30 +646,34 @@ Todos com **status: RATIFICAÇÃO PENDENTE**. Responder no chat "F-VR-0 a, F-VR-
 |---|---|---|---|
 | P-VR-1 | Multa de 2% em parcela **sem juros** (ambiguidade A do dossiê) | O caput do CDC art. 52 fala em "outorga de crédito ou concessão de financiamento". Leitura segura: 2% para todo cliente PF. | Advogado: "Em venda de serviço a consumidor parcelada sem juros, a multa por atraso de parcela pode passar de 2%?" |
 | P-VR-2 | Juros de mora convencionados com PF (ambiguidade B) | A Lei de Usura vale para PJ × PF (Lei 14.905 art. 3º só exclui PJ × PJ e afins): teto = 2 × taxa legal [D05] art. 1º, e a taxa legal muda todo mês (Selic − IPCA). Leitura segura: taxa legal por padrão. | Advogado: "Salão com cliente PF: posso cobrar 1% a.m. de mora fixo, ou fico limitado a 2 × (Selic − IPCA) do mês?" Contador: "Juros e multa por competência ou no recebimento?" |
-| P-VR-3 | Compensação AP × AR no Simples pelo caixa e no IBS/CBS (ambiguidade C) | Compensar extingue as duas obrigações sem passar dinheiro. Nenhuma norma lida diz se isso é "recebimento" na data. | Contador: "No Simples pelo regime de caixa, o valor compensado entre o que o parceiro me deve e o que eu devo a ele entra na receita do mês da compensação?" |
+| P-VR-3 | Compensação AP × AR no Simples pelo caixa (ambiguidade C) — **só 2026** | Compensar extingue as duas obrigações sem passar dinheiro. Nenhuma norma lida diz se isso é "recebimento" na data. O caixa do Simples acaba em 01/01/2027 (Res. CGSN 190/2026), então a pergunta só vale para compensação feita em 2026. | Contador, só se a compensação for implementada ainda em 2026: "No Simples pelo regime de caixa, o valor compensado entre o que o parceiro me deve e o que eu devo a ele entra na receita do mês da compensação?" |
 | P-VR-4 | Sinal retido em no-show: conta e tributo | Receita de serviço (base de ISS/Simples) ou indenização (arras com função indenizatória, CC 420)? | Contador: "Sinal retido por falta do cliente é receita de serviço ou outra receita? Entra no DAS?" |
-| P-VR-5 | Antecipação de IBS/CBS sobre sinal e crédito do cliente; validade do crédito | A proposta cita LC 214 art. 10 §4º para pacote pré-pago, mas não foi lida neste dossiê (a LC 214 do acervo é só a promulgação dos vetos). Validade de crédito monetário do consumidor não foi pesquisada. | Ir pelo dossiê do `IBS-CBS-2027` antes do BRIEF do item 3. |
-| P-VR-6 | Chargeback ou MED perdido na base do DAS no caixa | Devolução de dinheiro sem devolução de serviço: o recebimento "volta"? | Contador: "Venda recebida em setembro com chargeback perdido em outubro: abato da receita de outubro no Simples pelo caixa?" |
-| P-VR-7 | Perda com crédito dedutível no Lucro Real | A proposta cita a Lei 9.430 art. 9º, mas ela não foi lida neste dossiê. | Ler pelo método oficial antes do BRIEF do item 5. |
+| P-VR-5 | (a) Exceção de 5 dias da antecipação de IBS/CBS no sinal; (b) crédito do cliente **sem** serviço definido é "pagamento antes do fornecimento"?; (c) validade do crédito monetário | **Lido:** a regra geral da antecipação ([D11] LC 214 art. 10 §§4º–7º, red. LC 227/2026; [D13] Dec. 12.955 art. 11 §§5º–6º). **Aberto:** (a) o regulamento da exceção de 5 dias não está no texto original do Decreto 12.955, e a compilada não foi conferida; (b) o excedente de um Pix a maior não se refere a fornecimento definido; (c) não pesquisado. | (a) conferir a compilada do Dec. 12.955 no dossiê do `IBS-CBS-2027`; (b) contador: "Crédito do cliente gerado por pagamento a maior, sem serviço agendado, sofre antecipação de IBS/CBS?" |
+| P-VR-6 | Chargeback ou MED perdido na base do DAS no caixa — **só 2026** | **Lido:** no caixa, devolução e cancelamento deduzem "o valor efetivamente devolvido ao adquirente" (Res. 140 arts. 17 p.ú. e 18 §1º, revogados a partir de 2027). **Aberto:** se chargeback e MED (dinheiro volta sem o serviço ser desfeito) são "devolução" para esse fim. | Contador: "Venda recebida em setembro/2026 com chargeback perdido em novembro/2026: abato o valor da receita de novembro no Simples pelo caixa?" |
+| ~~P-VR-7~~ | ~~Perda com crédito dedutível no Lucro Real~~ | **Resolvido em 22/10:** Lei 9.430 arts. 9º–12 [D10] lidos (limites do §7º, §2º, §6º, art. 10 e art. 12). Entrou na §7 e no F-VR-14. | — |
 | P-VR-8 | Contas novas no plano referencial (`2.1.1.02`, `1.1.2.04`, `4.5`) | Toda conta nova precisa de mapeamento referencial na ECD. Códigos são proposta: o BRIEF confere colisão no `ChartOfAccountsFixture` e no binding. | Contador: validar a natureza e o referencial das três contas. |
 
 ## 12. Insumos ausentes
 
-- **I-1:** o motor DynamicTable suporta tabela filha (linhas da condição de pagamento) por relação ou só por campo JSON?
-  Não li o tipo de campo. O BRIEF do item 1 lê `ISchemaField` antes de fixar o esboço da §3.
-- **I-2:** como o modal Nova Venda (`SalesCreateModal`/`useSalesCreateForm`) grava hoje `paymentMethod`/`paymentStatus`
-  na criação já paga (`create` → `maybeSyncSaleSettled`). O FE é nó vizinho; o BRIEF de FE do item 2 lê.
-- **I-3:** Manual Operacional do DICT (prazos de bloqueio e devolução do MED). O regulamento remete a ele (art. 41-E).
-- **I-4:** o formato com que o MP informa MED (status próprio ou só `refunded`). O mapa atual tem `charged_back/*` e
-  `refunded` (M10), e não há status de mediação. Ler a doc do MP antes do BRIEF do item 4.
+- ~~I-1~~ **Resolvido:** o motor faz tabela filha por `relation` (M16). As linhas da condição são preset filho.
+- ~~I-2~~ **Resolvido:** o modal cria sempre `Pending`, com um meio, e paga depois pelo `SalePaymentModal` com um meio
+  (M17). O FE do item 2 troca esse modal por uma lista de pagamentos. A criação já paga (`create` →
+  `maybeSyncSaleSettled`) só acontece por API ou importação, não pelo modal.
+- ~~I-3~~ **Resolvido:** Manual Operacional do DICT v8.5 lido ([D09], IN BCB 766/2026 [D07]); prazos na §6.
+- **I-4 (parcial):** a doc pública do MP cobre chargeback (webhook, sub-status, prazo de documentação, cobertura),
+  mas **não descreve como o MED aparece** na Orders API (status próprio, `refunded` ou só no relatório de liberação).
+  O F7 já lê o relatório de liberação (`DESCRIPTION` = refund/chargeback, ADR F5 L376). Para fechar, há duas saídas:
+  (a) uma venda Pix real com MED no ambiente do M2, ou (b) perguntar ao suporte do MP. Isso não bloqueia o BRIEF: o
+  `PaymentDispute` aceita criação manual.
 
 ## 13. Achados fora de escopo (registrados, não planejados)
 
 - **E-1 — Venda do salão não pode ser cobrada pelo MP hoje (M7).** O FE do F5 (fila B6) só alcança títulos avulsos e do
   CRM. Isso muda o valor do `executa` do F5 FE para o salão. Vale a pena o dono saber antes da Q4.
 - **E-2 — Status do `CollectionCharge` sem efeito (M10)** já é dívida de correção hoje, sem esperar este PRE-ADR: um
-  título avulso pago por Pix MP e depois estornado continua `RECEIVED`. Candidato a `sessao-instrumentacao` (teste que
-  falha) se o dono quiser antes do item 4.
+  título avulso pago por Pix MP e depois estornado continua `RECEIVED`. O mapa também junta `charged_back/in_process`,
+  `/settled` e `/reimbursed` (M18), então até o status perde se o vendedor ganhou ou perdeu. Candidato a
+  `sessao-instrumentacao` (teste que falha) se o dono quiser antes do item 4.
 - **E-3 — Fechamento de caixa/PDV** (sangria, suprimento, conferência com o troco da §4) segue no `TESOURARIA`.
 
 ## 14. Gates que cada BRIEF vai acionar (entram no checklist, não ficam para o implementador)
@@ -606,10 +715,18 @@ Todos com **status: RATIFICAÇÃO PENDENTE**. Responder no chat "F-VR-0 a, F-VR-
   §5 (Q4, Q6, Q7, Q10–Q12); `docs/adr/ADR-PERSISTENCE-BOUNDARY-user-designed-vs-law-designed.md`;
   `docs/adr/ADR-INCR-AR-accounts-receivable.md:42-48`; `docs/adr/ADR-INCR-PAYMENT-PROVIDER-COLLECTION.md:376`.
 - Referências (código-fonte lido em 22/10/2026; os números de linha valem para os branches naquela data): Odoo 18.0
-  (`account_payment_term.py`, `pos_payment.py`, `pos_order.py`, `account_payment.py`); OCA `account_netting` 18.0,
-  `account_credit_control` 17.0; ERPNext version-15 (`payment_schedule.json`, `accounts_controller.py`, `dunning.py`,
-  `dunning_type.json`, `party_link.py`, `payment_entry.py`, `advance_payment_ledger_entry.json`, `pos_invoice.py`).
-  **Não lido:** `odoo/addons/account/models/account_move.py` (HTTP 429), `account_followup` (Enterprise).
+  (`account_payment_term.py`, `account_move.py`, `account_payment.py`, `payment_transaction.py`, `pos_payment.py`,
+  `pos_order.py`); OCA 18.0 (`account_netting`, `account_credit_control`) e `connector-shopify` 19.0 (`payout_sync.py`);
+  ERPNext version-15 (`payment_schedule.json`, `accounts_controller.py`, `dunning.py`, `dunning_type.json`,
+  `party_link.py`, `payment_entry.py`, `advance_payment_ledger_entry.json`, `pos_invoice.py`). Busca de código no
+  GitHub por "chargeback" em `odoo/odoo`, `frappe/erpnext` e `org:OCA` (22/10). `account_followup` é Enterprise: não
+  existe no repositório público (404).
+- Mercado Pago (doc oficial, `mercadopago.com.br/developers/pt/docs/checkout-api-orders/...`, lida em 22/10):
+  `payment-management/chargebacks.md`, `.../chargebacks/management.md`, `.../chargebacks/notifications.md`,
+  `.../status/order-status.md`, `.../status/transaction-status.md`.
 - Legal: [`pesquisas-legais/venda-recebivel/relatorio.md`](../../pesquisas-legais/venda-recebivel/relatorio.md) — D01
-  CDC, D02 CC, D03 Lei 14.905/2024, D04 Lei 13.455/2017 (acervo ctresb/leis); D05 Dec. 22.626/1933 (planalto.gov.br);
-  D06 Regulamento do Pix, Res. BCB 1/2020 v.43 (bcb.gov.br).
+  CDC, D02 CC, D03 Lei 14.905/2024, D04 Lei 13.455/2017, D10 Lei 9.430/1996, D13 Dec. 12.955/2026 (acervo
+  ctresb/leis); D05 Dec. 22.626/1933, D11 LC 214/2025 compilada (com LC 227/2026), D12 Lei 13.455 compilada
+  (planalto.gov.br); D06 Regulamento do Pix, Res. BCB 1/2020 v.43, D07 IN BCB 766/2026, D08 Guia MED, D09 Manual
+  Operacional do DICT v8.5 (bcb.gov.br). Dossiê vizinho:
+  [`simples-regime-caixa`](../../pesquisas-legais/simples-regime-caixa/relatorio.md) (Res. CGSN 140 e 190/2026).
