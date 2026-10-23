@@ -109,7 +109,8 @@ describe('ReconciliationPanel — Mercado Pago', () => {
 
   const cases: Array<[string, number, string, RegExp]> = [
     ['release_report_no_payment_account', 409, 'release_report_no_payment_account: folha sem conta', /não tem conta Mercado Pago; cadastre na aba Cobrança/],
-    ['release_report_overlap', 400, 'release_report_overlap: SOURCE_ID 111, 222 já importados', /SOURCE_ID 111, 222 já importados Nada foi importado\./],
+    // Formato real do BE (verificado no build de produção 23/10): ValidationError ⇒ code VALIDATION_ERROR; a mensagem já diz "nada foi importado".
+    ['VALIDATION_ERROR', 400, 'release_report_overlap: 1 SOURCE_ID já importado(s) para esta conta Mercado Pago — nada foi importado.', /^release_report_overlap: 1 SOURCE_ID já importado\(s\) para esta conta Mercado Pago — nada foi importado\.$/],
     ['VALIDATION_ERROR', 400, 'Colunas ausentes: SOURCE_ID', /^Colunas ausentes: SOURCE_ID$/],
   ];
   for (const [code, status, message, expected] of cases) {

@@ -922,8 +922,7 @@
       "format": "Format",
       "formatAuto": "Detect from content",
       "formatMpRelease": "Mercado Pago release report",
-      "mpNoPaymentAccount": "This GL account has no Mercado Pago account; register one in the Collections tab.",
-      "mpNothingImported": "Nothing was imported."
+      "mpNoPaymentAccount": "This GL account has no Mercado Pago account; register one in the Collections tab."
     },
     "statements": {
       "loading": "Loading statements…",

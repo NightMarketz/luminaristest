@@ -413,10 +413,11 @@ function StatementsSubView({ unitId, glAccountId, accountLabel, onLedgerChange }
       if (status === 413) setError(t('reconciliation.import.tooLarge', 'Arquivo muito grande.'));
       else if (code === 'release_report_no_payment_account') {
         setError(t('reconciliation.import.mpNoPaymentAccount', 'Esta conta contábil não tem conta Mercado Pago; cadastre na aba Cobrança.'));
-      } else if (code === 'release_report_overlap') {
-        // F-PPB-4 (a): a mensagem do BE lista os SOURCE_ID repetidos — verbatim.
-        setError(`${message} ${t('reconciliation.import.mpNothingImported', 'Nada foi importado.')}`);
-      } else setError(message);
+      } else {
+        // `release_report_overlap` (F-PPB-4 a) chega como VALIDATION_ERROR com `details.code`; a mensagem do BE já diz
+        // "nada foi importado" — vai verbatim, como as colunas ausentes (P3-3).
+        setError(message);
+      }
     } finally {
       setUploading(false);
     }

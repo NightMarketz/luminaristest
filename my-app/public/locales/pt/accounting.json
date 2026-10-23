@@ -922,8 +922,7 @@
       "format": "Formato",
       "formatAuto": "Detectar pelo conteúdo",
       "formatMpRelease": "Relatório de liberações do Mercado Pago",
-      "mpNoPaymentAccount": "Esta conta contábil não tem conta Mercado Pago; cadastre na aba Cobrança.",
-      "mpNothingImported": "Nada foi importado."
+      "mpNoPaymentAccount": "Esta conta contábil não tem conta Mercado Pago; cadastre na aba Cobrança."
     },
     "statements": {
       "loading": "Carregando extratos…",
