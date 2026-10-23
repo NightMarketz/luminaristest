@@ -1,5 +1,6 @@
 import { dateOnlyFromDayNumber, dayNumberFromDateOnly } from './dates';
-import { aplicarAliquota } from './profitDistribution';
+import { aplicarAliquota, ehDiaUtil } from './profitDistribution';
+import type { LinhaLegal } from '../../legalParameters/models/legalParameter';
 
 /**
  * BE-INCR-IRRF-DISTRIBUICAO PR-3 (BRIEF itens 22–26) — regras puras do JCP. IN 1.700 art. 75 [D11]: juros limitados à
@@ -134,4 +135,29 @@ export function lalurPrevisto(
     else if (totalCents > limiteCents) out.push({ livro, codigo: codigos.adicaoExcesso, valorCents: totalCents - limiteCents });
   }
   return out;
+}
+
+/** Item 31 (L16) — DARF do IRRF sobre JCP a residente: 5706 (MAFON 2025 [D14]). */
+export const CODIGO_RECEITA_JCP = '5706';
+
+/** Decêndio do dia: 1 (1–10), 2 (11–20) ou 3 (21–fim). */
+export function decendioDe(dia: string): 1 | 2 | 3 {
+  const d = Number(dia.slice(8, 10));
+  return d <= 10 ? 1 : d <= 20 ? 2 : 3;
+}
+
+/**
+ * Item 31 (L13) — vencimento do IRRF do JCP: 3º dia útil subsequente ao decêndio de ocorrência do fato gerador (Lei
+ * 11.196 art. 70 I b 1 [D10]). Dia útil = seg–sex fora da tabela `FERIADO_NACIONAL`.
+ */
+export function vencimentoIrrfJcp(dataCredito: string, feriados: readonly LinhaLegal[]): string {
+  const dec = decendioDe(dataCredito);
+  const fim = dec === 1 ? `${dataCredito.slice(0, 8)}10` : dec === 2 ? `${dataCredito.slice(0, 8)}20` : `${dataCredito.slice(0, 8)}${String(diasDoMes(dataCredito)).padStart(2, '0')}`;
+  let n = dayNumberFromDateOnly(fim);
+  let uteis = 0;
+  while (uteis < 3) {
+    n += 1;
+    if (ehDiaUtil(dateOnlyFromDayNumber(n), feriados)) uteis += 1;
+  }
+  return dateOnlyFromDayNumber(n);
 }

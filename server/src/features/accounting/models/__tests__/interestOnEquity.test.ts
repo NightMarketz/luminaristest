@@ -4,7 +4,8 @@
  */
 import { JcpPreviewInputSchema } from '../../dtos/InterestOnEquityDto';
 import { codigosJcp } from '../../services/InterestOnEquityService';
-import { chaveTjlp, faixasJcp, irrfJcp, lalurPrevisto, limiteDedutivel, rateioPorParticipacao } from '../interestOnEquity';
+import { legalParamsSeedRows } from '@test/helpers/legalParams';
+import { chaveTjlp, faixasJcp, irrfJcp, lalurPrevisto, limiteDedutivel, rateioPorParticipacao, vencimentoIrrfJcp } from '../interestOnEquity';
 
 const TJLP_T01 = 7658; // 0,7658% ao mês (L17)
 
@@ -72,6 +73,18 @@ describe('item 29 — Parte A prevista (quatro combinações) e códigos do cat�
       { exclusao: '166.03', adicaoExcesso: '20' },
       { exclusao: '166.03', adicaoExcesso: '20' },
     ]);
+  });
+});
+
+describe('item 31 (L13) — vencimento do IRRF do JCP: 3º dia útil depois do decêndio', () => {
+  const feriados = legalParamsSeedRows();
+  it.each([
+    ['2026-03-05', '2026-03-13'], // 1º decêndio fecha 10/03 (ter) → qua, qui, sex
+    ['2026-03-15', '2026-03-25'], // 2º fecha 20/03 (sex) → seg, ter, qua
+    ['2026-03-25', '2026-04-03'], // 3º fecha 31/03 (ter) → qua, qui, sex
+    ['2026-04-15', '2026-04-24'], // 2º fecha 20/04 (seg); 21/04 é feriado nacional → qua, qui, sex
+  ])('crédito em %s → %s', (dataCredito, vencimento) => {
+    expect(vencimentoIrrfJcp(dataCredito, feriados)).toBe(vencimento);
   });
 });
 

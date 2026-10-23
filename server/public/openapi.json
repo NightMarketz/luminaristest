@@ -12929,6 +12929,284 @@
         }
       }
     },
+    "/api/accounting/jcp": {
+      "post": {
+        "summary": "Confirm interest on equity (JCP), post it and record the e-Lalur/e-Lacs Part A adjustments",
+        "description": "Body = the preview body + previaSha256 returned by the preview. The calculation is redone inside the transaction: a different hash → 409 PREVIA_DESATUALIZADA; another live JCP in the period → 409 JCP_JA_CONFIRMADO_NO_PERIODO. Then posts (DESPESA: D JCP expense / C JCP payable net / C IRRF payable; PL: D the chosen equity account instead of the expense) and records the system Part A lines (PL: exclusion of min(total, limit); DESPESA: addition of the excess). If posting fails the calculation stays PENDING_POST (reconcile in /{id}/lancamento). Closed period → ACCOUNTING_PERIOD_NOT_OPEN and nothing is saved.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/JcpPreviewInput"
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "previaSha256"
+                    ],
+                    "properties": {
+                      "previaSha256": {
+                        "type": "string",
+                        "description": "sha256 hex returned by /jcp/preview"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "JcpView (status POSTED or PENDING_POST, entryId, lalurEntryIds, alocacoes)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "409": {
+            "description": "PREVIA_DESATUALIZADA or JCP_JA_CONFIRMADO_NO_PERIODO"
+          },
+          "422": {
+            "description": "ACCOUNTING_PERIOD_NOT_OPEN"
+          }
+        }
+      }
+    },
+    "/api/accounting/jcp/irrf": {
+      "get": {
+        "summary": "Monthly DARF 5706 summary of the IRRF on interest on equity, one DARF per ten-day period of the credit",
+        "description": "Due date = 3rd business day after the ten-day period of the credit date (Law 11.196 art. 70 I b 1).",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "competencia",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "2026-03"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ competencia, codigoReceita: 5706, totalCents, darfs: [{ decendio, vencimento, totalCents, calculos }] }"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/accounting/jcp/{id}": {
+      "get": {
+        "summary": "Read one confirmed JCP calculation",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JcpView"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/api/accounting/jcp/{id}/lancamento": {
+      "post": {
+        "summary": "Reconcile the journal entry and the Part A lines of a JCP calculation (idempotent)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JcpView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "description": "ACCOUNTING_PERIOD_NOT_OPEN"
+          }
+        }
+      }
+    },
+    "/api/accounting/jcp/{id}/cancel": {
+      "post": {
+        "summary": "Cancel a JCP calculation — reverses the entry and archives the system Part A lines",
+        "description": "A JCP already paid (any debit in the JCP payable account dated on or after the credit date, other than its own entry and reversal) → 409 JCP_JA_PAGO.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JcpView (CANCELLED)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "description": "JCP_JA_PAGO or JCP_NAO_POSTADO"
+          },
+          "422": {
+            "description": "ACCOUNTING_PERIOD_NOT_OPEN"
+          }
+        }
+      }
+    },
     "/api/accounting/policy-versions": {
       "post": {
         "summary": "O dono propõe mudança de parâmetro governado (BE-INCR-ACCOUNTING-POLICY-VERSION, F-POL-3 a)",

@@ -62,6 +62,7 @@ model User {
   companySigners             CompanySigner[] // X13 (F-OBP-9 a) — representante legal / signatários não-contador
   partners                   Partner[] // IRRF-DISTRIBUICAO PR-1 (F-IRD-2, F-IRD-14) — sócios beneficiários da distribuição
   profitDistributionEvents   ProfitDistributionEvent[] // IRRF-DISTRIBUICAO PR-2 (BRIEF item 10)
+  interestOnEquityCalculations InterestOnEquityCalculation[] // IRRF-DISTRIBUICAO PR-4 (BRIEF item 27)
   taxAssessments             TaxAssessment[] // BE-INCR-TAX-ASSESSMENT Fase A (nó X7, item 12) — apuração IRPJ/CSLL da PJ
   consumptionTaxAssessments  ConsumptionTaxAssessment[] // IBS-CBS-2027 PR-2 (item 8) — apuração mensal de IBS/CBS
   mitExports                 MitExport[] // BE-INCR-MIT-EXPORT PR-2 (nó X9, item 11) — arquivos do MIT gerados
@@ -1816,6 +1817,7 @@ model Partner {
   updatedAt       DateTime  @updatedAt
   deletedAt       DateTime?
   profitDistributionEvents ProfitDistributionEvent[]
+  interestOnEquityAllocations InterestOnEquityAllocation[]
 
   @@index([userId, taxId])
   @@map("partners")
@@ -1863,6 +1865,66 @@ model ProfitDistributionEvent {
   @@index([userId, partnerId, competencia])
   @@index([userId, taxId, competencia])
   @@map("profit_distribution_events")
+}
+
+// BE-INCR-IRRF-DISTRIBUICAO PR-4 (BRIEF itens 27–31; F-IRD-11, F-IRD-17; lacunas L-IRD-4/5/6) — JCP confirmado: um cálculo
+// vivo por (PJ, ano, período), com rename-on-cancel em `vivoKey` ('VIVO' → o próprio id; memória "@@unique de
+// idempotência × soft-delete"). Lançamento em 2 commits + CAS (`entryId`) + reconcile; a Parte A do e-Lalur/e-Lacs
+// (linhas `system`) entra num 3º commit com o CAS de `lalurEntryIds`. `memoria` = faixas, limites e avisos da prévia.
+model InterestOnEquityCalculation {
+  id                    String                       @id @default(cuid())
+  userId                String // a PJ
+  user                  User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId                String // unidade do lançamento e do razão lido
+  anoCalendario         Int
+  periodo               String // T01..T04 | A00 (F-IRD-17)
+  dataCredito           String // YYYY-MM-DD
+  forma                 String // DESPESA | PL (F-IRD-11)
+  debitoAccountId       String // a conta debitada: despesa de JCP (DESPESA) ou a conta de PL escolhida (PL)
+  memoria               Json
+  jurosMaxTjlpCents     BigInt
+  limite50LucroCents    BigInt
+  limite50ReservasCents BigInt
+  limiteDedutivelCents  BigInt
+  totalCents            BigInt
+  irrfCents             BigInt
+  liquidoCents          BigInt
+  excessoCents          BigInt
+  parametrosIds         Json
+  parametrosSha256      String
+  previaSha256          String
+  status                String // PENDING_POST | POSTED | CANCELLED
+  vivoKey               String // 'VIVO' enquanto vivo; o id depois de cancelado (libera o @@unique)
+  entryId               String?
+  lalurEntryIds         Json? // null = Parte A ainda não gravada; [] = nada a gravar
+  cancelledAt           DateTime?
+  cancelledById         String?
+  createdById           String?
+  createdAt             DateTime                     @default(now())
+  updatedAt             DateTime                     @updatedAt
+  deletedAt             DateTime?
+  alocacoes             InterestOnEquityAllocation[]
+
+  @@unique([userId, anoCalendario, periodo, vivoKey])
+  @@index([userId, dataCredito])
+  @@map("interest_on_equity_calculations")
+}
+
+// BE-INCR-IRRF-DISTRIBUICAO PR-4 (item 27) — a parte de cada sócio no JCP: bruto, IRRF de 17,5% e líquido.
+model InterestOnEquityAllocation {
+  id             String                      @id @default(cuid())
+  calculationId  String
+  calculation    InterestOnEquityCalculation @relation(fields: [calculationId], references: [id], onDelete: Restrict)
+  partnerId      String
+  partner        Partner                     @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+  participacaoBp Int
+  brutoCents     BigInt
+  irrfCents      BigInt
+  liquidoCents   BigInt
+  createdAt      DateTime                    @default(now())
+
+  @@index([calculationId])
+  @@map("interest_on_equity_allocations")
 }
 
 // X13 (F-OBP-9 a) — signatário da empresa que NÃO é o contador (sócio/administrador, responsável legal). O contador
