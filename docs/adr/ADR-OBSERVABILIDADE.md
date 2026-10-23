@@ -1,9 +1,11 @@
 # ADR-OBSERVABILIDADE — Política definitiva de observabilidade do server
 
 - **Data:** 2026-10-23
-- **Status:** **Proposed**. As regras OBS-R1..R14 viram política no dia em que os forks F-OBS-10..17 (§7)
-  forem ratificados. As regras que só reescrevem os forks F-OBS-0..9, já ratificados, valem desde já, e cada
-  uma está marcada com ✔.
+- **Status:** **Accepted 2026-10-23 (dono, chat, questionário)**. Forks F-OBS-10..17 (§7) ratificados, todos
+  pela recomendada (a): F-OBS-10 ✔ · F-OBS-11 ✔ · F-OBS-12 ✔ · F-OBS-13 ✔ · F-OBS-14 ✔ · F-OBS-15 ✔ · F-OBS-16 ✔
+  · F-OBS-17 ✔. Cédula: `docs/plano/decisoes/D-2026-10-23-OBSERVABILIDADE-FORKS-2.md`. F-OBS-13 e F-OBS-14 são
+  exceções explícitas à regra ⛔ do `CLAUDE.md` raiz, registradas lá. As regras OBS-R1..R14 são política desde
+  esta data; as marcadas com ✔ já valiam pelos forks F-OBS-0..9.
 - **Classe:** DECISÃO ARQUITETURAL (política cross-cutting do backend)
 - **Autorização:** dono, chat, 23/10/2026: *"Precisamos de mais estrutura, pq essa vai ser a politica
   definitiva"*. No questionário do mesmo turno, o dono marcou as 4 opções:
@@ -269,7 +271,7 @@ export async function outboundFetch(
 `lib/outboundHttp.ts` são novos); `skill-audit` (itens 8–9 tocam `.claude/skills/**`); suíte unitária e de
 integração (os nomes de `event` mudam nos testes de scheduler). Nenhum DTO de rota, rota ou migração é tocado.
 
-## 7. Forks — RATIFICAÇÃO PENDENTE
+## 7. Forks — RATIFICADOS em 23/10/2026, todos pela recomendada
 
 **F-OBS-10: alcance do catálogo.**
 - (a) Só as linhas dos 6 portões.
@@ -277,7 +279,7 @@ integração (os nomes de `event` mudam nos testes de scheduler). Nenhum DTO de 
 - (c) Sem catálogo.
 
 **Recomendo (a).** Os portões são onde alguém vai filtrar e alertar. (b) obriga a nomear 477 mensagens que
-ninguém consulta por nome. (c) mantém os 13 valores soltos de A2. **Status: PENDENTE.**
+ninguém consulta por nome. (c) mantém os 13 valores soltos de A2. **Status: RATIFICADO (a), 23/10/2026.**
 
 **F-OBS-11: forma da API.**
 - (a) `logger.event(level, event, message, ctx)` para os portões; `info`/`warn`/`error` seguem para o resto;
@@ -286,7 +288,7 @@ ninguém consulta por nome. (c) mantém os 13 valores soltos de A2. **Status: PE
 - (c) Métodos por evento (`logger.jobFailed(…)`).
 
 **Recomendo (a).** O tipo do `event` é checado pelo `tsc`, e as 477 chamadas não mudam. (b) perde a
-mensagem legível. (c) cria uma API larga demais para manter. **Status: PENDENTE.**
+mensagem legível. (c) cria uma API larga demais para manter. **Status: RATIFICADO (a), 23/10/2026.**
 
 **F-OBS-12: registrar uma vez, na borda (OBS-R5).**
 - (a) Regra para código novo; legado não varrido.
@@ -295,7 +297,7 @@ mensagem legível. (c) cria uma API larga demais para manter. **Status: PENDENTE
 
 **Recomendo (a).** A linha duplicada (service registra, controller registra de novo) é o ruído típico.
 Mas varrer 138 chamadas sem produção para dizer quais duplicam seria trabalho às cegas. A regra vale para a
-geração nova pelas skills (item 9). **Status: PENDENTE.**
+geração nova pelas skills (item 9). **Status: RATIFICADO (a), 23/10/2026.**
 
 **F-OBS-13: gate de `catch` silencioso (OBS-R8).**
 - (a) ESLint `no-empty` + `no-restricted-syntax` para `.catch` silencioso, com os 5 casos justificados no
@@ -305,21 +307,21 @@ geração nova pelas skills (item 9). **Status: PENDENTE.**
 
 **Recomendo (a).** É lint, no job que já roda, com ledger que já existe (A7). (b) daria falso positivo em
 boa parte dos 777 `catch` e seria código de gate novo para manter. **Ressalva ⛔:** é gate novo. Pede a
-mesma exceção explícita do F-OBS-8 (`CLAUDE.md`, linha de exceções). **Status: PENDENTE.**
+mesma exceção explícita do F-OBS-8 (`CLAUDE.md`, linha de exceções). **Status: RATIFICADO (a), 23/10/2026.** Exceção ⛔ aprovada pelo dono no mesmo questionário e registrada no `CLAUDE.md`.
 
 **F-OBS-14: gate de scheduler sem alerta (OBS-R11).**
 - (a) O teste de falha descobre `jobs/*Scheduler.ts` por glob e reprova arquivo sem caso.
 - (b) Só a regra na skill.
 
 **Recomendo (a).** É um teste na suíte que já roda, não uma rodada ou bancada. Fecha o furo de a tabela
-de #869 ser fixa. **Ressalva ⛔:** como F-OBS-13. **Status: PENDENTE.**
+de #869 ser fixa. **Ressalva ⛔:** como F-OBS-13. **Status: RATIFICADO (a), 23/10/2026.** Exceção ⛔ aprovada pelo dono no mesmo questionário e registrada no `CLAUDE.md`.
 
 **F-OBS-15: migrar os valores de `event` existentes.**
 - (a) Migrar os 15 arquivos agora (§4).
 - (b) Só o código novo usa o catálogo.
 
 **Recomendo (a).** São 15 arquivos e 13 valores. Sem a migração, o catálogo convive com o vocabulário velho
-e o filtro por `job.failed` perde as falhas antigas. O `AlertPayload.event` fica intacto. **Status: PENDENTE.**
+e o filtro por `job.failed` perde as falhas antigas. O `AlertPayload.event` fica intacto. **Status: RATIFICADO (a), 23/10/2026.**
 
 **F-OBS-16: wrapper de integração (OBS-R10).**
 - (a) `lib/outboundHttp.ts` adotado nos 4 `fetch` de A4 (menos o webhook).
@@ -327,14 +329,14 @@ e o filtro por `job.failed` perde as falhas antigas. O `AlertPayload.event` fica
 - (c) Nada.
 
 **Recomendo (a).** É o único portão (P5) que a Fase A não cobriu, e "cobrir tudo" foi o pedido de origem.
-**Status: PENDENTE.**
+**Status: RATIFICADO (a), 23/10/2026.**
 
 **F-OBS-17: onde a política mora.**
 - (a) Este ADR é a fonte; o contrato §2.4 traz o checklist e o link; as skills apontam para o contrato.
 - (b) Tudo dentro do contrato, sem ADR.
 
 **Recomendo (a).** Segue o desenho de `ADR-ARCH-BOUNDARIES` (decisão no ADR, checklist no contrato) e
-mantém o contrato curto. **Status: PENDENTE.**
+mantém o contrato curto. **Status: RATIFICADO (a), 23/10/2026.**
 
 ## 8. O que este ADR deliberadamente não faz
 

@@ -50,7 +50,9 @@ gate, nem rodada, nem mais um revisor. O gargalo é PVA / NF-e real / contador /
 `docs/operating-manual/CLAUDE-RAIZ-DETALHE.md`).
 Exceção ratificada (dono, 2026-10-13): o gate estático de fronteiras `check:arch` (`ADR-ARCH-BOUNDARIES.md` §4) —
 lê o código como o `tsc`; não reabre bancada, rodada nem revisor. Idem (dono, 2026-10-23, F-OBS-8 de
-`PRE-ADR-OBSERVABILIDADE.md`): `no-console` no ESLint do server, no job de lint que já roda.
+`PRE-ADR-OBSERVABILIDADE.md`): `no-console` no ESLint do server, no job de lint que já roda. Idem (dono,
+2026-10-23, F-OBS-13/14 de `ADR-OBSERVABILIDADE.md`): `catch` silencioso no ESLint do server (com o ledger de
+dívida que já existe) e o teste que descobre `jobs/*Scheduler.ts` e reprova scheduler sem caso de alerta.
 
 **Citação a `docs/audit/**` em comentário de teste, ADR ou doc é HISTÓRICA** — o caminho não existe
 mais; use `git show b617d8f1:<caminho>` se precisar.

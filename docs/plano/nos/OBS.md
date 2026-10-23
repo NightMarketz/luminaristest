@@ -4,9 +4,9 @@ tipo: "plataforma"
 dominio: "plataforma"
 titulo: "Observabilidade do server pelos 6 portões: contexto por requisição, 4xx×5xx, redação de PII, alertas dos jobs (Fase A) e registro de acesso do Marco Civil (Fase B, Onda 0)"
 estado: "planned"
-estado_detalhe: "23/10: PRE-ADR-OBSERVABILIDADE Accepted, forks F-OBS-0..9 RATIFICADOS, todos pela recomendada ([[D-2026-10-23-OBSERVABILIDADE-FORKS]]). Sem fork pendente. O §5 do PRE-ADR é o checklist: 10 itens na Fase A e 5 na Fase B. A Fase A espera o 'executa'; a Fase B espera a Onda 0 (host, que decide F-OBS-4 e confirma F-OBS-5/6)"
-depende_de: ["[[D-2026-10-23-OBSERVABILIDADE-FORKS]]"]
-autorizacao: "dono, chat, 2026-10-23: \"Planeja e mapeia se há uma forma de cobrir tudo, temos que ter um brief para não se perder depois\" + \"Pode ratificar tudo\" — PRE-ADR e forks; sem 'executa'"
+estado_detalhe: "23/10: ADR-OBSERVABILIDADE Accepted, forks F-OBS-10..17 RATIFICADOS, todos pela recomendada ([[D-2026-10-23-OBSERVABILIDADE-FORKS-2]]); Fase C (§6 itens 1–11, com o 7b) autorizada para execução em 4 PRs empilhados, sem merge · 23/10: PRE-ADR-OBSERVABILIDADE Accepted, forks F-OBS-0..9 RATIFICADOS, todos pela recomendada ([[D-2026-10-23-OBSERVABILIDADE-FORKS]]). Sem fork pendente. O §5 do PRE-ADR é o checklist: 10 itens na Fase A e 5 na Fase B. A Fase A espera o 'executa'; a Fase B espera a Onda 0 (host, que decide F-OBS-4 e confirma F-OBS-5/6)"
+depende_de: ["[[D-2026-10-23-OBSERVABILIDADE-FORKS]]", "[[D-2026-10-23-OBSERVABILIDADE-FORKS-2]]"]
+autorizacao: "dono, chat, 2026-10-23: \"Planeja e mapeia se há uma forma de cobrir tudo, temos que ter um brief para não se perder depois\" + \"Pode ratificar tudo\" — PRE-ADR e forks; sem 'executa' · dono, chat, 2026-10-23: \"Sessão de execução do nó OBS até o fim da Fase C. Autorizo, em sequência: (1) ratificar os forks F-OBS-10..17 do ADR-OBSERVABILIDADE por questionário comigo; (2) depois da ratificação, EXECUTAR a Fase C inteira (itens 1–11 do ADR-OBSERVABILIDADE §6, incluindo o 7b), seguindo as respostas que eu der, mesmo que alguma não seja a recomendada. Não autorizo merge. A Fase B (F-OBS-4/5/6) fica de fora: depende da Onda 0.\" — forks F-OBS-10..17 e Fase C; sem merge"
 ancora_sdd: "§14 · §19"
 atualizado: "2026-10-23"
 prs: ["#867"]
@@ -60,9 +60,9 @@ API sai sem contexto, 5 de 6 jobs não alertam e não existe registro de acesso 
 
 - [`PRE-ADR-OBSERVABILIDADE.md`](../../adr/PRE-ADR-OBSERVABILIDADE.md): mapa dos 6 portões, fatos medidos, checklist em
   2 fases, contratos e forks ratificados.
-- [`ADR-OBSERVABILIDADE.md`](../../adr/ADR-OBSERVABILIDADE.md) — **política definitiva (Proposed, 23/10)**: regras OBS-R1..R14, catálogo de
+- [`ADR-OBSERVABILIDADE.md`](../../adr/ADR-OBSERVABILIDADE.md) — **política definitiva (Accepted, 23/10)**: regras OBS-R1..R14, catálogo de
   eventos, `LogEntrySchema`, gates de `catch` silencioso e de scheduler sem alerta, propagação ao contrato e às skills
-  (Fase C, itens 1–11), forks F-OBS-10..17 PENDENTES. Pedido do dono, chat, 23/10: "Precisamos de mais estrutura, pq essa
+  (Fase C, itens 1–11), forks F-OBS-10..17 ratificados ([[D-2026-10-23-OBSERVABILIDADE-FORKS-2]]). Pedido do dono, chat, 23/10: "Precisamos de mais estrutura, pq essa
   vai ser a politica definitiva".
 - [`pesquisas-legais/marco-civil-guarda-registros`](../../../pesquisas-legais/marco-civil-guarda-registros/relatorio.md):
   Lei 12.965 art. 15 e Dec. 8.771 arts. 13, 15 e 15-A (redação de 2026).
