@@ -7546,6 +7546,232 @@
       "additionalProperties": false
     }
   },
+  "InterestOnEquityDto.ts": {
+    "JcpPreviewInputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "anoCalendario": {
+          "type": "integer",
+          "minimum": 2026,
+          "maximum": 9007199254740991
+        },
+        "periodo": {
+          "type": "string",
+          "enum": [
+            "T01",
+            "T02",
+            "T03",
+            "T04",
+            "A00"
+          ]
+        },
+        "dataCredito": {
+          "type": "string"
+        },
+        "forma": {
+          "type": "string",
+          "enum": [
+            "DESPESA",
+            "PL"
+          ]
+        },
+        "totalCents": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "debitoPlAccountId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rateio": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "partnerId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "brutoCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              }
+            },
+            "required": [
+              "partnerId",
+              "brutoCents"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "unitId",
+        "anoCalendario",
+        "periodo",
+        "dataCredito",
+        "forma",
+        "totalCents"
+      ],
+      "additionalProperties": false
+    },
+    "JcpPreviewView": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "faixas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "de": {
+                "type": "string"
+              },
+              "ate": {
+                "type": "string"
+              },
+              "baseCents": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "taxaDiaria": {
+                "type": "string"
+              },
+              "jurosCents": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "de",
+              "ate",
+              "baseCents",
+              "taxaDiaria",
+              "jurosCents"
+            ]
+          }
+        },
+        "jurosMaxTjlpCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "limite50LucroCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "limite50ReservasCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "limiteDedutivelCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "excessoIndedutivelCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "alocacoes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "partnerId": {
+                "type": "string"
+              },
+              "participacaoBp": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "brutoCents": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "irrfCents": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "liquidoCents": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "partnerId",
+              "participacaoBp",
+              "brutoCents",
+              "irrfCents",
+              "liquidoCents"
+            ]
+          }
+        },
+        "lalurPrevisto": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "livro": {
+                "type": "string",
+                "enum": [
+                  "lalur",
+                  "lacs"
+                ]
+              },
+              "codigo": {
+                "type": "string"
+              },
+              "valorCents": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "livro",
+              "codigo",
+              "valorCents"
+            ]
+          }
+        },
+        "avisos": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "faixas",
+        "jurosMaxTjlpCents",
+        "limite50LucroCents",
+        "limite50ReservasCents",
+        "limiteDedutivelCents",
+        "excessoIndedutivelCents",
+        "alocacoes",
+        "lalurPrevisto",
+        "avisos"
+      ]
+    }
+  },
   "InventoryDto.ts": {
     "ReceiveStockSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
