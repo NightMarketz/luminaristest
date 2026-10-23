@@ -162,7 +162,7 @@ describe('ExportRequestSchema — listas fechadas', () => {
             ? { accountCode: '1.1.1' }
             : kind === 'EXPORT_TEMPLATE'
               ? { templateKind: 'IMPORT_CHART_OF_ACCOUNTS' as const }
-              : kind === 'EXPORT_BANK_RECONCILIATION' || kind === 'EXPORT_TAX_ASSESSMENT_MEMO' || kind === 'EXPORT_ISS_BY_COMPETENCE'
+              : kind === 'EXPORT_BANK_RECONCILIATION' || kind === 'EXPORT_TAX_ASSESSMENT_MEMO' || kind === 'EXPORT_ISS_BY_COMPETENCE' || kind === 'EXPORT_IBS_CBS_MEMO'
                 ? { periodStart: '2026-01-01', periodEnd: '2026-01-31' }
                 : kind === 'EXPORT_ENTRY_SAMPLE'
                   ? { periodStart: '2026-01-01', periodEnd: '2026-01-31', seed: 'seed-1' }
@@ -391,5 +391,15 @@ describe('ExportRequestSchema — EXPORT_ISS_BY_COMPETENCE (X7 Fase C PR-2)', ()
     const parsed = ExportRequestSchema.safeParse({ ...iss, ...extra });
     expect(parsed.success).toBe(false);
     if (!parsed.success) expect(parsed.error.issues.some((i) => i.path[0] === campo)).toBe(true);
+  });
+});
+
+// IBS-CBS-2027 PR-5 (BRIEF item 24): memória das apurações de IBS/CBS — janela obrigatória, como o molde do X7.
+describe('ExportRequestSchema — EXPORT_IBS_CBS_MEMO (IBS-CBS-2027 PR-5)', () => {
+  it('aceita o kind com a janela; sem janela ⇒ issue em periodStart', () => {
+    expect(ExportRequestSchema.safeParse({ ...base, kind: 'EXPORT_IBS_CBS_MEMO', periodStart: '2027-01-01', periodEnd: '2027-12-31' }).success).toBe(true);
+    const parsed = ExportRequestSchema.safeParse({ ...base, kind: 'EXPORT_IBS_CBS_MEMO' });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) expect(parsed.error.issues.some((i) => i.path[0] === 'periodStart')).toBe(true);
   });
 });

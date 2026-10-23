@@ -38,6 +38,8 @@ export const EXPORT_KINDS = [
   // ISS por competência × município (X7 Fase C, C2 — BRIEF item 17, F-TC-7 b: kind de export, sem rota nova).
   // Mesma coluna String ⇒ zero migration.
   'EXPORT_ISS_BY_COMPETENCE',
+  // Memória das apurações mensais de IBS/CBS (IBS-CBS-2027 PR-5, BRIEF item 24). Mesma coluna String ⇒ zero migration.
+  'EXPORT_IBS_CBS_MEMO',
 ] as const;
 
 export type ImportKind = (typeof IMPORT_KINDS)[number];

@@ -328,6 +328,11 @@ export interface BankStatement {
   sha256: string;
   attachmentId: string | null;
   importedById: string | null;
+  /**
+   * F5 PR-3 (G1): extrato `mp_release` de uma PaymentAccount; null = extrato bancário. Vem na lista porque o
+   * `findStatements` do BE não tem `select` (FE-INCR-PAYMENT-PROVIDER item 25; mesmo campo da EMENDA 1 do FEE item 11).
+   */
+  paymentAccountId: string | null;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
@@ -432,8 +437,11 @@ export interface ImportStatementParams {
   periodStart: string;
   periodEnd: string;
   statementRef?: string;
+  /** Proibidos quando `format = 'mp_release'` (G2: o BE dá 400 `release_report_balance_from_file`). */
   openingBalanceCents?: number;
   closingBalanceCents?: number;
+  /** G6: relatório de liberações do Mercado Pago. Ausente = detecção pelo conteúdo. */
+  format?: 'mp_release';
 }
 
 /** The standard server response envelope: { success, data }. */
@@ -907,6 +915,7 @@ export const accountingService = {
     if (params.closingBalanceCents !== undefined) {
       form.append('closingBalanceCents', String(params.closingBalanceCents));
     }
+    if (params.format) form.append('format', params.format);
     const response = await fetch(`${reconBaseUrl()}/accounting/reconciliation/statements`, {
       method: 'POST',
       headers: reconAuthHeaders(), // no Content-Type — browser sets the multipart boundary

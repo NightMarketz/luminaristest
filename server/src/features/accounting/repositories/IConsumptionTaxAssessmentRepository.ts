@@ -40,5 +40,9 @@ export interface IConsumptionTaxAssessmentRepository {
   findConfirmedFrom(ownerUserId: string, tributo: string, anoCalendario: number, mes: number, tx?: Prisma.TransactionClient): Promise<ConsumptionTaxAssessment[]>;
   /** `CONFIRMED` → `SUPERSEDED` com CAS no status; devolve quantas linhas mudaram. */
   markSuperseded(ownerUserId: string, ids: string[], tx: Prisma.TransactionClient): Promise<number>;
+  /** PR-5 item 24 (job de recálculo, plataforma): linhas vivas `CONFIRMED` do tributo de todas as PJs. */
+  findConfirmedByTributo(tributo: string): Promise<ConsumptionTaxAssessment[]>;
+  /** PR-5 item 24: grava o aviso de parâmetro legal na linha (dono 23/10: só aviso, sem reconfirmar). */
+  setAvisoParametroLegal(ownerUserId: string, id: string, aviso: string): Promise<void>;
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 }

@@ -2,7 +2,7 @@
  * BE-INCR-MIT-EXPORT PR-2 (nó X9, BRIEF itens 10–12, 15–17; testes 17 c, d, f) — geração e listagem do arquivo do MIT
  * ponta a ponta pelo HTTP. As apurações do X7 são gravadas direto no banco (o X9 só as LÊ; o cálculo é do X7 e tem
  * suíte própria). Os testes 17 (a), (b) e (e) da função pura estão em `src/lib/__tests__/mit.test.ts` (PR-1); aqui o
- * (e) volta só como 422 pela rota.
+ * (e) volta só como 422 pela rota. PR-4 (item 19): o Real anual em março lê também o `A00` do ano anterior.
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
@@ -122,6 +122,36 @@ describe('X9 PR-2 — arquivo do MIT: geração, registro, auditoria e defasagem
     const id = (await gerar(dono)).body.data.id as string;
     await prisma.taxAssessment.update({ where: { id: irpj.id }, data: { deletedAt: new Date() } });
     expect((await listar(dono)).body.data).toEqual([expect.objectContaining({ id, defasado: true })]);
+  });
+
+  it('PR-4 (item 19): Real anual em março lê o A00 do ano anterior (AnoDebito) e a defasagem o enxerga', async () => {
+    const dono = await novoDono('REAL', { formaApuracaoIrpjCsll: 'ANUAL', lucroRealObrigatorio: true });
+    const real = { regime: 'REAL', forma: 'ANUAL' };
+    const ajuste = await apuracao(dono, 'IRPJ', 'A00', 99900n, { ...real, anoCalendario: 2025, modo: 'AJUSTE_ANUAL', codigoReceita: '243001' });
+    await apuracao(dono, 'IRPJ', 'A03', 30000n, { ...real, modo: 'BALANCETE_SUSPENSAO_REDUCAO', codigoReceita: '236201' });
+    await apuracao(dono, 'CSLL', 'A03', 10800n, { ...real, modo: 'BALANCETE_SUSPENSAO_REDUCAO', codigoReceita: '248401' });
+
+    const res = await gerar(dono);
+    expect(res.status).toBe(201);
+    const arq = JSON.parse(res.body.data.conteudo);
+    expect(arq.DadosIniciais.TributacaoLucro).toBe(1);
+    expect(arq.Debitos.BalancoLucroReal).toBe(true);
+    expect(arq.Debitos.Irpj.ListaDebitos).toEqual([
+      { IdDebito: 1, CodigoDebito: '243001', AnoDebito: 2025, ValorDebito: 999 },
+      { IdDebito: 2, CodigoDebito: '236201', ValorDebito: 300 },
+    ]);
+    expect((await listar(dono)).body.data).toEqual([expect.objectContaining({ defasado: false })]);
+
+    await prisma.taxAssessment.update({ where: { id: ajuste.id }, data: { status: 'SUPERSEDED' } });
+    expect((await listar(dono)).body.data).toEqual([expect.objectContaining({ defasado: true })]);
+  });
+
+  it('PR-4 (F-MIT-2 a): Real anual sem estimativa/balancete do mês confirmado ⇒ 422', async () => {
+    const dono = await novoDono('REAL', { formaApuracaoIrpjCsll: 'ANUAL', lucroRealObrigatorio: true });
+    await apuracao(dono, 'IRPJ', 'A00', 100n, { regime: 'REAL', forma: 'ANUAL', anoCalendario: 2025, modo: 'AJUSTE_ANUAL', codigoReceita: '243001' });
+    const res = await gerar(dono);
+    expect(res.status).toBe(422);
+    expect(JSON.stringify(res.body)).toMatch(/Confirme a estimativa ou o balancete do mês/);
   });
 
   describe('17 (f) recusas, na ordem do item 10', () => {

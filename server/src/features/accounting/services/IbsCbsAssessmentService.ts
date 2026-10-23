@@ -25,6 +25,7 @@
  * do binding ativo da unidade (mesma fonte do RevenueRecognitionArchetype; porta `RevenueAccountsPort`, adaptada no
  * factory — accounting não importa accountingBinding); sem binding, as do plano padrão (3.1 serviço, 3.3 revenda).
  *   teste: ibsCbsProvision.integration.test.ts › "lacuna #826-2: unidade com receita em outra conta (binding ativo) ⇒ debita as contas dos papéis receita-serviço / receita-revenda, não 3.1/3.3"
+ * PR-5 (item 22): `resumo` lê a apuração confirmada e chama a função pura `resumoIbsCbs` (lib/ibsCbsApuracao.ts) — sem escrita.
  */
 import type { CompanyFiscalProfile, ConsumptionTaxAssessment, Prisma } from 'generated/prisma';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
@@ -48,13 +49,16 @@ import type { LegalParameterService } from '../../legalParameters/services/Legal
 import { parametrosUsados, type ParametrosUsados } from '../../legalParameters/models/legalParameter';
 import {
   IBS_CBS_ANTES_DE_2027,
+  IbsCbsResumoSchema,
   MemoriaIbsCbsSchema,
+  type IbsCbsResumo,
   type IbsCbsAssessmentConfirmInput,
   type IbsCbsAssessmentListQuery,
   type IbsCbsAssessmentPreviewInput,
 } from '../dtos/IbsCbsAssessmentDto';
 import { apurarIbsCbsMes, type IbsCbsDocumento, type ResultadoIbsCbs } from '../models/ibsCbsCompetencia';
-import { tabelaIbsCbsDe, tabelaProvisoriaCbsDe } from '../models/ibsCbsParams';
+import { tabelaIbsCbsDe, tabelaProvisoriaCbsDe, vencimentoIbsCbsDe, type TributoConsumo } from '../models/ibsCbsParams';
+import { resumoIbsCbs } from '../../../lib/ibsCbsApuracao';
 import { fimDoMes } from '../models/taxAssessmentCalcAnual';
 import { mesBounds } from '../models/Lalur.model';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
@@ -93,6 +97,9 @@ export interface IbsCbsAssessmentView extends Omit<IbsCbsPreviewView, 'documento
   avisoParametroLegal: string | null;
   confirmedAt: string;
 }
+
+/** PR-5 item 22 — `IbsCbsResumo` com os centavos em string (JSON). */
+export type IbsCbsResumoView = Omit<IbsCbsResumo, 'saldoARecolherCents'> & { saldoARecolherCents: string };
 
 export interface IbsCbsConfirmView {
   assessment: IbsCbsAssessmentView;
@@ -148,6 +155,33 @@ export class IbsCbsAssessmentService {
     const perfil = await this.companyProfileRepo.findByYear(scope, q.anoCalendario);
     if (perfil) assertRegime(perfil.regime);
     return (await this.repo.findMany(scope.ownerUserId, q.anoCalendario)).map(toView);
+  }
+
+  /**
+   * PR-5 item 22 — resumo de uma apuração: saldo a recolher (saldo − split extinto, nunca negativo), vencimento pela linha
+   * `IBS_CBS/<tributo>/VENCIMENTO` (sem linha publicada ⇒ `null` + aviso, não 400) e memória. Feriados = os do município da
+   * unidade da apuração (dono, 23/10: no lugar do domicílio da matriz). Simples/MEI ⇒ 400 (item 10).
+   */
+  async resumo(scope: AccountingScope, id: string): Promise<IbsCbsResumoView> {
+    this.assertRead(scope);
+    const row = await this.repo.findById(scope.ownerUserId, id);
+    if (!row) throw new NotFoundError(`Apuração de IBS/CBS '${id}' não encontrada.`);
+    const perfil = await this.companyProfileRepo.findByYear(scope, row.anoCalendario);
+    if (perfil) assertRegime(perfil.regime);
+    const tributo = row.tributo as TributoConsumo;
+    const [linhas, fp] = await Promise.all([
+      this.legalParams.fotografia(['IBS_CBS', 'FERIADO_NACIONAL', 'FERIADO_LOCAL']),
+      this.fiscalProfileRepo.findByScope({ ...scope, unitId: row.unitId }),
+    ]);
+    const r = IbsCbsResumoSchema.parse(
+      resumoIbsCbs({
+        apuracao: { id: row.id, tributo, anoCalendario: row.anoCalendario, mes: row.mes, saldoCents: row.saldoCents, memoria: MemoriaIbsCbsSchema.parse(row.memoria), avisoParametroLegal: row.avisoParametroLegal },
+        vencimento: vencimentoIbsCbsDe(linhas, tributo, `${row.anoCalendario}-${mm(row.mes)}`),
+        feriados: linhas,
+        codMun: fp?.codMun ?? null,
+      }),
+    );
+    return { ...r, saldoARecolherCents: r.saldoARecolherCents.toString() };
   }
 
   /** Item 9 — confirmação (commit único); a reclassificação do item 12 vem depois, em 2 commits. */

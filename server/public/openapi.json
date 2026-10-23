@@ -599,7 +599,8 @@
                 "EXPORT_BANK_RECONCILIATION",
                 "EXPORT_ENTRY_SAMPLE",
                 "EXPORT_TAX_ASSESSMENT_MEMO",
-                "EXPORT_ISS_BY_COMPETENCE"
+                "EXPORT_ISS_BY_COMPETENCE",
+                "EXPORT_IBS_CBS_MEMO"
               ]
             },
             "description": "Kinds que a UI pré-marca no build — SUGESTÃO, não gate (C6b PR-3, F-C6b-2 a)"
@@ -8976,7 +8977,8 @@
                       "EXPORT_BANK_RECONCILIATION",
                       "EXPORT_ENTRY_SAMPLE",
                       "EXPORT_TAX_ASSESSMENT_MEMO",
-                      "EXPORT_ISS_BY_COMPETENCE"
+                      "EXPORT_ISS_BY_COMPETENCE",
+                      "EXPORT_IBS_CBS_MEMO"
                     ]
                   },
                   "format": {
@@ -8999,7 +9001,7 @@
                   },
                   "periodStart": {
                     "type": "string",
-                    "description": "YYYY-MM-DD — EXPORT_GENERAL_LEDGER (optional; window), EXPORT_BANK_RECONCILIATION, EXPORT_ENTRY_SAMPLE, EXPORT_TAX_ASSESSMENT_MEMO and EXPORT_ISS_BY_COMPETENCE (all REQUIRED) only (400 for any other kind). Must be given together with periodEnd (never just one — 400 otherwise)"
+                    "description": "YYYY-MM-DD — EXPORT_GENERAL_LEDGER (optional; window), EXPORT_BANK_RECONCILIATION, EXPORT_ENTRY_SAMPLE, EXPORT_TAX_ASSESSMENT_MEMO, EXPORT_ISS_BY_COMPETENCE and EXPORT_IBS_CBS_MEMO (all REQUIRED) only (400 for any other kind). Must be given together with periodEnd (never just one — 400 otherwise)"
                   },
                   "periodEnd": {
                     "type": "string",
@@ -11620,6 +11622,55 @@
         "responses": {
           "200": {
             "description": "IbsCbsAssessmentView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      }
+    },
+    "/api/accounting/ibs-cbs-assessments/{id}/resumo": {
+      "get": {
+        "summary": "Amount due and due date of an IBS or CBS assessment (IBS-CBS-2027 PR-5, item 22)",
+        "description": "saldoARecolherCents = saldoCents − split extinto (SPLIT_EXTINCAO_n; Decreto 12.955 art. 44 § 3º), nunca negativo (≤ 0 ⇒ 0 com aviso SALDO_CREDOR ou SPLIT_EXCEDENTE). vencimento pela linha IBS_CBS/<tributo>/VENCIMENTO: CBS = último dia útil do mês seguinte (Decreto 12.955 art. 45; sábado, domingo e feriados do município da unidade); sem linha publicada (IBS, P-IBS-5) ⇒ null + aviso VENCIMENTO_NAO_PUBLICADO, não 400. Só leitura; a guia não é emitida (R5). 400 para SIMPLES/MEI.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "IbsCbsResumo (id, tributo, anoCalendario, mes, saldoARecolherCents, vencimento, avisos, memoria)"
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"

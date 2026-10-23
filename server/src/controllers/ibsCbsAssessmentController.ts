@@ -70,3 +70,17 @@ export const reconcileIbsCbsProvisao = async (req: Request, res: Response) => {
     return handleApiError(error, res);
   }
 };
+
+/** GET /api/accounting/ibs-cbs-assessments/:id/resumo?unitId= — saldo a recolher, vencimento e memória (PR-5 item 22). */
+export const getIbsCbsResumo = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const q = IbsCbsAssessmentScopeQuerySchema.safeParse(req.query);
+    if (!q.success) return bad(res, q.error.flatten());
+    const data = await getFactory().getIbsCbsAssessmentService().resumo(await getFactory().getAccountingScopeResolver().resolve(user, q.data.unitId, { access: 'read' }), req.params.id);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};

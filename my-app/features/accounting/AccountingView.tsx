@@ -13,6 +13,7 @@ import { BalanceSheetPanel } from './components/BalanceSheetPanel';
 import { IncomeStatementPanel } from './components/IncomeStatementPanel';
 import { ImportExportPanel } from './components/ImportExportPanel';
 import { ReconciliationPanel } from './components/ReconciliationPanel';
+import { PaymentProviderPanel } from './components/PaymentProviderPanel';
 import { NfePanel } from './components/NfePanel';
 import { CompliancePanel } from './components/CompliancePanel';
 import { SpedGenerationPanel } from './components/SpedGenerationPanel';
@@ -48,7 +49,7 @@ import { PolicyVersionsPanel } from './governance/PolicyVersionsPanel';
 import { AccountingActivationBanner } from './components/AccountingActivationBanner';
 import { ReconcilePendingPanel } from './components/ReconcilePendingPanel';
 
-export type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'nfe' | 'compliance' | 'dimensoes' | 'imobilizado' | 'perfil-fiscal' | 'parametros-legais' | 'politica' | 'apuracao' | 'pendencias';
+export type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'cobranca' | 'nfe' | 'compliance' | 'dimensoes' | 'imobilizado' | 'perfil-fiscal' | 'parametros-legais' | 'politica' | 'apuracao' | 'pendencias';
 
 // label = i18n fallback (current pt-BR); rendered via t(`view.tabs.<id>`, label)
 export const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
@@ -92,6 +93,9 @@ export const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
   // BE-INCR-ONBOARDING-ACTIVATION item 18 (I5 PR-3, F-I5-4 a): pendências do reconcile da unidade, com "Re-varrer".
   // Fora do `DELEGATED_TABS` (o modo cliente não a vê até alguém decidir).
   { id: 'pendencias',     labelKey: 'view.tabs.pendencias',     label: 'Pendências' },
+  // FE-INCR-PAYMENT-PROVIDER (F-FE-COB-1 a, dono 13/10): conta do provedor (Mercado Pago) — serve à cobrança (AR) E ao
+  // relatório de liberações (Conciliação), por isso aba própria. Fora do `DELEGATED_TABS`.
+  { id: 'cobranca',       labelKey: 'view.tabs.cobranca',       label: 'Cobrança' },
 ];
 
 /**
@@ -161,6 +165,10 @@ export function AccountingView() {
   useEffect(() => { if (activeTab !== 'imobilizado') setFixedAssetsSection('bens'); }, [activeTab]);
   // Ano em que o enquadramento MEI abre — o atalho da aba Apuração aponta o ano (FE-INCR-SIMPLES item 8).
   const [meiAno, setMeiAno] = useState<number | undefined>(undefined);
+  // Folha em que a Conciliação abre — o atalho "Ver extratos e baixas" da aba Cobrança (FE-INCR-PAYMENT-PROVIDER
+  // item 24). Volta a `undefined` (primeira folha) ao sair da aba.
+  const [reconGlAccountId, setReconGlAccountId] = useState<string | undefined>(undefined);
+  useEffect(() => { if (activeTab !== 'conciliacao') setReconGlAccountId(undefined); }, [activeTab]);
   const visibleTabs = governance ? TABS.filter((tab) => DELEGATED_TABS.includes(tab.id)) : TABS;
 
   function switchContext(next: string) {
@@ -398,6 +406,7 @@ export function AccountingView() {
           onLedgerChange={reload}
           onNavigateToPeriods={() => setActiveTab('periodos')}
           onNavigateToCounterparties={() => setActiveTab('contrapartes')}
+          onNavigateToCobranca={() => setActiveTab('cobranca')}
           // F-AGING-5(b): mesmo SEED de uso único do lado de Contas a Receber.
           initialFilters={
             pendingCounterpartyFilter?.target === 'contas-a-receber'
@@ -480,7 +489,19 @@ export function AccountingView() {
 
       {/* ── Conciliação bancária tab ───────────────────────────────────────── */}
       {activeTab === 'conciliacao' && unitId && (
-        <ReconciliationPanel unitId={unitId} onLedgerChange={reload} />
+        <ReconciliationPanel key={reconGlAccountId ?? 'first'} unitId={unitId} onLedgerChange={reload} initialGlAccountId={reconGlAccountId} />
+      )}
+
+      {/* ── Cobrança (conta do provedor de pagamento) tab — FE-INCR-PAYMENT-PROVIDER PR-1 ── */}
+      {activeTab === 'cobranca' && unitId && (
+        <PaymentProviderPanel
+          key={unitId}
+          unitId={unitId}
+          onOpenReconciliation={(glAccountId) => {
+            setReconGlAccountId(glAccountId);
+            setActiveTab('conciliacao');
+          }}
+        />
       )}
 
       {/* ── NF-e (compra → AP + estoque; venda → proveniência) tab — FE-INCR-NFE ─── */}

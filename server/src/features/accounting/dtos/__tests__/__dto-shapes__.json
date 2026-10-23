@@ -366,7 +366,8 @@
               "EXPORT_BANK_RECONCILIATION",
               "EXPORT_ENTRY_SAMPLE",
               "EXPORT_TAX_ASSESSMENT_MEMO",
-              "EXPORT_ISS_BY_COMPETENCE"
+              "EXPORT_ISS_BY_COMPETENCE",
+              "EXPORT_IBS_CBS_MEMO"
             ]
           }
         }
@@ -3506,7 +3507,8 @@
             "EXPORT_BANK_RECONCILIATION",
             "EXPORT_ENTRY_SAMPLE",
             "EXPORT_TAX_ASSESSMENT_MEMO",
-            "EXPORT_ISS_BY_COMPETENCE"
+            "EXPORT_ISS_BY_COMPETENCE",
+            "EXPORT_IBS_CBS_MEMO"
           ]
         },
         "format": {
@@ -7462,6 +7464,85 @@
       },
       "required": [
         "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "IbsCbsResumoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "tributo": {
+          "type": "string",
+          "enum": [
+            "IBS",
+            "CBS"
+          ]
+        },
+        "anoCalendario": {
+          "type": "number"
+        },
+        "mes": {
+          "type": "number"
+        },
+        "saldoARecolherCents": {},
+        "vencimento": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "avisos": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "memoria": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "codigo": {
+                "type": "string"
+              },
+              "descricao": {
+                "type": "string"
+              },
+              "valorCents": {
+                "type": "string",
+                "pattern": "^-?\\d+$"
+              },
+              "fonte": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "codigo",
+              "descricao",
+              "valorCents",
+              "fonte"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "id",
+        "tributo",
+        "anoCalendario",
+        "mes",
+        "saldoARecolherCents",
+        "vencimento",
+        "avisos",
+        "memoria"
       ],
       "additionalProperties": false
     },

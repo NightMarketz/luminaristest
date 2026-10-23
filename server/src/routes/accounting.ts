@@ -201,7 +201,7 @@ import {
   getFiscalCertificate,
   putFiscalCertificate,
 } from '../controllers/fiscalCertificateController';
-import { confirmIbsCbsAssessment, listIbsCbsAssessments, previewIbsCbsAssessment, reconcileIbsCbsProvisao } from '../controllers/ibsCbsAssessmentController';
+import { confirmIbsCbsAssessment, getIbsCbsResumo, listIbsCbsAssessments, previewIbsCbsAssessment, reconcileIbsCbsProvisao } from '../controllers/ibsCbsAssessmentController';
 import { apropriarCreditoIbsCbs } from '../controllers/payableController';
 
 const router = Router();
@@ -465,6 +465,7 @@ router.post('/ibs-cbs-assessments/preview', previewIbsCbsAssessment);
 router.post('/ibs-cbs-assessments', confirmIbsCbsAssessment);
 router.get('/ibs-cbs-assessments', listIbsCbsAssessments);
 router.post('/ibs-cbs-assessments/:id/provisao', reconcileIbsCbsProvisao); // item 12: reconcile (dono 21/10)
+router.get('/ibs-cbs-assessments/:id/resumo', getIbsCbsResumo); // PR-5 item 22: saldo a recolher + vencimento
 // IBS-CBS-2027 PR-3 (item 16; F-IBS-12 a — caminho ratificado): apropriação do crédito de IBS/CBS de uma nota (serviço de AP).
 router.post('/payables/:id/ibs-cbs-credits/apropriar', apropriarCreditoIbsCbs);
 
