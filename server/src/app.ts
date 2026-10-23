@@ -14,6 +14,7 @@ import { httpTimingMiddleware } from './middleware/httpTiming';
 import { requestContextMiddleware } from './middleware/requestContext';
 import { handleApiError } from './lib/apiUtils';
 import { jsonBigintReplacer } from './lib/jsonBigintReplacer';
+import { outboundFetch } from './lib/outboundHttp';
 import prisma from './lib/prisma';
 
 /**
@@ -90,7 +91,7 @@ export function createApp(): express.Express {
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000);
-        const qdrantRes = await fetch(`${process.env.QDRANT_URL}/healthz`, { signal: controller.signal });
+        const qdrantRes = await outboundFetch('qdrant', `${process.env.QDRANT_URL}/healthz`, { signal: controller.signal });
         clearTimeout(timeoutId);
         checks.qdrant = qdrantRes.ok ? 'ok' : 'error';
       } catch {

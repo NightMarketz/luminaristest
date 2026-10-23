@@ -1,4 +1,5 @@
 import { isValidDateOnly } from '../../accounting/models/dates';
+import { outboundFetch } from '../../../lib/outboundHttp';
 import type { IPtaxClient } from '../ports/IPtaxClient';
 import {
   BcbPtaxResponseSchema,
@@ -24,7 +25,7 @@ export class PtaxClientError extends Error {
  * Endpoint `CotacaoMoedaPeriodo` da API Olinda (leitura sem autenticação). Pede o intervalo inteiro, sem `$filter`,
  * e fica **só** com o boletim de fechamento (`'Fechamento'` / `'Fechamento PTAX'`), recusando `Abertura`/`Intermediário`.
  * Datas `MM-DD-YYYY` na URL; `dataHoraCotacao` vem sem fuso e é hora de Brasília (UTC−3); cotação × 10⁵ com `Math.round`.
- * HTTP via `fetch` global + `AbortController` com timeout (precedente `app.ts:90`).
+ * HTTP via `outboundFetch` (portão P5, ADR-OBSERVABILIDADE OBS-R10) + `AbortController` com timeout (precedente `app.ts:90`).
  */
 export class BcbPtaxClient implements IPtaxClient {
   constructor(
@@ -42,7 +43,7 @@ export class BcbPtaxClient implements IPtaxClient {
     const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
     let body: unknown;
     try {
-      const res = await fetch(url, { headers: { Accept: 'application/json' }, signal: controller.signal });
+      const res = await outboundFetch('bcb_ptax', url, { headers: { Accept: 'application/json' }, signal: controller.signal });
       if (!res.ok) throw new PtaxClientError(`BCB PTAX respondeu ${res.status} para ${currency} ${fromDate}..${toDate}.`);
       body = await res.json();
     } catch (error) {
