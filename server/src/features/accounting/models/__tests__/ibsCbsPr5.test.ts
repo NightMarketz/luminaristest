@@ -65,9 +65,9 @@ describe('item 22 — vencimento e resumo', () => {
     expect(vencimentoIbsCbsDe(todas, 'CBS', '2026-12')).toBeNull();
   });
 
-  it('regra desconhecida na linha publicada ⇒ erro (não um vencimento inventado)', () => {
+  it('regra desconhecida na linha publicada ⇒ regra null com o id da linha (não um vencimento inventado; achado 2 do #861)', () => {
     const errada = todas.map((l) => (l.id === 'ibscbs-cbs-vencimento-2027' ? { ...l, valorTexto: 'DIA_20' } : l));
-    expect(() => vencimentoIbsCbsDe(errada, 'CBS', '2027-01')).toThrow(/regra desconhecida/);
+    expect(vencimentoIbsCbsDe(errada, 'CBS', '2027-01')).toEqual({ regra: null, linhaId: 'ibscbs-cbs-vencimento-2027', valor: 'DIA_20' });
   });
 
   it('último dia útil do mês seguinte: pula sábado, domingo e feriado do município; dezembro vira janeiro', () => {
@@ -80,7 +80,7 @@ describe('item 22 — vencimento e resumo', () => {
   });
 
   const apuracao = (over: Partial<ApuracaoParaResumo> = {}): ApuracaoParaResumo => ({
-    id: 'cta-1', tributo: 'CBS', anoCalendario: 2027, mes: 1, saldoCents: 1000n, avisoParametroLegal: null,
+    id: 'cta-1', tributo: 'CBS', anoCalendario: 2027, mes: 1, saldoCents: 1000n, avisoParametroLegal: null, substituida: false,
     memoria: [{ codigo: 'SALDO', descricao: 'saldo', valorCents: '1000', fonte: 'LC 214/2025 art. 45' }],
     ...over,
   });
@@ -121,7 +121,7 @@ describe('item 22 — vencimento e resumo', () => {
 
 describe('item 23 — porta EnvioApuracaoIbsCbs (adaptador nenhum, R5)', () => {
   it('o envio é montado do resumo, com período AAAA-MM e sha256 determinístico do corpo', () => {
-    const r = resumoIbsCbs({ apuracao: { id: 'cta-9', tributo: 'CBS', anoCalendario: 2027, mes: 3, saldoCents: 4200n, avisoParametroLegal: null, memoria: [] }, vencimento: vencimentoIbsCbsDe(todas, 'CBS', '2027-03'), feriados: todas, codMun: null });
+    const r = resumoIbsCbs({ apuracao: { id: 'cta-9', tributo: 'CBS', anoCalendario: 2027, mes: 3, saldoCents: 4200n, avisoParametroLegal: null, substituida: false, memoria: [] }, vencimento: vencimentoIbsCbsDe(todas, 'CBS', '2027-03'), feriados: todas, codMun: null });
     const e = montarEnvioApuracaoIbsCbs(r);
     expect(e).toMatchObject({ apuracaoId: 'cta-9', tributo: 'CBS', periodo: '2027-03', saldoARecolherCents: '4200', vencimento: '2027-04-30' });
     expect(e.sha256).toMatch(/^[0-9a-f]{64}$/);

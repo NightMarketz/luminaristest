@@ -66,17 +66,15 @@ export function parametroIbsCbsVigente(tabela: readonly ParametroIbsCbs[], tribu
 export const REGRAS_VENCIMENTO_IBS_CBS = ['ULTIMO_DIA_UTIL_MES_SEGUINTE'] as const;
 export type RegraVencimentoIbsCbs = (typeof REGRAS_VENCIMENTO_IBS_CBS)[number];
 
-export interface VencimentoIbsCbs {
-  regra: RegraVencimentoIbsCbs;
-  fonte: string;
-}
+/** `regra: null` = linha publicada com regra que o código não sabe ler (achado 2 do #861; dono 23/10: `null` + aviso, não 500). */
+export type VencimentoIbsCbs = { regra: RegraVencimentoIbsCbs; fonte: string } | { regra: null; linhaId: string; valor: string };
 
 /** A linha PUBLISHED vigente no 1º dia da competência (a de `vigenteDesde` mais recente); sem linha ⇒ `null` (aviso, não 400). */
 export function vencimentoIbsCbsDe(linhas: readonly LinhaLegal[], tributo: TributoConsumo, competencia: string): VencimentoIbsCbs | null {
   const vigente = linhaLegalVigente(linhas, 'IBS_CBS', tributo, `${competencia}-01`, 'VENCIMENTO');
   if (!vigente) return null;
   if (!(REGRAS_VENCIMENTO_IBS_CBS as readonly string[]).includes(vigente.valorTexto ?? '')) {
-    throw new Error(`ibsCbsParams: linha ${vigente.id} (${tributo}/VENCIMENTO) com regra desconhecida '${vigente.valorTexto ?? '∅'}'`);
+    return { regra: null, linhaId: vigente.id, valor: vigente.valorTexto ?? '∅' };
   }
   return { regra: vigente.valorTexto as RegraVencimentoIbsCbs, fonte: vigente.fonte };
 }

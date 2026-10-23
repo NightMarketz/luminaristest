@@ -175,7 +175,7 @@ export class IbsCbsAssessmentService {
     ]);
     const r = IbsCbsResumoSchema.parse(
       resumoIbsCbs({
-        apuracao: { id: row.id, tributo, anoCalendario: row.anoCalendario, mes: row.mes, saldoCents: row.saldoCents, memoria: MemoriaIbsCbsSchema.parse(row.memoria), avisoParametroLegal: row.avisoParametroLegal },
+        apuracao: { id: row.id, tributo, anoCalendario: row.anoCalendario, mes: row.mes, saldoCents: row.saldoCents, memoria: MemoriaIbsCbsSchema.parse(row.memoria), avisoParametroLegal: row.avisoParametroLegal, substituida: row.status === 'SUPERSEDED' },
         vencimento: vencimentoIbsCbsDe(linhas, tributo, `${row.anoCalendario}-${mm(row.mes)}`),
         feriados: linhas,
         codMun: fp?.codMun ?? null,
@@ -385,7 +385,8 @@ export class IbsCbsAssessmentService {
     const ate = fimDoMes(ano, mes);
     // Dono 22/10: a prévia também lê a taxa PROVISÓRIA da CBS; a confirmação não (a fotografia nem a carrega).
     const linhasLegais = await this.legalParams.fotografia(opts.taxaProvisoria ? ['IBS_CBS', 'IBS_CBS_PROVISORIA'] : ['IBS_CBS']);
-    const parametros = parametrosUsados(linhasLegais, de, ate);
+    // Achado 5 do #861: o vencimento é lido na hora pelo resumo, não entra no cálculo — fora do parametrosSha256.
+    const parametros = parametrosUsados(linhasLegais.filter((l) => !(l.tabela === 'IBS_CBS' && l.discriminador === 'VENCIMENTO')), de, ate);
     const tabela = tabelaIbsCbsDe(linhasLegais);
 
     const docs = await this.fiscalDocumentRepo.findForIbsCbs(scope, de, ate, AUTHORIZED_STATUSES);

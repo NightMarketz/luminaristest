@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { isValidDateOnly } from '../../accounting/models/dates';
 import { REGIMES_EMPRESA } from '../../accounting/models/regimeEmpresa';
-import { STATUS_OBRIGACAO } from '../../accounting/models/obrigacoesPorRegime';
+import { ORDEM_OBRIGACOES, STATUS_OBRIGACAO } from '../../accounting/models/obrigacoesPorRegime';
+import { REGRAS_VENCIMENTO_IBS_CBS } from '../../accounting/models/ibsCbsParams';
 import type { LegalParameterTabela } from './legalParameter';
 
 /**
@@ -127,7 +128,8 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
   OBRIGACAO_REGIME: {
     valor: 'json',
     checar: (l) =>
-      so(['ECD', 'ECF', 'DCTFWEB'].includes(l.chave) && (REGIMES_EMPRESA as readonly string[]).includes(l.discriminador ?? ''), 'chave ECD|ECF|DCTFWEB; discriminador = regime (MEI|SIMPLES|PRESUMIDO|REAL)') ??
+      // Achado 4 do #861: a chave é qualquer obrigação da matriz (ORDEM_OBRIGACOES), não só as do PR-2.
+      so((ORDEM_OBRIGACOES as readonly string[]).includes(l.chave) && (REGIMES_EMPRESA as readonly string[]).includes(l.discriminador ?? ''), `chave ${ORDEM_OBRIGACOES.join('|')}; discriminador = regime (MEI|SIMPLES|PRESUMIDO|REAL)`) ??
       jsonOk(ObrigacaoRegimeJson, l.valorJson, 'valorJson = { statusBase, condicoes[], perguntaBase?, inativa }'),
   },
   LC116_SERVICO: {
@@ -194,6 +196,15 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
   TJLP: {
     valor: 'int',
     checar: (l) => so(/^\d{4}-T0[1-4]$/.test(l.chave) && semDisc(l) && (l.valorInt ?? 0) > 0, 'chave = trimestre YYYY-T01..T04; valorInt = taxa mensal (0,7742% = 7742) > 0'),
+  },
+  // Achado 1 do #861: a linha VENCIMENTO (PR-5) é de texto — a regra que `vencimentoIbsCbsDe` sabe ler; as alíquotas seguem
+  // valorInt, como na regra do PR-1.
+  IBS_CBS: {
+    valor: (l) => (l.discriminador === 'VENCIMENTO' ? 'texto' : 'int'),
+    checar: (l) =>
+      l.discriminador === 'VENCIMENTO'
+        ? so(['IBS', 'CBS'].includes(l.chave) && (REGRAS_VENCIMENTO_IBS_CBS as readonly string[]).includes(l.valorTexto ?? ''), `chave IBS|CBS; valorTexto = regra de vencimento (${REGRAS_VENCIMENTO_IBS_CBS.join('|')})`)
+        : null,
   },
   // IBS-CBS-2027 PR-3 (item 15; dono 21/10): lista de uso ou consumo pessoal (LC 214 art. 57) — chave = prefixo de NCM.
   IBS_CBS_USO_CONSUMO: {

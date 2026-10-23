@@ -1,5 +1,5 @@
 import type { ConsumptionTaxAssessment } from 'generated/prisma';
-import { MemoriaCalculoSchema } from './taxAssessmentCalc';
+import { MemoriaIbsCbsSchema } from '../dtos/IbsCbsAssessmentDto';
 import { fimDoMes } from './taxAssessmentCalcAnual';
 import { MemoriaInvalidaError, type MemoWindow } from './taxAssessmentMemoExport';
 
@@ -31,7 +31,7 @@ export function selecionarApuracoesIbsCbs(rows: readonly ConsumptionTaxAssessmen
 
 /** Uma linha por `MemoriaLinha`, precedida das `RESUMO`; centavos em string inteira. Memória inválida ⇒ 500 com o id. */
 export function linhasDaApuracaoIbsCbs(r: ConsumptionTaxAssessment): string[][] {
-  const parsed = MemoriaCalculoSchema.safeParse(r.memoria);
+  const parsed = MemoriaIbsCbsSchema.safeParse(r.memoria);
   if (!parsed.success) throw new MemoriaInvalidaError(r.id);
   const prefixo = [String(r.anoCalendario), String(r.mes), r.tributo, r.regime, r.parametrosSha256, r.confirmedAt.toISOString(), r.id, r.supersedesId ?? ''];
   const resumo = RESUMO_COLUNAS.map(([codigo, coluna]) => [...prefixo, 'RESUMO', codigo, coluna, r[coluna].toString(), `ConsumptionTaxAssessment.${coluna}`]);

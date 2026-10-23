@@ -17,18 +17,16 @@ describe('achado 4 — a regra de formato da OBRIGACAO_REGIME aceita toda obriga
   it('cada linha OBRIGACAO_REGIME da semente passa no formato (revisá-la pelo LEGAL-PARAMS não dá 400)', () => {
     const linhas = todas.filter((l) => l.tabela === 'OBRIGACAO_REGIME');
     expect(linhas.some((l) => l.chave === 'IBS_CBS_APURACAO')).toBe(true);
-    const erros = linhas.map((l) => [l.id, erroDeFormato({ ...l, valorJson: JSON.parse(l.valorJson ?? 'null') })]).filter(([, e]) => e !== null);
+    const erros = linhas.map((l) => [l.id, erroDeFormato({ ...l, tabela: 'OBRIGACAO_REGIME', valorJson: JSON.parse(l.valorJson ?? 'null') })]).filter(([, e]) => e !== null);
     expect(erros).toEqual([]);
   });
 });
 
-// `substituida` (achado 3) entra pela asserção de tipo: o guarda compila antes do campo existir.
-const apuracao = (over: Partial<ApuracaoParaResumo> & { substituida?: boolean } = {}): ApuracaoParaResumo =>
-  ({
-    id: 'cta-1', tributo: 'CBS', anoCalendario: 2027, mes: 1, saldoCents: 1000n, avisoParametroLegal: null, substituida: false,
-    memoria: [{ codigo: 'SALDO', descricao: 'saldo', valorCents: '1000', fonte: 'LC 214/2025 art. 45' }],
-    ...over,
-  }) as ApuracaoParaResumo;
+const apuracao = (over: Partial<ApuracaoParaResumo> = {}): ApuracaoParaResumo => ({
+  id: 'cta-1', tributo: 'CBS', anoCalendario: 2027, mes: 1, saldoCents: 1000n, avisoParametroLegal: null, substituida: false,
+  memoria: [{ codigo: 'SALDO', descricao: 'saldo', valorCents: '1000', fonte: 'LC 214/2025 art. 45' }],
+  ...over,
+});
 
 describe('achado 2 — linha VENCIMENTO publicada com regra desconhecida ⇒ vencimento null + aviso (dono 23/10), não erro', () => {
   it('só valorInt (sem valorTexto) na linha publicada: o resumo sai com null e o aviso VENCIMENTO_REGRA_DESCONHECIDA', () => {
