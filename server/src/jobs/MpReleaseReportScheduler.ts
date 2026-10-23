@@ -8,6 +8,7 @@
  * ponytail: lock local; teto = 1 réplica (SQLite single-host); upgrade a lease distribuída só se multi-réplica.
  */
 import logger from '../lib/logger';
+import { sendAlertWebhook, type AlertPayload } from '../lib/alertWebhook';
 import { getFactory } from '../lib/factory';
 import type { ReleaseReportFetchSummary } from '../features/accounting/services/ReleaseReportService';
 
@@ -24,6 +25,8 @@ interface JobLogger {
 export interface MpReleaseReportSchedulerDeps {
   fetch?: () => Promise<ReleaseReportFetchSummary>;
   log?: JobLogger;
+  /** Nó OBS, item 10 (F-OBS-7 a): remote alert on failure. Default = the fire-and-forget webhook. */
+  alert?: (payload: AlertPayload) => void;
 }
 
 export class MpReleaseReportScheduler {
@@ -32,10 +35,12 @@ export class MpReleaseReportScheduler {
   private intervalTimer: NodeJS.Timeout | null = null;
   private readonly fetch: () => Promise<ReleaseReportFetchSummary>;
   private readonly log: JobLogger;
+  private readonly alert: (payload: AlertPayload) => void;
 
   constructor(deps: MpReleaseReportSchedulerDeps = {}) {
     this.fetch = deps.fetch ?? (() => getFactory().getReleaseReportService().fetchAll());
     this.log = deps.log ?? logger;
+    this.alert = deps.alert ?? sendAlertWebhook;
   }
 
   async runOnce(): Promise<ReleaseReportFetchSummary | { skipped: 'lock' }> {
@@ -50,7 +55,9 @@ export class MpReleaseReportScheduler {
       else this.log.info(JOB, { job: JOB, event: 'complete', ...summary });
       return summary;
     } catch (error) {
-      this.log.error(JOB, { job: JOB, event: 'failed', error: error instanceof Error ? error.message : String(error) });
+      const message = error instanceof Error ? error.message : String(error);
+      this.log.error(JOB, { job: JOB, event: 'failed', error: message });
+      this.alert({ source: 'mp_release_report', event: 'job_failed', timestamp: new Date().toISOString(), job: JOB, error: message });
       throw error;
     } finally {
       this.running = false;

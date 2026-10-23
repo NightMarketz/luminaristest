@@ -67,9 +67,17 @@ export default tseslint.config(
       'no-restricted-imports': ['error', { patterns: [PRISMA_SINGLETON], paths: [EXPRESS] }],
     },
   },
+  // Nó OBS, item 9 (F-OBS-8, dono 2026-10-23): log de produção passa pelo logger (contexto + redação +
+  // arquivo de erro). Fora: CLIs e scripts (saída de terminal), config/env.ts (roda antes do logger) e
+  // o próprio sink.
+  {
+    files: ['src/**/*.ts'],
+    ignores: ['src/jobs/*Cli.ts', 'src/scripts/**', 'src/config/env.ts', 'src/lib/logger.ts'],
+    rules: { 'no-console': 'error' },
+  },
   // Testes não são camada de produção — fora do gate.
   {
     files: ['src/**/__tests__/**/*.ts', 'src/**/*.test.ts'],
-    rules: { 'no-restricted-imports': 'off' },
+    rules: { 'no-restricted-imports': 'off', 'no-console': 'off' },
   },
 );

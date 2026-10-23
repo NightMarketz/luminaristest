@@ -16,8 +16,11 @@ import logger from './logger';
 const ALERT_WEBHOOK_TIMEOUT_MS = 3000;
 
 export interface AlertPayload {
-  source: 'accounting_sync_reconcile' | 'sped_ecd' | 'sped_ecf' | 'data_exchange_export';
-  event: 'reconcile_summary' | 'generation_failed';
+  source:
+    | 'accounting_sync_reconcile' | 'sped_ecd' | 'sped_ecf' | 'data_exchange_export'
+    // Nó OBS, item 10: the 5 schedulers that only logged their failure, and the process itself.
+    | 'dfe_poll' | 'collection_charge_poll' | 'mp_release_report' | 'legal_params_recalc' | 'ptax_rate' | 'process';
+  event: 'reconcile_summary' | 'generation_failed' | 'job_failed' | 'uncaught_exception';
   timestamp: string; // ISO
   [key: string]: unknown; // free-form fields per trigger (failed, blocked, jobId, kind…)
 }

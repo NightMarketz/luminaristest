@@ -7,6 +7,7 @@ import os from 'os';
 import path from 'path';
 import { logger } from '../logger';
 import { ForbiddenError } from '../errors';
+import { requestContext } from '../requestContext';
 
 describe('logger Error serialization', () => {
   let spy: jest.SpyInstance | undefined;
@@ -157,5 +158,60 @@ describe('logger error file sink', () => {
     expect(fs.existsSync(path.join(dir, stale))).toBe(false);
     expect(fs.existsSync(path.join(dir, fresh))).toBe(true);
     expect(fs.existsSync(path.join(dir, 'unrelated.txt'))).toBe(true);
+  });
+});
+
+/** Nó OBS, item 4: the request context rides on every line; outside a request the line is unchanged. */
+describe('logger request context', () => {
+  let spy: jest.SpyInstance | undefined;
+  afterEach(() => spy?.mockRestore());
+
+  it('merges requestId/userId/method/route inside requestContext.run', () => {
+    spy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    requestContext.run({ requestId: 'req-9', method: 'POST', route: '/api/x', userId: 'u9' }, () => {
+      logger.info('inside');
+    });
+    const logged = JSON.parse(spy.mock.calls[0][0] as string);
+    expect(logged).toMatchObject({ requestId: 'req-9', method: 'POST', route: '/api/x', userId: 'u9' });
+  });
+
+  it("lets the caller's own key win over the context", () => {
+    spy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    requestContext.run({ requestId: 'req-9', method: 'POST', route: '/api/x', userId: 'u9' }, () => {
+      logger.info('inside', { userId: 'explicit' });
+    });
+    expect(JSON.parse(spy.mock.calls[0][0] as string).userId).toBe('explicit');
+  });
+
+  it('adds nothing outside a request', () => {
+    spy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    logger.info('outside', { a: 1 });
+    expect(Object.keys(JSON.parse(spy.mock.calls[0][0] as string)).sort()).toEqual(['a', 'level', 'message', 'timestamp']);
+  });
+});
+
+/** Nó OBS, item 7 (F-OBS-3 a): sensitive keys are redacted at any depth, Error custom fields included. */
+describe('logger redaction', () => {
+  let spy: jest.SpyInstance | undefined;
+  afterEach(() => spy?.mockRestore());
+
+  it('redacts listed keys in nested objects, case-insensitively', () => {
+    spy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    logger.info('x', { user: { Email: 'a@b.co', profile: { cpf: '123', name: 'Ana' } }, headers: { authorization: 'Bearer t' } });
+    const logged = JSON.parse(spy.mock.calls[0][0] as string);
+    expect(logged.user.Email).toBe('[redacted]');
+    expect(logged.user.profile.cpf).toBe('[redacted]');
+    expect(logged.user.profile.name).toBe('Ana');
+    expect(logged.headers.authorization).toBe('[redacted]');
+  });
+
+  it('redacts a custom field carried by an Error', () => {
+    spy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const err = Object.assign(new Error('boom'), { cnpj: '12345678000199', step: 'emit' });
+    logger.error('x', { error: err });
+    const logged = JSON.parse(spy.mock.calls[0][0] as string);
+    expect(logged.error.cnpj).toBe('[redacted]');
+    expect(logged.error.step).toBe('emit');
+    expect(logged.error.message).toBe('boom');
   });
 });

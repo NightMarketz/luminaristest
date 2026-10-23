@@ -8,6 +8,7 @@
 import { handleApiError } from '../apiUtils';
 import { AppError, ValidationError, NotFoundError, ForbiddenError } from '../errors';
 import { ZodError, z } from 'zod';
+import { logger } from '../logger';
 
 /** Minimal Express `res` double capturing status + json. */
 function mockRes() {
@@ -77,5 +78,43 @@ describe('handleApiError', () => {
     const res = mockRes();
     handleApiError(new NotFoundError('gone'), res as any);
     expect(res.status).toHaveBeenCalledWith(404);
+  });
+});
+
+/** Nó OBS, item 6 (F-OBS-2 c): the log level follows the classified status, and a 4xx never carries the error. */
+describe('handleApiError log level', () => {
+  let spies: Record<'error' | 'warn' | 'info', jest.SpyInstance>;
+  beforeEach(() => {
+    spies = {
+      error: jest.spyOn(logger, 'error').mockImplementation(() => {}),
+      warn: jest.spyOn(logger, 'warn').mockImplementation(() => {}),
+      info: jest.spyOn(logger, 'info').mockImplementation(() => {}),
+    };
+  });
+  afterEach(() => Object.values(spies).forEach((s) => s.mockRestore()));
+
+  it('an unknown error (500) is logged as error, with the error', () => {
+    const err = new Error('db is gone');
+    handleApiError(err, mockRes() as any);
+    expect(spies.error).toHaveBeenCalledWith('[API Error Handler]', { statusCode: 500, code: 'INTERNAL_SERVER_ERROR', error: err });
+  });
+
+  it('a ZodError (400) is info with code and status only — never an error line', () => {
+    const parsed = z.object({ a: z.string() }).safeParse({});
+    handleApiError((parsed as { error: ZodError }).error, mockRes() as any);
+    expect(spies.error).not.toHaveBeenCalled();
+    expect(spies.info).toHaveBeenCalledWith('[API Error Handler]', { statusCode: 400, code: 'VALIDATION_ERROR' });
+  });
+
+  it('a 403 is warn with code and status only', () => {
+    handleApiError(new ForbiddenError('nope'), mockRes() as any);
+    expect(spies.error).not.toHaveBeenCalled();
+    expect(spies.warn).toHaveBeenCalledWith('[API Error Handler]', { statusCode: 403, code: 'FORBIDDEN' });
+  });
+
+  it('a 404 is info', () => {
+    handleApiError(new NotFoundError('gone'), mockRes() as any);
+    expect(spies.info).toHaveBeenCalledWith('[API Error Handler]', { statusCode: 404, code: expect.any(String) });
+    expect(spies.error).not.toHaveBeenCalled();
   });
 });

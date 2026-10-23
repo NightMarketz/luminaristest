@@ -1,4 +1,5 @@
 import { PrismaClient } from '../../generated/prisma';
+import { logger } from './logger';
 
 declare global {
   // allow global `var` declarations
@@ -25,7 +26,7 @@ if (process.env.NODE_ENV !== 'test') {
       prisma.$queryRawUnsafe('PRAGMA foreign_keys = ON'),
     ]);
   }).catch((err) => {
-    console.error('[prisma] Failed to apply SQLite pragmas:', err);
+    logger.error('[prisma] Failed to apply SQLite pragmas', { error: err });
   });
 }
 

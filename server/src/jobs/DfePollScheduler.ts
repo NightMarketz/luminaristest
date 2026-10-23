@@ -9,6 +9,7 @@
  * ponytail: lock local; upgrade a lease distribuída só se multi-réplica.
  */
 import logger from '../lib/logger';
+import { sendAlertWebhook, type AlertPayload } from '../lib/alertWebhook';
 import { runDfePollPending } from './dfePollPending.job';
 import type { PollSummary } from '../features/accounting/services/FiscalDocumentLifecycleService';
 
@@ -25,6 +26,8 @@ interface JobLogger {
 export interface DfePollSchedulerDeps {
   poll?: () => Promise<PollSummary>;
   log?: JobLogger;
+  /** Nó OBS, item 10 (F-OBS-7 a): remote alert on failure. Default = the fire-and-forget webhook. */
+  alert?: (payload: AlertPayload) => void;
 }
 
 export interface DfePollSchedulerStartOptions {
@@ -47,10 +50,12 @@ export class DfePollScheduler {
   private intervalTimer: NodeJS.Timeout | null = null;
   private readonly poll: () => Promise<PollSummary>;
   private readonly log: JobLogger;
+  private readonly alert: (payload: AlertPayload) => void;
 
   constructor(deps: DfePollSchedulerDeps = {}) {
     this.poll = deps.poll ?? runDfePollPending;
     this.log = deps.log ?? logger;
+    this.alert = deps.alert ?? sendAlertWebhook;
   }
 
   async runOnce(): Promise<PollSummary | { skipped: 'lock' }> {
@@ -68,7 +73,9 @@ export class DfePollScheduler {
       }
       return summary;
     } catch (error) {
-      this.log.error(JOB, { job: JOB, event: 'failed', error: error instanceof Error ? error.message : String(error) });
+      const message = error instanceof Error ? error.message : String(error);
+      this.log.error(JOB, { job: JOB, event: 'failed', error: message });
+      this.alert({ source: 'dfe_poll', event: 'job_failed', timestamp: new Date().toISOString(), job: JOB, error: message });
       throw error;
     } finally {
       this.running = false;

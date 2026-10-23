@@ -7,6 +7,7 @@
  * ponytail: lock local; teto = 1 réplica (SQLite single-host); upgrade a lease distribuída só se multi-réplica.
  */
 import logger from '../lib/logger';
+import { sendAlertWebhook, type AlertPayload } from '../lib/alertWebhook';
 import { getFactory } from '../lib/factory';
 import type { CollectionPollSummary } from '../features/accounting/services/CollectionChargeService';
 
@@ -23,6 +24,8 @@ interface JobLogger {
 export interface CollectionChargePollSchedulerDeps {
   poll?: () => Promise<CollectionPollSummary>;
   log?: JobLogger;
+  /** Nó OBS, item 10 (F-OBS-7 a): remote alert on failure. Default = the fire-and-forget webhook. */
+  alert?: (payload: AlertPayload) => void;
 }
 
 export class CollectionChargePollScheduler {
@@ -31,10 +34,12 @@ export class CollectionChargePollScheduler {
   private intervalTimer: NodeJS.Timeout | null = null;
   private readonly poll: () => Promise<CollectionPollSummary>;
   private readonly log: JobLogger;
+  private readonly alert: (payload: AlertPayload) => void;
 
   constructor(deps: CollectionChargePollSchedulerDeps = {}) {
     this.poll = deps.poll ?? (() => getFactory().getCollectionChargeService().pollPending());
     this.log = deps.log ?? logger;
+    this.alert = deps.alert ?? sendAlertWebhook;
   }
 
   async runOnce(): Promise<CollectionPollSummary | { skipped: 'lock' }> {
@@ -49,7 +54,9 @@ export class CollectionChargePollScheduler {
       else this.log.info(JOB, { job: JOB, event: 'complete', ...summary });
       return summary;
     } catch (error) {
-      this.log.error(JOB, { job: JOB, event: 'failed', error: error instanceof Error ? error.message : String(error) });
+      const message = error instanceof Error ? error.message : String(error);
+      this.log.error(JOB, { job: JOB, event: 'failed', error: message });
+      this.alert({ source: 'collection_charge_poll', event: 'job_failed', timestamp: new Date().toISOString(), job: JOB, error: message });
       throw error;
     } finally {
       this.running = false;

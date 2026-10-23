@@ -8,6 +8,7 @@
  * a mesma cotação não duplicam (o `@@unique([currency, rateDate])` + upsert), só fazem uma chamada a mais ao BCB.
  */
 import logger from '../lib/logger';
+import { sendAlertWebhook, type AlertPayload } from '../lib/alertWebhook';
 import { getFactory } from '../lib/factory';
 import type { PtaxSyncSummary } from '../features/fx/services/PtaxSyncService';
 
@@ -24,6 +25,8 @@ interface JobLogger {
 export interface PtaxRateSchedulerDeps {
   sync?: () => Promise<PtaxSyncSummary>;
   log?: JobLogger;
+  /** Nó OBS, item 10 (F-OBS-7 a): remote alert on failure. Default = the fire-and-forget webhook. */
+  alert?: (payload: AlertPayload) => void;
 }
 
 export interface PtaxRateSchedulerStartOptions {
@@ -46,10 +49,12 @@ export class PtaxRateScheduler {
   private intervalTimer: NodeJS.Timeout | null = null;
   private readonly sync: () => Promise<PtaxSyncSummary>;
   private readonly log: JobLogger;
+  private readonly alert: (payload: AlertPayload) => void;
 
   constructor(deps: PtaxRateSchedulerDeps = {}) {
     this.sync = deps.sync ?? (() => getFactory().getPtaxSyncService().syncClosings());
     this.log = deps.log ?? logger;
+    this.alert = deps.alert ?? sendAlertWebhook;
   }
 
   async runOnce(): Promise<PtaxSyncSummary | { skipped: 'lock' }> {
@@ -64,7 +69,9 @@ export class PtaxRateScheduler {
       else this.log.info(JOB, { job: JOB, event: 'complete', ...summary });
       return summary;
     } catch (error) {
-      this.log.error(JOB, { job: JOB, event: 'failed', error: error instanceof Error ? error.message : String(error) });
+      const message = error instanceof Error ? error.message : String(error);
+      this.log.error(JOB, { job: JOB, event: 'failed', error: message });
+      this.alert({ source: 'ptax_rate', event: 'job_failed', timestamp: new Date().toISOString(), job: JOB, error: message });
       throw error;
     } finally {
       this.running = false;

@@ -3,6 +3,7 @@ import app from './app';
 import { runQdrantInitialization } from './lib/vector/qdrant';
 import prisma from './lib/prisma';
 import { logger } from './lib/logger';
+import { sendAlertWebhook } from './lib/alertWebhook';
 import { ApplicationFactory } from './lib/factory';
 import { purgeOldDeletedRecords } from './jobs/PurgeDeletedRecords';
 import { accountingSyncScheduler } from './jobs/AccountingSyncScheduler';
@@ -46,8 +47,7 @@ async function bootstrap(): Promise<void> {
   ApplicationFactory.getInstance().getLegalParameterService().setAoEnfileirar(() => legalParamsRecalcScheduler.kick());
 
   httpServer = app.listen(PORT, () => {
-    console.log(`Luminaris Server running on http://localhost:${PORT}`);
-    console.log(`Health check: http://localhost:${PORT}/health`);
+    logger.info('Luminaris Server running', { url: `http://localhost:${PORT}`, health: `http://localhost:${PORT}/health` });
 
     // Initialize external infra at bootstrap (not on module import). Fire-and-forget: the function
     // logs and swallows its own errors, so a Qdrant outage never crashes the API process.
@@ -174,6 +174,14 @@ process.on('unhandledRejection', (reason) => {
 });
 process.on('uncaughtException', (error) => {
   logger.error('Uncaught Exception — shutting down', { error });
+  // Nó OBS, item 10 (F-OBS-7 a). Fire-and-forget: the shutdown below does not wait for it, so the POST
+  // may not leave before exit — the NDJSON line above is the record that always survives.
+  sendAlertWebhook({
+    source: 'process',
+    event: 'uncaught_exception',
+    timestamp: new Date().toISOString(),
+    error: error instanceof Error ? error.message : String(error),
+  });
   process.exitCode = 1;
   gracefulShutdown();
 });

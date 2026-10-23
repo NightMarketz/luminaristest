@@ -6,7 +6,7 @@ import type { Response } from 'express';
 import { handleApiError } from '../apiUtils';
 import { ModuleNotInstalledError } from '../errors';
 
-jest.mock('../logger', () => ({ __esModule: true, logger: { error: jest.fn() }, default: { error: jest.fn() } }));
+jest.mock('../logger', () => ({ __esModule: true, logger: { error: jest.fn(), warn: jest.fn(), info: jest.fn() }, default: { error: jest.fn(), warn: jest.fn(), info: jest.fn() } }));
 
 beforeEach(() => jest.clearAllMocks());
 

@@ -17,8 +17,6 @@ interface StandardApiErrorResponse {
  * Used both by controllers (in their catch) and by the global Express error handler in `app.ts`.
  */
 export function handleApiError(error: unknown, res: Response): void {
-  logger.error('[API Error Handler]', { error });
-
   let statusCode: number;
   let responseBody: StandardApiErrorResponse;
 
@@ -68,6 +66,16 @@ export function handleApiError(error: unknown, res: Response): void {
     if (process.env.NODE_ENV === 'development' && error instanceof Error) {
       responseBody.details = { rawError: error.message, stack: error.stack?.split('\n') };
     }
+  }
+
+  // Nó OBS, item 6 (F-OBS-2 c): logged AFTER classifying, so a user's 400 is not filed as a defect.
+  // Only a 5xx carries the full error; a 4xx carries code + status, never stack or details.
+  if (statusCode >= 500) {
+    logger.error('[API Error Handler]', { statusCode, code: responseBody.code, error });
+  } else if (statusCode === 401 || statusCode === 403) {
+    logger.warn('[API Error Handler]', { statusCode, code: responseBody.code });
+  } else {
+    logger.info('[API Error Handler]', { statusCode, code: responseBody.code });
   }
 
   res.status(statusCode).json(responseBody);

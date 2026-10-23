@@ -7,6 +7,7 @@
  * ⚠️ Lock PROCESS-LOCAL — mesma ressalva de `AccountingSyncScheduler` (não protege multi-réplica).
  */
 import logger from '../lib/logger';
+import { sendAlertWebhook, type AlertPayload } from '../lib/alertWebhook';
 import { getFactory } from '../lib/factory';
 
 const JOB = 'legal_params_recalc';
@@ -24,6 +25,8 @@ interface JobLogger {
 export interface LegalParamsRecalcSchedulerDeps {
   run?: () => Promise<Resumo>;
   log?: JobLogger;
+  /** Nó OBS, item 10 (F-OBS-7 a): remote alert on failure. Default = the fire-and-forget webhook. */
+  alert?: (payload: AlertPayload) => void;
 }
 
 function readMsEnv(name: string, fallback: number, min: number): number {
@@ -40,10 +43,12 @@ export class LegalParamsRecalcScheduler {
   private intervalTimer: NodeJS.Timeout | null = null;
   private readonly run: () => Promise<Resumo>;
   private readonly log: JobLogger;
+  private readonly alert: (payload: AlertPayload) => void;
 
   constructor(deps: LegalParamsRecalcSchedulerDeps = {}) {
     this.run = deps.run ?? (() => getFactory().getTaxAssessmentRecalcService().processarPendentes());
     this.log = deps.log ?? logger;
+    this.alert = deps.alert ?? sendAlertWebhook;
   }
 
   async runOnce(): Promise<Resumo | { skipped: 'lock' }> {
@@ -58,7 +63,9 @@ export class LegalParamsRecalcScheduler {
       else this.log.info(JOB, { job: JOB, event: 'complete', ...summary });
       return summary;
     } catch (error) {
-      this.log.error(JOB, { job: JOB, event: 'failed', error: error instanceof Error ? error.message : String(error) });
+      const message = error instanceof Error ? error.message : String(error);
+      this.log.error(JOB, { job: JOB, event: 'failed', error: message });
+      this.alert({ source: 'legal_params_recalc', event: 'job_failed', timestamp: new Date().toISOString(), job: JOB, error: message });
       throw error;
     } finally {
       this.running = false;
