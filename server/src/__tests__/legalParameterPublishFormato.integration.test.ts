@@ -23,7 +23,7 @@ async function novoDono() {
   await prisma.companyFiscalProfile.create({ data: { userId: u.id, anoCalendario: 2027, regime: 'REAL', ecfIndAliqCsll: '1', ecfIndRecReceita: '2', createdById: u.id, updatedById: u.id } });
   const unitId = 'unit-pubfmt-1';
   await seedUnit({ userId: u.id, id: unitId });
-  return { ...u, unitId };
+  return { id: u.id, username: u.username, unitId };
 }
 
 describe('publicar rascunho de parâmetro legal × formato da linha', () => {
