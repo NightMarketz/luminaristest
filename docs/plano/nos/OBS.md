@@ -3,13 +3,13 @@ id: "OBS"
 tipo: "plataforma"
 dominio: "plataforma"
 titulo: "Observabilidade do server pelos 6 portões: contexto por requisição, 4xx×5xx, redação de PII, alertas dos jobs (Fase A) e registro de acesso do Marco Civil (Fase B, Onda 0)"
-estado: "planned"
+estado: "inflight"
 estado_detalhe: "23/10: ADR-OBSERVABILIDADE Accepted, forks F-OBS-10..17 RATIFICADOS, todos pela recomendada ([[D-2026-10-23-OBSERVABILIDADE-FORKS-2]]); Fase C (§6 itens 1–11, com o 7b) autorizada para execução em 4 PRs empilhados, sem merge · 23/10 (executa): Fase A implementada (itens 1–10), com 2 lacunas de spec respondidas pelo dono por questionário — server.ts passa a logger.info; testes fora do no-console. Fase B segue para a Onda 0 · 23/10: PRE-ADR-OBSERVABILIDADE Accepted, forks F-OBS-0..9 RATIFICADOS, todos pela recomendada ([[D-2026-10-23-OBSERVABILIDADE-FORKS]]). Sem fork pendente. O §5 do PRE-ADR é o checklist: 10 itens na Fase A e 5 na Fase B. A Fase A espera o 'executa'; a Fase B espera a Onda 0 (host, que decide F-OBS-4 e confirma F-OBS-5/6)"
 depende_de: ["[[D-2026-10-23-OBSERVABILIDADE-FORKS]]", "[[D-2026-10-23-OBSERVABILIDADE-FORKS-2]]"]
 autorizacao: "dono, chat, 2026-10-23: \"Planeja e mapeia se há uma forma de cobrir tudo, temos que ter um brief para não se perder depois\" + \"Pode ratificar tudo\" — PRE-ADR e forks · dono, chat, 2026-10-23: \"Executa a Fase A do nó OBS (itens 1 a 10 do PRE-ADR-OBSERVABILIDADE).\" — só a Fase A; a Fase B espera a Onda 0 · dono, chat, 2026-10-23: \"Sessão de execução do nó OBS até o fim da Fase C. Autorizo, em sequência: (1) ratificar os forks F-OBS-10..17 do ADR-OBSERVABILIDADE por questionário comigo; (2) depois da ratificação, EXECUTAR a Fase C inteira (itens 1–11 do ADR-OBSERVABILIDADE §6, incluindo o 7b), seguindo as respostas que eu der, mesmo que alguma não seja a recomendada. Não autorizo merge. A Fase B (F-OBS-4/5/6) fica de fora: depende da Onda 0.\" — forks F-OBS-10..17 e Fase C; sem merge"
 ancora_sdd: "§14 · §19"
 atualizado: "2026-10-23"
-prs: ["#867"]
+prs: ["#867", "#869"]
 perfil_previsto: "opus-medio"
 perfil_evidencia: "Fase A: ~10 arquivos de infraestrutura (requestContext novo, middleware, logger, apiUtils, httpTiming, auth, 5 schedulers, alertWebhook, eslint.config) com teste por item, sem DTO nem migração; o raio é largo porque o logger toca toda linha, mas o contrato é aditivo"
 write_set: ["server/src/lib/requestContext.ts", "server/src/lib/__tests__/requestContext*", "server/src/middleware/requestContext.ts", "server/src/middleware/__tests__/requestContext*", "server/src/middleware/__tests__/httpTiming*", "server/src/middleware/httpTiming.ts", "server/src/middleware/auth.ts", "server/src/lib/logger.ts", "server/src/lib/apiUtils.ts", "server/src/lib/alertWebhook.ts", "server/src/lib/jwt.ts", "server/src/lib/prisma.ts", "server/src/lib/__tests__/**", "server/src/features/dynamicTables/utils/RelationUtils.ts", "server/src/jobs/*Scheduler.ts", "server/src/jobs/__tests__/**", "server/src/server.ts", "server/eslint.config.mjs"]
@@ -17,7 +17,7 @@ registros: ["server/src/app.ts"]
 ---
 # OBS — Observabilidade do server
 
-**Estado:** `planned`. 23/10: PRE-ADR Accepted e forks F-OBS-0..9 ratificados, todos pela recomendada
+**Estado:** `inflight` — 23/10 (executa): Fase A implementada (itens 1–10), com 2 lacunas de spec respondidas pelo dono por questionário — server.ts passa a logger.info; testes fora do no-console. Fase B segue para a Onda 0 · 23/10: PRE-ADR-OBSERVABILIDADE Accepted, forks F-OBS-0..9 RATIFICADOS, todos pela recomendada ([[D-2026-10-23-OBSERVABILIDADE-FORKS]]). Sem fork pendente. O §5 do PRE-ADR é o checklist: 10 itens na Fase A e 5 na Fase B. A Fase A espera o 'executa'; a Fase B espera a Onda 0 (host, que decide F-OBS-4 e confirma F-OBS-5/6)  
 ([[D-2026-10-23-OBSERVABILIDADE-FORKS]]). A Fase A espera o `executa`. A Fase B espera a Onda 0.
 
 **Autorização:** dono, chat, 2026-10-23: "Planeja e mapeia se há uma forma de cobrir tudo, temos que ter um brief
