@@ -9,8 +9,8 @@ import { MitNadaAExportarError } from './errors';
  * `ecf.ts`/`ecfReal.ts`): sem model, sem I/O, sem Prisma — o serviço do PR-2 lê o perfil, o contador e as apurações
  * e chama `montarArquivoMit`.
  *
- * Escopo do PR-1 (F-MIT-1 a): só o trimestral (`T01..T04`, Presumido e Real trimestral). `A00..A12` (Fase B do X7)
- * entram no PR-4 e `M01..M12` (PIS/Cofins, X8) no PR-3; até lá, `apuracoesDoPa` não os seleciona.
+ * Escopo (F-MIT-1 a): o trimestral (`T01..T04`, Presumido e Real trimestral, PR-1) e o Real anual (`A00..A12`, Fase B
+ * do X7, PR-4 — item 19). `M01..M12` (PIS/Cofins, X8) entram no PR-3; até lá, `apuracoesDoPa` não os seleciona.
  *
  * O formato só tem oráculo externo (P-6 do ADR): os testes provam o leiaute LIDO, não o leiaute ACEITO pelo MIT.
  */
@@ -67,11 +67,17 @@ export const AVISO_MIT_CNPJ_ALFANUMERICO = 'CNPJ alfanumérico: aceitação pelo
 export const AVISO_MIT_SEM_PIS_COFINS = 'PIS/Cofins não incluídos: o X8 não está ativo';
 
 const TRIMESTRE = /^T0([1-4])$/;
+const MES_ANUAL = /^A(0[1-9]|1[0-2])$/;
+const AJUSTE_ANUAL = 'A00';
+
+/** Item 1 — anos que o leitor do PA (ano, mês) tem de ler: o ano Y e, em março, também Y−1 (o `A00` de Y−1). */
+export const anosDoPa = (ano: number, mes: number): number[] => (mes === 3 ? [ano, ano - 1] : [ano]);
 
 /**
  * Item 1 (D2/D3/D4) — as apurações que entram no PA (ano, mês). Usada pelo POST e pelo cálculo de defasagem
  * (item 11), para que os dois nunca divirjam. Só `CONFIRMED` com `deletedAt` nulo (invariante 5). `T0q` do ano Y ⇒
  * PA (Y, 3q) (D4; grau I, P-4 do ADR): pedir o mês 1 ou 2 de um ano só trimestral devolve vazio (invariante 6).
+ * PR-4 (item 19): `A0m` do ano Y ⇒ PA (Y, m); `A00` do ano Y ⇒ PA (Y+1, 3) (Manual do MIT §4.1; leiaute p. 8).
  */
 export function apuracoesDoPa<T extends Pick<TaxAssessment, 'anoCalendario' | 'periodo' | 'status' | 'deletedAt'>>(
   linhas: T[],
@@ -79,9 +85,13 @@ export function apuracoesDoPa<T extends Pick<TaxAssessment, 'anoCalendario' | 'p
   mes: number,
 ): T[] {
   return linhas.filter((l) => {
-    if (l.status !== 'CONFIRMED' || l.deletedAt !== null || l.anoCalendario !== ano) return false;
+    if (l.status !== 'CONFIRMED' || l.deletedAt !== null) return false;
+    if (l.periodo === AJUSTE_ANUAL) return mes === 3 && l.anoCalendario === ano - 1;
+    if (l.anoCalendario !== ano) return false;
     const t = TRIMESTRE.exec(l.periodo);
-    return t !== null && Number(t[1]) * 3 === mes;
+    if (t !== null) return Number(t[1]) * 3 === mes;
+    const m = MES_ANUAL.exec(l.periodo);
+    return m !== null && Number(m[1]) === mes;
   });
 }
 
@@ -89,12 +99,18 @@ export function apuracoesDoPa<T extends Pick<TaxAssessment, 'anoCalendario' | 'p
 const valorDebito = (cents: bigint): number => Number(cents) / 100;
 
 /**
- * Item 3 — segundo débito da diferença postergada do 16% (IN 1.700 art. 215 §§ 10–13). PR-1: só o Presumido
- * (`208901` ⇒ `208902`, correção 06/10 / #560; P-M5: o `2089-02` não foi conferido na tabela do MIT). O
- * `236201`/`599301` da Fase B entra no PR-4; até lá, outro código com diferença > 0 é invariante quebrada no X7.
+ * Item 3 — segundo débito da diferença postergada do 16%. Presumido (PR-1, IN 1.700 art. 215 §§ 10–13): `208901` ⇒
+ * `208902` (correção 06/10 / #560; P-M5: o `2089-02` não foi conferido na tabela do MIT). Real anual (PR-4, B-3/B-9;
+ * IN 1.700 art. 33 § 8º): `236201` ⇒ `236202` (obrigada) e `599301` ⇒ `599302` (optante) — Manual do MIT §10.1, itens
+ * 17 e 42. Outro código com diferença > 0 é invariante quebrada no X7.
  */
 function codigoDiferencaPostergada(t: EntradaMit['tabela'], data: string): Readonly<Record<string, string>> {
-  return { [t.codigoReceita('IRPJ_PRESUMIDO', data).codigo]: t.codigoReceita('IRPJ_PRESUMIDO_DIFERENCA_POSTERGADA_16', data).codigo };
+  const c = (nome: Parameters<EntradaMit['tabela']['codigoReceita']>[0]) => t.codigoReceita(nome, data).codigo;
+  return {
+    [c('IRPJ_PRESUMIDO')]: c('IRPJ_PRESUMIDO_DIFERENCA_POSTERGADA_16'),
+    [c('IRPJ_ESTIMATIVA_OBRIGADA')]: c('IRPJ_DIFERENCA_POSTERGADA_16_OBRIGADA'),
+    [c('IRPJ_ESTIMATIVA_OPTANTE')]: c('IRPJ_DIFERENCA_POSTERGADA_16_OPTANTE'),
+  };
 }
 
 /** Item 2 (D5) — grupo de `Debitos` por tributo, na ordem do leiaute 1.0 (pp. 5–6). */
@@ -107,15 +123,25 @@ const porChave = (a: ApuracaoParaMit, b: ApuracaoParaMit): number =>
   a.anoCalendario - b.anoCalendario || a.periodo.localeCompare(b.periodo) || a.codigoReceita.localeCompare(b.codigoReceita);
 
 /**
- * Itens 2–9 — monta o arquivo do PA. Recusas (422, `MitNadaAExportarError`): Real anual (antes do PR-4), PA sem
- * apuração confirmada (D7) e PA só com débitos zero (leiaute p. 5: *"ao menos um débito"*).
+ * Itens 2–9 e 19 — monta o arquivo do PA. Recusas (422, `MitNadaAExportarError`): PA sem apuração confirmada (D7),
+ * Real anual sem estimativa/balancete do mês confirmado (item 6, F-MIT-2 a) e PA só com débitos zero (leiaute p. 5:
+ * *"ao menos um débito"*).
  */
 export function montarArquivoMit(e: EntradaMit): SaidaMit {
-  // Item 5: TributacaoLucro = 1 só no PR-4.
-  if (e.perfil.regime === 'REAL' && e.perfil.forma === 'ANUAL') {
-    throw new MitNadaAExportarError('Real anual chega com a Fase B do X7.');
-  }
   if (e.apuracoes.length === 0) throw new MitNadaAExportarError('Nada a exportar neste mês: não há apuração confirmada no período.');
+
+  // Item 5: PRESUMIDO ⇒ 3, REAL + TRIMESTRAL ⇒ 2, REAL + ANUAL ⇒ 1 (PR-4).
+  const tributacaoLucro = e.perfil.regime === 'PRESUMIDO' ? 3 : e.perfil.forma === 'ANUAL' ? 1 : 2;
+
+  // Item 6 (F-MIT-2 a): com TributacaoLucro = 1, `BalancoLucroReal` é obrigatório (leiaute p. 5) e é uma declaração —
+  // sai do modo da linha IRPJ `A0m` do PA; sem ela, 422 (não se afirma o que o sistema não sabe).
+  let balancoLucroReal: boolean | undefined;
+  if (tributacaoLucro === 1) {
+    const mesDoPa = `A${String(e.mes).padStart(2, '0')}`;
+    const irpjDoMes = e.apuracoes.find((a) => a.tributo === 'IRPJ' && a.anoCalendario === e.ano && a.periodo === mesDoPa);
+    if (!irpjDoMes) throw new MitNadaAExportarError('Confirme a estimativa ou o balancete do mês no X7 antes de exportar.');
+    balancoLucroReal = irpjDoMes.modo === 'BALANCETE_SUSPENSAO_REDUCAO';
+  }
 
   const tributosConhecidos = new Set<string>(GRUPOS.map(([t]) => t));
   for (const a of e.apuracoes) {
@@ -127,10 +153,15 @@ export function montarArquivoMit(e: EntradaMit): SaidaMit {
   // Itens 2–3: IdDebito contínuo na apuração inteira, não por grupo (invariante 1).
   let id = 0;
   const debitos: MitArquivo['Debitos'] = {};
+  if (balancoLucroReal !== undefined) debitos.BalancoLucroReal = balancoLucroReal; // 1º da ordem do leiaute (pp. 5–6)
   for (const [tributo, grupo] of GRUPOS) {
     const lista: MitDebito[] = [];
     for (const a of e.apuracoes.filter((x) => x.tributo === tributo).sort(porChave)) {
-      if (a.aPagarCents > 0n) lista.push({ IdDebito: ++id, CodigoDebito: a.codigoReceita, ValorDebito: valorDebito(a.aPagarCents) });
+      if (a.aPagarCents > 0n) {
+        // Item 3 (PR-4): o débito do ajuste anual (`A00`) leva o ano a que se refere (leiaute p. 8; Manual §4.1).
+        const anoDebito = a.periodo === AJUSTE_ANUAL ? { AnoDebito: a.anoCalendario } : {};
+        lista.push({ IdDebito: ++id, CodigoDebito: a.codigoReceita, ...anoDebito, ValorDebito: valorDebito(a.aPagarCents) });
+      }
       if (a.diferencaPostergadaCents > 0n) {
         const codigo = CODIGO_DIFERENCA_POSTERGADA[a.codigoReceita];
         if (!codigo) {
@@ -159,8 +190,7 @@ export function montarArquivoMit(e: EntradaMit): SaidaMit {
     DadosIniciais: {
       SemMovimento: false,
       QualificacaoPj: 1,
-      // Item 5 (F-X9-4 b): PRESUMIDO ⇒ 3, REAL + TRIMESTRAL ⇒ 2.
-      TributacaoLucro: e.perfil.regime === 'PRESUMIDO' ? 3 : 2,
+      TributacaoLucro: tributacaoLucro, // item 5 (F-X9-4 b)
       VariacoesMonetarias: 1,
       RegimePisCofins: e.perfil.regime === 'PRESUMIDO' ? 2 : 1,
       ResponsavelApuracao: responsavel,
