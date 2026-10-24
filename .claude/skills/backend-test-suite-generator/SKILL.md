@@ -45,6 +45,9 @@ Toda suíte gerada cumpre, por tipo:
 **Middleware test:**
 - [ ] **[TEST-006]** Cobre token ausente/inválido (rejeita) e token válido (popula `req` user context) — ver `auth.test.ts`.
 
+**Teste que asserta log (qualquer tipo):**
+- [ ] **[TEST-008]** Asserte sobre a **linha formatada**, não sobre a chamada do logger (Contrato §2.4): `jest.spyOn(console, 'log')` e `jest.spyOn(console, 'error')` com `mockImplementation` que coleta, `JSON.parse` de cada linha capturada e `LogEntrySchema.parse(linha)` (`server/src/lib/logEvents.ts`) antes de asserir `level`/`event`/campos; restaure os spies no `finally`. **Nunca** `jest.spyOn(logger, …)`: o contexto da requisição e o `event` entram dentro do `formatLog`, e o spy no logger vê a chamada sem eles — não prova nada. Exemplar: `server/src/middleware/__tests__/requestContext.integration.test.ts` (`captureLines`). Quando o código injeta `log` (schedulers), o `log` falso com `event: jest.fn()` basta para asserir o evento escolhido; o spy em `console` é para provar a linha.
+
 > Referências por tipo (já existem; complete a partir delas): `kpi` → `revenue/__tests__/RevenueKpiProcessor.test.ts`; `service` → `users/__tests__/user-deletion-qdrant.test.ts`; `security` → `documents/__tests__/rag-tenant-isolation.test.ts`; `middleware` → `middleware/__tests__/auth.test.ts`.
 
 ## When to use
@@ -308,3 +311,4 @@ Required check (frontend): `cd my-app && npx vitest run`. Arquivos: `my-app/**/_
 - **Não instancie o service inline em cada teste** — use o factory `buildService(overrides?)` para manter mocks consistentes e permitir override pontual de repo
 - **Não omita a suíte Empty Safety em KPI processor** — rows vazios devem render `0` finito, nunca `NaN`/`Infinity`; é a regressão mais comum
 - **Não asserir `previousValue === 0` sem dados no período anterior** — o contrato é `undefined`; aceite `undefined` ou `number`
+- **Não espione o `logger` para provar uma linha de log** — `jest.spyOn(logger, 'warn')` vê a chamada sem o contexto que o `formatLog` injeta; espione `console`, faça `JSON.parse` e valide com `LogEntrySchema` (`TEST-008`)

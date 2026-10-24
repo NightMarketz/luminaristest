@@ -1,4 +1,5 @@
 import { logger } from './logger';
+import type { LogEvent } from './logEvents';
 
 export interface MetricOptions {
   success: boolean;
@@ -13,6 +14,11 @@ export interface MetricOptions {
    * so without this a slow-but-successful run would never survive to disk.
    */
   warnThresholdMs?: number;
+  /**
+   * Catalog event for a gate line (ADR-OBSERVABILIDADE §11). Only the P1 use (httpTiming) passes it; the
+   * other `startTimer` callers are not gates and keep logging without one.
+   */
+  event?: LogEvent;
   /** Extra context forwarded to the log entry (e.g. ids, counts). */
   [key: string]: unknown;
 }
@@ -38,13 +44,10 @@ export class Metrics {
       const logLevel = !options.success || isSlow ? 'warn' : 'info';
       const status = options.success ? 'success' : 'failure';
 
-      const { warnThresholdMs: _warnThresholdMs, ...rest } = options;
-      logger[logLevel](`Metric: ${metricName}`, {
-        ...rest,
-        duration,
-        status,
-        metricName
-      });
+      const { warnThresholdMs: _warnThresholdMs, event, ...rest } = options;
+      const context = { ...rest, duration, status, metricName };
+      if (event) logger.event(logLevel, event, `Metric: ${metricName}`, context);
+      else logger[logLevel](`Metric: ${metricName}`, context);
     };
   }
 }

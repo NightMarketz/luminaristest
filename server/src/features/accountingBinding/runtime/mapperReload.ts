@@ -17,6 +17,7 @@ export function serializeReload(reload: () => Promise<void>): () => Promise<void
   let chain: Promise<void> = Promise.resolve();
   return () => {
     const run = chain.then(reload);
+    // eslint-disable-next-line no-restricted-syntax -- SANCTIONED: a rejeição chega a quem pediu a recarga (`run`); aqui só mantém a cadeia andando (OBS-R8)
     chain = run.catch(() => undefined);
     return run;
   };

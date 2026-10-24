@@ -37,10 +37,12 @@ import { AccountingPeriodNotOpenError, MaxCentsExceededError, NoMapperForUnitErr
 // (it operates purely over injected deps), but importing the job module loads them.
 jest.mock('../../lib/prisma', () => ({ __esModule: true, default: {} }));
 jest.mock('../../lib/factory', () => ({ __esModule: true, getFactory: jest.fn() }));
+import { logger } from '../../lib/logger';
+
 jest.mock('../../lib/logger', () => ({
   __esModule: true,
-  logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
-  default: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
+  logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn(), event: jest.fn() },
+  default: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn(), event: jest.fn() },
 }));
 
 function opp(over: Partial<WonOpportunity> = {}): WonOpportunity {
@@ -130,6 +132,8 @@ describe('reconcileCrmReceivables', () => {
 
     expect(book).toHaveBeenCalledTimes(3); // did not stop at the failure
     expect(summary).toEqual({ total: 3, synced: 2, idempotentHits: 0, failed: 1 });
+    // ADR-OBSERVABILIDADE item 4: the per-item failure is the P4 catalog event.
+    expect(logger.event).toHaveBeenCalledWith('error', 'job.reconcile_item_failed', expect.any(String), expect.objectContaining({ sourceId: 'opp-2' }));
   });
 
   it('classifies a MAX_CENTS_EXCEEDED poison from the bridge as BLOCKED (not failed) and continues', async () => {
@@ -259,6 +263,7 @@ describe('reconcileSaleSales', () => {
 
     expect(sync).toHaveBeenCalledTimes(3); // did not stop at the failure
     expect(summary).toEqual({ total: 3, synced: 2, idempotentHits: 0, failed: 1 });
+    expect(logger.event).toHaveBeenCalledWith('error', 'job.reconcile_item_failed', expect.any(String), expect.objectContaining({ sourceId: 'sale-2' }));
   });
 
   // BE-INCR-ONBOARDING-ACTIVATION item 6 (o teste-guarda do plano): venda sem mapper é BLOCKED com código próprio,

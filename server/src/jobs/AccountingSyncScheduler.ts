@@ -13,8 +13,8 @@
  * ponytail: process-local lock; upgrade to a DB/advisory lease only if multi-replica.
  */
 import { randomUUID } from 'crypto';
-import logger from '../lib/logger';
-import { sendAlertWebhook } from '../lib/alertWebhook';
+import logger, { type EventLogger } from '../lib/logger';
+import { sendAlertWebhook, type AlertPayload } from '../lib/alertWebhook';
 import { runAccountingSyncReconcile } from './accountingSyncReconcile.job';
 import type { ReconcileSummary } from './accountingSyncReconcile.job';
 
@@ -22,11 +22,8 @@ const JOB = 'accounting_sync_reconcile';
 const DEFAULT_INTERVAL_MS = 300_000; // 5 minutes
 const DEFAULT_INITIAL_DELAY_MS = 60_000; // 1 minute (mirrors the purge job)
 
-interface JobLogger {
-  info(message: string, context?: Record<string, unknown>): void;
-  warn(message: string, context?: Record<string, unknown>): void;
-  error(message: string, context?: Record<string, unknown>): void;
-}
+/** Gate P4 (ADR-OBSERVABILIDADE OBS-R9): every scheduler line carries a `job.*` catalog event. */
+type JobLogger = EventLogger;
 
 export interface SchedulerDeps {
   /** The reconciliation entry point. Defaults to runAccountingSyncReconcile. */
@@ -36,6 +33,11 @@ export interface SchedulerDeps {
   genRunId?: () => string;
   /** Injectable clock (ms) for deterministic duration/timestamps in tests. */
   now?: () => number;
+  /**
+   * Remote alert (OBS-R11; ADR-OBSERVABILIDADE A9 / item 7b): the bad-summary alert AND the failure of the pass.
+   * Default = the fire-and-forget webhook.
+   */
+  alert?: (payload: AlertPayload) => void;
 }
 
 export interface SchedulerStartOptions {
@@ -73,12 +75,14 @@ export class AccountingSyncScheduler {
   private readonly log: JobLogger;
   private readonly genRunId: () => string;
   private readonly now: () => number;
+  private readonly alert: (payload: AlertPayload) => void;
 
   constructor(deps: SchedulerDeps = {}) {
     this.reconcile = deps.reconcile ?? runAccountingSyncReconcile;
     this.log = deps.log ?? logger;
     this.genRunId = deps.genRunId ?? (() => randomUUID());
     this.now = deps.now ?? (() => Date.now());
+    this.alert = deps.alert ?? sendAlertWebhook;
   }
 
   /**
@@ -88,14 +92,14 @@ export class AccountingSyncScheduler {
    */
   async runOnce(): Promise<RunOnceResult> {
     if (this.running) {
-      this.log.warn(JOB, { job: JOB, event: 'skipped', reason: 'skipped_due_to_lock' });
+      this.log.event('warn', 'job.skipped', JOB, { job: JOB, reason: 'skipped_due_to_lock' });
       return { skipped: 'lock' };
     }
     this.running = true;
     const runId = this.genRunId();
     const startedAtMs = this.now();
     const startedAt = new Date(startedAtMs).toISOString();
-    this.log.info(JOB, { job: JOB, runId, event: 'start', startedAt });
+    this.log.event('info', 'job.started', JOB, { job: JOB, runId, startedAt });
 
     try {
       const summary = await this.reconcile();
@@ -104,7 +108,6 @@ export class AccountingSyncScheduler {
       const completeContext = {
         job: JOB,
         runId,
-        event: 'complete',
         startedAt,
         durationMs: this.now() - startedAtMs,
         total: summary.total,
@@ -119,28 +122,37 @@ export class AccountingSyncScheduler {
       // pendingWriteFailed > 0 also warns: it is the one case where an item ends up with NO
       // trace anywhere (watermark held by Fork 5-b, but nobody is told the safety net itself failed).
       if (blocked > 0 || summary.failed > 0 || pendingWriteFailed > 0) {
-        this.log.warn(JOB, completeContext);
+        this.log.event('warn', 'job.completed', JOB, completeContext);
         // Fire-and-forget — never awaited, never throws (see alertWebhook.ts). No-op when
         // ALERT_WEBHOOK_URL is unset.
-        sendAlertWebhook({
+        this.alert({
           ...completeContext,
           source: 'accounting_sync_reconcile',
           event: 'reconcile_summary',
           timestamp: new Date(this.now()).toISOString(),
         });
       } else {
-        this.log.info(JOB, completeContext);
+        this.log.event('info', 'job.completed', JOB, completeContext);
       }
       return summary;
     } catch (error) {
-      this.log.error(JOB, {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.log.event('error', 'job.failed', JOB, {
         job: JOB,
         runId,
-        event: 'failed',
         startedAt,
         durationMs: this.now() - startedAtMs,
         errorName: error instanceof Error ? error.name : 'UnknownError',
-        errorMessage: error instanceof Error ? error.message : String(error),
+        errorMessage,
+      });
+      // A9 / item 7b: a pass that throws is the failure most worth alerting — until this it only reached the log.
+      this.alert({
+        source: 'accounting_sync_reconcile',
+        event: 'job_failed',
+        timestamp: new Date(this.now()).toISOString(),
+        job: JOB,
+        runId,
+        error: errorMessage,
       });
       throw error;
     } finally {
@@ -154,11 +166,11 @@ export class AccountingSyncScheduler {
    */
   start(options: SchedulerStartOptions = {}): void {
     if (process.env.NODE_ENV === 'test' && !options.allowInTest) {
-      this.log.info(JOB, { job: JOB, event: 'skipped', reason: 'disabled_in_test' });
+      this.log.event('info', 'job.skipped', JOB, { job: JOB, reason: 'disabled_in_test' });
       return;
     }
     if (this.initialTimer || this.intervalTimer) {
-      this.log.warn(JOB, { job: JOB, event: 'skipped', reason: 'already_started' });
+      this.log.event('warn', 'job.skipped', JOB, { job: JOB, reason: 'already_started' });
       return;
     }
 
@@ -180,8 +192,9 @@ export class AccountingSyncScheduler {
     // The interval callback swallows errors (runOnce already logged them) so a single
     // failing pass never tears the recurring scheduler down.
     const tick = (): void => {
+      // eslint-disable-next-line no-restricted-syntax -- SANCTIONED: já registrado e alertado em runOnce (job.failed); o timer não pode morrer (OBS-R8)
       void this.runOnce().catch(() => {
-        /* already logged in runOnce(event:'failed') */
+        /* already logged in runOnce (job.failed) */
       });
     };
 
@@ -192,7 +205,7 @@ export class AccountingSyncScheduler {
     }, initialDelayMs);
     this.initialTimer.unref?.();
 
-    this.log.info(JOB, { job: JOB, event: 'scheduled', intervalMs, initialDelayMs });
+    this.log.event('info', 'job.scheduled', JOB, { job: JOB, intervalMs, initialDelayMs });
   }
 
   /** Stop all timers. Safe to call when not started; called from graceful shutdown. */

@@ -5,7 +5,7 @@ import type { Response } from 'express';
 import { handleApiError } from '../apiUtils';
 import { UnitDeletedError, UnitNotFoundError } from '../errors';
 
-jest.mock('../logger', () => ({ __esModule: true, logger: { error: jest.fn() }, default: { error: jest.fn() } }));
+jest.mock('../logger', () => ({ __esModule: true, logger: { error: jest.fn(), warn: jest.fn(), info: jest.fn(), event: jest.fn() }, default: { error: jest.fn(), warn: jest.fn(), info: jest.fn(), event: jest.fn() } }));
 
 function mockRes(): Response {
   const res = { status: jest.fn(), json: jest.fn() } as unknown as Response;

@@ -66,6 +66,8 @@ generated-by: skill-audit coverage
 | `SVC-006` | backend-service-generator | eval:./evals/evals.json#happy-1 | ✅ |
 | `SVC-007` | backend-service-generator | eval:./evals/evals.json#happy-1 | ✅ |
 | `SVC-008` | backend-service-generator | eval:./evals/evals.json#happy-2 | static:../../../server/src/features/accounting/__tests__/atomicUntil.boundary.test.ts | ✅ |
+| `SVC-009` | backend-service-generator | eval:./evals/evals.json#regression-2 | ✅ |
+| `SVC-010` | backend-service-generator | eval:./evals/evals.json#regression-2 | ✅ |
 | `TEST-001` | backend-test-suite-generator | eval:./evals/evals.json#happy-1 | ✅ |
 | `TEST-002` | backend-test-suite-generator | eval:./evals/evals.json#happy-1 | ✅ |
 | `TEST-003` | backend-test-suite-generator | eval:./evals/evals.json#happy-1 | eval:./evals/evals.json#regression-1 | ✅ |
@@ -73,6 +75,7 @@ generated-by: skill-audit coverage
 | `TEST-005` | backend-test-suite-generator | eval:./evals/evals.json#happy-1 | ✅ |
 | `TEST-006` | backend-test-suite-generator | eval:./evals/evals.json#edge-2 | ✅ |
 | `TEST-007` | backend-test-suite-generator | eval:./evals/evals.json#edge-1 | ✅ |
+| `TEST-008` | backend-test-suite-generator | eval:./evals/evals.json#edge-3 | ✅ |
 | `AC-2.1-B1` | backend-workflow-transition-generator | command:grep -rn 'PostingService\\|PayrollService\\|FiscalService' server/src/features/dynamicTables/ | ✅ |
 | `AC-2.1-B4` | backend-workflow-transition-generator | review:luminaris-reviewer/fronteira-2.1 | ✅ |
 | `CHAT-001` | chat-domain-generator | eval:./evals/evals.json#happy-1 | eval:./evals/evals.json#regression-1 | ✅ |

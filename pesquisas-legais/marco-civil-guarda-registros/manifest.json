@@ -1,0 +1,70 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei nº 12.965 de 23/04/2014",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2014/lei-12965-2014-04-23.md",
+      "url_final": "https://github.com/ctresb/leis/blob/304b3a90473b9f312cbbff04119cbc81dd492e3c/federal/leis-ordinarias/2014/lei-12965-2014-04-23.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2014-04-23;12965",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "304b3a90473b9f312cbbff04119cbc81dd492e3c",
+      "alertas": [],
+      "baixado_em": "2026-10-23T11:01:38-03:00",
+      "sha256": "3ab62009e0cbb77fa5c2113950e088852347108d8ec05c45f57dedff40923a38",
+      "arquivo": "docs/D01_lei-12965-2014-04-23.md",
+      "texto": "docs/D01_lei-12965-2014-04-23.txt",
+      "bytes": 27930
+    },
+    {
+      "id": "D02",
+      "titulo": "Decreto nº 8.771 de 11/05/2016",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos/2016/dec-8771-2016-05-11.md",
+      "url_final": "https://github.com/ctresb/leis/blob/39239e708b021186cea3d407a5fc7984f2c725f5/federal/decretos/2016/dec-8771-2016-05-11.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2016-05-11;8771",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-16",
+      "commit": "39239e708b021186cea3d407a5fc7984f2c725f5",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-10-23T11:01:53-03:00",
+      "sha256": "c4787d3e96bc3e0c82b38a2dcf3e77107f3e0b5572e3cd0dfd7e6db73bd4b311",
+      "arquivo": "docs/D02_dec-8771-2016-05-11.md",
+      "texto": "docs/D02_dec-8771-2016-05-11.txt",
+      "bytes": 13706
+    },
+    {
+      "id": "D03",
+      "titulo": "Decreto nº 8771",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2016/decreto/d8771.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2016/decreto/d8771.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-23T11:01:59-03:00",
+      "sha256": "180e261044c4b8ee32c27a0fc67d0be5f2acb1b82e62ad7b410a0e5020e77ac6",
+      "arquivo": "docs/D03_d8771-htm.html",
+      "texto": "docs/D03_d8771-htm.txt",
+      "bytes": 113231
+    },
+    {
+      "id": "D04",
+      "titulo": "d12975",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/d12975.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/d12975.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-23T11:02:44-03:00",
+      "sha256": "44345ad5f08654a08a7bed912caf39b83040a8d8abc6b9db99ef32dac9d9847c",
+      "arquivo": "docs/D04_d12975-htm.html",
+      "texto": "docs/D04_d12975-htm.txt",
+      "bytes": 62140
+    }
+  ],
+  "buscas": [],
+  "slug": "marco-civil-guarda-registros",
+  "pergunta": "Provedor de aplicação (ERP SaaS) é obrigado a guardar registros de acesso? Por quanto tempo e com que conteúdo?",
+  "criado": "2026-10-23T11:01:29-03:00"
+}

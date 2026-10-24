@@ -1,5 +1,6 @@
 import jwt, { type Secret, type SignOptions } from 'jsonwebtoken';
 import { Request } from 'express';
+import { logger } from './logger';
 
 const _rawSecret = process.env.JWT_SECRET;
 if (!_rawSecret) {
@@ -62,7 +63,8 @@ export function getAuthToken(req: Request): string | undefined {
         }
       }
     } catch (e) {
-      console.error('[jwt] Error parsing cookies:', e);
+      // warn: a malformed cookie is a client condition, not a server defect (F-OBS-2).
+      logger.warn('[jwt] Error parsing cookies', { error: e });
     }
   }
   return undefined;

@@ -7,7 +7,8 @@
  * ⚠️ Lock PROCESS-LOCAL — mesma ressalva do DfePollScheduler (não protege multi-réplica).
  * ponytail: lock local; teto = 1 réplica (SQLite single-host); upgrade a lease distribuída só se multi-réplica.
  */
-import logger from '../lib/logger';
+import logger, { type EventLogger } from '../lib/logger';
+import { sendAlertWebhook, type AlertPayload } from '../lib/alertWebhook';
 import { getFactory } from '../lib/factory';
 import type { ReleaseReportFetchSummary } from '../features/accounting/services/ReleaseReportService';
 
@@ -15,15 +16,14 @@ const JOB = 'mp_release_report_fetch';
 const DEFAULT_INTERVAL_MS = 24 * 60 * 60 * 1000; // P3-5: diário
 const DEFAULT_INITIAL_DELAY_MS = 5 * 60_000;
 
-interface JobLogger {
-  info(message: string, context?: Record<string, unknown>): void;
-  warn(message: string, context?: Record<string, unknown>): void;
-  error(message: string, context?: Record<string, unknown>): void;
-}
+/** Gate P4 (ADR-OBSERVABILIDADE OBS-R9): every scheduler line carries a `job.*` catalog event. */
+type JobLogger = EventLogger;
 
 export interface MpReleaseReportSchedulerDeps {
   fetch?: () => Promise<ReleaseReportFetchSummary>;
   log?: JobLogger;
+  /** Nó OBS, item 10 (F-OBS-7 a): remote alert on failure. Default = the fire-and-forget webhook. */
+  alert?: (payload: AlertPayload) => void;
 }
 
 export class MpReleaseReportScheduler {
@@ -32,25 +32,29 @@ export class MpReleaseReportScheduler {
   private intervalTimer: NodeJS.Timeout | null = null;
   private readonly fetch: () => Promise<ReleaseReportFetchSummary>;
   private readonly log: JobLogger;
+  private readonly alert: (payload: AlertPayload) => void;
 
   constructor(deps: MpReleaseReportSchedulerDeps = {}) {
     this.fetch = deps.fetch ?? (() => getFactory().getReleaseReportService().fetchAll());
     this.log = deps.log ?? logger;
+    this.alert = deps.alert ?? sendAlertWebhook;
   }
 
   async runOnce(): Promise<ReleaseReportFetchSummary | { skipped: 'lock' }> {
     if (this.running) {
-      this.log.warn(JOB, { job: JOB, event: 'skipped', reason: 'skipped_due_to_lock' });
+      this.log.event('warn', 'job.skipped', JOB, { job: JOB, reason: 'skipped_due_to_lock' });
       return { skipped: 'lock' };
     }
     this.running = true;
     try {
       const summary = await this.fetch();
-      if (summary.failed > 0) this.log.warn(JOB, { job: JOB, event: 'complete', ...summary });
-      else this.log.info(JOB, { job: JOB, event: 'complete', ...summary });
+      if (summary.failed > 0) this.log.event('warn', 'job.completed', JOB, { job: JOB, ...summary });
+      else this.log.event('info', 'job.completed', JOB, { job: JOB, ...summary });
       return summary;
     } catch (error) {
-      this.log.error(JOB, { job: JOB, event: 'failed', error: error instanceof Error ? error.message : String(error) });
+      const message = error instanceof Error ? error.message : String(error);
+      this.log.event('error', 'job.failed', JOB, { job: JOB, error: message });
+      this.alert({ source: 'mp_release_report', event: 'job_failed', timestamp: new Date().toISOString(), job: JOB, error: message });
       throw error;
     } finally {
       this.running = false;
@@ -59,18 +63,19 @@ export class MpReleaseReportScheduler {
 
   start(options: { intervalMs?: number; initialDelayMs?: number; allowInTest?: boolean } = {}): void {
     if (process.env.NODE_ENV === 'test' && !options.allowInTest) {
-      this.log.info(JOB, { job: JOB, event: 'skipped', reason: 'disabled_in_test' });
+      this.log.event('info', 'job.skipped', JOB, { job: JOB, reason: 'disabled_in_test' });
       return;
     }
     if (this.initialTimer || this.intervalTimer) {
-      this.log.warn(JOB, { job: JOB, event: 'skipped', reason: 'already_started' });
+      this.log.event('warn', 'job.skipped', JOB, { job: JOB, reason: 'already_started' });
       return;
     }
     const intervalMs = options.intervalMs ?? DEFAULT_INTERVAL_MS;
     const initialDelayMs = options.initialDelayMs ?? DEFAULT_INITIAL_DELAY_MS;
     const tick = (): void => {
+      // eslint-disable-next-line no-restricted-syntax -- SANCTIONED: já registrado e alertado em runOnce (job.failed); o timer não pode morrer (OBS-R8)
       void this.runOnce().catch(() => {
-        /* já logado em runOnce(event:'failed') */
+        /* já logado em runOnce (job.failed) */
       });
     };
     this.initialTimer = setTimeout(() => {
@@ -79,7 +84,7 @@ export class MpReleaseReportScheduler {
       this.intervalTimer.unref?.();
     }, initialDelayMs);
     this.initialTimer.unref?.();
-    this.log.info(JOB, { job: JOB, event: 'scheduled', intervalMs, initialDelayMs });
+    this.log.event('info', 'job.scheduled', JOB, { job: JOB, intervalMs, initialDelayMs });
   }
 
   stop(): void {

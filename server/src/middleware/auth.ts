@@ -1,6 +1,8 @@
 import type { Request, Response, NextFunction } from 'express';
 import { verifyToken, getAuthToken } from '@/lib/jwt';
 import { getFactory } from '@/lib/factory';
+import { logger } from '@/lib/logger';
+import { requestContext } from '@/lib/requestContext';
 
 /**
  * Identity headers this middleware injects for downstream handlers (getUserContext,
@@ -140,6 +142,9 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
 
     // Inject user context headers for downstream handlers
     req.headers['x-user-id'] = String(payload.id || payload.userId || '');
+    // Nó OBS, item 3: every later log line carries the user id. Only the id — never email or name.
+    const ctx = requestContext.get();
+    if (ctx) ctx.userId = req.headers['x-user-id'];
     req.headers['x-user-role'] = String(payload.role || '');
     if (payload.email) req.headers['x-user-email'] = String(payload.email);
     if (payload.name) req.headers['x-user-name'] = String(payload.name);
@@ -147,7 +152,7 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
 
     // Admin-only enforcement
     if (isAdminOnly(pathname, method) && payload.role !== 'ADMIN') {
-      console.warn(`[authMiddleware] 403: Admin access required for ${method} ${pathname}`);
+      logger.event('warn', 'auth.denied', '[authMiddleware] 403: Admin access required', { method, route: pathname });
       res.status(403).json({ code: 'FORBIDDEN', message: 'Admin access required' });
       return;
     }
@@ -166,7 +171,7 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
         const targetUserId = pathParts.pop();
         const currentUserId = String(payload.id || payload.userId || '');
         if (targetUserId !== currentUserId) {
-          console.warn(`[authMiddleware] 403: Self-update only for ${method} ${pathname}`);
+          logger.event('warn', 'auth.denied', '[authMiddleware] 403: Self-update only', { method, route: pathname });
           res.status(403).json({ code: 'FORBIDDEN', message: 'You can only update your own profile' });
           return;
         }
@@ -174,8 +179,10 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
     }
 
     next();
-  } catch (err: unknown) {
-    console.error(`[authMiddleware] 401: Invalid or expired token for ${method} ${pathname}. Error: ${err instanceof Error ? err.message : String(err)}`);
+  } catch {
+    // warn, not error: a bad token is a client condition (F-OBS-2). The raw JWT error message is left
+    // out on purpose (item 8) — the route is enough to investigate.
+    logger.event('warn', 'auth.denied', '[authMiddleware] 401: Invalid or expired token', { method, route: pathname });
     res.status(401).json({ code: 'UNAUTHORIZED', message: 'Invalid or expired token' });
   }
 }

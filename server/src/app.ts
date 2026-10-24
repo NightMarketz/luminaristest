@@ -11,8 +11,11 @@ import path from 'path';
 import { router as routes } from './routes';
 import { authMiddleware } from './middleware/auth';
 import { httpTimingMiddleware } from './middleware/httpTiming';
+import { requestContextMiddleware } from './middleware/requestContext';
+import { accessLogMiddleware } from './middleware/accessLog';
 import { handleApiError } from './lib/apiUtils';
 import { jsonBigintReplacer } from './lib/jsonBigintReplacer';
+import { outboundFetch } from './lib/outboundHttp';
 import prisma from './lib/prisma';
 
 /**
@@ -38,6 +41,12 @@ export function createApp(): express.Express {
   // CORS restricted to the frontend origin (R21) — never open cors() in production.
   app.use(cors({ origin: process.env.ALLOWED_ORIGIN || 'http://localhost:3000', credentials: true }));
   app.use(compression());
+  // Nó OBS, item 2: opens the per-request context (requestId/route; userId after auth) that every log
+  // line carries — before httpTiming so the timing line has the id too.
+  app.use(requestContextMiddleware);
+  // Nó OBS, Fase B (item 11): Marco Civil access log — reuses the context above, writes on finish once
+  // authMiddleware has set userId.
+  app.use(accessLogMiddleware);
   // BRIEF-W2-D (F4, layer 2 / F-W2D-2): measures the WHOLE route — body parsing, auth, and the
   // route handler — so it must sit before json()/urlencoded()/authMiddleware/routes, not after.
   app.use(httpTimingMiddleware);
@@ -86,7 +95,7 @@ export function createApp(): express.Express {
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000);
-        const qdrantRes = await fetch(`${process.env.QDRANT_URL}/healthz`, { signal: controller.signal });
+        const qdrantRes = await outboundFetch('qdrant', `${process.env.QDRANT_URL}/healthz`, { signal: controller.signal });
         clearTimeout(timeoutId);
         checks.qdrant = qdrantRes.ok ? 'ok' : 'error';
       } catch {

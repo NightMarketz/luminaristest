@@ -42,6 +42,11 @@ rules:
     gates:
       - type: eval
         target: ./evals/evals.json#edge-1
+  # Adicionada em 2026-10-23 (Contrato §2.4 — ADR-OBSERVABILIDADE §6 item 9).
+  TEST-008:
+    gates:
+      - type: eval
+        target: ./evals/evals.json#edge-3
 ---
 
 # Governança — `backend-test-suite-generator`
@@ -62,5 +67,7 @@ Regras normativas da camada Test Suite, cada uma coberta por um caso de eval com
 - `TEST-005` — shape mínimo da suíte service: `getById` ok/`NotFoundError`/`ForbiddenError` + `delete` chama `softDelete`.
 - `TEST-006` — shape da suíte middleware: token ausente/inválido rejeita, token válido popula `req`.
 - `TEST-007` — determinismo: `referenceDate` fixo e money via `toBeCloseTo(value, 2)`, nunca `new Date()` solto nem `toBe`/`toEqual` em float.
+- `TEST-008` — assert de log sobre a linha formatada: `jest.spyOn(console, 'log' | 'error')`, `JSON.parse` e
+  `LogEntrySchema.parse`, nunca spy no `logger` (Contrato §2.4) — caso `edge-3`.
 
 `status: validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit). `last_evaluated` registra a data de autoria das regras, não uma execução de eval aprovada.

@@ -11,6 +11,7 @@ import {
   type WebhookVerification,
 } from './CollectionProviderPort';
 import { MP_MAX_DAYS_TO_DUE, PAYMENT_WEBHOOK_MAX_AGE_MS } from '../models/CollectionCharge.model';
+import { outboundFetch } from '../../../lib/outboundHttp';
 
 /**
  * MercadoPagoCollectionProvider — 1º adaptador da porta (BE-INCR-PAYMENT-PROVIDER PR-2, P2-1; F-PP-4 a: Orders API).
@@ -148,7 +149,7 @@ export class MercadoPagoCollectionProvider implements CollectionProviderPort {
     if (body !== undefined) headers['Content-Type'] = 'application/json';
     let res: Response;
     try {
-      res = await fetch(`${this.baseUrl}${path}`, {
+      res = await outboundFetch('mercado_pago', `${this.baseUrl}${path}`, {
         method,
         headers,
         body: body === undefined ? undefined : JSON.stringify(body),
@@ -177,7 +178,7 @@ export class MercadoPagoCollectionProvider implements CollectionProviderPort {
     if (body !== undefined) headers['Content-Type'] = 'application/json';
     let res: Response;
     try {
-      res = await fetch(`${this.baseUrl}${path}`, {
+      res = await outboundFetch('mercado_pago', `${this.baseUrl}${path}`, {
         method,
         headers,
         body: body === undefined ? undefined : JSON.stringify(body),
