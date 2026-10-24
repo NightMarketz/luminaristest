@@ -54,6 +54,15 @@ rules:
         target: ./evals/evals.json#happy-2
       - type: static
         target: ../../../server/src/features/accounting/__tests__/atomicUntil.boundary.test.ts
+  # Adicionadas em 2026-10-23 (Contrato §2.4 — ADR-OBSERVABILIDADE §6 item 9, OBS-R5/OBS-R8).
+  SVC-009:
+    gates:
+      - type: eval
+        target: ./evals/evals.json#regression-2
+  SVC-010:
+    gates:
+      - type: eval
+        target: ./evals/evals.json#regression-2
 ---
 
 # Governança — `backend-service-generator`
@@ -75,6 +84,11 @@ Regras normativas da camada Service, cada uma coberta por pelo menos um caso de 
 - `SVC-006` — `actor: IUser | null` importado de `../../users/models/User.model`, nunca `@prisma/client`.
 - `SVC-007` — registro em `lib/factory.ts`: repo/policy antes do service + getter `get<Resource>Service()`.
 - `SVC-008` — service que chama `postEntry` (com ou sem subrazão) nasce com o cabeçalho `atomicUntil` (5 linhas) + 3 testes por linha; 2 commits + reconcile, nunca "mesma tx" (Contrato §2.3) — caso `happy-2`. Verificador real = `server/src/features/accounting/__tests__/atomicUntil.boundary.test.ts` (PR-B, GAP-MAP fila 9) — gate `static` desde 2026-10-01.
+- `SVC-009` — não registra e relança: o `catch` que converte ou deixa subir não chama `logger.*`; a borda registra
+  (Contrato §2.4, OBS-R5) — caso `regression-2`.
+- `SVC-010` — nenhum `catch` silencioso: quem não relança registra em `warn`+ com `{ error }` ou justifica no ledger
+  de dívida (Contrato §2.4, OBS-R8) — caso `regression-2`. O gate de lint de F-OBS-13 (Fase C3 do nó OBS) entra como
+  gate `static` quando estiver na main.
 
 Status `validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit). `eval-score`/`last-evaluated`
 são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.
