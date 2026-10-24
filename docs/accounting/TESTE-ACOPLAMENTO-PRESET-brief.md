@@ -190,7 +190,7 @@ consertados, só registrados (no nó e em `KNOWN_GAPS`). Sem merge.
 | Divergência | Origem |
 |---|---|
 | `expenses#costKpis` lista `status` em `importantFields`/`defaultImportantFields`; `expenses` não tem `status` | §3.2 #16 |
-| **Novo:** `sales#cashflowKpis`, KPI "Contas a Pagar Total", lista `['date', 'amount', 'paymentStatus']` — `amount` é de `expenses`, `date` é de `sales`; órfão em qualquer das duas leituras. `importantFields` não tem consumidor no frontend (só o `AnalyticsResolver` repassa) | este teste |
+| **Novo:** `sales#cashflowKpis`, KPI "Contas a Pagar Total", lista `['date', 'amount', 'paymentStatus']` — `amount` é de `expenses`, `date` é de `sales`. A chave entregue acusa `amount` (leitura A); pela leitura do runtime (B), o KPI lê `expenses`, e o órfão real é `date` — ver L-TAP-1 / F-TAP-6. `importantFields` não tem consumidor no frontend | este teste |
 
 **Por desenho (allowlist F-TAP-3 a, não é achado):** `leads.accountId/contactId`, `crmContacts.accountId` e — **novo,
 só visível com o módulo isolado de F-TAP-1 (b)** — `crmOpportunities.accountId/contactId` (CRM-3 depende só de CRM-0,
@@ -198,9 +198,74 @@ F-CRM-5 a). A sonda do ACHADOS §2.2 não varreu módulo isolado, por isso só c
 
 ### Lacunas de spec
 
-- Tabela de referência de um `importantFields` cujo KPI lê outra tabela (o "Contas a Pagar" dentro de
-  `sales#cashflowKpis`) não está especificada. O teste usa a do `tableKey`; não bloqueou porque o achado vale nas duas
-  leituras. Quem decide é o FIX-ANALYTICS-RESIDUO, ao corrigir o item.
+#### L-TAP-1 — contra qual tabela conferir `importantFields` (aprofundada em 24/10, a pedido do dono)
+
+**Resumo.** O BRIEF diz só "`importantFields` (achado §3.2 #16)". O teste entregue usa a tabela do `tableKey` do bloco
+(leitura A). O runtime tem uma semântica executável diferente (leitura B), e ela acha **mais** divergências: o teste
+entregue subnotifica. Há ainda uma terceira classe de órfão (chave de KPI que o processador não emite) que nenhuma das
+duas leituras pegava. **Fork aberto para o dono: F-TAP-6.**
+
+**1. O que é `importantFields` no código** (verificado lendo os arquivos):
+
+- Tipo: `ChartPreset.options.importantFields?: Record<string, string[]>` — "KPI name → array de campos importantes" —
+  e `defaultImportantFields?: string[]` — "Campos padrão para todos os KPIs deste chart"
+  (`server/src/features/analytics/core/models/ChartPreset.ts:49-50`). A chave é o **nome do KPI**, não a tabela.
+- Único leitor no servidor: `resolveChartDetails` (`engine/AnalyticsResolver.ts:453`), atrás de
+  `GET /api/analytics/chart/:chartKey/details` (`routes/analytics.ts:28`). Ele **só repassa** os dois campos no
+  corpo da resposta; não filtra nem valida nada com eles.
+- Consumidor no frontend: **nenhum**, em nenhum commit do histórico (`git log --all -S importantFields` só acha
+  `server/` e docs; `git grep` no `my-app` em `ef2fb231`, `0db39612` e `HEAD` = vazio). O `my-app` tem o tipo
+  `ChartDetailsResponse` (`analytics.types.ts:273`, sem `importantFields`) e nenhum chamador da rota de detalhe — é a
+  rota órfã do ACHADOS §3.2 #20. Pelo comentário em `AnalyticsResolver.ts:437` ("O modal ainda funcionará buscando
+  dados via resolveChartDetails"), a intenção era um modal de detalhamento do KPI (quais colunas mostrar). Grau:
+  **inferido**.
+- **De qual tabela vêm os registros do detalhe de um KPI:** do `tableSource` que o **processador** emite para aquele
+  KPI (`ProcessorRegistry.ts:36`; `AnalyticsResolver.ts` "Priority: dataPoint.tableSource > table.presetKey >
+  processorParams.tableId"). Valores: a tabela principal (`mainTableSource`), a de despesas (`expenseTableSource` =
+  `params.expensesTableKey ?? 'expenses'`), ou `'mixed'`. Com `'mixed'`, o resolver busca a principal **e** a de
+  `costSourceTableKey || expensesTableKey`, devolvendo `recordsByTable` agrupado por tabela. Esta é a **única
+  semântica executável** de "tabela de um KPI" no repo.
+
+**2. Inventário completo** (4 blocos com `importantFields`, idênticos em salão e clínica; nomes emitidos lidos dos
+processadores — `cashflow` 11, `cost` 14, `profit` 18, `revenue` 17 KPIs, conferidos por contagem):
+
+| Bloco (tabela) | KPI em `importantFields` | `tableSource` emitido | Campos fora da tabela-fonte |
+|---|---|---|---|
+| `sales#revenueKpis` | 6 KPIs | todos `sales` | — |
+| `sales#profitKpis` | Lucro Bruto, Lucro Líquido, Margem Bruta, Margem Líquida | `mixed` (sales ∪ expenses) | — |
+| `sales#profitKpis` | **Lucro por Cliente** | **não emitido** (o processador emite `Lucro Médio por Cliente`) | chave morta |
+| `sales#cashflowKpis` | Fluxo de Caixa Operacional | `mixed` | — |
+| `sales#cashflowKpis` | Contas a Receber Total | `sales` | — |
+| `sales#cashflowKpis` | **Contas a Pagar Total** `['date','amount','paymentStatus']` | **`expenses`** | **`date`** (expenses tem `paymentDate`/`dueDate`) |
+| `sales#cashflowKpis` | *default* `['date','totalAmount','paymentStatus','status']` → KPIs sem entrada própria com fonte `expenses`: **Contas a Pagar Vencidas**, **Prazo Médio de Pagamento** | `expenses` | **`date`, `totalAmount`, `status`** |
+| `expenses#costKpis` | Custo Total (e o *default*, que cobre os 9 KPIs sem entrada) | `expenses` | **`status`** |
+
+**3. As leituras e o que cada uma acha** (por suíte; ×2 com salão e clínica):
+
+| Leitura | Regra | Divergências |
+|---|---|---|
+| **A** (entregue no #883) | todo campo existe na tabela do `tableKey` do bloco | `costKpis:status`, `cashflowKpis:amount` |
+| **B** (oráculo de runtime) | campo da entrada de um KPI existe na tabela do `tableSource` que o processador emite para ele (`mixed` = pelo menos uma das duas tabelas); `default` vale para cada KPI emitido **sem** entrada própria, contra a fonte dele; chave de KPI tem de ser nome emitido | `costKpis:status`; `cashflowKpis` "Contas a Pagar Total": `date`; `cashflowKpis` *default* nos 2 KPIs de despesa: `date`, `totalAmount`, `status`; `profitKpis`: chave morta `Lucro por Cliente` |
+| **B′** (B com `mixed` estrito: o campo existe nas **duas** tabelas) | idem B | B + todo KPI `mixed` de lucro e de caixa (`date`, `totalAmount`, `status` não existem em `expenses`) — descartada: `importantFields` não é indexado por tabela, então não dá para exigir o campo nas duas |
+
+Sob A, `amount` em "Contas a Pagar Total" é falso positivo: o KPI lê `expenses`, onde `amount` existe. O órfão real
+é `date`, que A não vê. A também não vê o *default* aplicado a KPI de despesa nem a chave morta.
+
+**4. O que isso pede de decisão** — F-TAP-6 (abaixo). Até o dono decidir, o teste segue na leitura A e as 4 chaves
+de `KNOWN_GAPS` de analytics continuam valendo. O teste nunca acusa a mais: só subnotifica.
+
+**F-TAP-6 — semântica do `importantFields` no teste** (RATIFICAÇÃO PENDENTE)
+- (a) Manter A (tabela do bloco). Simples, mas tem falso positivo (`amount`) e falso negativo (`date`, *default*, chave morta).
+- (b) Adotar B: o teste lê o `tableSource` de cada KPI e confere a chave contra os nomes emitidos. Para isso, o
+  teste precisa da lista `nome → tableSource` de cada processador, e há dois jeitos de obtê-la: executar o
+  processador com um fixture vazio ou manter um manifesto estático, como no F-TAP-2 (a). **Rec.: (b)**, com o
+  manifesto estático: B é a única semântica que o runtime executa, e o manifesto cabe no write_set.
+- (c) Não testar `importantFields`: sem consumidor, o campo morre junto com a rota de detalhe se o
+  FIX-ANALYTICS-RESIDUO remover a rota órfã (§3.2 #20). Nesse caso, a fatia de `importantFields` sai de `KNOWN_GAPS`
+  e vira item de remoção no nó dono.
+
+Depende de F-TAP-6: se a rota de detalhe vai sobreviver é decisão do FIX-ANALYTICS-RESIDUO (§3.2 #20). Se ela
+morrer, (c) é a coerente.
 
 ### Fora de escopo (para os nós donos)
 

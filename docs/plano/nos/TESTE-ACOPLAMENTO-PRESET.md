@@ -56,8 +56,15 @@ Regras de governança (item 2), `deleteConstraints` (item 3) e `defaultValue` de
 
 3. `costKpis` (`expenses`) lista `status` em `importantFields`/`defaultImportantFields`; `expenses` não tem `status` · §3.2 #16.
 4. **Novo:** o KPI "Contas a Pagar Total" do `cashflowKpis` (`sales`) lista `['date', 'amount', 'paymentStatus']` —
-   `amount` é de `expenses`, `date` é de `sales`; órfão em qualquer das duas leituras. `importantFields` não tem
-   consumidor no frontend (só o `AnalyticsResolver` repassa).
+   `amount` é de `expenses`, `date` é de `sales`. `importantFields` não tem consumidor no frontend (só o
+   `AnalyticsResolver` repassa).
+
+**Aprofundado em 24/10 (L-TAP-1 do BRIEF):** o teste entregue confere `importantFields` contra a tabela do bloco
+(leitura A). O runtime decide a tabela de um KPI pelo `tableSource` que o processador emite (leitura B). Sob B:
+`amount` em "Contas a Pagar Total" é falso positivo (o KPI lê `expenses`) e o órfão real é `date`; o *default* do
+`cashflowKpis` aplicado a "Contas a Pagar Vencidas" e "Prazo Médio de Pagamento" (fonte `expenses`) deixa `date`,
+`totalAmount` e `status` órfãos; e `Lucro por Cliente` do `profitKpis` é chave morta (o processador emite
+`Lucro Médio por Cliente`). A leitura A subnotifica. **Fork F-TAP-6 aberto no BRIEF** (rec.: adotar B).
 
 **Por desenho (allowlist F-TAP-3 a, não é achado):** relações opcionais para módulo não instalado são descartadas
 pelo create — `leads.accountId/contactId`, `crmContacts.accountId` e, **novo com o módulo isolado**,
