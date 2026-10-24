@@ -44,6 +44,8 @@ export const LEGAL_PARAMETER_TABELAS = [
   // IBS-CBS-2027 PR-3 (dono 22/10): taxa de referência PROVISÓRIA da CBS para a prévia enquanto a linha IBS_CBS/CBS de 2027 for
   // DRAFT (sem fonte oficial — o operador da plataforma publica; a confirmação nunca a usa). Nasce vazia.
   'IBS_CBS_PROVISORIA',
+  // ISS-TRANSICAO-IBS PR-1 (BRIEF item 2): fator de redução do ISS em 2029–2032 (LC 116 art. 8º-B I–IV, incl. LC 214 art. 508).
+  'ISS_TRANSICAO',
 ] as const;
 export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
 

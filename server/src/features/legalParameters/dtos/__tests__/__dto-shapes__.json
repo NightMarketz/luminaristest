@@ -34,7 +34,8 @@
             "TJLP",
             "IBS_CBS",
             "IBS_CBS_USO_CONSUMO",
-            "IBS_CBS_PROVISORIA"
+            "IBS_CBS_PROVISORIA",
+            "ISS_TRANSICAO"
           ]
         },
         "chave": {
@@ -130,7 +131,8 @@
             "TJLP",
             "IBS_CBS",
             "IBS_CBS_USO_CONSUMO",
-            "IBS_CBS_PROVISORIA"
+            "IBS_CBS_PROVISORIA",
+            "ISS_TRANSICAO"
           ]
         },
         "status": {
@@ -209,7 +211,8 @@
             "TJLP",
             "IBS_CBS",
             "IBS_CBS_USO_CONSUMO",
-            "IBS_CBS_PROVISORIA"
+            "IBS_CBS_PROVISORIA",
+            "ISS_TRANSICAO"
           ]
         },
         "chave": {

@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { isLc116Codigo, listaLc116DoCache } from '../models/lc116ListaNacional';
 import { issAliquotaMaxBpDoCache } from '../models/issLimite';
+import { ISS_EXTINTO_MENSAGEM, issExtinto } from '../models/issTransicao';
+import { hojeDateOnly } from '../../legalParameters/models/hoje';
 
 /**
  * BE-INCR-NFE-COST-REGIME (nó X6) — DTOs do perfil fiscal (BRIEF §2 + EMENDA 2026-09-15). `.strict()`.
@@ -89,12 +91,17 @@ const FiscalProfileFields = z
     regApTribSN: z.number().int().min(1).max(3).nullable().optional(),
     // BE-INCR-DFE — D1f configurável (5a–5f), defaults = recomendação do ADR
     // BE-INCR-LEGAL-PARAMS PR-2 (item 22; L-8): o máximo vem da tabela ISS_LIMITE (cache síncrono). D-4 (mínimo de 2%)
-    // é pendência de contador — não corrigida.
+    // é pendência de contador — não corrigida. ISS-TRANSICAO-IBS PR-1 (item 4; F-ISS-5 a): de 01/01/2033 em diante a
+    // ISS_LIMITE não tem linha (LC 214 art. 543 IV) — valor não nulo ⇒ 400 nomeado, antes de ler o máximo; null passa.
     issAliquotaBp: z
       .number()
       .int()
       .min(0)
-      .refine((v) => v <= issAliquotaMaxBpDoCache(), { message: 'issAliquotaBp acima do máximo da tabela ISS_LIMITE (pAliq [312]; RN E0595)' })
+      .superRefine((v, ctx) => {
+        const hoje = hojeDateOnly();
+        if (issExtinto(hoje)) ctx.addIssue({ code: 'custom', message: ISS_EXTINTO_MENSAGEM });
+        else if (v > issAliquotaMaxBpDoCache(hoje)) ctx.addIssue({ code: 'custom', message: 'issAliquotaBp acima do máximo da tabela ISS_LIMITE (pAliq [312]; RN E0595)' });
+      })
       .nullable()
       .optional(),
     issRetidoTomadorPj: z.boolean().default(false),
