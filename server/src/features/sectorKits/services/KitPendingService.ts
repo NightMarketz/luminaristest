@@ -19,6 +19,7 @@
  *   fora da tx — nada. Recusar é uma tx só (CAS + auditoria).
  */
 import { ForbiddenError, RoleOverrideCompileDraftError, ValidationError } from '../../../lib/errors';
+import { logger } from '../../../lib/logger';
 import type { KitUpgradePending, Prisma } from 'generated/prisma';
 import type { BindingScope } from '../../accountingBinding/repositories/IAccountingBindingRepository';
 import type { BindingCompileService } from '../../accountingBinding/services/BindingCompileService';
@@ -164,7 +165,16 @@ export class KitPendingService {
           await this.recompileInstalled(scope);
         } catch (error) {
           // Desfaz o restaurar; se o desfazer também falhar, o erro que sobe continua sendo o da recompilação.
-          await this.write.deleteAccount(code).catch(() => undefined);
+          // A falha do desfazer deixa a conta restaurada sem a recompilação, então não pode sumir sem rastro
+          // (ADR-OBSERVABILIDADE OBS-R8): vira warn aqui, e o erro original segue para quem chamou.
+          await this.write.deleteAccount(code).catch((undoError: unknown) => {
+            logger.warn('[KitPendingService] undo of restoreAccount failed after recompile error', {
+              unitId: scope.unitId,
+              accountCode: code,
+              pendingId: pending.id,
+              error: undoError,
+            });
+          });
           throw error;
         }
         return;

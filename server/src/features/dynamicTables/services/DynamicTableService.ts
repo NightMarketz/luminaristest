@@ -34,6 +34,7 @@ function withTableWriteLock<T>(tableId: string, fn: () => Promise<T>): Promise<T
   // `then(fn, fn)` — a fila anda mesmo quando o pedido anterior rejeita (ValidationError é o
   // desfecho ESPERADO do perdedor; não pode travar quem vem atrás).
   const run = previous.then(fn, fn);
+  // eslint-disable-next-line no-restricted-syntax -- SANCTIONED: a rejeição chega ao chamador (`run`); aqui só mantém a fila da tabela andando (OBS-R8)
   const settled = run.catch(() => undefined);
   tableWriteQueue.set(tableId, settled);
   // Não deixa o Map crescer por tabela já drenada.

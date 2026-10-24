@@ -75,9 +75,35 @@ export default tseslint.config(
     ignores: ['src/jobs/*Cli.ts', 'src/scripts/**', 'src/config/env.ts', 'src/lib/logger.ts'],
     rules: { 'no-console': 'error' },
   },
+  // ADR-OBSERVABILIDADE OBS-R8 (F-OBS-13 a, dono 2026-10-23): nenhum `catch` silencioso. Um `catch {}` vazio
+  // (comentário conta como corpo) e um `.catch(...)` cuja arrow devolve undefined/null/literal sem chamar nada
+  // reprovam. Quem engole de propósito — o erro é tratado por outro caminho — leva supressão marcada
+  // (`-- SANCTIONED: <por quê>`) e entrada no bloco debt-ledger de docs/architecture/lint-layer-gate.md.
+  // Fora, pela exceção do OBS-R1: CLIs e scripts.
+  {
+    files: ['src/**/*.ts'],
+    ignores: ['src/jobs/*Cli.ts', 'src/scripts/**'],
+    rules: {
+      'no-empty': ['error', { allowEmptyCatch: false }],
+      'no-restricted-syntax': [
+        'error',
+        ...[
+          "ArrowFunctionExpression[body.type='Literal']",
+          "ArrowFunctionExpression[body.type='Identifier'][body.name='undefined']",
+          "ArrowFunctionExpression[body.type='UnaryExpression'][body.operator='void']",
+          "ArrowFunctionExpression[body.type='BlockStatement'][body.body.length=0]",
+        ].map((arrow) => ({
+          selector: `CallExpression[callee.property.name='catch'] > ${arrow}.arguments`,
+          message:
+            'OBS-R8 (ADR-OBSERVABILIDADE): `.catch` silencioso. Registre com logger.warn({ error }) ou acima; se o erro ' +
+            'é tratado por outro caminho, suprima com `-- SANCTIONED: <por quê>` e declare no bloco debt-ledger.',
+        })),
+      ],
+    },
+  },
   // Testes não são camada de produção — fora do gate.
   {
     files: ['src/**/__tests__/**/*.ts', 'src/**/*.test.ts'],
-    rules: { 'no-restricted-imports': 'off', 'no-console': 'off' },
+    rules: { 'no-restricted-imports': 'off', 'no-console': 'off', 'no-empty': 'off', 'no-restricted-syntax': 'off' },
   },
 );

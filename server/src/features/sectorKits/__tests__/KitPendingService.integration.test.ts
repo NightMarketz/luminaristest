@@ -16,6 +16,7 @@ import { BEAUTY_SALON_KIT_V4 } from '@/features/sectorKits/kits/beautySalon/kit.
 import { CANONICAL_ACCOUNTS_PRE_L8 } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
 import { KIT_REGISTRY, latestKit } from '@/features/sectorKits/registry';
 import type { KitVersionsLookup } from '@/features/sectorKits/services/KitInstallService';
+import { LogEntrySchema } from '@/lib/logEvents';
 
 const app = makeApp();
 const UNIT = 'unit-pend';
@@ -171,6 +172,35 @@ describe('KitPendingService (integração)', () => {
     });
     expect((await prisma.account.findUniqueOrThrow({ where: { id: id48 } })).deletedAt).not.toBeNull();
     expect((await pendencia('account:4.8')).status).toBe('OPEN');
+  }, T);
+
+  // ADR-OBSERVABILIDADE OBS-R8 (Fase C, item 6): o desfazer que falha não some sem rastro — vira warn — e o erro que
+  // sobe continua sendo o da recompilação. Assert na linha do console parseada (o contexto entra no formatLog).
+  it('aceitar conta apagada: se o desfazer falhar, registra warn e o 422 da recompilação ainda sobe', async () => {
+    await preparar();
+    const id48 = (await prisma.account.create({ data: { ...where(), code: '4.8', name: 'CMV próprio', nature: 'Expense' } })).id;
+    await prisma.account.update({ where: { id: id48 }, data: { deletedAt: new Date() } });
+    const lookup: KitVersionsLookup = () => [BEAUTY_SALON_KIT_V1, comPapel(BEAUTY_SALON_KIT_V1, 2, 'custo-mercadoria-vendida', '4.8')];
+    await atualizar('d1', lookup);
+    const p = await pendencia('account:4.8');
+    await prisma.accountingPeriod.updateMany({ where: { ...where(), year: Number(TODAY.slice(0, 4)), month: Number(TODAY.slice(5, 7)) }, data: { status: 'SOFT_CLOSED' } });
+
+    const svc = factory().getKitPendingService(scope(), lookup);
+    jest.spyOn(svc['write'], 'deleteAccount').mockRejectedValueOnce(new Error('disk gone'));
+    const out = jest.spyOn(console, 'log').mockImplementation(() => {});
+    try {
+      await expect(svc.accept(scope(), p.id, { unitId: UNIT, motivo: MOTIVO })).rejects.toMatchObject({ errorCode: 'KIT_PENDING_COMPILE_DRAFT' });
+      const lines = out.mock.calls.map((c) => LogEntrySchema.parse(JSON.parse(c[0] as string)));
+      expect(lines).toContainEqual(expect.objectContaining({
+        level: 'warn',
+        message: '[KitPendingService] undo of restoreAccount failed after recompile error',
+        unitId: UNIT,
+        accountCode: '4.8',
+        error: expect.objectContaining({ message: 'disk gone' }),
+      }));
+    } finally {
+      out.mockRestore();
+    }
   }, T);
 
   it('aceitar override remove o ajuste e recompila no código do kit', async () => {

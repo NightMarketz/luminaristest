@@ -159,10 +159,14 @@ describe('AccountingSyncScheduler', () => {
         expect(sendAlertWebhook).not.toHaveBeenCalled();
       });
 
-      it('does not fire the webhook on an exception (no summary to alert on)', async () => {
+      // ADR-OBSERVABILIDADE A9 / item 7b: this used to assert NO alert on a thrown pass — the gap the item closes.
+      it('fires job_failed (not reconcile_summary) on an exception, and still rethrows', async () => {
         const { scheduler } = build(jest.fn().mockRejectedValueOnce(new Error('boom')));
         await expect(scheduler.runOnce()).rejects.toThrow('boom');
-        expect(sendAlertWebhook).not.toHaveBeenCalled();
+        expect(sendAlertWebhook).toHaveBeenCalledTimes(1);
+        expect(sendAlertWebhook).toHaveBeenCalledWith(
+          expect.objectContaining({ source: 'accounting_sync_reconcile', event: 'job_failed', runId: 'run-fixed', error: 'boom' }),
+        );
       });
     });
 

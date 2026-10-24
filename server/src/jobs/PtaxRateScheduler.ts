@@ -88,6 +88,7 @@ export class PtaxRateScheduler {
     const initialDelayMs = options.initialDelayMs ?? readMsEnv('PTAX_SYNC_INITIAL_DELAY_MS', DEFAULT_INITIAL_DELAY_MS, 0);
 
     const tick = (): void => {
+      // eslint-disable-next-line no-restricted-syntax -- SANCTIONED: já registrado e alertado em runOnce (job.failed); o timer não pode morrer (OBS-R8)
       void this.runOnce().catch(() => {
         /* já logado em runOnce (job.failed) */
       });

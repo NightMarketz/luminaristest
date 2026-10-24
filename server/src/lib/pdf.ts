@@ -49,6 +49,7 @@ export async function closePdfBrowser(): Promise<void> {
   browserPromise = null;
   if (!pending) return;
   // Tolerate a still-rejecting launch promise — nothing to close in that case.
+  // eslint-disable-next-line no-restricted-syntax -- SANCTIONED: launch que falhou já rejeitou para quem chamou getBrowser(); no shutdown não há o que fechar (OBS-R8)
   const browser = await pending.catch(() => null);
   if (browser) await browser.close();
 }

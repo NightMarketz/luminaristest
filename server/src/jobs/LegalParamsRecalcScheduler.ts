@@ -73,6 +73,7 @@ export class LegalParamsRecalcScheduler {
   kick(options: { allowInTest?: boolean } = {}): void {
     if (process.env.NODE_ENV === 'test' && !options.allowInTest) return;
     setImmediate(() => {
+      // eslint-disable-next-line no-restricted-syntax -- SANCTIONED: já registrado e alertado em runOnce (job.failed); o timer não pode morrer (OBS-R8)
       void this.runOnce().catch(() => {
         /* já logado em runOnce (job.failed) */
       });
@@ -91,6 +92,7 @@ export class LegalParamsRecalcScheduler {
     const intervalMs = options.intervalMs ?? readMsEnv('LEGAL_PARAMS_RECALC_INTERVAL_MS', DEFAULT_INTERVAL_MS, 1);
     const initialDelayMs = options.initialDelayMs ?? readMsEnv('LEGAL_PARAMS_RECALC_INITIAL_DELAY_MS', DEFAULT_INITIAL_DELAY_MS, 0);
     const tick = (): void => {
+      // eslint-disable-next-line no-restricted-syntax -- SANCTIONED: já registrado e alertado em runOnce (job.failed); o timer não pode morrer (OBS-R8)
       void this.runOnce().catch(() => {
         /* já logado em runOnce (job.failed) */
       });

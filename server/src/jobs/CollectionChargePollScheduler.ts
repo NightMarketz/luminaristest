@@ -72,6 +72,7 @@ export class CollectionChargePollScheduler {
     const intervalMs = options.intervalMs ?? DEFAULT_INTERVAL_MS;
     const initialDelayMs = options.initialDelayMs ?? DEFAULT_INITIAL_DELAY_MS;
     const tick = (): void => {
+      // eslint-disable-next-line no-restricted-syntax -- SANCTIONED: já registrado e alertado em runOnce (job.failed); o timer não pode morrer (OBS-R8)
       void this.runOnce().catch(() => {
         /* já logado em runOnce (job.failed) */
       });
