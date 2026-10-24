@@ -25,7 +25,7 @@ const fullSuggestion = {
 
 const charge = (over: Partial<CollectionChargeView>): CollectionChargeView => ({
   id: 'c1', unitId: 'u1', receivableId: 'r1', paymentAccountId: 'pa1', kind: 'PIX', amountCents: '150000',
-  expiresAt: '2099-01-01T00:00:00Z', status: 'PENDING', providerRef: 'o1', providerPaymentRef: null,
+  expiresAt: '2099-10-24T00:00:00Z', status: 'PENDING', providerRef: 'o1', providerPaymentRef: null,
   providerStatus: 'action_required', providerStatusDetail: 'waiting_transfer', paidAt: null, failReason: null,
   instrument: null, createdAt: '2026-10-23T00:00:00Z', updatedAt: '2026-10-23T00:00:00Z', ...over,
 });
