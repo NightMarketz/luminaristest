@@ -44,6 +44,13 @@ export const LEGAL_PARAMETER_TABELAS = [
   // IBS-CBS-2027 PR-3 (dono 22/10): taxa de referência PROVISÓRIA da CBS para a prévia enquanto a linha IBS_CBS/CBS de 2027 for
   // DRAFT (sem fonte oficial — o operador da plataforma publica; a confirmação nunca a usa). Nasce vazia.
   'IBS_CBS_PROVISORIA',
+  // RETENCOES-FONTE PR-1 (BRIEF itens 1, 2, 3 e 7; Emenda 22/10 item 1): alíquotas e mínimos das retenções, código de
+  // receita por natureza do rendimento × tributo, natureza do rendimento (Tabela 01 da Reinf) e a tabela mensal do IRRF de
+  // PF. RETENCAO_CODIGO e NATUREZA_RENDIMENTO são as ÚNICAS tabelas desse dado — a EFD-REINF lê estas.
+  'RETENCAO',
+  'RETENCAO_CODIGO',
+  'NATUREZA_RENDIMENTO',
+  'IRRF_PF_MENSAL',
 ] as const;
 export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
 
