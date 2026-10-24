@@ -1,7 +1,8 @@
 # BRIEF — TESTE-ACOPLAMENTO-PRESET (teste de acoplamento preset↔schema)
 
 **Status:** BRIEF — forks F-TAP-1..5 **RATIFICADOS em 21/10/2026** ([[D-2026-10-21-CHAT-C-FORKS]], PR #793; registro no BRIEF em 22/10/2026).
-Sem código; sem "executa".
+**EXECUTADO em 24/10/2026** (dono, chat: "executa TESTE-ACOPLAMENTO-PRESET"; sessao-feature; PR #883, sem merge) — ver
+§"Execução (24/10/2026)" no fim. O corpo abaixo segue como spec; nada dele foi alterado.
 
 ## Contexto fixo
 
@@ -118,3 +119,98 @@ Nenhuma — o nó não depende de regra contábil/fiscal/legal.
 ## Gates para a sessão que implementar
 `cd server && npx tsc -p tsconfig.test.json --noEmit`; o novo teste roda em `npm test` (unit, sem banco); nenhum DTO,
 i18n, auditCanonical ou openapi tocado.
+
+---
+
+## Execução (24/10/2026, PR #883)
+
+Autorização: dono, chat, 2026-10-24: "executa TESTE-ACOPLAMENTO-PRESET" — teste-guarda; campos órfãos **não**
+consertados, só registrados (no nó e em `KNOWN_GAPS`). Sem merge.
+
+### Arquivos (todos em `server/src/features/dynamicTables/presets/__tests__/`, dentro do write_set)
+
+| Arquivo | Itens |
+|---|---|
+| `presetCouplingUniverse.ts` (helper, não é suíte) | universo F-TAP-1 (b), tipos `CouplingFinding`/`KnownGap` do §Contratos, `partitionByKnownGaps` (item 8) |
+| `presetSchemaCoupling.test.ts` | 1, 2, 3, 4, 6, 7, 8 + manifesto `PLUGIN_MANIFEST` (F-TAP-2 a) + allowlist `OPTIONAL_RELATIONS` (F-TAP-3 a) |
+| `analyticsFieldMappingCoupling.test.ts` (o do #770, estendido — não duplicado) | 5, 7, 8 |
+
+### Checklist
+
+| # | Status | Nota |
+|---|---|---|
+| 1 | ✅ | 8 universos: `beautySalon`, `aestheticClinic`, `crmModule` + `module:CRM-0/1/2A/2B/3`; salão ≥ 17 tabelas |
+| 2 | ✅ | 0 divergência (confirma a sonda do ACHADOS §2.2) |
+| 3 | ✅ | 0 divergência fora da allowlist |
+| 4 | ✅ | 0 divergência |
+| 5 | ✅ | 4 divergências → `KNOWN_GAPS` (FIX-ANALYTICS-RESIDUO) |
+| 6 | ✅ | 6 divergências → `KNOWN_GAPS` (FIX-PLUGINS-VENDA); `rate` (#771) fixado como regressão |
+| 7 | ✅ | um typo sintético por varredor (`defaultDisplayField`, alvo de relação, relação obrigatória fora da allowlist, `defaultValue`, campo e valor de plugin, `*Field`, join pontuado, `importantFields`) |
+| 8 | ✅ | entrada de `KNOWN_GAPS` que já não diverge reprova o teste; falsificador: remover a entrada do `sourceType` deixa o item 6 vermelho |
+
+### Insumos ausentes — resolvidos na leitura
+
+1. **Conjunto instalável de módulo isolado:** `Core.tables ∪ composeModuleTables(resolveModuleSelection([m]))`; suíte
+   = `Core ∪ composeModuleTables(resolveModuleSelection([], suite.modules)) ∪ suite.tables`, na ordem de spread do
+   `dashboardController.createDashboardFromPreset`. Custo de F-TAP-1 (b) baixo — nenhuma fixture.
+2. **Marcador de relação opcional:** não existe no preset. O critério real é `required: false`: o create descarta
+   relação opcional cujo alvo não foi instalado e responde 400 se ela for obrigatória (`dashboardController`,
+   "Verificar dependências quebradas"; idem `DynamicTableService.installPresetAsSystem`). Por isso a allowlist
+   F-TAP-3 (a) só vale com `required: false`.
+3. **Shape das regras:** em `models/DynamicTable.model.ts` (não em `RuleTypes.ts`). Campos checados: `compositeUnique.fields`,
+   `immutableAfter.condition.field` + `scope[]`, `compare.left/right`, `lifecycle.field`,
+   `noOverlap.startField/endField/scopeFields`, `requiredIf.field`, `defaultDisplayField`,
+   `deleteConstraints.targetTable` + `aggregate.field` (na tabela-alvo).
+
+### Leituras de implementação (dentro da spec, registradas para o revisor)
+
+- **Item 5, join pontuado:** os únicos `*Field` pontuados dos presets estão dentro de `params.pipeline`
+  (`dateField: 'header.date'` em `SalesItemsMixed`), não no top-level. O varredor percorre o pipeline:
+  `*Field` sem ponto → tabela `pipeline.source`; `alias.campo` → `joins[].alias` (ou campo `relation` homônimo na
+  tabela-base) → tabela-alvo; `joins[].leftField` na base, `rightField` no `rightRef`. `id` é aceito como campo de
+  sistema da linha. Chaves `field` (sem sufixo `Field`) de `filters`/`measures` ficam fora — o item pede `*Field`.
+- **Item 5, `importantFields`:** inclui `defaultImportantFields`; tabela de referência = a do `tableKey` do bloco.
+- **Item 6:** o manifesto cobre leitura e escrita com `source: 'plugin-write'` (o contrato só tem esse rótulo para
+  campo); valor de select só é checado quando o campo é `select` (campo livre aceita qualquer valor).
+- **Chave de `KnownGap`:** `${source}:${universo}.${tabela}:${ref}` — o mesmo gap aparece uma vez por universo que
+  contém a tabela (salão e clínica compartilham `stockMovements`, `expenses` e `sales`).
+
+### Achados (em `KNOWN_GAPS`, não consertados — critério de pronto dos nós donos: esvaziar a sua fatia)
+
+**FIX-PLUGINS-VENDA** (6 chaves = 3 divergências × salão/clínica)
+
+| Divergência | Origem |
+|---|---|
+| `sourceType` lido em `stockMovements` por `StockMovementsApplyPlugin` e `sales/stockSync.ts`; não declarado no preset (o Zod do motor remove a chave) | ACHADOS §3.1 #4 |
+| `reason='SALE'` gravado por `stockSync.createMovementsForItems`; opções `Sale`/`Return` | §3.1 #17 |
+| `reason='RETURN'`, idem | §3.1 #17 |
+
+**FIX-ANALYTICS-RESIDUO** (4 chaves = 2 divergências × salão/clínica)
+
+| Divergência | Origem |
+|---|---|
+| `expenses#costKpis` lista `status` em `importantFields`/`defaultImportantFields`; `expenses` não tem `status` | §3.2 #16 |
+| **Novo:** `sales#cashflowKpis`, KPI "Contas a Pagar Total", lista `['date', 'amount', 'paymentStatus']` — `amount` é de `expenses`, `date` é de `sales`; órfão em qualquer das duas leituras. `importantFields` não tem consumidor no frontend (só o `AnalyticsResolver` repassa) | este teste |
+
+**Por desenho (allowlist F-TAP-3 a, não é achado):** `leads.accountId/contactId`, `crmContacts.accountId` e — **novo,
+só visível com o módulo isolado de F-TAP-1 (b)** — `crmOpportunities.accountId/contactId` (CRM-3 depende só de CRM-0,
+F-CRM-5 a). A sonda do ACHADOS §2.2 não varreu módulo isolado, por isso só citava os `leads`.
+
+### Lacunas de spec
+
+- Tabela de referência de um `importantFields` cujo KPI lê outra tabela (o "Contas a Pagar" dentro de
+  `sales#cashflowKpis`) não está especificada. O teste usa a do `tableKey`; não bloqueou porque o achado vale nas duas
+  leituras. Quem decide é o FIX-ANALYTICS-RESIDUO, ao corrigir o item.
+
+### Fora de escopo (para os nós donos)
+
+- O manifesto é estático (F-TAP-2 a): plugin novo ou campo novo lido por plugin não entra sozinho. Revisar o
+  `PLUGIN_MANIFEST` no FIX-PLUGINS-VENDA, como o F-TAP-2 já previa.
+- `filters[].field` e `measures[].field` dos pipelines não são varridos (o item 5 pede `*Field`); se o
+  FIX-ANALYTICS-RESIDUO quiser a rede completa do pipeline, é extensão do mesmo varredor.
+
+### Gates rodados
+
+`npx jest --selectProjects unit --testPathPatterns "analyticsFieldMappingCoupling|presetSchemaCoupling"` 11/11 ·
+`npx tsc --noEmit` 0 · `npx tsc -p tsconfig.test.json --noEmit` 0 · eslint dos 3 arquivos 0 ·
+`node scripts/plano-vault.mjs check` 0. Review independente não despachado (CLAUDE.md §⛔: Bloco A com oráculo aberto).
