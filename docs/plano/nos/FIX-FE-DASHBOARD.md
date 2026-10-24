@@ -54,4 +54,4 @@ registrado a pedido do dono (chat, 2026-10-19: "Já incorpora nos planos do vaul
 #884** (guarda `ssrLog.noToken.static.test.ts`); (b) `onboardingNeedHelp`, `onboardingContactSupport` e
 `onboardingTotalControlConfirmDeselect` ficaram sem leitor em `common.json` en/pt → **removidas no #884** (guarda
 `commonLocale.orphanKeys.test.ts`); (c) o motor aceita `datetime` sem fuso e o lê no fuso do processo → decisão do dono
-(AskUserQuestion, 24/10): **"Rejeitar com 400"**, só no tipo `datetime`, em PR separado (mexe no motor do server).
+(AskUserQuestion, 24/10): **"Rejeitar com 400"**, só no tipo `datetime`, em PR separado (mexe no motor do server) → **#892** (guarda `SchemaValidator.datetimeOffset.test.ts`; mergear depois do #884).
