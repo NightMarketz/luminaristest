@@ -111,6 +111,42 @@
       "arquivo": "docs/D07_IT-2025-002-v-1-31-Tabelas-de-Classificacao-do-IBS-e-da-CBS-.pdf",
       "texto": "docs/D07_IT-2025-002-v-1-31-Tabelas-de-Classificacao-do-IBS-e-da-CBS-.txt",
       "bytes": 4188296
+    },
+    {
+      "id": "D08",
+      "titulo": "LEI Nº 13.701 DE 24 DE DEZEMBRO DE 2003 « Catálogo de Legislação Municipal",
+      "url": "https://legislacao.prefeitura.sp.gov.br/leis/lei-13701-de-24-de-dezembro-de-2003",
+      "url_final": "https://legislacao.prefeitura.sp.gov.br/lei-13701-de-24-de-dezembro-de-2003",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-24T13:22:27-03:00",
+      "sha256": "35632c29f753d4c5ebd4ad9961039b17d47a83e45b0d48dd7c24d25770a253f8",
+      "arquivo": "docs/D08_lei-13701-de-24-de-dezembro-de-2003.html",
+      "texto": "docs/D08_lei-13701-de-24-de-dezembro-de-2003.txt",
+      "bytes": 180179
+    },
+    {
+      "id": "D09",
+      "titulo": "D09_Manual_de_Orienta-c3-a7-c3-a3o_da_ECD_Leiaute_20_maio_2026-p",
+      "url": "http://sped.rfb.gov.br/arquivo/download/7990",
+      "url_final": "http://sped.rfb.gov.br/estatico/71/1BD273E4A9F51ED8EF01AC3A6BC15812A3481F/Manual_de_Orienta%c3%a7%c3%a3o_da_ECD_Leiaute_20_maio_2026.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-24T13:22:35-03:00",
+      "sha256": "bc63f0a893ce4b2262b73426717e1cb5546704db58eaf81791fb296468bacc91",
+      "arquivo": "docs/D09_Manual_de_Orienta-c3-a7-c3-a3o_da_ECD_Leiaute_20_maio_2026-p.pdf",
+      "texto": "docs/D09_Manual_de_Orienta-c3-a7-c3-a3o_da_ECD_Leiaute_20_maio_2026-p.txt",
+      "bytes": 2990432
+    },
+    {
+      "id": "D10",
+      "titulo": "Lcp 214",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-24T13:22:36-03:00",
+      "sha256": "9698a3bddf4ca69a1dd89c622bedbc873a844fdce88854d7ac96e908b53152ee",
+      "arquivo": "docs/D10_lcp214-htm.html",
+      "texto": "docs/D10_lcp214-htm.txt",
+      "bytes": 5403667
     }
   ],
   "buscas": [],

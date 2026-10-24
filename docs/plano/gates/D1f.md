@@ -41,9 +41,11 @@ atualizado: "2026-10-24"
 
 ## Fold 24/10 — pesquisa pelo método legal (dossiê `pesquisas-legais/gates-humanos-lei`)
 
-- **Ressalva do Simples: agora VERIFICADA em fonte oficial** (era inferida). LC 123 art. 13 VIII e Anexo III incluem o ISS no DAS; o
-  5% de SP vale **fora** do Simples (Lei SP 13.701 art. 16 IV, item 6.01–6.03; leitura do dossiê de 10/10, não relida agora).
-  LC 116 art. 8º-A fixa piso de 2% de ISS. Texto da LC 227/2026 não foi lido quanto a mudanças no art. 13 / Anexo III: **aberto**.
-- **cClassTrib 000001: continua SEM fonte oficial.** Li a IT 2025.002 **v1.31** (a tabela está no anexo); versões posteriores (1.50+) só
+- **Ressalva do Simples: agora VERIFICADA em fonte oficial** (era inferida). LC 123 art. 13 VIII inclui o ISS no DAS [D01], até 2032:
+  a LC 214 só tira o ISS pelo art. 518, com efeitos de 01/01/2033 (art. 544 V [D10]); IBS/CBS entram em 2027 (arts. 516–517, 544 III [D10]).
+  O 5% de SP vale **fora** do Simples: 6.01–6.03 não estão na lista de 2% do art. 16 I "a" (só o 6.04), e caem no art. 16 IV
+  [D08, relida 24/10]. LC 116 art. 8º-A fixa piso de 2% [D03]. A LC 227/2026 (redação compilada no [D10]) não tira o ISS do art. 13:
+  **fechado**. Relatório: [`relatorio.md`](../../../pesquisas-legais/gates-humanos-lei/relatorio.md) §1–§3.
+- **cClassTrib 000001: continua SEM fonte oficial.** Li a IT 2025.002 **v1.31** [D07] (a tabela está no anexo); versões posteriores (1.50+) só
   apareceram em fonte secundária; não confirmei nenhuma em domínio oficial. Quem confere é o agente, na tabela da versão vigente, não o contador. Grau: o 000001 segue **secundário**.
 - Estado e autorização **não mudam**.
