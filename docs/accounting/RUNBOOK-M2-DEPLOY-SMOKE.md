@@ -150,6 +150,15 @@ Fatos observados no worktree — não é recomendação de alvo (decisão do don
    Resultado esperado: `1:32B active=1`.
    EVIDÊNCIA: [saída da conferência (NUNCA a chave) + onde fica o backup da chave (local, não o conteúdo)]
 
+4a. **`ALERT_WEBHOOK_URL` no env da instância** (nó OBS, Fase B, item 15 do
+   [`PRE-ADR-OBSERVABILIDADE.md`](../adr/PRE-ADR-OBSERVABILIDADE.md) §5; emenda autorizada pelo dono em chat,
+   2026-10-24: *"Executa os itens 11, 13 e 15 do PRE-ADR-OBSERVABILIDADE §5 (Fase B)"*). Obrigatória em produção,
+   opcional em dev. Sem ela, `server/src/lib/alertWebhook.ts` não envia nada e falha de job ou do processo some sem
+   aviso. O `docker-compose.yml` recusa subir sem a variável (`${ALERT_WEBHOOK_URL:?…}`). Conferir sem imprimir a URL
+   (o path costuma carregar segredo): `docker compose config --format json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const u=JSON.parse(s).services.server.environment.ALERT_WEBHOOK_URL||'';console.log(u?'set host='+new URL(u).host:'MISSING')})"`
+   Resultado esperado: `set host=<host do receptor>`; `MISSING` ou erro do compose → parar.
+   EVIDÊNCIA: [saída da conferência (NUNCA a URL inteira)]
+
 5. Deploy do server e do front no alvo; subir os processos.
    Resultado esperado: processos de pé, `/api` respondendo autenticado.
    EVIDÊNCIA: [comandos usados + resposta de um endpoint autenticado]

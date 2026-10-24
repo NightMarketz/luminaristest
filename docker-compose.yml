@@ -35,6 +35,10 @@ services:
       # `:?` força a decisão explícita no .env da instância em vez de deixar o default errado
       # passar despercebido até o primeiro CORS-fail em produção.
       ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:?defina ALLOWED_ORIGIN no .env ao lado deste arquivo — sem ela o CORS cai no default http://localhost:3000 e bloqueia silenciosamente o frontend em qualquer host real}
+      # Nó OBS, Fase B, item 15 (PRE-ADR-OBSERVABILIDADE §5; dono, 2026-10-24: "Também trava no compose"):
+      # lib/alertWebhook.ts é no-op silencioso sem a URL, então em produção falha de job e do processo
+      # sumiria sem aviso. Obrigatória aqui; continua opcional em dev (server/.env.example).
+      ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:?defina ALERT_WEBHOOK_URL no .env ao lado deste arquivo — sem ela falha de job e do processo não alerta ninguém em produção}
     volumes:
       - sqlite_data:/data
       - attachments_data:/app/storage/attachments

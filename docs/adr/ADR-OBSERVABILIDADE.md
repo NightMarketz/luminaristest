@@ -125,7 +125,8 @@ indicado.
 - **OBS-R13 ✔ Retenção:**
   - o arquivo de erro fica 14 dias;
   - o registro de acesso fica 6 meses, com expurgo (Fase B; Marco Civil, Lei 12.965 art. 15; Dec. 8.771
-    arts. 13 § 2º e 15-A);
+    arts. 13 § 2º e 15-A). Prazo no código: 190 dias por arquivo diário, com expurgo na 1ª escrita de cada dia
+    (`ACCESS_LOG_RETENTION_DAYS`, `lib/accessLog.ts`; dono, questionário 2026-10-24);
   - nenhum outro sink sem uma regra de retenção escrita aqui.
 
 **Fronteira**
