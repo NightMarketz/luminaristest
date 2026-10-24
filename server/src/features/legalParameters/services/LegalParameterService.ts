@@ -34,19 +34,31 @@ export const PLATFORM_AUDIT_SCOPE: AccountingScope = {
  * Formato do valor por tabela migrada. PR-1: `ARREDONDAMENTO` é a única linha de texto do TAX_ASSESSMENT. PR-2: as
  * demais tabelas pela regra de `formatoLinha.ts` (§4 — `valorJson` com schema por tabela).
  */
-function exigirFormato(d: ProposeLegalParameterInput): void {
-  if (TEM_REGRA_DE_FORMATO(d.tabela)) {
-    const erro = erroDeFormato(d);
-    if (erro) throw new ValidationError(erro);
-    return;
-  }
+function erroDoFormato(d: Pick<ProposeLegalParameterInput, 'tabela' | 'chave' | 'discriminador' | 'valorInt' | 'valorTexto' | 'valorJson'>): string | null {
+  if (TEM_REGRA_DE_FORMATO(d.tabela)) return erroDeFormato(d);
   const texto = d.tabela === 'TAX_ASSESSMENT' && d.chave === 'ARREDONDAMENTO';
   if (texto ? d.valorTexto === undefined : d.valorInt === undefined) {
-    throw new ValidationError(`${d.tabela}/${d.chave}: o valor desta tabela é ${texto ? 'valorTexto' : 'valorInt'} (bp ou centavos).`);
+    return `${d.tabela}/${d.chave}: o valor desta tabela é ${texto ? 'valorTexto' : 'valorInt'} (bp ou centavos).`;
   }
   if (d.tabela === 'PIS_COFINS' && (!['PIS', 'COFINS'].includes(d.chave) || !['CUMULATIVO', 'NAO_CUMULATIVO'].includes(d.discriminador ?? ''))) {
-    throw new ValidationError('PIS_COFINS: chave PIS|COFINS e discriminador CUMULATIVO|NAO_CUMULATIVO.');
+    return 'PIS_COFINS: chave PIS|COFINS e discriminador CUMULATIVO|NAO_CUMULATIVO.';
   }
+  return null;
+}
+
+function exigirFormato(d: Parameters<typeof erroDoFormato>[0]): void {
+  const erro = erroDoFormato(d);
+  if (erro) throw new ValidationError(erro);
+}
+
+/** Linha PUBLISHED que a regra de formato de hoje recusaria (`checkLegalParamsFormatoCli`). */
+export interface LinhaPublicadaForaDoFormato {
+  id: string;
+  tabela: string;
+  chave: string;
+  discriminador: string | null;
+  vigenteDesde: string;
+  erro: string;
 }
 
 const mesmaLinhaLogica = (a: Pick<LegalParameter, 'tabela' | 'chave' | 'discriminador'>, b: Pick<LegalParameter, 'tabela' | 'chave' | 'discriminador'>) =>
@@ -130,6 +142,20 @@ export class LegalParameterService {
     // Lê tudo e só então troca tabela a tabela: o cache nunca fica frio no meio (um DTO concorrente leria o antigo).
     const lidas = await this.repo.findPublished(LEGAL_PARAMETER_TABELAS);
     for (const t of LEGAL_PARAMETER_TABELAS) storePublished(t, lidas.filter((l) => l.tabela === t));
+  }
+
+  /**
+   * Lacuna fora do #870: o `publish` confere o formato, mas a linha publicada ANTES de a regra apertar não é revalidada.
+   * Só lê — a correção do dado é decisão do dono (`supersedesId`). Uso: `checkLegalParamsFormatoCli`.
+   */
+  async linhasPublicadasForaDoFormato(): Promise<LinhaPublicadaForaDoFormato[]> {
+    const fora: LinhaPublicadaForaDoFormato[] = [];
+    for (const r of await this.repo.findPublished(LEGAL_PARAMETER_TABELAS)) {
+      const v = toView(r);
+      const erro = erroDoFormato({ tabela: v.tabela as LegalParameterTabela, chave: v.chave, discriminador: v.discriminador ?? undefined, valorInt: v.valorInt ?? undefined, valorTexto: v.valorTexto ?? undefined, valorJson: v.valorJson ?? undefined });
+      if (erro) fora.push({ id: r.id, tabela: r.tabela, chave: r.chave, discriminador: r.discriminador, vigenteDesde: r.vigenteDesde, erro });
+    }
+    return fora;
   }
 
   /**
@@ -229,6 +255,10 @@ export class LegalParameterService {
       const linha = await this.repo.findById(id, tx);
       if (!linha) throw new NotFoundError(`Parâmetro legal ${id} não existe.`);
       if (linha.status !== 'DRAFT') throw new ConflictError(`Parâmetro legal ${id} não é rascunho (${linha.status}).`);
+      // Dono 23/10 ("(a) 400 no publish"): a regra de formato do propose vale também aqui — o rascunho sem valor da migração
+      // (ex.: CBS 2027) não entra em vigor.
+      const v = toView(linha);
+      exigirFormato({ tabela: v.tabela as LegalParameterTabela, chave: v.chave, discriminador: v.discriminador ?? undefined, valorInt: v.valorInt ?? undefined, valorTexto: v.valorTexto ?? undefined, valorJson: v.valorJson ?? undefined });
       if (linha.supersedesId) {
         const alvo = await this.repo.findById(linha.supersedesId, tx);
         if (alvo?.status !== 'PUBLISHED') throw new ConflictError(`A linha substituída ${linha.supersedesId} já não está publicada.`);

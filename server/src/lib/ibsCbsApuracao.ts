@@ -3,7 +3,7 @@ import { dateOnlyFromDayNumber, dayNumberFromDateOnly } from '../features/accoun
 import type { TributoConsumo, VencimentoIbsCbs } from '../features/accounting/models/ibsCbsParams';
 import type { MemoriaLinha } from '../features/accounting/models/taxAssessmentCalc';
 import { fimDoMes } from '../features/accounting/models/taxAssessmentCalcAnual';
-import { isHoliday, type Feriados } from '../features/packages/models/validity';
+import { isHoliday, weekdayOf, type Feriados } from '../features/packages/models/validity';
 
 /**
  * IBS-CBS-2027 PR-5 (BRIEF `docs/accounting/BE-INCR-IBS-CBS-2027-brief.md` itens 22–23; ADR-INCR-IBS-CBS-2027 D6) — resumo do
@@ -16,6 +16,10 @@ import { isHoliday, type Feriados } from '../features/packages/models/validity';
 export const AVISO_RESUMO_IBS_CBS = {
   /** IBS: regulamento do CG-IBS não localizado (P-IBS-5) — linha `IBS_CBS/IBS/VENCIMENTO` em DRAFT. */
   VENCIMENTO_NAO_PUBLICADO: 'VENCIMENTO_NAO_PUBLICADO',
+  /** Linha `VENCIMENTO` publicada com regra que o código não lê (achado 2 do #861; dono 23/10: `null` + aviso, não 500). */
+  VENCIMENTO_REGRA_DESCONHECIDA: 'VENCIMENTO_REGRA_DESCONHECIDA',
+  /** A apuração foi substituída (SUPERSEDED): o saldo é da versão antiga (achado 3 do #861; dono 23/10: 200 + aviso). */
+  APURACAO_SUBSTITUIDA: 'APURACAO_SUBSTITUIDA',
   /** Unidade sem `codMun`: o último dia útil considera só os feriados nacionais. */
   VENCIMENTO_SEM_MUNICIPIO: 'VENCIMENTO_SEM_MUNICIPIO',
   /** saldo (débitos − créditos) < 0: nada a recolher, saldo credor do período. */
@@ -34,6 +38,8 @@ export interface ApuracaoParaResumo {
   saldoCents: bigint;
   memoria: readonly MemoriaLinha[];
   avisoParametroLegal: string | null;
+  /** `status === 'SUPERSEDED'`. */
+  substituida: boolean;
 }
 
 export interface EntradaResumoIbsCbs {
@@ -58,9 +64,6 @@ export interface ResumoIbsCbs {
 
 const SPLIT = /^SPLIT_EXTINCAO_\d+$/;
 
-/** Domingo = 0, sábado = 6 (Date.getUTCDay sobre o número do dia UTC). */
-const diaDaSemana = (dayNumber: number): number => new Date(dayNumber * 86_400_000).getUTCDay();
-
 /**
  * Decreto 12.955/2026 art. 45 (Planalto compilado, 23/10; dossiê verif-2026-10-23-ibs-cbs-vencimento [D02]): o último dia útil
  * do mês seguinte ao da competência. Não útil = sábado, domingo e feriado nacional, estadual ou municipal (parágrafo único;
@@ -69,7 +72,7 @@ const diaDaSemana = (dayNumber: number): number => new Date(dayNumber * 86_400_0
 export function ultimoDiaUtilDoMesSeguinte(ano: number, mes: number, feriados: Feriados, codMun: string | null): string {
   const [a, m] = mes === 12 ? [ano + 1, 1] : [ano, mes + 1];
   let dia = dayNumberFromDateOnly(fimDoMes(a, m));
-  while (diaDaSemana(dia) === 0 || diaDaSemana(dia) === 6 || isHoliday(dateOnlyFromDayNumber(dia), feriados, codMun)) dia -= 1;
+  while (weekdayOf(dia) === 0 || weekdayOf(dia) === 6 || isHoliday(dateOnlyFromDayNumber(dia), feriados, codMun)) dia -= 1;
   return dateOnlyFromDayNumber(dia);
 }
 
@@ -83,6 +86,9 @@ export function resumoIbsCbs(e: EntradaResumoIbsCbs): ResumoIbsCbs {
   const split = a.memoria.filter((l) => SPLIT.test(l.codigo)).reduce((s, l) => s + BigInt(l.valorCents), 0n);
   const liquido = a.saldoCents - split;
   const avisos: string[] = [];
+  if (a.substituida) {
+    avisos.push(`${AVISO_RESUMO_IBS_CBS.APURACAO_SUBSTITUIDA}: esta versão da apuração foi substituída — saldo e vencimento são da versão antiga; não recolha por ela, consulte a apuração confirmada vigente.`);
+  }
   if (a.saldoCents < 0n) {
     avisos.push(`${AVISO_RESUMO_IBS_CBS.SALDO_CREDOR}: saldo credor de ${-a.saldoCents} centavos no período — nada a recolher (LC 214/2025 art. 45).`);
   } else if (liquido < 0n) {
@@ -91,6 +97,8 @@ export function resumoIbsCbs(e: EntradaResumoIbsCbs): ResumoIbsCbs {
   let vencimento: string | null = null;
   if (!e.vencimento) {
     avisos.push(`${AVISO_RESUMO_IBS_CBS.VENCIMENTO_NAO_PUBLICADO}: vencimento do ${a.tributo} ainda não publicado (regulamento do CG-IBS não localizado — P-IBS-5).`);
+  } else if (e.vencimento.regra === null) {
+    avisos.push(`${AVISO_RESUMO_IBS_CBS.VENCIMENTO_REGRA_DESCONHECIDA}: a linha ${e.vencimento.linhaId} (${a.tributo}/VENCIMENTO) tem regra desconhecida '${e.vencimento.valor}' — vencimento não calculado; corrija a linha no LEGAL-PARAMS.`);
   } else {
     vencimento = ultimoDiaUtilDoMesSeguinte(a.anoCalendario, a.mes, e.feriados, e.codMun);
     if (e.codMun === null) avisos.push(`${AVISO_RESUMO_IBS_CBS.VENCIMENTO_SEM_MUNICIPIO}: unidade sem município no perfil fiscal — o vencimento considera só os feriados nacionais.`);

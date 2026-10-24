@@ -24,7 +24,7 @@ import { linhasVigentesDaTabela, type LinhaLegal } from '../../legalParameters/m
 export type Feriados = readonly LinhaLegal[];
 
 /** Domingo = 0 (Date.getUTCDay). */
-function weekdayOf(dayNumber: number): number {
+export function weekdayOf(dayNumber: number): number {
   return new Date(dayNumber * 86_400_000).getUTCDay();
 }
 

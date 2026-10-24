@@ -52,7 +52,7 @@ export interface LinhaMatriz {
 
 /** A ordem da matriz (ECD, ECF; DCTFWEB no fim — lacuna do X9 PR-1 decidida pelo dono em 06/10). */
 // IBS-CBS-2027 PR-5 (BRIEF item 21): a apuração mensal de IBS/CBS (regime regular, desde 2027-01-01) vai no fim.
-const ORDEM_OBRIGACOES: readonly ObrigacaoSped[] = ['ECD', 'ECF', 'DCTFWEB', 'PGDAS_D', 'DEFIS', 'LIVRO_CAIXA', 'DASN_SIMEI', 'IBS_CBS_APURACAO'];
+export const ORDEM_OBRIGACOES: readonly ObrigacaoSped[] = ['ECD', 'ECF', 'DCTFWEB', 'PGDAS_D', 'DEFIS', 'LIVRO_CAIXA', 'DASN_SIMEI', 'IBS_CBS_APURACAO'];
 
 /**
  * Fotografia → matriz vigente em `data`. Na ECD do Presumido a ordem das condições (guardada na linha) É a precedência

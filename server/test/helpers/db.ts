@@ -138,6 +138,8 @@ export async function resetDb(): Promise<void> {
   await prisma.companyFiscalProfile.deleteMany();
   await prisma.companySigner.deleteMany();
   await prisma.profitDistributionEvent.deleteMany(); // IRRF-DISTRIBUICAO PR-2 (antes de partners: FK Restrict)
+  await prisma.interestOnEquityAllocation.deleteMany(); // IRRF-DISTRIBUICAO PR-4 (antes do cálculo e dos partners: FK Restrict)
+  await prisma.interestOnEquityCalculation.deleteMany(); // IRRF-DISTRIBUICAO PR-4
   await prisma.partner.deleteMany(); // IRRF-DISTRIBUICAO PR-1
   await prisma.accountingContact.deleteMany(); // depois do accountingDeliveryLog (FK Restrict)
 

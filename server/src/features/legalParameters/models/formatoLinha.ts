@@ -1,7 +1,9 @@
 import { z } from 'zod';
 import { isValidDateOnly } from '../../accounting/models/dates';
 import { REGIMES_EMPRESA } from '../../accounting/models/regimeEmpresa';
-import { STATUS_OBRIGACAO } from '../../accounting/models/obrigacoesPorRegime';
+import { ORDEM_OBRIGACOES, STATUS_OBRIGACAO } from '../../accounting/models/obrigacoesPorRegime';
+import { REGRAS_VENCIMENTO_IBS_CBS } from '../../accounting/models/ibsCbsParams';
+import { EnquadramentoJsonSchema, FaixaJsonSchema, ReparticaoJsonSchema, TetoIssJsonSchema } from '../../accounting/models/simplesCalc';
 import type { LegalParameterTabela } from './legalParameter';
 
 /**
@@ -94,6 +96,9 @@ const jsonOk = (schema: z.ZodType, v: unknown, msg: string): string | null => (s
 const bp = (l: LinhaParaFormato) => (l.valorInt ?? -1) >= 0 && (l.valorInt ?? 0) <= 10_000;
 /** BE-INCR-IRRF-DISTRIBUICAO item 5 — chaves da tabela e o tipo de valor de cada uma. */
 const IRRF_DISTRIBUICAO_CHAVES_INT = ['ALIQUOTA_PF_BP', 'LIMITE_MENSAL_PF_CENTS', 'ALIQUOTA_JCP_BP'];
+/** D-2026-10-24-LEGAL-PARAMS-SIMPLES-FORMATO — chave = anexo; faixa F1..F6 nas tabelas por faixa (o que `simplesCalc` lê). */
+const anexo = (l: LinhaParaFormato) => ['I', 'II', 'III', 'IV', 'V'].includes(l.chave);
+const faixa = (l: LinhaParaFormato) => /^F[1-6]$/.test(l.discriminador ?? '');
 
 const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
   CODIGO_RECEITA: {
@@ -127,7 +132,8 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
   OBRIGACAO_REGIME: {
     valor: 'json',
     checar: (l) =>
-      so(['ECD', 'ECF', 'DCTFWEB'].includes(l.chave) && (REGIMES_EMPRESA as readonly string[]).includes(l.discriminador ?? ''), 'chave ECD|ECF|DCTFWEB; discriminador = regime (MEI|SIMPLES|PRESUMIDO|REAL)') ??
+      // Achado 4 do #861: a chave é qualquer obrigação da matriz (ORDEM_OBRIGACOES), não só as do PR-2.
+      so((ORDEM_OBRIGACOES as readonly string[]).includes(l.chave) && (REGIMES_EMPRESA as readonly string[]).includes(l.discriminador ?? ''), `chave ${ORDEM_OBRIGACOES.join('|')}; discriminador = regime (MEI|SIMPLES|PRESUMIDO|REAL)`) ??
       jsonOk(ObrigacaoRegimeJson, l.valorJson, 'valorJson = { statusBase, condicoes[], perguntaBase?, inativa }'),
   },
   LC116_SERVICO: {
@@ -195,6 +201,18 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
     valor: 'int',
     checar: (l) => so(/^\d{4}-T0[1-4]$/.test(l.chave) && semDisc(l) && (l.valorInt ?? 0) > 0, 'chave = trimestre YYYY-T01..T04; valorInt = taxa mensal (0,7742% = 7742) > 0'),
   },
+  // Achado 1 do #861: a linha VENCIMENTO (PR-5) é de texto — a regra que `vencimentoIbsCbsDe` sabe ler; as alíquotas seguem
+  // valorInt, como na regra do PR-1.
+  IBS_CBS: {
+    valor: (l) => (l.discriminador === 'VENCIMENTO' ? 'texto' : 'int'),
+    checar: (l) =>
+      l.discriminador === 'VENCIMENTO'
+        ? so(['IBS', 'CBS'].includes(l.chave) && (REGRAS_VENCIMENTO_IBS_CBS as readonly string[]).includes(l.valorTexto ?? ''), `chave IBS|CBS; valorTexto = regra de vencimento (${REGRAS_VENCIMENTO_IBS_CBS.join('|')})`)
+        : so(
+            ((l.chave === 'CBS' && l.discriminador === 'ALIQUOTA') || (l.chave === 'IBS' && ['ALIQUOTA_UF', 'ALIQUOTA_MUN'].includes(l.discriminador ?? ''))) && bp(l),
+            'chave CBS com discriminador ALIQUOTA, ou IBS com ALIQUOTA_UF|ALIQUOTA_MUN (ou VENCIMENTO); valorInt em bp (0..10000)',
+          ),
+  },
   // IBS-CBS-2027 PR-3 (item 15; dono 21/10): lista de uso ou consumo pessoal (LC 214 art. 57) — chave = prefixo de NCM.
   IBS_CBS_USO_CONSUMO: {
     valor: 'texto',
@@ -202,6 +220,31 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
   },
   // IBS-CBS-2027 PR-3 (dono 22/10): taxa de referência PROVISÓRIA da CBS enquanto a Res. SF não sai (art. 349 I) — só a prévia
   // a lê; a confirmação continua bloqueada. chave CBS, discriminador ALIQUOTA, valorInt em bp.
+  // D-2026-10-24-LEGAL-PARAMS-SIMPLES-FORMATO (dono 24/10): o valorJson é o que `simplesCalc` parseia; a semente é do X14 #573.
+  SIMPLES_ANEXO_FAIXA: {
+    valor: 'json',
+    checar: (l) =>
+      so(anexo(l) && faixa(l), 'chave = anexo I..V; discriminador F1..F6') ??
+      jsonOk(FaixaJsonSchema, l.valorJson, 'valorJson = { receitaAteCents, aliquotaNominalBp, parcelaDeduzirCents }'),
+  },
+  SIMPLES_ANEXO_REPARTICAO: {
+    valor: 'json',
+    checar: (l) =>
+      so(anexo(l) && faixa(l), 'chave = anexo I..V; discriminador F1..F6') ??
+      jsonOk(ReparticaoJsonSchema, l.valorJson, 'valorJson = { <tributo do Simples>: bp 0..10000 }, ao menos um'),
+  },
+  SIMPLES_TETO_ISS: {
+    valor: 'json',
+    checar: (l) =>
+      so(anexo(l) && semDisc(l), 'chave = anexo I..V, sem discriminador') ??
+      jsonOk(TetoIssJsonSchema, l.valorJson, 'valorJson = { percentualBp, limiarAliquotaEfetiva: "decimal", transfereAIbs, transferencia: { <tributo>: bp } }'),
+  },
+  SIMPLES_ENQUADRAMENTO: {
+    valor: 'json',
+    checar: (l) =>
+      so((['REVENDA', 'LOCACAO_MOVEL', 'PARCERIA_GESTAO'].includes(l.chave) || /^SERVICO:\d{6}$/.test(l.chave)) && semDisc(l), 'chave REVENDA|LOCACAO_MOVEL|PARCERIA_GESTAO|SERVICO:<cTribNac de 6 dígitos>, sem discriminador') ??
+      jsonOk(EnquadramentoJsonSchema, l.valorJson, 'valorJson = { anexo: I..V, fatorR, semIss }'),
+  },
   IBS_CBS_PROVISORIA: {
     valor: 'int',
     checar: (l) => so(l.chave === 'CBS' && l.discriminador === 'ALIQUOTA' && bp(l) && (l.valorInt ?? 0) > 0, 'chave CBS, discriminador ALIQUOTA; valorInt em bp (1..10000)'),

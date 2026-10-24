@@ -1594,6 +1594,9 @@ export class ApplicationFactory {
         this.repositories.fiscalProfile,
         legalParameterService,
         this.policies.accounting,
+        postingService, // IRRF-DISTRIBUICAO PR-4: lançamento do JCP (item 28)
+        this.repositories.lalur, // PR-4: Parte A `system` do e-Lalur/e-Lacs (item 29)
+        auditService,
       ),
       depreciationRate: depreciationRateService,
       fixedAssetClass: fixedAssetClassService,
