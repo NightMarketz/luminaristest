@@ -1785,6 +1785,9 @@ model CompanyFiscalProfile {
   // BE-INCR-IRRF-DISTRIBUICAO PR-1 (item 8, F-IRD-15): mapa das contas do PL na base do JCP (IN 1.700 art. 75 I–V) —
   // { CAPITAL_INTEGRALIZADO, RESERVAS_CAPITAL, RESERVAS_LUCROS, ACOES_TESOURARIA, LUCROS_ACUMULADOS: accountId[] }.
   jcpBaseContas                    Json?
+  // PRESUMIDO-TETO-78MI item 5 (F-PT-2 c): receita total do ano anterior declarada (IN 1.700 art. 59 § 1º), em centavos.
+  // Só PRESUMIDO/REAL. Não é copiada para outro ano.
+  receitaTotalAnoAnteriorCents     BigInt?
   createdById                      String?
   updatedById                      String?
   createdAt                        DateTime           @default(now())

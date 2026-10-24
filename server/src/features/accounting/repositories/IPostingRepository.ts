@@ -111,6 +111,13 @@ export interface IPostingRepository {
   unitIdsWithMovement(ownerUserId: string, statuses: string[], from: Date, to: Date): Promise<string[]>;
 
   /**
+   * PRESUMIDO-TETO-78MI item 4 (F-PT-3 a, F-PT-6 a): Σ(crédito − débito) das contas `Revenue` analíticas do DONO (todas
+   * as unidades) com lançamento num dos `statuses` e data em [from, to], SEM o encerramento (`sourceType='closing'`) e
+   * sem `excludeAccountIds` (as contas de dedução de PIS/COFINS de cada unidade). `null` = nenhuma posting. Em `bigint`.
+   */
+  sumRevenueNetByOwner(ownerUserId: string, statuses: string[], from: Date, to: Date, excludeAccountIds: string[]): Promise<bigint | null>;
+
+  /**
    * Atomically increments the JournalEntrySequence counter for (scope, fiscalYear)
    * and returns the new last value. Must be called inside a transaction.
    * Rollback of the outer tx also rolls back the increment — gapless transactional.
