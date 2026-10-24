@@ -3,18 +3,19 @@ id: "FE-INCR-BANK-SETTLEMENT-FEE"
 tipo: "fe"
 dominio: "financeiro"
 titulo: "Tarifa do provedor na tela de baixas do F7 (bruto, retido, líquido; aviso G7; método ProviderBalance)"
-estado: "planned"
-estado_detalhe: "14/10: #620 (feeCents/feeEntryId na view) já está em main (d88ff9cb); o sem merge abaixo está superado. Falta só o FE (sem executa). · 10/10: BRIEF canônico #616 (F-FE-FEE-1..3 ratificados 09/10) + EMENDA 1 (#617: itens 10–15, F-FEE-E1/E2 → a ratificados 10/10). Depende do PR de BE da view (#620: feeCents/feeEntryId no BankSettlementItemView, sem merge). #615 mergeado. Sem 'executa'"
+estado: "done"
+estado_detalhe: "24/10 (fold): FE da tarifa mergeado em main em 23/10 — #866 (`26d780d5`, checklist do PR com os itens 1–8 e 10–15 do BRIEF #616 + EMENDA 1 #617 — o item 9 não aparece no checklist; tsc, test:types, vitest, check:arch e build de produção verdes no PR); nó fecha (done). Fica fora: sign-off de browser com extrato `mp_release` real (gate humano, H2/M2). Autorização relatada no #866 (dono, chat, 2026-10-23, \"Executa todas\", item 6) não gravada no campo `autorizacao` — cabe ao dono. · 14/10: #620 (feeCents/feeEntryId na view) já está em main (d88ff9cb); o sem merge abaixo está superado. Falta só o FE (sem executa). · 10/10: BRIEF canônico #616 (F-FE-FEE-1..3 ratificados 09/10) + EMENDA 1 (#617: itens 10–15, F-FEE-E1/E2 → a ratificados 10/10). Depende do PR de BE da view (#620: feeCents/feeEntryId no BankSettlementItemView, sem merge). #615 mergeado. Sem 'executa'"
 depende_de: ["[[F5]]", "[[FE-INCR-BANK-SETTLEMENT]]"]
 autorizacao: "dono, chat, 2026-10-09: \"planeja o BRIEF de FE da tarifa no F7\" + \"ratifica os forks com as recomendações\" (#616) · dono, chat, 2026-10-10: \"Autorizo planejar o BRIEF do FE da tarifa no F7 — sessao-planejamento, sem 'executa'.\" + questionário: \"#616 + emenda do #617\" ([[D-2026-10-10-FE-F7-TARIFA-FORKS]]) · dono, chat, 2026-10-10: \"Executa o patch do F-TAR-1 no #615, sem merge\" + \"PR de BE novo\" (só o BE da view) · dono, chat, 2026-10-10: \"As outras pode seguir o que eu enviei, A pra todas\" (F-FEE-E1/E2 → a; sem executa)"
 ancora_sdd: "—"
 perfil_previsto: "sonnet-alto"
 perfil_evidencia: "regra 4: 15 itens, só FE; forks todos ratificados (F-FE-FEE-1..3 em 09/10, F-FEE-E1/E2 em 10/10)"
-atualizado: "2026-10-10"
+atualizado: "2026-10-24"
+prs: ["#866"]
 ---
 # FE-INCR-BANK-SETTLEMENT-FEE — Tarifa do provedor na tela de baixas do F7 (bruto, retido, líquido; aviso G7; método ProviderBalance)
 
-**Estado:** `planned` — 10/10: BRIEF canônico #616 (F-FE-FEE-1..3 ratificados 09/10) + EMENDA 1 (#617: itens 10–15, F-FEE-E1/E2 → a ratificados 10/10). Depende do PR de BE da view (#620: feeCents/feeEntryId no BankSettlementItemView, sem merge). #615 mergeado. Sem 'executa'  
+**Estado:** `done` — 24/10 (fold): FE da tarifa mergeado em main em 23/10 — #866 (`26d780d5`, checklist do PR com os itens 1–8 e 10–15 do BRIEF #616 + EMENDA 1 #617 — o item 9 não aparece no checklist; tsc, test:types, vitest, check:arch e build de produção verdes no PR); nó fecha (done). Fica fora: sign-off de browser com extrato `mp_release` real (gate humano, H2/M2). Autorização relatada no #866 (dono, chat, 2026-10-23, "Executa todas", item 6) não gravada no campo `autorizacao` — cabe ao dono. · 14/10: #620 (feeCents/feeEntryId na view) já está em main (d88ff9cb); o sem merge abaixo está superado. Falta só o FE (sem executa). · 10/10: BRIEF canônico #616 (F-FE-FEE-1..3 ratificados 09/10) + EMENDA 1 (#617: itens 10–15, F-FEE-E1/E2 → a ratificados 10/10). Depende do PR de BE da view (#620: feeCents/feeEntryId no BankSettlementItemView, sem merge). #615 mergeado. Sem 'executa'  
 **Autorização:** dono, chat, 2026-10-09: "planeja o BRIEF de FE da tarifa no F7" + "ratifica os forks com as recomendações" (#616) · dono, chat, 2026-10-10: "Autorizo planejar o BRIEF do FE da tarifa no F7 — sessao-planejamento, sem 'executa'." + questionário: "#616 + emenda do #617" ([[D-2026-10-10-FE-F7-TARIFA-FORKS]]) · dono, chat, 2026-10-10: "Executa o patch do F-TAR-1 no #615, sem merge" + "PR de BE novo" (só o BE da view) · dono, chat, 2026-10-10: "As outras pode seguir o que eu enviei, A pra todas" (F-FEE-E1/E2 → a; sem executa)  
 **Depende de:** [[F5]], [[FE-INCR-BANK-SETTLEMENT]]  
 **Desbloqueia:** —  
