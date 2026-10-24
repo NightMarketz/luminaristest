@@ -1,0 +1,421 @@
+Nota Fiscal Eletrônica - NF-e 
+Reforma Tributária do Consumo – Lei Complementar 214/2025 
+ IT 2025.002 v.1.31 
+ 
+ Versão 1.00  
+Página 1 / 10 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Projeto Reforma Tributária do 
+Consumo 
+ 
+Tabelas: Código de Classificação Tributária , CST e 
+Classificação do Crédito Presumido do IBS e da CBS  
+ 
+Informe Técnico 202 5.002 - Versão 1.31 
+15 de dezembro de 2025 
+ 
+ 
+ 
+
+Nota Fiscal Eletrônica - NF-e 
+Reforma Tributária do Consumo – Lei Complementar 214/2025 
+ IT 2025.002 v.1.31 
+ 
+ Versão 1.00  
+Página 2 / 10 
+ 
+ 
+ 
+Sumário 
+01. Objetivo ................................ ................................ ................................ ................................ ............... 4 
+02. Tabela de Código de Classificação Tributária do IBS e da CBS ................................ ............................ 4 
+03. Tabela CST ................................ ................................ ................................ ................................ ......... 6 
+04. Tabela de Classificação do Crédito Presumido do IBS e da CBS ................................ ....................... 7 
+05. Alíquotas padrão do IBS e da CBS ................................ ................................ ................................ ..... 8 
+06. Tabelas Online ................................ ................................ ................................ ................................ .... 8 
+07. Alterações realizadas nas tabelas ................................ ................................ ................................ ....... 8 
+06.01 Alterações na versão 1.10 ................................ ................................ ................................ ............... 8 
+06.02 Alterações na versão 1.20 ................................ ................................ ................................ ............... 9 
+06.03 Alterações na versão 1.21 ................................ ................................ ................................ ............... 9 
+06.04 Alterações na versão 1.30 ................................ ................................ ................................ ............. 10 
+06.05 Alterações na versão 1.31 ................................ ................................ ................................ ............. 10 
+ 
+Nota Fiscal Eletrônica - NF-e 
+Reforma Tributária do Consumo – Lei Complementar 214/2025 
+ IT 2025.002 v.1.31 
+ 
+ Versão 1.00  
+Página 3 / 10 
+ 
+ 
+ 
+Controle de Versões 
+ 
+Versão Publicação Descrição 
+1.00 Maio/2025 Publicação do IT  
+1.10 Junho/2025 Atualização das tabelas cClassTrib e CST e divulgação da tabela de Crédito 
+Presumido 
+1.11 Junho/2025 Correção do título da seção de alterações 
+1.20 Outubro/2025 - Atualização das tabelas CST, cClassTrib e Crédito Presumido.  
+- Informações sobre as alíquotas padrão. 
+1.21 Outubro/2025 - Correção na tabela Crédito Presumido 
+1.30 Novembro/2025  
+1.31 Dezembro/2025 - Correção tabela crédito presumido 
+- Atualização de indicadores de DF-e na tabela cClasssTrib 
+ 
+Informação sobre a finalidade do IT – Informe Técnico 
+De forma geral, o Informe Técnico tem a finalidade de: 
+ 
+• Divulgar orientações e aperfeiçoamentos para os Serviços de Autorização de Uso dos 
+DF-e, que são usados pelas Empresas; 
+• Divulgar e manter registro da atualização de tabelas de domínio usadas pelo Serviço 
+de Autorização, não significando obrigatoriamente a necessidade de alteração no 
+Sistema de Computação das Empresas; 
+ 
+• Divulgar e manter registro de orientações sobre a prestação de informações no leiaute 
+do DF-e, informando sobre o preenchimento de campo e outros; 
+ 
+• Divulgar e manter registro de comunicados e outras necessidades de comunicação 
+com as empresas. 
+ 
+• Revogar o Informe Técnico RT 2024.001 - v. 1.00 - Publicado em 07/12/2024. 
+ 
+ 
+ 
+Nota Fiscal Eletrônica - NF-e 
+Reforma Tributária do Consumo – Lei Complementar 214/2025 
+ IT 2025.002 v.1.31 
+ 
+ Versão 1.00  
+Página 4 / 10 
+ 
+ 
+ 
+01. Objetivo 
+O presente Informe Técnico tem como objetivo divulgar a publicação da Tabela de Código de 
+Classificação Tributária do IBS e da CBS, bem como da Tabela de Indicadores de CST  e a 
+Tabela de Classificação de Crédito Presumido disponíveis no Portal Nacional da NF-e, na aba 
+“Documentos”, opção “Diversos” e informar que o Informe Técnico  RT 2024.001 - v1.00 está 
+revogado. 
+O presente Informe Técnico tem como objetivo revogar Informe Técnico RT 2024.001 - v1.00 e 
+divulgar as tabelas necessárias para a correta classificação e tributação do IBS e da CBS: 
+• Tabela de Código de Classificação Tributária do IBS e da CBS (cClassTrib) 
+• Tabela CST 
+• Tabela de Classificação de Crédito Presumido (cCredPres) 
+• Tabela de Alíquotas Padrão do IBS e da CBS (2026 a 2028) 
+As tabelas estão disponíveis no Portal Nacional da NF -e, na aba “Documentos”, opção 
+“Diversos” e também nos portais de cada DFe em Portal dos Documentos Fiscais Eletrônicos - 
+SVRS. 
+  
+02. Tabela de Código de Classificação Tributária do IBS e 
+da CBS 
+A Lei Complementar nº 214 de 16/01/2025 aprovada na Câmara dos Deputados e encaminhada 
+para aprovação no Senado Federal, definiu na Seção VIII – Disposições transitórias, Art. 61, a 
+obrigatoriedade para Estados, o Distrito Federal e os Municípios adaptarem os sistemas 
+autorizadores de Documentos Fiscais Eletrônicos (DFe) vigentes para utilização de  leiaute 
+padronizado, que permita aos contribuintes informarem os dados relativos ao Imposto sobre 
+Bens e Serviços (IBS), Contribuição sobre Bens e Serviços (CBS) e Imposto Seletivo (IS). 
+Atendendo a este comando, foram publicadas Notas Técnicas referente a reforma tributária , 
+além de diversas outras disposições, que introduziram o Grupo UB: Informações dos tributos 
+IBS / CBS e Imposto Seletivo. Nesse grupo, posicionado no nível de item na NF-e e na NFS-e, 
+o contribuinte deve informar os códigos “CST-IBS/CBS” e “cClassTrib”. 
+Cada par de códigos “CST-IBS/CBS” e “cClassTrib” está associado a um dispositivo específico 
+da Lei Complementar nº 214/2025 e normas complementares, tornando objetiva a informação 
+Nota Fiscal Eletrônica - NF-e 
+Reforma Tributária do Consumo – Lei Complementar 214/2025 
+ IT 2025.002 v.1.31 
+ 
+ Versão 1.00  
+Página 5 / 10 
+ 
+ 
+ 
+do contribuinte sobre como interpreta a tributação do IBS e da CBS para cada item da NFe. 
+O significado de cada coluna da tabela está descrito a seguir . A codificação que deve ser 
+utilizada nas tags do grupo UB corresponde às colunas “CST -IBS/CBS” e “cClassTrib”. Como 
+os mesmos códigos se aplicam à Nota Fiscal de Serviços – NFSe, a tabela também 
+contém informações referentes a esse documento, para facilitar a utilização por contribuintes que 
+porventura o utilizem. 
+CST-IBS/CBS: Código de Situação Tributária do IBS e da CBS. 
+ 
+Descrição CST-IBS/CBS: Significado do Código de Situação Tributária do IBS e da CBS. 
+ 
+cClassTrib: Classificação Tributária do IBS e da CBS; os três primeiros dígitos são idênticos 
+ao CST-IBS/CBS. 
+Nome cClassTrib: Nome reduzido para apresentação da Classificação Tributária 
+Descrição cClassTrib: Situação a que se refere a Classificação Tributária do IBS e da CBS. 
+ 
+EC: Dispositivo da Emenda Constitucional 32/23 onde a situação a que se refere a 
+Classificação Tributária do IBS e da CBS está prevista. 
+LC Redação: Redação do dispositivo do LC 214/2025  onde a situação a que se refere a 
+Classificação Tributária do IBS e da CBS está prevista. 
+LC 214/25: Dispositivo da LC 214/2025 onde a situação a que se refere a Classificação 
+Tributária do IBS e da CBS está prevista. 
+Tipo de Alíquota: Define o tipo de alíquota aplicável, conforme disposto na Lei 
+Complementar nº 214/2025. 
+pRedIBS: Percentual de redução da alíquota do IBS associado ao código informado em 
+cClassTrib. 
+pRedCBS: Percentual de redução da alíquota da CBS correspondente ao cClassTrib. 
+Indicadores de exigência de grupos: Indicadores que estabelecem a exigência, permissão 
+ou vedação de preenchimento de campos no respectivo Documento Fiscal 
+Eletrônico (DFe) , conforme especificado em Nota Técnica . São eles: 
+ind_RedutorBC, ind_gTribRegular, ind_gCredPresOper, ind_gMonoPadrao, 
+ind_gMonoReten, ind_gMonoRet, ind_gMonoDif, ind_gEstornoCred 
+ 
+dIniVig e dFimVig: início e final de vigência deste cClassTrib.  
+Nota Fiscal Eletrônica - NF-e 
+Reforma Tributária do Consumo – Lei Complementar 214/2025 
+ IT 2025.002 v.1.31 
+ 
+ Versão 1.00  
+Página 6 / 10 
+ 
+ 
+ 
+ 
+DataAtualização: data da última atualização do cClassTrib. 
+Indicadores de modelos de documentos: Indicadores que estabelecem a permissão ou não 
+de informar o cClassTrib no respectivo documento : indNFeABI, indNFe, 
+indNFCe, indCTe,  indCTeOS, indBPe, indBPeTA, indBPeTM, indNF3e, 
+indNFSe, indNFSeVia, indNFCom, indNFAg, indNFGas, indDERE. 
+Esclarecimento sobre documentos em desenvolvimento: 
+• indNFeABI = indicador da Nota Fiscal Eletrônica de Alienação de Bens Imóveis  
+• indNFGas = indicador da Nota Fiscal para operações com Gás Canalizado 
+• indDERE = indicador de Declarações de Regimes Específicos 
+ANEXO: Identificação do número do anexo correspondente na Lei Complementar nº 
+214/2025, conforme aplicável à classificação tributária. 
+Link: link para o artigo da Lei Complementar 214/25 referente ao cClassTrib 
+ 
+ 
+03. Tabela CST 
+Esta tabela possui o objetivo de auxiliar os desenvolvedores no preenchimento dos grupos de campos 
+do IBS/CBS conforme o CST utilizado. Para isso, apresenta indicadores que definem a obrigatoriedade, 
+permissão ou vedação de preenchimento dos respectivos campos no Documento Fiscal Eletrônico 
+(DFe), conforme especificado em Nota Técnica. 
+ 
+Campos da tabela: 
+ 
+ 
+• CST-IBS/CBS: Código de Situação Tributária aplicável ao IBS e à CBS, conforme definido na 
+Lei Complementar nº 214/2025. 
+ 
+• Descrição CST-IBS/CBS: Texto explicativo que descreve a situação tributária correspondente 
+ao código CST-IBS/CBS. 
+ 
+• ind_gIBSCBS: Indica se deve ser preenchido o grupo de informações padrão do IBS e da CBS 
+no documento fiscal. 
+ 
+• ind_gIBSCBSMono: Indica se deve ser preenchido o grupo específico para operações sujeitas 
+ao regime monofásico do IBS/CBS. 
+ 
+• ind_gRed: Indica se há necessidade de informar os grupos de redução de alíquota do IBS e 
+da CBS. 
+Nota Fiscal Eletrônica - NF-e 
+Reforma Tributária do Consumo – Lei Complementar 214/2025 
+ IT 2025.002 v.1.31 
+ 
+ Versão 1.00  
+Página 7 / 10 
+ 
+ 
+ 
+ 
+• ind_gDif: Indica se devem ser informados os grupos de diferimento do IBS e da CBS. 
+ 
+• ind_gTransfCred: Indica se deve ser informado grupo de transferência de crédito. 
+ 
+• ind_gCredPresIBSZFM: Indica se deve ser informado o grupo para apropriação de crédito 
+presumido de IBS sobre o saldo devedor na ZFM (art. 450, § 1º, LC 214/25). 
+ 
+• ind_gAjusteCompet: Indica se deve ser informado grupo de ajustes por competência (ajustes 
+de apuração em períodos específicos). 
+ 
+• ind_RedutorBC:  Indica se haverá redução da base de cálculo no respectivo DFe. 
+ 
+ 
+04. Tabela de Classificação do Crédito Presumido do 
+IBS e da CBS 
+A tabela de Classificação do Crédito Presumido do IBS  e da CBS define códigos aplicáveis  às  
+hipóteses legais de crédito presumido do IBS e da CBS, conforme previstas na Lei Complementar nº 
+214, de 2025. Cada código refere-se a uma situação específica autorizada pela legislação. 
+ 
+Campos da tabela: 
+ 
+• cCredPres: Código que identifica a hipótese legal de crédito presumido do IBS e da CBS. 
+ 
+• Descrição: Texto explicativo que descreve a situação ou hipótese legal correspondente ao 
+código. 
+ 
+• LC 214/2025: Dispositivo da Lei Complementar nº 214/2025 que fundamenta a concessão do 
+crédito presumido. 
+ 
+• Apropria via NF? Indica se a apropriação do crédito presumido pode ser feita diretamente no 
+documento fiscal (NF-e ou NFSe). 
+ 
+• Apropria via evento? Indica se a apropriação do crédito presumido deve ser feita por meio de 
+evento específico no sistema. 
+ 
+• indDeduzCredPres: Indica se o crédito presumido será deduzido no cálculo do valor do tributo 
+do item. 
+ 
+• ind_gCBSCredPres: Indica se deve ser preenchido o grupo de crédito presumido da CBS no 
+documento fiscal. 
+ 
+• ind_gIBSCredPres: Indica se deve ser preenchido o grupo de crédito presumido do IBS no 
+documento fiscal. 
+ 
+• Alíquota CBS: orientações sobre a alíquota aplicável ao crédito presumido da CBS. 
+ 
+• Alíquota IBS: orientações sobre a alíquota aplicável ao crédito presumido do IBS. 
+ 
+• pAliqCredPresCBS: orientações sobre o Percentual específico para cálculo do crédito 
+presumido da CBS, quando aplicável. 
+Nota Fiscal Eletrônica - NF-e 
+Reforma Tributária do Consumo – Lei Complementar 214/2025 
+ IT 2025.002 v.1.31 
+ 
+ Versão 1.00  
+Página 8 / 10 
+ 
+ 
+ 
+ 
+• cClass nota referenciada: orientações sobre o Código de Classificação Tributária (cClassTrib) 
+da nota fiscal referenciada, quando necessário para validar a apropriação. 
+ 
+• dIniVig: Data de início da vigência do código de crédito presumido. 
+ 
+• dFimVig: Data de término da vigência do código de crédito presumido. 
+ 
+05. Alíquotas padrão do IBS e da CBS 
+As alíquotas padrão do IBS e da CBS, em percentual, a serem informadas nos documentos fiscais 
+eletrônicos são as definidas em legislação específica para o respectivo ano: 
+ 
+Ano pIBSUF (%) pIBSMun (%) pCBS (%) 
+2026 (LC 214/2025) 0,1 0 0,9 
+2027 (LC 214/2025) 0,05 0,05 Aguardar Legislação* 
+2028 (LC 214/2025) 0,05 0,05 Aguardar Legislação* 
+2029 em diante Aguardar Legislação* Aguardar Legislação* Aguardar Legislação( 
+ 
+* Cada ente federativo deve definir suas alíquotas por lei própria (art. 14 da LC 214/2025). 
+Se não o fizer, aplica-se a alíquota de referência, fixada por resolução do Senado Federal (art. 18). 
+  
+06. Tabelas Online  
+ 
+Com o objetivo de facilitar o entendimento e o correto preenchimento dos Documentos Fiscais 
+Eletrônicos (DF-e), essas tabelas também estão disponíveis nos Portais Nacionais de DF-e em formato 
+online e interativo: 
+ 
+Tabelas CST e Classificação Tributária (cClassTrib): 
+        https://dfe-portal.svrs.rs.gov.br/DFE/TabelaClassificacaoTributaria 
+ 
+ 
+Tabela de Crédito Presumido (cCredPres): 
+        https://dfe-portal.svrs.rs.gov.br/DFE/TabelaCreditoPresumido 
+ 
+A utilização dessas tabelas é essencial para assegurar a conformidade tributária adequada ,  o 
+preenchimento correto  dos campos obrigatórios nos documentos fiscais eletrônicos e o cumprimento 
+das regras de validação estabelecidas na documentação técnica de cada DFe. 
+ 
+Além disso, as informações também podem ser acessadas em formato JSON, por meio dos serviços 
+disponibilizados em: https://dfe-portal.svrs.rs.gov.br/CFF/Servicos (acesso mediante certificado digital). 
+ 
+ 
+07. Alterações realizadas nas tabelas 
+06.01 Alterações na versão 1.10 
+Foram realizadas as seguintes atualizações na versão 1.10: 
+Nota Fiscal Eletrônica - NF-e 
+Reforma Tributária do Consumo – Lei Complementar 214/2025 
+ IT 2025.002 v.1.31 
+ 
+ Versão 1.00  
+Página 9 / 10 
+ 
+ 
+ 
+ 
+1. Inclusão de indicadores de obrigatoriedade e vedação de preenchimento 
+ 
+Foram adicionados indicadores nas duas tabelas para explicitar os campos obrigatórios, permitidos e 
+vedados no preenchimento das tags dos XML dos Documentos Fiscais Eletrônicos, conforme as 
+regras de validação específicas de cada documento. 
+ 
+2. Tabela cClassTrib 
+ 
+• Códigos incluídos:  
+      010002, 222001, 410021, 410999, 820006, 830001 
+ 
+• Códigos atualizados: 
+620001, 620002, 620003  
+ 
+• Código 620004 dividido em 620004  e 620005  
+ 
+• Antigo código 620005 renumerado para 620006 
+ 
+ 
+3. Tabela CST 
+ 
+• Código incluído: 222 
+ 
+4. Tabela Crédito Presumido (cCredPres) 
+ 
+Publicação da primeira versão da tabela 
+ 
+ 
+06.02 Alterações na versão 1.20 
+• Transferência dos indicadores de documentos da tabela CST para a Tabela cClassTrib 
+• Tabela CST: Criação das colunas  ind_gCredPresIBSZFM: e ind_gAjusteCompet 
+• Tabela cClassTrib: ajustes em nomes dos indicadores existentes para padronização e 
+criação do indicador ind_gEstornoCred 
+• Tabela cCredPres: Criação dos indicadores ind_DeduzCredPres, ind_gCBSCredPres,  
+ind_gIBSCredPres 
+• As atualizações de valores nas tabelas CST e cClassTrib estão destacadas em verde nas 
+respectivas tabelas. Na tabela cClassTrib, verificar itens alterados pela data que consta na 
+coluna: DataAtualização. 
+ 
+ 
+06.03 Alterações na versão 1.21 
+• Tabela de Crédito Presumido: Correção do indicador “Apropria via NF?” no cCredPres = 2. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Nota Fiscal Eletrônica - NF-e 
+Reforma Tributária do Consumo – Lei Complementar 214/2025 
+ IT 2025.002 v.1.31 
+ 
+ Versão 1.00  
+Página 10 / 10 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+06.04 Alterações na versão 1.30 
+• Transferência do indicador ind_RedutorBC da tabela cClassTrib para a tabela CST, 
+agora habilitado para CST = 222. 
+ 
+• As atualizações de valores nas tabelas CST e cClassTrib estão destacadas em verde 
+em suas respectivas visualizações. Na tabela cClassTrib, os itens alterados podem ser 
+identificados pela data registrada na coluna DataAtualização igual a 19/11/2025. 
+ 
+06.05 Alterações na versão 1.31 
+• Atualização das datas de inicio de vigência dos códigos de crédito presumido para IBS 
+e CBS na tabela de crédito presumido 
+• Atualização de indicadores de DF-e : habilitado o cClassTrib 200050 para CT -e OS e 
+410031 para NF-e 
+• As atualizações de valores nas tabelas estão destacadas em verde em suas respectivas 
+visualizações. Na tabela cClassTrib, os itens alterados podem ser identificados pela data 
+registrada na coluna DataAtualização igual a 12/12/2025. 
+ 

@@ -7,7 +7,7 @@ estado: "human-open"
 estado_detalhe: "15/10 (fold): alíquota DECIDIDA por delegação do contador — ISS SP 5% padrão, retenção configurável por nota (D-3 de D-2026-10-10-TRIAGEM-CONTADOR-DELEGACAO); ressalva INFERIDA, não verificada: no Simples o ISS vai no DAS pela faixa do Anexo III (LC 123), então os 5% valem fora do Simples — conferir por fonte oficial · cClassTrib: o contador respondeu 000001 ('tributadas integralmente pelo IBS e CBS') + indOp 030101 em 10/10 (TRIAGEM-RESPOSTA-CONTADOR-2026-10-10 I-1/II-1), grau secundário — falta conferir na tabela oficial (pesquisa do agente pelo método legal, não pergunta ao contador); cTribNac/NBS já conferidos em fonte oficial (pesquisas-legais/ctribnac-salao-clinica: 060101/060201/060301). O follow-up de 26/09 foi SUPERSEDIDO pelo pedido único de 10/10 (enviado e respondido) · 27/09: Item LC 116 recebido (6.01/6.02/6.03; ISS no prestador — triagem 23/09 5a); faltam alíquota (município) e cClassTrib; pedidos no follow-up de 26/09 (item 3), não enviado"
 depende_de: ["[[D1]]"]
 ancora_sdd: "§III.2"
-atualizado: "2026-10-15"
+atualizado: "2026-10-24"
 ---
 # D1f — Itens 5a-5f do contador (item LC 116, alíquota ISS, cClassTrib)
 
@@ -38,3 +38,14 @@ atualizado: "2026-10-15"
 - **cTribNac/NBS:** conferidos em fonte oficial (Anexo B v1.01 + LC 116) no dossiê
   `pesquisas-legais/ctribnac-salao-clinica` — 060101 / 060201 / 060301.
 - O follow-up de 26/09 (item 3) foi supersedido pelo pedido único de 10/10, que foi enviado e respondido.
+
+## Fold 24/10 — pesquisa pelo método legal (dossiê `pesquisas-legais/gates-humanos-lei`)
+
+- **Ressalva do Simples: agora VERIFICADA em fonte oficial** (era inferida). LC 123 art. 13 VIII inclui o ISS no DAS [D01], até 2032:
+  a LC 214 só tira o ISS pelo art. 518, com efeitos de 01/01/2033 (art. 544 V [D10]); IBS/CBS entram em 2027 (arts. 516–517, 544 III [D10]).
+  O 5% de SP vale **fora** do Simples: 6.01–6.03 não estão na lista de 2% do art. 16 I "a" (só o 6.04), e caem no art. 16 IV
+  [D08, relida 24/10]. LC 116 art. 8º-A fixa piso de 2% [D03]. A LC 227/2026 (redação compilada no [D10]) não tira o ISS do art. 13:
+  **fechado**. Relatório: [`relatorio.md`](../../../pesquisas-legais/gates-humanos-lei/relatorio.md) §1–§3.
+- **cClassTrib 000001: continua SEM fonte oficial.** Li a IT 2025.002 **v1.31** [D07] (a tabela está no anexo); versões posteriores (1.50+) só
+  apareceram em fonte secundária; não confirmei nenhuma em domínio oficial. Quem confere é o agente, na tabela da versão vigente, não o contador. Grau: o 000001 segue **secundário**.
+- Estado e autorização **não mudam**.
