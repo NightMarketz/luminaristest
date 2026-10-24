@@ -3,17 +3,17 @@ id: "TESTE-ACOPLAMENTO-PRESET"
 tipo: "plataforma"
 dominio: "plataforma"
 titulo: "Teste de acoplamento preset↔schema: campos lidos por plugins e KPIs ⊆ campos declarados; regras de governança apontam para campo/tabela existente"
-estado: "planned"
+estado: "done"
 estado_detalhe: "24/10: teste-guarda entregue (presetSchemaCoupling.test.ts + extensão do analyticsFieldMappingCoupling.test.ts, itens 1–8 do BRIEF); 10 achados registrados em KNOWN_GAPS — 6 do FIX-PLUGINS-VENDA, 4 do FIX-ANALYTICS-RESIDUO (lista em '## Achados'); nada consertado · 22/10: forks F-TAP-1..5 já estavam RATIFICADOS em 21/10 ([[D-2026-10-21-CHAT-C-FORKS]], #793: 1b, 2a, 3a, 4a, 5a); registro levado ao BRIEF nesta data. Sem fork pendente; espera o 'executa' (e o FIX-ANALYTICS-DADO de que depende) · 21/10: BRIEF em docs/accounting/TESTE-ACOPLAMENTO-PRESET-brief.md, forks F-TAP-1..5 pendentes · Registrado 19/10. A varredura de hoje deu zero inconsistência nas regras de governança, mas não há teste — typo num módulo vira regra silenciosa (REVIEW_BACKLOG, junho). O #770 cobre só expenses"
 depende_de: ["[[FIX-ANALYTICS-DADO]]"]
 autorizacao: "dono, chat, 2026-10-21: \"dispara os chats A, C e F agora\" — escopo: planejar o BRIEF, sessao-planejamento, só docs, sem código, sem 'executa' · **EXECUTA** (dono, chat, 2026-10-24): \"executa TESTE-ACOPLAMENTO-PRESET\" — sessao-feature pelo BRIEF; teste-guarda, não consertar os campos órfãos, só registrar como achado; PR sem merge"
 write_set: ["server/src/features/dynamicTables/presets/__tests__/**", "server/src/features/analytics/**/__tests__/**"]
-atualizado: "2026-10-23"
-prs: ["#859"]
+atualizado: "2026-10-24"
+prs: ["#859", "#883"]
 ---
 # TESTE-ACOPLAMENTO-PRESET — Teste de acoplamento preset↔schema: campos lidos por plugins e KPIs ⊆ campos declarados; regras de governança apontam para campo/tabela existente
 
-**Estado:** `planned` — 22/10: forks F-TAP-1..5 já estavam RATIFICADOS em 21/10 ([[D-2026-10-21-CHAT-C-FORKS]], #793: 1b, 2a, 3a, 4a, 5a); registro levado ao BRIEF nesta data. Sem fork pendente; espera o 'executa' (e o FIX-ANALYTICS-DADO de que depende) · 21/10: BRIEF em docs/accounting/TESTE-ACOPLAMENTO-PRESET-brief.md, forks F-TAP-1..5 pendentes · Registrado 19/10. A varredura de hoje deu zero inconsistência nas regras de governança, mas não há teste — typo num módulo vira regra silenciosa (REVIEW_BACKLOG, junho). O #770 cobre só expenses  
+**Estado:** `done` — 24/10: teste-guarda entregue (presetSchemaCoupling.test.ts + extensão do analyticsFieldMappingCoupling.test.ts, itens 1–8 do BRIEF); 10 achados registrados em KNOWN_GAPS — 6 do FIX-PLUGINS-VENDA, 4 do FIX-ANALYTICS-RESIDUO (lista em '## Achados'); nada consertado · 22/10: forks F-TAP-1..5 já estavam RATIFICADOS em 21/10 ([[D-2026-10-21-CHAT-C-FORKS]], #793: 1b, 2a, 3a, 4a, 5a); registro levado ao BRIEF nesta data. Sem fork pendente; espera o 'executa' (e o FIX-ANALYTICS-DADO de que depende) · 21/10: BRIEF em docs/accounting/TESTE-ACOPLAMENTO-PRESET-brief.md, forks F-TAP-1..5 pendentes · Registrado 19/10. A varredura de hoje deu zero inconsistência nas regras de governança, mas não há teste — typo num módulo vira regra silenciosa (REVIEW_BACKLOG, junho). O #770 cobre só expenses  
 **Autorização:** **falta** — não roteia sem autorização citável do dono (ORCH-006)  
 **Depende de:** [[FIX-ANALYTICS-DADO]]  
 **Origem:** [[D-2026-10-19-ACHADOS-NA-FILA]] · achados em [`ACHADOS-2026-10-19`](../../operating-manual/ACHADOS-2026-10-19-DYNAMICTABLE-E-MODULOS-ANTIGOS.md)
