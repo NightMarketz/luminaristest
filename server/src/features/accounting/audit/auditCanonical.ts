@@ -252,6 +252,11 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'withholding_profile.created': ['profileId', 'counterpartyId', 'naturezaServico', 'natRend', 'irrf', 'csrf', 'inss', 'issRetido', 'vigenteDesde', 'vigenteAte'],
   'withholding_profile.updated': ['profileId', 'counterpartyId', 'naturezaServico', 'natRend', 'irrf', 'csrf', 'inss', 'issRetido', 'vigenteDesde', 'vigenteAte'],
   'withholding_profile.deleted': ['profileId'],
+  // BE-INCR-RETENCOES-FONTE PR-2 (item 23): retenção feita e título de imposto — ids, tributo, centavos e competência; nunca
+  // o taxId nem o nome do beneficiário.
+  'ap.withholding.recorded': ['withholdingId', 'payableId', 'tributo', 'event', 'amountCents', 'competencia', 'codigoReceita', 'dispensa', 'taxPayableId'],
+  'ap.withholding.reversed': ['withholdingId', 'payableId', 'tributo', 'amountCents', 'taxPayableId'],
+  'tax_payable.upserted': ['taxPayableId', 'codigoReceita', 'competencia', 'amountCents'],
   // BE-INCR-IRRF-DISTRIBUICAO PR-2 (item 33): distribuição — ids e valores; nome e CPF/CNPJ do sócio ficam FORA, e o
   // motivo do cancelamento (texto livre) também.
   'profit_distribution.created': ['distributionId', 'partnerId', 'evento', 'dataEvento', 'origemLucro', 'brutoCents', 'irrfCents', 'liquidoCents'],

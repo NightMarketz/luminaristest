@@ -14,7 +14,9 @@ import { BANCO_CODE, CAIXA_CODE } from '../fixtures/ChartOfAccountsFixture';
  * single-row write and exactly one wins; finalize resolves `PAYING → PAID | PARTIALLY_PAID` by the
  * balance. `PARTIALLY_PAID` (F-PS2 → a) = `0 < paidCents < amountCents`. `PAID`/`CANCELLED` are terminal.
  */
-export const PAYABLE_STATUSES = ['OPEN', 'PARTIALLY_PAID', 'PAYING', 'PAID', 'CANCELLED'] as const;
+// RETENCOES-FONTE PR-2 (item 20): `DEFERRED` = título de imposto < R$ 10 somado ao da competência seguinte (Lei 9.430
+// art. 68 § 1º) — não vence, não aceita baixa e fica fora do "em aberto".
+export const PAYABLE_STATUSES = ['OPEN', 'PARTIALLY_PAID', 'PAYING', 'PAID', 'CANCELLED', 'DEFERRED'] as const;
 export type PayableStatus = (typeof PAYABLE_STATUSES)[number];
 
 /** Statuses a NEW settlement may be registered against (guard pré-CAS, ADR F-PS2 site 2). */
@@ -91,6 +93,17 @@ export function hasSingleInventorySku(payable: {
  */
 export const AP_PAYABLE_SOURCE_TYPE = 'ap.payable';
 export const AP_PAYMENT_SOURCE_TYPE = 'ap.payment';
+
+/**
+ * BE-INCR-RETENCOES-FONTE PR-2 (item 15; F-RET-10 a): a baixa SEM caixa da retenção feita — `PayablePayment` de kind
+ * `WITHHOLDING`, posta sob `sourceId = paymentId` como D 2.1.2 / C conta a recolher do tributo (papel do perfil fiscal).
+ * `method = 'NONE'` só com esse kind (item 14): o mapa fechado de método segue valendo para o PAYMENT.
+ */
+export const AP_WITHHOLDING_SOURCE_TYPE = 'ap.withholding';
+export const WITHHOLDING_KIND = 'WITHHOLDING' as const;
+export const WITHHOLDING_METHOD = 'NONE' as const;
+/** Item 19 (F-RET-11 a): o título de imposto da retenção feita (sem reconhecimento próprio; baixa debita `liabilityAccountId`). */
+export const PAYABLE_ORIGIN_WITHHOLDING_TAX = 'WITHHOLDING_TAX' as const;
 
 /**
  * Closed payment-method → CREDIT (Asset) account map for the settlement leg (D2):
