@@ -27,7 +27,7 @@ Antes de gerar, leia `.claude/skills/_ARCHITECTURE-CONTRACT.md` — as regras cr
 - [ ] **[JOB-001] Idempotência:** re-rodar o job/seed **não duplica** nem corrompe. Operações de manutenção são reentrantes; seeds marcam e limpam antes de reinserir.
 - [ ] **[JOB-002] Seeds tagueiam os registros** — cada registro semeado leva `data.__demo = true`; no início, o seed apaga os `__demo` anteriores (`findMany` → filtra `r.data.__demo === true` → `deleteMany`) antes de reinserir. Sem tag + cleanup, duplica a cada execução.
 - [ ] **[JOB-003] Cron/agendamento explícito** — se o job roda periodicamente, registrar a chamada/agendamento no boot (`server.ts`) com o intervalo documentado. Se é one-shot, declarar isso.
-- [ ] **[JOB-004] Logs de início e fim com métricas** — `logger.info('Job started', { job })` + `logger.info('Job completed', { affected: N })`; `try/catch` com `logger.error(msg, { context })` (string primeiro, contexto depois).
+- [ ] **[JOB-004] Log e alerta no padrão dos schedulers** (Contrato §2.4, OBS-R2/R5/R9/R11; espelhe `server/src/jobs/PtaxRateScheduler.ts`) — a mensagem é a constante `const JOB = '<nome_do_job>'`, nunca texto interpolado; toda linha sai por `log.event(nível, '<evento>', JOB, { job: JOB, ...métricas })` com evento do catálogo `LOG_EVENTS` (`server/src/lib/logEvents.ts`: `job.scheduled`, `job.completed`, `job.skipped`, `job.failed`…), com `log` injetado (tipo `EventLogger`, default `logger`); `alert` é injetado com default `sendAlertWebhook` (`../lib/alertWebhook`) e, no `catch` do `runOnce`, o job registra `job.failed` com `{ error }` (a borda, OBS-R5), dispara `alert({ source, event: 'job_failed', timestamp, job: JOB, error })` e relança; a `source` nova entra em `AlertPayload.source` na mesma mudança; teste de falha com `run`/`log`/`alert` falsos prova que o alerta sai e o erro sobe (caso em `server/src/jobs/__tests__/schedulerFailureAlert.test.ts`).
 - [ ] **[JOB-005] Prisma direto é aceitável em script de seed/job — mas documentar** que bypassa factory, schema-validation, rules/plugins e policy. Anotar no topo do arquivo o que está sendo contornado.
 - [ ] **[JOB-006] Guard de produção em seed:** `if (process.env.NODE_ENV === 'production') throw/return` no topo. Seed de volume é dev-only, standalone (nunca endpoint), escopado a um `userId` resolvido por `--email`.
 - [ ] **[JOB-007] Resolver tabelas/pais por `internalName`/`id`, nunca por `[0]`** — a API ordena `createdAt desc` e o `prisma.findMany` default difere; posição não é estável.
@@ -64,8 +64,8 @@ server/src/lib/logger.ts
 1. Arquivo: `server/src/jobs/<JobName>.ts`
 2. Exportar named async function: `export async function run<JobName>(): Promise<void>`
 3. Usar `prisma` diretamente — jobs não passam pelo factory
-4. Logging: `logger.info('Job started', { job: '<JobName>' })` + `logger.info('Job completed', { affected: N })`
-5. Error handling: `try/catch` com `logger.error`
+4. Logging (JOB-004): `const JOB = '<nome_do_job>'` como mensagem e `log.event('info', 'job.completed', JOB, { job: JOB, affected: N })` (`warn` se parcial); `job.skipped`/`job.scheduled` pelo mesmo `log.event`; `log` injetado com default `logger`. Nada de `logger.info('Job started')`/`'Job completed'` nem mensagem interpolada
+5. Error handling (JOB-004): `alert` injetado com default `sendAlertWebhook`; no `catch` do `runOnce`, `log.event('error', 'job.failed', JOB, { job: JOB, error })` + `alert({ source: '<fonte>', event: 'job_failed', timestamp, job: JOB, error })` + `throw error`; `<fonte>` entra em `AlertPayload.source`; teste de falha em `jobs/__tests__/schedulerFailureAlert.test.ts`
 6. Registrar chamada em `server.ts` se agendado no boot
 
 ### Seed Fixture (frontend, via API — dados pequenos/realistas)

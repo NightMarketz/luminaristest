@@ -72,7 +72,9 @@ Regras normativas da camada **Job / Seed** (background job em `server/src/jobs/`
 - `JOB-002` — cada registro semeado leva `data.__demo = true`; no início, apaga os `__demo` anteriores
   (`findMany` → filtra `r.data.__demo === true` → `deleteMany`) antes de reinserir.
 - `JOB-003` — job periódico: agendamento registrado no boot (`server.ts`) com intervalo documentado; one-shot declarado.
-- `JOB-004` — logs de início/fim com métricas (`logger.info`) + `try/catch` com `logger.error` (string primeiro).
+- `JOB-004` — padrão dos schedulers (Contrato §2.4): mensagem = constante `JOB`, `log.event` com evento do catálogo
+  `LOG_EVENTS`, `alert` injetado (default `sendAlertWebhook`) disparando `job_failed` no `catch` do `runOnce`, que
+  relança; teste de falha. Caso `happy-2` (reescrito em 2026-10-23, ADR-OBSERVABILIDADE §6 item 9).
 - `JOB-005` — Prisma direto é aceitável em seed/job mas **documentado** no topo (bypassa factory/validação/rules/policy);
   job não usa `getFactory()`.
 - `JOB-006` — guard de produção (`process.env.NODE_ENV === 'production'`) no topo do seed; standalone, escopado a `userId`.

@@ -35,6 +35,8 @@ Cada item abaixo é uma REGRA DE GERAÇÃO (o `luminaris-reviewer` cobra exatame
 - [ ] **[SVC-006] Actor `actor: IUser | null`** em todo método público — importe `IUser` de `../../users/models/User.model` (NÃO `@prisma/client`).
 - [ ] **[SVC-007] Registro em `lib/factory.ts`:** repo e policy instanciados ANTES do service; getter `get<Resource>Service()` exposto.
 - [ ] **[SVC-008] Service que chama `PostingService.postEntry` (com ou sem subrazão) nasce com o cabeçalho `atomicUntil`** (primeiro JSDoc do arquivo, 5 linhas: `atomicUntil:`, `commit 1 — razão`, `commit 2 — subrazão`, `reconcile —`, `fora da tx —`) e com os 3 testes por linha (gate falha in-tx · commit 2 falha → reconcile converge · reconcile 2× idempotente). Razão e subrazão são **2 commits** — nunca "mesma tx", nunca compensação `try/catch`. Contrato §2.3 (`AC-2.3-1`/`AC-2.3-2`); template literal na etapa 9 abaixo.
+- [ ] **[SVC-009] Não registra e relança — a borda registra** (Contrato §2.4, OBS-R5). Um `catch` do service que só converte o erro (para o tipado de `lib/errors`) ou o deixa subir **não** chama `logger.*`: quem registra é a borda (`handleApiError`, o `catch` do `runOnce` de um job, ou o `catch` que decide seguir). Registrar e relançar duplica a linha.
+- [ ] **[SVC-010] Nenhum `catch` silencioso** (Contrato §2.4, OBS-R8). Todo `catch`/`.catch` que **não** relança (efeito best-effort, fallback) registra em `logger.warn` ou acima, com a mensagem em string literal e `{ error }` no contexto (OBS-R2). Nunca `catch {}` vazio nem `.catch(() => undefined/null)`; se o erro é tratado por outro caminho, a supressão vai justificada no ledger de dívida (`docs/architecture/lint-layer-gate.md`).
 - [ ] DTO guard (`is<Resource>Input`) antes de persistir quando o método recebe payload não validado.
 
 ### Variante: orquestra `DynamicTableService` (CRM/ERP schema-driven)
@@ -146,3 +148,5 @@ cd server && npx tsc --noEmit
 - Importe `IUser` de `../../users/models/User.model`, nunca de `@prisma/client` — o `UserContext` do controller é estruturalmente atribuível a `IUser`
 - **Nunca injete um serviço Prisma first-class (`PostingService`…) numa orchestration service que opera DynamicTable** — integração cross-módulo sobe a controller/serviço de integração (§2.1). Se você está acoplando dois domínios numa orchestration service, o design está errado.
 - **Nunca tente razão + subrazão na "mesma tx", nem compense com `try/catch` + delete** — `postEntry` abre a própria tx raiz; o padrão é 2 commits + reconcile declarado no cabeçalho `atomicUntil` (§2.3, `SVC-008`). Não invente engine/fila/plugin para isso: motor de domínio é decisão rejeitada (`docs/adr/ADR-DOMAIN-MOTOR-rejected.md`).
+- **Nunca `logger.error(...)` seguido de `throw` no service** — a borda registra (`SVC-009`, OBS-R5); a linha sai duplicada.
+- **Nunca engula erro com `catch {}` ou `.catch(() => undefined)`** — registre em `warn`+ com `{ error }` ou justifique no ledger de dívida (`SVC-010`, OBS-R8).

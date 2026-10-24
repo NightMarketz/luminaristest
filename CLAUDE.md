@@ -11,6 +11,7 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
   Fronteiras mecanizadas: `docs/adr/ADR-ARCH-BOUNDARIES.md` — `npm run check:arch` (server/ e my-app/) bloqueia
   violação nova; o baseline só encolhe.
 - **Critério reuse-vs-bespoke:** `.claude/skills/_REUSE-CRITERION.md`
+- **Observabilidade (log, nível, PII, alerta) →** `docs/adr/ADR-OBSERVABILIDADE.md`
 - **Scaffolding (nomes/paths por camada):** `docs/claude-skills/GENERATION_CONTRACTS.md`
 - **Disciplina operacional do agente (OPS-001..006):** `.claude/skills/_OPERATING-GATES.md`
   (versão portável p/ outros projetos: `docs/operating-manual/PORTABLE-GUIDE.md`;

@@ -48,15 +48,20 @@
       "id": "happy-2",
       "type": "happy",
       "rules": ["JOB-003", "JOB-004", "JOB-005"],
-      "prompt": "Gere um background job periódico server/src/jobs/PurgeExpiredProposals.ts que hard-deleta ActionProposal com status EXPIRED há mais de 30 dias. Requisitos: (1) export async function sem args retornando Promise<void>; (2) usa prisma diretamente (import default de ../lib/prisma) — NÃO usa getFactory(); (3) logger (import de ../lib/logger) com log de início e fim com métrica de afetados, e try/catch com logger.error; (4) comente onde/como registrar o agendamento no boot (server.ts). Saída: conteúdo completo do arquivo, com o marcador de arquivo na primeira linha.",
-      "target_files": ["server/src/jobs/PurgeExpiredProposals.ts"],
+      "prompt": "Gere um background job periódico server/src/jobs/PurgeExpiredProposalsScheduler.ts que hard-deleta ActionProposal com status EXPIRED há mais de 30 dias, no padrão dos schedulers do repo (espelhe PtaxRateScheduler.ts). Requisitos: (1) classe PurgeExpiredProposalsScheduler com async runOnce() e start()/stop(); (2) a purga usa prisma diretamente (import default de ../lib/prisma) — NÃO usa getFactory() — e o cabeçalho documenta o bypass; (3) a mensagem de log é a constante const JOB = 'purge_expired_proposals', e toda linha sai por log.event(nível, evento, JOB, { job: JOB, ... }) com evento do catálogo LOG_EVENTS (job.completed com a métrica de afetados, job.scheduled no start), com log injetado e default logger (import de ../lib/logger); (4) alert injetado com default sendAlertWebhook (import de ../lib/alertWebhook): no catch do runOnce, registra job.failed com { error }, dispara alert com event 'job_failed' e relança; (5) comente onde/como registrar o start() no boot (server.ts). Saída: conteúdo completo do arquivo, com o marcador de arquivo na primeira linha.",
+      "target_files": ["server/src/jobs/PurgeExpiredProposalsScheduler.ts"],
       "assertions": [
-        "@PurgeExpiredProposals.ts::regex:export\\s+async\\s+function\\s+\\w+\\s*\\(\\s*\\)\\s*:\\s*Promise<void>",
-        "@PurgeExpiredProposals.ts::ast-import:prisma@../lib/prisma",
-        "@PurgeExpiredProposals.ts::ast-import:logger@../lib/logger",
-        "@PurgeExpiredProposals.ts::regex:logger\\.info\\(",
-        "@PurgeExpiredProposals.ts::regex:logger\\.error\\(",
-        "@PurgeExpiredProposals.ts::absent-code:getFactory("
+        "@PurgeExpiredProposalsScheduler.ts::regex:async\\s+runOnce\\s*\\(",
+        "@PurgeExpiredProposalsScheduler.ts::ast-import:prisma@../lib/prisma",
+        "@PurgeExpiredProposalsScheduler.ts::ast-import:logger@../lib/logger",
+        "@PurgeExpiredProposalsScheduler.ts::ast-import:sendAlertWebhook@../lib/alertWebhook",
+        "@PurgeExpiredProposalsScheduler.ts::regex:const\\s+JOB\\s*=\\s*['\"]",
+        "@PurgeExpiredProposalsScheduler.ts::regex:\\.event\\(\\s*['\"]info['\"]\\s*,\\s*['\"]job\\.completed['\"]\\s*,\\s*JOB",
+        "@PurgeExpiredProposalsScheduler.ts::regex:\\.event\\(\\s*['\"]error['\"]\\s*,\\s*['\"]job\\.failed['\"]\\s*,\\s*JOB",
+        "@PurgeExpiredProposalsScheduler.ts::regex:event:\\s*['\"]job_failed['\"]",
+        "@PurgeExpiredProposalsScheduler.ts::regex:throw\\s+\\w+",
+        "@PurgeExpiredProposalsScheduler.ts::absent-code:Job started",
+        "@PurgeExpiredProposalsScheduler.ts::absent-code:getFactory("
       ]
     },
     {

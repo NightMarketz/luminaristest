@@ -94,6 +94,21 @@
         "regex:fora da tx —",
         "absent:$transaction(async"
       ]
+    },
+    {
+      "id": "regression-2",
+      "type": "regression",
+      "rules": ["SVC-009", "SVC-010"],
+      "regression_of": "Service que registra o erro e relança (a borda registra de novo: linha duplicada) e/ou engole a falha de um efeito best-effort com catch vazio ou .catch(() => undefined), sumindo com o erro (OBS-R5/OBS-R8).",
+      "prompt": "Gere o método markPaid(actor, id) do InvoiceService (Contrato §2.4, ADR-OBSERVABILIDADE). (1) Depois da policy e do NotFoundError, chama this.invoiceRepository.update(...); se o repositório lançar, o service deixa o erro subir — envolva num try/catch que só converte para o erro tipado e relança, sem registrar no log (quem registra é a borda, handleApiError). (2) Em seguida dispara a notificação best-effort this.notifier.sendPaid(id), que pode falhar sem desfazer o pagamento: o .catch registra logger.warn com a mensagem em string literal e { error, invoiceId: id } no contexto, e segue — nunca um catch vazio nem um .catch(() => undefined). Saída: o método e o import do logger.",
+      "assertions": [
+        "absent-code:logger.error(",
+        "regex:logger\\.warn\\(\\s*['\"][^'\"`]+['\"]\\s*,\\s*\\{[^}]*\\berror\\b",
+        "regex:throw\\s+\\w+",
+        "absent-code:.catch(() => undefined)",
+        "absent-code:.catch(() => null)",
+        "absent-code:catch {}"
+      ]
     }
   ]
 }

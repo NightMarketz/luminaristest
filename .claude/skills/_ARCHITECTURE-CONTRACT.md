@@ -35,7 +35,7 @@ Antes de escrever qualquer componente, classe, helper ou padrão, **procure o ca
 - [ ] **Nada de segredos no código.** Sem credenciais/keys hardcoded; segredos via `process.env`/`.env`.
 - [ ] **Nomes seguem a convenção da camada** (ver bloco da camada). PascalCase para classes/components, `use<X>` para hooks, `I<X>` para interfaces de repo/policy/model.
 - [ ] **Sem lógica morta / TODO falso.** Não deixe stubs vazios que aparentam funcionar.
-- [ ] **`logger.error(msg, { context })`** — string primeiro, objeto de contexto depois. Nunca `logger.error(msg, errorObjDireto)`.
+- [ ] **`logger.<nível>(mensagem, contexto)` conforme OBS-R2** (§2.4): mensagem em string literal, sem interpolar dado; o dado vai no objeto de contexto; erro sempre como `{ error }`. Nunca `logger.error(msg, errorObjDireto)`.
 
 ---
 
@@ -170,6 +170,34 @@ Toda linha de DynamicTable mora em `DynamicTableData.data Json` sobre **SQLite**
 
 > Evidência (2026-09-21, leitura direta): 56 services contábeis, 18 com padrão reconcile em prosa livre, 5 orquestrando razão + outro domínio, **8 chamam `.postEntry(` fora do `PostingService` e nenhum tem cabeçalho** (`grep -rlE "\.postEntry\(" server/src/features/*/services --include=*.ts | grep -v -e __tests__ -e PostingService`); 0 ocorrências de "2 commits"/"reconcile" neste contrato antes desta §. Gate executável (`atomicUntil.boundary.test.ts`) chega no PR-B (GAP-MAP fila 9); até lá a regra é `[PAPEL]` cobrada pelo revisor.
 
+### 2.4 Observabilidade (decisão 2026-10-23, `docs/adr/ADR-OBSERVABILIDADE.md`)
+
+A política mora no ADR (regras OBS-R1..R14, catálogo de eventos, `LogEntrySchema`); aqui fica só o checklist do que
+toda geração backend cumpre. Em dúvida, o ADR prevalece.
+
+- [ ] **[OBS-R1] Só pelo logger.** Produção não chama `console.*` (exceções fechadas: `jobs/*Cli.ts`, `scripts/**`,
+  `config/env.ts`, `lib/logger.ts`, testes). Gate: `no-console` no ESLint do server.
+- [ ] **[OBS-R2] Assinatura.** `logger.<nível>(mensagem, contexto)`: mensagem em string literal, sem interpolar dado;
+  o dado vai no contexto; erro sempre como `{ error }`, nunca como segundo argumento solto.
+- [ ] **[OBS-R4] Nível pelo significado.** `error` = defeito que pede ação (5xx, falha de job/processo, integração
+  falhou depois das tentativas); `warn` = degradação ou sinal de segurança (401/403, job lento/parcial, alerta que
+  não saiu); `info` = operação normal (demais 4xx); `debug` = só dev.
+- [ ] **[OBS-R5] Registrar uma vez, na borda.** Registra quem trata ou converte o erro (`handleApiError`, o `catch`
+  do `runOnce` do job, o `catch` que decide seguir). Service que só relança **não** registra. Vale para código novo.
+- [ ] **[OBS-R6] Chaves redigidas.** Chave nova de segredo ou dado pessoal entra na lista de redação do `logger.ts`
+  **na mesma mudança** que a introduz. Nunca ao log: corpo de requisição/resposta, query string, XML fiscal,
+  certificado, mensagem crua de JWT, valor de campo de DynamicTable (OBS-R7).
+- [ ] **[OBS-R8] Nenhum `catch` silencioso.** Todo `catch`/`.catch` que não relança registra em `warn`+ com
+  `{ error }`, ou leva supressão justificada no ledger de dívida (`docs/architecture/lint-layer-gate.md`).
+- [ ] **[OBS-R9] Portão emite evento do catálogo.** Linha de portão (HTTP, erro de API, auth, processo, job,
+  integração, alerta) usa `logger.event(nível, evento, mensagem, contexto)` com nome de `LOG_EVENTS`
+  (`server/src/lib/logEvents.ts`). Evento novo entra no catálogo na mesma mudança.
+- [ ] **[OBS-R10] `fetch` de saída passa por `lib/outboundHttp.ts`** (registra `integration.call`/`integration.failed`,
+  nunca o payload). O webhook de alerta fica fora.
+- [ ] **[OBS-R11] Falha de job alerta.** Scheduler novo injeta `alert` com padrão `sendAlertWebhook`, dispara
+  `job_failed` no `catch` do `runOnce` e tem teste de falha; a fonte nova entra em `AlertPayload.source` na mesma
+  mudança.
+
 ---
 
 ## 3. Arquitetura frontend (cross-cutting)
@@ -226,3 +254,5 @@ Detalhe completo em `frontend-design-system/SKILL.md`. Regras-gate:
 ## Anti-omissão — checklist de fechamento
 
 Antes de declarar qualquer geração "pronta", confirme que **nenhum** item aplicável acima ficou sem resposta. Se a skill que você executou não menciona um ponto deste contrato que se aplica à sua camada, **o contrato prevalece** — implemente-o mesmo assim. Omissão na skill nunca é desculpa para omissão no código.
+
+- [ ] log/alerta conforme §2.4.
