@@ -7,7 +7,7 @@ import { StageHandlers } from './StageHandlers';
 import { stageConfig } from './PromptConfig';
 import { CustomizationService } from '../CustomizationService/CustomizationService';
 import { presetService } from '../../dynamicTables/services/PresetService';
-import { MODULE_REGISTRY } from '../../dynamicTables/presets/modules/registry';
+import { MODULE_REGISTRY, type ModuleSelector } from '../../dynamicTables/presets/modules/registry';
 import { isInterviewSessionError } from '../models/InterviewSession.model';
 
 /**
@@ -61,7 +61,8 @@ export class InterviewService {
     userId: string,
     presetKey?: string,
     sessionId?: string,
-    choice?: CreationChoice
+    choice?: CreationChoice,
+    modules?: ModuleSelector[]
   ): Promise<IInterviewTurnResult> {
     try {
       logger.info(`[InterviewService] Processando turno no estágio: ${stage}`);
@@ -135,7 +136,7 @@ Gostaria de **criar o sistema agora** ou prefere **customizar** primeiro?`;
       } 
       
       else if (stage === 'AWAITING_CREATION_TYPE_CONFIRMATION' && presetKey) {
-        return await this.stageHandlers.handleCreationTypeConfirmation(messages, presetKey, userId, choice);
+        return await this.stageHandlers.handleCreationTypeConfirmation(messages, presetKey, userId, choice, modules);
       }
 
       else if (stage === 'CUSTOMIZATION_IN_PROGRESS' && sessionId) {

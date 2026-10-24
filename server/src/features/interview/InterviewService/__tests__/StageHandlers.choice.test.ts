@@ -52,7 +52,8 @@ describe('item 2 — choice decide sem ler o texto', () => {
     expect(result.nextStage).toBe('CUSTOMIZATION_IN_PROGRESS');
     expect(result.sessionId).toBe('sess-1');
     // W4 item 6: a sessão nasce do usuário autenticado — o id é o da linha, não vem do cliente.
-    expect(createCustomizationSession).toHaveBeenCalledWith('beautySalon', 'u1');
+    // W1 (F-W1-6 a): o 3º argumento são os módulos do turno (ausentes aqui).
+    expect(createCustomizationSession).toHaveBeenCalledWith('beautySalon', 'u1', undefined);
   });
 });
 
@@ -121,6 +122,24 @@ describe('item 1 — contrato do corpo em POST /api/dashboard/ai/ChatInterview',
     const res = await call({ stage: 'AWAITING_CREATION_TYPE_CONFIRMATION', presetKey: 'beautySalon', choice: 'create' });
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(processTurn).toHaveBeenCalledWith('AWAITING_CREATION_TYPE_CONFIRMATION', [], 'u1', 'beautySalon', undefined, 'create');
+    expect(processTurn).toHaveBeenCalledWith('AWAITING_CREATION_TYPE_CONFIRMATION', [], 'u1', 'beautySalon', undefined, 'create', undefined);
+  });
+
+  it('W1 (F-W1-6 a): modules do corpo chega ao processTurn', async () => {
+    const processTurn = jest
+      .spyOn(InterviewService.prototype, 'processTurn')
+      .mockResolvedValue({ response: 'ok', nextStage: 'CUSTOMIZATION_IN_PROGRESS' });
+
+    const res = await call({ stage: 'AWAITING_CREATION_TYPE_CONFIRMATION', presetKey: 'beautySalon', choice: 'customize', modules: ['CRM-3'] });
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(processTurn).toHaveBeenCalledWith('AWAITING_CREATION_TYPE_CONFIRMATION', [], 'u1', 'beautySalon', undefined, 'customize', ['CRM-3']);
+  });
+
+  it('W1: módulo fora do registro em modules → 400 sem chamar o processTurn', async () => {
+    const processTurn = jest.spyOn(InterviewService.prototype, 'processTurn');
+    const res = await call({ stage: 'AWAITING_CREATION_TYPE_CONFIRMATION', presetKey: 'beautySalon', choice: 'customize', modules: ['CRM-9'] });
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(processTurn).not.toHaveBeenCalled();
   });
 });

@@ -52,6 +52,29 @@
             "create",
             "customize"
           ]
+        },
+        "modules": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "CRM-0",
+                  "CRM-1",
+                  "CRM-2A",
+                  "CRM-2B",
+                  "CRM-3"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "CRM-2"
+                ]
+              }
+            ]
+          }
         }
       },
       "additionalProperties": false
@@ -271,6 +294,116 @@
           "additionalProperties": false
         }
       ]
+    }
+  },
+  "CustomCreationDraft.dto.ts": {
+    "CustomCreationDraftSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "const": "custom"
+        },
+        "presetKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "removedTables": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "addedFields": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "array",
+            "items": {}
+          }
+        },
+        "addedTables": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "fields": {
+                "minItems": 1,
+                "type": "array",
+                "items": {}
+              }
+            },
+            "required": [
+              "key",
+              "name",
+              "fields"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "mode",
+        "presetKey",
+        "removedTables",
+        "addedFields",
+        "addedTables"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "InterviewModules.dto.ts": {
+    "InterviewModulesSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "modules": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "CRM-0",
+                  "CRM-1",
+                  "CRM-2A",
+                  "CRM-2B",
+                  "CRM-3"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "CRM-2"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "sessionId",
+        "modules"
+      ],
+      "additionalProperties": false
     }
   }
 }
