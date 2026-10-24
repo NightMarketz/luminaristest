@@ -11,6 +11,7 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
   Fronteiras mecanizadas: `docs/adr/ADR-ARCH-BOUNDARIES.md` — `npm run check:arch` (server/ e my-app/) bloqueia
   violação nova; o baseline só encolhe.
 - **Critério reuse-vs-bespoke:** `.claude/skills/_REUSE-CRITERION.md`
+- **Observabilidade (log, nível, PII, alerta) →** `docs/adr/ADR-OBSERVABILIDADE.md`
 - **Scaffolding (nomes/paths por camada):** `docs/claude-skills/GENERATION_CONTRACTS.md`
 - **Disciplina operacional do agente (OPS-001..006):** `.claude/skills/_OPERATING-GATES.md`
   (versão portável p/ outros projetos: `docs/operating-manual/PORTABLE-GUIDE.md`;
@@ -49,7 +50,10 @@ externo** aberto há mais de 14 dias (hoje: **4 de 4**), **não monte aparato de
 gate, nem rodada, nem mais um revisor. O gargalo é PVA / NF-e real / contador / implantar (medida em
 `docs/operating-manual/CLAUDE-RAIZ-DETALHE.md`).
 Exceção ratificada (dono, 2026-10-13): o gate estático de fronteiras `check:arch` (`ADR-ARCH-BOUNDARIES.md` §4) —
-lê o código como o `tsc`; não reabre bancada, rodada nem revisor.
+lê o código como o `tsc`; não reabre bancada, rodada nem revisor. Idem (dono, 2026-10-23, F-OBS-8 de
+`PRE-ADR-OBSERVABILIDADE.md`): `no-console` no ESLint do server, no job de lint que já roda. Idem (dono,
+2026-10-23, F-OBS-13/14 de `ADR-OBSERVABILIDADE.md`): `catch` silencioso no ESLint do server (com o ledger de
+dívida que já existe) e o teste que descobre `jobs/*Scheduler.ts` e reprova scheduler sem caso de alerta.
 
 **Citação a `docs/audit/**` em comentário de teste, ADR ou doc é HISTÓRICA** — o caminho não existe
 mais; use `git show b617d8f1:<caminho>` se precisar.

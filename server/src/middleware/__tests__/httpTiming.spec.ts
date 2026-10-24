@@ -47,6 +47,7 @@ describe('httpTimingMiddleware', () => {
 
     expect(endTimer).toHaveBeenCalledTimes(1);
     expect(endTimer).toHaveBeenCalledWith({
+      event: 'http.request',
       success: true,
       warnThresholdMs: HTTP_WARN_THRESHOLD_MS,
       method: 'POST',
@@ -63,5 +64,15 @@ describe('httpTimingMiddleware', () => {
     (res as unknown as EventEmitter).emit('finish');
 
     expect(endTimer).toHaveBeenCalledWith(expect.objectContaining({ success: true, statusCode: 404 }));
+  });
+
+  it('logs the path WITHOUT the query string (nó OBS, item 5 — the query can carry a searched CPF)', () => {
+    const req = { method: 'GET', originalUrl: '/api/clientes?cpf=12345678900&page=2' } as Request;
+    const res = makeRes(200);
+    httpTimingMiddleware(req, res, jest.fn());
+
+    (res as unknown as EventEmitter).emit('finish');
+
+    expect(endTimer).toHaveBeenCalledWith(expect.objectContaining({ path: '/api/clientes' }));
   });
 });

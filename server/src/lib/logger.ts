@@ -1,5 +1,7 @@
 import fs from 'fs';
 import path from 'path';
+import { requestContext } from './requestContext';
+import type { LogEvent } from './logEvents';
 
 interface LogContext {
   [key: string]: unknown;
@@ -71,11 +73,23 @@ function appendToErrorLog(jsonLine: string, timestamp: string): void {
 }
 
 /**
+ * Keys whose value never reaches a log line, at any depth (nó OBS, item 7 / F-OBS-3 a). Matched
+ * case-insensitively on the exact key. Known limit, accepted in F-OBS-3: a sensitive value under an
+ * innocent key (`{ q: '123.456.789-00' }`) still passes.
+ */
+const REDACTED_KEYS = new Set([
+  'password', 'senha', 'token', 'authorization', 'cookie', 'secret', 'certificado', 'pfx', 'cpf', 'cnpj', 'email',
+]);
+
+/**
  * JSON.stringify replacer that makes Error values useful in logs. A plain `JSON.stringify(new Error())`
  * yields `{}` (Error's own enumerable props are none), so `logger.error('x', { error })` used to drop the
  * message and stack entirely. This serializes name/message/stack (and any custom enumerable props).
+ * It also redacts REDACTED_KEYS — the custom props of an Error are walked too, since the spread below
+ * hands them back to JSON.stringify as ordinary keys.
  */
-function logReplacer(_key: string, value: unknown): unknown {
+function logReplacer(key: string, value: unknown): unknown {
+  if (REDACTED_KEYS.has(key.toLowerCase())) return '[redacted]';
   if (value instanceof Error) {
     return {
       name: value.name,
@@ -87,9 +101,11 @@ function logReplacer(_key: string, value: unknown): unknown {
   return value;
 }
 
-function formatLog(level: string, message: string, context: LogContext = {}): void {
+function formatLog(level: string, message: string, context: LogContext = {}, event?: LogEvent): void {
   const timestamp = new Date().toISOString();
-  const logEntry = { timestamp, level, message, ...context };
+  // Nó OBS, item 4: the request's identity rides on every line; the caller's own keys win on a clash.
+  // The catalog event is the one exception: a gate line's `event` is never overwritten by its context.
+  const logEntry = { timestamp, level, message, ...requestContext.get(), ...context, ...(event ? { event } : {}) };
 
   // The compact form is always computed: it is what the file sink writes, so a dev run's
   // pretty-printed console output never turns the NDJSON file into multi-line JSON.
@@ -125,6 +141,20 @@ export const logger = {
       formatLog('debug', message, context);
     }
   },
+
+  /**
+   * A gate line (ADR-OBSERVABILIDADE OBS-R9, F-OBS-11 a): same line as `logger.<level>`, plus `event` from
+   * the closed catalog in logEvents.ts — a name outside it does not compile. Lines outside the 6 gates keep
+   * using info/warn/error.
+   */
+  event(level: EventLevel, event: LogEvent, message: string, context: LogContext = {}) {
+    formatLog(level, message, context, event);
+  },
 };
+
+export type EventLevel = 'info' | 'warn' | 'error';
+
+/** What a gate that takes its logger by injection (the schedulers) needs from it. */
+export type EventLogger = Pick<typeof logger, 'event'>;
 
 export default logger;

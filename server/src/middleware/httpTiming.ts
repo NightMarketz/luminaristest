@@ -21,10 +21,12 @@ export function httpTimingMiddleware(req: Request, res: Response, next: NextFunc
 
   res.on('finish', () => {
     endTimer({
+      event: 'http.request',
       success: true,
       warnThresholdMs: HTTP_WARN_THRESHOLD_MS,
       method: req.method,
-      path: req.originalUrl,
+      // Nó OBS, item 5 (F-OBS-3): no query string — it can carry a searched CPF or e-mail.
+      path: req.originalUrl.split('?')[0],
       statusCode: res.statusCode,
     });
   });

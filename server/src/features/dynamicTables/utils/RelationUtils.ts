@@ -1,6 +1,7 @@
 // --- Utilities for handling table relationships (backend version) ---
 import type { IDynamicTable, IDynamicTableData } from '../models/DynamicTable.model';
 import { getFactory } from '../../../lib/factory';
+import { logger } from '../../../lib/logger';
 
 /**
  * Carrega os dados de uma tabela relacionada para uso em campos de relação
@@ -9,7 +10,7 @@ import { getFactory } from '../../../lib/factory';
  */
 export async function fetchRelatedTableData(targetTableId: string): Promise<IDynamicTableData[] | null> {
   if (!targetTableId || targetTableId.startsWith('@@PRESET_TABLE_KEY::')) {
-    console.warn('fetchRelatedTableData: ID da tabela inválido ou não resolvido:', targetTableId);
+    logger.warn('fetchRelatedTableData: ID da tabela inválido ou não resolvido', { targetTableId });
     return null;
   }
 
@@ -18,7 +19,7 @@ export async function fetchRelatedTableData(targetTableId: string): Promise<IDyn
     const { data } = await repo.findDataByTableId(targetTableId);
     return data;
   } catch (err) {
-    console.error('Erro ao buscar dados relacionados:', err);
+    logger.error('Erro ao buscar dados relacionados', { targetTableId, error: err });
     return null;
   }
 }
@@ -30,7 +31,7 @@ export async function fetchRelatedTableData(targetTableId: string): Promise<IDyn
  */
 export async function fetchTableDetails(tableId: string): Promise<IDynamicTable | null> {
   if (!tableId || tableId.startsWith('@@PRESET_TABLE_KEY::')) {
-    console.warn('fetchTableDetails: ID da tabela inválido ou não resolvido:', tableId);
+    logger.warn('fetchTableDetails: ID da tabela inválido ou não resolvido', { tableId });
     return null;
   }
 
@@ -39,7 +40,7 @@ export async function fetchTableDetails(tableId: string): Promise<IDynamicTable 
     const table = await repo.findTableById(tableId);
     return table;
   } catch (err) {
-    console.error(`Erro ao buscar detalhes da tabela ${tableId}:`, err);
+    logger.error('Erro ao buscar detalhes da tabela', { tableId, error: err });
     return null;
   }
 }

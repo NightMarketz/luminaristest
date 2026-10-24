@@ -71,6 +71,23 @@ O critério **shape+posse** é **detector de candidatos, não decisor**. O lint 
 ### R3b — `@dnd-kit` / `@fullcalendar` inventariados (frontend, **tripwire**)
 - `error`; allowlist reflete os usos **sancionados atuais** + comentário no config declarando o que a lista significa. Adicionar path = afirmar divergência sancionada (shape+posse diferente), **não** ilha. **Não** se constrói wrapper canônico para estas nesta fatia — os usos são legitimamente diferentes.
 
+### R5 — `catch` silencioso (server) — 2026-10-23
+- **Onde:** `server/eslint.config.mjs`, bloco próprio em `src/**` (fora testes, `jobs/*Cli.ts` e `scripts/**`, pela
+  exceção do OBS-R1): `no-empty` com `allowEmptyCatch: false` + `no-restricted-syntax` para `.catch(...)` cuja arrow
+  devolve `undefined`, `null`, literal, `void …` ou bloco vazio (comentário não conta como chamada).
+- **Por que existe:** ADR-OBSERVABILIDADE OBS-R8 (F-OBS-13 a, dono 2026-10-23; exceção à regra ⛔ do `CLAUDE.md`).
+  Erro engolido não deixa linha nenhuma; o gate obriga a registrar (`logger.warn({ error })` ou acima) ou a declarar
+  por que o erro é tratado por outro caminho.
+- **Ledger:** `no-empty` e `no-restricted-syntax` entram no conjunto que o `debt-ledger-check` confere. Supressão sem
+  `SANCTIONED`/`DEBT:` ou fora do bloco reprova o CI, como as de camada.
+- **Medida na ligação (23/10): 11 sites.** 10 são engolimento legítimo e levam `-- SANCTIONED: <por quê>` (bloco
+  abaixo): a fila de `mapperReload` e a de `DynamicTableService` (a rejeição chega a quem espera; o `.catch` só mantém
+  a fila andando), o `closePdfBrowser` de `lib/pdf.ts` (o launch falho já rejeitou para quem chamou) e os 7
+  `tick`/`kick` dos 6 schedulers (o erro já sai como `job.failed` e alerta dentro do `runOnce`). O 11º,
+  `KitPendingService` (desfazer do `restoreAccount`), era engolimento real: virou `logger.warn`, sem supressão.
+  O ADR (A3) contava 5; os 7 dos schedulers não estavam na conta (arrow de bloco vazio), e incluí-los foi decisão do
+  dono por questionário no mesmo dia.
+
 ### R4 — CI gate
 - **server**: step `npm run lint` (`eslint src`) entre typecheck e test.
 - **my-app**: step `npm run lint:gate` (`eslint . --config eslint.gate.config.mjs`). Usa um config **separado** do `eslint.config.mjs` (next/dev): o frontend nunca foi lintado (`ignoreDuringBuilds: true`) e o ruleset next produz ~6000 erros pré-existentes — adotá-lo é iniciativa própria, não esta fatia. O gate roda isolado, só as regras de camada.
@@ -114,7 +131,17 @@ em silêncio (o script falha se achar mais de um).
   },
   "DEBT: apiClient": {},
   "DEBT: fetch": {},
-  "SANCTIONED": {}
+  "SANCTIONED": {
+    "server/src/features/accountingBinding/runtime/mapperReload.ts": 1,
+    "server/src/features/dynamicTables/services/DynamicTableService.ts": 1,
+    "server/src/jobs/AccountingSyncScheduler.ts": 1,
+    "server/src/jobs/CollectionChargePollScheduler.ts": 1,
+    "server/src/jobs/DfePollScheduler.ts": 1,
+    "server/src/jobs/LegalParamsRecalcScheduler.ts": 2,
+    "server/src/jobs/MpReleaseReportScheduler.ts": 1,
+    "server/src/jobs/PtaxRateScheduler.ts": 1,
+    "server/src/lib/pdf.ts": 1
+  }
 }
 ```
 <!-- debt-ledger:end -->

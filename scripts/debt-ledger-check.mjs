@@ -58,7 +58,11 @@ const ROOTS = {
 };
 // no-restricted-globals/-properties = R2b (fetch cru fora da service layer, my-app). O server não
 // as habilita, então entrar aqui não muda o run do server.
-const LAYER_RULES = new Set(['no-restricted-imports', 'no-restricted-globals', 'no-restricted-properties']);
+// no-empty/no-restricted-syntax = `catch` silencioso (ADR-OBSERVABILIDADE OBS-R8, F-OBS-13 a): toda supressão
+// dele também precisa de marcador e de entrada no bloco. O my-app não as habilita.
+const LAYER_RULES = new Set([
+  'no-restricted-imports', 'no-restricted-globals', 'no-restricted-properties', 'no-empty', 'no-restricted-syntax',
+]);
 const MARKER = /\b(DEBT:\s*\S+|SANCTIONED)\b/;
 
 const rootName = process.argv[process.argv.indexOf('--root') + 1];

@@ -6,7 +6,8 @@
  *
  * ⚠️ Lock PROCESS-LOCAL — mesma ressalva de `AccountingSyncScheduler` (não protege multi-réplica).
  */
-import logger from '../lib/logger';
+import logger, { type EventLogger } from '../lib/logger';
+import { sendAlertWebhook, type AlertPayload } from '../lib/alertWebhook';
 import { getFactory } from '../lib/factory';
 
 const JOB = 'legal_params_recalc';
@@ -15,15 +16,14 @@ const DEFAULT_INITIAL_DELAY_MS = 30_000;
 
 type Resumo = Awaited<ReturnType<ReturnType<ReturnType<typeof getFactory>['getTaxAssessmentRecalcService']>['processarPendentes']>>;
 
-interface JobLogger {
-  info(message: string, context?: Record<string, unknown>): void;
-  warn(message: string, context?: Record<string, unknown>): void;
-  error(message: string, context?: Record<string, unknown>): void;
-}
+/** Gate P4 (ADR-OBSERVABILIDADE OBS-R9): every scheduler line carries a `job.*` catalog event. */
+type JobLogger = EventLogger;
 
 export interface LegalParamsRecalcSchedulerDeps {
   run?: () => Promise<Resumo>;
   log?: JobLogger;
+  /** Nó OBS, item 10 (F-OBS-7 a): remote alert on failure. Default = the fire-and-forget webhook. */
+  alert?: (payload: AlertPayload) => void;
 }
 
 function readMsEnv(name: string, fallback: number, min: number): number {
@@ -40,25 +40,29 @@ export class LegalParamsRecalcScheduler {
   private intervalTimer: NodeJS.Timeout | null = null;
   private readonly run: () => Promise<Resumo>;
   private readonly log: JobLogger;
+  private readonly alert: (payload: AlertPayload) => void;
 
   constructor(deps: LegalParamsRecalcSchedulerDeps = {}) {
     this.run = deps.run ?? (() => getFactory().getTaxAssessmentRecalcService().processarPendentes());
     this.log = deps.log ?? logger;
+    this.alert = deps.alert ?? sendAlertWebhook;
   }
 
   async runOnce(): Promise<Resumo | { skipped: 'lock' }> {
     if (this.running) {
-      this.log.warn(JOB, { job: JOB, event: 'skipped', reason: 'skipped_due_to_lock' });
+      this.log.event('warn', 'job.skipped', JOB, { job: JOB, reason: 'skipped_due_to_lock' });
       return { skipped: 'lock' };
     }
     this.running = true;
     try {
       const summary = await this.run();
-      if (summary.falhas > 0) this.log.warn(JOB, { job: JOB, event: 'complete', ...summary });
-      else this.log.info(JOB, { job: JOB, event: 'complete', ...summary });
+      if (summary.falhas > 0) this.log.event('warn', 'job.completed', JOB, { job: JOB, ...summary });
+      else this.log.event('info', 'job.completed', JOB, { job: JOB, ...summary });
       return summary;
     } catch (error) {
-      this.log.error(JOB, { job: JOB, event: 'failed', error: error instanceof Error ? error.message : String(error) });
+      const message = error instanceof Error ? error.message : String(error);
+      this.log.event('error', 'job.failed', JOB, { job: JOB, error: message });
+      this.alert({ source: 'legal_params_recalc', event: 'job_failed', timestamp: new Date().toISOString(), job: JOB, error: message });
       throw error;
     } finally {
       this.running = false;
@@ -69,26 +73,28 @@ export class LegalParamsRecalcScheduler {
   kick(options: { allowInTest?: boolean } = {}): void {
     if (process.env.NODE_ENV === 'test' && !options.allowInTest) return;
     setImmediate(() => {
+      // eslint-disable-next-line no-restricted-syntax -- SANCTIONED: já registrado e alertado em runOnce (job.failed); o timer não pode morrer (OBS-R8)
       void this.runOnce().catch(() => {
-        /* já logado em runOnce(event:'failed') */
+        /* já logado em runOnce (job.failed) */
       });
     });
   }
 
   start(options: { intervalMs?: number; initialDelayMs?: number; allowInTest?: boolean } = {}): void {
     if (process.env.NODE_ENV === 'test' && !options.allowInTest) {
-      this.log.info(JOB, { job: JOB, event: 'skipped', reason: 'disabled_in_test' });
+      this.log.event('info', 'job.skipped', JOB, { job: JOB, reason: 'disabled_in_test' });
       return;
     }
     if (this.initialTimer || this.intervalTimer) {
-      this.log.warn(JOB, { job: JOB, event: 'skipped', reason: 'already_started' });
+      this.log.event('warn', 'job.skipped', JOB, { job: JOB, reason: 'already_started' });
       return;
     }
     const intervalMs = options.intervalMs ?? readMsEnv('LEGAL_PARAMS_RECALC_INTERVAL_MS', DEFAULT_INTERVAL_MS, 1);
     const initialDelayMs = options.initialDelayMs ?? readMsEnv('LEGAL_PARAMS_RECALC_INITIAL_DELAY_MS', DEFAULT_INITIAL_DELAY_MS, 0);
     const tick = (): void => {
+      // eslint-disable-next-line no-restricted-syntax -- SANCTIONED: já registrado e alertado em runOnce (job.failed); o timer não pode morrer (OBS-R8)
       void this.runOnce().catch(() => {
-        /* já logado em runOnce(event:'failed') */
+        /* já logado em runOnce (job.failed) */
       });
     };
     this.initialTimer = setTimeout(() => {
@@ -97,7 +103,7 @@ export class LegalParamsRecalcScheduler {
       this.intervalTimer.unref?.();
     }, initialDelayMs);
     this.initialTimer.unref?.();
-    this.log.info(JOB, { job: JOB, event: 'scheduled', intervalMs, initialDelayMs });
+    this.log.event('info', 'job.scheduled', JOB, { job: JOB, intervalMs, initialDelayMs });
   }
 
   stop(): void {

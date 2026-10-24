@@ -4,7 +4,10 @@
  * (collapses to a single logger.warn), and respects the short timeout (fake timers).
  */
 import { sendAlertWebhook, type AlertPayload } from '../alertWebhook';
-import { logger } from '../logger';
+import { LogEntrySchema } from '../logEvents';
+
+/** The warn line as written to the console, parsed against LogEntrySchema (the request context is merged inside formatLog). */
+const warned = (spy: jest.SpyInstance) => spy.mock.calls.map((c) => LogEntrySchema.parse(JSON.parse(c[0] as string)));
 
 async function flushMicrotasks(times = 3): Promise<void> {
   for (let i = 0; i < times; i++) {
@@ -27,7 +30,7 @@ describe('sendAlertWebhook', () => {
   let fetchSpy: jest.SpyInstance;
 
   beforeEach(() => {
-    warnSpy = jest.spyOn(logger, 'warn').mockImplementation(() => {});
+    warnSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -98,11 +101,11 @@ describe('sendAlertWebhook', () => {
     await flushMicrotasks();
 
     expect(warnSpy).toHaveBeenCalledTimes(1);
-    expect(warnSpy.mock.calls[0][0]).toBe('alert webhook failed');
-    expect(warnSpy.mock.calls[0][1]).toMatchObject({
+    expect(warned(warnSpy)[0]).toMatchObject({ level: 'warn', event: 'alert.failed', message: 'alert webhook failed' });
+    expect(warned(warnSpy)[0]).toMatchObject({
       url: 'https://alerts.example.com/hook',
       source: 'accounting_sync_reconcile',
-      event: 'reconcile_summary',
+      alertEvent: 'reconcile_summary',
       errorMessage: 'ECONNREFUSED',
     });
   });
@@ -115,7 +118,7 @@ describe('sendAlertWebhook', () => {
     await flushMicrotasks();
 
     expect(warnSpy).toHaveBeenCalledTimes(1);
-    expect(warnSpy.mock.calls[0][0]).toBe('alert webhook failed');
+    expect(warned(warnSpy)[0]).toMatchObject({ level: 'warn', event: 'alert.failed', message: 'alert webhook failed' });
   });
 
   it('aborts after the short timeout and logs a warn — never hangs the caller', async () => {
@@ -136,7 +139,7 @@ describe('sendAlertWebhook', () => {
     await flushMicrotasks(5);
 
     expect(warnSpy).toHaveBeenCalledTimes(1);
-    expect(warnSpy.mock.calls[0][1]).toMatchObject({ errorName: 'AbortError' });
+    expect(warned(warnSpy)[0]).toMatchObject({ errorName: 'AbortError' });
   });
 
   it('never throws when the payload has a circular reference — collapses to a single logger.warn', () => {
@@ -150,11 +153,11 @@ describe('sendAlertWebhook', () => {
 
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(warnSpy).toHaveBeenCalledTimes(1);
-    expect(warnSpy.mock.calls[0][0]).toBe('alert webhook failed');
-    expect(warnSpy.mock.calls[0][1]).toMatchObject({
+    expect(warned(warnSpy)[0]).toMatchObject({ level: 'warn', event: 'alert.failed', message: 'alert webhook failed' });
+    expect(warned(warnSpy)[0]).toMatchObject({
       url: 'https://alerts.example.com/hook',
       source: 'accounting_sync_reconcile',
-      event: 'reconcile_summary',
+      alertEvent: 'reconcile_summary',
     });
   });
 

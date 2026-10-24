@@ -16,8 +16,11 @@ import logger from './logger';
 const ALERT_WEBHOOK_TIMEOUT_MS = 3000;
 
 export interface AlertPayload {
-  source: 'accounting_sync_reconcile' | 'sped_ecd' | 'sped_ecf' | 'data_exchange_export';
-  event: 'reconcile_summary' | 'generation_failed';
+  source:
+    | 'accounting_sync_reconcile' | 'sped_ecd' | 'sped_ecf' | 'data_exchange_export'
+    // Nó OBS, item 10: the 5 schedulers that only logged their failure, and the process itself.
+    | 'dfe_poll' | 'collection_charge_poll' | 'mp_release_report' | 'legal_params_recalc' | 'ptax_rate' | 'process';
+  event: 'reconcile_summary' | 'generation_failed' | 'job_failed' | 'uncaught_exception';
   timestamp: string; // ISO
   [key: string]: unknown; // free-form fields per trigger (failed, blocked, jobId, kind…)
 }
@@ -54,10 +57,10 @@ export function sendAlertWebhook(payload: AlertPayload): void {
         // chain, rather than asserting `instanceof Error`.
         const hasNameAndMessage =
           typeof error === 'object' && error !== null && 'name' in error && 'message' in error;
-        logger.warn('alert webhook failed', {
+        logger.event('warn', 'alert.failed', 'alert webhook failed', {
           url,
           source: payload.source,
-          event: payload.event,
+          alertEvent: payload.event,
           errorName: hasNameAndMessage
             ? String((error as { name: unknown }).name)
             : 'UnknownError',
@@ -71,10 +74,10 @@ export function sendAlertWebhook(payload: AlertPayload): void {
     clearTimeout(timeoutId);
     const hasNameAndMessage =
       typeof error === 'object' && error !== null && 'name' in error && 'message' in error;
-    logger.warn('alert webhook failed', {
+    logger.event('warn', 'alert.failed', 'alert webhook failed', {
       url,
       source: payload.source,
-      event: payload.event,
+      alertEvent: payload.event,
       errorName: hasNameAndMessage ? String((error as { name: unknown }).name) : 'UnknownError',
       errorMessage: hasNameAndMessage
         ? String((error as { message: unknown }).message)

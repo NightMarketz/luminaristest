@@ -7,6 +7,15 @@ import os from 'os';
 import path from 'path';
 import { logger } from '../logger';
 import { ForbiddenError } from '../errors';
+import { requestContext } from '../requestContext';
+import { LogEntrySchema } from '../logEvents';
+
+/**
+ * ADR-OBSERVABILIDADE §6 item 1: every console line this spec reads goes through LogEntrySchema, so the
+ * fixed line shape (OBS-R12) is asserted on everything the logger emits here, not on a hand-picked sample.
+ */
+const parseLine = (spy: jest.SpyInstance, call = 0): Record<string, any> =>
+  LogEntrySchema.parse(JSON.parse(spy.mock.calls[call][0] as string));
 
 describe('logger Error serialization', () => {
   let spy: jest.SpyInstance | undefined;
@@ -16,7 +25,7 @@ describe('logger Error serialization', () => {
     spy = jest.spyOn(console, 'error').mockImplementation(() => {});
     logger.error('boom happened', { error: new Error('the real cause') });
 
-    const logged = JSON.parse(spy.mock.calls[0][0] as string);
+    const logged = parseLine(spy);
     expect(logged.message).toBe('boom happened');
     expect(logged.error.message).toBe('the real cause');
     expect(typeof logged.error.stack).toBe('string');
@@ -26,7 +35,7 @@ describe('logger Error serialization', () => {
     spy = jest.spyOn(console, 'error').mockImplementation(() => {});
     logger.error('denied', { error: new ForbiddenError('nope') });
 
-    const logged = JSON.parse(spy.mock.calls[0][0] as string);
+    const logged = parseLine(spy);
     expect(logged.error.errorCode).toBe('FORBIDDEN');
     expect(logged.error.statusCode).toBe(403);
   });
@@ -35,7 +44,7 @@ describe('logger Error serialization', () => {
     spy = jest.spyOn(console, 'log').mockImplementation(() => {});
     logger.info('hello', { userId: 'u1' });
 
-    const logged = JSON.parse(spy.mock.calls[0][0] as string);
+    const logged = parseLine(spy);
     expect(logged.level).toBe('info');
     expect(logged.userId).toBe('u1');
   });
@@ -78,7 +87,7 @@ describe('logger error file sink', () => {
     const lines = readLines();
     expect(lines).toHaveLength(1);
 
-    const entry = JSON.parse(lines[0]);
+    const entry = LogEntrySchema.parse(JSON.parse(lines[0])) as Record<string, any>;
     expect(entry.level).toBe('error');
     expect(entry.message).toBe('reconcile failed');
     expect(entry.jobId).toBe('j1');
@@ -94,7 +103,7 @@ describe('logger error file sink', () => {
     logger.info('server started');
     logger.debug('noise');
 
-    const levels = readLines().map((line) => JSON.parse(line).level);
+    const levels = readLines().map((line) => LogEntrySchema.parse(JSON.parse(line)).level);
     expect(levels).toEqual(['warn']);
   });
 
@@ -102,7 +111,7 @@ describe('logger error file sink', () => {
     logger.error('first');
     logger.error('second');
 
-    expect(readLines().map((line) => JSON.parse(line).message)).toEqual(['first', 'second']);
+    expect(readLines().map((line) => LogEntrySchema.parse(JSON.parse(line)).message)).toEqual(['first', 'second']);
   });
 
   it('stays silent when the app itself throws inside the sink (unwritable dir)', () => {
@@ -157,5 +166,97 @@ describe('logger error file sink', () => {
     expect(fs.existsSync(path.join(dir, stale))).toBe(false);
     expect(fs.existsSync(path.join(dir, fresh))).toBe(true);
     expect(fs.existsSync(path.join(dir, 'unrelated.txt'))).toBe(true);
+  });
+});
+
+/** Nó OBS, item 4: the request context rides on every line; outside a request the line is unchanged. */
+describe('logger request context', () => {
+  let spy: jest.SpyInstance | undefined;
+  afterEach(() => spy?.mockRestore());
+
+  it('merges requestId/userId/method/route inside requestContext.run', () => {
+    spy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    requestContext.run({ requestId: 'req-9', method: 'POST', route: '/api/x', userId: 'u9' }, () => {
+      logger.info('inside');
+    });
+    const logged = parseLine(spy);
+    expect(logged).toMatchObject({ requestId: 'req-9', method: 'POST', route: '/api/x', userId: 'u9' });
+  });
+
+  it("lets the caller's own key win over the context", () => {
+    spy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    requestContext.run({ requestId: 'req-9', method: 'POST', route: '/api/x', userId: 'u9' }, () => {
+      logger.info('inside', { userId: 'explicit' });
+    });
+    expect(parseLine(spy).userId).toBe('explicit');
+  });
+
+  it('adds nothing outside a request', () => {
+    spy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    logger.info('outside', { a: 1 });
+    expect(Object.keys(parseLine(spy)).sort()).toEqual(['a', 'level', 'message', 'timestamp']);
+  });
+});
+
+/** Nó OBS, item 7 (F-OBS-3 a): sensitive keys are redacted at any depth, Error custom fields included. */
+describe('logger redaction', () => {
+  let spy: jest.SpyInstance | undefined;
+  afterEach(() => spy?.mockRestore());
+
+  it('redacts listed keys in nested objects, case-insensitively', () => {
+    spy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    logger.info('x', { user: { Email: 'a@b.co', profile: { cpf: '123', name: 'Ana' } }, headers: { authorization: 'Bearer t' } });
+    const logged = parseLine(spy);
+    expect(logged.user.Email).toBe('[redacted]');
+    expect(logged.user.profile.cpf).toBe('[redacted]');
+    expect(logged.user.profile.name).toBe('Ana');
+    expect(logged.headers.authorization).toBe('[redacted]');
+  });
+
+  it('redacts a custom field carried by an Error', () => {
+    spy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const err = Object.assign(new Error('boom'), { cnpj: '12345678000199', step: 'emit' });
+    logger.error('x', { error: err });
+    const logged = parseLine(spy);
+    expect(logged.error.cnpj).toBe('[redacted]');
+    expect(logged.error.step).toBe('emit');
+    expect(logged.error.message).toBe('boom');
+  });
+});
+
+/** ADR-OBSERVABILIDADE §6 item 2 (F-OBS-11 a): gate lines carry `event` from the closed catalog. */
+describe('logger.event', () => {
+  let spy: jest.SpyInstance | undefined;
+  afterEach(() => spy?.mockRestore());
+
+  it('writes the catalog event on the line, at the given level', () => {
+    spy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    logger.event('warn', 'job.skipped', 'ptax_rate_sync', { job: 'ptax_rate_sync', reason: 'lock' });
+    expect(parseLine(spy)).toMatchObject({
+      level: 'warn', event: 'job.skipped', message: 'ptax_rate_sync', job: 'ptax_rate_sync', reason: 'lock',
+    });
+  });
+
+  it('routes error to console.error and keeps the request context', () => {
+    spy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    requestContext.run({ requestId: 'req-1', method: 'GET', route: '/x' }, () => {
+      logger.event('error', 'api.error', '[API Error Handler]', { statusCode: 500, error: new Error('db') });
+    });
+    expect(parseLine(spy)).toMatchObject({ level: 'error', event: 'api.error', requestId: 'req-1', statusCode: 500 });
+  });
+
+  it('keeps the catalog event even when the context carries its own `event`', () => {
+    spy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    logger.event('info', 'job.completed', 'x', { event: 'complete' });
+    expect(parseLine(spy).event).toBe('job.completed');
+  });
+
+  it('refuses, at compile time, a name outside the catalog and the debug level', () => {
+    spy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    // @ts-expect-error — 'complete' is the pre-catalog vocabulary, not a LogEvent
+    logger.event('info', 'complete', 'x');
+    // @ts-expect-error — gate lines are info/warn/error only
+    logger.event('debug', 'job.completed', 'x');
+    expect(spy).toHaveBeenCalled();
   });
 });

@@ -16,8 +16,13 @@ function summary(over: Partial<ReconcileSummary> = {}): ReconcileSummary {
   return { total: 1, synced: 1, idempotentHits: 0, failed: 0, ...over };
 }
 
+/** The gate lines written at `level`, as [message, context] with the catalog event folded into the context. */
+function lines(log: { event: jest.Mock }, level: 'info' | 'warn' | 'error'): [string, Record<string, unknown>][] {
+  return log.event.mock.calls.filter((c) => c[0] === level).map((c) => [c[2], { ...c[3], event: c[1] }]);
+}
+
 function build(reconcile?: jest.Mock) {
-  const log = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
+  const log = { event: jest.fn() };
   const r = reconcile ?? jest.fn(async () => summary());
   let clock = 0;
   const scheduler = new AccountingSyncScheduler({
@@ -41,12 +46,12 @@ describe('AccountingSyncScheduler', () => {
 
       expect(reconcile).toHaveBeenCalledTimes(1);
       expect(res).toEqual({ total: 3, synced: 2, idempotentHits: 1, failed: 0 });
-      expect(log.info.mock.calls.map((c) => c[1]?.event)).toContain('start');
-      const complete = log.info.mock.calls.find((c) => c[1]?.event === 'complete')?.[1];
+      expect(lines(log, 'info').map((c) => c[1]?.event)).toContain('job.started');
+      const complete = lines(log, 'info').find((c) => c[1]?.event === 'job.completed')?.[1];
       expect(complete).toMatchObject({
         job: 'accounting_sync_reconcile',
         runId: 'run-fixed',
-        event: 'complete',
+        event: 'job.completed',
         total: 3,
         synced: 2,
         idempotentHits: 1,
@@ -64,11 +69,11 @@ describe('AccountingSyncScheduler', () => {
 
       // The complete event must not be silently dropped: with blocked>0 it has to be logged at
       // `warn`, because logger.ts only persists error|warn to the NDJSON sink (info is console-only).
-      expect(log.info.mock.calls.find((c) => c[1]?.event === 'complete')).toBeUndefined();
-      const complete = log.warn.mock.calls.find((c) => c[1]?.event === 'complete')?.[1];
+      expect(lines(log, 'info').find((c) => c[1]?.event === 'job.completed')).toBeUndefined();
+      const complete = lines(log, 'warn').find((c) => c[1]?.event === 'job.completed')?.[1];
       expect(complete).toMatchObject({
         job: 'accounting_sync_reconcile',
-        event: 'complete',
+        event: 'job.completed',
         total: 3,
         synced: 1,
         idempotentHits: 0,
@@ -83,9 +88,9 @@ describe('AccountingSyncScheduler', () => {
       );
       await scheduler.runOnce();
 
-      const complete = log.info.mock.calls.find((c) => c[1]?.event === 'complete')?.[1];
-      expect(complete).toMatchObject({ event: 'complete', blocked: 0 });
-      expect(log.warn.mock.calls.find((c) => c[1]?.event === 'complete')).toBeUndefined();
+      const complete = lines(log, 'info').find((c) => c[1]?.event === 'job.completed')?.[1];
+      expect(complete).toMatchObject({ event: 'job.completed', blocked: 0 });
+      expect(lines(log, 'warn').find((c) => c[1]?.event === 'job.completed')).toBeUndefined();
     });
 
     it('includes pendingWriteFailed in the complete summary and logs at warn when pendingWriteFailed>0 even with blocked=0 and failed=0 (pós-review achado 4)', async () => {
@@ -96,10 +101,10 @@ describe('AccountingSyncScheduler', () => {
       );
       await scheduler.runOnce();
 
-      expect(log.info.mock.calls.find((c) => c[1]?.event === 'complete')).toBeUndefined();
-      const complete = log.warn.mock.calls.find((c) => c[1]?.event === 'complete')?.[1];
+      expect(lines(log, 'info').find((c) => c[1]?.event === 'job.completed')).toBeUndefined();
+      const complete = lines(log, 'warn').find((c) => c[1]?.event === 'job.completed')?.[1];
       expect(complete).toMatchObject({
-        event: 'complete',
+        event: 'job.completed',
         blocked: 0,
         failed: 0,
         pendingWriteFailed: 1,
@@ -154,10 +159,14 @@ describe('AccountingSyncScheduler', () => {
         expect(sendAlertWebhook).not.toHaveBeenCalled();
       });
 
-      it('does not fire the webhook on an exception (no summary to alert on)', async () => {
+      // ADR-OBSERVABILIDADE A9 / item 7b: this used to assert NO alert on a thrown pass — the gap the item closes.
+      it('fires job_failed (not reconcile_summary) on an exception, and still rethrows', async () => {
         const { scheduler } = build(jest.fn().mockRejectedValueOnce(new Error('boom')));
         await expect(scheduler.runOnce()).rejects.toThrow('boom');
-        expect(sendAlertWebhook).not.toHaveBeenCalled();
+        expect(sendAlertWebhook).toHaveBeenCalledTimes(1);
+        expect(sendAlertWebhook).toHaveBeenCalledWith(
+          expect.objectContaining({ source: 'accounting_sync_reconcile', event: 'job_failed', runId: 'run-fixed', error: 'boom' }),
+        );
       });
     });
 
@@ -177,9 +186,9 @@ describe('AccountingSyncScheduler', () => {
 
       expect(second).toEqual({ skipped: 'lock' });
       expect(reconcile).toHaveBeenCalledTimes(1);
-      expect(log.warn).toHaveBeenCalledWith(
-        'accounting_sync_reconcile',
-        expect.objectContaining({ event: 'skipped', reason: 'skipped_due_to_lock' }),
+      expect(log.event).toHaveBeenCalledWith(
+        'warn', 'job.skipped', 'accounting_sync_reconcile',
+        expect.objectContaining({ reason: 'skipped_due_to_lock' }),
       );
       release();
       await first;
@@ -200,9 +209,9 @@ describe('AccountingSyncScheduler', () => {
       const { scheduler, log } = build(reconcile as jest.Mock);
 
       await expect(scheduler.runOnce()).rejects.toThrow('boom');
-      expect(log.error).toHaveBeenCalledWith(
-        'accounting_sync_reconcile',
-        expect.objectContaining({ event: 'failed', errorName: 'Error', errorMessage: 'boom' }),
+      expect(log.event).toHaveBeenCalledWith(
+        'error', 'job.failed', 'accounting_sync_reconcile',
+        expect.objectContaining({ errorName: 'Error', errorMessage: 'boom' }),
       );
       // lock released → the next run proceeds
       await expect(scheduler.runOnce()).resolves.toMatchObject({ failed: 0 });

@@ -96,6 +96,21 @@
         "regex:objectContaining\\(\\s*\\{?\\s*userId",
         "absent:rejects.toThrow(ForbiddenError)"
       ]
+    },
+    {
+      "id": "edge-3",
+      "type": "edge",
+      "rules": ["TEST-008"],
+      "prompt": "Gere server/src/jobs/__tests__/ptaxLog.test.ts provando que, quando o sync falha, o PtaxRateScheduler (log padrão = logger real) escreve uma linha de nível error com event 'job.failed' e job 'ptax_rate_sync'. Asserte sobre a LINHA FORMATADA, não sobre a chamada do logger: espione console.log e console.error com jest.spyOn, faça JSON.parse de cada linha capturada, valide cada uma com LogEntrySchema.parse (import de ../../lib/logEvents) e restaure os spies no finally. Injete sync que rejeita e alert falso. Saída: conteúdo completo do arquivo, com o marcador de arquivo na primeira linha.",
+      "target_files": ["server/src/jobs/__tests__/ptaxLog.test.ts"],
+      "assertions": [
+        "@ptaxLog.test.ts::regex:jest\\.spyOn\\(\\s*console\\s*,\\s*['\"](log|error)['\"]\\s*\\)",
+        "@ptaxLog.test.ts::regex:JSON\\.parse\\(",
+        "@ptaxLog.test.ts::regex:LogEntrySchema\\.parse\\(",
+        "@ptaxLog.test.ts::regex:import\\s*\\{[^}]*\\bLogEntrySchema\\b[^}]*\\}\\s*from\\s*['\"][^'\"]*lib/logEvents['\"]",
+        "@ptaxLog.test.ts::regex:mockRestore\\(",
+        "@ptaxLog.test.ts::absent-code:spyOn(logger"
+      ]
     }
   ]
 }
