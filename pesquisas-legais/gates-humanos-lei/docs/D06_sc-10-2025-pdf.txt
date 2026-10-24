@@ -1,0 +1,82 @@
+SOLUÇÃO DE CONSULTA SF/DEJUG nº 10, de 19 de março de 2025 
+  
+  
+ISS. Assistência funeral. Fato Gerador. Aspecto 
+Temporal. Momento da emissão da Nota Fiscal 
+de Serviços Eletrônica – NFS-e. 
+  
+O DIRETOR DO DEPARTAMENTO DE TRIBUTAÇÃO E JULGAMENTO , no 
+uso de suas atribuições legais, em especial à vista dos artigos 73 a 78 da Lei nº 
+14.107, de 12 de dezembro de 2005, e em conformidade com o que consta nos 
+autos do processo administrativo; 
+  
+ESCLARECE: 
+  
+1. Trata-se de consulta tributária formulada por pessoa jurídica de direito privado 
+inscrita no Cadastro de Contribuintes Mobiliários – CCM. 
+2. A consulente afirma que exerce atividades de intermediação de negócios e 
+contratos relacionados a serviços funerários e a atividade de psicologia e 
+psicanálise. 
+3. A consulente descreve atividade segundo a qual é contratada por 
+determinadas empresas a fim de disponibilizar serviços funerários e de 
+assistência psicológica ligada ao evento funerário aos beneficiários das 
+contratantes, que se encontram inscritos em banco de dados. 
+4. Nessa configuração, a consulente recebe mensalmente a bas e de dados da 
+contratante para realização do faturamento dos serviços disponibilizados, que 
+incluem funeral individual e familiar, bem como assistência psicológica. 
+5. Após descrever pontos de dificuldade em relação à emissão da Nota Fiscal de 
+Serviços Eletrônica – NFS-e, considerando a quantidade de documentos fiscais 
+a emitir, bem como entendimento das contratantes no sentido de que não devem 
+figurar no documento fiscal emitido, entre outras especificidades, a consulente 
+indaga sobre a possibilidade de emissão das NFS-e: 
+5.1. De forma unificada e sem a identificação do tomador, disponibilizando 
+ao Fisco a documentação de suporte; 
+5.2. De forma unificada contra o próprio CNPJ do prestador, 
+disponibilizando ao Fisco a documentação de suporte; 
+6. Da análise da descrição dos serviços prestados e dos instrumentos 
+contratuais, verifica-se que a consulente disponibiliza um pacote de serviços que 
+podem ser utilizados pelos beneficiários das contratantes quando da ocorrência 
+dos sinistros. Contudo, a pre stação de serviços se configura pela simples 
+disponibilidade de tais utilidades durante o período de vigência do contrato, tanto 
+assim que a consulente é remunerada em função de uma quantidade de 
+potenciais usuários que constam da base de dados das contrat antes, servindo 
+de parâmetro quantitativo para a realização do faturamento dos serviços 
+disponibilizados e a quantificação da contraprestação a receber (cláusula 
+terceira – obrigações da contratada – subitem 3.1, “f”; e cláusula quinta – 
+remuneração – subitens 5.1 e 5.1.2 do contrato de prestação de serviços). 
+7. A NFS-e deve ser emitida por ocasião da prestação de cada serviço, conforme 
+determina o artigo 6º da Lei nº 13.701, de 2003. Em decorrência, a NFS -e deve 
+ser emitida ao tempo de cada prestação. 
+8. Como se trata de serviço que se configura pela simples disponibilização de 
+utilidades, que podem ou não ser efetivamente usufruídas pelos beneficiários da 
+contratada, e cuja contraprestação é quantificada em função da base de dados 
+mensal de potenciais beneficiários, sendo a apuração realizada mensalmente e 
+de tal modo que a efetiva utilização e prestação correspondente a cada usuário 
+é informada à contratante unicamente para o acompanhamento da eficiência do 
+modelo negocial e ainda para a eventual adequação do equilíbrio contratual entre 
+as partes (ver cláusula terceira – obrigações da contratada – subitem 3.1, “d”; e 
+cláusula quinta – remuneração – subitens 5.1 e 5.1.2 do contrato de prestação 
+de serviços), o fato gerador se configura pela prestação global dos serviços, com 
+período de apuração mensal relativamente ao ISS devido, nos termos da 
+Instrução Normativa SF/SUREM n° 08, de 18 de julho de 2011. 
+9. Desse modo, a NFS -e deve ser emitida no momento da apuração mensal e 
+respectivo faturamento dos serviços prestados, considerando-se como base de 
+cálculo o preço do serviço, como tal considerada a receita bruta a ele 
+correspondente, que nesse caso é o total da contraprestação relativa aos 
+serviços disponibilizados durante o período. 
+10. Não se trata de emissã o unificada de NFS -e, tendo em conta que, embora 
+possam ser prestadas assistências individualizadas (e destacáveis 
+autonomamente) aos beneficiários, a prestação havida entre a consulente e as 
+contratantes se caracteriza pela disponibilização global e poten cial de 
+assistência, variável conforme a base de beneficiários e apurável em período 
+mensal. Assim, a emissão da NFS -e representa esse todo integrado de 
+prestação de serviços. 
+11. A contratante é a tomadora do serviço e deve assim figurar na NFS-e (artigo 
+7º da Lei nº 13.701, de 2003). 
+12. Comunique-se o teor desta solução de consulta à consulente e, após as 
+providências de praxe, arquive-se. 
+  
+  
+  
+Isaac Libardi Godoy 
+Diretor do Departamento de Tributação e Julgamento 
