@@ -4,6 +4,9 @@ import { ITableSchema } from '../models/DynamicTable.model';
 import { ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 
+/** Data + hora sem `Z` nem offset (separador `T` ou espaço). */
+const WALL_DATETIME = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/;
+
 /**
  * Pure schema-validation engine for dynamic tables.
  *
@@ -49,8 +52,7 @@ export class SchemaValidator {
 
     for (const field of tableSchema.fields) {
       let zodField: z.ZodTypeAny;
-      // Normaliza tipos equivalentes
-      const fieldType = (field.type === 'datetime') ? 'date' : field.type;
+      const fieldType = field.type;
 
       switch (fieldType) {
         case 'textarea':
@@ -117,7 +119,16 @@ export class SchemaValidator {
         case 'date':
           zodField = z.coerce.date();
           break;
-        // 'datetime' é normalizado para 'date' acima
+        case 'datetime':
+          // Hora de parede sem fuso ('2026-10-24T12:30') o `new Date` lê no fuso do processo: o instante gravado
+          // dependeria do TZ do servidor. Rejeita (dono, 2026-10-24: "Rejeitar com 400"); com Z/offset, Date e epoch passam.
+          zodField = z
+            .unknown()
+            .refine((v) => !(typeof v === 'string' && WALL_DATETIME.test(v.trim())), {
+              message: 'Data/hora sem fuso horário: envie ISO 8601 com Z ou offset (ex.: 2026-10-24T15:30:00.000Z).',
+            })
+            .pipe(z.coerce.date());
+          break;
         case 'relation': {
           const base = z.string().cuid({ message: 'ID de relação inválido.' });
           if (field.relation?.allowMultiple) {
