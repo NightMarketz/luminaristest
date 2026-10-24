@@ -7,7 +7,7 @@ estado: "human-open"
 estado_detalhe: "15/10 (fold): alíquota DECIDIDA por delegação do contador — ISS SP 5% padrão, retenção configurável por nota (D-3 de D-2026-10-10-TRIAGEM-CONTADOR-DELEGACAO); ressalva INFERIDA, não verificada: no Simples o ISS vai no DAS pela faixa do Anexo III (LC 123), então os 5% valem fora do Simples — conferir por fonte oficial · cClassTrib: o contador respondeu 000001 ('tributadas integralmente pelo IBS e CBS') + indOp 030101 em 10/10 (TRIAGEM-RESPOSTA-CONTADOR-2026-10-10 I-1/II-1), grau secundário — falta conferir na tabela oficial (pesquisa do agente pelo método legal, não pergunta ao contador); cTribNac/NBS já conferidos em fonte oficial (pesquisas-legais/ctribnac-salao-clinica: 060101/060201/060301). O follow-up de 26/09 foi SUPERSEDIDO pelo pedido único de 10/10 (enviado e respondido) · 27/09: Item LC 116 recebido (6.01/6.02/6.03; ISS no prestador — triagem 23/09 5a); faltam alíquota (município) e cClassTrib; pedidos no follow-up de 26/09 (item 3), não enviado"
 depende_de: ["[[D1]]"]
 ancora_sdd: "§III.2"
-atualizado: "2026-10-15"
+atualizado: "2026-10-24"
 ---
 # D1f — Itens 5a-5f do contador (item LC 116, alíquota ISS, cClassTrib)
 
@@ -38,3 +38,12 @@ atualizado: "2026-10-15"
 - **cTribNac/NBS:** conferidos em fonte oficial (Anexo B v1.01 + LC 116) no dossiê
   `pesquisas-legais/ctribnac-salao-clinica` — 060101 / 060201 / 060301.
 - O follow-up de 26/09 (item 3) foi supersedido pelo pedido único de 10/10, que foi enviado e respondido.
+
+## Fold 24/10 — pesquisa pelo método legal (dossiê `pesquisas-legais/gates-humanos-lei`)
+
+- **Ressalva do Simples: agora VERIFICADA em fonte oficial** (era inferida). LC 123 art. 13 VIII e Anexo III incluem o ISS no DAS; o
+  5% de SP vale **fora** do Simples (Lei SP 13.701 art. 16 IV, item 6.01–6.03; leitura do dossiê de 10/10, não relida agora).
+  LC 116 art. 8º-A fixa piso de 2% de ISS. Texto da LC 227/2026 não foi lido quanto a mudanças no art. 13 / Anexo III: **aberto**.
+- **cClassTrib 000001: continua SEM fonte oficial.** Li a IT 2025.002 **v1.31** (a tabela está no anexo); versões posteriores (1.50+) só
+  apareceram em fonte secundária; não confirmei nenhuma em domínio oficial. Quem confere é o agente, na tabela da versão vigente, não o contador. Grau: o 000001 segue **secundário**.
+- Estado e autorização **não mudam**.
