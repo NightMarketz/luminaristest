@@ -34,7 +34,7 @@ export const PLATFORM_AUDIT_SCOPE: AccountingScope = {
  * Formato do valor por tabela migrada. PR-1: `ARREDONDAMENTO` é a única linha de texto do TAX_ASSESSMENT. PR-2: as
  * demais tabelas pela regra de `formatoLinha.ts` (§4 — `valorJson` com schema por tabela).
  */
-function exigirFormato(d: ProposeLegalParameterInput): void {
+function exigirFormato(d: Pick<ProposeLegalParameterInput, 'tabela' | 'chave' | 'discriminador' | 'valorInt' | 'valorTexto' | 'valorJson'>): void {
   if (TEM_REGRA_DE_FORMATO(d.tabela)) {
     const erro = erroDeFormato(d);
     if (erro) throw new ValidationError(erro);
@@ -229,6 +229,10 @@ export class LegalParameterService {
       const linha = await this.repo.findById(id, tx);
       if (!linha) throw new NotFoundError(`Parâmetro legal ${id} não existe.`);
       if (linha.status !== 'DRAFT') throw new ConflictError(`Parâmetro legal ${id} não é rascunho (${linha.status}).`);
+      // Dono 23/10 ("(a) 400 no publish"): a regra de formato do propose vale também aqui — o rascunho sem valor da migração
+      // (ex.: CBS 2027) não entra em vigor.
+      const v = toView(linha);
+      exigirFormato({ tabela: v.tabela as LegalParameterTabela, chave: v.chave, discriminador: v.discriminador ?? undefined, valorInt: v.valorInt ?? undefined, valorTexto: v.valorTexto ?? undefined, valorJson: v.valorJson ?? undefined });
       if (linha.supersedesId) {
         const alvo = await this.repo.findById(linha.supersedesId, tx);
         if (alvo?.status !== 'PUBLISHED') throw new ConflictError(`A linha substituída ${linha.supersedesId} já não está publicada.`);
