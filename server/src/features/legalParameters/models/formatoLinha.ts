@@ -204,7 +204,10 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
     checar: (l) =>
       l.discriminador === 'VENCIMENTO'
         ? so(['IBS', 'CBS'].includes(l.chave) && (REGRAS_VENCIMENTO_IBS_CBS as readonly string[]).includes(l.valorTexto ?? ''), `chave IBS|CBS; valorTexto = regra de vencimento (${REGRAS_VENCIMENTO_IBS_CBS.join('|')})`)
-        : null,
+        : so(
+            ((l.chave === 'CBS' && l.discriminador === 'ALIQUOTA') || (l.chave === 'IBS' && ['ALIQUOTA_UF', 'ALIQUOTA_MUN'].includes(l.discriminador ?? ''))) && bp(l),
+            'chave CBS com discriminador ALIQUOTA, ou IBS com ALIQUOTA_UF|ALIQUOTA_MUN (ou VENCIMENTO); valorInt em bp (0..10000)',
+          ),
   },
   // IBS-CBS-2027 PR-3 (item 15; dono 21/10): lista de uso ou consumo pessoal (LC 214 art. 57) — chave = prefixo de NCM.
   IBS_CBS_USO_CONSUMO: {
