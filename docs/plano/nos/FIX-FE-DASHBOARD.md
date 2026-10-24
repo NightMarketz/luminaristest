@@ -49,7 +49,9 @@ registrado a pedido do dono (chat, 2026-10-19: "Já incorpora nos planos do vaul
 | 24–27, 29, 30 | corrigidos | #823 (#815, #818, #819) |
 | 28 | corrigido | #817 |
 
-**Achados fora de escopo (24/10):** (a) o SSR de `pages/dashboard/index.tsx` loga `tokenPreview: token.substring(0, 20)`,
-um pedaço do JWT, no `console.log` (ADR-OBSERVABILIDADE); (b) as chaves `onboardingNeedHelp`, `onboardingContactSupport`
-e `onboardingTotalControlConfirmDeselect` ficaram sem uso em `common.json` en/pt; (c) a submissão de `datetime` sobe o
-instante com o fuso do navegador, e o servidor ainda aceita hora sem fuso de outro cliente (lê no fuso dele).
+**Achados fora de escopo (24/10)** — dono, chat, 2026-10-24: "Aborda as questões fora do escopo":
+(a) o SSR de `pages/dashboard/index.tsx` logava `tokenPreview: token.substring(0, 20)`, um pedaço do JWT → **corrigido no
+#884** (guarda `ssrLog.noToken.static.test.ts`); (b) `onboardingNeedHelp`, `onboardingContactSupport` e
+`onboardingTotalControlConfirmDeselect` ficaram sem leitor em `common.json` en/pt → **removidas no #884** (guarda
+`commonLocale.orphanKeys.test.ts`); (c) o motor aceita `datetime` sem fuso e o lê no fuso do processo → decisão do dono
+(AskUserQuestion, 24/10): **"Rejeitar com 400"**, só no tipo `datetime`, em PR separado (mexe no motor do server).
