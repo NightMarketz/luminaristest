@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 (globalThis as unknown as { React: typeof React }).React = React;
 import { render, screen, cleanup, waitFor, fireEvent } from '@testing-library/react';
@@ -28,6 +28,17 @@ const charge = (over: Partial<CollectionChargeView>): CollectionChargeView => ({
   expiresAt: '2026-10-24T00:00:00Z', status: 'PENDING', providerRef: 'o1', providerPaymentRef: null,
   providerStatus: 'action_required', providerStatusDetail: 'waiting_transfer', paidAt: null, failReason: null,
   instrument: null, createdAt: '2026-10-23T00:00:00Z', updatedAt: '2026-10-23T00:00:00Z', ...over,
+});
+
+// The fixtures carry fixed dates (createdAt 23/10, expiresAt 24/10/2026). Pin "now" between them: on the real clock
+// the PENDING charge turned "Vencida — aguardando o provedor" at 2026-10-24T00:00Z and the boleto case went red.
+// Only Date is faked, so waitFor keeps its real timers.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-10-23T12:00:00Z'));
+});
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 function renderModal(props: Partial<React.ComponentProps<typeof ChargeReceivableModal>> = {}) {
