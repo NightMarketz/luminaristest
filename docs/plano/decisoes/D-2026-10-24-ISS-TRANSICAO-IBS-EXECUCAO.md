@@ -39,6 +39,13 @@ interrompida antes de o resultado ser registrado. O dono respondeu **"segue"**, 
 **A confirmar na revisão do PR:** se "segue" não queria dizer a troca da aresta, basta reverter o campo `depende_de` da nota.
 O código do PR-1 não depende dessa troca.
 
+## Lacuna L-1 do PR-1 (respondida)
+
+Dono, chat, 2026-10-24: *"L-1: o texto padrão do SemLinhaVigenteError basta para o IBS 2029–2032; não muda o ibsCbsParams.ts."*
+Sem linha `PUBLISHED`, o IBS de 2029–2032 dá o erro padrão ("Sem linha vigente de IBS_CBS/IBS/ALIQUOTA_UF|MUN em …"). A
+mensagem da CBS de 2027 (`CBS_REFERENCIA_NAO_PUBLICADA`) não ganha equivalente, e o `ibsCbsParams.ts` do [[IBS-CBS-2027]] não
+muda.
+
 ## O que NÃO decide
 
 - O PR-2, P-ISS-1..5 e qualquer valor do IBS de 2029–2032 (as linhas nascem `DRAFT`; publicar é ato do operador).
