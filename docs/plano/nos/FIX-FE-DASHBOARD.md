@@ -3,16 +3,17 @@ id: "FIX-FE-DASHBOARD"
 tipo: "fe"
 dominio: "plataforma"
 titulo: "Frontend antigo do dashboard: datetime mostra o dia anterior, sem interceptor de 401, erros da API não são Error, chaves i18n duplicadas, json como [object Object]…"
-estado: "planned"
-estado_detalhe: "§3.5 fechado em 24/10: 26 itens corrigidos (#771 item 1; #804, #806, #813, #817, #823; e o PR deste fold para 3 resíduo, 4 e 7 resíduos), 19 e 20 não reproduzem mais (pagos pelo #784), 23 não é defeito (dono, 22/10, [[D-2026-10-22-FIX-AUTH-CHAT-DASHBOARD]]), 2 pertence ao W1. Tabela em §Fechamento"
+estado: "done"
+estado_detalhe: "§3.5 fechado em 24/10: 26 itens corrigidos (#771 item 1; #804, #806, #813, #817, #823; #884 para 3 resíduo, 4 e 7 resíduos), 19 e 20 não reproduzem mais (pagos pelo #784), 23 não é defeito (dono, 22/10, [[D-2026-10-22-FIX-AUTH-CHAT-DASHBOARD]]), 2 pertence ao W1. Tabela em §Fechamento"
 autorizacao: "dono, chat, 2026-10-24: \"Autorizo executar o nó FIX-FE-DASHBOARD … primeiro sessao-instrumentacao … depois sessao-correcao (fix mínimo). Itens que não reproduzirem como descritos: registre como 'não reproduz' e não conserte … PR sem merge.\" Antes: 2026-10-21, \"Autorizo instrumentar e corrigir os achados de … FIX-FE-DASHBOARD (§3.5) … sem merge\""
 depende_de: ["[[FIX-ESTOQUE-FINALIZE]]"]
 write_set: ["my-app/features/dashboard/**", "my-app/lib/api/**", "my-app/lib/services/**", "my-app/lib/context/**", "my-app/public/locales/**", "my-app/components/ui/**", "my-app/components/widgets/generic-chat/components/CommandConfirmationModal.tsx", "my-app/pages/dashboard/setup.tsx", "my-app/features/interview/setup/TotalControlSetup.tsx"]
-atualizado: "2026-10-22"
+atualizado: "2026-10-24"
+prs: ["#884"]
 ---
 # FIX-FE-DASHBOARD — Frontend antigo do dashboard: datetime mostra o dia anterior, sem interceptor de 401, erros da API não são Error, chaves i18n duplicadas, json como [object Object]…
 
-**Estado:** `planned` — Registrado 19/10; §3.5 do documento de achados (30 itens). O item 1 (readOnly na edição) está no #771  
+**Estado:** `done` — §3.5 fechado em 24/10: 26 itens corrigidos (#771 item 1; #804, #806, #813, #817, #823; #884 para 3 resíduo, 4 e 7 resíduos), 19 e 20 não reproduzem mais (pagos pelo #784), 23 não é defeito (dono, 22/10, [[D-2026-10-22-FIX-AUTH-CHAT-DASHBOARD]]), 2 pertence ao W1. Tabela em §Fechamento  
 **Autorização:** dono, chat, 2026-10-24: "executa FIX-FE-DASHBOARD" (texto literal no campo `autorizacao`); write_set do item 7 ampliado em [[D-2026-10-24-FIX-FE-DASHBOARD-ITEM7]]  
 **Depende de:** [[FIX-ESTOQUE-FINALIZE]]  
 **Origem:** [[D-2026-10-19-ACHADOS-NA-FILA]] · achados em [`ACHADOS-2026-10-19`](../../operating-manual/ACHADOS-2026-10-19-DYNAMICTABLE-E-MODULOS-ANTIGOS.md)
