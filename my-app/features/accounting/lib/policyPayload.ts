@@ -1,6 +1,6 @@
 import type { ProposePolicyVersionInput, PolicyTarget } from '../../../lib/services/policyVersions.service';
 import type { UpsertFiscalProfileInput } from '../../../lib/services/fiscalProfile.service';
-import type { FixedAssetAccountsPatch } from '../../../lib/services/accounting.service';
+import type { FixedAssetAccountsPatch, ProviderFeeAccountPatch } from '../../../lib/services/accounting.service';
 import { formatPctHundredths } from './fiscalProfileForm';
 
 /**
@@ -34,6 +34,11 @@ export function toScopeSettingsProposal(patch: FixedAssetAccountsPatch): Setting
       disposalLossAccountId: patch.disposalLossAccountId,
     },
   };
+}
+
+/** Patch da conta da tarifa do provedor → proposta parcial (FE-INCR-BANK-SETTLEMENT-FEE item 7): só essa chave. */
+export function toProviderFeeProposal(patch: ProviderFeeAccountPatch): SettingsProposal {
+  return { unitId: patch.unitId, target: 'SCOPE_SETTINGS', payload: { providerFeeExpenseAccountId: patch.providerFeeExpenseAccountId } };
 }
 
 // ─────────────────────────────────────────────────────────────── diff
@@ -79,6 +84,7 @@ const FIELD_LABEL: Record<string, [string, string]> = {
   depreciationExpenseAccountId: ['fixedAssets.accounts.depreciationExpense', 'Despesa de depreciação'],
   disposalGainAccountId: ['fixedAssets.accounts.disposalGain', 'Ganho na baixa'],
   disposalLossAccountId: ['fixedAssets.accounts.disposalLoss', 'Perda na baixa'],
+  providerFeeExpenseAccountId: ['bankSettlement.feeAccount.label', 'Conta da tarifa do provedor'],
 };
 
 /** Enum do perfil → as chaves de rótulo do `FiscalProfilePanel`. */

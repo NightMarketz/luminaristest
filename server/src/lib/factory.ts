@@ -49,6 +49,8 @@ import { PaymentAccountRepository } from '../features/accounting/repositories/Pa
 import { FiscalCertificateRepository } from '../features/accounting/repositories/FiscalCertificateRepository';
 import { CollectionChargeRepository } from '../features/accounting/repositories/CollectionChargeRepository';
 import { TaxAssessmentRepository } from '../features/accounting/repositories/TaxAssessmentRepository';
+import { ConsumptionTaxAssessmentRepository } from '../features/accounting/repositories/ConsumptionTaxAssessmentRepository';
+import type { IConsumptionTaxAssessmentRepository } from '../features/accounting/repositories/IConsumptionTaxAssessmentRepository';
 import { MitExportRepository } from '../features/accounting/repositories/MitExportRepository';
 import { SimplesEntradasRepository } from '../features/accounting/repositories/SimplesEntradasRepository';
 import { ReceitaFiscalRepository } from '../features/accounting/repositories/ReceitaFiscalRepository';
@@ -68,6 +70,9 @@ import { IssBeneficioMunicipalRepository } from '../features/accounting/reposito
 import { ProductDestinationDefaultRepository } from '../features/accounting/repositories/ProductDestinationDefaultRepository';
 import { CompanyFiscalProfileRepository } from '../features/accounting/repositories/CompanyFiscalProfileRepository';
 import { CompanySignerRepository } from '../features/accounting/repositories/CompanySignerRepository';
+import { PartnerRepository } from '../features/accounting/repositories/PartnerRepository';
+import { ProfitDistributionRepository } from '../features/accounting/repositories/ProfitDistributionRepository';
+import { InterestOnEquityRepository } from '../features/accounting/repositories/InterestOnEquityRepository';
 import { DepreciationRateRepository } from '../features/accounting/repositories/DepreciationRateRepository';
 import { FixedAssetClassRepository } from '../features/accounting/repositories/FixedAssetClassRepository';
 import { FixedAssetRepository } from '../features/accounting/repositories/FixedAssetRepository';
@@ -100,7 +105,6 @@ import { ChatService } from '../features/chat/services/ChatService';
 import { DashboardLayoutService } from '../features/dashboardLayout/services/DashboardLayoutService';
 import { DocumentProcessingService } from '../features/documents/services/DocumentProcessingService';
 import { DocumentService } from '../features/documents/services/DocumentService';
-import { ReportService } from '../features/reports/services/ReportService';
 import { StructuredDataService } from '../features/structuredData/services/StructuredDataService';
 import { UserService } from '../features/users/services/UserService';
 import { DynamicTableService } from '../features/dynamicTables/services/DynamicTableService';
@@ -167,6 +171,8 @@ import { SimplesRegistroCaixaService } from '../features/accounting/services/Sim
 import { SimplesCreditoIncobravelRepository } from '../features/accounting/repositories/SimplesCreditoIncobravelRepository';
 import type { ISimplesCreditoIncobravelRepository } from '../features/accounting/repositories/ISimplesCreditoIncobravelRepository';
 import { PisCofinsAssessmentService } from '../features/accounting/services/PisCofinsAssessmentService';
+import { IbsCbsAssessmentService, type RevenueAccountsPort } from '../features/accounting/services/IbsCbsAssessmentService';
+import { IbsCbsPacoteRepository } from '../features/accounting/repositories/IbsCbsPacoteRepository';
 import { AccountingDeliveryService } from '../features/accounting/services/AccountingDeliveryService';
 import { AccountingReviewService } from '../features/accounting/services/AccountingReviewService';
 import { InventoryService } from '../features/accounting/services/InventoryService';
@@ -182,6 +188,9 @@ import { IssBeneficioMunicipalService } from '../features/accounting/services/Is
 import { ProductDestinationService } from '../features/accounting/services/ProductDestinationService';
 import { CompanyFiscalProfileService } from '../features/accounting/services/CompanyFiscalProfileService';
 import { CompanySignerService } from '../features/accounting/services/CompanySignerService';
+import { PartnerService } from '../features/accounting/services/PartnerService';
+import { ProfitDistributionService } from '../features/accounting/services/ProfitDistributionService';
+import { InterestOnEquityService } from '../features/accounting/services/InterestOnEquityService';
 import { DepreciationRateService } from '../features/accounting/services/DepreciationRateService';
 import { FixedAssetClassService } from '../features/accounting/services/FixedAssetClassService';
 import { FixedAssetService } from '../features/accounting/services/FixedAssetService';
@@ -278,7 +287,6 @@ import type { IDocumentPolicy } from '../features/documents/policies/IDocumentPo
 import type { IUserPolicy } from '../features/users/policies/IUserPolicy';
 import type { IDynamicTablePolicy } from '../features/dynamicTables/policies/IDynamicTablePolicy';
 import type { IChatService } from '../features/chat/services/IChatService';
-import type { IReportService } from '../features/reports/services/IReportService';
 import type { IActionProposalRepository } from '../features/chat/repositories/IActionProposalRepository';
 import type { IKnowledgeGraphRepository } from '../features/chat/repositories/IKnowledgeGraphRepository';
 import type { IAttachmentRepository } from '../features/attachments/repositories/IAttachmentRepository';
@@ -290,7 +298,9 @@ import type { ISystemProvisioningPolicy } from '../features/onboarding/policies/
 import type { IAccountingEventMapper } from '../features/accounting/sync/mappers/IAccountingEventMapper';
 import type { PostEntryInput } from '../features/accounting/dtos/PostingDto';
 import type { AccountingScope } from '../features/accounting/scope/AccountingScope';
-import type { BindingScope } from '../features/accountingBinding/repositories/IAccountingBindingRepository';
+import type { BindingScope, IAccountingBindingRepository } from '../features/accountingBinding/repositories/IAccountingBindingRepository';
+import { AccountingBindingV1Schema } from '../features/accountingBinding/dtos/AccountingBindingDto';
+import { ValidationError } from './errors';
 import type { ChartLookupPort, PostingValidatePort } from '../features/accountingBinding/models/types';
 import type { IAccountRepository } from '../features/accounting/repositories/IAccountRepository';
 import type { IJournalEntryRepository } from '../features/accounting/repositories/IJournalEntryRepository';
@@ -332,6 +342,9 @@ import type { IIssBeneficioMunicipalRepository } from '../features/accounting/re
 import type { IProductDestinationDefaultRepository } from '../features/accounting/repositories/IProductDestinationDefaultRepository';
 import type { ICompanyFiscalProfileRepository } from '../features/accounting/repositories/ICompanyFiscalProfileRepository';
 import type { ICompanySignerRepository } from '../features/accounting/repositories/ICompanySignerRepository';
+import type { IPartnerRepository } from '../features/accounting/repositories/IPartnerRepository';
+import type { IProfitDistributionRepository } from '../features/accounting/repositories/IProfitDistributionRepository';
+import type { IInterestOnEquityRepository } from '../features/accounting/repositories/IInterestOnEquityRepository';
 import type { IDepreciationRateRepository } from '../features/accounting/repositories/IDepreciationRateRepository';
 import type { IFixedAssetClassRepository } from '../features/accounting/repositories/IFixedAssetClassRepository';
 import type { IFixedAssetRepository } from '../features/accounting/repositories/IFixedAssetRepository';
@@ -400,6 +413,33 @@ function buildAccountingBindingChartLookup(accountRepo: IAccountRepository, scop
       const account = await accountRepo.findByCode(scope, code);
       if (!account) return null;
       return { code: account.code, nature: account.nature, acceptsEntries: account.acceptsEntries };
+    },
+  };
+}
+
+/**
+ * Lacuna #826-2 — `RevenueAccountsPort` real: lê os papéis `receita-serviço` / `receita-revenda` do evento
+ * `revenue_recognition` dos bindings ATIVOS da unidade (a mesma fonte que o RevenueRecognitionArchetype credita).
+ * Aqui, fora dos dois módulos, pelo mesmo motivo do `bindingScopeToAccountingScope`. Dois bindings ativos com
+ * contas diferentes para o mesmo papel ⇒ 400 (não há como escolher); sem binding ⇒ null (o serviço cai no plano padrão).
+ */
+function buildIbsCbsRevenueAccounts(bindingRepo: IAccountingBindingRepository): RevenueAccountsPort {
+  return {
+    async contasDeReceita(scope) {
+      const rows = await bindingRepo.findMany({ ownerUserId: scope.ownerUserId, actorUserId: scope.actorUserId, unitId: scope.unitId }, { status: 'Active' });
+      const achado: Record<'receita-serviço' | 'receita-revenda', Set<string>> = { 'receita-serviço': new Set(), 'receita-revenda': new Set() };
+      for (const row of rows) {
+        for (const b of AccountingBindingV1Schema.parse(JSON.parse(row.payload)).eventBindings) {
+          if (b.archetypeKey !== 'revenue_recognition') continue;
+          for (const r of b.roleSlots) if (r.role === 'receita-serviço' || r.role === 'receita-revenda') achado[r.role].add(r.accountCode);
+        }
+      }
+      const unico = (role: keyof typeof achado) => {
+        const codes = [...achado[role]];
+        if (codes.length > 1) throw new ValidationError(`bindings ativos da unidade divergem no papel '${role}' (${codes.join(', ')}) — reclassificação IBS/CBS não sabe qual debitar.`);
+        return codes[0] ?? null;
+      };
+      return { servico: unico('receita-serviço'), revenda: unico('receita-revenda') };
     },
   };
 }
@@ -487,7 +527,11 @@ function buildKitRoleDefaultsPort(
       return (await fiscalProfileRepo.findByScope(scope)) !== null;
     },
     fillNullScopeSettings: (accountIds) => settingsService.fillNullAccounts(scope, accountIds),
-    fillNullFiscalProfile: (accountIds) => fiscalProfileService.fillNullAccounts(scope, accountIds),
+    // Lacuna #826-1 (opção (a)): depois dos papéis do kit, os do plano padrão que o kit publicado não traz (IBS/CBS a recolher).
+    fillNullFiscalProfile: async (accountIds) => [
+      ...(await fiscalProfileService.fillNullAccounts(scope, accountIds)),
+      ...(await fiscalProfileService.ensureCanonicalAccounts(scope)),
+    ],
   };
 }
 
@@ -506,6 +550,9 @@ function buildKitReferentialPort(
     },
     async batchSet(mappingVersion, items) {
       await mappingService.batchSet(scope, { unitId: scope.unitId, mappingVersion, items });
+      // IRRF-DISTRIBUICAO PR-1 item 6 (opção (b), provisória): a versão que o kit acabou de abrir também recebe o
+      // referencial das folhas do plano padrão que o kit publicado não traz — senão a instalação nasce "não pronta".
+      await mappingService.ensureCanonicalMappings(scope);
     },
   };
 }
@@ -764,6 +811,9 @@ export class ApplicationFactory {
     productDestinationDefault: IProductDestinationDefaultRepository; // ITEM-DESTINATION PR-2
     companyFiscalProfile: ICompanyFiscalProfileRepository; // X13
     companySigner: ICompanySignerRepository; // X13
+    partner: IPartnerRepository; // IRRF-DISTRIBUICAO PR-1
+    profitDistribution: IProfitDistributionRepository; // IRRF-DISTRIBUICAO PR-2
+    interestOnEquity: IInterestOnEquityRepository; // IRRF-DISTRIBUICAO PR-3
     fiscalDocument: IFiscalDocumentRepository;
     lalur: ILalurRepository;
     accountingContact: IAccountingContactRepository;
@@ -771,6 +821,7 @@ export class ApplicationFactory {
     fiscalCertificate: IFiscalCertificateRepository; // BE-INCR-DFE-ADN-EMISSOR PR-1
     collectionCharge: ICollectionChargeRepository; // BE-INCR-PAYMENT-PROVIDER PR-2
     taxAssessment: ITaxAssessmentRepository; // X7 Fase A PR-2
+    consumptionTaxAssessment: IConsumptionTaxAssessmentRepository; // IBS-CBS-2027 PR-2 (item 8)
     mitExport: IMitExportRepository; // X9 PR-2
     simplesEntradas: ISimplesEntradasRepository; // X14 PR-2
     receitaFiscal: IReceitaFiscalRepository; // X14 PR-2
@@ -814,7 +865,6 @@ export class ApplicationFactory {
     dashboardLayout: DashboardLayoutService;
     document: DocumentService;
     chat: IChatService;
-    report: IReportService;
     structuredData: StructuredDataService;
     dynamicTable: DynamicTableService;
     dynamicTableVersion: DynamicTableVersionService;
@@ -867,6 +917,9 @@ export class ApplicationFactory {
     productDestination: ProductDestinationService; // ITEM-DESTINATION PR-2
     companyFiscalProfile: CompanyFiscalProfileService; // X13
     companySigner: CompanySignerService; // X13
+    partner: PartnerService; // IRRF-DISTRIBUICAO PR-1
+    profitDistribution: ProfitDistributionService; // IRRF-DISTRIBUICAO PR-2
+    interestOnEquity: InterestOnEquityService; // IRRF-DISTRIBUICAO PR-3
     fiscalDocumentEmission: FiscalDocumentEmissionService;
     fiscalDocumentLifecycle: FiscalDocumentLifecycleService;
     lalur: LalurService;
@@ -885,6 +938,7 @@ export class ApplicationFactory {
     simplesDeclaracao: SimplesDeclaracaoService; // X14 PR-4
     simplesRegistroCaixa: SimplesRegistroCaixaService; // X14-CAIXA PR-3
     pisCofinsAssessment: PisCofinsAssessmentService; // X8 PR-2
+    ibsCbsAssessment: IbsCbsAssessmentService; // IBS-CBS-2027 PR-2
     taxAssessmentRecalc: TaxAssessmentRecalcService; // BE-INCR-LEGAL-PARAMS PR-4 (item 10)
     accountingDelivery: AccountingDeliveryService;
     accountingReview: AccountingReviewService;
@@ -968,6 +1022,9 @@ export class ApplicationFactory {
       productDestinationDefault: new ProductDestinationDefaultRepository(),
       companyFiscalProfile: new CompanyFiscalProfileRepository(),
       companySigner: new CompanySignerRepository(),
+      partner: new PartnerRepository(),
+      profitDistribution: new ProfitDistributionRepository(),
+      interestOnEquity: new InterestOnEquityRepository(),
       fiscalDocument: new FiscalDocumentRepository(),
       lalur: new LalurRepository(),
       accountingContact: new AccountingContactRepository(),
@@ -975,6 +1032,7 @@ export class ApplicationFactory {
       fiscalCertificate: new FiscalCertificateRepository(),
       collectionCharge: new CollectionChargeRepository(),
       taxAssessment: new TaxAssessmentRepository(),
+      consumptionTaxAssessment: new ConsumptionTaxAssessmentRepository(),
       mitExport: new MitExportRepository(),
       simplesEntradas: new SimplesEntradasRepository(),
       receitaFiscal: new ReceitaFiscalRepository(),
@@ -1107,6 +1165,9 @@ export class ApplicationFactory {
       this.repositories.sourceProvenance,
       this.repositories.dimension,
       this.repositories.lalur,
+      // IRRF-DISTRIBUICAO PR-1 item 6 (opção (b) do dono, 21/10): referencial das folhas do plano padrão. Adaptador tardio —
+      // o ReferentialMappingService é construído mais abaixo; a chamada só acontece em runtime.
+      { ensureCanonicalMappings: (scope) => referentialMappingService.ensureCanonicalMappings(scope) },
     );
 
     // BE-INCR-REVIEW-LAYER (nó C11): revisão profissional editável. Consome PostingService (acerto
@@ -1322,6 +1383,8 @@ export class ApplicationFactory {
       auditService,
       this.repositories.paymentAccount, // BE-INCR-PAYMENT-PROVIDER PR-3 (P3-9)
       this.repositories.collectionCharge, // BE-INCR-PAYMENT-PROVIDER PR-3 (P3-6)
+      this.repositories.companyFiscalProfile, // IBS-CBS-2027 PR-4 (item 19a): regime da competência do split
+      this.repositories.fiscalProfile, // IBS-CBS-2027 PR-4 (item 19a): contas de IBS/CBS a recolher
     );
     // BE-INCR-PAYMENT-PROVIDER PR-2: o adaptador sai do `provider` da conta — MP é o único da porta hoje (P2-1).
     const collectionChargeService = new CollectionChargeService(
@@ -1366,6 +1429,7 @@ export class ApplicationFactory {
       this.policies.accounting,
       auditService,
       legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia LC116_SERVICO
+      this.repositories.fiscalProfile, // IBS-CBS-2027 PR-1, L1: CST do perfil para a RN E0959
     );
     // BE-INCR-DFE (nó X10b, PR-2): porta+adaptadores e montagem/envio da DPS (Fase B+C).
     const fiscalDocumentEmissionService = new FiscalDocumentEmissionService(
@@ -1456,6 +1520,7 @@ export class ApplicationFactory {
       accountingReportService, // PR-2: aviso de grande porte (F-XP-6 a)
       this.repositories.lalur, // X7 Fase B PR-4 item 2 (F-TB-6 a): troca de forma com o e-Lalur do ano preenchido
       legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia OBRIGACAO_REGIME
+      this.repositories.account, // IRRF-DISTRIBUICAO PR-1 item 8: contas do mapa do PL (escopo + Equity)
     );
     // Hoisted no LEGAL-PARAMS PR-4: o TaxAssessmentRecalcService também o injeta.
     const pisCofinsAssessmentService = new PisCofinsAssessmentService(
@@ -1510,6 +1575,29 @@ export class ApplicationFactory {
       // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13, PR-1): perfil da EMPRESA por ano + signatários não-contador.
       companyFiscalProfile: companyFiscalProfileService,
       companySigner: new CompanySignerService(this.repositories.companySigner, this.policies.accounting, auditService),
+      partner: new PartnerService(this.repositories.partner, this.policies.accounting, auditService), // IRRF-DISTRIBUICAO PR-1
+      profitDistribution: new ProfitDistributionService( // IRRF-DISTRIBUICAO PR-2
+        this.repositories.profitDistribution,
+        this.repositories.partner,
+        this.repositories.account,
+        this.repositories.fiscalProfile,
+        postingService,
+        legalParameterService,
+        auditService,
+        this.policies.accounting,
+      ),
+      interestOnEquity: new InterestOnEquityService( // IRRF-DISTRIBUICAO PR-3
+        this.repositories.interestOnEquity,
+        this.repositories.partner,
+        this.repositories.account,
+        this.repositories.companyFiscalProfile,
+        this.repositories.fiscalProfile,
+        legalParameterService,
+        this.policies.accounting,
+        postingService, // IRRF-DISTRIBUICAO PR-4: lançamento do JCP (item 28)
+        this.repositories.lalur, // PR-4: Parte A `system` do e-Lalur/e-Lacs (item 29)
+        auditService,
+      ),
       depreciationRate: depreciationRateService,
       fixedAssetClass: fixedAssetClassService,
       fixedAsset: fixedAssetService,
@@ -1542,7 +1630,6 @@ export class ApplicationFactory {
         structuredDataService, // Injected dependency
         this.repositories.user
       ),
-      report: new ReportService(embeddingOpenAIService, this.repositories.vector, chatOpenAIService),
       structuredData: structuredDataService, // Assigned service
       user: new UserService(this.repositories.user, this.policies.user, this.repositories.vector),
       dynamicTable: dynamicTableService,
@@ -1613,6 +1700,7 @@ export class ApplicationFactory {
         // X7 Fase C PR-2: IIssDocumentReader (findForIssReport) para o ISS por competência.
         this.repositories.fiscalDocument,
         legalParameterService, // fotografia LC116_SERVICO: município do ISS pelo li (LC 116 art. 3º)
+        this.repositories.consumptionTaxAssessment, // IBS-CBS-2027 PR-5 (item 24): EXPORT_IBS_CBS_MEMO
       ),
       dataExchangeImport: new DataExchangeImportService(
         this.repositories.dataExchange,
@@ -1645,6 +1733,7 @@ export class ApplicationFactory {
         auditService,
         legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia LEIAUTE_SPED (ECF)
         this.repositories.fiscalProfile, // F-PCB-1R: dedução de PIS/COFINS fora do gate de receita bruta
+        this.repositories.partner, // BE-INCR-ECF-Y600: sócios do Y600
       ),
       // Lucro Real (BRIEF 3B, Fork 6→b + Fork 4→b): o gerador LÊ o e-Lalur do model; o report
       // service SAIU (item 6 — L100/L300 são recuperados pelo PVA do K155/K156, pp.224/232). ECF 3C:
@@ -1659,6 +1748,7 @@ export class ApplicationFactory {
         this.repositories.companyFiscalProfile,
         this.repositories.taxAssessment,
         legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia LEIAUTE_SPED (ECF)
+        this.repositories.partner, // BE-INCR-ECF-Y600: sócios do Y600
       ),
       exerciseClosing: new ExerciseClosingService(
         this.repositories.account,
@@ -1828,6 +1918,23 @@ export class ApplicationFactory {
       ),
       // BE-INCR-PIS-COFINS PR-2 (nó X8): prévia/confirmação da apuração mensal de PIS/Cofins (reusa o TaxAssessment do X7).
       pisCofinsAssessment: pisCofinsAssessmentService,
+      // IBS-CBS-2027 PR-2 (itens 6–13): apuração mensal de IBS/CBS + reclassificação receita → a recolher (item 12).
+      ibsCbsAssessment: new IbsCbsAssessmentService(
+        this.repositories.consumptionTaxAssessment,
+        this.repositories.companyFiscalProfile,
+        this.repositories.fiscalDocument,
+        this.repositories.journalEntry,
+        this.policies.accounting,
+        auditService,
+        legalParameterService, // fotografia IBS_CBS (PR-1)
+        this.repositories.fiscalProfile, // item 12: contas de IBS/CBS a recolher
+        this.repositories.account,
+        postingService, // item 12: reclassificação em 2 commits
+        buildIbsCbsRevenueAccounts(new AccountingBindingRepository()), // lacuna #826-2: papéis de receita do binding
+        this.repositories.payable, // PR-3 item 16: créditos de IBS/CBS das notas de entrada
+        new IbsCbsPacoteRepository(), // PR-3 itens 17–18: pacote pré-pago (razão + subrazão do saldo)
+        this.repositories.bankSettlement, // PR-4 item 20: recibos de split da competência
+      ),
       // BE-INCR-LEGAL-PARAMS PR-4 (item 10): recálculo das apurações quando uma linha de lei é publicada/revogada.
       taxAssessmentRecalc: new TaxAssessmentRecalcService(
         this.repositories.legalParameterRecalcJob,
@@ -1836,6 +1943,7 @@ export class ApplicationFactory {
         this.repositories.mitExport, // aviso "valor mudou depois da entrega" (dono 07/10)
         taxAssessmentService,
         pisCofinsAssessmentService,
+        this.repositories.consumptionTaxAssessment, // IBS-CBS-2027 PR-5 (item 24): só aviso
       ),
       legalParameter: legalParameterService,
       paymentAccount: new PaymentAccountService(
@@ -1874,7 +1982,7 @@ export class ApplicationFactory {
       ),
       presetSync: presetSyncService,
       moduleInstall: moduleInstallService,
-      attachment: new AttachmentService(this.repositories.attachment, this.policies.attachment),
+      attachment: new AttachmentService(this.repositories.attachment, this.policies.attachment, this.repositories.dynamicTable),
       savedTableView: new SavedTableViewService(
         this.repositories.savedTableView,
         this.policies.savedTableView
@@ -2191,7 +2299,6 @@ export class ApplicationFactory {
   public getAnalyticsService = (): AnalyticsService => this.services.analytics;
   public getDashboardLayoutService = (): DashboardLayoutService => this.services.dashboardLayout;
   public getDocumentService = (): DocumentService => this.services.document;
-  public getReportService = (): IReportService => this.services.report;
   public getStructuredDataService = (): StructuredDataService => this.services.structuredData;
   public getUserService = (): UserService => this.services.user;
   public getDynamicTableService = (): DynamicTableService => this.services.dynamicTable;
@@ -2250,6 +2357,7 @@ export class ApplicationFactory {
   public getSimplesDeclaracaoService = (): SimplesDeclaracaoService => this.services.simplesDeclaracao;
   public getSimplesRegistroCaixaService = (): SimplesRegistroCaixaService => this.services.simplesRegistroCaixa;
   public getPisCofinsAssessmentService = (): PisCofinsAssessmentService => this.services.pisCofinsAssessment;
+  public getIbsCbsAssessmentService = (): IbsCbsAssessmentService => this.services.ibsCbsAssessment;
   public getAccountingDeliveryService = (): AccountingDeliveryService =>
     this.services.accountingDelivery;
   public getAccountingReviewService = (): AccountingReviewService => this.services.accountingReview;
@@ -2270,6 +2378,9 @@ export class ApplicationFactory {
   public getProductDestinationService = (): ProductDestinationService => this.services.productDestination;
   public getCompanyFiscalProfileService = (): CompanyFiscalProfileService => this.services.companyFiscalProfile;
   public getCompanySignerService = (): CompanySignerService => this.services.companySigner;
+  public getPartnerService = (): PartnerService => this.services.partner;
+  public getProfitDistributionService = (): ProfitDistributionService => this.services.profitDistribution;
+  public getInterestOnEquityService = (): InterestOnEquityService => this.services.interestOnEquity;
   public getDepreciationRateService = (): DepreciationRateService => this.services.depreciationRate;
   public getFixedAssetClassService = (): FixedAssetClassService => this.services.fixedAssetClass;
   public getFixedAssetService = (): FixedAssetService => this.services.fixedAsset;

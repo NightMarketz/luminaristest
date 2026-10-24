@@ -23,6 +23,8 @@ export interface CreateLalurEntryData {
   parteBId: string | null;
   accountId: string | null;
   createdById: string | null;
+  /** `system` = linha gerada pelo sistema (IRRF-DISTRIBUICAO PR-4: o JCP); omitido = `user` (default do schema). */
+  origem?: string;
 }
 
 /** Data to create an M010 account (Parte B). */

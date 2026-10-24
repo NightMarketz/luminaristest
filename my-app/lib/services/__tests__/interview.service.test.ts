@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { InterviewApiError, InterviewService } from '../interview.service';
 import { notify } from '../../notifications/notify';
+import type { CustomizeFieldsDtoInput } from '@/types/contracts/interview/CustomizeFields.dto.gen';
 
 /** interview.service — R2b: URL, corpo e signal dos fetch da Entrevista; erro com status + corpo para o hook ramificar. */
 vi.mock('cookies-next', () => ({ getCookie: () => 'tok-1' }));
@@ -42,17 +43,31 @@ describe('InterviewService', () => {
     expect(notify).not.toHaveBeenCalled();
   });
 
-  it('customizeFields: POST /dashboard/ai/CustomizeFields com o corpo legado inalterado', async () => {
+  it('customizeFields (W6 item 13): POST /dashboard/ai/CustomizeFields com o corpo do DTO gerado, sem histórico', async () => {
     vi.mocked(globalThis.fetch).mockResolvedValue(res(200, { sessionId: 's1' }));
-    const body = { sessionId: null, tableKey: 't', userMessage: 'oi', conversationHistory: [{ role: 'user', content: 'oi' }] };
-    await expect(InterviewService.customizeFields(body)).resolves.toEqual({ sessionId: 's1' });
+    const message = { kind: 'message', sessionId: 's1', tableKey: 't', message: 'oi' } satisfies CustomizeFieldsDtoInput;
+    await expect(InterviewService.customizeFields(message)).resolves.toEqual({ sessionId: 's1' });
     expect(lastCall().url).toMatch(/\/dashboard\/ai\/CustomizeFields$/);
-    expect(JSON.parse(String(lastCall().init.body))).toEqual(body);
+    expect(JSON.parse(String(lastCall().init.body))).toEqual(message);
+
+    const decision = {
+      kind: 'decision', sessionId: 's1', tableKey: 't', proposalId: 'p1', decision: 'apply', acknowledgeSensitive: true,
+    } satisfies CustomizeFieldsDtoInput;
+    await InterviewService.customizeFields(decision);
+    expect(JSON.parse(String(lastCall().init.body))).toEqual(decision);
+  });
+
+  it('customizeFields (W6 item 13): o tipo gerado morde o corpo antigo', () => {
+    // @ts-expect-error — `conversationHistory` não existe no DTO `.strict()` (F-W6-3: o histórico mora no servidor).
+    const legado: CustomizeFieldsDtoInput = { kind: 'message', sessionId: 's', tableKey: 't', message: 'm', conversationHistory: [] };
+    // @ts-expect-error — `userMessage` era o nome antigo; o DTO pede `kind` + `message`.
+    const semKind: CustomizeFieldsDtoInput = { sessionId: 's', tableKey: 't', userMessage: 'm' };
+    expect([legado, semKind]).toHaveLength(2);
   });
 
   it('falha de rede: sem status, mensagem nativa', async () => {
     vi.mocked(globalThis.fetch).mockRejectedValue(new TypeError('Failed to fetch'));
-    await expect(InterviewService.customizeFields({ sessionId: 's', tableKey: 't', userMessage: 'm', conversationHistory: [] }))
+    await expect(InterviewService.customizeFields({ kind: 'message', sessionId: 's', tableKey: 't', message: 'm' }))
       .rejects.toMatchObject({ message: 'Failed to fetch', status: undefined });
   });
 });

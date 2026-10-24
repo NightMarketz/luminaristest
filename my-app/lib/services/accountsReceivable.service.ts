@@ -24,7 +24,12 @@ interface ApiEnvelope<T> {
 }
 
 // ── Domain types ───────────────────────────────────────────────────────────────
-export type ReceivableStatus = 'OPEN' | 'RECEIVING' | 'RECEIVED' | 'CANCELLED';
+// PARTIALLY_RECEIVED: status do BE desde o BE-INCR-PARTIAL-SETTLEMENT (Receivable.model.ts) — entra aqui pelo botão
+// "Cobrar" (FE-INCR-PAYMENT-PROVIDER item 11); filtros e aging para esse status são outra frente (BRIEF §7 item 2).
+export type ReceivableStatus = 'OPEN' | 'PARTIALLY_RECEIVED' | 'RECEIVING' | 'RECEIVED' | 'CANCELLED';
+
+/** Títulos em que a cobrança por provedor é oferecida — espelho de `CHARGEABLE_RECEIVABLE_STATUSES` do BE (F9). */
+export const CHARGEABLE_RECEIVABLE_STATUSES: readonly ReceivableStatus[] = ['OPEN', 'PARTIALLY_RECEIVED', 'RECEIVING'];
 export type ReceiptMethod = 'Cash' | 'Pix' | 'TED' | 'Boleto';
 export type ReceiptStatus = 'ACTIVE' | 'CANCELLED';
 

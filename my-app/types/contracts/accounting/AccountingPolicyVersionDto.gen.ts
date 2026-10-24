@@ -1,5 +1,19 @@
 // GERADO por server/src/features/accounting/dtos/__tests__/dtoShapeSnapshot.test.ts — NÃO EDITE.
 // Mudou um DTO? UPDATE_DTO_SNAPSHOT=1 npx jest --selectProjects unit --testPathPatterns dtoShapeSnapshot e comite o diff.
+export interface ApprovePolicyVersionInput {
+unitId: string
+ownerUserId?: string
+}
+export interface ListPolicyVersionsQueryInput {
+unitId: string
+target?: ("FISCAL_PROFILE" | "SCOPE_SETTINGS")
+status?: ("PROPOSED" | "APPLIED" | "REJECTED" | "SUPERSEDED")
+ownerUserId?: string
+}
+export interface PolicyVersionScopeQueryInput {
+unitId: string
+ownerUserId?: string
+}
 export type ProposePolicyVersionInput = ({
 unitId: string
 target: "FISCAL_PROFILE"
@@ -28,6 +42,14 @@ simplesDasDeducaoAccountId?: (string | null)
 simplesRecolherAccountId?: (string | null)
 irpjSaldoNegativoAccountId?: (string | null)
 csllSaldoNegativoAccountId?: (string | null)
+dividendosPagarAccountId?: (string | null)
+jcpPagarAccountId?: (string | null)
+irrfRecolherAccountId?: (string | null)
+jcpDespesaAccountId?: (string | null)
+ibsRecolherAccountId?: (string | null)
+cbsRecolherAccountId?: (string | null)
+ibsRecuperarAccountId?: (string | null)
+cbsRecuperarAccountId?: (string | null)
 partnerAccountRef?: (string | null)
 codMun?: (string | null)
 inscricaoMunicipal?: (string | null)
@@ -65,20 +87,6 @@ depreciationParteBAccountId?: (string | null)
 providerFeeExpenseAccountId?: (string | null)
 }
 })
-export interface ListPolicyVersionsQueryInput {
-unitId: string
-target?: ("FISCAL_PROFILE" | "SCOPE_SETTINGS")
-status?: ("PROPOSED" | "APPLIED" | "REJECTED" | "SUPERSEDED")
-ownerUserId?: string
-}
-export interface PolicyVersionScopeQueryInput {
-unitId: string
-ownerUserId?: string
-}
-export interface ApprovePolicyVersionInput {
-unitId: string
-ownerUserId?: string
-}
 export interface RejectPolicyVersionInput {
 unitId: string
 ownerUserId?: string

@@ -1,0 +1,70 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei nº 9.718 de 27/11/1998",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1998/lei-9718-1998-11-27.md",
+      "url_final": "https://github.com/ctresb/leis/blob/2ee55c0d178cb912e1a74026bc8bf4a365018bf0/federal/leis-ordinarias/1998/lei-9718-1998-11-27.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1998-11-27;9718",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "2ee55c0d178cb912e1a74026bc8bf4a365018bf0",
+      "alertas": [],
+      "baixado_em": "2026-10-22T13:18:51-03:00",
+      "sha256": "b15173fa6f57c3ef3a6c7709268c5757ad900c2f567a08f2e646ec014feadf12",
+      "arquivo": "docs/D01_lei-9718-1998-11-27.md",
+      "texto": "docs/D01_lei-9718-1998-11-27.txt",
+      "bytes": 41405
+    },
+    {
+      "id": "D02",
+      "titulo": "Decreto nº 9.580 de 22/11/2018",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos/2018/dec-9580-2018-11-22.md",
+      "url_final": "https://github.com/ctresb/leis/blob/39239e708b021186cea3d407a5fc7984f2c725f5/federal/decretos/2018/dec-9580-2018-11-22.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2018-11-22;9580",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "39239e708b021186cea3d407a5fc7984f2c725f5",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-10-22T13:18:57-03:00",
+      "sha256": "2c328212c1a8408eaa64072debe9860ecb435a731150296702b0583f00acfe6e",
+      "arquivo": "docs/D02_dec-9580-2018-11-22.md",
+      "texto": "docs/D02_dec-9580-2018-11-22.txt",
+      "bytes": 1624
+    },
+    {
+      "id": "D03",
+      "titulo": "D9580",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/d9580.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/d9580.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-22T13:19:12-03:00",
+      "sha256": "2f8ac8dc2ba55cae9afc5b48d73ea9bd8e2e0ed7bae1ec0510676c2b792243ac",
+      "arquivo": "docs/D03_d9580-htm.html",
+      "texto": "docs/D03_d9580-htm.txt",
+      "bytes": 2944670
+    },
+    {
+      "id": "D04",
+      "titulo": "Normas",
+      "url": "http://normas.receita.fazenda.gov.br/sijut2consulta/link.action?idAto=81268",
+      "url_final": "https://normas.receita.fazenda.gov.br/sijut2consulta/link.action?idAto=81268",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-22T13:19:12-03:00",
+      "sha256": "9f9413e20884b24680269927744a2abbf407243127ba5087a1489fd91fc8153a",
+      "arquivo": "docs/D04_link-action.html",
+      "texto": "docs/D04_link-action.txt",
+      "bytes": 45247
+    }
+  ],
+  "buscas": [],
+  "slug": "presumido-teto-78mi",
+  "pergunta": "Teto de R$ 78 mi do Lucro Presumido: receita do ano anterior, proporcionalidade no início de atividade, efeito no perfil",
+  "criado": "2026-10-22T13:18:49-03:00"
+}

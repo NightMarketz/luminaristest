@@ -45,7 +45,13 @@ export const LEGAL_PARAMS_SEED_FILE_V8 = path.resolve(__dirname, '../../prisma/d
 export const LEGAL_PARAMS_SEED_FILE_LP9_PC = path.resolve(__dirname, '../../prisma/data/legal_parameters_lp9_pis_cofins_ncm.sql');
 /** F-E4-1 (a): FERIADO_LOCAL — feriados estaduais e municipais (SP e São Paulo capital). Mesma regra de igualdade. */
 export const LEGAL_PARAMS_SEED_FILE_FERIADO_LOCAL = path.resolve(__dirname, '../../prisma/data/legal_parameters_feriado_local_v1.sql');
-export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4, LEGAL_PARAMS_SEED_FILE_V5, LEGAL_PARAMS_SEED_FILE_V6, LEGAL_PARAMS_SEED_FILE_V8, LEGAL_PARAMS_SEED_FILE_LP9_PC, LEGAL_PARAMS_SEED_FILE_FERIADO_LOCAL];
+/** BE-INCR-IRRF-DISTRIBUICAO PR-1 (item 5): IRRF_DISTRIBUICAO e TJLP 2026. Mesma regra de igualdade. */
+export const LEGAL_PARAMS_SEED_FILE_IRRF_DISTRIBUICAO = path.resolve(__dirname, '../../prisma/data/legal_parameters_irrf_distribuicao_v1.sql');
+/** IBS-CBS-2027 PR-1 (BRIEF item 1): tabela IBS_CBS. Mesma regra de igualdade com o migration.sql. */
+export const LEGAL_PARAMS_SEED_FILE_IBS_CBS = path.resolve(__dirname, '../../prisma/data/legal_parameters_ibs_cbs_v1.sql');
+/** IBS-CBS-2027 PR-5 (BRIEF itens 21–22): matriz IBS_CBS_APURACAO e IBS_CBS/VENCIMENTO. Mesma regra de igualdade com o migration.sql. */
+export const LEGAL_PARAMS_SEED_FILE_IBS_CBS_V2 = path.resolve(__dirname, '../../prisma/data/legal_parameters_ibs_cbs_v2.sql');
+export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4, LEGAL_PARAMS_SEED_FILE_V5, LEGAL_PARAMS_SEED_FILE_V6, LEGAL_PARAMS_SEED_FILE_V8, LEGAL_PARAMS_SEED_FILE_LP9_PC, LEGAL_PARAMS_SEED_FILE_FERIADO_LOCAL, LEGAL_PARAMS_SEED_FILE_IBS_CBS, LEGAL_PARAMS_SEED_FILE_IBS_CBS_V2, LEGAL_PARAMS_SEED_FILE_IRRF_DISTRIBUICAO];
 
 type Valor = string | number | null;
 

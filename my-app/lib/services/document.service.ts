@@ -13,13 +13,13 @@ export const DocumentService = {
   },
 
   /**
-   * GET /documents?mode=list (no cache) — the chat document picker's list. Returns the raw body so the
+   * GET /documents/list (no cache) — the chat document picker's list. Returns the raw body so the
    * caller validates `data`. Rejects with an `Error`: `Falha ao buscar documentos.` on a non-2xx
    * response, the native message on a network failure. `silent`: the picker shows its own error.
    */
   async listForSelection(): Promise<{ data?: unknown }> {
     try {
-      return await apiClient.get<{ data?: unknown }>('/documents?mode=list', { cache: 'no-store', silent: true });
+      return await apiClient.get<{ data?: unknown }>('/documents/list', { cache: 'no-store', silent: true });
     } catch (err) {
       const e = (err ?? {}) as { message?: unknown; error?: unknown; status?: unknown };
       if (typeof e.status === 'number') throw new Error('Falha ao buscar documentos.');
@@ -57,7 +57,9 @@ export const DocumentService = {
       body: formData,
     });
     if (!response.ok) throw await response.json();
-    return response.json();
+    // The server answers { success, data: { tokens, charCount } }.
+    const body = await response.json() as { data?: TokenCostResponse } & TokenCostResponse;
+    return body.data ?? body;
   },
 
   async getQdrantStatus(): Promise<QdrantStatusResponse> {

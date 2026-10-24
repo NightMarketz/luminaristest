@@ -15,6 +15,7 @@
           }
         },
         "history": {
+          "maxItems": 50,
           "type": "array",
           "items": {
             "type": "object",
@@ -23,8 +24,7 @@
                 "type": "string",
                 "enum": [
                   "user",
-                  "assistant",
-                  "system"
+                  "assistant"
                 ]
               },
               "content": {

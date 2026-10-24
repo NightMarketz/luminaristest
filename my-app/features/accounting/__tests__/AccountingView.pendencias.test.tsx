@@ -56,7 +56,7 @@ describe('AccountingView — aba Pendências (I5 PR-3)', () => {
   it('a barra de abas tem "Pendências" (27ª, depois de Apuração) e clicar nela renderiza o painel da unidade', async () => {
     render(<AccountingView />);
     const tabs = await screen.findAllByRole('tab');
-    expect(tabs).toHaveLength(27);
+    expect(tabs).toHaveLength(28); // 28ª = Cobrança (FE-INCR-PAYMENT-PROVIDER)
     expect(tabs[26]).toHaveTextContent('Pendências');
     fireEvent.click(tabs[26]);
     expect(await screen.findByTestId('reconcile-pending-panel-mock')).toHaveTextContent('u1');

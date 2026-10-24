@@ -30,3 +30,43 @@ describe('CustomizeFieldsDto', () => {
     expect(CustomizeFieldsDto.safeParse({ kind: 'decision', ...ref, proposalId: 'p', decision: 'apply', acknowledgeSensitive: false }).success).toBe(false);
   });
 });
+
+// W6 emenda (BRIEF WIZARD-W6-MANUAL-SESSION item 1; F-MS-1 a, F-MS-2 a).
+describe('CustomizeFieldsDto — kind manual', () => {
+  const campo = { name: 'apelido', label: 'Apelido', type: 'string', required: false };
+
+  it('aceita add (com format email/phone) e setHidden, com ou sem acknowledgeSensitive', () => {
+    expect(CustomizeFieldsDto.safeParse({ kind: 'manual', ...ref, changes: [{ action: 'add', field: campo }] }).success).toBe(true);
+    expect(
+      CustomizeFieldsDto.safeParse({
+        kind: 'manual',
+        ...ref,
+        changes: [{ action: 'add', field: { ...campo, format: 'email' } }, { action: 'setHidden', name: 'nome', hidden: true }],
+        acknowledgeSensitive: true,
+      }).success,
+    ).toBe(true);
+  });
+
+  it('changes vazio, mais de 50, chave fora do DTO ou tipo fora do enum manual → rejeita', () => {
+    const add = { action: 'add', field: campo };
+    expect(CustomizeFieldsDto.safeParse({ kind: 'manual', ...ref, changes: [] }).success).toBe(false);
+    expect(CustomizeFieldsDto.safeParse({ kind: 'manual', ...ref, changes: Array(51).fill(add) }).success).toBe(false);
+    expect(CustomizeFieldsDto.safeParse({ kind: 'manual', ...ref, changes: [add], fields: [] }).success).toBe(false);
+    expect(CustomizeFieldsDto.safeParse({ kind: 'manual', ...ref, changes: [{ action: 'add', field: { ...campo, hidden: false } }] }).success).toBe(false);
+    for (const type of ['email', 'password', 'phone', 'relation', 'json']) {
+      expect(CustomizeFieldsDto.safeParse({ kind: 'manual', ...ref, changes: [{ action: 'add', field: { ...campo, type } }] }).success).toBe(false);
+    }
+    expect(CustomizeFieldsDto.safeParse({ kind: 'manual', ...ref, changes: [{ action: 'remove', name: 'nome' }] }).success).toBe(false);
+  });
+});
+
+// Revisão do #786 (dono, questionário, 2026-10-21): `format` só com `type: 'string'`.
+describe('CustomizeFieldsDto — format só em campo texto', () => {
+  it('number/date/boolean com format → rejeita; string com format → aceita', () => {
+    const campo = (type: string) => ({ name: 'contato', label: 'Contato', type, format: 'phone', required: false });
+    for (const type of ['number', 'date', 'datetime', 'boolean']) {
+      expect(CustomizeFieldsDto.safeParse({ kind: 'manual', ...ref, changes: [{ action: 'add', field: campo(type) }] }).success).toBe(false);
+    }
+    expect(CustomizeFieldsDto.safeParse({ kind: 'manual', ...ref, changes: [{ action: 'add', field: campo('string') }] }).success).toBe(true);
+  });
+});

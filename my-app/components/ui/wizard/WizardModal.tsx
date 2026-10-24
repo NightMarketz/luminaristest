@@ -101,7 +101,7 @@ export function WizardModal({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div
                 ref={modalRef}
                 className={`bg-white dark:bg-neutral-900 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] w-full ${maxWidth} max-h-[90vh] flex flex-col border border-gray-200/50 dark:border-gray-800 relative overflow-hidden`}

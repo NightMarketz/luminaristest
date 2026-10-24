@@ -79,15 +79,16 @@ bootstrap().catch((error) => {
 const PURGE_INITIAL_DELAY_MS = 60 * 1000;
 const PURGE_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
-setTimeout(() => {
+let purgeInterval: NodeJS.Timeout | undefined;
+const purgeStartTimer = setTimeout(() => {
   purgeOldDeletedRecords().catch((err) => logger.error('Purge job failed', { err }));
-  setInterval(() => {
+  purgeInterval = setInterval(() => {
     purgeOldDeletedRecords().catch((err) => logger.error('Purge job failed', { err }));
   }, PURGE_INTERVAL_MS);
 }, PURGE_INITIAL_DELAY_MS);
 
 // R18 — PROCESSING watchdog: every 5 minutes, fail documents stuck in PROCESSING for > 10 minutes.
-setInterval(() => {
+const processingWatchdog = setInterval(() => {
   const cutoff = new Date(Date.now() - 10 * 60 * 1000);
   prisma.document.updateMany({
     where: {
@@ -130,6 +131,9 @@ function gracefulShutdown() {
   mpReleaseReportScheduler.stop();
   legalParamsRecalcScheduler.stop();
   ptaxRateScheduler.stop();
+  clearTimeout(purgeStartTimer);
+  clearInterval(purgeInterval);
+  clearInterval(processingWatchdog);
 
   // Force-exit safety net after 10 seconds
   const forceExitTimer = setTimeout(() => {
@@ -142,7 +146,7 @@ function gracefulShutdown() {
   const disconnectAndExit = () => {
     prisma.$disconnect().then(() => {
       logger.info('Database disconnected');
-      process.exit(0);
+      process.exit(); // uses process.exitCode (1 after an uncaughtException), else 0
     }).catch((err) => {
       logger.error('Error disconnecting database', { err });
       process.exit(1);
@@ -170,6 +174,7 @@ process.on('unhandledRejection', (reason) => {
 });
 process.on('uncaughtException', (error) => {
   logger.error('Uncaught Exception — shutting down', { error });
+  process.exitCode = 1;
   gracefulShutdown();
 });
 

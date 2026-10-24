@@ -155,6 +155,17 @@ export function useTableColumnControls(initialColumns: ColumnDefinition[], persi
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [persistenceKey]);
 
+    // Colunas que chegam depois do mount (ex.: relação, que depende do schema) entram com o seu default
+    const knownIdsRef = useRef(new Set(initialColumns.map(c => c.id)));
+    useEffect(() => {
+        const added = initialColumns.filter(c => !knownIdsRef.current.has(c.id));
+        if (added.length === 0) return;
+        added.forEach(c => knownIdsRef.current.add(c.id));
+        setOrderedColumns(prev => [...prev, ...added]);
+        setColWidths(prev => ({ ...Object.fromEntries(added.map(c => [c.id, c.defaultWidth])), ...prev }));
+        setVisibleCols(prev => new Set(Array.from(prev).concat(added.filter(c => c.defaultVisible).map(c => c.id))));
+    }, [initialColumns]);
+
     // --- Continuous Save Listeners (Auto-Save) ---
     useEffect(() => {
         if (!persistenceKey || typeof window === 'undefined') return;

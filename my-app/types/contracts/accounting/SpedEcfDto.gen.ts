@@ -15,6 +15,28 @@ cep: string
 numTel?: string
 email: string
 }
+export interface DirigenteEcfInput {
+nome: string
+cpf: string
+qualif: ("10" | "11" | "12" | "13" | "14" | "15" | "16" | "17")
+dtAltSoc: string
+dtFimSoc?: string
+representanteLegal?: {
+cpf: string
+qualif: ("01" | "02" | "03" | "04" | "05" | "06")
+}
+valores: {
+remTrabCents: number
+lucDivCents: number
+jurCapCents: number
+demRendCents: number
+irRetCents: number
+}
+}
+export interface RepresentanteLegalInput {
+cpf: string
+qualif: ("01" | "02" | "03" | "04" | "05" | "06")
+}
 export interface SignerInput {
 identNom: string
 identCpfCnpj: string
@@ -22,6 +44,23 @@ identQualif: ("203" | "204" | "205" | "206" | "207" | "220" | "222" | "223" | "2
 indCrc?: string
 email: string
 fone: string
+}
+export interface SocioEcfInput {
+partnerId: string
+qualif: ("10" | "11" | "12" | "13" | "14" | "15" | "16" | "17" | "01" | "02" | "03" | "04" | "05" | "06" | "07" | "08" | "09")
+pais?: string
+percCapVotBp?: number
+representanteLegal?: {
+cpf: string
+qualif: ("01" | "02" | "03" | "04" | "05" | "06")
+}
+valores: {
+remTrabCents: number
+lucDivCents: number
+jurCapCents: number
+demRendCents: number
+irRetCents: number
+}
 }
 export interface SpedEcfRequestInput {
 unitId: string
@@ -64,8 +103,56 @@ indCrc?: string
 email: string
 fone: string
 })[]]
+/**
+ * @maxItems 999
+ */
+socios: {
+partnerId: string
+qualif: ("10" | "11" | "12" | "13" | "14" | "15" | "16" | "17" | "01" | "02" | "03" | "04" | "05" | "06" | "07" | "08" | "09")
+pais?: string
+percCapVotBp?: number
+representanteLegal?: {
+cpf: string
+qualif: ("01" | "02" | "03" | "04" | "05" | "06")
+}
+valores: {
+remTrabCents: number
+lucDivCents: number
+jurCapCents: number
+demRendCents: number
+irRetCents: number
+}
+}[]
+/**
+ * @maxItems 999
+ */
+dirigentes?: {
+nome: string
+cpf: string
+qualif: ("10" | "11" | "12" | "13" | "14" | "15" | "16" | "17")
+dtAltSoc: string
+dtFimSoc?: string
+representanteLegal?: {
+cpf: string
+qualif: ("01" | "02" | "03" | "04" | "05" | "06")
+}
+valores: {
+remTrabCents: number
+lucDivCents: number
+jurCapCents: number
+demRendCents: number
+irRetCents: number
+}
+}[]
 retificadora?: ("N" | "S")
 numRec?: string
 supersedesJobId?: string
 deadlineJustification?: string
+}
+export interface Y600ValoresInput {
+remTrabCents: number
+lucDivCents: number
+jurCapCents: number
+demRendCents: number
+irRetCents: number
 }

@@ -27,6 +27,22 @@ export interface BankSettlementItemPatch {
   feeEntryId?: string | null;
   confirmedById?: string | null;
   confirmedAt?: Date | null;
+  // IBS-CBS-2027 PR-4 (itens 19–20): split gravado no pré-cheque do 1º confirm; ids dos recibos na etapa SPLIT.
+  shortfallTreatment?: string | null;
+  splitIbsCents?: number;
+  splitCbsCents?: number;
+  splitCompetencia?: string | null;
+  splitIbsReceiptId?: string | null;
+  splitCbsReceiptId?: string | null;
+}
+
+/** IBS-CBS-2027 PR-4 (item 20): um recibo de split ATIVO do tributo, do item CONFIRMED da competência. */
+export interface IbsCbsSplitExtinto {
+  itemId: string;
+  receiptId: string;
+  receivableId: string;
+  receivedAt: string; // AAAA-MM-DD (dia escrito do recibo = dia da linha do extrato)
+  amountCents: bigint;
 }
 
 export type BankSettlementItemWithLine = BankSettlementItem & { statementLine: BankStatementLine };
@@ -86,6 +102,12 @@ export interface IBankSettlementRepository {
     },
     tx?: Prisma.TransactionClient,
   ): Promise<AccountingScopeSettings>;
+
+  /**
+   * IBS-CBS-2027 PR-4 (item 20): recibos de split ATIVOS do tributo, de itens CONFIRMED do escopo cuja competência é
+   * `competencia` (AAAA-MM). Recibo cancelado não extingue nada (some da apuração). Leitura projetada do AR.
+   */
+  findIbsCbsSplits(scope: AccountingScope, competencia: string, tributo: 'IBS' | 'CBS', tx?: Prisma.TransactionClient): Promise<IbsCbsSplitExtinto[]>;
 
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 }

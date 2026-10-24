@@ -245,6 +245,24 @@
             "on_request": "Sob consulta"
         }
     },
+    "kanban_card": {
+        "in_list": "Na lista",
+        "priority": "Prioridade",
+        "description": "Descrição",
+        "edit": "Editar",
+        "save": "Salvar",
+        "cancel": "Cancelar",
+        "details": "Informações Detalhadas",
+        "quick_actions": "Ações Rápidas",
+        "archive": "Arquivar",
+        "delete": "Excluir",
+        "utilities": "Utilitários",
+        "copy": "Copiar",
+        "share": "Compartilhar",
+        "follow": "Seguir",
+        "created_at": "Criado em",
+        "empty": "Vazio"
+    },
     "field_descriptions": {
         "validityDays": "Prazo em dias corridos a partir da compra. Validade de 12 meses ou mais é a mais defensável; 0 ou vazio = sem validade."
     }

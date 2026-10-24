@@ -197,7 +197,33 @@ export class UserRepository implements IUserRepository {
     });
   }
 
+  public async getAttachmentStorageKeys(id: string): Promise<string[]> {
+    const rows = await prisma.crmAttachment.findMany({ where: { userId: id }, select: { storageKey: true } });
+    return rows.map((r) => r.storageKey);
+  }
+
   public async countByRole(role: Role): Promise<number> {
     return prisma.user.count({ where: { role } });
   }
-} 
+
+  /** True when a row with an `onDelete: Restrict` FK to the user would block its delete (§3.4 #1). */
+  public async hasRestrictedDependents(id: string): Promise<boolean> {
+    const [reviews, assignments, policyVersions] = await Promise.all([
+      prisma.accountingReview.count({ where: { userId: id } }),
+      prisma.accountantAssignment.count({ where: { OR: [{ userId: id }, { accountantUserId: id }] } }),
+      prisma.accountingPolicyVersion.count({ where: { userId: id } }),
+    ]);
+    return reviews + assignments + policyVersions > 0;
+  }
+
+  /** Current token version, or null when the user does not exist (§3.4 #3). */
+  public async getTokenVersion(id: string): Promise<number | null> {
+    const row = await prisma.user.findUnique({ where: { id }, select: { tokenVersion: true } });
+    return row ? row.tokenVersion : null;
+  }
+
+  /** Bumps the token version, invalidating every JWT issued before (§3.4 #3). */
+  public async incrementTokenVersion(id: string): Promise<void> {
+    await prisma.user.update({ where: { id }, data: { tokenVersion: { increment: 1 } } });
+  }
+}

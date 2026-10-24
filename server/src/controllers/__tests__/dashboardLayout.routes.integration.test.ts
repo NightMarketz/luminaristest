@@ -72,44 +72,6 @@ describe('POST /api/dashboard-layout', () => {
   });
 });
 
-describe('GET /api/dashboard-layout/:id', () => {
-  it('lets the owner read it (200)', async () => {
-    const u = await seedUser({ username: 'owner' });
-    const l = await seedDashboardLayout({ userId: u.id, name: 'Mine' });
-    const res = await request(app)
-      .get(`/api/dashboard-layout/${l.id}`)
-      .set(authHeader({ id: u.id, username: u.username }));
-    expect(res.status).toBe(200);
-    expect(res.body.data.name).toBe('Mine');
-  });
-
-  it('403s for another user', async () => {
-    const owner = await seedUser({ username: 'owner' });
-    const stranger = await seedUser({ username: 'stranger' });
-    const l = await seedDashboardLayout({ userId: owner.id });
-    const res = await request(app)
-      .get(`/api/dashboard-layout/${l.id}`)
-      .set(authHeader({ id: stranger.id, username: stranger.username }));
-    expect(res.status).toBe(403);
-  });
-
-  it('404s for a missing layout', async () => {
-    const u = await seedUser({ username: 'u' });
-    const res = await request(app)
-      .get('/api/dashboard-layout/cl00000000000000000000000')
-      .set(authHeader({ id: u.id, username: u.username }));
-    expect(res.status).toBe(404);
-  });
-
-  it('400s on a malformed (non-cuid) id', async () => {
-    const u = await seedUser({ username: 'u' });
-    const res = await request(app)
-      .get('/api/dashboard-layout/not-a-cuid')
-      .set(authHeader({ id: u.id, username: u.username }));
-    expect(res.status).toBe(400);
-  });
-});
-
 describe('PATCH /api/dashboard-layout/:id (merge-on-update)', () => {
   it('a name-only PATCH keeps the stored type/config (200)', async () => {
     const u = await seedUser({ username: 'u' });

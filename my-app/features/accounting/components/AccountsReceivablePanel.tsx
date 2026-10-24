@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'next-i18next';
-import { FiChevronDown, FiChevronRight, FiPlusCircle, FiDollarSign, FiXCircle, FiRotateCcw } from 'react-icons/fi';
+import { FiChevronDown, FiChevronRight, FiPlusCircle, FiDollarSign, FiXCircle, FiRotateCcw, FiSend, FiList } from 'react-icons/fi';
 import {
   accountsReceivableService,
+  CHARGEABLE_RECEIVABLE_STATUSES,
   RECEIPT_METHODS,
   type ReceivableWithReceipts,
   type ReceivableReceipt,
@@ -11,8 +12,13 @@ import {
 } from '../../../lib/services/accountsReceivable.service';
 import { accountingService, type Account } from '../../../lib/services/accounting.service';
 import { counterpartiesService, type Counterparty } from '../../../lib/services/counterparties.service';
+import { paymentAccountsService } from '../../../lib/services/paymentAccounts.service';
+import { collectionChargesService } from '../../../lib/services/collectionCharges.service';
+import type { PayerInput } from '@/types/contracts/accounting/CollectionChargeDto.gen';
 import { Modal } from '../../../components/ui/Modal';
 import { CreateReceivableModal } from './CreateReceivableModal';
+import { ChargeReceivableModal, type ChargeTarget } from './ChargeReceivableModal';
+import { ReceivableChargesDrawer } from './ReceivableChargesDrawer';
 import { SubledgerFilterBar, type SubledgerFilterValue } from './SubledgerFilterBar';
 import { StandardPagination } from '../../dashboard/shared/components/StandardPagination';
 import { formatCents } from '../lib/formatCents';
@@ -37,6 +43,7 @@ function sumActive(receipts: ReceivableReceipt[]): number {
 
 const STATUS_LABEL: Record<ReceivableStatus, string> = {
   OPEN: 'Em aberto',
+  PARTIALLY_RECEIVED: 'Recebida em parte',
   RECEIVING: 'Em recebimento',
   RECEIVED: 'Recebida',
   CANCELLED: 'Cancelada',
@@ -44,6 +51,7 @@ const STATUS_LABEL: Record<ReceivableStatus, string> = {
 
 const STATUS_CLASS: Record<ReceivableStatus, string> = {
   OPEN: 'bg-amber-900/40 text-amber-300',
+  PARTIALLY_RECEIVED: 'bg-sky-900/40 text-sky-300',
   RECEIVING: 'bg-blue-900/40 text-blue-300',
   RECEIVED: 'bg-emerald-900/40 text-emerald-300',
   CANCELLED: 'bg-neutral-700/60 text-neutral-300',
@@ -103,9 +111,20 @@ interface RowProps {
   onReceive: (r: ReceivableWithReceipts) => void;
   onCancel: (r: ReceivableWithReceipts) => void;
   onUndoReceipt: (r: ReceivableWithReceipts, receipt: ReceivableReceipt) => void;
+  /**
+   * Botão "Cobrar" (FE-INCR-PAYMENT-PROVIDER itens 11, 13 e 20): `hidden` depois de um 403 na sugestão do pagador
+   * (quem só lê); `disabled` sem conta Mercado Pago ACTIVE na unidade; `enabled` também quando a leitura das contas
+   * deu 403 — aí o 409 do BE decide.
+   */
+  chargeState: 'enabled' | 'disabled' | 'hidden';
+  onCharge: (r: ReceivableWithReceipts) => void;
+  /** Cobranças do título (item 16) — carregadas só ao abrir (F-FE-COB-3 a). */
+  chargesOpen: boolean;
+  onToggleCharges: (r: ReceivableWithReceipts) => void;
+  unitId: string;
 }
 
-function ReceivableRow({ receivable, onReceive, onCancel, onUndoReceipt }: RowProps) {
+function ReceivableRow({ receivable, onReceive, onCancel, onUndoReceipt, chargeState, onCharge, chargesOpen, onToggleCharges, unitId }: RowProps) {
   const { t } = useTranslation('accounting');
   const [expanded, setExpanded] = useState(false);
   const hasReceipts = receivable.receipts.length > 0;
@@ -172,10 +191,42 @@ function ReceivableRow({ receivable, onReceive, onCancel, onUndoReceipt }: RowPr
             {receivable.status === 'RECEIVING' && (
               <span className="text-xs text-neutral-500">{t('contasAReceber.action.receiving', 'Processando…')}</span>
             )}
+            {chargeState !== 'hidden' && CHARGEABLE_RECEIVABLE_STATUSES.includes(receivable.status) && (
+              <button
+                onClick={() => onCharge(receivable)}
+                disabled={chargeState === 'disabled'}
+                title={
+                  chargeState === 'disabled'
+                    ? t('contasAReceber.action.chargeDisabled', 'Sem conta Mercado Pago ativa nesta unidade — cadastre na aba Cobrança.')
+                    : t('contasAReceber.action.chargeTitle', 'Emitir cobrança Pix ou boleto pelo Mercado Pago')
+                }
+                className={`${btnBase} text-sky-300 hover:border-sky-600 hover:bg-sky-900/30 disabled:cursor-not-allowed disabled:opacity-40`}
+              >
+                <FiSend size={12} />
+                {t('contasAReceber.action.charge', 'Cobrar')}
+              </button>
+            )}
+            <button
+              onClick={() => onToggleCharges(receivable)}
+              aria-expanded={chargesOpen}
+              title={t('contasAReceber.action.chargesTitle', 'Ver as cobranças emitidas para este título')}
+              className={`${btnBase} text-neutral-300 hover:bg-neutral-700`}
+            >
+              <FiList size={12} />
+              {t('contasAReceber.action.charges', 'Cobranças')}
+            </button>
           </div>
         </td>
       </tr>
       {expanded && hasReceipts && <ReceiptsDrawer receivable={receivable} />}
+      {chargesOpen && (
+        <ReceivableChargesDrawer
+          unitId={unitId}
+          receivableId={receivable.id}
+          receivableOpen={receivable.status !== 'RECEIVED' && receivable.status !== 'CANCELLED'}
+          colSpan={7}
+        />
+      )}
     </>
   );
 }
@@ -206,6 +257,8 @@ interface AccountsReceivablePanelProps {
    * Callers that never pass it get today's behavior unchanged (`{}`).
    */
   initialFilters?: SubledgerFilterValue;
+  /** Atalho para a aba Cobrança (conta do provedor) — dicas do modal "Cobrar título" (item 15). */
+  onNavigateToCobranca?: () => void;
 }
 
 // ── main ─────────────────────────────────────────────────────────────────────
@@ -215,7 +268,7 @@ interface AccountsReceivablePanelProps {
  * the recognition posting; per-row commands (receive / cancel / undo receipt) each post
  * to the ledger via the AR command endpoints and refetch the trial balance.
  */
-export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPeriods, onNavigateToCounterparties, initialFilters }: AccountsReceivablePanelProps) {
+export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPeriods, onNavigateToCounterparties, initialFilters, onNavigateToCobranca }: AccountsReceivablePanelProps) {
   // `t` para renderizar, `tRef.current` dentro do fetch — ver `../lib/useAccountingT`.
   const { t, tRef } = useAccountingT();
   const [receivables, setReceivables] = useState<ReceivableWithReceipts[]>([]);
@@ -241,6 +294,19 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionPeriodError, setActionPeriodError] = useState(false);
+  // Item 18: 409 `receivable_has_live_charge` no cancelamento do título ⇒ atalho para as cobranças.
+  const [actionLiveCharge, setActionLiveCharge] = useState(false);
+
+  // ── cobrança por provedor (FE-INCR-PAYMENT-PROVIDER PR-2) ─────────────────────
+  // Item 20: `true`/`false` = há/não há conta ACTIVE; `null` = não deu para saber (403 ou erro) ⇒ botão habilitado.
+  const [hasActiveAccount, setHasActiveAccount] = useState<boolean | null>(null);
+  // Item 13: 403 na sugestão do pagador ⇒ quem só lê não vê mais o botão.
+  const [canCharge, setCanCharge] = useState(true);
+  const [chargeTarget, setChargeTarget] = useState<ChargeTarget | null>(null);
+  const [chargeSuggestion, setChargeSuggestion] = useState<Partial<PayerInput>>({});
+  const [chargesOpenId, setChargesOpenId] = useState<string | null>(null);
+  // Remonta o drawer aberto depois de emitir (a lista dele é lida ao montar).
+  const [chargesVersion, setChargesVersion] = useState(0);
 
   // ── fetch ──────────────────────────────────────────────────────────────────
   const fetchReceivables = useCallback(async () => {
@@ -287,6 +353,48 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
     void fetchCounterparties();
   }, [fetchCounterparties]);
 
+  // Item 20: lida uma vez por montagem do painel. O BE continua sendo a autoridade (409 do item 15).
+  useEffect(() => {
+    let active = true;
+    paymentAccountsService
+      .list(unitId, { silent: true })
+      .then((list) => {
+        if (active) setHasActiveAccount(list.some((a) => a.status === 'ACTIVE'));
+      })
+      .catch(() => {
+        if (active) setHasActiveAccount(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [unitId]);
+
+  async function openCharge(r: ReceivableWithReceipts) {
+    let suggestion: Partial<PayerInput> = {};
+    try {
+      suggestion = await collectionChargesService.payerSuggestion(r.id, unitId);
+    } catch (err: unknown) {
+      if ((err as { status?: number })?.status === 403) {
+        setCanCharge(false);
+        return;
+      }
+      suggestion = {}; // erro na sugestão ⇒ formulário vazio, sem bloquear (item 13)
+    }
+    setChargeSuggestion(suggestion);
+    setChargeTarget({
+      id: r.id,
+      customerName: r.customerName,
+      description: r.description,
+      openCents: r.amountCents - sumActive(r.receipts),
+    });
+  }
+
+  function toggleCharges(r: ReceivableWithReceipts) {
+    setChargesOpenId((cur) => (cur === r.id ? null : r.id));
+  }
+
+  const chargeState: RowProps['chargeState'] = !canCharge ? 'hidden' : hasActiveAccount === false ? 'disabled' : 'enabled';
+
   // ── create ─────────────────────────────────────────────────────────────────
   function openCreate() {
     if (!unitId) return;
@@ -304,6 +412,7 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
     setReason('');
     setActionError(null);
     setActionPeriodError(false);
+    setActionLiveCharge(false);
     setAction(next);
   }
 
@@ -312,6 +421,7 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
     setAction(null);
     setActionError(null);
     setActionPeriodError(false);
+    setActionLiveCharge(false);
   }
 
   // ── run the selected action ──────────────────────────────────────────────────
@@ -320,6 +430,7 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
     setBusy(true);
     setActionError(null);
     setActionPeriodError(false);
+    setActionLiveCharge(false);
     try {
       if (action.type === 'receive') {
         const remaining = action.receivable.amountCents - sumActive(action.receivable.receipts);
@@ -348,7 +459,12 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
     } catch (err: unknown) {
       const { message, code } = resolveErrorWithCode(err, t('contasAReceber.error.action', 'Não foi possível concluir a operação.'));
       if (code === 'ACCOUNTING_PERIOD_NOT_OPEN') setActionPeriodError(true);
-      setActionError(message);
+      if (code === 'receivable_has_live_charge') {
+        setActionLiveCharge(true);
+        setActionError(t('contasAReceber.error.liveCharge', 'Cancele a cobrança do título antes.'));
+      } else {
+        setActionError(message);
+      }
     } finally {
       setBusy(false);
     }
@@ -445,11 +561,16 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
             <tbody>
               {receivables.map((r) => (
                 <ReceivableRow
-                  key={r.id}
+                  key={`${r.id}-${chargesOpenId === r.id ? chargesVersion : 0}`}
                   receivable={r}
                   onReceive={(re) => openAction({ type: 'receive', receivable: re })}
                   onCancel={(re) => openAction({ type: 'cancelReceivable', receivable: re })}
                   onUndoReceipt={(re, receipt) => openAction({ type: 'cancelReceipt', receivable: re, receipt })}
+                  chargeState={chargeState}
+                  onCharge={(re) => void openCharge(re)}
+                  chargesOpen={chargesOpenId === r.id}
+                  onToggleCharges={toggleCharges}
+                  unitId={unitId}
                 />
               ))}
             </tbody>
@@ -479,6 +600,24 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
         }}
         onNavigateToPeriods={onNavigateToPeriods}
         onNavigateToCounterparties={onNavigateToCounterparties}
+      />
+
+      {/* Cobrar título (itens 12–15). Emitir ou cancelar cobrança NÃO chama onLedgerChange (item 21, P2-8). */}
+      <ChargeReceivableModal
+        isOpen={!!chargeTarget}
+        onClose={() => {
+          setChargeTarget(null);
+          setChargesVersion((v) => v + 1);
+        }}
+        unitId={unitId}
+        receivable={chargeTarget}
+        suggestion={chargeSuggestion}
+        onNavigateToCobranca={onNavigateToCobranca}
+        onShowCharges={(id) => {
+          setChargeTarget(null);
+          setChargesOpenId(id);
+          setChargesVersion((v) => v + 1);
+        }}
       />
 
       {/* Action modal (receive / cancel / undo) */}
@@ -593,6 +732,18 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
           {actionError && (
             <div className="rounded-xl border border-red-900/50 bg-red-950/30 px-3 py-2 text-xs text-red-300">
               {actionError}
+              {actionLiveCharge && action && (
+                <>
+                  {' '}
+                  <button
+                    type="button"
+                    onClick={() => { const id = action.receivable.id; setAction(null); setChargesOpenId(id); }}
+                    className="underline hover:text-red-200"
+                  >
+                    {t('contasAReceber.viewCharges', 'Ver cobranças do título')}
+                  </button>
+                </>
+              )}
               {actionPeriodError && onNavigateToPeriods && (
                 <>
                   {' '}

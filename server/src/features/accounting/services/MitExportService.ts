@@ -1,6 +1,6 @@
 import type { MitExport } from 'generated/prisma';
 import { ConflictError, ForbiddenError, ValidationError } from '../../../lib/errors';
-import { apuracoesDoPa, montarArquivoMit } from '../../../lib/mit';
+import { anosDoPa, apuracoesDoPa, montarArquivoMit } from '../../../lib/mit';
 import { tabelaApuracaoDe } from '../models/taxAssessmentParams';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -56,7 +56,7 @@ export class MitExportService {
       throw new ValidationError(`Indique um contador ativo no perfil fiscal de ${ano}: ele é o responsável pela apuração no MIT.`);
     }
 
-    const apuracoes = apuracoesDoPa(await this.taxAssessmentRepo.findConfirmedByYear(scope.ownerUserId, ano), ano, mes);
+    const apuracoes = apuracoesDoPa(await this.confirmadasDoPa(scope.ownerUserId, ano, mes), ano, mes);
 
     // F-X9-5 (c): liminar no perfil de ALGUM ano das apurações selecionadas.
     for (const anoApuracao of new Set(apuracoes.map((a) => a.anoCalendario))) {
@@ -106,7 +106,7 @@ export class MitExportService {
     const ano = query.anoCalendario;
     const rows = await this.repo.findByYear(scope.ownerUserId, ano);
     if (rows.length === 0) return [];
-    const confirmadas = await this.taxAssessmentRepo.findConfirmedByYear(scope.ownerUserId, ano);
+    const confirmadas = await this.confirmadasDoPa(scope.ownerUserId, ano, rows.some((r) => r.mes === 3) ? 3 : 1);
     const hojePorMes = new Map<number, Set<string>>();
     const hoje = (mes: number): Set<string> => {
       let s = hojePorMes.get(mes);
@@ -114,6 +114,11 @@ export class MitExportService {
       return s;
     };
     return rows.map((r) => toView(r, hoje(r.mes)));
+  }
+
+  /** Item 1 (PR-4): o ano do PA e, em março, também o ano anterior — o `A00` de Y−1 sai no PA de março de Y. */
+  private async confirmadasDoPa(ownerUserId: string, ano: number, mes: number) {
+    return (await Promise.all(anosDoPa(ano, mes).map((a) => this.taxAssessmentRepo.findConfirmedByYear(ownerUserId, a)))).flat();
   }
 }
 

@@ -78,6 +78,15 @@ export class ReferentialMappingRepository implements IReferentialMappingReposito
     });
   }
 
+  public async findDistinctVersions(scope: AccountingScope, tx?: Prisma.TransactionClient): Promise<string[]> {
+    const rows = await (tx ?? prisma).referentialMapping.findMany({
+      where: accountingScopeWhere(scope),
+      distinct: ['mappingVersion'],
+      select: { mappingVersion: true },
+    });
+    return rows.map((r) => r.mappingVersion);
+  }
+
   public async findManyByVersion(
     scope: AccountingScope,
     mappingVersion: string,

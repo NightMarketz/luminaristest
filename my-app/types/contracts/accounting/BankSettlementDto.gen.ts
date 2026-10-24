@@ -4,9 +4,19 @@ export interface ScanBankSettlementsInput {
 unitId: string
 statementId: string
 }
+export interface BankSettlementSplitInput {
+ibsCents: number
+cbsCents: number
+competencia?: string
+}
 export interface ConfirmBankSettlementInput {
 unitId: string
 method: ("Cash" | "Pix" | "TED" | "Boleto" | "ProviderBalance")
+split?: {
+ibsCents: number
+cbsCents: number
+competencia?: string
+}
 }
 export interface RejectBankSettlementInput {
 unitId: string

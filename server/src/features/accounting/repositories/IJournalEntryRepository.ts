@@ -93,6 +93,18 @@ export interface IJournalEntryRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<JournalEntryWithPostings | null>;
 
+  /**
+   * IBS-CBS-2027 PR-2 (BRIEF item 7) — `sourceId`s distintos das entries NÃO estornadas com `sourceType` cujo `date` cai
+   * na janela e cujo status está em `statuses` (ex.: as vendas `sale.settled` do mês). Read-only.
+   */
+  findSourceIdsInWindow(
+    scope: AccountingScope,
+    sourceType: string,
+    statuses: readonly string[],
+    window: { from: Date; to: Date },
+    tx?: Prisma.TransactionClient,
+  ): Promise<string[]>;
+
   /** Transitions an entry's status (e.g. Posted -> Reversed). Throws if not found in scope. */
   setStatus(
     scope: AccountingScope,

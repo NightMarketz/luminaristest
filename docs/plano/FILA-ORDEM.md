@@ -8,7 +8,8 @@
 ## Regras da ordem
 
 1. **Prazo legal externo primeiro**, quando bloqueia código ou gate já em curso.
-2. **Gate humano em cadeia** segue a ordem que o dono fixou: H1 → H2 → M2 (`[[H1]]`).
+2. **Gate humano em cadeia** segue a ordem que o dono fixou: H1 → H2 → M2 (`[[H1]]`). **Desde 22/10:** H1 (passos 1–5) → H2 → M2 →
+   1º cliente → H1 passo 6 + assinaturas — o fechamento de ECD/ECF é o último passo ([[D-2026-10-22-NFSE-PORTAL-E-H1-POR-ULTIMO]] §2).
 3. **Código só com `executa` citável** (ORCH-006). Brief pronto sem `executa` não entra como "a fazer agora": entra como "pronto para autorizar".
 4. Dependência explícita (`depende_de`) manda. Sufixo `?` (condicional) não bloqueia, mas sinaliza risco.
 
@@ -16,9 +17,9 @@
 
 | # | Item | Por que está aqui | Desbloqueia | Ação do dono |
 |---|---|---|---|---|
-| A1 | **Caminho da emissão NFS-e (ADN / PSC / PAA)** — [[D5]], [[X10i]] | NFS-e nacional obrigatória para ME/EPP do Simples em **01/11/2026** (Res. CGSN 191 art. 3º I). A decisão de 13/10 pausou o ADN; a FAQ NFS-e v1.1 17.7 exige certificado do próprio prestador no mTLS, o que não fecha com PSC. | [[X10i]], [[X10a]], [[X11]], [[D5]] | Escolher o caminho (decisão F-ADN-1) e acionar o advogado (L-ADN-5) antes de qualquer certificado de cliente. |
-| A2 | **H1 — PVA Presumido** [[H1]] | Parado no P5. Falta o passo do dono no RUNBOOK-H1 (PUT da conta 3.4 nas 2 unidades; re-semear; ECD/ECF). | [[H2]] → [[M2]] | Executar o passo e colar a evidência. Agente não preenche desfecho nem assinatura. |
-| A3 | **H2 — sign-off de browser** [[H2]] | Depende de H1 (ordem do dono). Inclui o passo de validade do pacote. | [[M2]], deploy do [[PACOTE-VALIDADE]] | Sign-off humano. |
+| A1 | **Caminho da emissão NFS-e (ADN / PSC / PAA)** — [[D5]], [[X10i]] | NFS-e nacional obrigatória para ME/EPP do Simples em **01/11/2026** (Res. CGSN 191 art. 3º I). A decisão de 13/10 pausou o ADN; a FAQ NFS-e v1.1 17.7 exige certificado do próprio prestador no mTLS, o que não fecha com PSC. **Decidido 22/10** ([[D-2026-10-22-NFSE-PORTAL-E-H1-POR-ULTIMO]] §1): NFS-e pelo portal desde 01/11 (relida pelo ManualEmissor), automática só com o PAA da NFS-e; sem guarda de certificado, L-ADN-5 não acionada. | [[X10i]], [[X10a]], [[X11]], [[D5]] | ~~Escolher o caminho e acionar o advogado~~ (fechado 22/10). Resta: quem contrata o PSC + e-CNPJ do Luminaris (NF-e/NFC-e). |
+| A2 | **H1 — PVA Presumido** [[H1]] | Passos 1–5 provados na tentativa 3 (22/10). **Desde 22/10 é o último passo do plano** ([[D-2026-10-22-NFSE-PORTAL-E-H1-POR-ULTIMO]] §2): o passo 6 (ECF com ECD assinada), o desfecho e as assinaturas (H1 e P4) ficam para perto de fechar o 1º cliente. | — (não trava mais H2/M2) | Por último: assinar a ECD do cliente real no PVA, validar a ECF e assinar o runbook. Agente não preenche desfecho nem assinatura. |
+| A3 | **H2 — sign-off de browser** [[H2]] | Não espera mais o H1 (22/10). Inclui o passo de validade do pacote. | [[M2]], deploy do [[PACOTE-VALIDADE]] | Sign-off humano. |
 | A4 | **M2 — host e 1º deploy** [[M2]] | VPS contratada (26/09). Chave do MP no ambiente e conta de emissão por unidade (R8). | [[F5]] em produção, [[PACOTE-VALIDADE]], [[GOV-CONTADOR]] (consulta CFC), [[P4]] (assinatura) | Deploy após H2. |
 | A5 | **D7 — PNCT** (vigilância de comunicações) | Prazo **31/12/2026**. Nasce com a emissão (depende de A1). | — | Corrigir até o prazo, com contador responsável. |
 | A6 | **D1 / D1f / D2 — contador e XML real de NF-e** | Pedido de follow-up de 26/09 não enviado; falta alíquota de ISS e cClassTrib; sem XML real (E9 fica preso). | Fixtures reais ([[E9]]), itens 5a–5f | Enviar o pedido ao contador (o agente só monta). |
@@ -89,10 +90,21 @@ e [[W1]] (a entrevista descarta a customização).
 | F1 | Prazo legal (01/12/2026 · 01/01/2027) | `IBS-CBS-2027` (promove [[M5-ibs-cbs]]) · `RETENCOES-FONTE` · `EFD-REINF` · [[NFE-DANFE-IBSCBS]] · [[PRESUMIDO-TETO-78MI]] | PRE-ADRs **autorizados** (Q2 a, só planejamento) | ratificar forks; `executa` por PR |
 | F5.1 | Pré-requisito | `EMAIL-TRANSPORT` | proposta | Q7 (BYOK) + PRE-ADR |
 | F1.5 | Eficiência fiscal lícita (sugestão + guarda) | [[EFICIENCIA-FISCAL]] — combo itemizado com desconto incondicional rateado e piso por item; segregação por NCM; simuladores de fator r, regime e remuneração do sócio; guarda anti-simulação; relatório de economia ([pesquisa 20/10](../accounting/PESQUISA-EFICIENCIA-FISCAL-2026-10-20.md)) | PRE-ADR **Proposed** 20/10 ([[D-2026-10-20-EFICIENCIA-FISCAL-PRE-ADR]]; `ADR-INCR-EFICIENCIA-FISCAL`); forks F-EF-1..9 pendentes | ratificar forks; P-EF-1..6 ao contador (A1–A3); `executa` por PR, PR-1 só depois do P-EF-1 |
-| F2 | Financeiro nível TOTVS | `TESOURARIA` · `REGUA-COBRANCA` · `CONC-ADQUIRENTE` · `CONTRATOS-RECORRENTES` · `ALCADA-PAGAMENTO` (portão P3) · `ORCAMENTO` | proposta | Q6 + PRE-ADR cada |
-| F3 | Contábil nível TOTVS | `RATEIO-DIMENSOES` · `PROVISOES-AGENDADAS` (ADR × [[R-motor-regras]]) · `FECHAMENTO-ASSISTIDO` · `RB-CONTABIL` | proposta | Q5 + PRE-ADR cada |
+| F2 | Financeiro nível TOTVS | `TESOURARIA` · `REGUA-COBRANCA` · `CONC-ADQUIRENTE` · `CONTRATOS-RECORRENTES` · `ALCADA-PAGAMENTO` (portão P3) · `ORCAMENTO` · *proposto 22/10:* `VENDA-PARCELADA` · `PAGAMENTO-MISTO` · `ESTORNO-PAGAMENTO` · `GORJETA-TAXA-SERVICO` | proposta (os 4 de 22/10: Q10) | Q6 + Q10 + PRE-ADR cada |
+| F3 | Contábil nível TOTVS | `RATEIO-DIMENSOES` · `PROVISOES-AGENDADAS` (ADR × [[R-motor-regras]]) · `FECHAMENTO-ASSISTIDO` · `RB-CONTABIL` · *proposto 22/10:* `CONCILIACAO-QUATRO-VIAS` | proposta (22/10: Q10) | Q5 + Q10 + PRE-ADR cada |
 | F5 | Analytics nível Power BI | `EXPORT-RELATORIOS` · `ALERTAS-ASSINATURAS` · `IA-ANALYTICS` (promove [[M5-ia-analytics]], depois do [[H1]]) | proposta | PRE-ADR cada |
-| F4 | Fiscal de comércio (gate: contribuinte de ICMS) | `TABELA-TRIBUTARIA-PRODUTO` · `MANIFESTACAO-DFE` · `EFD-ICMS-IPI` · `AGENDA-FISCAL` · `NFSE-PAULISTANA` | proposta | Q9 |
+| F4 | Fiscal de comércio (gate: contribuinte de ICMS) | `TABELA-TRIBUTARIA-PRODUTO` · `MANIFESTACAO-DFE` · `EFD-ICMS-IPI` · `AGENDA-FISCAL` · `NFSE-PAULISTANA` · *proposto 22/10, sem o gate de ICMS:* `CONTINGENCIA-EMISSOR` (depende do [[D5]]) | proposta (22/10: Q10) | Q9 + Q10 |
+
+**Emenda 22/10 — lista de BRIEFs para passar o Odoo** ([[D-2026-10-22-LISTA-BRIEFS-ODOO]]; detalhe na §4b da
+[`PROPOSTA-COMPLEMENTO-FIN-CTB-FIS-2026-10-20`](PROPOSTA-COMPLEMENTO-FIN-CTB-FIS-2026-10-20.md)). Na régua de 32
+capacidades do painel de 22/10 (Odoo 25,5 · Luminaris 14,5), a ordem **proposta** dentro de F (Q11) é: onda 0
+(`executa` dos BRIEFs prontos: F5 FE, RETENCOES-FONTE, IBS-CBS-2027 PR-5, EFD-REINF) → onda 1 venda e recebível
+(`EMAIL-TRANSPORT` → `VENDA-PARCELADA` → `PAGAMENTO-MISTO` → `TESOURARIA` → `REGUA-COBRANCA` → `ESTORNO-PAGAMENTO`
+→ `CONTRATOS-RECORRENTES` → `GORJETA-TAXA-SERVICO`) → onda 2 (`CONCILIACAO-QUATRO-VIAS` · `CONC-ADQUIRENTE` ·
+`CONTINGENCIA-EMISSOR`) → onda 3 (`RATEIO-DIMENSOES` · `ORCAMENTO` · `RB-CONTABIL` · `ALCADA-PAGAMENTO` ·
+`PROVISOES-AGENDADAS` · `FECHAMENTO-ASSISTIDO`) → F5 → F4. Ondas 1 e 2 em `main` = 26,5 (passa o Odoo); 0 a 3 = 31/32.
+Lacunas fora de BRIEF (Q12): devolução de venda e cancelamento → título, por instrumentação → correção. **Nada
+ratificado; a ordem de 20/10 vale até o dono responder Q10–Q12.**
 
 Fechado em 20/10 (R0, Q3 a): E1 inteiro mergeado (#769 · #771 · #770 · #772); X14-CAIXA (#729/#738/#739), FE-INCR-SIMPLES
 PR-D (#733) e X11 PR-1 (#633) em `main` — fold em sessão própria.

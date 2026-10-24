@@ -182,7 +182,6 @@ const service = getFactory().getUserService();
 | `documents` | Upload, processing and search of documents (RAG/vectors) | [README](./src/features/documents/README.md) |
 | `structuredData` | Structured data extracted from documents | [README](./src/features/structuredData/README.md) |
 | `dashboardLayout` | Dashboard layout configs (upsert per user) | [README](./src/features/dashboardLayout/README.md) |
-| `reports` | Report/chart data generation | [README](./src/features/reports/README.md) |
 | `interview` | Guided customization (interview/field services) | [READMEs](./src/features/interview/) |
 
 ---
@@ -202,7 +201,7 @@ Required layout (see §2 and §4): `dtos/ · models/ · policies/ · repositorie
 
 ### 9.2 Non-CRUD feature (derives / computes / orchestrates)
 It **does not own the data** it processes — it reads from other features, computes, or orchestrates.
-These are: `analytics` (read-only KPI engine), `reports` (compute façade),
+These are: `analytics` (read-only KPI engine),
 `chat` (orchestrator/agent; owner only of its own infra `KnowledgeGraph`/`ActionProposal`),
 `interview` (customization wizard).
 
@@ -237,8 +236,7 @@ They **do not need a `Policy` object** — they need **scoped, typed, explicit a
 - **Controllers are not 1:1 with features:** `dashboardController` serves `dynamicTables`/presets,
   `analyticsDefinitionsController` serves the `analyticsDefinitions` table of `dynamicTables`,
   `authController`/`authUtilityController` serve `users`.
-- **Service interfaces (`IChatService`, `IReportService`):** kept only for the two non-trivial services
-  (`chat`, `reports`); `IReportService` also exports the shared `ProgressCallback` type. The other
+- **Service interface (`IChatService`):** kept only for the non-trivial `chat` service. The other
   features resolve the concrete service via the factory — an accepted pattern.
 
 ---

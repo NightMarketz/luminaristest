@@ -53,6 +53,8 @@ function slugify(text: string): string {
     .replace(/__+/g, '_'); // Replace multiple _ with single _
 }
 
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/;
+
 function inferType(values: unknown[]): 'NUMBER' | 'DATE' | 'TEXT' {
   const defined = values.filter(v => v !== null && v !== undefined && v !== '');
   if (defined.length === 0) return 'TEXT';
@@ -68,7 +70,9 @@ function inferType(values: unknown[]): 'NUMBER' | 'DATE' | 'TEXT' {
   // Check for dates (including strings that can be parsed as dates)
   const areDates = defined.every(v => {
     if (v instanceof Date) return true;
-    return !isNaN(Date.parse((v as { toString(): string }).toString()));
+    // Só ISO (AAAA-MM-DD[ hora]): Date.parse aceita "Item 2" ou "Rua 1" como data. Célula de data real chega como Date.
+    const str = (v as { toString(): string }).toString();
+    return ISO_DATE.test(str) && !isNaN(Date.parse(str));
   });
   if (areDates) return 'DATE';
 

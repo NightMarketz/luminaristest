@@ -18,7 +18,7 @@ function FieldItem({ field, index, onToggleVisibility }: FieldItemProps) {
       <div className="flex justify-between items-center mb-2">
         <h5 className="font-medium text-neutral-900 dark:text-white">{field.label}</h5>
         <div className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 py-0.5 px-2 rounded">
-          {field.type}
+          {field.format ?? field.type}
         </div>
       </div>
       
@@ -34,6 +34,8 @@ function FieldItem({ field, index, onToggleVisibility }: FieldItemProps) {
           id={`visible-field-${index}`}
           type="checkbox"
           checked={!field.hidden}
+          // Revisão do #786 (dono, 21/10): campo obrigatório não se esconde (o servidor recusa com required_hidden).
+          disabled={Boolean(field.required) && !field.hidden}
           onChange={() => onToggleVisibility(index)}
           className="w-4 h-4 text-blue-600 bg-neutral-100 border-neutral-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-neutral-800 dark:focus:ring-offset-neutral-800 focus:ring-2 dark:bg-neutral-700 dark:border-neutral-600"
         />

@@ -40,6 +40,7 @@ import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
 import type { ICollectionChargeRepository } from '../repositories/ICollectionChargeRepository';
 import { RECEIVABLE_HAS_LIVE_CHARGE } from '../models/CollectionCharge.model';
+import { SPLIT_ACCOUNT_NOT_CONFIGURED, SPLIT_IBS_CBS_KIND } from '../models/BankSettlement.model';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { PostEntryInput } from '../dtos/PostingDto';
 import { syncSkipErrorCode } from '../sync/AccountingSyncPort';
@@ -226,8 +227,10 @@ export class ReceivableService {
     /**
      * P3-9 (F-PP-7 a / F-PPB-3 a): só o F7 passa a conta da `PaymentAccount` (método `ProviderBalance`). Não é campo
      * de DTO — recibo avulso com `ProviderBalance` cai no 400 `provider_balance_requires_payment_account`.
+     * IBS-CBS-2027 PR-4 (EMENDA PR-4, dono 22/10): `kind = 'SPLIT_IBS_CBS'` — recibo SEM caixa do split payment; a conta
+     * de débito (IBS|CBS a recolher do perfil fiscal) é obrigatória e vence o mapa do método. Também só o F7 passa.
      */
-    options: { debitAccountId?: string } = {},
+    options: { debitAccountId?: string; kind?: typeof SPLIT_IBS_CBS_KIND } = {},
   ): Promise<ReceivableReceipt> {
     if (!this.policy.canManageReceivable(scope)) {
       throw new ForbiddenError('Você não tem permissão para receber contas.');
@@ -254,7 +257,11 @@ export class ReceivableService {
     }
 
     // Resolve the debit account for the method (closed map — unknown REJECTS, D2) BEFORE the CAS.
-    const debitAccountId = dto.method === PROVIDER_BALANCE_METHOD ? options.debitAccountId ?? null : null;
+    const split = options.kind === SPLIT_IBS_CBS_KIND;
+    if (split && !options.debitAccountId) {
+      throw new ValidationError(`${SPLIT_ACCOUNT_NOT_CONFIGURED}: recibo de split exige a conta de IBS/CBS a recolher.`);
+    }
+    const debitAccountId = dto.method === PROVIDER_BALANCE_METHOD || split ? options.debitAccountId ?? null : null;
     const debitCode = await this.resolveReceiptDebitCode(scope, dto.method, debitAccountId);
 
     // ATOMIC SUM-CAS (D4 + ADR §3) — OPEN|PARTIALLY_RECEIVED → RECEIVING, receivedCents += amount.
@@ -279,6 +286,7 @@ export class ReceivableService {
         receivedByUserId: scope.actorUserId,
         status: 'ACTIVE',
         debitAccountId,
+        ...(split ? { kind: SPLIT_IBS_CBS_KIND } : {}),
       });
 
       const entry = await this.posting.postEntry(

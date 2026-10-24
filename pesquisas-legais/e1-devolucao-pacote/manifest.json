@@ -1,0 +1,90 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei Complementar nº 116 de 31/07/2003",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/2003/lcp-116-2003-07-31.md",
+      "url_final": "https://github.com/ctresb/leis/blob/ae234474cd3e1e3f6e871eaa102aeb862ec17541/federal/leis-complementares/2003/lcp-116-2003-07-31.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2003-07-31;116",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "ae234474cd3e1e3f6e871eaa102aeb862ec17541",
+      "alertas": [],
+      "baixado_em": "2026-10-22T22:11:31-03:00",
+      "sha256": "ee5663cd6f75d06dc795b4b9b49b52e4a9d7ad9c2575d817375088a5ed3098b9",
+      "arquivo": "docs/D01_lcp-116-2003-07-31.md",
+      "texto": "docs/D01_lcp-116-2003-07-31.txt",
+      "bytes": 48020
+    },
+    {
+      "id": "D02",
+      "titulo": "Decreto nº 12.955 de 29/04/2026",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos/2026/dec-12955-2026-04-29.md",
+      "url_final": "https://github.com/ctresb/leis/blob/517db958cd0ae2ba36c1f0b524b3cc55fe4198c6/federal/decretos/2026/dec-12955-2026-04-29.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2026-04-29;12955",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "517db958cd0ae2ba36c1f0b524b3cc55fe4198c6",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-10-22T22:11:32-03:00",
+      "sha256": "5527dbfe923a984a86c22b27ef1c5c0b6f4f0c2996bbe14315e8804afd08bbd9",
+      "arquivo": "docs/D02_dec-12955-2026-04-29.md",
+      "texto": "docs/D02_dec-12955-2026-04-29.txt",
+      "bytes": 779823
+    },
+    {
+      "id": "D03",
+      "titulo": "Lei Complementar nº 214 de 16/01/2025",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/2025/lcp-214-2025-01-16.md",
+      "url_final": "https://github.com/ctresb/leis/blob/571468687b4dc8d8f1a3b1dbd5f958ff85fad0cf/federal/leis-complementares/2025/lcp-214-2025-01-16.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2025-01-16;214",
+      "versao_texto": "republicação/retificação",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "571468687b4dc8d8f1a3b1dbd5f958ff85fad0cf",
+      "alertas": [
+        "versao_texto = 'republicação/retificação' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-10-22T22:11:33-03:00",
+      "sha256": "f1f80d77a11f96d8eaf7777d647e577d04abd0fc28420ec22664be7a76ed8851",
+      "arquivo": "docs/D03_lcp-214-2025-01-16.md",
+      "texto": "docs/D03_lcp-214-2025-01-16.txt",
+      "bytes": 1880
+    },
+    {
+      "id": "D04",
+      "titulo": "Lcp 214",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-22T22:11:40-03:00",
+      "sha256": "09db0fd1e8e840ab7c30090ff3f02654ff9d5644d0b2d2a6837b12262ede4e41",
+      "arquivo": "docs/D04_lcp214-htm.html",
+      "texto": "docs/D04_lcp214-htm.txt",
+      "bytes": 5403667
+    },
+    {
+      "id": "D05",
+      "titulo": "d12955",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/D12955.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/d12955.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-22T22:12:21-03:00",
+      "sha256": "6394469359a533b6e08574c2cd5aa259808c68d5ef4b4f06af448eb4575d83f9",
+      "arquivo": "docs/D05_d12955-htm.html",
+      "texto": "docs/D05_d12955-htm.txt",
+      "bytes": 3184515
+    }
+  ],
+  "buscas": [],
+  "slug": "e1-devolucao-pacote",
+  "pergunta": "Efeito fiscal (IBS/CBS, ISS/NFS-e) da devolução e do cancelamento de venda de serviço/produto/pacote pré-pago; momento do fato gerador do pacote",
+  "criado": "2026-10-22T22:11:23-03:00"
+}

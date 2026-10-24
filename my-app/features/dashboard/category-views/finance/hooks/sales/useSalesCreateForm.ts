@@ -206,7 +206,7 @@ export function useSalesCreateForm(options: UseSalesCreateFormOptions = {}): Use
     // ─────────────────────────────────────────────────────────────
 
     const subtotal = useMemo(() => {
-        return state.items.reduce((sum, item) => sum + lineQuantity(item) * Number(item.unitPrice || 0), 0);
+        return state.items.reduce((sum, item) => sum + Math.round(lineQuantity(item) * Number(item.unitPrice || 0) * 100), 0) / 100;
     }, [state.items]);
 
     const totalAmount = useMemo(
@@ -252,7 +252,7 @@ export function useSalesCreateForm(options: UseSalesCreateFormOptions = {}): Use
         const s = stateRef.current;
 
         // Recompute totals from snapshot to avoid stale closure on subtotal/totalAmount
-        const sub = s.items.reduce((acc, item) => acc + lineQuantity(item) * Number(item.unitPrice || 0), 0);
+        const sub = s.items.reduce((acc, item) => acc + Math.round(lineQuantity(item) * Number(item.unitPrice || 0) * 100), 0) / 100;
         const total = Math.max(0, sub - (s.discountAmount || 0));
         // F-FE-VP-1b: flag na venda, sem guardar o preço do catálogo. Só vai quando a tabela tem o
         // campo (`canFlagAboveCatalog`); sem ele, a venda acima já foi barrada por `packageIssue`.

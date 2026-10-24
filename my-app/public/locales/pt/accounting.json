@@ -37,7 +37,8 @@
       "parametrosLegais": "Parâmetros legais",
       "politica": "Política contábil",
       "apuracao": "Apuração",
-      "pendencias": "Pendências"
+      "pendencias": "Pendências",
+      "cobranca": "Cobrança"
     },
     "error": {
       "units": "Falha ao carregar as unidades.",
@@ -169,7 +170,8 @@
       "OPEN": "Em aberto",
       "RECEIVING": "Em recebimento",
       "RECEIVED": "Recebida",
-      "CANCELLED": "Cancelada"
+      "CANCELLED": "Cancelada",
+      "PARTIALLY_RECEIVED": "Recebida em parte"
     },
     "col": {
       "expand": "Expandir",
@@ -187,7 +189,12 @@
       "cancelTitle": "Cancelar a conta",
       "undo": "Desfazer recebimento",
       "undoTitle": "Desfazer o recebimento (reabre a conta)",
-      "receiving": "Processando…"
+      "receiving": "Processando…",
+      "charge": "Cobrar",
+      "chargeDisabled": "Sem conta Mercado Pago ativa nesta unidade — cadastre na aba Cobrança.",
+      "chargeTitle": "Emitir cobrança Pix ou boleto pelo Mercado Pago",
+      "charges": "Cobranças",
+      "chargesTitle": "Ver as cobranças emitidas para este título"
     },
     "receipts": {
       "date": "Recebido em",
@@ -199,7 +206,8 @@
     },
     "error": {
       "load": "Erro ao carregar as contas a receber.",
-      "action": "Não foi possível concluir a operação."
+      "action": "Não foi possível concluir a operação.",
+      "liveCharge": "Cancele a cobrança do título antes."
     },
     "createModal": {
       "title": "Nova Conta a Receber",
@@ -248,7 +256,8 @@
       "undoConfirm": "Confirmar",
       "undoing": "Desfazendo…",
       "undoNote": "O recebimento será estornado e a conta voltará para “Em aberto”."
-    }
+    },
+    "viewCharges": "Ver cobranças do título"
   },
   "aging": {
     "title": "Aging (Pagar/Receber)",
@@ -909,7 +918,11 @@
       "needPeriod": "Informe o início e o fim do período.",
       "tooLarge": "Arquivo muito grande.",
       "success": "Extrato importado: {{count}} linha(s).",
-      "idempotent": "Arquivo já importado — nada foi alterado ({{count}} linha(s))."
+      "idempotent": "Arquivo já importado — nada foi alterado ({{count}} linha(s)).",
+      "format": "Formato",
+      "formatAuto": "Detectar pelo conteúdo",
+      "formatMpRelease": "Relatório de liberações do Mercado Pago",
+      "mpNoPaymentAccount": "Esta conta contábil não tem conta Mercado Pago; cadastre na aba Cobrança."
     },
     "statements": {
       "loading": "Carregando extratos…",
@@ -924,7 +937,8 @@
         "ref": "Referência",
         "imported": "Importado em",
         "actions": "Ações"
-      }
+      },
+      "mercadoPago": "Mercado Pago"
     },
     "lines": {
       "loading": "Carregando linhas…",
@@ -1875,14 +1889,16 @@
       "line": "Linha do extrato",
       "proposed": "Proposto",
       "status": "Status",
-      "title": "Título"
+      "title": "Título",
+      "fee": "Retido pelo provedor"
     },
     "due": "vence",
     "empty": "Nenhuma baixa neste recorte — varra o extrato.",
     "entry": "lançamento",
     "error": {
       "generic": "Não foi possível concluir a operação.",
-      "load": "Erro ao carregar as baixas."
+      "load": "Erro ao carregar as baixas.",
+      "providerBalance": "Este extrato não é de uma conta de provedor ativa: ProviderBalance não vale aqui."
     },
     "filter": {
       "all": "Todos",
@@ -1916,6 +1932,28 @@
       "REJECTED": "rejeitada",
       "FAILED": "falhou",
       "STALE": "desatualizada"
+    },
+    "fee": {
+      "tooltip": "Tarifas e, até a resposta do contador (P3), impostos retidos pelo provedor."
+    },
+    "gross": "bruto",
+    "feeEntry": "retido",
+    "feeAccountHint": "Configure a conta da tarifa do provedor na seção \"Conta da tarifa do provedor\", no topo desta sub-aba (o código da conta é pendência do contador).",
+    "terminalCharge": {
+      "label": "Atenção — cobrança"
+    },
+    "feeCheck": {
+      "ok": "confere com proposto + encargo",
+      "mismatch": "não confere com proposto + encargo"
+    },
+    "feeAccount": {
+      "label": "Conta da tarifa do provedor",
+      "help": "Despesa onde entra o valor retido pelo provedor. Hoje é obrigatória para confirmar baixa com valor retido; quando a conta padrão 4.5 entrar, vazio passará a usar a 4.5. O código da conta é pendência do contador.",
+      "saved": "Conta da tarifa salva.",
+      "error": {
+        "load": "Erro ao carregar a conta da tarifa.",
+        "save": "Não foi possível salvar a conta da tarifa."
+      }
     }
   },
   "fixedAssets": {
@@ -2359,6 +2397,25 @@
       "pTotTribMunCent": "Tributos aproximados — municipal (%)",
       "ibsCbsCst": "IBS/CBS — CST",
       "ibsCbsClassTrib": "IBS/CBS — cClassTrib"
+    },
+    "presumido": {
+      "title": "Prestadora exclusiva de serviços (Presumido/Real)",
+      "ano": "Ano do perfil fiscal (Presumido/Real)",
+      "naoSuportado": "O perfil de {{ano}} é {{regime}}: a prestação exclusiva de serviços só vale no Lucro Presumido ou Real.",
+      "travada": "Forma de apuração travada desde {{data}}: estes campos não podem mais mudar no ano.",
+      "prestadora": "Prestadora exclusiva de serviços",
+      "prestadoraAjuda": "Receita bruta anual até R$ 120 mil, só de serviços: presunção de 16% no IRPJ (IN RFB 1.700/2017 art. 215 § 10).",
+      "declara": "Declaro que a empresa não exerce profissão legalmente regulamentada",
+      "declaraAjuda": "A empresa não é sociedade de profissão legalmente regulamentada nem presta serviço hospitalar ou de transporte (Lei 9.250/1995 art. 40 parágrafo único). O sistema não verifica a profissão: a declaração é responsabilidade da empresa e do contador.",
+      "salvar": "Salvar prestação de serviços",
+      "error": {
+        "load": "Não foi possível carregar o perfil fiscal do ano.",
+        "save": "Não foi possível salvar o perfil fiscal.",
+        "ecdIncompleta": "O perfil do ano tem ECD com campo vazio que o PUT exige — corrija a ECD antes.",
+        "ecfIncompleta": "O perfil do ano tem ECF com campo vazio que o PUT exige — corrija a ECF antes.",
+        "regimeNaoSuportado": "A prestação exclusiva de serviços só vale no Lucro Presumido ou Real.",
+        "confirmacaoAusente": "Para usar 16% como prestadora exclusiva de serviços no Presumido, confirme que a empresa não exerce profissão regulamentada (Lei 9.250/1995 art. 40 parágrafo único)."
+      }
     }
   },
   "dfe": {
@@ -2778,6 +2835,17 @@
     "title": "Política contábil"
   },
   "taxAssessment": {
+    "ibsCbsErro": {
+      "IBS_CBS_ANTES_DE_2027": "A apuração de IBS/CBS começa em 01/2027.",
+      "IBS_CBS_SIMPLES_MEI": "Optante pelo Simples Nacional ou MEI recolhe IBS/CBS no DAS.",
+      "IBS_CBS_ASSESSMENT_CAS": "A apuração deste mês mudou desde a prévia. Refaça a prévia.",
+      "IBS_CBS_ASSESSMENT_ORDER": "Há mês posterior já confirmado. Confirme na ordem ou substitua o posterior.",
+      "IBS_CBS_ASSESSMENT_STALE": "O perfil fiscal ou a apuração mudou durante a confirmação. Refaça a prévia.",
+      "IBS_CBS_ANTECIPACAO_SEM_ALIQUOTA": "Há pacote pago no mês e a alíquota de IBS/CBS da data ainda não foi publicada. A antecipação precisa da alíquota.",
+      "IBS_CBS_CREDITO_CAS": "Este crédito de IBS/CBS não está mais pendente. Recarregue a nota.",
+      "IBS_CBS_CREDITO_AUSENTE": "Esta nota não tem crédito de IBS/CBS a apropriar.",
+      "CBS_RATE_PENDING_SENATE_RES": "A alíquota definitiva da CBS de 2027 depende de Resolução do Senado. Esta prévia usa a taxa de referência provisória e não pode ser confirmada."
+    },
     "title": "Apuração de tributos",
     "ano": "Ano-calendário",
     "loading": "Carregando…",
@@ -3244,6 +3312,214 @@
       "error": {
         "load": "Erro ao carregar as alíquotas sugeridas."
       }
+    }
+  },
+  "collectionCharge": {
+    "action": {
+      "cancel": "Cancelar cobrança",
+      "detail": "Detalhe"
+    },
+    "address": {
+      "city": "Cidade",
+      "neighborhood": "Bairro",
+      "state": "UF",
+      "streetName": "Rua",
+      "streetNumber": "Número",
+      "zipCode": "CEP (8 dígitos)"
+    },
+    "badge": {
+      "overdue": "Vencida — aguardando o provedor",
+      "paidAwaiting": "Pago no provedor, aguardando confirmação"
+    },
+    "banner": {
+      "noLedgerEffect": "Sem efeito no razão; o tratamento contábil de estorno e contestação está pendente do contador (P4) — concilie à mão.",
+      "overdue": "Cancele para não deixar a cobrança aberta.",
+      "paidAwaiting": "A baixa entra pela Conciliação → Baixas por retorno, depois que o relatório de liberações do MP for importado.",
+      "terminal": "Se o pagador pagar mesmo assim, o valor aparece no relatório e a baixa é proposta na Conciliação com aviso."
+    },
+    "cancel": {
+      "cancelling": "Cancelando…",
+      "confirm": "Sim, cancelar",
+      "done": "Cobrança cancelada.",
+      "message": "O pedido de cancelamento vai ao Mercado Pago. Se a cobrança já tiver sido paga ou expirada, vale o estado que o provedor informar.",
+      "notPending": "A cobrança não está mais pendente; a lista foi atualizada.",
+      "providerState": "O provedor informou que a cobrança já estava {{status}}.",
+      "title": "Cancelar cobrança?"
+    },
+    "col": {
+      "actions": "Ações",
+      "amount": "Valor",
+      "expiresAt": "Vencimento",
+      "kind": "Tipo",
+      "provider": "Provedor",
+      "status": "Status",
+      "updatedAt": "Atualizada em"
+    },
+    "detail": {
+      "expiresAt": "vence em {{date}}",
+      "failReason": "Motivo da falha",
+      "paidAt": "Visto pago em",
+      "providerStatus": "Estado no provedor",
+      "refreshNote": "Atualizado por notificação ou re-consulta a cada 15 min.",
+      "title": "Cobrança",
+      "updatedAt": "Atualizada em"
+    },
+    "drawer": {
+      "empty": "Nenhuma cobrança emitida para este título.",
+      "loading": "Carregando cobranças…",
+      "title": "Cobranças do título"
+    },
+    "error": {
+      "cancel": "Não foi possível cancelar a cobrança.",
+      "create": "Não foi possível emitir a cobrança.",
+      "credentialInvalid": "O MP recusou a credencial; grave de novo na aba Cobrança.",
+      "detail": "Erro ao carregar a cobrança.",
+      "keyMissing": "A chave de cifra da instância não está provisionada (pré-condição do deploy, M2). Nenhuma cobrança foi emitida.",
+      "liveExists": "O título já tem cobrança em andamento.",
+      "noActiveAccount": "Não há conta Mercado Pago ativa nesta unidade. Cadastre ou ative a conta na aba Cobrança.",
+      "notChargeable": "O título não está numa situação que permita cobrança.",
+      "nothingToCharge": "O título não tem saldo em aberto para cobrar.",
+      "openCobranca": "Abrir a aba Cobrança",
+      "showCharges": "Ver cobranças do título"
+    },
+    "instrument": {
+      "copyDigitableLine": "Copiar linha digitável",
+      "copyPix": "Copiar código Pix",
+      "digitableLine": "Linha digitável",
+      "openBoleto": "Abrir boleto",
+      "openPix": "Abrir página do Pix",
+      "pixCode": "Pix copia-e-cola",
+      "qrAlt": "QR Code do Pix"
+    },
+    "kind": {
+      "BOLETO": "Boleto",
+      "PIX": "Pix"
+    },
+    "modal": {
+      "address": "Endereço",
+      "addressNotSent": "(não é enviado no Pix)",
+      "addressRequired": "(obrigatório no boleto)",
+      "amount": "Valor",
+      "amountNote": "O valor é o saldo em aberto, relido pelo servidor na hora da emissão.",
+      "boletoDays": "Vencimento em dias (1 a 30)",
+      "boletoDaysHint": "O Mercado Pago recomenda no mínimo 3 dias, por causa da compensação.",
+      "boletoDaysPlaceholder": "Vazio = 3 dias úteis",
+      "cancel": "Voltar",
+      "close": "Fechar",
+      "confirm": "Emitir cobrança",
+      "kind": "Tipo",
+      "payer": "Pagador",
+      "pixValidity": "Validade",
+      "sending": "Emitindo…",
+      "title": "Cobrar título"
+    },
+    "payer": {
+      "docNumber": "Documento",
+      "docType": "Tipo do documento",
+      "email": "E-mail",
+      "firstName": "Nome",
+      "lastName": "Sobrenome"
+    },
+    "pixPreset": {
+      "1h": "1 hora",
+      "24h": "24 horas (padrão)",
+      "30d": "30 dias",
+      "30m": "30 minutos",
+      "3d": "3 dias",
+      "7d": "7 dias"
+    },
+    "result": {
+      "requeued": "A cobrança foi registrada e será reenviada automaticamente.",
+      "summary": "{{amount}} · vence em {{date}}"
+    },
+    "status": {
+      "CANCELLED": "Cancelada",
+      "CHARGED_BACK": "Contestada",
+      "CREATING": "Enviando ao provedor",
+      "EXPIRED": "Expirada",
+      "FAILED": "Falhou",
+      "PAID": "Pago no provedor",
+      "PARTIALLY_REFUNDED": "Estornada em parte",
+      "PENDING": "Pendente",
+      "REFUNDED": "Estornada"
+    }
+  },
+  "paymentProvider": {
+    "action": {
+      "activate": "Ativar",
+      "credential": "Gravar credencial",
+      "deactivate": "Desativar",
+      "delete": "Excluir",
+      "rename": "Renomear"
+    },
+    "copied": "Copiado",
+    "copy": "Copiar",
+    "create": {
+      "confirm": "Cadastrar",
+      "glAccount": "Conta contábil do saldo no Mercado Pago",
+      "glAccountHelp": "O código e o nome desta conta são pendência do contador (saldo \"a liberar\" × \"disponível\").",
+      "glAccountPlaceholder": "Selecione a conta folha",
+      "glAccountRequired": "Selecione a conta contábil.",
+      "immutable": "A conta contábil não pode ser trocada depois; para trocar, crie outra conta.",
+      "label": "Rótulo",
+      "labelInvalid": "Informe um rótulo de 1 a 80 caracteres.",
+      "title": "Cadastrar conta Mercado Pago"
+    },
+    "createCta": "Cadastrar conta Mercado Pago",
+    "credential": {
+      "accessToken": "Access token",
+      "alreadyActive": "Já existe uma conta ativa nesta unidade; desative-a antes.",
+      "confirm": "Gravar",
+      "keyMissing": "A chave de cifra da instância não está provisionada (pré-condição do deploy, M2). Nada foi gravado.",
+      "note": "A credencial é cifrada no servidor e nunca é mostrada de novo; a tela guarda só os 4 últimos dígitos.",
+      "title": "Gravar credencial",
+      "tooShort": "O access token tem no mínimo 20 caracteres e o segredo do webhook, 16.",
+      "webhookSecret": "Segredo do webhook"
+    },
+    "credentialInvalid": "O Mercado Pago recusou a credencial. Grave a credencial de novo para voltar a cobrar.",
+    "credentialNotSet": "Sem credencial gravada",
+    "credentialSet": "Credencial gravada em {{date}} · •••• {{last4}}",
+    "delete": {
+      "confirm": "Sim, excluir",
+      "message": "Excluir a conta \"{{label}}\"?",
+      "title": "Excluir conta?"
+    },
+    "empty": "Nenhuma conta de provedor de pagamento nesta unidade.",
+    "error": {
+      "action": "Não foi possível concluir a operação.",
+      "forbidden": "Você não tem permissão para gerir a conta do provedor."
+    },
+    "heading": "Cobrança — conta do provedor",
+    "loading": "Carregando contas…",
+    "modal": {
+      "cancel": "Voltar",
+      "saving": "Enviando…"
+    },
+    "newAccount": "Nova conta",
+    "openReconciliation": "Ver extratos e baixas",
+    "provider": {
+      "MERCADO_PAGO": "Mercado Pago"
+    },
+    "releaseBlocked": {
+      "hint": "Resolva a sobreposição — por exemplo, exclua o extrato manual que cobre a faixa — e destrave.",
+      "title": "Relatório de liberações bloqueado",
+      "unblock": "Destravar"
+    },
+    "rename": {
+      "confirm": "Salvar",
+      "title": "Renomear conta"
+    },
+    "status": {
+      "ACTIVE": "Ativa",
+      "CREDENTIAL_INVALID": "Credencial recusada",
+      "DISABLED": "Desativada",
+      "DRAFT": "Rascunho"
+    },
+    "webhook": {
+      "copy": "Copiar URL do webhook",
+      "hint": "Cole esta URL no painel do Mercado Pago (Notificações/Webhooks). O webhook só se configura lá, em URL HTTPS de produção.",
+      "notProduction": "Atenção: a base da API não é HTTPS público (ou aponta para localhost). O Mercado Pago não alcança esta URL.",
+      "title": "URL do webhook"
     }
   }
 }

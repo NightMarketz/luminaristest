@@ -63,3 +63,74 @@ Cada passo tem três campos. EVIDÊNCIA é obrigatória e é sempre um artefato 
 - Achados no caminho (fora do escopo deste runbook): [lista ou "nenhum"]
 - Atualização do artefato de rastreio: [linha do master map §5.1 item 4 + linha do GAP-MAP atualizadas com o desfecho + data]
 - Assinatura do executor: ____________
+
+---
+
+# Seção W6 — modo IA do painel de campos (BRIEF WIZARD-W6 itens 19–20)
+
+> Preparada por agente em 2026-10-20 junto com o PR do FE do W6 (`FE-INCR-W6-CUSTOMIZE-FIELDS`). **Em branco de
+> propósito:** EVIDÊNCIA, desfecho e assinatura são do executor humano — runbook sem assinatura é nulo
+> (`docs/operating-manual/RUNBOOK-FORMAT.md`). O agente não rodou este roteiro: não subiu backend com
+> `OPENAI_API_KEY` real nem fez login em build de produção na sessão do PR.
+
+Executor: [nome — humano]           Data: [____]
+Autorização: BRIEF [`WIZARD-W6-CUSTOMIZE-FIELDS-brief.md`](WIZARD-W6-CUSTOMIZE-FIELDS-brief.md) item 20 (gate humano);
+FE autorizado pelo dono em 2026-10-20 ("corrige o body do AIChatMode pro CustomizeFieldsDto"; "FE completo 13–19").
+Rastreio: nota [`docs/plano/nos/W6.md`](../plano/nos/W6.md) e [`docs/plano/gates/H2.md`](../plano/gates/H2.md).
+
+## Pré-condições W6 (verificar TODAS antes do passo W6-1)
+
+| # | Pré-condição | Como verificar | OK? |
+|---|---|---|---|
+| W6-P1 | BE do W6 (#750) e FE do W6 em `main` (ou a branch do PR checada — anote qual) | `git log origin/main --oneline \| grep -i "W6"` ou `git branch --show-current` | [ ] |
+| W6-P2 | P2, P3 e P5 da seção acima valem aqui (servidor sobe, `OPENAI_API_KEY` real, usuário sem tabelas) | os mesmos comandos de P2/P3/P5 | [ ] |
+| W6-P3 | Front em **build de produção** (`cd my-app && npm run build && npm run start`) — `/dashboard/setup` está atrás de `withAuth` | `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/` → `200` | [ ] |
+| W6-P4 | DevTools aberto na aba Network, filtro `CustomizeFields` | — | [ ] |
+
+## Passos W6
+
+1. W6-1 — Fazer login, abrir `/dashboard/setup`, aba **Entrevista com IA**, conduzir a entrevista até a escolha e responder **customizar**.
+   Resultado esperado: o painel de customização abre com as tabelas do preset.
+   EVIDÊNCIA: [screenshot do painel]
+
+2. W6-2 — Escolher uma tabela (ex.: Clientes) e, no painel da direita, clicar no modo **IA**.
+   Resultado esperado: as boas-vindas do modo IA e o botão "Voltar ao modo manual".
+   EVIDÊNCIA: [screenshot]
+
+3. W6-3 — Enviar "preciso guardar alergias do cliente".
+   Resultado esperado: `POST /api/dashboard/ai/CustomizeFields` → **200**, corpo `{kind:"message", sessionId, tableKey, message}` **sem** `conversationHistory`; aparece o cartão "Proposta da IA" com o campo novo e o selo **"Dado sensível (LGPD)"**; o botão **Aplicar** está desabilitado.
+   EVIDÊNCIA: [linha do Network com status + aba Payload + screenshot do cartão com o selo e o Aplicar cinza]
+
+4. W6-4 — Marcar "Entendo que este campo guarda dado sensível" e clicar **Aplicar**.
+   Resultado esperado: `POST /api/dashboard/ai/CustomizeFields` → **200**, corpo com `kind:"decision"`, `decision:"apply"` e `acknowledgeSensitive:true`; o cartão some e a conversa ganha a nota de proposta aplicada.
+   EVIDÊNCIA: [linha do Network + aba Payload + screenshot]
+
+5. W6-5 — Clicar em "Voltar ao modo manual".
+   Resultado esperado: a lista de campos da tabela mostra o campo novo (ex.: Alergias).
+   EVIDÊNCIA: [screenshot da lista de campos]
+
+6. W6-6 — Contraprova do descarte: voltar ao modo IA, pedir outra mudança (ex.: "não preciso do fax") e clicar **Descartar**.
+   Resultado esperado: `decision:"discard"` → 200; o cartão some; a lista do modo manual **não** muda.
+   EVIDÊNCIA: [linha do Network + screenshot do modo manual]
+
+7. W6-7 — Modo manual grava na sessão (emenda de 21/10, BRIEF `WIZARD-W6-MANUAL-SESSION-brief.md`): no modo **Manual**, clicar **Novo Campo**, criar "Apelido" (tipo Texto), desmarcar "Visível" de um campo existente e clicar **Salvar Alterações**.
+   Resultado esperado: `POST /api/dashboard/ai/CustomizeFields` → **200**, corpo `{kind:"manual", …, changes:[{action:"setHidden",…},{action:"add",…}]}`; aparece "Alterações salvas com sucesso!" e o Salvar fica cinza (nada pendente). O tipo **Senha** não aparece no formulário.
+   EVIDÊNCIA: [linha do Network + aba Payload + screenshot do painel]
+
+8. W6-8 — O manual sobrevive à IA: voltar ao modo **IA**, pedir "quero também a data de nascimento" e clicar **Aplicar** na proposta.
+   Resultado esperado: a proposta não reapresenta o "Apelido"; depois do Aplicar, o modo manual mostra "Apelido", a data de nascimento e o campo escondido continua escondido.
+   EVIDÊNCIA: [screenshot do modo manual depois do Aplicar]
+
+9. W6-9 — Campo sensível no manual: criar "Alergias" no modo manual.
+   Resultado esperado: selo **"Dado sensível (LGPD)"**, o texto do art. 5º, II e a caixa "Entendo que este campo guarda dado sensível"; Salvar cinza até marcar; com a caixa marcada, o corpo leva `acknowledgeSensitive:true` → 200.
+   EVIDÊNCIA: [screenshot do bloco com o Salvar cinza + linha do Network com o Payload]
+
+## Desfecho W6 (marcar UM)
+[ ] PASSOU — todos os passos com evidência conferindo com o esperado
+[ ] FALHOU — passo __ divergiu; evidência da divergência colada acima; NENHUM passo seguinte foi executado após a falha
+[ ] BLOQUEADO — pré-condição __ não se sustentava; execução nem começou
+
+## Registro W6
+- Achados no caminho (fora do escopo deste runbook): [lista ou "nenhum"]
+- Atualização do artefato de rastreio: [nota `docs/plano/nos/W6.md` (estado) + `docs/plano/gates/H2.md` atualizadas com o desfecho + data]
+- Assinatura do executor: ____________

@@ -10,6 +10,8 @@ if (_rawSecret.length < 32) {
 }
 const JWT_SECRET: Secret = _rawSecret;
 const JWT_EXPIRES_IN = ((process.env.JWT_EXPIRES_IN as string | undefined) || '7d') as SignOptions['expiresIn'];
+/** "Lembrar-me" no login (§3.4 #16, dono 2026-10-22): 30 dias; o cookie do FE usa o mesmo prazo. */
+const JWT_REMEMBER_EXPIRES_IN: SignOptions['expiresIn'] = '30d';
 
 interface JWTPayload {
   id: string;
@@ -18,10 +20,12 @@ interface JWTPayload {
   userId?: string;
   email?: string;
   name?: string;
+  /** User.tokenVersion at issue time; absent = 0 (tokens issued before §3.4 #3). */
+  tokenVersion?: number;
 }
 
-export function generateToken(payload: JWTPayload): string {
-  const options: SignOptions = { expiresIn: JWT_EXPIRES_IN, algorithm: 'HS256' };
+export function generateToken(payload: JWTPayload, opts: { rememberMe?: boolean } = {}): string {
+  const options: SignOptions = { expiresIn: opts.rememberMe ? JWT_REMEMBER_EXPIRES_IN : JWT_EXPIRES_IN, algorithm: 'HS256' };
   return jwt.sign(payload as object, JWT_SECRET, options);
 }
 

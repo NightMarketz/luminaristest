@@ -184,6 +184,8 @@ export interface AccountingScopeSettings {
   disposalGainAccountId: string | null;
   disposalLossAccountId: string | null;
   depreciationParteBAccountId: string | null;
+  /** F5 PR-3 (P3-11): conta da tarifa do provedor; sem ela o confirm com `feeCents > 0` dá 400. */
+  providerFeeExpenseAccountId: string | null;
   updatedAt: string | null;
 }
 
@@ -192,6 +194,9 @@ export type FixedAssetAccountsPatch = Pick<
   UpdateAccountingScopeSettingsInput,
   'unitId' | 'depreciationExpenseAccountId' | 'disposalGainAccountId' | 'disposalLossAccountId'
 >;
+
+/** PATCH parcial da conta da tarifa do provedor (FE-INCR-BANK-SETTLEMENT-FEE item 7, F-FEE-E1 → a) — só ela. */
+export type ProviderFeeAccountPatch = Pick<UpdateAccountingScopeSettingsInput, 'unitId' | 'providerFeeExpenseAccountId'>;
 
 export interface Account {
   id: string;
@@ -328,6 +333,11 @@ export interface BankStatement {
   sha256: string;
   attachmentId: string | null;
   importedById: string | null;
+  /**
+   * F5 PR-3 (G1): extrato `mp_release` de uma PaymentAccount; null = extrato bancário. Vem na lista porque o
+   * `findStatements` do BE não tem `select` (FE-INCR-PAYMENT-PROVIDER item 25; mesmo campo da EMENDA 1 do FEE item 11).
+   */
+  paymentAccountId: string | null;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
@@ -432,8 +442,11 @@ export interface ImportStatementParams {
   periodStart: string;
   periodEnd: string;
   statementRef?: string;
+  /** Proibidos quando `format = 'mp_release'` (G2: o BE dá 400 `release_report_balance_from_file`). */
   openingBalanceCents?: number;
   closingBalanceCents?: number;
+  /** G6: relatório de liberações do Mercado Pago. Ausente = detecção pelo conteúdo. */
+  format?: 'mp_release';
 }
 
 /** The standard server response envelope: { success, data }. */
@@ -732,6 +745,13 @@ export const accountingService = {
     return res.data;
   },
 
+  /** PUT parcial só com a conta da tarifa do provedor (F-FEE-E1 → a). */
+  async updateProviderFeeAccount(input: ProviderFeeAccountPatch): Promise<AccountingScopeSettings> {
+    const res = await apiClient.put<ApiEnvelope<AccountingScopeSettings>>('/accounting/settings', input);
+    notify('Conta da tarifa do provedor salva.', 'success', 'Contabilidade');
+    return res.data;
+  },
+
   /** List journal entries (lançamentos) for a unit — raw paginated list. */
   async getEntries(unitId: string): Promise<{ entries: JournalEntry[]; total: number }> {
     const qs = buildQuery({ unitId });
@@ -907,6 +927,7 @@ export const accountingService = {
     if (params.closingBalanceCents !== undefined) {
       form.append('closingBalanceCents', String(params.closingBalanceCents));
     }
+    if (params.format) form.append('format', params.format);
     const response = await fetch(`${reconBaseUrl()}/accounting/reconciliation/statements`, {
       method: 'POST',
       headers: reconAuthHeaders(), // no Content-Type — browser sets the multipart boundary

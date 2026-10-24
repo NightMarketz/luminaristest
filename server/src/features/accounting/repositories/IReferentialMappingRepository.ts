@@ -63,6 +63,9 @@ export interface IReferentialMappingRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<ReferentialMapping[]>;
 
+  /** IRRF-DISTRIBUICAO PR-1 (item 6): as versões que o escopo já mapeia — onde a cobertura da ECD é lida. */
+  findDistinctVersions(scope: AccountingScope, tx?: Prisma.TransactionClient): Promise<string[]>;
+
   /** Runs fn inside a DB transaction (the only tx entry point for the service). */
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 }

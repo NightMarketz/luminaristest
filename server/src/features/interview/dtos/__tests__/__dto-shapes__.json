@@ -156,6 +156,119 @@
             "decision"
           ],
           "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "manual"
+            },
+            "sessionId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "tableKey": {
+              "type": "string",
+              "minLength": 1
+            },
+            "changes": {
+              "minItems": 1,
+              "maxItems": 50,
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "action": {
+                        "type": "string",
+                        "const": "add"
+                      },
+                      "field": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "label": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "string",
+                              "number",
+                              "boolean",
+                              "date",
+                              "datetime"
+                            ]
+                          },
+                          "format": {
+                            "type": "string",
+                            "enum": [
+                              "email",
+                              "phone"
+                            ]
+                          },
+                          "required": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "label",
+                          "type",
+                          "required"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "action",
+                      "field"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "action": {
+                        "type": "string",
+                        "const": "setHidden"
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "hidden": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "action",
+                      "name",
+                      "hidden"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "acknowledgeSensitive": {
+              "type": "boolean",
+              "const": true
+            }
+          },
+          "required": [
+            "kind",
+            "sessionId",
+            "tableKey",
+            "changes"
+          ],
+          "additionalProperties": false
         }
       ]
     }

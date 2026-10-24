@@ -23,6 +23,7 @@ model User {
   role                       Role                        @default(USER)
   locale                     String                      @default("en") // 'en' | 'pt'
   currency                   String                      @default("BRL") // 'BRL' | 'USD' | 'EUR'
+  tokenVersion               Int                         @default(0) // FIX-AUTH-CONTA §3.4 #3 — logout incrementa; JWT de versão antiga → 401
   onboardingCompletedAt      DateTime? // T0 do time-to-first-ECD — gravado na tx de installPresetAsSystem (ADR-P2 emenda R7, F-I2-1 → a)
   createdAt                  DateTime                    @default(now())
   updatedAt                  DateTime                    @updatedAt
@@ -59,7 +60,11 @@ model User {
   accountingContacts         AccountingContact[] // Relation to AccountingContact (contador destinatário, BE-INCR-CONTADOR-DELIVERY)
   companyFiscalProfiles      CompanyFiscalProfile[] // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13) — perfil da empresa por ano
   companySigners             CompanySigner[] // X13 (F-OBP-9 a) — representante legal / signatários não-contador
+  partners                   Partner[] // IRRF-DISTRIBUICAO PR-1 (F-IRD-2, F-IRD-14) — sócios beneficiários da distribuição
+  profitDistributionEvents   ProfitDistributionEvent[] // IRRF-DISTRIBUICAO PR-2 (BRIEF item 10)
+  interestOnEquityCalculations InterestOnEquityCalculation[] // IRRF-DISTRIBUICAO PR-4 (BRIEF item 27)
   taxAssessments             TaxAssessment[] // BE-INCR-TAX-ASSESSMENT Fase A (nó X7, item 12) — apuração IRPJ/CSLL da PJ
+  consumptionTaxAssessments  ConsumptionTaxAssessment[] // IBS-CBS-2027 PR-2 (item 8) — apuração mensal de IBS/CBS
   mitExports                 MitExport[] // BE-INCR-MIT-EXPORT PR-2 (nó X9, item 11) — arquivos do MIT gerados
   simplesHistorico           SimplesHistoricoMensal[] // BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14, itens 10–11)
   simplesApuracoes           SimplesApuracao[] // X14 PR-3 item 19
@@ -578,6 +583,14 @@ model Account {
   cofinsRecolherOf                   FiscalProfile[]           @relation("FiscalProfileCofinsRecolher") // X8 item 2
   irpjSaldoNegativoOf                FiscalProfile[]           @relation("FiscalProfileIrpjSaldoNegativo") // X7 Fase B item 16 (F-TB-3 a)
   csllSaldoNegativoOf                FiscalProfile[]           @relation("FiscalProfileCsllSaldoNegativo") // X7 Fase B item 16 (F-TB-3 a)
+  dividendosPagarOf                  FiscalProfile[]           @relation("FiscalProfileDividendosPagar") // IRRF-DISTRIBUICAO item 7
+  jcpPagarOf                         FiscalProfile[]           @relation("FiscalProfileJcpPagar") // IRRF-DISTRIBUICAO item 7
+  irrfRecolherOf                     FiscalProfile[]           @relation("FiscalProfileIrrfRecolher") // IRRF-DISTRIBUICAO item 7
+  jcpDespesaOf                       FiscalProfile[]           @relation("FiscalProfileJcpDespesa") // IRRF-DISTRIBUICAO item 7
+  ibsRecolherOf                      FiscalProfile[]           @relation("FiscalProfileIbsRecolher") // IBS-CBS-2027 PR-2 item 12
+  cbsRecolherOf                      FiscalProfile[]           @relation("FiscalProfileCbsRecolher") // IBS-CBS-2027 PR-2 item 12
+  ibsRecuperarOf                     FiscalProfile[]           @relation("FiscalProfileIbsRecuperar") // IBS-CBS-2027 PR-3 item 14
+  cbsRecuperarOf                     FiscalProfile[]           @relation("FiscalProfileCbsRecuperar") // IBS-CBS-2027 PR-3 item 14
   pisCofinsRecuperavelOf             FiscalProfile[]           @relation("FiscalProfilePisCofinsRecuperavel") // X6 F-X6-8 a: crédito de PIS/COFINS a recuperar
   pisCofinsCreditoOutrosOf           FiscalProfile[]           @relation("FiscalProfilePisCofinsCreditoOutros") // X8 PR-3 (L-5)
   pisCofinsRetidoCompensarOf         FiscalProfile[]           @relation("FiscalProfilePisCofinsRetidoCompensar") // X8 PR-3 (retenções)
@@ -1066,7 +1079,7 @@ model PackageBalanceMovement {
   customerId String
   packageId  String
   saleId     String // the sale (DynamicTable row id) that originated this movement; for 'expiry' the key 'expiry:<balanceId>:<expiresOn>'
-  kind       String // 'credit' (package-sale origin) | 'debit' (Package Balance consumption) | 'expiry' (remaining balance released)
+  kind       String // 'credit' (package-sale origin) | 'debit' (Package Balance consumption) | 'expiry' (remaining balance released) | 'reversal' (origin credit taken back on cancellation, E-1)
   deltaCents BigInt // always > 0; direction is given by `kind`
   createdAt  DateTime @default(now())
 
@@ -1648,6 +1661,25 @@ model FiscalProfile {
   irpjSaldoNegativoAccount            Account?  @relation("FiscalProfileIrpjSaldoNegativo", fields: [irpjSaldoNegativoAccountId], references: [id], onDelete: Restrict)
   csllSaldoNegativoAccountId          String? // Asset
   csllSaldoNegativoAccount            Account?  @relation("FiscalProfileCsllSaldoNegativo", fields: [csllSaldoNegativoAccountId], references: [id], onDelete: Restrict)
+  // BE-INCR-IRRF-DISTRIBUICAO PR-1 (item 7, molde F-TA-7): contas da distribuição de lucros e do JCP — código do contador
+  dividendosPagarAccountId            String? // Liability
+  dividendosPagarAccount              Account?  @relation("FiscalProfileDividendosPagar", fields: [dividendosPagarAccountId], references: [id], onDelete: Restrict)
+  jcpPagarAccountId                   String? // Liability
+  jcpPagarAccount                     Account?  @relation("FiscalProfileJcpPagar", fields: [jcpPagarAccountId], references: [id], onDelete: Restrict)
+  irrfRecolherAccountId               String? // Liability
+  irrfRecolherAccount                 Account?  @relation("FiscalProfileIrrfRecolher", fields: [irrfRecolherAccountId], references: [id], onDelete: Restrict)
+  jcpDespesaAccountId                 String? // Expense
+  jcpDespesaAccount                   Account?  @relation("FiscalProfileJcpDespesa", fields: [jcpDespesaAccountId], references: [id], onDelete: Restrict)
+  // IBS-CBS-2027 PR-2 (item 12, F-IBS-8 c): IBS e CBS a recolher (Liability) — o passivo da reclassificação mensal
+  ibsRecolherAccountId                String? // Liability
+  ibsRecolherAccount                  Account?  @relation("FiscalProfileIbsRecolher", fields: [ibsRecolherAccountId], references: [id], onDelete: Restrict)
+  cbsRecolherAccountId                String? // Liability
+  cbsRecolherAccount                  Account?  @relation("FiscalProfileCbsRecolher", fields: [cbsRecolherAccountId], references: [id], onDelete: Restrict)
+  // IBS-CBS-2027 PR-3 (item 14; dono 21/10 "razão completo"): IBS e CBS a recuperar (Asset) — o crédito da NF-e de entrada
+  ibsRecuperarAccountId               String? // Asset
+  ibsRecuperarAccount                 Account?  @relation("FiscalProfileIbsRecuperar", fields: [ibsRecuperarAccountId], references: [id], onDelete: Restrict)
+  cbsRecuperarAccountId               String? // Asset
+  cbsRecuperarAccount                 Account?  @relation("FiscalProfileCbsRecuperar", fields: [cbsRecuperarAccountId], references: [id], onDelete: Restrict)
   partnerAccountRef                   String? // R8 item 2: conta de emissão no parceiro POR UNIDADE — reservado; BE-INCR-DFE preenche
   // BE-INCR-DFE (nó X10b, BRIEF item 1) — emitente (ADR-DFE D5) + itens 5a–5f do contador como CONFIG
   // (D-X10b-2: default = recomendação do ADR, ambos os ramos implementados). Nullable/default => a linha X6
@@ -1750,6 +1782,9 @@ model CompanyFiscalProfile {
   // COMPETENCIA (0..365 dias).
   simplesCaixaPrazoCartaoDebitoDias  Int?
   simplesCaixaPrazoCartaoCreditoDias Int?
+  // BE-INCR-IRRF-DISTRIBUICAO PR-1 (item 8, F-IRD-15): mapa das contas do PL na base do JCP (IN 1.700 art. 75 I–V) —
+  // { CAPITAL_INTEGRALIZADO, RESERVAS_CAPITAL, RESERVAS_LUCROS, ACOES_TESOURARIA, LUCROS_ACUMULADOS: accountId[] }.
+  jcpBaseContas                    Json?
   createdById                      String?
   updatedById                      String?
   createdAt                        DateTime           @default(now())
@@ -1760,6 +1795,136 @@ model CompanyFiscalProfile {
   @@index([contadorContactId])
   @@index([representanteLegalSignerId])
   @@map("company_fiscal_profiles")
+}
+
+// BE-INCR-IRRF-DISTRIBUICAO PR-1 (itens 1–4; F-IRD-2, F-IRD-14) — sócio beneficiário da distribuição de lucros e do JCP.
+// PJ-wide (userId = PJ, R8; sem unitId). Vigência [entradaEm, saidaEm] (date-only; saidaEm null = em aberto) sem
+// sobreposição por taxId na mesma PJ — gate do serviço DENTRO da tx (SQLite não tem exclusion constraint).
+// nome/taxId são PII — nunca em auditoria (BRIEF item 33).
+model Partner {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nome            String
+  taxId           String // CPF (11) ou CNPJ (14) só dígitos, com DV validado
+  tipoPessoa      String // PF | PJ — derivado do tamanho do taxId
+  residenteBrasil Boolean
+  participacaoBp  Int // 0..10000
+  entradaEm       String // YYYY-MM-DD
+  saidaEm         String? // YYYY-MM-DD inclusive; null = em aberto
+  createdById     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  profitDistributionEvents ProfitDistributionEvent[]
+  interestOnEquityAllocations InterestOnEquityAllocation[]
+
+  @@index([userId, taxId])
+  @@map("partners")
+}
+
+// BE-INCR-IRRF-DISTRIBUICAO PR-2 (BRIEF itens 10–21; F-IRD-4, F-IRD-6, F-IRD-8, F-IRD-9) — evento de distribuição de
+// lucros com o IRRF do art. 6º-A da Lei 9.250. PJ = `userId`; a soma do mês é por `taxId` em TODAS as unidades. Imutável
+// depois de postado: correção = cancelamento com estorno (só o último do mês, F-IRD-8). Lançamento em 2 commits + CAS
+// (`entryId`) + reconcile, molde X7. `memoria` = MemoriaDistribuicao (dto); nome/CPF do sócio nunca aqui nem na auditoria.
+model ProfitDistributionEvent {
+  id                  String    @id @default(cuid())
+  userId              String // a PJ
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId              String // unidade do lançamento (proveniência)
+  partnerId           String
+  partner             Partner   @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+  taxId               String // cópia do taxId do sócio: a soma do mês é por CPF, não por linha de sócio
+  evento              String // CREDITO | PAGAMENTO | EMPREGO | ENTREGA (F-IRD-4)
+  dataEvento          String // YYYY-MM-DD
+  competencia         String // YYYY-MM (derivada de dataEvento)
+  debitoAccountId     String // Equity: lucros acumulados ou reserva
+  contraAccountId     String // CREDITO = dividendos a pagar do perfil; PAGAMENTO/ENTREGA = Asset; EMPREGO = Equity
+  brutoCents          BigInt
+  irrfCents           BigInt
+  liquidoCents        BigInt
+  origemLucro         String // CORRENTE | TRANSICAO (F-IRD-6)
+  anoResultado        Int?
+  aprovadoEm          String? // YYYY-MM-DD
+  atoSourceDocumentId String?
+  memoria             Json
+  parametrosIds       Json
+  parametrosSha256    String
+  avisoSaldoLucro     String?
+  status              String // PENDING_POST | POSTED | CANCELLED
+  entryId             String?
+  cancelledAt         DateTime?
+  cancelledById       String?
+  cancelReason        String?
+  createdById         String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime?
+
+  @@index([userId, competencia])
+  @@index([userId, partnerId, competencia])
+  @@index([userId, taxId, competencia])
+  @@map("profit_distribution_events")
+}
+
+// BE-INCR-IRRF-DISTRIBUICAO PR-4 (BRIEF itens 27–31; F-IRD-11, F-IRD-17; lacunas L-IRD-4/5/6) — JCP confirmado: um cálculo
+// vivo por (PJ, ano, período), com rename-on-cancel em `vivoKey` ('VIVO' → o próprio id; memória "@@unique de
+// idempotência × soft-delete"). Lançamento em 2 commits + CAS (`entryId`) + reconcile; a Parte A do e-Lalur/e-Lacs
+// (linhas `system`) entra num 3º commit com o CAS de `lalurEntryIds`. `memoria` = faixas, limites e avisos da prévia.
+model InterestOnEquityCalculation {
+  id                    String                       @id @default(cuid())
+  userId                String // a PJ
+  user                  User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId                String // unidade do lançamento e do razão lido
+  anoCalendario         Int
+  periodo               String // T01..T04 | A00 (F-IRD-17)
+  dataCredito           String // YYYY-MM-DD
+  forma                 String // DESPESA | PL (F-IRD-11)
+  debitoAccountId       String // a conta debitada: despesa de JCP (DESPESA) ou a conta de PL escolhida (PL)
+  memoria               Json
+  jurosMaxTjlpCents     BigInt
+  limite50LucroCents    BigInt
+  limite50ReservasCents BigInt
+  limiteDedutivelCents  BigInt
+  totalCents            BigInt
+  irrfCents             BigInt
+  liquidoCents          BigInt
+  excessoCents          BigInt
+  parametrosIds         Json
+  parametrosSha256      String
+  previaSha256          String
+  status                String // PENDING_POST | POSTED | CANCELLED
+  vivoKey               String // 'VIVO' enquanto vivo; o id depois de cancelado (libera o @@unique)
+  entryId               String?
+  lalurEntryIds         Json? // null = Parte A ainda não gravada; [] = nada a gravar
+  cancelledAt           DateTime?
+  cancelledById         String?
+  createdById           String?
+  createdAt             DateTime                     @default(now())
+  updatedAt             DateTime                     @updatedAt
+  deletedAt             DateTime?
+  alocacoes             InterestOnEquityAllocation[]
+
+  @@unique([userId, anoCalendario, periodo, vivoKey])
+  @@index([userId, dataCredito])
+  @@map("interest_on_equity_calculations")
+}
+
+// BE-INCR-IRRF-DISTRIBUICAO PR-4 (item 27) — a parte de cada sócio no JCP: bruto, IRRF de 17,5% e líquido.
+model InterestOnEquityAllocation {
+  id             String                      @id @default(cuid())
+  calculationId  String
+  calculation    InterestOnEquityCalculation @relation(fields: [calculationId], references: [id], onDelete: Restrict)
+  partnerId      String
+  partner        Partner                     @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+  participacaoBp Int
+  brutoCents     BigInt
+  irrfCents      BigInt
+  liquidoCents   BigInt
+  createdAt      DateTime                    @default(now())
+
+  @@index([calculationId])
+  @@map("interest_on_equity_allocations")
 }
 
 // X13 (F-OBP-9 a) — signatário da empresa que NÃO é o contador (sócio/administrador, responsável legal). O contador
@@ -1801,6 +1966,7 @@ model ServiceFiscalProfile {
   cIndOp        String    @default("030101") // Anexo C (models/indOp.ts) [339]
   cLocPrestacao String? // IBGE 7 [192]; null => FiscalProfile.codMun (EP — grupo 6 da lista, MUN.INCID l.73-78)
   xDescServ     String? // [197]; null => services.name
+  cClassTrib    String? // IBS-CBS-2027 PR-1 (F-IBS-10 a): 6 dígitos; null => FiscalProfile.ibsCbsClassTrib
   createdById   String?
   updatedById   String?
   createdAt     DateTime  @default(now())
@@ -2004,6 +2170,13 @@ model BankSettlementItem {
   shortfallCents       BigInt                     @default(0) // E11 — max(0, saldo − |linha|) no scan; re-derivado no pré-cheque
   shortfallTreatment   String? // E12 — SHORTFALL_TREATMENTS, gravado no confirm
   discountSettlementId String? // E12 — payable_payments.id | receivable_receipts.id (kind DISCOUNT)
+  // IBS-CBS-2027 PR-4 (itens 19–20, EMENDA PR-4 dono 22/10): split informado no 1º confirm, relido pelo retry;
+  // shortfallTreatment = 'SPLIT_IBS_CBS'. Recibos sem caixa D IBS|CBS a recolher / C cliente, um por tributo.
+  splitIbsCents        BigInt                     @default(0)
+  splitCbsCents        BigInt                     @default(0)
+  splitCompetencia     String? // AAAA-MM do débito extinto (Dec. 12.955 arts. 27 § 1º e 44 § 3º)
+  splitIbsReceiptId    String? // receivable_receipts.id (kind SPLIT_IBS_CBS) — etapa SPLIT, idempotente pelo id gravado
+  splitCbsReceiptId    String?
   chargeParts          BankSettlementChargePart[]
   confirmedById   String?
   confirmedAt     DateTime?
@@ -2782,6 +2955,39 @@ model TaxAssessment {
 
   @@index([userId, anoCalendario, tributo, periodo])
   @@map("tax_assessments")
+}
+
+// IBS-CBS-2027 PR-2 (BRIEF docs/accounting/BE-INCR-IBS-CBS-2027-brief.md item 8, contrato §4.1; F-IBS-2 a): apuração
+// MENSAL de IBS/CBS da PJ, uma linha por (ano, mês, tributo). Imutável por CAS (CONFIRMED → SUPERSEDED). Sem dispensaArt348
+// (D9 não implementado — F-IBS-7 b). `provisaoEntryId` fica null até o item 12 (aguarda #794).
+model ConsumptionTaxAssessment {
+  id                  String    @id @default(cuid())
+  userId              String
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId              String
+  anoCalendario       Int // >= 2027 (F-IBS-7 b)
+  mes                 Int // 1..12 (art. 43)
+  tributo             String // IBS | CBS
+  regime              String // PRESUMIDO | REAL
+  debitosCents        BigInt
+  creditosCents       BigInt // só APROPRIADO
+  saldoCents          BigInt // débitos − créditos; negativo = saldo credor
+  memoria             Json
+  parametrosIds       Json
+  parametrosSha256    String
+  entradaInformada    Json?
+  avisoParametroLegal String?
+  status              String // CONFIRMED | SUPERSEDED
+  supersedesId        String?
+  provisaoEntryId     String?
+  confirmedById       String
+  confirmedAt         DateTime
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime?
+
+  @@index([userId, anoCalendario, mes, tributo])
+  @@map("consumption_tax_assessments")
 }
 
 // BE-INCR-MIT-EXPORT PR-2 (nó X9, BRIEF item 11; F-X9-2 a) — registro de cada arquivo do MIT gerado, molde

@@ -8,7 +8,7 @@ import type { AccountingScope } from '../../accounting/scope/AccountingScope';
  * (BE-INCR-PACOTE-VALIDADE item 7: the remaining balance released when the validity ends — its
  * `saleId` column carries the movement key `expiry:<balanceId>:<expiresOn>`, not a sale id).
  */
-export type PackageMovementKind = 'credit' | 'debit' | 'expiry';
+export type PackageMovementKind = 'credit' | 'debit' | 'expiry' | 'reversal';
 
 /** Input for appending one balance movement (idempotency key is userId+unitId+saleId+kind). */
 export interface CreateMovementInput {

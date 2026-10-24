@@ -6,9 +6,13 @@ interface TextareaFieldProps {
   onChange: (name: string, value: unknown) => void;
   className: string;
   required?: boolean;
+  readOnly?: boolean;
+  disabled?: boolean;
+  'aria-invalid'?: boolean;
+  'aria-describedby'?: string;
 }
 
-function TextareaField({ name, value, onChange, className, required }: TextareaFieldProps) {
+function TextareaField({ name, value, onChange, className, required, readOnly, disabled, 'aria-invalid': ariaInvalid, 'aria-describedby': ariaDescribedBy }: TextareaFieldProps) {
   function handleChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
     onChange(name, event.target.value);
   }
@@ -21,6 +25,10 @@ function TextareaField({ name, value, onChange, className, required }: TextareaF
       onChange={handleChange}
       className={className}
       required={required}
+      readOnly={readOnly}
+      disabled={disabled}
+      aria-invalid={ariaInvalid}
+      aria-describedby={ariaDescribedBy}
       rows={6}
     />
   );

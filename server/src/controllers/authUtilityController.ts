@@ -17,6 +17,9 @@ export async function me(req: Request, res: Response) {
 
 export async function logout(req: Request, res: Response) {
   try {
+    // §3.4 #3 — bump the token version so this JWT (and every older one) stops validating.
+    const ctx = getUserContextFromRequest(req);
+    if (ctx) await getFactory().getUserService().revokeTokens(ctx.userId);
     res.clearCookie('auth_token', { path: '/', sameSite: 'lax' });
     res.clearCookie('auth_token', { path: '/', sameSite: 'lax', httpOnly: true });
     return res.json({ success: true });

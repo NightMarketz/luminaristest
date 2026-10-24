@@ -15,8 +15,10 @@ export const register = async (req: Request, res: Response) => {
     const parsed = CreateUserSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
 
-    const user = await getFactory().getUserService().createUser(parsed.data, null);
-    const token = generateToken({ id: user.id, username: user.username, role: user.role });
+    const service = getFactory().getUserService();
+    const user = await service.createUser(parsed.data, null);
+    const tokenVersion = (await service.getTokenVersion(user.id)) ?? 0;
+    const token = generateToken({ id: user.id, username: user.username, role: user.role, tokenVersion });
 
     return res.status(201).json({ success: true, data: { user, token } });
   } catch (error) {
@@ -34,11 +36,13 @@ export const login = async (req: Request, res: Response) => {
     const parsed = LoginSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
 
-    const { identifier, username, email, password } = parsed.data;
+    const { identifier, username, email, password, rememberMe } = parsed.data;
     const loginId = (identifier ?? username ?? email) as string;
 
-    const user = await getFactory().getUserService().authenticate(loginId, password);
-    const token = generateToken({ id: user.id, username: user.username, role: user.role });
+    const service = getFactory().getUserService();
+    const user = await service.authenticate(loginId, password);
+    const tokenVersion = (await service.getTokenVersion(user.id)) ?? 0;
+    const token = generateToken({ id: user.id, username: user.username, role: user.role, tokenVersion }, { rememberMe });
 
     return res.json({ success: true, data: { user, token } });
   } catch (error) {

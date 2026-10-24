@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'next-i18next';
 import { ITableField } from '../../types/RightSidebarTypes';
+import { MANUAL_FORM_TYPES } from './manualChanges';
 
 interface NewFieldFormProps {
   newField: ITableField;
@@ -68,14 +69,9 @@ function NewFieldForm({ newField, setNewField, onAddField, onCancel }: NewFieldF
             onChange={(e) => setNewField({ ...newField, type: e.target.value })}
             className="w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:border-neutral-600 dark:text-white"
           >
-            <option value="string">{t('onboardingFieldsType_string')}</option>
-            <option value="number">{t('onboardingFieldsType_number')}</option>
-            <option value="boolean">{t('onboardingFieldsType_boolean')}</option>
-            <option value="date">{t('onboardingFieldsType_date')}</option>
-            <option value="datetime">{t('onboardingFieldsType_datetime')}</option>
-            <option value="email">{t('onboardingFieldsType_email')}</option>
-            <option value="password">{t('onboardingFieldsType_password')}</option>
-            <option value="phone">{t('onboardingFieldsType_phone')}</option>
+            {MANUAL_FORM_TYPES.map((type) => (
+              <option key={type} value={type}>{t(`onboardingFieldsType_${type}`)}</option>
+            ))}
           </select>
         </div>
         
@@ -106,7 +102,7 @@ function NewFieldForm({ newField, setNewField, onAddField, onCancel }: NewFieldF
           <button
             type="button"
             onClick={onAddField}
-            disabled={!newField.name || !newField.label}
+            disabled={!newField.name.trim() || !newField.label.trim()}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed"
           >
             {t('onboardingFieldsAdd')}

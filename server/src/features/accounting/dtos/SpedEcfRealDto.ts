@@ -1,5 +1,13 @@
 import { z } from 'zod';
-import { DeclarantSchema, SignerSchema, refineEcfSigners, refineEcfRectification } from './SpedEcfDto';
+import {
+  DeclarantSchema,
+  SignerSchema,
+  refineEcfSigners,
+  refineEcfRectification,
+  SocioEcfSchema,
+  DirigenteEcfSchema,
+  refineEcfY600,
+} from './SpedEcfDto';
 
 /**
  * Zod DTO for SPED ECF generation — Lucro Real (ADR-INCR-SPED-ECF-FASE3, esqueleto;
@@ -69,6 +77,9 @@ export const SpedEcfRealRequestSchema = z
     declarant: DeclarantSchema,
     fiscal: FiscalRealSchema,
     signers: z.array(SignerSchema).min(1).max(2),
+    // Y600 (BE-INCR-ECF-Y600 item 13, F-Y600-1 → a): mesmos schemas e refine do Presumido (item 7).
+    socios: z.array(SocioEcfSchema).max(999),
+    dirigentes: z.array(DirigenteEcfSchema).max(999).default([]),
     retificadora: z.enum(['N', 'S']).default('N'),
     numRec: z.string().optional(),
     supersedesJobId: z.string().min(1).optional(),
@@ -76,6 +87,7 @@ export const SpedEcfRealRequestSchema = z
   })
   .strict()
   .superRefine(refineEcfSigners)
-  .superRefine((val, ctx) => refineEcfRectification(val, ctx));
+  .superRefine((val, ctx) => refineEcfRectification(val, ctx))
+  .superRefine((val, ctx) => refineEcfY600(val, ctx));
 
 export type SpedEcfRealRequestDto = z.infer<typeof SpedEcfRealRequestSchema>;

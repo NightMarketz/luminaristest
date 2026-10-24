@@ -316,6 +316,9 @@ describe('X8 PR-2 — 23 (f): a ECF Presumido de um ano com provisão de PIS/Cof
       { identNom: 'CONTADOR', identCpfCnpj: '11122233396', identQualif: '900', indCrc: 'DF-123456/O-1', email: 'c@d.com', fone: '6133334444' },
       { identNom: 'SOCIO', identCpfCnpj: '98765432100', identQualif: '205', email: 's@d.com', fone: '6133335555' },
     ],
+    // BE-INCR-ECF-Y600: o Y600 exige ≥ 1 ocorrência (item 11); sem sócio cadastrado, um dirigente transiente (item 5).
+    socios: [] as SpedEcfRequestDto['socios'],
+    dirigentes: [{ nome: 'DIRETORA', cpf: '52998224725', qualif: '10', dtAltSoc: '2020-01-01', valores: { remTrabCents: 0, lucDivCents: 0, jurCapCents: 0, demRendCents: 0, irRetCents: 0 } }] as SpedEcfRequestDto['dirigentes'],
   } as SpedEcfRequestDto;
 
   beforeAll(async () => {

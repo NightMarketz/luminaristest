@@ -1,0 +1,20 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "D01_Manual_ECF_Leiaute_12_20_05_2026_AC_2025_SIT_ESP_2026-pdf",
+      "url": "http://sped.rfb.gov.br/arquivo/download/8003",
+      "url_final": "http://sped.rfb.gov.br/estatico/54/7E3B296352B7AFD32210C180962BDB938B0804/Manual_ECF_Leiaute_12_20_05_2026_AC_2025_SIT_ESP_2026.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-22T10:40:46-03:00",
+      "sha256": "7216ec2bd62de7d45e5b019298be2420d08c2a3c6ade3646a053412937e95265",
+      "arquivo": "docs/D01_Manual_ECF_Leiaute_12_20_05_2026_AC_2025_SIT_ESP_2026-pdf.pdf",
+      "texto": "docs/D01_Manual_ECF_Leiaute_12_20_05_2026_AC_2025_SIT_ESP_2026-pdf.txt",
+      "bytes": 6410931
+    }
+  ],
+  "buscas": [],
+  "slug": "ecf-y600",
+  "pergunta": "Registro Y600 da ECF (Leiaute 12): obrigatoriedade para Lucro Presumido/Real, campos e regras de validação",
+  "criado": "2026-10-22T10:40:28-03:00"
+}

@@ -1,0 +1,44 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "AJUSTE SINIEF 7/05 — Conselho Nacional de Política Fazendária CONFAZ",
+      "url": "https://www.confaz.fazenda.gov.br/legislacao/ajustes/2005/AJ_007_05",
+      "url_final": "https://www.confaz.fazenda.gov.br/legislacao/ajustes/2005/AJ007_05",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-22T13:19:38-03:00",
+      "sha256": "f44adf45f3e22df040e5dc588c5aa5d944b0a7a468ea90adecc000e405843670",
+      "arquivo": "docs/D01_AJ007_05.html",
+      "texto": "docs/D01_AJ007_05.txt",
+      "bytes": 194604
+    },
+    {
+      "id": "D02",
+      "titulo": "AJUSTE SINIEF 19/16 — Conselho Nacional de Política Fazendária CONFAZ",
+      "url": "https://www.confaz.fazenda.gov.br/legislacao/ajustes/2016/AJ_019_16",
+      "url_final": "https://www.confaz.fazenda.gov.br/legislacao/ajustes/2016/AJ_019_16",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-22T13:19:38-03:00",
+      "sha256": "6692d344259fba1448dcb53b50385d9eb9106cec341af56c09316409feaa3570",
+      "arquivo": "docs/D02_AJ_019_16.html",
+      "texto": "docs/D02_AJ_019_16.txt",
+      "bytes": 126430
+    },
+    {
+      "id": "D03",
+      "titulo": "Nota Técnica 2026.010 v1.00 — DANFE Reforma Tributária (Portal Nacional da NF-e)",
+      "url": "https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=ugn4MYF5PLg=",
+      "url_final": "https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=ugn4MYF5PLg=",
+      "orgao": "Portal Nacional da NF-e (ENCAT/RFB) — baixado por curl com cookie de sessão (o legal.py baixar entra em laço de 302)",
+      "baixado_em": "2026-10-22T13:19:00-03:00",
+      "sha256": "eadc5246235f37a55f8140ddcf84595c8ce77f2d760f111f7b85ddf389b8f484",
+      "arquivo": "docs/D03_NT2026010-v1.00.pdf",
+      "texto": "docs/D03_NT2026010-v1.00.txt",
+      "bytes": 712823
+    }
+  ],
+  "buscas": [],
+  "slug": "nfe-danfe-ibscbs-nt2026010",
+  "pergunta": "O que a NT 2026.010 exige no DANFE (NF-e 55 e NFC-e 65) com IBS/CBS/IS, e desde quando?",
+  "criado": "2026-10-22T13:19:04-03:00"
+}

@@ -113,9 +113,28 @@ export interface IUserRepository {
   deleteUser(id: string): Promise<Prisma.UserGetPayload<{}>>;
 
   /**
+   * Storage keys of every CRM attachment of the user (active or soft-deleted) — the rows go by
+   * Cascade with the user, the binaries must be removed by the caller (§3.4 #12).
+   * @param id - User ID
+   */
+  getAttachmentStorageKeys(id: string): Promise<string[]>;
+
+  /**
    * Counts users with the given role.
    * @param role - Role to count
    * @returns Number of users holding that role
    */
   countByRole(role: Role): Promise<number>;
+
+  /**
+   * Whether any `onDelete: Restrict` dependent (accounting trail) references the user.
+   * @param id - User ID
+   */
+  hasRestrictedDependents(id: string): Promise<boolean>;
+
+  /** Current token version, or null when the user does not exist. */
+  getTokenVersion(id: string): Promise<number | null>;
+
+  /** Bumps the token version, invalidating every previously issued JWT. */
+  incrementTokenVersion(id: string): Promise<void>;
 }

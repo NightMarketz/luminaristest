@@ -41,6 +41,12 @@ export interface IChatInstanceRepository {
   getInstancesByUser(userId: string, type?: ChatInstanceType): Promise<IChatInstance[]>;
 
   /**
+   * Retrieves the user's instance for a widget, by the `@@unique([userId, widgetInstanceId])` key.
+   * @returns The instance, or null when the widget has none
+   */
+  findByWidgetInstanceId(userId: string, widgetInstanceId: string): Promise<IChatInstance | null>;
+
+  /**
    * Updates an instance.
    * @param id - Instance ID
    * @param data - Update data

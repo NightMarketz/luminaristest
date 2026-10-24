@@ -1,0 +1,88 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Decreto nº 9.580 de 22/11/2018",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos/2018/dec-9580-2018-11-22.md",
+      "url_final": "https://github.com/ctresb/leis/blob/39239e708b021186cea3d407a5fc7984f2c725f5/federal/decretos/2018/dec-9580-2018-11-22.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2018-11-22;9580",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "39239e708b021186cea3d407a5fc7984f2c725f5",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-10-21T16:39:56-03:00",
+      "sha256": "2c328212c1a8408eaa64072debe9860ecb435a731150296702b0583f00acfe6e",
+      "arquivo": "docs/D01_dec-9580-2018-11-22.md",
+      "texto": "docs/D01_dec-9580-2018-11-22.txt",
+      "bytes": 1624
+    },
+    {
+      "id": "D02",
+      "titulo": "Lei nº 9.250 de 26/12/1995",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1995/lei-9250-1995-12-26.md",
+      "url_final": "https://github.com/ctresb/leis/blob/ec2d052273aea51cd30fac55a779a8d933c11046/federal/leis-ordinarias/1995/lei-9250-1995-12-26.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1995-12-26;9250",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "ec2d052273aea51cd30fac55a779a8d933c11046",
+      "alertas": [],
+      "baixado_em": "2026-10-21T16:39:58-03:00",
+      "sha256": "aa9eedaae0195205b7f5bcde33c46572d4f1f5352de3cf92ec1e36342e88befd",
+      "arquivo": "docs/D02_lei-9250-1995-12-26.md",
+      "texto": "docs/D02_lei-9250-1995-12-26.txt",
+      "bytes": 49701
+    },
+    {
+      "id": "D03",
+      "titulo": "Lei nº 9.430 de 27/12/1996",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1996/lei-9430-1996-12-27.md",
+      "url_final": "https://github.com/ctresb/leis/blob/6c8aa8aa7d6126d14c332df3ab07f956b17f4bf2/federal/leis-ordinarias/1996/lei-9430-1996-12-27.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1996-12-27;9430",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "6c8aa8aa7d6126d14c332df3ab07f956b17f4bf2",
+      "alertas": [],
+      "baixado_em": "2026-10-21T16:39:59-03:00",
+      "sha256": "6e8e20371d0e7796244402441b7e3fc72df83a7bbe640029d4919359a6115bcc",
+      "arquivo": "docs/D03_lei-9430-1996-12-27.md",
+      "texto": "docs/D03_lei-9430-1996-12-27.txt",
+      "bytes": 117629
+    },
+    {
+      "id": "D04",
+      "titulo": "Lcp 214",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-21T16:40:01-03:00",
+      "sha256": "09807e4c5b842be5313743ae21c7c2f48fa893a736bc718b174a769b644684de",
+      "arquivo": "docs/D04_lcp214-htm.html",
+      "texto": "docs/D04_lcp214-htm.txt",
+      "bytes": 5403667
+    },
+    {
+      "id": "D05",
+      "titulo": "D9580",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/D9580.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/d9580.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-21T16:40:07-03:00",
+      "sha256": "0df7923eb9b091ca660e66043dde8cd05dd2ce75ca4983494e60afd1ec379fbb",
+      "arquivo": "docs/D05_d9580-htm.html",
+      "texto": "docs/D05_d9580-htm.txt",
+      "bytes": 2943111
+    }
+  ],
+  "buscas": [],
+  "slug": "triagem-2026-10-21-contador-pacote-f1",
+  "pergunta": "Conferir citações da resposta do contador ao pacote F1",
+  "criado": "2026-10-21T16:39:31-03:00"
+}

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Modal } from '../../../components/ui/Modal';
 import { StandardPagination } from '../../dashboard/shared/components/StandardPagination';
-import { accountingService, type BankStatement } from '../../../lib/services/accounting.service';
+import { accountingService, type Account, type BankStatement } from '../../../lib/services/accounting.service';
 import {
-  BANK_SETTLEMENT_METHODS,
   BANK_SETTLEMENT_STATUSES,
   bankSettlementService,
+  feeCheck,
+  methodsFor,
   type BankSettlementItemView,
   type BankSettlementMethod,
   type BankSettlementStatus,
@@ -16,6 +17,7 @@ import { useAccountingT } from '../lib/useAccountingT';
 import { formatCents } from '../lib/formatCents';
 import { formatDate } from '../lib/formatDate';
 import { Field, inputClass } from './SpedGenerationPanel';
+import { ProviderFeeAccountSection } from './ProviderFeeAccountSection';
 
 const LIMIT = 20;
 const isForbidden = (err: unknown) => !!err && typeof err === 'object' && (err as { status?: number }).status === 403;
@@ -68,6 +70,11 @@ export function BankSettlementPanel({ unitId, glAccountId, onLedgerChange }: Ban
   const [forbidden, setForbidden] = useState(false);
   const [busy, setBusy] = useState(false);
   const [action, setAction] = useState<Action | null>(null);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const selected = statements.find((s) => s.id === statementId) ?? null;
+  const isProvider = !!selected?.paymentAccountId;
+  // F-FE-FEE-2 → a: a coluna do retido só aparece quando algum item da página tem tarifa.
+  const showFee = items.some((it) => it.feeCents > 0);
 
   // Item 3: extratos da conta do seletor compartilhado (o BE não filtra por conta; a tela filtra), mais recente primeiro.
   useEffect(() => {
@@ -99,6 +106,17 @@ export function BankSettlementPanel({ unitId, glAccountId, onLedgerChange }: Ban
   }, [unitId, statementId, status, page, tRef]);
 
   useEffect(() => { void load(); }, [load]);
+
+  // Item 7 (F-FEE-E1 → a): o plano de contas só é lido quando a seção da tarifa aparece (extrato de provedor).
+  useEffect(() => {
+    if (!unitId || !isProvider) return;
+    let cancelled = false;
+    accountingService
+      .getAccounts(unitId)
+      .then((r) => { if (!cancelled) setAccounts(r.accounts.filter((a) => a.acceptsEntries)); })
+      .catch(() => { if (!cancelled) setAccounts([]); });
+    return () => { cancelled = true; };
+  }, [unitId, isProvider]);
 
   async function scan() {
     setBusy(true);
@@ -135,6 +153,7 @@ export function BankSettlementPanel({ unitId, glAccountId, onLedgerChange }: Ban
         <div className="py-6 text-center text-sm text-neutral-500">{t('bankSettlement.noStatement', 'Importe um extrato na sub-aba Extratos.')}</div>
       ) : (
         <>
+          {isProvider && <ProviderFeeAccountSection unitId={unitId} accounts={accounts} />}
           <div className="mb-3 flex flex-wrap items-end gap-3">
             <Field label={t('bankSettlement.statement', 'Extrato')}>
               <select value={statementId} onChange={(e) => { setStatementId(e.target.value); setPage(1); setSummary(null); }} className={inputClass}>
@@ -179,6 +198,7 @@ export function BankSettlementPanel({ unitId, glAccountId, onLedgerChange }: Ban
                     <th className={th}>{t('bankSettlement.col.title', 'Título')}</th>
                     <th className={`${th} text-right`}>{t('bankSettlement.col.proposed', 'Proposto')}</th>
                     <th className={`${th} text-right`}>{t('bankSettlement.col.charge', 'Encargo')}</th>
+                    {showFee && <th className={`${th} text-right`} title={t('bankSettlement.fee.tooltip', 'Tarifas e, até a resposta do contador (P3), impostos retidos pelo provedor.')}>{t('bankSettlement.col.fee', 'Retido pelo provedor')}</th>}
                     <th className={th}>{t('bankSettlement.col.status', 'Status')}</th>
                     <th className={th}>{t('bankSettlement.col.actions', 'Ações')}</th>
                   </tr>
@@ -205,16 +225,28 @@ export function BankSettlementPanel({ unitId, glAccountId, onLedgerChange }: Ban
                           <span className="rounded-full bg-amber-600/15 px-2 py-0.5 text-amber-300" title={t('bankSettlement.chargeHint', '|linha| − saldo, limite de 20%')}>{formatCents(it.chargeCents)}</span>
                         ) : '—'}
                       </td>
+                      {showFee && (
+                        <td className={`${td} text-right font-mono text-xs`} data-testid={`fee-${it.id}`}>
+                          {it.feeCents > 0 ? (
+                            <>
+                              {formatCents(it.feeCents)}
+                              <div className="text-neutral-500">{t('bankSettlement.gross', 'bruto')} {formatCents(Math.abs(it.line.amountCents) + it.feeCents)}</div>
+                            </>
+                          ) : '—'}
+                        </td>
+                      )}
                       <td className={`${td} text-xs`}>
                         <span className={`rounded-full px-2 py-0.5 font-semibold ${STATUS_TONE[it.status]}`} title={it.status === 'STALE' ? t('bankSettlement.staleHint', 'Título cancelado ou já baixado depois da varredura — varra de novo para reavaliar a linha.') : undefined}>
                           {t(`bankSettlement.status.${it.status}`, it.status)}
                         </span>
                         {it.status === 'FAILED' && <div className="mt-1 text-red-300">{it.failedStep} — {it.reason}</div>}
                         {it.status === 'REJECTED' && it.reason && <div className="mt-1 text-neutral-400">{it.reason}</div>}
+                        {it.status === 'PENDING' && it.reason && <TerminalChargeWarning reason={it.reason} />}
                         {it.status === 'CONFIRMED' && (
                           <div className="mt-1 text-neutral-400">
                             {it.confirmedAt ? new Date(it.confirmedAt).toLocaleString('pt-BR') : ''} · <span title={it.settlementId ?? ''}>{t('bankSettlement.entry', 'lançamento')} {short(it.settlementId)}</span>
                             {it.chargeEntryId && <> · <span title={it.chargeEntryId}>{t('bankSettlement.chargeEntry', 'encargo')} {short(it.chargeEntryId)}</span></>}
+                            {it.feeEntryId && <> · <span title={it.feeEntryId}>{t('bankSettlement.feeEntry', 'retido')} {short(it.feeEntryId)}</span></>}
                           </div>
                         )}
                       </td>
@@ -243,6 +275,7 @@ export function BankSettlementPanel({ unitId, glAccountId, onLedgerChange }: Ban
         <ActionModal
           unitId={unitId}
           action={action}
+          methods={methodsFor(selected)}
           onClose={() => setAction(null)}
           onDone={(ledgerChanged) => { setAction(null); void load(); if (ledgerChanged) onLedgerChange?.(); }}
           onStale={() => void load()}
@@ -252,27 +285,41 @@ export function BankSettlementPanel({ unitId, glAccountId, onLedgerChange }: Ban
   );
 }
 
+/** Aviso G7 (EMENDA 1 item 10, F-TAR-7/8 → a): `reason` do BE verbatim sob rótulo i18n; não bloqueia o confirmar. */
+function TerminalChargeWarning({ reason }: { reason: string }) {
+  const { t } = useAccountingT();
+  return (
+    <div role="note" className="mt-1 rounded-xl border border-amber-900/50 bg-amber-950/30 px-2 py-1 text-amber-300">
+      <span className="font-semibold">{t('bankSettlement.terminalCharge.label', 'Atenção — cobrança')}:</span> {reason}
+    </div>
+  );
+}
+
 /** Itens 8–10: confirmar/reprocessar (com `method`) e rejeitar (com motivo), um item por vez. */
 function ActionModal({
   unitId,
   action,
+  methods,
   onClose,
   onDone,
   onStale,
 }: {
   unitId: string;
   action: Action;
+  /** EMENDA 1 item 11: os métodos do extrato selecionado (`methodsFor`). */
+  methods: readonly BankSettlementMethod[];
   onClose: () => void;
   onDone: (ledgerChanged: boolean) => void;
   onStale: () => void;
 }) {
   const { t } = useAccountingT();
-  const [method, setMethod] = useState<BankSettlementMethod>('Pix');
+  const [method, setMethod] = useState<BankSettlementMethod>(methods.includes('Pix') ? 'Pix' : methods[0]);
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { item, type } = action;
   const isReject = type === 'reject';
+  const check = feeCheck(item);
   const valid = isReject ? reason.trim().length >= 1 && reason.trim().length <= 500 : true;
 
   async function submit() {
@@ -307,10 +354,22 @@ function ActionModal({
       }
     >
       <div className="space-y-3 px-6 py-5 text-sm text-neutral-300">
+        {item.status === 'PENDING' && item.reason && <TerminalChargeWarning reason={item.reason} />}
         <p className="text-xs">
           {formatDate(item.line.date)} · {item.line.description} · {formatCents(item.line.amountCents)} → {item.title?.counterpartyName ?? '—'} ·{' '}
           {t('bankSettlement.col.proposed', 'Proposto')} {formatCents(item.proposedCents)}{item.chargeCents > 0 ? ` · ${t('bankSettlement.col.charge', 'Encargo')} ${formatCents(item.chargeCents)}` : ''}
+          {item.feeCents > 0 ? ` · ${t('bankSettlement.col.fee', 'Retido pelo provedor')} ${formatCents(item.feeCents)}` : ''}
         </p>
+        {check && (
+          <p className="text-xs" data-testid="fee-check">
+            {t('bankSettlement.gross', 'bruto')} {formatCents(check.grossCents)} ·{' '}
+            {check.consistent ? (
+              <span className="text-emerald-300">✓ {t('bankSettlement.feeCheck.ok', 'confere com proposto + encargo')}</span>
+            ) : (
+              <span className="text-red-300">✗ {t('bankSettlement.feeCheck.mismatch', 'não confere com proposto + encargo')}</span>
+            )}
+          </p>
+        )}
         {isReject ? (
           <Field label={t('bankSettlement.reason', 'Motivo (obrigatório)')}>
             <textarea value={reason} maxLength={500} rows={3} onChange={(e) => setReason(e.target.value)} className={inputClass} />
@@ -319,7 +378,7 @@ function ActionModal({
         ) : (
           <Field label={t('bankSettlement.method', 'Meio de pagamento')}>
             <select value={method} onChange={(e) => setMethod(e.target.value as BankSettlementMethod)} className={inputClass}>
-              {BANK_SETTLEMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+              {methods.map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
             <span className="text-neutral-500">{t('bankSettlement.methodHint', 'O método tem de resolver para a conta deste extrato.')}</span>
           </Field>
@@ -329,6 +388,12 @@ function ActionModal({
             <p>{error}</p>
             {error.startsWith('charge_account_not_configured') && (
               <p>{t('bankSettlement.chargeAccountHint', 'Configure a conta de encargo em PUT /api/accounting/settings (ainda sem tela; os códigos são pendência do contador).')}</p>
+            )}
+            {error.startsWith('fee_account_not_configured') && (
+              <p>{t('bankSettlement.feeAccountHint', 'Configure a conta da tarifa do provedor na seção "Conta da tarifa do provedor", no topo desta sub-aba (o código da conta é pendência do contador).')}</p>
+            )}
+            {error.startsWith('provider_balance_requires_payment_account') && (
+              <p>{t('bankSettlement.error.providerBalance', 'Este extrato não é de uma conta de provedor ativa: ProviderBalance não vale aqui.')}</p>
             )}
           </div>
         )}
