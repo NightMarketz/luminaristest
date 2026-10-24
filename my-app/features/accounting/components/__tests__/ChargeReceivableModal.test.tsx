@@ -30,9 +30,9 @@ const charge = (over: Partial<CollectionChargeView>): CollectionChargeView => ({
   instrument: null, createdAt: '2026-10-23T00:00:00Z', updatedAt: '2026-10-23T00:00:00Z', ...over,
 });
 
-// The fixtures carry fixed dates (createdAt 23/10, expiresAt 24/10/2026). Pin "now" between them: on the real clock
-// the PENDING charge turned "Vencida — aguardando o provedor" at 2026-10-24T00:00Z and the boleto case went red.
-// Only Date is faked, so waitFor keeps its real timers.
+// The fixtures carry fixed dates (createdAt 23/10/2026, expiresAt 2099). Pin "now" between them so no case depends on
+// the real clock: with expiresAt 24/10/2026 the PENDING charge turned "Vencida — aguardando o provedor" at
+// 2026-10-24T00:00Z and the boleto case went red. Only Date is faked, so waitFor keeps its real timers.
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] });
   vi.setSystemTime(new Date('2026-10-23T12:00:00Z'));
