@@ -34,7 +34,7 @@ describe('BE-INCR-TAX-PRESUMIDO-16 itens 1 e 6', () => {
   it('as linhas do 16% citam também o art. 215 § 10 (valor igual); versão nova; código 208902', () => {
     expect(linhaVigente(T, 'PRESUNCAO_IRPJ_REDUZIDA', '2026-03-31')).toMatchObject({ valor: 1600, fonte: expect.stringContaining('art. 215 § 10') });
     expect(linhaVigente(T, 'RECEITA_LIMITE_REDUZIDA_ANO_CENTS', '2026-03-31')).toMatchObject({ valor: 12_000_000, fonte: expect.stringContaining('art. 215 § 10') });
-    expect(TAX_ASSESSMENT_TABELA_VERSAO).toBe('2026-10-06');
+    expect(TAX_ASSESSMENT_TABELA_VERSAO).toBe('2026-10-24'); // PRESUMIDO-TETO-78MI item 1 subiu a versão (era 2026-10-06)
     expect(T.codigoReceita('IRPJ_PRESUMIDO_DIFERENCA_POSTERGADA_16', '2026-03-31').codigo).toBe('208902');
   });
 });

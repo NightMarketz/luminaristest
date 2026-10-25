@@ -84,6 +84,8 @@ import {
 import { isLalurMes, mesBounds, periodoBounds, type LalurMes } from '../models/Lalur.model';
 import type { TributoPisCofins } from '../models/pisCofinsParams';
 import { MODO_PIS_COFINS, isPeriodoPisCofins } from '../models/pisCofinsCalc';
+import { brl, type TetoPresumidoResultado } from '../models/presumidoTeto';
+import type { PresumidoTetoService } from './PresumidoTetoService';
 
 export const TAX_ASSESSMENT_CONFIRMED = 'tax.assessment.confirmed';
 /** `sourceType` da provisão (item 15): chave de idempotência = id da apuração. */
@@ -257,6 +259,8 @@ interface Calculo {
   anterioresIds: string[];
   /** BE-INCR-LEGAL-PARAMS PR-4 (item 7): as linhas de lei do período que o cálculo recebeu. */
   parametros: ParametrosUsados;
+  /** PRESUMIDO-TETO-78MI item 9c: receita de Y−1 acima do teto ⇒ a confirmação recusa (null fora do Presumido). */
+  tetoExcedido: TetoPresumidoResultado | null;
 }
 
 /**
@@ -316,6 +320,8 @@ export class TaxAssessmentService {
     private readonly periodRepo: Pick<IAccountingPeriodRepository, 'findByYearMonth'>,
     /** BE-INCR-LEGAL-PARAMS PR-1 (F-LP-4 a): a fotografia dos coeficientes de lei que as funções puras recebem. */
     private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
+    /** PRESUMIDO-TETO-78MI itens 8–9 (F-PT-1 c): o teto de R$ 78 mi na prévia (aviso) e na confirmação (400) do Presumido. */
+    private readonly presumidoTeto: Pick<PresumidoTetoService, 'avaliar'>,
   ) {}
 
   /** Item 13 — calcula IRPJ e CSLL juntos (BRIEF item 13, art. 31 § 7º) e não persiste. */
@@ -347,6 +353,17 @@ export class TaxAssessmentService {
 
   private async confirmar(scope: AccountingScope, input: TaxAssessmentConfirmInput, aviso: string | null): Promise<TaxAssessmentConfirmView> {
     const c = await this.calcular(scope, input);
+    // PRESUMIDO-TETO-78MI item 9c (F-PT-1 c): a confirmação é o efeito irreversível (provisão e DARF com código do Presumido)
+    // — receita de Y−1 acima do teto ⇒ 400, fora da tx, como a receita do período. O campo declarado no perfil já é coberto
+    // pelo gate "perfil igual ao lido" dentro da tx (item 9d). Vale também para o job (`confirmarPeloSistema`).
+    if (c.tetoExcedido) {
+      const t = c.tetoExcedido;
+      throw new ValidationError(
+        `PRESUMIDO_TETO_EXCEDIDO: receita total de ${input.anoCalendario - 1} (${brl(t.receitaUsadaCents!)}) acima do teto do Lucro Presumido (${brl(t.limiteCents!)}) — a empresa está obrigada ao Lucro Real em ${input.anoCalendario} (Lei 9.718/1998 art. 14 I); a apuração do Presumido não se confirma.`,
+        { receitaUsadaCents: t.receitaUsadaCents!.toString(), limiteCents: t.limiteCents!.toString(), fonte: t.fonte },
+        'PRESUMIDO_TETO_EXCEDIDO',
+      );
+    }
     const { anoCalendario: ano, periodo } = input;
     const owner = scope.ownerUserId;
 
@@ -751,12 +768,17 @@ export class TaxAssessmentService {
 
     if (anual) {
       const r = await this.calcularAnual(scope, input, perfil, w, despesaIds, anterioresRows, avisos, tabela);
-      return { perfil, forma, ...r, provisaoContasConfiguradas, avisos, anterioresIds, parametros };
+      return { perfil, forma, ...r, provisaoContasConfiguradas, avisos, anterioresIds, parametros, tetoExcedido: null };
     }
 
     let irpj: ResultadoApuracaoAnual;
     let csll: ResultadoApuracaoAnual;
+    let tetoExcedido: TetoPresumidoResultado | null = null;
     if (perfil.regime === 'PRESUMIDO') {
+      // PRESUMIDO-TETO-78MI item 9b: o mesmo aviso das obrigações na prévia; EXCEDIDO segue para o 400 da confirmação.
+      const teto = await this.presumidoTeto.avaliar(scope, ano);
+      avisos.push(...teto.avisos);
+      if (teto.situacao === 'EXCEDIDO') tetoExcedido = teto;
       const rec = await receitaBrutaPorAtividade({ accountRepo: this.accountRepo, postingRepo: this.postingRepo, fiscalProfileRepo: this.fiscalProfileRepo }, scope, w.from, w.to);
       const base = {
         tabela,
@@ -782,7 +804,7 @@ export class TaxAssessmentService {
       irpj = { ...apurarRealTrimestral({ ...base, periodo: periodo as PeriodoTrimestral, tributo: 'IRPJ', linhasParteA: await linhas('lalur') }), diferencaPostergadaCents: 0n };
       csll = { ...apurarRealTrimestral({ ...base, periodo: periodo as PeriodoTrimestral, tributo: 'CSLL', linhasParteA: await linhas('lacs') }), diferencaPostergadaCents: 0n };
     }
-    return { perfil, forma, irpj, csll, provisaoContasConfiguradas, avisos, anterioresIds, parametros };
+    return { perfil, forma, irpj, csll, provisaoContasConfiguradas, avisos, anterioresIds, parametros, tetoExcedido };
   }
 
   /**
