@@ -75,19 +75,21 @@ useEffect(() => {
 
 Nenhum contrato com o servidor muda: as mesmas `GET /api/dynamic-tables/:id` e `GET /api/dynamic-tables/:id/data`.
 
-## 3. Forks — RATIFICAÇÃO PENDENTE
+## 3. Forks — RATIFICADOS 25/10 na recomendação
+
+Dono, chat, 2026-10-25: *"Ratifico F-KRO-1..5 na recomendação."* Cada fork fica com a opção marcada como *Recomendação*. **Isso não autoriza implementar**: falta "executa" (ORCH-006).
 
 **F-KRO-1 · O que conta como "o último falhou".** (a) qualquer tabela kanban que falhou na busca, ou o `catch` externo;
 (b) só quando **todas** as tabelas falharam; (c) só o `catch` externo.
 *Recomendação: (a).* O caso do runbook é uma tabela só, mas com várias tabelas kanban uma falha isolada também deixa
 cards velhos na tela. (c) nunca liga hoje, porque a falha por tabela não lança (§0).
-**RATIFICAÇÃO PENDENTE.**
+✅ **RATIFICADO na recomendação** (dono, chat, 2026-10-25).
 
 **F-KRO-2 · Onde mora o listener.** (a) dentro de `useKanbanData`, junto do `fetchData` e da marca; (b) em
 `useKanbanLogic`, que já chama o `refetch`; (c) hook genérico novo `useOnlineRefetch(refetch, failed)` em `lib/hooks`.
 *Recomendação: (a).* Quem busca sabe se falhou. (b) exigiria exportar a marca. (c) cria um canônico com um consumidor
 só, e o `_REUSE-CRITERION.md` pede dois lados vivos.
-**RATIFICAÇÃO PENDENTE.**
+✅ **RATIFICADO na recomendação** (dono, chat, 2026-10-25).
 
 **F-KRO-3 · Sinal além do `online`.** O `online` só dispara na transição offline→online do navegador. Back fora do ar,
 timeout ou 5xx com a rede de pé não disparam o evento, e a marca fica ligada sem gatilho. (a) só o `online`, como o dono
@@ -95,19 +97,19 @@ descreveu; (b) `online` + `visibilitychange` (aba volta a ficar visível com a m
 com backoff.
 *Recomendação: (a).* É o pedido, e cobre o passo 4 do runbook. (b) e (c) mudam o escopo; se o dono quiser, viram emenda
 própria.
-**RATIFICAÇÃO PENDENTE.**
+✅ **RATIFICADO na recomendação** (dono, chat, 2026-10-25).
 
 **F-KRO-4 · Aviso na tela enquanto a marca está ligada.** (a) nenhum aviso: o quadro mantém os cards (o #895) e se corrige
 sozinho no `online`; (b) faixa discreta "Sem conexão: o quadro pode estar desatualizado" enquanto a marca estiver ligada
 (i18n pt/en, `stale` no retorno); (c) toast na volta ("Quadro atualizado").
 *Recomendação: (a).* O pedido é o refetch. Aviso é UI nova, com i18n e decisão de texto. Hoje a falha já aparece no
 toast de erro do `updateRecord`.
-**RATIFICAÇÃO PENDENTE.**
+✅ **RATIFICADO na recomendação** (dono, chat, 2026-10-25).
 
 **F-KRO-5 · Ordem de entrega × #895.** (a) executar depois do merge do #895, numa branch a partir da `main`;
 (b) empilhar no #895.
 *Recomendação: (a).* A memória do repo registra que squash quebra PRs empilhados, e o #895 é pequeno e independente.
-**RATIFICAÇÃO PENDENTE.**
+✅ **RATIFICADO na recomendação** (dono, chat, 2026-10-25).
 
 ## 4. Pendente de validação externa
 
