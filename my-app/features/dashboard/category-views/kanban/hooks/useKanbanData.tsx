@@ -34,6 +34,7 @@ export function useKanbanData(tables: IDynamicTable[]) {
         try {
             const results: Task[] = [];
             const newSchemaMap: Record<string, unknown> = {};
+            const failedTableIds = new Set<string>();
 
             await Promise.all(kanbanTables.map(async (table) => {
                 const [tableData, tableRecords] = await Promise.all([
@@ -82,10 +83,12 @@ export function useKanbanData(tables: IDynamicTable[]) {
                     });
                 } else {
                     console.error(`Failed to fetch data for table ${table.name}`);
+                    failedTableIds.add(table.id);
                 }
             }));
 
-            setAggregatedData(results);
+            // Tabela que falhou mantém os cards já carregados (refetch offline não esvazia o quadro)
+            setAggregatedData(prev => [...results, ...prev.filter(t => typeof t.dynamicTableId === 'string' && failedTableIds.has(t.dynamicTableId))]);
             setSchemaMap(newSchemaMap);
         } catch (err) {
             console.error('Error fetching kanban data:', err);
