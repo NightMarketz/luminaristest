@@ -38,7 +38,8 @@
             "RETENCAO",
             "RETENCAO_CODIGO",
             "NATUREZA_RENDIMENTO",
-            "IRRF_PF_MENSAL"
+            "IRRF_PF_MENSAL",
+            "ISS_TRANSICAO"
           ]
         },
         "chave": {
@@ -138,7 +139,8 @@
             "RETENCAO",
             "RETENCAO_CODIGO",
             "NATUREZA_RENDIMENTO",
-            "IRRF_PF_MENSAL"
+            "IRRF_PF_MENSAL",
+            "ISS_TRANSICAO"
           ]
         },
         "status": {
@@ -221,7 +223,8 @@
             "RETENCAO",
             "RETENCAO_CODIGO",
             "NATUREZA_RENDIMENTO",
-            "IRRF_PF_MENSAL"
+            "IRRF_PF_MENSAL",
+            "ISS_TRANSICAO"
           ]
         },
         "chave": {

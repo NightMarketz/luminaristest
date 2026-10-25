@@ -51,6 +51,8 @@ export const LEGAL_PARAMETER_TABELAS = [
   'RETENCAO_CODIGO',
   'NATUREZA_RENDIMENTO',
   'IRRF_PF_MENSAL',
+  // ISS-TRANSICAO-IBS PR-1 (BRIEF item 2): fator de redução do ISS em 2029–2032 (LC 116 art. 8º-B I–IV, incl. LC 214 art. 508).
+  'ISS_TRANSICAO',
 ] as const;
 export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
 

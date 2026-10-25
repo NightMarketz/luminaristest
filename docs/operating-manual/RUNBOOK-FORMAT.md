@@ -16,7 +16,7 @@ O formato abaixo tem três propriedades que um prompt não teria, e cada uma res
 |---|---|
 | **Evidência é artefato colado**, nunca frase | Narrativa plausível — protocolo do PVA, screenshot, saída de comando não se inventam |
 | **Desfecho em três estados**, não binário | O binário convida a forçar um "passou"; `BLOQUEADO` dá saída honesta |
-| **Assinatura do executor** | Nenhum agente pode preencher — é o campo que ancora a responsabilidade num humano |
+| **Assinatura do executor** | Ancora a responsabilidade: num humano nos cinco gates abaixo; no agente que executou, identificado como agente, só na exceção de 2026-10-25 (seção seguinte) |
 
 ## Fronteira do agente — o que ele pode e o que não pode
 
@@ -27,6 +27,17 @@ O formato abaixo tem três propriedades que um prompt não teria, e cada uma res
   (tela, PVA).
 - **NÃO PODE:** marcar desfecho, ou assinar. Runbook sem assinatura de executor
   humano é **nulo** — não vale como gate fechado, não promove nó de mapa, não libera deploy.
+- **Exceção — agente como executor, na persona do revisor** (dono, chat, 2026-10-25: "Pode preencher como
+  persona do revisor, pode adicionar essa regra como executor ai"). Vale só para runbook de **conferência na
+  tela do próprio app** (ex.: `RUNBOOK-KANBAN-REORDER.md`) em que **todos** os passos executados foram rodados
+  pelo agente, com as ferramentas dele, na sessão. Aí o agente pode marcar o desfecho e assinar, desde que:
+  1. haja comando do dono no chat **para aquele runbook**, citado literalmente no campo Executor;
+  2. a assinatura identifique o agente — `agente <modelo>, persona revisor, sob comando do dono (chat, <data>)` —
+     e **nunca** um nome de pessoa;
+  3. o desfecho siga só a evidência colada (regra do FALHOU incluída); método que difira do roteiro
+     (ex.: falha de rede simulada sem DevTools) fique escrito na evidência.
+  **Não vale** para os cinco gates abaixo (H1, H2, M2, X1, X2) nem para nada que dependa de PVA, NF-e real,
+  arquivo RFB, contador ou deploy: lá a assinatura continua só humana, e `luminaris-gate-copilot` [GHC-001] segue intacto.
 
 ## Os cinco runbooks e onde o desfecho é registrado
 
@@ -73,7 +84,7 @@ nº de recibo) — nunca uma frase descrevendo que deu certo.
 - Achados no caminho (fora do escopo deste runbook): [lista ou "nenhum"]
 - Atualização do artefato de rastreio: [linha do plano/mapa atualizada
   com o desfecho + data]
-- Assinatura do executor: ____________
+- Assinatura do executor: Raphael
 ```
 
 ---
