@@ -8,7 +8,8 @@ estado_detalhe: "Registrado 19/10; itens 7–24 de §3.2 do documento de achados
 depende_de: ["[[FIX-ANALYTICS-DADO]]", "[[TESTE-ACOPLAMENTO-PRESET]]?"]
 autorizacao: "dono, chat, 2026-10-25: \"Dispara uma sessao para FIX-PLUGINS-VENDA e FIX-ANALYTICS-RESIDUO: já têm o teste-guarda como critério de pronto. Cada um fecha quando esvaziar a sua parte de `KNOWN_GAPS`: 6 chaves para o primeiro, 14 para o segundo.\" + \"Rota de detalhe órfã (§3.2 #20): se ela sobrevive é decisão do FIX-ANALYTICS-RESIDUO. Se for removida, as chaves de `importantFields` saem junto.\" — escopo LIMITADO às 14 chaves de `importantFields` do KNOWN_GAPS de analyticsFieldMappingCoupling.test.ts e à decisão sobre a rota `chart/:chartKey/details`; demais itens §3.2 (validador #15, período/fuso, measures, cache) fora; sem merge"
 write_set: ["server/src/features/analytics/**", "my-app/features/dashboard/category-views/finance/components/analytics/**"]
-atualizado: "2026-10-19"
+atualizado: "2026-10-25"
+prs: ["#894"]
 ---
 # FIX-ANALYTICS-RESIDUO — Analytics, resíduo: seletor de período não chega aos pipelines, fusos divergentes entre KPIs, card do grupo errado, "1.500" vira 1,5, validador que só loga…
 
