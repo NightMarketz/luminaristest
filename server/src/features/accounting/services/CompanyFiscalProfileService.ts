@@ -25,6 +25,7 @@ import type { LegalParameterService } from '../../legalParameters/services/Legal
 import type { CondicoesPerfil, ObrigacaoSped, StatusObrigacao } from '../models/obrigacoesPorRegime';
 import type { RegimeEmpresa } from '../models/regimeEmpresa';
 import { TABELA_ANEXO_XI, chavesInexistentes } from '../models/meiAnexoXi';
+import type { PresumidoTetoService } from './PresumidoTetoService';
 
 export const COMPANY_FISCAL_PROFILE_UPDATED = 'company_fiscal_profile.updated';
 export const COMPANY_FISCAL_PROFILE_DELETED = 'company_fiscal_profile.deleted';
@@ -72,6 +73,7 @@ export interface CompanyFiscalProfileView {
   simplesCaixaPrazoCartaoDebitoDias: number | null; // X14-CAIXA item 7a
   simplesCaixaPrazoCartaoCreditoDias: number | null;
   jcpBaseContas: JcpBaseContas | null; // IRRF-DISTRIBUICAO item 8 (F-IRD-15)
+  receitaTotalAnoAnteriorCents: string | null; // PRESUMIDO-TETO-78MI item 5: centavos (bigint) como string
   ibsCbsOpcaoS1: IbsCbsOpcao | null; // X14 PR-2 item 14
   ibsCbsOpcaoS2: IbsCbsOpcao | null;
   updatedAt: string;
@@ -133,6 +135,8 @@ export class CompanyFiscalProfileService {
     private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
     /** BE-INCR-IRRF-DISTRIBUICAO PR-1 (item 8): contas do mapa do PL na base do JCP — escopo e natureza. */
     private readonly accountRepo: Pick<IAccountRepository, 'findById'>,
+    /** PRESUMIDO-TETO-78MI item 9a (F-PT-1 c) e item 10 (F-PT-5 a): o teto do Presumido nos avisos das obrigações. */
+    private readonly presumidoTeto: Pick<PresumidoTetoService, 'avaliar'>,
   ) {}
 
   /**
@@ -322,7 +326,8 @@ export class CompanyFiscalProfileService {
       if (await this.repo.findByYear(scope, ano, tx)) {
         throw new ConflictError(`company_fiscal_profile_exists: já existe perfil fiscal da empresa para ${ano} — edite pelo PUT.`);
       }
-      const data: CompanyFiscalProfileData = { ...rowToData(origem), ecdNumOrd: null };
+      // PRESUMIDO-TETO-78MI item 5 (invariante 7): a receita declarada é do ano de origem — nunca se copia.
+      const data: CompanyFiscalProfileData = { ...rowToData(origem), ecdNumOrd: null, receitaTotalAnoAnteriorCents: null };
       assertCaixaAte2026(ano, data);
       // X7 Fase B PR-4 (item 2 + achado do review, decisão do dono 05/10): o ano sem perfil é TRIMESTRAL no e-Lalur.
       await this.assertTrocaDeFormaSemLalur(scope, ano, null, data, tx);
@@ -380,7 +385,27 @@ export class CompanyFiscalProfileService {
       return { ...o, faltantes };
     });
     const completo = obrigacoes.every((o) => o.faltantes.length === 0);
-    return { ano, perfil: completo ? 'COMPLETO' : 'INCOMPLETO', regime: view.regime, obrigacoes, avisos: [] };
+    return { ano, perfil: completo ? 'COMPLETO' : 'INCOMPLETO', regime: view.regime, obrigacoes, avisos: await this.avisosDoTeto(scope, ano, view) };
+  }
+
+  /**
+   * PRESUMIDO-TETO-78MI item 9a (F-PT-1 c): no PRESUMIDO, os avisos do teto (EXCEDIDO / NAO_CONFERIDO, e os de divergência
+   * e de meses dos itens 3 e 6) — só aviso, o bloqueio é na confirmação da apuração. Item 10 (F-PT-5 a): REAL com
+   * `lucroRealObrigatorio = false` e receita de Y−1 acima do teto ⇒ aviso do código de receita (0220 de obrigada, não 3373).
+   * O inverso (`true` com receita dentro) é válido — a obrigação pode vir dos outros incisos do art. 14 — e não avisa.
+   * MEI/SIMPLES nunca leem o teto (invariante 8).
+   */
+  private async avisosDoTeto(scope: AccountingScope, ano: number, view: CompanyFiscalProfileView): Promise<string[]> {
+    if (view.regime === 'PRESUMIDO') return (await this.presumidoTeto.avaliar(scope, ano)).avisos;
+    if (view.regime === 'REAL' && view.lucroRealObrigatorio === false) {
+      const r = await this.presumidoTeto.avaliar(scope, ano);
+      if (r.situacao === 'EXCEDIDO') {
+        return [
+          `lucroRealObrigatorio = false, mas a receita total de ${ano - 1} passou do teto do Presumido — a empresa é obrigada ao Lucro Real (Lei 9.718/1998 art. 14 I) e o código de receita do DARF é o 0220, não o 3373.`,
+        ];
+      }
+    }
+    return [];
   }
 
   private async assertRefs(scope: AccountingScope, data: CompanyFiscalProfileData, tx: Prisma.TransactionClient): Promise<void> {
@@ -441,6 +466,7 @@ export class CompanyFiscalProfileService {
         simplesRegimeApuracao: row.simplesRegimeApuracao, // X14 F-PR4-12 (b) (enum)
         simplesExclusaoEfeitosEm: row.simplesExclusaoEfeitosEm ?? '', // X14-CAIXA item 7 (date-only)
         jcpBaseContas: row.jcpBaseContas === null ? '' : JSON.stringify(row.jcpBaseContas), // IRRF-DISTRIBUICAO item 8: só ids de conta
+        receitaTotalAnoAnteriorCents: row.receitaTotalAnoAnteriorCents === null ? '' : row.receitaTotalAnoAnteriorCents.toString(), // PRESUMIDO-TETO item 5
         ...(copiadoDe === undefined ? {} : { copiadoDe: String(copiadoDe) }),
       },
     });
@@ -547,6 +573,7 @@ function toData(input: UpsertCompanyFiscalProfileInput): CompanyFiscalProfileDat
     simplesCaixaPrazoCartaoDebitoDias: input.simplesCaixaPrazoCartaoDebitoDias,
     simplesCaixaPrazoCartaoCreditoDias: input.simplesCaixaPrazoCartaoCreditoDias,
     jcpBaseContas: input.jcpBaseContas ?? Prisma.DbNull,
+    receitaTotalAnoAnteriorCents: input.receitaTotalAnoAnteriorCents === null ? null : BigInt(input.receitaTotalAnoAnteriorCents),
   };
 }
 
@@ -586,6 +613,7 @@ function rowToData(row: CompanyFiscalProfile): CompanyFiscalProfileData {
     simplesCaixaPrazoCartaoDebitoDias: row.simplesCaixaPrazoCartaoDebitoDias,
     simplesCaixaPrazoCartaoCreditoDias: row.simplesCaixaPrazoCartaoCreditoDias,
     jcpBaseContas: row.jcpBaseContas === null ? Prisma.DbNull : (row.jcpBaseContas as Prisma.InputJsonValue),
+    receitaTotalAnoAnteriorCents: row.receitaTotalAnoAnteriorCents,
   };
 }
 
@@ -627,6 +655,7 @@ function toView(row: CompanyFiscalProfile): CompanyFiscalProfileView {
     simplesCaixaPrazoCartaoDebitoDias: row.simplesCaixaPrazoCartaoDebitoDias,
     simplesCaixaPrazoCartaoCreditoDias: row.simplesCaixaPrazoCartaoCreditoDias,
     jcpBaseContas: (row.jcpBaseContas as JcpBaseContas | null) ?? null,
+    receitaTotalAnoAnteriorCents: row.receitaTotalAnoAnteriorCents === null ? null : row.receitaTotalAnoAnteriorCents.toString(),
     updatedAt: row.updatedAt.toISOString(),
   };
 }
