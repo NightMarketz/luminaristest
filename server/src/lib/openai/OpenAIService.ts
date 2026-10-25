@@ -4,7 +4,7 @@ import { logger } from '../logger';
 import type { LlmUsage } from './llmUsage';
 
 // Named constants for per-call output token ceilings (R11 cost guardrails)
-export const MAX_TOKENS_CHAT = 1024;        // RAG chat calls (gpt-3.5-turbo)
+export const MAX_TOKENS_CHAT = 1024;        // RAG chat calls (gpt-4o-mini)
 export const MAX_TOKENS_AGENT = 2048;       // Agent / tool calls (gpt-4o)
 export const MAX_TOKENS_EXTRACTION = 4096;  // Structured-data extraction calls
 
@@ -13,20 +13,21 @@ const CONFIG = {
   // Maximum tokens to process in a single request (system-wide limit)
   MAX_TOKENS_PER_REQUEST: 100000,
 
-  // Maximum characters per chunk to stay within token limits for GPT-3.5
+  // Maximum characters per chunk to stay within token limits
   // Approximately 1 token = 4 characters in English
   MAX_CHARS_PER_CHUNK: 3000,
 
-  // Model selection
+  // Model selection. A OpenAI desativou a família gpt-3.5 (404 model_not_found em 2026-10-24): CHAT e DEFAULT
+  // passaram a 'gpt-4o-mini' (decisão do dono). O retry de extractStructuredData repete o mesmo modelo.
   MODELS: {
-    // Default model for structured data extraction (cheapest)
-    DEFAULT: 'gpt-3.5-turbo-0125',
+    // Default model for structured data extraction
+    DEFAULT: 'gpt-4o-mini',
 
-    // Fallback model for when DEFAULT fails (more reliable but expensive)
+    // Second attempt when DEFAULT fails; also structured outputs (classifyIntoEnum*, completeWithJsonSchema)
     FALLBACK: 'gpt-4o-mini',
 
-    // Model for chat completions (good balance of quality and cost)
-    CHAT: 'gpt-3.5-turbo',
+    // Model for chat completions (RAG chat, interview, customization, tabular check)
+    CHAT: 'gpt-4o-mini',
 
     // Model for tool usage (requires tool capabilities)
     TOOLS: 'gpt-4o'
@@ -294,7 +295,7 @@ export class OpenAIService {
 
   /**
    * Escolhe uma das `options` para o `input` (ou `null`), com a saída restrita pelo schema (BE-INCR-KIT-SETOR-EMENDA-1
-   * PR-K3, item 7c; L1 de 13/10). Modelo = `FALLBACK` (`gpt-4o-mini`): o `CHAT` (3.5) não suporta structured outputs.
+   * PR-K3, item 7c; L1 de 13/10). Modelo = `FALLBACK` (`gpt-4o-mini`), que suporta structured outputs.
    * Erro da API sobe para o chamador (a sugestão fiscal o trata como "sem sugestão").
    */
   public async classifyIntoEnum(input: string, systemPrompt: string, options: readonly string[]): Promise<string | null> {

@@ -1,6 +1,7 @@
 import { getCookie } from 'cookies-next';
 import { notify } from '../notifications/notify';
 import { humanizeZodFlatten, isZodFlatten, type ZodFlatten } from './zodFlatten';
+import { emitSessionExpired } from './sessionExpired';
 
 // Re-exported so existing importers keep working; pure helpers live in ./zodFlatten
 // (importable outside lib/services — the lint gate bars only the client module).
@@ -70,10 +71,13 @@ class ApiClient {
     const { silent, token, ...init } = options;
 
     try {
+      const headers = this.getHeaders(init.headers, token) as Record<string, string>;
       const response = await fetch(url, {
         ...init,
-        headers: this.getHeaders(init.headers, token),
+        headers,
       });
+      // Só com token enviado: o 401 do login (sem sessão) é credencial errada, não sessão expirada.
+      if (response.status === 401 && headers['Authorization']) emitSessionExpired();
 
       const bodyText = await response.text();
       let result: Record<string, unknown>;

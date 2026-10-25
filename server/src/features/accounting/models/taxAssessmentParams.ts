@@ -14,7 +14,7 @@ import type { NomeCodigoReceita } from '../../legalParameters/models/formatoLinh
  * Versão gravada em `TaxAssessment.tabelaVersao` (D3). BE-INCR-LEGAL-PARAMS PR-1: as linhas moram no banco; esta
  * string continua sendo a gravada até o item 7 (PR-4) trocar por ids + hash das linhas usadas.
  */
-export const TAX_ASSESSMENT_TABELA_VERSAO = '2026-10-06'; // BE-INCR-TAX-PRESUMIDO-16 item 1: 16% também no Presumido (art. 215 § 10)
+export const TAX_ASSESSMENT_TABELA_VERSAO = '2026-10-24'; // PRESUMIDO-TETO-78MI item 1: teto da opção pelo Presumido (2026-10-06: 16% no Presumido, art. 215 § 10)
 
 export type ChaveParametro =
   | 'IRPJ_ALIQ'
@@ -27,14 +27,17 @@ export type ChaveParametro =
   | 'LC224_ACRESCIMO_CSLL'
   | 'LC224_LIMITE_TRIMESTRE_CENTS'
   | 'PRESUNCAO_IRPJ_REDUZIDA'
-  | 'RECEITA_LIMITE_REDUZIDA_ANO_CENTS';
+  | 'RECEITA_LIMITE_REDUZIDA_ANO_CENTS'
+  // PRESUMIDO-TETO-78MI item 1 (F-PT-7 a): em REAIS — `valorInt` é Int de 32 bits e R$ 78 mi em centavos não cabe.
+  | 'PRESUMIDO_TETO_ANO_REAIS'
+  | 'PRESUMIDO_TETO_MES_REAIS';
 
 export type AtividadePresuncao = 'SERVICO' | 'REVENDA';
 
 export interface ParametroApuracao {
   chave: ChaveParametro;
   atividade?: AtividadePresuncao;
-  valor: number; // bp, ou centavos nos *_CENTS
+  valor: number; // bp, centavos nos *_CENTS, reais nos *_REAIS
   fonte: string;
   vigenteDesde: string; // YYYY-MM-DD
   vigenteAte?: string; // YYYY-MM-DD inclusive (BE-INCR-LEGAL-PARAMS: a linha de banco pode ter fim)
@@ -56,7 +59,7 @@ export interface TabelaApuracao {
 const CHAVES: ReadonlySet<string> = new Set<ChaveParametro>([
   'IRPJ_ALIQ', 'IRPJ_ADIC_ALIQ', 'IRPJ_ADIC_LIMITE_MES_CENTS', 'PRESUNCAO_IRPJ', 'PRESUNCAO_CSLL', 'COMPENSACAO_TETO',
   'LC224_ACRESCIMO_IRPJ', 'LC224_ACRESCIMO_CSLL', 'LC224_LIMITE_TRIMESTRE_CENTS', 'PRESUNCAO_IRPJ_REDUZIDA',
-  'RECEITA_LIMITE_REDUZIDA_ANO_CENTS',
+  'RECEITA_LIMITE_REDUZIDA_ANO_CENTS', 'PRESUMIDO_TETO_ANO_REAIS', 'PRESUMIDO_TETO_MES_REAIS',
 ]);
 
 /**
