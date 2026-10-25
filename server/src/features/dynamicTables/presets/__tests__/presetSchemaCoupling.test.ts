@@ -63,12 +63,9 @@ const PLUGIN_MANIFEST: readonly PluginFieldManifest[] = [
   {
     plugin: 'StockMovementsApplyPlugin',
     table: 'stockMovements',
-    reads: ['productId', 'unitId', 'type', 'quantity', 'sourceType', 'detailKey', 'reason', 'cost', 'supplierId', 'paymentStatus'],
-    writes: ['paymentStatus', 'cost', 'reason'],
-    selectValues: [
-      { field: 'reason', values: ['Adjustment'] },
-      { field: 'paymentStatus', values: ['Pending'] },
-    ],
+    reads: ['productId', 'unitId', 'type', 'quantity', 'detailKey', 'reason', 'cost', 'supplierId', 'paymentStatus'],
+    writes: ['paymentStatus', 'cost'],
+    selectValues: [{ field: 'paymentStatus', values: ['Pending'] }],
   },
   { plugin: 'StockMovementsApplyPlugin', table: 'productUnits', reads: ['productId', 'unitId', 'stock'], writes: ['stock'] },
   { plugin: 'CommissionsPlugin', table: 'commissions', reads: ['status', 'paidAt'], writes: ['paidAt'] },
@@ -145,7 +142,7 @@ const PLUGIN_MANIFEST: readonly PluginFieldManifest[] = [
   {
     plugin: 'SalesPlugin/stockSync',
     table: 'stockMovements',
-    reads: ['sourceId', 'detailKey', 'sourceType'],
+    reads: ['sourceId', 'detailKey'],
     writes: ['productId', 'type', 'quantity', 'date', 'reason', 'sourceId', 'detailKey', 'unitId'],
     selectValues: [
       { field: 'reason', values: ['SALE', 'RETURN'] },
@@ -178,19 +175,7 @@ const PLUGIN_MANIFEST: readonly PluginFieldManifest[] = [
 
 // --- Item 8 / F-TAP-4 → (a): vermelhos conhecidos, com o nó dono — a lista só encolhe ----------------------------
 
-const PLUGINS_VENDA = { owner: 'FIX-PLUGINS-VENDA', since: '2026-10-21' } as const;
-
-const KNOWN_GAPS: readonly KnownGap[] = [
-  // ACHADOS-2026-10-19 §3.1 #4: `StockMovementsApplyPlugin` e `stockSync` leem `sourceType`, que o preset não declara
-  // (o Zod do motor remove a chave) — compra manual vira `Adjustment`.
-  { key: 'plugin-write:beautySalon.stockMovements:sourceType', ...PLUGINS_VENDA },
-  { key: 'plugin-write:aestheticClinic.stockMovements:sourceType', ...PLUGINS_VENDA },
-  // §3.1 #17: `stockSync.createMovementsForItems` grava `reason` 'SALE'/'RETURN'; as opções são 'Sale'/'Return'.
-  { key: 'plugin-select-value:beautySalon.stockMovements:reason=SALE', ...PLUGINS_VENDA },
-  { key: 'plugin-select-value:beautySalon.stockMovements:reason=RETURN', ...PLUGINS_VENDA },
-  { key: 'plugin-select-value:aestheticClinic.stockMovements:reason=SALE', ...PLUGINS_VENDA },
-  { key: 'plugin-select-value:aestheticClinic.stockMovements:reason=RETURN', ...PLUGINS_VENDA },
-];
+const KNOWN_GAPS: readonly KnownGap[] = [];
 
 // --- Coletores ---------------------------------------------------------------------------------------------------
 
