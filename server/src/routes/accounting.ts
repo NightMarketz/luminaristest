@@ -147,6 +147,14 @@ import {
 } from '../controllers/companySignerController';
 import { createPartner, deletePartner, getPartner, listPartners, updatePartner } from '../controllers/partnerController';
 import {
+  createWithholdingProfile,
+  deleteWithholdingProfile,
+  getWithholdingProfile,
+  listWithholdingProfiles,
+  updateWithholdingProfile,
+} from '../controllers/withholdingProfileController';
+import { getWithholdingSummary, listWithholdings } from '../controllers/withholdingController';
+import {
   cancelProfitDistribution,
   createProfitDistribution,
   getProfitDistribution,
@@ -420,6 +428,15 @@ router.post('/partners', createPartner);
 router.get('/partners/:id', getPartner);
 router.put('/partners/:id', updatePartner);
 router.delete('/partners/:id', deletePartner);
+// BE-INCR-RETENCOES-FONTE PR-1 (item 6): perfil de retenção por contraparte × natureza.
+router.get('/withholding-profiles', listWithholdingProfiles);
+router.post('/withholding-profiles', createWithholdingProfile);
+router.get('/withholding-profiles/:id', getWithholdingProfile);
+router.patch('/withholding-profiles/:id', updateWithholdingProfile);
+router.delete('/withholding-profiles/:id', deleteWithholdingProfile);
+// BE-INCR-RETENCOES-FONTE PR-2 (item 23; F-RET-18 a): leitura das retenções feitas (contrato da EFD-REINF). `summary` antes.
+router.get('/withholdings/summary', getWithholdingSummary);
+router.get('/withholdings', listWithholdings);
 // BE-INCR-IRRF-DISTRIBUICAO PR-2 (itens 10–21): distribuição de lucros com IRRF. `preview` e `irrf` antes de `:id`.
 router.post('/profit-distributions/preview', previewProfitDistribution);
 router.get('/profit-distributions/irrf', getProfitDistributionIrrf);

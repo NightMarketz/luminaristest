@@ -103,7 +103,8 @@ describe('item 8 — fim da customização não apaga a sessão', () => {
 
     const r = await svc.processCustomizationStep(s.id, USER, [{ role: 'user', content: 'pode finalizar' }]);
 
-    expect(r.nextStage).toBe('CUSTOMIZATION_COMPLETED');
+    // W1 (F-W1-2 a): o fim da customização devolve COMPLETED (um só gatilho de criação no front).
+    expect(r.nextStage).toBe('COMPLETED');
     expect((await sm.loadSession(s.id, USER)).state).toMatchObject({ isCompleted: true, currentAction: null });
   });
 });

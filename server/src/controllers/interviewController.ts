@@ -4,6 +4,7 @@ import { getUserContextFromRequest } from '@/lib/authUtils';
 import { getFactory } from '@/lib/factory';
 import { ChatInterviewSchema, InterviewMessageDto } from '@/features/interview/dtos/ChatInterviewDto';
 import { CustomizeFieldsDto } from '@/features/interview/dtos/CustomizeFields.dto';
+import { InterviewModulesSchema } from '@/features/interview/dtos/InterviewModules.dto';
 import { InterviewStage, IMessage } from '@/features/interview/models/InterviewTypes';
 
 /**
@@ -61,7 +62,7 @@ export async function postChatInterview(req: Request, res: Response) {
       return res.status(400).json({ success: false, error: parse.error.flatten() });
     }
 
-    const { stage, messages: rawMessages, presetKey, sessionId, choice } = parse.data;
+    const { stage, messages: rawMessages, presetKey, sessionId, choice, modules } = parse.data;
 
     // Validate that the stage is a known InterviewStage (fall back to GREETING if unknown)
     const validStages: InterviewStage[] = [
@@ -90,10 +91,40 @@ export async function postChatInterview(req: Request, res: Response) {
       ctx.userId,
       presetKey,
       sessionId,
-      choice
+      choice,
+      modules
     );
 
     return res.status(200).json(result);
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+}
+
+/**
+ * POST /api/dashboard/ai/InterviewModules — W1 (F-W1-6 a + sincronização, dono, questionário 2026-10-24).
+ *
+ * Request body (`InterviewModulesSchema`, `.strict()`): { sessionId, modules: ModuleSelector[] } — a seleção inteira.
+ * Response 200: { sessionId, customizationState } com as tabelas dos módulos regravadas na sessão.
+ *
+ * Erros: 401 sem contexto · 400 DTO ou dependência de módulo ausente (`ValidationError` do `resolveModuleSelection`) ·
+ * 404 `INTERVIEW_SESSION_NOT_FOUND` · 409 `INTERVIEW_SESSION_CONFLICT`, via `handleApiError`.
+ */
+export async function postInterviewModules(req: Request, res: Response) {
+  try {
+    const ctx = getUserContextFromRequest(req);
+    if (!ctx) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+
+    const parse = InterviewModulesSchema.safeParse(req.body);
+    if (!parse.success) {
+      return res.status(400).json({ success: false, error: parse.error.flatten() });
+    }
+
+    const { sessionId, modules } = parse.data;
+    const customizationState = await getFactory().getCustomizationService().syncModules(sessionId, ctx.userId, modules);
+    return res.status(200).json({ sessionId, customizationState });
   } catch (error) {
     return handleApiError(error, res);
   }

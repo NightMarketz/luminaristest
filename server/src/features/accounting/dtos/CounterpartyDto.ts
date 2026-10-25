@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { COUNTERPARTY_NAME_MAX_LENGTH, COUNTERPARTY_TYPES, normalizeTaxId } from '../models/Counterparty.model';
 import { queryBoolean } from './queryPrimitives';
+import { REGIMES_CONTRAPARTE } from '../models/retencaoParams';
 
 /**
  * CounterpartyDto — Contraparte (INCR-COUNTERPARTY / A1) request schemas. A counterparty is a
@@ -31,6 +32,8 @@ import { queryBoolean } from './queryPrimitives';
  *         name:   { type: string, description: "Nome de exibição — a chave de negócio é o nameNormalized derivado (trim + fold de caixa + colapso de espaços)" }
  *         taxId:  { type: string, description: "CPF/CNPJ opcional, normalizado (máscara removida; CPF só-dígitos; CNPJ alfanumérico preservado em maiúsculas — BE-INCR-CNPJ-ALFA) — discriminador informacional, fora da chave de unicidade" }
  *         ref:    { type: string, description: "Ref opcional escopada a uma linha de DynamicTable (não é FK)" }
+ *         regimeTributario: { type: string, enum: [SIMPLES, MEI, PRESUMIDO, REAL, ARBITRADO, PF, COOPERATIVA, EXTERIOR], description: "RETENCOES-FONTE item 5 — regime da contraparte para as retenções; PF exige CPF" }
+ *         declaracaoOptanteDocumentId: { type: string, description: "SourceDocument da declaração de optante do Simples (mesmo escopo)" }
  */
 export const CreateCounterpartySchema = z
   .object({
@@ -46,6 +49,32 @@ export const CreateCounterpartySchema = z
       .transform((v) => normalizeTaxId(v))
       .optional(),
     ref: z.string().min(1).optional(),
+    // RETENCOES-FONTE PR-1 (item 5; F-RET-5 a): a coerência com o taxId (PF ⇒ CPF) roda no serviço, com o taxId normalizado.
+    regimeTributario: z.enum(REGIMES_CONTRAPARTE).optional(),
+    declaracaoOptanteDocumentId: z.string().min(1).optional(),
+  })
+  .strict();
+
+/** @openapi
+ * components:
+ *   schemas:
+ *     SetCounterpartyRegimeInput:
+ *       type: object
+ *       required: [unitId, regimeTributario]
+ *       properties:
+ *         unitId: { type: string }
+ *         regimeTributario: { type: string, nullable: true, enum: [SIMPLES, MEI, PRESUMIDO, REAL, ARBITRADO, PF, COOPERATIVA, EXTERIOR] }
+ *         declaracaoOptanteDocumentId: { type: string, nullable: true }
+ */
+/**
+ * RETENCOES-FONTE PR-1 (item 5) — comando que grava o regime e a declaração de optante de uma contraparte que já existe
+ * (as criadas pelo AP/AR não passam pelo POST). `null` limpa. Sem `.partial()` (memória Zod 4): os dois campos vão juntos.
+ */
+export const SetCounterpartyRegimeSchema = z
+  .object({
+    unitId: z.string().min(1),
+    regimeTributario: z.enum(REGIMES_CONTRAPARTE).nullable(),
+    declaracaoOptanteDocumentId: z.string().min(1).nullable().optional(),
   })
   .strict();
 
@@ -89,6 +118,7 @@ export const CounterpartyScopeQuerySchema = z.object({
 
 export type CreateCounterpartyInput = z.infer<typeof CreateCounterpartySchema>;
 export type ArchiveCounterpartyInput = z.infer<typeof ArchiveCounterpartySchema>;
+export type SetCounterpartyRegimeInput = z.infer<typeof SetCounterpartyRegimeSchema>;
 export type ListCounterpartiesQueryInput = z.infer<typeof ListCounterpartiesQuerySchema>;
 export type CounterpartyScopeQueryInput = z.infer<typeof CounterpartyScopeQuerySchema>;
 

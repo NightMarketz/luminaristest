@@ -1118,6 +1118,24 @@
           "ref": {
             "type": "string",
             "description": "Ref opcional escopada a uma linha de DynamicTable (não é FK)"
+          },
+          "regimeTributario": {
+            "type": "string",
+            "enum": [
+              "SIMPLES",
+              "MEI",
+              "PRESUMIDO",
+              "REAL",
+              "ARBITRADO",
+              "PF",
+              "COOPERATIVA",
+              "EXTERIOR"
+            ],
+            "description": "RETENCOES-FONTE item 5 — regime da contraparte para as retenções; PF exige CPF"
+          },
+          "declaracaoOptanteDocumentId": {
+            "type": "string",
+            "description": "SourceDocument da declaração de optante do Simples (mesmo escopo)"
           }
         }
       },
@@ -2611,6 +2629,64 @@
             "type": "integer",
             "minimum": 1,
             "description": "Unidades recebidas nesta compra de estoque; pareado com inventoryProductRef. amountCents é o valor TOTAL (evita arredondamento por-unidade)."
+          },
+          "withholdings": {
+            "type": "array",
+            "description": "RETENCOES-FONTE PR-2 (item 12): sobrescrita da retenção calculada, SÓ PARA MENOS e com motivo (ADR D5); para mais ou tributo sem linha calculada → 400. Só em título de despesa de serviço.",
+            "items": {
+              "type": "object",
+              "required": [
+                "tributo",
+                "amountCents",
+                "motivo"
+              ],
+              "properties": {
+                "tributo": {
+                  "type": "string",
+                  "enum": [
+                    "IRRF",
+                    "CSLL",
+                    "COFINS",
+                    "PIS",
+                    "INSS",
+                    "ISS"
+                  ]
+                },
+                "amountCents": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 2147483647
+                },
+                "motivo": {
+                  "type": "string",
+                  "minLength": 3,
+                  "maxLength": 140
+                }
+              }
+            }
+          },
+          "pfDeducoes": {
+            "type": "object",
+            "description": "RETENCOES-FONTE PR-2 (item 11): deduções do IRRF de PF (Lei 9.250 art. 4º). Ausente com contraparte PF → 0 dependentes e desconto simplificado.",
+            "properties": {
+              "dependentes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 30
+              },
+              "previdenciaCents": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "pensaoCents": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "documentoSerie": {
+            "type": "string",
+            "description": "Série da NF (R-2010 serie) — RETENCOES-FONTE PR-2"
           },
           "fixedAssetItems": {
             "type": "array",
@@ -5439,6 +5515,36 @@
                 }
               }
             }
+          }
+        }
+      },
+      "SetCounterpartyRegimeInput": {
+        "type": "object",
+        "required": [
+          "unitId",
+          "regimeTributario"
+        ],
+        "properties": {
+          "unitId": {
+            "type": "string"
+          },
+          "regimeTributario": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "SIMPLES",
+              "MEI",
+              "PRESUMIDO",
+              "REAL",
+              "ARBITRADO",
+              "PF",
+              "COOPERATIVA",
+              "EXTERIOR"
+            ]
+          },
+          "declaracaoOptanteDocumentId": {
+            "type": "string",
+            "nullable": true
           }
         }
       }
@@ -29370,6 +29476,492 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/api/accounting/withholding-profiles": {
+      "get": {
+        "summary": "List the live withholding profiles of the unit (optionally of one counterparty)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "counterpartyId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "WithholdingProfileView[]"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a withholding profile (counterparty × service nature)",
+        "description": "issRetido requires issCodMun and issAliquotaBp; inss requires inssTpServico; irrf or csrf requires natRend, which must be in the EFD-Reinf Table 01 (NATUREZA_RENDIMENTO) in force on vigenteDesde (a DRAFT-only natRend is accepted with the warning NATUREZA_RENDIMENTO_DRAFT). A PF counterparty only accepts irrf. Overlapping validity for the same counterparty and nature → 409 VIGENCIA_SOBREPOSTA. Audited as withholding_profile.created without taxId or name.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "counterpartyId",
+                  "naturezaServico",
+                  "irrf",
+                  "csrf",
+                  "inss",
+                  "issRetido",
+                  "fonte",
+                  "vigenteDesde"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "counterpartyId": {
+                    "type": "string"
+                  },
+                  "naturezaServico": {
+                    "type": "string",
+                    "enum": [
+                      "SERVICO_PROFISSIONAL",
+                      "LIMPEZA_CONSERVACAO_SEGURANCA_LOCACAO",
+                      "COMISSAO_PROPAGANDA",
+                      "CESSAO_MAO_DE_OBRA",
+                      "TRABALHO_NAO_ASSALARIADO_PF",
+                      "OUTRO"
+                    ]
+                  },
+                  "natRend": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "5 digits (EFD-Reinf Table 01)"
+                  },
+                  "irrf": {
+                    "type": "boolean"
+                  },
+                  "csrf": {
+                    "type": "boolean"
+                  },
+                  "inss": {
+                    "type": "boolean"
+                  },
+                  "issRetido": {
+                    "type": "boolean"
+                  },
+                  "inssTpServico": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "9 digits (EFD-Reinf Table 06)"
+                  },
+                  "inssCprb": {
+                    "type": "boolean",
+                    "nullable": true
+                  },
+                  "issCodMun": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "IBGE, 7 digits"
+                  },
+                  "issAliquotaBp": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 0,
+                    "maximum": 10000
+                  },
+                  "issVencimentoDia": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 1,
+                    "maximum": 31
+                  },
+                  "fonte": {
+                    "type": "string",
+                    "description": "cited legal basis, e.g. \"RIR/2018 art. 714 § 1º XX\""
+                  },
+                  "vigenteDesde": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "vigenteAte": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "WithholdingProfileView (with avisos)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "unit or counterparty not found in the scope"
+          },
+          "409": {
+            "description": "VIGENCIA_SOBREPOSTA or deleted unit"
+          }
+        }
+      }
+    },
+    "/api/accounting/withholding-profiles/{id}": {
+      "get": {
+        "summary": "Read one withholding profile",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "WithholdingProfileView"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Replace a withholding profile (full body, same rules as POST; counterpartyId does not change)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "naturezaServico",
+                  "irrf",
+                  "csrf",
+                  "inss",
+                  "issRetido",
+                  "fonte",
+                  "vigenteDesde"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "WithholdingProfileView (with avisos)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "description": "VIGENCIA_SOBREPOSTA or deleted unit"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Soft-delete a withholding profile",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      }
+    },
+    "/api/counterparties/{id}/regime": {
+      "post": {
+        "summary": "Set the tax regime and the Simples opt-in declaration of a counterparty (command)",
+        "description": "RETENCOES-FONTE item 5 (F-RET-5 a). regimeTributario null clears it. PF requires a CPF (11-digit taxId) → otherwise 400. declaracaoOptanteDocumentId must be a live SourceDocument of the same unit. Audited as counterparty.regime_set without taxId or name.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetCounterpartyRegimeInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Counterparty"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "counterparty not found in the scope"
+          }
+        }
+      }
+    },
+    "/api/accounting/withholdings": {
+      "get": {
+        "summary": "Withholdings MADE in a month, one line per tax and payment (the EFD-Reinf contract, PR-2 item 23)",
+        "description": "Only direction=MADE (the withholdings suffered are PR-3). Lines are R-4020/R-4010/R-2010 ready (dtFG, natRend, revenue code, gross, base, amount, R-2010 fields, R-4010 deductions). The beneficiary taxId is returned here and only here. The same lines are available to the backend through ITaxWithholdingReadPort.findMadeForReinf (same mapper).",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "direction",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "MADE"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "competencia",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "WithholdingLineView[]"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      }
+    },
+    "/api/accounting/withholdings/summary": {
+      "get": {
+        "summary": "Withholdings MADE in a month grouped by tax title (revenue code), with due date and status",
+        "description": "One entry per tax title (DARF/GPS/ISS). A title below R$ 10 is added to the next month's title of the same code and becomes DEFERRED (Lei 9.430 art. 68 § 1º) — competenciasSomadas lists the months in it. Lines without a published revenue code have no title and come with the CODIGO_RECEITA_DRAFT warning.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "competencia",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "WithholdingSummary"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }

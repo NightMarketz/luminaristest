@@ -35,6 +35,10 @@
             "IBS_CBS",
             "IBS_CBS_USO_CONSUMO",
             "IBS_CBS_PROVISORIA",
+            "RETENCAO",
+            "RETENCAO_CODIGO",
+            "NATUREZA_RENDIMENTO",
+            "IRRF_PF_MENSAL",
             "ISS_TRANSICAO"
           ]
         },
@@ -132,6 +136,10 @@
             "IBS_CBS",
             "IBS_CBS_USO_CONSUMO",
             "IBS_CBS_PROVISORIA",
+            "RETENCAO",
+            "RETENCAO_CODIGO",
+            "NATUREZA_RENDIMENTO",
+            "IRRF_PF_MENSAL",
             "ISS_TRANSICAO"
           ]
         },
@@ -212,6 +220,10 @@
             "IBS_CBS",
             "IBS_CBS_USO_CONSUMO",
             "IBS_CBS_PROVISORIA",
+            "RETENCAO",
+            "RETENCAO_CODIGO",
+            "NATUREZA_RENDIMENTO",
+            "IRRF_PF_MENSAL",
             "ISS_TRANSICAO"
           ]
         },

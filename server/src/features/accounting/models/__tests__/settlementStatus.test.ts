@@ -18,7 +18,8 @@ import {
 
 describe('status arrays (BRIEF item 3)', () => {
   it('PARTIALLY_PAID entra entre OPEN e PAYING; OUTSTANDING e SETTLEABLE o incluem; terminais ficam fora', () => {
-    expect(PAYABLE_STATUSES).toEqual(['OPEN', 'PARTIALLY_PAID', 'PAYING', 'PAID', 'CANCELLED']);
+    // RETENCOES-FONTE PR-2 (item 20): DEFERRED = título de imposto < R$ 10 somado ao seguinte — fora de OUTSTANDING e SETTLEABLE.
+    expect(PAYABLE_STATUSES).toEqual(['OPEN', 'PARTIALLY_PAID', 'PAYING', 'PAID', 'CANCELLED', 'DEFERRED']);
     expect(PAYABLE_OUTSTANDING_STATUSES).toEqual(['OPEN', 'PARTIALLY_PAID', 'PAYING']);
     expect(PAYABLE_SETTLEABLE_STATUSES).toEqual(['OPEN', 'PARTIALLY_PAID']);
     expect(PAYABLE_OUTSTANDING_STATUSES).not.toContain('PAID');

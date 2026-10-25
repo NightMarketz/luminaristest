@@ -35,7 +35,14 @@ export type FiscalProfileAccountField =
   | 'ibsRecolherAccountId'
   | 'cbsRecolherAccountId'
   | 'ibsRecuperarAccountId'
-  | 'cbsRecuperarAccountId';
+  | 'cbsRecuperarAccountId'
+  | 'retencaoIrrfRecolherAccountId'
+  | 'retencaoCsrfRecolherAccountId'
+  | 'retencaoInssRecolherAccountId'
+  | 'retencaoIssRecolherAccountId'
+  | 'retencaoIrrfCompensarAccountId'
+  | 'retencaoCsllCompensarAccountId'
+  | 'retencaoInssCompensarAccountId';
 
 /**
  * BE-INCR-DFE (BRIEF item 7) — campos cujo valor vem de resposta pendente do contador (D1f, itens 5a–5f
@@ -101,6 +108,14 @@ export interface FiscalProfileView extends CostRegime {
   // IBS-CBS-2027 PR-3 (item 14)
   ibsRecuperarAccountId: string | null;
   cbsRecuperarAccountId: string | null;
+  // RETENCOES-FONTE PR-1 (item 8; F-RET-19 a)
+  retencaoIrrfRecolherAccountId: string | null;
+  retencaoCsrfRecolherAccountId: string | null;
+  retencaoInssRecolherAccountId: string | null;
+  retencaoIssRecolherAccountId: string | null;
+  retencaoIrrfCompensarAccountId: string | null;
+  retencaoCsllCompensarAccountId: string | null;
+  retencaoInssCompensarAccountId: string | null;
   partnerAccountRef: string | null;
   codMun: string | null;
   inscricaoMunicipal: string | null;
@@ -335,6 +350,14 @@ export class FiscalProfileService {
     // IBS-CBS-2027 PR-3 (item 14): o crédito da NF-e de entrada (ativo), compensado na apuração mensal.
     if (input.ibsRecuperarAccountId) await this.assertAssetAccount(scope, input.ibsRecuperarAccountId, 'IBS a recuperar', tx);
     if (input.cbsRecuperarAccountId) await this.assertAssetAccount(scope, input.cbsRecuperarAccountId, 'CBS a recuperar', tx);
+    // RETENCOES-FONTE PR-1 (item 8; F-RET-19 a): retenções feitas a recolher (Liability) e sofridas a compensar (Asset).
+    if (input.retencaoIrrfRecolherAccountId) await this.assertLiabilityAccount(scope, input.retencaoIrrfRecolherAccountId, 'IRRF retido a recolher', tx);
+    if (input.retencaoCsrfRecolherAccountId) await this.assertLiabilityAccount(scope, input.retencaoCsrfRecolherAccountId, 'CSRF retida a recolher', tx);
+    if (input.retencaoInssRecolherAccountId) await this.assertLiabilityAccount(scope, input.retencaoInssRecolherAccountId, 'INSS retido a recolher', tx);
+    if (input.retencaoIssRecolherAccountId) await this.assertLiabilityAccount(scope, input.retencaoIssRecolherAccountId, 'ISS retido a recolher', tx);
+    if (input.retencaoIrrfCompensarAccountId) await this.assertAssetAccount(scope, input.retencaoIrrfCompensarAccountId, 'IRRF retido a compensar', tx);
+    if (input.retencaoCsllCompensarAccountId) await this.assertAssetAccount(scope, input.retencaoCsllCompensarAccountId, 'CSLL retida a compensar', tx);
+    if (input.retencaoInssCompensarAccountId) await this.assertAssetAccount(scope, input.retencaoInssCompensarAccountId, 'INSS retido a compensar', tx);
     // X13 PR-2 item 15 (F-OBP-1 a): a unidade segue o regime da EMPRESA no ano corrente (MEI/SIMPLES → SIMPLES).
     const regimeEmpresa = await this.regimeEmpresaHoje(scope, tx);
     if (regimeEmpresa && regimeUnidadeEsperado(regimeEmpresa) !== input.regimeTributario) {
@@ -406,6 +429,13 @@ export class FiscalProfileService {
         cbsRecolherAccountId: row.cbsRecolherAccountId ?? '',
         ibsRecuperarAccountId: row.ibsRecuperarAccountId ?? '', // IBS-CBS-2027 PR-3 item 14
         cbsRecuperarAccountId: row.cbsRecuperarAccountId ?? '',
+        retencaoIrrfRecolherAccountId: row.retencaoIrrfRecolherAccountId ?? '', // RETENCOES-FONTE PR-1 item 8
+        retencaoCsrfRecolherAccountId: row.retencaoCsrfRecolherAccountId ?? '',
+        retencaoInssRecolherAccountId: row.retencaoInssRecolherAccountId ?? '',
+        retencaoIssRecolherAccountId: row.retencaoIssRecolherAccountId ?? '',
+        retencaoIrrfCompensarAccountId: row.retencaoIrrfCompensarAccountId ?? '',
+        retencaoCsllCompensarAccountId: row.retencaoCsllCompensarAccountId ?? '',
+        retencaoInssCompensarAccountId: row.retencaoInssCompensarAccountId ?? '',
         // BE-INCR-DFE (item 9): enum/boolean/int como string — sem texto livre (IM/CNAE ficam fora do evento)
         codMun: row.codMun ?? '',
         dpsSerie: String(row.dpsSerie),
@@ -507,6 +537,13 @@ export class FiscalProfileService {
       cbsRecolherAccountId: row.cbsRecolherAccountId,
       ibsRecuperarAccountId: row.ibsRecuperarAccountId, // IBS-CBS-2027 PR-3 item 14
       cbsRecuperarAccountId: row.cbsRecuperarAccountId,
+      retencaoIrrfRecolherAccountId: row.retencaoIrrfRecolherAccountId, // RETENCOES-FONTE PR-1 item 8
+      retencaoCsrfRecolherAccountId: row.retencaoCsrfRecolherAccountId,
+      retencaoInssRecolherAccountId: row.retencaoInssRecolherAccountId,
+      retencaoIssRecolherAccountId: row.retencaoIssRecolherAccountId,
+      retencaoIrrfCompensarAccountId: row.retencaoIrrfCompensarAccountId,
+      retencaoCsllCompensarAccountId: row.retencaoCsllCompensarAccountId,
+      retencaoInssCompensarAccountId: row.retencaoInssCompensarAccountId,
       partnerAccountRef: row.partnerAccountRef,
       codMun: row.codMun,
       inscricaoMunicipal: row.inscricaoMunicipal,

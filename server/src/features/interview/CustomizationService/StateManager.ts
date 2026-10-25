@@ -7,6 +7,29 @@ import {
 import type { IInterviewSessionRepository } from '../repositories/IInterviewSessionRepository';
 import { presetService } from '../../dynamicTables/services/PresetService';
 import { computeTableLocks } from '../../dynamicTables/presets/removability';
+import { CoreSystemPreset } from '../../dynamicTables/presets';
+import { MODULE_REGISTRY, moduleOfTable, type ModuleKey } from '../../dynamicTables/presets/modules/registry';
+import type { ISchemaField } from '../../dynamicTables/models/DynamicTable.model';
+import { ADDED_TABLE_KEY_PATTERN } from '../../dynamicTables/dtos/CreateDashboard.dto';
+import { composeSessionTables } from './sessionComposition';
+
+/**
+ * W1 (dono, questionário 2026-10-24: "Nasce com 'Nome'"): o create recusa tabela sem campo, então a tabela criada na
+ * conversa já nasce com este campo texto obrigatório.
+ */
+export const ADDED_TABLE_DEFAULT_FIELD: ISchemaField = { name: 'name', label: 'Nome', type: 'string', required: true };
+
+/** W1: chave da tabela criada na conversa no formato que o `AddedTableSchema` do create aceita (ou `null`). */
+export function addedTableKey(tableName: string): string | null {
+  const key = tableName
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 64);
+  return ADDED_TABLE_KEY_PATTERN.test(key) ? key : null;
+}
 
 /** F-W4-3 a: TTL de 24 h, deslizante — renovado a cada gravação. */
 export const INTERVIEW_SESSION_TTL_MS = 24 * 60 * 60 * 1000;
@@ -45,6 +68,7 @@ export class StateManager {
     presetKey: string,
     presetName: string,
     tables: ICustomizableTable[],
+    modules?: ModuleKey[],
   ): Promise<IInterviewSessionHandle> {
     const state: ICustomizationState = {
       presetKey,
@@ -52,6 +76,7 @@ export class StateManager {
       tables: tables.map(table => ({ ...table, conversationHistory: [] })),
       customMessages: [],
       isCompleted: false,
+      ...(modules ? { modules } : {}),
     };
     const row = await this.repository.create({ userId, presetKey, state, expiresAt: this.expiresAt() });
     logger.info(`[StateManager] Sessão de customização ${row.id} criada para ${presetName}`);
@@ -106,12 +131,15 @@ export class StateManager {
    */
   public async addTable(session: IInterviewSessionHandle, tableName: string, description: string): Promise<boolean> {
     const state = session.state;
-    // Gera uma chave a partir do nome da tabela
-    // BUG FIX (R28): /\\s+/g had a literal backslash and never matched whitespace. Fixed to /\s+/g.
-    const key = tableName.toLowerCase().replace(/\s+/g, '_');
+    // W1 (F-W1-4 a): a chave vai ao create (`addedTables[].key`), então segue o formato dele; nome sem letra → recusa.
+    const key = addedTableKey(tableName);
+    if (!key) {
+      logger.warn(`[StateManager] Nome de tabela sem chave válida na sessão ${session.id}`);
+      return false;
+    }
 
-    // Verifica se já existe uma tabela com essa chave
-    if (state.tables.some(t => t.key === key)) {
+    // Verifica se já existe uma tabela com essa chave (na sessão, no Core ou num módulo — o create recusaria)
+    if (state.tables.some(t => t.key === key) || key in CoreSystemPreset.tables || moduleOfTable(key)) {
       logger.warn(`[StateManager] Tabela com chave ${key} já existe na sessão ${session.id}`);
       return false;
     }
@@ -122,6 +150,7 @@ export class StateManager {
       description,
       isSelected: true,
       isCore: false, // Tabelas adicionadas pelo usuário não são essenciais por padrão
+      fields: [{ ...ADDED_TABLE_DEFAULT_FIELD }],
       conversationHistory: [], // Inicializa o histórico da conversa para a nova tabela
     });
     await this.saveSession(session);
@@ -150,11 +179,52 @@ export class StateManager {
       return false;
     }
 
-    state.tables.splice(tableIndex, 1);
+    // W1 (F-W1-5 a): tabela de módulo não-fixo sai com o módulo inteiro (módulo fixo já está travado acima); a
+    // resposta da conversa avisa (`CustomizationService.processRemovingTable`).
+    const target = state.tables[tableIndex];
+    const moduleKey = moduleOfTable(target.key);
+    if (moduleKey && target.lock !== undefined && state.modules?.includes(moduleKey)) {
+      const dependents = state.modules.filter((k) => MODULE_REGISTRY[k].dependsOn.includes(moduleKey));
+      if (dependents.length > 0) {
+        logger.warn(`[StateManager] Módulo ${moduleKey} tem dependentes (${dependents.join(', ')}) na sessão ${session.id}`);
+        return false;
+      }
+      const moduleTables = new Set(MODULE_REGISTRY[moduleKey].tables);
+      state.tables = state.tables.filter((t) => !(moduleTables.has(t.key) && t.lock !== undefined));
+      state.modules = state.modules.filter((k) => k !== moduleKey);
+    } else {
+      state.tables.splice(tableIndex, 1);
+    }
     this.refreshLocks(state);
     await this.saveSession(session);
     logger.info(`[StateManager] Tabela ${tableKey} removida da sessão ${session.id}`);
     return true;
+  }
+
+  /**
+   * W1 (F-W1-6 a + sincronização): troca os módulos da sessão. Tabelas de módulo que saiu são retiradas; as do módulo
+   * que entrou chegam em `addedTables` (já extraídas pelo serviço); o resto da customização fica como está.
+   */
+  public async setModules(
+    session: IInterviewSessionHandle,
+    modules: ModuleKey[],
+    addedTables: ICustomizableTable[],
+  ): Promise<void> {
+    const state = session.state;
+    const preset = presetService.getPresetByKey(state.presetKey);
+    const presetKeys = new Set(Object.keys(preset?.tables ?? {}));
+    state.tables = state.tables.filter((t) => {
+      const owner = moduleOfTable(t.key);
+      return t.lock === undefined || presetKeys.has(t.key) || !owner || modules.includes(owner);
+    });
+    const present = new Set(state.tables.map((t) => t.key));
+    for (const t of addedTables) {
+      if (!present.has(t.key)) state.tables.push({ ...t, conversationHistory: [] });
+    }
+    state.modules = modules;
+    this.refreshLocks(state);
+    await this.saveSession(session);
+    logger.info(`[StateManager] Módulos da sessão ${session.id}: ${modules.join(', ') || 'nenhum'}`);
   }
 
   /**
@@ -164,8 +234,10 @@ export class StateManager {
   private refreshLocks(state: ICustomizationState): void {
     const preset = presetService.getPresetByKey(state.presetKey);
     if (!preset) return;
-    const fromPreset = state.tables.filter((t) => t.lock !== undefined && t.key in preset.tables);
-    const locks = computeTableLocks(preset.tables, new Set(fromPreset.map((t) => t.key)));
+    // W1 (F-W1-6 a): as tabelas dos módulos da sessão entram na mesma regra de trava.
+    const known = composeSessionTables(preset, state.modules ?? []);
+    const fromPreset = state.tables.filter((t) => t.lock !== undefined && t.key in known);
+    const locks = computeTableLocks(known, new Set(fromPreset.map((t) => t.key)));
     for (const t of fromPreset) {
       t.lock = locks[t.key];
       t.isCore = t.lock !== null;

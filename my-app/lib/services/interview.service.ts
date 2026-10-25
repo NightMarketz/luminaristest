@@ -1,6 +1,7 @@
 import { apiClient } from '../api/api-client';
 import type { ChatInterviewInput } from '@/types/contracts/interview/ChatInterviewDto.gen';
 import type { CustomizeFieldsDtoInput } from '@/types/contracts/interview/CustomizeFields.dto.gen';
+import type { InterviewModulesInput } from '@/types/contracts/interview/InterviewModules.dto.gen';
 
 /**
  * interview.service.ts
@@ -114,5 +115,13 @@ export const InterviewService = {
    */
   customizeFields(input: CustomizeFieldsDtoInput): Promise<CustomizeFieldsResult> {
     return call(() => apiClient.post<CustomizeFieldsResult>('/dashboard/ai/CustomizeFields', input, { silent: true }));
+  },
+
+  /**
+   * POST /dashboard/ai/InterviewModules — W1: regrava os módulos da sessão de customização (seleção inteira).
+   * Responde `{ sessionId, customizationState }`; o formato do estado é lido pelo chamador.
+   */
+  interviewModules<T>(input: InterviewModulesInput): Promise<T> {
+    return call(() => apiClient.post<T>('/dashboard/ai/InterviewModules', input, { silent: true }));
   },
 };

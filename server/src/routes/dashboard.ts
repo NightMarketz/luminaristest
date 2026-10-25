@@ -8,7 +8,7 @@ import {
   deleteUserSystem,
   installModule,
 } from '@/controllers/dashboardController';
-import { postChatInterview, postCustomizeFields } from '@/controllers/interviewController';
+import { postChatInterview, postCustomizeFields, postInterviewModules } from '@/controllers/interviewController';
 
 const router = Router();
 
@@ -40,6 +40,9 @@ router.post('/ai/ChatInterview', postChatInterview);
 
 // POST /api/dashboard/ai/CustomizeFields — painel de campos por IA (W6). Auth no controller, como o de cima.
 router.post('/ai/CustomizeFields', postCustomizeFields);
+
+// POST /api/dashboard/ai/InterviewModules — módulos da sessão de customização (W1). Auth no controller.
+router.post('/ai/InterviewModules', postInterviewModules);
 
 export default router;
 

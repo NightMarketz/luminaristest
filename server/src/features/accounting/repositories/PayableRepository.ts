@@ -2,7 +2,7 @@ import prisma from '../../../lib/prisma';
 import type { Payable, PayablePayment, Prisma } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
-import { PAYABLE_OUTSTANDING_STATUSES, PAYABLE_SETTLEABLE_STATUSES } from '../models/Payable.model';
+import { PAYABLE_ORIGIN_WITHHOLDING_TAX, PAYABLE_OUTSTANDING_STATUSES, PAYABLE_SETTLEABLE_STATUSES } from '../models/Payable.model';
 import { scopeToday } from '../models/dates';
 import { buildSubledgerFilterWhere } from './subledgerFilters';
 import { separarCreditoPisCofins, type CreditoPisCofinsNota, type RazaoCreditoPisCofins } from '../models/pisCofinsParams';
@@ -208,6 +208,8 @@ export class PayableRepository implements IPayableRepository {
         ...accountingScopeWhere(scope),
         status: { in: [...PAYABLE_SETTLEABLE_STATUSES] },
         deletedAt: null,
+        // RETENCOES-FONTE PR-2 (F-RET-11 a): o valor do título de imposto muda enquanto OPEN — o claim confere o lido.
+        amountCents,
         paidCents: { lte: amountCents - newCents },
       },
       data: { status: 'PAYING', paidCents: { increment: newCents } },
@@ -332,5 +334,48 @@ export class PayableRepository implements IPayableRepository {
 
   public async runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
     return prisma.$transaction(fn);
+  }
+
+  // ── RETENCOES-FONTE PR-2 (itens 19–21) ──
+  public async findTaxTitles(scope: AccountingScope, counterpartyId: string, prefix: string, tx?: Prisma.TransactionClient): Promise<Payable[]> {
+    return (tx ?? prisma).payable.findMany({
+      where: { ...accountingScopeWhere(scope), counterpartyId, origin: PAYABLE_ORIGIN_WITHHOLDING_TAX, deletedAt: null, documentNumber: { startsWith: prefix } },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  public async findOpenTaxTitlesByCode(scope: AccountingScope, counterpartyId: string, codePrefix: string, tx?: Prisma.TransactionClient): Promise<Payable[]> {
+    return (tx ?? prisma).payable.findMany({
+      where: {
+        ...accountingScopeWhere(scope),
+        counterpartyId,
+        origin: PAYABLE_ORIGIN_WITHHOLDING_TAX,
+        deletedAt: null,
+        status: 'OPEN',
+        paidCents: 0,
+        documentNumber: { startsWith: codePrefix },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  public async findTaxTitleNumbersEver(scope: AccountingScope, counterpartyId: string, prefix: string, tx?: Prisma.TransactionClient): Promise<string[]> {
+    const rows = await (tx ?? prisma).payable.findMany({
+      where: { ...accountingScopeWhere(scope), counterpartyId, origin: PAYABLE_ORIGIN_WITHHOLDING_TAX, OR: [{ documentNumber: { startsWith: prefix } }, { documentNumber: { contains: `:${prefix}` } }] },
+      select: { documentNumber: true },
+    });
+    return rows.map((r) => r.documentNumber ?? '');
+  }
+
+  public async adjustTaxTitleAmount(scope: AccountingScope, id: string, expectedCents: number, delta: number, tx: Prisma.TransactionClient): Promise<number> {
+    const result = await tx.payable.updateMany({
+      where: { id, ...accountingScopeWhere(scope), origin: PAYABLE_ORIGIN_WITHHOLDING_TAX, deletedAt: null, status: 'OPEN', paidCents: 0, amountCents: expectedCents },
+      data: { amountCents: { increment: delta } },
+    });
+    return result.count;
+  }
+
+  public async findActivePayments(scope: AccountingScope, payableId: string, tx?: Prisma.TransactionClient): Promise<PayablePayment[]> {
+    return (tx ?? prisma).payablePayment.findMany({ where: { ...accountingScopeWhere(scope), payableId, status: 'ACTIVE' }, orderBy: { createdAt: 'asc' } });
   }
 }

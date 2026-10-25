@@ -7,9 +7,12 @@ import { SetupApiError, SetupService, type CreateDashboardPayload, type CreateDa
 import { InterviewApiError, InterviewService } from '@/lib/services/interview.service';
 import { notifyAccountingDraft } from '../setup/accountingDraftNotice';
 import { classifyCreationError } from '../setup/classifyCreationError';
+import { creationErrorMessage } from '../setup/creationErrorMessage';
 import { toggleModuleSelection } from '../setup/moduleSelection';
 import type { OnboardingFiscalInput } from '@/types/contracts/accounting/CompanyFiscalProfileDto.gen';
 import type { ChatInterviewInput } from '@/types/contracts/interview/ChatInterviewDto.gen';
+import type { CustomCreationDraftInput } from '@/types/contracts/interview/CustomCreationDraft.dto.gen';
+import type { InterviewModulesInput } from '@/types/contracts/interview/InterviewModules.dto.gen';
 
 /**
  * BE-INCR-ONBOARDING-FIRST-UNIT (I1, BRIEF item 5): na Entrevista o nome da primeira unidade vem do `SUMMARY:` que a IA
@@ -42,6 +45,37 @@ interface ChatInterviewReply {
   customizationState?: ICustomizationState;
   choicePrompt?: ICreationChoicePrompt | null;
   moduleOptions?: InterviewModuleOption[];
+  /** W1 (F-W1-2 a): só no fim da customização (COMPLETED) — o servidor consolidou a sessão. */
+  creation?: CustomCreationDraft;
+}
+
+/** W1 item 6: o `creation` do turno `done` (contrato gerado de `CustomCreationDraftSchema`). */
+export type CustomCreationDraft = CustomCreationDraftInput;
+
+/** W1 itens 6–8: o pedido de criação inteiro — sem `creation` é o caminho quick de antes. */
+interface CreateRequest {
+  key: string;
+  conversa: IMessage[];
+  fiscal: FiscalOnboarding;
+  modules: ModuleKey[];
+  creation?: CustomCreationDraft;
+}
+
+/** W1 itens 6–7: body do create — custom com o `creation` do servidor, ou quick (inalterado). */
+export function createDashboardBody(req: CreateRequest): CreateDashboardPayload {
+  const unit = { name: nomeDaUnidadeDaEntrevista(req.conversa, req.key) };
+  const { creation } = req;
+  if (!creation) return { suiteKey: req.key, unit, fiscal: req.fiscal, modules: req.modules };
+  return {
+    mode: 'custom',
+    presetKey: creation.presetKey,
+    removedTables: creation.removedTables,
+    addedFields: creation.addedFields,
+    addedTables: creation.addedTables,
+    unit,
+    fiscal: req.fiscal,
+    modules: req.modules,
+  };
 }
 
 export function useAiInterview() {
@@ -54,9 +88,12 @@ export function useAiInterview() {
   const [isCreating, setIsCreating] = useState(false);
   const [creationError, setCreationError] = useState<ICreationError | null>(null);
   // W7 item 3 (F-W7-2 a): o último pedido de criação — o retry o reenvia igual, sem recarregar a página.
-  const lastCreateRequest = useRef<{ key: string; conversa: IMessage[]; fiscal: FiscalOnboarding; modules: ModuleKey[] } | null>(null);
+  // W1 item 8: guarda o pedido INTEIRO (inclusive o `creation` do custom), não só a chave.
+  const lastCreateRequest = useRef<CreateRequest | null>(null);
   // X13 PR-3 item 20: a entrevista terminou; falta a pergunta fechada de regime/porte antes do create.
-  const [fiscalPendente, setFiscalPendente] = useState<{ key: string; conversa: IMessage[] } | null>(null);
+  const [fiscalPendente, setFiscalPendente] = useState<Omit<CreateRequest, 'fiscal' | 'modules'> | null>(null);
+  // W1 (F-W1-6 a + sincronização): trava enquanto a sessão regrava os módulos.
+  const [isSyncingModules, setIsSyncingModules] = useState(false);
   // W3 FE item 7: o servidor pede os botões criar × customizar (`choicePrompt` do último turno).
   const [choicePrompt, setChoicePrompt] = useState<ICreationChoicePrompt | null>(null);
   // W5 item 14 (FE-INCR-W5-MODULES): módulos do turno MATCHING_PRESET e a seleção (começa pelos `suggested`).
@@ -112,13 +149,14 @@ export function useAiInterview() {
     }
   }, [isLoading]);
 
-  async function handleCreateSystem(key: string, conversa: IMessage[], fiscal: FiscalOnboarding, modules: ModuleKey[]) {
-    lastCreateRequest.current = { key, conversa, fiscal, modules };
+  async function handleCreateSystem(req: CreateRequest) {
+    lastCreateRequest.current = req;
     setIsCreating(true);
     setCreationError(null);
     try {
       // W5 item 16: os módulos escolhidos na entrevista vão no create (somados ao padrão da suíte no servidor).
-      const body: CreateDashboardPayload = { suiteKey: key, unit: { name: nomeDaUnidadeDaEntrevista(conversa, key) }, fiscal, modules };
+      // W1 item 6: com `creation`, o create é custom com o que a customização decidiu.
+      const body = createDashboardBody(req);
       let created: CreateDashboardResult;
       try {
         // `silent`: a falha aparece no `creationError` (com retry), não num toast.
@@ -130,9 +168,11 @@ export function useAiInterview() {
             error: typeof err.body.error === 'string' ? err.body.error : undefined,
             errorCode: typeof err.body.errorCode === 'string' ? err.body.errorCode : undefined,
           };
+          // W1 item 10: 400 com motivo conhecido (módulo, trava, campo, tabela nova) → texto traduzido.
+          const known = err.status === 400 ? creationErrorMessage(err.body) : null;
           setCreationError({
             kind: classifyCreationError(err.status, errorData),
-            message: errorData.error || t('onboardingErrorCreateFailed'),
+            message: known ? t(known.key, known.params) : errorData.error || t('onboardingErrorCreateFailed'),
           });
         } else {
           // W7 item 4: falha de rede — o pedido pode ser reenviado (o 403 one-shot barra a criação dupla).
@@ -188,7 +228,9 @@ export function useAiInterview() {
           // `ChatInterviewSchema` aceita string ou ausente, nunca null (400) — omite o que ainda não existe.
           ...(presetKey ? { presetKey } : {}),
           ...(sessionId ? { sessionId } : {}),
-          ...(choice ? { choice } : {})
+          ...(choice ? { choice } : {}),
+          // W1 (F-W1-6 a): a sessão de customização nasce com os módulos marcados.
+          ...(choice === 'customize' && selectedModules.length > 0 ? { modules: selectedModules } : {})
         } satisfies ChatInterviewInput);
       } catch (requestError) {
         if (!(requestError instanceof InterviewApiError) || requestError.status === undefined) throw requestError;
@@ -233,12 +275,19 @@ export function useAiInterview() {
       if (newCustomizationState) {
         setCustomizationState(newCustomizationState);
         setShowCustomizationPanel(true);
+        // W1: a sessão é a verdade dos módulos (a conversa pode ter tirado um módulo inteiro — F-W1-5 a).
+        if (newCustomizationState.modules) setSelectedModules(newCustomizationState.modules);
       }
 
       if (nextStage === 'COMPLETED' && (newPresetKey || presetKey)) {
         if (!startCustomization) {
           // X13 PR-3 item 20: regime/porte vêm de pergunta FECHADA ao usuário — o modelo não os infere da conversa.
-          setFiscalPendente({ key: newPresetKey || presetKey!, conversa: [...newMessages, { sender: 'ai', text: aiResponse }] });
+          // W1 item 6: o fim da customização traz `creation`; sem ele segue o caminho quick.
+          setFiscalPendente({
+            key: newPresetKey || presetKey!,
+            conversa: [...newMessages, { sender: 'ai', text: aiResponse }],
+            ...(result.creation ? { creation: result.creation } : {}),
+          });
         }
       }
 
@@ -307,16 +356,15 @@ export function useAiInterview() {
   /** X13 PR-3 item 20: o usuário respondeu regime/porte (ou "não sei") — agora sim o sistema é criado. */
   function confirmarFiscal(fiscal: FiscalOnboarding) {
     if (!fiscalPendente) return;
-    const { key, conversa } = fiscalPendente;
     setFiscalPendente(null);
-    void handleCreateSystem(key, conversa, fiscal, selectedModules);
+    void handleCreateSystem({ ...fiscalPendente, fiscal, modules: selectedModules });
   }
 
   /** W7 item 3 (F-W7-2 a): reenvia o último pedido de criação, igual — nunca recarrega a página (perderia a conversa). */
   const handleRetry = () => {
     const last = lastCreateRequest.current;
     if (!last || isCreating) return;
-    void handleCreateSystem(last.key, last.conversa, last.fiscal, last.modules);
+    void handleCreateSystem(last);
   };
 
   /** W7 item 5: fecha o erro e devolve a pergunta fiscal do pedido que falhou; a conversa fica como estava. */
@@ -324,13 +372,46 @@ export function useAiInterview() {
     const last = lastCreateRequest.current;
     setCreationError(null);
     setIsCreating(false);
-    if (last) setFiscalPendente({ key: last.key, conversa: last.conversa });
+    if (last) setFiscalPendente({ key: last.key, conversa: last.conversa, ...(last.creation ? { creation: last.creation } : {}) });
   };
 
-  /** W5 item 15: marca/desmarca um módulo, fechando pelas dependências; travado não muda. */
+  /**
+   * W5 item 15: marca/desmarca um módulo, fechando pelas dependências; travado não muda.
+   * W1 (F-W1-6 a + sincronização, dono 2026-10-24): com a sessão de customização aberta, a sessão regrava as tabelas
+   * dos módulos e a seleção passa a ser a que o servidor devolveu.
+   */
   const toggleModule = (key: ModuleKey) => {
-    setSelectedModules((prev) => toggleModuleSelection(moduleOptions, prev, key));
+    const next = toggleModuleSelection(moduleOptions, selectedModules, key);
+    if (!sessionId || !customizationState) {
+      setSelectedModules(next);
+      return;
+    }
+    if (isSyncingModules || next === selectedModules) return;
+    void syncModules(sessionId, next);
   };
+
+  async function syncModules(id: string, modules: ModuleKey[]) {
+    setIsSyncingModules(true);
+    try {
+      const data = await InterviewService.interviewModules<{ customizationState: ICustomizationState }>(
+        { sessionId: id, modules } satisfies InterviewModulesInput,
+      );
+      setCustomizationState(data.customizationState);
+      setSelectedModules(data.customizationState.modules ?? modules);
+    } catch (error) {
+      const code = error instanceof InterviewApiError ? error.body.code : undefined;
+      if (error instanceof InterviewApiError && error.status === 404 && code === 'INTERVIEW_SESSION_NOT_FOUND') {
+        handleSessionLost();
+      } else if (error instanceof InterviewApiError && error.status === 409 && code === 'INTERVIEW_SESSION_CONFLICT') {
+        setMessages(prev => [...prev, { sender: 'ai', text: t('onboardingSessionConflict') }]);
+      } else {
+        console.error('Failed to sync interview modules:', error);
+        setMessages(prev => [...prev, { sender: 'ai', text: t('onboardingModulesSyncFailed') }]);
+      }
+    } finally {
+      setIsSyncingModules(false);
+    }
+  }
 
   return {
     messages,
@@ -361,6 +442,7 @@ export function useAiInterview() {
     confirmarFiscal,
     moduleOptions,
     selectedModules,
-    toggleModule
+    toggleModule,
+    isSyncingModules
   };
 }

@@ -8,6 +8,7 @@ import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { centsFromDb } from '../models/money';
+import { PAYABLE_ORIGIN_WITHHOLDING_TAX } from '../models/Payable.model';
 import {
   CLIENTES_A_RECEBER_CODE,
   ESTOQUES_CODE,
@@ -188,7 +189,9 @@ export class TieOutDiagnosticService {
     });
 
     // (ii) AP em aberto vs 2.1.2 (Liability: crédito − débito).
-    const apOpenCents = openPayables.reduce(
+    // RETENCOES-FONTE PR-2 (invariante 3; F-RET-11 a): o título de imposto da retenção não está em 2.1.2 — está na conta a
+    // recolher do tributo —, então fica fora desta soma.
+    const apOpenCents = openPayables.filter((p) => p.origin !== PAYABLE_ORIGIN_WITHHOLDING_TAX).reduce(
       (acc, p) => acc + (centsFromDb(p.amountCents) - centsFromDb(p.paidCents)),
       0,
     );

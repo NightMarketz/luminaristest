@@ -5,6 +5,7 @@ import { OpenAIService } from '../../../lib/openai/OpenAIService';
 import { IPresetKnowledge } from '../../dynamicTables/presets/ai/PresetKnowledgeBase';
 import { stageConfig } from './PromptConfig';
 import { CustomizationService } from '../CustomizationService/CustomizationService';
+import type { ModuleSelector } from '../../dynamicTables/presets/modules/registry';
 
 /**
  * Classe responsável pelo processamento de estágios específicos da entrevista
@@ -50,7 +51,8 @@ export class StageHandlers {
     messages: IMessage[],
     presetKey: string,
     userId: string,
-    choice?: CreationChoice
+    choice?: CreationChoice,
+    modules?: ModuleSelector[]
   ): Promise<IInterviewTurnResult> {
     const askAgain = (response: string, reason: CreationChoiceReason): IInterviewTurnResult => ({
       response,
@@ -105,7 +107,7 @@ export class StageHandlers {
       logger.info('[StageHandlers] Usuário escolheu customizar o sistema');
       
       // W4 item 6: a sessão pertence ao usuário; o id é o da linha persistida, nunca vem do cliente.
-      const session = await this.customizationService.createCustomizationSession(presetKey, userId);
+      const session = await this.customizationService.createCustomizationSession(presetKey, userId, modules);
 
       if (!session) {
         logger.error(`[StageHandlers] Falha ao criar sessão de customização para preset ${presetKey}`);

@@ -213,6 +213,35 @@
               }
             }
           }
+        },
+        "addedTables": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "fields": {
+                "minItems": 1,
+                "type": "array",
+                "items": {}
+              }
+            },
+            "required": [
+              "key",
+              "name",
+              "fields"
+            ],
+            "additionalProperties": false
+          }
         }
       },
       "required": [
@@ -409,6 +438,35 @@
                   }
                 }
               }
+            },
+            "addedTables": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9_]*$"
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "fields": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {}
+                  }
+                },
+                "required": [
+                  "key",
+                  "name",
+                  "fields"
+                ],
+                "additionalProperties": false
+              }
             }
           },
           "required": [
@@ -419,6 +477,33 @@
           "additionalProperties": false
         }
       ]
+    },
+    "AddedTableSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "fields": {
+          "minItems": 1,
+          "type": "array",
+          "items": {}
+        }
+      },
+      "required": [
+        "key",
+        "name",
+        "fields"
+      ],
+      "additionalProperties": false
     }
   },
   "DynamicTable.dto.ts": {

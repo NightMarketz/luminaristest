@@ -4,6 +4,20 @@ import { REGIMES_EMPRESA } from '../../accounting/models/regimeEmpresa';
 import { ORDEM_OBRIGACOES, STATUS_OBRIGACAO } from '../../accounting/models/obrigacoesPorRegime';
 import { REGRAS_VENCIMENTO_IBS_CBS } from '../../accounting/models/ibsCbsParams';
 import { EnquadramentoJsonSchema, FaixaJsonSchema, ReparticaoJsonSchema, TetoIssJsonSchema } from '../../accounting/models/simplesCalc';
+import {
+  CHAVE_CODIGO_INSS,
+  CHAVES_IRRF_PF_INT,
+  CHAVES_IRRF_PF_JSON,
+  CodigoRetencaoJson,
+  DISCRIMINADORES_CODIGO,
+  DISCRIMINADORES_INSS,
+  DISCRIMINADORES_MINIMO,
+  FaixaIrrfPfJson,
+  NATUREZAS_IRRF_ALIQUOTA,
+  NaturezaRendimentoJson,
+  ReducaoArt3AJson,
+  TRIBUTOS_CSRF,
+} from '../../accounting/models/retencaoParams';
 import type { LegalParameterTabela } from './legalParameter';
 
 /**
@@ -253,6 +267,51 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
   IBS_CBS_PROVISORIA: {
     valor: 'int',
     checar: (l) => so(l.chave === 'CBS' && l.discriminador === 'ALIQUOTA' && bp(l) && (l.valorInt ?? 0) > 0, 'chave CBS, discriminador ALIQUOTA; valorInt em bp (1..10000)'),
+  },
+  // RETENCOES-FONTE PR-1 (item 1): alíquotas em bp por tributo/natureza e mínimos em centavos (Lei 10.833 arts. 30–31;
+  // LC 214 art. 509; RIR/2018 arts. 714, 716, 718 e 785; Lei 8.212 art. 31; Lei 9.430 art. 68).
+  RETENCAO: {
+    valor: 'int',
+    checar: (l) => {
+      const d = l.discriminador ?? '';
+      if (l.chave === 'MINIMO') return so((DISCRIMINADORES_MINIMO as readonly string[]).includes(d) && (l.valorInt ?? 0) > 0, `MINIMO: discriminador ${DISCRIMINADORES_MINIMO.join('|')}; valorInt = centavos > 0`);
+      const ok =
+        (l.chave === 'CSRF' && (TRIBUTOS_CSRF as readonly string[]).includes(d)) ||
+        (l.chave === 'IRRF' && (NATUREZAS_IRRF_ALIQUOTA as readonly string[]).includes(d)) ||
+        (l.chave === 'INSS' && (DISCRIMINADORES_INSS as readonly string[]).includes(d));
+      return so(ok && bp(l), `chave CSRF (${TRIBUTOS_CSRF.join('|')}), IRRF (${NATUREZAS_IRRF_ALIQUOTA.join('|')}), INSS (${DISCRIMINADORES_INSS.join('|')}) ou MINIMO; valorInt em bp (0..10000)`);
+    },
+  },
+  // Item 2 (Emenda 22/10 item 1): chave = natRend de 5 dígitos (o INSS retido, sem natRend, usa CESSAO_MAO_DE_OBRA);
+  // discriminador = tributo das tabelas "R-4020"/"R-4010"; valorTexto = código de receita; valorJson = periodicidade.
+  RETENCAO_CODIGO: {
+    valor: 'texto',
+    checar: (l) =>
+      so((DISCRIMINADORES_CODIGO as readonly string[]).includes(l.discriminador ?? ''), `discriminador ${DISCRIMINADORES_CODIGO.join('|')}`) ??
+      so(l.discriminador === 'INSS' ? l.chave === CHAVE_CODIGO_INSS : /^\d{5}$/.test(l.chave), `chave = natRend de 5 dígitos (INSS: ${CHAVE_CODIGO_INSS})`) ??
+      so(/^\d{6}$/.test(l.valorTexto ?? ''), 'valorTexto = código de receita de 6 dígitos (código + variação)') ??
+      jsonOk(CodigoRetencaoJson, l.valorJson, 'valorJson = { periodicidade: MENSAL|DECENDIAL|QUINZENAL|DIARIO }'),
+  },
+  // Item 7 (F-REINF-5 a; Emenda 22/10 item 1): Tabela 01 da EFD-Reinf.
+  NATUREZA_RENDIMENTO: {
+    valor: 'json',
+    checar: (l) =>
+      so(/^\d{5}$/.test(l.chave) && semDisc(l), 'chave = natRend de 5 dígitos, sem discriminador') ??
+      jsonOk(NaturezaRendimentoJson, l.valorJson, 'valorJson = { descricao, grupo, declarante: PF|PJ|PF/PJ, tributos: [IR|CSLL|COFINS|PP|AGREGADO], tiposIsencao: [] }'),
+  },
+  // Item 3 (F-RET-17 a): faixas da Lei 11.482 art. 1º XII, redução da Lei 9.250 art. 3º-A, dependente (art. 4º III "i") e
+  // desconto simplificado (art. 4º § 2º, bp sobre o teto da faixa zero).
+  IRRF_PF_MENSAL: {
+    valor: (l) => ((CHAVES_IRRF_PF_INT as readonly string[]).includes(l.chave) ? 'int' : 'json'),
+    checar: (l) =>
+      so(semDisc(l), 'sem discriminador') ??
+      (CHAVES_IRRF_PF_JSON.test(l.chave)
+        ? jsonOk(FaixaIrrfPfJson, l.valorJson, 'FAIXA_n: valorJson = { ateCents: inteiro > 0 | null, aliquotaBp: 0..10000, deduzirCents ≥ 0 }')
+        : l.chave === 'REDUCAO_ART3A'
+          ? jsonOk(ReducaoArt3AJson, l.valorJson, 'REDUCAO_ART3A: valorJson = { limiteZeroCents, tetoCents, constanteCents, coeficienteMilionesimos }')
+          : l.chave === 'DEPENDENTE'
+            ? so((l.valorInt ?? 0) > 0, 'DEPENDENTE: valorInt = centavos > 0')
+            : so(l.chave === 'DESCONTO_SIMPLIFICADO_BP' && bp(l), 'chave FAIXA_1..9, REDUCAO_ART3A, DEPENDENTE ou DESCONTO_SIMPLIFICADO_BP (valorInt em bp)')),
   },
 };
 

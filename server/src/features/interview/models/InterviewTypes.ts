@@ -2,6 +2,7 @@ import { ISchemaField } from '../../dynamicTables/models/DynamicTable.model';
 import type { TableLock } from '../../dynamicTables/presets/removability';
 import type { ModuleKey } from '../../dynamicTables/presets/modules/registry';
 import type { IFieldHistoryEntry, IPendingProposal } from '../FieldCustomizationService/Types';
+import type { CustomCreationDraft } from '../dtos/CustomCreationDraft.dto';
 
 /**
  * Tipos compartilhados entre InterviewService e CustomizationService
@@ -54,6 +55,8 @@ export interface IInterviewTurnResult {
   choicePrompt?: { kind: 'creation_type'; reason: CreationChoiceReason };
   /** W5/I8-c12: só no turno MATCHING_PRESET com preset casado. */
   moduleOptions?: InterviewModuleOption[];
+  /** W1 (F-W1-2 a): só no turno `done` da customização, com nextStage COMPLETED — o servidor consolida a sessão. */
+  creation?: CustomCreationDraft;
 }
 
 /**
@@ -97,4 +100,9 @@ export interface ICustomizationState {
   customMessages: IMessage[];    // Histórico de mensagens durante a customização
   currentAction?: 'adding' | 'removing' | null;  // Ação atual sendo realizada
   isCompleted: boolean;          // Se o processo de customização foi concluído
+  /**
+   * W1 (F-W1-6 a): módulos instalados com a sessão (padrão da suíte ∪ escolha do front, fechado pelas dependências).
+   * As tabelas deles entram em `tables`. Ausente = sessão anterior ao W1 (só tabelas do preset).
+   */
+  modules?: ModuleKey[];
 }
