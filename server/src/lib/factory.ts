@@ -955,6 +955,7 @@ export class ApplicationFactory {
     attachment: AttachmentService;
     savedTableView: SavedTableViewService;
     interview: InterviewService; // W4: entrevista com IA sobre a sessão persistida
+    customization: CustomizationService; // W1: módulos da sessão (POST /dashboard/ai/InterviewModules)
     fieldCustomization: FieldCustomizationService; // W6: painel de campos por IA sobre a mesma sessão
     systemProvisioning: SystemProvisioningService;
     ptaxSync: PtaxSyncService; // BE-INCR-CRM-REPORT-BUILDER PR-1 (item 23)
@@ -1555,6 +1556,11 @@ export class ApplicationFactory {
       this.policies.accounting,
       auditService,
     );
+    // W1: a rota de módulos da entrevista fala com o mesmo CustomizationService da entrevista.
+    const customizationService = new CustomizationService(
+      new StateManager(this.repositories.interviewSession),
+      chatOpenAIService,
+    );
     this.services = {
       bankSettlement: bankSettlementService,
       accountingScopeSettings: accountingScopeSettingsService,
@@ -1998,10 +2004,8 @@ export class ApplicationFactory {
         this.policies.savedTableView
       ),
       // W4 item 3: StateManager sobre o repositório (injetado, nunca `new` dentro do serviço).
-      interview: new InterviewService(
-        new CustomizationService(new StateManager(this.repositories.interviewSession), chatOpenAIService),
-        chatOpenAIService,
-      ),
+      interview: new InterviewService(customizationService, chatOpenAIService),
+      customization: customizationService,
       // W6 item 1: instância por factory (sem singleton), sobre o repositório da sessão do W4.
       fieldCustomization: new FieldCustomizationService(
         new StateManager(this.repositories.interviewSession),
@@ -2413,6 +2417,7 @@ export class ApplicationFactory {
   public getAttachmentService = (): AttachmentService => this.services.attachment;
   public getSavedTableViewService = (): SavedTableViewService => this.services.savedTableView;
   public getInterviewService = (): InterviewService => this.services.interview;
+  public getCustomizationService = (): CustomizationService => this.services.customization;
   public getFieldCustomizationService = (): FieldCustomizationService => this.services.fieldCustomization;
   public getSystemProvisioningService = (): SystemProvisioningService => this.services.systemProvisioning;
 

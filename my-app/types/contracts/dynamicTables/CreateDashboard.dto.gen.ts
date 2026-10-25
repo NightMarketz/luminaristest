@@ -44,6 +44,14 @@ selectOverrides?: {
 [k: string]: [string, ...(string)[]]
 }
 }
+addedTables?: {
+key: string
+name: string
+/**
+ * @minItems 1
+ */
+fields: [unknown, ...(unknown)[]]
+}[]
 }
 export type UnifiedCreationInput = ({
 mode?: "quick"
@@ -83,4 +91,20 @@ selectOverrides?: {
 [k: string]: [string, ...(string)[]]
 }
 }
+addedTables?: {
+key: string
+name: string
+/**
+ * @minItems 1
+ */
+fields: [unknown, ...(unknown)[]]
+}[]
 })
+export interface AddedTableInput {
+key: string
+name: string
+/**
+ * @minItems 1
+ */
+fields: [unknown, ...(unknown)[]]
+}
