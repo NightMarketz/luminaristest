@@ -9,6 +9,7 @@ import type {
   IPostingRepository,
 } from './IPostingRepository';
 import { centsFromDb } from '../models/money';
+import { CLOSING_SOURCE_TYPE } from '../models/closing';
 
 /**
  * Prisma-backed repository for ledger lines (`postings`). Money is INTEGER CENTS
@@ -95,6 +96,21 @@ export class PostingRepository implements IPostingRepository {
       where: { userId: ownerUserId, entry: { status: { in: statuses }, date: { gte: from, lte: to } } },
     });
     return rows.map((r) => r.unitId).sort();
+  }
+
+  public async sumRevenueNetByOwner(ownerUserId: string, statuses: string[], from: Date, to: Date, excludeAccountIds: string[]): Promise<bigint | null> {
+    const r = await prisma.posting.aggregate({
+      where: {
+        userId: ownerUserId,
+        account: { nature: 'Revenue', acceptsEntries: true },
+        ...(excludeAccountIds.length > 0 ? { accountId: { notIn: excludeAccountIds } } : {}),
+        entry: { status: { in: statuses }, date: { gte: from, lte: to }, sourceType: { not: CLOSING_SOURCE_TYPE } },
+      },
+      _sum: { debitCents: true, creditCents: true },
+      _count: { _all: true },
+    });
+    if (r._count._all === 0) return null;
+    return (r._sum.creditCents ?? 0n) - (r._sum.debitCents ?? 0n);
   }
 
   public async sumCreditsBySourcePrefix(

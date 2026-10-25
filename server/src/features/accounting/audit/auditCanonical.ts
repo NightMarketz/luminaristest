@@ -211,7 +211,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     'simplesRegimeApuracao',
     // BE-INCR-SIMPLES-CAIXA PR-1 (item 7; F-CX-3 a): data de efeitos da exclusão do Simples (date-only, sem PII).
     'simplesExclusaoEfeitosEm',
-    'jcpBaseContas'], // IRRF-DISTRIBUICAO item 8 (F-IRD-15): JSON só com ids de conta
+    'jcpBaseContas', // IRRF-DISTRIBUICAO item 8 (F-IRD-15): JSON só com ids de conta
+    // PRESUMIDO-TETO-78MI item 5 (F-PT-2 c): centavos da receita total do ano anterior declarada (número da PJ, sem PII).
+    'receitaTotalAnoAnteriorCents'],
   'company_fiscal_profile.deleted': ['anoCalendario'],
   // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7, item 22) — só ids, enum e centavos como string; sem PII. O documento
   // da dedução (texto livre) e a memória ficam FORA do evento.

@@ -161,6 +161,7 @@ import { ReleaseReportService } from '../features/accounting/services/ReleaseRep
 import { JobWatermarkRepository } from '../jobs/JobWatermarkRepository';
 import { MercadoPagoCollectionProvider } from '../features/accounting/collection/MercadoPagoCollectionProvider';
 import { TaxAssessmentService } from '../features/accounting/services/TaxAssessmentService';
+import { PresumidoTetoService } from '../features/accounting/services/PresumidoTetoService';
 import { TaxAssessmentPeriodosService } from '../features/accounting/services/TaxAssessmentPeriodosService';
 import { MitExportService } from '../features/accounting/services/MitExportService';
 import { SimplesEntradasService } from '../features/accounting/services/SimplesEntradasService';
@@ -1251,6 +1252,13 @@ export class ApplicationFactory {
       this.repositories.posting,
       this.policies.accounting,
     );
+    // PRESUMIDO-TETO-78MI item 8 (F-PT-1 c): teto do Presumido — só leitura; consumido pela apuração e pelo perfil da empresa.
+    const presumidoTetoService = new PresumidoTetoService(
+      this.repositories.companyFiscalProfile,
+      this.repositories.posting,
+      this.repositories.fiscalProfile,
+      legalParameterService,
+    );
     const taxAssessmentService = new TaxAssessmentService(
       this.repositories.taxAssessment,
       this.repositories.companyFiscalProfile,
@@ -1264,6 +1272,7 @@ export class ApplicationFactory {
       postingService, // X7 PR-3: provisão + estorno na substituição (itens 15/16)
       this.repositories.accountingPeriod, // X7 Fase B item 15: meses fechados antes do balancete (só leitura)
       legalParameterService, // BE-INCR-LEGAL-PARAMS PR-1: fotografia TAX_ASSESSMENT + CSLL_ALIQUOTA
+      presumidoTetoService, // PRESUMIDO-TETO-78MI item 9b/9c: aviso na prévia, 400 na confirmação
     );
 
     // BE-INCR-SPED-ECF-FASE3B item 11 (Fork 4→b): e-Lalur/e-Lacs store. Lê o repo de contas do plano
@@ -1527,6 +1536,7 @@ export class ApplicationFactory {
       this.repositories.lalur, // X7 Fase B PR-4 item 2 (F-TB-6 a): troca de forma com o e-Lalur do ano preenchido
       legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia OBRIGACAO_REGIME
       this.repositories.account, // IRRF-DISTRIBUICAO PR-1 item 8: contas do mapa do PL (escopo + Equity)
+      presumidoTetoService, // PRESUMIDO-TETO-78MI item 9a / 10: avisos do teto nas obrigações
     );
     // Hoisted no LEGAL-PARAMS PR-4: o TaxAssessmentRecalcService também o injeta.
     const pisCofinsAssessmentService = new PisCofinsAssessmentService(
