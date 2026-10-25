@@ -53,8 +53,10 @@ export interface ITaxWithholdingRepository extends ITaxWithholdingReadPort {
   /** CAS ACTIVE → REVERSED; devolve quantas viraram. */
   markReversed(scope: AccountingScope, ids: readonly string[], tx: Prisma.TransactionClient): Promise<number>;
   setEntryId(scope: AccountingScope, id: string, entryId: string, tx?: Prisma.TransactionClient): Promise<void>;
-  /** Item 20: as linhas do título absorvido passam a apontar para o título que o somou. */
-  repointTaxPayable(scope: AccountingScope, fromPayableId: string, toPayableId: string, tx: Prisma.TransactionClient): Promise<number>;
+  /** Item 20: as linhas do título absorvido passam a apontar para o título que o somou (`competencia` = só as dela — desfazer). */
+  repointTaxPayable(scope: AccountingScope, fromPayableId: string, toPayableId: string, tx: Prisma.TransactionClient, competencia?: string): Promise<number>;
+  /** Item 20 (review A2): Σ retido MADE ACTIVE da competência num código de receita — decide se ela passa do mínimo do DARF. */
+  somaDaCompetencia(scope: AccountingScope, codigoReceita: string, competencia: string, tx: Prisma.TransactionClient, taxPayableId?: string): Promise<bigint>;
   /** As linhas MADE ACTIVE da competência com a contraparte, o título e o perfil vigente (para o mapeador). */
   findMadeWithOrigin(scope: AccountingScope, competencia: string): Promise<TaxWithholdingComOrigem[]>;
   /** As linhas MADE ACTIVE que apontam para os títulos (resumo por código). */

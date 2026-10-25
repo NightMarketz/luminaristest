@@ -357,6 +357,10 @@ export class WithholdingService {
       await this.auditTitulo(scope, aberto.id, codigo, plano.competencia, antes + valor, tx);
       return aberto.id;
     }
+    if (TRIBUTOS_DARF.includes(l.tributo)) {
+      const proprio = await this.desfazerAcumulo(scope, plano, l, { counterpartyId, sistema, codigo, ym, prefix, titulos, valor }, tx);
+      if (proprio) return proprio;
+    }
     // Review A5: o complementar segue a maior numeração JÁ usada no prefixo, inclusive em título cancelado (renomeado
     // `deleted:<id>:<doc>`) — contar só os vivos reusava o número de um cancelado e batia na chave única.
     let documentNumber = prefix;
@@ -398,8 +402,29 @@ export class WithholdingService {
       await this.auditTitulo(scope, seguinte.id, codigo, plano.competencia, antes + total, tx);
       return seguinte.id;
     }
+    const created = await this.criarTituloImposto(scope, plano, l, sistema, counterpartyId, codigo, documentNumber, total, tx);
+    for (const t of absorvidos) {
+      await this.payableRepo.updatePayable(scope, t.id, { status: 'DEFERRED' }, tx);
+      await this.taxRepo.repointTaxPayable(scope, t.id, created.id, tx);
+    }
+    await this.auditTitulo(scope, created.id, codigo, plano.competencia, total, tx);
+    return created.id;
+  }
+
+  /** Item 19 — o título de imposto (Payable `origin = WITHHOLDING_TAX`, sem reconhecimento próprio), com o vencimento do tributo. */
+  private async criarTituloImposto(
+    scope: AccountingScope,
+    plano: PlanoRetencao,
+    l: RetencaoPlanejada,
+    sistema: string,
+    counterpartyId: string,
+    codigo: string,
+    documentNumber: string,
+    total: number,
+    tx: Prisma.TransactionClient,
+  ): Promise<Payable> {
     const dueDate = this.vencimento(plano, l.tributo);
-    const created = await this.payableRepo.create(
+    return this.payableRepo.create(
       {
         userId: scope.ownerUserId,
         unitId: scope.unitId,
@@ -422,12 +447,51 @@ export class WithholdingService {
       },
       tx,
     );
-    for (const t of absorvidos) {
-      await this.payableRepo.updatePayable(scope, t.id, { status: 'DEFERRED' }, tx);
-      await this.taxRepo.repointTaxPayable(scope, t.id, created.id, tx);
+  }
+
+  /**
+   * Review A2, "desfazer" (dono, chat, 2026-10-25: "Somar e desfazer"; Lei 9.430 art. 68 § 1º) — a competência cujas linhas
+   * foram somadas a um título posterior (documento `…+AAAAMM`) e que, com esta retenção, chega a ≥ R$ 10 volta a ter título
+   * próprio, com o vencimento dela: o título posterior encolhe pelo que tinha da competência, perde o `+AAAAMM`, e as linhas
+   * dela passam ao título próprio (o DEFERRED reaberto, ou um novo). Abaixo do mínimo ⇒ `null` e segue a soma no posterior.
+   * Título posterior com baixa não muda (o fluxo normal abre o complementar).
+   */
+  private async desfazerAcumulo(
+    scope: AccountingScope,
+    plano: PlanoRetencao,
+    l: RetencaoPlanejada,
+    e: { counterpartyId: string; sistema: string; codigo: string; ym: string; prefix: string; titulos: Payable[]; valor: number },
+    tx: Prisma.TransactionClient,
+  ): Promise<string | null> {
+    const min = linhaLegalVigente(plano.legais, 'RETENCAO', 'MINIMO', plano.dataFatoGerador, 'DARF')?.valorInt ?? null;
+    if (min === null) return null;
+    const absorvente = (await this.payableRepo.findTaxTitles(scope, e.counterpartyId, `${e.codigo}-`, tx)).find(
+      (t) => t.status === 'OPEN' && t.paidCents === 0n && (t.documentNumber ?? '').split('+').slice(1).includes(e.ym),
+    );
+    if (!absorvente) return null;
+    if (Number(await this.taxRepo.somaDaCompetencia(scope, e.codigo, plano.competencia, tx)) + e.valor < min) return null;
+    const noAbsorvente = Number(await this.taxRepo.somaDaCompetencia(scope, e.codigo, plano.competencia, tx, absorvente.id));
+    const antes = centsFromDb(absorvente.amountCents);
+    if ((await this.payableRepo.adjustTaxTitleAmount(scope, absorvente.id, antes, -noAbsorvente, tx)) !== 1) {
+      throw new ConflictError('TITULO_IMPOSTO_CONCORRENTE: o título de imposto mudou em paralelo — repita a operação.', 'TITULO_IMPOSTO_CONCORRENTE');
     }
-    await this.auditTitulo(scope, created.id, codigo, plano.competencia, total, tx);
-    return created.id;
+    const doc = (absorvente.documentNumber ?? '').split('+');
+    await this.payableRepo.updatePayable(scope, absorvente.id, { documentNumber: [doc[0], ...doc.slice(1).filter((x) => x !== e.ym)].join('+') }, tx);
+    const total = noAbsorvente + e.valor;
+    const deferido = e.titulos.find((t) => t.status === 'DEFERRED');
+    let proprioId: string;
+    if (deferido) {
+      await this.payableRepo.updatePayable(scope, deferido.id, { status: 'OPEN', amountCents: total, documentNumber: (deferido.documentNumber ?? '').split('+')[0] }, tx);
+      proprioId = deferido.id;
+    } else {
+      const usados = (await this.payableRepo.findTaxTitleNumbersEver(scope, e.counterpartyId, e.prefix, tx)).map((d) => Number(/-C(\d+)$/.exec(d)?.[1] ?? 0));
+      const documentNumber = e.titulos.length > 0 ? `${e.prefix}-C${Math.max(0, ...usados) + 1}` : e.prefix;
+      proprioId = (await this.criarTituloImposto(scope, plano, l, e.sistema, e.counterpartyId, e.codigo, documentNumber, total, tx)).id;
+    }
+    await this.taxRepo.repointTaxPayable(scope, absorvente.id, proprioId, tx, plano.competencia);
+    await this.auditTitulo(scope, absorvente.id, e.codigo, plano.competencia, antes - noAbsorvente, tx);
+    await this.auditTitulo(scope, proprioId, e.codigo, plano.competencia, total, tx);
+    return proprioId;
   }
 
   /** Review A2 — o título OPEN sem baixa do código com a competência posterior mais próxima, se `total` < mínimo do DARF. */

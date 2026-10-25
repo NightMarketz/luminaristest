@@ -46,9 +46,17 @@ export class TaxWithholdingRepository implements ITaxWithholdingRepository {
     await this.db(tx).taxWithholding.updateMany({ where: { ...accountingScopeWhere(scope), id }, data: { entryId } });
   }
 
-  public async repointTaxPayable(scope: AccountingScope, fromPayableId: string, toPayableId: string, tx: Prisma.TransactionClient): Promise<number> {
-    const r = await tx.taxWithholding.updateMany({ where: { ...accountingScopeWhere(scope), taxPayableId: fromPayableId, status: 'ACTIVE' }, data: { taxPayableId: toPayableId } });
+  public async repointTaxPayable(scope: AccountingScope, fromPayableId: string, toPayableId: string, tx: Prisma.TransactionClient, competencia?: string): Promise<number> {
+    const r = await tx.taxWithholding.updateMany({ where: { ...accountingScopeWhere(scope), taxPayableId: fromPayableId, status: 'ACTIVE', ...(competencia ? { competencia } : {}) }, data: { taxPayableId: toPayableId } });
     return r.count;
+  }
+
+  public async somaDaCompetencia(scope: AccountingScope, codigoReceita: string, competencia: string, tx: Prisma.TransactionClient, taxPayableId?: string): Promise<bigint> {
+    const r = await tx.taxWithholding.aggregate({
+      where: { ...accountingScopeWhere(scope), codigoReceita, competencia, direction: 'MADE', status: 'ACTIVE', ...(taxPayableId ? { taxPayableId } : {}) },
+      _sum: { amountCents: true },
+    });
+    return r._sum.amountCents ?? 0n;
   }
 
   public async findMadeWithOrigin(scope: AccountingScope, competencia: string): Promise<TaxWithholdingComOrigem[]> {
