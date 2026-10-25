@@ -62,6 +62,7 @@ model User {
   companySigners             CompanySigner[] // X13 (F-OBP-9 a) — representante legal / signatários não-contador
   partners                   Partner[] // IRRF-DISTRIBUICAO PR-1 (F-IRD-2, F-IRD-14) — sócios beneficiários da distribuição
   withholdingProfiles        WithholdingProfile[] // RETENCOES-FONTE PR-1 (item 6) — perfil de retenção por contraparte × natureza
+  taxWithholdings            TaxWithholding[] // RETENCOES-FONTE PR-2 (item 13) — retenções feitas (e sofridas no PR-3)
   profitDistributionEvents   ProfitDistributionEvent[] // IRRF-DISTRIBUICAO PR-2 (BRIEF item 10)
   interestOnEquityCalculations InterestOnEquityCalculation[] // IRRF-DISTRIBUICAO PR-4 (BRIEF item 27)
   taxAssessments             TaxAssessment[] // BE-INCR-TAX-ASSESSMENT Fase A (nó X7, item 12) — apuração IRPJ/CSLL da PJ
@@ -593,6 +594,7 @@ model Account {
   ibsRecuperarOf                     FiscalProfile[]           @relation("FiscalProfileIbsRecuperar") // IBS-CBS-2027 PR-3 item 14
   cbsRecuperarOf                     FiscalProfile[]           @relation("FiscalProfileCbsRecuperar") // IBS-CBS-2027 PR-3 item 14
   retencaoIrrfRecolherOf             FiscalProfile[]           @relation("FiscalProfileRetencaoIrrfRecolher") // RETENCOES-FONTE PR-1 item 8
+  withholdingTaxPayables             Payable[]                 @relation("PayableLiabilityAccount") // RETENCOES-FONTE PR-2 item 19
   retencaoCsrfRecolherOf             FiscalProfile[]           @relation("FiscalProfileRetencaoCsrfRecolher") // RETENCOES-FONTE PR-1 item 8
   retencaoInssRecolherOf             FiscalProfile[]           @relation("FiscalProfileRetencaoInssRecolher") // RETENCOES-FONTE PR-1 item 8
   retencaoIssRecolherOf              FiscalProfile[]           @relation("FiscalProfileRetencaoIssRecolher") // RETENCOES-FONTE PR-1 item 8
@@ -1175,6 +1177,12 @@ model Payable {
   // botched rebuild silently drops FKs/indexes (lesson expenseAccountId RESTRICT→SET NULL). null = legacy
   // rows (pre-migration) = not multi-item; the create path writes an explicit boolean.
   inventoryMultiItem  Boolean?
+  // BE-INCR-RETENCOES-FONTE PR-2 (BRIEF item 19; F-RET-11 a): título de imposto da retenção feita. `origin =
+  // 'WITHHOLDING_TAX'` ⇒ sem reconhecimento próprio (o passivo já está na conta a recolher) e a baixa debita
+  // `liabilityAccountId` em vez de 2.1.2; `amountCents` só muda enquanto OPEN sem baixa. null = título comum.
+  origin              String?
+  liabilityAccountId  String?
+  liabilityAccount    Account?         @relation("PayableLiabilityAccount", fields: [liabilityAccountId], references: [id], onDelete: Restrict)
   payments            PayablePayment[]
   fixedAssetDrafts    FixedAsset[] // BE-INCR-FIXED-ASSETS item 22 — rascunhos criados a partir deste payable (modo 4 NF-e)
 
@@ -1887,6 +1895,51 @@ model WithholdingProfile {
 
   @@index([userId, unitId, counterpartyId])
   @@map("withholding_profiles")
+}
+
+// BE-INCR-RETENCOES-FONTE PR-2 (BRIEF item 13, §5.1; F-RET-10 a) — uma linha por tributo retido. `settlementId` = a baixa
+// sem caixa WITHHOLDING (`payable_payments.id`) que leva a retenção ao razão (D 2.1.2 / C a recolher); null só quando a
+// linha é dispensa (`amountCents` 0). `originSettlementId` = o PAYMENT que gerou a CSRF (event SETTLEMENT), para a Reinf
+// agrupar por pagamento. `taxPayableId` = título de imposto (Payable origin WITHHOLDING_TAX). Imutável salvo `status`
+// (ACTIVE → REVERSED) e o re-apontamento do título no acúmulo do DARF < R$ 10 (item 20).
+model TaxWithholding {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId             String
+  direction          String // MADE | SUFFERED
+  tributo            String // IRRF | CSLL | COFINS | PIS | INSS | ISS
+  event              String // RECOGNITION | SETTLEMENT
+  titleType          String // PAYABLE | RECEIVABLE
+  titleId            String
+  settlementId       String? // baixa WITHHOLDING; null só na dispensa
+  originSettlementId String? // PAYMENT que gerou a CSRF (event = SETTLEMENT)
+  counterpartyId     String // beneficiário (MADE) ou fonte pagadora (SUFFERED)
+  naturezaServico    String?
+  natRend            String?
+  dataFatoGerador    String // YYYY-MM-DD (dtFG da Reinf)
+  competencia        String // YYYY-MM do fato gerador
+  brutoCents         BigInt
+  baseCents          BigInt
+  aliquotaBp         Int? // null em PF (tabela progressiva)
+  amountCents        BigInt // ≥ 0; 0 só com dispensa
+  dispensa           String? // MINIMO_R10 | OPTANTE_SIMPLES | COOPERATIVA | ISENCAO_COMPROVADA
+  overrideMotivo     String?
+  codigoReceita      String? // 6 dígitos; null enquanto RETENCAO_CODIGO for DRAFT
+  taxPayableId       String?
+  documentoNumero    String?
+  documentoSerie     String?
+  pfDetalhe          String? // JSON (R-4010 ideDep/detDed)
+  entryId            String?
+  parametrosIds      String // JSON
+  parametrosSha256   String
+  status             String // ACTIVE | REVERSED
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([userId, unitId, competencia, direction])
+  @@index([titleType, titleId])
+  @@map("tax_withholdings")
 }
 
 // BE-INCR-IRRF-DISTRIBUICAO PR-2 (BRIEF itens 10–21; F-IRD-4, F-IRD-6, F-IRD-8, F-IRD-9) — evento de distribuição de

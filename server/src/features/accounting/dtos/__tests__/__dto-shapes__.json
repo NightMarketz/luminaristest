@@ -1367,6 +1367,7 @@
                   "ReceivableReceipt",
                   "Counterparty",
                   "WithholdingProfile",
+                  "TaxWithholding",
                   "InventoryItem",
                   "KitUpgradeRun",
                   "KitUpgradePending",
@@ -10331,6 +10332,66 @@
       ],
       "additionalProperties": false
     },
+    "WithholdingOverrideSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "tributo": {
+          "type": "string",
+          "enum": [
+            "IRRF",
+            "CSLL",
+            "COFINS",
+            "PIS",
+            "INSS",
+            "ISS"
+          ]
+        },
+        "amountCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "motivo": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 140
+        }
+      },
+      "required": [
+        "tributo",
+        "amountCents",
+        "motivo"
+      ],
+      "additionalProperties": false
+    },
+    "PfDeducoesSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "dependentes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30
+        },
+        "previdenciaCents": {
+          "default": 0,
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "pensaoCents": {
+          "default": 0,
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "dependentes"
+      ],
+      "additionalProperties": false
+    },
     "CreatePayableSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -10602,6 +10663,73 @@
         "attachmentId": {
           "type": "string",
           "minLength": 1
+        },
+        "withholdings": {
+          "maxItems": 6,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "tributo": {
+                "type": "string",
+                "enum": [
+                  "IRRF",
+                  "CSLL",
+                  "COFINS",
+                  "PIS",
+                  "INSS",
+                  "ISS"
+                ]
+              },
+              "amountCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "motivo": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 140
+              }
+            },
+            "required": [
+              "tributo",
+              "amountCents",
+              "motivo"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "pfDeducoes": {
+          "type": "object",
+          "properties": {
+            "dependentes": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 30
+            },
+            "previdenciaCents": {
+              "default": 0,
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "pensaoCents": {
+              "default": 0,
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            }
+          },
+          "required": [
+            "dependentes"
+          ],
+          "additionalProperties": false
+        },
+        "documentoSerie": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 5
         }
       },
       "required": [
@@ -10744,7 +10872,8 @@
             "PARTIALLY_PAID",
             "PAYING",
             "PAID",
-            "CANCELLED"
+            "CANCELLED",
+            "DEFERRED"
           ]
         },
         "counterpartyId": {
@@ -17347,6 +17476,734 @@
         "anoCalendario",
         "regime",
         "familias"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "WithholdingDto.ts": {
+    "ListWithholdingsQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "direction": {
+          "type": "string",
+          "const": "MADE"
+        },
+        "competencia": {
+          "type": "string",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+        }
+      },
+      "required": [
+        "unitId",
+        "direction",
+        "competencia"
+      ],
+      "additionalProperties": false
+    },
+    "WithholdingSummaryQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "competencia": {
+          "type": "string",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+        }
+      },
+      "required": [
+        "unitId",
+        "competencia"
+      ],
+      "additionalProperties": false
+    },
+    "WithholdingLineViewSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "tributo": {
+          "type": "string",
+          "enum": [
+            "IRRF",
+            "CSLL",
+            "COFINS",
+            "PIS",
+            "INSS",
+            "ISS"
+          ]
+        },
+        "event": {
+          "type": "string",
+          "enum": [
+            "RECOGNITION",
+            "SETTLEMENT"
+          ]
+        },
+        "dataFatoGerador": {
+          "type": "string"
+        },
+        "competencia": {
+          "type": "string"
+        },
+        "beneficiario": {
+          "type": "object",
+          "properties": {
+            "counterpartyId": {
+              "type": "string"
+            },
+            "nome": {
+              "type": "string"
+            },
+            "taxId": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "kind": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "CPF",
+                    "CNPJ"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "regime": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "counterpartyId",
+            "nome",
+            "taxId",
+            "kind",
+            "regime"
+          ],
+          "additionalProperties": false
+        },
+        "natRend": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "codigoReceita": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "brutoCents": {
+          "type": "string"
+        },
+        "baseCents": {
+          "type": "string"
+        },
+        "amountCents": {
+          "type": "string"
+        },
+        "dispensa": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "titulo": {
+          "type": "object",
+          "properties": {
+            "payableId": {
+              "type": "string"
+            },
+            "documentNumber": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "documentoSerie": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "issueDate": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "payableId",
+            "documentNumber",
+            "documentoSerie",
+            "issueDate"
+          ],
+          "additionalProperties": false
+        },
+        "inss": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "tpServico": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "cprb": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "tpServico",
+                "cprb"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pf": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "dependentes": {
+                  "type": "number"
+                },
+                "deducaoDependentesCents": {
+                  "type": "string"
+                },
+                "previdenciaCents": {
+                  "type": "string"
+                },
+                "pensaoCents": {
+                  "type": "string"
+                },
+                "descontoSimplificadoCents": {
+                  "type": "string"
+                },
+                "reducaoArt3ACents": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "dependentes",
+                "deducaoDependentesCents",
+                "previdenciaCents",
+                "pensaoCents",
+                "descontoSimplificadoCents",
+                "reducaoArt3ACents"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "taxPayableId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "tributo",
+        "event",
+        "dataFatoGerador",
+        "competencia",
+        "beneficiario",
+        "natRend",
+        "codigoReceita",
+        "brutoCents",
+        "baseCents",
+        "amountCents",
+        "dispensa",
+        "titulo",
+        "inss",
+        "pf",
+        "taxPayableId"
+      ],
+      "additionalProperties": false
+    },
+    "WithholdingLineForReinfSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "tributo": {
+          "type": "string",
+          "enum": [
+            "IRRF",
+            "CSLL",
+            "COFINS",
+            "PIS",
+            "INSS",
+            "ISS"
+          ]
+        },
+        "event": {
+          "type": "string",
+          "enum": [
+            "RECOGNITION",
+            "SETTLEMENT"
+          ]
+        },
+        "dataFatoGerador": {
+          "type": "string"
+        },
+        "competencia": {
+          "type": "string"
+        },
+        "beneficiario": {
+          "type": "object",
+          "properties": {
+            "counterpartyId": {
+              "type": "string"
+            },
+            "nome": {
+              "type": "string"
+            },
+            "taxId": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "kind": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "CPF",
+                    "CNPJ"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "regime": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "counterpartyId",
+            "nome",
+            "taxId",
+            "kind",
+            "regime"
+          ],
+          "additionalProperties": false
+        },
+        "natRend": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "codigoReceita": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "brutoCents": {
+          "type": "string"
+        },
+        "baseCents": {
+          "type": "string"
+        },
+        "amountCents": {
+          "type": "string"
+        },
+        "dispensa": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "titulo": {
+          "type": "object",
+          "properties": {
+            "payableId": {
+              "type": "string"
+            },
+            "documentNumber": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "documentoSerie": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "issueDate": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "payableId",
+            "documentNumber",
+            "documentoSerie",
+            "issueDate"
+          ],
+          "additionalProperties": false
+        },
+        "inss": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "tpServico": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "cprb": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "tpServico",
+                "cprb"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pf": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "dependentes": {
+                  "type": "number"
+                },
+                "deducaoDependentesCents": {
+                  "type": "string"
+                },
+                "previdenciaCents": {
+                  "type": "string"
+                },
+                "pensaoCents": {
+                  "type": "string"
+                },
+                "descontoSimplificadoCents": {
+                  "type": "string"
+                },
+                "reducaoArt3ACents": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "dependentes",
+                "deducaoDependentesCents",
+                "previdenciaCents",
+                "pensaoCents",
+                "descontoSimplificadoCents",
+                "reducaoArt3ACents"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "taxPayableId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "settlementId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "originSettlementId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "tributo",
+        "event",
+        "dataFatoGerador",
+        "competencia",
+        "beneficiario",
+        "natRend",
+        "codigoReceita",
+        "brutoCents",
+        "baseCents",
+        "amountCents",
+        "dispensa",
+        "titulo",
+        "inss",
+        "pf",
+        "taxPayableId",
+        "settlementId",
+        "originSettlementId"
+      ],
+      "additionalProperties": false
+    },
+    "WithholdingSummarySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "competencia": {
+          "type": "string"
+        },
+        "feitas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "codigoReceita": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "tributos": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "totalCents": {
+                "type": "string"
+              },
+              "vencimento": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "OPEN",
+                  "PARTIALLY_PAID",
+                  "PAID",
+                  "DEFERRED"
+                ]
+              },
+              "competenciasSomadas": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "taxPayableId": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "linhas": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "codigoReceita",
+              "tributos",
+              "totalCents",
+              "vencimento",
+              "status",
+              "competenciasSomadas",
+              "taxPayableId",
+              "linhas"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "sofridas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "tributo": {
+                "type": "string"
+              },
+              "totalCents": {
+                "type": "string"
+              },
+              "linhas": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "tributo",
+              "totalCents",
+              "linhas"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "avisos": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "competencia",
+        "feitas",
+        "sofridas",
+        "avisos"
       ],
       "additionalProperties": false
     }

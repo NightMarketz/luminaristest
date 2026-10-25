@@ -3,6 +3,7 @@ import { MAX_CENTS } from '../models/money';
 import { isValidDateOnly } from '../models/dates';
 import { PAYABLE_STATUSES, PAYMENT_METHODS } from '../models/Payable.model';
 import { queryBoolean } from './queryPrimitives';
+import { TRIBUTOS_RETENCAO } from '../models/retencaoParams';
 
 /**
  * PayableDto — Contas a Pagar (INCR-AP) request schemas. Money is INTEGER CENTS guarded by
@@ -41,6 +42,24 @@ const dateOnly = (field: string) =>
  *         expenseAccountId:    { type: string, description: "Id de uma conta-folha nature=Expense (contrapartida do reconhecimento). XOR com inventoryProductRef+inventoryQty (INCR-INVENTORY D3(b))." }
  *         inventoryProductRef: { type: string, description: "Compra de estoque (INCR-INVENTORY D3(b)): ref DynamicTable do produto; débito vai a 1.1.6 Estoques + emite StockMovement INBOUND. Exige inventoryQty; XOR com expenseAccountId." }
  *         inventoryQty:        { type: integer, minimum: 1, description: "Unidades recebidas nesta compra de estoque; pareado com inventoryProductRef. amountCents é o valor TOTAL (evita arredondamento por-unidade)." }
+ *         withholdings:
+ *           type: array
+ *           description: "RETENCOES-FONTE PR-2 (item 12): sobrescrita da retenção calculada, SÓ PARA MENOS e com motivo (ADR D5); para mais ou tributo sem linha calculada → 400. Só em título de despesa de serviço."
+ *           items:
+ *             type: object
+ *             required: [tributo, amountCents, motivo]
+ *             properties:
+ *               tributo:     { type: string, enum: [IRRF, CSLL, COFINS, PIS, INSS, ISS] }
+ *               amountCents: { type: integer, minimum: 0, maximum: 2147483647 }
+ *               motivo:      { type: string, minLength: 3, maxLength: 140 }
+ *         pfDeducoes:
+ *           type: object
+ *           description: "RETENCOES-FONTE PR-2 (item 11): deduções do IRRF de PF (Lei 9.250 art. 4º). Ausente com contraparte PF → 0 dependentes e desconto simplificado."
+ *           properties:
+ *             dependentes:      { type: integer, minimum: 0, maximum: 30 }
+ *             previdenciaCents: { type: integer, minimum: 0 }
+ *             pensaoCents:      { type: integer, minimum: 0 }
+ *         documentoSerie:      { type: string, description: "Série da NF (R-2010 serie) — RETENCOES-FONTE PR-2" }
  *         fixedAssetItems:
  *           type: array
  *           description: "BE-INCR-FIXED-ASSETS PR-5: itens de imobilizado da NF-e (declarados pelo classId do operador — ITEM-DESTINATION emenda 29/09) — combinável SÓ com inventoryMultiItem/inventoryItems (nota mista, 2 débitos). Debita class.costAccountId; NUNCA StockMovement."
@@ -168,6 +187,32 @@ const insumoItem = z
   })
   .strict();
 
+/**
+ * BE-INCR-RETENCOES-FONTE PR-2 (item 12, §5.3) — sobrescrita de uma retenção calculada, SÓ PARA MENOS, com motivo (ADR D5).
+ * Para mais que o calculado ⇒ 400 no serviço (o cálculo é o que a lei manda; reter a mais exige outro fundamento).
+ */
+export const WithholdingOverrideSchema = z
+  .object({
+    tributo: z.enum(TRIBUTOS_RETENCAO),
+    amountCents: z.number().int().min(0).max(MAX_CENTS),
+    motivo: z.string().trim().min(3).max(140),
+  })
+  .strict();
+export type WithholdingOverrideInput = z.infer<typeof WithholdingOverrideSchema>;
+
+/**
+ * Item 11 (F-RET-17 a) — deduções do IRRF de PF informadas no pagamento (Lei 9.250 art. 4º): dependentes (quantidade),
+ * previdência e pensão. Sem `.partial()` (memória Zod 4). Ausente com contraparte PF ⇒ 0 dependentes e desconto simplificado.
+ */
+export const PfDeducoesSchema = z
+  .object({
+    dependentes: z.number().int().min(0).max(30),
+    previdenciaCents: z.number().int().min(0).max(MAX_CENTS).default(0),
+    pensaoCents: z.number().int().min(0).max(MAX_CENTS).default(0),
+  })
+  .strict();
+export type PfDeducoesInput = z.infer<typeof PfDeducoesSchema>;
+
 export const CreatePayableSchema = z
   .object({
     unitId: z.string().min(1),
@@ -199,8 +244,18 @@ export const CreatePayableSchema = z
     // IBS-CBS-2027 PR-3 (item 14): até 2 linhas X6 (ICMS, PIS_COFINS) + 1 por tributo de IBS/CBS.
     recoverableTaxLines: z.array(recoverableTaxLineUnion).max(4).optional(),
     attachmentId: z.string().min(1).optional(),
+    // BE-INCR-RETENCOES-FONTE PR-2 (item 12): sobrescritas para menos, deduções de PF e a série da NF (R-2010 serie, C9).
+    withholdings: z.array(WithholdingOverrideSchema).max(6).optional(),
+    pfDeducoes: PfDeducoesSchema.optional(),
+    documentoSerie: z.string().trim().min(1).max(5).optional(),
   })
   .strict()
+  .superRefine((val, ctx) => {
+    const tributos = (val.withholdings ?? []).map((w) => w.tributo);
+    if (new Set(tributos).size !== tributos.length) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'withholdings: no máximo uma sobrescrita por tributo.', path: ['withholdings'] });
+    }
+  })
   // 3-mode gate (INCR-INVENTORY D3(b) + BE-INCR-NFE F0-1b / param-aceito-e-ignorado-e-bug): a Payable is
   // EXACTLY ONE of — (1) an ordinary EXPENSE (expenseAccountId, debit a 4.x leaf); (2) a SINGLE-SKU
   // inventory purchase (inventoryProductRef AND inventoryQty, debit 1.1.6); (3) a MULTI-ITEM NF-e
