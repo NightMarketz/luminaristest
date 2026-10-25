@@ -260,17 +260,49 @@ export function csrfDoBruto(brutoCents: bigint, aliquotasBp: readonly number[]):
  * Nenhum fecha ⇒ 409 `BRUTO_DA_PARCELA_SEM_SOLUCAO`.
  */
 export function brutoDaParcela(pagoCents: bigint, aliquotasBp: readonly number[], restanteCents: bigint, minimoCents: bigint | null): bigint {
+  return parcelaComCsrf({ pagoCents, aliquotasBp, restanteCents, brutoRestanteCents: restanteCents, tituloCents: 0n, retidoReconhecimentoCents: 0n, minimoCents }).brutoCents;
+}
+
+/**
+ * Item 17 + review A1 (dono, chat, 2026-10-25: "use the NF gross proportional to the installment as the CSRF base") — a
+ * parcela de um título que JÁ teve retenção no reconhecimento (IRRF/INSS/ISS, baixa sem caixa no `paidCents`). A base da
+ * CSRF é o bruto da NF que a parcela quita, `g`; a parte de `g` já retida no reconhecimento é proporcional,
+ * `g × R / T`; o claim no saldo é `c = g × (T − R) / T` (HALF_UP) = pago + CSRF(g). Sem retenção no reconhecimento (R = 0),
+ * `c = g` e vale a regra de antes. Preferências: o bruto restante da NF, quando fecha o saldo; o MAIOR `g` que fecha
+ * (dono 24/10); sem CSRF retida (≤ mínimo) ⇒ `c = pago`. Nenhum fecha ⇒ 409.
+ */
+export function parcelaComCsrf(e: {
+  pagoCents: bigint;
+  aliquotasBp: readonly number[];
+  /** Saldo do título (amountCents − paidCents), já líquido da retenção do reconhecimento. */
+  restanteCents: bigint;
+  /** Bruto da NF ainda não quitado por parcelas anteriores (T − Σ bruto das parcelas ativas). */
+  brutoRestanteCents: bigint;
+  /** T: bruto da NF (amountCents); 0 = sem retenção no reconhecimento. */
+  tituloCents: bigint;
+  /** R: Σ retido no reconhecimento. */
+  retidoReconhecimentoCents: bigint;
+  minimoCents: bigint | null;
+}): { brutoCents: bigint; claimCents: bigint } {
+  const { pagoCents, aliquotasBp, minimoCents } = e;
+  const T = e.tituloCents;
+  const R = e.retidoReconhecimentoCents;
+  const liquido = (g: bigint) => (R === 0n || T === 0n ? g : divHalfUp(g * (T - R), T));
   const retido = (g: bigint) => csrfDoBruto(g, aliquotasBp);
   const acimaDoMinimo = (g: bigint) => minimoCents === null || retido(g) > minimoCents;
-  if (restanteCents > 0n && acimaDoMinimo(restanteCents) && restanteCents - retido(restanteCents) === pagoCents) return restanteCents;
+  const fecha = (g: bigint) => pagoCents + retido(g) === liquido(g);
+  const gr = e.brutoRestanteCents;
+  if (gr > 0n && acimaDoMinimo(gr) && pagoCents + retido(gr) === e.restanteCents) return { brutoCents: gr, claimCents: e.restanteCents };
   const somaBp = BigInt(aliquotasBp.reduce((s, bp) => s + bp, 0));
-  if (somaBp > 0n && somaBp < 10_000n) {
-    const estimado = (pagoCents * 10_000n) / (10_000n - somaBp);
-    for (let g = estimado + 2n; g >= estimado - 2n; g--) {
-      if (g > pagoCents && acimaDoMinimo(g) && g - retido(g) === pagoCents) return g;
+  const escala = R === 0n || T === 0n ? 10_000n : ((T - R) * 10_000n) / T;
+  if (somaBp > 0n && escala - somaBp > 0n) {
+    const estimado = (pagoCents * 10_000n) / (escala - somaBp);
+    for (let g = estimado + 3n; g >= estimado - 3n; g--) {
+      if (g > pagoCents && acimaDoMinimo(g) && fecha(g)) return { brutoCents: g, claimCents: liquido(g) };
     }
   }
-  if (!acimaDoMinimo(pagoCents)) return pagoCents;
+  const semRetencao = R === 0n || T === 0n ? pagoCents : divHalfUp(pagoCents * T, T - R);
+  if (!acimaDoMinimo(semRetencao)) return { brutoCents: semRetencao, claimCents: pagoCents };
   throw new ConflictError(
     `BRUTO_DA_PARCELA_SEM_SOLUCAO: nenhum bruto fecha o pago de ${pagoCents} centavos com a CSRF por tributo (${aliquotasBp.join('+')} bp) — informe o valor pago que corresponde a um bruto.`,
     'BRUTO_DA_PARCELA_SEM_SOLUCAO',

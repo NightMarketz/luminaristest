@@ -359,6 +359,14 @@ export class PayableRepository implements IPayableRepository {
     });
   }
 
+  public async findTaxTitleNumbersEver(scope: AccountingScope, counterpartyId: string, prefix: string, tx?: Prisma.TransactionClient): Promise<string[]> {
+    const rows = await (tx ?? prisma).payable.findMany({
+      where: { ...accountingScopeWhere(scope), counterpartyId, origin: PAYABLE_ORIGIN_WITHHOLDING_TAX, OR: [{ documentNumber: { startsWith: prefix } }, { documentNumber: { contains: `:${prefix}` } }] },
+      select: { documentNumber: true },
+    });
+    return rows.map((r) => r.documentNumber ?? '');
+  }
+
   public async adjustTaxTitleAmount(scope: AccountingScope, id: string, expectedCents: number, delta: number, tx: Prisma.TransactionClient): Promise<number> {
     const result = await tx.payable.updateMany({
       where: { id, ...accountingScopeWhere(scope), origin: PAYABLE_ORIGIN_WITHHOLDING_TAX, deletedAt: null, status: 'OPEN', paidCents: 0, amountCents: expectedCents },

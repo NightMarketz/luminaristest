@@ -226,6 +226,8 @@ export interface IPayableRepository {
   findTaxTitles(scope: AccountingScope, counterpartyId: string, prefix: string, tx?: Prisma.TransactionClient): Promise<Payable[]>;
   /** Títulos de imposto OPEN sem baixa do código (candidatos ao acúmulo do DARF < R$ 10, item 20). */
   findOpenTaxTitlesByCode(scope: AccountingScope, counterpartyId: string, codePrefix: string, tx?: Prisma.TransactionClient): Promise<Payable[]>;
+  /** Review A5: os documentNumber de TODOS os títulos de imposto do prefixo, inclusive os cancelados (renomeados `deleted:<id>:`). */
+  findTaxTitleNumbersEver(scope: AccountingScope, counterpartyId: string, prefix: string, tx?: Prisma.TransactionClient): Promise<string[]>;
   /** CAS: soma `delta` (positivo ou negativo) ao valor só enquanto OPEN sem baixa e com o valor esperado. 0 = perdeu. */
   adjustTaxTitleAmount(scope: AccountingScope, id: string, expectedCents: number, delta: number, tx: Prisma.TransactionClient): Promise<number>;
   /** As baixas ATIVAS de um título (todas as kinds). */

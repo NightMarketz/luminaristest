@@ -4,7 +4,7 @@
  */
 import { LEGAIS_SEMENTE } from '@test/helpers/legalParams';
 import { linhasEmVigor } from '../../../legalParameters/models/legalParameter';
-import { brutoDaParcela, calcularIrrfPf, calcularRetencoes, csrfDoBruto, type EntradaRetencao, type PerfilParaCalculo } from '../withholdingCalc';
+import { brutoDaParcela, calcularIrrfPf, calcularRetencoes, csrfDoBruto, parcelaComCsrf, type EntradaRetencao, type PerfilParaCalculo } from '../withholdingCalc';
 
 const tabela = linhasEmVigor(LEGAIS_SEMENTE);
 const PERFIL: PerfilParaCalculo = { naturezaServico: 'SERVICO_PROFISSIONAL', natRend: '15022', irrf: true, csrf: true, inss: false, inssCprb: null, issRetido: false, issAliquotaBp: null };
@@ -146,6 +146,14 @@ describe('brutoDaParcela (itens 17 e 18; invariante 6)', () => {
 
   it('5 parcelas de R$ 200 (CSRF 9,30 ≤ R$ 10 ⇒ dispensada): pago 200 ⇒ bruto 200', () => {
     expect(brutoDaParcela(20_000n, bps, 100_000n, 1000n)).toBe(20_000n);
+  });
+
+  it('review A1: com IRRF de R$ 15 no reconhecimento, pago 938,50 ⇒ bruto da NF 1.000 (CSRF 46,50) e claim 985,00', () => {
+    const e = { aliquotasBp: bps, tituloCents: 100_000n, retidoReconhecimentoCents: 1500n, minimoCents: 1000n };
+    expect(parcelaComCsrf({ ...e, pagoCents: 93_850n, restanteCents: 98_500n, brutoRestanteCents: 100_000n })).toEqual({ brutoCents: 100_000n, claimCents: 98_500n });
+    // Duas parcelas: 469,25 ⇒ bruto proporcional 500 (CSRF 23,25, claim 492,50); a 2ª fecha pelo bruto restante.
+    expect(parcelaComCsrf({ ...e, pagoCents: 46_925n, restanteCents: 98_500n, brutoRestanteCents: 100_000n })).toEqual({ brutoCents: 50_000n, claimCents: 49_250n });
+    expect(parcelaComCsrf({ ...e, pagoCents: 46_925n, restanteCents: 49_250n, brutoRestanteCents: 50_000n })).toEqual({ brutoCents: 50_000n, claimCents: 49_250n });
   });
 
   it('pago que nenhum bruto fecha ⇒ 409 nomeado', () => {

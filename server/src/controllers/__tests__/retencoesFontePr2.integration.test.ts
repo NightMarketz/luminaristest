@@ -7,6 +7,7 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { getFactory } from '@/lib/factory';
 import { PostingService } from '@/features/accounting/services/PostingService';
+import { PayableRepository } from '@/features/accounting/repositories/PayableRepository';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
@@ -329,6 +330,103 @@ describe('RETENCOES-FONTE PR-2 — retenções feitas no AP', () => {
     // R$ 8.000 no mês, desconto simplificado: base 7.392,80 ⇒ 27,5% (2.033,02) − 908,73 = 1.124,29; sem redução (> R$ 7.350).
     expect([segundo.amountCents, segundo.baseCents, segundo.taxPayableId]).toEqual([112_429n, 739_280n, null]);
     expect(JSON.parse(segundo.pfDetalhe!)).toMatchObject({ descontoSimplificadoCents: '60720', retidoAntesNoMesCents: '0', reducaoArt3ACents: '0' });
+  });
+
+  // ── Review independente de 25/10 (`.claude/retornos/retencoes-fonte-review.md`), achados A1–A6 ─────────────────────────
+
+  it('review A1: título com IRRF no reconhecimento pago inteiro (R$ 938,50) ⇒ CSRF R$ 46,50 sobre o bruto da NF (R$ 1.000) e título PAID', async () => {
+    const t = (await criarTitulo(cp.A, 'NF-RA1', 100_000, '2026-02-02')).body.data.id as string;
+    expect((await pagar(t, 93_850, '2026-02-10')).status).toBe(201);
+    const row = await titulo(t);
+    expect([row.status, Number(row.paidCents)]).toEqual(['PAID', 100_000]);
+    const csrf = (await retencoes(t)).filter((x) => x.event === 'SETTLEMENT');
+    expect(csrf.map((x) => [x.tributo, Number(x.brutoCents), Number(x.baseCents), Number(x.amountCents)]).sort()).toEqual([
+      ['COFINS', 100_000, 100_000, 3000],
+      ['CSLL', 100_000, 100_000, 1000],
+      ['PIS', 100_000, 100_000, 650],
+    ]);
+  });
+
+  it('review A1: duas parcelas de R$ 469,25 ⇒ cada uma sobre bruto proporcional de R$ 500 (CSRF 23,25) e o título fecha', async () => {
+    const t = (await criarTitulo(cp.A, 'NF-RA2', 100_000, '2026-02-03')).body.data.id as string;
+    expect((await pagar(t, 46_925, '2026-02-11')).status).toBe(201);
+    expect((await pagar(t, 46_925, '2026-02-12')).status).toBe(201);
+    const row = await titulo(t);
+    expect([row.status, Number(row.paidCents)]).toEqual(['PAID', 100_000]);
+    const csrf = (await retencoes(t)).filter((x) => x.event === 'SETTLEMENT');
+    expect(csrf.every((x) => x.brutoCents === 50_000n)).toBe(true);
+    expect(csrf.reduce((s, x) => s + Number(x.amountCents), 0)).toBe(4650);
+  });
+
+  it('review A2: retenção tardia de competência já somada (DEFERRED) vai ao título que a somou — nenhum título < R$ 10 aberto', async () => {
+    expect((await criarTitulo(cp.D, 'NF-RD1', 30_000, '2026-05-20')).status).toBe(201); // 4,50 em 05, depois do acúmulo
+    expect(await tituloImposto('170806-202605-C1')).toBeNull();
+    expect(Number((await tituloImposto('170806-202606+202605'))!.amountCents)).toBe(1600);
+  });
+
+  it('review A2 (variante): 1º título < R$ 10 de competência encerrada cuja seguinte já tem título aberto ⇒ soma no seguinte', async () => {
+    expect((await criarTitulo(cp.D, 'NF-RD2', 46_667, '2026-08-20')).status).toBe(201); // 7,00 em 08 (o 08 do NF-A8 foi cancelado)
+    expect((await criarTitulo(cp.D, 'NF-RD3', 30_000, '2026-07-10')).status).toBe(201); // 4,50 em 07, lançado depois
+    // Agosto e julho estão encerrados e < R$ 10: ambos vão ao título aberto seguinte do código — o complementar de setembro
+    // (1.500) —, que passa a listar as duas competências. Nenhum título próprio de 07/08 abaixo do mínimo fica aberto.
+    expect(await tituloImposto('170806-202607')).toBeNull();
+    expect(await tituloImposto('170806-202608')).toBeNull();
+    const setembro = (await tituloImposto('170806-202609-C1+202608+202607'))!;
+    expect([Number(setembro.amountCents), setembro.status]).toEqual([2650, 'OPEN']);
+  });
+
+  it('review A3: pfDeducoes com contraparte PJ ⇒ 400 (parâmetro aceito e ignorado é bug)', async () => {
+    const r = await criarTitulo(cp.A, 'NF-RA3', 100_000, '2026-02-04', { pfDeducoes: { dependentes: 2 } });
+    expect([r.status, JSON.stringify(r.body)]).toEqual([400, expect.stringContaining('PF_DEDUCOES_FORA_DE_PF')]);
+  });
+
+  it('review A4: o claim da baixa do título de imposto confere o valor lido (valor velho ⇒ 0, nada muda)', async () => {
+    const imposto = await prisma.payable.findFirstOrThrow({ where: { userId: dono.id, unitId: UNIT, origin: 'WITHHOLDING_TAX', documentNumber: { startsWith: '170806-202612' } } });
+    const repo = new PayableRepository();
+    const lido = Number(imposto.amountCents);
+    // Leitura velha: o título valia mais antes de uma retenção encolher — sem a guarda, o claim passaria e fecharia com saldo.
+    expect(await repo.claimForPayment(scope(), imposto.id, lido + 1, lido + 1)).toBe(0);
+    expect((await titulo(imposto.id)).status).toBe('OPEN');
+    expect(Number((await titulo(imposto.id)).paidCents)).toBe(0);
+  });
+
+  it('review A5: o complementar não reusa o número de um título cancelado (sem P2002)', async () => {
+    const p1 = (await criarTitulo(cp.A, 'NF-RA51', 100_000, '2026-04-05')).body.data.id as string;
+    const base = (await tituloImposto('170806-202604'))!;
+    const pagBase = await pagar(base.id, 1500, '2026-05-20');
+    expect(pagBase.status).toBe(201);
+    expect((await criarTitulo(cp.A, 'NF-RA52', 100_000, '2026-04-06')).status).toBe(201); // ⇒ -C1
+    const c1 = (await tituloImposto('170806-202604-C1'))!;
+    expect((await cancelarPagamento(base.id, pagBase.body.data.id, '2026-05-21')).status).toBe(200); // base volta a OPEN sem baixa
+    expect((await pagar(c1.id, 1500, '2026-05-21')).status).toBe(201);
+    expect((await cancelarTitulo(p1, '2026-05-22')).status).toBe(200); // base zera e é cancelado
+    const r = await criarTitulo(cp.A, 'NF-RA53', 100_000, '2026-04-07');
+    expect(r.status).toBe(201);
+    expect(Number((await tituloImposto('170806-202604-C2'))!.amountCents)).toBe(1500);
+  });
+
+  it('review A6: o re-drive credita a conta do título de imposto, não a do perfil fiscal atual', async () => {
+    const real = PostingService.prototype.postEntry;
+    const spy = jest.spyOn(PostingService.prototype, 'postEntry').mockImplementation(function (this: PostingService, s, input) {
+      if (input.sourceType === 'ap.withholding') return Promise.reject(new Error('crash simulado'));
+      return real.call(this, s, input);
+    });
+    const t = (await criarTitulo(cp.A, 'NF-RA6', 100_000, '2026-01-15')).body.data.id as string;
+    spy.mockRestore();
+    const nova = await criarConta('2.1.99.04', 'Liability');
+    const perfilFiscal = (troca: string) =>
+      request(app).put('/api/accounting/fiscal-profile').set(authHeader(dono)).send({
+        unitId: UNIT, regimeTributario: 'REAL', icmsContribuinte: false, pisCofinsRegime: 'NAO_CUMULATIVO',
+        retencaoIrrfRecolherAccountId: troca, retencaoCsrfRecolherAccountId: conta.csrf, retencaoInssRecolherAccountId: conta.inss, retencaoIssRecolherAccountId: conta.iss,
+      });
+    expect((await perfilFiscal(nova.id)).status).toBe(200);
+    try {
+      await getFactory().getPayableService().reconcilePayables(scope());
+      const [tw] = await retencoes(t);
+      expect(await linhasDoLancamento('ap.withholding', tw.settlementId!)).toEqual([['2.1.2.01', 1500, 0], ['2.1.7.03', 0, 1500]]);
+    } finally {
+      expect((await perfilFiscal(conta.irrf)).status).toBe(200);
+    }
   });
 
   it('invariante 3: tie-out de 2.1.2 fecha — os títulos de imposto ficam fora da soma do AP', async () => {

@@ -707,19 +707,23 @@ export class PayableService implements IFixedAssetDraftRedriver {
     // derivação (maior `g` que fecha, dono 24/10; o saldo restante tem preferência). O claim soma `g` ao paidCents.
     const comCsrf = !!this.withholding && payable.origin !== PAYABLE_ORIGIN_WITHHOLDING_TAX;
     const legais = comCsrf ? await this.withholding!.service.fotografia() : null;
-    const brutoCents = legais
-      ? Number(
-          await this.withholding!.service.brutoDaBaixa(scope, {
-            counterpartyId: payable.counterpartyId,
-            pagoCents: BigInt(dto.amountCents),
-            restanteCents: BigInt(remaining),
-            data: dto.paidAt,
-            legais,
-          }),
-        )
-      : dto.amountCents;
+    // Review A1 (dono, 25/10): a base da CSRF (`baseCsrfCents`) é o bruto da NF proporcional à parcela; o que entra no saldo
+    // (`brutoCents`, o claim) é esse bruto menos a parte já retida no reconhecimento — pago + CSRF.
+    const parcela = legais
+      ? await this.withholding!.service.brutoDaBaixa(scope, {
+          payableId,
+          tituloCents: BigInt(amountCents),
+          counterpartyId: payable.counterpartyId,
+          pagoCents: BigInt(dto.amountCents),
+          restanteCents: BigInt(remaining),
+          data: dto.paidAt,
+          legais,
+        })
+      : null;
+    const brutoCents = parcela ? Number(parcela.claimCents) : dto.amountCents;
+    const baseCsrfCents = parcela ? parcela.brutoCents : BigInt(dto.amountCents);
     if (brutoCents > remaining) {
-      throw new ValidationError(`Bruto da parcela (${brutoCents} centavos, com a CSRF) excede o saldo em aberto (${remaining} centavos).`);
+      throw new ValidationError(`Parcela (${brutoCents} centavos, com a CSRF) excede o saldo em aberto (${remaining} centavos).`);
     }
 
     // ATOMIC SUM-CAS (D4 + ADR §3) — OPEN|PARTIALLY_PAID → PAYING, paidCents += amount, ONLY when the
@@ -743,12 +747,12 @@ export class PayableService implements IFixedAssetDraftRedriver {
         {
           const plano = await this.withholding!.service.planejar(
             scope,
-            { event: 'SETTLEMENT', counterpartyId: payable.counterpartyId, brutoCents: BigInt(brutoCents), dataFatoGerador: dto.paidAt, legais },
+            { event: 'SETTLEMENT', counterpartyId: payable.counterpartyId, brutoCents: baseCsrfCents, dataFatoGerador: dto.paidAt, legais },
             tx,
           );
           const retido = plano.linhas.reduce((s, l) => s + Number(l.amountCents), 0);
           if (dto.amountCents + retido !== brutoCents) {
-            throw new ValidationError(`Parcela incoerente: pago ${dto.amountCents} + CSRF ${retido} ≠ bruto ${brutoCents} centavos.`);
+            throw new ValidationError(`Parcela incoerente: pago ${dto.amountCents} + CSRF ${retido} ≠ parcela ${brutoCents} centavos.`);
           }
           baixas = await this.withholding!.service.gravar(scope, plano, payable, { originSettlementId: p.id, documentoNumero: payable.documentNumber, documentoSerie: null }, tx);
         }
@@ -1221,7 +1225,10 @@ export class PayableService implements IFixedAssetDraftRedriver {
             const tw = await this.withholding.repo.findBySettlement(scope, payment.id);
             const payable = await this.payableRepo.findById(scope, payment.payableId);
             if (!tw || !payable) continue;
-            const conta = await this.withholding.service.contaParaBaixa(scope, tw.tributo as TaxWithholdingTributo);
+            // Review A6: a conta é a do título de imposto (a que a baixa do DARF vai debitar); sem título, a do perfil atual.
+            const titulo = tw.taxPayableId ? await this.payableRepo.findById(scope, tw.taxPayableId) : null;
+            const doTitulo = titulo?.liabilityAccountId ? await this.accountRepo.findById(scope, titulo.liabilityAccountId) : null;
+            const conta = doTitulo ?? (await this.withholding.service.contaParaBaixa(scope, tw.tributo as TaxWithholdingTributo));
             const entry = await this.posting.postEntry(
               scope,
               this.buildWithholdingInput(scope, payable, payment.id, centsFromDb(payment.amountCents), conta.code, this.toDateOnly(payment.paidAt), tw.tributo),

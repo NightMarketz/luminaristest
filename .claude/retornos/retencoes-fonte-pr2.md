@@ -48,6 +48,21 @@ veredicto: PR-2 COMPLETO no escopo; gates verdes (PROVA no PR). NÃO mergear sem
     muda nada (o valor é imutável); no título de imposto fecha a corrida com a soma da retenção (F-RET-11 a).
 11. O aging inclui o título de imposto (F-RET-11 a: "reusa F7, aging e agenda"); o tie-out de 2.1.2 o exclui (invariante 3).
 
+## Review independente (25/10) — achados A1–A6 corrigidos
+Pedido do dono (chat, 2026-10-25): "Fix A1–A6 in PR-2 (#893) here, with a failing test before each fix. For A1, use the NF
+gross proportional to the installment as the CSRF base." Cada achado ganhou um teste em `retencoesFontePr2.integration.test.ts`
+("review A1"…"review A6"), rodado VERMELHO antes do conserto (motivo conferido) e verde depois.
+| Achado | Conserto |
+|---|---|
+| A1 (alto) CSRF sobre o saldo líquido | `parcelaComCsrf` (`withholdingCalc.ts`): base = bruto da NF proporcional à parcela; claim = bruto × (T − R)/T = pago + CSRF; o bruto restante da NF (T − Σ bruto das parcelas) tem preferência. Teste: R$ 938,50 ⇒ CSRF 46,50 sobre 1.000, PAID; 2 × 469,25 ⇒ 2 × (bruto 500, CSRF 23,25), PAID |
+| A2 (médio) DARF < R$ 10 tardio | título que nasceria < mínimo, de competência JÁ ENCERRADA, soma no título OPEN sem baixa de competência posterior do código (o que a somou ou o seguinte já existente). Competência corrente não estaciona (outra retenção do mês pode passar de R$ 10). Testes: tardia de 05 vai ao `202606+202605`; 08 e 07 encadeiam no complementar de 09 |
+| A3 (baixo) `pfDeducoes` ignorado | 400 `PF_DEDUCOES_FORA_DE_PF` sem contraparte PF com perfil de IRRF |
+| A4 (baixo) guarda sem teste | teste direto do `claimForPayment` com valor velho ⇒ 0; sabotagem (sem `amountCents,` no `where`) ⇒ o teste fica VERMELHO; restaurado |
+| A5 (baixo) numeração do complementar | `findTaxTitleNumbersEver` lê também os cancelados (`deleted:<id>:`); o número é o maior já usado + 1. Teste da sequência do review ⇒ `-C2`, sem P2002 |
+| A6 (baixo) conta do re-drive | o re-drive credita o `liabilityAccountId` do título de imposto; sem título, o papel atual. Teste: papel trocado antes do reconcile ⇒ crédito em 2.1.7.03 |
+Limite que fica: se uma retenção tardia levar uma competência já estacionada a ≥ R$ 10, ela não volta a ter DARF próprio — a
+parte nova abre título dela e a antiga segue no título seguinte (caso raro; registrar com o contador se aparecer).
+
 ## Achados fora de escopo
 1. `npm run docs:generate` no Windows: argumentos `/api/...` passados ao node pelo Git Bash viram caminho (conversão MSYS) —
    usar `MSYS_NO_PATHCONV=1` e `pwd -W` nos scripts de merge do openapi.
