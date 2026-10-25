@@ -12,6 +12,11 @@ import OpenAI from 'openai';
 /** Linhas devolvidas por query_table_data ao modelo (o `total` diz quantas casam no banco). */
 const QUERY_TOOL_LIMIT = 10;
 
+/** O motor rejeita `datetime` sem fuso (400): o modelo precisa mandar o instante, no fuso do usuário dado no prompt. */
+const DATE_VALUE_RULE =
+    'Fields of type "datetime" MUST be ISO 8601 with Z or a UTC offset, in the user\'s time zone given in the system prompt ' +
+    '(e.g. 2026-10-24T14:00:00-03:00); a value without offset is rejected. Fields of type "date" are YYYY-MM-DD.';
+
 export interface ActionProposalData {
     id: string;
     action: 'CREATE' | 'UPDATE' | 'DELETE';
@@ -82,7 +87,7 @@ export class LuminarisAgentService {
                         type: 'object',
                         properties: {
                             tableId: { type: 'string', description: 'The unique ID of the table (mandatory).' },
-                            data: { type: 'object', description: 'The data for the new record. MUST NOT BE EMPTY. Include all mandatory fields from the schema.' }
+                            data: { type: 'object', description: `The data for the new record. MUST NOT BE EMPTY. Include all mandatory fields from the schema. ${DATE_VALUE_RULE}` }
                         },
                         required: ['tableId', 'data']
                     }
@@ -98,7 +103,7 @@ export class LuminarisAgentService {
                         properties: {
                             tableId: { type: 'string', description: 'The unique ID of the table.' },
                             recordId: { type: 'string', description: 'The unique ID of the specific record to update.' },
-                            data: { type: 'object', description: 'The specific fields to update.' }
+                            data: { type: 'object', description: `The specific fields to update. ${DATE_VALUE_RULE}` }
                         },
                         required: ['tableId', 'recordId', 'data']
                     }
