@@ -57,6 +57,8 @@ export const ACCOUNTING_RESET_BLOCKING = [
   'Receivable',
   'ReceivableReceipt',
   'Counterparty',
+  'WithholdingProfile', // RETENCOES-FONTE PR-1: o onboarding não escreve perfil de retenção ⇒ bloqueia
+  'TaxWithholding', // RETENCOES-FONTE PR-2: retenção com lançamento e título de imposto ⇒ bloqueia
   'InventoryItem',
   'KitUpgradeRun',
   'KitUpgradePending',

@@ -96,8 +96,10 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // INCR-COUNTERPARTY (A1) — supplier/customer catalog. Id + type + ref only; the counterparty
   // `name` is third-party PII and is dropped exactly like `supplierName`/`customerName` in the
   // AP/AR events (the row keeps the name; the immutable audit trail does not).
-  'counterparty.created':  ['counterpartyId', 'type', 'ref'],
+  // RETENCOES-FONTE PR-1 (item 5/9): o regime entra na allowlist; o taxId e o nome nunca.
+  'counterparty.created':  ['counterpartyId', 'type', 'ref', 'regimeTributario'],
   'counterparty.archived': ['counterpartyId', 'type'],
+  'counterparty.regime_set': ['counterpartyId', 'regimeTributario', 'declaracaoOptanteDocumentId'],
   // INCR-DIM-COMPLETENESS (B1) — the per-account `requiresDimension` flag toggle. Code + old/new
   // flag as string (ACC config change; no PII).
   'account.requires_dimension_changed': ['code', 'from', 'to'],
@@ -171,6 +173,7 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     'dividendosPagarAccountId', 'jcpPagarAccountId', 'irrfRecolherAccountId', 'jcpDespesaAccountId', // IRRF-DISTRIBUICAO item 7
     'ibsRecolherAccountId', 'cbsRecolherAccountId', // IBS-CBS-2027 PR-2 item 12
     'ibsRecuperarAccountId', 'cbsRecuperarAccountId', // IBS-CBS-2027 PR-3 item 14
+    'retencaoIrrfRecolherAccountId', 'retencaoCsrfRecolherAccountId', 'retencaoInssRecolherAccountId', 'retencaoIssRecolherAccountId', 'retencaoIrrfCompensarAccountId', 'retencaoCsllCompensarAccountId', 'retencaoInssCompensarAccountId', // RETENCOES-FONTE PR-1 item 8
     // BE-INCR-DFE (item 9): enum/boolean/int como string — IM/CNAE (texto livre) ficam FORA do evento
     'codMun', 'dpsSerie', 'regEspTrib', 'regApTribSN', 'issAliquotaBp', 'issRetidoTomadorPj', 'pacoteFatoGerador', 'pacoteCTribNac', 'pacoteCNBS', 'ibsCbsInformar', 'ibsCbsCst', 'ibsCbsClassTrib', 'pTotTribFedCent', 'pTotTribEstCent', 'pTotTribMunCent', 'pTotTribSNCent', 'emissaoForaDoMes',
     'policyVersionId'], // GOV-CONTADOR política versionada (item 14): a versão que aplicou esta escrita
@@ -247,6 +250,15 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'partner.created': ['partnerId', 'tipoPessoa', 'residenteBrasil', 'participacaoBp', 'entradaEm', 'saidaEm'],
   'partner.updated': ['partnerId', 'tipoPessoa', 'residenteBrasil', 'participacaoBp', 'entradaEm', 'saidaEm'],
   'partner.deleted': ['partnerId'],
+  // BE-INCR-RETENCOES-FONTE PR-1 (item 9): perfil de retenção — ids, natureza e flags; taxId e nome da contraparte ficam FORA.
+  'withholding_profile.created': ['profileId', 'counterpartyId', 'naturezaServico', 'natRend', 'irrf', 'csrf', 'inss', 'issRetido', 'vigenteDesde', 'vigenteAte'],
+  'withholding_profile.updated': ['profileId', 'counterpartyId', 'naturezaServico', 'natRend', 'irrf', 'csrf', 'inss', 'issRetido', 'vigenteDesde', 'vigenteAte'],
+  'withholding_profile.deleted': ['profileId'],
+  // BE-INCR-RETENCOES-FONTE PR-2 (item 23): retenção feita e título de imposto — ids, tributo, centavos e competência; nunca
+  // o taxId nem o nome do beneficiário.
+  'ap.withholding.recorded': ['withholdingId', 'payableId', 'tributo', 'event', 'amountCents', 'competencia', 'codigoReceita', 'dispensa', 'taxPayableId'],
+  'ap.withholding.reversed': ['withholdingId', 'payableId', 'tributo', 'amountCents', 'taxPayableId'],
+  'tax_payable.upserted': ['taxPayableId', 'codigoReceita', 'competencia', 'amountCents'],
   // BE-INCR-IRRF-DISTRIBUICAO PR-2 (item 33): distribuição — ids e valores; nome e CPF/CNPJ do sócio ficam FORA, e o
   // motivo do cancelamento (texto livre) também.
   'profit_distribution.created': ['distributionId', 'partnerId', 'evento', 'dataEvento', 'origemLucro', 'brutoCents', 'irrfCents', 'liquidoCents'],

@@ -305,7 +305,7 @@ export const REFERENCIAL_PLANO_PADRAO: ReadonlyArray<{ accountCode: string; refe
  * `FiscalProfileService.ensureCanonicalAccounts` (só campo nulo; unidade sem a folha fica manual).
  */
 export const PERFIL_FISCAL_PLANO_PADRAO: ReadonlyArray<{
-  field: 'ibsRecolherAccountId' | 'cbsRecolherAccountId' | 'ibsRecuperarAccountId' | 'cbsRecuperarAccountId';
+  field: 'ibsRecolherAccountId' | 'cbsRecolherAccountId' | 'ibsRecuperarAccountId' | 'cbsRecuperarAccountId' | 'retencaoIrrfRecolherAccountId';
   accountCode: string;
 }> = [
   { field: 'ibsRecolherAccountId', accountCode: '2.1.8.01' },
@@ -313,4 +313,9 @@ export const PERFIL_FISCAL_PLANO_PADRAO: ReadonlyArray<{
   // IBS-CBS-2027 PR-3 (dono 22/10): IBS/CBS a recuperar pelo mesmo caminho (só campo nulo).
   { field: 'ibsRecuperarAccountId', accountCode: '1.1.9.01' },
   { field: 'cbsRecuperarAccountId', accountCode: '1.1.9.02' },
+  // RETENCOES-FONTE PR-1 (item 8; F-RET-19 a): o IRRF retido de serviço reusa o 2.1.7.03 (IRRF a Recolher, já mapeado ao
+  // referencial). As folhas 1.1.8/2.1.9 dos outros 6 papéis ficam FORA do plano padrão até o contador conferir o referencial
+  // (P-RET-4; dono, chat, 2026-10-24: "Folhas fora até o P-RET-4") — sem referencial, derrubariam a cobertura da ECD de toda
+  // unidade já mapeada. Até lá, os 6 papéis são configurados à mão no perfil fiscal.
+  { field: 'retencaoIrrfRecolherAccountId', accountCode: '2.1.7.03' },
 ];

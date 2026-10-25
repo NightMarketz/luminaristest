@@ -4,6 +4,7 @@ import {
   getCounterparty,
   createCounterparty,
   archiveCounterparty,
+  setCounterpartyRegime,
 } from '../controllers/counterpartyController';
 
 /**
@@ -18,5 +19,6 @@ router.get('/', listCounterparties);
 router.post('/', createCounterparty);
 router.get('/:id', getCounterparty);
 router.post('/:id/archive', archiveCounterparty);
+router.post('/:id/regime', setCounterpartyRegime); // RETENCOES-FONTE PR-1 (item 5)
 
 export default router;

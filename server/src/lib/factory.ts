@@ -71,6 +71,8 @@ import { ProductDestinationDefaultRepository } from '../features/accounting/repo
 import { CompanyFiscalProfileRepository } from '../features/accounting/repositories/CompanyFiscalProfileRepository';
 import { CompanySignerRepository } from '../features/accounting/repositories/CompanySignerRepository';
 import { PartnerRepository } from '../features/accounting/repositories/PartnerRepository';
+import { WithholdingProfileRepository } from '../features/accounting/repositories/WithholdingProfileRepository';
+import { TaxWithholdingRepository } from '../features/accounting/repositories/TaxWithholdingRepository';
 import { ProfitDistributionRepository } from '../features/accounting/repositories/ProfitDistributionRepository';
 import { InterestOnEquityRepository } from '../features/accounting/repositories/InterestOnEquityRepository';
 import { DepreciationRateRepository } from '../features/accounting/repositories/DepreciationRateRepository';
@@ -190,6 +192,8 @@ import { ProductDestinationService } from '../features/accounting/services/Produ
 import { CompanyFiscalProfileService } from '../features/accounting/services/CompanyFiscalProfileService';
 import { CompanySignerService } from '../features/accounting/services/CompanySignerService';
 import { PartnerService } from '../features/accounting/services/PartnerService';
+import { WithholdingProfileService } from '../features/accounting/services/WithholdingProfileService';
+import { WithholdingService } from '../features/accounting/services/WithholdingService';
 import { ProfitDistributionService } from '../features/accounting/services/ProfitDistributionService';
 import { InterestOnEquityService } from '../features/accounting/services/InterestOnEquityService';
 import { DepreciationRateService } from '../features/accounting/services/DepreciationRateService';
@@ -344,6 +348,8 @@ import type { IProductDestinationDefaultRepository } from '../features/accountin
 import type { ICompanyFiscalProfileRepository } from '../features/accounting/repositories/ICompanyFiscalProfileRepository';
 import type { ICompanySignerRepository } from '../features/accounting/repositories/ICompanySignerRepository';
 import type { IPartnerRepository } from '../features/accounting/repositories/IPartnerRepository';
+import type { IWithholdingProfileRepository } from '../features/accounting/repositories/IWithholdingProfileRepository';
+import type { ITaxWithholdingReadPort, ITaxWithholdingRepository } from '../features/accounting/repositories/ITaxWithholdingRepository';
 import type { IProfitDistributionRepository } from '../features/accounting/repositories/IProfitDistributionRepository';
 import type { IInterestOnEquityRepository } from '../features/accounting/repositories/IInterestOnEquityRepository';
 import type { IDepreciationRateRepository } from '../features/accounting/repositories/IDepreciationRateRepository';
@@ -813,6 +819,8 @@ export class ApplicationFactory {
     companyFiscalProfile: ICompanyFiscalProfileRepository; // X13
     companySigner: ICompanySignerRepository; // X13
     partner: IPartnerRepository; // IRRF-DISTRIBUICAO PR-1
+    withholdingProfile: IWithholdingProfileRepository; // RETENCOES-FONTE PR-1 (item 6)
+    taxWithholding: ITaxWithholdingRepository; // RETENCOES-FONTE PR-2 (item 13; porta da Reinf, Emenda 22/10 item 2)
     profitDistribution: IProfitDistributionRepository; // IRRF-DISTRIBUICAO PR-2
     interestOnEquity: IInterestOnEquityRepository; // IRRF-DISTRIBUICAO PR-3
     fiscalDocument: IFiscalDocumentRepository;
@@ -919,6 +927,8 @@ export class ApplicationFactory {
     companyFiscalProfile: CompanyFiscalProfileService; // X13
     companySigner: CompanySignerService; // X13
     partner: PartnerService; // IRRF-DISTRIBUICAO PR-1
+    withholdingProfile: WithholdingProfileService; // RETENCOES-FONTE PR-1 (item 6)
+    withholding: WithholdingService; // RETENCOES-FONTE PR-2 (itens 10–23)
     profitDistribution: ProfitDistributionService; // IRRF-DISTRIBUICAO PR-2
     interestOnEquity: InterestOnEquityService; // IRRF-DISTRIBUICAO PR-3
     fiscalDocumentEmission: FiscalDocumentEmissionService;
@@ -1025,6 +1035,8 @@ export class ApplicationFactory {
       companyFiscalProfile: new CompanyFiscalProfileRepository(),
       companySigner: new CompanySignerRepository(),
       partner: new PartnerRepository(),
+      withholdingProfile: new WithholdingProfileRepository(), // RETENCOES-FONTE PR-1 (item 6)
+      taxWithholding: new TaxWithholdingRepository(), // RETENCOES-FONTE PR-2 (item 13)
       profitDistribution: new ProfitDistributionRepository(),
       interestOnEquity: new InterestOnEquityRepository(),
       fiscalDocument: new FiscalDocumentRepository(),
@@ -1519,6 +1531,21 @@ export class ApplicationFactory {
     // [redriver] → PayableService; ver IFixedAssetDraftCreator.ts). Ambos os lados JÁ existem
     // aqui — só liga a ponta que faltava.
     payableService.setFixedAssetDraftCreator(fixedAssetService);
+    // BE-INCR-RETENCOES-FONTE PR-2 (itens 10–23): retenções feitas no AP — calcula e grava o subrazão na tx do título; o
+    // razão segue com o PayableService. Setter pelo mesmo motivo do draft creator (o serviço nasce depois das dependências).
+    const withholdingService = new WithholdingService(
+      this.repositories.taxWithholding,
+      this.repositories.payable,
+      this.repositories.counterparty,
+      this.repositories.withholdingProfile,
+      this.repositories.fiscalProfile,
+      this.repositories.companyFiscalProfile,
+      this.repositories.account,
+      legalParameterService,
+      this.policies.accounting,
+      auditService,
+    );
+    payableService.setWithholding(withholdingService, this.repositories.taxWithholding);
     depreciationService.setFixedAssetDraftRedriver(payableService);
     const companyFiscalProfileService = new CompanyFiscalProfileService(
       this.repositories.companyFiscalProfile,
@@ -1592,6 +1619,15 @@ export class ApplicationFactory {
       companyFiscalProfile: companyFiscalProfileService,
       companySigner: new CompanySignerService(this.repositories.companySigner, this.policies.accounting, auditService),
       partner: new PartnerService(this.repositories.partner, this.policies.accounting, auditService), // IRRF-DISTRIBUICAO PR-1
+      // RETENCOES-FONTE PR-1 (item 6): perfil de retenção; fotografia NATUREZA_RENDIMENTO e a leitura dos rascunhos dela.
+      withholdingProfile: new WithholdingProfileService(
+        this.repositories.withholdingProfile,
+        this.repositories.counterparty,
+        legalParameterService,
+        this.repositories.legalParameter,
+        this.policies.accounting,
+        auditService,
+      ),
       profitDistribution: new ProfitDistributionService( // IRRF-DISTRIBUICAO PR-2
         this.repositories.profitDistribution,
         this.repositories.partner,
@@ -1774,6 +1810,7 @@ export class ApplicationFactory {
         this.repositories.taxAssessment, // X7 PR-3 item 18 (F-TA-8 a): recusa encerrar com provisão pendente
       ),
       payable: payableService,
+      withholding: withholdingService, // RETENCOES-FONTE PR-2
       receivable: receivableService,
       // CRM → AR seam (ADR-CRM-AR-SEAM): post-commit integration bridge, same altitude as
       // AccountingSync — never injected into the DynamicTable engine (§2.1).
@@ -2393,6 +2430,10 @@ export class ApplicationFactory {
   public getCompanyFiscalProfileService = (): CompanyFiscalProfileService => this.services.companyFiscalProfile;
   public getCompanySignerService = (): CompanySignerService => this.services.companySigner;
   public getPartnerService = (): PartnerService => this.services.partner;
+  public getWithholdingProfileService = (): WithholdingProfileService => this.services.withholdingProfile;
+  public getWithholdingService = (): WithholdingService => this.services.withholding;
+  /** RETENCOES-FONTE PR-2 (Emenda 22/10 item 2): a porta que a EFD-REINF lê, sem HTTP. */
+  public getTaxWithholdingReadPort = (): ITaxWithholdingReadPort => this.repositories.taxWithholding;
   public getProfitDistributionService = (): ProfitDistributionService => this.services.profitDistribution;
   public getInterestOnEquityService = (): InterestOnEquityService => this.services.interestOnEquity;
   public getDepreciationRateService = (): DepreciationRateService => this.services.depreciationRate;

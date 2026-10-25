@@ -20,7 +20,7 @@ export const stockMovementsModule = {
       { name: 'type', label: 'Type', type: 'select', options: ['In', 'Out'], required: true },
       quantity,
       { ...date, label: 'Movement Date', type: 'datetime', defaultValue: 'CURRENT_TIMESTAMP' },
-      { name: 'reason', label: 'Reason', type: 'select', options: ['Purchase', 'Sale', 'Internal Use', 'Return', 'Adjustment'], required: true },
+      { name: 'reason', label: 'Reason', type: 'select', options: ['Purchase', 'Sale', 'Internal Use', 'Return', 'Adjustment', 'SALE', 'RETURN'], required: true },
       { ...cost, label: 'Cost (Total)' },
       supplierId,
       { ...paymentMethod, required: false },

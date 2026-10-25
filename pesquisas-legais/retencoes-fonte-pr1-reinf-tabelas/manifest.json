@@ -1,0 +1,74 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "D01_EFD-REINF-20-20Tabelas-2015012026-zip",
+      "url": "http://sped.rfb.gov.br/arquivo/download/7994",
+      "url_final": "http://sped.rfb.gov.br/estatico/56/02690B8D5DE8904DFAB98799195B016052E4F5/EFD-REINF%20-%20Tabelas%2015012026.zip",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-24T17:14:38-03:00",
+      "sha256": "31c04713b92a965c7413190a21dfc1b8eab4b10002a58371506da758e770b1a7",
+      "arquivo": "docs/D01_EFD-REINF-20-20Tabelas-2015012026-zip.html",
+      "texto": "docs/D01_EFD-REINF-20-20Tabelas-2015012026-zip.txt",
+      "bytes": 416773
+    },
+    {
+      "id": "D02",
+      "titulo": "Lei nº 11.482 de 31/05/2007",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2007/lei-11482-2007-05-31.md",
+      "url_final": "https://github.com/ctresb/leis/blob/6b9dfaf3a61af84706aba58fd654ab2d757b6917/federal/leis-ordinarias/2007/lei-11482-2007-05-31.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2007-05-31;11482",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "6b9dfaf3a61af84706aba58fd654ab2d757b6917",
+      "alertas": [],
+      "baixado_em": "2026-10-24T17:16:21-03:00",
+      "sha256": "0c2aeb0a857f68c5c325b2eef940461ffd5cd422422692c1057de35af96256bf",
+      "arquivo": "docs/D02_lei-11482-2007-05-31.md",
+      "texto": "docs/D02_lei-11482-2007-05-31.txt",
+      "bytes": 28318
+    },
+    {
+      "id": "D03",
+      "titulo": "D9580",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/d9580.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/d9580.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-24T17:16:22-03:00",
+      "sha256": "99577ff589f6e346588214958e91f358bd9bebe835a4f8d2e5962b680e18d9f1",
+      "arquivo": "docs/D03_d9580-htm.html",
+      "texto": "docs/D03_d9580-htm.txt",
+      "bytes": 2944670
+    },
+    {
+      "id": "D04",
+      "titulo": "L9250",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/l9250.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/l9250.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-24T17:16:23-03:00",
+      "sha256": "10d108312d807f2a09f5f773eac7805e09c7f71140439d94e77b768c0fe54717",
+      "arquivo": "docs/D04_l9250-htm.html",
+      "texto": "docs/D04_l9250-htm.txt",
+      "bytes": 269117
+    },
+    {
+      "id": "D05",
+      "titulo": "Lcp 214",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-24T17:20:59-03:00",
+      "sha256": "6f7a703e66995ebc9564b868e2867cb59820b52a9094274062510cfb00a99141",
+      "arquivo": "docs/D05_lcp214-htm.html",
+      "texto": "docs/D05_lcp214-htm.txt",
+      "bytes": 5403667
+    }
+  ],
+  "buscas": [],
+  "slug": "retencoes-fonte-pr1-reinf-tabelas",
+  "pergunta": "Carga das tabelas NATUREZA_RENDIMENTO e RETENCAO_CODIGO (EFD-Reinf Tabelas 15/01/2026) e IRRF_PF_MENSAL — RETENCOES-FONTE PR-1",
+  "criado": "2026-10-24T17:14:36-03:00"
+}
