@@ -160,6 +160,11 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
     valor: 'int',
     checar: (l) => so(l.chave === 'ALIQUOTA_MAX_BP' && semDisc(l) && (l.valorInt ?? -1) >= 0 && (l.valorInt ?? 0) <= 10_000, 'chave ALIQUOTA_MAX_BP; valorInt em bp (0..10000)'),
   },
+  // ISS-TRANSICAO-IBS PR-1 (BRIEF item 2): fator de redução do ISS por ano (LC 116 art. 8º-B I–IV), sem discriminador.
+  ISS_TRANSICAO: {
+    valor: 'int',
+    checar: (l) => so(l.chave === 'FATOR_REDUCAO_BP' && semDisc(l) && bp(l), 'chave FATOR_REDUCAO_BP; valorInt em bp (0..10000)'),
+  },
   LEIAUTE_SPED: {
     valor: 'texto',
     checar: (l) =>
