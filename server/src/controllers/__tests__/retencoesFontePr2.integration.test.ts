@@ -103,6 +103,53 @@ describe('RETENCOES-FONTE PR-2 — retenções feitas no AP', () => {
 
   let tA: string;
 
+  it('review A2 (dono 25/10 "somar e desfazer"): a tardia soma no título que absorveu a competência; se ela passa de R$ 10, volta a ter título próprio e o absorvente encolhe', async () => {
+    // Competências de 2025, encerradas (o 5ec322a4 não estaciona competência corrente).
+    for (let month = 2; month <= 5; month++) {
+      await prisma.accountingPeriod.create({ data: { userId: dono.id, unitId: UNIT, year: 2025, month, status: 'OPEN', openedAt: new Date(), openedById: dono.id } });
+    }
+    const p = await request(app).put('/api/accounting/company-fiscal-profile/2025').set(authHeader(dono)).send({ unitId: UNIT, regime: 'REAL', ecf: { indAliqCsll: '1', indRecReceita: '2' } });
+    expect(p.status).toBe(200);
+    const em2025 = { vigenteDesde: '2025-01-01', vigenteAte: '2025-12-31' };
+    await perfil(cp.D, { naturezaServico: 'SERVICO_PROFISSIONAL', natRend: '15022', irrf: true, ...em2025 });
+    await perfil(cp.A, { naturezaServico: 'SERVICO_PROFISSIONAL', natRend: '15022', irrf: true, csrf: true, ...em2025 });
+    expect((await criarTitulo(cp.D, 'NF-RE1', 30_000, '2025-02-05')).status).toBe(201); // 4,50 em 02
+    expect((await criarTitulo(cp.D, 'NF-RE2', 46_667, '2025-03-05')).status).toBe(201); // 7,00 em 03 ⇒ absorve 02
+    const marco = (await tituloImposto('170806-202503+202502'))!;
+    const fev = (await tituloImposto('170806-202502'))!;
+    expect([Number(marco.amountCents), fev.status]).toEqual([1150, 'DEFERRED']);
+    const r3 = await criarTitulo(cp.D, 'NF-RE3', 30_000, '2025-02-20'); // tardia 4,50 ⇒ 02 = 9,00 < 10 ⇒ soma no de 03
+    expect(r3.status).toBe(201);
+    expect((await retencoes(r3.body.data.id))[0].taxPayableId).toBe(marco.id);
+    expect(Number((await titulo(marco.id)).amountCents)).toBe(1600);
+    const r4 = await criarTitulo(cp.D, 'NF-RE4', 46_667, '2025-02-25'); // tardia 7,00 ⇒ 02 = 16,00 ≥ 10 ⇒ desfaz
+    expect(r4.status).toBe(201);
+    const fevDepois = await titulo(fev.id);
+    expect([fevDepois.status, Number(fevDepois.amountCents), fevDepois.documentNumber, fevDepois.dueDate.toISOString().slice(0, 10)]).toEqual(['OPEN', 1600, '170806-202502', '2025-03-20']);
+    const marcoDepois = await titulo(marco.id);
+    expect([Number(marcoDepois.amountCents), marcoDepois.documentNumber]).toEqual([700, '170806-202503']);
+    expect(await prisma.taxWithholding.count({ where: { taxPayableId: fev.id, status: 'ACTIVE' } })).toBe(3);
+  });
+
+  it('review A2: competência encerrada que nasce < R$ 10 com título posterior aberto soma nele; a tardia que a leva a ≥ R$ 10 abre o título próprio dela', async () => {
+    expect((await criarTitulo(cp.A, 'NF-RE5', 100_000, '2025-05-10')).status).toBe(201); // 15,00 em 05 (absorve os 7,00 de 03)
+    const maio = (await tituloImposto('170806-202505+202503'))!;
+    expect(Number(maio.amountCents)).toBe(2200);
+    const r = await criarTitulo(cp.D, 'NF-RE6', 30_000, '2025-04-10'); // 4,50 em 04, depois do título de 05
+    expect(r.status).toBe(201);
+    expect((await retencoes(r.body.data.id))[0].taxPayableId).toBe(maio.id);
+    expect(Number((await titulo(maio.id)).amountCents)).toBe(2650);
+    expect((await titulo(maio.id)).documentNumber).toBe('170806-202505+202503+202504');
+    const r2 = await criarTitulo(cp.D, 'NF-RE7', 46_667, '2025-04-20'); // tardia 7,00 ⇒ 04 = 11,50 ≥ 10 ⇒ título próprio
+    expect(r2.status).toBe(201);
+    const abril = (await tituloImposto('170806-202504'))!;
+    expect([abril.status, Number(abril.amountCents), abril.dueDate.toISOString().slice(0, 10)]).toEqual(['OPEN', 1150, '2025-05-20']);
+    expect((await retencoes(r.body.data.id))[0].taxPayableId).toBe(abril.id);
+    const maioDepois = await titulo(maio.id);
+    expect([Number(maioDepois.amountCents), maioDepois.documentNumber]).toEqual([2200, '170806-202505+202503']);
+  });
+
+
   it('item 15: R$ 1.000 a PJ Presumido, serviço profissional ⇒ IRRF R$ 15,00, paidCents 1500, remainingCents 98500, razão balanceado', async () => {
     const r = await criarTitulo(cp.A, 'NF-A1', 100_000, '2026-03-10', { documentoSerie: '1' });
     expect([r.status, r.body.data.withholdingAvisos]).toEqual([201, []]);
