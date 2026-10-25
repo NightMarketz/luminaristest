@@ -48,6 +48,7 @@ import { ClientModeStrip, PendingInvitesBanner, clientLabel } from './governance
 import { PolicyVersionsPanel } from './governance/PolicyVersionsPanel';
 import { AccountingActivationBanner } from './components/AccountingActivationBanner';
 import { ReconcilePendingPanel } from './components/ReconcilePendingPanel';
+import { parseInventoryPurchaseSeed, type InventoryPurchaseSeed } from './lib/inventoryPurchaseLink';
 
 export type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'cobranca' | 'nfe' | 'compliance' | 'dimensoes' | 'imobilizado' | 'perfil-fiscal' | 'parametros-legais' | 'politica' | 'apuracao' | 'pendencias';
 
@@ -156,7 +157,12 @@ export function AccountingView() {
   // Remonta os painéis delegáveis a cada troca de livro: resposta atrasada e formulário aberto de um contexto não podem aparecer no outro.
   const contextKey = governance ? governance.assignmentId : OWN_CONTEXT;
 
-  const [rawTab, setRawTab] = useState<Tab>('balancete');
+  // Deep link do MovementModal (Entrada+Compra): abre Contas a Pagar com a compra de estoque pré-preenchida.
+  // Lido uma vez da URL; o painel captura como SEED ao montar e o efeito abaixo limpa (uso único).
+  const [inventoryPurchaseSeed, setInventoryPurchaseSeed] = useState<InventoryPurchaseSeed | null>(() =>
+    typeof window === 'undefined' ? null : parseInventoryPurchaseSeed(window.location.search),
+  );
+  const [rawTab, setRawTab] = useState<Tab>(() => (inventoryPurchaseSeed ? 'contas-a-pagar' : 'balancete'));
   // Allowlist por construção: no modo cliente nenhuma aba fora de `DELEGATED_TABS` chega a renderizar (item 8.1).
   const activeTab: Tab = governance && !DELEGATED_TABS.includes(rawTab) ? 'periodos' : rawTab;
   const setActiveTab = setRawTab;
@@ -203,6 +209,13 @@ export function AccountingView() {
     // roda durante o render, antes de qualquer efeito) — consumo de uso único.
     setPendingCounterpartyFilter(null);
   }, [pendingCounterpartyFilter]);
+
+  useEffect(() => {
+    // Só depois que o painel montou (precisa do unitId): até lá o SEED ainda não foi capturado.
+    if (!inventoryPurchaseSeed || !unitId || activeTab !== 'contas-a-pagar') return;
+    setInventoryPurchaseSeed(null);
+    window.history.replaceState(window.history.state, '', window.location.pathname);
+  }, [inventoryPurchaseSeed, unitId, activeTab]);
 
   function openNewEntryModal() {
     // Modo cliente: `getAccounts`/`listCatalog` não são dos 9 handlers (item 8.4) — e a aba Balancete nem monta.
@@ -389,6 +402,7 @@ export function AccountingView() {
           onLedgerChange={reload}
           onNavigateToPeriods={() => setActiveTab('periodos')}
           onNavigateToCounterparties={() => setActiveTab('contrapartes')}
+          initialInventoryPurchase={inventoryPurchaseSeed ?? undefined}
           // F-AGING-5(b): SEED de uma só vez vindo do clique num grupo do AgingPanel — `undefined`
           // (nunca reaplicado) numa visita manual à aba, porque o efeito acima já limpou o pending.
           initialFilters={
