@@ -6,6 +6,13 @@ type: ("SUPPLIER" | "CUSTOMER")
 name: string
 taxId?: string
 ref?: string
+regimeTributario?: ("SIMPLES" | "MEI" | "PRESUMIDO" | "REAL" | "ARBITRADO" | "PF" | "COOPERATIVA" | "EXTERIOR")
+declaracaoOptanteDocumentId?: string
+}
+export interface SetCounterpartyRegimeInput {
+unitId: string
+regimeTributario: (("SIMPLES" | "MEI" | "PRESUMIDO" | "REAL" | "ARBITRADO" | "PF" | "COOPERATIVA" | "EXTERIOR") | null)
+declaracaoOptanteDocumentId?: (string | null)
 }
 export interface ArchiveCounterpartyInput {
 unitId: string

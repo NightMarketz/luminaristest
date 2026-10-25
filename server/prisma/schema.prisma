@@ -61,6 +61,7 @@ model User {
   companyFiscalProfiles      CompanyFiscalProfile[] // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13) — perfil da empresa por ano
   companySigners             CompanySigner[] // X13 (F-OBP-9 a) — representante legal / signatários não-contador
   partners                   Partner[] // IRRF-DISTRIBUICAO PR-1 (F-IRD-2, F-IRD-14) — sócios beneficiários da distribuição
+  withholdingProfiles        WithholdingProfile[] // RETENCOES-FONTE PR-1 (item 6) — perfil de retenção por contraparte × natureza
   profitDistributionEvents   ProfitDistributionEvent[] // IRRF-DISTRIBUICAO PR-2 (BRIEF item 10)
   interestOnEquityCalculations InterestOnEquityCalculation[] // IRRF-DISTRIBUICAO PR-4 (BRIEF item 27)
   taxAssessments             TaxAssessment[] // BE-INCR-TAX-ASSESSMENT Fase A (nó X7, item 12) — apuração IRPJ/CSLL da PJ
@@ -591,6 +592,13 @@ model Account {
   cbsRecolherOf                      FiscalProfile[]           @relation("FiscalProfileCbsRecolher") // IBS-CBS-2027 PR-2 item 12
   ibsRecuperarOf                     FiscalProfile[]           @relation("FiscalProfileIbsRecuperar") // IBS-CBS-2027 PR-3 item 14
   cbsRecuperarOf                     FiscalProfile[]           @relation("FiscalProfileCbsRecuperar") // IBS-CBS-2027 PR-3 item 14
+  retencaoIrrfRecolherOf             FiscalProfile[]           @relation("FiscalProfileRetencaoIrrfRecolher") // RETENCOES-FONTE PR-1 item 8
+  retencaoCsrfRecolherOf             FiscalProfile[]           @relation("FiscalProfileRetencaoCsrfRecolher") // RETENCOES-FONTE PR-1 item 8
+  retencaoInssRecolherOf             FiscalProfile[]           @relation("FiscalProfileRetencaoInssRecolher") // RETENCOES-FONTE PR-1 item 8
+  retencaoIssRecolherOf              FiscalProfile[]           @relation("FiscalProfileRetencaoIssRecolher") // RETENCOES-FONTE PR-1 item 8
+  retencaoIrrfCompensarOf            FiscalProfile[]           @relation("FiscalProfileRetencaoIrrfCompensar") // RETENCOES-FONTE PR-1 item 8
+  retencaoCsllCompensarOf            FiscalProfile[]           @relation("FiscalProfileRetencaoCsllCompensar") // RETENCOES-FONTE PR-1 item 8
+  retencaoInssCompensarOf            FiscalProfile[]           @relation("FiscalProfileRetencaoInssCompensar") // RETENCOES-FONTE PR-1 item 8
   pisCofinsRecuperavelOf             FiscalProfile[]           @relation("FiscalProfilePisCofinsRecuperavel") // X6 F-X6-8 a: crédito de PIS/COFINS a recuperar
   pisCofinsCreditoOutrosOf           FiscalProfile[]           @relation("FiscalProfilePisCofinsCreditoOutros") // X8 PR-3 (L-5)
   pisCofinsRetidoCompensarOf         FiscalProfile[]           @relation("FiscalProfilePisCofinsRetidoCompensar") // X8 PR-3 (retenções)
@@ -1397,6 +1405,11 @@ model Counterparty {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   deletedAt      DateTime? // set when archived (soft)
+  // RETENCOES-FONTE PR-1 (BRIEF item 5; F-RET-5 a): regime da contraparte para as retenções e a declaração de optante
+  // (SourceDocument anexado; plain string, sem FK — precedente). `taxIdKind` é derivado do comprimento do taxId, nunca coluna.
+  regimeTributario            String? // SIMPLES | MEI | PRESUMIDO | REAL | ARBITRADO | PF | COOPERATIVA | EXTERIOR
+  declaracaoOptanteDocumentId String? // SourceDocument.id da declaração de optante (IN RFB 765/2007 — não lida)
+  withholdingProfiles WithholdingProfile[] // RETENCOES-FONTE PR-1 (item 6)
   payables       Payable[] // linked AP rows (FK counterpartyId, nullable)
   receivables    Receivable[] // linked AR rows (FK counterpartyId, nullable)
 
@@ -1680,6 +1693,21 @@ model FiscalProfile {
   ibsRecuperarAccount                 Account?  @relation("FiscalProfileIbsRecuperar", fields: [ibsRecuperarAccountId], references: [id], onDelete: Restrict)
   cbsRecuperarAccountId               String? // Asset
   cbsRecuperarAccount                 Account?  @relation("FiscalProfileCbsRecuperar", fields: [cbsRecuperarAccountId], references: [id], onDelete: Restrict)
+  // RETENCOES-FONTE PR-1 (BRIEF item 8; F-RET-19 a): papéis das retenções feitas (a recolher) e sofridas (a compensar).
+  retencaoIrrfRecolherAccountId       String? // Liability — plano padrão 2.1.7.03 (reusa o IRRF a Recolher, F-RET-19 a)
+  retencaoIrrfRecolherAccount         Account?  @relation("FiscalProfileRetencaoIrrfRecolher", fields: [retencaoIrrfRecolherAccountId], references: [id], onDelete: Restrict)
+  retencaoCsrfRecolherAccountId       String? // Liability — sem folha no plano padrão até o P-RET-4 (dono 24/10)
+  retencaoCsrfRecolherAccount         Account?  @relation("FiscalProfileRetencaoCsrfRecolher", fields: [retencaoCsrfRecolherAccountId], references: [id], onDelete: Restrict)
+  retencaoInssRecolherAccountId       String? // Liability
+  retencaoInssRecolherAccount         Account?  @relation("FiscalProfileRetencaoInssRecolher", fields: [retencaoInssRecolherAccountId], references: [id], onDelete: Restrict)
+  retencaoIssRecolherAccountId        String? // Liability
+  retencaoIssRecolherAccount          Account?  @relation("FiscalProfileRetencaoIssRecolher", fields: [retencaoIssRecolherAccountId], references: [id], onDelete: Restrict)
+  retencaoIrrfCompensarAccountId      String? // Asset
+  retencaoIrrfCompensarAccount        Account?  @relation("FiscalProfileRetencaoIrrfCompensar", fields: [retencaoIrrfCompensarAccountId], references: [id], onDelete: Restrict)
+  retencaoCsllCompensarAccountId      String? // Asset
+  retencaoCsllCompensarAccount        Account?  @relation("FiscalProfileRetencaoCsllCompensar", fields: [retencaoCsllCompensarAccountId], references: [id], onDelete: Restrict)
+  retencaoInssCompensarAccountId      String? // Asset
+  retencaoInssCompensarAccount        Account?  @relation("FiscalProfileRetencaoInssCompensar", fields: [retencaoInssCompensarAccountId], references: [id], onDelete: Restrict)
   partnerAccountRef                   String? // R8 item 2: conta de emissão no parceiro POR UNIDADE — reservado; BE-INCR-DFE preenche
   // BE-INCR-DFE (nó X10b, BRIEF item 1) — emitente (ADR-DFE D5) + itens 5a–5f do contador como CONFIG
   // (D-X10b-2: default = recomendação do ADR, ambos os ramos implementados). Nullable/default => a linha X6
@@ -1824,6 +1852,41 @@ model Partner {
 
   @@index([userId, taxId])
   @@map("partners")
+}
+
+// BE-INCR-RETENCOES-FONTE PR-1 (BRIEF item 6, §5.1; F-RET-3 a, F-RET-16 a) — perfil de retenção por contraparte × natureza
+// do serviço: quais tributos o tenant retém (ou sofre) e o enquadramento citado. A matriz de incidência é DADO (este perfil +
+// tabela RETENCAO), aplicada por função pura no PR-2. Desenho de lei, igual para todos ⇒ Prisma first-class. Soft-delete;
+// vigência sem sobreposição por (counterpartyId, naturezaServico), gate dentro da tx.
+model WithholdingProfile {
+  id               String       @id @default(cuid())
+  userId           String
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId           String
+  counterpartyId   String
+  counterparty     Counterparty @relation(fields: [counterpartyId], references: [id], onDelete: Restrict)
+  naturezaServico  String // chave da RETENCAO: SERVICO_PROFISSIONAL | LIMPEZA_CONSERVACAO_SEGURANCA_LOCACAO | COMISSAO_PROPAGANDA | CESSAO_MAO_DE_OBRA | TRABALHO_NAO_ASSALARIADO_PF | OUTRO
+  natRend          String? // 5 dígitos, NATUREZA_RENDIMENTO (F-RET-16 a) — obrigatório quando irrf || csrf
+  irrf             Boolean
+  csrf             Boolean
+  inss             Boolean
+  inssTpServico    String? // 9 dígitos, Tabela 06 da Reinf (R-2010) — obrigatório se inss
+  inssCprb         Boolean? // prestador na CPRB (indCPRB) — alíquota DRAFT (P-RET-8)
+  issRetido        Boolean
+  issCodMun        String? // IBGE 7 — obrigatório se issRetido
+  issAliquotaBp    Int? // lei municipal (informada) — obrigatória se issRetido
+  issVencimentoDia Int? // 1..31, lei municipal (informada)
+  fonte            String // enquadramento citado (ex. "RIR/2018 art. 714 § 1º XX")
+  vigenteDesde     String // YYYY-MM-DD
+  vigenteAte       String?
+  createdById      String?
+  updatedById      String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  deletedAt        DateTime?
+
+  @@index([userId, unitId, counterpartyId])
+  @@map("withholding_profiles")
 }
 
 // BE-INCR-IRRF-DISTRIBUICAO PR-2 (BRIEF itens 10–21; F-IRD-4, F-IRD-6, F-IRD-8, F-IRD-9) — evento de distribuição de

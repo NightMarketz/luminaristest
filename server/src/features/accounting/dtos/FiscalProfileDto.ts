@@ -79,6 +79,14 @@ const FiscalProfileFields = z
     // IBS-CBS-2027 PR-3 (item 14; dono 21/10, razão completo): IBS e CBS a recuperar (Asset) — crédito da NF-e de entrada.
     ibsRecuperarAccountId: z.string().min(1).nullable().optional(),
     cbsRecuperarAccountId: z.string().min(1).nullable().optional(),
+    // RETENCOES-FONTE PR-1 (item 8; F-RET-19 a): retenções feitas a recolher (Liability) e sofridas a compensar (Asset).
+    retencaoIrrfRecolherAccountId: z.string().min(1).nullable().optional(),
+    retencaoCsrfRecolherAccountId: z.string().min(1).nullable().optional(),
+    retencaoInssRecolherAccountId: z.string().min(1).nullable().optional(),
+    retencaoIssRecolherAccountId: z.string().min(1).nullable().optional(),
+    retencaoIrrfCompensarAccountId: z.string().min(1).nullable().optional(),
+    retencaoCsllCompensarAccountId: z.string().min(1).nullable().optional(),
+    retencaoInssCompensarAccountId: z.string().min(1).nullable().optional(),
     partnerAccountRef: z.string().min(1).max(120).nullable().optional(),
     // BE-INCR-DFE — emitente (ADR-DFE D5)
     codMun: ibge7.nullable().optional(),

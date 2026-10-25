@@ -872,6 +872,83 @@
                     }
                   ]
                 },
+                "retencaoIrrfRecolherAccountId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "retencaoCsrfRecolherAccountId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "retencaoInssRecolherAccountId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "retencaoIssRecolherAccountId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "retencaoIrrfCompensarAccountId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "retencaoCsllCompensarAccountId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "retencaoInssCompensarAccountId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
                 "partnerAccountRef": {
                   "anyOf": [
                     {
@@ -1289,6 +1366,7 @@
                   "Receivable",
                   "ReceivableReceipt",
                   "Counterparty",
+                  "WithholdingProfile",
                   "InventoryItem",
                   "KitUpgradeRun",
                   "KitUpgradePending",
@@ -3433,12 +3511,75 @@
         "ref": {
           "type": "string",
           "minLength": 1
+        },
+        "regimeTributario": {
+          "type": "string",
+          "enum": [
+            "SIMPLES",
+            "MEI",
+            "PRESUMIDO",
+            "REAL",
+            "ARBITRADO",
+            "PF",
+            "COOPERATIVA",
+            "EXTERIOR"
+          ]
+        },
+        "declaracaoOptanteDocumentId": {
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [
         "unitId",
         "type",
         "name"
+      ],
+      "additionalProperties": false
+    },
+    "SetCounterpartyRegimeSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "regimeTributario": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "SIMPLES",
+                "MEI",
+                "PRESUMIDO",
+                "REAL",
+                "ARBITRADO",
+                "PF",
+                "COOPERATIVA",
+                "EXTERIOR"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "declaracaoOptanteDocumentId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "regimeTributario"
       ],
       "additionalProperties": false
     },
@@ -6126,6 +6267,83 @@
             }
           ]
         },
+        "retencaoIrrfRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "retencaoCsrfRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "retencaoInssRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "retencaoIssRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "retencaoIrrfCompensarAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "retencaoCsllCompensarAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "retencaoInssCompensarAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "partnerAccountRef": {
           "anyOf": [
             {
@@ -6697,6 +6915,83 @@
           ]
         },
         "cbsRecuperarAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "retencaoIrrfRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "retencaoCsrfRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "retencaoInssRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "retencaoIssRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "retencaoIrrfCompensarAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "retencaoCsllCompensarAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "retencaoInssCompensarAccountId": {
           "anyOf": [
             {
               "type": "string",
@@ -9837,6 +10132,151 @@
         "alreadyImported",
         "existingPayableId",
         "custo"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "PartnerDto.ts": {
+    "CreatePartnerSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "taxId": {
+          "type": "string",
+          "pattern": "^(\\d{11}|\\d{14})$"
+        },
+        "residenteBrasil": {
+          "type": "boolean"
+        },
+        "participacaoBp": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "entradaEm": {
+          "type": "string"
+        },
+        "saidaEm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "nome",
+        "taxId",
+        "residenteBrasil",
+        "participacaoBp",
+        "entradaEm"
+      ],
+      "additionalProperties": false
+    },
+    "ListPartnersQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "data": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "PartnerIdParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "PartnerScopeSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "UpdatePartnerSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "taxId": {
+          "type": "string",
+          "pattern": "^(\\d{11}|\\d{14})$"
+        },
+        "residenteBrasil": {
+          "type": "boolean"
+        },
+        "participacaoBp": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "entradaEm": {
+          "type": "string"
+        },
+        "saidaEm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "nome",
+        "taxId",
+        "residenteBrasil",
+        "participacaoBp",
+        "entradaEm"
       ],
       "additionalProperties": false
     }
@@ -16911,6 +17351,315 @@
       "additionalProperties": false
     }
   },
+  "WithholdingProfileDto.ts": {
+    "WithholdingProfileScopeSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "WithholdingProfileIdParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "ListWithholdingProfilesQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "counterpartyId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "CreateWithholdingProfileSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "naturezaServico": {
+          "type": "string",
+          "enum": [
+            "SERVICO_PROFISSIONAL",
+            "LIMPEZA_CONSERVACAO_SEGURANCA_LOCACAO",
+            "COMISSAO_PROPAGANDA",
+            "CESSAO_MAO_DE_OBRA",
+            "TRABALHO_NAO_ASSALARIADO_PF",
+            "OUTRO"
+          ]
+        },
+        "natRend": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{5}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "irrf": {
+          "type": "boolean"
+        },
+        "csrf": {
+          "type": "boolean"
+        },
+        "inss": {
+          "type": "boolean"
+        },
+        "issRetido": {
+          "type": "boolean"
+        },
+        "inssTpServico": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{9}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "inssCprb": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "issCodMun": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{7}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "issAliquotaBp": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "issVencimentoDia": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 31
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "fonte": {
+          "type": "string",
+          "minLength": 3
+        },
+        "vigenteDesde": {
+          "type": "string"
+        },
+        "vigenteAte": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "counterpartyId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId",
+        "naturezaServico",
+        "irrf",
+        "csrf",
+        "inss",
+        "issRetido",
+        "fonte",
+        "vigenteDesde",
+        "counterpartyId"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateWithholdingProfileSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "naturezaServico": {
+          "type": "string",
+          "enum": [
+            "SERVICO_PROFISSIONAL",
+            "LIMPEZA_CONSERVACAO_SEGURANCA_LOCACAO",
+            "COMISSAO_PROPAGANDA",
+            "CESSAO_MAO_DE_OBRA",
+            "TRABALHO_NAO_ASSALARIADO_PF",
+            "OUTRO"
+          ]
+        },
+        "natRend": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{5}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "irrf": {
+          "type": "boolean"
+        },
+        "csrf": {
+          "type": "boolean"
+        },
+        "inss": {
+          "type": "boolean"
+        },
+        "issRetido": {
+          "type": "boolean"
+        },
+        "inssTpServico": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{9}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "inssCprb": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "issCodMun": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{7}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "issAliquotaBp": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "issVencimentoDia": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 31
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "fonte": {
+          "type": "string",
+          "minLength": 3
+        },
+        "vigenteDesde": {
+          "type": "string"
+        },
+        "vigenteAte": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "naturezaServico",
+        "irrf",
+        "csrf",
+        "inss",
+        "issRetido",
+        "fonte",
+        "vigenteDesde"
+      ],
+      "additionalProperties": false
+    }
+  },
   "aging.dto.ts": {
     "AgingReportQuerySchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -17031,151 +17780,6 @@
       },
       "required": [
         "unitId"
-      ],
-      "additionalProperties": false
-    }
-  },
-  "PartnerDto.ts": {
-    "CreatePartnerSchema": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "unitId": {
-          "type": "string",
-          "minLength": 1
-        },
-        "nome": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 200
-        },
-        "taxId": {
-          "type": "string",
-          "pattern": "^(\\d{11}|\\d{14})$"
-        },
-        "residenteBrasil": {
-          "type": "boolean"
-        },
-        "participacaoBp": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 10000
-        },
-        "entradaEm": {
-          "type": "string"
-        },
-        "saidaEm": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      },
-      "required": [
-        "unitId",
-        "nome",
-        "taxId",
-        "residenteBrasil",
-        "participacaoBp",
-        "entradaEm"
-      ],
-      "additionalProperties": false
-    },
-    "ListPartnersQuerySchema": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "unitId": {
-          "type": "string",
-          "minLength": 1
-        },
-        "data": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "unitId"
-      ],
-      "additionalProperties": false
-    },
-    "PartnerIdParamSchema": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1
-        }
-      },
-      "required": [
-        "id"
-      ],
-      "additionalProperties": false
-    },
-    "PartnerScopeSchema": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "unitId": {
-          "type": "string",
-          "minLength": 1
-        }
-      },
-      "required": [
-        "unitId"
-      ],
-      "additionalProperties": false
-    },
-    "UpdatePartnerSchema": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "unitId": {
-          "type": "string",
-          "minLength": 1
-        },
-        "nome": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 200
-        },
-        "taxId": {
-          "type": "string",
-          "pattern": "^(\\d{11}|\\d{14})$"
-        },
-        "residenteBrasil": {
-          "type": "boolean"
-        },
-        "participacaoBp": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 10000
-        },
-        "entradaEm": {
-          "type": "string"
-        },
-        "saidaEm": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      },
-      "required": [
-        "unitId",
-        "nome",
-        "taxId",
-        "residenteBrasil",
-        "participacaoBp",
-        "entradaEm"
       ],
       "additionalProperties": false
     }

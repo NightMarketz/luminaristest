@@ -29,6 +29,19 @@ export const COUNTERPARTY_NAME_MAX_LENGTH = 200;
  */
 export const COUNTERPARTY_CREATED = 'counterparty.created';
 export const COUNTERPARTY_ARCHIVED = 'counterparty.archived';
+/** RETENCOES-FONTE PR-1 (item 5): comando que grava o regime e a declaração de optante (T8). */
+export const COUNTERPARTY_REGIME_SET = 'counterparty.regime_set';
+
+/**
+ * RETENCOES-FONTE PR-1 (BRIEF item 5; F-RET-5 a) — coerência entre o regime e o `taxId`: `PF` exige CPF (11 dígitos); um
+ * CNPJ (14) com `PF` é 400. Os demais regimes não conferem o tamanho (o `taxId` segue sem checksum, F-W2A-4). `null` = ok.
+ */
+export function erroRegimeContraparte(regime: string | null | undefined, taxId: string | null | undefined): string | null {
+  if (regime === 'PF' && !/^\d{11}$/.test(taxId ?? '')) {
+    return 'Regime PF exige taxId de pessoa física (CPF, 11 dígitos).';
+  }
+  return null;
+}
 
 /**
  * Rename-on-delete transform for the DISPLAY name (SEC-A1-4). `name` is no longer the business key
