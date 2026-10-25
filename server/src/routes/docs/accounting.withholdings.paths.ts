@@ -1,6 +1,6 @@
 /**
  * OpenAPI das retenções na fonte (BE-INCR-RETENCOES-FONTE). PR-1: perfil de retenção (item 6) e o comando de regime da
- * contraparte (item 5). Um arquivo por feature (dono, 2026-10-16).
+ * contraparte (item 5). PR-2: leitura das retenções feitas (item 23). Um arquivo por feature (dono, 2026-10-16).
  * @openapi
  * paths:
  *   /api/accounting/withholding-profiles:
@@ -100,6 +100,45 @@
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
  *       responses:
  *         '200': { description: 'deleted' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *
+ *   /api/accounting/withholdings:
+ *     get:
+ *       summary: Withholdings MADE in a month, one line per tax and payment (the EFD-Reinf contract, PR-2 item 23)
+ *       description: >-
+ *         Only direction=MADE (the withholdings suffered are PR-3). Lines are R-4020/R-4010/R-2010 ready (dtFG, natRend, revenue
+ *         code, gross, base, amount, R-2010 fields, R-4010 deductions). The beneficiary taxId is returned here and only here.
+ *         The same lines are available to the backend through ITaxWithholdingReadPort.findMadeForReinf (same mapper).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: direction, required: true, schema: { type: string, enum: [MADE] } }
+ *         - { in: query, name: competencia, required: true, schema: { type: string, pattern: '^\d{4}-\d{2}$' } }
+ *       responses:
+ *         '200': { description: 'WithholdingLineView[]' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *
+ *   /api/accounting/withholdings/summary:
+ *     get:
+ *       summary: Withholdings MADE in a month grouped by tax title (revenue code), with due date and status
+ *       description: >-
+ *         One entry per tax title (DARF/GPS/ISS). A title below R$ 10 is added to the next month's title of the same code and
+ *         becomes DEFERRED (Lei 9.430 art. 68 § 1º) — competenciasSomadas lists the months in it. Lines without a published
+ *         revenue code have no title and come with the CODIGO_RECEITA_DRAFT warning.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: competencia, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'WithholdingSummary' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *         '404': { $ref: '#/components/responses/UnitNotFound' }

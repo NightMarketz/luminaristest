@@ -130,6 +130,7 @@ export async function resetDb(): Promise<void> {
   await prisma.journalEntry.deleteMany();
   await prisma.bankStatement.deleteMany();
   await prisma.dimensionDefinition.deleteMany();
+  await prisma.taxWithholding.deleteMany(); // RETENCOES-FONTE PR-2
   await prisma.withholdingProfile.deleteMany(); // RETENCOES-FONTE PR-1 (antes das contrapartes: FK Restrict)
   await prisma.counterparty.deleteMany();
   await prisma.accountingPolicyVersion.deleteMany(); // GOV-CONTADOR política versionada — antes do accountantAssignment (FK Restrict)

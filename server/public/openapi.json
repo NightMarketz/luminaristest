@@ -2630,6 +2630,64 @@
             "minimum": 1,
             "description": "Unidades recebidas nesta compra de estoque; pareado com inventoryProductRef. amountCents é o valor TOTAL (evita arredondamento por-unidade)."
           },
+          "withholdings": {
+            "type": "array",
+            "description": "RETENCOES-FONTE PR-2 (item 12): sobrescrita da retenção calculada, SÓ PARA MENOS e com motivo (ADR D5); para mais ou tributo sem linha calculada → 400. Só em título de despesa de serviço.",
+            "items": {
+              "type": "object",
+              "required": [
+                "tributo",
+                "amountCents",
+                "motivo"
+              ],
+              "properties": {
+                "tributo": {
+                  "type": "string",
+                  "enum": [
+                    "IRRF",
+                    "CSLL",
+                    "COFINS",
+                    "PIS",
+                    "INSS",
+                    "ISS"
+                  ]
+                },
+                "amountCents": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 2147483647
+                },
+                "motivo": {
+                  "type": "string",
+                  "minLength": 3,
+                  "maxLength": 140
+                }
+              }
+            }
+          },
+          "pfDeducoes": {
+            "type": "object",
+            "description": "RETENCOES-FONTE PR-2 (item 11): deduções do IRRF de PF (Lei 9.250 art. 4º). Ausente com contraparte PF → 0 dependentes e desconto simplificado.",
+            "properties": {
+              "dependentes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 30
+              },
+              "previdenciaCents": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "pensaoCents": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "documentoSerie": {
+            "type": "string",
+            "description": "Série da NF (R-2010 serie) — RETENCOES-FONTE PR-2"
+          },
           "fixedAssetItems": {
             "type": "array",
             "description": "BE-INCR-FIXED-ASSETS PR-5: itens de imobilizado da NF-e (declarados pelo classId do operador — ITEM-DESTINATION emenda 29/09) — combinável SÓ com inventoryMultiItem/inventoryItems (nota mista, 2 débitos). Debita class.costAccountId; NUNCA StockMovement.",
@@ -29794,6 +29852,116 @@
           },
           "404": {
             "description": "counterparty not found in the scope"
+          }
+        }
+      }
+    },
+    "/api/accounting/withholdings": {
+      "get": {
+        "summary": "Withholdings MADE in a month, one line per tax and payment (the EFD-Reinf contract, PR-2 item 23)",
+        "description": "Only direction=MADE (the withholdings suffered are PR-3). Lines are R-4020/R-4010/R-2010 ready (dtFG, natRend, revenue code, gross, base, amount, R-2010 fields, R-4010 deductions). The beneficiary taxId is returned here and only here. The same lines are available to the backend through ITaxWithholdingReadPort.findMadeForReinf (same mapper).",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "direction",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "MADE"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "competencia",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "WithholdingLineView[]"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      }
+    },
+    "/api/accounting/withholdings/summary": {
+      "get": {
+        "summary": "Withholdings MADE in a month grouped by tax title (revenue code), with due date and status",
+        "description": "One entry per tax title (DARF/GPS/ISS). A title below R$ 10 is added to the next month's title of the same code and becomes DEFERRED (Lei 9.430 art. 68 § 1º) — competenciasSomadas lists the months in it. Lines without a published revenue code have no title and come with the CODIGO_RECEITA_DRAFT warning.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "competencia",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "WithholdingSummary"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }
