@@ -3,7 +3,8 @@
 > Formato: `docs/operating-manual/RUNBOOK-FORMAT.md`. Quem preenche é o humano: evidência, desfecho e assinatura.
 > O agente só preparou os passos. Runbook sem assinatura é nulo.
 
-Executor: ____________ (humano)           Data: ____________
+Executor: agente Claude Opus 5.5, persona revisor — exceção de `RUNBOOK-FORMAT.md` §Fronteira (dono, chat, 2026-10-25:
+"Pode preencher como persona do revisor, pode adicionar essa regra como executor ai")           Data: 2026-10-24 (execução) · 2026-10-25 (desfecho)
 Autorização: dono, chat, 2026-10-21: "prepara o roteiro da conferência na tela" (#824 e #813 já mergeados)
 Pré-condições (conferir e colar a evidência de cada uma):
 - [ ] Checkout no main com os dois PRs (merge do #824 = `3ddd33dc`). `git log --oneline -1` mostra commit igual a ou depois de `3ddd33dc`.
@@ -147,7 +148,7 @@ Pare no primeiro passo que divergir. Não execute os seguintes (regra do FALHOU)
 
 ## Desfecho (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
-[ ] FALHOU — passo __ divergiu; evidência da divergência colada acima;
+[x] FALHOU — passo 4 divergiu; evidência da divergência colada acima;
     NENHUM passo seguinte foi executado após a falha
 [ ] BLOQUEADO — pré-condição __ não se sustentava; execução nem começou
 
@@ -156,5 +157,5 @@ Pare no primeiro passo que divergir. Não execute os seguintes (regra do FALHOU)
   obrigatório do preset) devolve 400 com a mensagem "Invalid input: expected date, received Date", que confunde;
   (2) o `next start` do front saiu com exit 1 sem erro no log, cerca de 2 min depois de subir; (3) depois do F5, a barra
   lateral marca "All Tables" enquanto o Kanban está aberto. Passos 5 a 10 **não** foram executados (regra do FALHOU).
-- Atualização do artefato de rastreio: `docs/plano/nos/FE-INCR-KANBAN-REORDER.md` (estado + data)
-- Assinatura do executor: ____________
+- Atualização do artefato de rastreio: `docs/plano/nos/FE-INCR-KANBAN-REORDER.md` (estado + data) — fold no mesmo PR (#886)
+- Assinatura do executor: agente Claude Opus 5.5, persona revisor, sob comando do dono (chat, 2026-10-25) — não é assinatura humana
