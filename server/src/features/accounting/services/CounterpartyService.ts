@@ -4,7 +4,9 @@ import type { Counterparty } from 'generated/prisma';
 import {
   COUNTERPARTY_ARCHIVED,
   COUNTERPARTY_CREATED,
+  COUNTERPARTY_REGIME_SET,
   deletedCounterpartyName,
+  erroRegimeContraparte,
   deletedCounterpartyNameNormalized,
   normalizeCounterpartyName,
 } from '../models/Counterparty.model';
@@ -12,6 +14,7 @@ import type {
   ArchiveCounterpartyInput,
   CreateCounterpartyInput,
   ListCounterpartiesQueryInput,
+  SetCounterpartyRegimeInput,
 } from '../dtos/CounterpartyDto';
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
@@ -73,8 +76,11 @@ export class CounterpartyService {
       throw new ForbiddenError('Você não tem permissão para criar contrapartes.');
     }
     const { userId, unitId } = accountingScopeWhere(scope);
+    const erroRegime = erroRegimeContraparte(dto.regimeTributario, dto.taxId);
+    if (erroRegime) throw new ValidationError(erroRegime);
     try {
       return await this.counterpartyRepo.runTransaction(async (tx) => {
+        await this.assertDeclaracaoNoEscopo(scope, dto.declaracaoOptanteDocumentId ?? null, tx);
         const created = await this.counterpartyRepo.create(
           {
             userId,
@@ -84,6 +90,8 @@ export class CounterpartyService {
             nameNormalized: normalizeCounterpartyName(dto.name),
             ref: dto.ref ?? null,
             taxId: dto.taxId ?? null,
+            regimeTributario: dto.regimeTributario ?? null,
+            declaracaoOptanteDocumentId: dto.declaracaoOptanteDocumentId ?? null,
             createdById: scope.actorUserId,
           },
           tx,
@@ -97,7 +105,7 @@ export class CounterpartyService {
           // fix (dono decision 2026-08-31, AskUserQuestion "trocar por referência") — counterpartyId
           // resolves to the row, which stays deletable/maskable. Mirrors the implicit-mint payload in
           // counterpartyResolution.ts and matches PAYLOAD_ALLOWLIST['counterparty.created'] already.
-          payload: { counterpartyId: created.id, type: created.type, ref: created.ref },
+          payload: { counterpartyId: created.id, type: created.type, ref: created.ref, regimeTributario: created.regimeTributario ?? '' },
         });
         return created;
       });
@@ -155,5 +163,42 @@ export class CounterpartyService {
       });
       return archived;
     });
+  }
+
+  // ── Regime (RETENCOES-FONTE PR-1, item 5) ─────────────────────────────────
+  /**
+   * Comando que grava `regimeTributario` e `declaracaoOptanteDocumentId` (F-RET-5 a). A coerência com o `taxId` da linha
+   * (PF ⇒ CPF) e o escopo do SourceDocument rodam DENTRO da tx, sobre a linha relida. Contraparte arquivada ⇒ 404.
+   * Auditoria sem `taxId` nem nome (memória allowlist de auditoria).
+   */
+  async setRegime(scope: AccountingScope, id: string, dto: SetCounterpartyRegimeInput): Promise<Counterparty> {
+    if (!this.policy.canManageCounterparty(scope)) {
+      throw new ForbiddenError('Você não tem permissão para alterar contrapartes.');
+    }
+    return this.counterpartyRepo.runTransaction(async (tx) => {
+      const atual = await this.counterpartyRepo.findById(scope, id, tx);
+      if (!atual) throw new NotFoundError(`Contraparte '${id}' não foi encontrada.`);
+      const erroRegime = erroRegimeContraparte(dto.regimeTributario, atual.taxId);
+      if (erroRegime) throw new ValidationError(erroRegime);
+      const declaracao = dto.declaracaoOptanteDocumentId ?? null;
+      await this.assertDeclaracaoNoEscopo(scope, declaracao, tx);
+      const updated = await this.counterpartyRepo.update(scope, id, { regimeTributario: dto.regimeTributario, declaracaoOptanteDocumentId: declaracao }, tx);
+      await this.auditService.append(tx, scope, {
+        actorUserId: scope.actorUserId,
+        eventType: COUNTERPARTY_REGIME_SET,
+        targetType: 'counterparty',
+        targetId: id,
+        payload: { counterpartyId: id, regimeTributario: updated.regimeTributario ?? '', declaracaoOptanteDocumentId: updated.declaracaoOptanteDocumentId ?? '' },
+      });
+      return updated;
+    });
+  }
+
+  /** A declaração de optante é um SourceDocument vivo do MESMO escopo; de outro escopo ou apagado ⇒ 400. */
+  private async assertDeclaracaoNoEscopo(scope: AccountingScope, documentId: string | null, tx: Prisma.TransactionClient): Promise<void> {
+    if (documentId === null) return;
+    if (!(await this.counterpartyRepo.sourceDocumentExists(scope, documentId, tx))) {
+      throw new ValidationError(`declaracaoOptanteDocumentId '${documentId}' não é um documento desta unidade.`);
+    }
   }
 }

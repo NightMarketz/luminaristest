@@ -98,6 +98,17 @@
  *                       additionalProperties:
  *                         type: array
  *                         items: { type: object }
+ *                     addedTables:
+ *                       type: array
+ *                       description: 'W1 (F-W1-4 a) - tables created in the AI interview. Installed with category other; the key must not exist in the suite, a module or the Core (400 details.reason ADDED_TABLE_EXISTS); fields go through the same validation as addedFields (400 details.reason ADDED_TABLE_INVALID)'
+ *                       items:
+ *                         type: object
+ *                         required: [key, name, fields]
+ *                         additionalProperties: false
+ *                         properties:
+ *                           key: { type: string, pattern: '^[a-z][a-z0-9_]*$', maxLength: 64 }
+ *                           name: { type: string, minLength: 1, maxLength: 120 }
+ *                           fields: { type: array, minItems: 1, items: { type: object } }
  *                     modules:
  *                       type: array
  *                       description: 'I8 - module keys (flat list, F-CRM-9 b). Summed to the suite default; dependencies come from the registry (CRM-0 implicit). CRM-2 is a group key (BE-INCR-CRM-SUBMODULES F-SUB-2 a) that expands to CRM-2A + CRM-2B; data.modules.installed lists only atomic keys'
@@ -277,6 +288,10 @@
  *                 presetKey: { type: string }
  *                 sessionId: { type: string, format: uuid }
  *                 choice: { type: string, enum: [create, customize] }
+ *                 modules:
+ *                   type: array
+ *                   description: 'W1 (F-W1-6 a) - modules checked in the front; read only on the turn that opens the customization session (choice customize)'
+ *                   items: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, CRM-2] }
  *       responses:
  *         '200':
  *           description: Interview turn result
@@ -292,6 +307,16 @@
  *                   startCustomization: { type: boolean }
  *                   sessionId: { type: string }
  *                   customizationState: { type: object }
+ *                   creation:
+ *                     type: object
+ *                     description: 'W1 (F-W1-1 a, F-W1-2 a) - only on the turn that finishes the customization (nextStage COMPLETED). The server consolidates the persisted session into the custom create body; the client adds unit, fiscal and modules'
+ *                     required: [mode, presetKey, removedTables, addedFields, addedTables]
+ *                     properties:
+ *                       mode: { type: string, enum: [custom] }
+ *                       presetKey: { type: string }
+ *                       removedTables: { type: array, items: { type: string } }
+ *                       addedFields: { type: object, additionalProperties: { type: array, items: { type: object } } }
+ *                       addedTables: { type: array, items: { type: object } }
  *                   choicePrompt:
  *                     type: object
  *                     description: 'Only with nextStage AWAITING_CREATION_TYPE_CONFIRMATION'
@@ -487,5 +512,46 @@
  *                 properties:
  *                   code: { type: string, enum: [PROPOSAL_STALE, INTERVIEW_SESSION_CONFLICT] }
  *                   message: { type: string }
+ *
+ *   /api/dashboard/ai/InterviewModules:
+ *     post:
+ *       summary: Set the modules of the interview customization session (W1)
+ *       description: >
+ *         The user checks or unchecks a module while customizing; the session rewrites the module tables (the tables
+ *         of a module that left are removed, the ones of a module that entered are added, the rest of the
+ *         customization stays). `modules` is the whole selection. Suite modules still in the session stay even if
+ *         omitted; a module the conversation removed only comes back when listed.
+ *       tags: [Dashboard]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [sessionId, modules]
+ *               additionalProperties: false
+ *               properties:
+ *                 sessionId: { type: string, format: uuid }
+ *                 modules:
+ *                   type: array
+ *                   items: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, CRM-2] }
+ *       responses:
+ *         '200':
+ *           description: Session after the change
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 required: [sessionId, customizationState]
+ *                 properties:
+ *                   sessionId: { type: string }
+ *                   customizationState: { type: object, description: 'Includes modules (installed module keys) and tables' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404':
+ *           description: INTERVIEW_SESSION_NOT_FOUND (missing, expired or another user's session)
+ *         '409':
+ *           description: INTERVIEW_SESSION_CONFLICT (another turn wrote the session after this request read it)
  */
 export {};

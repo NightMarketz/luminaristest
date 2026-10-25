@@ -26,6 +26,8 @@ export interface ICustomizationState {
   presetKey: string;
   presetName: string;
   tables: ITable[];
+  /** W1 (F-W1-6 a): módulos instalados com a sessão — as tabelas deles estão em `tables`. */
+  modules?: ModuleKey[];
 }
 
 /** W3 FE: espelha `CreationChoiceReason`/`choicePrompt` de `server/.../InterviewTypes.ts` (BE #455). */

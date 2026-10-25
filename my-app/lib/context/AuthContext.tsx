@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect, ReactNode, useCa
 import { deleteCookie, getCookie } from 'cookies-next';
 import { useRouter } from 'next/router';
 import type { SessionRole } from '../../types/Role';
+import { SESSION_EXPIRED_EVENT } from '../api/sessionExpired';
 
 // API base URL — mirrors apiClient's fallback so auth works even when the
 // NEXT_PUBLIC_API_BASE_URL env var is unset (prevents a stuck "Authenticating…").
@@ -111,6 +112,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       isMountedRef.current = false;
     };
   }, [checkAuthState]);
+
+  // 401 numa chamada autenticada do apiClient: mesma saída do 401 do /auth/me, sem esperar a navegação.
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      deleteCookie('auth_token', { path: '/' });
+      if (isMountedRef.current) setUser(null);
+    };
+    window.addEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
+  }, []);
 
   // Sync Next.js locale with the user's saved preference.
   // Guarded so it attempts the replace ONCE per mismatch — `router.replace` with a

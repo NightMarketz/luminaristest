@@ -32,16 +32,10 @@ export const StockMovementsApplyPlugin: RulePlugin = {
     const unitId = String(ctx.after?.unitId || '');
     const type = String(ctx.after?.type || '');
     const quantity = Number(ctx.after?.quantity || 0);
-    const sourceType = String(ctx.after?.sourceType || '');
     if (!productId) throw new ValidationError('productId é obrigatório para movimentações.');
     if (!unitId) throw new ValidationError('unitId é obrigatório para movimentações.');
     if (!(type === 'In' || type === 'Out')) throw new ValidationError('type inválido para movimentação.');
     if (!(quantity > 0)) throw new ValidationError('quantity deve ser maior que zero.');
-
-    // Movimentações de venda são aplicadas diretamente pelo SalesPlugin para garantir atomicidade com reservas.
-    if (sourceType === 'SALE') {
-      return;
-    }
 
     // Entradas vindas do Payable de inventário (BE-INCR-PURCHASE-PHYSICAL-SYNC) já nasceram
     // valoradas no razão (D 1.1.6 × C 2.1.2 + receiveStock) e trazem fornecedor via Counterparty.
@@ -83,12 +77,6 @@ export const StockMovementsApplyPlugin: RulePlugin = {
     if (!productUnitsTableId) throw new ValidationError('Tabela de estoque (Product Units) não encontrada.');
     if (!productUnitRow) throw new ValidationError('Produto/unidade não possui registro de estoque.');
 
-    // Normalize reason: manual (sem sourceType) é sempre 'Adjustment' — exceto a linha do Payable,
-    // cujo reason='Purchase' é verdadeiro (o sourceType dela não sobrevive ao strip do schema).
-    if (!sourceType && !isAccountingPayableRow) {
-      if (ctx.after) ctx.after['reason'] = 'Adjustment';
-    }
-
     // Compute new stock and validate non-negative
     const currentStock = Number((productUnitRow?.data as Record<string, unknown>)?.stock ?? 0);
     const newStock = type === 'In' ? currentStock + quantity : currentStock - quantity;
@@ -100,8 +88,6 @@ export const StockMovementsApplyPlugin: RulePlugin = {
   async beforeUpdate(ctx) {
     const after = ctx.after ?? {};
     const before = ctx.before ?? {};
-    const sourceType = String(after?.sourceType || before?.sourceType || '');
-    if (sourceType === 'SALE') return; // sales handled atomically in SalesPlugin
     const productId = String(after?.productId || before?.productId || '');
     const unitId = String(after?.unitId || before?.unitId || '');
     const prevType = String(before?.type || '');
@@ -133,8 +119,6 @@ export const StockMovementsApplyPlugin: RulePlugin = {
   },
   async beforeDelete(ctx) {
     const before = ctx.before ?? {};
-    const sourceType = String(before?.sourceType || '');
-    if (sourceType === 'SALE') return;
     const productId = String(before?.productId || '');
     const unitId = String(before?.unitId || '');
     const type = String(before?.type || '');

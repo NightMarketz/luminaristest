@@ -7,6 +7,7 @@ import {
   CounterpartyScopeQuerySchema,
   CreateCounterpartySchema,
   ListCounterpartiesQuerySchema,
+  SetCounterpartyRegimeSchema,
 } from '../features/accounting/dtos/CounterpartyDto';
 
 /**
@@ -69,6 +70,21 @@ export const archiveCounterparty = async (req: Request, res: Response) => {
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
     const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const data = await getFactory().getCounterpartyService().archiveCounterparty(scope, req.params.id, parsed.data);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** POST /api/counterparties/:id/regime — RETENCOES-FONTE PR-1 (item 5): regime e declaração de optante (comando). */
+export const setCounterpartyRegime = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const parsed = SetCounterpartyRegimeSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
+    const data = await getFactory().getCounterpartyService().setRegime(scope, req.params.id, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);

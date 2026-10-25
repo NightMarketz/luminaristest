@@ -44,6 +44,12 @@ export interface IAccountingPolicy {
   /** Can list/read Contas a Pagar (INCR-AP). */
   canReadPayable(scope: AccountingScope): boolean;
 
+  /** RETENCOES-FONTE PR-1 (item 6): cria/altera/apaga perfil de retenção — a mesma régua do `canManagePayable`. */
+  canManageWithholdingProfile(scope: AccountingScope): boolean;
+
+  /** RETENCOES-FONTE PR-1 (item 6): lista/lê perfil de retenção — a mesma régua do `canReadPayable`. */
+  canReadWithholdingProfile(scope: AccountingScope): boolean;
+
   /** Can create/receive/cancel Contas a Receber (INCR-AR). */
   canManageReceivable(scope: AccountingScope): boolean;
 

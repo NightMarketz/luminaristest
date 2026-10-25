@@ -291,7 +291,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
 
-  console.log('[Dashboard SSR] Validating token...', { tokenPreview: token.substring(0, 20), tokenLength: token.length });
+  console.log('[Dashboard SSR] Validating token...');
 
   // Token explícito (o apiClient não lê cookie sem `req`) + Cookie repassado; rede fora do ar continua lançando.
   let body: { data?: unknown[] };

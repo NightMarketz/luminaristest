@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { moduleSelectorSchema } from '../../dynamicTables/presets/modules/registry';
 
 /**
  * BE-INCR-INTERVIEW-SESSION (nó W4, item 7) — corpo de `POST /api/dashboard/ai/ChatInterview`, saído do controller.
@@ -23,6 +24,8 @@ export const ChatInterviewSchema = z
     sessionId: z.string().uuid().optional(),
     // W3 (b), F-W3-B1 a: escolha por botão — decide sem ler o texto.
     choice: z.enum(['create', 'customize']).optional(),
+    // W1 (F-W1-6 a): módulos marcados no front; lidos só no turno que abre a sessão (`choice:'customize'`).
+    modules: z.array(moduleSelectorSchema).optional(),
   })
   .strict();
 

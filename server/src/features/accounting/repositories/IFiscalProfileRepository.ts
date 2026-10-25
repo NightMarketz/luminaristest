@@ -35,6 +35,13 @@ export interface FiscalProfileData {
   cbsRecolherAccountId?: string | null;
   ibsRecuperarAccountId?: string | null; // IBS-CBS-2027 PR-3 item 14
   cbsRecuperarAccountId?: string | null;
+  retencaoIrrfRecolherAccountId?: string | null; // RETENCOES-FONTE PR-1 item 8
+  retencaoCsrfRecolherAccountId?: string | null;
+  retencaoInssRecolherAccountId?: string | null;
+  retencaoIssRecolherAccountId?: string | null;
+  retencaoIrrfCompensarAccountId?: string | null;
+  retencaoCsllCompensarAccountId?: string | null;
+  retencaoInssCompensarAccountId?: string | null;
   partnerAccountRef?: string | null;
   // BE-INCR-DFE (BRIEF item 1) — emitente + D1f configurável
   codMun?: string | null;

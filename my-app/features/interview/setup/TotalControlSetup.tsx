@@ -11,14 +11,7 @@ import { notifyAccountingDraft } from './accountingDraftNotice';
 // Local lightweight types for frontend-only usage
 interface ISchemaField { name: string; label?: string; type: string; required?: boolean }
 interface ITableSchema { fields: ISchemaField[] }
-interface IPresetDependencyMap { dependencies: Record<string, string[]>; dependents: Record<string, string[]> }
 interface IPresetDetails { tables: Record<string, { name?: string; schema: ITableSchema | null }> }
-
-function analyzePresetDependencies(preset: IPresetDetails): IPresetDependencyMap {
-  const keys = Object.keys(preset.tables);
-  const emptyListMap = keys.reduce<Record<string, string[]>>((acc, key) => { acc[key] = []; return acc; }, {});
-  return { dependencies: emptyListMap, dependents: emptyListMap };
-}
 
 // --- Interfaces ---
 interface Preset {
@@ -48,7 +41,6 @@ export default function TotalControlSetup() {
   const [presets, setPresets] = useState<Preset[]>([]);
   const [selectedPreset, setSelectedPreset] = useState<Preset | null>(null);
   const [presetDetails, setPresetDetails] = useState<IPresetDetails | null>(null);
-  const [dependencyMap, setDependencyMap] = useState<IPresetDependencyMap | null>(null);
   const [selectedTables, setSelectedTables] = useState<SelectedTablesState>({});
   const [customFields, setCustomFields] = useState<CustomFieldsState>({});
 
@@ -106,10 +98,7 @@ export default function TotalControlSetup() {
       const presetData: IPresetDetails = await SetupService.getPresetDetails(selectedPreset.key);
       setPresetDetails(presetData);
 
-      // Analisa as dependências e inicializa os estados de customização
-      const dependencies = analyzePresetDependencies(presetData as IPresetDetails);
-      setDependencyMap(dependencies);
-
+      // Inicializa os estados de customização (as travas entre tabelas ficam no servidor)
       const initialSelectedTables: SelectedTablesState = {};
       const initialCustomFields: CustomFieldsState = {};
       for (const tableKey of Object.keys((presetData as IPresetDetails).tables)) {
@@ -129,37 +118,8 @@ export default function TotalControlSetup() {
   }
 
   const handleTableSelection = (tableKey: string, isSelected: boolean) => {
-    if (!dependencyMap) return;
-
-    const newSelectedTables = { ...selectedTables };
-    newSelectedTables[tableKey] = isSelected;
-
-    if (isSelected) {
-      // Auto-select dependencies
-      const dependencies = dependencyMap.dependencies[tableKey] || [];
-      dependencies.forEach(dep => {
-        newSelectedTables[dep] = true;
-      });
-    } else {
-      // Alert and auto-deselect dependents
-      const dependents = dependencyMap.dependents[tableKey] || [];
-      if (dependents.length > 0) {
-        const dependentNames = dependents.map(d => presetDetails?.tables[d]?.name || d).join(', ');
-        const confirmed = window.confirm(
-          t('onboardingTotalControlConfirmDeselect', { names: dependentNames })
-        );
-
-        if (confirmed) {
-          dependents.forEach(dep => {
-            newSelectedTables[dep] = false;
-          });
-        } else {
-          return; // Abort the change
-        }
-      }
-    }
-
-    setSelectedTables(newSelectedTables);
+    if (!presetDetails) return;
+    setSelectedTables({ ...selectedTables, [tableKey]: isSelected });
   };
 
   const handleCreateCustomDashboard = async (fiscal: FiscalOnboarding) => {

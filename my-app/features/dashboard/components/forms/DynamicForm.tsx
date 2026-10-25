@@ -15,6 +15,18 @@ import { useTranslation } from 'next-i18next';
 import { notify } from '@/lib/notifications/notify';
 import { scopeToday } from '../../shared/utils/formatters';
 
+// `datetime` chega do servidor como ISO UTC ('…Z', z.coerce.date no motor), que o `datetime-local` não aceita:
+// mostra-se a hora local do instante. O que o input devolve é hora de parede sem fuso — sobe como ISO UTC no submit
+// (mesmo padrão do MeetingCaptureModal). §3.5 item 3.
+const WALL_DATETIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/;
+const pad2 = (n: number) => String(n).padStart(2, '0');
+function toDateTimeLocal(value: unknown): unknown {
+  if (typeof value !== 'string' || value === '' || WALL_DATETIME.test(value)) return value;
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return value;
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
 // Technical fields that should be ignored in the UI
 const TECHNICAL_FIELDS = ['id', 'order', 'createdAt', 'updatedAt', 'internalName', 'userId', 'dynamicTableId'];
 
@@ -138,7 +150,7 @@ const fieldComponentMap: Record<string, ComponentType<FieldComponentProps>> = {
   datetime: (props) => (
     <InputField
       name={props.name}
-      value={props.value}
+      value={toDateTimeLocal(props.value)}
       onChange={props.onChange}
       className={asInputClass(props.className)}
       required={props.required}
@@ -236,6 +248,11 @@ function DynamicForm({ schema, onSubmit, onClose, initialData = {}, fieldErrors 
           if (isNaN(num)) errors[key] = t('common:invalid_number', 'Invalid numeric value');
           else if ((minValue !== undefined && num < minValue) || (maxValue !== undefined && num > maxValue)) errors[key] = t('common:invalid_number', 'Invalid numeric value');
           else payload[key] = num;
+          break;
+        }
+        case 'datetime': {
+          const wall = typeof value === 'string' && WALL_DATETIME.test(value) ? new Date(value) : null;
+          payload[key] = wall && !isNaN(wall.getTime()) ? wall.toISOString() : value;
           break;
         }
         default:

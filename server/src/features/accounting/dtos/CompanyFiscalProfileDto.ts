@@ -153,6 +153,9 @@ export const UpsertCompanyFiscalProfileSchema = z
     // BE-INCR-IRRF-DISTRIBUICAO PR-1 (item 8, F-IRD-15): mapa das contas do PL na base do JCP. Conta de outra PJ → 404,
     // conta que não é Equity → 400 (serviço, dentro da tx).
     jcpBaseContas: JcpBaseContasSchema.nullable().default(null),
+    // PRESUMIDO-TETO-78MI item 5 (F-PT-2 c): receita total do ano anterior declarada (IN 1.700 art. 59 § 1º), em centavos.
+    // Teto do DTO = MAX_SAFE_INTEGER, NÃO `MAX_CENTS` (R$ 21,4 mi, abaixo do próprio teto legal — invariante 9).
+    receitaTotalAnoAnteriorCents: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).nullable().default(null),
   })
   .strict()
   .superRefine((v, ctx) => {
@@ -206,6 +209,14 @@ export const UpsertCompanyFiscalProfileSchema = z
       } else if (v.simplesRegimeApuracao === 'COMPETENCIA' && v[k] !== null) {
         ctx.addIssue({ code: 'custom', path: [k], message: 'O prazo do cartão só se aplica ao regime de caixa (simplesRegimeApuracao = CAIXA).' });
       }
+    }
+    // PRESUMIDO-TETO-78MI item 5: o teto de R$ 78 mi só mede quem apura pelo Presumido ou pelo Real (Lei 9.718 arts. 13–14)
+    if (v.regime !== 'PRESUMIDO' && v.regime !== 'REAL' && v.receitaTotalAnoAnteriorCents !== null) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['receitaTotalAnoAnteriorCents'],
+        message: 'A receita total do ano anterior só se declara no Lucro Presumido ou no Real (teto da Lei 9.718/1998 arts. 13–14).',
+      });
     }
     // BE-INCR-TAX-PRESUMIDO-16 item 11 (F-P16-1 a)
     if (v.regime === 'PRESUMIDO' && v.prestadoraExclusivaServicos && !v.declaraNaoProfissaoRegulamentada) {

@@ -187,7 +187,7 @@ describe('BRIEF-W2-A migration (nameNormalized + taxId) — real SQLite DB (F-W2
 
     it('comp. 6 — nameNormalized backfillado corretamente (trim + fold + colapso) em linha viva', async () => {
       const db = new PrismaClient({ datasources: { db: { url: `file:${dbPath}` } } });
-      const viva = await db.counterparty.findUnique({ where: { id: ID_VIVA } });
+      const viva = await db.counterparty.findUnique({ where: { id: ID_VIVA }, select: { id: true, name: true, nameNormalized: true, taxId: true } });
       expect(viva!.name).toBe('  Padaria   X  '); // display preservado intacto
       expect(viva!.nameNormalized).toBe('padaria x');
       await db.$disconnect();
@@ -195,7 +195,7 @@ describe('BRIEF-W2-A migration (nameNormalized + taxId) — real SQLite DB (F-W2
 
     it('comp. 6 — a linha ARQUIVADA também tem nameNormalized backfillado, a partir do nome MANGLED', async () => {
       const db = new PrismaClient({ datasources: { db: { url: `file:${dbPath}` } } });
-      const tumba = await db.counterparty.findUnique({ where: { id: ID_TOMBA } });
+      const tumba = await db.counterparty.findUnique({ where: { id: ID_TOMBA }, select: { id: true, name: true, nameNormalized: true, taxId: true } });
       expect(tumba!.name).toBe(`deleted:${ID_TOMBA}:Padaria Z`);
       expect(tumba!.nameNormalized).toBe(`deleted:${ID_TOMBA}:padaria z`.toLowerCase());
       await db.$disconnect();
@@ -203,7 +203,7 @@ describe('BRIEF-W2-A migration (nameNormalized + taxId) — real SQLite DB (F-W2
 
     it('comp. 3 — taxId nasce NULL para toda linha pré-existente (sem dado histórico p/ backfill)', async () => {
       const db = new PrismaClient({ datasources: { db: { url: `file:${dbPath}` } } });
-      const rows = await db.counterparty.findMany({ where: { userId: 'u-w2a-h' } });
+      const rows = await db.counterparty.findMany({ where: { userId: 'u-w2a-h' }, select: { id: true, name: true, nameNormalized: true, taxId: true } });
       expect(rows.length).toBeGreaterThanOrEqual(3);
       expect(rows.every((r) => r.taxId === null)).toBe(true);
       await db.$disconnect();
@@ -211,7 +211,7 @@ describe('BRIEF-W2-A migration (nameNormalized + taxId) — real SQLite DB (F-W2
 
     it('linha DISTINTA não se funde com nada — preservação de identidades genuinamente diferentes', async () => {
       const db = new PrismaClient({ datasources: { db: { url: `file:${dbPath}` } } });
-      const distinta = await db.counterparty.findUnique({ where: { id: ID_DISTINTA } });
+      const distinta = await db.counterparty.findUnique({ where: { id: ID_DISTINTA }, select: { id: true, name: true, nameNormalized: true, taxId: true } });
       expect(distinta!.nameNormalized).toBe('padaria y');
       const total = await db.counterparty.count({ where: { userId: 'u-w2a-h' } });
       expect(total).toBe(3); // nenhuma linha foi fundida/perdida no rebuild

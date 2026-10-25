@@ -38,12 +38,28 @@ export const QuickCreationSchema = z
   })
   .strict();
 
+/**
+ * W1 (F-W1-4 → a, ratificado 2026-10-21): tabela nova criada na conversa da Entrevista com IA. A chave é a da sessão
+ * (`StateManager.addTable`); categoria fixa `other` (dono, questionário 2026-10-24). Os campos passam pela mesma
+ * validação forte de `addedFields` no controller (`CreateDynamicTableDto.shape.schema`), que também exige ≥ 1.
+ */
+export const ADDED_TABLE_KEY_PATTERN = /^[a-z][a-z0-9_]*$/;
+
+export const AddedTableSchema = z
+  .object({
+    key: z.string().regex(ADDED_TABLE_KEY_PATTERN, 'key: minúsculas, números e _, começando por letra').max(64),
+    name: z.string().trim().min(1).max(120),
+    fields: z.array(z.unknown()).min(1, 'A tabela deve ter pelo menos um campo.'),
+  })
+  .strict();
+
 export const CustomCreationSchema = z
   .object({
     mode: z.literal('custom'),
     presetKey: z.string().min(1, 'presetKey é obrigatório'),
     removedTables: z.array(z.string()).optional(),
     addedFields: z.record(z.string(), z.array(z.unknown())).optional(),
+    addedTables: z.array(AddedTableSchema).optional(),
     unit: UnitInputSchema,
     ...moduleSelection,
   })
@@ -52,4 +68,5 @@ export const CustomCreationSchema = z
 export const UnifiedCreationSchema = z.union([QuickCreationSchema, CustomCreationSchema]);
 
 export type UnitInput = z.infer<typeof UnitInputSchema>;
+export type AddedTableInput = z.infer<typeof AddedTableSchema>;
 export type UnifiedCreationInput = z.infer<typeof UnifiedCreationSchema>;

@@ -192,3 +192,53 @@ describe('uso de tokens por chamada (I11 PR-3, onUsage)', () => {
     expect(second).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * Modelo enviado por chamada. A família gpt-3.5 foi desativada pela OpenAI (404 model_not_found em 2026-10-24) e
+ * derrubava a Entrevista com IA no 1º turno; troca para gpt-4o-mini por decisão do dono. Trava o nome por método.
+ */
+describe('modelo enviado à API por chamada', () => {
+  function withCreate(create: jest.Mock) {
+    const anterior = process.env.OPENAI_API_KEY;
+    process.env.OPENAI_API_KEY = anterior ?? 'teste';
+    const service = new OpenAIService();
+    process.env.OPENAI_API_KEY = anterior;
+    Object.assign(service as unknown as { openai: unknown }, { openai: { chat: { completions: { create } } } });
+    Object.assign(OpenAIService as unknown as { instance: unknown }, { instance: service });
+    return service;
+  }
+  const ok = (content: string) => ({ model: 'x', choices: [{ message: { content } }] });
+  const modelOf = (create: jest.Mock, i = 0) => (create.mock.calls[i][0] as { model: string }).model;
+
+  it.each([
+    ['getChatCompletion (chat RAG)', 'gpt-4o-mini', (s: OpenAIService) => s.getChatCompletion('q-modelo', 'sys')],
+    ['getChatCompletionWithHistory (entrevista/customização)', 'gpt-4o-mini', (s: OpenAIService) => s.getChatCompletionWithHistory([{ role: 'user', content: 'x' }])],
+    ['isTextTabular (pipeline de documentos)', 'gpt-4o-mini', (s: OpenAIService) => s.isTextTabular('a;b')],
+    ['getChatCompletionWithToolsAndHistory (agente)', 'gpt-4o', (s: OpenAIService) => s.getChatCompletionWithToolsAndHistory([{ role: 'user', content: 'x' }], [])],
+    ['completeWithJsonSchema (W6)', 'gpt-4o-mini', (s: OpenAIService) => s.completeWithJsonSchema([{ role: 'user', content: 'x' }], { type: 'json_schema', json_schema: { name: 'n' } })],
+  ])('%s usa %s', async (_nome, esperado, call) => {
+    const create = jest.fn().mockResolvedValue(ok('true'));
+    await call(withCreate(create));
+    expect(modelOf(create)).toBe(esperado);
+  });
+
+  it('extractStructuredData usa gpt-4o-mini na 1ª tentativa e no retry', async () => {
+    const create = jest.fn()
+      .mockRejectedValueOnce(new Error('falha transitória'))
+      .mockResolvedValueOnce(ok('{"headers":[],"data":[]}'));
+    await expect(withCreate(create).extractStructuredData('a;b')).resolves.toEqual({ headers: [], data: [] });
+    expect([modelOf(create, 0), modelOf(create, 1)]).toEqual(['gpt-4o-mini', 'gpt-4o-mini']);
+  });
+
+  it('nenhuma chamada sai com modelo da família gpt-3.5', async () => {
+    const create = jest.fn().mockResolvedValue(ok('{"key":null,"keys":[]}'));
+    const s = withCreate(create);
+    await s.getChatCompletion('q-sem-35', 'sys');
+    await s.getChatCompletionWithHistory([{ role: 'user', content: 'x' }]);
+    await s.isTextTabular('x');
+    await s.extractStructuredData('x');
+    await s.classifyIntoEnum('x', 'sys', ['a']);
+    await s.classifyIntoEnumSet('x', 'sys', ['a']);
+    expect(create.mock.calls.map(c => (c[0] as { model: string }).model).filter(m => m.startsWith('gpt-3.5'))).toEqual([]);
+  });
+});

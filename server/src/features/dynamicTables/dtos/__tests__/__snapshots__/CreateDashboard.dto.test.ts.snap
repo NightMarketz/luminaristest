@@ -16,6 +16,35 @@ exports[`CreateDashboard DTO — modules (F-CRM-9 → b) shape snapshot (comport
         },
         "type": "object",
       },
+      "addedTables": {
+        "items": {
+          "additionalProperties": false,
+          "properties": {
+            "fields": {
+              "items": {},
+              "minItems": 1,
+              "type": "array",
+            },
+            "key": {
+              "maxLength": 64,
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "type": "string",
+            },
+            "name": {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string",
+            },
+          },
+          "required": [
+            "key",
+            "name",
+            "fields",
+          ],
+          "type": "object",
+        },
+        "type": "array",
+      },
       "mode": {
         "const": "custom",
         "type": "string",

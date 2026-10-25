@@ -82,7 +82,8 @@ function AiInterviewSetup() {
     confirmarFiscal,
     moduleOptions,
     selectedModules,
-    toggleModule
+    toggleModule,
+    isSyncingModules
   } = useAiInterview();
 
   if (isCreating || creationError) {
@@ -163,8 +164,9 @@ function AiInterviewSetup() {
           isLoading={isLoading}
           chatEndRef={chatEndRef}
         />
-        {choicePrompt && !fiscalPendente && moduleOptions.length > 0 && (
-          <ModuleChecklist options={moduleOptions} selected={selectedModules} disabled={isLoading || isCreating} onToggle={toggleModule} />
+        {/* W1 (F-W1-6 a + sincronização): a lista segue visível durante a customização e regrava a sessão. */}
+        {(choicePrompt || (sessionId && customizationState)) && !fiscalPendente && moduleOptions.length > 0 && (
+          <ModuleChecklist options={moduleOptions} selected={selectedModules} disabled={isLoading || isCreating || isSyncingModules} onToggle={toggleModule} />
         )}
         {choicePrompt && !fiscalPendente && (
           <CreationChoice prompt={choicePrompt} presetKey={presetKey} disabled={isLoading || isCreating} onChoose={sendCreationChoice} />
