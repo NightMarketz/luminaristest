@@ -60,7 +60,7 @@ describe('agente × datetime com fuso', () => {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any -- colaboradores não usados por getTools */
     const agent = new LuminarisAgentService({} as any, {} as any, {} as any, {} as any);
     const tool = (await agent.getTools()).find((t) => t.type === 'function' && t.function.name === name);
-    const params = (tool as { function: { parameters: { properties: { data: { description: string } } } } }).function.parameters;
+    const params = (tool as unknown as { function: { parameters: { properties: { data: { description: string } } } } }).function.parameters;
     const description = params.properties.data.description;
     expect(description).toMatch(/ISO 8601/);
     expect(description).toMatch(/offset/i);
