@@ -1,6 +1,6 @@
 # BRIEF — TESTE-ACOPLAMENTO-PRESET (teste de acoplamento preset↔schema)
 
-**Status:** BRIEF — forks F-TAP-1..5 **RATIFICADOS em 21/10/2026** ([[D-2026-10-21-CHAT-C-FORKS]], PR #793; registro no BRIEF em 22/10/2026).
+**Status:** BRIEF — forks F-TAP-1..5 **RATIFICADOS em 21/10/2026** ([[D-2026-10-21-CHAT-C-FORKS]], PR #793; registro no BRIEF em 22/10/2026). F-TAP-6 (aberto na execução) **RATIFICADO em 25/10/2026: (b)** (dono, chat).
 **EXECUTADO em 24/10/2026** (dono, chat: "executa TESTE-ACOPLAMENTO-PRESET"; sessao-feature; PR #883, sem merge) — ver
 §"Execução (24/10/2026)" no fim. O corpo abaixo segue como spec; nada dele foi alterado.
 
@@ -143,7 +143,7 @@ consertados, só registrados (no nó e em `KNOWN_GAPS`). Sem merge.
 | 2 | ✅ | 0 divergência (confirma a sonda do ACHADOS §2.2) |
 | 3 | ✅ | 0 divergência fora da allowlist |
 | 4 | ✅ | 0 divergência |
-| 5 | ✅ | 4 divergências → `KNOWN_GAPS` (FIX-ANALYTICS-RESIDUO) |
+| 5 | ✅ | `importantFields` na leitura do runtime (F-TAP-6 → b, 25/10); 7 divergências por suíte → 14 chaves em `KNOWN_GAPS` (FIX-ANALYTICS-RESIDUO) |
 | 6 | ✅ | 6 divergências → `KNOWN_GAPS` (FIX-PLUGINS-VENDA); `rate` (#771) fixado como regressão |
 | 7 | ✅ | um typo sintético por varredor (`defaultDisplayField`, alvo de relação, relação obrigatória fora da allowlist, `defaultValue`, campo e valor de plugin, `*Field`, join pontuado, `importantFields`) |
 | 8 | ✅ | entrada de `KNOWN_GAPS` que já não diverge reprova o teste; falsificador: remover a entrada do `sourceType` deixa o item 6 vermelho |
@@ -185,12 +185,18 @@ consertados, só registrados (no nó e em `KNOWN_GAPS`). Sem merge.
 | `reason='SALE'` gravado por `stockSync.createMovementsForItems`; opções `Sale`/`Return` | §3.1 #17 |
 | `reason='RETURN'`, idem | §3.1 #17 |
 
-**FIX-ANALYTICS-RESIDUO** (4 chaves = 2 divergências × salão/clínica)
+**FIX-ANALYTICS-RESIDUO** (14 chaves = 7 divergências × salão/clínica; leitura do runtime, F-TAP-6 → b)
 
-| Divergência | Origem |
-|---|---|
-| `expenses#costKpis` lista `status` em `importantFields`/`defaultImportantFields`; `expenses` não tem `status` | §3.2 #16 |
-| **Novo:** `sales#cashflowKpis`, KPI "Contas a Pagar Total", lista `['date', 'amount', 'paymentStatus']` — `amount` é de `expenses`, `date` é de `sales`. A chave entregue acusa `amount` (leitura A); pela leitura do runtime (B), o KPI lê `expenses`, e o órfão real é `date` — ver L-TAP-1 / F-TAP-6. `importantFields` não tem consumidor no frontend | este teste |
+| Chave (`analytics:<suíte>.<tabela>:` + …) | Divergência | Origem |
+|---|---|---|
+| `costKpis:importantFields[Custo Total]=status` | KPI de fonte `expenses` lista `status`, que `expenses` não tem | §3.2 #16 |
+| `costKpis:defaultImportantFields=status` | o *default* cobre os 9 KPIs de custo sem entrada própria, todos de `expenses` | §3.2 #16 |
+| `cashflowKpis:importantFields[Contas a Pagar Total]=date` | **novo:** KPI de fonte `expenses`; `expenses` tem `paymentDate`/`dueDate`, não `date` | L-TAP-1 |
+| `cashflowKpis:defaultImportantFields=date` · `=totalAmount` · `=status` | **novo:** o *default* do bloco de caixa (feito para `sales`) cai sobre "Contas a Pagar Vencidas" e "Prazo Médio de Pagamento (dias)", de fonte `expenses` | L-TAP-1 |
+| `profitKpis:importantFields[Lucro por Cliente]` | **novo:** chave morta; o `ProfitKpiProcessor` emite "Lucro Médio por Cliente" | L-TAP-1 |
+
+As 2 chaves da leitura A sobre `amount` saíram: `amount` existe em `expenses`, a fonte do KPI, então era falso positivo.
+`importantFields` não tem consumidor no frontend (L-TAP-1 §1).
 
 **Por desenho (allowlist F-TAP-3 a, não é achado):** `leads.accountId/contactId`, `crmContacts.accountId` e — **novo,
 só visível com o módulo isolado de F-TAP-1 (b)** — `crmOpportunities.accountId/contactId` (CRM-3 depende só de CRM-0,
@@ -198,12 +204,12 @@ F-CRM-5 a). A sonda do ACHADOS §2.2 não varreu módulo isolado, por isso só c
 
 ### Lacunas de spec
 
-#### L-TAP-1 — contra qual tabela conferir `importantFields` (aprofundada em 24/10, a pedido do dono)
+#### L-TAP-1 — contra qual tabela conferir `importantFields` (aprofundada em 24/10; **fechada em 25/10 por F-TAP-6 → b**)
 
-**Resumo.** O BRIEF diz só "`importantFields` (achado §3.2 #16)". O teste entregue usa a tabela do `tableKey` do bloco
-(leitura A). O runtime tem uma semântica executável diferente (leitura B), e ela acha **mais** divergências: o teste
-entregue subnotifica. Há ainda uma terceira classe de órfão (chave de KPI que o processador não emite) que nenhuma das
-duas leituras pegava. **Fork aberto para o dono: F-TAP-6.**
+**Resumo.** O BRIEF dizia só "`importantFields` (achado §3.2 #16)". A 1ª entrega usou a tabela do `tableKey` do bloco
+(leitura A). O runtime tem uma semântica executável diferente (leitura B), que acha **mais** divergências, então a
+1ª entrega subnotificava. Há ainda uma terceira classe de órfão (chave de KPI que o processador não emite) que A não
+pegava. **O dono ratificou B em 25/10** (F-TAP-6 abaixo); o teste agora usa B.
 
 **1. O que é `importantFields` no código** (verificado lendo os arquivos):
 
@@ -251,10 +257,12 @@ processadores — `cashflow` 11, `cost` 14, `profit` 18, `revenue` 17 KPIs, conf
 Sob A, `amount` em "Contas a Pagar Total" é falso positivo: o KPI lê `expenses`, onde `amount` existe. O órfão real
 é `date`, que A não vê. A também não vê o *default* aplicado a KPI de despesa nem a chave morta.
 
-**4. O que isso pede de decisão** — F-TAP-6 (abaixo). Até o dono decidir, o teste segue na leitura A e as 4 chaves
-de `KNOWN_GAPS` de analytics continuam valendo. O teste nunca acusa a mais: só subnotifica.
+**4. Decisão** — F-TAP-6 (abaixo), ratificado em (b).
 
-**F-TAP-6 — semântica do `importantFields` no teste** (RATIFICAÇÃO PENDENTE)
+**F-TAP-6 — semântica do `importantFields` no teste.** **RATIFICADO 25/10/2026: (b)** — dono, chat, 2026-10-25:
+"F-TAP-6 → (b): adota a leitura do runtime (tableSource por KPI, mixed = pelo menos uma das duas tabelas, default
+por KPI sem entrada, chave tem de ser nome emitido), com manifesto estático nome→tableSource. Atualiza o teste e os
+KNOWN_GAPS no #883, sem merge."
 - (a) Manter A (tabela do bloco). Simples, mas tem falso positivo (`amount`) e falso negativo (`date`, *default*, chave morta).
 - (b) Adotar B: o teste lê o `tableSource` de cada KPI e confere a chave contra os nomes emitidos. Para isso, o
   teste precisa da lista `nome → tableSource` de cada processador, e há dois jeitos de obtê-la: executar o
@@ -264,8 +272,26 @@ de `KNOWN_GAPS` de analytics continuam valendo. O teste nunca acusa a mais: só 
   FIX-ANALYTICS-RESIDUO remover a rota órfã (§3.2 #20). Nesse caso, a fatia de `importantFields` sai de `KNOWN_GAPS`
   e vira item de remoção no nó dono.
 
-Depende de F-TAP-6: se a rota de detalhe vai sobreviver é decisão do FIX-ANALYTICS-RESIDUO (§3.2 #20). Se ela
-morrer, (c) é a coerente.
+Continua aberto, mas não neste nó: se a rota de detalhe sobrevive é decisão do FIX-ANALYTICS-RESIDUO (§3.2 #20). Se
+ela morrer, a fatia de `importantFields` de `KNOWN_GAPS` some junto (o critério "a lista só encolhe" acomoda isso).
+
+**Implementação de (b)** (`analyticsFieldMappingCoupling.test.ts`):
+- `PROCESSOR_KPI_SOURCES`: nome emitido → `main | expense | mixed` dos 4 processadores cujos blocos têm
+  `importantFields` (`revenue` 17, `profit` 18, `cost` 14, `cashflow` 11), mais o `params` que dá a tabela de
+  despesa (`expensesTableKey` no caixa, `costSourceTableKey` no lucro), como cada processador faz.
+- Tabelas de um KPI = as que o `resolveChartDetails` buscaria: `main` → a do bloco; `expense` →
+  `params[expenseParam] ?? 'expenses'`; `mixed` → a do bloco + `costSourceTableKey || expensesTableKey`.
+- Regras: campo da entrada existe em **pelo menos uma** das tabelas do KPI; chave fora dos nomes emitidos é
+  divergência (`importantFields[<kpi>]`); o *default* é conferido para cada KPI emitido sem entrada própria e agregado
+  por campo (`defaultImportantFields=<campo>`, com os KPIs afetados na mensagem); bloco com `importantFields` e
+  processador fora do manifesto é divergência.
+- Guarda contra desatualização do manifesto: um `it` lê o código de cada processador e reprova nome ou fonte
+  divergente, nos dois sentidos.
+- Item 7: casos sintéticos para chave morta, campo de `sales` em KPI de fonte `expenses` e *default* com typo, mais
+  um caso negativo (`totalAmount` em KPI `mixed` não acusa).
+- Falsificadores rodados: fonte errada no manifesto (`Contas a Pagar Total: main`) deixa vermelho o `it` do
+  manifesto, o de acoplamento e o de `KNOWN_GAPS`; remover a entrada `defaultImportantFields=totalAmount` deixa
+  vermelho o de acoplamento. Arquivo restaurado e conferido com `cmp`.
 
 ### Fora de escopo (para os nós donos)
 
@@ -276,6 +302,6 @@ morrer, (c) é a coerente.
 
 ### Gates rodados
 
-`npx jest --selectProjects unit --testPathPatterns "analyticsFieldMappingCoupling|presetSchemaCoupling"` 11/11 ·
+`npx jest --selectProjects unit --testPathPatterns "analyticsFieldMappingCoupling|presetSchemaCoupling"` 12/12 (25/10, após F-TAP-6) ·
 `npx tsc --noEmit` 0 · `npx tsc -p tsconfig.test.json --noEmit` 0 · eslint dos 3 arquivos 0 ·
 `node scripts/plano-vault.mjs check` 0. Review independente não despachado (CLAUDE.md §⛔: Bloco A com oráculo aberto).

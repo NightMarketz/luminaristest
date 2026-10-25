@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import { tablePresetSuites } from '..';
 import type { AnalyticsConfiguration } from '@/features/analytics/core/models/AnalyticsConfiguration';
 import {
@@ -26,10 +28,13 @@ import {
  *
  * TESTE-ACOPLAMENTO-PRESET item 5 (docs/accounting/TESTE-ACOPLAMENTO-PRESET-brief.md) estende a regra: (a) todo
  * `*Field` dentro de `params.pipeline` existe na tabela `pipeline.source`, e `alias.campo` resolve pelo
- * `joins[].alias` (ou por campo `relation` homônimo na tabela-base) e é checado na tabela-alvo; (b) todo campo de
- * `options.importantFields`/`defaultImportantFields` existe na tabela do `tableKey` (ACHADOS-2026-10-19 §3.2 #16).
- * O universo é o de F-TAP-1 (b): cada suíte instalável e cada módulo isolado. O validador de runtime (§3.2 #15)
- * fica no FIX-ANALYTICS-RESIDUO (F-TAP-5 → a).
+ * `joins[].alias` (ou por campo `relation` homônimo na tabela-base) e é checado na tabela-alvo; (b) `importantFields`
+ * (ACHADOS-2026-10-19 §3.2 #16) na leitura do runtime — F-TAP-6 → (b), dono, chat, 2026-10-25: a tabela de um KPI é
+ * o `tableSource` que o processador emite para ele (o que `resolveChartDetails` usa para buscar os registros);
+ * `mixed` = pelo menos uma das duas tabelas; `defaultImportantFields` vale para cada KPI emitido sem entrada própria;
+ * a chave de `importantFields` tem de ser nome emitido. Nome → `tableSource` vem do manifesto estático
+ * `PROCESSOR_KPI_SOURCES`. O universo é o de F-TAP-1 (b): cada suíte instalável e cada módulo isolado. O validador
+ * de runtime (§3.2 #15) fica no FIX-ANALYTICS-RESIDUO (F-TAP-5 → a).
  */
 
 /** prefixo do `*Field` → chaves de `params` que apontam a tabela lida por esse grupo de campos. */
@@ -45,15 +50,86 @@ const ROW_ID = 'id';
 /** F-TAP-4 → (a): vermelhos conhecidos com o nó dono; a lista só encolhe. */
 const ANALYTICS_RESIDUO = { owner: 'FIX-ANALYTICS-RESIDUO', since: '2026-10-21' } as const;
 
-const KNOWN_GAPS: readonly KnownGap[] = [
-  // ACHADOS-2026-10-19 §3.2 #16: `costKpis` lista `status`, que `expenses` não declara.
-  { key: 'analytics:beautySalon.expenses:costKpis:importantFields=status', ...ANALYTICS_RESIDUO },
-  { key: 'analytics:aestheticClinic.expenses:costKpis:importantFields=status', ...ANALYTICS_RESIDUO },
-  // Mesma classe (#16), achado por este teste: o KPI "Contas a Pagar Total" do `cashflowKpis` lista `amount` (campo de
-  // `expenses`) junto com `date` (campo de `sales`) — órfão em `sales`, e `date` seria órfão em `expenses`.
-  { key: 'analytics:beautySalon.sales:cashflowKpis:importantFields=amount', ...ANALYTICS_RESIDUO },
-  { key: 'analytics:aestheticClinic.sales:cashflowKpis:importantFields=amount', ...ANALYTICS_RESIDUO },
-];
+const KNOWN_GAPS: readonly KnownGap[] = (['beautySalon', 'aestheticClinic'] as const).flatMap((suite) => [
+  // ACHADOS-2026-10-19 §3.2 #16: `costKpis` lista `status`, que `expenses` não declara — no KPI "Custo Total" e no
+  // default, que cobre os 9 KPIs de custo sem entrada própria.
+  { key: `analytics:${suite}.expenses:costKpis:importantFields[Custo Total]=status`, ...ANALYTICS_RESIDUO },
+  { key: `analytics:${suite}.expenses:costKpis:defaultImportantFields=status`, ...ANALYTICS_RESIDUO },
+  // Mesma classe (#16), achados por este teste (L-TAP-1 do BRIEF): "Contas a Pagar Total" lê `expenses`, que não tem
+  // `date`; o default do bloco de caixa (feito para `sales`) cai sobre "Contas a Pagar Vencidas" e "Prazo Médio de
+  // Pagamento", também de `expenses`.
+  { key: `analytics:${suite}.sales:cashflowKpis:importantFields[Contas a Pagar Total]=date`, ...ANALYTICS_RESIDUO },
+  { key: `analytics:${suite}.sales:cashflowKpis:defaultImportantFields=date`, ...ANALYTICS_RESIDUO },
+  { key: `analytics:${suite}.sales:cashflowKpis:defaultImportantFields=totalAmount`, ...ANALYTICS_RESIDUO },
+  { key: `analytics:${suite}.sales:cashflowKpis:defaultImportantFields=status`, ...ANALYTICS_RESIDUO },
+  // Chave morta: o `ProfitKpiProcessor` emite "Lucro Médio por Cliente", não "Lucro por Cliente".
+  { key: `analytics:${suite}.sales:profitKpis:importantFields[Lucro por Cliente]`, ...ANALYTICS_RESIDUO },
+]);
+
+/**
+ * F-TAP-6 → (b): nome de cada KPI emitido → `tableSource`, lido do `return` de cada processador em 2026-10-25.
+ * `main` = a tabela do bloco (`table.presetKey`); `expense` = `params[expenseParam] ?? 'expenses'`; `mixed` = as duas
+ * (`resolveChartDetails` busca a principal e a de `costSourceTableKey || expensesTableKey`). Só os processadores cujo
+ * bloco declara `importantFields`; bloco com `importantFields` e processador fora daqui é divergência.
+ */
+type KpiSource = 'main' | 'expense' | 'mixed';
+type ProcessorKpis = { file: string; expenseParam?: 'expensesTableKey' | 'costSourceTableKey'; kpis: Readonly<Record<string, KpiSource>> };
+
+const allMain = (names: readonly string[]): Record<string, KpiSource> => Object.fromEntries(names.map((n) => [n, 'main']));
+
+const PROCESSOR_KPI_SOURCES: Readonly<Record<string, ProcessorKpis>> = {
+  revenueKpis: {
+    file: 'revenue/RevenueKpiProcessor.ts',
+    kpis: allMain([
+      'Receita Bruta', 'Receita Líquida', 'Crescimento da Receita (%)', 'Receita Total Anual', 'Receita Operacional',
+      'Receita Não Operacional', 'Receita Média Mensal', 'Receita Média por Dia Útil', 'Receita por Hora Operacional',
+      'Receita por Cliente', 'Receita Máxima por Cliente', 'Receita por Categoria',
+      'Dependência de Receita de Fonte Única (%)', 'Receita Nova (%)', 'Receita Recorrente (%)',
+      'Receita Sazonal (Índice)', 'Receita Atribuída a Campanhas',
+    ]),
+  },
+  profitKpis: {
+    file: 'profit/ProfitKpiProcessor.ts',
+    expenseParam: 'costSourceTableKey',
+    kpis: {
+      'Lucro Bruto': 'mixed', 'Lucro Operacional': 'mixed', 'Lucro Líquido': 'mixed', 'Lucro Médio por Cliente': 'main',
+      'Lucro por Funcionário': 'mixed', 'Lucro por Hora Trabalhada': 'mixed', 'Margem Bruta (%)': 'mixed',
+      'Margem Operacional (%)': 'mixed', 'Margem Líquida (%)': 'mixed', 'Margem de Contribuição (%)': 'mixed',
+      'Rentabilidade Geral (%)': 'mixed', 'Crescimento do Lucro (%)': 'main', 'Produtividade do Lucro': 'mixed',
+      'Eficiência do Lucro (Lucro/Custo)': 'mixed', 'Índice de Qualidade do Lucro': 'mixed',
+      'Resultado Financeiro Final': 'mixed', 'Lucro Ajustado': 'mixed', 'Lucro Acumulado': 'mixed',
+    },
+  },
+  costKpis: {
+    file: 'cost/CostKpiProcessor.ts',
+    kpis: allMain([
+      'Custo Fixo Total', 'Custo Fixo Médio Mensal', 'Participação dos Custos Fixos (%)', 'Custo Variável Total',
+      'Custo Variável Médio por Atendimento', 'Participação dos Custos Variáveis (%)', 'Despesas Operacionais Totais',
+      'Despesas Administrativas (%)', 'Despesas de Manutenção', 'Despesas Não Recorrentes', 'Impostos Totais Pagos',
+      'Custo Total', 'Custo por Dia Útil', 'Custo Não Planejado (%)',
+    ]),
+  },
+  cashflowKpis: {
+    file: 'cashflow/CashflowKpiProcessor.ts',
+    expenseParam: 'expensesTableKey',
+    kpis: {
+      'Fluxo de Caixa Operacional': 'mixed', 'Fluxo de Caixa Livre': 'mixed', 'Saldo de Caixa': 'mixed',
+      'Contas a Receber Total': 'main', 'Contas a Receber Vencidas': 'main', 'Prazo Médio de Recebimento (dias)': 'main',
+      'Contas a Pagar Total': 'expense', 'Contas a Pagar Vencidas': 'expense', 'Prazo Médio de Pagamento (dias)': 'expense',
+      'Índice de Liquidez Corrente': 'mixed', 'Índice de Solvência': 'mixed',
+    },
+  },
+};
+
+/** Tabelas de onde `resolveChartDetails` busca os registros de um KPI com esta fonte. */
+function kpiTables(source: KpiSource, proc: ProcessorKpis, params: Record<string, unknown>, ownKey: string): string[] {
+  const ref = (p: string) => resolveTableRef(params[p] as string | undefined, ownKey);
+  const expense = (proc.expenseParam ? ref(proc.expenseParam) : undefined) ?? 'expenses';
+  if (source === 'main') return [ownKey];
+  if (source === 'expense') return [expense];
+  const mixedExpense = ref('costSourceTableKey') ?? ref('expensesTableKey');
+  return mixedExpense ? [ownKey, mixedExpense] : [ownKey];
+}
 
 function targetTableFor(key: string, config: AnalyticsConfiguration, selfKey: string): string | undefined {
   const params = (config.params ?? {}) as Record<string, unknown>;
@@ -112,6 +188,45 @@ function collectPipelineFindings(
   walk(pipeline);
 }
 
+/** F-TAP-6 → (b): `importantFields`/`defaultImportantFields` contra a fonte de cada KPI emitido. */
+function collectImportantFieldsFindings(
+  u: Universe,
+  tableKey: string,
+  config: AnalyticsConfiguration,
+  push: (f: CouplingFinding) => void,
+): void {
+  const options = (config.options ?? {}) as { importantFields?: Record<string, string[]>; defaultImportantFields?: string[] };
+  const entries = options.importantFields ?? {};
+  const defaults = options.defaultImportantFields ?? [];
+  if (Object.keys(entries).length === 0 && defaults.length === 0) return;
+  const finding = (ref: string, target: string) =>
+    push({ suite: u.name, table: tableKey, source: 'analytics', ref: `${config.key}:${ref}`, target });
+  const proc = PROCESSOR_KPI_SOURCES[String(config.templateKey)];
+  if (!proc) return finding('importantFields', `processador '${String(config.templateKey)}' sem manifesto em PROCESSOR_KPI_SOURCES`);
+  const params = (config.params ?? {}) as Record<string, unknown>;
+  const ownKey = resolveTableRef((config as unknown as { tableKey?: string }).tableKey, tableKey) ?? tableKey;
+  const inSome = (tables: string[], field: string) => tables.some((t) => hasField(u.tables[t], field));
+
+  for (const [kpi, fields] of Object.entries(entries)) {
+    const source = proc.kpis[kpi];
+    if (!source) {
+      finding(`importantFields[${kpi}]`, `nomes emitidos por '${String(config.templateKey)}'`);
+      continue;
+    }
+    const tables = kpiTables(source, proc, params, ownKey);
+    for (const field of fields) if (!inSome(tables, field)) finding(`importantFields[${kpi}]=${field}`, tables.join(' ∪ '));
+  }
+  const missingByField = new Map<string, string[]>();
+  for (const [kpi, source] of Object.entries(proc.kpis)) {
+    if (entries[kpi]) continue;
+    const tables = kpiTables(source, proc, params, ownKey);
+    for (const field of defaults) {
+      if (!inSome(tables, field)) missingByField.set(field, [...(missingByField.get(field) ?? []), `${kpi} (${tables.join(' ∪ ')})`]);
+    }
+  }
+  for (const [field, kpis] of missingByField) finding(`defaultImportantFields=${field}`, kpis.join('; '));
+}
+
 function collectAnalyticsFindings(universes: readonly Universe[]): CouplingFinding[] {
   const out: CouplingFinding[] = [];
   const seen = new Set<string>();
@@ -139,14 +254,7 @@ function collectAnalyticsFindings(universes: readonly Universe[]): CouplingFindi
         if (params.pipeline && typeof params.pipeline === 'object') {
           collectPipelineFindings(u, tableKey, config.key, params.pipeline as Pipeline, push);
         }
-        const options = (config.options ?? {}) as { importantFields?: Record<string, string[]>; defaultImportantFields?: string[] };
-        const ownKey = targetTableFor('', config, tableKey) ?? tableKey;
-        const important = [...(options.defaultImportantFields ?? []), ...Object.values(options.importantFields ?? {}).flat()];
-        for (const field of new Set(important)) {
-          if (!hasField(u.tables[ownKey], field)) {
-            push({ suite: u.name, table: tableKey, source: 'analytics', ref: `${config.key}:importantFields=${field}`, target: ownKey });
-          }
-        }
+        collectImportantFieldsFindings(u, tableKey, config, push);
       }
     }
   }
@@ -176,11 +284,41 @@ describe('presets de analytics × schema das tabelas de módulo', () => {
     const cost = expenses.analytics!.find((c) => c.key === 'costKpis')!;
     (cost.fieldMapping as Record<string, string>).amountField = 'amout';
     (cost.options as { defaultImportantFields: string[] }).defaultImportantFields.push('categoria');
-    const typo: Universe = { name: 'typo', tables: { ...salon.tables, saleItems: items, expenses } };
+    // F-TAP-6 (b): chave fora dos nomes emitidos, e campo de `sales` num KPI cuja fonte é `expenses`.
+    const sales = cloneTable(salon.tables.sales);
+    const cashflow = sales.analytics!.find((c) => c.key === 'cashflowKpis')!;
+    const cashImportant = (cashflow.options as { importantFields: Record<string, string[]> }).importantFields;
+    cashImportant['Contas a Pagr Total'] = ['paymentStatus'];
+    cashImportant['Prazo Médio de Pagamento (dias)'] = ['paymentStatus', 'totalAmount'];
+    const typo: Universe = { name: 'typo', tables: { ...salon.tables, saleItems: items, expenses, sales } };
     const refs = collectAnalyticsFindings([typo]).map((f) => f.ref);
     expect(refs).toEqual(
-      expect.arrayContaining([`${piped.key}:dateField=header.dat`, 'costKpis:amountField=amout', 'costKpis:importantFields=categoria']),
+      expect.arrayContaining([
+        `${piped.key}:dateField=header.dat`,
+        'costKpis:amountField=amout',
+        'costKpis:defaultImportantFields=categoria',
+        'cashflowKpis:importantFields[Contas a Pagr Total]',
+        'cashflowKpis:importantFields[Prazo Médio de Pagamento (dias)]=totalAmount',
+      ]),
     );
+    // `mixed` = pelo menos uma das duas: `totalAmount` (só em `sales`) num KPI misto não é divergência.
+    expect(refs).not.toContain('cashflowKpis:importantFields[Fluxo de Caixa Operacional]=totalAmount');
+  });
+
+  it('F-TAP-6 — o manifesto PROCESSOR_KPI_SOURCES bate com os nomes e as fontes do código dos processadores', () => {
+    const kpisDir = path.resolve(__dirname, '../../../analytics/kpis');
+    const sourceOf: Record<string, KpiSource> = { mainTableSource: 'main', expenseTableSource: 'expense', mixedTableSource: 'mixed' };
+    const drift: string[] = [];
+    for (const [templateKey, proc] of Object.entries(PROCESSOR_KPI_SOURCES)) {
+      const src = fs.readFileSync(path.join(kpisDir, proc.file), 'utf8');
+      const emitted = new Map<string, KpiSource | undefined>();
+      for (const m of src.matchAll(/\{\s*name:\s*'([^']+)'[^{}]*?tableSource:\s*([A-Za-z]+)/g)) emitted.set(m[1], sourceOf[m[2]]);
+      for (const [kpi, source] of Object.entries(proc.kpis)) {
+        if (emitted.get(kpi) !== source) drift.push(`${templateKey}: '${kpi}' manifesto=${source} código=${emitted.get(kpi) ?? 'ausente'}`);
+      }
+      for (const kpi of emitted.keys()) if (!proc.kpis[kpi]) drift.push(`${templateKey}: '${kpi}' emitido e fora do manifesto`);
+    }
+    expect(drift).toEqual([]);
   });
 
   it('item 8 — KNOWN_GAPS de analytics só encolhe', () => {
