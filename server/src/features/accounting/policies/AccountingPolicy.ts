@@ -47,6 +47,15 @@ export class AccountingPolicy implements IAccountingPolicy {
     return !!scope.actorUserId;
   }
 
+  /** RETENCOES-FONTE PR-1 (item 6): reusa a regra do AP — quem gere o título gere a retenção dele. */
+  canManageWithholdingProfile(scope: AccountingScope): boolean {
+    return this.canManagePayable(scope);
+  }
+
+  canReadWithholdingProfile(scope: AccountingScope): boolean {
+    return this.canReadPayable(scope);
+  }
+
   canManageReceivable(scope: AccountingScope): boolean {
     return !!scope.actorUserId;
   }

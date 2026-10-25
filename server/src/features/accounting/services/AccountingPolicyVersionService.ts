@@ -37,6 +37,7 @@ const ACCOUNT_KEYS: Record<PolicyTarget, readonly string[]> = {
     'dividendosPagarAccountId', 'jcpPagarAccountId', 'irrfRecolherAccountId', 'jcpDespesaAccountId', // IRRF-DISTRIBUICAO item 7
     'ibsRecolherAccountId', 'cbsRecolherAccountId', // IBS-CBS-2027 PR-2 item 12
     'ibsRecuperarAccountId', 'cbsRecuperarAccountId', // IBS-CBS-2027 PR-3 item 14
+    'retencaoIrrfRecolherAccountId', 'retencaoCsrfRecolherAccountId', 'retencaoInssRecolherAccountId', 'retencaoIssRecolherAccountId', 'retencaoIrrfCompensarAccountId', 'retencaoCsllCompensarAccountId', 'retencaoInssCompensarAccountId', // RETENCOES-FONTE PR-1 item 8
   ],
   SCOPE_SETTINGS: [
     'bankChargeExpenseAccountId', 'bankChargeIncomeAccountId', 'depreciationExpenseAccountId',

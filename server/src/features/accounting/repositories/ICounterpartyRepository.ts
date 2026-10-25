@@ -15,6 +15,8 @@ export interface CreateCounterpartyData {
   nameNormalized: string;
   ref: string | null;
   taxId?: string | null;
+  regimeTributario?: string | null; // RETENCOES-FONTE PR-1 (item 5)
+  declaracaoOptanteDocumentId?: string | null;
   createdById: string | null;
 }
 
@@ -61,6 +63,9 @@ export interface ICounterpartyRepository {
     data: Prisma.CounterpartyUpdateInput,
     tx?: Prisma.TransactionClient,
   ): Promise<Counterparty>;
+
+  /** RETENCOES-FONTE PR-1 (item 5): o SourceDocument vivo da declaração de optante, no mesmo escopo (outro escopo → null). */
+  sourceDocumentExists(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<boolean>;
 
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 }

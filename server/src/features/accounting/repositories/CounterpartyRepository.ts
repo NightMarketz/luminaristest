@@ -67,6 +67,11 @@ export class CounterpartyRepository implements ICounterpartyRepository {
     return (tx ?? prisma).counterparty.update({ where: { id, userId, unitId }, data });
   }
 
+  public async sourceDocumentExists(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<boolean> {
+    const row = await (tx ?? prisma).sourceDocument.findFirst({ where: { id, ...accountingScopeWhere(scope), deletedAt: null }, select: { id: true } });
+    return row !== null;
+  }
+
   public async runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
     return prisma.$transaction(fn);
   }

@@ -82,6 +82,7 @@ export const REKEY_MODELS = [
   'IssBeneficioMunicipal', // SIMPLES-PISO-ANEXO-XI bloco 1: benefício municipal de ISS por unidade, sem hash → REKEY pelo F-RK-5
   'ProfitDistributionEvent', // IRRF-DISTRIBUICAO PR-2: `unitId` = unidade do lançamento (proveniência), sem hash → REKEY pelo F-RK-5, como o TaxAssessment
   'InterestOnEquityCalculation', // IRRF-DISTRIBUICAO PR-4: `unitId` = unidade do lançamento e do razão lido, sem hash → REKEY pelo F-RK-5
+  'WithholdingProfile', // RETENCOES-FONTE PR-1: perfil de retenção da unidade, sem hash → REKEY pelo F-RK-5 (segue a contraparte, que já é REKEY)
 ] as const;
 
 /**
