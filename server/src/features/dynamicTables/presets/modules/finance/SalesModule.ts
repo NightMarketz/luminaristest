@@ -342,7 +342,7 @@ export const salesModule = {
         importantFields: {
           'Lucro Bruto': ['date', 'totalAmount', 'status'],
           'Lucro Líquido': ['date', 'totalAmount', 'status'],
-          'Lucro por Cliente': ['date', 'totalAmount', 'customerId', 'status'],
+          'Lucro Médio por Cliente': ['date', 'totalAmount', 'customerId', 'status'],
           'Margem Bruta (%)': ['date', 'totalAmount', 'status'],
           'Margem Líquida (%)': ['date', 'totalAmount', 'status'],
         },
@@ -565,7 +565,9 @@ export const salesModule = {
         importantFields: {
           'Fluxo de Caixa Operacional': ['date', 'totalAmount', 'paymentStatus', 'status'],
           'Contas a Receber Total': ['date', 'totalAmount', 'paymentStatus', 'status'],
-          'Contas a Pagar Total': ['date', 'amount', 'paymentStatus'],
+          'Contas a Pagar Total': ['dueDate', 'amount', 'paymentStatus'],
+          'Contas a Pagar Vencidas': ['dueDate', 'amount', 'paymentStatus'],
+          'Prazo Médio de Pagamento (dias)': ['dueDate', 'amount', 'paymentStatus'],
         },
       },
       params: {

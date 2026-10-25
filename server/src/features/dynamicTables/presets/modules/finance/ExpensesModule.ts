@@ -73,11 +73,11 @@ export const expensesModule = {
       },
       options: {
         currency: 'BRL',
-        defaultImportantFields: ['paymentDate', 'amount', 'category', 'isPlanned', 'status'],
+        defaultImportantFields: ['paymentDate', 'amount', 'category', 'isPlanned', 'paymentStatus'],
         importantFields: {
           'Custo Fixo Total': ['paymentDate', 'amount', 'category', 'isPlanned'],
           'Custo Variável Total': ['paymentDate', 'amount', 'category', 'isPlanned'],
-          'Custo Total': ['paymentDate', 'amount', 'category', 'isPlanned', 'status'],
+          'Custo Total': ['paymentDate', 'amount', 'category', 'isPlanned', 'paymentStatus'],
           'Despesas Operacionais Totais': ['paymentDate', 'amount', 'category'],
           'Custo Não Planejado (%)': ['paymentDate', 'amount', 'isPlanned', 'category'],
         },
