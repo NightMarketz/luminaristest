@@ -22,7 +22,7 @@ const todas = legalParamsSeedRows(); // todas as sementes: a lp2-iss-aliquota_ma
 describe('semente do PR-1', () => {
   it('a migração carrega o texto de prisma/data/legal_parameters_iss_transicao_v1.sql e só insere', () => {
     const norm = (s: string) => s.replace(/\r\n/g, '\n');
-    const mig = norm(fs.readFileSync(path.resolve(__dirname, '../../../../../prisma/migrations/20261024120000_legal_parameters_iss_transicao/migration.sql'), 'utf8'));
+    const mig = norm(fs.readFileSync(path.resolve(__dirname, '../../../../../prisma/migrations/20261024130000_legal_parameters_iss_transicao/migration.sql'), 'utf8'));
     expect(mig).toContain(norm(fs.readFileSync(LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO, 'utf8')).trimEnd());
     expect(mig.split('\n').filter((l) => l.trim() && !l.startsWith('--')).every((l) => l.startsWith('INSERT OR IGNORE INTO "legal_parameters" '))).toBe(true);
     expect(pr1).toHaveLength(13); // 1 ISS_LIMITE + 4 ISS_TRANSICAO + 8 IBS DRAFT

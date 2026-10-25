@@ -3096,6 +3096,19 @@
               "type": "null"
             }
           ]
+        },
+        "receitaTotalAnoAnteriorCents": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
