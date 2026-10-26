@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // AccountingView não faz `import React` — mesmo shim dos demais testes do módulo.
 (globalThis as unknown as { React: typeof React }).React = React;
-import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, waitFor, within } from '@testing-library/react';
 import { AccountingView, DELEGATED_TABS, TABS } from '../AccountingView';
 import { accountingService } from '../../../lib/services/accounting.service';
 import { dimensionsService } from '../../../lib/services/dimensions.service';
@@ -49,8 +49,12 @@ vi.mock('../../../lib/services/accountingBinding.service', () => ({
 vi.mock('../../../lib/services/accountingKit.service', () => ({
   accountingKitService: { getKit: vi.fn(), listPending: vi.fn() },
 }));
+let kitTabMounts = 0;
 vi.mock('../components/AccountingKitTab', () => ({
-  AccountingKitTab: (p: { unitId: string }) => <div data-testid="kit-tab" data-unit={p.unitId} />,
+  AccountingKitTab: (p: { unitId: string }) => {
+    const [mount] = React.useState(() => ++kitTabMounts);
+    return <div data-testid="kit-tab" data-unit={p.unitId} data-mount={mount} />;
+  },
 }));
 /** Sem kit na unidade (o padrão do `beforeEach`), a aba "Kit de setor" não entra na barra. */
 const OWN_TABS_WITHOUT_KIT = TABS.length - 1;
@@ -146,6 +150,27 @@ describe('AccountingView — modo cliente (F-FE-GOV-1 b)', () => {
     fireEvent.click(await screen.findByRole('tab', { name: 'Kit de setor' }));
     expect(screen.getByTestId('kit-tab')).toHaveAttribute('data-unit', 'u1');
     expect(screen.getAllByRole('tab')).toHaveLength(TABS.length);
+  });
+
+  it('EMENDA-2 LAC-B item 10: ativar pela faixa com a aba aberta relê o kit e remonta a aba (review do #919)', async () => {
+    mockUnits(['u1']);
+    vi.mocked(accountantAssignmentsService.listMine).mockResolvedValue([]);
+    // kit FAILED nos passos 1–4: sem binding Active, faixa e aba convivem
+    vi.mocked(accountingKitService.getKit).mockResolvedValue({
+      kitKey: 'beautySalon', kitVersion: 6, latestVersion: 6, status: 'FAILED', lastRun: null, openPendingCount: 0,
+      changelog: [], steps: { lastCompletedStep: 3, warnings: [] },
+    });
+    vi.mocked(accountingBindingService.activateDefault).mockResolvedValue({ status: 'Active', bindingVersion: 1 });
+    render(<AccountingView />);
+    fireEvent.click(await screen.findByRole('tab', { name: 'Kit de setor' }));
+    const before = screen.getByTestId('kit-tab').getAttribute('data-mount');
+    const callsBefore = vi.mocked(accountingKitService.getKit).mock.calls.length;
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Ativar contabilidade' }));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Ativar' }));
+
+    await waitFor(() => expect(screen.getByTestId('kit-tab').getAttribute('data-mount')).not.toBe(before));
+    expect(vi.mocked(accountingKitService.getKit).mock.calls.length).toBeGreaterThan(callsBefore);
   });
 
   it('EMENDA-2 LAC-B item 4: modo cliente não chama GET /accounting-kit e não mostra a aba', async () => {

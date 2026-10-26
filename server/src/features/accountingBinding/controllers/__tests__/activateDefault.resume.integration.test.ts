@@ -20,7 +20,10 @@ const app = makeApp();
 const ACTIVATE = '/api/accounting-binding/activate-default';
 const UNIT = 'unit-emenda2-retomada';
 
-type StepSpy = Record<'stepCanonicalChart' | 'stepChartExtension' | 'stepRoleDefaults' | 'stepPeriod' | 'stepCompile' | 'stepReferential', () => Promise<unknown>>;
+type StepSpy = Record<
+  'stepCanonicalChart' | 'stepChartExtension' | 'stepRoleDefaults' | 'stepPeriod' | 'stepCompile' | 'stepServiceFiscalDefaults' | 'stepReferential',
+  () => Promise<unknown>
+>;
 const proto = KitInstallService.prototype as unknown as StepSpy;
 
 let dono: { id: string; username: string };
@@ -79,7 +82,7 @@ describe('EMENDA-2 LAC-B PR-0 — kit FAILED no passo 7: view com steps e retoma
     const antes = await foto();
     const ativoAntes = await prisma.accountingBinding.findFirstOrThrow({ where: { ...where(), status: 'Active' } });
     // sondas: os passos são idempotentes, então só a sonda distingue "retomou do 7" de "refez tudo"
-    const sondas = (['stepCanonicalChart', 'stepChartExtension', 'stepRoleDefaults', 'stepPeriod', 'stepCompile'] as const).map((m) =>
+    const sondas = (['stepCanonicalChart', 'stepChartExtension', 'stepRoleDefaults', 'stepPeriod', 'stepCompile', 'stepServiceFiscalDefaults'] as const).map((m) =>
       jest.spyOn(proto, m),
     );
     const passo7 = jest.spyOn(proto, 'stepReferential');
