@@ -10,10 +10,52 @@
 > **Status 10/10/2026:** texto **aprovado pelo dono para envio** ao CRC-SP pelo canal oficial de consultas (Q4 a de
 > [`D-2026-10-10-QUESTIONARIO-DONO`](../plano/decisoes/D-2026-10-10-QUESTIONARIO-DONO.md)). Envio = dono; data de envio
 > e protocolo: _a preencher pelo dono_. Trava comercial: "com contador incluso" suspenso até a triagem da resposta.
+> **26/10/2026: v2 proposta pelo agente, com 2 perguntas e envio opcional.** A Res. CFC 1.708/2023 art. 1º e a Res. CFC
+> 1.640/2021 arts. 3º e 4º respondem as perguntas 1, 4 e 5 da v1 (dossiê
+> [`pesquisas-legais/crc-sp-consulta-opcional/relatorio.md`](../../pesquisas-legais/crc-sp-consulta-opcional/relatorio.md)).
+> Ficam a 2 e a 3. **O dono decide** se envia a v2, se envia a v1 já aprovada ou se não envia. Se não enviar, os riscos
+> das 2 perguntas ficam aceitos por escrito (F-GOV-11 a, ratificado contra a recomendação em 02/10). A trava comercial do
+> Q4 (10/10) só cai por decisão nova dele.
 
 ---
 
-## Texto para enviar
+## v2 (26/10) — texto para enviar, se o dono decidir enviar
+
+> Prezados,
+>
+> Somos uma empresa de **software de gestão** para pequenos negócios (salões, clínicas). O operador do cliente registra
+> vendas e despesas no sistema, e o sistema gera os lançamentos, o fechamento de período e os arquivos da ECD/ECF. Um
+> contador com registro no CRC, **contratado e pago pelo próprio cliente**, revisa a escrituração, trava o período e
+> assina a ECD com e-CPF. Nós não prestamos serviço contábil e não cobramos por ele.
+>
+> **1. Contador que assina a escrituração registrada pelo cliente.** A Res. CFC 1.640/2021, art. 3º, VIII, define a
+> escrituração como procedimento executado exclusivamente pelo profissional da contabilidade. A NBC PG 01, item 10,
+> admite que parte do serviço seja executada pelo cliente, se a proposta e o contrato disserem. No nosso desenho, o
+> contrato entre o cliente e o contador diz que o cliente registra as operações no sistema, e o contador revisa e trava
+> cada período antes de assinar. Esse arranjo atende às duas normas? Se não atende, o que falta?
+>
+> **2. Reabertura de período já revisado.** No nosso desenho:
+> - enquanto há um contador responsável ativo, **só ele** reabre um período fechado;
+> - o empresário pode encerrar a relação com o contador sozinho, registrando o motivo. Sem contador ativo, o **próprio
+>   empresário pode reabrir qualquer período**, inclusive os que o contador anterior revisou;
+> - tudo fica em trilha de auditoria (quem encerrou, quem reabriu, quando), mas o sistema não impede.
+>
+> Perguntamos: (a) esse desenho é aceitável para o contador que assinou, ou o sistema deveria **impedir** a reabertura
+> de período coberto por um contador e exigir lançamento extemporâneo na competência atual? (b) Se o empresário reabre
+> e altera um período que o contador revisou, qual é a situação desse contador?
+>
+> Agradecemos a orientação.
+
+**Critério de aceite interno da v2:** a pergunta 1 é a pergunta 2 da v1, e a pergunta 2 é a pergunta 3 da v1. Os
+critérios da tabela abaixo continuam valendo, linhas 2 e 3.
+
+**Cuidado com a frase "contratado e pago pelo próprio cliente".** Ela é o que deixa a Luminaris fora do art. 1º da
+1.708. Se o modelo comercial for cobrar o contador dentro da assinatura, a frase fica falsa. Nesse caso volta a pergunta
+1 da v1, e a Luminaris pode precisar de registro como organização contábil (dossiê §4, ambiguidade 1).
+
+---
+
+## v1 (02/10, aprovada pelo dono em 10/10) — texto para enviar
 
 > Prezados,
 >

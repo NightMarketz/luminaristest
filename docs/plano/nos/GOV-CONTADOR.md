@@ -45,6 +45,13 @@ atualizado: "2026-10-15"
   O dono envia; o agente não enviou. A pergunta 3 leva ao CRC-SP o efeito do F-GOV-11 (a): o dono encerra a atribuição
   e reabre períodos que o contador cobriu. Isso contraria a condição do contador de 23/09, "trava de período só ele
   reabre" ([[Z0-a]]).
+  **26/10:** a consulta ficou **opcional**, com uma **v2 de 2 perguntas** no mesmo arquivo. A Res. CFC 1.708/2023 art. 1º
+  e a 1.640/2021 arts. 3º XX e 4º respondem as perguntas 1, 4 e 5 (dossiê `pesquisas-legais/crc-sp-consulta-opcional/`).
+  A pergunta 1 fica respondida só se o cliente contratar e pagar o contador direto. Duas coisas são do dono, mande ou não
+  a consulta: (i) o **contrato-modelo** com o contador parceiro, que tem de dizer que o cliente registra as operações
+  (NBC PG 01 item 10); o código não faz isso; (ii) a **reabertura**: ou o contador aceita o F-GOV-11 (a), ou o dono reabre
+  o F-GOV-11. Ponto novo: a Res. CFC 1.640 art. 3º XXX diz que parametrizar regras fiscais e contábeis em software é
+  atribuição de profissional da contabilidade.
 
 ## Fold 02/10 — ratificação
 
