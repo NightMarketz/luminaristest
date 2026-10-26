@@ -88,6 +88,7 @@ export async function resetDb(): Promise<void> {
   await prisma.fiscalDocument.deleteMany();
   await prisma.fiscalDocumentSequence.deleteMany();
   await prisma.serviceFiscalProfile.deleteMany();
+  await prisma.productFiscalProfile.deleteMany(); // BE-INCR-NFCE item 10
   await prisma.issBeneficioMunicipal.deleteMany(); // SIMPLES-PISO-ANEXO-XI bloco 1
   // ITEM-DESTINATION PR-2: default de destinação por produto — folha (só FK Cascade para User).
   await prisma.productDestinationDefault.deleteMany();

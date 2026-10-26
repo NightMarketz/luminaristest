@@ -1724,6 +1724,11 @@ model FiscalProfile {
   inscricaoMunicipal                  String? // prest/IM [123]
   cnae                                String? // informativo
   dpsSerie                            Int       @default(1) // serie [106], faixa 00001–49999 "aplicativo próprio" (RN E0010)
+  // BE-INCR-NFCE (nó X10a, itens 8–9; F-NFCE-2 b): IE do emitente (emit/IE, C17 — só algarismos, 2–14) e séries da NF-e 55 e
+  // da NFC-e 65 (B07, faixa 000–889 "aplicativo do contribuinte", MOC 7.0 Anexo I p. 9). icmsContribuinte NÃO muda de sentido.
+  inscricaoEstadual                   String?
+  nfeSerie                            Int       @default(1)
+  nfceSerie                           Int       @default(1)
   regEspTrib                          Int       @default(0) // regTrib/regEspTrib [142]: 0 = nenhum
   regApTribSN                         Int? // [141] só SIMPLES; 1 = apuração do ISSQN pelo SN [inferido RN 508] — pendente contador (5e)
   issAliquotaBp                       Int? // pAliq [312] em basis points (≤ 500 = 5%, E0595); SÓ município NÃO conveniado (E0617/E0618) — pendente contador (5a)
@@ -2094,6 +2099,38 @@ model ServiceFiscalProfile {
 
   @@unique([userId, unitId, serviceRef])
   @@map("service_fiscal_profiles")
+}
+
+// BE-INCR-NFCE (nó X10a, item 10; F-NFCE-3 b ratificado 02/10, contra a recomendação) — perfil fiscal DO PRODUTO para a
+// NF-e 55 / NFC-e 65. Prisma first-class (§2.1, invariante legal), molde do ServiceFiscalProfile SEM unitId: um perfil por
+// produto, valendo para todas as unidades do dono. `productRef` = id da linha `products` (saleItems.productId), plain string.
+// `csosn` (CRT 1) e `cstIcms` (CRT 3) convivem; a montagem escolhe pelo CRT do perfil da unidade emitente. Códigos admitidos =
+// docs/accounting/fontes-oficiais/TRANSCRICAO-MOC70-NFCe-NFe-saida-2026-10-26.md. Soft-delete com rename-on-delete.
+model ProductFiscalProfile {
+  id              String    @id @default(cuid())
+  userId          String
+  productRef      String
+  ncm             String // I05: 8 dígitos
+  cest            String? // I05c: 7 dígitos
+  origem          Int // N11: 0–8
+  cfopPadrao      String // I08: 4 dígitos; NFC-e ⊂ I08-150
+  csosn           String? // N12a (CRT 1): 102, 103, 300, 400, 500
+  cstIcms         String? // N12 (CRT 3): 00
+  uCom            String // I09: 1–6
+  cEan            String // I03: GTIN-8/12/13/14 ou "SEM GTIN"
+  cstPis          String // Q06
+  cstCofins       String // S06
+  ibsCbsCst       String? // UB13 (NT 2025.002 v1.52)
+  ibsCbsClassTrib String? // UB14
+  xProd           String? // I04: 1–120; null => products.name
+  createdById     String?
+  updatedById     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  @@unique([userId, productRef])
+  @@map("product_fiscal_profiles")
 }
 
 // SIMPLES-PISO-ANEXO-XI bloco 1 (BRIEF item 1, F-PI-1 a): benefício municipal de ISS para ME/EPP do Simples (Res. CGSN

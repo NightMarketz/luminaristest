@@ -95,6 +95,11 @@ const FiscalProfileFields = z
     inscricaoMunicipal: z.string().min(1).max(15).nullable().optional(),
     cnae: z.string().min(1).max(10).nullable().optional(),
     dpsSerie: z.number().int().min(1).max(49999).default(1),
+    // BE-INCR-NFCE (nó X10a, itens 8–9; F-NFCE-2 b): emit/IE (C17: "somente os algarismos", 2–14 — o formato por UF é
+    // insumo pendente) e séries da NF-e 55 / NFC-e 65 (B07: 000–889 = aplicativo do contribuinte). MOC 7.0 Anexo I pp. 9, 13.
+    inscricaoEstadual: z.string().regex(/^\d{2,14}$/, 'inscricaoEstadual: só algarismos, 2 a 14 (emit/IE, C17)').nullable().optional(),
+    nfeSerie: z.number().int().min(0).max(889).default(1),
+    nfceSerie: z.number().int().min(0).max(889).default(1),
     regEspTrib: z.number().int().min(0).max(9).default(0),
     regApTribSN: z.number().int().min(1).max(3).nullable().optional(),
     // BE-INCR-DFE — D1f configurável (5a–5f), defaults = recomendação do ADR

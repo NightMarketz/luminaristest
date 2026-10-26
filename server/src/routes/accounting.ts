@@ -192,6 +192,12 @@ import {
   upsertServiceFiscalProfile,
 } from '../controllers/serviceFiscalProfileController';
 import {
+  deleteProductFiscalProfile,
+  getProductFiscalProfile,
+  listProductFiscalProfiles,
+  upsertProductFiscalProfile,
+} from '../controllers/productFiscalProfileController';
+import {
   createIssBeneficioMunicipal,
   deleteIssBeneficioMunicipal,
   getIssBeneficioMunicipal,
@@ -399,6 +405,11 @@ router.get('/service-fiscal-profiles', listServiceFiscalProfiles);
 router.get('/service-fiscal-profiles/:serviceRef', getServiceFiscalProfile);
 router.put('/service-fiscal-profiles/:serviceRef', upsertServiceFiscalProfile);
 router.delete('/service-fiscal-profiles/:serviceRef', deleteServiceFiscalProfile);
+// BE-INCR-NFCE (nó X10a, item 30): perfil fiscal do produto (F-NFCE-3 b)
+router.get('/product-fiscal-profiles', listProductFiscalProfiles);
+router.get('/product-fiscal-profiles/:productRef', getProductFiscalProfile);
+router.put('/product-fiscal-profiles/:productRef', upsertProductFiscalProfile);
+router.delete('/product-fiscal-profiles/:productRef', deleteProductFiscalProfile);
 // SIMPLES-PISO-ANEXO-XI bloco 1 (BRIEF item 1): benefício municipal de ISS (Res. CGSN 140 arts. 31-32)
 router.get('/iss-beneficios-municipais', listIssBeneficiosMunicipais);
 router.post('/iss-beneficios-municipais', createIssBeneficioMunicipal);

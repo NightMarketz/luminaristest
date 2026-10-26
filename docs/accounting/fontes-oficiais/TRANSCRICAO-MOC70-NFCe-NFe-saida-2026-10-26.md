@@ -122,7 +122,7 @@ Colunas: `ID · campo · Ele · Pai · Tipo · Ocor. · Tam. · observação (re
 | N10d | ICMSSN102 | CG | N01 | | 1-1 | | CRT 1, CSOSN 102/103/300/400: N11 orig + N12a CSOSN (3) (pp. 42–43) |
 | N10g | ICMSSN500 | CG | N01 | | 1-1 | | CRT 1, CSOSN 500: N11 orig, N12a CSOSN=500, grupo opcional N25.1 (vBCSTRet, pST, vICMSSubstituto, vICMSSTRet) (p. 46) |
 | N11 | orig | E | | N | 1-1 | 1 | 0 a 8 (p. 26): 0 nacional; 1 estrangeira importação direta; 2 estrangeira mercado interno; 3 nacional CI > 40% ≤ 70%; 4 nacional PPB; 5 nacional CI ≤ 40%; 6 estrangeira direta sem similar (CAMEX); 7 estrangeira mercado interno sem similar (CAMEX); 8 nacional CI > 70% |
-| Q01 | PIS | G | M01 | | 0-1 | | um de Q02 (CST 01/02: vBC, pPIS 3v2-4, vPIS), Q03 (CST 03), Q04 PISNT (CST 04, 05, 06, 07, 08, 09), Q05 PISOutr (CST 49–99) (pp. 52–54) |
+| Q01 | PIS | G | M01 | | 0-1 | | um de Q02 (CST 01/02: vBC, pPIS 3v2-4, vPIS), Q03 (CST 03), Q04 PISNT (CST 04, 05, 06, 07, 08, 09), Q05 PISOutr (CST 49, 50–56, 60–67, 70–75, 98, 99; vBC+pPIS ou qBCProd+vAliqProd, e vPIS) (pp. 52–54) |
 | S01 | COFINS | G | M01 | | 0-1 | | espelho do PIS: S02 (01/02), S03 (03), S04 COFINSNT (04–09), S05 COFINSOutr (49–99) (pp. 54–56) |
 
 ## 6. Totais, transporte, pagamento, informações adicionais (`[AI]` pp. 58–66)

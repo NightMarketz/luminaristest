@@ -121,6 +121,9 @@ export interface FiscalProfileView extends CostRegime {
   inscricaoMunicipal: string | null;
   cnae: string | null;
   dpsSerie: number;
+  inscricaoEstadual: string | null; // BE-INCR-NFCE item 8
+  nfeSerie: number; // BE-INCR-NFCE item 9
+  nfceSerie: number;
   regEspTrib: number;
   regApTribSN: number | null;
   issAliquotaBp: number | null;
@@ -439,6 +442,9 @@ export class FiscalProfileService {
         // BE-INCR-DFE (item 9): enum/boolean/int como string — sem texto livre (IM/CNAE ficam fora do evento)
         codMun: row.codMun ?? '',
         dpsSerie: String(row.dpsSerie),
+        inscricaoEstadual: row.inscricaoEstadual ?? '', // BE-INCR-NFCE item 8: só algarismos (C17), sem texto livre
+        nfeSerie: String(row.nfeSerie),
+        nfceSerie: String(row.nfceSerie),
         regEspTrib: String(row.regEspTrib),
         regApTribSN: row.regApTribSN == null ? '' : String(row.regApTribSN),
         issAliquotaBp: row.issAliquotaBp == null ? '' : String(row.issAliquotaBp),
@@ -549,6 +555,9 @@ export class FiscalProfileService {
       inscricaoMunicipal: row.inscricaoMunicipal,
       cnae: row.cnae,
       dpsSerie: row.dpsSerie,
+      inscricaoEstadual: row.inscricaoEstadual,
+      nfeSerie: row.nfeSerie,
+      nfceSerie: row.nfceSerie,
       regEspTrib: row.regEspTrib,
       regApTribSN: row.regApTribSN,
       issAliquotaBp: row.issAliquotaBp,

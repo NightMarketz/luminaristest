@@ -62,6 +62,9 @@ codMun?: (string | null)
 inscricaoMunicipal?: (string | null)
 cnae?: (string | null)
 dpsSerie?: number
+inscricaoEstadual?: (string | null)
+nfeSerie?: number
+nfceSerie?: number
 regEspTrib?: number
 regApTribSN?: (number | null)
 issAliquotaBp?: (number | null)
