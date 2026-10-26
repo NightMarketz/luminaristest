@@ -68,6 +68,7 @@ model User {
   taxAssessments             TaxAssessment[] // BE-INCR-TAX-ASSESSMENT Fase A (nó X7, item 12) — apuração IRPJ/CSLL da PJ
   consumptionTaxAssessments  ConsumptionTaxAssessment[] // IBS-CBS-2027 PR-2 (item 8) — apuração mensal de IBS/CBS
   mitExports                 MitExport[] // BE-INCR-MIT-EXPORT PR-2 (nó X9, item 11) — arquivos do MIT gerados
+  reinfBatches               ReinfBatch[] // BE-INCR-EFD-REINF PR-1 (item 10) — lotes da EFD-Reinf gerados
   simplesHistorico           SimplesHistoricoMensal[] // BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14, itens 10–11)
   simplesApuracoes           SimplesApuracao[] // X14 PR-3 item 19
   simplesDeclaracoesAnuais   SimplesDeclaracaoAnual[] // X14 PR-4 itens 27–28
@@ -1824,6 +1825,9 @@ model CompanyFiscalProfile {
   // PRESUMIDO-TETO-78MI item 5 (F-PT-2 c): receita total do ano anterior declarada (IN 1.700 art. 59 § 1º), em centavos.
   // Só PRESUMIDO/REAL. Não é copiada para outro ano.
   receitaTotalAnoAnteriorCents     BigInt?
+  // BE-INCR-EFD-REINF PR-1 (item 4; lacuna B, dono 26/10: "Campo no perfil fiscal") — `classTrib` do R-1000 (Tabela 08)
+  // do Simples: '01' | '02' | '03' conforme a CPP (P-REINF-7 ao contador). MEI = 04 e Presumido/Real = 99 são derivados.
+  reinfClassTrib                   String?
   createdById                      String?
   updatedById                      String?
   createdAt                        DateTime           @default(now())
@@ -3107,6 +3111,26 @@ model ConsumptionTaxAssessment {
 
   @@index([userId, anoCalendario, mes, tributo])
   @@map("consumption_tax_assessments")
+}
+
+// BE-INCR-EFD-REINF PR-1 (BRIEF item 10, §5.2; PRE-ADR D4/D8) — registro de cada lote da EFD-Reinf gerado, molde
+// MitExport: hash do lote + `eventos[]` (tipo, idEvento, sha256, origemIds, beneficiarioRef = id interno — nunca CPF/CNPJ).
+// O XML NÃO é persistido. `defasado` é calculado na leitura (item 13). Imutável: só `create` (PR-4 soma o CAS de status).
+model ReinfBatch {
+  id          String   @id @default(cuid())
+  userId      String // a PJ (R8: CNPJ raiz)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade) // como MitExport
+  competencia String // YYYY-MM (perApur)
+  tpAmb       Int // 1 produção | 2 produção restrita
+  eventos     Json // [{ tipo, idEvento, sha256, origemIds, beneficiarioRef?, conteudoSha256? (R-1000), retificaRecibo?, nrRecibo? }]
+  sha256      String // do lote
+  status      String // GERADO | TRANSMITIDO | ACEITO | REJEITADO
+  protocolo   String? // PR-4
+  geradoPorId String
+  createdAt   DateTime @default(now())
+
+  @@index([userId, competencia])
+  @@map("reinf_batches")
 }
 
 // BE-INCR-MIT-EXPORT PR-2 (nó X9, BRIEF item 11; F-X9-2 a) — registro de cada arquivo do MIT gerado, molde

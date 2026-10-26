@@ -51,6 +51,7 @@ export type WithholdingLineView = z.infer<typeof WithholdingLineViewSchema>;
 export const WithholdingLineForReinfSchema = WithholdingLineViewSchema.extend({
   settlementId: z.string().nullable(), // baixa WITHHOLDING da linha (null na dispensa)
   originSettlementId: z.string().nullable(), // PAYMENT que gerou a CSRF
+  unitId: z.string(), // BE-INCR-EFD-REINF PR-1 (dono 26/10): a unidade da linha — o vencimento do DARF sai do `resumo` dela
 }).strict();
 export type WithholdingLineForReinf = z.infer<typeof WithholdingLineForReinfSchema>;
 

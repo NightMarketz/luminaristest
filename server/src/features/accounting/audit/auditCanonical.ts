@@ -213,7 +213,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     'simplesExclusaoEfeitosEm',
     'jcpBaseContas', // IRRF-DISTRIBUICAO item 8 (F-IRD-15): JSON só com ids de conta
     // PRESUMIDO-TETO-78MI item 5 (F-PT-2 c): centavos da receita total do ano anterior declarada (número da PJ, sem PII).
-    'receitaTotalAnoAnteriorCents'],
+    'receitaTotalAnoAnteriorCents',
+    // BE-INCR-EFD-REINF PR-1 (item 4): enum 01–03 da Tabela 08 da Reinf (sem PII).
+    'reinfClassTrib'],
   'company_fiscal_profile.deleted': ['anoCalendario'],
   // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7, item 22) — só ids, enum e centavos como string; sem PII. O documento
   // da dedução (texto livre) e a memória ficam FORA do evento.
@@ -225,6 +227,8 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'tax.ibs_cbs_assessment.superseded': ['assessmentId', 'supersededById', 'anoCalendario', 'mes', 'tributo', 'saldoCents'],
   // BE-INCR-MIT-EXPORT PR-2 (nó X9, item 16; D12, invariante 9) — sem CPF, e-mail, telefone nem conteúdo do arquivo.
   'tax.mit_export.generated': ['mitExportId', 'anoCalendario', 'mes', 'sha256', 'apuracaoIds'],
+  // BE-INCR-EFD-REINF PR-1 (gates do BRIEF §4): ids, competência, hash e a contagem por tipo de evento (JSON) — sem CPF/CNPJ.
+  'tax.reinf_batch.generated': ['batchId', 'competencia', 'sha256', 'contagemPorTipo'],
   // BE-INCR-SIMPLES-NACIONAL PR-3 (nó X14, item 24): SIMPLES_DAS_REGISTRADO / _SUBSTITUIDO — ids, competência e centavos
   // como string; o número do DAS e a memória ficam FORA.
   'tax.simples_das.registrado': ['apuracaoId', 'competencia', 'valorOficialCents', 'totalCalculadoCents', 'divergenciaCents'],

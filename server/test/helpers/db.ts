@@ -155,6 +155,8 @@ export async function resetDb(): Promise<void> {
   await prisma.fiscalCertificate.deleteMany();
   // BE-INCR-MIT-EXPORT PR-2 (nó X9): mit_exports só referencia User (Cascade) — sem ordem de FK.
   await prisma.mitExport.deleteMany();
+  // BE-INCR-EFD-REINF PR-1: reinf_batches só referencia User (Cascade) — sem ordem de FK.
+  await prisma.reinfBatch.deleteMany();
   // BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14): só referenciam User (Cascade) — sem ordem de FK.
   await prisma.simplesHistoricoMensal.deleteMany();
   await prisma.simplesSegregacaoManual.deleteMany();

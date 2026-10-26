@@ -52,6 +52,7 @@ import { TaxAssessmentRepository } from '../features/accounting/repositories/Tax
 import { ConsumptionTaxAssessmentRepository } from '../features/accounting/repositories/ConsumptionTaxAssessmentRepository';
 import type { IConsumptionTaxAssessmentRepository } from '../features/accounting/repositories/IConsumptionTaxAssessmentRepository';
 import { MitExportRepository } from '../features/accounting/repositories/MitExportRepository';
+import { ReinfBatchRepository } from '../features/accounting/repositories/ReinfBatchRepository';
 import { SimplesEntradasRepository } from '../features/accounting/repositories/SimplesEntradasRepository';
 import { ReceitaFiscalRepository } from '../features/accounting/repositories/ReceitaFiscalRepository';
 import { ReceitaFiscalRecebimentoRepository } from '../features/accounting/repositories/ReceitaFiscalRecebimentoRepository';
@@ -165,6 +166,7 @@ import { TaxAssessmentService } from '../features/accounting/services/TaxAssessm
 import { PresumidoTetoService } from '../features/accounting/services/PresumidoTetoService';
 import { TaxAssessmentPeriodosService } from '../features/accounting/services/TaxAssessmentPeriodosService';
 import { MitExportService } from '../features/accounting/services/MitExportService';
+import { ReinfService } from '../features/accounting/services/ReinfService';
 import { SimplesEntradasService } from '../features/accounting/services/SimplesEntradasService';
 import { ReceitaFiscalService } from '../features/accounting/services/ReceitaFiscalService';
 import { ReceitaFiscalRecebimentoService } from '../features/accounting/services/ReceitaFiscalRecebimentoService';
@@ -317,6 +319,7 @@ import type { IFiscalCertificateRepository } from '../features/accounting/reposi
 import type { ICollectionChargeRepository } from '../features/accounting/repositories/ICollectionChargeRepository';
 import type { ITaxAssessmentRepository } from '../features/accounting/repositories/ITaxAssessmentRepository';
 import type { IMitExportRepository } from '../features/accounting/repositories/IMitExportRepository';
+import type { IReinfBatchRepository } from '../features/accounting/repositories/IReinfBatchRepository';
 import type { ISimplesEntradasRepository } from '../features/accounting/repositories/ISimplesEntradasRepository';
 import type { IReceitaFiscalRepository } from '../features/accounting/repositories/IReceitaFiscalRepository';
 import type { IReceitaFiscalRecebimentoRepository } from '../features/accounting/repositories/IReceitaFiscalRecebimentoRepository';
@@ -832,6 +835,7 @@ export class ApplicationFactory {
     taxAssessment: ITaxAssessmentRepository; // X7 Fase A PR-2
     consumptionTaxAssessment: IConsumptionTaxAssessmentRepository; // IBS-CBS-2027 PR-2 (item 8)
     mitExport: IMitExportRepository; // X9 PR-2
+    reinfBatch: IReinfBatchRepository; // EFD-REINF PR-1 (item 10)
     simplesEntradas: ISimplesEntradasRepository; // X14 PR-2
     receitaFiscal: IReceitaFiscalRepository; // X14 PR-2
     receitaFiscalRecebimento: IReceitaFiscalRecebimentoRepository; // X14-CAIXA PR-1
@@ -942,6 +946,7 @@ export class ApplicationFactory {
     taxAssessment: TaxAssessmentService; // X7 Fase A PR-2
     taxAssessmentPeriodos: TaxAssessmentPeriodosService; // TAX-ASSESSMENT-PERIODOS
     mitExport: MitExportService; // X9 PR-2
+    reinf: ReinfService; // EFD-REINF PR-1 (itens 4–14)
     simplesEntradas: SimplesEntradasService; // X14 PR-2
     receitaFiscal: ReceitaFiscalService; // X14 PR-2
     receitaFiscalRecebimento: ReceitaFiscalRecebimentoService; // X14-CAIXA PR-1
@@ -1048,6 +1053,7 @@ export class ApplicationFactory {
       taxAssessment: new TaxAssessmentRepository(),
       consumptionTaxAssessment: new ConsumptionTaxAssessmentRepository(),
       mitExport: new MitExportRepository(),
+      reinfBatch: new ReinfBatchRepository(),
       simplesEntradas: new SimplesEntradasRepository(),
       receitaFiscal: new ReceitaFiscalRepository(),
       receitaFiscalRecebimento: new ReceitaFiscalRecebimentoRepository(),
@@ -1969,6 +1975,17 @@ export class ApplicationFactory {
         auditService,
         legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia CODIGO_RECEITA
       ),
+      // BE-INCR-EFD-REINF PR-1: lote da Reinf a partir da porta de retenções da PJ (lacuna A) e do resumo D8 por unidade.
+      reinf: new ReinfService(
+        this.repositories.reinfBatch,
+        this.repositories.taxWithholding,
+        withholdingService,
+        this.repositories.companyFiscalProfile,
+        this.repositories.accountingContact,
+        this.policies.accounting,
+        auditService,
+        legalParameterService,
+      ),
       // BE-INCR-PIS-COFINS PR-2 (nó X8): prévia/confirmação da apuração mensal de PIS/Cofins (reusa o TaxAssessment do X7).
       pisCofinsAssessment: pisCofinsAssessmentService,
       // IBS-CBS-2027 PR-2 (itens 6–13): apuração mensal de IBS/CBS + reclassificação receita → a recolher (item 12).
@@ -2401,6 +2418,7 @@ export class ApplicationFactory {
   public getTaxAssessmentService = (): TaxAssessmentService => this.services.taxAssessment;
   public getTaxAssessmentPeriodosService = (): TaxAssessmentPeriodosService => this.services.taxAssessmentPeriodos;
   public getMitExportService = (): MitExportService => this.services.mitExport;
+  public getReinfService = (): ReinfService => this.services.reinf;
   public getSimplesEntradasService = (): SimplesEntradasService => this.services.simplesEntradas;
   public getReceitaFiscalService = (): ReceitaFiscalService => this.services.receitaFiscal;
   public getReceitaFiscalRecebimentoService = (): ReceitaFiscalRecebimentoService => this.services.receitaFiscalRecebimento;
