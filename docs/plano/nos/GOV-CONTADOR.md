@@ -51,7 +51,7 @@ atualizado: "2026-10-15"
   a consulta: (i) o **contrato-modelo** com o contador parceiro, que tem de dizer que o cliente registra as operações
   (NBC PG 01 item 10); o código não faz isso; (ii) a **reabertura**: ou o contador aceita o F-GOV-11 (a), ou o dono reabre
   o F-GOV-11. Ponto novo: a Res. CFC 1.640 art. 3º XXX diz que parametrizar regras fiscais e contábeis em software é
-  atribuição de profissional da contabilidade.
+  atribuição de profissional da contabilidade. **Dono, chat, 26/10:** "Vou enviar a v2 de 2 perguntas ao CRC-SP."
 
 ## Fold 02/10 — ratificação
 

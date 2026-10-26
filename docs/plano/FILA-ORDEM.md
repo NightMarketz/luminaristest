@@ -23,7 +23,7 @@
 | A4 | **M2 — host e 1º deploy** [[M2]] | VPS contratada (26/09). Chave do MP no ambiente e conta de emissão por unidade (R8). | [[F5]] em produção, [[PACOTE-VALIDADE]], [[GOV-CONTADOR]] (consulta CFC), [[P4]] (assinatura) | Deploy após H2. |
 | A5 | **D7 — PNCT** (vigilância de comunicações) | Prazo **31/12/2026**. Nasce com a emissão (depende de A1). | — | Corrigir até o prazo, com contador responsável. |
 | A6 | **D1 / D1f / D2 — contador e XML real de NF-e** | Pedido de follow-up de 26/09 não enviado; falta alíquota de ISS e cClassTrib; sem XML real (E9 fica preso). | Fixtures reais ([[E9]]), itens 5a–5f | Enviar o pedido ao contador (o agente só monta). |
-| A7 | **F-GOV-1 — consulta ao CRC-SP** | Dono decidiu enviar agora (10/10). 26/10: opcional, v2 com 2 perguntas. | [[GOV-CONTADOR]] | Dono escolhe: enviar a v2, enviar a v1 ou não enviar. |
+| A7 | **F-GOV-1 — consulta ao CRC-SP** | Dono decidiu enviar agora (10/10). 26/10: opcional, v2 com 2 perguntas; dono decidiu enviar a v2. | [[GOV-CONTADOR]] | Confirmar envio da v2 (data e protocolo). |
 
 ## B. Código destravado (precisa de `executa` do dono, por PR)
 

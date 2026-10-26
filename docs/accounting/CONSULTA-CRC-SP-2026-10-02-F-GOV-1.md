@@ -16,6 +16,8 @@
 > Ficam a 2 e a 3. **O dono decide** se envia a v2, se envia a v1 já aprovada ou se não envia. Se não enviar, os riscos
 > das 2 perguntas ficam aceitos por escrito (F-GOV-11 a, ratificado contra a recomendação em 02/10). A trava comercial do
 > Q4 (10/10) só cai por decisão nova dele.
+> **Decisão do dono (chat, 26/10/2026):** "Vou enviar a v2 de 2 perguntas ao CRC-SP." A v1 fica como histórico. Envio =
+> dono; data de envio e protocolo: _a preencher pelo dono_. A trava comercial do Q4 continua até a triagem da resposta.
 
 ---
 
