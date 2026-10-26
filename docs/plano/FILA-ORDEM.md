@@ -13,6 +13,28 @@
 3. **Código só com `executa` citável** (ORCH-006). Brief pronto sem `executa` não entra como "a fazer agora": entra como "pronto para autorizar".
 4. Dependência explícita (`depende_de`) manda. Sufixo `?` (condicional) não bloqueia, mas sinaliza risco.
 
+## Estado em 26/10 (revisão semanal — não muda a ordem)
+
+> Leitura de `origin/main` em 26/10 ([[REVISAO-SEMANAL-2026-10-26]]). Só atualiza o **estado** de cada linha abaixo;
+> a ordem A–F continua a ratificada. Estado de nó manda o frontmatter.
+
+- **A1** fechado em 22/10 (portal + PAA; [[D5]]). Resta: quem contrata PSC + e-CNPJ. **A2** H1 passos 1–5 provados
+  (tentativa 3, 22/10); passo 6 é o último do plano. **A3/A4** H2 → M2 seguem os próximos gates humanos, sem bloqueio
+  de código. **A5** D7 até 31/12. **A6** D1f alíquota decidida por delegação; cClassTrib e XML real seguem abertos.
+  **A7** F-GOV-1 em docs (#904/#905 abertos).
+- **B1** X9: PR-2 (#566) e PR-3 (#908) em `main`; PR-4 #860 aberto — fecha o nó. **B2** I4+I5: sem movimento na semana.
+  **B3** DEFIS-MANUAL / GET-ENTRADAS: sem movimento. **B5** CRM-RB PR-C: sem movimento (BE do GET ainda não existe).
+  **B6** F5 FE em `main` (#862, 23/10) — fechado como item de fila; o nó segue `inflight` por 16b/16c e chave do M2.
+  **B7** fechado (#866, nó `done` 24/10). **B8** LAC-B EMENDA-2: PR-0 #916 e PR-1 #919 abertos (26/10).
+- **C** W6 em `main` (#785/#786), nó `human-open`; W3 BRIEF da confirmação fechado (#788), forks F-W3-C1..C3 pendentes.
+- **D** X10a: 4 PRs abertos em 26/10 (#909 → #910 → #914 → #917) — **a nota ainda diz `blocked`**; o fold entra nesses PRs.
+- **E1** fechado 20/10 · **E2** fechado (#883) · **E3** #897 em `main`, resíduo #898 aberto · **E4** lotes 1–4 em `main`,
+  #10/#11/#20 esperam o dono · **E5** lotes A–C em `main`, 22 itens instrumentados, decisões de produto esperam o dono ·
+  **E6** fechado (nó `done` 24/10) · **E7** #894 em `main`, #899 aberto · **E8** sem movimento (BRIEF não pushado).
+- **F1** IBS-CBS-2027 `done` (24/10) · RETENCOES-FONTE PR-1/PR-2 em `main`, PR-3/4 esperam o contador · PRESUMIDO-TETO-78MI
+  #887 em `main` · ISS-TRANSICAO-IBS PR-1 #885 em `main` · EFD-REINF PR-1 #912 aberto · NFE-DANFE-IBSCBS PR-0 #906 e PR-1 #915
+  abertos (alvo 30/11) · **F1.5** EFICIENCIA-FISCAL PR-1 #913 aberto. **F2–F5** sem nó em `nos/`; Q4–Q12 abertas.
+
 ## A. Prazos e decisões do dono (só o dono move)
 
 | # | Item | Por que está aqui | Desbloqueia | Ação do dono |

@@ -1,0 +1,392 @@
+<title>Roadmap Luminaris 26/10</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: one sticky tab bar, two views; view 1 is a scanned briefing (tiles → trilhos → tarefas), view 2 is a timeline + table. */
+  :root {
+    --bg: #f6f7f9;
+    --surface: #ffffff;
+    --surface-2: #eef1f5;
+    --line: #d6dbe3;
+    --fg: #15181d;
+    --fg-2: #4e5663;
+    --fg-3: #7a8290;
+    --accent: #1f4e8c;
+    --accent-soft: #dbe7f7;
+    --st-done: #0ca30c;
+    --st-inflight: #2a78d6;
+    --st-planned: #6b7280;
+    --st-blocked: #d03b3b;
+    --st-human: #b07a00;
+    --st-legal: #7c3aed;
+    --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", "Consolas", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141618; --surface: #1c1f23; --surface-2: #24282e; --line: #353a42;
+      --fg: #eef0f3; --fg-2: #b4bac4; --fg-3: #858c99;
+      --accent: #6ea3ea; --accent-soft: #223a5c;
+      --st-done: #3fc43f; --st-inflight: #5a9cf0; --st-planned: #9aa3b2; --st-blocked: #ee6a6a; --st-human: #f0c34a; --st-legal: #b08cf5;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141618; --surface: #1c1f23; --surface-2: #24282e; --line: #353a42;
+    --fg: #eef0f3; --fg-2: #b4bac4; --fg-3: #858c99;
+    --accent: #6ea3ea; --accent-soft: #223a5c;
+    --st-done: #3fc43f; --st-inflight: #5a9cf0; --st-planned: #9aa3b2; --st-blocked: #ee6a6a; --st-human: #f0c34a; --st-legal: #b08cf5;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+  .wrap { max-width: 1100px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+  header.top { padding-block: 28px 12px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; }
+  header.top h1 { margin: 0; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+  header.top .meta { color: var(--fg-2); font-family: var(--font-mono); font-size: 0.8rem; }
+  nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
+  nav.tabs a { padding: 10px 14px; text-decoration: none; color: var(--fg-2); font-weight: 600; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  nav.tabs a[aria-current="page"] { color: var(--accent); border-bottom-color: var(--accent); }
+  nav.tabs a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  section.view[hidden] { display: none; }
+  h2 { font-size: 1.1rem; margin: 28px 0 10px; font-weight: 700; }
+  h3 { font-size: 0.95rem; margin: 0 0 6px; font-weight: 600; }
+  p { margin: 0 0 10px; max-width: 72ch; }
+  .muted { color: var(--fg-2); }
+  .small { font-size: 0.85rem; }
+  .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .note { background: var(--surface-2); border-left: 3px solid var(--accent); padding: 10px 14px; border-radius: 0 6px 6px 0; max-width: 100%; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .tile { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-width: 0; }
+  .tile .k { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-3); }
+  .tile .v { font-family: var(--font-mono); font-size: 1.7rem; font-weight: 500; line-height: 1.15; font-variant-numeric: tabular-nums; }
+  .tile .s { font-size: 0.8rem; color: var(--fg-2); }
+  .tile .bar { height: 6px; background: var(--surface-2); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+  .tile .bar i { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; min-width: 0; }
+  .card ul { margin: 0; padding-left: 18px; }
+  .card li { margin: 4px 0; }
+  .pill { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 0.72rem; padding: 1px 7px; border-radius: 999px; border: 1px solid currentColor; line-height: 1.5; white-space: nowrap; vertical-align: middle; }
+  .pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .pill.done { color: var(--st-done); }
+  .pill.inflight { color: var(--st-inflight); }
+  .pill.planned { color: var(--st-planned); }
+  .pill.blocked { color: var(--st-blocked); }
+  .pill.human { color: var(--st-human); }
+  .pill.legal { color: var(--st-legal); }
+  .pill.legal::before { border-radius: 1px; transform: rotate(45deg); }
+  .pill.human::before { border-radius: 1px; }
+  .pill.blocked::before { width: 9px; height: 3px; border-radius: 1px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; }
+  .chip .mono { color: var(--fg-3); font-size: 0.75rem; }
+  ol.tasks { margin: 0; padding-left: 22px; }
+  ol.tasks li { margin: 6px 0; }
+  ol.tasks li > .who { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--fg-3); margin-right: 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+  .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-3); background: var(--surface-2); position: sticky; top: 0; }
+  tr:last-child td { border-bottom: 0; }
+  td.n, th.n { font-family: var(--font-mono); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  /* timeline */
+  .tl { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px 8px; overflow: hidden; }
+  .tl-head { display: grid; grid-template-columns: 220px 1fr; gap: 10px; align-items: end; }
+  .tl-months { position: relative; height: 22px; border-bottom: 1px solid var(--line); }
+  .tl-months span { position: absolute; bottom: 2px; font-family: var(--font-mono); font-size: 0.7rem; color: var(--fg-3); transform: translateX(-50%); white-space: nowrap; }
+  .tl-months span::after { content: ""; position: absolute; left: 50%; bottom: -6px; height: 5px; border-left: 1px solid var(--line); }
+  .tl-row { display: grid; grid-template-columns: 220px 1fr; gap: 10px; align-items: center; min-height: 32px; border-bottom: 1px dashed var(--line); }
+  .tl-row:last-child { border-bottom: 0; }
+  .tl-row.group { min-height: 24px; border-bottom: 0; margin-top: 6px; }
+  .tl-row.group .lab { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-3); font-weight: 600; }
+  .tl-row .lab { font-size: 0.84rem; line-height: 1.25; min-width: 0; padding: 4px 0; }
+  .tl-row .lab small { display: block; color: var(--fg-3); font-family: var(--font-mono); font-size: 0.7rem; }
+  .track { position: relative; height: 24px; min-width: 0; }
+  .today { position: absolute; top: 0; bottom: 0; border-left: 2px solid var(--accent); opacity: 0.7; }
+  .bar { position: absolute; top: 6px; height: 12px; border-radius: 3px; min-width: 6px; cursor: default; }
+  .bar.proj { background: var(--st-inflight); }
+  .bar.gate { background: repeating-linear-gradient(135deg, var(--st-human) 0 4px, transparent 4px 7px); border: 1px solid var(--st-human); }
+  .bar.proj.fuzzy { opacity: 0.55; }
+  .dia { position: absolute; top: 5px; width: 14px; height: 14px; transform: translateX(-50%) rotate(45deg); background: var(--st-legal); border-radius: 2px; cursor: default; }
+  .dia.past { background: var(--st-done); }
+  .track .tag { position: absolute; top: 2px; font-family: var(--font-mono); font-size: 0.68rem; color: var(--fg-2); white-space: nowrap; }
+  .tip { position: fixed; z-index: 20; max-width: 320px; background: var(--fg); color: var(--bg); padding: 8px 10px; border-radius: 6px; font-size: 0.8rem; pointer-events: none; box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 10px 0 0; font-size: 0.8rem; color: var(--fg-2); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { display: inline-block; width: 14px; height: 10px; border-radius: 2px; }
+  .legend i.proj { background: var(--st-inflight); }
+  .legend i.gate { background: repeating-linear-gradient(135deg, var(--st-human) 0 4px, transparent 4px 7px); border: 1px solid var(--st-human); }
+  .legend i.leg { width: 10px; height: 10px; transform: rotate(45deg); background: var(--st-legal); }
+  .legend i.now { width: 2px; height: 14px; background: var(--accent); }
+  @media (max-width: 640px) {
+    .tl-head, .tl-row { grid-template-columns: 1fr; gap: 2px; }
+    .tl-head .lab { display: none; }
+    .tl-row { min-height: 0; padding-block: 4px; }
+  }
+  @media (prefers-reduced-motion: no-preference) { nav.tabs a { transition: color 120ms; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Roadmap Luminaris</h1>
+    <div class="meta">leitura de origin/main 4463385c · 26/10/2026 21:47 UTC · régua 55/63</div>
+  </header>
+
+  <nav class="tabs" aria-label="Abas">
+    <a href="#roadmap" id="tab-roadmap" data-view="roadmap">Roadmap e próximas tarefas</a>
+    <a href="#prazos" id="tab-prazos" data-view="prazos">Prazos e milestones</a>
+  </nav>
+
+  <!-- ================= ABA 1 ================= -->
+  <section class="view" id="view-roadmap" aria-labelledby="tab-roadmap">
+    <p class="note small">Avaliação do agente sobre a semana 19–26/10. Estado de nó manda o frontmatter do vault (<span class="mono">docs/plano</span>); ordem manda a <span class="mono">FILA-ORDEM</span>. Nada aqui autoriza código nem merge.</p>
+
+    <h2>Semana em números</h2>
+    <div class="tiles">
+      <div class="tile"><div class="k">PRs mergeados</div><div class="v">107</div><div class="s">semana anterior: 139</div></div>
+      <div class="tile"><div class="k">Nós fechados</div><div class="v">14</div><div class="s">done entre 20 e 24/10</div></div>
+      <div class="tile"><div class="k">Decisões do dono</div><div class="v">39</div><div class="s">cédulas D-2026-10-19..25</div></div>
+      <div class="tile"><div class="k">PRs abertos</div><div class="v">19</div><div class="s">todos "não mergear sem OK"</div></div>
+      <div class="tile"><div class="k">Contábil</div><div class="v">21<span class="muted" style="font-size:1rem">/22</span></div><div class="bar"><i style="width:95%"></i></div></div>
+      <div class="tile"><div class="k">Financeiro</div><div class="v">17<span class="muted" style="font-size:1rem">/19</span></div><div class="bar"><i style="width:89%"></i></div></div>
+      <div class="tile"><div class="k">Fiscal</div><div class="v">17<span class="muted" style="font-size:1rem">/22</span></div><div class="bar"><i style="width:77%"></i></div></div>
+      <div class="tile"><div class="k">CI em main</div><div class="v" style="color:var(--st-done)">verde</div><div class="s">última run 26/10 21:47</div></div>
+    </div>
+
+    <h2>O que fechou na semana</h2>
+    <div class="chips">
+      <span class="chip">IBS-CBS-2027 <span class="mono">PR-1..5 · #812 #826 #829 #833 #842 #861 #868</span></span>
+      <span class="chip">IRRF-DISTRIBUICAO <span class="mono">PR-1..4 · #794 #863 #864 #865</span></span>
+      <span class="chip">W1 Entrevista com IA <span class="mono">#889 #890 #891</span></span>
+      <span class="chip">FIX-FE-DASHBOARD <span class="mono">6 lotes · #804…#884</span></span>
+      <span class="chip">TESTE-ACOPLAMENTO-PRESET <span class="mono">#883</span></span>
+      <span class="chip">FE-INCR-BANK-SETTLEMENT-FEE <span class="mono">#866</span></span>
+      <span class="chip">I6 <span class="mono">fold #796</span></span>
+      <span class="chip">X14-CAIXA · FE-INCR-SIMPLES · DT-ARQ · 3 FIX de 19/10 <span class="mono">fold R0 #775</span></span>
+    </div>
+
+    <h2>Trilhos: onde cada frente está</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Fiscal, onda F1 (prazos 01/12/2026 e 01/01/2027)</h3>
+        <ul>
+          <li><span class="pill done">done</span> IBS-CBS-2027: tabela, apuração, crédito, split payment, matriz e export do contador</li>
+          <li><span class="pill inflight">inflight</span> RETENCOES-FONTE: PR-1/PR-2 em main; PR-3/4 esperam o contador (P-RET-4, 7..9)</li>
+          <li><span class="pill inflight">inflight</span> PRESUMIDO-TETO-78MI #887 em main · ISS-TRANSICAO-IBS PR-1 #885 em main</li>
+          <li><span class="pill inflight">inflight</span> X9 DCTFWeb/MIT: PR-3 #908 em main; PR-4 #860 aberto fecha o nó</li>
+          <li><span class="pill planned">PR aberto</span> EFD-REINF PR-1 #912 · NFE-DANFE-IBSCBS PR-0 #906 → PR-1 #915 · EFICIENCIA-FISCAL PR-1 #913</li>
+          <li><span class="pill blocked">blocked</span> X10a (4 PRs abertos 26/10, nota ainda blocked) · X10i · X11 · CSLL-RESSEGURADORES</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Gates humanos (cadeia decidida 22/10)</h3>
+        <ul>
+          <li><span class="pill done">feito</span> H1 passos 1–5: ECD 0 erros no PVA, ECF importa (L10 #837, Y600 #841)</li>
+          <li><span class="pill human">humano</span> H2 sign-off de browser: próximo; runbooks em branco, não espera mais o H1</li>
+          <li><span class="pill human">humano</span> M2 host + 1º deploy: VPS contratada; precisa chave MP e ALERT_WEBHOOK_URL</li>
+          <li><span class="pill human">humano</span> 1º cliente: NFS-e pelo portal desde 01/11, releitura pelo ManualEmissor (D5)</li>
+          <li><span class="pill human">último</span> H1 passo 6 + assinaturas (ECD/ECF, P4): depois do 1º cliente</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Achados de 19/10 (seção E da fila)</h3>
+        <ul>
+          <li><span class="pill done">done</span> E1 (4 PRs) · E2 TESTE-ACOPLAMENTO-PRESET · E6 FIX-FE-DASHBOARD</li>
+          <li><span class="pill inflight">inflight</span> E3 FIX-PLUGINS-VENDA #897 em main, resíduo #898 aberto</li>
+          <li><span class="pill inflight">inflight</span> E7 FIX-ANALYTICS-RESIDUO #894 em main, #899 aberto</li>
+          <li><span class="pill inflight">inflight</span> E4 FIX-AUTH-CONTA lotes 1–4 em main; #10/#11/#20 esperam decisão; #19 vira BRIEF (CSRF)</li>
+          <li><span class="pill inflight">inflight</span> E5 FIX-CHAT-AGENTE lotes A–C em main; 8 itens esperam decisão de produto</li>
+          <li><span class="pill planned">parado</span> E8 BRIEF BE-INCR-DT-NO-CONSUMER-CALLS não pushado</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Onboarding, FE e plataforma</h3>
+        <ul>
+          <li><span class="pill done">done</span> W1 em /dashboard/create · W6 painel de campos em main (nó human-open: rota ou remoção)</li>
+          <li><span class="pill inflight">inflight</span> KANBAN-REORDER: runbook FALHOU no passo 4 → fix #895 + EMENDA 1 #896 em main; passos 5–10 por rodar</li>
+          <li><span class="pill inflight">inflight</span> OBS: Fases A e C em main (#882); Fase B parcial (registro de acesso, webhook de alerta)</li>
+          <li><span class="pill inflight">inflight</span> F5 cobrança Mercado Pago: FE #862 em main; 16b/16c e chave do M2 faltam</li>
+          <li><span class="pill planned">PR aberto</span> LAC-B EMENDA-2 #916 → #919 · C8 emenda 3.2 #911 → #918 · GOV-CONTADOR #904/#905</li>
+          <li><span class="pill planned">PRE-ADR</span> BUILDER-VERTICAIS · OPEN-FINANCE-EXTRATO · FECHAMENTO-ASSISTIDO · VENDA-RECEBIVEL · FOLHA-CONTABILIZACAO · MODULE-BOUNDARIES</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Régua F (TOTVS · Salesforce · Power BI) e lista Odoo</h3>
+        <ul>
+          <li><span class="pill done">ratificado</span> Q1/Q2 de 20/10: régua própria de 22 nós; F1 planejada e em execução</li>
+          <li><span class="pill human">dono</span> Q4–Q12 abertas: entrada dos 6 nós propostos (VENDA-PARCELADA, PAGAMENTO-MISTO, ESTORNO-PAGAMENTO, GORJETA, CONCILIACAO-4-VIAS, CONTINGENCIA-EMISSOR), ordem por ondas, instrumentar devolução/cancelamento</li>
+          <li><span class="pill planned">proposto</span> Onda 1 venda e recebível (8 nós) → onda 2 (3) passa o Odoo (26,5/32) → onda 3 (6) → F5 → F4</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Riscos que a revisão expôs</h3>
+        <ul>
+          <li>Vault desatualizado em X10a: 4 PRs de código abertos com a nota em blocked; fold deve vir nesses PRs.</li>
+          <li>19 PRs abertos de 25–26/10: mesma classe de conflito do lote de 16/10. Mergear por pilha, base primeiro; snapshot de DTO regenerado na main.</li>
+          <li>01/12 (NT 2026.010) depende de DANFE PR-2/PR-3 que ainda não existem. Cabe no ritmo, não cabe sem OK de merge.</li>
+          <li>Oráculo externo segue o gargalo (4/4 do Bloco A abertos há mais de 14 dias): 6 dos 8 nós restantes da régua dependem de gate humano ou terceiro.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>Próximas tarefas, em ordem</h2>
+    <p class="muted small">Quem move cada uma está no rótulo. Código exige executa citável; merge exige número.</p>
+    <ol class="tasks">
+      <li><span class="who">dono</span><strong>OK de merge dos 19 PRs, por pilha:</strong> #860 · #898 (sobre #897) · #899 · #904 #905 · #906→#915 · #909→#910→#914→#917 · #911→#918 · #912 · #913 · #916→#919 · #907 (draft, nó a definir)</li>
+      <li><span class="who">agente</span><strong>Fold de X10a</strong> nos PRs #909–#917 (estado, prs, autorização citada) e check do vault.</li>
+      <li><span class="who">dono</span><strong>Decisões de produto pendentes:</strong> FIX-AUTH #10/#11/#20 · FIX-CHAT #6 #10 #11 #16 #17 #18 #20 e parte do #14 · Kanban (tela × rebalanceio parcial) · W6 (rota ou remoção) · W3 F-W3-C1..C3 · push do BRIEF E8</li>
+      <li><span class="who">agente</span><strong>NFE-DANFE-IBSCBS PR-2 e PR-3</strong> (executa já dado para PR-0..3; alvo 30/11) e <strong>EFD-REINF PR-2..PR-4</strong> depois do merge do PR-1.</li>
+      <li><span class="who">dono</span><strong>Régua F: Q4–Q12.</strong> Sem resposta, nenhum nó de onda 1 pode virar PRE-ADR.</li>
+      <li><span class="who">contador</span><strong>P-RET-4 e P-RET-7..9</strong> (destravam RETENCOES PR-3/4) · P-EF-1..6 · P-ISS-1..3 · P-PT-1..3 · cClassTrib (D1f) · XML real (D2).</li>
+      <li><span class="who">dono</span><strong>H2 sign-off de browser</strong> com o agente como copiloto (runbooks em branco; H1 1–5 prontos).</li>
+      <li><span class="who">dono</span><strong>M2 deploy:</strong> chave do Mercado Pago no ambiente, ALERT_WEBHOOK_URL, conta de emissão por unidade; depois a sonda de colunas do F5.</li>
+      <li><span class="who">dono</span><strong>Emissão:</strong> quem contrata o PSC e o e-CNPJ do Luminaris (resto aberto do D5); PNCT até 31/12 (D7).</li>
+      <li><span class="who">agente</span><strong>Sem movimento na semana e destravados:</strong> I4+I5 (BRIEF pronto), DEFIS-MANUAL e GET-ENTRADAS (BRIEFs prontos), CRM-RB PR-C (falta o BE do GET). Entram quando o dono der executa.</li>
+    </ol>
+  </section>
+
+  <!-- ================= ABA 2 ================= -->
+  <section class="view" id="view-prazos" aria-labelledby="tab-prazos" hidden>
+    <p class="note small"><strong>Projeção do agente, não ratificada.</strong> Datas legais estão verificadas no vault. Projeções usam o ritmo medido da semana (107 PRs, 14 nós, cerca de 3 PRs de feature por dia) e supõem OK de merge em até 2 dias. Gates humanos são janelas propostas, não compromissos.</p>
+
+    <h2>Linha do tempo: 19/10/2026 a 28/02/2027</h2>
+    <div class="tl" id="tl"></div>
+    <div class="legend">
+      <span><i class="leg"></i> prazo legal (losango)</span>
+      <span><i class="proj"></i> projeção do agente (barra)</span>
+      <span><i class="gate"></i> gate humano (janela proposta, hachurada)</span>
+      <span><i class="now"></i> hoje, 26/10</span>
+    </div>
+
+    <h2>Milestones</h2>
+    <div class="tablewrap">
+      <table id="ms-table">
+        <thead><tr><th class="n">#</th><th>Milestone</th><th>Tipo</th><th class="n">Data</th><th>Base e premissa</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <h2>Premissas e o que as derruba</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Ritmo</h3>
+        <ul>
+          <li>107 PRs e 14 nós fechados em 7 dias; 5 PRE-ADRs e 10 BRIEFs escritos. A semana anterior fez 139 PRs com menos planejamento.</li>
+          <li>Projeções de código assumem 1 nó de 3–4 PRs por semana por frente, com no máximo 3 frentes em paralelo (lição do lote de 16/10).</li>
+          <li>Derruba: fila de merge parada mais de 3 dias, ou conflito em massa por frentes partindo da mesma main.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Gates humanos</h3>
+        <ul>
+          <li>H2 → M2 → 1º cliente → H1 passo 6 é a ordem decidida em 22/10. As janelas são propostas do agente para caber antes de 01/12.</li>
+          <li>Derruba: contador sem resposta (RETENCOES PR-3/4, cClassTrib), PSC/e-CNPJ não contratado (X10i), chave do MP fora do ambiente (F5 em produção).</li>
+          <li>A régua de código já está em 55/63; 6 dos 8 restantes dependem de gate humano ou terceiro, então novas semanas de código não movem a régua sozinhas.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Régua F (ondas 1–3)</h3>
+        <ul>
+          <li>Nenhum nó de onda 1 existe em nos/. Cada um pede PRE-ADR → ratificação → BRIEF → executa. Duas semanas de planejamento depois de Q10–Q12 respondidas.</li>
+          <li>Onda 1 (8 nós) em código de fim de novembro a meados de dezembro; onda 2 (3 nós) fecha a régua de 32 em 26,5, passando o Odoo; onda 3 em jan–fev/2027.</li>
+          <li>Derruba: Q10–Q12 sem resposta, ou EMAIL-TRANSPORT (pré-requisito, Q7 BYOK) sem decisão.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="tip" id="tip" hidden></div>
+
+<script>
+(function () {
+  // ---- tabs by hash token
+  var views = { roadmap: document.getElementById('view-roadmap'), prazos: document.getElementById('view-prazos') };
+  var tabs = document.querySelectorAll('nav.tabs a');
+  function show(name) {
+    if (!views[name]) name = 'roadmap';
+    Object.keys(views).forEach(function (k) { views[k].hidden = (k !== name); });
+    tabs.forEach(function (a) { if (a.dataset.view === name) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    try { localStorage.setItem('lum-roadmap-tab', name); } catch (e) {}
+  }
+  var initial = (location.hash || '').replace('#', '');
+  if (!views[initial]) { try { initial = localStorage.getItem('lum-roadmap-tab') || 'roadmap'; } catch (e) { initial = 'roadmap'; } }
+  show(initial);
+  window.addEventListener('hashchange', function () { show((location.hash || '').replace('#', '')); });
+
+  // ---- timeline data
+  var START = new Date('2026-10-19T00:00:00'), END = new Date('2027-02-28T00:00:00'), TODAY = new Date('2026-10-26T00:00:00');
+  function pct(d) { return Math.max(0, Math.min(100, (d - START) / (END - START) * 100)); }
+  function D(s) { return new Date(s + 'T00:00:00'); }
+  function fmt(d) { return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2); }
+
+  var ms = [
+    { g: 'Prazos legais (verificados)' },
+    { id: 'L1', kind: 'legal', on: '2026-11-01', t: 'NFS-e nacional obrigatória (ME/EPP do Simples)', tipo: 'legal', data: '01/11/2026', base: 'Res. CGSN 191 art. 3º I. Cliente emite no portal; ManualEmissor em main (D5, 22/10). Não exige código.' },
+    { id: 'L2', kind: 'legal', on: '2026-12-01', t: 'DANFE com IBS/CBS (NT 2026.010) e NF-e p/ não contribuinte', tipo: 'legal', data: '01/12/2026', base: 'NFE-DANFE-IBSCBS alvo 30/11; Ato Conjunto RFB/CGIBS 4/2026 (D7).' },
+    { id: 'L3', kind: 'legal', on: '2026-12-31', t: 'PNCT: vigilância de comunicações', tipo: 'legal', data: '31/12/2026', base: 'D7; corrigir com contador responsável. Nasce com a emissão.' },
+    { id: 'L4', kind: 'legal', on: '2027-01-01', t: 'CBS plena, IBS teste, Simples pela LC 214', tipo: 'legal', data: '01/01/2027', base: 'IBS-CBS-2027 done 24/10. Precisa M2 em produção e linhas CBS 2027 publicadas nos parâmetros legais.' },
+    { g: 'Projeções do agente' },
+    { id: 'P1', kind: 'proj', from: '2026-10-27', to: '2026-10-30', t: 'Fila de 19 PRs zerada (merge por pilha)', tipo: 'projeção', data: '28–30/10', base: 'Depende só do OK do dono por número.' },
+    { id: 'P3', kind: 'proj', from: '2026-11-02', to: '2026-11-13', t: 'EFD-Reinf PR-2..PR-4 em main', tipo: 'projeção', data: '06–13/11', base: 'PR-1 #912 aberto; forks ratificados 22/10; sem fork pendente.' },
+    { id: 'P2', kind: 'proj', from: '2026-11-03', to: '2026-11-14', t: 'DANFE IBS/CBS PR-2 e PR-3 em main', tipo: 'projeção', data: '07–14/11', base: 'Alvo do BRIEF 30/11; PR-0/PR-1 abertos 26/10. Fecha o nó 2 semanas antes do L2.' },
+    { id: 'P4', kind: 'proj', from: '2026-11-13', to: '2026-11-13', t: 'Onda 0 da régua F fechada', tipo: 'projeção', data: '13/11', base: 'F5 FE, RETENCOES PR-1/2 e IBS-CBS PR-5 já em main; falta EFD-REINF. RETENCOES PR-3/4 ficam fora (contador).' },
+    { id: 'P5', kind: 'proj', fuzzy: true, from: '2026-11-23', to: '2026-12-18', t: 'Onda 1: venda e recebível (8 nós) em código', tipo: 'projeção', data: 'fim nov → meados dez', base: 'Nenhum nó existe em nos/. 2 semanas de PRE-ADR+BRIEF após Q10–Q12; EMAIL-TRANSPORT primeiro (Q7).' },
+    { id: 'P6', kind: 'proj', fuzzy: true, from: '2026-12-14', to: '2027-01-15', t: 'Onda 2 (3 nós): passa o Odoo (26,5/32)', tipo: 'projeção', data: 'dez/2026 → jan/2027', base: 'D-2026-10-22-LISTA-BRIEFS-ODOO; pontos copiados do painel de 22/10, não re-medidos.' },
+    { id: 'P7', kind: 'proj', fuzzy: true, from: '2027-01-11', to: '2027-02-26', t: 'Onda 3 (6 nós): 31/32', tipo: 'projeção', data: 'jan–fev/2027', base: 'RATEIO-DIMENSOES, ORCAMENTO, RB-CONTABIL, ALCADA, PROVISOES, FECHAMENTO-ASSISTIDO.' },
+    { g: 'Gates humanos (janelas propostas)' },
+    { id: 'G1', kind: 'gate', from: '2026-10-27', to: '2026-11-07', t: 'H2: sign-off de browser', tipo: 'gate humano', data: '27/10–07/11', base: 'Runbooks em branco; H1 1–5 feitos; não espera o H1 (22/10). Agente copiloto, não assina.' },
+    { id: 'G2', kind: 'gate', from: '2026-11-10', to: '2026-11-21', t: 'M2: host e 1º deploy', tipo: 'gate humano', data: '10–21/11', base: 'VPS contratada 26/09; chave MP; ALERT_WEBHOOK_URL; conta de emissão por unidade (R8). Depois de G1.' },
+    { id: 'G3', kind: 'gate', from: '2026-12-01', to: '2026-12-31', t: '1º cliente operando', tipo: 'gate humano', data: 'dez/2026', base: 'NFS-e pelo portal + releitura; data é do dono. Depois de G2.' },
+    { id: 'G4', kind: 'gate', from: '2027-01-04', to: '2027-01-29', t: 'H1 passo 6 + assinaturas (ECD/ECF, P4)', tipo: 'gate humano', data: 'após o 1º cliente', base: '"Último do último" (dono, 22/10). ECD assinada do cliente real no PVA.' }
+  ];
+
+  var tl = document.getElementById('tl');
+  var head = document.createElement('div'); head.className = 'tl-head';
+  var hl = document.createElement('div'); hl.className = 'lab'; hl.innerHTML = '<span class="small muted">19/10/2026 → 28/02/2027</span>';
+  var months = document.createElement('div'); months.className = 'tl-months';
+  [['2026-11-01', 'nov'], ['2026-12-01', 'dez'], ['2027-01-01', 'jan/27'], ['2027-02-01', 'fev']].forEach(function (m) {
+    var s = document.createElement('span'); s.style.left = pct(D(m[0])) + '%'; s.textContent = m[1]; months.appendChild(s);
+  });
+  head.appendChild(hl); head.appendChild(months); tl.appendChild(head);
+
+  var tip = document.getElementById('tip');
+  function bindTip(el, html) {
+    el.addEventListener('mouseenter', function (ev) { tip.innerHTML = html; tip.hidden = false; move(ev); });
+    el.addEventListener('mousemove', move);
+    el.addEventListener('mouseleave', function () { tip.hidden = true; });
+    el.setAttribute('tabindex', '0');
+    el.addEventListener('focus', function () { tip.innerHTML = html; tip.hidden = false; var r = el.getBoundingClientRect(); tip.style.left = Math.min(r.left, window.innerWidth - 330) + 'px'; tip.style.top = (r.bottom + 8) + 'px'; });
+    el.addEventListener('blur', function () { tip.hidden = true; });
+    function move(ev) { tip.style.left = Math.min(ev.clientX + 12, window.innerWidth - 330) + 'px'; tip.style.top = (ev.clientY + 14) + 'px'; }
+  }
+
+  var tbody = document.querySelector('#ms-table tbody');
+  ms.forEach(function (m) {
+    var row = document.createElement('div');
+    if (m.g) { row.className = 'tl-row group'; row.innerHTML = '<div class="lab">' + m.g + '</div><div></div>'; tl.appendChild(row); return; }
+    row.className = 'tl-row';
+    var lab = document.createElement('div'); lab.className = 'lab'; lab.innerHTML = m.t + '<small>' + m.id + ' · ' + m.data + '</small>';
+    var track = document.createElement('div'); track.className = 'track';
+    var today = document.createElement('div'); today.className = 'today'; today.style.left = pct(TODAY) + '%'; track.appendChild(today);
+    var html = '<strong>' + m.id + ' · ' + m.t + '</strong><br>' + m.tipo + ' · ' + m.data + '<br>' + m.base;
+    if (m.kind === 'legal') {
+      var d = document.createElement('div'); d.className = 'dia' + (D(m.on) < TODAY ? ' past' : ''); d.style.left = pct(D(m.on)) + '%'; d.setAttribute('aria-label', m.id + ' ' + m.data);
+      track.appendChild(d); bindTip(d, html);
+      var tag = document.createElement('span'); tag.className = 'tag'; tag.style.left = 'calc(' + pct(D(m.on)) + '% + 12px)'; tag.textContent = fmt(D(m.on)); track.appendChild(tag);
+    } else {
+      var b = document.createElement('div'); b.className = 'bar ' + (m.kind === 'gate' ? 'gate' : 'proj') + (m.fuzzy ? ' fuzzy' : '');
+      var l = pct(D(m.from)), r = pct(D(m.to)); b.style.left = l + '%'; b.style.width = Math.max(0.6, r - l) + '%'; b.setAttribute('aria-label', m.id + ' ' + m.data);
+      track.appendChild(b); bindTip(b, html);
+      var tag2 = document.createElement('span'); tag2.className = 'tag'; tag2.style.left = 'calc(' + r + '% + 8px)'; tag2.textContent = m.data; track.appendChild(tag2);
+    }
+    row.appendChild(lab); row.appendChild(track); tl.appendChild(row);
+
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td class="n">' + m.id + '</td><td>' + m.t + '</td><td><span class="pill ' + (m.kind === 'legal' ? 'legal' : m.kind === 'gate' ? 'human' : 'inflight') + '">' + m.tipo + '</span></td><td class="n">' + m.data + '</td><td>' + m.base + '</td>';
+    tbody.appendChild(tr);
+  });
+})();
+</script>
