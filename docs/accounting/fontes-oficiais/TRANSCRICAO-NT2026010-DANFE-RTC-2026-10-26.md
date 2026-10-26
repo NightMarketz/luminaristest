@@ -37,7 +37,7 @@ Posição: *"imediatamente após o bloco 'Total do ICMS/IPI'"*.
 
 | # | rótulo impresso | tag | ID | condição |
 |---|---|---|---|---|
-| 1 | Código do Regime Tributário | `CRT` | C21 | sempre. O modelo da p. 8 imprime código e descrição: *"3 - REGIME NORMAL"* |
+| 1 | Código do Regime Tributário | `CRT` | C21 | sempre (**inferido**: a NT não diz "sempre"; o CRT só não está entre os facultativos do §4.4). O modelo da p. 8 imprime código e descrição: *"3 - REGIME NORMAL"* |
 | 2 | Tipo de Regime de Apuração do IBS e da CBS | — | *"tag/ID a ser publicada em NT futura"* | §4.4: *"Campo reservado. Não imprimir conteúdo enquanto não houver definição da origem da informação."* |
 
 **2 linhas.**
@@ -126,7 +126,7 @@ e o resumo/introdução de cada uma; "menções a DANFE" = contagem de `danfe` n
 | NT | título (p. 1) | publicação · produção | sha256 | afeta o DANFE 55? | destino |
 |---|---|---|---|---|---|
 | 2026.009 v1.00 | Alteração de Regra de Validação de CFOP | 09/2026 · até 17/09/2026 | `50b7dec40bba8928b4d544feb4fdbd8c8bac16e37c99d926ddb2834cf246f15d` | **Não.** Muda só a regra I08-140 (aceita CFOP 1.949/2.949 na devolução); *"não modifica o leiaute da NF-e nem os schemas XML"*; 0 menções a DANFE | `X10a`: regra de validação da emissão 55 |
-| 2026.006 v1.00 | Reforma Tributária do Consumo – Vinculação com a Transação de Pagamento do DF-e | 08/2026 · homologação 05/10/2026, produção 03/11/2026 | `47a65abde315fed1e6a8c6085a67ca483935cb57877ae5715d365377a725e05d` | **Não.** Cria o grupo YC (split payment) e o evento 110300; *"Não há exigência de preenchimento ou uso dos campos de split payment em 2026"*; 0 menções a DANFE | `IBS-CBS-2027` (F-IBS-6, split payment); ver `M5-ibs-cbs` |
+| 2026.006 v1.00 | Reforma Tributária do Consumo – Vinculação com a Transação de Pagamento do DF-e | 08/2026 · homologação 05/10/2026, produção 03/11/2026 | `47a65abde315fed1e6a8c6085a67ca483935cb57877ae5715d365377a725e05d` | **Não.** Cria o grupo YC (split payment) e o evento 110300; *"Não há exigência de preenchimento ou uso dos campos de split payment em 2026 no ambiente de produção"* (em homologação desde 05/10/2026); 0 menções a DANFE | `IBS-CBS-2027` (F-IBS-6, split payment); ver `M5-ibs-cbs` |
 | 2026.003 v1.00 | DANFE Simplificado Tipo 2 | 05/2026 · teste 01/07/2026, produção 03/08/2026 | `2ef826027e0e8423ba9dc2f53ee7197f8bfdcc399a30459b72da977528600f13` | **Não o DANFE 55 deste nó.** Cria outro documento auxiliar: NF-e 55 emitida *"em operações que, em regra, seriam acobertadas por NFC-e"*, impressa no leiaute do DANFE-NFC-e (Aj. SINIEF 07/05 cl. 9ª §5º-D, pelo Aj. SINIEF 13/26) | achado §9 item 3 do BRIEF (outro nó, sem pedido) |
 | 2014.001 v1.41 | Evento Prévio de Emissão em Contingência (EPEC) | 08/2026 · teste 09/09/2026, produção 05/10/2026 | `fa9218ddadcb35ca1233434a4dfd040243360d983c0d3f6b85e7756284a6fd19` | **Só em contingência.** A v1.41 corrige o número da rejeição da regra P14-20 (a v1.40 impediu o EPEC para PR e PB). O DANFE em EPEC traz o protocolo do evento (MOC Anexo II §3.9.3); o nó não trata contingência | `X10a` (E1-5, EPEC fora do escopo atual) |
 

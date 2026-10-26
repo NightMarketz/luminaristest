@@ -25,7 +25,7 @@
 
 | chave | regra | onde |
 |---|---|---|
-| `[MOC-DANFE-C128-SIMB]` | Simbologia **CODE-128C**. Emissão normal ou SVC: **um** código de barras, com a chave de acesso. Contingência FS/FS-DA: dois códigos (o segundo, "Dados da NF-e", fica fora: o nó não trata contingência) | §2, p. 6 |
+| `[MOC-DANFE-C128-SIMB]` | Simbologia **CODE-128C**. Emissão normal ou SVC: **um** código de barras, com a chave de acesso. "Demais hipóteses de contingência" (item 3.9.2, que trata de FS/FS-DA; a redução a FS/FS-DA é leitura **inferida**): dois códigos (o segundo, "Dados da NF-e", fica fora: o nó não trata contingência) | §2, p. 6 |
 | `[MOC-DANFE-C128-ESTRUTURA]` | Margem clara · Start C · dados · DV · Stop · margem clara. Start C (valor 105) não representa caractere. Cada símbolo codifica 2 dígitos: 44 dígitos = 22 símbolos | §2, pp. 6–7 |
 | `[MOC-DANFE-C128-DIM]` | Largura mínima total do código da chave (44 posições): **6 cm** em impressora de não impacto. Altura mínima da barra **0,8 cm**. Largura mínima do módulo **0,02 cm**. Margem clara de no mínimo **10 módulos** de cada lado. Total = 242 + 20 + 11 (start) + 11 (DV) + 13 (stop) = **297 módulos** | §2, p. 7 |
 | `[MOC-DANFE-C128-DV]` | DV = (105 × 1 + Σ valorᵢ × i) mod 103, com i = 1, 2, … na ordem dos pares de dígitos | §2.1, p. 7 |
@@ -133,18 +133,20 @@ aparece em outro lugar, então ela é lida como **71** (**inferido**). O vetor d
 
 Ordem de cima para baixo, pela coluna "Superior" da tabela do §3.8.1 (cm a partir do topo). A ordem é **verificada**; as
 medidas são sugestão. A NT 2026.010 (p. 8) insere "Total do IBS/CBS/IS" entre "Total do ICMS/IPI" e "Cálculo do ISSQN" e
-divide "Cálculo do Imposto" em "Total dos produtos e total da nota" e "Total do ICMS/IPI".
+divide "Cálculo do Imposto" em "Total dos produtos e total da nota" e "Total do ICMS/IPI". O modelo da NT também move o
+"Cálculo do ISSQN" para **antes** do Transportador (no MOC ele vem depois de Produtos). A ordem completa da NT está no §6 de
+`TRANSCRICAO-NT2026010-DANFE-RTC-2026-10-26.md`.
 
 `[MOC-DANFE-ORDEM]`:
 
 1. **Canhoto** (0,42): "RECEBEMOS DE …", "NF-e / Nº / SÉRIE", "DATA DE RECEBIMENTO", "IDENTIFICAÇÃO E ASSINATURA DO RECEBEDOR".
 2. **Dados da NF-e** (2,54): identificação do emitente · quadro "DANFE" (descrição, 0-ENTRADA/1-SAÍDA, número, série, folha) ·
-   código de barras da chave (2,78) · chave de acesso (4,02) · campo 1 de conteúdo variável (4,98) · natureza da operação
+   código de barras da chave (2,78) · chave de acesso (4,02) · campo 1 de conteúdo variável (4,98; na tabela o rótulo é "QUADRO CÓDIGO DE BARRAS DOS DADOS", com a Obs 9 "exclusivamente no Modelo de Contingência", que vale também para a linha 6,46; ler a posição como o Campo 1 da emissão normal do §3.9.1 é **inferido**) · natureza da operação
    (B04) e campo 2 de conteúdo variável (6,46; o rótulo da tabela é "DADOS DA NF-e", leitura **inferida** pela posição e pelo §3.9) · IE (C17), IE do ST (C18) e CNPJ (C02) do emitente (7,31).
 3. **Destinatário/Remetente** (8,16–10,28): razão social (E04), CNPJ (E02), data de emissão (B09); endereço (E06),
    bairro (E09), CEP (E13), data de entrada/saída (B10); município (E11), fone (E16), UF (E12), IE (E03), hora de entrada/saída.
 4. **Fatura/Duplicatas** (11,09): Y02, com as duplicatas do grupo Y07 permitidas (Obs 1).
-5. **Cálculo do Imposto** (12,78): BC do ICMS (W03), ICMS (W04), BC do ICMS ST (W05), ICMS ST (W06), total dos produtos
+5. **Cálculo do Imposto** (12,36 o título; 12,78 o primeiro campo): BC do ICMS (W03), ICMS (W04), BC do ICMS ST (W05), ICMS ST (W06), total dos produtos
    (W07), frete (W08), seguro (W09), desconto (W10), outras despesas (W15), IPI (W12), total da nota (W16).
 6. **Transportador/Volumes transportados** (14,48): grupo X.
 7. **Dados dos Produtos/Serviços** (17,45): colunas na ordem descrita (Obs 4): código (I02), descrição (I04), "colunas
