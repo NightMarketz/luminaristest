@@ -741,6 +741,19 @@ describe('Bloco F — diferença contábil × fiscal da depreciação no fechame
     expect(sys(t.repo)).toHaveLength(0);
   });
 
+  it('review D2: linha system do Bloco F não aceita PATCH de valor/relação/conta/parteB/M312 (400) — só archive', async () => {
+    const t = build({ ativos: [ativo({ fiscalQuotaCents: 0n, bookQuotaCents: 70n, quotaEntries: quotas('acc-dep', 'je-1') })] });
+    const c = contas(t.repo);
+    await t.svc.closeParteB(scope, T01);
+    const linha = sys(t.repo).find((e) => e.livro === 'lalur')!;
+    for (const patch of [{ valorCents: 999 }, { indRelacao: '4' as const, histLancamento: 'x' }, { parteBId: c.i2210.id }, { accountId: 'acc-x' }, { journalEntryIds: [] }]) {
+      await expect(t.svc.updateEntry(scope, linha.id, { unitId: 'unit-1', ...patch })).rejects.toThrow(/Linha do Bloco F derivada pelo fechamento/);
+    }
+    expect(linha.valorCents).toBe(70n);
+    await t.svc.archiveEntry(scope, linha.id, { unitId: 'unit-1' });
+    expect(linha.deletedAt).not.toBeNull();
+  });
+
   it('archiveParteB: conta com link M305 vivo de linha system ⇒ 400 (o recompute perderia o saldo)', async () => {
     const t = build({ ativos: [ativo({ fiscalQuotaCents: 0n, bookQuotaCents: 70n, quotaEntries: quotas('acc-dep', 'je-1') })] });
     const c = contas(t.repo);

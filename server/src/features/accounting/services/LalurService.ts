@@ -471,6 +471,12 @@ export class LalurService {
     if (!this.policy.canManageLalur(scope)) throw new ForbiddenError('Você não tem permissão para gerir o e-Lalur.');
     const existing = await this.repo.findEntryById(scope, id);
     if (!existing || existing.deletedAt) throw new NotFoundError(`Ajuste '${id}' não foi encontrado.`);
+    // Bloco F (C8 emenda 3.2; review D1/D2): a linha system tem o M305 nos links — mudar valor/relação/conta/M312 pela API
+    // descasaria M300 × M305 × M500. Mesma regra do PF/BC system (Fork F-3C-2 a): só archive; o próximo fechamento recria.
+    const camposDerivados = [dto.valorCents, dto.indRelacao, dto.parteBId, dto.accountId, dto.journalEntryIds];
+    if (existing.origem === 'system' && (BLOCO_F_CODIGOS as readonly string[]).includes(existing.codigo) && camposDerivados.some((v) => v !== undefined)) {
+      throw new ValidationError('Linha do Bloco F derivada pelo fechamento não aceita alteração de valor, relação, conta ou lançamentos — arquive-a; o próximo fechamento a recria (C8 emenda 3.2, E17).');
+    }
 
     // Merge + full re-validation with the SAME conditionals as create (REGRA_RELACAO_INEXISTENTE / D-M3).
     const merged = {
@@ -1012,8 +1018,9 @@ export class LalurService {
    * IND_RELACAO da linha do Bloco F (E17, IN 1.700 art. 310 § 2º, "quando presentes"; grau INFERIDO — o PVA é o oráculo).
    * Exclusão 161 = valor só fiscal ⇒ `'1'`. Adição 86 = despesa contábil que existe ⇒ `'3'` com M310 = a conta que as
    * quotas do período debitam e M312 = essas quotas — o M312 é filho do M310, então só quando TODAS as quotas dos bens da
-   * linha debitam a MESMA conta; linha que mistura contas sai `'1'` (lacuna L-P3-1 → b, dono). 91.01 = realização do
-   * saldo 2210 na baixa, sem despesa própria no período ⇒ `'1'` (lacuna L-P3-2 → b, dono).
+   * linha debitam a MESMA conta; linha que mistura contas sai `'1'` (lacuna L-P3-1 → b — dono, chat, 2026-10-26: "(b)
+   * Conta onde a despesa caiu"). 91.01 = realização do saldo 2210 na baixa, sem despesa própria no período ⇒ `'1'`
+   * (lacuna L-P3-2 → b — dono, chat, 2026-10-26: "(b) Só Parte B, '1'").
    */
   public static relacaoBlocoF(codigo: BlocoFCodigo, bens: FixedAssetParteBRow[]): { indRelacao: '1' | '3'; accountId: string | null; journalEntryIds: string[] } {
     const soParteB = { indRelacao: '1' as const, accountId: null, journalEntryIds: [] };

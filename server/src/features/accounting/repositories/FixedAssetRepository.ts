@@ -90,7 +90,7 @@ export class FixedAssetRepository implements IFixedAssetRepository {
         deletedAt: null,
         activatedAt: { lte: to },
         class: { depreciable: true },
-        OR: [{ status: { in: ['ACTIVE', 'FULLY_DEPRECIATED'] } }, { status: 'DISPOSED', disposedAt: { gte: from, lte: to } }],
+        OR: [{ status: { in: ['ACTIVE', 'FULLY_DEPRECIATED'] } }, { status: 'DISPOSED', disposedAt: { gte: from } }],
       },
       include: { class: true },
       orderBy: [{ code: 'asc' }],

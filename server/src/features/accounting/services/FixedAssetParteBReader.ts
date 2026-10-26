@@ -65,7 +65,8 @@ export class FixedAssetParteBReader implements IFixedAssetReader {
     const out: FixedAssetParteBRow[] = [];
     for (const asset of await this.assetRepo.findForParteB(scope, from, to, tx)) {
       if (!entraNoBlocoF(asset, asset.class)) continue;
-      const disposedInPeriod = asset.status === 'DISPOSED';
+      // baixado depois do período (o repo devolve disposedAt >= from) conta como vivo nele (review D1)
+      const disposedInPeriod = asset.status === 'DISPOSED' && asset.disposedAt !== null && asset.disposedAt <= to;
       const end = disposedInPeriod && asset.disposedAt ? asset.disposedAt : to;
       const fiscal = fiscalSeries(asset, asset.class);
       const kPrev = Math.max(0, monthsBetweenInclusive(asset.activatedAt!, prevEnd));

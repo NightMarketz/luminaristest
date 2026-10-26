@@ -151,5 +151,21 @@ describe('POST /api/lalur/parte-b/close — Bloco F com ativo override (C8 emend
     const res = await request(app).post('/api/lalur/parte-b/close').set(authHeader(dono)).send(T01);
     expect(res.status).toBe(400);
     expect(JSON.stringify(res.body)).toContain(`ajuste ${manual.body.data.id} do usuário na linha 86 do lalur`);
+    expect((await request(app).post(`/api/lalur/entries/${manual.body.data.id}/archive`).set(authHeader(dono)).send({ unitId: UNIT })).status).toBe(200);
+  });
+
+  it('review D1: bem baixado DEPOIS do período (abril) segue no fechamento do T01 — refechar regrava a adição 86 de 30,00', async () => {
+    await prisma.accountingPeriod.create({ data: { userId: dono.id, unitId: UNIT, year: 2025, month: 4, status: 'OPEN', openedAt: new Date(), openedById: dono.id } });
+    const bem = await prisma.fixedAsset.findFirstOrThrow({ where: { unitId: UNIT, code: 'CADEIRA' } });
+    const baixa = await request(app)
+      .post(`/api/accounting/fixed-assets/${bem.id}/dispose`)
+      .set(authHeader(dono))
+      .send({ unitId: UNIT, assetId: bem.id, disposedAt: '2025-04-20', proceedsCents: 0, version: bem.version });
+    expect(baixa.status).toBe(200);
+    expect(baixa.body.data.status).toBe('DISPOSED');
+    const res = await request(app).post('/api/lalur/parte-b/close').set(authHeader(dono)).send(T01);
+    expect(res.status).toBe(200);
+    const vivas = await prisma.lalurEntry.findMany({ where: { unitId: UNIT, origem: 'system', deletedAt: null } });
+    expect(vivas.map((e) => [e.livro, e.codigo, e.valorCents]).sort()).toEqual([['lacs', '86', 3_000n], ['lalur', '86', 3_000n]]);
   });
 });

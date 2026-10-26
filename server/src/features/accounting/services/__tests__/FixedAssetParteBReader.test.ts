@@ -88,6 +88,12 @@ describe('FixedAssetParteBReader.listForParteB (E15)', () => {
     expect(vl).toMatchObject({ fiscalQuotaCents: 0n, priorDiffCents: 120_000n });
   });
 
+  it('review D1: bem baixado DEPOIS do período conta como vivo nele — fiscal até o fim do período e sem realização', async () => {
+    const { reader } = build([bem({ id: 'depois', bookAnnualRateBp: 2000, status: 'DISPOSED', disposedAt: d('2025-04-20') })]);
+    const [r] = await reader.listForParteB(scope, 2025, 'T01');
+    expect(r).toMatchObject({ fiscalQuotaCents: 3_000n, disposedInPeriod: false });
+  });
+
   it('A00 cobre o ano; período fora da Parte B (A05) é 400', async () => {
     expect(parteBWindow(2025, 'A00')).toEqual({ from: d('2025-01-01'), to: d('2025-12-31') });
     expect(parteBWindow(2025, 'T04')).toEqual({ from: d('2025-10-01'), to: d('2025-12-31') });

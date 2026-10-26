@@ -93,7 +93,8 @@ export interface IFixedAssetRepository {
 
   /**
    * C8 emenda 3.2 P3 (E15) — candidatos do Bloco F no período `[from, to]`: vivos, de classe depreciável, ativados até
-   * `to`, em `ACTIVE`/`FULLY_DEPRECIATED` ou `DISPOSED` com `disposedAt` dentro do período. Com a classe (o `kind`
+   * `to`, em `ACTIVE`/`FULLY_DEPRECIATED` ou `DISPOSED` com `disposedAt >= from` — o status é o de HOJE: um bem baixado
+   * DEPOIS do período estava vivo nele e entra (fechar o T04 em fevereiro com baixa em janeiro). Com a classe (o `kind`
    * decide a série fiscal). O filtro do E15 (override/residual/benfeitoria com `nBook < nFiscal`) é do serviço.
    */
   findForParteB(
