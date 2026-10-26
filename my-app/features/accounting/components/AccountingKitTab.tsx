@@ -389,8 +389,14 @@ function KitPendingList({
       case 'KIT_PENDING_COMPILE_DRAFT':
       case 'ROLE_OVERRIDE_COMPILE_DRAFT':
         return t('kit.decide.errors.COMPILE_DRAFT', 'A recompilação do binding reprovou; nada foi aplicado.');
+      case 'KIT_NOT_INSTALLED':
+        return t('kit.decide.errors.KIT_NOT_INSTALLED', 'O kit da unidade não está instalado; retome a instalação antes de decidir.');
       default:
-        // `ACCOUNT_NOT_FOUND` chega como 400 VALIDATION_ERROR com o código no começo da mensagem.
+        // `ACCOUNT_NOT_FOUND` e `KIT_NOT_INSTALLED` (pela recompilação da conta restaurada) também chegam como 400
+        // VALIDATION_ERROR com o código no começo da mensagem.
+        if (message.startsWith('KIT_NOT_INSTALLED')) {
+          return t('kit.decide.errors.KIT_NOT_INSTALLED', 'O kit da unidade não está instalado; retome a instalação antes de decidir.');
+        }
         if (message.startsWith('ACCOUNT_NOT_FOUND')) {
           return t('kit.decide.errors.ACCOUNT_NOT_FOUND', 'A conta do kit não está viva no plano da unidade.');
         }

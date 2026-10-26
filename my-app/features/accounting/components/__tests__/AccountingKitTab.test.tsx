@@ -304,6 +304,7 @@ describe('AccountingKitTab', () => {
       ['KIT_PENDING_NOT_FOUND', 404, 'Pendência não encontrada', true],
       ['KIT_PENDING_FROZEN_YEAR', 422, 'só dá para recusar', false],
       ['VALIDATION_ERROR', 400, 'A conta do kit não está viva', false],
+      ['KIT_NOT_INSTALLED', 422, 'retome a instalação antes de decidir', false],
     ] as const)('item 18: %s vira a mensagem certa (recarrega a lista: %s)', async (code, status, text, reloads) => {
       const dialog = await openDecision('Aceitar');
       const message = code === 'VALIDATION_ERROR' ? 'ACCOUNT_NOT_FOUND: a conta 4.8 do kit não está viva' : 'msg do BE';

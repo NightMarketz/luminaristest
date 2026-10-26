@@ -3590,7 +3590,8 @@
         "KIT_PENDING_NOT_FOUND": "Pending item not found; the list was refreshed.",
         "KIT_PENDING_FROZEN_YEAR": "This item belongs to a frozen year (ECF filed or period closed): it can only be rejected.",
         "COMPILE_DRAFT": "Recompiling the binding failed; nothing was applied.",
-        "ACCOUNT_NOT_FOUND": "The kit's account is not live in the unit's chart of accounts."
+        "ACCOUNT_NOT_FOUND": "The kit's account is not live in the unit's chart of accounts.",
+        "KIT_NOT_INSTALLED": "The unit's kit is not installed; resume the installation before deciding."
       }
     }
   }

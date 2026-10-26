@@ -3590,7 +3590,8 @@
         "KIT_PENDING_NOT_FOUND": "Pendência não encontrada; a lista foi atualizada.",
         "KIT_PENDING_FROZEN_YEAR": "Este item é de um ano congelado (ECF transmitida ou período fechado): só dá para recusar.",
         "COMPILE_DRAFT": "A recompilação do binding reprovou; nada foi aplicado.",
-        "ACCOUNT_NOT_FOUND": "A conta do kit não está viva no plano da unidade."
+        "ACCOUNT_NOT_FOUND": "A conta do kit não está viva no plano da unidade.",
+        "KIT_NOT_INSTALLED": "O kit da unidade não está instalado; retome a instalação antes de decidir."
       }
     }
   }
