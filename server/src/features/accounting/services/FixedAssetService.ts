@@ -84,7 +84,7 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
     const klass = await this.classRepo.findById(scope, dto.classId);
     if (!klass) throw new NotFoundError(`Classe de bem '${dto.classId}' não foi encontrada.`);
     const leaseEndDate = dto.leaseEndDate ? dateOnlyToUtc(dto.leaseEndDate) : null;
-    assertLeaseFields(klass, leaseEndDate, dto.leaseIndemnifiable ?? null, 'complete');
+    assertLeaseFields(klass, leaseEndDate, dto.leaseIndemnifiable ?? null, dto.bookAnnualRateBp ?? null, 'complete');
 
     // PR-3 (L-1): `rateId` do DTO aceita id do Anexo de plataforma ou CUSTOM; a taxa vai para a coluna certa do bem.
     // XOR garantido pelo DTO (superRefine) — sem rateId, annualRateBp sempre presente.
@@ -143,14 +143,14 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
     const nextLeaseEndDate =
       dto.leaseEndDate !== undefined ? (dto.leaseEndDate === null ? null : dateOnlyToUtc(dto.leaseEndDate)) : current.leaseEndDate;
     const nextLeaseIndemnifiable = dto.leaseIndemnifiable !== undefined ? dto.leaseIndemnifiable : current.leaseIndemnifiable;
-    assertLeaseFields(nextClass, nextLeaseEndDate, nextLeaseIndemnifiable, 'partial');
+    const nextBookRate = dto.bookAnnualRateBp !== undefined ? dto.bookAnnualRateBp : current.bookAnnualRateBp;
+    assertLeaseFields(nextClass, nextLeaseEndDate, nextLeaseIndemnifiable, nextBookRate, 'partial');
     const taxa = dto.rateId ? await this.taxas.resolverTaxa(scope, dto.rateId) : undefined;
     const nextCost = dto.costCents !== undefined ? BigInt(dto.costCents) : current.costCents;
     const nextResidual = dto.residualValueCents !== undefined ? BigInt(dto.residualValueCents) : current.residualValueCents;
     if (nextResidual >= nextCost) {
       throw new ValidationError('residualValueCents deve ser menor que costCents.');
     }
-    const nextBookRate = dto.bookAnnualRateBp !== undefined ? dto.bookAnnualRateBp : current.bookAnnualRateBp;
     const nextBookJustification =
       dto.bookRateJustification !== undefined ? dto.bookRateJustification : current.bookRateJustification;
     if (nextBookRate !== null && !nextBookJustification) {
@@ -201,7 +201,7 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
     // passou pelo createAsset. Depois daqui `leaseEndDate` é imutável (E13: updateAsset só aceita PENDING_ACTIVATION).
     const klass = await this.classRepo.findById(scope, current.classId);
     if (!klass) throw new NotFoundError(`Classe de bem '${current.classId}' não foi encontrada.`);
-    assertLeaseFields(klass, current.leaseEndDate, current.leaseIndemnifiable, 'complete');
+    assertLeaseFields(klass, current.leaseEndDate, current.leaseIndemnifiable, current.bookAnnualRateBp, 'complete');
     if (klass.kind === 'AMORTIZATION_LEASEHOLD' && current.leaseEndDate! <= activatedAtDate) {
       throw new ValidationError(
         `leaseEndDate (${current.leaseEndDate!.toISOString().slice(0, 10)}) deve ser posterior a activatedAt (${dto.activatedAt}) — benfeitoria amortiza pelo prazo restante do contrato (RIR/2018 art. 333).`,
@@ -434,12 +434,15 @@ function dateOnlyToUtc(dateOnly: string): Date {
  * em imóvel de terceiro só amortiza sem direito a indenização e com contrato de prazo determinado. A declaração é
  * obrigatória e sem default — no silêncio do contrato a benfeitoria necessária e a útil autorizada são indenizáveis.
  * `complete` (create/activate) cobra tudo; `partial` (update de rascunho) só rejeita o que já é proibido.
- * Campo de locação em classe `DEPRECIATION` é 400 (memória param-aceito-e-ignorado-e-bug).
+ * Campo de locação em classe `DEPRECIATION` é 400 (memória param-aceito-e-ignorado-e-bug). Taxa contábil
+ * divergente (`bookAnnualRateBp`, item 8) em benfeitoria é 400 — o E11 tira `nVida` de `annualRateBp` e o `min` do
+ * contrato já é o ajuste contábil (lacuna L3 do P2, dono, chat, 2026-10-26: "(a) Recusar a taxa contábil").
  */
 function assertLeaseFields(
   klass: FixedAssetClass,
   leaseEndDate: Date | null,
   leaseIndemnifiable: boolean | null,
+  bookAnnualRateBp: number | null,
   mode: 'complete' | 'partial',
 ): void {
   if (klass.kind !== 'AMORTIZATION_LEASEHOLD') {
@@ -449,6 +452,11 @@ function assertLeaseFields(
       );
     }
     return;
+  }
+  if (bookAnnualRateBp != null) {
+    throw new ValidationError(
+      'bookAnnualRateBp não se aplica a benfeitoria em imóvel de terceiro: o prazo contábil já é min(contrato, vida útil) sobre annualRateBp (E11).',
+    );
   }
   const orientacao = `use uma classe DEPRECIATION (taxa normal do Anexo III — edificação/instalação), RIR/2018 art. 331 III.`;
   if (leaseIndemnifiable === true) {

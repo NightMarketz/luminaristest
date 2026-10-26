@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { FIXED_ASSET_CLASS_KINDS } from '../models/FixedAsset.model';
+import { FIXED_ASSET_CLASS_KINDS, leaseholdClassIssues } from '../models/FixedAsset.model';
 
 /**
  * FixedAssetClassDto — classe de bem do imobilizado (BE-INCR-FIXED-ASSETS, nó C8, item 1).
@@ -22,7 +22,7 @@ import { FIXED_ASSET_CLASS_KINDS } from '../models/FixedAsset.model';
  *         costAccountId:                   { type: string, description: 'conta do bem (1.2.x)' }
  *         accumulatedDepreciationAccountId: { type: string, nullable: true, description: 'obrigatória quando depreciable=true (conta 1.2.9.x)' }
  *         kind:                            { type: string, enum: [DEPRECIATION, AMORTIZATION_LEASEHOLD], default: DEPRECIATION, description: 'AMORTIZATION_LEASEHOLD = benfeitoria em imóvel de terceiro (RIR 331 III, C8 emenda 3.2)' }
- *         amortizationExpenseAccountId:    { type: string, description: 'despesa de amortização da benfeitoria (F-EM-7 → b; referencial 3.01.01.07.01.24)' }
+ *         amortizationExpenseAccountId:    { type: string, description: 'despesa de amortização da benfeitoria (F-EM-7 → b; referencial 3.01.01.07.01.24) — obrigatória com AMORTIZATION_LEASEHOLD, proibida com DEPRECIATION' }
  */
 export const CreateFixedAssetClassSchema = z
   .object({
@@ -43,6 +43,9 @@ export const CreateFixedAssetClassSchema = z
         path: ['accumulatedDepreciationAccountId'],
         message: 'accumulatedDepreciationAccountId é obrigatório quando depreciable=true (BRIEF item 1).',
       });
+    }
+    for (const issue of leaseholdClassIssues(val.kind, val.depreciable, val.amortizationExpenseAccountId ?? null)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: [issue.path], message: issue.message });
     }
   });
 

@@ -459,6 +459,23 @@ describe('C8 emenda 3.2, Parte 2 — benfeitoria em imóvel de terceiro (E8b, E1
     expect(create).not.toHaveBeenCalled();
   });
 
+  it('L3 (dono, 26/10): bookAnnualRateBp em benfeitoria → 400 no create, no update e no activate', async () => {
+    const { service, create, update, activate } = build({ klass: leaseholdClass, asset: makeAsset({ classId: 'class-benf', leaseIndemnifiable: false, leaseEndDate: new Date('2027-12-31T00:00:00Z'), bookAnnualRateBp: 2000, bookRateJustification: 'x' }) });
+    await expect(
+      service.createAsset(scope, { ...createBase, leaseEndDate: '2027-12-31', leaseIndemnifiable: false, bookAnnualRateBp: 2000, bookRateJustification: 'reforma dura menos' }),
+    ).rejects.toThrow(/bookAnnualRateBp não se aplica a benfeitoria/);
+    expect(create).not.toHaveBeenCalled();
+    await expect(service.updateAsset(scope, 'asset-1', { unitId: 'unit-1', assetId: 'asset-1', description: 'x' })).rejects.toThrow(/bookAnnualRateBp não se aplica/);
+    expect(update).not.toHaveBeenCalled();
+    await expect(
+      service.activateAsset(scope, 'asset-1', { unitId: 'unit-1', assetId: 'asset-1', activatedAt: '2026-01-01', version: 1 }),
+    ).rejects.toThrow(/bookAnnualRateBp não se aplica/);
+    expect(activate).not.toHaveBeenCalled();
+    // limpar a taxa contábil no mesmo update é o caminho de saída
+    await service.updateAsset(scope, 'asset-1', { unitId: 'unit-1', assetId: 'asset-1', bookAnnualRateBp: null, bookRateJustification: null });
+    expect(update).toHaveBeenCalledTimes(1);
+  });
+
   it('update de rascunho: leaseIndemnifiable=true → 400; declaração ausente é aceita até o activate', async () => {
     const draft = makeAsset({ classId: 'class-benf' });
     const { service, update } = build({ klass: leaseholdClass, asset: draft });

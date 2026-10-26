@@ -1534,7 +1534,7 @@
           },
           "amortizationExpenseAccountId": {
             "type": "string",
-            "description": "despesa de amortização da benfeitoria (F-EM-7 → b; referencial 3.01.01.07.01.24)"
+            "description": "despesa de amortização da benfeitoria (F-EM-7 → b; referencial 3.01.01.07.01.24) — obrigatória com AMORTIZATION_LEASEHOLD, proibida com DEPRECIATION"
           }
         }
       },

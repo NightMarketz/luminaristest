@@ -22,6 +22,8 @@ const classRow = {
   depreciable: true,
   costAccountId: 'acc-cost',
   accumulatedDepreciationAccountId: 'acc-acc' as string | null,
+  kind: 'DEPRECIATION',
+  amortizationExpenseAccountId: null as string | null,
   createdAt: new Date('2026-09-18T00:00:00Z'),
   updatedAt: new Date('2026-09-18T00:00:00Z'),
   deletedAt: null as Date | null,
@@ -78,6 +80,23 @@ describe('FixedAssetClassService.createClass', () => {
     });
     expect(accountFindById).toHaveBeenCalledWith(scope, 'acc-amort');
     expect(create).toHaveBeenCalledWith(expect.objectContaining({ kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: 'acc-amort' }));
+  });
+
+  it('L1/L2 no update: estado resultante incoerente → 400, update não chamado', async () => {
+    const { service, update } = build();
+    // classe atual: DEPRECIATION, depreciable=true, sem conta de amortização
+    await expect(service.updateClass(scope, 'class-1', { unitId: 'unit-1', classId: 'class-1', kind: 'AMORTIZATION_LEASEHOLD' })).rejects.toThrow(
+      /amortizationExpenseAccountId é obrigatória/,
+    );
+    await expect(
+      service.updateClass(scope, 'class-1', { unitId: 'unit-1', classId: 'class-1', kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: 'acc-amort', depreciable: false }),
+    ).rejects.toThrow(/exige depreciable=true/);
+    await expect(service.updateClass(scope, 'class-1', { unitId: 'unit-1', classId: 'class-1', amortizationExpenseAccountId: 'acc-amort' })).rejects.toThrow(
+      /só se aplica a classe AMORTIZATION_LEASEHOLD/,
+    );
+    expect(update).not.toHaveBeenCalled();
+    await service.updateClass(scope, 'class-1', { unitId: 'unit-1', classId: 'class-1', kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: 'acc-amort' });
+    expect(update).toHaveBeenCalledWith(scope, 'class-1', expect.objectContaining({ kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: 'acc-amort' }));
   });
 
   it('C8 emenda 3.2: conta de amortização que não aceita lançamento → 400, nada criado', async () => {

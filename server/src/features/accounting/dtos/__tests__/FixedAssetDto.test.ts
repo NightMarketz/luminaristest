@@ -21,6 +21,21 @@ describe('FixedAssetClassDto — kind e amortizationExpenseAccountId (E9, F-EM-7
     expect([parsed.kind, parsed.amortizationExpenseAccountId]).toEqual(['AMORTIZATION_LEASEHOLD', 'acc-amort']);
   });
 
+  it('L1 (dono, 26/10): AMORTIZATION_LEASEHOLD com depreciable=false → erro', () => {
+    const r = CreateFixedAssetClassSchema.safeParse({ ...classBase, depreciable: false, kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: 'acc-amort' });
+    expect(r.success).toBe(false);
+    expect(r.error!.issues.map((i) => i.path.join('.'))).toContain('depreciable');
+  });
+
+  it('L2 (dono, 26/10): AMORTIZATION_LEASEHOLD sem amortizationExpenseAccountId → erro; conta em DEPRECIATION → erro', () => {
+    const sem = CreateFixedAssetClassSchema.safeParse({ ...classBase, kind: 'AMORTIZATION_LEASEHOLD' });
+    expect(sem.success).toBe(false);
+    expect(sem.error!.issues.map((i) => i.path.join('.'))).toContain('amortizationExpenseAccountId');
+    const sobra = CreateFixedAssetClassSchema.safeParse({ ...classBase, amortizationExpenseAccountId: 'acc-amort' });
+    expect(sobra.success).toBe(false);
+    expect(sobra.error!.issues.map((i) => i.path.join('.'))).toContain('amortizationExpenseAccountId');
+  });
+
   it('kind fora do enum → erro', () => {
     expect(CreateFixedAssetClassSchema.safeParse({ ...classBase, kind: 'AMORTIZATION' }).success).toBe(false);
   });

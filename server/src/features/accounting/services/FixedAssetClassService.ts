@@ -7,6 +7,7 @@ import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
+import { leaseholdClassIssues, type FixedAssetClassKind } from '../models/FixedAsset.model';
 
 /**
  * FixedAssetClassService — classe de bem do imobilizado (BE-INCR-FIXED-ASSETS, nó C8, item 1/7).
@@ -89,6 +90,14 @@ export class FixedAssetClassService {
     if (nextDepreciable && !nextAccumulatedAccountId) {
       throw new ValidationError('accumulatedDepreciationAccountId é obrigatório quando depreciable=true (BRIEF item 1).');
     }
+    const nextAmortizationAccountId =
+      dto.amortizationExpenseAccountId !== undefined ? dto.amortizationExpenseAccountId : current.amortizationExpenseAccountId;
+    const [leaseholdIssue] = leaseholdClassIssues(
+      (dto.kind ?? current.kind) as FixedAssetClassKind,
+      nextDepreciable,
+      nextAmortizationAccountId,
+    );
+    if (leaseholdIssue) throw new ValidationError(leaseholdIssue.message);
     return this.classRepo.update(scope, id, {
       ...(dto.code !== undefined ? { code: dto.code } : {}),
       ...(dto.name !== undefined ? { name: dto.name } : {}),
