@@ -61,7 +61,7 @@ Posição: *"imediatamente após o bloco 'Total do ICMS/IPI'"*.
 | 11 | Valor do IS | `vIS` (UB11) | — |
 
 **11 campos impressos, 14 tags** (as 11 + as 3 `pAliqEfet`). O BRIEF (item 1) esperava "12 de item, contando as 3
-`pAliqEfet`"; a contagem da fonte é outra (lacuna L-DANFE-PR0-1 do retorno do PR-0).
+`pAliqEfet`"; a contagem da fonte é outra (lacuna L-DANFE-PR0-1, decidida em 26/10: "Corrigir para 11/14", D-2026-10-26-NFE-DANFE-IBSCBS-LACUNAS-PR0).
 
 **Regra das alíquotas** `[NT10-ALIQ]` (observação do §4.3): *"quando houver redução de alíquota (ind_gRed = 1) ou compra
 governamental (gCompraGov), hipóteses em que o grupo gRed é informado, o DANFE deverá exibir a alíquota efetiva (pAliqEfet)

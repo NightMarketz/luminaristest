@@ -101,7 +101,8 @@ primeira NF-e 55. Há uma condição: se o X10a PR-7 entrar em produção antes 
    sha256 `eadc5246…`, acesso 22/10/2026) e transcrever as tabelas §4.1–§4.4 em
    `fontes-oficiais/TRANSCRICAO-NT2026010-DANFE-RTC-<data>.md`, com uma linha por campo (rótulo impresso, tag, ID, condição).
    *Teste:* o SHA-256 do PDF baixado de novo é igual; a transcrição tem 8 linhas de total (§4.1), 2 de emitente (§4.2),
-   12 de item (§4.3, contando as 3 `pAliqEfet`) e a lista de facultativos (§4.4) completa.
+   11 campos impressos de item com 14 tags (§4.3, contando as 3 `pAliqEfet`) e a lista de facultativos (§4.4) completa.
+   *(Emenda 26/10, L-DANFE-PR0-1 → "Corrigir para 11/14", [[D-2026-10-26-NFE-DANFE-IBSCBS-LACUNAS-PR0]]; o texto anterior dizia "12 de item".)*
 2. **Transcrever do MOC** (7.0 Visão Geral, ou a versão online do Paraná a partir de 01/11/2026, conforme EMENDA-3 §3
    item 3) o **leiaute base do DANFE**: quadros e ordem, padrão do código de barras da chave, texto obrigatório em
    homologação, regras de quebra de página e de supressão de quadros, formato de chave e protocolo.
@@ -150,6 +151,9 @@ primeira NF-e 55. Há uma condição: se o X10a PR-7 entrar em produção antes 
     `escapeHtml` (reuso de `receiptHtml.ts`). Sem `new Date()` no HTML.
     *Teste:* no HTML, a posição de `TOTAL DO ICMS / IPI` < `TOTAL DO IBS / CBS / IS` < `CÁLCULO DO ISSQN`; o mesmo model
     gera o mesmo HTML byte a byte em 2 chamadas; `xProd` = `<script>` sai escapado.
+    *(Emenda 26/10, L-DANFE-PR0-3 → "Texto da NT 2026.010":)* abaixo da chave, o campo de consulta imprime *"Consulte a
+    autenticidade no portal nacional da NF-e www.nfe.fazenda.gov.br/portal ou no site da SEFAZ autorizadora"* (modelo da NT,
+    p. 8; `[MOC-DANFE-CAMPO1]`). *Teste:* o HTML contém esse texto literal.
 12. **Linha de item com IBS/CBS/IS** (modelo da p. 8): colunas de bases (ICMS, IBS/CBS, IS, IPI), alíquotas e valores
     (ICMS/CBS, IBS UF/IPI, IBS MUN/IS) e a linha `[NCM …] [cClassTrib …]`. Item sem UB12 ⇒ as células IBS/CBS ficam vazias,
     e não "0,00".
@@ -159,6 +163,9 @@ primeira NF-e 55. Há uma condição: se o X10a PR-7 entrar em produção antes 
     de 44 dígitos ⇒ erro.
 14. **Homologação** [cond: item 2]: `ambiente: 'homologacao'` ⇒ o texto obrigatório do MOC em destaque.
     *Teste:* fixture `tpAmb=2` contém o texto; `tpAmb=1` não contém.
+    *(Emenda 26/10, L-DANFE-PR0-2 → "Os dois", [[D-2026-10-26-NFE-DANFE-IBSCBS-LACUNAS-PR0]]:)* a frase **"SEM VALOR FISCAL"**
+    (`[MOC-DANFE-HOMOLOG]`) sai como marca d'água destacada **e** no início de "Informações Complementares"; a marca não cobre
+    a leitura dos dados (`[MOC-DANFE-MARCA-DAGUA]`). *Teste:* com `tpAmb=2` o HTML tem as duas ocorrências; com `tpAmb=1`, nenhuma.
 15. **[F-DANFE-8]** QR Code: a área "QR CODE" do modelo fica vazia até a NT do `[NT10-QR]`. Com `infNFeSupl/qrCode`
     no XML, o model leva o aviso `QRCODE_NAO_RENDERIZADO`, que fica fora do HTML.
     *Teste:* fixture com `infNFeSupl` ⇒ área vazia e aviso presente.
@@ -339,7 +346,9 @@ export const DanfeParamsDto = z.object({ id: z.string().min(1) }).strict();
 >   A simbologia é **CODE-128C**, como o F-DANFE-4 inferia, e o MOC traz vetor de teste (`09758364` → DV 48).
 > - **Item 1:** NT 2026.010 rebaixada, sha256 igual; transcrição em [`TRANSCRICAO-NT2026010-DANFE-RTC-2026-10-26.md`](fontes-oficiais/TRANSCRICAO-NT2026010-DANFE-RTC-2026-10-26.md).
 > - **Insumo 3 / item 3:** nenhuma das quatro NTs muda o DANFE 55 (tabela no §7 da transcrição da NT).
-> - **Lacunas de spec abertas pelo PR-0** (voltam ao dono antes do PR-1/PR-2; não bloqueiam o PR-0):
+> - **Lacunas de spec abertas pelo PR-0** — **DECIDIDAS em 26/10/2026**, todas na recomendação
+>   ([[D-2026-10-26-NFE-DANFE-IBSCBS-LACUNAS-PR0]]): 1 → corrigir para 11/14 (item 1 emendado); 2 → as duas formas (item 14
+>   emendado); 3 → texto da NT 2026.010 (item 11 emendado). Texto original das lacunas:
 >   - **L-DANFE-PR0-1:** o teste do item 1 espera "12 de item, contando as 3 `pAliqEfet`". A NT §4.3 tem **11 campos impressos e 14
 >     tags**. A transcrição segue a fonte; a contagem do BRIEF precisa de correção.
 >   - **L-DANFE-PR0-2:** `[MOC-DANFE-HOMOLOG]` aceita "SEM VALOR FISCAL" em "Informações Complementares" **ou** em marca d'água.

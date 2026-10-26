@@ -175,7 +175,7 @@ divide "Cálculo do Imposto" em "Total dos produtos e total da nota" e "Total do
 
 1. **Texto do Campo 1.** MOC 7.0 (p. 20): *"Consulta de autenticidade no portal nacional da NF-e … ou no site da Sefaz
    Autorizadora"*. Modelo da NT 2026.010 (p. 8): *"Consulte a autenticidade no portal nacional da NF-e … ou no site da SEFAZ
-   autorizadora"*. O BRIEF não diz qual texto o item 11 imprime (lacuna L-DANFE-PR0-3 do retorno do PR-0).
+   autorizadora"*. Lacuna L-DANFE-PR0-3, decidida em 26/10: o item 11 imprime o texto da NT 2026.010 (D-2026-10-26-NFE-DANFE-IBSCBS-LACUNAS-PR0).
 2. **FCP.** O MOC (§3.1.7 e §3.1.8) manda o **emissor** pôr o FCP por item em `infAdProd` e os totais (W04b, W06a) em
    `infAdFisco`. A NT 2026.010 §4.4 cria campos facultativos de FCP no bloco de totais (vFCP W04h, vFCPST W06a). O leitor só
    imprime o que está no XML, então as duas regras convivem; o ID do total do FCP diverge entre as fontes (W04b no MOC,
