@@ -38,4 +38,18 @@ describe('accountingKitService', () => {
     await accountingKitService.listPending('u1');
     expect(lastCall().url).toMatch(/\/accounting-kit\/pending\?unitId=u1$/);
   });
+
+  it.each([
+    ['acceptPending', 'accept'],
+    ['rejectPending', 'reject'],
+  ] as const)('%s (PR-2 item 15): POST /accounting-kit/pending/:id/%s com unitId e motivo; devolve o data', async (fn, verb) => {
+    const view = { id: 'p 1', status: verb === 'accept' ? 'ACCEPTED' : 'REJECTED' };
+    vi.mocked(globalThis.fetch).mockResolvedValue(okResponse(view));
+    const body = { unitId: 'u1', motivo: 'conferido com o contador' };
+    await expect(accountingKitService[fn]('p 1', body)).resolves.toEqual(view);
+    const { url, init } = lastCall();
+    expect(url).toMatch(new RegExp(`/accounting-kit/pending/p%201/${verb}$`));
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(String(init.body))).toEqual(body);
+  });
 });

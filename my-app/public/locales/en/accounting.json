@@ -3560,6 +3560,38 @@
       "field_set_by_user": "The field was already filled in this unit",
       "referential_year_frozen": "The year's referential chart was already used in an ECD",
       "referential_mapped_differently": "The account already has another referential code in this unit"
+    },
+    "decide": {
+      "accept": "Accept",
+      "reject": "Reject",
+      "acceptedToast": "Pending item accepted.",
+      "rejectedToast": "Pending item rejected.",
+      "error": "Could not decide the pending item.",
+      "motivoLabel": "Reason (10 to 500 characters)",
+      "confirm": {
+        "acceptTitle": "Accept the pending item {{item}}?",
+        "rejectTitle": "Reject the pending item {{item}}?",
+        "cancelLabel": "Cancel"
+      },
+      "effects": {
+        "reject": "Rejecting keeps this unit's value; the item does not come back for this kit version.",
+        "generic": "This decision changes the unit's chart of accounts or binding.",
+        "accept": {
+          "override": "Accepting removes this role's account adjustment and recompiles the binding with the kit's account.",
+          "account_deleted_by_user": "Accepting restores the deleted account and recompiles the binding.",
+          "account_changed_in_use": "Accepting renames the account to the kit's name.",
+          "field_set_by_user": "Accepting writes the kit's account over the value set in this unit.",
+          "referential_year_frozen": "This item belongs to a frozen year: accepting is not possible, only rejecting.",
+          "referential_mapped_differently": "Accepting replaces the account's referential code with the kit's."
+        }
+      },
+      "errors": {
+        "KIT_PENDING_NOT_OPEN": "This item was already decided by someone else; the list was refreshed.",
+        "KIT_PENDING_NOT_FOUND": "Pending item not found; the list was refreshed.",
+        "KIT_PENDING_FROZEN_YEAR": "This item belongs to a frozen year (ECF filed or period closed): it can only be rejected.",
+        "COMPILE_DRAFT": "Recompiling the binding failed; nothing was applied.",
+        "ACCOUNT_NOT_FOUND": "The kit's account is not live in the unit's chart of accounts."
+      }
     }
   }
 }

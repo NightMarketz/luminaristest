@@ -55,6 +55,20 @@ Pré-condições:
    Resultado esperado: a aba "Kit de setor" não aparece.
    EVIDÊNCIA: [screenshot da barra de abas]
 
+8. (PR-2 — aceitar e recusar uma pendência aberta) Com a pendência do passo 3 e mais uma
+   (`INSERT … VALUES ('rb-p2', '<USER>', '<UNIT>', 'beautySalon', 6, 'rb-run', 'referential:2025:9.9.9', 'referential_year_frozen', '{}', '{}', 'OPEN', datetime('now'), datetime('now'));`),
+   na linha `referential:2025:9.9.9` clicar "Recusar", digitar um motivo de 9 caracteres e depois de 10 ou mais, e confirmar.
+   Resultado esperado: com 9 caracteres o botão "Recusar" do modal fica desabilitado; o modal diz que recusar mantém o
+   valor da unidade; ao confirmar, toast "Pendência recusada." e a linha some da lista.
+   `SELECT status, motivo FROM kit_upgrade_pendings WHERE id = 'rb-p2';` devolve `REJECTED` e o motivo digitado.
+   EVIDÊNCIA: [screenshots + saída do SELECT]
+
+9. Na linha `role:receita-servico` (motivo `override`) clicar "Aceitar".
+   Resultado esperado: o modal diz que aceitar remove o ajuste da conta do papel e recompila o binding. Confirmar com
+   motivo: toast "Pendência aceita." (sem ajuste vivo do papel o BE só fecha a pendência), a lista e o contador
+   atualizam. `SELECT status FROM kit_upgrade_pendings WHERE id = 'rb-p1';` devolve `ACCEPTED`.
+   EVIDÊNCIA: [screenshot + saída do SELECT]
+
 ## Desfecho (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
 [ ] FALHOU — passo __ divergiu; evidência da divergência colada acima;
