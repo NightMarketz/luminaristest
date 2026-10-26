@@ -52,6 +52,10 @@ atualizado: "2026-10-15"
   (NBC PG 01 item 10); o código não faz isso; (ii) a **reabertura**: ou o contador aceita o F-GOV-11 (a), ou o dono reabre
   o F-GOV-11. Ponto novo: a Res. CFC 1.640 art. 3º XXX diz que parametrizar regras fiscais e contábeis em software é
   atribuição de profissional da contabilidade. **Dono, chat, 26/10:** "Vou enviar a v2 de 2 perguntas ao CRC-SP."
+  **26/10, triagem do parecer colado (IA, não vinculante):** [`TRIAGEM-PARECER-IA-F-GOV-1-2026-10-26.md`](../../accounting/TRIAGEM-PARECER-IA-F-GOV-1-2026-10-26.md).
+  As citações conferem no SRE. Ele confirma o F-GOV-11 (a) e a Q1. A salvaguarda central (a aprovação fica presa ao par
+  ECD/ECF exato) já existe. Duas lacunas novas de código, sem autorização: ITG 2000 item 32 (motivo opcional e data de
+  origem fora do histórico do estorno, `PostingService.ts:617`) e item 36 (histórico do extemporâneo não é exigido).
 
 ## Fold 02/10 — ratificação
 
