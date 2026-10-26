@@ -185,7 +185,13 @@ export class TaxOptimizationService {
       });
       return { applied: false, suggestion: toSuggestionView(suggestion) };
     }
-    await this.repo.runTransaction((tx) => this.createVersionInTx(scope, data, tx));
+    await this.repo.runTransaction(async (tx) => {
+      // Review do #913: voltar ao proporcional revoga a troca para CARGA ainda pendente — senão o contador a aceitaria depois
+      // por cima da escolha mais nova do dono. A sugestão expira (EXPIRED) na mesma tx da versão nova.
+      const pendente = await this.repo.findPendingSuggestion(scope, { practice: 'CRITERIO_CARGA', subjectType: 'UNIT', subjectId: scope.unitId }, tx);
+      if (pendente) await this.repo.transitionSuggestion(pendente.id, 'PROPOSED', 'EXPIRED', null, tx);
+      await this.createVersionInTx(scope, data, tx, pendente?.id ?? '');
+    });
     return { applied: true, policy: this.policyView(await this.repo.listPolicies(scope), scopeToday(scope)) };
   }
 
@@ -260,9 +266,9 @@ export class TaxOptimizationService {
     });
   }
 
-  /** I-7: há sugestão PRINCIPAL_ACESSORIO aceita para o assunto? */
-  async aceita(scope: AccountingScope, practice: TaxPractice, subjectType: string, subjectId: string): Promise<boolean> {
-    return (await this.repo.listSuggestions(scope, 'ACCEPTED')).some((s) => s.practice === practice && s.subjectType === subjectType && s.subjectId === subjectId);
+  /** I-7: há sugestão aceita para o assunto? Consulta pontual pelo assunto, sem varrer as aceitas da unidade. */
+  async aceita(scope: AccountingScope, key: { practice: TaxPractice; subjectType: string; subjectId: string }): Promise<boolean> {
+    return (await this.repo.findAcceptedSuggestion(scope, key)) !== null;
   }
 
   async accept(scope: AccountingScope, id: string, input: DecideSuggestionInput): Promise<TaxOptimizationSuggestionView> {
@@ -379,7 +385,12 @@ export class TaxOptimizationService {
     return created;
   }
 
-  private async createVersionInTx(scope: AccountingScope, data: TaxOptimizationPolicyData, tx: Prisma.TransactionClient): Promise<TaxOptimizationPolicy> {
+  private async createVersionInTx(
+    scope: AccountingScope,
+    data: TaxOptimizationPolicyData,
+    tx: Prisma.TransactionClient,
+    expiredSuggestionId = '',
+  ): Promise<TaxOptimizationPolicy> {
     const linhas = await this.repo.listPolicies(scope, tx);
     const ultima = linhas.reduce<TaxOptimizationPolicy | null>((a, b) => (!a || b.vigenteDesde >= a.vigenteDesde ? b : a), null);
     if (ultima && data.vigenteDesde <= ultima.vigenteDesde) {
@@ -404,6 +415,7 @@ export class TaxOptimizationService {
         pisoServico: created.pisoServico,
         vigenteDesde: created.vigenteDesde,
         suggestionId: created.suggestionId ?? '',
+        expiredSuggestionId,
       },
     });
     return created;

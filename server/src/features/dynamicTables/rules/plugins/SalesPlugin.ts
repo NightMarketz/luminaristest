@@ -35,7 +35,7 @@ import {
   createMovementsForItems,
 } from './sales/stockSync';
 import { findSaleById } from './sales/shared';
-import { assertSaleDiscountItemization, isCostSnapshotOnlyWrite } from './sales/discountGuard';
+import { assertCostSnapshotNotYetRecorded, assertSaleDiscountItemization, isCostSnapshotOnlyWrite } from './sales/discountGuard';
 import { applyCustomerRevenueSideEffects } from './sales/customerMetrics';
 import { materializeCommissions, cancelCommissionsForSale } from './sales/commissions';
 import {
@@ -72,7 +72,10 @@ export const SalesPlugin: RulePlugin = {
     if (isItemsTable) {
       // EFICIENCIA-FISCAL PR-1 item 6: o SaleFiscalGuardService grava `custoSnapshotCents` (isSystem) depois do finalize —
       // a única escrita em item de venda finalizada, e só dessa coluna.
-      if (ctx.isSystem && isCostSnapshotOnlyWrite(ctx.before, ctx.after)) return;
+      if (ctx.isSystem && isCostSnapshotOnlyWrite(ctx.before, ctx.after)) {
+        assertCostSnapshotNotYetRecorded(ctx.before);
+        return;
+      }
       await assertParentSaleNotFinalized(ctx);
       await validateSaleItemXor(ctx, ctx.after ?? {});
       // Validação adicional para itens de serviço em edição: coerência do agendamento com serviço/responsável/unidade

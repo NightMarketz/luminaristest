@@ -154,7 +154,11 @@ export class FiscalDocumentEmissionService {
      * Porta estrutural (o `SaleFiscalGuardService` de `features/sales`), injetada pela factory.
      */
     private readonly fiscalGuard?: {
-      check(scope: AccountingScope, saleId: string, opts: { forEmission?: boolean }): Promise<{ violations: Array<{ code: string; severity: string; legalBasis: string }> }>;
+      check(
+        scope: AccountingScope,
+        saleId: string,
+        opts: { forEmission?: boolean; persistSnapshot?: boolean; sale?: Record<string, unknown> },
+      ): Promise<{ violations: Array<{ code: string; severity: string; legalBasis: string }> }>;
     },
   ) {}
 
@@ -180,7 +184,8 @@ export class FiscalDocumentEmissionService {
       throw new ForbiddenError('Você não tem permissão para emitir documento fiscal.');
     }
     try {
-      const assembly = await this.assemble(scope, saleId, kind, selectDfeEmissor(process.env).ambiente);
+      // Review do #913: a prévia só LÊ — a guarda roda sem gravar o custo nem a trilha de bloqueio.
+      const assembly = await this.assemble(scope, saleId, kind, selectDfeEmissor(process.env).ambiente, false, 'preview');
       // F-EF-16 a: o tie-out é Σ (vServ − vDescIncond) = crédito 3.1.
       const totalServiceCents = assembly.groups.reduce((sum, g) => sum + g.vServCents - g.vDescIncondCents, 0);
       return {
@@ -576,6 +581,8 @@ export class FiscalDocumentEmissionService {
     kind: FiscalDocumentKind,
     ambiente: DfeAmbiente | null,
     reenvio = false,
+    /** EFICIENCIA-FISCAL PR-1: 'preview' roda a guarda fiscal sem efeito (sem gravar custo nem trilha); 'emit' com. */
+    guardMode: 'preview' | 'emit' = 'emit',
   ): Promise<{
     groups: Array<{ cTribNac: string; vServCents: number; vDescIncondCents: number; payload: DpsPayload }>;
     ledgerCents: number;
@@ -717,7 +724,8 @@ export class FiscalDocumentEmissionService {
     // virar documento passa por aqui — a venda sem nota nunca é barrada (ADR §12).
     if (this.fiscalGuard && validSale && !pacoteVenda && saleInfo?.kind !== 'Empty') {
       try {
-        const check = await this.fiscalGuard.check(scope, saleId, { forEmission: true });
+        const emit = guardMode === 'emit';
+        const check = await this.fiscalGuard.check(scope, saleId, { forEmission: emit, persistSnapshot: emit, sale: saleData });
         for (const v of check.violations) if (v.severity === 'BLOCK') faltantes.push(`fiscal_guard: ${v.code} (${v.legalBasis})`);
       } catch (e) {
         if (!(e instanceof NotFoundError)) throw e;

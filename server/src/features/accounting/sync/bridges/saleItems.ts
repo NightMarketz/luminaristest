@@ -14,6 +14,7 @@
 import { getFactory } from '../../../../lib/factory';
 import logger from '../../../../lib/logger';
 import { classifyTaxId } from '../../../../lib/cnpj';
+import { classifySaleItem as classifyItem, toNum } from '../../../../lib/saleLine';
 
 export type SaleItemsKind = 'Product' | 'Service' | 'Package' | 'Mixed' | 'Empty';
 
@@ -50,22 +51,18 @@ export interface SalePackageInfo {
   productLines: ProductLine[];
 }
 
-/** Numeric coercion that never propagates NaN into the money math (missing/garbage → 0). */
-function toNum(v: unknown): number {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : 0;
-}
-
 /**
  * EFICIENCIA-FISCAL PR-1 item 9 + F-EF-15 a (BRIEF BE-INCR-EFICIENCIA-FISCAL; D-2026-10-22-EFICIENCIA-FISCAL-FORKS): valor da
  * linha para o rateio da receita. Venda com desconto INCONDICIONAL destacado por item ⇒ peso LÍQUIDO (quantidade × preço −
  * discountCents/100) — a mesma fonte para o razão (`revenueByNature` → `splitRevenueCredit`), a subrazão
  * (`ratearReceita`) e a DPS; CONDITIONAL ou venda legada ⇒ peso bruto (I-4; LC 87 art. 13 § 1º II "a"; LC 214 art. 12 § 3º).
  * Com o critério proporcional o resultado é o de antes, salvo arredondamento (o desconto já seguia o peso bruto).
+ * Nunca negativo (review do #913): sem a coluna `quantity` (preset só-serviços) o bruto é 0 e o desconto não pode
+ * virar peso negativo no `splitRevenueCredit`.
  */
 function lineValueReais(d: Record<string, unknown>, incondicional: boolean): number {
   const bruto = toNum(d.quantity) * toNum(d.unitPrice);
-  return incondicional ? bruto - toNum(d.discountCents) / 100 : bruto;
+  return incondicional ? Math.max(0, bruto - toNum(d.discountCents) / 100) : bruto;
 }
 
 /**
@@ -79,14 +76,6 @@ async function isUnconditionalSale(userId: string, saleId: string, rows: Readonl
   const row = salesTable ? await repo.findDataById(saleId) : null;
   if (!row || row.dynamicTableId !== salesTable!.id) return false;
   return (row.data as Record<string, unknown> | null)?.discountKind === 'UNCONDITIONAL';
-}
-
-/** The ONE item classifier (relation id first, then `type`) — shared by the split buckets and the revenue lines. */
-function classifyItem(d: Record<string, unknown>): 'Product' | 'Service' | 'Package' | 'Unknown' {
-  if (d.productId || String(d.type ?? '') === 'Product') return 'Product';
-  if (d.serviceId || String(d.type ?? '') === 'Service') return 'Service';
-  if (d.packageId || String(d.type ?? '') === 'Package') return 'Package';
-  return 'Unknown';
 }
 
 /** Load + classify a sale's items by querying the tenant's `saleItems` table for that saleId. */

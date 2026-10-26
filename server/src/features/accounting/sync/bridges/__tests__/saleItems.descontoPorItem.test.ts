@@ -58,6 +58,16 @@ describe('peso da receita por item (F-EF-15 a)', () => {
     expect(findDataById).not.toHaveBeenCalled();
   });
 
+  it('review do #913: sem a coluna quantity o peso líquido não fica negativo (clamp em 0)', async () => {
+    findTableByInternalName.mockImplementation(async (_u: string, name: string) => ({ id: `${name}-t` }));
+    findRowsByFieldValue.mockResolvedValue([
+      { id: 'a', data: { serviceId: 'srv-1', unitPrice: 100, discountCents: 1_000 } },
+      { id: 'b', data: { productId: 'prod-1', quantity: 2, unitPrice: 10 } },
+    ]);
+    findDataById.mockResolvedValue({ id: 's1', dynamicTableId: 'sales-t', data: { discountKind: 'UNCONDITIONAL' } });
+    expect((await loadSalePackageInfo('u1', 's1')).revenueByNature).toEqual({ serviceReais: 0, productReais: 20 });
+  });
+
   it('a linha de serviço da DPS carrega o desconto destacado do item (F-EF-16 a)', async () => {
     venda('UNCONDITIONAL');
     expect(await loadSaleServiceLines('u1', 's1')).toEqual([{ serviceRef: 'srv-1', description: '', quantity: 1, unitPrice: 100, discountCents: 3_000 }]);

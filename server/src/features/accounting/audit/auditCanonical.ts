@@ -343,7 +343,7 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'tax.suggestion.proposed': ['suggestionId', 'practice', 'subjectType', 'subjectId', 'estimatedSavingCents', 'supersedesId'],
   'tax.suggestion.accepted': ['suggestionId', 'practice', 'subjectType', 'subjectId', 'estimatedSavingCents', 'assignmentId', 'policyId'],
   'tax.suggestion.rejected': ['suggestionId', 'practice', 'subjectType', 'subjectId', 'estimatedSavingCents', 'assignmentId'],
-  'tax.policy.updated': ['policyId', 'criterioAlocacao', 'pisoServico', 'vigenteDesde', 'suggestionId'],
+  'tax.policy.updated': ['policyId', 'criterioAlocacao', 'pisoServico', 'vigenteDesde', 'suggestionId', 'expiredSuggestionId'],
   'tax.policy.service_cost_created': ['serviceCostId', 'serviceRef', 'custoCents', 'catalogoMinimoCents', 'sourceDocumentId', 'vigenteDesde', 'vigenteAte'],
   'tax.policy.service_cost_deleted': ['serviceCostId', 'serviceRef', 'custoCents', 'catalogoMinimoCents', 'sourceDocumentId', 'vigenteDesde', 'vigenteAte'],
   'sale.fiscal_guard.blocked': ['saleId', 'criterio', 'codes'],

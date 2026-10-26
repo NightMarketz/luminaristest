@@ -57,6 +57,12 @@ export interface ITaxOptimizationRepository {
     key: { practice: string; subjectType: string; subjectId: string },
     tx?: Prisma.TransactionClient,
   ): Promise<TaxOptimizationSuggestion | null>;
+  /** A sugestão ACCEPTED mais recente do assunto (consulta pontual — I-7). */
+  findAcceptedSuggestion(
+    scope: AccountingScope,
+    key: { practice: string; subjectType: string; subjectId: string },
+    tx?: Prisma.TransactionClient,
+  ): Promise<TaxOptimizationSuggestion | null>;
   createSuggestion(scope: AccountingScope, data: TaxOptimizationSuggestionData, tx?: Prisma.TransactionClient): Promise<TaxOptimizationSuggestion>;
   /** CAS PROPOSED → ACCEPTED | REJECTED | EXPIRED; devolve a linha nova ou null se o status já não era `from`. */
   transitionSuggestion(

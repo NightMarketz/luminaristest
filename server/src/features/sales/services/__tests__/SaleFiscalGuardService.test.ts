@@ -23,10 +23,17 @@ function build(opts: {
   const rows: Row[] = opts.items.map(({ id, ...data }) => ({ id, dynamicTableId: 'items-t', data: { saleId: 'sale-1', ...data } }));
   const repository = {
     findTableByInternalName: jest.fn(async (_u: string, name: string) => ({ id: name === 'sales' ? 'sales-t' : 'items-t' })),
-    findDataById: jest.fn(async (id: string) => (id === 'sale-1' ? sale : null)),
+    findDataById: jest.fn(async (id: string) => (id === 'sale-1' ? sale : rows.find((r) => r.id === id) ?? null)),
     findRowsByFieldValue: jest.fn(async () => rows),
   };
-  const dynamicTableService = { updateTableData: jest.fn(async () => ({})) };
+  const dynamicTableService = {
+    updateTableData: jest.fn(async (_u: unknown, id: string, dto: { data: Record<string, unknown> }) => {
+      const row = rows.find((r) => r.id === id)!;
+      await Promise.resolve();
+      row.data = { ...row.data, ...dto.data };
+      return row;
+    }),
+  };
   const writeEffects = { afterDataWrite: jest.fn() };
   const inventoryRepo = {
     findByProductRef: jest.fn(async (_s: AccountingScope, ref: string) => {
@@ -52,7 +59,7 @@ function build(opts: {
     tax,
     carga ? (i) => carga[i.productRef ?? i.serviceRef ?? ''] ?? null : undefined,
   );
-  return { svc, dynamicTableService, tax, writeEffects };
+  return { svc, dynamicTableService, tax, writeEffects, repository, rows };
 }
 
 const combo = [
@@ -113,6 +120,54 @@ describe('SaleFiscalGuardService.check', () => {
     const r = await svc.check(scope, 'sale-1');
     expect(r.criterio).toBe('PROPORCIONAL_CATALOGO');
     expect(r.violations.map((v) => v.code)).toContain('ORDEM_DE_CARGA_INDETERMINADA');
+  });
+});
+
+describe('review do #913', () => {
+  it('F1: persistSnapshot=false (prévia da NFS-e) não grava o custo nem audita, mesmo com BLOCK', async () => {
+    const { svc, dynamicTableService, tax } = build({ items: [{ ...combo[1], unitPrice: 90 }], inventory: { 'prod-1': { qtyOnHand: 1, totalValueCents: 6_000n } } });
+    const r = await svc.check(scope, 'sale-1', { forEmission: false, persistSnapshot: false });
+    expect(r.ok).toBe(false);
+    expect(dynamicTableService.updateTableData).not.toHaveBeenCalled();
+    expect(tax.auditGuardBlocked).not.toHaveBeenCalled();
+  });
+
+  it('F3: duas verificações concorrentes gravam o custo UMA vez e ambas usam o mesmo valor', async () => {
+    const inv = { 'prod-1': { qtyOnHand: 1, totalValueCents: 6_000n } };
+    const { svc, dynamicTableService } = build({ items: combo, inventory: inv });
+    const [a, b] = await Promise.all([svc.check(scope, 'sale-1'), svc.check(scope, 'sale-1')]);
+    expect(dynamicTableService.updateTableData).toHaveBeenCalledTimes(1);
+    expect(a.alocacao.find((x) => x.itemRef === 'b')!.pisoCents).toBe(6_000n);
+    expect(b.alocacao.find((x) => x.itemRef === 'b')!.pisoCents).toBe(6_000n);
+  });
+
+  it('F3: se o plugin recusa (CUSTO_JA_GRAVADO), o guard relê e usa o custo gravado', async () => {
+    const { svc, dynamicTableService, rows } = build({ items: combo, inventory: { 'prod-1': { qtyOnHand: 1, totalValueCents: 9_900n } } });
+    dynamicTableService.updateTableData.mockImplementationOnce(async () => {
+      rows.find((r) => r.id === 'b')!.data.custoSnapshotCents = 6_000;
+      throw Object.assign(new Error('CUSTO_JA_GRAVADO'), { errorCode: 'CUSTO_JA_GRAVADO' });
+    });
+    const r = await svc.check(scope, 'sale-1');
+    expect(r.alocacao.find((x) => x.itemRef === 'b')!.pisoCents).toBe(6_000n);
+  });
+
+  it('peso = catálogo × quantidade, o mesmo das pontes contábeis (razão/subrazão/DPS)', async () => {
+    const { svc } = build({
+      sale: { discountAmount: 30, discountKind: 'UNCONDITIONAL' },
+      items: [
+        { id: 'a', serviceId: 'srv-1', quantity: 3, unitPrice: 100, catalogUnitPrice: 100 },
+        { id: 'b', productId: 'prod-1', quantity: 2, unitPrice: 100, catalogUnitPrice: 100 },
+      ],
+    });
+    const r = await svc.check(scope, 'sale-1');
+    // pesos 300 (serviço × 3) e 200 (produto × 2) ⇒ R$ 18 e R$ 12
+    expect(r.alocacao.map((x) => x.discountCents)).toEqual([1_800n, 1_200n]);
+  });
+
+  it('F6: com a venda já lida pelo chamador, não relê a venda', async () => {
+    const { svc, repository } = build({ items: combo });
+    await svc.check(scope, 'sale-1', { sale: { unitId: 'unit-1', status: 'Finalized', date: '2026-10-20', discountAmount: 0 } });
+    expect(repository.findDataById).not.toHaveBeenCalledWith('sale-1');
   });
 });
 

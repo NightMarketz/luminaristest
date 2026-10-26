@@ -80,7 +80,12 @@ describe('guarda fiscal como pré-condição da NFS-e (item 6)', () => {
     const r = await service.preview(SCOPE, SALE_ID, 'NFSE');
     expect(r.ok).toBe(false);
     expect(r.faltantes).toContain('fiscal_guard: ITEM_ACIMA_DO_CATALOGO (CTN art. 148)');
-    expect(guard!.check).toHaveBeenCalledWith(SCOPE, SALE_ID, { forEmission: true });
+    // Review do #913: a prévia não grava custo nem trilha; recebe a venda já lida (sem reler).
+    expect(guard!.check).toHaveBeenCalledWith(SCOPE, SALE_ID, {
+      forEmission: false,
+      persistSnapshot: false,
+      sale: expect.objectContaining({ status: 'Finalized', unitId: 'unit-1' }),
+    });
   });
 
   it('WARN não bloqueia a emissão', async () => {
@@ -109,9 +114,11 @@ describe('F-EF-16 a — vDescIncond destacado por grupo, tie-out Σ (vServ − v
     process.env = OLD_ENV;
   });
 
-  // Dois grupos: A R$ 200 (desconto R$ 30,01) e B R$ 100 (desconto R$ 9,99) ⇒ crédito 3.1 = R$ 260,00.
+  // Dois grupos: A = 2 linhas de R$ 100 (desconto R$ 30,01) e B R$ 100 (desconto R$ 9,99) ⇒ crédito 3.1 = R$ 260,00.
+  // Serviço conta quantidade 1 (convenção do subtotal), então o grupo A tem duas linhas.
   const itens = [
-    { serviceId: 'srv-A', quantity: 2, unitPrice: 100, catalogUnitPrice: 100, discountCents: 3_001 },
+    { serviceId: 'srv-A', quantity: 1, unitPrice: 100, catalogUnitPrice: 100, discountCents: 1_500 },
+    { serviceId: 'srv-A', quantity: 1, unitPrice: 100, catalogUnitPrice: 100, discountCents: 1_501 },
     { serviceId: 'srv-B', quantity: 1, unitPrice: 100, catalogUnitPrice: 100, discountCents: 999 },
   ];
   const valores = (p: { infDPS: { valores: { vServPrest: { vServ: string }; vDescCondIncond?: { vDescIncond?: string } } } }) => ({

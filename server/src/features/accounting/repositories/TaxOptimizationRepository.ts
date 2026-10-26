@@ -74,6 +74,18 @@ export class TaxOptimizationRepository implements ITaxOptimizationRepository {
     });
   }
 
+  public async findAcceptedSuggestion(
+    scope: AccountingScope,
+    key: { practice: string; subjectType: string; subjectId: string },
+    tx?: Prisma.TransactionClient,
+  ): Promise<TaxOptimizationSuggestion | null> {
+    const { practice, subjectType, subjectId } = key;
+    return this.db(tx).taxOptimizationSuggestion.findFirst({
+      where: { ...accountingScopeWhere(scope), practice, subjectType, subjectId, status: 'ACCEPTED' },
+      orderBy: [{ decidedAt: 'desc' }, { id: 'asc' }],
+    });
+  }
+
   public async createSuggestion(scope: AccountingScope, data: TaxOptimizationSuggestionData, tx?: Prisma.TransactionClient): Promise<TaxOptimizationSuggestion> {
     const { userId, unitId } = accountingScopeWhere(scope);
     return this.db(tx).taxOptimizationSuggestion.create({ data: { userId, unitId, status: 'PROPOSED', pendingSlot: 'PROPOSED', ...data } });

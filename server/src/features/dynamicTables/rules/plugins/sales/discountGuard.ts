@@ -16,21 +16,14 @@
  * rateio fica com o fiscal-check (BRIEF §7 item 6).
  */
 import { ValidationError } from '../../../../../lib/errors';
+import { reaisToCents as toCents, saleLineQuantity as quantityOf, toNum as num } from '../../../../../lib/saleLine';
 
 export interface SaleItemForDiscount {
   id?: string;
   data?: Record<string, unknown> | null;
 }
 
-const num = (v: unknown): number => {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : 0;
-};
-const toCents = (reais: unknown): number => Math.round(num(reais) * 100);
 const hasValue = (v: unknown): boolean => v !== undefined && v !== null && v !== '';
-
-/** Quantidade do item; o preset só-serviços não tem a coluna ⇒ 1. */
-export const quantityOf = (d: Record<string, unknown>): number => (hasValue(d.quantity) ? num(d.quantity) : 1);
 
 export function assertSaleDiscountItemization(header: Record<string, unknown>, items: readonly SaleItemForDiscount[]): void {
   const datas: Array<Record<string, unknown>> = items.map((it) => ({ ...(it.data ?? {}), id: it.id ?? it.data?.id }));
@@ -85,6 +78,16 @@ export function assertSaleDiscountItemization(header: Record<string, unknown>, i
       { code: 'PRECO_DIFERENTE_DO_CATALOGO_SEM_DESCONTO', itemRef: String(abaixo.id ?? '') },
       'PRECO_DIFERENTE_DO_CATALOGO_SEM_DESCONTO',
     );
+  }
+}
+
+/**
+ * Item 6 / I-4b — a escrita isSystem só do custo é aceita uma vez: com o custo já gravado ⇒ 400 CUSTO_JA_GRAVADO (o guard
+ * relê e usa o gravado). Junto com a fila por item do SaleFiscalGuardService, fecha a dupla gravação concorrente.
+ */
+export function assertCostSnapshotNotYetRecorded(before: Record<string, unknown> | null | undefined): void {
+  if (before && hasValue(before.custoSnapshotCents)) {
+    throw new ValidationError('CUSTO_JA_GRAVADO: o custo do item na venda já foi gravado e não é recalculado (I-4b).', { code: 'CUSTO_JA_GRAVADO' }, 'CUSTO_JA_GRAVADO');
   }
 }
 

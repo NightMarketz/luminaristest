@@ -2,7 +2,7 @@
  * EFICIENCIA-FISCAL PR-1 item 2 (BRIEF §3; ADR-INCR-EFICIENCIA-FISCAL D4.1, I-1, I-4; F-EF-9 a) — guarda aritmética do
  * desconto no finalize: um teste por regra e o teste de mutação do I-1.
  */
-import { assertSaleDiscountItemization, isCostSnapshotOnlyWrite } from '../discountGuard';
+import { assertCostSnapshotNotYetRecorded, assertSaleDiscountItemization, isCostSnapshotOnlyWrite } from '../discountGuard';
 
 const it_ = (id: string, data: Record<string, unknown>) => ({ id, data: { quantity: 1, ...data } });
 const codeOf = (fn: () => void): string | undefined => {
@@ -56,6 +56,19 @@ describe('assertSaleDiscountItemization', () => {
 
   it('legado (sem catálogo, desconto só no cabeçalho) passa: catálogo := unitPrice e o rateio fica com o fiscal-check', () => {
     expect(codeOf(() => assertSaleDiscountItemization({ discountAmount: 15, discountKind: 'UNCONDITIONAL' }, [it_('a', { unitPrice: 100 }), it_('b', { unitPrice: 50 })]))).toBeUndefined();
+  });
+});
+
+describe('review do #913', () => {
+  it('sem a coluna quantity (preset só-serviços) o teto do desconto é 1 × catálogo', () => {
+    const svc = (discountCents: number) => [{ id: 's', data: { serviceId: 'srv', unitPrice: 100, catalogUnitPrice: 100, discountCents } }];
+    expect(codeOf(() => assertSaleDiscountItemization({ discountAmount: 100, discountKind: 'UNCONDITIONAL' }, svc(10_000)))).toBeUndefined();
+    expect(codeOf(() => assertSaleDiscountItemization({ discountAmount: 101, discountKind: 'UNCONDITIONAL' }, svc(10_100)))).toBe('DESCONTO_ITEM_FORA_DA_FAIXA');
+  });
+
+  it('F3: custo já gravado ⇒ CUSTO_JA_GRAVADO; ainda nulo ⇒ passa', () => {
+    expect(codeOf(() => assertCostSnapshotNotYetRecorded({ custoSnapshotCents: 3_000 }))).toBe('CUSTO_JA_GRAVADO');
+    expect(codeOf(() => assertCostSnapshotNotYetRecorded({ custoSnapshotCents: null }))).toBeUndefined();
   });
 });
 

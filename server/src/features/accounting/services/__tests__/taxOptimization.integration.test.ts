@@ -106,6 +106,22 @@ describe('política de eficiência fiscal (item 5)', () => {
   });
 });
 
+describe('review do #913 (F2)', () => {
+  it('voltar ao PROPORCIONAL expira a troca para CARGA pendente; o contador não a aceita depois', async () => {
+    const c = await cena(true);
+    const id = (await put(c, { criterioAlocacao: 'CARGA_TRIBUTARIA', vigenteDesde: '2026-12-01' })).body.data.suggestion.id;
+    const prop = await put(c, { criterioAlocacao: 'PROPORCIONAL_CATALOGO', vigenteDesde: '2026-11-15' });
+    expect(prop.status).toBe(200);
+    expect((await prisma.taxOptimizationSuggestion.findUnique({ where: { id } }))!.status).toBe('EXPIRED');
+    expect((await decidir(c, c.contador, id, 'accept', { reason: 'tarde demais' })).body).toMatchObject({ code: 'SUGESTAO_JA_DECIDIDA' });
+    const pol = await request(app).get(`${P}/policy`).query({ unitId: c.unit }).set(authHeader(c.dono));
+    expect(pol.body.data.versoes.map((v: { criterioAlocacao: string }) => v.criterioAlocacao)).toEqual(['PROPORCIONAL_CATALOGO']);
+    const ev = await prisma.auditEvent.findFirst({ where: { unitId: c.unit, eventType: 'tax.policy.updated' } });
+    const payload = typeof ev!.payload === 'string' ? JSON.parse(ev!.payload) : ev!.payload;
+    expect(payload).toMatchObject({ expiredSuggestionId: id });
+  });
+});
+
 describe('sugestão (item 7)', () => {
   it('rejeitar exige motivo; contador rejeita; a lista do contador (par contador × dono) enxerga', async () => {
     const c = await cena(true);

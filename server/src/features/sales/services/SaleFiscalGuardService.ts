@@ -20,6 +20,7 @@ import {
   type Violation,
 } from '../models/fiscalGuard';
 import type { FiscalCheckResponse } from '../dtos/FiscalCheckDto';
+import { classifySaleItem, reaisToCents, saleLineQuantity, toNum as num } from '../../../lib/saleLine';
 
 type Row = Record<string, unknown>;
 
@@ -37,19 +38,37 @@ interface ItemLido {
   principalItem: boolean;
 }
 
-const num = (v: unknown): number => {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : 0;
-};
 const has = (v: unknown) => v !== undefined && v !== null && v !== '';
-const cents = (reais: unknown) => BigInt(Math.round(num(reais) * 100));
+const cents = (reais: unknown) => BigInt(reaisToCents(reais));
 
-/** O MESMO classificador das pontes contábeis (`sync/bridges/saleItems.ts`): relação primeiro, depois `type`. */
-function naturezaDe(d: Row): NaturezaItem | null {
-  if (d.productId || String(d.type ?? '') === 'Product') return 'REVENDA';
-  if (d.serviceId || String(d.type ?? '') === 'Service') return 'SERVICO';
-  if (d.packageId || String(d.type ?? '') === 'Package') return 'PACOTE';
-  return null;
+/** O classificador canônico (`models/saleLine`, o mesmo das pontes contábeis) na natureza fiscal do item. */
+const NATUREZA: Record<string, NaturezaItem | null> = { Product: 'REVENDA', Service: 'SERVICO', Package: 'PACOTE', Unknown: null };
+const naturezaDe = (d: Row): NaturezaItem | null => NATUREZA[classifySaleItem(d)];
+
+/**
+ * Fila por item da gravação do custo (I-4b): duas verificações concorrentes da mesma venda no processo esperam uma pela
+ * outra; a segunda relê o item e usa o custo já gravado. O plugin recusa a 2ª escrita (CUSTO_JA_GRAVADO) como segunda linha.
+ */
+const snapshotQueue = new Map<string, Promise<unknown>>();
+async function serializedPorItem<T>(itemId: string, fn: () => Promise<T>): Promise<T> {
+  const anterior = snapshotQueue.get(itemId) ?? Promise.resolve();
+  // A falha da anterior é de quem a esperou (já a recebeu); aqui ela só libera a vez da próxima.
+  const atual = anterior.then(fn, fn);
+  snapshotQueue.set(itemId, atual);
+  try {
+    return await atual;
+  } finally {
+    if (snapshotQueue.get(itemId) === atual) snapshotQueue.delete(itemId);
+  }
+}
+
+export interface FiscalCheckOptions {
+  /** Montagem da NFS-e: BLOCK vai para a trilha (`sale.fiscal_guard.blocked`). */
+  forEmission?: boolean;
+  /** Grava o custo do produto na venda finalizada (padrão true). A prévia da NFS-e passa false: ler não muda dado. */
+  persistSnapshot?: boolean;
+  /** Linha da venda já lida pelo chamador (montagem da NFS-e) — evita reler a venda. */
+  sale?: Row;
 }
 
 /**
@@ -97,13 +116,13 @@ export class SaleFiscalGuardService {
     return this.check(scope, saleId);
   }
 
-  async check(scope: AccountingScope, saleId: string, opts: { forEmission?: boolean } = {}): Promise<FiscalCheckResponse> {
-    const { sale, items: rows } = await this.loadSale(scope.ownerUserId, saleId);
+  async check(scope: AccountingScope, saleId: string, opts: FiscalCheckOptions = {}): Promise<FiscalCheckResponse> {
+    const { sale, items: rows } = opts.sale ? { sale: opts.sale, items: await this.loadItems(scope.ownerUserId, saleId) } : await this.loadSale(scope.ownerUserId, saleId);
     if (sale.unitId !== scope.unitId) throw new NotFoundError(`Sale '${saleId}' não foi encontrada.`);
     const dia = saleDayAsWritten(scope, typeof sale.date === 'string' ? sale.date : undefined);
     const politica = await this.taxOptimization.politicaVigente(scope, dia);
 
-    const itens = await this.readItems(scope, rows, sale.status === 'Finalized');
+    const itens = await this.readItems(scope, rows, sale.status === 'Finalized' && opts.persistSnapshot !== false);
     await this.applyKitTreatment(scope, saleId, itens, dia);
 
     const custos = await this.taxOptimization.custosDeServicoVigentes(
@@ -205,12 +224,16 @@ export class SaleFiscalGuardService {
     const row = salesTable ? await this.repository.findDataById(saleId) : null;
     // findDataById não é escopado por dono: venda de outra tabela = inexistente (molde RegisterPaymentService).
     if (!salesTable || !row || row.dynamicTableId !== salesTable.id) throw new NotFoundError(`Sale '${saleId}' não foi encontrada.`);
-    const itemsTable = await this.repository.findTableByInternalName(ownerUserId, 'saleItems');
-    const items = itemsTable ? await this.repository.findRowsByFieldValue(itemsTable.id, 'saleId', saleId) : [];
-    return { sale: (row.data ?? {}) as Row, items: items.map((r) => ({ id: r.id, data: (r.data ?? {}) as Row })) };
+    return { sale: (row.data ?? {}) as Row, items: await this.loadItems(ownerUserId, saleId) };
   }
 
-  private async readItems(scope: AccountingScope, rows: Array<{ id: string; data: Row }>, finalized: boolean): Promise<ItemLido[]> {
+  private async loadItems(ownerUserId: string, saleId: string): Promise<Array<{ id: string; data: Row }>> {
+    const itemsTable = await this.repository.findTableByInternalName(ownerUserId, 'saleItems');
+    const items = itemsTable ? await this.repository.findRowsByFieldValue(itemsTable.id, 'saleId', saleId) : [];
+    return items.map((r) => ({ id: r.id, data: (r.data ?? {}) as Row }));
+  }
+
+  private async readItems(scope: AccountingScope, rows: Array<{ id: string; data: Row }>, gravarCusto: boolean): Promise<ItemLido[]> {
     const out: ItemLido[] = [];
     for (const r of [...rows].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))) {
       const d = r.data;
@@ -220,7 +243,7 @@ export class SaleFiscalGuardService {
       let custo = has(d.custoSnapshotCents) ? BigInt(Math.round(num(d.custoSnapshotCents))) : null;
       if (custo === null && natureza === 'REVENDA' && productRef) {
         custo = await this.custoMedio(scope, productRef);
-        if (custo !== null && finalized) await this.persistSnapshot(scope, r.id, custo);
+        if (custo !== null && gravarCusto) custo = await this.persistSnapshot(scope, r.id, custo);
       }
       out.push({
         itemRef: r.id,
@@ -230,7 +253,7 @@ export class SaleFiscalGuardService {
         unitPriceCents: cents(d.unitPrice),
         catalogUnitPriceCents: has(d.catalogUnitPrice) ? cents(d.catalogUnitPrice) : null,
         discountCents: has(d.discountCents) ? BigInt(Math.round(num(d.discountCents))) : 0n,
-        quantity: has(d.quantity) ? num(d.quantity) : 1,
+        quantity: saleLineQuantity(d),
         custoSnapshotCents: custo,
         kitRef: has(d.kitRef) ? String(d.kitRef) : null,
         principalItem: d.principalItem === true,
@@ -246,12 +269,29 @@ export class SaleFiscalGuardService {
     return BigInt(Math.round(Number(item.totalValueCents) / item.qtyOnHand));
   }
 
-  /** I-4b: grava uma vez, só a coluna do custo, por escrita isSystem (o plugin libera só essa coluna em venda finalizada). */
-  private async persistSnapshot(scope: AccountingScope, itemId: string, custo: bigint): Promise<void> {
-    const owner = { userId: scope.ownerUserId, id: scope.ownerUserId } as UserContext;
-    await this.dynamicTableService.updateTableData(owner, itemId, { data: { custoSnapshotCents: Number(custo) } }, { isSystem: true });
-    this.writeEffects.afterDataWrite(scope.ownerUserId);
-    logger.info('Sale item cost snapshot recorded', { itemId });
+  /**
+   * I-4b: grava uma vez, só a coluna do custo, por escrita isSystem (o plugin libera só essa coluna em venda finalizada e
+   * recusa a 2ª — CUSTO_JA_GRAVADO). Na fila do item: relê antes de gravar e, se outro já gravou, devolve o gravado.
+   */
+  private async persistSnapshot(scope: AccountingScope, itemId: string, custo: bigint): Promise<bigint> {
+    const gravado = async (): Promise<bigint | null> => {
+      const v = ((await this.repository.findDataById(itemId))?.data as Row | undefined)?.custoSnapshotCents;
+      return has(v) ? BigInt(Math.round(num(v))) : null;
+    };
+    return serializedPorItem(itemId, async () => {
+      const antes = await gravado();
+      if (antes !== null) return antes;
+      const owner = { userId: scope.ownerUserId, id: scope.ownerUserId } as UserContext;
+      try {
+        await this.dynamicTableService.updateTableData(owner, itemId, { data: { custoSnapshotCents: Number(custo) } }, { isSystem: true });
+      } catch (e) {
+        if ((e as { errorCode?: string }).errorCode !== 'CUSTO_JA_GRAVADO') throw e;
+        return (await gravado()) ?? custo;
+      }
+      this.writeEffects.afterDataWrite(scope.ownerUserId);
+      logger.info('Sale item cost snapshot recorded', { itemId });
+      return custo;
+    });
   }
 
   /** Item 10 / I-7: com PRINCIPAL_ACESSORIO aceita para o kit e data ≥ 2027, os acessórios seguem a natureza do principal. */
@@ -261,7 +301,7 @@ export class SaleFiscalGuardService {
       const membros = itens.filter((i) => i.kitRef === kit);
       const principal = membros.find((m) => m.principalItem) ?? null;
       if (!principal) continue;
-      const aceita = await this.taxOptimization.aceita(scope, 'PRINCIPAL_ACESSORIO', 'SALE_KIT', `${saleId}:${kit}`);
+      const aceita = await this.taxOptimization.aceita(scope, { practice: 'PRINCIPAL_ACESSORIO', subjectType: 'SALE_KIT', subjectId: `${saleId}:${kit}` });
       for (const m of membros) m.natureza = naturezaDoItemDoKit(m.natureza, principal.natureza, aceita, dia);
     }
   }
