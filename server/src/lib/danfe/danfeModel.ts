@@ -82,7 +82,10 @@ export interface DanfeItem {
   infAdProd: string | null; // V01, `[MOC-DANFE-INFADPROD]`
 }
 
-/** Totais do ICMS/IPI e da nota (MOC Anexo I W02) com os facultativos do `[NT10-FACULT]`. */
+/**
+ * Totais do ICMS/IPI e da nota (MOC 7.0 Anexo I W02–W16) com os facultativos do `[NT10-FACULT]`. Os quatro campos do ICMS
+ * monofásico (W06b.1–W06d) não estão no MOC 7.0: nomes e IDs vêm da NT 2026.010 §4.4.
+ */
 export interface DanfeTotaisIcmsIpi {
   vBC: BigCents; // W03
   vICMS: BigCents; // W04
@@ -366,6 +369,11 @@ export function readDanfeModel(xml: string | Buffer, legais: readonly LinhaLegal
   const chave = assertChaveAcesso(infNFe);
   const { infProt } = assertProtocoloAutorizado(proc, chave, legais);
 
+  // tpAmb (B24) é 1-1 e só 1 ou 2: ausente ou fora disso não pode virar 'producao' em silêncio — o item 14 imprime
+  // "SEM VALOR FISCAL" a partir daqui (`[MOC-DANFE-HOMOLOG]`).
+  const tpAmb = reqStr(ideNode.tpAmb, 'ide/tpAmb');
+  if (tpAmb !== '1' && tpAmb !== '2') throw new ValidationError(`NF-e inválida: ide/tpAmb "${tpAmb}" fora de 1/2.`);
+
   const tpNF = reqStr(ideNode.tpNF, 'ide/tpNF');
   if (tpNF !== '0' && tpNF !== '1') throw new ValidationError(`NF-e inválida: ide/tpNF "${tpNF}" fora de 0/1.`);
 
@@ -389,7 +397,7 @@ export function readDanfeModel(xml: string | Buffer, legais: readonly LinhaLegal
 
   return {
     chave,
-    ambiente: str(ideNode.tpAmb) === '2' ? 'homologacao' : 'producao',
+    ambiente: tpAmb === '2' ? 'homologacao' : 'producao',
     ide: {
       nNF: reqStr(ideNode.nNF, 'ide/nNF'),
       serie: reqStr(ideNode.serie, 'ide/serie'),

@@ -25,7 +25,8 @@ describe('readNfeTree — guardas compartilhadas (item 4)', () => {
   it('assinatura adulterada (infNFe mudou depois de assinado) ⇒ erro', () => {
     const adulterada = FULL.replace('<vNF>544.89</vNF>', '<vNF>999.99</vNF>');
     expect(adulterada).not.toBe(FULL);
-    expect(() => readNfeTree(adulterada)).toThrow();
+    expect(() => readNfeTree(adulterada)).toThrow(ValidationError);
+    expect(() => readNfeTree(adulterada)).toThrow(/assinatura digital/);
   });
 
   it('aceita Buffer', () => {

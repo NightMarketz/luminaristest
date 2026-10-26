@@ -74,6 +74,11 @@ describe('readDanfeModel — gates (item 5; "os mesmos do parseNfe", dono 26/10)
     expect(read(FULL).ambiente).toBe('producao');
   });
 
+  it('tpAmb ausente ou fora de 1/2 ⇒ erro (nunca vira produção em silêncio)', () => {
+    expect(() => read(variant((x) => x.replace('<tpAmb>1</tpAmb>', '')))).toThrow(/tpAmb/);
+    expect(() => read(variant((x) => x.replace('<tpAmb>1</tpAmb>', '<tpAmb>3</tpAmb>')))).toThrow(/tpAmb/);
+  });
+
   it('chave, ide e protocolo vêm do XML', () => {
     const m = read(FULL);
     expect(m.chave).toBe('35260911222333000181550010000123451482135790');
@@ -119,7 +124,9 @@ describe('readDanfeModel — IBS/CBS do item (item 7, [NT10-ITEM] [NT10-ALIQ])',
     expect(item.ibsCbs?.ibsMun.aliq?.origem).toBe('VIGENTE');
   });
 
-  it('gCompraGov com gRed nos três grupos ⇒ as três EFETIVA', () => {
+  // A regra decide pelo gRed, não pelo gCompraGov (NT 2026.010 §4.3: "hipóteses em que o grupo gRed é informado"); o
+  // gCompraGov está aqui só para a nota ter o formato de uma compra governamental, e o caso seguinte prova que ele sozinho não muda nada.
+  it('compra governamental com gRed nos três grupos ⇒ as três EFETIVA', () => {
     const compraGov = insertBefore('</ide>', '<gCompraGov><tpEnteGov>1</tpEnteGov><pRedutor>10.0000</pRedutor></gCompraGov>');
     const [item] = read(variant(compraGov, firstImposto(UB12(GRED('0.0900'), GRED('0.0450'), GRED('0.8100'))))).itens;
     expect([item.ibsCbs?.ibsUf.aliq, item.ibsCbs?.ibsMun.aliq, item.ibsCbs?.cbs.aliq]).toEqual([
@@ -127,6 +134,12 @@ describe('readDanfeModel — IBS/CBS do item (item 7, [NT10-ITEM] [NT10-ALIQ])',
       { aliquota: '0.0450', origem: 'EFETIVA' },
       { aliquota: '0.8100', origem: 'EFETIVA' },
     ]);
+  });
+
+  it('gCompraGov sem gRed ⇒ as três VIGENTE (o gCompraGov sozinho não troca a alíquota)', () => {
+    const compraGov = insertBefore('</ide>', '<gCompraGov><tpEnteGov>1</tpEnteGov><pRedutor>10.0000</pRedutor></gCompraGov>');
+    const [item] = read(variant(compraGov, firstImposto(UB12()))).itens;
+    expect([item.ibsCbs?.ibsUf.aliq?.origem, item.ibsCbs?.ibsMun.aliq?.origem, item.ibsCbs?.cbs.aliq?.origem]).toEqual(['VIGENTE', 'VIGENTE', 'VIGENTE']);
   });
 
   it('item sem UB12 ⇒ ibsCbs null; UB12 sem gIBSCBS ⇒ valores e alíquotas null', () => {
@@ -276,6 +289,13 @@ describe('readDanfeModel — facultativos: tag ausente ⇒ null (item 10)', () =
 
   it.each(casos)('sem %s ⇒ campo vazio', (_nome, rm, get, ausente) => {
     expect(get(read(variant(...COMPLETA, rm)))).toEqual(ausente);
+  });
+
+  it('cobr sem dup ⇒ lista vazia; cobr sem fat ⇒ nFat null; dest sem enderDest ⇒ endereço null', () => {
+    expect(read(variant(...COMPLETA, removeTag('dup'))).fatura).toEqual({ nFat: '12345', dup: [] });
+    expect(read(variant(...COMPLETA, removeTag('fat'))).fatura?.nFat).toBeNull();
+    const semEnder = read(variant(...COMPLETA, removeTag('enderDest'))).dest;
+    expect(semEnder).toMatchObject({ xNome: 'SALAO FICTICIO LTDA', endereco: null });
   });
 
   it('a nota completa traz o ISSQN com a IM do emitente', () => {
