@@ -155,8 +155,8 @@
   /* milestone cards */
   .ms-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 10px; }
   .ms { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; grid-template-columns: 64px 1fr; gap: 12px; min-width: 0; }
-  .ms .date { text-align: center; border-radius: 8px; padding: 6px 4px; font-family: var(--font-mono); line-height: 1.1; }
-  .ms .date b { display: block; font-size: 1.1rem; } .ms .date small { font-size: 0.68rem; }
+  .ms .date { text-align: center; border-radius: 8px; padding: 6px 4px; font-family: var(--font-mono); line-height: 1.1; min-width: 0; align-self: start; }
+  .ms .date b { display: block; font-size: 1rem; overflow-wrap: anywhere; } .ms .date small { display: block; font-size: 0.64rem; margin-top: 2px; overflow-wrap: anywhere; white-space: normal; }
   .ms.legal .date { background: var(--st-legal); color: #fff; } .ms.proj .date { background: var(--st-inflight); color: #fff; } .ms.gate .date { background: var(--st-human); color: #fff; }
   .ms b.t { display: block; } .ms .why { font-size: 0.84rem; color: var(--fg-2); margin-top: 3px; }
   .ms .kill { font-size: 0.8rem; margin-top: 5px; color: var(--st-blocked); }
@@ -600,7 +600,9 @@
       var b = document.createElement('div'); b.className = 'bar ' + (m.kind === 'gate' ? 'gate' : 'proj') + (m.fuzzy ? ' fuzzy' : '');
       var l = pct(D(m.from)), r = pct(D(m.to)); b.style.left = l + '%'; b.style.width = Math.max(0.8, r - l) + '%'; b.setAttribute('aria-label', m.id + ' ' + m.data); b.textContent = m.id;
       track.appendChild(b); bindTip(b, html);
-      var tag2 = document.createElement('span'); tag2.className = 'tag'; tag2.style.left = 'calc(' + r + '% + 8px)'; tag2.textContent = m.data; track.appendChild(tag2);
+      var tag2 = document.createElement('span'); tag2.className = 'tag'; tag2.textContent = m.data;
+      if (r > 84) { tag2.style.right = 'calc(' + (100 - l) + '% + 8px)'; } else { tag2.style.left = 'calc(' + r + '% + 8px)'; }
+      track.appendChild(tag2);
     }
     row.appendChild(lab); row.appendChild(track); body.appendChild(row);
 
