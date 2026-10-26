@@ -98,6 +98,14 @@ export class FixedAssetClassService {
       nextAmortizationAccountId,
     );
     if (leaseholdIssue) throw new ValidationError(leaseholdIssue.message);
+    // L4 (dono, chat, 2026-10-26, por questionário: "(a) Recusar com bem vivo"): trocar o tipo com bem vivo burlaria o
+    // E8b/E10 (bem vira benfeitoria sem declaração/prazo) ou trocaria a série no meio da vida (contorna o F-EM-8).
+    if (dto.kind !== undefined && dto.kind !== current.kind) {
+      const liveAssets = await this.assetRepo.countByClass(scope, id);
+      if (liveAssets > 0) {
+        throw new ValidationError(`Classe '${current.code}' tem ${liveAssets} ativo(s) vivo(s) — o kind não pode ser alterado.`);
+      }
+    }
     return this.classRepo.update(scope, id, {
       ...(dto.code !== undefined ? { code: dto.code } : {}),
       ...(dto.name !== undefined ? { name: dto.name } : {}),

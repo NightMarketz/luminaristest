@@ -99,6 +99,21 @@ describe('FixedAssetClassService.createClass', () => {
     expect(update).toHaveBeenCalledWith(scope, 'class-1', expect.objectContaining({ kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: 'acc-amort' }));
   });
 
+  it('L4 (dono, 26/10): mudar kind de classe com bem vivo → 400; mesmo kind ou classe vazia passa', async () => {
+    const comBem = build({ liveAssets: 1 });
+    await expect(
+      comBem.service.updateClass(scope, 'class-1', { unitId: 'unit-1', classId: 'class-1', kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: 'acc-amort' }),
+    ).rejects.toThrow(/kind não pode ser alterado/);
+    expect(comBem.update).not.toHaveBeenCalled();
+    await comBem.service.updateClass(scope, 'class-1', { unitId: 'unit-1', classId: 'class-1', kind: 'DEPRECIATION', name: 'Máquinas' });
+    expect(comBem.update).toHaveBeenCalledTimes(1);
+
+    const vazia = build({ liveAssets: 0 });
+    await vazia.service.updateClass(scope, 'class-1', { unitId: 'unit-1', classId: 'class-1', kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: 'acc-amort' });
+    expect(vazia.countByClass).toHaveBeenCalledWith(scope, 'class-1');
+    expect(vazia.update).toHaveBeenCalledTimes(1);
+  });
+
   it('C8 emenda 3.2: conta de amortização que não aceita lançamento → 400, nada criado', async () => {
     const { service, create, accountFindById } = build();
     accountFindById.mockImplementation(async (_s: unknown, id: string) => ({ ...accountRow, id, acceptsEntries: id !== 'acc-amort' }));
