@@ -378,3 +378,79 @@ describe('DepreciationService.postQuotaForDisposal — chamado pelo FixedAssetSe
     expect(postEntry).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('C8 emenda 3.2, Parte 2 — amortização da benfeitoria (E11, E12)', () => {
+  const leaseholdClass = {
+    ...classRow, id: 'class-benf', code: 'BENF', name: 'Benfeitorias', kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: 'acc-amort',
+  } as unknown as FixedAssetClass;
+  const leaseholdAsset = (over: Partial<Record<string, unknown>>) =>
+    makeAssetState({ classId: 'class-benf', leaseIndemnifiable: false, annualRateBp: 1000, ...over });
+  const monthQuotas = (postEntry: jest.Mock) =>
+    postEntry.mock.calls.map(([, input]) => (input as { lines: Array<{ debitCents: number }> }).lines.find((l) => l.debitCents > 0)!.debitCents);
+
+  it('E11: base 12.000, contrato de 24 meses, taxa 10% → 500/mês, Σ = 12.000 exato no mês 24 e FULLY_DEPRECIATED', async () => {
+    const { service, assetState, postEntry } = makeHarness({
+      klass: leaseholdClass,
+      asset: leaseholdAsset({ costCents: 12_000n, leaseEndDate: new Date('2027-12-31T00:00:00Z') }),
+    });
+    await runMonths(service, 2026, 1, 24);
+    expect(monthQuotas(postEntry)).toEqual(Array(24).fill(500));
+    expect(assetState.accumulatedDepreciationCents).toBe(12_000n);
+    expect(assetState.status).toBe('FULLY_DEPRECIATED');
+  });
+
+  it('E11: base 10.000 / contrato de 3 meses → 3.333, 3.333, 3.334 (resíduo no último mês)', async () => {
+    const { service, assetState, postEntry } = makeHarness({
+      klass: leaseholdClass,
+      asset: leaseholdAsset({ costCents: 10_000n, leaseEndDate: new Date('2026-03-31T00:00:00Z') }),
+    });
+    await runMonths(service, 2026, 1, 3);
+    expect(monthQuotas(postEntry)).toEqual([3333, 3333, 3334]);
+    expect(assetState.accumulatedDepreciationCents).toBe(10_000n);
+  });
+
+  it('E11: contrato de 15 anos com taxa 10% → o razão usa nBook = 120 (vida útil vence), não nFiscal = 180', async () => {
+    const { service, assetState, postEntry } = makeHarness({
+      klass: leaseholdClass,
+      asset: leaseholdAsset({ costCents: 18_000n, leaseEndDate: new Date('2040-12-31T00:00:00Z') }),
+    });
+    await runMonths(service, 2026, 1, 120);
+    expect(monthQuotas(postEntry)[0]).toBe(150); // 18.000 / 120 — com nFiscal seria 100
+    expect(assetState.accumulatedDepreciationCents).toBe(18_000n);
+    expect(assetState.status).toBe('FULLY_DEPRECIATED');
+  });
+
+  it('E12: D conta de amortização da classe / C acumulada da classe; sourceType e sourceId iguais aos da depreciação', async () => {
+    const { service, postEntry } = makeHarness({
+      klass: leaseholdClass,
+      asset: leaseholdAsset({ costCents: 12_000n, leaseEndDate: new Date('2027-12-31T00:00:00Z') }),
+    });
+    await service.runMonth(scope, { unitId: 'unit-1', yearMonth: '2026-01' });
+    const [, input] = postEntry.mock.calls[0] as [unknown, { sourceType: string; sourceId: string; lines: unknown[] }];
+    expect(input.sourceType).toBe('fixed_asset.depreciation');
+    expect(input.sourceId).toBe('asset-1:2026-01');
+    expect(input.lines).toEqual([
+      { accountCode: 'code-acc-amort', debitCents: 500, creditCents: 0 },
+      { accountCode: 'code-acc-accdep', debitCents: 0, creditCents: 500 },
+    ]);
+  });
+
+  it('E12 + item 16: classe de benfeitoria sem amortizationExpenseAccountId → 400 antes de postar qualquer ativo', async () => {
+    const { service, postEntry } = makeHarness({
+      klass: { ...leaseholdClass, amortizationExpenseAccountId: null } as unknown as FixedAssetClass,
+      asset: leaseholdAsset({ costCents: 12_000n, leaseEndDate: new Date('2027-12-31T00:00:00Z') }),
+    });
+    await expect(service.runMonth(scope, { unitId: 'unit-1', yearMonth: '2026-01' })).rejects.toThrow(/amortizationExpenseAccountId/);
+    expect(postEntry).not.toHaveBeenCalled();
+  });
+
+  it('E14: quota do mês da rescisão (postQuotaForDisposal) também debita a conta de amortização', async () => {
+    const { service, postEntry } = makeHarness({
+      klass: leaseholdClass,
+      asset: leaseholdAsset({ costCents: 12_000n, leaseEndDate: new Date('2027-12-31T00:00:00Z') }),
+    });
+    await service.postQuotaForDisposal(scope, 'asset-1', '2026-01-15');
+    const [, input] = postEntry.mock.calls[0] as [unknown, { lines: Array<{ accountCode: string; debitCents: number }> }];
+    expect(input.lines[0]).toEqual({ accountCode: 'code-acc-amort', debitCents: 500, creditCents: 0 });
+  });
+});

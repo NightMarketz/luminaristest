@@ -52,6 +52,9 @@ export class FixedAssetClassService {
     if (dto.accumulatedDepreciationAccountId) {
       await this.assertAccount(scope, dto.accumulatedDepreciationAccountId, 'conta de depreciação acumulada');
     }
+    if (dto.amortizationExpenseAccountId) {
+      await this.assertAccount(scope, dto.amortizationExpenseAccountId, 'despesa de amortização (amortizationExpenseAccountId)');
+    }
     const { userId, unitId } = accountingScopeWhere(scope);
     return this.classRepo.create({
       userId,
@@ -61,6 +64,8 @@ export class FixedAssetClassService {
       depreciable: dto.depreciable,
       costAccountId: dto.costAccountId,
       accumulatedDepreciationAccountId: dto.accumulatedDepreciationAccountId ?? null,
+      kind: dto.kind,
+      amortizationExpenseAccountId: dto.amortizationExpenseAccountId ?? null,
     });
   }
 
@@ -72,6 +77,9 @@ export class FixedAssetClassService {
     if (dto.costAccountId) await this.assertAccount(scope, dto.costAccountId, 'conta do bem (costAccountId)');
     if (dto.accumulatedDepreciationAccountId) {
       await this.assertAccount(scope, dto.accumulatedDepreciationAccountId, 'conta de depreciação acumulada');
+    }
+    if (dto.amortizationExpenseAccountId) {
+      await this.assertAccount(scope, dto.amortizationExpenseAccountId, 'despesa de amortização (amortizationExpenseAccountId)');
     }
     const nextDepreciable = dto.depreciable ?? current.depreciable;
     const nextAccumulatedAccountId =
@@ -88,6 +96,10 @@ export class FixedAssetClassService {
       ...(dto.costAccountId !== undefined ? { costAccountId: dto.costAccountId } : {}),
       ...(dto.accumulatedDepreciationAccountId !== undefined
         ? { accumulatedDepreciationAccountId: dto.accumulatedDepreciationAccountId }
+        : {}),
+      ...(dto.kind !== undefined ? { kind: dto.kind } : {}),
+      ...(dto.amortizationExpenseAccountId !== undefined
+        ? { amortizationExpenseAccountId: dto.amortizationExpenseAccountId }
         : {}),
     });
   }

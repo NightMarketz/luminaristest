@@ -1,4 +1,5 @@
 import type { FixedAssetClass, Prisma } from 'generated/prisma';
+import type { FixedAssetClassKind } from '../models/FixedAsset.model';
 import type { AccountingScope } from '../scope/AccountingScope';
 
 export interface CreateFixedAssetClassData {
@@ -9,6 +10,8 @@ export interface CreateFixedAssetClassData {
   depreciable: boolean;
   costAccountId: string;
   accumulatedDepreciationAccountId: string | null;
+  kind: FixedAssetClassKind; // C8 emenda 3.2 (E9)
+  amortizationExpenseAccountId: string | null; // E12, F-EM-7 → b
 }
 
 export interface UpdateFixedAssetClassData {
@@ -17,6 +20,8 @@ export interface UpdateFixedAssetClassData {
   depreciable?: boolean;
   costAccountId?: string;
   accumulatedDepreciationAccountId?: string | null;
+  kind?: FixedAssetClassKind;
+  amortizationExpenseAccountId?: string | null;
 }
 
 /**

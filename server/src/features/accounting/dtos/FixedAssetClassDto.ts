@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { FIXED_ASSET_CLASS_KINDS } from '../models/FixedAsset.model';
 
 /**
  * FixedAssetClassDto — classe de bem do imobilizado (BE-INCR-FIXED-ASSETS, nó C8, item 1).
@@ -20,6 +21,8 @@ import { z } from 'zod';
  *         depreciable:                     { type: boolean, description: 'false para classes tipo terreno (LAND) — nunca gera quota (F-FA5 → a)' }
  *         costAccountId:                   { type: string, description: 'conta do bem (1.2.x)' }
  *         accumulatedDepreciationAccountId: { type: string, nullable: true, description: 'obrigatória quando depreciable=true (conta 1.2.9.x)' }
+ *         kind:                            { type: string, enum: [DEPRECIATION, AMORTIZATION_LEASEHOLD], default: DEPRECIATION, description: 'AMORTIZATION_LEASEHOLD = benfeitoria em imóvel de terceiro (RIR 331 III, C8 emenda 3.2)' }
+ *         amortizationExpenseAccountId:    { type: string, description: 'despesa de amortização da benfeitoria (F-EM-7 → b; referencial 3.01.01.07.01.24)' }
  */
 export const CreateFixedAssetClassSchema = z
   .object({
@@ -29,6 +32,8 @@ export const CreateFixedAssetClassSchema = z
     depreciable: z.boolean(),
     costAccountId: z.string().min(1),
     accumulatedDepreciationAccountId: z.string().min(1).optional(),
+    kind: z.enum(FIXED_ASSET_CLASS_KINDS).default('DEPRECIATION'), // E9
+    amortizationExpenseAccountId: z.string().min(1).optional(), // E12, F-EM-7 → b
   })
   .strict()
   .superRefine((val, ctx) => {
@@ -55,6 +60,8 @@ export const CreateFixedAssetClassSchema = z
  *         depreciable:                     { type: boolean }
  *         costAccountId:                   { type: string }
  *         accumulatedDepreciationAccountId: { type: string, nullable: true }
+ *         kind:                            { type: string, enum: [DEPRECIATION, AMORTIZATION_LEASEHOLD] }
+ *         amortizationExpenseAccountId:    { type: string, nullable: true }
  */
 export const UpdateFixedAssetClassSchema = z
   .object({
@@ -65,6 +72,8 @@ export const UpdateFixedAssetClassSchema = z
     depreciable: z.boolean().optional(),
     costAccountId: z.string().min(1).optional(),
     accumulatedDepreciationAccountId: z.string().min(1).nullable().optional(),
+    kind: z.enum(FIXED_ASSET_CLASS_KINDS).optional(),
+    amortizationExpenseAccountId: z.string().min(1).nullable().optional(),
   })
   .strict();
 

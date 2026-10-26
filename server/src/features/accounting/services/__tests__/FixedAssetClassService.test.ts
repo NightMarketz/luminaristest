@@ -58,16 +58,38 @@ describe('FixedAssetClassService.createClass', () => {
   it('nega ANTES de tocar o repo quando canManageFixedAssets=false', async () => {
     const { service, create } = build({ canManage: false });
     await expect(
-      service.createClass(scope, { unitId: 'unit-1', code: 'MAQ', name: 'Máquinas', depreciable: true, costAccountId: 'acc-cost', accumulatedDepreciationAccountId: 'acc-acc' }),
+      service.createClass(scope, { unitId: 'unit-1', code: 'MAQ', name: 'Máquinas', depreciable: true, costAccountId: 'acc-cost', accumulatedDepreciationAccountId: 'acc-acc', kind: 'DEPRECIATION' }),
     ).rejects.toBeInstanceOf(ForbiddenError);
     expect(create).not.toHaveBeenCalled();
   });
 
   it('valida as contas antes de criar', async () => {
     const { service, create, accountFindById } = build();
-    await service.createClass(scope, { unitId: 'unit-1', code: 'MAQ', name: 'Máquinas', depreciable: true, costAccountId: 'acc-cost', accumulatedDepreciationAccountId: 'acc-acc' });
+    await service.createClass(scope, { unitId: 'unit-1', code: 'MAQ', name: 'Máquinas', depreciable: true, costAccountId: 'acc-cost', accumulatedDepreciationAccountId: 'acc-acc', kind: 'DEPRECIATION' });
     expect(accountFindById).toHaveBeenCalledTimes(2);
     expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  it('C8 emenda 3.2 (E9, F-EM-7 → b): grava kind e a conta de amortização, validada no escopo', async () => {
+    const { service, create, accountFindById } = build();
+    await service.createClass(scope, {
+      unitId: 'unit-1', code: 'BENF', name: 'Benfeitorias', depreciable: true, costAccountId: 'acc-cost',
+      accumulatedDepreciationAccountId: 'acc-acc', kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: 'acc-amort',
+    });
+    expect(accountFindById).toHaveBeenCalledWith(scope, 'acc-amort');
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: 'acc-amort' }));
+  });
+
+  it('C8 emenda 3.2: conta de amortização que não aceita lançamento → 400, nada criado', async () => {
+    const { service, create, accountFindById } = build();
+    accountFindById.mockImplementation(async (_s: unknown, id: string) => ({ ...accountRow, id, acceptsEntries: id !== 'acc-amort' }));
+    await expect(
+      service.createClass(scope, {
+        unitId: 'unit-1', code: 'BENF', name: 'Benfeitorias', depreciable: true, costAccountId: 'acc-cost',
+        accumulatedDepreciationAccountId: 'acc-acc', kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: 'acc-amort',
+      }),
+    ).rejects.toThrow(/amortizationExpenseAccountId/);
+    expect(create).not.toHaveBeenCalled();
   });
 });
 

@@ -49,6 +49,34 @@ export function lifeMonths(annualRateBp: number): number {
   return Math.ceil(120000 / annualRateBp);
 }
 
+/**
+ * C8 emenda 3.2, Parte 2 (E9, BE-INCR-FIXED-ASSETS-EMENDA-3-2-brief.md): tipo da classe. `AMORTIZATION_LEASEHOLD` =
+ * benfeitoria em imóvel de terceiro, amortizável só "quando não houver direito ao recebimento de seu valor" (RIR/2018
+ * art. 331 III) e pelos "anos restantes de existência do direito" (art. 333).
+ */
+export const FIXED_ASSET_CLASS_KINDS = ['DEPRECIATION', 'AMORTIZATION_LEASEHOLD'] as const;
+export type FixedAssetClassKind = (typeof FIXED_ASSET_CLASS_KINDS)[number];
+
+/**
+ * E11 (F-EM-5 → b só no contábil, revisto 02/10): prazos da amortização linear da benfeitoria, em meses.
+ * `nFiscal = nContrato` (RIR 333 — prazo restante do contrato); `nBook = min(nContrato, nVida)` (CPC 27 item 56(d):
+ * a vida útil considera o término do contrato), com `nVida = lifeMonths(annualRateBp)` (taxa do Anexo III do bem).
+ * O razão usa `nBook`; `nFiscal` só alimenta o Bloco F (E15, P3).
+ */
+export function amortizationTerms(nContrato: number, annualRateBp: number): { nBook: number; nFiscal: number } {
+  return { nBook: Math.min(nContrato, lifeMonths(annualRateBp)), nFiscal: nContrato };
+}
+
+/**
+ * E11: cumulativa linear até o mês `k` — `min(base × k ÷ n, base)` (floor em BigInt). O resíduo cai no mês `n`
+ * porque `base × n ÷ n = base` exato; a quota do mês é a diferença de duas cumulativas (item 12 do BRIEF-mãe),
+ * nunca soma de quotas arredondadas.
+ */
+export function quotaCumulativaLinear(baseCents: bigint, n: number, k: number): bigint {
+  const cum = (baseCents * BigInt(k)) / BigInt(n);
+  return cum < baseCents ? cum : baseCents;
+}
+
 /** Só os campos que `resolveRateForNcm` lê — `DepreciationRate` inteiro não é necessário aqui. */
 export interface NcmRateCandidate {
   id: string;
