@@ -106,6 +106,8 @@ export async function resetDb(): Promise<void> {
   // Restrict para a conta), depois movimentos (Restrict para a conta) e fechamentos.
   await prisma.lalurProcess.deleteMany();
   await prisma.lalurEntryJournalEntry.deleteMany();
+  // C8 emenda 3.2 (F-EM-14 → a): links M305 1:N — Restrict para o ajuste e para a conta da Parte B.
+  await prisma.lalurEntryParteBLink.deleteMany();
   await prisma.lalurParteBBalance.deleteMany();
   await prisma.lalurParteBClosing.deleteMany();
   await prisma.lalurParteBMovement.deleteMany();
