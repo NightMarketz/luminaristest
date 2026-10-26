@@ -607,8 +607,8 @@
     row.appendChild(lab); row.appendChild(track); body.appendChild(row);
 
     var card = document.createElement('div'); card.className = 'ms ' + m.kind;
-    var dparts = m.data.split('/'); var big = m.kind === 'legal' ? dparts[0] + '/' + dparts[1] : m.data.length <= 8 ? m.data : '';
-    card.innerHTML = '<div class="date"><b>' + (big || m.id) + '</b><small>' + (big ? m.id : m.data) + '</small></div><div><b class="t">' + m.t + '</b><div class="why">' + m.base + '</div><div class="kill">Derruba: ' + m.kill + '</div></div>';
+    var dparts = m.data.split('/'); var shortMap = { P5: 'nov→dez', P6: 'dez→jan', P7: 'jan→fev', G3: 'dez/26', G4: 'após G3' }; var big = m.kind === 'legal' ? dparts[0] + '/' + dparts[1] : (shortMap[m.id] || m.data);
+    card.innerHTML = '<div class="date"><b>' + big + '</b><small>' + m.id + '</small></div><div><b class="t">' + m.t + '</b><div class="why">' + m.base + '</div><div class="kill">Derruba: ' + m.kill + '</div></div>';
     cards.appendChild(card);
 
     var tr = document.createElement('tr');
