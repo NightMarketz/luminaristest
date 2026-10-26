@@ -328,6 +328,26 @@ export const DanfeParamsDto = z.object({ id: z.string().min(1) }).strict();
    EMENDA-1 §7 item 1.
 3. **NTs 2026.009, 2026.006, 2026.003 e 2014.001 v1.41**: não lidas. → item 3.
 
+> **PR-0 executado em 26/10/2026** (dono, chat, 2026-10-26: *"Executa o NFE-DANFE-IBSCBS PR-0 — sessao-feature, sem merge."*;
+> dossiê [`nfe-danfe-pr0`](../../pesquisas-legais/nfe-danfe-pr0/relatorio.md)). Os insumos 1 e 3 estão **resolvidos**; o 2
+> segue fora (F-DANFE-2 a).
+> - **Insumo 1:** o leiaute base está no **MOC 7.0 Anexo II** (Manual de Especificações Técnicas do DANFE e Código de Barras,
+>   v7.00), não na Visão Geral. Transcrição: [`TRANSCRICAO-MOC70-AnexoII-DANFE-2026-10-26.md`](fontes-oficiais/TRANSCRICAO-MOC70-AnexoII-DANFE-2026-10-26.md).
+>   Chaves que os itens condicionados citam: item 10 → `[MOC-DANFE-SO-XML]`, `[MOC-DANFE-ORDEM]`, `[MOC-DANFE-INFCPL]`,
+>   `[MOC-DANFE-INFADPROD]`, `[MOC-DANFE-MODFRETE]`, `[MOC-DANFE-PROTOCOLO]`; item 13 → `[MOC-DANFE-C128-SIMB]`,
+>   `[MOC-DANFE-C128-VETOR]`, `[MOC-DANFE-C128-DIM]`, `[MOC-DANFE-CHAVE-MASCARA]`; item 14 → `[MOC-DANFE-HOMOLOG]`.
+>   A simbologia é **CODE-128C**, como o F-DANFE-4 inferia, e o MOC traz vetor de teste (`09758364` → DV 48).
+> - **Item 1:** NT 2026.010 rebaixada, sha256 igual; transcrição em [`TRANSCRICAO-NT2026010-DANFE-RTC-2026-10-26.md`](fontes-oficiais/TRANSCRICAO-NT2026010-DANFE-RTC-2026-10-26.md).
+> - **Insumo 3 / item 3:** nenhuma das quatro NTs muda o DANFE 55 (tabela no §7 da transcrição da NT).
+> - **Lacunas de spec abertas pelo PR-0** (voltam ao dono antes do PR-1/PR-2; não bloqueiam o PR-0):
+>   - **L-DANFE-PR0-1:** o teste do item 1 espera "12 de item, contando as 3 `pAliqEfet`". A NT §4.3 tem **11 campos impressos e 14
+>     tags**. A transcrição segue a fonte; a contagem do BRIEF precisa de correção.
+>   - **L-DANFE-PR0-2:** `[MOC-DANFE-HOMOLOG]` aceita "SEM VALOR FISCAL" em "Informações Complementares" **ou** em marca d'água.
+>     O item 14 não diz qual.
+>   - **L-DANFE-PR0-3:** o texto do Campo 1 difere entre o MOC 7.0 ("Consulta de autenticidade…") e o modelo da NT 2026.010
+>     ("Consulte a autenticidade…"). O item 11 não diz qual.
+>   - **Pendência (não fork):** a partir de 01/11/2026 o MOC tem versão online do Paraná; o PR-2 confere as linhas `[MOC-DANFE-…]` nela.
+
 ## 8. Invariantes (cada uma vira teste)
 
 | # | Invariante | Teste |
