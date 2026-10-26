@@ -1,4 +1,4 @@
-import type { FixedAsset, Prisma } from 'generated/prisma';
+import type { FixedAsset, FixedAssetClass, Prisma } from 'generated/prisma';
 import type { FixedAssetStatus } from '../models/FixedAsset.model';
 import type { AccountingScope } from '../scope/AccountingScope';
 
@@ -90,6 +90,18 @@ export interface IFixedAssetRepository {
     asOfDate: Date,
     tx?: Prisma.TransactionClient,
   ): Promise<FixedAsset[]>;
+
+  /**
+   * C8 emenda 3.2 P3 (E15) — candidatos do Bloco F no período `[from, to]`: vivos, de classe depreciável, ativados até
+   * `to`, em `ACTIVE`/`FULLY_DEPRECIATED` ou `DISPOSED` com `disposedAt` dentro do período. Com a classe (o `kind`
+   * decide a série fiscal). O filtro do E15 (override/residual/benfeitoria com `nBook < nFiscal`) é do serviço.
+   */
+  findForParteB(
+    scope: AccountingScope,
+    from: Date,
+    to: Date,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Array<FixedAsset & { class: FixedAssetClass }>>;
 
   /** Conta ativos vivos (não soft-deleted) de uma classe, em qualquer status — usado pelo bloqueio
    *  de soft-delete da classe (item 7, "delete com ativo vivo → 400"). */

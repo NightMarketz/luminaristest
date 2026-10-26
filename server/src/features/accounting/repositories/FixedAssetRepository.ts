@@ -1,5 +1,5 @@
 import prisma from '../../../lib/prisma';
-import type { FixedAsset, Prisma } from 'generated/prisma';
+import type { FixedAsset, FixedAssetClass, Prisma } from 'generated/prisma';
 import type { FixedAssetStatus } from '../models/FixedAsset.model';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
@@ -74,6 +74,25 @@ export class FixedAssetRepository implements IFixedAssetRepository {
         activatedAt: { lte: asOfDate },
         class: { depreciable: true },
       },
+      orderBy: [{ code: 'asc' }],
+    });
+  }
+
+  public async findForParteB(
+    scope: AccountingScope,
+    from: Date,
+    to: Date,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Array<FixedAsset & { class: FixedAssetClass }>> {
+    return (tx ?? prisma).fixedAsset.findMany({
+      where: {
+        ...accountingScopeWhere(scope),
+        deletedAt: null,
+        activatedAt: { lte: to },
+        class: { depreciable: true },
+        OR: [{ status: { in: ['ACTIVE', 'FULLY_DEPRECIATED'] } }, { status: 'DISPOSED', disposedAt: { gte: from, lte: to } }],
+      },
+      include: { class: true },
       orderBy: [{ code: 'asc' }],
     });
   }

@@ -381,6 +381,18 @@ describe('ecfReal — 3C: M312/M362 (p.254/266) e M315/M365 (p.255/267) como fil
     const j = lacs.findIndex((l) => l.startsWith('|M350|7|'));
     expect(regsOf(lacs).slice(j, j + 6)).toEqual(['M350', 'M355', 'M360', 'M362', 'M362', 'M365']);
   });
+  it('C8 emenda 3.2 E21b: linha do Bloco F com parteBLinks ⇒ um M305 por conta, cada um com o seu valor (Σ = M300); 9900 conta os dois', () => {
+    const line: EcfRealLalurLine = {
+      livro: 'lalur', perApur: 'T01', codigo: '161', descricao: 'Depreciação', tipoLancamento: 'E', indRelacao: '1', valorCents: 25000,
+      parteBLinks: [{ codCtaB: 'DEP-A-I', valorCents: 10000 }, { codCtaB: 'DEP-E-I', valorCents: 15000 }],
+    };
+    const lines = buildEcfRealFile(sampleInput({ lalur: [line] }));
+    const i = lines.findIndex((l) => l.startsWith('|M300|161|'));
+    expect(lines.slice(i + 1, i + 3)).toEqual(['|M305|DEP-A-I|100,00|C|', '|M305|DEP-E-I|150,00|C|']);
+    expect(regsOf(lines)[i + 3]).not.toBe('M305');
+    const counts = Object.fromEntries(lines.filter((l) => l.startsWith('|9900|')).map((l) => l.split('|').slice(2, 4)));
+    expect(counts.M305).toBe('2');
+  });
   it('9900 conta os registros novos (M312 M315 M410 M415 M500 M510) e o arquivo segue determinístico', () => {
     const input = sampleInput({
       movements: movements(),

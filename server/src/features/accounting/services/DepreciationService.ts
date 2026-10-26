@@ -31,7 +31,7 @@ import type { IFixedAssetDraftRedriver } from './IFixedAssetDraftCreator';
 export const DEPRECIATION_POSTED = 'depreciation.posted';
 
 /** `sourceType` das quotas mensais — chave de idempotência é `${assetId}:${yearMonth}` (item 13). */
-const DEPRECIATION_SOURCE_TYPE = 'fixed_asset.depreciation';
+export const DEPRECIATION_SOURCE_TYPE = 'fixed_asset.depreciation';
 
 function minBigInt(a: bigint, b: bigint): bigint {
   return a < b ? a : b;

@@ -187,6 +187,7 @@ export class SpedEcfRealGenerationService {
       line.indRelacao = (e.indRelacao ?? undefined) as EcfRealLalurLine['indRelacao'];
       if (e.histLancamento) line.hist = e.histLancamento;
       if (e.parteB) line.codCtaB = e.parteB.codCtaB;
+      if ((e.parteBLinks ?? []).length > 0) line.parteBLinks = e.parteBLinks!.map((l) => ({ codCtaB: l.parteB.codCtaB, valorCents: Number(l.valorCents) }));
       if (e.account) {
         // BRIEF 3C item 19: conta arquivada DEPOIS do ajuste sairia no M310 como se viva.
         if (e.account.deletedAt) {
