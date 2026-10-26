@@ -90,12 +90,13 @@
  *     get:
  *       summary: Whether NFS-e/NF-e emission is enabled and by which partner (BE-INCR-DFE, nó X10b)
  *       description: >-
- *         Reads DFE_PARTNER/DFE_PARTNER_ENV — enabled=false with a named reason when disabled (ADR
- *         §7 item 6: nunca em silêncio). Fase E (NF-e 55) é [pendente-insumo].
+ *         Reads DFE_PARTNER_<KIND>/DFE_PARTNER_ENV_<KIND> with fallback to DFE_PARTNER/DFE_PARTNER_ENV —
+ *         enabled=false with a named reason when disabled (ADR §7 item 6: nunca em silêncio). Top-level
+ *         fields are the NFS-e selection; `porTipo` has one entry per kind (NFSE, NFE, NFCE — BE-INCR-NFCE item 5).
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       responses:
- *         '200': { description: '{ enabled, partner, ambiente, reason?, capabilities? }' }
+ *         '200': { description: '{ enabled, partner, ambiente, reason?, capabilities?, porTipo: { NFSE, NFE, NFCE } }' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *
  *   /api/nfe/dfe/preview:
@@ -113,7 +114,7 @@
  *               properties:
  *                 unitId: { type: string }
  *                 saleId: { type: string }
- *                 kind: { type: string, enum: [NFSE, NFE] }
+ *                 kind: { type: string, enum: [NFSE, NFE, NFCE] }
  *       responses:
  *         '200': { description: '{ ok, faltantes, competenciaAlerta, payloads, tieOut }' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
@@ -126,8 +127,8 @@
  *       description: >-
  *         All preconditions (item 14) are checked together before any tx/partner call — a single 400
  *         with the full `faltantes` list. Creates SENT + attempt 1 per document, consumes the DPS
- *         sequence, audits dfe.emitted, then calls the partner post-commit. Fase E (kind=NFE) is
- *         [pendente-insumo] and rejects loud.
+ *         sequence, audits dfe.emitted, then calls the partner post-commit. NF-e/NFC-e (kind=NFE|NFCE) is
+ *         rejected loud until the BE-INCR-NFCE assembly (Fase C) lands.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -140,7 +141,7 @@
  *               properties:
  *                 unitId: { type: string }
  *                 saleId: { type: string }
- *                 kind: { type: string, enum: [NFSE, NFE] }
+ *                 kind: { type: string, enum: [NFSE, NFE, NFCE] }
  *       responses:
  *         '200': { description: 'FiscalDocumentView[] — um por cTribNac distinto da venda' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }

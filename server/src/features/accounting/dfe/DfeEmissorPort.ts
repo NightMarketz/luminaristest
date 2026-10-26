@@ -10,7 +10,8 @@ import type { DpsPayload } from '../dtos/DpsPayloadDto';
  * o tipo `NfePayload` fica reservado como `unknown` até a Fase E transcrever o leiaute.
  */
 
-export type DfeKind = 'NFSE' | 'NFE';
+/** BE-INCR-NFCE (nó X10a, item 3; F-PLAN-2 a) — `NFCE` = NFC-e modelo 65. */
+export type DfeKind = 'NFSE' | 'NFE' | 'NFCE';
 export type DfeAmbiente = 'producao' | 'homologacao';
 
 /** `infDPS/tpAmb` [103] — Anexo I v1.01, aba LEIAUTE, linha 103: 1 = Produção, 2 = Homologação. */
@@ -54,6 +55,11 @@ export function assertTpAmb(payload: { infDPS: { tpAmb: number } }, ambiente: Df
 }
 
 export interface DfeCapabilities {
+  /**
+   * BE-INCR-NFCE (nó X10a, item 4) — os tipos de documento que o adaptador emite. A seleção (`selectDfeEmissor`) e a
+   * resolução por documento (`resolveEmissorFor`) recusam o tipo que não estiver aqui (F-NFCE-1 c).
+   */
+  kinds: readonly DfeKind[];
   /** true quando o parceiro numera a DPS/NF-e (a sequência local NÃO é consumida nesse caso). */
   numbersDps: boolean;
   consultar: boolean;
@@ -118,6 +124,14 @@ export interface CancelResult {
 }
 
 /**
+ * BE-INCR-NFCE (nó X10a, item 7) — o cancelamento tem a forma do tipo: NFS-e = `cMotivo`/`xMotivo` do e101101 (Anexo II,
+ * inalterado); NF-e/NFC-e = `xJust` de 15 a 255 caracteres (MOC 7.0 VG §5.9.1, Tabela 5-37, evento 110111).
+ */
+export type CancelInput =
+  | { kind: 'NFSE'; cMotivo: 1 | 2 | 9; xMotivo: string }
+  | { kind: 'NFE' | 'NFCE'; xJust: string };
+
+/**
  * A porta. Cada adaptador declara suas `capabilities`; o serviço nunca assume uma capacidade que o
  * adaptador corrente não anuncia (ex.: só consome a sequência local quando `numbersDps === false`).
  */
@@ -126,7 +140,7 @@ export interface DfeEmissorPort {
   readonly capabilities: DfeCapabilities;
   emitir(input: EmitirInput): Promise<EmissaoResult>;
   consultar(partnerRef: string): Promise<EmissaoResult>;
-  cancelar(partnerRef: string, motivo: { cMotivo: 1 | 2 | 9; xMotivo: string }): Promise<CancelResult>;
+  cancelar(partnerRef: string, input: CancelInput): Promise<CancelResult>;
   verifyWebhook(
     headers: Record<string, string | undefined>,
     rawBody: Buffer,

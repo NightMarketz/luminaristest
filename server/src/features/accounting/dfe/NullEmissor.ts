@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import type { CancelResult, DfeCapabilities, DfeEmissorPort, EmissaoResult, EmitirInput } from './DfeEmissorPort';
+import type { CancelInput, CancelResult, DfeCapabilities, DfeEmissorPort, EmissaoResult, EmitirInput } from './DfeEmissorPort';
 
 /**
  * NullEmissor — BE-INCR-DFE (BRIEF item 11). Adaptador de desenvolvimento/teste: autoriza
@@ -9,6 +9,7 @@ import type { CancelResult, DfeCapabilities, DfeEmissorPort, EmissaoResult, Emit
 export class NullEmissor implements DfeEmissorPort {
   public readonly name = 'null';
   public readonly capabilities: DfeCapabilities = {
+    kinds: ['NFSE', 'NFE', 'NFCE'], // BE-INCR-NFCE item 4
     numbersDps: false,
     consultar: true,
     cancelar: true,
@@ -44,9 +45,9 @@ export class NullEmissor implements DfeEmissorPort {
     };
   }
 
-  async cancelar(partnerRef: string, motivo: { cMotivo: 1 | 2 | 9; xMotivo: string }): Promise<CancelResult> {
+  async cancelar(partnerRef: string, input: CancelInput): Promise<CancelResult> {
     void partnerRef;
-    void motivo;
+    void input;
     return { status: 'CANCELLED', errors: [] };
   }
 

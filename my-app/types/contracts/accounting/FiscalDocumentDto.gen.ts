@@ -3,12 +3,12 @@
 export interface EmitFiscalDocumentInput {
 unitId: string
 saleId: string
-kind: ("NFSE" | "NFE")
+kind: ("NFSE" | "NFE" | "NFCE")
 }
 export interface PreviewFiscalDocumentInput {
 unitId: string
 saleId: string
-kind: ("NFSE" | "NFE")
+kind: ("NFSE" | "NFE" | "NFCE")
 }
 export interface FiscalDocumentListQueryInput {
 unitId: string

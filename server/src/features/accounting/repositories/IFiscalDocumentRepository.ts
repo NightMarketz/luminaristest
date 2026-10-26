@@ -1,7 +1,7 @@
 import type { FiscalDocument, FiscalDocumentAttempt, FiscalDocumentPendingAttachment, Prisma } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
 
-export const FISCAL_DOCUMENT_KINDS = ['NFSE', 'NFE'] as const;
+export const FISCAL_DOCUMENT_KINDS = ['NFSE', 'NFE', 'NFCE'] as const; // NFCE: BE-INCR-NFCE item 3
 export type FiscalDocumentKind = (typeof FISCAL_DOCUMENT_KINDS)[number];
 
 // AUTHORIZED_DIVERGENT — BE-INCR-DFE-MANUAL F-MAN-2 (c): nota autorizada no ambiente nacional cuja releitura (XML ×

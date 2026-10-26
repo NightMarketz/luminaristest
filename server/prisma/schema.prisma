@@ -2152,7 +2152,7 @@ model FiscalDocument {
   id                      String                  @id @default(cuid())
   userId                  String
   unitId                  String
-  kind                    String // NFSE | NFE
+  kind                    String // NFSE | NFE | NFCE (BE-INCR-NFCE item 3)
   status                  String // SENT | PROCESSING | AUTHORIZED | AUTHORIZED_DIVERGENT (releitura divergente, F-MAN-2 c) | REJECTED | CANCELLED
   saleId                  String
   saleKey                 String // = saleId enquanto vivo; "cancelled:<id>:<saleId>" após CANCELLED
