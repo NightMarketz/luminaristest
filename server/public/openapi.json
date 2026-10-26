@@ -2339,6 +2339,26 @@
                   "type": "string",
                   "description": "Imobilizado declarado pelo operador (ITEM-DESTINATION emenda 29/09 — o CFOP do XML não roteia) — XOR com productRef"
                 },
+                "treatment": {
+                  "type": "string",
+                  "enum": [
+                    "CAPITALIZE",
+                    "EXPENSE"
+                  ],
+                  "description": "C8 emenda 3.2 (IN RFB 1.700 art. 120): EXPENSE = imobilizado direto na despesa, no lugar do classId (exige expenseAccountId; unitário ≤ R$ 1.200 ou vida útil ≤ 1 ano). Ausente = CAPITALIZE"
+                },
+                "expenseAccountId": {
+                  "type": "string",
+                  "description": "Só com treatment EXPENSE — folha de despesa do escopo"
+                },
+                "setDeclared": {
+                  "type": "boolean",
+                  "description": "Faz parte de um conjunto (art. 120 § 1º) — só com classId"
+                },
+                "usefulLifeUpToOneYear": {
+                  "type": "boolean",
+                  "description": "Vida útil ≤ 1 ano — só com treatment EXPENSE; libera acima de R$ 1.200"
+                },
                 "destination": {
                   "type": "string",
                   "enum": [
@@ -2694,13 +2714,33 @@
             "items": {
               "type": "object",
               "required": [
-                "classId",
                 "cProd",
                 "costCents"
               ],
               "properties": {
+                "treatment": {
+                  "type": "string",
+                  "enum": [
+                    "CAPITALIZE",
+                    "EXPENSE"
+                  ],
+                  "description": "C8 emenda 3.2 (IN RFB 1.700 art. 120): ausente = CAPITALIZE (ativar). EXPENSE = direto na despesa — unitário ≤ R$ 1.200 ou vida útil ≤ 1 ano declarada; escolha irreversível"
+                },
                 "classId": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "Obrigatório com CAPITALIZE; proibido com EXPENSE"
+                },
+                "expenseAccountId": {
+                  "type": "string",
+                  "description": "Obrigatório com EXPENSE — folha de despesa do escopo"
+                },
+                "setDeclared": {
+                  "type": "boolean",
+                  "description": "Faz parte de um conjunto (art. 120 § 1º) — exige CAPITALIZE"
+                },
+                "usefulLifeUpToOneYear": {
+                  "type": "boolean",
+                  "description": "Vida útil ≤ 1 ano (2ª hipótese do art. 120) — só com EXPENSE; libera acima do limite"
                 },
                 "cProd": {
                   "type": "string"

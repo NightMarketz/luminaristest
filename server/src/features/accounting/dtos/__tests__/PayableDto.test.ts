@@ -343,3 +343,36 @@ describe('CreatePayableSchema — linha de crédito de IBS/CBS (IBS-CBS-2027 PR-
     expect(CreatePayableSchema.safeParse({ ...base, amountCents: 10010, recoverableTaxLines: [ibs, ibs] }).success).toBe(false);
   });
 });
+
+// ── C8 emenda 3.2 P1 (E3/E4b/E7, contrato §3.1 do BRIEF) ───────────────────────────────────────────────────────
+describe('CreatePayableSchema — fixedAssetItem.treatment (C8 emenda 3.2)', () => {
+  const base = {
+    unitId: 'unit-1', supplierName: 'ACME', documentNumber: 'NF-1', description: 'x',
+    issueDate: '2026-06-10', dueDate: '2026-07-10', amountCents: 90000, inventoryMultiItem: true,
+  };
+  const parse = (item: Record<string, unknown>) =>
+    CreatePayableSchema.safeParse({ ...base, fixedAssetItems: [{ cProd: 'CAD-1', costCents: 90000, ...item }] });
+
+  it('EXPENSE com expenseAccountId e sem classId → aceito; ausente = CAPITALIZE (exige classId)', () => {
+    expect(parse({ treatment: 'EXPENSE', expenseAccountId: 'acc-desp' }).success).toBe(true);
+    expect(parse({ classId: 'class-1' }).success).toBe(true);
+    expect(parse({}).success).toBe(false);
+  });
+
+  it.each([
+    ['EXPENSE sem expenseAccountId', { treatment: 'EXPENSE' }, 'expenseAccountId'],
+    ['EXPENSE com classId', { treatment: 'EXPENSE', expenseAccountId: 'a', classId: 'c' }, 'classId'],
+    ['CAPITALIZE com expenseAccountId', { classId: 'c', expenseAccountId: 'a' }, 'expenseAccountId'],
+    ['E7 — conjunto declarado com EXPENSE', { treatment: 'EXPENSE', expenseAccountId: 'a', setDeclared: true }, 'setDeclared'],
+    ['E4b — vida útil ≤ 1 ano com CAPITALIZE', { classId: 'c', usefulLifeUpToOneYear: true }, 'usefulLifeUpToOneYear'],
+  ])('%s → 400 no campo certo', (_n, item, campo) => {
+    const r = parse(item);
+    expect(r.success).toBe(false);
+    expect(r.error!.issues.map((i) => i.path.at(-1))).toContain(campo);
+  });
+
+  it('E7 — setDeclared com CAPITALIZE e E4b — vida útil ≤ 1 ano com EXPENSE → aceitos', () => {
+    expect(parse({ classId: 'c', setDeclared: true }).success).toBe(true);
+    expect(parse({ treatment: 'EXPENSE', expenseAccountId: 'a', usefulLifeUpToOneYear: true }).success).toBe(true);
+  });
+});

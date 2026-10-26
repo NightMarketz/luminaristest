@@ -39,7 +39,11 @@ valueCents: number
 description?: string
 }[]
 fixedAssetItems?: {
-classId: string
+treatment?: ("CAPITALIZE" | "EXPENSE")
+classId?: string
+expenseAccountId?: string
+setDeclared?: boolean
+usefulLifeUpToOneYear?: boolean
 cProd: string
 costCents: number
 ncm?: string
