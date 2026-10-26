@@ -203,9 +203,10 @@ primeira NF-e 55. Há uma condição: se o X10a PR-7 entrar em produção antes 
 > - `DanfeModel.avisos` entra aqui (item 15), não no PR-1.
 > - Conteúdo dos campos em 10 pt (`[MOC-DANFE-FONTE-CONTEUDO]`), informações complementares em 7 pt, produtos em 6 pt.
 > - Coluna CÓDIGO mantida no quadro de produtos (`[MOC-DANFE-COLUNAS]`: não pode ser suprimida), embora o modelo da NT não a desenhe.
-> - **Aberto (L-DANFE-PR2-1):** quando os quadros fixos da 1ª folha passam de uma A4 (ex.: 120 duplicatas e 3 volumes), o
->   render devolve `DANFE_FOLHA1_EXCEDE` (400) em vez de um PDF cortado. O MOC não prevê continuação da fatura. Com o
->   fixture de base cabem até ~59 duplicatas.
+> - **L-DANFE-PR2-1 decidida em 26/10** ("Resto nas Info. Complementares"): quando a fatura não cabe na 1ª folha, o quadro
+>   mostra as parcelas que cabem e "DEMAIS PARCELAS EM INFORMAÇÕES COMPLEMENTARES"; as demais abrem as informações
+>   complementares, que continuam na última folha (§3.5). `DANFE_FOLHA1_EXCEDE` (400) fica só para o que a fatura não
+>   resolve (ex.: dezenas de volumes no transporte).
 
 ### PR-3 — superfície (cadeia Route → Controller → Service → Repository, + Policy)
 

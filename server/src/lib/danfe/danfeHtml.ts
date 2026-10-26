@@ -241,17 +241,50 @@ function destinatario(m: DanfeModel): Pedaco {
   ]);
 }
 
-function fatura(m: DanfeModel): Pedaco {
-  if (!m.fatura) return VAZIO; // `[MOC-DANFE-SUPR-FATURA]`
-  const itens = [
+/** Aviso no quadro Fatura quando parte das parcelas vai para as informações complementares (L-DANFE-PR2-1). */
+export const AVISO_DEMAIS_PARCELAS = 'DEMAIS PARCELAS EM INFORMAÇÕES COMPLEMENTARES';
+const DUPS_POR_LINHA = Math.max(1, Math.floor(LARGURA_MM / DUP_MM));
+
+/**
+ * L-DANFE-PR2-1 (dono, questionário de 26/10: "Resto nas Info. Complementares"): o quadro Fatura mostra as parcelas que
+ * cabem na 1ª folha, "reduzido, desde que contenha todos os dados" (`[MOC-DANFE-SUPR-FATURA]`, MOC Anexo II §3.3.2); as
+ * demais vão para o início das informações complementares, que são a única continuação que as folhas adicionais admitem
+ * (`[MOC-DANFE-FOLHAS]`, §3.5). Nenhuma parcela some.
+ */
+interface PlanoFatura {
+  visiveis: string[];
+  resto: string[];
+}
+
+function textosFatura(m: DanfeModel): string[] {
+  if (!m.fatura) return [];
+  return [
     ...(m.fatura.nFat ? [`FATURA ${m.fatura.nFat}`] : []),
     ...m.fatura.dup.map((d) => `${d.nDup ?? ''} · ${dataBR(d.dVenc)} · ${fmtCents(d.vDup)}`),
   ];
-  const porLinha = Math.max(1, Math.floor(LARGURA_MM / DUP_MM));
-  const linhas = Math.max(1, Math.ceil(itens.length / porLinha));
-  const mm = Number((TITULO_MM + linhas * LINHA_TEXTO_MM + 1.5).toFixed(2));
-  const corpo = itens.map((t) => `<span class="dup">${e(t)}</span>`).join('');
-  return { html: `<div class="bloco" style="height:${mm}mm"><div class="t">FATURA / DUPLICATAS</div><div class="dups">${corpo}</div></div>`, mm };
+}
+
+function alturaFatura(n: number, aviso: boolean): number {
+  const linhas = Math.max(1, Math.ceil(n / DUPS_POR_LINHA)) + (aviso ? 1 : 0);
+  return Number((TITULO_MM + linhas * LINHA_TEXTO_MM + 1.5).toFixed(2));
+}
+
+/** Quantas parcelas cabem no espaço (mm) que sobra na 1ª folha; o resto segue para as informações complementares. */
+function planoFatura(m: DanfeModel, disponivelMm: number): PlanoFatura {
+  const todos = textosFatura(m);
+  if (todos.length === 0 || alturaFatura(todos.length, false) <= disponivelMm) return { visiveis: todos, resto: [] };
+  const linhas = Math.floor((disponivelMm - TITULO_MM - 1.5) / LINHA_TEXTO_MM) - 1; // uma linha fica para o aviso
+  const k = Math.max(0, Math.min(todos.length, linhas * DUPS_POR_LINHA));
+  return { visiveis: todos.slice(0, k), resto: todos.slice(k) };
+}
+
+function fatura(m: DanfeModel, plano: PlanoFatura): Pedaco {
+  if (!m.fatura) return VAZIO; // `[MOC-DANFE-SUPR-FATURA]`
+  const aviso = plano.resto.length > 0;
+  const mm = alturaFatura(plano.visiveis.length, aviso);
+  const corpo = plano.visiveis.map((t) => `<span class="dup">${e(t)}</span>`).join('');
+  const rodape = aviso ? `<div class="dups"><b>${AVISO_DEMAIS_PARCELAS}</b></div>` : '';
+  return { html: `<div class="bloco" style="height:${mm}mm"><div class="t">FATURA / DUPLICATAS</div><div class="dups">${corpo}</div>${rodape}</div>`, mm };
 }
 
 /** Campos facultativos (`[NT10-FACULT]`): só os que existem no XML, na mesma linha. */
@@ -441,17 +474,27 @@ function quadroProdutos(itens: DanfeItem[], alturaMm: number | null, continua: b
 
 // ── informações complementares ─────────────────────────────────────────────────────────────────────────────────
 
-/** Texto do quadro, na ordem: "SEM VALOR FISCAL" (homologação, item 14), infAdFisco, infCpl (`[MOC-DANFE-INFCPL]`). */
-function textoComplementar(m: DanfeModel): string {
-  return [m.ambiente === 'homologacao' ? SEM_VALOR_FISCAL : null, m.infAdFisco, m.infCpl].filter((x): x is string => !!x).join(' ');
+/**
+ * Texto do quadro, na ordem: "SEM VALOR FISCAL" (homologação, item 14), parcelas que não couberam no quadro Fatura
+ * (L-DANFE-PR2-1), infAdFisco, infCpl (`[MOC-DANFE-INFCPL]`).
+ */
+function textoComplementar(m: DanfeModel, plano: PlanoFatura): string {
+  const parcelas = plano.resto.length ? `DEMAIS PARCELAS: ${plano.resto.join('; ')}.` : null;
+  return [m.ambiente === 'homologacao' ? SEM_VALOR_FISCAL : null, parcelas, m.infAdFisco, m.infCpl]
+    .filter((x): x is string => !!x)
+    .join(' ');
 }
 
-/** Corta o texto no limite de caracteres da 1ª folha, sem partir palavra quando der. */
+/**
+ * Corta o texto no limite de caracteres da 1ª folha: de preferência entre parcelas ou cláusulas ("; "), senão entre
+ * palavras, para uma parcela não ficar partida entre o quadro e a continuação.
+ */
 function dividirComplementar(texto: string): [string, string] {
   const limite = LINHAS_INFCPL_FOLHA1 * CHARS_INFCPL_LINHA;
   if (texto.length <= limite) return [texto, ''];
-  const corte = texto.lastIndexOf(' ', limite);
-  const pos = corte > limite / 2 ? corte : limite;
+  const clausula = texto.lastIndexOf('; ', limite - 1);
+  const palavra = texto.lastIndexOf(' ', limite);
+  const pos = clausula > limite / 2 ? clausula + 1 : palavra > limite / 2 ? palavra : limite;
   return [texto.slice(0, pos), texto.slice(pos).trimStart()];
 }
 
@@ -475,23 +518,30 @@ export interface Paginacao {
   folhas: DanfeItem[][];
   /** Altura (mm) disponível para itens no quadro de produtos da 1ª folha e das adicionais. */
   capacidade: { folha1: number; adicionais: number };
-  /** Resto das informações complementares que vai para a última folha. */
+  /** Informações complementares: o que cabe no quadro da 1ª folha e o resto, que vai para a última. */
+  complementar1: string;
   complementarResto: string;
+  /** Parcelas no quadro Fatura e as que foram para as informações complementares (L-DANFE-PR2-1). */
+  fatura: PlanoFatura;
 }
 
 /** Blocos da 1ª folha antes do quadro de produtos, na ordem do modelo da NT 2026.010 p. 8. */
-function blocosFolha1(m: DanfeModel): Pedaco[] {
-  return [canhoto(m), destinatario(m), fatura(m), ...totais(m), issqn(m), transporte(m)];
+function blocosFolha1(m: DanfeModel, plano: PlanoFatura): Pedaco[] {
+  return [canhoto(m), destinatario(m), fatura(m, plano), ...totais(m), issqn(m), transporte(m)];
 }
 
 /** Distribui os itens pelas folhas por orçamento de altura (determinístico, sem medir o DOM). */
 export function paginar(m: DanfeModel): Paginacao {
   const cab = cabecalho(m, 1, 1).mm; // a altura não depende do número da folha
-  const fixos = blocosFolha1(m).reduce((s, b) => s + b.mm, 0) + cab + H.dadosAdicionais;
+  const vazio: PlanoFatura = { visiveis: [], resto: [] };
+  const semFatura = blocosFolha1(m, vazio).reduce((s, b) => s + b.mm, 0) - fatura(m, vazio).mm + cab + H.dadosAdicionais;
+  const plano = planoFatura(m, FOLHA_MM - semFatura - H.cabecalhoProdutos - H.continua);
+  const fixos = semFatura + fatura(m, plano).mm;
   const folha1 = FOLHA_MM - fixos - H.cabecalhoProdutos - H.continua;
   if (folha1 < 0) {
+    // sem a fatura (que agora cede espaço), só sobra transporte com muitos volumes ou facultativos demais
     throw new ValidationError(
-      'DANFE: os quadros da 1ª folha (fatura, totais, transporte e dados adicionais) não cabem em uma folha A4.',
+      'DANFE: os quadros da 1ª folha (totais, transporte e dados adicionais) não cabem em uma folha A4.',
       { alturaMm: Number(fixos.toFixed(1)) },
       'DANFE_FOLHA1_EXCEDE',
     );
@@ -509,10 +559,10 @@ export function paginar(m: DanfeModel): Paginacao {
     folhas[folhas.length - 1].push(item);
     livre -= altura;
   }
-  const [, resto] = dividirComplementar(textoComplementar(m));
+  const [complementar1, resto] = dividirComplementar(textoComplementar(m, plano));
   // a 1ª folha termina no quadro de dados adicionais: o resto sempre vai para uma folha adicional
   if (resto && (folhas.length === 1 || alturaContinuacao(resto) > livre)) folhas.push([]);
-  return { folhas, capacidade: { folha1, adicionais }, complementarResto: resto };
+  return { folhas, capacidade: { folha1, adicionais }, complementar1, complementarResto: resto, fatura: plano };
 }
 
 // ── documento ──────────────────────────────────────────────────────────────────────────────────────────────────
@@ -568,7 +618,6 @@ td.n { text-align: right; }
 export function renderDanfeHtml(m: DanfeModel): string {
   const pag = paginar(m);
   const total = pag.folhas.length;
-  const [complemento1] = dividirComplementar(textoComplementar(m));
   const marca = m.ambiente === 'homologacao' ? `<div class="marca">${SEM_VALOR_FISCAL}</div>` : '';
   const folhas = pag.folhas.map((itens, idx) => {
     const n = idx + 1;
@@ -576,9 +625,9 @@ export function renderDanfeHtml(m: DanfeModel): string {
     const continua = !ultima && pag.folhas[idx + 1].length > 0;
     const cont = ultima && pag.complementarResto ? continuacaoComplementar(pag.complementarResto) : '';
     if (n === 1) {
-      const [canh, ...resto] = blocosFolha1(m);
+      const [canh, ...resto] = blocosFolha1(m, pag.fatura);
       const altura = H.cabecalhoProdutos + pag.capacidade.folha1 + H.continua;
-      return `<section class="folha">${marca}${canh.html}${cabecalho(m, n, total).html}${resto.map((b) => b.html).join('')}${quadroProdutos(itens, altura, continua)}${dadosAdicionais(complemento1, pag.complementarResto !== '').html}</section>`;
+      return `<section class="folha">${marca}${canh.html}${cabecalho(m, n, total).html}${resto.map((b) => b.html).join('')}${quadroProdutos(itens, altura, continua)}${dadosAdicionais(pag.complementar1, pag.complementarResto !== '').html}</section>`;
     }
     const produtos = itens.length ? quadroProdutos(itens, null, continua) : '';
     return `<section class="folha">${marca}${cabecalho(m, n, total).html}${produtos}${cont}</section>`;

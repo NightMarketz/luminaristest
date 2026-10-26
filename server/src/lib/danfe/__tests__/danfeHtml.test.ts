@@ -268,9 +268,28 @@ describe('paginação (dono, 26/10: "Paginação no HTML"; [MOC-DANFE-FOLHAS])',
     expect(ocorrencias(html, 'CONTINUA NA PRÓXIMA FOLHA')).toBe(1);
   });
 
-  it('quadros da 1ª folha maiores que a folha (120 duplicatas e transporte com 3 volumes) ⇒ erro nomeado, não PDF cortado', () => {
+  // L-DANFE-PR2-1 (dono, 26/10: "Resto nas Info. Complementares")
+  it('120 duplicatas e transporte com 3 volumes ⇒ o DANFE sai; o quadro Fatura avisa e as demais parcelas vão para as informações complementares, sem perder nenhuma', () => {
     const vols = BASE.transp!.volumes;
     const m = comDups(120, { transp: { ...BASE.transp!, volumes: [...vols, ...vols, ...vols] } });
+    const pag = paginar(m);
+    expect(pag.fatura.resto.length).toBeGreaterThan(0);
+    expect(pag.fatura.visiveis.length + pag.fatura.resto.length).toBe(121); // FATURA 1 + 120 parcelas
+    const html = renderDanfeHtml(m);
+    expect(blocoHtml(html, 'FATURA / DUPLICATAS')).toContain('DEMAIS PARCELAS EM INFORMAÇÕES COMPLEMENTARES');
+    expect(html).toContain('DEMAIS PARCELAS: ');
+    const parcelas = [...html.matchAll(/(\d{3}) · 01\/12\/2026 · 1,00/g)].map((x) => x[1]);
+    expect(parcelas).toEqual(Array.from({ length: 120 }, (_, k) => String(k + 1).padStart(3, '0')));
+  });
+
+  it('fatura que cabe ⇒ sem aviso e sem "DEMAIS PARCELAS"', () => {
+    const html = renderDanfeHtml(comDups(10));
+    expect(html).not.toContain('DEMAIS PARCELAS');
+  });
+
+  it('o que a fatura não resolve (transporte com 60 volumes) ⇒ erro nomeado, não PDF cortado', () => {
+    const vol = BASE.transp!.volumes[0];
+    const m = com({ transp: { ...BASE.transp!, volumes: Array.from({ length: 60 }, () => vol) } });
     expect.assertions(2);
     try {
       renderDanfeHtml(m);
