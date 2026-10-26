@@ -162,10 +162,12 @@ export function AccountingView() {
   const contextKey = governance ? governance.assignmentId : OWN_CONTEXT;
 
   // Kit de setor da unidade (EMENDA-2 da LAC-B, itens 3–4): decide se a aba "Kit de setor" existe; no modo cliente
-  // não chama a rota (F-KA-6 a). `activationNonce` remonta a faixa de ativação depois de uma retomada (item 8).
+  // não chama a rota (F-KA-6 a). `activationNonce` remonta a faixa de ativação depois de uma retomada (item 8);
+  // `kitNonce` remonta a aba depois de ativar pela faixa (item 10) — a aba lê o kit pelo próprio hook.
   const unitKit = useUnitKit(unitId, { enabled: !governance && !!unitId });
   const kitTabVisible = !governance && unitKit.state === 'loaded';
   const [activationNonce, setActivationNonce] = useState(0);
+  const [kitNonce, setKitNonce] = useState(0);
 
   const [rawTab, setRawTab] = useState<Tab>('balancete');
   // Allowlist por construção: no modo cliente nenhuma aba fora de `DELEGATED_TABS` chega a renderizar (item 8.1).
@@ -305,7 +307,10 @@ export function AccountingView() {
           unitId={unitId}
           onNavigateToPeriods={() => setActiveTab('periodos')}
           onNavigateToPendencias={PENDENCIAS_TAB ? () => setActiveTab(PENDENCIAS_TAB) : undefined}
-          onActivated={unitKit.reload}
+          onActivated={() => {
+            unitKit.reload();
+            setKitNonce((n) => n + 1);
+          }}
         />
       )}
 
@@ -586,7 +591,7 @@ export function AccountingView() {
       {/* ── Kit de setor (EMENDA-2 da LAC-B, F-KA-1 c) ─────────────────────── */}
       {activeTab === 'kit' && unitId && (
         <AccountingKitTab
-          key={`kit-${unitId}`}
+          key={`kit-${unitId}-${kitNonce}`}
           unitId={unitId}
           onActivationChanged={() => {
             unitKit.reload();
