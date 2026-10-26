@@ -67,6 +67,10 @@ export const ACCOUNTING_RESET_BLOCKING = [
   'ProfitDistributionEvent', // IRRF-DISTRIBUICAO PR-2: evento com lançamento e IRRF ⇒ bloqueia
   'InterestOnEquityCalculation', // IRRF-DISTRIBUICAO PR-4: JCP com lançamento e Parte A ⇒ bloqueia
   'IssBeneficioMunicipal',
+  // EFICIENCIA-FISCAL PR-1: o onboarding não escreve política, custo de serviço nem sugestão (a sugestão é trilha) ⇒ bloqueia.
+  'TaxOptimizationPolicy',
+  'ServiceCostEvidence',
+  'TaxOptimizationSuggestion',
   'ProductDestinationDefault',
   'FiscalDocument',
   'FiscalDocumentPendingAttachment',

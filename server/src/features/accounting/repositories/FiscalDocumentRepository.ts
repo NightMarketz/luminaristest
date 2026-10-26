@@ -113,9 +113,10 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
         dCompet: { startsWith: `${competencia}-` },
         deletedAt: null,
       },
-      _sum: { vServCents: true },
+      _sum: { vServCents: true, vDescIncondCents: true },
     });
-    return r._sum.vServCents ?? 0n;
+    // F-EF-16 a: a receita da nota é vServ − vDescIncond (o desconto destacado não é receita — LC 123 art. 3º § 1º).
+    return (r._sum.vServCents ?? 0n) - (r._sum.vDescIncondCents ?? 0n);
   }
 
   public async listPending(olderThan: Date, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]> {

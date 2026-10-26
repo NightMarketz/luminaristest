@@ -338,6 +338,15 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'policy_version.proposed': ['policyVersionId', 'target', 'version', 'supersededId'],
   'policy_version.applied':  ['policyVersionId', 'target', 'version', 'assignmentId'],
   'policy_version.rejected': ['policyVersionId', 'target', 'version', 'reason'],
+  // EFICIENCIA-FISCAL PR-1 (BRIEF itens 5–7, item 24): ids, prática, enums e centavos — sem PII nem texto livre (a
+  // `decisionReason` fica na linha da sugestão, fora do evento — I-13).
+  'tax.suggestion.proposed': ['suggestionId', 'practice', 'subjectType', 'subjectId', 'estimatedSavingCents', 'supersedesId'],
+  'tax.suggestion.accepted': ['suggestionId', 'practice', 'subjectType', 'subjectId', 'estimatedSavingCents', 'assignmentId', 'policyId'],
+  'tax.suggestion.rejected': ['suggestionId', 'practice', 'subjectType', 'subjectId', 'estimatedSavingCents', 'assignmentId'],
+  'tax.policy.updated': ['policyId', 'criterioAlocacao', 'pisoServico', 'vigenteDesde', 'suggestionId'],
+  'tax.policy.service_cost_created': ['serviceCostId', 'serviceRef', 'custoCents', 'catalogoMinimoCents', 'sourceDocumentId', 'vigenteDesde', 'vigenteAte'],
+  'tax.policy.service_cost_deleted': ['serviceCostId', 'serviceRef', 'custoCents', 'catalogoMinimoCents', 'sourceDocumentId', 'vigenteDesde', 'vigenteAte'],
+  'sale.fiscal_guard.blocked': ['saleId', 'criterio', 'codes'],
   // BE-INCR-SPED-ECF-FASE3B item 11 (Fork 4→b) — e-Lalur/e-Lacs store. Ids, catalog codes and cents
   // only: `histLancamento` (M300.HIST_LAN_LAL, free text typed by the operator) and the Parte B
   // `descricao` NEVER enter the hash-chained trail (item 18: sem PII, sem texto livre).

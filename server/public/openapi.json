@@ -351,6 +351,145 @@
           }
         }
       },
+      "JcpPreviewInput": {
+        "type": "object",
+        "required": [
+          "unitId",
+          "anoCalendario",
+          "periodo",
+          "dataCredito",
+          "forma",
+          "totalCents"
+        ],
+        "properties": {
+          "unitId": {
+            "type": "string",
+            "description": "Unit of the ledger read and of the future entry"
+          },
+          "anoCalendario": {
+            "type": "integer",
+            "minimum": 2026
+          },
+          "periodo": {
+            "type": "string",
+            "enum": [
+              "T01",
+              "T02",
+              "T03",
+              "T04",
+              "A00"
+            ],
+            "description": "Quarterly real profit uses T0n; annual uses A00"
+          },
+          "dataCredito": {
+            "type": "string",
+            "format": "date",
+            "description": "Inside the period (L-IRD-3)"
+          },
+          "forma": {
+            "type": "string",
+            "enum": [
+              "DESPESA",
+              "PL"
+            ]
+          },
+          "totalCents": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "debitoPlAccountId": {
+            "type": "string",
+            "description": "PL only: the equity account debited instead of the expense"
+          },
+          "rateio": {
+            "type": "array",
+            "description": "Optional split per partner (default: by share); only partners in force; must add up to totalCents",
+            "items": {
+              "type": "object",
+              "required": [
+                "partnerId",
+                "brutoCents"
+              ],
+              "properties": {
+                "partnerId": {
+                  "type": "string"
+                },
+                "brutoCents": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          }
+        }
+      },
+      "ProfitDistributionInput": {
+        "type": "object",
+        "required": [
+          "unitId",
+          "partnerId",
+          "evento",
+          "dataEvento",
+          "brutoCents",
+          "debitoAccountId",
+          "origemLucro"
+        ],
+        "properties": {
+          "unitId": {
+            "type": "string",
+            "description": "Unit of the journal entry"
+          },
+          "partnerId": {
+            "type": "string"
+          },
+          "evento": {
+            "type": "string",
+            "enum": [
+              "CREDITO",
+              "PAGAMENTO",
+              "EMPREGO",
+              "ENTREGA"
+            ],
+            "description": "First event triggers the withholding (F-IRD-4)"
+          },
+          "dataEvento": {
+            "type": "string",
+            "format": "date"
+          },
+          "brutoCents": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "debitoAccountId": {
+            "type": "string",
+            "description": "Equity: retained earnings or a reserve"
+          },
+          "contraAccountId": {
+            "type": "string",
+            "description": "Forbidden in CREDITO (profile account); Asset in PAGAMENTO/ENTREGA; Equity (capital) in EMPREGO"
+          },
+          "origemLucro": {
+            "type": "string",
+            "enum": [
+              "CORRENTE",
+              "TRANSICAO"
+            ]
+          },
+          "anoResultado": {
+            "type": "integer",
+            "description": "TRANSICAO only, ≤ 2025"
+          },
+          "aprovadoEm": {
+            "type": "string",
+            "format": "date",
+            "description": "TRANSICAO only, ≤ the TRANSICAO_APROVACAO_ATE legal parameter"
+          },
+          "atoSourceDocumentId": {
+            "type": "string",
+            "description": "TRANSICAO only: the approval act attached"
+          }
+        }
+      },
       "InviteAccountantInput": {
         "type": "object",
         "required": [
@@ -1136,6 +1275,36 @@
           "declaracaoOptanteDocumentId": {
             "type": "string",
             "description": "SourceDocument da declaração de optante do Simples (mesmo escopo)"
+          }
+        }
+      },
+      "SetCounterpartyRegimeInput": {
+        "type": "object",
+        "required": [
+          "unitId",
+          "regimeTributario"
+        ],
+        "properties": {
+          "unitId": {
+            "type": "string"
+          },
+          "regimeTributario": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "SIMPLES",
+              "MEI",
+              "PRESUMIDO",
+              "REAL",
+              "ARBITRADO",
+              "PF",
+              "COOPERATIVA",
+              "EXTERIOR"
+            ]
+          },
+          "declaracaoOptanteDocumentId": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -5378,175 +5547,6 @@
             ]
           }
         }
-      },
-      "ProfitDistributionInput": {
-        "type": "object",
-        "required": [
-          "unitId",
-          "partnerId",
-          "evento",
-          "dataEvento",
-          "brutoCents",
-          "debitoAccountId",
-          "origemLucro"
-        ],
-        "properties": {
-          "unitId": {
-            "type": "string",
-            "description": "Unit of the journal entry"
-          },
-          "partnerId": {
-            "type": "string"
-          },
-          "evento": {
-            "type": "string",
-            "enum": [
-              "CREDITO",
-              "PAGAMENTO",
-              "EMPREGO",
-              "ENTREGA"
-            ],
-            "description": "First event triggers the withholding (F-IRD-4)"
-          },
-          "dataEvento": {
-            "type": "string",
-            "format": "date"
-          },
-          "brutoCents": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "debitoAccountId": {
-            "type": "string",
-            "description": "Equity: retained earnings or a reserve"
-          },
-          "contraAccountId": {
-            "type": "string",
-            "description": "Forbidden in CREDITO (profile account); Asset in PAGAMENTO/ENTREGA; Equity (capital) in EMPREGO"
-          },
-          "origemLucro": {
-            "type": "string",
-            "enum": [
-              "CORRENTE",
-              "TRANSICAO"
-            ]
-          },
-          "anoResultado": {
-            "type": "integer",
-            "description": "TRANSICAO only, ≤ 2025"
-          },
-          "aprovadoEm": {
-            "type": "string",
-            "format": "date",
-            "description": "TRANSICAO only, ≤ the TRANSICAO_APROVACAO_ATE legal parameter"
-          },
-          "atoSourceDocumentId": {
-            "type": "string",
-            "description": "TRANSICAO only: the approval act attached"
-          }
-        }
-      },
-      "JcpPreviewInput": {
-        "type": "object",
-        "required": [
-          "unitId",
-          "anoCalendario",
-          "periodo",
-          "dataCredito",
-          "forma",
-          "totalCents"
-        ],
-        "properties": {
-          "unitId": {
-            "type": "string",
-            "description": "Unit of the ledger read and of the future entry"
-          },
-          "anoCalendario": {
-            "type": "integer",
-            "minimum": 2026
-          },
-          "periodo": {
-            "type": "string",
-            "enum": [
-              "T01",
-              "T02",
-              "T03",
-              "T04",
-              "A00"
-            ],
-            "description": "Quarterly real profit uses T0n; annual uses A00"
-          },
-          "dataCredito": {
-            "type": "string",
-            "format": "date",
-            "description": "Inside the period (L-IRD-3)"
-          },
-          "forma": {
-            "type": "string",
-            "enum": [
-              "DESPESA",
-              "PL"
-            ]
-          },
-          "totalCents": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "debitoPlAccountId": {
-            "type": "string",
-            "description": "PL only: the equity account debited instead of the expense"
-          },
-          "rateio": {
-            "type": "array",
-            "description": "Optional split per partner (default: by share); only partners in force; must add up to totalCents",
-            "items": {
-              "type": "object",
-              "required": [
-                "partnerId",
-                "brutoCents"
-              ],
-              "properties": {
-                "partnerId": {
-                  "type": "string"
-                },
-                "brutoCents": {
-                  "type": "integer",
-                  "minimum": 0
-                }
-              }
-            }
-          }
-        }
-      },
-      "SetCounterpartyRegimeInput": {
-        "type": "object",
-        "required": [
-          "unitId",
-          "regimeTributario"
-        ],
-        "properties": {
-          "unitId": {
-            "type": "string"
-          },
-          "regimeTributario": {
-            "type": "string",
-            "nullable": true,
-            "enum": [
-              "SIMPLES",
-              "MEI",
-              "PRESUMIDO",
-              "REAL",
-              "ARBITRADO",
-              "PF",
-              "COOPERATIVA",
-              "EXTERIOR"
-            ]
-          },
-          "declaracaoOptanteDocumentId": {
-            "type": "string",
-            "nullable": true
-          }
-        }
       }
     }
   },
@@ -6329,39 +6329,6 @@
       }
     },
     "/api/dashboard-layout/{id}": {
-      "get": {
-        "summary": "Get a dashboard layout by ID",
-        "tags": [
-          "DashboardLayout"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "cuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Layout"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          }
-        }
-      },
       "patch": {
         "summary": "Update a dashboard layout",
         "tags": [
@@ -12149,6 +12116,325 @@
         }
       }
     },
+    "/api/accounting/jcp/preview": {
+      "post": {
+        "summary": "Preview interest on equity (JCP) — TJLP pro rata die base, deductible limit, split and IRRF (nothing is saved)",
+        "description": "Real profit only (400 JCP_SO_NO_LUCRO_REAL). Base = daily balance of the mapped equity accounts (end of the previous day) × monthly TJLP ÷ days of the month, from the start of the period to dataCredito. Limit = min(TJLP interest, max(50% of the period profit before JCP and IRPJ, 50% of retained earnings + profit reserves at the start of the period)). IRRF 17.5% per partner. A total above the limit is accepted and shows excessoIndedutivelCents. Errors: PERIODO_INCOMPATIVEL_COM_A_FORMA, DATA_CREDITO_FORA_DO_PERIODO, SOMA_PARTICIPACOES_INVALIDA, SOCIO_NAO_RESIDENTE_FORA_DO_ESCOPO, JCP_MAPA_PL_NAO_CONFIGURADO, RATEIO_INVALIDO, PARAMETRO_LEGAL_AUSENTE (no TJLP on some day).",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JcpPreviewInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JcpPreviewView (faixas, limits, alocacoes, lalurPrevisto, avisos)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Equity account (PL form) not found in the unit"
+          }
+        }
+      }
+    },
+    "/api/accounting/jcp": {
+      "post": {
+        "summary": "Confirm interest on equity (JCP), post it and record the e-Lalur/e-Lacs Part A adjustments",
+        "description": "Body = the preview body + previaSha256 returned by the preview. The calculation is redone inside the transaction: a different hash → 409 PREVIA_DESATUALIZADA; another live JCP in the period → 409 JCP_JA_CONFIRMADO_NO_PERIODO. Then posts (DESPESA: D JCP expense / C JCP payable net / C IRRF payable; PL: D the chosen equity account instead of the expense) and records the system Part A lines (PL: exclusion of min(total, limit); DESPESA: addition of the excess). If posting fails the calculation stays PENDING_POST (reconcile in /{id}/lancamento). Closed period → ACCOUNTING_PERIOD_NOT_OPEN and nothing is saved.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/JcpPreviewInput"
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "previaSha256"
+                    ],
+                    "properties": {
+                      "previaSha256": {
+                        "type": "string",
+                        "description": "sha256 hex returned by /jcp/preview"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "JcpView (status POSTED or PENDING_POST, entryId, lalurEntryIds, alocacoes)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "409": {
+            "description": "PREVIA_DESATUALIZADA or JCP_JA_CONFIRMADO_NO_PERIODO"
+          },
+          "422": {
+            "description": "ACCOUNTING_PERIOD_NOT_OPEN"
+          }
+        }
+      }
+    },
+    "/api/accounting/jcp/irrf": {
+      "get": {
+        "summary": "Monthly DARF 5706 summary of the IRRF on interest on equity, one DARF per ten-day period of the credit",
+        "description": "Due date = 3rd business day after the ten-day period of the credit date (Law 11.196 art. 70 I b 1).",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "competencia",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "2026-03"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ competencia, codigoReceita: 5706, totalCents, darfs: [{ decendio, vencimento, totalCents, calculos }] }"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/accounting/jcp/{id}": {
+      "get": {
+        "summary": "Read one confirmed JCP calculation",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JcpView"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/api/accounting/jcp/{id}/lancamento": {
+      "post": {
+        "summary": "Reconcile the journal entry and the Part A lines of a JCP calculation (idempotent)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JcpView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "description": "ACCOUNTING_PERIOD_NOT_OPEN"
+          }
+        }
+      }
+    },
+    "/api/accounting/jcp/{id}/cancel": {
+      "post": {
+        "summary": "Cancel a JCP calculation — reverses the entry and archives the system Part A lines",
+        "description": "A JCP already paid (any debit in the JCP payable account dated on or after the credit date, other than its own entry and reversal) → 409 JCP_JA_PAGO.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JcpView (CANCELLED)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "description": "JCP_JA_PAGO or JCP_NAO_POSTADO"
+          },
+          "422": {
+            "description": "ACCOUNTING_PERIOD_NOT_OPEN"
+          }
+        }
+      }
+    },
     "/api/accounting/journal-entries/{journalEntryId}/attachments": {
       "get": {
         "summary": "List attachments for a journal entry",
@@ -12684,631 +12970,6 @@
           },
           "404": {
             "$ref": "#/components/responses/UnitNotFound"
-          }
-        }
-      }
-    },
-    "/api/accounting/profit-distributions": {
-      "post": {
-        "summary": "Record a profit distribution with the IRRF of Law 9.250 art. 6-A, then post it",
-        "description": "Above BRL 50,000 in the month for the same individual (all units of the company), 10% on the month total; transition profit stays out of the base but counts for the limit (F-IRD-6). The event is saved as PENDING_POST and posted right away (D debit gross / C counterpart net / C IRRF payable); if posting fails the event stays PENDING_POST (reconcile in /{id}/lancamento). Closed period → ACCOUNTING_PERIOD_NOT_OPEN and nothing is saved. Non-resident partner → 400 SOCIO_NAO_RESIDENTE_FORA_DO_ESCOPO.",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProfitDistributionInput"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "ProfitDistributionView (status POSTED or PENDING_POST, memoria, avisoSaldoLucro)"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "description": "Partner, account or approval act not found in the scope"
-          },
-          "422": {
-            "description": "RETENCAO_EXCEDE_PAGAMENTO (details.brutoMinimoCents) or ACCOUNTING_PERIOD_NOT_OPEN"
-          }
-        }
-      }
-    },
-    "/api/accounting/profit-distributions/preview": {
-      "post": {
-        "summary": "Preview a profit distribution (nothing is saved)",
-        "description": "Returns the month sum, base, IRRF due, already withheld, the IRRF of this event, the ceiling without withholding, the minimum gross when the event does not cover the IRRF, and a suggestion (F-IRD-5R).",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProfitDistributionInput"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "ProfitDistributionPreviewView"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "description": "Partner, account or approval act not found in the scope"
-          }
-        }
-      }
-    },
-    "/api/accounting/profit-distributions/irrf": {
-      "get": {
-        "summary": "Monthly DARF 1841 summary of the IRRF on profits",
-        "description": "Total withheld in the company, events with withholding and due date (last business day of the 2nd ten-day period of the next month).",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "unitId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "competencia",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "example": "2026-03"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "{ competencia, codigoReceita: 1841, totalCents, vencimento, eventos }"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          }
-        }
-      }
-    },
-    "/api/accounting/profit-distributions/{id}": {
-      "get": {
-        "summary": "Read one profit distribution event",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "unitId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "ProfitDistributionView"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          }
-        }
-      }
-    },
-    "/api/accounting/profit-distributions/{id}/lancamento": {
-      "post": {
-        "summary": "Reconcile the journal entry of a pending distribution (idempotent)",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "unitId"
-                ],
-                "properties": {
-                  "unitId": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "ProfitDistributionView"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          },
-          "422": {
-            "description": "ACCOUNTING_PERIOD_NOT_OPEN"
-          }
-        }
-      }
-    },
-    "/api/accounting/profit-distributions/{id}/cancel": {
-      "post": {
-        "summary": "Cancel the last posted distribution of the partner in the month (F-IRD-8) and reverse its entry",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "unitId"
-                ],
-                "properties": {
-                  "unitId": {
-                    "type": "string"
-                  },
-                  "motivo": {
-                    "type": "string",
-                    "maxLength": 500
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "ProfitDistributionView (CANCELLED)"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          },
-          "409": {
-            "description": "NAO_E_O_ULTIMO_DO_MES (with the id to cancel first) or DISTRIBUICAO_NAO_POSTADA"
-          },
-          "422": {
-            "description": "ACCOUNTING_PERIOD_NOT_OPEN"
-          }
-        }
-      }
-    },
-    "/api/accounting/jcp/preview": {
-      "post": {
-        "summary": "Preview interest on equity (JCP) — TJLP pro rata die base, deductible limit, split and IRRF (nothing is saved)",
-        "description": "Real profit only (400 JCP_SO_NO_LUCRO_REAL). Base = daily balance of the mapped equity accounts (end of the previous day) × monthly TJLP ÷ days of the month, from the start of the period to dataCredito. Limit = min(TJLP interest, max(50% of the period profit before JCP and IRPJ, 50% of retained earnings + profit reserves at the start of the period)). IRRF 17.5% per partner. A total above the limit is accepted and shows excessoIndedutivelCents. Errors: PERIODO_INCOMPATIVEL_COM_A_FORMA, DATA_CREDITO_FORA_DO_PERIODO, SOMA_PARTICIPACOES_INVALIDA, SOCIO_NAO_RESIDENTE_FORA_DO_ESCOPO, JCP_MAPA_PL_NAO_CONFIGURADO, RATEIO_INVALIDO, PARAMETRO_LEGAL_AUSENTE (no TJLP on some day).",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/JcpPreviewInput"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "JcpPreviewView (faixas, limits, alocacoes, lalurPrevisto, avisos)"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "description": "Equity account (PL form) not found in the unit"
-          }
-        }
-      }
-    },
-    "/api/accounting/jcp": {
-      "post": {
-        "summary": "Confirm interest on equity (JCP), post it and record the e-Lalur/e-Lacs Part A adjustments",
-        "description": "Body = the preview body + previaSha256 returned by the preview. The calculation is redone inside the transaction: a different hash → 409 PREVIA_DESATUALIZADA; another live JCP in the period → 409 JCP_JA_CONFIRMADO_NO_PERIODO. Then posts (DESPESA: D JCP expense / C JCP payable net / C IRRF payable; PL: D the chosen equity account instead of the expense) and records the system Part A lines (PL: exclusion of min(total, limit); DESPESA: addition of the excess). If posting fails the calculation stays PENDING_POST (reconcile in /{id}/lancamento). Closed period → ACCOUNTING_PERIOD_NOT_OPEN and nothing is saved.",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/JcpPreviewInput"
-                  },
-                  {
-                    "type": "object",
-                    "required": [
-                      "previaSha256"
-                    ],
-                    "properties": {
-                      "previaSha256": {
-                        "type": "string",
-                        "description": "sha256 hex returned by /jcp/preview"
-                      }
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "JcpView (status POSTED or PENDING_POST, entryId, lalurEntryIds, alocacoes)"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "409": {
-            "description": "PREVIA_DESATUALIZADA or JCP_JA_CONFIRMADO_NO_PERIODO"
-          },
-          "422": {
-            "description": "ACCOUNTING_PERIOD_NOT_OPEN"
-          }
-        }
-      }
-    },
-    "/api/accounting/jcp/irrf": {
-      "get": {
-        "summary": "Monthly DARF 5706 summary of the IRRF on interest on equity, one DARF per ten-day period of the credit",
-        "description": "Due date = 3rd business day after the ten-day period of the credit date (Law 11.196 art. 70 I b 1).",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "unitId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "competencia",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "example": "2026-03"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "{ competencia, codigoReceita: 5706, totalCents, darfs: [{ decendio, vencimento, totalCents, calculos }] }"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          }
-        }
-      }
-    },
-    "/api/accounting/jcp/{id}": {
-      "get": {
-        "summary": "Read one confirmed JCP calculation",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "unitId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "JcpView"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          }
-        }
-      }
-    },
-    "/api/accounting/jcp/{id}/lancamento": {
-      "post": {
-        "summary": "Reconcile the journal entry and the Part A lines of a JCP calculation (idempotent)",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "unitId"
-                ],
-                "properties": {
-                  "unitId": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "JcpView"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          },
-          "422": {
-            "description": "ACCOUNTING_PERIOD_NOT_OPEN"
-          }
-        }
-      }
-    },
-    "/api/accounting/jcp/{id}/cancel": {
-      "post": {
-        "summary": "Cancel a JCP calculation — reverses the entry and archives the system Part A lines",
-        "description": "A JCP already paid (any debit in the JCP payable account dated on or after the credit date, other than its own entry and reversal) → 409 JCP_JA_PAGO.",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "unitId"
-                ],
-                "properties": {
-                  "unitId": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "JcpView (CANCELLED)"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          },
-          "409": {
-            "description": "JCP_JA_PAGO or JCP_NAO_POSTADO"
-          },
-          "422": {
-            "description": "ACCOUNTING_PERIOD_NOT_OPEN"
           }
         }
       }
@@ -13860,6 +13521,312 @@
           },
           "409": {
             "$ref": "#/components/responses/UnitDeleted"
+          }
+        }
+      }
+    },
+    "/api/accounting/profit-distributions": {
+      "post": {
+        "summary": "Record a profit distribution with the IRRF of Law 9.250 art. 6-A, then post it",
+        "description": "Above BRL 50,000 in the month for the same individual (all units of the company), 10% on the month total; transition profit stays out of the base but counts for the limit (F-IRD-6). The event is saved as PENDING_POST and posted right away (D debit gross / C counterpart net / C IRRF payable); if posting fails the event stays PENDING_POST (reconcile in /{id}/lancamento). Closed period → ACCOUNTING_PERIOD_NOT_OPEN and nothing is saved. Non-resident partner → 400 SOCIO_NAO_RESIDENTE_FORA_DO_ESCOPO.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfitDistributionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "ProfitDistributionView (status POSTED or PENDING_POST, memoria, avisoSaldoLucro)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Partner, account or approval act not found in the scope"
+          },
+          "422": {
+            "description": "RETENCAO_EXCEDE_PAGAMENTO (details.brutoMinimoCents) or ACCOUNTING_PERIOD_NOT_OPEN"
+          }
+        }
+      }
+    },
+    "/api/accounting/profit-distributions/preview": {
+      "post": {
+        "summary": "Preview a profit distribution (nothing is saved)",
+        "description": "Returns the month sum, base, IRRF due, already withheld, the IRRF of this event, the ceiling without withholding, the minimum gross when the event does not cover the IRRF, and a suggestion (F-IRD-5R).",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfitDistributionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "ProfitDistributionPreviewView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Partner, account or approval act not found in the scope"
+          }
+        }
+      }
+    },
+    "/api/accounting/profit-distributions/irrf": {
+      "get": {
+        "summary": "Monthly DARF 1841 summary of the IRRF on profits",
+        "description": "Total withheld in the company, events with withholding and due date (last business day of the 2nd ten-day period of the next month).",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "competencia",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "2026-03"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ competencia, codigoReceita: 1841, totalCents, vencimento, eventos }"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/accounting/profit-distributions/{id}": {
+      "get": {
+        "summary": "Read one profit distribution event",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ProfitDistributionView"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/api/accounting/profit-distributions/{id}/lancamento": {
+      "post": {
+        "summary": "Reconcile the journal entry of a pending distribution (idempotent)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "ProfitDistributionView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "description": "ACCOUNTING_PERIOD_NOT_OPEN"
+          }
+        }
+      }
+    },
+    "/api/accounting/profit-distributions/{id}/cancel": {
+      "post": {
+        "summary": "Cancel the last posted distribution of the partner in the month (F-IRD-8) and reverse its entry",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "motivo": {
+                    "type": "string",
+                    "maxLength": 500
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "ProfitDistributionView (CANCELLED)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "description": "NAO_E_O_ULTIMO_DO_MES (with the id to cancel first) or DISTRIBUICAO_NAO_POSTADA"
+          },
+          "422": {
+            "description": "ACCOUNTING_PERIOD_NOT_OPEN"
           }
         }
       }
@@ -18803,6 +18770,469 @@
         }
       }
     },
+    "/api/accounting/tax-optimization/policy": {
+      "get": {
+        "summary": "Tax-efficiency policy of a unit (current version + history)",
+        "description": "Commercial policy only — it never switches a legal guard off (ADR D2). Without a saved version the defaults apply: criterioAlocacao PROPORCIONAL_CATALOGO, pisoServico CUSTO_INFORMADO, severidadePisoProporcional WARN.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "TaxOptimizationPolicyView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      },
+      "put": {
+        "summary": "New version of the tax-efficiency policy",
+        "description": "PROPORCIONAL_CATALOGO applies at once (200) and closes the previous version on vigenteDesde minus one day. CARGA_TRIBUTARIA is not applied: it becomes a CRITERIO_CARGA suggestion that only the ACTIVE accountant decides (202); without one, 409 CRITERIO_CARGA_EXIGE_CONTADOR. 409 VIGENCIA_RETROATIVA when vigenteDesde is not after the latest version. Audited as tax.policy.updated.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "criterioAlocacao",
+                  "pisoServico",
+                  "vigenteDesde"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "criterioAlocacao": {
+                    "type": "string",
+                    "enum": [
+                      "PROPORCIONAL_CATALOGO",
+                      "CARGA_TRIBUTARIA"
+                    ]
+                  },
+                  "pisoServico": {
+                    "type": "string",
+                    "enum": [
+                      "CUSTO_INFORMADO",
+                      "CATALOGO_MINIMO",
+                      "SEM_DESCONTO_ALEM_DO_PROPORCIONAL"
+                    ]
+                  },
+                  "vigenteDesde": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ applied: true, policy }"
+          },
+          "202": {
+            "description": "{ applied: false, suggestion } (CARGA_TRIBUTARIA waits for the accountant)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "409": {
+            "description": "CRITERIO_CARGA_EXIGE_CONTADOR | VIGENCIA_RETROATIVA"
+          }
+        }
+      }
+    },
+    "/api/accounting/tax-optimization/service-costs": {
+      "get": {
+        "summary": "Service cost evidences (service floor, F-EF-1 a)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ServiceCostEvidenceView[] (cents as strings)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      },
+      "post": {
+        "summary": "Register a service cost (custoCents with sourceDocumentId) and/or a published minimum price",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "serviceRef",
+                  "vigenteDesde"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "serviceRef": {
+                    "type": "string"
+                  },
+                  "custoCents": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "catalogoMinimoCents": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "sourceDocumentId": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "vigenteDesde": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "vigenteAte": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "ServiceCostEvidenceView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/accounting/tax-optimization/service-costs/{id}": {
+      "delete": {
+        "summary": "Soft-delete a service cost evidence",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/api/accounting/tax-optimization/suggestions": {
+      "get": {
+        "summary": "Tax-efficiency suggestions of a unit (owner, or the ACTIVE accountant with ownerUserId)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ownerUserId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PROPOSED",
+                "ACCEPTED",
+                "REJECTED",
+                "EXPIRED"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "TaxOptimizationSuggestionView[]"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/accounting/tax-optimization/suggestions/{id}/accept": {
+      "post": {
+        "summary": "Accept a suggestion (ACTIVE accountant; without one, the owner; never the proposer)",
+        "description": "CRITERIO_CARGA is decided only by the ACTIVE accountant and requires a reason; accepting it creates the CARGA_TRIBUTARIA policy version. 409 SUGESTAO_JA_DECIDIDA when the status is no longer PROPOSED.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "ownerUserId": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 280
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "TaxOptimizationSuggestionView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "description": "SUGESTAO_JA_DECIDIDA"
+          }
+        }
+      }
+    },
+    "/api/accounting/tax-optimization/suggestions/{id}/reject": {
+      "post": {
+        "summary": "Reject a suggestion (reason required)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "reason"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "ownerUserId": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 280
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "TaxOptimizationSuggestionView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "description": "SUGESTAO_JA_DECIDIDA"
+          }
+        }
+      }
+    },
     "/api/accounting/trial-balance": {
       "get": {
         "summary": "Trial balance (balancete) for a unit",
@@ -18874,6 +19304,492 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/accounting/withholding-profiles": {
+      "get": {
+        "summary": "List the live withholding profiles of the unit (optionally of one counterparty)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "counterpartyId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "WithholdingProfileView[]"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a withholding profile (counterparty × service nature)",
+        "description": "issRetido requires issCodMun and issAliquotaBp; inss requires inssTpServico; irrf or csrf requires natRend, which must be in the EFD-Reinf Table 01 (NATUREZA_RENDIMENTO) in force on vigenteDesde (a DRAFT-only natRend is accepted with the warning NATUREZA_RENDIMENTO_DRAFT). A PF counterparty only accepts irrf. Overlapping validity for the same counterparty and nature → 409 VIGENCIA_SOBREPOSTA. Audited as withholding_profile.created without taxId or name.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "counterpartyId",
+                  "naturezaServico",
+                  "irrf",
+                  "csrf",
+                  "inss",
+                  "issRetido",
+                  "fonte",
+                  "vigenteDesde"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "counterpartyId": {
+                    "type": "string"
+                  },
+                  "naturezaServico": {
+                    "type": "string",
+                    "enum": [
+                      "SERVICO_PROFISSIONAL",
+                      "LIMPEZA_CONSERVACAO_SEGURANCA_LOCACAO",
+                      "COMISSAO_PROPAGANDA",
+                      "CESSAO_MAO_DE_OBRA",
+                      "TRABALHO_NAO_ASSALARIADO_PF",
+                      "OUTRO"
+                    ]
+                  },
+                  "natRend": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "5 digits (EFD-Reinf Table 01)"
+                  },
+                  "irrf": {
+                    "type": "boolean"
+                  },
+                  "csrf": {
+                    "type": "boolean"
+                  },
+                  "inss": {
+                    "type": "boolean"
+                  },
+                  "issRetido": {
+                    "type": "boolean"
+                  },
+                  "inssTpServico": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "9 digits (EFD-Reinf Table 06)"
+                  },
+                  "inssCprb": {
+                    "type": "boolean",
+                    "nullable": true
+                  },
+                  "issCodMun": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "IBGE, 7 digits"
+                  },
+                  "issAliquotaBp": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 0,
+                    "maximum": 10000
+                  },
+                  "issVencimentoDia": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 1,
+                    "maximum": 31
+                  },
+                  "fonte": {
+                    "type": "string",
+                    "description": "cited legal basis, e.g. \"RIR/2018 art. 714 § 1º XX\""
+                  },
+                  "vigenteDesde": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "vigenteAte": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "WithholdingProfileView (with avisos)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "unit or counterparty not found in the scope"
+          },
+          "409": {
+            "description": "VIGENCIA_SOBREPOSTA or deleted unit"
+          }
+        }
+      }
+    },
+    "/api/accounting/withholding-profiles/{id}": {
+      "get": {
+        "summary": "Read one withholding profile",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "WithholdingProfileView"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Replace a withholding profile (full body, same rules as POST; counterpartyId does not change)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "naturezaServico",
+                  "irrf",
+                  "csrf",
+                  "inss",
+                  "issRetido",
+                  "fonte",
+                  "vigenteDesde"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "WithholdingProfileView (with avisos)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "description": "VIGENCIA_SOBREPOSTA or deleted unit"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Soft-delete a withholding profile",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      }
+    },
+    "/api/accounting/withholdings": {
+      "get": {
+        "summary": "Withholdings MADE in a month, one line per tax and payment (the EFD-Reinf contract, PR-2 item 23)",
+        "description": "Only direction=MADE (the withholdings suffered are PR-3). Lines are R-4020/R-4010/R-2010 ready (dtFG, natRend, revenue code, gross, base, amount, R-2010 fields, R-4010 deductions). The beneficiary taxId is returned here and only here. The same lines are available to the backend through ITaxWithholdingReadPort.findMadeForReinf (same mapper).",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "direction",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "MADE"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "competencia",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "WithholdingLineView[]"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      }
+    },
+    "/api/accounting/withholdings/summary": {
+      "get": {
+        "summary": "Withholdings MADE in a month grouped by tax title (revenue code), with due date and status",
+        "description": "One entry per tax title (DARF/GPS/ISS). A title below R$ 10 is added to the next month's title of the same code and becomes DEFERRED (Lei 9.430 art. 68 § 1º) — competenciasSomadas lists the months in it. Lines without a published revenue code have no title and come with the CODIGO_RECEITA_DRAFT warning.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "competencia",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "WithholdingSummary"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      }
+    },
+    "/api/counterparties/{id}/regime": {
+      "post": {
+        "summary": "Set the tax regime and the Simples opt-in declaration of a counterparty (command)",
+        "description": "RETENCOES-FONTE item 5 (F-RET-5 a). regimeTributario null clears it. PF requires a CPF (11-digit taxId) → otherwise 400. declaracaoOptanteDocumentId must be a live SourceDocument of the same unit. Audited as counterparty.regime_set without taxId or name.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetCounterpartyRegimeInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Counterparty"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "counterparty not found in the scope"
           }
         }
       }
@@ -21529,6 +22445,38 @@
                           }
                         }
                       },
+                      "addedTables": {
+                        "type": "array",
+                        "description": "W1 (F-W1-4 a) - tables created in the AI interview. Installed with category other; the key must not exist in the suite, a module or the Core (400 details.reason ADDED_TABLE_EXISTS); fields go through the same validation as addedFields (400 details.reason ADDED_TABLE_INVALID)",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "key",
+                            "name",
+                            "fields"
+                          ],
+                          "additionalProperties": false,
+                          "properties": {
+                            "key": {
+                              "type": "string",
+                              "pattern": "^[a-z][a-z0-9_]*$",
+                              "maxLength": 64
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 120
+                            },
+                            "fields": {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": {
+                                "type": "object"
+                              }
+                            }
+                          }
+                        }
+                      },
                       "modules": {
                         "type": "array",
                         "description": "I8 - module keys (flat list, F-CRM-9 b). Summed to the suite default; dependencies come from the registry (CRM-0 implicit). CRM-2 is a group key (BE-INCR-CRM-SUBMODULES F-SUB-2 a) that expands to CRM-2A + CRM-2B; data.modules.installed lists only atomic keys",
@@ -21919,6 +22867,21 @@
                       "create",
                       "customize"
                     ]
+                  },
+                  "modules": {
+                    "type": "array",
+                    "description": "W1 (F-W1-6 a) - modules checked in the front; read only on the turn that opens the customization session (choice customize)",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "CRM-0",
+                        "CRM-1",
+                        "CRM-2A",
+                        "CRM-2B",
+                        "CRM-3",
+                        "CRM-2"
+                      ]
+                    }
                   }
                 }
               }
@@ -21954,6 +22917,49 @@
                     },
                     "customizationState": {
                       "type": "object"
+                    },
+                    "creation": {
+                      "type": "object",
+                      "description": "W1 (F-W1-1 a, F-W1-2 a) - only on the turn that finishes the customization (nextStage COMPLETED). The server consolidates the persisted session into the custom create body; the client adds unit, fiscal and modules",
+                      "required": [
+                        "mode",
+                        "presetKey",
+                        "removedTables",
+                        "addedFields",
+                        "addedTables"
+                      ],
+                      "properties": {
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "custom"
+                          ]
+                        },
+                        "presetKey": {
+                          "type": "string"
+                        },
+                        "removedTables": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "addedFields": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                              "type": "object"
+                            }
+                          }
+                        },
+                        "addedTables": {
+                          "type": "array",
+                          "items": {
+                            "type": "object"
+                          }
+                        }
+                      }
                     },
                     "choicePrompt": {
                       "type": "object",
@@ -22483,6 +23489,92 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/dashboard/ai/InterviewModules": {
+      "post": {
+        "summary": "Set the modules of the interview customization session (W1)",
+        "description": "The user checks or unchecks a module while customizing; the session rewrites the module tables (the tables of a module that left are removed, the ones of a module that entered are added, the rest of the customization stays). `modules` is the whole selection. Suite modules still in the session stay even if omitted; a module the conversation removed only comes back when listed.\n",
+        "tags": [
+          "Dashboard"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "sessionId",
+                  "modules"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "sessionId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "modules": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "CRM-0",
+                        "CRM-1",
+                        "CRM-2A",
+                        "CRM-2B",
+                        "CRM-3",
+                        "CRM-2"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session after the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "sessionId",
+                    "customizationState"
+                  ],
+                  "properties": {
+                    "sessionId": {
+                      "type": "string"
+                    },
+                    "customizationState": {
+                      "type": "object",
+                      "description": "Includes modules (installed module keys) and tables"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "INTERVIEW_SESSION_NOT_FOUND (missing, expired or another user's session)"
+          },
+          "409": {
+            "description": "INTERVIEW_SESSION_CONFLICT (another turn wrote the session after this request read it)"
           }
         }
       }
@@ -28611,44 +29703,6 @@
         }
       }
     },
-    "/api/reports/generate-chart-data": {
-      "post": {
-        "summary": "Generate chart data via Server-Sent Events stream",
-        "tags": [
-          "Reports"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "SSE stream of progress events and final chart data",
-            "content": {
-              "text/event-stream": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          }
-        }
-      }
-    },
     "/api/sales/cancel": {
       "post": {
         "summary": "Cancel a finalized salon sale (status → Cancelled; reverses the revenue entry)",
@@ -28871,6 +29925,58 @@
           },
           "409": {
             "$ref": "#/components/responses/UnitDeleted"
+          }
+        }
+      }
+    },
+    "/api/sales/{id}/fiscal-check": {
+      "post": {
+        "summary": "Fiscal guard of a sale (floor, discount allocation, catalog-price invariants; EFICIENCIA-FISCAL PR-1)",
+        "description": "Reads the sale and its items through the DynamicTable repository, records the product cost snapshot (custoSnapshotCents) on the first check after finalize, allocates the header discount by the unit policy (PROPORCIONAL_CATALOGO by default) and returns BLOCK/WARN violations with their legal basis. The same check is a precondition of the NFS-e (BLOCK means emissao_bloqueada). Cents are strings. Scope is the sale unit.",
+        "tags": [
+          "Sales"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "FiscalCheckResponse { saleId, ok, criterio, violations, alocacao, economiaPotencialCents, suggestionId }"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
           }
         }
       }
@@ -29476,492 +30582,6 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
-          }
-        }
-      }
-    },
-    "/api/accounting/withholding-profiles": {
-      "get": {
-        "summary": "List the live withholding profiles of the unit (optionally of one counterparty)",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "unitId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "counterpartyId",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "WithholdingProfileView[]"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/UnitNotFound"
-          }
-        }
-      },
-      "post": {
-        "summary": "Create a withholding profile (counterparty × service nature)",
-        "description": "issRetido requires issCodMun and issAliquotaBp; inss requires inssTpServico; irrf or csrf requires natRend, which must be in the EFD-Reinf Table 01 (NATUREZA_RENDIMENTO) in force on vigenteDesde (a DRAFT-only natRend is accepted with the warning NATUREZA_RENDIMENTO_DRAFT). A PF counterparty only accepts irrf. Overlapping validity for the same counterparty and nature → 409 VIGENCIA_SOBREPOSTA. Audited as withholding_profile.created without taxId or name.",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "unitId",
-                  "counterpartyId",
-                  "naturezaServico",
-                  "irrf",
-                  "csrf",
-                  "inss",
-                  "issRetido",
-                  "fonte",
-                  "vigenteDesde"
-                ],
-                "properties": {
-                  "unitId": {
-                    "type": "string"
-                  },
-                  "counterpartyId": {
-                    "type": "string"
-                  },
-                  "naturezaServico": {
-                    "type": "string",
-                    "enum": [
-                      "SERVICO_PROFISSIONAL",
-                      "LIMPEZA_CONSERVACAO_SEGURANCA_LOCACAO",
-                      "COMISSAO_PROPAGANDA",
-                      "CESSAO_MAO_DE_OBRA",
-                      "TRABALHO_NAO_ASSALARIADO_PF",
-                      "OUTRO"
-                    ]
-                  },
-                  "natRend": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "5 digits (EFD-Reinf Table 01)"
-                  },
-                  "irrf": {
-                    "type": "boolean"
-                  },
-                  "csrf": {
-                    "type": "boolean"
-                  },
-                  "inss": {
-                    "type": "boolean"
-                  },
-                  "issRetido": {
-                    "type": "boolean"
-                  },
-                  "inssTpServico": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "9 digits (EFD-Reinf Table 06)"
-                  },
-                  "inssCprb": {
-                    "type": "boolean",
-                    "nullable": true
-                  },
-                  "issCodMun": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "IBGE, 7 digits"
-                  },
-                  "issAliquotaBp": {
-                    "type": "integer",
-                    "nullable": true,
-                    "minimum": 0,
-                    "maximum": 10000
-                  },
-                  "issVencimentoDia": {
-                    "type": "integer",
-                    "nullable": true,
-                    "minimum": 1,
-                    "maximum": 31
-                  },
-                  "fonte": {
-                    "type": "string",
-                    "description": "cited legal basis, e.g. \"RIR/2018 art. 714 § 1º XX\""
-                  },
-                  "vigenteDesde": {
-                    "type": "string",
-                    "format": "date"
-                  },
-                  "vigenteAte": {
-                    "type": "string",
-                    "format": "date",
-                    "nullable": true
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "WithholdingProfileView (with avisos)"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "description": "unit or counterparty not found in the scope"
-          },
-          "409": {
-            "description": "VIGENCIA_SOBREPOSTA or deleted unit"
-          }
-        }
-      }
-    },
-    "/api/accounting/withholding-profiles/{id}": {
-      "get": {
-        "summary": "Read one withholding profile",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "unitId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "WithholdingProfileView"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/UnitNotFound"
-          }
-        }
-      },
-      "patch": {
-        "summary": "Replace a withholding profile (full body, same rules as POST; counterpartyId does not change)",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "unitId",
-                  "naturezaServico",
-                  "irrf",
-                  "csrf",
-                  "inss",
-                  "issRetido",
-                  "fonte",
-                  "vigenteDesde"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "WithholdingProfileView (with avisos)"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/UnitNotFound"
-          },
-          "409": {
-            "description": "VIGENCIA_SOBREPOSTA or deleted unit"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Soft-delete a withholding profile",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "unitId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "deleted"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/UnitNotFound"
-          }
-        }
-      }
-    },
-    "/api/counterparties/{id}/regime": {
-      "post": {
-        "summary": "Set the tax regime and the Simples opt-in declaration of a counterparty (command)",
-        "description": "RETENCOES-FONTE item 5 (F-RET-5 a). regimeTributario null clears it. PF requires a CPF (11-digit taxId) → otherwise 400. declaracaoOptanteDocumentId must be a live SourceDocument of the same unit. Audited as counterparty.regime_set without taxId or name.",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SetCounterpartyRegimeInput"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Counterparty"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "description": "counterparty not found in the scope"
-          }
-        }
-      }
-    },
-    "/api/accounting/withholdings": {
-      "get": {
-        "summary": "Withholdings MADE in a month, one line per tax and payment (the EFD-Reinf contract, PR-2 item 23)",
-        "description": "Only direction=MADE (the withholdings suffered are PR-3). Lines are R-4020/R-4010/R-2010 ready (dtFG, natRend, revenue code, gross, base, amount, R-2010 fields, R-4010 deductions). The beneficiary taxId is returned here and only here. The same lines are available to the backend through ITaxWithholdingReadPort.findMadeForReinf (same mapper).",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "unitId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "direction",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "MADE"
-              ]
-            }
-          },
-          {
-            "in": "query",
-            "name": "competencia",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "pattern": "^\\d{4}-\\d{2}$"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "WithholdingLineView[]"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/UnitNotFound"
-          }
-        }
-      }
-    },
-    "/api/accounting/withholdings/summary": {
-      "get": {
-        "summary": "Withholdings MADE in a month grouped by tax title (revenue code), with due date and status",
-        "description": "One entry per tax title (DARF/GPS/ISS). A title below R$ 10 is added to the next month's title of the same code and becomes DEFERRED (Lei 9.430 art. 68 § 1º) — competenciasSomadas lists the months in it. Lines without a published revenue code have no title and come with the CODIGO_RECEITA_DRAFT warning.",
-        "tags": [
-          "Accounting"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "unitId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "competencia",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "WithholdingSummary"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }

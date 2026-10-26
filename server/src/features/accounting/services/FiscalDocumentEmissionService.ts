@@ -1,6 +1,6 @@
 import type { FiscalDocument } from 'generated/prisma';
 import { Prisma } from 'generated/prisma';
-import { ConflictError, ForbiddenError, PackageExpiryNfsePendingError, ValidationError } from '../../../lib/errors';
+import { ConflictError, ForbiddenError, NotFoundError, PackageExpiryNfsePendingError, ValidationError } from '../../../lib/errors';
 import { getFactory } from '../../../lib/factory';
 import logger from '../../../lib/logger';
 import { classifyTaxId, isValidCnpj, stripCnpjMask } from '../../../lib/cnpj';
@@ -148,6 +148,14 @@ export class FiscalDocumentEmissionService {
     private readonly auditService: AuditService,
     /** BE-INCR-LEGAL-PARAMS PR-2 (F-LP-4 a): fotografia `LC116_SERVICO` (cTribNac na lista nacional). */
     private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
+    /**
+     * EFICIENCIA-FISCAL PR-1 item 6 (ADR-INCR-EFICIENCIA-FISCAL D4.2): guarda fiscal da venda como pré-condição da emissão —
+     * cada violação BLOCK vira pendência `fiscal_guard: <código> (<base legal>)` no 400 `emissao_bloqueada` existente.
+     * Porta estrutural (o `SaleFiscalGuardService` de `features/sales`), injetada pela factory.
+     */
+    private readonly fiscalGuard?: {
+      check(scope: AccountingScope, saleId: string, opts: { forEmission?: boolean }): Promise<{ violations: Array<{ code: string; severity: string; legalBasis: string }> }>;
+    },
   ) {}
 
   private async lc116(scope: AccountingScope): Promise<ListaLc116> {
@@ -173,7 +181,8 @@ export class FiscalDocumentEmissionService {
     }
     try {
       const assembly = await this.assemble(scope, saleId, kind, selectDfeEmissor(process.env).ambiente);
-      const totalServiceCents = assembly.groups.reduce((sum, g) => sum + g.vServCents, 0);
+      // F-EF-16 a: o tie-out é Σ (vServ − vDescIncond) = crédito 3.1.
+      const totalServiceCents = assembly.groups.reduce((sum, g) => sum + g.vServCents - g.vDescIncondCents, 0);
       return {
         ok: true,
         faltantes: [],
@@ -365,6 +374,8 @@ export class FiscalDocumentEmissionService {
           numero,
           dCompet: args.dCompet,
           vServCents: BigInt(group.vServCents),
+          // F-EF-16 a (reabre F-DFE-15 a): a coluna reservada recebe o desconto destacado no payload.
+          vDescIncondCents: BigInt(Math.round(Number(payload.infDPS.valores.vDescCondIncond?.vDescIncond ?? 0) * 100)),
           tpRetISSQN: args.tpRetISSQN,
           payloadJson: JSON.stringify(payload),
           ...(args.substitutes
@@ -566,7 +577,7 @@ export class FiscalDocumentEmissionService {
     ambiente: DfeAmbiente | null,
     reenvio = false,
   ): Promise<{
-    groups: Array<{ cTribNac: string; vServCents: number; payload: DpsPayload }>;
+    groups: Array<{ cTribNac: string; vServCents: number; vDescIncondCents: number; payload: DpsPayload }>;
     ledgerCents: number;
     anchorEntryId: string;
     serie: number;
@@ -702,6 +713,18 @@ export class FiscalDocumentEmissionService {
       faltantes.push("CNPJ da unidade ausente ou inválido (cadastre em 'units')");
     }
 
+    // (ix) EFICIENCIA-FISCAL PR-1 item 6: guarda fiscal da venda (piso, rateio, preço = catálogo). Só a venda que vai
+    // virar documento passa por aqui — a venda sem nota nunca é barrada (ADR §12).
+    if (this.fiscalGuard && validSale && !pacoteVenda && saleInfo?.kind !== 'Empty') {
+      try {
+        const check = await this.fiscalGuard.check(scope, saleId, { forEmission: true });
+        for (const v of check.violations) if (v.severity === 'BLOCK') faltantes.push(`fiscal_guard: ${v.code} (${v.legalBasis})`);
+      } catch (e) {
+        if (!(e instanceof NotFoundError)) throw e;
+        faltantes.push(`fiscal_guard: ${e.message}`);
+      }
+    }
+
     if (faltantes.length > 0) {
       throw new ValidationError(`emissao_bloqueada: ${faltantes.length} pendência(s) — ver 'faltantes'.`, { faltantes });
     }
@@ -724,7 +747,7 @@ export class FiscalDocumentEmissionService {
     // Agrupa as linhas de serviço por cTribNac (F-DFE-16 b — a DPS é mono-serviço).
     const groupsMap = new Map<string, ServiceLineGroup>();
     const linesForGrouping = pacoteVenda
-      ? [{ serviceRef: '', description: String(saleData.description ?? 'Pacote'), quantity: 1, unitPrice: ledgerCents / 100 }]
+      ? [{ serviceRef: '', description: String(saleData.description ?? 'Pacote'), quantity: 1, unitPrice: ledgerCents / 100, discountCents: 0 }]
       : serviceLines;
     for (const line of linesForGrouping) {
       const profile = pacoteVenda ? this.pacoteServiceProfile(fiscalProfile!) : profileByServiceRef.get(line.serviceRef)!;
@@ -750,24 +773,32 @@ export class FiscalDocumentEmissionService {
     // F-DFE-16 (b): "ordem determinística por cTribNac" — ordena por VALOR, não por ordem de
     // inserção no Map (que seguiria a ordem de retorno do repositório de linhas de venda).
     const orderedGroups = [...groupsMap.values()].sort((a, b) => a.cTribNac.localeCompare(b.cTribNac));
-    const weights = orderedGroups.map((g) => g.lines.reduce((s, l) => s + l.quantity * l.unitPrice, 0));
+    // EFICIENCIA-FISCAL PR-1 (F-EF-15 a / F-EF-16 a): com desconto INCONDICIONAL por item, o peso do grupo é o líquido
+    // (Σ quantidade × preço − desconto) e o desconto do grupo é destacado em `vDescIncond`; `vServ` = parcela do crédito
+    // 3.1 + desconto do grupo, então Σ (vServ − vDescIncond) = crédito 3.1 por construção. Venda legada ou CONDITIONAL:
+    // peso bruto e nenhum destaque (o condicional não abate a base — LC 87 art. 13 § 1º II "a"; LC 214 art. 12 § 3º).
+    const incondicional = saleData.discountKind === 'UNCONDITIONAL';
+    const descontoDoGrupo = (g: ServiceLineGroup) => (incondicional ? g.lines.reduce((s, l) => s + (l.discountCents ?? 0), 0) : 0);
+    const weights = orderedGroups.map((g) => g.lines.reduce((s, l) => s + l.quantity * l.unitPrice, 0) - descontoDoGrupo(g) / 100);
     const shares = splitCents(ledgerCents, weights);
 
     const fp = fiscalProfile!;
     const groups = orderedGroups.map((g, i) => {
-      const vServCents = shares[i];
+      const vDescIncondCents = pacoteVenda ? 0 : descontoDoGrupo(g);
+      const vServCents = shares[i] + vDescIncondCents;
       const xDescServ = g.lines.map((l) => `${l.quantity}x ${l.description || l.serviceRef}`).join('; ').slice(0, 1000) || 'Serviço';
       const payload = this.buildPayload({
         fp,
         cnpjEmitente: unitCnpj,
         group: g,
         vServCents,
+        vDescIncondCents,
         xDescServ,
         dCompet,
         tomador,
         ambiente,
       });
-      return { cTribNac: g.cTribNac, vServCents, payload };
+      return { cTribNac: g.cTribNac, vServCents, vDescIncondCents, payload };
     });
 
     return {
@@ -944,6 +975,8 @@ export class FiscalDocumentEmissionService {
     cnpjEmitente: string;
     group: ServiceLineGroup;
     vServCents: number;
+    /** F-EF-16 a: desconto incondicional destacado do grupo; 0 ⇒ sem o grupo `vDescCondIncond`. */
+    vDescIncondCents?: number;
     xDescServ: string;
     dCompet: string;
     tomador: { cnpj?: string; cpf?: string; xNome: string } | null;
@@ -990,6 +1023,7 @@ export class FiscalDocumentEmissionService {
         },
         valores: {
           vServPrest: { vServ: centsToMoneyString(vServCents) },
+          ...(args.vDescIncondCents ? { vDescCondIncond: { vDescIncond: centsToMoneyString(args.vDescIncondCents) } } : {}),
           trib: {
             tribMun: {
               tribISSQN: 1,

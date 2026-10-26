@@ -53,6 +53,11 @@ productCents = totalCents - serviceCents                // resíduo de arredonda
 - **Resíduo de arredondamento** absorvido pela conta de **revenda (`3.3`)** por construção (`productCents = totalCents − serviceCents`), garantindo **`serviceCents + productCents == totalCents`** (invariante "nenhum centavo perdido").
 - **Linhas de valor zero são omitidas:** venda só-serviço → 1 linha `3.1`; só-produto → 1 linha `3.3`; mista → 2 linhas. O **débito** é sempre `1.1.2 A Receber` pelo total (a receber independe da natureza).
 - **Fallback compat:** evento **sem** `revenueByNature` (ou base = 0) → credita tudo em `3.1` como hoje. Preserva idempotência/comportamento de qualquer evento legado ou degenerado.
+- **Emenda 26/10/2026 (F-EF-15 a, [[D-2026-10-22-EFICIENCIA-FISCAL-FORKS]]; EFICIENCIA-FISCAL PR-1):** com desconto
+  **incondicional destacado por item** (`saleItems.discountCents`, `sales.discountKind = UNCONDITIONAL`), a proporção
+  usa o subtotal **líquido** por natureza (`Σ quantity×unitPrice − discountCents/100`) — a mesma fonte da subrazão
+  (`ratearReceita`) e da DPS. Venda legada (sem desconto por item) ou `CONDITIONAL` segue no subtotal bruto. A fronteira
+  de dinheiro continua o mapper; o leitor (`saleItems.ts`) só entrega o peso.
 
 ### D6 — Consumo de pacote = **FORA de escopo**
 A receita diferida do consumo de pacote (reconhecida no consumo, não na venda) não entra neste incremento. O gate anti-receita all-Package é **inalterado**.

@@ -1376,6 +1376,9 @@
                   "ProfitDistributionEvent",
                   "InterestOnEquityCalculation",
                   "IssBeneficioMunicipal",
+                  "TaxOptimizationPolicy",
+                  "ServiceCostEvidence",
+                  "TaxOptimizationSuggestion",
                   "ProductDestinationDefault",
                   "FiscalDocument",
                   "FiscalDocumentPendingAttachment",
@@ -17476,6 +17479,185 @@
         "anoCalendario",
         "regime",
         "familias"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "TaxOptimizationDto.ts": {
+    "DecideSuggestionSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ownerUserId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 280
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "ServiceCostEvidenceCreateSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "serviceRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "custoCents": {
+          "default": null,
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "catalogoMinimoCents": {
+          "default": null,
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sourceDocumentId": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "vigenteDesde": {
+          "type": "string"
+        },
+        "vigenteAte": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "serviceRef",
+        "vigenteDesde"
+      ],
+      "additionalProperties": false
+    },
+    "SuggestionListQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ownerUserId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "PROPOSED",
+            "ACCEPTED",
+            "REJECTED",
+            "EXPIRED"
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "TaxOptimizationIdParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "TaxOptimizationScopeQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateTaxOptimizationPolicySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "criterioAlocacao": {
+          "type": "string",
+          "enum": [
+            "PROPORCIONAL_CATALOGO",
+            "CARGA_TRIBUTARIA"
+          ]
+        },
+        "pisoServico": {
+          "type": "string",
+          "enum": [
+            "CUSTO_INFORMADO",
+            "CATALOGO_MINIMO",
+            "SEM_DESCONTO_ALEM_DO_PROPORCIONAL"
+          ]
+        },
+        "vigenteDesde": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "unitId",
+        "criterioAlocacao",
+        "pisoServico",
+        "vigenteDesde"
       ],
       "additionalProperties": false
     }

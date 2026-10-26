@@ -3391,3 +3391,74 @@ model FiscalCertificate {
   @@unique([userId, unitId])
   @@map("fiscal_certificates")
 }
+
+// EFICIENCIA-FISCAL PR-1 (BRIEF BE-INCR-EFICIENCIA-FISCAL §4.1; ADR-INCR-EFICIENCIA-FISCAL D2, D3, D5, D6) — política
+// COMERCIAL de eficiência fiscal por unidade (não liga nem desliga guarda legal — D2). Versionada por vigência (molde
+// IssBeneficioMunicipal): a versão nova fecha a anterior em vigenteDesde − 1 dia. Sem linha ⇒ padrões do BRIEF.
+// `criterioAlocacao = CARGA_TRIBUTARIA` só nasce de sugestão CRITERIO_CARGA aceita por contador ACTIVE (I-6).
+model TaxOptimizationPolicy {
+  id                         String    @id @default(cuid())
+  userId                     String
+  unitId                     String
+  criterioAlocacao           String    @default("PROPORCIONAL_CATALOGO") // | CARGA_TRIBUTARIA
+  pisoServico                String    @default("CUSTO_INFORMADO") // F-EF-1 a: CUSTO_INFORMADO | CATALOGO_MINIMO | SEM_DESCONTO_ALEM_DO_PROPORCIONAL
+  aprovador                  String    @default("CONTADOR_SENAO_ADMIN") // F-EF-3 a
+  severidadePisoProporcional String    @default("WARN") // F-EF-14 a (fixo, sem PUT)
+  vigenteDesde               String // YYYY-MM-DD
+  vigenteAte                 String?
+  suggestionId               String? // sugestão CRITERIO_CARGA aceita que gerou esta versão
+  createdById                String
+  createdAt                  DateTime  @default(now())
+  deletedAt                  DateTime?
+
+  @@index([userId, unitId, vigenteDesde])
+  @@map("tax_optimization_policies")
+}
+
+// EFICIENCIA-FISCAL PR-1 item 5 (F-EF-1 a) — piso do serviço: custo informado com evidência e/ou preço mínimo publicado.
+model ServiceCostEvidence {
+  id                  String    @id @default(cuid())
+  userId              String
+  unitId              String
+  serviceRef          String // linha da tabela `services` (string escopada, não FK — F-INV5)
+  custoCents          BigInt? // custo unitário informado (exige sourceDocumentId)
+  catalogoMinimoCents BigInt? // preço mínimo publicado
+  sourceDocumentId    String?
+  vigenteDesde        String
+  vigenteAte          String?
+  createdById         String
+  createdAt           DateTime  @default(now())
+  deletedAt           DateTime?
+
+  @@index([userId, unitId, serviceRef, vigenteDesde])
+  @@map("service_cost_evidences")
+}
+
+// EFICIENCIA-FISCAL PR-1 item 7 (ADR D3) — sugestão de prática lícita: PROPOSED → ACCEPTED | REJECTED | EXPIRED. Trilha:
+// imutável depois de decidida e sem soft-delete. `pendingSlot` = 'PROPOSED' enquanto viva, senão NULL — uma PROPOSED por
+// assunto (molde AccountingPolicyVersion.pendingSlot; o @@unique com o status do ADR §7 barraria a 2ª REJECTED).
+model TaxOptimizationSuggestion {
+  id                   String    @id @default(cuid())
+  userId               String
+  unitId               String
+  practice             String // CRITERIO_CARGA | COMBO_DESCONTO_ALOCADO | PRINCIPAL_ACESSORIO | … (TAX_PRACTICES)
+  subjectType          String // UNIT | SALE | COMPETENCIA | ANO | PARTNER | PROFISSIONAL
+  subjectId            String
+  status               String // PROPOSED | ACCEPTED | REJECTED | EXPIRED
+  pendingSlot          String?
+  legalBasis           Json // [{ norma, artigo }] — do dossiê, nunca digitado livre
+  estimatedSavingCents BigInt // ≥ 0
+  calc                 Json // memória do cálculo / payload da decisão
+  parametrosSha256     String
+  proposedBy           String // 'SYSTEM' | userId
+  decidedById          String?
+  decidedAt            DateTime?
+  decisionReason       String?
+  supersedesId         String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@unique([userId, unitId, practice, subjectType, subjectId, pendingSlot])
+  @@index([userId, unitId, status])
+  @@map("tax_optimization_suggestions")
+}
