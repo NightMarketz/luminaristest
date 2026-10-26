@@ -108,6 +108,12 @@ describe('FixedAssetClassService.createClass', () => {
     await comBem.service.updateClass(scope, 'class-1', { unitId: 'unit-1', classId: 'class-1', kind: 'DEPRECIATION', name: 'Máquinas' });
     expect(comBem.update).toHaveBeenCalledTimes(1);
 
+    const benfComBem = build({ liveAssets: 1, found: { ...classRow, kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: 'acc-amort' } });
+    await expect(
+      benfComBem.service.updateClass(scope, 'class-1', { unitId: 'unit-1', classId: 'class-1', kind: 'DEPRECIATION', amortizationExpenseAccountId: null }),
+    ).rejects.toThrow(/kind não pode ser alterado/);
+    expect(benfComBem.update).not.toHaveBeenCalled();
+
     const vazia = build({ liveAssets: 0 });
     await vazia.service.updateClass(scope, 'class-1', { unitId: 'unit-1', classId: 'class-1', kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: 'acc-amort' });
     expect(vazia.countByClass).toHaveBeenCalledWith(scope, 'class-1');
