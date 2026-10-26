@@ -99,7 +99,7 @@ describe('ManualEmissor — BE-INCR-DFE-MANUAL item 7', () => {
   it('emitir devolve PROCESSING com partnerRef = ref e NÃO toca o disco', async () => {
     const fs = jest.requireActual<typeof import('fs')>('fs');
     const spies = [jest.spyOn(fs, 'writeFileSync'), jest.spyOn(fs.promises, 'writeFile'), jest.spyOn(fs.promises, 'mkdir')];
-    const r = await new ManualEmissor().emitir({ kind: 'NFSE', ref: 'doc-1:1', ambiente: 'producao', cnpjEmitente: '11222333000181', partnerAccountRef: null, payload: {} });
+    const r = await new ManualEmissor().emitir({ kind: 'NFSE', ref: 'doc-1:1', ambiente: 'producao', cnpjEmitente: '11222333000181', partnerAccountRef: null, payload: {} as never });
     expect(r).toEqual({ status: 'PROCESSING', partnerRef: 'doc-1:1', errors: [] });
     for (const s of spies) expect(s).not.toHaveBeenCalled();
     spies.forEach((s) => s.mockRestore());

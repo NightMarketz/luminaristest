@@ -48,6 +48,13 @@ dpsSerie?: number
 inscricaoEstadual?: (string | null)
 nfeSerie?: number
 nfceSerie?: number
+razaoSocial?: (string | null)
+enderLogradouro?: (string | null)
+enderNumero?: (string | null)
+enderComplemento?: (string | null)
+enderBairro?: (string | null)
+enderMunicipio?: (string | null)
+enderCep?: (string | null)
 regEspTrib?: number
 regApTribSN?: (number | null)
 issAliquotaBp?: (number | null)
@@ -119,6 +126,13 @@ dpsSerie?: number
 inscricaoEstadual?: (string | null)
 nfeSerie?: number
 nfceSerie?: number
+razaoSocial?: (string | null)
+enderLogradouro?: (string | null)
+enderNumero?: (string | null)
+enderComplemento?: (string | null)
+enderBairro?: (string | null)
+enderMunicipio?: (string | null)
+enderCep?: (string | null)
 regEspTrib?: number
 regApTribSN?: (number | null)
 issAliquotaBp?: (number | null)

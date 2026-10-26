@@ -124,6 +124,14 @@ export interface FiscalProfileView extends CostRegime {
   inscricaoEstadual: string | null; // BE-INCR-NFCE item 8
   nfeSerie: number; // BE-INCR-NFCE item 9
   nfceSerie: number;
+  // BE-INCR-NFCE PR-3 — emitente da NF-e/NFC-e (C03, C06–C13); texto livre, fora do audit
+  razaoSocial: string | null;
+  enderLogradouro: string | null;
+  enderNumero: string | null;
+  enderComplemento: string | null;
+  enderBairro: string | null;
+  enderMunicipio: string | null;
+  enderCep: string | null;
   regEspTrib: number;
   regApTribSN: number | null;
   issAliquotaBp: number | null;
@@ -558,6 +566,13 @@ export class FiscalProfileService {
       inscricaoEstadual: row.inscricaoEstadual,
       nfeSerie: row.nfeSerie,
       nfceSerie: row.nfceSerie,
+      razaoSocial: row.razaoSocial,
+      enderLogradouro: row.enderLogradouro,
+      enderNumero: row.enderNumero,
+      enderComplemento: row.enderComplemento,
+      enderBairro: row.enderBairro,
+      enderMunicipio: row.enderMunicipio,
+      enderCep: row.enderCep,
       regEspTrib: row.regEspTrib,
       regApTribSN: row.regApTribSN,
       issAliquotaBp: row.issAliquotaBp,

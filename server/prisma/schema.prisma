@@ -1729,6 +1729,16 @@ model FiscalProfile {
   inscricaoEstadual                   String?
   nfeSerie                            Int       @default(1)
   nfceSerie                           Int       @default(1)
+  // BE-INCR-NFCE PR-3 (nó X10a; D-2026-10-26-X10A-EXECUCAO, questionário: "Campos no FiscalProfile"): emitente da NF-e/NFC-e
+  // — razão social (C03 2-60) e endereço (C06 xLgr 2-60, C07 nro 1-60, C08 xCpl 1-60, C09 xBairro 2-60, C11 xMun 2-60,
+  // C13 CEP 8). cMun = codMun; UF derivada do codMun (IBGE). Só a emissão de NFE/NFCE os exige.
+  razaoSocial                         String?
+  enderLogradouro                     String?
+  enderNumero                         String?
+  enderComplemento                    String?
+  enderBairro                         String?
+  enderMunicipio                      String?
+  enderCep                            String?
   regEspTrib                          Int       @default(0) // regTrib/regEspTrib [142]: 0 = nenhum
   regApTribSN                         Int? // [141] só SIMPLES; 1 = apuração do ISSQN pelo SN [inferido RN 508] — pendente contador (5e)
   issAliquotaBp                       Int? // pAliq [312] em basis points (≤ 500 = 5%, E0595); SÓ município NÃO conveniado (E0617/E0618) — pendente contador (5a)

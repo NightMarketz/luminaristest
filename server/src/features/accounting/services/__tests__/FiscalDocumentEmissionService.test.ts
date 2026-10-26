@@ -26,6 +26,7 @@ import type { AccountingScope } from '../../scope/AccountingScope';
 import { PackageExpiryNfsePendingError } from '../../../../lib/errors';
 
 import { legalParamsSemente } from '@test/helpers/legalParams';
+import type { DpsPayload } from '../../dtos/DpsPayloadDto';
 const SCOPE: AccountingScope = {
   ownerUserId: 'u1',
   actorUserId: 'u1',
@@ -124,6 +125,7 @@ function makeService(opts: {
   };
   const policy = { canEmitFiscalDocument: () => true, canReadFiscalDocument: () => true };
   const auditService = { append: jest.fn() };
+  const productFiscalProfileService = { list: jest.fn().mockResolvedValue([]) }; // BE-INCR-NFCE PR-3 (só a NFS-e aqui)
 
   const service = new FiscalDocumentEmissionService(
     repo as never,
@@ -133,6 +135,7 @@ function makeService(opts: {
     serviceFiscalProfileService as never,
     policy as never,
     auditService as never, legalParamsSemente,
+    productFiscalProfileService as never,
   );
   return { service, repo, accountRepo, journalEntryRepo, fiscalProfileService, serviceFiscalProfileService, policy, auditService };
 }
@@ -190,8 +193,8 @@ describe('FiscalDocumentEmissionService — tie-out (item 16, fixture MISTA)', (
     const result = await service.preview(SCOPE, SALE_ID, 'NFSE');
 
     expect(result.ok).toBe(true);
-    expect(result.payloads).toHaveLength(2); // um por cTribNac (F-DFE-16 b)
-    const total = result.payloads.reduce((sum, p) => sum + Math.round(parseFloat(p.infDPS.valores.vServPrest.vServ) * 100), 0);
+    expect((result.payloads as DpsPayload[])).toHaveLength(2); // um por cTribNac (F-DFE-16 b)
+    const total = (result.payloads as DpsPayload[]).reduce((sum, p) => sum + Math.round(parseFloat(p.infDPS.valores.vServPrest.vServ) * 100), 0);
     expect(total).toBe(37544); // Σ vServCents dos N documentos == crédito 3.1 exato (nenhum centavo perdido)
     expect(result.tieOut.matches).toBe(true);
     expect(journalEntryRepo.findBySource).toHaveBeenCalledWith(SCOPE, 'sale.finalized', SALE_ID);
@@ -225,15 +228,12 @@ describe('FiscalDocumentEmissionService — pré-condições (item 14, porta nun
     expect(repo.runTransaction).not.toHaveBeenCalled();
   });
 
-  it('kind=NFE (Fase E pendente-insumo) recusa loud sem tocar a porta', async () => {
+  // BE-INCR-NFCE PR-3: NF-e/NFC-e têm montagem própria (assembleNfe); perfil sem IE/endereço ⇒ 400 agregado, porta intocada.
+  it.each(['NFE', 'NFCE'] as const)('kind=%s com perfil incompleto recusa no 400 agregado sem tocar a porta', async (kind) => {
     const { service, repo } = makeService({});
-    await expect(service.emit(SCOPE, SALE_ID, 'NFE')).rejects.toThrow(/nfe_nao_implementada/);
-    expect(repo.runTransaction).not.toHaveBeenCalled();
-  });
-
-  it('kind=NFCE (montagem é o PR-3 do BE-INCR-NFCE) recusa loud sem tocar a porta', async () => {
-    const { service, repo } = makeService({});
-    await expect(service.emit(SCOPE, SALE_ID, 'NFCE')).rejects.toThrow(/nfe_nao_implementada: a montagem de NFCE/);
+    await expect(service.emit(SCOPE, SALE_ID, kind)).rejects.toMatchObject({
+      details: { faltantes: expect.arrayContaining(["perfil fiscal da unidade: falta 'inscricaoEstadual'"]) },
+    });
     expect(repo.runTransaction).not.toHaveBeenCalled();
   });
 
@@ -447,9 +447,9 @@ describe('FiscalDocumentEmissionService — pacote VENDA (item 21; destravado pe
     const result = await service.preview(SCOPE, SALE_ID, 'NFSE');
     expect(result.faltantes).toEqual([]);
     expect(result.ok).toBe(true);
-    expect(result.payloads).toHaveLength(1);
-    expect(result.payloads[0].infDPS.serv.cServ.cTribNac).toBe('060101');
-    expect(result.payloads[0].infDPS.valores.vServPrest.vServ).toBe('200.00');
+    expect((result.payloads as DpsPayload[])).toHaveLength(1);
+    expect((result.payloads as DpsPayload[])[0].infDPS.serv.cServ.cTribNac).toBe('060101');
+    expect((result.payloads as DpsPayload[])[0].infDPS.valores.vServPrest.vServ).toBe('200.00');
   });
 });
 
@@ -597,7 +597,7 @@ describe('FiscalDocumentEmissionService — Simples Nacional (item 22)', () => {
     });
     const result = await service.preview(SCOPE, SALE_ID, 'NFSE');
     expect(result.ok).toBe(true);
-    const payload = result.payloads[0];
+    const payload = (result.payloads as DpsPayload[])[0];
     expect(payload.infDPS.prest.regTrib.opSimpNac).toBe(3);
     expect('pTotTribSN' in payload.infDPS.valores.trib.totTrib).toBe(true);
     expect(payload.infDPS.IBSCBS).toBeUndefined();
@@ -612,7 +612,7 @@ describe('FiscalDocumentEmissionService — Simples Nacional (item 22)', () => {
     });
     const result = await service.preview(SCOPE, SALE_ID, 'NFSE');
     expect(result.ok).toBe(true);
-    return (result.payloads[0].infDPS.IBSCBS as { valores: { trib: { gIBSCBS: { cClassTrib: string } } } } | undefined)?.valores.trib.gIBSCBS.cClassTrib;
+    return ((result.payloads as DpsPayload[])[0].infDPS.IBSCBS as { valores: { trib: { gIBSCBS: { cClassTrib: string } } } } | undefined)?.valores.trib.gIBSCBS.cClassTrib;
   }
 
   it('serviço com cClassTrib próprio ⇒ o DPS leva o do serviço', async () => {
@@ -637,7 +637,7 @@ describe('FiscalDocumentEmissionService — Simples Nacional (item 22)', () => {
     });
     const result = await service.preview(SCOPE, SALE_ID, 'NFSE');
     expect(result.ok).toBe(true);
-    return (result.payloads[0].infDPS.valores.trib.tribMun as { pAliq?: string }).pAliq;
+    return ((result.payloads as DpsPayload[])[0].infDPS.valores.trib.tribMun as { pAliq?: string }).pAliq;
   }
 
   it('E0625/E0631: Simples com ISS pelo SN e sem retenção — a DPS sai SEM pAliq mesmo com issAliquotaBp no perfil', async () => {
@@ -682,7 +682,7 @@ describe('FiscalDocumentEmissionService — Id da DPS [102] (GAP-MAP: tpInsc do 
     });
     const result = await service.preview(SCOPE, SALE_ID, 'NFSE');
     expect(result.ok).toBe(true);
-    const id = result.payloads[0].infDPS.id;
+    const id = (result.payloads as DpsPayload[])[0].infDPS.id;
     expect({ tpInsc: id.slice(10, 11), id }).toEqual({
       tpInsc: '2',
       id: 'DPS' + '3550308' + '2' + '11222333000181' + '00001' + '0'.repeat(15),
@@ -770,14 +770,14 @@ describe('FiscalDocumentEmissionService — tpAmb [103] = ambiente do documento 
     const { service } = setup('null', 'homologacao');
     const result = await service.preview(SCOPE, SALE_ID, 'NFSE');
     expect(result.ok).toBe(true);
-    expect(result.payloads.map((p) => p.infDPS.tpAmb)).toEqual([2, 2]);
+    expect((result.payloads as DpsPayload[]).map((p) => p.infDPS.tpAmb)).toEqual([2, 2]);
   });
 
   it('item 4 — prévia com porta desabilitada: ok=false, nenhum payload montado (nenhum tpAmb "neutro")', async () => {
     const { service } = setup('', '');
     const result = await service.preview(SCOPE, SALE_ID, 'NFSE');
     expect(result.ok).toBe(false);
-    expect(result.payloads).toEqual([]);
+    expect((result.payloads as DpsPayload[])).toEqual([]);
   });
 
   it('item 7 (F-AMB-3 a) — tpAmb adulterado na montagem: emit lança dfe_tpamb_invariant e createSent nunca é chamado', async () => {
@@ -938,7 +938,7 @@ describe('FiscalDocumentEmissionService — GAP-MAP L-PR2 (verificação de brow
     const result = await service.preview(SCOPE, SALE_ID, 'NFSE');
     expect(result.ok).toBe(true);
     // Hoje sai '2026-10-06T00:00:00.000Z' e o emit morre em DpsPayloadSchema ([108] /^\d{4}-\d{2}-\d{2}$/) → 400.
-    expect(result.payloads[0].infDPS.dCompet).toBe('2026-10-06');
+    expect((result.payloads as DpsPayload[])[0].infDPS.dCompet).toBe('2026-10-06');
   });
 
   it('L-PR2-2: reenvio de documento REJECTED remonta — o próprio rejeitado não conta como documento vivo', async () => {
