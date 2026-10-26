@@ -30,10 +30,12 @@ export const DANFE_PDF_MARGIN = { top: '5mm', right: '5mm', bottom: '5mm', left:
 // ── métrica de texto (pessimista: Times maiúsculo ≈ 0,7 em por caractere; linha = 1,2 × corpo) ─────────────────────
 const PT_MM = 0.3528;
 const charMm = (pt: number) => pt * PT_MM * 0.7;
+/** Pior caso (W, M em Times maiúsculo ≈ 0,95 em): para texto corrido que pode ser longo, onde errar para menos perde texto. */
+const charMmPior = (pt: number) => pt * PT_MM * 0.95;
 const linhaMm = (pt: number) => Number((pt * PT_MM * 1.2).toFixed(2));
 /** Linhas que um texto ocupa numa largura (mm), na fonte dada. Vazio = 1 linha (a célula existe). */
-const linhasTexto = (texto: string, larguraMm: number, pt: number) =>
-  Math.max(1, Math.ceil((texto.length * charMm(pt)) / Math.max(1, larguraMm)));
+const linhasTexto = (texto: string, larguraMm: number, pt: number, porChar = charMm) =>
+  Math.max(1, Math.ceil((texto.length * porChar(pt)) / Math.max(1, larguraMm)));
 
 const PT_ROTULO = 5; // `[MOC-DANFE-FONTE]`
 const PT_CAMPO = 10; // `[MOC-DANFE-FONTE-CONTEUDO]` "demais campos"
@@ -52,11 +54,22 @@ const H = {
   dadosAdicionais: 34,
 } as const;
 
-/** Colunas do quadro de produtos (mm); a descrição tem 50 mm (`[MOC-DANFE-COLUNAS]`). */
-const COL_DESCRICAO_MM = 50;
+/** Colunas do quadro de produtos (mm), somando os 200 mm da folha (`[MOC-DANFE-COLUNAS]`; modelo da NT 2026.010 p. 8). */
+const COL = { cod: 12, desc: 46, cst: 12, qtd: 14, vunit: 17, vtotal: 17, bases: 24, aliq: 27, valores: 31 } as const;
+const COL_DESCRICAO_MM = COL.desc;
+
+/**
+ * Quadro da chave no cabeçalho (MOC 7.0 Anexo II §3.8.1, retrato: emitente 5,33 cm, "DANFE" 2,54 cm, código de barras
+ * 12,70 cm). O código de barras tem 115 mm — a largura mínima do modelo híbrido (NT Conjunta 2025.001 §6: 11,5 cm) e acima
+ * dos 6 cm do 128C puro (`[MOC-DANFE-C128-DIM]`) — com margem clara de 4 mm de cada lado.
+ */
+const TOPO_PCT = { emit: 25, danfe: 12, chave: 63 } as const;
+export const DANFE_BARRAS_MM = 115;
+export const DANFE_MARGEM_CLARA_MM = 4;
+export const DANFE_QUADRO_CHAVE_MM = (LARGURA_MM * TOPO_PCT.chave) / 100;
 const INFCPL_LARGURA_MM = LARGURA_MM * 0.58 - 2;
 const LINHAS_INFCPL_FOLHA1 = Math.floor((H.dadosAdicionais - TITULO_MM - linhaMm(PT_ROTULO) - CELULA_EXTRA_MM) / LINHA_TEXTO_MM);
-const CHARS_INFCPL_LINHA = Math.floor(INFCPL_LARGURA_MM / charMm(PT_TEXTO));
+const CHARS_INFCPL_LINHA = Math.floor(INFCPL_LARGURA_MM / charMmPior(PT_TEXTO));
 const DUP_MM = 46; // "001 · 15/10/2026 · 272,44" em 7 pt + espaço
 
 // ── formatação (pura, sem Intl/toLocaleString — memória `centsToBRL`) ─────────────────────────────────────────────
@@ -166,12 +179,20 @@ function cabecalho(m: DanfeModel, folha: number, total: number): Pedaco {
   const linhaEnd2 = `${en.xMun}/${en.uf}${en.cep ? ` – CEP ${cepFormatado(en.cep)}` : ''}`;
   const linhaEnd3 = en.fone ? `Fone: ${en.fone}` : '';
   // `[MOC-DANFE-FONTE-CONTEUDO]`: razão social ≥ 12 pt, demais dados do emitente ≥ 8 pt
-  const larguraEmit = LARGURA_MM * 0.38 - CELULA_EXTRA_MM;
+  const larguraEmit = (LARGURA_MM * TOPO_PCT.emit) / 100 - CELULA_EXTRA_MM;
   const emitMm =
     linhasTexto(m.emit.xNome, larguraEmit, 12) * linhaMm(12) +
     [linhaEnd1, linhaEnd2, linhaEnd3].filter(Boolean).reduce((s, t) => s + linhasTexto(t, larguraEmit, 8) * linhaMm(8), 0) +
     CELULA_EXTRA_MM;
-  const topo = Number(Math.max(H.topoMin, emitMm).toFixed(2));
+  // quadro "DANFE" (`[MOC-DANFE-IDENT-DOC]`): título 12 pt, descrição 8 pt, entrada/saída 8 pt, número/série/folha 10 pt
+  const larguraDanfe = (LARGURA_MM * TOPO_PCT.danfe) / 100 - CELULA_EXTRA_MM;
+  const danfeMm =
+    linhaMm(12) +
+    linhasTexto('DOCUMENTO AUXILIAR DA NOTA FISCAL ELETRÔNICA', larguraDanfe, 8) * linhaMm(8) +
+    2 * linhaMm(8) +
+    3 * linhaMm(10) +
+    CELULA_EXTRA_MM;
+  const topo = Number(Math.max(H.topoMin, emitMm, danfeMm).toFixed(2));
   const linhas = [
     linha(
       c('NATUREZA DA OPERAÇÃO', m.ide.natOp, 55),
@@ -188,11 +209,11 @@ function cabecalho(m: DanfeModel, folha: number, total: number): Pedaco {
   const mm = Number((topo + linhas.reduce((s, l) => s + l.mm, 0) + 0.5).toFixed(2));
   const html = `<div class="cabecalho" style="height:${mm}mm">
 <div class="topo" style="height:${topo}mm">
-<div class="cx emit" style="width:38%"><div class="xnome">${e(m.emit.xNome)}</div><div class="end">${e(linhaEnd1)}<br>${e(linhaEnd2)}${linhaEnd3 ? `<br>${e(linhaEnd3)}` : ''}</div></div>
-<div class="cx danfe" style="width:17%"><div class="titulo">DANFE</div><div class="sub">DOCUMENTO AUXILIAR DA NOTA FISCAL ELETRÔNICA</div>
+<div class="cx emit" style="width:${TOPO_PCT.emit}%"><div class="xnome">${e(m.emit.xNome)}</div><div class="end">${e(linhaEnd1)}<br>${e(linhaEnd2)}${linhaEnd3 ? `<br>${e(linhaEnd3)}` : ''}</div></div>
+<div class="cx danfe" style="width:${TOPO_PCT.danfe}%"><div class="titulo">DANFE</div><div class="sub">DOCUMENTO AUXILIAR DA NOTA FISCAL ELETRÔNICA</div>
 <div class="tp"><span>0 - ENTRADA<br>1 - SAÍDA</span><b class="tpnf">${e(m.ide.tpNF)}</b></div>
 <div class="num">Nº ${numeroNF(e(m.ide.nNF))}<br>SÉRIE ${serieNF(e(m.ide.serie))}<br>FOLHA ${folha}/${total}</div></div>
-<div class="cx chave" style="width:45%"><div class="barras">${barcodeChaveSvg(m.chave)}</div>
+<div class="cx chave" style="width:${TOPO_PCT.chave}%"><div class="barras">${barcodeChaveSvg(m.chave)}</div>
 <span class="r">CHAVE DE ACESSO</span><div class="chv">${e(chaveMascarada(m.chave))}</div>
 <div class="consulta">${e(TEXTO_CONSULTA)}</div></div>
 </div>${linhas.map((l) => l.html).join('')}</div>`;
@@ -338,13 +359,52 @@ function transporte(m: DanfeModel): Pedaco {
 
 // ── quadro de produtos (item 12) ───────────────────────────────────────────────────────────────────────────────
 
-/** Linhas que o item ocupa: descrição + infAdProd (`[MOC-DANFE-INFADPROD]`) + [NCM][cClassTrib], no mínimo as 4 de bases. */
+/** Textos de cada coluna do item, uma entrada por linha lógica (o render usa os mesmos). */
+function textosDoItem(i: DanfeItem) {
+  const ib = i.ibsCbs;
+  return {
+    desc: [i.xProd, ...(i.infAdProd ? [i.infAdProd] : []), `[NCM ${i.ncm}]${ib ? ` [cClassTrib ${ib.cClassTrib}]` : ''}`],
+    cst: [`CST ${i.cstOuCsosn ?? ''}`, `CFOP ${i.cfop}`],
+    qtd: [fmtDec(i.qCom), `[${i.uCom}]`],
+    vunit: [fmtDec(i.vUnCom)],
+    vtotal: [fmtCents(i.vProd)],
+    bases: [
+      ['ICMS', fmtCents(i.icms.vBC)],
+      ['IBS / CBS', fmtCents(ib?.vBC ?? null)],
+      ['IS', fmtCents(i.is?.vBCIS ?? null)],
+      ['IPI', fmtCents(i.ipi?.vBC ?? null)],
+    ] as Array<[string, string]>,
+    aliq: [
+      ['ICMS', fmtAliq(i.icms.pICMS), 'CBS', fmtAliq(ib?.cbs.aliq ?? null)],
+      ['IBS UF', fmtAliq(ib?.ibsUf.aliq ?? null), 'IPI', fmtAliq(i.ipi?.pIPI ?? null)],
+      ['IBS MUN', fmtAliq(ib?.ibsMun.aliq ?? null), 'IS', fmtAliq(i.is?.pIS ?? null)],
+    ] as Array<[string, string, string, string]>,
+    valores: [
+      ['ICMS', fmtCents(i.icms.vICMS), 'CBS', fmtCents(ib?.cbs.valor ?? null)],
+      ['IBS UF', fmtCents(ib?.ibsUf.valor ?? null), 'IPI', fmtCents(i.ipi?.vIPI ?? null)],
+      ['IBS MUN', fmtCents(ib?.ibsMun.valor ?? null), 'IS', fmtCents(i.is?.vIS ?? null)],
+    ] as Array<[string, string, string, string]>,
+  };
+}
+
+/**
+ * Linhas que o item ocupa: a coluna mais alta. Cada coluna soma as suas linhas lógicas, cada uma quebrada na largura da
+ * coluna (descrição + infAdProd `[MOC-DANFE-INFADPROD]` + [NCM][cClassTrib]; pares "ICMS … / CBS …" das alíquotas e valores).
+ */
 export function linhasDoItem(i: DanfeItem): number {
-  const larg = COL_DESCRICAO_MM - CELULA_EXTRA_MM;
-  const ncm = `[NCM ${i.ncm}]${i.ibsCbs ? ` [cClassTrib ${i.ibsCbs.cClassTrib}]` : ''}`;
-  const desc =
-    linhasTexto(i.xProd, larg, PT_ITEM) + (i.infAdProd ? linhasTexto(i.infAdProd, larg, PT_ITEM) : 0) + linhasTexto(ncm, larg, PT_ITEM);
-  return Math.max(4, desc);
+  const t = textosDoItem(i);
+  const n = (textos: string[], colMm: number) => textos.reduce((s, x) => s + linhasTexto(x, colMm - CELULA_EXTRA_MM, PT_ITEM), 0);
+  return Math.max(
+    4,
+    n(t.desc, COL.desc),
+    n(t.cst, COL.cst),
+    n(t.qtd, COL.qtd),
+    n(t.vunit, COL.vunit),
+    n(t.vtotal, COL.vtotal),
+    n(t.bases.map(([r, v]) => `${r} ${v}`), COL.bases),
+    n(t.aliq.map(([r1, v1, r2, v2]) => `${r1} ${v1} / ${r2} ${v2}`), COL.aliq),
+    n(t.valores.map(([r1, v1, r2, v2]) => `${r1} ${v1} / ${r2} ${v2}`), COL.valores),
+  );
 }
 
 /** Altura do item no quadro de produtos (mm). */
@@ -356,24 +416,26 @@ const par = (r1: string, v1: string, r2: string, v2: string) =>
   `<div class="sl"><span><span class="sr">${r1}</span> ${e(v1)}</span><span>/</span><span><span class="sr">${r2}</span> ${e(v2)}</span></div>`;
 
 function linhaItem(i: DanfeItem): string {
-  const ib = i.ibsCbs;
-  const ncm = `[NCM ${i.ncm}]${ib ? ` [cClassTrib ${ib.cClassTrib}]` : ''}`;
+  const t = textosDoItem(i);
+  const [xProd, ...resto] = t.desc;
+  const ncm = resto[resto.length - 1];
   return `<tr class="item" style="height:${alturaDoItem(i)}mm">
 <td class="cod">${e(i.cProd)}</td>
-<td class="desc">${e(i.xProd)}${i.infAdProd ? `<div class="inf">${e(i.infAdProd)}</div>` : ''}<div class="ncm">${e(ncm)}</div></td>
+<td class="desc">${e(xProd)}${i.infAdProd ? `<div class="inf">${e(i.infAdProd)}</div>` : ''}<div class="ncm">${e(ncm)}</div></td>
 <td>${sub('CST', i.cstOuCsosn ?? '')}${sub('CFOP', i.cfop)}</td>
-<td class="n">${e(fmtDec(i.qCom))}<br>[${e(i.uCom)}]</td>
-<td class="n">${e(fmtDec(i.vUnCom))}</td>
-<td class="n">${e(fmtCents(i.vProd))}</td>
-<td class="n">${sub('ICMS', fmtCents(i.icms.vBC))}${sub('IBS / CBS', fmtCents(ib?.vBC ?? null))}${sub('IS', fmtCents(i.is?.vBCIS ?? null))}${sub('IPI', fmtCents(i.ipi?.vBC ?? null))}</td>
-<td class="n">${par('ICMS', fmtAliq(i.icms.pICMS), 'CBS', fmtAliq(ib?.cbs.aliq ?? null))}${par('IBS UF', fmtAliq(ib?.ibsUf.aliq ?? null), 'IPI', fmtAliq(i.ipi?.pIPI ?? null))}${par('IBS MUN', fmtAliq(ib?.ibsMun.aliq ?? null), 'IS', fmtAliq(i.is?.pIS ?? null))}</td>
-<td class="n">${par('ICMS', fmtCents(i.icms.vICMS), 'CBS', fmtCents(ib?.cbs.valor ?? null))}${par('IBS UF', fmtCents(ib?.ibsUf.valor ?? null), 'IPI', fmtCents(i.ipi?.vIPI ?? null))}${par('IBS MUN', fmtCents(ib?.ibsMun.valor ?? null), 'IS', fmtCents(i.is?.vIS ?? null))}</td>
+<td class="n">${e(t.qtd[0])}<br>${e(t.qtd[1])}</td>
+<td class="n">${e(t.vunit[0])}</td>
+<td class="n">${e(t.vtotal[0])}</td>
+<td class="n">${t.bases.map(([r, v]) => sub(r, v)).join('')}</td>
+<td class="n">${t.aliq.map((p) => par(...p)).join('')}</td>
+<td class="n">${t.valores.map((p) => par(...p)).join('')}</td>
 </tr>`;
 }
 
 function quadroProdutos(itens: DanfeItem[], alturaMm: number | null, continua: boolean): string {
   return `<div class="bloco produtos"${alturaMm === null ? '' : ` style="height:${alturaMm}mm"`}><div class="t">DADOS DOS PRODUTOS / SERVIÇOS</div>
-<table><thead><tr><th class="cod">CÓDIGO</th><th class="desc">DESCRIÇÃO DO PRODUTO / SERVIÇO</th><th>CST / CFOP</th><th>QTD / UN</th><th>VLR UNIT</th><th>VLR TOTAL</th><th>BASES DE CÁLCULO</th><th>ALÍQUOTAS</th><th>VALOR DOS TRIBUTOS</th></tr></thead>
+<table><colgroup>${Object.values(COL).map((w) => `<col style="width:${w}mm">`).join('')}</colgroup>
+<thead><tr><th class="cod">CÓDIGO</th><th class="desc">DESCRIÇÃO DO PRODUTO / SERVIÇO</th><th>CST / CFOP</th><th>QTD / UN</th><th>VLR UNIT</th><th>VLR TOTAL</th><th>BASES DE CÁLCULO</th><th>ALÍQUOTAS</th><th>VALOR DOS TRIBUTOS</th></tr></thead>
 <tbody>${itens.map(linhaItem).join('')}</tbody></table>${continua ? '<div class="continua">CONTINUA NA PRÓXIMA FOLHA</div>' : ''}</div>`;
 }
 
@@ -402,7 +464,7 @@ function dadosAdicionais(texto: string, continua: boolean): Pedaco {
 }
 
 const alturaContinuacao = (texto: string) =>
-  TITULO_MM + CELULA_EXTRA_MM + linhasTexto(texto, LARGURA_MM - CELULA_EXTRA_MM, PT_TEXTO) * LINHA_TEXTO_MM;
+  TITULO_MM + CELULA_EXTRA_MM + linhasTexto(texto, LARGURA_MM - CELULA_EXTRA_MM, PT_TEXTO, charMmPior) * LINHA_TEXTO_MM;
 const continuacaoComplementar = (texto: string) =>
   `<div class="bloco continuacao"><div class="t">INFORMAÇÕES COMPLEMENTARES (CONTINUAÇÃO)</div><div class="c" style="width:100%"><span class="v">${e(texto)}</span></div></div>`;
 
@@ -465,12 +527,12 @@ body { font-family: 'Times New Roman', Times, serif; font-size: ${PT_ITEM}pt; co
   color: rgba(0,0,0,0.12); transform: rotate(-30deg); z-index: 0; pointer-events: none; }
 .canhoto, .topo, .l { display: flex; }
 .canhoto { border-bottom: 0.3mm dashed #000; }
-.cx, .c { border: 0.2mm solid #000; padding: 0.5mm 0.5mm; overflow: hidden; }
+.cx, .c { border: 0.2mm solid #000; padding: 0.5mm 0.5mm; }
 .r { display: block; font-size: ${PT_ROTULO}pt; line-height: ${linhaMm(PT_ROTULO)}mm; font-weight: bold; text-transform: uppercase; }
 .v { display: block; font-size: ${PT_CAMPO}pt; line-height: ${linhaMm(PT_CAMPO)}mm; word-break: break-word; }
 .inf-cpl .v, .continuacao .v { font-size: ${PT_TEXTO}pt; line-height: ${LINHA_TEXTO_MM}mm; }
 .t { font-size: ${PT_ROTULO}pt; font-weight: bold; text-transform: uppercase; height: ${TITULO_MM}mm; padding-top: 1mm; }
-.bloco, .cabecalho { position: relative; z-index: 1; overflow: hidden; }
+.bloco, .cabecalho { position: relative; z-index: 1; }
 .emit .xnome { font-size: 12pt; line-height: ${linhaMm(12)}mm; font-weight: bold; }
 .emit .end { font-size: 8pt; line-height: ${linhaMm(8)}mm; font-weight: bold; }
 .danfe { text-align: center; }
@@ -480,8 +542,8 @@ body { font-family: 'Times New Roman', Times, serif; font-size: ${PT_ITEM}pt; co
 .danfe .tpnf { font-size: 10pt; border: 0.2mm solid #000; padding: 0 1mm; }
 .danfe .num { font-size: 10pt; font-weight: bold; }
 .nfe { text-align: center; font-size: 10pt; }
-.chave .barras svg { width: 115mm; height: 10mm; }
-.chave .barras { height: 11mm; overflow: hidden; }
+.chave .barras { height: 11mm; padding: 0 ${DANFE_MARGEM_CLARA_MM}mm; }
+.chave .barras svg { display: block; width: ${DANFE_BARRAS_MM}mm; height: 10mm; }
 .chave .chv { font-size: 9pt; font-weight: bold; letter-spacing: 0.2mm; }
 .chave .consulta { font-size: 7pt; }
 .dups { display: flex; flex-wrap: wrap; column-gap: 3mm; font-size: ${PT_TEXTO}pt; line-height: ${LINHA_TEXTO_MM}mm; }
@@ -489,8 +551,7 @@ body { font-family: 'Times New Roman', Times, serif; font-size: ${PT_ITEM}pt; co
 table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 th, td { border: 0.2mm solid #000; vertical-align: top; padding: 0.2mm 0.5mm; font-size: ${PT_ITEM}pt; line-height: ${LINHA_ITEM_MM}mm; }
 th { font-size: ${PT_ROTULO}pt; line-height: 2.2mm; text-transform: uppercase; }
-th.cod, td.cod { width: 12mm; word-break: break-word; }
-th.desc, td.desc { width: ${COL_DESCRICAO_MM}mm; word-break: break-word; }
+td.cod, td.desc { word-break: break-word; }
 td.n { text-align: right; }
 .item td { border-top: 0.3mm dashed #000; }
 .sl { display: flex; justify-content: space-between; gap: 0.5mm; }

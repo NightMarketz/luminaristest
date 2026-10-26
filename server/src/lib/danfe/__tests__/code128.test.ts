@@ -55,8 +55,8 @@ describe('codewordsChave / barcodeChaveSvg', () => {
 
   it('chave com CNPJ alfanumérico ⇒ híbrido, volta para C nos 26 dígitos finais', () => {
     const cw = codewordsChave(ALFA);
-    expect(cw).toContain(101);
-    expect(cw).toContain(99);
+    // 35260912 em C · Code A · A B C · "34501" (5 dígitos, ímpar): 3 em A, Code C, 45 01 · Code A · D E · Code C · 26 dígitos
+    expect(cw.slice(0, 17)).toEqual([105, 35, 26, 9, 12, 101, 33, 34, 35, 19, 99, 45, 1, 101, 36, 37, 99]);
     expect(cw.slice(-13)).toEqual([35, 55, 0, 10, 0, 0, 0, 1, 10, 0, 0, 0, 12]); // "35550010000000011000000012" em pares
   });
 
@@ -66,9 +66,9 @@ describe('codewordsChave / barcodeChaveSvg', () => {
     expect(() => barcodeChaveSvg('3526091122233300018155001000012345148213579x')).toThrow(ValidationError);
   });
 
-  it('SVG determinístico e sem texto', () => {
+  it('SVG determinístico, sem texto e esticado na largura do CSS', () => {
     const svg = barcodeChaveSvg(NUMERICA);
-    expect(svg.startsWith('<svg')).toBe(true);
+    expect(svg.startsWith('<svg preserveAspectRatio="none" ')).toBe(true);
     expect(barcodeChaveSvg(NUMERICA)).toBe(svg);
     expect(svg).not.toContain('<text');
   });

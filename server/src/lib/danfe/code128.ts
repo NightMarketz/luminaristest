@@ -95,11 +95,13 @@ export function larguras(codewords: readonly number[]): string {
  * Determinístico: mesma chave ⇒ mesmo SVG.
  */
 export function barcodeChaveSvg(chave: string): string {
-  return bwipjs.toSVG({
+  // preserveAspectRatio="none": o SVG ocupa a largura e a altura que o CSS der (`DANFE_BARRAS_MM`), sem encolher
+  const svg = bwipjs.toSVG({
     bcid: 'code128',
     text: asRaw(codewordsChave(chave)),
     raw: true,
     height: 10, // mm — altura mínima 0,8 cm (`[MOC-DANFE-C128-DIM]`)
     includetext: false,
   } as bwipjs.RenderOptions);
+  return svg.replace('<svg ', '<svg preserveAspectRatio="none" ');
 }

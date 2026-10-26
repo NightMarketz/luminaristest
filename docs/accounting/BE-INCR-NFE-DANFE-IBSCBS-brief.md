@@ -205,7 +205,7 @@ primeira NF-e 55. Há uma condição: se o X10a PR-7 entrar em produção antes 
 > - Coluna CÓDIGO mantida no quadro de produtos (`[MOC-DANFE-COLUNAS]`: não pode ser suprimida), embora o modelo da NT não a desenhe.
 > - **Aberto (L-DANFE-PR2-1):** quando os quadros fixos da 1ª folha passam de uma A4 (ex.: 120 duplicatas e 3 volumes), o
 >   render devolve `DANFE_FOLHA1_EXCEDE` (400) em vez de um PDF cortado. O MOC não prevê continuação da fatura. Com o
->   fixture de base cabem até ~67 duplicatas.
+>   fixture de base cabem até ~59 duplicatas.
 
 ### PR-3 — superfície (cadeia Route → Controller → Service → Repository, + Policy)
 

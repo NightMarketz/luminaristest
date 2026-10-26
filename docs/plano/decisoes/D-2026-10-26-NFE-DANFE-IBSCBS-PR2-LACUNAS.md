@@ -24,5 +24,5 @@ decidia e perguntou antes de escrever o código de cada um. Nó: [[NFE-DANFE-IBS
 
 ## O que NÃO decide
 
-Não é merge e não é `executa` do PR-3. Fica em aberto o limite da fatura (ver a nota do nó): com mais de ~67 duplicatas no
+Não é merge e não é `executa` do PR-3. Fica em aberto o limite da fatura (ver a nota do nó): com mais de ~59 duplicatas no
 fixture de base, os quadros da 1ª folha não cabem em A4 e o render devolve `DANFE_FOLHA1_EXCEDE`.

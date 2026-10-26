@@ -6,7 +6,18 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { readDanfeModel, type DanfeItem, type DanfeModel } from '../danfeModel';
-import { DANFE_PDF_MARGIN, alturaDoItem, chaveMascarada, fmtCents, paginar, renderDanfeHtml } from '../danfeHtml';
+import {
+  DANFE_BARRAS_MM,
+  DANFE_MARGEM_CLARA_MM,
+  DANFE_PDF_MARGIN,
+  DANFE_QUADRO_CHAVE_MM,
+  alturaDoItem,
+  chaveMascarada,
+  fmtCents,
+  linhasDoItem,
+  paginar,
+  renderDanfeHtml,
+} from '../danfeHtml';
 import { LEGAIS_SEMENTE } from '@test/helpers/legalParams';
 import { ValidationError } from '../../errors';
 
@@ -46,11 +57,22 @@ describe('renderDanfeHtml — item 11', () => {
     expect(renderDanfeHtml(comIssqn)).toBe(renderDanfeHtml(comIssqn));
   });
 
-  it('texto do XML sai escapado (I7): xProd = <script>', () => {
-    const itens = [{ ...BASE.itens[0], xProd: '<script>alert(1)</script>' }, ...BASE.itens.slice(1)];
-    const html = renderDanfeHtml(com({ itens }));
+  it('texto do XML sai escapado (I7): produto, emitente (canhoto e cabeçalho), transporte e informações complementares', () => {
+    const X = '<script>x</script>';
+    const itens = [{ ...BASE.itens[0], xProd: X, infAdProd: X }, ...BASE.itens.slice(1)];
+    const html = renderDanfeHtml(
+      com({
+        itens,
+        emit: { ...BASE.emit, xNome: X },
+        transp: { ...BASE.transp!, transportadora: { ...BASE.transp!.transportadora!, xNome: X, xEnder: X } },
+        dest: { ...BASE.dest, xNome: X },
+        infCpl: X,
+        infAdFisco: X,
+      }),
+    );
     expect(html).not.toContain('<script>');
-    expect(html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+    // produto ×2, canhoto, cabeçalho, transportadora ×2, destinatário, infAdFisco + infCpl
+    expect(ocorrencias(html, '&lt;script&gt;x&lt;/script&gt;')).toBe(9);
   });
 
   it('campo de consulta com o texto do modelo da NT 2026.010 (L-DANFE-PR0-3, dono 26/10)', () => {
@@ -107,6 +129,41 @@ describe('renderDanfeHtml — item 12 (linha do item com IBS/CBS/IS)', () => {
     expect(linha).toContain('199,00');
     expect(linha).toContain('5,00%');
     expect(linha).toContain('9,95');
+  });
+});
+
+describe('código de barras no cabeçalho (`[MOC-DANFE-C128-DIM]`, NT Conjunta 2025.001 §6)', () => {
+  it('115 mm de barras (mínimo do híbrido) cabem no quadro da chave com a margem clara dos dois lados', () => {
+    expect(DANFE_BARRAS_MM).toBeGreaterThanOrEqual(115);
+    expect(DANFE_QUADRO_CHAVE_MM - 1.4 - 2 * DANFE_MARGEM_CLARA_MM).toBeGreaterThanOrEqual(DANFE_BARRAS_MM);
+    const html = renderDanfeHtml(BASE);
+    expect(html).toContain(`width: ${DANFE_BARRAS_MM}mm`);
+    expect(html).toMatch(/<div class="cx chave" style="width:63%">/);
+  });
+});
+
+describe('altura do item considera todas as colunas', () => {
+  const pequeno = BASE.itens[1];
+  const grande: DanfeItem = {
+    ...pequeno,
+    vProd: 123456789n,
+    icms: { vBC: 123456789n, pICMS: '18.0000', vICMS: 22222222n },
+    ipi: { vBC: 123456789n, pIPI: '5.0000', vIPI: 6172839n },
+    ibsCbs: {
+      cClassTrib: '000001', vBC: 123456789n,
+      ibsUf: { aliq: { aliquota: '0.1000', origem: 'VIGENTE' }, valor: 123456n },
+      ibsMun: { aliq: { aliquota: '0.0500', origem: 'VIGENTE' }, valor: 61728n },
+      cbs: { aliq: { aliquota: '0.9000', origem: 'VIGENTE' }, valor: 1111111n },
+    },
+  };
+
+  it('valores grandes nas colunas de tributos fazem o item ocupar mais linhas, mesmo com a descrição curta', () => {
+    expect(linhasDoItem(grande)).toBeGreaterThan(linhasDoItem(pequeno));
+  });
+
+  it('nota com 40 itens de valores grandes pede mais folhas que a mesma nota com valores pequenos', () => {
+    const n = (item: DanfeItem) => paginar(com({ itens: Array.from({ length: 40 }, (_, k) => ({ ...item, nItem: k + 1 })) })).folhas.length;
+    expect(n(grande)).toBeGreaterThan(n(pequeno));
   });
 });
 
@@ -192,7 +249,16 @@ describe('paginação (dono, 26/10: "Paginação no HTML"; [MOC-DANFE-FOLHAS])',
     com({ fatura: { nFat: '1', dup: Array.from({ length: n }, (_, k) => ({ nDup: String(k + 1).padStart(3, '0'), dVenc: '2026-12-01', vDup: 100n })) }, ...patch });
 
   it('sem espaço para um item na 1ª folha ⇒ a 1ª folha sai sem itens e eles começam na 2ª', () => {
-    const m = comDups(60);
+    // o menor número de duplicatas que tira todo o espaço de item da 1ª folha sem estourar a folha
+    const n = Array.from({ length: 120 }, (_, k) => k + 1).find((k) => {
+      try {
+        return paginar(comDups(k)).folhas[0].length === 0;
+      } catch {
+        return false;
+      }
+    });
+    expect(n).toBeDefined();
+    const m = comDups(n!);
     const pag = paginar(m);
     expect(pag.capacidade.folha1).toBeLessThan(alturaDoItem(m.itens[0]));
     expect(pag.folhas[0]).toEqual([]);
