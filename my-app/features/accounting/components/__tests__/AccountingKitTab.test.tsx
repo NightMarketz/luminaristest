@@ -13,7 +13,7 @@ import { notify } from '../../../../lib/notifications/notify';
  * chamada (memória handler-async-closure-stale-x-waitfor-tohavebeencalled).
  */
 vi.mock('../../../../lib/services/accountingKit.service', () => ({
-  accountingKitService: { getKit: vi.fn(), listPending: vi.fn() },
+  accountingKitService: { getKit: vi.fn(), listPending: vi.fn(), acceptPending: vi.fn(), rejectPending: vi.fn() },
 }));
 vi.mock('../../../../lib/services/accountingBinding.service', () => ({
   accountingBindingService: { listActive: vi.fn(), activateDefault: vi.fn() },
@@ -125,7 +125,7 @@ describe('AccountingKitTab', () => {
     expect(accountingKitService.listPending).not.toHaveBeenCalled();
   });
 
-  it('item 7: abrir a aba com pendências chama listPending(unitId, OPEN) uma vez; lista só leitura com motivo; código desconhecido cru', async () => {
+  it('item 7: abrir a aba com pendências chama listPending(unitId, OPEN) uma vez; lista com motivo; código desconhecido cru', async () => {
     vi.mocked(accountingKitService.getKit).mockResolvedValue(kit({ openPendingCount: 2 }));
     vi.mocked(accountingKitService.listPending).mockResolvedValue([
       pending(),
@@ -139,7 +139,9 @@ describe('AccountingKitTab', () => {
     expect(within(block).getByText('motivo_novo')).toBeInTheDocument();
     expect(accountingKitService.listPending).toHaveBeenCalledTimes(1);
     expect(accountingKitService.listPending).toHaveBeenCalledWith('u1', 'OPEN');
-    expect(within(block).queryByRole('button')).not.toBeInTheDocument();
+    // PR-2: cada linha ganha "Aceitar" e "Recusar"
+    expect(within(block).getAllByRole('button', { name: 'Aceitar' })).toHaveLength(2);
+    expect(within(block).getAllByRole('button', { name: 'Recusar' })).toHaveLength(2);
   });
 
   it('item 8: INSTALLING ⇒ "em andamento", sem botão de retomada', async () => {
@@ -224,6 +226,109 @@ describe('AccountingKitTab', () => {
     renderTab();
     await screen.findByTestId('accounting-kit-tab');
     expect(screen.queryByTestId('accounting-kit-warnings')).not.toBeInTheDocument();
+  });
+
+  describe('PR-2 — decidir pendências (itens 16–18)', () => {
+    async function openDecision(button: 'Aceitar' | 'Recusar', rows: KitUpgradePendingView[] = [pending()]) {
+      vi.mocked(accountingKitService.getKit).mockResolvedValue(kit({ openPendingCount: rows.length }));
+      vi.mocked(accountingKitService.listPending).mockResolvedValue(rows);
+      renderTab(onActivationChanged);
+      const block = await screen.findByTestId('accounting-kit-pending');
+      fireEvent.click((await within(block).findAllByRole('button', { name: button }))[0]);
+      return screen.getByRole('dialog');
+    }
+    const confirmButton = (dialog: HTMLElement, name: 'Aceitar' | 'Recusar') => within(dialog).getByRole('button', { name });
+    const MOTIVO = 'conferido com o contador';
+    let onActivationChanged = vi.fn();
+    beforeEach(() => { onActivationChanged = vi.fn(); });
+
+    it('item 16: motivo com 9 caracteres (ou só espaços) ⇒ confirmar desabilitado; com 10 ⇒ habilitado', async () => {
+      const dialog = await openDecision('Recusar');
+      const textarea = within(dialog).getByLabelText(/Motivo/);
+      expect(confirmButton(dialog, 'Recusar')).toBeDisabled();
+      fireEvent.change(textarea, { target: { value: 'x'.repeat(9) } });
+      expect(confirmButton(dialog, 'Recusar')).toBeDisabled();
+      fireEvent.change(textarea, { target: { value: ` ${'x'.repeat(9)}  ` } });
+      expect(confirmButton(dialog, 'Recusar')).toBeDisabled();
+      fireEvent.change(textarea, { target: { value: 'x'.repeat(10) } });
+      expect(confirmButton(dialog, 'Recusar')).toBeEnabled();
+    });
+
+    it.each([
+      ['override', 'remove o ajuste da conta deste papel e recompila'],
+      ['account_deleted_by_user', 'restaura a conta apagada e recompila'],
+      ['account_changed_in_use', 'renomeia a conta para o nome do kit'],
+      ['field_set_by_user', 'grava a conta do kit por cima'],
+      ['referential_year_frozen', 'aceitar não é possível, só recusar'],
+      ['referential_mapped_differently', 'troca o código referencial'],
+      ['motivo_novo', 'altera o plano ou o binding da unidade'],
+    ])('item 16: aceitar %s mostra o efeito antes de confirmar', async (reason, effect) => {
+      const dialog = await openDecision('Aceitar', [pending({ reason: reason as KitUpgradePendingView['reason'] })]);
+      expect(dialog).toHaveTextContent(effect);
+    });
+
+    it('item 16: recusar diz que mantém o valor da unidade', async () => {
+      const dialog = await openDecision('Recusar');
+      expect(dialog).toHaveTextContent('Recusar mantém o valor desta unidade');
+    });
+
+    it('item 17: aceitar override ⇒ POST com unitId e motivo aparado, notify, recarrega lista e kit, e a ativação (recompilou)', async () => {
+      const dialog = await openDecision('Aceitar');
+      vi.mocked(accountingKitService.acceptPending).mockResolvedValue(pending({ status: 'ACCEPTED' }));
+      vi.mocked(accountingKitService.listPending).mockResolvedValue([]);
+      fireEvent.change(within(dialog).getByLabelText(/Motivo/), { target: { value: `  ${MOTIVO}  ` } });
+      fireEvent.click(confirmButton(dialog, 'Aceitar'));
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(accountingKitService.acceptPending).toHaveBeenCalledWith('p1', { unitId: 'u1', motivo: MOTIVO });
+      expect(notify).toHaveBeenCalledWith('Pendência aceita.', 'success');
+      expect(accountingKitService.listPending).toHaveBeenCalledTimes(2);
+      expect(accountingKitService.getKit).toHaveBeenCalledTimes(2);
+      expect(onActivationChanged).toHaveBeenCalledTimes(1);
+    });
+
+    it('item 17: recusar ⇒ rejectPending, recarrega lista e kit, sem reler a ativação', async () => {
+      const dialog = await openDecision('Recusar');
+      vi.mocked(accountingKitService.rejectPending).mockResolvedValue(pending({ status: 'REJECTED' }));
+      fireEvent.change(within(dialog).getByLabelText(/Motivo/), { target: { value: MOTIVO } });
+      fireEvent.click(confirmButton(dialog, 'Recusar'));
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(accountingKitService.rejectPending).toHaveBeenCalledWith('p1', { unitId: 'u1', motivo: MOTIVO });
+      expect(notify).toHaveBeenCalledWith('Pendência recusada.', 'success');
+      expect(accountingKitService.listPending).toHaveBeenCalledTimes(2);
+      expect(accountingKitService.getKit).toHaveBeenCalledTimes(2);
+      expect(onActivationChanged).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['KIT_PENDING_NOT_OPEN', 409, 'já foi decidida por outra pessoa', true],
+      ['KIT_PENDING_NOT_FOUND', 404, 'Pendência não encontrada', true],
+      ['KIT_PENDING_FROZEN_YEAR', 422, 'só dá para recusar', false],
+      ['VALIDATION_ERROR', 400, 'A conta do kit não está viva', false],
+      ['KIT_NOT_INSTALLED', 422, 'retome a instalação antes de decidir', false],
+    ] as const)('item 18: %s vira a mensagem certa (recarrega a lista: %s)', async (code, status, text, reloads) => {
+      const dialog = await openDecision('Aceitar');
+      const message = code === 'VALIDATION_ERROR' ? 'ACCOUNT_NOT_FOUND: a conta 4.8 do kit não está viva' : 'msg do BE';
+      vi.mocked(accountingKitService.acceptPending).mockRejectedValue({ code, status, message });
+      fireEvent.change(within(dialog).getByLabelText(/Motivo/), { target: { value: MOTIVO } });
+      fireEvent.click(confirmButton(dialog, 'Aceitar'));
+      expect(await screen.findByTestId('accounting-kit-decide-error')).toHaveTextContent(text);
+      expect(accountingKitService.listPending).toHaveBeenCalledTimes(reloads ? 2 : 1);
+    });
+
+    it('item 18: KIT_PENDING_COMPILE_DRAFT lista os bloqueantes com o render da faixa', async () => {
+      const dialog = await openDecision('Aceitar', [pending({ reason: 'account_deleted_by_user' })]);
+      vi.mocked(accountingKitService.acceptPending).mockRejectedValue({
+        code: 'KIT_PENDING_COMPILE_DRAFT',
+        status: 422,
+        message: 'A recompilação depois de aceitar a pendência reprovou; nada foi aplicado.',
+        details: { binding: { status: 'Draft', bindingVersion: 3 }, blocking: [{ code: 'ROLE_SLOT_ACCOUNT_MISSING', message: 'Conta 4.8 ausente' }], missingEventKeys: [] },
+      });
+      fireEvent.change(within(dialog).getByLabelText(/Motivo/), { target: { value: MOTIVO } });
+      fireEvent.click(confirmButton(dialog, 'Aceitar'));
+      expect(await screen.findByTestId('accounting-kit-decide-error')).toHaveTextContent('A recompilação do binding reprovou');
+      expect(screen.getByTestId('accounting-activation-blocking')).toHaveTextContent('Conta 4.8 ausente');
+      expect(onActivationChanged).not.toHaveBeenCalled();
+    });
   });
 
   it('erro na leitura do kit ⇒ aviso e a tela segue de pé', async () => {

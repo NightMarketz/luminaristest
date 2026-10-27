@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FiAlertTriangle, FiChevronDown, FiChevronRight, FiLoader, FiPackage } from 'react-icons/fi';
 import { ConfirmModal } from '../../../components/ui/feedback/ConfirmModal';
 import { notify } from '../../../lib/notifications/notify';
@@ -10,7 +10,7 @@ import {
 } from '../../../lib/services/accountingKit.service';
 import { useUnitKit } from '../hooks/useUnitKit';
 import { ACTIVATION_SECTOR_LABELS, type ActivationSector } from '../lib/activationSectors';
-import { resolveError } from '../lib/resolveError';
+import { resolveError, resolveErrorWithCode } from '../lib/resolveError';
 import { useAccountingT } from '../lib/useAccountingT';
 import { ActivationBlockingList, type ActivationBlockingIssue } from './ActivationBlockingList';
 
@@ -48,12 +48,63 @@ const REASON_LABELS: Record<Reason, { key: string; fallback: string }> = {
   },
 };
 
+/**
+ * PR-2 item 16: o efeito de ACEITAR, por motivo — o `KitPendingService.applyKitValue` do server (emenda E-12.3 do
+ * BE-INCR-KIT-SETOR). Código sem texto ⇒ aviso genérico.
+ */
+const ACCEPT_EFFECTS: Record<Reason, { key: string; fallback: string }> = {
+  override: {
+    key: 'kit.decide.effects.accept.override',
+    fallback: 'Aceitar remove o ajuste da conta deste papel e recompila o binding com a conta do kit.',
+  },
+  account_deleted_by_user: {
+    key: 'kit.decide.effects.accept.account_deleted_by_user',
+    fallback: 'Aceitar restaura a conta apagada e recompila o binding.',
+  },
+  account_changed_in_use: {
+    key: 'kit.decide.effects.accept.account_changed_in_use',
+    fallback: 'Aceitar renomeia a conta para o nome do kit.',
+  },
+  field_set_by_user: {
+    key: 'kit.decide.effects.accept.field_set_by_user',
+    fallback: 'Aceitar grava a conta do kit por cima do valor preenchido nesta unidade.',
+  },
+  referential_year_frozen: {
+    key: 'kit.decide.effects.accept.referential_year_frozen',
+    fallback: 'Este item é de um ano congelado: aceitar não é possível, só recusar.',
+  },
+  referential_mapped_differently: {
+    key: 'kit.decide.effects.accept.referential_mapped_differently',
+    fallback: 'Aceitar troca o código referencial da conta pelo do kit.',
+  },
+};
+/** Aceitar estes motivos recompila o binding (override e conta restaurada) ⇒ a ativação da unidade é relida. */
+const RECOMPILES_ON_ACCEPT: ReadonlySet<string> = new Set<Reason>(['override', 'account_deleted_by_user']);
+/** `DecideKitPendingRequestSchema` do server: `motivo` com trim, 10–500 caracteres. */
+const MOTIVO_MIN = 10;
+const MOTIVO_MAX = 500;
+
+type DecisionKind = 'accept' | 'reject';
+
+/** `details.blocking` de um 422 de recompilação ⇒ itens no formato do render da faixa (descarta o que não tiver code). */
+function toBlockingIssues(e: unknown): ActivationBlockingIssue[] {
+  const details = e && typeof e === 'object' ? (e as { details?: { blocking?: unknown } }).details : undefined;
+  const raw: unknown[] = Array.isArray(details?.blocking) ? details.blocking : [];
+  return raw.flatMap((item): ActivationBlockingIssue[] => {
+    if (!item || typeof item !== 'object') return [];
+    const { code, message } = item as { code?: unknown; message?: unknown };
+    if (typeof code !== 'string') return [];
+    return [{ code, message: typeof message === 'string' ? message : code }];
+  });
+}
+
 const isActivationSector = (key: string): key is ActivationSector => key in ACTIVATION_SECTOR_LABELS;
 
 /**
  * Aba "Kit de setor" da AccountingView (FE-INCR-BINDING-ACTIVATION-EMENDA-2-brief §10, F-KA-1 c): setor e versão
  * instalada, versão mais nova com o changelog (F-KA-5 a), avisos do referencial (F-KA-4 b), pendências da atualização
- * só leitura (F-KA-2, PR-1) e a instalação que parou no meio com "Retomar instalação" só em `FAILED` (F-KA-3 a+ii).
+ * com aceitar/recusar (F-KA-2 c, PR-2) e a instalação que parou no meio com "Retomar instalação" só em `FAILED`
+ * (F-KA-3 a+ii).
  * Quem a monta é a AccountingView, só com kit na unidade e nunca no modo cliente (F-KA-6 a).
  *
  * Bespoke × `components/ui/feedback/Alert`: mesma justificativa da faixa de ativação — o `Alert` recebe só uma
@@ -168,7 +219,9 @@ function KitDetails({
         </ul>
       )}
 
-      {kit.openPendingCount > 0 && <KitPendingList unitId={unitId} count={kit.openPendingCount} />}
+      {kit.openPendingCount > 0 && (
+        <KitPendingList unitId={unitId} count={kit.openPendingCount} reloadKit={reloadKit} onActivationChanged={onActivationChanged} />
+      )}
     </div>
   );
 }
@@ -274,42 +327,187 @@ function KitInstallStatus({
   );
 }
 
-/** Item 7 (F-KA-2, PR-1): contador + lista SOMENTE LEITURA das pendências abertas, carregada uma vez ao abrir a aba. */
-function KitPendingList({ unitId, count }: { unitId: string; count: number }) {
+/**
+ * Item 7 (F-KA-2): contador + lista das pendências abertas, carregada ao abrir a aba. PR-2 (itens 16–18, F-KA-2 c):
+ * "Aceitar"/"Recusar" por linha, com `motivo` e o efeito dito antes de confirmar.
+ */
+function KitPendingList({
+  unitId,
+  count,
+  reloadKit,
+  onActivationChanged,
+}: {
+  unitId: string;
+  count: number;
+  reloadKit: () => void;
+  onActivationChanged: () => void;
+}) {
   const { t } = useAccountingT();
   const [rows, setRows] = useState<KitUpgradePendingView[] | null>(null);
-  const [error, setError] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [decision, setDecision] = useState<{ pending: KitUpgradePendingView; kind: DecisionKind } | null>(null);
+  const [motivo, setMotivo] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [blocking, setBlocking] = useState<ActivationBlockingIssue[]>([]);
   const reqRef = useRef(0);
 
-  useEffect(() => {
+  const reloadRows = useCallback(() => {
     const req = ++reqRef.current;
     accountingKitService
       .listPending(unitId, 'OPEN')
-      .then((r) => { if (req === reqRef.current) setRows(r); })
-      .catch(() => { if (req === reqRef.current) setError(true); });
+      .then((r) => { if (req === reqRef.current) { setRows(r); setLoadError(false); } })
+      .catch(() => { if (req === reqRef.current) setLoadError(true); });
   }, [unitId]);
+
+  useEffect(() => { reloadRows(); }, [reloadRows]);
 
   const reasonLabel = (reason: string) => {
     const known = REASON_LABELS[reason as Reason]; // ponytail: folha string → união; código fora da lista cai no cru
     return known ? t(known.key, known.fallback) : reason;
   };
 
+  const effectText = (pending: KitUpgradePendingView, kind: DecisionKind) => {
+    if (kind === 'reject') {
+      return t('kit.decide.effects.reject', 'Recusar mantém o valor desta unidade; a pendência não volta nesta versão do kit.');
+    }
+    const known = ACCEPT_EFFECTS[pending.reason as Reason]; // ponytail: folha string → união; código fora da lista cai no genérico
+    return known
+      ? t(known.key, known.fallback)
+      : t('kit.decide.effects.generic', 'Esta decisão altera o plano ou o binding da unidade.');
+  };
+
+  /** Item 18: texto próprio por `code` do BE (lidos em `KitPendingService` e `kitUpgradeTypes.ts`); o resto, a mensagem do BE. */
+  const decisionErrorText = (code: string | undefined, message: string): string => {
+    switch (code) {
+      case 'KIT_PENDING_NOT_OPEN':
+        return t('kit.decide.errors.KIT_PENDING_NOT_OPEN', 'Esta pendência já foi decidida por outra pessoa; a lista foi atualizada.');
+      case 'KIT_PENDING_NOT_FOUND':
+        return t('kit.decide.errors.KIT_PENDING_NOT_FOUND', 'Pendência não encontrada; a lista foi atualizada.');
+      case 'KIT_PENDING_FROZEN_YEAR':
+        return t('kit.decide.errors.KIT_PENDING_FROZEN_YEAR', 'Este item é de um ano congelado (ECF transmitida ou período fechado): só dá para recusar.');
+      case 'KIT_PENDING_COMPILE_DRAFT':
+      case 'ROLE_OVERRIDE_COMPILE_DRAFT':
+        return t('kit.decide.errors.COMPILE_DRAFT', 'A recompilação do binding reprovou; nada foi aplicado.');
+      case 'KIT_NOT_INSTALLED':
+        return t('kit.decide.errors.KIT_NOT_INSTALLED', 'O kit da unidade não está instalado; retome a instalação antes de decidir.');
+      default:
+        // `ACCOUNT_NOT_FOUND` e `KIT_NOT_INSTALLED` (pela recompilação da conta restaurada) também chegam como 400
+        // VALIDATION_ERROR com o código no começo da mensagem.
+        if (message.startsWith('KIT_NOT_INSTALLED')) {
+          return t('kit.decide.errors.KIT_NOT_INSTALLED', 'O kit da unidade não está instalado; retome a instalação antes de decidir.');
+        }
+        if (message.startsWith('ACCOUNT_NOT_FOUND')) {
+          return t('kit.decide.errors.ACCOUNT_NOT_FOUND', 'A conta do kit não está viva no plano da unidade.');
+        }
+        return message;
+    }
+  };
+
+  const motivoLength = motivo.trim().length;
+  const motivoOk = motivoLength >= MOTIVO_MIN && motivoLength <= MOTIVO_MAX;
+
+  function openDecision(pending: KitUpgradePendingView, kind: DecisionKind) {
+    setDecision({ pending, kind });
+    setMotivo('');
+    setError(null);
+    setBlocking([]);
+  }
+
+  async function decide() {
+    if (!decision || busy || !motivoOk) return;
+    const { pending, kind } = decision;
+    setBusy(true);
+    try {
+      const body = { unitId, motivo: motivo.trim() };
+      if (kind === 'accept') await accountingKitService.acceptPending(pending.id, body);
+      else await accountingKitService.rejectPending(pending.id, body);
+      setDecision(null);
+      notify(kind === 'accept' ? t('kit.decide.acceptedToast', 'Pendência aceita.') : t('kit.decide.rejectedToast', 'Pendência recusada.'), 'success');
+      reloadRows();
+      reloadKit();
+      if (kind === 'accept' && RECOMPILES_ON_ACCEPT.has(pending.reason)) onActivationChanged();
+    } catch (e: unknown) {
+      setDecision(null);
+      const { message, code } = resolveErrorWithCode(e, t('kit.decide.error', 'Não foi possível decidir a pendência.'));
+      setBlocking(code === 'KIT_PENDING_COMPILE_DRAFT' || code === 'ROLE_OVERRIDE_COMPILE_DRAFT' ? toBlockingIssues(e) : []);
+      setError(decisionErrorText(code, message));
+      if (code === 'KIT_PENDING_NOT_OPEN' || code === 'KIT_PENDING_NOT_FOUND') {
+        reloadRows();
+        reloadKit();
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
-    <section data-testid="accounting-kit-pending" className="rounded-2xl border border-neutral-800 bg-neutral-900/60 px-4 py-4 text-sm text-neutral-200">
+    <section data-testid="accounting-kit-pending" className="space-y-2 rounded-2xl border border-neutral-800 bg-neutral-900/60 px-4 py-4 text-sm text-neutral-200">
       <p className="font-semibold text-neutral-100">
         {t('kit.pending.count', 'Pendências da atualização do kit: {{total}}', { total: String(count) })}
       </p>
-      {error && <p role="alert" className="mt-2 text-red-300">{t('kit.pending.error', 'Não foi possível carregar as pendências.')}</p>}
+      {loadError && <p role="alert" className="text-red-300">{t('kit.pending.error', 'Não foi possível carregar as pendências.')}</p>}
+      {error && (
+        <p role="alert" data-testid="accounting-kit-decide-error" className="rounded-2xl border border-red-900/50 bg-red-950/30 px-3 py-2 text-red-300">
+          {error}
+        </p>
+      )}
+      <ActivationBlockingList blocking={blocking} />
       {rows && rows.length > 0 && (
-        <ul className="mt-2 divide-y divide-neutral-800">
+        <ul className="divide-y divide-neutral-800">
           {rows.map((p) => (
             <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
               <span className="font-mono text-xs text-neutral-300">{p.itemKey}</span>
-              <span className="text-neutral-400">{reasonLabel(p.reason)}</span>
+              <span className="flex flex-wrap items-center gap-2">
+                <span className="text-neutral-400">{reasonLabel(p.reason)}</span>
+                <button
+                  type="button"
+                  onClick={() => openDecision(p, 'accept')}
+                  className="rounded-xl border border-emerald-800/60 px-2.5 py-1 text-xs font-semibold text-emerald-300 hover:bg-emerald-900/30"
+                >
+                  {t('kit.decide.accept', 'Aceitar')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openDecision(p, 'reject')}
+                  className="rounded-xl border border-neutral-700 px-2.5 py-1 text-xs font-semibold text-neutral-300 hover:bg-neutral-800"
+                >
+                  {t('kit.decide.reject', 'Recusar')}
+                </button>
+              </span>
             </li>
           ))}
         </ul>
       )}
+
+      <ConfirmModal
+        isOpen={decision !== null}
+        onClose={() => { if (!busy) setDecision(null); }}
+        onConfirm={() => void decide()}
+        isLoading={busy}
+        confirmDisabled={!motivoOk}
+        variant="warning"
+        title={
+          decision?.kind === 'accept'
+            ? t('kit.decide.confirm.acceptTitle', 'Aceitar a pendência {{item}}?', { item: decision.pending.itemKey })
+            : t('kit.decide.confirm.rejectTitle', 'Recusar a pendência {{item}}?', { item: decision?.pending.itemKey ?? '' })
+        }
+        message={decision ? effectText(decision.pending, decision.kind) : undefined}
+        confirmLabel={decision?.kind === 'accept' ? t('kit.decide.accept', 'Aceitar') : t('kit.decide.reject', 'Recusar')}
+        cancelLabel={t('kit.decide.confirm.cancelLabel', 'Cancelar')}
+      >
+        <label className="block text-xs text-neutral-400">
+          {t('kit.decide.motivoLabel', 'Motivo (10 a 500 caracteres)')}
+          <textarea
+            value={motivo}
+            onChange={(e) => setMotivo(e.target.value)}
+            maxLength={MOTIVO_MAX}
+            rows={3}
+            disabled={busy}
+            className="mt-1 w-full rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 focus:border-emerald-500 focus:outline-none disabled:opacity-50"
+          />
+        </label>
+      </ConfirmModal>
     </section>
   );
 }
