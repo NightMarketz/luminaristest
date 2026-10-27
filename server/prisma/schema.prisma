@@ -1759,6 +1759,9 @@ model FiscalProfile {
   cancelPrazoDias                     Int? // Anexo II RN E0822 [28] — prazo de cancelamento, "conforme parametrização do município emissor"
   substPrazoDias                      Int? // Anexo I RN E0050 [173] — prazo de substituição; ≤ 730 (Anexo I [114] "Prazo máximo parametrizável é 2 anos")
   prazoFonte                          String? // onde o operador achou o número (link/norma municipal)
+  // BE-INCR-NFCE (nó X10a, item 27; EMENDA 2026-10-11 §3 E3-1): prazo do cancelamento 110111 — null ⇒ prazo nacional
+  nfeCancelPrazoHoras                 Int? // NF-e 55: null ⇒ 24 h (Aj. SINIEF 07/05 cl. 12ª; MOC VG Tabela 5-38, exceção estadual)
+  nfceCancelPrazoMinutos              Int? // NFC-e 65: null ⇒ 30 min (Aj. SINIEF 19/16 cl. 15ª, teto nacional); 1–30
   createdById                         String?
   updatedById                         String?
   createdAt                           DateTime  @default(now())

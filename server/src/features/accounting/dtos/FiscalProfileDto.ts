@@ -152,6 +152,11 @@ const FiscalProfileFields = z
     // Anexo I [114] (obs. de chSubstda): "Prazo máximo parametrizável é 2 anos" ⇒ ≤ 730 dias.
     substPrazoDias: z.number().int().min(0).max(730).nullable().optional(),
     prazoFonte: z.string().min(1).max(500).nullable().optional(),
+    // BE-INCR-NFCE (nó X10a, item 27; EMENDA 2026-10-11 §3 E3-1) — prazo do cancelamento 110111; null ⇒ prazo nacional.
+    // Faixa (dono, questionário de 26/10, "NFC-e 1–30, NF-e ≥ 1"): os 30 min do Aj. SINIEF 19/16 cl. 15ª são teto
+    // nacional (só a UF reduz); a NF-e não tem teto porque a exceção estadual da MOC VG Tabela 5-38 não diz o sentido.
+    nfeCancelPrazoHoras: z.number().int().min(1).nullable().optional(),
+    nfceCancelPrazoMinutos: z.number().int().min(1).max(30).nullable().optional(),
   })
   .strict();
 

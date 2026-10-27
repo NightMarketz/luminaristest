@@ -114,7 +114,7 @@ describe('BE-INCR-NFCE PR-4 — inutilização (item 24)', () => {
   it('adaptador que emite o tipo mas não declara inutilização ⇒ 409 DFE_INUT_NAO_SUPORTADA, nada gravado', async () => {
     const { NullEmissor } = await import('../../dfe/NullEmissor');
     const port = new NullEmissor();
-    Object.assign(port, { capabilities: { ...port.capabilities, inutilizar: false } });
+    Object.assign(port, { capabilities: { ...port.capabilities, inutilizar: false, cce: false } });
     mockSelectOverride = { port, ambiente: 'homologacao', enabled: true };
     try {
       const { service, voidRepo } = montar();

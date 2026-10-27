@@ -46,7 +46,7 @@ import {
 import type { ProductFiscalProfileService } from './ProductFiscalProfileService';
 import { selectDfeEmissor, type DfeSelection } from '../dfe/selectDfeEmissor';
 import { assertTpAmb, tpAmbFor } from '../dfe/DfeEmissorPort';
-import type { DfeAmbiente, DfeEmissorPort } from '../dfe/DfeEmissorPort';
+import type { DfeAmbiente, DfeEmissorPort, DfeKind } from '../dfe/DfeEmissorPort';
 import { scopeToday } from '../models/dates';
 import { IND_OP_DEFAULT_SALAO } from '../models/indOp';
 import { RECEITA_NAO_USO_CODE, A_RECEBER_CODE } from '../fixtures/ChartOfAccountsFixture';
@@ -1301,7 +1301,7 @@ export class FiscalDocumentEmissionService {
   private toView(
     doc: FiscalDocumentWithAttempts,
     pendencias: string[] = [],
-    prazos: { cancelPrazoDias: number | null; substPrazoDias: number | null } | null = null,
+    prazos: Parameters<typeof janelaEventos>[1] = null,
   ): FiscalDocumentView {
     return {
       id: doc.id,
@@ -1338,7 +1338,7 @@ export class FiscalDocumentEmissionService {
       xmlAttachmentId: doc.xmlAttachmentId ?? null,
       pdfAttachmentId: doc.pdfAttachmentId ?? null,
       releitura: readReleitura(doc.attempts.find((a) => a.attemptNo === doc.currentAttemptNo)?.resultJson),
-      janela: janelaEventos({ nfseDhProc: doc.nfseDhProc ?? null }, prazos),
+      janela: janelaEventos({ kind: doc.kind as DfeKind, nfseDhProc: doc.nfseDhProc ?? null }, prazos),
       substitutesDocumentId: doc.substitutesDocumentId ?? null,
       substitutedByDocumentId: doc.substitutedByDocumentId ?? null,
       substMotivo: doc.substMotivo ?? null,

@@ -140,9 +140,8 @@ export const cancelarFiscalDocument = async (req: Request, res: Response) => {
     if (!params.success) return res.status(400).json({ success: false, error: params.error.flatten() });
     if (!body.success) return res.status(400).json({ success: false, error: body.error.flatten() });
     const scope = await getFactory().getAccountingScopeResolver().resolve(user, body.data.unitId, { access: 'write' });
-    const data = await getFactory()
-      .getFiscalDocumentLifecycleService()
-      .cancelar(scope, params.data.id, { cMotivo: body.data.cMotivo, xMotivo: body.data.xMotivo });
+    const { unitId: _unitId, ...input } = body.data; // a forma (NFS-e × NF-e/NFC-e) o serviço confere contra o tipo
+    const data = await getFactory().getFiscalDocumentLifecycleService().cancelar(scope, params.data.id, input);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
