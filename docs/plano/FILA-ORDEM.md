@@ -19,23 +19,33 @@
 > a ordem A–F continua a ratificada. Estado de nó manda o frontmatter — os folds vencidos pelos consolidados #902/#903
 > (RETENCOES-FONTE, PRESUMIDO-TETO-78MI `done`, ISS-TRANSICAO-IBS, FIX-PLUGINS-VENDA, FIX-ANALYTICS-RESIDUO, OBS,
 > FE-INCR-KANBAN-REORDER) entraram no mesmo PR desta leitura.
+>
+> **Adendo 27/10 (mesmo PR):** 18 PRs entraram em `main` na madrugada de 27/10 — X10a PR-0..PR-4 (#909, #910, #914, #917,
+> #924), NFE-DANFE-IBSCBS PR-0..PR-2 (#906, #915, #922), C8 emenda 3.2 P1..P3 (#911, #918, #923), LAC-B EMENDA-2 (#916,
+> #919, #921), X9 PR-3 (#908), #898 e #899. Folds de 27/10: X10a `inflight`; FIX-PLUGINS-VENDA e FIX-ANALYTICS-RESIDUO
+> `done`. Plano dia a dia 27/10 → 01/11 com os "executa" necessários: [[REVISAO-SEMANAL-2026-10-26]] §8.
 
 - **A1** fechado em 22/10 (portal + PAA; [[D5]]). Resta: quem contrata PSC + e-CNPJ. **A2** H1 passos 1–5 provados
   (tentativa 3, 22/10); passo 6 é o último do plano. **A3/A4** H2 → M2 seguem os próximos gates humanos, sem bloqueio
   de código. **A5** D7 até 31/12. **A6** D1f alíquota decidida por delegação; cClassTrib e XML real seguem abertos.
   **A7** F-GOV-1 em docs (#904/#905 abertos).
-- **B1** X9: PR-2 (#566) e PR-3 (#908) em `main`; PR-4 #860 aberto — fecha o nó. **B2** I4+I5: nós `done` (fechados antes
+- **B1** X9: PR-2 (#566), PR-3 (#908) e PR-4 (#860, em `main` desde 23/10 — listado como aberto por engano em 26/10,
+  corrigido 27/10) em `main`; o nó segue `inflight` só pelos oráculos do X7. **B2** I4+I5: nós `done` (fechados antes
   de 19/10). **B3** DEFIS-MANUAL / GET-ENTRADAS: nós `done`. **B5** CRM-RB: nó `done`.
   **B6** F5 FE em `main` (#862, 23/10) — fechado como item de fila; o nó segue `inflight` por 16b/16c e chave do M2.
-  **B7** fechado (#866, nó `done` 24/10). **B8** LAC-B EMENDA-2: PR-0 #916 e PR-1 #919 abertos (26/10).
+  **B7** fechado (#866, nó `done` 24/10). **B8** LAC-B EMENDA-2: PR-0 #916, PR-1 #919 e PR-2 #921 em `main` (27/10); runbook da aba PASSOU (#925 aberto, só docs).
 - **C** W6 em `main` (#785/#786), nó `human-open`; W3 BRIEF da confirmação fechado (#788), forks F-W3-C1..C3 pendentes.
-- **D** X10a: 4 PRs abertos em 26/10 (#909 → #910 → #914 → #917) — **a nota ainda diz `blocked`**; o fold entra nesses PRs.
-- **E1** fechado 20/10 · **E2** fechado (#883) · **E3** #897 em `main`, resíduo #898 aberto · **E4** lotes 1–4 em `main`,
+- **D** X10a: PR-0..PR-4 (#909, #910, #914, #917, #924 com a EMENDA-3) em `main` em 27/10; PR-5 #926 aberto; PR-6 sob o
+  mesmo 'executa' de 26/10; nó `inflight` (fold 27/10). PR-7..PR-9 continuam no D (PSC + e-CNPJ, mTLS). O #914 destrava
+  o PR-2 do EFICIENCIA-FISCAL.
+- **E1** fechado 20/10 · **E2** fechado (#883) · **E3** #897 e #898 em `main` — nó `done` (27/10) · **E4** lotes 1–4 em `main`,
   #10/#11/#20 esperam o dono · **E5** lotes A–C em `main`, 22 itens instrumentados, decisões de produto esperam o dono ·
-  **E6** fechado (nó `done` 24/10) · **E7** #894 em `main`, #899 aberto · **E8** sem movimento (BRIEF não pushado).
+  **E6** fechado (nó `done` 24/10) · **E7** #894 e #899 em `main` — nó `done` (27/10) · **E8** nó `done` desde 20/10 (#773 e o BRIEF em `main`) — a linha E8
+  da tabela E está superada; a leitura de 26/10 ("BRIEF não pushado") estava errada.
 - **F1** IBS-CBS-2027 `done` (24/10) · RETENCOES-FONTE PR-1/PR-2 em `main`, PR-3/4 esperam o contador · PRESUMIDO-TETO-78MI
-  `done` (#887 em `main`; P-PT-1..3 com o contador) · ISS-TRANSICAO-IBS PR-1 #885 em `main` · EFD-REINF PR-1 #912 aberto · NFE-DANFE-IBSCBS PR-0 #906 e PR-1 #915
-  abertos (alvo 30/11) · **F1.5** EFICIENCIA-FISCAL PR-1 #913 aberto. **F2–F5** sem nó em `nos/`; Q4–Q12 abertas.
+  `done` (#887 em `main`; P-PT-1..3 com o contador) · ISS-TRANSICAO-IBS PR-1 #885 em `main` · EFD-REINF PR-1 #912 aberto (em conflito com `main` desde 27/10) · NFE-DANFE-IBSCBS PR-0..PR-2 (#906, #915, #922) em
+  `main` 27/10; PR-3 espera 'executa' (alvo 30/11) · **F1.5** EFICIENCIA-FISCAL PR-1 #913 aberto (em conflito); PR-2
+  destravado pelo #914. **F2–F5** sem nó em `nos/`; Q4–Q12 abertas.
 
 ## A. Prazos e decisões do dono (só o dono move)
 

@@ -170,6 +170,20 @@
     .tl-head, .tl-row { grid-template-columns: 1fr; gap: 2px; } .tl-head .lab { display: none; } .tl-grid { left: 0; } .tl-row { min-height: 0; padding-block: 4px; }
   }
   @media (prefers-reduced-motion: no-preference) { nav.tabs a { transition: color 120ms; } }
+  .banner { background: var(--accent-soft); border-radius: 8px; padding: 8px 12px; font-size: 0.88rem; margin-bottom: 12px; }
+  .task .n .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .exec { padding-left: 1.2em; } .exec li { margin-bottom: 8px; font-size: 0.88rem; }
+  .exec code { display: block; background: var(--surface-2); padding: 6px 8px; border-radius: 6px; font-size: 0.8rem; white-space: pre-wrap; margin-top: 2px; }
+  .exec .why { color: var(--fg-2); font-size: 0.8rem; }
+  .gantt text { font-family: var(--font-mono); font-size: 11px; fill: var(--fg-2); }
+  .gantt .lbl { fill: var(--fg); font-family: var(--font-body, inherit); font-size: 12px; }
+  .gantt .grid { stroke: var(--line); stroke-width: 1; }
+  .gantt .today { fill: var(--accent-soft); }
+  .gantt .bar { rx: 4; }
+  .gantt .bt { fill: var(--fg); font-size: 10.5px; }
+  .three-tab { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .three-tab .card b.h { display: block; font-size: 1rem; margin-bottom: 4px; }
+  .three-tab .yes { color: var(--st-done); } .three-tab .no { color: var(--st-human); }
 </style>
 
 <div class="wrap">
@@ -181,10 +195,13 @@
   <nav class="tabs" aria-label="Abas">
     <a href="#roadmap" id="tab-roadmap" data-view="roadmap">Roadmap e próximas tarefas</a>
     <a href="#prazos" id="tab-prazos" data-view="prazos">Prazos e milestones</a>
+    <a href="#semana" id="tab-semana" data-view="semana">Semana 27/10 → 01/11</a>
   </nav>
 
   <!-- ================= ABA 1 ================= -->
   <section class="view" id="view-roadmap" aria-labelledby="tab-roadmap">
+
+    <div class="banner"><b>Atualizado 27/10, 03:00:</b> 18 PRs entraram em <code>main</code> na madrugada (X10a PR-0..4, DANFE PR-0..2, C8 P1..P3, LAC-B PR-0..2, X9 PR-3, #898, #899). Os números e gráficos desta aba são a foto de 26/10; o estado novo e o plano dia a dia estão na aba <a href="#semana">Semana 27/10 → 01/11</a>. Correções: #860 (X9 PR-4) já estava em <code>main</code> desde 23/10; E8 já era nó fechado.</div>
 
     <div class="hero">
       <div>
@@ -339,7 +356,7 @@
     <p class="lead">Numeradas pela ordem sugerida. A linha verde em cada cartão diz o que a tarefa destrava.</p>
     <div class="board">
       <div class="col"><h3><i class="dot" style="background:var(--st-human)"></i>Você (dono)<span class="cnt">6</span></h3>
-        <div class="task"><span class="n">1</span><b>OK de merge dos 19 PRs, por pilha</b><div class="d">#860 · #898 · #899 · #904 #905 · #906→#915 · #909→#910→#914→#917 · #911→#918 · #912 · #913 · #916→#919 · #907 (draft)</div><div class="unlock">destrava: DANFE PR-2/3, Reinf PR-2..4, fechamento do X9</div></div>
+        <div class="task"><span class="n">1</span><b>OK de merge dos PRs abertos, por pilha</b><div class="d">26/10: #898 · #899 · #904 #905 · #906→#915 · #909→#910→#914→#917 · #911→#918 · #912 · #913 · #916→#919 · #907 (draft). <b>27/10:</b> 18 já mergeados; restam #926 · #925 · #920 · #912 e #913 (em conflito) · #907 · #904 · #905</div><div class="unlock">destrava: DANFE PR-3, Reinf PR-2/3, X10a PR-6</div></div>
         <div class="task"><span class="n">3</span><b>11 decisões de produto</b><div class="d">auth #10/#11/#20 · chat #6 #10 #11 #16 #17 #18 #20 e parte do #14 · Kanban: tela × rebalanceio parcial · W6: rota ou remoção · W3: F-W3-C1..C3</div><div class="unlock">destrava: fechar FIX-AUTH, FIX-CHAT, KANBAN, W6</div></div>
         <div class="task"><span class="n">5</span><b>Régua F: responder Q4–Q12</b><div class="d">6 nós propostos entram? ordem por ondas? instrumentar devolução e cancelamento?</div><div class="unlock">destrava: onda 1 (8 nós) começar a ser planejada</div></div>
         <div class="task"><span class="n">7</span><b>H2: conferir na tela com o agente de copiloto</b><div class="d">Runbooks em branco; H1 passos 1–5 já provados.</div><div class="unlock">destrava: M2</div></div>
@@ -347,10 +364,10 @@
         <div class="task"><span class="n">9</span><b>Emissão: contratar PSC + e-CNPJ</b><div class="d">Resto aberto do D5. PNCT até 31/12 (D7).</div><div class="unlock">destrava: X10i, X11, NF-e/NFC-e automáticas</div></div>
       </div>
       <div class="col"><h3><i class="dot" style="background:var(--st-inflight)"></i>Agente<span class="cnt">4</span></h3>
-        <div class="task"><span class="n">2</span><b>Fold do X10a nos PRs #909–#917</b><div class="d">Estado, PRs e autorização citada; check do vault.</div><div class="unlock">destrava: índice do plano volta a dizer a verdade</div></div>
-        <div class="task"><span class="n">4</span><b>DANFE IBS/CBS PR-2 e PR-3</b><div class="d">Executa já dado para PR-0..3; alvo 30/11.</div><div class="unlock">destrava: prazo legal 01/12</div></div>
-        <div class="task"><span class="n">4b</span><b>EFD-Reinf PR-2..PR-4</b><div class="d">Depois do merge do PR-1 #912.</div><div class="unlock">destrava: onda 0 da régua F fechada</div></div>
-        <div class="task"><span class="n">10</span><b>Esperam só "executa" (sem fork pendente)</b><div class="d">KANBAN EMENDA 1 (refetch no evento online) · X10a EMENDA-2 PR-4..PR-6 · E8 BRIEF DT-NO-CONSUMER-CALLS (push). PR-7 do X10a segue travado por mTLS × PSC.</div><div class="unlock">entram quando você der "executa"</div></div>
+        <div class="task"><span class="n">2</span><b>Fold do X10a — feito 27/10 (#920)</b><div class="d">Nó <code>inflight</code>, PRs #909–#924 e a autorização de 26/10 citados; check do vault íntegro.</div><div class="unlock">feito: índice do plano volta a dizer a verdade</div></div>
+        <div class="task"><span class="n">4</span><b>DANFE IBS/CBS PR-3 (superfície)</b><div class="d">PR-0..PR-2 em main (27/10). O PR-3 precisa do próprio "executa" (as cédulas de 26/10 dizem que não cobrem o PR-3); alvo 30/11.</div><div class="unlock">destrava: prazo legal 01/12</div></div>
+        <div class="task"><span class="n">4b</span><b>EFD-Reinf PR-2 e PR-3</b><div class="d">Depois do #912 reintegrado e mergeado; PR-2 e PR-3 precisam de "executa". PR-4 fica fora (F-REINF-2: manual lido + tenant real).</div><div class="unlock">destrava: onda 0 da régua F fechada</div></div>
+        <div class="task"><span class="n">10</span><b>Esperam só "executa" (sem fork pendente)</b><div class="d">KANBAN EMENDA 1 (refetch no evento online) · EFICIENCIA-FISCAL PR-2 (destravado pelo #914) · C8 P4 (ADR da junção). X10a PR-6 já tem executa; PR-7 segue travado por mTLS × PSC.</div><div class="unlock">entram quando você der "executa"</div></div>
       </div>
       <div class="col"><h3><i class="dot" style="background:var(--st-planned)"></i>Contador<span class="cnt">3</span></h3>
         <div class="task"><span class="n">6</span><b>P-RET-4 e P-RET-7..9</b><div class="d">Retenções: naturezas e códigos que o agente não pode inferir.</div><div class="unlock">destrava: RETENCOES PR-3/4</div></div>
@@ -359,7 +376,7 @@
       </div>
       <div class="col"><h3><i class="dot" style="background:var(--st-legal)"></i>Datas fixas<span class="cnt">4</span></h3>
         <div class="task"><span class="n">01/11</span><b>NFS-e nacional obrigatória</b><div class="d">Cliente emite no portal; sistema relê. Pronto.</div></div>
-        <div class="task"><span class="n">01/12</span><b>DANFE com IBS/CBS</b><div class="d">Precisa DANFE PR-2/3 em main antes.</div></div>
+        <div class="task"><span class="n">01/12</span><b>DANFE com IBS/CBS</b><div class="d">PR-2 em main (27/10); falta só o PR-3.</div></div>
         <div class="task"><span class="n">31/12</span><b>PNCT</b><div class="d">Vigilância de comunicações, com contador.</div></div>
         <div class="task"><span class="n">01/01</span><b>CBS plena 2027</b><div class="d">Código em main; precisa estar no ar (M2).</div></div>
       </div>
@@ -431,6 +448,98 @@
       </table>
     </div>
   </section>
+
+  <!-- ================= ABA 3 ================= -->
+  <section class="view" id="view-semana" aria-labelledby="tab-semana" hidden>
+
+    <div class="hero">
+      <div>
+        <div class="big">Em uma frase: <strong>o que é código destravado cabe até domingo</strong> — se o OK de merge vier no mesmo dia e os quatro "executa" vierem até terça. A régua de 63 e a régua F <strong>não fecham nesta semana</strong>: dependem do contador, do PSC e de planejamento que ainda não existe.</div>
+        <ul class="three">
+          <li><b>1</b><span><strong>Ponto de partida (27/10, 03:00):</strong> 18 PRs entraram em main na madrugada; sobram 8 abertos, dois deles (#912, #913) em conflito e à espera de reintegração.</span></li>
+          <li><b>2</b><span><strong>Ritmo:</strong> no máximo 3 frentes de agente por dia, base → topo nas pilhas, snapshot de DTO e openapi regerados na main. Foi assim que 18 PRs couberam numa noite sem se pisar.</span></li>
+          <li><b>3</b><span><strong>O que não entra:</strong> X10a PR-7..9 (PSC + e-CNPJ), Reinf PR-4, RETENCOES PR-3/4, ISS PR-2, F6, X10i/X11, CSLL-RESSEGURADORES, X7, M2 e as ondas da régua F — nenhum depende de código.</span></li>
+        </ul>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><div class="k">Mergeados na madrugada</div><div class="v">18</div><div class="s">26/10 23:55 → 27/10 02:53</div></div>
+        <div class="kpi"><div class="k">Abertos agora</div><div class="v">8</div><div class="s">2 em conflito com main</div></div>
+        <div class="kpi"><div class="k">"Executa" que faltam</div><div class="v">4</div><div class="s">+ 3 pedidos, 2 opcionais</div></div>
+        <div class="kpi"><div class="k">Régua no domingo</div><div class="v">55<small>/63</small></div><div class="s">igual a hoje, por desenho</div></div>
+      </div>
+    </div>
+
+    <h2>A resposta em três camadas</h2>
+    <div class="three-tab">
+      <div class="card"><b class="h"><span class="yes">Sim, condicionado</span> — código destravado</b>~9 PRs de feature + 2 reintegrações. Condição: OK de merge no mesmo dia e os 4 "executa" até terça. Sem OK diário, quinta já abre conflito entre DANFE PR-3 e EF PR-2 (os dois tocam snapshot de DTO e openapi) e metade escorrega para 02–04/11.</div>
+      <div class="card"><b class="h"><span class="no">Não</span> — régua de 63</b>Dos 8 nós abertos, 6 esperam terceiro: contador (RETENCOES, ISS), PSC/e-CNPJ (X10a PR-7, X10i, X11), chave do MP (F6), ADE da Receita (CSLL-RESSEGURADORES), oráculos humanos (X7). A régua termina a semana em 55/63 mesmo com tudo mergeado.</div>
+      <div class="card"><b class="h"><span class="no">Não</span> — régua F (22 nós)</b>Nenhum nó existe em nos/. Q4–Q12 estão abertas desde 20/10, e cada nó pede PRE-ADR → forks → BRIEF → executa: no mínimo duas semanas por onda. Responder Q4–Q12 no sábado abre a onda 1 na semana que vem.</div>
+    </div>
+
+    <h2>Quem faz o quê, dia a dia</h2>
+    <div class="chart"><h3>Linha do tempo da semana</h3><div class="sub">cada barra é uma frente; cor = quem move (com rótulo); hoje sombreado</div>
+      <div class="legend-status" style="margin-bottom:6px"><span><i class="dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--st-human);vertical-align:middle;margin-right:4px"></i>Você (OK, decisão, gate)</span><span><i class="dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--st-inflight);vertical-align:middle;margin-right:4px"></i>Agente (código, fold, pacote)</span><span><i class="dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--st-legal);vertical-align:middle;margin-right:4px"></i>Lei (data fixa)</span></div>
+      <div id="c-week"></div>
+    </div>
+
+    <div class="board" style="margin-top:12px">
+      <div class="col"><h3><i class="dot" style="background:var(--accent)"></i>ter 27/10<span class="cnt">hoje</span></h3>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-human)"></i>Você</span><b>OK por número: #925, #904, #905, #920, #926</b><div class="d">Os quatro primeiros são só docs. O #926 (X10a PR-5) é fiscal: ler a nota de risco da leitura E3-2 no corpo do PR.</div></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-human)"></i>Você</span><b>Dar os 4 "executa" + o pedido de integração</b><div class="d">Lista pronta para colar logo abaixo. Podem vir todos hoje; o agente consome na ordem DANFE → Reinf → EF → Kanban.</div></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-inflight)"></i>Agente</span><b>Reintegrar #912 e #913 sobre a main</b><div class="d">sessao-integracao: main vence em snapshot/openapi; código conflitante resolve pela spec.</div></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-inflight)"></i>Agente</span><b>X10a PR-6 (Fase F)</b><div class="d">Já coberto pelo executa de 26/10; empilhado no #926.</div></div>
+      </div>
+      <div class="col"><h3><i class="dot" style="background:var(--fg-3)"></i>qua 28/10</h3>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-human)"></i>Você</span><b>OK: #912 e #913 reintegrados · X10a PR-6</b><div class="d">Os dois primeiros são fiscais: ler o "em duas linhas" de cada um.</div></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-human)"></i>Você</span><b>Questionário: 11 decisões de produto</b><div class="d">auth #10/#11, #20 · chat #6 #10 #11 #16 #17 #18 #20 e parte do #14. O agente prepara com contexto e recomendação, uma rodada só.</div></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-inflight)"></i>Agente</span><b>DANFE PR-3 · Reinf PR-2 · EF PR-2</b><div class="d">Três frentes, cada uma sobre a main do dia. DANFE PR-3 fecha o nó um mês antes do 01/12.</div></div>
+      </div>
+      <div class="col"><h3><i class="dot" style="background:var(--fg-3)"></i>qui 29/10</h3>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-human)"></i>Você</span><b>OK: DANFE PR-3, Reinf PR-2, EF PR-2</b></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-human)"></i>Você</span><b>H2 dia 1 — sign-off de browser</b><div class="d">Com o agente de copiloto. O ambiente já foi provado pelo runner do #925 (H2 passos 1–3).</div><div class="unlock">destrava: M2 na semana que vem</div></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-inflight)"></i>Agente</span><b>Reinf PR-3 · lote final FIX-AUTH/CHAT · Kanban EMENDA 1</b><div class="d">O lote FIX usa as decisões de quarta.</div></div>
+      </div>
+      <div class="col"><h3><i class="dot" style="background:var(--fg-3)"></i>sex 30/10</h3>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-human)"></i>Você</span><b>OK: Reinf PR-3, lotes FIX, Kanban E1</b></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-human)"></i>Você</span><b>H2 dia 2 — passos restantes + assinatura</b><div class="d">Assinatura só sua. Decidir também #907 (nó + correção) e C8 P4, se quiser nesta semana.</div></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-inflight)"></i>Agente</span><b>Runbook do Kanban (passos 5–10) · folds · pacote do contador</b><div class="d">Runbook em build de produção, assinado como agente (regra de 25/10). Pacote: P-RET-4/7..9, P-ISS-1..3, P-EF-1..6, P-PT-1..3.</div></div>
+      </div>
+      <div class="col"><h3><i class="dot" style="background:var(--fg-3)"></i>sáb 31/10</h3>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-human)"></i>Você</span><b>Enviar o pacote ao contador</b><div class="unlock">destrava: RETENCOES PR-3/4, ISS PR-2, EF PR-3..5</div></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-human)"></i>Você</span><b>Régua F: responder Q4–Q12</b><div class="d">Questionário preparado pelo agente.</div><div class="unlock">destrava: onda 1 começa a ser planejada em 03/11</div></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-inflight)"></i>Agente</span><b>#907 e C8 P4 se autorizados · reserva para conflitos</b></div>
+      </div>
+      <div class="col"><h3><i class="dot" style="background:var(--st-legal)"></i>dom 01/11</h3>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-legal)"></i>Lei</span><b>NFS-e nacional obrigatória</b><div class="d">Nada no código: o cliente emite no portal e o sistema relê. Conferir que o cliente sabe operar o portal — fora do repo.</div></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-inflight)"></i>Agente</span><b>Revisão semanal de 02/11 + artefato · check do vault</b></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-human)"></i>Você</span><b>Nada obrigatório</b></div>
+      </div>
+    </div>
+
+    <h2>Os "executa" e pedidos, prontos para colar</h2>
+    <div class="card">
+      <ol class="exec">
+        <li>Executa que falta — DANFE<code>Executa o NFE-DANFE-IBSCBS PR-3 (itens 17–21 do BRIEF) — sessao-feature, sem merge.</code><span class="why">As cédulas de 26/10 dizem "não é executa do PR-3". Fecha o nó um mês antes do prazo legal.</span></li>
+        <li>Executa que falta — EFD-Reinf<code>Executa o EFD-REINF PR-2 e PR-3 (BRIEF #848) — sessao-feature, um PR por fatia, empilhados, sem merge.</code><span class="why">26/10 cobriu só o PR-1. Dependências (IRRF-DISTRIBUICAO, RETENCOES PR-2) já em main. PR-4 fica fora.</span></li>
+        <li>Executa que falta — Eficiência fiscal<code>Executa o EFICIENCIA-FISCAL PR-2 (BRIEF #846, segregação por NCM) — sessao-feature, sem merge.</code><span class="why">O bloqueio do BRIEF ("até o ProductFiscalProfile estar em main") caiu com o #914.</span></li>
+        <li>Executa que falta — Kanban<code>Executa a EMENDA 1 do FE-INCR-KANBAN-REORDER (#896) — sessao-feature, sem merge; depois roda os passos 5–10 do runbook em build de produção.</code><span class="why">O executa de 21/10 cobriu o nó, não a emenda.</span></li>
+        <li>Pedido (não é executa)<code>Integra #912 e #913 sobre a main — sessao-integracao, sem merge.</code><span class="why">O executa do PR-1 cobre o código; o transporte é da sessão de integração (inferido).</span></li>
+        <li>Pedido<code>Prepara o questionário das decisões de FIX-AUTH-CONTA (#10/#11, #20) e FIX-CHAT-AGENTE (#6, #10, #11, #16, #17, #18, #20, #14).</code></li>
+        <li>Pedido<code>Monta o pacote do contador com P-RET-4/7..9, P-ISS-1..3, P-EF-1..6 e P-PT-1..3.</code></li>
+        <li>Opcional<code>Executa o C8 P4 (ADR-INCR-FIXED-ASSETS-EMENDA-JUNCAO) — sessao-feature, sem merge.</code><span class="why">"faz o C8 emenda 3.2" cobriu P1–P3; a junção tem ADR próprio (inferido).</span></li>
+        <li>Opcional<code>#907: o nó é &lt;NÓ&gt;; executa a sessao-correcao dos itens 32 e 36 da ITG 2000, sem merge.</code></li>
+      </ol>
+    </div>
+
+    <h2>Como fica domingo, se tudo acima acontecer</h2>
+    <div class="three-tab">
+      <div class="card"><h3>Fecha</h3><ul><li>NFE-DANFE-IBSCBS <b>done</b> (um mês antes do 01/12)</li><li>EFD-REINF PR-1..PR-3 em main (PR-4 fora)</li><li>EFICIENCIA-FISCAL PR-1/PR-2 em main (PR-3..5 com o contador)</li><li>X10a EMENDA-2 fechada até o PR-6 (nó segue inflight pelo PR-7)</li><li>FIX-AUTH-CONTA, FIX-CHAT-AGENTE e KANBAN <b>done</b></li><li>H2 assinado → M2 pode começar em 03/11</li></ul></div>
+      <div class="card"><h3>Não muda</h3><ul><li><b>Régua 55/63</b>, igual a hoje: nenhum nó acima está na régua ou fecha nela esta semana</li><li>Régua F continua em 0 nós planejados até Q4–Q12</li><li>PSC + e-CNPJ, chave do MP, ADE da Receita e respostas do contador seguem fora do seu e do meu alcance de código</li></ul></div>
+      <div class="card"><h3>O que ganha a semana</h3><ul><li>Prazo legal de 01/12 garantido com um mês de folga</li><li>Onda 0 da régua F quase fechada (só RETENCOES PR-3/4 de fora, por causa do contador)</li><li>H2 sai do caminho do M2 — e o M2 é o que põe o CBS 2027 e o F5 no ar</li></ul></div>
+    </div>
+
+  </section>
+
 </div>
 
 <div class="tip" id="tip" hidden></div>
@@ -438,7 +547,7 @@
 <script>
 (function () {
   // ---------- tabs
-  var views = { roadmap: document.getElementById('view-roadmap'), prazos: document.getElementById('view-prazos') };
+  var views = { roadmap: document.getElementById('view-roadmap'), prazos: document.getElementById('view-prazos'), semana: document.getElementById('view-semana') };
   var tabs = document.querySelectorAll('nav.tabs a');
   function show(name) {
     if (!views[name]) name = 'roadmap';
@@ -616,4 +725,52 @@
     tbody.appendChild(tr);
   });
 })();
+
+  // ---------- aba 3: linha do tempo da semana (27/10 → 01/11)
+  (function () {
+    var host = document.getElementById('c-week'); if (!host) return;
+    var days = ['ter 27', 'qua 28', 'qui 29', 'sex 30', 'sáb 31', 'dom 01'];
+    var who = { dono: 'var(--st-human)', agente: 'var(--st-inflight)', lei: 'var(--st-legal)' };
+    var rows = [
+      { l: 'OKs: #925 #904 #905 #920 #926', w: 'dono', s: 0, e: 0 },
+      { l: 'Os 4 "executa" + pedido de integração', w: 'dono', s: 0, e: 0 },
+      { l: 'Reintegrar #912 e #913', w: 'agente', s: 0, e: 0 },
+      { l: 'X10a PR-6 (Fase F)', w: 'agente', s: 0, e: 1 },
+      { l: 'OK #912 #913 · PR-6', w: 'dono', s: 1, e: 1 },
+      { l: 'Questionário: 11 decisões', w: 'dono', s: 1, e: 1 },
+      { l: 'DANFE PR-3', w: 'agente', s: 1, e: 2 },
+      { l: 'EFD-Reinf PR-2 → PR-3', w: 'agente', s: 1, e: 3 },
+      { l: 'Eficiência fiscal PR-2', w: 'agente', s: 1, e: 2 },
+      { l: 'OKs do dia (DANFE, Reinf, EF, FIX, Kanban)', w: 'dono', s: 2, e: 4 },
+      { l: 'H2: sign-off de browser + assinatura', w: 'dono', s: 2, e: 3 },
+      { l: 'FIX-AUTH / FIX-CHAT lote final', w: 'agente', s: 2, e: 3 },
+      { l: 'Kanban EMENDA 1 + runbook 5–10', w: 'agente', s: 2, e: 3 },
+      { l: 'Pacote do contador: monta → você envia', w: 'agente', s: 3, e: 3, x: { w: 'dono', s: 4, e: 4 } },
+      { l: 'Régua F: Q4–Q12', w: 'dono', s: 4, e: 4 },
+      { l: 'Folds · revisão semanal 02/11', w: 'agente', s: 4, e: 5 },
+      { l: 'NFS-e nacional obrigatória (portal)', w: 'lei', s: 5, e: 5 }
+    ];
+    var L = 250, W = 820, colW = (W - L - 10) / days.length, top = 26, rh = 24, H = top + rows.length * rh + 8;
+    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, width: '100%', 'class': 'gantt', role: 'img', 'aria-label': 'Linha do tempo da semana por frente e responsável' });
+    svg.appendChild(el('rect', { x: L, y: 0, width: colW, height: H, 'class': 'today' }));
+    days.forEach(function (d, i) {
+      var x = L + i * colW;
+      svg.appendChild(el('line', { x1: x, y1: 0, x2: x, y2: H, 'class': 'grid' }));
+      svg.appendChild(el('text', { x: x + colW / 2, y: 16, 'text-anchor': 'middle' }, d));
+    });
+    svg.appendChild(el('line', { x1: W - 10, y1: 0, x2: W - 10, y2: H, 'class': 'grid' }));
+    rows.forEach(function (r, i) {
+      var y = top + i * rh;
+      svg.appendChild(el('line', { x1: 0, y1: y + rh, x2: W, y2: y + rh, 'class': 'grid' }));
+      var t = el('text', { x: 4, y: y + rh / 2 + 4, 'class': 'lbl' }, r.l); svg.appendChild(t);
+      function bar(b) {
+        var x = L + b.s * colW + 3, w = (b.e - b.s + 1) * colW - 6;
+        svg.appendChild(el('rect', { x: x, y: y + 5, width: w, height: rh - 10, fill: who[b.w], 'class': 'bar', opacity: 0.9 }));
+        var lab = b.w === 'dono' ? 'Você' : (b.w === 'agente' ? 'Agente' : 'Lei');
+        svg.appendChild(el('text', { x: x + 6, y: y + rh / 2 + 4, 'class': 'bt' }, lab));
+      }
+      bar(r); if (r.x) bar(r.x);
+    });
+    host.appendChild(svg);
+  })();
 </script>
