@@ -1,6 +1,6 @@
 const mockPort = {
   name: 'null',
-  capabilities: { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: false, consultar: true, cancelar: true, webhook: false, substituir: false, inutilizar: true },
+  capabilities: { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: false, consultar: true, cancelar: true, webhook: false, substituir: false, inutilizar: true, cce: false },
   emitir: jest.fn(async () => ({ status: 'PROCESSING', partnerRef: 'x', errors: [] })),
   consultar: jest.fn(),
   cancelar: jest.fn(),

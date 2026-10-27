@@ -6,7 +6,7 @@
  */
 const mockPort = {
   name: 'manual',
-  capabilities: { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: true, consultar: false, cancelar: false, webhook: false, substituir: true, inutilizar: false },
+  capabilities: { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: true, consultar: false, cancelar: false, webhook: false, substituir: true, inutilizar: false, cce: false },
   emitir: jest.fn(),
   consultar: jest.fn(),
   cancelar: jest.fn(),
@@ -19,7 +19,9 @@ jest.mock('../../dfe/resolveEmissor', () => ({ __esModule: true, resolveEmissorF
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { Prisma } from 'generated/prisma';
-import { FiscalDocumentLifecycleService } from '../FiscalDocumentLifecycleService';
+import { FiscalDocumentLifecycleService, cancelInputDoTipo } from '../FiscalDocumentLifecycleService';
+import { janelaEventos } from '../../models/janelaEventos';
+import type { JanelaEventos } from '../../dtos/FiscalDocumentDto';
 import type { AccountingScope } from '../../scope/AccountingScope';
 import type { CancelResult } from '../../dfe/DfeEmissorPort';
 import { signNfseEventoForTest, signNfseForTest } from '@test/helpers/nfeSignature';
@@ -97,7 +99,7 @@ const JANELA = (over: Record<string, string | null> = {}) => ({
   ...over,
 });
 
-function make(docs: Doc[], opts: { janela?: ReturnType<typeof JANELA>; policy?: Partial<Record<string, () => boolean>> } = {}) {
+function make(docs: Doc[], opts: { janela?: ReturnType<typeof JANELA> | JanelaEventos; policy?: Partial<Record<string, () => boolean>> } = {}) {
   const byId: Record<string, Doc> = Object.fromEntries(docs.map((d) => [d.id, d]));
   const repo = {
     findById: jest.fn(async (_s: unknown, id: string) => byId[id] ?? null),
@@ -133,7 +135,7 @@ beforeEach(() => {
   mockSelection.enabled = true;
   mockSelection.ambiente = 'producao';
   mockPort.name = 'manual';
-  mockPort.capabilities = { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: true, consultar: false, cancelar: false, webhook: false, substituir: true, inutilizar: false };
+  mockPort.capabilities = { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: true, consultar: false, cancelar: false, webhook: false, substituir: true, inutilizar: false, cce: false };
 });
 
 describe('item 1 — nfseDhProc', () => {
@@ -145,7 +147,7 @@ describe('item 1 — nfseDhProc', () => {
 
   it('por máquina: EmissaoResult.dhProc vira nfseDhProc; ausente ⇒ null', async () => {
     mockPort.name = 'null';
-    mockPort.capabilities = { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: false, consultar: true, cancelar: true, webhook: false, substituir: true, inutilizar: false };
+    mockPort.capabilities = { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: false, consultar: true, cancelar: true, webhook: false, substituir: true, inutilizar: false, cce: false };
     const s = make([doc({ id: 'd', status: 'SENT', partner: 'null', ambiente: 'producao' })]);
     mockPort.consultar.mockResolvedValueOnce({ status: 'AUTHORIZED', partnerRef: 'd:1', numero: '15', chaveOuCodigo: 'K', dhProc: '2026-10-01T10:00:00-03:00', errors: [] });
     await s.service.consultarUm(SCOPE, 'd');
@@ -156,7 +158,7 @@ describe('item 1 — nfseDhProc', () => {
 describe('itens 5 e 6 — cancelamento por máquina com a janela e contrato do OUT_OF_WINDOW', () => {
   beforeEach(() => {
     mockPort.name = 'null';
-    mockPort.capabilities = { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: false, consultar: true, cancelar: true, webhook: false, substituir: true, inutilizar: false };
+    mockPort.capabilities = { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: false, consultar: true, cancelar: true, webhook: false, substituir: true, inutilizar: false, cce: false };
   });
   const maquina = () => doc({ partner: 'null' });
 
@@ -326,7 +328,7 @@ describe('review B1 — reenviar a substituta REJECTED recoloca o subst', () => 
 
   it('máquina: idem, com xMotivo do pedido', async () => {
     mockPort.name = 'null';
-    mockPort.capabilities = { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: false, consultar: true, cancelar: true, webhook: false, substituir: true, inutilizar: false };
+    mockPort.capabilities = { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: false, consultar: true, cancelar: true, webhook: false, substituir: true, inutilizar: false, cce: false };
     const s = make([doc({ partner: 'null' }), substituta({ status: 'REJECTED', partner: 'null', numero: 9n, substMotivo: '99', substReason: 'valor do servico corrigido' })]);
     await s.service.reenviar(SCOPE, 'subst');
     expect(payloadDaTentativa2(s.repo as never).infDPS.subst).toEqual({ chSubstda: CHAVE_ORIGINAL, cMotivo: '99', xMotivo: 'valor do servico corrigido' });
@@ -390,5 +392,92 @@ describe('item 14 — autorizar a substituta cancela a original na mesma tx (uni
     await s.service.rejeicaoManual(SCOPE, 'subst', [{ code: 'E0050', message: 'fora do prazo do município' }]);
     expect(transitionsOf(s.repo, 'orig')).toEqual([]);
     expect(s.postingService.retireSourceDocument).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * BE-INCR-NFCE (nó X10a, item 27; F-NFCE-10 a) — cancelamento 110111 da NF-e/NFC-e por máquina. A janela é a da função pura
+ * real (`janelaEventos`, ramo 55/65) sobre o `dhRecbto` gravado; fora dela a operação segue para a porta com aviso e o 409
+ * `OUT_OF_WINDOW` só vem da rejeição 501 do fisco (`[NFCE-CANC-FORA]`).
+ */
+describe('BE-INCR-NFCE item 27 — cancelamento 110111 da NF-e/NFC-e', () => {
+  beforeEach(() => {
+    mockPort.name = 'null';
+    mockPort.capabilities = { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: false, consultar: true, cancelar: true, webhook: false, substituir: true, inutilizar: false, cce: false };
+  });
+  const XJUST = 'venda digitada em duplicidade no caixa';
+  const nfe = (kind: 'NFE' | 'NFCE', autorizadaHaMs: number) => {
+    const dhRecbto = new Date(Date.now() - autorizadaHaMs);
+    return { doc: doc({ kind, partner: 'null', cTribNac: null, nfseDhProc: dhRecbto }), janela: janelaEventos({ kind, nfseDhProc: dhRecbto }, null) };
+  };
+  /** Fixture de adaptador: traduz o `retEvento/cStat` pela regra do JSDoc de `CancelResult` (501 ⇒ OUT_OF_WINDOW). */
+  const traduz110111 = (cStat: string): CancelResult =>
+    cStat === '135' ? { status: 'CANCELLED', errors: [] } : { status: cStat === '501' ? 'OUT_OF_WINDOW' : 'REJECTED', errors: [{ code: cStat, message: 'retEvento' }] };
+
+  it('NF-e autorizada há 25 h, prazo nulo ⇒ avisos fora_da_janela_configurada e a porta é chamada com xJust', async () => {
+    const { doc: d, janela } = nfe('NFE', 25 * 3_600_000);
+    const s = make([d], { janela });
+    mockPort.cancelar.mockResolvedValueOnce(traduz110111('135'));
+    const r = await s.service.cancelar(SCOPE, 'orig', { xJust: XJUST });
+    expect(r.avisos).toEqual(['fora_da_janela_configurada']);
+    expect(mockPort.cancelar).toHaveBeenCalledWith('orig:1', { kind: 'NFE', xJust: XJUST });
+    expect(transitionsOf(s.repo, 'orig')[0]).toMatchObject({ status: 'CANCELLED', cancelMotivo: null, cancelReason: XJUST });
+    expect(s.auditService.append).toHaveBeenCalledWith(expect.anything(), SCOPE, expect.objectContaining({ eventType: 'dfe.cancelled', payload: { documentId: 'orig' } }));
+    expect(s.postingService.retireSourceDocument).toHaveBeenCalledWith(SCOPE, 'src-orig', 'dfe_cancelled:110111');
+  });
+
+  it('porta falsa devolvendo 501 ⇒ 409 DFE_CANCEL_OUT_OF_WINDOW, nada escrito', async () => {
+    const { doc: d, janela } = nfe('NFE', 25 * 3_600_000);
+    const s = make([d], { janela });
+    mockPort.cancelar.mockResolvedValueOnce(traduz110111('501'));
+    await expect(s.service.cancelar(SCOPE, 'orig', { xJust: XJUST })).rejects.toMatchObject({
+      statusCode: 409,
+      errorCode: 'DFE_CANCEL_OUT_OF_WINDOW',
+      message: expect.stringContaining('501'),
+    });
+    expect(s.repo.transition).not.toHaveBeenCalled();
+  });
+
+  it('EMENDA §3 E3-2: NFC-e com 29 min cancela sem aviso', async () => {
+    const { doc: d, janela } = nfe('NFCE', 29 * 60_000);
+    const s = make([d], { janela });
+    mockPort.cancelar.mockResolvedValueOnce(traduz110111('135'));
+    const r = await s.service.cancelar(SCOPE, 'orig', { xJust: XJUST });
+    expect(r.avisos).toEqual([]);
+    expect(mockPort.cancelar).toHaveBeenCalledWith('orig:1', { kind: 'NFCE', xJust: XJUST });
+  });
+
+  it('EMENDA §3 E3-2: NFC-e com 31 min segue para a porta com aviso; o 501 do fisco dá 409', async () => {
+    const { doc: d, janela } = nfe('NFCE', 31 * 60_000);
+    const s = make([d], { janela });
+    mockPort.cancelar.mockResolvedValueOnce(traduz110111('501'));
+    await expect(s.service.cancelar(SCOPE, 'orig', { xJust: XJUST })).rejects.toMatchObject({ statusCode: 409, errorCode: 'DFE_CANCEL_OUT_OF_WINDOW' });
+    expect(mockPort.cancelar).toHaveBeenCalledTimes(1);
+  });
+
+  it('outra rejeição do 110111 ⇒ 409 DFE_CANCEL_REJECTED com o cStat na mensagem', async () => {
+    const { doc: d, janela } = nfe('NFCE', 60_000);
+    const s = make([d], { janela });
+    mockPort.cancelar.mockResolvedValueOnce(traduz110111('573'));
+    await expect(s.service.cancelar(SCOPE, 'orig', { xJust: XJUST })).rejects.toMatchObject({ statusCode: 409, errorCode: 'DFE_CANCEL_REJECTED', message: expect.stringContaining('573') });
+  });
+
+  it('corpo da forma trocada ⇒ 400 dfe_cancel_corpo_do_tipo, porta não chamada', async () => {
+    const s = make([nfe('NFCE', 60_000).doc]);
+    await expect(s.service.cancelar(SCOPE, 'orig', { cMotivo: 1, xMotivo: 'erro na emissao da nota' })).rejects.toMatchObject({
+      statusCode: 400,
+      message: expect.stringContaining('dfe_cancel_corpo_do_tipo'),
+    });
+    const n = make([doc({ partner: 'null' })]);
+    await expect(n.service.cancelar(SCOPE, 'orig', { xJust: XJUST })).rejects.toMatchObject({ statusCode: 400, message: expect.stringContaining('dfe_cancel_corpo_do_tipo') });
+    expect(mockPort.cancelar).not.toHaveBeenCalled();
+  });
+});
+
+describe('cancelInputDoTipo (item 27)', () => {
+  it('NFS-e ⇒ e101101; NF-e/NFC-e ⇒ 110111', () => {
+    expect(cancelInputDoTipo('NFSE', { cMotivo: 2, xMotivo: 'servico nao prestado' })).toEqual({ kind: 'NFSE', cMotivo: 2, xMotivo: 'servico nao prestado' });
+    expect(cancelInputDoTipo('NFE', { xJust: 'x'.repeat(15) })).toEqual({ kind: 'NFE', xJust: 'x'.repeat(15) });
+    expect(cancelInputDoTipo('NFCE', { xJust: 'x'.repeat(15) })).toEqual({ kind: 'NFCE', xJust: 'x'.repeat(15) });
   });
 });
