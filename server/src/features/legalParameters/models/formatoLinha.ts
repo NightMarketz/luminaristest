@@ -165,6 +165,15 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
     valor: 'int',
     checar: (l) => so(l.chave === 'FATOR_REDUCAO_BP' && semDisc(l) && bp(l), 'chave FATOR_REDUCAO_BP; valorInt em bp (0..10000)'),
   },
+  // BE-INCR-NFCE PR-3 (item 17): chave = limite em centavos; discriminador = IBGE da UF (2 dígitos) ou nenhum (nacional).
+  NFCE_LIMITE: {
+    valor: 'int',
+    checar: (l) =>
+      so(
+        ['DEST_IDENTIFICADO_CENTS', 'VEDADA_CENTS'].includes(l.chave) && (l.discriminador == null || /^\d{2}$/.test(l.discriminador)) && (l.valorInt ?? 0) > 0,
+        'chave DEST_IDENTIFICADO_CENTS|VEDADA_CENTS; discriminador = IBGE da UF (2 dígitos) ou nenhum; valorInt em centavos > 0',
+      ),
+  },
   LEIAUTE_SPED: {
     valor: 'texto',
     checar: (l) =>

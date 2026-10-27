@@ -48,6 +48,7 @@ function make(rows: ReturnType<typeof row>[], prazos: { cancelPrazoDias: number 
     { canReadFiscalDocument: () => true } as never,
     { append: jest.fn() } as never,
     legalParamsSemente,
+    null as never,
   );
   return { svc, repo };
 }

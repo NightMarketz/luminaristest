@@ -19,12 +19,31 @@ import type {
   FiscalDocumentWithAttempts,
   IFiscalDocumentRepository,
 } from '../repositories/IFiscalDocumentRepository';
-import { loadSalePackageInfo, loadSaleServiceLines } from '../sync/bridges/saleItems';
+import { loadSalePackageInfo, loadSaleProductLines, loadSaleServiceLines } from '../sync/bridges/saleItems';
 import type { SaleServiceLine } from '../sync/bridges/saleItems';
-import { SERVICE_REVENUE_ACCOUNT } from '../sync/mappers/revenueSplit';
+import { RESALE_REVENUE_ACCOUNT, SERVICE_REVENUE_ACCOUNT } from '../sync/mappers/revenueSplit';
 import { splitCents } from '../dfe/splitCents';
 import { DpsManualPayloadSchema, DpsPayloadSchema, toManualDps } from '../dtos/DpsPayloadDto';
 import type { DpsManualPayload, DpsPayload } from '../dtos/DpsPayloadDto';
+import { NfePayloadSchema, NfePayloadSemNumeracaoSchema } from '../dtos/NfePayloadDto';
+import type { NfePayloadSemNumeracao } from '../dtos/NfePayloadDto';
+import { crtDoRegime, faltantesDosItens } from '../models/nfePrecondicoes';
+import {
+  RTC_SIMPLES_DESDE,
+  RTC_SIMPLES_NAO_TRANSCRITO,
+  clienteDaVenda,
+  destNfce,
+  dhEmiNoFuso,
+  gerarCnf,
+  limitesNfce,
+  montarNfe,
+  numerarNfe,
+  pisCofinsSimples,
+  tPagDoMetodo,
+  ufDoCodMun,
+  type ItemParaMontagem,
+} from '../models/nfeMontagem';
+import type { ProductFiscalProfileService } from './ProductFiscalProfileService';
 import { selectDfeEmissor, type DfeSelection } from '../dfe/selectDfeEmissor';
 import { assertTpAmb, tpAmbFor } from '../dfe/DfeEmissorPort';
 import type { DfeAmbiente, DfeEmissorPort } from '../dfe/DfeEmissorPort';
@@ -55,7 +74,8 @@ export interface PreviewResult {
   ok: boolean;
   faltantes: string[];
   competenciaAlerta: boolean;
-  payloads: DpsPayload[];
+  /** DPS (NFS-e) ou NF-e/NFC-e sem numeração (BE-INCR-NFCE item 22: a numeração e a chave nascem na tx do envio). */
+  payloads: Array<DpsPayload | NfePayloadSemNumeracao>;
   tieOut: { vServCents: string; ledgerCents: string; matches: boolean };
 }
 
@@ -167,6 +187,8 @@ export class FiscalDocumentEmissionService {
     private readonly auditService: AuditService,
     /** BE-INCR-LEGAL-PARAMS PR-2 (F-LP-4 a): fotografia `LC116_SERVICO` (cTribNac na lista nacional). */
     private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
+    // BE-INCR-NFCE (nó X10a, item 11): perfis fiscais dos produtos para a montagem da NF-e/NFC-e.
+    private readonly productFiscalProfileService: Pick<ProductFiscalProfileService, 'list'>,
   ) {}
 
   private async lc116(scope: AccountingScope): Promise<ListaLc116> {
@@ -190,7 +212,8 @@ export class FiscalDocumentEmissionService {
       throw new ForbiddenError('Você não tem permissão para emitir documento fiscal.');
     }
     try {
-      const assembly = await this.assemble(scope, saleId, kind, selectDfeEmissor(process.env, kind).ambiente);
+      const ambiente = selectDfeEmissor(process.env, kind).ambiente;
+      const assembly = kind === 'NFSE' ? await this.assemble(scope, saleId, kind, ambiente) : await this.assembleNfe(scope, saleId, kind, ambiente);
       const totalServiceCents = assembly.groups.reduce((sum, g) => sum + g.vServCents, 0);
       return {
         ok: true,
@@ -230,7 +253,8 @@ export class FiscalDocumentEmissionService {
       throw new ForbiddenError('Você não tem permissão para emitir documento fiscal.');
     }
     const selection = selectDfeEmissor(process.env, kind);
-    const assembly = await this.assemble(scope, saleId, kind, selection.ambiente);
+    const assembly =
+      kind === 'NFSE' ? await this.assemble(scope, saleId, kind, selection.ambiente) : await this.assembleNfe(scope, saleId, kind, selection.ambiente);
     if (!selection.enabled) {
       throw new ValidationError(`dfe_disabled: ${selection.reason}`, { faltantes: [selection.reason ?? 'porta desabilitada'] });
     }
@@ -333,7 +357,7 @@ export class FiscalDocumentEmissionService {
     args: {
       saleId: string;
       saleKey?: string;
-      group: { cTribNac: string; vServCents: number; payload: DpsPayload };
+      group: { cTribNac: string; vServCents: number; payload: DpsPayload | NfePayloadSemNumeracao };
       anchorEntryId: string;
       serie: number;
       dCompet: string;
@@ -357,18 +381,29 @@ export class FiscalDocumentEmissionService {
       if (!selection.port.capabilities.numbersDps) {
         numero = await this.repo.nextNumber(scope, kind, args.serie, tx);
       }
-      let payload: DpsPayload | DpsManualPayload;
-      if (selection.port.capabilities.numbersDps) {
+      let payload: DpsPayload | DpsManualPayload | NfePayloadSemNumeracao;
+      if (kind !== 'NFSE') {
+        // BE-INCR-NFCE item 21: chave de acesso montada aqui, com o número da tx, só quando o Luminaris numera.
+        const semNumero = group.payload as NfePayloadSemNumeracao;
+        payload =
+          numero != null
+            ? NfePayloadSchema.parse(numerarNfe(semNumero, Number(numero), gerarCnf(Number(numero))))
+            : NfePayloadSemNumeracaoSchema.parse(semNumero);
+        if (payload.infNFe.ide.tpAmb !== tpAmbFor(selection.ambiente as DfeAmbiente)) {
+          throw new Error(`dfe_tpamb_invariant: NF-e com tpAmb=${payload.infNFe.ide.tpAmb} num documento de ${selection.ambiente}.`);
+        }
+      } else if (selection.port.capabilities.numbersDps) {
         // BE-INCR-DFE-MANUAL (item 8, F-MAN-4 a): quem numera é o adaptador/portal — a DPS sai SEM id/serie/nDPS.
-        payload = DpsManualPayloadSchema.parse(toManualDps(group.payload));
+        payload = DpsManualPayloadSchema.parse(toManualDps(group.payload as DpsPayload));
+        assertTpAmb(payload, selection.ambiente as DfeAmbiente);
       } else {
-        const numerada = { ...group.payload };
+        const numerada = { ...(group.payload as DpsPayload) };
         if (numero != null) {
           numerada.infDPS = { ...numerada.infDPS, nDPS: Number(numero), id: numerada.infDPS.id.slice(0, -15) + String(numero).padStart(15, '0') };
         }
         payload = DpsPayloadSchema.parse(numerada); // valida ANTES de persistir (payload inválido = bug nosso, não 400)
+        assertTpAmb(payload, selection.ambiente as DfeAmbiente);
       }
-      assertTpAmb(payload, selection.ambiente as DfeAmbiente);
       const createdDoc = await this.repo.createSent(
         scope,
         {
@@ -595,9 +630,10 @@ export class FiscalDocumentEmissionService {
     competenciaAlerta: boolean;
   }> {
     if (kind !== 'NFSE') {
-      // BE-INCR-NFCE: a montagem da NF-e 55 / NFC-e 65 é a Fase C (PR-3); até lá a porta só recusa.
-      throw new ValidationError(`nfe_nao_implementada: a montagem de ${kind} é a Fase C do BE-INCR-NFCE — fora desta fatia.`, {
-        faltantes: [`montagem de ${kind} ainda não implementada`],
+      // BE-INCR-NFCE: emissão e prévia de NF-e/NFC-e vão por `assembleNfe` (PR-3); aqui só chega o reenvio, que reusa o
+      // número da tentativa rejeitada (EMENDA-3 E3-2 a) — PR-4.
+      throw new ValidationError(`nfe_reenvio_nao_implementado: o reenvio de ${kind} é o PR-4 do BE-INCR-NFCE (número reusado, EMENDA-3).`, {
+        faltantes: [`reenvio de ${kind} ainda não implementado`],
       });
     }
 
@@ -799,6 +835,189 @@ export class FiscalDocumentEmissionService {
       cnpjEmitente: unitCnpj,
       partnerAccountRef: fp.partnerAccountRef,
       competenciaAlerta: competenciaCruzouMes,
+    };
+  }
+
+  /**
+   * BE-INCR-NFCE (nó X10a, Fase C — itens 11, 13–19, 21–22) — pré-condições e montagem da NF-e 55 / NFC-e 65 do Simples.
+   * Mesmo contrato de `assemble`: todas as pendências num 400 agregado (`faltantes`) ANTES de tocar a porta; o payload sai
+   * SEM numeração (a chave nasce na tx do envio, `createAndSend`, item 21). Só as linhas de PRODUTO (item 13: o serviço
+   * segue na NFS-e) e um documento por venda; Σ vProd = crédito 3.3 do `sale.finalized`, exato (item 14, F-DFE-11 a).
+   * O regime normal (CRT 3) é o PR-6; a NF-e 55 para nos faltantes até haver o código IBGE do município do destinatário
+   * (questionário de 26/10, "Recusa nomeada na 55").
+   */
+  private async assembleNfe(
+    scope: AccountingScope,
+    saleId: string,
+    kind: 'NFE' | 'NFCE',
+    ambiente: DfeAmbiente | null,
+  ): Promise<{
+    groups: Array<{ cTribNac: string; vServCents: number; payload: NfePayloadSemNumeracao }>;
+    ledgerCents: number;
+    anchorEntryId: string;
+    serie: number;
+    dCompet: string;
+    tpRetISSQN: number;
+    cnpjEmitente: string;
+    partnerAccountRef: string | null;
+    competenciaAlerta: boolean;
+  }> {
+    const faltantes: string[] = [];
+    const bloquear = (lista: string[]): never => {
+      throw new ValidationError(`emissao_bloqueada: ${lista.length} pendência(s) — ver 'faltantes'.`, { faltantes: lista });
+    };
+    const dynamicTableRepo = getFactory().getDynamicTableRepository();
+    const salesTable = await dynamicTableRepo.findTableByInternalName(scope.ownerUserId, 'sales');
+    const saleRow = salesTable ? await dynamicTableRepo.findDataById(saleId) : null;
+    const validSale = saleRow && salesTable && (await dynamicTableRepo.existsByIdInTable(saleId, salesTable.id));
+    const saleData = (validSale ? saleRow!.data : {}) as Record<string, unknown>;
+    if (!validSale) faltantes.push(`venda '${saleId}' não encontrada neste escopo`);
+    else if (saleData.status !== 'Finalized') faltantes.push(`venda '${saleId}' não está Finalizada (status atual: ${String(saleData.status ?? '?')})`);
+
+    // Emitente (C02–C21): perfil da unidade + CNPJ da unidade.
+    const fp = await this.fiscalProfileService.get(scope);
+    let crt: 1 | 3 | null = null;
+    if (!fp) {
+      faltantes.push('perfil fiscal da unidade não cadastrado (PUT /api/accounting/fiscal-profile)');
+    } else {
+      faltantes.push(...fp.emissao.faltantes.filter((f) => f.startsWith('regime MEI')).map((f) => `perfil fiscal da unidade: ${f}`));
+      const campos: Array<[string, unknown]> = [
+        ['codMun', fp.codMun], // C10/B12
+        ['inscricaoEstadual', fp.inscricaoEstadual], // C17 (item 8)
+        ['razaoSocial', fp.razaoSocial], // C03
+        ['enderLogradouro', fp.enderLogradouro], // C06
+        ['enderNumero', fp.enderNumero], // C07
+        ['enderBairro', fp.enderBairro], // C09
+        ['enderMunicipio', fp.enderMunicipio], // C11
+        ['enderCep', fp.enderCep], // C13
+      ];
+      for (const [campo, valor] of campos) if (!valor) faltantes.push(`perfil fiscal da unidade: falta '${campo}'`);
+      crt = crtDoRegime(fp.regimeTributario);
+      if (crt === 3) faltantes.push('regime normal (CRT 3): a montagem do ICMS e do IBS/CBS é do PR-6 do BE-INCR-NFCE (item 20)');
+    }
+
+    // Item 19 ([RTC-SIMPLES]): a partir de 04/01/2027 o Simples leva o grupo IBSCBS, ainda não transcrito.
+    const today = scopeToday(scope);
+    if (crt === 1 && today >= RTC_SIMPLES_DESDE) faltantes.push(RTC_SIMPLES_NAO_TRANSCRITO);
+
+    // Itens 11 e 13: só linhas de produto, cada uma com perfil fiscal compatível com o CRT e o modelo.
+    const productLines = validSale ? await loadSaleProductLines(scope.ownerUserId, saleId) : [];
+    if (validSale && productLines.length === 0) faltantes.push('venda sem linhas de produto (nenhum item Product) — NF-e/NFC-e exige ao menos uma');
+    const perfis = productLines.length ? await this.productFiscalProfileService.list(scope) : [];
+    const perfilPorRef = new Map(perfis.map((p) => [p.productRef, p]));
+    if (crt !== null) {
+      faltantes.push(...faltantesDosItens(kind, crt, productLines.map((l) => l.productRef), perfis));
+      for (const ref of new Set(productLines.map((l) => l.productRef))) {
+        const perfil = perfilPorRef.get(ref);
+        if (!perfil || crt !== 1) continue;
+        for (const [t, cst] of [['PIS', perfil.cstPis], ['COFINS', perfil.cstCofins]] as const) {
+          const r = pisCofinsSimples(t, cst);
+          if ('faltante' in r) faltantes.push(`produto ${ref}: ${r.faltante}`);
+        }
+      }
+    }
+
+    // Item 18: forma de pagamento → tPag.
+    const pag = validSale ? tPagDoMetodo(saleData.paymentMethod) : null;
+    if (pag && 'faltante' in pag) faltantes.push(pag.faltante);
+
+    // Destinatário: na 55 obrigatório (F-DFE-7 b) e, sem o cMun IBGE do cliente, impossível nesta fatia; na 65, pela A9.
+    const customerId = typeof saleData.customerId === 'string' ? saleData.customerId : '';
+    let cliente = clienteDaVenda('', '', '');
+    if (validSale && customerId) {
+      const customersTable = await dynamicTableRepo.findTableByInternalName(scope.ownerUserId, 'customers');
+      const customerRow = customersTable ? await dynamicTableRepo.findDataById(customerId) : null;
+      const customerData = (customerRow?.data ?? {}) as Record<string, unknown>;
+      cliente = clienteDaVenda(customerId, String(customerData.taxId ?? ''), String(customerData.name ?? saleData.simpleCustomerName ?? ''));
+    }
+    if (kind === 'NFE') {
+      if (cliente.status !== 'valido') faltantes.push('venda sem cliente com CPF/CNPJ válido — a NF-e 55 exige o destinatário (E01; F-DFE-7 b)');
+      faltantes.push(
+        'NF-e 55: o endereço do destinatário precisa do código IBGE do município (enderDest/cMun, E10), que o cadastro de clientes não tem — lacuna até haver a tabela de municípios',
+      );
+    }
+
+    // Documento vivo do mesmo tipo para a venda (uma NF-e/NFC-e por venda).
+    if (validSale) {
+      const vivo = (await this.repo.findLiveBySale(scope, saleId, kind))[0];
+      if (vivo) faltantes.push(`documento vivo já existe para esta venda/kind (id ${vivo.id}, status ${vivo.status})`);
+    }
+
+    const selection = selectDfeEmissor(process.env, kind);
+    if (!selection.enabled) faltantes.push(selection.reason ?? 'porta de emissão desabilitada');
+
+    const unitsTable = await dynamicTableRepo.findTableByInternalName(scope.ownerUserId, 'units');
+    const unitRow = unitsTable ? await dynamicTableRepo.findDataById(scope.unitId) : null;
+    const unitCnpj = stripCnpjMask(String((unitRow?.data as Record<string, unknown> | undefined)?.cnpj ?? '')).toUpperCase();
+    if (!unitCnpj || !isValidCnpj(unitCnpj)) faltantes.push("CNPJ da unidade ausente ou inválido (cadastre em 'units')");
+
+    if (faltantes.length > 0) bloquear(faltantes);
+    if (ambiente === null) throw new Error('dfe_tpamb_invariant: montagem sem ambiente com a porta habilitada.');
+
+    // Item 14: Σ vProd = crédito 3.3 do lançamento da venda, rateado pelas linhas de produto (técnica canônica).
+    const anchor = await this.journalEntryRepo.findBySource(scope, 'sale.finalized', saleId);
+    if (!anchor) bloquear(["lançamento âncora 'sale.finalized' ausente — a venda não foi contabilizada ainda"]);
+    const ledgerCents = await this.sumPostings(scope, anchor!.postings, RESALE_REVENUE_ACCOUNT, 'credit');
+    const shares = splitCents(ledgerCents, productLines.map((l) => l.lineReais));
+
+    const profile = fp!;
+    const { cUF } = ufDoCodMun(profile.codMun!);
+    let dest = null;
+    if (kind === 'NFCE') {
+      const limites = limitesNfce(await this.legalParams.fotografia(['NFCE_LIMITE']), cUF, today);
+      const r = destNfce(ledgerCents, limites, cliente);
+      if (r.faltantes.length) bloquear(r.faltantes);
+      dest = r.dest;
+    }
+
+    const productsTable = await dynamicTableRepo.findTableByInternalName(scope.ownerUserId, 'products');
+    const nomes = new Map<string, string>();
+    for (const ref of new Set(productLines.map((l) => l.productRef))) {
+      const row = productsTable ? await dynamicTableRepo.findDataById(ref) : null;
+      nomes.set(ref, String((row?.data as Record<string, unknown> | undefined)?.name ?? ref));
+    }
+    const itens: ItemParaMontagem[] = productLines.map((l, i) => {
+      const perfil = perfilPorRef.get(l.productRef)!;
+      return { productRef: l.productRef, xProd: perfil.xProd ?? nomes.get(l.productRef)!, qty: l.quantity, vProdCents: shares[i], perfil };
+    });
+
+    const serie = kind === 'NFCE' ? profile.nfceSerie : profile.nfeSerie;
+    const semNumero = montarNfe({
+      mod: kind === 'NFCE' ? 65 : 55,
+      ambiente,
+      serie,
+      dhEmi: dhEmiNoFuso(new Date(), scope.timeZone), // F-NFCE-6 a: momento da montagem
+      codMun: profile.codMun!,
+      crt: crt!,
+      emit: {
+        cnpj: unitCnpj,
+        razaoSocial: profile.razaoSocial!,
+        ie: profile.inscricaoEstadual!,
+        logradouro: profile.enderLogradouro!,
+        numero: profile.enderNumero!,
+        complemento: profile.enderComplemento,
+        bairro: profile.enderBairro!,
+        municipio: profile.enderMunicipio!,
+        cep: profile.enderCep!,
+      },
+      dest,
+      itens,
+      tPag: (pag as { tPag: string }).tPag,
+    });
+    // Item 12: as regras da SEFAZ que o cadastro pode violar (ex.: CSOSN × CFOP, rej. 386) voltam como faltantes nomeados.
+    const parsed = NfePayloadSemNumeracaoSchema.safeParse(semNumero);
+    if (!parsed.success) bloquear(parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`));
+
+    return {
+      groups: [{ cTribNac: '', vServCents: ledgerCents, payload: parsed.data! }],
+      ledgerCents,
+      anchorEntryId: anchor!.id,
+      serie,
+      dCompet: typeof saleData.date === 'string' ? saleData.date.slice(0, 10) : today,
+      tpRetISSQN: 1,
+      cnpjEmitente: unitCnpj,
+      partnerAccountRef: profile.partnerAccountRef,
+      competenciaAlerta: false,
     };
   }
 

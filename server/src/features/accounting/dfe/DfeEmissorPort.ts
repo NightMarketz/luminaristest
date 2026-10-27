@@ -1,4 +1,5 @@
-import type { DpsPayload } from '../dtos/DpsPayloadDto';
+import type { DpsManualPayload, DpsPayload } from '../dtos/DpsPayloadDto';
+import type { NfePayload as NfePayloadNumerada, NfePayloadSemNumeracao } from '../dtos/NfePayloadDto';
 
 /**
  * DfeEmissorPort — BE-INCR-DFE (nó X10b, BRIEF item 10; ADR-DFE D-X10b-1).
@@ -72,8 +73,11 @@ export interface DfeCapabilities {
   substituir: boolean;
 }
 
-/** Fase E (NF-e 55) é [pendente-insumo] — reservado até a transcrição do MOC 7.0 de saída. */
-export type NfePayload = unknown;
+/**
+ * BE-INCR-NFCE (nó X10a, item 12) — a NF-e 55 / NFC-e 65 pelo `NfePayloadSchema`: numerada quando o Luminaris numera
+ * (`numbersDps === false`, item 21), sem Id/cNF/nNF/cDV quando o adaptador numera.
+ */
+export type NfePayload = NfePayloadNumerada | NfePayloadSemNumeracao;
 
 export interface EmitirInput {
   kind: DfeKind;
@@ -82,7 +86,8 @@ export interface EmitirInput {
   ambiente: DfeAmbiente;
   cnpjEmitente: string;
   partnerAccountRef: string | null;
-  payload: DpsPayload | NfePayload;
+  /** DPS numerada, DPS sem numeração (portal numera, F-MAN-4 a) ou NF-e/NFC-e (item 12). */
+  payload: DpsPayload | DpsManualPayload | NfePayload;
 }
 
 export interface EmissaoResult {
