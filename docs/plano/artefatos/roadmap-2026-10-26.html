@@ -729,6 +729,8 @@
   // ---------- aba 3: linha do tempo da semana (27/10 → 01/11)
   (function () {
     var host = document.getElementById('c-week'); if (!host) return;
+    var NS = 'http://www.w3.org/2000/svg';
+    function el(tag, attrs, text) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; return e; }
     var days = ['ter 27', 'qua 28', 'qui 29', 'sex 30', 'sáb 31', 'dom 01'];
     var who = { dono: 'var(--st-human)', agente: 'var(--st-inflight)', lei: 'var(--st-legal)' };
     var rows = [
