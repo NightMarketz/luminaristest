@@ -48,6 +48,17 @@ export interface FiscalProfileData {
   inscricaoMunicipal?: string | null;
   cnae?: string | null;
   dpsSerie: number;
+  inscricaoEstadual?: string | null; // BE-INCR-NFCE item 8
+  nfeSerie: number; // BE-INCR-NFCE item 9
+  nfceSerie: number;
+  // BE-INCR-NFCE PR-3 — emitente da NF-e/NFC-e (C03, C06–C13)
+  razaoSocial?: string | null;
+  enderLogradouro?: string | null;
+  enderNumero?: string | null;
+  enderComplemento?: string | null;
+  enderBairro?: string | null;
+  enderMunicipio?: string | null;
+  enderCep?: string | null;
   regEspTrib: number;
   regApTribSN?: number | null;
   issAliquotaBp?: number | null;

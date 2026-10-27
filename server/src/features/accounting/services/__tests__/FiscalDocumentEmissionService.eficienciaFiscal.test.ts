@@ -59,6 +59,7 @@ function makeService(guardViolations: Array<{ code: string; severity: string; le
     { canEmitFiscalDocument: () => true, canReadFiscalDocument: () => true } as never,
     { append: jest.fn() } as never,
     legalParamsSemente,
+    { list: jest.fn().mockResolvedValue([]) } as never, // productFiscalProfileService (X10a) — fora da NFS-e
     guard,
   );
   return { service, guard };
@@ -130,7 +131,7 @@ describe('F-EF-16 a — vDescIncond destacado por grupo, tie-out Σ (vServ − v
     arrange({ discountKind: 'UNCONDITIONAL', discountAmount: 40, totalAmount: 260 }, itens);
     const r = await makeService(null, 26_000n).service.preview(SCOPE, SALE_ID, 'NFSE');
     expect(r.ok).toBe(true);
-    expect(r.payloads.map(valores)).toEqual([
+    expect((r.payloads as unknown as Parameters<typeof valores>[0][]).map(valores)).toEqual([
       { vServ: 20_000, vDesc: 3_001 },
       { vServ: 10_000, vDesc: 999 },
     ]);
@@ -140,7 +141,7 @@ describe('F-EF-16 a — vDescIncond destacado por grupo, tie-out Σ (vServ − v
   it('CONDITIONAL: sem destaque (o condicional não abate a base) — vServ = parcela do crédito pelo peso bruto', async () => {
     arrange({ discountKind: 'CONDITIONAL', discountAmount: 40, totalAmount: 260 }, itens);
     const r = await makeService(null, 26_000n).service.preview(SCOPE, SALE_ID, 'NFSE');
-    expect(r.payloads.map(valores)).toEqual([
+    expect((r.payloads as unknown as Parameters<typeof valores>[0][]).map(valores)).toEqual([
       { vServ: 17_333, vDesc: 0 },
       { vServ: 8_667, vDesc: 0 },
     ]);

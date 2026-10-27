@@ -178,6 +178,11 @@ export class AccountingPolicy implements IAccountingPolicy {
     return this.canManageFiscalProfile(scope);
   }
 
+  // BE-INCR-NFCE (nó X10a, item 10)
+  canManageProductFiscalProfile(scope: AccountingScope): boolean {
+    return this.canManageFiscalProfile(scope);
+  }
+
   // SIMPLES-PISO-ANEXO-XI bloco 1 (BRIEF item 1)
   canManageIssBeneficioMunicipal(scope: AccountingScope): boolean {
     return this.canManageFiscalProfile(scope);

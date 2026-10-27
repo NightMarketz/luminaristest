@@ -10,7 +10,6 @@ import {
   AVISOS_MIT_FIXOS,
   AVISO_MIT_EMAIL_OMITIDO,
   AVISO_MIT_CNPJ_ALFANUMERICO,
-  AVISO_MIT_SEM_PIS_COFINS,
   type ApuracaoParaMit,
   type EntradaMit,
   type MitDebito,
@@ -82,12 +81,19 @@ describe('item 1 — apuracoesDoPa (D2/D4; invariantes 5 e 6)', () => {
     expect(apuracoesDoPa(linhas, 2026, 3)).toEqual([linha('T01')]);
   });
 
-  it('PR-4: A0m do ano Y ⇒ PA (Y, m); A00 de Y ⇒ PA (Y+1, 3); M0m ainda não entra (PR-3)', () => {
-    const linhas = [linha('A03'), linha('A04'), linha('A00', { anoCalendario: 2025 }), linha('A00'), linha('M03'), linha('A03', { anoCalendario: 2025 })];
+  it('PR-4: A0m do ano Y ⇒ PA (Y, m); A00 de Y ⇒ PA (Y+1, 3)', () => {
+    const linhas = [linha('A03'), linha('A04'), linha('A00', { anoCalendario: 2025 }), linha('A00'), linha('A03', { anoCalendario: 2025 })];
     expect(apuracoesDoPa(linhas, 2026, 3)).toEqual([linha('A03'), linha('A00', { anoCalendario: 2025 })]);
     expect(apuracoesDoPa(linhas, 2026, 4)).toEqual([linha('A04')]);
     expect(apuracoesDoPa(linhas, 2027, 3)).toEqual([linha('A00')]);
     expect(apuracoesDoPa(linhas, 2026, 12)).toEqual([]);
+  });
+
+  it('PR-3 (item 18): M0m do ano Y ⇒ PA (Y, m), ao lado do T0q no mês do trimestre', () => {
+    const linhas = [linha('T01'), linha('M01'), linha('M02'), linha('M03'), linha('M03', { anoCalendario: 2025 }), linha('M03', { status: 'SUPERSEDED' })];
+    expect(apuracoesDoPa(linhas, 2026, 3)).toEqual([linha('T01'), linha('M03')]);
+    expect(apuracoesDoPa(linhas, 2026, 1)).toEqual([linha('M01')]);
+    expect(apuracoesDoPa(linhas, 2026, 4)).toEqual([]);
   });
 
   it('A00 SUPERSEDED/deletado nunca entra; anosDoPa lê Y−1 só em março', () => {
@@ -327,13 +333,54 @@ describe('item 8 — nome, conteúdo e hash (invariante 8)', () => {
 });
 
 describe('item 9 — avisos (invariante 11)', () => {
-  it('os 4 fixos em todo sucesso, por igualdade, + "PIS/Cofins não incluídos" antes do PR-3', () => {
-    expect(montarArquivoMit(entrada()).avisos).toEqual([...AVISOS_MIT_FIXOS, AVISO_MIT_SEM_PIS_COFINS]);
+  it('os 4 fixos em todo sucesso, por igualdade; "PIS/Cofins não incluídos" saiu no PR-3 (item 18)', () => {
+    expect(montarArquivoMit(entrada()).avisos).toEqual([...AVISOS_MIT_FIXOS]);
+    expect(montarArquivoMit(entrada()).avisos.join(' ')).not.toMatch(/PIS\/Cofins/);
     expect(AVISOS_MIT_FIXOS).toEqual([
       'O arquivo traz só os débitos que o Luminaris apurou; inclua os demais no MIT antes de encerrar.',
       'Importado sobre uma apuração já encerrada, ele vira retificador e substitui a apuração inteira.',
       'Mês com extinção, fusão, cisão ou incorporação: não importe este arquivo.',
       'Confira os Dados Iniciais no MIT.',
     ]);
+  });
+});
+
+describe('item 18 — PIS/Cofins (PR-3; ADR-X8 D10/D12)', () => {
+  const PIS = (o: Partial<ApuracaoParaMit> = {}) =>
+    ap({ id: 'pis', tributo: 'PIS', codigoReceita: '810902', periodo: 'M03', modo: 'PIS_COFINS_CUMULATIVO', aPagarCents: 3900n, ...o });
+  const COFINS = (o: Partial<ApuracaoParaMit> = {}) =>
+    ap({ id: 'cofins', tributo: 'COFINS', codigoReceita: '217201', periodo: 'M03', modo: 'PIS_COFINS_CUMULATIVO', aPagarCents: 18000n, ...o });
+
+  it('Presumido em março com T01 e M03 ⇒ 4 débitos Irpj, Csll, PisPasep, Cofins, IdDebito 1..4; RegimePisCofins 2', () => {
+    const entradaMarco = { apuracoes: [COFINS(), PIS(), CSLL(), IRPJ()] };
+    const a = arquivo(entradaMarco);
+    expect(Object.keys(a.Debitos)).toEqual(['Irpj', 'Csll', 'PisPasep', 'Cofins']);
+    expect(debitos(entradaMarco).map((x) => [x.grupo, x.IdDebito, x.CodigoDebito, x.ValorDebito])).toEqual([
+      ['Irpj', 1, '208901', 1234.56],
+      ['Csll', 2, '237201', 654.32],
+      ['PisPasep', 3, '810902', 39],
+      ['Cofins', 4, '217201', 180],
+    ]);
+    expect(a.DadosIniciais.RegimePisCofins).toBe(2);
+    expect(montarArquivoMit(entrada(entradaMarco)).apuracaoIds).toEqual(['cofins', 'pis', 'csll', 'irpj']);
+  });
+
+  it('o débito é o aPagarCents: PIS com aPagar 0 (saldo credor) não vira débito', () => {
+    const d = debitos({ apuracoes: [PIS({ aPagarCents: 0n }), COFINS()] });
+    expect(d.map((x) => [x.grupo, x.IdDebito])).toEqual([['Cofins', 1]]);
+  });
+
+  it('mês fora do trimestre só com PIS/Cofins (Real trimestral) ⇒ arquivo com os 2 grupos e RegimePisCofins 1', () => {
+    const real = { cnpj: '12345678000195', regime: 'REAL' as const, forma: 'TRIMESTRAL' as const };
+    const nc = { periodo: 'M01', modo: 'PIS_COFINS_NAO_CUMULATIVO' };
+    const a = arquivo({ mes: 1, perfil: real, apuracoes: [PIS({ ...nc, codigoReceita: '691201' }), COFINS({ ...nc, codigoReceita: '585601' })] });
+    expect(Object.keys(a.Debitos)).toEqual(['PisPasep', 'Cofins']);
+    expect(a.DadosIniciais.RegimePisCofins).toBe(1);
+    expect(a.PeriodoApuracao).toEqual({ MesApuracao: 1, AnoApuracao: 2026 });
+  });
+
+  it('Real anual só com PIS/Cofins no mês ⇒ 422 do F-MIT-2 a (sem IRPJ A0m, BalancoLucroReal desconhecido)', () => {
+    const anual = { cnpj: '12345678000195', regime: 'REAL' as const, forma: 'ANUAL' as const };
+    expect(() => montarArquivoMit(entrada({ mes: 3, perfil: anual, apuracoes: [PIS(), COFINS()] }))).toThrow(MitNadaAExportarError);
   });
 });

@@ -90,10 +90,10 @@ describe('FiscalDocument + ServiceFiscalProfile — contrato em SQLite real (BE-
   });
 
   it('item 4: nextNumber é consecutivo por (escopo, kind, serie) e independente entre séries/kinds', async () => {
-    const n1 = await docRepo.runTransaction((tx) => docRepo.nextNumber(escopo(DONO_A), 'NFSE', 7, tx));
-    const n2 = await docRepo.runTransaction((tx) => docRepo.nextNumber(escopo(DONO_A), 'NFSE', 7, tx));
-    const outraSerie = await docRepo.runTransaction((tx) => docRepo.nextNumber(escopo(DONO_A), 'NFSE', 8, tx));
-    const outroKind = await docRepo.runTransaction((tx) => docRepo.nextNumber(escopo(DONO_A), 'NFE', 7, tx));
+    const n1 = await docRepo.runTransaction((tx) => docRepo.nextNumber(escopo(DONO_A), 'NFSE', '', 7, tx));
+    const n2 = await docRepo.runTransaction((tx) => docRepo.nextNumber(escopo(DONO_A), 'NFSE', '', 7, tx));
+    const outraSerie = await docRepo.runTransaction((tx) => docRepo.nextNumber(escopo(DONO_A), 'NFSE', '', 8, tx));
+    const outroKind = await docRepo.runTransaction((tx) => docRepo.nextNumber(escopo(DONO_A), 'NFE', 'homologacao', 7, tx));
     expect([n1, n2]).toEqual([1n, 2n]);
     expect(outraSerie).toBe(1n);
     expect(outroKind).toBe(1n);

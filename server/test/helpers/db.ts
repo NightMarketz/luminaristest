@@ -87,7 +87,9 @@ export async function resetDb(): Promise<void> {
   await prisma.fiscalDocumentAttempt.deleteMany();
   await prisma.fiscalDocument.deleteMany();
   await prisma.fiscalDocumentSequence.deleteMany();
+  await prisma.fiscalNumberVoid.deleteMany(); // BE-INCR-NFCE PR-4
   await prisma.serviceFiscalProfile.deleteMany();
+  await prisma.productFiscalProfile.deleteMany(); // BE-INCR-NFCE item 10
   await prisma.issBeneficioMunicipal.deleteMany(); // SIMPLES-PISO-ANEXO-XI bloco 1
   // EFICIENCIA-FISCAL PR-1: folhas sem FK.
   await prisma.taxOptimizationSuggestion.deleteMany();
@@ -110,6 +112,8 @@ export async function resetDb(): Promise<void> {
   // Restrict para a conta), depois movimentos (Restrict para a conta) e fechamentos.
   await prisma.lalurProcess.deleteMany();
   await prisma.lalurEntryJournalEntry.deleteMany();
+  // C8 emenda 3.2 (F-EM-14 → a): links M305 1:N — Restrict para o ajuste e para a conta da Parte B.
+  await prisma.lalurEntryParteBLink.deleteMany();
   await prisma.lalurParteBBalance.deleteMany();
   await prisma.lalurParteBClosing.deleteMany();
   await prisma.lalurParteBMovement.deleteMany();

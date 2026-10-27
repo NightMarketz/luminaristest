@@ -188,6 +188,34 @@ export async function loadSaleServiceLines(userId: string, saleId: string): Prom
   return lines;
 }
 
+/** BE-INCR-NFCE (nó X10a, item 13) — one Product line of a sale, for the NF-e/NFC-e assembly. */
+export interface SaleProductLine {
+  itemRef: string;
+  productRef: string;
+  quantity: number;
+  /** Σ quantity×unitPrice in reais — the weight of the 3.3 rateio (item 14), same classifier as `revenueByNature`. */
+  lineReais: number;
+}
+
+/**
+ * BE-INCR-NFCE (nó X10a, item 13) — the Product lines of a sale, classified by the SAME `classifyItem` as the 3.3 credit
+ * (`revenueByNature`), so the per-line rateio sums to the ledger. Ordered by item id (deterministic). Lines without a
+ * `productId` are skipped (no product profile to read).
+ */
+export async function loadSaleProductLines(userId: string, saleId: string): Promise<SaleProductLine[]> {
+  const repo = getFactory().getDynamicTableRepository();
+  const itemsTable = await repo.findTableByInternalName(userId, 'saleItems');
+  if (!itemsTable) return [];
+  const rows = await repo.findRowsByFieldValue(itemsTable.id, 'saleId', saleId);
+  const out: SaleProductLine[] = [];
+  for (const r of rows) {
+    const d = (r.data ?? {}) as Record<string, unknown>;
+    if (classifyItem(d) !== 'Product' || !d.productId) continue;
+    out.push({ itemRef: r.id, productRef: String(d.productId), quantity: toNum(d.quantity), lineReais: toNum(d.quantity) * toNum(d.unitPrice) });
+  }
+  return out.sort((a, b) => (a.itemRef < b.itemRef ? -1 : a.itemRef > b.itemRef ? 1 : 0));
+}
+
 /**
  * BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14, item 15) — one revenue line of a sale for the fiscal revenue subledger,
  * bucketed by the SAME classifier as `revenueByNature` (so the per-line rateio sums to the 3.1/3.3 credits).

@@ -49,7 +49,7 @@ export const REKEY_MODELS = [
   'BankStatement', 'BankStatementLine', 'ReconciliationMatch', 'SourceDocument', 'JournalEntrySource',
   'CustomerPackageBalance', 'PackageBalanceMovement', 'Payable', 'PayablePayment', 'Receivable', 'ReceivableReceipt',
   'DimensionDefinition', 'DimensionValue', 'PostingDimension', 'Counterparty', 'InventoryItem', 'AccountingBinding',
-  'FiscalProfile', 'ServiceFiscalProfile', 'FiscalDocument', 'FiscalDocumentSequence', 'BankSettlementItem',
+  'FiscalProfile', 'ServiceFiscalProfile', 'FiscalDocument', 'FiscalDocumentSequence', 'FiscalNumberVoid', 'BankSettlementItem',
   'AccountingScopeSettings', 'FixedAssetClass', 'DepreciationRate', 'FixedAsset', 'ReconcilePendingItem',
   'AccountingContact', 'AccountingDeliveryLog', 'AccountingReview', 'AccountingReviewFinding', 'LalurEntry',
   'LalurParteBAccount', 'LalurParteBMovement', 'LalurParteBClosing',

@@ -39,7 +39,9 @@
             "RETENCAO_CODIGO",
             "NATUREZA_RENDIMENTO",
             "IRRF_PF_MENSAL",
-            "ISS_TRANSICAO"
+            "ISS_TRANSICAO",
+            "NFCE_LIMITE",
+            "INUT_NAO_SE_APLICA"
           ]
         },
         "chave": {
@@ -140,7 +142,9 @@
             "RETENCAO_CODIGO",
             "NATUREZA_RENDIMENTO",
             "IRRF_PF_MENSAL",
-            "ISS_TRANSICAO"
+            "ISS_TRANSICAO",
+            "NFCE_LIMITE",
+            "INUT_NAO_SE_APLICA"
           ]
         },
         "status": {
@@ -224,7 +228,9 @@
             "RETENCAO_CODIGO",
             "NATUREZA_RENDIMENTO",
             "IRRF_PF_MENSAL",
-            "ISS_TRANSICAO"
+            "ISS_TRANSICAO",
+            "NFCE_LIMITE",
+            "INUT_NAO_SE_APLICA"
           ]
         },
         "chave": {
