@@ -67,7 +67,8 @@ export const BANK_CHARGE_KINDS_BY_SIDE: Record<BankSettlementTitleType, readonly
 /** Domínio de `bank_settlement_items.shortfallTreatment` (E12, PR-3). IBS-CBS-2027 PR-4: `SPLIT_IBS_CBS` (EMENDA PR-4, dono 22/10). */
 export const SHORTFALL_TREATMENTS = ['PARTIAL', 'DISCOUNT', 'SPLIT_IBS_CBS'] as const;
 /** Domínio de `payable_payments.kind` / `receivable_receipts.kind` (E13, PR-3); a coluna nasce no PR-1 (E5). */
-export const SETTLEMENT_KINDS = ['PAYMENT', 'DISCOUNT', 'SPLIT_IBS_CBS'] as const;
+// RETENCOES-FONTE PR-2 (item 14; C4): `WITHHOLDING` = baixa sem caixa da retenção feita (F-RET-10 a).
+export const SETTLEMENT_KINDS = ['PAYMENT', 'DISCOUNT', 'SPLIT_IBS_CBS', 'WITHHOLDING'] as const;
 
 // ── IBS-CBS-2027 PR-4 (BRIEF itens 19–20 + EMENDA PR-4, dono 22/10) ─────────────────────────────────────────────────
 // Split payment (LC 214/2025 arts. 31–33; Decreto 12.955/2026 art. 26 III): o provedor retém o IBS/CBS na liquidação e a

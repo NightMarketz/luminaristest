@@ -47,6 +47,15 @@ export class AccountingPolicy implements IAccountingPolicy {
     return !!scope.actorUserId;
   }
 
+  /** RETENCOES-FONTE PR-1 (item 6): reusa a regra do AP — quem gere o título gere a retenção dele. */
+  canManageWithholdingProfile(scope: AccountingScope): boolean {
+    return this.canManagePayable(scope);
+  }
+
+  canReadWithholdingProfile(scope: AccountingScope): boolean {
+    return this.canReadPayable(scope);
+  }
+
   canManageReceivable(scope: AccountingScope): boolean {
     return !!scope.actorUserId;
   }
@@ -166,6 +175,11 @@ export class AccountingPolicy implements IAccountingPolicy {
 
   // BE-INCR-DFE (nó X10b, BRIEF item 5)
   canManageServiceFiscalProfile(scope: AccountingScope): boolean {
+    return this.canManageFiscalProfile(scope);
+  }
+
+  // BE-INCR-NFCE (nó X10a, item 10)
+  canManageProductFiscalProfile(scope: AccountingScope): boolean {
     return this.canManageFiscalProfile(scope);
   }
 

@@ -1118,6 +1118,24 @@
           "ref": {
             "type": "string",
             "description": "Ref opcional escopada a uma linha de DynamicTable (não é FK)"
+          },
+          "regimeTributario": {
+            "type": "string",
+            "enum": [
+              "SIMPLES",
+              "MEI",
+              "PRESUMIDO",
+              "REAL",
+              "ARBITRADO",
+              "PF",
+              "COOPERATIVA",
+              "EXTERIOR"
+            ],
+            "description": "RETENCOES-FONTE item 5 — regime da contraparte para as retenções; PF exige CPF"
+          },
+          "declaracaoOptanteDocumentId": {
+            "type": "string",
+            "description": "SourceDocument da declaração de optante do Simples (mesmo escopo)"
           }
         }
       },
@@ -1504,6 +1522,19 @@
             "type": "string",
             "nullable": true,
             "description": "obrigatória quando depreciable=true (conta 1.2.9.x)"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "DEPRECIATION",
+              "AMORTIZATION_LEASEHOLD"
+            ],
+            "default": "DEPRECIATION",
+            "description": "AMORTIZATION_LEASEHOLD = benfeitoria em imóvel de terceiro (RIR 331 III, C8 emenda 3.2)"
+          },
+          "amortizationExpenseAccountId": {
+            "type": "string",
+            "description": "despesa de amortização da benfeitoria (F-EM-7 → b; referencial 3.01.01.07.01.24) — obrigatória com AMORTIZATION_LEASEHOLD, proibida com DEPRECIATION"
           }
         }
       },
@@ -1534,6 +1565,17 @@
             "type": "string"
           },
           "accumulatedDepreciationAccountId": {
+            "type": "string",
+            "nullable": true
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "DEPRECIATION",
+              "AMORTIZATION_LEASEHOLD"
+            ]
+          },
+          "amortizationExpenseAccountId": {
             "type": "string",
             "nullable": true
           }
@@ -1632,6 +1674,14 @@
           },
           "bookRateJustification": {
             "type": "string"
+          },
+          "leaseEndDate": {
+            "type": "string",
+            "description": "YYYY-MM-DD — fim do contrato de locação; obrigatório em classe AMORTIZATION_LEASEHOLD (E10)"
+          },
+          "leaseIndemnifiable": {
+            "type": "boolean",
+            "description": "declaração obrigatória em classe AMORTIZATION_LEASEHOLD: true (direito a indenização) não amortiza (RIR 331 III; Lei 8.245/91 art. 35)"
           }
         }
       },
@@ -1695,6 +1745,15 @@
           },
           "bookRateJustification": {
             "type": "string",
+            "nullable": true
+          },
+          "leaseEndDate": {
+            "type": "string",
+            "nullable": true,
+            "description": "YYYY-MM-DD; imutável depois do activate (E13)"
+          },
+          "leaseIndemnifiable": {
+            "type": "boolean",
             "nullable": true
           }
         }
@@ -2321,6 +2380,26 @@
                   "type": "string",
                   "description": "Imobilizado declarado pelo operador (ITEM-DESTINATION emenda 29/09 — o CFOP do XML não roteia) — XOR com productRef"
                 },
+                "treatment": {
+                  "type": "string",
+                  "enum": [
+                    "CAPITALIZE",
+                    "EXPENSE"
+                  ],
+                  "description": "C8 emenda 3.2 (IN RFB 1.700 art. 120): EXPENSE = imobilizado direto na despesa, no lugar do classId (exige expenseAccountId; unitário ≤ R$ 1.200 ou vida útil ≤ 1 ano). Ausente = CAPITALIZE"
+                },
+                "expenseAccountId": {
+                  "type": "string",
+                  "description": "Só com treatment EXPENSE — folha de despesa do escopo"
+                },
+                "setDeclared": {
+                  "type": "boolean",
+                  "description": "Faz parte de um conjunto (art. 120 § 1º) — só com classId"
+                },
+                "usefulLifeUpToOneYear": {
+                  "type": "boolean",
+                  "description": "Vida útil ≤ 1 ano — só com treatment EXPENSE; libera acima de R$ 1.200"
+                },
                 "destination": {
                   "type": "string",
                   "enum": [
@@ -2612,19 +2691,97 @@
             "minimum": 1,
             "description": "Unidades recebidas nesta compra de estoque; pareado com inventoryProductRef. amountCents é o valor TOTAL (evita arredondamento por-unidade)."
           },
+          "withholdings": {
+            "type": "array",
+            "description": "RETENCOES-FONTE PR-2 (item 12): sobrescrita da retenção calculada, SÓ PARA MENOS e com motivo (ADR D5); para mais ou tributo sem linha calculada → 400. Só em título de despesa de serviço.",
+            "items": {
+              "type": "object",
+              "required": [
+                "tributo",
+                "amountCents",
+                "motivo"
+              ],
+              "properties": {
+                "tributo": {
+                  "type": "string",
+                  "enum": [
+                    "IRRF",
+                    "CSLL",
+                    "COFINS",
+                    "PIS",
+                    "INSS",
+                    "ISS"
+                  ]
+                },
+                "amountCents": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 2147483647
+                },
+                "motivo": {
+                  "type": "string",
+                  "minLength": 3,
+                  "maxLength": 140
+                }
+              }
+            }
+          },
+          "pfDeducoes": {
+            "type": "object",
+            "description": "RETENCOES-FONTE PR-2 (item 11): deduções do IRRF de PF (Lei 9.250 art. 4º). Ausente com contraparte PF → 0 dependentes e desconto simplificado.",
+            "properties": {
+              "dependentes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 30
+              },
+              "previdenciaCents": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "pensaoCents": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "documentoSerie": {
+            "type": "string",
+            "description": "Série da NF (R-2010 serie) — RETENCOES-FONTE PR-2"
+          },
           "fixedAssetItems": {
             "type": "array",
             "description": "BE-INCR-FIXED-ASSETS PR-5: itens de imobilizado da NF-e (declarados pelo classId do operador — ITEM-DESTINATION emenda 29/09) — combinável SÓ com inventoryMultiItem/inventoryItems (nota mista, 2 débitos). Debita class.costAccountId; NUNCA StockMovement.",
             "items": {
               "type": "object",
               "required": [
-                "classId",
                 "cProd",
                 "costCents"
               ],
               "properties": {
+                "treatment": {
+                  "type": "string",
+                  "enum": [
+                    "CAPITALIZE",
+                    "EXPENSE"
+                  ],
+                  "description": "C8 emenda 3.2 (IN RFB 1.700 art. 120): ausente = CAPITALIZE (ativar). EXPENSE = direto na despesa — unitário ≤ R$ 1.200 ou vida útil ≤ 1 ano declarada; escolha irreversível"
+                },
                 "classId": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "Obrigatório com CAPITALIZE; proibido com EXPENSE"
+                },
+                "expenseAccountId": {
+                  "type": "string",
+                  "description": "Obrigatório com EXPENSE — folha de despesa do escopo"
+                },
+                "setDeclared": {
+                  "type": "boolean",
+                  "description": "Faz parte de um conjunto (art. 120 § 1º) — exige CAPITALIZE"
+                },
+                "usefulLifeUpToOneYear": {
+                  "type": "boolean",
+                  "description": "Vida útil ≤ 1 ano (2ª hipótese do art. 120) — só com EXPENSE; libera acima do limite"
                 },
                 "cProd": {
                   "type": "string"
@@ -5441,6 +5598,36 @@
             }
           }
         }
+      },
+      "SetCounterpartyRegimeInput": {
+        "type": "object",
+        "required": [
+          "unitId",
+          "regimeTributario"
+        ],
+        "properties": {
+          "unitId": {
+            "type": "string"
+          },
+          "regimeTributario": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "SIMPLES",
+              "MEI",
+              "PRESUMIDO",
+              "REAL",
+              "ARBITRADO",
+              "PF",
+              "COOPERATIVA",
+              "EXTERIOR"
+            ]
+          },
+          "declaracaoOptanteDocumentId": {
+            "type": "string",
+            "nullable": true
+          }
+        }
       }
     }
   },
@@ -6792,7 +6979,7 @@
     "/api/accounting-kit": {
       "get": {
         "summary": "The unit's installed sector kit — version, latest version, last upgrade run, open pendings, changelog (BE-INCR-KIT-SETOR PR-4)",
-        "description": "Item 38. data = null quando a unidade não tem kit. changelog = as entradas novas de cada versão depois da instalada. A atualização em si não tem rota: roda pelo upgradeSectorKitsCli no passo de migração do deploy (dry-run gravado, depois apply do mesmo deploy).",
+        "description": "Item 38. data = null quando a unidade não tem kit. changelog = as entradas novas de cada versão depois da instalada. A atualização em si não tem rota: roda pelo upgradeSectorKitsCli no passo de migração do deploy (dry-run gravado, depois apply do mesmo deploy). steps = o último passo concluído da instalação (0–7) e os avisos do referencial (KIT_REFERENTIAL_SKIPPED_NO_REGIME | KIT_REFERENTIAL_SKIPPED_NO_CATALOG) — EMENDA-2 da LAC-B.",
         "tags": [
           "AccountingKit"
         ],
@@ -6813,7 +7000,7 @@
         ],
         "responses": {
           "200": {
-            "description": "{ kitKey, kitVersion, latestVersion, status, lastRun: { id, mode, status, fromVersion, toVersion, deployId, startedAt, finishedAt, counts: { additive, forward, conflicts } } | null, openPendingCount, changelog: [{ kitVersion, entries }] } | null"
+            "description": "{ kitKey, kitVersion, latestVersion, status, lastRun: { id, mode, status, fromVersion, toVersion, deployId, startedAt, finishedAt, counts: { additive, forward, conflicts } } | null, openPendingCount, changelog: [{ kitVersion, entries }], steps: { lastCompletedStep, warnings } } | null"
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"
@@ -15617,6 +15804,271 @@
           {
             "in": "path",
             "name": "serviceRef",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "deleted"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
+          }
+        }
+      }
+    },
+    "/api/accounting/product-fiscal-profiles": {
+      "get": {
+        "summary": "List the per-product fiscal profiles of the owner (BE-INCR-NFCE, nó X10a, F-NFCE-3 b)",
+        "description": "One row per productRef (id of the `products` DynamicTable row), shared by every unit of the owner. NCM, origin, CFOP, CSOSN (CRT 1) / CST ICMS (CRT 3), commercial unit, GTIN and PIS/COFINS/IBS-CBS CST for the NF-e 55 / NFC-e 65 (MOC 7.0 Anexo I). unitId only resolves access. Soft-deleted rows are omitted.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ProductFiscalProfileView[]"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      }
+    },
+    "/api/accounting/product-fiscal-profiles/{productRef}": {
+      "get": {
+        "summary": "Read one product fiscal profile",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "productRef",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ProductFiscalProfileView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      },
+      "put": {
+        "summary": "Create or replace a product fiscal profile (idempotent upsert)",
+        "description": "Codes accepted are those transcribed in TRANSCRICAO-MOC70-NFCe-NFe-saida-2026-10-26 (csosn 102/103/300/400/500, cstIcms 00, PIS/COFINS CST of groups Aliq/NT/Outr). Audited as product_fiscal_profile.updated (codes only).",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "productRef",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "ncm",
+                  "origem",
+                  "cfopPadrao",
+                  "uCom",
+                  "cEan",
+                  "cstPis",
+                  "cstCofins"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "ncm": {
+                    "type": "string",
+                    "description": "8 dígitos (I05)"
+                  },
+                  "cest": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "7 dígitos (I05c)"
+                  },
+                  "origem": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 8
+                  },
+                  "cfopPadrao": {
+                    "type": "string",
+                    "description": "4 dígitos (I08)"
+                  },
+                  "csosn": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "102",
+                      "103",
+                      "300",
+                      "400",
+                      "500"
+                    ]
+                  },
+                  "cstIcms": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "00"
+                    ]
+                  },
+                  "uCom": {
+                    "type": "string",
+                    "maxLength": 6
+                  },
+                  "cEan": {
+                    "type": "string",
+                    "description": "GTIN-8/12/13/14 ou \"SEM GTIN\""
+                  },
+                  "cstPis": {
+                    "type": "string"
+                  },
+                  "cstCofins": {
+                    "type": "string"
+                  },
+                  "ibsCbsCst": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "ibsCbsClassTrib": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "xProd": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 120
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "ProductFiscalProfileView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Soft-delete a product fiscal profile (rename-on-delete frees the key)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "productRef",
             "required": true,
             "schema": {
               "type": "string"
@@ -25685,7 +26137,7 @@
     "/api/nfe/dfe/status": {
       "get": {
         "summary": "Whether NFS-e/NF-e emission is enabled and by which partner (BE-INCR-DFE, nó X10b)",
-        "description": "Reads DFE_PARTNER/DFE_PARTNER_ENV — enabled=false with a named reason when disabled (ADR §7 item 6: nunca em silêncio). Fase E (NF-e 55) é [pendente-insumo].",
+        "description": "Reads DFE_PARTNER_<KIND>/DFE_PARTNER_ENV_<KIND> with fallback to DFE_PARTNER/DFE_PARTNER_ENV — enabled=false with a named reason when disabled (ADR §7 item 6: nunca em silêncio). Top-level fields are the NFS-e selection; `porTipo` has one entry per kind (NFSE, NFE, NFCE — BE-INCR-NFCE item 5).",
         "tags": [
           "Accounting"
         ],
@@ -25696,7 +26148,7 @@
         ],
         "responses": {
           "200": {
-            "description": "{ enabled, partner, ambiente, reason?, capabilities? }"
+            "description": "{ enabled, partner, ambiente, reason?, capabilities?, porTipo: { NFSE, NFE, NFCE } }"
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
@@ -25737,7 +26189,8 @@
                     "type": "string",
                     "enum": [
                       "NFSE",
-                      "NFE"
+                      "NFE",
+                      "NFCE"
                     ]
                   }
                 }
@@ -25764,7 +26217,7 @@
     "/api/nfe/dfe/documents": {
       "post": {
         "summary": "Emit one FiscalDocument per distinct cTribNac of the sale's service lines (F-DFE-16 b)",
-        "description": "All preconditions (item 14) are checked together before any tx/partner call — a single 400 with the full `faltantes` list. Creates SENT + attempt 1 per document, consumes the DPS sequence, audits dfe.emitted, then calls the partner post-commit. Fase E (kind=NFE) is [pendente-insumo] and rejects loud.",
+        "description": "All preconditions (item 14) are checked together before any tx/partner call — a single 400 with the full `faltantes` list. Creates SENT + attempt 1 per document, consumes the DPS sequence, audits dfe.emitted, then calls the partner post-commit. NF-e/NFC-e (kind=NFE|NFCE) is rejected loud until the BE-INCR-NFCE assembly (Fase C) lands.",
         "tags": [
           "Accounting"
         ],
@@ -25795,7 +26248,8 @@
                     "type": "string",
                     "enum": [
                       "NFSE",
-                      "NFE"
+                      "NFE",
+                      "NFCE"
                     ]
                   }
                 }
@@ -26008,7 +26462,7 @@
     "/api/nfe/dfe/documents/{id}/reenviar": {
       "post": {
         "summary": "Resend a REJECTED document as a new attempt (item 26)",
-        "description": "Só de status REJECTED. Payload remontado (perfil/venda corrigidos), tentativa n+1 com ref novo; a tentativa n permanece intacta. A numeração da DPS NÃO é reconsumida.",
+        "description": "Só de status REJECTED. Payload remontado (perfil/venda corrigidos), tentativa n+1 com ref novo; a tentativa n permanece intacta. A numeração da DPS NÃO é reconsumida. NF-e/NFC-e (BE-INCR-NFCE PR-4, EMENDA-3 E3-2 a): mesma série e mesmo nNF, cNF novo e chave recalculada com o dhEmi do reenvio; número com pedido de inutilização ⇒ 409 DFE_NUMERO_INUTILIZADO.",
         "tags": [
           "Accounting"
         ],
@@ -26048,6 +26502,146 @@
         "responses": {
           "200": {
             "description": "FiscalDocumentView (status SENT, nova tentativa)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
+          }
+        }
+      }
+    },
+    "/api/nfe/dfe/inutilizacoes": {
+      "post": {
+        "summary": "Request the voiding of an NF-e/NFC-e number range (BE-INCR-NFCE item 24)",
+        "description": "Guardas locais antes da porta ([NFE-INUT-REGRAS], MOC VG Tabela 5-12): nIni ≤ nFin, ≤ 10.000 números, só número já consumido pela sequência (ambiente da emissão configurada), nenhum número com documento SENT/PROCESSING/ AUTHORIZED/CANCELLED (409 INUT_NUMERO_USADO, rej. 241), sem cruzar pedido REQUESTED/HOMOLOGATED (409 INUT_FAIXA_JA_PEDIDA, rej. 256/563). Adaptador sem inutilização ⇒ 409 DFE_INUT_NAO_SUPORTADA. Vale para toda UF (EMENDA-3 E3-1 c): a SEFAZ decide. Faixa homologada ⇒ audit dfe.number_voided.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "kind",
+                  "serie",
+                  "nIni",
+                  "nFin",
+                  "xJust"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "NFE",
+                      "NFCE"
+                    ]
+                  },
+                  "serie": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 889
+                  },
+                  "nIni": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 999999999
+                  },
+                  "nFin": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 999999999
+                  },
+                  "xJust": {
+                    "type": "string",
+                    "minLength": 15,
+                    "maxLength": 255
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "FiscalNumberVoidView (status REQUESTED | HOMOLOGATED | REJECTED)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "description": "INUT_NUMERO_USADO | INUT_FAIXA_JA_PEDIDA | DFE_INUT_NAO_SUPORTADA | unidade apagada"
+          }
+        }
+      }
+    },
+    "/api/nfe/dfe/inutilizacoes/pendentes": {
+      "get": {
+        "summary": "List numbering gaps of NF-e/NFC-e (BE-INCR-NFCE item 25)",
+        "description": "Números 1..último de cada sequência (todas as séries e ambientes) sem documento SENT/PROCESSING/AUTHORIZED/ CANCELLED e fora de faixa inutilizada homologada. Nada automático. Na UF onde o pedido de inutilização não se aplica desde 01/11/2026 (AC, BA, SP — parâmetro legal INUT_NAO_SE_APLICA, data de hoje), cada lacuna traz o aviso e, só na NFC-e, o texto da presunção (Aj. SINIEF 19/16 cl. 11ª § 5º).",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "NFE",
+                "NFCE"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "LacunaDeNumeracao[] ({ ambiente, serie, numero, documentId, status, avisos, presuncao? })"
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"
@@ -29370,6 +29964,492 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/api/accounting/withholding-profiles": {
+      "get": {
+        "summary": "List the live withholding profiles of the unit (optionally of one counterparty)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "counterpartyId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "WithholdingProfileView[]"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a withholding profile (counterparty × service nature)",
+        "description": "issRetido requires issCodMun and issAliquotaBp; inss requires inssTpServico; irrf or csrf requires natRend, which must be in the EFD-Reinf Table 01 (NATUREZA_RENDIMENTO) in force on vigenteDesde (a DRAFT-only natRend is accepted with the warning NATUREZA_RENDIMENTO_DRAFT). A PF counterparty only accepts irrf. Overlapping validity for the same counterparty and nature → 409 VIGENCIA_SOBREPOSTA. Audited as withholding_profile.created without taxId or name.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "counterpartyId",
+                  "naturezaServico",
+                  "irrf",
+                  "csrf",
+                  "inss",
+                  "issRetido",
+                  "fonte",
+                  "vigenteDesde"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "counterpartyId": {
+                    "type": "string"
+                  },
+                  "naturezaServico": {
+                    "type": "string",
+                    "enum": [
+                      "SERVICO_PROFISSIONAL",
+                      "LIMPEZA_CONSERVACAO_SEGURANCA_LOCACAO",
+                      "COMISSAO_PROPAGANDA",
+                      "CESSAO_MAO_DE_OBRA",
+                      "TRABALHO_NAO_ASSALARIADO_PF",
+                      "OUTRO"
+                    ]
+                  },
+                  "natRend": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "5 digits (EFD-Reinf Table 01)"
+                  },
+                  "irrf": {
+                    "type": "boolean"
+                  },
+                  "csrf": {
+                    "type": "boolean"
+                  },
+                  "inss": {
+                    "type": "boolean"
+                  },
+                  "issRetido": {
+                    "type": "boolean"
+                  },
+                  "inssTpServico": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "9 digits (EFD-Reinf Table 06)"
+                  },
+                  "inssCprb": {
+                    "type": "boolean",
+                    "nullable": true
+                  },
+                  "issCodMun": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "IBGE, 7 digits"
+                  },
+                  "issAliquotaBp": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 0,
+                    "maximum": 10000
+                  },
+                  "issVencimentoDia": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 1,
+                    "maximum": 31
+                  },
+                  "fonte": {
+                    "type": "string",
+                    "description": "cited legal basis, e.g. \"RIR/2018 art. 714 § 1º XX\""
+                  },
+                  "vigenteDesde": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "vigenteAte": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "WithholdingProfileView (with avisos)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "unit or counterparty not found in the scope"
+          },
+          "409": {
+            "description": "VIGENCIA_SOBREPOSTA or deleted unit"
+          }
+        }
+      }
+    },
+    "/api/accounting/withholding-profiles/{id}": {
+      "get": {
+        "summary": "Read one withholding profile",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "WithholdingProfileView"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Replace a withholding profile (full body, same rules as POST; counterpartyId does not change)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "naturezaServico",
+                  "irrf",
+                  "csrf",
+                  "inss",
+                  "issRetido",
+                  "fonte",
+                  "vigenteDesde"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "WithholdingProfileView (with avisos)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "description": "VIGENCIA_SOBREPOSTA or deleted unit"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Soft-delete a withholding profile",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      }
+    },
+    "/api/counterparties/{id}/regime": {
+      "post": {
+        "summary": "Set the tax regime and the Simples opt-in declaration of a counterparty (command)",
+        "description": "RETENCOES-FONTE item 5 (F-RET-5 a). regimeTributario null clears it. PF requires a CPF (11-digit taxId) → otherwise 400. declaracaoOptanteDocumentId must be a live SourceDocument of the same unit. Audited as counterparty.regime_set without taxId or name.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetCounterpartyRegimeInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Counterparty"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "counterparty not found in the scope"
+          }
+        }
+      }
+    },
+    "/api/accounting/withholdings": {
+      "get": {
+        "summary": "Withholdings MADE in a month, one line per tax and payment (the EFD-Reinf contract, PR-2 item 23)",
+        "description": "Only direction=MADE (the withholdings suffered are PR-3). Lines are R-4020/R-4010/R-2010 ready (dtFG, natRend, revenue code, gross, base, amount, R-2010 fields, R-4010 deductions). The beneficiary taxId is returned here and only here. The same lines are available to the backend through ITaxWithholdingReadPort.findMadeForReinf (same mapper).",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "direction",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "MADE"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "competencia",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "WithholdingLineView[]"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      }
+    },
+    "/api/accounting/withholdings/summary": {
+      "get": {
+        "summary": "Withholdings MADE in a month grouped by tax title (revenue code), with due date and status",
+        "description": "One entry per tax title (DARF/GPS/ISS). A title below R$ 10 is added to the next month's title of the same code and becomes DEFERRED (Lei 9.430 art. 68 § 1º) — competenciasSomadas lists the months in it. Lines without a published revenue code have no title and come with the CODIGO_RECEITA_DRAFT warning.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "competencia",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "WithholdingSummary"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
           }
         }
       }

@@ -15,11 +15,13 @@ import type { CancelResult, DfeCapabilities, DfeEmissorPort, EmissaoResult, Emit
 export class ManualEmissor implements DfeEmissorPort {
   public readonly name = 'manual';
   public readonly capabilities: DfeCapabilities = {
+    kinds: ['NFSE'], // BE-INCR-NFCE item 4
     numbersDps: true,
     consultar: false,
     cancelar: false,
     webhook: false,
     substituir: true, // BE-INCR-DFE-EVENTOS item 16 — a substituta é uma DPS nova com o grupo subst (Guia §5.2)
+    inutilizar: false, // BE-INCR-NFCE item 24 — o modo manual só emite NFS-e
   };
 
   async emitir(input: EmitirInput): Promise<EmissaoResult> {

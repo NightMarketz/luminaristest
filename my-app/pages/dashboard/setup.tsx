@@ -116,12 +116,6 @@ function SetupDashboardPage() {
                   )}
                 </main>
               </div>
-
-              <div className="mt-8 text-center">
-                <p className="text-neutral-400 dark:text-neutral-600 text-sm">
-                  {t('onboardingNeedHelp')} <button className="text-blue-500 font-semibold hover:underline">{t('onboardingContactSupport')}</button>
-                </p>
-              </div>
             </div>
           </div>
         </div>

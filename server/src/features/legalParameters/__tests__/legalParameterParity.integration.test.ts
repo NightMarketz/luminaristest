@@ -83,7 +83,8 @@ describe('BE-INCR-LEGAL-PARAMS item 6 — paridade tabela em código × banco', 
       }
     }
     expect(comparados).toBe(pares.length * DATAS.length);
-    expect(t.linhas).toHaveLength(ANTIGA_APURACAO.length);
+    // PRESUMIDO-TETO-78MI item 1: as 2 linhas do teto (em reais) nasceram no banco, sem par na tabela antiga em código.
+    expect(t.linhas.filter((l) => !l.chave.startsWith('PRESUMIDO_TETO_'))).toHaveLength(ANTIGA_APURACAO.length);
   });
 
   it('CSLL_ALIQUOTA: indicadores 1 e 4 com mesmo valor e fonte em toda data apurável; indicador ausente segue ausente', async () => {

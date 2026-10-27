@@ -36,6 +36,11 @@ export interface CreatePayableData {
   // (ver `PayableService.buildRecognitionInput`). Nenhum campo `fixedAssetItems` nesta interface.
   status: string;
   createdById: string | null;
+  // RETENCOES-FONTE PR-2: `paidCents` inicial = Σ retenções do reconhecimento (baixas WITHHOLDING na mesma tx1); título
+  // de imposto = `origin` WITHHOLDING_TAX + `liabilityAccountId` (item 19).
+  paidCents?: number;
+  origin?: string | null;
+  liabilityAccountId?: string | null;
 }
 
 /** Data to create a PayablePayment row. */
@@ -48,6 +53,7 @@ export interface CreatePaymentData {
   paidAt: Date;
   paidByUserId: string | null;
   status: string;
+  kind?: string; // RETENCOES-FONTE PR-2: 'WITHHOLDING' (default da coluna: PAYMENT)
 }
 
 /**
@@ -214,6 +220,18 @@ export interface IPayableRepository {
     data: Prisma.PayablePaymentUpdateInput,
     tx?: Prisma.TransactionClient,
   ): Promise<PayablePayment>;
+
+  // ── RETENCOES-FONTE PR-2 (itens 19–21): título de imposto ──
+  /** Títulos de imposto vivos do beneficiário-sistema cujo `documentNumber` começa por `prefix` (`<código>-<AAAAMM>`). */
+  findTaxTitles(scope: AccountingScope, counterpartyId: string, prefix: string, tx?: Prisma.TransactionClient): Promise<Payable[]>;
+  /** Títulos de imposto OPEN sem baixa do código (candidatos ao acúmulo do DARF < R$ 10, item 20). */
+  findOpenTaxTitlesByCode(scope: AccountingScope, counterpartyId: string, codePrefix: string, tx?: Prisma.TransactionClient): Promise<Payable[]>;
+  /** Review A5: os documentNumber de TODOS os títulos de imposto do prefixo, inclusive os cancelados (renomeados `deleted:<id>:`). */
+  findTaxTitleNumbersEver(scope: AccountingScope, counterpartyId: string, prefix: string, tx?: Prisma.TransactionClient): Promise<string[]>;
+  /** CAS: soma `delta` (positivo ou negativo) ao valor só enquanto OPEN sem baixa e com o valor esperado. 0 = perdeu. */
+  adjustTaxTitleAmount(scope: AccountingScope, id: string, expectedCents: number, delta: number, tx: Prisma.TransactionClient): Promise<number>;
+  /** As baixas ATIVAS de um título (todas as kinds). */
+  findActivePayments(scope: AccountingScope, payableId: string, tx?: Prisma.TransactionClient): Promise<PayablePayment[]>;
 
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 }

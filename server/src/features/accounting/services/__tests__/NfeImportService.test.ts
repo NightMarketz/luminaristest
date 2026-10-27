@@ -711,3 +711,35 @@ describe('IBS-CBS-2027 PR-3 — crédito de IBS/CBS na NF-e de entrada', () => {
     expect(r.warnings.some((w) => /uso ou consumo pessoal.*P-IBS-2/.test(w))).toBe(true);
   });
 });
+
+// ── C8 emenda 3.2 P1 (E3/E5): item mapeado com treatment EXPENSE → fixedAssetItems EXPENSE, destinação IMOBILIZADO ──
+describe('NfeImportService.importPurchase — imobilizado direto na despesa (C8 emenda 3.2)', () => {
+  it('3 cadeiras mapeadas EXPENSE → fixedAssetItems com treatment/conta/qty, sem classId; destinação IMOBILIZADO', async () => {
+    const xml = inlineNfe(
+      [{ cProd: 'CAD-1', xProd: 'Cadeira', qCom: '3', vProd: '2700.00', cfop: '5102', ncm: '9401.71' }],
+      { vProd: '2700.00', vNF: '2700.00' },
+    );
+    const { service, createPayable } = build();
+    const result = await service.importPurchase(
+      scope,
+      xml,
+      dto({ itemMappings: [{ cProd: 'CAD-1', treatment: 'EXPENSE', expenseAccountId: 'acc-desp', usefulLifeUpToOneYear: true }] }),
+    );
+    const input = createPayable.mock.calls[0][1] as CreatePayableInput;
+    expect(input.fixedAssetItems).toEqual([
+      { treatment: 'EXPENSE', expenseAccountId: 'acc-desp', usefulLifeUpToOneYear: true, cProd: 'CAD-1', costCents: 270000, ncm: '9401.71', qty: 3, nItem: 1 },
+    ]);
+    expect(result.destinacoes).toEqual([{ nItem: 1, cProd: 'CAD-1', destination: 'IMOBILIZADO', origem: 'OVERRIDE' }]);
+  });
+
+  it('setDeclared do mapeamento chega ao item CAPITALIZE (E7)', async () => {
+    const xml = inlineNfe(
+      [{ cProd: 'MAQ-1', xProd: 'Máquina', qCom: '1', vProd: '850.00', cfop: '5102', ncm: '8452.10' }],
+      { vProd: '850.00', vNF: '850.00' },
+    );
+    const { service, createPayable } = build();
+    await service.importPurchase(scope, xml, dto({ itemMappings: [{ cProd: 'MAQ-1', classId: 'class-maq', setDeclared: true }] }));
+    const input = createPayable.mock.calls[0][1] as CreatePayableInput;
+    expect(input.fixedAssetItems![0]).toMatchObject({ classId: 'class-maq', setDeclared: true });
+  });
+});

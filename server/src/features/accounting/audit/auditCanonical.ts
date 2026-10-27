@@ -60,7 +60,7 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'referential.mapping.set':   ['accountId', 'referentialCode', 'mappingVersion'],
   'referential.mapping.unset': ['accountId', 'referentialCode', 'mappingVersion'],
   // INCR-AP — Contas a Pagar. Id-only / money-as-string; NEVER the supplier name (PII-safe, D6).
-  'payable.created':            ['payableId', 'supplierRef', 'amountCents', 'dueDate', 'expenseAccountCode', 'recoverableIcmsCents', 'recoverablePisCofinsCents', 'insumoCents', 'recoverableIbsCbsCents'], // X6 item 13 + ITEM-DESTINATION item 13 + IBS-CBS-2027 PR-3 item 14
+  'payable.created':            ['payableId', 'supplierRef', 'amountCents', 'dueDate', 'expenseAccountCode', 'recoverableIcmsCents', 'recoverablePisCofinsCents', 'insumoCents', 'recoverableIbsCbsCents', 'expensedFixedAssetItems'], // X6 item 13 + ITEM-DESTINATION item 13 + IBS-CBS-2027 PR-3 item 14 + C8 emenda 3.2 E8
   'payable.cancelled':          ['payableId', 'reversalEntryId', 'reason'],
   // IBS-CBS-2027 PR-3 (item 16): PENDENTE → APROPRIADO do crédito de IBS/CBS — ids, tributo, valor e dia; sem PII.
   'payable.ibs_cbs_credit.appropriated': ['payableId', 'tributo', 'amountCents', 'sourceDocumentId', 'apropriadoEm'],
@@ -96,8 +96,10 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // INCR-COUNTERPARTY (A1) — supplier/customer catalog. Id + type + ref only; the counterparty
   // `name` is third-party PII and is dropped exactly like `supplierName`/`customerName` in the
   // AP/AR events (the row keeps the name; the immutable audit trail does not).
-  'counterparty.created':  ['counterpartyId', 'type', 'ref'],
+  // RETENCOES-FONTE PR-1 (item 5/9): o regime entra na allowlist; o taxId e o nome nunca.
+  'counterparty.created':  ['counterpartyId', 'type', 'ref', 'regimeTributario'],
   'counterparty.archived': ['counterpartyId', 'type'],
+  'counterparty.regime_set': ['counterpartyId', 'regimeTributario', 'declaracaoOptanteDocumentId'],
   // INCR-DIM-COMPLETENESS (B1) — the per-account `requiresDimension` flag toggle. Code + old/new
   // flag as string (ACC config change; no PII).
   'account.requires_dimension_changed': ['code', 'from', 'to'],
@@ -171,12 +173,16 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     'dividendosPagarAccountId', 'jcpPagarAccountId', 'irrfRecolherAccountId', 'jcpDespesaAccountId', // IRRF-DISTRIBUICAO item 7
     'ibsRecolherAccountId', 'cbsRecolherAccountId', // IBS-CBS-2027 PR-2 item 12
     'ibsRecuperarAccountId', 'cbsRecuperarAccountId', // IBS-CBS-2027 PR-3 item 14
+    'retencaoIrrfRecolherAccountId', 'retencaoCsrfRecolherAccountId', 'retencaoInssRecolherAccountId', 'retencaoIssRecolherAccountId', 'retencaoIrrfCompensarAccountId', 'retencaoCsllCompensarAccountId', 'retencaoInssCompensarAccountId', // RETENCOES-FONTE PR-1 item 8
     // BE-INCR-DFE (item 9): enum/boolean/int como string — IM/CNAE (texto livre) ficam FORA do evento
-    'codMun', 'dpsSerie', 'regEspTrib', 'regApTribSN', 'issAliquotaBp', 'issRetidoTomadorPj', 'pacoteFatoGerador', 'pacoteCTribNac', 'pacoteCNBS', 'ibsCbsInformar', 'ibsCbsCst', 'ibsCbsClassTrib', 'pTotTribFedCent', 'pTotTribEstCent', 'pTotTribMunCent', 'pTotTribSNCent', 'emissaoForaDoMes',
+    'codMun', 'dpsSerie', 'inscricaoEstadual', 'nfeSerie', 'nfceSerie', 'regEspTrib', 'regApTribSN', 'issAliquotaBp', 'issRetidoTomadorPj', 'pacoteFatoGerador', 'pacoteCTribNac', 'pacoteCNBS', 'ibsCbsInformar', 'ibsCbsCst', 'ibsCbsClassTrib', 'pTotTribFedCent', 'pTotTribEstCent', 'pTotTribMunCent', 'pTotTribSNCent', 'emissaoForaDoMes',
     'policyVersionId'], // GOV-CONTADOR política versionada (item 14): a versão que aplicou esta escrita
   // BE-INCR-DFE (nó X10b, item 9) — perfil fiscal do serviço: só códigos (lista nacional/NBS/INDOP/IBGE) + serviceRef (id)
   'service_fiscal_profile.updated': ['serviceRef', 'cTribNac', 'cTribMun', 'cNBS', 'cIndOp', 'cLocPrestacao', 'cClassTrib'], // cClassTrib: IBS-CBS-2027 PR-1, L2
   'service_fiscal_profile.deleted': ['serviceRef', 'cTribNac'],
+  // BE-INCR-NFCE (nó X10a, item 26): perfil fiscal do produto — só códigos (xProd é texto livre, fica fora)
+  'product_fiscal_profile.updated': ['productRef', 'ncm', 'cest', 'origem', 'cfopPadrao', 'csosn', 'cstIcms', 'cstPis', 'cstCofins', 'ibsCbsCst', 'ibsCbsClassTrib'],
+  'product_fiscal_profile.deleted': ['productRef', 'ncm'],
   // SIMPLES-PISO-ANEXO-XI bloco 1 (BRIEF item 1) — benefício municipal de ISS: códigos/enum/datas; a legislação
   // concessiva (texto livre) fica FORA do evento.
   'iss_beneficio_municipal.created': ['codMun', 'tipo', 'cTribNacPrefixos', 'reducaoBpPorFaixa', 'vigenteDesde', 'vigenteAte'],
@@ -208,7 +214,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     'simplesRegimeApuracao',
     // BE-INCR-SIMPLES-CAIXA PR-1 (item 7; F-CX-3 a): data de efeitos da exclusão do Simples (date-only, sem PII).
     'simplesExclusaoEfeitosEm',
-    'jcpBaseContas'], // IRRF-DISTRIBUICAO item 8 (F-IRD-15): JSON só com ids de conta
+    'jcpBaseContas', // IRRF-DISTRIBUICAO item 8 (F-IRD-15): JSON só com ids de conta
+    // PRESUMIDO-TETO-78MI item 5 (F-PT-2 c): centavos da receita total do ano anterior declarada (número da PJ, sem PII).
+    'receitaTotalAnoAnteriorCents'],
   'company_fiscal_profile.deleted': ['anoCalendario'],
   // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7, item 22) — só ids, enum e centavos como string; sem PII. O documento
   // da dedução (texto livre) e a memória ficam FORA do evento.
@@ -245,6 +253,15 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'partner.created': ['partnerId', 'tipoPessoa', 'residenteBrasil', 'participacaoBp', 'entradaEm', 'saidaEm'],
   'partner.updated': ['partnerId', 'tipoPessoa', 'residenteBrasil', 'participacaoBp', 'entradaEm', 'saidaEm'],
   'partner.deleted': ['partnerId'],
+  // BE-INCR-RETENCOES-FONTE PR-1 (item 9): perfil de retenção — ids, natureza e flags; taxId e nome da contraparte ficam FORA.
+  'withholding_profile.created': ['profileId', 'counterpartyId', 'naturezaServico', 'natRend', 'irrf', 'csrf', 'inss', 'issRetido', 'vigenteDesde', 'vigenteAte'],
+  'withholding_profile.updated': ['profileId', 'counterpartyId', 'naturezaServico', 'natRend', 'irrf', 'csrf', 'inss', 'issRetido', 'vigenteDesde', 'vigenteAte'],
+  'withholding_profile.deleted': ['profileId'],
+  // BE-INCR-RETENCOES-FONTE PR-2 (item 23): retenção feita e título de imposto — ids, tributo, centavos e competência; nunca
+  // o taxId nem o nome do beneficiário.
+  'ap.withholding.recorded': ['withholdingId', 'payableId', 'tributo', 'event', 'amountCents', 'competencia', 'codigoReceita', 'dispensa', 'taxPayableId'],
+  'ap.withholding.reversed': ['withholdingId', 'payableId', 'tributo', 'amountCents', 'taxPayableId'],
+  'tax_payable.upserted': ['taxPayableId', 'codigoReceita', 'competencia', 'amountCents'],
   // BE-INCR-IRRF-DISTRIBUICAO PR-2 (item 33): distribuição — ids e valores; nome e CPF/CNPJ do sócio ficam FORA, e o
   // motivo do cancelamento (texto livre) também.
   'profit_distribution.created': ['distributionId', 'partnerId', 'evento', 'dataEvento', 'origemLucro', 'brutoCents', 'irrfCents', 'liquidoCents'],
@@ -264,6 +281,8 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'dfe.manual_result': ['documentId', 'attemptNo', 'releitura', 'nDivergencias'],
   // BE-INCR-DFE-EVENTOS (nó X11, item 14) — a substituta autorizada cancelou a original (e105102). Sem PII.
   'dfe.substituted': ['documentId', 'substituteDocumentId', 'cMotivo'],
+  // BE-INCR-NFCE (nó X10a, item 26) — faixa inutilizada homologada (F-NFCE-5 a). Sem PII (o xJust fica na linha, não aqui).
+  'dfe.number_voided': ['voidId', 'kind', 'serie', 'nIni', 'nFin', 'ambiente'],
   // BE-INCR-CONTADOR-DELIVERY (item 14) — cadastro do contador + entrega do pacote ECD/ECF.
   // `name`/`email` do contador NUNCA aparecem aqui (D5): são PII de TERCEIRO numa trilha
   // append-only e hash-encadeada, então o que entra não sai. A trilha carrega `contactId`, que

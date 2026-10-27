@@ -7,7 +7,10 @@ import { describeTableLock } from '../../dynamicTables/presets/removability';
 import { TableExtractor } from './TableExtractor';
 import { AIInteractions } from './AIInteractions';
 import { IInterviewSessionHandle, StateManager } from './StateManager';
-import { isInterviewSessionError } from '../models/InterviewSession.model';
+import { InterviewSessionNotFoundError, isInterviewSessionError } from '../models/InterviewSession.model';
+import { expandModuleSelectors, moduleOfTable, MODULE_REGISTRY, type ModuleKey, type ModuleSelector } from '../../dynamicTables/presets/modules/registry';
+import { resolveModuleSelection } from '../../dynamicTables/presets/modules/moduleSelection';
+import { composeSessionTables, toCustomCreation } from './sessionComposition';
 
 /**
  * @description
@@ -36,7 +39,11 @@ export class CustomizationService {
   /**
    * Cria uma sessão de customização do usuário para um preset específico. O id da sessão é o da linha persistida.
    */
-  public async createCustomizationSession(presetKey: string, userId: string): Promise<IInterviewSessionHandle | null> {
+  public async createCustomizationSession(
+    presetKey: string,
+    userId: string,
+    modules: ModuleSelector[] = [],
+  ): Promise<IInterviewSessionHandle | null> {
     logger.info(`[CustomizationService] Criando sessão de customização para preset ${presetKey}`);
 
     // Encontra o preset usando o PresetService em vez da base de conhecimento da AI
@@ -53,12 +60,15 @@ export class CustomizationService {
       return null;
     }
 
-    // Extrai as tabelas do preset real
-    const tables = this.tableExtractor.extractTablesFromRealPreset(preset);
-
     // Cria o estado da customização usando o StateManager
     try {
-      return await this.stateManager.createSessionState(userId, presetKey, preset.name, tables);
+      // W1 (F-W1-6 a): a sessão nasce das tabelas da suíte ∪ as dos módulos marcados (fechados como no create).
+      const installed = resolveModuleSelection(expandModuleSelectors(modules), preset.modules ?? []);
+      const tables = this.tableExtractor.extractTablesFromRealPreset({
+        key: presetKey,
+        tables: composeSessionTables(preset, installed),
+      });
+      return await this.stateManager.createSessionState(userId, presetKey, preset.name, tables, installed);
     } catch (error) {
       logger.error(`[CustomizationService] Erro ao criar sessão de customização: ${error}`);
       return null;
@@ -204,14 +214,20 @@ Você gostaria de:
             sessionId
           };
 
-        case 'done':
-          // Finaliza a customização
+        case 'done': {
+          // W1 itens 1–2 (F-W1-1 a, F-W1-2 a): a sessão persistida é a verdade — o servidor consolida e devolve
+          // `creation`; o front cria com ele (um só gatilho de criação: COMPLETED).
+          const preset = presetService.getPresetByKey(session.presetKey);
+          if (!preset) throw new InterviewSessionNotFoundError();
           await this.stateManager.completeCustomization(handle);
           return {
             response: `# Customização Concluída!\n\nSeu sistema "${session.presetName}" foi customizado com sucesso e agora inclui todas as funcionalidades e tabelas que você solicitou.\n\nO sistema será criado conforme suas especificações.`,
-            nextStage: 'CUSTOMIZATION_COMPLETED',
+            nextStage: 'COMPLETED',
+            presetKey: session.presetKey,
+            creation: toCustomCreation(session, preset),
             sessionId
           };
+        }
 
         default:
           // Para intenção desconhecida, responde com uma mensagem genérica
@@ -247,6 +263,27 @@ Você gostaria de:
         sessionId
       };
     }
+  }
+
+  /**
+   * W1 (F-W1-6 a + sincronização, dono 2026-10-24): `POST /dashboard/ai/InterviewModules`. Regrava os módulos da
+   * sessão com a seleção inteira do front. Módulos da suíte que a sessão ainda tem continuam (a conversa pode ter
+   * tirado um deles — F-W1-5 a); dependência não-fixa ausente → 400 do `resolveModuleSelection`.
+   */
+  public async syncModules(sessionId: string, userId: string, modules: ModuleSelector[]): Promise<ICustomizationState> {
+    const handle = await this.stateManager.loadSession(sessionId, userId);
+    const preset = presetService.getPresetByKey(handle.state.presetKey);
+    if (!preset) throw new InterviewSessionNotFoundError();
+    const current = handle.state.modules ?? [];
+    const suiteModules: readonly ModuleKey[] = preset.modules ?? [];
+    const suiteKept = suiteModules.filter((k) => current.includes(k));
+    const installed = resolveModuleSelection(expandModuleSelectors(modules), suiteKept);
+    const entering = installed.filter((k) => !current.includes(k));
+    const enteringTables = this.tableExtractor
+      .extractTablesFromRealPreset({ key: preset.key ?? handle.state.presetKey, tables: composeSessionTables(preset, installed) })
+      .filter((t) => entering.includes(moduleOfTable(t.key)!) && !(t.key in preset.tables));
+    await this.stateManager.setModules(handle, installed, enteringTables);
+    return handle.state;
   }
 
   /**
@@ -320,7 +357,9 @@ Você gostaria de:
           return {
             response: `# Tabela Adicionada com Sucesso!\n\nA tabela "${tableInfo.tableName}" foi adicionada ao seu sistema.\n\nVocê gostaria de:\n\n1. **Adicionar** outra funcionalidade\n2. **Remover** alguma funcionalidade existente\n3. **Finalizar** a customização e criar o sistema`,
             nextStage: 'CUSTOMIZATION_IN_PROGRESS',
-            sessionId
+            sessionId,
+            // W1: a tabela nova aparece no painel (já com o campo "Nome").
+            customizationState: handle.state
           };
         } else {
           return {
@@ -386,16 +425,26 @@ Você gostaria de:
 
       // Tenta remover a tabela
       const tableKey = aiResponse.trim();
+      // W1 (F-W1-5 a): tabela de módulo não-fixo leva o módulo inteiro — a resposta avisa quais tabelas saíram.
+      const before = session.tables.map((t) => t.key);
+      const modulesBefore = [...(session.modules ?? [])];
       const success = await this.stateManager.removeTable(handle, tableKey);
 
       // Reseta o estado de ação
       await this.stateManager.setCurrentAction(handle, null);
 
       if (success) {
+        const gone = before.filter((k) => !handle.state.tables.some((t) => t.key === k));
+        const moduleKey = modulesBefore.find((k) => !(handle.state.modules ?? []).includes(k));
+        const moduleNote = moduleKey
+          ? `\n\nEla faz parte do módulo "${MODULE_REGISTRY[moduleKey].name.pt}", que existe inteiro ou não existe: o módulo saiu junto, com as tabelas ${gone.join(', ')}.`
+          : '';
         return {
-          response: `# Tabela Removida com Sucesso!\n\nA tabela "${tableKey}" foi removida do seu sistema.\n\nVocê gostaria de:\n\n1. **Adicionar** uma nova funcionalidade\n2. **Remover** outra funcionalidade existente\n3. **Finalizar** a customização e criar o sistema`,
+          response: `# Tabela Removida com Sucesso!\n\nA tabela "${tableKey}" foi removida do seu sistema.${moduleNote}\n\nVocê gostaria de:\n\n1. **Adicionar** uma nova funcionalidade\n2. **Remover** outra funcionalidade existente\n3. **Finalizar** a customização e criar o sistema`,
           nextStage: 'CUSTOMIZATION_IN_PROGRESS',
-          sessionId
+          sessionId,
+          // W1: o painel e a lista de módulos do front seguem a sessão (o módulo pode ter saído junto).
+          customizationState: handle.state
         };
       } else {
         // Prepara a lista de tabelas não essenciais para apresentar ao usuário

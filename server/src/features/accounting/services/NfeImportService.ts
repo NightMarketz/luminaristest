@@ -343,9 +343,25 @@ export class NfeImportService {
       const mapping = mappingByCProd.get(it.cProd);
       const destination = destinationByNItem.get(it.nItem);
 
+      if (destination === 'IMOBILIZADO' && mapping?.treatment === 'EXPENSE') {
+        // C8 emenda 3.2 (E3/E5): bem do imobilizado direto na despesa — mesma lista `fixedAssetItems` (o `rawJson`
+        // guarda a escolha), sem classe; o limite de R$ 1.200 (E4) é conferido no `PayableService`.
+        fixedAssetItems.push({
+          treatment: 'EXPENSE',
+          expenseAccountId: mapping.expenseAccountId,
+          ...(mapping.usefulLifeUpToOneYear ? { usefulLifeUpToOneYear: true } : {}),
+          cProd: it.cProd,
+          costCents: share,
+          ncm: it.ncm || undefined,
+          qty: this.qComToUnits(it.qCom, it.cProd),
+          nItem: it.nItem,
+        });
+        continue;
+      }
       if (destination === 'IMOBILIZADO' && mapping?.classId) {
         fixedAssetItems.push({
           classId: mapping.classId,
+          ...(mapping.setDeclared ? { setDeclared: true } : {}),
           cProd: it.cProd,
           costCents: share,
           ncm: it.ncm || undefined,

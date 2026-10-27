@@ -48,23 +48,7 @@ const PREFIX_TO_TABLE_KEY_PARAMS: Array<[prefix: string, params: string[]]> = [
 const ROW_ID = 'id';
 
 /** F-TAP-4 → (a): vermelhos conhecidos com o nó dono; a lista só encolhe. */
-const ANALYTICS_RESIDUO = { owner: 'FIX-ANALYTICS-RESIDUO', since: '2026-10-21' } as const;
-
-const KNOWN_GAPS: readonly KnownGap[] = (['beautySalon', 'aestheticClinic'] as const).flatMap((suite) => [
-  // ACHADOS-2026-10-19 §3.2 #16: `costKpis` lista `status`, que `expenses` não declara — no KPI "Custo Total" e no
-  // default, que cobre os 9 KPIs de custo sem entrada própria.
-  { key: `analytics:${suite}.expenses:costKpis:importantFields[Custo Total]=status`, ...ANALYTICS_RESIDUO },
-  { key: `analytics:${suite}.expenses:costKpis:defaultImportantFields=status`, ...ANALYTICS_RESIDUO },
-  // Mesma classe (#16), achados por este teste (L-TAP-1 do BRIEF): "Contas a Pagar Total" lê `expenses`, que não tem
-  // `date`; o default do bloco de caixa (feito para `sales`) cai sobre "Contas a Pagar Vencidas" e "Prazo Médio de
-  // Pagamento", também de `expenses`.
-  { key: `analytics:${suite}.sales:cashflowKpis:importantFields[Contas a Pagar Total]=date`, ...ANALYTICS_RESIDUO },
-  { key: `analytics:${suite}.sales:cashflowKpis:defaultImportantFields=date`, ...ANALYTICS_RESIDUO },
-  { key: `analytics:${suite}.sales:cashflowKpis:defaultImportantFields=totalAmount`, ...ANALYTICS_RESIDUO },
-  { key: `analytics:${suite}.sales:cashflowKpis:defaultImportantFields=status`, ...ANALYTICS_RESIDUO },
-  // Chave morta: o `ProfitKpiProcessor` emite "Lucro Médio por Cliente", não "Lucro por Cliente".
-  { key: `analytics:${suite}.sales:profitKpis:importantFields[Lucro por Cliente]`, ...ANALYTICS_RESIDUO },
-]);
+const KNOWN_GAPS: readonly KnownGap[] = [];
 
 /**
  * F-TAP-6 → (b): nome de cada KPI emitido → `tableSource`, lido do `return` de cada processador em 2026-10-25.

@@ -4,18 +4,18 @@ tipo: "fe"
 dominio: "motor"
 titulo: "Reordenar cards dentro da coluna do Kanban, com a ordem salva no servidor"
 estado: "inflight"
-estado_detalhe: "21/10: BRIEF escrito (sessao-planejamento). 21/10: forks F-KR-1..6 RATIFICADOS na recomendação (dono, chat, 2026-10-21: \"Pode tomar as decisões de acordo com o recomendado\"). 21/10: código mergeado no #824 (CI verde; testes de unidade com servidor simulado). Falta a conferência na tela: docs/runbooks/RUNBOOK-KANBAN-REORDER.md (#830), desfecho e assinatura do dono"
+estado_detalhe: "21/10: BRIEF escrito (sessao-planejamento). 21/10: forks F-KR-1..6 RATIFICADOS na recomendação (dono, chat, 2026-10-21: \"Pode tomar as decisões de acordo com o recomendado\"). 21/10: código mergeado no #824 (CI verde; testes de unidade com servidor simulado). Conferência na tela (#830) rodada 24/10 e fechada 25/10 como FALHOU no passo 4 (#886; assinatura do agente, persona revisor, D-2026-10-25-RUNBOOK-TELA-AGENTE-EXECUTOR): falha de rede no meio do rebalanceio esvazia o quadro até o F5. 25/10: guarda + fix mínimo no #895 (quadro mantém os cards); passos 5–10 não rodados; fica aberto alinhar tela × rebalanceio parcial depois da falha (decisão do dono)"
 depende_de: []
 autorizacao: "dono, chat, 2026-10-21, sobre o item 22 do §3.5 retirado no #813: \"Esse nao pode voltar?\" + clique no cartão da sessão de planejamento — só o BRIEF (sessao-planejamento); sem código, sem executa · dono, chat, 2026-10-21: \"Pode tomar as decisões de acordo com o recomendado\" — forks F-KR-1..6 ratificados na recomendação; sem executa · **EXECUTA** (dono, chat, 2026-10-21): \"Executa o FE-INCR-KANBAN-REORDER — sessao-feature, sem merge.\" — sem merge"
-prs: ["#824", "#830"]
+prs: ["#824", "#830", "#886", "#895"]
 ancora_sdd: "—"
 perfil_previsto: "opus-medio"
 perfil_evidencia: "FE de um hook + leitura de um campo de preset que já existe; risco no backfill de linhas com order=0 e em tabelas kanban criadas pelo usuário sem o campo"
-atualizado: "2026-10-22"
+atualizado: "2026-10-25"
 ---
 # FE-INCR-KANBAN-REORDER — reordenar cards na coluna, ordem persistida
 
-**Estado:** `inflight` — 21/10: BRIEF escrito (sessao-planejamento). 21/10: forks F-KR-1..6 RATIFICADOS na recomendação (dono, chat, 2026-10-21: "Pode tomar as decisões de acordo com o recomendado"). 21/10: código mergeado no #824 (CI verde; testes de unidade com servidor simulado). Falta a conferência na tela: docs/runbooks/RUNBOOK-KANBAN-REORDER.md (#830), desfecho e assinatura do dono  
+**Estado:** `inflight` — 21/10: BRIEF escrito (sessao-planejamento). 21/10: forks F-KR-1..6 RATIFICADOS na recomendação (dono, chat, 2026-10-21: "Pode tomar as decisões de acordo com o recomendado"). 21/10: código mergeado no #824 (CI verde; testes de unidade com servidor simulado). Conferência na tela (#830) rodada 24/10 e fechada 25/10 como FALHOU no passo 4 (#886): falha de rede no meio do rebalanceio esvazia o quadro até o F5. 25/10: guarda + fix mínimo no #895 (quadro mantém os cards); passos 5–10 não rodados; fica aberto alinhar tela × rebalanceio parcial depois da falha (decisão do dono)  
 **Autorização:** dono, chat, 2026-10-21: "Esse nao pode voltar?" (sobre a reordenação retirada no item 22 do §3.5, PR #813). Cobre só este BRIEF.
 **Depende de:** —
 **Desbloqueia:** —

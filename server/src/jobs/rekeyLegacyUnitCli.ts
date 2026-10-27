@@ -49,7 +49,7 @@ export const REKEY_MODELS = [
   'BankStatement', 'BankStatementLine', 'ReconciliationMatch', 'SourceDocument', 'JournalEntrySource',
   'CustomerPackageBalance', 'PackageBalanceMovement', 'Payable', 'PayablePayment', 'Receivable', 'ReceivableReceipt',
   'DimensionDefinition', 'DimensionValue', 'PostingDimension', 'Counterparty', 'InventoryItem', 'AccountingBinding',
-  'FiscalProfile', 'ServiceFiscalProfile', 'FiscalDocument', 'FiscalDocumentSequence', 'BankSettlementItem',
+  'FiscalProfile', 'ServiceFiscalProfile', 'FiscalDocument', 'FiscalDocumentSequence', 'FiscalNumberVoid', 'BankSettlementItem',
   'AccountingScopeSettings', 'FixedAssetClass', 'DepreciationRate', 'FixedAsset', 'ReconcilePendingItem',
   'AccountingContact', 'AccountingDeliveryLog', 'AccountingReview', 'AccountingReviewFinding', 'LalurEntry',
   'LalurParteBAccount', 'LalurParteBMovement', 'LalurParteBClosing',
@@ -82,6 +82,8 @@ export const REKEY_MODELS = [
   'IssBeneficioMunicipal', // SIMPLES-PISO-ANEXO-XI bloco 1: benefício municipal de ISS por unidade, sem hash → REKEY pelo F-RK-5
   'ProfitDistributionEvent', // IRRF-DISTRIBUICAO PR-2: `unitId` = unidade do lançamento (proveniência), sem hash → REKEY pelo F-RK-5, como o TaxAssessment
   'InterestOnEquityCalculation', // IRRF-DISTRIBUICAO PR-4: `unitId` = unidade do lançamento e do razão lido, sem hash → REKEY pelo F-RK-5
+  'WithholdingProfile', // RETENCOES-FONTE PR-1: perfil de retenção da unidade, sem hash → REKEY pelo F-RK-5 (segue a contraparte, que já é REKEY)
+  'TaxWithholding', // RETENCOES-FONTE PR-2: retenção da unidade (segue o título e a baixa), sem hash → REKEY pelo F-RK-5
 ] as const;
 
 /**

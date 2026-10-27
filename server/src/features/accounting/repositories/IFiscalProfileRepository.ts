@@ -35,12 +35,30 @@ export interface FiscalProfileData {
   cbsRecolherAccountId?: string | null;
   ibsRecuperarAccountId?: string | null; // IBS-CBS-2027 PR-3 item 14
   cbsRecuperarAccountId?: string | null;
+  retencaoIrrfRecolherAccountId?: string | null; // RETENCOES-FONTE PR-1 item 8
+  retencaoCsrfRecolherAccountId?: string | null;
+  retencaoInssRecolherAccountId?: string | null;
+  retencaoIssRecolherAccountId?: string | null;
+  retencaoIrrfCompensarAccountId?: string | null;
+  retencaoCsllCompensarAccountId?: string | null;
+  retencaoInssCompensarAccountId?: string | null;
   partnerAccountRef?: string | null;
   // BE-INCR-DFE (BRIEF item 1) — emitente + D1f configurável
   codMun?: string | null;
   inscricaoMunicipal?: string | null;
   cnae?: string | null;
   dpsSerie: number;
+  inscricaoEstadual?: string | null; // BE-INCR-NFCE item 8
+  nfeSerie: number; // BE-INCR-NFCE item 9
+  nfceSerie: number;
+  // BE-INCR-NFCE PR-3 — emitente da NF-e/NFC-e (C03, C06–C13)
+  razaoSocial?: string | null;
+  enderLogradouro?: string | null;
+  enderNumero?: string | null;
+  enderComplemento?: string | null;
+  enderBairro?: string | null;
+  enderMunicipio?: string | null;
+  enderCep?: string | null;
   regEspTrib: number;
   regApTribSN?: number | null;
   issAliquotaBp?: number | null;

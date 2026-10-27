@@ -14,6 +14,7 @@ import { ForbiddenError } from '@/lib/errors';
 // eslint-disable-next-line no-restricted-imports -- DEBT: prisma.* em service, viola contrato §2 (só Repository). Backlog: docs/architecture/lint-layer-gate.md. Remover ao migrar para repository (DocumentRepository).
 import prisma from '@/lib/prisma';
 import OpenAI from 'openai';
+import { formatInTimeZone } from 'date-fns-tz';
 import { sanitizeUserInput, wrapSystemPrompt } from '@/lib/PromptSanitizer';
 
 // System prompts are intentionally written in Portuguese: the assistant's persona is
@@ -45,6 +46,24 @@ Sua missão:
    - Se faltarem dados obrigatórios, peça ao usuário ANTES de chamar a ferramenta.
 7. Use a linguagem do usuário (Português) para conversar, mas mantenha os valores técnicos (IDs e Enums) idênticos ao Graph.
 `;
+
+/**
+ * Fuso do usuário (`x-user-timezone` → `user.timeZone`) e a hora atual nele, para o agente converter "amanhã às 14h"
+ * no instante certo — o motor rejeita `datetime` sem fuso. Fuso ausente ou desconhecido → UTC.
+ */
+function userClockPrompt(timeZone: string | undefined): string {
+  let zone = 'UTC';
+  try {
+    if (timeZone) {
+      Intl.DateTimeFormat(undefined, { timeZone });
+      zone = timeZone;
+    }
+  } catch {
+    // RangeError: fuso desconhecido — fica UTC
+  }
+  const now = formatInTimeZone(new Date(), zone, "yyyy-MM-dd'T'HH:mmxxx");
+  return `Fuso horário do usuário: ${zone}. Agora no fuso do usuário: ${now}. Datas/horas que o usuário disser são nesse fuso: envie campos datetime em ISO 8601 com esse offset.`;
+}
 
 /** Same ceiling as the client `history` (ChatDto `.max(50)`). */
 const MAX_PERSISTED_HISTORY = 50;
@@ -173,6 +192,7 @@ Pergunta Reformulada:
 
       const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
         { role: 'system', content: wrapSystemPrompt(AGENT_SYSTEM_PROMPT, user.id) },
+        { role: 'system', content: userClockPrompt(user.timeZone) },
         { role: 'system', content: knowledgeGraphPrompt },
         ...(history || []).map(h => ({ role: h.role, content: h.content } as OpenAI.Chat.Completions.ChatCompletionMessageParam)),
         { role: 'user', content: query }

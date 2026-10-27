@@ -61,6 +61,8 @@ model User {
   companyFiscalProfiles      CompanyFiscalProfile[] // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13) — perfil da empresa por ano
   companySigners             CompanySigner[] // X13 (F-OBP-9 a) — representante legal / signatários não-contador
   partners                   Partner[] // IRRF-DISTRIBUICAO PR-1 (F-IRD-2, F-IRD-14) — sócios beneficiários da distribuição
+  withholdingProfiles        WithholdingProfile[] // RETENCOES-FONTE PR-1 (item 6) — perfil de retenção por contraparte × natureza
+  taxWithholdings            TaxWithholding[] // RETENCOES-FONTE PR-2 (item 13) — retenções feitas (e sofridas no PR-3)
   profitDistributionEvents   ProfitDistributionEvent[] // IRRF-DISTRIBUICAO PR-2 (BRIEF item 10)
   interestOnEquityCalculations InterestOnEquityCalculation[] // IRRF-DISTRIBUICAO PR-4 (BRIEF item 27)
   taxAssessments             TaxAssessment[] // BE-INCR-TAX-ASSESSMENT Fase A (nó X7, item 12) — apuração IRPJ/CSLL da PJ
@@ -591,6 +593,14 @@ model Account {
   cbsRecolherOf                      FiscalProfile[]           @relation("FiscalProfileCbsRecolher") // IBS-CBS-2027 PR-2 item 12
   ibsRecuperarOf                     FiscalProfile[]           @relation("FiscalProfileIbsRecuperar") // IBS-CBS-2027 PR-3 item 14
   cbsRecuperarOf                     FiscalProfile[]           @relation("FiscalProfileCbsRecuperar") // IBS-CBS-2027 PR-3 item 14
+  retencaoIrrfRecolherOf             FiscalProfile[]           @relation("FiscalProfileRetencaoIrrfRecolher") // RETENCOES-FONTE PR-1 item 8
+  withholdingTaxPayables             Payable[]                 @relation("PayableLiabilityAccount") // RETENCOES-FONTE PR-2 item 19
+  retencaoCsrfRecolherOf             FiscalProfile[]           @relation("FiscalProfileRetencaoCsrfRecolher") // RETENCOES-FONTE PR-1 item 8
+  retencaoInssRecolherOf             FiscalProfile[]           @relation("FiscalProfileRetencaoInssRecolher") // RETENCOES-FONTE PR-1 item 8
+  retencaoIssRecolherOf              FiscalProfile[]           @relation("FiscalProfileRetencaoIssRecolher") // RETENCOES-FONTE PR-1 item 8
+  retencaoIrrfCompensarOf            FiscalProfile[]           @relation("FiscalProfileRetencaoIrrfCompensar") // RETENCOES-FONTE PR-1 item 8
+  retencaoCsllCompensarOf            FiscalProfile[]           @relation("FiscalProfileRetencaoCsllCompensar") // RETENCOES-FONTE PR-1 item 8
+  retencaoInssCompensarOf            FiscalProfile[]           @relation("FiscalProfileRetencaoInssCompensar") // RETENCOES-FONTE PR-1 item 8
   pisCofinsRecuperavelOf             FiscalProfile[]           @relation("FiscalProfilePisCofinsRecuperavel") // X6 F-X6-8 a: crédito de PIS/COFINS a recuperar
   pisCofinsCreditoOutrosOf           FiscalProfile[]           @relation("FiscalProfilePisCofinsCreditoOutros") // X8 PR-3 (L-5)
   pisCofinsRetidoCompensarOf         FiscalProfile[]           @relation("FiscalProfilePisCofinsRetidoCompensar") // X8 PR-3 (retenções)
@@ -600,6 +610,7 @@ model Account {
   lalurEntries                       LalurEntry[]              @relation("LalurEntryAccount") // ajuste da Parte A com relação contábil (M310/M360.COD_CTA, ECF Fase 3B)
   fixedAssetClassCostOf              FixedAssetClass[]         @relation("FixedAssetClassCost") // conta do bem (1.2.x, BE-INCR-FIXED-ASSETS)
   fixedAssetClassAccumulatedOf       FixedAssetClass[]         @relation("FixedAssetClassAccumulatedDepreciation") // conta de depreciação acumulada (1.2.9.x)
+  fixedAssetClassAmortizationOf      FixedAssetClass[]         @relation("FixedAssetClassAmortizationExpense") // despesa de amortização de benfeitoria (C8 emenda 3.2, F-EM-7 b)
   scopeSettingsDepreciationExpenseOf AccountingScopeSettings[] @relation("ScopeSettingsDepreciationExpense") // despesa de depreciação (4.x)
   scopeSettingsDisposalGainOf        AccountingScopeSettings[] @relation("ScopeSettingsDisposalGain") // ganho na baixa de imobilizado
   scopeSettingsDisposalLossOf        AccountingScopeSettings[] @relation("ScopeSettingsDisposalLoss") // perda na baixa de imobilizado
@@ -1167,6 +1178,12 @@ model Payable {
   // botched rebuild silently drops FKs/indexes (lesson expenseAccountId RESTRICT→SET NULL). null = legacy
   // rows (pre-migration) = not multi-item; the create path writes an explicit boolean.
   inventoryMultiItem  Boolean?
+  // BE-INCR-RETENCOES-FONTE PR-2 (BRIEF item 19; F-RET-11 a): título de imposto da retenção feita. `origin =
+  // 'WITHHOLDING_TAX'` ⇒ sem reconhecimento próprio (o passivo já está na conta a recolher) e a baixa debita
+  // `liabilityAccountId` em vez de 2.1.2; `amountCents` só muda enquanto OPEN sem baixa. null = título comum.
+  origin              String?
+  liabilityAccountId  String?
+  liabilityAccount    Account?         @relation("PayableLiabilityAccount", fields: [liabilityAccountId], references: [id], onDelete: Restrict)
   payments            PayablePayment[]
   fixedAssetDrafts    FixedAsset[] // BE-INCR-FIXED-ASSETS item 22 — rascunhos criados a partir deste payable (modo 4 NF-e)
 
@@ -1397,6 +1414,11 @@ model Counterparty {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   deletedAt      DateTime? // set when archived (soft)
+  // RETENCOES-FONTE PR-1 (BRIEF item 5; F-RET-5 a): regime da contraparte para as retenções e a declaração de optante
+  // (SourceDocument anexado; plain string, sem FK — precedente). `taxIdKind` é derivado do comprimento do taxId, nunca coluna.
+  regimeTributario            String? // SIMPLES | MEI | PRESUMIDO | REAL | ARBITRADO | PF | COOPERATIVA | EXTERIOR
+  declaracaoOptanteDocumentId String? // SourceDocument.id da declaração de optante (IN RFB 765/2007 — não lida)
+  withholdingProfiles WithholdingProfile[] // RETENCOES-FONTE PR-1 (item 6)
   payables       Payable[] // linked AP rows (FK counterpartyId, nullable)
   receivables    Receivable[] // linked AR rows (FK counterpartyId, nullable)
 
@@ -1680,6 +1702,21 @@ model FiscalProfile {
   ibsRecuperarAccount                 Account?  @relation("FiscalProfileIbsRecuperar", fields: [ibsRecuperarAccountId], references: [id], onDelete: Restrict)
   cbsRecuperarAccountId               String? // Asset
   cbsRecuperarAccount                 Account?  @relation("FiscalProfileCbsRecuperar", fields: [cbsRecuperarAccountId], references: [id], onDelete: Restrict)
+  // RETENCOES-FONTE PR-1 (BRIEF item 8; F-RET-19 a): papéis das retenções feitas (a recolher) e sofridas (a compensar).
+  retencaoIrrfRecolherAccountId       String? // Liability — plano padrão 2.1.7.03 (reusa o IRRF a Recolher, F-RET-19 a)
+  retencaoIrrfRecolherAccount         Account?  @relation("FiscalProfileRetencaoIrrfRecolher", fields: [retencaoIrrfRecolherAccountId], references: [id], onDelete: Restrict)
+  retencaoCsrfRecolherAccountId       String? // Liability — sem folha no plano padrão até o P-RET-4 (dono 24/10)
+  retencaoCsrfRecolherAccount         Account?  @relation("FiscalProfileRetencaoCsrfRecolher", fields: [retencaoCsrfRecolherAccountId], references: [id], onDelete: Restrict)
+  retencaoInssRecolherAccountId       String? // Liability
+  retencaoInssRecolherAccount         Account?  @relation("FiscalProfileRetencaoInssRecolher", fields: [retencaoInssRecolherAccountId], references: [id], onDelete: Restrict)
+  retencaoIssRecolherAccountId        String? // Liability
+  retencaoIssRecolherAccount          Account?  @relation("FiscalProfileRetencaoIssRecolher", fields: [retencaoIssRecolherAccountId], references: [id], onDelete: Restrict)
+  retencaoIrrfCompensarAccountId      String? // Asset
+  retencaoIrrfCompensarAccount        Account?  @relation("FiscalProfileRetencaoIrrfCompensar", fields: [retencaoIrrfCompensarAccountId], references: [id], onDelete: Restrict)
+  retencaoCsllCompensarAccountId      String? // Asset
+  retencaoCsllCompensarAccount        Account?  @relation("FiscalProfileRetencaoCsllCompensar", fields: [retencaoCsllCompensarAccountId], references: [id], onDelete: Restrict)
+  retencaoInssCompensarAccountId      String? // Asset
+  retencaoInssCompensarAccount        Account?  @relation("FiscalProfileRetencaoInssCompensar", fields: [retencaoInssCompensarAccountId], references: [id], onDelete: Restrict)
   partnerAccountRef                   String? // R8 item 2: conta de emissão no parceiro POR UNIDADE — reservado; BE-INCR-DFE preenche
   // BE-INCR-DFE (nó X10b, BRIEF item 1) — emitente (ADR-DFE D5) + itens 5a–5f do contador como CONFIG
   // (D-X10b-2: default = recomendação do ADR, ambos os ramos implementados). Nullable/default => a linha X6
@@ -1688,6 +1725,21 @@ model FiscalProfile {
   inscricaoMunicipal                  String? // prest/IM [123]
   cnae                                String? // informativo
   dpsSerie                            Int       @default(1) // serie [106], faixa 00001–49999 "aplicativo próprio" (RN E0010)
+  // BE-INCR-NFCE (nó X10a, itens 8–9; F-NFCE-2 b): IE do emitente (emit/IE, C17 — só algarismos, 2–14) e séries da NF-e 55 e
+  // da NFC-e 65 (B07, faixa 000–889 "aplicativo do contribuinte", MOC 7.0 Anexo I p. 9). icmsContribuinte NÃO muda de sentido.
+  inscricaoEstadual                   String?
+  nfeSerie                            Int       @default(1)
+  nfceSerie                           Int       @default(1)
+  // BE-INCR-NFCE PR-3 (nó X10a; D-2026-10-26-X10A-EXECUCAO, questionário: "Campos no FiscalProfile"): emitente da NF-e/NFC-e
+  // — razão social (C03 2-60) e endereço (C06 xLgr 2-60, C07 nro 1-60, C08 xCpl 1-60, C09 xBairro 2-60, C11 xMun 2-60,
+  // C13 CEP 8). cMun = codMun; UF derivada do codMun (IBGE). Só a emissão de NFE/NFCE os exige.
+  razaoSocial                         String?
+  enderLogradouro                     String?
+  enderNumero                         String?
+  enderComplemento                    String?
+  enderBairro                         String?
+  enderMunicipio                      String?
+  enderCep                            String?
   regEspTrib                          Int       @default(0) // regTrib/regEspTrib [142]: 0 = nenhum
   regApTribSN                         Int? // [141] só SIMPLES; 1 = apuração do ISSQN pelo SN [inferido RN 508] — pendente contador (5e)
   issAliquotaBp                       Int? // pAliq [312] em basis points (≤ 500 = 5%, E0595); SÓ município NÃO conveniado (E0617/E0618) — pendente contador (5a)
@@ -1785,6 +1837,9 @@ model CompanyFiscalProfile {
   // BE-INCR-IRRF-DISTRIBUICAO PR-1 (item 8, F-IRD-15): mapa das contas do PL na base do JCP (IN 1.700 art. 75 I–V) —
   // { CAPITAL_INTEGRALIZADO, RESERVAS_CAPITAL, RESERVAS_LUCROS, ACOES_TESOURARIA, LUCROS_ACUMULADOS: accountId[] }.
   jcpBaseContas                    Json?
+  // PRESUMIDO-TETO-78MI item 5 (F-PT-2 c): receita total do ano anterior declarada (IN 1.700 art. 59 § 1º), em centavos.
+  // Só PRESUMIDO/REAL. Não é copiada para outro ano.
+  receitaTotalAnoAnteriorCents     BigInt?
   createdById                      String?
   updatedById                      String?
   createdAt                        DateTime           @default(now())
@@ -1821,6 +1876,86 @@ model Partner {
 
   @@index([userId, taxId])
   @@map("partners")
+}
+
+// BE-INCR-RETENCOES-FONTE PR-1 (BRIEF item 6, §5.1; F-RET-3 a, F-RET-16 a) — perfil de retenção por contraparte × natureza
+// do serviço: quais tributos o tenant retém (ou sofre) e o enquadramento citado. A matriz de incidência é DADO (este perfil +
+// tabela RETENCAO), aplicada por função pura no PR-2. Desenho de lei, igual para todos ⇒ Prisma first-class. Soft-delete;
+// vigência sem sobreposição por (counterpartyId, naturezaServico), gate dentro da tx.
+model WithholdingProfile {
+  id               String       @id @default(cuid())
+  userId           String
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId           String
+  counterpartyId   String
+  counterparty     Counterparty @relation(fields: [counterpartyId], references: [id], onDelete: Restrict)
+  naturezaServico  String // chave da RETENCAO: SERVICO_PROFISSIONAL | LIMPEZA_CONSERVACAO_SEGURANCA_LOCACAO | COMISSAO_PROPAGANDA | CESSAO_MAO_DE_OBRA | TRABALHO_NAO_ASSALARIADO_PF | OUTRO
+  natRend          String? // 5 dígitos, NATUREZA_RENDIMENTO (F-RET-16 a) — obrigatório quando irrf || csrf
+  irrf             Boolean
+  csrf             Boolean
+  inss             Boolean
+  inssTpServico    String? // 9 dígitos, Tabela 06 da Reinf (R-2010) — obrigatório se inss
+  inssCprb         Boolean? // prestador na CPRB (indCPRB) — alíquota DRAFT (P-RET-8)
+  issRetido        Boolean
+  issCodMun        String? // IBGE 7 — obrigatório se issRetido
+  issAliquotaBp    Int? // lei municipal (informada) — obrigatória se issRetido
+  issVencimentoDia Int? // 1..31, lei municipal (informada)
+  fonte            String // enquadramento citado (ex. "RIR/2018 art. 714 § 1º XX")
+  vigenteDesde     String // YYYY-MM-DD
+  vigenteAte       String?
+  createdById      String?
+  updatedById      String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  deletedAt        DateTime?
+
+  @@index([userId, unitId, counterpartyId])
+  @@map("withholding_profiles")
+}
+
+// BE-INCR-RETENCOES-FONTE PR-2 (BRIEF item 13, §5.1; F-RET-10 a) — uma linha por tributo retido. `settlementId` = a baixa
+// sem caixa WITHHOLDING (`payable_payments.id`) que leva a retenção ao razão (D 2.1.2 / C a recolher); null só quando a
+// linha é dispensa (`amountCents` 0). `originSettlementId` = o PAYMENT que gerou a CSRF (event SETTLEMENT), para a Reinf
+// agrupar por pagamento. `taxPayableId` = título de imposto (Payable origin WITHHOLDING_TAX). Imutável salvo `status`
+// (ACTIVE → REVERSED) e o re-apontamento do título no acúmulo do DARF < R$ 10 (item 20).
+model TaxWithholding {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId             String
+  direction          String // MADE | SUFFERED
+  tributo            String // IRRF | CSLL | COFINS | PIS | INSS | ISS
+  event              String // RECOGNITION | SETTLEMENT
+  titleType          String // PAYABLE | RECEIVABLE
+  titleId            String
+  settlementId       String? // baixa WITHHOLDING; null só na dispensa
+  originSettlementId String? // PAYMENT que gerou a CSRF (event = SETTLEMENT)
+  counterpartyId     String // beneficiário (MADE) ou fonte pagadora (SUFFERED)
+  naturezaServico    String?
+  natRend            String?
+  dataFatoGerador    String // YYYY-MM-DD (dtFG da Reinf)
+  competencia        String // YYYY-MM do fato gerador
+  brutoCents         BigInt
+  baseCents          BigInt
+  aliquotaBp         Int? // null em PF (tabela progressiva)
+  amountCents        BigInt // ≥ 0; 0 só com dispensa
+  dispensa           String? // MINIMO_R10 | OPTANTE_SIMPLES | COOPERATIVA | ISENCAO_COMPROVADA
+  overrideMotivo     String?
+  codigoReceita      String? // 6 dígitos; null enquanto RETENCAO_CODIGO for DRAFT
+  taxPayableId       String?
+  documentoNumero    String?
+  documentoSerie     String?
+  pfDetalhe          String? // JSON (R-4010 ideDep/detDed)
+  entryId            String?
+  parametrosIds      String // JSON
+  parametrosSha256   String
+  status             String // ACTIVE | REVERSED
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([userId, unitId, competencia, direction])
+  @@index([titleType, titleId])
+  @@map("tax_withholdings")
 }
 
 // BE-INCR-IRRF-DISTRIBUICAO PR-2 (BRIEF itens 10–21; F-IRD-4, F-IRD-6, F-IRD-8, F-IRD-9) — evento de distribuição de
@@ -1977,6 +2112,38 @@ model ServiceFiscalProfile {
   @@map("service_fiscal_profiles")
 }
 
+// BE-INCR-NFCE (nó X10a, item 10; F-NFCE-3 b ratificado 02/10, contra a recomendação) — perfil fiscal DO PRODUTO para a
+// NF-e 55 / NFC-e 65. Prisma first-class (§2.1, invariante legal), molde do ServiceFiscalProfile SEM unitId: um perfil por
+// produto, valendo para todas as unidades do dono. `productRef` = id da linha `products` (saleItems.productId), plain string.
+// `csosn` (CRT 1) e `cstIcms` (CRT 3) convivem; a montagem escolhe pelo CRT do perfil da unidade emitente. Códigos admitidos =
+// docs/accounting/fontes-oficiais/TRANSCRICAO-MOC70-NFCe-NFe-saida-2026-10-26.md. Soft-delete com rename-on-delete.
+model ProductFiscalProfile {
+  id              String    @id @default(cuid())
+  userId          String
+  productRef      String
+  ncm             String // I05: 8 dígitos
+  cest            String? // I05c: 7 dígitos
+  origem          Int // N11: 0–8
+  cfopPadrao      String // I08: 4 dígitos; NFC-e ⊂ I08-150
+  csosn           String? // N12a (CRT 1): 102, 103, 300, 400, 500
+  cstIcms         String? // N12 (CRT 3): 00
+  uCom            String // I09: 1–6
+  cEan            String // I03: GTIN-8/12/13/14 ou "SEM GTIN"
+  cstPis          String // Q06
+  cstCofins       String // S06
+  ibsCbsCst       String? // UB13 (NT 2025.002 v1.52)
+  ibsCbsClassTrib String? // UB14
+  xProd           String? // I04: 1–120; null => products.name
+  createdById     String?
+  updatedById     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  @@unique([userId, productRef])
+  @@map("product_fiscal_profiles")
+}
+
 // SIMPLES-PISO-ANEXO-XI bloco 1 (BRIEF item 1, F-PI-1 a): benefício municipal de ISS para ME/EPP do Simples (Res. CGSN
 // 140 arts. 31-32). Lei do Município: por unidade + codMun, ramo (prefixos de cTribNac; [] = todos) e faixa, com vigência.
 // Prisma first-class (§2.1). Soft-delete; sem @@unique (sobreposição é checada no serviço).
@@ -2033,7 +2200,7 @@ model FiscalDocument {
   id                      String                  @id @default(cuid())
   userId                  String
   unitId                  String
-  kind                    String // NFSE | NFE
+  kind                    String // NFSE | NFE | NFCE (BE-INCR-NFCE item 3)
   status                  String // SENT | PROCESSING | AUTHORIZED | AUTHORIZED_DIVERGENT (releitura divergente, F-MAN-2 c) | REJECTED | CANCELLED
   saleId                  String
   saleKey                 String // = saleId enquanto vivo; "cancelled:<id>:<saleId>" após CANCELLED
@@ -2130,16 +2297,44 @@ model FiscalDocumentAttempt {
 
 // BE-INCR-DFE (BRIEF item 4; ADR §9.2 item 9) — numeração da DPS/NF-e por (unidade, kind, série), consumida
 // DENTRO da tx do SENT (ACC-015 por analogia). Espelho de JournalEntrySequence; NUNCA a sequência do razão.
+// BE-INCR-NFCE (nó X10a, item 23; F-NFCE-4 a): chave com o ambiente — na NF-e/NFC-e homologação e produção numeram de 1
+// cada uma (a chave natural inclui o ambiente, MOC VG §2.2.7). A NFS-e numera com ambiente = '' (lacuna no GAP-MAP).
 model FiscalDocumentSequence {
   userId    String
   unitId    String
   kind      String
+  ambiente  String   @default("") // producao | homologacao (NFE/NFCE) | '' (NFSE)
   serie     Int
   last      BigInt   @default(0)
   updatedAt DateTime @updatedAt
 
-  @@id([userId, unitId, kind, serie])
+  @@id([userId, unitId, kind, ambiente, serie])
   @@map("fiscal_document_sequences")
+}
+
+// BE-INCR-NFCE (nó X10a, item 24; F-NFCE-5 a; EMENDA-3 E3-1 c) — faixa de numeração de NF-e/NFC-e cujo pedido de
+// inutilização foi enviado pelo operador (MOC VG §5.3, Tabela 5-9). Guardas locais `[NFE-INUT-REGRAS]` antes da porta.
+model FiscalNumberVoid {
+  id          String   @id @default(cuid())
+  userId      String
+  unitId      String
+  kind        String // NFE | NFCE
+  ambiente    String // producao | homologacao
+  serie       Int
+  nIni        BigInt
+  nFin        BigInt
+  ano         Int
+  xJust       String
+  status      String // REQUESTED | HOMOLOGATED | REJECTED
+  partner     String
+  nProt       String?
+  errorsJson  String?
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, unitId, kind, ambiente, serie])
+  @@map("fiscal_number_voids")
 }
 
 // F7 / BE-INCR-BANK-SETTLEMENT — item de baixa PROPOSTO pelo retorno bancário, efetivado só por
@@ -2262,6 +2457,10 @@ model FixedAssetClass {
   accumulatedDepreciationAccountId String? // obrigatório se depreciable (gate no DTO/serviço do PR-2, não aqui — a coluna é sempre nullable)
   accumulatedDepreciationAccount   Account?     @relation("FixedAssetClassAccumulatedDepreciation", fields: [accumulatedDepreciationAccountId], references: [id], onDelete: Restrict)
   assets                           FixedAsset[]
+  // C8 emenda 3.2 (E9, F-EM-7 → b): tipo da classe e conta própria da despesa de amortização (benfeitoria em imóvel de terceiro, RIR 331 III)
+  kind                             String       @default("DEPRECIATION") // FIXED_ASSET_CLASS_KINDS: DEPRECIATION | AMORTIZATION_LEASEHOLD
+  amortizationExpenseAccountId     String?
+  amortizationExpenseAccount       Account?     @relation("FixedAssetClassAmortizationExpense", fields: [amortizationExpenseAccountId], references: [id], onDelete: Restrict)
   createdAt                        DateTime     @default(now())
   updatedAt                        DateTime     @updatedAt
   deletedAt                        DateTime?
@@ -2353,6 +2552,10 @@ model FixedAsset {
   // o rascunho. NULL para todo ativo que não nasceu de NF-e (SQLite trata NULL como distinto —
   // muitas linhas com payableId/sourceItemRef ambos null coexistem sem colidir no unique).
   sourceItemRef                String?
+  // C8 emenda 3.2 (E8b/E10, F-EM-6 → a): fim do contrato de locação (date-only) e a declaração de direito à indenização
+  // (NULL = não declarado — o silêncio do contrato gera direito, Lei 8.245/91 art. 35). Só para classe AMORTIZATION_LEASEHOLD.
+  leaseEndDate                 DateTime?
+  leaseIndemnifiable           Boolean?
   version                      Int               @default(1) // optimistic-lock counter da CAS de addAccumulated (item 14) e de activate/dispose (item 9/18)
   createdById                  String?
   createdAt                    DateTime          @default(now())
@@ -2593,6 +2796,7 @@ model LalurEntry {
   account        Account?                 @relation("LalurEntryAccount", fields: [accountId], references: [id])
   processos      LalurProcess[] // M315/M365 (processos judiciais/administrativos do ajuste) — value-objects, C2
   journalLinks   LalurEntryJournalEntry[] // M312/M362 (lançamentos da ECD relacionados) — value-objects, Fork F-3C-3
+  parteBLinks    LalurEntryParteBLink[] // M305/M355 1:N das linhas origem='system' (C8 emenda 3.2, E21b, F-EM-14 → a)
   createdById    String? // actor (AccountingScope.actorUserId); plain string
   createdAt      DateTime                 @default(now())
   updatedAt      DateTime                 @updatedAt
@@ -2630,6 +2834,7 @@ model LalurParteBAccount {
   updatedAt                         DateTime                  @updatedAt
   deletedAt                         DateTime? // set when archived (soft) — together with the rename-on-key
   entries                           LalurEntry[] // linhas da Parte A relacionadas (M305/M355)
+  entryLinks                        LalurEntryParteBLink[] // M305/M355 1:N (C8 emenda 3.2, F-EM-14 → a)
   movements                         LalurParteBMovement[]     @relation("LalurMovementConta") // M410 lançados NESTA conta (ECF Fase 3C)
   contrapartidaDe                   LalurParteBMovement[]     @relation("LalurMovementContrapartida") // M410 em que esta conta é COD_CTA_B_CTP
   balances                          LalurParteBBalance[] // M500 materializado por período fechado (ECF Fase 3C, Fork N-1 a)
@@ -2751,6 +2956,21 @@ model LalurProcess {
 // relacionados ao ajuste da Parte A com relação contábil. Só lançamento com `entryNumber` (Posted/Reconciled/
 // Reversed — nulo em Draft/PendingApproval, D-P3.4). Value-object do pai: sem deletedAt; `journalEntryIds[]`
 // SUBSTITUI o conjunto na mesma tx (Fork F-3C-3 a).
+/// C8 emenda 3.2 (E21b, F-EM-14 → a): M305/M355 1:N — uma linha da Parte A `origem='system'` (86/161/91.01) pode
+/// referir mais de uma conta da Parte B no mesmo trimestre (ex.: 161 realizando 1071 de um bem e constituindo 2210 de
+/// outro). O leiaute aceita vários M305 por M300 (REGRA_VALOR_DETALHADO soma os VL_CTA). Value-object, como o M312.
+model LalurEntryParteBLink {
+  entryId    String // FK LalurEntry — Restrict
+  entry      LalurEntry         @relation(fields: [entryId], references: [id], onDelete: Restrict)
+  parteBId   String // FK LalurParteBAccount — Restrict
+  parteB     LalurParteBAccount @relation(fields: [parteBId], references: [id], onDelete: Restrict)
+  valorCents BigInt // M305.VL_CTA (> 0)
+
+  @@id([entryId, parteBId])
+  @@index([parteBId])
+  @@map("lalur_entry_parte_b_links")
+}
+
 model LalurEntryJournalEntry {
   entryId        String // FK LalurEntry — Restrict
   entry          LalurEntry   @relation(fields: [entryId], references: [id], onDelete: Restrict)

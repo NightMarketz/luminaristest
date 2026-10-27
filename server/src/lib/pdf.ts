@@ -25,8 +25,20 @@ function getBrowser(): Promise<Browser> {
   return browserPromise;
 }
 
-/** Renders a self-contained HTML string to an A4 PDF buffer. */
-export async function htmlToPdf(html: string): Promise<Buffer> {
+export interface PdfMargin {
+  top: string;
+  right: string;
+  bottom: string;
+  left: string;
+}
+
+const DEFAULT_MARGIN: PdfMargin = { top: '16mm', bottom: '16mm', left: '14mm', right: '14mm' };
+
+/**
+ * Renders a self-contained HTML string to an A4 PDF buffer. `opts.margin` (NFE-DANFE-IBSCBS PR-2, item 16): the DANFE
+ * needs 0,2–0,8 cm (`[MOC-DANFE-MARGEM]`); without it the receipts keep the default above.
+ */
+export async function htmlToPdf(html: string, opts?: { margin?: PdfMargin }): Promise<Buffer> {
   const browser = await getBrowser();
   const page = await browser.newPage();
   try {
@@ -35,7 +47,7 @@ export async function htmlToPdf(html: string): Promise<Buffer> {
     const pdf = await page.pdf({
       format: 'A4',
       printBackground: true,
-      margin: { top: '16mm', bottom: '16mm', left: '14mm', right: '14mm' },
+      margin: opts?.margin ?? DEFAULT_MARGIN,
     });
     return Buffer.from(pdf);
   } finally {

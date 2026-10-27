@@ -3,7 +3,12 @@ import { Prisma } from 'generated/prisma';
 import { SubstituicaoBloqueadaError } from '../../../lib/errors';
 import { foraDaJanela } from '../models/janelaEventos';
 import { invariantesSubstituicao } from '../models/substituicaoInvariantes';
-import type { DpsPayload, SubstMotivo } from '../dtos/DpsPayloadDto';
+import type { DpsManualPayload, DpsPayload, SubstMotivo } from '../dtos/DpsPayloadDto';
+import { NfePayloadSchema, NfePayloadSemNumeracaoSchema } from '../dtos/NfePayloadDto';
+import type { NfePayload, NfePayloadSemNumeracao } from '../dtos/NfePayloadDto';
+import { gerarCnf, numerarNfe } from '../models/nfeMontagem';
+import type { IFiscalNumberVoidRepository } from '../repositories/IFiscalNumberVoidRepository';
+import { OCCUPYING_VOID_STATUSES } from '../repositories/IFiscalNumberVoidRepository';
 import {
   PendingAttachmentDrainSummarySchema,
   PendingAttachmentResultSchema,
@@ -15,7 +20,7 @@ import { parseEventoCancelamento } from '../../../lib/nfseEvento';
 import { compareNfseWithDps, toReleituraJson, type DpsEnviada, type ReleituraJson } from '../../../lib/nfseReadback';
 import logger from '../../../lib/logger';
 import { attemptRef } from '../repositories/FiscalDocumentRepository';
-import { AUTHORIZED_STATUSES } from '../repositories/IFiscalDocumentRepository';
+import { AUTHORIZED_STATUSES, FISCAL_DOCUMENT_KINDS } from '../repositories/IFiscalDocumentRepository';
 import type { FiscalDocumentKind, FiscalDocumentStatus, FiscalDocumentWithAttempts, IFiscalDocumentRepository } from '../repositories/IFiscalDocumentRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AuditService } from './AuditService';
@@ -24,7 +29,7 @@ import type { PostingService } from './PostingService';
 import type { FiscalDocumentEmissionService, FiscalDocumentView } from './FiscalDocumentEmissionService';
 import { selectDfeEmissor } from '../dfe/selectDfeEmissor';
 import { resolveEmissorFor } from '../dfe/resolveEmissor';
-import { ambienteFromTpAmb, assertTpAmb } from '../dfe/DfeEmissorPort';
+import { ambienteFromTpAmb, assertTpAmb, tpAmbFor } from '../dfe/DfeEmissorPort';
 import type { DfeAmbiente, DfeEmissorPort, EmissaoResult } from '../dfe/DfeEmissorPort';
 import { DpsManualPayloadSchema, DpsPayloadSchema, toManualDps } from '../dtos/DpsPayloadDto';
 import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeInternal';
@@ -100,6 +105,8 @@ export class FiscalDocumentLifecycleService {
     private readonly postingService: PostingService,
     private readonly policy: IAccountingPolicy,
     private readonly auditService: AuditService,
+    /** BE-INCR-NFCE (nó X10a, PR-4; EMENDA-3 E3-2 a): o reenvio da NF-e/NFC-e recusa número com pedido de inutilização. */
+    private readonly voidRepo: Pick<IFiscalNumberVoidRepository, 'findOverlapping'>,
   ) {}
 
   /** POST /api/nfe/dfe/documents/:id/consultar (item 27, tela) — re-consulta UM documento. */
@@ -134,18 +141,17 @@ export class FiscalDocumentLifecycleService {
   async pollPendingOnce(olderThan: Date): Promise<PollSummary> {
     const pending = await this.repo.listPending(olderThan);
     const summary: PollSummary = { total: pending.length, updated: 0, skipped: 0, failed: 0 };
-    const selection = selectDfeEmissor(process.env);
-    if (!selection.enabled) {
-      // Porta desabilitada globalmente — não é erro de nenhum documento individual, só não há o
-      // que consultar. Skip silencioso em nível de lote (o `status` endpoint já avisa disso).
-      summary.skipped = pending.length;
-      return summary;
-    }
     for (const doc of pending) {
+      // Porta desabilitada para o TIPO do documento (BE-INCR-NFCE item 5) — não é erro do documento, só não há o que
+      // consultar. Skip silencioso (o `status` endpoint já avisa disso, por tipo).
+      if (!selectDfeEmissor(process.env, doc.kind as FiscalDocumentKind).enabled) {
+        summary.skipped++;
+        continue;
+      }
       const scope = resolveAccountingScopeInternal({ userId: doc.userId }, doc.unitId);
       try {
         // BE-INCR-DFE-MANUAL (itens 9 e 10): o adaptador é o do DOCUMENTO; o que não consulta (modo manual) é pulado.
-        const port = resolveEmissorFor(doc.partner);
+        const port = resolveEmissorFor(doc.partner, doc.kind as FiscalDocumentKind);
         if (!port.capabilities.consultar) {
           summary.skipped++;
           continue;
@@ -191,47 +197,15 @@ export class FiscalDocumentLifecycleService {
     const port = this.portFor(doc);
     // BE-INCR-DFE-TPAMB (F-AMB-2 a): a porta do env aponta para o ambiente do env; documento de outro ambiente
     // não sai por ela (uma nota de teste sairia como produção). O operador cancela e emite de novo.
-    const envSelection = selectDfeEmissor(process.env);
+    const envSelection = selectDfeEmissor(process.env, doc.kind as FiscalDocumentKind);
     if (envSelection.port.name === doc.partner && envSelection.ambiente !== doc.ambiente) {
       throw new ValidationError('reenvio_bloqueado: ambiente_divergente', {
         faltantes: [`documento em ${doc.ambiente}, emissão configurada em ${envSelection.ambiente ?? 'nenhum'}`],
       });
     }
 
-    const reassembled = await this.emissionService.reassembleGroupForReenvio(
-      scope,
-      doc.saleId,
-      doc.kind as FiscalDocumentKind,
-      doc.cTribNac,
-      doc.ambiente as DfeAmbiente,
-      doc.saleKey, // BE-INCR-PACOTE-VALIDADE (L2, dono 03/10): nota de saldo vencido remonta pelo vencimento
-    );
-    // BE-INCR-DFE-EVENTOS (review B1): a remontagem não conhece o `subst` — a substituta reenviada tem de continuar
-    // substituindo a original (chave da original + substMotivo/substReason; E0078 validado pelo DpsSubstSchema abaixo).
-    if (doc.substitutesDocumentId) {
-      const original = await this.repo.findById(scope, doc.substitutesDocumentId);
-      reassembled.payload = {
-        ...reassembled.payload,
-        infDPS: {
-          ...reassembled.payload.infDPS,
-          subst: {
-            chSubstda: original?.chaveOuCodigo ?? '',
-            cMotivo: doc.substMotivo as SubstMotivo,
-            ...(doc.substReason ? { xMotivo: doc.substReason } : {}),
-          },
-        },
-      };
-    }
-    // A numeração NÃO é reconsumida no reenvio — é a MESMA DPS, uma nova tentativa de envio dela.
-    const payload = port.capabilities.numbersDps
-      ? DpsManualPayloadSchema.parse(toManualDps(reassembled.payload)) // F-MAN-4 a: o portal numera
-      : DpsPayloadSchema.parse(
-          doc.numero != null
-            ? { ...reassembled.payload, infDPS: { ...reassembled.payload.infDPS, nDPS: Number(doc.numero) } }
-            : reassembled.payload,
-        );
-
-    assertTpAmb(payload, doc.ambiente as DfeAmbiente);
+    const { payload, cnpjEmitente, partnerAccountRef } =
+      doc.kind === 'NFSE' ? await this.reenvioDps(scope, doc, port) : await this.reenvioNfe(scope, doc, port);
 
     const nextAttemptNo = doc.currentAttemptNo + 1;
     const ref = attemptRef(doc.id, nextAttemptNo);
@@ -254,8 +228,8 @@ export class FiscalDocumentLifecycleService {
         kind: doc.kind as FiscalDocumentKind,
         ref,
         ambiente: doc.ambiente as DfeAmbiente,
-        cnpjEmitente: reassembled.cnpjEmitente,
-        partnerAccountRef: reassembled.partnerAccountRef,
+        cnpjEmitente,
+        partnerAccountRef,
         payload,
       });
     } catch (emitError) {
@@ -265,6 +239,86 @@ export class FiscalDocumentLifecycleService {
     }
 
     return this.emissionService.getById(scope, documentId);
+  }
+
+  /** Reenvio da NFS-e: DPS remontada com o MESMO nDPS (a numeração não é reconsumida). Extraído do `reenviar` sem mudança. */
+  private async reenvioDps(
+    scope: AccountingScope,
+    doc: FiscalDocumentWithAttempts,
+    port: DfeEmissorPort,
+  ): Promise<{ payload: DpsPayload | DpsManualPayload; cnpjEmitente: string; partnerAccountRef: string | null }> {
+      const reassembled = await this.emissionService.reassembleGroupForReenvio(
+        scope,
+        doc.saleId,
+        doc.kind as FiscalDocumentKind,
+        doc.cTribNac,
+        doc.ambiente as DfeAmbiente,
+        doc.saleKey, // BE-INCR-PACOTE-VALIDADE (L2, dono 03/10): nota de saldo vencido remonta pelo vencimento
+      );
+      // BE-INCR-DFE-EVENTOS (review B1): a remontagem não conhece o `subst` — a substituta reenviada tem de continuar
+      // substituindo a original (chave da original + substMotivo/substReason; E0078 validado pelo DpsSubstSchema abaixo).
+      if (doc.substitutesDocumentId) {
+        const original = await this.repo.findById(scope, doc.substitutesDocumentId);
+        reassembled.payload = {
+          ...reassembled.payload,
+          infDPS: {
+            ...reassembled.payload.infDPS,
+            subst: {
+              chSubstda: original?.chaveOuCodigo ?? '',
+              cMotivo: doc.substMotivo as SubstMotivo,
+              ...(doc.substReason ? { xMotivo: doc.substReason } : {}),
+            },
+          },
+        };
+      }
+      // A numeração NÃO é reconsumida no reenvio — é a MESMA DPS, uma nova tentativa de envio dela.
+      const payload = port.capabilities.numbersDps
+        ? DpsManualPayloadSchema.parse(toManualDps(reassembled.payload)) // F-MAN-4 a: o portal numera
+        : DpsPayloadSchema.parse(
+            doc.numero != null
+              ? { ...reassembled.payload, infDPS: { ...reassembled.payload.infDPS, nDPS: Number(doc.numero) } }
+              : reassembled.payload,
+          );
+
+      assertTpAmb(payload, doc.ambiente as DfeAmbiente);
+    return { payload, cnpjEmitente: reassembled.cnpjEmitente, partnerAccountRef: reassembled.partnerAccountRef };
+  }
+
+  /**
+   * BE-INCR-NFCE (nó X10a, PR-4; EMENDA-3 F-NFCE-E3-2 a) — reenvio da NF-e/NFC-e rejeitada com o número AMARRADO ao
+   * documento: mesma série e mesmo nNF (a rejeitada é descartada e "pode ser corrigida e novamente transmitida", MOC VG
+   * §5.1.6). O cNF é sorteado de novo e a chave recalculada com o `dhEmi` do reenvio (dono, 26/10: "Sortear novo"). Número
+   * com pedido de inutilização REQUESTED/HOMOLOGATED ⇒ 409 `DFE_NUMERO_INUTILIZADO` (dono, 26/10: depois de inutilizar o
+   * número de uma rejeitada, o reenvio dela é recusado).
+   */
+  private async reenvioNfe(
+    scope: AccountingScope,
+    doc: FiscalDocumentWithAttempts,
+    port: DfeEmissorPort,
+  ): Promise<{ payload: NfePayload | NfePayloadSemNumeracao; cnpjEmitente: string; partnerAccountRef: string | null }> {
+    const kind = doc.kind as 'NFE' | 'NFCE';
+    const ambiente = doc.ambiente as DfeAmbiente;
+    if (doc.numero != null) {
+      const faixa = { kind, ambiente, serie: doc.serie, nIni: doc.numero, nFin: doc.numero };
+      const inutilizacoes = await this.voidRepo.findOverlapping(scope, faixa, OCCUPYING_VOID_STATUSES);
+      if (inutilizacoes.length > 0) {
+        throw new ConflictError(
+          `reenvio_bloqueado: o número ${doc.numero} da série ${doc.serie} tem pedido de inutilização (${inutilizacoes[0].status}).`,
+          'DFE_NUMERO_INUTILIZADO',
+        );
+      }
+    }
+    const reassembled = await this.emissionService.reassembleNfeForReenvio(scope, doc.saleId, kind, ambiente);
+    const { infNFe } = reassembled.payload;
+    const semNumero: NfePayloadSemNumeracao = { ...reassembled.payload, infNFe: { ...infNFe, ide: { ...infNFe.ide, serie: doc.serie } } };
+    const payload =
+      !port.capabilities.numbersDps && doc.numero != null
+        ? NfePayloadSchema.parse(numerarNfe(semNumero, Number(doc.numero), gerarCnf(Number(doc.numero))))
+        : NfePayloadSemNumeracaoSchema.parse(semNumero);
+    if (payload.infNFe.ide.tpAmb !== tpAmbFor(ambiente)) {
+      throw new Error(`dfe_tpamb_invariant: NF-e com tpAmb=${payload.infNFe.ide.tpAmb} num documento de ${ambiente}.`);
+    }
+    return { payload, cnpjEmitente: reassembled.cnpjEmitente, partnerAccountRef: reassembled.partnerAccountRef };
   }
 
   /**
@@ -301,8 +355,12 @@ export class FiscalDocumentLifecycleService {
     const { janela } = await this.emissionService.getById(scope, documentId);
     const avisos = foraDaJanela(janela.cancelarAte, new Date()) ? [AVISO_FORA_DA_JANELA] : [];
 
+    if (doc.kind !== 'NFSE') {
+      // BE-INCR-NFCE: o cancelamento 110111 da NF-e/NFC-e (`xJust`) é a Fase E (PR-5); esta rota só cancela NFS-e.
+      throw new ValidationError(`dfe_cancel_kind: cancelamento de ${doc.kind} ainda não implementado.`, null);
+    }
     const partnerRef = doc.partnerRef ?? attemptRef(doc.id, doc.currentAttemptNo);
-    const result = await port.cancelar(partnerRef, input);
+    const result = await port.cancelar(partnerRef, { kind: 'NFSE', cMotivo: input.cMotivo, xMotivo: input.xMotivo });
 
     if (result.status === 'OUT_OF_WINDOW') {
       throw new ConflictError('prazo do município (E0822): fora da janela de cancelamento.', 'DFE_CANCEL_OUT_OF_WINDOW');
@@ -369,8 +427,11 @@ export class FiscalDocumentLifecycleService {
    * "válido" fica sem cobertura de integração até existir um parceiro real com webhook.
    */
   async webhookReceived(partner: string, headers: Record<string, string | undefined>, rawBody: Buffer): Promise<{ status: number }> {
-    const selection = selectDfeEmissor(process.env);
-    if (!selection.enabled || selection.port.name !== partner || !selection.port.capabilities.webhook) {
+    // BE-INCR-NFCE item 5: a seleção é por tipo — vale a do primeiro tipo cujo adaptador habilitado é este parceiro.
+    const selection = FISCAL_DOCUMENT_KINDS.map((kind) => selectDfeEmissor(process.env, kind)).find(
+      (sel) => sel.enabled && sel.port.name === partner,
+    );
+    if (!selection || !selection.port.capabilities.webhook) {
       return { status: 401 };
     }
     const verification = selection.port.verifyWebhook(headers, rawBody);
@@ -599,7 +660,7 @@ export class FiscalDocumentLifecycleService {
     }
     const doc = await this.repo.findById(scope, documentId);
     if (!doc) throw new ValidationError(`Documento fiscal '${documentId}' não encontrado.`, null);
-    const selection = selectDfeEmissor(process.env);
+    const selection = selectDfeEmissor(process.env, 'NFSE');
     if (doc.kind !== 'NFSE' || !selection.port.capabilities.substituir) {
       throw new ConflictError(
         `dfe_subst_nao_suportada: ${doc.kind !== 'NFSE' ? 'só NFS-e tem substituição (BRIEF §7)' : `o adaptador '${selection.port.name}' não substitui`}.`,
@@ -707,11 +768,12 @@ export class FiscalDocumentLifecycleService {
    * operação por máquina (mesmo contrato do X10b: "desabilitada com aviso, nunca em silêncio").
    */
   private portFor(doc: FiscalDocument): DfeEmissorPort {
-    const selection = selectDfeEmissor(process.env);
+    const kind = doc.kind as FiscalDocumentKind;
+    const selection = selectDfeEmissor(process.env, kind);
     if (!selection.enabled) {
       throw new ValidationError(`dfe_disabled: ${selection.reason}`, { faltantes: [selection.reason ?? 'porta desabilitada'] });
     }
-    return resolveEmissorFor(doc.partner);
+    return resolveEmissorFor(doc.partner, kind);
   }
 
   /**
@@ -720,7 +782,7 @@ export class FiscalDocumentLifecycleService {
    * ambiente não passa por ela.
    */
   private assertAmbienteDoDocumento(doc: FiscalDocument): void {
-    const selection = selectDfeEmissor(process.env);
+    const selection = selectDfeEmissor(process.env, doc.kind as FiscalDocumentKind);
     if (selection.port.name === doc.partner && selection.ambiente !== doc.ambiente) {
       throw new ValidationError('dfe_ambiente_divergente', {
         faltantes: [`documento em ${doc.ambiente}, emissão configurada em ${selection.ambiente ?? 'nenhum'}`],
@@ -1069,18 +1131,18 @@ export class FiscalDocumentLifecycleService {
    * os pulados não escondem os demais.
    */
   private async backfillPendingAttachments(limit: number): Promise<void> {
-    const selection = selectDfeEmissor(process.env);
     let cursor: string | null = null;
     do {
       const page = await this.repo.listAttachmentBackfillCandidates(limit, cursor);
       cursor = page.nextCursor;
       for (const doc of page.candidates) {
         try {
+          const selection = selectDfeEmissor(process.env, doc.kind as FiscalDocumentKind);
           if (!selection.enabled) {
             logger.warn('dfe_pending_attachment_backfill: skip — porta desabilitada', { documentId: doc.id });
             continue;
           }
-          const port = resolveEmissorFor(doc.partner);
+          const port = resolveEmissorFor(doc.partner, doc.kind as FiscalDocumentKind);
           if (!port.capabilities.consultar) {
             logger.warn('dfe_pending_attachment_backfill: skip — modo manual, sem de onde tirar o XML', { documentId: doc.id });
             continue;

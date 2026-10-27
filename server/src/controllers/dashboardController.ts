@@ -19,7 +19,7 @@ const UnifiedCreationSchema = z.union([
   CustomCreationSchema.extend({ fiscal: OnboardingFiscalSchema.optional() }),
 ]);
 
-import type { UnitInput } from '@/features/dynamicTables/dtos/CreateDashboard.dto';
+import type { AddedTableInput, UnitInput } from '@/features/dynamicTables/dtos/CreateDashboard.dto';
 import type { UserContext } from '@/lib/authUtils';
 
 import { ForbiddenError, OnboardingRolledBackError, OnboardingRollbackFailedError, ValidationError } from '@/lib/errors';
@@ -32,7 +32,7 @@ import { resolveBindingScope } from '@/features/accountingBinding/scope/BindingS
 import { reloadAccountingMappersSerialized } from '@/features/accountingBinding/runtime/mapperReload';
 import { OnboardingAccountingResultSchema } from '@/features/accountingBinding/dtos/ActivateDefaultBindingDto';
 import type { ActivateDefaultBindingResult, OnboardingAccountingResult } from '@/features/accountingBinding/dtos/ActivateDefaultBindingDto';
-import { composeModuleTables, expandModuleSelectors, type ModuleSelector } from '@/features/dynamicTables/presets/modules/registry';
+import { composeModuleTables, expandModuleSelectors, moduleOfTable, type ModuleSelector } from '@/features/dynamicTables/presets/modules/registry';
 import { applyModuleRemovals, applySelectOverrides, assertAddedFieldsRespectModules, resolveModuleSelection } from '@/features/dynamicTables/presets/modules/moduleSelection';
 import { assertRemovalsAllowed } from '@/features/dynamicTables/presets/removability';
 import { CoreSystemPreset, PresetTableDefinition } from '@/features/dynamicTables/presets';
@@ -70,6 +70,7 @@ export async function createDashboard(req: Request, res: Response) {
         payload.presetKey,
         payload.removedTables || [],
         payload.addedFields || {},
+        payload.addedTables || [],
         payload.unit,
         payload.fiscal,
         payload.modules,
@@ -181,6 +182,7 @@ async function handleCustomCreation(
   presetKey: string,
   removedTables: string[],
   addedFields: Record<string, unknown[]>,
+  addedTables: AddedTableInput[],
   unit: UnitInput,
   fiscal: OnboardingFiscalInput | undefined,
   modules: ModuleSelector[],
@@ -238,6 +240,30 @@ async function handleCustomCreation(
           };
         }
       }
+    }
+
+    // W1 (F-W1-4 → a): tabela criada na conversa da Entrevista com IA. Chave nova (nem da suíte, nem de módulo, nem do
+    // Core) e campos com a mesma validação forte de `addedFields`; categoria fixa `other` (dono, questionário 2026-10-24).
+    for (const added of addedTables) {
+      if (finalTablesConfig[added.key] || coreTableKeys.includes(added.key) || moduleOfTable(added.key)) {
+        throw new ValidationError(`addedTables: a tabela '${added.key}' já existe no sistema.`, {
+          reason: 'ADDED_TABLE_EXISTS',
+          table: added.key,
+        });
+      }
+      const schema = CreateDynamicTableDto.shape.schema.safeParse({ fields: added.fields });
+      if (!schema.success) {
+        throw new ValidationError(`Campo inválido em addedTables para a tabela '${added.key}'.`, {
+          reason: 'ADDED_TABLE_INVALID',
+          table: added.key,
+          issues: schema.error.flatten(),
+        });
+      }
+      finalTablesConfig[added.key] = {
+        name: added.name,
+        category: 'other',
+        schema: { fields: added.fields as ISchemaField[] },
+      };
     }
 
     // I8 c11 (F-I8-C11): opções de selects livres — só select da allowlist; campo texto → 400 nomeado.

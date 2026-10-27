@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { isLc116Codigo, listaLc116DoCache } from '../models/lc116ListaNacional';
 import { issAliquotaMaxBpDoCache } from '../models/issLimite';
+import { ISS_EXTINTO_MENSAGEM, issExtinto } from '../models/issTransicao';
+import { hojeDateOnly } from '../../legalParameters/models/hoje';
 
 /**
  * BE-INCR-NFE-COST-REGIME (nó X6) — DTOs do perfil fiscal (BRIEF §2 + EMENDA 2026-09-15). `.strict()`.
@@ -79,22 +81,49 @@ const FiscalProfileFields = z
     // IBS-CBS-2027 PR-3 (item 14; dono 21/10, razão completo): IBS e CBS a recuperar (Asset) — crédito da NF-e de entrada.
     ibsRecuperarAccountId: z.string().min(1).nullable().optional(),
     cbsRecuperarAccountId: z.string().min(1).nullable().optional(),
+    // RETENCOES-FONTE PR-1 (item 8; F-RET-19 a): retenções feitas a recolher (Liability) e sofridas a compensar (Asset).
+    retencaoIrrfRecolherAccountId: z.string().min(1).nullable().optional(),
+    retencaoCsrfRecolherAccountId: z.string().min(1).nullable().optional(),
+    retencaoInssRecolherAccountId: z.string().min(1).nullable().optional(),
+    retencaoIssRecolherAccountId: z.string().min(1).nullable().optional(),
+    retencaoIrrfCompensarAccountId: z.string().min(1).nullable().optional(),
+    retencaoCsllCompensarAccountId: z.string().min(1).nullable().optional(),
+    retencaoInssCompensarAccountId: z.string().min(1).nullable().optional(),
     partnerAccountRef: z.string().min(1).max(120).nullable().optional(),
     // BE-INCR-DFE — emitente (ADR-DFE D5)
     codMun: ibge7.nullable().optional(),
     inscricaoMunicipal: z.string().min(1).max(15).nullable().optional(),
     cnae: z.string().min(1).max(10).nullable().optional(),
     dpsSerie: z.number().int().min(1).max(49999).default(1),
+    // BE-INCR-NFCE (nó X10a, itens 8–9; F-NFCE-2 b): emit/IE (C17: "somente os algarismos", 2–14 — o formato por UF é
+    // insumo pendente) e séries da NF-e 55 / NFC-e 65 (B07: 000–889 = aplicativo do contribuinte). MOC 7.0 Anexo I pp. 9, 13.
+    inscricaoEstadual: z.string().regex(/^\d{2,14}$/, 'inscricaoEstadual: só algarismos, 2 a 14 (emit/IE, C17)').nullable().optional(),
+    nfeSerie: z.number().int().min(0).max(889).default(1),
+    nfceSerie: z.number().int().min(0).max(889).default(1),
+    // BE-INCR-NFCE PR-3 (D-2026-10-26-X10A-EXECUCAO, "Campos no FiscalProfile"): emitente da NF-e/NFC-e, MOC 7.0 Anexo I
+    // pp. 12–13 — C03 xNome 2-60, C06 xLgr 2-60, C07 nro 1-60, C08 xCpl 1-60, C09 xBairro 2-60, C11 xMun 2-60, C13 CEP 8.
+    razaoSocial: z.string().trim().min(2).max(60).nullable().optional(),
+    enderLogradouro: z.string().trim().min(2).max(60).nullable().optional(),
+    enderNumero: z.string().trim().min(1).max(60).nullable().optional(),
+    enderComplemento: z.string().trim().min(1).max(60).nullable().optional(),
+    enderBairro: z.string().trim().min(2).max(60).nullable().optional(),
+    enderMunicipio: z.string().trim().min(2).max(60).nullable().optional(),
+    enderCep: z.string().regex(/^\d{8}$/, 'enderCep: 8 algarismos (C13)').nullable().optional(),
     regEspTrib: z.number().int().min(0).max(9).default(0),
     regApTribSN: z.number().int().min(1).max(3).nullable().optional(),
     // BE-INCR-DFE — D1f configurável (5a–5f), defaults = recomendação do ADR
     // BE-INCR-LEGAL-PARAMS PR-2 (item 22; L-8): o máximo vem da tabela ISS_LIMITE (cache síncrono). D-4 (mínimo de 2%)
-    // é pendência de contador — não corrigida.
+    // é pendência de contador — não corrigida. ISS-TRANSICAO-IBS PR-1 (item 4; F-ISS-5 a): de 01/01/2033 em diante a
+    // ISS_LIMITE não tem linha (LC 214 art. 543 IV) — valor não nulo ⇒ 400 nomeado, antes de ler o máximo; null passa.
     issAliquotaBp: z
       .number()
       .int()
       .min(0)
-      .refine((v) => v <= issAliquotaMaxBpDoCache(), { message: 'issAliquotaBp acima do máximo da tabela ISS_LIMITE (pAliq [312]; RN E0595)' })
+      .superRefine((v, ctx) => {
+        const hoje = hojeDateOnly();
+        if (issExtinto(hoje)) ctx.addIssue({ code: 'custom', message: ISS_EXTINTO_MENSAGEM });
+        else if (v > issAliquotaMaxBpDoCache(hoje)) ctx.addIssue({ code: 'custom', message: 'issAliquotaBp acima do máximo da tabela ISS_LIMITE (pAliq [312]; RN E0595)' });
+      })
       .nullable()
       .optional(),
     issRetidoTomadorPj: z.boolean().default(false),

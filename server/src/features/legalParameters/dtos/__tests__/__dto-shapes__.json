@@ -34,7 +34,14 @@
             "TJLP",
             "IBS_CBS",
             "IBS_CBS_USO_CONSUMO",
-            "IBS_CBS_PROVISORIA"
+            "IBS_CBS_PROVISORIA",
+            "RETENCAO",
+            "RETENCAO_CODIGO",
+            "NATUREZA_RENDIMENTO",
+            "IRRF_PF_MENSAL",
+            "ISS_TRANSICAO",
+            "NFCE_LIMITE",
+            "INUT_NAO_SE_APLICA"
           ]
         },
         "chave": {
@@ -130,7 +137,14 @@
             "TJLP",
             "IBS_CBS",
             "IBS_CBS_USO_CONSUMO",
-            "IBS_CBS_PROVISORIA"
+            "IBS_CBS_PROVISORIA",
+            "RETENCAO",
+            "RETENCAO_CODIGO",
+            "NATUREZA_RENDIMENTO",
+            "IRRF_PF_MENSAL",
+            "ISS_TRANSICAO",
+            "NFCE_LIMITE",
+            "INUT_NAO_SE_APLICA"
           ]
         },
         "status": {
@@ -209,7 +223,14 @@
             "TJLP",
             "IBS_CBS",
             "IBS_CBS_USO_CONSUMO",
-            "IBS_CBS_PROVISORIA"
+            "IBS_CBS_PROVISORIA",
+            "RETENCAO",
+            "RETENCAO_CODIGO",
+            "NATUREZA_RENDIMENTO",
+            "IRRF_PF_MENSAL",
+            "ISS_TRANSICAO",
+            "NFCE_LIMITE",
+            "INUT_NAO_SE_APLICA"
           ]
         },
         "chave": {

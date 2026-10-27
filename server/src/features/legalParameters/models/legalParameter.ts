@@ -44,6 +44,21 @@ export const LEGAL_PARAMETER_TABELAS = [
   // IBS-CBS-2027 PR-3 (dono 22/10): taxa de referência PROVISÓRIA da CBS para a prévia enquanto a linha IBS_CBS/CBS de 2027 for
   // DRAFT (sem fonte oficial — o operador da plataforma publica; a confirmação nunca a usa). Nasce vazia.
   'IBS_CBS_PROVISORIA',
+  // RETENCOES-FONTE PR-1 (BRIEF itens 1, 2, 3 e 7; Emenda 22/10 item 1): alíquotas e mínimos das retenções, código de
+  // receita por natureza do rendimento × tributo, natureza do rendimento (Tabela 01 da Reinf) e a tabela mensal do IRRF de
+  // PF. RETENCAO_CODIGO e NATUREZA_RENDIMENTO são as ÚNICAS tabelas desse dado — a EFD-REINF lê estas.
+  'RETENCAO',
+  'RETENCAO_CODIGO',
+  'NATUREZA_RENDIMENTO',
+  'IRRF_PF_MENSAL',
+  // ISS-TRANSICAO-IBS PR-1 (BRIEF item 2): fator de redução do ISS em 2029–2032 (LC 116 art. 8º-B I–IV, incl. LC 214 art. 508).
+  'ISS_TRANSICAO',
+  // BE-INCR-NFCE PR-3 (nó X10a, item 17 pela A9; D-2026-10-26-X10A-EXECUCAO): limites da NFC-e (Aj. SINIEF 19/16 cl. 4ª VII
+  // "a" e § 4º), valor nacional sem discriminador e redução por UF (§ 5º) com o código IBGE da UF.
+  'NFCE_LIMITE',
+  // BE-INCR-NFCE PR-4 (nó X10a, EMENDA-3 F-NFCE-E3-2 a): UF onde o pedido de inutilização "não se aplica" desde 01/11/2026
+  // (Aj. SINIEF 40/26 na NF-e, 38/26 na NFC-e) — aviso na lista de lacunas, não recusa (E3-1 c).
+  'INUT_NAO_SE_APLICA',
 ] as const;
 export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
 

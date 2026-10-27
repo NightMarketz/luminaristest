@@ -49,8 +49,10 @@ import { PolicyVersionsPanel } from './governance/PolicyVersionsPanel';
 import { AccountingActivationBanner } from './components/AccountingActivationBanner';
 import { ReconcilePendingPanel } from './components/ReconcilePendingPanel';
 import { parseInventoryPurchaseSeed, type InventoryPurchaseSeed } from './lib/inventoryPurchaseLink';
+import { AccountingKitTab } from './components/AccountingKitTab';
+import { useUnitKit } from './hooks/useUnitKit';
 
-export type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'cobranca' | 'nfe' | 'compliance' | 'dimensoes' | 'imobilizado' | 'perfil-fiscal' | 'parametros-legais' | 'politica' | 'apuracao' | 'pendencias';
+export type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'cobranca' | 'nfe' | 'compliance' | 'dimensoes' | 'imobilizado' | 'perfil-fiscal' | 'parametros-legais' | 'politica' | 'apuracao' | 'pendencias' | 'kit';
 
 // label = i18n fallback (current pt-BR); rendered via t(`view.tabs.<id>`, label)
 export const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
@@ -97,6 +99,9 @@ export const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
   // FE-INCR-PAYMENT-PROVIDER (F-FE-COB-1 a, dono 13/10): conta do provedor (Mercado Pago) — serve à cobrança (AR) E ao
   // relatório de liberações (Conciliação), por isso aba própria. Fora do `DELEGATED_TABS`.
   { id: 'cobranca',       labelKey: 'view.tabs.cobranca',       label: 'Cobrança' },
+  // EMENDA-2 da LAC-B (F-KA-1 c, dono 16/10): kit de setor da unidade — só entra na barra quando a unidade TEM kit
+  // (`useUnitKit` → `loaded`). Fora do `DELEGATED_TABS` (F-KA-6 a: o kit lido seria o do silo do contador).
+  { id: 'kit',            labelKey: 'view.tabs.kit',            label: 'Kit de setor' },
 ];
 
 /**
@@ -162,9 +167,20 @@ export function AccountingView() {
   const [inventoryPurchaseSeed, setInventoryPurchaseSeed] = useState<InventoryPurchaseSeed | null>(() =>
     typeof window === 'undefined' ? null : parseInventoryPurchaseSeed(window.location.search),
   );
+
+  // Kit de setor da unidade (EMENDA-2 da LAC-B, itens 3–4): decide se a aba "Kit de setor" existe; no modo cliente
+  // não chama a rota (F-KA-6 a). `activationNonce` remonta a faixa de ativação depois de uma retomada (item 8);
+  // `kitNonce` remonta a aba depois de ativar pela faixa (item 10) — a aba lê o kit pelo próprio hook.
+  const unitKit = useUnitKit(unitId, { enabled: !governance && !!unitId });
+  const kitTabVisible = !governance && unitKit.state === 'loaded';
+  const [activationNonce, setActivationNonce] = useState(0);
+  const [kitNonce, setKitNonce] = useState(0);
+
   const [rawTab, setRawTab] = useState<Tab>(() => (inventoryPurchaseSeed ? 'contas-a-pagar' : 'balancete'));
   // Allowlist por construção: no modo cliente nenhuma aba fora de `DELEGATED_TABS` chega a renderizar (item 8.1).
-  const activeTab: Tab = governance && !DELEGATED_TABS.includes(rawTab) ? 'periodos' : rawTab;
+  // A aba "Kit de setor" sem kit carregado (outra unidade, erro) volta ao Balancete.
+  const activeTab: Tab =
+    governance && !DELEGATED_TABS.includes(rawTab) ? 'periodos' : rawTab === 'kit' && !kitTabVisible ? 'balancete' : rawTab;
   const setActiveTab = setRawTab;
   // Seção em que a aba Imobilizado abre — a NF-e aponta "Classes"/"Taxas"; volta a "Bens" ao sair da aba.
   const [fixedAssetsSection, setFixedAssetsSection] = useState<FixedAssetsSectionId>('bens');
@@ -175,7 +191,9 @@ export function AccountingView() {
   // item 24). Volta a `undefined` (primeira folha) ao sair da aba.
   const [reconGlAccountId, setReconGlAccountId] = useState<string | undefined>(undefined);
   useEffect(() => { if (activeTab !== 'conciliacao') setReconGlAccountId(undefined); }, [activeTab]);
-  const visibleTabs = governance ? TABS.filter((tab) => DELEGATED_TABS.includes(tab.id)) : TABS;
+  const visibleTabs = governance
+    ? TABS.filter((tab) => DELEGATED_TABS.includes(tab.id))
+    : TABS.filter((tab) => tab.id !== 'kit' || kitTabVisible);
 
   function switchContext(next: string) {
     setChosenContext(next);
@@ -299,10 +317,14 @@ export function AccountingView() {
            do chamador, não no do cliente (item 4). `key` remonta por unidade. ── */}
       {!governance && unitId && (
         <AccountingActivationBanner
-          key={unitId}
+          key={`${unitId}-${activationNonce}`}
           unitId={unitId}
           onNavigateToPeriods={() => setActiveTab('periodos')}
           onNavigateToPendencias={PENDENCIAS_TAB ? () => setActiveTab(PENDENCIAS_TAB) : undefined}
+          onActivated={() => {
+            unitKit.reload();
+            setKitNonce((n) => n + 1);
+          }}
         />
       )}
 
@@ -580,6 +602,18 @@ export function AccountingView() {
       )}
 
       {activeTab === 'pendencias' && unitId && <ReconcilePendingPanel key={`pendencias-${unitId}`} unitId={unitId} />}
+
+      {/* ── Kit de setor (EMENDA-2 da LAC-B, F-KA-1 c) ─────────────────────── */}
+      {activeTab === 'kit' && unitId && (
+        <AccountingKitTab
+          key={`kit-${unitId}-${kitNonce}`}
+          unitId={unitId}
+          onActivationChanged={() => {
+            unitKit.reload();
+            setActivationNonce((n) => n + 1);
+          }}
+        />
+      )}
 
       {/* ── New Entry Modal ────────────────────────────────────────────────── */}
       <JournalEntryModal

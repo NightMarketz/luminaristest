@@ -13,11 +13,16 @@
  *              teste: PayableService.test.ts › "does NOT re-post when the recognition already exists (idempotent)"
  *   fora da tx — entrada de estoque (receiveStock; falha não compensa, o reconcile re-dirige) e rascunho de imobilizado (modo 4)
  *              teste: PayableService.test.ts › "does NOT compensate the recognition when the INBOUND fails (reconcile re-drives)"
+ *   RETENCOES-FONTE PR-2 (F-RET-10 a) — a retenção feita é baixa SEM caixa (kind WITHHOLDING) gravada na tx1 do título (ou na
+ *              tx da baixa, para a CSRF) com a TaxWithholding e o título de imposto; o razão vem depois, em postEntry próprio
+ *              (sourceType='ap.withholding', sourceId=paymentId): D 2.1.2 / C conta a recolher. Falha do post ⇒ o reconcile refaz.
+ *              teste: retencoesFontePr2.integration.test.ts › "item 15: R$ 1.000 a PJ Presumido ⇒ IRRF R$ 15,00, paidCents 1500, razão balanceado"
+ *              teste: retencoesFontePr2.integration.test.ts › "item 21: reconcile refaz o lançamento WITHHOLDING que faltou, idempotente"
  */
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import { Prisma } from 'generated/prisma';
-import type { Account, Payable, PayablePayment } from 'generated/prisma';
+import type { Account, Payable, PayablePayment, TaxWithholding } from 'generated/prisma';
 import { ESTOQUES_CODE, FORNECEDORES_A_PAGAR_CODE } from '../fixtures/ChartOfAccountsFixture';
 import { aggregateInventoryItems, INVENTORY_INBOUND_SOURCE_TYPE } from '../models/Inventory.model';
 import { centsFromDb } from '../models/money';
@@ -25,6 +30,9 @@ import { scopeToday } from '../models/dates';
 import {
   AP_PAYABLE_SOURCE_TYPE,
   AP_PAYMENT_SOURCE_TYPE,
+  AP_WITHHOLDING_SOURCE_TYPE,
+  PAYABLE_ORIGIN_WITHHOLDING_TAX,
+  WITHHOLDING_KIND,
   deletedDocumentNumber,
   hasSingleInventorySku,
   isInventoryPurchase,
@@ -56,10 +64,21 @@ import type { PostingService } from './PostingService';
 import type { IInventoryService } from './IInventoryService';
 import type { IProductRefLookup } from './ProductRefLookup';
 import type { IPhysicalStockSync } from './PhysicalStockSync';
-import type { IFixedAssetDraftCreator, IFixedAssetDraftRedriver, ResolvedFixedAssetItem } from './IFixedAssetDraftCreator';
+import {
+  isExpensedFixedAssetItem,
+  type IFixedAssetDraftCreator,
+  type IFixedAssetDraftRedriver,
+  type ResolvedExpensedFixedAssetItem,
+  type ResolvedFixedAssetItem,
+  type StoredFixedAssetItem,
+} from './IFixedAssetDraftCreator';
+import { FIXED_ASSET_EXPENSE_LIMIT_CENTS, expenseAllowed, unitCostCentsOf } from '../models/fixedAssetLimits';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
 import { resolveOrCreateCounterpartyId } from './counterpartyResolution';
+import type { BaixaRetencao, WithholdingService } from './WithholdingService';
+import type { TributoRetencao as TaxWithholdingTributo } from '../models/retencaoParams';
+import type { ITaxWithholdingRepository } from '../repositories/ITaxWithholdingRepository';
 
 /**
  * PayableService — Contas a Pagar (INCR-AP / ADR-INCR-AP). FIRST-CLASS PRISMA.
@@ -128,6 +147,14 @@ export class PayableService implements IFixedAssetDraftRedriver {
 
   setFixedAssetDraftCreator(creator: IFixedAssetDraftCreator): void {
     this.fixedAssetDraftCreator = creator;
+  }
+
+  // BE-INCR-RETENCOES-FONTE PR-2 (setter injection, mesmo motivo do draft creator: o WithholdingService nasce depois na
+  // factory). `undefined` = sem retenção (o título segue como antes; sobrescrita informada ⇒ 400, nunca ignorada).
+  private withholding?: { service: WithholdingService; repo: ITaxWithholdingRepository };
+
+  setWithholding(service: WithholdingService, repo: ITaxWithholdingRepository): void {
+    this.withholding = { service, repo };
   }
 
   constructor(
@@ -209,7 +236,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
    * surfaced, so a failed creation never leaves a dangling payable. A crash between the two txs is
    * converged by reconcilePayables.
    */
-  async createPayable(scope: AccountingScope, dto: CreatePayableInput): Promise<Payable> {
+  async createPayable(scope: AccountingScope, dto: CreatePayableInput): Promise<Payable & { withholdingAvisos: string[] }> {
     if (!this.policy.canManagePayable(scope)) {
       throw new ForbiddenError('Você não tem permissão para criar contas a pagar.');
     }
@@ -218,6 +245,14 @@ export class PayableService implements IFixedAssetDraftRedriver {
     // INCR-INVENTORY D3(b): an inventory PURCHASE (inventoryProductRef + inventoryQty, DTO XOR gate)
     // debits 1.1.6 Estoques instead of an expense leaf and drives a StockMovement INBOUND.
     const inventoryPurchase = isInventoryPurchase(dto);
+
+    // RETENCOES-FONTE PR-2 (itens 10–16): retenção só no título de DESPESA (serviço). Sobrescrita/deduções de PF numa
+    // compra de mercadoria ou sem o serviço de retenção ligado ⇒ 400, nunca ignorada (param-aceito-e-ignorado-e-bug).
+    const comRetencao = !inventoryPurchase && !!this.withholding;
+    if (!comRetencao && (dto.withholdings?.length || dto.pfDeducoes)) {
+      throw new ValidationError('withholdings/pfDeducoes só se aplicam a título de despesa de serviço com retenção na fonte.', null, 'RETENCAO_FORA_DO_TITULO_DE_SERVICO');
+    }
+    const legais = comRetencao ? await this.withholding!.service.fotografia() : null;
 
     // Expense-account gate (D4): only for ordinary expense payables — must be an existing, active, LEAF
     // Expense account of this scope. Inventory purchases carry expenseAccountId=null.
@@ -233,8 +268,11 @@ export class PayableService implements IFixedAssetDraftRedriver {
     // tx (mesmo padrão de recoverableLines) — persistido na linha para o re-drive reconstruir o
     // MESMO entry e para o rascunho (item 22, fora desta PR — ver F-FA-DRAFT-RATE no retorno) ler
     // qty/ncm/cProd por item.
+    // C8 emenda 3.2 (E3–E5): o item EXPENSE sai à parte — debita a própria folha de despesa e não vira rascunho.
     const hasFixedAssetItems = (dto.fixedAssetItems?.length ?? 0) > 0;
-    const fixedAssetLines = hasFixedAssetItems ? await this.resolveFixedAssetLines(scope, dto) : [];
+    const { capitalized: fixedAssetLines, expensed: expensedLines } = hasFixedAssetItems
+      ? await this.resolveFixedAssetLines(scope, dto)
+      : { capitalized: [], expensed: [] };
 
     // ITEM-DESTINATION item 11 (F-ID-3 a): a conta de cada item de insumo é re-conferida aqui como folha
     // Expense do escopo (defesa em profundidade — mesmo gate do `expenseAccountId`), ANTES do tx1.
@@ -282,9 +320,21 @@ export class PayableService implements IFixedAssetDraftRedriver {
     // it can now WRITE (mint a catalog identity), and a mint that survived a rolled-back payable
     // would leave an orphan supplier in the catalog. Mints payableId.
     let payable: Payable;
+    let baixas: BaixaRetencao[] = [];
+    let withholdingAvisos: string[] = [];
     try {
       payable = await this.payableRepo.runTransaction(async (tx) => {
         const counterpartyId = await this.resolveOrCreateCounterpartyId(scope, dto, tx);
+        // RETENCOES-FONTE PR-2 (item 15; F-RET-10 a): plano do RECONHECIMENTO na tx1 (a contraparte pode ter nascido agora).
+        // O título nasce com `paidCents` = Σ retido (as baixas sem caixa abaixo, na mesma tx) — reconhecimento segue bruto.
+        const plano = legais
+          ? await this.withholding!.service.planejar(
+              scope,
+              { event: 'RECOGNITION', counterpartyId, brutoCents: BigInt(dto.amountCents), dataFatoGerador: dto.issueDate, legais, overrides: dto.withholdings, pfDeducoes: dto.pfDeducoes },
+              tx,
+            )
+          : null;
+        const retido = (plano?.linhas ?? []).reduce((s, l) => s + Number(l.amountCents), 0);
         const created = await this.payableRepo.create(
           {
             userId,
@@ -302,11 +352,22 @@ export class PayableService implements IFixedAssetDraftRedriver {
             inventoryQty: dto.inventoryQty ?? null,
             inventoryMultiItem: dto.inventoryMultiItem ?? false,
             recoverableTaxLines: recoverableLines.length > 0 ? JSON.stringify(recoverableLines) : null,
-            status: 'OPEN',
+            status: payableStatusForBalance(retido, dto.amountCents),
+            paidCents: retido,
             createdById: scope.actorUserId,
           },
           tx,
         );
+        if (plano) {
+          baixas = await this.withholding!.service.gravar(
+            scope,
+            plano,
+            created,
+            { originSettlementId: null, documentoNumero: dto.documentNumber ?? null, documentoSerie: dto.documentoSerie ?? null },
+            tx,
+          );
+          withholdingAvisos = plano.avisos;
+        }
         await this.auditService.append(tx, scope, {
           actorUserId: scope.actorUserId,
           eventType: 'payable.created',
@@ -323,6 +384,21 @@ export class PayableService implements IFixedAssetDraftRedriver {
             recoverableIbsCbsCents: String(recoverableLines.filter(isIbsCbsRow).reduce((acc, l) => acc + l.amountCents, 0)),
             // ITEM-DESTINATION item 13: o que foi para DESPESA de insumo (precedente do X6 item 13).
             insumoCents: String(insumoLines.reduce((acc, l) => acc + l.costCents, 0)),
+            // C8 emenda 3.2 (E8): imobilizado deduzido como despesa (IN RFB 1.700 art. 120) — unitário e a declaração de vida
+            // útil ≤ 1 ano. Só quando há item EXPENSE: evento sem a chave mantém o hash (canonicalize pula ausente).
+            ...(expensedLines.length > 0
+              ? {
+                  expensedFixedAssetItems: JSON.stringify(
+                    expensedLines.map((l) => ({
+                      sourceItemRef: l.sourceItemRef,
+                      cProd: l.cProd,
+                      costCents: l.costCents,
+                      unitCostCents: l.unitCostCents,
+                      ...(l.usefulLifeUpToOneYear ? { usefulLifeUpToOneYear: true } : {}),
+                    })),
+                  ),
+                }
+              : {}),
             dueDate: dto.dueDate,
             // Debit leg of the recognition: an expense leaf, or 1.1.6 Estoques for an inventory purchase.
             expenseAccountCode: expenseAccount?.code ?? ESTOQUES_CODE,
@@ -344,13 +420,17 @@ export class PayableService implements IFixedAssetDraftRedriver {
     try {
       const entry = await this.posting.postEntry(
         scope,
-        this.buildRecognitionInput(scope, payable, expenseAccount, dto, fixedAssetLines, insumoLines),
+        this.buildRecognitionInput(scope, payable, expenseAccount, dto, fixedAssetLines, insumoLines, expensedLines),
       );
       recognitionEntryId = entry.id;
     } catch (error) {
       await this.compensateFailedRecognition(scope, payable);
       throw error;
     }
+
+    // RETENCOES-FONTE PR-2 (item 15): as baixas sem caixa vão ao razão DEPOIS do reconhecimento (D 2.1.2 / C a recolher).
+    // O reconhecimento já está commitado: falha aqui NÃO compensa — o reconcilePayables refaz (item 21).
+    for (const b of baixas) await this.postWithholdingBestEffort(scope, payable, b);
 
     // Inventory INBOUND (D3(b) + BE-INCR-NFE F-NFE7→a) — AFTER the recognition is booked (D 1.1.6 / C
     // 2.1.2), value the SKU(s). receiveStock is READ-FIRST idempotent on (item, sourceId=payableId), so
@@ -423,7 +503,68 @@ export class PayableService implements IFixedAssetDraftRedriver {
         });
       }
     }
-    return payable;
+    return Object.assign(payable, { withholdingAvisos });
+  }
+
+  /**
+   * RETENCOES-FONTE PR-2 (item 21) — estorno das retenções do RECONHECIMENTO antes do cancelamento do título: só quando as
+   * baixas ativas do título são todas sem caixa da retenção (pagamento ativo ⇒ o cancelamento segue recusando). Gate antes
+   * do razão (título de imposto já baixado ⇒ 409), depois os estornos no razão, depois a tx do subrazão. `true` = estornou.
+   */
+  private async estornarRetencoesDoReconhecimento(scope: AccountingScope, payable: PayableWithPayments, dto: CancelPayableInput): Promise<boolean> {
+    const ativos = payable.payments.filter((p) => p.status === 'ACTIVE');
+    if (ativos.some((p) => p.kind !== WITHHOLDING_KIND)) return false;
+    const linhas = (await this.withholding!.repo.findActiveByTitle(scope, 'PAYABLE', payable.id)).filter((l) => l.event === 'RECOGNITION');
+    if (linhas.length === 0) return false;
+    await this.withholding!.service.assertEstornavel(scope, linhas);
+    await this.reverterLancamentosDeRetencao(scope, linhas, dto);
+    await this.payableRepo.runTransaction(async (tx) => {
+      const liberado = await this.withholding!.service.reverterNaTx(scope, linhas, tx);
+      if (liberado > 0 && (await this.payableRepo.releaseSettlement(scope, payable.id, liberado, tx)) === 0) {
+        throw new ValidationError('Não foi possível estornar as retenções: o saldo liquidado não comporta o estorno (invariante violado).');
+      }
+      const row = await this.payableRepo.findById(scope, payable.id, tx);
+      if (row) await this.payableRepo.updatePayable(scope, payable.id, { status: payableStatusForBalance(centsFromDb(row.paidCents), centsFromDb(row.amountCents)) }, tx);
+    });
+    return true;
+  }
+
+  /** Item 21 — estorna no razão (T5, período da data do estorno) o lançamento `ap.withholding` de cada linha; idempotente. */
+  private async reverterLancamentosDeRetencao(scope: AccountingScope, linhas: readonly TaxWithholding[], dto: { reversalDate: string; reason?: string }): Promise<void> {
+    for (const l of linhas) {
+      if (!l.settlementId) continue;
+      const entry = await this.posting.findEntryBySource(scope, AP_WITHHOLDING_SOURCE_TYPE, l.settlementId);
+      if (entry) await this.posting.reverseEntry(scope, { unitId: scope.unitId, lancamentoId: entry.id, reversalPostingDate: dto.reversalDate, reason: dto.reason });
+    }
+  }
+
+  /**
+   * RETENCOES-FONTE PR-2 (item 15; F-RET-10 a): lança a baixa sem caixa da retenção — D 2.1.2 / C conta a recolher, sob
+   * `sourceId = paymentId` (idempotente). Best-effort: o título e a retenção já estão commitados; o reconcile refaz.
+   */
+  private async postWithholdingBestEffort(scope: AccountingScope, payable: Payable, b: BaixaRetencao): Promise<void> {
+    try {
+      const entry = await this.posting.postEntry(scope, this.buildWithholdingInput(scope, payable, b.paymentId, b.amountCents, b.accountCode, b.date, b.tributo));
+      await this.payableRepo.updatePayment(scope, b.paymentId, { entryId: entry.id });
+      await this.withholding!.repo.setEntryId(scope, b.withholdingId, entry.id);
+    } catch (error) {
+      logger.warn('AP: lançamento da retenção falhou — o reconcile refaz', { payableId: payable.id, paymentId: b.paymentId, error });
+    }
+  }
+
+  private buildWithholdingInput(scope: AccountingScope, payable: Payable, paymentId: string, cents: number, accountCode: string, date: string, tributo: string): PostEntryInput {
+    return {
+      unitId: scope.unitId,
+      date,
+      description: `Retenção de ${tributo} — ${payable.supplierName}${payable.documentNumber ? ` (NF ${payable.documentNumber})` : ''}`,
+      auditDescription: `Retenção de ${tributo} — NF ${payable.documentNumber ?? 's/nº'}`,
+      sourceType: AP_WITHHOLDING_SOURCE_TYPE,
+      sourceId: paymentId,
+      lines: [
+        { accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: cents, creditCents: 0 },
+        { accountCode, debitCents: 0, creditCents: cents },
+      ],
+    };
   }
 
   /** Resolve o `sourceDocumentId` da recognition (drill-down do rascunho, item 22) — best-effort,
@@ -585,10 +726,35 @@ export class PayableService implements IFixedAssetDraftRedriver {
 
     // Resolve the credit account for the method (closed map — unknown REJECTS, D2) BEFORE the CAS.
     const creditCode = resolvePaymentMethodAccount(dto.method);
+    // RETENCOES-FONTE PR-2 (item 19; F-RET-11 a): a baixa do título de imposto debita a conta a recolher, não 2.1.2.
+    const debitCode = await this.settlementDebitCode(scope, payable);
+
+    // RETENCOES-FONTE PR-2 (item 17; F-RET-4 a): CSRF na baixa — o DTO traz o PAGO em caixa; o bruto `g` da parcela sai da
+    // derivação (maior `g` que fecha, dono 24/10; o saldo restante tem preferência). O claim soma `g` ao paidCents.
+    const comCsrf = !!this.withholding && payable.origin !== PAYABLE_ORIGIN_WITHHOLDING_TAX;
+    const legais = comCsrf ? await this.withholding!.service.fotografia() : null;
+    // Review A1 (dono, 25/10): a base da CSRF (`baseCsrfCents`) é o bruto da NF proporcional à parcela; o que entra no saldo
+    // (`brutoCents`, o claim) é esse bruto menos a parte já retida no reconhecimento — pago + CSRF.
+    const parcela = legais
+      ? await this.withholding!.service.brutoDaBaixa(scope, {
+          payableId,
+          tituloCents: BigInt(amountCents),
+          counterpartyId: payable.counterpartyId,
+          pagoCents: BigInt(dto.amountCents),
+          restanteCents: BigInt(remaining),
+          data: dto.paidAt,
+          legais,
+        })
+      : null;
+    const brutoCents = parcela ? Number(parcela.claimCents) : dto.amountCents;
+    const baseCsrfCents = parcela ? parcela.brutoCents : BigInt(dto.amountCents);
+    if (brutoCents > remaining) {
+      throw new ValidationError(`Parcela (${brutoCents} centavos, com a CSRF) excede o saldo em aberto (${remaining} centavos).`);
+    }
 
     // ATOMIC SUM-CAS (D4 + ADR §3) — OPEN|PARTIALLY_PAID → PAYING, paidCents += amount, ONLY when the
     // balance carries it. count 0 = lost the race / not settleable / would overshoot the balance.
-    const claimed = await this.payableRepo.claimForPayment(scope, payableId, amountCents, dto.amountCents);
+    const claimed = await this.payableRepo.claimForPayment(scope, payableId, amountCents, brutoCents);
     if (claimed === 0) {
       throw new ValidationError(
         'A conta já está em pagamento, não está mais aberta ou o saldo não comporta este pagamento.',
@@ -597,24 +763,34 @@ export class PayableService implements IFixedAssetDraftRedriver {
 
     let posted = false;
     let payment: PayablePayment | undefined;
+    let baixas: BaixaRetencao[] = [];
     try {
-      // Mint the payment row (ACTIVE) — its id is the settlement idempotency key (D3).
-      payment = await this.payableRepo.createPayment({
-        userId,
-        unitId,
-        payableId,
-        amountCents: dto.amountCents,
-        method: dto.method,
-        paidAt: new Date(dto.paidAt),
-        paidByUserId: scope.actorUserId,
-        status: 'ACTIVE',
+      // Mint the payment row (ACTIVE) — its id is the settlement idempotency key (D3). RETENCOES-FONTE PR-2: na mesma tx, as
+      // baixas WITHHOLDING da CSRF desta parcela, as TaxWithholding (origin = este PAYMENT) e o título de imposto (item 17).
+      const paymentData = { userId, unitId, payableId, amountCents: dto.amountCents, method: dto.method, paidAt: new Date(dto.paidAt), paidByUserId: scope.actorUserId, status: 'ACTIVE' };
+      payment = !legais ? await this.payableRepo.createPayment(paymentData) : await this.payableRepo.runTransaction(async (tx) => {
+        const p = await this.payableRepo.createPayment(paymentData, tx);
+        {
+          const plano = await this.withholding!.service.planejar(
+            scope,
+            { event: 'SETTLEMENT', counterpartyId: payable.counterpartyId, brutoCents: baseCsrfCents, dataFatoGerador: dto.paidAt, legais },
+            tx,
+          );
+          const retido = plano.linhas.reduce((s, l) => s + Number(l.amountCents), 0);
+          if (dto.amountCents + retido !== brutoCents) {
+            throw new ValidationError(`Parcela incoerente: pago ${dto.amountCents} + CSRF ${retido} ≠ parcela ${brutoCents} centavos.`);
+          }
+          baixas = await this.withholding!.service.gravar(scope, plano, payable, { originSettlementId: p.id, documentoNumero: payable.documentNumber, documentoSerie: null }, tx);
+        }
+        return p;
       });
 
       const entry = await this.posting.postEntry(
         scope,
-        this.buildSettlementInput(scope, payable, payment, creditCode, dto),
+        this.buildSettlementInput(scope, payable, payment, creditCode, dto, debitCode),
       );
       posted = true;
+      for (const b of baixas) await this.postWithholdingBestEffort(scope, payable, b);
 
       // Finalize (tx) — link the entry, resolve PAYING → PAID|PARTIALLY_PAID via the atomic CAS, emit
       // the domain audit ONLY when THIS call performed the transition. The ledger is already committed;
@@ -628,7 +804,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
         const flipped = await this.payableRepo.finalizeIfPaying(scope, payableId, amountCents, tx);
         if (flipped === 1) {
           const row = await this.payableRepo.findById(scope, payableId, tx);
-          const paidCentsAfter = row ? centsFromDb(row.paidCents) : paidBefore + dto.amountCents;
+          const paidCentsAfter = row ? centsFromDb(row.paidCents) : paidBefore + brutoCents;
           await this.auditService.append(tx, scope, {
             actorUserId: scope.actorUserId,
             eventType: 'payable.settlement_registered',
@@ -651,10 +827,18 @@ export class PayableService implements IFixedAssetDraftRedriver {
       // Only safe to revert BEFORE the ledger commit. After a successful post, the money is
       // booked — leave it PAYING for reconcile to finalize (never revert over a real posting).
       if (!posted) {
-        await this.revertClaim(scope, payableId, payment, dto.amountCents);
+        await this.revertClaim(scope, payableId, payment, brutoCents);
       }
       throw error;
     }
+  }
+
+  /** RETENCOES-FONTE PR-2 (item 19): débito da baixa — conta a recolher do título de imposto, ou 2.1.2. */
+  private async settlementDebitCode(scope: AccountingScope, payable: Payable): Promise<string> {
+    if (payable.origin !== PAYABLE_ORIGIN_WITHHOLDING_TAX) return FORNECEDORES_A_PAGAR_CODE;
+    const conta = payable.liabilityAccountId ? await this.accountRepo.findById(scope, payable.liabilityAccountId) : null;
+    if (!conta) throw new ValidationError('Título de imposto sem a conta a recolher (liabilityAccountId).');
+    return conta.code;
   }
 
   // ---------------------------------------------------------------------------
@@ -718,9 +902,18 @@ export class PayableService implements IFixedAssetDraftRedriver {
     if (!this.policy.canManagePayable(scope)) {
       throw new ForbiddenError('Você não tem permissão para cancelar contas a pagar.');
     }
-    const payable = await this.payableRepo.findByIdWithPayments(scope, payableId);
+    let payable = await this.payableRepo.findByIdWithPayments(scope, payableId);
     if (!payable) throw new NotFoundError(`Conta a pagar '${payableId}' não foi encontrada.`);
     if (payable.status === 'CANCELLED') return payable; // idempotent
+    // RETENCOES-FONTE PR-2 (item 19): o título de imposto é gerido pelas retenções — some quando elas são estornadas.
+    if (payable.origin === PAYABLE_ORIGIN_WITHHOLDING_TAX) {
+      throw new ValidationError('TITULO_IMPOSTO_GERIDO_PELAS_RETENCOES: o título de imposto encolhe com o estorno das retenções; cancele o título de origem.', null, 'TITULO_IMPOSTO_GERIDO_PELAS_RETENCOES');
+    }
+    // RETENCOES-FONTE PR-2 (item 21): título só com as baixas sem caixa da retenção do reconhecimento ⇒ estorna-as antes
+    // (título de imposto já baixado ⇒ 409), e o cancelamento segue com o título de volta a OPEN.
+    if (this.withholding && (await this.estornarRetencoesDoReconhecimento(scope, payable, dto))) {
+      payable = (await this.payableRepo.findByIdWithPayments(scope, payableId))!;
+    }
     if (payable.status !== 'OPEN') {
       throw new ValidationError(
         payable.status === 'PAID'
@@ -830,13 +1023,23 @@ export class PayableService implements IFixedAssetDraftRedriver {
       throw new NotFoundError(`Pagamento '${paymentId}' não foi encontrado.`);
     }
     if (payment.status === 'CANCELLED') return payment; // idempotent
+    // RETENCOES-FONTE PR-2 (item 21): a baixa sem caixa da retenção não se estorna sozinha — sai com o pagamento que a gerou
+    // (CSRF) ou com o cancelamento do título (retenção do reconhecimento).
+    if (payment.kind === WITHHOLDING_KIND) {
+      throw new ValidationError('RETENCAO_ESTORNO_PELA_ORIGEM: estorne o pagamento que gerou a retenção ou cancele o título.', null, 'RETENCAO_ESTORNO_PELA_ORIGEM');
+    }
+    // A CSRF desta parcela (TaxWithholding com originSettlementId = este PAYMENT) sai junto; imposto já recolhido ⇒ 409,
+    // checado ANTES de qualquer estorno no razão (memória efeito-irreversivel-antes-do-gate).
+    const csrf = this.withholding ? await this.withholding.repo.findActiveByOriginSettlement(scope, paymentId) : [];
+    if (csrf.length > 0) await this.withholding!.service.assertEstornavel(scope, csrf);
+    const csrfCents = csrf.filter((l) => l.settlementId).reduce((s, l) => s + Number(l.amountCents), 0);
 
     // Review #307 F1 — check what the release gate will check BEFORE the ledger reversal, so a
     // rejected command has mutated nothing. The in-tx `releaseSettlement` below stays authoritative;
     // this read only prevents the "400 after the estorno was posted" window for a breach that is
     // already visible. A settlement in flight (PAYING) is NOT a reason to refuse: the decrement is
     // atomic and the status is left to that settlement's finalize (F-PS3 → a, any order).
-    const cents = centsFromDb(payment.amountCents);
+    const cents = centsFromDb(payment.amountCents) + csrfCents;
     const current = await this.payableRepo.findById(scope, payableId);
     if (!current) throw new NotFoundError(`Conta a pagar '${payableId}' não foi encontrada.`);
     if (centsFromDb(current.paidCents) < cents) {
@@ -856,6 +1059,8 @@ export class PayableService implements IFixedAssetDraftRedriver {
       });
       reversalEntryId = reversal.id;
     }
+    // RETENCOES-FONTE PR-2 (item 21): estorno, no razão, das baixas sem caixa da CSRF desta parcela (idempotente).
+    await this.reverterLancamentosDeRetencao(scope, csrf, dto);
 
     // The reversal above runs in PostingService's own tx (reverseEntry takes no `tx`); the
     // balance/status change lives in ONE tx here, so decrement + recompute never split. A crash in
@@ -871,9 +1076,11 @@ export class PayableService implements IFixedAssetDraftRedriver {
         return already; // idempotent — no release, no second audit
       }
       const cancelled = { ...payment, status: 'CANCELLED' };
+      // RETENCOES-FONTE PR-2 (item 21): a CSRF da parcela sai na mesma tx (título de imposto encolhe; baixado ⇒ 409).
+      const liberadoCsrf = csrf.length > 0 ? await this.withholding!.service.reverterNaTx(scope, csrf, tx) : 0;
       // F-PS3 → a: atomic decrement — the only refusal is the invariant (`paidCents >= cents`); the
       // pre-check above already screened it, so a 0 here is a race that broke the invariant.
-      const released = await this.payableRepo.releaseSettlement(scope, payableId, cents, tx);
+      const released = await this.payableRepo.releaseSettlement(scope, payableId, centsFromDb(payment.amountCents) + liberadoCsrf, tx);
       if (released === 0) {
         throw new ValidationError(
           'Não foi possível estornar o pagamento: o saldo liquidado não comporta o estorno (invariante violado).',
@@ -928,6 +1135,8 @@ export class PayableService implements IFixedAssetDraftRedriver {
     const payables = await this.payableRepo.findAllActive(scope);
     for (const payable of payables) {
       if (payable.status === 'CANCELLED') continue;
+      // RETENCOES-FONTE PR-2 (F-RET-11 a): título de imposto não tem reconhecimento próprio.
+      if (payable.origin === PAYABLE_ORIGIN_WITHHOLDING_TAX) continue;
       const recognition = await this.posting.findEntryBySource(scope, AP_PAYABLE_SOURCE_TYPE, payable.id);
 
       // INCR-INVENTORY D3(b) twin (Gap 2/Gate 8): an inventory PURCHASE carries expenseAccountId=null
@@ -1035,6 +1244,27 @@ export class PayableService implements IFixedAssetDraftRedriver {
     const payments = await this.payableRepo.findAllActivePayments(scope);
     for (const payment of payments) {
       try {
+        // RETENCOES-FONTE PR-2 (item 21): baixa sem caixa da retenção sem lançamento ⇒ posta (idempotente por paymentId).
+        // A conta a recolher vem do perfil fiscal atual. Não finaliza nada: o PAYING é do PAYMENT que a acompanha.
+        if (payment.kind === WITHHOLDING_KIND) {
+          if (this.withholding && !(await this.posting.findEntryBySource(scope, AP_WITHHOLDING_SOURCE_TYPE, payment.id))) {
+            const tw = await this.withholding.repo.findBySettlement(scope, payment.id);
+            const payable = await this.payableRepo.findById(scope, payment.payableId);
+            if (!tw || !payable) continue;
+            // Review A6: a conta é a do título de imposto (a que a baixa do DARF vai debitar); sem título, a do perfil atual.
+            const titulo = tw.taxPayableId ? await this.payableRepo.findById(scope, tw.taxPayableId) : null;
+            const doTitulo = titulo?.liabilityAccountId ? await this.accountRepo.findById(scope, titulo.liabilityAccountId) : null;
+            const conta = doTitulo ?? (await this.withholding.service.contaParaBaixa(scope, tw.tributo as TaxWithholdingTributo));
+            const entry = await this.posting.postEntry(
+              scope,
+              this.buildWithholdingInput(scope, payable, payment.id, centsFromDb(payment.amountCents), conta.code, this.toDateOnly(payment.paidAt), tw.tributo),
+            );
+            await this.payableRepo.updatePayment(scope, payment.id, { entryId: entry.id });
+            await this.withholding.repo.setEntryId(scope, tw.id, entry.id);
+            settlementsPosted += 1;
+          }
+          continue;
+        }
         let settlement = await this.posting.findEntryBySource(scope, AP_PAYMENT_SOURCE_TYPE, payment.id);
         if (!settlement) {
           const payable = await this.payableRepo.findByIdWithPayments(scope, payment.payableId);
@@ -1042,7 +1272,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
           const creditCode = resolvePaymentMethodAccount(payment.method);
           settlement = await this.posting.postEntry(
             scope,
-            this.buildSettlementInputFromRow(scope, payable, payment, creditCode),
+            this.buildSettlementInputFromRow(scope, payable, payment, creditCode, await this.settlementDebitCode(scope, payable)),
           );
           settlementsPosted += 1;
         }
@@ -1132,12 +1362,14 @@ export class PayableService implements IFixedAssetDraftRedriver {
         const sources = await this.sourceProvenanceRepo.findSourcesByEntry(scope, entry.id);
         const doc = sources[0]?.sourceDocument;
         if (!doc?.rawJson) continue;
-        const parsed = JSON.parse(doc.rawJson) as { fixedAssetItems?: ResolvedFixedAssetItem[] };
-        if (!parsed.fixedAssetItems || parsed.fixedAssetItems.length === 0) continue;
+        const parsed = JSON.parse(doc.rawJson) as { fixedAssetItems?: StoredFixedAssetItem[] };
+        // C8 emenda 3.2 (E5): o item EXPENSE foi para a despesa — re-rascunhá-lo ativaria o que o usuário expensou.
+        const capitalized = (parsed.fixedAssetItems ?? []).filter((i): i is ResolvedFixedAssetItem => !isExpensedFixedAssetItem(i));
+        if (capitalized.length === 0) continue;
         const result = await this.fixedAssetDraftCreator.createDraftFromPayable(
           scope,
           payable,
-          await this.taxaPosLegalParams(scope, parsed.fixedAssetItems),
+          await this.taxaPosLegalParams(scope, capitalized),
           doc.id,
         );
         created += result.created;
@@ -1231,7 +1463,9 @@ export class PayableService implements IFixedAssetDraftRedriver {
     dto: CreatePayableInput,
     fixedAssetLines: ResolvedFixedAssetItem[],
     insumoLines: { accountCode: string; costCents: number }[] = [],
+    expensedLines: ResolvedExpensedFixedAssetItem[] = [],
   ): PostEntryInput {
+    const storedItems: StoredFixedAssetItem[] = [...fixedAssetLines, ...expensedLines];
     return {
       unitId: scope.unitId,
       date: dto.issueDate,
@@ -1246,14 +1480,16 @@ export class PayableService implements IFixedAssetDraftRedriver {
         // BE-INCR-FIXED-ASSETS PR-5 (decisão do dono 23/09): o breakdown do modo 4 vai AQUI (campo
         // já existente do SourceDocument, reuso — NENHUMA coluna nova no Payable). O re-drive do
         // rascunho (`redriveFixedAssetDrafts`) relê este `rawJson` pelo `sourceDocumentId` da entry.
-        rawJson: fixedAssetLines.length > 0 ? JSON.stringify({ fixedAssetItems: fixedAssetLines }) : undefined,
+        // C8 emenda 3.2 (E5): os itens EXPENSE vão junto, com `treatment` — trilha da escolha (PN CST 100/78 item 13).
+        rawJson: storedItems.length > 0 ? JSON.stringify({ fixedAssetItems: storedItems }) : undefined,
       },
       lines: this.recognitionLines(
         payable,
         expenseAccount,
         dto.amountCents,
         this.parseRecoverableLines(payable),
-        this.groupFixedAssetDebits(fixedAssetLines),
+        // C8 emenda 3.2 (E5): o item EXPENSE debita a folha de despesa pelo MESMO agrupamento por `accountCode`.
+        this.groupFixedAssetDebits(storedItems),
         this.groupFixedAssetDebits(insumoLines),
       ),
     };
@@ -1378,10 +1614,42 @@ export class PayableService implements IFixedAssetDraftRedriver {
    * motivo). `sourceItemRef` (chave do rascunho) é o `nItem` da NF-e — nunca `cProd` (2 linhas de
    * imobilizado podem repetir o `cProd`; um índice de fallback cobre a criação manual sem `nItem`).
    */
+  /**
+   * C8 emenda 3.2 (E3–E4b): item `treatment: 'EXPENSE'` (IN RFB 1.700 art. 120) pula classe e taxa (E3 ii — um NCM sem
+   * taxa não derruba uma compra que nem vai ao ativo); a conta é folha de despesa do escopo (mesmo gate do
+   * `expenseAccountId`) e o unitário `ceil(costCents/qty)` acima de R$ 1.200 sem `usefulLifeUpToOneYear` → 400 ANTES do tx1.
+   */
   private async resolveFixedAssetLines(
     scope: AccountingScope,
     dto: CreatePayableInput,
-  ): Promise<ResolvedFixedAssetItem[]> {
+  ): Promise<{ capitalized: ResolvedFixedAssetItem[]; expensed: ResolvedExpensedFixedAssetItem[] }> {
+    const items = dto.fixedAssetItems ?? [];
+    const expensed: ResolvedExpensedFixedAssetItem[] = [];
+    for (const [index, item] of items.entries()) {
+      if (item.treatment !== 'EXPENSE') continue;
+      const qty = item.qty ?? 1;
+      const unitCostCents = unitCostCentsOf(item.costCents, qty);
+      if (!expenseAllowed(unitCostCents, item.usefulLifeUpToOneYear)) {
+        throw new ValidationError(
+          `Item '${item.cProd}': valor unitário ${unitCostCents} centavos acima do limite de ${FIXED_ASSET_EXPENSE_LIMIT_CENTS} para deduzir como despesa (IN RFB 1.700/2017 art. 120) — ative o bem ou declare vida útil de até 1 ano.`,
+          null,
+          'FIXED_ASSET_EXPENSE_OVER_LIMIT',
+        );
+      }
+      const account = await this.resolveExpenseAccount(scope, item.expenseAccountId!);
+      expensed.push({
+        treatment: 'EXPENSE',
+        accountCode: account.code,
+        cProd: item.cProd,
+        sourceItemRef: String(item.nItem ?? index + 1),
+        costCents: item.costCents,
+        ncm: item.ncm,
+        qty,
+        unitCostCents: unitCostCents.toString(),
+        ...(item.usefulLifeUpToOneYear ? { usefulLifeUpToOneYear: true as const } : {}),
+      });
+    }
+    if (!items.some((item) => item.treatment !== 'EXPENSE')) return { capitalized: [], expensed };
     if (!this.fixedAssetClassRepo) {
       throw new ValidationError(
         'Compra com itens de imobilizado requer o catálogo de classes de bem configurado (wiring pendente).',
@@ -1392,14 +1660,13 @@ export class PayableService implements IFixedAssetDraftRedriver {
         'Compra com itens de imobilizado requer o catálogo de taxas de depreciação configurado (wiring pendente).',
       );
     }
-    const items = dto.fixedAssetItems ?? [];
-    if (items.length === 0) return [];
     // O catálogo de taxas VIVAS é lido UMA vez para todos os itens (evita N queries idênticas).
     // BE-INCR-LEGAL-PARAMS PR-3: Anexo III de plataforma (vigente hoje) + CUSTOM vivas do escopo.
     const rates = await this.depreciationRateCatalog.catalogo(scope, false);
     const out: ResolvedFixedAssetItem[] = [];
     for (const [index, item] of items.entries()) {
-      const klass = await this.fixedAssetClassRepo.findById(scope, item.classId);
+      if (item.treatment === 'EXPENSE') continue;
+      const klass = await this.fixedAssetClassRepo.findById(scope, item.classId!);
       if (!klass || klass.deletedAt) {
         throw new ValidationError(`Classe de bem '${item.classId}' não existe nesta unidade.`);
       }
@@ -1427,9 +1694,10 @@ export class PayableService implements IFixedAssetDraftRedriver {
         rateId,
         legalParameterId,
         annualRateBp,
+        ...(item.setDeclared ? { setDeclared: true as const } : {}),
       });
     }
-    return out;
+    return { capitalized: out, expensed };
   }
 
   /**
@@ -1484,6 +1752,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
     payment: PayablePayment,
     creditCode: string,
     dto: RegisterPaymentInput,
+    debitCode: string = FORNECEDORES_A_PAGAR_CODE, // RETENCOES-FONTE PR-2: conta a recolher no título de imposto
   ): PostEntryInput {
     return {
       unitId: scope.unitId,
@@ -1493,7 +1762,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
       sourceType: AP_PAYMENT_SOURCE_TYPE,
       sourceId: payment.id,
       lines: [
-        { accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: dto.amountCents, creditCents: 0 },
+        { accountCode: debitCode, debitCents: dto.amountCents, creditCents: 0 },
         { accountCode: creditCode, debitCents: 0, creditCents: dto.amountCents },
       ],
     };
@@ -1505,6 +1774,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
     payable: Payable,
     payment: PayablePayment,
     creditCode: string,
+    debitCode: string = FORNECEDORES_A_PAGAR_CODE, // RETENCOES-FONTE PR-2: conta a recolher no título de imposto
   ): PostEntryInput {
     return {
       unitId: scope.unitId,
@@ -1514,7 +1784,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
       sourceType: AP_PAYMENT_SOURCE_TYPE,
       sourceId: payment.id,
       lines: [
-        { accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: centsFromDb(payment.amountCents), creditCents: 0 },
+        { accountCode: debitCode, debitCents: centsFromDb(payment.amountCents), creditCents: 0 },
         { accountCode: creditCode, debitCents: 0, creditCents: centsFromDb(payment.amountCents) },
       ],
     };
@@ -1563,6 +1833,11 @@ export class PayableService implements IFixedAssetDraftRedriver {
       await this.payableRepo.runTransaction(async (tx) => {
         if (payment) {
           await this.payableRepo.updatePayment(scope, payment.id, { status: 'CANCELLED' }, tx);
+          // RETENCOES-FONTE PR-2: a CSRF desta parcela (gravada com o PAYMENT) sai junto — nada dela foi ao razão.
+          if (this.withholding) {
+            const linhas = await this.withholding.repo.findActiveByOriginSettlement(scope, payment.id, tx);
+            await this.withholding.service.reverterNaTx(scope, linhas, tx);
+          }
         }
         await this.payableRepo.updatePayable(scope, payableId, { paidCents: { decrement: claimedCents } }, tx);
         const row = await this.payableRepo.findById(scope, payableId, tx);
@@ -1581,10 +1856,18 @@ export class PayableService implements IFixedAssetDraftRedriver {
   /** Compensate a payable whose recognition posting failed synchronously (soft-delete + rename). */
   private async compensateFailedRecognition(scope: AccountingScope, payable: Payable): Promise<void> {
     try {
-      await this.payableRepo.updatePayable(scope, payable.id, {
-        status: 'CANCELLED',
-        deletedAt: new Date(),
-        documentNumber: deletedDocumentNumber(payable.id, payable.documentNumber),
+      await this.payableRepo.runTransaction(async (tx) => {
+        // RETENCOES-FONTE PR-2: as retenções da tx1 (subrazão e título de imposto) saem junto — nada foi ao razão ainda.
+        if (this.withholding) {
+          const linhas = await this.withholding.repo.findActiveByTitle(scope, 'PAYABLE', payable.id, tx);
+          await this.withholding.service.reverterNaTx(scope, linhas, tx);
+        }
+        await this.payableRepo.updatePayable(
+          scope,
+          payable.id,
+          { status: 'CANCELLED', deletedAt: new Date(), documentNumber: deletedDocumentNumber(payable.id, payable.documentNumber) },
+          tx,
+        );
       });
     } catch (error) {
       logger.error('AP createPayable compensation failed — reconcile will not re-post a cancelled row', {

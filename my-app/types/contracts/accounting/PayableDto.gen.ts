@@ -8,6 +8,16 @@ status: "PENDENTE"
 sourceDocumentId: null
 usoConsumoCents?: number
 }
+export interface WithholdingOverrideInput {
+tributo: ("IRRF" | "CSLL" | "COFINS" | "PIS" | "INSS" | "ISS")
+amountCents: number
+motivo: string
+}
+export interface PfDeducoesInput {
+dependentes: number
+previdenciaCents?: number
+pensaoCents?: number
+}
 export interface CreatePayableInput {
 unitId: string
 supplierName: string
@@ -29,7 +39,11 @@ valueCents: number
 description?: string
 }[]
 fixedAssetItems?: {
-classId: string
+treatment?: ("CAPITALIZE" | "EXPENSE")
+classId?: string
+expenseAccountId?: string
+setDeclared?: boolean
+usefulLifeUpToOneYear?: boolean
 cProd: string
 costCents: number
 ncm?: string
@@ -63,6 +77,20 @@ sourceDocumentId: null
 usoConsumoCents?: number
 })[]
 attachmentId?: string
+/**
+ * @maxItems 6
+ */
+withholdings?: {
+tributo: ("IRRF" | "CSLL" | "COFINS" | "PIS" | "INSS" | "ISS")
+amountCents: number
+motivo: string
+}[]
+pfDeducoes?: {
+dependentes: number
+previdenciaCents?: number
+pensaoCents?: number
+}
+documentoSerie?: string
 }
 export interface RegisterPaymentInput {
 unitId: string
@@ -89,7 +117,7 @@ reason?: string
 }
 export interface ListPayablesQueryInput {
 unitId: string
-status?: ("OPEN" | "PARTIALLY_PAID" | "PAYING" | "PAID" | "CANCELLED")
+status?: ("OPEN" | "PARTIALLY_PAID" | "PAYING" | "PAID" | "CANCELLED" | "DEFERRED")
 counterpartyId?: string
 dueFrom?: string
 dueTo?: string

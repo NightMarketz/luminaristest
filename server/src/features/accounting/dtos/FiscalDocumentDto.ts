@@ -12,7 +12,7 @@ export const EmitFiscalDocumentSchema = z
   .object({
     unitId: z.string().min(1),
     saleId: z.string().min(1),
-    kind: z.enum(['NFSE', 'NFE']),
+    kind: z.enum(['NFSE', 'NFE', 'NFCE']), // NFCE: BE-INCR-NFCE item 3
   })
   .strict();
 export type EmitFiscalDocumentInput = z.infer<typeof EmitFiscalDocumentSchema>;
@@ -21,7 +21,7 @@ export const PreviewFiscalDocumentSchema = z
   .object({
     unitId: z.string().min(1),
     saleId: z.string().min(1),
-    kind: z.enum(['NFSE', 'NFE']),
+    kind: z.enum(['NFSE', 'NFE', 'NFCE']), // NFCE: BE-INCR-NFCE item 3
   })
   .strict();
 export type PreviewFiscalDocumentInput = z.infer<typeof PreviewFiscalDocumentSchema>;
@@ -112,3 +112,56 @@ export const JanelaEventosSchema = z
   })
   .strict();
 export type JanelaEventos = z.infer<typeof JanelaEventosSchema>;
+
+/**
+ * BE-INCR-NFCE (nó X10a, itens 24 e 31) — `POST /api/nfe/dfe/inutilizacoes`. Campos do `inutNFe` (MOC 7.0 VG §5.3.1,
+ * Tabela 5-9): série 0–889 (`[NFE-SERIE]`), nNFIni/nNFFin 1–999.999.999 (9 dígitos), xJust 15–255. O `ano` sai do relógio
+ * do escopo (não é entrada); as guardas da Tabela 5-12 ficam no serviço.
+ */
+export const VoidNumberRangeSchema = z
+  .object({
+    unitId: z.string().min(1),
+    kind: z.enum(['NFE', 'NFCE']),
+    serie: z.number().int().min(0).max(889),
+    nIni: z.number().int().min(1).max(999_999_999),
+    nFin: z.number().int().min(1).max(999_999_999),
+    xJust: z.string().trim().min(15).max(255),
+  })
+  .strict();
+export type VoidNumberRangeInput = z.infer<typeof VoidNumberRangeSchema>;
+
+/** BE-INCR-NFCE item 25 — `GET /api/nfe/dfe/inutilizacoes/pendentes?unitId&kind`. */
+export const PendingVoidsQuerySchema = z.object({ unitId: z.string().min(1), kind: z.enum(['NFE', 'NFCE']) }).strict();
+export type PendingVoidsQueryInput = z.infer<typeof PendingVoidsQuerySchema>;
+
+/** Contrato de SAÍDA do pedido de inutilização (números como string: BigInt-safe). */
+export const FiscalNumberVoidViewSchema = z
+  .object({
+    id: z.string(),
+    kind: z.enum(['NFE', 'NFCE']),
+    ambiente: z.enum(['producao', 'homologacao']),
+    serie: z.number().int(),
+    nIni: z.string().regex(/^\d+$/),
+    nFin: z.string().regex(/^\d+$/),
+    ano: z.number().int(),
+    status: z.enum(['REQUESTED', 'HOMOLOGATED', 'REJECTED']),
+    partner: z.string(),
+    nProt: z.string().nullable(),
+    errors: z.array(z.object({ code: z.string(), message: z.string() }).strict()),
+  })
+  .strict();
+export type FiscalNumberVoidView = z.infer<typeof FiscalNumberVoidViewSchema>;
+
+/** Contrato de SAÍDA de uma lacuna (item 25 + EMENDA-3 E3-2 a: aviso da UF e, na NFC-e, o texto da presunção). */
+export const LacunaDeNumeracaoSchema = z
+  .object({
+    ambiente: z.string(),
+    serie: z.number().int(),
+    numero: z.string().regex(/^\d+$/),
+    documentId: z.string().nullable(),
+    status: z.enum(['SENT', 'PROCESSING', 'AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'REJECTED', 'CANCELLED']).nullable(),
+    avisos: z.array(z.string()),
+    presuncao: z.string().optional(),
+  })
+  .strict();
+export type LacunaDeNumeracaoView = z.infer<typeof LacunaDeNumeracaoSchema>;

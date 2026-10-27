@@ -3,6 +3,8 @@ import { MAX_CENTS } from '../models/money';
 import { isValidDateOnly } from '../models/dates';
 import { PAYABLE_STATUSES, PAYMENT_METHODS } from '../models/Payable.model';
 import { queryBoolean } from './queryPrimitives';
+import { TRIBUTOS_RETENCAO } from '../models/retencaoParams';
+import { FIXED_ASSET_TREATMENTS } from '../models/fixedAssetLimits';
 
 /**
  * PayableDto — Contas a Pagar (INCR-AP) request schemas. Money is INTEGER CENTS guarded by
@@ -41,14 +43,36 @@ const dateOnly = (field: string) =>
  *         expenseAccountId:    { type: string, description: "Id de uma conta-folha nature=Expense (contrapartida do reconhecimento). XOR com inventoryProductRef+inventoryQty (INCR-INVENTORY D3(b))." }
  *         inventoryProductRef: { type: string, description: "Compra de estoque (INCR-INVENTORY D3(b)): ref DynamicTable do produto; débito vai a 1.1.6 Estoques + emite StockMovement INBOUND. Exige inventoryQty; XOR com expenseAccountId." }
  *         inventoryQty:        { type: integer, minimum: 1, description: "Unidades recebidas nesta compra de estoque; pareado com inventoryProductRef. amountCents é o valor TOTAL (evita arredondamento por-unidade)." }
+ *         withholdings:
+ *           type: array
+ *           description: "RETENCOES-FONTE PR-2 (item 12): sobrescrita da retenção calculada, SÓ PARA MENOS e com motivo (ADR D5); para mais ou tributo sem linha calculada → 400. Só em título de despesa de serviço."
+ *           items:
+ *             type: object
+ *             required: [tributo, amountCents, motivo]
+ *             properties:
+ *               tributo:     { type: string, enum: [IRRF, CSLL, COFINS, PIS, INSS, ISS] }
+ *               amountCents: { type: integer, minimum: 0, maximum: 2147483647 }
+ *               motivo:      { type: string, minLength: 3, maxLength: 140 }
+ *         pfDeducoes:
+ *           type: object
+ *           description: "RETENCOES-FONTE PR-2 (item 11): deduções do IRRF de PF (Lei 9.250 art. 4º). Ausente com contraparte PF → 0 dependentes e desconto simplificado."
+ *           properties:
+ *             dependentes:      { type: integer, minimum: 0, maximum: 30 }
+ *             previdenciaCents: { type: integer, minimum: 0 }
+ *             pensaoCents:      { type: integer, minimum: 0 }
+ *         documentoSerie:      { type: string, description: "Série da NF (R-2010 serie) — RETENCOES-FONTE PR-2" }
  *         fixedAssetItems:
  *           type: array
  *           description: "BE-INCR-FIXED-ASSETS PR-5: itens de imobilizado da NF-e (declarados pelo classId do operador — ITEM-DESTINATION emenda 29/09) — combinável SÓ com inventoryMultiItem/inventoryItems (nota mista, 2 débitos). Debita class.costAccountId; NUNCA StockMovement."
  *           items:
  *             type: object
- *             required: [classId, cProd, costCents]
+ *             required: [cProd, costCents]
  *             properties:
- *               classId:   { type: string }
+ *               treatment: { type: string, enum: [CAPITALIZE, EXPENSE], description: "C8 emenda 3.2 (IN RFB 1.700 art. 120): ausente = CAPITALIZE (ativar). EXPENSE = direto na despesa — unitário ≤ R$ 1.200 ou vida útil ≤ 1 ano declarada; escolha irreversível" }
+ *               classId:   { type: string, description: "Obrigatório com CAPITALIZE; proibido com EXPENSE" }
+ *               expenseAccountId: { type: string, description: "Obrigatório com EXPENSE — folha de despesa do escopo" }
+ *               setDeclared: { type: boolean, description: "Faz parte de um conjunto (art. 120 § 1º) — exige CAPITALIZE" }
+ *               usefulLifeUpToOneYear: { type: boolean, description: "Vida útil ≤ 1 ano (2ª hipótese do art. 120) — só com EXPENSE; libera acima do limite" }
  *               cProd:     { type: string }
  *               costCents: { type: integer, minimum: 1, maximum: 2147483647 }
  *               ncm:       { type: string, description: "Exigido para o casamento da taxa pelo Anexo III — ausente ou sem correspondência única → 400 ANTES de qualquer escrita" }
@@ -141,7 +165,14 @@ const inventoryItem = z
  *  there is no `qCom` to derive it from. */
 const fixedAssetItem = z
   .object({
-    classId: z.string().min(1),
+    // C8 emenda 3.2 (E3, F-EM-1 → a): escolha EXPLÍCITA por item no lançamento da aquisição (PN CST 100/78 item 13);
+    // ausente = CAPITALIZE (padrão ativar; `.optional()` em vez de `.default()` para o JSON legado e os chamadores
+    // internos lerem o mesmo "ausente = ativar"). EXPENSE = IN RFB 1.700 art. 120 — o limite (E4) é regra de SERVIÇO.
+    treatment: z.enum(FIXED_ASSET_TREATMENTS).optional(),
+    classId: z.string().min(1).optional(), // obrigatório se CAPITALIZE
+    expenseAccountId: z.string().min(1).optional(), // obrigatório se EXPENSE (folha de despesa do escopo)
+    setDeclared: z.boolean().optional(), // F-EM-4 → e (E7): "faz parte de um conjunto" (art. 120 § 1º) — força CAPITALIZE
+    usefulLifeUpToOneYear: z.boolean().optional(), // F-EM-3 → b (E4b): libera EXPENSE acima do limite (2ª hipótese do art. 120)
     cProd: z.string().min(1),
     costCents: cents,
     ncm: z.string().min(1).optional(),
@@ -151,7 +182,17 @@ const fixedAssetItem = z
     // distintas). Ausente numa criação MANUAL (fora de NF-e) → o service usa o índice no array.
     nItem: z.number().int().positive().optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((v, ctx) => {
+    const expense = v.treatment === 'EXPENSE';
+    const issue = (path: string, message: string) => ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message });
+    if (!expense && !v.classId) issue('classId', 'classId obrigatório para CAPITALIZE (ativar o bem).');
+    if (expense && !v.expenseAccountId) issue('expenseAccountId', 'expenseAccountId obrigatório para EXPENSE (IN RFB 1.700 art. 120).');
+    if (expense && v.classId) issue('classId', 'EXPENSE não leva classId — o bem não vai ao ativo.');
+    if (!expense && v.expenseAccountId) issue('expenseAccountId', 'expenseAccountId só cabe em EXPENSE.');
+    if (expense && v.setDeclared) issue('setDeclared', 'conjunto declarado exige CAPITALIZE (IN RFB 1.700 art. 120 § 1º).');
+    if (v.usefulLifeUpToOneYear && !expense) issue('usefulLifeUpToOneYear', 'vida útil ≤ 1 ano só se aplica a EXPENSE (IN RFB 1.700 art. 120).');
+  });
 
 /** ITEM-DESTINATION (BRIEF item 3 / F-ID-3 a): item de NF-e usado como INSUMO do serviço — despesa na
  *  entrada (D `accountId`, a conta de insumo do perfil fiscal, resolvida pelo `NfeImportService`), NUNCA
@@ -167,6 +208,32 @@ const insumoItem = z
     description: z.string().min(1).optional(),
   })
   .strict();
+
+/**
+ * BE-INCR-RETENCOES-FONTE PR-2 (item 12, §5.3) — sobrescrita de uma retenção calculada, SÓ PARA MENOS, com motivo (ADR D5).
+ * Para mais que o calculado ⇒ 400 no serviço (o cálculo é o que a lei manda; reter a mais exige outro fundamento).
+ */
+export const WithholdingOverrideSchema = z
+  .object({
+    tributo: z.enum(TRIBUTOS_RETENCAO),
+    amountCents: z.number().int().min(0).max(MAX_CENTS),
+    motivo: z.string().trim().min(3).max(140),
+  })
+  .strict();
+export type WithholdingOverrideInput = z.infer<typeof WithholdingOverrideSchema>;
+
+/**
+ * Item 11 (F-RET-17 a) — deduções do IRRF de PF informadas no pagamento (Lei 9.250 art. 4º): dependentes (quantidade),
+ * previdência e pensão. Sem `.partial()` (memória Zod 4). Ausente com contraparte PF ⇒ 0 dependentes e desconto simplificado.
+ */
+export const PfDeducoesSchema = z
+  .object({
+    dependentes: z.number().int().min(0).max(30),
+    previdenciaCents: z.number().int().min(0).max(MAX_CENTS).default(0),
+    pensaoCents: z.number().int().min(0).max(MAX_CENTS).default(0),
+  })
+  .strict();
+export type PfDeducoesInput = z.infer<typeof PfDeducoesSchema>;
 
 export const CreatePayableSchema = z
   .object({
@@ -199,8 +266,18 @@ export const CreatePayableSchema = z
     // IBS-CBS-2027 PR-3 (item 14): até 2 linhas X6 (ICMS, PIS_COFINS) + 1 por tributo de IBS/CBS.
     recoverableTaxLines: z.array(recoverableTaxLineUnion).max(4).optional(),
     attachmentId: z.string().min(1).optional(),
+    // BE-INCR-RETENCOES-FONTE PR-2 (item 12): sobrescritas para menos, deduções de PF e a série da NF (R-2010 serie, C9).
+    withholdings: z.array(WithholdingOverrideSchema).max(6).optional(),
+    pfDeducoes: PfDeducoesSchema.optional(),
+    documentoSerie: z.string().trim().min(1).max(5).optional(),
   })
   .strict()
+  .superRefine((val, ctx) => {
+    const tributos = (val.withholdings ?? []).map((w) => w.tributo);
+    if (new Set(tributos).size !== tributos.length) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'withholdings: no máximo uma sobrescrita por tributo.', path: ['withholdings'] });
+    }
+  })
   // 3-mode gate (INCR-INVENTORY D3(b) + BE-INCR-NFE F0-1b / param-aceito-e-ignorado-e-bug): a Payable is
   // EXACTLY ONE of — (1) an ordinary EXPENSE (expenseAccountId, debit a 4.x leaf); (2) a SINGLE-SKU
   // inventory purchase (inventoryProductRef AND inventoryQty, debit 1.1.6); (3) a MULTI-ITEM NF-e

@@ -44,6 +44,12 @@ export interface IAccountingPolicy {
   /** Can list/read Contas a Pagar (INCR-AP). */
   canReadPayable(scope: AccountingScope): boolean;
 
+  /** RETENCOES-FONTE PR-1 (item 6): cria/altera/apaga perfil de retenção — a mesma régua do `canManagePayable`. */
+  canManageWithholdingProfile(scope: AccountingScope): boolean;
+
+  /** RETENCOES-FONTE PR-1 (item 6): lista/lê perfil de retenção — a mesma régua do `canReadPayable`. */
+  canReadWithholdingProfile(scope: AccountingScope): boolean;
+
   /** Can create/receive/cancel Contas a Receber (INCR-AR). */
   canManageReceivable(scope: AccountingScope): boolean;
 
@@ -131,6 +137,8 @@ export interface IAccountingPolicy {
    * de documento fiscal = quem gerencia dados contábeis (efeito legal externo); leitura = canRead.
    */
   canManageServiceFiscalProfile(scope: AccountingScope): boolean;
+  /** BE-INCR-NFCE (nó X10a, item 10): perfil fiscal do produto = régua do perfil fiscal. */
+  canManageProductFiscalProfile(scope: AccountingScope): boolean;
   /** SIMPLES-PISO-ANEXO-XI bloco 1 (BRIEF item 1): benefício municipal de ISS = régua do perfil fiscal. */
   canManageIssBeneficioMunicipal(scope: AccountingScope): boolean;
   canReadFiscalDocument(scope: AccountingScope): boolean;

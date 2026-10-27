@@ -105,6 +105,20 @@ export interface IJournalEntryRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<string[]>;
 
+  /**
+   * C8 emenda 3.2 P3 (E15) — entries NÃO estornadas com `sourceType` e `sourceId` começando por `sourceIdPrefix`, status em
+   * `statuses`, com `date <= to` (as quotas mensais de UM ativo: `fixed_asset.depreciation`, `<assetId>:<yyyy-mm>`). Cada
+   * uma com o total a débito e a conta debitada (a despesa da quota). Ordem: `date`, `id`. Read-only.
+   */
+  findDebitsBySourcePrefix(
+    scope: AccountingScope,
+    sourceType: string,
+    sourceIdPrefix: string,
+    statuses: readonly string[],
+    to: Date,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Array<{ id: string; sourceId: string; date: Date; debitCents: bigint; debitAccountIds: string[] }>>;
+
   /** Transitions an entry's status (e.g. Posted -> Reversed). Throws if not found in scope. */
   setStatus(
     scope: AccountingScope,
