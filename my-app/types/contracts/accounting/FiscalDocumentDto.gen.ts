@@ -22,11 +22,14 @@ unitId: string
 export interface FiscalDocumentParamsInput {
 id: string
 }
-export interface CancelFiscalDocumentInput {
+export type CancelFiscalDocumentInput = ({
 unitId: string
 cMotivo: (1 | 2 | 9)
 xMotivo: string
-}
+} | {
+unitId: string
+xJust: string
+})
 export interface WebhookParamsInput {
 partner: string
 }
@@ -64,7 +67,7 @@ export interface JanelaEventosInput {
 cancelarAte: (string | null)
 substituirAte: (string | null)
 substituirTeto: (string | null)
-fonte: ("perfil" | "desconhecida")
+fonte: ("perfil" | "desconhecida" | "nacional")
 }
 export interface FiscalNumberVoidViewInput {
 id: string
@@ -102,4 +105,13 @@ serie: number
 nIni: number
 nFin: number
 xJust: string
+}
+export interface CancelNfeInput {
+unitId: string
+xJust: string
+}
+export interface CancelNfseInput {
+unitId: string
+cMotivo: (1 | 2 | 9)
+xMotivo: string
 }

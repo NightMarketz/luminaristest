@@ -93,7 +93,7 @@ describe('ManualEmissor — BE-INCR-DFE-MANUAL item 7', () => {
   });
 
   it('capabilities: o portal numera (F-MAN-4 a) e não há consulta/cancelamento por máquina', () => {
-    expect(new ManualEmissor().capabilities).toEqual({ kinds: ['NFSE'], numbersDps: true, consultar: false, cancelar: false, webhook: false, substituir: true, inutilizar: false }); // + substituir (X11 item 16)
+    expect(new ManualEmissor().capabilities).toEqual({ kinds: ['NFSE'], numbersDps: true, consultar: false, cancelar: false, webhook: false, substituir: true, inutilizar: false, cce: false }); // + substituir (X11 item 16)
   });
 
   it('emitir devolve PROCESSING com partnerRef = ref e NÃO toca o disco', async () => {

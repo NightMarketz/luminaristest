@@ -76,6 +76,11 @@ export interface DfeCapabilities {
    * `false` ⇒ `POST …/inutilizacoes` recusa com 409 `DFE_INUT_NAO_SUPORTADA`.
    */
   inutilizar: boolean;
+  /**
+   * BE-INCR-NFCE (nó X10a, item 28; F-NFCE-9 c, ratificado 02/10) — carta de correção (evento 110110, só NF-e 55;
+   * vedada na NFC-e, Aj. SINIEF 19/16 cl. 8ª §1º). Reservada: nenhum adaptador declara `true` e não há rota.
+   */
+  cce: boolean;
 }
 
 /**
@@ -124,6 +129,8 @@ export interface EmissaoResult {
  * BE-INCR-DFE-EVENTOS (nó X11, item 6) — contrato do resultado do cancelamento por máquina:
  * - `OUT_OF_WINDOW` ⇔ o fisco rejeitou com **E0822** ("fora do prazo limite … conforme parametrização do município
  *   emissor", Anexo II aba `RN EVENTO_PED.REG.EVENTO` [28]).
+ * - BE-INCR-NFCE (nó X10a, item 27; F-NFCE-10 a): na NF-e/NFC-e, `OUT_OF_WINDOW` ⇔ o fisco rejeitou o 110111 com **501**
+ *   (`retEvento/cStat`, prazo de cancelamento superado — `[NFCE-CANC-FORA]`; na NFC-e é terminal).
  * - E0823 / E0824 / E0827 / E0840 (Anexo II [29]/[30]/[31]/[35]) e qualquer outra rejeição ⇒ `REJECTED`, com o
  *   código preservado em `errors[].code`.
  * O adaptador real (X10i) herda o teste de tradução (`DfeCancelResultContract.test.ts`).
@@ -176,6 +183,8 @@ export interface DfeEmissorPort {
   cancelar(partnerRef: string, input: CancelInput): Promise<CancelResult>;
   /** BE-INCR-NFCE item 24 — só existe quando `capabilities.inutilizar`. */
   inutilizar?(input: InutilizarInput): Promise<InutilizarResult>;
+  /** BE-INCR-NFCE item 28 — CC-e (110110), só NF-e e só quando `capabilities.cce`. Sem implementação (F-NFCE-9 c). */
+  cce?(partnerRef: string, xCorrecao: string, nSeqEvento: number): Promise<CancelResult>;
   verifyWebhook(
     headers: Record<string, string | undefined>,
     rawBody: Buffer,

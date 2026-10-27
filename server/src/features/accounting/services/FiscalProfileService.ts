@@ -151,6 +151,9 @@ export interface FiscalProfileView extends CostRegime {
   cancelPrazoDias: number | null;
   substPrazoDias: number | null;
   prazoFonte: string | null;
+  // BE-INCR-NFCE (nó X10a, item 27; EMENDA 2026-10-11 §3 E3-1)
+  nfeCancelPrazoHoras: number | null;
+  nfceCancelPrazoMinutos: number | null;
   d1fConfirmado: boolean;
   emissao: FiscalProfileEmissaoStatus;
   updatedAt: string;
@@ -591,6 +594,8 @@ export class FiscalProfileService {
       cancelPrazoDias: row.cancelPrazoDias,
       substPrazoDias: row.substPrazoDias,
       prazoFonte: row.prazoFonte,
+      nfeCancelPrazoHoras: row.nfeCancelPrazoHoras,
+      nfceCancelPrazoMinutos: row.nfceCancelPrazoMinutos,
       d1fConfirmado: row.d1fConfirmado,
       emissao: fiscalProfileEmissaoStatus(row, regimeEmpresa),
       updatedAt: row.updatedAt.toISOString(),

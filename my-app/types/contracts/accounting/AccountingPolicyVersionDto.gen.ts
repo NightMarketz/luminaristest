@@ -90,6 +90,8 @@ emissaoForaDoMes?: ("AVISAR" | "BLOQUEAR")
 cancelPrazoDias?: (number | null)
 substPrazoDias?: (number | null)
 prazoFonte?: (string | null)
+nfeCancelPrazoHoras?: (number | null)
+nfceCancelPrazoMinutos?: (number | null)
 }
 } | {
 unitId: string

@@ -1288,6 +1288,30 @@
                       "type": "null"
                     }
                   ]
+                },
+                "nfeCancelPrazoHoras": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "nfceCancelPrazoMinutos": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 30
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 }
               },
               "required": [
@@ -5701,40 +5725,63 @@
     },
     "CancelFiscalDocumentSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "unitId": {
-          "type": "string",
-          "minLength": 1
-        },
-        "cMotivo": {
-          "anyOf": [
-            {
-              "type": "number",
-              "const": 1
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "unitId": {
+              "type": "string",
+              "minLength": 1
             },
-            {
-              "type": "number",
-              "const": 2
+            "cMotivo": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "const": 1
+                },
+                {
+                  "type": "number",
+                  "const": 2
+                },
+                {
+                  "type": "number",
+                  "const": 9
+                }
+              ]
             },
-            {
-              "type": "number",
-              "const": 9
+            "xMotivo": {
+              "type": "string",
+              "minLength": 15,
+              "maxLength": 255
             }
-          ]
+          },
+          "required": [
+            "unitId",
+            "cMotivo",
+            "xMotivo"
+          ],
+          "additionalProperties": false
         },
-        "xMotivo": {
-          "type": "string",
-          "minLength": 15,
-          "maxLength": 255
+        {
+          "type": "object",
+          "properties": {
+            "unitId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "xJust": {
+              "type": "string",
+              "minLength": 15,
+              "maxLength": 255
+            }
+          },
+          "required": [
+            "unitId",
+            "xJust"
+          ],
+          "additionalProperties": false
         }
-      },
-      "required": [
-        "unitId",
-        "cMotivo",
-        "xMotivo"
-      ],
-      "additionalProperties": false
+      ]
     },
     "WebhookParamsSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -5930,7 +5977,8 @@
           "type": "string",
           "enum": [
             "perfil",
-            "desconhecida"
+            "desconhecida",
+            "nacional"
           ]
         }
       },
@@ -6166,6 +6214,63 @@
         "nIni",
         "nFin",
         "xJust"
+      ],
+      "additionalProperties": false
+    },
+    "CancelNfeSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "xJust": {
+          "type": "string",
+          "minLength": 15,
+          "maxLength": 255
+        }
+      },
+      "required": [
+        "unitId",
+        "xJust"
+      ],
+      "additionalProperties": false
+    },
+    "CancelNfseSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cMotivo": {
+          "anyOf": [
+            {
+              "type": "number",
+              "const": 1
+            },
+            {
+              "type": "number",
+              "const": 2
+            },
+            {
+              "type": "number",
+              "const": 9
+            }
+          ]
+        },
+        "xMotivo": {
+          "type": "string",
+          "minLength": 15,
+          "maxLength": 255
+        }
+      },
+      "required": [
+        "unitId",
+        "cMotivo",
+        "xMotivo"
       ],
       "additionalProperties": false
     }
@@ -7020,6 +7125,30 @@
               "type": "null"
             }
           ]
+        },
+        "nfeCancelPrazoHoras": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nfceCancelPrazoMinutos": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 30
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -7779,6 +7908,30 @@
               "type": "string",
               "minLength": 1,
               "maxLength": 500
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nfeCancelPrazoHoras": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nfceCancelPrazoMinutos": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 30
             },
             {
               "type": "null"
@@ -20372,6 +20525,935 @@
                           }
                         },
                         "additionalProperties": false
+                      },
+                      "IS": {
+                        "type": "object",
+                        "properties": {
+                          "CSTIS": {
+                            "type": "string",
+                            "pattern": "^\\d{3}$"
+                          },
+                          "cClassTribIS": {
+                            "type": "string",
+                            "pattern": "^\\d{6}$"
+                          },
+                          "vBCIS": {
+                            "type": "string",
+                            "pattern": "^\\d{1,13}\\.\\d{2}$"
+                          },
+                          "pIS": {
+                            "type": "string",
+                            "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                          },
+                          "adRemIS": {
+                            "type": "string",
+                            "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                          },
+                          "uTrib": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 6
+                          },
+                          "qTrib": {
+                            "type": "string",
+                            "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                          },
+                          "vIS": {
+                            "type": "string",
+                            "pattern": "^\\d{1,13}\\.\\d{2}$"
+                          }
+                        },
+                        "required": [
+                          "CSTIS",
+                          "cClassTribIS"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "IBSCBS": {
+                        "type": "object",
+                        "properties": {
+                          "CST": {
+                            "type": "string",
+                            "pattern": "^\\d{3}$"
+                          },
+                          "cClassTrib": {
+                            "type": "string",
+                            "pattern": "^\\d{6}$"
+                          },
+                          "indDoacao": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "gIBSCBS": {
+                            "type": "object",
+                            "properties": {
+                              "vBC": {
+                                "type": "string",
+                                "pattern": "^\\d{1,13}\\.\\d{2}$"
+                              },
+                              "gIBSUF": {
+                                "type": "object",
+                                "properties": {
+                                  "pIBSUF": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                  },
+                                  "gDif": {
+                                    "type": "object",
+                                    "properties": {
+                                      "pDif": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vDif": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "pDif",
+                                      "vDif"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gDevTrib": {
+                                    "type": "object",
+                                    "properties": {
+                                      "pDevTrib": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vDevTrib": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "vDevTrib"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gRed": {
+                                    "type": "object",
+                                    "properties": {
+                                      "pRedAliq": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "pAliqEfet": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "pRedAliq",
+                                      "pAliqEfet"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "vIBSUF": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  }
+                                },
+                                "required": [
+                                  "pIBSUF",
+                                  "vIBSUF"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "gIBSMun": {
+                                "type": "object",
+                                "properties": {
+                                  "pIBSMun": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                  },
+                                  "gDif": {
+                                    "type": "object",
+                                    "properties": {
+                                      "pDif": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vDif": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "pDif",
+                                      "vDif"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gDevTrib": {
+                                    "type": "object",
+                                    "properties": {
+                                      "pDevTrib": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vDevTrib": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "vDevTrib"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gRed": {
+                                    "type": "object",
+                                    "properties": {
+                                      "pRedAliq": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "pAliqEfet": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "pRedAliq",
+                                      "pAliqEfet"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "vIBSMun": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  }
+                                },
+                                "required": [
+                                  "pIBSMun",
+                                  "vIBSMun"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "vIBS": {
+                                "type": "string",
+                                "pattern": "^\\d{1,13}\\.\\d{2}$"
+                              },
+                              "gCBS": {
+                                "type": "object",
+                                "properties": {
+                                  "pCBS": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                  },
+                                  "gDif": {
+                                    "type": "object",
+                                    "properties": {
+                                      "pDif": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vDif": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "pDif",
+                                      "vDif"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gDevTrib": {
+                                    "type": "object",
+                                    "properties": {
+                                      "pDevTrib": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vDevTrib": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "vDevTrib"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gRed": {
+                                    "type": "object",
+                                    "properties": {
+                                      "pRedAliq": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "pAliqEfet": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "pRedAliq",
+                                      "pAliqEfet"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gALCZFMCBS": {
+                                    "type": "object",
+                                    "properties": {
+                                      "tpALCZFMCBS": {
+                                        "anyOf": [
+                                          {
+                                            "type": "number",
+                                            "const": 1
+                                          },
+                                          {
+                                            "type": "number",
+                                            "const": 2
+                                          }
+                                        ]
+                                      },
+                                      "nProcSuframa": {
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "maxLength": 12
+                                      },
+                                      "pAliqEfetRegCBS": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vTribRegCBS": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "tpALCZFMCBS",
+                                      "pAliqEfetRegCBS",
+                                      "vTribRegCBS"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "vCBS": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  }
+                                },
+                                "required": [
+                                  "pCBS",
+                                  "vCBS"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "gTribRegular": {
+                                "type": "object",
+                                "properties": {
+                                  "CSTReg": {
+                                    "type": "string",
+                                    "pattern": "^\\d{3}$"
+                                  },
+                                  "cClassTribReg": {
+                                    "type": "string",
+                                    "pattern": "^\\d{6}$"
+                                  },
+                                  "pAliqEfetRegIBSUF": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                  },
+                                  "vTribRegIBSUF": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  },
+                                  "pAliqEfetRegIBSMun": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                  },
+                                  "vTribRegIBSMun": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  },
+                                  "pAliqEfetRegCBS": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                  },
+                                  "vTribRegCBS": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  }
+                                },
+                                "required": [
+                                  "CSTReg",
+                                  "cClassTribReg",
+                                  "pAliqEfetRegIBSUF",
+                                  "vTribRegIBSUF",
+                                  "pAliqEfetRegIBSMun",
+                                  "vTribRegIBSMun",
+                                  "pAliqEfetRegCBS",
+                                  "vTribRegCBS"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "gTribCompraGov": {
+                                "type": "object",
+                                "properties": {
+                                  "pAliqIBSUF": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                  },
+                                  "vTribIBSUF": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  },
+                                  "pAliqIBSMun": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                  },
+                                  "vTribIBSMun": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  },
+                                  "pAliqCBS": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                  },
+                                  "vTribCBS": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  }
+                                },
+                                "required": [
+                                  "pAliqIBSUF",
+                                  "vTribIBSUF",
+                                  "pAliqIBSMun",
+                                  "vTribIBSMun",
+                                  "pAliqCBS",
+                                  "vTribCBS"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "vBC",
+                              "gIBSUF",
+                              "gIBSMun",
+                              "vIBS",
+                              "gCBS"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "gIBSCBSMono": {
+                            "type": "object",
+                            "properties": {
+                              "gIBSMonoAdRem": {
+                                "type": "object",
+                                "properties": {
+                                  "gMonoPadrao": {
+                                    "type": "object",
+                                    "properties": {
+                                      "qBCMono": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                                      },
+                                      "adRemIBS": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vIBSMono": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "qBCMono",
+                                      "adRemIBS",
+                                      "vIBSMono"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gMonoReten": {
+                                    "type": "object",
+                                    "properties": {
+                                      "qBCMonoReten": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                                      },
+                                      "adRemIBSReten": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vIBSMonoReten": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "qBCMonoReten",
+                                      "adRemIBSReten",
+                                      "vIBSMonoReten"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gMonoRet": {
+                                    "type": "object",
+                                    "properties": {
+                                      "vIBSMonoRet": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "vIBSMonoRet"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gpBioDiferenca": {
+                                    "type": "object",
+                                    "properties": {
+                                      "qBCBioComb": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                                      },
+                                      "vIBSDiferenca": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "qBCBioComb",
+                                      "vIBSDiferenca"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "gIBSMonoAdValorem": {
+                                "type": "object",
+                                "properties": {
+                                  "gMonoPadrao": {
+                                    "type": "object",
+                                    "properties": {
+                                      "vBCMono": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      },
+                                      "pAliqMonoUF": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vIBSMonoUF": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      },
+                                      "pAliqMonoMun": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vIBSMonoMun": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      },
+                                      "vIBSMono": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "vBCMono",
+                                      "pAliqMonoUF",
+                                      "vIBSMonoUF",
+                                      "pAliqMonoMun",
+                                      "vIBSMonoMun",
+                                      "vIBSMono"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gMonoReten": {
+                                    "type": "object",
+                                    "properties": {
+                                      "vBCMonoReten": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      },
+                                      "pAliqMonoReten": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vIBSMonoReten": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "vBCMonoReten",
+                                      "pAliqMonoReten",
+                                      "vIBSMonoReten"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gMonoRet": {
+                                    "type": "object",
+                                    "properties": {
+                                      "vIBSMonoRet": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "vIBSMonoRet"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gpBioDiferenca": {
+                                    "type": "object",
+                                    "properties": {
+                                      "qBCBioComb": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                                      },
+                                      "vIBSDiferenca": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "qBCBioComb",
+                                      "vIBSDiferenca"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "gCBSMonoAdRem": {
+                                "type": "object",
+                                "properties": {
+                                  "gMonoPadrao": {
+                                    "type": "object",
+                                    "properties": {
+                                      "qBCMono": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                                      },
+                                      "adRemCBS": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vCBSMono": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "qBCMono",
+                                      "adRemCBS",
+                                      "vCBSMono"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gMonoReten": {
+                                    "type": "object",
+                                    "properties": {
+                                      "qBCMonoReten": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                                      },
+                                      "adRemCBSReten": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vCBSMonoReten": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "qBCMonoReten",
+                                      "adRemCBSReten",
+                                      "vCBSMonoReten"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gMonoRet": {
+                                    "type": "object",
+                                    "properties": {
+                                      "vCBSMonoRet": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "vCBSMonoRet"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gpBioDiferenca": {
+                                    "type": "object",
+                                    "properties": {
+                                      "qBCBioComb": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                                      },
+                                      "vCBSDiferenca": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "qBCBioComb",
+                                      "vCBSDiferenca"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "gCBSMonoAdValorem": {
+                                "type": "object",
+                                "properties": {
+                                  "gMonoPadrao": {
+                                    "type": "object",
+                                    "properties": {
+                                      "vBCMono": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      },
+                                      "pAliqMonoCBS": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vCBSMono": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "vBCMono",
+                                      "pAliqMonoCBS",
+                                      "vCBSMono"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gMonoReten": {
+                                    "type": "object",
+                                    "properties": {
+                                      "vBCMonoReten": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      },
+                                      "pAliqMonoReten": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vCBSMonoReten": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "vBCMonoReten",
+                                      "pAliqMonoReten",
+                                      "vCBSMonoReten"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gMonoRet": {
+                                    "type": "object",
+                                    "properties": {
+                                      "vCBSMonoRet": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "vCBSMonoRet"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gpBioDiferenca": {
+                                    "type": "object",
+                                    "properties": {
+                                      "qBCBioComb": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                                      },
+                                      "vCBSDiferenca": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "qBCBioComb",
+                                      "vCBSDiferenca"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "vTotIBSMonoItem": {
+                                "type": "string",
+                                "pattern": "^\\d{1,13}\\.\\d{2}$"
+                              },
+                              "vTotCBSMonoItem": {
+                                "type": "string",
+                                "pattern": "^\\d{1,13}\\.\\d{2}$"
+                              }
+                            },
+                            "required": [
+                              "vTotIBSMonoItem",
+                              "vTotCBSMonoItem"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "gTransfCred": {
+                            "type": "object",
+                            "properties": {
+                              "vIBS": {
+                                "type": "string",
+                                "pattern": "^\\d{1,13}\\.\\d{2}$"
+                              },
+                              "vCBS": {
+                                "type": "string",
+                                "pattern": "^\\d{1,13}\\.\\d{2}$"
+                              }
+                            },
+                            "required": [
+                              "vIBS",
+                              "vCBS"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "gAjusteCompet": {
+                            "type": "object",
+                            "properties": {
+                              "competApur": {
+                                "type": "string",
+                                "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                              },
+                              "vIBS": {
+                                "type": "string",
+                                "pattern": "^\\d{1,13}\\.\\d{2}$"
+                              },
+                              "vCBS": {
+                                "type": "string",
+                                "pattern": "^\\d{1,13}\\.\\d{2}$"
+                              }
+                            },
+                            "required": [
+                              "competApur",
+                              "vIBS",
+                              "vCBS"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "gEstornoCred": {
+                            "type": "object",
+                            "properties": {
+                              "vIBSEstCred": {
+                                "type": "string",
+                                "pattern": "^\\d{1,13}\\.\\d{2}$"
+                              },
+                              "vCBSEstCred": {
+                                "type": "string",
+                                "pattern": "^\\d{1,13}\\.\\d{2}$"
+                              }
+                            },
+                            "required": [
+                              "vIBSEstCred",
+                              "vCBSEstCred"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "gCredPresOper": {
+                            "type": "object",
+                            "properties": {
+                              "vBCCredPres": {
+                                "type": "string",
+                                "pattern": "^\\d{1,13}\\.\\d{2}$"
+                              },
+                              "cCredPres": {
+                                "type": "string",
+                                "pattern": "^\\d{2}$"
+                              },
+                              "gIBSCredPres": {
+                                "type": "object",
+                                "properties": {
+                                  "pCredPres": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                  },
+                                  "vCredPres": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  },
+                                  "vCredPresCondSus": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  }
+                                },
+                                "required": [
+                                  "pCredPres"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "gCBSCredPres": {
+                                "type": "object",
+                                "properties": {
+                                  "pCredPres": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                  },
+                                  "vCredPres": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  },
+                                  "vCredPresCondSus": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  }
+                                },
+                                "required": [
+                                  "pCredPres"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "vBCCredPres",
+                              "cCredPres"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "gCredPresIBSZFM": {
+                            "type": "object",
+                            "properties": {
+                              "competApur": {
+                                "type": "string",
+                                "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                              },
+                              "tpCredPresIBSZFM": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 4
+                              },
+                              "vCredPresIBSZFM": {
+                                "type": "string",
+                                "pattern": "^\\d{1,13}\\.\\d{2}$"
+                              }
+                            },
+                            "required": [
+                              "competApur",
+                              "tpCredPresIBSZFM",
+                              "vCredPresIBSZFM"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "CST",
+                          "cClassTrib"
+                        ],
+                        "additionalProperties": false
                       }
                     },
                     "required": [
@@ -20487,6 +21569,196 @@
                     "vNF"
                   ],
                   "additionalProperties": false
+                },
+                "ISTot": {
+                  "type": "object",
+                  "properties": {
+                    "vIS": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "vIS"
+                  ],
+                  "additionalProperties": false
+                },
+                "IBSCBSTot": {
+                  "type": "object",
+                  "properties": {
+                    "vBCIBSCBS": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    },
+                    "gIBS": {
+                      "type": "object",
+                      "properties": {
+                        "gIBSUF": {
+                          "type": "object",
+                          "properties": {
+                            "vDif": {
+                              "type": "string",
+                              "pattern": "^\\d{1,13}\\.\\d{2}$"
+                            },
+                            "vDevTrib": {
+                              "type": "string",
+                              "pattern": "^\\d{1,13}\\.\\d{2}$"
+                            },
+                            "vIBSUF": {
+                              "type": "string",
+                              "pattern": "^\\d{1,13}\\.\\d{2}$"
+                            }
+                          },
+                          "required": [
+                            "vDif",
+                            "vDevTrib",
+                            "vIBSUF"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "gIBSMun": {
+                          "type": "object",
+                          "properties": {
+                            "vDif": {
+                              "type": "string",
+                              "pattern": "^\\d{1,13}\\.\\d{2}$"
+                            },
+                            "vDevTrib": {
+                              "type": "string",
+                              "pattern": "^\\d{1,13}\\.\\d{2}$"
+                            },
+                            "vIBSMun": {
+                              "type": "string",
+                              "pattern": "^\\d{1,13}\\.\\d{2}$"
+                            }
+                          },
+                          "required": [
+                            "vDif",
+                            "vDevTrib",
+                            "vIBSMun"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "vIBS": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        },
+                        "vCredPres": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        },
+                        "vCredPresCondSus": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        }
+                      },
+                      "required": [
+                        "gIBSUF",
+                        "gIBSMun",
+                        "vIBS",
+                        "vCredPres",
+                        "vCredPresCondSus"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "gCBS": {
+                      "type": "object",
+                      "properties": {
+                        "vDif": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        },
+                        "vDevTrib": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        },
+                        "vCBS": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        },
+                        "vCredPres": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        },
+                        "vCredPresCondSus": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        }
+                      },
+                      "required": [
+                        "vDif",
+                        "vDevTrib",
+                        "vCBS",
+                        "vCredPres",
+                        "vCredPresCondSus"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "gMono": {
+                      "type": "object",
+                      "properties": {
+                        "vIBSMono": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        },
+                        "vCBSMono": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        },
+                        "vIBSMonoReten": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        },
+                        "vCBSMonoReten": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        },
+                        "vIBSMonoRet": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        },
+                        "vCBSMonoRet": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        }
+                      },
+                      "required": [
+                        "vIBSMono",
+                        "vCBSMono",
+                        "vIBSMonoReten",
+                        "vCBSMonoReten",
+                        "vIBSMonoRet",
+                        "vCBSMonoRet"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "gEstornoCred": {
+                      "type": "object",
+                      "properties": {
+                        "vIBSEstCred": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        },
+                        "vCBSEstCred": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        }
+                      },
+                      "required": [
+                        "vIBSEstCred",
+                        "vCBSEstCred"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "vBCIBSCBS"
+                  ],
+                  "additionalProperties": false
+                },
+                "vNFTot": {
+                  "type": "string",
+                  "pattern": "^\\d{1,13}\\.\\d{2}$"
                 }
               },
               "required": [
@@ -21407,6 +22679,935 @@
                           }
                         },
                         "additionalProperties": false
+                      },
+                      "IS": {
+                        "type": "object",
+                        "properties": {
+                          "CSTIS": {
+                            "type": "string",
+                            "pattern": "^\\d{3}$"
+                          },
+                          "cClassTribIS": {
+                            "type": "string",
+                            "pattern": "^\\d{6}$"
+                          },
+                          "vBCIS": {
+                            "type": "string",
+                            "pattern": "^\\d{1,13}\\.\\d{2}$"
+                          },
+                          "pIS": {
+                            "type": "string",
+                            "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                          },
+                          "adRemIS": {
+                            "type": "string",
+                            "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                          },
+                          "uTrib": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 6
+                          },
+                          "qTrib": {
+                            "type": "string",
+                            "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                          },
+                          "vIS": {
+                            "type": "string",
+                            "pattern": "^\\d{1,13}\\.\\d{2}$"
+                          }
+                        },
+                        "required": [
+                          "CSTIS",
+                          "cClassTribIS"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "IBSCBS": {
+                        "type": "object",
+                        "properties": {
+                          "CST": {
+                            "type": "string",
+                            "pattern": "^\\d{3}$"
+                          },
+                          "cClassTrib": {
+                            "type": "string",
+                            "pattern": "^\\d{6}$"
+                          },
+                          "indDoacao": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "gIBSCBS": {
+                            "type": "object",
+                            "properties": {
+                              "vBC": {
+                                "type": "string",
+                                "pattern": "^\\d{1,13}\\.\\d{2}$"
+                              },
+                              "gIBSUF": {
+                                "type": "object",
+                                "properties": {
+                                  "pIBSUF": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                  },
+                                  "gDif": {
+                                    "type": "object",
+                                    "properties": {
+                                      "pDif": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vDif": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "pDif",
+                                      "vDif"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gDevTrib": {
+                                    "type": "object",
+                                    "properties": {
+                                      "pDevTrib": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vDevTrib": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "vDevTrib"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gRed": {
+                                    "type": "object",
+                                    "properties": {
+                                      "pRedAliq": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "pAliqEfet": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "pRedAliq",
+                                      "pAliqEfet"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "vIBSUF": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  }
+                                },
+                                "required": [
+                                  "pIBSUF",
+                                  "vIBSUF"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "gIBSMun": {
+                                "type": "object",
+                                "properties": {
+                                  "pIBSMun": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                  },
+                                  "gDif": {
+                                    "type": "object",
+                                    "properties": {
+                                      "pDif": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vDif": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "pDif",
+                                      "vDif"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gDevTrib": {
+                                    "type": "object",
+                                    "properties": {
+                                      "pDevTrib": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vDevTrib": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "vDevTrib"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gRed": {
+                                    "type": "object",
+                                    "properties": {
+                                      "pRedAliq": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "pAliqEfet": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "pRedAliq",
+                                      "pAliqEfet"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "vIBSMun": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  }
+                                },
+                                "required": [
+                                  "pIBSMun",
+                                  "vIBSMun"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "vIBS": {
+                                "type": "string",
+                                "pattern": "^\\d{1,13}\\.\\d{2}$"
+                              },
+                              "gCBS": {
+                                "type": "object",
+                                "properties": {
+                                  "pCBS": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                  },
+                                  "gDif": {
+                                    "type": "object",
+                                    "properties": {
+                                      "pDif": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vDif": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "pDif",
+                                      "vDif"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gDevTrib": {
+                                    "type": "object",
+                                    "properties": {
+                                      "pDevTrib": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vDevTrib": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "vDevTrib"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gRed": {
+                                    "type": "object",
+                                    "properties": {
+                                      "pRedAliq": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "pAliqEfet": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "pRedAliq",
+                                      "pAliqEfet"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gALCZFMCBS": {
+                                    "type": "object",
+                                    "properties": {
+                                      "tpALCZFMCBS": {
+                                        "anyOf": [
+                                          {
+                                            "type": "number",
+                                            "const": 1
+                                          },
+                                          {
+                                            "type": "number",
+                                            "const": 2
+                                          }
+                                        ]
+                                      },
+                                      "nProcSuframa": {
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "maxLength": 12
+                                      },
+                                      "pAliqEfetRegCBS": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vTribRegCBS": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "tpALCZFMCBS",
+                                      "pAliqEfetRegCBS",
+                                      "vTribRegCBS"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "vCBS": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  }
+                                },
+                                "required": [
+                                  "pCBS",
+                                  "vCBS"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "gTribRegular": {
+                                "type": "object",
+                                "properties": {
+                                  "CSTReg": {
+                                    "type": "string",
+                                    "pattern": "^\\d{3}$"
+                                  },
+                                  "cClassTribReg": {
+                                    "type": "string",
+                                    "pattern": "^\\d{6}$"
+                                  },
+                                  "pAliqEfetRegIBSUF": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                  },
+                                  "vTribRegIBSUF": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  },
+                                  "pAliqEfetRegIBSMun": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                  },
+                                  "vTribRegIBSMun": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  },
+                                  "pAliqEfetRegCBS": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                  },
+                                  "vTribRegCBS": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  }
+                                },
+                                "required": [
+                                  "CSTReg",
+                                  "cClassTribReg",
+                                  "pAliqEfetRegIBSUF",
+                                  "vTribRegIBSUF",
+                                  "pAliqEfetRegIBSMun",
+                                  "vTribRegIBSMun",
+                                  "pAliqEfetRegCBS",
+                                  "vTribRegCBS"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "gTribCompraGov": {
+                                "type": "object",
+                                "properties": {
+                                  "pAliqIBSUF": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                  },
+                                  "vTribIBSUF": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  },
+                                  "pAliqIBSMun": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                  },
+                                  "vTribIBSMun": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  },
+                                  "pAliqCBS": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                  },
+                                  "vTribCBS": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  }
+                                },
+                                "required": [
+                                  "pAliqIBSUF",
+                                  "vTribIBSUF",
+                                  "pAliqIBSMun",
+                                  "vTribIBSMun",
+                                  "pAliqCBS",
+                                  "vTribCBS"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "vBC",
+                              "gIBSUF",
+                              "gIBSMun",
+                              "vIBS",
+                              "gCBS"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "gIBSCBSMono": {
+                            "type": "object",
+                            "properties": {
+                              "gIBSMonoAdRem": {
+                                "type": "object",
+                                "properties": {
+                                  "gMonoPadrao": {
+                                    "type": "object",
+                                    "properties": {
+                                      "qBCMono": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                                      },
+                                      "adRemIBS": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vIBSMono": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "qBCMono",
+                                      "adRemIBS",
+                                      "vIBSMono"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gMonoReten": {
+                                    "type": "object",
+                                    "properties": {
+                                      "qBCMonoReten": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                                      },
+                                      "adRemIBSReten": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vIBSMonoReten": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "qBCMonoReten",
+                                      "adRemIBSReten",
+                                      "vIBSMonoReten"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gMonoRet": {
+                                    "type": "object",
+                                    "properties": {
+                                      "vIBSMonoRet": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "vIBSMonoRet"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gpBioDiferenca": {
+                                    "type": "object",
+                                    "properties": {
+                                      "qBCBioComb": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                                      },
+                                      "vIBSDiferenca": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "qBCBioComb",
+                                      "vIBSDiferenca"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "gIBSMonoAdValorem": {
+                                "type": "object",
+                                "properties": {
+                                  "gMonoPadrao": {
+                                    "type": "object",
+                                    "properties": {
+                                      "vBCMono": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      },
+                                      "pAliqMonoUF": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vIBSMonoUF": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      },
+                                      "pAliqMonoMun": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vIBSMonoMun": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      },
+                                      "vIBSMono": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "vBCMono",
+                                      "pAliqMonoUF",
+                                      "vIBSMonoUF",
+                                      "pAliqMonoMun",
+                                      "vIBSMonoMun",
+                                      "vIBSMono"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gMonoReten": {
+                                    "type": "object",
+                                    "properties": {
+                                      "vBCMonoReten": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      },
+                                      "pAliqMonoReten": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vIBSMonoReten": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "vBCMonoReten",
+                                      "pAliqMonoReten",
+                                      "vIBSMonoReten"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gMonoRet": {
+                                    "type": "object",
+                                    "properties": {
+                                      "vIBSMonoRet": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "vIBSMonoRet"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gpBioDiferenca": {
+                                    "type": "object",
+                                    "properties": {
+                                      "qBCBioComb": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                                      },
+                                      "vIBSDiferenca": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "qBCBioComb",
+                                      "vIBSDiferenca"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "gCBSMonoAdRem": {
+                                "type": "object",
+                                "properties": {
+                                  "gMonoPadrao": {
+                                    "type": "object",
+                                    "properties": {
+                                      "qBCMono": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                                      },
+                                      "adRemCBS": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vCBSMono": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "qBCMono",
+                                      "adRemCBS",
+                                      "vCBSMono"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gMonoReten": {
+                                    "type": "object",
+                                    "properties": {
+                                      "qBCMonoReten": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                                      },
+                                      "adRemCBSReten": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vCBSMonoReten": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "qBCMonoReten",
+                                      "adRemCBSReten",
+                                      "vCBSMonoReten"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gMonoRet": {
+                                    "type": "object",
+                                    "properties": {
+                                      "vCBSMonoRet": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "vCBSMonoRet"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gpBioDiferenca": {
+                                    "type": "object",
+                                    "properties": {
+                                      "qBCBioComb": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                                      },
+                                      "vCBSDiferenca": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "qBCBioComb",
+                                      "vCBSDiferenca"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "gCBSMonoAdValorem": {
+                                "type": "object",
+                                "properties": {
+                                  "gMonoPadrao": {
+                                    "type": "object",
+                                    "properties": {
+                                      "vBCMono": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      },
+                                      "pAliqMonoCBS": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vCBSMono": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "vBCMono",
+                                      "pAliqMonoCBS",
+                                      "vCBSMono"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gMonoReten": {
+                                    "type": "object",
+                                    "properties": {
+                                      "vBCMonoReten": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      },
+                                      "pAliqMonoReten": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                      },
+                                      "vCBSMonoReten": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "vBCMonoReten",
+                                      "pAliqMonoReten",
+                                      "vCBSMonoReten"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gMonoRet": {
+                                    "type": "object",
+                                    "properties": {
+                                      "vCBSMonoRet": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "vCBSMonoRet"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "gpBioDiferenca": {
+                                    "type": "object",
+                                    "properties": {
+                                      "qBCBioComb": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                                      },
+                                      "vCBSDiferenca": {
+                                        "type": "string",
+                                        "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "qBCBioComb",
+                                      "vCBSDiferenca"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "vTotIBSMonoItem": {
+                                "type": "string",
+                                "pattern": "^\\d{1,13}\\.\\d{2}$"
+                              },
+                              "vTotCBSMonoItem": {
+                                "type": "string",
+                                "pattern": "^\\d{1,13}\\.\\d{2}$"
+                              }
+                            },
+                            "required": [
+                              "vTotIBSMonoItem",
+                              "vTotCBSMonoItem"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "gTransfCred": {
+                            "type": "object",
+                            "properties": {
+                              "vIBS": {
+                                "type": "string",
+                                "pattern": "^\\d{1,13}\\.\\d{2}$"
+                              },
+                              "vCBS": {
+                                "type": "string",
+                                "pattern": "^\\d{1,13}\\.\\d{2}$"
+                              }
+                            },
+                            "required": [
+                              "vIBS",
+                              "vCBS"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "gAjusteCompet": {
+                            "type": "object",
+                            "properties": {
+                              "competApur": {
+                                "type": "string",
+                                "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                              },
+                              "vIBS": {
+                                "type": "string",
+                                "pattern": "^\\d{1,13}\\.\\d{2}$"
+                              },
+                              "vCBS": {
+                                "type": "string",
+                                "pattern": "^\\d{1,13}\\.\\d{2}$"
+                              }
+                            },
+                            "required": [
+                              "competApur",
+                              "vIBS",
+                              "vCBS"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "gEstornoCred": {
+                            "type": "object",
+                            "properties": {
+                              "vIBSEstCred": {
+                                "type": "string",
+                                "pattern": "^\\d{1,13}\\.\\d{2}$"
+                              },
+                              "vCBSEstCred": {
+                                "type": "string",
+                                "pattern": "^\\d{1,13}\\.\\d{2}$"
+                              }
+                            },
+                            "required": [
+                              "vIBSEstCred",
+                              "vCBSEstCred"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "gCredPresOper": {
+                            "type": "object",
+                            "properties": {
+                              "vBCCredPres": {
+                                "type": "string",
+                                "pattern": "^\\d{1,13}\\.\\d{2}$"
+                              },
+                              "cCredPres": {
+                                "type": "string",
+                                "pattern": "^\\d{2}$"
+                              },
+                              "gIBSCredPres": {
+                                "type": "object",
+                                "properties": {
+                                  "pCredPres": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                  },
+                                  "vCredPres": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  },
+                                  "vCredPresCondSus": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  }
+                                },
+                                "required": [
+                                  "pCredPres"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "gCBSCredPres": {
+                                "type": "object",
+                                "properties": {
+                                  "pCredPres": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                                  },
+                                  "vCredPres": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  },
+                                  "vCredPresCondSus": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,13}\\.\\d{2}$"
+                                  }
+                                },
+                                "required": [
+                                  "pCredPres"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "vBCCredPres",
+                              "cCredPres"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "gCredPresIBSZFM": {
+                            "type": "object",
+                            "properties": {
+                              "competApur": {
+                                "type": "string",
+                                "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                              },
+                              "tpCredPresIBSZFM": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 4
+                              },
+                              "vCredPresIBSZFM": {
+                                "type": "string",
+                                "pattern": "^\\d{1,13}\\.\\d{2}$"
+                              }
+                            },
+                            "required": [
+                              "competApur",
+                              "tpCredPresIBSZFM",
+                              "vCredPresIBSZFM"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "CST",
+                          "cClassTrib"
+                        ],
+                        "additionalProperties": false
                       }
                     },
                     "required": [
@@ -21522,6 +23723,196 @@
                     "vNF"
                   ],
                   "additionalProperties": false
+                },
+                "ISTot": {
+                  "type": "object",
+                  "properties": {
+                    "vIS": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "vIS"
+                  ],
+                  "additionalProperties": false
+                },
+                "IBSCBSTot": {
+                  "type": "object",
+                  "properties": {
+                    "vBCIBSCBS": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    },
+                    "gIBS": {
+                      "type": "object",
+                      "properties": {
+                        "gIBSUF": {
+                          "type": "object",
+                          "properties": {
+                            "vDif": {
+                              "type": "string",
+                              "pattern": "^\\d{1,13}\\.\\d{2}$"
+                            },
+                            "vDevTrib": {
+                              "type": "string",
+                              "pattern": "^\\d{1,13}\\.\\d{2}$"
+                            },
+                            "vIBSUF": {
+                              "type": "string",
+                              "pattern": "^\\d{1,13}\\.\\d{2}$"
+                            }
+                          },
+                          "required": [
+                            "vDif",
+                            "vDevTrib",
+                            "vIBSUF"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "gIBSMun": {
+                          "type": "object",
+                          "properties": {
+                            "vDif": {
+                              "type": "string",
+                              "pattern": "^\\d{1,13}\\.\\d{2}$"
+                            },
+                            "vDevTrib": {
+                              "type": "string",
+                              "pattern": "^\\d{1,13}\\.\\d{2}$"
+                            },
+                            "vIBSMun": {
+                              "type": "string",
+                              "pattern": "^\\d{1,13}\\.\\d{2}$"
+                            }
+                          },
+                          "required": [
+                            "vDif",
+                            "vDevTrib",
+                            "vIBSMun"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "vIBS": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        },
+                        "vCredPres": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        },
+                        "vCredPresCondSus": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        }
+                      },
+                      "required": [
+                        "gIBSUF",
+                        "gIBSMun",
+                        "vIBS",
+                        "vCredPres",
+                        "vCredPresCondSus"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "gCBS": {
+                      "type": "object",
+                      "properties": {
+                        "vDif": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        },
+                        "vDevTrib": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        },
+                        "vCBS": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        },
+                        "vCredPres": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        },
+                        "vCredPresCondSus": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        }
+                      },
+                      "required": [
+                        "vDif",
+                        "vDevTrib",
+                        "vCBS",
+                        "vCredPres",
+                        "vCredPresCondSus"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "gMono": {
+                      "type": "object",
+                      "properties": {
+                        "vIBSMono": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        },
+                        "vCBSMono": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        },
+                        "vIBSMonoReten": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        },
+                        "vCBSMonoReten": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        },
+                        "vIBSMonoRet": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        },
+                        "vCBSMonoRet": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        }
+                      },
+                      "required": [
+                        "vIBSMono",
+                        "vCBSMono",
+                        "vIBSMonoReten",
+                        "vCBSMonoReten",
+                        "vIBSMonoRet",
+                        "vCBSMonoRet"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "gEstornoCred": {
+                      "type": "object",
+                      "properties": {
+                        "vIBSEstCred": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        },
+                        "vCBSEstCred": {
+                          "type": "string",
+                          "pattern": "^\\d{1,13}\\.\\d{2}$"
+                        }
+                      },
+                      "required": [
+                        "vIBSEstCred",
+                        "vCBSEstCred"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "vBCIBSCBS"
+                  ],
+                  "additionalProperties": false
+                },
+                "vNFTot": {
+                  "type": "string",
+                  "pattern": "^\\d{1,13}\\.\\d{2}$"
                 }
               },
               "required": [
@@ -21606,6 +23997,1127 @@
       },
       "required": [
         "infNFe"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "NfeIbsCbsDto.ts": {
+    "NfeIbsCbsSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "CST": {
+          "type": "string",
+          "pattern": "^\\d{3}$"
+        },
+        "cClassTrib": {
+          "type": "string",
+          "pattern": "^\\d{6}$"
+        },
+        "indDoacao": {
+          "type": "number",
+          "const": 1
+        },
+        "gIBSCBS": {
+          "type": "object",
+          "properties": {
+            "vBC": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            },
+            "gIBSUF": {
+              "type": "object",
+              "properties": {
+                "pIBSUF": {
+                  "type": "string",
+                  "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                },
+                "gDif": {
+                  "type": "object",
+                  "properties": {
+                    "pDif": {
+                      "type": "string",
+                      "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                    },
+                    "vDif": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "pDif",
+                    "vDif"
+                  ],
+                  "additionalProperties": false
+                },
+                "gDevTrib": {
+                  "type": "object",
+                  "properties": {
+                    "pDevTrib": {
+                      "type": "string",
+                      "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                    },
+                    "vDevTrib": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "vDevTrib"
+                  ],
+                  "additionalProperties": false
+                },
+                "gRed": {
+                  "type": "object",
+                  "properties": {
+                    "pRedAliq": {
+                      "type": "string",
+                      "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                    },
+                    "pAliqEfet": {
+                      "type": "string",
+                      "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                    }
+                  },
+                  "required": [
+                    "pRedAliq",
+                    "pAliqEfet"
+                  ],
+                  "additionalProperties": false
+                },
+                "vIBSUF": {
+                  "type": "string",
+                  "pattern": "^\\d{1,13}\\.\\d{2}$"
+                }
+              },
+              "required": [
+                "pIBSUF",
+                "vIBSUF"
+              ],
+              "additionalProperties": false
+            },
+            "gIBSMun": {
+              "type": "object",
+              "properties": {
+                "pIBSMun": {
+                  "type": "string",
+                  "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                },
+                "gDif": {
+                  "type": "object",
+                  "properties": {
+                    "pDif": {
+                      "type": "string",
+                      "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                    },
+                    "vDif": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "pDif",
+                    "vDif"
+                  ],
+                  "additionalProperties": false
+                },
+                "gDevTrib": {
+                  "type": "object",
+                  "properties": {
+                    "pDevTrib": {
+                      "type": "string",
+                      "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                    },
+                    "vDevTrib": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "vDevTrib"
+                  ],
+                  "additionalProperties": false
+                },
+                "gRed": {
+                  "type": "object",
+                  "properties": {
+                    "pRedAliq": {
+                      "type": "string",
+                      "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                    },
+                    "pAliqEfet": {
+                      "type": "string",
+                      "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                    }
+                  },
+                  "required": [
+                    "pRedAliq",
+                    "pAliqEfet"
+                  ],
+                  "additionalProperties": false
+                },
+                "vIBSMun": {
+                  "type": "string",
+                  "pattern": "^\\d{1,13}\\.\\d{2}$"
+                }
+              },
+              "required": [
+                "pIBSMun",
+                "vIBSMun"
+              ],
+              "additionalProperties": false
+            },
+            "vIBS": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            },
+            "gCBS": {
+              "type": "object",
+              "properties": {
+                "pCBS": {
+                  "type": "string",
+                  "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                },
+                "gDif": {
+                  "type": "object",
+                  "properties": {
+                    "pDif": {
+                      "type": "string",
+                      "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                    },
+                    "vDif": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "pDif",
+                    "vDif"
+                  ],
+                  "additionalProperties": false
+                },
+                "gDevTrib": {
+                  "type": "object",
+                  "properties": {
+                    "pDevTrib": {
+                      "type": "string",
+                      "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                    },
+                    "vDevTrib": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "vDevTrib"
+                  ],
+                  "additionalProperties": false
+                },
+                "gRed": {
+                  "type": "object",
+                  "properties": {
+                    "pRedAliq": {
+                      "type": "string",
+                      "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                    },
+                    "pAliqEfet": {
+                      "type": "string",
+                      "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                    }
+                  },
+                  "required": [
+                    "pRedAliq",
+                    "pAliqEfet"
+                  ],
+                  "additionalProperties": false
+                },
+                "gALCZFMCBS": {
+                  "type": "object",
+                  "properties": {
+                    "tpALCZFMCBS": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "const": 1
+                        },
+                        {
+                          "type": "number",
+                          "const": 2
+                        }
+                      ]
+                    },
+                    "nProcSuframa": {
+                      "type": "string",
+                      "minLength": 8,
+                      "maxLength": 12
+                    },
+                    "pAliqEfetRegCBS": {
+                      "type": "string",
+                      "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                    },
+                    "vTribRegCBS": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "tpALCZFMCBS",
+                    "pAliqEfetRegCBS",
+                    "vTribRegCBS"
+                  ],
+                  "additionalProperties": false
+                },
+                "vCBS": {
+                  "type": "string",
+                  "pattern": "^\\d{1,13}\\.\\d{2}$"
+                }
+              },
+              "required": [
+                "pCBS",
+                "vCBS"
+              ],
+              "additionalProperties": false
+            },
+            "gTribRegular": {
+              "type": "object",
+              "properties": {
+                "CSTReg": {
+                  "type": "string",
+                  "pattern": "^\\d{3}$"
+                },
+                "cClassTribReg": {
+                  "type": "string",
+                  "pattern": "^\\d{6}$"
+                },
+                "pAliqEfetRegIBSUF": {
+                  "type": "string",
+                  "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                },
+                "vTribRegIBSUF": {
+                  "type": "string",
+                  "pattern": "^\\d{1,13}\\.\\d{2}$"
+                },
+                "pAliqEfetRegIBSMun": {
+                  "type": "string",
+                  "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                },
+                "vTribRegIBSMun": {
+                  "type": "string",
+                  "pattern": "^\\d{1,13}\\.\\d{2}$"
+                },
+                "pAliqEfetRegCBS": {
+                  "type": "string",
+                  "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                },
+                "vTribRegCBS": {
+                  "type": "string",
+                  "pattern": "^\\d{1,13}\\.\\d{2}$"
+                }
+              },
+              "required": [
+                "CSTReg",
+                "cClassTribReg",
+                "pAliqEfetRegIBSUF",
+                "vTribRegIBSUF",
+                "pAliqEfetRegIBSMun",
+                "vTribRegIBSMun",
+                "pAliqEfetRegCBS",
+                "vTribRegCBS"
+              ],
+              "additionalProperties": false
+            },
+            "gTribCompraGov": {
+              "type": "object",
+              "properties": {
+                "pAliqIBSUF": {
+                  "type": "string",
+                  "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                },
+                "vTribIBSUF": {
+                  "type": "string",
+                  "pattern": "^\\d{1,13}\\.\\d{2}$"
+                },
+                "pAliqIBSMun": {
+                  "type": "string",
+                  "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                },
+                "vTribIBSMun": {
+                  "type": "string",
+                  "pattern": "^\\d{1,13}\\.\\d{2}$"
+                },
+                "pAliqCBS": {
+                  "type": "string",
+                  "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                },
+                "vTribCBS": {
+                  "type": "string",
+                  "pattern": "^\\d{1,13}\\.\\d{2}$"
+                }
+              },
+              "required": [
+                "pAliqIBSUF",
+                "vTribIBSUF",
+                "pAliqIBSMun",
+                "vTribIBSMun",
+                "pAliqCBS",
+                "vTribCBS"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "vBC",
+            "gIBSUF",
+            "gIBSMun",
+            "vIBS",
+            "gCBS"
+          ],
+          "additionalProperties": false
+        },
+        "gIBSCBSMono": {
+          "type": "object",
+          "properties": {
+            "gIBSMonoAdRem": {
+              "type": "object",
+              "properties": {
+                "gMonoPadrao": {
+                  "type": "object",
+                  "properties": {
+                    "qBCMono": {
+                      "type": "string",
+                      "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                    },
+                    "adRemIBS": {
+                      "type": "string",
+                      "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                    },
+                    "vIBSMono": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "qBCMono",
+                    "adRemIBS",
+                    "vIBSMono"
+                  ],
+                  "additionalProperties": false
+                },
+                "gMonoReten": {
+                  "type": "object",
+                  "properties": {
+                    "qBCMonoReten": {
+                      "type": "string",
+                      "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                    },
+                    "adRemIBSReten": {
+                      "type": "string",
+                      "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                    },
+                    "vIBSMonoReten": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "qBCMonoReten",
+                    "adRemIBSReten",
+                    "vIBSMonoReten"
+                  ],
+                  "additionalProperties": false
+                },
+                "gMonoRet": {
+                  "type": "object",
+                  "properties": {
+                    "vIBSMonoRet": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "vIBSMonoRet"
+                  ],
+                  "additionalProperties": false
+                },
+                "gpBioDiferenca": {
+                  "type": "object",
+                  "properties": {
+                    "qBCBioComb": {
+                      "type": "string",
+                      "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                    },
+                    "vIBSDiferenca": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "qBCBioComb",
+                    "vIBSDiferenca"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            "gIBSMonoAdValorem": {
+              "type": "object",
+              "properties": {
+                "gMonoPadrao": {
+                  "type": "object",
+                  "properties": {
+                    "vBCMono": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    },
+                    "pAliqMonoUF": {
+                      "type": "string",
+                      "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                    },
+                    "vIBSMonoUF": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    },
+                    "pAliqMonoMun": {
+                      "type": "string",
+                      "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                    },
+                    "vIBSMonoMun": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    },
+                    "vIBSMono": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "vBCMono",
+                    "pAliqMonoUF",
+                    "vIBSMonoUF",
+                    "pAliqMonoMun",
+                    "vIBSMonoMun",
+                    "vIBSMono"
+                  ],
+                  "additionalProperties": false
+                },
+                "gMonoReten": {
+                  "type": "object",
+                  "properties": {
+                    "vBCMonoReten": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    },
+                    "pAliqMonoReten": {
+                      "type": "string",
+                      "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                    },
+                    "vIBSMonoReten": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "vBCMonoReten",
+                    "pAliqMonoReten",
+                    "vIBSMonoReten"
+                  ],
+                  "additionalProperties": false
+                },
+                "gMonoRet": {
+                  "type": "object",
+                  "properties": {
+                    "vIBSMonoRet": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "vIBSMonoRet"
+                  ],
+                  "additionalProperties": false
+                },
+                "gpBioDiferenca": {
+                  "type": "object",
+                  "properties": {
+                    "qBCBioComb": {
+                      "type": "string",
+                      "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                    },
+                    "vIBSDiferenca": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "qBCBioComb",
+                    "vIBSDiferenca"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            "gCBSMonoAdRem": {
+              "type": "object",
+              "properties": {
+                "gMonoPadrao": {
+                  "type": "object",
+                  "properties": {
+                    "qBCMono": {
+                      "type": "string",
+                      "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                    },
+                    "adRemCBS": {
+                      "type": "string",
+                      "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                    },
+                    "vCBSMono": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "qBCMono",
+                    "adRemCBS",
+                    "vCBSMono"
+                  ],
+                  "additionalProperties": false
+                },
+                "gMonoReten": {
+                  "type": "object",
+                  "properties": {
+                    "qBCMonoReten": {
+                      "type": "string",
+                      "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                    },
+                    "adRemCBSReten": {
+                      "type": "string",
+                      "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                    },
+                    "vCBSMonoReten": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "qBCMonoReten",
+                    "adRemCBSReten",
+                    "vCBSMonoReten"
+                  ],
+                  "additionalProperties": false
+                },
+                "gMonoRet": {
+                  "type": "object",
+                  "properties": {
+                    "vCBSMonoRet": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "vCBSMonoRet"
+                  ],
+                  "additionalProperties": false
+                },
+                "gpBioDiferenca": {
+                  "type": "object",
+                  "properties": {
+                    "qBCBioComb": {
+                      "type": "string",
+                      "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                    },
+                    "vCBSDiferenca": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "qBCBioComb",
+                    "vCBSDiferenca"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            "gCBSMonoAdValorem": {
+              "type": "object",
+              "properties": {
+                "gMonoPadrao": {
+                  "type": "object",
+                  "properties": {
+                    "vBCMono": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    },
+                    "pAliqMonoCBS": {
+                      "type": "string",
+                      "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                    },
+                    "vCBSMono": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "vBCMono",
+                    "pAliqMonoCBS",
+                    "vCBSMono"
+                  ],
+                  "additionalProperties": false
+                },
+                "gMonoReten": {
+                  "type": "object",
+                  "properties": {
+                    "vBCMonoReten": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    },
+                    "pAliqMonoReten": {
+                      "type": "string",
+                      "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                    },
+                    "vCBSMonoReten": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "vBCMonoReten",
+                    "pAliqMonoReten",
+                    "vCBSMonoReten"
+                  ],
+                  "additionalProperties": false
+                },
+                "gMonoRet": {
+                  "type": "object",
+                  "properties": {
+                    "vCBSMonoRet": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "vCBSMonoRet"
+                  ],
+                  "additionalProperties": false
+                },
+                "gpBioDiferenca": {
+                  "type": "object",
+                  "properties": {
+                    "qBCBioComb": {
+                      "type": "string",
+                      "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+                    },
+                    "vCBSDiferenca": {
+                      "type": "string",
+                      "pattern": "^\\d{1,13}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "qBCBioComb",
+                    "vCBSDiferenca"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            "vTotIBSMonoItem": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            },
+            "vTotCBSMonoItem": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            }
+          },
+          "required": [
+            "vTotIBSMonoItem",
+            "vTotCBSMonoItem"
+          ],
+          "additionalProperties": false
+        },
+        "gTransfCred": {
+          "type": "object",
+          "properties": {
+            "vIBS": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            },
+            "vCBS": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            }
+          },
+          "required": [
+            "vIBS",
+            "vCBS"
+          ],
+          "additionalProperties": false
+        },
+        "gAjusteCompet": {
+          "type": "object",
+          "properties": {
+            "competApur": {
+              "type": "string",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+            },
+            "vIBS": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            },
+            "vCBS": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            }
+          },
+          "required": [
+            "competApur",
+            "vIBS",
+            "vCBS"
+          ],
+          "additionalProperties": false
+        },
+        "gEstornoCred": {
+          "type": "object",
+          "properties": {
+            "vIBSEstCred": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            },
+            "vCBSEstCred": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            }
+          },
+          "required": [
+            "vIBSEstCred",
+            "vCBSEstCred"
+          ],
+          "additionalProperties": false
+        },
+        "gCredPresOper": {
+          "type": "object",
+          "properties": {
+            "vBCCredPres": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            },
+            "cCredPres": {
+              "type": "string",
+              "pattern": "^\\d{2}$"
+            },
+            "gIBSCredPres": {
+              "type": "object",
+              "properties": {
+                "pCredPres": {
+                  "type": "string",
+                  "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                },
+                "vCredPres": {
+                  "type": "string",
+                  "pattern": "^\\d{1,13}\\.\\d{2}$"
+                },
+                "vCredPresCondSus": {
+                  "type": "string",
+                  "pattern": "^\\d{1,13}\\.\\d{2}$"
+                }
+              },
+              "required": [
+                "pCredPres"
+              ],
+              "additionalProperties": false
+            },
+            "gCBSCredPres": {
+              "type": "object",
+              "properties": {
+                "pCredPres": {
+                  "type": "string",
+                  "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+                },
+                "vCredPres": {
+                  "type": "string",
+                  "pattern": "^\\d{1,13}\\.\\d{2}$"
+                },
+                "vCredPresCondSus": {
+                  "type": "string",
+                  "pattern": "^\\d{1,13}\\.\\d{2}$"
+                }
+              },
+              "required": [
+                "pCredPres"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "vBCCredPres",
+            "cCredPres"
+          ],
+          "additionalProperties": false
+        },
+        "gCredPresIBSZFM": {
+          "type": "object",
+          "properties": {
+            "competApur": {
+              "type": "string",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+            },
+            "tpCredPresIBSZFM": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4
+            },
+            "vCredPresIBSZFM": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            }
+          },
+          "required": [
+            "competApur",
+            "tpCredPresIBSZFM",
+            "vCredPresIBSZFM"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "CST",
+        "cClassTrib"
+      ],
+      "additionalProperties": false
+    },
+    "NfeIbsCbsTotSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "vBCIBSCBS": {
+          "type": "string",
+          "pattern": "^\\d{1,13}\\.\\d{2}$"
+        },
+        "gIBS": {
+          "type": "object",
+          "properties": {
+            "gIBSUF": {
+              "type": "object",
+              "properties": {
+                "vDif": {
+                  "type": "string",
+                  "pattern": "^\\d{1,13}\\.\\d{2}$"
+                },
+                "vDevTrib": {
+                  "type": "string",
+                  "pattern": "^\\d{1,13}\\.\\d{2}$"
+                },
+                "vIBSUF": {
+                  "type": "string",
+                  "pattern": "^\\d{1,13}\\.\\d{2}$"
+                }
+              },
+              "required": [
+                "vDif",
+                "vDevTrib",
+                "vIBSUF"
+              ],
+              "additionalProperties": false
+            },
+            "gIBSMun": {
+              "type": "object",
+              "properties": {
+                "vDif": {
+                  "type": "string",
+                  "pattern": "^\\d{1,13}\\.\\d{2}$"
+                },
+                "vDevTrib": {
+                  "type": "string",
+                  "pattern": "^\\d{1,13}\\.\\d{2}$"
+                },
+                "vIBSMun": {
+                  "type": "string",
+                  "pattern": "^\\d{1,13}\\.\\d{2}$"
+                }
+              },
+              "required": [
+                "vDif",
+                "vDevTrib",
+                "vIBSMun"
+              ],
+              "additionalProperties": false
+            },
+            "vIBS": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            },
+            "vCredPres": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            },
+            "vCredPresCondSus": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            }
+          },
+          "required": [
+            "gIBSUF",
+            "gIBSMun",
+            "vIBS",
+            "vCredPres",
+            "vCredPresCondSus"
+          ],
+          "additionalProperties": false
+        },
+        "gCBS": {
+          "type": "object",
+          "properties": {
+            "vDif": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            },
+            "vDevTrib": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            },
+            "vCBS": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            },
+            "vCredPres": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            },
+            "vCredPresCondSus": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            }
+          },
+          "required": [
+            "vDif",
+            "vDevTrib",
+            "vCBS",
+            "vCredPres",
+            "vCredPresCondSus"
+          ],
+          "additionalProperties": false
+        },
+        "gMono": {
+          "type": "object",
+          "properties": {
+            "vIBSMono": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            },
+            "vCBSMono": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            },
+            "vIBSMonoReten": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            },
+            "vCBSMonoReten": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            },
+            "vIBSMonoRet": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            },
+            "vCBSMonoRet": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            }
+          },
+          "required": [
+            "vIBSMono",
+            "vCBSMono",
+            "vIBSMonoReten",
+            "vCBSMonoReten",
+            "vIBSMonoRet",
+            "vCBSMonoRet"
+          ],
+          "additionalProperties": false
+        },
+        "gEstornoCred": {
+          "type": "object",
+          "properties": {
+            "vIBSEstCred": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            },
+            "vCBSEstCred": {
+              "type": "string",
+              "pattern": "^\\d{1,13}\\.\\d{2}$"
+            }
+          },
+          "required": [
+            "vIBSEstCred",
+            "vCBSEstCred"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "vBCIBSCBS"
+      ],
+      "additionalProperties": false
+    },
+    "NfeIsSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "CSTIS": {
+          "type": "string",
+          "pattern": "^\\d{3}$"
+        },
+        "cClassTribIS": {
+          "type": "string",
+          "pattern": "^\\d{6}$"
+        },
+        "vBCIS": {
+          "type": "string",
+          "pattern": "^\\d{1,13}\\.\\d{2}$"
+        },
+        "pIS": {
+          "type": "string",
+          "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+        },
+        "adRemIS": {
+          "type": "string",
+          "pattern": "^\\d{1,3}\\.\\d{2,4}$"
+        },
+        "uTrib": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 6
+        },
+        "qTrib": {
+          "type": "string",
+          "pattern": "^\\d{1,11}(\\.\\d{1,4})?$"
+        },
+        "vIS": {
+          "type": "string",
+          "pattern": "^\\d{1,13}\\.\\d{2}$"
+        }
+      },
+      "required": [
+        "CSTIS",
+        "cClassTribIS"
+      ],
+      "additionalProperties": false
+    },
+    "NfeIsTotSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "vIS": {
+          "type": "string",
+          "pattern": "^\\d{1,13}\\.\\d{2}$"
+        }
+      },
+      "required": [
+        "vIS"
       ],
       "additionalProperties": false
     }

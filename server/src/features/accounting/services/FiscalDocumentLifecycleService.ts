@@ -30,7 +30,7 @@ import type { FiscalDocumentEmissionService, FiscalDocumentView } from './Fiscal
 import { selectDfeEmissor } from '../dfe/selectDfeEmissor';
 import { resolveEmissorFor } from '../dfe/resolveEmissor';
 import { ambienteFromTpAmb, assertTpAmb, tpAmbFor } from '../dfe/DfeEmissorPort';
-import type { DfeAmbiente, DfeEmissorPort, EmissaoResult } from '../dfe/DfeEmissorPort';
+import type { CancelInput, DfeAmbiente, DfeEmissorPort, EmissaoResult } from '../dfe/DfeEmissorPort';
 import { DpsManualPayloadSchema, DpsPayloadSchema, toManualDps } from '../dtos/DpsPayloadDto';
 import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeInternal';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -68,6 +68,22 @@ const PENDING_STATUSES: readonly FiscalDocumentStatus[] = ['SENT', 'PROCESSING']
 
 /** BE-INCR-DFE-EVENTOS itens 5 e 11 (F-EVT-1 a): fora da janela configurada — aviso na resposta, nunca bloqueio. */
 export const AVISO_FORA_DA_JANELA = 'fora_da_janela_configurada';
+
+/**
+ * BE-INCR-NFCE (nó X10a, item 27) — o corpo do cancelamento tem a forma do tipo do documento (`CancelInput`, item 7):
+ * NFS-e = e101101 (`cMotivo`/`xMotivo`); NF-e/NFC-e = 110111 (`xJust`). Forma trocada ⇒ 400.
+ */
+export function cancelInputDoTipo(
+  kind: FiscalDocumentKind,
+  input: { cMotivo: 1 | 2 | 9; xMotivo: string } | { xJust: string },
+): CancelInput {
+  if (kind === 'NFSE') {
+    if ('cMotivo' in input) return { kind, cMotivo: input.cMotivo, xMotivo: input.xMotivo };
+    throw new ValidationError('dfe_cancel_corpo_do_tipo: o cancelamento de NFS-e pede cMotivo e xMotivo (e101101), não xJust.', null);
+  }
+  if ('xJust' in input) return { kind, xJust: input.xJust };
+  throw new ValidationError(`dfe_cancel_corpo_do_tipo: o cancelamento de ${kind} pede xJust (evento 110111), não cMotivo/xMotivo.`, null);
+}
 
 /** A guarda `whenStatusIn` do repositório perdeu a corrida (outro pedido mudou o status antes) ⇒ 409, nunca 500. */
 async function raceToConflict<T>(fn: () => Promise<T>): Promise<T> {
@@ -325,17 +341,21 @@ export class FiscalDocumentLifecycleService {
    * POST /api/nfe/dfe/documents/:id/cancelar (item 29) — só de `AUTHORIZED`. Nunca toca a venda
    * nem o razão (ADR §7 item 5) — só o documento fiscal e, se autorizado em produção, a
    * proveniência que ele havia anexado (F-DFE-18, soft-delete, sem apagar lançamento nenhum).
+   *
+   * BE-INCR-NFCE (nó X10a, item 27): a NF-e/NFC-e cancela pelo 110111 com `xJust`; a NFS-e segue com `cMotivo`/`xMotivo`.
+   * O corpo da outra forma é 400 (`dfe_cancel_corpo_do_tipo`) — parâmetro aceito e ignorado é bug.
    */
   async cancelar(
     scope: AccountingScope,
     documentId: string,
-    input: { cMotivo: 1 | 2 | 9; xMotivo: string },
+    input: { cMotivo: 1 | 2 | 9; xMotivo: string } | { xJust: string },
   ): Promise<FiscalDocumentView & { avisos: string[] }> {
     if (!this.policy.canCancelFiscalDocument(scope)) {
       throw new ForbiddenError('Você não tem permissão para cancelar documento fiscal.');
     }
     const doc = await this.repo.findById(scope, documentId);
     if (!doc) throw new ValidationError(`Documento fiscal '${documentId}' não encontrado.`, null);
+    const cancelInput = cancelInputDoTipo(doc.kind as FiscalDocumentKind, input);
     if (!AUTHORIZED_STATUSES.includes(doc.status as FiscalDocumentStatus)) {
       throw new ValidationError(`cancelamento_bloqueado: só é possível cancelar um documento AUTHORIZED (status atual: ${doc.status}).`, {
         faltantes: [`status atual é ${doc.status}, esperado AUTHORIZED`],
@@ -353,17 +373,19 @@ export class FiscalDocumentLifecycleService {
     // BE-INCR-DFE-EVENTOS item 5 (F-EVT-1 a): fora da janela CONFIGURADA a operação segue para a porta e só avisa —
     // quem recusa é o fisco (E0822 → OUT_OF_WINDOW, item 6). O prazo é parâmetro do município (Anexo II RN E0822 [28]).
     const { janela } = await this.emissionService.getById(scope, documentId);
+    // BE-INCR-NFCE item 27 (F-NFCE-10 a): a mesma política na NF-e/NFC-e, com a janela do ramo 55/65 (24 h / 30 min).
     const avisos = foraDaJanela(janela.cancelarAte, new Date()) ? [AVISO_FORA_DA_JANELA] : [];
 
-    if (doc.kind !== 'NFSE') {
-      // BE-INCR-NFCE: o cancelamento 110111 da NF-e/NFC-e (`xJust`) é a Fase E (PR-5); esta rota só cancela NFS-e.
-      throw new ValidationError(`dfe_cancel_kind: cancelamento de ${doc.kind} ainda não implementado.`, null);
-    }
     const partnerRef = doc.partnerRef ?? attemptRef(doc.id, doc.currentAttemptNo);
-    const result = await port.cancelar(partnerRef, { kind: 'NFSE', cMotivo: input.cMotivo, xMotivo: input.xMotivo });
+    const result = await port.cancelar(partnerRef, cancelInput);
 
     if (result.status === 'OUT_OF_WINDOW') {
-      throw new ConflictError('prazo do município (E0822): fora da janela de cancelamento.', 'DFE_CANCEL_OUT_OF_WINDOW');
+      throw new ConflictError(
+        cancelInput.kind === 'NFSE'
+          ? 'prazo do município (E0822): fora da janela de cancelamento.'
+          : 'prazo de cancelamento (501): o fisco recusou o cancelamento fora do prazo.',
+        'DFE_CANCEL_OUT_OF_WINDOW',
+      );
     }
     if (result.status === 'REJECTED') {
       // item 6: o código do fisco (E0823/E0824/E0827/E0840…) vai na mensagem, não só o texto.
@@ -377,7 +399,11 @@ export class FiscalDocumentLifecycleService {
     }
 
     // CANCELLED
-    await raceToConflict(() => this.markCancelled(scope, doc, input.cMotivo, input.xMotivo));
+    await raceToConflict(() =>
+      cancelInput.kind === 'NFSE'
+        ? this.markCancelled(scope, doc, cancelInput.cMotivo, cancelInput.xMotivo)
+        : this.markCancelled(scope, doc, null, cancelInput.xJust),
+    );
     return { ...(await this.emissionService.getById(scope, documentId)), avisos };
   }
 
@@ -385,11 +411,12 @@ export class FiscalDocumentLifecycleService {
    * Ramo CANCELLED (item 29), compartilhado com o cancelamento manual (BE-INCR-DFE-MANUAL item 13). Status re-checado
    * DENTRO da escrita (`whenStatusIn`). Nunca toca venda nem razão; só aposenta a proveniência.
    * `cancelledAt`: no manual, o `dhProc` do evento (BE-INCR-DFE-EVENTOS item 7); por máquina, o instante do registro.
+   * NF-e/NFC-e (BE-INCR-NFCE item 27): `cMotivo` null — o 110111 não tem código de motivo, só o `xJust` (em `cancelReason`).
    */
   private async markCancelled(
     scope: AccountingScope,
     doc: FiscalDocument,
-    cMotivo: 1 | 2 | 9,
+    cMotivo: 1 | 2 | 9 | null,
     xMotivo: string,
     cancelledAt: Date = new Date(),
   ): Promise<void> {
@@ -407,12 +434,12 @@ export class FiscalDocumentLifecycleService {
         eventType: 'dfe.cancelled',
         targetType: 'fiscal_document',
         targetId: doc.id,
-        payload: { documentId: doc.id, cMotivo: String(cMotivo) },
+        payload: cMotivo == null ? { documentId: doc.id } : { documentId: doc.id, cMotivo: String(cMotivo) },
       });
     });
 
     if (doc.sourceDocumentId) {
-      await this.postingService.retireSourceDocument(scope, doc.sourceDocumentId, `dfe_cancelled:${cMotivo}`);
+      await this.postingService.retireSourceDocument(scope, doc.sourceDocumentId, `dfe_cancelled:${cMotivo ?? '110111'}`);
     }
   }
 
