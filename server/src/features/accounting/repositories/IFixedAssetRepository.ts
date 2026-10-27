@@ -23,6 +23,9 @@ export interface CreateFixedAssetData {
   payableId?: string | null;
   sourceDocumentId?: string | null;
   sourceItemRef?: string | null;
+  // C8 emenda 3.2 (E8b/E10, F-EM-6 → a) — só em classe AMORTIZATION_LEASEHOLD; ausentes no rascunho de NF-e.
+  leaseEndDate?: Date | null;
+  leaseIndemnifiable?: boolean | null;
 }
 
 export interface UpdateFixedAssetData {
@@ -39,6 +42,8 @@ export interface UpdateFixedAssetData {
   bookAnnualRateBp?: number | null;
   bookRateJustification?: string | null;
   acquiredAt?: Date;
+  leaseEndDate?: Date | null;
+  leaseIndemnifiable?: boolean | null;
 }
 
 /**

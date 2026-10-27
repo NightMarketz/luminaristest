@@ -38,7 +38,8 @@
       "politica": "Política contábil",
       "apuracao": "Apuração",
       "pendencias": "Pendências",
-      "cobranca": "Cobrança"
+      "cobranca": "Cobrança",
+      "kit": "Kit de setor"
     },
     "error": {
       "units": "Falha ao carregar as unidades.",
@@ -3520,6 +3521,78 @@
       "hint": "Cole esta URL no painel do Mercado Pago (Notificações/Webhooks). O webhook só se configura lá, em URL HTTPS de produção.",
       "notProduction": "Atenção: a base da API não é HTTPS público (ou aponta para localhost). O Mercado Pago não alcança esta URL.",
       "title": "URL do webhook"
+    }
+  },
+  "kit": {
+    "loading": "Carregando o kit de setor…",
+    "loadError": "Não foi possível carregar o kit de setor da unidade.",
+    "none": "Esta unidade não tem kit de setor instalado.",
+    "version": "Versão {{installed}}",
+    "versionNewer": "Versão {{installed}} instalada · versão {{latest}} disponível",
+    "lastRunFailed": "A última atualização do kit falhou.",
+    "changelog": "O que muda nas versões novas",
+    "changelogVersion": "Versão {{version}}",
+    "installing": "Instalação do kit em andamento.",
+    "failed": "A instalação do kit parou no meio, no passo {{step}} de 7.",
+    "resume": {
+      "button": "Retomar instalação",
+      "success": "Instalação do kit concluída.",
+      "error": "Não foi possível retomar a instalação do kit.",
+      "confirm": {
+        "title": "Retomar a instalação do kit?",
+        "message": "A instalação continua do passo {{step}}; os passos já concluídos não são refeitos.",
+        "confirmLabel": "Retomar",
+        "cancelLabel": "Cancelar"
+      }
+    },
+    "warnings": {
+      "KIT_REFERENTIAL_SKIPPED_NO_REGIME": "O referencial não foi instalado porque a empresa não tem regime definido.",
+      "KIT_REFERENTIAL_SKIPPED_NO_CATALOG": "Não há referencial publicado para o ano."
+    },
+    "pending": {
+      "count": "Pendências da atualização do kit: {{total}}",
+      "error": "Não foi possível carregar as pendências."
+    },
+    "reasons": {
+      "override": "A conta do papel foi ajustada nesta unidade",
+      "account_deleted_by_user": "A conta foi apagada nesta unidade",
+      "account_changed_in_use": "A conta mudou no kit e já tem lançamentos",
+      "field_set_by_user": "O campo já foi preenchido nesta unidade",
+      "referential_year_frozen": "O referencial do ano já foi usado numa ECD",
+      "referential_mapped_differently": "A conta já tem outro código referencial nesta unidade"
+    },
+    "decide": {
+      "accept": "Aceitar",
+      "reject": "Recusar",
+      "acceptedToast": "Pendência aceita.",
+      "rejectedToast": "Pendência recusada.",
+      "error": "Não foi possível decidir a pendência.",
+      "motivoLabel": "Motivo (10 a 500 caracteres)",
+      "confirm": {
+        "acceptTitle": "Aceitar a pendência {{item}}?",
+        "rejectTitle": "Recusar a pendência {{item}}?",
+        "cancelLabel": "Cancelar"
+      },
+      "effects": {
+        "reject": "Recusar mantém o valor desta unidade; a pendência não volta nesta versão do kit.",
+        "generic": "Esta decisão altera o plano ou o binding da unidade.",
+        "accept": {
+          "override": "Aceitar remove o ajuste da conta deste papel e recompila o binding com a conta do kit.",
+          "account_deleted_by_user": "Aceitar restaura a conta apagada e recompila o binding.",
+          "account_changed_in_use": "Aceitar renomeia a conta para o nome do kit.",
+          "field_set_by_user": "Aceitar grava a conta do kit por cima do valor preenchido nesta unidade.",
+          "referential_year_frozen": "Este item é de um ano congelado: aceitar não é possível, só recusar.",
+          "referential_mapped_differently": "Aceitar troca o código referencial da conta pelo do kit."
+        }
+      },
+      "errors": {
+        "KIT_PENDING_NOT_OPEN": "Esta pendência já foi decidida por outra pessoa; a lista foi atualizada.",
+        "KIT_PENDING_NOT_FOUND": "Pendência não encontrada; a lista foi atualizada.",
+        "KIT_PENDING_FROZEN_YEAR": "Este item é de um ano congelado (ECF transmitida ou período fechado): só dá para recusar.",
+        "COMPILE_DRAFT": "A recompilação do binding reprovou; nada foi aplicado.",
+        "ACCOUNT_NOT_FOUND": "A conta do kit não está viva no plano da unidade.",
+        "KIT_NOT_INSTALLED": "O kit da unidade não está instalado; retome a instalação antes de decidir."
+      }
     }
   }
 }

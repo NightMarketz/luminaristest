@@ -9,8 +9,8 @@ import { MitNadaAExportarError } from './errors';
  * `ecf.ts`/`ecfReal.ts`): sem model, sem I/O, sem Prisma — o serviço do PR-2 lê o perfil, o contador e as apurações
  * e chama `montarArquivoMit`.
  *
- * Escopo (F-MIT-1 a): o trimestral (`T01..T04`, Presumido e Real trimestral, PR-1) e o Real anual (`A00..A12`, Fase B
- * do X7, PR-4 — item 19). `M01..M12` (PIS/Cofins, X8) entram no PR-3; até lá, `apuracoesDoPa` não os seleciona.
+ * Escopo (F-MIT-1 a): o trimestral (`T01..T04`, Presumido e Real trimestral, PR-1), o PIS/Cofins mensal (`M01..M12`,
+ * X8, PR-3 — item 18) e o Real anual (`A00..A12`, Fase B do X7, PR-4 — item 19).
  *
  * O formato só tem oráculo externo (P-6 do ADR): os testes provam o leiaute LIDO, não o leiaute ACEITO pelo MIT.
  */
@@ -63,11 +63,10 @@ export const AVISOS_MIT_FIXOS: readonly string[] = [
 export const AVISO_MIT_EMAIL_OMITIDO = 'E-mail do contador omitido: o MIT aceita de 5 a 40 caracteres; informe-o no MIT se quiser.';
 /** Item 8 (P-1 do ADR). */
 export const AVISO_MIT_CNPJ_ALFANUMERICO = 'CNPJ alfanumérico: aceitação pelo MIT não confirmada';
-/** Item 9 — sai no PR-3 (item 18), quando o X8 entra no arquivo. */
-export const AVISO_MIT_SEM_PIS_COFINS = 'PIS/Cofins não incluídos: o X8 não está ativo';
 
 const TRIMESTRE = /^T0([1-4])$/;
 const MES_ANUAL = /^A(0[1-9]|1[0-2])$/;
+const MES_PIS_COFINS = /^M(0[1-9]|1[0-2])$/;
 const AJUSTE_ANUAL = 'A00';
 
 /** Item 1 — anos que o leitor do PA (ano, mês) tem de ler: o ano Y e, em março, também Y−1 (o `A00` de Y−1). */
@@ -78,6 +77,7 @@ export const anosDoPa = (ano: number, mes: number): number[] => (mes === 3 ? [an
  * (item 11), para que os dois nunca divirjam. Só `CONFIRMED` com `deletedAt` nulo (invariante 5). `T0q` do ano Y ⇒
  * PA (Y, 3q) (D4; grau I, P-4 do ADR): pedir o mês 1 ou 2 de um ano só trimestral devolve vazio (invariante 6).
  * PR-4 (item 19): `A0m` do ano Y ⇒ PA (Y, m); `A00` do ano Y ⇒ PA (Y+1, 3) (Manual do MIT §4.1; leiaute p. 8).
+ * PR-3 (item 18): `M0m` do ano Y (PIS/COFINS, X8) ⇒ PA (Y, m).
  */
 export function apuracoesDoPa<T extends Pick<TaxAssessment, 'anoCalendario' | 'periodo' | 'status' | 'deletedAt'>>(
   linhas: T[],
@@ -90,7 +90,7 @@ export function apuracoesDoPa<T extends Pick<TaxAssessment, 'anoCalendario' | 'p
     if (l.anoCalendario !== ano) return false;
     const t = TRIMESTRE.exec(l.periodo);
     if (t !== null) return Number(t[1]) * 3 === mes;
-    const m = MES_ANUAL.exec(l.periodo);
+    const m = MES_ANUAL.exec(l.periodo) ?? MES_PIS_COFINS.exec(l.periodo);
     return m !== null && Number(m[1]) === mes;
   });
 }
@@ -113,10 +113,16 @@ function codigoDiferencaPostergada(t: EntradaMit['tabela'], data: string): Reado
   };
 }
 
-/** Item 2 (D5) — grupo de `Debitos` por tributo, na ordem do leiaute 1.0 (pp. 5–6). */
+/**
+ * Item 2 (D5) — grupo de `Debitos` por tributo, na ordem do leiaute 1.0 (pp. 5–6). PR-3 (item 18; ADR-X8 D10/D12):
+ * `PisPasep` e `Cofins`, com o `aPagarCents` como débito — o `saldoNegativoCents` do X8 é saldo credor, nunca débito
+ * (P-12), e por isso não é lido aqui.
+ */
 const GRUPOS = [
   ['IRPJ', 'Irpj'],
   ['CSLL', 'Csll'],
+  ['PIS', 'PisPasep'],
+  ['COFINS', 'Cofins'],
 ] as const;
 
 const porChave = (a: ApuracaoParaMit, b: ApuracaoParaMit): number =>
@@ -145,7 +151,7 @@ export function montarArquivoMit(e: EntradaMit): SaidaMit {
 
   const tributosConhecidos = new Set<string>(GRUPOS.map(([t]) => t));
   for (const a of e.apuracoes) {
-    if (!tributosConhecidos.has(a.tributo)) throw new Error(`montarArquivoMit: tributo fora do PR-1 (${a.tributo}, apuração ${a.id})`);
+    if (!tributosConhecidos.has(a.tributo)) throw new Error(`montarArquivoMit: tributo fora do arquivo do MIT (${a.tributo}, apuração ${a.id})`);
   }
 
   // PR-2: os códigos vêm da tabela de plataforma, vigentes no último dia do PA.
@@ -201,7 +207,6 @@ export function montarArquivoMit(e: EntradaMit): SaidaMit {
   // Item 8: nome `<raiz 8>-MIT-<AAAAMM>.json` (leiaute p. 10); conteúdo sem espaços; sha256 do texto em UTF-8.
   const raiz = e.perfil.cnpj.slice(0, 8);
   if (/[A-Za-z]/.test(raiz)) avisos.push(AVISO_MIT_CNPJ_ALFANUMERICO);
-  avisos.push(AVISO_MIT_SEM_PIS_COFINS);
   const conteudo = JSON.stringify(arquivo);
   return {
     nomeArquivo: `${raiz}-MIT-${e.ano}${String(e.mes).padStart(2, '0')}.json`,

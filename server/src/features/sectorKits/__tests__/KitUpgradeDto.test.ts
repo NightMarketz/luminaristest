@@ -52,8 +52,14 @@ describe('KitUpgradeDto', () => {
   });
 
   it('view da instalação (item 38)', () => {
-    const view = { kitKey: 'beautySalon', kitVersion: 1, latestVersion: 4, status: 'INSTALLED', lastRun: null, openPendingCount: 0, changelog: [{ kitVersion: 2, entries: ['v2'] }] };
+    const view = { kitKey: 'beautySalon', kitVersion: 1, latestVersion: 4, status: 'INSTALLED', lastRun: null, openPendingCount: 0, changelog: [{ kitVersion: 2, entries: ['v2'] }], steps: { lastCompletedStep: 7, warnings: [] } };
     expect(KitInstallationViewSchema.safeParse(view).success).toBe(true);
     expect(KitInstallationViewSchema.safeParse({ ...view, openPendingCount: -1 }).success).toBe(false);
+    // EMENDA-2 da LAC-B, item 0: `steps` obrigatório, passo 0–7, só os avisos conhecidos
+    const { steps: _steps, ...semSteps } = view;
+    expect(KitInstallationViewSchema.safeParse(semSteps).success).toBe(false);
+    expect(KitInstallationViewSchema.safeParse({ ...view, steps: { lastCompletedStep: 8, warnings: [] } }).success).toBe(false);
+    expect(KitInstallationViewSchema.safeParse({ ...view, steps: { lastCompletedStep: 6, warnings: ['KIT_REFERENTIAL_SKIPPED_NO_REGIME'] } }).success).toBe(true);
+    expect(KitInstallationViewSchema.safeParse({ ...view, steps: { lastCompletedStep: 6, warnings: ['OUTRO'] } }).success).toBe(false);
   });
 });

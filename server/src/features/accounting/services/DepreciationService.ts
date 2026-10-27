@@ -14,7 +14,7 @@
 import type { FixedAsset, FixedAssetClass } from 'generated/prisma';
 import logger from '../../../lib/logger';
 import { AccountingPeriodNotOpenError, ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
-import { quotaCumulativa } from '../models/FixedAsset.model';
+import { amortizationTerms, quotaCumulativa, quotaCumulativaLinear } from '../models/FixedAsset.model';
 import type { RunDepreciationFailure, RunDepreciationInput, RunDepreciationResult, ReconcileFixedAssetsInput, ReconcileFixedAssetsResult } from '../dtos/DepreciationDto';
 import type { IFixedAssetRepository } from '../repositories/IFixedAssetRepository';
 import type { IFixedAssetClassRepository } from '../repositories/IFixedAssetClassRepository';
@@ -42,6 +42,32 @@ function minBigInt(a: bigint, b: bigint): bigint {
  *  serviços do mesmo nó lendo a mesma regra de domínio, não uma dependência entre eles). */
 function monthsBetweenInclusive(from: Date, to: Date): number {
   return (to.getUTCFullYear() - from.getUTCFullYear()) * 12 + (to.getUTCMonth() - from.getUTCMonth()) + 1;
+}
+
+/**
+ * Série cumulativa do ativo, já com o cap na base. Depreciação: taxa anual (`bookAnnualRateBp ?? annualRateBp`, item
+ * 12). Benfeitoria (C8 emenda 3.2, E11): linear em `nBook = min(nContrato, nVida)` meses, `nContrato` de `activatedAt`
+ * a `leaseEndDate` inclusive — o razão é o livro contábil; `nFiscal` fica para o Bloco F (P3).
+ */
+function cumulativeSeries(asset: FixedAsset, klass: FixedAssetClass, base: bigint): (k: number) => bigint {
+  if (klass.kind !== 'AMORTIZATION_LEASEHOLD') {
+    const bp = asset.bookAnnualRateBp ?? asset.annualRateBp;
+    return (k) => minBigInt(quotaCumulativa(base, bp, k), base);
+  }
+  if (!asset.leaseEndDate) {
+    throw new ValidationError(`Ativo '${asset.code}' é benfeitoria (classe '${klass.code}') sem leaseEndDate — não há prazo de amortização (E10).`);
+  }
+  const { nBook } = amortizationTerms(monthsBetweenInclusive(asset.activatedAt!, asset.leaseEndDate), asset.annualRateBp);
+  return (k) => quotaCumulativaLinear(base, nBook, k);
+}
+
+/** Item 16 aplicado à conta da benfeitoria: nomeia a conta ausente antes de postar qualquer ativo. */
+function assertAmortizationAccount(klass: FixedAssetClass): void {
+  if (klass.kind === 'AMORTIZATION_LEASEHOLD' && !klass.amortizationExpenseAccountId) {
+    throw new ValidationError(
+      `Classe '${klass.code}' (benfeitoria) não tem amortizationExpenseAccountId configurada — configure antes de rodar a amortização (item 16; referencial 3.01.01.07.01.24).`,
+    );
+  }
 }
 
 function lastDayOfMonthUTC(year: number, month: number): Date {
@@ -121,6 +147,7 @@ export class DepreciationService {
           `Classe '${klass.code}' não tem accumulatedDepreciationAccountId configurada — configure antes de rodar a depreciação (item 16).`,
         );
       }
+      assertAmortizationAccount(klass);
       classesById.set(classId, klass);
     }
 
@@ -164,6 +191,7 @@ export class DepreciationService {
     if (!klass.accumulatedDepreciationAccountId) {
       throw new ValidationError(`Classe '${klass.code}' não tem accumulatedDepreciationAccountId configurada (item 16).`);
     }
+    assertAmortizationAccount(klass);
     const settings = await this.settingsService.get(scope);
     if (!settings.depreciationExpenseAccountId) {
       throw new ValidationError('depreciationExpenseAccountId não configurado em AccountingScopeSettings (item 16).');
@@ -188,9 +216,10 @@ export class DepreciationService {
   ): Promise<{ asset: FixedAsset; outcome: 'posted' | 'skipped' }> {
     const sourceId = `${asset.id}:${yearMonth}`;
     const base = asset.costCents - asset.residualValueCents;
-    const bp = asset.bookAnnualRateBp ?? asset.annualRateBp;
     const k = monthsBetweenInclusive(asset.activatedAt!, endOfMonth);
-    const cumK = minBigInt(quotaCumulativa(base, bp, k), base);
+    const cumulativeAt = cumulativeSeries(asset, klass, base);
+    const cumK = cumulativeAt(k);
+    const isAmortization = klass.kind === 'AMORTIZATION_LEASEHOLD';
 
     const existing = await this.journalEntryRepo.findBySource(scope, DEPRECIATION_SOURCE_TYPE, sourceId);
     if (existing) {
@@ -206,19 +235,22 @@ export class DepreciationService {
       return { asset: repaired, outcome: 'skipped' };
     }
 
-    const cumK1 = k > 1 ? minBigInt(quotaCumulativa(base, bp, k - 1), base) : 0n;
+    const cumK1 = k > 1 ? cumulativeAt(k - 1) : 0n;
     const rawDelta = cumK - cumK1;
     const quota = minBigInt(rawDelta, base - asset.accumulatedDepreciationCents);
     if (quota <= 0n) return { asset, outcome: 'skipped' };
 
-    const despesaAccount = await this.requireAccount(scope, settings.depreciationExpenseAccountId!, 'despesa de depreciação (depreciationExpenseAccountId)');
+    // E12 (F-EM-7 → b): benfeitoria debita a conta de amortização da classe; o crédito reusa a acumulada da classe.
+    const despesaAccount = isAmortization
+      ? await this.requireAccount(scope, klass.amortizationExpenseAccountId!, 'despesa de amortização da classe (amortizationExpenseAccountId)')
+      : await this.requireAccount(scope, settings.depreciationExpenseAccountId!, 'despesa de depreciação (depreciationExpenseAccountId)');
     const acumuladaAccount = await this.requireAccount(scope, klass.accumulatedDepreciationAccountId!, 'depreciação acumulada da classe (accumulatedDepreciationAccountId)');
 
     const dateStr = `${yearMonth}-${String(endOfMonth.getUTCDate()).padStart(2, '0')}`;
     const entry = await this.postingService.postEntry(scope, {
       unitId: scope.unitId,
       date: dateStr,
-      description: `Depreciação de ${asset.code} — ${klass.name} (${yearMonth})`,
+      description: `${isAmortization ? 'Amortização' : 'Depreciação'} de ${asset.code} — ${klass.name} (${yearMonth})`,
       sourceType: DEPRECIATION_SOURCE_TYPE,
       sourceId,
       lines: [

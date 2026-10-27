@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // AccountingView não faz `import React` — mesmo shim dos demais testes do módulo.
 (globalThis as unknown as { React: typeof React }).React = React;
-import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, waitFor, within } from '@testing-library/react';
 import { AccountingView, DELEGATED_TABS, TABS } from '../AccountingView';
 import { accountingService } from '../../../lib/services/accounting.service';
 import { dimensionsService } from '../../../lib/services/dimensions.service';
@@ -14,6 +14,7 @@ import {
 import { DynamicTableService } from '../../../lib/services/dynamic-table.service';
 import { policyVersionsService } from '../../../lib/services/policyVersions.service';
 import { accountingBindingService } from '../../../lib/services/accountingBinding.service';
+import { accountingKitService } from '../../../lib/services/accountingKit.service';
 
 /**
  * FE-INCR-ACCOUNTANT-GOVERNANCE item 13c/13c2 — a mordida do risco principal: o modo cliente (F-FE-GOV-1 b) vive
@@ -44,6 +45,20 @@ vi.mock('../../../lib/services/policyVersions.service', () => ({
 vi.mock('../../../lib/services/accountingBinding.service', () => ({
   accountingBindingService: { listActive: vi.fn(), activateDefault: vi.fn() },
 }));
+// Aba "Kit de setor" (EMENDA-2 da LAC-B, itens 3–4): só aparece com kit na unidade e nunca no modo cliente.
+vi.mock('../../../lib/services/accountingKit.service', () => ({
+  accountingKitService: { getKit: vi.fn(), listPending: vi.fn() },
+}));
+let kitTabMounts = 0;
+vi.mock('../components/AccountingKitTab', () => ({
+  AccountingKitTab: (p: { unitId: string }) => {
+    const [mount] = React.useState(() => ++kitTabMounts);
+    return <div data-testid="kit-tab" data-unit={p.unitId} data-mount={mount} />;
+  },
+}));
+/** Sem kit na unidade (o padrão do `beforeEach`), a aba "Kit de setor" não entra na barra. */
+const OWN_TABS_WITHOUT_KIT = TABS.length - 1;
+
 vi.mock('../governance/PolicyVersionsPanel', () => ({
   PolicyVersionsPanel: (p: { governance?: { ownerUserId: string } }) => (
     <div data-testid="policy-panel" data-owner={p.governance?.ownerUserId ?? ''} />
@@ -115,6 +130,57 @@ describe('AccountingView — modo cliente (F-FE-GOV-1 b)', () => {
     vi.mocked(dimensionsService.listCatalog).mockResolvedValue([]);
     vi.mocked(policyVersionsService.list).mockResolvedValue([]);
     vi.mocked(accountingBindingService.listActive).mockResolvedValue([]);
+    vi.mocked(accountingKitService.getKit).mockResolvedValue(null);
+  });
+
+  it('EMENDA-2 LAC-B item 3: unidade sem kit ⇒ sem a aba "Kit de setor"; com kit ⇒ aba presente e conteúdo renderiza', async () => {
+    mockUnits(['u1']);
+    vi.mocked(accountantAssignmentsService.listMine).mockResolvedValue([]);
+    render(<AccountingView />);
+    await waitFor(() => expect(accountingKitService.getKit).toHaveBeenCalledWith('u1'));
+    await waitFor(() => expect(accountingService.getTrialBalance).toHaveBeenCalled());
+    expect(screen.queryByRole('tab', { name: 'Kit de setor' })).not.toBeInTheDocument();
+    cleanup();
+
+    vi.mocked(accountingKitService.getKit).mockResolvedValue({
+      kitKey: 'beautySalon', kitVersion: 6, latestVersion: 6, status: 'INSTALLED', lastRun: null, openPendingCount: 0,
+      changelog: [], steps: { lastCompletedStep: 7, warnings: [] },
+    });
+    render(<AccountingView />);
+    fireEvent.click(await screen.findByRole('tab', { name: 'Kit de setor' }));
+    expect(screen.getByTestId('kit-tab')).toHaveAttribute('data-unit', 'u1');
+    expect(screen.getAllByRole('tab')).toHaveLength(TABS.length);
+  });
+
+  it('EMENDA-2 LAC-B item 10: ativar pela faixa com a aba aberta relê o kit e remonta a aba (review do #919)', async () => {
+    mockUnits(['u1']);
+    vi.mocked(accountantAssignmentsService.listMine).mockResolvedValue([]);
+    // kit FAILED nos passos 1–4: sem binding Active, faixa e aba convivem
+    vi.mocked(accountingKitService.getKit).mockResolvedValue({
+      kitKey: 'beautySalon', kitVersion: 6, latestVersion: 6, status: 'FAILED', lastRun: null, openPendingCount: 0,
+      changelog: [], steps: { lastCompletedStep: 3, warnings: [] },
+    });
+    vi.mocked(accountingBindingService.activateDefault).mockResolvedValue({ status: 'Active', bindingVersion: 1 });
+    render(<AccountingView />);
+    fireEvent.click(await screen.findByRole('tab', { name: 'Kit de setor' }));
+    const before = screen.getByTestId('kit-tab').getAttribute('data-mount');
+    const callsBefore = vi.mocked(accountingKitService.getKit).mock.calls.length;
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Ativar contabilidade' }));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Ativar' }));
+
+    await waitFor(() => expect(screen.getByTestId('kit-tab').getAttribute('data-mount')).not.toBe(before));
+    expect(vi.mocked(accountingKitService.getKit).mock.calls.length).toBeGreaterThan(callsBefore);
+  });
+
+  it('EMENDA-2 LAC-B item 4: modo cliente não chama GET /accounting-kit e não mostra a aba', async () => {
+    mockUnits([]);
+    vi.mocked(accountantAssignmentsService.listMine).mockResolvedValue([row({})]);
+    render(<AccountingView />);
+    await screen.findByTestId('client-mode-strip');
+    await waitFor(() => expect(DynamicTableService.getTableData).toHaveBeenCalled());
+    expect(accountingKitService.getKit).not.toHaveBeenCalled();
+    expect(screen.queryByRole('tab', { name: 'Kit de setor' })).not.toBeInTheDocument();
   });
 
   it('LAC-B item 4: modo cliente não chama GET /accounting-binding nem mostra a faixa de ativação', async () => {
@@ -143,7 +209,7 @@ describe('AccountingView — modo cliente (F-FE-GOV-1 b)', () => {
     vi.mocked(accountantAssignmentsService.listMine).mockResolvedValue([]);
     render(<AccountingView />);
     await waitFor(() => expect(accountingService.getTrialBalance).toHaveBeenCalledWith({ unitId: 'u1' }));
-    expect(screen.getAllByRole('tab')).toHaveLength(TABS.length);
+    expect(screen.getAllByRole('tab')).toHaveLength(OWN_TABS_WITHOUT_KIT);
     expect(screen.queryByLabelText('Livro')).not.toBeInTheDocument();
     expect(screen.queryByTestId('client-mode-strip')).not.toBeInTheDocument();
   });
@@ -153,7 +219,7 @@ describe('AccountingView — modo cliente (F-FE-GOV-1 b)', () => {
     vi.mocked(accountantAssignmentsService.listMine).mockRejectedValue({ error: 'x' });
     render(<AccountingView />);
     await waitFor(() => expect(accountantAssignmentsService.listMine).toHaveBeenCalled());
-    expect(await screen.findAllByRole('tab')).toHaveLength(TABS.length);
+    expect(await screen.findAllByRole('tab')).toHaveLength(OWN_TABS_WITHOUT_KIT);
   });
 
   it('13c: usuário SEM unidades e com ACTIVE entra direto no modo cliente; só as abas de DELEGATED_TABS aparecem', async () => {
@@ -209,7 +275,7 @@ describe('AccountingView — modo cliente (F-FE-GOV-1 b)', () => {
     render(<AccountingView />);
     const selector = await screen.findByLabelText('Livro');
     await waitFor(() => expect(accountingService.getTrialBalance).toHaveBeenCalledTimes(1));
-    expect(screen.getAllByRole('tab')).toHaveLength(TABS.length);
+    expect(screen.getAllByRole('tab')).toHaveLength(OWN_TABS_WITHOUT_KIT);
 
     // Numa aba própria que o modo cliente não tem, a troca de contexto leva a Períodos.
     fireEvent.click(screen.getByRole('tab', { name: 'Imobilizado' }));
@@ -222,7 +288,7 @@ describe('AccountingView — modo cliente (F-FE-GOV-1 b)', () => {
     fireEvent.change(screen.getByLabelText('Livro'), { target: { value: 'own' } });
     await waitFor(() => expect(accountingService.getTrialBalance).toHaveBeenCalledTimes(2));
     expect(screen.queryByTestId('client-mode-strip')).not.toBeInTheDocument();
-    expect(screen.getAllByRole('tab')).toHaveLength(TABS.length);
+    expect(screen.getAllByRole('tab')).toHaveLength(OWN_TABS_WITHOUT_KIT);
   });
 
   it('trocar de livro REMONTA o painel de Períodos (resposta atrasada/formulário aberto não passam de um contexto ao outro)', async () => {
@@ -291,6 +357,6 @@ describe('AccountingView — modo cliente (F-FE-GOV-1 b)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Encerrar' }));
     await waitFor(() => expect(accountantAssignmentsService.end).toHaveBeenCalledWith('a1', { reason: 'fim do contrato' }));
     await waitFor(() => expect(screen.queryByTestId('client-mode-strip')).not.toBeInTheDocument());
-    expect(screen.getAllByRole('tab')).toHaveLength(TABS.length);
+    expect(screen.getAllByRole('tab')).toHaveLength(OWN_TABS_WITHOUT_KIT);
   });
 });

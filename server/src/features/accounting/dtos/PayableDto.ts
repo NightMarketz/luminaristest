@@ -4,6 +4,7 @@ import { isValidDateOnly } from '../models/dates';
 import { PAYABLE_STATUSES, PAYMENT_METHODS } from '../models/Payable.model';
 import { queryBoolean } from './queryPrimitives';
 import { TRIBUTOS_RETENCAO } from '../models/retencaoParams';
+import { FIXED_ASSET_TREATMENTS } from '../models/fixedAssetLimits';
 
 /**
  * PayableDto — Contas a Pagar (INCR-AP) request schemas. Money is INTEGER CENTS guarded by
@@ -65,9 +66,13 @@ const dateOnly = (field: string) =>
  *           description: "BE-INCR-FIXED-ASSETS PR-5: itens de imobilizado da NF-e (declarados pelo classId do operador — ITEM-DESTINATION emenda 29/09) — combinável SÓ com inventoryMultiItem/inventoryItems (nota mista, 2 débitos). Debita class.costAccountId; NUNCA StockMovement."
  *           items:
  *             type: object
- *             required: [classId, cProd, costCents]
+ *             required: [cProd, costCents]
  *             properties:
- *               classId:   { type: string }
+ *               treatment: { type: string, enum: [CAPITALIZE, EXPENSE], description: "C8 emenda 3.2 (IN RFB 1.700 art. 120): ausente = CAPITALIZE (ativar). EXPENSE = direto na despesa — unitário ≤ R$ 1.200 ou vida útil ≤ 1 ano declarada; escolha irreversível" }
+ *               classId:   { type: string, description: "Obrigatório com CAPITALIZE; proibido com EXPENSE" }
+ *               expenseAccountId: { type: string, description: "Obrigatório com EXPENSE — folha de despesa do escopo" }
+ *               setDeclared: { type: boolean, description: "Faz parte de um conjunto (art. 120 § 1º) — exige CAPITALIZE" }
+ *               usefulLifeUpToOneYear: { type: boolean, description: "Vida útil ≤ 1 ano (2ª hipótese do art. 120) — só com EXPENSE; libera acima do limite" }
  *               cProd:     { type: string }
  *               costCents: { type: integer, minimum: 1, maximum: 2147483647 }
  *               ncm:       { type: string, description: "Exigido para o casamento da taxa pelo Anexo III — ausente ou sem correspondência única → 400 ANTES de qualquer escrita" }
@@ -160,7 +165,14 @@ const inventoryItem = z
  *  there is no `qCom` to derive it from. */
 const fixedAssetItem = z
   .object({
-    classId: z.string().min(1),
+    // C8 emenda 3.2 (E3, F-EM-1 → a): escolha EXPLÍCITA por item no lançamento da aquisição (PN CST 100/78 item 13);
+    // ausente = CAPITALIZE (padrão ativar; `.optional()` em vez de `.default()` para o JSON legado e os chamadores
+    // internos lerem o mesmo "ausente = ativar"). EXPENSE = IN RFB 1.700 art. 120 — o limite (E4) é regra de SERVIÇO.
+    treatment: z.enum(FIXED_ASSET_TREATMENTS).optional(),
+    classId: z.string().min(1).optional(), // obrigatório se CAPITALIZE
+    expenseAccountId: z.string().min(1).optional(), // obrigatório se EXPENSE (folha de despesa do escopo)
+    setDeclared: z.boolean().optional(), // F-EM-4 → e (E7): "faz parte de um conjunto" (art. 120 § 1º) — força CAPITALIZE
+    usefulLifeUpToOneYear: z.boolean().optional(), // F-EM-3 → b (E4b): libera EXPENSE acima do limite (2ª hipótese do art. 120)
     cProd: z.string().min(1),
     costCents: cents,
     ncm: z.string().min(1).optional(),
@@ -170,7 +182,17 @@ const fixedAssetItem = z
     // distintas). Ausente numa criação MANUAL (fora de NF-e) → o service usa o índice no array.
     nItem: z.number().int().positive().optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((v, ctx) => {
+    const expense = v.treatment === 'EXPENSE';
+    const issue = (path: string, message: string) => ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message });
+    if (!expense && !v.classId) issue('classId', 'classId obrigatório para CAPITALIZE (ativar o bem).');
+    if (expense && !v.expenseAccountId) issue('expenseAccountId', 'expenseAccountId obrigatório para EXPENSE (IN RFB 1.700 art. 120).');
+    if (expense && v.classId) issue('classId', 'EXPENSE não leva classId — o bem não vai ao ativo.');
+    if (!expense && v.expenseAccountId) issue('expenseAccountId', 'expenseAccountId só cabe em EXPENSE.');
+    if (expense && v.setDeclared) issue('setDeclared', 'conjunto declarado exige CAPITALIZE (IN RFB 1.700 art. 120 § 1º).');
+    if (v.usefulLifeUpToOneYear && !expense) issue('usefulLifeUpToOneYear', 'vida útil ≤ 1 ano só se aplica a EXPENSE (IN RFB 1.700 art. 120).');
+  });
 
 /** ITEM-DESTINATION (BRIEF item 3 / F-ID-3 a): item de NF-e usado como INSUMO do serviço — despesa na
  *  entrada (D `accountId`, a conta de insumo do perfil fiscal, resolvida pelo `NfeImportService`), NUNCA
