@@ -105,6 +105,25 @@ describe('AccountingActivationBanner', () => {
     expect(accountingBindingService.listActive).toHaveBeenCalledTimes(2);
   });
 
+  it('EMENDA-2 item 10: sucesso chama onActivated (quem monta recarrega o kit); Draft não chama', async () => {
+    const onActivated = vi.fn();
+    vi.mocked(accountingBindingService.listActive).mockResolvedValueOnce([]).mockResolvedValueOnce(active);
+    vi.mocked(accountingBindingService.activateDefault).mockResolvedValue({ status: 'Active', bindingVersion: 1 });
+    render(<AccountingActivationBanner unitId="u1" onNavigateToPeriods={vi.fn()} onActivated={onActivated} />);
+    fireEvent.click(within(await openConfirm()).getByRole('button', { name: 'Ativar' }));
+    await waitFor(() => expect(screen.queryByTestId('accounting-activation-banner')).not.toBeInTheDocument());
+    expect(onActivated).toHaveBeenCalledTimes(1);
+    cleanup();
+
+    const onActivatedDraft = vi.fn();
+    vi.mocked(accountingBindingService.listActive).mockResolvedValue([]);
+    vi.mocked(accountingBindingService.activateDefault).mockResolvedValue({ status: 'Draft', blocking: [{ code: 'X', message: 'bloqueado' }] });
+    render(<AccountingActivationBanner unitId="u1" onNavigateToPeriods={vi.fn()} onActivated={onActivatedDraft} />);
+    fireEvent.click(within(await openConfirm()).getByRole('button', { name: 'Ativar' }));
+    expect(await screen.findByText('bloqueado')).toBeInTheDocument();
+    expect(onActivatedDraft).not.toHaveBeenCalled();
+  });
+
   it('item 6: Draft ⇒ a faixa mostra os bloqueantes — rótulo i18n nos conhecidos, message do BE nos demais; período leva a Períodos', async () => {
     const onNavigateToPeriods = vi.fn();
     vi.mocked(accountingBindingService.activateDefault).mockResolvedValue({

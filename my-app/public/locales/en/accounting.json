@@ -38,7 +38,8 @@
       "politica": "Accounting policy",
       "apuracao": "Tax assessment",
       "pendencias": "Pending items",
-      "cobranca": "Collections"
+      "cobranca": "Collections",
+      "kit": "Sector kit"
     },
     "error": {
       "units": "Failed to load units.",
@@ -3520,6 +3521,45 @@
       "hint": "Paste this URL in the Mercado Pago panel (Notifications/Webhooks). The webhook is only configured there, on a production HTTPS URL.",
       "notProduction": "Warning: the API base is not public HTTPS (or points to localhost). Mercado Pago cannot reach this URL.",
       "title": "Webhook URL"
+    }
+  },
+  "kit": {
+    "loading": "Loading the sector kit…",
+    "loadError": "Could not load the unit's sector kit.",
+    "none": "This unit has no sector kit installed.",
+    "version": "Version {{installed}}",
+    "versionNewer": "Version {{installed}} installed · version {{latest}} available",
+    "lastRunFailed": "The last kit upgrade failed.",
+    "changelog": "What changes in the new versions",
+    "changelogVersion": "Version {{version}}",
+    "installing": "Kit installation in progress.",
+    "failed": "The kit installation stopped midway, at step {{step}} of 7.",
+    "resume": {
+      "button": "Resume installation",
+      "success": "Kit installation completed.",
+      "error": "Could not resume the kit installation.",
+      "confirm": {
+        "title": "Resume the kit installation?",
+        "message": "Installation continues from step {{step}}; steps already completed are not redone.",
+        "confirmLabel": "Resume",
+        "cancelLabel": "Cancel"
+      }
+    },
+    "warnings": {
+      "KIT_REFERENTIAL_SKIPPED_NO_REGIME": "The referential chart was not installed because the company has no tax regime set.",
+      "KIT_REFERENTIAL_SKIPPED_NO_CATALOG": "There is no referential chart published for the year."
+    },
+    "pending": {
+      "count": "Kit upgrade pending items: {{total}}",
+      "error": "Could not load the pending items."
+    },
+    "reasons": {
+      "override": "The role's account was adjusted in this unit",
+      "account_deleted_by_user": "The account was deleted in this unit",
+      "account_changed_in_use": "The account changed in the kit and already has entries",
+      "field_set_by_user": "The field was already filled in this unit",
+      "referential_year_frozen": "The year's referential chart was already used in an ECD",
+      "referential_mapped_differently": "The account already has another referential code in this unit"
     }
   }
 }
