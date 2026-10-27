@@ -200,6 +200,7 @@ import { DepreciationRateService } from '../features/accounting/services/Depreci
 import { FixedAssetClassService } from '../features/accounting/services/FixedAssetClassService';
 import { FixedAssetService } from '../features/accounting/services/FixedAssetService';
 import { DepreciationService } from '../features/accounting/services/DepreciationService';
+import { FixedAssetParteBReader } from '../features/accounting/services/FixedAssetParteBReader';
 import { FiscalDocumentEmissionService } from '../features/accounting/services/FiscalDocumentEmissionService';
 import { FiscalDocumentLifecycleService } from '../features/accounting/services/FiscalDocumentLifecycleService';
 import { LalurService } from '../features/accounting/services/LalurService';
@@ -1293,6 +1294,8 @@ export class ApplicationFactory {
       this.policies.accounting,
       accountingReportService,
       this.repositories.companyFiscalProfile, // X7 Fase B (item 12): forma do ano + início de atividade — só leitura
+      // C8 emenda 3.2 (E15, A6): Bloco F — ativos + quotas do razão, só leitura (interface, não o DepreciationService)
+      new FixedAssetParteBReader(this.repositories.fixedAsset, this.repositories.journalEntry),
     );
 
     const presetSyncService = new PresetSyncService(

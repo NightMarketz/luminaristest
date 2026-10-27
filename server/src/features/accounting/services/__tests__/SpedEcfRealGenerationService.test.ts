@@ -233,6 +233,18 @@ describe('SpedEcfRealGenerationService.generate', () => {
     expect(lines).toContain('|P001|1|');
   });
 
+  it('toSerializerLine (C8 emenda 3.2, E21b): linha system do Bloco F leva os links M305 com codCtaB e valor de cada conta', () => {
+    const base = makeEntries()[0];
+    const pb = (codCtaB: string) => ({ codCtaB }) as LalurParteBAccount;
+    const e = {
+      ...base, livro: 'lalur', codigo: '161', indRelacao: '1', parteBId: null, parteB: null, accountId: null, account: null, journalLinks: [], valorCents: 250n, origem: 'system',
+      parteBLinks: [{ parteBId: 'a', valorCents: 100n, parteB: pb('DEP-A-I') }, { parteBId: 'b', valorCents: 150n, parteB: pb('DEP-E-I') }],
+    } as LalurEntryWithRelations;
+    const line = SpedEcfRealGenerationService.toSerializerLine(e);
+    expect(line.parteBLinks).toEqual([{ codCtaB: 'DEP-A-I', valorCents: 100 }, { codCtaB: 'DEP-E-I', valorCents: 150 }]);
+    expect(line.codCtaB).toBeUndefined();
+  });
+
   it('toSerializerLine: linha persistida cujo código deixou de ser E no catálogo, ou não vigora no ano, é erro explícito — nunca omitida (classe FAIL-1)', async () => {
     const bad = { ...makeEntries()[0], codigo: '2' } as LalurEntryWithRelations; // 2 = CNA
     expect(() => SpedEcfRealGenerationService.toSerializerLine(bad)).toThrow(ValidationError);

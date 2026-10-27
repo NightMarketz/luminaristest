@@ -20,6 +20,7 @@ import type {
   LalurEntryWithRelations,
   LalurMovementWithRelations,
 } from '../../repositories/ILalurRepository';
+import type { FixedAssetParteBRow } from '../IFixedAssetReader';
 
 const scope = resolveAccountingScopeInternal({ userId: 'owner-1' }, 'unit-1');
 const TX = { __tx: true } as never;
@@ -71,18 +72,24 @@ class FakeRepo {
   // Entries
   createEntry = async (data: CreateLalurEntryData, tx?: unknown) => {
     this.rec('createEntry', tx);
-    const e = { id: nid('e'), ...data, createdAt: new Date(), updatedAt: new Date(), deletedAt: null, parteB: this.accounts.find((a) => a.id === data.parteBId) ?? null, account: data.accountId ? { id: data.accountId, code: '3.1.1', nature: 'Revenue', deletedAt: null } : null, processos: [], journalLinks: [] } as unknown as LalurEntryWithRelations;
+    const e = { id: nid('e'), ...data, createdAt: new Date(), updatedAt: new Date(), deletedAt: null, parteB: this.accounts.find((a) => a.id === data.parteBId) ?? null, account: data.accountId ? { id: data.accountId, code: '3.1.1', nature: 'Revenue', deletedAt: null } : null, processos: [], journalLinks: [], parteBLinks: [] } as unknown as LalurEntryWithRelations;
     this.entries.push(e);
     return e as unknown as LalurEntry;
   };
   findEntryById = async (_s: unknown, id: string) => (this.entries.find((e) => e.id === id) as unknown as LalurEntry) ?? null;
   findEntriesForYear = async (_s: unknown, year: number) => this.live(this.entries).filter((e) => e.year === year);
   updateEntry = async (_s: unknown, id: string, data: Record<string, unknown>) => { const e = this.entries.find((x) => x.id === id)!; Object.assign(e, data); return e as unknown as LalurEntry; };
-  countLiveEntriesByParteB = async (_s: unknown, id: string, tx?: unknown) => { this.rec('countLiveEntriesByParteB', tx); return this.live(this.entries).filter((e) => e.parteBId === id).length; };
+  countLiveEntriesByParteB = async (_s: unknown, id: string, tx?: unknown) => { this.rec('countLiveEntriesByParteB', tx); return this.live(this.entries).filter((e) => e.parteBId === id || (e.parteBLinks ?? []).some((l) => l.parteBId === id)).length; };
   countLiveEntriesByAccount = async () => 0;
   replaceEntryProcesses = async () => undefined;
   replaceMovementProcesses = async () => undefined;
-  replaceEntryJournalLinks = async () => undefined;
+  replaceEntryJournalLinks = async (entryId: string, ids: string[]) => {
+    this.entries.find((e) => e.id === entryId)!.journalLinks = ids.map((journalEntryId) => ({ journalEntryId, journalEntry: { entryNumber: 1 } }));
+  };
+  createEntryParteBLinks = async (entryId: string, links: Array<{ parteBId: string; valorCents: bigint }>, tx?: unknown) => {
+    this.rec('createEntryParteBLinks', tx);
+    this.entries.find((e) => e.id === entryId)!.parteBLinks = links.map((l) => ({ ...l, parteB: this.accounts.find((a) => a.id === l.parteBId)! }));
+  };
   findJournalEntriesForLinks = async () => [];
 
   // Movements
@@ -119,7 +126,7 @@ class FakeRepo {
 /** X7 Fase B (item 12): perfil da empresa por ano — ausente ⇒ e-Lalur trimestral (lacuna 1 do PR-2). */
 type PerfilAno = { regime: string; formaApuracaoIrpjCsll: string | null; inicioAtividadeEm?: string | null };
 
-function build(over: { netResult?: Record<string, string>; perfis?: Record<number, PerfilAno> } = {}) {
+function build(over: { netResult?: Record<string, string>; perfis?: Record<number, PerfilAno>; ativos?: FixedAssetParteBRow[] } = {}) {
   const repo = new FakeRepo();
   const accountRepo = { findById: jest.fn(async (_s: unknown, id: string) => ({ id, code: '3.1.1', nature: 'Revenue' })) };
   const events: Array<{ eventType: string; payload: Record<string, unknown> }> = [];
@@ -128,8 +135,9 @@ function build(over: { netResult?: Record<string, string>; perfis?: Record<numbe
   // DRE YTD closing-exclusive por data-fim: default resultado 0 em todo trimestre
   const reports = { incomeStatement: jest.fn(async (_s: unknown, asOf: Date) => ({ netResult: { amountCents: over.netResult?.[asOf.toISOString().slice(0, 10)] ?? '0' } })) };
   const profiles = { findByYear: jest.fn(async (_s: unknown, ano: number) => (over.perfis?.[ano] ? { inicioAtividadeEm: null, ...over.perfis[ano] } : null)) };
-  const svc = new LalurService(repo as unknown as ILalurRepository, accountRepo as never, audit as never, policy as never, reports as never, profiles as never);
-  return { svc, repo, events, reports, accountRepo, profiles };
+  const fixedAssets = { listForParteB: jest.fn(async () => over.ativos ?? []) };
+  const svc = new LalurService(repo as unknown as ILalurRepository, accountRepo as never, audit as never, policy as never, reports as never, profiles as never, fixedAssets);
+  return { svc, repo, events, reports, accountRepo, profiles, fixedAssets };
 }
 
 const bal = (c: LalurClosingWithBalances, id: string) => c.balances.find((b) => b.parteBId === id)!;
@@ -574,5 +582,182 @@ describe('X7 Fase B item 12 — teto da compensação P em A0m = saldo da Parte 
     const p = (valorCents: number) => linha('A02', { codigo: '173', valorCents, indRelacao: '1', parteBId: pf.id, histLancamento: undefined });
     await expect(svc.createEntry(scope, p(30_001))).rejects.toThrow(/Compensação excede/); // 50.000 − 20.000 = 30.000
     await svc.createEntry(scope, p(30_000));
+  });
+});
+
+// ═══ C8 emenda 3.2, P3 — Bloco F no fechamento (E15–E22; F-EM-9 d, F-EM-10 b, F-EM-12 a, F-EM-14 a) ═══════════════
+describe('Bloco F — diferença contábil × fiscal da depreciação no fechamento (C8 emenda 3.2, E16–E22)', () => {
+  const T01 = { unitId: 'unit-1', year: 2025, quarter: 'T01' as const };
+  const ativo = (over: Partial<FixedAssetParteBRow>): FixedAssetParteBRow => ({
+    assetId: nid('fa'), code: 'BEM', fiscalQuotaCents: 0n, bookQuotaCents: 0n, priorDiffCents: 0n, disposedInPeriod: false, quotaEntries: [], ...over,
+  });
+  const quotas = (conta: string, ...ids: string[]) => ids.map((id) => ({ id, debitAccountIds: [conta] }));
+  /** As 4 contas do Bloco F: 1071/2210 × IRPJ/CSLL (tributo `A` na PARTEB_PADRAO — vale para os dois). */
+  function contas(repo: FakeRepo) {
+    const c = {
+      i1071: acc({ codCtaB: 'DEP-A-I', codPbRfb: '1071', codTributo: 'I' }),
+      c1071: acc({ codCtaB: 'DEP-A-C', codPbRfb: '1071', codTributo: 'C' }),
+      i2210: acc({ codCtaB: 'DEP-E-I', codPbRfb: '2210', codTributo: 'I' }),
+      c2210: acc({ codCtaB: 'DEP-E-C', codPbRfb: '2210', codTributo: 'C' }),
+    };
+    repo.accounts.push(c.i1071, c.c1071, c.i2210, c.c2210);
+    return c;
+  }
+  const sys = (repo: FakeRepo) => repo.entries.filter((e) => e.origem === 'system' && !e.deletedAt);
+  const links = (e: LalurEntryWithRelations) => (e.parteBLinks ?? []).map((l) => [l.parteB.codCtaB, l.valorCents]);
+
+  it('E16/E16b/E17: contábil > fiscal ⇒ 86 no lalur E no lacs, M305 em 1071 do tributo, IND_RELACAO 3 + conta e quotas (M310/M312); nenhum M410; entra na base ANTES do PF', async () => {
+    // resultado T01 = −100; sem o Bloco F antes da base, o PF exigiria conta 1000/1003 (não há) ⇒ 400
+    const { svc, repo, fixedAssets } = build({
+      netResult: { '2025-03-31': '-100' },
+      ativos: [ativo({ fiscalQuotaCents: 300n, bookQuotaCents: 450n, quotaEntries: quotas('acc-dep', 'je-3', 'je-1', 'je-2') })],
+    });
+    const c = contas(repo);
+    const fechado = await svc.closeParteB(scope, T01);
+    expect(fixedAssets.listForParteB).toHaveBeenCalledWith(scope, 2025, 'T01', TX);
+    const linhas = sys(repo);
+    expect(linhas.map((e) => [e.livro, e.codigo, e.valorCents, e.indRelacao, e.accountId, e.parteBId]).sort()).toEqual([
+      ['lacs', '86', 150n, '3', 'acc-dep', null],
+      ['lalur', '86', 150n, '3', 'acc-dep', null],
+    ]);
+    const lalur = linhas.find((e) => e.livro === 'lalur')!;
+    expect(links(lalur)).toEqual([['DEP-A-I', 150n]]);
+    expect(links(linhas.find((e) => e.livro === 'lacs')!)).toEqual([['DEP-A-C', 150n]]);
+    expect(lalur.journalLinks.map((j) => j.journalEntryId)).toEqual(['je-1', 'je-2', 'je-3']);
+    expect(repo.movements.filter((m) => m.origem === 'system' && !m.deletedAt)).toHaveLength(0); // F-EM-9 d: sem M410
+    expect(bal(fechado, c.i1071.id)).toMatchObject({ vlParteACents: 150n, indVlParteA: 'D', sdFimCents: 150n, indSdFim: 'D' });
+    expect(bal(fechado, c.c1071.id)).toMatchObject({ sdFimCents: 150n, indSdFim: 'D' });
+    expect(bal(fechado, c.i2210.id)).toMatchObject({ sdFimCents: 0n });
+    expect(repo.calls.filter((x) => x.m === 'createEntryParteBLinks').every((x) => x.tx)).toBe(true);
+  });
+
+  it('E21b: exclusão que realiza o 1071 do bem e constitui 2210 sai numa linha 161 só, com DOIS M305; exclusão é IND_RELACAO 1 sem M310/M312', async () => {
+    const { svc, repo } = build({ netResult: { '2025-03-31': '1000' }, ativos: [ativo({ priorDiffCents: -100n, fiscalQuotaCents: 400n, bookQuotaCents: 150n, quotaEntries: quotas('acc-dep', 'je-1') })] });
+    contas(repo);
+    await svc.closeParteB(scope, T01);
+    const lalur = sys(repo).find((e) => e.livro === 'lalur')!;
+    expect([lalur.codigo, lalur.valorCents, lalur.indRelacao, lalur.accountId, lalur.journalLinks]).toEqual(['161', 250n, '1', null, []]);
+    expect(links(lalur)).toEqual([['DEP-A-I', 100n], ['DEP-E-I', 150n]]);
+  });
+
+  it('E16 baixa: saldo 2210 do bem ⇒ 91.01 (IND_RELACAO 1, só M305); saldo 1071 ⇒ 161; os dois realizam o saldo inteiro', async () => {
+    const { svc, repo } = build({
+      ativos: [
+        ativo({ priorDiffCents: 200n, fiscalQuotaCents: 50n, bookQuotaCents: 50n, disposedInPeriod: true, quotaEntries: quotas('acc-dep', 'je-1') }),
+        ativo({ priorDiffCents: -80n, disposedInPeriod: true }),
+      ],
+    });
+    const c = contas(repo);
+    const fechado = await svc.closeParteB(scope, T01);
+    const lalur = sys(repo).filter((e) => e.livro === 'lalur');
+    expect(lalur.map((e) => [e.codigo, e.valorCents, e.indRelacao, links(e)])).toEqual(
+      expect.arrayContaining([['91.01', 200n, '1', [['DEP-E-I', 200n]]], ['161', 80n, '1', [['DEP-A-I', 80n]]]]),
+    );
+    expect(lalur).toHaveLength(2);
+    expect(bal(fechado, c.i2210.id)).toMatchObject({ vlParteACents: 200n, indVlParteA: 'D' });
+    expect(bal(fechado, c.i1071.id)).toMatchObject({ vlParteACents: 80n, indVlParteA: 'C' });
+  });
+
+  it('E18: diferença sem a conta do código/tributo ⇒ 400 nomeando o COD_PB_RFB e o tributo, nada gravado; >1 conta viva ⇒ 400 de ambiguidade', async () => {
+    const t = build({ ativos: [ativo({ fiscalQuotaCents: 100n, bookQuotaCents: 0n })] }); // 161 / 2210
+    const c = contas(t.repo);
+    t.repo.accounts.splice(t.repo.accounts.indexOf(c.c2210), 1);
+    await expect(t.svc.closeParteB(scope, T01)).rejects.toThrow(/COD_PB_RFB 2210 \(C, CSLL\)/);
+    expect(sys(t.repo)).toHaveLength(0);
+    expect(t.repo.closings).toHaveLength(0);
+    t.repo.accounts.push(c.c2210, acc({ codCtaB: 'DEP-E-I-2', codPbRfb: '2210', codTributo: 'I' }));
+    await expect(t.svc.closeParteB(scope, T01)).rejects.toThrow(/Mais de uma conta da Parte B viva com COD_PB_RFB 2210 para o tributo I \(DEP-E-I, DEP-E-I-2\)/);
+  });
+
+  it('E19: escopo só com a conta 3130 ⇒ 400 pedindo a 1071; a 3130 nunca é escolhida', async () => {
+    const { svc, repo } = build({ ativos: [ativo({ fiscalQuotaCents: 0n, bookQuotaCents: 90n })] });
+    repo.accounts.push(acc({ codCtaB: 'PETRO', codPbRfb: '3130', codTributo: 'I' }), acc({ codCtaB: 'PETRO-C', codPbRfb: '3130', codTributo: 'C' }));
+    await expect(svc.closeParteB(scope, T01)).rejects.toThrow(/COD_PB_RFB 1071 \(I, IRPJ\)/);
+    expect(repo.entries.some((e) => (e.parteBLinks ?? []).length > 0)).toBe(false);
+  });
+
+  it('E20: sem ativo do E15, ou com diferença 0 e sem baixa, nenhuma linha system é gravada', async () => {
+    const vazio = build();
+    contas(vazio.repo);
+    await vazio.svc.closeParteB(scope, T01);
+    expect(sys(vazio.repo)).toHaveLength(0);
+    const zero = build({ ativos: [ativo({ fiscalQuotaCents: 300n, bookQuotaCents: 300n, priorDiffCents: 500n })] });
+    await zero.svc.closeParteB(scope, T01); // sem contas: nada a escolher, nada a recusar
+    expect(sys(zero.repo)).toHaveLength(0);
+  });
+
+  it('E21: benfeitoria, contrato de 15 anos, taxa 10%, base 18.000 — trimestre 1 contábil 450 × fiscal 300 ⇒ adição 150 em 86/1071 no IRPJ e na CSLL, M310 = conta de amortização', async () => {
+    const { svc, repo } = build({ ativos: [ativo({ fiscalQuotaCents: 300n, bookQuotaCents: 450n, quotaEntries: quotas('acc-amort', 'je-1', 'je-2', 'je-3') })] });
+    contas(repo);
+    await svc.closeParteB(scope, T01);
+    expect(sys(repo).map((e) => [e.livro, e.codigo, e.valorCents, e.indRelacao, e.accountId, links(e)]).sort()).toEqual([
+      ['lacs', '86', 150n, '3', 'acc-amort', [['DEP-A-C', 150n]]],
+      ['lalur', '86', 150n, '3', 'acc-amort', [['DEP-A-I', 150n]]],
+    ]);
+  });
+
+  it('L-P3-1: adição 86 com quotas em contas DIFERENTES (depreciação + amortização) sai IND_RELACAO 1, sem M310/M312', async () => {
+    const { svc, repo } = build({
+      ativos: [
+        ativo({ fiscalQuotaCents: 0n, bookQuotaCents: 30n, quotaEntries: quotas('acc-dep', 'je-1') }),
+        ativo({ fiscalQuotaCents: 0n, bookQuotaCents: 20n, quotaEntries: quotas('acc-amort', 'je-2') }),
+      ],
+    });
+    contas(repo);
+    await svc.closeParteB(scope, T01);
+    const lalur = sys(repo).find((e) => e.livro === 'lalur')!;
+    expect([lalur.codigo, lalur.valorCents, lalur.indRelacao, lalur.accountId, lalur.journalLinks]).toEqual(['86', 50n, '1', null, []]);
+  });
+
+  it('E22: linha do USUÁRIO no código que o sistema precisa ⇒ 400 nomeando o ajuste e nada gravado; em outro código ou trimestre não colide', async () => {
+    const ativos = [ativo({ fiscalQuotaCents: 0n, bookQuotaCents: 70n, quotaEntries: quotas('acc-dep', 'je-1') })]; // ⇒ 86
+    const livre = build({ ativos });
+    const cl = contas(livre.repo);
+    await livre.svc.createEntry(scope, { unitId: 'unit-1', year: 2025, quarter: 'T01', livro: 'lalur', codigo: '161', valorCents: 5, indRelacao: '1', parteBId: cl.i2210.id });
+    await livre.svc.createEntry(scope, { unitId: 'unit-1', year: 2025, quarter: 'T02', livro: 'lalur', codigo: '86', valorCents: 5, indRelacao: '1', parteBId: cl.i1071.id });
+    await livre.svc.closeParteB(scope, T01);
+    expect(sys(livre.repo)).toHaveLength(2);
+
+    const t = build({ ativos });
+    const c = contas(t.repo);
+    const manual = await t.svc.createEntry(scope, { unitId: 'unit-1', year: 2025, quarter: 'T01', livro: 'lacs', codigo: '86', valorCents: 5, indRelacao: '1', parteBId: c.c1071.id });
+    await expect(t.svc.closeParteB(scope, T01)).rejects.toThrow(new RegExp(`ajuste ${manual.id} do usuário na linha 86 do lacs em T01/2025`));
+    expect(sys(t.repo)).toHaveLength(0);
+    expect(t.repo.closings).toHaveLength(0);
+  });
+
+  it('refechar SUBSTITUI: as linhas system do período são arquivadas (rename-on-key) e regravadas; diferença que zerou ⇒ nenhuma viva', async () => {
+    const t = build({ ativos: [ativo({ fiscalQuotaCents: 0n, bookQuotaCents: 70n, quotaEntries: quotas('acc-dep', 'je-1') })] });
+    contas(t.repo);
+    await t.svc.closeParteB(scope, T01);
+    const antes = sys(t.repo).map((e) => e.id);
+    t.fixedAssets.listForParteB.mockImplementation(async () => [ativo({ fiscalQuotaCents: 0n, bookQuotaCents: 90n, quotaEntries: quotas('acc-dep', 'je-1') })]);
+    await t.svc.closeParteB(scope, T01);
+    expect(sys(t.repo).map((e) => [e.livro, e.valorCents]).sort()).toEqual([['lacs', 90n], ['lalur', 90n]]);
+    const arquivadas = t.repo.entries.filter((e) => antes.includes(e.id));
+    expect(arquivadas.every((e) => e.deletedAt && e.codigo.startsWith(`deleted:${e.id}:`))).toBe(true);
+    t.fixedAssets.listForParteB.mockImplementation(async () => []);
+    await t.svc.closeParteB(scope, T01);
+    expect(sys(t.repo)).toHaveLength(0);
+  });
+
+  it('review D2: linha system do Bloco F não aceita PATCH de valor/relação/conta/parteB/M312 (400) — só archive', async () => {
+    const t = build({ ativos: [ativo({ fiscalQuotaCents: 0n, bookQuotaCents: 70n, quotaEntries: quotas('acc-dep', 'je-1') })] });
+    const c = contas(t.repo);
+    await t.svc.closeParteB(scope, T01);
+    const linha = sys(t.repo).find((e) => e.livro === 'lalur')!;
+    for (const patch of [{ valorCents: 999 }, { indRelacao: '4' as const, histLancamento: 'x' }, { parteBId: c.i2210.id }, { accountId: 'acc-x' }, { journalEntryIds: [] }]) {
+      await expect(t.svc.updateEntry(scope, linha.id, { unitId: 'unit-1', ...patch })).rejects.toThrow(/Linha do Bloco F derivada pelo fechamento/);
+    }
+    expect(linha.valorCents).toBe(70n);
+    await t.svc.archiveEntry(scope, linha.id, { unitId: 'unit-1' });
+    expect(linha.deletedAt).not.toBeNull();
+  });
+
+  it('archiveParteB: conta com link M305 vivo de linha system ⇒ 400 (o recompute perderia o saldo)', async () => {
+    const t = build({ ativos: [ativo({ fiscalQuotaCents: 0n, bookQuotaCents: 70n, quotaEntries: quotas('acc-dep', 'je-1') })] });
+    const c = contas(t.repo);
+    await t.svc.closeParteB(scope, T01);
+    await expect(t.svc.archiveParteB(scope, c.i1071.id, { unitId: 'unit-1' })).rejects.toThrow(/Arquive os ajustes relacionados/);
   });
 });
