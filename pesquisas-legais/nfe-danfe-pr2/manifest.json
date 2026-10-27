@@ -1,0 +1,32 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Nota Técnica Conjunta 2025.001 v1.00 — CNPJ Alfanumérico (§6: padrão do código de barras dos documentos auxiliares)",
+      "url": "https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=5ZkvIZt10mQ=",
+      "url_final": "https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=5ZkvIZt10mQ=",
+      "orgao": "Portal Nacional da NF-e (ENCAT/RFB) — baixado por curl com cookie de sessão (o legal.py baixar entra em laço de 302)",
+      "baixado_em": "2026-10-26T18:30:00-03:00",
+      "sha256": "671d546b24ad4682e267fc76a9eeca8f14ad15ead2be20721ee2aec5438cf964",
+      "arquivo": "docs/D01_NT-Conjunta-2025.001-CNPJ-Alfanumerico.pdf",
+      "texto": "docs/D01_NT-Conjunta-2025.001-CNPJ-Alfanumerico.txt",
+      "bytes": 962216
+    },
+    {
+      "id": "D02",
+      "titulo": "Nota Técnica 2026.004 v1.01 — CNPJ alfanumérico na NF-e/NFC-e (sem regra de código de barras)",
+      "url": "https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=BTZQzgsO9Ws=",
+      "url_final": "https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=BTZQzgsO9Ws=",
+      "orgao": "Portal Nacional da NF-e (ENCAT/RFB) — baixado por curl com cookie de sessão (o legal.py baixar entra em laço de 302)",
+      "baixado_em": "2026-10-26T18:30:00-03:00",
+      "sha256": "5f24a25351e790692754b07bbefac42ac67e70167a62a7806395d880f56675be",
+      "arquivo": "docs/D02_NT2026004-v1.01.pdf",
+      "texto": "docs/D02_NT2026004-v1.01.txt",
+      "bytes": 516956
+    }
+  ],
+  "buscas": [],
+  "slug": "nfe-danfe-pr2",
+  "pergunta": "PR-2 do NFE-DANFE-IBSCBS: padrão do código de barras da chave com CNPJ alfanumérico (NT Conjunta 2025.001 §6)",
+  "criado": "2026-10-26T20:13:29-03:00"
+}

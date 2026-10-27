@@ -188,6 +188,26 @@ primeira NF-e 55. Há uma condição: se o X10a PR-7 entrar em produção antes 
     *Teste:* os chamadores atuais (`ReceiptService`, `PackageAcceptanceService`) continuam sem argumento novo; com
     `margin` o PDF sai (`%PDF` nos 4 primeiros bytes). Teste de integração com Chromium, só onde a suíte já usa `htmlToPdf`.
 
+> **PR-2 executado em 26/10/2026** (dono, chat, 2026-10-26: *"Executa o NFE-DANFE-IBSCBS PR-2 — sessao-feature, sem merge."*).
+> Quatro lacunas decididas antes do código ([[D-2026-10-26-NFE-DANFE-IBSCBS-PR2-LACUNAS]]):
+> - **Folhas:** paginação no HTML. A altura de cada bloco é estimada pelo texto, de forma pessimista, e gravada no CSS; os
+>   itens vão por esse orçamento; cabeçalho repetido e FOLHA n/m em todas (`[MOC-DANFE-FOLHAS]`, `[MOC-DANFE-NUM-FOLHA]`).
+> - **Item 16:** teste com puppeteer falso + prova local com Chromium real no corpo do PR (fora do CI).
+> - **Item 13:** código de barras **híbrido 128C/128A** da NT Conjunta 2025.001 §6 para chave com CNPJ alfanumérico; chave
+>   numérica segue 100% 128C. Biblioteca: **`bwip-js` ^4.11.4** (MIT), no modo `raw`. A NT se contradiz (regra 3 × exemplo);
+>   seguem as **regras numeradas**. O MOC traz vetor de teste (`09758364` → DV 48), e a biblioteca o reproduz dígito a dígito.
+>   Dossiê [`nfe-danfe-pr2`](../../pesquisas-legais/nfe-danfe-pr2/relatorio.md).
+>
+> Ajustes feitos na execução, todos pela fonte:
+> - `DanfeItem.ipi` ganha `vBC` (O10): o item 12 pede a coluna de base do IPI.
+> - `DanfeModel.avisos` entra aqui (item 15), não no PR-1.
+> - Conteúdo dos campos em 10 pt (`[MOC-DANFE-FONTE-CONTEUDO]`), informações complementares em 7 pt, produtos em 6 pt.
+> - Coluna CÓDIGO mantida no quadro de produtos (`[MOC-DANFE-COLUNAS]`: não pode ser suprimida), embora o modelo da NT não a desenhe.
+> - **L-DANFE-PR2-1 decidida em 26/10** ("Resto nas Info. Complementares"): quando a fatura não cabe na 1ª folha, o quadro
+>   mostra as parcelas que cabem e "DEMAIS PARCELAS EM INFORMAÇÕES COMPLEMENTARES"; as demais abrem as informações
+>   complementares, que continuam na última folha (§3.5). `DANFE_FOLHA1_EXCEDE` (400) fica só para o que a fatura não
+>   resolve (ex.: dezenas de volumes no transporte).
+
 ### PR-3 — superfície (cadeia Route → Controller → Service → Repository, + Policy)
 
 17. **[F-DANFE-5]** `DanfeService.gerar(scope, fiscalDocumentId) → { buffer, fileName, mimeType }`, no molde de

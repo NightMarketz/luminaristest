@@ -217,9 +217,9 @@ describe('readDanfeModel — campos base (item 10)', () => {
     expect(shampoo).toMatchObject({
       nItem: 1, cProd: 'SHAMP-1L', ncm: '33051000', cstOuCsosn: '010', cfop: '1403', uCom: 'UN', qCom: '12.0000',
       vUnCom: '18.5000000000', vProd: 22200n, icms: { vBC: 22350n, pICMS: '18.00', vICMS: 4023n },
-      ipi: { pIPI: null, vIPI: null }, infAdProd: 'PRODUTO SUJEITO A TRIBUTACAO MONOFASICA DE PIS/COFINS',
+      ipi: { vBC: null, pIPI: null, vIPI: null }, infAdProd: 'PRODUTO SUJEITO A TRIBUTACAO MONOFASICA DE PIS/COFINS',
     });
-    expect(toalha).toMatchObject({ cstOuCsosn: '000', ipi: { pIPI: '5.00', vIPI: 995n }, infAdProd: null });
+    expect(toalha).toMatchObject({ cstOuCsosn: '000', ipi: { vBC: 19900n, pIPI: '5.00', vIPI: 995n }, infAdProd: null });
   });
 
   it('transporte: modFrete, transportadora e volumes', () => {

@@ -74,6 +74,29 @@ describe('lib/pdf', () => {
     expect(mockedLaunch).toHaveBeenCalledTimes(2);
   });
 
+  // NFE-DANFE-IBSCBS PR-2, item 16 (dono, questionário de 26/10: "Puppeteer falso + prova local").
+  it('without opts keeps the default margin (current callers pass no argument)', async () => {
+    const { browser, page } = makeBrowser();
+    mockedLaunch.mockResolvedValue(browser);
+
+    await htmlToPdf('<a/>');
+
+    expect(page.pdf).toHaveBeenCalledWith(
+      expect.objectContaining({ format: 'A4', margin: { top: '16mm', bottom: '16mm', left: '14mm', right: '14mm' } }),
+    );
+  });
+
+  it('opts.margin reaches page.pdf and the buffer still comes back', async () => {
+    const { browser, page } = makeBrowser();
+    mockedLaunch.mockResolvedValue(browser);
+    const margin = { top: '4mm', right: '4mm', bottom: '4mm', left: '4mm' };
+
+    const buf = await htmlToPdf('<a/>', { margin });
+
+    expect(page.pdf).toHaveBeenCalledWith(expect.objectContaining({ format: 'A4', margin }));
+    expect(buf.subarray(0, 4).toString()).toBe('%PDF');
+  });
+
   it('closePdfBrowser is a no-op when no browser is open', async () => {
     await expect(closePdfBrowser()).resolves.toBeUndefined();
     expect(mockedLaunch).not.toHaveBeenCalled();

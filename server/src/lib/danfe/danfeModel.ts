@@ -76,7 +76,8 @@ export interface DanfeItem {
   vUnCom: string; // I10a — idem
   vProd: BigCents; // I11
   icms: { vBC: BigCents; pICMS: string | null; vICMS: BigCents }; // N15 / N16 / N17
-  ipi: { pIPI: string | null; vIPI: BigCents } | null; // O13 / O14; grupo IPI ausente ⇒ null
+  /** O10 / O13 / O14; grupo IPI ausente ⇒ null. `vBC` entrou no PR-2 (item 12: coluna "BASES DE CÁLCULO" do IPI, NT 2026.010 p. 8). */
+  ipi: { vBC: BigCents; pIPI: string | null; vIPI: BigCents } | null;
   ibsCbs: DanfeItemIbsCbs | null;
   is: { vBCIS: BigCents; pIS: string | null; vIS: BigCents } | null; // UB05 / UB06 / UB11
   infAdProd: string | null; // V01, `[MOC-DANFE-INFADPROD]`
@@ -154,6 +155,8 @@ export interface DanfeModel {
   itens: DanfeItem[];
   infAdFisco: string | null; // Z02 — `[MOC-DANFE-INFCPL]` (dono, questionário de 26/10: incluir)
   infCpl: string | null; // Z03
+  /** Item 15 (F-DANFE-8 b): `infNFeSupl/qrCode` no XML ⇒ aviso; a área "QR CODE" fica vazia até a NT do `[NT10-QR]`. Fora do HTML. */
+  avisos: Array<'QRCODE_NAO_RENDERIZADO'>;
 }
 
 type Node = Record<string, unknown>;
@@ -263,7 +266,13 @@ function readItem(det: Node): DanfeItem {
       pICMS: opt(icms?.pICMS),
       vICMS: moneyToBigCentsOpt(icms?.vICMS, 'det/imposto/ICMS/vICMS'),
     },
-    ipi: ipiVar ? { pIPI: opt(ipiVar.pIPI), vIPI: moneyToBigCentsOpt(ipiVar.vIPI, 'det/imposto/IPI/IPITrib/vIPI') } : null,
+    ipi: ipiVar
+      ? {
+          vBC: moneyToBigCentsOpt(ipiVar.vBC, 'det/imposto/IPI/IPITrib/vBC'),
+          pIPI: opt(ipiVar.pIPI),
+          vIPI: moneyToBigCentsOpt(ipiVar.vIPI, 'det/imposto/IPI/IPITrib/vIPI'),
+        }
+      : null,
     ibsCbs: readItemIbsCbs(imposto),
     is: readItemIs(imposto),
     infAdProd: opt(det.infAdProd),
@@ -355,7 +364,10 @@ function readFatura(c: Node | null): DanfeModel['fatura'] {
  * (`assertProtocoloAutorizado`). `tpAmb=2` é aceito e marca `ambiente: 'homologacao'`.
  */
 export function readDanfeModel(xml: string | Buffer, legais: readonly LinhaLegal[]): DanfeModel {
-  const { proc, infNFe, ideNode } = locateInfNFe(readNfeTree(xml));
+  const tree = readNfeTree(xml);
+  const { proc, infNFe, ideNode } = locateInfNFe(tree);
+  const nfeNode = node(node(tree.nfeProc)?.NFe) ?? node(tree.NFe);
+  const qrCode = opt(node(nfeNode?.infNFeSupl)?.qrCode);
 
   const mod = reqStr(ideNode.mod, 'ide/mod');
   if (mod !== '55') {
@@ -441,5 +453,6 @@ export function readDanfeModel(xml: string | Buffer, legais: readonly LinhaLegal
     itens: dets.map(readItem),
     infAdFisco: opt(infAdic?.infAdFisco),
     infCpl: opt(infAdic?.infCpl),
+    avisos: qrCode ? ['QRCODE_NAO_RENDERIZADO'] : [],
   };
 }
