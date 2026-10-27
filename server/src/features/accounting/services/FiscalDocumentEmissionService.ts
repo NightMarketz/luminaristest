@@ -227,7 +227,7 @@ export class FiscalDocumentEmissionService {
       const ambiente = selectDfeEmissor(process.env, kind).ambiente;
       // Review do #913: a prévia só LÊ — a guarda roda sem gravar o custo nem a trilha de bloqueio.
       const assembly =
-        kind === 'NFSE' ? await this.assemble(scope, saleId, kind, ambiente, false, 'preview') : await this.assembleNfe(scope, saleId, kind, ambiente);
+        kind === 'NFSE' ? await this.assemble(scope, saleId, kind, ambiente, false, 'preview') : await this.assembleNfe(scope, saleId, kind, ambiente, false, 'preview');
       // F-EF-16 a: o tie-out da NFS-e é Σ (vServ − vDescIncond) = crédito 3.1 (a NF-e não destaca — sem a coluna no grupo).
       const totalServiceCents = assembly.groups.reduce((sum, g) => sum + g.vServCents - ('vDescIncondCents' in g ? g.vDescIncondCents : 0), 0);
       return {
@@ -793,16 +793,7 @@ export class FiscalDocumentEmissionService {
 
     // (ix) EFICIENCIA-FISCAL PR-1 item 6: guarda fiscal da venda (piso, rateio, preço = catálogo). Só a venda que vai
     // virar documento passa por aqui — a venda sem nota nunca é barrada (ADR §12).
-    if (this.fiscalGuard && validSale && !pacoteVenda && saleInfo?.kind !== 'Empty') {
-      try {
-        const emit = guardMode === 'emit';
-        const check = await this.fiscalGuard.check(scope, saleId, { forEmission: emit, persistSnapshot: emit, sale: saleData });
-        for (const v of check.violations) if (v.severity === 'BLOCK') faltantes.push(`fiscal_guard: ${v.code} (${v.legalBasis})`);
-      } catch (e) {
-        if (!(e instanceof NotFoundError)) throw e;
-        faltantes.push(`fiscal_guard: ${e.message}`);
-      }
-    }
+    if (validSale && !pacoteVenda && saleInfo?.kind !== 'Empty') faltantes.push(...(await this.fiscalGuardFaltantes(scope, saleId, saleData, guardMode)));
 
     if (faltantes.length > 0) {
       throw new ValidationError(`emissao_bloqueada: ${faltantes.length} pendência(s) — ver 'faltantes'.`, { faltantes });
@@ -901,12 +892,31 @@ export class FiscalDocumentEmissionService {
    * O regime normal (CRT 3) é o PR-6; a NF-e 55 para nos faltantes até haver o código IBGE do município do destinatário
    * (questionário de 26/10, "Recusa nomeada na 55").
    */
+  /**
+   * EFICIENCIA-FISCAL PR-1 item 6 (ADR D4.2): a guarda fiscal da venda como pendência da emissão — NFS-e e NF-e/NFC-e
+   * (onde a Lei 8.137 e a LC 214 art. 7º mordem). Cada BLOCK vira `fiscal_guard: <código> (<base legal>)` no 400
+   * `emissao_bloqueada` existente. 'preview' só lê: sem gravar o custo nem a trilha de bloqueio (review do #913).
+   */
+  private async fiscalGuardFaltantes(scope: AccountingScope, saleId: string, saleData: Record<string, unknown>, guardMode: 'preview' | 'emit'): Promise<string[]> {
+    if (!this.fiscalGuard) return [];
+    try {
+      const emit = guardMode === 'emit';
+      const check = await this.fiscalGuard.check(scope, saleId, { forEmission: emit, persistSnapshot: emit, sale: saleData });
+      return check.violations.filter((v) => v.severity === 'BLOCK').map((v) => `fiscal_guard: ${v.code} (${v.legalBasis})`);
+    } catch (e) {
+      if (!(e instanceof NotFoundError)) throw e;
+      return [`fiscal_guard: ${e.message}`];
+    }
+  }
+
   private async assembleNfe(
     scope: AccountingScope,
     saleId: string,
     kind: 'NFE' | 'NFCE',
     ambiente: DfeAmbiente | null,
     reenvio = false,
+    /** 'preview' roda a guarda fiscal sem efeito (como na NFS-e); 'emit' com. */
+    guardMode: 'preview' | 'emit' = 'emit',
   ): Promise<{
     groups: Array<{ cTribNac: string; vServCents: number; payload: NfePayloadSemNumeracao }>;
     ledgerCents: number;
@@ -1006,6 +1016,9 @@ export class FiscalDocumentEmissionService {
     const unitRow = unitsTable ? await dynamicTableRepo.findDataById(scope.unitId) : null;
     const unitCnpj = stripCnpjMask(String((unitRow?.data as Record<string, unknown> | undefined)?.cnpj ?? '')).toUpperCase();
     if (!unitCnpj || !isValidCnpj(unitCnpj)) faltantes.push("CNPJ da unidade ausente ou inválido (cadastre em 'units')");
+
+    // EFICIENCIA-FISCAL PR-1 item 6: o produto do combo agora tem documento — a guarda vale aqui também.
+    if (validSale && productLines.length > 0) faltantes.push(...(await this.fiscalGuardFaltantes(scope, saleId, saleData, guardMode)));
 
     if (faltantes.length > 0) bloquear(faltantes);
     if (ambiente === null) throw new Error('dfe_tpamb_invariant: montagem sem ambiente com a porta habilitada.');
