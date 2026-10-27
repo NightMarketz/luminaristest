@@ -1,5 +1,5 @@
 /**
- * BE-INCR-EFD-REINF PR-1 (nó EFD-REINF; BRIEF itens 2–6, 9, 10, 12; §5.3) — serializer PURO da EFD-Reinf, leiaute 2.1.2b,
+ * BE-INCR-EFD-REINF PR-1 (nó EFD-REINF; BRIEF itens 2–6, 9, 10, 12; §5.3) e PR-2 (itens 15, 17, 18) — serializer PURO da EFD-Reinf, leiaute 2.1.2b,
  * XSD v2.1.2 "CNPJ alfanumérico" (pacote [D06] do dossiê pesquisas-legais/verif-2026-10-22-efd-reinf-brief, cópia em
  * `lib/reinf/xsd/`). Molde `lib/ecf.ts`: sem Prisma, sem relógio implícito (o cabeçalho traz `agora`), sem `features/`.
  *
@@ -13,17 +13,14 @@ import { createHash } from 'crypto';
 
 export type ReinfEvento = 'R-1000' | 'R-2010' | 'R-2098' | 'R-2099' | 'R-4010' | 'R-4020' | 'R-4099' | 'R-9000';
 
-/** Gerados por este PR (fase 1 do F-REINF-3 a). */
-export const EVENTOS_SUPORTADOS: readonly ReinfEvento[] = ['R-1000', 'R-4020', 'R-4099'];
+/** Gerados hoje: PR-1 (R-1000, R-4020, R-4099) e PR-2 (R-4010, R-2010, R-2099) do F-REINF-3 a. */
+export const EVENTOS_SUPORTADOS: readonly ReinfEvento[] = ['R-1000', 'R-2010', 'R-2099', 'R-4010', 'R-4020', 'R-4099'];
 
 /**
  * Previstos no BRIEF e ainda não gerados: cada um sai daqui para `EVENTOS_SUPORTADOS` no PR que o implementa (§3).
  * Ao fim do PR-4 este conjunto fica vazio (invariante 2: suportado, não aplicável ou retorno).
  */
 export const EVENTOS_PLANEJADOS: Readonly<Record<string, string>> = {
-  'R-4010': 'PR-2 (item 15–16: dividendos e JCP a PF)',
-  'R-2010': 'PR-2 (item 17: INSS 11% de cessão de mão de obra tomada)',
-  'R-2099': 'PR-2 (item 18: fechamento da série R-2000)',
   'R-2098': 'PR-4 (F-REINF-10 a: reabertura da série R-2000)',
   'R-9000': 'PR-4 (item 27: exclusão, só com transmissão)',
 };
@@ -78,6 +75,40 @@ export interface BeneficiarioPJ {
   nome: string;
   ref: string; // counterpartyId — o que vai para o ReinfBatch (nunca o CNPJ)
   porNatureza: Record<string, PagamentoPJ[]>;
+}
+
+/** PR-2 (item 15) — uma `infoPgto` do R-4010. `isencao` = `rendIsento` (dividendo da transição: `tpIsencao` 12, NT 02/2026). */
+export interface PagamentoPF {
+  dtFG: string;
+  vlrRendBrutoCents: bigint;
+  vlrRendTribCents?: bigint;
+  vlrIRCents?: bigint;
+  isencao?: { tpIsencao: number; valorCents: bigint };
+  origemIds: string[];
+}
+
+export interface BeneficiarioPF {
+  cpf: string;
+  nome: string;
+  ref: string; // partnerId — o que vai para o ReinfBatch (nunca o CPF)
+  porNatureza: Record<string, PagamentoPF[]>;
+}
+
+/** PR-2 (item 17) — uma NF do R-2010 (lacuna C, dono 27/10: NF = título; uma `infoTpServ` por `tpServico`). */
+export interface NfServicoTomado {
+  serie: string;
+  numDocto: string;
+  dtEmissaoNF: string;
+  vlrBrutoCents: bigint;
+  tiposServico: { tpServico: string; baseCents: bigint; retencaoCents: bigint }[];
+  origemIds: string[];
+}
+
+export interface PrestadorR2010 {
+  cnpj: string;
+  ref: string; // counterpartyId
+  indCPRB: 0 | 1;
+  nfs: NfServicoTomado[];
 }
 
 export interface RespInf {
@@ -241,7 +272,7 @@ export const MAX_PAGAMENTOS_POR_NATUREZA = 999;
 export class ReinfLimiteXsdError extends Error {
   constructor(
     message: string,
-    readonly code: 'REINF_NATUREZAS_ACIMA_DO_LIMITE' | 'REINF_PAGAMENTOS_ACIMA_DO_LIMITE' | 'REINF_EVENTOS_ACIMA_DO_LIMITE',
+    readonly code: 'REINF_NATUREZAS_ACIMA_DO_LIMITE' | 'REINF_PAGAMENTOS_ACIMA_DO_LIMITE' | 'REINF_EVENTOS_ACIMA_DO_LIMITE' | 'REINF_TIPOS_SERVICO_ACIMA_DO_LIMITE',
     readonly ref: string,
   ) {
     super(message);
@@ -255,21 +286,26 @@ function infoPgto(p: PagamentoPJ): string {
   return '<infoPgto>' + el('dtFG', p.dtFG) + el('vlrBruto', valorReinf(p.vlrBrutoCents)) + (ret ? `<retencoes>${ret}</retencoes>` : '') + '</infoPgto>';
 }
 
-/** Um evento por beneficiário × estabelecimento (L2); `idePgto` por `natRend`, `infoPgto` por `dtFG`, em ordem. */
-export function buildR4020(h: CabecalhoEvento, c: ContribuinteR1000, estabCnpj: string, b: BeneficiarioPJ, perApur: string, retifica?: string): EventoGerado {
-  const naturezas = Object.keys(b.porNatureza).sort();
+/** `idePgto` por `natRend` (≤ 100) e `infoPgto` por `dtFG` (≤ 999), em ordem — quebra comum do R-4020 e do R-4010 (L2). */
+function idePgtoPorNatureza<P extends { dtFG: string }>(porNatureza: Record<string, P[]>, ref: string, render: (p: P) => string): string {
+  const naturezas = Object.keys(porNatureza).sort();
   if (naturezas.length > MAX_NATUREZAS_R4020) {
-    throw new ReinfLimiteXsdError(`O fornecedor tem ${naturezas.length} naturezas de rendimento no mês; o R-4020 aceita ${MAX_NATUREZAS_R4020}.`, 'REINF_NATUREZAS_ACIMA_DO_LIMITE', b.ref);
+    throw new ReinfLimiteXsdError(`O beneficiário tem ${naturezas.length} naturezas de rendimento no mês; o evento aceita ${MAX_NATUREZAS_R4020}.`, 'REINF_NATUREZAS_ACIMA_DO_LIMITE', ref);
   }
-  const idePgto = naturezas
+  return naturezas
     .map((nat) => {
-      const pgtos = [...b.porNatureza[nat]].sort((x, y) => x.dtFG.localeCompare(y.dtFG));
+      const pgtos = [...porNatureza[nat]].sort((x, y) => x.dtFG.localeCompare(y.dtFG));
       if (pgtos.length > MAX_PAGAMENTOS_POR_NATUREZA) {
-        throw new ReinfLimiteXsdError(`O fornecedor tem ${pgtos.length} pagamentos na natureza ${nat}; o R-4020 aceita ${MAX_PAGAMENTOS_POR_NATUREZA}.`, 'REINF_PAGAMENTOS_ACIMA_DO_LIMITE', b.ref);
+        throw new ReinfLimiteXsdError(`O beneficiário tem ${pgtos.length} pagamentos na natureza ${nat}; o evento aceita ${MAX_PAGAMENTOS_POR_NATUREZA}.`, 'REINF_PAGAMENTOS_ACIMA_DO_LIMITE', ref);
       }
-      return '<idePgto>' + el('natRend', nat) + pgtos.map(infoPgto).join('') + '</idePgto>';
+      return '<idePgto>' + el('natRend', nat) + pgtos.map(render).join('') + '</idePgto>';
     })
     .join('');
+}
+
+/** Um evento por beneficiário × estabelecimento (L2); `idePgto` por `natRend`, `infoPgto` por `dtFG`, em ordem. */
+export function buildR4020(h: CabecalhoEvento, c: ContribuinteR1000, estabCnpj: string, b: BeneficiarioPJ, perApur: string, retifica?: string): EventoGerado {
+  const idePgto = idePgtoPorNatureza(b.porNatureza, b.ref, infoPgto);
   const id = idEvento(c.cnpjRaiz, h.agora, h.seq);
   const corpo =
     ideEventoPeriodico(h, perApur, retifica) +
@@ -278,12 +314,125 @@ export function buildR4020(h: CabecalhoEvento, c: ContribuinteR1000, estabCnpj: 
   return evento('R-4020', 'evt4020PagtoBeneficiarioPJ', 'evtRetPJ', id, corpo);
 }
 
+// ─── PR-2 item 15 — R-4010 ───────────────────────────────────────────────────────────────────────────────────────────
+
+function infoPgtoPF(p: PagamentoPF): string {
+  const isento = p.isencao ? '<rendIsento>' + el('tpIsencao', p.isencao.tpIsencao) + el('vlrIsento', valorReinf(p.isencao.valorCents)) + '</rendIsento>' : '';
+  return (
+    '<infoPgto>' +
+    el('dtFG', p.dtFG) +
+    el('vlrRendBruto', valorReinf(p.vlrRendBrutoCents)) +
+    (p.vlrRendTribCents !== undefined ? el('vlrRendTrib', valorReinf(p.vlrRendTribCents)) : '') +
+    (p.vlrIRCents !== undefined ? el('vlrIR', valorReinf(p.vlrIRCents)) : '') +
+    isento +
+    '</infoPgto>'
+  );
+}
+
+/**
+ * Item 15 — um evento por CPF × estabelecimento (mesma quebra do R-4020, L2): `idePgto` por `natRend`, `infoPgto` por
+ * `dtFG`, com `vlrRendBruto`, `vlrRendTrib`, `vlrIR` e `rendIsento`. Sem `ideDep`/`detDed`: o R-4010 de PF por serviço
+ * (que os exige) é lacuna até o nó de pessoal (item 19).
+ */
+export function buildR4010(h: CabecalhoEvento, c: ContribuinteR1000, estabCnpj: string, b: BeneficiarioPF, perApur: string, retifica?: string): EventoGerado {
+  const idePgto = idePgtoPorNatureza(b.porNatureza, b.ref, infoPgtoPF);
+  const id = idEvento(c.cnpjRaiz, h.agora, h.seq);
+  const corpo =
+    ideEventoPeriodico(h, perApur, retifica) +
+    ideContri(c.cnpjRaiz) +
+    '<ideEstab>' + el('tpInscEstab', 1) + el('nrInscEstab', estabCnpj) + '<ideBenef>' + el('cpfBenef', b.cpf) + idePgto + '</ideBenef></ideEstab>';
+  return evento('R-4010', 'evt4010PagtoBeneficiarioPF', 'evtRetPF', id, corpo);
+}
+
+// ─── PR-2 item 17 — R-2010 ───────────────────────────────────────────────────────────────────────────────────────────
+
+/** XSD R-2010: `infoTpServ` 1..9 por NF. */
+export const MAX_TIPOS_SERVICO_POR_NF = 9;
+
+/**
+ * Item 17 — um evento por prestador (CNPJ) no estabelecimento centralizado (F-REINF-11 a), `indObra = 0` (não é obra):
+ * totais do prestador (Σ das NFs) e `nfs[]` com `infoTpServ[]` (Tabela 06 [L01]). Só a retenção principal (11%): adicional,
+ * não retido e processo ficam fora (o RETENCOES-FONTE não os grava).
+ */
+export function buildR2010(h: CabecalhoEvento, c: ContribuinteR1000, estabCnpj: string, p: PrestadorR2010, perApur: string, retifica?: string): EventoGerado {
+  let bruto = 0n;
+  let base = 0n;
+  let ret = 0n;
+  const nfs = [...p.nfs]
+    .sort((x, y) => x.dtEmissaoNF.localeCompare(y.dtEmissaoNF) || x.numDocto.localeCompare(y.numDocto))
+    .map((nf) => {
+      if (nf.tiposServico.length > MAX_TIPOS_SERVICO_POR_NF) {
+        throw new ReinfLimiteXsdError(`A NF ${nf.numDocto} tem ${nf.tiposServico.length} tipos de serviço; o R-2010 aceita ${MAX_TIPOS_SERVICO_POR_NF}.`, 'REINF_TIPOS_SERVICO_ACIMA_DO_LIMITE', p.ref);
+      }
+      bruto += nf.vlrBrutoCents;
+      const tps = [...nf.tiposServico].sort((x, y) => x.tpServico.localeCompare(y.tpServico));
+      for (const t of tps) {
+        base += t.baseCents;
+        ret += t.retencaoCents;
+      }
+      return (
+        '<nfs>' +
+        el('serie', nf.serie) +
+        el('numDocto', nf.numDocto) +
+        el('dtEmissaoNF', nf.dtEmissaoNF) +
+        el('vlrBruto', valorReinf(nf.vlrBrutoCents)) +
+        tps.map((t) => '<infoTpServ>' + el('tpServico', t.tpServico) + el('vlrBaseRet', valorReinf(t.baseCents)) + el('vlrRetencao', valorReinf(t.retencaoCents)) + '</infoTpServ>').join('') +
+        '</nfs>'
+      );
+    })
+    .join('');
+  const id = idEvento(c.cnpjRaiz, h.agora, h.seq);
+  const corpo =
+    ideEventoPeriodico(h, perApur, retifica) +
+    ideContri(c.cnpjRaiz) +
+    '<infoServTom><ideEstabObra>' +
+    el('tpInscEstab', 1) +
+    el('nrInscEstab', estabCnpj) +
+    el('indObra', 0) +
+    '<idePrestServ>' +
+    el('cnpjPrestador', p.cnpj) +
+    el('vlrTotalBruto', valorReinf(bruto)) +
+    el('vlrTotalBaseRet', valorReinf(base)) +
+    el('vlrTotalRetPrinc', valorReinf(ret)) +
+    el('indCPRB', p.indCPRB) +
+    nfs +
+    '</idePrestServ></ideEstabObra></infoServTom>';
+  return evento('R-2010', 'evtTomadorServicos', 'evtServTom', id, corpo);
+}
+
+// ─── PR-2 item 18 — R-2099 ───────────────────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Item 18 — fechamento da série R-2000 com os 7 indicadores `S/N` do `infoFech`: `evtServTm = S` quando há R-2010; os
+ * demais `N` (os eventos deles não se aplicam, item 3). Sai só com R-2010 no lote (lacuna C, ponto 4, dono 27/10).
+ */
+export function buildR2099(h: CabecalhoEvento, c: ContribuinteR1000, perApur: string, flags: { servTomados: boolean }, respInf?: RespInf): EventoGerado {
+  const id = idEvento(c.cnpjRaiz, h.agora, h.seq);
+  const sn = (b: boolean) => (b ? 'S' : 'N');
+  const corpo =
+    '<ideEvento>' + el('perApur', perApur) + el('tpAmb', h.tpAmb) + el('procEmi', 1) + el('verProc', h.verProc) + '</ideEvento>' +
+    ideContri(c.cnpjRaiz) +
+    ideRespInf(respInf) +
+    '<infoFech>' +
+    el('evtServTm', sn(flags.servTomados)) +
+    el('evtServPr', 'N') +
+    el('evtAssDespRec', 'N') +
+    el('evtAssDespRep', 'N') +
+    el('evtComProd', 'N') +
+    el('evtCPRB', 'N') +
+    el('evtAquis', 'N') +
+    '</infoFech>';
+  return evento('R-2099', 'evtFechamento', 'evtFechaEvPer', id, corpo);
+}
+
 // ─── Item 9 — R-4099 ─────────────────────────────────────────────────────────────────────────────────────────────────
+
+const ideRespInf = (r?: RespInf) => (r ? '<ideRespInf>' + el('nmResp', r.nome) + el('cpfResp', r.cpf) + opt('telefone', r.telefone) + opt('email', r.email) + '</ideRespInf>' : '');
 
 /** `fechRet`: 0 = fechamento, 1 = reabertura (leiaute 2.1.2b, R-4099 campo 18). */
 export function buildR4099(h: CabecalhoEvento, c: ContribuinteR1000, perApur: string, fechRet: 'FECHAMENTO' | 'REABERTURA', respInf?: RespInf): EventoGerado {
   const id = idEvento(c.cnpjRaiz, h.agora, h.seq);
-  const resp = respInf ? '<ideRespInf>' + el('nmResp', respInf.nome) + el('cpfResp', respInf.cpf) + opt('telefone', respInf.telefone) + opt('email', respInf.email) + '</ideRespInf>' : '';
+  const resp = ideRespInf(respInf);
   const corpo =
     '<ideEvento>' + el('perApur', perApur) + el('tpAmb', h.tpAmb) + el('procEmi', 1) + el('verProc', h.verProc) + '</ideEvento>' +
     ideContri(c.cnpjRaiz) +

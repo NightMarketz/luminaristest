@@ -14351,13 +14351,24 @@
       "properties": {
         "evento": {
           "type": "string",
-          "const": "R-4020"
+          "enum": [
+            "R-4020",
+            "R-4010",
+            "R-2010"
+          ]
         },
         "beneficiario": {
           "type": "string"
         },
         "natRend": {
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "dtFG": {
           "type": "string"
@@ -14455,13 +14466,24 @@
             "properties": {
               "evento": {
                 "type": "string",
-                "const": "R-4020"
+                "enum": [
+                  "R-4020",
+                  "R-4010",
+                  "R-2010"
+                ]
               },
               "beneficiario": {
                 "type": "string"
               },
               "natRend": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "dtFG": {
                 "type": "string"
@@ -14621,13 +14643,24 @@
                 "properties": {
                   "evento": {
                     "type": "string",
-                    "const": "R-4020"
+                    "enum": [
+                      "R-4020",
+                      "R-4010",
+                      "R-2010"
+                    ]
                   },
                   "beneficiario": {
                     "type": "string"
                   },
                   "natRend": {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "dtFG": {
                     "type": "string"

@@ -2018,6 +2018,8 @@ export class ApplicationFactory {
         this.policies.accounting,
         auditService,
         legalParameterService,
+        // PR-2 (E4): dividendos e JCP POSTED, só leitura pelas interfaces do IRRF-DISTRIBUICAO.
+        { dividendos: this.repositories.profitDistribution, jcp: this.repositories.interestOnEquity, socios: this.repositories.partner },
       ),
       // BE-INCR-PIS-COFINS PR-2 (nó X8): prévia/confirmação da apuração mensal de PIS/Cofins (reusa o TaxAssessment do X7).
       pisCofinsAssessment: pisCofinsAssessmentService,
