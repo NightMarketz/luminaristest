@@ -165,6 +165,29 @@ acrescentadas a mao com o sha do disco (o script reescreve o manifesto so com a 
   34-C e 34-D à Portaria CAT 147/12; 34-D: CF-e-SAT vedado a partir de 01/01/2026. Conteúdo no HTML servido (sem JS).
 - **nfe-nt-2025-002-v151** lido de outra worktree, sha256 `a4aaaa181522…` (igual ao registrado em 29/09).
 
+**26/10/2026** — PR-0 do nó `NFE-DANFE-IBSCBS` (`BE-INCR-NFE-DANFE-IBSCBS-brief.md` itens 1–3; dono, chat, 2026-10-26:
+"Executa o NFE-DANFE-IBSCBS PR-0 — sessao-feature, sem merge"). Baixados do Portal da NF-e com cookie de sessão
+(`curl -c cj -b cj -L -A "<UA de navegador>"`); título conferido na 1ª página de cada PDF. Cópias e texto no dossiê
+`pesquisas-legais/nfe-danfe-pr0/` (D01–D06).
+- **nt-2026-010-v100** — <https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=ugn4MYF5PLg=> — NT 2026.010 v1.00
+  (DANFE Reforma Tributária, produção 01/12/2026), 712.823 bytes, sha256
+  `eadc5246235f37a55f8140ddcf84595c8ce77f2d760f111f7b85ddf389b8f484` (**igual** ao de 17/10 e 22/10). Transcrita (§4.1–§4.4)
+  em `TRANSCRICAO-NT2026010-DANFE-RTC-2026-10-26.md`.
+- **moc70-anexo-ii** — <https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=f%20NhsSn3/5M=> — MOC 7.0 Anexo II,
+  Manual de Especificações Técnicas do DANFE e Código de Barras, versão 7.00, 28 pp., 1.345.906 bytes, sha256
+  `729c04fd1374188c29eb21ca60342741b24a014003d4c2ff1bbb455bb1a6a60e`. Transcrito em
+  `TRANSCRICAO-MOC70-AnexoII-DANFE-2026-10-26.md`. O **moc70-visao-geral** foi rebaixado no mesmo dia: sha256 igual
+  (`f664dcf94b77…`).
+- **nt-2026-009-v100** — <https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=ADlgg2xjMZI=> — 310.342 bytes,
+  sha256 `50b7dec40bba8928b4d544feb4fdbd8c8bac16e37c99d926ddb2834cf246f15d`.
+- **nt-2026-006-v100** — <https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=k7zG06n5M6I=> — 767.681 bytes,
+  sha256 `47a65abde315fed1e6a8c6085a67ca483935cb57877ae5715d365377a725e05d`.
+- **nt-2026-003-v100** — <https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=2YdaBTIql%20k=> — 1.666.337 bytes,
+  sha256 `2ef826027e0e8423ba9dc2f53ee7197f8bfdcc399a30459b72da977528600f13`.
+- **nt-2014-001-v141** — <https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=9hgG%20%20cH8gA=> — 814.340 bytes,
+  sha256 `fa9218ddadcb35ca1233434a4dfd040243360d983c0d3f6b85e7756284a6fd19`.
+  Classificação das quatro NTs (afeta o DANFE 55? qual nó recebe): §7 de `TRANSCRICAO-NT2026010-DANFE-RTC-2026-10-26.md`.
+
 **26/10/2026** — X10a PR-0 (`TRANSCRICAO-MOC70-NFCe-NFe-saida-2026-10-26.md`), dono no chat: *"faz o X10a EMENDA-2 PR-1..PR-6 e EMENDA-3"* + questionario (*"Faço o PR-0 também"*); download da v1.52 autorizado em 13/10 (F-NFCE-E1-7 a):
 - **moc70-anexo-i** lido no navegador embutido (o host recusa download fora dele); sha256 **igual** (`5eb4cf2010b1…`). **moc70-visao-geral** copiado do dossie `dfe-mtls-psc`, sha256 igual.
 - **nfe-nt-2025-002-v152** e **nfe-nt-2025-001-v103** copiados do dossie `verif-2026-10-17-nfe-nfce-dfe` ([P1]/[P2]), sha256 iguais aos de 17/10. A v1.51 (`nfe-nt-2025-002-v151`) fica superada.
