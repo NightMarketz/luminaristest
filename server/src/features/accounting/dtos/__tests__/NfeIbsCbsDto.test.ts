@@ -285,7 +285,8 @@ describe('gEstornoCred — estorno de crédito (UB116-10/20/30, W59f/g)', () => 
 });
 
 describe('gCredPresOper — crédito presumido da operação (UB120..UB130, UB54a, W48)', () => {
-  const cp = (cCredPres: string, ibs?: object, cbs?: object) => ({ vBCCredPres: '100.00', cCredPres, ...(ibs ? { gIBSCredPres: ibs } : {}), ...(cbs ? { gCBSCredPres: cbs } : {}) });
+  type CredPres = { pCredPres: string; vCredPres?: string; vCredPresCondSus?: string };
+  const cp = (cCredPres: string, ibs?: CredPres, cbs?: CredPres) => ({ vBCCredPres: '100.00', cCredPres, ...(ibs ? { gIBSCredPres: ibs } : {}), ...(cbs ? { gCBSCredPres: cbs } : {}) });
   it('na NFC-e ⇒ 1049', () => rej(nota([{ CST: '000', cClassTrib: '000001', gIBSCBS: g000(), gCredPresOper: cp('05', undefined, { pCredPres: '1.00', vCredPres: '1.00' }) }]), '1049'));
   it('000001 não permite (ind_gCredPresOper = 0) ⇒ 1175; cCredPres inexistente ⇒ 1055', () => {
     rej(nota([{ CST: '000', cClassTrib: '000001', gIBSCBS: g000(), gCredPresOper: cp('05', undefined, { pCredPres: '1.00', vCredPres: '1.00' }) }], { mod: 55 }), '1175');
