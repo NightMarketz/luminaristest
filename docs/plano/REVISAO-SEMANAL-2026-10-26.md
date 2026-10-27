@@ -41,7 +41,7 @@ trabalho foi mais de fechar decisão do que de abrir frente.
 
 **Fiscal — onda F1 (prazo legal 01/12/2026 e 01/01/2027)**
 - [[RETENCOES-FONTE]]: PR-1 (#888) e PR-2 (#893) em `main` pelo consolidado #902; achados A1–A6 do review independente corrigidos. PR-3/PR-4 **esperam o contador** (P-RET-4, P-RET-7..9).
-- [[PRESUMIDO-TETO-78MI]]: PR único #887 em `main` (teto na `TAX_ASSESSMENT`, 400 `PRESUMIDO_TETO_EXCEDIDO`).
+- [[PRESUMIDO-TETO-78MI]]: PR único #887 em `main` (teto na `TAX_ASSESSMENT`, 400 `PRESUMIDO_TETO_EXCEDIDO`) — nó fechado no fold de 26/10 (P-PT-1..3 seguem com o contador).
 - [[ISS-TRANSICAO-IBS]]: PR-1 #885 em `main` (fim do ISS_LIMITE em 2032, ISS_TRANSICAO 2029–2032, IBS DRAFT). PR-2 espera P-ISS-1..3.
 - [[X9]]: PR-3 #908 em `main` (PIS/Cofins no MIT, item 18); PR-4 #860 (Real anual, item 19) **aberto**.
 - [[X7]]: seção Presumido do perfil fiscal (#809) em `main`; restam os oráculos humanos (P-C1, P-C5).
@@ -110,6 +110,10 @@ Merge **só por número** (CLAUDE.md §Merge só com PR nomeado). Pilhas empilha
 
 ## 6. Riscos e inconsistências que a revisão expôs
 
+- **Folds vencidos (corrigidos no PR desta revisão, 26/10):** sete notas diziam "sem merge" para PRs já em `main` —
+  RETENCOES-FONTE (#888/#893 via #902), PRESUMIDO-TETO-78MI (#887 → `done`), ISS-TRANSICAO-IBS (#885), FIX-PLUGINS-VENDA
+  (#897 → `inflight`, resíduo #898), FIX-ANALYTICS-RESIDUO (#894 → `inflight`, doc #899), OBS (#882) e
+  FE-INCR-KANBAN-REORDER (#896). Causa: os merges de 24–25/10 vieram por consolidados (#902/#903), que não carregam fold.
 - **Vault × PRs do fim de semana:** [[X10a]] está `blocked` no frontmatter, mas 4 PRs de código (#909–#917) foram abertos em 26/10 sob autorização que a nota não cita. O fold deve vir nesses PRs; até lá o `_INDEX` subestima a frente fiscal.
 - **Concentração de PRs abertos** (19, maioria de 25–26/10): mesma classe do lote de 16/10 (conflito por frentes partindo da mesma `main`). Mitigação: mergear por pilha, base primeiro; regenerar snapshot de DTO na `main`, não no PR (memória `dto-snapshot-update-reordena-no-windows`).
 - **Prazo 01/12/2026 (NT 2026.010)** depende de PR-2/PR-3 do DANFE que ainda não existem; PR-0/PR-1 abertos em 26/10. Com o ritmo da semana (3–4 PRs de feature/dia), cabe; sem OK de merge, não.

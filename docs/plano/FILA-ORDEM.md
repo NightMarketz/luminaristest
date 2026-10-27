@@ -16,7 +16,9 @@
 ## Estado em 26/10 (revisão semanal — não muda a ordem)
 
 > Leitura de `origin/main` em 26/10 ([[REVISAO-SEMANAL-2026-10-26]]). Só atualiza o **estado** de cada linha abaixo;
-> a ordem A–F continua a ratificada. Estado de nó manda o frontmatter.
+> a ordem A–F continua a ratificada. Estado de nó manda o frontmatter — os folds vencidos pelos consolidados #902/#903
+> (RETENCOES-FONTE, PRESUMIDO-TETO-78MI `done`, ISS-TRANSICAO-IBS, FIX-PLUGINS-VENDA, FIX-ANALYTICS-RESIDUO, OBS,
+> FE-INCR-KANBAN-REORDER) entraram no mesmo PR desta leitura.
 
 - **A1** fechado em 22/10 (portal + PAA; [[D5]]). Resta: quem contrata PSC + e-CNPJ. **A2** H1 passos 1–5 provados
   (tentativa 3, 22/10); passo 6 é o último do plano. **A3/A4** H2 → M2 seguem os próximos gates humanos, sem bloqueio
@@ -32,7 +34,7 @@
   #10/#11/#20 esperam o dono · **E5** lotes A–C em `main`, 22 itens instrumentados, decisões de produto esperam o dono ·
   **E6** fechado (nó `done` 24/10) · **E7** #894 em `main`, #899 aberto · **E8** sem movimento (BRIEF não pushado).
 - **F1** IBS-CBS-2027 `done` (24/10) · RETENCOES-FONTE PR-1/PR-2 em `main`, PR-3/4 esperam o contador · PRESUMIDO-TETO-78MI
-  #887 em `main` · ISS-TRANSICAO-IBS PR-1 #885 em `main` · EFD-REINF PR-1 #912 aberto · NFE-DANFE-IBSCBS PR-0 #906 e PR-1 #915
+  `done` (#887 em `main`; P-PT-1..3 com o contador) · ISS-TRANSICAO-IBS PR-1 #885 em `main` · EFD-REINF PR-1 #912 aberto · NFE-DANFE-IBSCBS PR-0 #906 e PR-1 #915
   abertos (alvo 30/11) · **F1.5** EFICIENCIA-FISCAL PR-1 #913 aberto. **F2–F5** sem nó em `nos/`; Q4–Q12 abertas.
 
 ## A. Prazos e decisões do dono (só o dono move)
