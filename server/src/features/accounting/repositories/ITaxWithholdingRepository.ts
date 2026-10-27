@@ -37,6 +37,11 @@ export interface CreateTaxWithholdingData {
  */
 export interface ITaxWithholdingReadPort {
   findMadeForReinf(scope: AccountingScope, competencia: string): Promise<WithholdingLineForReinf[]>;
+  /**
+   * BE-INCR-EFD-REINF PR-1 (lacuna A, dono 26/10: "Método na porta") — as mesmas linhas, de TODAS as unidades da PJ: a Reinf
+   * é por CNPJ raiz, centralizada (F-REINF-11 a). Mesmo mapeador; tenancy só por `ownerUserId`.
+   */
+  findMadeForReinfDaPj(ownerUserId: string, competencia: string): Promise<WithholdingLineForReinf[]>;
 }
 
 /**

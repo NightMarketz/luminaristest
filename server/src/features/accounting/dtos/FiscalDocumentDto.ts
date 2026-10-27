@@ -43,14 +43,29 @@ export const FiscalDocumentScopeQuerySchema = z.object({ unitId: z.string().min(
 
 export const FiscalDocumentParamsSchema = z.object({ id: z.string().min(1) }).strict();
 
-/** BE-INCR-DFE (item 29) — Anexo II e101101: cMotivo 1|2|9, xMotivo 15-255 caracteres. */
-export const CancelFiscalDocumentSchema = z
+/** BE-INCR-DFE (item 29) — Anexo II e101101: cMotivo 1|2|9, xMotivo 15-255 caracteres. Cancelamento de NFS-e. */
+export const CancelNfseSchema = z
   .object({
     unitId: z.string().min(1),
     cMotivo: z.union([z.literal(1), z.literal(2), z.literal(9)]),
     xMotivo: z.string().min(15).max(255),
   })
   .strict();
+
+/** BE-INCR-NFCE (nó X10a, item 27) — evento 110111 da NF-e/NFC-e: `xJust` de 15 a 255 caracteres (MOC 7.0 VG Tabela 5-37). */
+export const CancelNfeSchema = z
+  .object({
+    unitId: z.string().min(1),
+    xJust: z.string().min(15).max(255),
+  })
+  .strict();
+
+/**
+ * POST …/documents/:id/cancelar — a forma do corpo segue o tipo do documento (item 27, contrato `CancelInput` da porta):
+ * NFS-e = `cMotivo`/`xMotivo`; NF-e/NFC-e = `xJust`. O corpo não traz o tipo (vem do documento): o serviço recusa com
+ * 400 o corpo da outra forma (`dfe_cancel_corpo_do_tipo`).
+ */
+export const CancelFiscalDocumentSchema = z.union([CancelNfseSchema, CancelNfeSchema]);
 export type CancelFiscalDocumentInput = z.infer<typeof CancelFiscalDocumentSchema>;
 
 /** BE-INCR-DFE (item 28) — :partner na rota pública do webhook. */
@@ -78,11 +93,11 @@ export const RejeicaoManualSchema = z
 export type RejeicaoManualInput = z.infer<typeof RejeicaoManualSchema>;
 
 /**
- * F-MAN-5 (a) — cancelamento manual: o corpo reusa `CancelFiscalDocumentSchema` (item 13) e o XML do evento
+ * F-MAN-5 (a) — cancelamento manual: o corpo reusa o ramo NFS-e de `CancelFiscalDocumentSchema` (item 13) e o XML do evento
  * `e101101` chega pelo multer. O `cMotivo` do corpo tem de ser o do XML (senão 422 — parâmetro aceito e ignorado é
  * bug); o texto gravado é o `xMotivo` do XML (transcrição §7).
  */
-export const CancelamentoManualSchema = CancelFiscalDocumentSchema;
+export const CancelamentoManualSchema = CancelNfseSchema; // o modo manual só emite NFS-e (capabilities.kinds)
 
 /**
  * BE-INCR-DFE-EVENTOS (nó X11, itens 11 e 17) — POST …/documents/:id/substituir. `cMotivo` é o `TSCodJustSubst` do
@@ -108,7 +123,7 @@ export const JanelaEventosSchema = z
     cancelarAte: z.string().datetime({ offset: true }).nullable(),
     substituirAte: z.string().datetime({ offset: true }).nullable(),
     substituirTeto: z.string().datetime({ offset: true }).nullable(),
-    fonte: z.enum(['perfil', 'desconhecida']),
+    fonte: z.enum(['perfil', 'desconhecida', 'nacional']), // 'nacional': 55/65 sem prazo no perfil (BE-INCR-NFCE item 27)
   })
   .strict();
 export type JanelaEventos = z.infer<typeof JanelaEventosSchema>;

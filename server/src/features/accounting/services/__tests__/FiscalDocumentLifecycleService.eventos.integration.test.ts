@@ -7,7 +7,7 @@
  */
 const mockPort = {
   name: 'null',
-  capabilities: { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: false, consultar: true, cancelar: true, webhook: false, substituir: true, inutilizar: false },
+  capabilities: { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: false, consultar: true, cancelar: true, webhook: false, substituir: true, inutilizar: false, cce: false },
   emitir: jest.fn(),
   consultar: jest.fn(),
   cancelar: jest.fn(),

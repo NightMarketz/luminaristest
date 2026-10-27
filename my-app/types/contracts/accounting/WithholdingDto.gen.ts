@@ -88,6 +88,7 @@ reducaoArt3ACents: string
 taxPayableId: (string | null)
 settlementId: (string | null)
 originSettlementId: (string | null)
+unitId: string
 }
 export interface WithholdingSummaryInput {
 competencia: string
