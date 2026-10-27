@@ -231,6 +231,27 @@ describe('FiscalDocumentEmissionService — pré-condições (item 14, porta nun
     expect(repo.runTransaction).not.toHaveBeenCalled();
   });
 
+  it('kind=NFCE (montagem é o PR-3 do BE-INCR-NFCE) recusa loud sem tocar a porta', async () => {
+    const { service, repo } = makeService({});
+    await expect(service.emit(SCOPE, SALE_ID, 'NFCE')).rejects.toThrow(/nfe_nao_implementada: a montagem de NFCE/);
+    expect(repo.runTransaction).not.toHaveBeenCalled();
+  });
+
+  it('getStatus por tipo (BE-INCR-NFCE item 5): NFS-e manual + NFC-e null; topo = NFS-e', () => {
+    const saved = { ...process.env };
+    Object.assign(process.env, { DFE_PARTNER: 'manual', DFE_PARTNER_ENV: 'producao', DFE_PARTNER_NFCE: 'null', DFE_PARTNER_ENV_NFCE: 'homologacao' });
+    try {
+      const { service } = makeService({});
+      const st = service.getStatus();
+      expect([st.enabled, st.partner]).toEqual([true, 'manual']);
+      expect([st.porTipo.NFCE.enabled, st.porTipo.NFCE.partner, st.porTipo.NFCE.ambiente]).toEqual([true, 'null', 'homologacao']);
+      expect([st.porTipo.NFE.enabled, st.porTipo.NFE.reason]).toEqual([false, "parceiro 'manual' não emite NFE"]);
+    } finally {
+      for (const k of ['DFE_PARTNER', 'DFE_PARTNER_ENV', 'DFE_PARTNER_NFCE', 'DFE_PARTNER_ENV_NFCE']) delete process.env[k];
+      Object.assign(process.env, saved);
+    }
+  });
+
   // As 6 pré-condições restantes (revisão independente do PR-2, achado MÉDIO) — cada uma prova,
   // com spy, que `repo.runTransaction` (logo `porta.emitir`) nunca é alcançado quando ela falha.
   function setupFinalizedSaleFixtures(overrides: { customerTaxId?: string; unitCnpj?: string } = {}) {

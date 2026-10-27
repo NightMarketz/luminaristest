@@ -3,7 +3,7 @@
 // getFactory() em FiscalDocumentEmissionService.test.ts: isola o que este arquivo testa).
 const mockPort = {
   name: 'null',
-  capabilities: { numbersDps: false, consultar: true, cancelar: true, webhook: false },
+  capabilities: { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: false, consultar: true, cancelar: true, webhook: false },
   emitir: jest.fn(),
   consultar: jest.fn(),
   cancelar: jest.fn(),
@@ -182,7 +182,7 @@ beforeEach(() => {
   mockSelection.ambiente = 'homologacao';
   mockSelection.reason = undefined;
   mockPort.name = 'null';
-  mockPort.capabilities = { numbersDps: false, consultar: true, cancelar: true, webhook: false };
+  mockPort.capabilities = { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: false, consultar: true, cancelar: true, webhook: false };
 });
 
 describe('isValidResultTransition — item 24, tabela pura (mutation target)', () => {
@@ -504,7 +504,7 @@ describe('FiscalDocumentLifecycleService — pollPendingOnce (item 27, skip+log 
 
 describe('FiscalDocumentLifecycleService — webhookReceived (item 28)', () => {
   it('adaptador sem capabilities.webhook -> 401 sempre, 0 escrita (Null/File deste BRIEF)', async () => {
-    mockPort.capabilities = { numbersDps: false, consultar: true, cancelar: true, webhook: false };
+    mockPort.capabilities = { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: false, consultar: true, cancelar: true, webhook: false };
     const { service, repo } = makeService();
     const result = await service.webhookReceived('null', {}, Buffer.from('{}'));
     expect(result.status).toBe(401);
@@ -520,7 +520,7 @@ describe('FiscalDocumentLifecycleService — webhookReceived (item 28)', () => {
   });
 
   it('assinatura inválida (mesmo com capability) -> 401, 0 escrita', async () => {
-    mockPort.capabilities = { numbersDps: false, consultar: true, cancelar: true, webhook: true };
+    mockPort.capabilities = { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: false, consultar: true, cancelar: true, webhook: true };
     mockPort.verifyWebhook.mockReturnValueOnce({ ok: false });
     const { service, repo } = makeService();
     const result = await service.webhookReceived('null', {}, Buffer.from('{}'));
@@ -529,7 +529,7 @@ describe('FiscalDocumentLifecycleService — webhookReceived (item 28)', () => {
   });
 
   it('assinatura válida: acorda a re-consulta do partnerRef, nunca transiciona pelo corpo diretamente', async () => {
-    mockPort.capabilities = { numbersDps: false, consultar: true, cancelar: true, webhook: true };
+    mockPort.capabilities = { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: false, consultar: true, cancelar: true, webhook: true };
     mockPort.verifyWebhook.mockReturnValueOnce({ ok: true, partnerRef: 'doc-1:1' });
     mockPort.consultar.mockResolvedValueOnce({ status: 'PROCESSING', partnerRef: 'doc-1:1', errors: [] } as EmissaoResult);
     const { service, repo } = makeService({ docs: { 'doc-1': baseDoc({ status: 'SENT', partnerRef: 'doc-1:1' }) } });

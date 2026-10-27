@@ -12,7 +12,7 @@ export const EmitFiscalDocumentSchema = z
   .object({
     unitId: z.string().min(1),
     saleId: z.string().min(1),
-    kind: z.enum(['NFSE', 'NFE']),
+    kind: z.enum(['NFSE', 'NFE', 'NFCE']), // NFCE: BE-INCR-NFCE item 3
   })
   .strict();
 export type EmitFiscalDocumentInput = z.infer<typeof EmitFiscalDocumentSchema>;
@@ -21,7 +21,7 @@ export const PreviewFiscalDocumentSchema = z
   .object({
     unitId: z.string().min(1),
     saleId: z.string().min(1),
-    kind: z.enum(['NFSE', 'NFE']),
+    kind: z.enum(['NFSE', 'NFE', 'NFCE']), // NFCE: BE-INCR-NFCE item 3
   })
   .strict();
 export type PreviewFiscalDocumentInput = z.infer<typeof PreviewFiscalDocumentSchema>;

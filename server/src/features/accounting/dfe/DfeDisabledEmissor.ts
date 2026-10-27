@@ -10,6 +10,7 @@ import type { CancelResult, DfeCapabilities, DfeEmissorPort, EmissaoResult } fro
 export class DfeDisabledEmissor implements DfeEmissorPort {
   public readonly name = 'disabled';
   public readonly capabilities: DfeCapabilities = {
+    kinds: [], // BE-INCR-NFCE item 4
     numbersDps: false,
     consultar: false,
     cancelar: false,

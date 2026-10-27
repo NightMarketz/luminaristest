@@ -12,7 +12,7 @@ import type { FiscalProfileService } from './FiscalProfileService';
 import type { ServiceFiscalProfileService, ServiceFiscalProfileView } from './ServiceFiscalProfileService';
 import type { AuditService } from './AuditService';
 import { attemptRef } from '../repositories/FiscalDocumentRepository';
-import { AUTHORIZED_STATUSES } from '../repositories/IFiscalDocumentRepository';
+import { AUTHORIZED_STATUSES, FISCAL_DOCUMENT_KINDS } from '../repositories/IFiscalDocumentRepository';
 import type {
   FiscalDocumentKind,
   FiscalDocumentStatus,
@@ -25,7 +25,7 @@ import { SERVICE_REVENUE_ACCOUNT } from '../sync/mappers/revenueSplit';
 import { splitCents } from '../dfe/splitCents';
 import { DpsManualPayloadSchema, DpsPayloadSchema, toManualDps } from '../dtos/DpsPayloadDto';
 import type { DpsManualPayload, DpsPayload } from '../dtos/DpsPayloadDto';
-import { selectDfeEmissor } from '../dfe/selectDfeEmissor';
+import { selectDfeEmissor, type DfeSelection } from '../dfe/selectDfeEmissor';
 import { assertTpAmb, tpAmbFor } from '../dfe/DfeEmissorPort';
 import type { DfeAmbiente, DfeEmissorPort } from '../dfe/DfeEmissorPort';
 import { scopeToday } from '../models/dates';
@@ -110,6 +110,25 @@ function readReleitura(resultJson: string | null | undefined): ReleituraJson['re
   }
 }
 
+/** GET /api/nfe/dfe/status — o estado de UMA seleção (um tipo de documento). */
+export interface DfeStatusView {
+  enabled: boolean;
+  partner: string | null;
+  ambiente: DfeAmbiente | null;
+  reason?: string;
+  capabilities?: DfeEmissorPort['capabilities'];
+}
+
+function statusView(selection: DfeSelection): DfeStatusView {
+  return {
+    enabled: selection.enabled,
+    partner: selection.enabled ? selection.port.name : null,
+    ambiente: selection.ambiente,
+    reason: selection.reason,
+    capabilities: selection.enabled ? selection.port.capabilities : undefined,
+  };
+}
+
 function centsToMoneyString(cents: number): string {
   const sign = cents < 0 ? '-' : '';
   const abs = Math.abs(cents);
@@ -154,16 +173,15 @@ export class FiscalDocumentEmissionService {
     return listaLc116De(await this.legalParams.fotografia(['LC116_SERVICO']), scopeToday(scope));
   }
 
-  /** GET /api/nfe/dfe/status (item 13). */
-  getStatus(): { enabled: boolean; partner: string | null; ambiente: DfeAmbiente | null; reason?: string; capabilities?: DfeEmissorPort['capabilities'] } {
-    const selection = selectDfeEmissor(process.env);
-    return {
-      enabled: selection.enabled,
-      partner: selection.enabled ? selection.port.name : null,
-      ambiente: selection.ambiente,
-      reason: selection.reason,
-      capabilities: selection.enabled ? selection.port.capabilities : undefined,
-    };
+  /**
+   * GET /api/nfe/dfe/status (item 13). BE-INCR-NFCE (nó X10a, item 5): o estado é POR TIPO em `porTipo`; os campos de
+   * topo continuam sendo os da NFS-e, que é o que o FE lê hoje (botão "Emitir NFS-e").
+   */
+  getStatus(): DfeStatusView & { porTipo: Record<FiscalDocumentKind, DfeStatusView> } {
+    const porTipo = Object.fromEntries(
+      FISCAL_DOCUMENT_KINDS.map((kind) => [kind, statusView(selectDfeEmissor(process.env, kind))]),
+    ) as Record<FiscalDocumentKind, DfeStatusView>;
+    return { ...porTipo.NFSE, porTipo };
   }
 
   /** POST /api/nfe/dfe/preview (item 23) — roda as pré-condições e a montagem SEM persistir nem chamar a porta. */
@@ -172,7 +190,7 @@ export class FiscalDocumentEmissionService {
       throw new ForbiddenError('Você não tem permissão para emitir documento fiscal.');
     }
     try {
-      const assembly = await this.assemble(scope, saleId, kind, selectDfeEmissor(process.env).ambiente);
+      const assembly = await this.assemble(scope, saleId, kind, selectDfeEmissor(process.env, kind).ambiente);
       const totalServiceCents = assembly.groups.reduce((sum, g) => sum + g.vServCents, 0);
       return {
         ok: true,
@@ -211,7 +229,7 @@ export class FiscalDocumentEmissionService {
     if (!this.policy.canEmitFiscalDocument(scope)) {
       throw new ForbiddenError('Você não tem permissão para emitir documento fiscal.');
     }
-    const selection = selectDfeEmissor(process.env);
+    const selection = selectDfeEmissor(process.env, kind);
     const assembly = await this.assemble(scope, saleId, kind, selection.ambiente);
     if (!selection.enabled) {
       throw new ValidationError(`dfe_disabled: ${selection.reason}`, { faltantes: [selection.reason ?? 'porta desabilitada'] });
@@ -250,7 +268,7 @@ export class FiscalDocumentEmissionService {
     if (!fiscalProfile || fiscalProfile.pacoteFatoGerador !== 'CONSUMO') return 'not_applicable';
     if (await this.repo.findBySaleKey(scope, movementKey, 'NFSE')) return 'exists';
 
-    const selection = selectDfeEmissor(process.env);
+    const selection = selectDfeEmissor(process.env, 'NFSE');
     let assembly: Awaited<ReturnType<FiscalDocumentEmissionService['assembleExpiry']>>;
     try {
       assembly = await this.assembleExpiry(scope, movementKey, selection.ambiente);
@@ -288,7 +306,7 @@ export class FiscalDocumentEmissionService {
       subst: { cMotivo: string; xMotivo: string | null };
     },
   ): Promise<FiscalDocumentWithAttempts> {
-    const selection = selectDfeEmissor(process.env);
+    const selection = selectDfeEmissor(process.env, original.kind as FiscalDocumentKind);
     const { infDPS } = args.payload;
     return this.createAndSend(scope, selection, original.kind as FiscalDocumentKind, {
       saleId: original.saleId,
@@ -576,9 +594,10 @@ export class FiscalDocumentEmissionService {
     partnerAccountRef: string | null;
     competenciaAlerta: boolean;
   }> {
-    if (kind === 'NFE') {
-      throw new ValidationError('nfe_nao_implementada: NF-e 55 é Fase E, [pendente-insumo] (F-DFE-13 a) — fora desta fatia.', {
-        faltantes: ['Fase E (NF-e 55) ainda não implementada'],
+    if (kind !== 'NFSE') {
+      // BE-INCR-NFCE: a montagem da NF-e 55 / NFC-e 65 é a Fase C (PR-3); até lá a porta só recusa.
+      throw new ValidationError(`nfe_nao_implementada: a montagem de ${kind} é a Fase C do BE-INCR-NFCE — fora desta fatia.`, {
+        faltantes: [`montagem de ${kind} ainda não implementada`],
       });
     }
 
@@ -688,7 +707,7 @@ export class FiscalDocumentEmissionService {
     }
 
     // (viii) porta habilitada.
-    const selection = selectDfeEmissor(process.env);
+    const selection = selectDfeEmissor(process.env, kind);
     if (!selection.enabled) {
       faltantes.push(selection.reason ?? 'porta de emissão desabilitada');
     }
@@ -881,7 +900,7 @@ export class FiscalDocumentEmissionService {
       faltantes.push(`competência ${dCompet} fora do mês corrente (${today.slice(0, 7)}) e emissaoForaDoMes=BLOQUEAR`);
     }
 
-    const selection = selectDfeEmissor(process.env);
+    const selection = selectDfeEmissor(process.env, 'NFSE');
     if (!selection.enabled) faltantes.push(selection.reason ?? 'porta de emissão desabilitada');
 
     const unitsTable = await dynamicTableRepo.findTableByInternalName(scope.ownerUserId, 'units');

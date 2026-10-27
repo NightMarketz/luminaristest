@@ -6,7 +6,7 @@
 const mockSelection = {
   enabled: true,
   ambiente: 'producao',
-  port: { name: 'manual', capabilities: { numbersDps: true, consultar: false, cancelar: false, webhook: false, substituir: true }, emitir: jest.fn(async () => ({ status: 'PROCESSING', partnerRef: 'x', errors: [] })) },
+  port: { name: 'manual', capabilities: { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: true, consultar: false, cancelar: false, webhook: false, substituir: true }, emitir: jest.fn(async () => ({ status: 'PROCESSING', partnerRef: 'x', errors: [] })) },
 };
 jest.mock('../../dfe/selectDfeEmissor', () => ({ __esModule: true, selectDfeEmissor: () => mockSelection }));
 jest.mock('../../../../lib/factory', () => ({

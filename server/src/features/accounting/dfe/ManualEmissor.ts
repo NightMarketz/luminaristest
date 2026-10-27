@@ -15,6 +15,7 @@ import type { CancelResult, DfeCapabilities, DfeEmissorPort, EmissaoResult, Emit
 export class ManualEmissor implements DfeEmissorPort {
   public readonly name = 'manual';
   public readonly capabilities: DfeCapabilities = {
+    kinds: ['NFSE'], // BE-INCR-NFCE item 4
     numbersDps: true,
     consultar: false,
     cancelar: false,
