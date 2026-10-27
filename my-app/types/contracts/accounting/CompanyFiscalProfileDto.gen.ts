@@ -111,6 +111,7 @@ ACOES_TESOURARIA: string[]
 LUCROS_ACUMULADOS: string[]
 } | null)
 receitaTotalAnoAnteriorCents?: (number | null)
+reinfClassTrib?: (("01" | "02" | "03") | null)
 }
 export interface OnboardingFiscalInput {
 regime: ("MEI" | "SIMPLES" | "PRESUMIDO" | "REAL" | "NAO_SEI")

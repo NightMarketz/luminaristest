@@ -143,6 +143,15 @@ export function signNfseEventoForTest(xml: string, opts: SignNfeOptions = {}): s
   return signGroupForTest(xml, "//*[local-name(.)='infEvento']", opts);
 }
 
+/**
+ * BE-INCR-EFD-REINF PR-1 (F-REINF-6 a): assina um evento da Reinf com a chave de teste — `ds:Signature` enveloped como a
+ * última filha de `<Reinf>`, irmã do `evt*` (o XSD de cada evento: `<xs:element ref="ds:Signature"/>`, 1..1). A saída de
+ * produção da fase 1 não é assinada; isto existe só para validar o XML no XSD oficial.
+ */
+export function signReinfEventoForTest(xml: string, opts: SignNfeOptions = {}): string {
+  return signGroupForTest(xml, '/*/*[1]', opts);
+}
+
 function signGroupForTest(xml: string, infXpath: string, opts: SignNfeOptions): string {
   const key = opts.key ?? testKey();
   const titular = 'cnpj' in opts || 'cpf' in opts ? {} : { cnpj: NFSE_TEST_SIGNER_CNPJ };

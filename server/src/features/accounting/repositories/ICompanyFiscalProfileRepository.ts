@@ -45,6 +45,7 @@ export interface CompanyFiscalProfileData {
   simplesCaixaPrazoCartaoCreditoDias: number | null;
   jcpBaseContas: Prisma.InputJsonValue | typeof Prisma.DbNull; // IRRF-DISTRIBUICAO item 8 (F-IRD-15): JcpBaseContas
   receitaTotalAnoAnteriorCents: bigint | null; // PRESUMIDO-TETO-78MI item 5 (F-PT-2 c): do ano, nunca copiado
+  reinfClassTrib: string | null; // EFD-REINF PR-1 (item 4): '01' | '02' | '03', só SIMPLES
 }
 
 /**

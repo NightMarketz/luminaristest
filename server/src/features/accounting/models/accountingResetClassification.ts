@@ -90,6 +90,7 @@ export const ACCOUNTING_RESET_BLOCKING = [
   'TaxAssessment',
   'ConsumptionTaxAssessment', // IBS-CBS-2027 PR-2 — tabela nova nasce BLOCKING
   'MitExport',
+  'ReinfBatch', // BE-INCR-EFD-REINF PR-1 — tabela nova nasce BLOCKING
   'SimplesHistoricoMensal',
   'SimplesSegregacaoManual',
   'SalaoParceriaContrato',

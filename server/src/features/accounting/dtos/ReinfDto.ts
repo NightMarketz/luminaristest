@@ -1,0 +1,84 @@
+import { z } from 'zod';
+
+/**
+ * BE-INCR-EFD-REINF PR-1 (BRIEF itens 10, 11, 13, 14; §5.3) — `.strict()`. `unitId` só resolve escopo/policy e a cadeia de
+ * auditoria (precedente do X9, lacuna 1 do PR-2, dono 07/10); o lote é da PJ inteira (F-REINF-11 a). `competencia` ≤ mês
+ * corrente (`perApur`, leiaute 2.1.2b: "Não pode ser maior que o ano/mês corrente") é conferida no serviço, que tem o relógio.
+ */
+const competencia = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'competencia = YYYY-MM');
+
+export const ReinfBatchRequestSchema = z.object({ unitId: z.string().min(1), competencia }).strict();
+export type ReinfBatchRequest = z.infer<typeof ReinfBatchRequestSchema>;
+
+export const ReinfBatchListQuerySchema = z.object({ unitId: z.string().min(1), competencia }).strict();
+export type ReinfBatchListQuery = z.infer<typeof ReinfBatchListQuerySchema>;
+
+export const ReinfBatchGetQuerySchema = z.object({ unitId: z.string().min(1) }).strict();
+export type ReinfBatchGetQuery = z.infer<typeof ReinfBatchGetQuerySchema>;
+
+/** Um evento do lote no registro: sem CPF/CNPJ (PRE-ADR D8; `beneficiarioRef` = ids internos). */
+export const ReinfBatchEventoSchema = z
+  .object({
+    tipo: z.string(),
+    idEvento: z.string(),
+    sha256: z.string(),
+    origemIds: z.array(z.string()),
+    beneficiarioRef: z.string().optional(),
+    conteudoSha256: z.string().optional(), // só R-1000 (lacuna D, dono 26/10)
+  })
+  .strict();
+export type ReinfBatchEvento = z.infer<typeof ReinfBatchEventoSchema>;
+
+export const ReinfBatchViewSchema = z
+  .object({
+    id: z.string(),
+    competencia: z.string(),
+    tpAmb: z.number().int(),
+    sha256: z.string(),
+    status: z.enum(['GERADO', 'TRANSMITIDO', 'ACEITO', 'REJEITADO']),
+    eventos: z.array(ReinfBatchEventoSchema),
+    defasado: z.boolean(),
+    prazo: z.string(),
+    geradoPorId: z.string(),
+    createdAt: z.string(),
+  })
+  .strict();
+export type ReinfBatchView = z.infer<typeof ReinfBatchViewSchema>;
+
+/** Item 14 — uma linha do relatório de conferência (beneficiário mascarado; centavos como string). */
+export const ReinfRelatorioLinhaSchema = z
+  .object({
+    evento: z.literal('R-4020'),
+    beneficiario: z.string(),
+    natRend: z.string(),
+    dtFG: z.string(),
+    tributo: z.string(),
+    brutoCents: z.string(),
+    baseCents: z.string(),
+    retidoCents: z.string(),
+    codigoReceita: z.string().nullable(),
+    vencimentoDarf: z.string().nullable(),
+  })
+  .strict();
+
+/** Item 13 — evento de lote anterior cuja origem foi estornada: retificar (e reabrir antes, se o lote foi transmitido — L4). */
+export const ReinfMarcacaoSchema = z
+  .object({ batchId: z.string(), idEvento: z.string(), tipo: z.string(), acao: z.enum(['RETIFICAR', 'REABRIR_ANTES']) })
+  .strict();
+
+export const ReinfRelatorioSchema = z
+  .object({
+    competencia: z.string(),
+    prazo: z.string(),
+    linhas: z.array(ReinfRelatorioLinhaSchema),
+    totaisPorCodigo: z.array(z.object({ codigoReceita: z.string().nullable(), totalCents: z.string() }).strict()),
+    marcacoes: z.array(ReinfMarcacaoSchema),
+    avisos: z.array(z.string()),
+    csv: z.string(),
+  })
+  .strict();
+export type ReinfRelatorio = z.infer<typeof ReinfRelatorioSchema>;
+
+/** Resposta do POST (201): o XML vai só aqui — não é persistido (D8). */
+export const ReinfBatchCreatedSchema = z.object({ batchId: z.string(), sha256: z.string(), xml: z.string(), relatorio: ReinfRelatorioSchema }).strict();
+export type ReinfBatchCreated = z.infer<typeof ReinfBatchCreatedSchema>;
