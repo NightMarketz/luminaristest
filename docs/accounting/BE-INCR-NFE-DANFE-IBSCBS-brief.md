@@ -144,6 +144,21 @@ primeira NF-e 55. Há uma condição: se o X10a PR-7 entrar em produção antes 
     *Teste de propriedade:* para cada campo facultativo, o XML sem a tag dá `null` no model e o rótulo some do HTML
     (item 11).
 
+> **PR-1 executado em 26/10/2026** (dono, chat, 2026-10-26: *"Executa o NFE-DANFE-IBSCBS PR-1 — sessao-feature, sem merge."*).
+> Três lacunas decididas antes do código ([[D-2026-10-26-NFE-DANFE-IBSCBS-PR1-LACUNAS]]), que emendam o §4:
+> - **Item 4:** `readNfeTree(input)` **sem** `opts` ("Sem opts"); a recusa de homologação fica no `parseNfe`.
+> - **Item 5:** `readDanfeModel(xml, legais)` com **os mesmos gates do `parseNfe`** ("Os mesmos do parseNfe"): cStat pela tabela
+>   `NFE_CSTAT_AUTORIZADA` vigente na data do protocolo (F-LP-4 a), formato/DV/CNPJ da chave e `chNFe` = chave. O "{100,150}"
+>   do texto do item cede à tabela.
+> - **Item 10:** o modelo ganha `infAdFisco: string | null` ("Incluir infAdFisco").
+>
+> Ajustes do contrato esboçado feitos na execução, todos pela invariante I2 ou pela fonte:
+> - `DanfeItem.cstOuCsosn` passa a `string | null` (sem grupo ICMS ⇒ null) e é `orig` + `CST`/`CSOSN` (MOC Anexo II §3.8.1, coluna CST = N11 + N12).
+> - `totaisIcmsIpi` e `transp`, que o §4 deixava "cond. item 2", ficam definidos por tag (MOC 7.0 Anexo I W02–W16 e X01–X32,
+>   NT 2026.010 §4.4); `qBCMono`/`qBCMonoReten` são quantidade (string crua); `transp.volumes` é lista (`vol` 0-5000).
+> - `avisos` (`QRCODE_NAO_RENDERIZADO`) **não** entra no PR-1: é do item 15 (PR-2).
+> - Caminho das tags: dossiê [`nfe-danfe-pr1`](../../pesquisas-legais/nfe-danfe-pr1/relatorio.md) (NT 2025.002 v1.52 e MOC 7.0 Anexo I).
+
 ### PR-2 — render (lib pura + `htmlToPdf`)
 
 11. **`renderDanfeHtml(model): string`** (`lib/danfe/danfeHtml.ts`): retrato A4 [F-DANFE-6]. Ordem dos quadros conforme a
