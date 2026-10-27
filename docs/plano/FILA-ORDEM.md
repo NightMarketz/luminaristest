@@ -24,8 +24,8 @@
   (tentativa 3, 22/10); passo 6 é o último do plano. **A3/A4** H2 → M2 seguem os próximos gates humanos, sem bloqueio
   de código. **A5** D7 até 31/12. **A6** D1f alíquota decidida por delegação; cClassTrib e XML real seguem abertos.
   **A7** F-GOV-1 em docs (#904/#905 abertos).
-- **B1** X9: PR-2 (#566) e PR-3 (#908) em `main`; PR-4 #860 aberto — fecha o nó. **B2** I4+I5: sem movimento na semana.
-  **B3** DEFIS-MANUAL / GET-ENTRADAS: sem movimento. **B5** CRM-RB PR-C: sem movimento (BE do GET ainda não existe).
+- **B1** X9: PR-2 (#566) e PR-3 (#908) em `main`; PR-4 #860 aberto — fecha o nó. **B2** I4+I5: nós `done` (fechados antes
+  de 19/10). **B3** DEFIS-MANUAL / GET-ENTRADAS: nós `done`. **B5** CRM-RB: nó `done`.
   **B6** F5 FE em `main` (#862, 23/10) — fechado como item de fila; o nó segue `inflight` por 16b/16c e chave do M2.
   **B7** fechado (#866, nó `done` 24/10). **B8** LAC-B EMENDA-2: PR-0 #916 e PR-1 #919 abertos (26/10).
 - **C** W6 em `main` (#785/#786), nó `human-open`; W3 BRIEF da confirmação fechado (#788), forks F-W3-C1..C3 pendentes.
