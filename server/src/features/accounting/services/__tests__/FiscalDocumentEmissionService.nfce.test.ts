@@ -21,6 +21,7 @@ import { isValidNfeChave } from '../../../../lib/cnpj';
 import { parseNfe } from '../../../../lib/nfe';
 import { acquisitionCost } from '../../../../lib/nfeCost';
 import { LEGAIS_SEMENTE, legalParamsSemente } from '@test/helpers/legalParams';
+import { CRT3_ICMS_SEM_SPEC } from '../../models/nfeIbsCbsMontagem';
 
 /**
  * BE-INCR-NFCE (nó X10a, PR-3 — itens 8, 11, 13–19, 21–22) — emissão da NFC-e 65 / NF-e 55 do Simples pelo serviço, com o
@@ -276,9 +277,22 @@ describe('BE-INCR-NFCE PR-3 — emissão da NFC-e do Simples (NullEmissor)', () 
     expect(nfce(await service.preview(SCOPE, SALE_ID, 'NFCE')).det[0].imposto).not.toHaveProperty('IBSCBS');
   });
 
-  it('regime normal (CRT 3) ⇒ recusa nomeada até o PR-6', async () => {
+  it('item 20 — perfil PRESUMIDO + produto sem CST do IBS/CBS ⇒ ibsCbsCst/ibsCbsClassTrib nos faltantes, ao lado da recusa do ICMS', async () => {
     const { service } = montar({ fiscalProfile: perfilSimples({ regimeTributario: 'PRESUMIDO' }), produtos: [perfilProduto('prod-1', { csosn: null, cstIcms: '00' })] });
-    expect((await service.preview(SCOPE, SALE_ID, 'NFCE')).faltantes.join(' ')).toContain('PR-6');
+    const { faltantes } = await service.preview(SCOPE, SALE_ID, 'NFCE');
+    expect(faltantes).toEqual(expect.arrayContaining([CRT3_ICMS_SEM_SPEC, 'produto prod-1: ibsCbsCst (CRT 3, UB13)', 'produto prod-1: ibsCbsClassTrib (CRT 3, UB14)']));
+  });
+
+  it('item 20 — perfil PRESUMIDO + produto com CST/cClassTrib ⇒ o IBS/CBS não falta; a nota para só no ICMS (questionário 27/10)', async () => {
+    const produtos = [perfilProduto('prod-1', { csosn: null, cstIcms: '00', ibsCbsCst: '000', ibsCbsClassTrib: '000001' })];
+    const { service } = montar({ fiscalProfile: perfilSimples({ regimeTributario: 'PRESUMIDO' }), produtos });
+    expect((await service.preview(SCOPE, SALE_ID, 'NFCE')).faltantes).toEqual([CRT3_ICMS_SEM_SPEC]);
+  });
+
+  it('item 20 — cClassTrib que exige subgrupo sem dado no perfil (diferimento) ⇒ faltante nomeado', async () => {
+    const produtos = [perfilProduto('prod-1', { csosn: null, cstIcms: '00', ibsCbsCst: '510', ibsCbsClassTrib: '510001' })];
+    const { service } = montar({ fiscalProfile: perfilSimples({ regimeTributario: 'PRESUMIDO' }), produtos });
+    expect((await service.preview(SCOPE, SALE_ID, 'NFCE')).faltantes.join(' ')).toContain('diferimento');
   });
 
   it('NF-e 55 ⇒ para nos faltantes pelo cMun do destinatário (questionário 26/10: recusa nomeada na 55)', async () => {

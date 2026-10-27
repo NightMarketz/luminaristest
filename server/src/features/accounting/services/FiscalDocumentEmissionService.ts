@@ -28,6 +28,7 @@ import type { DpsManualPayload, DpsPayload } from '../dtos/DpsPayloadDto';
 import { NfePayloadSchema, NfePayloadSemNumeracaoSchema } from '../dtos/NfePayloadDto';
 import type { NfePayloadSemNumeracao } from '../dtos/NfePayloadDto';
 import { crtDoRegime, faltantesDosItens } from '../models/nfePrecondicoes';
+import { CRT3_ICMS_SEM_SPEC, ibsCbsDoProduto } from '../models/nfeIbsCbsMontagem';
 import {
   RTC_SIMPLES_DESDE,
   RTC_SIMPLES_NAO_TRANSCRITO,
@@ -858,7 +859,7 @@ export class FiscalDocumentEmissionService {
    * Mesmo contrato de `assemble`: todas as pendências num 400 agregado (`faltantes`) ANTES de tocar a porta; o payload sai
    * SEM numeração (a chave nasce na tx do envio, `createAndSend`, item 21). Só as linhas de PRODUTO (item 13: o serviço
    * segue na NFS-e) e um documento por venda; Σ vProd = crédito 3.3 do `sale.finalized`, exato (item 14, F-DFE-11 a).
-   * O regime normal (CRT 3) é o PR-6; a NF-e 55 para nos faltantes até haver o código IBGE do município do destinatário
+   * O regime normal (CRT 3) monta o IBS/CBS (PR-6) e para no ICMS (`CRT3_ICMS_SEM_SPEC`); a NF-e 55 para nos faltantes até haver o código IBGE do município do destinatário
    * (questionário de 26/10, "Recusa nomeada na 55").
    */
   private async assembleNfe(
@@ -909,7 +910,9 @@ export class FiscalDocumentEmissionService {
       ];
       for (const [campo, valor] of campos) if (!valor) faltantes.push(`perfil fiscal da unidade: falta '${campo}'`);
       crt = crtDoRegime(fp.regimeTributario);
-      if (crt === 3) faltantes.push('regime normal (CRT 3): a montagem do ICMS e do IBS/CBS é do PR-6 do BE-INCR-NFCE (item 20)');
+      // PR-6 (item 20; questionário de 27/10, "Só UB; CRT 3 segue recusado"): o IBS/CBS do CRT 3 é montado e validado
+      // (`models/nfeIbsCbsMontagem.ts`), mas o ICMS do regime normal não tem alíquota no perfil nem item no BRIEF.
+      if (crt === 3) faltantes.push(CRT3_ICMS_SEM_SPEC);
     }
 
     // Item 19 ([RTC-SIMPLES]): a partir de 04/01/2027 o Simples leva o grupo IBSCBS, ainda não transcrito.
@@ -925,6 +928,10 @@ export class FiscalDocumentEmissionService {
       faltantes.push(...faltantesDosItens(kind, crt, productLines.map((l) => l.productRef), perfis));
       for (const ref of new Set(productLines.map((l) => l.productRef))) {
         const perfil = perfilPorRef.get(ref);
+        if (perfil && crt === 3) {
+          const r = ibsCbsDoProduto(ref, perfil, kind === 'NFCE' ? 65 : 55, today);
+          if ('faltantes' in r) faltantes.push(...r.faltantes);
+        }
         if (!perfil || crt !== 1) continue;
         for (const [t, cst] of [['PIS', perfil.cstPis], ['COFINS', perfil.cstCofins]] as const) {
           const r = pisCofinsSimples(t, cst);
