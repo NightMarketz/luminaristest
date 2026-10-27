@@ -1522,6 +1522,19 @@
             "type": "string",
             "nullable": true,
             "description": "obrigatória quando depreciable=true (conta 1.2.9.x)"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "DEPRECIATION",
+              "AMORTIZATION_LEASEHOLD"
+            ],
+            "default": "DEPRECIATION",
+            "description": "AMORTIZATION_LEASEHOLD = benfeitoria em imóvel de terceiro (RIR 331 III, C8 emenda 3.2)"
+          },
+          "amortizationExpenseAccountId": {
+            "type": "string",
+            "description": "despesa de amortização da benfeitoria (F-EM-7 → b; referencial 3.01.01.07.01.24) — obrigatória com AMORTIZATION_LEASEHOLD, proibida com DEPRECIATION"
           }
         }
       },
@@ -1552,6 +1565,17 @@
             "type": "string"
           },
           "accumulatedDepreciationAccountId": {
+            "type": "string",
+            "nullable": true
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "DEPRECIATION",
+              "AMORTIZATION_LEASEHOLD"
+            ]
+          },
+          "amortizationExpenseAccountId": {
             "type": "string",
             "nullable": true
           }
@@ -1650,6 +1674,14 @@
           },
           "bookRateJustification": {
             "type": "string"
+          },
+          "leaseEndDate": {
+            "type": "string",
+            "description": "YYYY-MM-DD — fim do contrato de locação; obrigatório em classe AMORTIZATION_LEASEHOLD (E10)"
+          },
+          "leaseIndemnifiable": {
+            "type": "boolean",
+            "description": "declaração obrigatória em classe AMORTIZATION_LEASEHOLD: true (direito a indenização) não amortiza (RIR 331 III; Lei 8.245/91 art. 35)"
           }
         }
       },
@@ -1713,6 +1745,15 @@
           },
           "bookRateJustification": {
             "type": "string",
+            "nullable": true
+          },
+          "leaseEndDate": {
+            "type": "string",
+            "nullable": true,
+            "description": "YYYY-MM-DD; imutável depois do activate (E13)"
+          },
+          "leaseIndemnifiable": {
+            "type": "boolean",
             "nullable": true
           }
         }
@@ -2339,6 +2380,26 @@
                   "type": "string",
                   "description": "Imobilizado declarado pelo operador (ITEM-DESTINATION emenda 29/09 — o CFOP do XML não roteia) — XOR com productRef"
                 },
+                "treatment": {
+                  "type": "string",
+                  "enum": [
+                    "CAPITALIZE",
+                    "EXPENSE"
+                  ],
+                  "description": "C8 emenda 3.2 (IN RFB 1.700 art. 120): EXPENSE = imobilizado direto na despesa, no lugar do classId (exige expenseAccountId; unitário ≤ R$ 1.200 ou vida útil ≤ 1 ano). Ausente = CAPITALIZE"
+                },
+                "expenseAccountId": {
+                  "type": "string",
+                  "description": "Só com treatment EXPENSE — folha de despesa do escopo"
+                },
+                "setDeclared": {
+                  "type": "boolean",
+                  "description": "Faz parte de um conjunto (art. 120 § 1º) — só com classId"
+                },
+                "usefulLifeUpToOneYear": {
+                  "type": "boolean",
+                  "description": "Vida útil ≤ 1 ano — só com treatment EXPENSE; libera acima de R$ 1.200"
+                },
                 "destination": {
                   "type": "string",
                   "enum": [
@@ -2694,13 +2755,33 @@
             "items": {
               "type": "object",
               "required": [
-                "classId",
                 "cProd",
                 "costCents"
               ],
               "properties": {
+                "treatment": {
+                  "type": "string",
+                  "enum": [
+                    "CAPITALIZE",
+                    "EXPENSE"
+                  ],
+                  "description": "C8 emenda 3.2 (IN RFB 1.700 art. 120): ausente = CAPITALIZE (ativar). EXPENSE = direto na despesa — unitário ≤ R$ 1.200 ou vida útil ≤ 1 ano declarada; escolha irreversível"
+                },
                 "classId": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "Obrigatório com CAPITALIZE; proibido com EXPENSE"
+                },
+                "expenseAccountId": {
+                  "type": "string",
+                  "description": "Obrigatório com EXPENSE — folha de despesa do escopo"
+                },
+                "setDeclared": {
+                  "type": "boolean",
+                  "description": "Faz parte de um conjunto (art. 120 § 1º) — exige CAPITALIZE"
+                },
+                "usefulLifeUpToOneYear": {
+                  "type": "boolean",
+                  "description": "Vida útil ≤ 1 ano (2ª hipótese do art. 120) — só com EXPENSE; libera acima do limite"
                 },
                 "cProd": {
                   "type": "string"

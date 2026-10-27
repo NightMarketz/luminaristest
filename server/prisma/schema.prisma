@@ -610,6 +610,7 @@ model Account {
   lalurEntries                       LalurEntry[]              @relation("LalurEntryAccount") // ajuste da Parte A com relação contábil (M310/M360.COD_CTA, ECF Fase 3B)
   fixedAssetClassCostOf              FixedAssetClass[]         @relation("FixedAssetClassCost") // conta do bem (1.2.x, BE-INCR-FIXED-ASSETS)
   fixedAssetClassAccumulatedOf       FixedAssetClass[]         @relation("FixedAssetClassAccumulatedDepreciation") // conta de depreciação acumulada (1.2.9.x)
+  fixedAssetClassAmortizationOf      FixedAssetClass[]         @relation("FixedAssetClassAmortizationExpense") // despesa de amortização de benfeitoria (C8 emenda 3.2, F-EM-7 b)
   scopeSettingsDepreciationExpenseOf AccountingScopeSettings[] @relation("ScopeSettingsDepreciationExpense") // despesa de depreciação (4.x)
   scopeSettingsDisposalGainOf        AccountingScopeSettings[] @relation("ScopeSettingsDisposalGain") // ganho na baixa de imobilizado
   scopeSettingsDisposalLossOf        AccountingScopeSettings[] @relation("ScopeSettingsDisposalLoss") // perda na baixa de imobilizado
@@ -2381,6 +2382,10 @@ model FixedAssetClass {
   accumulatedDepreciationAccountId String? // obrigatório se depreciable (gate no DTO/serviço do PR-2, não aqui — a coluna é sempre nullable)
   accumulatedDepreciationAccount   Account?     @relation("FixedAssetClassAccumulatedDepreciation", fields: [accumulatedDepreciationAccountId], references: [id], onDelete: Restrict)
   assets                           FixedAsset[]
+  // C8 emenda 3.2 (E9, F-EM-7 → b): tipo da classe e conta própria da despesa de amortização (benfeitoria em imóvel de terceiro, RIR 331 III)
+  kind                             String       @default("DEPRECIATION") // FIXED_ASSET_CLASS_KINDS: DEPRECIATION | AMORTIZATION_LEASEHOLD
+  amortizationExpenseAccountId     String?
+  amortizationExpenseAccount       Account?     @relation("FixedAssetClassAmortizationExpense", fields: [amortizationExpenseAccountId], references: [id], onDelete: Restrict)
   createdAt                        DateTime     @default(now())
   updatedAt                        DateTime     @updatedAt
   deletedAt                        DateTime?
@@ -2472,6 +2477,10 @@ model FixedAsset {
   // o rascunho. NULL para todo ativo que não nasceu de NF-e (SQLite trata NULL como distinto —
   // muitas linhas com payableId/sourceItemRef ambos null coexistem sem colidir no unique).
   sourceItemRef                String?
+  // C8 emenda 3.2 (E8b/E10, F-EM-6 → a): fim do contrato de locação (date-only) e a declaração de direito à indenização
+  // (NULL = não declarado — o silêncio do contrato gera direito, Lei 8.245/91 art. 35). Só para classe AMORTIZATION_LEASEHOLD.
+  leaseEndDate                 DateTime?
+  leaseIndemnifiable           Boolean?
   version                      Int               @default(1) // optimistic-lock counter da CAS de addAccumulated (item 14) e de activate/dispose (item 9/18)
   createdById                  String?
   createdAt                    DateTime          @default(now())
@@ -2712,6 +2721,7 @@ model LalurEntry {
   account        Account?                 @relation("LalurEntryAccount", fields: [accountId], references: [id])
   processos      LalurProcess[] // M315/M365 (processos judiciais/administrativos do ajuste) — value-objects, C2
   journalLinks   LalurEntryJournalEntry[] // M312/M362 (lançamentos da ECD relacionados) — value-objects, Fork F-3C-3
+  parteBLinks    LalurEntryParteBLink[] // M305/M355 1:N das linhas origem='system' (C8 emenda 3.2, E21b, F-EM-14 → a)
   createdById    String? // actor (AccountingScope.actorUserId); plain string
   createdAt      DateTime                 @default(now())
   updatedAt      DateTime                 @updatedAt
@@ -2749,6 +2759,7 @@ model LalurParteBAccount {
   updatedAt                         DateTime                  @updatedAt
   deletedAt                         DateTime? // set when archived (soft) — together with the rename-on-key
   entries                           LalurEntry[] // linhas da Parte A relacionadas (M305/M355)
+  entryLinks                        LalurEntryParteBLink[] // M305/M355 1:N (C8 emenda 3.2, F-EM-14 → a)
   movements                         LalurParteBMovement[]     @relation("LalurMovementConta") // M410 lançados NESTA conta (ECF Fase 3C)
   contrapartidaDe                   LalurParteBMovement[]     @relation("LalurMovementContrapartida") // M410 em que esta conta é COD_CTA_B_CTP
   balances                          LalurParteBBalance[] // M500 materializado por período fechado (ECF Fase 3C, Fork N-1 a)
@@ -2870,6 +2881,21 @@ model LalurProcess {
 // relacionados ao ajuste da Parte A com relação contábil. Só lançamento com `entryNumber` (Posted/Reconciled/
 // Reversed — nulo em Draft/PendingApproval, D-P3.4). Value-object do pai: sem deletedAt; `journalEntryIds[]`
 // SUBSTITUI o conjunto na mesma tx (Fork F-3C-3 a).
+/// C8 emenda 3.2 (E21b, F-EM-14 → a): M305/M355 1:N — uma linha da Parte A `origem='system'` (86/161/91.01) pode
+/// referir mais de uma conta da Parte B no mesmo trimestre (ex.: 161 realizando 1071 de um bem e constituindo 2210 de
+/// outro). O leiaute aceita vários M305 por M300 (REGRA_VALOR_DETALHADO soma os VL_CTA). Value-object, como o M312.
+model LalurEntryParteBLink {
+  entryId    String // FK LalurEntry — Restrict
+  entry      LalurEntry         @relation(fields: [entryId], references: [id], onDelete: Restrict)
+  parteBId   String // FK LalurParteBAccount — Restrict
+  parteB     LalurParteBAccount @relation(fields: [parteBId], references: [id], onDelete: Restrict)
+  valorCents BigInt // M305.VL_CTA (> 0)
+
+  @@id([entryId, parteBId])
+  @@index([parteBId])
+  @@map("lalur_entry_parte_b_links")
+}
+
 model LalurEntryJournalEntry {
   entryId        String // FK LalurEntry — Restrict
   entry          LalurEntry   @relation(fields: [entryId], references: [id], onDelete: Restrict)

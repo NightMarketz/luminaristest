@@ -14,6 +14,8 @@ rateId?: string
 annualRateBp?: number
 bookAnnualRateBp?: number
 bookRateJustification?: string
+leaseEndDate?: string
+leaseIndemnifiable?: boolean
 }
 export interface UpdateFixedAssetInput {
 unitId: string
@@ -30,6 +32,8 @@ rateId?: string
 annualRateBp?: number
 bookAnnualRateBp?: (number | null)
 bookRateJustification?: (string | null)
+leaseEndDate?: (string | null)
+leaseIndemnifiable?: (boolean | null)
 }
 export interface ActivateFixedAssetInput {
 unitId: string

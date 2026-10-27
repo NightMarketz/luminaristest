@@ -7274,6 +7274,18 @@
         "accumulatedDepreciationAccountId": {
           "type": "string",
           "minLength": 1
+        },
+        "kind": {
+          "default": "DEPRECIATION",
+          "type": "string",
+          "enum": [
+            "DEPRECIATION",
+            "AMORTIZATION_LEASEHOLD"
+          ]
+        },
+        "amortizationExpenseAccountId": {
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [
@@ -7313,6 +7325,24 @@
           "minLength": 1
         },
         "accumulatedDepreciationAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "DEPRECIATION",
+            "AMORTIZATION_LEASEHOLD"
+          ]
+        },
+        "amortizationExpenseAccountId": {
           "anyOf": [
             {
               "type": "string",
@@ -7425,6 +7455,12 @@
         "bookRateJustification": {
           "type": "string",
           "minLength": 1
+        },
+        "leaseEndDate": {
+          "type": "string"
+        },
+        "leaseIndemnifiable": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -7516,6 +7552,26 @@
             {
               "type": "string",
               "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseEndDate": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseIndemnifiable": {
+          "anyOf": [
+            {
+              "type": "boolean"
             },
             {
               "type": "null"
@@ -9484,6 +9540,23 @@
                   "INSUMO_SERVICO",
                   "IMOBILIZADO"
                 ]
+              },
+              "treatment": {
+                "type": "string",
+                "enum": [
+                  "CAPITALIZE",
+                  "EXPENSE"
+                ]
+              },
+              "expenseAccountId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "setDeclared": {
+                "type": "boolean"
+              },
+              "usefulLifeUpToOneYear": {
+                "type": "boolean"
               }
             },
             "required": [
@@ -9550,6 +9623,23 @@
                   "INSUMO_SERVICO",
                   "IMOBILIZADO"
                 ]
+              },
+              "treatment": {
+                "type": "string",
+                "enum": [
+                  "CAPITALIZE",
+                  "EXPENSE"
+                ]
+              },
+              "expenseAccountId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "setDeclared": {
+                "type": "boolean"
+              },
+              "usefulLifeUpToOneYear": {
+                "type": "boolean"
               }
             },
             "required": [
@@ -10484,9 +10574,26 @@
           "items": {
             "type": "object",
             "properties": {
+              "treatment": {
+                "type": "string",
+                "enum": [
+                  "CAPITALIZE",
+                  "EXPENSE"
+                ]
+              },
               "classId": {
                 "type": "string",
                 "minLength": 1
+              },
+              "expenseAccountId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "setDeclared": {
+                "type": "boolean"
+              },
+              "usefulLifeUpToOneYear": {
+                "type": "boolean"
               },
               "cProd": {
                 "type": "string",
@@ -10513,7 +10620,6 @@
               }
             },
             "required": [
-              "classId",
               "cProd",
               "costCents"
             ],
