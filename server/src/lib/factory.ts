@@ -80,6 +80,7 @@ import { DepreciationRateRepository } from '../features/accounting/repositories/
 import { FixedAssetClassRepository } from '../features/accounting/repositories/FixedAssetClassRepository';
 import { FixedAssetRepository } from '../features/accounting/repositories/FixedAssetRepository';
 import { FiscalDocumentRepository } from '../features/accounting/repositories/FiscalDocumentRepository';
+import { FiscalNumberVoidRepository } from '../features/accounting/repositories/FiscalNumberVoidRepository';
 import { LalurRepository } from '../features/accounting/repositories/LalurRepository';
 import { PackageBalanceRepository } from '../features/packages/repositories/PackageBalanceRepository';
 import { PackageAcceptanceRepository } from '../features/packages/repositories/PackageAcceptanceRepository';
@@ -204,6 +205,7 @@ import { FixedAssetService } from '../features/accounting/services/FixedAssetSer
 import { DepreciationService } from '../features/accounting/services/DepreciationService';
 import { FiscalDocumentEmissionService } from '../features/accounting/services/FiscalDocumentEmissionService';
 import { FiscalDocumentLifecycleService } from '../features/accounting/services/FiscalDocumentLifecycleService';
+import { FiscalNumberVoidService } from '../features/accounting/services/FiscalNumberVoidService';
 import { LalurService } from '../features/accounting/services/LalurService';
 import { PackageBalanceService } from '../features/packages/services/PackageBalanceService';
 import { PackageAcceptanceService } from '../features/packages/services/PackageAcceptanceService';
@@ -359,6 +361,7 @@ import type { IDepreciationRateRepository } from '../features/accounting/reposit
 import type { IFixedAssetClassRepository } from '../features/accounting/repositories/IFixedAssetClassRepository';
 import type { IFixedAssetRepository } from '../features/accounting/repositories/IFixedAssetRepository';
 import type { IFiscalDocumentRepository } from '../features/accounting/repositories/IFiscalDocumentRepository';
+import type { IFiscalNumberVoidRepository } from '../features/accounting/repositories/IFiscalNumberVoidRepository';
 import type { ILalurRepository } from '../features/accounting/repositories/ILalurRepository';
 import type { IAccountingPolicy } from '../features/accounting/policies/IAccountingPolicy';
 import type { IAccountingScopeResetPolicy } from '../features/accounting/policies/IAccountingScopeResetPolicy';
@@ -828,6 +831,7 @@ export class ApplicationFactory {
     profitDistribution: IProfitDistributionRepository; // IRRF-DISTRIBUICAO PR-2
     interestOnEquity: IInterestOnEquityRepository; // IRRF-DISTRIBUICAO PR-3
     fiscalDocument: IFiscalDocumentRepository;
+    fiscalNumberVoid: IFiscalNumberVoidRepository; // BE-INCR-NFCE item 24
     lalur: ILalurRepository;
     accountingContact: IAccountingContactRepository;
     paymentAccount: IPaymentAccountRepository; // BE-INCR-PAYMENT-PROVIDER PR-1
@@ -938,6 +942,7 @@ export class ApplicationFactory {
     interestOnEquity: InterestOnEquityService; // IRRF-DISTRIBUICAO PR-3
     fiscalDocumentEmission: FiscalDocumentEmissionService;
     fiscalDocumentLifecycle: FiscalDocumentLifecycleService;
+    fiscalNumberVoid: FiscalNumberVoidService; // BE-INCR-NFCE itens 24–25
     lalur: LalurService;
     accountingContact: AccountingContactService;
     paymentAccount: PaymentAccountService; // BE-INCR-PAYMENT-PROVIDER PR-1
@@ -1046,6 +1051,7 @@ export class ApplicationFactory {
       profitDistribution: new ProfitDistributionRepository(),
       interestOnEquity: new InterestOnEquityRepository(),
       fiscalDocument: new FiscalDocumentRepository(),
+      fiscalNumberVoid: new FiscalNumberVoidRepository(), // BE-INCR-NFCE item 24
       lalur: new LalurRepository(),
       accountingContact: new AccountingContactRepository(),
       paymentAccount: new PaymentAccountRepository(),
@@ -1496,6 +1502,7 @@ export class ApplicationFactory {
       postingService,
       this.policies.accounting,
       auditService,
+      this.repositories.fiscalNumberVoid, // BE-INCR-NFCE PR-4: reenvio recusa número com pedido de inutilização
     );
     // Extraído como const própria (não só inline no literal abaixo) porque FixedAssetService
     // (BE-INCR-FIXED-ASSETS, nó C8, PR-2) também a injeta (baixa lê disposalGain/LossAccountId).
@@ -1670,6 +1677,15 @@ export class ApplicationFactory {
       depreciation: depreciationService,
       fiscalDocumentEmission: fiscalDocumentEmissionService,
       fiscalDocumentLifecycle: fiscalDocumentLifecycleService,
+      // BE-INCR-NFCE (nó X10a, itens 24–25): inutilização de faixa + lista das lacunas de numeração.
+      fiscalNumberVoid: new FiscalNumberVoidService(
+        this.repositories.fiscalDocument,
+        this.repositories.fiscalNumberVoid,
+        fiscalProfileService,
+        this.policies.accounting,
+        auditService,
+        legalParameterService, // EMENDA-3 E3-2 a: fotografia INUT_NAO_SE_APLICA
+      ),
       chat: new ChatService(
         embeddingOpenAIService,
         this.repositories.vector,
@@ -2457,6 +2473,7 @@ export class ApplicationFactory {
   public getDepreciationService = (): DepreciationService => this.services.depreciation;
   public getFiscalDocumentEmissionService = (): FiscalDocumentEmissionService => this.services.fiscalDocumentEmission;
   public getFiscalDocumentLifecycleService = (): FiscalDocumentLifecycleService => this.services.fiscalDocumentLifecycle;
+  public getFiscalNumberVoidService = (): FiscalNumberVoidService => this.services.fiscalNumberVoid;
   public getFiscalDocumentRepository = (): IFiscalDocumentRepository => this.repositories.fiscalDocument;
   public getLalurService = (): LalurService => this.services.lalur;
   public getPackageBalanceService = (): PackageBalanceService => this.services.packageBalance;

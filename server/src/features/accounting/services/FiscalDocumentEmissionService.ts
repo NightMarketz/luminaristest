@@ -379,7 +379,8 @@ export class FiscalDocumentEmissionService {
       }
       let numero: bigint | null = null;
       if (!selection.port.capabilities.numbersDps) {
-        numero = await this.repo.nextNumber(scope, kind, args.serie, tx);
+        // BE-INCR-NFCE item 23 (F-NFCE-4 a): NF-e/NFC-e numeram por ambiente; a NFS-e segue sem ('' — lacuna no GAP-MAP).
+        numero = await this.repo.nextNumber(scope, kind, kind === 'NFSE' ? '' : (selection.ambiente as DfeAmbiente), args.serie, tx);
       }
       let payload: DpsPayload | DpsManualPayload | NfePayloadSemNumeracao;
       if (kind !== 'NFSE') {
@@ -610,6 +611,23 @@ export class FiscalDocumentEmissionService {
     return { ...group, cnpjEmitente: assembly.cnpjEmitente, partnerAccountRef: assembly.partnerAccountRef };
   }
 
+  /**
+   * BE-INCR-NFCE (nó X10a, PR-4; EMENDA-3 F-NFCE-E3-2 a) — remonta a NF-e/NFC-e de um documento `REJECTED` para o reenvio,
+   * pelas MESMAS pré-condições da emissão (`assembleNfe`), menos a de "documento vivo já existe" (o vivo é o próprio
+   * rejeitado). Devolve SEM numeração: quem numera é o `reenviar`, com o número do documento (a nota rejeitada é
+   * descartada e "pode ser corrigida e novamente transmitida", MOC VG §5.1.6 — `[VG-REJ-DESCARTADA]`). O `dhEmi` é o do
+   * reenvio (F-NFCE-6 a; na NFC-e a SEFAZ rejeita atraso > 5 min, B09-40 rej. 704).
+   */
+  async reassembleNfeForReenvio(
+    scope: AccountingScope,
+    saleId: string,
+    kind: 'NFE' | 'NFCE',
+    ambiente: DfeAmbiente,
+  ): Promise<{ vServCents: number; payload: NfePayloadSemNumeracao; cnpjEmitente: string; partnerAccountRef: string | null }> {
+    const assembly = await this.assembleNfe(scope, saleId, kind, ambiente, true);
+    return { ...assembly.groups[0], cnpjEmitente: assembly.cnpjEmitente, partnerAccountRef: assembly.partnerAccountRef };
+  }
+
   // ---- Montagem interna (itens 14-19) — compartilhada por preview e emit ----
 
   private async assemble(
@@ -630,11 +648,8 @@ export class FiscalDocumentEmissionService {
     competenciaAlerta: boolean;
   }> {
     if (kind !== 'NFSE') {
-      // BE-INCR-NFCE: emissão e prévia de NF-e/NFC-e vão por `assembleNfe` (PR-3); aqui só chega o reenvio, que reusa o
-      // número da tentativa rejeitada (EMENDA-3 E3-2 a) — PR-4.
-      throw new ValidationError(`nfe_reenvio_nao_implementado: o reenvio de ${kind} é o PR-4 do BE-INCR-NFCE (número reusado, EMENDA-3).`, {
-        faltantes: [`reenvio de ${kind} ainda não implementado`],
-      });
+      // BE-INCR-NFCE: NF-e/NFC-e montam por `assembleNfe` (emissão, prévia e, desde o PR-4, o reenvio) — chegar aqui é bug.
+      throw new Error(`dfe_assemble_kind_invariant: a montagem da DPS recebeu ${kind}.`);
     }
 
     const faltantes: string[] = [];
@@ -851,6 +866,7 @@ export class FiscalDocumentEmissionService {
     saleId: string,
     kind: 'NFE' | 'NFCE',
     ambiente: DfeAmbiente | null,
+    reenvio = false,
   ): Promise<{
     groups: Array<{ cTribNac: string; vServCents: number; payload: NfePayloadSemNumeracao }>;
     ledgerCents: number;
@@ -937,8 +953,8 @@ export class FiscalDocumentEmissionService {
       );
     }
 
-    // Documento vivo do mesmo tipo para a venda (uma NF-e/NFC-e por venda).
-    if (validSale) {
+    // Documento vivo do mesmo tipo para a venda (uma NF-e/NFC-e por venda). No reenvio o vivo é o próprio rejeitado.
+    if (validSale && !reenvio) {
       const vivo = (await this.repo.findLiveBySale(scope, saleId, kind))[0];
       if (vivo) faltantes.push(`documento vivo já existe para esta venda/kind (id ${vivo.id}, status ${vivo.status})`);
     }

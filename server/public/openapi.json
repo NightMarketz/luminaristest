@@ -26381,7 +26381,7 @@
     "/api/nfe/dfe/documents/{id}/reenviar": {
       "post": {
         "summary": "Resend a REJECTED document as a new attempt (item 26)",
-        "description": "Só de status REJECTED. Payload remontado (perfil/venda corrigidos), tentativa n+1 com ref novo; a tentativa n permanece intacta. A numeração da DPS NÃO é reconsumida.",
+        "description": "Só de status REJECTED. Payload remontado (perfil/venda corrigidos), tentativa n+1 com ref novo; a tentativa n permanece intacta. A numeração da DPS NÃO é reconsumida. NF-e/NFC-e (BE-INCR-NFCE PR-4, EMENDA-3 E3-2 a): mesma série e mesmo nNF, cNF novo e chave recalculada com o dhEmi do reenvio; número com pedido de inutilização ⇒ 409 DFE_NUMERO_INUTILIZADO.",
         "tags": [
           "Accounting"
         ],
@@ -26421,6 +26421,146 @@
         "responses": {
           "200": {
             "description": "FiscalDocumentView (status SENT, nova tentativa)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
+          }
+        }
+      }
+    },
+    "/api/nfe/dfe/inutilizacoes": {
+      "post": {
+        "summary": "Request the voiding of an NF-e/NFC-e number range (BE-INCR-NFCE item 24)",
+        "description": "Guardas locais antes da porta ([NFE-INUT-REGRAS], MOC VG Tabela 5-12): nIni ≤ nFin, ≤ 10.000 números, só número já consumido pela sequência (ambiente da emissão configurada), nenhum número com documento SENT/PROCESSING/ AUTHORIZED/CANCELLED (409 INUT_NUMERO_USADO, rej. 241), sem cruzar pedido REQUESTED/HOMOLOGATED (409 INUT_FAIXA_JA_PEDIDA, rej. 256/563). Adaptador sem inutilização ⇒ 409 DFE_INUT_NAO_SUPORTADA. Vale para toda UF (EMENDA-3 E3-1 c): a SEFAZ decide. Faixa homologada ⇒ audit dfe.number_voided.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "kind",
+                  "serie",
+                  "nIni",
+                  "nFin",
+                  "xJust"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "NFE",
+                      "NFCE"
+                    ]
+                  },
+                  "serie": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 889
+                  },
+                  "nIni": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 999999999
+                  },
+                  "nFin": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 999999999
+                  },
+                  "xJust": {
+                    "type": "string",
+                    "minLength": 15,
+                    "maxLength": 255
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "FiscalNumberVoidView (status REQUESTED | HOMOLOGATED | REJECTED)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "description": "INUT_NUMERO_USADO | INUT_FAIXA_JA_PEDIDA | DFE_INUT_NAO_SUPORTADA | unidade apagada"
+          }
+        }
+      }
+    },
+    "/api/nfe/dfe/inutilizacoes/pendentes": {
+      "get": {
+        "summary": "List numbering gaps of NF-e/NFC-e (BE-INCR-NFCE item 25)",
+        "description": "Números 1..último de cada sequência (todas as séries e ambientes) sem documento SENT/PROCESSING/AUTHORIZED/ CANCELLED e fora de faixa inutilizada homologada. Nada automático. Na UF onde o pedido de inutilização não se aplica desde 01/11/2026 (AC, BA, SP — parâmetro legal INUT_NAO_SE_APLICA, data de hoje), cada lacuna traz o aviso e, só na NFC-e, o texto da presunção (Aj. SINIEF 19/16 cl. 11ª § 5º).",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "NFE",
+                "NFCE"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "LacunaDeNumeracao[] ({ ambiente, serie, numero, documentId, status, avisos, presuncao? })"
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"

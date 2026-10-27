@@ -40,7 +40,8 @@
             "NATUREZA_RENDIMENTO",
             "IRRF_PF_MENSAL",
             "ISS_TRANSICAO",
-            "NFCE_LIMITE"
+            "NFCE_LIMITE",
+            "INUT_NAO_SE_APLICA"
           ]
         },
         "chave": {
@@ -142,7 +143,8 @@
             "NATUREZA_RENDIMENTO",
             "IRRF_PF_MENSAL",
             "ISS_TRANSICAO",
-            "NFCE_LIMITE"
+            "NFCE_LIMITE",
+            "INUT_NAO_SE_APLICA"
           ]
         },
         "status": {
@@ -227,7 +229,8 @@
             "NATUREZA_RENDIMENTO",
             "IRRF_PF_MENSAL",
             "ISS_TRANSICAO",
-            "NFCE_LIMITE"
+            "NFCE_LIMITE",
+            "INUT_NAO_SE_APLICA"
           ]
         },
         "chave": {

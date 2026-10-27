@@ -2296,16 +2296,44 @@ model FiscalDocumentAttempt {
 
 // BE-INCR-DFE (BRIEF item 4; ADR §9.2 item 9) — numeração da DPS/NF-e por (unidade, kind, série), consumida
 // DENTRO da tx do SENT (ACC-015 por analogia). Espelho de JournalEntrySequence; NUNCA a sequência do razão.
+// BE-INCR-NFCE (nó X10a, item 23; F-NFCE-4 a): chave com o ambiente — na NF-e/NFC-e homologação e produção numeram de 1
+// cada uma (a chave natural inclui o ambiente, MOC VG §2.2.7). A NFS-e numera com ambiente = '' (lacuna no GAP-MAP).
 model FiscalDocumentSequence {
   userId    String
   unitId    String
   kind      String
+  ambiente  String   @default("") // producao | homologacao (NFE/NFCE) | '' (NFSE)
   serie     Int
   last      BigInt   @default(0)
   updatedAt DateTime @updatedAt
 
-  @@id([userId, unitId, kind, serie])
+  @@id([userId, unitId, kind, ambiente, serie])
   @@map("fiscal_document_sequences")
+}
+
+// BE-INCR-NFCE (nó X10a, item 24; F-NFCE-5 a; EMENDA-3 E3-1 c) — faixa de numeração de NF-e/NFC-e cujo pedido de
+// inutilização foi enviado pelo operador (MOC VG §5.3, Tabela 5-9). Guardas locais `[NFE-INUT-REGRAS]` antes da porta.
+model FiscalNumberVoid {
+  id          String   @id @default(cuid())
+  userId      String
+  unitId      String
+  kind        String // NFE | NFCE
+  ambiente    String // producao | homologacao
+  serie       Int
+  nIni        BigInt
+  nFin        BigInt
+  ano         Int
+  xJust       String
+  status      String // REQUESTED | HOMOLOGATED | REJECTED
+  partner     String
+  nProt       String?
+  errorsJson  String?
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, unitId, kind, ambiente, serie])
+  @@map("fiscal_number_voids")
 }
 
 // F7 / BE-INCR-BANK-SETTLEMENT — item de baixa PROPOSTO pelo retorno bancário, efetivado só por

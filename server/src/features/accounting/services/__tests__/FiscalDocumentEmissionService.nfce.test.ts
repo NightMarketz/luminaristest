@@ -205,7 +205,7 @@ describe('BE-INCR-NFCE PR-3 — emissão da NFC-e do Simples (NullEmissor)', () 
     const { service, repo, auditService } = montar();
     const docs = await service.emit(SCOPE, SALE_ID, 'NFCE');
     expect(docs).toHaveLength(1);
-    expect(repo.nextNumber).toHaveBeenCalledWith(SCOPE, 'NFCE', 3, {});
+    expect(repo.nextNumber).toHaveBeenCalledWith(SCOPE, 'NFCE', 'homologacao', 3, {}); // PR-4 item 23: o ambiente entra na chave
     const data = repo.createSent.mock.calls[0][1] as Record<string, unknown>;
     expect(data).toMatchObject({ kind: 'NFCE', serie: 3, numero: 1n, cTribNac: '', vServCents: 6000n });
     const payload = NfePayloadSchema.parse(JSON.parse(data.payloadJson as string));
@@ -298,5 +298,37 @@ describe('BE-INCR-NFCE PR-3 — emissão da NFC-e do Simples (NullEmissor)', () 
     const r = await service.preview(SCOPE, SALE_ID, 'NFSE');
     expect((r.payloads as DpsPayload[]).length).toBe(0); // venda sem serviço: a NFS-e recusa como antes
     expect(r.ok).toBe(false);
+  });
+});
+
+describe('BE-INCR-NFCE PR-4 — remontagem do reenvio (EMENDA-3 E3-2 a)', () => {
+  const OLD_ENV = process.env;
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate'] }).setSystemTime(new Date('2026-11-02T13:00:00Z'));
+    process.env = { ...OLD_ENV, DFE_PARTNER: 'null', DFE_PARTNER_ENV: 'homologacao', NODE_ENV: 'test' };
+  });
+  afterEach(() => jest.useRealTimers());
+  afterAll(() => {
+    process.env = OLD_ENV;
+  });
+
+  it('o documento vivo é o próprio rejeitado: a prévia recusa, a remontagem do reenvio passa (sem numerar, dhEmi do reenvio)', async () => {
+    const { service, repo } = montar();
+    repo.findLiveBySale.mockResolvedValue([{ id: 'doc-65', status: 'REJECTED' }]);
+    expect((await service.preview(SCOPE, SALE_ID, 'NFCE')).faltantes.join(' ')).toContain('documento vivo já existe');
+    const r = await service.reassembleNfeForReenvio(SCOPE, SALE_ID, 'NFCE', 'homologacao');
+    expect(r.vServCents).toBe(6000);
+    expect(r.payload.infNFe.ide).not.toHaveProperty('nNF');
+    expect(r.payload.infNFe.ide.dhEmi).toBe('2026-11-02T10:00:00-03:00');
+    expect(repo.nextNumber).not.toHaveBeenCalled();
+    expect(repo.createSent).not.toHaveBeenCalled();
+  });
+
+  it('a remontagem do reenvio roda as MESMAS pré-condições (perfil sem IE ⇒ faltante)', async () => {
+    const { service } = montar({ fiscalProfile: perfilSimples({ inscricaoEstadual: null }) });
+    await expect(service.reassembleNfeForReenvio(SCOPE, SALE_ID, 'NFCE', 'homologacao')).rejects.toMatchObject({
+      details: { faltantes: ["perfil fiscal da unidade: falta 'inscricaoEstadual'"] },
+    });
   });
 });

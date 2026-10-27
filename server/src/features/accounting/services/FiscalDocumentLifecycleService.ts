@@ -3,7 +3,12 @@ import { Prisma } from 'generated/prisma';
 import { SubstituicaoBloqueadaError } from '../../../lib/errors';
 import { foraDaJanela } from '../models/janelaEventos';
 import { invariantesSubstituicao } from '../models/substituicaoInvariantes';
-import type { DpsPayload, SubstMotivo } from '../dtos/DpsPayloadDto';
+import type { DpsManualPayload, DpsPayload, SubstMotivo } from '../dtos/DpsPayloadDto';
+import { NfePayloadSchema, NfePayloadSemNumeracaoSchema } from '../dtos/NfePayloadDto';
+import type { NfePayload, NfePayloadSemNumeracao } from '../dtos/NfePayloadDto';
+import { gerarCnf, numerarNfe } from '../models/nfeMontagem';
+import type { IFiscalNumberVoidRepository } from '../repositories/IFiscalNumberVoidRepository';
+import { OCCUPYING_VOID_STATUSES } from '../repositories/IFiscalNumberVoidRepository';
 import {
   PendingAttachmentDrainSummarySchema,
   PendingAttachmentResultSchema,
@@ -24,7 +29,7 @@ import type { PostingService } from './PostingService';
 import type { FiscalDocumentEmissionService, FiscalDocumentView } from './FiscalDocumentEmissionService';
 import { selectDfeEmissor } from '../dfe/selectDfeEmissor';
 import { resolveEmissorFor } from '../dfe/resolveEmissor';
-import { ambienteFromTpAmb, assertTpAmb } from '../dfe/DfeEmissorPort';
+import { ambienteFromTpAmb, assertTpAmb, tpAmbFor } from '../dfe/DfeEmissorPort';
 import type { DfeAmbiente, DfeEmissorPort, EmissaoResult } from '../dfe/DfeEmissorPort';
 import { DpsManualPayloadSchema, DpsPayloadSchema, toManualDps } from '../dtos/DpsPayloadDto';
 import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeInternal';
@@ -100,6 +105,8 @@ export class FiscalDocumentLifecycleService {
     private readonly postingService: PostingService,
     private readonly policy: IAccountingPolicy,
     private readonly auditService: AuditService,
+    /** BE-INCR-NFCE (nó X10a, PR-4; EMENDA-3 E3-2 a): o reenvio da NF-e/NFC-e recusa número com pedido de inutilização. */
+    private readonly voidRepo: Pick<IFiscalNumberVoidRepository, 'findOverlapping'>,
   ) {}
 
   /** POST /api/nfe/dfe/documents/:id/consultar (item 27, tela) — re-consulta UM documento. */
@@ -197,40 +204,8 @@ export class FiscalDocumentLifecycleService {
       });
     }
 
-    const reassembled = await this.emissionService.reassembleGroupForReenvio(
-      scope,
-      doc.saleId,
-      doc.kind as FiscalDocumentKind,
-      doc.cTribNac,
-      doc.ambiente as DfeAmbiente,
-      doc.saleKey, // BE-INCR-PACOTE-VALIDADE (L2, dono 03/10): nota de saldo vencido remonta pelo vencimento
-    );
-    // BE-INCR-DFE-EVENTOS (review B1): a remontagem não conhece o `subst` — a substituta reenviada tem de continuar
-    // substituindo a original (chave da original + substMotivo/substReason; E0078 validado pelo DpsSubstSchema abaixo).
-    if (doc.substitutesDocumentId) {
-      const original = await this.repo.findById(scope, doc.substitutesDocumentId);
-      reassembled.payload = {
-        ...reassembled.payload,
-        infDPS: {
-          ...reassembled.payload.infDPS,
-          subst: {
-            chSubstda: original?.chaveOuCodigo ?? '',
-            cMotivo: doc.substMotivo as SubstMotivo,
-            ...(doc.substReason ? { xMotivo: doc.substReason } : {}),
-          },
-        },
-      };
-    }
-    // A numeração NÃO é reconsumida no reenvio — é a MESMA DPS, uma nova tentativa de envio dela.
-    const payload = port.capabilities.numbersDps
-      ? DpsManualPayloadSchema.parse(toManualDps(reassembled.payload)) // F-MAN-4 a: o portal numera
-      : DpsPayloadSchema.parse(
-          doc.numero != null
-            ? { ...reassembled.payload, infDPS: { ...reassembled.payload.infDPS, nDPS: Number(doc.numero) } }
-            : reassembled.payload,
-        );
-
-    assertTpAmb(payload, doc.ambiente as DfeAmbiente);
+    const { payload, cnpjEmitente, partnerAccountRef } =
+      doc.kind === 'NFSE' ? await this.reenvioDps(scope, doc, port) : await this.reenvioNfe(scope, doc, port);
 
     const nextAttemptNo = doc.currentAttemptNo + 1;
     const ref = attemptRef(doc.id, nextAttemptNo);
@@ -253,8 +228,8 @@ export class FiscalDocumentLifecycleService {
         kind: doc.kind as FiscalDocumentKind,
         ref,
         ambiente: doc.ambiente as DfeAmbiente,
-        cnpjEmitente: reassembled.cnpjEmitente,
-        partnerAccountRef: reassembled.partnerAccountRef,
+        cnpjEmitente,
+        partnerAccountRef,
         payload,
       });
     } catch (emitError) {
@@ -264,6 +239,86 @@ export class FiscalDocumentLifecycleService {
     }
 
     return this.emissionService.getById(scope, documentId);
+  }
+
+  /** Reenvio da NFS-e: DPS remontada com o MESMO nDPS (a numeração não é reconsumida). Extraído do `reenviar` sem mudança. */
+  private async reenvioDps(
+    scope: AccountingScope,
+    doc: FiscalDocumentWithAttempts,
+    port: DfeEmissorPort,
+  ): Promise<{ payload: DpsPayload | DpsManualPayload; cnpjEmitente: string; partnerAccountRef: string | null }> {
+      const reassembled = await this.emissionService.reassembleGroupForReenvio(
+        scope,
+        doc.saleId,
+        doc.kind as FiscalDocumentKind,
+        doc.cTribNac,
+        doc.ambiente as DfeAmbiente,
+        doc.saleKey, // BE-INCR-PACOTE-VALIDADE (L2, dono 03/10): nota de saldo vencido remonta pelo vencimento
+      );
+      // BE-INCR-DFE-EVENTOS (review B1): a remontagem não conhece o `subst` — a substituta reenviada tem de continuar
+      // substituindo a original (chave da original + substMotivo/substReason; E0078 validado pelo DpsSubstSchema abaixo).
+      if (doc.substitutesDocumentId) {
+        const original = await this.repo.findById(scope, doc.substitutesDocumentId);
+        reassembled.payload = {
+          ...reassembled.payload,
+          infDPS: {
+            ...reassembled.payload.infDPS,
+            subst: {
+              chSubstda: original?.chaveOuCodigo ?? '',
+              cMotivo: doc.substMotivo as SubstMotivo,
+              ...(doc.substReason ? { xMotivo: doc.substReason } : {}),
+            },
+          },
+        };
+      }
+      // A numeração NÃO é reconsumida no reenvio — é a MESMA DPS, uma nova tentativa de envio dela.
+      const payload = port.capabilities.numbersDps
+        ? DpsManualPayloadSchema.parse(toManualDps(reassembled.payload)) // F-MAN-4 a: o portal numera
+        : DpsPayloadSchema.parse(
+            doc.numero != null
+              ? { ...reassembled.payload, infDPS: { ...reassembled.payload.infDPS, nDPS: Number(doc.numero) } }
+              : reassembled.payload,
+          );
+
+      assertTpAmb(payload, doc.ambiente as DfeAmbiente);
+    return { payload, cnpjEmitente: reassembled.cnpjEmitente, partnerAccountRef: reassembled.partnerAccountRef };
+  }
+
+  /**
+   * BE-INCR-NFCE (nó X10a, PR-4; EMENDA-3 F-NFCE-E3-2 a) — reenvio da NF-e/NFC-e rejeitada com o número AMARRADO ao
+   * documento: mesma série e mesmo nNF (a rejeitada é descartada e "pode ser corrigida e novamente transmitida", MOC VG
+   * §5.1.6). O cNF é sorteado de novo e a chave recalculada com o `dhEmi` do reenvio (dono, 26/10: "Sortear novo"). Número
+   * com pedido de inutilização REQUESTED/HOMOLOGATED ⇒ 409 `DFE_NUMERO_INUTILIZADO` (dono, 26/10: depois de inutilizar o
+   * número de uma rejeitada, o reenvio dela é recusado).
+   */
+  private async reenvioNfe(
+    scope: AccountingScope,
+    doc: FiscalDocumentWithAttempts,
+    port: DfeEmissorPort,
+  ): Promise<{ payload: NfePayload | NfePayloadSemNumeracao; cnpjEmitente: string; partnerAccountRef: string | null }> {
+    const kind = doc.kind as 'NFE' | 'NFCE';
+    const ambiente = doc.ambiente as DfeAmbiente;
+    if (doc.numero != null) {
+      const faixa = { kind, ambiente, serie: doc.serie, nIni: doc.numero, nFin: doc.numero };
+      const inutilizacoes = await this.voidRepo.findOverlapping(scope, faixa, OCCUPYING_VOID_STATUSES);
+      if (inutilizacoes.length > 0) {
+        throw new ConflictError(
+          `reenvio_bloqueado: o número ${doc.numero} da série ${doc.serie} tem pedido de inutilização (${inutilizacoes[0].status}).`,
+          'DFE_NUMERO_INUTILIZADO',
+        );
+      }
+    }
+    const reassembled = await this.emissionService.reassembleNfeForReenvio(scope, doc.saleId, kind, ambiente);
+    const { infNFe } = reassembled.payload;
+    const semNumero: NfePayloadSemNumeracao = { ...reassembled.payload, infNFe: { ...infNFe, ide: { ...infNFe.ide, serie: doc.serie } } };
+    const payload =
+      !port.capabilities.numbersDps && doc.numero != null
+        ? NfePayloadSchema.parse(numerarNfe(semNumero, Number(doc.numero), gerarCnf(Number(doc.numero))))
+        : NfePayloadSemNumeracaoSchema.parse(semNumero);
+    if (payload.infNFe.ide.tpAmb !== tpAmbFor(ambiente)) {
+      throw new Error(`dfe_tpamb_invariant: NF-e com tpAmb=${payload.infNFe.ide.tpAmb} num documento de ${ambiente}.`);
+    }
+    return { payload, cnpjEmitente: reassembled.cnpjEmitente, partnerAccountRef: reassembled.partnerAccountRef };
   }
 
   /**

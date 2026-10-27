@@ -1,5 +1,14 @@
 import { createHash } from 'crypto';
-import type { CancelInput, CancelResult, DfeCapabilities, DfeEmissorPort, EmissaoResult, EmitirInput } from './DfeEmissorPort';
+import type {
+  CancelInput,
+  CancelResult,
+  DfeCapabilities,
+  DfeEmissorPort,
+  EmissaoResult,
+  EmitirInput,
+  InutilizarInput,
+  InutilizarResult,
+} from './DfeEmissorPort';
 
 /**
  * NullEmissor — BE-INCR-DFE (BRIEF item 11). Adaptador de desenvolvimento/teste: autoriza
@@ -16,6 +25,7 @@ export class NullEmissor implements DfeEmissorPort {
     // Nenhum parceiro real por trás — sem webhook de verdade para verificar (item 28: Null/File ⇒ 401 sempre).
     webhook: false,
     substituir: false, // X11 review M3: a chave sintética NULL<hex> não é TSChaveNFSe (50 dígitos) — não monta o subst
+    inutilizar: true, // BE-INCR-NFCE item 24: homologa sinteticamente (faixa válida + Null ⇒ HOMOLOGATED)
   };
 
   constructor() {
@@ -49,6 +59,12 @@ export class NullEmissor implements DfeEmissorPort {
     void partnerRef;
     void input;
     return { status: 'CANCELLED', errors: [] };
+  }
+
+  /** BE-INCR-NFCE item 24 — protocolo sintético determinístico a partir da faixa (nunca aleatório). */
+  async inutilizar(input: InutilizarInput): Promise<InutilizarResult> {
+    const chave = `${input.kind}:${input.ambiente}:${input.serie}:${input.nIni}:${input.nFin}`;
+    return { status: 'HOMOLOGATED', nProt: `NULL${createHash('sha256').update(chave).digest('hex').slice(0, 11).toUpperCase()}`, errors: [] };
   }
 
   verifyWebhook(): { ok: true; partnerRef: string } | { ok: false } {

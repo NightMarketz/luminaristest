@@ -66,3 +66,40 @@ substituirAte: (string | null)
 substituirTeto: (string | null)
 fonte: ("perfil" | "desconhecida")
 }
+export interface FiscalNumberVoidViewInput {
+id: string
+kind: ("NFE" | "NFCE")
+ambiente: ("producao" | "homologacao")
+serie: number
+nIni: string
+nFin: string
+ano: number
+status: ("REQUESTED" | "HOMOLOGATED" | "REJECTED")
+partner: string
+nProt: (string | null)
+errors: {
+code: string
+message: string
+}[]
+}
+export interface LacunaDeNumeracaoInput {
+ambiente: string
+serie: number
+numero: string
+documentId: (string | null)
+status: (("SENT" | "PROCESSING" | "AUTHORIZED" | "AUTHORIZED_DIVERGENT" | "REJECTED" | "CANCELLED") | null)
+avisos: string[]
+presuncao?: string
+}
+export interface PendingVoidsQueryInput {
+unitId: string
+kind: ("NFE" | "NFCE")
+}
+export interface VoidNumberRangeInput {
+unitId: string
+kind: ("NFE" | "NFCE")
+serie: number
+nIni: number
+nFin: number
+xJust: string
+}

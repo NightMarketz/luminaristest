@@ -172,6 +172,7 @@ function makeService(opts: { docs?: Record<string, ReturnType<typeof baseDoc>> }
     postingService as never,
     policy as never,
     auditService as never,
+    { findOverlapping: async () => [] } as never, // BE-INCR-NFCE PR-4: faixas inutilizadas (reenvio)
   );
   return { service, repo, emissionService, documentAttachmentService, postingService, policy, auditService, docsById };
 }
