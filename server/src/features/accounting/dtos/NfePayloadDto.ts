@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { CNPJ_REGEX, CPF_REGEX, classifyTaxId, isValidCnpj, nfeChaveCheckDigit } from '../../../lib/cnpj';
 import { NFCE_CFOP } from '../models/nfePrecondicoes';
+import { NfeIbsCbsSchema, NfeIbsCbsTotSchema, NfeIsSchema, NfeIsTotSchema, regrasIbsCbs } from './NfeIbsCbsDto';
 
 /**
  * BE-INCR-NFCE (nó X10a, item 12) — leiaute de SAÍDA da NF-e 55 / NFC-e 65, transcrito de
@@ -11,7 +12,7 @@ import { NFCE_CFOP } from '../models/nfePrecondicoes';
  *
  * Forma: códigos com zero à esquerda (NCM, CFOP, CST, CSOSN, cUF, cNF) como string; dinheiro e quantidades como texto
  * decimal ("0.00") — mesma convenção da DPS (`DpsPayloadDto.ts`); a conversão de centavos mora na montagem
- * (`models/nfeMontagem.ts`). O grupo IBS/CBS (UB) é do PR-6 (item 20) e ainda não está no schema.
+ * (`models/nfeMontagem.ts`). O grupo UB (IS e IBS/CBS) e os totais W03 moram em `NfeIbsCbsDto.ts` (PR-6, item 20).
  */
 
 const Money = z.string().regex(/^\d{1,13}\.\d{2}$/); // 13v2
@@ -177,6 +178,8 @@ const Det = z
         ICMS: Icms, // N01
         PIS: tributoPisCofins('PIS').optional(), // Q01 0-1
         COFINS: tributoPisCofins('COFINS').optional(), // S01 0-1
+        IS: NfeIsSchema.optional(), // UB01 0-1
+        IBSCBS: NfeIbsCbsSchema.optional(), // UB12 0-1 — exigido conforme UB12-10
       })
       .strict(),
   })
@@ -204,7 +207,9 @@ const InfNFeShape = {
   emit: Emit,
   dest: Dest.optional(), // E01 0-1 — obrigatório na 55
   det: z.array(Det).min(1).max(990),
-  total: z.object({ ICMSTot: IcmsTot }).strict(),
+  total: z
+    .object({ ICMSTot: IcmsTot, ISTot: NfeIsTotSchema.optional(), IBSCBSTot: NfeIbsCbsTotSchema.optional(), vNFTot: Money.optional() }) // W31, W34, W60
+    .strict(),
   transp: z.object({ modFrete: z.number().int().min(0).max(9) }).strict(), // X02
   pag: z.object({ detPag: z.array(DetPag).min(1).max(100), vTroco: Money.optional() }).strict(), // YA01
 } as const;
@@ -251,6 +256,9 @@ function regrasNfe(inf: InfNFeComum & { ide: { cNF?: string; nNF?: number; cDV?:
   const somaPag = pag.detPag.filter((p) => p.tPag !== '90' && p.tPag !== '91').reduce((s, p) => s + cents(p.vPag), 0);
   const semPagamento = pag.detPag.every((p) => p.tPag === '90' || p.tPag === '91');
   if (!semPagamento && somaPag < cents(t.vNF)) add('rej. 865: Σ vPag < vNF — YA03-10', ['pag']);
+
+  // Grupo UB e totais W03 (NT 2025.002 v1.52) — `NfeIbsCbsDto.regrasIbsCbs`.
+  regrasIbsCbs(inf, add);
 
   if (!nfce) return;
 

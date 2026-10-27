@@ -284,9 +284,10 @@
  *
  *   /api/nfe/dfe/documents/{id}/cancelar:
  *     post:
- *       summary: Cancel an AUTHORIZED document (item 29, Anexo II e101101)
+ *       summary: Cancel an AUTHORIZED document (NFS-e e101101 item 29; NF-e/NFC-e 110111, BE-INCR-NFCE item 27)
  *       description: >-
- *         409: OUT_OF_WINDOW (E0822) ou REJECTED pelo parceiro (código do fisco na mensagem)
+ *         409: OUT_OF_WINDOW (NFS-e E0822; NF-e/NFC-e 501) ou REJECTED pelo parceiro (código do fisco na mensagem)
+ *         O corpo tem a forma do tipo do documento: NFS-e cMotivo/xMotivo; NF-e/NFC-e xJust (forma trocada = 400).
  *         Só de status AUTHORIZED. Nunca toca a venda nem o razão. OUT_OF_WINDOW/REJECTED do
  *         parceiro viram 409 tipado; CANCELLED retira a proveniência anexada (F-DFE-18, soft-delete).
  *       tags: [Accounting]
@@ -298,14 +299,22 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               required: [unitId, cMotivo, xMotivo]
- *               properties:
- *                 unitId: { type: string }
- *                 cMotivo: { type: integer, enum: [1, 2, 9], description: '1 erro na emissão | 2 serviço não prestado | 9 outros' }
- *                 xMotivo: { type: string, minLength: 15, maxLength: 255 }
+ *               oneOf:
+ *                 - type: object
+ *                   description: NFS-e (Anexo II e101101)
+ *                   required: [unitId, cMotivo, xMotivo]
+ *                   properties:
+ *                     unitId: { type: string }
+ *                     cMotivo: { type: integer, enum: [1, 2, 9], description: '1 erro na emissão | 2 serviço não prestado | 9 outros' }
+ *                     xMotivo: { type: string, minLength: 15, maxLength: 255 }
+ *                 - type: object
+ *                   description: NF-e / NFC-e (evento 110111, MOC 7.0 VG Tabela 5-37)
+ *                   required: [unitId, xJust]
+ *                   properties:
+ *                     unitId: { type: string }
+ *                     xJust: { type: string, minLength: 15, maxLength: 255 }
  *       responses:
- *         '200': { description: "FiscalDocumentView (status CANCELLED) + avisos (['fora_da_janela_configurada'] quando passou do prazo configurado no perfil — só aviso, BE-INCR-DFE-EVENTOS item 5)" }
+ *         '200': { description: "FiscalDocumentView (status CANCELLED) + avisos (['fora_da_janela_configurada'] quando passou do prazo — perfil, ou na NF-e/NFC-e o nacional de 24 h / 30 min; só aviso, BE-INCR-DFE-EVENTOS item 5, BE-INCR-NFCE item 27)" }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }

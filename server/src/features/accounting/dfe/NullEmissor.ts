@@ -26,6 +26,7 @@ export class NullEmissor implements DfeEmissorPort {
     webhook: false,
     substituir: false, // X11 review M3: a chave sintética NULL<hex> não é TSChaveNFSe (50 dígitos) — não monta o subst
     inutilizar: true, // BE-INCR-NFCE item 24: homologa sinteticamente (faixa válida + Null ⇒ HOMOLOGATED)
+    cce: false, // BE-INCR-NFCE item 28 (F-NFCE-9 c): a CC-e não está implementada em adaptador nenhum
   };
 
   constructor() {
