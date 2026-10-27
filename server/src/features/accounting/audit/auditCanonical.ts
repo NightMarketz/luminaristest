@@ -281,6 +281,8 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'dfe.manual_result': ['documentId', 'attemptNo', 'releitura', 'nDivergencias'],
   // BE-INCR-DFE-EVENTOS (nó X11, item 14) — a substituta autorizada cancelou a original (e105102). Sem PII.
   'dfe.substituted': ['documentId', 'substituteDocumentId', 'cMotivo'],
+  // BE-INCR-NFCE (nó X10a, item 26) — faixa inutilizada homologada (F-NFCE-5 a). Sem PII (o xJust fica na linha, não aqui).
+  'dfe.number_voided': ['voidId', 'kind', 'serie', 'nIni', 'nFin', 'ambiente'],
   // BE-INCR-CONTADOR-DELIVERY (item 14) — cadastro do contador + entrega do pacote ECD/ECF.
   // `name`/`email` do contador NUNCA aparecem aqui (D5): são PII de TERCEIRO numa trilha
   // append-only e hash-encadeada, então o que entra não sai. A trilha carrega `contactId`, que

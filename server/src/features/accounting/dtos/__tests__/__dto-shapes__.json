@@ -1486,6 +1486,7 @@
                   "FiscalDocument",
                   "FiscalDocumentPendingAttachment",
                   "FiscalDocumentSequence",
+                  "FiscalNumberVoid",
                   "FixedAssetClass",
                   "DepreciationRate",
                   "FixedAsset",
@@ -5938,6 +5939,233 @@
         "substituirAte",
         "substituirTeto",
         "fonte"
+      ],
+      "additionalProperties": false
+    },
+    "FiscalNumberVoidViewSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "NFE",
+            "NFCE"
+          ]
+        },
+        "ambiente": {
+          "type": "string",
+          "enum": [
+            "producao",
+            "homologacao"
+          ]
+        },
+        "serie": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "nIni": {
+          "type": "string",
+          "pattern": "^\\d+$"
+        },
+        "nFin": {
+          "type": "string",
+          "pattern": "^\\d+$"
+        },
+        "ano": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "REQUESTED",
+            "HOMOLOGATED",
+            "REJECTED"
+          ]
+        },
+        "partner": {
+          "type": "string"
+        },
+        "nProt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "ambiente",
+        "serie",
+        "nIni",
+        "nFin",
+        "ano",
+        "status",
+        "partner",
+        "nProt",
+        "errors"
+      ],
+      "additionalProperties": false
+    },
+    "LacunaDeNumeracaoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "ambiente": {
+          "type": "string"
+        },
+        "serie": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "numero": {
+          "type": "string",
+          "pattern": "^\\d+$"
+        },
+        "documentId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "SENT",
+                "PROCESSING",
+                "AUTHORIZED",
+                "AUTHORIZED_DIVERGENT",
+                "REJECTED",
+                "CANCELLED"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "avisos": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "presuncao": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "ambiente",
+        "serie",
+        "numero",
+        "documentId",
+        "status",
+        "avisos"
+      ],
+      "additionalProperties": false
+    },
+    "PendingVoidsQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "NFE",
+            "NFCE"
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "kind"
+      ],
+      "additionalProperties": false
+    },
+    "VoidNumberRangeSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "NFE",
+            "NFCE"
+          ]
+        },
+        "serie": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 889
+        },
+        "nIni": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 999999999
+        },
+        "nFin": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 999999999
+        },
+        "xJust": {
+          "type": "string",
+          "minLength": 15,
+          "maxLength": 255
+        }
+      },
+      "required": [
+        "unitId",
+        "kind",
+        "serie",
+        "nIni",
+        "nFin",
+        "xJust"
       ],
       "additionalProperties": false
     }

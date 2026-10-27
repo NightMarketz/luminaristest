@@ -159,6 +159,7 @@ function harness(docs: Doc[] = [baseDoc()]) {
     postingService as never,
     { canEmitFiscalDocument: () => true, canCancelFiscalDocument: () => true } as never,
     auditService as never,
+    { findOverlapping: async () => [] } as never, // BE-INCR-NFCE PR-4: faixas inutilizadas (reenvio)
   );
   const onlyPending = () => [...pendings.values()];
   return { service, repo, docsById, pendings, onlyPending, documentAttachmentService, postingService };

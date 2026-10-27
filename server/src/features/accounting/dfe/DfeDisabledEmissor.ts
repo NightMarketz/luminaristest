@@ -16,6 +16,7 @@ export class DfeDisabledEmissor implements DfeEmissorPort {
     cancelar: false,
     webhook: false,
     substituir: false, // BE-INCR-DFE-EVENTOS item 16 — nada é emitido pela porta desabilitada
+    inutilizar: false, // BE-INCR-NFCE item 24 — idem
   };
 
   constructor(public readonly reason: string) {}

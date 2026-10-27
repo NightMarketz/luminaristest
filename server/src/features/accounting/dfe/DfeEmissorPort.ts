@@ -71,6 +71,11 @@ export interface DfeCapabilities {
    * `false` ⇒ `POST …/substituir` recusa com 409 `DFE_SUBST_NAO_SUPORTADA`.
    */
   substituir: boolean;
+  /**
+   * BE-INCR-NFCE (nó X10a, item 24) — o adaptador pede a inutilização de faixa de NF-e/NFC-e (`inutNFe`, MOC VG §5.3).
+   * `false` ⇒ `POST …/inutilizacoes` recusa com 409 `DFE_INUT_NAO_SUPORTADA`.
+   */
+  inutilizar: boolean;
 }
 
 /**
@@ -137,6 +142,29 @@ export type CancelInput =
   | { kind: 'NFE' | 'NFCE'; xJust: string };
 
 /**
+ * BE-INCR-NFCE (nó X10a, item 24) — pedido de inutilização (`inutNFe`, MOC 7.0 VG §5.3.1, Tabela 5-9): tpAmb, ano (2),
+ * CNPJ, mod (55 | 65), série, nNFIni, nNFFin e xJust (15–255). EMENDA-3 E3-1 (c): vale para toda UF, também AC/BA/SP depois
+ * de 01/11/2026 — quem decide é a SEFAZ.
+ */
+export interface InutilizarInput {
+  kind: 'NFE' | 'NFCE';
+  ambiente: DfeAmbiente;
+  cnpjEmitente: string;
+  partnerAccountRef: string | null;
+  ano: number;
+  serie: number;
+  nIni: bigint;
+  nFin: bigint;
+  xJust: string;
+}
+
+export interface InutilizarResult {
+  status: 'HOMOLOGATED' | 'REJECTED' | 'PROCESSING';
+  nProt?: string;
+  errors: Array<{ code: string; message: string }>;
+}
+
+/**
  * A porta. Cada adaptador declara suas `capabilities`; o serviço nunca assume uma capacidade que o
  * adaptador corrente não anuncia (ex.: só consome a sequência local quando `numbersDps === false`).
  */
@@ -146,6 +174,8 @@ export interface DfeEmissorPort {
   emitir(input: EmitirInput): Promise<EmissaoResult>;
   consultar(partnerRef: string): Promise<EmissaoResult>;
   cancelar(partnerRef: string, input: CancelInput): Promise<CancelResult>;
+  /** BE-INCR-NFCE item 24 — só existe quando `capabilities.inutilizar`. */
+  inutilizar?(input: InutilizarInput): Promise<InutilizarResult>;
   verifyWebhook(
     headers: Record<string, string | undefined>,
     rawBody: Buffer,

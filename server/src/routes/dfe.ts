@@ -16,6 +16,8 @@ import {
   cancelamentoManualFiscalDocument,
   getFichaFiscalDocument,
   substituirFiscalDocument,
+  inutilizarNumeracao,
+  listInutilizacoesPendentes,
 } from '../controllers/fiscalDocumentController';
 
 /**
@@ -45,6 +47,9 @@ router.get('/documents/:id/ficha', getFichaFiscalDocument);
 router.post('/documents/:id/retorno-manual', retornoManualUpload, retornoManualFiscalDocument);
 router.post('/documents/:id/rejeicao-manual', rejeicaoManualFiscalDocument);
 router.post('/documents/:id/cancelamento-manual', eventoManualUpload, cancelamentoManualFiscalDocument);
+// BE-INCR-NFCE (nó X10a, itens 24–25) — inutilização de faixa de NF-e/NFC-e e lacunas de numeração (o sistema lista, o operador pede).
+router.post('/inutilizacoes', inutilizarNumeracao);
+router.get('/inutilizacoes/pendentes', listInutilizacoesPendentes);
 // PÚBLICA (F-DFE-12) — listada em publicApiRoutes (middleware/auth.ts); NUNCA GET (HEAD deriva de
 // GET no Express — memória critical-auth-bypass-case-sensitive-guard — por isso só POST aqui).
 router.post('/webhook/:partner', receiveDfeWebhook);

@@ -38,6 +38,7 @@ const service = new FiscalDocumentLifecycleService(
   { attachSourceDocument, retireSourceDocument: jest.fn() } as never,
   { canEmitFiscalDocument: () => true, canCancelFiscalDocument: () => true } as never,
   { append: jest.fn() } as never,
+  { findOverlapping: async () => [] } as never, // BE-INCR-NFCE PR-4: faixas inutilizadas (reenvio)
 );
 
 async function pendente(saleId: string) {

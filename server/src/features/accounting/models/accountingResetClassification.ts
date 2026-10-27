@@ -72,6 +72,7 @@ export const ACCOUNTING_RESET_BLOCKING = [
   'FiscalDocument',
   'FiscalDocumentPendingAttachment',
   'FiscalDocumentSequence',
+  'FiscalNumberVoid', // BE-INCR-NFCE PR-4: pedido de inutilização enviado à SEFAZ ⇒ bloqueia, como a sequência
   'FixedAssetClass',
   'DepreciationRate',
   'FixedAsset',

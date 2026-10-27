@@ -52,6 +52,7 @@ describe('retorno manual → GET /documents/:id (FE-INCR-DFE PR-1, itens 10–13
     { attachSourceDocument: async () => ({ id: 'src-1' }), retireSourceDocument: async () => undefined } as never,
     policy as never,
     { append: async () => undefined } as never,
+    { findOverlapping: async () => [] } as never, // BE-INCR-NFCE PR-4: faixas inutilizadas (reenvio)
   );
 
   beforeAll(async () => {

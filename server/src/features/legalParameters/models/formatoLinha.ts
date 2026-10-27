@@ -174,6 +174,15 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
         'chave DEST_IDENTIFICADO_CENTS|VEDADA_CENTS; discriminador = IBGE da UF (2 dígitos) ou nenhum; valorInt em centavos > 0',
       ),
   },
+  // BE-INCR-NFCE PR-4 (EMENDA-3 E3-2 a): chave = tipo (NFE | NFCE); discriminador = IBGE da UF; valorTexto = o aviso.
+  INUT_NAO_SE_APLICA: {
+    valor: 'texto',
+    checar: (l) =>
+      so(
+        ['NFE', 'NFCE'].includes(l.chave) && /^\d{2}$/.test(l.discriminador ?? '') && (l.valorTexto ?? '').trim().length > 0,
+        'chave NFE|NFCE; discriminador = IBGE da UF (2 dígitos); valorTexto = o aviso',
+      ),
+  },
   LEIAUTE_SPED: {
     valor: 'texto',
     checar: (l) =>
