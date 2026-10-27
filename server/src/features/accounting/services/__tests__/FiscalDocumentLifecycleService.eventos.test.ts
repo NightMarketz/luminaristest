@@ -6,7 +6,7 @@
  */
 const mockPort = {
   name: 'manual',
-  capabilities: { numbersDps: true, consultar: false, cancelar: false, webhook: false, substituir: true },
+  capabilities: { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: true, consultar: false, cancelar: false, webhook: false, substituir: true, inutilizar: false },
   emitir: jest.fn(),
   consultar: jest.fn(),
   cancelar: jest.fn(),
@@ -122,7 +122,7 @@ function make(docs: Doc[], opts: { janela?: ReturnType<typeof JANELA>; policy?: 
   const postingService = { attachSourceDocument: jest.fn(async () => ({ id: 'src-new' })), retireSourceDocument: jest.fn(async () => undefined) };
   const policy = { canEmitFiscalDocument: () => true, canCancelFiscalDocument: () => true, canReadFiscalDocument: () => true, ...opts.policy };
   const auditService = { append: jest.fn() };
-  const service = new FiscalDocumentLifecycleService(repo as never, emissionService as never, documentAttachmentService as never, postingService as never, policy as never, auditService as never);
+  const service = new FiscalDocumentLifecycleService(repo as never, emissionService as never, documentAttachmentService as never, postingService as never, policy as never, auditService as never, { findOverlapping: async () => [] } as never);
   return { service, repo, emissionService, documentAttachmentService, postingService, auditService, byId };
 }
 const transitionsOf = (repo: { transition: jest.Mock }, id: string) =>
@@ -133,7 +133,7 @@ beforeEach(() => {
   mockSelection.enabled = true;
   mockSelection.ambiente = 'producao';
   mockPort.name = 'manual';
-  mockPort.capabilities = { numbersDps: true, consultar: false, cancelar: false, webhook: false, substituir: true };
+  mockPort.capabilities = { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: true, consultar: false, cancelar: false, webhook: false, substituir: true, inutilizar: false };
 });
 
 describe('item 1 — nfseDhProc', () => {
@@ -145,7 +145,7 @@ describe('item 1 — nfseDhProc', () => {
 
   it('por máquina: EmissaoResult.dhProc vira nfseDhProc; ausente ⇒ null', async () => {
     mockPort.name = 'null';
-    mockPort.capabilities = { numbersDps: false, consultar: true, cancelar: true, webhook: false, substituir: true };
+    mockPort.capabilities = { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: false, consultar: true, cancelar: true, webhook: false, substituir: true, inutilizar: false };
     const s = make([doc({ id: 'd', status: 'SENT', partner: 'null', ambiente: 'producao' })]);
     mockPort.consultar.mockResolvedValueOnce({ status: 'AUTHORIZED', partnerRef: 'd:1', numero: '15', chaveOuCodigo: 'K', dhProc: '2026-10-01T10:00:00-03:00', errors: [] });
     await s.service.consultarUm(SCOPE, 'd');
@@ -156,7 +156,7 @@ describe('item 1 — nfseDhProc', () => {
 describe('itens 5 e 6 — cancelamento por máquina com a janela e contrato do OUT_OF_WINDOW', () => {
   beforeEach(() => {
     mockPort.name = 'null';
-    mockPort.capabilities = { numbersDps: false, consultar: true, cancelar: true, webhook: false, substituir: true };
+    mockPort.capabilities = { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: false, consultar: true, cancelar: true, webhook: false, substituir: true, inutilizar: false };
   });
   const maquina = () => doc({ partner: 'null' });
 
@@ -326,7 +326,7 @@ describe('review B1 — reenviar a substituta REJECTED recoloca o subst', () => 
 
   it('máquina: idem, com xMotivo do pedido', async () => {
     mockPort.name = 'null';
-    mockPort.capabilities = { numbersDps: false, consultar: true, cancelar: true, webhook: false, substituir: true };
+    mockPort.capabilities = { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: false, consultar: true, cancelar: true, webhook: false, substituir: true, inutilizar: false };
     const s = make([doc({ partner: 'null' }), substituta({ status: 'REJECTED', partner: 'null', numero: 9n, substMotivo: '99', substReason: 'valor do servico corrigido' })]);
     await s.service.reenviar(SCOPE, 'subst');
     expect(payloadDaTentativa2(s.repo as never).infDPS.subst).toEqual({ chSubstda: CHAVE_ORIGINAL, cMotivo: '99', xMotivo: 'valor do servico corrigido' });

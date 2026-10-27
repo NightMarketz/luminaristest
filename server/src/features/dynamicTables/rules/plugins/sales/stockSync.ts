@@ -134,7 +134,7 @@ export async function resolveProductUnitId(ctx: RuleContext, productId: string, 
   return String(candidates[0].id);
 }
 
-/** Create inventory movements for product items (In or Out) and avoid duplicates by (sourceType, sourceId, detailKey). */
+/** Create inventory movements for product items (In or Out) and avoid duplicates by (sourceId, detailKey) — see movementExists. */
 export async function createMovementsForItems(ctx: RuleContext, items: Array<{ id: string; data: Record<string, unknown> }>, saleUnitId?: string, type: 'In' | 'Out' = 'Out') {
   // Find movements table and whether it requires unitId; if not present, skip silently
   const mv = await findMovementsTable(ctx);

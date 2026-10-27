@@ -8,6 +8,7 @@ import {
   KIT_UPGRADE_RUN_STATUSES,
 } from '../models/kitUpgradeTypes';
 import { KIT_INSTALL_STATUSES } from '../models/kitInstallTypes';
+import { KitInstallStepsSchema } from './KitInstallationDto';
 
 /**
  * Contratos da atualização do kit (BE-INCR-KIT-SETOR, PR-4; BRIEF §3.3, §3.4; emenda §12).
@@ -88,6 +89,8 @@ export const KitInstallationViewSchema = z
     openPendingCount: z.number().int().min(0),
     /** As entradas do `changelog` das versões depois da instalada, até a última. */
     changelog: z.array(z.object({ kitVersion: z.number().int(), entries: z.array(z.string()) }).strict()),
+    /** EMENDA-2 da LAC-B, item 0 (F-KA-4 b): o último passo concluído e os avisos do referencial, como gravados. */
+    steps: KitInstallStepsSchema,
   })
   .strict();
 export type KitInstallationView = z.infer<typeof KitInstallationViewSchema>;

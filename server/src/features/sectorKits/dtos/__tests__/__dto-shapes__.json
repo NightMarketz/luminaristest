@@ -717,6 +717,31 @@
             ],
             "additionalProperties": false
           }
+        },
+        "steps": {
+          "type": "object",
+          "properties": {
+            "lastCompletedStep": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 7
+            },
+            "warnings": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "KIT_REFERENTIAL_SKIPPED_NO_REGIME",
+                  "KIT_REFERENTIAL_SKIPPED_NO_CATALOG"
+                ]
+              }
+            }
+          },
+          "required": [
+            "lastCompletedStep",
+            "warnings"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -726,7 +751,8 @@
         "status",
         "lastRun",
         "openPendingCount",
-        "changelog"
+        "changelog",
+        "steps"
       ],
       "additionalProperties": false
     },

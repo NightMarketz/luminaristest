@@ -327,6 +327,48 @@ describe('/api/accounting/fixed-asset-classes + /fixed-assets — contrato HTTP'
     });
   });
 
+  describe('C8 emenda 3.2, Parte 2 — benfeitoria em imóvel de terceiro (E8b, E9-E12)', () => {
+    it('classe AMORTIZATION_LEASEHOLD + ativo com prazo: grava os campos e a quota linear debita a conta de amortização', async () => {
+      const amort = await criarConta('4.1.7', 'Expense');
+      const klass = await request(app)
+        .post('/api/accounting/fixed-asset-classes')
+        .set(authHeader(dono))
+        .send({
+          unitId: UNIT, code: 'BENF-1', name: 'Benfeitorias', depreciable: true, costAccountId,
+          accumulatedDepreciationAccountId: accDepAccountId, kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: amort.id,
+        });
+      expect(klass.status).toBe(201);
+      expect(klass.body.data).toMatchObject({ kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: amort.id });
+
+      const indenizavel = await request(app)
+        .post('/api/accounting/fixed-assets')
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, classId: klass.body.data.id, code: 'A-BENF-X', description: 'x', costCents: 12_000, acquiredAt: '2026-01-01', annualRateBp: 1000, leaseEndDate: '2027-12-31', leaseIndemnifiable: true });
+      expect(indenizavel.status).toBe(400);
+
+      const asset = await request(app)
+        .post('/api/accounting/fixed-assets')
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, classId: klass.body.data.id, code: 'A-BENF-1', description: 'Reforma', costCents: 12_000, acquiredAt: '2026-01-01', annualRateBp: 1000, leaseEndDate: '2027-12-31', leaseIndemnifiable: false });
+      expect(asset.status).toBe(201);
+      const assetId = asset.body.data.id as string;
+      const stored = await prisma.fixedAsset.findUnique({ where: { id: assetId } });
+      expect([stored!.leaseEndDate, stored!.leaseIndemnifiable]).toEqual([new Date('2027-12-31T00:00:00.000Z'), false]);
+
+      const activated = await request(app).post(`/api/accounting/fixed-assets/${assetId}/activate`).set(authHeader(dono)).send({ unitId: UNIT, assetId, activatedAt: '2026-01-01', version: 1 });
+      expect(activated.status).toBe(200);
+      const run = await request(app).post('/api/accounting/fixed-assets/depreciation/run').set(authHeader(dono)).send({ unitId: UNIT, yearMonth: '2026-01' });
+      expect(run.status).toBe(200);
+
+      const entry = await prisma.journalEntry.findFirst({
+        where: { sourceType: 'fixed_asset.depreciation', sourceId: `${assetId}:2026-01` },
+        include: { postings: true },
+      });
+      const debit = entry!.postings.find((p) => p.debitCents > 0n)!;
+      expect([debit.accountId, debit.debitCents]).toEqual([amort.id, 500n]); // 12.000 / 24 meses
+    });
+  });
+
   describe('/api/accounting/fixed-assets/reconcile (PR-3, item 13/14)', () => {
     it('sem Bearer, 401', async () => {
       const res = await request(app).post('/api/accounting/fixed-assets/reconcile').send({ unitId: UNIT });
