@@ -73,6 +73,8 @@ emissaoForaDoMes?: ("AVISAR" | "BLOQUEAR")
 cancelPrazoDias?: (number | null)
 substPrazoDias?: (number | null)
 prazoFonte?: (string | null)
+nfeCancelPrazoHoras?: (number | null)
+nfceCancelPrazoMinutos?: (number | null)
 }
 export interface FiscalProfileScopeQueryInput {
 unitId: string
@@ -151,4 +153,6 @@ emissaoForaDoMes?: ("AVISAR" | "BLOQUEAR")
 cancelPrazoDias?: (number | null)
 substPrazoDias?: (number | null)
 prazoFonte?: (string | null)
+nfeCancelPrazoHoras?: (number | null)
+nfceCancelPrazoMinutos?: (number | null)
 }
