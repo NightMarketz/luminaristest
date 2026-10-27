@@ -6,6 +6,7 @@ jest.mock('@/lib/factory', () => ({
 }));
 
 import prisma from '@/lib/prisma';
+import { PrismaClient } from 'generated/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { legalParamsSemente } from '@test/helpers/legalParams';
 import { FiscalDocumentRepository } from '@/features/accounting/repositories/FiscalDocumentRepository';
@@ -84,11 +85,22 @@ describe('BE-INCR-NFCE PR-4 — numeração e inutilização em SQLite real', ()
   });
 
   it('item 23: 10 consumos concorrentes na mesma (kind, ambiente, série) não repetem número (1..10)', async () => {
-    const numeros = await Promise.all(
-      Array.from({ length: 10 }, () => docRepo.runTransaction((tx) => docRepo.nextNumber(scope, 'NFE', 'producao', 9, tx))),
-    );
-    expect(numeros.map(Number).sort((a, b) => a - b)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-  });
+    // Padrão do PostingRepository.concurrency: no Linux (CI) N tx interativas no pool padrão disputam o lock do SQLite
+    // até o timeout de 5 s; com uma conexão só elas fazem FILA — o teste prova número sem repetição, não latência.
+    const url = process.env.DATABASE_URL ?? '';
+    const db = new PrismaClient({
+      datasources: { db: { url: `${url}${url.includes('?') ? '&' : '?'}socket_timeout=60&connection_limit=1` } },
+      transactionOptions: { maxWait: 30_000, timeout: 30_000 },
+    });
+    try {
+      const numeros = await Promise.all(
+        Array.from({ length: 10 }, () => db.$transaction((tx) => docRepo.nextNumber(scope, 'NFE', 'producao', 9, tx))),
+      );
+      expect(numeros.map(Number).sort((a, b) => a - b)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    } finally {
+      await db.$disconnect();
+    }
+  }, 60000);
 
   it('itens 24–25: 1..5 com o 3 rejeitado ⇒ pendência [3]; guarda 241 no 4; inutiliza o 3 ⇒ HOMOLOGATED, trilha e lista vazia', async () => {
     for (let i = 0; i < 5; i++) await docRepo.runTransaction((tx) => docRepo.nextNumber(scope, 'NFCE', 'homologacao', 1, tx));
