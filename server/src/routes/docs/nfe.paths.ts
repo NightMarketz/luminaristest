@@ -362,6 +362,30 @@
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *
+ *   /api/nfe/dfe/documents/{id}/danfe:
+ *     get:
+ *       summary: DANFE PDF of an authorized NF-e 55 (NFE-DANFE-IBSCBS PR-3 item 19)
+ *       description: >-
+ *         Gera sob demanda o DANFE (NT 2026.010) só a partir do nfeProc anexado ao documento; nada é gravado.
+ *         Policy canReadFiscalDocument, a mesma da leitura por id.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200':
+ *           description: PDF (Content-Disposition attachment; filename="danfe-<chave>.pdf")
+ *           content:
+ *             application/pdf:
+ *               schema: { type: string, format: binary }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { description: 'Unidade ou documento fiscal inexistente (ou de outro tenant)' }
+ *         '409': { description: 'DANFE_DOCUMENTO_NAO_AUTORIZADO (status fora de AUTHORIZED/AUTHORIZED_DIVERGENT) ou DANFE_SEM_XML' }
+ *         '422': { description: 'DANFE_SO_NFE (documento NFS-e) ou DANFE_NFCE_NO_FE (NFC-e, DANFE do frontend)' }
+ *
  *   /api/nfe/dfe/documents/{id}/retorno-manual:
  *     post:
  *       summary: Register the authorized NFS-e XML downloaded from the public portal (manual mode, item 11)
