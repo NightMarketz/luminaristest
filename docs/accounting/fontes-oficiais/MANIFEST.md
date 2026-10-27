@@ -165,7 +165,6 @@ acrescentadas a mao com o sha do disco (o script reescreve o manifesto so com a 
   34-C e 34-D à Portaria CAT 147/12; 34-D: CF-e-SAT vedado a partir de 01/01/2026. Conteúdo no HTML servido (sem JS).
 - **nfe-nt-2025-002-v151** lido de outra worktree, sha256 `a4aaaa181522…` (igual ao registrado em 29/09).
 
-<<<<<<< HEAD
 **26/10/2026** — PR-0 do nó `NFE-DANFE-IBSCBS` (`BE-INCR-NFE-DANFE-IBSCBS-brief.md` itens 1–3; dono, chat, 2026-10-26:
 "Executa o NFE-DANFE-IBSCBS PR-0 — sessao-feature, sem merge"). Baixados do Portal da NF-e com cookie de sessão
 (`curl -c cj -b cj -L -A "<UA de navegador>"`); título conferido na 1ª página de cada PDF. Cópias e texto no dossiê
