@@ -6,7 +6,7 @@
 > dono 2026-10-25): conferência na tela do próprio app, todos os passos rodados pelo agente na sessão.
 > Prints e textos literais da tela em [`runbook-evidence/lac-b-kit-de-setor/`](runbook-evidence/lac-b-kit-de-setor/).
 
-Executor: agente Claude Fable 5.1, persona revisor, sob comando do dono (chat, 2026-10-26: *"Roda o Runbook: a conferência na tela está em RUNBOOK-LAC-B-KIT-DE-SETOR.md; preenche com prints e evidencias e assina como ia tester"*)           Data: 2026-10-26 (22h–23h, horário de Brasília; os timestamps do servidor abaixo estão em UTC, 2026-10-27T01:xx)
+Executor: agente Claude Fable 5.1, persona revisor, sob comando do dono (chat, 2026-10-26: *"Roda o Runbook: a conferência na tela está em RUNBOOK-LAC-B-KIT-DE-SETOR.md; preenche com prints e evidencias e assina como ia tester"*; reexecução do passo 9: *"Corrige a fixture dos passos 3 e 9 … e reexecuta só o passo 9, atualizando o runbook e a nota LAC-B"*)           Data: 2026-10-26 (22h–23h, horário de Brasília; os timestamps do servidor abaixo estão em UTC, 2026-10-27T01:xx)
 Autorização: EMENDA-2 da LAC-B, item 14; execução pedida pelo dono no chat em 26/10/2026 ("executa a EMENDA-2 da LAC-B"); execução deste runbook pedida pelo dono no chat em 26/10/2026 (frase citada no campo Executor)
 Pré-condições:
 - PR-0 e PR-1 da EMENDA-2 integrados (commit `957ec331f4b567135ceac49269d036d71c78d942` = `main` com #916, #919 e **#921 — o PR-2 também já está integrado**, por isso os passos 8–9 existem e o passo 3 mostra os botões; ver Registro)
@@ -90,12 +90,14 @@ Pré-condições:
    ```
    Confere: texto da versão, botão, e as entradas das versões 5 e 6. **PASSOU.**
 
-3. Simular uma pendência aberta:
-   `INSERT INTO kit_upgrade_pendings (id, userId, unitId, kitKey, toVersion, runId, itemKey, reason, kitValue, tenantValue, status, createdAt, updatedAt) VALUES ('rb-p1', '<USER>', '<UNIT>', 'beautySalon', 6, 'rb-run', 'role:receita-servico', 'override', '{}', '{}', 'OPEN', datetime('now'), datetime('now'));`
-   e recarregar a aba.
-   Resultado esperado: "Pendências da atualização do kit: 1" e a linha `role:receita-servico` com "A conta do papel foi
+3. Simular uma pendência aberta (fixture no formato real de `classifyKitDiff.ts:204`, corrigida em 26/10 por comando do
+   dono — a 1ª execução usou `'role:receita-servico'` e `kitValue '{}'`, ver passo 9 e Registro, achado 1):
+   `INSERT INTO kit_upgrade_pendings (id, userId, unitId, kitKey, toVersion, runId, itemKey, reason, kitValue, tenantValue, status, createdAt, updatedAt) VALUES ('rb-p1', '<USER>', '<UNIT>', 'beautySalon', 6, 'rb-run', 'role:receita-serviço', 'override', '{"role":"receita-serviço","accountCode":"3.1"}', '{"role":"receita-serviço","accountCode":"3.1.1"}', 'OPEN', datetime('now'), datetime('now'));`
+   (`3.1` = código do papel `receita-serviço` no binding Active do kit v6 da unidade; `tenantValue` leva outro código só
+   para ter forma de ajuste) e recarregar a aba.
+   Resultado esperado: "Pendências da atualização do kit: 1" e a linha `role:receita-serviço` com "A conta do papel foi
    ajustada nesta unidade". Sem botões de aceitar/recusar (entram no PR-2).
-   EVIDÊNCIA:
+   EVIDÊNCIA (1ª execução, fixture antiga — a tela com a fixture corrigida está no passo 9, "Reexecução"):
    ```
    sqlite> INSERT INTO kit_upgrade_pendings (id, userId, unitId, kitKey, toVersion, runId, itemKey, reason, kitValue, tenantValue, status, createdAt, updatedAt) VALUES ('rb-p1', 'cmufn7n590000cixkxbls0agh', 'cmvpzspp50001ciwszbcczcrj', 'beautySalon', 6, 'rb-run', 'role:receita-servico', 'override', '{}', '{}', 'OPEN', datetime('now'), datetime('now'));
    (1 row(s) affected)
@@ -262,11 +264,11 @@ Pré-condições:
    ```
    **PASSOU** (o motivo gravado é exatamente o texto que ficou no campo).
 
-9. Na linha `role:receita-servico` (motivo `override`) clicar "Aceitar".
+9. Na linha `role:receita-serviço` (motivo `override`) clicar "Aceitar".
    Resultado esperado: o modal diz que aceitar remove o ajuste da conta do papel e recompila o binding. Confirmar com
    motivo: toast "Pendência aceita." (sem ajuste vivo do papel o BE só fecha a pendência), a lista e o contador
    atualizam. `SELECT status FROM kit_upgrade_pendings WHERE id = 'rb-p1';` devolve `ACCEPTED`.
-   EVIDÊNCIA: modal ([`passo9-modal.png`](runbook-evidence/lac-b-kit-de-setor/passo9-modal.png)) confere:
+   EVIDÊNCIA — **1ª execução (fixture antiga, `role:receita-servico` + `kitValue '{}'`): FALHOU**; modal ([`passo9-modal.png`](runbook-evidence/lac-b-kit-de-setor/passo9-modal.png)) confere:
    ```
    Aceitar a pendência role:receita-servico?
    Aceitar remove o ajuste da conta deste papel e recompila o binding com a conta do kit.
@@ -296,14 +298,65 @@ Pré-condições:
    sqlite> SELECT id, status, motivo, updatedAt FROM kit_upgrade_pendings WHERE id = 'rb-p1';
    | rb-p1 | OPEN | None | 2026-10-27 01:18:43 |
    ```
-   A lista e o contador não mudaram; `rb-p1` segue `OPEN`. **FALHOU** — divergência do esperado.
-   Causa apurada (leitura do código + 1 diagnóstico, fora do roteiro — Registro, achado 1): a fixture deste passo 3
-   (`kitValue = '{}'`) não tem o formato da pendência real.
+   A lista e o contador não mudaram; `rb-p1` seguia `OPEN`. Divergência do esperado na 1ª execução.
+   Causa apurada (leitura do código + 1 diagnóstico, fora do roteiro — Registro, achado 1): a fixture do passo 3
+   (`kitValue = '{}'`, papel sem ç) não tinha o formato da pendência real.
+
+   **Reexecução do passo 9 (26/10, mesmo build `957ec331`, mesmos servidores reiniciados; dono, chat, 2026-10-26:
+   *"Corrige a fixture dos passos 3 e 9 … e reexecuta só o passo 9, atualizando o runbook e a nota LAC-B"*).**
+   A linha antiga foi removida e a fixture corrigida do passo 3 inserida (o SELECT confirma o `ç` em UTF-8:
+   `itemKey = 'role:receita-serviço'` → `1`):
+   ```
+   sqlite> DELETE FROM kit_upgrade_pendings WHERE id = 'rb-p1';
+   (1 row(s) affected)
+   sqlite> INSERT INTO kit_upgrade_pendings (id, userId, unitId, kitKey, toVersion, runId, itemKey, reason, kitValue, tenantValue, status, createdAt, updatedAt) VALUES ('rb-p1', 'cmufn7n590000cixkxbls0agh', 'cmvpzspp50001ciwszbcczcrj', 'beautySalon', 6, 'rb-run', 'role:receita-serviço', 'override', '{"role":"receita-serviço","accountCode":"3.1"}', '{"role":"receita-serviço","accountCode":"3.1.1"}', 'OPEN', datetime('now'), datetime('now'));
+   (1 row(s) affected)
+   sqlite> SELECT id, itemKey, reason, kitValue, tenantValue, status FROM kit_upgrade_pendings WHERE id = 'rb-p1';
+   | rb-p1 | role:receita-serviço | override | {"role":"receita-serviço","accountCode":"3.1"} | {"role":"receita-serviço","accountCode":"3.1.1"} | OPEN |
+   ```
+   Aba ao abrir — vale também como a tela do passo 3 com a fixture corrigida
+   ([`passo9r-antes.png`](runbook-evidence/lac-b-kit-de-setor/passo9r-antes.png)):
+   ```
+   Salão de beleza
+   Versão 6
+   Pendências da atualização do kit: 1
+   role:receita-serviço
+   A conta do papel foi ajustada nesta unidade
+   Aceitar
+   Recusar
+   ```
+   "Aceitar" na linha → modal ([`passo9r-modal.png`](runbook-evidence/lac-b-kit-de-setor/passo9r-modal.png)), com o
+   motivo `aceite de teste do runbook` e `[assert] botão "Aceitar" disabled=false`:
+   ```
+   Aceitar a pendência role:receita-serviço?
+   Aceitar remove o ajuste da conta deste papel e recompila o binding com a conta do kit.
+   Motivo (10 a 500 caracteres)
+   Cancelar
+   Aceitar
+   ```
+   Confirmado: toast *"Pendência aceita."* ([`passo9r-toast.png`](runbook-evidence/lac-b-kit-de-setor/passo9r-toast.png));
+   2,5 s depois `role:receita-serviço` e "Pendências da atualização do kit" ausentes da página (assert do runner — o
+   contador foi a 0 e o bloco de pendências some) e a aba ([`passo9r-depois.png`](runbook-evidence/lac-b-kit-de-setor/passo9r-depois.png)):
+   ```
+   Salão de beleza
+   Versão 6
+   ```
+   ```
+   sqlite> SELECT status FROM kit_upgrade_pendings WHERE id = 'rb-p1';
+   | ACCEPTED |
+   sqlite> SELECT id, status, motivo FROM kit_upgrade_pendings WHERE id = 'rb-p1';
+   | rb-p1 | ACCEPTED | aceite de teste do runbook |
+   sqlite> SELECT COUNT(*) FROM accounting_bindings WHERE unitId = 'cmvpzspp50001ciwszbcczcrj' AND status = 'Active';
+   | 1 |
+   ```
+   **PASSOU** (na reexecução; sem ajuste vivo do papel o BE só fechou a pendência, e o binding seguiu com 1 Active).
 
 ## Desfecho (marcar UM)
-[ ] PASSOU — todos os passos com evidência conferindo com o esperado
-[x] FALHOU — passo 9 divergiu; evidência da divergência colada acima;
-    NENHUM passo seguinte foi executado após a falha (o 9 é o último; o diagnóstico do Registro não é passo do runbook)
+[x] PASSOU — todos os passos com evidência conferindo com o esperado
+    (o passo 9 passou na reexecução de 26/10, depois da correção da fixture do roteiro autorizada pelo dono; a 1ª
+    execução do passo 9 FALHOU por essa fixture e a evidência dela fica colada acima)
+[ ] FALHOU — passo __ divergiu; evidência da divergência colada acima;
+    NENHUM passo seguinte foi executado após a falha
 [ ] BLOQUEADO — pré-condição __ não se sustentava; execução nem começou
 
 ## Registro
@@ -320,10 +373,10 @@ Pré-condições:
      com o motivo `aceite diagnostico formato real`: toast *"Pendência aceita."*
      ([`diag-rb-p3-toast.png`](runbook-evidence/lac-b-kit-de-setor/diag-rb-p3-toast.png)), contador 2 → 1, linha some,
      `SELECT id, itemKey, status, motivo … WHERE id = 'rb-p3'` → `| rb-p3 | role:receita-revenda | ACCEPTED | aceite diagnostico formato real |`.
-     Ou seja: o comportamento esperado do passo 9 existe no app; o roteiro é que pede uma linha que o app nunca grava
-     (regra de [sintético ≠ formato real]). Correção proposta do roteiro (passos 3 e 9): `itemKey 'role:receita-serviço'`
-     e `kitValue '{"role":"receita-serviço","accountCode":"<código do papel no kit>"}'` (`tenantValue` idem com outro
-     código). Exige nova execução do passo 9 depois de corrigido — não feita aqui.
+     Ou seja: o comportamento esperado do passo 9 existe no app; o roteiro é que pedia uma linha que o app nunca grava
+     (regra de [sintético ≠ formato real]). **Correção aplicada ao roteiro (passos 3 e 9) em 26/10 por comando do dono:**
+     `itemKey 'role:receita-serviço'` e `kitValue '{"role":"receita-serviço","accountCode":"3.1"}'` (`tenantValue` idem
+     com `3.1.1`); o passo 9 foi reexecutado com ela e PASSOU (evidência no passo 9, "Reexecução").
   2. O passo 3 ainda carrega a frase "Sem botões de aceitar/recusar (entram no PR-2)" da redação do PR-1; com o #921
      integrado os botões aparecem (e o passo 8 depende deles). Lido como superado; o dono confirma ou reprova a leitura.
   3. (baixo) Com a linha malformada, a tela mostra a mensagem crua do BE com `'undefined'` dentro — `ROLE_NOT_IN_KIT` não
@@ -338,5 +391,6 @@ Pré-condições:
   status volta. A faixa de ativação e os convites ficam acima da barra de abas e não entram na aba. Julgamento do dono
   continua valendo sobre o do agente.
 - Atualização do artefato de rastreio: nota [LAC-B](../plano/nos/LAC-B.md) (`estado_detalhe`) com o desfecho + data — feita
-  nesta execução (26/10).
-- Assinatura do executor: agente Claude Fable 5.1, persona revisor, sob comando do dono (chat, 2026-10-26)
+  nesta execução (26/10) e refeita depois da reexecução do passo 9 (26/10).
+- Assinatura do executor: agente Claude Fable 5.1, persona revisor, sob comando do dono (chat, 2026-10-26) — 1ª execução
+  (FALHOU no passo 9) e reexecução do passo 9 com a fixture corrigida (PASSOU), ambas em 2026-10-26
