@@ -28,6 +28,11 @@ export const ALERTA_LABEL: Record<AlertaSimples['codigo'], string> = {
   IMPEDIMENTO_CAIXA_ICMS_ISS: 'Impedimento: ICMS/ISS fora do DAS',
   CARTAO_RECEBIMENTO_ESTIMADO: 'Recebimento do cartão estimado',
   RECEBIMENTO_DE_VENDA_TRIBUTADA_POR_COMPETENCIA: 'Recebimento de venda já tributada por competência',
+  // BE-INCR-EFICIENCIA-FISCAL PR-2 (segregação por NCM)
+  SEM_NCM: 'Revenda sem NCM no perfil do produto',
+  SEGREGACAO_DIVERGE: 'Segregação manual diverge da NCM',
+  SEGREGACAO_INDEVIDA: 'Segregação monofásica sem NCM que a sustente',
+  ICMS_ST_NAO_CONFERIDA: 'ICMS-ST não conferido para a NCM',
 };
 
 const MOTIVO: Record<NonNullable<AlertaSimples['motivoInformativo']>, { key: string; label: string }> = {

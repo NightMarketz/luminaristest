@@ -41,7 +41,8 @@
             "IRRF_PF_MENSAL",
             "ISS_TRANSICAO",
             "NFCE_LIMITE",
-            "INUT_NAO_SE_APLICA"
+            "INUT_NAO_SE_APLICA",
+            "ICMS_ST_NCM_UF"
           ]
         },
         "chave": {
@@ -144,7 +145,8 @@
             "IRRF_PF_MENSAL",
             "ISS_TRANSICAO",
             "NFCE_LIMITE",
-            "INUT_NAO_SE_APLICA"
+            "INUT_NAO_SE_APLICA",
+            "ICMS_ST_NCM_UF"
           ]
         },
         "status": {
@@ -230,7 +232,8 @@
             "IRRF_PF_MENSAL",
             "ISS_TRANSICAO",
             "NFCE_LIMITE",
-            "INUT_NAO_SE_APLICA"
+            "INUT_NAO_SE_APLICA",
+            "ICMS_ST_NCM_UF"
           ]
         },
         "chave": {

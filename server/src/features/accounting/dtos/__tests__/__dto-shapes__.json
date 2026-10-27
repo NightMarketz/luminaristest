@@ -14543,7 +14543,11 @@
             "REGIME_CAIXA_RECALCULO",
             "IMPEDIMENTO_CAIXA_ICMS_ISS",
             "CARTAO_RECEBIMENTO_ESTIMADO",
-            "RECEBIMENTO_DE_VENDA_TRIBUTADA_POR_COMPETENCIA"
+            "RECEBIMENTO_DE_VENDA_TRIBUTADA_POR_COMPETENCIA",
+            "SEM_NCM",
+            "SEGREGACAO_DIVERGE",
+            "SEGREGACAO_INDEVIDA",
+            "ICMS_ST_NAO_CONFERIDA"
           ]
         },
         "detalhe": {
