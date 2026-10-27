@@ -5,13 +5,13 @@
  */
 const mockPort = {
   name: 'focus',
-  capabilities: { numbersDps: false, consultar: true, cancelar: true, webhook: false },
+  capabilities: { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: false, consultar: true, cancelar: true, webhook: false },
   emitir: jest.fn(),
   consultar: jest.fn(),
   cancelar: jest.fn(),
   verifyWebhook: jest.fn(),
 };
-const mockManualPort = { ...mockPort, name: 'manual', capabilities: { numbersDps: true, consultar: false, cancelar: false, webhook: false } };
+const mockManualPort = { ...mockPort, name: 'manual', capabilities: { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: true, consultar: false, cancelar: false, webhook: false } };
 const mockSelection = { enabled: true, ambiente: 'producao' as string | null, port: mockPort };
 jest.mock('../../dfe/selectDfeEmissor', () => ({ __esModule: true, selectDfeEmissor: () => mockSelection }));
 jest.mock('../../dfe/resolveEmissor', () => ({
@@ -159,6 +159,7 @@ function harness(docs: Doc[] = [baseDoc()]) {
     postingService as never,
     { canEmitFiscalDocument: () => true, canCancelFiscalDocument: () => true } as never,
     auditService as never,
+    { findOverlapping: async () => [] } as never, // BE-INCR-NFCE PR-4: faixas inutilizadas (reenvio)
   );
   const onlyPending = () => [...pendings.values()];
   return { service, repo, docsById, pendings, onlyPending, documentAttachmentService, postingService };

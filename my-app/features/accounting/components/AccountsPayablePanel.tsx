@@ -13,6 +13,7 @@ import { accountingService, type Account } from '../../../lib/services/accountin
 import { counterpartiesService, type Counterparty } from '../../../lib/services/counterparties.service';
 import { Modal } from '../../../components/ui/Modal';
 import { CreatePayableModal } from './CreatePayableModal';
+import type { InventoryPurchaseSeed } from '../lib/inventoryPurchaseLink';
 import { SubledgerFilterBar, type SubledgerFilterValue } from './SubledgerFilterBar';
 import { StandardPagination } from '../../dashboard/shared/components/StandardPagination';
 import { formatCents } from '../lib/formatCents';
@@ -212,6 +213,11 @@ interface AccountsPayablePanelProps {
    * Callers that never pass it get today's behavior unchanged (`{}`).
    */
   initialFilters?: SubledgerFilterValue;
+  /**
+   * Optional SEED (deep link do MovementModal): abre o modal de criação no braço estoque com
+   * produto/quantidade. Mesmo contrato do `initialFilters` — lido só no `useState` inicial.
+   */
+  initialInventoryPurchase?: InventoryPurchaseSeed;
 }
 
 // ── main ─────────────────────────────────────────────────────────────────────
@@ -221,7 +227,7 @@ interface AccountsPayablePanelProps {
  * the recognition posting; per-row commands (pay / cancel / undo payment) each post
  * to the ledger via the AP command endpoints and refetch the trial balance.
  */
-export function AccountsPayablePanel({ unitId, onLedgerChange, onNavigateToPeriods, onNavigateToCounterparties, initialFilters }: AccountsPayablePanelProps) {
+export function AccountsPayablePanel({ unitId, onLedgerChange, onNavigateToPeriods, onNavigateToCounterparties, initialFilters, initialInventoryPurchase }: AccountsPayablePanelProps) {
   // `t` para renderizar, `tRef.current` dentro do fetch — ver `../lib/useAccountingT`.
   const { t, tRef } = useAccountingT();
   const [payables, setPayables] = useState<PayableWithPayments[]>([]);
@@ -236,6 +242,7 @@ export function AccountsPayablePanel({ unitId, onLedgerChange, onNavigateToPerio
 
   // create modal
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createSeed, setCreateSeed] = useState<InventoryPurchaseSeed | undefined>(() => initialInventoryPurchase);
   const [expenseAccounts, setExpenseAccounts] = useState<Account[]>([]);
   const [counterparties, setCounterparties] = useState<Counterparty[]>([]);
 
@@ -302,6 +309,12 @@ export function AccountsPayablePanel({ unitId, onLedgerChange, onNavigateToPerio
       .catch(() => setExpenseAccounts([]))
       .finally(() => setIsCreateOpen(true));
   }
+
+  // Deep link: o SEED abre o modal uma vez, ao montar.
+  useEffect(() => {
+    if (createSeed) openCreate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- só no mount
+  }, []);
 
   // ── action open helpers ──────────────────────────────────────────────────────
   function openAction(next: ActionState) {
@@ -474,12 +487,14 @@ export function AccountsPayablePanel({ unitId, onLedgerChange, onNavigateToPerio
       {/* Create modal */}
       <CreatePayableModal
         isOpen={isCreateOpen}
-        onClose={() => setIsCreateOpen(false)}
+        onClose={() => { setIsCreateOpen(false); setCreateSeed(undefined); }}
+        initialInventory={createSeed}
         unitId={unitId}
         expenseAccounts={expenseAccounts}
         counterparties={counterparties}
         onSuccess={() => {
           setIsCreateOpen(false);
+          setCreateSeed(undefined);
           void fetchPayables();
           onLedgerChange?.();
         }}

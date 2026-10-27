@@ -170,3 +170,27 @@ describe('NfePreviewSchema — contrato de saída (comportamento 2)', () => {
     }
   });
 });
+
+// ── C8 emenda 3.2 P1 (E3): mapeamento do import com treatment EXPENSE no lugar do classId ─────────────────────
+describe('ImportNfePurchaseSchema — itemMapping.treatment (C8 emenda 3.2)', () => {
+  const parse = (m: Record<string, unknown>) => ImportNfePurchaseSchema.safeParse({ unitId: 'unit-1', itemMappings: [{ cProd: 'p1', ...m }] });
+
+  it('EXPENSE + expenseAccountId (com ou sem destination IMOBILIZADO) → aceito', () => {
+    expect(parse({ treatment: 'EXPENSE', expenseAccountId: 'acc' }).success).toBe(true);
+    expect(parse({ treatment: 'EXPENSE', expenseAccountId: 'acc', destination: 'IMOBILIZADO', usefulLifeUpToOneYear: true }).success).toBe(true);
+    expect(parse({ classId: 'c', setDeclared: true }).success).toBe(true);
+  });
+
+  it.each([
+    ['EXPENSE + classId', { treatment: 'EXPENSE', expenseAccountId: 'acc', classId: 'c' }],
+    ['EXPENSE + productRef', { treatment: 'EXPENSE', expenseAccountId: 'acc', productRef: 'p' }],
+    ['EXPENSE sem conta', { treatment: 'EXPENSE' }],
+    ['EXPENSE com destination INSUMO_SERVICO', { treatment: 'EXPENSE', expenseAccountId: 'acc', destination: 'INSUMO_SERVICO' }],
+    ['expenseAccountId sem EXPENSE', { classId: 'c', expenseAccountId: 'acc' }],
+    ['CAPITALIZE sem classId', { treatment: 'CAPITALIZE', productRef: 'p' }],
+    ['setDeclared sem classId', { productRef: 'p', setDeclared: true }],
+    ['vida útil ≤ 1 ano sem EXPENSE', { classId: 'c', usefulLifeUpToOneYear: true }],
+  ])('%s → 400', (_n, m) => {
+    expect(parse(m).success).toBe(false);
+  });
+});

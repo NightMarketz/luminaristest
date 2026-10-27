@@ -60,7 +60,7 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'referential.mapping.set':   ['accountId', 'referentialCode', 'mappingVersion'],
   'referential.mapping.unset': ['accountId', 'referentialCode', 'mappingVersion'],
   // INCR-AP — Contas a Pagar. Id-only / money-as-string; NEVER the supplier name (PII-safe, D6).
-  'payable.created':            ['payableId', 'supplierRef', 'amountCents', 'dueDate', 'expenseAccountCode', 'recoverableIcmsCents', 'recoverablePisCofinsCents', 'insumoCents', 'recoverableIbsCbsCents'], // X6 item 13 + ITEM-DESTINATION item 13 + IBS-CBS-2027 PR-3 item 14
+  'payable.created':            ['payableId', 'supplierRef', 'amountCents', 'dueDate', 'expenseAccountCode', 'recoverableIcmsCents', 'recoverablePisCofinsCents', 'insumoCents', 'recoverableIbsCbsCents', 'expensedFixedAssetItems'], // X6 item 13 + ITEM-DESTINATION item 13 + IBS-CBS-2027 PR-3 item 14 + C8 emenda 3.2 E8
   'payable.cancelled':          ['payableId', 'reversalEntryId', 'reason'],
   // IBS-CBS-2027 PR-3 (item 16): PENDENTE → APROPRIADO do crédito de IBS/CBS — ids, tributo, valor e dia; sem PII.
   'payable.ibs_cbs_credit.appropriated': ['payableId', 'tributo', 'amountCents', 'sourceDocumentId', 'apropriadoEm'],
@@ -175,11 +175,14 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     'ibsRecuperarAccountId', 'cbsRecuperarAccountId', // IBS-CBS-2027 PR-3 item 14
     'retencaoIrrfRecolherAccountId', 'retencaoCsrfRecolherAccountId', 'retencaoInssRecolherAccountId', 'retencaoIssRecolherAccountId', 'retencaoIrrfCompensarAccountId', 'retencaoCsllCompensarAccountId', 'retencaoInssCompensarAccountId', // RETENCOES-FONTE PR-1 item 8
     // BE-INCR-DFE (item 9): enum/boolean/int como string — IM/CNAE (texto livre) ficam FORA do evento
-    'codMun', 'dpsSerie', 'regEspTrib', 'regApTribSN', 'issAliquotaBp', 'issRetidoTomadorPj', 'pacoteFatoGerador', 'pacoteCTribNac', 'pacoteCNBS', 'ibsCbsInformar', 'ibsCbsCst', 'ibsCbsClassTrib', 'pTotTribFedCent', 'pTotTribEstCent', 'pTotTribMunCent', 'pTotTribSNCent', 'emissaoForaDoMes',
+    'codMun', 'dpsSerie', 'inscricaoEstadual', 'nfeSerie', 'nfceSerie', 'regEspTrib', 'regApTribSN', 'issAliquotaBp', 'issRetidoTomadorPj', 'pacoteFatoGerador', 'pacoteCTribNac', 'pacoteCNBS', 'ibsCbsInformar', 'ibsCbsCst', 'ibsCbsClassTrib', 'pTotTribFedCent', 'pTotTribEstCent', 'pTotTribMunCent', 'pTotTribSNCent', 'emissaoForaDoMes',
     'policyVersionId'], // GOV-CONTADOR política versionada (item 14): a versão que aplicou esta escrita
   // BE-INCR-DFE (nó X10b, item 9) — perfil fiscal do serviço: só códigos (lista nacional/NBS/INDOP/IBGE) + serviceRef (id)
   'service_fiscal_profile.updated': ['serviceRef', 'cTribNac', 'cTribMun', 'cNBS', 'cIndOp', 'cLocPrestacao', 'cClassTrib'], // cClassTrib: IBS-CBS-2027 PR-1, L2
   'service_fiscal_profile.deleted': ['serviceRef', 'cTribNac'],
+  // BE-INCR-NFCE (nó X10a, item 26): perfil fiscal do produto — só códigos (xProd é texto livre, fica fora)
+  'product_fiscal_profile.updated': ['productRef', 'ncm', 'cest', 'origem', 'cfopPadrao', 'csosn', 'cstIcms', 'cstPis', 'cstCofins', 'ibsCbsCst', 'ibsCbsClassTrib'],
+  'product_fiscal_profile.deleted': ['productRef', 'ncm'],
   // SIMPLES-PISO-ANEXO-XI bloco 1 (BRIEF item 1) — benefício municipal de ISS: códigos/enum/datas; a legislação
   // concessiva (texto livre) fica FORA do evento.
   'iss_beneficio_municipal.created': ['codMun', 'tipo', 'cTribNacPrefixos', 'reducaoBpPorFaixa', 'vigenteDesde', 'vigenteAte'],
@@ -282,6 +285,8 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'dfe.manual_result': ['documentId', 'attemptNo', 'releitura', 'nDivergencias'],
   // BE-INCR-DFE-EVENTOS (nó X11, item 14) — a substituta autorizada cancelou a original (e105102). Sem PII.
   'dfe.substituted': ['documentId', 'substituteDocumentId', 'cMotivo'],
+  // BE-INCR-NFCE (nó X10a, item 26) — faixa inutilizada homologada (F-NFCE-5 a). Sem PII (o xJust fica na linha, não aqui).
+  'dfe.number_voided': ['voidId', 'kind', 'serie', 'nIni', 'nFin', 'ambiente'],
   // BE-INCR-CONTADOR-DELIVERY (item 14) — cadastro do contador + entrega do pacote ECD/ECF.
   // `name`/`email` do contador NUNCA aparecem aqui (D5): são PII de TERCEIRO numa trilha
   // append-only e hash-encadeada, então o que entra não sai. A trilha carrega `contactId`, que

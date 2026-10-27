@@ -101,7 +101,8 @@ primeira NF-e 55. Há uma condição: se o X10a PR-7 entrar em produção antes 
    sha256 `eadc5246…`, acesso 22/10/2026) e transcrever as tabelas §4.1–§4.4 em
    `fontes-oficiais/TRANSCRICAO-NT2026010-DANFE-RTC-<data>.md`, com uma linha por campo (rótulo impresso, tag, ID, condição).
    *Teste:* o SHA-256 do PDF baixado de novo é igual; a transcrição tem 8 linhas de total (§4.1), 2 de emitente (§4.2),
-   12 de item (§4.3, contando as 3 `pAliqEfet`) e a lista de facultativos (§4.4) completa.
+   11 campos impressos de item com 14 tags (§4.3, contando as 3 `pAliqEfet`) e a lista de facultativos (§4.4) completa.
+   *(Emenda 26/10, L-DANFE-PR0-1 → "Corrigir para 11/14", [[D-2026-10-26-NFE-DANFE-IBSCBS-LACUNAS-PR0]]; o texto anterior dizia "12 de item".)*
 2. **Transcrever do MOC** (7.0 Visão Geral, ou a versão online do Paraná a partir de 01/11/2026, conforme EMENDA-3 §3
    item 3) o **leiaute base do DANFE**: quadros e ordem, padrão do código de barras da chave, texto obrigatório em
    homologação, regras de quebra de página e de supressão de quadros, formato de chave e protocolo.
@@ -143,6 +144,21 @@ primeira NF-e 55. Há uma condição: se o X10a PR-7 entrar em produção antes 
     *Teste de propriedade:* para cada campo facultativo, o XML sem a tag dá `null` no model e o rótulo some do HTML
     (item 11).
 
+> **PR-1 executado em 26/10/2026** (dono, chat, 2026-10-26: *"Executa o NFE-DANFE-IBSCBS PR-1 — sessao-feature, sem merge."*).
+> Três lacunas decididas antes do código ([[D-2026-10-26-NFE-DANFE-IBSCBS-PR1-LACUNAS]]), que emendam o §4:
+> - **Item 4:** `readNfeTree(input)` **sem** `opts` ("Sem opts"); a recusa de homologação fica no `parseNfe`.
+> - **Item 5:** `readDanfeModel(xml, legais)` com **os mesmos gates do `parseNfe`** ("Os mesmos do parseNfe"): cStat pela tabela
+>   `NFE_CSTAT_AUTORIZADA` vigente na data do protocolo (F-LP-4 a), formato/DV/CNPJ da chave e `chNFe` = chave. O "{100,150}"
+>   do texto do item cede à tabela.
+> - **Item 10:** o modelo ganha `infAdFisco: string | null` ("Incluir infAdFisco").
+>
+> Ajustes do contrato esboçado feitos na execução, todos pela invariante I2 ou pela fonte:
+> - `DanfeItem.cstOuCsosn` passa a `string | null` (sem grupo ICMS ⇒ null) e é `orig` + `CST`/`CSOSN` (MOC Anexo II §3.8.1, coluna CST = N11 + N12).
+> - `totaisIcmsIpi` e `transp`, que o §4 deixava "cond. item 2", ficam definidos por tag (MOC 7.0 Anexo I W02–W16 e X01–X32,
+>   NT 2026.010 §4.4); `qBCMono`/`qBCMonoReten` são quantidade (string crua); `transp.volumes` é lista (`vol` 0-5000).
+> - `avisos` (`QRCODE_NAO_RENDERIZADO`) **não** entra no PR-1: é do item 15 (PR-2).
+> - Caminho das tags: dossiê [`nfe-danfe-pr1`](../../pesquisas-legais/nfe-danfe-pr1/relatorio.md) (NT 2025.002 v1.52 e MOC 7.0 Anexo I).
+
 ### PR-2 — render (lib pura + `htmlToPdf`)
 
 11. **`renderDanfeHtml(model): string`** (`lib/danfe/danfeHtml.ts`): retrato A4 [F-DANFE-6]. Ordem dos quadros conforme a
@@ -150,6 +166,9 @@ primeira NF-e 55. Há uma condição: se o X10a PR-7 entrar em produção antes 
     `escapeHtml` (reuso de `receiptHtml.ts`). Sem `new Date()` no HTML.
     *Teste:* no HTML, a posição de `TOTAL DO ICMS / IPI` < `TOTAL DO IBS / CBS / IS` < `CÁLCULO DO ISSQN`; o mesmo model
     gera o mesmo HTML byte a byte em 2 chamadas; `xProd` = `<script>` sai escapado.
+    *(Emenda 26/10, L-DANFE-PR0-3 → "Texto da NT 2026.010":)* abaixo da chave, o campo de consulta imprime *"Consulte a
+    autenticidade no portal nacional da NF-e www.nfe.fazenda.gov.br/portal ou no site da SEFAZ autorizadora"* (modelo da NT,
+    p. 8; `[MOC-DANFE-CAMPO1]`). *Teste:* o HTML contém esse texto literal.
 12. **Linha de item com IBS/CBS/IS** (modelo da p. 8): colunas de bases (ICMS, IBS/CBS, IS, IPI), alíquotas e valores
     (ICMS/CBS, IBS UF/IPI, IBS MUN/IS) e a linha `[NCM …] [cClassTrib …]`. Item sem UB12 ⇒ as células IBS/CBS ficam vazias,
     e não "0,00".
@@ -159,12 +178,35 @@ primeira NF-e 55. Há uma condição: se o X10a PR-7 entrar em produção antes 
     de 44 dígitos ⇒ erro.
 14. **Homologação** [cond: item 2]: `ambiente: 'homologacao'` ⇒ o texto obrigatório do MOC em destaque.
     *Teste:* fixture `tpAmb=2` contém o texto; `tpAmb=1` não contém.
+    *(Emenda 26/10, L-DANFE-PR0-2 → "Os dois", [[D-2026-10-26-NFE-DANFE-IBSCBS-LACUNAS-PR0]]:)* a frase **"SEM VALOR FISCAL"**
+    (`[MOC-DANFE-HOMOLOG]`) sai como marca d'água destacada **e** no início de "Informações Complementares"; a marca não cobre
+    a leitura dos dados (`[MOC-DANFE-MARCA-DAGUA]`). *Teste:* com `tpAmb=2` o HTML tem as duas ocorrências; com `tpAmb=1`, nenhuma.
 15. **[F-DANFE-8]** QR Code: a área "QR CODE" do modelo fica vazia até a NT do `[NT10-QR]`. Com `infNFeSupl/qrCode`
     no XML, o model leva o aviso `QRCODE_NAO_RENDERIZADO`, que fica fora do HTML.
     *Teste:* fixture com `infNFeSupl` ⇒ área vazia e aviso presente.
 16. **`htmlToPdf(html, opts?)`**: parâmetro opcional `{ margin }`. O padrão atual não muda.
     *Teste:* os chamadores atuais (`ReceiptService`, `PackageAcceptanceService`) continuam sem argumento novo; com
     `margin` o PDF sai (`%PDF` nos 4 primeiros bytes). Teste de integração com Chromium, só onde a suíte já usa `htmlToPdf`.
+
+> **PR-2 executado em 26/10/2026** (dono, chat, 2026-10-26: *"Executa o NFE-DANFE-IBSCBS PR-2 — sessao-feature, sem merge."*).
+> Quatro lacunas decididas antes do código ([[D-2026-10-26-NFE-DANFE-IBSCBS-PR2-LACUNAS]]):
+> - **Folhas:** paginação no HTML. A altura de cada bloco é estimada pelo texto, de forma pessimista, e gravada no CSS; os
+>   itens vão por esse orçamento; cabeçalho repetido e FOLHA n/m em todas (`[MOC-DANFE-FOLHAS]`, `[MOC-DANFE-NUM-FOLHA]`).
+> - **Item 16:** teste com puppeteer falso + prova local com Chromium real no corpo do PR (fora do CI).
+> - **Item 13:** código de barras **híbrido 128C/128A** da NT Conjunta 2025.001 §6 para chave com CNPJ alfanumérico; chave
+>   numérica segue 100% 128C. Biblioteca: **`bwip-js` ^4.11.4** (MIT), no modo `raw`. A NT se contradiz (regra 3 × exemplo);
+>   seguem as **regras numeradas**. O MOC traz vetor de teste (`09758364` → DV 48), e a biblioteca o reproduz dígito a dígito.
+>   Dossiê [`nfe-danfe-pr2`](../../pesquisas-legais/nfe-danfe-pr2/relatorio.md).
+>
+> Ajustes feitos na execução, todos pela fonte:
+> - `DanfeItem.ipi` ganha `vBC` (O10): o item 12 pede a coluna de base do IPI.
+> - `DanfeModel.avisos` entra aqui (item 15), não no PR-1.
+> - Conteúdo dos campos em 10 pt (`[MOC-DANFE-FONTE-CONTEUDO]`), informações complementares em 7 pt, produtos em 6 pt.
+> - Coluna CÓDIGO mantida no quadro de produtos (`[MOC-DANFE-COLUNAS]`: não pode ser suprimida), embora o modelo da NT não a desenhe.
+> - **L-DANFE-PR2-1 decidida em 26/10** ("Resto nas Info. Complementares"): quando a fatura não cabe na 1ª folha, o quadro
+>   mostra as parcelas que cabem e "DEMAIS PARCELAS EM INFORMAÇÕES COMPLEMENTARES"; as demais abrem as informações
+>   complementares, que continuam na última folha (§3.5). `DANFE_FOLHA1_EXCEDE` (400) fica só para o que a fatura não
+>   resolve (ex.: dezenas de volumes no transporte).
 
 ### PR-3 — superfície (cadeia Route → Controller → Service → Repository, + Policy)
 
@@ -327,6 +369,28 @@ export const DanfeParamsDto = z.object({ id: z.string().min(1) }).strict();
 2. **Manual de Padrões Técnicos do DANFE NFC-e e QR Code**: só necessário se o F-DANFE-2 for (b). Já era ausente na
    EMENDA-1 §7 item 1.
 3. **NTs 2026.009, 2026.006, 2026.003 e 2014.001 v1.41**: não lidas. → item 3.
+
+> **PR-0 executado em 26/10/2026** (dono, chat, 2026-10-26: *"Executa o NFE-DANFE-IBSCBS PR-0 — sessao-feature, sem merge."*;
+> dossiê [`nfe-danfe-pr0`](../../pesquisas-legais/nfe-danfe-pr0/relatorio.md)). Os insumos 1 e 3 estão **resolvidos**; o 2
+> segue fora (F-DANFE-2 a).
+> - **Insumo 1:** o leiaute base está no **MOC 7.0 Anexo II** (Manual de Especificações Técnicas do DANFE e Código de Barras,
+>   v7.00), não na Visão Geral. Transcrição: [`TRANSCRICAO-MOC70-AnexoII-DANFE-2026-10-26.md`](fontes-oficiais/TRANSCRICAO-MOC70-AnexoII-DANFE-2026-10-26.md).
+>   Chaves que os itens condicionados citam: item 10 → `[MOC-DANFE-SO-XML]`, `[MOC-DANFE-ORDEM]`, `[MOC-DANFE-INFCPL]`,
+>   `[MOC-DANFE-INFADPROD]`, `[MOC-DANFE-MODFRETE]`, `[MOC-DANFE-PROTOCOLO]`; item 13 → `[MOC-DANFE-C128-SIMB]`,
+>   `[MOC-DANFE-C128-VETOR]`, `[MOC-DANFE-C128-DIM]`, `[MOC-DANFE-CHAVE-MASCARA]`; item 14 → `[MOC-DANFE-HOMOLOG]`.
+>   A simbologia é **CODE-128C**, como o F-DANFE-4 inferia, e o MOC traz vetor de teste (`09758364` → DV 48).
+> - **Item 1:** NT 2026.010 rebaixada, sha256 igual; transcrição em [`TRANSCRICAO-NT2026010-DANFE-RTC-2026-10-26.md`](fontes-oficiais/TRANSCRICAO-NT2026010-DANFE-RTC-2026-10-26.md).
+> - **Insumo 3 / item 3:** nenhuma das quatro NTs muda o DANFE 55 (tabela no §7 da transcrição da NT).
+> - **Lacunas de spec abertas pelo PR-0** — **DECIDIDAS em 26/10/2026**, todas na recomendação
+>   ([[D-2026-10-26-NFE-DANFE-IBSCBS-LACUNAS-PR0]]): 1 → corrigir para 11/14 (item 1 emendado); 2 → as duas formas (item 14
+>   emendado); 3 → texto da NT 2026.010 (item 11 emendado). Texto original das lacunas:
+>   - **L-DANFE-PR0-1:** o teste do item 1 espera "12 de item, contando as 3 `pAliqEfet`". A NT §4.3 tem **11 campos impressos e 14
+>     tags**. A transcrição segue a fonte; a contagem do BRIEF precisa de correção.
+>   - **L-DANFE-PR0-2:** `[MOC-DANFE-HOMOLOG]` aceita "SEM VALOR FISCAL" em "Informações Complementares" **ou** em marca d'água.
+>     O item 14 não diz qual.
+>   - **L-DANFE-PR0-3:** o texto do Campo 1 difere entre o MOC 7.0 ("Consulta de autenticidade…") e o modelo da NT 2026.010
+>     ("Consulte a autenticidade…"). O item 11 não diz qual.
+>   - **Pendência (não fork):** a partir de 01/11/2026 o MOC tem versão online do Paraná; o PR-2 confere as linhas `[MOC-DANFE-…]` nela.
 
 ## 8. Invariantes (cada uma vira teste)
 

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { isValidDateOnly } from '../models/dates';
 import { NFE_CHAVE_REGEX } from '../../../lib/cnpj';
 import { ITEM_DESTINATIONS, ITEM_DESTINATION_ORIGINS } from '../models/itemDestination';
+import { FIXED_ASSET_TREATMENTS } from '../models/fixedAssetLimits';
 
 /**
  * NfeDto — request schemas for fiscal NF-e ingestion (BE-INCR-NFE): `ImportNfePurchaseSchema` (A2,
@@ -22,8 +23,9 @@ const dateOnly = (field: string) =>
   z.string().refine(isValidDateOnly, `${field} deve ser uma data real YYYY-MM-DD`);
 
 /** One operator-confirmed mapping of a note item (`cProd` from the XML). EXACTLY one of
- *  `productRef` (estoque/insumo, D6 — never auto-create a product from the note) or `classId`
- *  (imobilizado, BE-INCR-FIXED-ASSETS PR-5) — never both, never neither.
+ *  `productRef` (estoque/insumo, D6 — never auto-create a product from the note), `classId`
+ *  (imobilizado, BE-INCR-FIXED-ASSETS PR-5) or `treatment: 'EXPENSE'` (imobilizado direto na despesa,
+ *  C8 emenda 3.2) — never two, never none.
  *
  *  ITEM-DESTINATION (BRIEF item 3 + EMENDA 29/09 itens 22–23): o CFOP deixa de rotear — o `classId` do
  *  operador É a declaração de imobilizado. `destination` opcional é o override por item: com `productRef`,
@@ -34,17 +36,38 @@ const itemMapping = z
     productRef: z.string().min(1).optional(),
     classId: z.string().min(1).optional(),
     destination: z.enum(ITEM_DESTINATIONS).optional(),
+    // C8 emenda 3.2 (E3, F-EM-1 → a): bem do imobilizado deduzido direto como despesa (IN RFB 1.700 art. 120) — o
+    // operador declara `treatment: 'EXPENSE'` + `expenseAccountId` no lugar do `classId`. A destinação continua
+    // IMOBILIZADO (mesma fórmula de custo D3); ausente = CAPITALIZE (com `classId`).
+    treatment: z.enum(FIXED_ASSET_TREATMENTS).optional(),
+    expenseAccountId: z.string().min(1).optional(),
+    setDeclared: z.boolean().optional(), // E7: faz parte de um conjunto (art. 120 § 1º) — só com classId
+    usefulLifeUpToOneYear: z.boolean().optional(), // E4b: vida útil ≤ 1 ano — só com EXPENSE
   })
   .strict()
   .superRefine((val, ctx) => {
     const hasProductRef = val.productRef != null;
     const hasClassId = val.classId != null;
-    if (hasProductRef === hasClassId) {
+    const expense = val.treatment === 'EXPENSE';
+    if ([hasProductRef, hasClassId, expense].filter(Boolean).length !== 1) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Item '${val.cProd}': informe EXATAMENTE UM de productRef (estoque) ou classId (imobilizado).`,
+        message: `Item '${val.cProd}': informe EXATAMENTE UM de productRef (estoque), classId (imobilizado) ou treatment EXPENSE (imobilizado direto na despesa).`,
         path: ['productRef'],
       });
+      return;
+    }
+    const issue = (path: string, message: string) =>
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message: `Item '${val.cProd}': ${message}` });
+    if (val.treatment === 'CAPITALIZE' && !hasClassId) issue('treatment', 'treatment CAPITALIZE exige classId.');
+    if (expense && val.expenseAccountId == null) issue('expenseAccountId', 'treatment EXPENSE exige expenseAccountId (IN RFB 1.700 art. 120).');
+    if (!expense && val.expenseAccountId != null) issue('expenseAccountId', 'expenseAccountId só cabe com treatment EXPENSE.');
+    if (val.setDeclared && !hasClassId) issue('setDeclared', 'conjunto declarado exige classId — vai ao ativo (IN RFB 1.700 art. 120 § 1º).');
+    if (val.usefulLifeUpToOneYear && !expense) issue('usefulLifeUpToOneYear', 'vida útil ≤ 1 ano só se aplica a treatment EXPENSE (IN RFB 1.700 art. 120).');
+    if (expense) {
+      if (val.destination != null && val.destination !== 'IMOBILIZADO') {
+        issue('destination', 'item EXPENSE é imobilizado deduzido como despesa — destination só pode ser IMOBILIZADO.');
+      }
       return;
     }
     // EMENDA item 22: IMOBILIZADO ⇔ classId — `destination: 'IMOBILIZADO'` sem classId, ou classId com outra
@@ -80,6 +103,10 @@ const itemMapping = z
  *               cProd:      { type: string }
  *               productRef: { type: string, description: "Estoque (REVENDA) ou despesa (INSUMO_SERVICO) — XOR com classId" }
  *               classId:    { type: string, description: "Imobilizado declarado pelo operador (ITEM-DESTINATION emenda 29/09 — o CFOP do XML não roteia) — XOR com productRef" }
+ *               treatment:  { type: string, enum: [CAPITALIZE, EXPENSE], description: "C8 emenda 3.2 (IN RFB 1.700 art. 120): EXPENSE = imobilizado direto na despesa, no lugar do classId (exige expenseAccountId; unitário ≤ R$ 1.200 ou vida útil ≤ 1 ano). Ausente = CAPITALIZE" }
+ *               expenseAccountId: { type: string, description: "Só com treatment EXPENSE — folha de despesa do escopo" }
+ *               setDeclared: { type: boolean, description: "Faz parte de um conjunto (art. 120 § 1º) — só com classId" }
+ *               usefulLifeUpToOneYear: { type: boolean, description: "Vida útil ≤ 1 ano — só com treatment EXPENSE; libera acima de R$ 1.200" }
  *               destination: { type: string, enum: [REVENDA, INSUMO_SERVICO, IMOBILIZADO], description: "Override da destinação do item (ITEM-DESTINATION). Com productRef — REVENDA ou INSUMO_SERVICO (ausente ⇒ REVENDA com origem FALLBACK + warning); com classId — só IMOBILIZADO" }
  */
 export const ImportNfePurchaseSchema = z

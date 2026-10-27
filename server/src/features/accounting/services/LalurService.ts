@@ -75,6 +75,8 @@ import {
   type QuarterBalance,
 } from './lalurParteBBalances';
 import { z } from 'zod';
+import { BLOCO_F_CODIGOS, BLOCO_F_CONTAS, blocoFMoves, type BlocoFCodigo, type BlocoFConta } from '../models/lalurBlocoF';
+import type { FixedAssetParteBRow, IFixedAssetReader } from './IFixedAssetReader';
 
 /** O que o serviço lê do razão para derivar o PF/BC (D-P3.3) — só `incomeStatement`. */
 export type LalurReportReader = Pick<AccountingReportService, 'incomeStatement' | 'accountAggregates'>;
@@ -168,6 +170,8 @@ export class LalurService {
     private readonly reports: LalurReportReader,
     /** X7 Fase B (item 12): forma do ano (período × forma, períodos da Parte B, continuidade) e início de atividade. */
     private readonly profiles: LalurProfileReader,
+    /** C8 emenda 3.2 (E15, execution-plan A6): só a leitura do imobilizado que o Bloco F precisa — nunca o serviço inteiro. */
+    private readonly fixedAssets: IFixedAssetReader,
   ) {}
 
   // ── Período × forma (X7 Fase B, BRIEF B item 12) ─────────────────────────
@@ -467,6 +471,12 @@ export class LalurService {
     if (!this.policy.canManageLalur(scope)) throw new ForbiddenError('Você não tem permissão para gerir o e-Lalur.');
     const existing = await this.repo.findEntryById(scope, id);
     if (!existing || existing.deletedAt) throw new NotFoundError(`Ajuste '${id}' não foi encontrado.`);
+    // Bloco F (C8 emenda 3.2; review D1/D2): a linha system tem o M305 nos links — mudar valor/relação/conta/M312 pela API
+    // descasaria M300 × M305 × M500. Mesma regra do PF/BC system (Fork F-3C-2 a): só archive; o próximo fechamento recria.
+    const camposDerivados = [dto.valorCents, dto.indRelacao, dto.parteBId, dto.accountId, dto.journalEntryIds];
+    if (existing.origem === 'system' && (BLOCO_F_CODIGOS as readonly string[]).includes(existing.codigo) && camposDerivados.some((v) => v !== undefined)) {
+      throw new ValidationError('Linha do Bloco F derivada pelo fechamento não aceita alteração de valor, relação, conta ou lançamentos — arquive-a; o próximo fechamento a recria (C8 emenda 3.2, E17).');
+    }
 
     // Merge + full re-validation with the SAME conditionals as create (REGRA_RELACAO_INEXISTENTE / D-M3).
     const merged = {
@@ -877,10 +887,14 @@ export class LalurService {
   private movesByQuarter(entries: LalurEntryWithRelations[], movements: LalurMovementWithRelations[], periods: readonly LalurPeriodo[]) {
     const out = new Map<LalurPeriodo, { movesA: ParteAMove[]; movesB: ParteBMove[] }>(periods.map((q) => [q, { movesA: [], movesB: [] }]));
     for (const e of entries) {
-      if (!e.parteBId || !isParteALivro(e.livro) || !out.has(e.quarter as LalurPeriodo)) continue;
+      const links = e.parteBLinks ?? [];
+      if ((!e.parteBId && links.length === 0) || !isParteALivro(e.livro) || !out.has(e.quarter as LalurPeriodo)) continue;
       const row = findLinha(e.livro, e.codigo);
       if (!row?.tipoLanc || row.tipoLanc === 'R') throw new ValidationError(`Ajuste ${e.id}: código '${e.codigo}' sem TIPO_LANCAMENTO no catálogo (livro ${e.livro}).`);
-      out.get(e.quarter as LalurPeriodo)!.movesA.push({ parteBId: e.parteBId, tipoLanc: row.tipoLanc, valorCents: e.valorCents });
+      const movesA = out.get(e.quarter as LalurPeriodo)!.movesA;
+      // Bloco F (E21b): a linha `system` leva o M305 nos links (um por conta), não no `parteBId`.
+      if (links.length > 0) for (const l of links) movesA.push({ parteBId: l.parteBId, tipoLanc: row.tipoLanc, valorCents: l.valorCents });
+      else movesA.push({ parteBId: e.parteBId!, tipoLanc: row.tipoLanc, valorCents: e.valorCents });
     }
     for (const m of movements) {
       out.get(m.quarter as LalurPeriodo)?.movesB.push({ parteBId: m.parteBId, contrapartidaId: m.contrapartidaId, indicador: m.indicador, valorCents: m.valorCents });
@@ -936,6 +950,88 @@ export class LalurService {
   }
 
   /**
+   * Bloco F (C8 emenda 3.2, E15–E22; BRIEF-mãe itens 23-25) — diferença contábil × fiscal da depreciação/amortização do
+   * período, em dobro (E16b: `lalur`/IRPJ e `lacs`/CSLL — IN 1.700 art. 124 § 4º, "e-Lalur e do e-Lacs").
+   *  - E17 (F-EM-9 → d): só `LalurEntry` da Parte A `origem='system'`, M305 pelos links (E21b, F-EM-14 → a); NENHUM
+   *    `LalurParteBMovement` — o saldo anda pelo M305, gravar M410 também contaria em dobro.
+   *  - E18/E19 (F-EM-10 → b): conta por `codPbRfb` (1071/2210) + `codTributo`, como o PF/BC; a 3130 nunca é procurada.
+   *  - E22 (F-EM-12 → a, = F-ENC-6 "mesma regra para toda linha derivada da Parte A"): linha do usuário no código que o
+   *    sistema precisa escrever ⇒ 400.
+   *  - Refechar substitui: as linhas `system` 86/161/91.01 do período são arquivadas (rename-on-key, D-M2) e regravadas.
+   *  - E20: sem ativo do E15 (ou diferença 0) nada é gravado.
+   */
+  private async derivarBlocoF(scope: AccountingScope, year: number, periodo: LalurPeriodo, accounts: LalurParteBAccount[], tx: Prisma.TransactionClient): Promise<void> {
+    const rows = await this.fixedAssets.listForParteB(scope, year, periodo, tx);
+    const moves = rows.flatMap((r) => blocoFMoves(r));
+    const doPeriodo = (await this.repo.findEntriesForYear(scope, year, tx)).filter((e) => e.quarter === periodo && isParteALivro(e.livro as LalurLivro));
+    const ehBlocoF = (codigo: string) => (BLOCO_F_CODIGOS as readonly string[]).includes(codigo);
+    for (const e of doPeriodo) {
+      if (e.origem === 'system' && ehBlocoF(e.codigo)) await this.repo.updateEntry(scope, e.id, { deletedAt: new Date(), codigo: deletedLalurCodigo(e.id, e.codigo) }, tx);
+    }
+    if (moves.length === 0) return;
+
+    const { userId, unitId } = accountingScopeWhere(scope);
+    const rowById = new Map(rows.map((r) => [r.assetId, r]));
+    for (const tributo of LALUR_TRIBUTOS) {
+      const livro = TRIBUTO_LIVRO[tributo];
+      const contaPb = new Map<BlocoFConta, LalurParteBAccount>();
+      for (const conta of BLOCO_F_CONTAS) {
+        if (!moves.some((m) => m.conta === conta)) continue;
+        const targets = accounts.filter((a) => a.codTributo === tributo && a.codPbRfb === conta);
+        const nome = tributo === 'I' ? 'IRPJ' : 'CSLL';
+        if (targets.length === 0) {
+          throw new ValidationError(
+            `Diferença entre a depreciação contábil e a fiscal em ${periodo}/${year} e não há conta da Parte B com COD_PB_RFB ${conta} (${tributo}, ${nome}): cadastre-a antes de fechar ${periodo} (C8 emenda 3.2, E18).`,
+          );
+        }
+        if (targets.length > 1) {
+          throw new ValidationError(
+            `Mais de uma conta da Parte B viva com COD_PB_RFB ${conta} para o tributo ${tributo} (${targets.map((a) => a.codCtaB).join(', ')}): a escolha da conta do Bloco F é ambígua — arquive as sobras e refeche (C8 emenda 3.2, E18; como o PF/BC, BRIEF 3C item 6).`,
+          );
+        }
+        contaPb.set(conta, targets[0]);
+      }
+      for (const codigo of BLOCO_F_CODIGOS) {
+        const doCodigo = moves.filter((m) => m.codigo === codigo);
+        if (doCodigo.length === 0) continue;
+        const manual = doPeriodo.find((e) => e.origem !== 'system' && e.livro === livro && e.codigo === codigo);
+        if (manual) {
+          throw new ValidationError(
+            `Já existe o ajuste ${manual.id} do usuário na linha ${codigo} do ${livro} em ${periodo}/${year}, e o fechamento precisa gravar a diferença de depreciação nessa linha: arquive o ajuste manual e refeche (C8 emenda 3.2, E22; F-EM-12 → a).`,
+          );
+        }
+        const porConta = new Map<BlocoFConta, bigint>();
+        for (const m of doCodigo) porConta.set(m.conta, (porConta.get(m.conta) ?? 0n) + m.valorCents);
+        const valorCents = [...porConta.values()].reduce((a, b) => a + b, 0n);
+        const relacao = LalurService.relacaoBlocoF(codigo, doCodigo.map((m) => rowById.get(m.assetId)!));
+        const entry = await this.repo.createEntry(
+          { userId, unitId, year, quarter: periodo, livro, codigo, valorCents, indRelacao: relacao.indRelacao, histLancamento: null, parteBId: null, accountId: relacao.accountId, createdById: scope.actorUserId, origem: 'system' },
+          tx,
+        );
+        await this.repo.createEntryParteBLinks(entry.id, [...porConta].map(([conta, v]) => ({ parteBId: contaPb.get(conta)!.id, valorCents: v })), tx);
+        if (relacao.journalEntryIds.length > 0) await this.repo.replaceEntryJournalLinks(entry.id, relacao.journalEntryIds, tx);
+      }
+    }
+  }
+
+  /**
+   * IND_RELACAO da linha do Bloco F (E17, IN 1.700 art. 310 § 2º, "quando presentes"; grau INFERIDO — o PVA é o oráculo).
+   * Exclusão 161 = valor só fiscal ⇒ `'1'`. Adição 86 = despesa contábil que existe ⇒ `'3'` com M310 = a conta que as
+   * quotas do período debitam e M312 = essas quotas — o M312 é filho do M310, então só quando TODAS as quotas dos bens da
+   * linha debitam a MESMA conta; linha que mistura contas sai `'1'` (lacuna L-P3-1 → b — dono, chat, 2026-10-26: "(b)
+   * Conta onde a despesa caiu"). 91.01 = realização do saldo 2210 na baixa, sem despesa própria no período ⇒ `'1'`
+   * (lacuna L-P3-2 → b — dono, chat, 2026-10-26: "(b) Só Parte B, '1'").
+   */
+  public static relacaoBlocoF(codigo: BlocoFCodigo, bens: FixedAssetParteBRow[]): { indRelacao: '1' | '3'; accountId: string | null; journalEntryIds: string[] } {
+    const soParteB = { indRelacao: '1' as const, accountId: null, journalEntryIds: [] };
+    if (codigo !== '86') return soParteB;
+    const quotas = [...new Map(bens.flatMap((b) => b.quotaEntries).map((q) => [q.id, q])).values()];
+    const contas = new Set(quotas.flatMap((q) => q.debitAccountIds));
+    if (quotas.length === 0 || contas.size !== 1) return soParteB;
+    return { indRelacao: '3', accountId: [...contas][0], journalEntryIds: quotas.map((q) => q.id).sort() };
+  }
+
+  /**
    * POST /lalur/parte-b/close — materializa o M500 do período (BRIEF item 10) e deriva o PF/BC (Fork F-3C-2 a).
    * Idempotente: refechar recalcula se nenhum período posterior estiver fechado. Gate DENTRO da tx.
    */
@@ -961,12 +1057,14 @@ export class LalurService {
       if (primeiroSeguinte) {
         throw new ValidationError(`${primeiroSeguinte}/${year + 1} já está fechado sobre o saldo final de ${quarter}/${year} — reabra-o antes de refechar ${quarter}/${year} (REGRA_SALDOS_M010_E020, p.237).`);
       }
-      const entriesTx = await this.repo.findEntriesForYear(scope, year, tx);
-      const bases = new Map<LalurTributo, bigint>(LALUR_TRIBUTOS.map((t) => [t, LalurService.baseDoTributo(resultado, quarter, t, entriesTx)]));
       const prevQ = qi > 0 ? periods[qi - 1] : null;
       if (prevQ && !byQ.has(prevQ)) throw new ValidationError(`Feche ${prevQ}/${year} antes de ${quarter}/${year}: o saldo inicial do período é o saldo final do anterior (Manual p.271).`);
 
       const accounts = await this.accountsOfYear(scope, year, tx);
+      // Bloco F (C8 emenda 3.2, E15–E22) ANTES da base: as linhas 86/161/91.01 entram no lucro real do período.
+      await this.derivarBlocoF(scope, year, quarter, accounts, tx);
+      const entriesTx = await this.repo.findEntriesForYear(scope, year, tx);
+      const bases = new Map<LalurTributo, bigint>(LALUR_TRIBUTOS.map((t) => [t, LalurService.baseDoTributo(resultado, quarter, t, entriesTx)]));
       const sdIni = prevQ
         ? new Map(byQ.get(prevQ)!.balances.map((b) => [b.parteBId, signed(b.sdFimCents, b.indSdFim)]))
         : await this.openingBalances(scope, year, accounts, tx); // T01: C3 (guarda de continuidade dentro)

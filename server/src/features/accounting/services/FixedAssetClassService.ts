@@ -7,6 +7,7 @@ import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
+import { leaseholdClassIssues, type FixedAssetClassKind } from '../models/FixedAsset.model';
 
 /**
  * FixedAssetClassService — classe de bem do imobilizado (BE-INCR-FIXED-ASSETS, nó C8, item 1/7).
@@ -52,6 +53,9 @@ export class FixedAssetClassService {
     if (dto.accumulatedDepreciationAccountId) {
       await this.assertAccount(scope, dto.accumulatedDepreciationAccountId, 'conta de depreciação acumulada');
     }
+    if (dto.amortizationExpenseAccountId) {
+      await this.assertAccount(scope, dto.amortizationExpenseAccountId, 'despesa de amortização (amortizationExpenseAccountId)');
+    }
     const { userId, unitId } = accountingScopeWhere(scope);
     return this.classRepo.create({
       userId,
@@ -61,6 +65,8 @@ export class FixedAssetClassService {
       depreciable: dto.depreciable,
       costAccountId: dto.costAccountId,
       accumulatedDepreciationAccountId: dto.accumulatedDepreciationAccountId ?? null,
+      kind: dto.kind,
+      amortizationExpenseAccountId: dto.amortizationExpenseAccountId ?? null,
     });
   }
 
@@ -73,6 +79,9 @@ export class FixedAssetClassService {
     if (dto.accumulatedDepreciationAccountId) {
       await this.assertAccount(scope, dto.accumulatedDepreciationAccountId, 'conta de depreciação acumulada');
     }
+    if (dto.amortizationExpenseAccountId) {
+      await this.assertAccount(scope, dto.amortizationExpenseAccountId, 'despesa de amortização (amortizationExpenseAccountId)');
+    }
     const nextDepreciable = dto.depreciable ?? current.depreciable;
     const nextAccumulatedAccountId =
       dto.accumulatedDepreciationAccountId !== undefined
@@ -81,6 +90,22 @@ export class FixedAssetClassService {
     if (nextDepreciable && !nextAccumulatedAccountId) {
       throw new ValidationError('accumulatedDepreciationAccountId é obrigatório quando depreciable=true (BRIEF item 1).');
     }
+    const nextAmortizationAccountId =
+      dto.amortizationExpenseAccountId !== undefined ? dto.amortizationExpenseAccountId : current.amortizationExpenseAccountId;
+    const [leaseholdIssue] = leaseholdClassIssues(
+      (dto.kind ?? current.kind) as FixedAssetClassKind,
+      nextDepreciable,
+      nextAmortizationAccountId,
+    );
+    if (leaseholdIssue) throw new ValidationError(leaseholdIssue.message);
+    // L4 (dono, chat, 2026-10-26, por questionário: "(a) Recusar com bem vivo"): trocar o tipo com bem vivo burlaria o
+    // E8b/E10 (bem vira benfeitoria sem declaração/prazo) ou trocaria a série no meio da vida (contorna o F-EM-8).
+    if (dto.kind !== undefined && dto.kind !== current.kind) {
+      const liveAssets = await this.assetRepo.countByClass(scope, id);
+      if (liveAssets > 0) {
+        throw new ValidationError(`Classe '${current.code}' tem ${liveAssets} ativo(s) vivo(s) — o kind não pode ser alterado.`);
+      }
+    }
     return this.classRepo.update(scope, id, {
       ...(dto.code !== undefined ? { code: dto.code } : {}),
       ...(dto.name !== undefined ? { name: dto.name } : {}),
@@ -88,6 +113,10 @@ export class FixedAssetClassService {
       ...(dto.costAccountId !== undefined ? { costAccountId: dto.costAccountId } : {}),
       ...(dto.accumulatedDepreciationAccountId !== undefined
         ? { accumulatedDepreciationAccountId: dto.accumulatedDepreciationAccountId }
+        : {}),
+      ...(dto.kind !== undefined ? { kind: dto.kind } : {}),
+      ...(dto.amortizationExpenseAccountId !== undefined
+        ? { amortizationExpenseAccountId: dto.amortizationExpenseAccountId }
         : {}),
     });
   }

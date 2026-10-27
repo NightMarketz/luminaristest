@@ -81,6 +81,31 @@ export class JournalEntryRepository implements IJournalEntryRepository {
     return rows.map((r) => r.sourceId).filter((s): s is string => s !== null);
   }
 
+  public async findDebitsBySourcePrefix(
+    scope: AccountingScope,
+    sourceType: string,
+    sourceIdPrefix: string,
+    statuses: readonly string[],
+    to: Date,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Array<{ id: string; sourceId: string; date: Date; debitCents: bigint; debitAccountIds: string[] }>> {
+    const rows = await (tx ?? prisma).journalEntry.findMany({
+      where: { ...accountingScopeWhere(scope), sourceType, sourceId: { startsWith: sourceIdPrefix }, status: { in: [...statuses] }, reversedById: null, date: { lte: to } },
+      select: { id: true, sourceId: true, date: true, postings: { select: { accountId: true, debitCents: true } } },
+      orderBy: [{ date: 'asc' }, { id: 'asc' }],
+    });
+    return rows.map((r) => {
+      const debits = r.postings.filter((p) => p.debitCents > 0n);
+      return {
+        id: r.id,
+        sourceId: r.sourceId ?? '',
+        date: r.date,
+        debitCents: debits.reduce((acc, p) => acc + p.debitCents, 0n),
+        debitAccountIds: [...new Set(debits.map((p) => p.accountId))],
+      };
+    });
+  }
+
   public async setStatus(
     scope: AccountingScope,
     id: string,

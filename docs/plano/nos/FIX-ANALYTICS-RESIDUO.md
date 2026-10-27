@@ -35,3 +35,8 @@ registrado a pedido do dono (chat, 2026-10-19: "Já incorpora nos planos do vaul
 - Write_set estendido só para `presets/modules/finance/ExpensesModule.ts` e `SalesModule.ts` (blocos `importantFields`/`defaultImportantFields`) e para o `KNOWN_GAPS` do teste.
 - Em `expenses`: `date` → `dueDate`; `status` → `paymentStatus`.
 - Caixa: "Contas a Pagar Vencidas" e "Prazo Médio de Pagamento (dias)" ganham entradas próprias, com os campos de "Contas a Pagar Total"; a chave morta "Lucro por Cliente" vira "Lucro Médio por Cliente".
+- Colunas do detalhe em KPI `mixed` (questionário, 2026-10-25, opção escolhida: **"Aceitar e documentar"**): fica como
+  está, sem mudança de código. Registro em [`TESTE-ACOPLAMENTO-PRESET-brief.md`](../../accounting/TESTE-ACOPLAMENTO-PRESET-brief.md)
+  §"Fora de escopo". "Lucro Médio por Cliente" não é `mixed` (o processador emite `main`, com IDs só de `sales`). A
+  lacuna vale para os KPIs `mixed` de lucro e de caixa: as colunas valem para `sales`, e nas linhas de `expenses`
+  elas vêm vazias.

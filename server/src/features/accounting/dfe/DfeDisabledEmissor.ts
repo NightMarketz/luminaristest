@@ -10,11 +10,13 @@ import type { CancelResult, DfeCapabilities, DfeEmissorPort, EmissaoResult } fro
 export class DfeDisabledEmissor implements DfeEmissorPort {
   public readonly name = 'disabled';
   public readonly capabilities: DfeCapabilities = {
+    kinds: [], // BE-INCR-NFCE item 4
     numbersDps: false,
     consultar: false,
     cancelar: false,
     webhook: false,
     substituir: false, // BE-INCR-DFE-EVENTOS item 16 — nada é emitido pela porta desabilitada
+    inutilizar: false, // BE-INCR-NFCE item 24 — idem
   };
 
   constructor(public readonly reason: string) {}
