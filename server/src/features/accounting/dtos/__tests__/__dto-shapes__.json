@@ -1002,6 +1002,29 @@
                   "minimum": 1,
                   "maximum": 49999
                 },
+                "inscricaoEstadual": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^\\d{2,14}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "nfeSerie": {
+                  "default": 1,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 889
+                },
+                "nfceSerie": {
+                  "default": 1,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 889
+                },
                 "regEspTrib": {
                   "default": 0,
                   "type": "integer",
@@ -6400,6 +6423,29 @@
           "minimum": 1,
           "maximum": 49999
         },
+        "inscricaoEstadual": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{2,14}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nfeSerie": {
+          "default": 1,
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 889
+        },
+        "nfceSerie": {
+          "default": 1,
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 889
+        },
         "regEspTrib": {
           "default": 0,
           "type": "integer",
@@ -7057,6 +7103,29 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 49999
+        },
+        "inscricaoEstadual": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{2,14}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nfeSerie": {
+          "default": 1,
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 889
+        },
+        "nfceSerie": {
+          "default": 1,
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 889
         },
         "regEspTrib": {
           "default": 0,
@@ -12012,6 +12081,229 @@
         "productRef",
         "destination",
         "updatedAt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "ProductFiscalProfileDto.ts": {
+    "ProductFiscalProfileParamsSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "productRef": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        }
+      },
+      "required": [
+        "productRef"
+      ],
+      "additionalProperties": false
+    },
+    "ProductFiscalProfileScopeQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "UpsertProductFiscalProfileSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ncm": {
+          "type": "string",
+          "pattern": "^\\d{8}$"
+        },
+        "cest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{7}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "origem": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 8
+        },
+        "cfopPadrao": {
+          "type": "string",
+          "pattern": "^\\d{4}$"
+        },
+        "csosn": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "102",
+                "103",
+                "300",
+                "400",
+                "500"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cstIcms": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "00"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "uCom": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 6
+        },
+        "cEan": {
+          "type": "string",
+          "pattern": "^(\\d{8}|\\d{12}|\\d{13}|\\d{14}|SEM GTIN)$"
+        },
+        "cstPis": {
+          "type": "string",
+          "enum": [
+            "49",
+            "50",
+            "51",
+            "52",
+            "53",
+            "54",
+            "55",
+            "56",
+            "60",
+            "61",
+            "62",
+            "63",
+            "64",
+            "65",
+            "66",
+            "67",
+            "70",
+            "71",
+            "72",
+            "73",
+            "74",
+            "75",
+            "98",
+            "99",
+            "01",
+            "02",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09"
+          ]
+        },
+        "cstCofins": {
+          "type": "string",
+          "enum": [
+            "49",
+            "50",
+            "51",
+            "52",
+            "53",
+            "54",
+            "55",
+            "56",
+            "60",
+            "61",
+            "62",
+            "63",
+            "64",
+            "65",
+            "66",
+            "67",
+            "70",
+            "71",
+            "72",
+            "73",
+            "74",
+            "75",
+            "98",
+            "99",
+            "01",
+            "02",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09"
+          ]
+        },
+        "ibsCbsCst": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{3}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ibsCbsClassTrib": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{6}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "xProd": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "ncm",
+        "origem",
+        "cfopPadrao",
+        "uCom",
+        "cEan",
+        "cstPis",
+        "cstCofins"
       ],
       "additionalProperties": false
     }

@@ -48,6 +48,9 @@ export interface FiscalProfileData {
   inscricaoMunicipal?: string | null;
   cnae?: string | null;
   dpsSerie: number;
+  inscricaoEstadual?: string | null; // BE-INCR-NFCE item 8
+  nfeSerie: number; // BE-INCR-NFCE item 9
+  nfceSerie: number;
   regEspTrib: number;
   regApTribSN?: number | null;
   issAliquotaBp?: number | null;

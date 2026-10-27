@@ -175,11 +175,14 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     'ibsRecuperarAccountId', 'cbsRecuperarAccountId', // IBS-CBS-2027 PR-3 item 14
     'retencaoIrrfRecolherAccountId', 'retencaoCsrfRecolherAccountId', 'retencaoInssRecolherAccountId', 'retencaoIssRecolherAccountId', 'retencaoIrrfCompensarAccountId', 'retencaoCsllCompensarAccountId', 'retencaoInssCompensarAccountId', // RETENCOES-FONTE PR-1 item 8
     // BE-INCR-DFE (item 9): enum/boolean/int como string — IM/CNAE (texto livre) ficam FORA do evento
-    'codMun', 'dpsSerie', 'regEspTrib', 'regApTribSN', 'issAliquotaBp', 'issRetidoTomadorPj', 'pacoteFatoGerador', 'pacoteCTribNac', 'pacoteCNBS', 'ibsCbsInformar', 'ibsCbsCst', 'ibsCbsClassTrib', 'pTotTribFedCent', 'pTotTribEstCent', 'pTotTribMunCent', 'pTotTribSNCent', 'emissaoForaDoMes',
+    'codMun', 'dpsSerie', 'inscricaoEstadual', 'nfeSerie', 'nfceSerie', 'regEspTrib', 'regApTribSN', 'issAliquotaBp', 'issRetidoTomadorPj', 'pacoteFatoGerador', 'pacoteCTribNac', 'pacoteCNBS', 'ibsCbsInformar', 'ibsCbsCst', 'ibsCbsClassTrib', 'pTotTribFedCent', 'pTotTribEstCent', 'pTotTribMunCent', 'pTotTribSNCent', 'emissaoForaDoMes',
     'policyVersionId'], // GOV-CONTADOR política versionada (item 14): a versão que aplicou esta escrita
   // BE-INCR-DFE (nó X10b, item 9) — perfil fiscal do serviço: só códigos (lista nacional/NBS/INDOP/IBGE) + serviceRef (id)
   'service_fiscal_profile.updated': ['serviceRef', 'cTribNac', 'cTribMun', 'cNBS', 'cIndOp', 'cLocPrestacao', 'cClassTrib'], // cClassTrib: IBS-CBS-2027 PR-1, L2
   'service_fiscal_profile.deleted': ['serviceRef', 'cTribNac'],
+  // BE-INCR-NFCE (nó X10a, item 26): perfil fiscal do produto — só códigos (xProd é texto livre, fica fora)
+  'product_fiscal_profile.updated': ['productRef', 'ncm', 'cest', 'origem', 'cfopPadrao', 'csosn', 'cstIcms', 'cstPis', 'cstCofins', 'ibsCbsCst', 'ibsCbsClassTrib'],
+  'product_fiscal_profile.deleted': ['productRef', 'ncm'],
   // SIMPLES-PISO-ANEXO-XI bloco 1 (BRIEF item 1) — benefício municipal de ISS: códigos/enum/datas; a legislação
   // concessiva (texto livre) fica FORA do evento.
   'iss_beneficio_municipal.created': ['codMun', 'tipo', 'cTribNacPrefixos', 'reducaoBpPorFaixa', 'vigenteDesde', 'vigenteAte'],
