@@ -140,6 +140,8 @@
         "Department": "Department",
         "Sale": "Sale",
         "Internal Use": "Internal Use",
+        "SALE": "Sale",
+        "RETURN": "Return",
         "Both": "Both",
         "Planned": "Planned",
         "Active": "Active",

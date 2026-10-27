@@ -120,3 +120,30 @@ describe('CreatePayableModal — braço de inventário (XOR)', () => {
     expect(screen.getByRole('button', { name: 'Registrar' })).toHaveProperty('disabled', true);
   });
 });
+
+describe('CreatePayableModal — deep link do MovementModal (initialInventory)', () => {
+  it('abre no braço estoque com produto e quantidade do link; o payload leva os dois', async () => {
+    render(
+      <CreatePayableModal
+        isOpen
+        onClose={() => {}}
+        unitId="u1"
+        expenseAccounts={expenseAccounts}
+        onSuccess={() => {}}
+        initialInventory={{ productRef: 'prod-2', qty: 4 }}
+      />,
+    );
+    expect(screen.getByRole('radio', { name: 'Compra de estoque' })).toHaveAttribute('aria-checked', 'true');
+    await waitFor(() => expect(screen.getByText('Condicionador')).toBeInTheDocument());
+    expect(screen.getByPlaceholderText('0')).toHaveProperty('value', '4');
+
+    fillCommonFields();
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar' }));
+
+    await waitFor(() => expect(accountsPayableService.createPayable).toHaveBeenCalledTimes(1));
+    const payload = vi.mocked(accountsPayableService.createPayable).mock.calls[0][0];
+    expect(payload.inventoryProductRef).toBe('prod-2');
+    expect(payload.inventoryQty).toBe(4);
+    expect(payload).not.toHaveProperty('expenseAccountId');
+  });
+});

@@ -12,6 +12,7 @@ import { parseBrl } from '../lib/parseBrl';
 import { formatCents } from '../lib/formatCents';
 import { resolveErrorWithCode } from '../lib/resolveError';
 import { scopeToday } from '../lib/formatDate';
+import type { InventoryPurchaseSeed } from '../lib/inventoryPurchaseLink';
 
 export interface CreatePayableModalProps {
   isOpen: boolean;
@@ -26,6 +27,8 @@ export interface CreatePayableModalProps {
   onNavigateToPeriods?: () => void;
   /** Navigate to the Contrapartes tab (shown when none is registered). */
   onNavigateToCounterparties?: () => void;
+  /** Pré-preenche o braço estoque ao abrir (deep link do MovementModal). */
+  initialInventory?: InventoryPurchaseSeed;
 }
 
 /**
@@ -46,6 +49,7 @@ export function CreatePayableModal({
   onSuccess,
   onNavigateToPeriods,
   onNavigateToCounterparties,
+  initialInventory,
 }: CreatePayableModalProps) {
   const { t } = useTranslation('accounting');
   const [supplierName, setSupplierName] = useState('');
@@ -63,6 +67,14 @@ export function CreatePayableModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [periodError, setPeriodError] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen || !initialInventory) return;
+    setMode('inventory');
+    setExpenseAccountId('');
+    setInventoryProductRef(initialInventory.productRef);
+    setInventoryQtyStr(initialInventory.qty !== undefined ? String(initialInventory.qty) : '');
+  }, [isOpen, initialInventory]);
 
   // Catálogo de produtos: carregado sob demanda na 1ª entrada no modo estoque.
   useEffect(() => {
