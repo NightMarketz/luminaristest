@@ -1,0 +1,6 @@
+Ativar a contabilidade desta unidade?
+
+Setor: Salão de beleza. Ao confirmar, (1) o plano de contas padrão é instalado se o da unidade estiver vazio e (2) o período do mês corrente é aberto se ainda não existir.
+
+Cancelar
+Ativar
