@@ -436,16 +436,60 @@ describe('AccountingDeliveryService', () => {
       ).rejects.toThrow(/não tem período gravado/);
     });
 
-    it('2 extras do MESMO kind é 400 DUPLICATE_KIND', async () => {
-      const { service } = build({
+    // Emenda C6b (cédula D-2026-10-28-LACUNAS-EXECUTA-27-28, item 2): a unicidade do extra é
+    // kind + período. Mesmo kind com intervalo que se cruza — inclusive igual — continua 400.
+    it('2 extras do MESMO kind com período sobreposto (ou igual) é 400 DUPLICATE_KIND', async () => {
+      const q1 = { start: new Date('2026-01-01T00:00:00.000Z'), end: new Date('2026-03-31T00:00:00.000Z') };
+      const marAbr = { start: new Date('2026-03-01T00:00:00.000Z'), end: new Date('2026-04-30T00:00:00.000Z') };
+      const sobreposto = build({
+        extraJobs: {
+          'extra-1': extraJob('extra-1', 'EXPORT_TRIAL_BALANCE', 'c'.repeat(64), 'EXPORTED', q1),
+          'extra-2': extraJob('extra-2', 'EXPORT_TRIAL_BALANCE', 'd'.repeat(64), 'EXPORTED', marAbr),
+        },
+      });
+      await expect(
+        sobreposto.service.buildDeliveryPackage(scope, { ...buildDto, extraJobIds: ['extra-1', 'extra-2'] }),
+      ).rejects.toMatchObject({ errorCode: 'DUPLICATE_KIND' });
+
+      const igual = build({
         extraJobs: {
           'extra-1': extraJob('extra-1', 'EXPORT_TRIAL_BALANCE'),
           'extra-2': extraJob('extra-2', 'EXPORT_TRIAL_BALANCE'),
         },
       });
       await expect(
-        service.buildDeliveryPackage(scope, { ...buildDto, extraJobIds: ['extra-1', 'extra-2'] }),
+        igual.service.buildDeliveryPackage(scope, { ...buildDto, extraJobIds: ['extra-1', 'extra-2'] }),
       ).rejects.toMatchObject({ errorCode: 'DUPLICATE_KIND' });
+    });
+
+    it('2 extras do MESMO kind em meses disjuntos entram os dois no pacote (build e confirmação)', async () => {
+      const jan = { start: new Date('2026-01-01T00:00:00.000Z'), end: new Date('2026-01-31T00:00:00.000Z') };
+      const fev = { start: new Date('2026-02-01T00:00:00.000Z'), end: new Date('2026-02-28T00:00:00.000Z') };
+      const { service, createItems } = build({
+        extraJobs: {
+          'extra-1': extraJob('extra-1', 'EXPORT_TRIAL_BALANCE', 'c'.repeat(64), 'EXPORTED', jan),
+          'extra-2': extraJob('extra-2', 'EXPORT_TRIAL_BALANCE', 'd'.repeat(64), 'EXPORTED', fev),
+        },
+      });
+      const extraJobIds = ['extra-1', 'extra-2'];
+      const esperado = [
+        { kind: 'EXPORT_SPED_ECD', jobId: 'job-ecd', sha256: SHA_ECD },
+        { kind: 'EXPORT_SPED_ECF', jobId: 'job-ecf', sha256: SHA_ECF },
+        { kind: 'EXPORT_TRIAL_BALANCE', jobId: 'extra-1', sha256: 'c'.repeat(64) },
+        { kind: 'EXPORT_TRIAL_BALANCE', jobId: 'extra-2', sha256: 'd'.repeat(64) },
+      ];
+      const manifest = await service.buildDeliveryPackage(scope, { ...buildDto, extraJobIds });
+      expect(manifest.files).toEqual(esperado);
+
+      const { manifest: confirmado } = await service.confirmDelivery(scope, { ...confirmDto, extraJobIds });
+      expect(confirmado.files).toEqual(esperado);
+      const [, items] = createItems.mock.calls[0] as unknown as [string, Array<{ jobId: string; position: number }>];
+      expect(items.map((i) => [i.jobId, i.position])).toEqual([
+        ['job-ecd', 0],
+        ['job-ecf', 1],
+        ['extra-1', 2],
+        ['extra-2', 3],
+      ]);
     });
 
     it('id repetido em extraJobIds é 400 antes de resolver qualquer job', async () => {
