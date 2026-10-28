@@ -1,0 +1,3 @@
+To Do -> A fazer 6=1000, A fazer 3=2000, A fazer 4=3000
+In Progress -> Em andamento 1=1000, Em andamento 2=2000, A fazer 5=2500, Em andamento 3=3000, Em andamento 4=4000, Em andamento 5=5000, Em andamento 6=6000
+Done -> Feito 1=1000, A fazer 1=1500, Feito 2=2000, Feito 3=3000, A fazer 2=4000

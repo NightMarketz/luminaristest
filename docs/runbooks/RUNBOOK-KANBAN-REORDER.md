@@ -75,6 +75,24 @@ Pré-condições (conferir e colar a evidência de cada uma):
 > ```
 > Network e console lidos pelo runner (`page.on('response'|'requestfailed'|'console')`), não pelo DevTools.
 
+> **Rodada de 2026-10-28** (agente, persona revisor; comando do dono no chat da sessão coordenadora, 2026-10-28, repassado:
+> "Sim, rodar 6–10" — passos 6 a 10 sobre a branch do #961, que corrige o passo 6, mais a regressão "soltar sobre card" pedida
+> na mesma ordem). Mesmo runner da rodada de 27/10 (`kro.mjs`, Puppeteer de `server/node_modules`, Chrome headless 1800×1000),
+> adaptado às portas desta rodada; prints e logs em `docs/runbooks/evidencia-kanban-reorder-2026-10-28/`. Pré-condições:
+> ```
+> $ git log --oneline -1   → 694f1c95 fix(kanban): soltar na área vazia de outra coluna manda o card para o fim (RUNBOOK-KANBAN-REORDER passo 6)
+>                            (branch claude/kanban-passo6-guarda, PR #961, sobre origin/main 9a865c50)
+> server: npm ci + npm run build → server build exit=0 ; my-app: NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:3031/api npm run build → next build exit=0
+> back: npm run start (server/.env da worktree: PORT=3031, ALLOWED_ORIGIN=http://127.0.0.1:3030) ; front: next start -p 3030 -H 127.0.0.1
+> $ curl -s 127.0.0.1:3031/health → {"status":"degraded","uptime":4.8981484,"checks":{"database":"ok","qdrant":"error"}}
+> $ curl -s -o /dev/null -w "frontend %{http_code}" http://127.0.0.1:3030/ → frontend 200
+> banco: cópia de server/prisma/prisma/dev.db do checkout principal → server/prisma/prisma/kro-rb.db (o original não foi tocado)
+>   prisma migrate deploy → "All migrations have been successfully applied." ; npm run db:seed → "Admin user created/updated: admin@luminaris.test"
+> Tasks do admin vazia ("linhas existentes: 0") → 15 cards via POST /api/dynamic-tables/:id/data, "201" em cada (seed.log), no
+>   estado em que o passo 6 de 27/10 começou: To Do: A fazer 2..6 = 1000..5000 | In Progress: Em andamento 1..6 = 1000..6000 |
+>   Done: Feito 1=1000, A fazer 1=1500, Feito 2=2000, Feito 3=3000   (print probe.png; console.error: nenhum)
+> ```
+
 ## Passos
 Pare no primeiro passo que divergir. Não execute os seguintes (regra do FALHOU).
 
@@ -191,24 +209,75 @@ Pare no primeiro passo que divergir. Não execute os seguintes (regra do FALHOU)
    card" (F-KR-4: entra na posição dele). O teste de unidade do #824 (item 4) passa `over: { id: 'done' }` direto e não
    exercita a colisão.
 
+   **Rodada de 2026-10-28 — com o fix do #961 no build: confere.** Mesmo arrasto e mesmo ponto da rodada de 27/10. Log
+   `evidencia-kanban-reorder-2026-10-28/p6.log`; telas `p6-antes.png`, `p6-depois.png`, `p6-depois-f5.png`.
+   ```
+   arrasto: "A fazer 2" → {"x":1598,"y":936}
+   200       PUT /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data/cmvsmd0lp0001cif8elrns7rj {"data":{"status":"Done","order":4000}}
+   depois do arrasto: DONE: Feito 1, A fazer 1, Feito 2, Feito 3, A fazer 2
+   depois do F5:      DONE: Feito 1, A fazer 1, Feito 2, Feito 3, A fazer 2
+   IGUAL antes×depois do F5: true
+   console.error: (nenhum)
+   ```
+
+   **Regressão "soltar sobre card" (rodada de 2026-10-28, pedida na ordem do dono).** A colisão passou a ser `pointerWithin`
+   primeiro, então soltar **sobre** um card precisa continuar pondo o card antes dele (F-KR-4). Log `reg.log`; telas
+   `reg-mesma-*.png` e `reg-outra-*.png`. **Confere nos dois casos.**
+   ```
+   mesma coluna:  arrasto: "A fazer 6" → sobre "A fazer 3"
+   200       PUT /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data/cmvsmd0mq000hcif8vj1dzu6z {"data":{"order":1000}}
+   depois do arrasto: TO DO: A fazer 6, A fazer 3, A fazer 4, A fazer 5
+   depois do F5:      TO DO: A fazer 6, A fazer 3, A fazer 4, A fazer 5          IGUAL antes×depois do F5: true
+   outra coluna:  arrasto: "A fazer 5" → sobre "Em andamento 3"
+   200       PUT /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data/cmvsmd0mh000dcif8vl5mqdxo {"data":{"status":"In Progress","order":2500}}
+   depois do arrasto: IN PROGRESS: Em andamento 1, Em andamento 2, A fazer 5, Em andamento 3, Em andamento 4, Em andamento 5, Em andamento 6
+   depois do F5:      IN PROGRESS: Em andamento 1, Em andamento 2, A fazer 5, Em andamento 3, Em andamento 4, Em andamento 5, Em andamento 6
+   IGUAL antes×depois do F5: true          console.error: (nenhum) nos dois
+   ```
+   Banco depois dos arrastos (`banco-depois.txt`, `python -I` + `sqlite3` sobre `kro-rb.db`):
+   ```
+   To Do -> A fazer 6=1000, A fazer 3=2000, A fazer 4=3000
+   In Progress -> Em andamento 1=1000, Em andamento 2=2000, A fazer 5=2500, Em andamento 3=3000, Em andamento 4=4000, Em andamento 5=5000, Em andamento 6=6000
+   Done -> Feito 1=1000, A fazer 1=1500, Feito 2=2000, Feito 3=3000, A fazer 2=4000
+   ```
+
 7. Escolha uma **ordenação** na barra do Kanban (por exemplo, prioridade) e tente reordenar dentro da coluna.
    Resultado esperado: a ordem não muda (com ordenação escolhida, arrastar só muda de coluna). Nenhum update.
    EVIDÊNCIA: não executado na rodada de 27/10 (regra do FALHOU: o passo 6 divergiu).
+   **Rodada de 2026-10-28 — diverge do esperado: não há ordenação para escolher.** O runner abriu a barra de filtros
+   (botão "Show Filters") e procurou o seletor "Sort by". Log `evidencia-kanban-reorder-2026-10-28/p7.log`; tela
+   `p7-barra-sem-ordenacao.png` (a barra aberta mostra só SEARCH, PRIORITY e os totais).
+   ```
+   abre a barra: botão "show filters"
+   opções da ordenação: null
+   <select> na página: 0 · rótulo "Sort by" na página: false
+   --- texto da barra de filtros aberta ---  SEARCH / PRIORITY: All, Low, Medium, High, Urgent / TOTAL 15 / COMPLETED 5
+   FALHOU: a barra do Kanban não oferece ordenação para escolher
+   console.error: (nenhum)
+   ```
+   O passo não pôde ser executado como escrito; nenhum arrasto foi feito. Causa provável (inferida lendo o código, sem teste
+   que a prove): o `SortSelect` (`shared/SortSelect.tsx`) só lista campos lidos de `record.data` e devolve `null` quando
+   não acha nenhum; o Kanban passa `filteredTasks`, e o `Task` montado em `useKanbanData.tsx:75-85` espalha os campos no
+   topo (`...data`) sem uma propriedade `data`. Sem campos, o seletor nunca aparece. O código do `SortSelect` é do baseline
+   (`0db39612`), anterior ao #824.
 
 8. Abra uma tabela Kanban **criada pelo usuário, sem campo `order`**. Se não existir nenhuma, marque N/A.
    Resultado esperado: aparece a dica "A ordem dos cards nesta tabela não é salva: arrastar só muda o card
    de coluna." Arrastar entre colunas funciona; dentro da coluna não reordena.
    EVIDÊNCIA: não executado na rodada de 27/10 (regra do FALHOU: o passo 6 divergiu).
+   Rodada de 2026-10-28: não executado (regra do FALHOU: o passo 7 divergiu).
 
 9. Lote 4 (#813): abra o detalhe de um card, troque o idioma para EN e confira os textos (Quick Actions,
    Archive, Detailed Information, Created at…). Feche com Esc ou clique fora.
    Resultado esperado: nenhum texto em PT na tela EN. O inspetor mostra `role="dialog"` no overlay.
    EVIDÊNCIA (screenshot EN + trecho do inspetor): não executado na rodada de 27/10 (regra do FALHOU: o passo 6 divergiu).
+   Rodada de 2026-10-28: não executado (regra do FALHOU: o passo 7 divergiu).
 
 10. Lote 4 (#813): numa tabela com coluna de relação (ex.: cliente), limpe o localStorage do site e abra
     a tabela.
     Resultado esperado: a coluna de relação aparece visível, e não oculta até alguém ligá-la à mão.
     EVIDÊNCIA: não executado na rodada de 27/10 (regra do FALHOU: o passo 6 divergiu).
+    Rodada de 2026-10-28: não executado (regra do FALHOU: o passo 7 divergiu).
 
 ## Desfecho da rodada de 2026-10-24/25 (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
@@ -238,3 +307,18 @@ Pare no primeiro passo que divergir. Não execute os seguintes (regra do FALHOU)
   fixa `category: 'other'`, então uma "tabela Kanban criada pelo usuário" talvez não exista por construção — não verificado.
 - Atualização do artefato de rastreio: `docs/plano/nos/FE-INCR-KANBAN-REORDER.md` (estado + data) — fold no mesmo PR da Emenda 1
 - Assinatura do executor: agente Claude Opus 5.5, persona revisor, sob comando do dono (chat, 2026-10-27) — não é assinatura humana
+
+## Desfecho da rodada de 2026-10-28 (marcar UM)
+[ ] PASSOU — todos os passos com evidência conferindo com o esperado
+[x] FALHOU — passo 7 divergiu (a barra do Kanban não oferece ordenação para escolher); evidência colada acima; o passo 6
+    (com o fix do #961) e a regressão "soltar sobre card" (mesma coluna e outra coluna) conferiram; NENHUM passo seguinte
+    (8–10) foi executado
+[ ] BLOQUEADO — pré-condição __ não se sustentava; execução nem começou
+
+## Registro da rodada de 2026-10-28
+- Achados no caminho (fora do escopo deste runbook): agente, 2026-10-28 — (1) o `npm ci` do server avisou que scripts de
+  instalação não rodaram (`npm warn install-scripts`, ex.: `unrs-resolver`); o build e o servidor subiram mesmo assim;
+  (2) os 404 de `/favicon.ico` e 400 de `/_next/image` das rodadas anteriores não apareceram no `console.error` desta rodada.
+  Passos 8 a 10 **não** foram executados (regra do FALHOU).
+- Atualização do artefato de rastreio: `docs/plano/nos/FE-INCR-KANBAN-REORDER.md` — fold no PR #961
+- Assinatura do executor: agente Claude Opus 5.5, persona revisor, sob comando do dono (chat, 2026-10-28) — não é assinatura humana
