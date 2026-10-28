@@ -5,7 +5,7 @@ import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IServiceFiscalProfileRepository } from '../repositories/IServiceFiscalProfileRepository';
 import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRepository';
 import type { AuditService } from './AuditService';
-import type { UpsertServiceFiscalProfileInput } from '../dtos/ServiceFiscalProfileDto';
+import { HOSPITALAR_SO_TERAPEUTICA, hospitalarValido, type UpsertServiceFiscalProfileInput } from '../dtos/ServiceFiscalProfileDto';
 import { findLc116, listaLc116De, type ListaLc116 } from '../models/lc116ListaNacional';
 import { scopeToday } from '../models/dates';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
@@ -25,6 +25,10 @@ export interface ServiceFiscalProfileView {
   xDescServ: string | null;
   /** IBS-CBS-2027 PR-1 (F-IBS-10 a): null => a emissão usa FiscalProfile.ibsCbsClassTrib. */
   cClassTrib: string | null;
+  /** EFICIENCIA-FISCAL PR-5 (item 25): null = não informada ⇒ tratada como ESTETICA (I-17). */
+  finalidade: string | null;
+  elegivelHospitalar: boolean;
+  fundamentoHospitalar: string | null;
   updatedAt: string;
 }
 
@@ -77,6 +81,16 @@ export class ServiceFiscalProfileService {
           throw new ValidationError(`Os 3 primeiros dígitos de cClassTrib (${data.cClassTrib}) devem ser iguais ao CST do IBS/CBS do perfil fiscal (${cst}) (RN E0959).`);
         }
       }
+      // EFICIENCIA-FISCAL PR-5 (item 25): campo omitido mantém o gravado — a combinação final é conferida aqui, na tx.
+      const atual = await this.repo.findByServiceRef(scope, serviceRef, tx);
+      const final = {
+        finalidade: data.finalidade !== undefined ? data.finalidade : (atual?.finalidade ?? null),
+        elegivelHospitalar: data.elegivelHospitalar ?? atual?.elegivelHospitalar ?? false,
+        fundamentoHospitalar: data.fundamentoHospitalar !== undefined ? data.fundamentoHospitalar : (atual?.fundamentoHospitalar ?? null),
+      };
+      if (!hospitalarValido(final)) {
+        throw new ValidationError(`${HOSPITALAR_SO_TERAPEUTICA}: a equiparação hospitalar (Lei 9.249/1995 art. 15 § 1º III "a") só cabe a serviço de finalidade TERAPEUTICA com o fundamento informado (item da Atribuição 4 da RDC Anvisa 50).`);
+      }
       const row = await this.repo.upsert(scope, serviceRef, data, tx);
       await this.auditService.append(tx, scope, {
         actorUserId: scope.actorUserId,
@@ -91,6 +105,8 @@ export class ServiceFiscalProfileService {
           cIndOp: row.cIndOp,
           cLocPrestacao: row.cLocPrestacao ?? '',
           cClassTrib: row.cClassTrib ?? '', // IBS-CBS-2027 PR-1, L2 (dono, 21/10): a troca entra na trilha
+          finalidade: row.finalidade ?? '', // EFICIENCIA-FISCAL PR-5 (item 25); o fundamento (texto livre) fica fora
+          elegivelHospitalar: String(row.elegivelHospitalar),
         },
       });
       return this.toView(row, lista);
@@ -124,6 +140,9 @@ export class ServiceFiscalProfileService {
       cLocPrestacao: row.cLocPrestacao,
       xDescServ: row.xDescServ,
       cClassTrib: row.cClassTrib,
+      finalidade: row.finalidade,
+      elegivelHospitalar: row.elegivelHospitalar,
+      fundamentoHospitalar: row.fundamentoHospitalar,
       updatedAt: row.updatedAt.toISOString(),
     };
   }
