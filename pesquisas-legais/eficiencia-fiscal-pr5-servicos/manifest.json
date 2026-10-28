@@ -1,0 +1,44 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei nº 9.249 de 26/12/1995",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1995/lei-9249-1995-12-26.md",
+      "url_final": "https://github.com/ctresb/leis/blob/d955e7e66c4a7176278ee8ac74513668de7fc989/federal/leis-ordinarias/1995/lei-9249-1995-12-26.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1995-12-26;9249",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "d955e7e66c4a7176278ee8ac74513668de7fc989",
+      "alertas": [],
+      "baixado_em": "2026-10-28T20:04:06-03:00",
+      "sha256": "18cb96b64a850a3f9b738da870044230b76a336068e3fae79cb83f10b14d4699",
+      "arquivo": "docs/D01_lei-9249-1995-12-26.md",
+      "texto": "docs/D01_lei-9249-1995-12-26.txt",
+      "bytes": 45124
+    },
+    {
+      "id": "D02",
+      "titulo": "Lei nº 9.250 de 26/12/1995",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1995/lei-9250-1995-12-26.md",
+      "url_final": "https://github.com/ctresb/leis/blob/ec2d052273aea51cd30fac55a779a8d933c11046/federal/leis-ordinarias/1995/lei-9250-1995-12-26.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1995-12-26;9250",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "ec2d052273aea51cd30fac55a779a8d933c11046",
+      "alertas": [],
+      "baixado_em": "2026-10-28T20:04:07-03:00",
+      "sha256": "aa9eedaae0195205b7f5bcde33c46572d4f1f5352de3cf92ec1e36342e88befd",
+      "arquivo": "docs/D02_lei-9250-1995-12-26.md",
+      "texto": "docs/D02_lei-9250-1995-12-26.txt",
+      "bytes": 49701
+    }
+  ],
+  "buscas": [],
+  "slug": "eficiencia-fiscal-pr5-servicos",
+  "pergunta": "EFICIENCIA-FISCAL PR-5: Lei 9.249 arts. 15 §1º III a, §2º e 20 (8%/12% hospitalar); Lei 9.250 art. 40 p.ú.; Lei SP 13.701 arts. 15-16 (SUP); LC 214 Anexo III (NBS saúde 60%)",
+  "criado": "2026-10-28T20:04:04-03:00"
+}

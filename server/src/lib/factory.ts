@@ -1312,6 +1312,8 @@ export class ApplicationFactory {
       this.repositories.accountingPeriod, // X7 Fase B item 15: meses fechados antes do balancete (só leitura)
       legalParameterService, // BE-INCR-LEGAL-PARAMS PR-1: fotografia TAX_ASSESSMENT + CSLL_ALIQUOTA
       presumidoTetoService, // PRESUMIDO-TETO-78MI item 9b/9c: aviso na prévia, 400 na confirmação
+      this.repositories.receitaFiscal, // EFICIENCIA-FISCAL PR-5 item 26: subrazão por serviço (8 %/12 % hospitalar)
+      this.repositories.serviceFiscalProfile,
     );
 
     // BE-INCR-SPED-ECF-FASE3B item 11 (Fork 4→b): e-Lalur/e-Lacs store. Lê o repo de contas do plano
