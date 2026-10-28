@@ -139,6 +139,7 @@ import { SourceDocumentUploadService } from '../features/accounting/services/Sou
 import { DocumentAttachmentService } from '../features/accounting/services/DocumentAttachmentService';
 import { DataExchangeExportService } from '../features/accounting/services/DataExchangeExportService';
 import { ReceiptService } from '../features/accounting/services/ReceiptService';
+import { DanfeService } from '../features/accounting/services/DanfeService';
 import { DataExchangeImportService } from '../features/accounting/services/DataExchangeImportService';
 import { SpedGenerationService } from '../features/accounting/services/SpedGenerationService';
 import { SpedEcfGenerationService } from '../features/accounting/services/SpedEcfGenerationService';
@@ -923,6 +924,7 @@ export class ApplicationFactory {
     dataExchangeExport: DataExchangeExportService;
     dataExchangeImport: DataExchangeImportService;
     receipt: ReceiptService;
+    danfe: DanfeService; // NFE-DANFE-IBSCBS PR-3 (item 20)
     sped: SpedGenerationService;
     spedEcf: SpedEcfGenerationService;
     spedEcfReal: SpedEcfRealGenerationService;
@@ -1285,6 +1287,9 @@ export class ApplicationFactory {
       this.repositories.account,
       this.repositories.posting,
       this.policies.accounting,
+      this.repositories.productFiscalProfile, // EFICIENCIA-FISCAL PR-2 (item 13): NCM do produto
+      this.repositories.fiscalProfile, // UF da unidade (codMun)
+      legalParameterService, // fotografia PIS_COFINS_MONOFASICO_NCM + ICMS_ST_NCM_UF
     );
     // PRESUMIDO-TETO-78MI item 8 (F-PT-1 c): teto do Presumido — só leitura; consumido pela apuração e pelo perfil da empresa.
     const presumidoTetoService = new PresumidoTetoService(
@@ -1673,7 +1678,13 @@ export class ApplicationFactory {
       // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13, PR-1): perfil da EMPRESA por ano + signatários não-contador.
       companyFiscalProfile: companyFiscalProfileService,
       companySigner: new CompanySignerService(this.repositories.companySigner, this.policies.accounting, auditService),
-      partner: new PartnerService(this.repositories.partner, this.policies.accounting, auditService), // IRRF-DISTRIBUICAO PR-1
+      partner: new PartnerService( // IRRF-DISTRIBUICAO PR-1; D-2026-10-28 item 1 (409 com distribuição)
+        this.repositories.partner,
+        this.policies.accounting,
+        auditService,
+        this.repositories.profitDistribution,
+        this.repositories.interestOnEquity,
+      ),
       // RETENCOES-FONTE PR-1 (item 6): perfil de retenção; fotografia NATUREZA_RENDIMENTO e a leitura dos rascunhos dela.
       withholdingProfile: new WithholdingProfileService(
         this.repositories.withholdingProfile,
@@ -1830,6 +1841,12 @@ export class ApplicationFactory {
         this.repositories.journalEntry,
         this.repositories.account,
         this.policies.accounting,
+      ),
+      danfe: new DanfeService(
+        this.repositories.fiscalDocument,
+        this.repositories.documentAttachment,
+        this.policies.accounting,
+        legalParameterService,
       ),
       sped: new SpedGenerationService(
         this.repositories.account,
@@ -1997,6 +2014,7 @@ export class ApplicationFactory {
         this.repositories.issBeneficioMunicipal, // SIMPLES-PISO-ANEXO-XI bloco 1: benefício municipal de ISS
         sourceDocumentUploadService, // BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-9 a: o PDF do DAS na visão
         this.repositories.receitaFiscalRecebimento, // X14-CAIXA PR-2 item 8: recebimentos, base do caixa
+        this.repositories.productFiscalProfile, // EFICIENCIA-FISCAL PR-2 item 13: avisos SEM_NCM e ICMS_ST_NAO_CONFERIDA
       ),
       // BE-INCR-SIMPLES-NACIONAL PR-4 (nó X14, itens 27–28): espelhos DASN-SIMEI e DEFIS.
       simplesDeclaracao: new SimplesDeclaracaoService(
@@ -2044,6 +2062,8 @@ export class ApplicationFactory {
         this.policies.accounting,
         auditService,
         legalParameterService,
+        // PR-2 (E4): dividendos e JCP POSTED, só leitura pelas interfaces do IRRF-DISTRIBUICAO.
+        { dividendos: this.repositories.profitDistribution, jcp: this.repositories.interestOnEquity, socios: this.repositories.partner },
       ),
       // BE-INCR-PIS-COFINS PR-2 (nó X8): prévia/confirmação da apuração mensal de PIS/Cofins (reusa o TaxAssessment do X7).
       pisCofinsAssessment: pisCofinsAssessmentService,
@@ -2458,6 +2478,7 @@ export class ApplicationFactory {
   public getDataExchangeExportService = (): DataExchangeExportService => this.services.dataExchangeExport;
   public getDataExchangeImportService = (): DataExchangeImportService => this.services.dataExchangeImport;
   public getReceiptService = (): ReceiptService => this.services.receipt;
+  public getDanfeService = (): DanfeService => this.services.danfe;
   public getSpedGenerationService = (): SpedGenerationService => this.services.sped;
   public getSpedEcfGenerationService = (): SpedEcfGenerationService => this.services.spedEcf;
   public getSpedEcfRealGenerationService = (): SpedEcfRealGenerationService => this.services.spedEcfReal;

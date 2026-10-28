@@ -7,6 +7,9 @@ import { readdirSync } from 'fs';
 import {
   __selfCheck,
   buildR1000,
+  buildR2010,
+  buildR2099,
+  buildR4010,
   buildR4020,
   buildR4099,
   conteudoSha256R1000,
@@ -21,8 +24,10 @@ import {
   statusDoLoteNaConsulta,
   tpAmbReinf,
   valorReinf,
+  type BeneficiarioPF,
   type BeneficiarioPJ,
   type CabecalhoEvento,
+  type PrestadorR2010,
   type ContribuinteR1000,
   type ReinfTransmissorPort,
 } from '../reinf';
@@ -51,6 +56,41 @@ const FISIO: BeneficiarioPJ = {
       { dtFG: '2026-03-25', vlrBrutoCents: 50_000n, agregado: { baseCents: 50_000n, valorCents: 2_325n }, origemIds: ['c4', 'c5', 'c6'] },
     ],
   },
+};
+
+/** PR-2 (itens 15–16): dividendo com IR (corrente), dividendo da transição (isenção 12) e JCP no mesmo CPF. */
+const SOCIO: BeneficiarioPF = {
+  cpf: '52998224725',
+  nome: '',
+  ref: 'p-1',
+  porNatureza: {
+    '12001': [
+      { dtFG: '2026-03-20', vlrRendBrutoCents: 3_000_000n, vlrRendTribCents: 3_000_000n, vlrIRCents: 600_000n, origemIds: ['d2'] },
+      { dtFG: '2026-03-05', vlrRendBrutoCents: 4_000_000n, vlrRendTribCents: 3_000_000n, isencao: { tpIsencao: 12, valorCents: 1_000_000n }, origemIds: ['d1', 'd0'] },
+    ],
+    '12016': [{ dtFG: '2026-03-31', vlrRendBrutoCents: 200_000n, vlrRendTribCents: 200_000n, vlrIRCents: 35_000n, origemIds: ['a1'] }],
+  },
+};
+
+/** PR-2 (item 17): limpeza em duas NFs, uma com dois tipos de serviço. */
+const PRESTADOR: PrestadorR2010 = {
+  cnpj: '19131243000197',
+  ref: 'cp-limpa',
+  indCPRB: 0,
+  nfs: [
+    { serie: '1', numDocto: '124', dtEmissaoNF: '2026-03-15', vlrBrutoCents: 500_000n, tiposServico: [{ tpServico: '100000001', baseCents: 500_000n, retencaoCents: 55_000n }], origemIds: ['w2'] },
+    {
+      serie: 'A',
+      numDocto: '123',
+      dtEmissaoNF: '2026-03-02',
+      vlrBrutoCents: 1_000_000n,
+      tiposServico: [
+        { tpServico: '100000002', baseCents: 400_000n, retencaoCents: 44_000n },
+        { tpServico: '100000001', baseCents: 600_000n, retencaoCents: 66_000n },
+      ],
+      origemIds: ['w1'],
+    },
+  ],
 };
 
 describe('lib/reinf — base (item 2; L5, L8)', () => {
@@ -96,6 +136,9 @@ describe('lib/reinf — eventos no XSD oficial (item 5; invariante 7)', () => {
     ['R-4020', () => buildR4020(H(), C, ESTAB, FISIO, '2026-03').xml],
     ['R-4099', () => buildR4099(H(), C, '2026-03', 'FECHAMENTO', { nome: 'Ana', cpf: '52998224725', email: 'ana@contab.test' }).xml],
     ['R-4099', () => buildR4099(H(), C, '2026-03', 'REABERTURA').xml],
+    ['R-4010', () => buildR4010(H(), C, ESTAB, SOCIO, '2026-03').xml],
+    ['R-2010', () => buildR2010(H(), C, ESTAB, PRESTADOR, '2026-03').xml],
+    ['R-2099', () => buildR2099(H(), C, '2026-03', { servTomados: true }, { nome: 'Ana', cpf: '52998224725' }).xml],
   ];
   it.each(casos)('%s assinado com a chave de teste valida no XSD', async (tipo, gerar) => {
     const r = await validarNoXsdReinf(signReinfEventoForTest(gerar()), tipo);
@@ -175,6 +218,49 @@ describe('lib/reinf — R-1000, R-4099, lote (itens 4, 9, 10)', () => {
     expect(x.xml).toContain('<evento Id="ID1112223330000002026041510300000001"><Reinf xmlns="http://www.reinf.esocial.gov.br/schemas/evt4020PagtoBeneficiarioPJ/v2_01_02">');
     const muitos = Array.from({ length: MAX_EVENTOS_LOTE + 1 }, () => buildR4099(H(), C, '2026-03', 'FECHAMENTO'));
     expect(() => serializeLote('11222333', muitos)).toThrow(ReinfLimiteXsdError);
+  });
+});
+
+describe('lib/reinf — PR-2: R-4010, R-2010, R-2099 (itens 15, 17, 18)', () => {
+  it('R-4010: um evento por CPF; idePgto 12001 e 12016; infoPgto por dtFG em ordem; rendIsento tpIsencao 12; sem ideDep', () => {
+    const { xml, tipo } = buildR4010(H(), C, ESTAB, SOCIO, '2026-03');
+    expect(tipo).toBe('R-4010');
+    expect(xml).toContain('<Reinf xmlns="http://www.reinf.esocial.gov.br/schemas/evt4010PagtoBeneficiarioPF/v2_01_02"><evtRetPF id=');
+    expect(xml).toContain('<ideBenef><cpfBenef>52998224725</cpfBenef><idePgto><natRend>12001</natRend>');
+    expect([...xml.matchAll(/<dtFG>([^<]+)<\/dtFG>/g)].map((m) => m[1])).toEqual(['2026-03-05', '2026-03-20', '2026-03-31']);
+    expect(xml).toContain('<infoPgto><dtFG>2026-03-05</dtFG><vlrRendBruto>40000,00</vlrRendBruto><vlrRendTrib>30000,00</vlrRendTrib><rendIsento><tpIsencao>12</tpIsencao><vlrIsento>10000,00</vlrIsento></rendIsento></infoPgto>');
+    expect(xml).toContain('<infoPgto><dtFG>2026-03-20</dtFG><vlrRendBruto>30000,00</vlrRendBruto><vlrRendTrib>30000,00</vlrRendTrib><vlrIR>6000,00</vlrIR></infoPgto>');
+    expect(xml).not.toMatch(/ideDep|detDed|184101|570602/);
+  });
+
+  it('R-2010: totais do prestador = Σ das NFs; NFs por data de emissão; infoTpServ por tpServico; indObra 0', () => {
+    const { xml } = buildR2010(H(), C, ESTAB, PRESTADOR, '2026-03');
+    expect(xml).toContain(`<ideEstabObra><tpInscEstab>1</tpInscEstab><nrInscEstab>${ESTAB}</nrInscEstab><indObra>0</indObra>`);
+    expect(xml).toContain('<cnpjPrestador>19131243000197</cnpjPrestador><vlrTotalBruto>15000,00</vlrTotalBruto><vlrTotalBaseRet>15000,00</vlrTotalBaseRet><vlrTotalRetPrinc>1650,00</vlrTotalRetPrinc><indCPRB>0</indCPRB><nfs><serie>A</serie><numDocto>123</numDocto>');
+    expect([...xml.matchAll(/<tpServico>(\d+)<\/tpServico>/g)].map((m) => m[1])).toEqual(['100000001', '100000002', '100000001']);
+  });
+
+  it('R-2010: mais de 9 tipos de serviço numa NF ⇒ erro nomeado', () => {
+    const tipos = Array.from({ length: 10 }, (_, i) => ({ tpServico: String(100000001 + i), baseCents: 1n, retencaoCents: 0n }));
+    expect(() => buildR2010(H(), C, ESTAB, { ...PRESTADOR, nfs: [{ ...PRESTADOR.nfs[0], tiposServico: tipos }] }, '2026-03')).toThrow(ReinfLimiteXsdError);
+  });
+
+  it('R-2099: evtServTm = S com R-2010; os outros 6 indicadores N', () => {
+    const { xml } = buildR2099(H(), C, '2026-03', { servTomados: true });
+    expect(xml).toContain('<infoFech><evtServTm>S</evtServTm><evtServPr>N</evtServPr><evtAssDespRec>N</evtAssDespRec><evtAssDespRep>N</evtAssDespRep><evtComProd>N</evtComProd><evtCPRB>N</evtCPRB><evtAquis>N</evtAquis></infoFech>');
+    expect(xml).not.toContain('ideRespInf');
+  });
+
+  it('lote completo do PR-2 (R-1000 → R-2010 → R-4010 → R-4020 → R-2099 → R-4099) valida no envelope', async () => {
+    const lote = serializeLote('11222333', [
+      buildR1000(H(), C, 'inclusao', '2026-03'),
+      buildR2010(H(), C, ESTAB, PRESTADOR, '2026-03'),
+      buildR4010(H(), C, ESTAB, SOCIO, '2026-03'),
+      buildR4020(H(), C, ESTAB, FISIO, '2026-03'),
+      buildR2099(H(), C, '2026-03', { servTomados: true }),
+      buildR4099(H(), C, '2026-03', 'FECHAMENTO'),
+    ]);
+    expect(await validarNoXsdReinf(lote.xml, 'envioLoteEventosAssincrono')).toEqual({ valid: true, errors: [] });
   });
 });
 

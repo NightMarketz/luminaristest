@@ -59,6 +59,9 @@ export const LEGAL_PARAMETER_TABELAS = [
   // BE-INCR-NFCE PR-4 (nó X10a, EMENDA-3 F-NFCE-E3-2 a): UF onde o pedido de inutilização "não se aplica" desde 01/11/2026
   // (Aj. SINIEF 40/26 na NF-e, 38/26 na NFC-e) — aviso na lista de lacunas, não recusa (E3-1 c).
   'INUT_NAO_SE_APLICA',
+  // BE-INCR-EFICIENCIA-FISCAL PR-2 (item 11; F-EF-5 a; D-2026-10-27-EFICIENCIA-FISCAL-PR2-EXECUCAO): NCM sob ICMS-ST por UF
+  // (IBGE no discriminador) — segregação do Simples (LC 123 art. 18 § 4º-A I). Consumidor = models/segregacaoNcm.ts.
+  'ICMS_ST_NCM_UF',
 ] as const;
 export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
 

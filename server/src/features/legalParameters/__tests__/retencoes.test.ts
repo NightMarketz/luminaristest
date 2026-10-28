@@ -5,7 +5,7 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { LEGAL_PARAMS_SEED_FILE_RETENCOES, legalParamsSeedRows } from '@test/helpers/legalParams';
+import { LEGAL_PARAMS_SEED_FILE_RETENCOES, LEGAL_PARAMS_SEED_FILE_RETENCOES_V2, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { LEGAL_PARAMETER_TABELAS, linhaLegalVigente, linhasEmVigor } from '../models/legalParameter';
 import { erroDeFormato } from '../models/formatoLinha';
 import { familiasDaLinha } from '../../accounting/services/TaxAssessmentRecalcService';
@@ -139,6 +139,31 @@ describe('item 7 — NATUREZA_RENDIMENTO (Tabela 01)', () => {
       tributos: ['IR', 'CSLL', 'COFINS', 'PP', 'AGREGADO'],
     });
     expect(naturezaRendimentoVigente(publicadas, '15049', '2026-03-10')).toBeUndefined();
+  });
+});
+
+describe('lacuna 9 (D-2026-10-28) — 12001 com o tipo de isenção 12 (NT EFD-Reinf 02/2026 item b)', () => {
+  const MIGRATION_V2 = path.resolve(__dirname, '../../../../prisma/migrations/20261028120000_legal_parameters_retencoes_v2_isencao_12/migration.sql');
+  const v2 = legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_RETENCOES_V2);
+  const emVigor = linhasEmVigor([...rows, ...v2]);
+  const SHA_NT_02_2026 = '5e39d987baa08ee86e1cc7969ae50242f13bbab475ccb23c1564b44aaedf694b';
+
+  it('a migração nova carrega o texto de prisma/data/legal_parameters_retencoes_v2.sql e só insere', () => {
+    const sql = norm(fs.readFileSync(MIGRATION_V2, 'utf8'));
+    expect(sql).toContain(norm(fs.readFileSync(LEGAL_PARAMS_SEED_FILE_RETENCOES_V2, 'utf8')).trimEnd());
+    expect(sql.split('\n').filter((l) => l.trim() !== '' && !l.startsWith('--')).every((l) => l.startsWith('INSERT OR IGNORE'))).toBe(true);
+  });
+
+  it('uma linha PUBLISHED no formato, fonte = NT 02/2026, supersede a de 2026 com a mesma vigência', () => {
+    expect(v2.map((r) => [r.chave, r.status, r.supersedesId, r.vigenteDesde, r.vigenteAte, r.fonteSha256, formato(r)])).toEqual([
+      ['12001', 'PUBLISHED', 'natrend-12001-2026-01-01', '2026-01-01', null, SHA_NT_02_2026, null],
+    ]);
+  });
+
+  it('12001 vigente desde 2026-01-01 tem IR e o tipo de isenção 12; até 2025-12-31 segue sem tributo nem isenção', () => {
+    expect(naturezaRendimentoVigente(emVigor, '12001', '2026-01-01')).toMatchObject({ tributos: ['IR'], tiposIsencao: ['12'] });
+    expect(naturezaRendimentoVigente(emVigor, '12001', '2026-10-28')?.tiposIsencao).toEqual(['12']);
+    expect(naturezaRendimentoVigente(emVigor, '12001', '2025-12-31')).toMatchObject({ tributos: [], tiposIsencao: [] });
   });
 });
 

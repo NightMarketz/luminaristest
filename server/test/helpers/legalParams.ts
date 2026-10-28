@@ -55,13 +55,17 @@ export const LEGAL_PARAMS_SEED_FILE_IBS_CBS_V2 = path.resolve(__dirname, '../../
 export const LEGAL_PARAMS_SEED_FILE_PRESUMIDO_TETO = path.resolve(__dirname, '../../prisma/data/legal_parameters_presumido_teto_v1.sql');
 /** RETENCOES-FONTE PR-1 (itens 1, 2, 3 e 7): RETENCAO, RETENCAO_CODIGO, NATUREZA_RENDIMENTO e IRRF_PF_MENSAL. Mesma regra de igualdade. */
 export const LEGAL_PARAMS_SEED_FILE_RETENCOES = path.resolve(__dirname, '../../prisma/data/legal_parameters_retencoes_v1.sql');
+/** RETENCOES-FONTE lacuna 9 (NT EFD-Reinf 02/2026): 12001 com o tipo de isenção 12, supersede a linha de 2026. Mesma regra de igualdade. */
+export const LEGAL_PARAMS_SEED_FILE_RETENCOES_V2 = path.resolve(__dirname, '../../prisma/data/legal_parameters_retencoes_v2.sql');
 /** ISS-TRANSICAO-IBS PR-1 (BRIEF itens 1, 2 e 5): fim do ISS_LIMITE, ISS_TRANSICAO e IBS DRAFT 2029–2032. Mesma regra de igualdade. */
 export const LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO = path.resolve(__dirname, '../../prisma/data/legal_parameters_iss_transicao_v1.sql');
 /** BE-INCR-NFCE PR-3 (item 17): limites da NFC-e (Aj. SINIEF 19/16 cl. 4ª VII "a" e § 4º). Mesma regra de igualdade. */
 export const LEGAL_PARAMS_SEED_FILE_NFCE_LIMITE = path.resolve(__dirname, '../../prisma/data/legal_parameters_nfce_limite_v1.sql');
 /** BE-INCR-NFCE PR-4 (EMENDA-3 E3-2 a): UF sem pedido de inutilização desde 01/11/2026. Mesma regra de igualdade. */
 export const LEGAL_PARAMS_SEED_FILE_INUT_NAO_SE_APLICA = path.resolve(__dirname, '../../prisma/data/legal_parameters_inut_nao_se_aplica_v1.sql');
-export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4, LEGAL_PARAMS_SEED_FILE_V5, LEGAL_PARAMS_SEED_FILE_V6, LEGAL_PARAMS_SEED_FILE_V8, LEGAL_PARAMS_SEED_FILE_LP9_PC, LEGAL_PARAMS_SEED_FILE_FERIADO_LOCAL, LEGAL_PARAMS_SEED_FILE_IBS_CBS, LEGAL_PARAMS_SEED_FILE_IBS_CBS_V2, LEGAL_PARAMS_SEED_FILE_IRRF_DISTRIBUICAO, LEGAL_PARAMS_SEED_FILE_PRESUMIDO_TETO, LEGAL_PARAMS_SEED_FILE_RETENCOES, LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO, LEGAL_PARAMS_SEED_FILE_NFCE_LIMITE, LEGAL_PARAMS_SEED_FILE_INUT_NAO_SE_APLICA];
+/** EFICIENCIA-FISCAL PR-2 (item 11): NCM sob ICMS-ST em SP até 31/03/2026, DRAFT. Mesma regra de igualdade. */
+export const LEGAL_PARAMS_SEED_FILE_ICMS_ST_NCM_UF = path.resolve(__dirname, '../../prisma/data/legal_parameters_icms_st_ncm_uf_v1.sql');
+export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4, LEGAL_PARAMS_SEED_FILE_V5, LEGAL_PARAMS_SEED_FILE_V6, LEGAL_PARAMS_SEED_FILE_V8, LEGAL_PARAMS_SEED_FILE_LP9_PC, LEGAL_PARAMS_SEED_FILE_FERIADO_LOCAL, LEGAL_PARAMS_SEED_FILE_IBS_CBS, LEGAL_PARAMS_SEED_FILE_IBS_CBS_V2, LEGAL_PARAMS_SEED_FILE_IRRF_DISTRIBUICAO, LEGAL_PARAMS_SEED_FILE_PRESUMIDO_TETO, LEGAL_PARAMS_SEED_FILE_RETENCOES, LEGAL_PARAMS_SEED_FILE_RETENCOES_V2, LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO, LEGAL_PARAMS_SEED_FILE_NFCE_LIMITE, LEGAL_PARAMS_SEED_FILE_INUT_NAO_SE_APLICA, LEGAL_PARAMS_SEED_FILE_ICMS_ST_NCM_UF];
 
 type Valor = string | number | null;
 

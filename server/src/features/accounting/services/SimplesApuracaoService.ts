@@ -23,7 +23,9 @@ import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '.
 import logger from '../../../lib/logger';
 import { ParametroLegalAusenteError, linhaLegalVigente, type LegalParameterTabela } from '../../legalParameters/models/legalParameter';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
-import { INICIO_LC214, apurar, apurarSimei, janelaRbt12, type ApuracaoSimei, type ApuracaoCalculada, type AtividadeInput, type MesReceita, type NaturezaSimples } from '../models/simplesCalc';
+import { INICIO_LC214, apurar, apurarSimei, janelaRbt12, type ApuracaoSimei, type ApuracaoCalculada, type AtividadeInput, type MesReceita, type NaturezaSimples, type TributoSimples } from '../models/simplesCalc';
+import { normalizeNcm } from '../models/pisCofinsMonofasicoNcm';
+import type { IProductFiscalProfileRepository } from '../repositories/IProductFiscalProfileRepository';
 import { espelhoPgdas, type EspelhoAtividade } from '../models/simplesEspelho';
 import { mesBounds } from '../models/Lalur.model';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -164,7 +166,10 @@ interface Montagem {
 }
 
 /** A linha que vira atividade: a do subrazão (competência) ou a composta da base caixa (X14-CAIXA item 8). */
-type LinhaBase = Pick<ReceitaFiscalLinha, 'natureza' | 'cTribNac' | 'receitaCents' | 'cotaProfissionalCents' | 'parceriaContratoId'>;
+type LinhaBase = Pick<ReceitaFiscalLinha, 'natureza' | 'cTribNac' | 'receitaCents' | 'cotaProfissionalCents' | 'parceriaContratoId' | 'excluir' | 'productRef'>;
+/** EFICIENCIA-FISCAL PR-2 (item 13): as marcas gravadas pela subrazão (`segregacaoPorNcm`), em ordem estável. */
+const marcas = (excluir: unknown): TributoSimples[] => (Array.isArray(excluir) ? [...(excluir as TributoSimples[])].sort() : []);
+const chaveMarcas = (m: readonly TributoSimples[]) => m.join('+');
 const MEIOS_CARTAO = new Set(['Debit Card', 'Credit Card']);
 const ART20_CHAVE: Partial<Record<BucketCaixa, keyof BaseCaixa['art20Cents']>> = {
   PARCELA_VENCIDA: 'parcelaVencida',
@@ -184,7 +189,7 @@ function comporItens(itens: readonly ItemBaseCaixa[], vendasPorId: ReadonlyMap<s
     const ls = vendasPorId.get(item.saleId) ?? [];
     const total = ls.reduce((s, l) => s + l.receitaCents, 0n);
     if (!item.venda || ls.length === 0 || total === 0n) {
-      return { item, linhas: [{ natureza: 'SERVICO', cTribNac: null, receitaCents: item.valorCents, cotaProfissionalCents: 0n, parceriaContratoId: null }] };
+      return { item, linhas: [{ natureza: 'SERVICO', cTribNac: null, receitaCents: item.valorCents, cotaProfissionalCents: 0n, parceriaContratoId: null, excluir: [], productRef: null }] };
     }
     let restoR = item.valorCents;
     let restoC = (ls.reduce((s, l) => s + l.cotaProfissionalCents, 0n) * item.valorCents) / total;
@@ -194,7 +199,7 @@ function comporItens(itens: readonly ItemBaseCaixa[], vendasPorId: ReadonlyMap<s
       const c = ultimo ? restoC : (l.cotaProfissionalCents * item.valorCents) / total;
       restoR -= r;
       restoC -= c;
-      return { natureza: l.natureza, cTribNac: l.cTribNac, receitaCents: r, cotaProfissionalCents: c, parceriaContratoId: l.parceriaContratoId };
+      return { natureza: l.natureza, cTribNac: l.cTribNac, receitaCents: r, cotaProfissionalCents: c, parceriaContratoId: l.parceriaContratoId, excluir: l.excluir, productRef: l.productRef };
     });
     return { item, linhas };
   });
@@ -226,6 +231,75 @@ interface MontagemMei {
   limite: bigint;
 }
 
+/** EFICIENCIA-FISCAL PR-2 — o que os avisos de segregação leem do `ProductFiscalProfile`. */
+export interface PerfilProdutoSegregacao {
+  ncm: string;
+  csosn: string | null;
+}
+
+const reais = (c: bigint) => `R$ ${(Number(c) / 100).toFixed(2)}`;
+
+/**
+ * EFICIENCIA-FISCAL PR-2 (itens 13–14; ADR D7, I-8, §12 "segregação errada por NCM") — avisos da segregação, puros sobre as
+ * linhas da base do PA (receita líquida da cota), a declaração manual e o perfil dos produtos:
+ * - `SEM_NCM` (WARNING): revenda sem produto ou sem NCM válida no perfil — nada derivado, a receita vai cheia ao DAS;
+ * - `ICMS_ST_NAO_CONFERIDA` (INFO): produto com CSOSN 500 sem linha PUBLISHED de ST na UF — o ICMS fica no DAS
+ *   (D-2026-10-27-EFICIENCIA-FISCAL-PR2-EXECUCAO, decisão 2);
+ * - `SEGREGACAO_DIVERGE` (WARNING): há declaração manual e ela difere da derivada, por conjunto de tributos — a manual prevalece;
+ * - `SEGREGACAO_INDEVIDA` (WARNING): a manual declara como monofásica mais receita do que a NCM sustenta (derivada + revenda
+ *   sem NCM) — LC 123 art. 29 V (exclusão de ofício).
+ */
+export function alertasDeSegregacao(
+  manual: readonly SimplesSegregacaoParcela[],
+  linhas: readonly LinhaBase[],
+  perfis: ReadonlyMap<string, PerfilProdutoSegregacao>,
+): AlertaSimples[] {
+  const out: AlertaSimples[] = [];
+  const revenda = linhas.filter((l) => l.natureza === 'REVENDA' && !l.parceriaContratoId);
+  const liq = (l: LinhaBase) => l.receitaCents - l.cotaProfissionalCents;
+  const semNcm = revenda.filter((l) => !l.productRef || !normalizeNcm(perfis.get(l.productRef)?.ncm));
+  const semNcmCents = semNcm.reduce((x, l) => x + liq(l), 0n);
+  if (semNcm.length > 0 && semNcmCents > 0n) {
+    out.push({ severity: 'WARNING', codigo: 'SEM_NCM', detalhe: `${reais(semNcmCents)} de revenda sem NCM no perfil fiscal do produto: sem segregação derivada (monofásico/ICMS-ST) — cadastre o perfil ou declare na segregação manual` });
+  }
+  const stNaoConferida = revenda.filter((l) => l.productRef && perfis.get(l.productRef)?.csosn === '500' && !marcas(l.excluir).includes('ICMS'));
+  const stCents = stNaoConferida.reduce((x, l) => x + liq(l), 0n);
+  if (stCents > 0n) {
+    out.push({ severity: 'INFO', codigo: 'ICMS_ST_NAO_CONFERIDA', detalhe: `${reais(stCents)} de revenda com CSOSN 500 sem ICMS-ST conferido para a NCM na UF da unidade: o ICMS fica no DAS — declare na segregação manual se a ST foi retida (LC 123 art. 18 § 4º-A I)` });
+  }
+  if (manual.length === 0) return out;
+
+  const derivada = new Map<string, bigint>();
+  for (const l of linhas) {
+    const m = marcas(l.excluir);
+    if (m.length > 0) derivada.set(chaveMarcas(m), (derivada.get(chaveMarcas(m)) ?? 0n) + liq(l));
+  }
+  const declarada = new Map<string, bigint>();
+  for (const p of manual) {
+    const k = chaveMarcas([...excluirDoMotivo(p.motivo)].sort());
+    declarada.set(k, (declarada.get(k) ?? 0n) + BigInt(p.receitaCents));
+  }
+  const chaves = [...new Set([...derivada.keys(), ...declarada.keys()])].sort();
+  const diverge = chaves.filter((k) => (derivada.get(k) ?? 0n) !== (declarada.get(k) ?? 0n));
+  if (diverge.length > 0) {
+    out.push({
+      severity: 'WARNING',
+      codigo: 'SEGREGACAO_DIVERGE',
+      detalhe: `a segregação manual prevalece sobre a derivada da NCM: ${diverge.map((k) => `${k} manual ${reais(declarada.get(k) ?? 0n)} × derivada ${reais(derivada.get(k) ?? 0n)}`).join('; ')}`,
+    });
+  }
+  const mono = (m: ReadonlyMap<string, bigint>) => [...m.entries()].filter(([k]) => k.split('+').includes('PIS')).reduce((x, [, v]) => x + v, 0n);
+  const sustentada = mono(derivada) + semNcmCents;
+  if (mono(declarada) > sustentada) {
+    out.push({
+      severity: 'WARNING',
+      codigo: 'SEGREGACAO_INDEVIDA',
+      detalhe: `${reais(mono(declarada))} declarados como monofásicos, mas a NCM dos produtos sustenta ${reais(sustentada)}: segregação indevida pode levar à exclusão do Simples (LC 123 art. 29 V)`,
+    });
+  }
+  return out;
+}
+
 export class SimplesApuracaoService {
   constructor(
     private readonly repo: ISimplesApuracaoRepository,
@@ -248,7 +322,16 @@ export class SimplesApuracaoService {
     private readonly documentos: Pick<SourceDocumentUploadService, 'documentosPorId'>,
     /** BE-INCR-SIMPLES-CAIXA PR-2 (item 8): os recebimentos de venda, base do DAS no regime de caixa. */
     private readonly recebimentoRepo: Pick<IReceitaFiscalRecebimentoRepository, 'findByCompetenciaCaixa' | 'findEstornadosNoMes' | 'findBySales'>,
+    /** EFICIENCIA-FISCAL PR-2 (item 13): perfil do produto para os avisos `SEM_NCM` e `ICMS_ST_NAO_CONFERIDA`. */
+    private readonly productFiscalRepo: Pick<IProductFiscalProfileRepository, 'findManyByProductRefs'>,
   ) {}
+
+  /** EFICIENCIA-FISCAL PR-2 (item 13): NCM e CSOSN dos produtos das linhas de revenda do PA. */
+  private async perfisDosProdutos(scope: AccountingScope, linhas: readonly LinhaBase[], tx?: Prisma.TransactionClient): Promise<Map<string, PerfilProdutoSegregacao>> {
+    const refs = [...new Set(linhas.filter((l) => l.natureza === 'REVENDA' && l.productRef).map((l) => l.productRef as string))];
+    if (refs.length === 0) return new Map();
+    return new Map((await this.productFiscalRepo.findManyByProductRefs(scope, refs, tx)).map((p) => [p.productRef, { ncm: p.ncm, csosn: p.csosn }]));
+  }
 
   /** X14-CAIXA item 4: o controller roda o backfill dos recebimentos sob demanda antes da apuração CAIXA. */
   async regimeApuracaoDoPa(scope: AccountingScope, competencia: string): Promise<'COMPETENCIA' | 'CAIXA' | null> {
@@ -432,10 +515,11 @@ export class SimplesApuracaoService {
         )
       ).map((c) => [c.id, c]),
     );
-    const grupos = new Map<string, { natureza: NaturezaSimples; cTribNac: string | null; receita: bigint }>();
-    const somar = (natureza: NaturezaSimples, cTribNac: string | null, v: bigint) => {
-      const k = `${natureza}|${cTribNac ?? ''}`;
-      const g = grupos.get(k) ?? { natureza, cTribNac, receita: 0n };
+    // EFICIENCIA-FISCAL PR-2 (item 13): o grupo também separa as marcas de segregação da linha (`excluir` derivado da NCM).
+    const grupos = new Map<string, { natureza: NaturezaSimples; cTribNac: string | null; excluir: TributoSimples[]; receita: bigint }>();
+    const somar = (natureza: NaturezaSimples, cTribNac: string | null, v: bigint, excluir: TributoSimples[] = []) => {
+      const k = `${natureza}|${cTribNac ?? ''}|${chaveMarcas(excluir)}`;
+      const g = grupos.get(k) ?? { natureza, cTribNac, excluir, receita: 0n };
       g.receita += v;
       grupos.set(k, g);
     };
@@ -446,7 +530,7 @@ export class SimplesApuracaoService {
         somar(contrato.naturezaCota === 'ALUGUEL_BEM_MOVEL' ? 'LOCACAO_MOVEL' : 'PARCERIA_GESTAO', null, l.receitaCents - l.cotaProfissionalCents);
       } else {
         // Sem contrato achado, a cota já gravada continua fora da receita bruta (mesma regra do total do mês).
-        somar(l.natureza === 'REVENDA' ? 'REVENDA' : 'SERVICO', l.natureza === 'REVENDA' ? null : l.cTribNac, l.receitaCents - l.cotaProfissionalCents);
+        somar(l.natureza === 'REVENDA' ? 'REVENDA' : 'SERVICO', l.natureza === 'REVENDA' ? null : l.cTribNac, l.receitaCents - l.cotaProfissionalCents, marcas(l.excluir));
       }
     }
 
@@ -461,7 +545,7 @@ export class SimplesApuracaoService {
       inicio: perfil.inicioAtividadeEm,
       historico: historico.map((h) => [h.competencia, String(h.receitaBrutaCents), h.folhaCents === null ? null : String(h.folhaCents)]),
       subrazao: [...subrazao.entries()].map(([k, v]) => [k, String(v.receitaCents), String(v.cotaCents)]).sort(),
-      linhasPa: linhasPa.map((l) => [l.id, l.natureza, l.cTribNac, String(l.receitaCents), String(l.cotaProfissionalCents), l.parceriaContratoId]),
+      linhasPa: linhasPa.map((l) => [l.id, l.natureza, l.cTribNac, String(l.receitaCents), String(l.cotaProfissionalCents), l.parceriaContratoId, marcas(l.excluir)]),
       contratos: [...contratos.values()].map((c) => [c.id, c.naturezaCota]).sort(),
       segregacao: seg.parcelas,
       beneficiosIss: { codMun, linhas: cadastrados },
@@ -479,23 +563,47 @@ export class SimplesApuracaoService {
         neg.receita += v;
       }
     }
-    // Review do PR-3 (achado 1): cada parcela segregada é consumida UMA vez, pelos grupos da natureza dela, em ordem.
-    const sobra = seg.parcelas.map((p) => BigInt(p.receitaCents));
-    const entrada: AtividadeInput[] = [];
+    // EFICIENCIA-FISCAL PR-2 (item 13; I-8): as parcelas derivadas da NCM de cada atividade (natureza × cTribNac).
+    const atividades = new Map<string, { natureza: NaturezaSimples; cTribNac: string | null; receita: bigint; derivadas: Map<string, { excluir: TributoSimples[]; receita: bigint }> }>();
     for (const g of lista) {
       if (g.receita <= 0n) continue;
-      let disponivel = g.receita;
-      const parcelas: AtividadeInput['parcelas'] = [];
-      seg.parcelas.forEach((p, i) => {
-        if (p.natureza !== g.natureza || disponivel <= 0n || sobra[i] <= 0n) return;
-        const v = sobra[i] > disponivel ? disponivel : sobra[i];
-        parcelas.push({ receitaCents: Number(v), excluir: excluirDoMotivo((p as SimplesSegregacaoParcela).motivo) });
-        sobra[i] -= v;
-        disponivel -= v;
-      });
-      if (disponivel > 0n) parcelas.push({ receitaCents: Number(disponivel), excluir: [] });
-      entrada.push({ natureza: g.natureza, cTribNac: g.cTribNac, parcelas });
+      const k = `${g.natureza}|${g.cTribNac ?? ''}`;
+      const a = atividades.get(k) ?? { natureza: g.natureza, cTribNac: g.cTribNac, receita: 0n, derivadas: new Map() };
+      a.receita += g.receita;
+      const d = a.derivadas.get(chaveMarcas(g.excluir)) ?? { excluir: g.excluir, receita: 0n };
+      d.receita += g.receita;
+      a.derivadas.set(chaveMarcas(g.excluir), d);
+      atividades.set(k, a);
     }
+    const entrada: AtividadeInput[] = [];
+    if (seg.parcelas.length > 0) {
+      // A declaração manual da competência PREVALECE sobre a derivada (ADR D7, I-8; precedente F-RET-8 a).
+      // Review do PR-3 (achado 1): cada parcela segregada é consumida UMA vez, pelos grupos da natureza dela, em ordem.
+      const sobra = seg.parcelas.map((p) => BigInt(p.receitaCents));
+      for (const a of atividades.values()) {
+        let disponivel = a.receita;
+        const parcelas: AtividadeInput['parcelas'] = [];
+        seg.parcelas.forEach((p, i) => {
+          if (p.natureza !== a.natureza || disponivel <= 0n || sobra[i] <= 0n) return;
+          const v = sobra[i] > disponivel ? disponivel : sobra[i];
+          parcelas.push({ receitaCents: Number(v), excluir: excluirDoMotivo((p as SimplesSegregacaoParcela).motivo) });
+          sobra[i] -= v;
+          disponivel -= v;
+        });
+        if (disponivel > 0n) parcelas.push({ receitaCents: Number(disponivel), excluir: [] });
+        entrada.push({ natureza: a.natureza, cTribNac: a.cTribNac, parcelas });
+      }
+      const naoAplicada = sobra.reduce((x, v) => x + v, 0n);
+      if (naoAplicada > 0n) {
+        alertas.push({ severity: 'WARNING', codigo: 'SEGREGACAO_MANUAL', detalhe: `R$ ${(Number(naoAplicada) / 100).toFixed(2)} declarados na segregação não têm receita da mesma natureza no mês e foram ignorados` });
+      }
+    } else {
+      for (const a of atividades.values()) {
+        entrada.push({ natureza: a.natureza, cTribNac: a.cTribNac, parcelas: [...a.derivadas.values()].map((d) => ({ receitaCents: Number(d.receita), excluir: d.excluir })) });
+      }
+    }
+    const perfisProduto = await this.perfisDosProdutos(scope, linhasBase, tx);
+    alertas.push(...alertasDeSegregacao(seg.parcelas, linhasBase, perfisProduto));
     for (const a of catalogo) {
       if (!entrada.some((e) => e.natureza === a.natureza && e.cTribNac === a.cTribNac)) entrada.push({ ...a, parcelas: [{ receitaCents: 0, excluir: [] }] });
     }
@@ -512,10 +620,6 @@ export class SimplesApuracaoService {
       } else {
         e.beneficioIss = { tipo: b.tipo, reducaoBpPorFaixa: b.reducaoBpPorFaixa };
       }
-    }
-    const naoAplicada = sobra.reduce((x, v) => x + v, 0n);
-    if (naoAplicada > 0n) {
-      alertas.push({ severity: 'WARNING', codigo: 'SEGREGACAO_MANUAL', detalhe: `R$ ${(Number(naoAplicada) / 100).toFixed(2)} declarados na segregação não têm receita da mesma natureza no mês e foram ignorados` });
     }
 
     // Item 23 — limites (LC 123 art. 3º I/II, §§ 9º, 9º-A; art. 13-A; Res. CGSN 140 art. 12 §§ 1º–2º).

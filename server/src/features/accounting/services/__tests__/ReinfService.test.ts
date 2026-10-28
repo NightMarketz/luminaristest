@@ -2,7 +2,7 @@
  * BE-INCR-EFD-REINF PR-1 — ReinfService com fakes (itens 1, 4, 8, 10, 11, 13; invariantes 1, 8, 9). As tabelas vêm da
  * semente REAL de `legal_parameters` (`fotografiaSemente`), a mesma que a migração carrega.
  */
-import type { CompanyFiscalProfile, Prisma, ReinfBatch } from 'generated/prisma';
+import type { CompanyFiscalProfile, InterestOnEquityAllocation, InterestOnEquityCalculation, Partner, Prisma, ProfitDistributionEvent, ReinfBatch } from 'generated/prisma';
 import { AccountingPolicy } from '../../policies/AccountingPolicy';
 import type { AuditService } from '../AuditService';
 import { ReinfService, decidirR1000 } from '../ReinfService';
@@ -52,9 +52,31 @@ const linha = (o: Partial<WithholdingLineForReinf> = {}): WithholdingLineForRein
     taxPayableId: 't1', settlementId: `s${n}`, originSettlementId: null, unitId: 'u1', ...o,
   });
 
+const CPF_A = '52998224725';
+const dividendo = (o: Partial<ProfitDistributionEvent> = {}): ProfitDistributionEvent =>
+  ({ id: `d${++n}`, partnerId: 'p-a', taxId: CPF_A, dataEvento: '2026-03-10', competencia: '2026-03', brutoCents: 6_000_000n, irrfCents: 600_000n, origemLucro: 'CORRENTE', status: 'POSTED', ...o }) as ProfitDistributionEvent;
+const jcpCalc = (alocacoes: Partial<InterestOnEquityAllocation>[], o: Partial<InterestOnEquityCalculation> = {}) => {
+  const id = `j${++n}`;
+  return {
+    id,
+    dataCredito: '2026-03-31',
+    status: 'POSTED',
+    ...o,
+    alocacoes: alocacoes.map((a, i) => ({ id: `${id}-a${i}`, calculationId: id, partnerId: 'p-a', participacaoBp: 10000, brutoCents: 200_000n, irrfCents: 35_000n, liquidoCents: 165_000n, ...a })),
+  } as InterestOnEquityCalculation & { alocacoes: InterestOnEquityAllocation[] };
+};
+const socio = (id: string, taxId: string) => ({ id, taxId, tipoPessoa: taxId.length === 14 ? 'PJ' : 'PF' }) as Partner;
+
 function montar(o: { perfil?: CompanyFiscalProfile | null; linhas?: WithholdingLineForReinf[]; agora?: Date; contato?: { cpf: string; phone: string | null } | null } = {}) {
   const repo = new FakeRepo();
-  const state = { linhas: o.linhas ?? [linha()], perfil: o.perfil === undefined ? perfil() : o.perfil };
+  const state = {
+    linhas: o.linhas ?? [linha()],
+    perfil: o.perfil === undefined ? perfil() : o.perfil,
+    // PR-2 (E4): dividendos POSTED e JCP POSTED com as alocações; os sócios vivos.
+    dividendos: [] as ProfitDistributionEvent[],
+    jcp: [] as (InterestOnEquityCalculation & { alocacoes: InterestOnEquityAllocation[] })[],
+    socios: [] as Partner[],
+  };
   const append = jest.fn();
   const svc = new ReinfService(
     repo,
@@ -65,6 +87,14 @@ function montar(o: { perfil?: CompanyFiscalProfile | null; linhas?: WithholdingL
     new AccountingPolicy(),
     { append } as unknown as AuditService,
     { fotografia: async (t: readonly string[]) => fotografiaSemente(t) as never },
+    {
+      dividendos: { listDaCompetencia: async (_o, c, st) => state.dividendos.filter((d) => d.competencia === c && st.includes(d.status)) },
+      jcp: {
+        listDaCompetencia: async (_o, c, st) => state.jcp.filter((j) => j.dataCredito.startsWith(c) && st.includes(j.status)),
+        findById: async (_o, id) => state.jcp.find((j) => j.id === id) ?? null,
+      },
+      socios: { list: async () => state.socios },
+    },
     { REINF_TP_AMB: '2' },
     () => o.agora ?? new Date('2026-10-26T15:00:00Z'),
   );
@@ -120,12 +150,16 @@ describe('ReinfService.gerar', () => {
     expect(await codigo(montar({ perfil: null }).svc.gerar(scope, { unitId: 'u1', competencia: '2026-03' }))).toBe('400 VALIDATION_ERROR');
   });
 
-  it('fato só de PF/INSS e R-1000 já enviado ⇒ 422 REINF_SEM_EVENTO_GERAVEL com os avisos', async () => {
+  it('fato só de PF por serviço (item 19) ou dividendo a PJ (lacuna A do PR-2) e R-1000 já enviado ⇒ 422 REINF_SEM_EVENTO_GERAVEL com os avisos', async () => {
     const m = montar();
     await m.svc.gerar(scope, { unitId: 'u1', competencia: '2026-03' });
-    m.state.linhas = [linha({ tributo: 'INSS', natRend: null, dataFatoGerador: '2026-04-02', competencia: '2026-04' })];
+    m.state.linhas = [linha({ dataFatoGerador: '2026-04-02', competencia: '2026-04', beneficiario: { counterpartyId: 'pf', nome: 'Autônomo', taxId: CPF_A, kind: 'CPF', regime: 'PF' } })];
+    m.state.dividendos = [dividendo({ taxId: CNPJ_A, competencia: '2026-04', dataEvento: '2026-04-10' })];
     const e = await m.svc.gerar(scope, { unitId: 'u1', competencia: '2026-04' }).catch((x: { errorCode: string; message: string }) => x);
-    expect([(e as { errorCode: string }).errorCode, (e as { message: string }).message]).toEqual(['REINF_SEM_EVENTO_GERAVEL', expect.stringContaining('R2010_AINDA_NAO_GERADO')]);
+    expect([(e as { errorCode: string }).errorCode, (e as { message: string }).message]).toEqual([
+      'REINF_SEM_EVENTO_GERAVEL',
+      expect.stringMatching(/PF_SERVICO_FORA_DA_REINF.*DIVIDENDO_PJ_FORA_DA_REINF/),
+    ]);
   });
 
   it('itens 13 e invariante 9: estorno depois do lote ⇒ defasado; o próximo relatório pede RETIFICAR o evento', async () => {
@@ -141,6 +175,59 @@ describe('ReinfService.gerar', () => {
     expect(r.relatorio.marcacoes).toEqual([{ batchId: v.id, idEvento: v.eventos[1].idEvento, tipo: 'R-4020', acao: 'RETIFICAR' }]);
     expect(await m.svc.get(scope, v.id)).toMatchObject({ id: v.id, defasado: true });
     expect(await codigo(m.svc.get(scope, 'nao-existe'))).toBe('404 NOT_FOUND');
+  });
+});
+
+describe('ReinfService.gerar — PR-2 (itens 15–18)', () => {
+  const tipos = (repo: FakeRepo) => (repo.rows[0].eventos as { tipo: string }[]).map((e) => e.tipo);
+
+  it('item 8: só dividendo POSTED já é fato; lote R-1000 → R-4010 → R-4099; registro sem CPF; relatório mascarado', async () => {
+    const m = montar({ linhas: [] });
+    m.state.dividendos = [dividendo(), dividendo({ status: 'CANCELLED', id: 'd-canc' })];
+    const r = await m.svc.gerar(scope, { unitId: 'u1', competencia: '2026-03' });
+    expect(tipos(m.repo)).toEqual(['R-1000', 'R-4010', 'R-4099']);
+    expect(JSON.stringify(m.repo.rows[0])).not.toContain(CPF_A);
+    expect((m.repo.rows[0].eventos as { origemIds: string[]; beneficiarioRef?: string }[])[1]).toMatchObject({ beneficiarioRef: 'p-a', origemIds: [expect.stringMatching(/^d\d+$/)] });
+    expect(r.xml).not.toContain('d-canc');
+    expect(r.relatorio.linhas).toEqual([expect.objectContaining({ evento: 'R-4010', beneficiario: '***.982.247-**', natRend: '12001', codigoReceita: '184101', retidoCents: '600000' })]);
+    expect(r.relatorio.csv.split('\n')[1]).toBe('R-4010;***.982.247-**;12001;2026-03-10;IRRF;6000000;6000000;600000;184101;;2026-04-15');
+  });
+
+  it('itens 17–18: INSS ⇒ R-2010 + R-2099 (sem R-4099); lote completo na ordem R-1000 → R-2010 → R-4010 → R-4020 → R-2099 → R-4099', async () => {
+    const inss = linha({ tributo: 'INSS', natRend: null, codigoReceita: '116201', amountCents: '11000', titulo: { payableId: 'p9', documentNumber: '77', documentoSerie: '1', issueDate: '2026-03-05' }, inss: { tpServico: '100000001', cprb: false } });
+    const soInss = montar({ linhas: [inss] });
+    await soInss.svc.gerar(scope, { unitId: 'u1', competencia: '2026-03' });
+    expect(tipos(soInss.repo)).toEqual(['R-1000', 'R-2010', 'R-2099']);
+
+    const m = montar({ linhas: [linha(), inss] });
+    m.state.dividendos = [dividendo()];
+    m.state.jcp = [jcpCalc([{ partnerId: 'p-pj', brutoCents: 100_000n, irrfCents: 15_000n }])];
+    m.state.socios = [socio('p-a', CPF_A), socio('p-pj', CNPJ_A)];
+    const r = await m.svc.gerar(scope, { unitId: 'u1', competencia: '2026-03' });
+    expect(tipos(m.repo)).toEqual(['R-1000', 'R-2010', 'R-4010', 'R-4020', 'R-2099', 'R-4099']);
+    // JCP a sócio PJ de mesmo CNPJ do fornecedor ⇒ um só R-4020 com as naturezas 12016 e 15022 (invariante 6)
+    expect(r.xml.match(/<natRend>(1[25]0\d\d)<\/natRend>/g)).toEqual(['<natRend>12001</natRend>', '<natRend>12016</natRend>', '<natRend>15022</natRend>']);
+    expect(r.relatorio.linhas.map((x) => x.evento)).toEqual(['R-2010', 'R-4010', 'R-4020', 'R-4020']);
+    expect(r.relatorio.totaisPorCodigo).toEqual(expect.arrayContaining([{ codigoReceita: '116201', totalCents: '11000' }, { codigoReceita: '570602', totalCents: '15000' }]));
+  });
+
+  it('item 13: dividendo cancelado depois do lote ⇒ defasado; o próximo relatório pede RETIFICAR o R-4010', async () => {
+    const m = montar({ linhas: [] });
+    const d = dividendo();
+    m.state.dividendos = [d, dividendo({ partnerId: 'p-b', taxId: '11144477735' })];
+    await m.svc.gerar(scope, { unitId: 'u1', competencia: '2026-03' });
+    expect((await m.svc.list(scope, { unitId: 'u1', competencia: '2026-03' }))[0].defasado).toBe(false);
+    d.status = 'CANCELLED';
+    const [v] = await m.svc.list(scope, { unitId: 'u1', competencia: '2026-03' });
+    expect(v.defasado).toBe(true);
+    const r = await m.svc.gerar(scope, { unitId: 'u1', competencia: '2026-03' });
+    expect(r.relatorio.marcacoes).toEqual([{ batchId: v.id, idEvento: expect.any(String), tipo: 'R-4010', acao: 'RETIFICAR' }]);
+  });
+
+  it('JCP de sócio removido do cadastro ⇒ 400 REINF_SOCIO_REMOVIDO', async () => {
+    const m = montar({ linhas: [] });
+    m.state.jcp = [jcpCalc([{ partnerId: 'p-sumiu' }])];
+    expect(await codigo(m.svc.gerar(scope, { unitId: 'u1', competencia: '2026-03' }))).toBe('400 REINF_SOCIO_REMOVIDO');
   });
 });
 
