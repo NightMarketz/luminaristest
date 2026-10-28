@@ -7,11 +7,11 @@ estado: "done"
 estado_detalhe: "✅ #337/#338/#340 → 373d00d4 (17/09); residual FE-INCR-DELIVERY. **Emenda ABERTA (Fase 3.4 do plano pós-contador, sem BRIEF):** memória de cálculo, créditos por nota e item, aging conciliado, ficha do imobilizado, inventário, conciliação apurado × contabilizado × pago, XLSX (dependência nova? checar antes) — a memória de IRPJ/CSLL depende do [[X7]] · 29/09: emenda 3.4 PLANEJAR autorizado — XLSX já existe (exceljs; a triagem dizia 'só CSV'); agora: inventário (sem rota), ficha do imobilizado e aging exportáveis; memória de cálculo depois do X7"
 depende_de: ["[[C6]]"]
 autorizacao: "\"executa C6b\" (dono, 16/09); dono, 2026-09-29: Fase 3 — PLANEJAR a emenda (sem 'executa')"
-prs: ["#324", "#336", "#337", "#338", "#340"]
+prs: ["#324", "#336", "#337", "#338", "#340", "#954"]
 ancora_sdd: "§M7.1 · §M5.1"
 perfil_previsto: "precisa-de-planejamento"
 perfil_evidencia: "EMENDA 3.4 (o nó segue done; BRIEF lido na íntegra) — regra 1: 11 forks F-C6bE pendentes. Depois deles: opus-medio (regra 2: nó de régua; 30 itens, zero migração, 5 exports reconstruídos do razão com tie-out)"
-atualizado: "2026-10-01"
+atualizado: "2026-10-28"
 ---
 # C6b — Pacote ampliado ao contador (tabela filha AccountingDeliveryItem)
 
@@ -19,7 +19,7 @@ atualizado: "2026-10-01"
 **Autorização:** "executa C6b" (dono, 16/09); dono, 2026-09-29: Fase 3 — PLANEJAR a emenda (sem 'executa')  
 **Depende de:** [[C6]]  
 **Desbloqueia:** [[FE-INCR-DELIVERY]]  
-**PRs:** #324, #336, #337, #338, #340  
+**PRs:** #324, #336, #337, #338, #340, #954  
 **Âncora no SDD consolidado:** §M7.1 · §M5.1
 
 ## Docs
