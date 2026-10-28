@@ -30,23 +30,33 @@
    cliente com o contador (`pesquisas-legais/ctribnac-salao-clinica` §4). **Não conferido:** o indOp 030101.
 2. **Lista de uso e consumo pessoal (P-IBS-2, 2ª parte; item 15): a lista do contador não serve, e a chave por NCM só cobre
    parte do art. 57** (dossiê `fila-2026-10-27-bloco4-draft` [D03] LC 214; [D06] Regulamento da CBS, arts. 62 e 63).
-   - O inciso I lista bens por natureza (joias, pedras e metais preciosos, obras de arte, bebidas alcoólicas, derivados do
-     tabaco, armas e munições e "bens e serviços recreativos, esportivos e estéticos"); o inciso II, bens e serviços dados
-     de graça ou abaixo do mercado a sócio, administrador, empregado ou parente.
-   - Bem estético usado "exclusivamente em estabelecimento físico pelos seus clientes" ou revendido não é uso pessoal
-     (art. 62 p.ú. III); serviço estético comprado por quem presta "esses mesmos serviços" também não (p.ú. IV "a"). Para
-     salão e clínica, a alínea "f" **não** entra na tabela.
+   - O inciso I lista bens por natureza: joias, pedras e metais preciosos, obras de arte, bebidas alcoólicas, derivados do
+     tabaco, armas e munições, "bens e serviços recreativos, esportivos e estéticos" e, desde a LC 227/2026, a alínea "g":
+     "bens e serviços relacionados à aquisição ou à manutenção dos bens de que trata este inciso" (o Regulamento já a trazia
+     no art. 62 VII). O inciso II trata dos bens e serviços dados de graça ou abaixo do mercado a sócio, administrador,
+     empregado ou parente.
+   - As exceções estão no próprio art. 57 § 3º da LC 214, e o Regulamento as detalha. Bem estético usado "exclusivamente em
+     estabelecimento físico pelos seus clientes" ou revendido não é uso pessoal (LC 214 art. 57 § 3º III; Regulamento art. 62
+     p.ú. III). Serviço estético comprado por quem presta "esses mesmos serviços" também não, mas essa exceção só está no
+     Regulamento (art. 62 p.ú. IV "a"), pela delegação do § 3º V da LC. Para salão e clínica, a alínea "f" **não** entra na
+     tabela.
    - Os quatro itens do contador (copa, veículo de passeio, vestuário, higiene pessoal) são casos de destino (inciso II),
-     e três têm exceção expressa: alimentação na jornada (art. 63 § 1º III), uniforme (§ 1º I) e veículo usado na função
-     (§ 2º II). Nenhum se reconhece pelo NCM.
+     e três têm exceção expressa: alimentação na jornada (LC 214 art. 57 § 3º IV "c"; Regulamento art. 63 § 1º III),
+     uniforme (§ 3º IV "a"; art. 63 § 1º I) e veículo usado na função (só no Regulamento, art. 63 § 2º II). Nenhum se
+     reconhece pelo NCM.
    - **Efeito no item 15:** `IBS_CBS_USO_CONSUMO` (chave = prefixo de NCM) comporta só as alíneas "a" a "e" do inciso I,
      com a exceção de revenda. Conteúdo `DRAFT` proposto (grau inferido: a correspondência categoria × NCM é leitura do
      agente): pedras e metais preciosos 7101–7112; joias e ourivesaria 7113, 7114 e 7116; bebidas alcoólicas 2203–2206 e
      2208; derivados do tabaco 2402–2404; armas e munições 93; obras de arte e antiguidades 97. Bijuteria (7117) e álcool
      etílico (2207) ficam de fora.
-   - **Ponto de desenho aberto para o PR-3 (não é fork ratificado):** o inciso II pede uma marca por item de entrada
-     ("fornecido a sócio, empregado ou parente") que o código não tem (`NfeImportService` só cruza NCM): campo por item na
-     importação da NF-e ou regra por conta de despesa. O efeito só começa em 2027; entra no planejamento do PR-3.
+   - **A alínea "g" também fica fora da tabela:** o que a define é a ligação com o bem principal (a manutenção da joia, o
+     acessório da arma), não o NCM. Para salão e clínica, a manutenção de equipamento estético usado só com clientes fica
+     fora da alínea "g" porque o bem principal está na exceção do § 3º III. O § 3º não cita a alínea "g", então essa leitura
+     é do agente (grau inferido) e vai junto da confirmação da lista ao contador, quando o efeito de 2027 chegar.
+   - **Ponto de desenho aberto para emenda do PR-3 (não é fork ratificado):** o PR-3 já está em `main` (#833, 22/10), e o
+     inciso II pede uma marca por item de entrada ("fornecido a sócio, empregado ou parente") que o código não tem
+     (`NfeImportService` só cruza NCM): campo por item na importação da NF-e ou regra por conta de despesa. O efeito só
+     começa em 2027; entra como emenda do PR-3.
 3. **P-IBS-4 (códigos do referencial): sem tabela nova.** O Leiaute 12 da ECF (28/05/2026) segue o mais recente na pasta do
    SPED [D04]; nas abas L100A e P100A há 0 contas com "IBS", "CBS" ou "Bens e Serviços" no nome [D02]. Fica a escolha do
    dono de 21/10, `2.01.01.09.28 Outros Tributos a Recolher – Circulante` (`ChartOfAccountsFixture.ts:289-293`). Revisar
