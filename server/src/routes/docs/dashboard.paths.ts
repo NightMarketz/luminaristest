@@ -40,7 +40,7 @@
  *                   required: [suiteKey, unit]
  *                   properties:
  *                     mode: { type: string, enum: [quick] }
- *                     suiteKey: { type: string, description: Preset suite key, e.g. "agronegocio" }
+ *                     suiteKey: { type: string, description: 'Preset suite key, e.g. "agronegocio"' }
  *                     unit:
  *                       type: object
  *                       required: [name]

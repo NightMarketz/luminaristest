@@ -64,6 +64,8 @@ export interface IInterestOnEquityRepository {
   findById(ownerUserId: string, id: string, tx?: Prisma.TransactionClient): Promise<InterestOnEquityWithAlocacoes | null>;
   /** Item 27 — o cálculo vivo (não cancelado) da PJ no ano e período. */
   findVivo(ownerUserId: string, anoCalendario: number, periodo: string, tx?: Prisma.TransactionClient): Promise<InterestOnEquityCalculation | null>;
+  /** D-2026-10-28 item 1 — o sócio tem alocação num cálculo vivo (qualquer status; cálculo com `deletedAt` não conta)? */
+  existsAlocacaoDoSocio(ownerUserId: string, partnerId: string, tx?: Prisma.TransactionClient): Promise<boolean>;
   /** Item 31 — cálculos com `dataCredito` na competência (YYYY-MM), nos status pedidos. */
   listDaCompetencia(ownerUserId: string, competencia: string, status: readonly string[]): Promise<InterestOnEquityCalculation[]>;
   /** Commit 2 (CAS): `PENDING_POST` sem lançamento → `POSTED` com `entryId`. false = outra chamada já vinculou. */

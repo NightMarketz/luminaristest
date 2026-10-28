@@ -54,6 +54,14 @@ Cada linha é **candidata** a nó ou lacuna própria. Nenhuma entra na fila sem 
   de novo marca o passo 8 como N/A com essa linha como evidência, se o predicado do passo depender da categoria. Senão, roda o
   passo.
 
+## Execução autorizada (dono, chat, 2026-10-28)
+
+*"Pode fechar as lacunas então?"*, e por questionário: "Sessões paralelas (Recomendado)". O escopo são as 6 lacunas com
+correção definida, uma sessão e um PR cada, sem merge: **1** (409 na remoção de sócio com distribuição), **2** (C6b
+kind+período), **8** (deriva do OpenAPI, PR só de docs), **9** (12001 com tipo 12, condicionado à leitura da NT 02/2026),
+**10** (job PROCESSING órfão: guarda e correção) e **12** (favicon/logo). Ficam fora: 4 (cartão próprio), 6 (01/11), 11
+(reconcile), 13 (demanda).
+
 ## D. Ambiente
 
 - **14.** Com 3 sessões na mesma máquina, a integração local dá timeout no Windows; no CI ela passa. Regra operacional: **no
