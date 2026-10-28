@@ -8,6 +8,11 @@ on:
     branches: [main]
   pull_request:
 
+# Token só de leitura: nenhum job escreve no repo (artifact e cache usam o token de runtime, não o
+# GITHUB_TOKEN). Sem este bloco, a permissão vem do padrão do repositório, que pode ser escrita.
+permissions:
+  contents: read
+
 # Cancel superseded runs on the same ref to save CI minutes.
 concurrency:
   group: ci-${{ github.ref }}
@@ -30,12 +35,12 @@ jobs:
       DATABASE_URL: file:./ci.db
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: server/package-lock.json
 
@@ -114,12 +119,12 @@ jobs:
       DATABASE_URL: file:./ci.db
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: server/package-lock.json
 
@@ -134,7 +139,7 @@ jobs:
       # Chave por sha (sempre salva a versão nova) + restore-keys por shard (recupera a última). Entrada
       # velha é inofensiva: o Jest indexa cada arquivo pelo conteúdo + config, não pelo nome.
       - name: Restore Jest cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: server/.jest-cache
           key: jest-${{ runner.os }}-${{ matrix.project }}-${{ matrix.shard }}-${{ hashFiles('server/package-lock.json') }}-${{ github.sha }}
@@ -163,7 +168,7 @@ jobs:
       # sobre a soma dos 7 shards (por isso `--coverageThreshold='{}'` acima).
       - name: Upload coverage do shard
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: coverage-${{ matrix.project }}-${{ strategy.job-index }}
           path: server/coverage/coverage-final.json
@@ -178,16 +183,16 @@ jobs:
       run:
         working-directory: server
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: server/package-lock.json
       - name: Install dependencies
         run: npm ci
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: coverage-*
           path: server/coverage-shards
@@ -215,12 +220,12 @@ jobs:
         working-directory: my-app
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: my-app/package-lock.json
 
@@ -278,12 +283,12 @@ jobs:
     name: Skill governance – skill-audit run --all
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: server/package-lock.json
 
@@ -307,7 +312,7 @@ jobs:
     steps:
       # `fetch-depth: 0` foi removido em 2026-08-09 junto com a bancada: o único passo que
       # precisava da história inteira era o `review-ledger-check.mjs`, que não existe mais.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Assert operating-gates layer exists
         shell: bash
@@ -333,7 +338,7 @@ jobs:
     name: Design – no new zinc-
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
 
