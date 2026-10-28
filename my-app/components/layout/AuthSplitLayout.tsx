@@ -76,7 +76,7 @@ export const AuthSplitLayout: React.FC<AuthSplitLayoutProps> = ({ children, titl
           <div className="mb-12 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-700">
             <div className="relative w-10 h-10 overflow-hidden rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
                <Image
-                src="/logo.png"
+                src="/Logo.png"
                 alt="Luminaris Logo"
                 width={40}
                 height={40}
@@ -119,7 +119,7 @@ export const AuthSplitLayout: React.FC<AuthSplitLayoutProps> = ({ children, titl
         <div className="relative z-10 p-16 xl:p-24 max-w-3xl mx-auto flex flex-col items-start">
           <div className="mb-12 p-5 rounded-3xl bg-white/5 backdrop-blur-3xl border border-white/10 shadow-2xl animate-in zoom-in duration-1000">
              <Image
-                src="/logo.png"
+                src="/Logo.png"
                 alt="Brand Symbol"
                 width={120}
                 height={120}

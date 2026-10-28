@@ -95,5 +95,6 @@
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { description: 'SOCIO_COM_DISTRIBUICAO (partner has profit distribution or JCP; set saidaEm instead) or deleted unit' }
  */
 export {};
