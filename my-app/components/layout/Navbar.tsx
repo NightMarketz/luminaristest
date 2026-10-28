@@ -77,7 +77,7 @@ export function Navbar() {
         <Link href="/" className="flex items-center space-x-3 group">
           <div className="relative overflow-hidden rounded-xl transition-all duration-300 group-hover:scale-105 group-hover:rotate-2 group-hover:shadow-lg group-hover:shadow-indigo-500/20">
             <Image
-              src="/logo.png"
+              src="/Logo.png"
               alt="Luminaris Logo"
               width={38}
               height={38}
