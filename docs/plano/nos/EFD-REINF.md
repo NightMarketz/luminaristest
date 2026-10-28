@@ -69,3 +69,19 @@ registros: ["server/src/lib/factory.ts", "server/src/routes/accounting.ts", "ser
 - `server/prisma/schema.prisma` — `FiscalCertificate` (X10i PR-1): chave PKCS#8 e DER cifrados, 1 por (userId, unitId).
 - `server/src/lib/sped.ts:1-40`, `server/src/lib/ecf.ts:52-466` — molde de serializer puro com `__selfCheck` e cobertura.
 - `server/src/features/accounting/models/obrigacoesPorRegime.ts:19-25` — `ObrigacaoSped` sem `REINF`.
+
+## Fold 28/10 — fila de pesquisa de 27/10 (bloco 2)
+
+> Só esta seção. O frontmatter, o cabeçalho e "O que espera o dono" ficam como estão porque os PRs abertos #929 e #933
+> editam essas linhas. Onde a lista acima diverge, vale esta seção; o próximo fold do nó acerta o cabeçalho.
+
+- Resumo da fila: [[PESQUISA-FILA-2026-10-27]]. Detalhe e fontes no BRIEF, seção "Emenda 28/10".
+- **Resolvidas em fonte oficial:** P-REINF-7 (`classTrib` **01** para Simples dos Anexos III e V; 99 fora do Simples) e
+  P-REINF-5 (o portal web aceita os R-4000, até 100 notas por evento).
+- **P-REINF-2:** mapa de 23 serviços pela Tabela 01 oficial; o contador confirma uma vez.
+- **P-REINF-4 (= P-RET-5):** a regra é da IN RFB 2.110; o fato é dado do fornecedor e do tenant. Sai do pacote do contador.
+- **P-REINF-8 (= P-RET-9):** vira confirmação de sim ou não.
+- **Ao contador ficam:** P-REINF-3 e P-REINF-6, mais as confirmações da P-REINF-2 e da P-REINF-8. P-REINF-1 (runbook) e
+  P-REINF-9 (nova tabela SPED) não mudam.
+- Dossiê: [`fila-2026-10-27-bloco2-reinf`](../../../pesquisas-legais/fila-2026-10-27-bloco2-reinf/relatorio.md).
+- Estado e autorização **não mudam**.

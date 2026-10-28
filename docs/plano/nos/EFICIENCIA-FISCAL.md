@@ -121,3 +121,19 @@ registros: ["server/src/lib/factory.ts", "server/src/routes/sales.ts", "server/s
 - `models/simplesCalc.ts:257-275, 317` — `fatorR`, `apurar` puros; `SimplesDto.ts:36` — segregação manual.
 - `legalParameters/models/legalParameter.ts:9-36` — `PIS_COFINS_MONOFASICO_NCM` já existe; sem tabela de ST.
 - `grep simula server/src` = só testes (pesquisa §4).
+
+## Fold 28/10 — fila de pesquisa de 27/10 (bloco 3)
+
+> Só esta seção. O frontmatter e o cabeçalho ficam como estão porque o PR aberto #930 edita essas linhas.
+
+- Resumo da fila: [[PESQUISA-FILA-2026-10-27]]. Detalhe e fontes no BRIEF, seção "Emenda 28/10".
+- **P-EF-6:** em SP, cosméticos (NCM 3303–3305) estão fora da ICMS-ST desde 01/04/2026 (Portaria SRE 94/2025; RC 33677/2026).
+  O #930 já segue essa leitura (linhas de SP com `vigenteAte` 2026-03-31); outras UFs entram quando houver cliente nelas.
+- **P-EF-8:** SUP de SP em 2026 = R$ 2.413,62 por profissional por mês até 5 (faixas no BRIEF), vencimento trimestral; salão
+  fora do regime, clínica pode entrar. A linha SP da `ISS_FIXO_SUP` (item 28) pode sair de `DRAFT` por PR de dado.
+- **P-EF-11:** esteticista é profissão regulamentada (Lei 13.643): salão de estética fora dos 16%. Cabeleireiro e manicure
+  (Lei 12.592) ficam ambíguos; leitura segura de 32%, com diferença máxima de R$ 2.880 por ano.
+- **P-EF-12:** a forma do "valor de mercado" está nos arts. 14 e 16 do Regulamento da CBS; o comparável do item num combo é a
+  venda avulsa nos 3 meses anteriores. O CARGA continua só com aceite do contador.
+- Dossiê: [`fila-2026-10-27-bloco3-eficiencia`](../../../pesquisas-legais/fila-2026-10-27-bloco3-eficiencia/relatorio.md).
+- Estado e autorização **não mudam**.

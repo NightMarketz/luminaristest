@@ -143,6 +143,12 @@
 
 ## 2. PARTEB_PADRAO (II-4, M010.COD_PB_RFB)
 
+> **Nota de 28/10 (fila de pesquisa de 27/10, dossiê `pesquisas-legais/fila-2026-10-27-bloco4-draft`):** esta seção
+> ficou velha. O código em `main` (`lalurBlocoF.ts`) usa **1071** para o saldo devedor e **2210** para o saldo credor,
+> com a linha 91.01 só na 2210; os 5 pares que ele gera existem com qualificação 01 na PARTEB_PARTEA do Leiaute 12 da
+> ECF, e o par 91.01/1071 não existe. O sentido 1xxx/2xxx é inferido do padrão do bloco (o manual não o define).
+> Detalhe no fold de 28/10 do [D1](../plano/gates/D1.md).
+
 A validação do sistema confere com a fonte (**V**):
 - `LalurDto.ts:239` aceita `codPbRfb` de até 6 caracteres;
 - a existência por tributo é checada no serviço (`LalurService` → `findParteBPadrao`, `Lalur.model.ts:223`);
