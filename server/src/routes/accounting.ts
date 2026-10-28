@@ -205,6 +205,16 @@ import {
   updateIssBeneficioMunicipal,
 } from '../controllers/issBeneficioMunicipalController';
 import {
+  acceptTaxSuggestion,
+  createServiceCost,
+  deleteServiceCost,
+  getTaxOptimizationPolicy,
+  listServiceCosts,
+  listTaxSuggestions,
+  rejectTaxSuggestion,
+  updateTaxOptimizationPolicy,
+} from '../controllers/taxOptimizationController';
+import {
   deleteProductDestination,
   listProductDestinations,
   upsertProductDestination,
@@ -416,6 +426,15 @@ router.post('/iss-beneficios-municipais', createIssBeneficioMunicipal);
 router.get('/iss-beneficios-municipais/:id', getIssBeneficioMunicipal);
 router.put('/iss-beneficios-municipais/:id', updateIssBeneficioMunicipal);
 router.delete('/iss-beneficios-municipais/:id', deleteIssBeneficioMunicipal);
+// EFICIENCIA-FISCAL PR-1 (BRIEF itens 5 e 7, §4.3): política de eficiência fiscal, custo de serviço (piso) e sugestões.
+router.get('/tax-optimization/policy', getTaxOptimizationPolicy);
+router.put('/tax-optimization/policy', updateTaxOptimizationPolicy);
+router.get('/tax-optimization/service-costs', listServiceCosts);
+router.post('/tax-optimization/service-costs', createServiceCost);
+router.delete('/tax-optimization/service-costs/:id', deleteServiceCost);
+router.get('/tax-optimization/suggestions', listTaxSuggestions);
+router.post('/tax-optimization/suggestions/:id/accept', acceptTaxSuggestion);
+router.post('/tax-optimization/suggestions/:id/reject', rejectTaxSuggestion);
 // ITEM-DESTINATION PR-2 (BRIEF item 18, F-ID-2 a) — destinação padrão por produto
 router.get('/product-destinations', listProductDestinations);
 router.put('/product-destinations', upsertProductDestination);

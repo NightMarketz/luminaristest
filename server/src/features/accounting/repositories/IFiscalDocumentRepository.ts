@@ -26,6 +26,8 @@ export interface CreateSentFiscalDocumentData {
   numero: bigint | null;
   dCompet: string;
   vServCents: bigint;
+  /** EFICIENCIA-FISCAL PR-1 (F-EF-16 a): desconto incondicional destacado (`vDescIncond`); ausente = 0. */
+  vDescIncondCents?: bigint;
   tpRetISSQN: number;
   /** payload da tentativa 1 (imutável — ADR §9.1). */
   payloadJson: string;
