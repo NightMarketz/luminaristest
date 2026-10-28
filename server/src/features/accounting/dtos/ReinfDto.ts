@@ -45,12 +45,15 @@ export const ReinfBatchViewSchema = z
   .strict();
 export type ReinfBatchView = z.infer<typeof ReinfBatchViewSchema>;
 
-/** Item 14 — uma linha do relatório de conferência (beneficiário mascarado; centavos como string). */
+/**
+ * Item 14 — uma linha do relatório de conferência (beneficiário mascarado; centavos como string). PR-2 (lacuna D, dono
+ * 27/10): também R-4010 e R-2010; `natRend` nulo no R-2010.
+ */
 export const ReinfRelatorioLinhaSchema = z
   .object({
-    evento: z.literal('R-4020'),
+    evento: z.enum(['R-4020', 'R-4010', 'R-2010']),
     beneficiario: z.string(),
-    natRend: z.string(),
+    natRend: z.string().nullable(),
     dtFG: z.string(),
     tributo: z.string(),
     brutoCents: z.string(),

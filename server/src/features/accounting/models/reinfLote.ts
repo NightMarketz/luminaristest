@@ -1,6 +1,9 @@
+import { z } from 'zod';
+import type { InterestOnEquityAllocation, InterestOnEquityCalculation, Partner, ProfitDistributionEvent } from 'generated/prisma';
 import { ValidationError } from '../../../lib/errors';
 import { isValidCnpj } from '../../../lib/cnpj';
-import type { BeneficiarioPJ, PagamentoPJ, ValorRetido } from '../../../lib/reinf';
+import { isValidCpf } from '../../../lib/cpf';
+import type { BeneficiarioPF, BeneficiarioPJ, PagamentoPF, PagamentoPJ, PrestadorR2010, ValorRetido } from '../../../lib/reinf';
 import type { LinhaLegal } from '../../legalParameters/models/legalParameter';
 import type { WithholdingLineForReinf } from '../dtos/WithholdingDto';
 import { codigoReceitaRetencao, discriminadorDoCodigo, naturezaRendimentoVigente } from './retencaoParams';
@@ -15,14 +18,15 @@ import { codigoReceitaRetencao, discriminadorDoCodigo, naturezaRendimentoVigente
 export const TRIBUTOS_R4020 = ['IRRF', 'CSLL', 'COFINS', 'PIS'] as const;
 const CSRF = new Set(['CSLL', 'COFINS', 'PIS']);
 
-/** Avisos do relatório que o PR-1 emite (pacote de lacunas, dono 26/10, ponto 4). */
+/** Avisos do relatório (PR-1: pacote de lacunas, dono 26/10, ponto 4; item 19). */
 export const AVISO_PF_FORA_DA_REINF = 'PF_SERVICO_FORA_DA_REINF';
-export const AVISO_R2010_NAO_GERADO = 'R2010_AINDA_NAO_GERADO';
+/** PR-2 (lacuna A, dono 27/10): dividendo a sócio PJ não tem natureza na tabela do R-4020 — fica fora, P-REINF-10. */
+export const AVISO_DIVIDENDO_PJ_FORA_DA_REINF = 'DIVIDENDO_PJ_FORA_DA_REINF';
 
 export interface LinhaRelatorio {
-  evento: 'R-4020';
+  evento: 'R-4020' | 'R-4010' | 'R-2010';
   beneficiario: string; // mascarado
-  natRend: string;
+  natRend: string | null; // null no R-2010 (não tem natureza do rendimento)
   dtFG: string;
   tributo: string;
   brutoCents: string;
@@ -77,8 +81,6 @@ export function montarR4020(
 
   const pf = declaraveis.filter((l) => l.beneficiario.kind === 'CPF' && l.tributo !== 'INSS');
   if (pf.length > 0) avisos.push(`${AVISO_PF_FORA_DA_REINF}: ${pf.length} retenção(ões) de pessoa física — declarar fora do sistema (R-4010 de PF por serviço espera o nó de pessoal).`);
-  const inss = declaraveis.filter((l) => l.tributo === 'INSS');
-  if (inss.length > 0) avisos.push(`${AVISO_R2010_NAO_GERADO}: ${inss.length} retenção(ões) de INSS 11% — o R-2010 entra no PR-2 do nó.`);
 
   const r4020 = declaraveis.filter((l) => (TRIBUTOS_R4020 as readonly string[]).includes(l.tributo) && l.beneficiario.kind !== 'CPF');
   for (const l of r4020) {
@@ -185,4 +187,327 @@ function pagamentoCsrf(dtFG: string, csrf: readonly WithholdingLineForReinf[], t
     }
   }
   return p;
+}
+
+// ─── PR-2 — R-4010 (itens 15–16) e R-2010 (item 17) ──────────────────────────────────────────────────────────────────
+
+/**
+ * Contrato de entrada E4 (BRIEF §5.1, confirmado contra o código do IRRF-DISTRIBUICAO em `main`): um dividendo `POSTED`
+ * (`ProfitDistributionEvent`) com o tipo do sócio. Centavos como string (padrão do repo).
+ */
+export const DividendoParaReinfSchema = z
+  .object({
+    id: z.string(),
+    partnerId: z.string(),
+    taxId: z.string(),
+    tipoPessoa: z.enum(['PF', 'PJ']),
+    dataEvento: z.string(),
+    brutoCents: z.string(),
+    irrfCents: z.string(),
+    origemLucro: z.enum(['CORRENTE', 'TRANSICAO']),
+  })
+  .strict();
+export type DividendoParaReinf = z.infer<typeof DividendoParaReinfSchema>;
+
+/** E4 — a parte de um sócio num JCP `POSTED` (`InterestOnEquityAllocation`); `dtFG` = `dataCredito` do cálculo. */
+export const JcpParaReinfSchema = z
+  .object({
+    id: z.string(), // id da alocação
+    partnerId: z.string(),
+    taxId: z.string(),
+    tipoPessoa: z.enum(['PF', 'PJ']),
+    dataCredito: z.string(),
+    brutoCents: z.string(),
+    irrfCents: z.string(),
+  })
+  .strict();
+export type JcpParaReinf = z.infer<typeof JcpParaReinfSchema>;
+
+type SocioReinf = Pick<Partner, 'id' | 'tipoPessoa' | 'taxId'>;
+
+/**
+ * O JCP guarda só o `partnerId`; o CPF/CNPJ vem do cadastro vivo do sócio. Sócio removido (soft-delete) com JCP na
+ * competência ⇒ 400 nomeado: nenhum fato some calado (lacuna aberta no PR-2, sem decisão do dono).
+ */
+function socioDe(socios: ReadonlyMap<string, SocioReinf>, partnerId: string, origemId: string): SocioReinf {
+  const s = socios.get(partnerId);
+  if (!s) throw new ValidationError('Um JCP da competência é de sócio removido do cadastro: a Reinf precisa do CPF/CNPJ dele.', { partnerId, origemId }, 'REINF_SOCIO_REMOVIDO');
+  return s;
+}
+
+/** O `tipoPessoa` do sócio é derivado do tamanho do `taxId` (`Partner`, IRRF-DISTRIBUICAO PR-1); o evento guarda o `taxId`. */
+export function dividendoParaReinf(e: ProfitDistributionEvent): DividendoParaReinf {
+  return DividendoParaReinfSchema.parse({
+    id: e.id,
+    partnerId: e.partnerId,
+    taxId: e.taxId,
+    tipoPessoa: e.taxId.length === 14 ? 'PJ' : 'PF',
+    dataEvento: e.dataEvento,
+    brutoCents: e.brutoCents.toString(),
+    irrfCents: e.irrfCents.toString(),
+    origemLucro: e.origemLucro,
+  });
+}
+
+export function jcpParaReinf(c: Pick<InterestOnEquityCalculation, 'dataCredito'>, a: InterestOnEquityAllocation, socios: ReadonlyMap<string, SocioReinf>): JcpParaReinf {
+  const s = socioDe(socios, a.partnerId, a.id);
+  return JcpParaReinfSchema.parse({
+    id: a.id,
+    partnerId: a.partnerId,
+    taxId: s.taxId,
+    tipoPessoa: s.tipoPessoa,
+    dataCredito: c.dataCredito,
+    brutoCents: a.brutoCents.toString(),
+    irrfCents: a.irrfCents.toString(),
+  });
+}
+
+/** Natureza dos dividendos (Tabela 01: "Lucro e Dividendo") e do JCP ("Juros sobre o Capital Próprio") [D02]. */
+export const NAT_DIVIDENDOS = '12001';
+export const NAT_JCP = '12016';
+/** NT 02/2026 [D04]: tipo de isenção 12 = dividendos do § 3º do art. 6º-A da Lei 9.250 (lucro da transição). */
+export const TP_ISENCAO_TRANSICAO = 12;
+
+// Item 14 estendido ao R-4010 (lacuna D, dono 27/10): `***.NNN.NNN-**` — só os 6 dígitos do meio à vista.
+export function mascararCpf(cpf: string): string {
+  return `***.${cpf.slice(3, 6)}.${cpf.slice(6, 9)}-**`;
+}
+
+export interface MontagemR4010 {
+  beneficiariosPF: BeneficiarioPF[];
+  /** JCP a sócio PJ: vai ao R-4020 na 12016 (item 16), juntado aos fornecedores pelo CNPJ. */
+  beneficiariosPJ: BeneficiarioPJ[];
+  avisos: string[];
+  relatorio: LinhaRelatorio[];
+}
+
+function somaOpt(x?: bigint, y?: bigint): bigint | undefined {
+  return x === undefined && y === undefined ? undefined : (x ?? 0n) + (y ?? 0n);
+}
+
+/** Vários fatos do mesmo CPF, natureza e dia viram uma `infoPgto` (soma por campo). */
+function somaPF(a: PagamentoPF | undefined, b: PagamentoPF): PagamentoPF {
+  if (!a) return b;
+  const trib = somaOpt(a.vlrRendTribCents, b.vlrRendTribCents);
+  const ir = somaOpt(a.vlrIRCents, b.vlrIRCents);
+  const isento = somaOpt(a.isencao?.valorCents, b.isencao?.valorCents);
+  return {
+    dtFG: a.dtFG,
+    vlrRendBrutoCents: a.vlrRendBrutoCents + b.vlrRendBrutoCents,
+    ...(trib !== undefined ? { vlrRendTribCents: trib } : {}),
+    ...(ir !== undefined ? { vlrIRCents: ir } : {}),
+    ...(isento !== undefined ? { isencao: { tpIsencao: TP_ISENCAO_TRANSICAO, valorCents: isento } } : {}),
+    origemIds: [...a.origemIds, ...b.origemIds],
+  };
+}
+
+/**
+ * Itens 15–16 (F-REINF-4 a; L6) — dividendos e JCP `POSTED` da competência para o R-4010 (sócio PF) e o R-4020 (JCP a sócio
+ * PJ). Um evento por CPF; `idePgto` 12001 (dividendos) e 12016 (JCP); `infoPgto` por `dtFG` (fatos do mesmo dia somam).
+ * - Dividendo CORRENTE: no mês em que o CPF cruzou o limite (houve IR no mês), `vlrRendTrib` = bruto em todo evento e
+ *   `vlrIR` onde houve retenção (lacuna B, dono 27/10); no mês sem IR, só `vlrRendBruto` (MOU item 9, até P-REINF-6).
+ * - Dividendo TRANSICAO (art. 6º-A § 3º): `rendIsento` com `tpIsencao` 12 (NT 02/2026 [D04]).
+ * - JCP: `vlrRendTrib` = bruto, `vlrIR` = o IRRF da alocação (código 5706-02).
+ * - Dividendo a sócio PJ: fora, com aviso (lacuna A, dono 27/10).
+ * CPF/CNPJ com DV inválido ⇒ 400 nomeado com o `partnerId` (invariante 3).
+ */
+export function montarR4010(dividendos: readonly DividendoParaReinf[], jcps: readonly JcpParaReinf[], tabelas: readonly LinhaLegal[]): MontagemR4010 {
+  const avisos: string[] = [];
+  const divPj = dividendos.filter((d) => d.tipoPessoa === 'PJ');
+  if (divPj.length > 0) {
+    avisos.push(`${AVISO_DIVIDENDO_PJ_FORA_DA_REINF}: ${divPj.length} distribuição(ões) de lucros a sócio PJ — fora da Reinf até o contador responder (P-REINF-10).`);
+  }
+  const divPf = dividendos.filter((d) => d.tipoPessoa === 'PF');
+
+  for (const x of [...divPf, ...jcps]) {
+    const pf = x.tipoPessoa === 'PF';
+    if (!(pf ? isValidCpf(x.taxId) : isValidCnpj(x.taxId))) {
+      throw new ValidationError(
+        `O sócio de uma distribuição da competência não tem ${pf ? 'CPF' : 'CNPJ'} válido: corrija o cadastro antes de gerar a Reinf.`,
+        { partnerId: x.partnerId },
+        pf ? 'REINF_BENEFICIARIO_CPF_INVALIDO' : 'REINF_BENEFICIARIO_CNPJ_INVALIDO',
+      );
+    }
+  }
+
+  const porCpf = new Map<string, { refs: Set<string>; porNat: Map<string, Map<string, PagamentoPF>> }>();
+  const add = (cpf: string, ref: string, nat: string, p: PagamentoPF) => {
+    const b = porCpf.get(cpf) ?? { refs: new Set<string>(), porNat: new Map<string, Map<string, PagamentoPF>>() };
+    b.refs.add(ref);
+    const porDia = b.porNat.get(nat) ?? new Map<string, PagamentoPF>();
+    porDia.set(p.dtFG, somaPF(porDia.get(p.dtFG), p));
+    b.porNat.set(nat, porDia);
+    porCpf.set(cpf, b);
+  };
+  const relatorio: LinhaRelatorio[] = [];
+  const linha = (evento: 'R-4010' | 'R-4020', kind: 'CPF' | 'CNPJ', taxId: string, nat: string, dtFG: string, bruto: string, base: bigint, retido: string): LinhaRelatorio => ({
+    evento,
+    beneficiario: kind === 'CPF' ? mascararCpf(taxId) : mascararCnpj(taxId),
+    natRend: nat,
+    dtFG,
+    tributo: 'IRRF',
+    brutoCents: bruto,
+    baseCents: base.toString(),
+    retidoCents: retido,
+    codigoReceita: codigoReceitaRetencao(tabelas, { tributo: 'IRRF', natRend: nat, beneficiarioKind: kind, data: dtFG }).codigo,
+    vencimentoDarf: null,
+  });
+
+  const cruzou = new Set(divPf.filter((d) => BigInt(d.irrfCents) > 0n).map((d) => d.taxId));
+  for (const d of divPf) {
+    const bruto = BigInt(d.brutoCents);
+    const ir = BigInt(d.irrfCents);
+    const transicao = d.origemLucro === 'TRANSICAO';
+    const trib = !transicao && cruzou.has(d.taxId) ? bruto : undefined;
+    add(d.taxId, d.partnerId, NAT_DIVIDENDOS, {
+      dtFG: d.dataEvento,
+      vlrRendBrutoCents: bruto,
+      ...(trib !== undefined ? { vlrRendTribCents: trib } : {}),
+      ...(ir > 0n ? { vlrIRCents: ir } : {}),
+      ...(transicao ? { isencao: { tpIsencao: TP_ISENCAO_TRANSICAO, valorCents: bruto } } : {}),
+      origemIds: [d.id],
+    });
+    relatorio.push(linha('R-4010', 'CPF', d.taxId, NAT_DIVIDENDOS, d.dataEvento, d.brutoCents, trib ?? 0n, d.irrfCents));
+  }
+
+  const porCnpj = new Map<string, BeneficiarioPJ>();
+  for (const j of jcps) {
+    const bruto = BigInt(j.brutoCents);
+    const ir = BigInt(j.irrfCents);
+    if (j.tipoPessoa === 'PF') {
+      add(j.taxId, j.partnerId, NAT_JCP, { dtFG: j.dataCredito, vlrRendBrutoCents: bruto, vlrRendTribCents: bruto, ...(ir > 0n ? { vlrIRCents: ir } : {}), origemIds: [j.id] });
+      relatorio.push(linha('R-4010', 'CPF', j.taxId, NAT_JCP, j.dataCredito, j.brutoCents, bruto, j.irrfCents));
+    } else {
+      const b = porCnpj.get(j.taxId) ?? { cnpj: j.taxId, nome: '', ref: j.partnerId, porNatureza: { [NAT_JCP]: [] } };
+      b.porNatureza[NAT_JCP].push({ dtFG: j.dataCredito, vlrBrutoCents: bruto, ir: { baseCents: bruto, valorCents: ir }, origemIds: [j.id] });
+      porCnpj.set(j.taxId, b);
+      relatorio.push(linha('R-4020', 'CNPJ', j.taxId, NAT_JCP, j.dataCredito, j.brutoCents, bruto, j.irrfCents));
+    }
+  }
+
+  const beneficiariosPF: BeneficiarioPF[] = [...porCpf.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([cpf, b]) => ({
+      cpf,
+      nome: '',
+      ref: [...b.refs].sort().join(','),
+      porNatureza: Object.fromEntries([...b.porNat.entries()].map(([nat, porDia]) => [nat, [...porDia.values()]])),
+    }));
+  return { beneficiariosPF, beneficiariosPJ: [...porCnpj.values()], avisos, relatorio };
+}
+
+/** Um R-4020 por CNPJ (invariante 6): o JCP a sócio PJ entra no evento do fornecedor de mesmo CNPJ, se houver. */
+export function juntarBeneficiariosPJ(a: readonly BeneficiarioPJ[], b: readonly BeneficiarioPJ[]): BeneficiarioPJ[] {
+  const m = new Map<string, BeneficiarioPJ>();
+  for (const x of [...a, ...b]) {
+    const atual = m.get(x.cnpj);
+    if (!atual) {
+      m.set(x.cnpj, { ...x, porNatureza: Object.fromEntries(Object.entries(x.porNatureza).map(([k, v]) => [k, [...v]])) });
+      continue;
+    }
+    for (const [nat, ps] of Object.entries(x.porNatureza)) atual.porNatureza[nat] = [...(atual.porNatureza[nat] ?? []), ...ps];
+    atual.ref = [...new Set([...atual.ref.split(','), ...x.ref.split(',')])].sort().join(',');
+  }
+  return [...m.values()].sort((x, y) => x.cnpj.localeCompare(y.cnpj));
+}
+
+export interface MontagemR2010 {
+  prestadores: PrestadorR2010[];
+  /** As linhas declaradas (invariante 13). */
+  linhasR2010: WithholdingLineForReinf[];
+  relatorio: LinhaRelatorio[];
+}
+
+/**
+ * Item 17 — linhas `MADE` `ACTIVE` `tributo = INSS` ao R-2010 (invariante 13; o ISS nunca entra). Um prestador por CNPJ; NF =
+ * título (`payableId`), `vlrBruto` = bruto da linha de INSS, uma `infoTpServ` por `tpServico` (lacuna C, dono 27/10). Recusas
+ * (400 nomeado com o id da linha, sem inventar valor): prestador sem CNPJ válido ⇒ `REINF_PRESTADOR_CNPJ_INVALIDO`; série,
+ * número da NF, `tpServico` ou `cprb` nulos ⇒ `REINF_R2010_CAMPO_AUSENTE` com os campos; `indCPRB` diferente entre NFs do
+ * mesmo prestador ⇒ `REINF_R2010_CPRB_DIVERGENTE`.
+ */
+export function montarR2010(linhas: readonly WithholdingLineForReinf[]): MontagemR2010 {
+  const inss = linhas.filter((l) => l.tributo === 'INSS' && l.dispensa === null);
+  for (const l of inss) {
+    if (l.beneficiario.kind !== 'CNPJ' || !l.beneficiario.taxId || !isValidCnpj(l.beneficiario.taxId)) {
+      throw new ValidationError(
+        'O prestador de uma retenção de INSS da competência não tem CNPJ válido: corrija o cadastro antes de gerar a Reinf.',
+        { counterpartyId: l.beneficiario.counterpartyId, withholdingId: l.id },
+        'REINF_PRESTADOR_CNPJ_INVALIDO',
+      );
+    }
+    const faltando = [
+      l.titulo.documentoSerie === null ? 'serie' : null,
+      l.titulo.documentNumber === null ? 'numDocto' : null,
+      l.inss?.tpServico == null ? 'tpServico' : null,
+      l.inss?.cprb == null ? 'indCPRB' : null,
+    ].filter((x): x is string => x !== null);
+    if (faltando.length > 0) {
+      throw new ValidationError(
+        `A retenção de INSS não tem ${faltando.join(', ')}: complete a nota (série/número) ou o perfil de retenção do prestador (tipo de serviço, CPRB).`,
+        { withholdingId: l.id, campos: faltando },
+        'REINF_R2010_CAMPO_AUSENTE',
+      );
+    }
+  }
+
+  const porCnpj = new Map<string, WithholdingLineForReinf[]>();
+  for (const l of inss) porCnpj.set(l.beneficiario.taxId!, [...(porCnpj.get(l.beneficiario.taxId!) ?? []), l]);
+
+  const relatorio: LinhaRelatorio[] = [];
+  const prestadores: PrestadorR2010[] = [...porCnpj.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([cnpj, ls]) => {
+      if (new Set(ls.map((l) => l.inss!.cprb)).size > 1) {
+        throw new ValidationError(
+          'O prestador tem notas com e sem CPRB no mesmo mês; o R-2010 informa um só indicador por prestador. Confira o perfil de retenção.',
+          { counterpartyId: ls[0].beneficiario.counterpartyId },
+          'REINF_R2010_CPRB_DIVERGENTE',
+        );
+      }
+      const porTitulo = new Map<string, WithholdingLineForReinf[]>();
+      for (const l of ls) porTitulo.set(l.titulo.payableId, [...(porTitulo.get(l.titulo.payableId) ?? []), l]);
+      const nfs = [...porTitulo.values()].map((doc) => {
+        const tipos = new Map<string, { tpServico: string; baseCents: bigint; retencaoCents: bigint }>();
+        for (const l of doc) {
+          const tp = l.inss!.tpServico!;
+          const t = tipos.get(tp) ?? { tpServico: tp, baseCents: 0n, retencaoCents: 0n };
+          t.baseCents += BigInt(l.baseCents);
+          t.retencaoCents += BigInt(l.amountCents);
+          tipos.set(tp, t);
+        }
+        return {
+          serie: doc[0].titulo.documentoSerie!,
+          numDocto: doc[0].titulo.documentNumber!,
+          dtEmissaoNF: doc[0].titulo.issueDate,
+          vlrBrutoCents: BigInt(doc[0].brutoCents),
+          tiposServico: [...tipos.values()],
+          origemIds: doc.map((l) => l.id),
+        };
+      });
+      for (const l of ls) {
+        relatorio.push({
+          evento: 'R-2010',
+          beneficiario: mascararCnpj(cnpj),
+          natRend: null,
+          dtFG: l.dataFatoGerador,
+          tributo: 'INSS',
+          brutoCents: l.brutoCents,
+          baseCents: l.baseCents,
+          retidoCents: l.amountCents,
+          codigoReceita: l.codigoReceita,
+          vencimentoDarf: null,
+        });
+      }
+      const refs = [...new Set(ls.map((l) => l.beneficiario.counterpartyId))].sort();
+      const prestador: PrestadorR2010 = { cnpj, ref: refs.join(','), indCPRB: ls[0].inss!.cprb ? 1 : 0, nfs };
+      return prestador;
+    });
+  return { prestadores, linhasR2010: inss, relatorio };
+}
+
+/** Item 14 — Σ do retido por código derivado, sobre todas as linhas do relatório (invariante 4 por código). */
+export function totaisPorCodigo(linhas: readonly LinhaRelatorio[]): { codigoReceita: string | null; totalCents: string }[] {
+  const totais = new Map<string | null, bigint>();
+  for (const r of linhas) totais.set(r.codigoReceita, (totais.get(r.codigoReceita) ?? 0n) + BigInt(r.retidoCents));
+  return [...totais.entries()].map(([codigoReceita, t]) => ({ codigoReceita, totalCents: t.toString() }));
 }
