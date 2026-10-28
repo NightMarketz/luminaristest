@@ -25,7 +25,16 @@ da main divergia do código em 5 paths, relatado pelos PRs #928 e #933.
 
 Causa provável (inferido): a união por chave do `746f9b74` (#935) juntou o artefato de branches anteriores ao
 #839 e ao #889, recolocando os paths removidos e perdendo o `addedTables`, além de anexar chaves fora da ordem
-do gerador. Por isso o diff textual tem ~15,7 mil linhas e o semântico só 3 paths.
+do gerador. Por isso o diff textual tem ~15,7 mil linhas (1,8 mil com `--diff-algorithm=histogram`) e o
+semântico só 3 paths.
+
+**Ordem (verificado):** o `glob` 7.1.6 do `swagger-jsdoc` ordena os arquivos com `localeCompare`, sem depender do
+`readdir` do SO. Gerando o spec com a lista de arquivos ordenada por `en-US`, `pt-BR`, `en-US-u-va-posix` e code
+point, a ordem dos **paths** sai idêntica nas quatro. A main tinha 21 paths fora dessa ordem, todos de entradas da
+união: profit-distributions, jcp, withholdings, reinf, danfe e afins. Só a ordem de `components.schemas` depende da
+colação: o artefato sai igual sob `en-US`/`pt-BR`, e a colação POSIX daria 74 linhas a mais. A main já seguia
+`en-US`/`pt-BR`: 3 schemas fora de ordem, todos da união, contra 7 sob POSIX. O CI não regenera o artefato. Não
+foi possível rodar num Linux aqui, porque o WSL não respondeu e o Docker estava parado.
 
 ## O que mudou
 
@@ -41,3 +50,5 @@ do gerador. Por isso o diff textual tem ~15,7 mil linhas e o semântico só 3 pa
   (linhas 24, 74, 110, 111, 166).
 - A guarda `openapi-paths.test.ts` é um piso de contagem (`BASELINE = 293`): não pega artefato velho com
   path a mais. Registrado, sem aparato novo (regra ⛔ do CLAUDE.md).
+- Fixar a colação em `scripts/generate-openapi.js` (ordenar `apis` com `localeCompare(…, 'en-US')`) tornaria
+  a ordem dos schemas independente do locale de quem regenera. É ferramenta, fora de um PR só de docs.
