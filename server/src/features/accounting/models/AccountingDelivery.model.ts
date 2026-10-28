@@ -38,6 +38,9 @@ export const DELIVERABLE_EXPORT_KINDS = [
   'EXPORT_ISS_BY_COMPETENCE',
   // IBS-CBS-2027 PR-5 (BRIEF item 24): a memória das apurações de IBS/CBS entra como extra do pacote.
   'EXPORT_IBS_CBS_MEMO',
+  // EFD-REINF PR-3 (BRIEF item 22): o XML do lote da Reinf e o relatório de conferência entram como extras do pacote.
+  'EXPORT_REINF',
+  'EXPORT_REINF_RELATORIO',
 ] as const;
 export type DeliverableExportKind = (typeof DELIVERABLE_EXPORT_KINDS)[number];
 

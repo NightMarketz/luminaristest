@@ -367,7 +367,9 @@
               "EXPORT_ENTRY_SAMPLE",
               "EXPORT_TAX_ASSESSMENT_MEMO",
               "EXPORT_ISS_BY_COMPETENCE",
-              "EXPORT_IBS_CBS_MEMO"
+              "EXPORT_IBS_CBS_MEMO",
+              "EXPORT_REINF",
+              "EXPORT_REINF_RELATORIO"
             ]
           }
         }
@@ -25406,6 +25408,9 @@
         },
         "conteudoSha256": {
           "type": "string"
+        },
+        "prazo": {
+          "type": "string"
         }
       },
       "required": [
@@ -25467,6 +25472,9 @@
                 "type": "string"
               },
               "conteudoSha256": {
+                "type": "string"
+              },
+              "prazo": {
                 "type": "string"
               }
             },
@@ -25565,6 +25573,9 @@
               "type": "null"
             }
           ]
+        },
+        "prazoReinf": {
+          "type": "string"
         }
       },
       "required": [
@@ -25577,7 +25588,8 @@
         "baseCents",
         "retidoCents",
         "codigoReceita",
-        "vencimentoDarf"
+        "vencimentoDarf",
+        "prazoReinf"
       ],
       "additionalProperties": false
     },
@@ -25680,6 +25692,9 @@
                     "type": "null"
                   }
                 ]
+              },
+              "prazoReinf": {
+                "type": "string"
               }
             },
             "required": [
@@ -25692,7 +25707,8 @@
               "baseCents",
               "retidoCents",
               "codigoReceita",
-              "vencimentoDarf"
+              "vencimentoDarf",
+              "prazoReinf"
             ],
             "additionalProperties": false
           }
@@ -25757,7 +25773,33 @@
         "avisos": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "object",
+            "properties": {
+              "codigo": {
+                "type": "string",
+                "enum": [
+                  "PF_SERVICO_FORA_DA_REINF",
+                  "DIVIDENDO_PJ_FORA_DA_REINF",
+                  "NATUREZA_NAO_CONFERIDA",
+                  "DEFASADO_RETIFICAR",
+                  "REABRIR_ANTES"
+                ]
+              },
+              "quantidade": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "detalhe": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "codigo",
+              "quantidade",
+              "detalhe"
+            ],
+            "additionalProperties": false
           }
         },
         "csv": {
@@ -25857,6 +25899,9 @@
                         "type": "null"
                       }
                     ]
+                  },
+                  "prazoReinf": {
+                    "type": "string"
                   }
                 },
                 "required": [
@@ -25869,7 +25914,8 @@
                   "baseCents",
                   "retidoCents",
                   "codigoReceita",
-                  "vencimentoDarf"
+                  "vencimentoDarf",
+                  "prazoReinf"
                 ],
                 "additionalProperties": false
               }
@@ -25934,7 +25980,33 @@
             "avisos": {
               "type": "array",
               "items": {
-                "type": "string"
+                "type": "object",
+                "properties": {
+                  "codigo": {
+                    "type": "string",
+                    "enum": [
+                      "PF_SERVICO_FORA_DA_REINF",
+                      "DIVIDENDO_PJ_FORA_DA_REINF",
+                      "NATUREZA_NAO_CONFERIDA",
+                      "DEFASADO_RETIFICAR",
+                      "REABRIR_ANTES"
+                    ]
+                  },
+                  "quantidade": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "detalhe": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "codigo",
+                  "quantidade",
+                  "detalhe"
+                ],
+                "additionalProperties": false
               }
             },
             "csv": {
@@ -25951,13 +26023,60 @@
             "csv"
           ],
           "additionalProperties": false
+        },
+        "exportJobIds": {
+          "type": "object",
+          "properties": {
+            "xml": {
+              "type": "string"
+            },
+            "relatorio": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "xml",
+            "relatorio"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "batchId",
         "sha256",
         "xml",
-        "relatorio"
+        "relatorio",
+        "exportJobIds"
+      ],
+      "additionalProperties": false
+    },
+    "ReinfAvisoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "codigo": {
+          "type": "string",
+          "enum": [
+            "PF_SERVICO_FORA_DA_REINF",
+            "DIVIDENDO_PJ_FORA_DA_REINF",
+            "NATUREZA_NAO_CONFERIDA",
+            "DEFASADO_RETIFICAR",
+            "REABRIR_ANTES"
+          ]
+        },
+        "quantidade": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "detalhe": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "codigo",
+        "quantidade",
+        "detalhe"
       ],
       "additionalProperties": false
     }

@@ -3598,5 +3598,18 @@
         "KIT_NOT_INSTALLED": "O kit da unidade não está instalado; retome a instalação antes de decidir."
       }
     }
+  },
+  "reinf": {
+    "avisos": {
+      "PF_SERVICO_FORA_DA_REINF": "{{quantidade}} retenção(ões) de pessoa física por serviço fora da Reinf: declare fora do sistema até o cadastro de dependentes.",
+      "DIVIDENDO_PJ_FORA_DA_REINF": "{{quantidade}} distribuição(ões) de lucros a sócio PJ fora da Reinf até o contador responder.",
+      "NATUREZA_NAO_CONFERIDA": "{{quantidade}} natureza(s) do rendimento vêm do perfil de retenção e ainda não foram conferidas pelo contador.",
+      "DEFASADO_RETIFICAR": "{{quantidade}} evento(s) de lote anterior com origem estornada: retifique.",
+      "REABRIR_ANTES": "{{quantidade}} evento(s) já transmitido(s): reabra o período antes de retificar."
+    },
+    "erros": {
+      "NATUREZA_RENDIMENTO_SEM_MAPA": "Uma retenção não tem natureza do rendimento publicada: confira o perfil de retenção do fornecedor.",
+      "REINF_SEM_CONTATO": "Indique no perfil fiscal o contador com CPF: ele é o contato do R-1000."
+    }
   }
 }

@@ -68,6 +68,8 @@ describe('X13 PR-1 — perfil fiscal da empresa, signatários e obrigações', (
       expect.objectContaining({ obrigacao: 'DCTFWEB', status: 'CONDICIONAL', faltantes: [] }),
       // X14 PR-3 item 22: DASN-SIMEI do MEI (Res. CGSN 140 art. 109), sem faltantes do perfil
       expect.objectContaining({ obrigacao: 'DASN_SIMEI', status: 'OBRIGATORIA', faltantes: [] }),
+      // EFD-REINF PR-3 item 20: REINF CONDICIONAL no fim (IN RFB 2.043 art. 3º e § 1º I)
+      expect.objectContaining({ obrigacao: 'REINF', status: 'CONDICIONAL', faltantes: [] }),
     ]);
   });
 
@@ -129,7 +131,7 @@ describe('X13 PR-1 — perfil fiscal da empresa, signatários e obrigações', (
     expect(g.body.data).toMatchObject({ ano: 2025, regime: 'PRESUMIDO', ecd: { numOrd: '7' }, declarante: { cnpj: '12345678000195' } });
     const r = await obrigacoes(2025);
     expect(r.body.data.perfil).toBe('COMPLETO');
-    expect(r.body.data.obrigacoes.map((o: { status: string }) => o.status)).toEqual(['OBRIGATORIA', 'OBRIGATORIA', 'OBRIGATORIA']); // + DCTFWEB (X9 item 13)
+    expect(r.body.data.obrigacoes.map((o: { status: string }) => o.status)).toEqual(['OBRIGATORIA', 'OBRIGATORIA', 'OBRIGATORIA', 'CONDICIONAL']); // + DCTFWEB (X9 item 13) · + REINF (EFD-REINF PR-3 item 20)
     const ev = await eventos('company_fiscal_profile.updated');
     const ultimo = dump(ev[ev.length - 1]);
     for (const pii of ['Salao Bela', '12345678000195', 'contato@bela', 'DIARIO GERAL']) expect(ultimo).not.toContain(pii);

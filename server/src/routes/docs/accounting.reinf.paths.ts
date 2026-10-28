@@ -6,12 +6,14 @@
  * paths:
  *   /api/accounting/reinf/batches:
  *     post:
- *       summary: Generate the EFD-Reinf batch of a month (BE-INCR-EFD-REINF PR-1 items 4-14, PR-2 items 15-18)
+ *       summary: Generate the EFD-Reinf batch of a month (BE-INCR-EFD-REINF PR-1 items 4-14, PR-2 items 15-18, PR-3 items 21-23)
  *       description: >-
  *         Monta o lote da EFD-Reinf (leiaute 2.1.2b; R-1000 quando preciso, R-2010 por prestador de cessão de mão de obra,
  *         R-4010 por sócio PF (dividendos e JCP), R-4020 por fornecedor PJ e sócio PJ com JCP, R-2099 e R-4099) a partir
  *         das retenções feitas e das distribuições POSTED da PJ inteira, sem assinatura, e registra a geração (hash + ids, sem XML nem CPF/CNPJ). O
- *         XML e o relatório de conferência só saem nesta resposta. 400 - competência futura (REINF_COMPETENCIA_FUTURA),
+ *         XML e o relatório de conferência saem nesta resposta e, desde o PR-3, também como 2 jobs de export (EXPORT_REINF com o
+ *         sha256 do lote; EXPORT_REINF_RELATORIO), extras do pacote do contador (exportJobIds). O relatório traz o prazo por
+ *         linha (trimestral só no R-4010 inteiramente de isenção 12) e avisos com código. 400 - competência futura (REINF_COMPETENCIA_FUTURA),
  *         perfil do ano ausente, CNPJ do fornecedor inválido (REINF_BENEFICIARIO_CNPJ_INVALIDO), natureza do rendimento
  *         sem mapa (NATUREZA_RENDIMENTO_SEM_MAPA), CPF do sócio inválido (REINF_BENEFICIARIO_CPF_INVALIDO), sócio removido
  *         com JCP (REINF_SOCIO_REMOVIDO), R-2010 sem série/número/tipo de serviço/CPRB (REINF_R2010_CAMPO_AUSENTE),
@@ -32,7 +34,7 @@
  *                 unitId:      { type: string, minLength: 1 }
  *                 competencia: { type: string, pattern: '^\d{4}-(0[1-9]|1[0-2])$' }
  *       responses:
- *         '201': { description: 'ReinfBatchCreated (batchId, sha256, xml, relatorio)' }
+ *         '201': { description: 'ReinfBatchCreated (batchId, sha256, xml, relatorio, exportJobIds)' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }

@@ -2,7 +2,9 @@
  * BE-INCR-EFD-REINF PR-1 — ReinfService com fakes (itens 1, 4, 8, 10, 11, 13; invariantes 1, 8, 9). As tabelas vêm da
  * semente REAL de `legal_parameters` (`fotografiaSemente`), a mesma que a migração carrega.
  */
-import type { CompanyFiscalProfile, InterestOnEquityAllocation, InterestOnEquityCalculation, Partner, Prisma, ProfitDistributionEvent, ReinfBatch } from 'generated/prisma';
+import { createHash } from 'node:crypto';
+import type { CreateJobInput, UpdateJobInput } from '../../models/DataExchange.model';
+import type { AccountingDataExchangeJob, CompanyFiscalProfile, InterestOnEquityAllocation, InterestOnEquityCalculation, Partner, Prisma, ProfitDistributionEvent, ReinfBatch } from 'generated/prisma';
 import { AccountingPolicy } from '../../policies/AccountingPolicy';
 import type { AuditService } from '../AuditService';
 import { ReinfService, decidirR1000 } from '../ReinfService';
@@ -78,6 +80,12 @@ function montar(o: { perfil?: CompanyFiscalProfile | null; linhas?: WithholdingL
     socios: [] as Partner[],
   };
   const append = jest.fn();
+  // PR-3 (item 22): os 2 jobs de export do lote, em memória.
+  const jobs: Record<string, Record<string, unknown>> = {};
+  const jobsFake = {
+    createJob: async (d: CreateJobInput) => ((jobs[`j${Object.keys(jobs).length + 1}`] = { id: `j${Object.keys(jobs).length + 1}`, ...d }) as unknown as AccountingDataExchangeJob),
+    updateJob: async (_s: AccountingScope, id: string, d: UpdateJobInput) => Object.assign(jobs[id], d) as unknown as AccountingDataExchangeJob,
+  };
   const svc = new ReinfService(
     repo,
     { findMadeForReinfDaPj: async () => state.linhas },
@@ -95,10 +103,11 @@ function montar(o: { perfil?: CompanyFiscalProfile | null; linhas?: WithholdingL
       },
       socios: { list: async () => state.socios },
     },
+    { jobs: jobsFake, salvar: async (_o, _u, jobId) => ({ storageKey: `k/${jobId}` }) },
     { REINF_TP_AMB: '2' },
     () => o.agora ?? new Date('2026-10-26T15:00:00Z'),
   );
-  return { svc, repo, state, append };
+  return { svc, repo, state, append, jobs };
 }
 const codigo = async (p: Promise<unknown>) => p.then(() => 'OK', (e: { errorCode?: string; statusCode?: number }) => `${e.statusCode} ${e.errorCode}`);
 
@@ -251,5 +260,82 @@ describe('item 1: códigos de receita contra as tabelas do RETENCOES-FONTE (foto
   it('15022 × IRRF = 170806, × CSRF (AGREGADO) = 595207; 15052 só IRRF 804506; 12016 = 570602; 12001 em 2026-03 = 184101', () => {
     expect([cod('IRRF', '15022', '2026-03-02'), cod('COFINS', '15022', '2026-03-02'), cod('IRRF', '15052', '2026-03-02'), cod('CSLL', '15052', '2026-03-02')]).toEqual(['170806', '595207', '804506', null]);
     expect([cod('IRRF', '12016', '2026-03-02'), cod('IRRF', '12001', '2026-03-02', 'CPF')]).toEqual(['570602', '184101']);
+  });
+});
+
+describe('ReinfService — PR-3 (itens 21–23)', () => {
+  const CPF_B = '11144477735';
+  const transicao = (o: Partial<ProfitDistributionEvent> = {}) => dividendo({ partnerId: 'p-b', taxId: CPF_B, brutoCents: 3_000_000n, irrfCents: 0n, origemLucro: 'TRANSICAO', ...o });
+
+  it('item 21: R-4010 só de isenção 12 ⇒ prazo trimestral (2026-T1 ⇒ 2026-05-15) no evento, na linha, no CSV e no lote', async () => {
+    const m = montar({ linhas: [] });
+    m.state.dividendos = [transicao()];
+    const r = await m.svc.gerar(scope, { unitId: 'u1', competencia: '2026-03' });
+    expect((m.repo.rows[0].eventos as { tipo: string; prazo?: string }[]).map((e) => [e.tipo, e.prazo])).toEqual([['R-1000', undefined], ['R-4010', '2026-05-15'], ['R-4099', undefined]]);
+    expect([r.relatorio.prazo, r.relatorio.linhas.map((l) => l.prazoReinf)]).toEqual(['2026-05-15', ['2026-05-15']]);
+    expect(r.relatorio.csv.split('\n')[1].endsWith(';2026-05-15')).toBe(true);
+    expect((await m.svc.list(scope, { unitId: 'u1', competencia: '2026-03' }))[0].prazo).toBe('2026-05-15');
+  });
+
+  it('item 21 (lacuna B): ≤ R$ 50 mil sem retenção e transição + corrente no mesmo CPF ficam no mensal; o lote leva o mais cedo', async () => {
+    const m = montar({ linhas: [] });
+    m.state.dividendos = [transicao(), dividendo({ brutoCents: 4_000_000n, irrfCents: 0n })];
+    const r = await m.svc.gerar(scope, { unitId: 'u1', competencia: '2026-03' });
+    expect(r.relatorio.linhas.map((l) => [l.beneficiario, l.prazoReinf])).toEqual([['***.444.777-**', '2026-05-15'], ['***.982.247-**', '2026-04-15']]);
+    expect(r.relatorio.prazo).toBe('2026-04-15');
+
+    const mesmoCpf = montar({ linhas: [] });
+    mesmoCpf.state.dividendos = [transicao({ partnerId: 'p-a', taxId: CPF_A }), dividendo({ brutoCents: 1_000_000n, irrfCents: 0n })];
+    const r2 = await mesmoCpf.svc.gerar(scope, { unitId: 'u1', competencia: '2026-03' });
+    expect(r2.relatorio.linhas.map((l) => l.prazoReinf)).toEqual(['2026-04-15', '2026-04-15']);
+  });
+
+  it('item 22: 2 jobs EXPORTED (XML com o sha256 do lote; CSV do relatório) no mês da competência, com auditoria de export', async () => {
+    const m = montar();
+    const r = await m.svc.gerar(scope, { unitId: 'u1', competencia: '2026-03' });
+    const xml = m.jobs[r.exportJobIds.xml];
+    const csv = m.jobs[r.exportJobIds.relatorio];
+    expect(xml).toMatchObject({ kind: 'EXPORT_REINF', status: 'EXPORTED', sha256: r.sha256, storageKey: `k/${r.exportJobIds.xml}`, mimeType: 'application/xml', unitId: 'u1', userId: 'pj' });
+    expect([xml.periodStart, xml.periodEnd]).toEqual([new Date('2026-03-01T00:00:00Z'), new Date('2026-03-31T00:00:00Z')]);
+    expect(csv).toMatchObject({ kind: 'EXPORT_REINF_RELATORIO', status: 'EXPORTED', mimeType: 'text/csv', totalRows: r.relatorio.linhas.length });
+    expect(csv.sha256).toBe(createHash('sha256').update(Buffer.from(r.relatorio.csv, 'utf8')).digest('hex'));
+    expect(m.append.mock.calls.map((c) => (c[2] as { eventType: string }).eventType)).toEqual(['tax.reinf_batch.generated', 'data_exchange.export_generated', 'data_exchange.export_generated']);
+  });
+
+  it('item 22: disco falhou ⇒ job FAILED, erro sobe e nenhum lote é gravado', async () => {
+    const m = montar();
+    (m.svc as unknown as { artefatos: { salvar: () => Promise<never> } }).artefatos.salvar = async () => {
+      throw new Error('EIO');
+    };
+    await expect(m.svc.gerar(scope, { unitId: 'u1', competencia: '2026-03' })).rejects.toThrow('EIO');
+    expect([Object.values(m.jobs).map((j) => j.status), m.repo.rows.length]).toEqual([['FAILED'], 0]);
+  });
+
+  it('item 23: NATUREZA_NAO_CONFERIDA com as naturezas do R-4020 de retenção; lote só de dividendos não traz o aviso', async () => {
+    const m = montar({ linhas: [linha(), linha({ natRend: '15052', codigoReceita: '804506' })] });
+    const r = await m.svc.gerar(scope, { unitId: 'u1', competencia: '2026-03' });
+    expect(r.relatorio.avisos).toEqual([{ codigo: 'NATUREZA_NAO_CONFERIDA', quantidade: 2, detalhe: expect.stringContaining('15022, 15052') }]);
+    const so = montar({ linhas: [] });
+    so.state.dividendos = [dividendo()];
+    expect((await so.svc.gerar(scope, { unitId: 'u1', competencia: '2026-03' })).relatorio.avisos).toEqual([]);
+  });
+
+  it('item 23: origem estornada ⇒ DEFASADO_RETIFICAR; lote anterior TRANSMITIDO ⇒ também REABRIR_ANTES (L4)', async () => {
+    const m = montar({ linhas: [] });
+    const d = dividendo();
+    m.state.dividendos = [d, dividendo({ partnerId: 'p-b', taxId: CPF_B })];
+    await m.svc.gerar(scope, { unitId: 'u1', competencia: '2026-03' });
+    d.status = 'CANCELLED';
+    const r = await m.svc.gerar(scope, { unitId: 'u1', competencia: '2026-03' });
+    expect(r.relatorio.avisos.map((a) => [a.codigo, a.quantidade])).toEqual([['DEFASADO_RETIFICAR', 1]]);
+
+    const t = montar({ linhas: [] });
+    const d2 = dividendo();
+    t.state.dividendos = [d2, dividendo({ partnerId: 'p-b', taxId: CPF_B })];
+    await t.svc.gerar(scope, { unitId: 'u1', competencia: '2026-03' });
+    t.repo.rows[0].status = 'TRANSMITIDO';
+    d2.status = 'CANCELLED';
+    const r2 = await t.svc.gerar(scope, { unitId: 'u1', competencia: '2026-03' });
+    expect(r2.relatorio.avisos.map((a) => [a.codigo, a.quantidade])).toEqual([['DEFASADO_RETIFICAR', 1], ['REABRIR_ANTES', 1]]);
   });
 });

@@ -6,6 +6,7 @@ import { isValidCpf } from '../../../lib/cpf';
 import type { BeneficiarioPF, BeneficiarioPJ, PagamentoPF, PagamentoPJ, PrestadorR2010, ValorRetido } from '../../../lib/reinf';
 import type { LinhaLegal } from '../../legalParameters/models/legalParameter';
 import type { WithholdingLineForReinf } from '../dtos/WithholdingDto';
+import type { ReinfAviso } from '../dtos/ReinfDto';
 import { codigoReceitaRetencao, discriminadorDoCodigo, naturezaRendimentoVigente } from './retencaoParams';
 
 /**
@@ -22,6 +23,8 @@ const CSRF = new Set(['CSLL', 'COFINS', 'PIS']);
 export const AVISO_PF_FORA_DA_REINF = 'PF_SERVICO_FORA_DA_REINF';
 /** PR-2 (lacuna A, dono 27/10): dividendo a sócio PJ não tem natureza na tabela do R-4020 — fica fora, P-REINF-10. */
 export const AVISO_DIVIDENDO_PJ_FORA_DA_REINF = 'DIVIDENDO_PJ_FORA_DA_REINF';
+/** PR-3 (item 23; lacuna D, dono 28/10): enquanto a P-REINF-2 estiver aberta, a natureza do perfil não foi conferida pelo contador. */
+export const AVISO_NATUREZA_NAO_CONFERIDA = 'NATUREZA_NAO_CONFERIDA';
 
 export interface LinhaRelatorio {
   evento: 'R-4020' | 'R-4010' | 'R-2010';
@@ -34,6 +37,8 @@ export interface LinhaRelatorio {
   retidoCents: string;
   codigoReceita: string | null;
   vencimentoDarf: string | null;
+  /** PR-3 (item 21; lacuna B, dono 28/10): a linha é de um R-4010 só de isenção 12 ⇒ prazo trimestral (§ 3º). Interno: não vai ao DTO. */
+  trimestral?: true;
 }
 
 export interface MontagemR4020 {
@@ -42,7 +47,7 @@ export interface MontagemR4020 {
   linhasR4020: WithholdingLineForReinf[];
   /** Há fato da Reinf na competência (invariante 1; dispensa e ISS não contam). */
   temFato: boolean;
-  avisos: string[];
+  avisos: ReinfAviso[];
   relatorio: LinhaRelatorio[];
   totaisPorCodigo: { codigoReceita: string | null; totalCents: string }[];
 }
@@ -75,12 +80,14 @@ export function montarR4020(
   tabelas: readonly LinhaLegal[],
   vencimentoPorTitulo: ReadonlyMap<string, string>,
 ): MontagemR4020 {
-  const avisos: string[] = [];
+  const avisos: ReinfAviso[] = [];
   const declaraveis = linhas.filter((l) => l.dispensa === null && l.tributo !== 'ISS');
   const temFato = declaraveis.length > 0;
 
   const pf = declaraveis.filter((l) => l.beneficiario.kind === 'CPF' && l.tributo !== 'INSS');
-  if (pf.length > 0) avisos.push(`${AVISO_PF_FORA_DA_REINF}: ${pf.length} retenção(ões) de pessoa física — declarar fora do sistema (R-4010 de PF por serviço espera o nó de pessoal).`);
+  if (pf.length > 0) {
+    avisos.push({ codigo: AVISO_PF_FORA_DA_REINF, quantidade: pf.length, detalhe: `${pf.length} retenção(ões) de pessoa física — declarar fora do sistema (R-4010 de PF por serviço espera o nó de pessoal).` });
+  }
 
   const r4020 = declaraveis.filter((l) => (TRIBUTOS_R4020 as readonly string[]).includes(l.tributo) && l.beneficiario.kind !== 'CPF');
   for (const l of r4020) {
@@ -277,7 +284,7 @@ export interface MontagemR4010 {
   beneficiariosPF: BeneficiarioPF[];
   /** JCP a sócio PJ: vai ao R-4020 na 12016 (item 16), juntado aos fornecedores pelo CNPJ. */
   beneficiariosPJ: BeneficiarioPJ[];
-  avisos: string[];
+  avisos: ReinfAviso[];
   relatorio: LinhaRelatorio[];
 }
 
@@ -312,10 +319,10 @@ function somaPF(a: PagamentoPF | undefined, b: PagamentoPF): PagamentoPF {
  * CPF/CNPJ com DV inválido ⇒ 400 nomeado com o `partnerId` (invariante 3).
  */
 export function montarR4010(dividendos: readonly DividendoParaReinf[], jcps: readonly JcpParaReinf[], tabelas: readonly LinhaLegal[]): MontagemR4010 {
-  const avisos: string[] = [];
+  const avisos: ReinfAviso[] = [];
   const divPj = dividendos.filter((d) => d.tipoPessoa === 'PJ');
   if (divPj.length > 0) {
-    avisos.push(`${AVISO_DIVIDENDO_PJ_FORA_DA_REINF}: ${divPj.length} distribuição(ões) de lucros a sócio PJ — fora da Reinf até o contador responder (P-REINF-10).`);
+    avisos.push({ codigo: AVISO_DIVIDENDO_PJ_FORA_DA_REINF, quantidade: divPj.length, detalhe: `${divPj.length} distribuição(ões) de lucros a sócio PJ — fora da Reinf até o contador responder (P-REINF-10).` });
   }
   const divPf = dividendos.filter((d) => d.tipoPessoa === 'PF');
 
@@ -353,6 +360,7 @@ export function montarR4010(dividendos: readonly DividendoParaReinf[], jcps: rea
     vencimentoDarf: null,
   });
 
+  const cpfDaLinha: (string | null)[] = []; // paralelo a `relatorio`: o CPF do evento de cada linha (PR-3, item 21)
   const cruzou = new Set(divPf.filter((d) => BigInt(d.irrfCents) > 0n).map((d) => d.taxId));
   for (const d of divPf) {
     const bruto = BigInt(d.brutoCents);
@@ -368,6 +376,7 @@ export function montarR4010(dividendos: readonly DividendoParaReinf[], jcps: rea
       origemIds: [d.id],
     });
     relatorio.push(linha('R-4010', 'CPF', d.taxId, NAT_DIVIDENDOS, d.dataEvento, d.brutoCents, trib ?? 0n, d.irrfCents));
+    cpfDaLinha.push(d.taxId);
   }
 
   const porCnpj = new Map<string, BeneficiarioPJ>();
@@ -377,11 +386,13 @@ export function montarR4010(dividendos: readonly DividendoParaReinf[], jcps: rea
     if (j.tipoPessoa === 'PF') {
       add(j.taxId, j.partnerId, NAT_JCP, { dtFG: j.dataCredito, vlrRendBrutoCents: bruto, vlrRendTribCents: bruto, ...(ir > 0n ? { vlrIRCents: ir } : {}), origemIds: [j.id] });
       relatorio.push(linha('R-4010', 'CPF', j.taxId, NAT_JCP, j.dataCredito, j.brutoCents, bruto, j.irrfCents));
+      cpfDaLinha.push(j.taxId);
     } else {
       const b = porCnpj.get(j.taxId) ?? { cnpj: j.taxId, nome: '', ref: j.partnerId, porNatureza: { [NAT_JCP]: [] } };
       b.porNatureza[NAT_JCP].push({ dtFG: j.dataCredito, vlrBrutoCents: bruto, ir: { baseCents: bruto, valorCents: ir }, origemIds: [j.id] });
       porCnpj.set(j.taxId, b);
       relatorio.push(linha('R-4020', 'CNPJ', j.taxId, NAT_JCP, j.dataCredito, j.brutoCents, bruto, j.irrfCents));
+      cpfDaLinha.push(null);
     }
   }
 
@@ -393,7 +404,23 @@ export function montarR4010(dividendos: readonly DividendoParaReinf[], jcps: rea
       ref: [...b.refs].sort().join(','),
       porNatureza: Object.fromEntries([...b.porNat.entries()].map(([nat, porDia]) => [nat, [...porDia.values()]])),
     }));
-  return { beneficiariosPF, beneficiariosPJ: [...porCnpj.values()], avisos, relatorio };
+  const soIsentos = new Set(beneficiariosPF.filter(r4010SoIsentos).map((b) => b.cpf));
+  const relatorioComPrazo = relatorio.map((l, i): LinhaRelatorio => (soIsentos.has(cpfDaLinha[i] ?? '') ? { ...l, trimestral: true } : l));
+  return { beneficiariosPF, beneficiariosPJ: [...porCnpj.values()], avisos, relatorio: relatorioComPrazo };
+}
+
+/**
+ * PR-3 (item 21; lacuna B, dono 28/10) — o R-4010 tem o prazo trimestral do § 3º do art. 6º da IN 2.043 ("lucros e dividendos,
+ * quando isentos de retenção") só quando TODA `infoPgto` é dividendo inteiramente isento pela isenção 12 (TRANSICAO), sem IR.
+ * Dividendo ≤ R$ 50 mil sem retenção fica no mensal até a P-REINF-6.
+ */
+export function r4010SoIsentos(b: BeneficiarioPF): boolean {
+  const nats = Object.keys(b.porNatureza);
+  return (
+    nats.length === 1 &&
+    nats[0] === NAT_DIVIDENDOS &&
+    b.porNatureza[NAT_DIVIDENDOS].every((p) => p.isencao?.tpIsencao === TP_ISENCAO_TRANSICAO && p.isencao.valorCents === p.vlrRendBrutoCents && !p.vlrIRCents && p.vlrRendTribCents === undefined)
+  );
 }
 
 /** Um R-4020 por CNPJ (invariante 6): o JCP a sócio PJ entra no evento do fornecedor de mesmo CNPJ, se houver. */
