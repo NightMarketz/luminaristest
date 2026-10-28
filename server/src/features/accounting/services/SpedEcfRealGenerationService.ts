@@ -588,6 +588,13 @@ export class SpedEcfRealGenerationService {
         }
       }
       return j;
+    }).catch(async (error: unknown) => {
+      // Lacuna 10 (D-2026-10-28-LACUNAS-EXECUTA-27-28): o arquivo já existe e o rollback desfez o
+      // EXPORTED — sem isto o job ficaria PROCESSING para sempre, com o artefato órfão. FAILED fora
+      // da tx que falhou; sem log aqui (OBS-R5: quem relança não registra, a borda registra).
+      await this.repo.updateJob(scope, job.id, { status: 'FAILED', supersedesJobId: null });
+      await storage.deleteFile(storageKey);
+      throw error;
     });
 
     endTimer({ success: true, jobId: job.id, kind: job.kind, unitId: scope.unitId });
