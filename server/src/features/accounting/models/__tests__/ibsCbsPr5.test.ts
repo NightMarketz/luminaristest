@@ -52,7 +52,8 @@ describe('item 21 — matriz OBRIGACAO_REGIME ganha IBS_CBS_APURACAO', () => {
   it('sem linha de 2026 (F-IBS-7 b) e vai no fim da ordem da matriz', () => {
     expect(status('REAL', '2026-12-31')).toBeUndefined();
     const real = resolverObrigacoes({ regime: 'REAL', inativa: false, condicoes }, matrizObrigacoesDe(todas, '2027-01-01'));
-    expect(real[real.length - 1].obrigacao).toBe('IBS_CBS_APURACAO');
+    // EFD-REINF PR-3 (item 20): REINF passou a ser a última; IBS_CBS_APURACAO vem logo antes.
+    expect(real[real.length - 2].obrigacao).toBe('IBS_CBS_APURACAO');
   });
 });
 

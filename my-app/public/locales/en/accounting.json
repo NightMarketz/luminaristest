@@ -3594,5 +3594,18 @@
         "KIT_NOT_INSTALLED": "The unit's kit is not installed; resume the installation before deciding."
       }
     }
+  },
+  "reinf": {
+    "avisos": {
+      "PF_SERVICO_FORA_DA_REINF": "{{quantidade}} individual service withholding(s) left out of Reinf: report them outside the system until dependents are registered.",
+      "DIVIDENDO_PJ_FORA_DA_REINF": "{{quantidade}} profit distribution(s) to a corporate partner left out of Reinf until the accountant answers.",
+      "NATUREZA_NAO_CONFERIDA": "{{quantidade}} income nature code(s) come from the withholding profile and have not been checked by the accountant yet.",
+      "DEFASADO_RETIFICAR": "{{quantidade}} event(s) from a previous batch have a reversed source: rectify them.",
+      "REABRIR_ANTES": "{{quantidade}} event(s) already transmitted: reopen the period before rectifying."
+    },
+    "erros": {
+      "NATUREZA_RENDIMENTO_SEM_MAPA": "A withholding has no published income nature code: check the supplier withholding profile.",
+      "REINF_SEM_CONTATO": "Set the accountant with a CPF in the fiscal profile: they are the R-1000 contact."
+    }
   }
 }

@@ -2020,6 +2020,8 @@ export class ApplicationFactory {
         legalParameterService,
         // PR-2 (E4): dividendos e JCP POSTED, só leitura pelas interfaces do IRRF-DISTRIBUICAO.
         { dividendos: this.repositories.profitDistribution, jcp: this.repositories.interestOnEquity, socios: this.repositories.partner },
+        // PR-3 (item 22): XML e relatório viram jobs EXPORT_REINF/EXPORT_REINF_RELATORIO no disco dos artefatos.
+        { jobs: this.repositories.dataExchange, salvar: attachmentStorage.saveFile },
       ),
       // BE-INCR-PIS-COFINS PR-2 (nó X8): prévia/confirmação da apuração mensal de PIS/Cofins (reusa o TaxAssessment do X7).
       pisCofinsAssessment: pisCofinsAssessmentService,

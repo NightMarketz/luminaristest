@@ -1,7 +1,8 @@
 import type { CompanyFiscalProfile, ReinfBatch } from 'generated/prisma';
 import { ForbiddenError, NotFoundError, ReinfNadaAGerarError, ValidationError } from '../../../lib/errors';
 import { isValidCnpj } from '../../../lib/cnpj';
-import { prazoReinfMensal } from '../../../lib/prazoReinf';
+import { createHash } from 'node:crypto';
+import { prazoReinfIsentos, prazoReinfMensal } from '../../../lib/prazoReinf';
 import {
   buildR1000,
   buildR2010,
@@ -34,20 +35,22 @@ import { matrizObrigacoesDe, resolverObrigacoes } from '../models/obrigacoesPorR
 import type { RegimeEmpresa } from '../models/regimeEmpresa';
 import {
   dividendoParaReinf,
+  AVISO_NATUREZA_NAO_CONFERIDA,
   jcpParaReinf,
   juntarBeneficiariosPJ,
   montarR2010,
   montarR4010,
   montarR4020,
+  r4010SoIsentos,
   totaisPorCodigo,
   type DividendoParaReinf,
   type JcpParaReinf,
-  type LinhaRelatorio,
 } from '../models/reinfLote';
 import type { IProfitDistributionRepository } from '../repositories/IProfitDistributionRepository';
 import type { IInterestOnEquityRepository } from '../repositories/IInterestOnEquityRepository';
 import type { IPartnerRepository } from '../repositories/IPartnerRepository';
-import type { ReinfBatchCreated, ReinfBatchEvento, ReinfBatchListQuery, ReinfBatchRequest, ReinfBatchView, ReinfRelatorio } from '../dtos/ReinfDto';
+import type { IDataExchangeRepository } from '../repositories/IDataExchangeRepository';
+import type { ReinfAviso, ReinfBatchCreated, ReinfBatchEvento, ReinfBatchListQuery, ReinfBatchRequest, ReinfBatchView, ReinfRelatorio } from '../dtos/ReinfDto';
 
 export const REINF_BATCH_GENERATED = 'tax.reinf_batch.generated';
 
@@ -62,6 +65,15 @@ export interface ReinfDistribuicoesLeitura {
   dividendos: Pick<IProfitDistributionRepository, 'listDaCompetencia'>;
   jcp: Pick<IInterestOnEquityRepository, 'listDaCompetencia' | 'findById'>;
   socios: Pick<IPartnerRepository, 'list'>;
+}
+
+/**
+ * PR-3 (item 22; lacuna A, dono 28/10) — onde o lote vira artefato do pacote do contador: 2 jobs de export (molde do
+ * `EXPORT_SPED_ECD`, criado pelo serviço dedicado) e o disco do `attachmentStorage` (a factory injeta o `saveFile`).
+ */
+export interface ReinfArtefatos {
+  jobs: Pick<IDataExchangeRepository, 'createJob' | 'updateJob'>;
+  salvar: (ownerUserId: string, unitId: string, jobId: string, fileName: string, buffer: Buffer) => Promise<{ storageKey: string }>;
 }
 
 /**
@@ -89,6 +101,7 @@ export class ReinfService {
     private readonly auditService: AuditService,
     private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
     private readonly distribuicoes: ReinfDistribuicoesLeitura,
+    private readonly artefatos: ReinfArtefatos,
     private readonly env: Readonly<Record<string, string | undefined>> = process.env,
     private readonly agora: () => Date = () => new Date(),
   ) {}
@@ -123,7 +136,7 @@ export class ReinfService {
     const r1000 = decidirR1000(contribuinte, competencia, anteriores);
     const temR4000 = beneficiariosPJ.length > 0 || mR4010.beneficiariosPF.length > 0;
     if (!temR4000 && mR2010.prestadores.length === 0 && !r1000) {
-      throw new ReinfNadaAGerarError(`Nada que esta versão gere em ${competencia}: ${avisos.join(' ')}`, 'REINF_SEM_EVENTO_GERAVEL');
+      throw new ReinfNadaAGerarError(`Nada que esta versão gere em ${competencia}: ${avisos.map((a) => `${a.codigo}: ${a.detalhe}`).join(' ')}`, 'REINF_SEM_EVENTO_GERAVEL');
     }
 
     const tpAmb = tpAmbReinf(this.env);
@@ -131,6 +144,9 @@ export class ReinfService {
     let seq = 0;
     const h = (): CabecalhoEvento => ({ tpAmb, verProc: VER_PROC, agora: agoraId, seq: ++seq });
     const estab = (perfil.declarante as { cnpj: string }).cnpj;
+    // Item 21 (lacuna B, dono 28/10): prazo por evento periódico; trimestral só no R-4010 inteiramente de isenção 12.
+    const prazo = prazoReinfMensal(competencia, tabelas);
+    const prazoIsentos = prazoReinfIsentos(competencia, tabelas);
     const eventos: { gerado: EventoGerado; registro: ReinfBatchEvento }[] = [];
     try {
       if (r1000) {
@@ -140,17 +156,17 @@ export class ReinfService {
       // Ordem do lote (item 10): R-1000 → periódicos (R-2010, R-4010, R-4020) → fechamentos (R-2099, R-4099).
       for (const p of mR2010.prestadores) {
         const g = buildR2010(h(), contribuinte, estab, p, competencia);
-        eventos.push({ gerado: g, registro: { tipo: g.tipo, idEvento: g.id, sha256: g.sha256, origemIds: p.nfs.flatMap((nf) => nf.origemIds), beneficiarioRef: p.ref } });
+        eventos.push({ gerado: g, registro: { tipo: g.tipo, idEvento: g.id, sha256: g.sha256, origemIds: p.nfs.flatMap((nf) => nf.origemIds), beneficiarioRef: p.ref, prazo } });
       }
       for (const b of mR4010.beneficiariosPF) {
         const g = buildR4010(h(), contribuinte, estab, b, competencia);
         const origemIds = Object.values(b.porNatureza).flatMap((ps) => ps.flatMap((p) => p.origemIds));
-        eventos.push({ gerado: g, registro: { tipo: g.tipo, idEvento: g.id, sha256: g.sha256, origemIds, beneficiarioRef: b.ref } });
+        eventos.push({ gerado: g, registro: { tipo: g.tipo, idEvento: g.id, sha256: g.sha256, origemIds, beneficiarioRef: b.ref, prazo: r4010SoIsentos(b) ? prazoIsentos : prazo } });
       }
       for (const b of beneficiariosPJ) {
         const g = buildR4020(h(), contribuinte, estab, b, competencia);
         const origemIds = Object.values(b.porNatureza).flatMap((ps) => ps.flatMap((p) => p.origemIds));
-        eventos.push({ gerado: g, registro: { tipo: g.tipo, idEvento: g.id, sha256: g.sha256, origemIds, beneficiarioRef: b.ref } });
+        eventos.push({ gerado: g, registro: { tipo: g.tipo, idEvento: g.id, sha256: g.sha256, origemIds, beneficiarioRef: b.ref, prazo } });
       }
       if (mR2010.prestadores.length > 0) {
         const g = buildR2099(h(), contribuinte, competencia, { servTomados: true }, this.respInf(contribuinte));
@@ -173,9 +189,20 @@ export class ReinfService {
     }
 
     const ativos = new Set([...linhas.map((l) => l.id), ...socios.dividendos.map((d) => d.id), ...socios.jcps.map((j) => j.id)]);
-    const prazo = prazoReinfMensal(competencia, tabelas);
     const linhasRelatorio = [...mR2010.relatorio, ...mR4010.relatorio.filter((r) => r.evento === 'R-4010'), ...montagem.relatorio, ...mR4010.relatorio.filter((r) => r.evento === 'R-4020')];
-    const relatorio = montarRelatorio(competencia, prazo, linhasRelatorio, avisos, marcacoes(anteriores.filter((a) => a.competencia === competencia), ativos));
+    const marc = marcacoes(anteriores.filter((a) => a.competencia === competencia), ativos);
+    const relatorio = montarRelatorio(
+      competencia,
+      prazoDoLote(eventos.map((e) => e.registro), prazo),
+      linhasRelatorio.map(({ trimestral, ...l }) => ({ ...l, prazoReinf: trimestral ? prazoIsentos : prazo })),
+      [...avisos, ...avisosDoPr3(montagem.linhasR4020, marc)],
+      marc,
+    );
+
+    // Item 22 (lacuna A, dono 28/10): o XML e o CSV viram 2 jobs de export ANTES do registro do lote (A1: o job nasce PROCESSING e
+    // só vira EXPORTED, na tx do lote, depois que o arquivo existe). Falha de disco ⇒ job FAILED e nenhum lote gravado.
+    const jobXml = await this.salvarArtefato(scope, 'EXPORT_REINF', `efd_reinf_${competencia}.xml`, 'application/xml', Buffer.from(lote.xml, 'utf8'), competencia, eventos.length);
+    const jobCsv = await this.salvarArtefato(scope, 'EXPORT_REINF_RELATORIO', `efd_reinf_${competencia}_relatorio.csv`, 'text/csv', Buffer.from(relatorio.csv, 'utf8'), competencia, relatorio.linhas.length);
 
     const row = await this.repo.runTransaction(async (tx) => {
       const criado = await this.repo.create(
@@ -191,10 +218,56 @@ export class ReinfService {
         targetId: criado.id,
         payload: { batchId: criado.id, competencia, sha256: lote.sha256, contagemPorTipo: JSON.stringify(contagem) },
       });
+      for (const j of [jobXml, jobCsv]) {
+        await this.artefatos.jobs.updateJob(scope, j.id, { storageKey: j.storageKey, status: 'EXPORTED' }, tx);
+        await this.auditService.append(tx, scope, {
+          actorUserId: scope.actorUserId,
+          eventType: 'data_exchange.export_generated',
+          targetType: 'data_exchange_job',
+          targetId: j.id,
+          payload: { jobId: j.id, kind: j.kind, direction: 'EXPORT', sha256: j.sha256, totalRows: String(j.linhas), validRows: String(j.linhas), invalidRows: '0' },
+        });
+      }
       return criado;
     });
 
-    return { batchId: row.id, sha256: lote.sha256, xml: lote.xml, relatorio };
+    return { batchId: row.id, sha256: lote.sha256, xml: lote.xml, relatorio, exportJobIds: { xml: jobXml.id, relatorio: jobCsv.id } };
+  }
+
+  /** Item 22 — cria o job PROCESSING e grava o arquivo; disco falhou ⇒ FAILED e o erro sobe (molde `DataExchangeExportService.export`). */
+  private async salvarArtefato(
+    scope: AccountingScope,
+    kind: 'EXPORT_REINF' | 'EXPORT_REINF_RELATORIO',
+    fileName: string,
+    mimeType: string,
+    buffer: Buffer,
+    competencia: string,
+    linhas: number,
+  ): Promise<{ id: string; kind: string; sha256: string; storageKey: string; linhas: number }> {
+    const sha256 = createHash('sha256').update(buffer).digest('hex');
+    const [ano, mes] = competencia.split('-').map(Number);
+    const job = await this.artefatos.jobs.createJob({
+      userId: scope.ownerUserId,
+      unitId: scope.unitId,
+      direction: 'EXPORT',
+      kind,
+      status: 'PROCESSING',
+      requestedById: scope.actorUserId,
+      periodStart: new Date(Date.UTC(ano, mes - 1, 1)),
+      periodEnd: new Date(Date.UTC(ano, mes, 0)),
+      originalName: fileName,
+      mimeType,
+      sizeBytes: buffer.length,
+      sha256,
+      totalRows: linhas,
+    });
+    try {
+      const { storageKey } = await this.artefatos.salvar(scope.ownerUserId, scope.unitId, job.id, fileName, buffer);
+      return { id: job.id, kind, sha256, storageKey, linhas };
+    } catch (e) {
+      await this.artefatos.jobs.updateJob(scope, job.id, { status: 'FAILED' });
+      throw e;
+    }
   }
 
   /** Itens 11 e 13 — GET /api/accounting/reinf/batches?competencia=, com `defasado` calculado na leitura. */
@@ -322,10 +395,36 @@ function marcacoes(anteriores: readonly ReinfBatch[], ativos: ReadonlySet<string
   );
 }
 
-/** Item 14 — relatório mínimo em JSON + CSV (`;`, beneficiário mascarado). */
-function montarRelatorio(competencia: string, prazo: string, linhas: LinhaRelatorio[], avisos: string[], marc: ReinfRelatorio['marcacoes']): ReinfRelatorio {
+/**
+ * Item 23 (lacunas C e D, dono 28/10) — os avisos que o PR-3 soma: natureza do perfil não conferida (P-REINF-2 aberta) em todo lote
+ * com R-4020 de retenção; evento de lote anterior a retificar e, antes, a reabrir (item 13, L4).
+ */
+function avisosDoPr3(linhasR4020: readonly { natRend: string | null }[], marc: ReinfRelatorio['marcacoes']): ReinfAviso[] {
+  const out: ReinfAviso[] = [];
+  const naturezas = [...new Set(linhasR4020.map((l) => l.natRend).filter((n): n is string => !!n))].sort();
+  if (naturezas.length > 0) {
+    out.push({
+      codigo: AVISO_NATUREZA_NAO_CONFERIDA,
+      quantidade: naturezas.length,
+      detalhe: `Natureza(s) do rendimento ${naturezas.join(', ')} vêm do perfil de retenção e ainda não foram conferidas pelo contador (P-REINF-2).`,
+    });
+  }
+  const retificar = marc.filter((m) => m.acao === 'RETIFICAR').length;
+  const reabrir = marc.filter((m) => m.acao === 'REABRIR_ANTES').length;
+  if (retificar > 0) out.push({ codigo: 'DEFASADO_RETIFICAR', quantidade: retificar, detalhe: `${retificar} evento(s) de lote anterior com origem estornada: retificar.` });
+  if (reabrir > 0) out.push({ codigo: 'REABRIR_ANTES', quantidade: reabrir, detalhe: `${reabrir} evento(s) já transmitido(s): reabrir o período antes de retificar (L4).` });
+  return out;
+}
+
+/** Item 21 (lacuna B, dono 28/10) — o prazo do lote é o mais cedo dos eventos periódicos; lote sem prazo gravado (PR-1/PR-2), o mensal. */
+function prazoDoLote(eventos: readonly ReinfBatchEvento[], mensal: string): string {
+  return eventos.map((e) => e.prazo).filter((p): p is string => !!p).sort()[0] ?? mensal;
+}
+
+/** Item 14 — relatório em JSON + CSV (`;`, beneficiário mascarado); PR-3: o prazo da Reinf por linha (item 21). */
+function montarRelatorio(competencia: string, prazo: string, linhas: ReinfRelatorio['linhas'], avisos: ReinfAviso[], marc: ReinfRelatorio['marcacoes']): ReinfRelatorio {
   const cab = 'evento;beneficiario;natRend;dtFG;tributo;brutoCents;baseCents;retidoCents;codigoReceita;vencimentoDarf;prazoReinf';
-  const csv = [cab, ...linhas.map((r) => [r.evento, r.beneficiario, r.natRend ?? '', r.dtFG, r.tributo, r.brutoCents, r.baseCents, r.retidoCents, r.codigoReceita ?? '', r.vencimentoDarf ?? '', prazo].join(';'))].join('\n');
+  const csv = [cab, ...linhas.map((r) => [r.evento, r.beneficiario, r.natRend ?? '', r.dtFG, r.tributo, r.brutoCents, r.baseCents, r.retidoCents, r.codigoReceita ?? '', r.vencimentoDarf ?? '', r.prazoReinf].join(';'))].join('\n');
   return { competencia, prazo, linhas, totaisPorCodigo: totaisPorCodigo(linhas), marcacoes: marc, avisos, csv };
 }
 
@@ -340,7 +439,7 @@ function toView(r: ReinfBatch, ativos: ReadonlySet<string>, prazo: string): Rein
     status: r.status as ReinfBatchView['status'],
     eventos,
     defasado: eventos.some((e) => e.origemIds.some((id) => !ativos.has(id))),
-    prazo,
+    prazo: prazoDoLote(eventos, prazo),
     geradoPorId: r.geradoPorId,
     createdAt: r.createdAt.toISOString(),
   };

@@ -18,6 +18,7 @@ sha256: string
 origemIds: string[]
 beneficiarioRef?: string
 conteudoSha256?: string
+prazo?: string
 }
 export interface ReinfBatchViewInput {
 id: string
@@ -32,6 +33,7 @@ sha256: string
 origemIds: string[]
 beneficiarioRef?: string
 conteudoSha256?: string
+prazo?: string
 }[]
 defasado: boolean
 prazo: string
@@ -49,6 +51,7 @@ baseCents: string
 retidoCents: string
 codigoReceita: (string | null)
 vencimentoDarf: (string | null)
+prazoReinf: string
 }
 export interface ReinfMarcacaoInput {
 batchId: string
@@ -70,6 +73,7 @@ baseCents: string
 retidoCents: string
 codigoReceita: (string | null)
 vencimentoDarf: (string | null)
+prazoReinf: string
 }[]
 totaisPorCodigo: {
 codigoReceita: (string | null)
@@ -81,7 +85,11 @@ idEvento: string
 tipo: string
 acao: ("RETIFICAR" | "REABRIR_ANTES")
 }[]
-avisos: string[]
+avisos: {
+codigo: ("PF_SERVICO_FORA_DA_REINF" | "DIVIDENDO_PJ_FORA_DA_REINF" | "NATUREZA_NAO_CONFERIDA" | "DEFASADO_RETIFICAR" | "REABRIR_ANTES")
+quantidade: number
+detalhe: string
+}[]
 csv: string
 }
 export interface ReinfBatchCreatedInput {
@@ -102,6 +110,7 @@ baseCents: string
 retidoCents: string
 codigoReceita: (string | null)
 vencimentoDarf: (string | null)
+prazoReinf: string
 }[]
 totaisPorCodigo: {
 codigoReceita: (string | null)
@@ -113,7 +122,20 @@ idEvento: string
 tipo: string
 acao: ("RETIFICAR" | "REABRIR_ANTES")
 }[]
-avisos: string[]
+avisos: {
+codigo: ("PF_SERVICO_FORA_DA_REINF" | "DIVIDENDO_PJ_FORA_DA_REINF" | "NATUREZA_NAO_CONFERIDA" | "DEFASADO_RETIFICAR" | "REABRIR_ANTES")
+quantidade: number
+detalhe: string
+}[]
 csv: string
 }
+exportJobIds: {
+xml: string
+relatorio: string
+}
+}
+export interface ReinfAvisoInput {
+codigo: ("PF_SERVICO_FORA_DA_REINF" | "DIVIDENDO_PJ_FORA_DA_REINF" | "NATUREZA_NAO_CONFERIDA" | "DEFASADO_RETIFICAR" | "REABRIR_ANTES")
+quantidade: number
+detalhe: string
 }
