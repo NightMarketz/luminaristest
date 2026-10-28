@@ -283,23 +283,72 @@ Pare no primeiro passo que divergir. Não execute os seguintes (regra do FALHOU)
    topo (`...data`) sem uma propriedade `data`. Sem campos, o seletor nunca aparece. O código do `SortSelect` é do baseline
    (`0db39612`), anterior ao #824.
 
+   **Continuação de 2026-10-28 (passos 7–10), com o fix do passo 7 no build (`faa50acf`): confere.** Comando do dono no
+   chat, 2026-10-28: "Sim, rodar 7–10". Pré-condições: front reconstruído (`NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:3031/api
+   npm run build` → `next build exit=0`), back e front reiniciados do mesmo commit; mesma cópia de banco da rodada
+   (`kro-rb.db`); `$ curl -s 127.0.0.1:3031/health → {"status":"degraded","uptime":5.4893047,"checks":{"database":"ok","qdrant":"error"}}`;
+   `frontend 200`. Ordenação escolhida: "name" (todos os cards são "Medium", então "priority" não mudaria a tela). Log
+   `p7-r2.log`; telas `p7-antes.png`, `p7-depois.png`.
+   ```
+   opções da ordenação: ["","name","date","order","priority","status"]
+   ordenação escolhida: name
+   antes:             IN PROGRESS: A fazer 5, Em andamento 1, Em andamento 2, Em andamento 3, Em andamento 4, Em andamento 5, Em andamento 6
+   arrasto: "Em andamento 6" → sobre "A fazer 5"
+   depois do arrasto: IN PROGRESS: A fazer 5, Em andamento 1, Em andamento 2, Em andamento 3, Em andamento 4, Em andamento 5, Em andamento 6
+   IGUAL antes×depois do arrasto: true
+   PUTs: 0
+   console.error: (nenhum)
+   ```
+
 8. Abra uma tabela Kanban **criada pelo usuário, sem campo `order`**. Se não existir nenhuma, marque N/A.
    Resultado esperado: aparece a dica "A ordem dos cards nesta tabela não é salva: arrastar só muda o card
    de coluna." Arrastar entre colunas funciona; dentro da coluna não reordena.
    EVIDÊNCIA: não executado na rodada de 27/10 (regra do FALHOU: o passo 6 divergiu).
    Rodada de 2026-10-28: não executado (regra do FALHOU: o passo 7 divergiu).
+   **Continuação de 2026-10-28: N/A** — nenhuma tabela da categoria `kanban` sem o campo `order`, em nenhum usuário.
+   Consulta ao banco da rodada (`python -I` + `sqlite3` sobre `kro-rb.db`), `p8-tabelas-kanban.txt`:
+   ```
+   tabelas category=kanban (todos os usuarios): 3
+     cmr2jy28w0062ci1kemqrt5vo Tasks tem order: True
+     cmuw4yqv50005cii0tz2vsvzr Tasks tem order: True
+     cmuw4z7xh02d3cii032xh9hcs Tasks tem order: True
+   sem campo order: 0
+   ```
 
 9. Lote 4 (#813): abra o detalhe de um card, troque o idioma para EN e confira os textos (Quick Actions,
    Archive, Detailed Information, Created at…). Feche com Esc ou clique fora.
    Resultado esperado: nenhum texto em PT na tela EN. O inspetor mostra `role="dialog"` no overlay.
    EVIDÊNCIA (screenshot EN + trecho do inspetor): não executado na rodada de 27/10 (regra do FALHOU: o passo 6 divergiu).
    Rodada de 2026-10-28: não executado (regra do FALHOU: o passo 7 divergiu).
+   **Continuação de 2026-10-28 — diverge do esperado: texto em PT na tela EN.** Idioma trocado para "English (US)" pelo
+   seletor do topo; detalhe de "Feito 1" aberto. Log `p9.log`; tela `p9-detalhe-en.png`.
+   ```
+   --- inspetor: abertura do overlay ---
+   <div role="dialog" aria-modal="true" class="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto p-4 sm:p-6 md:p-12 lg:p-20">
+   --- texto do diálogo (EN) ---
+   Feito 1 / In list Done / PRIORITY Medium / DESCRIPTION / Adicione uma descrição mais detalhada... /
+   DETAILED INFORMATION / ASSIGNEE Empty / DUE DATE 27/10/2026 / LEAD Empty / REMINDER AT Empty / QUICK ACTIONS Delete /
+   CREATED AT 28/10/2026
+   console.error: (nenhum)
+   ```
+   `role="dialog"` confere. **"Adicione uma descrição mais detalhada..." está em PT** com a tela em EN: é texto da própria
+   interface, fixo no código (`KanbanCardDetailModal.tsx:225` como placeholder e `:251` como texto do campo vazio), não um
+   valor do card (o card foi criado sem descrição). "Archive" não aparece em QUICK ACTIONS (só "Delete").
+   Fechar (log `p9-fechar.log`; telas `p9-apos-esc.png`, `p9-apos-clique-fora.png`):
+   ```
+   activeElement antes do Esc: DIV[role=button]
+   3 s após Esc, [role=dialog] presente: true
+   3 s após clique fora (20,980), [role=dialog] presente: false
+   ```
+   O Esc não fechou o diálogo; o clique fora fechou. O roteiro aceita "Esc ou clique fora", então a divergência que reprova
+   o passo é o texto em PT.
 
 10. Lote 4 (#813): numa tabela com coluna de relação (ex.: cliente), limpe o localStorage do site e abra
     a tabela.
     Resultado esperado: a coluna de relação aparece visível, e não oculta até alguém ligá-la à mão.
     EVIDÊNCIA: não executado na rodada de 27/10 (regra do FALHOU: o passo 6 divergiu).
     Rodada de 2026-10-28: não executado (regra do FALHOU: o passo 7 divergiu).
+    Continuação de 2026-10-28: não executado (regra do FALHOU: o passo 9 divergiu).
 
 ## Desfecho da rodada de 2026-10-24/25 (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
@@ -344,3 +393,17 @@ Pare no primeiro passo que divergir. Não execute os seguintes (regra do FALHOU)
   Passos 8 a 10 **não** foram executados (regra do FALHOU).
 - Atualização do artefato de rastreio: `docs/plano/nos/FE-INCR-KANBAN-REORDER.md` — fold no PR #961
 - Assinatura do executor: agente Claude Opus 5.5, persona revisor, sob comando do dono (chat, 2026-10-28) — não é assinatura humana
+
+## Desfecho da continuação de 2026-10-28, passos 7–10 (marcar UM)
+[ ] PASSOU — todos os passos com evidência conferindo com o esperado
+[x] FALHOU — passo 9 divergiu (texto em PT, "Adicione uma descrição mais detalhada...", no detalhe do card com a tela em EN);
+    evidência colada acima; o passo 7 (com o fix do #961) conferiu e o passo 8 é N/A; NENHUM passo seguinte (10) foi executado
+[ ] BLOQUEADO — pré-condição __ não se sustentava; execução nem começou
+
+## Registro da continuação de 2026-10-28
+- Achados no caminho (fora do escopo deste runbook): agente, 2026-10-28 — (1) a ordenação do Kanban oferece também `order`
+  (campo escondido do preset) e `date`; (2) no detalhe, DUE DATE mostra 27/10/2026 para um card criado com `date`
+  "2026-10-28" (dia anterior; mesma classe do date-only com UTC-shift); (3) o Esc não fecha o detalhe do card (o clique fora
+  fecha); (4) "Archive", citado no roteiro do passo 9, não existe em QUICK ACTIONS.
+- Atualização do artefato de rastreio: `docs/plano/nos/FE-INCR-KANBAN-REORDER.md` — fold no PR #961
+- Assinatura do executor: agente Claude Opus 5.5, persona revisor, sob comando do dono (chat, 2026-10-28: "Sim, rodar 7–10") — não é assinatura humana
