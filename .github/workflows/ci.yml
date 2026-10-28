@@ -13,12 +13,50 @@ on:
 permissions:
   contents: read
 
-# Cancel superseded runs on the same ref to save CI minutes.
+# Cancela a run superada só em PR. Na main, cancelar fazia duas pushes seguidas matarem a run da
+# primeira — e o commit dela ficava sem CI nenhuma. Na main a run nova espera a anterior terminar.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Todo job tem `timeout-minutes` (~2–3× a duração medida em 2026-10-28). Sem ele, o padrão do
+# GitHub é 360 min: um Jest pendurado queimava 6 h de runner antes de alguém perceber.
 
 jobs:
+  # PR que só mexe em Markdown não roda typecheck, testes, build nem docker. Exceção: a spec do
+  # gate C5 (`docs/architecture/lint-layer-gate.md`), lida pelo `debt-ledger-check`. Os testes leem
+  # `docs/accounting/fontes-oficiais/` (txt/pdf/xlsx/html), então a regra é por extensão, não por
+  # pasta. Push na main roda tudo. Os jobs baratos (governança, skills, zinc) rodam sempre.
+  changes:
+    name: Changes – só Markdown?
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.diff.outputs.code }}
+    steps:
+      # O checkout de PR é o merge commit; HEAD^1 é a base na hora do merge.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 2
+
+      - id: diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_EVENT_NAME}" != "pull_request" ]; then
+            echo "code=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          FILES=$(git diff --name-only HEAD^1 HEAD)
+          CODE=$(printf '%s\n' "${FILES}" | grep -vE '\.md$' || true)
+          SPEC=$(printf '%s\n' "${FILES}" | grep -xF 'docs/architecture/lint-layer-gate.md' || true)
+          printf '%s\n' "${FILES}"
+          if [ -z "${FILES}" ] || [ -n "${CODE}${SPEC}" ]; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Só Markdown — typecheck, testes, build e docker pulados."
+            echo "code=false" >> "$GITHUB_OUTPUT"
+          fi
+
   # O job do server era serial e levava ~40 min: unit (2,5) + integração (11) + o tripwire de
   # handles re-rodando TUDO com `--detectOpenHandles` (implica runInBand, 22–25). Agora: estático
   # num job, e a suíte roda UMA vez, já com o detector, fatiada em shards paralelos. O nome do
@@ -26,6 +64,9 @@ jobs:
   server-static:
     name: Server – typecheck & lint
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [changes]
+    if: needs.changes.outputs.code == 'true'
     defaults:
       run:
         working-directory: server
@@ -97,6 +138,9 @@ jobs:
   server-tests:
     name: Server – ${{ matrix.project }} tests (${{ matrix.shard }})
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [changes]
+    if: needs.changes.outputs.code == 'true'
     strategy:
       fail-fast: false
       # Integração em 4: com 3, o shard mais pesado levava 6 min contra ~3 dos outros
@@ -178,6 +222,7 @@ jobs:
   server-coverage:
     name: Server – coverage gate
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [server-tests]
     defaults:
       run:
@@ -200,21 +245,26 @@ jobs:
         run: node scripts/coverage-gate.js coverage-shards
 
   # Agregador: mantém o nome do required status check da branch protection. `always()` para
-  # reprovar (e não ficar "skipped" = pendente eterno) quando algum shard falha.
+  # reprovar (e não ficar "skipped" = pendente eterno) quando algum shard falha. "skipped" só
+  # passa quando o `changes` mandou pular (PR só de Markdown); fora disso continua reprovando.
   server:
     name: Server – typecheck & test
     runs-on: ubuntu-latest
-    needs: [server-static, server-tests, server-coverage]
+    timeout-minutes: 5
+    needs: [changes, server-static, server-tests, server-coverage]
     if: always()
     steps:
       - name: All server jobs passed
-        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || (contains(needs.*.result, 'skipped') && needs.changes.outputs.code != 'false') }}
         run: exit 1
       - run: echo "OK"
 
   frontend:
     name: Frontend – build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [changes]
+    if: needs.changes.outputs.code == 'true'
     defaults:
       run:
         working-directory: my-app
@@ -228,6 +278,17 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: my-app/package-lock.json
+
+      # Cache incremental do `next build`. Fica ANTES do `npm ci`: o hashFiles abaixo varreria o
+      # node_modules inteiro se ele já existisse. Chave pelos fontes; restore-keys recupera o último
+      # cache do mesmo lock quando só o código mudou (o Next revalida o que mudou).
+      - name: Restore Next.js build cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: my-app/.next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('my-app/package-lock.json') }}-${{ hashFiles('my-app/**/*.js', 'my-app/**/*.jsx', 'my-app/**/*.ts', 'my-app/**/*.tsx', 'my-app/**/*.css') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('my-app/package-lock.json') }}-
 
       - name: Install dependencies
         run: npm ci
@@ -280,6 +341,9 @@ jobs:
   docker-build:
     name: Docker – build ${{ matrix.image }} (advisory)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [changes]
+    if: needs.changes.outputs.code == 'true'
     continue-on-error: true
     strategy:
       fail-fast: false
@@ -312,6 +376,7 @@ jobs:
   skill-governance:
     name: Skill governance – skill-audit run --all
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
@@ -339,6 +404,7 @@ jobs:
   governance-presence:
     name: Governance – OPS-001 layer present
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       # `fetch-depth: 0` foi removido em 2026-08-09 junto com a bancada: o único passo que
       # precisava da história inteira era o `review-ledger-check.mjs`, que não existe mais.
@@ -367,6 +433,7 @@ jobs:
   zinc-guard:
     name: Design – no new zinc-
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
