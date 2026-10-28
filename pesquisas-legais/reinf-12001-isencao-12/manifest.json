@@ -1,0 +1,20 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "D01_Nota-20t-c3-a9cnica-20EFD-Reinf-202-2026-pdf",
+      "url": "http://sped.rfb.gov.br/estatico/20/CF34CCA6DFAE45E4E000EF345534FCA35D4C0A/Nota%20t%c3%a9cnica%20EFD-Reinf%202-2026.pdf",
+      "url_final": "http://sped.rfb.gov.br/estatico/20/CF34CCA6DFAE45E4E000EF345534FCA35D4C0A/Nota%20t%c3%a9cnica%20EFD-Reinf%202-2026.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-28T12:48:49-03:00",
+      "sha256": "5e39d987baa08ee86e1cc7969ae50242f13bbab475ccb23c1564b44aaedf694b",
+      "arquivo": "docs/D01_Nota-20t-c3-a9cnica-20EFD-Reinf-202-2026-pdf.pdf",
+      "texto": "docs/D01_Nota-20t-c3-a9cnica-20EFD-Reinf-202-2026-pdf.txt",
+      "bytes": 564684
+    }
+  ],
+  "buscas": [],
+  "slug": "reinf-12001-isencao-12",
+  "pergunta": "Quais tiposIsencao valem para a natureza de rendimento 12001 (Lucro e Dividendo) na EFD-Reinf e desde quando? A NT 02/2026 cria o tipo 12?",
+  "criado": "2026-10-28T12:48:48-03:00"
+}
