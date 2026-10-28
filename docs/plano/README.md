@@ -37,6 +37,8 @@ Citação antiga "master map §5.1" / "§M5.1" / "Bloco A" → [[_ANCORAS]] reso
 | `diferidos/` | domínios diferidos, cada um com ADR/incremento próprio |
 | `destino/` | a visão (SDD Parte I), uma nota por seção; divergências SDD × repo em [[18-caminho]] §18.4 |
 | [[DUVIDAS-INVENTARIO]] | ambiguidades das fontes que o vault **não** decidiu (X6 na régua, X10a/X11/X12, C9, Z0-a…) — esperam o dono |
+| `REVISAO-SEMANAL-<data>.md` | avaliação semanal do agente (números medidos, o que fechou, o que espera o dono, projeção de milestones **não ratificada**); a mais recente: [[REVISAO-SEMANAL-2026-10-26]]. Não muda estado nem ordem |
+| `artefatos/` | cópia versionada dos artefatos publicados (roadmap, painéis); o link publicado fica no PR que os gerou |
 
 ## Frontmatter
 

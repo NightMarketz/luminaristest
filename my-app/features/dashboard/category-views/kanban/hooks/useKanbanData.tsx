@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { IDynamicTable, ISchemaField } from '../../../components/shared/dynamic-tables.client';
 import { DynamicTableService } from '../../../../../lib/services/dynamic-table.service';
 import { Task } from '../../../../../types/Task.types';
@@ -21,11 +21,14 @@ export function useKanbanData(tables: IDynamicTable[]) {
     const [isLoading, setIsLoading] = useState(true);
     const [schemaMap, setSchemaMap] = useState<Record<string, unknown>>({});
     const [error, setError] = useState<string | null>(null);
+    // Emenda 1 (F-KRO-1/2): a última busca falhou? Ref para o listener `online` não re-registrar
+    const lastFetchFailed = useRef(false);
 
     const fetchData = useCallback(async () => {
         if (kanbanTables.length === 0) {
             setIsLoading(false);
             setAggregatedData([]);
+            lastFetchFailed.current = false;
             return;
         }
 
@@ -90,9 +93,11 @@ export function useKanbanData(tables: IDynamicTable[]) {
             // Tabela que falhou mantém os cards já carregados (refetch offline não esvazia o quadro)
             setAggregatedData(prev => [...results, ...prev.filter(t => typeof t.dynamicTableId === 'string' && failedTableIds.has(t.dynamicTableId))]);
             setSchemaMap(newSchemaMap);
+            lastFetchFailed.current = failedTableIds.size > 0;
         } catch (err) {
             console.error('Error fetching kanban data:', err);
             setError('Failed to load tasks');
+            lastFetchFailed.current = true;
         } finally {
             setIsLoading(false);
         }
@@ -100,6 +105,13 @@ export function useKanbanData(tables: IDynamicTable[]) {
 
     useEffect(() => {
         fetchData();
+    }, [fetchData]);
+
+    // Emenda 1 (F-KRO-3 = só o `online`): a rede voltou e a última busca falhou → busca de novo
+    useEffect(() => {
+        const onOnline = () => { if (lastFetchFailed.current) void fetchData(); };
+        window.addEventListener('online', onOnline);
+        return () => window.removeEventListener('online', onOnline);
     }, [fetchData]);
 
     return {

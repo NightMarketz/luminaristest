@@ -1,0 +1,62 @@
+# node kro.mjs p4 | tail -60  — o comando cortou o topo da saída (bloco "antes" e o quadro offline);
+# esses dois estados estão nos prints p4-antes.png e p4-offline-rollback.png. Abaixo, as 60 linhas finais, literais.
+200       PUT /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data/cmvreesjw001fcidckp50dbxe {"data":{"order":1000}}
+204       OPTIONS /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data/cmvreeshq000vcidctnj7z4vq
+200       PUT /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data/cmvreeshq000vcidctnj7z4vq {"data":{"order":2000}}
+204       OPTIONS /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data/cmvreesi7000zcidcye9yxkga
+OFFLINE   (setOfflineMode(true) antes do PUT nº 3)
+ABORTADO  PUT /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data/cmvreesi7000zcidcye9yxkga {"data":{"order":3000}}
+FALHOU    GET /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo (net::ERR_INTERNET_DISCONNECTED)
+FALHOU    GET /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data (net::ERR_INTERNET_DISCONNECTED)
+FALHOU    GET /api/dynamic-tables/cmr2jy28v0060ci1khsbgosq9/data (net::ERR_INTERNET_DISCONNECTED)
+FALHOU    GET /api/dynamic-tables/cmr2jy28y006aci1kne72l79r/data (net::ERR_INTERNET_DISCONNECTED)
+ONLINE    (setOfflineMode(false) — dispara o evento online)
+navigator.onLine = true
+rede de volta, antes do F5:
+Categories: (vazia)
+TO DO: A fazer 1, A fazer 2, A fazer 3, A fazer 4, A fazer 5, A fazer 6
+IN PROGRESS: Em andamento 2, Em andamento 3, Em andamento 4, Em andamento 5, Em andamento 6, Em andamento 1
+IN REVIEW: (vazia)
+DONE: Feito 1, Feito 2, Feito 3
+[print] docs/runbooks/evidencia-kanban-reorder-2026-10-27/p4-antes-f5.png
+--- Network (evento online) ---
+204       OPTIONS /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo
+204       OPTIONS /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data
+304       GET /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo
+200       GET /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data
+204       OPTIONS /api/dynamic-tables/cmr2jy28v0060ci1khsbgosq9/data
+204       OPTIONS /api/dynamic-tables/cmr2jy28y006aci1kne72l79r/data
+200       GET /api/dynamic-tables/cmr2jy28v0060ci1khsbgosq9/data
+200       GET /api/dynamic-tables/cmr2jy28y006aci1kne72l79r/data
+depois do F5:
+Categories: (vazia)
+TO DO: A fazer 1, A fazer 2, A fazer 3, A fazer 4, A fazer 5, A fazer 6
+IN PROGRESS: Em andamento 2, Em andamento 3, Em andamento 4, Em andamento 5, Em andamento 6, Em andamento 1
+IN REVIEW: (vazia)
+DONE: Feito 1, Feito 2, Feito 3
+[print] docs/runbooks/evidencia-kanban-reorder-2026-10-27/p4-depois-f5.png
+IGUAL antes×depois do F5: true
+--- Network (F5) ---
+204       OPTIONS /api/dynamic-tables
+304       GET /api/dynamic-tables
+304       GET /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo
+200       GET /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data
+304       GET /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo
+200       GET /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data
+200       GET /api/dynamic-tables/cmr2jy28v0060ci1khsbgosq9/data
+200       GET /api/dynamic-tables/cmr2jy28y006aci1kne72l79r/data
+200       GET /api/dynamic-tables/cmr2jy28v0060ci1khsbgosq9/data
+200       GET /api/dynamic-tables/cmr2jy28y006aci1kne72l79r/data
+--- console.error ---
+Failed to load resource: the server responded with a status of 404 (Not Found)
+Failed to load resource: the server responded with a status of 400 (Bad Request)
+Failed to load resource: the server responded with a status of 400 (Bad Request)
+Failed to load resource: the server responded with a status of 400 (Bad Request)
+Failed to load resource: net::ERR_INTERNET_DISCONNECTED
+TypeError: Failed to fetch
+Failed to load resource: net::ERR_INTERNET_DISCONNECTED
+Failed to load resource: net::ERR_INTERNET_DISCONNECTED
+Failed to fetch data for table Tasks
+Failed to load resource: net::ERR_INTERNET_DISCONNECTED
+Failed to load resource: net::ERR_INTERNET_DISCONNECTED
+Failed to load resource: the server responded with a status of 400 (Bad Request)

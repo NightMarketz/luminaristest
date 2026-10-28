@@ -1,0 +1,44 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "D01_ITG2000-R1-pdf",
+      "url": "https://www1.cfc.org.br/sisweb/SRE/docs/ITG2000(R1).pdf",
+      "url_final": "https://www1.cfc.org.br/sisweb/SRE/docs/ITG2000(R1).pdf",
+      "orgao": "Conselho Federal de Contabilidade (SRE: resoluções e NBC)",
+      "baixado_em": "2026-10-26T16:19:32-03:00",
+      "sha256": "6b4355f83fb74d084248893d4dc3ce78258a624a151dabcaebb801d9a63042e5",
+      "arquivo": "docs/D01_ITG2000-R1-pdf.pdf",
+      "texto": "docs/D01_ITG2000-R1-pdf.txt",
+      "bytes": 212395
+    },
+    {
+      "id": "D02",
+      "titulo": "D02_RES_1590-pdf",
+      "url": "https://www1.cfc.org.br/sisweb/SRE/docs/RES_1590.pdf",
+      "url_final": "https://www1.cfc.org.br/sisweb/SRE/docs/RES_1590.pdf",
+      "orgao": "Conselho Federal de Contabilidade (SRE: resoluções e NBC)",
+      "baixado_em": "2026-10-26T16:19:32-03:00",
+      "sha256": "ecaa931e840406874d1ea3541d83bc360fbdbcda91a512e589a55d7cffae8491",
+      "arquivo": "docs/D02_RES_1590-pdf.pdf",
+      "texto": "docs/D02_RES_1590-pdf.txt",
+      "bytes": 443394
+    },
+    {
+      "id": "D03",
+      "titulo": "D03_NBCPG01-pdf",
+      "url": "https://www1.cfc.org.br/sisweb/SRE/docs/NBCPG01.pdf",
+      "url_final": "https://www1.cfc.org.br/sisweb/SRE/docs/NBCPG01.pdf",
+      "orgao": "Conselho Federal de Contabilidade (SRE: resoluções e NBC)",
+      "baixado_em": "2026-10-26T16:19:32-03:00",
+      "sha256": "cb3ca0a1aca81329157bed471e159a66aaae2dbfe65e18c894cd6db590ef0f6b",
+      "arquivo": "docs/D03_NBCPG01-pdf.pdf",
+      "texto": "docs/D03_NBCPG01-pdf.txt",
+      "bytes": 128917
+    }
+  ],
+  "buscas": [],
+  "slug": "triagem-parecer-ia-crc-sp",
+  "pergunta": "Parecer colado (IA) sobre F-GOV-1 v2: as citações conferem e o que muda no desenho?",
+  "criado": "2026-10-26T16:19:31-03:00"
+}

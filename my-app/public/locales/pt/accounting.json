@@ -2984,7 +2984,11 @@
       "RBT12_INCOMPLETO": "RBT12 incompleto",
       "SEGREGACAO_MANUAL": "Segregação manual",
       "SUBLIMITE_ICMS_ISS": "Sublimite do ICMS/ISS",
-      "TIEOUT_DIVERGENTE": "Subrazão × razão divergentes"
+      "TIEOUT_DIVERGENTE": "Subrazão × razão divergentes",
+      "SEM_NCM": "Revenda sem NCM no perfil do produto",
+      "SEGREGACAO_DIVERGE": "Segregação manual diverge da NCM",
+      "SEGREGACAO_INDEVIDA": "Segregação monofásica sem NCM que a sustente",
+      "ICMS_ST_NAO_CONFERIDA": "ICMS-ST não conferido para a NCM"
     },
     "alertas": {
       "title": "Alertas"

@@ -2984,7 +2984,11 @@
       "RBT12_INCOMPLETO": "Incomplete RBT12",
       "SEGREGACAO_MANUAL": "Manual segregation",
       "SUBLIMITE_ICMS_ISS": "ICMS/ISS sublimit",
-      "TIEOUT_DIVERGENTE": "Subledger × ledger divergent"
+      "TIEOUT_DIVERGENTE": "Subledger × ledger divergent",
+      "SEM_NCM": "Resale without NCM on the product profile",
+      "SEGREGACAO_DIVERGE": "Manual segregation differs from the NCM",
+      "SEGREGACAO_INDEVIDA": "Single-phase segregation not backed by the NCM",
+      "ICMS_ST_NAO_CONFERIDA": "ICMS-ST not verified for the NCM"
     },
     "alertas": {
       "title": "Alerts"

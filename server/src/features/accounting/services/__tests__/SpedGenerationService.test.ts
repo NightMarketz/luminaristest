@@ -15,6 +15,7 @@ jest.mock('../../../../lib/attachmentStorage', () => ({
     return { storageKey: 'u/unit/job/ecd.txt', sanitizedName: 'ecd.txt' };
   }),
   resolveReadPath: jest.fn((k: string) => `/abs/${k}`),
+  deleteFile: jest.fn(async () => undefined),
 }));
 import * as storage from '../../../../lib/attachmentStorage';
 import { legalParamsSemente } from '@test/helpers/legalParams';
@@ -319,6 +320,47 @@ describe('SpedGenerationService.generate', () => {
     const i200 = lines.find((l) => l.startsWith('|I200|'))!.slice(1, -1).split('|');
     expect(i200[2]).toBe('15012026'); // DT_LCTO literal slice
     expect(i200[3]).toBe('500,00'); // VL_LCTO
+  });
+
+  // GUARD (lacuna 10, cédula D-2026-10-28-LACUNAS-EXECUTA-27-28): o arquivo já foi gravado e a
+  // tx do EXPORTED falha (aqui, a auditoria dentro dela). O rollback desfaz o EXPORTED, e nada
+  // fora da tx volta o job: ele fica PROCESSING para sempre, com o artefato órfão no disco.
+  // Esperado: FAILED gravado FORA da tx que falhou, o arquivo apagado, e o erro relançado.
+  it('keeps compensating and rethrows the ORIGINAL tx error when updateJob(FAILED) itself fails (lacuna 10)', async () => {
+    const { service, updateJob, append } = buildService();
+    append.mockRejectedValueOnce(new Error('audit insert failed'));
+    const passThrough = updateJob.getMockImplementation()!;
+    updateJob.mockImplementation(async (...args: Parameters<typeof passThrough>) => {
+      if ((args as unknown[])[3] === undefined && (args[2] as { status?: string }).status === 'FAILED') {
+        throw new Error('db down');
+      }
+      return passThrough(...args);
+    });
+    const errorSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
+
+    await expect(service.generate(scope, makeDto())).rejects.toThrow('audit insert failed');
+
+    expect(storage.deleteFile).toHaveBeenCalledWith('u/unit/job/ecd.txt');
+    expect(errorSpy).toHaveBeenCalledWith(
+      'export: falha ao marcar FAILED depois da tx — job fica PROCESSING',
+      expect.objectContaining({ jobId: 'job-1', error: expect.objectContaining({ message: 'db down' }) }),
+    );
+    errorSpy.mockRestore();
+  });
+
+  it('does not leave the job PROCESSING when the EXPORTED tx fails after the file was written (lacuna 10)', async () => {
+    const { service, updateJob, append } = buildService();
+    append.mockRejectedValueOnce(new Error('audit insert failed'));
+
+    await expect(service.generate(scope, makeDto())).rejects.toThrow('audit insert failed');
+
+    const outOfTx = updateJob.mock.calls
+      .filter((c) => (c as unknown[])[3] === undefined)
+      .map((c) => c[2] as { status?: string; supersedesJobId?: string | null });
+    const lastOutOfTx = outOfTx[outOfTx.length - 1];
+    expect(lastOutOfTx?.status).toBe('FAILED');
+    expect(lastOutOfTx).toEqual(expect.objectContaining({ supersedesJobId: null }));
+    expect(storage.deleteFile).toHaveBeenCalledWith('u/unit/job/ecd.txt');
   });
 
   // GUARD (A1, triagem 2026-08-20 ratificada): o job NÃO pode nascer 'EXPORTED'. O sucesso é

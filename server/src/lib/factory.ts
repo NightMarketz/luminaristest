@@ -139,6 +139,7 @@ import { SourceDocumentUploadService } from '../features/accounting/services/Sou
 import { DocumentAttachmentService } from '../features/accounting/services/DocumentAttachmentService';
 import { DataExchangeExportService } from '../features/accounting/services/DataExchangeExportService';
 import { ReceiptService } from '../features/accounting/services/ReceiptService';
+import { DanfeService } from '../features/accounting/services/DanfeService';
 import { DataExchangeImportService } from '../features/accounting/services/DataExchangeImportService';
 import { SpedGenerationService } from '../features/accounting/services/SpedGenerationService';
 import { SpedEcfGenerationService } from '../features/accounting/services/SpedEcfGenerationService';
@@ -266,6 +267,10 @@ import type { TenantAccount } from '../features/sectorKits/services/classifyKitD
 import prismaClient from './prisma';
 import { SalesCancellationService } from '../features/sales/services/SalesCancellationService';
 import { RegisterPaymentService } from '../features/sales/services/RegisterPaymentService';
+import { SaleFiscalGuardService } from '../features/sales/services/SaleFiscalGuardService'; // EFICIENCIA-FISCAL PR-1
+import { TaxOptimizationService } from '../features/accounting/services/TaxOptimizationService'; // EFICIENCIA-FISCAL PR-1
+import { TaxOptimizationRepository } from '../features/accounting/repositories/TaxOptimizationRepository'; // EFICIENCIA-FISCAL PR-1
+import type { ITaxOptimizationRepository } from '../features/accounting/repositories/ITaxOptimizationRepository';
 import { PresetSyncService } from '../features/dynamicTables/services/PresetSyncService';
 import { ModuleInstallService } from '../features/dynamicTables/services/ModuleInstallService';
 import { AttachmentService } from '../features/attachments/services/AttachmentService';
@@ -826,6 +831,7 @@ export class ApplicationFactory {
     serviceFiscalProfile: IServiceFiscalProfileRepository;
     productFiscalProfile: IProductFiscalProfileRepository; // BE-INCR-NFCE item 10
     issBeneficioMunicipal: IIssBeneficioMunicipalRepository; // SIMPLES-PISO-ANEXO-XI bloco 1
+    taxOptimization: ITaxOptimizationRepository; // EFICIENCIA-FISCAL PR-1
     productDestinationDefault: IProductDestinationDefaultRepository; // ITEM-DESTINATION PR-2
     companyFiscalProfile: ICompanyFiscalProfileRepository; // X13
     companySigner: ICompanySignerRepository; // X13
@@ -897,6 +903,7 @@ export class ApplicationFactory {
     crmAnalytics: CrmAnalyticsService;
     salesCancellation: SalesCancellationService;
     registerPayment: RegisterPaymentService;
+    saleFiscalGuard: SaleFiscalGuardService; // EFICIENCIA-FISCAL PR-1
     posting: PostingService;
     audit: AuditService;
     entryApproval: EntryApprovalService;
@@ -917,6 +924,7 @@ export class ApplicationFactory {
     dataExchangeExport: DataExchangeExportService;
     dataExchangeImport: DataExchangeImportService;
     receipt: ReceiptService;
+    danfe: DanfeService; // NFE-DANFE-IBSCBS PR-3 (item 20)
     sped: SpedGenerationService;
     spedEcf: SpedEcfGenerationService;
     spedEcfReal: SpedEcfRealGenerationService;
@@ -937,6 +945,7 @@ export class ApplicationFactory {
     serviceFiscalProfile: ServiceFiscalProfileService;
     productFiscalProfile: ProductFiscalProfileService; // BE-INCR-NFCE item 10
     issBeneficioMunicipal: IssBeneficioMunicipalService; // SIMPLES-PISO-ANEXO-XI bloco 1
+    taxOptimization: TaxOptimizationService; // EFICIENCIA-FISCAL PR-1
     productDestination: ProductDestinationService; // ITEM-DESTINATION PR-2
     companyFiscalProfile: CompanyFiscalProfileService; // X13
     companySigner: CompanySignerService; // X13
@@ -1048,6 +1057,7 @@ export class ApplicationFactory {
       serviceFiscalProfile: new ServiceFiscalProfileRepository(),
       productFiscalProfile: new ProductFiscalProfileRepository(),
       issBeneficioMunicipal: new IssBeneficioMunicipalRepository(),
+      taxOptimization: new TaxOptimizationRepository(), // EFICIENCIA-FISCAL PR-1
       productDestinationDefault: new ProductDestinationDefaultRepository(),
       companyFiscalProfile: new CompanyFiscalProfileRepository(),
       companySigner: new CompanySignerRepository(),
@@ -1277,6 +1287,9 @@ export class ApplicationFactory {
       this.repositories.account,
       this.repositories.posting,
       this.policies.accounting,
+      this.repositories.productFiscalProfile, // EFICIENCIA-FISCAL PR-2 (item 13): NCM do produto
+      this.repositories.fiscalProfile, // UF da unidade (codMun)
+      legalParameterService, // fotografia PIS_COFINS_MONOFASICO_NCM + ICMS_ST_NCM_UF
     );
     // PRESUMIDO-TETO-78MI item 8 (F-PT-1 c): teto do Presumido — só leitura; consumido pela apuração e pelo perfil da empresa.
     const presumidoTetoService = new PresumidoTetoService(
@@ -1480,6 +1493,21 @@ export class ApplicationFactory {
       this.policies.accounting,
       auditService,
     );
+    // EFICIENCIA-FISCAL PR-1 (itens 5–8): política/sugestões e a guarda fiscal da venda — a NFS-e a chama como
+    // pré-condição (item 6), por isso nascem antes da montagem da DPS.
+    const taxOptimizationService = new TaxOptimizationService(
+      this.repositories.taxOptimization,
+      this.repositories.accountantAssignment,
+      this.policies.accounting,
+      auditService,
+    );
+    const saleFiscalGuardService = new SaleFiscalGuardService(
+      dynamicTableService,
+      this.repositories.dynamicTable,
+      dynamicTableWriteEffects,
+      this.repositories.inventory,
+      taxOptimizationService,
+    );
     // BE-INCR-DFE (nó X10b, PR-2): porta+adaptadores e montagem/envio da DPS (Fase B+C).
     const fiscalDocumentEmissionService = new FiscalDocumentEmissionService(
       this.repositories.fiscalDocument,
@@ -1491,6 +1519,7 @@ export class ApplicationFactory {
       auditService,
       legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia LC116_SERVICO
       productFiscalProfileService, // BE-INCR-NFCE PR-3: perfis dos produtos na montagem da NF-e/NFC-e
+      saleFiscalGuardService, // EFICIENCIA-FISCAL PR-1 item 6: guarda fiscal como pré-condição da emissão
     );
     // Extraído como const própria (não só inline no literal abaixo) porque
     // FiscalDocumentLifecycleService (PR-3) também a injeta (item 25 — anexa XML/PDF).
@@ -1637,6 +1666,7 @@ export class ApplicationFactory {
       serviceFiscalProfile: serviceFiscalProfileService,
       productFiscalProfile: productFiscalProfileService,
       issBeneficioMunicipal: new IssBeneficioMunicipalService(this.repositories.issBeneficioMunicipal, this.policies.accounting, auditService),
+      taxOptimization: taxOptimizationService, // EFICIENCIA-FISCAL PR-1
       // ITEM-DESTINATION PR-2 (item 17, F-ID-2 a): destinação padrão por produto — a mesma porta de existência
       // de produto do LAC-E (reuso), sob a policy fiscal.
       productDestination: new ProductDestinationService(
@@ -1648,7 +1678,13 @@ export class ApplicationFactory {
       // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13, PR-1): perfil da EMPRESA por ano + signatários não-contador.
       companyFiscalProfile: companyFiscalProfileService,
       companySigner: new CompanySignerService(this.repositories.companySigner, this.policies.accounting, auditService),
-      partner: new PartnerService(this.repositories.partner, this.policies.accounting, auditService), // IRRF-DISTRIBUICAO PR-1
+      partner: new PartnerService( // IRRF-DISTRIBUICAO PR-1; D-2026-10-28 item 1 (409 com distribuição)
+        this.repositories.partner,
+        this.policies.accounting,
+        auditService,
+        this.repositories.profitDistribution,
+        this.repositories.interestOnEquity,
+      ),
       // RETENCOES-FONTE PR-1 (item 6): perfil de retenção; fotografia NATUREZA_RENDIMENTO e a leitura dos rascunhos dela.
       withholdingProfile: new WithholdingProfileService(
         this.repositories.withholdingProfile,
@@ -1738,6 +1774,7 @@ export class ApplicationFactory {
       crmAnalytics: crmAnalyticsService,
       salesCancellation: salesCancellationService,
       registerPayment: registerPaymentService,
+      saleFiscalGuard: saleFiscalGuardService, // EFICIENCIA-FISCAL PR-1
       posting: postingService,
       audit: auditService,
       entryApproval: entryApprovalService,
@@ -1804,6 +1841,12 @@ export class ApplicationFactory {
         this.repositories.journalEntry,
         this.repositories.account,
         this.policies.accounting,
+      ),
+      danfe: new DanfeService(
+        this.repositories.fiscalDocument,
+        this.repositories.documentAttachment,
+        this.policies.accounting,
+        legalParameterService,
       ),
       sped: new SpedGenerationService(
         this.repositories.account,
@@ -1971,6 +2014,7 @@ export class ApplicationFactory {
         this.repositories.issBeneficioMunicipal, // SIMPLES-PISO-ANEXO-XI bloco 1: benefício municipal de ISS
         sourceDocumentUploadService, // BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-9 a: o PDF do DAS na visão
         this.repositories.receitaFiscalRecebimento, // X14-CAIXA PR-2 item 8: recebimentos, base do caixa
+        this.repositories.productFiscalProfile, // EFICIENCIA-FISCAL PR-2 item 13: avisos SEM_NCM e ICMS_ST_NAO_CONFERIDA
       ),
       // BE-INCR-SIMPLES-NACIONAL PR-4 (nó X14, itens 27–28): espelhos DASN-SIMEI e DEFIS.
       simplesDeclaracao: new SimplesDeclaracaoService(
@@ -2415,6 +2459,7 @@ export class ApplicationFactory {
   public getCrmAnalyticsService = (): CrmAnalyticsService => this.services.crmAnalytics;
   public getSalesCancellationService = (): SalesCancellationService => this.services.salesCancellation;
   public getRegisterPaymentService = (): RegisterPaymentService => this.services.registerPayment;
+  public getSaleFiscalGuardService = (): SaleFiscalGuardService => this.services.saleFiscalGuard;
   public getPostingService = (): PostingService => this.services.posting;
   public getAuditService = (): AuditService => this.services.audit;
   public getEntryApprovalService = (): EntryApprovalService => this.services.entryApproval;
@@ -2435,6 +2480,7 @@ export class ApplicationFactory {
   public getDataExchangeExportService = (): DataExchangeExportService => this.services.dataExchangeExport;
   public getDataExchangeImportService = (): DataExchangeImportService => this.services.dataExchangeImport;
   public getReceiptService = (): ReceiptService => this.services.receipt;
+  public getDanfeService = (): DanfeService => this.services.danfe;
   public getSpedGenerationService = (): SpedGenerationService => this.services.sped;
   public getSpedEcfGenerationService = (): SpedEcfGenerationService => this.services.spedEcf;
   public getSpedEcfRealGenerationService = (): SpedEcfRealGenerationService => this.services.spedEcfReal;
@@ -2482,6 +2528,7 @@ export class ApplicationFactory {
   public getServiceFiscalProfileService = (): ServiceFiscalProfileService => this.services.serviceFiscalProfile;
   public getProductFiscalProfileService = (): ProductFiscalProfileService => this.services.productFiscalProfile;
   public getIssBeneficioMunicipalService = (): IssBeneficioMunicipalService => this.services.issBeneficioMunicipal;
+  public getTaxOptimizationService = (): TaxOptimizationService => this.services.taxOptimization;
   public getProductDestinationService = (): ProductDestinationService => this.services.productDestination;
   public getCompanyFiscalProfileService = (): CompanyFiscalProfileService => this.services.companyFiscalProfile;
   public getCompanySignerService = (): CompanySignerService => this.services.companySigner;

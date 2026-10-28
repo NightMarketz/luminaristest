@@ -8,12 +8,55 @@ on:
     branches: [main]
   pull_request:
 
-# Cancel superseded runs on the same ref to save CI minutes.
+# Token só de leitura: nenhum job escreve no repo (artifact e cache usam o token de runtime, não o
+# GITHUB_TOKEN). Sem este bloco, a permissão vem do padrão do repositório, que pode ser escrita.
+permissions:
+  contents: read
+
+# Cancela a run superada só em PR. Na main, cancelar fazia duas pushes seguidas matarem a run da
+# primeira — e o commit dela ficava sem CI nenhuma. Na main a run nova espera a anterior terminar.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Todo job tem `timeout-minutes` (~2–3× a duração medida em 2026-10-28). Sem ele, o padrão do
+# GitHub é 360 min: um Jest pendurado queimava 6 h de runner antes de alguém perceber.
 
 jobs:
+  # PR que só mexe em Markdown não roda typecheck, testes, build nem docker. Exceção: a spec do
+  # gate C5 (`docs/architecture/lint-layer-gate.md`), lida pelo `debt-ledger-check`. Os testes leem
+  # `docs/accounting/fontes-oficiais/` (txt/pdf/xlsx/html), então a regra é por extensão, não por
+  # pasta. Push na main roda tudo. Os jobs baratos (governança, skills, zinc) rodam sempre.
+  changes:
+    name: Changes – só Markdown?
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.diff.outputs.code }}
+    steps:
+      # O checkout de PR é o merge commit; HEAD^1 é a base na hora do merge.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 2
+
+      - id: diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_EVENT_NAME}" != "pull_request" ]; then
+            echo "code=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          FILES=$(git diff --name-only HEAD^1 HEAD)
+          CODE=$(printf '%s\n' "${FILES}" | grep -vE '\.md$' || true)
+          SPEC=$(printf '%s\n' "${FILES}" | grep -xF 'docs/architecture/lint-layer-gate.md' || true)
+          printf '%s\n' "${FILES}"
+          if [ -z "${FILES}" ] || [ -n "${CODE}${SPEC}" ]; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Só Markdown — typecheck, testes, build e docker pulados."
+            echo "code=false" >> "$GITHUB_OUTPUT"
+          fi
+
   # O job do server era serial e levava ~40 min: unit (2,5) + integração (11) + o tripwire de
   # handles re-rodando TUDO com `--detectOpenHandles` (implica runInBand, 22–25). Agora: estático
   # num job, e a suíte roda UMA vez, já com o detector, fatiada em shards paralelos. O nome do
@@ -21,6 +64,9 @@ jobs:
   server-static:
     name: Server – typecheck & lint
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [changes]
+    if: needs.changes.outputs.code == 'true'
     defaults:
       run:
         working-directory: server
@@ -30,12 +76,12 @@ jobs:
       DATABASE_URL: file:./ci.db
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: server/package-lock.json
 
@@ -92,6 +138,9 @@ jobs:
   server-tests:
     name: Server – ${{ matrix.project }} tests (${{ matrix.shard }})
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [changes]
+    if: needs.changes.outputs.code == 'true'
     strategy:
       fail-fast: false
       # Integração em 4: com 3, o shard mais pesado levava 6 min contra ~3 dos outros
@@ -114,12 +163,12 @@ jobs:
       DATABASE_URL: file:./ci.db
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: server/package-lock.json
 
@@ -134,7 +183,7 @@ jobs:
       # Chave por sha (sempre salva a versão nova) + restore-keys por shard (recupera a última). Entrada
       # velha é inofensiva: o Jest indexa cada arquivo pelo conteúdo + config, não pelo nome.
       - name: Restore Jest cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: server/.jest-cache
           key: jest-${{ runner.os }}-${{ matrix.project }}-${{ matrix.shard }}-${{ hashFiles('server/package-lock.json') }}-${{ github.sha }}
@@ -163,7 +212,7 @@ jobs:
       # sobre a soma dos 7 shards (por isso `--coverageThreshold='{}'` acima).
       - name: Upload coverage do shard
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: coverage-${{ matrix.project }}-${{ strategy.job-index }}
           path: server/coverage/coverage-final.json
@@ -173,21 +222,22 @@ jobs:
   server-coverage:
     name: Server – coverage gate
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [server-tests]
     defaults:
       run:
         working-directory: server
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: server/package-lock.json
       - name: Install dependencies
         run: npm ci
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: coverage-*
           path: server/coverage-shards
@@ -195,34 +245,50 @@ jobs:
         run: node scripts/coverage-gate.js coverage-shards
 
   # Agregador: mantém o nome do required status check da branch protection. `always()` para
-  # reprovar (e não ficar "skipped" = pendente eterno) quando algum shard falha.
+  # reprovar (e não ficar "skipped" = pendente eterno) quando algum shard falha. "skipped" só
+  # passa quando o `changes` mandou pular (PR só de Markdown); fora disso continua reprovando.
   server:
     name: Server – typecheck & test
     runs-on: ubuntu-latest
-    needs: [server-static, server-tests, server-coverage]
+    timeout-minutes: 5
+    needs: [changes, server-static, server-tests, server-coverage]
     if: always()
     steps:
       - name: All server jobs passed
-        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || (contains(needs.*.result, 'skipped') && needs.changes.outputs.code != 'false') }}
         run: exit 1
       - run: echo "OK"
 
   frontend:
     name: Frontend – build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [changes]
+    if: needs.changes.outputs.code == 'true'
     defaults:
       run:
         working-directory: my-app
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: my-app/package-lock.json
+
+      # Cache incremental do `next build`. Fica ANTES do `npm ci`: o hashFiles abaixo varreria o
+      # node_modules inteiro se ele já existisse. Chave pelos fontes; restore-keys recupera o último
+      # cache do mesmo lock quando só o código mudou (o Next revalida o que mudou).
+      - name: Restore Next.js build cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: my-app/.next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('my-app/package-lock.json') }}-${{ hashFiles('my-app/**/*.js', 'my-app/**/*.jsx', 'my-app/**/*.ts', 'my-app/**/*.tsx', 'my-app/**/*.css') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('my-app/package-lock.json') }}-
 
       - name: Install dependencies
         run: npm ci
@@ -268,6 +334,39 @@ jobs:
         env:
           TZ: America/Sao_Paulo
 
+  # Constrói as duas imagens de deploy (ADR-M2) sem push. Nenhum outro job exercita os
+  # Dockerfiles: sem este, a troca de imagem base (node:22-alpine) só seria testada no próximo
+  # build real. Advisory por decisão do dono (2026-10-28): job vermelho aparece no PR, mas não
+  # reprova o workflow.
+  docker-build:
+    name: Docker – build ${{ matrix.image }} (advisory)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [changes]
+    if: needs.changes.outputs.code == 'true'
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [server, my-app]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      # NEXT_PUBLIC_API_BASE_URL é inlinado no bundle no `next build` (ADR-M2 §4.b); o valor aqui
+      # é dummy — a imagem não é publicada. O server ignora o build-arg.
+      - name: Build ${{ matrix.image }} (sem push)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ matrix.image }}
+          push: false
+          build-args: |
+            NEXT_PUBLIC_API_BASE_URL=https://api.ci.invalid
+          cache-from: type=gha,scope=docker-${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=docker-${{ matrix.image }}
+
   # Gate de governança de skills. `skill-audit run --all` é determinístico (estático: validate +
   # governance-check + sync-metadata + coverage + eval-estrutural + controls + self-check) — sem
   # model-in-loop, roda em < 1s. Barra drift: regra sem gate, gate órfão, eval-score divergente do
@@ -277,13 +376,14 @@ jobs:
   skill-governance:
     name: Skill governance – skill-audit run --all
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: server/package-lock.json
 
@@ -304,10 +404,11 @@ jobs:
   governance-presence:
     name: Governance – OPS-001 layer present
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       # `fetch-depth: 0` foi removido em 2026-08-09 junto com a bancada: o único passo que
       # precisava da história inteira era o `review-ledger-check.mjs`, que não existe mais.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Assert operating-gates layer exists
         shell: bash
@@ -332,8 +433,9 @@ jobs:
   zinc-guard:
     name: Design – no new zinc-
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
 

@@ -77,6 +77,8 @@ interface Cenario {
   postings?: Array<{ accountId: string; debitCents: bigint; creditCents: bigint }>;
   sale?: Record<string, unknown>;
   customer?: Record<string, unknown> | null;
+  /** EFICIENCIA-FISCAL PR-1 item 6: guarda fiscal da venda (porta estrutural). */
+  guard?: { check: jest.Mock };
 }
 
 function montar(c: Cenario = {}) {
@@ -120,6 +122,7 @@ function montar(c: Cenario = {}) {
     auditService as never,
     legalParamsSemente,
     productFiscalProfileService as never,
+    c.guard,
   );
   return { service, repo, auditService };
 }
@@ -344,5 +347,50 @@ describe('BE-INCR-NFCE PR-4 — remontagem do reenvio (EMENDA-3 E3-2 a)', () => 
     await expect(service.reassembleNfeForReenvio(SCOPE, SALE_ID, 'NFCE', 'homologacao')).rejects.toMatchObject({
       details: { faltantes: ["perfil fiscal da unidade: falta 'inscricaoEstadual'"] },
     });
+  });
+});
+
+describe('EFICIENCIA-FISCAL PR-1 item 6 — guarda fiscal na NF-e/NFC-e', () => {
+  const OLD_ENV = process.env;
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate'] }).setSystemTime(new Date('2026-10-26T15:00:00Z'));
+    process.env = { ...OLD_ENV, DFE_PARTNER: 'null', DFE_PARTNER_ENV: 'homologacao', NODE_ENV: 'test' };
+  });
+  afterEach(() => jest.useRealTimers());
+  afterAll(() => {
+    process.env = OLD_ENV;
+  });
+  const guarda = (violations: Array<{ code: string; severity: string; legalBasis: string }>) => ({ check: jest.fn().mockResolvedValue({ violations }) });
+
+  it('BLOCK ⇒ pendência `fiscal_guard: …` no 400 da NFC-e; a prévia roda sem gravar custo nem trilha', async () => {
+    const guard = guarda([{ code: 'ITEM_ABAIXO_DO_PISO', severity: 'BLOCK', legalBasis: 'CTN art. 148' }]);
+    const { service } = montar({ guard });
+    const r = await service.preview(SCOPE, SALE_ID, 'NFCE');
+    expect(r.ok).toBe(false);
+    expect(r.faltantes).toContain('fiscal_guard: ITEM_ABAIXO_DO_PISO (CTN art. 148)');
+    expect(guard.check).toHaveBeenCalledWith(SCOPE, SALE_ID, expect.objectContaining({ forEmission: false, persistSnapshot: false }));
+  });
+
+  it('a emissão roda a guarda com efeito (grava o custo, audita o bloqueio) e não chama a porta', async () => {
+    const guard = guarda([{ code: 'PRECO_DIFERENTE_DO_CATALOGO_SEM_DESCONTO', severity: 'BLOCK', legalBasis: 'LC 214 art. 12 § 3º' }]);
+    const { service, repo } = montar({ guard });
+    await expect(service.emit(SCOPE, SALE_ID, 'NFCE')).rejects.toMatchObject({
+      details: { faltantes: ['fiscal_guard: PRECO_DIFERENTE_DO_CATALOGO_SEM_DESCONTO (LC 214 art. 12 § 3º)'] },
+    });
+    expect(guard.check).toHaveBeenCalledWith(SCOPE, SALE_ID, expect.objectContaining({ forEmission: true, persistSnapshot: true }));
+    expect(repo.createSent).not.toHaveBeenCalled();
+  });
+
+  it('WARN não bloqueia a NFC-e', async () => {
+    const { service } = montar({ guard: guarda([{ code: 'SEM_CUSTO', severity: 'WARN', legalBasis: 'CTN art. 148' }]) });
+    expect((await service.preview(SCOPE, SALE_ID, 'NFCE')).ok).toBe(true);
+  });
+
+  it('venda só de serviço não chega à guarda pela NFC-e (já recusada por não ter produto)', async () => {
+    const guard = guarda([]);
+    const { service } = montar({ guard, itens: [{ serviceId: 'srv-A', type: 'Service', quantity: 1, unitPrice: 50 }] });
+    expect((await service.preview(SCOPE, SALE_ID, 'NFCE')).ok).toBe(false);
+    expect(guard.check).not.toHaveBeenCalled();
   });
 });

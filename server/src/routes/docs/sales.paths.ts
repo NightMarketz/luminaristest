@@ -101,5 +101,30 @@
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *         '409': { $ref: '#/components/responses/UnitDeleted' }
+ *
+ *   /api/sales/{id}/fiscal-check:
+ *     post:
+ *       summary: Fiscal guard of a sale (floor, discount allocation, catalog-price invariants; EFICIENCIA-FISCAL PR-1)
+ *       description: >-
+ *         Reads the sale and its items through the DynamicTable repository, records the product cost snapshot
+ *         (custoSnapshotCents) on the first check after finalize, allocates the header discount by the unit policy
+ *         (PROPORCIONAL_CATALOGO by default) and returns BLOCK/WARN violations with their legal basis. The same check is
+ *         a precondition of the NFS-e (BLOCK means emissao_bloqueada). Cents are strings. Scope is the sale unit.
+ *       tags: [Sales]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: false
+ *         content:
+ *           application/json:
+ *             schema: { type: object, additionalProperties: false }
+ *       responses:
+ *         '200':
+ *           description: FiscalCheckResponse { saleId, ok, criterio, violations, alocacao, economiaPotencialCents, suggestionId }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
  */
 export {};

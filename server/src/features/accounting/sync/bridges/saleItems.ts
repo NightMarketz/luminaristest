@@ -14,6 +14,7 @@
 import { getFactory } from '../../../../lib/factory';
 import logger from '../../../../lib/logger';
 import { classifyTaxId } from '../../../../lib/cnpj';
+import { classifySaleItem as classifyItem, toNum } from '../../../../lib/saleLine';
 
 export type SaleItemsKind = 'Product' | 'Service' | 'Package' | 'Mixed' | 'Empty';
 
@@ -50,18 +51,31 @@ export interface SalePackageInfo {
   productLines: ProductLine[];
 }
 
-/** Numeric coercion that never propagates NaN into the money math (missing/garbage → 0). */
-function toNum(v: unknown): number {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : 0;
+/**
+ * EFICIENCIA-FISCAL PR-1 item 9 + F-EF-15 a (BRIEF BE-INCR-EFICIENCIA-FISCAL; D-2026-10-22-EFICIENCIA-FISCAL-FORKS): valor da
+ * linha para o rateio da receita. Venda com desconto INCONDICIONAL destacado por item ⇒ peso LÍQUIDO (quantidade × preço −
+ * discountCents/100) — a mesma fonte para o razão (`revenueByNature` → `splitRevenueCredit`), a subrazão
+ * (`ratearReceita`) e a DPS; CONDITIONAL ou venda legada ⇒ peso bruto (I-4; LC 87 art. 13 § 1º II "a"; LC 214 art. 12 § 3º).
+ * Com o critério proporcional o resultado é o de antes, salvo arredondamento (o desconto já seguia o peso bruto).
+ * Nunca negativo (review do #913): sem a coluna `quantity` (preset só-serviços) o bruto é 0 e o desconto não pode
+ * virar peso negativo no `splitRevenueCredit`.
+ */
+function lineValueReais(d: Record<string, unknown>, incondicional: boolean): number {
+  const bruto = toNum(d.quantity) * toNum(d.unitPrice);
+  return incondicional ? Math.max(0, bruto - toNum(d.discountCents) / 100) : bruto;
 }
 
-/** The ONE item classifier (relation id first, then `type`) — shared by the split buckets and the revenue lines. */
-function classifyItem(d: Record<string, unknown>): 'Product' | 'Service' | 'Package' | 'Unknown' {
-  if (d.productId || String(d.type ?? '') === 'Product') return 'Product';
-  if (d.serviceId || String(d.type ?? '') === 'Service') return 'Service';
-  if (d.packageId || String(d.type ?? '') === 'Package') return 'Package';
-  return 'Unknown';
+/**
+ * A venda tem desconto INCONDICIONAL destacado por item? Só lê o cabeçalho quando algum item traz `discountCents` — a venda
+ * legada (sem desconto por item) nunca paga a leitura extra e segue no peso bruto.
+ */
+async function isUnconditionalSale(userId: string, saleId: string, rows: ReadonlyArray<{ data: unknown }>): Promise<boolean> {
+  if (!rows.some((r) => toNum((r.data as Record<string, unknown> | null)?.discountCents) !== 0)) return false;
+  const repo = getFactory().getDynamicTableRepository();
+  const salesTable = await repo.findTableByInternalName(userId, 'sales');
+  const row = salesTable ? await repo.findDataById(saleId) : null;
+  if (!row || row.dynamicTableId !== salesTable!.id) return false;
+  return (row.data as Record<string, unknown> | null)?.discountKind === 'UNCONDITIONAL';
 }
 
 /** Load + classify a sale's items by querying the tenant's `saleItems` table for that saleId. */
@@ -78,9 +92,10 @@ export async function loadSalePackageInfo(userId: string, saleId: string): Promi
   const productLines: ProductLine[] = [];
   let serviceReais = 0;
   let productReais = 0;
+  const incondicional = await isUnconditionalSale(userId, saleId, rows);
   for (const r of rows) {
     const d = (r.data ?? {}) as Record<string, unknown>;
-    const lineReais = toNum(d.quantity) * toNum(d.unitPrice);
+    const lineReais = lineValueReais(d, incondicional);
     const k = classifyItem(d);
     if (k === 'Product') {
       kinds.add('Product');
@@ -142,6 +157,8 @@ export interface SaleServiceLine {
   description: string;
   quantity: number;
   unitPrice: number;
+  /** EFICIENCIA-FISCAL PR-1 (F-EF-16 a): desconto destacado do item, centavos inteiros (0 sem desconto). */
+  discountCents: number;
 }
 
 /**
@@ -165,6 +182,7 @@ export async function loadSaleServiceLines(userId: string, saleId: string): Prom
       description: String(d.description ?? ''),
       quantity: toNum(d.quantity),
       unitPrice: toNum(d.unitPrice),
+      discountCents: Math.round(toNum(d.discountCents)),
     });
   }
   return lines;
@@ -235,6 +253,7 @@ export async function loadSaleRevenueLines(userId: string, saleId: string): Prom
   const itemsTable = await repo.findTableByInternalName(userId, 'saleItems');
   if (!itemsTable) return [];
   const rows = await repo.findRowsByFieldValue(itemsTable.id, 'saleId', saleId);
+  const incondicional = await isUnconditionalSale(userId, saleId, rows);
   const out: SaleRevenueLine[] = [];
   for (const r of rows) {
     const d = (r.data ?? {}) as Record<string, unknown>;
@@ -246,7 +265,7 @@ export async function loadSaleRevenueLines(userId: string, saleId: string): Prom
       serviceRef: d.serviceId ? String(d.serviceId) : null,
       productRef: d.productId ? String(d.productId) : null,
       employeeRef: d.responsibleEmployeeId ? String(d.responsibleEmployeeId) : null,
-      lineReais: toNum(d.quantity) * toNum(d.unitPrice),
+      lineReais: lineValueReais(d, incondicional),
     });
   }
   return out.sort((a, b) => (a.itemRef < b.itemRef ? -1 : a.itemRef > b.itemRef ? 1 : 0));

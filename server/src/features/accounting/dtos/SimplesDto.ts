@@ -109,6 +109,11 @@ export const CODIGOS_ALERTA_SIMPLES = [
   'IMPEDIMENTO_CAIXA_ICMS_ISS',
   'CARTAO_RECEBIMENTO_ESTIMADO',
   'RECEBIMENTO_DE_VENDA_TRIBUTADA_POR_COMPETENCIA',
+  // BE-INCR-EFICIENCIA-FISCAL PR-2 (itens 13–14; ADR D7, I-8): segregação derivada da NCM.
+  'SEM_NCM',
+  'SEGREGACAO_DIVERGE',
+  'SEGREGACAO_INDEVIDA',
+  'ICMS_ST_NAO_CONFERIDA',
 ] as const;
 /** D-2026-10-10-X14-ALERTA-INFORMATIVO (dono, chat, 2026-10-10), item 1: o código fica estável; o alerta ganha severidade. */
 export const SEVERIDADES_ALERTA_SIMPLES = ['INFO', 'WARNING'] as const;

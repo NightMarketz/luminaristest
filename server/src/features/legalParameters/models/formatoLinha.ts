@@ -18,6 +18,7 @@ import {
   ReducaoArt3AJson,
   TRIBUTOS_CSRF,
 } from '../../accounting/models/retencaoParams';
+import { IcmsStNcmJsonSchema } from '../../accounting/models/segregacaoNcm';
 import type { LegalParameterTabela } from './legalParameter';
 
 /**
@@ -182,6 +183,14 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
         ['NFE', 'NFCE'].includes(l.chave) && /^\d{2}$/.test(l.discriminador ?? '') && (l.valorTexto ?? '').trim().length > 0,
         'chave NFE|NFCE; discriminador = IBGE da UF (2 dígitos); valorTexto = o aviso',
       ),
+  },
+  // BE-INCR-EFICIENCIA-FISCAL PR-2 (item 11): chave = prefixo de 4 a 8 dígitos do NCM; discriminador = IBGE da UF;
+  // valorJson = itens e CEST do anexo do Conv. ICMS 142/2018.
+  ICMS_ST_NCM_UF: {
+    valor: 'json',
+    checar: (l) =>
+      so(/^\d{4,8}$/.test(l.chave) && /^\d{2}$/.test(l.discriminador ?? ''), 'chave = prefixo de 4 a 8 dígitos do NCM; discriminador = IBGE da UF (2 dígitos)') ??
+      jsonOk(IcmsStNcmJsonSchema, l.valorJson, 'valorJson = { anexo, itens: ["N.N"], cest: ["NN.NNN.NN"] }'),
   },
   LEIAUTE_SPED: {
     valor: 'texto',
