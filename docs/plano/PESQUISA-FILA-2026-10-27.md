@@ -36,7 +36,7 @@ Grau: **V** = lido em fonte oficial; **I** = inferido (o passo está no dossiê)
 | P-EF-11 | 3 | Esteticista é profissão regulamentada (Lei 13.643): fora dos 16%. Cabeleireiro (Lei 12.592, "reconhecido") ambíguo: leitura segura 32%, até R$ 2.880/ano | V (lei) / ambiguidade | EF item 30 | [`fila-2026-10-27-bloco3-eficiencia`](../../pesquisas-legais/fila-2026-10-27-bloco3-eficiencia/relatorio.md) |
 | P-EF-12 | 3 | "Valor de mercado" nos arts. 14 e 16 do Regulamento da CBS: comparável = venda avulsa do item nos 3 meses anteriores; desconto na nota sai da base | V | antes de ligar o CARGA | [`fila-2026-10-27-bloco3-eficiencia`](../../pesquisas-legais/fila-2026-10-27-bloco3-eficiencia/relatorio.md) |
 | Natureza e DARF (DRAFT de 21/10) | 4 | DARF 1708, 5952 e 8045 conferem; naturezas 13003, 13007 e 15001 do contador estão erradas; a carga do PR-1 já é a oficial | V | nada a mudar | [`fila-2026-10-27-bloco4-draft`](../../pesquisas-legais/fila-2026-10-27-bloco4-draft/relatorio.md) |
-| Uso e consumo pessoal (LC 214 art. 57) | 4 | Por NCM só o inciso I "a"–"e" (6 categorias); a alínea "f" não entra para salão e clínica; o inciso II pede marca por item | V (lei) / I (NCM por categoria) | [[IBS-CBS-2027]] item 15 | [`fila-2026-10-27-bloco4-draft`](../../pesquisas-legais/fila-2026-10-27-bloco4-draft/relatorio.md) |
+| Uso e consumo pessoal (LC 214 art. 57) | 4 | Por NCM só o inciso I "a"–"e" (6 categorias); as alíneas "f" (salão e clínica, § 3º III) e "g" (LC 227/2026) não entram; o inciso II pede marca por item | V (lei) / I (NCM por categoria) | [[IBS-CBS-2027]] item 15 | [`fila-2026-10-27-bloco4-draft`](../../pesquisas-legais/fila-2026-10-27-bloco4-draft/relatorio.md) |
 | P-IBS-4 | 4 | Leiaute 12 da ECF sem conta de IBS/CBS; fica `2.01.01.09.28` até a tabela de 2027 | V | IBS item 12 | [`fila-2026-10-27-bloco4-draft`](../../pesquisas-legais/fila-2026-10-27-bloco4-draft/relatorio.md) |
 | COD_PB_RFB do M010 | 4 | O código em `main` (1071 devedor, 2210 credor) bate com a PARTEB_PARTEA; a proposta D-1 "só 2210" ficou velha | V (pares) / I (sentido 1xxx/2xxx) | [[D1]]; X8 | [`fila-2026-10-27-bloco4-draft`](../../pesquisas-legais/fila-2026-10-27-bloco4-draft/relatorio.md) |
 | cClassTrib | 5 | **000001**/CST 000 para o salão; **200029**/CST 200, −60%, para serviço médico do Anexo III (tabela do SVRS, carga de 05/10/2026; IT v1.70 igual) | V | [[D1f]]; IBS item 3 | [`fila-2026-10-27-bloco5-cclasstrib`](../../pesquisas-legais/fila-2026-10-27-bloco5-cclasstrib/relatorio.md) |
@@ -59,14 +59,14 @@ Grau: **V** = lido em fonte oficial; **I** = inferido (o passo está no dossiê)
 2. **D5:** pedir cotação a DigitalSign, Certisign e Safeweb; quem contrata o PSC.
 3. **P-RET-4:** estender a delegação D-1 ([[D-2026-10-10-TRIAGEM-CONTADOR-DELEGACAO]]) ao referencial das folhas de retenção
    (o agente propõe, o contador revisa sem travar) ou perguntar ao contador.
-4. **IBS PR-3:** quem marca o item "fornecido a sócio, empregado ou parente" (campo por item na importação × regra por conta).
-   Desenho; entra no planejamento do PR-3.
+4. **Emenda do IBS PR-3 (já em `main`, #833):** quem marca o item "fornecido a sócio, empregado ou parente" (campo por item na
+   importação × regra por conta). Desenho de produto; entra como emenda do PR-3.
 
 ## 4. PRs de dado que a pesquisa destrava (cada um com `executa` próprio)
 
 - RETENCOES-FONTE: `RETENCAO_CODIGO` `INSS` → `116201`; `RETENCAO` `INSS/CPRB` → 350 bp até 2027-12-31 e 1100 bp desde 2028-01-01.
 - EFICIENCIA-FISCAL: linha SP da `ISS_FIXO_SUP` com os valores de 2026; `ICMS_ST_NCM_UF` sem SP desde 2026-04-01 (o #930 já faz).
-- IBS-CBS-2027: `IBS_CBS_USO_CONSUMO` em `DRAFT` com as 6 categorias por NCM, quando o PR-3 for executado.
+- IBS-CBS-2027: carga de `IBS_CBS_USO_CONSUMO` em `DRAFT` com as 6 categorias por NCM (a tabela nasceu vazia no PR-3, já em `main`).
 
 ## 5. Lacunas (não lidas ou não achadas)
 
@@ -75,7 +75,7 @@ Grau: **V** = lido em fonte oficial; **I** = inferido (o passo está no dossiê)
 - Reinf: notas técnicas 1 a 3 de 2026 para a Tabela 08; grupo 20 da Tabela 01.
 - Eficiência fiscal: RICMS das outras 26 UFs; Regulamento do IBS (Resolução CGIBS 6/2026); ato conjunto do art. 14 § 7º; origem
   dos códigos "uso restrito" da SUP.
-- IBS/CBS: ato conjunto do art. 63 § 2º V do Regulamento; sentido 1xxx/2xxx da PARTEB_PADRAO; indOp 030101.
+- IBS/CBS: ato conjunto do art. 63 § 2º V do Regulamento; sentido 1xxx/2xxx da PARTEB_PADRAO. (O indOp 030101 foi conferido em 28/10 no Anexo C v1.01 (dossiê `fila-2026-10-28-d1f-indop`).)
 - Terceiros: preço e cota de Safeweb, Soluti PJ, SyngularID e ACDIGITAL; `lifetime` da `signature_session` de cada PSC;
   referência de API do Payouts; se o MP aceitaria a aplicação do Luminaris operando com token OAuth do cliente (só o time de
   Integrações responde).

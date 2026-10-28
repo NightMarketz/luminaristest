@@ -1,0 +1,20 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "D01_anexo_i-sefin_adn-dps_nfse-snnfse-v1-01-20260209-xlsx",
+      "url": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/documentacao-atual/anexo_i-sefin_adn-dps_nfse-snnfse-v1-01-20260209.xlsx",
+      "url_final": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/documentacao-atual/anexo_i-sefin_adn-dps_nfse-snnfse-v1-01-20260209.xlsx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-28T12:47:29-03:00",
+      "sha256": "de5bc492959eadc8bfa7540e16939995924f2188f743648eaf84d3b31e9eeb7c",
+      "arquivo": "docs/D01_anexo_i-sefin_adn-dps_nfse-snnfse-v1-01-20260209-xlsx.html",
+      "texto": "docs/D01_anexo_i-sefin_adn-dps_nfse-snnfse-v1-01-20260209-xlsx.txt",
+      "bytes": 215196
+    }
+  ],
+  "buscas": [],
+  "slug": "fila-2026-10-28-indop-domicilio",
+  "pergunta": "Com o indOp 030102 (serviço sobre a pessoa, local = endereço do adquirente), a DPS da NFS-e nacional exige o endereço do tomador? Quais regras de validação ligam cIndOp ao endereço?",
+  "criado": "2026-10-28T12:47:29-03:00"
+}

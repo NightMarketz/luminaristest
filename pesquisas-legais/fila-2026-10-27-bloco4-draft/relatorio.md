@@ -27,20 +27,21 @@ Das quatro linhas DRAFT de 21/10, duas já estão certas em `main`, uma muda de 
   - **Efeito:** nada a mudar no código. A linha DRAFT de 21/10 sai do pacote como "descartada: valores do contador não conferem com a Tabela 01; vale a carga do PR-1".
 - **Lista de uso e consumo pessoal (LC 214, art. 57): a lista do contador não serve, e a chave por NCM só cobre parte do artigo.**
   - O art. 57 tem duas partes [D03]:
-    - inciso I: bens por natureza (joias, pedras e metais preciosos, obras de arte, bebidas alcoólicas, derivados do tabaco, armas e munições, e "bens e serviços recreativos, esportivos e estéticos");
+    - inciso I: bens por natureza (joias, pedras e metais preciosos, obras de arte, bebidas alcoólicas, derivados do tabaco, armas e munições, e "bens e serviços recreativos, esportivos e estéticos") e, desde a LC 227/2026, a alínea "g": "bens e serviços relacionados à aquisição ou à manutenção dos bens de que trata este inciso" (o Regulamento já a trazia no art. 62 VII [D06]);
     - inciso II: bens e serviços fornecidos de graça ou abaixo do mercado a sócio, administrador, empregado ou parente, conforme o destino.
-  - O Regulamento da CBS detalha as exceções [D06, arts. 62 e 63].
-    - Bens estéticos usados "exclusivamente em estabelecimento físico pelos seus clientes" ou revendidos não são uso pessoal (art. 62 p.ú. III).
-    - Serviços estéticos comprados por quem presta "esses mesmos serviços" também não são (art. 62 p.ú. IV "a").
+  - As exceções estão no próprio art. 57 § 3º [D03], e o Regulamento da CBS as detalha [D06, arts. 62 e 63].
+    - Bens estéticos usados "exclusivamente em estabelecimento físico pelos seus clientes" ou revendidos não são uso pessoal (LC 214 art. 57 § 3º III; Regulamento art. 62 p.ú. III).
+    - Serviços estéticos comprados por quem presta "esses mesmos serviços" também não são, mas essa exceção só está no Regulamento (art. 62 p.ú. IV "a"), pela delegação do § 3º V da LC.
     - Para salão e clínica, isso tira quase tudo da alínea "f".
   - Os quatro itens do contador (copa, veículo de passeio, vestuário, higiene pessoal) são todos casos de destino (inciso II). Três têm exceção expressa:
-    - copa é "alimentação e bebida não alcoólica [...] durante a jornada de trabalho" (art. 63 § 1º III);
-    - uniforme não é uso pessoal (§ 1º I);
-    - veículo usado nas funções do empregado não é (§ 2º II).
+    - copa é "alimentação e bebida não alcoólica [...] durante a jornada de trabalho" (LC 214 art. 57 § 3º IV "c"; Regulamento art. 63 § 1º III);
+    - uniforme não é uso pessoal (§ 3º IV "a"; art. 63 § 1º I);
+    - veículo usado nas funções do empregado não é, mas só pelo Regulamento (art. 63 § 2º II).
   - Nenhum dos quatro se reconhece pelo NCM.
   - **Efeito:**
     - a tabela `IBS_CBS_USO_CONSUMO` (chave = prefixo de NCM) comporta só as alíneas "a" a "e" do inciso I, com a exceção de revenda;
     - a alínea "f" (estéticos) **não** deve entrar para salão e clínica;
+    - a alínea "g" também não: o que a define é a ligação com o bem principal, não o NCM. A manutenção de equipamento estético usado só com clientes fica fora dela porque o bem principal está na exceção do § 3º III; o § 3º não cita a alínea "g", então essa leitura é minha (grau I);
     - o inciso II pede uma marca por item de entrada ("fornecido a sócio, empregado ou parente"), que o código não tem hoje (`NfeImportService` só cruza NCM).
   - Proposta de conteúdo DRAFT (grau I: a correspondência entre categoria e capítulo de NCM é leitura minha):
 
@@ -78,6 +79,7 @@ Das quatro linhas DRAFT de 21/10, duas já estão certas em `main`, uma muda de 
 | Comissões | idem | [D01] | "15052 \| Demais comissões, corretagens ou qualquer outra importância paga/creditada pela representação comercial" |
 | DARF da 15052 | Tabela R-4020 | [D01] | "15052 [...] IRPJ \| N/A \| 804506 \| Mensal" |
 | Estético é uso pessoal | LC 214, art. 57 I "f" | [D03] | "bens e serviços recreativos, esportivos e estéticos" |
+| Aquisição e manutenção | LC 214, art. 57 I "g" (LC 227/2026) | [D03] | "bens e serviços relacionados à aquisição ou à manutenção dos bens de que trata este inciso" |
 | Exceção: uso pelos clientes | LC 214, art. 57 § 3º III | [D03] | "sejam utilizados exclusivamente em estabelecimento físico pelos seus clientes" |
 | Exceção: mesmo serviço | Regulamento da CBS, art. 62 p.ú. IV "a" | [D06] | "adquiridos por contribuintes cuja atividade preponderante seja a prestação desses mesmos serviços" |
 | Copa | LC 214, art. 57 § 3º IV "c" | [D03] | "alimentação e bebida não alcoólica disponibilizada no estabelecimento do contribuinte para seus empregados" |
