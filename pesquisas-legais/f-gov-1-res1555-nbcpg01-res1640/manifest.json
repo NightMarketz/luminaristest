@@ -1,0 +1,48 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "RESOLUÇÃO CFC Nº 1.717, DE 22 DE FEVEREIRO DE 2024",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/reguladores/cfc/resolucoes/2024/resolucao-cfc-n-1.717-de-22-de-fevereiro-de-2024-546033356.md",
+      "url_final": "https://github.com/ctresb/leis/blob/83b9a9fb396bf2690cd944c3cfbb6594dac614ec/reguladores/cfc/resolucoes/2024/resolucao-cfc-n-1.717-de-22-de-fevereiro-de-2024-546033356.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www.in.gov.br/web/dou/-/resolucao-cfc-n-1.717-de-22-de-fevereiro-de-2024-546033356",
+      "versao_texto": "publicação original",
+      "acervo_baixado_em": "2026-10-16",
+      "commit": "83b9a9fb396bf2690cd944c3cfbb6594dac614ec",
+      "alertas": [
+        "versao_texto = 'publicação original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-10-25T23:28:11-03:00",
+      "sha256": "4839b137fdfb09a2db336d6eea05e3635588369a6163e0ae4702632b083a41d7",
+      "arquivo": "docs/D01_resolucao-cfc-n-1-717-de-22-de-fevereiro-de-2024-546033356.md",
+      "texto": "docs/D01_resolucao-cfc-n-1-717-de-22-de-fevereiro-de-2024-546033356.txt",
+      "bytes": 3822
+    },
+    {
+      "id": "D02",
+      "titulo": "RESOLUÇÃO CFC Nº 1.726, DE 16 DE MAIO DE 2024",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/reguladores/cfc/resolucoes/2024/resolucao-cfc-n-1.726-de-16-de-maio-de-2024-562132609.md",
+      "url_final": "https://github.com/ctresb/leis/blob/83b9a9fb396bf2690cd944c3cfbb6594dac614ec/reguladores/cfc/resolucoes/2024/resolucao-cfc-n-1.726-de-16-de-maio-de-2024-562132609.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www.in.gov.br/web/dou/-/resolucao-cfc-n-1.726-de-16-de-maio-de-2024-562132609",
+      "versao_texto": "publicação original",
+      "acervo_baixado_em": "2026-10-16",
+      "commit": "83b9a9fb396bf2690cd944c3cfbb6594dac614ec",
+      "alertas": [
+        "versao_texto = 'publicação original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-10-25T23:28:13-03:00",
+      "sha256": "c6ea940a91efc8ec24bdf51d461ac26fec2773b14b4e8562bd7153ec3e3a2a1c",
+      "arquivo": "docs/D02_resolucao-cfc-n-1-726-de-16-de-maio-de-2024-562132609.md",
+      "texto": "docs/D02_resolucao-cfc-n-1-726-de-16-de-maio-de-2024-562132609.txt",
+      "bytes": 2883
+    }
+  ],
+  "buscas": [],
+  "slug": "f-gov-1-res1555-nbcpg01-res1640",
+  "pergunta": "Res. CFC 1.555/2018 (registro de organização contábil), NBC PG 01 (itens sobre trabalho de terceiros e parte executada pelo cliente) e alterações da Res. CFC 1.640/2021",
+  "criado": "2026-10-25T23:26:21-03:00"
+}
