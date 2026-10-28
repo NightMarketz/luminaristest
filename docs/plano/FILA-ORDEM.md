@@ -11,6 +11,7 @@
 2. **Gate humano em cadeia** segue a ordem que o dono fixou: H1 → H2 → M2 (`[[H1]]`). **Desde 22/10:** H1 (passos 1–5) → H2 → M2 →
    1º cliente → H1 passo 6 + assinaturas — o fechamento de ECD/ECF é o último passo ([[D-2026-10-22-NFSE-PORTAL-E-H1-POR-ULTIMO]] §2).
 3. **Código só com `executa` citável** (ORCH-006). Brief pronto sem `executa` não entra como "a fazer agora": entra como "pronto para autorizar".
+   Desde 28/10 um `executa` cobre o BRIEF inteiro, e o merge segue a classe de risco ([[D-2026-10-28-FLUXO-AUTONOMO]]).
 4. Dependência explícita (`depende_de`) manda. Sufixo `?` (condicional) não bloqueia, mas sinaliza risco.
 
 ## Estado em 26/10 (revisão semanal — não muda a ordem)
