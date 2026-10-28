@@ -35,6 +35,18 @@
       "arquivo": "docs/D02_lei-9250-1995-12-26.md",
       "texto": "docs/D02_lei-9250-1995-12-26.txt",
       "bytes": 49701
+    },
+    {
+      "id": "D03",
+      "titulo": "Lcp 214",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-28T20:14:36-03:00",
+      "sha256": "95f8352a08d1f8bfae710983ee2712b9e9ee899172250fd169a9b0e854eb912d",
+      "arquivo": "docs/D03_lcp214-htm.html",
+      "texto": "docs/D03_lcp214-htm.txt",
+      "bytes": 5403667
     }
   ],
   "buscas": [],

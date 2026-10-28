@@ -269,6 +269,7 @@ import { SalesCancellationService } from '../features/sales/services/SalesCancel
 import { RegisterPaymentService } from '../features/sales/services/RegisterPaymentService';
 import { SaleFiscalGuardService } from '../features/sales/services/SaleFiscalGuardService'; // EFICIENCIA-FISCAL PR-1
 import { TaxOptimizationService } from '../features/accounting/services/TaxOptimizationService'; // EFICIENCIA-FISCAL PR-1
+import { ServicoFiscalAvaliacaoService } from '../features/accounting/services/ServicoFiscalAvaliacaoService';
 import { TaxOptimizationRepository } from '../features/accounting/repositories/TaxOptimizationRepository'; // EFICIENCIA-FISCAL PR-1
 import type { ITaxOptimizationRepository } from '../features/accounting/repositories/ITaxOptimizationRepository';
 import { PresetSyncService } from '../features/dynamicTables/services/PresetSyncService';
@@ -946,6 +947,7 @@ export class ApplicationFactory {
     productFiscalProfile: ProductFiscalProfileService; // BE-INCR-NFCE item 10
     issBeneficioMunicipal: IssBeneficioMunicipalService; // SIMPLES-PISO-ANEXO-XI bloco 1
     taxOptimization: TaxOptimizationService; // EFICIENCIA-FISCAL PR-1
+    servicoFiscalAvaliacao: ServicoFiscalAvaliacaoService; // EFICIENCIA-FISCAL PR-5
     productDestination: ProductDestinationService; // ITEM-DESTINATION PR-2
     companyFiscalProfile: CompanyFiscalProfileService; // X13
     companySigner: CompanySignerService; // X13
@@ -1669,6 +1671,18 @@ export class ApplicationFactory {
       productFiscalProfile: productFiscalProfileService,
       issBeneficioMunicipal: new IssBeneficioMunicipalService(this.repositories.issBeneficioMunicipal, this.policies.accounting, auditService),
       taxOptimization: taxOptimizationService, // EFICIENCIA-FISCAL PR-1
+      // EFICIENCIA-FISCAL PR-5 (itens 27, 30–32): alertas de enquadramento e sugestões dos serviços — só leitura + proposeSystem.
+      servicoFiscalAvaliacao: new ServicoFiscalAvaliacaoService(
+        this.policies.accounting,
+        this.repositories.companyFiscalProfile,
+        this.repositories.serviceFiscalProfile,
+        this.repositories.fiscalProfile,
+        this.repositories.receitaFiscal,
+        this.repositories.account,
+        this.repositories.posting,
+        legalParameterService,
+        taxOptimizationService,
+      ),
       // ITEM-DESTINATION PR-2 (item 17, F-ID-2 a): destinação padrão por produto — a mesma porta de existência
       // de produto do LAC-E (reuso), sob a policy fiscal.
       productDestination: new ProductDestinationService(
@@ -2531,6 +2545,7 @@ export class ApplicationFactory {
   public getProductFiscalProfileService = (): ProductFiscalProfileService => this.services.productFiscalProfile;
   public getIssBeneficioMunicipalService = (): IssBeneficioMunicipalService => this.services.issBeneficioMunicipal;
   public getTaxOptimizationService = (): TaxOptimizationService => this.services.taxOptimization;
+  public getServicoFiscalAvaliacaoService = (): ServicoFiscalAvaliacaoService => this.services.servicoFiscalAvaliacao;
   public getProductDestinationService = (): ProductDestinationService => this.services.productDestination;
   public getCompanyFiscalProfileService = (): CompanyFiscalProfileService => this.services.companyFiscalProfile;
   public getCompanySignerService = (): CompanySignerService => this.services.companySigner;

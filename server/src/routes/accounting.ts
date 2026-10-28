@@ -214,6 +214,7 @@ import {
   rejectTaxSuggestion,
   updateTaxOptimizationPolicy,
 } from '../controllers/taxOptimizationController';
+import { avaliarServicosFiscais } from '../controllers/servicoFiscalAvaliacaoController';
 import {
   deleteProductDestination,
   listProductDestinations,
@@ -435,6 +436,8 @@ router.delete('/tax-optimization/service-costs/:id', deleteServiceCost);
 router.get('/tax-optimization/suggestions', listTaxSuggestions);
 router.post('/tax-optimization/suggestions/:id/accept', acceptTaxSuggestion);
 router.post('/tax-optimization/suggestions/:id/reject', rejectTaxSuggestion);
+// EFICIENCIA-FISCAL PR-5 (BRIEF itens 27, 30–32; lacuna 4 do dono, 28/10): avaliação dos serviços do ano.
+router.post('/tax-optimization/servicos/avaliar', avaliarServicosFiscais);
 // ITEM-DESTINATION PR-2 (BRIEF item 18, F-ID-2 a) — destinação padrão por produto
 router.get('/product-destinations', listProductDestinations);
 router.put('/product-destinations', upsertProductDestination);
