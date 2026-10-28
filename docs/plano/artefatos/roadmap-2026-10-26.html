@@ -1,0 +1,778 @@
+<title>Roadmap Luminaris 26/10</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: sticky tab bar; view 1 = briefing didático (resumo → como ler → mapa → gráficos → frentes → quadro de tarefas);
+     view 2 = cadeia de gates desenhada → linha do tempo com swimlanes → cartões de milestone → premissas. */
+  :root {
+    --bg: #f4f6f9; --surface: #ffffff; --surface-2: #e9edf3; --line: #d3d9e2;
+    --fg: #15181d; --fg-2: #4a5260; --fg-3: #7b8391;
+    --accent: #1f4e8c; --accent-soft: #dce7f7;
+    --st-done: #0f9a0f; --st-inflight: #2a78d6; --st-planned: #6b7280; --st-blocked: #cf3a3a; --st-human: #a66f00; --st-legal: #6f35d9;
+    --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
+    --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #131517; --surface: #1c1f23; --surface-2: #252930; --line: #363c45;
+      --fg: #eef0f3; --fg-2: #b6bcc6; --fg-3: #8a919e;
+      --accent: #78aaee; --accent-soft: #233a5e;
+      --st-done: #43c843; --st-inflight: #5a9cf0; --st-planned: #a0a8b6; --st-blocked: #f07070; --st-human: #f2c24a; --st-legal: #b596f7;
+      --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #131517; --surface: #1c1f23; --surface-2: #252930; --line: #363c45;
+    --fg: #eef0f3; --fg-2: #b6bcc6; --fg-3: #8a919e;
+    --accent: #78aaee; --accent-soft: #233a5e;
+    --st-done: #43c843; --st-inflight: #5a9cf0; --st-planned: #a0a8b6; --st-blocked: #f07070; --st-human: #f2c24a; --st-legal: #b596f7;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+  .wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 56px; }
+  header.top { padding-block: 26px 10px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 24px; }
+  header.top h1 { margin: 0; font-size: 1.7rem; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+  header.top .meta { color: var(--fg-2); font-family: var(--font-mono); font-size: 0.78rem; }
+  nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
+  nav.tabs a { padding: 10px 14px; text-decoration: none; color: var(--fg-2); font-weight: 600; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  nav.tabs a[aria-current="page"] { color: var(--accent); border-bottom-color: var(--accent); }
+  nav.tabs a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  section.view[hidden] { display: none; }
+  h2 { font-size: 1.15rem; margin: 30px 0 4px; font-weight: 700; }
+  h2 + .lead { color: var(--fg-2); margin: 0 0 12px; max-width: 78ch; }
+  h3 { font-size: 0.95rem; margin: 0 0 6px; font-weight: 600; }
+  p { margin: 0 0 10px; max-width: 78ch; }
+  .muted { color: var(--fg-2); } .small { font-size: 0.85rem; }
+  .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  /* resumo */
+  .hero { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px; }
+  .hero .big { font-size: 1.15rem; line-height: 1.45; }
+  .hero .big strong { color: var(--accent); }
+  .hero ul.three { margin: 10px 0 0; padding-left: 0; list-style: none; display: grid; gap: 8px; }
+  .hero ul.three li { display: grid; grid-template-columns: 28px 1fr; gap: 8px; align-items: start; }
+  .hero ul.three b { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-family: var(--font-mono); font-size: 0.8rem; }
+  .kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; align-content: start; }
+  .kpi { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+  .kpi .k { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-3); }
+  .kpi .v { font-family: var(--font-mono); font-size: 1.6rem; line-height: 1.15; font-variant-numeric: tabular-nums; }
+  .kpi .v small { font-size: 0.9rem; color: var(--fg-3); }
+  .kpi .s { font-size: 0.78rem; color: var(--fg-2); }
+  /* glossário */
+  details.gloss { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 16px; }
+  details.gloss summary { cursor: pointer; font-weight: 600; }
+  dl.terms { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px 20px; margin: 10px 0 4px; }
+  dl.terms div { border-top: 1px solid var(--line); padding-top: 6px; }
+  dl.terms dt { font-weight: 600; font-family: var(--font-mono); font-size: 0.82rem; }
+  dl.terms dd { margin: 2px 0 0; color: var(--fg-2); font-size: 0.88rem; }
+  /* status pills */
+  .pill { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 0.72rem; padding: 1px 7px; border-radius: 999px; border: 1px solid currentColor; line-height: 1.5; white-space: nowrap; vertical-align: middle; }
+  .pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .pill.done { color: var(--st-done); } .pill.inflight { color: var(--st-inflight); } .pill.planned { color: var(--st-planned); }
+  .pill.blocked { color: var(--st-blocked); } .pill.human { color: var(--st-human); } .pill.legal { color: var(--st-legal); }
+  .pill.legal::before { border-radius: 1px; transform: rotate(45deg); } .pill.human::before { border-radius: 1px; } .pill.blocked::before { width: 9px; height: 3px; border-radius: 1px; }
+  .legend-status { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 0.85rem; color: var(--fg-2); align-items: center; }
+  /* journey map */
+  .journey { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px 10px; overflow-x: auto; }
+  .journey svg { display: block; width: 100%; min-width: 760px; height: auto; font-family: var(--font-body); }
+  .journey .cap { font-size: 0.82rem; color: var(--fg-2); margin-top: 6px; }
+  /* charts */
+  .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+  .chart { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px 10px; min-width: 0; }
+  .chart h3 { margin-bottom: 2px; }
+  .chart .sub { font-size: 0.8rem; color: var(--fg-3); margin-bottom: 8px; }
+  .chart svg { display: block; width: 100%; height: auto; font-family: var(--font-mono); }
+  .chart .leg { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.78rem; color: var(--fg-2); margin-top: 6px; }
+  .chart .leg i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+  .chart .read { font-size: 0.82rem; color: var(--fg-2); margin: 8px 0 0; border-top: 1px dashed var(--line); padding-top: 6px; }
+  /* cards */
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 12px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+  .card ul { margin: 0; padding-left: 18px; } .card li { margin: 4px 0; }
+  .card .why { font-size: 0.85rem; color: var(--fg-2); background: var(--surface-2); border-radius: 6px; padding: 6px 10px; margin-top: 8px; }
+  .prog { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; margin: 6px 0 8px; font-family: var(--font-mono); font-size: 0.74rem; color: var(--fg-2); }
+  .prog .t { height: 8px; background: var(--surface-2); border-radius: 4px; overflow: hidden; display: flex; }
+  .prog .t i { display: block; height: 100%; }
+  .prog .t i.d { background: var(--st-done); } .prog .t i.o { background: var(--st-inflight); margin-left: 2px; }
+  /* done cards */
+  .done-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; }
+  .done { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--st-done); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+  .done b { display: block; } .done .prs { font-family: var(--font-mono); font-size: 0.72rem; color: var(--fg-3); }
+  .done .m { font-size: 0.85rem; color: var(--fg-2); margin-top: 4px; }
+  /* kanban */
+  .board { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .col { background: var(--surface-2); border-radius: 10px; padding: 10px; min-width: 0; }
+  .col h3 { display: flex; align-items: center; gap: 8px; padding: 2px 4px 8px; }
+  .col h3 .cnt { margin-left: auto; font-family: var(--font-mono); font-size: 0.75rem; color: var(--fg-3); }
+  .col h3 .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .task { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; font-size: 0.88rem; }
+  .task .n { font-family: var(--font-mono); font-size: 0.7rem; color: var(--fg-3); }
+  .task b { display: block; } .task .d { color: var(--fg-2); font-size: 0.82rem; margin-top: 2px; }
+  .task .unlock { font-size: 0.78rem; margin-top: 4px; color: var(--st-done); }
+  /* risks */
+  .risk { display: grid; grid-template-columns: 6px 1fr; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-bottom: 8px; }
+  .risk i { background: var(--st-blocked); } .risk.w i { background: var(--st-human); }
+  .risk div { padding: 10px 12px 10px 0; } .risk b { display: block; }
+  /* gate chain */
+  .chain { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px 12px; overflow-x: auto; }
+  .chain svg { display: block; width: 100%; min-width: 820px; height: auto; font-family: var(--font-body); }
+  /* timeline */
+  .tl { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px 10px; overflow-x: auto; }
+  .tl-inner { min-width: 760px; }
+  .tl-head { display: grid; grid-template-columns: 240px 1fr; gap: 10px; align-items: end; }
+  .tl-months { position: relative; height: 26px; }
+  .tl-months span { position: absolute; bottom: 4px; font-family: var(--font-mono); font-size: 0.74rem; color: var(--fg-2); padding-left: 6px; border-left: 1px solid var(--line); height: 100%; display: flex; align-items: flex-end; }
+  .tl-body { position: relative; }
+  .tl-grid { position: absolute; inset: 0 0 0 250px; pointer-events: none; }
+  .tl-grid i { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--line); }
+  .tl-grid i.alt { background: var(--surface-2); opacity: 0.5; border: 0; }
+  .tl-grid .now { position: absolute; top: 0; bottom: 0; border-left: 2px solid var(--accent); }
+  .tl-grid .now::after { content: "hoje 26/10"; position: absolute; top: -2px; left: 4px; font-family: var(--font-mono); font-size: 0.68rem; color: var(--accent); white-space: nowrap; }
+  .tl-row { position: relative; display: grid; grid-template-columns: 240px 1fr; gap: 10px; align-items: center; min-height: 38px; border-bottom: 1px dashed var(--line); }
+  .tl-row:last-child { border-bottom: 0; }
+  .tl-row.group { min-height: 30px; border-bottom: 0; margin-top: 8px; }
+  .tl-row.group .lab { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .tl-row.group .lab i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .tl-row .lab { font-size: 0.84rem; line-height: 1.25; min-width: 0; padding: 4px 0; }
+  .tl-row .lab small { display: block; color: var(--fg-3); font-family: var(--font-mono); font-size: 0.7rem; }
+  .track { position: relative; height: 30px; min-width: 0; }
+  .bar { position: absolute; top: 7px; height: 16px; border-radius: 4px; min-width: 8px; cursor: default; display: flex; align-items: center; padding: 0 6px; font-family: var(--font-mono); font-size: 0.68rem; color: #fff; white-space: nowrap; overflow: hidden; }
+  .bar.proj { background: var(--st-inflight); } .bar.proj.fuzzy { background: repeating-linear-gradient(90deg, var(--st-inflight) 0 10px, transparent 10px 14px); border: 1px solid var(--st-inflight); color: transparent; }
+  .bar.gate { background: var(--st-human); }
+  .dia { position: absolute; top: 7px; width: 16px; height: 16px; transform: translateX(-50%) rotate(45deg); background: var(--st-legal); border-radius: 2px; cursor: default; }
+  .dia.past { background: var(--st-done); }
+  .track .tag { position: absolute; top: 8px; font-family: var(--font-mono); font-size: 0.7rem; color: var(--fg-2); white-space: nowrap; }
+  .tip { position: fixed; z-index: 20; max-width: 330px; background: var(--fg); color: var(--bg); padding: 8px 10px; border-radius: 6px; font-size: 0.8rem; pointer-events: none; box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 16px; margin: 10px 0 0; font-size: 0.82rem; color: var(--fg-2); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { display: inline-block; width: 16px; height: 10px; border-radius: 2px; }
+  .legend i.proj { background: var(--st-inflight); } .legend i.fuzzy { background: repeating-linear-gradient(90deg, var(--st-inflight) 0 6px, transparent 6px 9px); border: 1px solid var(--st-inflight); }
+  .legend i.gate { background: var(--st-human); } .legend i.leg { width: 10px; height: 10px; transform: rotate(45deg); background: var(--st-legal); } .legend i.now { width: 2px; height: 14px; background: var(--accent); }
+  /* milestone cards */
+  .ms-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 10px; }
+  .ms { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; grid-template-columns: 64px 1fr; gap: 12px; min-width: 0; }
+  .ms .date { text-align: center; border-radius: 8px; padding: 6px 4px; font-family: var(--font-mono); line-height: 1.1; min-width: 0; align-self: start; }
+  .ms .date b { display: block; font-size: 1rem; overflow-wrap: anywhere; } .ms .date small { display: block; font-size: 0.64rem; margin-top: 2px; overflow-wrap: anywhere; white-space: normal; }
+  .ms.legal .date { background: var(--st-legal); color: #fff; } .ms.proj .date { background: var(--st-inflight); color: #fff; } .ms.gate .date { background: var(--st-human); color: #fff; }
+  .ms b.t { display: block; } .ms .why { font-size: 0.84rem; color: var(--fg-2); margin-top: 3px; }
+  .ms .kill { font-size: 0.8rem; margin-top: 5px; color: var(--st-blocked); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.86rem; }
+  .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-3); background: var(--surface-2); }
+  tr:last-child td { border-bottom: 0; } td.n { font-family: var(--font-mono); white-space: nowrap; }
+  @media (max-width: 760px) {
+    .hero { grid-template-columns: 1fr; }
+    .tl-head, .tl-row { grid-template-columns: 1fr; gap: 2px; } .tl-head .lab { display: none; } .tl-grid { left: 0; } .tl-row { min-height: 0; padding-block: 4px; }
+  }
+  @media (prefers-reduced-motion: no-preference) { nav.tabs a { transition: color 120ms; } }
+  .banner { background: var(--accent-soft); border-radius: 8px; padding: 8px 12px; font-size: 0.88rem; margin-bottom: 12px; }
+  .task .n .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .exec { padding-left: 1.2em; } .exec li { margin-bottom: 8px; font-size: 0.88rem; }
+  .exec code { display: block; background: var(--surface-2); padding: 6px 8px; border-radius: 6px; font-size: 0.8rem; white-space: pre-wrap; margin-top: 2px; }
+  .exec .why { color: var(--fg-2); font-size: 0.8rem; }
+  .gantt text { font-family: var(--font-mono); font-size: 11px; fill: var(--fg-2); }
+  .gantt .lbl { fill: var(--fg); font-family: var(--font-body, inherit); font-size: 12px; }
+  .gantt .grid { stroke: var(--line); stroke-width: 1; }
+  .gantt .today { fill: var(--accent-soft); }
+  .gantt .bar { rx: 4; }
+  .gantt .bt { fill: var(--fg); font-size: 10.5px; }
+  .three-tab { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .three-tab .card b.h { display: block; font-size: 1rem; margin-bottom: 4px; }
+  .three-tab .yes { color: var(--st-done); } .three-tab .no { color: var(--st-human); }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Roadmap Luminaris</h1>
+    <div class="meta">lido em origin/main 4463385c · 26/10/2026 · régua 55/63</div>
+  </header>
+
+  <nav class="tabs" aria-label="Abas">
+    <a href="#roadmap" id="tab-roadmap" data-view="roadmap">Roadmap e próximas tarefas</a>
+    <a href="#prazos" id="tab-prazos" data-view="prazos">Prazos e milestones</a>
+    <a href="#semana" id="tab-semana" data-view="semana">Semana 27/10 → 01/11</a>
+  </nav>
+
+  <!-- ================= ABA 1 ================= -->
+  <section class="view" id="view-roadmap" aria-labelledby="tab-roadmap">
+
+    <div class="banner"><b>Atualizado 27/10, 03:00:</b> 18 PRs entraram em <code>main</code> na madrugada (X10a PR-0..4, DANFE PR-0..2, C8 P1..P3, LAC-B PR-0..2, X9 PR-3, #898, #899). Os números e gráficos desta aba são a foto de 26/10; o estado novo e o plano dia a dia estão na aba <a href="#semana">Semana 27/10 → 01/11</a>. Correções: #860 (X9 PR-4) já estava em <code>main</code> desde 23/10; E8 já era nó fechado.</div>
+
+    <div class="hero">
+      <div>
+        <div class="big">Em uma frase: <strong>o código do núcleo está 87% fechado</strong> (55 de 63 nós); o que falta agora depende mais de gente do que de código: seus OKs de merge, as respostas do contador e os gates humanos (H2, deploy, 1º cliente).</div>
+        <ul class="three">
+          <li><b>1</b><span><strong>A semana fechou 14 nós</strong> e mergeou 107 PRs. Os maiores: IBS/CBS 2027 completo, IRRF sobre distribuição e JCP, Entrevista com IA no fluxo de criação, e todos os achados de dashboard de 19/10.</span></li>
+          <li><b>2</b><span><strong>Há 19 PRs abertos esperando seu OK</strong>, em pilhas. Enquanto não entram, o prazo de 01/12 (DANFE com IBS/CBS) fica em risco por fila, não por falta de código.</span></li>
+          <li><b>3</b><span><strong>Você decidiu em 22/10 a ordem dos gates:</strong> H2 (conferir na tela) → M2 (colocar no ar) → 1º cliente → só então fechar ECD/ECF. É isso que a aba de prazos desenha.</span></li>
+        </ul>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><div class="k">PRs mergeados</div><div class="v">107</div><div class="s">semana anterior: 139</div></div>
+        <div class="kpi"><div class="k">Nós fechados</div><div class="v">14</div><div class="s">de 20 a 24/10</div></div>
+        <div class="kpi"><div class="k">Decisões suas</div><div class="v">39</div><div class="s">cédulas no vault</div></div>
+        <div class="kpi"><div class="k">PRs abertos</div><div class="v">19</div><div class="s">esperando OK por número</div></div>
+        <div class="kpi"><div class="k">CI em main</div><div class="v" style="color:var(--st-done)">verde</div><div class="s">26/10 21:47</div></div>
+        <div class="kpi"><div class="k">Testes tocados</div><div class="v">222<small> arq.</small></div><div class="s">14 migrações novas</div></div>
+      </div>
+    </div>
+
+    <h2>Como ler este painel</h2>
+    <p class="lead">Cada item do plano tem um estado. As cores abaixo valem nas duas abas e sempre vêm com o nome escrito, nunca só a cor.</p>
+    <div class="legend-status">
+      <span class="pill done">done</span> fechado e em main ·
+      <span class="pill inflight">inflight</span> em execução ou com PR aberto ·
+      <span class="pill planned">planned</span> planejado, espera "executa" ·
+      <span class="pill blocked">blocked</span> travado por dependência ·
+      <span class="pill human">humano</span> só você (ou o contador) move ·
+      <span class="pill legal">legal</span> data fixada por lei
+    </div>
+    <details class="gloss" style="margin-top:10px">
+      <summary>Glossário dos termos do vault (abra se algum nome abaixo não for óbvio)</summary>
+      <dl class="terms">
+        <div><dt>nó</dt><dd>Uma unidade de trabalho do plano com nota própria em docs/plano. Fecha quando o código está em main.</dd></div>
+        <div><dt>régua 55/63</dt><dd>Os 63 nós do núcleo contábil, financeiro e fiscal. 55 estão fechados. É a medida de "quanto falta do produto base".</dd></div>
+        <div><dt>PRE-ADR → BRIEF → executa</dt><dd>A sequência de um nó: decisão de arquitetura proposta, depois a spec com checklist, depois sua palavra "executa" que libera código.</dd></div>
+        <div><dt>fork</dt><dd>Uma escolha que o agente não pode fazer sozinho. Vai para você em questionário; "ratificado" = respondido.</dd></div>
+        <div><dt>fold</dt><dd>Atualizar a nota do nó (estado, PRs) dentro do próprio PR que fez o trabalho.</dd></div>
+        <div><dt>gate humano</dt><dd>Passo que só pessoa fecha: conferir na tela (H2), validar no PVA (H1), colocar no ar (M2), dado do contador.</dd></div>
+        <div><dt>régua F</dt><dd>Lista separada de 22 nós para alcançar TOTVS, Salesforce e Power BI, dividida em ondas. Nenhum nó dela existe ainda em código.</dd></div>
+        <div><dt>KNOWN_GAPS</dt><dd>Chaves que um teste-guarda deixa registradas como "sabemos que está errado". O nó fecha quando esvazia a sua parte.</dd></div>
+      </dl>
+    </details>
+
+    <h2>Onde o projeto está</h2>
+    <p class="lead">O caminho até o primeiro cliente operando, em cinco estações. O marcador mostra a posição de hoje.</p>
+    <div class="journey">
+      <svg viewBox="0 0 1000 190" role="img" aria-label="Cinco estações do caminho: código do núcleo, conferência na tela, ir ao ar, primeiro cliente, fechamento fiscal; hoje entre a primeira e a segunda">
+        <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--line)"/></marker></defs>
+        <line x1="90" y1="70" x2="910" y2="70" stroke="var(--line)" stroke-width="3" marker-end="url(#arr)"/>
+        <line x1="90" y1="70" x2="240" y2="70" stroke="var(--st-done)" stroke-width="5"/>
+        <g font-size="13" fill="var(--fg)">
+          <g transform="translate(90,70)"><circle r="18" fill="var(--st-done)"/><text y="5" text-anchor="middle" fill="#fff" font-weight="700">1</text>
+            <text y="48" text-anchor="middle" font-weight="600">Código do núcleo</text><text y="66" text-anchor="middle" fill="var(--fg-2)" font-size="12">régua 55/63 · 8 nós abertos</text><text y="82" text-anchor="middle" fill="var(--fg-2)" font-size="12">6 deles esperam gente, não código</text></g>
+          <g transform="translate(295,70)"><circle r="18" fill="var(--st-human)"/><text y="5" text-anchor="middle" fill="#fff" font-weight="700">2</text>
+            <text y="48" text-anchor="middle" font-weight="600">H2 · conferir na tela</text><text y="66" text-anchor="middle" fill="var(--fg-2)" font-size="12">runbooks prontos, em branco</text><text y="82" text-anchor="middle" fill="var(--fg-2)" font-size="12">janela proposta 27/10–07/11</text></g>
+          <g transform="translate(500,70)"><circle r="18" fill="var(--st-human)"/><text y="5" text-anchor="middle" fill="#fff" font-weight="700">3</text>
+            <text y="48" text-anchor="middle" font-weight="600">M2 · colocar no ar</text><text y="66" text-anchor="middle" fill="var(--fg-2)" font-size="12">VPS contratada; falta chave MP</text><text y="82" text-anchor="middle" fill="var(--fg-2)" font-size="12">e webhook de alerta</text></g>
+          <g transform="translate(705,70)"><circle r="18" fill="var(--st-human)"/><text y="5" text-anchor="middle" fill="#fff" font-weight="700">4</text>
+            <text y="48" text-anchor="middle" font-weight="600">1º cliente operando</text><text y="66" text-anchor="middle" fill="var(--fg-2)" font-size="12">NFS-e pelo portal desde 01/11</text><text y="82" text-anchor="middle" fill="var(--fg-2)" font-size="12">o sistema relê e lança</text></g>
+          <g transform="translate(910,70)"><circle r="18" fill="var(--st-planned)"/><text y="5" text-anchor="middle" fill="#fff" font-weight="700">5</text>
+            <text y="48" text-anchor="middle" font-weight="600">Fechar ECD/ECF</text><text y="66" text-anchor="middle" fill="var(--fg-2)" font-size="12">H1 passo 6 + assinaturas</text><text y="82" text-anchor="middle" fill="var(--fg-2)" font-size="12">"último do último" (22/10)</text></g>
+        </g>
+        <g transform="translate(240,70)"><path d="M0,-34 L-9,-18 L9,-18 z" fill="var(--accent)"/><text y="-40" text-anchor="middle" font-size="12" fill="var(--accent)" font-weight="700">hoje</text></g>
+        <text x="500" y="170" text-anchor="middle" font-size="12" fill="var(--fg-3)">Em paralelo às estações 2–4 corre a frente fiscal com prazo legal (DANFE 01/12, CBS 01/01/2027) e a régua F (ondas 1–3).</text>
+      </svg>
+    </div>
+
+    <h2>A semana em gráficos</h2>
+    <p class="lead">Quatro leituras: quando os PRs entraram, de que tipo eram, quanto falta por domínio e em que estado estão os nós abertos.</p>
+    <div class="charts">
+      <div class="chart"><h3>PRs mergeados por dia</h3><div class="sub">19 a 26/10 · empilhado por tipo</div><div id="c-days"></div></div>
+      <div class="chart"><h3>PRs por tipo</h3><div class="sub">107 no total</div><div id="c-types"></div></div>
+      <div class="chart"><h3>Régua por domínio</h3><div class="sub">nós fechados de 63</div><div id="c-regua"></div></div>
+      <div class="chart"><h3>Nós abertos por estado</h3><div class="sub">43 notas abertas em nos/ e gates/</div><div id="c-states"></div></div>
+    </div>
+
+    <h2>O que fechou e o que isso muda</h2>
+    <p class="lead">Nós que viraram <span class="pill done">done</span> na semana, com o efeito prático de cada um.</p>
+    <div class="done-grid">
+      <div class="done"><b>IBS-CBS-2027</b><span class="prs">#812 #826 #829 #833 #842 #861 #868</span><div class="m">O sistema já calcula, credita, apura e exporta IBS/CBS. Pronto para 01/01/2027 assim que estiver no ar.</div></div>
+      <div class="done"><b>IRRF-DISTRIBUICAO</b><span class="prs">#794 #863 #864 #865</span><div class="m">Distribuição de lucros e JCP com IRRF, lançamento, e-Lalur e DARF. O sócio recebe com o imposto certo.</div></div>
+      <div class="done"><b>W1 · Entrevista com IA</b><span class="prs">#889 #890 #891</span><div class="m">A customização da entrevista chega ao /dashboard/create. Modelo trocado para gpt-4o-mini (o antigo dava 404).</div></div>
+      <div class="done"><b>FIX-FE-DASHBOARD</b><span class="prs">#804 #806 #813 #817 #823 #884</span><div class="m">Os 20 achados de tela de 19/10 corrigidos (2 não reproduziram). O que você vê ao clicar está consertado.</div></div>
+      <div class="done"><b>TESTE-ACOPLAMENTO-PRESET</b><span class="prs">#883</span><div class="m">Teste que pega campo lido sem o preset declarar. Virou o critério de pronto de dois nós de correção.</div></div>
+      <div class="done"><b>FE-INCR-BANK-SETTLEMENT-FEE</b><span class="prs">#866</span><div class="m">A tarifa do provedor aparece na tela de baixas.</div></div>
+      <div class="done"><b>Fold R0 (7 nós)</b><span class="prs">#775</span><div class="m">X14-CAIXA, FE-INCR-SIMPLES, DT-ARQ e três correções de 19/10 já estavam em main; o vault passou a dizer isso.</div></div>
+      <div class="done"><b>I6</b><span class="prs">fold #796</span><div class="m">Onboarding: nó fechado por documentação.</div></div>
+    </div>
+
+    <h2>Frentes abertas: quanto falta em cada uma</h2>
+    <p class="lead">Barra verde = PRs já em main; azul = PRs abertos esperando OK. "Próximo passo" diz quem move.</p>
+    <div class="grid2">
+      <div class="card"><h3>Fiscal com prazo legal (onda F1)</h3>
+        <div class="prog"><div class="t"><i class="d" style="width:70%"></i><i class="o" style="width:18%"></i></div><span>14 em main · 4 abertos</span></div>
+        <ul>
+          <li><span class="pill inflight">inflight</span> RETENCOES-FONTE: PR-1/2 em main. PR-3/4 <strong>esperam o contador</strong> (P-RET-4, 7..9).</li>
+          <li><span class="pill inflight">inflight</span> X9 DCTFWeb/MIT: PR-3 em main; PR-4 #860 aberto fecha o nó.</li>
+          <li><span class="pill done">done</span> PRESUMIDO-TETO-78MI #887 em main (nó fechado 26/10). <span class="pill inflight">inflight</span> ISS-TRANSICAO-IBS PR-1 #885 em main; PR-2 espera o contador.</li>
+          <li><span class="pill planned">PR aberto</span> EFD-REINF PR-1 #912 · DANFE IBS/CBS PR-0 #906 → PR-1 #915 · EFICIENCIA-FISCAL PR-1 #913.</li>
+        </ul>
+        <div class="why">Próximo passo: seu OK nos 4 PRs; depois o agente escreve DANFE PR-2/3 e Reinf PR-2..4 (executa já dado).</div>
+      </div>
+      <div class="card"><h3>Emissão de documento fiscal (X10a, X10i, X11)</h3>
+        <div class="prog"><div class="t"><i class="d" style="width:20%"></i><i class="o" style="width:40%"></i></div><span>2 em main · 4 abertos</span></div>
+        <ul>
+          <li><span class="pill blocked">blocked</span> X10a aparece travado no vault, mas 4 PRs foram abertos em 26/10 (#909 → #910 → #914 → #917): NFC-e na porta, IE/séries, montagem 55/65.</li>
+          <li><span class="pill blocked">blocked</span> X10i e X11 esperam o caminho de emissão: quem contrata PSC e e-CNPJ (D5).</li>
+          <li><span class="pill human">decidido</span> NFS-e do 1º cliente pelo portal desde 01/11; o sistema relê. Não exige código novo.</li>
+        </ul>
+        <div class="why">Próximo passo: fold do X10a nesses PRs (agente) e a contratação do PSC (você).</div>
+      </div>
+      <div class="card"><h3>Correções dos achados de 19/10</h3>
+        <div class="prog"><div class="t"><i class="d" style="width:82%"></i><i class="o" style="width:8%"></i></div><span>18 em main · 2 abertos</span></div>
+        <ul>
+          <li><span class="pill done">done</span> E1, E2 (teste de acoplamento), E6 (dashboard).</li>
+          <li><span class="pill inflight">inflight</span> E3 plugins de venda #897 em main, resíduo #898 aberto · E7 analytics #894 em main, #899 aberto.</li>
+          <li><span class="pill inflight">inflight</span> E4 auth lotes 1–4 e E5 chat lotes A–C em main. <strong>11 itens viraram decisão de produto sua</strong> (auth #10/#11/#20; chat #6 #10 #11 #16 #17 #18 #20 e parte do #14).</li>
+        </ul>
+        <div class="why">Próximo passo: suas 11 decisões; sem elas os dois nós ficam inflight para sempre.</div>
+      </div>
+      <div class="card"><h3>Onboarding, FE e plataforma</h3>
+        <div class="prog"><div class="t"><i class="d" style="width:75%"></i><i class="o" style="width:15%"></i></div><span>12 em main · 4 abertos</span></div>
+        <ul>
+          <li><span class="pill done">done</span> W1 e W6 em main (W6 espera sua escolha: manter a rota ou remover).</li>
+          <li><span class="pill inflight">inflight</span> Kanban reordenável: a conferência na tela FALHOU no passo 4; correção #895 + emenda #896 já em main; passos 5–10 por rodar.</li>
+          <li><span class="pill inflight">inflight</span> OBS (observabilidade): Fases A e C em main; Fase B parcial. F5 cobrança MP: tela em main, falta chave no ambiente (M2).</li>
+          <li><span class="pill planned">PR aberto</span> LAC-B "Kit de setor" #916 → #919 · C8 imobilizado emenda #911 → #918 · GOV-CONTADOR #904/#905.</li>
+        </ul>
+        <div class="why">Próximo passo: OK nos PRs; rodar os passos 5–10 do runbook do Kanban (agente, persona revisor).</div>
+      </div>
+      <div class="card"><h3>Régua F (passar TOTVS, Salesforce, Power BI e Odoo)</h3>
+        <div class="prog"><div class="t"><i class="d" style="width:0%"></i><i class="o" style="width:0%"></i></div><span>0 de 22 nós em código</span></div>
+        <ul>
+          <li><span class="pill done">ratificado</span> A régua de 22 nós existe (20/10). A onda F1 (fiscal) já está em execução acima.</li>
+          <li><span class="pill human">dono</span> Q4–Q12 abertas: entram os 6 nós propostos (venda parcelada, pagamento misto, estorno, gorjeta, conciliação 4 vias, contingência do emissor)? Em que ordem?</li>
+          <li><span class="pill planned">proposto</span> Onda 1 venda e recebível (8 nós) → onda 2 (3 nós) passa o Odoo → onda 3 (6 nós).</li>
+        </ul>
+        <div class="why">Próximo passo: suas respostas Q4–Q12. Nada da onda 1 pode virar PRE-ADR antes.</div>
+      </div>
+      <div class="card"><h3>Arquitetura e decisões em maturação</h3>
+        <div class="prog"><div class="t"><i class="d" style="width:100%"></i></div><span>6 PRE-ADRs em main</span></div>
+        <ul>
+          <li><span class="pill planned">PRE-ADR</span> BUILDER-VERTICAIS, OPEN-FINANCE-EXTRATO, FECHAMENTO-ASSISTIDO, VENDA-RECEBIVEL, FOLHA → contabilidade, MODULE-BOUNDARIES. Todos com forks pendentes.</li>
+          <li><span class="pill done">done</span> fetch() cru barrado fora da service layer e dívida paga (27 → 0); mutation testing por diff; openapi regerado.</li>
+        </ul>
+        <div class="why">Próximo passo: ratificar forks quando quiser abrir cada frente. Nenhum tem prazo.</div>
+      </div>
+    </div>
+
+    <h2>Próximas tarefas, por quem move</h2>
+    <p class="lead">Numeradas pela ordem sugerida. A linha verde em cada cartão diz o que a tarefa destrava.</p>
+    <div class="board">
+      <div class="col"><h3><i class="dot" style="background:var(--st-human)"></i>Você (dono)<span class="cnt">6</span></h3>
+        <div class="task"><span class="n">1</span><b>OK de merge dos PRs abertos, por pilha</b><div class="d">26/10: #898 · #899 · #904 #905 · #906→#915 · #909→#910→#914→#917 · #911→#918 · #912 · #913 · #916→#919 · #907 (draft). <b>27/10:</b> 18 já mergeados; restam #926 · #925 · #920 · #912 e #913 (em conflito) · #907 · #904 · #905</div><div class="unlock">destrava: DANFE PR-3, Reinf PR-2/3, X10a PR-6</div></div>
+        <div class="task"><span class="n">3</span><b>11 decisões de produto</b><div class="d">auth #10/#11/#20 · chat #6 #10 #11 #16 #17 #18 #20 e parte do #14 · Kanban: tela × rebalanceio parcial · W6: rota ou remoção · W3: F-W3-C1..C3</div><div class="unlock">destrava: fechar FIX-AUTH, FIX-CHAT, KANBAN, W6</div></div>
+        <div class="task"><span class="n">5</span><b>Régua F: responder Q4–Q12</b><div class="d">6 nós propostos entram? ordem por ondas? instrumentar devolução e cancelamento?</div><div class="unlock">destrava: onda 1 (8 nós) começar a ser planejada</div></div>
+        <div class="task"><span class="n">7</span><b>H2: conferir na tela com o agente de copiloto</b><div class="d">Runbooks em branco; H1 passos 1–5 já provados.</div><div class="unlock">destrava: M2</div></div>
+        <div class="task"><span class="n">8</span><b>M2: colocar no ar</b><div class="d">Chave do Mercado Pago no ambiente, ALERT_WEBHOOK_URL, conta de emissão por unidade; depois a sonda de colunas do F5.</div><div class="unlock">destrava: 1º cliente, F5 em produção, CBS 2027 no ar</div></div>
+        <div class="task"><span class="n">9</span><b>Emissão: contratar PSC + e-CNPJ</b><div class="d">Resto aberto do D5. PNCT até 31/12 (D7).</div><div class="unlock">destrava: X10i, X11, NF-e/NFC-e automáticas</div></div>
+      </div>
+      <div class="col"><h3><i class="dot" style="background:var(--st-inflight)"></i>Agente<span class="cnt">4</span></h3>
+        <div class="task"><span class="n">2</span><b>Fold do X10a — feito 27/10 (#920)</b><div class="d">Nó <code>inflight</code>, PRs #909–#924 e a autorização de 26/10 citados; check do vault íntegro.</div><div class="unlock">feito: índice do plano volta a dizer a verdade</div></div>
+        <div class="task"><span class="n">4</span><b>DANFE IBS/CBS PR-3 (superfície)</b><div class="d">PR-0..PR-2 em main (27/10). O PR-3 precisa do próprio "executa" (as cédulas de 26/10 dizem que não cobrem o PR-3); alvo 30/11.</div><div class="unlock">destrava: prazo legal 01/12</div></div>
+        <div class="task"><span class="n">4b</span><b>EFD-Reinf PR-2 e PR-3</b><div class="d">Depois do #912 reintegrado e mergeado; PR-2 e PR-3 precisam de "executa". PR-4 fica fora (F-REINF-2: manual lido + tenant real).</div><div class="unlock">destrava: onda 0 da régua F fechada</div></div>
+        <div class="task"><span class="n">10</span><b>Esperam só "executa" (sem fork pendente)</b><div class="d">KANBAN EMENDA 1 (refetch no evento online) · EFICIENCIA-FISCAL PR-2 (destravado pelo #914) · C8 P4 (ADR da junção). X10a PR-6 já tem executa; PR-7 segue travado por mTLS × PSC.</div><div class="unlock">entram quando você der "executa"</div></div>
+      </div>
+      <div class="col"><h3><i class="dot" style="background:var(--st-planned)"></i>Contador<span class="cnt">3</span></h3>
+        <div class="task"><span class="n">6</span><b>P-RET-4 e P-RET-7..9</b><div class="d">Retenções: naturezas e códigos que o agente não pode inferir.</div><div class="unlock">destrava: RETENCOES PR-3/4</div></div>
+        <div class="task"><span class="n">6b</span><b>P-EF-1..6 · P-ISS-1..3 · P-PT-1..3</b><div class="d">Eficiência fiscal, transição do ISS, teto do Presumido.</div><div class="unlock">destrava: EFICIENCIA PR-2+, ISS PR-2, validação do teto</div></div>
+        <div class="task"><span class="n">6c</span><b>cClassTrib (D1f) e XML real de NF-e (D2)</b><div class="d">Sem XML real, as fixtures continuam sintéticas (E9).</div><div class="unlock">destrava: E9, emissão com classificação certa</div></div>
+      </div>
+      <div class="col"><h3><i class="dot" style="background:var(--st-legal)"></i>Datas fixas<span class="cnt">4</span></h3>
+        <div class="task"><span class="n">01/11</span><b>NFS-e nacional obrigatória</b><div class="d">Cliente emite no portal; sistema relê. Pronto.</div></div>
+        <div class="task"><span class="n">01/12</span><b>DANFE com IBS/CBS</b><div class="d">PR-2 em main (27/10); falta só o PR-3.</div></div>
+        <div class="task"><span class="n">31/12</span><b>PNCT</b><div class="d">Vigilância de comunicações, com contador.</div></div>
+        <div class="task"><span class="n">01/01</span><b>CBS plena 2027</b><div class="d">Código em main; precisa estar no ar (M2).</div></div>
+      </div>
+    </div>
+
+    <h2>Riscos que esta revisão expôs</h2>
+    <div class="risk"><i></i><div><b>O vault está atrasado em relação ao código em X10a</b>A nota diz "blocked"; quatro PRs de código foram abertos em 26/10. Até o fold, o índice do plano subestima a frente fiscal.</div></div>
+    <div class="risk"><i></i><div><b>19 PRs abertos de uma vez é a receita do conflito de 16/10</b>Muitas frentes partindo da mesma main. Mitigação: mergear por pilha, base primeiro; regenerar o snapshot de DTO na main, não no PR.</div></div>
+    <div class="risk w"><i></i><div><b>01/12 depende de dois PRs que ainda não existem</b>DANFE PR-2 e PR-3. No ritmo da semana cabem em duas; sem OK de merge do PR-0/PR-1, não começam.</div></div>
+    <div class="risk w"><i></i><div><b>Código novo não move mais a régua sozinho</b>Dos 8 nós restantes, 6 esperam gate humano ou terceiro (PSC, chave do MP, ADE da Receita, contador). O gargalo é o de sempre: oráculo externo.</div></div>
+  </section>
+
+  <!-- ================= ABA 2 ================= -->
+  <section class="view" id="view-prazos" aria-labelledby="tab-prazos" hidden>
+    <div class="hero" style="grid-template-columns:1fr">
+      <div class="big">Três tipos de data nesta aba: <strong style="color:var(--st-legal)">legais</strong> (fixas, verificadas no vault), <strong style="color:var(--st-inflight)">projeções do agente</strong> (calculadas pelo ritmo da semana, não ratificadas) e <strong style="color:var(--st-human)">gates humanos</strong> (janelas propostas para caber antes de 01/12; a data é sua).
+        <div class="small muted" style="margin-top:6px">Premissas: 107 PRs e 14 nós por semana, cerca de 3 PRs de feature por dia, OK de merge em até 2 dias, no máximo 3 frentes em paralelo.</div></div>
+    </div>
+
+    <h2>A cadeia de gates que você decidiu em 22/10</h2>
+    <p class="lead">Cada caixa é um gate humano. A seta diz a ordem; o texto embaixo diz o que falta para passar.</p>
+    <div class="chain">
+      <svg viewBox="0 0 1000 200" role="img" aria-label="Cadeia: H1 passos 1 a 5 feitos, depois H2, M2, primeiro cliente e H1 passo 6">
+        <defs><marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--fg-3)"/></marker></defs>
+        <g font-size="12.5" fill="var(--fg)">
+          <g transform="translate(10,40)"><rect width="180" height="100" rx="10" fill="var(--surface-2)" stroke="var(--st-done)" stroke-width="2"/>
+            <text x="90" y="24" text-anchor="middle" font-weight="700">H1 · passos 1–5</text><text x="90" y="44" text-anchor="middle" fill="var(--st-done)" font-weight="600">FEITO 22/10</text>
+            <text x="90" y="66" text-anchor="middle" fill="var(--fg-2)" font-size="11.5">ECD 0 erros no PVA</text><text x="90" y="82" text-anchor="middle" fill="var(--fg-2)" font-size="11.5">ECF importa (L10, Y600)</text></g>
+          <line x1="192" y1="90" x2="218" y2="90" stroke="var(--fg-3)" stroke-width="2" marker-end="url(#arr2)"/>
+          <g transform="translate(220,40)"><rect width="180" height="100" rx="10" fill="var(--surface-2)" stroke="var(--st-human)" stroke-width="2"/>
+            <text x="90" y="24" text-anchor="middle" font-weight="700">H2 · conferir na tela</text><text x="90" y="44" text-anchor="middle" fill="var(--st-human)" font-weight="600">PRÓXIMO</text>
+            <text x="90" y="66" text-anchor="middle" fill="var(--fg-2)" font-size="11.5">runbooks em branco</text><text x="90" y="82" text-anchor="middle" fill="var(--fg-2)" font-size="11.5">janela 27/10–07/11</text></g>
+          <line x1="402" y1="90" x2="428" y2="90" stroke="var(--fg-3)" stroke-width="2" marker-end="url(#arr2)"/>
+          <g transform="translate(430,40)"><rect width="180" height="100" rx="10" fill="var(--surface-2)" stroke="var(--st-human)" stroke-width="2"/>
+            <text x="90" y="24" text-anchor="middle" font-weight="700">M2 · colocar no ar</text><text x="90" y="44" text-anchor="middle" fill="var(--st-human)" font-weight="600">DEPOIS DO H2</text>
+            <text x="90" y="66" text-anchor="middle" fill="var(--fg-2)" font-size="11.5">VPS ok · chave MP · webhook</text><text x="90" y="82" text-anchor="middle" fill="var(--fg-2)" font-size="11.5">janela 10–21/11</text></g>
+          <line x1="612" y1="90" x2="638" y2="90" stroke="var(--fg-3)" stroke-width="2" marker-end="url(#arr2)"/>
+          <g transform="translate(640,40)"><rect width="160" height="100" rx="10" fill="var(--surface-2)" stroke="var(--st-human)" stroke-width="2"/>
+            <text x="80" y="24" text-anchor="middle" font-weight="700">1º cliente</text><text x="80" y="44" text-anchor="middle" fill="var(--st-human)" font-weight="600">DEZ/2026 (sua data)</text>
+            <text x="80" y="66" text-anchor="middle" fill="var(--fg-2)" font-size="11.5">NFS-e pelo portal</text><text x="80" y="82" text-anchor="middle" fill="var(--fg-2)" font-size="11.5">sistema relê e lança</text></g>
+          <line x1="802" y1="90" x2="828" y2="90" stroke="var(--fg-3)" stroke-width="2" marker-end="url(#arr2)"/>
+          <g transform="translate(830,40)"><rect width="160" height="100" rx="10" fill="var(--surface-2)" stroke="var(--st-planned)" stroke-width="2" stroke-dasharray="6 4"/>
+            <text x="80" y="24" text-anchor="middle" font-weight="700">H1 · passo 6</text><text x="80" y="44" text-anchor="middle" fill="var(--st-planned)" font-weight="600">ÚLTIMO DO ÚLTIMO</text>
+            <text x="80" y="66" text-anchor="middle" fill="var(--fg-2)" font-size="11.5">ECD assinada do cliente</text><text x="80" y="82" text-anchor="middle" fill="var(--fg-2)" font-size="11.5">assinaturas H1 e P4</text></g>
+        </g>
+        <text x="500" y="178" text-anchor="middle" font-size="12" fill="var(--fg-3)">Risco aceito em 22/10: um erro novo na ECF só aparece depois do deploy e vira correção antes da 1ª entrega oficial.</text>
+      </svg>
+    </div>
+
+    <h2>Linha do tempo: 19/10/2026 a 28/02/2027</h2>
+    <p class="lead">Losango = data fixa por lei. Barra cheia = projeção com data; barra tracejada = projeção com mais incerteza. Barra âmbar = janela proposta para um gate humano. Passe o mouse para ver a base de cada item.</p>
+    <div class="tl"><div class="tl-inner" id="tl"></div></div>
+    <div class="legend">
+      <span><i class="leg"></i> prazo legal</span>
+      <span><i class="proj"></i> projeção do agente</span>
+      <span><i class="fuzzy"></i> projeção incerta</span>
+      <span><i class="gate"></i> gate humano (janela proposta)</span>
+      <span><i class="now"></i> hoje, 26/10</span>
+    </div>
+
+    <h2>Cada milestone, por que nesta data e o que derruba</h2>
+    <div class="ms-grid" id="ms-cards"></div>
+
+    <h2>Tabela para conferência</h2>
+    <div class="tablewrap">
+      <table id="ms-table">
+        <thead><tr><th class="n">#</th><th>Milestone</th><th>Tipo</th><th class="n">Data</th><th>Base e premissa</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= ABA 3 ================= -->
+  <section class="view" id="view-semana" aria-labelledby="tab-semana" hidden>
+
+    <div class="hero">
+      <div>
+        <div class="big">Em uma frase: <strong>o que é código destravado cabe até domingo</strong> — se o OK de merge vier no mesmo dia e os quatro "executa" vierem até terça. A régua de 63 e a régua F <strong>não fecham nesta semana</strong>: dependem do contador, do PSC e de planejamento que ainda não existe.</div>
+        <ul class="three">
+          <li><b>1</b><span><strong>Ponto de partida (27/10, 03:00):</strong> 18 PRs entraram em main na madrugada; sobram 8 abertos, dois deles (#912, #913) em conflito e à espera de reintegração.</span></li>
+          <li><b>2</b><span><strong>Ritmo:</strong> no máximo 3 frentes de agente por dia, base → topo nas pilhas, snapshot de DTO e openapi regerados na main. Foi assim que 18 PRs couberam numa noite sem se pisar.</span></li>
+          <li><b>3</b><span><strong>O que não entra:</strong> X10a PR-7..9 (PSC + e-CNPJ), Reinf PR-4, RETENCOES PR-3/4, ISS PR-2, F6, X10i/X11, CSLL-RESSEGURADORES, X7, M2 e as ondas da régua F — nenhum depende de código.</span></li>
+        </ul>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><div class="k">Mergeados na madrugada</div><div class="v">18</div><div class="s">26/10 23:55 → 27/10 02:53</div></div>
+        <div class="kpi"><div class="k">Abertos agora</div><div class="v">8</div><div class="s">2 em conflito com main</div></div>
+        <div class="kpi"><div class="k">"Executa" que faltam</div><div class="v">4</div><div class="s">+ 3 pedidos, 2 opcionais</div></div>
+        <div class="kpi"><div class="k">Régua no domingo</div><div class="v">55<small>/63</small></div><div class="s">igual a hoje, por desenho</div></div>
+      </div>
+    </div>
+
+    <h2>A resposta em três camadas</h2>
+    <div class="three-tab">
+      <div class="card"><b class="h"><span class="yes">Sim, condicionado</span> — código destravado</b>~9 PRs de feature + 2 reintegrações. Condição: OK de merge no mesmo dia e os 4 "executa" até terça. Sem OK diário, quinta já abre conflito entre DANFE PR-3 e EF PR-2 (os dois tocam snapshot de DTO e openapi) e metade escorrega para 02–04/11.</div>
+      <div class="card"><b class="h"><span class="no">Não</span> — régua de 63</b>Dos 8 nós abertos, 6 esperam terceiro: contador (RETENCOES, ISS), PSC/e-CNPJ (X10a PR-7, X10i, X11), chave do MP (F6), ADE da Receita (CSLL-RESSEGURADORES), oráculos humanos (X7). A régua termina a semana em 55/63 mesmo com tudo mergeado.</div>
+      <div class="card"><b class="h"><span class="no">Não</span> — régua F (22 nós)</b>Nenhum nó existe em nos/. Q4–Q12 estão abertas desde 20/10, e cada nó pede PRE-ADR → forks → BRIEF → executa: no mínimo duas semanas por onda. Responder Q4–Q12 no sábado abre a onda 1 na semana que vem.</div>
+    </div>
+
+    <h2>Quem faz o quê, dia a dia</h2>
+    <div class="chart"><h3>Linha do tempo da semana</h3><div class="sub">cada barra é uma frente; cor = quem move (com rótulo); hoje sombreado</div>
+      <div class="legend-status" style="margin-bottom:6px"><span><i class="dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--st-human);vertical-align:middle;margin-right:4px"></i>Você (OK, decisão, gate)</span><span><i class="dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--st-inflight);vertical-align:middle;margin-right:4px"></i>Agente (código, fold, pacote)</span><span><i class="dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--st-legal);vertical-align:middle;margin-right:4px"></i>Lei (data fixa)</span></div>
+      <div id="c-week"></div>
+    </div>
+
+    <div class="board" style="margin-top:12px">
+      <div class="col"><h3><i class="dot" style="background:var(--accent)"></i>ter 27/10<span class="cnt">hoje</span></h3>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-human)"></i>Você</span><b>OK por número: #925, #904, #905, #920, #926</b><div class="d">Os quatro primeiros são só docs. O #926 (X10a PR-5) é fiscal: ler a nota de risco da leitura E3-2 no corpo do PR.</div></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-human)"></i>Você</span><b>Dar os 4 "executa" + o pedido de integração</b><div class="d">Lista pronta para colar logo abaixo. Podem vir todos hoje; o agente consome na ordem DANFE → Reinf → EF → Kanban.</div></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-inflight)"></i>Agente</span><b>Reintegrar #912 e #913 sobre a main</b><div class="d">sessao-integracao: main vence em snapshot/openapi; código conflitante resolve pela spec.</div></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-inflight)"></i>Agente</span><b>X10a PR-6 (Fase F)</b><div class="d">Já coberto pelo executa de 26/10; empilhado no #926.</div></div>
+      </div>
+      <div class="col"><h3><i class="dot" style="background:var(--fg-3)"></i>qua 28/10</h3>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-human)"></i>Você</span><b>OK: #912 e #913 reintegrados · X10a PR-6</b><div class="d">Os dois primeiros são fiscais: ler o "em duas linhas" de cada um.</div></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-human)"></i>Você</span><b>Questionário: 11 decisões de produto</b><div class="d">auth #10/#11, #20 · chat #6 #10 #11 #16 #17 #18 #20 e parte do #14. O agente prepara com contexto e recomendação, uma rodada só.</div></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-inflight)"></i>Agente</span><b>DANFE PR-3 · Reinf PR-2 · EF PR-2</b><div class="d">Três frentes, cada uma sobre a main do dia. DANFE PR-3 fecha o nó um mês antes do 01/12.</div></div>
+      </div>
+      <div class="col"><h3><i class="dot" style="background:var(--fg-3)"></i>qui 29/10</h3>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-human)"></i>Você</span><b>OK: DANFE PR-3, Reinf PR-2, EF PR-2</b></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-human)"></i>Você</span><b>H2 dia 1 — sign-off de browser</b><div class="d">Com o agente de copiloto. O ambiente já foi provado pelo runner do #925 (H2 passos 1–3).</div><div class="unlock">destrava: M2 na semana que vem</div></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-inflight)"></i>Agente</span><b>Reinf PR-3 · lote final FIX-AUTH/CHAT · Kanban EMENDA 1</b><div class="d">O lote FIX usa as decisões de quarta.</div></div>
+      </div>
+      <div class="col"><h3><i class="dot" style="background:var(--fg-3)"></i>sex 30/10</h3>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-human)"></i>Você</span><b>OK: Reinf PR-3, lotes FIX, Kanban E1</b></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-human)"></i>Você</span><b>H2 dia 2 — passos restantes + assinatura</b><div class="d">Assinatura só sua. Decidir também #907 (nó + correção) e C8 P4, se quiser nesta semana.</div></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-inflight)"></i>Agente</span><b>Runbook do Kanban (passos 5–10) · folds · pacote do contador</b><div class="d">Runbook em build de produção, assinado como agente (regra de 25/10). Pacote: P-RET-4/7..9, P-ISS-1..3, P-EF-1..6, P-PT-1..3.</div></div>
+      </div>
+      <div class="col"><h3><i class="dot" style="background:var(--fg-3)"></i>sáb 31/10</h3>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-human)"></i>Você</span><b>Enviar o pacote ao contador</b><div class="unlock">destrava: RETENCOES PR-3/4, ISS PR-2, EF PR-3..5</div></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-human)"></i>Você</span><b>Régua F: responder Q4–Q12</b><div class="d">Questionário preparado pelo agente.</div><div class="unlock">destrava: onda 1 começa a ser planejada em 03/11</div></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-inflight)"></i>Agente</span><b>#907 e C8 P4 se autorizados · reserva para conflitos</b></div>
+      </div>
+      <div class="col"><h3><i class="dot" style="background:var(--st-legal)"></i>dom 01/11</h3>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-legal)"></i>Lei</span><b>NFS-e nacional obrigatória</b><div class="d">Nada no código: o cliente emite no portal e o sistema relê. Conferir que o cliente sabe operar o portal — fora do repo.</div></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-inflight)"></i>Agente</span><b>Revisão semanal de 02/11 + artefato · check do vault</b></div>
+        <div class="task"><span class="n"><i class="dot" style="background:var(--st-human)"></i>Você</span><b>Nada obrigatório</b></div>
+      </div>
+    </div>
+
+    <h2>Os "executa" e pedidos, prontos para colar</h2>
+    <div class="card">
+      <ol class="exec">
+        <li>Executa que falta — DANFE<code>Executa o NFE-DANFE-IBSCBS PR-3 (itens 17–21 do BRIEF) — sessao-feature, sem merge.</code><span class="why">As cédulas de 26/10 dizem "não é executa do PR-3". Fecha o nó um mês antes do prazo legal.</span></li>
+        <li>Executa que falta — EFD-Reinf<code>Executa o EFD-REINF PR-2 e PR-3 (BRIEF #848) — sessao-feature, um PR por fatia, empilhados, sem merge.</code><span class="why">26/10 cobriu só o PR-1. Dependências (IRRF-DISTRIBUICAO, RETENCOES PR-2) já em main. PR-4 fica fora.</span></li>
+        <li>Executa que falta — Eficiência fiscal<code>Executa o EFICIENCIA-FISCAL PR-2 (BRIEF #846, segregação por NCM) — sessao-feature, sem merge.</code><span class="why">O bloqueio do BRIEF ("até o ProductFiscalProfile estar em main") caiu com o #914.</span></li>
+        <li>Executa que falta — Kanban<code>Executa a EMENDA 1 do FE-INCR-KANBAN-REORDER (#896) — sessao-feature, sem merge; depois roda os passos 5–10 do runbook em build de produção.</code><span class="why">O executa de 21/10 cobriu o nó, não a emenda.</span></li>
+        <li>Pedido (não é executa)<code>Integra #912 e #913 sobre a main — sessao-integracao, sem merge.</code><span class="why">O executa do PR-1 cobre o código; o transporte é da sessão de integração (inferido).</span></li>
+        <li>Pedido<code>Prepara o questionário das decisões de FIX-AUTH-CONTA (#10/#11, #20) e FIX-CHAT-AGENTE (#6, #10, #11, #16, #17, #18, #20, #14).</code></li>
+        <li>Pedido<code>Monta o pacote do contador com P-RET-4/7..9, P-ISS-1..3, P-EF-1..6 e P-PT-1..3.</code></li>
+        <li>Opcional<code>Executa o C8 P4 (ADR-INCR-FIXED-ASSETS-EMENDA-JUNCAO) — sessao-feature, sem merge.</code><span class="why">"faz o C8 emenda 3.2" cobriu P1–P3; a junção tem ADR próprio (inferido).</span></li>
+        <li>Opcional<code>#907: o nó é &lt;NÓ&gt;; executa a sessao-correcao dos itens 32 e 36 da ITG 2000, sem merge.</code></li>
+      </ol>
+    </div>
+
+    <h2>Como fica domingo, se tudo acima acontecer</h2>
+    <div class="three-tab">
+      <div class="card"><h3>Fecha</h3><ul><li>NFE-DANFE-IBSCBS <b>done</b> (um mês antes do 01/12)</li><li>EFD-REINF PR-1..PR-3 em main (PR-4 fora)</li><li>EFICIENCIA-FISCAL PR-1/PR-2 em main (PR-3..5 com o contador)</li><li>X10a EMENDA-2 fechada até o PR-6 (nó segue inflight pelo PR-7)</li><li>FIX-AUTH-CONTA, FIX-CHAT-AGENTE e KANBAN <b>done</b></li><li>H2 assinado → M2 pode começar em 03/11</li></ul></div>
+      <div class="card"><h3>Não muda</h3><ul><li><b>Régua 55/63</b>, igual a hoje: nenhum nó acima está na régua ou fecha nela esta semana</li><li>Régua F continua em 0 nós planejados até Q4–Q12</li><li>PSC + e-CNPJ, chave do MP, ADE da Receita e respostas do contador seguem fora do seu e do meu alcance de código</li></ul></div>
+      <div class="card"><h3>O que ganha a semana</h3><ul><li>Prazo legal de 01/12 garantido com um mês de folga</li><li>Onda 0 da régua F quase fechada (só RETENCOES PR-3/4 de fora, por causa do contador)</li><li>H2 sai do caminho do M2 — e o M2 é o que põe o CBS 2027 e o F5 no ar</li></ul></div>
+    </div>
+
+  </section>
+
+</div>
+
+<div class="tip" id="tip" hidden></div>
+
+<script>
+(function () {
+  // ---------- tabs
+  var views = { roadmap: document.getElementById('view-roadmap'), prazos: document.getElementById('view-prazos'), semana: document.getElementById('view-semana') };
+  var tabs = document.querySelectorAll('nav.tabs a');
+  function show(name) {
+    if (!views[name]) name = 'roadmap';
+    Object.keys(views).forEach(function (k) { views[k].hidden = (k !== name); });
+    tabs.forEach(function (a) { if (a.dataset.view === name) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    try { localStorage.setItem('lum-roadmap-tab', name); } catch (e) {}
+  }
+  var initial = (location.hash || '').replace('#', '');
+  if (!views[initial]) { try { initial = localStorage.getItem('lum-roadmap-tab') || 'roadmap'; } catch (e) { initial = 'roadmap'; } }
+  show(initial);
+  window.addEventListener('hashchange', function () { show((location.hash || '').replace('#', '')); });
+
+  var NS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs, text) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; return e; }
+
+  // ---------- chart 1: PRs por dia, empilhado por tipo (dados: gh pr list merged 19–26/10)
+  var days = ['19/10', '20/10', '21/10', '22/10', '23/10', '24/10', '25/10', '26/10'];
+  var series = [
+    { k: 'docs', c: 'var(--s1)', v: [0, 10, 14, 14, 5, 2, 1, 0] },
+    { k: 'fix', c: 'var(--s2)', v: [0, 5, 7, 9, 1, 3, 4, 0] },
+    { k: 'feat', c: 'var(--s3)', v: [0, 0, 7, 3, 7, 1, 5, 1] },
+    { k: 'outros', c: 'var(--s4)', v: [0, 2, 3, 0, 0, 0, 3, 0] }
+  ];
+  (function () {
+    var W = 520, H = 230, padL = 30, padR = 10, padT = 10, padB = 28, max = 35;
+    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'PRs mergeados por dia, empilhados por tipo' });
+    var iw = W - padL - padR, ih = H - padT - padB, bw = iw / days.length, bar = bw * 0.6;
+    [0, 10, 20, 30].forEach(function (g) { var y = padT + ih - g / max * ih; svg.appendChild(el('line', { x1: padL, x2: W - padR, y1: y, y2: y, stroke: 'var(--line)', 'stroke-width': 1 })); svg.appendChild(el('text', { x: padL - 6, y: y + 4, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--fg-3)' }, g)); });
+    days.forEach(function (d, i) {
+      var x = padL + i * bw + (bw - bar) / 2, acc = 0, total = 0;
+      series.forEach(function (s) { total += s.v[i]; });
+      series.forEach(function (s, si) {
+        var v = s.v[i]; if (!v) return;
+        var h = v / max * ih, y = padT + ih - (acc + v) / max * ih;
+        var r = el('rect', { x: x, y: y + (si ? 0 : 0), width: bar, height: Math.max(0, h - (acc ? 2 : 0)), fill: s.c, rx: (acc + v === total) ? 4 : 0 });
+        r.appendChild(el('title', {}, d + ' · ' + s.k + ': ' + v)); svg.appendChild(r); acc += v;
+      });
+      svg.appendChild(el('text', { x: x + bar / 2, y: H - 10, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--fg-2)' }, d));
+      if (total) svg.appendChild(el('text', { x: x + bar / 2, y: padT + ih - total / max * ih - 5, 'text-anchor': 'middle', 'font-size': 10.5, fill: 'var(--fg)', 'font-weight': 600 }, total));
+    });
+    var host = document.getElementById('c-days'); host.appendChild(svg);
+    var leg = document.createElement('div'); leg.className = 'leg';
+    series.forEach(function (s) { var sp = document.createElement('span'); sp.innerHTML = '<i style="background:' + s.c + '"></i>' + s.k; leg.appendChild(sp); });
+    host.appendChild(leg);
+    var rd = document.createElement('p'); rd.className = 'read'; rd.textContent = 'Leitura: o pico foi 21/10 (31 PRs, 14 deles de documentação); de 23/10 em diante a maioria é feature e correção. 19/10 e 26/10 são domingo e segunda à noite.'; host.appendChild(rd);
+  })();
+
+  // ---------- chart 2: PRs por tipo (barras horizontais)
+  (function () {
+    var data = [['docs', 46, 'var(--s1)'], ['fix', 29, 'var(--s2)'], ['feat', 24, 'var(--s3)'], ['chore', 5, 'var(--s4)'], ['test', 2, 'var(--s4)'], ['refactor', 1, 'var(--s4)']];
+    var W = 520, rowH = 26, padL = 70, padR = 40, H = data.length * rowH + 10, max = 50;
+    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'PRs por tipo' });
+    data.forEach(function (d, i) {
+      var y = 5 + i * rowH, w = d[1] / max * (W - padL - padR);
+      svg.appendChild(el('text', { x: padL - 8, y: y + 15, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--fg)' }, d[0]));
+      svg.appendChild(el('rect', { x: padL, y: y + 4, width: Math.max(w, 3), height: 14, fill: d[2], rx: 4 }));
+      svg.appendChild(el('text', { x: padL + w + 6, y: y + 15, 'font-size': 11, fill: 'var(--fg)', 'font-weight': 600 }, d[1]));
+    });
+    var host = document.getElementById('c-types'); host.appendChild(svg);
+    var rd = document.createElement('p'); rd.className = 'read'; rd.textContent = 'Leitura: 43% dos PRs foram docs (PRE-ADRs, BRIEFs, cédulas, folds). A semana foi mais de decidir do que de abrir frente nova; os 24 feat concentram IBS/CBS, IRRF, retenções e W1.'; host.appendChild(rd);
+  })();
+
+  // ---------- chart 3: régua por domínio (barras 100%)
+  (function () {
+    var data = [['contábil', 21, 22], ['financeiro', 17, 19], ['fiscal', 17, 22]];
+    var W = 520, rowH = 34, padL = 80, padR = 60, H = data.length * rowH + 8;
+    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Régua por domínio: fechados de total' });
+    data.forEach(function (d, i) {
+      var y = 4 + i * rowH, full = W - padL - padR, w = d[1] / d[2] * full;
+      svg.appendChild(el('text', { x: padL - 8, y: y + 19, 'text-anchor': 'end', 'font-size': 11.5, fill: 'var(--fg)' }, d[0]));
+      svg.appendChild(el('rect', { x: padL, y: y + 6, width: full, height: 18, fill: 'var(--surface-2)', rx: 4 }));
+      svg.appendChild(el('rect', { x: padL, y: y + 6, width: w, height: 18, fill: 'var(--st-done)', rx: 4 }));
+      svg.appendChild(el('text', { x: padL + 8, y: y + 19, 'font-size': 11, fill: '#fff', 'font-weight': 600 }, d[1] + ' fechados'));
+      svg.appendChild(el('text', { x: padL + full + 8, y: y + 19, 'font-size': 11, fill: 'var(--fg)', 'font-weight': 600 }, d[1] + '/' + d[2]));
+    });
+    var host = document.getElementById('c-regua'); host.appendChild(svg);
+    var rd = document.createElement('p'); rd.className = 'read'; rd.textContent = 'Leitura: o fiscal é o domínio com mais a fazer (5 abertos), mas 3 deles (X10a, X10i, X11) esperam o caminho de emissão, não código. O contábil tem 1 aberto; o financeiro, 2 (F5 espera o deploy; F6 espera chave do Mercado Pago).'; host.appendChild(rd);
+  })();
+
+  // ---------- chart 4: nós abertos por estado
+  (function () {
+    var data = [['inflight (em execução)', 13, 'var(--st-inflight)'], ['human-open (gate humano)', 13, 'var(--st-human)'], ['blocked (travado)', 7, 'var(--st-blocked)'], ['planned (espera executa)', 6, 'var(--st-planned)'], ['deferred (adiado)', 4, 'var(--st-planned)']];
+    var W = 520, rowH = 26, padL = 190, padR = 40, H = data.length * rowH + 10, max = 15;
+    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Nós abertos por estado' });
+    data.forEach(function (d, i) {
+      var y = 5 + i * rowH, w = d[1] / max * (W - padL - padR);
+      svg.appendChild(el('text', { x: padL - 8, y: y + 15, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--fg)' }, d[0]));
+      svg.appendChild(el('rect', { x: padL, y: y + 4, width: w, height: 14, fill: d[2], rx: 4 }));
+      svg.appendChild(el('text', { x: padL + w + 6, y: y + 15, 'font-size': 11, fill: 'var(--fg)', 'font-weight': 600 }, d[1]));
+    });
+    var host = document.getElementById('c-states'); host.appendChild(svg);
+    var rd = document.createElement('p'); rd.className = 'read'; rd.textContent = 'Leitura: 13 notas só uma pessoa fecha (H1, H2, M2, contador, XML real, PSC). É o mesmo número das que estão em execução. Metade do que está aberto não é trabalho de agente.'; host.appendChild(rd);
+  })();
+
+  // ---------- timeline
+  var START = new Date('2026-10-19T00:00:00'), END = new Date('2027-02-28T00:00:00'), TODAY = new Date('2026-10-26T00:00:00');
+  function pct(d) { return Math.max(0, Math.min(100, (d - START) / (END - START) * 100)); }
+  function D(s) { return new Date(s + 'T00:00:00'); }
+  function fmt(d) { return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2); }
+
+  var ms = [
+    { g: 'Prazos legais (verificados no vault)', c: 'var(--st-legal)' },
+    { id: 'L1', kind: 'legal', on: '2026-11-01', t: 'NFS-e nacional obrigatória (ME/EPP do Simples)', tipo: 'legal', data: '01/11/2026', base: 'Res. CGSN 191 art. 3º I. O cliente emite no portal; o ManualEmissor já está em main (decisão D5, 22/10).', kill: 'Nada no código. Derruba só se o cliente não souber operar o portal.' },
+    { id: 'L2', kind: 'legal', on: '2026-12-01', t: 'DANFE com IBS/CBS (NT 2026.010) e NF-e p/ não contribuinte', tipo: 'legal', data: '01/12/2026', base: 'Alvo do BRIEF NFE-DANFE-IBSCBS é 30/11; Ato Conjunto RFB/CGIBS 4/2026 (D7).', kill: 'PR-0/PR-1 sem OK de merge até 03/11; PR-2/PR-3 ainda não escritos.' },
+    { id: 'L3', kind: 'legal', on: '2026-12-31', t: 'PNCT: vigilância de comunicações', tipo: 'legal', data: '31/12/2026', base: 'D7. Corrigir com contador responsável; nasce com a emissão.', kill: 'Emissão não contratada (PSC/e-CNPJ) empurra a obrigação, não a data.' },
+    { id: 'L4', kind: 'legal', on: '2027-01-01', t: 'CBS plena, IBS teste, Simples pela LC 214', tipo: 'legal', data: '01/01/2027', base: 'IBS-CBS-2027 fechado em 24/10. Precisa M2 em produção e as linhas CBS 2027 publicadas nos parâmetros legais.', kill: 'M2 não acontecer em 2026; linhas de 2027 ficarem como rascunho.' },
+    { g: 'Projeções do agente (pelo ritmo da semana)', c: 'var(--st-inflight)' },
+    { id: 'P1', kind: 'proj', from: '2026-10-27', to: '2026-10-30', t: 'Fila de 19 PRs zerada (merge por pilha)', tipo: 'projeção', data: '28–30/10', base: 'Depende só do seu OK por número. A pilha mais longa (X10a) tem 4 PRs.', kill: 'OK parado mais de 3 dias; conflito de snapshot de DTO entre pilhas.' },
+    { id: 'P3', kind: 'proj', from: '2026-11-02', to: '2026-11-13', t: 'EFD-Reinf PR-2 a PR-4 em main', tipo: 'projeção', data: '06–13/11', base: 'PR-1 #912 aberto; forks ratificados 22/10, nenhum pendente; 3 PRs no ritmo de 1 a cada 3 dias.', kill: 'Contador não responder P-REINF (natureza do rendimento) antes do PR-3.' },
+    { id: 'P2', kind: 'proj', from: '2026-11-03', to: '2026-11-14', t: 'DANFE IBS/CBS PR-2 e PR-3 em main', tipo: 'projeção', data: '07–14/11', base: 'Executa já dado para PR-0..3; alvo do BRIEF 30/11; a projeção fecha o nó 2 semanas antes do L2 por folga.', kill: 'Biblioteca de PDF escolhida no fork 4b não renderizar o leiaute do MOC 7.0.' },
+    { id: 'P4', kind: 'proj', from: '2026-11-13', to: '2026-11-13', t: 'Onda 0 da régua F fechada', tipo: 'projeção', data: '13/11', base: 'F5 FE, RETENCOES PR-1/2 e IBS-CBS PR-5 já em main; falta só EFD-REINF. RETENCOES PR-3/4 ficam fora (contador).', kill: 'P3 atrasar.' },
+    { id: 'P5', kind: 'proj', fuzzy: true, from: '2026-11-23', to: '2026-12-18', t: 'Onda 1: venda e recebível (8 nós) em código', tipo: 'projeção', data: 'fim nov → meados dez', base: 'Nenhum nó existe ainda. 2 semanas de PRE-ADR + BRIEF depois de Q10–Q12; EMAIL-TRANSPORT primeiro (Q7 BYOK).', kill: 'Q10–Q12 sem resposta até 09/11; mais de 3 frentes em paralelo.' },
+    { id: 'P6', kind: 'proj', fuzzy: true, from: '2026-12-14', to: '2027-01-15', t: 'Onda 2 (3 nós): passa o Odoo (26,5 de 32)', tipo: 'projeção', data: 'dez/2026 → jan/2027', base: 'D-2026-10-22-LISTA-BRIEFS-ODOO; os pontos foram copiados do painel de 22/10, não re-medidos no código.', kill: 'P5 atrasar; recesso de fim de ano.' },
+    { id: 'P7', kind: 'proj', fuzzy: true, from: '2027-01-11', to: '2027-02-26', t: 'Onda 3 (6 nós): 31 de 32', tipo: 'projeção', data: 'jan–fev/2027', base: 'RATEIO-DIMENSOES, ORCAMENTO, RB-CONTABIL, ALCADA, PROVISOES-AGENDADAS, FECHAMENTO-ASSISTIDO.', kill: 'PROVISOES-AGENDADAS colide com o trilho R-motor-regras e exige ADR.' },
+    { g: 'Gates humanos (janelas propostas pelo agente)', c: 'var(--st-human)' },
+    { id: 'G1', kind: 'gate', from: '2026-10-27', to: '2026-11-07', t: 'H2: conferir na tela', tipo: 'gate humano', data: '27/10–07/11', base: 'Runbooks em branco; H1 passos 1–5 feitos; não espera mais o H1 (22/10). O agente é copiloto e não assina.', kill: 'Achado novo na tela vira correção antes do M2.' },
+    { id: 'G2', kind: 'gate', from: '2026-11-10', to: '2026-11-21', t: 'M2: colocar no ar', tipo: 'gate humano', data: '10–21/11', base: 'VPS contratada 26/09; chave do MP; ALERT_WEBHOOK_URL; conta de emissão por unidade (R8). Depois de G1.', kill: 'H2 reprovar; chave do MP não emitida.' },
+    { id: 'G3', kind: 'gate', from: '2026-12-01', to: '2026-12-31', t: '1º cliente operando', tipo: 'gate humano', data: 'dez/2026', base: 'NFS-e pelo portal + releitura; a data é sua. Depois de G2.', kill: 'Deploy atrasar; cliente não estar pronto.' },
+    { id: 'G4', kind: 'gate', from: '2027-01-04', to: '2027-01-29', t: 'H1 passo 6 + assinaturas (ECD/ECF, P4)', tipo: 'gate humano', data: 'depois do 1º cliente', base: '"Último do último" (você, 22/10). ECD assinada do cliente real no PVA, depois a ECF.', kill: 'Erro novo na ECF descoberto só aqui (risco aceito em 22/10).' }
+  ];
+
+  var tl = document.getElementById('tl');
+  var head = document.createElement('div'); head.className = 'tl-head';
+  var hl = document.createElement('div'); hl.className = 'lab'; hl.innerHTML = '<span class="small muted">19/10/2026 → 28/02/2027</span>';
+  var months = document.createElement('div'); months.className = 'tl-months';
+  var mdefs = [['2026-10-19', 'out'], ['2026-11-01', 'nov'], ['2026-12-01', 'dez'], ['2027-01-01', 'jan/27'], ['2027-02-01', 'fev']];
+  mdefs.forEach(function (m) { var s = document.createElement('span'); s.style.left = pct(D(m[0])) + '%'; s.textContent = m[1]; months.appendChild(s); });
+  head.appendChild(hl); head.appendChild(months); tl.appendChild(head);
+  var body = document.createElement('div'); body.className = 'tl-body';
+  var grid = document.createElement('div'); grid.className = 'tl-grid';
+  mdefs.forEach(function (m, i) { var g = document.createElement('i'); g.style.left = pct(D(m[0])) + '%'; grid.appendChild(g); if (i % 2) { var a = document.createElement('i'); a.className = 'alt'; a.style.left = pct(D(m[0])) + '%'; var nx = mdefs[i + 1] ? pct(D(mdefs[i + 1][0])) : 100; a.style.width = (nx - pct(D(m[0]))) + '%'; grid.appendChild(a); } });
+  var now = document.createElement('div'); now.className = 'now'; now.style.left = pct(TODAY) + '%'; grid.appendChild(now);
+  body.appendChild(grid); tl.appendChild(body);
+
+  var tip = document.getElementById('tip');
+  function bindTip(e, html) {
+    function move(ev) { tip.style.left = Math.min(ev.clientX + 12, window.innerWidth - 340) + 'px'; tip.style.top = (ev.clientY + 14) + 'px'; }
+    e.addEventListener('mouseenter', function (ev) { tip.innerHTML = html; tip.hidden = false; move(ev); });
+    e.addEventListener('mousemove', move);
+    e.addEventListener('mouseleave', function () { tip.hidden = true; });
+    e.setAttribute('tabindex', '0');
+    e.addEventListener('focus', function () { tip.innerHTML = html; tip.hidden = false; var r = e.getBoundingClientRect(); tip.style.left = Math.min(r.left, window.innerWidth - 340) + 'px'; tip.style.top = (r.bottom + 8) + 'px'; });
+    e.addEventListener('blur', function () { tip.hidden = true; });
+  }
+
+  var tbody = document.querySelector('#ms-table tbody'), cards = document.getElementById('ms-cards');
+  ms.forEach(function (m) {
+    var row = document.createElement('div');
+    if (m.g) { row.className = 'tl-row group'; row.innerHTML = '<div class="lab" style="color:' + m.c + '"><i style="background:' + m.c + '"></i>' + m.g + '</div><div></div>'; body.appendChild(row); return; }
+    row.className = 'tl-row';
+    var lab = document.createElement('div'); lab.className = 'lab'; lab.innerHTML = m.t + '<small>' + m.id + ' · ' + m.data + '</small>';
+    var track = document.createElement('div'); track.className = 'track';
+    var html = '<strong>' + m.id + ' · ' + m.t + '</strong><br>' + m.tipo + ' · ' + m.data + '<br>' + m.base + '<br><em>Derruba: ' + m.kill + '</em>';
+    if (m.kind === 'legal') {
+      var d = document.createElement('div'); d.className = 'dia' + (D(m.on) < TODAY ? ' past' : ''); d.style.left = pct(D(m.on)) + '%'; d.setAttribute('aria-label', m.id + ' ' + m.data);
+      track.appendChild(d); bindTip(d, html);
+      var tag = document.createElement('span'); tag.className = 'tag'; tag.style.left = 'calc(' + pct(D(m.on)) + '% + 14px)'; tag.textContent = fmt(D(m.on)); track.appendChild(tag);
+    } else {
+      var b = document.createElement('div'); b.className = 'bar ' + (m.kind === 'gate' ? 'gate' : 'proj') + (m.fuzzy ? ' fuzzy' : '');
+      var l = pct(D(m.from)), r = pct(D(m.to)); b.style.left = l + '%'; b.style.width = Math.max(0.8, r - l) + '%'; b.setAttribute('aria-label', m.id + ' ' + m.data); b.textContent = m.id;
+      track.appendChild(b); bindTip(b, html);
+      var tag2 = document.createElement('span'); tag2.className = 'tag'; tag2.textContent = m.data;
+      if (r > 84) { tag2.style.right = 'calc(' + (100 - l) + '% + 8px)'; } else { tag2.style.left = 'calc(' + r + '% + 8px)'; }
+      track.appendChild(tag2);
+    }
+    row.appendChild(lab); row.appendChild(track); body.appendChild(row);
+
+    var card = document.createElement('div'); card.className = 'ms ' + m.kind;
+    var dparts = m.data.split('/'); var shortMap = { P5: 'nov→dez', P6: 'dez→jan', P7: 'jan→fev', G3: 'dez/26', G4: 'após G3' }; var big = m.kind === 'legal' ? dparts[0] + '/' + dparts[1] : (shortMap[m.id] || m.data);
+    card.innerHTML = '<div class="date"><b>' + big + '</b><small>' + m.id + '</small></div><div><b class="t">' + m.t + '</b><div class="why">' + m.base + '</div><div class="kill">Derruba: ' + m.kill + '</div></div>';
+    cards.appendChild(card);
+
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td class="n">' + m.id + '</td><td>' + m.t + '</td><td><span class="pill ' + (m.kind === 'legal' ? 'legal' : m.kind === 'gate' ? 'human' : 'inflight') + '">' + m.tipo + '</span></td><td class="n">' + m.data + '</td><td>' + m.base + ' <em>Derruba: ' + m.kill + '</em></td>';
+    tbody.appendChild(tr);
+  });
+})();
+
+  // ---------- aba 3: linha do tempo da semana (27/10 → 01/11)
+  (function () {
+    var host = document.getElementById('c-week'); if (!host) return;
+    var NS = 'http://www.w3.org/2000/svg';
+    function el(tag, attrs, text) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; return e; }
+    var days = ['ter 27', 'qua 28', 'qui 29', 'sex 30', 'sáb 31', 'dom 01'];
+    var who = { dono: 'var(--st-human)', agente: 'var(--st-inflight)', lei: 'var(--st-legal)' };
+    var rows = [
+      { l: 'OKs: #925 #904 #905 #920 #926', w: 'dono', s: 0, e: 0 },
+      { l: 'Os 4 "executa" + pedido de integração', w: 'dono', s: 0, e: 0 },
+      { l: 'Reintegrar #912 e #913', w: 'agente', s: 0, e: 0 },
+      { l: 'X10a PR-6 (Fase F)', w: 'agente', s: 0, e: 1 },
+      { l: 'OK #912 #913 · PR-6', w: 'dono', s: 1, e: 1 },
+      { l: 'Questionário: 11 decisões', w: 'dono', s: 1, e: 1 },
+      { l: 'DANFE PR-3', w: 'agente', s: 1, e: 2 },
+      { l: 'EFD-Reinf PR-2 → PR-3', w: 'agente', s: 1, e: 3 },
+      { l: 'Eficiência fiscal PR-2', w: 'agente', s: 1, e: 2 },
+      { l: 'OKs do dia (DANFE, Reinf, EF, FIX, Kanban)', w: 'dono', s: 2, e: 4 },
+      { l: 'H2: sign-off de browser + assinatura', w: 'dono', s: 2, e: 3 },
+      { l: 'FIX-AUTH / FIX-CHAT lote final', w: 'agente', s: 2, e: 3 },
+      { l: 'Kanban EMENDA 1 + runbook 5–10', w: 'agente', s: 2, e: 3 },
+      { l: 'Pacote do contador: monta → você envia', w: 'agente', s: 3, e: 3, x: { w: 'dono', s: 4, e: 4 } },
+      { l: 'Régua F: Q4–Q12', w: 'dono', s: 4, e: 4 },
+      { l: 'Folds · revisão semanal 02/11', w: 'agente', s: 4, e: 5 },
+      { l: 'NFS-e nacional obrigatória (portal)', w: 'lei', s: 5, e: 5 }
+    ];
+    var L = 250, W = 820, colW = (W - L - 10) / days.length, top = 26, rh = 24, H = top + rows.length * rh + 8;
+    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, width: '100%', 'class': 'gantt', role: 'img', 'aria-label': 'Linha do tempo da semana por frente e responsável' });
+    svg.appendChild(el('rect', { x: L, y: 0, width: colW, height: H, 'class': 'today' }));
+    days.forEach(function (d, i) {
+      var x = L + i * colW;
+      svg.appendChild(el('line', { x1: x, y1: 0, x2: x, y2: H, 'class': 'grid' }));
+      svg.appendChild(el('text', { x: x + colW / 2, y: 16, 'text-anchor': 'middle' }, d));
+    });
+    svg.appendChild(el('line', { x1: W - 10, y1: 0, x2: W - 10, y2: H, 'class': 'grid' }));
+    rows.forEach(function (r, i) {
+      var y = top + i * rh;
+      svg.appendChild(el('line', { x1: 0, y1: y + rh, x2: W, y2: y + rh, 'class': 'grid' }));
+      var t = el('text', { x: 4, y: y + rh / 2 + 4, 'class': 'lbl' }, r.l); svg.appendChild(t);
+      function bar(b) {
+        var x = L + b.s * colW + 3, w = (b.e - b.s + 1) * colW - 6;
+        svg.appendChild(el('rect', { x: x, y: y + 5, width: w, height: rh - 10, fill: who[b.w], 'class': 'bar', opacity: 0.9 }));
+        var lab = b.w === 'dono' ? 'Você' : (b.w === 'agente' ? 'Agente' : 'Lei');
+        svg.appendChild(el('text', { x: x + 6, y: y + rh / 2 + 4, 'class': 'bt' }, lab));
+      }
+      bar(r); if (r.x) bar(r.x);
+    });
+    host.appendChild(svg);
+  })();
+</script>
