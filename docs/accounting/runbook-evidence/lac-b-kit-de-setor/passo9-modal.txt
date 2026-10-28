@@ -1,0 +1,7 @@
+Aceitar a pendência role:receita-servico?
+
+Aceitar remove o ajuste da conta deste papel e recompila o binding com a conta do kit.
+
+Motivo (10 a 500 caracteres)
+Cancelar
+Aceitar
