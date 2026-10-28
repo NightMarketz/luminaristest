@@ -1,0 +1,20 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Normas",
+      "url": "http://normas.receita.fazenda.gov.br/sijut2consulta/link.action?idAto=126687&visao=compilado",
+      "url_final": "https://normas.receita.fazenda.gov.br/sijut2consulta/link.action?idAto=126687&visao=compilado",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-27T02:20:27-03:00",
+      "sha256": "9f9413e20884b24680269927744a2abbf407243127ba5087a1489fd91fc8153a",
+      "arquivo": "docs/D01_link-action.html",
+      "texto": "docs/D01_link-action.txt",
+      "bytes": 45247
+    }
+  ],
+  "buscas": [],
+  "slug": "fila-2026-10-27-p-ret-5",
+  "pergunta": "P-RET-5: quais serviços contratados por salão ou clínica (limpeza, vigilância, recepção, manutenção) sofrem a retenção de 11% do INSS como cessão de mão de obra ou empreitada (Lei 8.212 art. 31; IN RFB 2.110/2022)?",
+  "criado": "2026-10-27T02:20:27-03:00"
+}

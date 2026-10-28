@@ -1,0 +1,80 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "D01_EFD-REINF-20-20Tabelas-2015012026-zip",
+      "url": "http://sped.rfb.gov.br/arquivo/download/7994",
+      "url_final": "http://sped.rfb.gov.br/estatico/56/02690B8D5DE8904DFAB98799195B016052E4F5/EFD-REINF%20-%20Tabelas%2015012026.zip",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-27T11:11:40-03:00",
+      "sha256": "31c04713b92a965c7413190a21dfc1b8eab4b10002a58371506da758e770b1a7",
+      "arquivo": "docs/D01_EFD-REINF-20-20Tabelas-2015012026-zip.html",
+      "texto": "docs/D01_EFD-REINF-20-20Tabelas-2015012026-zip.txt",
+      "bytes": 416773
+    },
+    {
+      "id": "D02",
+      "titulo": "D02_Tabelas_Dinamicas_ECF_Leiaute_12_28_05_2026_AC_2025_SIT_ESP_",
+      "url": "http://sped.rfb.gov.br/estatico/E1/20FDEEE25CAA9F998AC2AD3045DE0E9C631D3C/Tabelas_Dinamicas_ECF_Leiaute_12_28_05_2026_AC_2025_SIT_ESP_2026.xlsx",
+      "url_final": "http://sped.rfb.gov.br/estatico/E1/20FDEEE25CAA9F998AC2AD3045DE0E9C631D3C/Tabelas_Dinamicas_ECF_Leiaute_12_28_05_2026_AC_2025_SIT_ESP_2026.xlsx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-27T11:11:43-03:00",
+      "sha256": "366b8d9030a04e9f6203b6ae29ace49d3ffa3fa0c1f5a7a18b0c967b9a5a3cac",
+      "arquivo": "docs/D02_Tabelas_Dinamicas_ECF_Leiaute_12_28_05_2026_AC_2025_SIT_ESP_.html",
+      "texto": "docs/D02_Tabelas_Dinamicas_ECF_Leiaute_12_28_05_2026_AC_2025_SIT_ESP_.txt",
+      "bytes": 1724077
+    },
+    {
+      "id": "D03",
+      "titulo": "Lcp 214",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-27T11:11:56-03:00",
+      "sha256": "7e93804ba56ebf0a879689403173aabb40b04b7a6a9120b73058e39d0a7f2c5e",
+      "arquivo": "docs/D03_lcp214-htm.html",
+      "texto": "docs/D03_lcp214-htm.txt",
+      "bytes": 5403667
+    },
+    {
+      "id": "D04",
+      "titulo": "Manuais",
+      "url": "http://sped.rfb.gov.br/pasta/show/1644",
+      "url_final": "http://sped.rfb.gov.br/pasta/show/1644",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-27T11:13:29-03:00",
+      "sha256": "d63a09d5e50a2fd7e42bde6d83fd32ed5cf8384b8a6c080529674ebeb6409c31",
+      "arquivo": "docs/D04_1644.html",
+      "texto": "docs/D04_1644.txt",
+      "bytes": 40577
+    },
+    {
+      "id": "D05",
+      "titulo": "D05_Manual_ECF_Leiaute_12_20_05_2026_AC_2025_SIT_ESP_2026-pdf",
+      "url": "http://sped.rfb.gov.br/arquivo/download/8003",
+      "url_final": "http://sped.rfb.gov.br/estatico/54/7E3B296352B7AFD32210C180962BDB938B0804/Manual_ECF_Leiaute_12_20_05_2026_AC_2025_SIT_ESP_2026.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-27T11:14:44-03:00",
+      "sha256": "7216ec2bd62de7d45e5b019298be2420d08c2a3c6ade3646a053412937e95265",
+      "arquivo": "docs/D05_Manual_ECF_Leiaute_12_20_05_2026_AC_2025_SIT_ESP_2026-pdf.pdf",
+      "texto": "docs/D05_Manual_ECF_Leiaute_12_20_05_2026_AC_2025_SIT_ESP_2026-pdf.txt",
+      "bytes": 6410931
+    },
+    {
+      "id": "D06",
+      "titulo": "d12955",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/d12955.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/d12955.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-27T11:19:04-03:00",
+      "sha256": "3e9bb39fc0bd35b24ba427e4c9d4c66fe49eae11d4a32405943bad4e4ad6e40b",
+      "arquivo": "docs/D06_d12955-htm.html",
+      "texto": "docs/D06_d12955-htm.txt",
+      "bytes": 3182956
+    }
+  ],
+  "buscas": [],
+  "slug": "fila-2026-10-27-bloco4-draft",
+  "pergunta": "Bloco 4 da fila (linhas DRAFT de 21/10): natRend 13003/13007/15001 e DARF 1708/5952/8045 (P-REINF-2); lista de uso e consumo pessoal (LC 214 art. 57); contas do referencial para IBS/CBS (P-IBS-4); COD_PB_RFB do M010 (PARTEB_PADRAO 1071/2210)",
+  "criado": "2026-10-27T11:05:16-03:00"
+}

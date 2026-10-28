@@ -1,0 +1,56 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lista de Prestadores de Serviço de Confiança - PSC — Instituto Nacional de Tecnologia da Informação",
+      "url": "https://www.gov.br/iti/pt-br/assuntos/icp-brasil/lista-de-prestadores-de-servico-de-confianca-psc",
+      "url_final": "https://www.gov.br/iti/pt-br/assuntos/icp-brasil/lista-de-prestadores-de-servico-de-confianca-psc",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-27T11:33:55-03:00",
+      "sha256": "2f3f87297e225cc131a78fa69744c8bd13697555ee70d6aeb84b16e461730d70",
+      "arquivo": "docs/D01_lista-de-prestadores-de-servico-de-confianca-psc.html",
+      "texto": "docs/D01_lista-de-prestadores-de-servico-de-confianca-psc.txt",
+      "bytes": 117715
+    },
+    {
+      "id": "D02",
+      "titulo": "Documentos Principais — Instituto Nacional de Tecnologia da Informação",
+      "url": "https://www.gov.br/iti/pt-br/assuntos/legislacao/documentos-principais",
+      "url_final": "https://www.gov.br/iti/pt-br/assuntos/legislacao/documentos-principais",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-27T11:33:55-03:00",
+      "sha256": "89ff6dae591aa8d9815c1737de6a79b0c0749e40f0ce04b58cfc49c0370daa52",
+      "arquivo": "docs/D02_documentos-principais.html",
+      "texto": "docs/D02_documentos-principais.txt",
+      "bytes": 217591
+    },
+    {
+      "id": "D03",
+      "titulo": "D03_IN_20_2020_DOC_17-01_assinada-pdf",
+      "url": "https://www.gov.br/iti/pt-br/assuntos/legislacao/instrucoes-normativas/IN_20_2020_DOC_17.01_assinada.pdf",
+      "url_final": "https://www.gov.br/iti/pt-br/assuntos/legislacao/instrucoes-normativas/IN_20_2020_DOC_17.01_assinada.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-27T11:34:31-03:00",
+      "sha256": "250483a6b21a6bd2fac9a31e5ed6a1ee56a36b89d86d3ca2b9ffd6831b10b136",
+      "arquivo": "docs/D03_IN_20_2020_DOC_17-01_assinada-pdf.pdf",
+      "texto": "docs/D03_IN_20_2020_DOC_17-01_assinada-pdf.txt",
+      "bytes": 878378
+    },
+    {
+      "id": "D04",
+      "titulo": "D04_DOCICP17-01verso2-3PROCEDIMENTOSOPERACIONAISMNIMOSPARAOSPRES",
+      "url": "https://www.gov.br/iti/pt-br/assuntos/legislacao/documentos-principais/DOCICP17.01verso2.3PROCEDIMENTOSOPERACIONAISMNIMOSPARAOSPRESTADORESDESERVIODECONFIANADAICPBRASIL.pdf",
+      "url_final": "https://www.gov.br/iti/pt-br/assuntos/legislacao/documentos-principais/DOCICP17.01verso2.3PROCEDIMENTOSOPERACIONAISMNIMOSPARAOSPRESTADORESDESERVIODECONFIANADAICPBRASIL.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-27T11:34:32-03:00",
+      "sha256": "9181b47a7f5f7660b6f5bed087a5c630d3515e22e38623500b34d55a1676d945",
+      "arquivo": "docs/D04_DOCICP17-01verso2-3PROCEDIMENTOSOPERACIONAISMNIMOSPARAOSPRES.pdf",
+      "texto": "docs/D04_DOCICP17-01verso2-3PROCEDIMENTOSOPERACIONAISMNIMOSPARAOSPRES.txt",
+      "bytes": 290310
+    }
+  ],
+  "buscas": [],
+  "slug": "fila-2026-10-27-bloco6-terceiros",
+  "pergunta": "Bloco 6 da fila (terceiros): (a) comparativo dos PSCs credenciados pelo ITI (lista vigente, API DOC-ICP-17.01, cota, preço, SLA) para e-CNPJ em nuvem; (b) Payouts do Mercado Pago: há operação em nome de terceiro (OAuth) ou só conta própria, e como se obtém a chave Ed25519",
+  "criado": "2026-10-27T11:33:54-03:00"
+}

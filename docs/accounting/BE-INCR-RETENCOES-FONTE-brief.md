@@ -47,6 +47,46 @@ Itens afetados: 2, 7 e 23, §5.4, §6 (F-RET-16) e §8.
 > AskUserQuestion): **F-RET-10..19 todos (a)**, a recomendação do BRIEF. PR-2 e PR-3 deixam de esperar fork; cada PR
 > continua precisando do próprio `executa`. F-RET-16 (a) e F-RET-18 (a) foram perguntados em par com F-REINF-8/9.
 
+## Emenda 28/10 — fila de pesquisa de 27/10 (blocos 1, 2 e 4)
+
+> **Pedido do dono** (chat, 2026-10-28): *"Faz o fold dos achados da fila de pesquisa de 27/10 (blocos 1 a 6) no vault e
+> nos BRIEFs, junto com os 7 dossiês, num PR sem merge."* Escopo: este BRIEF e a nota do nó. **Só fato de fonte oficial:
+> nenhum fork é ratificado, e não é `executa`.** Resumo da fila: [[PESQUISA-FILA-2026-10-27]].
+
+1. **P-RET-6: código 116201.** Com a DCTFWeb, a retenção do art. 31 da Lei 8.212 sai com o código de receita **116201**, o
+   mesmo para 11% e 3,5%; o adicional de retenção (aposentadoria especial, IN 2.110 art. 131) sai com **114106**. A Reinf
+   devolve os códigos no retorno do R-2010 (MOU 2.1.2.1, totalizador da série R-2000, item 1.1; dossiê
+   `pesquisas-legais/fila-2026-10-27-p-ret-6-8` [D03]). O GPS 2631 citado no ADR é do regime anterior à DCTFWeb e não vai
+   para a linha `INSS` da `RETENCAO_CODIGO`. **Efeito:** a linha `INSS` do item 2 pode sair de `DRAFT` com `116201`.
+2. **P-RET-8: 3,5% até 2027, 11% desde 2028.** Vale para contratada optante pela CPRB em atividade do caput do art. 7º da
+   Lei 12.546 (TI e TIC, call center, transporte rodoviário coletivo de passageiros, construção civil nos grupos CNAE 412,
+   432, 433 e 439): art. 7º § 6º e art. 9º-A, na redação da Lei 14.973/2024 (mesmo dossiê, [D01], compilada); a SC Cosit
+   153/2026 fixa os 3,5% de 2025 a 2027 e os 11% a partir de 01/01/2028 ([D02], ementa lida no SIJUT). Sem opção pela CPRB,
+   11%. **Efeito:** a linha `INSS/CPRB` do item 1 pode sair de `DRAFT` com 350 bp de 2025-01-01 a 2027-12-31 e 1100 bp
+   desde 2028-01-01.
+3. **P-RET-5: regra, não pergunta.** Só os serviços dos arts. 111 (cessão ou empreitada) e 112 (só cessão) da IN RFB
+   2.110/2022 sofrem os 11%, e as listas são exaustivas (art. 113). Cessão é serviço contínuo com trabalhador à disposição
+   (art. 108 § 1º). Dispensas no art. 115: nota abaixo do mínimo, prestador sem empregado até 2 tetos e profissão
+   regulamentada exercida pelos sócios, as duas com declaração. Simples: o tomador do Simples retém (art. 133); o prestador
+   do Simples só sofre se for do Anexo IV (arts. 166 e 167). Leitura no SIJUT, visão vigente, em 27/10 (dossiê
+   `fila-2026-10-27-p-ret-5` [D01]). **Efeito:** o `inss` do perfil fica decidível com 4 dados do cadastro do fornecedor:
+   o serviço (Tabela 06 da Reinf, `inssTpServico`), cessão ou empreitada, Simples e anexo, e a declaração de dispensa.
+   Nenhum vai ao contador; o texto de ajuda cita o art. 108 § 1º. Quais desses 4 já existem no `WithholdingProfile` se
+   confere no `executa` do PR-3/PR-4.
+4. **P-RET-7: a tabela incide sobre a soma do mês.** RIR/2018 art. 677 § 2º: havendo mais de um pagamento no mês pela
+   mesma fonte, "será aplicada a alíquota correspondente à soma dos rendimentos pagos à pessoa física" (cópia do Planalto
+   de 21/10, dossiê `triagem-2026-10-21-contador-pacote-f1` [D05]). Confirma o F-RET-17 (a).
+5. **P-RET-9 (= P-REINF-8): vira confirmação de sim ou não.** O manual da Reinf (item 11) e o FAQ oficial (1.17) mandam o
+   rendimento do trabalho ao eSocial; o R-4010 de PF fica para pagamento sem relação de trabalho (dossiê
+   `fila-2026-10-27-bloco2-reinf` [D01], [D05]). Pergunta: *"Autônomo PF que já entra no eSocial (S-1200/S-1210):
+   confirmamos que não vai R-4010?"*
+6. **Linha DRAFT de 21/10 (natureza e DARF do contador): descartada.** Os DARF 1708, 5952 e 8045 conferem com a tabela
+   "R-4020"; as naturezas 13003, 13007 e 15001 não (são arrendamento, juros de alienação a prazo e cooperativa). A carga
+   do PR-1 (`legal_parameters_retencoes_v1.sql`) já veio da Tabela 01 oficial e não as contém: nada muda no código (dossiê
+   `fila-2026-10-27-bloco4-draft` [D01]).
+7. **Lacunas que ficam:** o mínimo do documento de arrecadação do art. 115 I na DCTFWeb (o item usa R$ 10 do DARF), o teto
+   do salário de contribuição de 2026 (art. 115 II) e a IN RFB 2.053/2021 (arts. 2º-A e 11, citados pela SC 153).
+
 ## TLDR (2 linhas)
 
 Quatro PRs: **PR-1** grava as tabelas (alíquotas com a vigência de 2027, mínimos, códigos, natureza do rendimento,
@@ -534,17 +574,18 @@ nova da RFB substitui esta pela vigência). Se a Reinf precisar dos valores sepa
 | P-RET-2 | ~~mínimo de R$ 10 de PJ~~ **Respondida 21/10:** RIR art. 785 II (conferido [D09]) | — | — |
 | P-RET-3 | ~~fato gerador por tributo~~ **Respondida 21/10:** confirma o D2; o MOU da Reinf também | — | — |
 | P-RET-4 | Códigos do referencial das folhas do F-RET-19 e a pergunta do F-RET-15 | itens 8, 25 | contador |
-| P-RET-5 | ~~cessão de mão de obra~~ **respondida 21/10** (limpeza, vigilância, recepcionista = cessão; manutenção depende). IN 2.110 arts. 112/115 **não lidos** | perfil (dado do usuário) | fonte oficial |
-| P-RET-6 | ~~Códigos por `natRend` × tributo~~ resolvidos pela leitura oficial da Reinf (Emenda 22/10). Restam o código GPS/DCTFWeb do INSS retido e uma eventual tabela nova para 2027 | item 2 (`INSS` DRAFT) | fonte oficial |
-| **P-RET-7** (nova) | Pagando duas vezes no mês ao mesmo autônomo PF, a tabela incide sobre a soma do mês? | F-RET-17 | contador |
-| **P-RET-8** (nova) | Prestador na CPRB: retenção de 3,5% em vez de 11%? Base legal? | item 1 (`INSS/CPRB` DRAFT) | contador + fonte oficial |
-| **P-RET-9** (nova) | O pagamento a contribuinte individual também vai ao eSocial S-1210 (pendência que a sessão da Reinf deixou)? | fronteira do F-RET-17 | contador |
+| P-RET-5 | ~~cessão de mão de obra~~ **respondida 21/10; lida em 27/10** na IN 2.110 vigente (arts. 108–115, 133, 166–167): lista exaustiva, dispensas e regra do Simples (Emenda 28/10 item 3) | perfil (dado do usuário) | — |
+| P-RET-6 | ~~Códigos por `natRend` × tributo~~ resolvidos pela leitura oficial da Reinf (Emenda 22/10). ~~Código do INSS retido~~ **resolvido 27/10: 116201** (adicional 114106; Emenda 28/10 item 1). Resta a eventual tabela nova para 2027 (P-REINF-9) | item 2 (`INSS` sai de DRAFT por PR de dado) | fonte oficial |
+| **P-RET-7** (nova) | ~~Pagando duas vezes no mês ao mesmo autônomo PF, a tabela incide sobre a soma do mês?~~ **Resolvida 27/10: sim**, RIR art. 677 § 2º (Emenda 28/10 item 4) | — | — |
+| **P-RET-8** (nova) | ~~Prestador na CPRB: retenção de 3,5% em vez de 11%?~~ **Resolvida 27/10:** 3,5% até 2027-12-31 e 11% desde 2028 (Lei 12.546 art. 7º § 6º e 9º-A; SC Cosit 153/2026; Emenda 28/10 item 2) | item 1 (`INSS/CPRB` sai de DRAFT por PR de dado) | — |
+| **P-RET-9** (nova) | O pagamento a contribuinte individual também vai ao eSocial S-1210? **27/10: manual e FAQ da Reinf mandam ao eSocial; vira confirmação de sim ou não** (= P-REINF-8; Emenda 28/10 item 5) | fronteira do F-RET-17 | contador (confirmação) |
 
 ## 8. Insumos ausentes
 
 1. **IN SRF 459/2004 e IN RFB 765/2007** (Simples nos dois sentidos, declaração de optante): não lidas. O item 10 usa a
    leitura segura (sem declaração ⇒ retém IRRF).
-2. **IN RFB 2.110/2022** (lista de cessão de mão de obra): não lida. A natureza é escolha do usuário no perfil, com `fonte`.
+2. ~~**IN RFB 2.110/2022** (lista de cessão de mão de obra): não lida.~~ **Lida em 27/10** no SIJUT (dossiê
+   `fila-2026-10-27-p-ret-5`; Emenda 28/10 item 3). A natureza continua escolha do usuário no perfil, com `fonte`.
 3. **Tabela 01 e tabelas "R-4020"/"R-4010" da Reinf**: lidas em fonte oficial pela sessão EFD-REINF em 22/10 (dossiê
    `verif-2026-10-22-efd-reinf-brief` [D02], branch `claude/brief-efd-reinf-b0063b`), não neste dossiê. Pela Emenda 22/10
    nascem `PUBLISHED`, com o `fonteSha256` do zip daquele dossiê.

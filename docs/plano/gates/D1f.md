@@ -4,14 +4,14 @@ tipo: "dado-externo"
 dominio: "externo"
 titulo: "Itens 5a-5f do contador (item LC 116, alíquota ISS, cClassTrib)"
 estado: "human-open"
-estado_detalhe: "15/10 (fold): alíquota DECIDIDA por delegação do contador — ISS SP 5% padrão, retenção configurável por nota (D-3 de D-2026-10-10-TRIAGEM-CONTADOR-DELEGACAO); ressalva INFERIDA, não verificada: no Simples o ISS vai no DAS pela faixa do Anexo III (LC 123), então os 5% valem fora do Simples — conferir por fonte oficial · cClassTrib: o contador respondeu 000001 ('tributadas integralmente pelo IBS e CBS') + indOp 030101 em 10/10 (TRIAGEM-RESPOSTA-CONTADOR-2026-10-10 I-1/II-1), grau secundário — falta conferir na tabela oficial (pesquisa do agente pelo método legal, não pergunta ao contador); cTribNac/NBS já conferidos em fonte oficial (pesquisas-legais/ctribnac-salao-clinica: 060101/060201/060301). O follow-up de 26/09 foi SUPERSEDIDO pelo pedido único de 10/10 (enviado e respondido) · 27/09: Item LC 116 recebido (6.01/6.02/6.03; ISS no prestador — triagem 23/09 5a); faltam alíquota (município) e cClassTrib; pedidos no follow-up de 26/09 (item 3), não enviado"
+estado_detalhe: "28/10 (fold da fila de pesquisa de 27/10): cClassTrib 000001 VERIFICADO na tabela oficial do SVRS (carga de 05/10/2026, com a v1.70) e na IT 2025.002 v1.70; clínica com NBS do Anexo III = 200029 (redução de 60%); os 3 itens do D1f têm resposta conferida, falta só o indOp 030101; fechar o gate é do dono · 15/10 (fold): alíquota DECIDIDA por delegação do contador — ISS SP 5% padrão, retenção configurável por nota (D-3 de D-2026-10-10-TRIAGEM-CONTADOR-DELEGACAO); ressalva INFERIDA, não verificada: no Simples o ISS vai no DAS pela faixa do Anexo III (LC 123), então os 5% valem fora do Simples — conferir por fonte oficial · cClassTrib: o contador respondeu 000001 ('tributadas integralmente pelo IBS e CBS') + indOp 030101 em 10/10 (TRIAGEM-RESPOSTA-CONTADOR-2026-10-10 I-1/II-1), grau secundário — falta conferir na tabela oficial (pesquisa do agente pelo método legal, não pergunta ao contador); cTribNac/NBS já conferidos em fonte oficial (pesquisas-legais/ctribnac-salao-clinica: 060101/060201/060301). O follow-up de 26/09 foi SUPERSEDIDO pelo pedido único de 10/10 (enviado e respondido) · 27/09: Item LC 116 recebido (6.01/6.02/6.03; ISS no prestador — triagem 23/09 5a); faltam alíquota (município) e cClassTrib; pedidos no follow-up de 26/09 (item 3), não enviado"
 depende_de: ["[[D1]]"]
 ancora_sdd: "§III.2"
 atualizado: "2026-10-24"
 ---
 # D1f — Itens 5a-5f do contador (item LC 116, alíquota ISS, cClassTrib)
 
-**Estado:** `human-open` — 15/10 (fold): alíquota DECIDIDA por delegação do contador — ISS SP 5% padrão, retenção configurável por nota (D-3 de D-2026-10-10-TRIAGEM-CONTADOR-DELEGACAO); ressalva INFERIDA, não verificada: no Simples o ISS vai no DAS pela faixa do Anexo III (LC 123), então os 5% valem fora do Simples — conferir por fonte oficial · cClassTrib: o contador respondeu 000001 ('tributadas integralmente pelo IBS e CBS') + indOp 030101 em 10/10 (TRIAGEM-RESPOSTA-CONTADOR-2026-10-10 I-1/II-1), grau secundário — falta conferir na tabela oficial (pesquisa do agente pelo método legal, não pergunta ao contador); cTribNac/NBS já conferidos em fonte oficial (pesquisas-legais/ctribnac-salao-clinica: 060101/060201/060301). O follow-up de 26/09 foi SUPERSEDIDO pelo pedido único de 10/10 (enviado e respondido) · 27/09: Item LC 116 recebido (6.01/6.02/6.03; ISS no prestador — triagem 23/09 5a); faltam alíquota (município) e cClassTrib; pedidos no follow-up de 26/09 (item 3), não enviado  
+**Estado:** `human-open` — 28/10 (fold da fila de pesquisa de 27/10): cClassTrib 000001 VERIFICADO na tabela oficial do SVRS (carga de 05/10/2026, com a v1.70) e na IT 2025.002 v1.70; clínica com NBS do Anexo III = 200029 (redução de 60%); os 3 itens do D1f têm resposta conferida, falta só o indOp 030101; fechar o gate é do dono · 15/10 (fold): alíquota DECIDIDA por delegação do contador — ISS SP 5% padrão, retenção configurável por nota (D-3 de D-2026-10-10-TRIAGEM-CONTADOR-DELEGACAO); ressalva INFERIDA, não verificada: no Simples o ISS vai no DAS pela faixa do Anexo III (LC 123), então os 5% valem fora do Simples — conferir por fonte oficial · cClassTrib: o contador respondeu 000001 ('tributadas integralmente pelo IBS e CBS') + indOp 030101 em 10/10 (TRIAGEM-RESPOSTA-CONTADOR-2026-10-10 I-1/II-1), grau secundário — falta conferir na tabela oficial (pesquisa do agente pelo método legal, não pergunta ao contador); cTribNac/NBS já conferidos em fonte oficial (pesquisas-legais/ctribnac-salao-clinica: 060101/060201/060301). O follow-up de 26/09 foi SUPERSEDIDO pelo pedido único de 10/10 (enviado e respondido) · 27/09: Item LC 116 recebido (6.01/6.02/6.03; ISS no prestador — triagem 23/09 5a); faltam alíquota (município) e cClassTrib; pedidos no follow-up de 26/09 (item 3), não enviado  
 **Autorização:** **falta** — não roteia sem autorização citável do dono (ORCH-006)  
 **Depende de:** [[D1]]  
 **Desbloqueia:** [[X10b]]  
@@ -48,4 +48,21 @@ atualizado: "2026-10-24"
   **fechado**. Relatório: [`relatorio.md`](../../../pesquisas-legais/gates-humanos-lei/relatorio.md) §1–§3.
 - **cClassTrib 000001: continua SEM fonte oficial.** Li a IT 2025.002 **v1.31** [D07] (a tabela está no anexo); versões posteriores (1.50+) só
   apareceram em fonte secundária; não confirmei nenhuma em domínio oficial. Quem confere é o agente, na tabela da versão vigente, não o contador. Grau: o 000001 segue **secundário**.
+- Estado e autorização **não mudam**.
+
+## Fold 28/10 — cClassTrib conferido na tabela oficial (fila de pesquisa de 27/10)
+
+- Resumo da fila: [[PESQUISA-FILA-2026-10-27]]. Dossiê: [`fila-2026-10-27-bloco5-cclasstrib`](../../../pesquisas-legais/fila-2026-10-27-bloco5-cclasstrib/relatorio.md).
+- **000001 deixa de ser secundário: VERIFICADO.** A tabela oficial está no Portal da Conformidade Fácil, do SVRS, com a carga
+  de 05/10/2026, que já inclui as linhas da v1.70 [D01]. O 000001 é "Situações tributadas integralmente pelo IBS e CBS.",
+  CST 000, sem redução, aceito na NFS-e. Os serviços 6.01–6.03 (NBS 1.2602) não estão no Anexo III da LC 214, e a esteticista
+  não está no art. 127 [D02].
+- **Corroboração:** a IT 2025.002 v1.70, lida no Portal NF-e por outra sessão no mesmo dia, traz a mesma linha
+  ([`TRANSCRICAO-IT2025002-v170-tabelas-IBSCBS-2026-10-27.md`](../../accounting/fontes-oficiais/TRANSCRICAO-IT2025002-v170-tabelas-IBSCBS-2026-10-27.md)).
+- **Clínica:** consulta e procedimento médico com NBS do Anexo III (1.2301.21.00, 1.2301.22.00) levam **200029**, CST 200,
+  redução de 60% (art. 130). Procedimento estético feito por médico só com NBS do Anexo III marcado pela clínica; a
+  classificação é do cliente com o contador (ambiguidade no §4 do dossiê `ctribnac-salao-clinica`).
+- **Não conferido:** o indOp 030101 que veio com o 000001 (é outra tabela).
+- Os três itens do D1f (item LC 116, alíquota, cClassTrib) têm resposta conferida em fonte oficial; falta só o indOp.
+  Fechar o gate é do dono.
 - Estado e autorização **não mudam**.

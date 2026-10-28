@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>       <html class="no-js lt-ie11 lt-ie10 lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>          <html class="no-js lt-ie11 lt-ie10 lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>          <html class="no-js lt-ie11 lt-ie10 lt-ie9"> <![endif]-->
+<!--[if IE 9]>          <html class="no-js lt-ie11 lt-ie10"> <![endif]-->
+<!--[if IE 10]>         <html class="no-js lt-ie11"> <![endif]-->
+<!--[if gt IE 10]><!--> <html class="no-js not-ie"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Pesquisa avan&#231;ada por nome do benefici&#225;rio no portal do e-CAC</title>
+        <meta name="description">
+        <meta name="viewport" content="width=device-width">
+        <link href="/Content/themes/base/jquery-ui-1.10.3.custom.css" rel="stylesheet"/>
+
+        <link href="/Content/tipografia.css" rel="stylesheet"/>
+<link href="/Content/grid.css" rel="stylesheet"/>
+<link href="/Content/grid-mobile.css" rel="stylesheet"/>
+<link href="/Content/util.css" rel="stylesheet"/>
+<link href="/Content/site.css" rel="stylesheet"/>
+<link href="/Content/site-mobile.css" rel="stylesheet"/>
+<link href="/Content/conteudos.css" rel="stylesheet"/>
+<link href="/Content/faq.css" rel="stylesheet"/>
+<link href="/Content/pesquisaSatisfacao.css" rel="stylesheet"/>
+<link href="/Content/menu-mobile.css" rel="stylesheet"/>
+
+        <script src="/Scripts/modernizr-2.5.3.js"></script>
+
+    </head>
+    <body id="pagina">
+
+        <a class="visuallyhidden" href="#conteudo">Ir para o conteúdo</a>
+
+        <!-- CABEÇALHO -->
+
+        <div id="container-barra-governo">
+            <script type="text/javascript" src="http://www.receita.fazenda.gov.br/barra-governo/barra-governo.js"></script>
+        </div>
+
+        <header class="cabecalho-sped" role="banner">
+            <a href="/">
+                <h1 class="logo ir">SPED — Sistema Público de Escrituração Digital</h1>
+            </a>
+
+            <ul class="ajuste-fonte">                
+                <li class="botao fonte-normal"><a href="#">Fonte Normal</a></li>
+                <li class="botao aumentar-fonte"><a class="ir" title="Aumentar o tamanho do texto" href="#">Aumentar Fonte</a></li>
+                <li class="botao diminuir-fonte"><a class="ir" title="Diminuir o tamanho do texto" href="#">Diminuir Fonte</a></li>
+                <li class="botao link-home"><a href="/">Página Inicial</a></li>
+            </ul>
+
+            <ul class="menu-geral-sped">
+                        <li class="item">
+                            <a href="/item/show/10">Conhe&#231;a o Sped</a>
+                            <ul class="submenu">
+                                    <li class="item"><a href="/item/show/964">Apresenta&#231;&#227;o</a></li>
+                                    <li class="item"><a href="/item/show/965">Benef&#237;cios</a></li>
+                                    <li class="item"><a href="/item/show/966">Hist&#243;rico</a></li>
+                                    <li class="item"><a href="/item/show/967">Objetivos</a></li>
+                                    <li class="item"><a href="/item/show/969">Premissas</a></li>
+                                    <li class="item"><a href="/item/show/970">Universo de atua&#231;&#227;o</a></li>
+                                    <li class="item"><a href="/item/show/2844">Estat&#237;sticas Sped</a></li>
+                            </ul>
+                        </li>
+                        <li class="item">
+                            <a href="/item/show/8">Servi&#231;os</a>
+                            <ul class="submenu">
+                                    <li class="item"><a href="/item/show/261">Contribuinte</a></li>
+                                    <li class="item"><a target="_blank" href="https://www1.sped.fazenda.gov.br/login/sped/appmanutencaotabelas">Atualiza&#231;&#227;o de Tabelas</a></li>
+                                    <li class="item"><a target="_blank" href="https://www.sped.fazenda.gov.br/estatisticascontabil/Default.aspx?ano=2016">Estat&#237;sticas ECD Junta</a></li>
+                                    <li class="item"><a target="_blank" href="https://cav.receita.fazenda.gov.br/ecac/publico/login/certificado.aspx?Sistema=00027">Entes Conveniados - habilita&#231;&#227;o de usu&#225;rios</a></li>
+                                    <li class="item"><a target="_blank" href="https://portalunico.siscomex.gov.br/classif/#/sumario?perfil=publico">Consulta de NCM</a></li>
+                            </ul>
+                        </li>
+                        <li class="item">
+                            <a href="/item/show/1125">Legisla&#231;&#227;o</a>
+                        <li class="item">
+                            <a href="/item/show/1022">Parceiros do Projeto</a>
+                            <ul class="submenu">
+                                    <li class="item"><a href="/item/show/1241">Membros, Entidades e Empresas Piloto</a></li>
+                            </ul>
+                        </li>
+            </ul>
+
+            <form class="pesquisa-no-sped" method="GET" action="/pesquisa/pesquisar" onSubmit="if(($('#input-pesquisa').val().length < 3)){ return false;};">
+                <fieldset>
+                    <legend>Pesquise no SPED</legend>
+                    <input id="input-pesquisa" title="O termo a ser pesquisado precisa ter pelo menos 3 caracteres." type="text" name="q" placeholder="Pesquisa…">
+                    <button type="submit">Buscar</button>
+                </fieldset>
+            </form>
+        </header>
+
+        <!-- CONTEÚDO -->
+
+        <section id="conteudo" class="conteudo grid-container clearfix">
+            
+
+
+
+<!-- Barra Lateral -->
+
+<nav class="barra-lateral grid-1">
+    <ul class="navegacao-menu">
+        <li>
+            <p class="titulo-menu projetos">Módulos</p>
+            <ul class="navegacao-submenu">
+                    <li><a href="/projeto/show/4146">Central de Balan&#231;os</a></li>
+                    <li><a href="/projeto/show/267">CT-e</a></li>
+                    <li><a href="/projeto/show/2918">DeRE</a></li>
+                    <li><a href="/projeto/show/273">ECD</a></li>
+                    <li><a href="/projeto/show/269">ECF</a></li>
+                    <li><a href="/projeto/show/268">EFD Contribui&#231;&#245;es</a></li>
+                    <li><a href="/projeto/show/274">EFD ICMS IPI</a></li>
+                    <li><a href="/projeto/show/1196">EFD-Reinf</a></li>
+                    <li><a href="/projeto/show/1179">e-Financeira</a></li>
+                    <li><a href="/projeto/show/1048">eSocial</a></li>
+                    <li><a href="/projeto/show/1312">MDF-e</a></li>
+                    <li><a href="/projeto/show/1304">NFC-e</a></li>
+                    <li><a href="/projeto/show/271">NF-e</a></li>
+                    <li><a href="/projeto/show/272">NFS-e</a></li>
+            </ul>
+        </li>
+        <li>
+            <p class="titulo-menu downloads">Downloads</p>
+            <ul class="navegacao-submenu downloads">
+                    <li class="        
+">
+                            <a target="_blank" href="https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/download/receitanet">Receitanet</a>
+                    </li>
+                    <li class="        
+">
+                            <a target="_blank" href="https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/download/receitanetbx/receitanetbx">ReceitanetBX</a>
+                    </li>
+                    <li class="        
+">
+                            <a target="_blank" href="https://www.gov.br/receitafederal/pt-br/assuntos/orientacao-tributaria/declaracoes-e-demonstrativos/sped-sistema-publico-de-escrituracao-digital/escrituracao-contabil-digital-ecd/escrituracao-contabil-digital-ecd">Validador ECD</a>
+                    </li>
+                    <li class="        
+">
+                            <a target="_blank" href="https://www.gov.br/receitafederal/pt-br/assuntos/orientacao-tributaria/declaracoes-e-demonstrativos/sped-sistema-publico-de-escrituracao-digital/escrituracao-contabil-fiscal-ecf/sped-programa-sped-contabil-fiscal">Validador ECF</a>
+                    </li>
+                    <li class="        
+">
+                            <a target="_blank" href="https://www.gov.br/receitafederal/pt-br/assuntos/orientacao-tributaria/declaracoes-e-demonstrativos/sped-sistema-publico-de-escrituracao-digital/escrituracao-fiscal-digital-efd/escrituracao-fiscal-digital-efd">Validador EFD ICMS-IPI</a>
+                    </li>
+                    <li class="        
+">
+                            <a target="_blank" href="https://www.gov.br/receitafederal/pt-br/assuntos/orientacao-tributaria/declaracoes-e-demonstrativos/sped-sistema-publico-de-escrituracao-digital/efd-contribuicoes/programa-validador-da-escrituracao-fiscal-digital-das-contribuicoes-incidentes-sobre-a-receita-efd-contribuicoes-2">Validador EFD-Contribui&#231;&#245;es</a>
+                    </li>
+                    <li class="        visualizadorsped
+">
+                            <a target="_blank" href="http://www.nfe.fazenda.gov.br/portal/download.aspx?tipoConteudo=s/eYlu5e+Y4=">Visualizador Sped</a>
+                    </li>
+            </ul>
+        </li>
+        <li>
+            <p class="titulo-menu portais">Portais e Secretarias</p>
+            <div class="navegacao-painel">
+                <p>Portais Estaduais da NF-e</p>
+                <select class="combo-navegacao">
+                    <option>Selecione</option>
+                        <option value="http://sefaznet.ac.gov.br/nfe/">Acre</option>
+                        <option value="http://www.sefaz.al.gov.br/nfe/">Alagoas</option>
+                        <option value="http://sistemas.sefaz.am.gov.br/nfeweb/portal/index.do">Amazonas</option>
+                        <option value="http://www.sefaz.ba.gov.br/nfen/portal/home.htm">Bahia</option>
+                        <option value="http://nfe.sefaz.ce.gov.br/">Cear&#225;</option>
+                        <option value="http://dec.fazenda.df.gov.br/">Distrito Federal</option>
+                        <option value="http://internet.sefaz.es.gov.br/informacoes/nfe/">Espirito Santo</option>
+                        <option value="http://www.nfe.go.gov.br/">Goi&#225;s</option>
+                        <option value="http://portal.sefaz.ma.gov.br/portalsefaz/jsp/pagina/pagina.jsf?codigo=11">Maranh&#227;o</option>
+                        <option value="http://www.sefaz.mt.gov.br/portal/nfe/">Mato Grosso</option>
+                        <option value="http://www.dfe.ms.gov.br/nfe/consulta/">Mato Grosso do Sul</option>
+                        <option value="http://www.sped.fazenda.mg.gov.br/spedmg/nfe/consultas/">Minas Gerais</option>
+                        <option value="http://www.sefa.pa.gov.br/index.php/orientacoes/sped/nfe/1512-consulta-publica">Par&#225;</option>
+                        <option value="https://www.sefaz.pb.gov.br/info/documentos-fiscais/nf-e#consultas">Para&#237;ba</option>
+                        <option value="http://www.sped.fazenda.pr.gov.br/">Paran&#225;</option>
+                        <option value="https://www.sefaz.pe.gov.br/Servicos/nota-fiscal-eletronica/Paginas/Apresentacao.aspx">Pernambuco</option>
+                        <option value="https://webas.sefaz.pi.gov.br/nfe/">Piau&#237;</option>
+                        <option value="http://www4.fazenda.rj.gov.br/consultaDFe/paginas/consultaChaveAcesso.faces">Rio de Janeiro</option>
+                        <option value="http://www.set.rn.gov.br/contentProducao/aplicacao/set_v2/nfe/gerados/inicio.asp">Rio Grande do Norte</option>
+                        <option value="http://www.sefaz.rs.gov.br/SEF_ROOT/inf/SEF-NFE.htm">Rio Grande do Sul</option>
+                        <option value="http://nfe.sef.sc.gov.br/">Santa Catarina</option>
+                        <option value="http://www.fazenda.sp.gov.br/nfe/">S&#227;o Paulo</option>
+                        <option value="http://nfe.sefaz.se.gov.br/">Sergipe</option>
+                        <option value="http://www.sefaz.to.gov.br/empresa/documentos-fiscais-eletronicos/sped---sistema-publico-de-escrituracao-digital/nf-e---nota-fiscal-eletronica/">Tocantins</option>
+                </select>
+                <p>Secretarias de Fazenda</p>
+                <select class="combo-navegacao">
+                    <option>Selecione</option>
+                        <option value="http://www.sefaz.ac.gov.br/">Acre</option>
+                        <option value="http://www.sefaz.al.gov.br/">Alagoas</option>
+                        <option value="http://www.sefaz.ap.gov.br/">Amap&#225;</option>
+                        <option value="http://www.sefaz.am.gov.br/">Amazonas</option>
+                        <option value="http://www.sefaz.ba.gov.br/">Bahia</option>
+                        <option value="http://www.sefaz.ce.gov.br/">Cear&#225;</option>
+                        <option value="http://www.fazenda.df.gov.br/">Distrito Federal</option>
+                        <option value="http://www.sefaz.es.gov.br/">Espirito Santo</option>
+                        <option value="http://www.sefaz.go.gov.br/">Goi&#225;s</option>
+                        <option value="http://www.sefaz.ma.gov.br/">Maranh&#227;o</option>
+                        <option value="http://www.sefaz.mt.gov.br/">Mato Grosso</option>
+                        <option value="http://www.sefaz.ms.gov.br/">Mato Grosso do Sul</option>
+                        <option value="http://www.fazenda.mg.gov.br/">Minas Gerais</option>
+                        <option value="http://www.sefa.pa.gov.br/">Par&#225;</option>
+                        <option value="http://www.sefaz.pb.gov.br/">Para&#237;ba</option>
+                        <option value="https://www.fazenda.pr.gov.br/">Paran&#225;</option>
+                        <option value="http://www.sefaz.pe.gov.br/">Pernambuco</option>
+                        <option value="http://www.sefaz.pi.gov.br/">Piau&#237;</option>
+                        <option value="http://www.fazenda.rj.gov.br/">Rio de Janeiro</option>
+                        <option value="http://www.set.rn.gov.br/">Rio Grande do Norte</option>
+                        <option value="http://www.sefaz.rs.gov.br/">Rio Grande do Sul</option>
+                        <option value="http://www.sefin.ro.gov.br/">Rond&#244;nia</option>
+                        <option value="http://www.sefaz.rr.gov.br/">Roraima</option>
+                        <option value="http://www.sef.sc.gov.br/">Santa Catarina</option>
+                        <option value="http://www.fazenda.sp.gov.br/">S&#227;o Paulo</option>
+                        <option value="http://www.sefaz.se.gov.br/">Sergipe</option>
+                        <option value="http://www.sefaz.to.gov.br/">Tocantins</option>
+                </select>
+                <p>Portais de Documentos Fiscais</p>
+                <select class="combo-navegacao">
+                    <option>Selecione</option>
+                        <option value="https://dfe-portal.svrs.rs.gov.br/Mdfe ">MDF-e</option>
+                        <option value="http://www.nfe.fazenda.gov.br/portal/principal.aspx">NF-e</option>
+                        <option value="http://www.cte.fazenda.gov.br/">CT-e</option>
+                </select>
+            </div>
+        </li>
+    </ul>
+</nav>
+
+<!-- INÍCIO: conteúdo -->
+
+<article class="container-conteudo-item grid-3">
+        <ul class="breadcrumbs">
+                <li><a href="/item/show/2">P&#225;gina Inicial</a></li>
+                <li><a href="/item/show/9">M&#243;dulos</a></li>
+                <li><a href="/item/show/1196">EFD-Reinf</a></li>
+                <li><a href="/item/show/1199">Destaques</a></li>
+                <li><a href="/item/show/7911">Pesquisa avan&#231;ada por nome do benefici&#225;rio no portal do e-CAC</a></li>
+        </ul>
+<header class="cabecalho-projeto">
+    <h1>EFD-Reinf</h1>
+    <ul class="menu menu-projeto clearfix">
+            <li class="item">
+                    <a href="/item/show/1494">O que &#233;</a>
+ 
+                            <li class="item">
+                    <a href="/item/show/1495">Downloads</a>
+ 
+                                <ul class="menu">
+                            <li class="item"><a href="/item/show/2133">Leiautes </a></li>
+                            <li class="item"><a href="/item/show/2141">Esquemas XSD</a></li>
+                            <li class="item"><a href="/item/show/2225">Manual de Orienta&#231;&#227;o</a></li>
+                            <li class="item"><a href="/item/show/7873">Tabelas</a></li>
+                            <li class="item"><a href="/item/show/2544">Mensagens do Sistema</a></li>
+                            <li class="item"><a href="/item/show/2547">Consultas EFD-REINF</a></li>
+                            <li class="item"><a href="/item/show/2694">Notas T&#233;cnicas e Orientativas</a></li>
+                            <li class="item"><a href="/item/show/4118">Nota Conjunta SEPRT/RFB/SED n&#186; 1/2019</a></li>
+                </ul>
+            </li>
+            <li class="item">
+                    <a href="/item/show/1496">Legisla&#231;&#227;o</a>
+ 
+            <li class="item">
+                    <a href="/item/show/1497">Perguntas Frequentes</a>
+ 
+    </ul>
+</header>
+    
+    
+
+<h1 class="destacado">
+	Pesquisa avan&#231;ada por nome do benefici&#225;rio no portal do e-CAC
+</h1>
+
+    <p class="data-destaque">Publicado em 27/11/2025</p>
+
+
+<section id="conteudo-pagina">
+    <p>Para facilitar o uso do portal web da EFD-Reinf pelos usu&aacute;rios do e-CAC, foi inclu&iacute;da nova op&ccedil;&atilde;o na pesquisa avan&ccedil;ada dos eventos da s&eacute;rie R-4000: a busca por nome do benefici&aacute;rio (no exterior).<br />Para utilizar a funcionalidade da pesquisa por nome, acessar a op&ccedil;&atilde;o de menu &ldquo;Rendimentos Pagos/Creditados (S&eacute;rie R-4000)&rdquo; -&gt; &ldquo;Visualizar pagamentos/cr&eacute;ditos&rdquo; e marcar a op&ccedil;&atilde;o de menu &ldquo;Pesquisa avan&ccedil;ada&rdquo;. <br />Observar que nas op&ccedil;&otilde;es dos eventos &ldquo;Benefici&aacute;rio pessoa f&iacute;sica (R-4010)&rdquo; e &ldquo;Benefici&aacute;rio pessoa jur&iacute;dica (R-4020)&rdquo; aparecem dispon&iacute;veis os campos de "Nome do benefici&aacute;rio", que poder&atilde;o ser opcionalmente preenchidos caso o CPF ou CNPJ n&atilde;o sejam preenchidos, e vice-versa. A pesquisa funciona mesmo que seja digitado apenas um trecho do nome.<br />Al&eacute;m disso, caso a pesquisa avan&ccedil;ada n&atilde;o seja utilizada, a ordem de exibi&ccedil;&atilde;o dos eventos foi alterada para que aqueles enviados com o nome do benefici&aacute;rio preenchido apare&ccedil;am primeiro, antes dos eventos enviados com n&uacute;mero de CPF ou CNPJ.</p>
+</section>
+
+
+</article>
+
+<!-- FIM: conteúdo -->
+
+
+        </section>
+
+        <!-- RODAPÉ -->
+
+        <footer class="rodape-sped">
+            <nav class="grid-container clearfix">
+                <div class="col grid-1">
+                    <a href="http://www.receita.fazenda.gov.br">
+                        <img class="logo-receita" src="/Content/Images/marca-rfb.png" alt="Receita Federal" />
+                    </a>
+                </div>
+                <!--
+                <div class="col grid-1">
+                    <h2>SPED</h2>
+                    <ul>
+                        <li><a href="/">Conheça o SPED</a>
+                        <li><a href="/">Serviços</a>
+                        <li><a href="/">Legislação</a>
+                        <li><a href="/">Empresas Piloto e Entidades</a>
+                    </ul>
+                </div>
+                <div class="col grid-1">
+                    <h2>Projetos</h2>
+                    <ul>
+                        <li><a href="/projeto/show/4146">Central de Balan&#231;os</a></li>
+                        <li><a href="/projeto/show/267">CT-e</a></li>
+                        <li><a href="/projeto/show/2918">DeRE</a></li>
+                        <li><a href="/projeto/show/273">ECD</a></li>
+                        <li><a href="/projeto/show/269">ECF</a></li>
+                        <li><a href="/projeto/show/268">EFD Contribui&#231;&#245;es</a></li>
+                        <li><a href="/projeto/show/274">EFD ICMS IPI</a></li>
+                        <li><a href="/projeto/show/1196">EFD-Reinf</a></li>
+                        <li><a href="/projeto/show/1179">e-Financeira</a></li>
+                        <li><a href="/projeto/show/1048">eSocial</a></li>
+                        <li><a href="/projeto/show/1312">MDF-e</a></li>
+                        <li><a href="/projeto/show/1304">NFC-e</a></li>
+                        <li><a href="/projeto/show/271">NF-e</a></li>
+                        <li><a href="/projeto/show/272">NFS-e</a></li>
+                    </ul>
+                </div>
+                <div class="col grid-1">
+                    <h2>Downloads</h2>
+                    <ul>
+                        <li><a href="/">Validador ECD</a>
+                        <li><a href="/">Validado EFC ICMS–IPI</a>
+                        <li><a href="/">Validador EFD-Contribuições</a>
+                        <li><a href="/">Validador FCONT</a>
+                        <li><a href="/">Emissor CTe</a>
+                        <li><a href="/">Visualizador Sped</a>
+                        <li><a href="/">Receitanet–BX</a>
+                    </ul>
+                </div>
+                -->
+            </nav>
+        </footer>
+
+        <script src="/Scripts/jquery-1.10.1.js"></script>
+
+        <script src="/Scripts/jquery-ui-1.10.3.custom.js"></script>
+
+        <script src="/Scripts/sped-mobile.js"></script>
+<script src="/Scripts/sped-zoom.js"></script>
+
+        
+    <script type="text/javascript">
+        (function () {
+            "use strict";
+            $(function () { 
+                $('.combo-navegacao').on('change', function () {
+                    var value = $(this).val();
+                    if (value !== 'Selecione') {
+                        window.open(value);
+                    }
+                });
+            });
+        }());
+    </script>
+    
+
+        <script type="text/javascript">
+            $(function () {
+                $("input#input-pesquisa").tooltip();
+            });
+        </script>
+		
+		<style>
+            #dialog-sped::backdrop {
+                backdrop-filter: blur(5px);
+            }
+        </style>        
+        <script>
+            var _spedInterval = null;
+
+            function _spedStartCountdown() {
+                var bar = document.getElementById("sped-progress-bar");
+                if (!bar) return;
+                if (_spedInterval) clearInterval(_spedInterval);
+                // reseta a barra instantaneamente antes de animar
+                bar.style.transition = "none";
+                bar.style.width = "0%";
+                bar.offsetWidth; // força reflow para aplicar o reset antes da transição
+                bar.style.transition = "width 1s linear";
+                var elapsed = 0;
+                _spedInterval = setInterval(function () {
+                    elapsed++;
+                    bar.style.width = (elapsed / 10 * 100) + "%";
+                    if (elapsed >= 10) {
+                        clearInterval(_spedInterval);
+                        window.location.href = "https://www.gov.br/sped";
+                    }
+                }, 1000);
+            }
+
+            window.addEventListener("load", function () {
+                // urls na white list não exibem a modal
+				/* Desenvolvimento: 
+                var whiteList = [
+                    'http://sped-sitio.dev.serpro/pagina/show/466',
+                    'http://sped-sitio.dev.serpro/pagina/show/467'
+                ];
+                */                          
+                var whiteList = [
+                    'https://sped.rfb.gov.br/pagina/show/1779',
+                    'https://sped.rfb.gov.br/pagina/show/7701'
+                ];
+
+                if (whiteList.indexOf(window.location.href) !== -1) { 
+                    return
+                };
+ 
+                var dialog = document.createElement("dialog");
+                dialog.id = "dialog-sped";
+                dialog.style.cssText = "padding:2em; border: none;border-radius:6px; max-width:400px; text-align:center;";
+
+                var heading = document.createElement("h2");
+                heading.innerHTML = `<svg width="4em" height="4em" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M12 20.75a8.75 8.75 0 1 0 0-17.5a8.75 8.75 0 0 0 0 17.5M10.639 8.063C10.564 7.24 11.195 6.53 12 6.53s1.436.71 1.361 1.532l-.54 4.538a.83.83 0 0 1-.821.766a.83.83 0 0 1-.82-.766zm2.728 8.039a1.367 1.367 0 1 1-2.734 0a1.367 1.367 0 0 1 2.734 0"/><path fill="#d89851" d="M 11.290712,20.710645 C 9.0132243,20.478325 7.1608267,19.576635 5.6156047,17.94818 4.5271434,16.80109 3.744622,15.277627 3.4318645,13.696735 3.2174441,12.612908 3.2178719,11.362933 3.4330297,10.291918 3.9586368,7.6755439 5.6735756,5.419877 8.057555,4.2092581 10.01056,3.2174945 12.302138,2.9997287 14.407908,3.605792 c 3.135956,0.902562 5.528368,3.5036209 6.160227,6.697473 0.115402,0.583316 0.154405,1.005294 0.155493,1.68226 0.0017,1.041271 -0.13113,1.858788 -0.459873,2.830907 -0.888161,2.626357 -3.044538,4.718898 -5.701632,5.532842 -0.841937,0.25791 -1.475586,0.352867 -2.431846,0.364431 -0.39807,0.0048 -0.775874,0.0034 -0.839565,-0.0031 z m 1.02505,-3.269095 c 0.38276,-0.09022 0.743962,-0.371326 0.917711,-0.714205 0.227669,-0.449283 0.180251,-1.032018 -0.116812,-1.43555 -0.152834,-0.207609 -0.300404,-0.326294 -0.55655,-0.447609 -0.19066,-0.0903 -0.212047,-0.09388 -0.560111,-0.09388 -0.348064,0 -0.369451,0.0036 -0.560111,0.09388 -0.256146,0.121315 -0.403716,0.24 -0.55655,0.447609 -0.22259,0.302368 -0.311908,0.715438 -0.23426,1.083387 0.05716,0.270883 0.155946,0.45977 0.350141,0.669524 0.335072,0.361918 0.830794,0.511343 1.316542,0.396844 z m 0.05259,-4.14887 c 0.164434,-0.08429 0.321501,-0.246357 0.390988,-0.403445 0.04453,-0.100677 0.120755,-0.660654 0.345155,-2.535761 0.267185,-2.2326354 0.28576,-2.4222412 0.257023,-2.6236791 -0.08788,-0.6159977 -0.557771,-1.1017983 -1.155159,-1.1942654 -0.74938,-0.1159933 -1.450289,0.4129997 -1.567824,1.1832746 -0.02897,0.1898791 -0.0097,0.3896856 0.244348,2.5331729 0.151691,1.279868 0.28988,2.394187 0.307086,2.476262 0.05706,0.272181 0.263077,0.503393 0.540735,0.606867 0.157389,0.05865 0.482674,0.03701 0.637648,-0.04243 z"/></svg>`;
+                heading.style.cssText = "margin:0 0 .5em;";
+
+                var title = document.createElement("p");
+                title.style.cssText = "text-align:center; font-weight:bold; font-size:1.1em; color: #D89851";
+                title.innerHTML = 'Transição do Portal Sped';
+
+                var msg = document.createElement("p");
+                msg.style.cssText = "text-align:justify;";
+                msg.innerHTML = 'O portal do Sped está em novo endereço. Você será redirecionado em alguns instantes.';
+
+                var progressWrap = document.createElement("div");
+                progressWrap.style.cssText = "margin-top:1.2em; background:#eee; border-radius:4px; overflow:hidden; height:8px;";
+
+                var progressBar = document.createElement("div");
+                progressBar.id = "sped-progress-bar";
+                progressBar.style.cssText = "height:8px; width:0%; background:#D89851;";
+
+                progressWrap.appendChild(progressBar);
+
+                dialog.appendChild(heading);
+                dialog.appendChild(title);
+                dialog.appendChild(msg);
+                dialog.appendChild(progressWrap);
+                document.body.appendChild(dialog);
+                dialog.showModal();
+
+                _spedStartCountdown();
+            });
+
+            // ao voltar pelo botão do browser (bfcache), o load não dispara novamente;
+            // o pageshow com persisted=true reinicia a barra do zero
+            window.addEventListener("pageshow", function (e) {
+                if (e.persisted) _spedStartCountdown();
+            });
+        </script>
+    </body>
+</html>
