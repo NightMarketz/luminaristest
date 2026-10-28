@@ -236,6 +236,29 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
   // tx do EXPORTED falha (aqui, a auditoria dentro dela). O rollback desfaz o EXPORTED, e nada
   // fora da tx volta o job: ele fica PROCESSING para sempre, com o artefato órfão no disco.
   // Esperado: FAILED gravado FORA da tx que falhou, o arquivo apagado, e o erro relançado.
+  it('keeps compensating and rethrows the ORIGINAL tx error when updateJob(FAILED) itself fails (lacuna 10)', async () => {
+    const { repo, updateJob } = makeRepo();
+    const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo(), makeAccountRepo(), makeTaxReader(), makeIssReader(), legalParamsSemente, makeIbsCbsReader());
+    auditAppend.mockRejectedValueOnce(new Error('audit insert failed'));
+    const passThrough = updateJob.getMockImplementation()!;
+    updateJob.mockImplementation(async (...args: Parameters<typeof passThrough>) => {
+      if ((args as unknown[])[3] === undefined && (args[2] as { status?: string }).status === 'FAILED') {
+        throw new Error('db down');
+      }
+      return passThrough(...args);
+    });
+    const errorSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
+
+    await expect(svc.export(scope, { kind: 'EXPORT_TRIAL_BALANCE', format: 'csv', unitId: 'unit-1' })).rejects.toThrow('audit insert failed');
+
+    expect(storage.deleteFile).toHaveBeenCalledWith('u/unit/job/rand_export.csv');
+    expect(errorSpy).toHaveBeenCalledWith(
+      'export: falha ao marcar FAILED depois da tx — job fica PROCESSING',
+      expect.objectContaining({ jobId: 'job-1', error: expect.objectContaining({ message: 'db down' }) }),
+    );
+    errorSpy.mockRestore();
+  });
+
   it('does not leave the job PROCESSING when the EXPORTED tx fails after the file was written (lacuna 10)', async () => {
     const { repo, updateJob } = makeRepo();
     const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo(), makeAccountRepo(), makeTaxReader(), makeIssReader(), legalParamsSemente, makeIbsCbsReader());

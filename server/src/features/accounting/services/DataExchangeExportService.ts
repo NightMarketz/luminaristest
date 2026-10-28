@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import type { AccountingDataExchangeJob, BankStatementLine, ConsumptionTaxAssessment, FiscalDocument, TaxAssessment } from 'generated/prisma';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import * as storage from '../../../lib/attachmentStorage';
+import { logger } from '../../../lib/logger';
 import { sendAlertWebhook } from '../../../lib/alertWebhook';
 import { metrics } from '../../../lib/monitoring';
 import { serializeTable, type OutTable } from '../../../lib/spreadsheet';
@@ -562,9 +563,25 @@ export class DataExchangeExportService {
     }).catch(async (error: unknown) => {
       // Lacuna 10 (D-2026-10-28-LACUNAS-EXECUTA-27-28): o arquivo já existe e o rollback desfez o
       // EXPORTED — sem isto o job ficaria PROCESSING para sempre, com o artefato órfão. FAILED fora
-      // da tx que falhou; sem log aqui (OBS-R5: quem relança não registra, a borda registra).
-      await this.repo.updateJob(scope, job.id, { status: 'FAILED' });
-      await storage.deleteFile(storageKey);
+      // da tx que falhou; o erro da tx não é registrado aqui (OBS-R5: a borda registra).
+      // Compensação best-effort: cada passo isolado e o erro original sempre relançado. A falha
+      // de um passo é OUTRO erro, que se perderia — por isso registra aqui (não é o relançado).
+      try {
+        await this.repo.updateJob(scope, job.id, { status: 'FAILED' });
+      } catch (compensationError) {
+        logger.error('export: falha ao marcar FAILED depois da tx — job fica PROCESSING', {
+          jobId: job.id, kind: job.kind, error: compensationError,
+        });
+      }
+      for (const key of [storageKey]) {
+        try {
+          await storage.deleteFile(key);
+        } catch (compensationError) {
+          logger.error('export: falha ao apagar o artefato depois da tx — arquivo órfão', {
+            jobId: job.id, kind: job.kind, error: compensationError,
+          });
+        }
+      }
       throw error;
     });
 
