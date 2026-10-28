@@ -232,6 +232,25 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
     expect(createJob).not.toHaveBeenCalled();
   });
 
+  // GUARD (lacuna 10, cédula D-2026-10-28-LACUNAS-EXECUTA-27-28): o arquivo já foi gravado e a
+  // tx do EXPORTED falha (aqui, a auditoria dentro dela). O rollback desfaz o EXPORTED, e nada
+  // fora da tx volta o job: ele fica PROCESSING para sempre, com o artefato órfão no disco.
+  // Esperado: FAILED gravado FORA da tx que falhou, o arquivo apagado, e o erro relançado.
+  it('does not leave the job PROCESSING when the EXPORTED tx fails after the file was written (lacuna 10)', async () => {
+    const { repo, updateJob } = makeRepo();
+    const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo(), makeAccountRepo(), makeTaxReader(), makeIssReader(), legalParamsSemente, makeIbsCbsReader());
+    auditAppend.mockRejectedValueOnce(new Error('audit insert failed'));
+
+    await expect(svc.export(scope, { kind: 'EXPORT_TRIAL_BALANCE', format: 'csv', unitId: 'unit-1' })).rejects.toThrow('audit insert failed');
+
+    const outOfTx = updateJob.mock.calls
+      .filter((c) => (c as unknown[])[3] === undefined)
+      .map((c) => c[2] as { status?: string; supersedesJobId?: string | null });
+    const lastOutOfTx = outOfTx[outOfTx.length - 1];
+    expect(lastOutOfTx?.status).toBe('FAILED');
+    expect(storage.deleteFile).toHaveBeenCalledWith('u/unit/job/rand_export.csv');
+  });
+
   // GUARD (A1, triagem 2026-08-20 ratificada) — terceiro sítio da classe; este NÃO estava no
   // relatório da auditoria (ela nomeou só ECD e ECF). Ver a nota em SpedGenerationService.test.ts.
   it('does not leave the job claiming EXPORTED when saveFile fails, and records FAILED (A1)', async () => {
