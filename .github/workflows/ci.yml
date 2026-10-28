@@ -273,6 +273,36 @@ jobs:
         env:
           TZ: America/Sao_Paulo
 
+  # Constrói as duas imagens de deploy (ADR-M2) sem push. Nenhum outro job exercita os
+  # Dockerfiles: sem este, a troca de imagem base (node:22-alpine) só seria testada no próximo
+  # build real. Advisory por decisão do dono (2026-10-28): job vermelho aparece no PR, mas não
+  # reprova o workflow.
+  docker-build:
+    name: Docker – build ${{ matrix.image }} (advisory)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [server, my-app]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      # NEXT_PUBLIC_API_BASE_URL é inlinado no bundle no `next build` (ADR-M2 §4.b); o valor aqui
+      # é dummy — a imagem não é publicada. O server ignora o build-arg.
+      - name: Build ${{ matrix.image }} (sem push)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ matrix.image }}
+          push: false
+          build-args: |
+            NEXT_PUBLIC_API_BASE_URL=https://api.ci.invalid
+          cache-from: type=gha,scope=docker-${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=docker-${{ matrix.image }}
+
   # Gate de governança de skills. `skill-audit run --all` é determinístico (estático: validate +
   # governance-check + sync-metadata + coverage + eval-estrutural + controls + self-check) — sem
   # model-in-loop, roda em < 1s. Barra drift: regra sem gate, gate órfão, eval-score divergente do
