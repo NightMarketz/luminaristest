@@ -1,0 +1,56 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "CONVÊNIO ICMS 142/18 — Conselho Nacional de Política Fazendária CONFAZ",
+      "url": "https://www.confaz.fazenda.gov.br/legislacao/convenios/2018/CV142_18",
+      "url_final": "https://www.confaz.fazenda.gov.br/legislacao/convenios/2018/CV142_18",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-27T11:07:22-03:00",
+      "sha256": "7c2bdc9db1ceb11faaa56b2582e77e5a1bcb66e51cd62b6de0f155a78359c45a",
+      "arquivo": "docs/D01_CV142_18.html",
+      "texto": "docs/D01_CV142_18.txt",
+      "bytes": 933142
+    },
+    {
+      "id": "D02",
+      "titulo": "RC 33677/2026",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/RC33677_2026.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/RC33677_2026.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-27T11:08:35-03:00",
+      "sha256": "543cc9f15760ac039571d718c5b28ddb01b8cd35a795d7c654f1321c061c9753",
+      "arquivo": "docs/D02_RC33677_2026-aspx.html",
+      "texto": "docs/D02_RC33677_2026-aspx.txt",
+      "bytes": 158704
+    },
+    {
+      "id": "D03",
+      "titulo": "RICMS - Artigo 313 E a 313 F\r\n\t\t\t\t\t\t\r\nSEÇÃO XIII - DAS OPERAÇÕES COM PRODUTOS DE PERFUMARIA",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art313e.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art313e.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-27T11:08:36-03:00",
+      "sha256": "ae78f66568762bf33159910dfa97cc8f9e22854e154168e877daac77073e4ed1",
+      "arquivo": "docs/D03_art313e-aspx.html",
+      "texto": "docs/D03_art313e-aspx.txt",
+      "bytes": 161487
+    },
+    {
+      "id": "D04",
+      "titulo": "Lcp 214",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-27T11:08:57-03:00",
+      "sha256": "e4477a56b80a530c0225894ae17c4507c1d4bdab4d772999cc5befb4794ef8c8",
+      "arquivo": "docs/D04_lcp214-htm.html",
+      "texto": "docs/D04_lcp214-htm.txt",
+      "bytes": 5403667
+    }
+  ],
+  "buscas": [],
+  "slug": "eficiencia-fiscal-pr2-icms-st-ncm",
+  "pergunta": "Quais NCM 3303/3304/3305 estão sob ICMS-ST (Conv. ICMS 142/2018 Anexo de perfumaria e o RICMS/SP) e como a segregação do Simples (LC 123 art. 18 § 4º-A I) depende disso?",
+  "criado": "2026-10-27T11:07:21-03:00"
+}

@@ -1287,6 +1287,9 @@ export class ApplicationFactory {
       this.repositories.account,
       this.repositories.posting,
       this.policies.accounting,
+      this.repositories.productFiscalProfile, // EFICIENCIA-FISCAL PR-2 (item 13): NCM do produto
+      this.repositories.fiscalProfile, // UF da unidade (codMun)
+      legalParameterService, // fotografia PIS_COFINS_MONOFASICO_NCM + ICMS_ST_NCM_UF
     );
     // PRESUMIDO-TETO-78MI item 8 (F-PT-1 c): teto do Presumido — só leitura; consumido pela apuração e pelo perfil da empresa.
     const presumidoTetoService = new PresumidoTetoService(
@@ -2005,6 +2008,7 @@ export class ApplicationFactory {
         this.repositories.issBeneficioMunicipal, // SIMPLES-PISO-ANEXO-XI bloco 1: benefício municipal de ISS
         sourceDocumentUploadService, // BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-9 a: o PDF do DAS na visão
         this.repositories.receitaFiscalRecebimento, // X14-CAIXA PR-2 item 8: recebimentos, base do caixa
+        this.repositories.productFiscalProfile, // EFICIENCIA-FISCAL PR-2 item 13: avisos SEM_NCM e ICMS_ST_NAO_CONFERIDA
       ),
       // BE-INCR-SIMPLES-NACIONAL PR-4 (nó X14, itens 27–28): espelhos DASN-SIMEI e DEFIS.
       simplesDeclaracao: new SimplesDeclaracaoService(
