@@ -36,6 +36,15 @@ atualizado: "2026-10-01"
 - `docs/SDD-LUMINARIS.md:595` → > **🔁 FOLD 2026-09-17 — SESSÃO 5: "executa C6b" → C6b MERGEADO em 3 PRs seriais.** Plano granular #336 (`b7310a2c`) → **PR-1 #337 `daf76279`** (período nos 4 exports de relatório; F-C6b-6/7 → a: balancete usa o `asOf` antes aceito-e-ignorado, razão geral com abertura; review PASS + 1 MÉDIO fechado no PR) → **PR-2 #338 `15c8bf53`** (`EXPORT_BANK_RECONCILIATION` + `EXPORT_ENTRY_SAMPLE` sha256-rank por lançamento; review FAIL 2 ALTO — `'?'` alcançável no CSV, amostra por perna — + 1 MÉDIO → fix → delta PASS) → **PR-3 #340 `373d00d4`** (`AccountingDeliveryItem` + backfill idempotente, manifesto N-
 - `docs/SDD-LUMINARIS.md:1690` → C6 --> C6b
 
+## Emenda 28/10 — unicidade do extra por kind + período
+
+- **Decisão:** `docs/plano/decisoes/D-2026-10-28-LACUNAS-EXECUTA-27-28.md`, item 2 (chega à `main` pelo PR #937) — "Chave kind+período (Recomendado)" (dono, AskUserQuestion, 2026-10-28).
+- **Autorização de execução:** dono, chat, 2026-10-28: "Pode fechar as lacunas então?", com a escolha "Sessões paralelas" (uma sessão por lacuna). Nada mergeia sem OK.
+- **O que muda:** `AccountingDeliveryService.resolveExtras` deixa de recusar o segundo extra do mesmo `kind`. O mesmo kind entra de novo quando os intervalos `[periodStart, periodEnd]` não se cruzam (fechados nas duas pontas: 31/01 e 01/02 não se cruzam). Intervalo sobreposto ou igual do mesmo kind continua 400 `DUPLICATE_KIND`. Vale para todo kind.
+- **Ordem das checagens:** a de período ausente sobe para antes da de duplicata, porque a duplicata agora compara períodos. O job sem período segue com a mensagem própria.
+- **Manifesto:** não há nome de arquivo nem ZIP; cada item é identificado por `jobId` (e `@@unique([deliveryId, jobId])`). Dois do mesmo kind não colidem; nada a desambiguar.
+- **Limite herdado:** `extraJobIds` aceita até 20 ids (DTO). Os 12 meses de um export mensal cabem com mais 8 extras; acima disso é outra emenda.
+
 ## Linhas de origem (verbatim do SDD consolidado)
 
 > Copiadas das tabelas das Partes II/III de `docs/SDD-LUMINARIS.md` (snapshot 23/09). O estado **vivo** é o frontmatter acima.
