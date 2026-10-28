@@ -68,6 +68,7 @@ model User {
   taxAssessments             TaxAssessment[] // BE-INCR-TAX-ASSESSMENT Fase A (nó X7, item 12) — apuração IRPJ/CSLL da PJ
   consumptionTaxAssessments  ConsumptionTaxAssessment[] // IBS-CBS-2027 PR-2 (item 8) — apuração mensal de IBS/CBS
   mitExports                 MitExport[] // BE-INCR-MIT-EXPORT PR-2 (nó X9, item 11) — arquivos do MIT gerados
+  reinfBatches               ReinfBatch[] // BE-INCR-EFD-REINF PR-1 (item 10) — lotes da EFD-Reinf gerados
   simplesHistorico           SimplesHistoricoMensal[] // BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14, itens 10–11)
   simplesApuracoes           SimplesApuracao[] // X14 PR-3 item 19
   simplesDeclaracoesAnuais   SimplesDeclaracaoAnual[] // X14 PR-4 itens 27–28
@@ -610,6 +611,7 @@ model Account {
   lalurEntries                       LalurEntry[]              @relation("LalurEntryAccount") // ajuste da Parte A com relação contábil (M310/M360.COD_CTA, ECF Fase 3B)
   fixedAssetClassCostOf              FixedAssetClass[]         @relation("FixedAssetClassCost") // conta do bem (1.2.x, BE-INCR-FIXED-ASSETS)
   fixedAssetClassAccumulatedOf       FixedAssetClass[]         @relation("FixedAssetClassAccumulatedDepreciation") // conta de depreciação acumulada (1.2.9.x)
+  fixedAssetClassAmortizationOf      FixedAssetClass[]         @relation("FixedAssetClassAmortizationExpense") // despesa de amortização de benfeitoria (C8 emenda 3.2, F-EM-7 b)
   scopeSettingsDepreciationExpenseOf AccountingScopeSettings[] @relation("ScopeSettingsDepreciationExpense") // despesa de depreciação (4.x)
   scopeSettingsDisposalGainOf        AccountingScopeSettings[] @relation("ScopeSettingsDisposalGain") // ganho na baixa de imobilizado
   scopeSettingsDisposalLossOf        AccountingScopeSettings[] @relation("ScopeSettingsDisposalLoss") // perda na baixa de imobilizado
@@ -1724,6 +1726,21 @@ model FiscalProfile {
   inscricaoMunicipal                  String? // prest/IM [123]
   cnae                                String? // informativo
   dpsSerie                            Int       @default(1) // serie [106], faixa 00001–49999 "aplicativo próprio" (RN E0010)
+  // BE-INCR-NFCE (nó X10a, itens 8–9; F-NFCE-2 b): IE do emitente (emit/IE, C17 — só algarismos, 2–14) e séries da NF-e 55 e
+  // da NFC-e 65 (B07, faixa 000–889 "aplicativo do contribuinte", MOC 7.0 Anexo I p. 9). icmsContribuinte NÃO muda de sentido.
+  inscricaoEstadual                   String?
+  nfeSerie                            Int       @default(1)
+  nfceSerie                           Int       @default(1)
+  // BE-INCR-NFCE PR-3 (nó X10a; D-2026-10-26-X10A-EXECUCAO, questionário: "Campos no FiscalProfile"): emitente da NF-e/NFC-e
+  // — razão social (C03 2-60) e endereço (C06 xLgr 2-60, C07 nro 1-60, C08 xCpl 1-60, C09 xBairro 2-60, C11 xMun 2-60,
+  // C13 CEP 8). cMun = codMun; UF derivada do codMun (IBGE). Só a emissão de NFE/NFCE os exige.
+  razaoSocial                         String?
+  enderLogradouro                     String?
+  enderNumero                         String?
+  enderComplemento                    String?
+  enderBairro                         String?
+  enderMunicipio                      String?
+  enderCep                            String?
   regEspTrib                          Int       @default(0) // regTrib/regEspTrib [142]: 0 = nenhum
   regApTribSN                         Int? // [141] só SIMPLES; 1 = apuração do ISSQN pelo SN [inferido RN 508] — pendente contador (5e)
   issAliquotaBp                       Int? // pAliq [312] em basis points (≤ 500 = 5%, E0595); SÓ município NÃO conveniado (E0617/E0618) — pendente contador (5a)
@@ -1744,6 +1761,9 @@ model FiscalProfile {
   cancelPrazoDias                     Int? // Anexo II RN E0822 [28] — prazo de cancelamento, "conforme parametrização do município emissor"
   substPrazoDias                      Int? // Anexo I RN E0050 [173] — prazo de substituição; ≤ 730 (Anexo I [114] "Prazo máximo parametrizável é 2 anos")
   prazoFonte                          String? // onde o operador achou o número (link/norma municipal)
+  // BE-INCR-NFCE (nó X10a, item 27; EMENDA 2026-10-11 §3 E3-1): prazo do cancelamento 110111 — null ⇒ prazo nacional
+  nfeCancelPrazoHoras                 Int? // NF-e 55: null ⇒ 24 h (Aj. SINIEF 07/05 cl. 12ª; MOC VG Tabela 5-38, exceção estadual)
+  nfceCancelPrazoMinutos              Int? // NFC-e 65: null ⇒ 30 min (Aj. SINIEF 19/16 cl. 15ª, teto nacional); 1–30
   createdById                         String?
   updatedById                         String?
   createdAt                           DateTime  @default(now())
@@ -1824,6 +1844,9 @@ model CompanyFiscalProfile {
   // PRESUMIDO-TETO-78MI item 5 (F-PT-2 c): receita total do ano anterior declarada (IN 1.700 art. 59 § 1º), em centavos.
   // Só PRESUMIDO/REAL. Não é copiada para outro ano.
   receitaTotalAnoAnteriorCents     BigInt?
+  // BE-INCR-EFD-REINF PR-1 (item 4; lacuna B, dono 26/10: "Campo no perfil fiscal") — `classTrib` do R-1000 (Tabela 08)
+  // do Simples: '01' | '02' | '03' conforme a CPP (P-REINF-7 ao contador). MEI = 04 e Presumido/Real = 99 são derivados.
+  reinfClassTrib                   String?
   createdById                      String?
   updatedById                      String?
   createdAt                        DateTime           @default(now())
@@ -2096,6 +2119,38 @@ model ServiceFiscalProfile {
   @@map("service_fiscal_profiles")
 }
 
+// BE-INCR-NFCE (nó X10a, item 10; F-NFCE-3 b ratificado 02/10, contra a recomendação) — perfil fiscal DO PRODUTO para a
+// NF-e 55 / NFC-e 65. Prisma first-class (§2.1, invariante legal), molde do ServiceFiscalProfile SEM unitId: um perfil por
+// produto, valendo para todas as unidades do dono. `productRef` = id da linha `products` (saleItems.productId), plain string.
+// `csosn` (CRT 1) e `cstIcms` (CRT 3) convivem; a montagem escolhe pelo CRT do perfil da unidade emitente. Códigos admitidos =
+// docs/accounting/fontes-oficiais/TRANSCRICAO-MOC70-NFCe-NFe-saida-2026-10-26.md. Soft-delete com rename-on-delete.
+model ProductFiscalProfile {
+  id              String    @id @default(cuid())
+  userId          String
+  productRef      String
+  ncm             String // I05: 8 dígitos
+  cest            String? // I05c: 7 dígitos
+  origem          Int // N11: 0–8
+  cfopPadrao      String // I08: 4 dígitos; NFC-e ⊂ I08-150
+  csosn           String? // N12a (CRT 1): 102, 103, 300, 400, 500
+  cstIcms         String? // N12 (CRT 3): 00
+  uCom            String // I09: 1–6
+  cEan            String // I03: GTIN-8/12/13/14 ou "SEM GTIN"
+  cstPis          String // Q06
+  cstCofins       String // S06
+  ibsCbsCst       String? // UB13 (NT 2025.002 v1.52)
+  ibsCbsClassTrib String? // UB14
+  xProd           String? // I04: 1–120; null => products.name
+  createdById     String?
+  updatedById     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  @@unique([userId, productRef])
+  @@map("product_fiscal_profiles")
+}
+
 // SIMPLES-PISO-ANEXO-XI bloco 1 (BRIEF item 1, F-PI-1 a): benefício municipal de ISS para ME/EPP do Simples (Res. CGSN
 // 140 arts. 31-32). Lei do Município: por unidade + codMun, ramo (prefixos de cTribNac; [] = todos) e faixa, com vigência.
 // Prisma first-class (§2.1). Soft-delete; sem @@unique (sobreposição é checada no serviço).
@@ -2152,7 +2207,7 @@ model FiscalDocument {
   id                      String                  @id @default(cuid())
   userId                  String
   unitId                  String
-  kind                    String // NFSE | NFE
+  kind                    String // NFSE | NFE | NFCE (BE-INCR-NFCE item 3)
   status                  String // SENT | PROCESSING | AUTHORIZED | AUTHORIZED_DIVERGENT (releitura divergente, F-MAN-2 c) | REJECTED | CANCELLED
   saleId                  String
   saleKey                 String // = saleId enquanto vivo; "cancelled:<id>:<saleId>" após CANCELLED
@@ -2249,16 +2304,44 @@ model FiscalDocumentAttempt {
 
 // BE-INCR-DFE (BRIEF item 4; ADR §9.2 item 9) — numeração da DPS/NF-e por (unidade, kind, série), consumida
 // DENTRO da tx do SENT (ACC-015 por analogia). Espelho de JournalEntrySequence; NUNCA a sequência do razão.
+// BE-INCR-NFCE (nó X10a, item 23; F-NFCE-4 a): chave com o ambiente — na NF-e/NFC-e homologação e produção numeram de 1
+// cada uma (a chave natural inclui o ambiente, MOC VG §2.2.7). A NFS-e numera com ambiente = '' (lacuna no GAP-MAP).
 model FiscalDocumentSequence {
   userId    String
   unitId    String
   kind      String
+  ambiente  String   @default("") // producao | homologacao (NFE/NFCE) | '' (NFSE)
   serie     Int
   last      BigInt   @default(0)
   updatedAt DateTime @updatedAt
 
-  @@id([userId, unitId, kind, serie])
+  @@id([userId, unitId, kind, ambiente, serie])
   @@map("fiscal_document_sequences")
+}
+
+// BE-INCR-NFCE (nó X10a, item 24; F-NFCE-5 a; EMENDA-3 E3-1 c) — faixa de numeração de NF-e/NFC-e cujo pedido de
+// inutilização foi enviado pelo operador (MOC VG §5.3, Tabela 5-9). Guardas locais `[NFE-INUT-REGRAS]` antes da porta.
+model FiscalNumberVoid {
+  id          String   @id @default(cuid())
+  userId      String
+  unitId      String
+  kind        String // NFE | NFCE
+  ambiente    String // producao | homologacao
+  serie       Int
+  nIni        BigInt
+  nFin        BigInt
+  ano         Int
+  xJust       String
+  status      String // REQUESTED | HOMOLOGATED | REJECTED
+  partner     String
+  nProt       String?
+  errorsJson  String?
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, unitId, kind, ambiente, serie])
+  @@map("fiscal_number_voids")
 }
 
 // F7 / BE-INCR-BANK-SETTLEMENT — item de baixa PROPOSTO pelo retorno bancário, efetivado só por
@@ -2381,6 +2464,10 @@ model FixedAssetClass {
   accumulatedDepreciationAccountId String? // obrigatório se depreciable (gate no DTO/serviço do PR-2, não aqui — a coluna é sempre nullable)
   accumulatedDepreciationAccount   Account?     @relation("FixedAssetClassAccumulatedDepreciation", fields: [accumulatedDepreciationAccountId], references: [id], onDelete: Restrict)
   assets                           FixedAsset[]
+  // C8 emenda 3.2 (E9, F-EM-7 → b): tipo da classe e conta própria da despesa de amortização (benfeitoria em imóvel de terceiro, RIR 331 III)
+  kind                             String       @default("DEPRECIATION") // FIXED_ASSET_CLASS_KINDS: DEPRECIATION | AMORTIZATION_LEASEHOLD
+  amortizationExpenseAccountId     String?
+  amortizationExpenseAccount       Account?     @relation("FixedAssetClassAmortizationExpense", fields: [amortizationExpenseAccountId], references: [id], onDelete: Restrict)
   createdAt                        DateTime     @default(now())
   updatedAt                        DateTime     @updatedAt
   deletedAt                        DateTime?
@@ -2472,6 +2559,10 @@ model FixedAsset {
   // o rascunho. NULL para todo ativo que não nasceu de NF-e (SQLite trata NULL como distinto —
   // muitas linhas com payableId/sourceItemRef ambos null coexistem sem colidir no unique).
   sourceItemRef                String?
+  // C8 emenda 3.2 (E8b/E10, F-EM-6 → a): fim do contrato de locação (date-only) e a declaração de direito à indenização
+  // (NULL = não declarado — o silêncio do contrato gera direito, Lei 8.245/91 art. 35). Só para classe AMORTIZATION_LEASEHOLD.
+  leaseEndDate                 DateTime?
+  leaseIndemnifiable           Boolean?
   version                      Int               @default(1) // optimistic-lock counter da CAS de addAccumulated (item 14) e de activate/dispose (item 9/18)
   createdById                  String?
   createdAt                    DateTime          @default(now())
@@ -2712,6 +2803,7 @@ model LalurEntry {
   account        Account?                 @relation("LalurEntryAccount", fields: [accountId], references: [id])
   processos      LalurProcess[] // M315/M365 (processos judiciais/administrativos do ajuste) — value-objects, C2
   journalLinks   LalurEntryJournalEntry[] // M312/M362 (lançamentos da ECD relacionados) — value-objects, Fork F-3C-3
+  parteBLinks    LalurEntryParteBLink[] // M305/M355 1:N das linhas origem='system' (C8 emenda 3.2, E21b, F-EM-14 → a)
   createdById    String? // actor (AccountingScope.actorUserId); plain string
   createdAt      DateTime                 @default(now())
   updatedAt      DateTime                 @updatedAt
@@ -2749,6 +2841,7 @@ model LalurParteBAccount {
   updatedAt                         DateTime                  @updatedAt
   deletedAt                         DateTime? // set when archived (soft) — together with the rename-on-key
   entries                           LalurEntry[] // linhas da Parte A relacionadas (M305/M355)
+  entryLinks                        LalurEntryParteBLink[] // M305/M355 1:N (C8 emenda 3.2, F-EM-14 → a)
   movements                         LalurParteBMovement[]     @relation("LalurMovementConta") // M410 lançados NESTA conta (ECF Fase 3C)
   contrapartidaDe                   LalurParteBMovement[]     @relation("LalurMovementContrapartida") // M410 em que esta conta é COD_CTA_B_CTP
   balances                          LalurParteBBalance[] // M500 materializado por período fechado (ECF Fase 3C, Fork N-1 a)
@@ -2870,6 +2963,21 @@ model LalurProcess {
 // relacionados ao ajuste da Parte A com relação contábil. Só lançamento com `entryNumber` (Posted/Reconciled/
 // Reversed — nulo em Draft/PendingApproval, D-P3.4). Value-object do pai: sem deletedAt; `journalEntryIds[]`
 // SUBSTITUI o conjunto na mesma tx (Fork F-3C-3 a).
+/// C8 emenda 3.2 (E21b, F-EM-14 → a): M305/M355 1:N — uma linha da Parte A `origem='system'` (86/161/91.01) pode
+/// referir mais de uma conta da Parte B no mesmo trimestre (ex.: 161 realizando 1071 de um bem e constituindo 2210 de
+/// outro). O leiaute aceita vários M305 por M300 (REGRA_VALOR_DETALHADO soma os VL_CTA). Value-object, como o M312.
+model LalurEntryParteBLink {
+  entryId    String // FK LalurEntry — Restrict
+  entry      LalurEntry         @relation(fields: [entryId], references: [id], onDelete: Restrict)
+  parteBId   String // FK LalurParteBAccount — Restrict
+  parteB     LalurParteBAccount @relation(fields: [parteBId], references: [id], onDelete: Restrict)
+  valorCents BigInt // M305.VL_CTA (> 0)
+
+  @@id([entryId, parteBId])
+  @@index([parteBId])
+  @@map("lalur_entry_parte_b_links")
+}
+
 model LalurEntryJournalEntry {
   entryId        String // FK LalurEntry — Restrict
   entry          LalurEntry   @relation(fields: [entryId], references: [id], onDelete: Restrict)
@@ -3107,6 +3215,26 @@ model ConsumptionTaxAssessment {
 
   @@index([userId, anoCalendario, mes, tributo])
   @@map("consumption_tax_assessments")
+}
+
+// BE-INCR-EFD-REINF PR-1 (BRIEF item 10, §5.2; PRE-ADR D4/D8) — registro de cada lote da EFD-Reinf gerado, molde
+// MitExport: hash do lote + `eventos[]` (tipo, idEvento, sha256, origemIds, beneficiarioRef = id interno — nunca CPF/CNPJ).
+// O XML NÃO é persistido. `defasado` é calculado na leitura (item 13). Imutável: só `create` (PR-4 soma o CAS de status).
+model ReinfBatch {
+  id          String   @id @default(cuid())
+  userId      String // a PJ (R8: CNPJ raiz)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade) // como MitExport
+  competencia String // YYYY-MM (perApur)
+  tpAmb       Int // 1 produção | 2 produção restrita
+  eventos     Json // [{ tipo, idEvento, sha256, origemIds, beneficiarioRef?, conteudoSha256? (R-1000), retificaRecibo?, nrRecibo? }]
+  sha256      String // do lote
+  status      String // GERADO | TRANSMITIDO | ACEITO | REJEITADO
+  protocolo   String? // PR-4
+  geradoPorId String
+  createdAt   DateTime @default(now())
+
+  @@index([userId, competencia])
+  @@map("reinf_batches")
 }
 
 // BE-INCR-MIT-EXPORT PR-2 (nó X9, BRIEF item 11; F-X9-2 a) — registro de cada arquivo do MIT gerado, molde
@@ -3390,4 +3518,75 @@ model FiscalCertificate {
 
   @@unique([userId, unitId])
   @@map("fiscal_certificates")
+}
+
+// EFICIENCIA-FISCAL PR-1 (BRIEF BE-INCR-EFICIENCIA-FISCAL §4.1; ADR-INCR-EFICIENCIA-FISCAL D2, D3, D5, D6) — política
+// COMERCIAL de eficiência fiscal por unidade (não liga nem desliga guarda legal — D2). Versionada por vigência (molde
+// IssBeneficioMunicipal): a versão nova fecha a anterior em vigenteDesde − 1 dia. Sem linha ⇒ padrões do BRIEF.
+// `criterioAlocacao = CARGA_TRIBUTARIA` só nasce de sugestão CRITERIO_CARGA aceita por contador ACTIVE (I-6).
+model TaxOptimizationPolicy {
+  id                         String    @id @default(cuid())
+  userId                     String
+  unitId                     String
+  criterioAlocacao           String    @default("PROPORCIONAL_CATALOGO") // | CARGA_TRIBUTARIA
+  pisoServico                String    @default("CUSTO_INFORMADO") // F-EF-1 a: CUSTO_INFORMADO | CATALOGO_MINIMO | SEM_DESCONTO_ALEM_DO_PROPORCIONAL
+  aprovador                  String    @default("CONTADOR_SENAO_ADMIN") // F-EF-3 a
+  severidadePisoProporcional String    @default("WARN") // F-EF-14 a (fixo, sem PUT)
+  vigenteDesde               String // YYYY-MM-DD
+  vigenteAte                 String?
+  suggestionId               String? // sugestão CRITERIO_CARGA aceita que gerou esta versão
+  createdById                String
+  createdAt                  DateTime  @default(now())
+  deletedAt                  DateTime?
+
+  @@index([userId, unitId, vigenteDesde])
+  @@map("tax_optimization_policies")
+}
+
+// EFICIENCIA-FISCAL PR-1 item 5 (F-EF-1 a) — piso do serviço: custo informado com evidência e/ou preço mínimo publicado.
+model ServiceCostEvidence {
+  id                  String    @id @default(cuid())
+  userId              String
+  unitId              String
+  serviceRef          String // linha da tabela `services` (string escopada, não FK — F-INV5)
+  custoCents          BigInt? // custo unitário informado (exige sourceDocumentId)
+  catalogoMinimoCents BigInt? // preço mínimo publicado
+  sourceDocumentId    String?
+  vigenteDesde        String
+  vigenteAte          String?
+  createdById         String
+  createdAt           DateTime  @default(now())
+  deletedAt           DateTime?
+
+  @@index([userId, unitId, serviceRef, vigenteDesde])
+  @@map("service_cost_evidences")
+}
+
+// EFICIENCIA-FISCAL PR-1 item 7 (ADR D3) — sugestão de prática lícita: PROPOSED → ACCEPTED | REJECTED | EXPIRED. Trilha:
+// imutável depois de decidida e sem soft-delete. `pendingSlot` = 'PROPOSED' enquanto viva, senão NULL — uma PROPOSED por
+// assunto (molde AccountingPolicyVersion.pendingSlot; o @@unique com o status do ADR §7 barraria a 2ª REJECTED).
+model TaxOptimizationSuggestion {
+  id                   String    @id @default(cuid())
+  userId               String
+  unitId               String
+  practice             String // CRITERIO_CARGA | COMBO_DESCONTO_ALOCADO | PRINCIPAL_ACESSORIO | … (TAX_PRACTICES)
+  subjectType          String // UNIT | SALE | COMPETENCIA | ANO | PARTNER | PROFISSIONAL
+  subjectId            String
+  status               String // PROPOSED | ACCEPTED | REJECTED | EXPIRED
+  pendingSlot          String?
+  legalBasis           Json // [{ norma, artigo }] — do dossiê, nunca digitado livre
+  estimatedSavingCents BigInt // ≥ 0
+  calc                 Json // memória do cálculo / payload da decisão
+  parametrosSha256     String
+  proposedBy           String // 'SYSTEM' | userId
+  decidedById          String?
+  decidedAt            DateTime?
+  decisionReason       String?
+  supersedesId         String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@unique([userId, unitId, practice, subjectType, subjectId, pendingSlot])
+  @@index([userId, unitId, status])
+  @@map("tax_optimization_suggestions")
 }

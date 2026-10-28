@@ -35,6 +35,7 @@ import bankSettlementRoutes from './bankSettlements';
 import lalurRoutes from './lalur';
 import taxAssessmentRoutes from './taxAssessments';
 import mitExportRoutes from './mitExports';
+import reinfBatchRoutes from './reinfBatches';
 import simplesRoutes from './simples';
 import legalParameterRoutes from './legalParameters';
 
@@ -77,6 +78,7 @@ router.use('/crm', crmRoutes);
 router.use('/accounting/tax-assessments', taxAssessmentRoutes); // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7) — antes de /accounting
 router.use('/accounting/simples', simplesRoutes); // BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14) — antes de /accounting
 router.use('/accounting/mit-exports', mitExportRoutes); // BE-INCR-MIT-EXPORT PR-2 (nó X9) — antes de /accounting
+router.use('/accounting/reinf/batches', reinfBatchRoutes); // BE-INCR-EFD-REINF PR-1 — antes de /accounting
 router.use('/legal-parameters', legalParameterRoutes); // BE-INCR-LEGAL-PARAMS PR-1 — coeficientes de lei da plataforma
 router.use('/accounting', accountingRoutes);
 router.use('/accounting-binding', accountingBindingRoutes);

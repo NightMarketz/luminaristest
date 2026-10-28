@@ -1,4 +1,5 @@
-import type { DpsPayload } from '../dtos/DpsPayloadDto';
+import type { DpsManualPayload, DpsPayload } from '../dtos/DpsPayloadDto';
+import type { NfePayload as NfePayloadNumerada, NfePayloadSemNumeracao } from '../dtos/NfePayloadDto';
 
 /**
  * DfeEmissorPort — BE-INCR-DFE (nó X10b, BRIEF item 10; ADR-DFE D-X10b-1).
@@ -10,7 +11,8 @@ import type { DpsPayload } from '../dtos/DpsPayloadDto';
  * o tipo `NfePayload` fica reservado como `unknown` até a Fase E transcrever o leiaute.
  */
 
-export type DfeKind = 'NFSE' | 'NFE';
+/** BE-INCR-NFCE (nó X10a, item 3; F-PLAN-2 a) — `NFCE` = NFC-e modelo 65. */
+export type DfeKind = 'NFSE' | 'NFE' | 'NFCE';
 export type DfeAmbiente = 'producao' | 'homologacao';
 
 /** `infDPS/tpAmb` [103] — Anexo I v1.01, aba LEIAUTE, linha 103: 1 = Produção, 2 = Homologação. */
@@ -54,6 +56,11 @@ export function assertTpAmb(payload: { infDPS: { tpAmb: number } }, ambiente: Df
 }
 
 export interface DfeCapabilities {
+  /**
+   * BE-INCR-NFCE (nó X10a, item 4) — os tipos de documento que o adaptador emite. A seleção (`selectDfeEmissor`) e a
+   * resolução por documento (`resolveEmissorFor`) recusam o tipo que não estiver aqui (F-NFCE-1 c).
+   */
+  kinds: readonly DfeKind[];
   /** true quando o parceiro numera a DPS/NF-e (a sequência local NÃO é consumida nesse caso). */
   numbersDps: boolean;
   consultar: boolean;
@@ -64,10 +71,23 @@ export interface DfeCapabilities {
    * `false` ⇒ `POST …/substituir` recusa com 409 `DFE_SUBST_NAO_SUPORTADA`.
    */
   substituir: boolean;
+  /**
+   * BE-INCR-NFCE (nó X10a, item 24) — o adaptador pede a inutilização de faixa de NF-e/NFC-e (`inutNFe`, MOC VG §5.3).
+   * `false` ⇒ `POST …/inutilizacoes` recusa com 409 `DFE_INUT_NAO_SUPORTADA`.
+   */
+  inutilizar: boolean;
+  /**
+   * BE-INCR-NFCE (nó X10a, item 28; F-NFCE-9 c, ratificado 02/10) — carta de correção (evento 110110, só NF-e 55;
+   * vedada na NFC-e, Aj. SINIEF 19/16 cl. 8ª §1º). Reservada: nenhum adaptador declara `true` e não há rota.
+   */
+  cce: boolean;
 }
 
-/** Fase E (NF-e 55) é [pendente-insumo] — reservado até a transcrição do MOC 7.0 de saída. */
-export type NfePayload = unknown;
+/**
+ * BE-INCR-NFCE (nó X10a, item 12) — a NF-e 55 / NFC-e 65 pelo `NfePayloadSchema`: numerada quando o Luminaris numera
+ * (`numbersDps === false`, item 21), sem Id/cNF/nNF/cDV quando o adaptador numera.
+ */
+export type NfePayload = NfePayloadNumerada | NfePayloadSemNumeracao;
 
 export interface EmitirInput {
   kind: DfeKind;
@@ -76,7 +96,8 @@ export interface EmitirInput {
   ambiente: DfeAmbiente;
   cnpjEmitente: string;
   partnerAccountRef: string | null;
-  payload: DpsPayload | NfePayload;
+  /** DPS numerada, DPS sem numeração (portal numera, F-MAN-4 a) ou NF-e/NFC-e (item 12). */
+  payload: DpsPayload | DpsManualPayload | NfePayload;
 }
 
 export interface EmissaoResult {
@@ -108,12 +129,45 @@ export interface EmissaoResult {
  * BE-INCR-DFE-EVENTOS (nó X11, item 6) — contrato do resultado do cancelamento por máquina:
  * - `OUT_OF_WINDOW` ⇔ o fisco rejeitou com **E0822** ("fora do prazo limite … conforme parametrização do município
  *   emissor", Anexo II aba `RN EVENTO_PED.REG.EVENTO` [28]).
+ * - BE-INCR-NFCE (nó X10a, item 27; F-NFCE-10 a): na NF-e/NFC-e, `OUT_OF_WINDOW` ⇔ o fisco rejeitou o 110111 com **501**
+ *   (`retEvento/cStat`, prazo de cancelamento superado — `[NFCE-CANC-FORA]`; na NFC-e é terminal).
  * - E0823 / E0824 / E0827 / E0840 (Anexo II [29]/[30]/[31]/[35]) e qualquer outra rejeição ⇒ `REJECTED`, com o
  *   código preservado em `errors[].code`.
  * O adaptador real (X10i) herda o teste de tradução (`DfeCancelResultContract.test.ts`).
  */
 export interface CancelResult {
   status: 'CANCELLED' | 'OUT_OF_WINDOW' | 'REJECTED' | 'PROCESSING';
+  errors: Array<{ code: string; message: string }>;
+}
+
+/**
+ * BE-INCR-NFCE (nó X10a, item 7) — o cancelamento tem a forma do tipo: NFS-e = `cMotivo`/`xMotivo` do e101101 (Anexo II,
+ * inalterado); NF-e/NFC-e = `xJust` de 15 a 255 caracteres (MOC 7.0 VG §5.9.1, Tabela 5-37, evento 110111).
+ */
+export type CancelInput =
+  | { kind: 'NFSE'; cMotivo: 1 | 2 | 9; xMotivo: string }
+  | { kind: 'NFE' | 'NFCE'; xJust: string };
+
+/**
+ * BE-INCR-NFCE (nó X10a, item 24) — pedido de inutilização (`inutNFe`, MOC 7.0 VG §5.3.1, Tabela 5-9): tpAmb, ano (2),
+ * CNPJ, mod (55 | 65), série, nNFIni, nNFFin e xJust (15–255). EMENDA-3 E3-1 (c): vale para toda UF, também AC/BA/SP depois
+ * de 01/11/2026 — quem decide é a SEFAZ.
+ */
+export interface InutilizarInput {
+  kind: 'NFE' | 'NFCE';
+  ambiente: DfeAmbiente;
+  cnpjEmitente: string;
+  partnerAccountRef: string | null;
+  ano: number;
+  serie: number;
+  nIni: bigint;
+  nFin: bigint;
+  xJust: string;
+}
+
+export interface InutilizarResult {
+  status: 'HOMOLOGATED' | 'REJECTED' | 'PROCESSING';
+  nProt?: string;
   errors: Array<{ code: string; message: string }>;
 }
 
@@ -126,7 +180,11 @@ export interface DfeEmissorPort {
   readonly capabilities: DfeCapabilities;
   emitir(input: EmitirInput): Promise<EmissaoResult>;
   consultar(partnerRef: string): Promise<EmissaoResult>;
-  cancelar(partnerRef: string, motivo: { cMotivo: 1 | 2 | 9; xMotivo: string }): Promise<CancelResult>;
+  cancelar(partnerRef: string, input: CancelInput): Promise<CancelResult>;
+  /** BE-INCR-NFCE item 24 — só existe quando `capabilities.inutilizar`. */
+  inutilizar?(input: InutilizarInput): Promise<InutilizarResult>;
+  /** BE-INCR-NFCE item 28 — CC-e (110110), só NF-e e só quando `capabilities.cce`. Sem implementação (F-NFCE-9 c). */
+  cce?(partnerRef: string, xCorrecao: string, nSeqEvento: number): Promise<CancelResult>;
   verifyWebhook(
     headers: Record<string, string | undefined>,
     rawBody: Buffer,

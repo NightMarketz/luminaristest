@@ -90,12 +90,13 @@
  *     get:
  *       summary: Whether NFS-e/NF-e emission is enabled and by which partner (BE-INCR-DFE, nó X10b)
  *       description: >-
- *         Reads DFE_PARTNER/DFE_PARTNER_ENV — enabled=false with a named reason when disabled (ADR
- *         §7 item 6: nunca em silêncio). Fase E (NF-e 55) é [pendente-insumo].
+ *         Reads DFE_PARTNER_<KIND>/DFE_PARTNER_ENV_<KIND> with fallback to DFE_PARTNER/DFE_PARTNER_ENV —
+ *         enabled=false with a named reason when disabled (ADR §7 item 6: nunca em silêncio). Top-level
+ *         fields are the NFS-e selection; `porTipo` has one entry per kind (NFSE, NFE, NFCE — BE-INCR-NFCE item 5).
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       responses:
- *         '200': { description: '{ enabled, partner, ambiente, reason?, capabilities? }' }
+ *         '200': { description: '{ enabled, partner, ambiente, reason?, capabilities?, porTipo: { NFSE, NFE, NFCE } }' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *
  *   /api/nfe/dfe/preview:
@@ -113,7 +114,7 @@
  *               properties:
  *                 unitId: { type: string }
  *                 saleId: { type: string }
- *                 kind: { type: string, enum: [NFSE, NFE] }
+ *                 kind: { type: string, enum: [NFSE, NFE, NFCE] }
  *       responses:
  *         '200': { description: '{ ok, faltantes, competenciaAlerta, payloads, tieOut }' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
@@ -126,8 +127,8 @@
  *       description: >-
  *         All preconditions (item 14) are checked together before any tx/partner call — a single 400
  *         with the full `faltantes` list. Creates SENT + attempt 1 per document, consumes the DPS
- *         sequence, audits dfe.emitted, then calls the partner post-commit. Fase E (kind=NFE) is
- *         [pendente-insumo] and rejects loud.
+ *         sequence, audits dfe.emitted, then calls the partner post-commit. NF-e/NFC-e (kind=NFE|NFCE) is
+ *         rejected loud until the BE-INCR-NFCE assembly (Fase C) lands.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -140,7 +141,7 @@
  *               properties:
  *                 unitId: { type: string }
  *                 saleId: { type: string }
- *                 kind: { type: string, enum: [NFSE, NFE] }
+ *                 kind: { type: string, enum: [NFSE, NFE, NFCE] }
  *       responses:
  *         '200': { description: 'FiscalDocumentView[] — um por cTribNac distinto da venda' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
@@ -207,7 +208,9 @@
  *       summary: Resend a REJECTED document as a new attempt (item 26)
  *       description: >-
  *         Só de status REJECTED. Payload remontado (perfil/venda corrigidos), tentativa n+1 com ref
- *         novo; a tentativa n permanece intacta. A numeração da DPS NÃO é reconsumida.
+ *         novo; a tentativa n permanece intacta. A numeração da DPS NÃO é reconsumida. NF-e/NFC-e (BE-INCR-NFCE PR-4,
+ *         EMENDA-3 E3-2 a): mesma série e mesmo nNF, cNF novo e chave recalculada com o dhEmi do reenvio; número com
+ *         pedido de inutilização ⇒ 409 DFE_NUMERO_INUTILIZADO.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -225,11 +228,66 @@
  *         '404': { $ref: '#/components/responses/UnitNotFound' }
  *         '409': { $ref: '#/components/responses/UnitDeleted' }
  *
+ *   /api/nfe/dfe/inutilizacoes:
+ *     post:
+ *       summary: Request the voiding of an NF-e/NFC-e number range (BE-INCR-NFCE item 24)
+ *       description: >-
+ *         Guardas locais antes da porta ([NFE-INUT-REGRAS], MOC VG Tabela 5-12): nIni ≤ nFin, ≤ 10.000 números, só número
+ *         já consumido pela sequência (ambiente da emissão configurada), nenhum número com documento SENT/PROCESSING/
+ *         AUTHORIZED/CANCELLED (409 INUT_NUMERO_USADO, rej. 241), sem cruzar pedido REQUESTED/HOMOLOGATED (409
+ *         INUT_FAIXA_JA_PEDIDA, rej. 256/563). Adaptador sem inutilização ⇒ 409 DFE_INUT_NAO_SUPORTADA. Vale para toda UF
+ *         (EMENDA-3 E3-1 c): a SEFAZ decide. Faixa homologada ⇒ audit dfe.number_voided.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [unitId, kind, serie, nIni, nFin, xJust]
+ *               properties:
+ *                 unitId: { type: string }
+ *                 kind: { type: string, enum: [NFE, NFCE] }
+ *                 serie: { type: integer, minimum: 0, maximum: 889 }
+ *                 nIni: { type: integer, minimum: 1, maximum: 999999999 }
+ *                 nFin: { type: integer, minimum: 1, maximum: 999999999 }
+ *                 xJust: { type: string, minLength: 15, maxLength: 255 }
+ *       responses:
+ *         '200': { description: 'FiscalNumberVoidView (status REQUESTED | HOMOLOGATED | REJECTED)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { description: 'INUT_NUMERO_USADO | INUT_FAIXA_JA_PEDIDA | DFE_INUT_NAO_SUPORTADA | unidade apagada' }
+ *
+ *   /api/nfe/dfe/inutilizacoes/pendentes:
+ *     get:
+ *       summary: List numbering gaps of NF-e/NFC-e (BE-INCR-NFCE item 25)
+ *       description: >-
+ *         Números 1..último de cada sequência (todas as séries e ambientes) sem documento SENT/PROCESSING/AUTHORIZED/
+ *         CANCELLED e fora de faixa inutilizada homologada. Nada automático. Na UF onde o pedido de inutilização não se
+ *         aplica desde 01/11/2026 (AC, BA, SP — parâmetro legal INUT_NAO_SE_APLICA, data de hoje), cada lacuna traz o
+ *         aviso e, só na NFC-e, o texto da presunção (Aj. SINIEF 19/16 cl. 11ª § 5º).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: kind, required: true, schema: { type: string, enum: [NFE, NFCE] } }
+ *       responses:
+ *         '200': { description: 'LacunaDeNumeracao[] ({ ambiente, serie, numero, documentId, status, avisos, presuncao? })' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { $ref: '#/components/responses/UnitDeleted' }
+ *
  *   /api/nfe/dfe/documents/{id}/cancelar:
  *     post:
- *       summary: Cancel an AUTHORIZED document (item 29, Anexo II e101101)
+ *       summary: Cancel an AUTHORIZED document (NFS-e e101101 item 29; NF-e/NFC-e 110111, BE-INCR-NFCE item 27)
  *       description: >-
- *         409: OUT_OF_WINDOW (E0822) ou REJECTED pelo parceiro (código do fisco na mensagem)
+ *         409: OUT_OF_WINDOW (NFS-e E0822; NF-e/NFC-e 501) ou REJECTED pelo parceiro (código do fisco na mensagem)
+ *         O corpo tem a forma do tipo do documento: NFS-e cMotivo/xMotivo; NF-e/NFC-e xJust (forma trocada = 400).
  *         Só de status AUTHORIZED. Nunca toca a venda nem o razão. OUT_OF_WINDOW/REJECTED do
  *         parceiro viram 409 tipado; CANCELLED retira a proveniência anexada (F-DFE-18, soft-delete).
  *       tags: [Accounting]
@@ -241,14 +299,22 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               required: [unitId, cMotivo, xMotivo]
- *               properties:
- *                 unitId: { type: string }
- *                 cMotivo: { type: integer, enum: [1, 2, 9], description: '1 erro na emissão | 2 serviço não prestado | 9 outros' }
- *                 xMotivo: { type: string, minLength: 15, maxLength: 255 }
+ *               oneOf:
+ *                 - type: object
+ *                   description: NFS-e (Anexo II e101101)
+ *                   required: [unitId, cMotivo, xMotivo]
+ *                   properties:
+ *                     unitId: { type: string }
+ *                     cMotivo: { type: integer, enum: [1, 2, 9], description: '1 erro na emissão | 2 serviço não prestado | 9 outros' }
+ *                     xMotivo: { type: string, minLength: 15, maxLength: 255 }
+ *                 - type: object
+ *                   description: NF-e / NFC-e (evento 110111, MOC 7.0 VG Tabela 5-37)
+ *                   required: [unitId, xJust]
+ *                   properties:
+ *                     unitId: { type: string }
+ *                     xJust: { type: string, minLength: 15, maxLength: 255 }
  *       responses:
- *         '200': { description: "FiscalDocumentView (status CANCELLED) + avisos (['fora_da_janela_configurada'] quando passou do prazo configurado no perfil — só aviso, BE-INCR-DFE-EVENTOS item 5)" }
+ *         '200': { description: "FiscalDocumentView (status CANCELLED) + avisos (['fora_da_janela_configurada'] quando passou do prazo — perfil, ou na NF-e/NFC-e o nacional de 24 h / 30 min; só aviso, BE-INCR-DFE-EVENTOS item 5, BE-INCR-NFCE item 27)" }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }

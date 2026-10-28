@@ -49,6 +49,8 @@ que citava o antigo precisa ser reconferido.
 | nfse-guia-emissor-web | Emissao NFS-e — modo manual (ficha espelho do portal, FE-INCR-DFE C.1) | Guia do Emissor Publico Nacional Web v1.2 (gov.br/nfse, documentacao atual) — mesmo sha do BRIEF BE-INCR-DFE-MANUAL (27/09) | `NFSe-Guia-Emissor-Publico-Nacional-Web-v1.2.pdf` | 4.849.267 | `85982d1ee76b` |
 | nfse-anexo-iv-adn | Emissao NFS-e — ADN (X10i) | ANEXO IV — ADN, v1.00 (16/12/2025) `anexo_iv-adn-snnfse-v1-00-20251216.xlsx` | `NFSe-ANEXO-IV-ADN-v1.00.xlsx` | 26.231 | `fa778d0b6e58` |
 | nfe-nt-2025-002-v151 | Reforma tributaria — IBS/CBS na NF-e/NFC-e (X10a, PRE-ADR IBS/CBS) | NT 2025.002-RTC v1.51 (julho/2026; portal: publicada 04/08/2026, `conteudo=AKD/muSmiIY=`) | `NFe-NT-2025.002-v1.51.pdf` | 2.182.361 | `a4aaaa181522` **[ERRATA 10/10 — `docs/plano/PERGUNTAS-DE-LEI-2026-10-10.md` §10.2]** existe a **v1.52** (01/10/2026), não baixada; a v1.51 do corpus está defasada (`pesquisa-lei-2026-10-10/piscofins-icms.md`). |
+| nfe-nt-2025-002-v152 | Reforma tributaria — grupo UB (IBS/CBS/IS) da NF-e/NFC-e, X10a PR-0/PR-6 (F-NFCE-12b b, F-NFCE-E1-7 a) | NT 2025.002-RTC **v1.52** (portal: publicada 01/10/2026, `conteudo=HXPO8VLbh4o=`); texto extraido em `TRANSCRICAO-NT2025002-v152-UB-2026-10-26.md` | `NFe-NT-2025.002-v1.52.pdf` | — | `54ed89332704` |
+| nfe-nt-2025-001-v103 | QR Code v3 da NFC-e; `tPag` 91 (RV YA03-10/30) — X10a EMENDA-1/3 | NT 2025.001 **v1.03** (setembro/2025, producao 03/11/2025, `conteudo=NvuzQGYd6E8=`) | `NFe-NT-2025.001-v1.03.pdf` | — | `333b69f71deb` |
 | nfe-nt-2026-006 | Split payment — vinculacao DF-e × transacao de pagamento (onda 3) | NT 2026.006 v1.00 (agosto/2026; portal: publicada 25/08/2026, `conteudo=k7zG06n5M6I=`) | `NFe-NT-2026.006-v1.00.pdf` | 767.681 | `47a65abde315` |
 | nfe-nt-2026-007 | NF-e por contribuinte exclusivo do IBS/CBS (sem IE; Ato 4 § 4º) | NT 2026.007 v1.00 (julho/2026; portal: publicada 04/08/2026, `conteudo=jVEAeMhv83w=`) | `NFe-NT-2026.007-v1.00.pdf` | 733.482 | `559fcd7d1b49` |
 | res-cgsn-140-2018 | Simples — PGDAS-D (art. 38), DAS dia 20 (art. 40), Defis 31/03 (art. 72), livro caixa (art. 63), fator r (art. 26), segregacao (art. 25) | Resolucao CGSN 140/2018, texto multivigente (idAto 92278) + 24 anexos. **Compilacao da RFB vai ate a Res. CGSN 183/2025 — a 191/2026 NAO esta compilada** | `Res-CGSN-140-2018.json` | 1.460.719 | `8d9b024965c1` **[ERRATA 10/10 — `docs/plano/PERGUNTAS-DE-LEI-2026-10-10.md` §10.2]** falso: o arquivo do corpus (sha `8d9b024965c1`) já traz as Res. CGSN 190 e 191/2026 (conferido em `pesquisa-lei-2026-10-10/simples-nfse.md`). |
@@ -162,3 +164,31 @@ acrescentadas a mao com o sha do disco (o script reescreve o manifesto so com a 
   147.695 bytes, sha256 `f197f7e5a5bf8895dc28b939b1798f3d1b76f041c6c6b5d9b364806c38c11144`. Art. 1º acrescenta os arts.
   34-C e 34-D à Portaria CAT 147/12; 34-D: CF-e-SAT vedado a partir de 01/01/2026. Conteúdo no HTML servido (sem JS).
 - **nfe-nt-2025-002-v151** lido de outra worktree, sha256 `a4aaaa181522…` (igual ao registrado em 29/09).
+
+**26/10/2026** — PR-0 do nó `NFE-DANFE-IBSCBS` (`BE-INCR-NFE-DANFE-IBSCBS-brief.md` itens 1–3; dono, chat, 2026-10-26:
+"Executa o NFE-DANFE-IBSCBS PR-0 — sessao-feature, sem merge"). Baixados do Portal da NF-e com cookie de sessão
+(`curl -c cj -b cj -L -A "<UA de navegador>"`); título conferido na 1ª página de cada PDF. Cópias e texto no dossiê
+`pesquisas-legais/nfe-danfe-pr0/` (D01–D06).
+- **nt-2026-010-v100** — <https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=ugn4MYF5PLg=> — NT 2026.010 v1.00
+  (DANFE Reforma Tributária, produção 01/12/2026), 712.823 bytes, sha256
+  `eadc5246235f37a55f8140ddcf84595c8ce77f2d760f111f7b85ddf389b8f484` (**igual** ao de 17/10 e 22/10). Transcrita (§4.1–§4.4)
+  em `TRANSCRICAO-NT2026010-DANFE-RTC-2026-10-26.md`.
+- **moc70-anexo-ii** — <https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=f%20NhsSn3/5M=> — MOC 7.0 Anexo II,
+  Manual de Especificações Técnicas do DANFE e Código de Barras, versão 7.00, 28 pp., 1.345.906 bytes, sha256
+  `729c04fd1374188c29eb21ca60342741b24a014003d4c2ff1bbb455bb1a6a60e`. Transcrito em
+  `TRANSCRICAO-MOC70-AnexoII-DANFE-2026-10-26.md`. O **moc70-visao-geral** foi rebaixado no mesmo dia: sha256 igual
+  (`f664dcf94b77…`).
+- **nt-2026-009-v100** — <https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=ADlgg2xjMZI=> — 310.342 bytes,
+  sha256 `50b7dec40bba8928b4d544feb4fdbd8c8bac16e37c99d926ddb2834cf246f15d`.
+- **nt-2026-006-v100** — <https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=k7zG06n5M6I=> — 767.681 bytes,
+  sha256 `47a65abde315fed1e6a8c6085a67ca483935cb57877ae5715d365377a725e05d`.
+- **nt-2026-003-v100** — <https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=2YdaBTIql%20k=> — 1.666.337 bytes,
+  sha256 `2ef826027e0e8423ba9dc2f53ee7197f8bfdcc399a30459b72da977528600f13`.
+- **nt-2014-001-v141** — <https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=9hgG%20%20cH8gA=> — 814.340 bytes,
+  sha256 `fa9218ddadcb35ca1233434a4dfd040243360d983c0d3f6b85e7756284a6fd19`.
+  Classificação das quatro NTs (afeta o DANFE 55? qual nó recebe): §7 de `TRANSCRICAO-NT2026010-DANFE-RTC-2026-10-26.md`.
+
+**26/10/2026** — X10a PR-0 (`TRANSCRICAO-MOC70-NFCe-NFe-saida-2026-10-26.md`), dono no chat: *"faz o X10a EMENDA-2 PR-1..PR-6 e EMENDA-3"* + questionario (*"Faço o PR-0 também"*); download da v1.52 autorizado em 13/10 (F-NFCE-E1-7 a):
+- **moc70-anexo-i** lido no navegador embutido (o host recusa download fora dele); sha256 **igual** (`5eb4cf2010b1…`). **moc70-visao-geral** copiado do dossie `dfe-mtls-psc`, sha256 igual.
+- **nfe-nt-2025-002-v152** e **nfe-nt-2025-001-v103** copiados do dossie `verif-2026-10-17-nfe-nfce-dfe` ([P1]/[P2]), sha256 iguais aos de 17/10. A v1.51 (`nfe-nt-2025-002-v151`) fica superada.
+- Ajustes SINIEF 19/16 e 07/05 rebaixados do CONFAZ pelo `legal.py`: sha256 iguais aos de 17/10 (`6692d344…`, `f44adf45…`) — sem alteracao desde entao. Dossie: `pesquisas-legais/x10a-pr0-leiaute-saida/`.

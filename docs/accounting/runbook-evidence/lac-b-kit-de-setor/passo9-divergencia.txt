@@ -1,0 +1,12 @@
+Salão de beleza
+
+Versão 6
+
+Pendências da atualização do kit: 1
+
+O papel 'undefined' não é usado pelo binding do kit 'beautySalon'.
+
+role:receita-servico
+A conta do papel foi ajustada nesta unidade
+Aceitar
+Recusar

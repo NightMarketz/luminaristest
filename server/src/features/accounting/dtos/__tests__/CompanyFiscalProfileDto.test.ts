@@ -135,3 +135,13 @@ describe('UpsertCompanyFiscalProfileSchema — X7 Fase A (BRIEF itens 1, 2, 2b)'
     });
   });
 });
+
+describe('UpsertCompanyFiscalProfileSchema — EFD-REINF PR-1 (item 4; lacuna B)', () => {
+  it('reinfClassTrib: 01/02/03 só no SIMPLES; fora da Tabela 08 ou em outro regime ⇒ recusa; padrão null', () => {
+    for (const reinfClassTrib of ['01', '02', '03']) expect(ok({ regime: 'SIMPLES', reinfClassTrib })).toBe(true);
+    expect(ok({ regime: 'SIMPLES', reinfClassTrib: '04' })).toBe(false);
+    expect(ok({ regime: 'MEI', reinfClassTrib: '01' })).toBe(false);
+    expect(ok({ regime: 'REAL', reinfClassTrib: '01' })).toBe(false);
+    expect(UpsertCompanyFiscalProfileSchema.parse({ ...base, regime: 'SIMPLES' }).reinfClassTrib).toBeNull();
+  });
+});

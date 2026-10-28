@@ -13,6 +13,40 @@
 3. **Código só com `executa` citável** (ORCH-006). Brief pronto sem `executa` não entra como "a fazer agora": entra como "pronto para autorizar".
 4. Dependência explícita (`depende_de`) manda. Sufixo `?` (condicional) não bloqueia, mas sinaliza risco.
 
+## Estado em 26/10 (revisão semanal — não muda a ordem)
+
+> Leitura de `origin/main` em 26/10 ([[REVISAO-SEMANAL-2026-10-26]]). Só atualiza o **estado** de cada linha abaixo;
+> a ordem A–F continua a ratificada. Estado de nó manda o frontmatter — os folds vencidos pelos consolidados #902/#903
+> (RETENCOES-FONTE, PRESUMIDO-TETO-78MI `done`, ISS-TRANSICAO-IBS, FIX-PLUGINS-VENDA, FIX-ANALYTICS-RESIDUO, OBS,
+> FE-INCR-KANBAN-REORDER) entraram no mesmo PR desta leitura.
+>
+> **Adendo 27/10 (mesmo PR):** 18 PRs entraram em `main` na madrugada de 27/10 — X10a PR-0..PR-4 (#909, #910, #914, #917,
+> #924), NFE-DANFE-IBSCBS PR-0..PR-2 (#906, #915, #922), C8 emenda 3.2 P1..P3 (#911, #918, #923), LAC-B EMENDA-2 (#916,
+> #919, #921), X9 PR-3 (#908), #898 e #899. Folds de 27/10: X10a `inflight`; FIX-PLUGINS-VENDA e FIX-ANALYTICS-RESIDUO
+> `done`. Plano dia a dia 27/10 → 01/11 com os "executa" necessários: [[REVISAO-SEMANAL-2026-10-26]] §8.
+
+- **A1** fechado em 22/10 (portal + PAA; [[D5]]). Resta: quem contrata PSC + e-CNPJ. **A2** H1 passos 1–5 provados
+  (tentativa 3, 22/10); passo 6 é o último do plano. **A3/A4** H2 → M2 seguem os próximos gates humanos, sem bloqueio
+  de código. **A5** D7 até 31/12. **A6** D1f alíquota decidida por delegação; cClassTrib e XML real seguem abertos.
+  **A7** F-GOV-1 em docs (#904/#905 abertos).
+- **B1** X9: PR-2 (#566), PR-3 (#908) e PR-4 (#860, em `main` desde 23/10 — listado como aberto por engano em 26/10,
+  corrigido 27/10) em `main`; o nó segue `inflight` só pelos oráculos do X7. **B2** I4+I5: nós `done` (fechados antes
+  de 19/10). **B3** DEFIS-MANUAL / GET-ENTRADAS: nós `done`. **B5** CRM-RB: nó `done`.
+  **B6** F5 FE em `main` (#862, 23/10) — fechado como item de fila; o nó segue `inflight` por 16b/16c e chave do M2.
+  **B7** fechado (#866, nó `done` 24/10). **B8** LAC-B EMENDA-2: PR-0 #916, PR-1 #919 e PR-2 #921 em `main` (27/10); runbook da aba PASSOU (#925 aberto, só docs).
+- **C** W6 em `main` (#785/#786), nó `human-open`; W3 BRIEF da confirmação fechado (#788), forks F-W3-C1..C3 pendentes.
+- **D** X10a: PR-0..PR-4 (#909, #910, #914, #917, #924 com a EMENDA-3) em `main` em 27/10; PR-5 #926 aberto; PR-6 sob o
+  mesmo 'executa' de 26/10; nó `inflight` (fold 27/10). PR-7..PR-9 continuam no D (PSC + e-CNPJ, mTLS). O #914 destrava
+  o PR-2 do EFICIENCIA-FISCAL.
+- **E1** fechado 20/10 · **E2** fechado (#883) · **E3** #897 e #898 em `main` — nó `done` (27/10) · **E4** lotes 1–4 em `main`,
+  #10/#11/#20 esperam o dono · **E5** lotes A–C em `main`, 22 itens instrumentados, decisões de produto esperam o dono ·
+  **E6** fechado (nó `done` 24/10) · **E7** #894 e #899 em `main` — nó `done` (27/10) · **E8** nó `done` desde 20/10 (#773 e o BRIEF em `main`) — a linha E8
+  da tabela E está superada; a leitura de 26/10 ("BRIEF não pushado") estava errada.
+- **F1** IBS-CBS-2027 `done` (24/10) · RETENCOES-FONTE PR-1/PR-2 em `main`, PR-3/4 esperam o contador · PRESUMIDO-TETO-78MI
+  `done` (#887 em `main`; P-PT-1..3 com o contador) · ISS-TRANSICAO-IBS PR-1 #885 em `main` · EFD-REINF PR-1 #912 aberto (em conflito com `main` desde 27/10) · NFE-DANFE-IBSCBS PR-0..PR-2 (#906, #915, #922) em
+  `main` 27/10; PR-3 espera 'executa' (alvo 30/11) · **F1.5** EFICIENCIA-FISCAL PR-1 #913 aberto (em conflito); PR-2
+  destravado pelo #914. **F2–F5** sem nó em `nos/`; Q4–Q12 abertas.
+
 ## A. Prazos e decisões do dono (só o dono move)
 
 | # | Item | Por que está aqui | Desbloqueia | Ação do dono |
@@ -23,7 +57,7 @@
 | A4 | **M2 — host e 1º deploy** [[M2]] | VPS contratada (26/09). Chave do MP no ambiente e conta de emissão por unidade (R8). | [[F5]] em produção, [[PACOTE-VALIDADE]], [[GOV-CONTADOR]] (consulta CFC), [[P4]] (assinatura) | Deploy após H2. |
 | A5 | **D7 — PNCT** (vigilância de comunicações) | Prazo **31/12/2026**. Nasce com a emissão (depende de A1). | — | Corrigir até o prazo, com contador responsável. |
 | A6 | **D1 / D1f / D2 — contador e XML real de NF-e** | Pedido de follow-up de 26/09 não enviado; falta alíquota de ISS e cClassTrib; sem XML real (E9 fica preso). | Fixtures reais ([[E9]]), itens 5a–5f | Enviar o pedido ao contador (o agente só monta). |
-| A7 | **F-GOV-1 — consulta ao CRC-SP** | Dono decidiu enviar agora (10/10). 26/10: opcional, v2 com 2 perguntas; dono decidiu enviar a v2. | [[GOV-CONTADOR]] | Confirmar envio da v2 (data e protocolo). |
+| A7 | **F-GOV-1 — consulta ao CRC-SP** | ✅ Fechado em 25/10 com risco residual (dono, Q1 c / Q2 c do `DECISAO-F-GOV-1-GATE-E-TRAVA-2026-10-25`): "contador parceiro, contratado pelo cliente" liberado; "com contador incluso" segue suspenso. 26/10: consulta opcional, v2 com 2 perguntas; dono decidiu enviar a v2. | [[GOV-CONTADOR]] | Confirmar envio da v2 (data e protocolo) — opcional. |
 
 ## B. Código destravado (precisa de `executa` do dono, por PR)
 

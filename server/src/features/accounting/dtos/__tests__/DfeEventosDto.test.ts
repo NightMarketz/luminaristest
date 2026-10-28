@@ -5,7 +5,7 @@
  */
 import { UpsertFiscalProfileSchema } from '../FiscalProfileDto';
 import { DpsManualPayloadSchema, DpsSubstSchema, toManualDps } from '../DpsPayloadDto';
-import { JanelaEventosSchema, SubstituirFiscalDocumentSchema } from '../FiscalDocumentDto';
+import { CancelFiscalDocumentSchema, CancelamentoManualSchema, JanelaEventosSchema, SubstituirFiscalDocumentSchema } from '../FiscalDocumentDto';
 
 const CH = '1'.repeat(50);
 const PERFIL = { unitId: 'u', regimeTributario: 'REAL', icmsContribuinte: false, pisCofinsRegime: 'CUMULATIVO' } as const;
@@ -72,5 +72,37 @@ describe('item 4 — contrato de saída JanelaEventosSchema', () => {
     expect(JanelaEventosSchema.safeParse({ cancelarAte: '2026-10-02T23:59:59-03:00', substituirAte: null, substituirTeto: null, fonte: 'perfil' }).success).toBe(true);
     expect(JanelaEventosSchema.safeParse({ cancelarAte: '2026-10-02', substituirAte: null, substituirTeto: null, fonte: 'perfil' }).success).toBe(false);
     expect(JanelaEventosSchema.safeParse({ cancelarAte: null, substituirAte: null, substituirTeto: null, fonte: 'outra' }).success).toBe(false);
+  });
+});
+
+describe('BE-INCR-NFCE item 27 — corpo do cancelamento como união e prazos 55/65 no perfil', () => {
+  it('CancelFiscalDocumentSchema aceita as duas formas e recusa a mistura', () => {
+    expect(CancelFiscalDocumentSchema.safeParse({ unitId: 'u', cMotivo: 1, xMotivo: 'erro na emissao da nota' }).success).toBe(true);
+    expect(CancelFiscalDocumentSchema.safeParse({ unitId: 'u', xJust: 'x'.repeat(15) }).success).toBe(true);
+    expect(CancelFiscalDocumentSchema.safeParse({ unitId: 'u', xJust: 'x'.repeat(15), cMotivo: 1, xMotivo: 'erro na emissao da nota' }).success).toBe(false);
+  });
+
+  it('xJust de 15 a 255 caracteres (MOC 7.0 VG Tabela 5-37)', () => {
+    expect(CancelFiscalDocumentSchema.safeParse({ unitId: 'u', xJust: 'x'.repeat(14) }).success).toBe(false);
+    expect(CancelFiscalDocumentSchema.safeParse({ unitId: 'u', xJust: 'x'.repeat(255) }).success).toBe(true);
+    expect(CancelFiscalDocumentSchema.safeParse({ unitId: 'u', xJust: 'x'.repeat(256) }).success).toBe(false);
+  });
+
+  it('o cancelamento manual segue só com a forma da NFS-e', () => {
+    expect(CancelamentoManualSchema.safeParse({ unitId: 'u', xJust: 'x'.repeat(15) }).success).toBe(false);
+    expect(CancelamentoManualSchema.safeParse({ unitId: 'u', cMotivo: 9, xMotivo: 'outro motivo qualquer' }).success).toBe(true);
+  });
+
+  it('nfceCancelPrazoMinutos 1–30 (teto do Aj. SINIEF 19/16 cl. 15ª); nfeCancelPrazoHoras ≥ 1, sem teto; null aceito', () => {
+    expect(UpsertFiscalProfileSchema.safeParse({ ...PERFIL, nfceCancelPrazoMinutos: 31 }).success).toBe(false);
+    expect(UpsertFiscalProfileSchema.safeParse({ ...PERFIL, nfceCancelPrazoMinutos: 0 }).success).toBe(false);
+    expect(UpsertFiscalProfileSchema.safeParse({ ...PERFIL, nfceCancelPrazoMinutos: 30 }).success).toBe(true);
+    expect(UpsertFiscalProfileSchema.safeParse({ ...PERFIL, nfeCancelPrazoHoras: 0 }).success).toBe(false);
+    expect(UpsertFiscalProfileSchema.safeParse({ ...PERFIL, nfeCancelPrazoHoras: 168 }).success).toBe(true);
+    expect(UpsertFiscalProfileSchema.parse({ ...PERFIL, nfeCancelPrazoHoras: null, nfceCancelPrazoMinutos: null })).toMatchObject({ nfeCancelPrazoHoras: null, nfceCancelPrazoMinutos: null });
+  });
+
+  it("JanelaEventosSchema aceita fonte 'nacional'", () => {
+    expect(JanelaEventosSchema.safeParse({ cancelarAte: null, substituirAte: null, substituirTeto: null, fonte: 'nacional' }).success).toBe(true);
   });
 });

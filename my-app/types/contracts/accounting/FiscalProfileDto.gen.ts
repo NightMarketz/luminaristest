@@ -45,6 +45,16 @@ codMun?: (string | null)
 inscricaoMunicipal?: (string | null)
 cnae?: (string | null)
 dpsSerie?: number
+inscricaoEstadual?: (string | null)
+nfeSerie?: number
+nfceSerie?: number
+razaoSocial?: (string | null)
+enderLogradouro?: (string | null)
+enderNumero?: (string | null)
+enderComplemento?: (string | null)
+enderBairro?: (string | null)
+enderMunicipio?: (string | null)
+enderCep?: (string | null)
 regEspTrib?: number
 regApTribSN?: (number | null)
 issAliquotaBp?: (number | null)
@@ -63,6 +73,8 @@ emissaoForaDoMes?: ("AVISAR" | "BLOQUEAR")
 cancelPrazoDias?: (number | null)
 substPrazoDias?: (number | null)
 prazoFonte?: (string | null)
+nfeCancelPrazoHoras?: (number | null)
+nfceCancelPrazoMinutos?: (number | null)
 }
 export interface FiscalProfileScopeQueryInput {
 unitId: string
@@ -113,6 +125,16 @@ codMun?: (string | null)
 inscricaoMunicipal?: (string | null)
 cnae?: (string | null)
 dpsSerie?: number
+inscricaoEstadual?: (string | null)
+nfeSerie?: number
+nfceSerie?: number
+razaoSocial?: (string | null)
+enderLogradouro?: (string | null)
+enderNumero?: (string | null)
+enderComplemento?: (string | null)
+enderBairro?: (string | null)
+enderMunicipio?: (string | null)
+enderCep?: (string | null)
 regEspTrib?: number
 regApTribSN?: (number | null)
 issAliquotaBp?: (number | null)
@@ -131,4 +153,6 @@ emissaoForaDoMes?: ("AVISAR" | "BLOQUEAR")
 cancelPrazoDias?: (number | null)
 substPrazoDias?: (number | null)
 prazoFonte?: (string | null)
+nfeCancelPrazoHoras?: (number | null)
+nfceCancelPrazoMinutos?: (number | null)
 }

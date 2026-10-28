@@ -32,6 +32,10 @@ interface ConfirmModalProps extends ConfirmModalOptions {
     isLoading?: boolean;
     /** Error message to display inside the modal */
     error?: string | null;
+    /** Extra body content below the message (e.g. a required reason field). */
+    children?: React.ReactNode;
+    /** Keeps the confirm button disabled (e.g. while a required field is invalid). */
+    confirmDisabled?: boolean;
 }
 
 // =============================================================================
@@ -126,6 +130,8 @@ export function ConfirmModal({
     variant = 'danger',
     isLoading = false,
     error = null,
+    children,
+    confirmDisabled = false,
 }: ConfirmModalProps) {
     const { t } = useTranslation('common');
 
@@ -192,6 +198,7 @@ export function ConfirmModal({
                             {message}
                         </p>
                     )}
+                    {children}
                 </div>
 
                 {/* Footer */}
@@ -205,7 +212,7 @@ export function ConfirmModal({
                     </button>
                     <button
                         onClick={onConfirm}
-                        disabled={isLoading}
+                        disabled={isLoading || confirmDisabled}
                         className={`px-4 py-2 text-sm font-bold text-white ${cfg.confirmBg} ${cfg.confirmHover} rounded-xl transition-colors shadow-sm ${cfg.confirmShadow} disabled:opacity-50 flex items-center gap-2`}
                     >
                         {isLoading ? (

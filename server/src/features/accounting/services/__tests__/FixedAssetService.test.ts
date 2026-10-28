@@ -24,6 +24,7 @@ const scope = resolveAccountingScopeInternal({ userId: 'dono-a' }, 'unit-1');
 const classRow = {
   id: 'class-1', userId: 'dono-a', unitId: 'unit-1', code: 'MAQ', name: 'Máquinas',
   depreciable: true, costAccountId: 'acc-cost', accumulatedDepreciationAccountId: 'acc-accdep' as string | null,
+  kind: 'DEPRECIATION' as string, amortizationExpenseAccountId: null as string | null,
   deletedAt: null as Date | null,
 };
 
@@ -39,6 +40,7 @@ function makeAsset(over: Partial<Record<string, unknown>> = {}) {
     status: 'PENDING_ACTIVATION', acquiredAt: new Date('2026-01-01T00:00:00Z'),
     activatedAt: null as Date | null, disposedAt: null as Date | null, disposalEntryId: null as string | null,
     sourceDocumentId: null, payableId: null, version: 1, createdById: 'dono-a',
+    leaseEndDate: null as Date | null, leaseIndemnifiable: null as boolean | null,
     ...over,
   };
 }
@@ -409,5 +411,133 @@ describe('FixedAssetService.createDraftFromPayable — rascunho por NF-e modo 4'
     await service.createDraftFromPayable(scope, makePayable() as never, [item]);
     const [data2] = create.mock.calls[0] as [Record<string, unknown>];
     expect(data1.code).toBe(data2.code);
+  });
+});
+
+describe('C8 emenda 3.2, Parte 2 — benfeitoria em imóvel de terceiro (E8b, E10, E13, E14)', () => {
+  const leaseholdClass = {
+    ...classRow, id: 'class-benf', code: 'BENF', name: 'Benfeitorias em imóvel de terceiro',
+    kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: 'acc-amort',
+  };
+  const createBase = {
+    unitId: 'unit-1', classId: 'class-benf', code: 'B-1', description: 'Reforma da loja', quantity: 1,
+    costCents: 1_200_000, residualValueCents: 0, acquiredAt: '2026-01-01', annualRateBp: 1000,
+  };
+
+  it('E8b: leaseIndemnifiable ausente → 400 (declaração obrigatória, sem default — Lei 8.245/91 art. 35)', async () => {
+    const { service, create } = build({ klass: leaseholdClass });
+    await expect(service.createAsset(scope, { ...createBase, leaseEndDate: '2027-12-31' })).rejects.toThrow(/leaseIndemnifiable é declaração obrigatória.*art\. 35/);
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('E8b: leaseIndemnifiable=true → 400 orientando a classe DEPRECIATION', async () => {
+    const { service, create } = build({ klass: leaseholdClass });
+    await expect(
+      service.createAsset(scope, { ...createBase, leaseEndDate: '2027-12-31', leaseIndemnifiable: true }),
+    ).rejects.toThrow(/direito a indenização não é amortizável.*classe DEPRECIATION/);
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('E8b: prazo indeterminado (sem leaseEndDate) → 400 orientando a classe DEPRECIATION', async () => {
+    const { service } = build({ klass: leaseholdClass });
+    await expect(service.createAsset(scope, { ...createBase, leaseIndemnifiable: false })).rejects.toThrow(/leaseEndDate é obrigatório.*classe DEPRECIATION/);
+  });
+
+  it('E8b: leaseIndemnifiable=false + leaseEndDate → aceita e grava os dois campos', async () => {
+    const { service, create } = build({ klass: leaseholdClass });
+    await service.createAsset(scope, { ...createBase, leaseEndDate: '2027-12-31', leaseIndemnifiable: false });
+    const [data] = create.mock.calls[0] as [{ leaseEndDate: Date | null; leaseIndemnifiable: boolean | null }];
+    expect(data.leaseEndDate).toEqual(new Date('2027-12-31T00:00:00.000Z'));
+    expect(data.leaseIndemnifiable).toBe(false);
+  });
+
+  it('campo de locação em classe DEPRECIATION → 400 (param aceito e ignorado é bug)', async () => {
+    const { service, create } = build();
+    await expect(
+      service.createAsset(scope, { ...createBase, classId: 'class-1', leaseEndDate: '2027-12-31', leaseIndemnifiable: false }),
+    ).rejects.toThrow(/só se aplicam a classe AMORTIZATION_LEASEHOLD/);
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('L3 (dono, 26/10): bookAnnualRateBp em benfeitoria → 400 no create, no update e no activate', async () => {
+    const { service, create, update, activate } = build({ klass: leaseholdClass, asset: makeAsset({ classId: 'class-benf', leaseIndemnifiable: false, leaseEndDate: new Date('2027-12-31T00:00:00Z'), bookAnnualRateBp: 2000, bookRateJustification: 'x' }) });
+    await expect(
+      service.createAsset(scope, { ...createBase, leaseEndDate: '2027-12-31', leaseIndemnifiable: false, bookAnnualRateBp: 2000, bookRateJustification: 'reforma dura menos' }),
+    ).rejects.toThrow(/bookAnnualRateBp não se aplica a benfeitoria/);
+    expect(create).not.toHaveBeenCalled();
+    await expect(service.updateAsset(scope, 'asset-1', { unitId: 'unit-1', assetId: 'asset-1', description: 'x' })).rejects.toThrow(/bookAnnualRateBp não se aplica/);
+    expect(update).not.toHaveBeenCalled();
+    await expect(
+      service.activateAsset(scope, 'asset-1', { unitId: 'unit-1', assetId: 'asset-1', activatedAt: '2026-01-01', version: 1 }),
+    ).rejects.toThrow(/bookAnnualRateBp não se aplica/);
+    expect(activate).not.toHaveBeenCalled();
+    // limpar a taxa contábil no mesmo update é o caminho de saída
+    await service.updateAsset(scope, 'asset-1', { unitId: 'unit-1', assetId: 'asset-1', bookAnnualRateBp: null, bookRateJustification: null });
+    expect(update).toHaveBeenCalledTimes(1);
+  });
+
+  it('update de rascunho: leaseIndemnifiable=true → 400; declaração ausente é aceita até o activate', async () => {
+    const draft = makeAsset({ classId: 'class-benf' });
+    const { service, update } = build({ klass: leaseholdClass, asset: draft });
+    await expect(
+      service.updateAsset(scope, 'asset-1', { unitId: 'unit-1', assetId: 'asset-1', leaseIndemnifiable: true }),
+    ).rejects.toThrow(/direito a indenização/);
+    await service.updateAsset(scope, 'asset-1', { unitId: 'unit-1', assetId: 'asset-1', description: 'Reforma' });
+    await service.updateAsset(scope, 'asset-1', { unitId: 'unit-1', assetId: 'asset-1', leaseEndDate: '2027-12-31', leaseIndemnifiable: false });
+    expect(update).toHaveBeenLastCalledWith(scope, 'asset-1', expect.objectContaining({
+      leaseEndDate: new Date('2027-12-31T00:00:00.000Z'), leaseIndemnifiable: false,
+    }));
+  });
+
+  it('E8b no activate: rascunho de benfeitoria sem a declaração (ex.: nascido de NF-e) → 400, não ativa', async () => {
+    const { service, activate } = build({ klass: leaseholdClass, asset: makeAsset({ classId: 'class-benf', leaseEndDate: new Date('2027-12-31T00:00:00Z') }) });
+    await expect(
+      service.activateAsset(scope, 'asset-1', { unitId: 'unit-1', assetId: 'asset-1', activatedAt: '2026-01-01', version: 1 }),
+    ).rejects.toThrow(/leaseIndemnifiable é declaração obrigatória/);
+    expect(activate).not.toHaveBeenCalled();
+  });
+
+  it('E10: activate sem leaseEndDate → 400', async () => {
+    const { service, activate } = build({ klass: leaseholdClass, asset: makeAsset({ classId: 'class-benf', leaseIndemnifiable: false }) });
+    await expect(
+      service.activateAsset(scope, 'asset-1', { unitId: 'unit-1', assetId: 'asset-1', activatedAt: '2026-01-01', version: 1 }),
+    ).rejects.toThrow(/leaseEndDate é obrigatório/);
+    expect(activate).not.toHaveBeenCalled();
+  });
+
+  it('E10: leaseEndDate igual ou anterior a activatedAt → 400; posterior → ativa', async () => {
+    const asset = makeAsset({ classId: 'class-benf', leaseIndemnifiable: false, leaseEndDate: new Date('2026-03-01T00:00:00Z') });
+    const { service, activate } = build({ klass: leaseholdClass, asset });
+    await expect(
+      service.activateAsset(scope, 'asset-1', { unitId: 'unit-1', assetId: 'asset-1', activatedAt: '2026-03-01', version: 1 }),
+    ).rejects.toThrow(/deve ser posterior a activatedAt/);
+    expect(activate).not.toHaveBeenCalled();
+    await service.activateAsset(scope, 'asset-1', { unitId: 'unit-1', assetId: 'asset-1', activatedAt: '2026-02-28', version: 1 });
+    expect(activate).toHaveBeenCalledTimes(1);
+  });
+
+  it('E13 (F-EM-8 → a): leaseEndDate é imutável depois do activate → 400, update não é chamado', async () => {
+    const asset = makeAsset({ classId: 'class-benf', status: 'ACTIVE', leaseIndemnifiable: false, leaseEndDate: new Date('2027-12-31T00:00:00Z') });
+    const { service, update } = build({ klass: leaseholdClass, asset });
+    await expect(
+      service.updateAsset(scope, 'asset-1', { unitId: 'unit-1', assetId: 'asset-1', leaseEndDate: '2029-12-31' }),
+    ).rejects.toThrow(/só PENDING_ACTIVATION pode ser editado/);
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it('E14: rescisão antes de leaseEndDate = dispose existente — baixa o líquido como perda', async () => {
+    const asset = makeAsset({
+      classId: 'class-benf', status: 'ACTIVE', leaseIndemnifiable: false, leaseEndDate: new Date('2027-12-31T00:00:00Z'),
+      activatedAt: new Date('2026-01-01T00:00:00Z'), costCents: 1_200_000n, accumulatedDepreciationCents: 150_000n,
+    });
+    const { service, postEntry, postQuotaForDisposal } = build({ klass: leaseholdClass, asset });
+    await service.disposeAsset(scope, 'asset-1', { unitId: 'unit-1', assetId: 'asset-1', disposedAt: '2026-03-31', proceedsCents: 0, version: 1 });
+    expect(postQuotaForDisposal).toHaveBeenCalledWith(scope, 'asset-1', '2026-03-31');
+    const [, input] = postEntry.mock.calls[0] as [unknown, { lines: Array<{ accountCode: string; debitCents: number; creditCents: number }> }];
+    expect(input.lines).toEqual([
+      { accountCode: 'code-acc-accdep', debitCents: 150_000, creditCents: 0 },
+      { accountCode: 'code-acc-cost', debitCents: 0, creditCents: 1_200_000 },
+      { accountCode: 'code-acc-loss', debitCents: 1_050_000, creditCents: 0 },
+    ]);
   });
 });

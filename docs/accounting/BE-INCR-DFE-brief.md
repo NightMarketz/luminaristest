@@ -692,6 +692,10 @@ primária e das duas decisões de §0.
   espelha a venda como o cliente viu; reintroduz float→centavos fora do mapper e resíduo próprio.
 - **Recomendação: (a).** É a F-DFE-11 (a) levada até o campo. Custo de errar (b): 1 centavo de divergência
   sistemática (parecer §1.1) e re-inlinar a técnica canônica.
+- **Reaberto e emendado em 26/10/2026 (F-EF-16 a, [[D-2026-10-22-EFICIENCIA-FISCAL-FORKS]]; EFICIENCIA-FISCAL PR-1):**
+  com desconto incondicional destacado por item, `vDescIncond` do grupo = Σ `discountCents` (inteiro, sem float fora do
+  mapper) e `vServ` = parcela do crédito 3.1 + `vDescIncond`; o tie-out passa a `Σ (vServ − vDescIncond) = crédito 3.1`
+  e `FiscalDocument.vDescIncondCents` é preenchido. Venda legada ou `CONDITIONAL` segue a (a) original.
 
 ### F-DFE-16 — Venda com serviços de `cTribNac` distintos (DPS é mono-serviço: `cServ` 1-1)
 - **(a) MVP: 400 nomeado** "serviços de códigos distintos na mesma venda — emita por código" + registro no

@@ -12,7 +12,7 @@ export const EmitFiscalDocumentSchema = z
   .object({
     unitId: z.string().min(1),
     saleId: z.string().min(1),
-    kind: z.enum(['NFSE', 'NFE']),
+    kind: z.enum(['NFSE', 'NFE', 'NFCE']), // NFCE: BE-INCR-NFCE item 3
   })
   .strict();
 export type EmitFiscalDocumentInput = z.infer<typeof EmitFiscalDocumentSchema>;
@@ -21,7 +21,7 @@ export const PreviewFiscalDocumentSchema = z
   .object({
     unitId: z.string().min(1),
     saleId: z.string().min(1),
-    kind: z.enum(['NFSE', 'NFE']),
+    kind: z.enum(['NFSE', 'NFE', 'NFCE']), // NFCE: BE-INCR-NFCE item 3
   })
   .strict();
 export type PreviewFiscalDocumentInput = z.infer<typeof PreviewFiscalDocumentSchema>;
@@ -43,14 +43,29 @@ export const FiscalDocumentScopeQuerySchema = z.object({ unitId: z.string().min(
 
 export const FiscalDocumentParamsSchema = z.object({ id: z.string().min(1) }).strict();
 
-/** BE-INCR-DFE (item 29) — Anexo II e101101: cMotivo 1|2|9, xMotivo 15-255 caracteres. */
-export const CancelFiscalDocumentSchema = z
+/** BE-INCR-DFE (item 29) — Anexo II e101101: cMotivo 1|2|9, xMotivo 15-255 caracteres. Cancelamento de NFS-e. */
+export const CancelNfseSchema = z
   .object({
     unitId: z.string().min(1),
     cMotivo: z.union([z.literal(1), z.literal(2), z.literal(9)]),
     xMotivo: z.string().min(15).max(255),
   })
   .strict();
+
+/** BE-INCR-NFCE (nó X10a, item 27) — evento 110111 da NF-e/NFC-e: `xJust` de 15 a 255 caracteres (MOC 7.0 VG Tabela 5-37). */
+export const CancelNfeSchema = z
+  .object({
+    unitId: z.string().min(1),
+    xJust: z.string().min(15).max(255),
+  })
+  .strict();
+
+/**
+ * POST …/documents/:id/cancelar — a forma do corpo segue o tipo do documento (item 27, contrato `CancelInput` da porta):
+ * NFS-e = `cMotivo`/`xMotivo`; NF-e/NFC-e = `xJust`. O corpo não traz o tipo (vem do documento): o serviço recusa com
+ * 400 o corpo da outra forma (`dfe_cancel_corpo_do_tipo`).
+ */
+export const CancelFiscalDocumentSchema = z.union([CancelNfseSchema, CancelNfeSchema]);
 export type CancelFiscalDocumentInput = z.infer<typeof CancelFiscalDocumentSchema>;
 
 /** BE-INCR-DFE (item 28) — :partner na rota pública do webhook. */
@@ -78,11 +93,11 @@ export const RejeicaoManualSchema = z
 export type RejeicaoManualInput = z.infer<typeof RejeicaoManualSchema>;
 
 /**
- * F-MAN-5 (a) — cancelamento manual: o corpo reusa `CancelFiscalDocumentSchema` (item 13) e o XML do evento
+ * F-MAN-5 (a) — cancelamento manual: o corpo reusa o ramo NFS-e de `CancelFiscalDocumentSchema` (item 13) e o XML do evento
  * `e101101` chega pelo multer. O `cMotivo` do corpo tem de ser o do XML (senão 422 — parâmetro aceito e ignorado é
  * bug); o texto gravado é o `xMotivo` do XML (transcrição §7).
  */
-export const CancelamentoManualSchema = CancelFiscalDocumentSchema;
+export const CancelamentoManualSchema = CancelNfseSchema; // o modo manual só emite NFS-e (capabilities.kinds)
 
 /**
  * BE-INCR-DFE-EVENTOS (nó X11, itens 11 e 17) — POST …/documents/:id/substituir. `cMotivo` é o `TSCodJustSubst` do
@@ -108,7 +123,60 @@ export const JanelaEventosSchema = z
     cancelarAte: z.string().datetime({ offset: true }).nullable(),
     substituirAte: z.string().datetime({ offset: true }).nullable(),
     substituirTeto: z.string().datetime({ offset: true }).nullable(),
-    fonte: z.enum(['perfil', 'desconhecida']),
+    fonte: z.enum(['perfil', 'desconhecida', 'nacional']), // 'nacional': 55/65 sem prazo no perfil (BE-INCR-NFCE item 27)
   })
   .strict();
 export type JanelaEventos = z.infer<typeof JanelaEventosSchema>;
+
+/**
+ * BE-INCR-NFCE (nó X10a, itens 24 e 31) — `POST /api/nfe/dfe/inutilizacoes`. Campos do `inutNFe` (MOC 7.0 VG §5.3.1,
+ * Tabela 5-9): série 0–889 (`[NFE-SERIE]`), nNFIni/nNFFin 1–999.999.999 (9 dígitos), xJust 15–255. O `ano` sai do relógio
+ * do escopo (não é entrada); as guardas da Tabela 5-12 ficam no serviço.
+ */
+export const VoidNumberRangeSchema = z
+  .object({
+    unitId: z.string().min(1),
+    kind: z.enum(['NFE', 'NFCE']),
+    serie: z.number().int().min(0).max(889),
+    nIni: z.number().int().min(1).max(999_999_999),
+    nFin: z.number().int().min(1).max(999_999_999),
+    xJust: z.string().trim().min(15).max(255),
+  })
+  .strict();
+export type VoidNumberRangeInput = z.infer<typeof VoidNumberRangeSchema>;
+
+/** BE-INCR-NFCE item 25 — `GET /api/nfe/dfe/inutilizacoes/pendentes?unitId&kind`. */
+export const PendingVoidsQuerySchema = z.object({ unitId: z.string().min(1), kind: z.enum(['NFE', 'NFCE']) }).strict();
+export type PendingVoidsQueryInput = z.infer<typeof PendingVoidsQuerySchema>;
+
+/** Contrato de SAÍDA do pedido de inutilização (números como string: BigInt-safe). */
+export const FiscalNumberVoidViewSchema = z
+  .object({
+    id: z.string(),
+    kind: z.enum(['NFE', 'NFCE']),
+    ambiente: z.enum(['producao', 'homologacao']),
+    serie: z.number().int(),
+    nIni: z.string().regex(/^\d+$/),
+    nFin: z.string().regex(/^\d+$/),
+    ano: z.number().int(),
+    status: z.enum(['REQUESTED', 'HOMOLOGATED', 'REJECTED']),
+    partner: z.string(),
+    nProt: z.string().nullable(),
+    errors: z.array(z.object({ code: z.string(), message: z.string() }).strict()),
+  })
+  .strict();
+export type FiscalNumberVoidView = z.infer<typeof FiscalNumberVoidViewSchema>;
+
+/** Contrato de SAÍDA de uma lacuna (item 25 + EMENDA-3 E3-2 a: aviso da UF e, na NFC-e, o texto da presunção). */
+export const LacunaDeNumeracaoSchema = z
+  .object({
+    ambiente: z.string(),
+    serie: z.number().int(),
+    numero: z.string().regex(/^\d+$/),
+    documentId: z.string().nullable(),
+    status: z.enum(['SENT', 'PROCESSING', 'AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'REJECTED', 'CANCELLED']).nullable(),
+    avisos: z.array(z.string()),
+    presuncao: z.string().optional(),
+  })
+  .strict();
+export type LacunaDeNumeracaoView = z.infer<typeof LacunaDeNumeracaoSchema>;

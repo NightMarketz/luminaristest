@@ -12,11 +12,19 @@ cProd: string
 productRef?: string
 classId?: string
 destination?: ("REVENDA" | "INSUMO_SERVICO" | "IMOBILIZADO")
+treatment?: ("CAPITALIZE" | "EXPENSE")
+expenseAccountId?: string
+setDeclared?: boolean
+usefulLifeUpToOneYear?: boolean
 }, ...({
 cProd: string
 productRef?: string
 classId?: string
 destination?: ("REVENDA" | "INSUMO_SERVICO" | "IMOBILIZADO")
+treatment?: ("CAPITALIZE" | "EXPENSE")
+expenseAccountId?: string
+setDeclared?: boolean
+usefulLifeUpToOneYear?: boolean
 })[]]
 }
 export interface ImportNfeSaleInput {
@@ -30,6 +38,10 @@ cProd: string
 productRef?: string
 classId?: string
 destination?: ("REVENDA" | "INSUMO_SERVICO" | "IMOBILIZADO")
+treatment?: ("CAPITALIZE" | "EXPENSE")
+expenseAccountId?: string
+setDeclared?: boolean
+usefulLifeUpToOneYear?: boolean
 }[]
 }
 export interface NfeItemDestinationInput {

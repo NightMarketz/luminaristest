@@ -8,7 +8,8 @@ import { MovementModal } from '../MovementModal';
 /**
  * LAC-D F-D1(a) — a entrada com motivo Compra é BLOQUEADA na tela de estoque: o custo digitado
  * aqui era coletado e descartado (nunca virava AP/razão/custo médio — receita-sem-CMV). O modal
- * agora aponta para Contas a Pagar e desabilita a confirmação; os demais motivos seguem normais.
+ * agora troca a confirmação por um link para Contas a Pagar com produto e quantidade pré-preenchidos
+ * (redirecionamento escolhido pelo dono em 2026-10-25); os demais motivos seguem normais.
  */
 
 vi.mock('@/lib/context/CurrencyContext', () => ({
@@ -46,14 +47,16 @@ function renderModal() {
 beforeEach(() => cleanup());
 
 describe('MovementModal — bloqueio da compra (LAC-D F-D1a)', () => {
-  it('Entrada + Compra (default) mostra o aviso, o atalho para Contas a Pagar e desabilita Confirmar', () => {
+  it('Entrada + Compra (default) mostra o aviso e troca Confirmar pelo link pré-preenchido para Contas a Pagar', () => {
     renderModal();
     expect(screen.getByText('Compra entra por Contas a Pagar')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Abrir Contas a Pagar' })).toHaveProperty(
-      'pathname',
-      '/accounting',
-    );
-    expect(screen.getByRole('button', { name: 'Confirmar Fluxo' })).toHaveProperty('disabled', true);
+    expect(screen.queryByRole('button', { name: 'Confirmar Fluxo' })).toBeNull();
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: '3' } });
+    const link = screen.getByRole('link', { name: 'Abrir Contas a Pagar' }) as HTMLAnchorElement;
+    expect(link.pathname).toBe('/accounting');
+    const params = new URLSearchParams(link.search);
+    expect(params.get('newInventoryPayable')).toBe('prod-1');
+    expect(params.get('qty')).toBe('3');
   });
 
   it('trocar o motivo para Ajuste destrava a confirmação e esconde o aviso', () => {

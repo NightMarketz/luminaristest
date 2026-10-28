@@ -87,8 +87,14 @@ export async function resetDb(): Promise<void> {
   await prisma.fiscalDocumentAttempt.deleteMany();
   await prisma.fiscalDocument.deleteMany();
   await prisma.fiscalDocumentSequence.deleteMany();
+  await prisma.fiscalNumberVoid.deleteMany(); // BE-INCR-NFCE PR-4
   await prisma.serviceFiscalProfile.deleteMany();
+  await prisma.productFiscalProfile.deleteMany(); // BE-INCR-NFCE item 10
   await prisma.issBeneficioMunicipal.deleteMany(); // SIMPLES-PISO-ANEXO-XI bloco 1
+  // EFICIENCIA-FISCAL PR-1: folhas sem FK.
+  await prisma.taxOptimizationSuggestion.deleteMany();
+  await prisma.serviceCostEvidence.deleteMany();
+  await prisma.taxOptimizationPolicy.deleteMany();
   // ITEM-DESTINATION PR-2: default de destinação por produto — folha (só FK Cascade para User).
   await prisma.productDestinationDefault.deleteMany();
   // C6b PR-3: o item do pacote tem FK RESTRICT para o log de entrega E para o job de
@@ -106,6 +112,8 @@ export async function resetDb(): Promise<void> {
   // Restrict para a conta), depois movimentos (Restrict para a conta) e fechamentos.
   await prisma.lalurProcess.deleteMany();
   await prisma.lalurEntryJournalEntry.deleteMany();
+  // C8 emenda 3.2 (F-EM-14 → a): links M305 1:N — Restrict para o ajuste e para a conta da Parte B.
+  await prisma.lalurEntryParteBLink.deleteMany();
   await prisma.lalurParteBBalance.deleteMany();
   await prisma.lalurParteBClosing.deleteMany();
   await prisma.lalurParteBMovement.deleteMany();
@@ -155,6 +163,8 @@ export async function resetDb(): Promise<void> {
   await prisma.fiscalCertificate.deleteMany();
   // BE-INCR-MIT-EXPORT PR-2 (nó X9): mit_exports só referencia User (Cascade) — sem ordem de FK.
   await prisma.mitExport.deleteMany();
+  // BE-INCR-EFD-REINF PR-1: reinf_batches só referencia User (Cascade) — sem ordem de FK.
+  await prisma.reinfBatch.deleteMany();
   // BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14): só referenciam User (Cascade) — sem ordem de FK.
   await prisma.simplesHistoricoMensal.deleteMany();
   await prisma.simplesSegregacaoManual.deleteMany();

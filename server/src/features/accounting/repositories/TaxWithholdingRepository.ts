@@ -60,21 +60,26 @@ export class TaxWithholdingRepository implements ITaxWithholdingRepository {
   }
 
   public async findMadeWithOrigin(scope: AccountingScope, competencia: string): Promise<TaxWithholdingComOrigem[]> {
+    return this.madeWithOrigin(accountingScopeWhere(scope), competencia);
+  }
+
+  /** `tenancy` = `{ userId, unitId }` (a unidade) ou `{ userId }` (a PJ inteira, porta da Reinf). */
+  private async madeWithOrigin(tenancy: { userId: string; unitId?: string }, competencia: string): Promise<TaxWithholdingComOrigem[]> {
     const rows = await prisma.taxWithholding.findMany({
-      where: { ...accountingScopeWhere(scope), competencia, direction: 'MADE', status: 'ACTIVE' },
+      where: { ...tenancy, competencia, direction: 'MADE', status: 'ACTIVE' },
       orderBy: [{ dataFatoGerador: 'asc' }, { createdAt: 'asc' }],
     });
     if (rows.length === 0) return [];
     const cps = await prisma.counterparty.findMany({
-      where: { ...accountingScopeWhere(scope), id: { in: [...new Set(rows.map((r) => r.counterpartyId))] } },
+      where: { ...tenancy, id: { in: [...new Set(rows.map((r) => r.counterpartyId))] } },
       select: { id: true, name: true, taxId: true, regimeTributario: true },
     });
     const titulos = await prisma.payable.findMany({
-      where: { ...accountingScopeWhere(scope), id: { in: [...new Set(rows.map((r) => r.titleId))] } },
+      where: { ...tenancy, id: { in: [...new Set(rows.map((r) => r.titleId))] } },
       select: { id: true, documentNumber: true, issueDate: true },
     });
     const perfis = await prisma.withholdingProfile.findMany({
-      where: { ...accountingScopeWhere(scope), counterpartyId: { in: cps.map((c) => c.id) }, deletedAt: null },
+      where: { ...tenancy, counterpartyId: { in: cps.map((c) => c.id) }, deletedAt: null },
       select: { counterpartyId: true, naturezaServico: true, vigenteDesde: true, vigenteAte: true, inssTpServico: true, inssCprb: true },
     });
     const cp = new Map(cps.map((c) => [c.id, c]));
@@ -92,6 +97,10 @@ export class TaxWithholdingRepository implements ITaxWithholdingRepository {
 
   public async findMadeForReinf(scope: AccountingScope, competencia: string): Promise<WithholdingLineForReinf[]> {
     return (await this.findMadeWithOrigin(scope, competencia)).map(toWithholdingLineForReinf);
+  }
+
+  public async findMadeForReinfDaPj(ownerUserId: string, competencia: string): Promise<WithholdingLineForReinf[]> {
+    return (await this.madeWithOrigin({ userId: ownerUserId }, competencia)).map(toWithholdingLineForReinf);
   }
 
   public async findMadeByTaxPayables(scope: AccountingScope, taxPayableIds: readonly string[]): Promise<TaxWithholding[]> {

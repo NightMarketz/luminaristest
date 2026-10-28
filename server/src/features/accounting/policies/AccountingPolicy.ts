@@ -178,9 +178,27 @@ export class AccountingPolicy implements IAccountingPolicy {
     return this.canManageFiscalProfile(scope);
   }
 
+  // BE-INCR-NFCE (nó X10a, item 10)
+  canManageProductFiscalProfile(scope: AccountingScope): boolean {
+    return this.canManageFiscalProfile(scope);
+  }
+
   // SIMPLES-PISO-ANEXO-XI bloco 1 (BRIEF item 1)
   canManageIssBeneficioMunicipal(scope: AccountingScope): boolean {
     return this.canManageFiscalProfile(scope);
+  }
+
+  // EFICIENCIA-FISCAL PR-1 (BRIEF item 5): política de eficiência fiscal e custo de serviço — mesma régua do perfil fiscal.
+  canManageTaxOptimization(scope: AccountingScope): boolean {
+    return this.canManageFiscalProfile(scope);
+  }
+
+  // EFICIENCIA-FISCAL PR-1 (BRIEF item 7; F-EF-3 a; triagem 21/10): com contador ACTIVE só ele decide; sem ele, o dono
+  // com a régua do perfil fiscal. CRITERIO_CARGA só com contador ACTIVE (I-6). Quem propôs não decide — checado no serviço.
+  canDecideTaxSuggestion(scope: AccountingScope, active: ActiveAccountant | null, practice: string): boolean {
+    if (active) return this.isActiveAccountant(scope, active);
+    if (practice === 'CRITERIO_CARGA') return false;
+    return !!scope.actorUserId && scope.ownerUserId === scope.actorUserId && this.canManageFiscalProfile(scope);
   }
 
   canReadFiscalDocument(scope: AccountingScope): boolean {

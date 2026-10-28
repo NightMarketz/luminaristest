@@ -1,7 +1,9 @@
 import type { ITableSchema } from '../../../models/DynamicTable.model';
 import { saleId, productId, serviceId, packageId, responsibleEmployeeId, appointmentId } from '../../fields/relation/RelationPresets';
 import { description } from '../../fields/text/TextPresets';
-import { quantity, unitPrice, commission } from '../../fields/number/NumberPresets';
+import { quantity, unitPrice, commission, catalogUnitPrice, discountCents, custoSnapshotCents } from '../../fields/number/NumberPresets';
+import { kitRef } from '../../fields/text/TextPresets';
+import { principalItem } from '../../fields/boolean/BooleanPresets';
 import { itemType } from '../../fields/select/SelectPresets';
 
 export const saleItemsMixedModule = {
@@ -20,6 +22,12 @@ export const saleItemsMixedModule = {
       { ...description, label: 'Description' },
       quantity,
       unitPrice,
+      // EFICIENCIA-FISCAL PR-1 item 1 (combo itemizado, desconto por item, piso de custo, kit).
+      catalogUnitPrice,
+      discountCents,
+      custoSnapshotCents,
+      kitRef,
+      principalItem,
       { name: 'requiresAppointment', label: 'Schedule now', type: 'boolean', required: false, defaultValue: false, searchable: false },
       appointmentId,
       responsibleEmployeeId,

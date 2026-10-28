@@ -52,6 +52,7 @@ import { TaxAssessmentRepository } from '../features/accounting/repositories/Tax
 import { ConsumptionTaxAssessmentRepository } from '../features/accounting/repositories/ConsumptionTaxAssessmentRepository';
 import type { IConsumptionTaxAssessmentRepository } from '../features/accounting/repositories/IConsumptionTaxAssessmentRepository';
 import { MitExportRepository } from '../features/accounting/repositories/MitExportRepository';
+import { ReinfBatchRepository } from '../features/accounting/repositories/ReinfBatchRepository';
 import { SimplesEntradasRepository } from '../features/accounting/repositories/SimplesEntradasRepository';
 import { ReceitaFiscalRepository } from '../features/accounting/repositories/ReceitaFiscalRepository';
 import { ReceitaFiscalRecebimentoRepository } from '../features/accounting/repositories/ReceitaFiscalRecebimentoRepository';
@@ -66,6 +67,7 @@ import { ReconcilePendingRepository } from '../features/accounting/repositories/
 import { BankSettlementRepository } from '../features/accounting/repositories/BankSettlementRepository';
 import { FiscalProfileRepository } from '../features/accounting/repositories/FiscalProfileRepository';
 import { ServiceFiscalProfileRepository } from '../features/accounting/repositories/ServiceFiscalProfileRepository';
+import { ProductFiscalProfileRepository } from '../features/accounting/repositories/ProductFiscalProfileRepository';
 import { IssBeneficioMunicipalRepository } from '../features/accounting/repositories/IssBeneficioMunicipalRepository';
 import { ProductDestinationDefaultRepository } from '../features/accounting/repositories/ProductDestinationDefaultRepository';
 import { CompanyFiscalProfileRepository } from '../features/accounting/repositories/CompanyFiscalProfileRepository';
@@ -79,6 +81,7 @@ import { DepreciationRateRepository } from '../features/accounting/repositories/
 import { FixedAssetClassRepository } from '../features/accounting/repositories/FixedAssetClassRepository';
 import { FixedAssetRepository } from '../features/accounting/repositories/FixedAssetRepository';
 import { FiscalDocumentRepository } from '../features/accounting/repositories/FiscalDocumentRepository';
+import { FiscalNumberVoidRepository } from '../features/accounting/repositories/FiscalNumberVoidRepository';
 import { LalurRepository } from '../features/accounting/repositories/LalurRepository';
 import { PackageBalanceRepository } from '../features/packages/repositories/PackageBalanceRepository';
 import { PackageAcceptanceRepository } from '../features/packages/repositories/PackageAcceptanceRepository';
@@ -165,6 +168,7 @@ import { TaxAssessmentService } from '../features/accounting/services/TaxAssessm
 import { PresumidoTetoService } from '../features/accounting/services/PresumidoTetoService';
 import { TaxAssessmentPeriodosService } from '../features/accounting/services/TaxAssessmentPeriodosService';
 import { MitExportService } from '../features/accounting/services/MitExportService';
+import { ReinfService } from '../features/accounting/services/ReinfService';
 import { SimplesEntradasService } from '../features/accounting/services/SimplesEntradasService';
 import { ReceitaFiscalService } from '../features/accounting/services/ReceitaFiscalService';
 import { ReceitaFiscalRecebimentoService } from '../features/accounting/services/ReceitaFiscalRecebimentoService';
@@ -187,6 +191,7 @@ import { BankSettlementService } from '../features/accounting/services/BankSettl
 import { AccountingScopeSettingsService } from '../features/accounting/services/AccountingScopeSettingsService';
 import { FiscalProfileService } from '../features/accounting/services/FiscalProfileService';
 import { ServiceFiscalProfileService } from '../features/accounting/services/ServiceFiscalProfileService';
+import { ProductFiscalProfileService } from '../features/accounting/services/ProductFiscalProfileService';
 import { IssBeneficioMunicipalService } from '../features/accounting/services/IssBeneficioMunicipalService';
 import { ProductDestinationService } from '../features/accounting/services/ProductDestinationService';
 import { CompanyFiscalProfileService } from '../features/accounting/services/CompanyFiscalProfileService';
@@ -200,8 +205,10 @@ import { DepreciationRateService } from '../features/accounting/services/Depreci
 import { FixedAssetClassService } from '../features/accounting/services/FixedAssetClassService';
 import { FixedAssetService } from '../features/accounting/services/FixedAssetService';
 import { DepreciationService } from '../features/accounting/services/DepreciationService';
+import { FixedAssetParteBReader } from '../features/accounting/services/FixedAssetParteBReader';
 import { FiscalDocumentEmissionService } from '../features/accounting/services/FiscalDocumentEmissionService';
 import { FiscalDocumentLifecycleService } from '../features/accounting/services/FiscalDocumentLifecycleService';
+import { FiscalNumberVoidService } from '../features/accounting/services/FiscalNumberVoidService';
 import { LalurService } from '../features/accounting/services/LalurService';
 import { PackageBalanceService } from '../features/packages/services/PackageBalanceService';
 import { PackageAcceptanceService } from '../features/packages/services/PackageAcceptanceService';
@@ -259,6 +266,10 @@ import type { TenantAccount } from '../features/sectorKits/services/classifyKitD
 import prismaClient from './prisma';
 import { SalesCancellationService } from '../features/sales/services/SalesCancellationService';
 import { RegisterPaymentService } from '../features/sales/services/RegisterPaymentService';
+import { SaleFiscalGuardService } from '../features/sales/services/SaleFiscalGuardService'; // EFICIENCIA-FISCAL PR-1
+import { TaxOptimizationService } from '../features/accounting/services/TaxOptimizationService'; // EFICIENCIA-FISCAL PR-1
+import { TaxOptimizationRepository } from '../features/accounting/repositories/TaxOptimizationRepository'; // EFICIENCIA-FISCAL PR-1
+import type { ITaxOptimizationRepository } from '../features/accounting/repositories/ITaxOptimizationRepository';
 import { PresetSyncService } from '../features/dynamicTables/services/PresetSyncService';
 import { ModuleInstallService } from '../features/dynamicTables/services/ModuleInstallService';
 import { AttachmentService } from '../features/attachments/services/AttachmentService';
@@ -317,6 +328,7 @@ import type { IFiscalCertificateRepository } from '../features/accounting/reposi
 import type { ICollectionChargeRepository } from '../features/accounting/repositories/ICollectionChargeRepository';
 import type { ITaxAssessmentRepository } from '../features/accounting/repositories/ITaxAssessmentRepository';
 import type { IMitExportRepository } from '../features/accounting/repositories/IMitExportRepository';
+import type { IReinfBatchRepository } from '../features/accounting/repositories/IReinfBatchRepository';
 import type { ISimplesEntradasRepository } from '../features/accounting/repositories/ISimplesEntradasRepository';
 import type { IReceitaFiscalRepository } from '../features/accounting/repositories/IReceitaFiscalRepository';
 import type { IReceitaFiscalRecebimentoRepository } from '../features/accounting/repositories/IReceitaFiscalRecebimentoRepository';
@@ -343,6 +355,7 @@ import type { IReconcilePendingRepository } from '../features/accounting/reposit
 import type { IBankSettlementRepository } from '../features/accounting/repositories/IBankSettlementRepository';
 import type { IFiscalProfileRepository } from '../features/accounting/repositories/IFiscalProfileRepository';
 import type { IServiceFiscalProfileRepository } from '../features/accounting/repositories/IServiceFiscalProfileRepository';
+import type { IProductFiscalProfileRepository } from '../features/accounting/repositories/IProductFiscalProfileRepository';
 import type { IIssBeneficioMunicipalRepository } from '../features/accounting/repositories/IIssBeneficioMunicipalRepository';
 import type { IProductDestinationDefaultRepository } from '../features/accounting/repositories/IProductDestinationDefaultRepository';
 import type { ICompanyFiscalProfileRepository } from '../features/accounting/repositories/ICompanyFiscalProfileRepository';
@@ -356,6 +369,7 @@ import type { IDepreciationRateRepository } from '../features/accounting/reposit
 import type { IFixedAssetClassRepository } from '../features/accounting/repositories/IFixedAssetClassRepository';
 import type { IFixedAssetRepository } from '../features/accounting/repositories/IFixedAssetRepository';
 import type { IFiscalDocumentRepository } from '../features/accounting/repositories/IFiscalDocumentRepository';
+import type { IFiscalNumberVoidRepository } from '../features/accounting/repositories/IFiscalNumberVoidRepository';
 import type { ILalurRepository } from '../features/accounting/repositories/ILalurRepository';
 import type { IAccountingPolicy } from '../features/accounting/policies/IAccountingPolicy';
 import type { IAccountingScopeResetPolicy } from '../features/accounting/policies/IAccountingScopeResetPolicy';
@@ -814,7 +828,9 @@ export class ApplicationFactory {
     bankSettlement: IBankSettlementRepository;
     fiscalProfile: IFiscalProfileRepository;
     serviceFiscalProfile: IServiceFiscalProfileRepository;
+    productFiscalProfile: IProductFiscalProfileRepository; // BE-INCR-NFCE item 10
     issBeneficioMunicipal: IIssBeneficioMunicipalRepository; // SIMPLES-PISO-ANEXO-XI bloco 1
+    taxOptimization: ITaxOptimizationRepository; // EFICIENCIA-FISCAL PR-1
     productDestinationDefault: IProductDestinationDefaultRepository; // ITEM-DESTINATION PR-2
     companyFiscalProfile: ICompanyFiscalProfileRepository; // X13
     companySigner: ICompanySignerRepository; // X13
@@ -824,6 +840,7 @@ export class ApplicationFactory {
     profitDistribution: IProfitDistributionRepository; // IRRF-DISTRIBUICAO PR-2
     interestOnEquity: IInterestOnEquityRepository; // IRRF-DISTRIBUICAO PR-3
     fiscalDocument: IFiscalDocumentRepository;
+    fiscalNumberVoid: IFiscalNumberVoidRepository; // BE-INCR-NFCE item 24
     lalur: ILalurRepository;
     accountingContact: IAccountingContactRepository;
     paymentAccount: IPaymentAccountRepository; // BE-INCR-PAYMENT-PROVIDER PR-1
@@ -832,6 +849,7 @@ export class ApplicationFactory {
     taxAssessment: ITaxAssessmentRepository; // X7 Fase A PR-2
     consumptionTaxAssessment: IConsumptionTaxAssessmentRepository; // IBS-CBS-2027 PR-2 (item 8)
     mitExport: IMitExportRepository; // X9 PR-2
+    reinfBatch: IReinfBatchRepository; // EFD-REINF PR-1 (item 10)
     simplesEntradas: ISimplesEntradasRepository; // X14 PR-2
     receitaFiscal: IReceitaFiscalRepository; // X14 PR-2
     receitaFiscalRecebimento: IReceitaFiscalRecebimentoRepository; // X14-CAIXA PR-1
@@ -884,6 +902,7 @@ export class ApplicationFactory {
     crmAnalytics: CrmAnalyticsService;
     salesCancellation: SalesCancellationService;
     registerPayment: RegisterPaymentService;
+    saleFiscalGuard: SaleFiscalGuardService; // EFICIENCIA-FISCAL PR-1
     posting: PostingService;
     audit: AuditService;
     entryApproval: EntryApprovalService;
@@ -922,7 +941,9 @@ export class ApplicationFactory {
     accountingScopeSettings: AccountingScopeSettingsService;
     fiscalProfile: FiscalProfileService;
     serviceFiscalProfile: ServiceFiscalProfileService;
+    productFiscalProfile: ProductFiscalProfileService; // BE-INCR-NFCE item 10
     issBeneficioMunicipal: IssBeneficioMunicipalService; // SIMPLES-PISO-ANEXO-XI bloco 1
+    taxOptimization: TaxOptimizationService; // EFICIENCIA-FISCAL PR-1
     productDestination: ProductDestinationService; // ITEM-DESTINATION PR-2
     companyFiscalProfile: CompanyFiscalProfileService; // X13
     companySigner: CompanySignerService; // X13
@@ -933,6 +954,7 @@ export class ApplicationFactory {
     interestOnEquity: InterestOnEquityService; // IRRF-DISTRIBUICAO PR-3
     fiscalDocumentEmission: FiscalDocumentEmissionService;
     fiscalDocumentLifecycle: FiscalDocumentLifecycleService;
+    fiscalNumberVoid: FiscalNumberVoidService; // BE-INCR-NFCE itens 24–25
     lalur: LalurService;
     accountingContact: AccountingContactService;
     paymentAccount: PaymentAccountService; // BE-INCR-PAYMENT-PROVIDER PR-1
@@ -942,6 +964,7 @@ export class ApplicationFactory {
     taxAssessment: TaxAssessmentService; // X7 Fase A PR-2
     taxAssessmentPeriodos: TaxAssessmentPeriodosService; // TAX-ASSESSMENT-PERIODOS
     mitExport: MitExportService; // X9 PR-2
+    reinf: ReinfService; // EFD-REINF PR-1 (itens 4–14)
     simplesEntradas: SimplesEntradasService; // X14 PR-2
     receitaFiscal: ReceitaFiscalService; // X14 PR-2
     receitaFiscalRecebimento: ReceitaFiscalRecebimentoService; // X14-CAIXA PR-1
@@ -1030,7 +1053,9 @@ export class ApplicationFactory {
       bankSettlement: new BankSettlementRepository(),
       fiscalProfile: new FiscalProfileRepository(),
       serviceFiscalProfile: new ServiceFiscalProfileRepository(),
+      productFiscalProfile: new ProductFiscalProfileRepository(),
       issBeneficioMunicipal: new IssBeneficioMunicipalRepository(),
+      taxOptimization: new TaxOptimizationRepository(), // EFICIENCIA-FISCAL PR-1
       productDestinationDefault: new ProductDestinationDefaultRepository(),
       companyFiscalProfile: new CompanyFiscalProfileRepository(),
       companySigner: new CompanySignerRepository(),
@@ -1040,6 +1065,7 @@ export class ApplicationFactory {
       profitDistribution: new ProfitDistributionRepository(),
       interestOnEquity: new InterestOnEquityRepository(),
       fiscalDocument: new FiscalDocumentRepository(),
+      fiscalNumberVoid: new FiscalNumberVoidRepository(), // BE-INCR-NFCE item 24
       lalur: new LalurRepository(),
       accountingContact: new AccountingContactRepository(),
       paymentAccount: new PaymentAccountRepository(),
@@ -1048,6 +1074,7 @@ export class ApplicationFactory {
       taxAssessment: new TaxAssessmentRepository(),
       consumptionTaxAssessment: new ConsumptionTaxAssessmentRepository(),
       mitExport: new MitExportRepository(),
+      reinfBatch: new ReinfBatchRepository(),
       simplesEntradas: new SimplesEntradasRepository(),
       receitaFiscal: new ReceitaFiscalRepository(),
       receitaFiscalRecebimento: new ReceitaFiscalRecebimentoRepository(),
@@ -1293,6 +1320,8 @@ export class ApplicationFactory {
       this.policies.accounting,
       accountingReportService,
       this.repositories.companyFiscalProfile, // X7 Fase B (item 12): forma do ano + início de atividade — só leitura
+      // C8 emenda 3.2 (E15, A6): Bloco F — ativos + quotas do razão, só leitura (interface, não o DepreciationService)
+      new FixedAssetParteBReader(this.repositories.fixedAsset, this.repositories.journalEntry),
     );
 
     const presetSyncService = new PresetSyncService(
@@ -1453,6 +1482,27 @@ export class ApplicationFactory {
       legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia LC116_SERVICO
       this.repositories.fiscalProfile, // IBS-CBS-2027 PR-1, L1: CST do perfil para a RN E0959
     );
+    // BE-INCR-NFCE (nó X10a, PR-2): perfil fiscal do produto (F-NFCE-3 b) — a montagem da NF-e/NFC-e (PR-3) também o lê.
+    const productFiscalProfileService = new ProductFiscalProfileService(
+      this.repositories.productFiscalProfile,
+      this.policies.accounting,
+      auditService,
+    );
+    // EFICIENCIA-FISCAL PR-1 (itens 5–8): política/sugestões e a guarda fiscal da venda — a NFS-e a chama como
+    // pré-condição (item 6), por isso nascem antes da montagem da DPS.
+    const taxOptimizationService = new TaxOptimizationService(
+      this.repositories.taxOptimization,
+      this.repositories.accountantAssignment,
+      this.policies.accounting,
+      auditService,
+    );
+    const saleFiscalGuardService = new SaleFiscalGuardService(
+      dynamicTableService,
+      this.repositories.dynamicTable,
+      dynamicTableWriteEffects,
+      this.repositories.inventory,
+      taxOptimizationService,
+    );
     // BE-INCR-DFE (nó X10b, PR-2): porta+adaptadores e montagem/envio da DPS (Fase B+C).
     const fiscalDocumentEmissionService = new FiscalDocumentEmissionService(
       this.repositories.fiscalDocument,
@@ -1463,6 +1513,8 @@ export class ApplicationFactory {
       this.policies.accounting,
       auditService,
       legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia LC116_SERVICO
+      productFiscalProfileService, // BE-INCR-NFCE PR-3: perfis dos produtos na montagem da NF-e/NFC-e
+      saleFiscalGuardService, // EFICIENCIA-FISCAL PR-1 item 6: guarda fiscal como pré-condição da emissão
     );
     // Extraído como const própria (não só inline no literal abaixo) porque
     // FiscalDocumentLifecycleService (PR-3) também a injeta (item 25 — anexa XML/PDF).
@@ -1483,6 +1535,7 @@ export class ApplicationFactory {
       postingService,
       this.policies.accounting,
       auditService,
+      this.repositories.fiscalNumberVoid, // BE-INCR-NFCE PR-4: reenvio recusa número com pedido de inutilização
     );
     // Extraído como const própria (não só inline no literal abaixo) porque FixedAssetService
     // (BE-INCR-FIXED-ASSETS, nó C8, PR-2) também a injeta (baixa lê disposalGain/LossAccountId).
@@ -1606,7 +1659,9 @@ export class ApplicationFactory {
       // (requireCostRegime, F-X6-6 a) e nunca o escreve.
       fiscalProfile: fiscalProfileService,
       serviceFiscalProfile: serviceFiscalProfileService,
+      productFiscalProfile: productFiscalProfileService,
       issBeneficioMunicipal: new IssBeneficioMunicipalService(this.repositories.issBeneficioMunicipal, this.policies.accounting, auditService),
+      taxOptimization: taxOptimizationService, // EFICIENCIA-FISCAL PR-1
       // ITEM-DESTINATION PR-2 (item 17, F-ID-2 a): destinação padrão por produto — a mesma porta de existência
       // de produto do LAC-E (reuso), sob a policy fiscal.
       productDestination: new ProductDestinationService(
@@ -1656,6 +1711,15 @@ export class ApplicationFactory {
       depreciation: depreciationService,
       fiscalDocumentEmission: fiscalDocumentEmissionService,
       fiscalDocumentLifecycle: fiscalDocumentLifecycleService,
+      // BE-INCR-NFCE (nó X10a, itens 24–25): inutilização de faixa + lista das lacunas de numeração.
+      fiscalNumberVoid: new FiscalNumberVoidService(
+        this.repositories.fiscalDocument,
+        this.repositories.fiscalNumberVoid,
+        fiscalProfileService,
+        this.policies.accounting,
+        auditService,
+        legalParameterService, // EMENDA-3 E3-2 a: fotografia INUT_NAO_SE_APLICA
+      ),
       chat: new ChatService(
         embeddingOpenAIService,
         this.repositories.vector,
@@ -1699,6 +1763,7 @@ export class ApplicationFactory {
       crmAnalytics: crmAnalyticsService,
       salesCancellation: salesCancellationService,
       registerPayment: registerPaymentService,
+      saleFiscalGuard: saleFiscalGuardService, // EFICIENCIA-FISCAL PR-1
       posting: postingService,
       audit: auditService,
       entryApproval: entryApprovalService,
@@ -1968,6 +2033,17 @@ export class ApplicationFactory {
         this.policies.accounting,
         auditService,
         legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia CODIGO_RECEITA
+      ),
+      // BE-INCR-EFD-REINF PR-1: lote da Reinf a partir da porta de retenções da PJ (lacuna A) e do resumo D8 por unidade.
+      reinf: new ReinfService(
+        this.repositories.reinfBatch,
+        this.repositories.taxWithholding,
+        withholdingService,
+        this.repositories.companyFiscalProfile,
+        this.repositories.accountingContact,
+        this.policies.accounting,
+        auditService,
+        legalParameterService,
       ),
       // BE-INCR-PIS-COFINS PR-2 (nó X8): prévia/confirmação da apuração mensal de PIS/Cofins (reusa o TaxAssessment do X7).
       pisCofinsAssessment: pisCofinsAssessmentService,
@@ -2361,6 +2437,7 @@ export class ApplicationFactory {
   public getCrmAnalyticsService = (): CrmAnalyticsService => this.services.crmAnalytics;
   public getSalesCancellationService = (): SalesCancellationService => this.services.salesCancellation;
   public getRegisterPaymentService = (): RegisterPaymentService => this.services.registerPayment;
+  public getSaleFiscalGuardService = (): SaleFiscalGuardService => this.services.saleFiscalGuard;
   public getPostingService = (): PostingService => this.services.posting;
   public getAuditService = (): AuditService => this.services.audit;
   public getEntryApprovalService = (): EntryApprovalService => this.services.entryApproval;
@@ -2401,6 +2478,7 @@ export class ApplicationFactory {
   public getTaxAssessmentService = (): TaxAssessmentService => this.services.taxAssessment;
   public getTaxAssessmentPeriodosService = (): TaxAssessmentPeriodosService => this.services.taxAssessmentPeriodos;
   public getMitExportService = (): MitExportService => this.services.mitExport;
+  public getReinfService = (): ReinfService => this.services.reinf;
   public getSimplesEntradasService = (): SimplesEntradasService => this.services.simplesEntradas;
   public getReceitaFiscalService = (): ReceitaFiscalService => this.services.receitaFiscal;
   public getReceitaFiscalRecebimentoService = (): ReceitaFiscalRecebimentoService => this.services.receitaFiscalRecebimento;
@@ -2425,7 +2503,9 @@ export class ApplicationFactory {
   public getAccountingScopeSettingsService = (): AccountingScopeSettingsService => this.services.accountingScopeSettings;
   public getFiscalProfileService = (): FiscalProfileService => this.services.fiscalProfile;
   public getServiceFiscalProfileService = (): ServiceFiscalProfileService => this.services.serviceFiscalProfile;
+  public getProductFiscalProfileService = (): ProductFiscalProfileService => this.services.productFiscalProfile;
   public getIssBeneficioMunicipalService = (): IssBeneficioMunicipalService => this.services.issBeneficioMunicipal;
+  public getTaxOptimizationService = (): TaxOptimizationService => this.services.taxOptimization;
   public getProductDestinationService = (): ProductDestinationService => this.services.productDestination;
   public getCompanyFiscalProfileService = (): CompanyFiscalProfileService => this.services.companyFiscalProfile;
   public getCompanySignerService = (): CompanySignerService => this.services.companySigner;
@@ -2442,6 +2522,7 @@ export class ApplicationFactory {
   public getDepreciationService = (): DepreciationService => this.services.depreciation;
   public getFiscalDocumentEmissionService = (): FiscalDocumentEmissionService => this.services.fiscalDocumentEmission;
   public getFiscalDocumentLifecycleService = (): FiscalDocumentLifecycleService => this.services.fiscalDocumentLifecycle;
+  public getFiscalNumberVoidService = (): FiscalNumberVoidService => this.services.fiscalNumberVoid;
   public getFiscalDocumentRepository = (): IFiscalDocumentRepository => this.repositories.fiscalDocument;
   public getLalurService = (): LalurService => this.services.lalur;
   public getPackageBalanceService = (): PackageBalanceService => this.services.packageBalance;

@@ -121,6 +121,17 @@ export interface FiscalProfileView extends CostRegime {
   inscricaoMunicipal: string | null;
   cnae: string | null;
   dpsSerie: number;
+  inscricaoEstadual: string | null; // BE-INCR-NFCE item 8
+  nfeSerie: number; // BE-INCR-NFCE item 9
+  nfceSerie: number;
+  // BE-INCR-NFCE PR-3 — emitente da NF-e/NFC-e (C03, C06–C13); texto livre, fora do audit
+  razaoSocial: string | null;
+  enderLogradouro: string | null;
+  enderNumero: string | null;
+  enderComplemento: string | null;
+  enderBairro: string | null;
+  enderMunicipio: string | null;
+  enderCep: string | null;
   regEspTrib: number;
   regApTribSN: number | null;
   issAliquotaBp: number | null;
@@ -140,6 +151,9 @@ export interface FiscalProfileView extends CostRegime {
   cancelPrazoDias: number | null;
   substPrazoDias: number | null;
   prazoFonte: string | null;
+  // BE-INCR-NFCE (nó X10a, item 27; EMENDA 2026-10-11 §3 E3-1)
+  nfeCancelPrazoHoras: number | null;
+  nfceCancelPrazoMinutos: number | null;
   d1fConfirmado: boolean;
   emissao: FiscalProfileEmissaoStatus;
   updatedAt: string;
@@ -439,6 +453,9 @@ export class FiscalProfileService {
         // BE-INCR-DFE (item 9): enum/boolean/int como string — sem texto livre (IM/CNAE ficam fora do evento)
         codMun: row.codMun ?? '',
         dpsSerie: String(row.dpsSerie),
+        inscricaoEstadual: row.inscricaoEstadual ?? '', // BE-INCR-NFCE item 8: só algarismos (C17), sem texto livre
+        nfeSerie: String(row.nfeSerie),
+        nfceSerie: String(row.nfceSerie),
         regEspTrib: String(row.regEspTrib),
         regApTribSN: row.regApTribSN == null ? '' : String(row.regApTribSN),
         issAliquotaBp: row.issAliquotaBp == null ? '' : String(row.issAliquotaBp),
@@ -549,6 +566,16 @@ export class FiscalProfileService {
       inscricaoMunicipal: row.inscricaoMunicipal,
       cnae: row.cnae,
       dpsSerie: row.dpsSerie,
+      inscricaoEstadual: row.inscricaoEstadual,
+      nfeSerie: row.nfeSerie,
+      nfceSerie: row.nfceSerie,
+      razaoSocial: row.razaoSocial,
+      enderLogradouro: row.enderLogradouro,
+      enderNumero: row.enderNumero,
+      enderComplemento: row.enderComplemento,
+      enderBairro: row.enderBairro,
+      enderMunicipio: row.enderMunicipio,
+      enderCep: row.enderCep,
       regEspTrib: row.regEspTrib,
       regApTribSN: row.regApTribSN,
       issAliquotaBp: row.issAliquotaBp,
@@ -567,6 +594,8 @@ export class FiscalProfileService {
       cancelPrazoDias: row.cancelPrazoDias,
       substPrazoDias: row.substPrazoDias,
       prazoFonte: row.prazoFonte,
+      nfeCancelPrazoHoras: row.nfeCancelPrazoHoras,
+      nfceCancelPrazoMinutos: row.nfceCancelPrazoMinutos,
       d1fConfirmado: row.d1fConfirmado,
       emissao: fiscalProfileEmissaoStatus(row, regimeEmpresa),
       updatedAt: row.updatedAt.toISOString(),

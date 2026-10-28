@@ -1,5 +1,14 @@
 import { createHash } from 'crypto';
-import type { CancelResult, DfeCapabilities, DfeEmissorPort, EmissaoResult, EmitirInput } from './DfeEmissorPort';
+import type {
+  CancelInput,
+  CancelResult,
+  DfeCapabilities,
+  DfeEmissorPort,
+  EmissaoResult,
+  EmitirInput,
+  InutilizarInput,
+  InutilizarResult,
+} from './DfeEmissorPort';
 
 /**
  * NullEmissor — BE-INCR-DFE (BRIEF item 11). Adaptador de desenvolvimento/teste: autoriza
@@ -9,12 +18,15 @@ import type { CancelResult, DfeCapabilities, DfeEmissorPort, EmissaoResult, Emit
 export class NullEmissor implements DfeEmissorPort {
   public readonly name = 'null';
   public readonly capabilities: DfeCapabilities = {
+    kinds: ['NFSE', 'NFE', 'NFCE'], // BE-INCR-NFCE item 4
     numbersDps: false,
     consultar: true,
     cancelar: true,
     // Nenhum parceiro real por trás — sem webhook de verdade para verificar (item 28: Null/File ⇒ 401 sempre).
     webhook: false,
     substituir: false, // X11 review M3: a chave sintética NULL<hex> não é TSChaveNFSe (50 dígitos) — não monta o subst
+    inutilizar: true, // BE-INCR-NFCE item 24: homologa sinteticamente (faixa válida + Null ⇒ HOMOLOGATED)
+    cce: false, // BE-INCR-NFCE item 28 (F-NFCE-9 c): a CC-e não está implementada em adaptador nenhum
   };
 
   constructor() {
@@ -44,10 +56,16 @@ export class NullEmissor implements DfeEmissorPort {
     };
   }
 
-  async cancelar(partnerRef: string, motivo: { cMotivo: 1 | 2 | 9; xMotivo: string }): Promise<CancelResult> {
+  async cancelar(partnerRef: string, input: CancelInput): Promise<CancelResult> {
     void partnerRef;
-    void motivo;
+    void input;
     return { status: 'CANCELLED', errors: [] };
+  }
+
+  /** BE-INCR-NFCE item 24 — protocolo sintético determinístico a partir da faixa (nunca aleatório). */
+  async inutilizar(input: InutilizarInput): Promise<InutilizarResult> {
+    const chave = `${input.kind}:${input.ambiente}:${input.serie}:${input.nIni}:${input.nFin}`;
+    return { status: 'HOMOLOGATED', nProt: `NULL${createHash('sha256').update(chave).digest('hex').slice(0, 11).toUpperCase()}`, errors: [] };
   }
 
   verifyWebhook(): { ok: true; partnerRef: string } | { ok: false } {

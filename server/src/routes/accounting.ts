@@ -192,12 +192,28 @@ import {
   upsertServiceFiscalProfile,
 } from '../controllers/serviceFiscalProfileController';
 import {
+  deleteProductFiscalProfile,
+  getProductFiscalProfile,
+  listProductFiscalProfiles,
+  upsertProductFiscalProfile,
+} from '../controllers/productFiscalProfileController';
+import {
   createIssBeneficioMunicipal,
   deleteIssBeneficioMunicipal,
   getIssBeneficioMunicipal,
   listIssBeneficiosMunicipais,
   updateIssBeneficioMunicipal,
 } from '../controllers/issBeneficioMunicipalController';
+import {
+  acceptTaxSuggestion,
+  createServiceCost,
+  deleteServiceCost,
+  getTaxOptimizationPolicy,
+  listServiceCosts,
+  listTaxSuggestions,
+  rejectTaxSuggestion,
+  updateTaxOptimizationPolicy,
+} from '../controllers/taxOptimizationController';
 import {
   deleteProductDestination,
   listProductDestinations,
@@ -399,12 +415,26 @@ router.get('/service-fiscal-profiles', listServiceFiscalProfiles);
 router.get('/service-fiscal-profiles/:serviceRef', getServiceFiscalProfile);
 router.put('/service-fiscal-profiles/:serviceRef', upsertServiceFiscalProfile);
 router.delete('/service-fiscal-profiles/:serviceRef', deleteServiceFiscalProfile);
+// BE-INCR-NFCE (nó X10a, item 30): perfil fiscal do produto (F-NFCE-3 b)
+router.get('/product-fiscal-profiles', listProductFiscalProfiles);
+router.get('/product-fiscal-profiles/:productRef', getProductFiscalProfile);
+router.put('/product-fiscal-profiles/:productRef', upsertProductFiscalProfile);
+router.delete('/product-fiscal-profiles/:productRef', deleteProductFiscalProfile);
 // SIMPLES-PISO-ANEXO-XI bloco 1 (BRIEF item 1): benefício municipal de ISS (Res. CGSN 140 arts. 31-32)
 router.get('/iss-beneficios-municipais', listIssBeneficiosMunicipais);
 router.post('/iss-beneficios-municipais', createIssBeneficioMunicipal);
 router.get('/iss-beneficios-municipais/:id', getIssBeneficioMunicipal);
 router.put('/iss-beneficios-municipais/:id', updateIssBeneficioMunicipal);
 router.delete('/iss-beneficios-municipais/:id', deleteIssBeneficioMunicipal);
+// EFICIENCIA-FISCAL PR-1 (BRIEF itens 5 e 7, §4.3): política de eficiência fiscal, custo de serviço (piso) e sugestões.
+router.get('/tax-optimization/policy', getTaxOptimizationPolicy);
+router.put('/tax-optimization/policy', updateTaxOptimizationPolicy);
+router.get('/tax-optimization/service-costs', listServiceCosts);
+router.post('/tax-optimization/service-costs', createServiceCost);
+router.delete('/tax-optimization/service-costs/:id', deleteServiceCost);
+router.get('/tax-optimization/suggestions', listTaxSuggestions);
+router.post('/tax-optimization/suggestions/:id/accept', acceptTaxSuggestion);
+router.post('/tax-optimization/suggestions/:id/reject', rejectTaxSuggestion);
 // ITEM-DESTINATION PR-2 (BRIEF item 18, F-ID-2 a) — destinação padrão por produto
 router.get('/product-destinations', listProductDestinations);
 router.put('/product-destinations', upsertProductDestination);

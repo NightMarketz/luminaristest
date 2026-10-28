@@ -15,6 +15,8 @@ import {
   RejeicaoManualSchema,
   CancelamentoManualSchema,
   SubstituirFiscalDocumentSchema,
+  VoidNumberRangeSchema,
+  PendingVoidsQuerySchema,
 } from '../features/accounting/dtos/FiscalDocumentDto';
 import { makeUploadFieldsMiddleware } from '../lib/uploadSecurity';
 
@@ -138,9 +140,8 @@ export const cancelarFiscalDocument = async (req: Request, res: Response) => {
     if (!params.success) return res.status(400).json({ success: false, error: params.error.flatten() });
     if (!body.success) return res.status(400).json({ success: false, error: body.error.flatten() });
     const scope = await getFactory().getAccountingScopeResolver().resolve(user, body.data.unitId, { access: 'write' });
-    const data = await getFactory()
-      .getFiscalDocumentLifecycleService()
-      .cancelar(scope, params.data.id, { cMotivo: body.data.cMotivo, xMotivo: body.data.xMotivo });
+    const { unitId: _unitId, ...input } = body.data; // a forma (NFS-e × NF-e/NFC-e) o serviço confere contra o tipo
+    const data = await getFactory().getFiscalDocumentLifecycleService().cancelar(scope, params.data.id, input);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
@@ -280,6 +281,37 @@ export const getFichaFiscalDocument = async (req: Request, res: Response) => {
     if (!query.success) return res.status(400).json({ success: false, error: query.error.flatten() });
     const scope = await getFactory().getAccountingScopeResolver().resolve(user, query.data.unitId, { access: 'read' });
     const data = await getFactory().getFiscalDocumentEmissionService().ficha(scope, params.data.id);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** BE-INCR-NFCE (nó X10a, item 24) — POST /api/nfe/dfe/inutilizacoes. */
+export const inutilizarNumeracao = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const body = VoidNumberRangeSchema.safeParse(req.body);
+    if (!body.success) return res.status(400).json({ success: false, error: body.error.flatten() });
+    const { unitId, ...input } = body.data;
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, unitId, { access: 'write' });
+    const data = await getFactory().getFiscalNumberVoidService().inutilizar(scope, input);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** BE-INCR-NFCE (nó X10a, item 25) — GET /api/nfe/dfe/inutilizacoes/pendentes?unitId&kind. */
+export const listInutilizacoesPendentes = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const query = PendingVoidsQuerySchema.safeParse(req.query);
+    if (!query.success) return res.status(400).json({ success: false, error: query.error.flatten() });
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, query.data.unitId, { access: 'read' });
+    const data = await getFactory().getFiscalNumberVoidService().pendentes(scope, query.data.kind);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
