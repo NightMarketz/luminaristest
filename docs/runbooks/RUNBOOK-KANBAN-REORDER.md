@@ -240,6 +240,28 @@ Pare no primeiro passo que divergir. Não execute os seguintes (regra do FALHOU)
    In Progress -> Em andamento 1=1000, Em andamento 2=2000, A fazer 5=2500, Em andamento 3=3000, Em andamento 4=4000, Em andamento 5=5000, Em andamento 6=6000
    Done -> Feito 1=1000, A fazer 1=1500, Feito 2=2000, Feito 3=3000, A fazer 2=4000
    ```
+   **Complemento da regressão: mesma coluna, arrastando para baixo (agente, 2026-10-28, mesma ordem do dono).** Os dois
+   casos acima arrastam para cima ou para outra coluna. Arrastar para baixo na mesma coluna é o caso em que o ponteiro está
+   dentro do card-alvo **e** da própria coluna, e onde a coluna, se ganhasse a colisão, faria o soltar não fazer nada
+   (`useKanbanLogic.tsx:145`, `if (overIsColumn) return`). Foi rodado numa execução paralela da mesma rodada: outra worktree
+   (`vibrant-payne-efaebe`), o mesmo commit `694f1c95`, build de produção em 127.0.0.1:3020/3021, outra cópia do `dev.db`
+   (`kro-rb.db`), 15 cards novos (os ids não são os de cima) e o mesmo runner com a etapa `r2`. Antes do arrasto, um "Feito 3"
+   sobre "Feito 1" dessa mesma execução tinha gravado `{"data":{"order":0}}` (para cima, antes do alvo). Log
+   `reg-mesma-baixo.log` (nas linhas `[print]`, o nome `r2-*.png` foi trocado por `reg-mesma-baixo-*.png`, o nome do arquivo
+   versionado); telas `reg-mesma-baixo-antes.png`, `reg-mesma-baixo-depois.png`, `reg-mesma-baixo-depois-f5.png`.
+   **Confere.**
+   ```
+   antes:             DONE: Feito 3, Feito 1, Feito 2, A fazer 2
+   arrasto: "Feito 3" → sobre "Feito 2"
+   200       PUT /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data/cmvsmcdz3001lciakvbr3vn6x {"data":{"order":3000}}
+   depois do arrasto: DONE: Feito 1, Feito 2, Feito 3, A fazer 2
+   depois do F5:      DONE: Feito 1, Feito 2, Feito 3, A fazer 2          IGUAL antes×depois do F5: true
+   console.error: (nenhum)
+   banco depois: Feito 1=1000, Feito 2=2000, Feito 3=3000, A fazer 2=4000
+   ```
+   Houve 1 PUT, então o soltar foi tratado como "sobre o card". O card tomou o índice do alvo e ficou **depois** dele: é a
+   semântica `arrayMove` da mesma coluna (`useKanbanLogic.tsx:147-149`), a mesma do passo 3 de 24/10. Por isso o "antes dele"
+   do F-KR-4 não se aplica aqui.
 
 7. Escolha uma **ordenação** na barra do Kanban (por exemplo, prioridade) e tente reordenar dentro da coluna.
    Resultado esperado: a ordem não muda (com ordenação escolhida, arrastar só muda de coluna). Nenhum update.
