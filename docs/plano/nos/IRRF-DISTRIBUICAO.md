@@ -6,7 +6,7 @@ titulo: "IRRF na distribuição: dividendos (Lei 15.270/2025) e JCP a 17,5% (LC 
 estado: "done"
 estado_detalhe: "17/10: BRIEF escrito (BE-INCR-IRRF-DISTRIBUICAO-brief.md, 36 itens em 4 PRs: sócios + parâmetros → dividendos com IRRF → JCP cálculo → JCP lançamento + e-Lalur). Forks F-IRD-1..18 ratificados no mesmo dia ([[D-2026-10-17-IRRF-DISTRIBUICAO-FORKS]]); 4 contra a recomendação (JCP completo, model próprio de sócios, reter sempre no Simples, lucro da transição conta no limite). 17/10, 2ª rodada (pesquisa das pendências): resolvidos o DARF do JCP (5706, MAFON 2025), a TJLP 2026 (tabela RFB) e o período do JCP (SC Cosit 45/2018). Novo: o STF prorrogou para 31/01/2026 o prazo de aprovação dos lucros de 2025 (ADIs 7.912/7.914) e negou a cautelar do Simples (ADI 7.917). F-IRD-18 ratificado. Para o contador: P1 (deliberação = creditamento?) e P2 (transição no limite), mais as confirmações P3 e P7. 21/10: PR-1 (#794) mergeado. 23/10 (executa: dono, \"Executa todas\"): PR-2 (#863, distribuição com IRRF), PR-3 (#864, cálculo e prévia do JCP) e PR-4 (#865, confirmação, lançamento, e-Lalur e DARF do JCP) abertos e empilhados — backend completo; FE no nó vizinho; 6 lacunas decididas ([[D-2026-10-23-IRRF-DISTRIBUICAO-LACUNAS]])"
 depende_de: ["[[D-2026-10-17-IRRF-DISTRIBUICAO-FORKS]]", "[[D-2026-10-23-IRRF-DISTRIBUICAO-LACUNAS]]"]
-autorizacao: "dono, chat, 2026-10-23: \"Executa todas\" (sobre a lista cujo item 4 era \"IRRF-DISTRIBUICAO PR-2 a PR-4\") — executa os PR-2, PR-3 e PR-4, sem merge · antes: dono, chat, 2026-10-21: \"dispara os chats A, C e F agora\" — executa só o PR-1 · dono, chat, 2026-10-17: \"Autorizo planejar o BRIEF de <NÓ> — sessao-planejamento, sem 'executa'\" + \"Pode decidir vc memso\" (o agente escolheu este nó) — só o BRIEF; forks ratificados no questionário do mesmo dia ([[D-2026-10-17-IRRF-DISTRIBUICAO-FORKS]]) — sem 'executa' · antes: dono, chat, 2026-10-17: \"Atualiza tbm briefs e documenta em features novas\" — só a nota"
+autorizacao: "dono, chat, 2026-10-28: \"Pode fechar as lacunas então?\" com a escolha \"Sessões paralelas\" — executa só a emenda do item 1 da cédula D-2026-10-28-LACUNAS-EXECUTA-27-28 (409 na remoção de sócio com distribuição), sem merge · antes: dono, chat, 2026-10-23: \"Executa todas\" (sobre a lista cujo item 4 era \"IRRF-DISTRIBUICAO PR-2 a PR-4\") — executa os PR-2, PR-3 e PR-4, sem merge · antes: dono, chat, 2026-10-21: \"dispara os chats A, C e F agora\" — executa só o PR-1 · dono, chat, 2026-10-17: \"Autorizo planejar o BRIEF de <NÓ> — sessao-planejamento, sem 'executa'\" + \"Pode decidir vc memso\" (o agente escolheu este nó) — só o BRIEF; forks ratificados no questionário do mesmo dia ([[D-2026-10-17-IRRF-DISTRIBUICAO-FORKS]]) — sem 'executa' · antes: dono, chat, 2026-10-17: \"Atualiza tbm briefs e documenta em features novas\" — só a nota"
 ancora_sdd: "—"
 atualizado: "2026-10-23"
 prs: ["#761", "#794", "#863", "#864", "#865"]
@@ -43,3 +43,13 @@ registros: ["server/src/lib/factory.ts", "server/src/routes/accounting.ts", "ser
   (21/10), a revisar com usuários e contador depois do app completo:** (1) o capital social é uma conta única, ligada a
   2.03.01.01.01 (residentes); falta a subconta 2.3.2.01.02 → 2.03.01.02.01 para sócio estrangeiro / RDE-IED; (2) o referencial
   do plano padrão é mapeado fora dos kits, em todo escopo (`ReferentialMappingService.ensureCanonicalMappings`).
+
+## Emendas
+
+- 28/10 — item 1 da cédula `D-2026-10-28-LACUNAS-EXECUTA-27-28` (fork "Bloquear remoção (Recomendado)"; cédula em
+  `docs/plano/decisoes/` na branch do PR #937, ainda sem merge): `PartnerService.remove` responde **409
+  `SOCIO_COM_DISTRIBUICAO`** quando o sócio tem evento de distribuição de lucros ou alocação de JCP em qualquer status,
+  com a checagem dentro do `runTransaction`, antes do `softDelete`. Linha soft-deletada (o evento, ou o cálculo do JCP)
+  não conta. A mensagem manda registrar a saída em `saidaEm`. A leitura vai por `existsDoSocio`
+  (`IProfitDistributionRepository`) e `existsAlocacaoDoSocio` (`IInterestOnEquityRepository`); a porta
+  `IPartnerRepository` não muda, e o 400 `REINF_SOCIO_REMOVIDO` do EFD-REINF continua para dado legado.
