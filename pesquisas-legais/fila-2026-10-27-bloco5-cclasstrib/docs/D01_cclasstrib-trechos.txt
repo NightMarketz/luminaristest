@@ -1,0 +1,37 @@
+Extraído de [D01] (SVRS, Portal da Conformidade Fácil, /DFE/ClassificacaoTributaria; SHA-256 da página 0c2d7b19379f605e9d9a98b1045984e2da8c2ce7a57ba677e4057b401207cace) em 2026-10-27, do JSON embutido 'dadosOriginais'.
+Total: 18 CST, 173 cClassTrib.
+Datas de publicação presentes: 2026-06-22, 2026-10-01
+Datas de inclusão (CtrDthInc) mais recentes: 2025-09-30, 2025-11-19, 2026-01-27, 2026-04-15, 2026-06-25, 2026-10-05
+
+## Linhas citadas
+000001 | 000 | Situações tributadas integralmente pelo IBS e CBS. | 0.0 | 0.0 | True | True | 2025-05-05T00:00:00 | None | 2026-06-22T00:00:00 | https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm#art4
+200029 | 200 | Fornecimento dos serviços de saúde humana (Anexo III) | 60.0 | 60.0 | True | False | 2025-05-05T00:00:00 | None | 2026-06-22T00:00:00 | https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm#art130
+
+## Incluídas na carga mais recente (CtrDthInc = 2026-10-05)
+000006 | CST 000 | Situações tributadas integralmente pelo IBS e CBS.realizadas por autônomo | NFS-e=True
+200055 | CST 200 | Fornecimento dos serviços com redução de alíquota de 60% realizado por autônomo | NFS-e=True
+200056 | CST 200 | Fornecimento dos serviços com redução de alíquota de 30% realizado por autônomo | NFS-e=True
+400003 | CST 400 | Bagagens | NFS-e=False
+400004 | CST 400 | Remessas internacionais | NFS-e=False
+550026 | CST 550 | Regimes de admissão temporária com suspensão total do pagamento dos tributos (ZFM) | NFS-e=False
+550027 | CST 550 | Regimes de Aperfeiçoamento (Drawback) | NFS-e=False
+550028 | CST 550 | Regimes de Aperfeiçoamento (Admissão temporária) | NFS-e=False
+550029 | CST 550 | Zona de Processamento de Exportação | NFS-e=False
+
+## Busca por beleza, estética, saúde e autônomo no nome
+000006 | CST 000 | Situações tributadas integralmente pelo IBS e CBS.realizadas por autônomo | red 0.0/0.0 | NFS-e=True
+011002 | CST 011 | Planos de assistência à saúde | red 60.0/60.0 | NFS-e=False
+011003 | CST 011 | Intermediação de planos de assistência à saúde | red 60.0/60.0 | NFS-e=True
+011005 | CST 011 | Planos de assistência à saúde de animais domésticos | red 30.0/30.0 | NFS-e=False
+200002 | CST 200 | Fornecimento ou importação para produtor rural não contribuinte ou TAC | red 100.0/100.0 | NFS-e=False
+200005 | CST 200 | Fornecimento de dispositivos médicos para órgãos da administração pública e entidades de saúde imunes (Anexo IV) | red 100.0/100.0 | NFS-e=True
+200006 | CST 200 | Situação de emergência de saúde pública reconhecida pelo Poder público | red 100.0/100.0 | NFS-e=True
+200012 | CST 200 | Situação de emergência de saúde pública reconhecida pelo Poder público | red 100.0/100.0 | NFS-e=False
+200015 | CST 200 | Venda de automóveis de passageiros de fabricação nacional adquiridos por motoristas profissionais ou pessoas com deficiência | red 100.0/100.0 | NFS-e=False
+200029 | CST 200 | Fornecimento dos serviços de saúde humana (Anexo III) | red 60.0/60.0 | NFS-e=True
+200052 | CST 200 | Prestação de serviços de profissões intelectuais | red 30.0/30.0 | NFS-e=True
+200055 | CST 200 | Fornecimento dos serviços com redução de alíquota de 60% realizado por autônomo | red 60.0/60.0 | NFS-e=True
+200056 | CST 200 | Fornecimento dos serviços com redução de alíquota de 30% realizado por autônomo | red 30.0/30.0 | NFS-e=True
+410015 | CST 410 | Fornecimento por transportador autônomo não contribuinte | red 0.0/0.0 | NFS-e=True
+820001 | CST 820 | Documento com informações de fornecimento de serviços de planos de assistência à saúde elencados no art. 234 da Lei Complementar nº214, de 2025 | red 0.0/0.0 | NFS-e=True
+820003 | CST 820 | Documento com informações de fornecimento de serviços de planos de assistência à saúde de animais domésticos | red 0.0/0.0 | NFS-e=True

@@ -1,0 +1,32 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Portal da Conformidade Fácil",
+      "url": "https://dfe-portal.svrs.rs.gov.br/DFE/ClassificacaoTributaria",
+      "url_final": "https://dfe-portal.svrs.rs.gov.br/DFE/ClassificacaoTributaria",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-27T11:30:37-03:00",
+      "sha256": "0c2d7b19379f605e9d9a98b1045984e2da8c2ce7a57ba677e4057b401207cace",
+      "arquivo": "docs/D01_ClassificacaoTributaria.html",
+      "texto": "docs/D01_ClassificacaoTributaria.txt",
+      "bytes": 4189528
+    },
+    {
+      "id": "D02",
+      "titulo": "Lcp 214",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-10-27T11:32:48-03:00",
+      "sha256": "f263c67b4ce6b975183450009b98882cff7c22d7d31a5bc341de48e303b870c3",
+      "arquivo": "docs/D02_lcp214-htm.html",
+      "texto": "docs/D02_lcp214-htm.txt",
+      "bytes": 5403667
+    }
+  ],
+  "buscas": [],
+  "slug": "fila-2026-10-27-bloco5-cclasstrib",
+  "pergunta": "Bloco 5 da fila: cClassTrib vigente (IT 2025.002, versão em vigor em 27/10/2026) para os serviços de salão (6.01-6.03) e de clínica (4.01, consulta médica): confirmar 000001 (CST 000) e o código de redução de 60% (CST 200) em fonte oficial",
+  "criado": "2026-10-27T11:30:31-03:00"
+}

@@ -1,0 +1,39 @@
+Leitura em 2026-10-27, pelo navegador embutido, de https://www.mercadopago.com.br/developers/pt/docs/payouts/*
+(innerText do <main>; SHA-256 do texto normalizado de cada página). Documentação do fornecedor, não norma.
+Obs.: https://www.mercadopago.com.br/developers/llms.txt devolveu {"error":"Invalid values in params object."} (D07).
+
+## /developers/pt/docs/payouts/overview — SHA-256 1fc6de12cc0addebfd3c94ac20f0cf0d66328136b06d9243772221de64910470
+"Faça uma ou várias transferências, em uma única requisição, a partir de uma conta Mercado Pago para contas Mercado Pago
+ou contas bancárias externas, além de transferências via Pix. A conta Mercado Pago de origem atua como intermediária entre
+um provedor de serviços e um ou mais clientes."
+"Crie um _payout_ com uma ou várias transferências de dinheiro [...] em uma única requisição a partir da sua conta Mercado Pago."
+Pré-requisitos: "Conta de usuário Mercado Pago" · "A conta do Mercado Pago de origem deve ter saldo suficiente para realizar
+as transações." · "Para realizar transferências via Pix, o destinatário deve ter uma chave Pix cadastrada".
+
+## /integration-configuration/money-transfers — SHA-256 6b54e772f29313710b24ec09c9c958f0cd11652ed8598aedb9ba6cac8964172c
+"A integração de Payouts utiliza uma única chamada à API /v1/payoutsPOST para criar um lote de transações com uma ou várias
+transferências para uma ou várias contas de destino, seja por transferência bancária, seja via Pix."
+"O payout pode conter até 1000 transações, criadas e processadas em uma única requisição, desde que a conta de origem tenha
+saldo disponível."
+"Valor da transação a ser debitado da conta de origem." (exemplo com "currency": "BRL")
+
+## /resources/api-endpoints — SHA-256 2b1ad6a56fd0f57f3b4dd16eb6bec6c2d0da607c4faebaca31f39ce1713d8a68
+POST /v1/payouts · GET /v1/payouts/{payout_id} · GET /v1/payouts/{payout_id}/transactions ·
+GET /v1/payouts/{payout_id}/transactions/{transaction_id} · PUT /v1/payouts/{payout_id}/transactions/{transaction_id}/cancel
+("desde que a solicitação seja enviada com, no mínimo, 12 horas de antecedência").
+
+## /go-to-production — SHA-256 2aa1a846af3904088fc08b16c5b477816078579152809c844c68f59f8c87a83a
+"você deve enviar sua chave pública para o Mercado Pago para a validação de suas transações, e manter sua chave privada
+armazenada de forma segura para criptografar seus requests."
+"O envio da chave de segurança é necessário apenas em ambientes de produção. Basta adicionar o header X-signature [...]"
+"openssl genpkey -algorithm ed25519 -out mpprivate.pem"
+"Para enviar sua chave pública, você precisará se conectar com a equipe de Integrações."
+
+## /resources/credentials — SHA-256 cebfa54a70f6a26116402dc7fcc72866ff7e29d009993a70a46c084024adb1f1
+"Use o OAuth para gerenciar credenciais de terceiros — OAuth é um protocolo de autorização que permite o acesso seguro de
+aplicações a contas de usuário em serviços HTTP [...] Para mais informações, acesse a documentação."
+(Parágrafo genérico: não diz que o Payouts aceita token de terceiro nem como a chave Ed25519 se liga a ele.)
+
+## Divergência com o repositório oficial do MP (D06, guides/payouts.md, commit 8458eb50 de 24/08/2026)
+D06: "Brazil (`BR`/`MLB`): single Transaction Intent contract. One request has exactly one destination account"
+D08 (site, 27/10): lote POST /v1/payouts com até 1000 transações, exemplo em BRL.
