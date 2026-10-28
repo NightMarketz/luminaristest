@@ -15,6 +15,7 @@ import {
   rejeicaoManualFiscalDocument,
   cancelamentoManualFiscalDocument,
   getFichaFiscalDocument,
+  getDanfeFiscalDocument,
   substituirFiscalDocument,
   inutilizarNumeracao,
   listInutilizacoesPendentes,
@@ -44,6 +45,8 @@ router.post('/documents/:id/cancelar', cancelarFiscalDocument);
 router.post('/documents/:id/substituir', substituirFiscalDocument);
 // BE-INCR-DFE-MANUAL (itens 11–14) — modo manual: o retorno vem do portal público, por upload do XML.
 router.get('/documents/:id/ficha', getFichaFiscalDocument);
+// NFE-DANFE-IBSCBS PR-3 (item 19) — PDF do DANFE da NF-e 55, sob demanda, só do XML autorizado.
+router.get('/documents/:id/danfe', getDanfeFiscalDocument);
 router.post('/documents/:id/retorno-manual', retornoManualUpload, retornoManualFiscalDocument);
 router.post('/documents/:id/rejeicao-manual', rejeicaoManualFiscalDocument);
 router.post('/documents/:id/cancelamento-manual', eventoManualUpload, cancelamentoManualFiscalDocument);

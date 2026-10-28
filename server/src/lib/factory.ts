@@ -139,6 +139,7 @@ import { SourceDocumentUploadService } from '../features/accounting/services/Sou
 import { DocumentAttachmentService } from '../features/accounting/services/DocumentAttachmentService';
 import { DataExchangeExportService } from '../features/accounting/services/DataExchangeExportService';
 import { ReceiptService } from '../features/accounting/services/ReceiptService';
+import { DanfeService } from '../features/accounting/services/DanfeService';
 import { DataExchangeImportService } from '../features/accounting/services/DataExchangeImportService';
 import { SpedGenerationService } from '../features/accounting/services/SpedGenerationService';
 import { SpedEcfGenerationService } from '../features/accounting/services/SpedEcfGenerationService';
@@ -923,6 +924,7 @@ export class ApplicationFactory {
     dataExchangeExport: DataExchangeExportService;
     dataExchangeImport: DataExchangeImportService;
     receipt: ReceiptService;
+    danfe: DanfeService; // NFE-DANFE-IBSCBS PR-3 (item 20)
     sped: SpedGenerationService;
     spedEcf: SpedEcfGenerationService;
     spedEcfReal: SpedEcfRealGenerationService;
@@ -1831,6 +1833,12 @@ export class ApplicationFactory {
         this.repositories.account,
         this.policies.accounting,
       ),
+      danfe: new DanfeService(
+        this.repositories.fiscalDocument,
+        this.repositories.documentAttachment,
+        this.policies.accounting,
+        legalParameterService,
+      ),
       sped: new SpedGenerationService(
         this.repositories.account,
         this.repositories.posting,
@@ -2458,6 +2466,7 @@ export class ApplicationFactory {
   public getDataExchangeExportService = (): DataExchangeExportService => this.services.dataExchangeExport;
   public getDataExchangeImportService = (): DataExchangeImportService => this.services.dataExchangeImport;
   public getReceiptService = (): ReceiptService => this.services.receipt;
+  public getDanfeService = (): DanfeService => this.services.danfe;
   public getSpedGenerationService = (): SpedGenerationService => this.services.sped;
   public getSpedEcfGenerationService = (): SpedEcfGenerationService => this.services.spedEcf;
   public getSpedEcfRealGenerationService = (): SpedEcfRealGenerationService => this.services.spedEcfReal;
