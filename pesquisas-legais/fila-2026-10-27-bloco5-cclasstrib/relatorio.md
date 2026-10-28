@@ -45,7 +45,7 @@ conferida quando há evidência de texto mais novo. Documentos salvos com hash p
 
 ## 5. Lacunas
 - PDF da IT 2025.002 v1.70 no Portal NF-e, não lido (redirecionamento em laço).
-- O indicador de operação (indOp 030101) que o contador deu com o 000001 não foi conferido: é outra tabela, fora deste bloco.
+- O indicador de operação (indOp 030101) que o contador deu com o 000001 não foi conferido: é outra tabela, fora deste bloco. Foi conferido em 28/10 no Anexo C v1.01 (dossiê `fila-2026-10-28-d1f-indop`).
 <!-- /ANALISE -->
 
 ## Fontes consultadas

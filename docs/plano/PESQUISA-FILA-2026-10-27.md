@@ -75,7 +75,7 @@ Grau: **V** = lido em fonte oficial; **I** = inferido (o passo está no dossiê)
 - Reinf: notas técnicas 1 a 3 de 2026 para a Tabela 08; grupo 20 da Tabela 01.
 - Eficiência fiscal: RICMS das outras 26 UFs; Regulamento do IBS (Resolução CGIBS 6/2026); ato conjunto do art. 14 § 7º; origem
   dos códigos "uso restrito" da SUP.
-- IBS/CBS: ato conjunto do art. 63 § 2º V do Regulamento; sentido 1xxx/2xxx da PARTEB_PADRAO; indOp 030101.
+- IBS/CBS: ato conjunto do art. 63 § 2º V do Regulamento; sentido 1xxx/2xxx da PARTEB_PADRAO. (O indOp 030101 foi conferido em 28/10 no Anexo C v1.01 (dossiê `fila-2026-10-28-d1f-indop`).)
 - Terceiros: preço e cota de Safeweb, Soluti PJ, SyngularID e ACDIGITAL; `lifetime` da `signature_session` de cada PSC;
   referência de API do Payouts; se o MP aceitaria a aplicação do Luminaris operando com token OAuth do cliente (só o time de
   Integrações responde).

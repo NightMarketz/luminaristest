@@ -1,0 +1,32 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "D01_anexo-c-indop-ibscbs-snnfse-v1-01-xlsx",
+      "url": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/documentacao-atual/anexo-c-indop-ibscbs-snnfse-v1-01.xlsx",
+      "url_final": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/documentacao-atual/anexo-c-indop-ibscbs-snnfse-v1-01.xlsx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-28T04:59:57-03:00",
+      "sha256": "f59f066c5c3584ac26cc07d9b23f9fb6713e4bc9212b5e37fededf9244f29d15",
+      "arquivo": "docs/D01_anexo-c-indop-ibscbs-snnfse-v1-01-xlsx.html",
+      "texto": "docs/D01_anexo-c-indop-ibscbs-snnfse-v1-01-xlsx.txt",
+      "bytes": 13746
+    },
+    {
+      "id": "D02",
+      "titulo": "Documentação Atual — Portal da Nota Fiscal de Serviço eletrônica",
+      "url": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/documentacao-atual",
+      "url_final": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/documentacao-atual",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-28T04:59:58-03:00",
+      "sha256": "dca11da6c3df7d6ba0fa210145c90cfb316822af5a4019eba7231903001bc706",
+      "arquivo": "docs/D02_documentacao-atual.html",
+      "texto": "docs/D02_documentacao-atual.txt",
+      "bytes": 92886
+    }
+  ],
+  "buscas": [],
+  "slug": "fila-2026-10-28-d1f-indop",
+  "pergunta": "D1f: o indOp 030101 informado pelo contador em 10/10 para o salão está na tabela oficial vigente (Anexo C da NFS-e nacional)?",
+  "criado": "2026-10-28T04:59:57-03:00"
+}

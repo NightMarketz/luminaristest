@@ -27,7 +27,7 @@
    `ibsCbsTabelas.ts` em `main`). **Efeito:** o valor que o usuário informa no `ServiceFiscalProfile` tem referência
    conferida; o item 3 continua sem seed (sugerir o valor por padrão mudaria o item e pede emenda própria). Ambiguidade:
    procedimento estético feito por médico só leva 200029 com NBS do Anexo III marcado pela clínica; a classificação é do
-   cliente com o contador (`pesquisas-legais/ctribnac-salao-clinica` §4). **Não conferido:** o indOp 030101.
+   cliente com o contador (`pesquisas-legais/ctribnac-salao-clinica` §4). **indOp 030101:** conferido em 28/10 no Anexo C v1.01 (dossiê `fila-2026-10-28-d1f-indop`).
 2. **Lista de uso e consumo pessoal (P-IBS-2, 2ª parte; item 15): a lista do contador não serve, e a chave por NCM só cobre
    parte do art. 57** (dossiê `fila-2026-10-27-bloco4-draft` [D03] LC 214; [D06] Regulamento da CBS, arts. 62 e 63).
    - O inciso I lista bens por natureza: joias, pedras e metais preciosos, obras de arte, bebidas alcoólicas, derivados do

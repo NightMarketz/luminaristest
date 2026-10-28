@@ -71,7 +71,7 @@ registros: ["server/src/lib/factory.ts", "server/src/routes/accounting.ts", "ser
 - Resumo da fila: [[PESQUISA-FILA-2026-10-27]]. Detalhe e fontes no BRIEF, seção "Emenda 28/10".
 - **cClassTrib (item 3):** **000001**/CST 000 para o salão e **200029**/CST 200, redução de 60%, para serviço médico do Anexo III,
   na tabela oficial do SVRS (carga de 05/10/2026, já com a v1.70) e na IT 2025.002 v1.70 transcrita em `main`. O item 3 continua
-  sem seed. O indOp 030101 não foi conferido.
+  sem seed. O indOp 030101 foi conferido em 28/10 no Anexo C v1.01 (dossiê `fila-2026-10-28-d1f-indop`).
 - **Uso e consumo pessoal (item 15):** a lista do contador (copa, veículo, vestuário, higiene) depende do destino, não do NCM.
   Por NCM cabem só 6 categorias do inciso I (`DRAFT`, grau inferido); a alínea "f" (estéticos) não entra para salão e clínica,
   nem a "g" (aquisição e manutenção desses bens, LC 227/2026). Exceções no próprio art. 57 § 3º da LC 214.
