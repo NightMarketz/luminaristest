@@ -10,6 +10,11 @@ import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IPostingRepository } from '../repositories/IPostingRepository';
 import type { IReceitaFiscalRepository, ReceitaFiscalLinhaData, TipoLinhaReceita, TomadorTipo } from '../repositories/IReceitaFiscalRepository';
 import type { IServiceFiscalProfileRepository } from '../repositories/IServiceFiscalProfileRepository';
+import type { IProductFiscalProfileRepository } from '../repositories/IProductFiscalProfileRepository';
+import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRepository';
+import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
+import { segregacaoPorNcm } from '../models/segregacaoNcm';
+import { UF_IBGE } from '../models/nfeMontagem';
 import type { SimplesEntradasService } from './SimplesEntradasService';
 
 /** Conta de devoluções (ChartOfAccountsFixture): entra no tie-out com sinal de dedução. */
@@ -95,6 +100,10 @@ export class ReceitaFiscalService {
     private readonly accountRepo: Pick<IAccountRepository, 'findByCode'>,
     private readonly postingRepo: Pick<IPostingRepository, 'groupByAccount'>,
     private readonly policy: IAccountingPolicy,
+    // EFICIENCIA-FISCAL PR-2 (item 13): NCM do produto × UF da unidade × tabelas de lei ⇒ `excluir` da linha de revenda.
+    private readonly productFiscalRepo: Pick<IProductFiscalProfileRepository, 'findManyByProductRefs'>,
+    private readonly fiscalProfileRepo: Pick<IFiscalProfileRepository, 'findByScope'>,
+    private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
   ) {}
 
   /** Item 15 — commit 2 da venda finalizada. Idempotente: linhas já gravadas ficam. Devolve quantas criou. */
@@ -103,6 +112,7 @@ export class ReceitaFiscalService {
     const servicos = [...new Set(venda.lines.map((l) => l.serviceRef).filter((r): r is string => r !== null))];
     const perfis = servicos.length > 0 ? await this.serviceFiscalRepo.findManyByServiceRefs(scope, servicos) : [];
     const cTribNacDe = new Map(perfis.map((p) => [p.serviceRef, p.cTribNac]));
+    const excluirDe = await this.excluirPorProduto(scope, venda);
 
     const linhas: ReceitaFiscalLinhaData[] = [];
     for (const r of rateio) {
@@ -126,8 +136,9 @@ export class ReceitaFiscalService {
         cTribNac: l?.serviceRef ? (cTribNacDe.get(l.serviceRef) ?? null) : null,
         productRef: l?.productRef ?? null,
         receitaCents: BigInt(r.receitaCents),
-        // Sem atributo fiscal do produto (X10a) as marcas ficam vazias; a segregação vem da declaração manual (item 12).
-        excluir: [],
+        // EFICIENCIA-FISCAL PR-2 (item 13; ADR D7): derivado da NCM do `ProductFiscalProfile`. Serviço e produto sem perfil
+        // ⇒ `[]` (o aviso `SEM_NCM` é da apuração); a segregação manual da competência prevalece na apuração (I-8).
+        excluir: r.natureza === 'REVENDA' && l?.productRef ? (excluirDe.get(l.productRef) ?? []) : [],
         parceriaContratoId,
         cotaProfissionalCents,
         tipo: 'VENDA',
@@ -135,6 +146,22 @@ export class ReceitaFiscalService {
       });
     }
     return this.repo.createLinhasDaVenda(scope, linhas);
+  }
+
+  /**
+   * Item 13 — `segregacaoPorNcm` de cada produto da venda, na data da receita e na UF da unidade (`FiscalProfile.codMun`,
+   * IBGE). Sem produto na venda, nenhuma leitura.
+   */
+  private async excluirPorProduto(scope: AccountingScope, venda: VendaReconhecida): Promise<Map<string, string[]>> {
+    const produtos = [...new Set(venda.lines.filter((l) => l.nature === 'Product').map((l) => l.productRef).filter((r): r is string => r !== null))];
+    if (produtos.length === 0) return new Map();
+    const [perfis, fiscal, linhas] = await Promise.all([
+      this.productFiscalRepo.findManyByProductRefs(scope, produtos),
+      this.fiscalProfileRepo.findByScope(scope),
+      this.legalParams.fotografia(['PIS_COFINS_MONOFASICO_NCM', 'ICMS_ST_NCM_UF']),
+    ]);
+    const cUf = fiscal?.codMun && UF_IBGE[fiscal.codMun.slice(0, 2)] ? fiscal.codMun.slice(0, 2) : null;
+    return new Map(perfis.map((p) => [p.productRef, segregacaoPorNcm(p.ncm, cUf, venda.dia, linhas)]));
   }
 
   /** O reconcile pergunta antes de regravar. */

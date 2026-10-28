@@ -230,6 +230,17 @@ primeira NF-e 55. Há uma condição: se o X10a PR-7 entrar em produção antes 
     leitura; a allowlist de `auditCanonical.ts` não muda); `npm run check:arch` sem violação nova; `tsc --noEmit` limpo.
     *Teste:* os próprios gates.
 
+> **PR-3 executado em 27/10/2026** (dono, chat, 2026-10-27: *"Executa o NFE-DANFE-IBSCBS PR-3 (itens 17–21 do BRIEF) —
+> sessao-feature, sem merge."*). Nenhuma lacuna nova pediu cédula. Leituras feitas na execução, todas dentro do texto dos itens:
+> - **DTO:** `DanfeParamsSchema` em `dtos/DanfeDto.ts` (o §4 esboçava `DanfeParamsDto`; o sufixo `Schema` é a convenção que o
+>   gerador de tipos do FE espera). A query `unitId` reusa a `FiscalDocumentScopeQuerySchema` da leitura por id.
+> - **Item 17:** anexo `xmlAttachmentId` apontando para linha apagada ⇒ o mesmo 409 `DANFE_SEM_XML` (o XML não existe).
+> - **Item 19:** a policy é `canReadFiscalDocument`, a da leitura por id. Hoje ela só nega sem ator, então o 403 é provado
+>   com a policy negando (spy no teste de integração); a 404 de outro tenant sai do repositório com escopo.
+> - **Item 21:** os códigos novos não chegam ao FE neste PR (o botão é o nó de FE do §9 item 2) ⇒ sem chave i18n.
+> - **Pendência do MOC online (não fork):** a versão online do MOC (Paraná) só sai em 01/11/2026. Nem o PR-2 nem este PR
+>   puderam conferir as linhas `[MOC-DANFE-…]` nela. A conferência continua aberta para depois de 01/11.
+
 ## 4. Contratos esboçados
 
 ```ts

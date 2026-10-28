@@ -4,7 +4,7 @@
  */
 import type { LinhaLegal } from '../../../legalParameters/models/legalParameter';
 import { WithholdingLineForReinfSchema, type WithholdingLineForReinf } from '../../dtos/WithholdingDto';
-import { AVISO_PF_FORA_DA_REINF, AVISO_R2010_NAO_GERADO, mascararCnpj, montarR4020 } from '../reinfLote';
+import { AVISO_PF_FORA_DA_REINF, mascararCnpj, montarR4020 } from '../reinfLote';
 
 const linha = (o: Partial<Omit<LinhaLegal, 'id'>> & Pick<LinhaLegal, 'tabela' | 'chave'>): LinhaLegal => ({
   id: `${o.tabela}-${o.chave}-${o.discriminador ?? ''}-${o.vigenteDesde ?? ''}`,
@@ -107,7 +107,7 @@ describe('montarR4020 — agrupamento (itens 6–7; L2, L7)', () => {
     expect(noEvento).toBe(1_500n + 2_325n);
     expect(m.linhasR4020.reduce((s, x) => s + BigInt(x.amountCents), 0n)).toBe(noEvento);
     expect(m.totaisPorCodigo).toEqual(expect.arrayContaining([{ codigoReceita: '170806', totalCents: '1500' }, { codigoReceita: '595207', totalCents: '2325' }]));
-    expect(m.avisos).toEqual([expect.stringContaining(AVISO_PF_FORA_DA_REINF), expect.stringContaining(AVISO_R2010_NAO_GERADO)]);
+    expect(m.avisos).toEqual([expect.stringContaining(AVISO_PF_FORA_DA_REINF)]); // PR-2: o INSS vai ao R-2010 (montarR2010), sem aviso
   });
 });
 

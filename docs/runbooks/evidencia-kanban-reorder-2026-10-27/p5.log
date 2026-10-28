@@ -1,0 +1,39 @@
+url após login: http://127.0.0.1:3020/
+
+======== p5 ========
+antes:
+Categories: (vazia)
+TO DO: A fazer 1, A fazer 2, A fazer 3, A fazer 4, A fazer 5, A fazer 6
+IN PROGRESS: Em andamento 2, Em andamento 3, Em andamento 4, Em andamento 5, Em andamento 6, Em andamento 1
+IN REVIEW: (vazia)
+DONE: Feito 1, Feito 2, Feito 3
+[print] docs/runbooks/evidencia-kanban-reorder-2026-10-27/p5-antes.png
+arrasto: "A fazer 1" → sobre "Feito 2"
+depois do arrasto:
+Categories: (vazia)
+TO DO: A fazer 2, A fazer 3, A fazer 4, A fazer 5, A fazer 6
+IN PROGRESS: Em andamento 2, Em andamento 3, Em andamento 4, Em andamento 5, Em andamento 6, Em andamento 1
+IN REVIEW: (vazia)
+DONE: Feito 1, A fazer 1, Feito 2, Feito 3
+[print] docs/runbooks/evidencia-kanban-reorder-2026-10-27/p5-depois.png
+--- Network (arrasto) ---
+204       OPTIONS /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data/cmvreesfo0007cidcyqk1hxv2 
+200       PUT /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data/cmvreesfo0007cidcyqk1hxv2 {"data":{"status":"Done","order":1500}}
+304       GET /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo 
+200       GET /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data 
+200       GET /api/dynamic-tables/cmr2jy28v0060ci1khsbgosq9/data 
+200       GET /api/dynamic-tables/cmr2jy28y006aci1kne72l79r/data 
+depois do F5:
+Categories: (vazia)
+TO DO: A fazer 2, A fazer 3, A fazer 4, A fazer 5, A fazer 6
+IN PROGRESS: Em andamento 2, Em andamento 3, Em andamento 4, Em andamento 5, Em andamento 6, Em andamento 1
+IN REVIEW: (vazia)
+DONE: Feito 1, A fazer 1, Feito 2, Feito 3
+[print] docs/runbooks/evidencia-kanban-reorder-2026-10-27/p5-depois-f5.png
+IGUAL antes×depois do F5: true
+--- console.error ---
+Failed to load resource: the server responded with a status of 404 (Not Found)  [/favicon.ico]
+Failed to load resource: the server responded with a status of 400 (Bad Request)  [/_next/image?url=%2Flogo.png&w=48&q=75]
+Failed to load resource: the server responded with a status of 400 (Bad Request)  [/_next/image?url=%2Flogo.png&w=128&q=75]
+Failed to load resource: the server responded with a status of 400 (Bad Request)  [/_next/image?url=%2Flogo.png&w=48&q=75]
+Failed to load resource: the server responded with a status of 400 (Bad Request)  [/_next/image?url=%2Flogo.png&w=48&q=75]

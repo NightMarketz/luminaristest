@@ -39,9 +39,9 @@ geradoPorId: string
 createdAt: string
 }
 export interface ReinfRelatorioLinhaInput {
-evento: "R-4020"
+evento: ("R-4020" | "R-4010" | "R-2010")
 beneficiario: string
-natRend: string
+natRend: (string | null)
 dtFG: string
 tributo: string
 brutoCents: string
@@ -60,9 +60,9 @@ export interface ReinfRelatorioInput {
 competencia: string
 prazo: string
 linhas: {
-evento: "R-4020"
+evento: ("R-4020" | "R-4010" | "R-2010")
 beneficiario: string
-natRend: string
+natRend: (string | null)
 dtFG: string
 tributo: string
 brutoCents: string
@@ -92,9 +92,9 @@ relatorio: {
 competencia: string
 prazo: string
 linhas: {
-evento: "R-4020"
+evento: ("R-4020" | "R-4010" | "R-2010")
 beneficiario: string
-natRend: string
+natRend: (string | null)
 dtFG: string
 tributo: string
 brutoCents: string

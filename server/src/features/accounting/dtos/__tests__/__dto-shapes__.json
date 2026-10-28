@@ -14713,7 +14713,11 @@
             "REGIME_CAIXA_RECALCULO",
             "IMPEDIMENTO_CAIXA_ICMS_ISS",
             "CARTAO_RECEBIMENTO_ESTIMADO",
-            "RECEBIMENTO_DE_VENDA_TRIBUTADA_POR_COMPETENCIA"
+            "RECEBIMENTO_DE_VENDA_TRIBUTADA_POR_COMPETENCIA",
+            "SEM_NCM",
+            "SEGREGACAO_DIVERGE",
+            "SEGREGACAO_INDEVIDA",
+            "ICMS_ST_NAO_CONFERIDA"
           ]
         },
         "detalhe": {
@@ -25508,13 +25512,24 @@
       "properties": {
         "evento": {
           "type": "string",
-          "const": "R-4020"
+          "enum": [
+            "R-4020",
+            "R-4010",
+            "R-2010"
+          ]
         },
         "beneficiario": {
           "type": "string"
         },
         "natRend": {
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "dtFG": {
           "type": "string"
@@ -25612,13 +25627,24 @@
             "properties": {
               "evento": {
                 "type": "string",
-                "const": "R-4020"
+                "enum": [
+                  "R-4020",
+                  "R-4010",
+                  "R-2010"
+                ]
               },
               "beneficiario": {
                 "type": "string"
               },
               "natRend": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "dtFG": {
                 "type": "string"
@@ -25778,13 +25804,24 @@
                 "properties": {
                   "evento": {
                     "type": "string",
-                    "const": "R-4020"
+                    "enum": [
+                      "R-4020",
+                      "R-4010",
+                      "R-2010"
+                    ]
                   },
                   "beneficiario": {
                     "type": "string"
                   },
                   "natRend": {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "dtFG": {
                     "type": "string"
@@ -25921,6 +25958,22 @@
         "sha256",
         "xml",
         "relatorio"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "DanfeDto.ts": {
+    "DanfeParamsSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
       ],
       "additionalProperties": false
     }
