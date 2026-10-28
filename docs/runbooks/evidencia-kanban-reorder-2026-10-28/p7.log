@@ -1,0 +1,64 @@
+url após login: http://127.0.0.1:3030/
+
+======== p7 ========
+abre a barra: botão "show filters"
+opções da ordenação: null
+<select> na página: 0 · rótulo "Sort by" na página: false
+--- texto da barra de filtros aberta ---
+Kanban Board
+New Task
+SEARCH
+PRIORITY
+All
+Low
+Medium
+High
+Urgent
+TOTAL
+15
+COMPLETED
+5
+Tasks
+15
+TO DO
+3
+A fazer 6
+Medium
+A fazer 3
+Medium
+A fazer 4
+Medium
+IN PROGRESS
+7
+Em andamento 1
+Medium
+Em andamento 2
+Medium
+A fazer 5
+Medium
+Em andamento 3
+Medium
+Em andamento 4
+Medium
+Em andamento 5
+Medium
+Em andamento 6
+Medium
+IN REVIEW
+0
+DONE
+5
+Feito 1
+Medium
+A fazer 1
+Medium
+Feito 2
+Medium
+Feito 3
+Medium
+A fazer 2
+Medium
+[print] docs/runbooks/evidencia-kanban-reorder-2026-10-28/p7-barra-sem-ordenacao.png
+FALHOU: a barra do Kanban não oferece ordenação para escolher
+--- console.error ---
+(nenhum)

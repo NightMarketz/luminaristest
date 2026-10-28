@@ -1,0 +1,67 @@
+url após login: http://127.0.0.1:3030/
+
+======== reg-mesma ========
+antes:
+Categories: (vazia)
+TO DO: A fazer 3, A fazer 4, A fazer 5, A fazer 6
+IN PROGRESS: Em andamento 1, Em andamento 2, Em andamento 3, Em andamento 4, Em andamento 5, Em andamento 6
+IN REVIEW: (vazia)
+DONE: Feito 1, A fazer 1, Feito 2, Feito 3, A fazer 2
+[print] docs/runbooks/evidencia-kanban-reorder-2026-10-28/reg-mesma-antes.png
+arrasto: "A fazer 6" → sobre "A fazer 3"
+depois do arrasto:
+Categories: (vazia)
+TO DO: A fazer 6, A fazer 3, A fazer 4, A fazer 5
+IN PROGRESS: Em andamento 1, Em andamento 2, Em andamento 3, Em andamento 4, Em andamento 5, Em andamento 6
+IN REVIEW: (vazia)
+DONE: Feito 1, A fazer 1, Feito 2, Feito 3, A fazer 2
+[print] docs/runbooks/evidencia-kanban-reorder-2026-10-28/reg-mesma-depois.png
+--- Network (arrasto) ---
+200       PUT /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data/cmvsmd0mq000hcif8vj1dzu6z {"data":{"order":1000}}
+304       GET /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo 
+200       GET /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data 
+200       GET /api/dynamic-tables/cmr2jy28v0060ci1khsbgosq9/data 
+200       GET /api/dynamic-tables/cmr2jy28y006aci1kne72l79r/data 
+depois do F5:
+Categories: (vazia)
+TO DO: A fazer 6, A fazer 3, A fazer 4, A fazer 5
+IN PROGRESS: Em andamento 1, Em andamento 2, Em andamento 3, Em andamento 4, Em andamento 5, Em andamento 6
+IN REVIEW: (vazia)
+DONE: Feito 1, A fazer 1, Feito 2, Feito 3, A fazer 2
+[print] docs/runbooks/evidencia-kanban-reorder-2026-10-28/reg-mesma-depois-f5.png
+IGUAL antes×depois do F5: true
+--- console.error ---
+(nenhum)
+
+======== reg-outra ========
+antes:
+Categories: (vazia)
+TO DO: A fazer 6, A fazer 3, A fazer 4, A fazer 5
+IN PROGRESS: Em andamento 1, Em andamento 2, Em andamento 3, Em andamento 4, Em andamento 5, Em andamento 6
+IN REVIEW: (vazia)
+DONE: Feito 1, A fazer 1, Feito 2, Feito 3, A fazer 2
+[print] docs/runbooks/evidencia-kanban-reorder-2026-10-28/reg-outra-antes.png
+arrasto: "A fazer 5" → sobre "Em andamento 3"
+depois do arrasto:
+Categories: (vazia)
+TO DO: A fazer 6, A fazer 3, A fazer 4
+IN PROGRESS: Em andamento 1, Em andamento 2, A fazer 5, Em andamento 3, Em andamento 4, Em andamento 5, Em andamento 6
+IN REVIEW: (vazia)
+DONE: Feito 1, A fazer 1, Feito 2, Feito 3, A fazer 2
+[print] docs/runbooks/evidencia-kanban-reorder-2026-10-28/reg-outra-depois.png
+--- Network (arrasto) ---
+200       PUT /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data/cmvsmd0mh000dcif8vl5mqdxo {"data":{"status":"In Progress","order":2500}}
+304       GET /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo 
+200       GET /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data 
+200       GET /api/dynamic-tables/cmr2jy28v0060ci1khsbgosq9/data 
+200       GET /api/dynamic-tables/cmr2jy28y006aci1kne72l79r/data 
+depois do F5:
+Categories: (vazia)
+TO DO: A fazer 6, A fazer 3, A fazer 4
+IN PROGRESS: Em andamento 1, Em andamento 2, A fazer 5, Em andamento 3, Em andamento 4, Em andamento 5, Em andamento 6
+IN REVIEW: (vazia)
+DONE: Feito 1, A fazer 1, Feito 2, Feito 3, A fazer 2
+[print] docs/runbooks/evidencia-kanban-reorder-2026-10-28/reg-outra-depois-f5.png
+IGUAL antes×depois do F5: true
+--- console.error ---
+(nenhum)
