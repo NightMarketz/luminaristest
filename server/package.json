@@ -106,7 +106,7 @@
     "ts-node-dev": "^2.0.0",
     "tsc-alias": "^1.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.3.3",
+    "typescript": "^7.0.2",
     "typescript-eslint": "^8.62.0",
     "xmllint-wasm": "^5.3.0"
   },
