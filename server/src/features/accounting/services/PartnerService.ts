@@ -2,6 +2,8 @@ import { ConflictError, ForbiddenError, NotFoundError } from '../../../lib/error
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IPartnerRepository, PartnerData } from '../repositories/IPartnerRepository';
+import type { IProfitDistributionRepository } from '../repositories/IProfitDistributionRepository';
+import type { IInterestOnEquityRepository } from '../repositories/IInterestOnEquityRepository';
 import type { AuditService } from './AuditService';
 import type { CreatePartnerInput } from '../dtos/PartnerDto';
 import type { Partner, Prisma } from 'generated/prisma';
@@ -43,6 +45,8 @@ export class PartnerService {
     private readonly repo: IPartnerRepository,
     private readonly policy: IAccountingPolicy,
     private readonly auditService: AuditService,
+    private readonly distribuicoes: Pick<IProfitDistributionRepository, 'existsDoSocio'>,
+    private readonly jcp: Pick<IInterestOnEquityRepository, 'existsAlocacaoDoSocio'>,
   ) {}
 
   /** Item 3 — sócios vigentes na `data` (hoje no fuso do escopo, sem ela) e a soma das participações. */
@@ -92,10 +96,21 @@ export class PartnerService {
     });
   }
 
+  /**
+   * D-2026-10-28-LACUNAS-EXECUTA-27-28 item 1 ("Bloquear remoção") — sócio com distribuição (lucro/dividendo ou JCP, em
+   * qualquer status; linha soft-deletada não conta) → 409 `SOCIO_COM_DISTRIBUICAO`, checado dentro da tx do soft-delete.
+   * A saída da sociedade é `saidaEm`; o soft-delete fica para o cadastro errado, que não tem fato.
+   */
   async remove(scope: AccountingScope, id: string): Promise<void> {
     this.assertManage(scope);
     await this.repo.runTransaction(async (tx) => {
       if (!(await this.repo.findById(scope, id, tx))) throw new NotFoundError('Sócio não encontrado.');
+      if ((await this.distribuicoes.existsDoSocio(scope.ownerUserId, id, tx)) || (await this.jcp.existsAlocacaoDoSocio(scope.ownerUserId, id, tx))) {
+        throw new ConflictError(
+          'SOCIO_COM_DISTRIBUICAO: o sócio tem distribuição de lucros ou JCP registrada e não pode ser removido. Se ele saiu da sociedade, informe a data de saída (saidaEm).',
+          'SOCIO_COM_DISTRIBUICAO',
+        );
+      }
       await this.repo.softDelete(scope, id, tx);
       await this.auditService.append(tx, scope, {
         actorUserId: scope.actorUserId,

@@ -104,6 +104,44 @@ describe('IRRF-DISTRIBUICAO PR-1 — sócios (itens 1–4)', () => {
     expect(await ultimoEvento('partner.deleted')).toEqual({ partnerId: id });
     expect((await post({ ...SOCIO, taxId: '71428793860', participacaoBp: 0 })).status).toBe(201);
   });
+
+  // D-2026-10-28-LACUNAS-EXECUTA-27-28 item 1 ("Bloquear remoção"): o sócio com fato de distribuição não sai por DELETE.
+  const socioDireto = (taxId: string) =>
+    prisma.partner.create({ data: { userId: dono.id, nome: 'Sócio do fato', taxId, tipoPessoa: 'PF', residenteBrasil: true, participacaoBp: 0, entradaEm: '2026-01-01' } });
+  const del = (id: string) => request(app).delete(`${BASE}/${id}`).set(authHeader(dono)).query({ unitId: UNIT });
+
+  it('D-2026-10-28 item 1: sócio com dividendo → 409 SOCIO_COM_DISTRIBUICAO; com o evento soft-deletado, remove', async () => {
+    const socio = await socioDireto('11144477735');
+    const evento = await prisma.profitDistributionEvent.create({
+      data: {
+        userId: dono.id, unitId: UNIT, partnerId: socio.id, taxId: socio.taxId, evento: 'CREDITO', dataEvento: '2026-03-10', competencia: '2026-03',
+        debitoAccountId: 'x', contraAccountId: 'y', brutoCents: 100n, irrfCents: 0n, liquidoCents: 100n, origemLucro: 'CORRENTE',
+        memoria: {}, parametrosIds: [], parametrosSha256: 'h', status: 'CANCELLED',
+      },
+    });
+    const r = await del(socio.id);
+    expect([r.status, r.body.code]).toEqual([409, 'SOCIO_COM_DISTRIBUICAO']);
+    expect(JSON.stringify(r.body)).toContain('saidaEm');
+    expect((await prisma.partner.findUnique({ where: { id: socio.id } }))?.deletedAt).toBeNull();
+    await prisma.profitDistributionEvent.update({ where: { id: evento.id }, data: { deletedAt: new Date() } });
+    expect((await del(socio.id)).status).toBe(200);
+  });
+
+  it('D-2026-10-28 item 1: sócio com alocação de JCP → 409; com o cálculo soft-deletado, remove', async () => {
+    const socio = await socioDireto('39053344705');
+    const calc = await prisma.interestOnEquityCalculation.create({
+      data: {
+        userId: dono.id, unitId: UNIT, anoCalendario: 2026, periodo: 'T01', dataCredito: '2026-03-31', forma: 'DESPESA', debitoAccountId: 'x',
+        memoria: {}, jurosMaxTjlpCents: 0n, limite50LucroCents: 0n, limite50ReservasCents: 0n, limiteDedutivelCents: 0n, totalCents: 100n,
+        irrfCents: 18n, liquidoCents: 82n, excessoCents: 0n, parametrosIds: [], parametrosSha256: 'h', previaSha256: 'h', status: 'PENDING_POST',
+        vivoKey: 'VIVO', alocacoes: { create: [{ partnerId: socio.id, participacaoBp: 10000, brutoCents: 100n, irrfCents: 18n, liquidoCents: 82n }] },
+      },
+    });
+    const r = await del(socio.id);
+    expect([r.status, r.body.code]).toEqual([409, 'SOCIO_COM_DISTRIBUICAO']);
+    await prisma.interestOnEquityCalculation.update({ where: { id: calc.id }, data: { deletedAt: new Date() } });
+    expect((await del(socio.id)).status).toBe(200);
+  });
 });
 
 describe('IRRF-DISTRIBUICAO PR-1 — contas do perfil fiscal (item 7) e mapa do PL (item 8)', () => {

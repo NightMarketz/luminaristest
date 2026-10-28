@@ -1678,7 +1678,13 @@ export class ApplicationFactory {
       // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13, PR-1): perfil da EMPRESA por ano + signatários não-contador.
       companyFiscalProfile: companyFiscalProfileService,
       companySigner: new CompanySignerService(this.repositories.companySigner, this.policies.accounting, auditService),
-      partner: new PartnerService(this.repositories.partner, this.policies.accounting, auditService), // IRRF-DISTRIBUICAO PR-1
+      partner: new PartnerService( // IRRF-DISTRIBUICAO PR-1; D-2026-10-28 item 1 (409 com distribuição)
+        this.repositories.partner,
+        this.policies.accounting,
+        auditService,
+        this.repositories.profitDistribution,
+        this.repositories.interestOnEquity,
+      ),
       // RETENCOES-FONTE PR-1 (item 6): perfil de retenção; fotografia NATUREZA_RENDIMENTO e a leitura dos rascunhos dela.
       withholdingProfile: new WithholdingProfileService(
         this.repositories.withholdingProfile,
