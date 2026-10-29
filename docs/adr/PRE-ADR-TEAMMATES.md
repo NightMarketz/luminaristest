@@ -1,7 +1,7 @@
 # PRE-ADR-TEAMMATES — Teammates nativos: agentes persistentes, rotinas, canais agente↔agente e multi-provedor
 
 - **Data:** 2026-10-29
-- **Status:** **Proposed** — F-TM-1..4 **RATIFICADOS** (dono, questionário, 29/10); F-TM-5..12 **RATIFICAÇÃO PENDENTE**. Sem código, sem "executa".
+- **Status:** **Accepted** (29/10) — F-TM-1..13 **RATIFICADOS** por questionário em dois turnos do mesmo dia (cédula abaixo). Sem código, sem "executa".
 - **Autorização:** dono, chat, 2026-10-29: "Autorizo planejar", em resposta a "Autoriza abrir o nó e escrever PRE-ADR + BRIEF (sessao-planejamento, só docs)?". Cobre o nó, este PRE-ADR e o BRIEF; **não** cobre código nem merge.
 - **Nó:** [`docs/plano/nos/TEAMMATES.md`](../plano/nos/TEAMMATES.md) · cédula dos forks: [`D-2026-10-29-TEAMMATES-FORKS`](../plano/decisoes/D-2026-10-29-TEAMMATES-FORKS.md).
 - **Respeita:** destino §7 (`docs/plano/destino/07-camada-de-ia-agentica.md`), `ADR-DOMAIN-MOTOR-rejected.md`, `ADR-PERSISTENCE-BOUNDARY-user-designed-vs-law-designed.md`, `ADR-M2-deploy-topology.md` (BYOK), `ADR-OBSERVABILIDADE.md` (OBS-R11), BRIEF do I11 (`docs/accounting/BE-INCR-CHAT-AGENT-brief.md`), nó FIX-CHAT-AGENTE.
@@ -13,8 +13,9 @@ As funções do OpenBot (openbot.run) — teammate persistente com papel e memó
 chama outro, vários provedores com reserva — viram uma camada **de plataforma** em Prisma, em cima do chat agente que
 já existe. A trava que o OpenBot não tem fica no código, não no prompt: **toda ação é classificada antes de rodar**
 (livre, proposta ou proibida), e dinheiro, fiscal, razão e envio para fora são sempre proposta confirmada por humano.
-Risco principal: canais completos trazem uma fila assíncrona, e ela só não reabre o motor rejeitado em 21/09 se ficar
-em tabela (sem Redis) e nunca carregar mutação de domínio — F-TM-5.
+Risco principal: o dono escolheu **BullMQ + Redis** para os turnos (F-TM-5 b). Quando essa fila estiver em produção,
+existe a evidência do gatilho (b) do R-motor-dominio — o que **permite pedir** a reabertura com ADR novo, não a faz. A
+cerca que sobra é mecânica: a fila só carrega `{ turnId }` e o worker não importa serviço de domínio (item do BRIEF).
 
 ## 1. Objetivo (sob a letra)
 
@@ -57,14 +58,18 @@ desenho de tela é copiado (licença).
 1. **R-motor-dominio × canais completos (F-TM-4).** O motor rejeitado coordenava **mutações de domínio**. Canal de
    teammates coordena **conversa**: cada turno de agente só lê, rascunha ou grava uma proposta; a mutação continua sendo
    uma proposta confirmada e executada pelo serviço dono, como hoje (`executeProposal`). Nenhum dos gatilhos (a), (c),
-   (d) se aplica. O gatilho **(b)** ("fila adotada para outro fim e já em produção") é o ponto sensível — ver F-TM-5.
-2. **ADR-M2 (BYOK) × chave da plataforma com teto (F-TM-3).** O dono escolheu "chave do cliente **ou a nossa com teto**".
-   O M2 só prevê a do cliente → emenda ao ADR-M2 (F-TM-6).
+   (d) se aplica. O gatilho **(b)** ("fila adotada para outro fim e já em produção") **passa a ter evidência** quando a
+   fila BullMQ (F-TM-5 b) subir no M2. Isso não reabre o ADR de 21/09 sozinho: reabrir continua exigindo ADR novo que
+   cite o gatilho. Registro para quem vier depois: a fila foi adotada para turnos de agente, e o próprio dono aceitou
+   esse efeito ao escolher contra a recomendação (pergunta F-TM-5 citava o gatilho).
+2. **ADR-M2 (BYOK) × chave da plataforma (F-TM-3).** Resolvido pelo F-TM-6 (b): v1 só BYOK, o M2 não muda nesse ponto.
+   **Muda em outro:** o Redis do F-TM-5 vira serviço novo em cada instância do M2 (1 VPS por cliente) — emenda ao runbook
+   do M2, que é gate humano (o agente prepara, o dono assina).
 3. **SQLite com um escritor** (a migração para Postgres foi rejeitada: `docs/plano/rejeitadas/R-postgresql.md`): rotinas e canais concorrentes disputariam o lock com as
    vendas. Resposta direta, não fork: **um turno de agente por vez por instância**, e o turno não segura transação
    durante a chamada ao modelo (lê → chama o LLM fora de tx → grava em tx curta).
 4. **Ferramentas do OpenBot que não entram** (decisão direta, vem do §7 e do §13): shell, sistema de arquivos,
-   navegador embutido e acesso direto ao Prisma. Num SaaS multi-tenant são superfície de ataque sem dono.
+   navegador embutido, servidor MCP stdio e acesso direto ao Prisma. Num SaaS multi-tenant são superfície de ataque sem dono.
 
 ## 4. Decisões diretas (sem fork)
 
@@ -77,108 +82,86 @@ desenho de tela é copiado (licença).
   **apertar** (LIVRE → PROPOSTA), nunca afrouxar dinheiro, fiscal, razão ou envio externo (F-TM-2).
 - **D-3 Playbook = dado:** instruções em texto + lista de ferramentas permitidas, gravadas no teammate. Sem código
   enviado pelo usuário.
-- **D-4 Um turno por vez por instância** (colisão 3) e sem transação aberta durante a chamada ao LLM.
+- **D-4 Um turno por vez por instância** (colisão 3; worker da fila com concorrência 1) e sem transação aberta durante a
+  chamada ao LLM.
 - **D-5 Custo medido em todo turno** com o `LlmUsage` que já existe; o turno grava provedor, modelo e tokens.
 
-## 5. Forks
+## 5. Forks — todos RATIFICADOS (dono, questionário, 29/10 — cédula `D-2026-10-29-TEAMMATES-FORKS`)
 
-### Ratificados (dono, questionário, 29/10 — cédula `D-2026-10-29-TEAMMATES-FORKS`)
+| Fork | Recomendada | Resposta do dono | Efeito no BRIEF |
+|---|---|---|---|
+| F-TM-1 Primeiro corte | base + 1 piloto | **base + 1 piloto** | PR-0..PR-8 |
+| F-TM-2 Autonomia | alçada por ação | **alçada por ação** | D-2; itens 11, 15 |
+| F-TM-3 Provedor | multi + BYOK/chave nossa com teto | **multi + BYOK/chave nossa com teto** (refinado pelo F-TM-6) | PR-1 |
+| F-TM-4 Agente↔agente | adiar | **canais completos no v1** | PR-6 |
+| F-TM-5 Mecanismo assíncrono | fila em tabela, sem Redis | **BullMQ + Redis** | PR-4 reescrito; Redis no M2; cerca mecânica da fila |
+| F-TM-6 Chave da plataforma | emendar o M2 | **só BYOK no v1** | item 8 sem chave da plataforma; teto mensal vira orçamento do próprio cliente |
+| F-TM-7 Piloto | Conciliação | **Conciliação** | PR-8 |
+| F-TM-8 Forma da proposta | estender `ActionProposal` | **estender `ActionProposal`** | itens 1, 30–32 |
+| F-TM-9 Adaptadores | SDK oficial por provedor | **SDK oficial por provedor** | item 6 |
+| F-TM-10 Ao bater limite | pausa e avisa | **pausa e avisa** | item 22 |
+| F-TM-11 Gatilhos de rotina | agenda + manual | **agenda + manual + webhook** | PR-9 (webhook) |
+| F-TM-12 Conectores externos | fora do v1 | **cliente MCP no v1**, toda ferramenta externa como `PROPOSTA` | PR-10 (MCP) |
+| F-TM-13 Autenticação MCP | token estático | **token estático no v1**; OAuth em nó próprio | PR-10 |
 
-| Fork | Resposta |
-|---|---|
-| F-TM-1 Primeiro corte | Plataforma mínima + 1 agente piloto do §7 |
-| F-TM-2 Autonomia | Alçada por ação: ler/resumir/rascunhar/tarefa interna livres; envio externo, dinheiro e fiscal = proposta; dono configura por teammate |
-| F-TM-3 Provedor | Multi-provedor (Claude, OpenAI, Gemini) + chave do cliente (BYOK) ou a nossa com teto + provedor reserva |
-| F-TM-4 Agente↔agente | Canais completos no v1 (contra a recomendação de adiar) |
+O texto das opções está na cédula. Quatro respostas foram contra a recomendação (F-TM-4, 5, 11, 12); as consequências
+estão na §5.1 para que ninguém as "conserte" depois achando que foram descuido.
 
-### RATIFICAÇÃO PENDENTE
+### 5.1 Consequências das escolhas contra a recomendação
 
-**F-TM-5 — Mecanismo assíncrono dos turnos (rotina e canal)**
-- (a) **Fila em tabela** (`AgentTurn` com `PENDING → RUNNING → DONE/FAILED`), consumida por um agendador da casa que
-  reivindica com `updateMany` condicional; sem Redis. Este ADR declara que a fila **não conta** como gatilho (b) do
-  R-motor-dominio: ela não carrega mutação de domínio e não traz infraestrutura nova (a premissa do gatilho).
-- (b) BullMQ + Redis.
-- (c) Sem fila: rotina roda dentro do agendador e canal processa a menção na própria requisição.
-- **Recomendada: (a).** (b) traz o Redis que o ADR de 21/09 recusou e entrega exatamente a evidência do gatilho (b);
-  (c) prende a requisição HTTP por vários turnos encadeados e não sobrevive a restart.
+- **F-TM-5 (Redis):** (i) serviço Redis em cada instância do M2 e no CI; (ii) a aplicação **sobe sem Redis** — só os
+  teammates ficam desligados, com erro claro (falha fechada, como o keyring do `secretBox`); (iii) evidência futura do
+  gatilho (b) do R-motor-dominio (§3, colisão 1); (iv) cerca mecânica: o job da fila só tem `{ turnId }` e um teste de
+  fronteira reprova `features/teammates/**` importando `PostingService`, `postEntry` ou serviço de domínio fora da lista
+  de ferramentas.
+- **F-TM-4 (canais):** o laço de agentes é o modo de falha esperado; F-TM-10 (pausa) e o teto de saltos existem por isso.
+- **F-TM-11 (webhook):** rota pública nova. Conteúdo do webhook é **dado não confiável** que entra no prompt
+  (injeção de prompt): vai delimitado como dado, e nenhuma ferramenta muda de classe por causa dele. Segredo por rotina
+  guardado só como hash, comparação em tempo constante, limite de tamanho e de taxa.
+- **F-TM-12 (MCP):** só servidor **remoto** (HTTP); **stdio é `PROIBIDA`** (executaria processo no nosso servidor). Toda
+  ferramenta MCP é `PROPOSTA`, inclusive leitura — o resultado de uma ferramenta externa também é dado não confiável.
+  O envio de dado do tenant a um servidor MCP de terceiro soma à pendência de LGPD (§7).
 
-**F-TM-6 — Chave da plataforma × ADR-M2**
-- (a) Emenda ao ADR-M2: a instância pode usar a chave da plataforma com **teto mensal em tokens** definido pelo dono; a
-  chave do cliente tem precedência quando existe.
-- (b) v1 só BYOK; a chave da plataforma vira nó próprio.
-- **Recomendada: (a)**, porque é o que o dono escolheu em F-TM-3; o fork existe só para a emenda ficar escrita no M2.
+## 6. Comportamentos do BRIEF (esqueleto)
 
-**F-TM-7 — Agente piloto**
-- (a) **Conciliação:** casa linha de extrato × título × adquirente e **propõe** item pendente; nunca posta (§7).
-- (b) Cobrança: prioriza inadimplência, gera Pix/boleto, negocia dentro de alçada.
-- **Recomendada: (a).** Tudo dentro do sistema; (b) precisa de envio externo (e-mail/WhatsApp), e não achei
-  transporte de mensagem no código (insumo ausente, §8) — o piloto travaria no transporte, não no agente.
-
-**F-TM-8 — Forma da proposta**
-- (a) **Estender `ActionProposal`:** `kind` discriminado (`TABLE_ROW` = o atual, mais os kinds novos), `payload`
-  validado por Zod por kind, `teammateId?`, `channelMessageId?`, `expiresAt`. Uma caixa de aprovação só.
-- (b) Tabela nova `TeammateProposal`, separada da do chat.
-- **Recomendada: (a).** Duas caixas de aprovação dividem a atenção do dono, que é o gargalo do desenho inteiro.
-
-**F-TM-9 — Adaptadores de provedor**
-- (a) **Porta `LlmProvider`** + um adaptador por SDK oficial (`openai` existente, `@anthropic-ai/sdk`, `@google/genai`),
-  todos traduzindo para um formato único de mensagem, ferramenta e uso.
-- (b) Só o SDK `openai`, apontando para os endpoints "compatíveis com OpenAI" de cada provedor.
-- **Recomendada: (a).** (b) evita 2 dependências, mas a camada de compatibilidade de cada provedor cobre só parte das
-  ferramentas e do uso de tokens — o custo medido (D-5) ficaria errado em silêncio. **Não verificado** neste PRE-ADR
-  quanto cada compatibilidade cobre hoje (insumo ausente, §8).
-
-**F-TM-10 — O que acontece ao bater um limite (saltos no canal, turnos/dia, teto de tokens)**
-- (a) **Pausa** o teammate (ou a thread) e avisa o dono na caixa de aprovação; nada roda até ele liberar.
-- (b) Troca para um modelo mais barato e segue.
-- **Recomendada: (a).** (b) esconde o laço em vez de pará-lo; num canal com vários agentes o laço é o modo de falha
-  esperado.
-
-**F-TM-11 — Gatilhos de rotina no v1**
-- (a) **Agendada + manual** ("roda agora"); webhook de entrada vira nó próprio.
-- (b) Agendada + manual + webhook de entrada com segredo por rotina.
-- **Recomendada: (a).** Webhook é rota pública nova, com autenticação própria e superfície de abuso; o piloto não
-  precisa dele.
-
-**F-TM-12 — Conectores externos (MCP, plugins) no v1**
-- (a) **Fora do v1**; nó próprio depois do transporte de mensagens.
-- (b) Cliente MCP no v1, com toda ferramenta externa classificada como `PROPOSTA`.
-- **Recomendada: (a).** Sem transporte e sem a pesquisa de LGPD do §7 deste PRE-ADR, o conector só serviria para ler
-  dado de fora, e isso não é o que o piloto pede.
-
-## 6. Comportamentos candidatos do BRIEF (esqueleto)
-
-Plataforma: teammate (CRUD + alçada) · credencial de provedor cifrada · porta `LlmProvider` com reserva · runner de
-turno com classificação da ação · fila `AgentTurn` + agendador com alerta · rotinas · canais e menções com limite de
-saltos · caixa única de propostas com expiração. Piloto: ferramentas de leitura da conciliação + kind de proposta
-`SETTLEMENT_MATCH` executado pelo serviço dono. Detalhe e ordem no BRIEF.
+Plataforma: teammate (CRUD + alçada) · credencial de provedor cifrada (BYOK) · porta `LlmProvider` com reserva ·
+runner de turno com classificação da ação · fila BullMQ + registro `AgentTurn` + worker com alerta · rotinas (agenda,
+manual, webhook) · canais e menções com teto de saltos · caixa única de propostas com expiração · cliente MCP remoto.
+Piloto: ferramentas de leitura da conciliação + kind `SETTLEMENT_MATCH` executado pelo serviço dono. Detalhe e ordem no
+BRIEF.
 
 ## 7. Pendente de validação externa
 
-- **LGPD — dado de cliente do tenant enviado ao provedor de IA.** Pergunta: o tenant (controlador) usando Claude/
-  OpenAI/Gemini como operador/suboperador, com servidores fora do Brasil, exige o quê (art. 33 transferência
-  internacional; art. 39 operador; cláusulas da ANPD)? Muda se a chave é do cliente (contrato dele com o provedor) ou
-  da plataforma (contrato nosso). Vai pelo método oficial (`legal.py`, acervo `ctresb/leis`) antes do PR que liga a
-  chave da plataforma; **não** bloqueia os PRs de estrutura.
+- **LGPD — dado do tenant enviado ao provedor de IA e a servidores MCP de terceiros.** Pergunta: com a chave do próprio
+  cliente (BYOK) e servidores fora do Brasil, quem é controlador e operador, e o que exige o art. 33 (transferência
+  internacional) e o art. 39 (operador)? O mesmo para o servidor MCP que o tenant conecta. Pesquisa pelo método oficial
+  (`legal.py`, acervo `ctresb/leis`) **antes do PR-8 (piloto com dado real) e do PR-10 (MCP)**; não bloqueia os PRs de
+  estrutura.
 
 ## 8. Insumos ausentes (não varridos — regra 2)
 
-- Interface do `BankSettlementService` para "propor item pendente" sem postar (piloto F-TM-7 a).
+- Interface do `BankSettlementService` para "propor item pendente" sem postar (piloto).
 - Transporte de e-mail/WhatsApp: não achei no código; o nó FIX-AUTH-CONTA exclui "itens que dependem de transporte de
   e-mail" — inferido, não varrido.
 - Estado dos PRs do FIX-CHAT-AGENTE (#835, #836, #838) — a nota diz "aguarda decisões e merge"; não medido com `gh`.
-- Cobertura atual das camadas de compatibilidade OpenAI de Anthropic e Google (F-TM-9).
+- `ci.yml` e o `docker-compose` do M2: onde entra o serviço Redis (não lidos).
+- Rate limit existente da casa para reaproveitar no webhook (não localizado).
 
 ## 9. Achados fora de escopo
 
 - Tela (FE-INCR-TEAMMATES): nó vizinho.
 - Agentes 2..6 do §7 (Vendas, Cobrança, Fiscal, Atendimento, Contador-assistente): um nó por agente, depois do piloto.
-- Generalizar o nome do keyring do `secretBox` (hoje `PAYMENT_CREDENTIAL_KEYS`) — o BRIEF usa um keyring próprio para
-  não acoplar à rotação da chave de pagamento.
+- OAuth para MCP (F-TM-13): nó próprio.
+- Chave de IA da plataforma com teto (F-TM-6 a): nó próprio, junto com a pesquisa de LGPD.
+- Generalizar o nome do keyring do `secretBox` (hoje `PAYMENT_CREDENTIAL_KEYS`) — o BRIEF usa keyring próprio para não
+  acoplar à rotação da chave de pagamento.
 
 ## Riscos (inclui vieses do autor)
 
-- **Laço de agentes** é o modo de falha típico de canal: limite de saltos e F-TM-10 existem por isso.
-- **Viés de escopo:** "canais completos" foi escolha do dono contra a recomendação; o autor pode estar subestimando o
-  custo deles no BRIEF — o PR de canais vem por último para poder ser cortado sem desfazer o resto.
+- **Escopo do v1 cresceu** com quatro escolhas contra a recomendação (canais, Redis, webhook, MCP). O BRIEF ordena os
+  PRs para que canais, webhook e MCP sejam os últimos e possam ser cortados sem desfazer a base.
+- **Injeção de prompt** entra por três portas novas (canal entre agentes, webhook, resultado de MCP). A defesa não é o
+  prompt: é a classe da ferramenta checada no código e toda ação relevante passar por proposta.
+- **Viés do autor:** recomendou contra Redis e contra MCP; o BRIEF pode estar pessimista no custo deles — a sessão de
+  feature mede e corrige o esboço, não o escopo.
 - **Dependência do chat:** se o FIX-CHAT-AGENTE não fechar antes, o runner herda os defeitos do laço atual.
