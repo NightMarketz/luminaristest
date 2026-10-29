@@ -6412,39 +6412,6 @@
       }
     },
     "/api/dashboard-layout/{id}": {
-      "get": {
-        "summary": "Get a dashboard layout by ID",
-        "tags": [
-          "DashboardLayout"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "cuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Layout"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          }
-        }
-      },
       "patch": {
         "summary": "Update a dashboard layout",
         "tags": [
@@ -12767,6 +12734,9 @@
           },
           "404": {
             "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "description": "SOCIO_COM_DISTRIBUICAO (partner has profit distribution or JCP; set saidaEm instead) or deleted unit"
           }
         }
       }
@@ -19151,6 +19121,469 @@
         }
       }
     },
+    "/api/accounting/tax-optimization/policy": {
+      "get": {
+        "summary": "Tax-efficiency policy of a unit (current version + history)",
+        "description": "Commercial policy only — it never switches a legal guard off (ADR D2). Without a saved version the defaults apply: criterioAlocacao PROPORCIONAL_CATALOGO, pisoServico CUSTO_INFORMADO, severidadePisoProporcional WARN.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "TaxOptimizationPolicyView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      },
+      "put": {
+        "summary": "New version of the tax-efficiency policy",
+        "description": "PROPORCIONAL_CATALOGO applies at once (200) and closes the previous version on vigenteDesde minus one day. CARGA_TRIBUTARIA is not applied: it becomes a CRITERIO_CARGA suggestion that only the ACTIVE accountant decides (202); without one, 409 CRITERIO_CARGA_EXIGE_CONTADOR. 409 VIGENCIA_RETROATIVA when vigenteDesde is not after the latest version. Audited as tax.policy.updated.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "criterioAlocacao",
+                  "pisoServico",
+                  "vigenteDesde"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "criterioAlocacao": {
+                    "type": "string",
+                    "enum": [
+                      "PROPORCIONAL_CATALOGO",
+                      "CARGA_TRIBUTARIA"
+                    ]
+                  },
+                  "pisoServico": {
+                    "type": "string",
+                    "enum": [
+                      "CUSTO_INFORMADO",
+                      "CATALOGO_MINIMO",
+                      "SEM_DESCONTO_ALEM_DO_PROPORCIONAL"
+                    ]
+                  },
+                  "vigenteDesde": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ applied: true, policy }"
+          },
+          "202": {
+            "description": "{ applied: false, suggestion } (CARGA_TRIBUTARIA waits for the accountant)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "409": {
+            "description": "CRITERIO_CARGA_EXIGE_CONTADOR | VIGENCIA_RETROATIVA"
+          }
+        }
+      }
+    },
+    "/api/accounting/tax-optimization/service-costs": {
+      "get": {
+        "summary": "Service cost evidences (service floor, F-EF-1 a)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ServiceCostEvidenceView[] (cents as strings)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      },
+      "post": {
+        "summary": "Register a service cost (custoCents with sourceDocumentId) and/or a published minimum price",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "serviceRef",
+                  "vigenteDesde"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "serviceRef": {
+                    "type": "string"
+                  },
+                  "custoCents": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "catalogoMinimoCents": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "sourceDocumentId": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "vigenteDesde": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "vigenteAte": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "ServiceCostEvidenceView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/accounting/tax-optimization/service-costs/{id}": {
+      "delete": {
+        "summary": "Soft-delete a service cost evidence",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/api/accounting/tax-optimization/suggestions": {
+      "get": {
+        "summary": "Tax-efficiency suggestions of a unit (owner, or the ACTIVE accountant with ownerUserId)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ownerUserId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PROPOSED",
+                "ACCEPTED",
+                "REJECTED",
+                "EXPIRED"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "TaxOptimizationSuggestionView[]"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/accounting/tax-optimization/suggestions/{id}/accept": {
+      "post": {
+        "summary": "Accept a suggestion (ACTIVE accountant; without one, the owner; never the proposer)",
+        "description": "CRITERIO_CARGA is decided only by the ACTIVE accountant and requires a reason; accepting it creates the CARGA_TRIBUTARIA policy version. 409 SUGESTAO_JA_DECIDIDA when the status is no longer PROPOSED.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "ownerUserId": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 280
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "TaxOptimizationSuggestionView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "description": "SUGESTAO_JA_DECIDIDA"
+          }
+        }
+      }
+    },
+    "/api/accounting/tax-optimization/suggestions/{id}/reject": {
+      "post": {
+        "summary": "Reject a suggestion (reason required)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "reason"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "ownerUserId": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 280
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "TaxOptimizationSuggestionView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "description": "SUGESTAO_JA_DECIDIDA"
+          }
+        }
+      }
+    },
     "/api/accounting/trial-balance": {
       "get": {
         "summary": "Trial balance (balancete) for a unit",
@@ -21702,8 +22135,7 @@
                       },
                       "suiteKey": {
                         "type": "string",
-                        "description": "Preset suite key",
-                        "e.g. \"agronegocio\"": null
+                        "description": "Preset suite key, e.g. \"agronegocio\""
                       },
                       "unit": {
                         "type": "object",
@@ -21874,6 +22306,38 @@
                           "type": "array",
                           "items": {
                             "type": "object"
+                          }
+                        }
+                      },
+                      "addedTables": {
+                        "type": "array",
+                        "description": "W1 (F-W1-4 a) - tables created in the AI interview. Installed with category other; the key must not exist in the suite, a module or the Core (400 details.reason ADDED_TABLE_EXISTS); fields go through the same validation as addedFields (400 details.reason ADDED_TABLE_INVALID)",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "key",
+                            "name",
+                            "fields"
+                          ],
+                          "additionalProperties": false,
+                          "properties": {
+                            "key": {
+                              "type": "string",
+                              "pattern": "^[a-z][a-z0-9_]*$",
+                              "maxLength": 64
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 120
+                            },
+                            "fields": {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": {
+                                "type": "object"
+                              }
+                            }
                           }
                         }
                       },
@@ -22267,6 +22731,21 @@
                       "create",
                       "customize"
                     ]
+                  },
+                  "modules": {
+                    "type": "array",
+                    "description": "W1 (F-W1-6 a) - modules checked in the front; read only on the turn that opens the customization session (choice customize)",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "CRM-0",
+                        "CRM-1",
+                        "CRM-2A",
+                        "CRM-2B",
+                        "CRM-3",
+                        "CRM-2"
+                      ]
+                    }
                   }
                 }
               }
@@ -22302,6 +22781,49 @@
                     },
                     "customizationState": {
                       "type": "object"
+                    },
+                    "creation": {
+                      "type": "object",
+                      "description": "W1 (F-W1-1 a, F-W1-2 a) - only on the turn that finishes the customization (nextStage COMPLETED). The server consolidates the persisted session into the custom create body; the client adds unit, fiscal and modules",
+                      "required": [
+                        "mode",
+                        "presetKey",
+                        "removedTables",
+                        "addedFields",
+                        "addedTables"
+                      ],
+                      "properties": {
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "custom"
+                          ]
+                        },
+                        "presetKey": {
+                          "type": "string"
+                        },
+                        "removedTables": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "addedFields": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                              "type": "object"
+                            }
+                          }
+                        },
+                        "addedTables": {
+                          "type": "array",
+                          "items": {
+                            "type": "object"
+                          }
+                        }
+                      }
                     },
                     "choicePrompt": {
                       "type": "object",
@@ -22831,6 +23353,92 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/dashboard/ai/InterviewModules": {
+      "post": {
+        "summary": "Set the modules of the interview customization session (W1)",
+        "description": "The user checks or unchecks a module while customizing; the session rewrites the module tables (the tables of a module that left are removed, the ones of a module that entered are added, the rest of the customization stays). `modules` is the whole selection. Suite modules still in the session stay even if omitted; a module the conversation removed only comes back when listed.\n",
+        "tags": [
+          "Dashboard"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "sessionId",
+                  "modules"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "sessionId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "modules": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "CRM-0",
+                        "CRM-1",
+                        "CRM-2A",
+                        "CRM-2B",
+                        "CRM-3",
+                        "CRM-2"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session after the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "sessionId",
+                    "customizationState"
+                  ],
+                  "properties": {
+                    "sessionId": {
+                      "type": "string"
+                    },
+                    "customizationState": {
+                      "type": "object",
+                      "description": "Includes modules (installed module keys) and tables"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "INTERVIEW_SESSION_NOT_FOUND (missing, expired or another user's session)"
+          },
+          "409": {
+            "description": "INTERVIEW_SESSION_CONFLICT (another turn wrote the session after this request read it)"
           }
         }
       }
@@ -26897,6 +27505,69 @@
         }
       }
     },
+    "/api/nfe/dfe/documents/{id}/danfe": {
+      "get": {
+        "summary": "DANFE PDF of an authorized NF-e 55 (NFE-DANFE-IBSCBS PR-3 item 19)",
+        "description": "Gera sob demanda o DANFE (NT 2026.010) só a partir do nfeProc anexado ao documento; nada é gravado. Policy canReadFiscalDocument, a mesma da leitura por id.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PDF (Content-Disposition attachment; filename=\"danfe-<chave>.pdf\")",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Unidade ou documento fiscal inexistente (ou de outro tenant)"
+          },
+          "409": {
+            "description": "DANFE_DOCUMENTO_NAO_AUTORIZADO (status fora de AUTHORIZED/AUTHORIZED_DIVERGENT) ou DANFE_SEM_XML"
+          },
+          "422": {
+            "description": "DANFE_SO_NFE (documento NFS-e) ou DANFE_NFCE_NO_FE (NFC-e, DANFE do frontend)"
+          }
+        }
+      }
+    },
     "/api/nfe/dfe/documents/{id}/retorno-manual": {
       "post": {
         "summary": "Register the authorized NFS-e XML downloaded from the public portal (manual mode, item 11)",
@@ -29124,44 +29795,6 @@
         }
       }
     },
-    "/api/reports/generate-chart-data": {
-      "post": {
-        "summary": "Generate chart data via Server-Sent Events stream",
-        "tags": [
-          "Reports"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "SSE stream of progress events and final chart data",
-            "content": {
-              "text/event-stream": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          }
-        }
-      }
-    },
     "/api/sales/cancel": {
       "post": {
         "summary": "Cancel a finalized salon sale (status → Cancelled; reverses the revenue entry)",
@@ -29384,6 +30017,58 @@
           },
           "409": {
             "$ref": "#/components/responses/UnitDeleted"
+          }
+        }
+      }
+    },
+    "/api/sales/{id}/fiscal-check": {
+      "post": {
+        "summary": "Fiscal guard of a sale (floor, discount allocation, catalog-price invariants; EFICIENCIA-FISCAL PR-1)",
+        "description": "Reads the sale and its items through the DynamicTable repository, records the product cost snapshot (custoSnapshotCents) on the first check after finalize, allocates the header discount by the unit policy (PROPORCIONAL_CATALOGO by default) and returns BLOCK/WARN violations with their legal basis. The same check is a precondition of the NFS-e (BLOCK means emissao_bloqueada). Cents are strings. Scope is the sale unit.",
+        "tags": [
+          "Sales"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "FiscalCheckResponse { saleId, ok, criterio, violations, alocacao, economiaPotencialCents, suggestionId }"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
           }
         }
       }
