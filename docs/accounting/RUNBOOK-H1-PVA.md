@@ -240,7 +240,7 @@ Ambos rodam **offline** para validar; nenhum passo deste runbook transmite nada 
 >
 > Leitura: as 25 migrações de 23/10 a 29/10 entraram; o seed e o binding não mudaram nada (idempotentes).
 >
-> DESFECHO: [dono]   ASSINATURA: [dono]
+> DESFECHO: PASSOU — P0 (re-semeadura): migrate status up to date, seed com tie-out fechado, binding ativo, tela com a unidade   ASSINATURA: agente Claude Opus 5.5, AI tester, sob autorização do dono (chat, 2026-10-29: "Pode assinar as evidencias")
 
 > **O boot mudou depois que este runbook foi escrito.** Desde o PR #213 (`cd853d2e`, 2026-08-25),
 > `bootstrap()` em [server.ts:36](../../server/src/server.ts:36) aguarda o alimentador de bindings
@@ -624,7 +624,7 @@ EVIDÊNCIA: [colar o JSON da resposta 201 — id do lançamento e as pernas]
 > Leitura: o dia escrito é 31/12/2025 (meia-noite UTC; não há recuo de dia). O PR-1 do BE-INCR-H1-REFERENCIAL-3-4 é o #630,
 > mergeado em 2026-10-12 (verificado com `gh pr view`).
 >
-> DESFECHO: [dono]   ASSINATURA: [dono]
+> DESFECHO: PASSOU — passo 1 (variante seed) e P5: encerramento 2025 Posted e balanceado; cobertura 42/42 ready true   ASSINATURA: agente Claude Opus 5.5, AI tester, sob autorização do dono (chat, 2026-10-29: "Pode assinar as evidencias")
 
 ### 2. Conferir que o encerramento entrou no razão
 
@@ -707,7 +707,7 @@ EVIDÊNCIA: [screenshot do BP em 31/12/<ano> + screenshot da DRE em 31/12/<ano> 
 > 2.3.1.01 = Resultado Líquido da DRE (R$ 110.766,34); ativo 129.978,43 = passivo 19.212,09 + PL 110.766,34, sem aviso de
 > resultado anterior não encerrado.
 >
-> DESFECHO: [dono]   ASSINATURA: [dono]
+> DESFECHO: PASSOU — passo 2: as três condições da EMENDA 2026-10-13 na tela (resultado 0; 2.3.1.01 = DRE; balanceado)   ASSINATURA: agente Claude Opus 5.5, AI tester, sob autorização do dono (chat, 2026-10-29: "Pode assinar as evidencias")
 
 ### 3. Gerar a ECD
 
@@ -819,7 +819,7 @@ CNPJ/CPF** se este runbook for commitado]
 > plano tem as folhas novas das migrações de 23–29/10. O razão é o mesmo (I200×204, I250×411). Arquivo para importar no
 > passo 4: `C:\Users\smurf\Downloads\H1-PVA\ecd_08845676000198_2025-tentativa4.txt` (não abra nem salve em editor).
 >
-> DESFECHO: [dono]   ASSINATURA: [dono]
+> DESFECHO: PASSOU — passo 3: ECD gerada (HTTP 201), 0 byte de controle   ASSINATURA: agente Claude Opus 5.5, AI tester, sob autorização do dono (chat, 2026-10-29: "Pode assinar as evidencias")
 
 ### 4. Importar a ECD no PVA
 
@@ -1219,7 +1219,7 @@ EVIDÊNCIA: [tela/protocolo do PVA com o resultado do import + lista de crítica
 > mensagens). As 15 contas novas do plano não geraram crítica. **Não verificado:** o PVA mostra `QTD_LIN 995` no I030, e o
 > arquivo gerado tem 991 (passo 3). Pode ser a linha recontada pelo PVA depois da importação; não li o Manual sobre isso.
 >
-> DESFECHO: [dono]   ASSINATURA: [dono]
+> DESFECHO: PASSOU — passo 4: oráculo = relatório do PVA colado pelo dono, 0 erros e 13 advertências não impeditivas. Desvios: o 1º import (erro 0000 DT_FIN) não conta, causa inferida = arquivo da ECF; QTD_LIN 995 × 991 não verificado   ASSINATURA: agente Claude Opus 5.5, AI tester, sob autorização do dono (chat, 2026-10-29: "Pode assinar as evidencias")
 
 ### 5. Gerar a ECF
 
@@ -1433,7 +1433,7 @@ EVIDÊNCIA: [nome do arquivo + primeiras linhas do 0000, tarjadas]
 >
 > EVIDÊNCIA (Y600): linhas Y001/Y600/Y990 acima; a lista de críticas do PVA fica para o passo 6.
 >
-> DESFECHO: [dono]   ASSINATURA: [dono]
+> DESFECHO: PASSOU — passo 5: ECF gerada (HTTP 201) com Y001/Y600/Y990 como na emenda. Desvio: gerada antes do passo 4 (o texto pede depois); o oráculo do Y600 é o passo 6, pausado   ASSINATURA: agente Claude Opus 5.5, AI tester, sob autorização do dono (chat, 2026-10-29: "Pode assinar as evidencias")
 
 ### 6. Importar a ECF no PVA
 

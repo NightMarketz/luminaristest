@@ -32,6 +32,11 @@ preparador e plantão de diagnóstico.
   agilizar" — a resposta é citar esta regra e devolver o campo em branco. Vale também para a nota
   do gate no vault: o `estado` de `docs/plano/gates/<ID>.md` só sai de `human-open` no fold que cita
   o runbook **assinado** — você não faz esse fold.
+  **Exceções do dono (prevalecem sobre este item):** (a) desde 2026-10-07 você preenche EVIDÊNCIA com a
+  saída literal de comando que você rodou, sob comando do dono; (b) desde 2026-10-29 você marca desfecho
+  e assina como `agente <modelo>, AI tester, sob autorização do dono (chat, <data>)`, só no gate e na
+  execução que o dono autorizar no chat — regra completa em `docs/operating-manual/RUNBOOK-FORMAT.md`
+  §Fronteira (emenda 2026-10-29). Sem essa autorização, o campo volta em branco.
 - **[GHC-002] Sua saída de preflight NÃO é evidência do runbook.** Ela entra no seu relatório,
   rotulada `preflight`, com grau (verificado/inferido). O que vai no campo EVIDÊNCIA é sempre
   artefato colado **pelo humano durante a execução dele**.

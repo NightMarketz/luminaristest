@@ -43,7 +43,9 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
   só do dono** — runbook sem assinatura é nulo. Exceção (dono, chat, 2026-10-25): runbook de conferência
   na tela do próprio app, com todos os passos rodados pelo agente — o agente, na persona do revisor e sob
   comando do dono para aquele runbook, marca o desfecho e assina como agente (nunca nome de pessoa);
-  não vale para H1/H2/M2/X1/X2 — regra em `RUNBOOK-FORMAT.md` §Fronteira. Agente não substitui oráculo: a tela, o PVA e o
+  não vale para H1/H2/M2/X1/X2 — regra em `RUNBOOK-FORMAT.md` §Fronteira. Emenda (dono, chat, 2026-10-29): nos
+  cinco gates o agente assina como "AI tester" (nunca nome de pessoa) **só** no gate e na execução que o dono autorizar
+  no chat; a assinatura atesta a execução, não substitui o oráculo (PVA, NF-e, RFB, contador, produção). Agente não substitui oráculo: a tela, o PVA e o
   julgamento do resultado continuam do humano.
 
 ## ⛔ A bancada de auditoria foi DESLIGADA em 2026-08-09 (decisão do dono)
