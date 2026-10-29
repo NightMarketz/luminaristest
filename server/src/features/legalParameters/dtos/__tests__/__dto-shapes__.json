@@ -42,7 +42,8 @@
             "ISS_TRANSICAO",
             "NFCE_LIMITE",
             "INUT_NAO_SE_APLICA",
-            "ICMS_ST_NCM_UF"
+            "ICMS_ST_NCM_UF",
+            "ENCARGO_FOLHA"
           ]
         },
         "chave": {
@@ -146,7 +147,8 @@
             "ISS_TRANSICAO",
             "NFCE_LIMITE",
             "INUT_NAO_SE_APLICA",
-            "ICMS_ST_NCM_UF"
+            "ICMS_ST_NCM_UF",
+            "ENCARGO_FOLHA"
           ]
         },
         "status": {
@@ -233,7 +235,8 @@
             "ISS_TRANSICAO",
             "NFCE_LIMITE",
             "INUT_NAO_SE_APLICA",
-            "ICMS_ST_NCM_UF"
+            "ICMS_ST_NCM_UF",
+            "ENCARGO_FOLHA"
           ]
         },
         "chave": {
