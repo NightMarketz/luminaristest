@@ -2988,7 +2988,15 @@
       "SEM_NCM": "Resale without NCM on the product profile",
       "SEGREGACAO_DIVERGE": "Manual segregation differs from the NCM",
       "SEGREGACAO_INDEVIDA": "Single-phase segregation not backed by the NCM",
-      "ICMS_ST_NAO_CONFERIDA": "ICMS-ST not verified for the NCM"
+      "ICMS_ST_NAO_CONFERIDA": "ICMS-ST not verified for the NCM",
+      "PARCERIA_COTA_SEM_CONTRATO": "Partner share without a contract in effect",
+      "PARCERIA_SEM_COTA": "Partnership in effect with no share this month",
+      "PARCEIRO_SEM_CNPJ": "Partner professional without a declared CNPJ",
+      "PARCERIA_CHECKLIST_INCOMPLETO": "Partnership clause not declared",
+      "INTERDEPENDENCIA_SOCIO": "Partner's stake that bars Simples",
+      "INTERDEPENDENCIA_RECEITA_NAO_INFORMADA": "Revenue of the partner's other company not informed",
+      "PROJECAO_LIMITE_EPP": "Year projection near the EPP limit",
+      "PROJECAO_SUBLIMITE_ICMS_ISS": "Year projection near the ICMS/ISS sublimit"
     },
     "alertas": {
       "title": "Alerts"

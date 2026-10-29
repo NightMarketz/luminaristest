@@ -2988,7 +2988,15 @@
       "SEM_NCM": "Revenda sem NCM no perfil do produto",
       "SEGREGACAO_DIVERGE": "Segregação manual diverge da NCM",
       "SEGREGACAO_INDEVIDA": "Segregação monofásica sem NCM que a sustente",
-      "ICMS_ST_NAO_CONFERIDA": "ICMS-ST não conferido para a NCM"
+      "ICMS_ST_NAO_CONFERIDA": "ICMS-ST não conferido para a NCM",
+      "PARCERIA_COTA_SEM_CONTRATO": "Cota do parceiro sem contrato em efeito",
+      "PARCERIA_SEM_COTA": "Parceria em efeito sem cota no mês",
+      "PARCEIRO_SEM_CNPJ": "Profissional-parceiro sem CNPJ declarado",
+      "PARCERIA_CHECKLIST_INCOMPLETO": "Cláusula da parceria não declarada",
+      "INTERDEPENDENCIA_SOCIO": "Sócio com participação que veda o Simples",
+      "INTERDEPENDENCIA_RECEITA_NAO_INFORMADA": "Receita da outra empresa do sócio não informada",
+      "PROJECAO_LIMITE_EPP": "Projeção do ano perto do limite da EPP",
+      "PROJECAO_SUBLIMITE_ICMS_ISS": "Projeção do ano perto do sublimite do ICMS/ISS"
     },
     "alertas": {
       "title": "Alertas"

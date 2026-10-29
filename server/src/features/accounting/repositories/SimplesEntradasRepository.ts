@@ -1,5 +1,5 @@
 import prisma from '../../../lib/prisma';
-import type { Prisma, SalaoParceriaContrato, SimplesHistoricoMensal, SimplesSegregacaoManual } from 'generated/prisma';
+import { Prisma, type SalaoParceriaContrato, type SimplesHistoricoMensal, type SimplesSegregacaoManual } from 'generated/prisma';
 import { accountingScopeWhere, type AccountingScope } from '../scope/AccountingScope';
 import type { HistoricoData, ISimplesEntradasRepository, ParceriaData } from './ISimplesEntradasRepository';
 
@@ -40,13 +40,13 @@ export class SimplesEntradasRepository implements ISimplesEntradasRepository {
 
   public async createParceria(scope: AccountingScope, data: ParceriaData, tx?: Prisma.TransactionClient): Promise<SalaoParceriaContrato> {
     return (tx ?? prisma).salaoParceriaContrato.create({
-      data: { ...accountingScopeWhere(scope), ...data, createdById: scope.actorUserId, updatedById: scope.actorUserId },
+      data: { ...accountingScopeWhere(scope), ...parceriaColunas(data), createdById: scope.actorUserId, updatedById: scope.actorUserId },
     });
   }
 
   public async updateParceria(scope: AccountingScope, id: string, data: Partial<ParceriaData>, tx?: Prisma.TransactionClient): Promise<SalaoParceriaContrato> {
     const c = tx ?? prisma;
-    await c.salaoParceriaContrato.updateMany({ where: { id, ...accountingScopeWhere(scope), deletedAt: null }, data: { ...data, updatedById: scope.actorUserId } });
+    await c.salaoParceriaContrato.updateMany({ where: { id, ...accountingScopeWhere(scope), deletedAt: null }, data: { ...parceriaColunas(data), updatedById: scope.actorUserId } });
     return c.salaoParceriaContrato.findFirstOrThrow({ where: { id, ...accountingScopeWhere(scope) } });
   }
 
@@ -86,4 +86,11 @@ export class SimplesEntradasRepository implements ISimplesEntradasRepository {
   public async findHistoricoTx(scope: AccountingScope, competencias: readonly string[], tx: Prisma.TransactionClient): Promise<SimplesHistoricoMensal[]> {
     return this.findHistorico(scope, competencias, tx);
   }
+}
+
+/** Coluna Json anulável: `null` do DTO vira `Prisma.DbNull` (o Prisma recusa `null` cru em Json); ausente fica fora. */
+function parceriaColunas<T extends Partial<ParceriaData>>(data: T): Omit<T, 'checklistDeclarado'> & { checklistDeclarado?: Prisma.InputJsonValue | typeof Prisma.DbNull } {
+  const { checklistDeclarado, ...resto } = data;
+  if (checklistDeclarado === undefined) return resto;
+  return { ...resto, checklistDeclarado: checklistDeclarado === null ? Prisma.DbNull : (checklistDeclarado as Prisma.InputJsonValue) };
 }
