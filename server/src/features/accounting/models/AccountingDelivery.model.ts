@@ -38,6 +38,8 @@ export const DELIVERABLE_EXPORT_KINDS = [
   'EXPORT_ISS_BY_COMPETENCE',
   // IBS-CBS-2027 PR-5 (BRIEF item 24): a memória das apurações de IBS/CBS entra como extra do pacote.
   'EXPORT_IBS_CBS_MEMO',
+  // EFICIENCIA-FISCAL PR-4 (BRIEF item 23; ADR D9): o relatório de economia entra como extra do pacote, para a assinatura.
+  'EXPORT_ECONOMIA_FISCAL',
   // EFD-REINF PR-3 (BRIEF item 22): o XML do lote da Reinf e o relatório de conferência entram como extras do pacote.
   'EXPORT_REINF',
   'EXPORT_REINF_RELATORIO',

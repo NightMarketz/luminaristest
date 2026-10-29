@@ -269,6 +269,8 @@ import { SalesCancellationService } from '../features/sales/services/SalesCancel
 import { RegisterPaymentService } from '../features/sales/services/RegisterPaymentService';
 import { SaleFiscalGuardService } from '../features/sales/services/SaleFiscalGuardService'; // EFICIENCIA-FISCAL PR-1
 import { TaxOptimizationService } from '../features/accounting/services/TaxOptimizationService'; // EFICIENCIA-FISCAL PR-1
+import { TaxOptimizationReportService } from '../features/accounting/services/TaxOptimizationReportService'; // EFICIENCIA-FISCAL PR-4
+import { loadUnconditionalDiscountCents } from '../features/accounting/sync/bridges/saleItems'; // EFICIENCIA-FISCAL PR-4
 import { TaxOptimizationRepository } from '../features/accounting/repositories/TaxOptimizationRepository'; // EFICIENCIA-FISCAL PR-1
 import type { ITaxOptimizationRepository } from '../features/accounting/repositories/ITaxOptimizationRepository';
 import { PresetSyncService } from '../features/dynamicTables/services/PresetSyncService';
@@ -946,6 +948,7 @@ export class ApplicationFactory {
     productFiscalProfile: ProductFiscalProfileService; // BE-INCR-NFCE item 10
     issBeneficioMunicipal: IssBeneficioMunicipalService; // SIMPLES-PISO-ANEXO-XI bloco 1
     taxOptimization: TaxOptimizationService; // EFICIENCIA-FISCAL PR-1
+    taxOptimizationReport: TaxOptimizationReportService; // EFICIENCIA-FISCAL PR-4
     productDestination: ProductDestinationService; // ITEM-DESTINATION PR-2
     companyFiscalProfile: CompanyFiscalProfileService; // X13
     companySigner: CompanySignerService; // X13
@@ -1667,6 +1670,15 @@ export class ApplicationFactory {
       productFiscalProfile: productFiscalProfileService,
       issBeneficioMunicipal: new IssBeneficioMunicipalService(this.repositories.issBeneficioMunicipal, this.policies.accounting, auditService),
       taxOptimization: taxOptimizationService, // EFICIENCIA-FISCAL PR-1
+      // EFICIENCIA-FISCAL PR-4 (itens 22–23): relatório de economia. A medida vem da apuração do Simples, montada mais abaixo
+      // neste literal — leitura tardia por closure.
+      taxOptimizationReport: new TaxOptimizationReportService(
+        this.repositories.taxOptimization,
+        this.repositories.receitaFiscal,
+        { medidaDaApuracao: (scope, competencia) => this.services.simplesApuracao.medidaDaApuracao(scope, competencia) },
+        { descontoIncondicionalCents: loadUnconditionalDiscountCents },
+        this.policies.accounting,
+      ),
       // ITEM-DESTINATION PR-2 (item 17, F-ID-2 a): destinação padrão por produto — a mesma porta de existência
       // de produto do LAC-E (reuso), sob a policy fiscal.
       productDestination: new ProductDestinationService(
@@ -1829,6 +1841,9 @@ export class ApplicationFactory {
         this.repositories.fiscalDocument,
         legalParameterService, // fotografia LC116_SERVICO: município do ISS pelo li (LC 116 art. 3º)
         this.repositories.consumptionTaxAssessment, // IBS-CBS-2027 PR-5 (item 24): EXPORT_IBS_CBS_MEMO
+        // EFICIENCIA-FISCAL PR-4 (item 23): EXPORT_ECONOMIA_FISCAL. Leitura tardia: o serviço do relatório depende da
+        // apuração do Simples, montada mais abaixo neste mesmo literal.
+        { relatorio: (scope, competencia) => this.services.taxOptimizationReport.relatorio(scope, competencia) },
       ),
       dataExchangeImport: new DataExchangeImportService(
         this.repositories.dataExchange,
@@ -2015,6 +2030,7 @@ export class ApplicationFactory {
         sourceDocumentUploadService, // BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-9 a: o PDF do DAS na visão
         this.repositories.receitaFiscalRecebimento, // X14-CAIXA PR-2 item 8: recebimentos, base do caixa
         this.repositories.productFiscalProfile, // EFICIENCIA-FISCAL PR-2 item 13: avisos SEM_NCM e ICMS_ST_NAO_CONFERIDA
+        this.repositories.partner, // EFICIENCIA-FISCAL PR-4 item 20: aviso de interdependência pelos sócios
       ),
       // BE-INCR-SIMPLES-NACIONAL PR-4 (nó X14, itens 27–28): espelhos DASN-SIMEI e DEFIS.
       simplesDeclaracao: new SimplesDeclaracaoService(
@@ -2529,6 +2545,7 @@ export class ApplicationFactory {
   public getProductFiscalProfileService = (): ProductFiscalProfileService => this.services.productFiscalProfile;
   public getIssBeneficioMunicipalService = (): IssBeneficioMunicipalService => this.services.issBeneficioMunicipal;
   public getTaxOptimizationService = (): TaxOptimizationService => this.services.taxOptimization;
+  public getTaxOptimizationReportService = (): TaxOptimizationReportService => this.services.taxOptimizationReport;
   public getProductDestinationService = (): ProductDestinationService => this.services.productDestination;
   public getCompanyFiscalProfileService = (): CompanyFiscalProfileService => this.services.companyFiscalProfile;
   public getCompanySignerService = (): CompanySignerService => this.services.companySigner;

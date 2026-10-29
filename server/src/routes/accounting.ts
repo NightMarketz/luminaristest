@@ -212,6 +212,7 @@ import {
   listServiceCosts,
   listTaxSuggestions,
   rejectTaxSuggestion,
+  getTaxOptimizationReport,
   updateTaxOptimizationPolicy,
 } from '../controllers/taxOptimizationController';
 import {
@@ -435,6 +436,7 @@ router.delete('/tax-optimization/service-costs/:id', deleteServiceCost);
 router.get('/tax-optimization/suggestions', listTaxSuggestions);
 router.post('/tax-optimization/suggestions/:id/accept', acceptTaxSuggestion);
 router.post('/tax-optimization/suggestions/:id/reject', rejectTaxSuggestion);
+router.get('/tax-optimization/report', getTaxOptimizationReport); // EFICIENCIA-FISCAL PR-4 item 23
 // ITEM-DESTINATION PR-2 (BRIEF item 18, F-ID-2 a) — destinação padrão por produto
 router.get('/product-destinations', listProductDestinations);
 router.put('/product-destinations', upsertProductDestination);

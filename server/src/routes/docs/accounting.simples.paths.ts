@@ -135,6 +135,16 @@
  *                 sindicato:             { type: string, minLength: 1, maxLength: 200 }
  *                 vigenteDesde:          { type: string, format: date }
  *                 vigenteAte:            { type: string, format: date, nullable: true }
+ *                 profissionalCnpj:      { type: string, nullable: true, description: 'EFICIENCIA-FISCAL PR-4 item 19 — declared; 14 positions, check digit validated. Missing ⇒ PARCEIRO_SEM_CNPJ alert' }
+ *                 checklistDeclarado:
+ *                   type: object
+ *                   nullable: true
+ *                   description: 'EFICIENCIA-FISCAL PR-4 item 19 — P-EF-9 clause, declared. Any item other than SIM ⇒ PARCERIA_CHECKLIST_INCOMPLETO alert'
+ *                   required: [clausulaLocacaoBemMovel, clausulaCusteio, nfseEmitidaPeloParceiro]
+ *                   properties:
+ *                     clausulaLocacaoBemMovel: { type: string, enum: [SIM, NAO, NAO_INFORMADO] }
+ *                     clausulaCusteio:         { type: string, enum: [SIM, NAO, NAO_INFORMADO] }
+ *                     nfseEmitidaPeloParceiro: { type: string, enum: [SIM, NAO, NAO_INFORMADO] }
  *       responses:
  *         '201': { description: 'SalaoParceriaContratoView' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
@@ -180,6 +190,16 @@
  *                 sindicato:             { type: string, minLength: 1, maxLength: 200 }
  *                 vigenteDesde:          { type: string, format: date }
  *                 vigenteAte:            { type: string, format: date, nullable: true }
+ *                 profissionalCnpj:      { type: string, nullable: true, description: 'EFICIENCIA-FISCAL PR-4 item 19 — declared; 14 positions, check digit validated. Missing ⇒ PARCEIRO_SEM_CNPJ alert' }
+ *                 checklistDeclarado:
+ *                   type: object
+ *                   nullable: true
+ *                   description: 'EFICIENCIA-FISCAL PR-4 item 19 — P-EF-9 clause, declared. Any item other than SIM ⇒ PARCERIA_CHECKLIST_INCOMPLETO alert'
+ *                   required: [clausulaLocacaoBemMovel, clausulaCusteio, nfseEmitidaPeloParceiro]
+ *                   properties:
+ *                     clausulaLocacaoBemMovel: { type: string, enum: [SIM, NAO, NAO_INFORMADO] }
+ *                     clausulaCusteio:         { type: string, enum: [SIM, NAO, NAO_INFORMADO] }
+ *                     nfseEmitidaPeloParceiro: { type: string, enum: [SIM, NAO, NAO_INFORMADO] }
  *       responses:
  *         '200': { description: 'SalaoParceriaContratoView' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }

@@ -162,7 +162,7 @@ describe('ExportRequestSchema — listas fechadas', () => {
             ? { accountCode: '1.1.1' }
             : kind === 'EXPORT_TEMPLATE'
               ? { templateKind: 'IMPORT_CHART_OF_ACCOUNTS' as const }
-              : kind === 'EXPORT_BANK_RECONCILIATION' || kind === 'EXPORT_TAX_ASSESSMENT_MEMO' || kind === 'EXPORT_ISS_BY_COMPETENCE' || kind === 'EXPORT_IBS_CBS_MEMO'
+              : kind === 'EXPORT_BANK_RECONCILIATION' || kind === 'EXPORT_TAX_ASSESSMENT_MEMO' || kind === 'EXPORT_ISS_BY_COMPETENCE' || kind === 'EXPORT_IBS_CBS_MEMO' || kind === 'EXPORT_ECONOMIA_FISCAL'
                 ? { periodStart: '2026-01-01', periodEnd: '2026-01-31' }
                 : kind === 'EXPORT_ENTRY_SAMPLE'
                   ? { periodStart: '2026-01-01', periodEnd: '2026-01-31', seed: 'seed-1' }
