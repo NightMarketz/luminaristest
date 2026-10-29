@@ -21,5 +21,8 @@ export default defineConfig({
     include: ['**/*.{test,spec}.{ts,tsx}'],
     exclude: ['node_modules', '.next', 'e2e'],
     css: false,
+    // Sem teto, o vitest abre ~1 worker jsdom por núcleo; somado a outras sessões testando, esgota a RAM
+    // e trava o PC (medido 29/10). Mesmo teto do jest do server.
+    maxWorkers: '25%',
   },
 });

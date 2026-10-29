@@ -1,6 +1,7 @@
 import type { CompanyFiscalProfile, ReinfBatch } from 'generated/prisma';
 import { ForbiddenError, NotFoundError, ReinfNadaAGerarError, ValidationError } from '../../../lib/errors';
 import { isValidCnpj } from '../../../lib/cnpj';
+import { logger } from '../../../lib/logger';
 import { createHash } from 'node:crypto';
 import { prazoReinfIsentos, prazoReinfMensal } from '../../../lib/prazoReinf';
 import {
@@ -229,6 +230,18 @@ export class ReinfService {
         });
       }
       return criado;
+    }).catch(async (error: unknown) => {
+      // Achado 10 (dono, 29/10; molde da Lacuna 10 do `DataExchangeExportService.export`): os arquivos já existem e o
+      // rollback desfez o EXPORTED — sem isto os 2 jobs ficariam PROCESSING para sempre. FAILED fora da tx que falhou,
+      // best-effort por job; o erro original sempre relançado (OBS-R5: a borda o registra).
+      for (const j of [jobXml, jobCsv]) {
+        try {
+          await this.artefatos.jobs.updateJob(scope, j.id, { status: 'FAILED' });
+        } catch (compensationError) {
+          logger.error('reinf: falha ao marcar FAILED depois da tx — job fica PROCESSING', { jobId: j.id, kind: j.kind, error: compensationError });
+        }
+      }
+      throw error;
     });
 
     return { batchId: row.id, sha256: lote.sha256, xml: lote.xml, relatorio, exportJobIds: { xml: jobXml.id, relatorio: jobCsv.id } };
