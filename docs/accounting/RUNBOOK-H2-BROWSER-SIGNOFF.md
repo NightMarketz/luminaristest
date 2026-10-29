@@ -219,6 +219,17 @@ Pré-condições (verificar antes de começar):
    Resultado esperado: veredicto consciente do executor.
    EVIDÊNCIA: [uma frase por tela inspecionada OU "sem ressalvas"]
 
+   > **Execução 2026-10-29.** Releitura do **dono**, no chat, depois de ver as telas dos passos 1–4 no painel. Texto literal:
+   >
+   > ```text
+   > Loguei, sem ressalvas
+   > ```
+   >
+   > O achado do passo 4 continua registrado (o recibo em PT mostra o status "Posted" em inglês). É um rótulo e não foi
+   > corrigido nesta sessão. O dono decide se ele vira ressalva no desfecho.
+   >
+   > DESFECHO: [dono]   ASSINATURA: [dono]
+
 ---
 
 ### [EMENDA 2026-08-22] Passos 6–11 — fluxo de salão pós-swap (intérprete `SALON_BINDING_V1`, `04582d8a`/PR #211)
@@ -301,6 +312,139 @@ Pré-condições (verificar antes de começar):
     EVIDÊNCIA: [print do console final (sem erros) + saída do comando jest acima (verde) +
     confirmação linha-a-linha dos lançamentos dos passos 6–10, ou divergência registrada em
     Achados]
+
+> **Execução 2026-10-29 — passos 6 a 11.** Feita pelo agente sob comando do dono no chat (29/10: *"Autorizo executar os
+> runbooks"*). O dono logou `seed-presumido` no painel do navegador embutido, e o agente clicou cada ação na tela de vendas
+> (Financeiro → Vendas, build de produção de `455c1a45`, `127.0.0.1:3100`, unidade `seed-unit-presumido` =
+> `cmuw4yqxg001jcii0iz2yb9rw`, binding `beautySalon` v2 `Active`). Cada venda seguiu a EMENDA 2026-10-05: **Salvar
+> Rascunho** no modal Nova Venda e depois **Finalizar** → "Confirmar finalização" na lista. O razão foi lido no `dev.db` real,
+> só leitura, depois de cada ação.
+>
+> **Preparação (não é evidência de passo).** Backup `server/prisma/prisma/dev-20261029-pre-h2-p6.db` (9.895.936 bytes,
+> sha256 `e23f4060d526715f7ac396f4b06191fb253ceadd5406b6f865fdce16a9198f99`, `integrity_check` ok), feito pela cópia online do
+> SQLite antes do passo 6. A unidade estava sem catálogo (0 serviços, produtos, pacotes, clientes e vendas), então o catálogo
+> H2 foi criado pela API do build com o login do seed:
+>
+> ```text
+> POST customers → HTTP 201 | id cmvtxuu6b000pci9c3yk4b6n2 | {"name":"Cliente H2","email":"cliente.h2@example.com","mainUnitId":"cmuw4yqxg001jcii0iz2yb9rw"}
+> POST services → HTTP 201 | id cmvtxuu71000tci9chpnj578o | {"name":"Corte H2","category":"Cabelo","price":80,"duration":30,"isActive":true}
+> POST products → HTTP 201 | id cmvtxuu7l000xci9crbmlvkqu | {"name":"Shampoo H2","usageType":"Sale","sku":"H2-SHAMPOO"}
+> POST packages → HTTP 201 | id cmvtxuu8f0015ci9c87vo9g6f | {"name":"Pacote H2","price":300,"validityDays":365,"active":true}
+> ```
+>
+> O estoque com custo entrou **pela tela**, em Contas a Pagar → Nova Conta → "Compra de estoque", com Shampoo H2, 10 un.,
+> R$ 200,00 e NF H2-NF-1. Resultado: título `OPEN` de 20000 centavos, `inventory_items` com qtd 10 e valor 20000 (custo de
+> R$ 20,00/un.), `productUnits.stock` 10 e o lançamento 2026/0171 (abaixo).
+>
+> **Vendas na tela** (lista de vendas, saída literal do `dev.db`):
+>
+> ```text
+> cmvtxzxnq001uci9chnle6uoe 2026-10-29 Returned Pending Pix 80               ← passo 6 (só serviço) e passo 9 (devolução)
+> cmvty32ke002gci9c3ly0x5sj 2026-10-29 Finalized Paid Cash 300              ← passo 7 (pacote) e passo 10 (Dinheiro)
+> cmvty55ma0035ci9ciymrduie 2026-10-29 Finalized Paid Pix 50                ← passo 8 (produto) e passo 10 (Pix)
+> cmvtya7g00057ci9cidoityjv 2026-10-29 Finalized Paid Package Balance 80    ← passo 10 (saldo de pacote)
+> ```
+>
+> **Razão** (`journal_entries` + `postings`, só leitura, todos os lançamentos criados na sessão; valores em centavos; o "date" é
+> o dia escrito 29/10/2026, gravado como 00:00 UTC, e a tela mostra 29/10/2026):
+>
+> ```text
+> lançamento 2026/0171 | ap.payable cmvtxwdiz0019ci9ckprvb3ze | Posted | binding vNone | criado 2026-10-29T19:31:59.518Z
+>    D 1.1.3.01 Estoques | 20000                     C 2.1.2.01 Fornecedores a Pagar | 20000
+> lançamento 2026/0172 | sale.finalized cmvtxzxnq001uci9chnle6uoe | Posted | reversedBy - | binding v2 | criado 2026-10-29T19:35:24.832Z
+>    D 1.1.2.01 A Receber | 8000                     C 3.1 Receita de Serviços | 8000
+> lançamento 2026/0173 | sale.package.sold cmvty32ke002gci9c3ly0x5sj | Posted | binding v2 | criado 2026-10-29T19:37:29.775Z
+>    D 1.1.2.01 A Receber | 30000                    C 2.1.1.01 Pacotes Pré-pagos | 30000
+> lançamento 2026/0174 | sale.finalized cmvty55ma0035ci9ciymrduie | Posted | binding v2 | criado 2026-10-29T19:39:05.938Z
+>    D 1.1.2.01 A Receber | 5000                     C 3.3 Receita de Revenda de Mercadorias | 5000
+> lançamento 2026/0175 | sale.cogs cmvty55ma0035ci9ciymrduie | Posted | binding v2 | criado 2026-10-29T19:39:05.972Z
+>    D 4.2 Custo das Mercadorias Vendidas | 2000     C 1.1.3.01 Estoques | 2000
+> lançamento 2026/0176 | sale.returned cmvtxzxnq001uci9chnle6uoe | Posted | reversedBy - | binding v2 | criado 2026-10-29T19:39:49.583Z
+>    D 3.2 Devoluções de Vendas | 8000               C 1.1.2.01 A Receber | 8000
+> lançamento 2026/0177 | sale.settled cmvty55ma0035ci9ciymrduie (Pix) | Posted | binding v2 | criado 2026-10-29T19:40:54.499Z
+>    D 1.1.1.01 Banco | 5000                         C 1.1.2.01 A Receber | 5000
+> lançamento 2026/0178 | sale.settled cmvty32ke002gci9c3ly0x5sj (Dinheiro) | Posted | binding v2 | criado 2026-10-29T19:41:23.995Z
+>    D 1.1.1.02 Caixa | 30000                        C 1.1.2.01 A Receber | 30000
+> lançamento 2026/0179 | sale.finalized cmvtya7g00057ci9cidoityjv | Posted | binding v2 | criado 2026-10-29T19:43:09.925Z
+>    D 1.1.2.01 A Receber | 8000                     C 3.1 Receita de Serviços | 8000
+> lançamento 2026/0180 | sale.settled cmvtya7g00057ci9cidoityjv (Saldo de pacote) | Posted | binding v2 | criado 2026-10-29T19:43:56.780Z
+>    D 2.1.1.01 Pacotes Pré-pagos | 8000             C 1.1.2.01 A Receber | 8000
+> ```
+>
+> Leitura linha a linha (o agente compara com o roteiro e com o binding v2; os códigos do binding v2 são subcontas, ex.:
+> 1.1.2 → 1.1.2.01, 1.1.3 Caixa → 1.1.1.02, 1.1.6 Estoques → 1.1.3.01):
+>
+> - **Passo 6** (só serviço, R$ 80): 2026/0172 tem D 1.1.2.01 e C 3.1, de 8000 cada, e **nenhuma linha 3.3**. Prints:
+>   [`passo6-01-nova-venda-servico.jpg`](runbook-evidence/H2-2026-10-29/passo6-01-nova-venda-servico.jpg),
+>   [`passo6-02-venda-finalizada.jpg`](runbook-evidence/H2-2026-10-29/passo6-02-venda-finalizada.jpg).
+> - **Passo 7** (pacote, R$ 300): 2026/0173 tem D 1.1.2.01 e C 2.1.1.01 (passivo), de 30000 cada, sem receita.
+>   `customer_package_balances` = 30000, com vencimento em 29/10/2027 (aceite da validade marcado na tela,
+>   `POST /api/package-acceptances` → 201). Print: [`passo7-01-nova-venda-pacote.jpg`](runbook-evidence/H2-2026-10-29/passo7-01-nova-venda-pacote.jpg).
+> - **Passo 8** (produto, R$ 50, custo R$ 20): foram **dois** lançamentos. 2026/0174 tem D 1.1.2.01 e C 3.3, de 5000. 2026/0175
+>   é a CMV, D 4.2 e C 1.1.3.01, de **2000 = custo cadastrado** (não o preço de 5000). O estoque foi de 10/20000 para 9/18000, com
+>   `stock_movements` COGS −1/−2000. Print: [`passo8-01-nova-venda-produto.jpg`](runbook-evidence/H2-2026-10-29/passo8-01-nova-venda-produto.jpg),
+>   [`passo7-8-vendas-finalizadas.jpg`](runbook-evidence/H2-2026-10-29/passo7-8-vendas-finalizadas.jpg).
+>   **Desvio do roteiro:** a venda não teve serviço junto, então não houve C 3.1 + C 3.3 no mesmo lançamento. O modal Nova
+>   Venda tem um tipo só por venda (Produtos | Serviços | Pacotes; `useSalesCreateForm.ts:177` define o `type` do item pela
+>   variante — verificado no código). A venda mista não sai desta tela, e o split misto fica coberto só pelo golden test
+>   ("finalized: split misto 100/100").
+> - **Passo 9** (devolução da venda do passo 6): 2026/0176 é **novo** (`sale.returned`), com D 3.2 e C 1.1.2.01 de 8000. O original
+>   2026/0172 continua `('Posted', reversedById None, version 1, updatedAt 1793302524832)`, e esse `updatedAt` é igual ao
+>   instante de criação (19:35:24.832Z). Print: [`passo9-01-devolucao.jpg`](runbook-evidence/H2-2026-10-29/passo9-01-devolucao.jpg).
+> - **Passo 10** (três meios, pelo botão "Pagar" → "Registrar pagamento"): Pix → 2026/0177 com D 1.1.1.01 Banco. Dinheiro →
+>   2026/0178 com D 1.1.1.02 Caixa. **Saldo de pacote → 2026/0180 com D 2.1.1.01 Pacotes Pré-pagos, sem conta de caixa ou banco.**
+>   O saldo foi de 30000 para 22000 (`package_balance_movements` debit 8000, venda `cmvtya7g…`). Cartão não foi testado; o roteiro
+>   pede "Pix ou Cartão". Prints: [`passo10-01-pagamento-pix.jpg`](runbook-evidence/H2-2026-10-29/passo10-01-pagamento-pix.jpg),
+>   [`passo10-02-pagamento-dinheiro.jpg`](runbook-evidence/H2-2026-10-29/passo10-02-pagamento-dinheiro.jpg),
+>   [`passo10-03-pagamento-saldo-pacote.jpg`](runbook-evidence/H2-2026-10-29/passo10-03-pagamento-saldo-pacote.jpg),
+>   [`passo10-04-lancamento-0180-saldo-pacote.jpg`](runbook-evidence/H2-2026-10-29/passo10-04-lancamento-0180-saldo-pacote.jpg).
+> - **Passo 11:** a aba Lançamentos mostra 2026/0171–0180, todos "Postado", com data 29/10/2026
+>   ([`passo11-01-lancamentos-0171-0180.jpg`](runbook-evidence/H2-2026-10-29/passo11-01-lancamentos-0171-0180.jpg)).
+>   **Console:** `read_console_messages` (só erros) devolve **1** entrada, `Failed to load resource: the server responded with
+>   a status of 400 (Bad Request)`, e ela já estava lá antes do primeiro clique do passo 6. Nenhuma requisição desta página
+>   respondeu ≥400 (`performance` e o Network do painel, últimas 50). A origem do 400 não foi identificada, e o console **não**
+>   está limpo. Golden test no worktree (`81c0f409`; `git diff 455c1a45..HEAD -- server/src/features/accountingBinding
+>   server/src/features/accounting/sync` vazio, logo o mesmo código do intérprete do build). Saída literal:
+>
+> ```text
+> $ cd server && npx jest src/features/accountingBinding/__tests__/goldenPhase1.test.ts
+> PASS unit src/features/accountingBinding/__tests__/goldenPhase1.test.ts
+>   golden Fase 1 — mapper-à-mão vs. InterpretedEventMapper+binding-do-salão (pós-P1, pré-swap)
+>     √ finalized: sem breakdown — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte) (2 ms)
+>     √ finalized: split misto 100/100 — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ finalized: rateio de desconto de header (180 sobre itens 100+100) — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ finalized: resíduo de arredondamento 1:2 sobre 10001¢ — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ finalized: só-serviço (sem linha 3.3 zerada) — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ finalized: só-produto (sem linha 3.1 zerada) — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte) (1 ms)
+>     √ finalized: idempotência preservada sob split — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ finalized: arredondamento round-half-up no limite (0,005) — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ settled: Cash — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ settled: Pix — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte) (1 ms)
+>     √ settled: Debit Card — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ settled: Credit Card — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ settled: Package Balance — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ returned: base — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ packageSold: base — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ cogs: base — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ cogs: fronteira MAX_CENTS — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ cobre exatamente os mesmos 17 casos de goldenPhase0.test.ts (nenhum a mais/a menos sem revisão)
+> Test Suites: 1 passed, 1 total
+> Tests:       18 passed, 18 total
+> [exited with code 0]
+> ```
+>
+> **Achados da tela** (rótulo e fluxo, não corrigidos):
+> - (A) Na lista de vendas, a venda **Devolvida** ainda mostra o botão "Finalizar" (verificado no DOM, linha "Devolvida
+>   Pendente R$ 80,00"). O agente não clicou nele, e não se sabe o efeito.
+> - (B) No "Registrar pagamento" com Saldo de pacote, a opção do pacote mostra "Pacote cmvtxuu8 — saldo R$ 300,00 …", um pedaço
+>   do ID, em vez do nome "Pacote H2".
+> - (C) A dica do modal de compra de estoque diz "Debita 1.1.6 Estoques", mas o lançamento real debita **1.1.3.01** Estoques
+>   (plano do binding v2).
+> - (D) O preço do serviço não vem do catálogo ao escolher o serviço; ele é digitado (`SaleItemsManager.tsx:198`, por desenho
+>   do código). O campo de preço lê "8000" como R$ 8.000,00: quem digita em centavos erra por 100×.
+> - (E) O botão "Próximo" do modal Nova Venda vira "Salvar Rascunho" no mesmo lugar, e um clique duplo grava o rascunho.
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
 
 ---
 
