@@ -29,6 +29,8 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
   (transporta branch revisada, não melhora). **Toda uma exige autorização citável do dono** (ORCH-006; no vault, o campo `autorizacao` da nota
   do nó — vazio não roteia, e o texto limita o escopo: "só ADR"/"sem 'executa'" não autoriza código),
   recusa o que não é dela, e trata campo com placeholder como decisão não coberta.
+  **Desde 28/10 o `executa` vale para o BRIEF inteiro** (todos os PR-0..PR-n, BRIEF ratificado e sem fork
+  pendente; fork novo para o nó e vira pergunta) — `docs/plano/decisoes/D-2026-10-28-FLUXO-AUTONOMO.md`.
   **O uso é pela natureza do trabalho, não pela frase-gatilho:** tarefa autorizada que É planejar /
   implementar spec / instrumentar lacuna / corrigir lacuna / integrar branch **roda pela sessão**
   (invoque a skill e trabalhe pelo formulário) — executar esses tipos de mão livre é violação de
@@ -57,6 +59,8 @@ lê o código como o `tsc`; não reabre bancada, rodada nem revisor. Idem (dono,
 `PRE-ADR-OBSERVABILIDADE.md`): `no-console` no ESLint do server, no job de lint que já roda. Idem (dono,
 2026-10-23, F-OBS-13/14 de `ADR-OBSERVABILIDADE.md`): `catch` silencioso no ESLint do server (com o ledger de
 dívida que já existe) e o teste que descobre `jobs/*Scheduler.ts` e reprova scheduler sem caso de alerta.
+Idem (dono, 2026-10-28, `D-2026-10-28-FLUXO-AUTONOMO`): o `revisor-independente` roda **só em PR vermelho**
+(`scripts/classe-risco.mjs`), antes do lote de merge do dono.
 
 **Citação a `docs/audit/**` em comentário de teste, ADR ou doc é HISTÓRICA** — o caminho não existe
 mais; use `git show b617d8f1:<caminho>` se precisar.
@@ -115,9 +119,12 @@ morde só no código solto; em dúvida, **o contrato prevalece**.
 - Pausa > 60 min com contexto > 150k → retome em sessão nova a partir do handoff.
 - Arquivo grande já lido e não editado → não releia; cite o trecho que está no contexto.
 
-## Merge só com PR nomeado
-Autorização genérica ("mergeia tudo", "os PRs com CI verde", "executa") **não** autoriza merge: liste os PRs
-(número · título · fiscal/contábil? · CI · revisão) e espere o dono confirmar por número. "Executar" não inclui mergear.
+## Merge por classe de risco (dono, 2026-10-28)
+`node scripts/classe-risco.mjs pr <n>` decide. **Verde** → a sessão maestro (`.claude/prompts/maestro.md`) mergeia
+sozinha (squash) com todos os checks verdes, sem conflito e fora de draft. **Vermelho** → revisor-independente e
+depois o **lote diário**: liste os PRs (número · título · motivo do vermelho · CI · veredito do revisor) e espere o
+dono confirmar por número. Fora da maestro, nenhuma sessão mergeia, nem verde. Regra em
+`docs/plano/decisoes/D-2026-10-28-FLUXO-AUTONOMO.md`.
 
 ## Gates de envio [OPS-001] — antes de fechar resposta/relatório/PR
 
