@@ -5,7 +5,7 @@ import type { IPartnerRepository, PartnerData } from '../repositories/IPartnerRe
 import type { IProfitDistributionRepository } from '../repositories/IProfitDistributionRepository';
 import type { IInterestOnEquityRepository } from '../repositories/IInterestOnEquityRepository';
 import type { AuditService } from './AuditService';
-import type { CreatePartnerInput } from '../dtos/PartnerDto';
+import type { CreatePartnerInput, OutraParticipacao } from '../dtos/PartnerDto';
 import type { Partner, Prisma } from 'generated/prisma';
 import { scopeToday } from '../models/dates';
 import { PARTICIPACAO_TOTAL_BP, somaParticipacaoBp, tipoPessoaDe, vigenciasSeSobrepoem, vigenteEm } from '../models/partner';
@@ -23,6 +23,7 @@ export interface PartnerView {
   participacaoBp: number;
   entradaEm: string;
   saidaEm: string | null;
+  outrasParticipacoes: OutraParticipacao[] | null;
   updatedAt: string;
 }
 
@@ -173,6 +174,7 @@ function toData(input: CreatePartnerInput): PartnerData {
     participacaoBp: input.participacaoBp,
     entradaEm: input.entradaEm,
     saidaEm: input.saidaEm ?? null,
+    outrasParticipacoes: input.outrasParticipacoes ?? null,
   };
 }
 
@@ -186,6 +188,7 @@ function toView(row: Partner): PartnerView {
     participacaoBp: row.participacaoBp,
     entradaEm: row.entradaEm,
     saidaEm: row.saidaEm,
+    outrasParticipacoes: (row.outrasParticipacoes as OutraParticipacao[] | null) ?? null,
     updatedAt: row.updatedAt.toISOString(),
   };
 }

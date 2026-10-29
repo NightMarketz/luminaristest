@@ -53,6 +53,9 @@ import type { AccountingReportService } from './AccountingReportService';
 import type { TaxAssessmentConfirmInput, TaxAssessmentListQuery, TaxAssessmentPreviewInput } from '../dtos/TaxAssessmentDto';
 import { formaEfetiva } from './CompanyFiscalProfileService';
 import { receitaBrutaPorAtividade } from './receitaBrutaPorAtividade';
+import { repartirReceitaHospitalar, type ChecklistHospitalarEmpresa } from '../models/presuncaoHospitalar';
+import type { IReceitaFiscalRepository } from '../repositories/IReceitaFiscalRepository';
+import type { IServiceFiscalProfileRepository } from '../repositories/IServiceFiscalProfileRepository';
 import { quarterWindows } from './SpedEcfGenerationService';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import {
@@ -322,7 +325,28 @@ export class TaxAssessmentService {
     private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
     /** PRESUMIDO-TETO-78MI itens 8–9 (F-PT-1 c): o teto de R$ 78 mi na prévia (aviso) e na confirmação (400) do Presumido. */
     private readonly presumidoTeto: Pick<PresumidoTetoService, 'avaliar'>,
+    /**
+     * EFICIENCIA-FISCAL PR-5 (item 26; dono, 28/10, lacuna 1): a subrazão por serviço e o perfil fiscal de cada serviço —
+     * a parte hospitalar (8 %/12 %) da receita de serviço (Lei 9.249/1995 art. 15 § 2º). Só leitura.
+     */
+    private readonly receitaFiscalRepo: Pick<IReceitaFiscalRepository, 'findServicosEntreDias'>,
+    private readonly serviceFiscalRepo: Pick<IServiceFiscalProfileRepository, 'findManyByServiceRefs'>,
   ) {}
+
+  /**
+   * EFICIENCIA-FISCAL PR-5 (item 26): Σ da receita dos serviços HOSPITALAR na data (`repartirReceitaHospitalar`) na janela;
+   * os avisos `HOSPITALAR_REQUISITO_AUSENTE` vão para a prévia. O teto na 3.1 é da função pura do cálculo.
+   */
+  private async receitaHospitalar(scope: AccountingScope, empresa: ChecklistHospitalarEmpresa, de: Date, ate: Date, avisos: string[]): Promise<bigint> {
+    // Janelas UTC (`to` às 23:59:59.999Z): o dia date-only é o prefixo ISO.
+    const linhas = await this.receitaFiscalRepo.findServicosEntreDias(scope, de.toISOString().slice(0, 10), ate.toISOString().slice(0, 10));
+    const refs = [...new Set(linhas.map((l) => l.serviceRef).filter((r): r is string => r !== null))];
+    if (refs.length === 0) return 0n;
+    const perfis = await this.serviceFiscalRepo.findManyByServiceRefs(scope, refs);
+    const r = repartirReceitaHospitalar(linhas, perfis, empresa);
+    for (const a of r.avisos) if (!avisos.includes(a)) avisos.push(a);
+    return r.hospitalarCents;
+  }
 
   /** Item 13 — calcula IRPJ e CSLL juntos (BRIEF item 13, art. 31 § 7º) e não persiste. */
   async preview(scope: AccountingScope, input: TaxAssessmentPreviewInput): Promise<TaxAssessmentPreviewView> {
@@ -787,6 +811,7 @@ export class TaxAssessmentService {
         receitaServicoCents: BigInt(rec.servicoCents),
         receitaRevendaCents: BigInt(rec.revendaCents),
         receitaNaoUsoCents: BigInt(rec.naoUsoCents),
+        receitaHospitalarCents: await this.receitaHospitalar(scope, perfil, w.from, w.to, avisos), // EFICIENCIA-FISCAL PR-5 item 26
         perfil,
         deducoes,
       };
@@ -864,7 +889,9 @@ export class TaxAssessmentService {
     if (input.modoMensal === 'RECEITA_BRUTA') {
       const rec = await receitaDoMes(m);
       const anteriores = await receitasAnteriores();
-      const base = { tabela, ano, periodo: mes, receitaServicoCents: rec.servicoCents, receitaRevendaCents: rec.revendaCents, receitaNaoUsoCents: rec.naoUsoCents, receitasMesesAnteriores: anteriores, perfil, deducoes };
+      const b = mesBounds(ano, m);
+      const receitaHospitalarCents = await this.receitaHospitalar(scope, perfil, b.from, b.to, avisos); // EFICIENCIA-FISCAL PR-5 item 26 (lacuna 2: estimativa também)
+      const base = { tabela, ano, periodo: mes, receitaServicoCents: rec.servicoCents, receitaRevendaCents: rec.revendaCents, receitaNaoUsoCents: rec.naoUsoCents, receitaHospitalarCents, receitasMesesAnteriores: anteriores, perfil, deducoes };
       return {
         irpj: apurarEstimativaReceitaBruta({ ...base, tributo: 'IRPJ', confirmados: meses('IRPJ') }),
         csll: apurarEstimativaReceitaBruta({ ...base, tributo: 'CSLL', confirmados: meses('CSLL') }),

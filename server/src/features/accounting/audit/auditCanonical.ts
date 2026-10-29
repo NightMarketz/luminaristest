@@ -178,7 +178,7 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     'codMun', 'dpsSerie', 'inscricaoEstadual', 'nfeSerie', 'nfceSerie', 'regEspTrib', 'regApTribSN', 'issAliquotaBp', 'issRetidoTomadorPj', 'pacoteFatoGerador', 'pacoteCTribNac', 'pacoteCNBS', 'ibsCbsInformar', 'ibsCbsCst', 'ibsCbsClassTrib', 'pTotTribFedCent', 'pTotTribEstCent', 'pTotTribMunCent', 'pTotTribSNCent', 'emissaoForaDoMes',
     'policyVersionId'], // GOV-CONTADOR política versionada (item 14): a versão que aplicou esta escrita
   // BE-INCR-DFE (nó X10b, item 9) — perfil fiscal do serviço: só códigos (lista nacional/NBS/INDOP/IBGE) + serviceRef (id)
-  'service_fiscal_profile.updated': ['serviceRef', 'cTribNac', 'cTribMun', 'cNBS', 'cIndOp', 'cLocPrestacao', 'cClassTrib'], // cClassTrib: IBS-CBS-2027 PR-1, L2
+  'service_fiscal_profile.updated': ['serviceRef', 'cTribNac', 'cTribMun', 'cNBS', 'cIndOp', 'cLocPrestacao', 'cClassTrib', 'finalidade', 'elegivelHospitalar'], // cClassTrib: IBS-CBS-2027 PR-1, L2; finalidade/elegivelHospitalar: EFICIENCIA-FISCAL PR-5 item 25 (fundamento = texto livre, fora)
   'service_fiscal_profile.deleted': ['serviceRef', 'cTribNac'],
   // BE-INCR-NFCE (nó X10a, item 26): perfil fiscal do produto — só códigos (xProd é texto livre, fica fora)
   'product_fiscal_profile.updated': ['productRef', 'ncm', 'cest', 'origem', 'cfopPadrao', 'csosn', 'cstIcms', 'cstPis', 'cstCofins', 'ibsCbsCst', 'ibsCbsClassTrib'],
@@ -218,7 +218,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     // PRESUMIDO-TETO-78MI item 5 (F-PT-2 c): centavos da receita total do ano anterior declarada (número da PJ, sem PII).
     'receitaTotalAnoAnteriorCents',
     // BE-INCR-EFD-REINF PR-1 (item 4): enum 01–03 da Tabela 08 da Reinf (sem PII).
-    'reinfClassTrib'],
+    'reinfClassTrib',
+    // EFICIENCIA-FISCAL PR-5 (itens 25 e 30): checklist hospitalar (boolean, date-only, id) e naturezas declaradas (boolean).
+    'sociedadeEmpresaria', 'alvaraSanitarioValidoAte', 'alvaraSourceDocumentId', 'declaraLocacaoImovelProprio', 'declaraCessaoMaoDeObraMedica'],
   'company_fiscal_profile.deleted': ['anoCalendario'],
   // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7, item 22) — só ids, enum e centavos como string; sem PII. O documento
   // da dedução (texto livre) e a memória ficam FORA do evento.
