@@ -199,6 +199,17 @@ Pré-condições (verificar antes de começar):
    >   Documento gerado eletronicamente em 29/10/2026.
    > ```
    >
+   > **Arquivo baixado pela tela** (o dono localizou o download do painel e colou no chat):
+   >
+   > ```text
+   > C:\Users\smurf\Downloads\recibo-cmuw4z7v302cmcii0fxxn95uz.pdf · 58531 bytes · 29/10/2026 16:15:40
+   > sha256 da83ee4fda5b1dc248562bc5737be458315bb957dcf5906e9b56bb4dd1a434eb · 1 pagina(s)
+   > texto: igual ao da cópia da API acima, linha a linha (nº 170/2026, 06/10/2026, 1.1.2.03 D / 3.1 C, R$ 2.568,00)
+   > ```
+   >
+   > Os dois arquivos têm o mesmo tamanho e o mesmo texto, mas sha256 diferentes. Leitura inferida: cada geração grava data
+   > e ID internos próprios no PDF.
+   >
    > Achado para o passo 5 (rótulo, não foi corrigido): o recibo, que está em PT, mostra o status em inglês ("Posted").
    >
    > DESFECHO: [dono]   ASSINATURA: [dono]
