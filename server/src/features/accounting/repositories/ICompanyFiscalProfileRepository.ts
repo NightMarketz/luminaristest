@@ -46,6 +46,11 @@ export interface CompanyFiscalProfileData {
   jcpBaseContas: Prisma.InputJsonValue | typeof Prisma.DbNull; // IRRF-DISTRIBUICAO item 8 (F-IRD-15): JcpBaseContas
   receitaTotalAnoAnteriorCents: bigint | null; // PRESUMIDO-TETO-78MI item 5 (F-PT-2 c): do ano, nunca copiado
   reinfClassTrib: string | null; // EFD-REINF PR-1 (item 4): '01' | '02' | '03', só SIMPLES
+  sociedadeEmpresaria: boolean; // EFICIENCIA-FISCAL PR-5 item 25 (checklist hospitalar)
+  alvaraSanitarioValidoAte: string | null;
+  alvaraSourceDocumentId: string | null;
+  declaraLocacaoImovelProprio: boolean | null; // EFICIENCIA-FISCAL PR-5 item 30
+  declaraCessaoMaoDeObraMedica: boolean | null;
 }
 
 /**

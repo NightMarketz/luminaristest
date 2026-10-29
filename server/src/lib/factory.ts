@@ -17,7 +17,6 @@ import { ChatMessageRepository } from '../features/chatMessages/repositories/Cha
 import { ChunkRepository } from '../features/documents/repositories/ChunkRepository';
 import { DashboardLayoutRepository } from '../features/dashboardLayout/repositories/DashboardLayoutRepository';
 import { DocumentRepository } from '../features/documents/repositories/DocumentRepository';
-import { StructuredDataRepository } from '../features/structuredData/repositories/StructuredDataRepository';
 import { UserRepository } from '../features/users/repositories/UserRepository';
 import { VectorRepository } from '../features/documents/repositories/VectorRepository';
 import { DynamicTableRepository } from '../features/dynamicTables/repositories/DynamicTableRepository';
@@ -91,7 +90,6 @@ import { ChatInstancePolicy } from '../features/chatInstances/policies/ChatInsta
 import { ChatMessagePolicy } from '../features/chatMessages/policies/ChatMessagePolicy';
 import { DashboardLayoutPolicy } from '../features/dashboardLayout/policies/DashboardLayoutPolicy';
 import { DocumentPolicy } from '../features/documents/policies/DocumentPolicy';
-import { StructuredDataPolicy } from '../features/structuredData/policies/StructuredDataPolicy';
 import { UserPolicy } from '../features/users/policies/UserPolicy';
 import { DynamicTablePolicy } from '../features/dynamicTables/policies/DynamicTablePolicy';
 import { AttachmentPolicy } from '../features/attachments/policies/AttachmentPolicy';
@@ -110,7 +108,6 @@ import { ChatService } from '../features/chat/services/ChatService';
 import { DashboardLayoutService } from '../features/dashboardLayout/services/DashboardLayoutService';
 import { DocumentProcessingService } from '../features/documents/services/DocumentProcessingService';
 import { DocumentService } from '../features/documents/services/DocumentService';
-import { StructuredDataService } from '../features/structuredData/services/StructuredDataService';
 import { UserService } from '../features/users/services/UserService';
 import { DynamicTableService } from '../features/dynamicTables/services/DynamicTableService';
 import { LuminarisAgentService } from '../features/chat/services/LuminarisAgentService';
@@ -270,6 +267,9 @@ import { RegisterPaymentService } from '../features/sales/services/RegisterPayme
 import { SaleFiscalGuardService } from '../features/sales/services/SaleFiscalGuardService'; // EFICIENCIA-FISCAL PR-1
 import { TaxOptimizationService } from '../features/accounting/services/TaxOptimizationService'; // EFICIENCIA-FISCAL PR-1
 import { TaxSimulationService } from '../features/accounting/services/TaxSimulationService'; // EFICIENCIA-FISCAL PR-3
+import { TaxOptimizationReportService } from '../features/accounting/services/TaxOptimizationReportService'; // EFICIENCIA-FISCAL PR-4
+import { loadUnconditionalDiscountCents } from '../features/accounting/sync/bridges/saleItems'; // EFICIENCIA-FISCAL PR-4
+import { ServicoFiscalAvaliacaoService } from '../features/accounting/services/ServicoFiscalAvaliacaoService';
 import { TaxOptimizationRepository } from '../features/accounting/repositories/TaxOptimizationRepository'; // EFICIENCIA-FISCAL PR-1
 import type { ITaxOptimizationRepository } from '../features/accounting/repositories/ITaxOptimizationRepository';
 import { PresetSyncService } from '../features/dynamicTables/services/PresetSyncService';
@@ -795,7 +795,6 @@ export class ApplicationFactory {
     document: IDocumentRepository;
     vector: IVectorRepository;
     chunk: ChunkRepository;
-    structuredData: StructuredDataRepository;
     dynamicTable: IDynamicTableRepository;
     dynamicTableVersion: IDynamicTableVersionRepository;
     actionProposal: IActionProposalRepository;
@@ -873,7 +872,6 @@ export class ApplicationFactory {
     chatInstance: IChatInstancePolicy;
     dashboardLayout: IDashboardLayoutPolicy;
     document: IDocumentPolicy;
-    structuredData: StructuredDataPolicy;
     dynamicTable: IDynamicTablePolicy;
     attachment: IAttachmentPolicy;
     savedTableView: ISavedTableViewPolicy;
@@ -894,7 +892,6 @@ export class ApplicationFactory {
     dashboardLayout: DashboardLayoutService;
     document: DocumentService;
     chat: IChatService;
-    structuredData: StructuredDataService;
     dynamicTable: DynamicTableService;
     dynamicTableVersion: DynamicTableVersionService;
     luminarisAgent: LuminarisAgentService;
@@ -949,6 +946,8 @@ export class ApplicationFactory {
     taxOptimization: TaxOptimizationService; // EFICIENCIA-FISCAL PR-1
     /** EFICIENCIA-FISCAL PR-3 — montado no getter: depende de simplesApuracao e interestOnEquity, criados no mesmo literal. */
     taxSimulation?: TaxSimulationService;
+    taxOptimizationReport: TaxOptimizationReportService; // EFICIENCIA-FISCAL PR-4
+    servicoFiscalAvaliacao: ServicoFiscalAvaliacaoService; // EFICIENCIA-FISCAL PR-5
     productDestination: ProductDestinationService; // ITEM-DESTINATION PR-2
     companyFiscalProfile: CompanyFiscalProfileService; // X13
     companySigner: CompanySignerService; // X13
@@ -1021,7 +1020,6 @@ export class ApplicationFactory {
       chunk: new ChunkRepository(),
       dashboardLayout: new DashboardLayoutRepository(),
       document: new DocumentRepository(),
-      structuredData: new StructuredDataRepository(),
       user: new UserRepository(),
       vector: new VectorRepository(),
       dynamicTable: new DynamicTableRepository(),
@@ -1101,7 +1099,6 @@ export class ApplicationFactory {
       chatMessage: new ChatMessagePolicy(),
       dashboardLayout: new DashboardLayoutPolicy(),
       document: new DocumentPolicy(),
-      structuredData: new StructuredDataPolicy(this.repositories.document),
       user: new UserPolicy(),
       dynamicTable: new DynamicTablePolicy(),
       attachment: new AttachmentPolicy(),
@@ -1116,11 +1113,6 @@ export class ApplicationFactory {
     };
 
     // Services (handling inter-dependencies)
-    const structuredDataService = new StructuredDataService(
-      this.repositories.structuredData,
-      this.policies.structuredData,
-      chatOpenAIService
-    );
     const knowledgeGraphService = new KnowledgeGraphService(
       this.repositories.knowledgeGraph,
       this.repositories.dynamicTable
@@ -1315,6 +1307,8 @@ export class ApplicationFactory {
       this.repositories.accountingPeriod, // X7 Fase B item 15: meses fechados antes do balancete (só leitura)
       legalParameterService, // BE-INCR-LEGAL-PARAMS PR-1: fotografia TAX_ASSESSMENT + CSLL_ALIQUOTA
       presumidoTetoService, // PRESUMIDO-TETO-78MI item 9b/9c: aviso na prévia, 400 na confirmação
+      this.repositories.receitaFiscal, // EFICIENCIA-FISCAL PR-5 item 26: subrazão por serviço (8 %/12 % hospitalar)
+      this.repositories.serviceFiscalProfile,
     );
 
     // BE-INCR-SPED-ECF-FASE3B item 11 (Fork 4→b): e-Lalur/e-Lacs store. Lê o repo de contas do plano
@@ -1670,6 +1664,27 @@ export class ApplicationFactory {
       productFiscalProfile: productFiscalProfileService,
       issBeneficioMunicipal: new IssBeneficioMunicipalService(this.repositories.issBeneficioMunicipal, this.policies.accounting, auditService),
       taxOptimization: taxOptimizationService, // EFICIENCIA-FISCAL PR-1
+      // EFICIENCIA-FISCAL PR-4 (itens 22–23): relatório de economia. A medida vem da apuração do Simples, montada mais abaixo
+      // neste literal — leitura tardia por closure.
+      taxOptimizationReport: new TaxOptimizationReportService(
+        this.repositories.taxOptimization,
+        this.repositories.receitaFiscal,
+        { medidaDaApuracao: (scope, competencia) => this.services.simplesApuracao.medidaDaApuracao(scope, competencia) },
+        { descontoIncondicionalCents: loadUnconditionalDiscountCents },
+        this.policies.accounting,
+      ),
+      // EFICIENCIA-FISCAL PR-5 (itens 27, 30–32): alertas de enquadramento e sugestões dos serviços — só leitura + proposeSystem.
+      servicoFiscalAvaliacao: new ServicoFiscalAvaliacaoService(
+        this.policies.accounting,
+        this.repositories.companyFiscalProfile,
+        this.repositories.serviceFiscalProfile,
+        this.repositories.fiscalProfile,
+        this.repositories.receitaFiscal,
+        this.repositories.account,
+        this.repositories.posting,
+        legalParameterService,
+        taxOptimizationService,
+      ),
       // ITEM-DESTINATION PR-2 (item 17, F-ID-2 a): destinação padrão por produto — a mesma porta de existência
       // de produto do LAC-E (reuso), sob a policy fiscal.
       productDestination: new ProductDestinationService(
@@ -1756,11 +1771,8 @@ export class ApplicationFactory {
         this.repositories.vector,
         new DocumentProcessingService(),
         this.policies.document,
-        chatOpenAIService,
-        structuredDataService, // Injected dependency
         this.repositories.user
       ),
-      structuredData: structuredDataService, // Assigned service
       user: new UserService(this.repositories.user, this.policies.user, this.repositories.vector),
       dynamicTable: dynamicTableService,
       // BE-INCR-DT-VERSION-LEDGER: leitura/diff/restore do ledger; o restore delega ao DynamicTableService.
@@ -1832,6 +1844,9 @@ export class ApplicationFactory {
         this.repositories.fiscalDocument,
         legalParameterService, // fotografia LC116_SERVICO: município do ISS pelo li (LC 116 art. 3º)
         this.repositories.consumptionTaxAssessment, // IBS-CBS-2027 PR-5 (item 24): EXPORT_IBS_CBS_MEMO
+        // EFICIENCIA-FISCAL PR-4 (item 23): EXPORT_ECONOMIA_FISCAL. Leitura tardia: o serviço do relatório depende da
+        // apuração do Simples, montada mais abaixo neste mesmo literal.
+        { relatorio: (scope, competencia) => this.services.taxOptimizationReport.relatorio(scope, competencia) },
       ),
       dataExchangeImport: new DataExchangeImportService(
         this.repositories.dataExchange,
@@ -2018,6 +2033,7 @@ export class ApplicationFactory {
         sourceDocumentUploadService, // BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-9 a: o PDF do DAS na visão
         this.repositories.receitaFiscalRecebimento, // X14-CAIXA PR-2 item 8: recebimentos, base do caixa
         this.repositories.productFiscalProfile, // EFICIENCIA-FISCAL PR-2 item 13: avisos SEM_NCM e ICMS_ST_NAO_CONFERIDA
+        this.repositories.partner, // EFICIENCIA-FISCAL PR-4 item 20: aviso de interdependência pelos sócios
       ),
       // BE-INCR-SIMPLES-NACIONAL PR-4 (nó X14, itens 27–28): espelhos DASN-SIMEI e DEFIS.
       simplesDeclaracao: new SimplesDeclaracaoService(
@@ -2451,7 +2467,6 @@ export class ApplicationFactory {
   public getAnalyticsService = (): AnalyticsService => this.services.analytics;
   public getDashboardLayoutService = (): DashboardLayoutService => this.services.dashboardLayout;
   public getDocumentService = (): DocumentService => this.services.document;
-  public getStructuredDataService = (): StructuredDataService => this.services.structuredData;
   public getUserService = (): UserService => this.services.user;
   public getDynamicTableService = (): DynamicTableService => this.services.dynamicTable;
   public getDynamicTableVersionService = (): DynamicTableVersionService => this.services.dynamicTableVersion;
@@ -2548,6 +2563,8 @@ export class ApplicationFactory {
       this.services.taxOptimization,
       this.policies.accounting,
     ));
+  public getTaxOptimizationReportService = (): TaxOptimizationReportService => this.services.taxOptimizationReport;
+  public getServicoFiscalAvaliacaoService = (): ServicoFiscalAvaliacaoService => this.services.servicoFiscalAvaliacao;
   public getProductDestinationService = (): ProductDestinationService => this.services.productDestination;
   public getCompanyFiscalProfileService = (): CompanyFiscalProfileService => this.services.companyFiscalProfile;
   public getCompanySignerService = (): CompanySignerService => this.services.companySigner;

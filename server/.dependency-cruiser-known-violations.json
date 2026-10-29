@@ -82,15 +82,6 @@
   },
   {
     "type": "dependency",
-    "from": "src/features/structuredData/policies/StructuredDataPolicy.ts",
-    "to": "src/features/documents/repositories/IDocumentRepository.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L5-policy-is-pure"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/features/accounting/models/issLimite.ts",
     "to": "src/features/legalParameters/services/legalParameterCache.ts",
     "rule": {

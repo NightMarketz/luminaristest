@@ -18,10 +18,17 @@ import CategoryHeader from '../shared/components/CategoryHeader';
 import CategoryTabs from '../shared/components/CategoryTabs';
 import { useFilterPersistence } from '../shared/hooks/useFilterPersistence';
 
-// Área vazia da coluna = a coluna (F-KR-4: vai para o fim); closestCenter escolheria o último card
+// Área vazia de outra coluna = a coluna (F-KR-4: vai para o fim); closestCenter escolheria o último card.
+// Vão na própria coluna = card mais próximo dela (D-2026-10-29-ACHADOS-FORA-DE-ESCOPO, achado 5)
 const kanbanCollision: CollisionDetection = (args) => {
     const hits = pointerWithin(args);
-    return hits.length > 0 ? hits : closestCenter(args);
+    if (hits.length === 0) return closestCenter(args);
+    const ownColumn = args.active.data.current?.sortable?.containerId;
+    if (ownColumn !== undefined && hits.every(h => h.id === ownColumn)) {
+        const siblings = args.droppableContainers.filter(c => c.data.current?.sortable?.containerId === ownColumn);
+        if (siblings.length > 0) return closestCenter({ ...args, droppableContainers: siblings });
+    }
+    return hits;
 };
 
 interface InternalKanbanViewProps {

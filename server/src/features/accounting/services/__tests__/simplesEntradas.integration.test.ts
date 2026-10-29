@@ -206,6 +206,8 @@ describe('itens 15–16 — subrazão fiscal de receita na finalização + tie-o
     // splitRevenueCredit: 29000 × 200/300 = 19333; revenda = 9667.
     expect([Number(servico.receitaCents), Number(revenda.receitaCents)]).toEqual([19_333, 9_667]);
     expect(servico).toMatchObject({ competencia: '2026-05', dia: '2026-05-20', cTribNac: '060101', productRef: null });
+    // EFICIENCIA-FISCAL PR-5 (item 26): o serviço da linha fica gravado (presunção por serviço); a revenda não tem serviço.
+    expect([servico.serviceRef, revenda.serviceRef]).toEqual(['srv-corte', null]);
     // Contrato com cota do salão 30% (PATCH acima) → profissional 70%: 13533,1 → 13533.
     expect(Number(servico.cotaProfissionalCents)).toBe(13_533);
     expect(revenda).toMatchObject({ productRef: 'prd-shampoo', parceriaContratoId: null, cotaProfissionalCents: 0n });

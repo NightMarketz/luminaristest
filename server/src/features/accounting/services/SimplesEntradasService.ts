@@ -6,6 +6,7 @@ import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { ISimplesEntradasRepository, ParceriaData } from '../repositories/ISimplesEntradasRepository';
 import {
   excluirDoMotivo,
+  type ChecklistParceria,
   type SalaoParceriaContratoInput,
   type SalaoParceriaContratoPatch,
   type SalaoParceriaContratoView,
@@ -181,7 +182,7 @@ function comExcluir(parcelas: readonly SimplesSegregacaoParcela[]): SimplesSegre
   return parcelas.map((p) => ({ ...p, excluir: excluirDoMotivo(p.motivo) }));
 }
 
-function parceriaData(v: ParceriaData | SalaoParceriaContratoInput): ParceriaData {
+function parceriaData(v: SalaoParceriaContrato | SalaoParceriaContratoInput): ParceriaData {
   return {
     profissionalContactId: v.profissionalContactId,
     cotaSalaoBp: v.cotaSalaoBp,
@@ -190,6 +191,8 @@ function parceriaData(v: ParceriaData | SalaoParceriaContratoInput): ParceriaDat
     sindicato: v.sindicato,
     vigenteDesde: v.vigenteDesde,
     vigenteAte: v.vigenteAte,
+    profissionalCnpj: v.profissionalCnpj ?? null,
+    checklistDeclarado: (v.checklistDeclarado as ChecklistParceria | null | undefined) ?? null,
   };
 }
 
@@ -217,6 +220,8 @@ function parceriaView(r: SalaoParceriaContrato): SalaoParceriaContratoView {
     sindicato: r.sindicato,
     vigenteDesde: r.vigenteDesde,
     vigenteAte: r.vigenteAte,
+    profissionalCnpj: r.profissionalCnpj,
+    checklistDeclarado: (r.checklistDeclarado as ChecklistParceria | null) ?? null,
     createdAt: r.createdAt.toISOString(),
     updatedAt: r.updatedAt.toISOString(),
   };

@@ -18,7 +18,7 @@
  *              desfaz
  *              teste: simplesApuracao.integration.test.ts › "item 20: gate dentro da tx — entrada mudou entre o cálculo e o registro ⇒ 409, nada gravado"
  */
-import type { Prisma, ReceitaFiscalLinha, SimplesApuracao } from 'generated/prisma';
+import type { Prisma, ReceitaFiscalLinha, SalaoParceriaContrato, SimplesApuracao } from 'generated/prisma';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import { ParametroLegalAusenteError, linhaLegalVigente, type LegalParameterTabela, type LinhaLegal } from '../../legalParameters/models/legalParameter';
@@ -40,6 +40,9 @@ import { baseCaixaDoPa, naoRecebidasAte, type BucketCaixa, type ItemBaseCaixa, t
 import type { IServiceFiscalProfileRepository } from '../repositories/IServiceFiscalProfileRepository';
 import type { ISimplesApuracaoRepository } from '../repositories/ISimplesApuracaoRepository';
 import type { ISimplesEntradasRepository } from '../repositories/ISimplesEntradasRepository';
+import type { IPartnerRepository } from '../repositories/IPartnerRepository';
+import type { OutraParticipacao } from '../dtos/PartnerDto';
+import { alertasDeInterdependencia, alertasDeParceria, alertasDeProjecao, receitaProjetadaDoAno, type ContratoParceria, type SocioComParticipacoes } from '../models/taxOptimizationAlertas';
 import type { IIssBeneficioMunicipalRepository } from '../repositories/IIssBeneficioMunicipalRepository';
 import { beneficioDaAtividade, excecaoPisoIss, type BeneficioCadastrado } from '../models/issBeneficio';
 import { toBeneficio } from './IssBeneficioMunicipalService';
@@ -49,7 +52,7 @@ import type { AuditService } from './AuditService';
 import type { PostingService } from './PostingService';
 import type { ReceitaFiscalService } from './ReceitaFiscalService';
 import type { SimplesEntradasService } from './SimplesEntradasService';
-import { excluirDoMotivo, type AlertaSimples, type BaseCaixa, type CodigoAlertaSimples, type ImpedimentoCaixa, type SimplesDasRegistro, type SimplesSegregacaoParcela } from '../dtos/SimplesDto';
+import { excluirDoMotivo, type AlertaSimples, type ChecklistParceria, type BaseCaixa, type CodigoAlertaSimples, type ImpedimentoCaixa, type SimplesDasRegistro, type SimplesSegregacaoParcela } from '../dtos/SimplesDto';
 import { SOURCE_TYPE_SIMPLES_DAS, type DocumentoRef } from '../dtos/SourceDocumentUploadDto';
 import type { SourceDocumentUploadService } from './SourceDocumentUploadService';
 
@@ -166,6 +169,13 @@ interface Montagem {
   /** EFICIENCIA-FISCAL PR-3 (item 15): a entrada exata que foi ao `apurar` (null quando a atividade ficou sem anexo). */
   apuracaoInput: ApuracaoInput | null;
   linhasLegais: LinhaLegal[];
+  /**
+   * EFICIENCIA-FISCAL PR-4 item 23 (D-2026-10-28-EFICIENCIA-FISCAL-PR4-EXECUCAO #6): o DAS da mesma entrada sem as marcas de
+   * segregação (`excluir = []`); null quando nenhuma parcela é segregada ou o cálculo não fechou.
+   */
+  dasSemSegregacaoCents: number | null;
+  /** A base do DAS no PA (competência: receita do mês; caixa: recebido) — a alíquota efetiva do relatório. */
+  receitaPaCents: number;
 }
 
 /** A linha que vira atividade: a do subrazão (competência) ou a composta da base caixa (X14-CAIXA item 8). */
@@ -306,7 +316,7 @@ export function alertasDeSegregacao(
 export class SimplesApuracaoService {
   constructor(
     private readonly repo: ISimplesApuracaoRepository,
-    private readonly entradasRepo: Pick<ISimplesEntradasRepository, 'findHistorico' | 'findHistoricoTx' | 'findSegregacao' | 'findParceriaMesmoRemovida' | 'sourceDocumentExists'>,
+    private readonly entradasRepo: Pick<ISimplesEntradasRepository, 'findHistorico' | 'findHistoricoTx' | 'findSegregacao' | 'findParceriaMesmoRemovida' | 'listParcerias' | 'sourceDocumentExists'>,
     private readonly receitaRepo: Pick<IReceitaFiscalRepository, 'findByCompetencia' | 'somaPorCompetencia' | 'findVendasEntre' | 'findLinhasDasVendas'>,
     private readonly receitaFiscal: Pick<ReceitaFiscalService, 'tieOut'>,
     private readonly entradas: Pick<SimplesEntradasService, 'segregacaoDaCompetencia'>,
@@ -327,6 +337,8 @@ export class SimplesApuracaoService {
     private readonly recebimentoRepo: Pick<IReceitaFiscalRecebimentoRepository, 'findByCompetenciaCaixa' | 'findEstornadosNoMes' | 'findBySales'>,
     /** EFICIENCIA-FISCAL PR-2 (item 13): perfil do produto para os avisos `SEM_NCM` e `ICMS_ST_NAO_CONFERIDA`. */
     private readonly productFiscalRepo: Pick<IProductFiscalProfileRepository, 'findManyByProductRefs'>,
+    /** EFICIENCIA-FISCAL PR-4 (item 20): sócios e as participações informadas, para o aviso de interdependência. */
+    private readonly partnerRepo: Pick<IPartnerRepository, 'list'>,
   ) {}
 
   /** EFICIENCIA-FISCAL PR-2 (item 13): NCM e CSOSN dos produtos das linhas de revenda do PA. */
@@ -619,6 +631,11 @@ export class SimplesApuracaoService {
     }
     const perfisProduto = await this.perfisDosProdutos(scope, linhasBase, tx);
     alertas.push(...alertasDeSegregacao(seg.parcelas, linhasBase, perfisProduto));
+    // EFICIENCIA-FISCAL PR-4 item 19: salão-parceiro sobre as linhas do PA (competência) e os contratos vivos + os removidos
+    // que as linhas citam.
+    const contratosParceria = new Map<string, ContratoParceria>();
+    for (const c of [...contratos.values(), ...(await this.entradasRepo.listParcerias(scope, tx))]) contratosParceria.set(c.id, toContratoParceria(c));
+    alertas.push(...alertasDeParceria(competencia, linhasPa, [...contratosParceria.values()]));
     for (const a of catalogo) {
       if (!entrada.some((e) => e.natureza === a.natureza && e.cTribNac === a.cTribNac)) entrada.push({ ...a, parcelas: [{ receitaCents: 0, excluir: [] }] });
     }
@@ -638,7 +655,7 @@ export class SimplesApuracaoService {
     }
 
     // Item 23 — limites (LC 123 art. 3º I/II, §§ 9º, 9º-A; art. 13-A; Res. CGSN 140 art. 12 §§ 1º–2º).
-    const sublimiteExcedido = this.limites(linhas, competencia, receitas, inicio, alertas);
+    const sublimiteExcedido = this.limites(linhas, competencia, receitas, inicio, alertas, await this.sociosNoMes(scope, competencia, tx));
 
     let calculada: ApuracaoCalculada;
     const receitaPa = caixa ? caixa.baseCents : (receitas.get(competencia) ?? 0n);
@@ -652,8 +669,14 @@ export class SimplesApuracaoService {
       sublimiteExcedido,
       atividades: entrada.length > 0 ? entrada : [{ natureza: 'SERVICO', cTribNac: null, parcelas: [{ receitaCents: 0, excluir: [] }] }],
     };
+    let dasSemSegregacaoCents: number | null = null;
     try {
       calculada = apurar(apuracaoInput, linhas);
+      // EFICIENCIA-FISCAL PR-4 item 23 (#6): a mesma entrada sem as marcas — a diferença é a economia medida da segregação.
+      if (entrada.some((e) => e.parcelas.some((pc) => pc.excluir.length > 0))) {
+        const semMarcas = apuracaoInput.atividades.map((e) => ({ ...e, parcelas: e.parcelas.map((pc) => ({ ...pc, excluir: [] as TributoSimples[] })) }));
+        dasSemSegregacaoCents = apurar({ ...apuracaoInput, atividades: semMarcas }, linhas).totalCalculadoCents;
+      }
     } catch (e) {
       if ((e as { errorCode?: string }).errorCode !== 'ATIVIDADE_SEM_ANEXO') throw e;
       apuracaoInput = null;
@@ -716,7 +739,30 @@ export class SimplesApuracaoService {
       impedimentoCaixa,
       apuracaoInput,
       linhasLegais: [...linhas],
+      dasSemSegregacaoCents: entrada.length === 0 ? null : dasSemSegregacaoCents,
+      receitaPaCents: Number(receitaPa > 0n ? receitaPa : 0n),
     };
+  }
+
+  /**
+   * EFICIENCIA-FISCAL PR-4 item 23 (D-2026-10-28-EFICIENCIA-FISCAL-PR4-EXECUCAO #6) — o que o relatório de economia mede na
+   * apuração do PA: DAS calculado, DAS sem as marcas de segregação e a receita do PA. `null` fora do ME/EPP do Simples (MEI,
+   * Presumido, Real ou sem perfil): a medida não existe lá. Sem gate próprio: o relatório já checou o dele.
+   */
+  async medidaDaApuracao(scope: AccountingScope, competencia: string): Promise<{ dasCents: number; dasSemSegregacaoCents: number | null; receitaPaCents: number } | null> {
+    const perfil = await this.companyProfileRepo.findByYear(scope, Number(competencia.slice(0, 4)));
+    if (!perfil || perfil.regime !== 'SIMPLES') return null;
+    const m = await this.montar(scope, competencia);
+    return { dasCents: m.calculada.totalCalculadoCents, dasSemSegregacaoCents: m.dasSemSegregacaoCents, receitaPaCents: m.receitaPaCents };
+  }
+
+  /** Item 20 — sócios com vigência em algum dia do mês e as participações informadas. */
+  private async sociosNoMes(scope: AccountingScope, competencia: string, tx?: Prisma.TransactionClient): Promise<SocioComParticipacoes[]> {
+    const inicio = `${competencia}-01`;
+    const fim = `${competencia}-31`;
+    return (await this.partnerRepo.list(scope, tx))
+      .filter((p) => p.entradaEm <= fim && (p.saidaEm === null || p.saidaEm >= inicio))
+      .map((p) => ({ id: p.id, nome: p.nome, tipoPessoa: p.tipoPessoa, outrasParticipacoes: (p.outrasParticipacoes as OutraParticipacao[] | null) ?? null }));
   }
 
   /**
@@ -851,7 +897,14 @@ export class SimplesApuracaoService {
   }
 
   /** Item 23. Devolve se o sublimite do ICMS/ISS (e IBS a partir de 2027) está excedido para o PA. */
-  private limites(linhas: Awaited<ReturnType<LegalParameterService['fotografia']>>, competencia: string, receitas: Receitas, inicio: string | null, alertas: AlertaSimples[]): boolean {
+  private limites(
+    linhas: Awaited<ReturnType<LegalParameterService['fotografia']>>,
+    competencia: string,
+    receitas: Receitas,
+    inicio: string | null,
+    alertas: AlertaSimples[],
+    socios: readonly SocioComParticipacoes[] = [],
+  ): boolean {
     const data = `${competencia}-01`;
     // F-PR4-7 (dono 09/10): sem a linha, falha ruidoso — o zero calava o sublimite e o impedimento.
     const limite = (chave: string) => {
@@ -884,6 +937,15 @@ export class SimplesApuracaoService {
     if (sub > 0n && acumuladoAno > sub) {
       alertas.push({ severity: 'WARNING', codigo: 'SUBLIMITE_ICMS_ISS', detalhe: `receita acumulada em ${ano} ${fmt(acumuladoAno)} acima do sublimite ${fmt(sub)} (LC 123 art. 13-A; Res. CGSN 140 art. 12)` });
     }
+    // EFICIENCIA-FISCAL PR-4 itens 21 e 20 (#4, #3): projeção do ano contra 80% dos limites e a receita bruta global do sócio.
+    const projetado = receitaProjetadaDoAno(acumuladoAno, competencia, inicio);
+    alertas.push(
+      ...alertasDeProjecao(acumuladoAno, projetado, [
+        { codigo: 'PROJECAO_LIMITE_EPP', limiteCents: epp },
+        { codigo: 'PROJECAO_SUBLIMITE_ICMS_ISS', limiteCents: sub },
+      ]),
+    );
+    alertas.push(...alertasDeInterdependencia(socios, projetado ?? acumuladoAno, epp));
     return impedidoEsteAno || impedidoPeloAnterior;
   }
 
@@ -1275,4 +1337,18 @@ export class SimplesApuracaoService {
   private assertRead(scope: AccountingScope): void {
     if (!this.policy.canReadTaxAssessment(scope)) throw new ForbiddenError('Você não tem permissão para ler a apuração do Simples Nacional.');
   }
+}
+
+/** EFICIENCIA-FISCAL PR-4 item 19 — a linha do contrato no formato que o alerta puro lê. */
+function toContratoParceria(c: SalaoParceriaContrato): ContratoParceria {
+  return {
+    id: c.id,
+    profissionalContactId: c.profissionalContactId,
+    homologadoEm: c.homologadoEm,
+    vigenteDesde: c.vigenteDesde,
+    vigenteAte: c.vigenteAte,
+    deletedAt: c.deletedAt,
+    profissionalCnpj: c.profissionalCnpj,
+    checklistDeclarado: (c.checklistDeclarado as ChecklistParceria | null) ?? null,
+  };
 }

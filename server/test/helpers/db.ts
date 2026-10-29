@@ -205,7 +205,6 @@ export async function resetDb(): Promise<void> {
   await prisma.dashboardLayout.deleteMany();
   await prisma.chatMessage.deleteMany();
   await prisma.chatInstance.deleteMany();
-  await prisma.structuredData.deleteMany();
   await prisma.chunk.deleteMany();
   await prisma.document.deleteMany();
   await prisma.actionProposal.deleteMany();

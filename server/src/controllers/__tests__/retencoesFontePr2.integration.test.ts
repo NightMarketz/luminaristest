@@ -226,15 +226,17 @@ describe('RETENCOES-FONTE PR-2 — retenções feitas no AP', () => {
     expect((await cancelarPagamento(tA, tw.settlementId!, '2026-03-30')).status).toBe(400);
   });
 
-  it('item 16: INSS 11% sobre o bruto da NF e ISS do perfil; código do INSS DRAFT ⇒ sem título + aviso; ISS vence no dia do perfil', async () => {
+  it('item 16: INSS 11% sobre o bruto da NF com o código 116201 e título do INSS no dia 20 (PR de dado 29/10); ISS vence no dia do perfil', async () => {
     const r = await criarTitulo(cp.C, 'NF-C1', 100_000, '2026-03-12');
     expect(r.status).toBe(201);
-    expect(r.body.data.withholdingAvisos).toEqual(['CODIGO_RECEITA_DRAFT']);
+    expect(r.body.data.withholdingAvisos).toEqual([]);
     const tws = await retencoes(r.body.data.id);
     expect(tws.map((x) => [x.tributo, Number(x.amountCents), x.codigoReceita, x.taxPayableId === null])).toEqual([
-      ['INSS', 11_000, null, true],
+      ['INSS', 11_000, '116201', false],
       ['ISS', 2_000, null, false],
     ]);
+    const inss = (await tituloImposto('116201-202603'))!;
+    expect([inss.supplierName, inss.dueDate.toISOString().slice(0, 10), Number(inss.amountCents)]).toEqual(['INSS', '2026-04-20', 11_000]);
     const iss = (await tituloImposto('ISS-202603'))!;
     expect([iss.supplierName, iss.dueDate.toISOString().slice(0, 10), Number(iss.amountCents)]).toEqual(['MUNICIPIO:3550308', '2026-04-15', 2000]);
     expect((await titulo(r.body.data.id)).paidCents).toBe(13_000n);
@@ -355,7 +357,8 @@ describe('RETENCOES-FONTE PR-2 — retenções feitas no AP', () => {
         expect.objectContaining({ codigoReceita: '595207', tributos: expect.arrayContaining(['CSLL', 'COFINS', 'PIS']), vencimento: '2026-04-20' }),
       ]),
     );
-    expect(s.body.data.avisos).toEqual([expect.stringContaining('CODIGO_RECEITA_DRAFT')]);
+    // PR de dado 29/10: o INSS ganhou o código 116201 — nenhuma linha do mês fica sem código.
+    expect(s.body.data.avisos).toEqual([]);
     expect((await request(app).get('/api/accounting/withholdings').set(authHeader(dono)).query({ unitId: UNIT, direction: 'SUFFERED', competencia: '2026-03' })).status).toBe(400);
   });
 

@@ -43,7 +43,8 @@
             "NFCE_LIMITE",
             "INUT_NAO_SE_APLICA",
             "ICMS_ST_NCM_UF",
-            "ENCARGO_FOLHA"
+            "ENCARGO_FOLHA",
+            "IBS_CBS_REDUCAO_NBS"
           ]
         },
         "chave": {
@@ -148,7 +149,8 @@
             "NFCE_LIMITE",
             "INUT_NAO_SE_APLICA",
             "ICMS_ST_NCM_UF",
-            "ENCARGO_FOLHA"
+            "ENCARGO_FOLHA",
+            "IBS_CBS_REDUCAO_NBS"
           ]
         },
         "status": {
@@ -236,7 +238,8 @@
             "NFCE_LIMITE",
             "INUT_NAO_SE_APLICA",
             "ICMS_ST_NCM_UF",
-            "ENCARGO_FOLHA"
+            "ENCARGO_FOLHA",
+            "IBS_CBS_REDUCAO_NBS"
           ]
         },
         "chave": {

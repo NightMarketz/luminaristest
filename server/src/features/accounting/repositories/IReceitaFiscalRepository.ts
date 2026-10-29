@@ -9,6 +9,8 @@ export interface ReceitaFiscalLinhaData {
   itemRef: string;
   natureza: 'SERVICO' | 'REVENDA';
   cTribNac: string | null;
+  /** EFICIENCIA-FISCAL PR-5 (item 26): serviço da linha — presunção por serviço no Presumido. */
+  serviceRef: string | null;
   productRef: string | null;
   receitaCents: bigint;
   excluir: string[];
@@ -42,6 +44,8 @@ export interface IReceitaFiscalRepository {
   somaPorCompetencia(scope: AccountingScope, competencias: readonly string[], tx?: Prisma.TransactionClient): Promise<Map<string, { receitaCents: bigint; cotaCents: bigint }>>;
   /** X14-CAIXA PR-2 (item 8) — as linhas VENDA com competência no intervalo [de, ate]. */
   findVendasEntre(scope: AccountingScope, de: string, ate: string, tx?: Prisma.TransactionClient): Promise<ReceitaFiscalLinha[]>;
+  /** EFICIENCIA-FISCAL PR-5 (item 26) — linhas de SERVICO (todos os tipos, com sinal) com `dia` em [de, ate]. */
+  findServicosEntreDias(scope: AccountingScope, de: string, ate: string, tx?: Prisma.TransactionClient): Promise<ReceitaFiscalLinha[]>;
   /** X14-CAIXA PR-2 (item 8) — todas as linhas (VENDA e negativas) das vendas pedidas. */
   findLinhasDasVendas(scope: AccountingScope, saleIds: readonly string[], tx?: Prisma.TransactionClient): Promise<ReceitaFiscalLinha[]>;
   /** Das competências pedidas, as que têm ao menos uma linha. */

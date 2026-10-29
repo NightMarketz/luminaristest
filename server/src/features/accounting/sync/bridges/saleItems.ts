@@ -270,3 +270,23 @@ export async function loadSaleRevenueLines(userId: string, saleId: string): Prom
   }
   return out.sort((a, b) => (a.itemRef < b.itemRef ? -1 : a.itemRef > b.itemRef ? 1 : 0));
 }
+
+/**
+ * EFICIENCIA-FISCAL PR-4 item 23 (D-2026-10-28-EFICIENCIA-FISCAL-PR4-EXECUCAO #6) — Σ desconto INCONDICIONAL do cabeçalho
+ * (`discountAmount`, em reais) das vendas pedidas, em centavos. Venda CONDITIONAL ou legada (`discountKind` vazio) fica fora:
+ * só o incondicional sai da receita bruta (LC 123 art. 3º § 1º). Uma leitura em lote.
+ */
+export async function loadUnconditionalDiscountCents(userId: string, saleIds: readonly string[]): Promise<bigint> {
+  if (saleIds.length === 0) return 0n;
+  const repo = getFactory().getDynamicTableRepository();
+  const salesTable = await repo.findTableByInternalName(userId, 'sales');
+  if (!salesTable) return 0n;
+  let total = 0n;
+  for (const row of await repo.findDataByIds([...saleIds])) {
+    if (row.dynamicTableId !== salesTable.id) continue;
+    const d = (row.data ?? {}) as Record<string, unknown>;
+    if (d.discountKind !== 'UNCONDITIONAL') continue;
+    total += BigInt(Math.max(0, Math.round(toNum(d.discountAmount) * 100)));
+  }
+  return total;
+}
