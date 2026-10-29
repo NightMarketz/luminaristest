@@ -99,6 +99,16 @@ Network, o XML, a chave da nota) — nunca uma frase descrevendo que deu certo.
    aparecem (o anexo só é guardado em produção).
    EVIDÊNCIA: [os dois arquivos ou o print da pasta de downloads]
 
+10. **(EMENDA 2026-10-29 — MEI, F-XP-4 → b)** Pré-condição: uma empresa com o perfil da empresa no regime **MEI** no ano
+    corrente, e a unidade com `regEspTrib = 0`, sem ISS retido e sem IBS/CBS. O `codMun` da unidade precisa ser o
+    município do endereço do CNPJ do MEI (RN E0041 — o Luminaris não confere isso). Emitir uma venda de serviço dessa
+    unidade.
+    Resultado esperado: a ficha mostra "2 — Optante MEI", "Sem tributação federal na nota do MEI — não informe." e
+    "Valor aproximado dos tributos: Não informe — facultativo para o MEI.", sem alíquota e sem "Regime de Apuração
+    Tributária pelo SN". O portal autoriza a nota, e o XML devolvido pelo retorno manual é aceito sem divergência
+    (`cStat 107`, NFS-e MEI).
+    EVIDÊNCIA: [print da ficha + resposta do retorno manual]
+
 ## Desfecho (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
 [ ] FALHOU — passo __ divergiu; evidência da divergência colada acima;

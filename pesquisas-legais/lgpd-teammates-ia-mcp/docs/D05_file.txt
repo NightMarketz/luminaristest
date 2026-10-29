@@ -1,0 +1,970 @@
+  
+AUTORIDADE NACIONAL 
+DE PROTEÇÃO DE DADOS 
+ 
+ 
+  
+ 
+ 
+ 
+ 
+Guia Orientativo para Definições dos 
+Agentes de Tratamento de Dados Pessoais 
+e do Encarregado 
+ 
+VERSÃO 2.0 
+ABR. 2022 
+ 
+
+  
+   
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+GUIA ORIENTATIVO PARA DEFINIÇÕES DOS AGENTES DE 
+TRATAMENTO DE DADOS PESSOAIS E DO ENCARREGADO 
+ 
+ 
+Versão 2.0 
+ 
+ 
+ 
+ 
+ABRIL DE 2022 
+
+Guia Orientativo para Definições dos Agentes de Tratamento de Dados Pessoais e do Encarregado  Abril/2022 
+ 
+3 de 26 
+Presidente da República 
+Jair Messias Bolsonaro 
+ 
+Diretor-Presidente 
+Waldemar Gonçalves Ortunho Junior 
+ 
+Diretores 
+Arthur Pereira Sabbat 
+Joacil Basilio Rael 
+Miriam Wimmer 
+Nairane Farias Rabelo Leitão 
+ 
+Equipe de elaboração 
+Alexandra Krastins Lopes - Gerente de Projeto do Conselho Diretor 
+Andressa Girotto Vargas - Especialista na Coordenação-Geral de Normatização 
+Fabrício Guimarães Madruga Lopes - Coordenador-Geral de Fiscalização 
+Isabela Maiolino - Coordenadora-Geral de Normatização 
+Lucas Borges de Carvalho - Gerente de Projeto do Conselho Diretor 
+Thiago Guimarães Moraes - Coordenador de Inovação e Pesquisa 
+ 
+Capa: Fabrício Guimarães Madruga Lopes  
+Imagem de Capa: Oleg Magni, em pexels.com 
+  
+Guia Orientativo para Definições dos Agentes de Tratamento de Dados Pessoais e do Encarregado  Abril/2022 
+ 
+4 de 26 
+Histórico de versões 
+ 
+ 
+Versão 2.0 Abril 2022 
+Versão 1.0 Maio 2021 
+ 
+ 
+ 
+ 
+ 
+ 
+  
+Guia Orientativo para Definições dos Agentes de Tratamento de Dados Pessoais e do Encarregado  Abril/2022 
+ 
+5 de 26 
+SUMÁRIO 
+ 
+Histórico de versões ...................................................................................................................................... 4 
+APRESENTAÇÃO ............................................................................................................................................ 6 
+1. AGENTES DE TRATAMENTO. Quem pode ser considerado agente de tratamento? ................................ 6 
+2. CONTROLADOR ......................................................................................................................................... 7 
+2.1. Definição legal .................................................................................................................................... 7 
+2.2. Controlador pessoa jurídica ............................................................................................................... 9 
+2.3. Controlador pessoa jurídica de direito público.................................................................................. 9 
+2.4. Controlador pessoa natural ............................................................................................................. 11 
+2.5. Decisões do controlador .................................................................................................................. 11 
+2.6 Exemplos ........................................................................................................................................... 12 
+3. CONTROLADORIA CONJUNTA E CONTROLADORIA SINGULAR ............................................................... 13 
+3.1 Diferença – definição de finalidades e elementos essenciais em conjunto. .................................... 13 
+3.2 Como avaliar se há controladoria conjunta ...................................................................................... 14 
+3.3 Exemplos ........................................................................................................................................... 15 
+4. OPERADOR .............................................................................................................................................. 16 
+4.1 Definição legal ................................................................................................................................... 16 
+4.2 Tipos de operadores.......................................................................................................................... 17 
+4.3 Responsabilidade .............................................................................................................................. 18 
+4.4 Exemplos ........................................................................................................................................... 18 
+5. SUBOPERADOR ........................................................................................................................................ 19 
+5.1 Definição legal ................................................................................................................................... 19 
+5.2 Exemplos ........................................................................................................................................... 21 
+6. ENCARREGADO........................................................................................................................................ 22 
+6.1 Definição legal ................................................................................................................................... 22 
+6.2 Atribuições do encarregado. ............................................................................................................. 23 
+7. CONSIDERAÇÕES FINAIS .......................................................................................................................... 24 
+APÊNDICE - Aplicação dos conceitos de Controlador e Operador.............................................................. 25 
+ 
+  
+Guia Orientativo para Definições dos Agentes de Tratamento de Dados Pessoais e do Encarregado  Abril/2022 
+ 
+6 de 26 
+APRESENTAÇÃO 
+1. A publicação da Lei Geral de Proteção de Dados Pessoais (LGPD), qual seja, a Lei nº 13.709 
+de 14 de agosto de 2018, representa um marco ao dispor sobre o tratamento por pessoas físicas 
+e jurídicas, ao apresentar conceitos e ao buscar estruturar nacionalmente um sistema efetivo de 
+proteção de dados pessoais. Ao mesmo tempo, a LGPD deixa espaços para interpretações e 
+regulamentação pela Autoridade Nacional de Proteção de Dados (ANPD), a quem incumbe zelar 
+pelos dados pessoais, bem como regulamentar a LGPD e o seu enforcement. 
+2. Dos assuntos que têm suscitado dúvidas destacam -se o conceito e os aspectos 
+relacionados aos agentes de tr atamento, quais sejam, o controlador e o operador, bem como 
+sobre o encarregado. Assim, com base nas atribuições institucionais da ANPD decorrentes do art. 
+55-J, VI e VII1, da LGPD, e considerando a necessidade de esclarecimentos a respeito de conceitos 
+para a atuação de organizações públicas e privadas no tratamento de dados pessoais, foi 
+elaborado o ‘Guia Orientativo para a Definição dos Agentes de Tratamento e do Encarregado’. 
+3. O presente Guia orientativo busca estabelecer diretrizes não-vinculantes aos agentes de 
+tratamento e explicar quem pode exercer a função do  controlador, do operador e do 
+encarregado2; as definições legais; os respectivos regimes de responsabilidade; casos hipotéticos 
+que exemplificam as explicações da ANPD e as perguntas frequentes sobre o assunto. 
+4. A versão ora publicada atualiza a versão original para ajustar, entre outras, questões 
+redacionais e gramaticais, para relacionar o debate com a Resolução CD/ANPD nº 2, de 27 janeiro 
+de 2022, que aprova o Regulamento de Aplicação da LGPD para Agentes de Tratamento de 
+Pequeno Porte, assim como para acrescentar esclarecimentos sobre as atribuições do 
+encarregado e a desnecessidade neste momento de registro de sua identidade perante a ANPD. 
+5. A presente versão está sujeita a comentários e contribuições pela sociedade de forma 
+contínua e o Guia será atualizado , à critério da ANPD,  à medida que novas regulamentações e 
+entendimentos forem publicados. As sugestões podem ser enviadas para a Ouvidoria da ANPD, 
+por meio da Plataforma Fala.BR (https://falabr.cgu.gov.br/). 
+ 
+1. AGENTES DE TRATAMENTO . Quem pode ser considerado agente de 
+tratamento? 
+6. São agentes de tratamento 3 o controlador e o operador de dados pessoais 4, os quais 
+podem ser pessoas naturais ou jurídicas, de direito público ou privado5. Ressalta-se que os 
+ 
+1 Art. 55-J - Compete à ANPD: 
+VI - promover na população o conhecimento das normas e das políticas públicas sobre proteção de dados pessoais 
+e das medidas de segurança; VII - promover e elaborar estudos sobre as práticas nacionais e internacionais de 
+proteção de dados pessoais e privacidade; 
+2 Art. 5º, VIII, da LGPD. 
+3 Os agentes de tratamento são os responsáveis pelo tratamento dos dados pessoais, sujeitos às regras da LGPD e à 
+fiscalização da ANPD. O controlador é quem toma as decisões referentes ao tratamento de dados pessoais e o 
+operador, aquele que realiza o tratamento de dados pessoais em nome do controlador. 
+4 Art. 5º, IX, da LGPD. 
+5 Art. 5º, VI e VII, da LGPD. 
+Guia Orientativo para Definições dos Agentes de Tratamento de Dados Pessoais e do Encarregado  Abril/2022 
+ 
+7 de 26 
+agentes de tratamento deve m ser definidos a partir de seu caráter institucional. Não são 
+considerados controladores (autônomos ou conjuntos) ou operadores  os indivíduos 
+subordinados, tais como  os funcionários, os servidores públicos ou as equipes de trabalho de 
+uma organização, já que atuam sob o poder diretivo do agente de tratamento. 
+7. No contexto de uma pessoa jurídica, a organização é o agente de tratamento para os fins 
+da LGPD, já que é esta que estabelece as regras para o tratamento de dados pessoais, a serem 
+executadas por seus representantes ou prepostos.  
+8. Mas, além disso, o agente de tratamento é definido para cada operação de tratamento 
+de dados pessoais, portanto, a mesma organização poderá ser controladora e operadora , de 
+acordo com sua atuação em diferentes operações de tratamento. 
+9. Conforme se verificará adi ante, pessoas naturais podem ser consideradas controladoras 
+ou operadoras de dados pessoais. Serão controladoras quando  atuarem de acordo com os 
+próprios interesses, com poder de decisão sobre as finalidades e os elementos essenciais de 
+tratamento. Serão operadoras quando atuarem de acordo com os interesses do controlador, 
+sendo-lhes facultada apenas a definição de elementos não essenciais à finalidade do tratamento. 
+O operador deve ser uma entidade distinta do controlador 6, isto é, que não atua como 
+profissional subordinado a este ou como membro de seus órgãos. 
+10. Por outro lado, os funcionários atuarão em subordinação às decisões do controlador, não 
+se confundindo, portanto, com os operadores de dados pessoais. 
+11. A título exemplificativo, uma empresa decide enviar propagandas aos seus clientes com 
+a finalidade de alavancar as vendas de determinado produto. Para isso , contrata agência de 
+publicidade, que elaborará a campanha de marketing com fotos de pessoas utilizando o produto. 
+A empresa informa todos os critérios para a campanha, tais como o público-alvo e estabelece os 
+critérios de como deve ser a aparência física dos modelos fotográficos. A agência de publicidade 
+trata dados pessoais para prestar o serviço para a empresa, ao selecionar modelos fotográficos 
+e armazenar as fotos desses titulares. Após a conclusão do serviço pela agência, o funcionário da 
+empresa envia as propagandas aos clientes. 
+12. Neste exemplo a empresa atua como controlador, ao determinar o tratamento de dados 
+e definir os seus elementos essenciais. A agência de publicidade atua como operadora ao tratar 
+dados conforme a finalidade do tratamento definida pelo controlador e o funcionário, ao enviar 
+os e -mails para os clientes, atua sob o poder diretivo da empresa  e não se caracteriza como 
+agente de tratamento. 
+ 
+2. CONTROLADOR 
+2.1. Definição legal 
+13. O controlador é o agente responsável por tomar as principais decisões referentes ao 
+tratamento de dados pessoais e por definir a finalidade deste tratamento. Entre essas decisões, 
+ 
+6 O art. 29 do Regulamento Geral sobre Proteção de Dados (RGPD) da União Europeia traz a diferença entre operador 
+e “qualquer pessoa que, agindo sob a autoridade (...)”. 
+Guia Orientativo para Definições dos Agentes de Tratamento de Dados Pessoais e do Encarregado  Abril/2022 
+ 
+8 de 26 
+incluem-se as instruções fornecidas a operadores contratados para a realização de um 
+determinado tratamento de dados pessoais. 
+14. A definição legal de controlador se encontra no art. 5º, VI, da LGPD: 
+ 
+Pessoa natural ou jurídica, de direito público ou privado, a quem competem as decisões 
+referentes ao tratamento de dados pessoais 
+ 
+15. O conceito possui elevada importância prática, uma vez que a LGPD atribui obrigações 
+específicas ao controlador, como a de elaborar relatório de impacto à proteção de dados pessoais 
+(art. 387), a de comprovar que o consentimento obtido do titular atende às exigências legais (art. 
+8º, § 2º8) e a de comunicar à ANPD a ocorrência de incidentes de segurança (art. 48). Além disso, 
+a atribuição de responsabilidades em relação à reparação por danos decorrentes de atos ilíc itos 
+é distinta de acordo com a qualificação do agente de tratamento, isto é, se controlador ou 
+operador, conforme o disposto nos arts. 42 a 45. 
+16. Vale mencionar ainda que os direitos dos titulares (art. 18) são, em regra, exercidos em 
+face do controlador, a quem compete, entre outras providências, fornecer informações relativas 
+ao tratamento, assegurar a correção e a eliminação de dados pessoais, e receber requerimento 
+de oposição a tratamento. O titular dos dados pode, ainda, peticionar contra o controlador 
+perante a ANPD, o que denota a relevância da compreensão do conceito não só para os 
+profissionais da área, mas também para o cidadão comum. 
+17. A identificação do controlador deve partir do conceito legal e dos parâmetros auxiliares 
+indicados neste Guia, sempre considerando o contexto fático e as circunstâncias relevantes do 
+caso. O papel de controlador pode decorrer expressamente de obrigações estipuladas em 
+instrumentos legais e regulamentares ou em contrato firmado entre as partes.  Não obstante, a 
+efetiva atividade desempenhada por uma organização pode se distanciar do que estabelecem as 
+disposições jurídicas formais, razão pela qual é de suma importância avaliar  se o s uposto 
+controlador é, de fato, o responsável pelas principais decisões relativas ao tratamento.9 
+ 
+ 
+7  Art. 38. A autoridade nacional poderá determinar ao controla dor que elabore relatório de impacto à proteção de 
+dados pessoais, inclusive de dados sensíveis, referente a suas operações de tratamento de dados, nos termos de 
+regulamento, observados os segredos comercial e industrial. 
+8 Art. 8º O consentimento previsto no inciso I do art. 7º desta Lei deverá ser fornecido por escrito ou por outro meio 
+que demonstre a manifestação de vontade do titular. 
+(...) 
+§ 2º Cabe ao controlador o ônus da prova de que o consentimento foi obtido em conformidade com o disposto nesta 
+Lei.  
+9 Nesse sentido são as orientações do European Data Protection Board - EDPB: “os conceitos de controlador e 
+operador são funcionais: eles visam alocar responsabilidades de acordo com os papéis reais das partes. Isso implica 
+que o status legal de um ator como ‘controlador’ ou ‘operador’ deve, em princípio, ser determinado por suas ações 
+concretas em uma determinada situação, ao invés da designação formal como sendo um ‘controlador’ ou ‘operador’ 
+(por exemplo, em um contrato).” (tradução livre). Guidelines 07/2020 on the concepts of controller and processor in 
+the GDPR. set. 2020, p . 9. Disponível em 
+https://edpb.europa.eu/sites/edpb/files/consultation/edpb_guidelines_202007_controllerprocessor_en.pdf. 
+Acesso: 12 mar. 2021. 
+Guia Orientativo para Definições dos Agentes de Tratamento de Dados Pessoais e do Encarregado  Abril/2022 
+ 
+9 de 26 
+2.2. Controlador pessoa jurídica 
+18. Na maioria das vezes, o controlador será uma pessoa jurídica, seja de direito privado, seja 
+de direito público. É o que ocorre, por exemplo, quando sociedades empresárias ou entidades 
+públicas tomam as principais decisões a respeito do armazenamento, da eliminação ou do 
+compartilhamento de informações que integram um banco de dados pessoais que é gerido no 
+âmbito da organização. 
+ 
+De acordo com o Código Civil, as pessoas jurídicas de direito privado podem ser: 
+ 
+(a) entidades sem fins lucrativos, como as associações, fundações, organizações 
+religiosas, sindicatos e partidos políticos; ou 
+ 
+(b) entidades com fins lucrativos, como as sociedades empresárias ou simples  e as 
+cooperativas. Já as pessoas jurídicas de direito público interno são os entes federados 
+(União, Estados, Distrito Federal e Municípios), além de entidades da administração 
+pública, a exemplo de autarquias e fundações públicas. Estados estrangeiros e 
+organismos internacionais são pessoas jurídicas de direito público externo. 
+ 
+Portanto, todas essas entidades podem ser consideradas como controladoras para fins da 
+LGPD. 
+ 
+19. Daí decorre que não são controladoras as pessoas naturais que atuam como 
+profissionais subordinados a uma  pessoa jurídica ou como membros de seus órgãos.  É o caso 
+de empregados, administradores, sócios, servidores e outras pessoas naturais que integram a 
+pessoa jurídica e cujos atos expressam a atuação desta.  
+20. Nesse sentido, a definição legal de controlador não deve ser entendida como uma norma 
+de distribu ição interna de competências e responsabilidades. De forma diversa, trata -se de 
+comando legal que atribui obrigações específicas à pessoa jurídica, de modo que esta assume a 
+responsabilidade pelos atos praticados por seus agentes e prepostos em face dos ti tulares e da 
+ANPD. 
+2.3. Controlador pessoa jurídica de direito público 
+21. Situação peculiar é a das pessoas jurídicas de direito público , cujas competências 
+decisórias são distribuídas internamente entre diferentes órgãos públicos. É o que ocorre, por 
+exemplo, com a União (pessoa jurídica de direito público) e os Ministérios (órgãos públicos 
+despersonalizados que integram a União e realizam tratamento de dados pessoais conforme o 
+previsto na legislação). 
+22. Nesses casos, deve-se considerar dois aspectos centrais. De um lado, conforme o art. 5º, 
+VI, da LGPD, o controlador é a União, pessoa jurídica de direito público que, em última análise, 
+é a responsável pelas obrigações decorrentes da lei, de instrumentos contratuais ou de atos 
+ilícitos praticados pelos seus órgãos e servidores. 
+Guia Orientativo para Definições dos Agentes de Tratamento de Dados Pessoais e do Encarregado  Abril/2022 
+ 
+10 de 26 
+23. De outro lado,  a LGPD atribuiu aos órgãos públicos  obrigações típicas de controlador , 
+indicando que, no setor público, essas obrigações devem ser distribuídas entre as principais 
+unidades administrativas despersonalizadas que integram a pessoa jurídica de direito público e 
+realizam tratamento de dados pessoais. 
+24. Nesse sentido, a União, como controladora, é a responsável perante a LGPD, mas as 
+atribuições de controlador, por força da desconcentração administrativa, são exercidas pelos 
+órgãos públicos que desempenham funções em nome da pessoa jurídica d a qual fazem parte, 
+fenômeno que caracteriza a distribuição interna das competências.  É o que se verifica nas 
+hipóteses de uso compartilhado de dados pessoais (art. 26 10), de atendimento às exigências da 
+ANPD (art. 2911) e de aplicação de sanções administrativas (art. 52, § 3º12). 
+25. No mesmo sentido, r essalta-se que os órgãos públicos devem cumprir os deveres de 
+transparência e de nomeação de encarregado (pessoa indicada pelo con trolador e operador 
+para atuar como canal de comunicação entre o controlador, os titulares de dados e a ANPD) , 
+pois além de atuarem em nome da pessoa jurídica da qual fazem parte, tais obrigações decorrem 
+expressamente da LGPD (art. 23, I e III).13 
+26. Por fim, a crescente-se que tais órgãos devem estabelecer estruturas adequadas para 
+receber requerimentos de titulares e solicitações de providências determinadas pela ANPD. 
+27. Considere o seguinte exemplo: em uma contratação de uma solução de computação em 
+nuvem de uma empresa por um determinado Ministério do Poder Executivo  a controladora é a 
+União, mas é o Ministério, na condição de órgão público federal, que exercerá as funções típicas 
+do controlador. Por sua vez, o operador será a empresa contratada. Por exerc er funções típicas 
+de controlador, cabe ao Ministério designar um encarregado, bem como realizar notificações à 
+ANPD em casos de incidentes de segurança , dentre outras obrigações previstas na LGPD . No 
+entanto, caso um titular de dados deci da ajuizar uma ação judicial, questionando o tratamento 
+realizado, deverá ingressar contra o controlador, que é a União. 
+28. Em suma, a atribuição de obrigações legais específicas para os órgãos públicos decorre da 
+complexidade das estruturas administrativas e de suas implicações práticas para os direitos dos 
+titulares, em especial diante da realização de tratamento de dados para finalidades distintas 
+ 
+10 Art. 26. O uso compartilhado de dados pessoais pelo Poder Público deve atender a finalidades específicas de 
+execução de políticas públicas e atribuição legal pelos órgãos e pelas entidades públicas, respeitados os princípios 
+de proteção de dados pessoais elencados no art. 6º desta Lei. 
+11 Art. 29. A autoridade nacional poderá solicitar, a qualquer momento, aos órgãos e às entidades do poder público 
+a realização de operações de tratamento de dados pessoais, informações específicas sobre o âmbito e a  natureza 
+dos dados e outros detalhes do tratamento realizado e poderá emitir parecer técnico complementar para garantir 
+o cumprimento desta Lei. 
+12 Art. 52. Os agentes de tratamento de dados, em razão das infrações cometidas às normas previstas nesta Lei, ficam 
+sujeitos às seguintes sanções administrativas aplicáveis pela autoridade nacional: (...) § 3º O disposto nos incisos I, 
+IV, V, VI, X, XI e XII do caput deste artigo poderá ser aplicado às entidades e aos órgãos públicos, sem prejuízo do 
+disposto na Lei nº 8.112, de 11 de dezembro de 1990, na Lei nº 8.429, de 2 de junho de 1992, e na Lei nº 12.527, de 
+18 de novembro de 2011. 
+13 Ao estabelecer requisitos específicos para o tratamento de dados pessoais pelo Poder Público, o art. 23 da LGPD 
+menciona as “pessoas jurídicas de direito público referidas no parágrafo único do art. 1º da Lei nº 12.527, de 18 de 
+novembro de 2011 (Lei de Acesso à Informação)”. Este dispositivo, por sua vez, em seu inciso I, refere-se aos “órgãos 
+públicos integrantes da administração direta dos Poderes Executiv o, Legislativo, incluindo as Cortes de Contas, e 
+Judiciário e do Ministério Público”. Vale mencionar, ainda, que a Instrução Normativa SGD/ME nº 117, de 19 de 
+novembro de 2020, prevê expressamente que órgãos públicos federais devem indicar um encarregado. 
+Guia Orientativo para Definições dos Agentes de Tratamento de Dados Pessoais e do Encarregado  Abril/2022 
+ 
+11 de 26 
+pelos diferentes órgãos. Por isso, além de definir  a pessoa jurídica de direito público como 
+controladora, a LGPD também atribuiu obrigações legais específicas para os diversos órgãos 
+públicos que realizam tratamento de dados pessoais. 
+29. Assim, em conclusão: n as operações de tratamento de dados pessoais conduzidas por 
+órgãos públicos despersonalizados a pessoa jurídica de direito público a que os órgãos sejam 
+vinculados é a controladora dos dados pessoais e, portanto, responsável pelo cumprimento da 
+LGPD. 
+30. Contudo, em razão do princípio da desc oncentração administrativa, o órgão público 
+despersonalizado desempenhará funções típicas de controlador de dados, de acordo com as 
+obrigações estabelecidas na LGPD. 
+31. Essa conclusão refere-se apenas à Administração Pública direta, já que a administração 
+indireta segue o regramento de pessoa jurídica estabelecido pela LGPD. 
+ 
+2.4. Controlador pessoa natural 
+32. Uma pessoa natural poderá ser controladora nas situações em que é a responsável pelas 
+principais decisões referentes ao tratamento de dados pessoais. Nessa hipótese, a pessoa natural 
+age de forma independente e em nome própri o – e não de forma subordinada a uma pessoa 
+jurídica ou como membro de um órgão desta. 
+33. É o que ocorre, por exemplo, com os empresários individuais, os profissionais liberais 
+(como advogados, contadores e médicos) e os responsáveis pelas serventias extrajudiciais.14 
+ 
+2.5. Decisões do controlador 
+34. De acordo com o disposto na LGPD, o controlador é o responsável por tomar as “decisões 
+referentes ao tratamento de dados pessoais” (art. 5º, VI). 
+35. Extrai-se dessa disposição legal que o tratamento não precisa ser realizado diretamente 
+pelo controlador. Muito embora o controlador também trate dados pessoais, o  elemento 
+distintivo é o poder de decisão, admitindo-se que o controlador forneça instruções para que um 
+terceiro (“operador”) realize o tratamento em seu nome (art. 5º, VII; art. 39). 
+36. O segundo ponto relevante é a desnecessidade de que todas as decisões sejam tomadas 
+pelo controlador, bastando apenas que este mantenha sob sua influência e controle as principais 
+decisões, isto é, aquelas  relativas aos elementos essenciais para o cumprimento da finalidade 
+do tratamento. De fato, especialmente quando há a contratação de um operador, é usual e 
+legítimo que parte das decisões a respeito d o tratamento, limitadas aos seus elementos não 
+essenciais, fique sob a alçada do operador . A título de exemplo , podem ser mencionados a 
+escolha dos softwares e equipamentos que serão utilizados e o detalhamento de medidas de 
+prevenção e segurança. 
+ 
+14 Os notários e os oficiais de registro são designados como titulares das serventias extrajudiciais após aprovação em 
+concurso público, atuando na condição de pessoa natural como delegatários do Poder Público. Por tal razão, a LGPD 
+prevê que terão tratamento similar ao dispensado às pessoas jurídicas de direito público (art. 23, § 4º). 
+Guia Orientativo para Definições dos Agentes de Tratamento de Dados Pessoais e do Encarregado  Abril/2022 
+ 
+12 de 26 
+37. O terceiro ponto a ser considerado diz respeito à definição dos elementos decisórios que 
+se caracterizam como “principais” ou “essenciais”  e que, por isso, devem permanecer sob o 
+domínio do controlador. Dentre esses elementos decisórios principais, destaca-se a definição da 
+finalidade do tratamento, que será sempre estabelecida pelo controlador, a quem compete, em 
+conformidade com as disposições da LGPD, estipular os objetivos que justificam a realização do 
+tratamento, bem como a sua respectiva base legal. Considere os seguintes exemplos de decisões 
+do controlador, segundo a finalidade do tratamento: utilização de dados pessoais para o 
+pagamento de empregados, a realização de uma pesquisa com clientes, a promoção de u ma 
+campanha de marketing, o armazenamento seguro de informações ou a emissão de passagens 
+aéreas. 
+38. Por fim, além da finalidade, o controlador é o responsável por estabelecer outros 
+elementos essenciais relativos ao tratamento. É o caso da definição d a natureza dos dados 
+pessoais tratados  (por exemplo, dados de beneficiários de plano de saúde ou de pessoas 
+cadastradas em banco de dados oficial) e da duração do tratamento, isto é, do período durante 
+o qual será realizada a operação, incluindo o estabelecimento de prazo para a eliminação dos 
+dados.15 Vale ressaltar que outros elementos podem ser considerados essenciais a depender do 
+contexto e das peculiaridades do caso concreto. 
+ 
+2.6 Exemplos 
+39. A seguir, alguns exemplos que demonstram quem pode assumir o papel de controlador a 
+depender do cenário. 
+Exemplo 1 - Médica profissional liberal 
+Uma médica, profissional liberal, armazena os prontuários e os demais dados pessoais de seus 
+pacientes no computador de seu consultório. A médica, pessoa natural, é a controladora dos 
+dados pessoais. 
+ 
+Exemplo 2 - Médica empregada de um hospital 
+Uma médica é empregada de um hospital, constituído sob a forma de associação civil sem fins 
+lucrativos. Nessa condição, atua como principal representante do hospital junto a um serviço de 
+armazenamento de dados de pacientes em nuvem, inclusive assinando os contratos 
+correspondentes. O hospital, isto é, a associação civil, pessoa jurídica de direito privado, é o 
+controlador na hipótese. A médica, por atuar sob o poder diretivo da organização, não se 
+caracteriza como agente de tratamento. 
+ 
+Exemplo 3 - Órgão público contratante de um serviço de inteligência artificial 
+ 
+15 Nesse sentido, ver EDPB, Guidelines 07/2020 on the concepts of controller and processor in the GDPR. set. 2020, 
+p. 13 -15. Disponível em 
+<https://edpb.europa.eu/sites/edpb/files/consultation/edpb_guidelines_202007_controllerprocessor_en.pdf>. 
+Acesso: 12 mar. 2021. 
+Guia Orientativo para Definições dos Agentes de Tratamento de Dados Pessoais e do Encarregado  Abril/2022 
+ 
+13 de 26 
+Um órgão público, vinculado à União, contrata uma solução de inteligência artificial fornecida por 
+uma sociedade empresária com a finalidade específica de realizar o tratamento automatizado de 
+decisões com base em um banco de dados gerido pelo órgão. Seguindo as instruções fornecidas 
+pelo gestor público responsável e estabelecidas em contrato, a sociedade e mpresária realiza as 
+operações necessárias para viabilizar o tratamento dos dados em questão. A União, pessoa 
+jurídica de direito público, é a controladora na hipótese. Não obstante, o órgão público 
+responsável detém obrigações legais específicas em face d os titulares e da ANPD, conforme 
+previsto na LGPD. A sociedade empresária é a operadora, uma vez que realiza o tratamento dos 
+dados conforme as instruções fornecidas pelo controlador. Por fim, o gestor público responsável, 
+por atuar como servidor público s ubordinado à União, não se caracteriza como agente de 
+tratamento. 
+ 
+3. CONTROLADORIA CONJUNTA E CONTROLADORIA SINGULAR 
+3.1 Diferença – definição de finalidades e elementos essenciais em conjunto. 
+40. A depender do contexto, uma mesma operação de tratamento de dados pessoais pode 
+envolver mais de um controlador. Conforme a LGPD, art. 42, §1º, II, quando mais de um 
+controlador estiver diretamente envolvido no tratamento do qual decorram danos ao titular de 
+dados, estes responderão de forma solidária, à exceção das hipóteses previstas no art. 43. 
+41. Assim, embora a LGPD não explicite o conceito de controladoria conjunta, é possível 
+inferir que ele está contemplado no sistema jurídico de proteção de dados. A definição das 
+funções dos controladores conjuntos implica consequências no que diz respeito às funções dos 
+agentes de tratamento e aos direitos dos titulares. 
+42. Considerando a inspiração da LGPD no direito europeu, é possível buscar nessa última 
+norma, para esclarecimento, a definição de controladoria conjunta (art. 26 do RGPD): 
+ 
+Quando dois ou mais responsáveis pelo tratamento determinem conjuntamente as 
+finalidades e os meios desse tratamento, ambos são responsáveis conjuntos pelo 
+tratamento. Estes determinam, por acordo entre si e de modo transparente, as 
+respectivas responsabil idades pelo cumprimento do presente regulamento, 
+nomeadamente no que diz respeito ao exercício dos direitos do titular dos dados e aos 
+respectivos deveres de fornecer as informações referidas nos artigos 13º e 14º, a menos 
+e na medida em que as suas respon sabilidades respectivas sejam determinadas pelo 
+direito da União ou do Estado-Membro a que se estejam sujeitos. O acordo pode designar 
+um ponto de contato para os titulares dos dados. 
+ 
+43. Para o  regulamento europeu , a controladoria conjunta ocorre quando há uma 
+"participação conjunta" na determinação de "finalidades e meios de tratamento". Conforme o 
+Guia Orientativo para Definições dos Agentes de Tratamento de Dados Pessoais e do Encarregado  Abril/2022 
+ 
+14 de 26 
+Comitê Europeu de Proteção de Dados (EDPB), a finalidade do tratamento pode ocorrer a partir 
+de decisões comuns ou convergentes.16 
+44. Nas decisões comuns, duas ou mais entidades possuem uma intenção comum sobre as 
+finalidades e meios de tratamento e tomam decisões em conjunto. Em contrapartida, nas 
+decisões convergentes existem decisões distintas sendo tomadas, porém elas se complementam 
+de tal forma que o tratamento não seria possível sem a participação de ambos os controladores. 
+45. Entretanto, ainda que o mesmo conjunto de dados seja tratado, não haverá controladoria 
+conjunta se os objetivos do tratamento forem distintos. Por exemplo, diversos controladores 
+podem tratar dados abertos do governo, cada um para suas finalidades específicas. Se estas 
+finalidades não forem comuns, convergentes ou complementares, ambos serão controladores 
+singulares em relação ao tratamento de dados e a controladoria conjunta não e stará 
+estabelecida, o que afastaria a incidência do art. 42, §1º, II, da LGPD. 
+46. Assim como na controladoria singular, os controladores conjuntos são capazes de 
+determinar os elementos essenciais do tratamento. Essa decisão é tomada de maneira coletiva, 
+mas não há a necessidade de que cada controlador determine todos os elementos envolvidos 
+em uma operação de tratamento para que a controladoria conjunta se estabeleça. 
+47. Cabe, contudo, frisar, que a identificação da controladoria conjunta será contextual e 
+apenas o caso concreto permitirá identificar em que casos a controladoria conjunta foi 
+estabelecida.  Uma vez que se configure, a responsabilidade dos controladores será solidária, nos 
+termos do art. 42, §1º, II, o que reforça a importância de  que todos estejam em conformidade 
+com a LGPD. 
+48. Assim, ao adaptar a concepção europeia  para o cenário da LGPD, pode -se entender o 
+conceito de controladoria conjunta como “ a determinação conjunta, comum ou convergente, 
+por dois ou mais controladores, das fin alidades e dos elementos essenciais para a realização 
+do tratamento de dados pessoais, por meio de acordo que estabeleça as respectivas 
+responsabilidades quanto ao cumprimento da LGPD”. 
+ 
+3.2 Como avaliar se há controladoria conjunta 
+49. Em resumo, verifica-se a existência de controladoria conjunta quando os seguintes 
+critérios forem observados: 
+1. Mais de um controlador possui poder de decisão sobre o tratamento de dados 
+pessoais; 
+2. Há interesse mútuo de dois ou mais controladores, com base em finalidades 
+próprias, sobre um mesmo tratamento; e 
+3. Dois ou mais controladores tomam decisões comuns ou convergentes sobre as 
+finalidades e elementos essenciais do tratamento. 
+ 
+16 EDPB, Guidelines 07/2020 on the concepts of  controller and processor in the GDPR, set. 2020. Disponível em: < 
+https://edpb.europa.eu/sites/edpb/files/consultation/edpb_guidelines_202007_controllerprocessor_en.pdf> 
+Acesso: 12 mar. 2021. 
+Guia Orientativo para Definições dos Agentes de Tratamento de Dados Pessoais e do Encarregado  Abril/2022 
+ 
+15 de 26 
+ 
+50. Todos os critérios acima deverão ser observados para que a existência da controladoria 
+conjunta seja reconhecida. 
+ 
+3.3 Exemplos 
+Exemplo 4 – Uso de dados abertos disponibilizados por Agência Reguladora 
+Agência Reguladora disponibiliza acesso público aos dados relativos às outorgas dos serviços 
+regulados, incluindo informações de pessoas naturais sócias de prestadoras. A base de dados é 
+armazenada pela própria Agência e utilizada para subsidiar decisões administrativas. Organização 
+da Sociedade Civil tem acesso aos dados disponibilizados pela Agência e efetua, com ba se em 
+solução de inteligência artificial, cruzamento com outras bases de dados visando à realização de 
+ações de controle social de entidades e agentes públicos. Sociedade Empresária também trata os 
+dados em questão, visando, porém, fornecer serviços de con sultoria aos agentes do setor 
+regulado. 
+Embora a mesma base de dados seja utilizada pelas três entidades (Agência Reguladora, 
+Organização da Sociedade Civil e Sociedade Empresária), cada uma dessas organizações é 
+responsável e responde pelos respectivos tr atamentos realizados. Neste contexto, não há 
+controladoria conjunta pois o tratamento de dados ocorre no âmbito das atividades e das 
+finalidades definidas por cada organização. 
+ 
+Exemplo 5 – Campanha de marketing de empresas I: decisões comuns 
+As empresas ARGENTINA e BRASIL lançaram um produto de marca conjunta COSMÉTICO e 
+desejam organizar um evento para promover este produto. Para esse fim, decidem compartilhar 
+dados de seus respectivos clientes e banco de dados de clientes potenciais e decidi r sobre a lista 
+de convidados para o evento com base nesses dado s. Eles também concordam sobre as 
+modalidades de envio dos convites para o evento, como coletar feedback durante os eventos e 
+sobre as ações de marketing de acompanhamento. Por fim, contratam a agência de marketing 
+DINAMARCA para executar a campanha. A agência traz sugestões de como os clientes poderiam 
+ser mais bem alcançados e define os canais, ferramentas e produtos da campanha. 
+As empresas ARGENTINA e BRASIL podem ser consideradas controlad ores conjuntos para o 
+tratamento de dados pessoais relacionados com a organização do evento e com a promoção do 
+produto da marca COSMÉTICO, por terem definido, em conjunto, a finalidade e os elementos 
+essenciais dos dados tratados nesse contexto. 
+Já a agên cia de marketing DINAMARCA atuará como operadora de dados para as empresas 
+ARGENTINA e BRASIL. Ainda que opine sobre os meios de tratamento, ela não é a responsável 
+pela tomada de decisão final, limitando -se a definir elementos não essenciais como os canai s, 
+ferramentas e produtos da campanha. 
+Caso a agência de marketing DINAMARCA contrate serviços de terceiros de armazenamento de 
+dados em nuvem, por exemplo, essa empresa prestadora de serviços será caracterizada como 
+suboperadora. 
+ 
+Guia Orientativo para Definições dos Agentes de Tratamento de Dados Pessoais e do Encarregado  Abril/2022 
+ 
+16 de 26 
+Exemplo 6 - Campanha de marketing de empresas II: decisões autônomas 
+Considere-se agora que a campanha descrita no exemplo anterior foi tão bem -sucedida que, em 
+um segundo momento, a empresa ARGENTINA contrata a agência de marketing DINAMARCA para 
+divulgar seus produtos ESPELHO e FACA. Pouco tempo depois, a empresa BRASIL toma a mesma 
+decisão para divulgação dos produtos GARRAFA e HALTERE. Ambas as empresas passam a usar a 
+lista de clientes que haviam compartilhado anteriormente. 
+Nesta situação, que envolve a divulgação de produtos produzidos exclusivamente pela empresa 
+ARGENTINA ou pela empresa BRASIL, estas atuarão como controladores singulares, cada uma 
+atuando em suas próprias campanhas. A agência de marketing DINAMARCA continuará como 
+operadora de dados para cada empresa. 
+ 
+Exemplo 7 – Campanha de marketing de empresas III: matriz e filial 
+A empresa XRAY prestadora de serviços por meio de plataforma digital possui sede no Reino 
+Unido. Em razão da necessidade de efetuar o marketing de seus serviços e de obter mais 
+conhecimento sobre os interesses do público brasileiro, abre a filial YANKEE no Brasil, que atua 
+somente conforme suas orientações. 
+Apesar de fazerem parte do mesmo grupo econômico, a empresa matriz XRAY e a filial brasileira 
+YANKEE possuem personalidades jurídic as distintas e , a depender do tipo de operação de 
+tratamento de dados pessoais e das circunstâncias do caso concreto, podem atuar como 
+controladoras ou operadoras, de acordo com o caso concreto. 
+No tratamento de dados para a campanha de marketing realizada  pela filial brasileira YANKEE, 
+com a decisão sobre a finalidade e os elementos essenciais foram estabelecidos pela matriz (dados 
+dos titulares determinados para campanha de marketing com a finalidade de alavancar as vendas 
+dos serviços, por determinado pe ríodo). Nesse caso, a filial brasileira YANKEE é a operadora de 
+dados. Isso ocorre porque realiza o tratamento de dados exclusivamente conforme as instruções 
+da empresa XRAY, as quais foram definidas em instrumento contratual firmado entre as partes. 
+Já com relação ao tratamento de dados de seus funcionários, ao processar a folha de pagamento, 
+por exemplo, a filial brasileira YANKEE será considerada a controladora dos dados. 
+Por outro lado, caso a matriz XRAY e a filial brasileira YANKEE desenvolvam um novo serviço para 
+o público brasileiro, definindo em conjunto as finalidades e os elementos essenciais do 
+tratamento, atuarão como controladoras conjuntas em relação a essa operação. 
+ 
+4. OPERADOR 
+4.1 Definição legal 
+51. O operador é o agente responsável por realizar o tratamento de dados em nome do 
+controlador e conforme a finalidade por este delimitada. A definição legal se encontra no art. 5º, 
+inciso VII da LGPD: 
+ 
+Guia Orientativo para Definições dos Agentes de Tratamento de Dados Pessoais e do Encarregado  Abril/2022 
+ 
+17 de 26 
+Pessoa natural ou jurídica, de direito público ou privado, que realiza o tratamento de 
+dados pessoais em nome do controlador 
+ 
+52. Nesse mesmo sentido é a previsão do art. 39 da LGPD: 
+ 
+O operador deverá realizar o tratamento segundo as instruções fornecidas pelo 
+controlador, que verificará a observância das próprias instruções e das normas sobre a 
+matéria. 
+ 
+53. A previsão acima implica dizer que o operador só poderá tratar os dados para a finalidade 
+previamente estabelecida pelo controlador. Isso demonstra a principal diferença entre o 
+controlador e operador, qual seja, o poder de decisão: o operador só pode agir no limite das 
+finalidades determinadas pelo controlador. 
+54. Cabe destacar, ainda, algumas das obrigações do operador: (i) seguir as instruções do 
+controlador; (ii) firmar contratos que estabeleçam, dentre outros assuntos, o regime de 
+atividades e responsabilidades com o controlador; (iii) dar ciência ao controlador em caso de 
+contrato com suboperador. 
+55. O conceito e o escopo de atuação do operador  indicam, também, a importância das 
+definições contratuais para a relação entre controlador e operador. Ainda que a LG PD não 
+determine expressamente que o controlador e o operador devam firmar um contrato sobre o 
+tratamento de dados, tal ajuste se mostra como uma boa prática de tratamento de dados, uma 
+vez que as cláusulas contratuais impõem limites à atuação do operador , fixam parâmetros 
+objetivos para a alocação de responsabilidades entre as partes e reduzem os riscos e as incertezas 
+decorrentes da operação. 
+56. Os pontos que podem ser definidos contratualmente são o objeto, a duração, a natureza 
+e a finalidade do tratamento dos dados, os tipos de dados pessoais envolvidos e os direitos e 
+obrigações e responsabilidades relacionados ao cumprimento da LGPD. 
+57. Por fim, d entro do escopo de atuação do operador, importa dizer que ele  pode definir 
+elementos não essenciais do tratamento, como medidas técnicas. 
+ 
+4.2 Tipos de operadores 
+58. De acordo com a LGPD, p essoas físicas e jurídicas  de direito público e privado  podem 
+atuar como operadoras.  Na maior parte das vezes, o operador é uma pessoa jurídica , que é  
+contratada pelo controlador para realizar o tratamento de dados, conforme as instruções deste 
+último. Contudo, não há óbices para que uma pessoa natural contratada como prestadora de 
+serviços para uma finalidade específica possa ser considerada operadora de dados. 
+59. Em caso de pessoa jurídica, importa destacar que a organização ou empresa é entendida 
+como agente de tratamento, de forma que seus funcionários apenas a representam. Assim como 
+explicado no tópico 2.2 e de forma análoga à definição de controlador, a definição legal 
+Guia Orientativo para Definições dos Agentes de Tratamento de Dados Pessoais e do Encarregado  Abril/2022 
+ 
+18 de 26 
+de operador também  não deve ser entendida como uma norma de distribuição interna de 
+competências e responsabilidades. 
+60. Nesse cenário, empregados, administradores, sócios, servidores e outras pessoas naturais 
+que integram a pes soa jurídica e cujos atos expressam a atuação desta não devem ser 
+considerados operadores, tendo em vista que o operador será sempre uma pessoa distinta do 
+controlador, isto é, que não atua como profissional subordinado a este ou como membro de 
+seus órgãos. 
+ 
+4.3 Responsabilidade 
+61. Muito embora o controlador tenha a principal responsabilidade e o operador deva atuar 
+em nome dele, o art. 37 da LGPD determina que am bos partilham obrigações e, 
+consequentemente, a responsabilidade de manter o registro das operações de tratamento. Além 
+disso, nos termos do art. 42 da LGPD, ambos possuem a obrigação de reparação se causarem 
+dano patrimonial, moral, individual ou coletivo a outrem, no âmbito de suas respectivas esferas 
+de atuação. 
+62. No entanto, cabe ressaltar que , via de regra,  as obrigações e responsabilidades do 
+controlador e do operador são distintas, pois são determinadas de acordo com o papel exercido 
+por cada um no âmbito do tratamento dos dados pessoais.  Assim, a responsabilidade solidária 
+estabelecida pelo inciso I, § 1º do art. 42 da LGPD, prevista para os casos de danos causados em 
+razão do tratamento irregular realizado por operador (por descumprir as obrigações da legislação 
+ou por não observar as instruções do controlador ), pode ser considerada como uma 
+excepcionalidade, já que em regra a responsabilidade é do controlador . Em princípio, essa é a 
+única hipótese em que o operador é equiparado ao controlador. 
+ 
+4.4 Exemplos 
+Exemplo 8 - E-commerce 
+Em um canal de venda online de livros, que conta com diversas formas de pagamento, o canal que 
+realiza a venda é o controlador dos dados pessoais, enquanto cada serviço de pagamento 
+disponível será um operador diferente, como, por exemplo, a empresa de cartão de crédito, uma 
+fintech, o banco em caso de transferência bancárias, dentre outros. O operador dessa transação, 
+seja ele qual for, não poderá utilizar os dados fornecidos para novas finalidades que não aquelas 
+determinadas pelo controlador. 
+ 
+Exemplo 9 - Call center 
+A empresa XRAY tem sob sua responsabilidade os dados de seus clientes e repassa para uma 
+empresa terceirizada de call center , ZULU, que recebe as informações. A empresa XRAY é a 
+controladora e o call center terceirizado ZULU, o operador, que executará o tratamento de dados 
+dos clientes a mando da empresa XRAY. Caso realize o tratamento de dados fora do que foi 
+orientado pelo controlador, a empresa ZULU poderá ser responsabilizada. 
+ 
+Guia Orientativo para Definições dos Agentes de Tratamento de Dados Pessoais e do Encarregado  Abril/2022 
+ 
+19 de 26 
+Exemplo 10 - Servidores públicos 
+Uma autarquia, entidade da administração p ública indireta, com personalidade jurídica própria, 
+deseja utilizar um novo software para aprimorar o gerenciamento dos funcionários da instituição. 
+Para isso, a Secretaria de Gestão Corporativa da entidade delega à Diretoria de Gestão de Pessoas 
+(DGP) a tarefa de determinar os meios pelos quais este software será implementado. Após 
+algumas reuniões, a DGP decide pela contratação da empresa terceirizada SIERRA para 
+desenvolver o software em parceria com a equipe interna da Diretoria de Tecnologia da 
+Informação (DTI). 
+Embora a delegação de decisão quanto aos meios para a DGP possa sugerir que essa diretoria atue 
+como operadora de dados, esta não é a análise correta: como a DGP é uma unidade administrativa 
+da autarquia, a delegação interna não altera o papel do agente de tratamento. , uma vez que, 
+como exposto, o operador será sempre pessoa distinta do controlador. O mesmo raciocínio se 
+aplica para a DTI. Desse modo, a autarquia será a controladora de dados e a empresa SIERRA será 
+a operadora de dados. A Secretaria e as Diretorias, assim como os seus respectivos servidores, são 
+apenas unidades organizacionais do ente controlador de dados, razão pela qual não se 
+caracterizam como agentes de tratamento. 
+ 
+5. SUBOPERADOR 
+5.1 Definição legal 
+63. Formalmente, a LGPD, no que se refere aos agentes de tratamento,  definiu apenas as 
+figuras do controlador e do operador (art. 5º, incisos VI, VII e IX), conforme trecho a seguir: 
+Art. 5º Para os fins desta Lei, considera-se: 
+VI - controlador: pessoa natural ou jurídica, de direito público ou privado, a quem 
+competem as decisões referentes ao tratamento de dados pessoais; 
+VII - operador: pessoa natural ou jurídica, de direito público ou privado, que realiza o 
+tratamento de dados pessoais em nome do controlador; 
+(...) 
+IX - agentes de tratamento: o controlador e o operador; (grifo nosso) 
+ 
+64. Muito embora não exista um conceito de suboperador na LGPD, o tema pode ser utilizado 
+como parâmetro de análise para compreensão de cadeias mais complexas de tratamento de 
+dados. 
+65. Isso porque a falta do conceito de suboperador na LGPD não impossibilita ou torna ilegal 
+que ele exista ou que tenha funções, competências e responsabilidade no ambiente de proteção 
+de dados pessoais  brasileiro, principalmente porque pode desempenhar a função de operador 
+em subordinação a outro operador. Dito isso, importa saber que  o suboperador é aquele 
+contratado pelo operador para auxiliá -lo a realizar o tratamento de dados pessoais em nome 
+Guia Orientativo para Definições dos Agentes de Tratamento de Dados Pessoais e do Encarregado  Abril/2022 
+ 
+20 de 26 
+do controlador. A relação direta  do suboperador é com o operador e não com o controlador . 
+Porém, independentemente dos arranjos institucionais entre operado r e suboperador, para 
+efeitos da LGPD, ambos podem desempenhar, a depender do caso concreto,  a função de 
+operador e responder perante a ANPD.  
+66. Considerando que o operador realiza o tratamento de dados pessoais em nome do  
+controlador, é de se supor que a relação entre eles esteja fundada na confiança.  
+67. Nesse sentido, é recomendável que o operado r, ao contratar o suboperador, obtenha 
+autorização formal (genérica ou específica 17) do controlador, a qual pode inclusive constar do 
+próprio contrato firmado entre as partes. Tal medida visa evitar que se entenda que, ao contratar 
+o suboperador, o operador tenha executado o tratamento de dados descumprindo orientações 
+do controlador, o que poderia atrair para o operador resp onsabilidades que normalmente são 
+exclusivas do controlador.18 
+ 
+Art. 42. O controlador ou o operador que, em razão do exercício de atividade de 
+tratamento de dados pessoais, causar a outrem dano patrimonial, moral, individual ou 
+coletivo, em violação à legislação de proteção de dados pessoais, é obrigado a repará-lo. 
+§ 1º A fim de assegurar a efetiva indenização ao titular dos dados: 
+I - o operador responde solidariamente pelos danos causados pelo tratamento quando 
+descumprir as obrigações da legislação  de proteção de dados ou quando não tiver 
+seguido as instruções lícitas do controlador, hipótese em que o operador equipara-se ao 
+controlador, salvo nos casos de exclusão previstos no art. 43 desta Lei; (grifo nosso) 
+ 
+68. De maneira semelhante, o RGPD também não traz uma definição para o suboperador, 
+limitando-se a definir o conceito de Operador ( “Processor” em inglês /” Subcontratante” em 
+português de Portugal) como consta no Artigo 4º do RGPD. Ainda assim, a redação dos itens 2 e 
+4 do artigo 28 do RGPD prevê expressamente a possibilidade de um subcontratante contratar 
+outro subcontratante. 
+ 
+Artigo 28. - Subcontratante. 
+(...) 
+2.  O subcontratante não contrata outro subcontratante sem que o responsável pelo 
+tratamento tenha dado, previamente e por escrito, autorização específica ou geral. Em 
+caso de autorização geral por escrito, o subcontratante informa o responsável pelo 
+ 
+17 Como por exemplo, o controlador pode autorizar genericamente qualquer subcontratação de serviços técnicos, 
+tais como armazenamento em nuvem. Por outro lado, a autorização específica se refere à determinada organização 
+subcontratada para finalidade específica. 
+18  Em sentido similar, ver EDPB, Guidelines 07/2020 on the concepts of controller and processor in the GDPR, set. 
+2020, p. 39 -40. Disponível em: 
+<https://edpb.europa.eu/sites/edpb/files/consultation/edpb_guidelines_202007_controllerprocessor_en.pdf> 
+Acesso: 12 mar. 2021. 
+Guia Orientativo para Definições dos Agentes de Tratamento de Dados Pessoais e do Encarregado  Abril/2022 
+ 
+21 de 26 
+tratamento de quaisquer alterações pretendidas quanto ao aumento do número ou à 
+substituição de outros subcontratantes, dando assim ao responsável pelo tratamento a 
+oportunidade de se opor a tais alterações. 
+(...) 
+4.  Se o subcontratante c ontratar outro subcontratante para a realização de operações 
+específicas de tratamento de dados por conta do responsável pelo tratamento, são 
+impostas a esse outro subcontratante, por contrato ou outro ato normativo ao abrigo do 
+direito da União ou dos Est ados-Membros, as mesmas obrigações em matéria de 
+proteção de dados que as estabelecidas no contrato ou em outro ato normativo entre o 
+responsável pelo tratamento e o subcontratante, referidas no nº 3, em particular a 
+obrigação de apresentar garantias sufic ientes de execução de medidas técnicas e 
+organizativas adequadas de uma forma que o tratamento seja conforme com os requisitos 
+do presente regulamento. Se esse outro subcontratante não cumprir as suas obrigações 
+em matéria de proteção de dados, o subcontra tante inicial continua a ser plenamente 
+responsável, perante o responsável pelo tratamento, pelo cumprimento das obrigações 
+desse outro subcontratante 
+ 
+69. No que se refere às responsabilidades, o suboperador p ode ser equiparado ao operador 
+perante a LGPD em relação às atividades que foi contratado para executar. Ocorre, dessa forma, 
+a ampliação da cadeia de responsabilidade solidária prevista no art. 42, §1º, I da LGPD. 
+ 
+5.2 Exemplos 
+Exemplo 11 - Subcontratação de serviço de armazenamento em nuvem 
+A empresa ALPHA deseja contratar uma pesquisa de mercado para alavancar suas vendas. Para 
+isso, contrata a empresa de pesquisas BRAVO, que envia os resultados para a empresa ALPHA. 
+Com a autorização da empresa ALPHA, a empresa BRAVO contrata os serviços de armazenamento 
+em nuvem da empresa CHARLIE. 
+A empresa ALPHA pode ser considerada controladora pois verifica -se que foram cumpridos os 
+seguintes requisitos: i) a empresa A teve poder decisório em relação ao tratamento de dados; ii) 
+os elementos essenciais do tratamento foram definidos pela empresa A: finalidade, titulares (por 
+exemplo mulheres da faixa etária de 20 a 30 anos, residentes em Brasília/DF), tipos de dados (por 
+exemplo nome, idade, endereço, preferência alimentar) etc. 
+Ainda que possa decidir quanto às técnicas a ser empregadas no processo de tratamento de dados 
+para gerar os resultados da pesquisa, a empresa de pesquisas BRAVO realiza os tratamentos de 
+dados de acordo com a finalidade e as instruções determinadas pela empresa ALPHA, atuando, 
+portanto, como operadora. 
+A empresa CHARLIE atua conforme diretrizes da empresa BRAVO e seria, portanto, suboperadora. 
+É recomendável que BRAVO obtenha autorização formal de ALPHA para a subcontratação de 
+CHARLIE. 
+Guia Orientativo para Definições dos Agentes de Tratamento de Dados Pessoais e do Encarregado  Abril/2022 
+ 
+22 de 26 
+ 
+Exemplo 12 – Ferramenta web e serviço de armazenagem  
+A empresa GOLF e suas filiais (aqui, grupo GOLF) passam a coletar dados cadastrais e de consumo 
+de seus clientes. Todavia, a guarda e a coleta desses dados são realizadas com o uso de ferramenta 
+web da empresa ECHO. 
+O grupo GOLF informou quais dados quer coletar, por quanto tempo pretende mantê -los e que 
+tipo de processamento pretende fazer com esses dados, portanto, ele é controlador. 
+A empresa ECHO, por sua vez, toma algumas decisões técnicas sobre protocolos de acesso, de 
+armazenagem, de backup, de proteção contra invasões, todas de acordo com as especificações de 
+segurança exigidas pelo grupo GOLF. A empresa ECHO é operadora. 
+Esta mesma empresa ECHO, percebendo que o volume de dados a ser guardado é superior à 
+capacidade de seus bancos de dad os internos, com a autorização do grupo, contrata com a 
+empresa FOXTROT um serviço de armazenagem. A empresa FOXTROT é uma suboperadora. 
+ 
+Exemplo 13 – Sorteio de loja 
+A loja KILO organiza um sorteio e, para concorrer, os clientes preenchem um cadastro com 
+algumas informações pessoais. Os dados e a finalidade do tratamento foram definidos pela loja 
+KILO, que é a controladora. 
+A guarda e a coleta desses dados são realizadas, por funcionários da loja KILO, no sistema da 
+empresa LIMA. A empresa LIMA é a operadora. 
+Ao fim do período de inscrição, a loja KILO contrata a empresa OSCAR para realizar o sorteio 
+usando os dados guardados pela empresa LIMA. A empresa OSCAR também é uma operadora, em 
+função de sua relação direta com a controladora, a loja KILO. 
+ 
+6. ENCARREGADO 
+6.1 Definição legal 
+ 
+70. Conforme o artigo 41 da LGPD, o controlador de dados deverá indicar um encarregado 
+pelo tratamento de dados pessoais.  No exercício de suas atribuições, o encarregado pode 
+desempenhar um importante papel de fomentar e disseminar a cultura da proteção de dados 
+pessoais na organização, como, por exemplo, ao receber solicitações de titulares e da autoridade 
+nacional e adotar providências ou, ainda, ao orientar funcionários e contratados a respeito das 
+práticas a serem tomadas em relação à proteção de dados pessoais.  
+ 
+Art. 41. O controlador deverá indicar encarregado pelo tratamento de dados pessoais. 
+ 
+Guia Orientativo para Definições dos Agentes de Tratamento de Dados Pessoais e do Encarregado  Abril/2022 
+ 
+23 de 26 
+71. Ao contrário de outras legislações de proteção de dados estrangeiras, a LGPD não 
+determinou em que circunstâncias uma organização deve indicar um encarregado. Assim, deve-
+se assumir, como regra geral, que toda organização deverá indicar uma pessoa para assumir esse 
+papel. 
+72. Contudo, em cumprimento ao estabelecido no § 3º do art. 41, a ANPD publicou a 
+Resolução CD/ANPD nº 2, de 27 janeiro de 2022, que aprova o Regulamento de Aplicação da 
+LGPD para Agentes de Tratamento de Pequeno Porte, que traz hipótese de dispensa da 
+necessidade de indicação do encarregado. 
+73. O artigo 41 da LGPD não faz distinção quanto a instituições públicas ou privadas e por isso 
+é importante que ambas estejam cientes da sua obrigação de indicar um encarregado de dados. 
+A esse respeito, o art. 23, III, reforça a necessidade de um encarregado ser indicado por órgãos e 
+entidades públicas que realizam operação de tratamento de dados pessoais. 
+74.  A LGPD também não distingue se o encarregado deve ser pessoa física ou jurídica, e se 
+deve ser um funcionário da organização ou um agente externo. Considerando as boas práticas 
+internacionais, o encarregado poderá ser tanto um funcionário da instituição quanto um agente 
+externo, de natureza física ou jurídica. Recomenda -se que o encarregado seja indicado por um 
+ato formal, como um contrato de prestação de serviços ou um ato administrativo. 
+75. Como boa prática, considera-se importante que o encarregado tenha liberdade na 
+realização de suas atribuições . No que diz respeito às  suas qualificações profissionais, estas 
+devem ser definidas mediante um juízo de valor realizado pelo controlador que o indica , 
+considerando conhecimentos de proteção de dados e segurança da informação em nível que 
+atenda às necessidades das operações de tratamento de dados pessoais da organização. 
+76. Também é importante observar que a LGPD não proíbe que o encarregado seja  apoiado 
+por uma equipe de proteção de dados. Ao contrário, considerando as boas práticas, é importante 
+que o encarregado tenha recursos adequados para realizar suas atividades, o que pode incluir 
+recursos humanos. Outros recursos que devem ser considerados são te mpo (prazos 
+apropriados), finanças e infraestrutura. 
+77. Conquanto a LGPD não impeça que um mesmo encarregado atue em nome de diferentes 
+organizações, é importante que ele seja capaz de realizar suas atribuições com eficiência. Assim, 
+antes de indicar um encar regado, o controlador deve considerar se ele será mesmo capaz de 
+atender às suas demandas e às de outras organizações concomitantemente. A responsabilidade 
+pelas atividades de tratamento de dados pessoais continua sendo do controlador ou do operador 
+de dados, conforme estabelece o art. 42 da LGPD. 
+ 
+6.2 Atribuições do encarregado. 
+78. De acordo com o § 2º do art. 41, o encarregado possui as seguintes atribuições: 
+ 
+- aceitar reclamações e comunicações dos titulares, prestar esclarecimentos e adotar 
+providências; 
+Guia Orientativo para Definições dos Agentes de Tratamento de Dados Pessoais e do Encarregado  Abril/2022 
+ 
+24 de 26 
+- receber comunicações da autoridade nacional e adotar providências; 
+- orientar os funcionários e os contratados da entidade a respeito das práticas a serem 
+tomadas em relação à proteção de dados pessoais; e 
+- executar as demais atribuições d eterminadas pelo controlador ou estabelecidas em 
+normas complementares. 
+ 
+79. Por agir como um ponto de contato com os titulares de dados e a ANPD, é importante 
+que os detalhes de contato do encarregado de dados estejam facilmente acessíveis , nos termos 
+do § 1º do art. 41 da LGPD: 
+ 
+A identidade e as informações de contato do encarregado deverão ser divulgadas 
+publicamente, de forma clara e objetiva, preferencialmente no sítio eletrônico do 
+controlador. 
+ 
+80. Em alinhamento com o § 3º do art. 41, a ANPD poderá esta belecer normas 
+complementares sobre a definição e atribuições do encarregado. 
+81. Ressalte-se que no momento, não há necessidade, tendo em vista a ausência de previsão 
+legal ou regulamentar, de comunicação ou de registro da identidade e das informações de 
+contato do encarregado perante a ANPD, o que pode ser regulamentado pela Autoridade em 
+normativo futuro. 
+ 
+7. CONSIDERAÇÕES FINAIS 
+82. O presente Guia orientativo foi construído com o objetivo de trazer maior segurança aos 
+titulares de dados e agentes de tratamento, sanando algumas das principais dúvidas que têm 
+sido apresentadas à ANPD quanto aos papéis dos agentes de tratamento e do encarregado. 
+83. Nesse sentido, o Guia apresenta os conceitos e as definições legais sobre o controlador, 
+a controladoria conjunta, operador, suboperador e o encarregado. Além disso, apresenta 
+exemplos hipotéticos para facilitar a compreensão do conteúdo abordado.  
+84. Especificamente em relação ao encarregado, tendo em vista que o tema está previsto na 
+Agenda Regulatória 2021-2022, os assuntos a ele relacionados serão aprofundados e mais bem 
+delimitados no momento de sua regulamentação. 
+85. Destaca-se, por fim, que o presente Guia não descarta futuras regulamentações sobre os 
+temas aqui elencados. Dessa forma, recomenda -se, como complemento ao Guia, o 
+acompanhamento das decisões da Autoridade. 
+ 
+  
+Guia Orientativo para Definições dos Agentes de Tratamento de Dados Pessoais e do Encarregado  Abril/2022 
+ 
+25 de 26 
+APÊNDICE - Aplicação dos conceitos de Controlador e Operador
+ 
+
+Guia Orientativo para Definições dos Agentes de Tratamento de Dados Pessoais e do Encarregado  Abril/2022 
+ 
+26 de 26 
+ 
+ 
+ 
+ 
+ 
+ 
+  
+ 
+ 
+ 
+  
+ 
+  
+ 
+   
+  
+ 
+           /www.gov.br/anpd 
+          /anpdgov 
+         /anpdgov 
+        /company/anpdgov 
+        /anpdgov 
+ 

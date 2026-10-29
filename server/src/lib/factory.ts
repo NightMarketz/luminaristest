@@ -17,7 +17,6 @@ import { ChatMessageRepository } from '../features/chatMessages/repositories/Cha
 import { ChunkRepository } from '../features/documents/repositories/ChunkRepository';
 import { DashboardLayoutRepository } from '../features/dashboardLayout/repositories/DashboardLayoutRepository';
 import { DocumentRepository } from '../features/documents/repositories/DocumentRepository';
-import { StructuredDataRepository } from '../features/structuredData/repositories/StructuredDataRepository';
 import { UserRepository } from '../features/users/repositories/UserRepository';
 import { VectorRepository } from '../features/documents/repositories/VectorRepository';
 import { DynamicTableRepository } from '../features/dynamicTables/repositories/DynamicTableRepository';
@@ -101,7 +100,6 @@ import { ChatInstancePolicy } from '../features/chatInstances/policies/ChatInsta
 import { ChatMessagePolicy } from '../features/chatMessages/policies/ChatMessagePolicy';
 import { DashboardLayoutPolicy } from '../features/dashboardLayout/policies/DashboardLayoutPolicy';
 import { DocumentPolicy } from '../features/documents/policies/DocumentPolicy';
-import { StructuredDataPolicy } from '../features/structuredData/policies/StructuredDataPolicy';
 import { UserPolicy } from '../features/users/policies/UserPolicy';
 import { DynamicTablePolicy } from '../features/dynamicTables/policies/DynamicTablePolicy';
 import { AttachmentPolicy } from '../features/attachments/policies/AttachmentPolicy';
@@ -120,7 +118,6 @@ import { ChatService } from '../features/chat/services/ChatService';
 import { DashboardLayoutService } from '../features/dashboardLayout/services/DashboardLayoutService';
 import { DocumentProcessingService } from '../features/documents/services/DocumentProcessingService';
 import { DocumentService } from '../features/documents/services/DocumentService';
-import { StructuredDataService } from '../features/structuredData/services/StructuredDataService';
 import { UserService } from '../features/users/services/UserService';
 import { DynamicTableService } from '../features/dynamicTables/services/DynamicTableService';
 import { LuminarisAgentService } from '../features/chat/services/LuminarisAgentService';
@@ -808,7 +805,6 @@ export class ApplicationFactory {
     document: IDocumentRepository;
     vector: IVectorRepository;
     chunk: ChunkRepository;
-    structuredData: StructuredDataRepository;
     dynamicTable: IDynamicTableRepository;
     dynamicTableVersion: IDynamicTableVersionRepository;
     actionProposal: IActionProposalRepository;
@@ -889,7 +885,6 @@ export class ApplicationFactory {
     chatInstance: IChatInstancePolicy;
     dashboardLayout: IDashboardLayoutPolicy;
     document: IDocumentPolicy;
-    structuredData: StructuredDataPolicy;
     dynamicTable: IDynamicTablePolicy;
     attachment: IAttachmentPolicy;
     savedTableView: ISavedTableViewPolicy;
@@ -910,7 +905,6 @@ export class ApplicationFactory {
     dashboardLayout: DashboardLayoutService;
     document: DocumentService;
     chat: IChatService;
-    structuredData: StructuredDataService;
     dynamicTable: DynamicTableService;
     dynamicTableVersion: DynamicTableVersionService;
     luminarisAgent: LuminarisAgentService;
@@ -1042,7 +1036,6 @@ export class ApplicationFactory {
       chunk: new ChunkRepository(),
       dashboardLayout: new DashboardLayoutRepository(),
       document: new DocumentRepository(),
-      structuredData: new StructuredDataRepository(),
       user: new UserRepository(),
       vector: new VectorRepository(),
       dynamicTable: new DynamicTableRepository(),
@@ -1125,7 +1118,6 @@ export class ApplicationFactory {
       chatMessage: new ChatMessagePolicy(),
       dashboardLayout: new DashboardLayoutPolicy(),
       document: new DocumentPolicy(),
-      structuredData: new StructuredDataPolicy(this.repositories.document),
       user: new UserPolicy(),
       dynamicTable: new DynamicTablePolicy(),
       attachment: new AttachmentPolicy(),
@@ -1140,11 +1132,6 @@ export class ApplicationFactory {
     };
 
     // Services (handling inter-dependencies)
-    const structuredDataService = new StructuredDataService(
-      this.repositories.structuredData,
-      this.policies.structuredData,
-      chatOpenAIService
-    );
     const knowledgeGraphService = new KnowledgeGraphService(
       this.repositories.knowledgeGraph,
       this.repositories.dynamicTable
@@ -1823,11 +1810,8 @@ export class ApplicationFactory {
         this.repositories.vector,
         new DocumentProcessingService(),
         this.policies.document,
-        chatOpenAIService,
-        structuredDataService, // Injected dependency
         this.repositories.user
       ),
-      structuredData: structuredDataService, // Assigned service
       user: new UserService(this.repositories.user, this.policies.user, this.repositories.vector),
       dynamicTable: dynamicTableService,
       // BE-INCR-DT-VERSION-LEDGER: leitura/diff/restore do ledger; o restore delega ao DynamicTableService.
@@ -2525,7 +2509,6 @@ export class ApplicationFactory {
   public getAnalyticsService = (): AnalyticsService => this.services.analytics;
   public getDashboardLayoutService = (): DashboardLayoutService => this.services.dashboardLayout;
   public getDocumentService = (): DocumentService => this.services.document;
-  public getStructuredDataService = (): StructuredDataService => this.services.structuredData;
   public getUserService = (): UserService => this.services.user;
   public getDynamicTableService = (): DynamicTableService => this.services.dynamicTable;
   public getDynamicTableVersionService = (): DynamicTableVersionService => this.services.dynamicTableVersion;

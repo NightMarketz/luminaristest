@@ -28,8 +28,6 @@
  *     description: Messages within a chat instance
  *   - name: Reports
  *     description: Server-sent-event report generation
- *   - name: StructuredData
- *     description: Structured data extracted from documents
  *
  * x-response-envelope: |
  *   Most success responses use { success: true, data: <payload> }.

@@ -981,7 +981,12 @@ export class FiscalDocumentEmissionService {
     if (!fp) {
       faltantes.push('perfil fiscal da unidade não cadastrado (PUT /api/accounting/fiscal-profile)');
     } else {
-      faltantes.push(...fp.emissao.faltantes.filter((f) => f.startsWith('regime MEI')).map((f) => `perfil fiscal da unidade: ${f}`));
+      // NF-e/NFC-e do MEI segue fora: até 31/12/2026 ele é dispensado do DF-e de ICMS salvo exigência do Estado com
+      // emissor gratuito (Res. CGSN 140 art. 106 § 1º III); desde 01/01/2027 usa preferencialmente a NFF (art. 106-B,
+      // red. Res. CGSN 190/2026). A NFS-e do MEI (opSimpNac=2) é a que o F-XP-4 → (b) liberou.
+      if (fp.emissao.opSimpNac === 2) {
+        faltantes.push('perfil fiscal da unidade: regime MEI — NF-e/NFC-e fora do escopo (Res. CGSN 140 art. 106 § 1º III; art. 106-B NFF desde 2027)');
+      }
       const campos: Array<[string, unknown]> = [
         ['codMun', fp.codMun], // C10/B12
         ['inscricaoEstadual', fp.inscricaoEstadual], // C17 (item 8)
@@ -1304,7 +1309,12 @@ export class FiscalDocumentEmissionService {
   }): DpsPayload {
     const { fp, group, vServCents, xDescServ, dCompet, tomador } = args;
     const dhEmi = new Date().toISOString();
-    const isSimples = fp.regimeTributario === 'SIMPLES';
+    // [140] opSimpNac vem do status de emissão (regime da EMPRESA): MEI = 2 (F-XP-4 → b, dono 29/10/2026). O MEI não
+    // informa regApTribSN (E0162), pAliq (E0600) nem pTotTribSN (E0710); regEspTrib = 0 e sem retenção (E0174/E0583)
+    // são garantidos pelo status, que recusa o perfil que os contrarie.
+    const opSimpNac = fp.emissao.opSimpNac;
+    const isMei = opSimpNac === 2;
+    const isSimples = opSimpNac === 3;
     return {
       versao: '1.01',
       infDPS: {
@@ -1320,7 +1330,7 @@ export class FiscalDocumentEmissionService {
         prest: {
           CNPJ: args.cnpjEmitente,
           regTrib: {
-            opSimpNac: isSimples ? 3 : 1,
+            opSimpNac,
             ...(isSimples && fp.regApTribSN ? { regApTribSN: fp.regApTribSN } : {}),
             regEspTrib: fp.regEspTrib,
           },
@@ -1351,11 +1361,13 @@ export class FiscalDocumentEmissionService {
               // Anexo I v1.01 E0625/E0631: ME/EPP com ISS pelo SN e sem retenção NÃO informa pAliq (município ativo
               // ou não); com retenção é obrigatório (E0621/E0628). Regime normal: issAliquotaBp = município não
               // conveniado (E0619); vazio omite (E0617). Verificação legal 17/10/2026 (verif-2026-10-17-iss-nfse).
-              ...(fp.issAliquotaBp && !(isSimples && fp.regApTribSN === 1 && !fp.issRetidoTomadorPj)
+              ...(fp.issAliquotaBp && !isMei && !(isSimples && fp.regApTribSN === 1 && !fp.issRetidoTomadorPj)
                 ? { pAliq: bpToPctString(fp.issAliquotaBp) }
                 : {}),
             },
-            totTrib: isSimples
+            totTrib: isMei
+              ? { indTotTrib: 0 }
+              : isSimples
               ? { pTotTribSN: bpToPctString(fp.pTotTribSNCent ?? 0) }
               : {
                   pTotTrib: {
@@ -1367,7 +1379,7 @@ export class FiscalDocumentEmissionService {
           },
         },
         // IBS-CBS-2027 PR-1 (BRIEF item 3; F-IBS-10 a): cClassTrib do serviço, com fallback no do perfil.
-        ...(fp.ibsCbsInformar && fp.ibsCbsCst && (group.profile.cClassTrib ?? fp.ibsCbsClassTrib)
+        ...(!isMei && fp.ibsCbsInformar && fp.ibsCbsCst && (group.profile.cClassTrib ?? fp.ibsCbsClassTrib)
           ? {
               IBSCBS: {
                 finNFSe: 0,

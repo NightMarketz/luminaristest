@@ -88,7 +88,7 @@ describe('fiscalProfileEmissaoStatus (BRIEF item 7 — função pura)', () => {
 
   it('completo quando tudo que a DPS exige está lá; pendingExternalValidation esvazia com d1fConfirmado', () => {
     const s = fiscalProfileEmissaoStatus(rowFrom({ regimeTributario: 'REAL', codMun: '3550308', pTotTribFedCent: 1300, pTotTribEstCent: 0, pTotTribMunCent: 500, ibsCbsCst: '000', ibsCbsClassTrib: '000001', d1fConfirmado: true }));
-    expect(s).toEqual({ completo: true, faltantes: [], pendingExternalValidation: [] });
+    expect(s).toEqual({ completo: true, faltantes: [], pendingExternalValidation: [], opSimpNac: 1 });
   });
 });
 
@@ -232,17 +232,41 @@ describe('X13 PR-2 — regime da EMPRESA governa a unidade (itens 15 e 17)', () 
     await expect(build({ regimeEmpresa: null }).svc.upsert(scope, { ...base, regimeTributario: 'REAL', pisCofinsRegime: 'NAO_CUMULATIVO' } as never)).resolves.toBeDefined();
   });
 
-  it('item 17 (F-XP-4 a): empresa MEI → a emissão fica incompleta com o motivo explícito (opSimpNac=2 fora do MVP)', () => {
-    const s = fiscalProfileEmissaoStatus(rowFrom({ regimeTributario: 'SIMPLES', codMun: '3550308', pTotTribSNCent: 600, ibsCbsInformar: false }), 'MEI');
-    expect(s.completo).toBe(false);
-    expect(s.faltantes).toEqual(['regime MEI — emissão fora do escopo (opSimpNac=2)']);
-    // a mesma unidade sob empresa SIMPLES emite
-    expect(fiscalProfileEmissaoStatus(rowFrom({ regimeTributario: 'SIMPLES', codMun: '3550308', pTotTribSNCent: 600, ibsCbsInformar: false }), 'SIMPLES').completo).toBe(true);
+  // F-XP-4 → (b) (dono, chat, 29/10/2026): a emissão de MEI sai com opSimpNac=2; Anexo I v1.01 E0710/E0174/E0583.
+  it('item 17 (F-XP-4 b): empresa MEI → opSimpNac=2 e completo SEM pTotTribSN (E0710)', () => {
+    const s = fiscalProfileEmissaoStatus(rowFrom({ regimeTributario: 'SIMPLES', codMun: '3550308', pTotTribSNCent: null, ibsCbsInformar: false }), 'MEI');
+    expect(s).toMatchObject({ completo: true, faltantes: [], opSimpNac: 2 });
+    // a mesma unidade sob empresa SIMPLES é ME/EPP e exige o pTotTribSN
+    const me = fiscalProfileEmissaoStatus(rowFrom({ regimeTributario: 'SIMPLES', codMun: '3550308', pTotTribSNCent: null, ibsCbsInformar: false }), 'SIMPLES');
+    expect(me).toMatchObject({ completo: false, faltantes: ['pTotTribSNCent'], opSimpNac: 3 });
+    expect(fiscalProfileEmissaoStatus(rowFrom({ regimeTributario: 'PRESUMIDO' })).opSimpNac).toBe(1);
   });
 
-  it('item 17: GET da unidade devolve emissao com o faltante do MEI (lê o regime da empresa)', async () => {
-    const { svc } = build({ regimeEmpresa: 'MEI', existing: rowFrom({ regimeTributario: 'SIMPLES', codMun: '3550308', pTotTribSNCent: 600, ibsCbsInformar: false }) });
-    expect((await svc.get(scope))?.emissao.faltantes).toContain('regime MEI — emissão fora do escopo (opSimpNac=2)');
+  it('item 17 (F-XP-4 b): perfil que contraria a RN do MEI vira faltante, nunca é ignorado (E0174, E0583, IBS/CBS)', () => {
+    const s = fiscalProfileEmissaoStatus(rowFrom({ regimeTributario: 'SIMPLES', codMun: '3550308', regEspTrib: 3, issRetidoTomadorPj: true, ibsCbsInformar: true }), 'MEI');
+    expect(s.completo).toBe(false);
+    expect(s.faltantes).toEqual([
+      'regEspTrib — MEI exige regime especial "Nenhum" (0) (E0174)',
+      'issRetidoTomadorPj — MEI não tem retenção de ISS (E0583): desmarque no perfil',
+      'ibsCbsInformar — MEI não destaca IBS/CBS (Res. CGSN 140 art. 106 § 1º V)',
+    ]);
+  });
+
+  // Revisão independente do #976 (achado 1): regApTribSN, issAliquotaBp e pTotTribSNCent de um perfil que era ME/EPP
+  // eram descartados em silêncio pelo montador, com completo=true. Dono, 29/10: "Nada é aceito e ignorado em silêncio."
+  it('item 17 (F-XP-4 b): regApTribSN, alíquota e pTotTribSN herdados de ME/EPP viram faltante (E0162, E0600, E0710)', () => {
+    const s = fiscalProfileEmissaoStatus(rowFrom({ regimeTributario: 'SIMPLES', codMun: '3550308', regApTribSN: 1, issAliquotaBp: 200, pTotTribSNCent: 600, ibsCbsInformar: false }), 'MEI');
+    expect(s.completo).toBe(false);
+    expect(s.faltantes).toEqual([
+      'regApTribSN — MEI não informa o regime de apuração do SN (E0162): limpe no perfil',
+      'issAliquotaBp — MEI não informa alíquota de ISS (E0600): limpe no perfil',
+      'pTotTribSNCent — MEI não informa pTotTribSN (E0710): limpe no perfil',
+    ]);
+  });
+
+  it('item 17: GET da unidade devolve emissao.opSimpNac=2 (lê o regime da empresa)', async () => {
+    const { svc } = build({ regimeEmpresa: 'MEI', existing: rowFrom({ regimeTributario: 'SIMPLES', codMun: '3550308', pTotTribSNCent: null, ibsCbsInformar: false }) });
+    expect((await svc.get(scope))?.emissao).toMatchObject({ completo: true, opSimpNac: 2 });
   });
 });
 

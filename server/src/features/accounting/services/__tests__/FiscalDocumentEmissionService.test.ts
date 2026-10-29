@@ -26,7 +26,7 @@ import type { AccountingScope } from '../../scope/AccountingScope';
 import { PackageExpiryNfsePendingError } from '../../../../lib/errors';
 
 import { legalParamsSemente } from '@test/helpers/legalParams';
-import type { DpsPayload } from '../../dtos/DpsPayloadDto';
+import { DpsPayloadSchema, type DpsPayload } from '../../dtos/DpsPayloadDto';
 const SCOPE: AccountingScope = {
   ownerUserId: 'u1',
   actorUserId: 'u1',
@@ -71,7 +71,7 @@ function baseFiscalProfileView(overrides: Partial<Record<string, unknown>> = {})
     pTotTribSNCent: null,
     emissaoForaDoMes: 'AVISAR',
     d1fConfirmado: true,
-    emissao: { completo: true, faltantes: [], pendingExternalValidation: [] },
+    emissao: { completo: true, faltantes: [], pendingExternalValidation: [], opSimpNac: overrides.regimeTributario === 'SIMPLES' ? 3 : 1 },
     updatedAt: new Date().toISOString(),
     ...overrides,
   };
@@ -601,6 +601,37 @@ describe('FiscalDocumentEmissionService — Simples Nacional (item 22)', () => {
     expect(payload.infDPS.prest.regTrib.opSimpNac).toBe(3);
     expect('pTotTribSN' in payload.infDPS.valores.trib.totTrib).toBe(true);
     expect(payload.infDPS.IBSCBS).toBeUndefined();
+  });
+
+  // F-XP-4 → (b) (dono, chat, 29/10/2026): DPS do MEI pelas RNs do Anexo I v1.01 (gov.br/nfse, 09/02/2026).
+  it('MEI (opSimpNac=2): sem regApTribSN (E0162), sem pAliq (E0600), sem retenção (E0583), indTotTrib=0 (E0710) e sem IBSCBS', async () => {
+    const { service } = makeService({
+      fiscalProfile: baseFiscalProfileView({
+        regimeTributario: 'SIMPLES', regApTribSN: 1, issAliquotaBp: 200, pTotTribSNCent: null, ibsCbsInformar: false,
+        emissao: { completo: true, faltantes: [], pendingExternalValidation: [], opSimpNac: 2 },
+      }),
+      serviceProfiles: { 'srv-A': { cTribNac: '060101', cTribMun: null, cNBS: null, cIndOp: '030101', cLocPrestacao: null } },
+      ledgerPostings: [{ accountId: 'acc-3.1', debitCents: 0n, creditCents: 10000n }],
+    });
+    const result = await service.preview(SCOPE, SALE_ID, 'NFSE');
+    expect(result.ok).toBe(true);
+    const payload = (result.payloads as DpsPayload[])[0];
+    expect(DpsPayloadSchema.parse(payload)).toBeDefined();
+    expect(payload.infDPS.prest.regTrib).toEqual({ opSimpNac: 2, regEspTrib: 0 });
+    expect(payload.infDPS.valores.trib.tribMun).toEqual({ tribISSQN: 1, tpRetISSQN: 1 });
+    expect(payload.infDPS.valores.trib.totTrib).toEqual({ indTotTrib: 0 });
+    expect(payload.infDPS.IBSCBS).toBeUndefined();
+  });
+
+  it('MEI: NF-e/NFC-e seguem bloqueadas com o motivo (Res. CGSN 140 art. 106 § 1º III / art. 106-B)', async () => {
+    const { service } = makeService({
+      fiscalProfile: baseFiscalProfileView({ regimeTributario: 'SIMPLES', emissao: { completo: true, faltantes: [], pendingExternalValidation: [], opSimpNac: 2 } }),
+      serviceProfiles: { 'srv-A': { cTribNac: '060101', cTribMun: null, cNBS: null, cIndOp: '030101', cLocPrestacao: null } },
+      ledgerPostings: [{ accountId: 'acc-3.1', debitCents: 0n, creditCents: 10000n }],
+    });
+    const result = await service.preview(SCOPE, SALE_ID, 'NFCE');
+    expect(result.ok).toBe(false);
+    expect(result.faltantes.join(' ')).toMatch(/regime MEI — NF-e\/NFC-e fora do escopo/);
   });
 
   // IBS-CBS-2027 PR-1 (BRIEF item 3; F-IBS-10 a): cClassTrib do SERVIÇO no gIBSCBS, com fallback no do perfil.

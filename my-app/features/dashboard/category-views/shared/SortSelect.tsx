@@ -51,7 +51,8 @@ const DEFAULT_FIELD_LABELS: Record<string, string> = {
 const SORTABLE_FIELD_TYPES = ['string', 'number'];
 
 // Fields to exclude from sorting options
-const EXCLUDED_FIELDS = ['id', 'unitId', 'productId', 'tenantDbId', 'createdAt', 'updatedAt', 'isActive', 'description', 'avatar', 'image', 'photo'];
+// `order` is the card position kept by drag-and-drop (hidden in TasksModule), not a user sort key.
+const EXCLUDED_FIELDS = ['id', 'unitId', 'productId', 'tenantDbId', 'createdAt', 'updatedAt', 'isActive', 'description', 'avatar', 'image', 'photo', 'order'];
 
 // ─────────────────────────────────────────────────────────────
 // Component

@@ -72,6 +72,8 @@ export interface FiscalProfileEmissaoStatus {
   completo: boolean;
   faltantes: string[];
   pendingExternalValidation: string[];
+  /** [140] Situação perante o Simples na DPS: 1 não optante · 2 MEI (regime da EMPRESA) · 3 ME/EPP. */
+  opSimpNac: 1 | 2 | 3;
 }
 
 export interface FiscalProfileView extends CostRegime {
@@ -164,15 +166,26 @@ export interface FiscalProfileView extends CostRegime {
  * (Anexo I v1.01) / RN que a exige. Perfil de serviço e tomador são checados na emissão (item 14), não aqui.
  */
 export function fiscalProfileEmissaoStatus(
-  row: Pick<FiscalProfile, 'regimeTributario' | 'codMun' | 'ibsCbsInformar' | 'ibsCbsCst' | 'ibsCbsClassTrib' | 'pTotTribFedCent' | 'pTotTribEstCent' | 'pTotTribMunCent' | 'pTotTribSNCent' | 'd1fConfirmado'>,
+  row: Pick<FiscalProfile, 'regimeTributario' | 'codMun' | 'ibsCbsInformar' | 'ibsCbsCst' | 'ibsCbsClassTrib' | 'pTotTribFedCent' | 'pTotTribEstCent' | 'pTotTribMunCent' | 'pTotTribSNCent' | 'd1fConfirmado' | 'regEspTrib' | 'issRetidoTomadorPj' | 'regApTribSN' | 'issAliquotaBp'>,
   regimeEmpresa: RegimeEmpresa | null = null,
 ): FiscalProfileEmissaoStatus {
   const faltantes: string[] = [];
-  // X13 PR-2 item 17 (F-XP-4 a): opSimpNac=2 (MEI) está fora do MVP da DPS (`DpsPayloadDto.ts:38`) — a emissão de
-  // empresa MEI fica BLOQUEADA com o motivo explícito, em vez de sair como ME/EPP (opSimpNac=3), que seria errado.
-  if (regimeEmpresa === 'MEI') faltantes.push('regime MEI — emissão fora do escopo (opSimpNac=2)');
+  const isMei = regimeEmpresa === 'MEI';
   if (!row.codMun) faltantes.push('codMun'); // cLocEmi [112] 1-1
-  if (row.regimeTributario === 'SIMPLES') {
+  if (isMei) {
+    // F-XP-4 → (b) (dono, chat, 29/10/2026, D-2026-10-29-EMISSAO-SIMPLES-E-FINANCEIRO): a DPS do MEI sai com
+    // opSimpNac=2. RNs do Anexo I v1.01 (gov.br/nfse, 09/02/2026) que o perfil não pode contrariar — o campo
+    // conflitante vira faltante, nunca é ignorado: E0174 regEspTrib = 0; E0583 sem retenção de ISS; E0162 sem
+    // regApTribSN; E0600 sem alíquota; IBS/CBS não é destacado pelo MEI (Res. CGSN 140 art. 106 § 1º V, red. Res. CGSN
+    // 190/2026). pTotTribSN é proibido (E0710): o totTrib sai como indTotTrib = 0 (Decreto 8.264/2014 art. 8º — a
+    // informação é facultativa para o MEI).
+    if (row.regEspTrib !== 0) faltantes.push('regEspTrib — MEI exige regime especial "Nenhum" (0) (E0174)');
+    if (row.issRetidoTomadorPj) faltantes.push('issRetidoTomadorPj — MEI não tem retenção de ISS (E0583): desmarque no perfil');
+    if (row.ibsCbsInformar) faltantes.push('ibsCbsInformar — MEI não destaca IBS/CBS (Res. CGSN 140 art. 106 § 1º V)');
+    if (row.regApTribSN != null) faltantes.push('regApTribSN — MEI não informa o regime de apuração do SN (E0162): limpe no perfil');
+    if (row.issAliquotaBp != null) faltantes.push('issAliquotaBp — MEI não informa alíquota de ISS (E0600): limpe no perfil');
+    if (row.pTotTribSNCent != null) faltantes.push('pTotTribSNCent — MEI não informa pTotTribSN (E0710): limpe no perfil');
+  } else if (row.regimeTributario === 'SIMPLES') {
     if (row.pTotTribSNCent == null) faltantes.push('pTotTribSNCent'); // totTrib [325] 1-1; ME/EPP => pTotTribSN (RN E0712)
   } else {
     // totTrib [325] 1-1 e indTotTrib PROIBIDO para não-optante (RN E0713) => pTotTrib{Fed,Est,Mun}
@@ -180,7 +193,7 @@ export function fiscalProfileEmissaoStatus(
     if (row.pTotTribEstCent == null) faltantes.push('pTotTribEstCent');
     if (row.pTotTribMunCent == null) faltantes.push('pTotTribMunCent');
   }
-  if (row.ibsCbsInformar) {
+  if (row.ibsCbsInformar && !isMei) {
     if (!row.ibsCbsCst) faltantes.push('ibsCbsCst'); // gIBSCBS/CST [405] 1-1 quando o grupo é informado
     if (!row.ibsCbsClassTrib) faltantes.push('ibsCbsClassTrib'); // [406]
   }
@@ -188,6 +201,7 @@ export function fiscalProfileEmissaoStatus(
     completo: faltantes.length === 0,
     faltantes,
     pendingExternalValidation: row.d1fConfirmado ? [] : [...D1F_FIELDS],
+    opSimpNac: isMei ? 2 : row.regimeTributario === 'SIMPLES' ? 3 : 1,
   };
 }
 
