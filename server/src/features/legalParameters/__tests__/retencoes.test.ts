@@ -5,7 +5,12 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { LEGAL_PARAMS_SEED_FILE_RETENCOES, LEGAL_PARAMS_SEED_FILE_RETENCOES_V2, legalParamsSeedRows } from '@test/helpers/legalParams';
+import {
+  LEGAL_PARAMS_SEED_FILE_RETENCOES,
+  LEGAL_PARAMS_SEED_FILE_RETENCOES_V2,
+  LEGAL_PARAMS_SEED_FILE_RETENCOES_V3,
+  legalParamsSeedRows,
+} from '@test/helpers/legalParams';
 import { LEGAL_PARAMETER_TABELAS, linhaLegalVigente, linhasEmVigor } from '../models/legalParameter';
 import { erroDeFormato } from '../models/formatoLinha';
 import { familiasDaLinha } from '../../accounting/services/TaxAssessmentRecalcService';
@@ -164,6 +169,52 @@ describe('lacuna 9 (D-2026-10-28) — 12001 com o tipo de isenção 12 (NT EFD-R
     expect(naturezaRendimentoVigente(emVigor, '12001', '2026-01-01')).toMatchObject({ tributos: ['IR'], tiposIsencao: ['12'] });
     expect(naturezaRendimentoVigente(emVigor, '12001', '2026-10-28')?.tiposIsencao).toEqual(['12']);
     expect(naturezaRendimentoVigente(emVigor, '12001', '2025-12-31')).toMatchObject({ tributos: [], tiposIsencao: [] });
+  });
+});
+
+describe('PR de dado (29/10) — INSS e INSS/CPRB saem de DRAFT (P-RET-6 e P-RET-8)', () => {
+  const MIGRATION_V3 = path.resolve(__dirname, '../../../../prisma/migrations/20261029130000_legal_parameters_retencoes_v3_inss/migration.sql');
+  const v3 = legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_RETENCOES_V3);
+  const v2 = legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_RETENCOES_V2);
+  const emVigor = linhasEmVigor([...rows, ...v2, ...v3]);
+  const bp = (data: string) => linhaLegalVigente(emVigor, 'RETENCAO', 'INSS', data, 'CPRB')?.valorInt ?? null;
+  const SHA_LEI_12546 = 'ae4a2cb31093920893030d91f9460b536c801ba7c5400d2a77ce857b8d644ab1';
+  const SHA_LEI_8212 = '6ace89674b04578f1f2ff4e16d4ab89e4a251e1da7b44b288870cc63ec2bb0b7';
+  const SHA_MANUAL_REINF = '563e771cf0b48dec156c44bc3582a469c8a7203b2e415a89da7bba1ee27f5977';
+
+  it('a migração nova carrega o texto de prisma/data/legal_parameters_retencoes_v3.sql e só insere', () => {
+    const sql = norm(fs.readFileSync(MIGRATION_V3, 'utf8'));
+    expect(sql).toContain(norm(fs.readFileSync(LEGAL_PARAMS_SEED_FILE_RETENCOES_V3, 'utf8')).trimEnd());
+    expect(sql.split('\n').filter((l) => l.trim() !== '' && !l.startsWith('--')).every((l) => l.startsWith('INSERT OR IGNORE'))).toBe(true);
+  });
+
+  it('três linhas PUBLISHED no formato, com fonte e sha256; as DRAFT do PR-1 são substituídas, não editadas', () => {
+    expect(v3.map((r) => [r.id, r.tabela, r.chave, r.discriminador, r.valorInt, r.valorTexto, r.vigenteDesde, r.vigenteAte, r.status, r.supersedesId, r.fonteSha256, formato(r)])).toEqual([
+      ['ret-inss-cprb-2025-2027', 'RETENCAO', 'INSS', 'CPRB', 350, null, '2025-01-01', '2027-12-31', 'PUBLISHED', 'ret-inss-cprb', SHA_LEI_12546, null],
+      ['ret-inss-cprb-2028', 'RETENCAO', 'INSS', 'CPRB', 1100, null, '2028-01-01', null, 'PUBLISHED', null, SHA_LEI_8212, null],
+      ['retcod-inss-116201', 'RETENCAO_CODIGO', 'CESSAO_MAO_DE_OBRA', 'INSS', null, '116201', '2025-01-01', null, 'PUBLISHED', 'retcod-inss-cessao', SHA_MANUAL_REINF, null],
+    ]);
+    expect(rows.find((r) => r.id === 'ret-inss-cprb')?.status).toBe('DRAFT');
+    expect(rows.find((r) => r.id === 'retcod-inss-cessao')?.status).toBe('DRAFT');
+  });
+
+  it('P-RET-8: CPRB 3,5% de 2025-01-01 a 2027-12-31; 11% desde 2028-01-01; 11% da cessão sem CPRB intocado', () => {
+    expect([bp('2025-01-01'), bp('2026-10-29'), bp('2027-12-31'), bp('2028-01-01'), bp('2030-06-15')]).toEqual([350, 350, 350, 1100, 1100]);
+    expect(bp('2024-12-31')).toBeNull();
+    expect(linhaLegalVigente(emVigor, 'RETENCAO', 'INSS', '2026-10-29', 'CESSAO_MAO_DE_OBRA')?.valorInt).toBe(1100);
+  });
+
+  it('P-RET-6: o INSS retido leva o código 116201 (mensal) sem aviso; antes de 2025 segue sem código', () => {
+    expect(codigoReceitaRetencao(emVigor, { tributo: 'INSS', natRend: null, beneficiarioKind: 'CNPJ', data: '2026-03-10' })).toEqual({
+      codigo: '116201',
+      discriminador: 'INSS',
+      aviso: null,
+    });
+    expect(codigoReceitaRetencao(emVigor, { tributo: 'INSS', natRend: null, beneficiarioKind: 'CNPJ', data: '2024-12-31' }).aviso).toBe(AVISO_CODIGO_RECEITA_DRAFT);
+  });
+
+  it('as linhas novas não reabrem o X7 nem o X8 (familiasDaLinha = [])', () => {
+    for (const r of v3) expect([r.id, familiasDaLinha(r)]).toEqual([r.id, []]);
   });
 });
 
