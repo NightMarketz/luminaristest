@@ -54,6 +54,28 @@ export class CollectionChargeRepository implements ICollectionChargeRepository {
     });
   }
 
+  public async findPageByUnit(
+    scope: AccountingScope,
+    params: { status?: string; kind?: string; page: number; limit: number },
+  ): Promise<{ items: CollectionCharge[]; total: number }> {
+    const where: Prisma.CollectionChargeWhereInput = {
+      ...accountingScopeWhere(scope),
+      deletedAt: null,
+      ...(params.status ? { status: params.status } : {}),
+      ...(params.kind ? { kind: params.kind } : {}),
+    };
+    const [items, total] = await Promise.all([
+      prisma.collectionCharge.findMany({
+        where,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        skip: (params.page - 1) * params.limit,
+        take: params.limit,
+      }),
+      prisma.collectionCharge.count({ where }),
+    ]);
+    return { items, total };
+  }
+
   public async findLastByCounterparty(scope: AccountingScope, counterpartyId: string): Promise<CollectionCharge | null> {
     return prisma.collectionCharge.findFirst({
       where: { ...accountingScopeWhere(scope), counterpartyId, deletedAt: null },

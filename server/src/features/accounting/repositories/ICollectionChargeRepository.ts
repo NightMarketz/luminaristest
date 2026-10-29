@@ -44,6 +44,11 @@ export interface ICollectionChargeRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<CollectionCharge | null>;
   findManyByReceivable(scope: AccountingScope, receivableId: string): Promise<CollectionCharge[]>;
+  /** Página das cobranças da unidade (EMENDA-1 PR-0, 0b), `createdAt desc, id desc`. */
+  findPageByUnit(
+    scope: AccountingScope,
+    params: { status?: string; kind?: string; page: number; limit: number },
+  ): Promise<{ items: CollectionCharge[]; total: number }>;
   findLastByCounterparty(scope: AccountingScope, counterpartyId: string): Promise<CollectionCharge | null>;
   /** PENDING (inclusive vencidas) + CREATING com `updatedAt` anterior a `staleBefore` (P2-3/P2-9). */
   findPollable(staleBefore: Date): Promise<CollectionCharge[]>;

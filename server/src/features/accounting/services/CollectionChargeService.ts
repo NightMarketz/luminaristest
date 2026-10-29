@@ -33,7 +33,7 @@ import {
   mapMercadoPagoStatus,
   type CollectionChargeStatus,
 } from '../models/CollectionCharge.model';
-import type { CreateChargeInputDto } from '../dtos/CollectionChargeDto';
+import type { CreateChargeInputDto, ListCollectionChargesQueryDto } from '../dtos/CollectionChargeDto';
 import type { ICollectionChargeRepository } from '../repositories/ICollectionChargeRepository';
 import type { IPaymentAccountRepository } from '../repositories/IPaymentAccountRepository';
 import type { IReceivableRepository } from '../repositories/IReceivableRepository';
@@ -63,6 +63,14 @@ export interface CollectionChargeView {
   createdAt: string;
   updatedAt: string;
   payer?: PayerInput;
+}
+
+/** Página da lista da unidade (EMENDA-1 PR-0, 0c). */
+export interface CollectionChargePage {
+  items: CollectionChargeView[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
 export interface CollectionPollSummary {
@@ -317,6 +325,16 @@ export class CollectionChargeService {
     const receivable = await this.receivableRepo.findById(scope, receivableId);
     if (!receivable) throw new NotFoundError(`Conta a receber '${receivableId}' não foi encontrada.`);
     return (await this.repo.findManyByReceivable(scope, receivableId)).map((c) => toView(c, false));
+  }
+
+  /** GET /api/collection-charges?unitId (EMENDA-1 PR-0, 0c) — mesma policy da lista por título; sem pagador (F9). */
+  async listByUnit(scope: AccountingScope, query: ListCollectionChargesQueryDto): Promise<CollectionChargePage> {
+    if (!this.policy.canReadReceivable(scope)) {
+      throw new ForbiddenError('Você não tem permissão para ler cobranças.');
+    }
+    const { status, kind, page, limit } = query;
+    const { items, total } = await this.repo.findPageByUnit(scope, { status, kind, page, limit });
+    return { items: items.map((c) => toView(c, false)), total, page, limit };
   }
 
   /** GET /api/collection-charges/:id (P2-15) — pagador só para quem gerencia o título (F9). */
