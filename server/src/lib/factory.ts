@@ -269,6 +269,7 @@ import { SalesCancellationService } from '../features/sales/services/SalesCancel
 import { RegisterPaymentService } from '../features/sales/services/RegisterPaymentService';
 import { SaleFiscalGuardService } from '../features/sales/services/SaleFiscalGuardService'; // EFICIENCIA-FISCAL PR-1
 import { TaxOptimizationService } from '../features/accounting/services/TaxOptimizationService'; // EFICIENCIA-FISCAL PR-1
+import { TaxSimulationService } from '../features/accounting/services/TaxSimulationService'; // EFICIENCIA-FISCAL PR-3
 import { TaxOptimizationRepository } from '../features/accounting/repositories/TaxOptimizationRepository'; // EFICIENCIA-FISCAL PR-1
 import type { ITaxOptimizationRepository } from '../features/accounting/repositories/ITaxOptimizationRepository';
 import { PresetSyncService } from '../features/dynamicTables/services/PresetSyncService';
@@ -946,6 +947,8 @@ export class ApplicationFactory {
     productFiscalProfile: ProductFiscalProfileService; // BE-INCR-NFCE item 10
     issBeneficioMunicipal: IssBeneficioMunicipalService; // SIMPLES-PISO-ANEXO-XI bloco 1
     taxOptimization: TaxOptimizationService; // EFICIENCIA-FISCAL PR-1
+    /** EFICIENCIA-FISCAL PR-3 — montado no getter: depende de simplesApuracao e interestOnEquity, criados no mesmo literal. */
+    taxSimulation?: TaxSimulationService;
     productDestination: ProductDestinationService; // ITEM-DESTINATION PR-2
     companyFiscalProfile: CompanyFiscalProfileService; // X13
     companySigner: CompanySignerService; // X13
@@ -2529,6 +2532,22 @@ export class ApplicationFactory {
   public getProductFiscalProfileService = (): ProductFiscalProfileService => this.services.productFiscalProfile;
   public getIssBeneficioMunicipalService = (): IssBeneficioMunicipalService => this.services.issBeneficioMunicipal;
   public getTaxOptimizationService = (): TaxOptimizationService => this.services.taxOptimization;
+  public getTaxSimulationService = (): TaxSimulationService =>
+    (this.services.taxSimulation ??= new TaxSimulationService(
+      this.services.simplesApuracao,
+      this.repositories.companyFiscalProfile,
+      this.repositories.fiscalProfile,
+      this.repositories.account,
+      this.repositories.posting,
+      this.repositories.receitaFiscal,
+      this.repositories.simplesEntradas,
+      this.services.accountingReport,
+      this.repositories.partner,
+      this.services.interestOnEquity,
+      this.services.legalParameter,
+      this.services.taxOptimization,
+      this.policies.accounting,
+    ));
   public getProductDestinationService = (): ProductDestinationService => this.services.productDestination;
   public getCompanyFiscalProfileService = (): CompanyFiscalProfileService => this.services.companyFiscalProfile;
   public getCompanySignerService = (): CompanySignerService => this.services.companySigner;
