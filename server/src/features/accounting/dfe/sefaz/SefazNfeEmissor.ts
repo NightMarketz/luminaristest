@@ -1,0 +1,265 @@
+import { XMLParser } from 'fast-xml-parser';
+import { logger } from '../../../../lib/logger';
+import { NFE_NS, escapeXml, partesDaChave, serializeNfe, CUF_POR_SIGLA } from '../../../../lib/nfeXml';
+import { assinarEnveloped, digestValueDe } from '../../../../lib/dfeXmlSign';
+import { assertChaveAcesso, locateInfNFe, readNfeTree, str } from '../../../../lib/nfe';
+import { NfePayloadSchema, type NfePayload } from '../../dtos/NfePayloadDto';
+import { tpAmbFor } from '../DfeEmissorPort';
+import type {
+  CancelInput,
+  CancelResult,
+  DfeAmbiente,
+  DfeCallContext,
+  DfeCapabilities,
+  DfeEmissorPort,
+  EmissaoResult,
+  EmitirInput,
+  InutilizarInput,
+  InutilizarResult,
+} from '../DfeEmissorPort';
+import type { AssinaturaErro, TipoDfeAssinado } from '../AssinadorRemotoPort';
+import { endpointSefaz, type SefazServico } from './sefazConfig';
+import type { SefazSoapClient } from './SefazSoapClient';
+
+/**
+ * SefazNfeEmissor — adaptador `sefaz` da NF-e 55 e NFC-e 65 (BE-INCR-NFCE-EMENDA-1 itens E-4..E-8, E-10; F-NFCE-E1-1 a,
+ * E1-2 a: um adaptador para os dois modelos). Fala SOAP 1.2 com a autorizadora da UF (tabela E-11) sobre o mTLS do
+ * transmissor; a nota é assinada pelo certificado do emitente no PSC (`AssinadorRemotoPort`, F-E8-1R a) — o Luminaris
+ * nunca vê a chave. Leiaute dos lotes e retornos: `TRANSCRICAO-MOC70-webservices-NFe-2026-10-29.md` (`[WS-*]`).
+ *
+ * - `emitir` (E-5): lote `enviNFe` com UMA nota e `indSinc=1` (`[NT2025001-SINC]`); cStat 100/150 ⇒ `AUTHORIZED` com o
+ *   `nfeProc` (NFe + protNFe); rejeição ⇒ `REJECTED` com o cStat em `errors[].code`; duplicidade (204/539) ⇒
+ *   `NFeConsultaProtocolo4` pela chave antes de qualquer outra decisão. `partnerRef` = chave (44).
+ * - `consultar` (E-8): `consSitNFe` pela chave; 100/150 ⇒ `AUTHORIZED` (re-assina a mesma nota — a assinatura é
+ *   determinística — e confere o `digVal` do protocolo); 217 ⇒ `PROCESSING` com o código, e quem decide o
+ *   `dfe_nao_recebida` é o ciclo (F-ADN-8 a, D-2026-10-29-X10A-PR7-9-FORKS). Nunca reenvia.
+ * - `inutilizar` (E-6) e `cancelar` 110111 (E-7) montam, assinam e enviam o pedido; o `nProt` do cancelamento vem da
+ *   consulta (sem coluna nova).
+ * - Releitura (E-10): o `nfeProc` passa por `readNfeTree` (assinatura PRIMEIRO, F-SIG-5 a) e é comparado com o payload;
+ *   divergência de identidade ⇒ alerta, e o protocolo da SEFAZ é o fato.
+ *
+ * Não recusa `NODE_ENV=production`: é o adaptador real. Não tem webhook.
+ */
+
+export class AssinaturaRemotaError extends Error {
+  constructor(public readonly code: AssinaturaErro, message: string) {
+    super(`dfe_assinatura_${code.toLowerCase()}: ${message}`);
+    this.name = 'AssinaturaRemotaError';
+  }
+}
+
+export type EndpointResolver = (uf: string, modelo: 55 | 65, ambiente: DfeAmbiente, servico: SefazServico) => string;
+
+export interface SefazNfeEmissorOptions {
+  ambiente: DfeAmbiente;
+  soap: SefazSoapClient;
+  endpoint?: EndpointResolver;
+  /** `verAplic` do evento / `verProc`: versão do Luminaris. */
+  versaoAplicativo?: string;
+  now?: () => Date;
+}
+
+const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_', removeNSPrefix: true, parseTagValue: false, trimValues: true });
+
+const AUTORIZADO = new Set(['100', '150']); // [WS-CSTAT] 100 autorizado; 150 autorizado fora de prazo
+const DUPLICIDADE = new Set(['204', '539']); // [WS-CSTAT] duplicidade de NF-e
+const NAO_CONSTA = '217'; // [WS-CSTAT] NF-e não consta na base de dados da SEFAZ
+
+type No = Record<string, unknown>;
+const no = (v: unknown): No => (v && typeof v === 'object' ? (v as No) : {});
+
+/** `dhEvento` / `dhRecbto` (TZD) em Brasília (-03:00): o mesmo formato do `dhEmi` da montagem. */
+function dataHoraBrasilia(d: Date): string {
+  const local = new Date(d.getTime() - 3 * 3600_000);
+  return `${local.toISOString().slice(0, 19)}-03:00`;
+}
+
+export class SefazNfeEmissor implements DfeEmissorPort {
+  public readonly name = 'sefaz';
+  public readonly capabilities: DfeCapabilities = {
+    kinds: ['NFE', 'NFCE'],
+    numbersDps: false, // EMENDA-1 item 21: o emissor próprio sempre monta a chave localmente
+    consultar: true,
+    cancelar: true,
+    webhook: false,
+    substituir: false,
+    inutilizar: true,
+    cce: false,
+    assinaturaRemota: true,
+  };
+  private readonly endpoint: EndpointResolver;
+  private readonly now: () => Date;
+  private idLoteSeq = 0;
+
+  constructor(private readonly opts: SefazNfeEmissorOptions) {
+    this.endpoint = opts.endpoint ?? endpointSefaz;
+    this.now = opts.now ?? (() => new Date());
+  }
+
+  async emitir(input: EmitirInput): Promise<EmissaoResult> {
+    const payload = NfePayloadSchema.parse(input.payload);
+    const assinado = await this.assinarNota(payload, input.kind as TipoDfeAssinado, input.ctx);
+    const chave = payload.infNFe.Id.slice(3);
+    const { uf, modelo } = partesDaChave(chave);
+    const lote = `<enviNFe xmlns="${NFE_NS}" versao="4.00"><idLote>${this.idLote()}</idLote><indSinc>1</indSinc>${assinado}</enviNFe>`;
+    const ret = await this.opts.soap.call(this.endpoint(uf, modelo, this.opts.ambiente, 'NFeAutorizacao4'), 'NFeAutorizacao4', lote);
+    const r = no(no(parser.parse(ret)).retEnviNFe);
+    const prot = no(no(r.protNFe).infProt);
+    const cStatLote = str(r.cStat);
+    const cStat = str(prot.cStat) || cStatLote;
+    const xMotivo = str(prot.xMotivo) || str(r.xMotivo);
+    if (AUTORIZADO.has(cStat)) return this.autorizado(chave, payload, assinado, extrairProtNFe(ret), prot);
+    if (DUPLICIDADE.has(cStat)) return this.consultar(chave, input.ctx ? { ...input.ctx, payload } : { ambiente: this.opts.ambiente, payload });
+    return { status: 'REJECTED', partnerRef: chave, errors: [{ code: cStat || 'sefaz_sem_cstat', message: xMotivo }] };
+  }
+
+  async consultar(partnerRef: string, ctx?: DfeCallContext): Promise<EmissaoResult> {
+    const { uf, modelo } = partesDaChave(partnerRef);
+    const pedido = `<consSitNFe xmlns="${NFE_NS}" versao="4.00"><tpAmb>${tpAmbFor(this.opts.ambiente)}</tpAmb><xServ>CONSULTAR</xServ><chNFe>${partnerRef}</chNFe></consSitNFe>`;
+    const ret = await this.opts.soap.call(this.endpoint(uf, modelo, this.opts.ambiente, 'NFeConsultaProtocolo4'), 'NFeConsultaProtocolo4', pedido);
+    const r = no(no(parser.parse(ret)).retConsSitNFe);
+    const cStat = str(r.cStat);
+    const prot = no(no(r.protNFe).infProt);
+    if (AUTORIZADO.has(cStat) || AUTORIZADO.has(str(prot.cStat))) {
+      const payload = ctx?.payload ? NfePayloadSchema.parse(ctx.payload) : null;
+      if (!payload || !ctx?.assinatura) {
+        // Sem a nota para remontar o nfeProc: autoriza pelo protocolo (o fato), sem XML — a pendência de anexo fica sem bytes.
+        return { status: 'AUTHORIZED', partnerRef, chaveOuCodigo: partnerRef, numero: String(partesDaChave(partnerRef).nNF), errors: [] };
+      }
+      const assinado = await this.assinarNota(payload, modelo === 65 ? 'NFCE' : 'NFE', ctx);
+      return this.autorizado(partnerRef, payload, assinado, extrairProtNFe(ret), prot);
+    }
+    return { status: 'PROCESSING', partnerRef, errors: [{ code: cStat || 'sefaz_sem_cstat', message: str(r.xMotivo) }] };
+  }
+
+  async cancelar(partnerRef: string, input: CancelInput, ctx?: DfeCallContext): Promise<CancelResult> {
+    if (input.kind === 'NFSE') throw new Error('dfe_cancel_tipo: o adaptador sefaz não cancela NFS-e');
+    const assinatura = this.exigirAssinatura(ctx);
+    const { uf, modelo, cnpj, cUF } = partesDaChave(partnerRef);
+    const nProt = await this.nProtDe(partnerRef, uf, modelo);
+    if (!nProt) return { status: 'REJECTED', errors: [{ code: 'sefaz_sem_protocolo', message: 'a consulta não devolveu o protocolo de autorização' }] };
+    const id = `ID110111${partnerRef}01`; // [VG-EVT-ID]: "ID" + tpEvento + chave + nSeqEvento (2)
+    const evento =
+      `<evento xmlns="${NFE_NS}" versao="1.00"><infEvento Id="${id}"><cOrgao>${cUF}</cOrgao><tpAmb>${tpAmbFor(this.opts.ambiente)}</tpAmb>` +
+      `<CNPJ>${cnpj}</CNPJ><chNFe>${partnerRef}</chNFe><dhEvento>${dataHoraBrasilia(this.now())}</dhEvento><tpEvento>110111</tpEvento>` +
+      `<nSeqEvento>1</nSeqEvento><verEvento>1.00</verEvento><detEvento versao="1.00"><descEvento>Cancelamento</descEvento>` +
+      `<nProt>${nProt}</nProt><xJust>${escapeXml(input.xJust)}</xJust></detEvento></infEvento></evento>`;
+    const assinado = await this.assinar(evento, 'infEvento', modelo === 65 ? 'NFCE' : 'NFE', assinatura);
+    const lote = `<envEvento xmlns="${NFE_NS}" versao="1.00"><idLote>${this.idLote()}</idLote>${assinado}</envEvento>`;
+    const ret = await this.opts.soap.call(this.endpoint(uf, modelo, this.opts.ambiente, 'NFeRecepcaoEvento4'), 'NFeRecepcaoEvento4', lote);
+    const r = no(no(parser.parse(ret)).retEnvEvento);
+    const inf = no(no(r.retEvento).infEvento);
+    const cStat = str(inf.cStat) || str(r.cStat);
+    if (cStat === '135' || cStat === '155') return { status: 'CANCELLED', errors: [] }; // [WS-EVENTO] 135 registrado; 155 fora de prazo
+    if (cStat === '501') return { status: 'OUT_OF_WINDOW', errors: [{ code: '501', message: str(inf.xMotivo) }] }; // [NFCE-CANC-FORA]
+    return { status: 'REJECTED', errors: [{ code: cStat || 'sefaz_sem_cstat', message: str(inf.xMotivo) || str(r.xMotivo) }] };
+  }
+
+  async inutilizar(input: InutilizarInput): Promise<InutilizarResult> {
+    const assinatura = this.exigirAssinatura(input.ctx);
+    if (!input.uf || !CUF_POR_SIGLA[input.uf]) throw new Error(`dfe_inut_sem_uf: UF do emitente ausente (${input.uf ?? ''})`);
+    const cUF = CUF_POR_SIGLA[input.uf];
+    const mod = input.kind === 'NFCE' ? 65 : 55;
+    const ano = String(input.ano % 100).padStart(2, '0');
+    const serie3 = String(input.serie).padStart(3, '0');
+    // [VG-INUT-ID]: "ID" + cUF + ano(2) + CNPJ + mod + série(3) + nNFIni(9) + nNFFin(9)
+    const id = `ID${cUF}${ano}${input.cnpjEmitente}${mod}${serie3}${String(input.nIni).padStart(9, '0')}${String(input.nFin).padStart(9, '0')}`;
+    const pedido =
+      `<inutNFe xmlns="${NFE_NS}" versao="4.00"><infInut Id="${id}"><tpAmb>${tpAmbFor(input.ambiente)}</tpAmb><xServ>INUTILIZAR</xServ>` +
+      `<cUF>${cUF}</cUF><ano>${ano}</ano><CNPJ>${input.cnpjEmitente}</CNPJ><mod>${mod}</mod><serie>${input.serie}</serie>` +
+      `<nNFIni>${input.nIni}</nNFIni><nNFFin>${input.nFin}</nNFFin><xJust>${escapeXml(input.xJust)}</xJust></infInut></inutNFe>`;
+    const assinado = await this.assinar(pedido, 'infInut', input.kind, assinatura);
+    const ret = await this.opts.soap.call(this.endpoint(input.uf, mod, input.ambiente, 'NFeInutilizacao4'), 'NFeInutilizacao4', assinado);
+    const inf = no(no(no(parser.parse(ret)).retInutNFe).infInut);
+    const cStat = str(inf.cStat);
+    if (cStat === '102') return { status: 'HOMOLOGATED', nProt: str(inf.nProt), errors: [] }; // [WS-INUT] 102 inutilização homologada
+    return { status: 'REJECTED', errors: [{ code: cStat || 'sefaz_sem_cstat', message: str(inf.xMotivo) }] };
+  }
+
+  verifyWebhook(): { ok: false } {
+    return { ok: false };
+  }
+
+  // ---- internos ----
+
+  private idLote(): string {
+    // idLote 1–15 dígitos ([WS-ENVINFE]); instante + sequência local evita repetição dentro do processo.
+    this.idLoteSeq = (this.idLoteSeq + 1) % 1000;
+    return `${this.now().getTime()}${String(this.idLoteSeq).padStart(3, '0')}`.slice(-15);
+  }
+
+  private exigirAssinatura(ctx?: DfeCallContext): NonNullable<DfeCallContext['assinatura']> {
+    if (!ctx?.assinatura) throw new Error('dfe_sem_credencial_psc: o serviço não resolveu a credencial do PSC da unidade');
+    return ctx.assinatura;
+  }
+
+  private async assinarNota(payload: NfePayload, tipo: TipoDfeAssinado, ctx?: DfeCallContext): Promise<string> {
+    return this.assinar(serializeNfe(payload), 'infNFe', tipo, this.exigirAssinatura(ctx));
+  }
+
+  private async assinar(xml: string, alvo: 'infNFe' | 'infEvento' | 'infInut', tipo: TipoDfeAssinado, a: NonNullable<DfeCallContext['assinatura']>): Promise<string> {
+    return assinarEnveloped(xml, { signedLocalName: alvo }, a.credencial.certificadoPem, async (digest) => {
+      const r = await a.assinador.assinarHash(digest, 'sha1', tipo, a.credencial);
+      if (!r.ok) throw new AssinaturaRemotaError(r.code, r.message);
+      return r.signatureValueB64;
+    });
+  }
+
+  private async nProtDe(chave: string, uf: string, modelo: 55 | 65): Promise<string | null> {
+    const pedido = `<consSitNFe xmlns="${NFE_NS}" versao="4.00"><tpAmb>${tpAmbFor(this.opts.ambiente)}</tpAmb><xServ>CONSULTAR</xServ><chNFe>${chave}</chNFe></consSitNFe>`;
+    const ret = await this.opts.soap.call(this.endpoint(uf, modelo, this.opts.ambiente, 'NFeConsultaProtocolo4'), 'NFeConsultaProtocolo4', pedido);
+    const nProt = str(no(no(no(no(parser.parse(ret)).retConsSitNFe).protNFe).infProt).nProt);
+    return nProt || null;
+  }
+
+  private autorizado(chave: string, payload: NfePayload, assinado: string, protXml: string | null, prot: No): EmissaoResult {
+    const digVal = str(prot.digVal);
+    if (digVal && digVal !== digestValueDe(assinado)) {
+      // O protocolo é o fato (E-10): a nota autorizada não é a que montamos agora — alerta, sem anexar XML trocado.
+      logger.error('dfe_sefaz_releitura: digVal do protocolo difere da nota montada — ação humana', { chave });
+      return { status: 'AUTHORIZED', partnerRef: chave, chaveOuCodigo: chave, numero: String(payload.infNFe.ide.nNF), errors: [] };
+    }
+    const nfeProc = `<nfeProc xmlns="${NFE_NS}" versao="4.00">${assinado}${protXml ?? ''}</nfeProc>`;
+    const divergencias = releituraNfe(nfeProc, payload);
+    if (divergencias.length) {
+      logger.error('dfe_sefaz_releitura: nfeProc diverge do payload enviado — ação humana', { chave, divergencias: divergencias.join(',') });
+    }
+    return {
+      status: 'AUTHORIZED',
+      partnerRef: chave,
+      chaveOuCodigo: chave,
+      numero: String(payload.infNFe.ide.nNF),
+      serie: String(payload.infNFe.ide.serie),
+      xml: Buffer.from(nfeProc, 'utf8'),
+      errors: [],
+    };
+  }
+}
+
+/** O `<protNFe>…</protNFe>` cru do retorno (o nfeProc carrega o protocolo como a SEFAZ o devolveu). */
+function extrairProtNFe(ret: string): string | null {
+  const m = /<protNFe\b[\s\S]*?<\/protNFe>/.exec(ret);
+  return m ? m[0] : null;
+}
+
+/**
+ * E-10 — releitura do autorizado: `readNfeTree` verifica a assinatura ANTES de ler (F-SIG-5 a; adulteração depois do
+ * protocolo lança aqui) e a comparação campo a campo cobre a nota montada diferente do payload persistido. Devolve os
+ * nomes dos campos divergentes (chave, emitente, destinatário, itens, vNF, tPag).
+ */
+export function releituraNfe(nfeProc: string, payload: NfePayload): string[] {
+  const { infNFe } = locateInfNFe(readNfeTree(nfeProc));
+  const inf = payload.infNFe;
+  const div: string[] = [];
+  if (assertChaveAcesso(infNFe) !== inf.Id.slice(3)) div.push('chave');
+  if (str(no(infNFe.emit).CNPJ) !== inf.emit.CNPJ) div.push('emitente');
+  const dest = no(infNFe.dest);
+  if ((str(dest.CNPJ) || str(dest.CPF)) !== (inf.dest?.CNPJ ?? inf.dest?.CPF ?? '')) div.push('dest');
+  const det = Array.isArray(infNFe.det) ? infNFe.det : infNFe.det ? [infNFe.det] : [];
+  if (det.length !== inf.det.length) div.push('itens');
+  if (str(no(no(infNFe.total).ICMSTot).vNF) !== inf.total.ICMSTot.vNF) div.push('vNF');
+  const detPag = no(infNFe.pag).detPag;
+  const tPags = (Array.isArray(detPag) ? detPag : [detPag]).map((p) => str(no(p).tPag)).join(',');
+  if (tPags !== inf.pag.detPag.map((p) => p.tPag).join(',')) div.push('tPag');
+  return div;
+}
