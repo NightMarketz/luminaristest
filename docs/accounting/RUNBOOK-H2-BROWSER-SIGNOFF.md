@@ -540,11 +540,32 @@ Pré-condições (verificar antes de começar):
 > **Achado de tela (F):** nos dois painéis da ECF, a linha de signatário passa da largura do card e a página ganha rolagem
 > horizontal (visível nos dois prints do passo 14).
 >
-> Leitura do agente: 12 e 13 conferem com o esperado. No 14, "nenhum 400" **não** se cumpriu nas duas ECFs. DESFECHO: [dono]
+> Leitura do agente: 12 e 13 conferem com o esperado. No 14, "nenhum 400" **não** se cumpriu nas duas ECFs.
+> Desfecho escolhido pelo dono no chat (29/10, questionário): *"FALHOU no 14"*. O dono também pediu para refazer o 14 no
+> `seed-real` antes de seguir.
+>
+> **Passo 14 refeito no `seed-real`** (o dono logou no painel; unidade `seed-unit-real`). Pelo dev.db, em modo só-leitura,
+> o tenant tinha 0 sócios, 0 contas da Parte B e nenhum trimestre fechado. Pela tela (Compliance → e-Lalur → Fechamento do
+> trimestre, ano 2025), o agente fechou T01→T04 confirmando o diálogo, e foram 4× `POST
+> http://127.0.0.1:3101/api/lalur/parte-b/close → 200 OK`. A tela passou a mostrar os quatro "fechado 29/10/2026". No dev.db:
+> `[(2025, 'T01', 1793304243209), (2025, 'T02', 1793304246022), (2025, 'T03', 1793304248855), (2025, 'T04', 1793304251672)]`.
+> Depois, a ECF Real com os mesmos dados (203 + 900, `FORMA_TRIB_PER = RRRR`) deu
+> `POST http://127.0.0.1:3101/api/accounting/sped/ecf/real/generate → 400 Bad Request`. Corpo:
+>
+> ```text
+> {"code":"ECF_Y600_SEM_SOCIOS","message":"Y600: a ECF de 2025 exige ao menos um sócio, titular ou dirigente (Manual ECF L12 p. 56, OC para FORMA_TRIB 1 a 7) — cadastre os sócios em /accounting/partners ou informe dirigentes."}
+> ```
+>
+> Print: [`passo14-03-ecf-real-seed-real-400-sem-socios.jpg`](runbook-evidence/H2-2026-10-29/passo14-03-ecf-real-seed-real-400-sem-socios.jpg).
+> As duas metades se fecham. Sem sócio cadastrado, o servidor recusa (`ECF_Y600_SEM_SOCIOS`). Com sócio cadastrado, ele
+> exige o complemento que a tela não coleta (`ECF_Y600_COMPLEMENTO_FALTANDO`, `seed-presumido`). **Nenhuma ECF de 2025 sai
+> pela tela hoje.** Isso está verificado para o Real nos dois casos e para o Presumido no caso com sócio. O Presumido sem sócio
+> foi inferido pela mesma regra Y600 do BRIEF (F-Y600-1 a, "Presumido e Real juntos") e não foi executado. A causa é a tela
+> que falta (FE-INCR-ECF-Y600), não um bug do servidor.
 
 Desfecho dos passos 12–14 (marcar UM):
 [ ] PASSOU — 12, 13 e 14 com evidência conferindo com o esperado
-[ ] FALHOU — passo __ divergiu; evidência colada acima; nenhum passo seguinte executado
+[x] FALHOU — passo 14 divergiu; evidência colada acima; nenhum passo seguinte executado *(marcado pelo dono no chat, 29/10; assinatura abaixo continua do dono)*
 [ ] BLOQUEADO — pré-condição __ não se sustentava
 Assinatura do executor (passos 12–14): ____________
 
