@@ -383,8 +383,11 @@ o limite de taxa do webhook ficam para a sessão de feature propor com medida.
 
 ## 4. Pendente de validação externa
 
-- **LGPD do envio de dado do tenant ao provedor de IA e a servidores MCP de terceiros** (PRE-ADR §7): pesquisa pelo
-  método oficial **antes do PR-8 e do PR-10**. Não bloqueia PR-0..PR-7 nem PR-9.
+- **LGPD do envio de dado do tenant ao provedor de IA e a servidores MCP de terceiros:** pesquisa feita (PR #975;
+  resumo no PRE-ADR §7). Antes do PR-8 e do PR-10 faltam as lacunas L1 (termos/DPA dos provedores × cláusulas-padrão
+  da ANPD, região UE/EEE) e L2 (região da VPS do M2). Não bloqueia PR-0..PR-7 nem PR-9. O que o produto precisa entregar
+  (aviso, campos excluídos do envio, registro de operações, DPA operador × tenant) está na Q4 do dossiê e entra como
+  item quando o dono pedir.
 - **Runbook M2 com Redis:** serviço Redis em cada instância (1 VPS por cliente). É gate humano: o agente prepara a
   emenda do runbook; o dono executa e assina. Teammates em produção dependem dele.
 

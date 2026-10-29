@@ -132,11 +132,17 @@ BRIEF.
 
 ## 7. Pendente de validação externa
 
-- **LGPD — dado do tenant enviado ao provedor de IA e a servidores MCP de terceiros.** Pergunta: com a chave do próprio
-  cliente (BYOK) e servidores fora do Brasil, quem é controlador e operador, e o que exige o art. 33 (transferência
-  internacional) e o art. 39 (operador)? O mesmo para o servidor MCP que o tenant conecta. Pesquisa pelo método oficial
-  (`legal.py`, acervo `ctresb/leis`) **antes do PR-8 (piloto com dado real) e do PR-10 (MCP)**; não bloqueia os PRs de
-  estrutura.
+- **LGPD — pesquisa feita em 29/10** (PR #975, dossiê `pesquisas-legais/lgpd-teammates-ia-mcp/relatorio.md`). Conclusão
+  do dossiê: tenant = controlador, Luminaris = operador (Lei 13.709/2018 art. 5º VI–VII, art. 39), provedor de IA com
+  BYOK e servidor MCP = operadores contratados pelo tenant. O envio ao exterior precisa de base do art. 7º **e** de um
+  mecanismo do art. 33; hoje só a UE/EEE tem adequação (Res. CD/ANPD 32/2026), e fora dela valem as cláusulas-padrão da
+  ANPD **sem alteração** (Res. CD/ANPD 19/2024, art. 16). O Luminaris responde junto se mandar campo que o tenant
+  excluiu ou chamar ferramenta sem a confirmação dele (art. 42 §1º I) — as travas do BRIEF são a defesa.
+- **Ainda aberto antes do PR-8 e do PR-10** (lacunas L1–L2 do dossiê): (L1) ler os termos de API/DPA de Anthropic,
+  OpenAI e Google — cláusulas-padrão da ANPD integrais, região UE/EEE, uso do dado de API para fim próprio; (L2) região
+  da VPS do M2, que se ficar fora do Brasil já é transferência internacional antes de qualquer teammate.
+- **Achado do dossiê, fora deste nó:** o chat agente que já existe manda dado do tenant à OpenAI hoje; a mesma análise
+  vale para ele.
 
 ## 8. Insumos ausentes (não varridos — regra 2)
 
