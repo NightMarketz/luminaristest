@@ -17,7 +17,7 @@ import type {
   InutilizarInput,
   InutilizarResult,
 } from '../DfeEmissorPort';
-import type { AssinaturaErro, TipoDfeAssinado } from '../AssinadorRemotoPort';
+import { AssinaturaRemotaError, type TipoDfeAssinado } from '../AssinadorRemotoPort';
 import { endpointSefaz, type SefazServico } from './sefazConfig';
 import type { SefazSoapClient } from './SefazSoapClient';
 
@@ -41,12 +41,7 @@ import type { SefazSoapClient } from './SefazSoapClient';
  * Não recusa `NODE_ENV=production`: é o adaptador real. Não tem webhook.
  */
 
-export class AssinaturaRemotaError extends Error {
-  constructor(public readonly code: AssinaturaErro, message: string) {
-    super(`dfe_assinatura_${code.toLowerCase()}: ${message}`);
-    this.name = 'AssinaturaRemotaError';
-  }
-}
+export { AssinaturaRemotaError };
 
 export type EndpointResolver = (uf: string, modelo: 55 | 65, ambiente: DfeAmbiente, servico: SefazServico) => string;
 
@@ -86,6 +81,7 @@ export class SefazNfeEmissor implements DfeEmissorPort {
     inutilizar: true,
     cce: false,
     assinaturaRemota: true,
+    resultadoSincrono: true, // indSinc=1: o protNFe vem na resposta do lote (F-ADN-5 a)
   };
   private readonly endpoint: EndpointResolver;
   private readonly now: () => Date;

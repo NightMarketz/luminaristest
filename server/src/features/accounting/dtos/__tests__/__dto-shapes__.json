@@ -5745,7 +5745,8 @@
             "AUTHORIZED",
             "AUTHORIZED_DIVERGENT",
             "REJECTED",
-            "CANCELLED"
+            "CANCELLED",
+            "PENDING_SIGNATURE"
           ]
         },
         "pendencias": {
@@ -6194,7 +6195,8 @@
                 "AUTHORIZED",
                 "AUTHORIZED_DIVERGENT",
                 "REJECTED",
-                "CANCELLED"
+                "CANCELLED",
+                "PENDING_SIGNATURE"
               ]
             },
             {

@@ -54,6 +54,8 @@ import type { IPscProviderRepository } from '../features/accounting/repositories
 import type { IPscCredentialRepository } from '../features/accounting/repositories/IPscCredentialRepository';
 import { PscProviderService } from '../features/accounting/services/PscProviderService';
 import { PscCredentialService } from '../features/accounting/services/PscCredentialService';
+import { DfeAssinaturaResolver } from '../features/accounting/services/DfeAssinaturaResolver';
+import { PscAssinador } from '../features/accounting/dfe/psc/PscAssinador';
 import { PscProviderPolicy } from '../features/accounting/policies/PscProviderPolicy';
 import { CollectionChargeRepository } from '../features/accounting/repositories/CollectionChargeRepository';
 import { TaxAssessmentRepository } from '../features/accounting/repositories/TaxAssessmentRepository';
@@ -1535,6 +1537,16 @@ export class ApplicationFactory {
       this.repositories.inventory,
       taxOptimizationService,
     );
+    // X10a PR-7 (EMENDA-PSC): credencial OAuth do PSC por unidade. Const própria porque a emissão, o ciclo e a
+    // inutilização resolvem por ela o `ctx.assinatura` (E-12); o gancho `onAuthorized` é ligado abaixo, ao ciclo.
+    const pscCredentialService = new PscCredentialService(
+      this.repositories.pscCredential,
+      this.repositories.pscProvider,
+      auditService,
+      this.policies.accounting,
+      resolveUnitCnpjFromUnits,
+    );
+    const dfeAssinaturaResolver = new DfeAssinaturaResolver(pscCredentialService, new PscAssinador());
     // BE-INCR-DFE (nó X10b, PR-2): porta+adaptadores e montagem/envio da DPS (Fase B+C).
     const fiscalDocumentEmissionService = new FiscalDocumentEmissionService(
       this.repositories.fiscalDocument,
@@ -1547,6 +1559,7 @@ export class ApplicationFactory {
       legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia LC116_SERVICO
       productFiscalProfileService, // BE-INCR-NFCE PR-3: perfis dos produtos na montagem da NF-e/NFC-e
       saleFiscalGuardService, // EFICIENCIA-FISCAL PR-1 item 6: guarda fiscal como pré-condição da emissão
+      dfeAssinaturaResolver, // X10a PR-7: pré-voo e ctx.assinatura do adaptador que assina pelo PSC
     );
     // Extraído como const própria (não só inline no literal abaixo) porque
     // FiscalDocumentLifecycleService (PR-3) também a injeta (item 25 — anexa XML/PDF).
@@ -1569,6 +1582,14 @@ export class ApplicationFactory {
       auditService,
       this.repositories.fiscalNumberVoid, // BE-INCR-NFCE PR-4: reenvio recusa número com pedido de inutilização
     );
+    // X10a PR-7 (F-ADN-5 a): o retorno síncrono do envio é aplicado pelo applyResult do ciclo.
+    fiscalDocumentEmissionService.setResultApplier((scope, doc, result) =>
+      fiscalDocumentLifecycleService.aplicarResultadoDoEnvio(scope, doc, result),
+    );
+    // Decisão 5 de D-2026-10-29-X10A-PR7-9-FORKS: a reautorização no PSC envia as PENDING_SIGNATURE da unidade.
+    pscCredentialService.setOnAuthorized(async (scope) => {
+      await fiscalDocumentLifecycleService.enviarPendentesDaUnidade(scope);
+    });
     // Extraído como const própria (não só inline no literal abaixo) porque FixedAssetService
     // (BE-INCR-FIXED-ASSETS, nó C8, PR-2) também a injeta (baixa lê disposalGain/LossAccountId).
     const accountingScopeSettingsService = new AccountingScopeSettingsService(
@@ -1778,6 +1799,7 @@ export class ApplicationFactory {
         this.policies.accounting,
         auditService,
         legalParameterService, // EMENDA-3 E3-2 a: fotografia INUT_NAO_SE_APLICA
+        dfeAssinaturaResolver, // X10a PR-7 (E-6): o inutNFe é assinado pelo PSC
       ),
       chat: new ChatService(
         embeddingOpenAIService,
@@ -2162,16 +2184,9 @@ export class ApplicationFactory {
         this.policies.accounting,
         resolveUnitCnpjFromUnits,
       ),
-      // X10a PR-7 (EMENDA-PSC): cadastro de PSCs (PLATFORM_ADMIN) e credencial OAuth por unidade. O gancho
-      // `onAuthorized` nasce no-op; quem liga o envio das PENDING_SIGNATURE usa `setOnAuthorized`.
+      // X10a PR-7 (EMENDA-PSC): cadastro de PSCs (PLATFORM_ADMIN) e credencial OAuth por unidade (const acima).
       pscProvider: new PscProviderService(this.repositories.pscProvider, auditService, new PscProviderPolicy()),
-      pscCredential: new PscCredentialService(
-        this.repositories.pscCredential,
-        this.repositories.pscProvider,
-        auditService,
-        this.policies.accounting,
-        resolveUnitCnpjFromUnits,
-      ),
+      pscCredential: pscCredentialService,
       collectionCharge: collectionChargeService,
       releaseReport: releaseReportService, // BE-INCR-PAYMENT-PROVIDER PR-3 (P3-1..P3-5)
       accountingDelivery: new AccountingDeliveryService(

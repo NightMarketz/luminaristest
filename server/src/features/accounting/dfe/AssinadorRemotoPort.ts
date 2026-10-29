@@ -32,3 +32,19 @@ export interface AssinadorRemotoPort {
   readonly name: string;
   assinarHash(digestB64: string, algoritmo: AlgoritmoHash, tipo: TipoDfeAssinado, cred: CredencialPscResolvida): Promise<AssinaturaResultado>;
 }
+
+/**
+ * Recusa do PSC no meio da assinatura (E-8). `CREDENCIAL_EXPIRADA | CREDENCIAL_REVOGADA` = a sessão da unidade caiu: o
+ * serviço põe a nota em `PENDING_SIGNATURE` (F-PSC-6 a); os demais códigos são falha do envio.
+ */
+export class AssinaturaRemotaError extends Error {
+  constructor(public readonly code: AssinaturaErro, message: string) {
+    super(`dfe_assinatura_${code.toLowerCase()}: ${message}`);
+    this.name = 'AssinaturaRemotaError';
+  }
+}
+
+/** F-PSC-6 a — a recusa que pede reautorização do titular (não é falha de rede nem de cota). */
+export function isSessaoPscVencida(error: unknown): boolean {
+  return error instanceof AssinaturaRemotaError && (error.code === 'CREDENCIAL_EXPIRADA' || error.code === 'CREDENCIAL_REVOGADA');
+}

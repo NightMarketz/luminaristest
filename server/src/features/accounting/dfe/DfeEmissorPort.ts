@@ -87,6 +87,12 @@ export interface DfeCapabilities {
    * `ctx.assinatura`. O serviço faz o pré-voo (F-PSC-5 a) antes de consumir número. Ausente = `false`.
    */
   assinaturaRemota?: boolean;
+  /**
+   * X10a PR-7 (F-ADN-5 a, D-2026-10-29-X10A-PR7-9-FORKS decisão 1) — o retorno de `emitir` é o resultado do fisco (SEFAZ
+   * com `indSinc=1`), e o serviço o aplica pelo mesmo `applyResult` do ciclo. Ausente = `false`: o resultado imediato
+   * fica para o polling, como antes.
+   */
+  resultadoSincrono?: boolean;
 }
 
 /**
