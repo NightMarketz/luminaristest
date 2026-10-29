@@ -15,6 +15,9 @@
 > **Aberto (fora deste ADR):** qual VPS/provedor concreto; se o Qdrant vira serviço gerenciado;
 > F-P2-3 e F-P2-4 do `ADR-P2-second-vertical.md` (não tocados aqui).
 >
+> **Emenda 2026-10-29 (§8):** cada instância ganha um serviço **Redis** para a fila BullMQ dos teammates
+> (F-TM-5, PR #969). As quatro decisões acima não mudam.
+>
 > Criado: 2026-08-22.
 
 ---
@@ -189,3 +192,117 @@ entre clientes, mas não é sem custo operacional — registrado sem venda:
    documentação; candidato a sessão de planejamento antes de sessão de feature.
 4. Rodar o `RUNBOOK-M2-DEPLOY-SMOKE.md` (atualizado) contra o alvo provisionado — gate humano, agente
    não preenche evidência nem assina.
+
+## 8. Emenda 2026-10-29 — Redis por instância (fila dos teammates, F-TM-5)
+
+**Origem:** o dono escolheu **"BullMQ + Redis"** para os turnos dos teammates (F-TM-5; a recomendação era fila em
+tabela, sem Redis). Cédula `docs/plano/decisoes/D-2026-10-29-TEAMMATES-FORKS.md` e BRIEF
+`docs/accounting/BE-INCR-TEAMMATES-brief.md` itens 19–22, os dois só no PR #969 (branch
+`claude/teammates-planejamento`) até o merge. **Autorização desta emenda:** dono, chat, 2026-10-29: *"Dispara sessão
+para o … Runbook do M2 com Redis, para colocar em produção."* O escopo é só documentação. Ninguém provisiona nada a
+partir daqui; o `docker-compose.yml` e o `ci.yml` mudam no PR-4 do TEAMMATES (§8.7).
+
+**Não muda:** as quatro decisões da §2. A topologia continua sendo uma instância por cliente: cada instância passa a ter
+**o seu** Redis, nunca um Redis compartilhado entre clientes (isso quebraria o isolamento da decisão 2 e o BYOK da 3).
+
+### 8.1 O que o Redis guarda, e o que acontece se ele perder tudo
+
+| Dado no Redis | Fonte da verdade fora do Redis | Perda do Redis apaga… |
+|---|---|---|
+| Job `{ turnId }` na fila `teammate-turns` (item 20: payload é **só** o id) | linha `AgentTurn` no SQLite, com `status` espelhado (item 19) | o job, não o turno: a linha `PENDING`/`RUNNING` continua no `.db` |
+| *Job scheduler* por rotina (`upsertJobScheduler`, id = `routineId`, item 25 do PR-5) | linha `TeammateRoutine` no SQLite | o agendamento: a rotina para de disparar **sem erro**, até alguém regravar o scheduler |
+| Estado interno do BullMQ (locks, contadores, retenção de concluídos/falhos) | — | nada de negócio |
+
+Leitura (grau: **inferido** do BRIEF, código ainda não existe): **nada no Redis é dado de negócio**, mas ele não é
+descartável sem a **reconciliação no boot**, que o BRIEF não lista: re-enfileirar `AgentTurn` em `PENDING` (e
+`RUNNING` sem lock) e regravar um scheduler por `TeammateRoutine` ativa. `jobId = turnId` e `id = routineId` deixam
+as duas operações idempotentes. Sem reconciliação, um volume do Redis perdido some com turnos pendentes e com toda
+rotina agendada, sem alerta. Isso vira pendência do PR-4/PR-5 (§8.7, P2).
+
+### 8.2 Serviço
+
+- **Um serviço `redis` no compose de cada instância**, imagem oficial `redis`, linha **8.2**, com **tag de patch exata e
+  digest** (`redis:8.2.<patch>-alpine@sha256:…`), **nunca** `latest` nem tag só de major. O patch exato é escolhido
+  no PR-4, que é quem escreve o compose. O runbook cola o digest que subiu como EVIDÊNCIA (passo R1). A linha 8.2 foi
+  conferida publicada no Docker Hub em 29/10 (tags `8.2.10`, `8.2.10-alpine`); qual é o patch mais novo, os snapshots
+  do Hub divergem, então o PR-4 confere no dia. O BullMQ pede Redis ≥ 5 e recomenda ≥ 6.2 (fonte secundária, espelho
+  da doc do BullMQ); a 8.2 atende.
+- **Licença** (grau: inferido, não é parecer): o Redis 8 é tri-licenciado (RSALv2 / SSPLv1 / AGPLv3). Aqui ele roda
+  **sem modificação**, como componente interno da instância, sem ser oferecido a terceiros como serviço de banco. Nessa
+  leitura, nenhuma das três licenças cria obrigação para o produto. Se o dono preferir zerar a questão, a troca direta é
+  o **Valkey** (BSD-3, compatível no protocolo e listado como suportado pelo BullMQ, fonte secundária), sem mudar uma
+  linha de código.
+- **Rede: só a interna do compose.** Sem `ports:` no serviço: nada publicado no host e nada na interface pública da
+  VPS. O server alcança o Redis por `redis:6379`. Isso é diferente do `qdrant`, que hoje publica 6333/6334, e ele não
+  serve de modelo.
+- **Senha por env:** `REDIS_PASSWORD` no `.env` da instância, obrigatória no compose (`${REDIS_PASSWORD:?…}`, mesmo
+  padrão do `QDRANT_API_KEY`), em hex (`openssl rand -hex 32`) para não exigir *escape* na URL. O server recebe
+  `REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0`, montada no compose. `REDIS_URL` já existe como opcional em
+  `server/src/config/env.ts:113`. A senha é a segunda barreira; a primeira é a rede interna.
+- **Sem `depends_on: condition: service_healthy`** do server para o redis: a aplicação **sobe sem Redis** (item 22).
+  Basta `depends_on: [redis]` para a ordem de partida. Um healthcheck do Redis que travasse o boot do ERP contrariaria
+  o item 22.
+
+### 8.3 Persistência: AOF, `appendfsync everysec`
+
+**Escolha: AOF ligado** (`--appendonly yes --appendfsync everysec`), sem RDB periódico (`--save ""`), num volume
+nomeado `redis_data:/data`.
+
+Por que não "nenhuma": a fila de turnos pode ser refeita a partir do `AgentTurn`, mas só quando a reconciliação da
+§8.1 existir, e os schedulers das rotinas (PR-5) **não estão em lugar nenhum além do Redis** enquanto ela não existir.
+Sem persistência, qualquer `docker compose restart`, *reboot* da VPS ou atualização da imagem apagaria as rotinas em
+silêncio. Com AOF `everysec`, o pior caso num *crash* é perder até ~1 s de escrita: um job recém-enfileirado, cujo
+`AgentTurn` já está no `.db` e é recuperado pela reconciliação. O custo é desprezível com payload de um id.
+
+Por que não `appendfsync always`: o Redis aqui não é fonte da verdade, e o `fsync` por escrita disputaria o disco com o
+SQLite em WAL na mesma VPS.
+
+**Quando a reconciliação (P2) estiver entregue e provada**, "sem persistência" vira opção legítima. Trocar continua
+sendo emenda deste ADR, não ajuste de compose.
+
+### 8.4 Memória e despejo
+
+- `--maxmemory 128mb --maxmemory-policy noeviction`. **`noeviction` é obrigatório para o BullMQ:** com qualquer
+  política `allkeys-*`/`volatile-*`, o Redis pode despejar a chave de um job ou de um lock no meio do processamento e
+  quebrar a fila sem erro claro (guia "Going to production" do BullMQ).
+- Com `noeviction`, memória cheia faz o Redis **recusar escrita** (erro OOM). Para a aplicação, isso precisa virar o
+  mesmo 503 `TEAMMATES_FILA_INDISPONIVEL` de "Redis fora", e não um 500 (pendência P3).
+- 128 MB é folga larga para uma instância de um cliente com concorrência 1 (D-4) e payload `{ turnId }`. O que enche
+  um Redis de BullMQ é a **retenção** de jobs concluídos e falhos, que por padrão é ilimitada. O PR-4 precisa fixar
+  `removeOnComplete`/`removeOnFail` com teto (pendência P4). O histórico que importa já está no `AgentTurn`.
+- O `maxmemory` fica **abaixo** do limite de memória do container (se houver), para que o Redis recuse escrita antes
+  de o kernel matar o processo.
+
+### 8.5 Backup: não precisa (condicionado)
+
+**O Redis não entra na rotina de backup da instância.** Todo dado de negócio que passa por ele tem fonte da verdade no
+SQLite (§8.1), e o backup do `.db` (pré-condição do runbook) já cobre essa fonte. Fazer backup do AOF traria de volta
+jobs de um instante que não bate com o `.db` restaurado (turnos que o `.db` já marca `DONE` reaparecendo na fila), ou
+seja, mais risco do que proteção.
+
+**Condição:** isso vale quando a reconciliação no boot (P2) existir. Até lá, restaurar a instância é restaurar o `.db`
+e **regravar as rotinas à mão** (desativar e reativar cada uma). O runbook registra isso como pendência, e não como
+passo.
+
+### 8.6 Observabilidade (cruza com `ADR-OBSERVABILIDADE.md`)
+
+- `/health` (`server/src/app.ts:82-116`) hoje devolve 503 quando qualquer check falha. Se o PR-4 incluir o Redis
+  nesse cálculo, **Redis fora derruba o health do ERP**, o que contraria o item 22 e faria um supervisor ou monitor
+  externo reiniciar ou alertar o ERP inteiro por causa dos teammates. Proposta: o check do Redis entra no corpo como
+  informação (`checks.redis = 'ok' | 'error' | 'not_configured'`) e fica **fora** do `allOk` (pendência P5).
+- Falha final de turno já alerta (`job_failed`, item 21, OBS-R11). Redis inalcançável por tempo prolongado não tem
+  alerta previsto no BRIEF. Ele é degradação (`warn`), não queda do ERP. Fica como pendência P6, para o PR-4 decidir
+  com o ADR-OBSERVABILIDADE: um alerta por janela, não um por tentativa de reconexão.
+
+### 8.7 Pendências de infraestrutura (código, do PR-4 do TEAMMATES; este ADR não altera arquivo)
+
+| # | Onde | O quê |
+|---|---|---|
+| P1 | `docker-compose.yml` | serviço `redis` conforme §8.2–8.4 + volume `redis_data` + `REDIS_URL` no `server` (diff proposto no runbook, bloco R) |
+| P2 | `features/teammates` (PR-4/PR-5) | reconciliação no boot: re-enfileirar `AgentTurn` `PENDING`/`RUNNING` órfão e regravar o scheduler de cada `TeammateRoutine` ativa; teste com Redis zerado |
+| P3 | idem | erro OOM do Redis (`noeviction` cheio) → 503 `TEAMMATES_FILA_INDISPONIVEL`, igual a conexão recusada |
+| P4 | idem | `removeOnComplete`/`removeOnFail` com teto fixo |
+| P5 | `server/src/app.ts` `/health` | Redis informativo, fora do `allOk` |
+| P6 | idem + `ADR-OBSERVABILIDADE.md` | alerta de Redis inalcançável por janela (decidir se entra no v1) |
+| P7 | `.github/workflows/ci.yml` | serviço Redis (mesma linha 8.2) no job que roda `npm run test:integration`, como o BRIEF §5 já lista |
+| P8 | idem (PR-4) | reconexão: Redis volta → rotas de teammates saem do 503 **sem reiniciar o server**; teste |
