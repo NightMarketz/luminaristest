@@ -17,11 +17,11 @@ fora de escopo" dos PRs #961, #963, #964, #965 e #933. Cada achado foi medido co
 | 1 | `openapi.json` desatualizado | **fechado** pelo #966 (tax-optimization, fiscal-check, danfe e InterviewModules presentes; generate-chart-data ausente) | nada |
 | 2 | `UPDATE_DTO_SNAPSHOT=1` reordena 81 arquivos no Windows | continua; classe conhecida | nada novo (memória `dto-snapshot-update-reordena-no-windows`) |
 | 3 | `templateDb` sem `legal_parameters_simples_v6.sql` | **confirmado**: 26 arquivos `legal_parameters*.sql` no disco, 25 na lista | consertado no PR desta nota (guarda de cobertura + inclusão do v6) |
-| 4 | rota do fator r no router de `/accounting` | código só no #965 | fica no #965: mover para `routes/simples.ts` é decisão desse PR |
-| 5 | Kanban: vão entre cards da mesma coluna não faz nada | código só no #961 | **dono: ir para o card mais próximo** (mesma coluna); entre colunas segue o passo 6. Executa no #961 |
+| 4 | rota do fator r no router de `/accounting` | #965 mergeado com a rota em `routes/accounting.ts:448-449` (comentário explica o repasse) | aberto: funciona, mas o lugar explícito é `routes/simples.ts`; refactor sem mudança de comportamento, sem pedido |
+| 5 | Kanban: vão entre cards da mesma coluna não faz nada | código só no #961 | **dono: ir para o card mais próximo** (mesma coluna); entre colunas segue o passo 6. O #961 foi mergeado antes; executa em PR novo |
 | 6 | ordenação oferece `order` (e `date`) | **confirmado**: `SortSelect` deduz os campos de `record.data` e não exclui `order` | consertado no PR desta nota (`order` em `EXCLUDED_FIELDS`); `date` não entrou |
 | 7 | DUE DATE um dia antes | classe date-only × UTC | nada novo (varredura FE date-only) |
-| 8 | sem "Archive" em QUICK ACTIONS | confirmado: só "Excluir" | **dono: tirar do runbook**. Archive não é requisito. Executa no #961 |
+| 8 | sem "Archive" em QUICK ACTIONS | confirmado: só "Excluir" | **dono: tirar do runbook**. Archive não é requisito. Executa em PR novo (`RUNBOOK-KANBAN-REORDER.md`) |
 | 9 | interdependência por cisão (LC 123, art. 3º, § 4º, IX) sem dado no cadastro | código só no #964 | **dono: registrar como lacuna**. Ver abaixo |
 | 10 | job de export órfão em `PROCESSING` | `DataExchangeExportService` **fechado** (Lacuna 10); `ReinfService.gerar` **aberto** | consertado no PR desta nota (compensação FAILED nos 2 jobs) |
 | 11 | pacote anual com 1 mês de Reinf (`DUPLICATE_KIND`) | **fechado**: emenda C6b (item 2 da cédula `D-2026-10-28-LACUNAS-EXECUTA-27-28`); unicidade = kind + período | nada |
