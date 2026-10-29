@@ -39,6 +39,21 @@ risco** ([[D-2026-10-28-FLUXO-AUTONOMO]]): verde pela maestro, vermelho no lote 
 5. **Financeiro — [[PACOTE-VALIDADE]]:** só o que for código e estiver aberto no `PACOTE-VALIDADE-PENDENCIAS-brief.md`;
    o PE-6 (contador + jurídico) segue externo.
 
+## 2.1 Emissão do MEI (segundo questionário de 29/10)
+
+O item 1 achou a emissão de MEI bloqueada pelo F-XP-4 (a) (`BE-INCR-FISCAL-OBLIGATION-PROFILE-brief.md`, faltante
+`regime MEI — emissão fora do escopo`). Nas palavras do dono, por AskUserQuestion: F-XP-4 → **"Sim, (b) agora
+(Recomendado)"**; totTrib do MEI → **"Pesquise como é para mei"**; ISS retido no perfil do MEI → **"Bloquear com motivo
+(Recomendado)"**.
+
+- **F-XP-4 → (b)**: a DPS do MEI sai com `opSimpNac = 2`, pelas RNs do Anexo I v1.01: E0162, E0174, E0583, E0600, E0676 e
+  E0710.
+- **totTrib do MEI → `indTotTrib = 0`**, pela pesquisa: o Decreto 8.264/2014 art. 8º (Planalto) torna a informação
+  facultativa para o MEI, e o leiaute só proíbe o `indTotTrib` para ME/EPP (E0712) e não optante (E0713). Dossiê
+  `pesquisas-legais/emissao-mei-me-por-tipo`.
+- **ISS retido, `regEspTrib ≠ 0` ou IBS/CBS ligado no perfil do MEI** viram faltante nomeado. A NF-e/NFC-e do MEI segue
+  bloqueada (Res. CGSN 140 art. 106 § 1º III até 2026; art. 106-B, NFF, desde 2027).
+
 ## 3. Fora
 
 - Prova real do pagamento: boleto/Pix/CSV do Mercado Pago na sonda do [[M2]], chave do MP no ambiente.
