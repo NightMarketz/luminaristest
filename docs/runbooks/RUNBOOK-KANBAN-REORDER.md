@@ -263,6 +263,15 @@ Pare no primeiro passo que divergir. Não execute os seguintes (regra do FALHOU)
    semântica `arrayMove` da mesma coluna (`useKanbanLogic.tsx:147-149`), a mesma do passo 3 de 24/10. Por isso o "antes dele"
    do F-KR-4 não se aplica aqui.
 
+6b. Na **mesma coluna**, arraste um card e solte no **vão entre dois cards**, fora dos dois, mais perto de um deles.
+   (Passo incluído em 2026-10-29, achado 5 de `docs/plano/decisoes/D-2026-10-29-ACHADOS-FORA-DE-ESCOPO.md`; dono, chat:
+   "Ir p/ o card mais próximo".)
+   Resultado esperado: o card vai para a posição do card **mais próximo** do ponto de soltura, com a mesma semântica de
+   soltar sobre ele (passo 3). 1 update só com `order`, sem `status`. Continua igual depois do F5. Se o card mais
+   próximo for o próprio card arrastado, a ordem não muda e não há update.
+   Contraprova: o passo 6 continua valendo. Na área vazia de **outra** coluna, o card vai para o fim dela.
+   EVIDÊNCIA (ponto de soltura, cards vizinhos e a distância até cada um, linhas da Network, screenshot depois do F5):
+
 7. Escolha uma **ordenação** na barra do Kanban (por exemplo, prioridade) e tente reordenar dentro da coluna.
    Resultado esperado: a ordem não muda (com ordenação escolhida, arrastar só muda de coluna). Nenhum update.
    EVIDÊNCIA: não executado na rodada de 27/10 (regra do FALHOU: o passo 6 divergiu).
@@ -315,9 +324,15 @@ Pare no primeiro passo que divergir. Não execute os seguintes (regra do FALHOU)
    sem campo order: 0
    ```
 
-9. Lote 4 (#813): abra o detalhe de um card, troque o idioma para EN e confira os textos (Quick Actions,
-   Archive, Detailed Information, Created at…). Feche com Esc ou clique fora.
-   Resultado esperado: nenhum texto em PT na tela EN. O inspetor mostra `role="dialog"` no overlay.
+9. Lote 4 (#813): abra o detalhe de um card e anote o idioma ativo da tela. Confira os textos fixos da interface no
+   diálogo: títulos das seções, rótulos dos campos, ações rápidas, placeholder e texto de campo vazio. Troque para o
+   outro idioma (PT ↔ EN) pelo seletor do topo e confira de novo. Feche com Esc ou clique fora.
+   Resultado esperado: nos dois idiomas, todo texto fixo da interface está no idioma ativo. Os valores do card (nome,
+   descrição, opções gravadas) ficam como foram gravados. O inspetor mostra `role="dialog"` no overlay.
+   O roteiro não depende do idioma de partida nem de um rótulo literal. O runner localiza o diálogo por `role="dialog"`
+   e compara o texto com o idioma ativo, sem procurar o nome de um botão em PT ou em EN.
+   (Roteiro revisto em 2026-10-29, achado 8 de `D-2026-10-29-ACHADOS-FORA-DE-ESCOPO.md`; dono, chat: "Tirar do runbook".
+   "Archive" saiu da lista: não é requisito do Lote 4. As observações de 28/10 abaixo ficam como histórico.)
    EVIDÊNCIA (screenshot EN + trecho do inspetor): não executado na rodada de 27/10 (regra do FALHOU: o passo 6 divergiu).
    Rodada de 2026-10-28: não executado (regra do FALHOU: o passo 7 divergiu).
    **Continuação de 2026-10-28 — diverge do esperado: texto em PT na tela EN.** Idioma trocado para "English (US)" pelo
