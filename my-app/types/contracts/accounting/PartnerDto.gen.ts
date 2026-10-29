@@ -20,13 +20,6 @@ export interface ListPartnersQueryInput {
 unitId: string
 data?: string
 }
-export interface OutraParticipacaoInput {
-cnpj: string
-participacaoBp: number
-empresaNoSimples: boolean
-administrador: boolean
-receitaBrutaAnualCents?: (number | null)
-}
 export interface PartnerIdParamInput {
 id: string
 }
@@ -48,4 +41,11 @@ empresaNoSimples: boolean
 administrador: boolean
 receitaBrutaAnualCents?: (number | null)
 }[] | null)
+}
+export interface OutraParticipacaoInput {
+cnpj: string
+participacaoBp: number
+empresaNoSimples: boolean
+administrador: boolean
+receitaBrutaAnualCents?: (number | null)
 }

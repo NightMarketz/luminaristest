@@ -73,11 +73,6 @@ retornoCompetencia: number
 exclusao: number
 }
 }
-export interface ChecklistParceriaInput {
-clausulaLocacaoBemMovel: ("SIM" | "NAO" | "NAO_INFORMADO")
-clausulaCusteio: ("SIM" | "NAO" | "NAO_INFORMADO")
-nfseEmitidaPeloParceiro: ("SIM" | "NAO" | "NAO_INFORMADO")
-}
 export interface ImpedimentoCaixaInput {
 mesBase: string
 receitaNaoRecebidaCents: number
@@ -255,4 +250,9 @@ tipoBeneficiario: ("CANDIDATO" | "COMITE_FINANCEIRO" | "PARTIDO_POLITICO")
 formaDoacao: ("CHEQUE" | "OUTROS_TITULOS_CREDITO" | "TRANSFERENCIA_ELETRONICA" | "DEPOSITO_ESPECIE" | "DINHEIRO" | "BENS" | "SERVICOS")
 valorCents: number
 }[]
+}
+export interface ChecklistParceriaInput {
+clausulaLocacaoBemMovel: ("SIM" | "NAO" | "NAO_INFORMADO")
+clausulaCusteio: ("SIM" | "NAO" | "NAO_INFORMADO")
+nfseEmitidaPeloParceiro: ("SIM" | "NAO" | "NAO_INFORMADO")
 }
