@@ -1,0 +1,30 @@
+url após login: http://127.0.0.1:3030/
+
+======== seed ========
+Tasks: cmr2jy28w0062ci1kemqrt5vo
+linhas existentes: 0
+201  POST A fazer 2 To Do order=1000
+201  POST A fazer 3 To Do order=2000
+201  POST A fazer 4 To Do order=3000
+201  POST A fazer 5 To Do order=4000
+201  POST A fazer 6 To Do order=5000
+201  POST Em andamento 1 In Progress order=1000
+201  POST Em andamento 2 In Progress order=2000
+201  POST Em andamento 3 In Progress order=3000
+201  POST Em andamento 4 In Progress order=4000
+201  POST Em andamento 5 In Progress order=5000
+201  POST Em andamento 6 In Progress order=6000
+201  POST Feito 1 Done order=1000
+201  POST A fazer 1 Done order=1500
+201  POST Feito 2 Done order=2000
+201  POST Feito 3 Done order=3000
+
+======== probe ========
+Categories: (vazia)
+TO DO: A fazer 2, A fazer 3, A fazer 4, A fazer 5, A fazer 6
+IN PROGRESS: Em andamento 1, Em andamento 2, Em andamento 3, Em andamento 4, Em andamento 5, Em andamento 6
+IN REVIEW: (vazia)
+DONE: Feito 1, A fazer 1, Feito 2, Feito 3
+[print] docs/runbooks/evidencia-kanban-reorder-2026-10-28/probe.png
+--- console.error ---
+(nenhum)

@@ -62,6 +62,9 @@ export const LEGAL_PARAMETER_TABELAS = [
   // BE-INCR-EFICIENCIA-FISCAL PR-2 (item 11; F-EF-5 a; D-2026-10-27-EFICIENCIA-FISCAL-PR2-EXECUCAO): NCM sob ICMS-ST por UF
   // (IBGE no discriminador) — segregação do Simples (LC 123 art. 18 § 4º-A I). Consumidor = models/segregacaoNcm.ts.
   'ICMS_ST_NCM_UF',
+  // BE-INCR-EFICIENCIA-FISCAL PR-3 (itens 15–17; D-2026-10-28-EFICIENCIA-FISCAL-PR3-EXECUCAO decisão 1): encargos da folha
+  // (INSS do contribuinte individual, patronal, FGTS, teto do RGPS). Consumidor = models/taxSimulation.ts.
+  'ENCARGO_FOLHA',
 ] as const;
 export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
 

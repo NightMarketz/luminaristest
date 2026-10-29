@@ -1,0 +1,24 @@
+url após login: http://127.0.0.1:3030/
+
+======== p7 ========
+opções da ordenação: ["","name","date","order","priority","status"]
+ordenação escolhida: name
+antes:
+Categories: (vazia)
+TO DO: A fazer 3, A fazer 4, A fazer 6
+IN PROGRESS: A fazer 5, Em andamento 1, Em andamento 2, Em andamento 3, Em andamento 4, Em andamento 5, Em andamento 6
+IN REVIEW: (vazia)
+DONE: A fazer 1, A fazer 2, Feito 1, Feito 2, Feito 3
+[print] docs/runbooks/evidencia-kanban-reorder-2026-10-28/p7-antes.png
+arrasto: "Em andamento 6" → sobre "A fazer 5"
+depois do arrasto:
+Categories: (vazia)
+TO DO: A fazer 3, A fazer 4, A fazer 6
+IN PROGRESS: A fazer 5, Em andamento 1, Em andamento 2, Em andamento 3, Em andamento 4, Em andamento 5, Em andamento 6
+IN REVIEW: (vazia)
+DONE: A fazer 1, A fazer 2, Feito 1, Feito 2, Feito 3
+[print] docs/runbooks/evidencia-kanban-reorder-2026-10-28/p7-depois.png
+IGUAL antes×depois do arrasto: true
+PUTs: 0
+--- console.error ---
+(nenhum)

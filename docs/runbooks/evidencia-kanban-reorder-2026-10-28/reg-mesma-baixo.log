@@ -1,0 +1,40 @@
+url após login: http://127.0.0.1:3020/
+
+======== r2 ========
+antes:
+Categories: (vazia)
+TO DO: A fazer 1, A fazer 3, A fazer 4, A fazer 5, A fazer 6
+IN PROGRESS: Em andamento 1, Em andamento 2, Em andamento 3, Em andamento 4, Em andamento 5, Em andamento 6
+IN REVIEW: (vazia)
+DONE: Feito 3, Feito 1, Feito 2, A fazer 2
+[print] docs/runbooks/evidencia-kanban-reorder-2026-10-28/reg-mesma-baixo-antes.png
+arrasto: "Feito 3" → sobre "Feito 2"
+depois do arrasto:
+Categories: (vazia)
+TO DO: A fazer 1, A fazer 3, A fazer 4, A fazer 5, A fazer 6
+IN PROGRESS: Em andamento 1, Em andamento 2, Em andamento 3, Em andamento 4, Em andamento 5, Em andamento 6
+IN REVIEW: (vazia)
+DONE: Feito 1, Feito 2, Feito 3, A fazer 2
+[print] docs/runbooks/evidencia-kanban-reorder-2026-10-28/reg-mesma-baixo-depois.png
+--- Network (arrasto) ---
+204       OPTIONS /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data/cmvsmcdz3001lciakvbr3vn6x 
+200       PUT /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data/cmvsmcdz3001lciakvbr3vn6x {"data":{"order":3000}}
+304       GET /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo 
+200       GET /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data 
+200       GET /api/dynamic-tables/cmr2jy28v0060ci1khsbgosq9/data 
+200       GET /api/dynamic-tables/cmr2jy28y006aci1kne72l79r/data 
+depois do F5:
+Categories: (vazia)
+TO DO: A fazer 1, A fazer 3, A fazer 4, A fazer 5, A fazer 6
+IN PROGRESS: Em andamento 1, Em andamento 2, Em andamento 3, Em andamento 4, Em andamento 5, Em andamento 6
+IN REVIEW: (vazia)
+DONE: Feito 1, Feito 2, Feito 3, A fazer 2
+[print] docs/runbooks/evidencia-kanban-reorder-2026-10-28/reg-mesma-baixo-depois-f5.png
+IGUAL antes×depois do F5: true
+--- console.error ---
+(nenhum)
+$ python -I kdb.py kro-rb.db v
+cmr2jy28w0062ci1kemqrt5vo | Tasks | kanban | tasks | order: True | cards: 15 | ['To Do', 'In Progress', 'In Review', 'Done']
+    To Do -> ['A fazer 1=0', 'A fazer 3=0', 'A fazer 4=0', 'A fazer 5=0', 'A fazer 6=0']
+    Done -> ['Feito 1=1000', 'Feito 2=2000', 'Feito 3=3000', 'A fazer 2=4000']
+    In Progress -> ['Em andamento 1=0', 'Em andamento 2=0', 'Em andamento 3=0', 'Em andamento 4=0', 'Em andamento 5=0', 'Em andamento 6=0']

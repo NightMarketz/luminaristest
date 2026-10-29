@@ -26096,5 +26096,691 @@
       ],
       "additionalProperties": false
     }
+  },
+  "TaxSimulationDto.ts": {
+    "AlertaRegimeSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "codigo": {
+          "type": "string",
+          "enum": [
+            "SUBLIMITE_80",
+            "SUBLIMITE_EXCEDIDO",
+            "LIMITE_EPP_EXCEDIDO",
+            "JANELA_OPCAO"
+          ]
+        },
+        "detalhe": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "codigo",
+        "detalhe"
+      ],
+      "additionalProperties": false
+    },
+    "FatorRSimulacaoQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "competencia": {
+          "type": "string",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+        },
+        "folhaAlvoCents": {},
+        "tipoFolha": {
+          "default": "PRO_LABORE",
+          "type": "string",
+          "enum": [
+            "PRO_LABORE",
+            "EMPREGADO"
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "competencia",
+        "folhaAlvoCents"
+      ],
+      "additionalProperties": false
+    },
+    "FatorRSimulacaoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "competencia": {
+          "type": "string"
+        },
+        "tipoFolha": {
+          "type": "string",
+          "enum": [
+            "PRO_LABORE",
+            "EMPREGADO"
+          ]
+        },
+        "rAtual": {
+          "type": "number"
+        },
+        "rSimulado": {
+          "type": "number"
+        },
+        "anexoAtual": {
+          "type": "string"
+        },
+        "anexoSimulado": {
+          "type": "string"
+        },
+        "fs12AtualCents": {
+          "type": "string",
+          "pattern": "^\\d+$"
+        },
+        "folhaAdicionalCents": {
+          "type": "string",
+          "pattern": "^\\d+$"
+        },
+        "dasAtualCents": {
+          "type": "string",
+          "pattern": "^\\d+$"
+        },
+        "dasSimuladoCents": {
+          "type": "string",
+          "pattern": "^\\d+$"
+        },
+        "custoFolhaAdicionalCents": {
+          "type": "string",
+          "pattern": "^\\d+$"
+        },
+        "economiaLiquidaCents": {
+          "type": "string",
+          "pattern": "^-?\\d+$"
+        },
+        "avisos": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "parametrosSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "competencia",
+        "tipoFolha",
+        "rAtual",
+        "rSimulado",
+        "anexoAtual",
+        "anexoSimulado",
+        "fs12AtualCents",
+        "folhaAdicionalCents",
+        "dasAtualCents",
+        "dasSimuladoCents",
+        "custoFolhaAdicionalCents",
+        "economiaLiquidaCents",
+        "avisos",
+        "parametrosSha256"
+      ],
+      "additionalProperties": false
+    },
+    "RegimeSimulacaoQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ano": {
+          "type": "integer",
+          "minimum": 2018,
+          "maximum": 2100
+        }
+      },
+      "required": [
+        "unitId",
+        "ano"
+      ],
+      "additionalProperties": false
+    },
+    "RegimeSimulacaoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "ano": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "regimeAtual": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "simulacao": {
+          "type": "object",
+          "properties": {
+            "ano": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "receitaBrutaCents": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            },
+            "cenarios": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "regime": {
+                    "type": "string",
+                    "enum": [
+                      "SIMPLES",
+                      "PRESUMIDO",
+                      "REAL"
+                    ]
+                  },
+                  "disponivel": {
+                    "type": "boolean"
+                  },
+                  "motivoIndisponivel": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "cargaTotalCents": {
+                    "type": "string",
+                    "pattern": "^\\d+$"
+                  },
+                  "componentes": {
+                    "type": "object",
+                    "properties": {
+                      "das": {
+                        "type": "string",
+                        "pattern": "^\\d+$"
+                      },
+                      "irpj": {
+                        "type": "string",
+                        "pattern": "^\\d+$"
+                      },
+                      "csll": {
+                        "type": "string",
+                        "pattern": "^\\d+$"
+                      },
+                      "pis": {
+                        "type": "string",
+                        "pattern": "^\\d+$"
+                      },
+                      "cofins": {
+                        "type": "string",
+                        "pattern": "^\\d+$"
+                      },
+                      "cbs": {
+                        "type": "string",
+                        "pattern": "^\\d+$"
+                      },
+                      "ibs": {
+                        "type": "string",
+                        "pattern": "^\\d+$"
+                      },
+                      "cpp": {
+                        "type": "string",
+                        "pattern": "^\\d+$"
+                      },
+                      "iss": {
+                        "type": "string",
+                        "pattern": "^\\d+$"
+                      }
+                    },
+                    "required": [
+                      "das",
+                      "irpj",
+                      "csll",
+                      "pis",
+                      "cofins",
+                      "cbs",
+                      "ibs",
+                      "cpp",
+                      "iss"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "regime",
+                  "disponivel",
+                  "motivoIndisponivel",
+                  "cargaTotalCents",
+                  "componentes"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "melhor": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "SIMPLES",
+                    "PRESUMIDO",
+                    "REAL"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "avisos": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "ano",
+            "receitaBrutaCents",
+            "cenarios",
+            "melhor",
+            "avisos"
+          ],
+          "additionalProperties": false
+        },
+        "projecao2027": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "ano": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "receitaBrutaCents": {
+                  "type": "string",
+                  "pattern": "^\\d+$"
+                },
+                "cenarios": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "regime": {
+                        "type": "string",
+                        "enum": [
+                          "SIMPLES",
+                          "PRESUMIDO",
+                          "REAL"
+                        ]
+                      },
+                      "disponivel": {
+                        "type": "boolean"
+                      },
+                      "motivoIndisponivel": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "cargaTotalCents": {
+                        "type": "string",
+                        "pattern": "^\\d+$"
+                      },
+                      "componentes": {
+                        "type": "object",
+                        "properties": {
+                          "das": {
+                            "type": "string",
+                            "pattern": "^\\d+$"
+                          },
+                          "irpj": {
+                            "type": "string",
+                            "pattern": "^\\d+$"
+                          },
+                          "csll": {
+                            "type": "string",
+                            "pattern": "^\\d+$"
+                          },
+                          "pis": {
+                            "type": "string",
+                            "pattern": "^\\d+$"
+                          },
+                          "cofins": {
+                            "type": "string",
+                            "pattern": "^\\d+$"
+                          },
+                          "cbs": {
+                            "type": "string",
+                            "pattern": "^\\d+$"
+                          },
+                          "ibs": {
+                            "type": "string",
+                            "pattern": "^\\d+$"
+                          },
+                          "cpp": {
+                            "type": "string",
+                            "pattern": "^\\d+$"
+                          },
+                          "iss": {
+                            "type": "string",
+                            "pattern": "^\\d+$"
+                          }
+                        },
+                        "required": [
+                          "das",
+                          "irpj",
+                          "csll",
+                          "pis",
+                          "cofins",
+                          "cbs",
+                          "ibs",
+                          "cpp",
+                          "iss"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "regime",
+                      "disponivel",
+                      "motivoIndisponivel",
+                      "cargaTotalCents",
+                      "componentes"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "melhor": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "SIMPLES",
+                        "PRESUMIDO",
+                        "REAL"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "avisos": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "ano",
+                "receitaBrutaCents",
+                "cenarios",
+                "melhor",
+                "avisos"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "economiaCents": {
+          "type": "string",
+          "pattern": "^-?\\d+$"
+        },
+        "alertas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "codigo": {
+                "type": "string",
+                "enum": [
+                  "SUBLIMITE_80",
+                  "SUBLIMITE_EXCEDIDO",
+                  "LIMITE_EPP_EXCEDIDO",
+                  "JANELA_OPCAO"
+                ]
+              },
+              "detalhe": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "codigo",
+              "detalhe"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "avisos": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "parametrosSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "ano",
+        "regimeAtual",
+        "simulacao",
+        "projecao2027",
+        "economiaCents",
+        "alertas",
+        "avisos",
+        "parametrosSha256"
+      ],
+      "additionalProperties": false
+    },
+    "RemuneracaoSocioQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ano": {
+          "type": "integer",
+          "minimum": 2018,
+          "maximum": 2100
+        },
+        "partnerId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "valorAnualCents": {}
+      },
+      "required": [
+        "unitId",
+        "ano",
+        "partnerId",
+        "valorAnualCents"
+      ],
+      "additionalProperties": false
+    },
+    "RemuneracaoSocioSimulacaoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "ano": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "partnerId": {
+          "type": "string"
+        },
+        "regime": {
+          "type": "string"
+        },
+        "valorAnualCents": {
+          "type": "string",
+          "pattern": "^\\d+$"
+        },
+        "mixes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "mix": {
+                "type": "string",
+                "enum": [
+                  "PRO_LABORE_INTEGRAL",
+                  "PRO_LABORE_MINIMO_DIVIDENDOS",
+                  "PRO_LABORE_MINIMO_JCP_DIVIDENDOS"
+                ]
+              },
+              "proLaboreCents": {
+                "type": "string",
+                "pattern": "^\\d+$"
+              },
+              "dividendosCents": {
+                "type": "string",
+                "pattern": "^\\d+$"
+              },
+              "jcpCents": {
+                "type": "string",
+                "pattern": "^\\d+$"
+              },
+              "inssSocioCents": {
+                "type": "string",
+                "pattern": "^\\d+$"
+              },
+              "cppEmpresaCents": {
+                "type": "string",
+                "pattern": "^\\d+$"
+              },
+              "irpfProLaboreCents": {
+                "type": "string",
+                "pattern": "^\\d+$"
+              },
+              "irrfDividendosCents": {
+                "type": "string",
+                "pattern": "^\\d+$"
+              },
+              "irrfJcpCents": {
+                "type": "string",
+                "pattern": "^\\d+$"
+              },
+              "economiaIrpjCsllJcpCents": {
+                "type": "string",
+                "pattern": "^\\d+$"
+              },
+              "cargaTotalCents": {
+                "type": "string",
+                "pattern": "^-?\\d+$"
+              },
+              "liquidoSocioCents": {
+                "type": "string",
+                "pattern": "^-?\\d+$"
+              }
+            },
+            "required": [
+              "mix",
+              "proLaboreCents",
+              "dividendosCents",
+              "jcpCents",
+              "inssSocioCents",
+              "cppEmpresaCents",
+              "irpfProLaboreCents",
+              "irrfDividendosCents",
+              "irrfJcpCents",
+              "economiaIrpjCsllJcpCents",
+              "cargaTotalCents",
+              "liquidoSocioCents"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "melhor": {
+          "type": "string",
+          "enum": [
+            "PRO_LABORE_INTEGRAL",
+            "PRO_LABORE_MINIMO_DIVIDENDOS",
+            "PRO_LABORE_MINIMO_JCP_DIVIDENDOS"
+          ]
+        },
+        "economiaCents": {
+          "type": "string",
+          "pattern": "^\\d+$"
+        },
+        "avisos": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "parametrosSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "ano",
+        "partnerId",
+        "regime",
+        "valorAnualCents",
+        "mixes",
+        "melhor",
+        "economiaCents",
+        "avisos",
+        "parametrosSha256"
+      ],
+      "additionalProperties": false
+    },
+    "SimulacaoSugestaoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "suggestionId": {
+          "type": "string"
+        },
+        "reaproveitada": {
+          "type": "boolean"
+        },
+        "avisos": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "suggestionId",
+        "reaproveitada",
+        "avisos"
+      ],
+      "additionalProperties": false
+    }
   }
 }

@@ -215,6 +215,14 @@ import {
   updateTaxOptimizationPolicy,
 } from '../controllers/taxOptimizationController';
 import {
+  proporFatorR,
+  proporRegime,
+  proporRemuneracaoSocio,
+  simularFatorR,
+  simularRegime,
+  simularRemuneracaoSocio,
+} from '../controllers/taxSimulationController';
+import {
   deleteProductDestination,
   listProductDestinations,
   upsertProductDestination,
@@ -435,6 +443,14 @@ router.delete('/tax-optimization/service-costs/:id', deleteServiceCost);
 router.get('/tax-optimization/suggestions', listTaxSuggestions);
 router.post('/tax-optimization/suggestions/:id/accept', acceptTaxSuggestion);
 router.post('/tax-optimization/suggestions/:id/reject', rejectTaxSuggestion);
+// EFICIENCIA-FISCAL PR-3 (BRIEF itens 15–18, §4.3): simuladores (GET não grava) e o POST gêmeo que grava a sugestão do SYSTEM.
+// O fator r fica sob /simples: o router de /accounting/simples (montado antes) não tem a rota e passa adiante.
+router.get('/simples/simulacoes/fator-r', simularFatorR);
+router.post('/simples/simulacoes/fator-r/sugestao', proporFatorR);
+router.get('/simulacoes/regime', simularRegime);
+router.post('/simulacoes/regime/sugestao', proporRegime);
+router.get('/simulacoes/remuneracao-socio', simularRemuneracaoSocio);
+router.post('/simulacoes/remuneracao-socio/sugestao', proporRemuneracaoSocio);
 // ITEM-DESTINATION PR-2 (BRIEF item 18, F-ID-2 a) — destinação padrão por produto
 router.get('/product-destinations', listProductDestinations);
 router.put('/product-destinations', upsertProductDestination);

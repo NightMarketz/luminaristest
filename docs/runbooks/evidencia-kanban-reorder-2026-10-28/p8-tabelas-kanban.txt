@@ -1,0 +1,5 @@
+tabelas category=kanban (todos os usuarios): 3
+  cmr2jy28w0062ci1kemqrt5vo Tasks tem order: True
+  cmuw4yqv50005cii0tz2vsvzr Tasks tem order: True
+  cmuw4z7xh02d3cii032xh9hcs Tasks tem order: True
+sem campo order: 0
