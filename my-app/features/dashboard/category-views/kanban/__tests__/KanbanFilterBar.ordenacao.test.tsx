@@ -1,56 +1,64 @@
 import React from 'react';
-import { describe, it, expect, vi, afterEach } from 'vitest';
-
-(globalThis as unknown as { React: typeof React }).React = React;
-import { render, cleanup } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { KanbanFilterBar } from '../KanbanFilterBar';
-import type { Task } from '@/types/Task.types';
+import { useKanbanData } from '../hooks/useKanbanData';
+import { useKanbanLogic } from '../hooks/useKanbanLogic';
+import type { IDynamicTable, ITableSchema } from '../../../components/shared/dynamic-tables.client';
 
 /**
- * Teste-guarda — RUNBOOK-KANBAN-REORDER passo 7 (FALHOU na rodada de 2026-10-28, branch do #961).
- *
- * O passo pede "escolha uma ordenação na barra do Kanban (por exemplo, prioridade)", e a barra aberta não
- * oferece nenhuma. O `SortSelect` só detecta campos em `record.data` e devolve `null` sem campos; o `Task`
- * que o `useKanbanData` monta espalha os campos no topo (`...data`), sem `data`.
- * Esperado: com cards que têm `priority`, a barra de filtros oferece o seletor de ordenação com "Prioridade".
+ * Teste-guarda (sessao-instrumentacao) do passo 7 do RUNBOOK-KANBAN-REORDER, que FALHOU na rodada de 28/10:
+ * "Escolha uma ordenação na barra do Kanban" — com a barra aberta não havia seletor de ordenação (`<select>` 0,
+ * sem "Sort by"; evidencia-kanban-reorder-2026-10-28/p7.log). Esperado: a barra oferece a ordenação e, escolhida,
+ * ela ordena os cards. Dados pelo caminho real (useKanbanData → useKanbanLogic → KanbanFilterBar), service mockado.
  */
-vi.mock('next-i18next', () => ({
-  useTranslation: () => ({ t: (key: string, def?: unknown) => (typeof def === 'string' ? def : key) }),
+(globalThis as unknown as { React: typeof React }).React = React;
+
+vi.mock('next-i18next', () => ({ useTranslation: () => ({ t: (k: string, d?: string) => d ?? k }) }));
+
+const { schema } = vi.hoisted(() => ({
+  schema: { fields: [{ name: 'status', type: 'select', options: ['To Do', 'Done'] }, { name: 'order', type: 'number' }] },
+}));
+vi.mock('../../../../../lib/services/dynamic-table.service', () => ({
+  DynamicTableService: {
+    getTableById: vi.fn().mockResolvedValue({ success: true, data: { schema } }),
+    getTableData: vi.fn().mockResolvedValue({
+      success: true,
+      data: [
+        { id: 'c', data: { name: 'Charlie', status: 'To Do', priority: 'Medium', order: 1000 }, createdAt: '', updatedAt: '' },
+        { id: 'a', data: { name: 'Alpha', status: 'To Do', priority: 'Medium', order: 2000 }, createdAt: '', updatedAt: '' },
+        { id: 'b', data: { name: 'Bravo', status: 'To Do', priority: 'Medium', order: 3000 }, createdAt: '', updatedAt: '' },
+      ],
+    }),
+  },
 }));
 
-afterEach(() => cleanup());
+const tables = [{ id: 't1', name: 'Tasks', category: 'kanban', schema }] as unknown as IDynamicTable[];
 
-// Mesmo formato que `useKanbanData.tsx` grava: campos dinâmicos no topo, sem `data`.
-const card = (id: string, name: string, priority: Task['priority'], order: number): Task => ({
-  id,
-  name,
-  description: '',
-  status: 'To_Do',
-  priority,
-  order,
-  createdAt: '2026-10-28T12:00:00.000Z',
-  updatedAt: '2026-10-28T12:00:00.000Z',
-  dynamicTableId: 'tbl-tasks',
-});
+function Harness() {
+  const { tasks } = useKanbanData(tables);
+  const logic = useKanbanLogic({ tasks, activeTabId: 't1', schema: schema as unknown as ITableSchema, refetch: () => {} });
+  return (
+    <>
+      <KanbanFilterBar isOpen query={logic.query} setQuery={logic.setQuery} priorityFilter={logic.priorityFilter}
+        setPriorityFilter={logic.setPriorityFilter} sortConfig={logic.sortConfig} setSortConfig={logic.setSortConfig}
+        tasks={logic.filteredTasks} stats={{ total: 0, done: 0, inProgress: 0 }} />
+      <ul data-testid="coluna">{logic.filteredTasks.map(t => <li key={t.id}>{t.name}</li>)}</ul>
+    </>
+  );
+}
 
-describe('KanbanFilterBar — ordenação (RUNBOOK-KANBAN-REORDER passo 7)', () => {
-  it('a barra oferece ordenar por prioridade quando os cards têm prioridade', () => {
-    const tasks = [card('t1', 'A fazer 1', 'High', 1000), card('t2', 'A fazer 2', 'Low', 2000)];
+const coluna = () => Array.from(screen.getByTestId('coluna').querySelectorAll('li')).map(li => li.textContent);
 
-    const { container } = render(
-      <KanbanFilterBar
-        query=""
-        setQuery={() => {}}
-        priorityFilter=""
-        setPriorityFilter={() => {}}
-        sortConfig={null}
-        setSortConfig={() => {}}
-        tasks={tasks}
-        stats={{ total: 2, done: 0, inProgress: 0 }}
-      />,
-    );
+describe('Kanban — RUNBOOK-KANBAN-REORDER passo 7', () => {
+  it('a barra oferece ordenação e, escolhida, ela ordena os cards', async () => {
+    const { container } = render(<Harness />);
+    await waitFor(() => expect(coluna()).toEqual(['Charlie', 'Alpha', 'Bravo'])); // ordem manual (order)
 
-    const opcoesDeOrdenacao = Array.from(container.querySelectorAll('select option')).map((o) => o.textContent);
-    expect(opcoesDeOrdenacao).toContain('Prioridade');
+    const sortSelect = container.querySelector<HTMLSelectElement>('select:has(option[value="name"])');
+    expect(sortSelect, 'a barra do Kanban não oferece ordenação por nome').not.toBeNull();
+    fireEvent.change(sortSelect!, { target: { value: 'name' } });
+
+    expect(coluna()).toEqual(['Alpha', 'Bravo', 'Charlie']);
   });
 });

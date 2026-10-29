@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useTranslation } from 'next-i18next';
-import { DndContext, closestCenter, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, closestCenter, pointerWithin, DragOverlay, PointerSensor, useSensor, useSensors, type CollisionDetection } from '@dnd-kit/core';
 import type { Task } from '../../../../types/Task.types';
 import type { IDynamicTable, ITableSchema } from '../../components/shared/dynamic-tables.client';
 import KanbanColumn from './KanbanColumn';
@@ -17,6 +17,12 @@ import { EmptyState } from '../../shared/components/EmptyState';
 import CategoryHeader from '../shared/components/CategoryHeader';
 import CategoryTabs from '../shared/components/CategoryTabs';
 import { useFilterPersistence } from '../shared/hooks/useFilterPersistence';
+
+// Área vazia da coluna = a coluna (F-KR-4: vai para o fim); closestCenter escolheria o último card
+const kanbanCollision: CollisionDetection = (args) => {
+    const hits = pointerWithin(args);
+    return hits.length > 0 ? hits : closestCenter(args);
+};
 
 interface InternalKanbanViewProps {
     tables: IDynamicTable[];
@@ -200,7 +206,7 @@ export function InternalKanbanView({
                         )}
                         <DndContext
                             sensors={sensors}
-                            collisionDetection={closestCenter}
+                            collisionDetection={kanbanCollision}
                             onDragStart={handleDragStart}
                             onDragEnd={handleDragEnd}
                         >

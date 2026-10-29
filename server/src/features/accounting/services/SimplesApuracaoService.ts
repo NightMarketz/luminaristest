@@ -21,9 +21,9 @@
 import type { Prisma, ReceitaFiscalLinha, SimplesApuracao } from 'generated/prisma';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
-import { ParametroLegalAusenteError, linhaLegalVigente, type LegalParameterTabela } from '../../legalParameters/models/legalParameter';
+import { ParametroLegalAusenteError, linhaLegalVigente, type LegalParameterTabela, type LinhaLegal } from '../../legalParameters/models/legalParameter';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
-import { INICIO_LC214, apurar, apurarSimei, janelaRbt12, type ApuracaoSimei, type ApuracaoCalculada, type AtividadeInput, type MesReceita, type NaturezaSimples, type TributoSimples } from '../models/simplesCalc';
+import { INICIO_LC214, apurar, apurarSimei, janelaRbt12, type ApuracaoInput, type ApuracaoSimei, type ApuracaoCalculada, type AtividadeInput, type MesReceita, type NaturezaSimples, type TributoSimples } from '../models/simplesCalc';
 import { normalizeNcm } from '../models/pisCofinsMonofasicoNcm';
 import type { IProductFiscalProfileRepository } from '../repositories/IProductFiscalProfileRepository';
 import { espelhoPgdas, type EspelhoAtividade } from '../models/simplesEspelho';
@@ -163,6 +163,9 @@ interface Montagem {
   regimeApuracao: 'COMPETENCIA' | 'CAIXA';
   baseCaixa: BaseCaixa | null;
   impedimentoCaixa: ImpedimentoCaixa | null;
+  /** EFICIENCIA-FISCAL PR-3 (item 15): a entrada exata que foi ao `apurar` (null quando a atividade ficou sem anexo). */
+  apuracaoInput: ApuracaoInput | null;
+  linhasLegais: LinhaLegal[];
 }
 
 /** A linha que vira atividade: a do subrazão (competência) ou a composta da base caixa (X14-CAIXA item 8). */
@@ -345,6 +348,18 @@ export class SimplesApuracaoService {
     this.assertRead(scope);
     if (await this.ehMei(scope, competencia)) return this.visaoMei(scope, competencia, await this.montarMei(scope, competencia));
     return this.visao(scope, competencia, await this.montar(scope, competencia));
+  }
+
+  /**
+   * EFICIENCIA-FISCAL PR-3 (item 15) — a entrada da apuração do PA como o `apurar` a recebeu, para o simulador do fator r
+   * (`TaxSimulationService`). Nada é gravado. MEI não tem fator r; atividade sem anexo ⇒ 400 nomeado.
+   */
+  async entradaParaSimulacao(scope: AccountingScope, competencia: string): Promise<{ input: ApuracaoInput; linhas: LinhaLegal[]; calculada: ApuracaoCalculada; alertas: AlertaSimples[] }> {
+    this.assertRead(scope);
+    if (await this.ehMei(scope, competencia)) throw new ValidationError(`${competencia}: o MEI recolhe valor fixo pelo SIMEI — sem fator r (LC 123 art. 18-A).`);
+    const m = await this.montar(scope, competencia);
+    if (!m.apuracaoInput) throw new ValidationError(`${competencia}: atividade sem anexo no Simples — corrija o cadastro antes de simular o fator r.`, undefined, 'ATIVIDADE_SEM_ANEXO');
+    return { input: m.apuracaoInput, linhas: m.linhasLegais, calculada: m.calculada, alertas: m.alertas };
   }
 
   /** Item 18 — GET …/apuracoes/:competencia: o cálculo + espelho do PGDAS-D + DAS oficial registrado + divergência. */
@@ -628,21 +643,20 @@ export class SimplesApuracaoService {
     let calculada: ApuracaoCalculada;
     const receitaPa = caixa ? caixa.baseCents : (receitas.get(competencia) ?? 0n);
     const folhaPa = hist.get(competencia)?.folhaCents ?? null;
+    let apuracaoInput: ApuracaoInput | null = {
+      competencia,
+      historico: historicoMes,
+      inicioAtividade: inicio && inicio <= competencia ? inicio : null,
+      receitaPaCents: Number(receitaPa > 0n ? receitaPa : 0n),
+      folhaPaCents: folhaPa === null ? 0 : Number(folhaPa),
+      sublimiteExcedido,
+      atividades: entrada.length > 0 ? entrada : [{ natureza: 'SERVICO', cTribNac: null, parcelas: [{ receitaCents: 0, excluir: [] }] }],
+    };
     try {
-      calculada = apurar(
-        {
-          competencia,
-          historico: historicoMes,
-          inicioAtividade: inicio && inicio <= competencia ? inicio : null,
-          receitaPaCents: Number(receitaPa > 0n ? receitaPa : 0n),
-          folhaPaCents: folhaPa === null ? 0 : Number(folhaPa),
-          sublimiteExcedido,
-          atividades: entrada.length > 0 ? entrada : [{ natureza: 'SERVICO', cTribNac: null, parcelas: [{ receitaCents: 0, excluir: [] }] }],
-        },
-        linhas,
-      );
+      calculada = apurar(apuracaoInput, linhas);
     } catch (e) {
       if ((e as { errorCode?: string }).errorCode !== 'ATIVIDADE_SEM_ANEXO') throw e;
+      apuracaoInput = null;
       alertas.push({ severity: 'WARNING', codigo: 'ATIVIDADE_SEM_ANEXO', detalhe: (e as Error).message });
       calculada = { competencia, regime: 'SIMPLES', rbt12Cents: 0, janelaRbt12: janela, mesesFaltantes: [], atividades: [], totalCalculadoCents: 0, tabela: [] };
     }
@@ -700,6 +714,8 @@ export class SimplesApuracaoService {
       regimeApuracao: caixa ? 'CAIXA' : 'COMPETENCIA',
       baseCaixa,
       impedimentoCaixa,
+      apuracaoInput,
+      linhasLegais: [...linhas],
     };
   }
 
