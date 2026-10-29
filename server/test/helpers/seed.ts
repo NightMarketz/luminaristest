@@ -41,7 +41,7 @@ export interface SeedDocumentOptions {
 
 /**
  * Creates a Document directly via Prisma (bypassing the upload pipeline) and returns the row with its
- * generated cuid id. Used by `documents` and `structuredData` integration tests to arrange fixtures
+ * generated cuid id. Used by `documents` integration tests to arrange fixtures
  * without hitting OpenAI/Qdrant.
  */
 export async function seedDocument(opts: SeedDocumentOptions) {
@@ -198,28 +198,6 @@ export async function seedUnit(opts: SeedUnitOptions) {
       dynamicTableId: table.id,
       data: { name: opts.name ?? opts.id } as any,
       deletedAt: opts.deleted ? new Date() : null,
-    },
-  });
-}
-
-export interface SeedStructuredDataOptions {
-  documentId: string;
-  /** Stored as the `headers` JSON column ([{ name, type }] in the simple case). */
-  headers?: unknown;
-  /** Stored as the `data` JSON column — tabular `[[...]]`, multi-sheet `[{name,headers,data}]`, or object. */
-  data?: unknown;
-}
-
-/**
- * Creates a StructuredData row (1:1 with a Document) directly via Prisma. The caller must pass the id
- * of a Document seeded with `seedDocument`. Used by the structuredData integration/HTTP tests.
- */
-export async function seedStructuredData(opts: SeedStructuredDataOptions) {
-  return prisma.structuredData.create({
-    data: {
-      documentId: opts.documentId,
-      headers: (opts.headers ?? [{ name: 'Produto', type: 'TEXT' }]) as any,
-      data: (opts.data ?? [['Notebook', 5000]]) as any,
     },
   });
 }
