@@ -57,6 +57,8 @@ export const LEGAL_PARAMS_SEED_FILE_PRESUMIDO_TETO = path.resolve(__dirname, '..
 export const LEGAL_PARAMS_SEED_FILE_RETENCOES = path.resolve(__dirname, '../../prisma/data/legal_parameters_retencoes_v1.sql');
 /** RETENCOES-FONTE lacuna 9 (NT EFD-Reinf 02/2026): 12001 com o tipo de isenção 12, supersede a linha de 2026. Mesma regra de igualdade. */
 export const LEGAL_PARAMS_SEED_FILE_RETENCOES_V2 = path.resolve(__dirname, '../../prisma/data/legal_parameters_retencoes_v2.sql');
+/** RETENCOES-FONTE PR de dado (29/10): INSS/CPRB 3,5% até 2027 e 11% desde 2028; código 116201 do INSS. Mesma regra de igualdade. */
+export const LEGAL_PARAMS_SEED_FILE_RETENCOES_V3 = path.resolve(__dirname, '../../prisma/data/legal_parameters_retencoes_v3.sql');
 /** ISS-TRANSICAO-IBS PR-1 (BRIEF itens 1, 2 e 5): fim do ISS_LIMITE, ISS_TRANSICAO e IBS DRAFT 2029–2032. Mesma regra de igualdade. */
 export const LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO = path.resolve(__dirname, '../../prisma/data/legal_parameters_iss_transicao_v1.sql');
 /** BE-INCR-NFCE PR-3 (item 17): limites da NFC-e (Aj. SINIEF 19/16 cl. 4ª VII "a" e § 4º). Mesma regra de igualdade. */
