@@ -3342,6 +3342,55 @@
               "type": "null"
             }
           ]
+        },
+        "sociedadeEmpresaria": {
+          "default": false,
+          "type": "boolean"
+        },
+        "alvaraSanitarioValidoAte": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "alvaraSourceDocumentId": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "declaraLocacaoImovelProprio": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "declaraCessaoMaoDeObraMedica": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -14565,6 +14614,36 @@
             {
               "type": "string",
               "pattern": "^\\d{6}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "finalidade": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "TERAPEUTICA",
+                "ESTETICA",
+                "BELEZA"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "elegivelHospitalar": {
+          "type": "boolean"
+        },
+        "fundamentoHospitalar": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 280
             },
             {
               "type": "null"
@@ -27335,6 +27414,140 @@
       "required": [
         "suggestionId",
         "reaproveitada",
+        "avisos"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "ServicoFiscalAvaliacaoDto.ts": {
+    "ServicoFiscalAvaliacaoQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ano": {
+          "type": "integer",
+          "minimum": 2025,
+          "maximum": 2100
+        }
+      },
+      "required": [
+        "unitId",
+        "ano"
+      ],
+      "additionalProperties": false
+    },
+    "ServicoFiscalAvaliacaoResponseSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "ano": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "regime": {
+          "type": "string"
+        },
+        "alertas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "PROFISSAO_REGULAMENTADA_TIRA_16",
+                  "MEDICO_COM_SERVICO_ESTETICO",
+                  "LOCACAO_IMOVEL_PROPRIO_NO_SIMPLES",
+                  "CESSAO_MAO_DE_OBRA_MEDICA",
+                  "PACOTE_FATO_GERADOR_FORA_DO_PADRAO"
+                ]
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "WARN",
+                  "INFO"
+                ]
+              },
+              "serviceRefs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "motivoInformativo": {
+                "type": "string"
+              },
+              "legalBasis": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "severity",
+              "serviceRefs",
+              "motivoInformativo",
+              "legalBasis"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "sugestoes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "practice": {
+                "type": "string",
+                "enum": [
+                  "PRESUNCAO_HOSPITALAR",
+                  "NBS_SAUDE_2027"
+                ]
+              },
+              "serviceRef": {
+                "type": "string"
+              },
+              "suggestionId": {
+                "type": "string"
+              },
+              "estimatedSavingCents": {
+                "type": "string",
+                "pattern": "^\\d+$"
+              },
+              "faltando": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "practice",
+              "serviceRef",
+              "suggestionId",
+              "estimatedSavingCents",
+              "faltando"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "avisos": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "ano",
+        "regime",
+        "alertas",
+        "sugestoes",
         "avisos"
       ],
       "additionalProperties": false
