@@ -22,6 +22,15 @@ status?: ("PROPOSED" | "ACCEPTED" | "REJECTED" | "EXPIRED")
 export interface TaxOptimizationIdParamInput {
 id: string
 }
+export interface TaxOptimizationScopeQueryInput {
+unitId: string
+}
+export interface UpdateTaxOptimizationPolicyInput {
+unitId: string
+criterioAlocacao: ("PROPORCIONAL_CATALOGO" | "CARGA_TRIBUTARIA")
+pisoServico: ("CUSTO_INFORMADO" | "CATALOGO_MINIMO" | "SEM_DESCONTO_ALEM_DO_PROPORCIONAL")
+vigenteDesde: string
+}
 export interface TaxOptimizationReportLinhaInput {
 tipo: ("SUGESTAO_ACEITA" | "MEDIDA" | "CONSUMIDA")
 codigo: string
@@ -66,13 +75,4 @@ REJECTED: number
 EXPIRED: number
 }
 parametrosSha256: string
-}
-export interface TaxOptimizationScopeQueryInput {
-unitId: string
-}
-export interface UpdateTaxOptimizationPolicyInput {
-unitId: string
-criterioAlocacao: ("PROPORCIONAL_CATALOGO" | "CARGA_TRIBUTARIA")
-pisoServico: ("CUSTO_INFORMADO" | "CATALOGO_MINIMO" | "SEM_DESCONTO_ALEM_DO_PROPORCIONAL")
-vigenteDesde: string
 }
