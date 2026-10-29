@@ -479,6 +479,69 @@ Pré-condições (verificar antes de começar):
     EVIDÊNCIA: [status + corpo de `POST /api/accounting/sped/ecf/generate` e de
     `POST /api/accounting/sped/ecf/real/generate` + a 1ª linha de cada `.txt`]
 
+> **EVIDÊNCIA dos passos 12–14 (agente, 29/10/2026, sob comando do dono no chat; RUNBOOK-FORMAT §Fronteira).**
+> Ambiente: build de produção de `455c1a45` (back `:3101`, front `127.0.0.1:3100`), dev.db real
+> `server/prisma/prisma/dev.db`, usuário `seed-presumido`, unidade `seed-unit-presumido`, exercício **2025** (`HARD_CLOSED`).
+> O agente preencheu os formulários de Contabilidade → Compliance no painel do navegador embutido com os dados fictícios
+> do H1 (CNPJ `08845676000198`, CPFs `23456789173`/`12345678062`, CRC `SP-123456/O-1`). Os códigos dos signatários foram
+> escolhidos no combobox ("900 · Contador/Contabilista", "205 · Administrador", "203 · Diretor"). Status e corpo foram
+> lidos no Network do painel.
+>
+> **Passo 12 — ECD:** `POST http://127.0.0.1:3101/api/accounting/sped/ecd/generate → 201 Created`. Corpo da resposta:
+>
+> ```text
+> {"success":true,"data":{"id":"cmvtyocgj0066ci9c0phmim1f","direction":"EXPORT","kind":"EXPORT_SPED_ECD","status":"EXPORTED","fileName":"ecd_08845676000198_2025.txt","mimeType":"text/plain","sizeBytes":53513,"sha256":"7d23fc3820d688743791d9e9f2a5a7ec1346a1fc0d756634a13bee9f479fd880","totalRows":991,"validRows":0,"invalidRows":0,"committedRows":0,"createdAt":"2026-10-29T19:53:44.467Z","periodStart":"2025-01-01","periodEnd":"2025-12-31"},"perfilFiscal":{"aplicado":false,"sobrescritos":[]},"avisos":["perfil fiscal da empresa ausente para 2025: a geração usou só o corpo da requisição (F-XP-1 c)."]}
+> ```
+>
+> O `.txt` caiu em `Downloads` e foi movido para `Downloads/H2-BROWSER/passo12-14/` (fora do repo). Conferência literal:
+>
+> ```text
+> $ sha256sum ecd_08845676000198_2025.txt; head -1 …; grep "^|J930|" …; wc -l < …
+> 7d23fc3820d688743791d9e9f2a5a7ec1346a1fc0d756634a13bee9f479fd880 *ecd_08845676000198_2025.txt
+> |0000|LECD|01012025|31122025|CORP�REOS - SERVI�OS TERAP�UTICOS S.A.|08845676000198|SP||3550308|||0|0|0||0|0||N|N|0|0|1|
+> |J930|CONTADOR FICTICIO DE TESTE|23456789173|Contador|900|SP-123456/O-1|contador.teste@example.com|1148583340|SP|||N|
+> |J930|DIRETOR FICTICIO DE TESTE|12345678062|Administrador|205|||||||S|
+> 991
+> ```
+>
+> O sha256 do arquivo é igual ao da resposta. O `�` é o terminal UTF-8 lendo o `.txt` em Latin-1, que é a codificação do
+> SPED. O J930 do contador tem CRC, UF, e-mail e fone, com `IND_RESP_LEGAL = N`. O do 205 tem `S`.
+>
+> **Passo 13 — recusa local:** com o CRC do contador apagado (DOM: `CRC=` vazio), "Gerar e baixar ECD" mostrou na tela
+> "O signatário contador (900) exige CPF de 11 dígitos, CRC, UF do CRC, e-mail e fone.". Depois do clique, o Network
+> filtrado em `sped/ecd` continuou com **um só** POST, o 201 do passo 12, e nenhum request novo. Print:
+> [`passo13-01-recusa-local-crc.jpg`](runbook-evidence/H2-2026-10-29/passo13-01-recusa-local-crc.jpg).
+>
+> **Passo 14 — ECF Presumido:** `POST http://127.0.0.1:3101/api/accounting/sped/ecf/generate → 400 Bad Request`. Corpo:
+>
+> ```text
+> {"code":"ECF_Y600_COMPLEMENTO_FALTANDO","message":"Y600: toda vigência de sócio em 2025 precisa de complemento em socios (qualif e valores); faltam os partnerId: cmvttnb71000cci9cinonvsp9.","details":{"partnerIds":["cmvttnb71000cci9cinonvsp9"]}}
+> ```
+>
+> A tela mostra a mensagem inteira, mas não tem campo de sócios, então não há como completar o pedido por ela. O sócio é o
+> `SOCIO TESTE H1`, criado pela API no H1 tentativa 4 (`partners`: `('cmvttnb71000cci9cinonvsp9', …, 'SOCIO TESTE H1',
+> '11144477735', 'PF', 1, 10000, '2020-01-01', None, …)`, lido do dev.db em modo só-leitura). O código já registra a
+> lacuna: `SpedEcfRealPanel.tsx:122` tem *"a tela ainda não coleta sócios — o servidor devolve 400 ECF_Y600_*; FE próprio
+> pendente"*, e o `BE-INCR-ECF-Y600-brief.md:271` lista o **FE-INCR-ECF-Y600** como "vizinho, não planejado aqui". Print:
+> [`passo14-01-ecf-presumido-400-y600.jpg`](runbook-evidence/H2-2026-10-29/passo14-01-ecf-presumido-400-y600.jpg).
+>
+> **Passo 14 — ECF Real** (mesmo tenant, `FORMA_TRIB = 1`, `FORMA_TRIB_PER = RRRR`):
+> `POST http://127.0.0.1:3101/api/accounting/sped/ecf/real/generate → 400 Bad Request`. Corpo:
+>
+> ```text
+> {"code":"VALIDATION_ERROR","message":"Feche a Parte B do e-Lalur/e-Lacs de T01/2025 (e dos trimestres seguintes) antes de gerar a ECF — o M500 e o E020 do exercício seguinte saem da materialização (Manual p.271)."}
+> ```
+>
+> O tenant `seed-presumido` é de Lucro Presumido e não tem a Parte B de 2025 fechada. A ECF Real precisa do `seed-real`, que
+> outro login abre. Mesmo nesse tenant, o painel do Real manda `socios: []` fixo (`SpedEcfRealPanel.tsx:123`), então um
+> tenant com sócio cadastrado daria o mesmo 400 de Y600 (inferido pelo código, não executado). Print:
+> [`passo14-02-ecf-real-400-parte-b.jpg`](runbook-evidence/H2-2026-10-29/passo14-02-ecf-real-400-parte-b.jpg).
+>
+> **Achado de tela (F):** nos dois painéis da ECF, a linha de signatário passa da largura do card e a página ganha rolagem
+> horizontal (visível nos dois prints do passo 14).
+>
+> Leitura do agente: 12 e 13 conferem com o esperado. No 14, "nenhum 400" **não** se cumpriu nas duas ECFs. DESFECHO: [dono]
+
 Desfecho dos passos 12–14 (marcar UM):
 [ ] PASSOU — 12, 13 e 14 com evidência conferindo com o esperado
 [ ] FALHOU — passo __ divergiu; evidência colada acima; nenhum passo seguinte executado
