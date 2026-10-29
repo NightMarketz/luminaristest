@@ -63,11 +63,12 @@ Pré-condições (verificar antes de começar):
 >   segue igual.
 > - **Redis ausente não é falha de deploy do ERP.** Pelo item 22 do BRIEF, a aplicação sobe sem Redis e só os
 >   teammates respondem 503 `TEAMMATES_FILA_INDISPONIVEL`. O passo R5 prova isso.
-> - **Regra de desfecho do bloco R** (proposta nesta emenda; se o dono não a aceitar, vale a regra geral do formato):
+> - **Regra de desfecho do bloco R** (aceita pelo dono no chat em 29/10/2026, com a ressalva do R5):
 >   cada passo R tem desfecho próprio. **R3 FALHOU** (Redis alcançável de fora ou sem senha) → para tudo, e o M2 fica
->   FALHOU, porque é exposição. Qualquer **outro** passo R FALHOU ou BLOQUEADO → para **só o bloco R**: o executor
->   desliga os teammates (`docker compose stop redis`), registra em "Achados", e o M2 segue nos passos numerados (5–7)
->   sem contar isso como falha do ERP.
+>   FALHOU, porque é exposição. **R5 FALHOU com `/health` ou ERP fora de 200** (Redis fora derrubou o ERP) → para
+>   tudo, e o M2 fica FALHOU. Qualquer **outro** passo R FALHOU ou BLOQUEADO (inclusive R5 com health e ERP em 200)
+>   → para **só o bloco R**: o executor desliga os teammates (`docker compose stop redis`), registra em "Achados", e o
+>   M2 segue nos passos numerados (5–7) sem contar isso como falha do ERP.
 > - **Ordem:** R0–R3 vêm entre o 4a e o 5 (Redis de pé antes do server). R4–R5 vêm entre o 6 e o 7 (precisam do server
 >   de pé, e o 7 lê os logs depois da queda simulada).
 > - **Pendências de infraestrutura** (compose, CI, `/health`, reconciliação), que são código do PR-4 e não deste
