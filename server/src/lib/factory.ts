@@ -47,6 +47,14 @@ import { CounterpartyRepository } from '../features/accounting/repositories/Coun
 import { AccountingContactRepository } from '../features/accounting/repositories/AccountingContactRepository';
 import { PaymentAccountRepository } from '../features/accounting/repositories/PaymentAccountRepository';
 import { FiscalCertificateRepository } from '../features/accounting/repositories/FiscalCertificateRepository';
+// X10a PR-7 (EMENDA-PSC) — PSC
+import { PscProviderRepository } from '../features/accounting/repositories/PscProviderRepository';
+import { PscCredentialRepository } from '../features/accounting/repositories/PscCredentialRepository';
+import type { IPscProviderRepository } from '../features/accounting/repositories/IPscProviderRepository';
+import type { IPscCredentialRepository } from '../features/accounting/repositories/IPscCredentialRepository';
+import { PscProviderService } from '../features/accounting/services/PscProviderService';
+import { PscCredentialService } from '../features/accounting/services/PscCredentialService';
+import { PscProviderPolicy } from '../features/accounting/policies/PscProviderPolicy';
 import { CollectionChargeRepository } from '../features/accounting/repositories/CollectionChargeRepository';
 import { TaxAssessmentRepository } from '../features/accounting/repositories/TaxAssessmentRepository';
 import { ConsumptionTaxAssessmentRepository } from '../features/accounting/repositories/ConsumptionTaxAssessmentRepository';
@@ -850,6 +858,9 @@ export class ApplicationFactory {
     accountingContact: IAccountingContactRepository;
     paymentAccount: IPaymentAccountRepository; // BE-INCR-PAYMENT-PROVIDER PR-1
     fiscalCertificate: IFiscalCertificateRepository; // BE-INCR-DFE-ADN-EMISSOR PR-1
+    // X10a PR-7 (EMENDA-PSC E-2/E-3)
+    pscProvider: IPscProviderRepository;
+    pscCredential: IPscCredentialRepository;
     collectionCharge: ICollectionChargeRepository; // BE-INCR-PAYMENT-PROVIDER PR-2
     taxAssessment: ITaxAssessmentRepository; // X7 Fase A PR-2
     consumptionTaxAssessment: IConsumptionTaxAssessmentRepository; // IBS-CBS-2027 PR-2 (item 8)
@@ -969,6 +980,9 @@ export class ApplicationFactory {
     accountingContact: AccountingContactService;
     paymentAccount: PaymentAccountService; // BE-INCR-PAYMENT-PROVIDER PR-1
     fiscalCertificate: FiscalCertificateService; // BE-INCR-DFE-ADN-EMISSOR PR-1
+    // X10a PR-7 (EMENDA-PSC E-2..E-6, E-9)
+    pscProvider: PscProviderService;
+    pscCredential: PscCredentialService;
     collectionCharge: CollectionChargeService; // BE-INCR-PAYMENT-PROVIDER PR-2
     releaseReport: ReleaseReportService; // BE-INCR-PAYMENT-PROVIDER PR-3
     taxAssessment: TaxAssessmentService; // X7 Fase A PR-2
@@ -1080,6 +1094,9 @@ export class ApplicationFactory {
       accountingContact: new AccountingContactRepository(),
       paymentAccount: new PaymentAccountRepository(),
       fiscalCertificate: new FiscalCertificateRepository(),
+      // X10a PR-7 (EMENDA-PSC)
+      pscProvider: new PscProviderRepository(),
+      pscCredential: new PscCredentialRepository(),
       collectionCharge: new CollectionChargeRepository(),
       taxAssessment: new TaxAssessmentRepository(),
       consumptionTaxAssessment: new ConsumptionTaxAssessmentRepository(),
@@ -2145,6 +2162,16 @@ export class ApplicationFactory {
         this.policies.accounting,
         resolveUnitCnpjFromUnits,
       ),
+      // X10a PR-7 (EMENDA-PSC): cadastro de PSCs (PLATFORM_ADMIN) e credencial OAuth por unidade. O gancho
+      // `onAuthorized` nasce no-op; quem liga o envio das PENDING_SIGNATURE usa `setOnAuthorized`.
+      pscProvider: new PscProviderService(this.repositories.pscProvider, auditService, new PscProviderPolicy()),
+      pscCredential: new PscCredentialService(
+        this.repositories.pscCredential,
+        this.repositories.pscProvider,
+        auditService,
+        this.policies.accounting,
+        resolveUnitCnpjFromUnits,
+      ),
       collectionCharge: collectionChargeService,
       releaseReport: releaseReportService, // BE-INCR-PAYMENT-PROVIDER PR-3 (P3-1..P3-5)
       accountingDelivery: new AccountingDeliveryService(
@@ -2531,6 +2558,9 @@ export class ApplicationFactory {
   public getAccountingContactService = (): AccountingContactService => this.services.accountingContact;
   public getPaymentAccountService = (): PaymentAccountService => this.services.paymentAccount;
   public getFiscalCertificateService = (): FiscalCertificateService => this.services.fiscalCertificate;
+  // X10a PR-7 (EMENDA-PSC)
+  public getPscProviderService = (): PscProviderService => this.services.pscProvider;
+  public getPscCredentialService = (): PscCredentialService => this.services.pscCredential;
   public getCollectionChargeService = (): CollectionChargeService => this.services.collectionCharge;
   public getReleaseReportService = (): ReleaseReportService => this.services.releaseReport;
   public getTaxAssessmentService = (): TaxAssessmentService => this.services.taxAssessment;

@@ -3545,6 +3545,70 @@ model FiscalCertificate {
   @@map("fiscal_certificates")
 }
 
+// X10a PR-7 (EMENDA-PSC E-2/E-3; F-PSC-2 a, F-PSC-3 a; dono 29/10 "Executa (sem merge)"): PSC homologado (cadastro da
+// PLATAFORMA, gerido por PLATFORM_ADMIN) e a credencial OAuth do PSC por unidade. Prisma first-class (§2.1: credencial
+// de emissão legal). Segredos cifrados com o keyring DFE_PSC_KEYS (secretBox, AAD = id da linha).
+model PscProvider {
+  id                  String    @id @default(cuid())
+  nome                String
+  baseUrl             String
+  clientId            String
+  clientSecretCipher  Bytes?
+  keyVersion          Int?
+  cotaAnual           Int?
+  lifetimeMaxSegundos Int?
+  algoritmos          String // JSON: ["rsa-sha256", …]
+  habilitadoEm        DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime?
+
+  @@map("psc_providers")
+}
+
+// Uma linha viva por (userId, unitId) — R8. Soft-delete com rename do unitId e ciphertext zerado na mesma tx.
+// consumoAno = ano civil do contador consumoNoAno (F-PSC-4 a); ao incrementar em ano novo, o contador zera.
+model PscCredential {
+  id                    String    @id @default(cuid())
+  userId                String
+  unitId                String
+  pscProviderId         String
+  titularCnpj           String
+  certificadoPem        String
+  certNotAfter          String // AAAA-MM-DD
+  accessTokenCiphertext Bytes? // null após DELETE
+  tokenExpiraEm         DateTime
+  keyVersion            Int?
+  escopo                String // JSON
+  consumoNoAno          Int       @default(0)
+  consumoAno            Int
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  deletedAt             DateTime?
+
+  @@unique([userId, unitId])
+  @@map("psc_credentials")
+}
+
+// Autorização OAuth pendente (E-4): guarda o code_verifier PKCE cifrado (AAD = id) por 10 min; o `state` é o id
+// assinado por HMAC. usedAt preenchido no callback ⇒ state reusado é recusado.
+model PscAuthorization {
+  id                     String    @id @default(cuid())
+  userId                 String
+  actorUserId            String
+  unitId                 String
+  pscProviderId          String
+  escopo                 String // JSON
+  codeVerifierCiphertext Bytes?
+  keyVersion             Int
+  expiresAt              DateTime
+  usedAt                 DateTime?
+  createdAt              DateTime  @default(now())
+
+  @@index([userId, unitId])
+  @@map("psc_authorizations")
+}
+
 // EFICIENCIA-FISCAL PR-1 (BRIEF BE-INCR-EFICIENCIA-FISCAL §4.1; ADR-INCR-EFICIENCIA-FISCAL D2, D3, D5, D6) — política
 // COMERCIAL de eficiência fiscal por unidade (não liga nem desliga guarda legal — D2). Versionada por vigência (molde
 // IssBeneficioMunicipal): a versão nova fecha a anterior em vigenteDesde − 1 dia. Sem linha ⇒ padrões do BRIEF.

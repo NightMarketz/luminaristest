@@ -1,5 +1,3 @@
-import type { NfePayload } from '../features/accounting/dtos/NfePayloadDto';
-
 /**
  * BE-INCR-NFCE-EMENDA-1 item E-2 (X10a PR-7) — serialização da NF-e 55 / NFC-e 65 em XML 4.00, a partir do payload já
  * validado pelo `NfePayloadSchema`. Namespace `http://www.portalfiscal.inf.br/nfe` sem prefixo, `infNFe/@Id` e
@@ -25,6 +23,14 @@ export const escapeXml = (s: string): string => s.replace(/[&<>"']/g, (c) => ESC
 
 type Valor = string | number | boolean | null | undefined | Valor[] | { [k: string]: Valor };
 
+/**
+ * A forma mínima que a serialização lê (lib não importa DTO de feature — ADR-ARCH-BOUNDARIES X1). Quem chama passa o
+ * `NfePayload` já validado pelo `NfePayloadSchema`.
+ */
+export interface NfeSerializavel {
+  infNFe: { Id: string; versao: string; det: ReadonlyArray<{ nItem: number }> } & Record<string, unknown>;
+}
+
 function elemento(nome: string, valor: Valor, attrs = ''): string {
   if (valor === undefined || valor === null) return '';
   if (Array.isArray(valor)) return valor.map((v) => elemento(nome, v)).join('');
@@ -47,7 +53,7 @@ function filhos(pai: string, obj: { [k: string]: Valor }): string {
 }
 
 /** `det` com o atributo `nItem` (H01). */
-function det(itens: NfePayload['infNFe']['det']): string {
+function det(itens: NfeSerializavel['infNFe']['det']): string {
   return itens
     .map((d) => {
       const { nItem, ...resto } = d;
@@ -60,7 +66,7 @@ function det(itens: NfePayload['infNFe']['det']): string {
  * `<NFe xmlns=…><infNFe Id=… versao="4.00">…</infNFe></NFe>`, sem `<Signature>` e sem `infNFeSupl` (o QR Code entra no
  * PR-8, fora da assinatura — ZX01). Sem declaração `<?xml?>`: o lote `enviNFe` embute a nota como elemento.
  */
-export function serializeNfe(payload: NfePayload): string {
+export function serializeNfe(payload: NfeSerializavel): string {
   const { Id, versao, det: itens, ...grupos } = payload.infNFe;
   const corpo = Object.entries(grupos)
     .map(([k, v]) => (k === 'det' ? '' : elemento(k, v as Valor)))

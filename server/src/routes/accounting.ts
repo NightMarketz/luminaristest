@@ -235,6 +235,16 @@ import {
   getFiscalCertificate,
   putFiscalCertificate,
 } from '../controllers/fiscalCertificateController';
+import {
+  authorizePscCredential,
+  createPscProvider,
+  deletePscCredential,
+  deletePscProvider,
+  getPscCredential,
+  listPscProviders,
+  pscCredentialCallback,
+  updatePscProvider,
+} from '../controllers/pscCredentialController';
 import { confirmIbsCbsAssessment, getIbsCbsResumo, listIbsCbsAssessments, previewIbsCbsAssessment, reconcileIbsCbsProvisao } from '../controllers/ibsCbsAssessmentController';
 import { apropriarCreditoIbsCbs } from '../controllers/payableController';
 
@@ -277,6 +287,17 @@ router.get('/journal-entries/:journalEntryId/attachments', listDocumentAttachmen
 router.put('/fiscal-certificates/:unitId', fiscalCertificateUpload, putFiscalCertificate);
 router.get('/fiscal-certificates/:unitId', getFiscalCertificate);
 router.delete('/fiscal-certificates/:unitId', deleteFiscalCertificate);
+
+// Credencial do PSC por unidade + cadastro dos PSCs (X10a PR-7; EMENDA-PSC E-2..E-5). `callback` é estático e vem
+// ANTES de '/:unitId'; é público (publicApiRoutes) — a prova é o `state` assinado.
+router.get('/psc-credentials/callback', pscCredentialCallback);
+router.post('/psc-credentials/:unitId/authorize', authorizePscCredential);
+router.get('/psc-credentials/:unitId', getPscCredential);
+router.delete('/psc-credentials/:unitId', deletePscCredential);
+router.get('/psc-providers', listPscProviders);
+router.post('/psc-providers', createPscProvider);
+router.patch('/psc-providers/:id', updatePscProvider);
+router.delete('/psc-providers/:id', deletePscProvider);
 
 // Formal provenance on an already-posted entry (BE-INCR-PROVENANCE-ATTACH / NFE-X).
 // Distinct from /attachments above: that one stores a FILE; this one records the FISCAL

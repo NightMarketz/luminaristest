@@ -49,6 +49,9 @@ const publicApiRoutes: PublicRule[] = [
   // BE-INCR-PAYMENT-PROVIDER PR-2 (P2-5, PP-D4) — webhook do provedor de cobrança: sem sessão; a prova é a
   // assinatura `x-signature` com o segredo da conta do `:accountId`. POST apenas (GET/HEAD continuam 401).
   { path: '/api/payment-collection/webhook', method: 'POST', match: 'prefix' },
+  // X10a PR-7 (EMENDA-PSC E-4) — retorno OAuth do PSC: quem chega é o navegador do titular, sem JWT. A prova é o
+  // `state` (HMAC do keyring DFE_PSC) + a autorização pendente não expirada e não usada. GET exato.
+  { path: '/api/accounting/psc-credentials/callback', method: 'GET', match: 'exact' },
 ];
 
 // Admin-only API paths with method checks (prefix match covers /api/users/:id).
