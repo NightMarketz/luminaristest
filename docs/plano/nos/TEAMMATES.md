@@ -11,10 +11,11 @@ autorizacao: "dono, chat, 2026-10-29: \"Autorizo planejar\" — nó + PRE-ADR + 
 atualizado: "2026-10-29"
 write_set: ["server/src/features/teammates/**", "server/src/lib/llm/**", "server/src/features/chat/**", "server/src/jobs/TeammateTurnScheduler.ts", "server/src/jobs/TeammateRoutineScheduler.ts", "server/src/jobs/ProposalExpiryScheduler.ts", "server/prisma/schema.prisma", "server/prisma/migrations/**", "server/src/routes/teammates.ts", "server/src/routes/docs/teammates.paths.ts"]
 registros: ["server/src/lib/factory.ts", "server/src/routes/index.ts", "server/src/features/accounting/audit/auditCanonical.ts"]
+prs: ["#969"]
 ---
 # TEAMMATES — Teammates nativos (funções do OpenBot, sem o OpenBot)
 
-**Estado:** `planned` — 29/10: PRE-ADR (Proposed) + BRIEF escritos; F-TM-1..4 ratificados, F-TM-5..12 PENDENTES; sem código, sem 'executa'  
+**Estado:** `planned` — 29/10: PRE-ADR (Proposed) + BRIEF escritos — F-TM-1..4 ratificados, F-TM-5..12 PENDENTES; sem código, sem 'executa'. Depende do FIX-CHAT-AGENTE fechado  
 **Autorização:** dono, chat, 2026-10-29: "Autorizo planejar" — nó + PRE-ADR + BRIEF, só docs, sem código, sem 'executa'. Registro do nó antes do PRE-ADR ratificado a pedido do dono (mesmo caminho do [[BUILDER-VERTICAIS]], 15/10)  
 **Depende de:** [[FIX-CHAT-AGENTE]]  
 **Desbloqueia:** os agentes PROPOSTOS do destino §7 (Vendas, Cobrança, Fiscal, Atendimento, Contador-assistente) — um nó por agente, depois do piloto  
