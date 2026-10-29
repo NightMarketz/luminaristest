@@ -24,6 +24,8 @@ interface SalePaymentModalProps {
     sale: SaleRecord | null;
     /** Venda de pacote: o pacote vendido não aparece como saldo para pagar a própria compra (FE-INCR-VENDA-PACOTE item 7) */
     soldPackageId?: string;
+    /** packageId → nome do pacote; sem nome conhecido, a opção cai no pedaço do id */
+    packageNameMap?: Record<string, string>;
     isOpen: boolean;
     onClose: () => void;
     onConfirm: (payment: {
@@ -33,7 +35,7 @@ interface SalePaymentModalProps {
     }) => Promise<void>;
 }
 
-export function SalePaymentModal({ sale, soldPackageId, isOpen, onClose, onConfirm }: SalePaymentModalProps) {
+export function SalePaymentModal({ sale, soldPackageId, packageNameMap = {}, isOpen, onClose, onConfirm }: SalePaymentModalProps) {
     const { t } = useTranslation(['finance_view', 'common']);
     const formatCurrency = useFormatCurrency();
     const [method, setMethod] = useState<SalePaymentMethod | ''>('');
@@ -172,10 +174,15 @@ export function SalePaymentModal({ sale, soldPackageId, isOpen, onClose, onConfi
                             <option value="">{t('finance_view:sales.payment.package_placeholder', 'Selecione o pacote…')}</option>
                             {balances.map((b) => (
                                 <option key={b.id} value={b.packageId} disabled={isExpired(b)}>
-                                    {t('finance_view:sales.payment.package_option', 'Pacote {{id}} — saldo {{balance}}', {
-                                        id: b.packageId.slice(0, 8),
-                                        balance: formatCurrency(b.balanceCents / 100),
-                                    })}
+                                    {packageNameMap[b.packageId]
+                                        ? t('finance_view:sales.payment.package_option_named', '{{name}} — saldo {{balance}}', {
+                                            name: packageNameMap[b.packageId],
+                                            balance: formatCurrency(b.balanceCents / 100),
+                                        })
+                                        : t('finance_view:sales.payment.package_option', 'Pacote {{id}} — saldo {{balance}}', {
+                                            id: b.packageId.slice(0, 8),
+                                            balance: formatCurrency(b.balanceCents / 100),
+                                        })}
                                     {' — '}
                                     {b.expiresOn == null
                                         ? t('finance_view:sales.payment.no_validity', 'sem validade')
