@@ -9,6 +9,10 @@ export interface ServiceFiscalProfileData {
   cLocPrestacao?: string | null;
   xDescServ?: string | null;
   cClassTrib?: string | null;
+  // EFICIENCIA-FISCAL PR-5 (item 25)
+  finalidade?: string | null;
+  elegivelHospitalar?: boolean;
+  fundamentoHospitalar?: string | null;
 }
 
 /**

@@ -65,6 +65,9 @@ export const LEGAL_PARAMETER_TABELAS = [
   // BE-INCR-EFICIENCIA-FISCAL PR-3 (itens 15–17; D-2026-10-28-EFICIENCIA-FISCAL-PR3-EXECUCAO decisão 1): encargos da folha
   // (INSS do contribuinte individual, patronal, FGTS, teto do RGPS). Consumidor = models/taxSimulation.ts.
   'ENCARGO_FOLHA',
+  // EFICIENCIA-FISCAL PR-5 (item 32; F-EF-8/11 a): serviços de saúde com redução de 60 % do IBS/CBS a partir de 2027 (LC 214
+  // art. 130 e Anexo III), chave = prefixo de NBS. Consumidor = models/servicoFiscalAvaliacao.ts.
+  'IBS_CBS_REDUCAO_NBS',
 ] as const;
 export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
 
