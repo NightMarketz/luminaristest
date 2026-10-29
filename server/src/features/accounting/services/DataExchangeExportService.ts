@@ -18,6 +18,8 @@ import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { centsFromDb } from '../models/money';
 import { sampleEntries, type SampleableLeg } from '../models/entrySample';
 import { anosDaJanela, linhaMeta, linhasDaApuracao, MEMO_COLUMNS, selecionarApuracoes } from '../models/taxAssessmentMemoExport';
+import { ECONOMIA_COLUMNS, competenciasDaJanela, linhaMetaEconomia, linhasExportEconomia } from '../models/taxOptimizationReport';
+import type { TaxOptimizationReport } from '../dtos/TaxOptimizationDto';
 import { IBS_CBS_MEMO_COLUMNS, linhaMetaIbsCbs, linhasDaApuracaoIbsCbs, selecionarApuracoesIbsCbs } from '../models/ibsCbsMemoExport';
 import { agregarIssPorCompetencia, ISS_COLUMNS, municipioDeIncidencia, type IssDocInput } from '../models/issCompetencia';
 import { listaLc116De, type ListaLc116 } from '../models/lc116ListaNacional';
@@ -94,6 +96,12 @@ export interface ITaxAssessmentReader {
  *  `IConsumptionTaxAssessmentRepository.findMany` (método existente, sem query nova). */
 export interface IIbsCbsAssessmentReader {
   findMany(ownerUserId: string, anoCalendario: number): Promise<ConsumptionTaxAssessment[]>;
+}
+
+/** Leitura que `EXPORT_ECONOMIA_FISCAL` precisa (EFICIENCIA-FISCAL PR-4 item 23) — o relatório de economia por competência,
+ *  satisfeita por `TaxOptimizationReportService` (que aplica a policy dele). */
+export interface IEconomiaFiscalReader {
+  relatorio(scope: AccountingScope, competencia: string): Promise<TaxOptimizationReport>;
 }
 
 /** Leitura que `EXPORT_ISS_BY_COMPETENCE` precisa (X7 Fase C PR-2, BRIEF C item 14) — satisfeita
@@ -180,6 +188,8 @@ export class DataExchangeExportService {
     private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
     // IBS-CBS-2027 PR-5 (BRIEF item 24): apurações mensais de IBS/CBS para EXPORT_IBS_CBS_MEMO.
     private readonly ibsCbsAssessments: IIbsCbsAssessmentReader,
+    // EFICIENCIA-FISCAL PR-4 (item 23): relatório de economia por competência para EXPORT_ECONOMIA_FISCAL.
+    private readonly economiaFiscal: IEconomiaFiscalReader,
   ) {}
 
   /**
@@ -435,6 +445,18 @@ export class DataExchangeExportService {
         const table: OutTable = {
           headers: [linhaMetaIbsCbs(w, apuracoes.length, new Date())],
           rows: [[...IBS_CBS_MEMO_COLUMNS], ...apuracoes.flatMap((a) => linhasDaApuracaoIbsCbs(a))],
+        };
+        return { table, period: periodColumns(w.periodStart, w.periodEnd) };
+      }
+      case 'EXPORT_ECONOMIA_FISCAL': {
+        // EFICIENCIA-FISCAL PR-4 (item 23; ADR D9): o relatório de economia de cada competência da janela, no pacote do
+        // contador. A policy do relatório (canManageTaxAssessment) roda dentro de `relatorio`. Só ACCEPTED soma (I-11).
+        const w = { periodStart: dto.periodStart as string, periodEnd: dto.periodEnd as string };
+        const relatorios: TaxOptimizationReport[] = [];
+        for (const c of competenciasDaJanela(w)) relatorios.push(await this.economiaFiscal.relatorio(scope, c));
+        const table: OutTable = {
+          headers: [linhaMetaEconomia(w, relatorios, new Date())],
+          rows: [[...ECONOMIA_COLUMNS], ...relatorios.flatMap(linhasExportEconomia)],
         };
         return { table, period: periodColumns(w.periodStart, w.periodEnd) };
       }

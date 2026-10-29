@@ -8,6 +8,13 @@ residenteBrasil: boolean
 participacaoBp: number
 entradaEm: string
 saidaEm?: (string | null)
+outrasParticipacoes?: ({
+cnpj: string
+participacaoBp: number
+empresaNoSimples: boolean
+administrador: boolean
+receitaBrutaAnualCents?: (number | null)
+}[] | null)
 }
 export interface ListPartnersQueryInput {
 unitId: string
@@ -27,4 +34,18 @@ residenteBrasil: boolean
 participacaoBp: number
 entradaEm: string
 saidaEm?: (string | null)
+outrasParticipacoes?: ({
+cnpj: string
+participacaoBp: number
+empresaNoSimples: boolean
+administrador: boolean
+receitaBrutaAnualCents?: (number | null)
+}[] | null)
+}
+export interface OutraParticipacaoInput {
+cnpj: string
+participacaoBp: number
+empresaNoSimples: boolean
+administrador: boolean
+receitaBrutaAnualCents?: (number | null)
 }

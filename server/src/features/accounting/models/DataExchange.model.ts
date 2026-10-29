@@ -40,6 +40,8 @@ export const EXPORT_KINDS = [
   'EXPORT_ISS_BY_COMPETENCE',
   // Memória das apurações mensais de IBS/CBS (IBS-CBS-2027 PR-5, BRIEF item 24). Mesma coluna String ⇒ zero migration.
   'EXPORT_IBS_CBS_MEMO',
+  // Relatório de economia fiscal por competência (EFICIENCIA-FISCAL PR-4, BRIEF item 23). Mesma coluna String ⇒ zero migration.
+  'EXPORT_ECONOMIA_FISCAL',
   // EFD-REINF PR-3 (BRIEF item 22; lacuna A, dono 28/10): XML do lote e relatório de conferência, gravados pelo ReinfService no
   // POST /reinf/batches (molde EXPORT_SPED_ECD: serviço dedicado). Mesma coluna String ⇒ zero migration.
   'EXPORT_REINF',

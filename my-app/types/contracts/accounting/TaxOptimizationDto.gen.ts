@@ -31,3 +31,48 @@ criterioAlocacao: ("PROPORCIONAL_CATALOGO" | "CARGA_TRIBUTARIA")
 pisoServico: ("CUSTO_INFORMADO" | "CATALOGO_MINIMO" | "SEM_DESCONTO_ALEM_DO_PROPORCIONAL")
 vigenteDesde: string
 }
+export interface TaxOptimizationReportLinhaInput {
+tipo: ("SUGESTAO_ACEITA" | "MEDIDA" | "CONSUMIDA")
+codigo: string
+suggestionId: (string | null)
+disponivel: boolean
+economiaCents: (string | null)
+legalBasis: {
+norma: string
+artigo: string
+}[]
+detalhe: string
+noDependente: (string | null)
+}
+export interface TaxOptimizationReportQueryInput {
+unitId: string
+competencia: string
+}
+export interface TaxOptimizationReportInput {
+competencia: string
+unitId: string
+linhas: {
+tipo: ("SUGESTAO_ACEITA" | "MEDIDA" | "CONSUMIDA")
+codigo: string
+suggestionId: (string | null)
+disponivel: boolean
+economiaCents: (string | null)
+legalBasis: {
+norma: string
+artigo: string
+}[]
+detalhe: string
+noDependente: (string | null)
+}[]
+totais: {
+aceitasCents: string
+medidaCents: string
+totalCents: string
+}
+contagem: {
+PROPOSED: number
+REJECTED: number
+EXPIRED: number
+}
+parametrosSha256: string
+}

@@ -42,6 +42,20 @@
  *                 participacaoBp: { type: integer, minimum: 0, maximum: 10000 }
  *                 entradaEm: { type: string, format: date }
  *                 saidaEm: { type: string, format: date, nullable: true }
+ *                 outrasParticipacoes:
+ *                   type: array
+ *                   nullable: true
+ *                   maxItems: 50
+ *                   description: 'EFICIENCIA-FISCAL PR-4 item 20 — informed stakes in other companies; feed only the interdependence alert (LC 123 art. 3º § 4º III, IV, V)'
+ *                   items:
+ *                     type: object
+ *                     required: [cnpj, participacaoBp, empresaNoSimples, administrador]
+ *                     properties:
+ *                       cnpj: { type: string }
+ *                       participacaoBp: { type: integer, minimum: 0, maximum: 10000 }
+ *                       empresaNoSimples: { type: boolean }
+ *                       administrador: { type: boolean }
+ *                       receitaBrutaAnualCents: { type: integer, minimum: 0, nullable: true }
  *       responses:
  *         '201': { description: 'PartnerView' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
