@@ -110,10 +110,11 @@ export class FakeSefaz {
         req.on('data', (c: Buffer) => chunks.push(c));
         req.on('end', () => {
           void (async () => {
-            if (this.controle.atrasoMs) await new Promise((r) => setTimeout(r, this.controle.atrasoMs));
             const servico = (req.url ?? '').replace(/^\/ws\//, '').replace(/\.asmx$/, '');
             const corpo = Buffer.concat(chunks).toString('utf8');
+            // Registra ANTES do atraso: a chamada lenta de um teste não pode cair na contagem do teste seguinte.
             this.controle.chamadas.push({ servico, corpo });
+            if (this.controle.atrasoMs) await new Promise((r) => setTimeout(r, this.controle.atrasoMs));
             const resultado = this.responder(servico, corpo);
             if (resultado === null) {
               req.socket.destroy();

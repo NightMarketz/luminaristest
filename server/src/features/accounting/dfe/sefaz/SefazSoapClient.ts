@@ -9,7 +9,10 @@ import type { SefazServico } from './sefazConfig';
  * TRANSMISSOR (o e-CNPJ do Luminaris), não o do emitente: "não necessariamente o CNPJ/CPF da empresa emissora" (MOC 7.0
  * Visão Geral; `pesquisas-legais/dfe-mtls-psc/relatorio.md`, EMENDA-2 §4.1; F-PSC-1 a). A nota segue assinada pelo
  * certificado do emitente no PSC. Envelope com a área `nfeDadosMsg` no namespace do WSDL do serviço; o retorno é o
- * conteúdo de `nfeResultMsg` (`[WS-SOAP]` da transcrição `TRANSCRICAO-MOC70-webservices-NFe-2026-10-29.md`).
+ * conteúdo de `nfeResultMsg`. **Grau I:** o MOC 7.0 VG (`TRANSCRICAO-MOC70-webservices-NFe-2026-10-29.md`, `[WS-SOAP]`)
+ * não traz o namespace `…/nfe/wsdl/<Servico>4` nem o `nfeResultMsg` da versão 4.00 (só o envelope do `NfeRecepcao2` e a
+ * nota de que a 4.0 eliminou o `nfeCabecMsg`, p. 64); os dois vêm dos WSDL publicados das autorizadoras e ficam aqui como
+ * constantes únicas, a conferir no runbook de homologação (D5) contra o `?wsdl` real.
  *
  * Falha de transporte (handshake, timeout, 5xx, corpo sem `nfeResultMsg`) ⇒ `SefazTransporteError` — quem chama decide
  * (o envio deixa o documento `SENT` e entra na recuperação, E-8). Nunca loga corpo, URL com query ou certificado (OBS-R7).
