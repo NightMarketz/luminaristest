@@ -1,0 +1,233 @@
+Transferência Internacional de Dados
+
+Ir para o conteúdoIr para a navegaçãoIr para a buscaIr para o rodapé
+
+Botão Menu
+
+Assuntos
+
+Assuntos Internacionais
+
+Transferência Internacional de Dados
+
+Transferência Internacional de Dados
+
+English versionVersión en español
+
+Transferência Internacional de Dados
+
+A Resolução CD/ANPD nº 19, de 23 de agosto de 2024 (Regulamento de Transferência Internacional de Dados), estabelece procedimentos e regras aplicáveis à transferência internacional de dados pessoais, em conformidade com as disposições da Lei Geral de Proteção de Dados Pessoais (Lei nº 13.709, de 2018) e do Regimento Interno da Autoridade Nacional de Proteção de Dados (ANPD). A resolução visa garantir transferências internacionais de dados pessoais seguras e transparentes, alinhadas aos direitos fundamentais e à segurança jurídica, promovendo o desenvolvimento econômico e a proteção dos titulares de dados pessoais.
+
+A Divisão de Transferência Internacional de Dados (DITID), subordinada à Coordenação de Assuntos Internacionais (CAI/CGAI/SRII), é a unidade responsável pela implementação e pelo suporte técnico relacionados aos mecanismos de transferência internacional de dados, garantindo a conformidade com a LGPD e prestando assessoramento técnico às instâncias competentes da ANPD na análise e deliberação sobre tais mecanismos.
+
+Mecanismos regulados
+
+Resolução regulamenta alguns dos mecanismos previstos na LGPD, assegurando proteção conforme os padrões da legislação brasileira. São eles:
+
+Decisões de adequação
+
+Decisões emitidas pela ANPD que reconhecem determinados países ou organismos internacionais como possuidores de um nível de proteção de dados pessoais equivalente ao exigido pela legislação brasileira. Quando uma decisão de adequação é emitida, as transferências internacionais de dados para esses países ou organizações podem ocorrer sem a necessidade de mecanismos adicionais de transferência internacional.
+
+Cláusulas-padrão contratuais
+
+São cláusulas contratuais predefinidas pela ANPD, que podem ser incorporadas a contratos já existentes. Elas estabelecem garantias mínimas para que, mesmo em países onde o regime de proteção de dados é diferente do Brasil, os dados pessoais continuem protegidos conforme os padrões exigidos pela LGPD. A implementação dessas cláusulas deve ser feita sem modificações (Anexo II do Regulamento), em até 12 meses da publicação do Regulamento (Art. 2º, parágrafo único).
+
+Cláusulas-padrão equivalentes
+
+Referem-se a cláusulas-padrão contratuais aprovadas por países estrangeiros ou organismos internacionais que podem ser reconhecidos pela ANPD como equivalentes às cláusulas-padrão contratuais brasileiras Uma vez consideradas equivalentes, e observadas eventuais condicionantes estabelecidas pela ANPD, agentes de tratamento podem utilizar essas cláusulas em suas transferências internacionais de dados sem a necessidade de utilização das cláusulas-padrão contratuais do Anexo II do Regulamento.
+
+Cláusulas contratuais específicas
+
+Podem ser utilizadas em situações excepcionais, nas quais se mostra comprovadamente inviável utilizar as cláusulas-padrão contratuais. Essas cláusulas devem oferecer um nível de proteção de dados equivalente ao garantido pelas cláusulas-padrão contratuais nacionais e precisam ser adaptadas às circunstâncias particulares de determinadas operações de transferência. A aprovação prévia pela ANPD é necessária para validar a utilização desse mecanismo.
+
+Normas corporativas globais
+
+Conjunto de regras internas adotadas por organizações do mesmo grupo ou conglomerado de empresas para regular a transferência internacional de dados pessoais entre suas diferentes entidades. Essas normas, que devem ser previamente aprovadas pela ANPD, garantem que todas as empresas do grupo, independentemente da jurisdição onde operam, respeitem o nível de proteção de dados exigido pela LGPD. Essas normas são especialmente úteis para empresas que operam em vários países e desejam manter uma abordagem uniforme de proteção de dados pessoais em suas operações internacionais.
+
+Peticionamento eletrônico
+
+Os pedidos relacionados à aprovação ou revisão de mecanismos de transferência internacional de dados devem ser submetidos à ANPD por meio do Sistema Eletrônico de Informações (SEI). Esse procedimento visa garantir a eficiência e a segurança na instrução e tramitação dos processos, permitindo que as empresas acompanhem o andamento de suas solicitações.
+
+Trâmite dos mecanismos
+
+Com base no Regulamento, o trâmite dos pedidos de análise dos mecanismos de transferência internacional de dados segue procedimentos específicos:
+
+Decisões de adequação
+
+Iniciado por decisão do Conselho Diretor (de ofício) ou por solicitação de entidades públicas (parágrafo único do art. 1º da Lei nº 12.527, de 18 de novembro de 2011), o processo é conduzido pela área técnica da ANPD (CAI/CGRII), que analisa o contexto jurídico, as normas, as medidas de segurança e as garantias institucionais do país ou organismo em questão. A Procuradoria Federal Especializada da ANPD emite um parecer sobre a adequação, e o Conselho Diretor delibera sobre sua aprovação. Se aprovada, a decisão é formalizada e publicada no site da ANPD. As decisões podem ser revisadas ou revogadas conforme mudanças nas condições do país ou organismo internacional, garantindo contínua conformidade com a LGPD. Até o momento, a União Europeia foi considerada como organismo internacional adequado pelo Conselho Diretor da ANPD por meio da publicação da Resolução nº 32/2026.
+
+Cláusulas-padrão contratuais equivalentes
+
+Seu trâmite pode ser iniciado pelo Conselho Diretor (de ofício), ou a requerimento das partes interessadas. A área técnica da ANPD (CGRII/CAI) realiza uma análise detalhada sobre a compatibilidade das cláusulas estrangeiras com as normas brasileiras e a LGPD. A Procuradoria Federal Especializada da ANPD emite um parecer e o processo é submetido para a deliberação final pelo Conselho Diretor. A ANPD pode ainda realizar consultas à sociedade ou ouvir manifestações de outros órgãos da administração pública com competências afins. Caso aprovadas, as cláusulas serão reconhecidas por meio de resolução e publicadas no site da ANPD, tornando-se válidas para transferências internacionais de dados, desde que observadas as condições estabelecidas pela decisão do Conselho Diretor. Até o momento, nenhuma cláusula-padrão contratual equivalente foi reconhecida pelo Conselho Diretor da ANPD.
+
+Cláusulas contratuais específicas
+
+O controlador deve submeter à ANPD a íntegra das cláusulas que pretende utilizar, comprovando que elas oferecem e comprovam garantias de cumprimento dos princípios, dos direitos do titular e do regime de proteção de dados previstos pela LGPD. Sua aprovação pelo Conselho Diretor é necessária para que a transferência internacional de dados ocorra com base nesse mecanismo. A aprovação de cláusulas específicas somente ocorrerá em situações excepcionais, isto é, quando, por razões de fato ou de direito devidamente comprovadas pelo interessado, for inviável utilizar as cláusulas-padrão contratuais. O processo inclui a análise detalhada das disposições propostas pela CAI/CGRII e pela Procuradoria Federal Especializada, levando em consideração a compatibilidade com a legislação brasileira e os riscos e benefícios envolvidos. Até o momento, nenhuma cláusula contratual específica foi aprovada pelo Conselho Diretor da ANPD.
+
+Normas corporativas globais
+
+Devem ser submetidas para aprovação da ANPD, acompanhadas de uma descrição detalhada das transferências que cobrem, os países envolvidos, e as medidas de segurança implementadas. Além disso, essas normas devem estar vinculadas a um programa de governança em privacidade que esteja de acordo com as exigências da LGPD (art. 50). Após análise pela CAI/CGRII e pela Procuradoria Federal Especializada, as normas corporativas globais serão objeto de deliberação pelo Conselho Diretor. Até o momento, nenhuma norma corporativa global foi aprovada pelo Conselho Diretor da ANPD.
+
+Perguntas frequentes
+
+O que é a Resolução CD/ANPD Nº 19/2024?
+
+A Resolução CD/ANPD Nº 19/2024 é o Regulamento de Transferência Internacional de Dados emitido pela ANPD que estabelece os mecanismos para a transferência internacional de dados pessoais em conformidade com a LGPD. Este Regulamento dispõe sobre as cláusulas-padrão contratuais, as cláusulas-padrão contratuais equivalentes, as cláusulas contratuais específicas, as normas corporativas globais e as decisões de adequação.
+
+Quando é possível utilizar as cláusulas contratuais específicas?
+
+As cláusulas contratuais específicas somente podem ser utilizadas se previamente aprovadas pela ANPD. Tal aprovação apenas ocorrerá em situações excepcionais, quando, por razões de fato ou de direito devidamente comprovadas pelo interessado, for inviável utilizar as cláusulas-padrão contratuais. Essas circunstâncias excepcionais e as cláusulas devem ser submetidas à apreciação da ANPD, acompanhadas da documentação pertinente, conforme o previsto no Regulamento.
+
+Como posso submeter um pedido de aprovação de cláusulas contratuais específicas, cláusulas-padrão contratuais equivalentes ou normas corporativas globais?
+
+Os pedidos de aprovação devem ser feitos por meio do Sistema Eletrônico de Informações (SEI) da ANPD. A documentação exigida para instrução do pedido está detalhada no Regulamento e inclui, entre outros documentos, a íntegra das cláusulas ou normas propostas, bem como informações adicionais que comprovem a conformidade com os requisitos da LGPD.
+
+Como posso saber se um país tem uma decisão de adequação emitida pela ANPD?
+
+A ANPD publicará neste site uma lista dos países e organismos internacionais que receberam decisões de adequação pelo Conselho Diretor. Esta lista será constantemente atualizada, permitindo que os agentes de tratamento verifiquem se a transferência internacional de dados pessoais para um determinado país está coberta por uma decisão de adequação. coberta por uma decisão de adequação. Até o momento, a União Europeia foi considerada como organismo internacional adequado pelo Conselho Diretor da ANPD por meio da publicação da Resolução n. 32/2026. Para isso, é necessário um trâmite específico, previsto pelo Regulamento. Conforme outras decisões como essa forem emitidas, este site será atualizado para conter a listagem dos países considerados adequados.
+
+Como posso saber quais cláusulas-padrão contratuais equivalentes, cláusulas específicas e normas corporativas globais foram aprovadas pela ANPD?
+
+A ANPD publicará neste site uma lista das cláusulas-padrão contratuais equivalentes, cláusulas específicas e normas corporativas globais aprovadas pelo Conselho Diretor. Assim como no caso das decisões de adequação, esta lista será constantemente atualizada. Até o momento, nenhum desses mecanismos foi aprovado pelo Conselho Diretor da ANPD. Para isso, é necessário um trâmite específico, previsto pelo Regulamento.
+
+As decisões de adequação emitidas por outros países são válidas no Brasil?
+
+Decisões de adequação emitidas por outros países não são válidas para o Brasil. Não obstante, informações e análises que constam dessas decisões poderão eventualmente ser consideradas como subsídio para a emissão de decisões de adequação pela ANPD.
+
+Quais são as responsabilidades dos agentes de tratamento que realizam transferências internacionais de dados?
+
+Os agentes de tratamento que realizam transferências internacionais de dados pessoais devem garantir que essas operações estejam em conformidade com a LGPD e com o Regulamento de Transferência Internacional de Dados, adotando os mecanismos previstos pela norma e as salvaguardas apropriadas ao caso. Entre outras obrigações, os agentes de tratamento devem garantir o exercício de direitos e fornecer informações claras aos titulares sobre a transferência.
+
+Quem pode submeter o pedido de análise de cada mecanismo de transferência internacional de dados pessoais?
+
+O Regulamento prevê quem são os legitimados para realizar o pedido de análise pela ANPD para cada mecanismo de transferência internacional de dados. No caso de cláusulas contratuais específicas, quem solicita sua análise é o controlador (art. 21), enquanto para cláusulas-padrão contratuais equivalentes o pedido pode ser apresentado por qualquer interessado (art. 18). Para as normas corporativas globais, o pedido pode ser apresentado por organizações do mesmo grupo ou conglomerado de empresas (art. 25). Finalmente, a emissão de decisões de adequação (art. 13) somente pode ser solicitada por órgãos ou entidades públicas. Vale mencionar que os procedimentos de emissão de decisão de adequação (art. 13) ou de aprovação de cláusulas equivalentes (art. 18) também poderão ser instaurados de ofício pela ANPD, por decisão do Conselho Diretor.
+
+Repositório de mecanismos
+
+Relação das Cláusulas Contratuais Específicas, das Cláusulas-Padrão Equivalentes, das Normas Corporativas Globais e das Decisões de Adequação aprovadas pela ANPD (Art. 31 RTCD).
+Art. 31. A ANPD publicará em seu sítio eletrônico a relação das cláusulas contratuais específicas e das normas corporativas globais aprovadas, com indicação do respectivo requerente, da data de aprovação e da decisão proferida pelo Conselho Diretor, além de outras informações consideradas necessárias pela área técnica responsável.Parágrafo único. A ANPD publicará a íntegra das cláusulas contratuais específicas nas hipóteses em que tais cláusulas possam ser utilizadas por outros agentes de tratamento, observados os segredos comercial e industrial.
+﻿Até a presente data, não houve nenhuma decisão do Conselho Diretor da ANPD acerca de cláusulas contratuais específicas, cláusulas-padrão equivalentes ou normas corporativas globais. Quanto à emissão de Decisão de Adequação, a União Europeia foi considerada como organismo internacional adequado pelo Conselho Diretor da ANPD por meio da publicação da Resolução n. 32/2026. Conforme previsão do Regulamento de Transferências Internacionais, quando outras decisões como essa forem emitidas, este site será atualizado.
+
+Canal de atendimento
+
+Para acesso a informações, denúncias, elogios, reclamações, solicitações e sugestões: acesse nossos canais de atendimento.
+
+Links de compartilhamento em redes sociais
+
+Compartilhe:
+
+Portal Gov.br
+
+Assuntos
+
+Assuntos
+
+Notícias
+
+Deliberações do Conselho Diretor
+
+Denúncia de descumprimento da LGPD
+
+Comunicação de incidente de segurança
+
+Titular de Dados
+
+Fiscalização
+
+Regulação
+
+Assuntos Internacionais
+
+Projetos/Ações/Iniciativas
+
+Eca Digital
+
+Marco Civil da Internet
+
+Acesso à Informação
+
+Acesso à Informação
+
+Institucional
+
+Ações e Programas
+
+Participação Social
+
+Auditoria
+
+Convênios e Transferências
+
+Receitas e Despesas
+
+Licitações e Contratos
+
+Servidores
+
+Informações Classificadas
+
+Serviço de Informação ao Cidadão
+
+Dados Abertos
+
+Sanções Administrativas
+
+Ferramentas e Aspectos Tecnológicos
+
+Aviso de Privacidade
+
+Comissão de Ética da ANPD
+
+Composição
+
+Composição
+
+Centrais de Conteúdo
+
+Centrais de Conteúdo
+
+Centrais de Conteúdo
+
+Serviços
+
+Serviços
+
+Canais de Atendimento
+
+Canais de Atendimento
+
+Cidadão/Titular de Dados
+
+Agente de Tratamento
+
+Peticionamento Eletrônico ANPD
+
+Ouvidoria
+
+Encarregado de Dados na ANPD
+
+Assessoria de Comunicação
+
+Fornecedores
+
+Trabalhe Conosco
+
+Fale Conosco
+
+Carta de Serviços
+
+Pedidos de Acesso à Informação
+
+Conselho Nacional de Proteção de Dados Pessoais e da Privacidade
+
+Conselho Nacional de Proteção de Dados Pessoais e da Privacidade
+
+Conselho Nacional de Proteção de Dados Pessoais e da Privacidade
+
+Fale Conosco
+
+Fale Conosco
+
+Redefinir Cookies
+
+Todo o conteúdo deste site está publicado sob a licença Creative Commons Atribuição-SemDerivações 3.0 Não Adaptada

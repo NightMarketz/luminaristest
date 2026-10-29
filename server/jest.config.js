@@ -43,6 +43,9 @@ const base = {
 };
 
 module.exports = {
+    // Sem teto, o jest abre núcleos−1 workers (15 nesta máquina, ~700 MB cada): duas sessões testando juntas
+    // esgotam 31 GB e travam o PC (medido 29/10). 25% = 4 workers aqui; no CI (2–4 núcleos) dá 1. Integração já é --runInBand.
+    maxWorkers: '25%',
     projects: [
         {
             ...base,
