@@ -3459,6 +3459,20 @@
       "PARTIALLY_REFUNDED": "Estornada em parte",
       "PENDING": "Pendente",
       "REFUNDED": "Estornada"
+    },
+    "list": {
+      "title": "Cobranças da unidade",
+      "filterStatus": "Status",
+      "filterKind": "Tipo",
+      "all": "Todos",
+      "loading": "Carregando cobranças…",
+      "empty": "Nenhuma cobrança nesta unidade com estes filtros.",
+      "error": "Erro ao carregar as cobranças da unidade.",
+      "openReceivable": "Abrir o título no Contas a Receber",
+      "noNumber": "sem nº",
+      "col": {
+        "receivable": "Título"
+      }
     }
   },
   "paymentProvider": {

@@ -259,6 +259,11 @@ interface AccountsReceivablePanelProps {
   initialFilters?: SubledgerFilterValue;
   /** Atalho para a aba Cobrança (conta do provedor) — dicas do modal "Cobrar título" (item 15). */
   onNavigateToCobranca?: () => void;
+  /**
+   * SEED de uso único (molde do `initialFilters`): o título cujo drawer de cobranças abre na montagem — o link da lista
+   * global da aba Cobrança (FE-INCR-PAYMENT-PROVIDER-EMENDA-1 16b; D-2026-10-29-F5-16B-E-P-RET-4 item 2).
+   */
+  initialChargesReceivableId?: string;
 }
 
 // ── main ─────────────────────────────────────────────────────────────────────
@@ -268,7 +273,7 @@ interface AccountsReceivablePanelProps {
  * the recognition posting; per-row commands (receive / cancel / undo receipt) each post
  * to the ledger via the AR command endpoints and refetch the trial balance.
  */
-export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPeriods, onNavigateToCounterparties, initialFilters, onNavigateToCobranca }: AccountsReceivablePanelProps) {
+export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPeriods, onNavigateToCounterparties, initialFilters, onNavigateToCobranca, initialChargesReceivableId }: AccountsReceivablePanelProps) {
   // `t` para renderizar, `tRef.current` dentro do fetch — ver `../lib/useAccountingT`.
   const { t, tRef } = useAccountingT();
   const [receivables, setReceivables] = useState<ReceivableWithReceipts[]>([]);
@@ -304,7 +309,7 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
   const [canCharge, setCanCharge] = useState(true);
   const [chargeTarget, setChargeTarget] = useState<ChargeTarget | null>(null);
   const [chargeSuggestion, setChargeSuggestion] = useState<Partial<PayerInput>>({});
-  const [chargesOpenId, setChargesOpenId] = useState<string | null>(null);
+  const [chargesOpenId, setChargesOpenId] = useState<string | null>(() => initialChargesReceivableId ?? null);
   // Remonta o drawer aberto depois de emitir (a lista dele é lida ao montar).
   const [chargesVersion, setChargesVersion] = useState(0);
 

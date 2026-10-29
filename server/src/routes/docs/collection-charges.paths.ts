@@ -17,7 +17,7 @@
  *         - { in: query, name: page, required: false, schema: { type: integer, minimum: 1, default: 1 } }
  *         - { in: query, name: limit, required: false, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
  *       responses:
- *         '200': { description: '{ items: CollectionChargeView[], total, page, limit }' }
+ *         '200': { description: '{ items: (CollectionChargeView + receivableDocumentNumber)[], total, page, limit }' }
  *         '400': { $ref: '#/components/responses/ValidationError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }

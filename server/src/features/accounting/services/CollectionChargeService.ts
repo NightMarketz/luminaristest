@@ -34,6 +34,7 @@ import {
   type CollectionChargeStatus,
 } from '../models/CollectionCharge.model';
 import type { CreateChargeInputDto, ListCollectionChargesQueryDto } from '../dtos/CollectionChargeDto';
+import { writtenDocumentNumber } from '../models/Receivable.model';
 import type { ICollectionChargeRepository } from '../repositories/ICollectionChargeRepository';
 import type { IPaymentAccountRepository } from '../repositories/IPaymentAccountRepository';
 import type { IReceivableRepository } from '../repositories/IReceivableRepository';
@@ -65,9 +66,14 @@ export interface CollectionChargeView {
   payer?: PayerInput;
 }
 
+/** Item da lista da unidade: a view sem pagador + o nº do título como escrito (16b; D-2026-10-29-F5-16B-E-P-RET-4). */
+export interface CollectionChargeListItem extends CollectionChargeView {
+  receivableDocumentNumber: string | null;
+}
+
 /** Página da lista da unidade (EMENDA-1 PR-0, 0c). */
 export interface CollectionChargePage {
-  items: CollectionChargeView[];
+  items: CollectionChargeListItem[];
   total: number;
   page: number;
   limit: number;
@@ -334,7 +340,12 @@ export class CollectionChargeService {
     }
     const { status, kind, page, limit } = query;
     const { items, total } = await this.repo.findPageByUnit(scope, { status, kind, page, limit });
-    return { items: items.map((c) => toView(c, false)), total, page, limit };
+    return {
+      items: items.map((c) => ({ ...toView(c, false), receivableDocumentNumber: writtenDocumentNumber(c.receivableId, c.receivable.documentNumber) })),
+      total,
+      page,
+      limit,
+    };
   }
 
   /** GET /api/collection-charges/:id (P2-15) — pagador só para quem gerencia o título (F9). */

@@ -16,6 +16,7 @@ import { useAccountingT } from '../lib/useAccountingT';
 import { FixedAssetAccountSelect } from './FixedAssetAccountSelect';
 import { CopyButton } from './CopyButton';
 import { inputClass } from './SpedGenerationPanel';
+import { CollectionChargesList } from './CollectionChargesList';
 
 // ── status badge (item 4) ────────────────────────────────────────────────────
 
@@ -78,6 +79,8 @@ interface PaymentProviderPanelProps {
   unitId: string;
   /** Atalho "Ver extratos e baixas" (item 24): abre a Conciliação com a folha da conta selecionada. */
   onOpenReconciliation?: (glAccountId: string) => void;
+  /** Link do título na lista global (EMENDA-1 16b): abre o AR filtrado pelo nº, com o drawer de cobranças aberto. */
+  onOpenReceivable?: (receivableId: string, documentNumber: string | null) => void;
 }
 
 /**
@@ -85,7 +88,7 @@ interface PaymentProviderPanelProps {
  * status, webhook, alerta do relatório de liberações (R2 a) e o atalho para a Conciliação. Cards (F-FE-COB-8: com
  * F-PP-9 a há no máximo uma conta ativa). A policy é do BE: um 403 num comando esconde as ações de gerir.
  */
-export function PaymentProviderPanel({ unitId, onOpenReconciliation }: PaymentProviderPanelProps) {
+export function PaymentProviderPanel({ unitId, onOpenReconciliation, onOpenReceivable }: PaymentProviderPanelProps) {
   const { t, tRef } = useAccountingT();
   const [accounts, setAccounts] = useState<PaymentAccountView[]>([]);
   const [leaves, setLeaves] = useState<Account[]>([]);
@@ -444,6 +447,9 @@ export function PaymentProviderPanel({ unitId, onOpenReconciliation }: PaymentPr
             </section>
           );
         })}
+
+      {/* EMENDA-1 16b: lista global de cobranças da unidade, abaixo do card da conta. */}
+      {!loading && accounts.length > 0 && <CollectionChargesList unitId={unitId} onOpenReceivable={onOpenReceivable} />}
 
       <Modal
         isOpen={!!modal}

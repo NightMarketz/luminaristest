@@ -156,6 +156,16 @@ describe('F5 PR-0 — GET /api/collection-charges (lista da unidade)', () => {
     }
   });
 
+  it('16b (D-2026-10-29-F5-16B-E-P-RET-4 item 2): cada item traz o nº do título como escrito, também do título cancelado', async () => {
+    const r = await listar(dono, `unitId=${UNIT_A}`);
+    for (const c of r.body.data.items) expect(c.receivableDocumentNumber).toMatch(/^FAT-[0-9a-f]{6}$/);
+    // Título cancelado: o nº é reescrito para `deleted:<id>:<nº>` (rename-on-delete); a lista mostra o nº original.
+    const alvo = await prisma.collectionCharge.findUniqueOrThrow({ where: { id: idsA[3] } });
+    await prisma.receivable.update({ where: { id: alvo.receivableId }, data: { status: 'CANCELLED', documentNumber: `deleted:${alvo.receivableId}:FAT-CANC` } });
+    const depois = await listar(dono, `unitId=${UNIT_A}&kind=BOLETO&status=EXPIRED`);
+    expect(depois.body.data.items.map((c: { id: string; receivableDocumentNumber: string }) => [c.id, c.receivableDocumentNumber])).toEqual([[idsA[3], 'FAT-CANC']]);
+  });
+
   it('0d: GET /:id continua respondendo depois da rota da lista', async () => {
     const r = await request(app).get(`/api/collection-charges/${idsA[0]}?unitId=${UNIT_A}`).set(authHeader(dono));
     expect(r.status).toBe(200);

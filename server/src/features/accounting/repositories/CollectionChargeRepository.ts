@@ -2,7 +2,11 @@ import prisma from '../../../lib/prisma';
 import type { CollectionCharge, Prisma } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
-import type { CreateCollectionChargeData, ICollectionChargeRepository } from './ICollectionChargeRepository';
+import type {
+  CollectionChargeWithReceivableNumber,
+  CreateCollectionChargeData,
+  ICollectionChargeRepository,
+} from './ICollectionChargeRepository';
 
 /** Repositório Prisma de `collection_charges`. Zero regra de negócio (ver o contrato). */
 export class CollectionChargeRepository implements ICollectionChargeRepository {
@@ -57,7 +61,7 @@ export class CollectionChargeRepository implements ICollectionChargeRepository {
   public async findPageByUnit(
     scope: AccountingScope,
     params: { status?: string; kind?: string; page: number; limit: number },
-  ): Promise<{ items: CollectionCharge[]; total: number }> {
+  ): Promise<{ items: CollectionChargeWithReceivableNumber[]; total: number }> {
     const where: Prisma.CollectionChargeWhereInput = {
       ...accountingScopeWhere(scope),
       deletedAt: null,
@@ -67,6 +71,7 @@ export class CollectionChargeRepository implements ICollectionChargeRepository {
     const [items, total] = await Promise.all([
       prisma.collectionCharge.findMany({
         where,
+        include: { receivable: { select: { documentNumber: true } } },
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         skip: (params.page - 1) * params.limit,
         take: params.limit,

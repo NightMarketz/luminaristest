@@ -73,9 +73,14 @@ export interface CollectionChargeView {
   payer?: PayerInput;
 }
 
+/** Item da lista da unidade: sem pagador + o nº do título como escrito (16b; à mão, de `CollectionChargeListItem`). */
+export interface CollectionChargeListItem extends CollectionChargeView {
+  receivableDocumentNumber: string | null;
+}
+
 /** Página da lista da unidade (EMENDA-1 item 16c) — à mão, transcrita de `CollectionChargeService.ts` (CollectionChargePage). */
 export interface CollectionChargePage {
-  items: CollectionChargeView[];
+  items: CollectionChargeListItem[];
   total: number;
   page: number;
   limit: number;
