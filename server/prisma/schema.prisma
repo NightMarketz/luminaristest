@@ -1847,6 +1847,15 @@ model CompanyFiscalProfile {
   // BE-INCR-EFD-REINF PR-1 (item 4; lacuna B, dono 26/10: "Campo no perfil fiscal") — `classTrib` do R-1000 (Tabela 08)
   // do Simples: '01' | '02' | '03' conforme a CPP (P-REINF-7 ao contador). MEI = 04 e Presumido/Real = 99 são derivados.
   reinfClassTrib                   String?
+  // EFICIENCIA-FISCAL PR-5 (item 25; ADR §7 ChecklistHospitalarSchema): checklist da empresa para o 8 %/12 % hospitalar
+  // (Lei 9.249 art. 15 § 1º III "a": sociedade empresária + normas da Anvisa). Alvará date-only, calendário validado.
+  sociedadeEmpresaria              Boolean            @default(false)
+  alvaraSanitarioValidoAte         String?
+  alvaraSourceDocumentId           String?
+  // EFICIENCIA-FISCAL PR-5 (item 30; D-2026-10-28-EFICIENCIA-FISCAL-PR5-EXECUCAO, lacuna 4): naturezas declaradas que
+  // sustentam LOCACAO_IMOVEL_PROPRIO_NO_SIMPLES e CESSAO_MAO_DE_OBRA_MEDICA. null = não declarado.
+  declaraLocacaoImovelProprio      Boolean?
+  declaraCessaoMaoDeObraMedica     Boolean?
   createdById                      String?
   updatedById                      String?
   createdAt                        DateTime           @default(now())
@@ -2113,6 +2122,11 @@ model ServiceFiscalProfile {
   cLocPrestacao String? // IBGE 7 [192]; null => FiscalProfile.codMun (EP — grupo 6 da lista, MUN.INCID l.73-78)
   xDescServ     String? // [197]; null => services.name
   cClassTrib    String? // IBS-CBS-2027 PR-1 (F-IBS-10 a): 6 dígitos; null => FiscalProfile.ibsCbsClassTrib
+  // EFICIENCIA-FISCAL PR-5 (item 25; F-EF-10/11 a): finalidade TERAPEUTICA | ESTETICA | BELEZA (null ⇒ ESTETICA, I-17) e a
+  // equiparação hospitalar do serviço (Lei 9.249 art. 15 § 1º III "a"); fundamento = item da Atribuição 4 da RDC Anvisa 50.
+  finalidade           String?
+  elegivelHospitalar   Boolean   @default(false)
+  fundamentoHospitalar String?
   createdById   String?
   updatedById   String?
   createdAt     DateTime  @default(now())
@@ -3340,6 +3354,9 @@ model ReceitaFiscalLinha {
   itemRef               String // id da linha de saleItems
   natureza              String // SERVICO | REVENDA
   cTribNac              String? // do ServiceFiscalProfile do serviço
+  // EFICIENCIA-FISCAL PR-5 (item 26; D-2026-10-28-EFICIENCIA-FISCAL-PR5-EXECUCAO, lacuna 1): serviço da linha — a presunção
+  // hospitalar do Presumido é por serviço (Lei 9.249 art. 15 § 2º). Linhas anteriores = null ⇒ 32 %.
+  serviceRef            String?
   productRef            String?
   receitaCents          BigInt
   excluir               Json // TributoSimples[] — marcas de segregação do item (vazio até o X10a)

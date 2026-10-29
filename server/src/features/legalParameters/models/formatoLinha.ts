@@ -270,6 +270,12 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
             'chave CBS com discriminador ALIQUOTA, ou IBS com ALIQUOTA_UF|ALIQUOTA_MUN (ou VENCIMENTO); valorInt em bp (0..10000)',
           ),
   },
+  // EFICIENCIA-FISCAL PR-5 (item 32): Anexo III da LC 214 — chave = prefixo de NBS (5 a 9 dígitos, sem pontos), sem
+  // discriminador; valorInt = redução em bp.
+  IBS_CBS_REDUCAO_NBS: {
+    valor: 'int',
+    checar: (l) => so(/^\d{5,9}$/.test(l.chave) && semDisc(l) && bp(l) && (l.valorInt ?? 0) > 0, 'chave = prefixo de NBS (5 a 9 dígitos); sem discriminador; valorInt = redução em bp (1..10000)'),
+  },
   // IBS-CBS-2027 PR-3 (item 15; dono 21/10): lista de uso ou consumo pessoal (LC 214 art. 57) — chave = prefixo de NCM.
   IBS_CBS_USO_CONSUMO: {
     valor: 'texto',

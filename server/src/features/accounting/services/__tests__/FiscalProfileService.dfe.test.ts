@@ -139,7 +139,7 @@ describe('ServiceFiscalProfileService (BRIEF item 8/9)', () => {
       findManyByServiceRefs: jest.fn(async (_s, refs: string[]) => refs.map((r) => rows.get(r)).filter(Boolean) as ServiceFiscalProfile[]),
       listByScope: jest.fn(async () => [...rows.values()]),
       upsert: jest.fn(async (_s, ref: string, data: ServiceFiscalProfileData) => {
-        const row = { id: `sfp-${ref}`, userId: 'u1', unitId: 'unit-1', serviceRef: ref, cTribMun: null, cNBS: null, cLocPrestacao: null, xDescServ: null, ...data, createdById: 'u1', updatedById: 'u1', createdAt: new Date(), updatedAt: new Date('2026-09-17T00:00:00Z'), deletedAt: null } as ServiceFiscalProfile;
+        const row = { id: `sfp-${ref}`, userId: 'u1', unitId: 'unit-1', serviceRef: ref, cTribMun: null, cNBS: null, cLocPrestacao: null, xDescServ: null, finalidade: null, elegivelHospitalar: false, fundamentoHospitalar: null, ...rows.get(ref), ...data, createdById: 'u1', updatedById: 'u1', createdAt: new Date(), updatedAt: new Date('2026-09-17T00:00:00Z'), deletedAt: null } as ServiceFiscalProfile;
         rows.set(ref, row);
         return row;
       }),
@@ -159,7 +159,7 @@ describe('ServiceFiscalProfileService (BRIEF item 8/9)', () => {
     expect(v.cIndOp).toBe('030101');
     const call = (append as jest.Mock).mock.calls[0][2];
     expect(call.eventType).toBe('service_fiscal_profile.updated');
-    expect(call.payload).toEqual({ serviceRef: 'svc-corte', cTribNac: '060101', cTribMun: '', cNBS: '126021000', cIndOp: '030101', cLocPrestacao: '', cClassTrib: '' });
+    expect(call.payload).toEqual({ serviceRef: 'svc-corte', cTribNac: '060101', cTribMun: '', cNBS: '126021000', cIndOp: '030101', cLocPrestacao: '', cClassTrib: '', finalidade: '', elegivelHospitalar: 'false' });
     expect(JSON.parse(canonicalizeAuditPayload('service_fiscal_profile.updated', call.payload))).toMatchObject({ cTribNac: '060101' });
   });
 
@@ -191,6 +191,24 @@ describe('ServiceFiscalProfileService (BRIEF item 8/9)', () => {
     await svc.delete(scope, 'svc-x');
     expect((append as jest.Mock).mock.calls.map((c) => c[2].eventType)).toEqual(['service_fiscal_profile.updated', 'service_fiscal_profile.deleted']);
     await expect(svc.get(scope, 'svc-x')).rejects.toBeInstanceOf(NotFoundError);
+  });
+
+  // EFICIENCIA-FISCAL PR-5 (BRIEF item 25; ADR §7; F-EF-10/11 a)
+  it('item 25: finalidade + hospitalar gravam e entram na trilha sem o fundamento (texto livre)', async () => {
+    const { svc, append } = buildSvc();
+    const v = await svc.upsert(scope, 'svc-proc', UpsertServiceFiscalProfileSchema.parse({ unitId: 'unit-1', cTribNac: '040101', finalidade: 'TERAPEUTICA', elegivelHospitalar: true, fundamentoHospitalar: 'Atribuição 4 — sala de procedimentos' }));
+    expect(v).toMatchObject({ finalidade: 'TERAPEUTICA', elegivelHospitalar: true, fundamentoHospitalar: 'Atribuição 4 — sala de procedimentos' });
+    const kept = JSON.parse(canonicalizeAuditPayload('service_fiscal_profile.updated', (append as jest.Mock).mock.calls[0][2].payload));
+    expect(kept).toMatchObject({ finalidade: 'TERAPEUTICA', elegivelHospitalar: 'true' });
+    expect(kept).not.toHaveProperty('fundamentoHospitalar');
+  });
+
+  it('item 25: campo omitido mantém o gravado; trocar a finalidade de um elegível para ESTETICA → 400 HOSPITALAR_SO_TERAPEUTICA_COM_FUNDAMENTO', async () => {
+    const { svc, repo } = buildSvc();
+    await svc.upsert(scope, 'svc-proc', UpsertServiceFiscalProfileSchema.parse({ unitId: 'unit-1', cTribNac: '040101', finalidade: 'TERAPEUTICA', elegivelHospitalar: true, fundamentoHospitalar: 'Atribuição 4' }));
+    await expect(svc.upsert(scope, 'svc-proc', UpsertServiceFiscalProfileSchema.parse({ unitId: 'unit-1', cTribNac: '040101' }))).resolves.toMatchObject({ finalidade: 'TERAPEUTICA', elegivelHospitalar: true });
+    await expect(svc.upsert(scope, 'svc-proc', UpsertServiceFiscalProfileSchema.parse({ unitId: 'unit-1', cTribNac: '040101', finalidade: 'ESTETICA' }))).rejects.toThrow(/HOSPITALAR_SO_TERAPEUTICA_COM_FUNDAMENTO/);
+    expect(repo.upsert).toHaveBeenCalledTimes(2);
   });
 
   it('policy: canManageServiceFiscalProfile=false → 403', async () => {

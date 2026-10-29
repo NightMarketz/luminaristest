@@ -1113,6 +1113,9 @@ export class FiscalDocumentEmissionService {
       cLocPrestacao: null,
       xDescServ: null,
       cClassTrib: null, // IBS-CBS-2027 PR-1: pacote sem serviço ⇒ cClassTrib do perfil (F-IBS-10 a, fallback)
+      finalidade: null, // EFICIENCIA-FISCAL PR-5 (item 25): a emissão não lê estes campos
+      elegivelHospitalar: false,
+      fundamentoHospitalar: null,
       updatedAt: '',
     };
   }

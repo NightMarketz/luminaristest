@@ -32,7 +32,34 @@ export type ChaveParametro =
   | 'PRESUMIDO_TETO_ANO_REAIS'
   | 'PRESUMIDO_TETO_MES_REAIS';
 
-export type AtividadePresuncao = 'SERVICO' | 'REVENDA';
+/**
+ * EFICIENCIA-FISCAL PR-5 (BRIEF item 26; ADR §7): `HOSPITALAR` = serviço hospitalar ou de auxílio diagnóstico e terapia,
+ * fora do 32 % (Lei 9.249/1995 art. 15 § 1º III "a" ⇒ 8 % do caput) e no 12 % da CSLL (art. 20 III).
+ */
+export type AtividadePresuncao = 'SERVICO' | 'REVENDA' | 'HOSPITALAR';
+
+/** Requisitos do 8 %/12 % que faltaram na data (I-14). */
+export type RequisitoHospitalar = 'ELEGIVEL_HOSPITALAR' | 'FINALIDADE_TERAPEUTICA' | 'SOCIEDADE_EMPRESARIA' | 'ALVARA_VIGENTE';
+
+/**
+ * EFICIENCIA-FISCAL PR-5 (BRIEF item 26; ADR §7 `atividadeDoServico`; I-14, I-17) — a atividade de presunção de UM serviço na
+ * data do fato. HOSPITALAR só com `elegivelHospitalar`, `finalidade = TERAPEUTICA` (null ⇒ ESTETICA) e a empresa organizada
+ * como sociedade empresária com alvará sanitário válido na data (Lei 9.249 art. 15 § 1º III "a": "sociedade empresária e
+ * atenda às normas da [...] Anvisa"). Faltou um ⇒ SERVICO (32 %) e a lista do que faltou; serviço não marcado como elegível
+ * não gera aviso.
+ */
+export function atividadeDoServico(
+  perfil: { finalidade: string | null; elegivelHospitalar: boolean } | null,
+  empresa: { sociedadeEmpresaria: boolean; alvaraSanitarioValidoAte: string | null },
+  data: string,
+): { atividade: 'SERVICO' | 'HOSPITALAR'; faltando: RequisitoHospitalar[] } {
+  if (!perfil?.elegivelHospitalar) return { atividade: 'SERVICO', faltando: [] };
+  const faltando: RequisitoHospitalar[] = [];
+  if ((perfil.finalidade ?? 'ESTETICA') !== 'TERAPEUTICA') faltando.push('FINALIDADE_TERAPEUTICA');
+  if (!empresa.sociedadeEmpresaria) faltando.push('SOCIEDADE_EMPRESARIA');
+  if (!empresa.alvaraSanitarioValidoAte || empresa.alvaraSanitarioValidoAte < data) faltando.push('ALVARA_VIGENTE');
+  return { atividade: faltando.length === 0 ? 'HOSPITALAR' : 'SERVICO', faltando };
+}
 
 export interface ParametroApuracao {
   chave: ChaveParametro;

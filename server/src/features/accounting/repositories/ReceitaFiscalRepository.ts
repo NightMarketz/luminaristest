@@ -39,6 +39,13 @@ export class ReceitaFiscalRepository implements IReceitaFiscalRepository {
     });
   }
 
+  public async findServicosEntreDias(scope: AccountingScope, de: string, ate: string, tx?: Prisma.TransactionClient): Promise<ReceitaFiscalLinha[]> {
+    return (tx ?? prisma).receitaFiscalLinha.findMany({
+      where: { ...accountingScopeWhere(scope), natureza: 'SERVICO', dia: { gte: de, lte: ate } },
+      orderBy: [{ dia: 'asc' }, { saleId: 'asc' }, { itemRef: 'asc' }],
+    });
+  }
+
   public async findLinhasDasVendas(scope: AccountingScope, saleIds: readonly string[], tx?: Prisma.TransactionClient): Promise<ReceitaFiscalLinha[]> {
     if (saleIds.length === 0) return [];
     return (tx ?? prisma).receitaFiscalLinha.findMany({

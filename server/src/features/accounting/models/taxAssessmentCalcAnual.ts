@@ -3,12 +3,16 @@ import { LALUR_MESES, type LalurMes } from './Lalur.model';
 import {
   ajustesParteA,
   aliquotaCsll,
+  assertHospitalarSem16,
   baseServicoCents,
   fecharComDeducoes,
   impostoSobreBase,
   linha,
+  linhaHospitalar,
   linhaNaoUso,
+  hospitalarComTeto,
   maxZero,
+  presuncaoHospitalar,
   receitaServicoDaMemoria,
   somarDeducoes,
   temLinha,
@@ -145,6 +149,8 @@ export interface EntradaEstimativa {
   receitaRevendaCents: bigint;
   /** BE-INCR-H1-REFERENCIAL-3-4 (F-HR-3 b) — conta 3.4 do mês, com sinal; ausente = 0. */
   receitaNaoUsoCents?: bigint;
+  /** EFICIENCIA-FISCAL PR-5 (item 26; dono, 28/10, lacuna 2) — parte do serviço do mês a 8 %/12 %; ausente = 0. */
+  receitaHospitalarCents?: bigint;
   /** Item 9 — receita dos meses em atividade ANTERIORES do ano, mês a mês (só o 16% lê). */
   receitasMesesAnteriores: ReceitaMes[];
   /** Item 9 — meses `CONFIRMED` do ano, do mesmo tributo (só a diferença postergada lê). */
@@ -176,14 +182,17 @@ export function apurarEstimativaReceitaBruta(e: EntradaEstimativa): ResultadoApu
   const pR = linhaVigente(e.tabela, chave, dataFim, 'REVENDA')!;
 
   const servico = baseServicoCents(e.receitaServicoCents, e.receitaNaoUsoCents);
+  const hosp = hospitalarComTeto(e.receitaHospitalarCents, servico);
+  if (e.tributo === 'IRPJ' && e.perfil.prestadoraExclusivaServicos) assertHospitalarSem16(hosp);
   const memoria: MemoriaLinha[] = [
     linha('RECEITA_SERVICO', 'Receita bruta de serviço do mês (conta 3.1)', e.receitaServicoCents, F_ART2),
     ...linhaNaoUso(e.receitaNaoUsoCents, 'mês'),
+    ...linhaHospitalar(hosp, 'mês'),
     linha('RECEITA_REVENDA', 'Receita bruta de revenda do mês (conta 3.3)', e.receitaRevendaCents, F_ART2),
     linha('RECEITA_MES', 'Receita bruta do mês', servico + e.receitaRevendaCents, F_ART2),
   ];
 
-  let presServico = mulBp(servico, pS.valor);
+  let presServico = mulBp(servico - hosp, pS.valor);
   let codigoServico = 'PRESUNCAO_SERVICO';
   let descServico = `Receita de serviço × ${pS.valor / 100}%`;
   let fonteServico = pS.fonte;
@@ -213,10 +222,18 @@ export function apurarEstimativaReceitaBruta(e: EntradaEstimativa): ResultadoApu
   }
 
   const presRevenda = mulBp(e.receitaRevendaCents, pR.valor);
-  const base = presServico + presRevenda;
+  let base = presServico + presRevenda;
   memoria.push(
     linha(codigoServico, descServico, presServico, fonteServico),
     linha('PRESUNCAO_REVENDA', `Receita de revenda × ${pR.valor / 100}%`, presRevenda, pR.fonte),
+  );
+  if (hosp > 0n) {
+    const pH = presuncaoHospitalar(e.tabela, chave, dataFim);
+    const presH = mulBp(hosp, pH.valor);
+    base += presH;
+    memoria.push(linha('PRESUNCAO_HOSPITALAR', `Receita de serviço hospitalar × ${pH.valor / 100}%`, presH, pH.fonte));
+  }
+  memoria.push(
     linha('BASE', 'Base de cálculo estimada do mês', base, F_ART2),
   );
   const imposto = impostoSobreBase(e.tabela, e.tributo, dataFim, base, aliqCsll, 1n);

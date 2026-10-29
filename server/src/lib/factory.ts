@@ -272,6 +272,7 @@ import { TaxOptimizationService } from '../features/accounting/services/TaxOptim
 import { TaxSimulationService } from '../features/accounting/services/TaxSimulationService'; // EFICIENCIA-FISCAL PR-3
 import { TaxOptimizationReportService } from '../features/accounting/services/TaxOptimizationReportService'; // EFICIENCIA-FISCAL PR-4
 import { loadUnconditionalDiscountCents } from '../features/accounting/sync/bridges/saleItems'; // EFICIENCIA-FISCAL PR-4
+import { ServicoFiscalAvaliacaoService } from '../features/accounting/services/ServicoFiscalAvaliacaoService';
 import { TaxOptimizationRepository } from '../features/accounting/repositories/TaxOptimizationRepository'; // EFICIENCIA-FISCAL PR-1
 import type { ITaxOptimizationRepository } from '../features/accounting/repositories/ITaxOptimizationRepository';
 import { PresetSyncService } from '../features/dynamicTables/services/PresetSyncService';
@@ -952,6 +953,7 @@ export class ApplicationFactory {
     /** EFICIENCIA-FISCAL PR-3 — montado no getter: depende de simplesApuracao e interestOnEquity, criados no mesmo literal. */
     taxSimulation?: TaxSimulationService;
     taxOptimizationReport: TaxOptimizationReportService; // EFICIENCIA-FISCAL PR-4
+    servicoFiscalAvaliacao: ServicoFiscalAvaliacaoService; // EFICIENCIA-FISCAL PR-5
     productDestination: ProductDestinationService; // ITEM-DESTINATION PR-2
     companyFiscalProfile: CompanyFiscalProfileService; // X13
     companySigner: CompanySignerService; // X13
@@ -1318,6 +1320,8 @@ export class ApplicationFactory {
       this.repositories.accountingPeriod, // X7 Fase B item 15: meses fechados antes do balancete (só leitura)
       legalParameterService, // BE-INCR-LEGAL-PARAMS PR-1: fotografia TAX_ASSESSMENT + CSLL_ALIQUOTA
       presumidoTetoService, // PRESUMIDO-TETO-78MI item 9b/9c: aviso na prévia, 400 na confirmação
+      this.repositories.receitaFiscal, // EFICIENCIA-FISCAL PR-5 item 26: subrazão por serviço (8 %/12 % hospitalar)
+      this.repositories.serviceFiscalProfile,
     );
 
     // BE-INCR-SPED-ECF-FASE3B item 11 (Fork 4→b): e-Lalur/e-Lacs store. Lê o repo de contas do plano
@@ -1681,6 +1685,18 @@ export class ApplicationFactory {
         { medidaDaApuracao: (scope, competencia) => this.services.simplesApuracao.medidaDaApuracao(scope, competencia) },
         { descontoIncondicionalCents: loadUnconditionalDiscountCents },
         this.policies.accounting,
+      ),
+      // EFICIENCIA-FISCAL PR-5 (itens 27, 30–32): alertas de enquadramento e sugestões dos serviços — só leitura + proposeSystem.
+      servicoFiscalAvaliacao: new ServicoFiscalAvaliacaoService(
+        this.policies.accounting,
+        this.repositories.companyFiscalProfile,
+        this.repositories.serviceFiscalProfile,
+        this.repositories.fiscalProfile,
+        this.repositories.receitaFiscal,
+        this.repositories.account,
+        this.repositories.posting,
+        legalParameterService,
+        taxOptimizationService,
       ),
       // ITEM-DESTINATION PR-2 (item 17, F-ID-2 a): destinação padrão por produto — a mesma porta de existência
       // de produto do LAC-E (reuso), sob a policy fiscal.
@@ -2565,6 +2581,7 @@ export class ApplicationFactory {
       this.policies.accounting,
     ));
   public getTaxOptimizationReportService = (): TaxOptimizationReportService => this.services.taxOptimizationReport;
+  public getServicoFiscalAvaliacaoService = (): ServicoFiscalAvaliacaoService => this.services.servicoFiscalAvaliacao;
   public getProductDestinationService = (): ProductDestinationService => this.services.productDestination;
   public getCompanyFiscalProfileService = (): CompanyFiscalProfileService => this.services.companyFiscalProfile;
   public getCompanySignerService = (): CompanySignerService => this.services.companySigner;
