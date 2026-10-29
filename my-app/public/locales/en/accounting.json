@@ -2525,7 +2525,8 @@
         "vDescCond": "Conditional discount",
         "vDescIncond": "Unconditional discount",
         "vServ": "Service amount",
-        "xDescServ": "Service description"
+        "xDescServ": "Service description",
+        "totTrib": "Approximate taxes"
       },
       "homologacaoSemLink": "Homologation: use the portal restricted-production environment (address to be confirmed in the runbook — PV-7).",
       "howto": "Use the portal \"Emissão Completa\". Copy each value into the field with the same name; the ones marked \"checked on return\" are compared with the authorized XML.",
@@ -2542,7 +2543,9 @@
         "naoInformado": "Not provided.",
         "prestador": "Select Prestador (service provider).",
         "retidoSim": "Yes, withheld by the customer.",
-        "tributavel": "Taxable operation."
+        "tributavel": "Taxable operation.",
+        "fedMei": "No federal taxes on the MEI invoice — do not provide.",
+        "totTribMei": "Do not provide — optional for the MEI."
       },
       "note": {
         "aliquota": "check — the portal may compute it",
@@ -2553,6 +2556,7 @@
       },
       "opSimpNac": {
         "1": "1 — Not opted in",
+        "2": "2 — Opted in MEI",
         "3": "3 — Opted in ME/EPP"
       },
       "portalLink": "Open the Emissor Nacional",

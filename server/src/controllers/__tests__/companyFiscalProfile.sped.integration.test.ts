@@ -150,11 +150,11 @@ describe('X13 PR-2 — geração SPED lê o perfil da empresa', () => {
     expect(ok.status).toBe(200);
   });
 
-  it('item 17: empresa MEI no ano corrente → GET da unidade mostra a emissão bloqueada com o motivo', async () => {
+  it('item 17 (F-XP-4 → b, dono 29/10): empresa MEI no ano corrente → GET da unidade lê opSimpNac=2 do regime da empresa', async () => {
     await prisma.companyFiscalProfile.update({ where: { userId_anoCalendario: { userId: dono.id, anoCalendario: HOJE } }, data: { regime: 'MEI' } });
     const g = await request(app).get('/api/accounting/fiscal-profile').set(authHeader(dono)).query({ unitId: UNIT });
     expect(g.status).toBe(200);
-    expect(g.body.data.emissao.completo).toBe(false);
-    expect(g.body.data.emissao.faltantes).toContain('regime MEI — emissão fora do escopo (opSimpNac=2)');
+    expect(g.body.data.emissao.opSimpNac).toBe(2);
+    expect(g.body.data.emissao.faltantes).not.toContain('pTotTribSNCent'); // E0710: o MEI nunca informa pTotTribSN
   });
 });
