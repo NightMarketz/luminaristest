@@ -252,6 +252,18 @@ describe('X13 PR-2 — regime da EMPRESA governa a unidade (itens 15 e 17)', () 
     ]);
   });
 
+  // Revisão independente do #976 (achado 1): regApTribSN, issAliquotaBp e pTotTribSNCent de um perfil que era ME/EPP
+  // eram descartados em silêncio pelo montador, com completo=true. Dono, 29/10: "Nada é aceito e ignorado em silêncio."
+  it('item 17 (F-XP-4 b): regApTribSN, alíquota e pTotTribSN herdados de ME/EPP viram faltante (E0162, E0600, E0710)', () => {
+    const s = fiscalProfileEmissaoStatus(rowFrom({ regimeTributario: 'SIMPLES', codMun: '3550308', regApTribSN: 1, issAliquotaBp: 200, pTotTribSNCent: 600, ibsCbsInformar: false }), 'MEI');
+    expect(s.completo).toBe(false);
+    expect(s.faltantes).toEqual([
+      'regApTribSN — MEI não informa o regime de apuração do SN (E0162): limpe no perfil',
+      'issAliquotaBp — MEI não informa alíquota de ISS (E0600): limpe no perfil',
+      'pTotTribSNCent — MEI não informa pTotTribSN (E0710): limpe no perfil',
+    ]);
+  });
+
   it('item 17: GET da unidade devolve emissao.opSimpNac=2 (lê o regime da empresa)', async () => {
     const { svc } = build({ regimeEmpresa: 'MEI', existing: rowFrom({ regimeTributario: 'SIMPLES', codMun: '3550308', pTotTribSNCent: null, ibsCbsInformar: false }) });
     expect((await svc.get(scope))?.emissao).toMatchObject({ completo: true, opSimpNac: 2 });

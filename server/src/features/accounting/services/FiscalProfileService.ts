@@ -166,7 +166,7 @@ export interface FiscalProfileView extends CostRegime {
  * (Anexo I v1.01) / RN que a exige. Perfil de serviço e tomador são checados na emissão (item 14), não aqui.
  */
 export function fiscalProfileEmissaoStatus(
-  row: Pick<FiscalProfile, 'regimeTributario' | 'codMun' | 'ibsCbsInformar' | 'ibsCbsCst' | 'ibsCbsClassTrib' | 'pTotTribFedCent' | 'pTotTribEstCent' | 'pTotTribMunCent' | 'pTotTribSNCent' | 'd1fConfirmado' | 'regEspTrib' | 'issRetidoTomadorPj'>,
+  row: Pick<FiscalProfile, 'regimeTributario' | 'codMun' | 'ibsCbsInformar' | 'ibsCbsCst' | 'ibsCbsClassTrib' | 'pTotTribFedCent' | 'pTotTribEstCent' | 'pTotTribMunCent' | 'pTotTribSNCent' | 'd1fConfirmado' | 'regEspTrib' | 'issRetidoTomadorPj' | 'regApTribSN' | 'issAliquotaBp'>,
   regimeEmpresa: RegimeEmpresa | null = null,
 ): FiscalProfileEmissaoStatus {
   const faltantes: string[] = [];
@@ -175,12 +175,16 @@ export function fiscalProfileEmissaoStatus(
   if (isMei) {
     // F-XP-4 → (b) (dono, chat, 29/10/2026, D-2026-10-29-EMISSAO-SIMPLES-E-FINANCEIRO): a DPS do MEI sai com
     // opSimpNac=2. RNs do Anexo I v1.01 (gov.br/nfse, 09/02/2026) que o perfil não pode contrariar — o campo
-    // conflitante vira faltante, nunca é ignorado: E0174 regEspTrib = 0; E0583 sem retenção de ISS; IBS/CBS não é
-    // destacado pelo MEI (Res. CGSN 140 art. 106 § 1º V, red. Res. CGSN 190/2026). pTotTribSN é proibido (E0710):
-    // o totTrib sai como indTotTrib = 0 (Decreto 8.264/2014 art. 8º — a informação é facultativa para o MEI).
+    // conflitante vira faltante, nunca é ignorado: E0174 regEspTrib = 0; E0583 sem retenção de ISS; E0162 sem
+    // regApTribSN; E0600 sem alíquota; IBS/CBS não é destacado pelo MEI (Res. CGSN 140 art. 106 § 1º V, red. Res. CGSN
+    // 190/2026). pTotTribSN é proibido (E0710): o totTrib sai como indTotTrib = 0 (Decreto 8.264/2014 art. 8º — a
+    // informação é facultativa para o MEI).
     if (row.regEspTrib !== 0) faltantes.push('regEspTrib — MEI exige regime especial "Nenhum" (0) (E0174)');
     if (row.issRetidoTomadorPj) faltantes.push('issRetidoTomadorPj — MEI não tem retenção de ISS (E0583): desmarque no perfil');
     if (row.ibsCbsInformar) faltantes.push('ibsCbsInformar — MEI não destaca IBS/CBS (Res. CGSN 140 art. 106 § 1º V)');
+    if (row.regApTribSN != null) faltantes.push('regApTribSN — MEI não informa o regime de apuração do SN (E0162): limpe no perfil');
+    if (row.issAliquotaBp != null) faltantes.push('issAliquotaBp — MEI não informa alíquota de ISS (E0600): limpe no perfil');
+    if (row.pTotTribSNCent != null) faltantes.push('pTotTribSNCent — MEI não informa pTotTribSN (E0710): limpe no perfil');
   } else if (row.regimeTributario === 'SIMPLES') {
     if (row.pTotTribSNCent == null) faltantes.push('pTotTribSNCent'); // totTrib [325] 1-1; ME/EPP => pTotTribSN (RN E0712)
   } else {
