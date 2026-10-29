@@ -12,6 +12,7 @@ import type {
   DfeCallContext,
   DfeCapabilities,
   DfeEmissorPort,
+  DfeKind,
   EmissaoResult,
   EmitirInput,
   InutilizarInput,
@@ -19,6 +20,7 @@ import type {
 } from '../DfeEmissorPort';
 import { AssinaturaRemotaError, type TipoDfeAssinado } from '../AssinadorRemotoPort';
 import { endpointSefaz, type SefazServico } from './sefazConfig';
+import { comInfNFeSupl, qrCodeV2Online, qrCodeV3Online, urlsNfce, type InfNFeSupl } from './nfceQrCode';
 import type { SefazSoapClient } from './SefazSoapClient';
 
 /**
@@ -59,6 +61,7 @@ const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_
 const AUTORIZADO = new Set(['100', '150']); // [WS-CSTAT] 100 autorizado; 150 autorizado fora de prazo
 const DUPLICIDADE = new Set(['204', '539']); // [WS-CSTAT] duplicidade de NF-e
 const NAO_CONSTA = '217'; // [WS-CSTAT] NF-e não consta na base de dados da SEFAZ
+const QR_V3_RECUSADO = '407'; // RV ZX02-220 (D02 p. 11): "QR Code versão 3 e UF não aceita esta versão"
 
 type No = Record<string, unknown>;
 const no = (v: unknown): No => (v && typeof v === 'object' ? (v as No) : {});
@@ -94,19 +97,46 @@ export class SefazNfeEmissor implements DfeEmissorPort {
 
   async emitir(input: EmitirInput): Promise<EmissaoResult> {
     const payload = NfePayloadSchema.parse(input.payload);
-    const assinado = await this.assinarNota(payload, input.kind as TipoDfeAssinado, input.ctx);
     const chave = payload.infNFe.Id.slice(3);
     const { uf, modelo } = partesDaChave(chave);
-    const lote = `<enviNFe xmlns="${NFE_NS}" versao="4.00"><idLote>${this.idLote()}</idLote><indSinc>1</indSinc>${assinado}</enviNFe>`;
-    const ret = await this.opts.soap.call(this.endpoint(uf, modelo, this.opts.ambiente, 'NFeAutorizacao4'), 'NFeAutorizacao4', lote);
-    const r = no(no(parser.parse(ret)).retEnviNFe);
-    const prot = no(no(r.protNFe).infProt);
-    const cStatLote = str(r.cStat);
-    const cStat = str(prot.cStat) || cStatLote;
-    const xMotivo = str(prot.xMotivo) || str(r.xMotivo);
+    let assinado = await this.assinarNota(payload, input.kind as TipoDfeAssinado, input.ctx);
+    // E-3: a NFC-e leva o infNFeSupl (fora da assinatura) — v3 primeiro (F-NFCE-E1-4 c).
+    if (modelo === 65) assinado = comInfNFeSupl(assinado, this.supl(uf, chave, 3));
+    let envio = await this.enviarLote(uf, modelo, assinado);
+    if (modelo === 65 && envio.cStat === QR_V3_RECUSADO) {
+      if (!input.ctx?.csc) {
+        return {
+          status: 'REJECTED',
+          partnerRef: chave,
+          errors: [{ code: QR_V3_RECUSADO, message: `${envio.xMotivo} — a UF recusa o QR Code v3 e a unidade não tem CSC cadastrado (PUT /api/accounting/nfce-cscs/:unitId)` }],
+        };
+      }
+      // A mesma nota assinada: só o infNFeSupl muda (D02 p. 8), então não há nova assinatura.
+      assinado = comInfNFeSupl(assinado, this.supl(uf, chave, 2, input.ctx.csc));
+      envio = await this.enviarLote(uf, modelo, assinado);
+    }
+    const { ret, prot, cStat, xMotivo } = envio;
     if (AUTORIZADO.has(cStat)) return this.autorizado(chave, payload, assinado, extrairProtNFe(ret), prot);
     if (DUPLICIDADE.has(cStat)) return this.consultar(chave, input.ctx ? { ...input.ctx, payload } : { ambiente: this.opts.ambiente, payload });
     return { status: 'REJECTED', partnerRef: chave, errors: [{ code: cStat || 'sefaz_sem_cstat', message: xMotivo }] };
+  }
+
+  /** X10a PR-8: webservice de autorização e (na NFC-e) URL do QR Code da UF/ambiente — o que falta vira faltante nomeado. */
+  faltantesDoEnvio(kind: DfeKind, cUF: string, ambiente: DfeAmbiente): string[] {
+    const uf = Object.entries(CUF_POR_SIGLA).find(([, c]) => c === cUF)?.[0];
+    if (!uf) return [`UF do emitente desconhecida (cUF ${cUF})`];
+    const modelo = kind === 'NFCE' ? 65 : 55;
+    const faltantes: string[] = [];
+    try {
+      this.endpoint(uf, modelo, ambiente, 'NFeAutorizacao4');
+    } catch (error) {
+      faltantes.push(error instanceof Error ? error.message : String(error));
+    }
+    if (modelo === 65) {
+      const urls = urlsNfce(uf, ambiente);
+      if (!urls.ok) faltantes.push(urls.motivo);
+    }
+    return faltantes;
   }
 
   async consultar(partnerRef: string, ctx?: DfeCallContext): Promise<EmissaoResult> {
@@ -122,7 +152,9 @@ export class SefazNfeEmissor implements DfeEmissorPort {
         // Sem a nota para remontar o nfeProc: autoriza pelo protocolo (o fato), sem XML — a pendência de anexo fica sem bytes.
         return { status: 'AUTHORIZED', partnerRef, chaveOuCodigo: partnerRef, numero: String(partesDaChave(partnerRef).nNF), errors: [] };
       }
-      const assinado = await this.assinarNota(payload, modelo === 65 ? 'NFCE' : 'NFE', ctx);
+      let assinado = await this.assinarNota(payload, modelo === 65 ? 'NFCE' : 'NFE', ctx);
+      // O infNFeSupl não é assinado; na remontagem vai o v3 (a versão aceita pela UF não volta no protocolo).
+      if (modelo === 65) assinado = comInfNFeSupl(assinado, this.supl(uf, partnerRef, 3));
       return this.autorizado(partnerRef, payload, assinado, extrairProtNFe(ret), prot);
     }
     return { status: 'PROCESSING', partnerRef, errors: [{ code: cStat || 'sefaz_sem_cstat', message: str(r.xMotivo) }] };
@@ -177,6 +209,24 @@ export class SefazNfeEmissor implements DfeEmissorPort {
   }
 
   // ---- internos ----
+
+  private async enviarLote(uf: string, modelo: 55 | 65, nfeAssinada: string): Promise<{ ret: string; prot: No; cStat: string; xMotivo: string }> {
+    const lote = `<enviNFe xmlns="${NFE_NS}" versao="4.00"><idLote>${this.idLote()}</idLote><indSinc>1</indSinc>${nfeAssinada}</enviNFe>`;
+    const ret = await this.opts.soap.call(this.endpoint(uf, modelo, this.opts.ambiente, 'NFeAutorizacao4'), 'NFeAutorizacao4', lote);
+    const r = no(no(parser.parse(ret)).retEnviNFe);
+    const prot = no(no(r.protNFe).infProt);
+    return { ret, prot, cStat: str(prot.cStat) || str(r.cStat), xMotivo: str(prot.xMotivo) || str(r.xMotivo) };
+  }
+
+  /** E-3 — QR Code da versão pedida + urlChave da UF; UF sem URL oficial ⇒ erro nomeado (o serviço já barrou no pré-voo). */
+  private supl(uf: string, chave: string, versao: 2 | 3, csc?: { id: string; csc: string }): InfNFeSupl {
+    const urls = urlsNfce(uf, this.opts.ambiente);
+    if (!urls.ok) throw new Error(`dfe_nfce_sem_url: ${urls.motivo}`);
+    const tpAmb = tpAmbFor(this.opts.ambiente);
+    if (versao === 2 && !csc) throw new Error('dfe_nfce_sem_csc: QR Code v2 sem o CSC da unidade');
+    const qrCode = versao === 3 ? qrCodeV3Online(urls.qrCodeBase, chave, tpAmb) : qrCodeV2Online(urls.qrCodeBase, chave, tpAmb, csc!);
+    return { qrCode, urlChave: urls.urlChave };
+  }
 
   private idLote(): string {
     // idLote 1–15 dígitos ([WS-ENVINFE]); instante + sequência local evita repetição dentro do processo.

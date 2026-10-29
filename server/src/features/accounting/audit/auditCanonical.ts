@@ -323,6 +323,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'psc_credential.removed':    ['unitId', 'pscProviderId', 'certNotAfter'],
   'psc_provider.set':          ['pscProviderId', 'nome'],
   'psc_provider.removed':      ['pscProviderId', 'nome'],
+  // X10a PR-8 (D-2026-10-29-X10A-PR7-9-FORKS decisão 3) — só unidade, ambiente e o identificador do CSC: NUNCA o CSC.
+  'nfce_csc.set':     ['unitId', 'ambiente', 'cscId'],
+  'nfce_csc.removed': ['unitId', 'ambiente', 'cscId'],
   'collection_charge.created':        ['collectionChargeId', 'receivableId', 'paymentAccountId', 'kind', 'amountCents', 'status'],
   'collection_charge.status_changed': ['collectionChargeId', 'from', 'to', 'providerStatus'],
   'collection_charge.cancelled':      ['collectionChargeId', 'fromStatus', 'toStatus', 'providerStatus'],

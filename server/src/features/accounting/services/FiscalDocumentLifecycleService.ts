@@ -216,10 +216,13 @@ export class FiscalDocumentLifecycleService {
     if (!port.capabilities.assinaturaRemota) return undefined;
     const a = await this.emissionService.assinaturaDaUnidade(scope, port);
     if (!a.ok && exigir) throw bloqueioSessaoPsc(a.motivo);
+    // X10a PR-8: o CSC da NFC-e acompanha o contexto (o reenvio pode cair no QR Code v2).
+    const csc = await this.emissionService.cscDaUnidade(scope, port, doc.kind as FiscalDocumentKind, doc.ambiente as DfeAmbiente);
     return {
       ambiente: doc.ambiente as DfeAmbiente,
       ...(a.ok && a.assinatura ? { assinatura: a.assinatura } : {}),
       payload: JSON.parse(this.currentAttempt(doc).payloadJson) as unknown,
+      ...(csc ? { csc } : {}),
     };
   }
 

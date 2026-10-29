@@ -1,0 +1,315 @@
+{
+ "acessoEm": "2026-10-29",
+ "fonte": "docs/accounting/fontes-oficiais/TRANSCRICAO-NFCe-QRCode-contingencia-2026-10-29.md §2 (páginas oficiais de cada SEFAZ; o ENCAT estava fora do ar)",
+ "regra": "qrCodeBase e urlChave = o primeiro literal da página quando ela lista mais de um; a base é tudo antes de ?p=",
+ "urls": [
+  {
+   "uf": "SP",
+   "ambiente": "producao",
+   "qrCodeBase": "https://www.nfce.fazenda.sp.gov.br/NFCeConsultaPublica/Paginas/ConsultaQRCode.aspx",
+   "urlChave": "https://www.nfce.fazenda.sp.gov.br/NFCeConsultaPublica",
+   "fonte": "https://portal.fazenda.sp.gov.br/servicos/nfce/Paginas/WebServices.aspx (acesso 29/10/2026)"
+  },
+  {
+   "uf": "SP",
+   "ambiente": "homologacao",
+   "qrCodeBase": "https://www.homologacao.nfce.fazenda.sp.gov.br/NFCeConsultaPublica/Paginas/ConsultaQRCode.aspx",
+   "urlChave": "https://www.homologacao.nfce.fazenda.sp.gov.br/NFCeConsultaPublica",
+   "fonte": "https://portal.fazenda.sp.gov.br/servicos/nfce/Paginas/WebServices.aspx (acesso 29/10/2026)"
+  },
+  {
+   "uf": "BA",
+   "ambiente": "producao",
+   "qrCodeBase": "http://nfe.sefaz.ba.gov.br/servicos/nfce/qrcode.aspx",
+   "urlChave": "http://www.sefaz.ba.gov.br/nfce/consulta",
+   "fonte": "https://www.sefaz.ba.gov.br/docs/inspetoria-eletronica/icms/nfce_configuracao_programa_emissor.pdf (PDF de 27/03/2018) (acesso 29/10/2026)"
+  },
+  {
+   "uf": "BA",
+   "ambiente": "homologacao",
+   "qrCodeBase": "http://hnfe.sefaz.ba.gov.br/servicos/nfce/qrcode.aspx",
+   "urlChave": "http://hinternet.sefaz.ba.gov.br/nfce/consulta",
+   "fonte": "https://www.sefaz.ba.gov.br/docs/inspetoria-eletronica/icms/nfce_configuracao_programa_emissor.pdf (acesso 29/10/2026)"
+  },
+  {
+   "uf": "DF",
+   "ambiente": "producao",
+   "qrCodeBase": "http://www.fazenda.df.gov.br/nfce/qrcode",
+   "urlChave": "http://www.fazenda.df.gov.br/nfce/consulta",
+   "fonte": "https://mobile.receita.fazenda.df.gov.br/aplicacoes/CartaServicos/servico.cfm?codTipoPessoa=7&codServico=781&codSubCategoria=218 (última alteração 19/05/2026) (acesso 29/10/2026)"
+  },
+  {
+   "uf": "DF",
+   "ambiente": "homologacao",
+   "qrCodeBase": "http://www.fazenda.df.gov.br/nfce/qrcode",
+   "urlChave": "http://www.fazenda.df.gov.br/nfce/consulta",
+   "fonte": "idem DF produção (acesso 29/10/2026)"
+  },
+  {
+   "uf": "MS",
+   "ambiente": "producao",
+   "qrCodeBase": "http://www.dfe.ms.gov.br/nfce/qrcode",
+   "urlChave": "http://www.dfe.ms.gov.br/nfce/consulta",
+   "fonte": "https://www.sefaz.ms.gov.br/documentos-fiscais-eletronicos/nfc-e/ (acesso 29/10/2026)"
+  },
+  {
+   "uf": "MS",
+   "ambiente": "homologacao",
+   "qrCodeBase": "http://www.dfe.ms.gov.br/nfce/qrcode",
+   "urlChave": "http://www.dfe.ms.gov.br/nfce/consulta",
+   "fonte": "idem MS produção (acesso 29/10/2026)"
+  },
+  {
+   "uf": "MG",
+   "ambiente": "producao",
+   "qrCodeBase": "https://portalsped.fazenda.mg.gov.br/portalnfce/sistema/qrcode.xhtml",
+   "urlChave": "https://portalsped.fazenda.mg.gov.br/portalnfce",
+   "fonte": "https://portalsped.fazenda.mg.gov.br/spedmg/nfce/web-services/ (acesso 29/10/2026)"
+  },
+  {
+   "uf": "MG",
+   "ambiente": "homologacao",
+   "qrCodeBase": "https://portalsped.fazenda.mg.gov.br/portalnfce/sistema/qrcode.xhtml",
+   "urlChave": "https://hportalsped.fazenda.mg.gov.br/portalnfce",
+   "fonte": "idem MG produção (acesso 29/10/2026)"
+  },
+  {
+   "uf": "PB",
+   "ambiente": "producao",
+   "qrCodeBase": "http://www.sefaz.pb.gov.br/nfce",
+   "urlChave": "www.sefaz.pb.gov.br/nfce",
+   "fonte": "https://www.sefaz.pb.gov.br/view-docs?task=document.viewdoc&id=2576 (aviso de 16/01/2024) (acesso 29/10/2026)"
+  },
+  {
+   "uf": "PE",
+   "ambiente": "producao",
+   "qrCodeBase": "http://nfce.sefaz.pe.gov.br/nfce/consulta",
+   "urlChave": "nfce.sefaz.pe.gov.br/nfce/consulta",
+   "fonte": "https://www.sefaz.pe.gov.br/Servicos/Nota-Fiscal-de-Consumidor-Eletronica/Paginas/Webservices-Producao-e-Homologacao.aspx ; https://www.sefaz.pe.gov.br/Servicos/Nota-Fiscal-de-Consumidor-Eletronica/Paginas/Avisos-NFC-e.aspx (acesso 29/10/2026)"
+  },
+  {
+   "uf": "PE",
+   "ambiente": "homologacao",
+   "qrCodeBase": "http://nfcehomolog.sefaz.pe.gov.br/nfce/consulta",
+   "urlChave": "nfce.sefaz.pe.gov.br/nfce/consulta",
+   "fonte": "idem PE produção (acesso 29/10/2026)"
+  },
+  {
+   "uf": "RO",
+   "ambiente": "producao",
+   "qrCodeBase": "http://www.nfce.sefin.ro.gov.br/consultanfce/consulta.jsp",
+   "urlChave": "www.sefin.ro.gov.br/nfce/consulta",
+   "fonte": "http://www.nfce.sefin.ro.gov.br/docTecnica.jsp (acesso 29/10/2026)"
+  },
+  {
+   "uf": "SC",
+   "ambiente": "producao",
+   "qrCodeBase": "https://sat.sef.sc.gov.br/nfce/consulta",
+   "urlChave": "https://sat.sef.sc.gov.br/nfce/consulta",
+   "fonte": "https://www.sef.sc.gov.br/arquivos_portal/servicos/136/WEBSERVICE_DA_NFC_E_URL_DO_QR_CODE_E_DA_CONSULTA_EM_SC.pdf (sem data) (acesso 29/10/2026)"
+  },
+  {
+   "uf": "SC",
+   "ambiente": "homologacao",
+   "qrCodeBase": "https://hom.sat.sef.sc.gov.br/nfce/consulta",
+   "urlChave": "https://hom.sat.sef.sc.gov.br/nfce/consulta",
+   "fonte": "idem SC produção (acesso 29/10/2026)"
+  },
+  {
+   "uf": "TO",
+   "ambiente": "producao",
+   "qrCodeBase": "http://www.sefaz.to.gov.br/nfce/qrcode",
+   "urlChave": "http://www.sefaz.to.gov.br/nfce/consulta",
+   "fonte": "https://www.to.gov.br/sefaz/documentacao/4zw4v3wp9rrc (acesso 29/10/2026)"
+  },
+  {
+   "uf": "TO",
+   "ambiente": "homologacao",
+   "qrCodeBase": "http://homologacao.sefaz.to.gov.br/nfce/qrcode",
+   "urlChave": "http://homologacao.sefaz.to.gov.br/nfce/consulta",
+   "fonte": "idem TO produção (acesso 29/10/2026)"
+  }
+ ],
+ "desabilitadas": [
+  {
+   "uf": "AM",
+   "ambiente": "producao",
+   "motivo": "a página oficial lida não declara a urlChave (ZX03)"
+  },
+  {
+   "uf": "AM",
+   "ambiente": "homologacao",
+   "motivo": "a página oficial lida não declara a urlChave (ZX03)"
+  },
+  {
+   "uf": "CE",
+   "ambiente": "producao",
+   "motivo": "a página oficial lida não declara a urlChave (ZX03)"
+  },
+  {
+   "uf": "CE",
+   "ambiente": "homologacao",
+   "motivo": "a página oficial lida não declara a urlChave (ZX03)"
+  },
+  {
+   "uf": "ES",
+   "ambiente": "producao",
+   "motivo": "urlChave ambígua na fonte oficial (texto da âncora × href; seção 2 e 4 da transcrição)"
+  },
+  {
+   "uf": "ES",
+   "ambiente": "homologacao",
+   "motivo": "urlChave ambígua na fonte oficial (texto da âncora × href; seção 2 e 4 da transcrição)"
+  },
+  {
+   "uf": "GO",
+   "ambiente": "producao",
+   "motivo": "a página oficial lida não declara a urlChave (ZX03)"
+  },
+  {
+   "uf": "GO",
+   "ambiente": "homologacao",
+   "motivo": "a página oficial lida não declara a urlChave (ZX03)"
+  },
+  {
+   "uf": "PB",
+   "ambiente": "homologacao",
+   "motivo": "a página oficial lida não declara a urlChave (ZX03)"
+  },
+  {
+   "uf": "PR",
+   "ambiente": "producao",
+   "motivo": "a página oficial lida não declara a urlChave (ZX03)"
+  },
+  {
+   "uf": "PR",
+   "ambiente": "homologacao",
+   "motivo": "a página oficial lida não declara a urlChave (ZX03)"
+  },
+  {
+   "uf": "RJ",
+   "ambiente": "producao",
+   "motivo": "urlChave ambígua na fonte oficial (manual dá dois valores: item 2.6 × seção DANFE)"
+  },
+  {
+   "uf": "RJ",
+   "ambiente": "homologacao",
+   "motivo": "urlChave ambígua na fonte oficial (manual dá dois valores: item 2.6 × seção DANFE)"
+  },
+  {
+   "uf": "RO",
+   "ambiente": "homologacao",
+   "motivo": "a página oficial não separa homologação"
+  },
+  {
+   "uf": "AC",
+   "ambiente": "producao",
+   "motivo": "sem fonte oficial lida em 29/10/2026: O portal http://www.sefaznet.ac.gov.br/nfce/ não publica URL de QR nem urlChave. O site sefaz.ac.gov.br só devolve decretos na busca."
+  },
+  {
+   "uf": "AC",
+   "ambiente": "homologacao",
+   "motivo": "sem fonte oficial lida em 29/10/2026: O portal http://www.sefaznet.ac.gov.br/nfce/ não publica URL de QR nem urlChave. O site sefaz.ac.gov.br só devolve decretos na busca."
+  },
+  {
+   "uf": "AL",
+   "ambiente": "producao",
+   "motivo": "sem fonte oficial lida em 29/10/2026: https://www.sefaz.al.gov.br/nfce/nfce-documentacao mostra \"SEFAZ-AL \\| Site em manutenção\" (curl, WebFetch e navegador)."
+  },
+  {
+   "uf": "AL",
+   "ambiente": "homologacao",
+   "motivo": "sem fonte oficial lida em 29/10/2026: https://www.sefaz.al.gov.br/nfce/nfce-documentacao mostra \"SEFAZ-AL \\| Site em manutenção\" (curl, WebFetch e navegador)."
+  },
+  {
+   "uf": "AP",
+   "ambiente": "producao",
+   "motivo": "sem fonte oficial lida em 29/10/2026: O portal novo https://www.sefaz.ap.gov.br/ é uma SPA; o link \"Consultar NFC-e\" tem href vazio e /nfce/ dá 404."
+  },
+  {
+   "uf": "AP",
+   "ambiente": "homologacao",
+   "motivo": "sem fonte oficial lida em 29/10/2026: O portal novo https://www.sefaz.ap.gov.br/ é uma SPA; o link \"Consultar NFC-e\" tem href vazio e /nfce/ dá 404."
+  },
+  {
+   "uf": "MA",
+   "ambiente": "producao",
+   "motivo": "sem fonte oficial lida em 29/10/2026: https://portal-sgc.sefaz.ma.gov.br/portal/pagina?id=3571 só tem links de consulta pública, sem rótulo de QR ou urlChave. O menu de webservices manda para o ENCAT, fora do ar."
+  },
+  {
+   "uf": "MA",
+   "ambiente": "homologacao",
+   "motivo": "sem fonte oficial lida em 29/10/2026: https://portal-sgc.sefaz.ma.gov.br/portal/pagina?id=3571 só tem links de consulta pública, sem rótulo de QR ou urlChave. O menu de webservices manda para o ENCAT, fora do ar."
+  },
+  {
+   "uf": "MT",
+   "ambiente": "producao",
+   "motivo": "sem fonte oficial lida em 29/10/2026: O portal NFC-e da SEFAZ-MT dá ECONNRESET ou timeout."
+  },
+  {
+   "uf": "MT",
+   "ambiente": "homologacao",
+   "motivo": "sem fonte oficial lida em 29/10/2026: O portal NFC-e da SEFAZ-MT dá ECONNRESET ou timeout."
+  },
+  {
+   "uf": "PA",
+   "ambiente": "producao",
+   "motivo": "sem fonte oficial lida em 29/10/2026: http://nfce.sefa.pa.gov.br/index.php/desenvolvedor dá ECONNREFUSED."
+  },
+  {
+   "uf": "PA",
+   "ambiente": "homologacao",
+   "motivo": "sem fonte oficial lida em 29/10/2026: http://nfce.sefa.pa.gov.br/index.php/desenvolvedor dá ECONNREFUSED."
+  },
+  {
+   "uf": "PI",
+   "ambiente": "producao",
+   "motivo": "sem fonte oficial lida em 29/10/2026: As páginas do portal.sefaz.pi.gov.br caem na home; portal-admin dá 403 e siteantigo dá 502. www.sefaz.pi.gov.br/nfce/qrcode tem **desafio anti-robô, não resolvido**."
+  },
+  {
+   "uf": "PI",
+   "ambiente": "homologacao",
+   "motivo": "sem fonte oficial lida em 29/10/2026: As páginas do portal.sefaz.pi.gov.br caem na home; portal-admin dá 403 e siteantigo dá 502. www.sefaz.pi.gov.br/nfce/qrcode tem **desafio anti-robô, não resolvido**."
+  },
+  {
+   "uf": "RN",
+   "ambiente": "producao",
+   "motivo": "sem fonte oficial lida em 29/10/2026: As páginas NFC-e de sefaz.rn.gov.br não trazem as URLs. O aviso \"Atenção desenvolvedores NFC-e\" dá 404 e www.set.rn.gov.br não conecta."
+  },
+  {
+   "uf": "RN",
+   "ambiente": "homologacao",
+   "motivo": "sem fonte oficial lida em 29/10/2026: As páginas NFC-e de sefaz.rn.gov.br não trazem as URLs. O aviso \"Atenção desenvolvedores NFC-e\" dá 404 e www.set.rn.gov.br não conecta."
+  },
+  {
+   "uf": "RR",
+   "ambiente": "producao",
+   "motivo": "sem fonte oficial lida em 29/10/2026: O portal só remete à SVRS. O manual em sefaz.rr.gov.br dá 404 e portalweb dá 403."
+  },
+  {
+   "uf": "RR",
+   "ambiente": "homologacao",
+   "motivo": "sem fonte oficial lida em 29/10/2026: O portal só remete à SVRS. O manual em sefaz.rr.gov.br dá 404 e portalweb dá 403."
+  },
+  {
+   "uf": "RS",
+   "ambiente": "producao",
+   "motivo": "sem fonte oficial lida em 29/10/2026: As páginas de sefaz.rs.gov.br (m_nfe_nfce, l_rel_end_ws_nfce, FAQ) só trazem web services e CSC. https://nfce.svrs.rs.gov.br/ tem certificado inválido e não foi lido."
+  },
+  {
+   "uf": "RS",
+   "ambiente": "homologacao",
+   "motivo": "sem fonte oficial lida em 29/10/2026: As páginas de sefaz.rs.gov.br (m_nfe_nfce, l_rel_end_ws_nfce, FAQ) só trazem web services e CSC. https://nfce.svrs.rs.gov.br/ tem certificado inválido e não foi lido."
+  },
+  {
+   "uf": "SE",
+   "ambiente": "producao",
+   "motivo": "sem fonte oficial lida em 29/10/2026: http://www.nfce.se.gov.br/ responde 403 (bloqueio) e fecha a conexão em https."
+  },
+  {
+   "uf": "SE",
+   "ambiente": "homologacao",
+   "motivo": "sem fonte oficial lida em 29/10/2026: http://www.nfce.se.gov.br/ responde 403 (bloqueio) e fecha a conexão em https."
+  }
+ ]
+}

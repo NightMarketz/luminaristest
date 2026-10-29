@@ -3588,6 +3588,24 @@ model PscAuthorization {
   @@map("psc_authorizations")
 }
 
+// X10a PR-8 (BE-INCR-NFCE-EMENDA-1 §4, F-NFCE-E1-4 c; D-2026-10-29-X10A-PR7-9-FORKS decisão 3): CSC da NFC-e por unidade e
+// ambiente, para o QR Code v2 quando a UF recusa a v3. Cifrado com o keyring DFE_PSC_KEYS (secretBox, AAD = id). Uma
+// linha viva por (unidade, ambiente) — o serviço apaga a anterior na mesma tx; soft-delete zera o ciphertext.
+model NfceCsc {
+  id            String    @id @default(cuid())
+  userId        String
+  unitId        String
+  ambiente      String // producao | homologacao
+  cscId         String // identificador do CSC na SEFAZ (1–6 dígitos)
+  cscCiphertext Bytes?
+  keyVersion    Int?
+  createdAt     DateTime  @default(now())
+  deletedAt     DateTime?
+
+  @@index([userId, unitId, ambiente])
+  @@map("nfce_cscs")
+}
+
 // EFICIENCIA-FISCAL PR-1 (BRIEF BE-INCR-EFICIENCIA-FISCAL §4.1; ADR-INCR-EFICIENCIA-FISCAL D2, D3, D5, D6) — política
 // COMERCIAL de eficiência fiscal por unidade (não liga nem desliga guarda legal — D2). Versionada por vigência (molde
 // IssBeneficioMunicipal): a versão nova fecha a anterior em vigenteDesde − 1 dia. Sem linha ⇒ padrões do BRIEF.

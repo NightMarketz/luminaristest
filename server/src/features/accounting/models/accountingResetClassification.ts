@@ -22,6 +22,8 @@ export const ACCOUNTING_RESET_SETUP = [
   // X10a PR-7 (EMENDA-PSC E-3/E-4): como o FiscalCertificate — credencial da unidade, sem FK.
   'PscCredential',
   'PscAuthorization',
+  // X10a PR-8: o CSC da NFC-e é cadastro da unidade, como a credencial do PSC — sem FK.
+  'NfceCsc',
   'ReferentialMapping',
   'RoleAccountOverride',
   'FiscalProfile',

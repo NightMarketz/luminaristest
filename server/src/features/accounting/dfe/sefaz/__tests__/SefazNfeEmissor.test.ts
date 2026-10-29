@@ -5,6 +5,7 @@ import { FakePscServer } from '../../psc/FakePscServer';
 import { PscAssinador } from '../../psc/PscAssinador';
 import { SefazSoapClient, SefazTransporteError } from '../SefazSoapClient';
 import { AssinaturaRemotaError, SefazNfeEmissor, releituraNfe } from '../SefazNfeEmissor';
+import { hashQrCodeV2 } from '../nfceQrCode';
 import { inputNfce, nfceNumerada } from '../../../models/__tests__/nfeMontagem.fixture';
 import { montarNfe, numerarNfe } from '../../../models/nfeMontagem';
 import type { DfeCallContext } from '../../DfeEmissorPort';
@@ -168,5 +169,54 @@ describe('SefazNfeEmissor', () => {
       return s.signatureValueB64;
     });
     expect(releituraNfe(`<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">${assinado}</nfeProc>`, p)).toEqual(['tPag']);
+  });
+
+  // ---- X10a PR-8 (E-3, F-NFCE-E1-4 c): QR Code v3 e recuo para v2/CSC ----
+
+  it('E-3: a NFC-e sai com infNFeSupl v3 (p=chave|3|tpAmb) entre </infNFe> e <Signature>, e a assinatura continua válida', async () => {
+    const p = nova();
+    const chave = p.infNFe.Id.slice(3);
+    const r = await emitir(p);
+    expect(r.status).toBe('AUTHORIZED');
+    const lote = sefaz.controle.chamadas.at(-1)!.corpo;
+    expect(lote).toMatch(new RegExp(`</infNFe><infNFeSupl><qrCode>https://www\\.homologacao\\.nfce\\.fazenda\\.sp\\.gov\\.br/[^<]*\\?p=${chave}\\|3\\|2</qrCode><urlChave>[^<]+</urlChave></infNFeSupl><Signature`));
+    expect(r.xml!.toString('utf8')).toContain('<infNFeSupl>');
+    expect(releituraNfe(r.xml!.toString('utf8'), p)).toEqual([]);
+  });
+
+  it('E-3: UF recusa a v3 (407) e há CSC ⇒ reenvia a MESMA nota assinada com o QR v2 (hash do CSC) ⇒ AUTHORIZED, uma assinatura só', async () => {
+    sefaz.controle.recusarQrV3 = true;
+    try {
+      const p = nova();
+      const chave = p.infNFe.Id.slice(3);
+      const assinaturasAntes = psc.controle.assinaturas;
+      const antes = sefaz.controle.chamadas.length;
+      const csc = { id: '000001', csc: 'A1B2C3D4E5F6G7H8I9J0' };
+      const r = await emissor.emitir({ kind: 'NFCE', ref: 'd:1', ambiente: 'homologacao', cnpjEmitente: p.infNFe.emit.CNPJ, partnerAccountRef: null, payload: p, ctx: { ...ctx, csc } });
+      expect(r.status).toBe('AUTHORIZED');
+      expect(sefaz.controle.chamadas.slice(antes).map((c) => c.servico)).toEqual(['NFeAutorizacao4', 'NFeAutorizacao4']);
+      const hash = hashQrCodeV2(chave, 2, '1', csc.csc);
+      expect(sefaz.controle.chamadas.at(-1)!.corpo).toContain(`?p=${chave}|2|2|1|${hash}</qrCode>`);
+      expect(psc.controle.assinaturas - assinaturasAntes).toBe(1);
+    } finally {
+      sefaz.controle.recusarQrV3 = false;
+    }
+  });
+
+  it('E-3: UF recusa a v3 e a unidade não tem CSC ⇒ REJECTED 407 nomeando o cadastro do CSC', async () => {
+    sefaz.controle.recusarQrV3 = true;
+    try {
+      const r = await emitir(nova());
+      expect(r).toMatchObject({ status: 'REJECTED', errors: [{ code: '407', message: expect.stringContaining('nfce-cscs') }] });
+    } finally {
+      sefaz.controle.recusarQrV3 = false;
+    }
+  });
+
+  it('faltantesDoEnvio: UF sem URL oficial do QR Code ou sem webservice ⇒ faltante nomeado; SP homologação passa', () => {
+    expect(emissor.faltantesDoEnvio('NFCE', '35', 'homologacao')).toEqual([]);
+    expect(emissor.faltantesDoEnvio('NFCE', '12', 'homologacao').join(' ')).toMatch(/AC\/homologacao sem URL oficial do QR Code/);
+    expect(emissor.faltantesDoEnvio('NFE', '12', 'homologacao')).toEqual([]); // a NF-e 55 não tem QR Code
+    expect(emissor.faltantesDoEnvio('NFCE', '99', 'homologacao')).toEqual(['UF do emitente desconhecida (cUF 99)']);
   });
 });

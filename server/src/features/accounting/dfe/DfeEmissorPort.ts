@@ -103,6 +103,8 @@ export interface DfeCallContext {
   ambiente: DfeAmbiente;
   assinatura?: { assinador: AssinadorRemotoPort; credencial: CredencialPscResolvida };
   payload?: unknown;
+  /** X10a PR-8 (E-3, F-NFCE-E1-4 c): CSC da unidade no ambiente, para o QR Code v2 quando a UF recusa a v3 (rej. 407). */
+  csc?: { id: string; csc: string };
 }
 
 /**
@@ -208,6 +210,11 @@ export interface DfeEmissorPort {
   emitir(input: EmitirInput): Promise<EmissaoResult>;
   consultar(partnerRef: string, ctx?: DfeCallContext): Promise<EmissaoResult>;
   cancelar(partnerRef: string, input: CancelInput, ctx?: DfeCallContext): Promise<CancelResult>;
+  /**
+   * X10a PR-8 — o que impede o envio do tipo na UF/ambiente do emitente (webservice ou URL do QR Code sem fonte oficial),
+   * como faltantes nomeados. O serviço consulta ANTES de consumir o número. Ausente = nada a checar.
+   */
+  faltantesDoEnvio?(kind: DfeKind, cUF: string, ambiente: DfeAmbiente): string[];
   /** BE-INCR-NFCE item 24 — só existe quando `capabilities.inutilizar`. */
   inutilizar?(input: InutilizarInput): Promise<InutilizarResult>;
   /** BE-INCR-NFCE item 28 — CC-e (110110), só NF-e e só quando `capabilities.cce`. Sem implementação (F-NFCE-9 c). */

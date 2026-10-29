@@ -82,6 +82,8 @@ export interface FakeSefazControle {
   cStatInutilizacao: string | null;
   /** Atraso (ms) antes de responder qualquer chamada. */
   atrasoMs: number;
+  /** X10a PR-8: a UF não aceita o QR Code v3 (RV ZX02-220, rej. 407). */
+  recusarQrV3: boolean;
   chamadas: Array<{ servico: string; corpo: string }>;
 }
 
@@ -95,6 +97,7 @@ export class FakeSefaz {
     cStatEvento: null,
     cStatInutilizacao: null,
     atrasoMs: 0,
+    recusarQrV3: false,
     chamadas: [],
   };
   public baseUrl = '';
@@ -160,6 +163,9 @@ export class FakeSefaz {
       }
       if (this.autorizadas.has(chave)) {
         return `<retEnviNFe xmlns="${NS}" versao="4.00"><cStat>104</cStat><xMotivo>Lote processado</xMotivo>${this.protNFe(chave, '204', 'Rejeicao: Duplicidade de NF-e')}</retEnviNFe>`;
+      }
+      if (this.controle.recusarQrV3 && /<qrCode>[^<]*\?p=\w{44}\|3\|/.test(nfe)) {
+        return `<retEnviNFe xmlns="${NS}" versao="4.00"><cStat>104</cStat><xMotivo>Lote processado</xMotivo>${this.protNFe(chave, '407', 'Rejeicao: QR Code versao 3 nao aceito pela UF')}</retEnviNFe>`;
       }
       const forcado = this.controle.cStatAutorizacao;
       if (forcado) {
