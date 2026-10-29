@@ -311,6 +311,15 @@ describe('ReinfService — PR-3 (itens 21–23)', () => {
     expect([Object.values(m.jobs).map((j) => j.status), m.repo.rows.length]).toEqual([['FAILED'], 0]);
   });
 
+  it('achado 10 (dono, 29/10): a tx do lote falhou depois dos arquivos gravados ⇒ os 2 jobs FAILED (não PROCESSING) e o erro sobe', async () => {
+    const m = montar();
+    m.repo.create = async () => {
+      throw new Error('SQLITE_BUSY');
+    };
+    await expect(m.svc.gerar(scope, { unitId: 'u1', competencia: '2026-03' })).rejects.toThrow('SQLITE_BUSY');
+    expect([Object.values(m.jobs).map((j) => j.status), m.repo.rows.length]).toEqual([['FAILED', 'FAILED'], 0]);
+  });
+
   it('item 23: NATUREZA_NAO_CONFERIDA com as naturezas do R-4020 de retenção; lote só de dividendos não traz o aviso', async () => {
     const m = montar({ linhas: [linha(), linha({ natRend: '15052', codigoReceita: '804506' })] });
     const r = await m.svc.gerar(scope, { unitId: 'u1', competencia: '2026-03' });
