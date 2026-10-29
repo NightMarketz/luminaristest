@@ -3470,6 +3470,7 @@
       "error": "Error loading the unit's charges.",
       "openReceivable": "Open the receivable in Accounts Receivable",
       "noNumber": "no number",
+      "receivableCancelled": "cancelled",
       "col": {
         "receivable": "Receivable"
       }

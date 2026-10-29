@@ -3470,6 +3470,7 @@
       "error": "Erro ao carregar as cobranças da unidade.",
       "openReceivable": "Abrir o título no Contas a Receber",
       "noNumber": "sem nº",
+      "receivableCancelled": "cancelado",
       "col": {
         "receivable": "Título"
       }

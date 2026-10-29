@@ -150,7 +150,15 @@ export function CollectionChargesList({ unitId, onOpenReceivable }: CollectionCh
                 >
                   <td className="py-1.5 pr-4 text-neutral-300">{c.kind === 'PIX' ? t('collectionCharge.kind.PIX', 'Pix') : t('collectionCharge.kind.BOLETO', 'Boleto')}</td>
                   <td className="py-1.5 pr-4">
-                    {onOpenReceivable ? (
+                    {c.receivableCancelled ? (
+                      // Título cancelado sai do AR: nº sem link + selo (D-2026-10-29-F5-16B-TITULO-CANCELADO).
+                      <span className="inline-flex items-center gap-2">
+                        <span className="font-mono text-neutral-400">{c.receivableDocumentNumber ?? t('collectionCharge.list.noNumber', 'sem nº')}</span>
+                        <span className="rounded-full border border-neutral-700 px-2 py-0.5 text-[10px] text-neutral-400">
+                          {t('collectionCharge.list.receivableCancelled', 'cancelado')}
+                        </span>
+                      </span>
+                    ) : onOpenReceivable ? (
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onOpenReceivable(c.receivableId, c.receivableDocumentNumber); }}

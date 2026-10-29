@@ -69,6 +69,8 @@ export interface CollectionChargeView {
 /** Item da lista da unidade: a view sem pagador + o nº do título como escrito (16b; D-2026-10-29-F5-16B-E-P-RET-4). */
 export interface CollectionChargeListItem extends CollectionChargeView {
   receivableDocumentNumber: string | null;
+  /** Título cancelado (`deletedAt`): fora do AR, então o FE mostra o nº sem link (D-2026-10-29-F5-16B-TITULO-CANCELADO). */
+  receivableCancelled: boolean;
 }
 
 /** Página da lista da unidade (EMENDA-1 PR-0, 0c). */
@@ -341,7 +343,11 @@ export class CollectionChargeService {
     const { status, kind, page, limit } = query;
     const { items, total } = await this.repo.findPageByUnit(scope, { status, kind, page, limit });
     return {
-      items: items.map((c) => ({ ...toView(c, false), receivableDocumentNumber: writtenDocumentNumber(c.receivableId, c.receivable.documentNumber) })),
+      items: items.map((c) => ({
+        ...toView(c, false),
+        receivableDocumentNumber: writtenDocumentNumber(c.receivableId, c.receivable.documentNumber),
+        receivableCancelled: c.receivable.deletedAt !== null,
+      })),
       total,
       page,
       limit,

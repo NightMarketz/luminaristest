@@ -25,7 +25,7 @@ const item = (over: Partial<CollectionChargeListItem>): CollectionChargeListItem
   expiresAt: FUTURE, status: 'PENDING', providerRef: 'o1', providerPaymentRef: null,
   providerStatus: 'action_required', providerStatusDetail: null, paidAt: null, failReason: null,
   instrument: { digitableLine: '2379' }, createdAt: '2026-10-23T00:00:00Z', updatedAt: '2026-10-23T10:00:00Z',
-  receivableDocumentNumber: 'FAT-777', ...over,
+  receivableDocumentNumber: 'FAT-777', receivableCancelled: false, ...over,
 });
 const page = (items: CollectionChargeListItem[], total = items.length) => ({ items, total, page: 1, limit: 20 });
 
@@ -89,6 +89,20 @@ describe('CollectionChargesList (16b)', () => {
     expect(collectionChargesService.get).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'sem nº' }));
     expect(onOpen).toHaveBeenLastCalledWith('r2', null);
+  });
+
+  it('D-2026-10-29-F5-16B-TITULO-CANCELADO: título cancelado mostra o nº sem link, com o selo "cancelado"; a linha ainda abre o detalhe', async () => {
+    const onOpen = vi.fn();
+    vi.mocked(collectionChargesService.listByUnit).mockResolvedValue(page([item({ receivableDocumentNumber: 'FAT-CANC', receivableCancelled: true })]));
+    vi.mocked(collectionChargesService.get).mockResolvedValue(item({}));
+    render(<CollectionChargesList unitId="u1" onOpenReceivable={onOpen} />);
+    const row = await screen.findByTestId('collection-charge-row-c1');
+    expect(within(row).queryByRole('button', { name: 'FAT-CANC' })).toBeNull();
+    expect(within(row).getByText('FAT-CANC')).toBeInTheDocument();
+    expect(within(row).getByText('cancelado')).toBeInTheDocument();
+    fireEvent.click(within(row).getByText('FAT-CANC'));
+    expect(onOpen).not.toHaveBeenCalled();
+    await waitFor(() => expect(collectionChargesService.get).toHaveBeenCalledWith('c1', 'u1'));
   });
 
   it('vazio e erro', async () => {

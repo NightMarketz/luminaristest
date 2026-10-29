@@ -76,6 +76,8 @@ export interface CollectionChargeView {
 /** Item da lista da unidade: sem pagador + o nº do título como escrito (16b; à mão, de `CollectionChargeListItem`). */
 export interface CollectionChargeListItem extends CollectionChargeView {
   receivableDocumentNumber: string | null;
+  /** Título cancelado: fora do AR, então o nº vai sem link (D-2026-10-29-F5-16B-TITULO-CANCELADO). */
+  receivableCancelled: boolean;
 }
 
 /** Página da lista da unidade (EMENDA-1 item 16c) — à mão, transcrita de `CollectionChargeService.ts` (CollectionChargePage). */

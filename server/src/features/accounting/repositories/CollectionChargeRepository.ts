@@ -71,7 +71,7 @@ export class CollectionChargeRepository implements ICollectionChargeRepository {
     const [items, total] = await Promise.all([
       prisma.collectionCharge.findMany({
         where,
-        include: { receivable: { select: { documentNumber: true } } },
+        include: { receivable: { select: { documentNumber: true, deletedAt: true } } },
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         skip: (params.page - 1) * params.limit,
         take: params.limit,
