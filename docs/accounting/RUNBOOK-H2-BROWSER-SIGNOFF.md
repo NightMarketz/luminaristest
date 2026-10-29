@@ -88,6 +88,49 @@ Pré-condições (verificar antes de começar):
    Resultado esperado: telas renderizam, console sem erro.
    EVIDÊNCIA: [screenshots das abas-chave + print do console limpo ao final]
 
+   > **Execução 2026-10-29.** Preenchida pelo agente sob comando do dono no chat (29/10: *"Autorizo executar os runbooks"*
+   > e *"Segue pro H2"*). **P0:** é a re-semeadura do H1 e não foi repetida. A EVIDÊNCIA está no bloco "Tentativa 4 —
+   > 2026-10-29" do P0 do [RUNBOOK-H1-PVA](RUNBOOK-H1-PVA.md) (PR #981): backup `dev-20261029-142253-pre-h1-t4.db`, 25
+   > migrações, seed e binding idempotentes, build de produção de `455c1a45` (front `127.0.0.1:3100`, back `:3101`, `dev.db`
+   > real). **Passo 1:** Puppeteer headless, login `seed-presumido`, unidade `seed-unit-presumido`, cada aba clicada com
+   > 2,5 s de espera. Prints das 13 abas-chave em [`runbook-evidence/H2-2026-10-29/`](runbook-evidence/H2-2026-10-29/).
+   > Saída literal:
+   >
+   > ```text
+   > login seed-presumido · unidade cmuw4yqxg001jcii0iz2yb9rw · 29 abas
+   >  1. Balancete · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   >  2. Períodos · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   >  3. Lançamentos · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   >  4. Aprovações · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-04-aprovacoes.png
+   >  5. Contas a Pagar · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-05-contas-a-pagar.png
+   >  6. Contas a Receber · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-06-contas-a-receber.png
+   >  7. Aging · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   >  8. Fluxo de Caixa Projetado · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   >  9. Contrapartes · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-09-contrapartes.png
+   > 10. Razão · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   > 11. Plano de Contas · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   > 12. BP · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-12-bp.png
+   > 13. DRE · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-13-dre.png
+   > 14. DFC · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-14-dfc.png
+   > 15. Comparativo · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-15-comparativo.png
+   > 16. Livro Diário · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-16-livro-diario.png
+   > 17. Importação/Exportação · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-17-importacao-exportacao.png
+   > 18. Conciliação · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-18-conciliacao.png
+   > 19. NF-e · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   > 20. Compliance · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-20-compliance.png
+   > 21. Dimensões · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-21-dimensoes.png
+   > 22. Imobilizado · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   > 23. Perfil fiscal · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   > 24. Parâmetros legais · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   > 25. Política contábil · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   > 26. Apuração · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   > 27. Pendências · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   > 28. Cobrança · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   > 29. Kit de setor · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   > ```
+   >
+   > DESFECHO: [dono]   ASSINATURA: [dono]
+
 2. Na aba **Conciliação**, importar o extrato **clicando** no controle de upload e escolhendo o
    `.ofx` do disco (não colar, não fetch).
    Resultado esperado: extrato listado com linhas; auto-match roda.
@@ -97,9 +140,68 @@ Pré-condições (verificar antes de começar):
    Resultado esperado: idem.
    EVIDÊNCIA: [screenshot]
 
+   > **Execução 2026-10-29 — passos 2 e 3.** O **dono** fez os dois uploads por clique, no painel do navegador embutido
+   > (build de produção, `127.0.0.1:3100`, login `seed-presumido`). O agente preparou a tela (Conciliação → Extratos, conta
+   > `1.1.1.01 — Banco`, formato "Detectar pelo conteúdo", período 27/10/2026–28/10/2026, referência `H2 OFX`), gerou os
+   > arquivos de teste no formato dos fixtures de `ofx.test.ts`/`cnab.test.ts`, clicou em "Auto-conciliar" e conferiu no
+   > `dev.db`. Print: [`passo2-3-conciliacao-extratos.jpg`](runbook-evidence/H2-2026-10-29/passo2-3-conciliacao-extratos.jpg).
+   > Saída literal:
+   >
+   > ```text
+   > arquivos (C:\Users\smurf\Downloads\H2-BROWSER\)
+   >   extrato-teste.ofx · 629 bytes · sha256 9ebfafec5ac21699e631c5fe5b36facc98f8594d1be265695a4f032fb61c7111
+   >   extrato-teste-cnab240.ret · 726 bytes · sha256 ade0f16f228cdaf1747325772601a47eb47881a714abec6ef57959b4eb9c88b1
+   > tela, depois do 2º upload:  "Extrato importado: 2 linha(s)."
+   > tela, Auto-conciliar (CNAB): "Auto-conciliação: 0 conciliada(s), 0 ambígua(s), 2 sem candidato (de 2)."
+   > tela, Auto-conciliar (OFX):  "Auto-conciliação: 0 conciliada(s), 0 ambígua(s), 3 sem candidato (de 3)."
+   > console do painel (só erros): No console logs.
+   > dev.db (bank_statements / bank_statement_lines, unidade cmuw4yqxg001jcii0iz2yb9rw)
+   > extrato cmvtx4jbo000fci9czmbowfx0 | ref H2 OFX | conta 1.1.1.01 | periodo 2026-10-27..2026-10-28 | sha256 9ebfafec5ac21699e631c5fe5b36facc98f8594d1be265695a4f032fb61c7111 | criado 2026-10-29T19:10:20.628Z | anexo -
+   >    1 | 2026-10-27T00:00:00.000Z | 35000 | PIX RECEBIDO CLIENTE TESTE | H2-OFX-1 | UNMATCHED
+   >    2 | 2026-10-27T00:00:00.000Z | -12050 | TARIFA BANCARIA | H2-OFX-2 | UNMATCHED
+   >    3 | 2026-10-28T00:00:00.000Z | 8990 | DEPOSITO | H2-OFX-3 | UNMATCHED
+   > extrato cmvtx4li6000kci9cw27p8bn8 | ref H2 OFX | conta 1.1.1.01 | periodo 2026-10-27..2026-10-28 | sha256 ade0f16f228cdaf1747325772601a47eb47881a714abec6ef57959b4eb9c88b1 | criado 2026-10-29T19:10:23.454Z | anexo -
+   >    1 | 2026-10-27T00:00:00.000Z | 45000 | TED RECEBIDA TESTE | H2-CNAB-1 | UNMATCHED
+   >    2 | 2026-10-28T00:00:00.000Z | -7890 | PAGTO FORNECEDOR TESTE | H2-CNAB-2 | UNMATCHED
+   > ```
+   >
+   > Leitura do agente: o sha256 de cada extrato é igual ao do arquivo, e as datas e os valores são os do arquivo (o dia
+   > escrito, sem recuo UTC). Os desvios do roteiro ficam escritos aqui. (1) O CNAB entrou com a referência `H2 OFX`, porque o
+   > campo não foi trocado entre os dois uploads. (2) Os dois uploads ficaram a 2,8 s um do outro, e o agente não viu o
+   > diálogo de arquivo; o "por clique" é a palavra do dono ("upei os 2"), não um artefato. (3) Nenhuma linha casou: são
+   > linhas sintéticas, sem lançamento correspondente.
+   >
+   > DESFECHO: [dono]   ASSINATURA: [dono]
+
 4. Em **Recibos**, gerar o PDF de um recibo (caminho puppeteer) e ABRIR o arquivo baixado.
    Resultado esperado: PDF válido, com os dados do recibo.
    EVIDÊNCIA: [o PDF anexado ou screenshot dele aberto]
+
+   > **Execução 2026-10-29.** Feita pelo agente sob comando do dono. O recibo fica na aba **Lançamentos** (botão "Recibo
+   > (PDF)" de cada linha; não existe aba "Recibos"). Pela tela, no painel, o clique no lançamento `2026/0170` fez o GET
+   > responder 200, sem erro no console. O destino do download do painel não ficou visível ao agente, então o mesmo endpoint
+   > foi chamado pela API para salvar e abrir o arquivo (`pypdf`). Saída literal:
+   >
+   > ```text
+   > painel: GET http://127.0.0.1:3101/api/accounting/journal-entries/cmuw4z7v302cmcii0fxxn95uz/receipt?unitId=REDACTED → 200 OK · console: No console logs.
+   > API:    GET /accounting/journal-entries/cmuw4z7v302cmcii0fxxn95uz/receipt → HTTP 200 · application/pdf · attachment; filename="comprovante-lancamento-2026-170.pdf"
+   >         58531 bytes · cabeçalho %PDF- · sha256 283c363dd955fb1a5fd0aebc36ee7178edc434e87db3d75e511ab656ef1b1896
+   > PDF aberto: 1 pagina(s)
+   >   Comprovante de Lançamento Contábil
+   >   Lançamento nº 170/2026 – Posted
+   >   Data 06/10/2026
+   >   Histórico Contas a receber – Cliente Seed (Fatura SEED-AR-2026-10-2)
+   >   Origem ar.receivable – ref. cmuw4z7ua02ckcii08hbl4pcn
+   >   CONTA DESCRIÇÃO DÉBITO CRÉDITO
+   >   1.1.2.03 Clientes a Receber R$ 2.568,00
+   >   3.1 Receita de Serviços R$ 2.568,00
+   >   Totais R$ 2.568,00 R$ 2.568,00
+   >   Documento gerado eletronicamente em 29/10/2026.
+   > ```
+   >
+   > Achado para o passo 5 (rótulo, não foi corrigido): o recibo, que está em PT, mostra o status em inglês ("Posted").
+   >
+   > DESFECHO: [dono]   ASSINATURA: [dono]
 
 5. Releitura crítica ("carimbo"): algo em qualquer tela está errado para uso real (rótulo,
    número, fluxo)? Se sim, registrar em Achados — não corrigir nada nesta sessão.
