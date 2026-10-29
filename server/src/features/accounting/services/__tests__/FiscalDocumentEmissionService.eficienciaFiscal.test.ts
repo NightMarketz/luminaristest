@@ -29,7 +29,7 @@ const perfil = {
   unitId: 'unit-1', regimeTributario: 'PRESUMIDO', codMun: '3550308', dpsSerie: 1, regEspTrib: 0, regApTribSN: null, issAliquotaBp: null,
   issRetidoTomadorPj: false, pacoteFatoGerador: 'CONSUMO', ibsCbsInformar: false, ibsCbsCst: null, ibsCbsClassTrib: null,
   pTotTribFedCent: 1000, pTotTribEstCent: 500, pTotTribMunCent: 200, pTotTribSNCent: null, emissaoForaDoMes: 'AVISAR',
-  d1fConfirmado: true, emissao: { completo: true, faltantes: [], pendingExternalValidation: [] }, updatedAt: new Date().toISOString(),
+  d1fConfirmado: true, emissao: { completo: true, faltantes: [], pendingExternalValidation: [], opSimpNac: 1 }, updatedAt: new Date().toISOString(),
 };
 
 function arrange(sale: Record<string, unknown>, items: Array<Record<string, unknown>>) {
