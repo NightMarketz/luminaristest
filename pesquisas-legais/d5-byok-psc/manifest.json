@@ -1,0 +1,56 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "D01_IN2022_22_DOC_ICP_01-01_compilada-pdf",
+      "url": "https://www.gov.br/iti/pt-br/assuntos/legislacao/documentos-principais/IN2022_22_DOC_ICP_01.01_compilada.pdf",
+      "url_final": "https://www.gov.br/iti/pt-br/assuntos/legislacao/documentos-principais/IN2022_22_DOC_ICP_01.01_compilada.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-30T02:26:57-03:00",
+      "sha256": "6f975ac2b6dbdf578a1723687521a371e0cdf69adab7d3f0b9ab6bcaf71bf84e",
+      "arquivo": "docs/D01_IN2022_22_DOC_ICP_01-01_compilada-pdf.pdf",
+      "texto": "docs/D01_IN2022_22_DOC_ICP_01-01_compilada-pdf.txt",
+      "bytes": 419181
+    },
+    {
+      "id": "D02",
+      "titulo": "D02_IN2019_08_DOC-ICP-01-01-htm",
+      "url": "https://repositorio.iti.gov.br/instrucoes-normativas/IN2019_08_DOC-ICP-01.01.htm",
+      "url_final": "https://repositorio.iti.gov.br/instrucoes-normativas/IN2019_08_DOC-ICP-01.01.htm",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-30T02:30:24-03:00",
+      "sha256": "2d33f7be10e64ab78fc0dc745b2b840a7f08b0911ece0f70e35eeacba55c1637",
+      "arquivo": "docs/D02_IN2019_08_DOC-ICP-01-01-htm.html",
+      "texto": "docs/D02_IN2019_08_DOC-ICP-01-01-htm.txt",
+      "bytes": 540002
+    },
+    {
+      "id": "D03",
+      "titulo": "D03_IN2026_35_DOC_ICP_01-01_PQC-htm",
+      "url": "https://repositorio.iti.gov.br/instrucoes-normativas/IN2026_35_DOC_ICP_01.01_PQC.htm",
+      "url_final": "https://repositorio.iti.gov.br/instrucoes-normativas/IN2026_35_DOC_ICP_01.01_PQC.htm",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-30T02:30:24-03:00",
+      "sha256": "2d25791c4224eda63316291d770045fceccc3ddd6ec6c0630ba875fed240ed94",
+      "arquivo": "docs/D03_IN2026_35_DOC_ICP_01-01_PQC-htm.html",
+      "texto": "docs/D03_IN2026_35_DOC_ICP_01-01_PQC-htm.txt",
+      "bytes": 419893
+    },
+    {
+      "id": "D04",
+      "titulo": "Assinatura digital - SerproID - Manual de integração",
+      "url": "https://serproid.serpro.gov.br/manual-integracao/utilizacao-certificado/assinatura-digital/",
+      "url_final": "https://serproid.serpro.gov.br/manual-integracao/utilizacao-certificado/assinatura-digital/",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-30T02:30:29-03:00",
+      "sha256": "ef20baf846436193ddc4c6bca7f3c8998a002de1e27afe7cee435b0640a243b1",
+      "arquivo": "docs/D04_assinatura-digital.html",
+      "texto": "docs/D04_assinatura-digital.txt",
+      "bytes": 43806
+    }
+  ],
+  "buscas": [],
+  "slug": "d5-byok-psc",
+  "pergunta": "BYOK com e-CNPJ em nuvem (PSC): o PSC pode assinar NF-e/NFC-e (rsa-sha1)? cadastro da aplicação? mTLS?",
+  "criado": "2026-10-30T02:26:56-03:00"
+}
