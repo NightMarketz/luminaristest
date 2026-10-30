@@ -5,6 +5,7 @@ import {
   getCollectionCharge,
   getPayerSuggestion,
   listCollectionCharges,
+  listUnitCollectionCharges,
   receiveCollectionWebhook,
 } from '../controllers/collectionChargeController';
 
@@ -12,7 +13,7 @@ import {
  * Cobrança por provedor (BE-INCR-PAYMENT-PROVIDER PR-2). Três montagens em routes/index.ts (registro em 2 toques:
  * a montagem e os blocos OpenAPI em docs.paths.ts):
  * - `/api/receivables` (`/:receivableId/charges…`) — criação, lista e sugestão do pagador (P2-2/P2-11/P2-15);
- * - `/api/collection-charges` — detalhe e cancelamento (P2-10/P2-15);
+ * - `/api/collection-charges` — lista da unidade (EMENDA-1 PR-0), detalhe e cancelamento (P2-10/P2-15);
  * - `/api/payment-collection` — webhook PÚBLICO (P2-5; `publicApiRoutes`, POST, prefix).
  */
 // Montado em `/api/receivables` ANTES do router do AR, com o caminho inteiro (o wiring de rotas × OpenAPI não lê
@@ -23,6 +24,7 @@ receivableChargesRouter.get('/:receivableId/charges', listCollectionCharges);
 receivableChargesRouter.get('/:receivableId/charges/payer-suggestion', getPayerSuggestion);
 
 export const collectionChargesRouter = Router();
+collectionChargesRouter.get('/', listUnitCollectionCharges); // antes de `/:id` (EMENDA-1 0d)
 collectionChargesRouter.get('/:id', getCollectionCharge);
 collectionChargesRouter.post('/:id/cancel', cancelCollectionCharge);
 

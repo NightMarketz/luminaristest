@@ -221,6 +221,13 @@ export function AccountingView() {
     counterpartyId: string;
   } | null>(null);
 
+  // EMENDA-1 16b: link do título na lista global de cobranças → AR filtrado pelo nº com o drawer aberto (seed de uso
+  // único, mesmo consumo do `pendingCounterpartyFilter`).
+  const [pendingChargesSeed, setPendingChargesSeed] = useState<{ receivableId: string; documentNumber: string | null } | null>(null);
+  useEffect(() => {
+    if (pendingChargesSeed) setPendingChargesSeed(null);
+  }, [pendingChargesSeed]);
+
   useEffect(() => {
     if (!pendingCounterpartyFilter) return;
     // O painel-alvo já capturou o valor como SEED no mesmo commit (useState lazy initializer
@@ -453,8 +460,11 @@ export function AccountingView() {
           initialFilters={
             pendingCounterpartyFilter?.target === 'contas-a-receber'
               ? { counterpartyId: pendingCounterpartyFilter.counterpartyId }
-              : undefined
+              : pendingChargesSeed?.documentNumber
+                ? { q: pendingChargesSeed.documentNumber }
+                : undefined
           }
+          initialChargesReceivableId={pendingChargesSeed?.receivableId}
         />
       )}
 
@@ -542,6 +552,10 @@ export function AccountingView() {
           onOpenReconciliation={(glAccountId) => {
             setReconGlAccountId(glAccountId);
             setActiveTab('conciliacao');
+          }}
+          onOpenReceivable={(receivableId, documentNumber) => {
+            setPendingChargesSeed({ receivableId, documentNumber });
+            setActiveTab('contas-a-receber');
           }}
         />
       )}

@@ -3468,6 +3468,21 @@
       "PARTIALLY_REFUNDED": "Partially refunded",
       "PENDING": "Pending",
       "REFUNDED": "Refunded"
+    },
+    "list": {
+      "title": "Unit charges",
+      "filterStatus": "Status",
+      "filterKind": "Type",
+      "all": "All",
+      "loading": "Loading charges…",
+      "empty": "No charges in this unit with these filters.",
+      "error": "Error loading the unit's charges.",
+      "openReceivable": "Open the receivable in Accounts Receivable",
+      "noNumber": "no number",
+      "receivableCancelled": "cancelled",
+      "col": {
+        "receivable": "Receivable"
+      }
     }
   },
   "paymentProvider": {

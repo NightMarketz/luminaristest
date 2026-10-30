@@ -45,6 +45,20 @@ describe('collectionChargesService — wire', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/collection-charges/c1/cancel', { unitId: 'u1' }, { silent: true });
   });
 
+  it('listByUnit (16c): GET /collection-charges com a query, sem campo vazio, e desembrulha a página', async () => {
+    const page = { items: [{ id: 'c1' }], total: 1, page: 2, limit: 20 };
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ success: true, data: page });
+    const out = await collectionChargesService.listByUnit({ unitId: 'u 1', status: 'PENDING', kind: undefined, page: 2, limit: 20 });
+    expect(apiClient.get).toHaveBeenCalledWith('/collection-charges?unitId=u+1&status=PENDING&page=2&limit=20');
+    expect(out).toEqual(page);
+  });
+
+  it('listByUnit (16c): só unitId ⇒ nenhum outro parâmetro na URL', async () => {
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ success: true, data: { items: [], total: 0, page: 1, limit: 20 } });
+    await collectionChargesService.listByUnit({ unitId: 'u1' });
+    expect(apiClient.get).toHaveBeenCalledWith('/collection-charges?unitId=u1');
+  });
+
   it('payerSuggestion: GET …/charges/payer-suggestion?unitId, silencioso (403 é do painel)', async () => {
     await collectionChargesService.payerSuggestion('r1', 'u1');
     expect(apiClient.get).toHaveBeenCalledWith('/receivables/r1/charges/payer-suggestion?unitId=u1', { silent: true });

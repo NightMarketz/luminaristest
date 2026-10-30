@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CHARGE_KINDS } from '../models/CollectionCharge.model';
+import { CHARGE_KINDS, COLLECTION_CHARGE_STATUSES } from '../models/CollectionCharge.model';
 
 /**
  * CollectionChargeDto — cobrança no provedor (BE-INCR-PAYMENT-PROVIDER PR-2; BRIEF §4.3, P2-2/P2-10/P2-11/P2-12/P2-15).
@@ -57,9 +57,24 @@ export const CreateChargeSchema = z
 export const CollectionChargeScopeQuerySchema = z.object({ unitId: z.string().min(1) }).strict();
 export const CancelChargeSchema = z.object({ unitId: z.string().min(1) }).strict();
 
+/**
+ * GET /api/collection-charges — lista da unidade (FE-INCR-PAYMENT-PROVIDER-EMENDA-1, PR-0 item 0a; COB-2 b).
+ * Sem boolean (memória zod-coerce-boolean); parâmetro desconhecido ⇒ 400 (`.strict()`, param-aceito-e-ignorado).
+ */
+export const ListCollectionChargesQuerySchema = z
+  .object({
+    unitId: z.string().min(1),
+    status: z.enum(COLLECTION_CHARGE_STATUSES).optional(),
+    kind: z.enum(CHARGE_KINDS).optional(),
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+  })
+  .strict();
+
 export const CollectionWebhookParamsSchema = z
   .object({ provider: z.string().min(1), accountId: z.string().min(1) })
   .strict();
 
 export type PayerInputDto = z.infer<typeof PayerSchema>;
 export type CreateChargeInputDto = z.infer<typeof CreateChargeSchema>;
+export type ListCollectionChargesQueryDto = z.infer<typeof ListCollectionChargesQuerySchema>;

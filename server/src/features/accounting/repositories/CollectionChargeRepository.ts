@@ -2,7 +2,11 @@ import prisma from '../../../lib/prisma';
 import type { CollectionCharge, Prisma } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
-import type { CreateCollectionChargeData, ICollectionChargeRepository } from './ICollectionChargeRepository';
+import type {
+  CollectionChargeWithReceivableNumber,
+  CreateCollectionChargeData,
+  ICollectionChargeRepository,
+} from './ICollectionChargeRepository';
 
 /** Repositório Prisma de `collection_charges`. Zero regra de negócio (ver o contrato). */
 export class CollectionChargeRepository implements ICollectionChargeRepository {
@@ -52,6 +56,29 @@ export class CollectionChargeRepository implements ICollectionChargeRepository {
       where: { ...accountingScopeWhere(scope), receivableId, deletedAt: null },
       orderBy: [{ createdAt: 'desc' }],
     });
+  }
+
+  public async findPageByUnit(
+    scope: AccountingScope,
+    params: { status?: string; kind?: string; page: number; limit: number },
+  ): Promise<{ items: CollectionChargeWithReceivableNumber[]; total: number }> {
+    const where: Prisma.CollectionChargeWhereInput = {
+      ...accountingScopeWhere(scope),
+      deletedAt: null,
+      ...(params.status ? { status: params.status } : {}),
+      ...(params.kind ? { kind: params.kind } : {}),
+    };
+    const [items, total] = await Promise.all([
+      prisma.collectionCharge.findMany({
+        where,
+        include: { receivable: { select: { documentNumber: true, deletedAt: true } } },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        skip: (params.page - 1) * params.limit,
+        take: params.limit,
+      }),
+      prisma.collectionCharge.count({ where }),
+    ]);
+    return { items, total };
   }
 
   public async findLastByCounterparty(scope: AccountingScope, counterpartyId: string): Promise<CollectionCharge | null> {
