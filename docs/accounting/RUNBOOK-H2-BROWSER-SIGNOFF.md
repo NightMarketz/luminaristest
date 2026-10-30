@@ -715,10 +715,11 @@ Assinatura do executor (passos 12–14): ____________
 > Dez/2027 abertos. O 2026 não foi tocado pelo encerramento. Antes do encerramento, a tela não avisa que Dez precisa estar
 > aberto: o 422 aparece só depois do clique.
 >
-> Leitura do agente: a) a k) com 2xx nas escritas depois do refazer. DESFECHO: [dono]
+> Leitura do agente: a) a k) com 2xx nas escritas depois do refazer.
+> Desfecho escolhido pelo dono no chat (29/10, questionário): *"PASSOU"*.
 
 Desfecho do passo 15 (marcar UM):
-[ ] PASSOU — a) a k) com evidência conferindo com o esperado
+[x] PASSOU — a) a k) com evidência conferindo com o esperado *(marcado pelo dono no chat, 29/10; assinatura abaixo continua do dono)*
 [ ] FALHOU — item __ divergiu; evidência colada acima
 [ ] BLOQUEADO — pré-condição __ não se sustentava
 Assinatura do executor (passo 15): ____________
