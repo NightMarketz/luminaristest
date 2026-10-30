@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — d5-byok-psc
 
 **Pergunta:** BYOK com e-CNPJ em nuvem (PSC): o PSC pode assinar NF-e/NFC-e (rsa-sha1)? cadastro da aplicação? mTLS?
-**Aberto em:** 2026-10-30T02:26:56-03:00 · **Atualizado em:** 2026-10-30T02:36:15-03:00
+**Aberto em:** 2026-10-30T02:26:56-03:00 · **Atualizado em:** 2026-10-30T02:43:07-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -43,6 +43,9 @@ comercial (IntegraICP) [X01].
 | SEFAZ exige rsa-sha1 hoje | MOC NF-e/NFC-e online, Visão Geral, XS06 e XS16 | [D05] | "Atributo Algorithm de SignatureMethod: http://www.w3.org/2000/09/xmldsig#rsa-sha1" |
 | MOC online atualizado | idem, cabeçalho | [D05] | "Atualizado até a NT 2026.007 v.1.10 publicada em 01/10/2026" |
 | PAA também em SHA1 | NT 2026.001 v1.00, campo ZG04 | [X02] | "assinar com a chave privada do RSA com algoritmo SHA1" |
+| SEFAZ aceita A1 ou A3 com CNPJ | MOC online §4.2.3 | [D05] | "tipo A1 ou A3, devendo conter o CNPJ da pessoa jurídica titular" |
+| Tipos atuais valem até 02/03/2029; depois, Selo Eletrônico para PJ | Res. CG ICP-Brasil 211/2024, FAQ do ITI, perguntas 01–03 | [D06] | "Até 02/03/2029 todos os tipos de certificados hoje existentes [...] poderão ser utilizados" |
+| Responsável técnico e CSRT a critério da UF | MOC online §2.2.10 | [D05] | "A critério da UF, para os estados que exigem o credenciamento de software emissor de DF-e, poderá ser exigido [...] CSRT" |
 
 ## 3. Vigência conferida
 - DOC-ICP-01.01: a versão compilada do ITI é a v6.0, com a redação da IN ITI 35/2026 [D01][D03]. A IN 08/2019 [D02]
@@ -75,7 +78,13 @@ comercial (IntegraICP) [X01].
 - NT 2026.001: só a v1.00 foi lida [X02]. As v1.01, v1.02 e v1.02a não foram lidas; as notícias não indicam mudança
   de algoritmo.
 
+- **Caminho A3 com assinador local (30/10):** não conferi se SP exige o `infRespTec` e o CSRT. Também não achei norma da
+  SEFAZ que admita o Selo Eletrônico (pós-2029) na NF-e: o MOC diz "A1 ou A3". O texto da Res. CG ICP-Brasil 211/2024
+  não foi lido; só o FAQ oficial do ITI [D06].
+
 **Fora do manifesto:**
+- **[X03]** `docs/X03_lojas-a3-token-navegador.txt`: preços de loja de e-CNPJ A1, A3 em token e A3 em cartão da
+  DigitalSign, da Certisign e da Safeweb, lidos em 30/10. É dado comercial.
 - **[X01]** `docs/X01_psc-docs-fornecedores-navegador.txt`: documentação de fornecedor, não é fonte oficial. Linhas
   literais de BirdID, Safeweb, Valid, DigitalSign e Certisign, lidas em 30/10.
 - **[X02]** `docs/X02_NT2026-001_v1-00_PAA.pdf` (+ `.txt` extraído): NT 2026.001 v1.00, fonte **oficial**
@@ -100,6 +109,9 @@ comercial (IntegraICP) [X01].
 - **[D05]** Manual da NF-e — Órgãos federais (Receita, ANPD, INSS, etc.)  
   Link oficial: <http://moc.sped.fazenda.pr.gov.br/NFe_NFCe/VisaoGeral.html>  
   Baixado em 2026-10-30T02:35:49-03:00 · arquivo local `docs/D05_VisaoGeral-html.html` · SHA-256 `7869d3726b407c988030087b19d2efa4421f5b96c9353c93a9bd09a9994f9eb2`
+- **[D06]** Perguntas Frequentes - CG ICP-Brasil — Instituto Nacional de Tecnologia da Informação — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://www.gov.br/iti/pt-br/assuntos/comite-gestor/perguntas-frequentes-cg-icp-brasil>  
+  Baixado em 2026-10-30T02:39:11-03:00 · arquivo local `docs/D06_perguntas-frequentes-cg-icp-brasil.html` · SHA-256 `1fbca433a21a3f48b952129527dce81a7821ac1c9fd5aa9a0969313e30d1fb27`
 
 ## Registro de buscas
 _Nenhuma busca registrada._

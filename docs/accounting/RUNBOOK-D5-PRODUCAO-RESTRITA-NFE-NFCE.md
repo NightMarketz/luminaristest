@@ -87,6 +87,16 @@ Pré-condições:
 
 ## Notas de preparo (não fazem parte do formulário)
 
+- **Variante A3 com assinador local** ([`D5-DECISAO-2026-10-30.md`](../plano/gates/D5-DECISAO-2026-10-30.md) §8). Antes de
+  imprimir, troque:
+  - **P2:** e-CNPJ A3 do cliente em token ou cartão, espetado na máquina do caixa (ou A1 só nessa máquina).
+  - **P3:** "assinador local do Luminaris instalado no caixa: versão ___".
+  - **P4:** "mTLS pelo próprio token (EKU 'Autenticação Cliente' conferido no certificado: ___)".
+  - **P5:** não se aplica, porque o token assina SHA-1.
+  - **Passo 1:** troca de "pedir a signature_session" para "titular digita o PIN do token na máquina do caixa; colar o log
+    do assinador sem o PIN".
+  - **Passo 7:** troca para "remover o token e tentar emitir".
+
 - **NFS-e fora:** a NFS-e segue pelo portal ([[D-2026-10-22-NFSE-PORTAL-E-H1-POR-ULTIMO]]). O PSC não emite NFS-e
   (FAQ NFS-e v1.1 item 17.7). Este runbook não tem passo de DPS.
 - **cStat esperados:** 107, 100 e 135 são os códigos de sucesso do MOC 7.0. Confira na tabela do MOC vigente ao executar.

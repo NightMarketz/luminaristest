@@ -59,6 +59,18 @@
       "arquivo": "docs/D05_VisaoGeral-html.html",
       "texto": "docs/D05_VisaoGeral-html.txt",
       "bytes": 483990
+    },
+    {
+      "id": "D06",
+      "titulo": "Perguntas Frequentes - CG ICP-Brasil — Instituto Nacional de Tecnologia da Informação",
+      "url": "https://www.gov.br/iti/pt-br/assuntos/comite-gestor/perguntas-frequentes-cg-icp-brasil",
+      "url_final": "https://www.gov.br/iti/pt-br/assuntos/comite-gestor/perguntas-frequentes-cg-icp-brasil",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-30T02:39:11-03:00",
+      "sha256": "1fbca433a21a3f48b952129527dce81a7821ac1c9fd5aa9a0969313e30d1fb27",
+      "arquivo": "docs/D06_perguntas-frequentes-cg-icp-brasil.html",
+      "texto": "docs/D06_perguntas-frequentes-cg-icp-brasil.txt",
+      "bytes": 151744
     }
   ],
   "buscas": [],
