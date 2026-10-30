@@ -1,12 +1,14 @@
 # BRIEF — Prévia ao vivo da tela do módulo custom na entrevista
 
-- **Nó:** nenhum ainda em `docs/plano/nos/`. Frente aberta pelo dono no chat de 2026-10-29. Os vizinhos são
-  [[W1]] (`done`), [[W4]] e [[W6]] (`human-open`). Para criar a nota do nó, ver F-LP-1.
+- **Nó:** [`docs/plano/nos/W8.md`](../plano/nos/W8.md) (F-LP-1 (a)). Frente aberta pelo dono no chat de
+  2026-10-29. Os vizinhos são [[W1]] (`done`), [[W4]] e [[W6]] (`human-open`).
 - **Spec de origem:** [`docs/superpowers/specs/2026-10-29-interview-live-preview-design.md`](../superpowers/specs/2026-10-29-interview-live-preview-design.md)
   (commit `b91d37dc`). As seções 1 a 6 foram aprovadas pelo dono uma a uma, e a spec inteira com "Aprovada, faz o plano".
 - **Autorização:** dono, chat, 2026-10-29: "Aprovada, faz o plano". Vale **só para este BRIEF**. Código,
   `executa` e merge ficam de fora (ORCH-006).
-- **Estado:** BRIEF pronto, com **0 de 6 forks ratificados** (§3). Tamanho estimado: **XL**, em 5 PRs.
+- **Estado:** BRIEF pronto, com **6 de 6 forks ratificados** em 2026-10-29 pelo questionário (§3). F-LP-3 foi
+  ratificado **contra a recomendação**, com quatro rotas espelho. Executar exige autorização própria ("executa").
+  Tamanho estimado: **XL**, em 5 PRs.
 - **Base lida:** `origin/main` @ `778d867c` (2026-10-29).
 
 ## 0. Estado de partida (conferido no código)
@@ -82,9 +84,17 @@ O PR-5 depende de todos (F-LP-5).
 10. Extrair do `AnalyticsResolver` um núcleo que recebe `{ chart, table, rows, fetchByPresetTableKey }` já
     resolvidos e devolve `ChartDataPoint[]`. `resolveChartData` e `resolveChartDetails` continuam com a mesma
     assinatura e o mesmo resultado, protegidos por teste de caracterização antes da extração.
-11. Rota de analytics da prévia, no formato que F-LP-3 decidir. Ela cobre as operações listadas em §0 (presets,
-    data, discover, drill-down) sobre as linhas de exemplo do item 5. Os grupos de chart vêm do preset do
-    rascunho, não do `userId`.
+11. *(F-LP-3 (b))* Quatro rotas de analytics da prévia, uma espelhando cada rota real listada em §0. Todas
+    rodam sobre as linhas de exemplo do item 5:
+    - `POST /dashboard/ai/InterviewPreview/analytics/presets`
+    - `POST /dashboard/ai/InterviewPreview/analytics/data`
+    - `POST /dashboard/ai/InterviewPreview/analytics/discover`
+    - `POST /dashboard/ai/InterviewPreview/analytics/drill-down`
+
+    Os grupos de chart vêm do preset do rascunho, não do `userId`. A leitura da sessão, a validação do `pending`
+    e a recomposição ficam num só método do service, `loadPreviewContext`, que as quatro rotas chamam. Cada
+    controller só faz o parse do próprio DTO. Testes por rota: 401, 404 para sessão alheia e 400 para chave
+    extra.
 12. Teste de equivalência: com as mesmas linhas, a rota de prévia e o `resolveChartData` real devolvem o mesmo
     `ChartDataPoint[]`. O teste roda em pelo menos um processador de finance e um de serviços.
 
@@ -145,7 +155,8 @@ O PR-5 depende de todos (F-LP-5).
 
 22. Os gates que o diff aciona:
     - `dtoShapeSnapshot` para os DTOs novos, inserindo só o novo (memória do reorder no Windows);
-    - guarda de path-count do openapi (1 ou 2 paths novos, conforme F-LP-3);
+    - guarda de path-count do openapi, com **5 paths novos**: `InterviewPreview` e as 4 rotas de analytics
+      (F-LP-3 (b));
     - paridade i18n pt/en (namespace novo entra em `ns`);
     - `check:arch` em server e my-app;
     - `tsc` limpo, com `tsconfig.test.json` no server e `npm run test:types` no my-app;
@@ -189,18 +200,17 @@ type InterviewPreviewResponse = {
 };
 // erros: 401 · 404 SESSION_NOT_FOUND · 409 PROPOSAL_STALE · 400 { reason } (mesmo do create)
 
-// BE — analytics da prévia (forma (a) de F-LP-3)
-const InterviewPreviewAnalyticsDto = z.object({
-  sessionId: z.string().min(1),
-  pending: InterviewPreviewDto.shape.pending,
-  op: z.discriminatedUnion('kind', [
-    z.object({ kind: z.literal('presets'), datePreset: z.string() }).strict(),
-    z.object({ kind: z.literal('data'), chartKey: z.string(), datePreset: z.string(), params: z.record(z.string()).optional() }).strict(),
-    z.object({ kind: z.literal('discover'), tableId: z.string().startsWith('preview:'), datePreset: z.string() }).strict(),
-    z.object({ kind: z.literal('drillDown'), params: z.record(z.string()) }).strict(),
-  ]),
-}).strict();
-// resposta: o mesmo envelope de cada rota real correspondente (data/presets/discover/drill-down)
+// BE — analytics da prévia: quatro rotas espelho (F-LP-3 (b)), base comum
+const PreviewBase = { sessionId: z.string().min(1), pending: InterviewPreviewDto.shape.pending };
+// POST .../InterviewPreview/analytics/presets
+const PreviewAnalyticsPresetsDto  = z.object({ ...PreviewBase, datePreset: z.string() }).strict();
+// POST .../InterviewPreview/analytics/data
+const PreviewAnalyticsDataDto     = z.object({ ...PreviewBase, chartKey: z.string(), datePreset: z.string(), params: z.record(z.string()).optional() }).strict();
+// POST .../InterviewPreview/analytics/discover
+const PreviewAnalyticsDiscoverDto = z.object({ ...PreviewBase, tableId: z.string().startsWith('preview:'), datePreset: z.string() }).strict();
+// POST .../InterviewPreview/analytics/drill-down
+const PreviewAnalyticsDrillDto    = z.object({ ...PreviewBase, params: z.record(z.string()) }).strict();
+// resposta de cada uma: o mesmo envelope da rota real que ela espelha
 
 // FE — fonte de dados
 interface TableDataSource {
@@ -226,16 +236,19 @@ Os nomes `TableQuery`, `TablePage`, `TableRow`, `ChartResponse`, `DiscoverRespon
 **reaproveitam os tipos que os serviços já devolvem hoje**. O executor lê a assinatura atual de cada método e
 não inventa shape novo.
 
-## 3. Forks: RATIFICAÇÃO PENDENTE (0 de 6)
+## 3. Forks: ✅ 6 de 6 RATIFICADOS em 2026-10-29 (dono, questionário)
+
+Ratificados: F-LP-1 (a), F-LP-2 (a), **F-LP-3 (b) quatro rotas espelho, contra a recomendação**, F-LP-4 (a),
+F-LP-5 (a) e F-LP-6 (a).
 
 | Fork | Caminhos | Recomendação | Status |
 |---|---|---|---|
-| **F-LP-1** Nó no vault | (a) nota nova `docs/plano/nos/W8.md` (`plataforma`, `depende_de: [W1, W4, W6]`) com o fold deste BRIEF; (b) item dentro do W1, que já está `done`; (c) sem nó, só a spec e o BRIEF | **(a)**. O W1 está fechado, e reabri-lo mistura estados. Sem nó, a `autorizacao` não tem onde morar, e o protocolo do vault deixa o item sem rota | PENDENTE |
-| **F-LP-2** Analytics no `TableDataSource` | (a) trocar `getCustomData(url)` por métodos tipados (presets, data, discover, drillDown); (b) manter `getCustomData(url)`, com o `PreviewDataSource` interpretando a URL | **(a)**. Com (b), a prévia passa a depender do formato de string montado em 3 hooks, e uma URL nova escapa calada para a rede, que é o que o teste do item 16 tenta impedir | PENDENTE |
-| **F-LP-3** Forma da rota de analytics | (a) uma rota `POST /dashboard/ai/InterviewPreview/analytics` com união `op.kind`; (b) quatro rotas espelhando as reais (`.../presets`, `.../data`, `.../discover`, `.../drill-down`) | **(a)**. É um path no openapi e um DTO, a sessão e o `pending` são validados num ponto só, e o FE tem um método por `kind` | PENDENTE |
-| **F-LP-4** Linhas digitadas na prévia | (a) só na memória do navegador e perdidas ao recarregar (spec §1, "fora do escopo"); (b) guardadas na sessão do W4 para sobreviver ao recarregar | **(a)**. A spec aprovada exclui persistir linhas, e (b) aumenta a sessão e o TTL sem pedido do dono. Fica listado porque recarregar a página apaga o que o usuário digitou | PENDENTE |
-| **F-LP-5** Empacotamento | (a) um BRIEF com 5 PRs, BE e FE juntos (precedente: W1 e W6); (b) separar em `BE-INCR-WIZARD-PREVIEW` e `FE-INCR-WIZARD-PREVIEW` (padrão da casa) | **(a)**. O valor só existe com os dois, e W1 e W6 já fizeram assim. Os PRs continuam separados por camada | PENDENTE |
-| **F-LP-6** Campo sensível pendente (W6, F-W6-8) | (a) aparece na prévia com o mesmo selo LGPD do cartão e dados de exemplo fictícios; (b) não aparece até a ciência ser dada no Aplicar | **(a)**. A prévia não coleta dado real, e esconder o campo quebra o objetivo de "conferir antes de criar". O selo deixa a ciência visível no ponto em que o usuário decide | PENDENTE |
+| **F-LP-1** Nó no vault | (a) nota nova `docs/plano/nos/W8.md` (`plataforma`, `depende_de: [W1, W4, W6]`) com o fold deste BRIEF; (b) item dentro do W1, que já está `done`; (c) sem nó, só a spec e o BRIEF | **(a)**. O W1 está fechado, e reabri-lo mistura estados. Sem nó, a `autorizacao` não tem onde morar, e o protocolo do vault deixa o item sem rota | ✅ (a) |
+| **F-LP-2** Analytics no `TableDataSource` | (a) trocar `getCustomData(url)` por métodos tipados (presets, data, discover, drillDown); (b) manter `getCustomData(url)`, com o `PreviewDataSource` interpretando a URL | **(a)**. Com (b), a prévia passa a depender do formato de string montado em 3 hooks, e uma URL nova escapa calada para a rede, que é o que o teste do item 16 tenta impedir | ✅ (a) |
+| **F-LP-3** Forma da rota de analytics | (a) uma rota `POST /dashboard/ai/InterviewPreview/analytics` com união `op.kind`; (b) quatro rotas espelhando as reais (`.../presets`, `.../data`, `.../discover`, `.../drill-down`) | **(a)**. É um path no openapi e um DTO, a sessão e o `pending` são validados num ponto só, e o FE tem um método por `kind` | ✅ (b), contra a recomendação |
+| **F-LP-4** Linhas digitadas na prévia | (a) só na memória do navegador e perdidas ao recarregar (spec §1, "fora do escopo"); (b) guardadas na sessão do W4 para sobreviver ao recarregar | **(a)**. A spec aprovada exclui persistir linhas, e (b) aumenta a sessão e o TTL sem pedido do dono. Fica listado porque recarregar a página apaga o que o usuário digitou | ✅ (a) |
+| **F-LP-5** Empacotamento | (a) um BRIEF com 5 PRs, BE e FE juntos (precedente: W1 e W6); (b) separar em `BE-INCR-WIZARD-PREVIEW` e `FE-INCR-WIZARD-PREVIEW` (padrão da casa) | **(a)**. O valor só existe com os dois, e W1 e W6 já fizeram assim. Os PRs continuam separados por camada | ✅ (a) |
+| **F-LP-6** Campo sensível pendente (W6, F-W6-8) | (a) aparece na prévia com o mesmo selo LGPD do cartão e dados de exemplo fictícios; (b) não aparece até a ciência ser dada no Aplicar | **(a)**. A prévia não coleta dado real, e esconder o campo quebra o objetivo de "conferir antes de criar". O selo deixa a ciência visível no ponto em que o usuário decide | ✅ (a) |
 
 ## 4. Pendente de validação externa
 
