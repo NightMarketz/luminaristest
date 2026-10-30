@@ -24,6 +24,7 @@ prs: ["#978", "#990"]
 
 - [`PRE-ADR-RAG-DOCUMENTOS.md`](../../adr/PRE-ADR-RAG-DOCUMENTOS.md) — 29/10, **Accepted** 30/10; respostas e consequências na §2.1
 - Cédula: [[D-2026-10-30-RAG-DOCUMENTOS-FORKS]]
+- **Sequência de execução** (TEAMMATES + RAG intercalados, um PR por vez, 18 passos): [[FILA-ORDEM]] §G
 - [`BE-INCR-RAG-DOCUMENTOS-brief.md`](../../accounting/BE-INCR-RAG-DOCUMENTOS-brief.md) — 30/10: 28 itens em RAG-PR-A..D; forks F-RAG-B1..B6 ratificados no mesmo dia; o item 1 (carga do `sqlite-vec`) trava o resto
 
 ## O que é
