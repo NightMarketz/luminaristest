@@ -553,7 +553,12 @@ Pré-condições (verificar antes de começar):
 >
 > **Depois da [EMENDA 2026-10-30] do passo 8** (dono, chat, 30/10: *"Emendar o passo 8"*): o FALHOU acima foi dado contra
 > o texto original. Pelo texto emendado, a evidência do passo 8 já colada (2026/0183 D 1.1.2.01 / C 3.3 5000, sem 3.1;
-> 2026/0184 D 4.2 / C 1.1.3.01 2000 = custo) confere com o esperado. Novo desfecho sob a emenda: [dono]
+> 2026/0184 D 4.2 / C 1.1.3.01 2000 = custo) confere com o esperado.
+> Desfecho escolhido pelo dono no chat (30/10), sob a emenda: *"PASSOU"*.
+>
+> [x] PASSOU — passos 6–10 (passo 8 pelo texto da EMENDA 2026-10-30) com evidência conferindo com o esperado *(marcado pelo
+> dono no chat, 30/10; assinatura abaixo continua do dono)*. Ressalva registrada antes da escolha: nos prints do Livro Diário só
+> a coluna Débito aparece (achado F), e o lado do crédito está provado pelo texto do DOM e pelo dev.db.
 >
 > ASSINATURA: [dono]
 
