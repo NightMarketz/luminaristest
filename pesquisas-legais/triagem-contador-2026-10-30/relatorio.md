@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — triagem-contador-2026-10-30
 
 **Pergunta:** Quais perguntas abertas ao contador (D1, X7, ISS-TRANSICAO, EF, RETENCOES, PRESUMIDO-TETO, X14-CAIXA, confirmações de 10/10) a lei ou a doc oficial já responde?
-**Aberto em:** 2026-10-30T02:20:30-03:00 · **Atualizado em:** 2026-10-30T02:46:47-03:00
+**Aberto em:** 2026-10-30T02:20:30-03:00 · **Atualizado em:** 2026-10-30T09:31:46-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -106,8 +106,30 @@ para o regime de caixa de 2026, não têm cliente.
 - **Res. CGSN 195/2026 (DOU 22/10/2026, efeitos em 01/01/2027), art. 106-C [D17]:** a DASN-Simei "poderá ser utilizada como
   documento fiscal eletrônico" nas vendas e serviços do MEI a consumidor final pessoa física sem CNPJ. O dossiê
   `emissao-mei-me-por-tipo` e a [[D-2026-10-29-EMISSAO-SIMPLES-E-FINANCEIRO]] não conhecem esse artigo: o dossiê diz que, para
-  tomador PF, a emissão do MEI é facultativa só "até 31/12/2026". **Inferido:** em 2027 o MEI continua sem obrigação de emitir
-  NFS-e para PF. Conferir antes de o produto exigir a nota nesse caso.
+  tomador PF, a emissão do MEI é facultativa só "até 31/12/2026".
+- **Conferido em 30/10 (pedido do dono: "Sim, confere aqui").** Em 2027, três normas mexem nisso ao mesmo tempo [D18]:
+  1. **A lei passa a obrigar.** A LC 214 art. 517 (efeitos em 01/01/2027, art. 544 III) dá à LC 123 art. 26 § 6º II a
+     redação "será obrigatória a emissão de documento fiscal nas vendas e nas prestações de serviços realizadas pelo MEI",
+     sem a exceção do consumidor final, e tira do § 1º a dispensa [D10].
+  2. **A Res. 190 acompanha.** O art. 106 novo diz "O MEI deverá emitir os documentos fiscais nas vendas e nas prestações de
+     serviços realizadas", e o art. 106-A torna a NFS-e nacional obrigatória. Saem a dispensa para PF (art. 106 II "a" 1) e a
+     NFS-e facultativa para PF (art. 106-A § 2º): Res. 190 art. 8º XXIX e XXX [D18].
+  3. **A Res. 195 regulamenta a obrigação para PF.** Pelo art. 106-C, a DASN-Simei "poderá ser utilizada como documento fiscal
+     eletrônico" nas vendas e serviços a consumidor final PF sem CNPJ, "para fins do disposto nos arts. 106, 106-A e 106-B".
+     A base são a LC 123 art. 26 §§ 1º, 6º II e 15 (o CGSN regulamenta) [D17].
+- **Conclusão:** em 2027 o MEI segue **sem precisar de NFS-e por venda a consumidor PF**. A obrigação legal de documento é
+  cumprida pela DASN-Simei, e emitir a NFS-e continua permitido. Para tomador com CNPJ, a NFS-e nacional é obrigatória.
+  Grau: **verificado** no texto das três normas. Uma ressalva de leitura: o CGSN trata uma declaração anual como "documento
+  fiscal eletrônico". Isso se apoia na delegação do art. 26 § 15 e só seria contestado se alguém questionasse a resolução.
+- **Efeito no produto (lido em `origin/main`):**
+  - `SimplesApuracaoService.ts:1028–1029`: a conferência de NFS-e do MEI só cobra a nota do tomador `CNPJ`. **O comportamento
+    continua certo em 2027.** O comentário cita a base antiga (LC 123 art. 26 § 6º II e Res. 140 art. 106 II, na redação até
+    2026), que em 2027 passa a ser a Res. 140 art. 106-C. Ajuste só de comentário, sem mudar comportamento.
+  - `FiscalDocumentEmissionService.ts:950–954`: a NF-e/NFC-e do MEI fica fora, com a NFF desde 2027 (art. 106-B). Confere com
+    a Res. 190.
+  - Nada no produto obriga o MEI a emitir NFS-e para PF, e nada impede que ele emita.
+- **Sem pergunta ao contador e sem decisão de produto.** O ajuste do comentário vai junto do próximo PR que tocar o
+  `SimplesApuracaoService` (este PR é só de docs).
 <!-- /ANALISE -->
 
 ## Fontes consultadas

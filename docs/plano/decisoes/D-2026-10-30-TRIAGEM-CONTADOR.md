@@ -46,4 +46,13 @@ pedida. Duas ressalvas entraram no registro:
   código, #902).
 - **III-9:** no trimestral, o PER/DCOMP feito antes de fechar o ano não exige a ECF [D11].
 
+## Achado lateral: emissão do MEI para consumidor PF em 2027 (conferido 30/10)
+
+Dono, chat, 30/10: "Sim, confere aqui". Em 2027 a LC 214 art. 517 e a Res. CGSN 190 passam a obrigar o documento fiscal
+em toda venda do MEI, e a **Res. CGSN 195/2026 (art. 106-C)** deixa a DASN-Simei valer como documento na venda a consumidor
+PF. O MEI segue sem precisar de NFS-e por venda a PF, e a NFS-e continua obrigatória para tomador CNPJ. O produto já faz
+isso (`SimplesApuracaoService.ts:1028`). Falta só atualizar a base legal do comentário (art. 106-C) no próximo PR que tocar o
+arquivo. Detalhe: dossiê `triagem-contador-2026-10-30` §6 e o adendo do dossiê `emissao-mei-me-por-tipo`. Não muda
+[[D-2026-10-29-EMISSAO-SIMPLES-E-FINANCEIRO]].
+
 Não autoriza merge fora da regra de classe de risco ([[D-2026-10-28-FLUXO-AUTONOMO]]).
