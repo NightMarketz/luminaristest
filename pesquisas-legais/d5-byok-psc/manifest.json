@@ -47,6 +47,18 @@
       "arquivo": "docs/D04_assinatura-digital.html",
       "texto": "docs/D04_assinatura-digital.txt",
       "bytes": 43806
+    },
+    {
+      "id": "D05",
+      "titulo": "Manual da NF-e",
+      "url": "http://moc.sped.fazenda.pr.gov.br/NFe_NFCe/VisaoGeral.html",
+      "url_final": "http://moc.sped.fazenda.pr.gov.br/NFe_NFCe/VisaoGeral.html",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-30T02:35:49-03:00",
+      "sha256": "7869d3726b407c988030087b19d2efa4421f5b96c9353c93a9bd09a9994f9eb2",
+      "arquivo": "docs/D05_VisaoGeral-html.html",
+      "texto": "docs/D05_VisaoGeral-html.txt",
+      "bytes": 483990
     }
   ],
   "buscas": [],
