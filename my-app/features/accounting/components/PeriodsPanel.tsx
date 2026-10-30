@@ -19,6 +19,8 @@ const STATUS_CHIP: Record<PeriodStatus, { label: string; className: string }> = 
 
 interface Props {
   unitId: string;
+  /** Nome da unidade, repassado ao modal "Encerrar exercício". */
+  unitName?: string;
   /**
    * Modo cliente (contador no livro do dono, F-FE-GOV-1 b): repassa `ownerUserId` nos 3 handlers delegados
    * (F-GOV-7) e ESCONDE o resto — semear, fechar parcial/definitivo e encerrar exercício não estão entre os 9 e
@@ -29,7 +31,7 @@ interface Props {
   onAssignmentLost?: () => void;
 }
 
-export function PeriodsPanel({ unitId, governance, onAssignmentLost }: Props) {
+export function PeriodsPanel({ unitId, unitName, governance, onAssignmentLost }: Props) {
   const { t, tRef } = useAccountingT();
   const ownerUserId = governance?.ownerUserId;
   const active = useActiveAssignment(unitId, !governance);
@@ -267,6 +269,7 @@ export function PeriodsPanel({ unitId, governance, onAssignmentLost }: Props) {
         isOpen={closeExerciseOpen}
         onClose={() => setCloseExerciseOpen(false)}
         unitId={unitId}
+        unitName={unitName}
         year={year}
         onSuccess={(_entry: JournalEntry) => {}}
       />
