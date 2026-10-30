@@ -2,7 +2,8 @@
 
 > Produzido por **sessão de planejamento** em 2026-10-30. Escopo: **backend**; as telas são nó vizinho (FE).
 > **Forks F-RAG-1..10 ratificados** (30/10); cinco contra a recomendação (F-RAG-1, 2, 3, 5, 5b). O checklist já as
-> materializa — não "conserte". **Forks F-RAG-B1..B5 deste BRIEF estão PENDENTES** (§3). Sem `executa`.
+> materializa — não "conserte". **Forks F-RAG-B1..B6 deste BRIEF ratificados** no mesmo dia (§3); o F-RAG-B2 foi
+> contra a recomendação. Executável com `executa` do dono.
 
 ## Contexto fixo
 
@@ -10,7 +11,8 @@
   [`PRE-ADR-RAG-DOCUMENTOS.md`](../adr/PRE-ADR-RAG-DOCUMENTOS.md) (Accepted 30/10; **a §2.1 manda** sobre TLDR, §3 e §4).
 - **Autorização:** dono, chat, 2026-10-29: "Sim, vamos repensar o RAG agora, as coisas mudaram muito" (planejar) ·
   2026-10-30: "Forks do RAG antes" + questionário ([`D-2026-10-30-RAG-DOCUMENTOS-FORKS`](../plano/decisoes/D-2026-10-30-RAG-DOCUMENTOS-FORKS.md))
-  · 2026-10-30: "BRIEF do RAG antes" (este documento). Nada disso autoriza código.
+  · 2026-10-30: "BRIEF do RAG antes" (este documento) · 2026-10-30: "Sim, questionário" (F-RAG-B1..B6, §3). Nada
+  disso autoriza código.
 - **Insumos (lidos em `c8b7c835`):**
   - `prisma/schema.prisma` (`Document`, `Chunk`);
   - `features/documents/**`: `DocumentService`, `DocumentProcessingPipeline`, `VectorRepository`, `ChunkRepository`,
@@ -32,7 +34,10 @@
 F-RAG-1 **`sqlite-vec`** · F-RAG-2 **serviço + ferramenta + rota** · F-RAG-3 **dois modos de chat** · F-RAG-4 **contexto
 gerado + PATCH só de contexto** · F-RAG-5 **embedding pela `LlmCredential` do usuário** · F-RAG-5b **chave da instância de
 reserva** · F-RAG-6 fila própria no mesmo Redis · F-RAG-7 em memória sem Redis · F-RAG-8 3 tentativas e alerta ·
-F-RAG-9 contexto com a regra de chave do embedding · F-RAG-10 provedor de embedding escolhido pelo usuário.
+F-RAG-9 contexto com a regra de chave do embedding · F-RAG-10 provedor de embedding escolhido pelo usuário ·
+F-RAG-B1 coluna `generatedContext` · F-RAG-B2 **embedding e contexto contam** (com a reserva medida sem orçamento) ·
+F-RAG-B3 coluna `User.embeddingProvider` · F-RAG-B4 falha de contexto não tira da busca · F-RAG-B5 modo RAG sem
+resumo · F-RAG-B6 orçamento estourado para e avisa.
 
 ## 1. Checklist numerado (cada item testável sozinho)
 
@@ -122,7 +127,7 @@ F-RAG-9 contexto com a regra de chave do embedding · F-RAG-10 provedor de embed
 
 19. **Adaptador Gemini** da `EmbeddingProvider` (`@google/genai`, que o TEAMMATES já traz), com
     `outputDimensionality: 768`. **Prova:** resposta gravada (fixture) → 768 posições.
-20. **Escolha do provedor de embedding** (F-RAG-10), guardada onde o F-RAG-B3 decidir, e resolvedor com `source = 'USER'`.
+20. **Escolha do provedor de embedding** (F-RAG-10), na coluna `User.embeddingProvider` (F-RAG-B3 a), e resolvedor com `source = 'USER'`.
     A ordem de resolução:
     1. o provedor escolhido, se o usuário tem `LlmCredential` não apagada dele;
     2. senão, a primeira `LlmCredential` OpenAI ou Gemini do usuário (por `createdAt`);
@@ -135,7 +140,25 @@ F-RAG-9 contexto com a regra de chave do embedding · F-RAG-10 provedor de embed
     serviço de integração que chama `DocumentReindexService.scheduleForUser(userId)` (CLAUDE.md, integração
     cross-módulo fora do motor). Até o RAG-PR-D, roda em memória. **Prova:** cadastrar a primeira chave Gemini → os
     chunks do usuário passam a ter o carimbo Gemini; a busca devolve resultados.
-22. **Uso e orçamento** conforme o F-RAG-B2. **Prova:** segue a resposta do fork.
+22. **Uso e orçamento** (F-RAG-B2 a, F-RAG-B2b, F-RAG-B6):
+    - toda chamada de IA do RAG grava uma linha em `DocumentAiUsage` (§2.1): embedding de indexação, embedding da
+      pergunta (modo RAG, rota e ferramenta) e geração de contexto;
+    - com `source = 'USER'`, a linha leva o `credentialId` e soma no orçamento mensal da credencial;
+    - com `source = 'INSTANCE'`, a linha é gravada para o custo, mas não consome orçamento de ninguém (F-RAG-B2b);
+    - antes de chamar o provedor com a chave do usuário, confere o orçamento. Se estourou, **não chama e não cai na
+      reserva** (F-RAG-B6): o documento vai a `AWAITING_BUDGET` sem índice nem contexto, e a busca responde 409
+      `RAG_ORCAMENTO_ESGOTADO`;
+    - quando o mês vira ou o teto sobe, os documentos em `AWAITING_BUDGET` voltam para a fila (no RAG-PR-D; até lá,
+      pelo comando do item 10).
+
+    **Emenda no TEAMMATES (item 23):** o cálculo do orçamento mensal passa a somar `AgentTurn` **e**
+    `DocumentAiUsage` da credencial. A emenda é do nó TEAMMATES; este item depende dela.
+
+    **Prova:**
+    - uma linha por tipo de chamada;
+    - linha `INSTANCE` fora da soma;
+    - orçamento estourado → provedor não chamado, documento `AWAITING_BUDGET`, busca 409;
+    - teto aumentado → documento volta a indexar.
 
 ### RAG-PR-D · fila de documentos e contexto gerado (depois do TEAMMATES PR-4 e PR-1)
 
@@ -154,13 +177,16 @@ F-RAG-9 contexto com a regra de chave do embedding · F-RAG-10 provedor de embed
     - uma chamada `LlmProvider.complete` com a chave do usuário (qualquer provedor) ou a reserva da instância, pelo
       mesmo resolvedor generalizado;
     - o texto do documento entra delimitado como dado não confiável, sem ferramentas;
-    - a saída é validada pelo `GeneratedContextSchema` e grava `summary` e o contexto (onde o F-RAG-B1 decidir);
+    - a saída é validada pelo `GeneratedContextSchema` e grava `summary` e `Document.generatedContext` (F-RAG-B1 a);
     - campos em `userEditedFields` nunca são sobrescritos;
-    - falha da geração segue o F-RAG-B4;
+    - falha da geração (erro do provedor ou saída fora do schema, depois das tentativas do job) **não** reprova o
+      documento: ele fica `COMPLETED`, pesquisável, com o contexto vazio e o aviso em `processingError`, prefixado
+      `CONTEXTO:` (F-RAG-B4 a);
     - entidades podem ter PII: nunca vão a log (ADR-OBSERVABILIDADE).
 
-    **Prova:** saída fora do schema não grava nada; campo corrigido sobrevive ao reprocessamento; texto com instrução
-    injetada não muda o schema da saída.
+    **Prova:** saída fora do schema não grava contexto e o documento fica `COMPLETED` com o aviso; campo corrigido
+    sobrevive ao reprocessamento; texto com instrução injetada não muda o schema da saída. O modo RAG **não** recebe o
+    resumo (F-RAG-B5 b).
 27. **Watchdog R18.** Não reprova documento cujo job está pendente ou ativo. **Prova:** documento em `PROCESSING` com job
     ativo continua `PROCESSING` depois do prazo.
 28. **Reindexação na fila.** O comando do item 10 e o disparo do item 21 passam a enfileirar `{ documentId }` na mesma
@@ -194,12 +220,36 @@ model Chunk {
 
 model Document {
   // … campos atuais; contextJson continua com as estatísticas do pipeline
-  generatedContext Json?   // F-RAG-B1 a (recomendado): GeneratedContextSchema
+  generatedContext Json?   // F-RAG-B1 a: GeneratedContextSchema
 }
+
+enum ProcessingStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  ERROR
+  FAILED
+  AWAITING_BUDGET          // F-RAG-B6 a: orçamento da credencial do usuário estourado
+}
+
+model DocumentAiUsage {     // F-RAG-B2 a / B2b
+  id               String   @id @default(cuid())
+  userId           String
+  documentId       String?  // null na pergunta (embedding da busca)
+  kind             String   // 'EMBED_INDEX' | 'EMBED_QUERY' | 'CONTEXT'
+  source           String   // 'USER' | 'INSTANCE'
+  credentialId     String?  // só com source = 'USER'; soma no orçamento
+  model            String
+  promptTokens     Int
+  completionTokens Int      @default(0)
+  createdAt        DateTime @default(now())
+  @@index([credentialId, createdAt])
+  @@index([userId, createdAt])
+} // trilha de custo, sem FK cascade a Document (o documento pode ser apagado e o custo fica); userId cai com o usuário
 
 model User {
   // …
-  embeddingProvider String? // F-RAG-B3 a (recomendado): 'openai' | 'gemini' | null = automático
+  embeddingProvider String? // F-RAG-B3 a: 'openai' | 'gemini' | null = automático
 }
 ```
 
@@ -275,15 +325,19 @@ export const UpdateDocumentContextSchema = z.object({
 }).strict(); // status, processingError, processingDate e contextJson fora: chave extra → 400
 ```
 
-## 3. Forks deste BRIEF — RATIFICAÇÃO PENDENTE
+## 3. Forks deste BRIEF — ratificados (dono, chat, questionário, 2026-10-30)
 
-| # | Pergunta | Caminhos | Recomendação |
-|---|---|---|---|
-| F-RAG-B1 | Onde mora o contexto gerado? | **a** coluna nova `Document.generatedContext Json?` · b dentro do `contextJson`, sob a chave `ai` · c tabela `DocumentContext` 1:1 | **a.** O `contextJson` já guarda as estatísticas que o pipeline escreve (`DocumentContext.ts`); misturar faz o PATCH e o pipeline disputarem o mesmo JSON. A tabela 1:1 é cerimônia para um JSON só |
-| F-RAG-B2 | Tokens de embedding e de contexto entram no uso e no orçamento? | a os dois contam em `LlmUsage` e no `monthlyTokenBudget` da credencial do usuário · **b** só o contexto gerado conta (é uma `complete`); o embedding segue fora, como no F-I11-5 a · c nenhum conta | **b.** O F-I11-5 a tirou o embedding da medida, e o embedding custa uma fração do contexto. O contexto é uma chamada de conversa por documento e precisa entrar no orçamento que protege a conta do usuário (TEAMMATES item 23). Isso **corrige** a frase da §2.1 do PRE-ADR que mandava medir o embedding |
-| F-RAG-B3 | Onde mora a escolha do provedor de embedding (F-RAG-10)? | **a** coluna `User.embeddingProvider String?` · b tabela de preferências de IA 1:1 com o usuário · c campo na `LlmCredential` (`useForEmbedding`) | **a.** É um valor por usuário e não há outra preferência de IA em vista. O c espalha a escolha por linhas e permite duas marcadas |
-| F-RAG-B4 | Se a geração de contexto falhar | **a** o documento fica `COMPLETED` com o contexto vazio e um aviso em `processingError`, porque a busca não depende do contexto · b conta como falha do job (3 tentativas, depois `FAILED`) | **a.** Indexação e busca são o valor principal. Reprovar o documento por um resumo que falhou tira o documento da busca. O usuário pode preencher o contexto pelo PATCH |
-| F-RAG-B5 | O modo RAG (com documentos selecionados) devolve o resumo junto com os trechos? | a sim, o resumo de cada documento selecionado entra no contexto do prompt · **b** não por agora: o modo RAG fica como está (F-RAG-3 a) | **b.** O dono escolheu manter o modo RAG como está. Mudar o prompt dele é mudança de comportamento que a resposta não pediu |
+| # | Pergunta | Resposta literal | Recomendada? | Efeito |
+|---|---|---|---|---|
+| F-RAG-B1 | Onde mora o contexto gerado? | "Coluna nova (Recomendado)" | Sim | `Document.generatedContext`; o `contextJson` fica só com as estatísticas do pipeline |
+| F-RAG-B2 | O que entra no uso e no orçamento? | "Os dois contam" (a recomendada era só o contexto) | Não | Embedding e contexto gravam `DocumentAiUsage` e somam no orçamento da credencial. **Revisa o F-I11-5 a** para as chamadas do RAG; o chat segue como está |
+| F-RAG-B2b | Embedding com a chave da instância entra na medida? | "Mede, sem orçamento (Recomendado)" | Sim | Linha `source = 'INSTANCE'`, sem `credentialId`, fora da soma |
+| F-RAG-B3 | Onde mora a escolha do provedor de embedding? | "Coluna no usuário (Recomendado)" | Sim | `User.embeddingProvider` |
+| F-RAG-B4 | Se a geração de contexto falhar | "Fica pesquisável e avisa (Recomendado)" | Sim | `COMPLETED` + aviso `CONTEXTO:` em `processingError` |
+| F-RAG-B5 | Modo RAG recebe o resumo? | "Não por agora (Recomendado)" | Sim | Modo RAG intacto |
+| F-RAG-B6 | Orçamento estourado | "Para e avisa (Recomendado)" | Sim | `AWAITING_BUDGET`, busca 409 `RAG_ORCAMENTO_ESGOTADO`, sem cair na reserva |
+
+F-RAG-B2b e F-RAG-B6 nasceram da resposta do F-RAG-B2 e foram perguntados no mesmo turno.
 
 ## 4. Pendente de validação externa
 
@@ -300,6 +354,8 @@ export const UpdateDocumentContextSchema = z.object({
 - Se a versão do `sqlite-vec` tem `PARTITION KEY` e metadado filtrável no KNN (o item 4 decide entre isso e o pós-filtro).
 - Se o `prisma migrate` ignora a `vec0` e as tabelas-sombra (o item 2 mede).
 - `dimensions: 768` nos modelos `text-embedding-3` da OpenAI: conhecimento do agente; conferir na doc antes do item 5.
+- Se a API de embedding do Gemini devolve contagem de tokens (o item 22 precisa dela). Se não devolver, **pare no
+  item 19** e pergunte ao dono como contar; não estime em silêncio.
 - Volume real de documentos por cliente: não há instância em produção.
 
 ## 6. Achados fora de escopo (registrados, não planejados)
@@ -311,8 +367,10 @@ export const UpdateDocumentContextSchema = z.object({
   - motivo do `FAILED` e do aviso de contexto na lista de documentos.
 - **Seletor "Análise de dados × Base de conhecimento" do upload:** segue só como rótulo desde o R26.
 - **README de documentos:** cita `reports` como consumidor; o grep do PRE-ADR não achou (inferido).
-- **Emenda do item 8 do BRIEF do TEAMMATES:** a reserva lê `OPENAI_API_KEY` no caminho do teammate. A emenda é do nó
-  TEAMMATES, não deste.
+- **Emendas no BRIEF do TEAMMATES (feitas pelo nó TEAMMATES, não por este):**
+  - **item 8:** a reserva lê `OPENAI_API_KEY` no caminho do teammate;
+  - **item 23:** o orçamento mensal passa a somar `DocumentAiUsage`, além de `AgentTurn` (F-RAG-B2).
+- **FE:** o novo estado `AWAITING_BUDGET` precisa de rótulo e aviso na lista de documentos (i18n pt/en).
 
 ## 7. Ordem e dependências
 
@@ -320,7 +378,7 @@ export const UpdateDocumentContextSchema = z.object({
 |---|---|---|---|
 | RAG-PR-A | 1–12 | #977 (mergeado) | `lib/factory.ts`, `server/package.json`, `UserService.ts` |
 | RAG-PR-B | 13–18 | RAG-PR-A | `features/chat/**`, `lib/factory.ts`, `routes/index.ts` |
-| RAG-PR-C | 19–22 | RAG-PR-B, TEAMMATES PR-1 | `lib/factory.ts` |
+| RAG-PR-C | 19–22 | RAG-PR-B, TEAMMATES PR-1; o item 22 também espera o item 23 do TEAMMATES (PR-4) emendado | `lib/factory.ts`, `schema.prisma` |
 | RAG-PR-D | 23–28 | RAG-PR-C, TEAMMATES PR-4 | teste de descoberta de workers, `lib/factory.ts`, `server/package.json` |
 
 O RAG-PR-A e o RAG-PR-B podem ir antes do TEAMMATES ou entre os PRs dele, mas nunca **ao mesmo tempo** que um PR do

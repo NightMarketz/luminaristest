@@ -272,8 +272,8 @@ respostas e foram perguntados no mesmo turno.
   F-RAG-5b sem fork novo.
 - **Emenda no TEAMMATES (item 8):** a reserva lê `OPENAI_API_KEY` no caminho do teammate. A ressalva do item 15 deste
   PRE-ADR continua necessária, e é feita pelo nó TEAMMATES.
-- **Custo:** o embedding passa a sair da conta do usuário quando ele tem chave. Se ele entra na medida de uso, apesar
-  do F-I11-5 a, que o excluiu, é o fork F-RAG-B2 do BRIEF (pendente).
+- **Custo:** o embedding passa a sair da conta do usuário quando ele tem chave. Pelo F-RAG-B2 do BRIEF (dono, 30/10:
+  "Os dois contam"), embedding e contexto entram na medida e no orçamento, o que revisa o F-I11-5 a só para o RAG.
 
 **F-RAG-9.** O contexto gerado usa a `LlmCredential` do usuário, de qualquer provedor (Claude, OpenAI ou Gemini, pela
 porta `LlmProvider`), com reserva na chave da instância. Depende do PR-1 do TEAMMATES pelo mesmo motivo do F-RAG-5.
