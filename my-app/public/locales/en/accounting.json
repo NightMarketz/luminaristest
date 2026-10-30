@@ -67,7 +67,8 @@
       "OPEN": "Open",
       "PAYING": "Paying",
       "PAID": "Paid",
-      "CANCELLED": "Cancelled"
+      "CANCELLED": "Cancelled",
+      "PARTIALLY_PAID": "Partially paid"
     },
     "col": {
       "expand": "Expand",
@@ -145,6 +146,9 @@
       "paidAtLabel": "Payment date",
       "reversalDateLabel": "Reversal date",
       "methodLabel": "Payment method",
+      "method": {
+        "Cash": "Cash"
+      },
       "reasonLabel": "Reason",
       "payTitle": "Register payment",
       "payConfirm": "Confirm payment",
@@ -244,6 +248,9 @@
       "receivedAtLabel": "Receipt date",
       "reversalDateLabel": "Reversal date",
       "methodLabel": "Receipt method",
+      "method": {
+        "Cash": "Cash"
+      },
       "reasonLabel": "Reason",
       "receiveTitle": "Register receipt",
       "receiveConfirm": "Confirm receipt",

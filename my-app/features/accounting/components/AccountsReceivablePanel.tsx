@@ -677,7 +677,7 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
               >
                 {RECEIPT_METHODS.map((m) => (
                   <option key={m} value={m}>
-                    {m}
+                    {t('contasAReceber.actionModal.method.' + m, m === 'Cash' ? 'Dinheiro' : m)}
                   </option>
                 ))}
               </select>

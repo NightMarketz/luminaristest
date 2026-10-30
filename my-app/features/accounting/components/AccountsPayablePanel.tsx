@@ -38,6 +38,7 @@ function sumActive(payments: PayablePayment[]): number {
 
 const STATUS_LABEL: Record<PayableStatus, string> = {
   OPEN: 'Em aberto',
+  PARTIALLY_PAID: 'Paga em parte',
   PAYING: 'Em pagamento',
   PAID: 'Paga',
   CANCELLED: 'Cancelada',
@@ -45,6 +46,7 @@ const STATUS_LABEL: Record<PayableStatus, string> = {
 
 const STATUS_CLASS: Record<PayableStatus, string> = {
   OPEN: 'bg-amber-900/40 text-amber-300',
+  PARTIALLY_PAID: 'bg-sky-900/40 text-sky-300',
   PAYING: 'bg-blue-900/40 text-blue-300',
   PAID: 'bg-emerald-900/40 text-emerald-300',
   CANCELLED: 'bg-neutral-700/60 text-neutral-300',
@@ -559,7 +561,7 @@ export function AccountsPayablePanel({ unitId, onLedgerChange, onNavigateToPerio
               >
                 {PAYMENT_METHODS.map((m) => (
                   <option key={m} value={m}>
-                    {m}
+                    {t('contasAPagar.actionModal.method.' + m, m === 'Cash' ? 'Dinheiro' : m)}
                   </option>
                 ))}
               </select>

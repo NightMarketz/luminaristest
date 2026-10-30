@@ -404,7 +404,13 @@ export function AccountingView() {
 
       {/* ── Períodos tab ───────────────────────────────────────────────────── */}
       {activeTab === 'periodos' && unitId && (
-        <PeriodsPanel key={contextKey} unitId={unitId} governance={governance} onAssignmentLost={leaveClient} />
+        <PeriodsPanel
+          key={contextKey}
+          unitId={unitId}
+          unitName={units.find((u) => u.id === unitId)?.label}
+          governance={governance}
+          onAssignmentLost={leaveClient}
+        />
       )}
 
       {/* ── Lançamentos tab ────────────────────────────────────────────────── */}

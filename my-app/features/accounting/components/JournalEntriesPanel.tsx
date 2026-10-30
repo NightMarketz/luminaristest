@@ -158,7 +158,10 @@ function JournalEntryRow({
 
   const totalDebitCents = entry.postings.reduce((s, p) => s + p.debitCents, 0);
   const totalCreditCents = entry.postings.reduce((s, p) => s + p.creditCents, 0);
-  const canReverse = !entry.reversedById && entry.status !== 'Reversed';
+  // Rascunho/pendente não tem número: o servidor recusa recibo (ReceiptService) e estorno (PostingService).
+  const canReceipt = entry.entryNumber != null && entry.fiscalYear != null;
+  const canReverse =
+    !entry.reversedById && entry.status !== 'Reversed' && entry.status !== 'Draft' && entry.status !== 'PendingApproval';
   const isDownloadingReceipt = receiptBusyId === entry.id;
   const isLoadingProvenance = provenanceBusyId === entry.id;
 
@@ -196,7 +199,7 @@ function JournalEntryRow({
         >
           <div className="flex items-center gap-2">
             <button
-              disabled={isDownloadingReceipt}
+              disabled={isDownloadingReceipt || !canReceipt}
               onClick={() => onReceiptClick(entry.id)}
               title={t('journalEntries.receiptAction.title', 'Baixar recibo em PDF deste lançamento')}
               className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-xs font-medium text-neutral-300 transition-colors hover:border-blue-700 hover:bg-blue-900/30 hover:text-blue-300 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-neutral-700 disabled:hover:bg-neutral-800 disabled:hover:text-neutral-300"

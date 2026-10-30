@@ -67,7 +67,8 @@
       "OPEN": "Em aberto",
       "PAYING": "Em pagamento",
       "PAID": "Paga",
-      "CANCELLED": "Cancelada"
+      "CANCELLED": "Cancelada",
+      "PARTIALLY_PAID": "Paga em parte"
     },
     "col": {
       "expand": "Expandir",
@@ -145,6 +146,9 @@
       "paidAtLabel": "Data do pagamento",
       "reversalDateLabel": "Data da reversão",
       "methodLabel": "Forma de pagamento",
+      "method": {
+        "Cash": "Dinheiro"
+      },
       "reasonLabel": "Motivo",
       "payTitle": "Registrar pagamento",
       "payConfirm": "Confirmar pagamento",
@@ -244,6 +248,9 @@
       "receivedAtLabel": "Data do recebimento",
       "reversalDateLabel": "Data da reversão",
       "methodLabel": "Forma de recebimento",
+      "method": {
+        "Cash": "Dinheiro"
+      },
       "reasonLabel": "Motivo",
       "receiveTitle": "Registrar recebimento",
       "receiveConfirm": "Confirmar recebimento",
