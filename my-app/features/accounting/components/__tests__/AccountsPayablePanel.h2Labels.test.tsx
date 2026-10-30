@@ -81,4 +81,23 @@ describe('AccountsPayablePanel — rótulos em pt (achado G do H2)', () => {
       'a lista de Contas a Pagar não pode mostrar o enum "PARTIALLY_PAID" cru — falta o rótulo pt do status',
     ).not.toContain('PARTIALLY_PAID');
   });
+
+  // Achado da correção do G (PR #988, 29/10): o servidor também devolve DEFERRED — título de imposto < R$ 10
+  // somado ao da competência seguinte (Payable.model.ts:17-19) —, e o tipo do FE não o tem. Teste-guarda:
+  // VERMELHO até o fix. Autorização: dono em chat 29/10 ("Corrige").
+  it('G4: uma conta DEFERRED mostra o status em pt na lista, não o enum cru', async () => {
+    const deferred: PayableWithPayments = {
+      ...openPayable, id: 'ap4', supplierName: 'Fornecedor Adiado',
+      status: 'DEFERRED' as unknown as PayableStatus,
+    };
+    vi.mocked(accountsPayableService.listPayables).mockResolvedValue({ payables: [deferred], total: 1 });
+
+    const { container } = render(<AccountsPayablePanel unitId="u1" />);
+    await waitFor(() => expect(screen.getByText('Fornecedor Adiado')).toBeInTheDocument());
+
+    expect(
+      container.textContent,
+      'a lista de Contas a Pagar não pode mostrar o enum "DEFERRED" cru — falta o rótulo pt do status',
+    ).not.toContain('DEFERRED');
+  });
 });
