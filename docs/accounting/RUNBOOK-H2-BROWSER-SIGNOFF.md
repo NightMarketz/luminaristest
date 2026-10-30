@@ -446,6 +446,81 @@ Pré-condições (verificar antes de começar):
 >
 > DESFECHO: [dono]   ASSINATURA: [dono]
 
+> **Passos 6–10 refeitos sobre o #985 (agente, 30/10/2026 03:01–03:08 UTC, sob comando do dono no chat: "Sim, manda pra
+> ela", repassado pela sessão-mãe; RUNBOOK-FORMAT §Fronteira).** O PR #985 (commits `10a8ebd7` teste-guarda e `81b8ca63`
+> correção) corrige os achados A–D. Ambiente: build de produção da `origin/main` `c8b7c83551a665d29d3ca855d6f22a4a5fb340a4`
+> (worktree separado, sem tocar o branch deste PR), back `:3101` e front `127.0.0.1:3100`, o mesmo `server/.env` e o dev.db
+> real. Antes de subir: backup `server/prisma/prisma/dev.db.bak-h2-refazer-6-10-2026-10-29` (10.166.272 bytes, sha256
+> `b430ee50ced2c74cbbd6fec042fa027a7c0ac412789bec0bfcfa6f2bb5be9bca`, API de backup do SQLite) e, com o ok do dono no chat
+> ("Ok, migrate"), `npx prisma migrate deploy` aplicou as 2 migrações pendentes (`20261029130000_legal_parameters_retencoes_v3_inss`
+> e `20261029150000_fix_chat_agente_r26_drop_structured_data`, `StructuredData` com 0 linhas). O dono logou `seed-presumido`
+> no painel. Os passos rodaram depois das 03:00 UTC, fora da janela em que o dia BRT e o dia UTC divergem; as vendas são de
+> 30/10/2026. Mesmo roteiro da execução de 29/10 (Salvar Rascunho → Finalizar → "Confirmar finalização"), com a mesma
+> unidade, cliente e catálogo. Estado inicial lido no dev.db: último lançamento 2026/0180, Shampoo H2 9 un./18000,
+> saldo de pacote 22000.
+>
+> Razão (`razao.py`, só leitura, lançamentos criados depois de 02:55 UTC; centavos; o `date` é o dia escrito 30/10, 00:00 UTC):
+>
+> ```text
+> lançamento 2026/0181 | sale.finalized cmvudz55v0001ci38nrddtau5 | Posted | binding v2 | criado 2026-10-30T03:02:23.804Z
+>    D 1.1.2.01 A Receber | 8000                     C 3.1 Receita de Serviços | 8000
+> lançamento 2026/0182 | sale.package.sold cmvue0zpl000nci38s86twu4x | Posted | binding v2 | criado 2026-10-30T03:03:41.415Z
+>    D 1.1.2.01 A Receber | 30000                    C 2.1.1.01 Pacotes Pré-pagos | 30000
+> lançamento 2026/0183 | sale.finalized cmvue2rru001cci387qk76tpn | Posted | binding v2 | criado 2026-10-30T03:05:04.124Z
+>    D 1.1.2.01 A Receber | 5000                     C 3.3 Receita de Revenda de Mercadorias | 5000
+> lançamento 2026/0184 | sale.cogs cmvue2rru001cci387qk76tpn | Posted | binding v2 | criado 2026-10-30T03:05:04.158Z
+>    D 4.2 Custo das Mercadorias Vendidas | 2000     C 1.1.3.01 Estoques | 2000
+> lançamento 2026/0185 | sale.returned cmvudz55v0001ci38nrddtau5 | Posted | binding v2 | criado 2026-10-30T03:05:28.832Z
+>    D 3.2 Devoluções de Vendas | 8000               C 1.1.2.01 A Receber | 8000
+> lançamento 2026/0186 | sale.settled cmvue2rru001cci387qk76tpn (Pix) | Posted | binding v2 | criado 2026-10-30T03:06:05.569Z
+>    D 1.1.1.01 Banco | 5000                         C 1.1.2.01 A Receber | 5000
+> lançamento 2026/0187 | sale.settled cmvue0zpl000nci38s86twu4x (Dinheiro) | Posted | binding v2 | criado 2026-10-30T03:06:22.401Z
+>    D 1.1.1.02 Caixa | 30000                        C 1.1.2.01 A Receber | 30000
+> lançamento 2026/0188 | sale.finalized cmvue5lcy003eci38d00hecak | Posted | binding v2 | criado 2026-10-30T03:07:12.934Z
+>    D 1.1.2.01 A Receber | 8000                     C 3.1 Receita de Serviços | 8000
+> lançamento 2026/0189 | sale.settled cmvue5lcy003eci38d00hecak (Saldo de pacote) | Posted | binding v2 | criado 2026-10-30T03:07:45.442Z
+>    D 2.1.1.01 Pacotes Pré-pagos | 8000             C 1.1.2.01 A Receber | 8000
+> ```
+>
+> - **Passo 6** (só serviço): 2026/0181 tem D 1.1.2.01 e C 3.1, de 8000, sem linha 3.3. Print:
+>   [`refazer-985-p6-01-servico-preco-do-catalogo.jpg`](runbook-evidence/H2-2026-10-29/refazer-985-p6-01-servico-preco-do-catalogo.jpg).
+> - **Passo 7** (pacote): 2026/0182 tem D 1.1.2.01 e C 2.1.1.01, de 30000, sem receita. O modal mostrou "Válido até
+>   30/10/2027", e o aceite foi marcado. Print: [`refazer-985-p7-01-pacote.jpg`](runbook-evidence/H2-2026-10-29/refazer-985-p7-01-pacote.jpg).
+> - **Passo 8** (produto, R$ 50): 2026/0183 tem D 1.1.2.01 e C 3.3, de 5000. A CMV 2026/0184 tem D 4.2 e C 1.1.3.01, de **2000 =
+>   custo** (não o preço). O estoque foi de 9/18000 para 8/16000. O produto não tem preço de venda no catálogo, então o campo
+>   veio com R$ 0,00 e o agente digitou 50, como em 29/10. Print: [`refazer-985-p8-01-produto.jpg`](runbook-evidence/H2-2026-10-29/refazer-985-p8-01-produto.jpg).
+>   Segue o desvio de 29/10: a venda mista não sai desta tela (um tipo por venda).
+> - **Passo 9** (devolução da venda do passo 6): 2026/0185 é **novo** (`sale.returned`), com D 3.2 e C 1.1.2.01 de 8000. O original
+>   2026/0181 continua `('Posted', reversedById None, version 1)`, com `updatedAt` = `createdAt` = 1793329343804. Print:
+>   [`refazer-985-p9-01-devolucao-so-ver-detalhes.jpg`](runbook-evidence/H2-2026-10-29/refazer-985-p9-01-devolucao-so-ver-detalhes.jpg).
+> - **Passo 10** ("Pagar" → "Registrar pagamento"): Pix → 2026/0186 com D 1.1.1.01 Banco. Dinheiro → 2026/0187 com D 1.1.1.02
+>   Caixa. **Saldo de pacote → 2026/0189 com D 2.1.1.01, sem conta de caixa ou banco**, e `package_balance_movements` debit
+>   8000 na venda `cmvue5lcy…`. Cartão não foi testado, como em 29/10. Print:
+>   [`refazer-985-p10-01-saldo-pacote-nome.jpg`](runbook-evidence/H2-2026-10-29/refazer-985-p10-01-saldo-pacote-nome.jpg).
+>
+> **Achados A–D contra o #985** (cada um lido no DOM do build `c8b7c835`):
+> - **(A) Confirmado corrigido.** As duas vendas Devolvidas (a de 29/10 e a nova de 30/10) mostram só "Ver Detalhes"; não há
+>   "Finalizar". Prints: [`refazer-985-A-devolvida-sem-finalizar.jpg`](runbook-evidence/H2-2026-10-29/refazer-985-A-devolvida-sem-finalizar.jpg),
+>   [`refazer-985-p9-01-devolucao-so-ver-detalhes.jpg`](runbook-evidence/H2-2026-10-29/refazer-985-p9-01-devolucao-so-ver-detalhes.jpg).
+> - **(B) Confirmado corrigido.** A opção do saldo diz "Pacote H2 — saldo R$ 520,00 — vence em 30/10/2027": é o nome, não o ID.
+>   Print: [`refazer-985-p10-01-saldo-pacote-nome.jpg`](runbook-evidence/H2-2026-10-29/refazer-985-p10-01-saldo-pacote-nome.jpg).
+> - **(C) Confirmado corrigido.** O modal "Compra de estoque" diz "Debita 1.1.3.01 Estoques e valora o produto pelo custo
+>   médio — o valor acima é o TOTAL da compra." O modal foi só aberto pelo deep link e fechado com Cancelar, sem registrar
+>   nada. Print: [`refazer-985-C-dica-1.1.3.01.jpg`](runbook-evidence/H2-2026-10-29/refazer-985-C-dica-1.1.3.01.jpg).
+> - **(D) Confirmado corrigido para o serviço.** Ao escolher "Corte H2", o preço veio R$ 80,00 do catálogo, sem digitação.
+>   O produto continua vindo do `salePrice` (o Shampoo H2 não tem, daí R$ 0,00). Print do passo 6.
+> - **(E) Continua aberto.** "Próximo" vira "Salvar Rascunho" no mesmo elemento (mesmo `ref` no DOM). Nesta execução o modal
+>   mudou de altura ao trocar de aba, e o botão não ficou no mesmo pixel, mas o risco do clique duplo não foi testado.
+> - **Console / 400.** O console das telas de venda se perdeu na navegação para a Contabilidade e não foi lido. Depois da
+>   navegação, `read_console_messages` (só erros) voltou vazio. No log do servidor, a janela 02:55–03:09 UTC (login e passos
+>   6–10) teve `{200: 324, 201: 9, 304: 91}` e **nenhuma** resposta ≥400. O 400 de origem não identificada de 29/10 não se
+>   repetiu do lado do servidor, mas a causa segue sem identificação.
+> - **Observação nova (não é achado de A–E):** a segunda compra do mesmo pacote pelo mesmo cliente não criou outro saldo. A
+>   linha existente foi de 22000 para 52000 (antes da baixa do passo 10), e o vencimento **do saldo inteiro** foi de 29/10/2027 para
+>   30/10/2027. Os R$ 220 antigos ganharam um dia de validade. Inferido pelo dado; não li o código que decide isso.
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
+
 ---
 
 ### [EMENDA 2026-09-28] Passos 12–14 — SPED pela tela (FE-FIX-SPED-ECD-SIGNERS + contrato gerado PR-1)
