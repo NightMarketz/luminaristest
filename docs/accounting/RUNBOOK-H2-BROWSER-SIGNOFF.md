@@ -533,7 +533,15 @@ Pré-condições (verificar antes de começar):
 >   linha existente foi de 22000 para 52000 (antes da baixa do passo 10), e o vencimento **do saldo inteiro** foi de 29/10/2027 para
 >   30/10/2027. Os R$ 220 antigos ganharam um dia de validade. Inferido pelo dado; não li o código que decide isso.
 >
-> DESFECHO: [dono]   ASSINATURA: [dono]
+> Leitura do agente: os lançamentos dos passos 6, 7, 9 e 10 e a CMV do passo 8 conferem com o esperado, mas o passo 8 pede
+> **um** lançamento com C 3.1 **e** C 3.3 (venda mista), e a tela não monta venda mista (um tipo por venda).
+> Desfecho escolhido pelo dono no chat (30/10): *"FALHOU no passo 8"*.
+>
+> [x] FALHOU — passo 8 divergiu (venda mista de serviço + produto não sai do modal Nova Venda; o split misto só está
+> coberto pelo golden test); evidência da divergência colada acima *(marcado pelo dono no chat, 30/10; assinatura abaixo
+> continua do dono)*. Os passos 9–10 foram rodados na mesma passada, antes do desfecho.
+>
+> ASSINATURA: [dono]
 
 ---
 
