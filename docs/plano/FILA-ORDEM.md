@@ -159,6 +159,7 @@ então cada PR parte da `main` com o anterior mergeado.
 
 ```mermaid
 flowchart LR
+  P0{{"0 · antes da fila<br/>#979 · deps · FIX-AUTH-CONTA · OBS 12/14"}} --> TM0
   TM0["1 · TM PR-0<br/>schema"] --> RA["2 · RAG-A<br/>sqlite-vec · gate"]
   RA --> TM1["3 · TM PR-1<br/>provedor e chave"] --> TM2["4 · TM PR-2<br/>alçada"]
   TM2 --> RB["5 · RAG-B<br/>busca e PATCH"] --> TM3["6 · TM PR-3<br/>runner"]
@@ -172,7 +173,8 @@ flowchart LR
 
 | # | Passo | Depende de | Por que aqui |
 |---|---|---|---|
-| 1 | TM PR-0 · schema e contratos | #977 | Serial por definição: nada dos corpos antes dele |
+| 0 | **Antes da fila** (passo 0, abaixo) | — | Itens já documentados que tocam os mesmos arquivos ou a mesma régua |
+| 1 | TM PR-0 · schema e contratos | #977, passo 0 | Serial por definição: nada dos corpos antes dele |
 | 2 | RAG-A · índice `sqlite-vec`, saída do Qdrant | #977 | **Risco técnico mais alto, na frente:** os itens 1 e 2 (carga da extensão nas 3 plataformas, drift do Prisma) devolvem a decisão ao dono se falharem, e é melhor saber antes de 10 PRs |
 | 3 | TM PR-1 · porta `LlmProvider` e `LlmCredential` | 1 | Já com a ressalva do item 8 (emenda 30/10) |
 | 4 | TM PR-2 · teammate e alçada | 1 | Corpo paralelizável com o 3, mas registros em comum → serial |
@@ -190,6 +192,29 @@ flowchart LR
 | 16 | TM PR-10 · cliente MCP | 6, 7, 14 | Dado a servidor de terceiro |
 | 17 | **Runbook M2** (gate humano) | 2, 8, 10 | Redis por instância, Qdrant fora, binário do `sqlite-vec` e `DOCUMENTS_DIR` na imagem. O agente prepara a emenda depois do 2; o dono executa e assina |
 | 18 | Produção | 17 | TEAMMATES e RAG-DOCUMENTOS vão a `done` |
+
+### Passo 0 — o que entra antes (levantado em 30/10)
+
+Cruzamento por `node scripts/paralelo.mjs plano` com todos os nós não `done` e com os PRs abertos em 30/10.
+
+| Item | O que é | Por que vem antes | Ação |
+|---|---|---|---|
+| #979 | Limite de workers no jest e no vitest | Os 16 PRs de código rodam suítes pesadas; merge pequeno e sem conflito | Merge |
+| #949 | `openai` 4 → 7 (Dependabot) | O TM PR-1 embrulha o `OpenAIService`, e o embedding do RAG usa o mesmo SDK. Trocar no meio quebra os dois | Dono decide antes do passo 1: mergear e adaptar, ou fechar e fixar a versão |
+| #951, #950 | TypeScript 5.9 → 7.0 e dependency-cruiser 16 → 18 (Dependabot) | São os gates de todo PR (`tsc` e `check:arch`); trocar no meio muda a régua da fila | Idem |
+| #948, #952 e os do my-app | Bumps menores (Dependabot) | O TEAMMATES mexe no `server/package.json` | Se entrarem, antes do passo 1 |
+| [[FIX-AUTH-CONTA]] (inflight) | Itens #10 (a purga cobre 2 de 47 modelos com `deletedAt`), #11 (anexo apagado na hora) e #20 esperam decisão do dono; #19 (CSRF) vai a BRIEF | Choca com o RAG-A no `UserService.ts` e no `user-deletion-qdrant.test.ts`, que o RAG-A reescreve. O #10 deve fechar antes de o TEAMMATES criar mais modelos com exclusão lógica | Dono decide #10/#11/#20; fecha antes do passo 2 |
+| [[OBS]] itens 12 e 14 da Fase B | Restos da Onda 0 | Tocam `schedulerFailureAlert.test.ts`, `docker-compose.yml` e `.env.example`, que o RAG-A e o TM PR-4 também tocam | Fecha antes do passo 2. Não conferido se têm `executa` |
+
+**Não entram na fila (correm em paralelo):**
+- EFICIENCIA-FISCAL, F5, X10a, X9, RETENCOES-FONTE, EFD-REINF e PACOTE-VALIDADE.
+- Só a ordem de merge dos registros comuns (`factory.ts`, `openapi.json`, `auditCanonical.ts`) fica serial, pela Fase B do
+  contrato de paralelização.
+- O conflito que o `paralelo.mjs` acusa entre EFICIENCIA-FISCAL e o chat vem de um glob largo de testes
+  (`server/src/features/**/__tests__/**`), não de código.
+- W8 (#989, só docs) toca a entrevista, que o TEAMMATES deixou fora do escopo. A lista de arquivos dele não foi
+  conferida contra esta sequência.
+- BUILDER-VERTICAIS: forks pendentes, sem BRIEF.
 
 **Fora da fila de código:**
 - merge da documentação: #975 (LGPD) e #990 (BRIEF do RAG e emendas do TEAMMATES). Se o #990 não for mergeado
