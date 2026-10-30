@@ -121,6 +121,25 @@ describe('FiscalDocument + ServiceFiscalProfile — contrato em SQLite real (BE-
     expect(await docRepo.findById(escopo(DONO_A), doc.id)).toMatchObject({ status: 'SENT', numero: 9n });
   });
 
+  it('X10a PR-9: listContingencia traz só CONTINGENCY com as tentativas; listContingenciaNaoAutorizada acha a tpEmis=9 rejeitada e ignora a normal e a autorizada', async () => {
+    const off = (saleId: string) => sent(saleId, { kind: 'NFCE', cTribNac: '', initialStatus: 'CONTINGENCY', payloadJson: JSON.stringify({ infNFe: { ide: { tpEmis: 9 } } }) });
+    const pendente = await docRepo.createSent(escopo(DONO_A), off('sale-cont-1'));
+    const rejeitada = await docRepo.createSent(escopo(DONO_A), off('sale-cont-2'));
+    const autorizada = await docRepo.createSent(escopo(DONO_A), off('sale-cont-3'));
+    const normal = await docRepo.createSent(escopo(DONO_A), sent('sale-cont-4', { kind: 'NFCE', cTribNac: '', payloadJson: JSON.stringify({ infNFe: { ide: { tpEmis: 1 } } }) }));
+    await docRepo.transition(escopo(DONO_A), rejeitada.id, { status: 'REJECTED', whenStatusIn: ['CONTINGENCY'] });
+    await docRepo.transition(escopo(DONO_A), autorizada.id, { status: 'AUTHORIZED', contingenciaSuplJson: '{"qrCode":"q","urlChave":"u"}', whenStatusIn: ['CONTINGENCY'] });
+
+    const fila = await docRepo.listContingencia(50);
+    expect(fila.map((d) => d.id)).toEqual([pendente.id]);
+    expect(fila[0].attempts).toHaveLength(1);
+    const alerta = (await docRepo.listContingenciaNaoAutorizada(50)).map((d) => d.id);
+    expect(alerta).toEqual(expect.arrayContaining([pendente.id, rejeitada.id]));
+    expect(alerta).not.toContain(autorizada.id);
+    expect(alerta).not.toContain(normal.id);
+    expect((await docRepo.findById(escopo(DONO_A), autorizada.id))?.contingenciaSuplJson).toBe('{"qrCode":"q","urlChave":"u"}');
+  });
+
   // GAP-MAP "DF-e — webhook nunca acha documento pendente" — teste-guarda (sessao-instrumentacao, 07/10). O webhook
   // resolve o documento por `findByPartnerRef(ref da tentativa)`; o mock do LifecycleService.test grava `partnerRef`
   // no documento pendente e por isso não enxerga a lacuna — aqui é o banco real.
