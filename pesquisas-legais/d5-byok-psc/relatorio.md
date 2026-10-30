@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — d5-byok-psc
 
 **Pergunta:** BYOK com e-CNPJ em nuvem (PSC): o PSC pode assinar NF-e/NFC-e (rsa-sha1)? cadastro da aplicação? mTLS?
-**Aberto em:** 2026-10-30T02:26:56-03:00 · **Atualizado em:** 2026-10-30T02:43:07-03:00
+**Aberto em:** 2026-10-30T02:26:56-03:00 · **Atualizado em:** 2026-10-30T02:50:54-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -46,6 +46,10 @@ comercial (IntegraICP) [X01].
 | SEFAZ aceita A1 ou A3 com CNPJ | MOC online §4.2.3 | [D05] | "tipo A1 ou A3, devendo conter o CNPJ da pessoa jurídica titular" |
 | Tipos atuais valem até 02/03/2029; depois, Selo Eletrônico para PJ | Res. CG ICP-Brasil 211/2024, FAQ do ITI, perguntas 01–03 | [D06] | "Até 02/03/2029 todos os tipos de certificados hoje existentes [...] poderão ser utilizados" |
 | Responsável técnico e CSRT a critério da UF | MOC online §2.2.10 | [D05] | "A critério da UF, para os estados que exigem o credenciamento de software emissor de DF-e, poderá ser exigido [...] CSRT" |
+| CSRT só onde há cadastro de software; ativo só no PR (mod. 55) | NT 2018.005 v1.40, regra ZD07-10 | [D07] | "Implementação a critério da UF para os estados que possuem cadastro de fornecedor de software [...] Regra válida para o PR, modelo 55" |
+| Regra 972 (infRespTec) a critério da UF | NT 2020.005 v1.20, regra ZD01-10 | [D08] | "Não informado o grupo de informações do responsável técnico Observação: Implementação a critério da UF" |
+| SP não autoriza nem homologa software | FAQ NFC-e SEFAZ-SP | [X04] | "Não é necessário autorizar qualquer equipamento ou software na SEFAZ para emitir a NFC-e" |
+| Ambiente de teste de SP só para contribuinte | idem | [X04] | "disponível para os contribuintes do ICMS" |
 
 ## 3. Vigência conferida
 - DOC-ICP-01.01: a versão compilada do ITI é a v6.0, com a redação da IN ITI 35/2026 [D01][D03]. A IN 08/2019 [D02]
@@ -78,11 +82,16 @@ comercial (IntegraICP) [X01].
 - NT 2026.001: só a v1.00 foi lida [X02]. As v1.01, v1.02 e v1.02a não foram lidas; as notícias não indicam mudança
   de algoritmo.
 
-- **Caminho A3 com assinador local (30/10):** não conferi se SP exige o `infRespTec` e o CSRT. Também não achei norma da
+- **SP, conferido em 30/10:** o CSRT não se aplica, porque SP não credencia software (inferido forte, [D07] + [X04]).
+  Para a regra 972 (`infRespTec`) não achei ato de SP que a ative; **não verificado**, e só a homologação responde. O
+  [D09] é a página do FAQ de SP salva pelo `baixar`, mas veio sem conteúdo (1.379 caracteres); o texto vale pelo [X04].
+- **Caminho A3 com assinador local (30/10):** Também não achei norma da
   SEFAZ que admita o Selo Eletrônico (pós-2029) na NF-e: o MOC diz "A1 ou A3". O texto da Res. CG ICP-Brasil 211/2024
   não foi lido; só o FAQ oficial do ITI [D06].
 
 **Fora do manifesto:**
+- **[X04]** `docs/X04_sefaz-sp-nfce-faq-navegador.txt`: FAQ oficial da NFC-e da SEFAZ-SP, salvo do texto renderizado no
+  navegador, com SHA-256 do texto, porque o servidor entrega a página vazia a script.
 - **[X03]** `docs/X03_lojas-a3-token-navegador.txt`: preços de loja de e-CNPJ A1, A3 em token e A3 em cartão da
   DigitalSign, da Certisign e da Safeweb, lidos em 30/10. É dado comercial.
 - **[X01]** `docs/X01_psc-docs-fornecedores-navegador.txt`: documentação de fornecedor, não é fonte oficial. Linhas
@@ -112,6 +121,15 @@ comercial (IntegraICP) [X01].
 - **[D06]** Perguntas Frequentes - CG ICP-Brasil — Instituto Nacional de Tecnologia da Informação — Órgãos federais (Receita, ANPD, INSS, etc.)  
   Link oficial: <https://www.gov.br/iti/pt-br/assuntos/comite-gestor/perguntas-frequentes-cg-icp-brasil>  
   Baixado em 2026-10-30T02:39:11-03:00 · arquivo local `docs/D06_perguntas-frequentes-cg-icp-brasil.html` · SHA-256 `1fbca433a21a3f48b952129527dce81a7821ac1c9fd5aa9a0969313e30d1fb27`
+- **[D07]** D07_DownloadArquivoEstatico — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://dfe-portal.svrs.rs.gov.br/NFE/DownloadArquivoEstatico/?sistema=NFE&tipoArquivo=3&nomeArquivo=NT2018%20005_v1_40-AlteracaodeleiauteNF-eNFC-e.pdf>  
+  Baixado em 2026-10-30T02:48:06-03:00 · arquivo local `docs/D07_DownloadArquivoEstatico.html` · SHA-256 `817cdba0654a4cd6cf72af52fd67bbb588f7a22aa7bedc8a026d041e91438af7`
+- **[D08]** D08_DownloadArquivoEstatico — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://dfe-portal.svrs.rs.gov.br/NFE/DownloadArquivoEstatico/?sistema=NFE&tipoArquivo=3&nomeArquivo=Nota%20T%C3%A9cnica%202020.005%20-%20v1.20%20-%20Regras%20de%20Valida%C3%A7%C3%A3o.pdf>  
+  Baixado em 2026-10-30T02:48:51-03:00 · arquivo local `docs/D08_DownloadArquivoEstatico.html` · SHA-256 `b0a750234d4c2b2f79f44f1fbdef33c2e51c6f98347952b01633cde5942b0737`
+- **[D09]** Perguntas Frequentes — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://portal.fazenda.sp.gov.br/servicos/nfce/Paginas/perguntas-frequentes.aspx>  
+  Baixado em 2026-10-30T02:49:36-03:00 · arquivo local `docs/D09_perguntas-frequentes-aspx.html` · SHA-256 `f930b129274d3b61a6fe72c977d054bf5327d12627ea80a7522ceb0ce8f0fe11`
 
 ## Registro de buscas
 _Nenhuma busca registrada._

@@ -71,6 +71,42 @@
       "arquivo": "docs/D06_perguntas-frequentes-cg-icp-brasil.html",
       "texto": "docs/D06_perguntas-frequentes-cg-icp-brasil.txt",
       "bytes": 151744
+    },
+    {
+      "id": "D07",
+      "titulo": "D07_DownloadArquivoEstatico",
+      "url": "https://dfe-portal.svrs.rs.gov.br/NFE/DownloadArquivoEstatico/?sistema=NFE&tipoArquivo=3&nomeArquivo=NT2018%20005_v1_40-AlteracaodeleiauteNF-eNFC-e.pdf",
+      "url_final": "https://dfe-portal.svrs.rs.gov.br/NFE/DownloadArquivoEstatico/?sistema=NFE&tipoArquivo=3&nomeArquivo=NT2018%20005_v1_40-AlteracaodeleiauteNF-eNFC-e.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-30T02:48:06-03:00",
+      "sha256": "817cdba0654a4cd6cf72af52fd67bbb588f7a22aa7bedc8a026d041e91438af7",
+      "arquivo": "docs/D07_DownloadArquivoEstatico.html",
+      "texto": "docs/D07_DownloadArquivoEstatico.txt",
+      "bytes": 742871
+    },
+    {
+      "id": "D08",
+      "titulo": "D08_DownloadArquivoEstatico",
+      "url": "https://dfe-portal.svrs.rs.gov.br/NFE/DownloadArquivoEstatico/?sistema=NFE&tipoArquivo=3&nomeArquivo=Nota%20T%C3%A9cnica%202020.005%20-%20v1.20%20-%20Regras%20de%20Valida%C3%A7%C3%A3o.pdf",
+      "url_final": "https://dfe-portal.svrs.rs.gov.br/NFE/DownloadArquivoEstatico/?sistema=NFE&tipoArquivo=3&nomeArquivo=Nota%20T%C3%A9cnica%202020.005%20-%20v1.20%20-%20Regras%20de%20Valida%C3%A7%C3%A3o.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-30T02:48:51-03:00",
+      "sha256": "b0a750234d4c2b2f79f44f1fbdef33c2e51c6f98347952b01633cde5942b0737",
+      "arquivo": "docs/D08_DownloadArquivoEstatico.html",
+      "texto": "docs/D08_DownloadArquivoEstatico.txt",
+      "bytes": 751215
+    },
+    {
+      "id": "D09",
+      "titulo": "Perguntas Frequentes",
+      "url": "https://portal.fazenda.sp.gov.br/servicos/nfce/Paginas/perguntas-frequentes.aspx",
+      "url_final": "https://portal.fazenda.sp.gov.br/servicos/nfce/Paginas/perguntas-frequentes.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-30T02:49:36-03:00",
+      "sha256": "f930b129274d3b61a6fe72c977d054bf5327d12627ea80a7522ceb0ce8f0fe11",
+      "arquivo": "docs/D09_perguntas-frequentes-aspx.html",
+      "texto": "docs/D09_perguntas-frequentes-aspx.txt",
+      "bytes": 104813
     }
   ],
   "buscas": [],

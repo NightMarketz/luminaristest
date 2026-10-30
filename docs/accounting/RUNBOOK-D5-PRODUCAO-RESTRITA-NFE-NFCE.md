@@ -53,8 +53,11 @@ Pré-condições:
    Resultado esperado: handshake concluído; cStat 107 "Serviço em Operação".
    EVIDÊNCIA: [colar a resposta SOAP com cStat/xMotivo]
 
-4. Transmitir a 1ª NF-e de homologação (NFeAutorizacao4) pelo adaptador.
+4. Transmitir a 1ª NF-e de homologação (NFeAutorizacao4) pelo adaptador,
+   SEM o grupo infRespTec.
    Resultado esperado: cStat 100 "Autorizado o uso da NF-e" e protocolo.
+   (Se vier cStat 972, SP exige o responsável técnico: FALHOU neste passo;
+   registrar como achado — pede CNPJ do Luminaris no grupo ZD.)
    EVIDÊNCIA: [colar retorno com chave, cStat, nProt]
 
 5. Transmitir a 1ª NFC-e de homologação (modelo 65, on-line, QR Code
