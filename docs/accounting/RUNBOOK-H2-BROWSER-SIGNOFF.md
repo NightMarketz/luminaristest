@@ -591,6 +591,111 @@ Assinatura do executor (passos 12–14): ____________
     - k) Plano de contas: criar conta; ligar/desligar "exige dimensão". Períodos: criar exercício, abrir,
       fechar (parcial/definitivo), reabrir; encerrar exercício. EVIDÊNCIA: [ ]
 
+> **EVIDÊNCIA do passo 15 (agente, 29/10/2026, sob comando do dono no chat; RUNBOOK-FORMAT §Fronteira).** Mesmo ambiente dos
+> passos 12–14, usuário `seed-real` (o dono logou no painel), unidade `seed-unit-real` (`cmuw4z7zj02ehcii0st3unfr4`). O agente
+> operou as telas no painel do navegador embutido, com cliques e preenchimento de campos por script na página. Para ter o
+> **corpo do request**, que o Network do painel não mostra, o agente instalou na página um gancho só de leitura em `fetch`/XHR.
+> Ele grava método, URL, corpo, status e o começo da resposta de toda escrita. A saída abaixo é a transcrição desse gancho e do
+> Network, com os ids encurtados só onde está indicado. Nos itens g) e h), os arquivos CSV foram entregues ao `<input type=file>`
+> por `DataTransfer`, sem diálogo do sistema. O upload por clique é o passo 2, não este. Contagem final do gancho: **52 escritas,
+> 1 com status ≥ 400** (o encerramento do item k, regra de negócio). Nenhuma escrita deu 400 de `unrecognized_keys` ou
+> `invalid_type`.
+>
+> ```text
+> ## a) AP
+> POST /api/payables → 201 (resp id cmvtz4385006jci9c10ux4oes, amountCents 15000, expenseAccountId 4.1, status OPEN, withholdingAvisos SEM_PERFIL_RETENCAO)
+> POST /api/payables/cmvtz4385006jci9c10ux4oes/pay → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","method":"Pix","paidAt":"2026-10-29","amountCents":15000}
+> POST /api/payables/cmvtz4385006jci9c10ux4oes/payments/cmvtz51c7006uci9cyg1add7j/cancel → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","reversalDate":"2026-10-29","reason":"H2 15a teste"}
+>   resp updatedAt 20:06:43.262Z mas dev.db updatedAt 20:06:57.856 (resposta com updatedAt velho)
+> POST /api/payables/cmvtz4385006jci9c10ux4oes/cancel → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","reversalDate":"2026-10-29","reason":"H2 15a cancelar titulo"} resp status CANCELLED, documentNumber "deleted:<id>:NF-H2-1"
+> braço estoque: seed-real sem produto ("Nenhum produto no catálogo"); feito pela tela no seed-presumido antes do passo 6 (Shampoo H2) sem status capturado
+> Achados: "Cash" sem tradução no select; status "PARTIALLY_PAID" sem tradução na lista; dica "Debita 1.1.6" (=C)
+> ## b) AR
+> POST /api/receivables → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","customerName":"Cliente H2","description":"H2 15b receita","issueDate":"2026-10-29","dueDate":"2026-10-29","amountCents":12000,"revenueAccountId":"cmuw4z86802gpcii04kmwh7xu","documentNumber":"FAT-H2-1"}
+> POST /api/receivables/cmvtz63wp007gci9cis6sswh9/receive → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","method":"Pix","receivedAt":"2026-10-29","amountCents":12000}
+> POST /api/receivables/cmvtz63wp007gci9cis6sswh9/receipts/cmvtz6cl9007rci9c7vp2evu1/cancel → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","reversalDate":"2026-10-29","reason":"H2 15b teste"}
+> POST /api/receivables/cmvtz63wp007gci9cis6sswh9/cancel → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","reversalDate":"2026-10-29","reason":"H2 15b cancelar titulo"}
+> linhas: Recebida → Em aberto → some da lista
+> ## c) e-Lalur
+> POST /api/lalur/parte-b → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","codCtaB":"PB-H2-1","descricao":"H2 15c prejuizo fiscal","dtCriacao":"2026-03-31","codPbRfb":"1000","codTributo":"I","saldoIniCents":0,"indSaldoIni":"D"}  (id cmvtz7a7n008bci9cf3u0vmes)
+> PATCH /api/lalur/parte-b/cmvtz7a7n008bci9cf3u0vmes → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","descricao":"H2 15c prejuizo fiscal (editada)","dtCriacao":"2026-03-31","codPbRfb":"1000","dtLimite":null,"saldoIniCents":0,"indSaldoIni":"D","cnpjSitEsp":null}
+>   (1º PATCH 200 saiu com a descrição antiga — erro do agente: preencheu o campo errado; refeito)
+> POST /api/lalur/parte-b → 201 ×2 (PB-H2-2 p/ passo 16; PB-H2-X p/ arquivar)
+> POST /api/lalur/parte-b/cmvtz8dto008fci9c1o3u346y/archive → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4"} resp codCtaB "deleted:<id>:PB-H2-X"; linha sumiu
+> POST /api/lalur/entries → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","year":2026,"quarter":"T01","livro":"lalur","codigo":"8.60","valorCents":10000,"indRelacao":"4","histLancamento":"H2 15c ajuste de teste"}
+> PATCH /api/lalur/entries/cmvtz92b0008hci9c1wup3g4p → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","valorCents":15000,"indRelacao":"4","parteBId":null,"accountId":null,"histLancamento":"H2 15c ajuste de teste (editado)"}
+> POST /api/lalur/entries/cmvtz92b0008hci9c1wup3g4p/archive → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4"}; linha sumiu
+> ## d) Aprovações
+> POST /api/entry-approvals/drafts → 201 body={"date":"2026-10-29","description":"H2 15d rascunho A","unitId":"cmuw4z7zj02ehcii0st3unfr4","lines":[{"accountCode":"4.1","debitCents":5000,"creditCents":0},{"accountCode":"1.1.1.01","debitCents":0,"creditCents":5000}]}
+> PUT /api/entry-approvals/drafts/cmvtza6j6008jci9cuva6bekg → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","date":"2026-10-29","description":"H2 15d rascunho A (editado)","lines":[{"accountCode":"4.1","debitCents":6000,"creditCents":0},{"accountCode":"1.1.1.01","debitCents":0,"creditCents":6000}],"expectedVersion":1}
+> POST /api/entry-approvals/drafts/cmvtza6j6008jci9cuva6bekg/submit → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","expectedVersion":2}
+> POST /api/entry-approvals/cmvtza6j6008jci9cuva6bekg/approve → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","expectedVersion":3} resp status "Posted", sourceType manual
+> POST /api/entry-approvals/drafts → 201 (rascunho B, 3000)
+> POST /api/entry-approvals/drafts/cmvtzayms008tci9c166s5kz7/submit → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","expectedVersion":1}
+> POST /api/entry-approvals/cmvtzayms008tci9c166s5kz7/reject → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","expectedVersion":2,"reason":"H2 15d motivo da rejeição"}; card volta a rascunho (Editar/Enviar)
+> ## e) Lançamentos (Balancete → Novo Lançamento)
+> POST /api/accounting/post → 201 body={"date":"2026-10-29","description":"H2 15e lancamento com dimensao","unitId":"cmuw4z7zj02ehcii0st3unfr4","lines":[{"accountCode":"4.1","debitCents":2500,"creditCents":0,"dimensions":["cmvtzbva90091ci9cjb6dcsaa"]},{"accountCode":"1.1.1.01","debitCents":0,"creditCents":2500}]} → 2026/0180
+> POST /api/accounting/reverse → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","lancamentoId":"cmvtzckf00093ci9crf8hl7ko","reversalPostingDate":"2026-10-29"}; linha 2026/0180 "Estornado" mas ainda com botão Estornar
+> Achado (I): rascunho B (status Rascunho, sem nº) aparece em Lançamentos com "Recibo (PDF)" e "Estornar"
+> ## f) Dimensões
+> POST /api/dimensions/definitions → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","code":"H2_CC","name":"Centro de custo H2"}
+> POST /api/dimensions/values → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","definitionId":"cmvtzboo5008zci9ckjlqx6u6","code":"LOJA1","name":"Loja 1 H2"}
+> POST /api/dimensions/values/cmvtzbva90091ci9cjb6dcsaa/archive → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4"}
+> POST /api/dimensions/definitions/cmvtzboo5008zci9ckjlqx6u6/archive → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4"}; tela: "Nenhum eixo de dimensão cadastrado"
+> ## g) Conciliação (extrato CSV de 3 linhas injetado no input file por DataTransfer — não é "upload por clique"; isso foi o passo 2)
+> POST /api/accounting/reconciliation/statements → 201 body=[FormData] (statement cmvtze2hc009jci9czqvrgtsz, ref EXTRATO-H2-15G, conta 1.1.1.01) tela "Extrato importado: 3 linha(s)."
+> POST /api/accounting/reconciliation/statements/cmvtze2hc009jci9czqvrgtsz/auto-match → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4"} res={"success":true,"data":{"processed":3,"matched":1,"zeroCandidates":2,"ambiguous":0}}
+> POST /api/accounting/reconciliation/lines/cmvtze2hd009mci9co3ob8gug/ignore → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","ignored":true}
+> (linha E sem candidato: 2026/0180 estornado; postado lançamento 4.1 D / 1.1.1.01 C 2500, POST /api/accounting/post → 201; 1ª abertura de Sugestões depois disso mostrou "Nenhum candidato" (GET suggestions → 200 {"success":true,"data":[]}); a API, chamada direto, devolveu o candidato; reaberto depois de "Atualizar", a tela listou. Ordem GET×POST não confirmada.)
+> POST /api/accounting/reconciliation/matches → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","statementLineId":"cmvtze2hd009lci9cresny5cz","postingIds":["cmvtzfgju009uci9crgmpv7hg"]} res={"success":true,"data":{"matchedPostings":1}}
+> POST /api/accounting/reconciliation/matches/cmvtzhcgc009wci9cmdtlhgq9/unmatch → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4"}; linha volta a Pendente
+> ## h) Import/Export (CSV de lançamentos injetado no input file)
+> POST /api/accounting/data-exchange/imports → 201 (job cmvtziswn009xci9c3nru7tqx, IMPORT_JOURNAL_ENTRIES, VALIDATED; tela "Total: 2 | Válidas: 2 | Inválidas: 0")
+> POST /api/accounting/data-exchange/jobs/cmvtziswn009xci9c3nru7tqx/commit → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4"} status COMMITTED
+> POST /api/accounting/data-exchange/exports → 201 body={"kind":"EXPORT_TRIAL_BALANCE","format":"csv","unitId":"cmuw4z7zj02ehcii0st3unfr4"} status EXPORTED, export_trial_balance.csv 779 bytes
+> ## i) Referencial (seed-real: 2025 = 42/42 "Pronto"; 2026 vazio)
+> POST /api/accounting/referential/mappings/copy → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","fromVersion":"2025","toVersion":"2026"} (2026 passa a 42/42; com tudo mapeado a tela esconde a grade de edição)
+> POST /api/accounting/referential/mappings/batch → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","mappingVersion":"2027","items":[{"accountId":"cmuw4z84o02g1cii05zbuilnh","referentialCode":"1.01.01.02.01","label":"Bancos Conta Movimento - No País"}]}; tela "Mapeadas: 1 | Pendentes: 41"
+> ## j) Contrapartes
+> POST /api/counterparties → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","type":"SUPPLIER","name":"Contraparte H2 com ref","ref":"H2-REF-001"}
+> POST /api/counterparties → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","type":"CUSTOMER","name":"Contraparte H2 sem ref"}  (sem chave ref)
+> POST /api/counterparties/cmvtzlc3900crci9c9791y9e1/archive → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4"}; linha sumiu
+> ## k) Plano de contas / Períodos
+> POST /api/accounting/accounts → 201 body={"code":"4.9","name":"Despesa teste H2","nature":"Expense","acceptsEntries":true,"unitId":"cmuw4z7zj02ehcii0st3unfr4"}
+> PATCH /api/accounting/accounts/cmvtzm15000ctci9cizegw9tr/requires-dimension → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","requiresDimension":true} (linha "Obrigatória")
+> PATCH .../requires-dimension → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","requiresDimension":false} (linha "Opcional")
+> POST /api/accounting/cmuw4z7zj02ehcii0st3unfr4/periods/seed-year → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","year":2027} ("Semear 2027"; 12 meses Futuro)
+> POST /api/accounting/periods/cmvtzmt7300cuci9cf3yhsv46/open → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4"} (Jan/2027 Aberto)
+> POST .../soft-close → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","reason":"H2 15k teste"} (Fech. Parcial)
+> POST .../reopen → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","periodId":"cmvtzmt7300cuci9cf3yhsv46","reason":"H2 15k teste"} (Aberto)
+> POST .../hard-close → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","reason":"H2 15k teste"} (Definitivo)
+> POST /api/accounting/closing/exercise → 400 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","year":2027} res={"code":"VALIDATION_ERROR","message":"Não há saldo de contas de resultado para encerrar em 2027."}
+> Achado: modal "Encerrar exercício" mostra Unidade = id cru (cmuw4z7zj02ehcii0st3unfr4)
+> Total: 52 escritas registradas pelo gancho; 1 ≥400 (o encerramento). Console: 4× "Failed to load resource: 400" desde o login no seed-real (ECF Real 400, encerramento 400 e 2 de origem não identificada).
+> ```
+>
+> **Desvios e lacunas do passo 15:**
+> - a) O braço **estoque** não rodou no `seed-real`: o modal mostra "Nenhum produto no catálogo". Ele rodou pela mesma tela no
+>   `seed-presumido`, hoje, antes do passo 6 (Shampoo H2, 10 un., título `OPEN` de 20000; ver o bloco dos passos 6–11), mas
+>   aquela sessão não guardou o status nem o corpo do request.
+> - c) O 1º PATCH da conta da Parte B saiu com a descrição antiga porque o agente preencheu o campo errado (no modo edição os
+>   índices mudam). Foi refeito; o PATCH válido está acima.
+> - g) A 1ª abertura de "Sugestões" depois de postar o lançamento de R$ 25 mostrou "Nenhum candidato". A mesma rota chamada
+>   pela API devolveu o candidato. Depois de "Atualizar", a tela também listou. Não foi confirmado se o GET saiu antes do POST.
+> - k) "Encerrar exercício" deu 400 de regra ("Não há saldo de contas de resultado para encerrar em 2027"). O corpo
+>   `{unitId, year}` passou pelo DTO. O agente não encerrou 2026 (exercício com movimento e meses abertos) para não lançar
+>   encerramento real no dev.db. Efeito colateral no `seed-real`: 2027 semeado e Jan/2027 `HARD_CLOSED`.
+>
+> **Achados de tela (rótulo e fluxo, não corrigidos):** (G) "Cash" sem tradução no select de forma de pagamento/recebimento e
+> status "PARTIALLY_PAID" sem tradução na lista de Contas a Pagar. (H) A resposta do cancelamento de pagamento traz um
+> `updatedAt` velho (20:06:43.262Z, enquanto o dev.db tem 20:06:57.856). (I) Em Lançamentos, um rascunho (status "Rascunho",
+> sem número) mostra "Recibo (PDF)" e "Estornar", e um lançamento "Estornado" ainda mostra "Estornar". (J) O modal "Encerrar
+> exercício" mostra o `unitId` cru no campo Unidade. Console (só erros): 4× "Failed to load resource: 400" desde o login no
+> `seed-real`. Dois são o 400 da ECF Real (passo 14) e o do encerramento. Os outros 2 não têm origem identificada, como no
+> passo 11.
+>
+> Leitura do agente: a) a k) com 2xx nas escritas, menos o braço estoque de a) e o encerramento de k). DESFECHO: [dono]
+
 Desfecho do passo 15 (marcar UM):
 [ ] PASSOU — a) a k) com evidência conferindo com o esperado
 [ ] FALHOU — item __ divergiu; evidência colada acima
