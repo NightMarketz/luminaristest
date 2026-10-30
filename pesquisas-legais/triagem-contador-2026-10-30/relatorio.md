@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — triagem-contador-2026-10-30
 
 **Pergunta:** Quais perguntas abertas ao contador (D1, X7, ISS-TRANSICAO, EF, RETENCOES, PRESUMIDO-TETO, X14-CAIXA, confirmações de 10/10) a lei ou a doc oficial já responde?
-**Aberto em:** 2026-10-30T02:20:30-03:00 · **Atualizado em:** 2026-10-30T02:32:46-03:00
+**Aberto em:** 2026-10-30T02:20:30-03:00 · **Atualizado em:** 2026-10-30T02:46:47-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -20,7 +20,7 @@ para o regime de caixa de 2026, não têm cliente.
 | 1 | III-4: ISS 5% em SP e códigos nacionais (D1/D1f) | (a) | Confere: 6.01–6.03 caem no art. 16 IV da Lei SP 13.701 (5%), fora do Simples; piso de 2% da LC 116 art. 8º-A | dossiê `gates-humanos-lei` [D08][D03], 24/10 |
 | 2 | III-7a: 16% só no IRPJ, CSLL a 32% (D1) | (a) | Confere: a Lei 9.250 art. 40 fala só da "base de cálculo mensal do imposto de renda"; a CSLL de serviço é 32% (Lei 9.249 art. 20 I) | [D04] art. 40; [D03] art. 20 I |
 | 3 | III-8: IRRF 1,5% salvo Simples e valor mínimo (D1) | (a) | 1,5%: RIR art. 714. Simples: dispensa vigente (IN RFB 765/2007 art. 1º). Valor mínimo: a dispensa de R$ 10 da Lei 9.430 art. 67 é da PF. Na PJ o IRRF pequeno se acumula até o DARF de R$ 10, como o código já faz desde o #902 | dossiê `verif-2026-10-20-f1-retencoes-reinf-ibscbs` [D09]; [D13] |
-| 4 | III-9: PER/DCOMP de saldo negativo só depois da ECF (D1) | (b) | Confere, com ressalva: no trimestral, PER/DCOMP feito antes de fechar o ano não exige ECF | [D11] (guia RFB, IN 2.055 art. 28) |
+| 4 | III-9: PER/DCOMP de saldo negativo só depois da ECF (D1) | (b) | Confere, com ressalva: no trimestral, PER/DCOMP feito antes de fechar o ano não exige ECF | [D11] (guia RFB); [D14] IN 2.055 art. 28 § 2º |
 | 5 | III-10: o CST 02 não é só do monofásico (D1) | (a) | Confere: na tabela do CST, o 02 é "alíquota diferenciada" | `docs/accounting/pesquisa-lei-2026-10-10/piscofins-icms.md` (IN 1.009, Tabela II; MOC 7.0) |
 | 6 | P-C1: a forma da planilha de memória serve ao contador? (X7) | **(d)** | Só ele diz se a planilha serve à rotina dele | — |
 | 7 | P-C5: soma do ISS × livro municipal (X7) | gate do dono | Conferência com dado real (runbook), não pergunta | BRIEF X7-C §P-C5 |
@@ -29,14 +29,14 @@ para o regime de caixa de 2026, não têm cliente.
 | 10 | P-ISS-3: pacote vendido em 2028 e consumido em 2029 | (a) | "Primeira ocorrência" = o primeiro fato gerador da operação (art. 408 § 4º I). O pagamento antecipado é fato gerador só na execução fracionada (art. 10 § 3º, red. LC 227). No resto, ele gera só antecipação, e o fato gerador é o fornecimento (art. 10 § 4º I–II). O produto segue o `pacoteFatoGerador` do perfil: VENDA ⇒ lei de 2028; CONSUMO ⇒ lei de 2029. Saldo não consumido até 31/12/2032: só IBS (art. 408 § 4º II; § 5º) | [D10] arts. 10 §§ 3º–4º, 408 §§ 4º–5º |
 | 11 | P-EF-1: prova de custo no modo CARGA (EFICIENCIA-FISCAL) | (c) → dono | **Documento obrigatório** (dono, 30/10). Base: DL 1.598 art. 9º § 1º (a escrituração só faz prova com "documentos hábeis") | [D06] art. 9º § 1º |
 | 12 | P-EF-7: lista de procedimentos hospitalares por cliente | (c) já decidido | Critério já respondido em 21/10; a lista é cadastro de cada cliente, feito no onboarding | BRIEF EF §9 |
-| 13 | P-EF-11: o cabeleireiro perde os 16%? | (a) | A Lei 12.592 só "reconhece" as atividades (art. 1º). A Lei 13.643 "Regulamenta" a esteticista. Nenhuma Solução de Consulta achada. O produto mantém 32% por padrão (leitura segura), e a diferença máxima é de R$ 2.880/ano | [D05] art. 1º; dossiê `fila-2026-10-27-bloco3-eficiencia` |
+| 13 | P-EF-11: o cabeleireiro perde os 16%? | (a) | A Lei 12.592 só "reconhece" as atividades (art. 1º). A Lei 13.643 "Regulamenta" a esteticista. A IN 1.700 tira dos 16% só a alínea "a" (profissão regulamentada), sem definir o termo [D15]. Nenhuma Solução de Consulta achada no SIJUT. O produto mantém 32% por padrão (leitura segura), e a diferença máxima é de R$ 2.880/ano | [D05] art. 1º; dossiê `fila-2026-10-27-bloco3-eficiencia` |
 | 14 | P-EF-12: ligar o CARGA exige aceite do contador | (c) já decidido | Liga por cliente, com o aceite do contador **do cliente**, no onboarding. Não é pergunta ao nosso contador | BRIEF EF §9 |
 | 15 | F-RET-15: o ISS retido vai direto para "ISS sobre serviços"? (RETENCOES-FONTE) | (a) + (c) | **Sim:** o ISS é tributo sobre a receita, então é dedução da receita bruta (DL 1.598 art. 12 § 1º III). **Momento:** pela competência (Lei 6.404 art. 177), a dedução cai no mês da receita. O dono decidiu em 30/10: lançar na emissão da NFS-e com ISS retido, e o recebimento só baixa o valor | [D06] art. 12 § 1º III; [D12] art. 177 |
 | 16 | P-RET-9: autônomo no eSocial não vai ao R-4010 | (b) | Confere: o manual da Reinf (item 11) e o FAQ 1.17 mandam o rendimento do trabalho para o eSocial | dossiê `fila-2026-10-27-bloco2-reinf` [D01][D05] |
 | 17 | P-PT-1: teto de R$ 78 mi pela receita total ou bruta? | (a) | Receita total: a IN 1.700 usa a mesma medida na opção e na obrigação (arts. 59 I e § 1º, 214) | dossiê `presumido-teto-78mi` [D04] |
 | 18 | P-PT-2: o mês de abertura conta inteiro? | (c) já decidido | Nem a lei nem a IN tratam. Fica o F-PT-4 (a) que o dono ratificou. Para salão e clínica o efeito é nulo (R$ 6,5 mi por mês) | dossiê `presumido-teto-78mi` §4.2 |
 | 19 | P-PT-3: no ano de início não há teto? | (a) | Não há. O art. 13 mede o "ano-calendário anterior", e a IN 1.700 art. 214 § 3º regula a opção de quem começa sem citar limite | [D02] art. 13; dossiê `presumido-teto-78mi` [D04] |
-| 20 | A1: receita de 2026 não recebida (X14-CAIXA) | (a) + (c) | Entra no PGDAS-D de **dez/2026**: o art. 20 II b da Res. CGSN 140 vale até 31/12/2026, e o fim do caixa é um "retorno ao Regime de Competência". A RFB não publicou regra de transição (notícia de 14/08/2026). O dono escolheu automatizar, mas o produto **vai ao ar só em 2027**, então ninguém vai apurar dez/2026 nele. Nada a codificar | dossiê `simples-regime-caixa` [D02][D04]; notícia RFB/Agência Gov 14/08/2026 |
+| 20 | A1: receita de 2026 não recebida (X14-CAIXA) | (a) + (c) | Entra no PGDAS-D de **dez/2026**: o art. 20 II b da Res. CGSN 140 vale até 31/12/2026, e o fim do caixa é um "retorno ao Regime de Competência". Nenhum ato do CGSN traz regra de transição: conferi o texto da Res. 190 e as Res. 191 a 195 [D16][D17]. O dono escolheu automatizar, mas o produto **vai ao ar só em 2027**, então ninguém vai apurar dez/2026 nele. Nada a codificar | dossiê `simples-regime-caixa` [D02][D04]; notícia RFB/Agência Gov 14/08/2026 |
 | 21 | A2: o cartão entra na base no mês da venda ou no do crédito? | (c) já decidido | A norma não diz. Fica o F-CX-2 (c), D+N, com alerta. Só vale até 2026: sem cliente | dossiê `simples-regime-caixa` §4 A2 |
 | 22 | A3: receita de 2025 recebida no caixa de 2026 | (c) já decidido | A norma não trata. Fica a decisão do dono de 16/10 ("Só vendas de ano no caixa"). Só vale para 2026: sem cliente | D-2026-10-16-X14-CAIXA-LACUNAS |
 
@@ -68,10 +68,16 @@ para o regime de caixa de 2026, não têm cliente.
   (dossiê `verif-2026-10-20-f1-retencoes-reinf-ibscbs`, D09).
 - **IN RFB 765/2007 [D13]:** não está no acervo. Li no SIJUT pelo navegador embutido, em 30/10, na visão multivigente. Só o
   art. 2º foi revogado (IN 1.234/2012); o art. 1º vigora.
-- **IN RFB 2.055/2021:** não está no acervo. Li o guia oficial da RFB [D11], que cita o art. 28. O texto da IN não foi lido.
+- **IN RFB 2.055/2021 [D14]:** não está no acervo. Li o texto no SIJUT (visão multivigente, alterações até a IN 2.314/2026). Os
+  arts. 27 e 28 não trazem marca de alteração. O art. 28 § 2º confirma a ressalva do trimestral que o guia [D11] já dava.
+- **IN RFB 1.700/2017 [D15]:** li no SIJUT, já com a IN 2.343/2026. Art. 33 § 7º e art. 215 § 10: os 16% valem só para os
+  serviços das alíneas "b", "c", "d", "f", "g" e "j" do art. 33 § 1º IV, ou seja, **sem** a alínea "a" (profissão legalmente
+  regulamentada). A IN não define o termo.
 - **Leis 9.718, 9.249, 9.250, 12.592 e 6.404, DL 1.598 e LC 123:** compiladas, cópias de 13/10, sem alerta.
-- **Res. CGSN 190/2026:** a notícia oficial da RFB de 14/08/2026 (Agência Gov, lida em 30/10) não traz regra de transição
-  para o caixa.
+- **Res. CGSN 190/2026 [D16]:** li o texto integral no SIJUT. "caixa", "a receber" e "transição" não aparecem nenhuma vez. A
+  resolução só revoga os arts. 16 § 1º, 17 p.ú., 18 § 1º, 19, 20, 77 e 78 (art. 8º), com efeitos em 01/01/2027 (art. 9º).
+- **Resoluções CGSN posteriores [D17]:** a lista do SIJUT para 2026 vai até a Res. 195 (DOU 22/10/2026). Nenhuma trata do
+  caixa: a 191 é da NFS-e (art. 59), a 194 é dos prazos de opção para 2027, e a 195 é do documento fiscal do MEI.
 
 ## 4. Ambiguidades (só o que precisa de decisão humana)
 - **P-ISS-1:** a LC 116 art. 8º-A não foi alterada. A leitura "o piso cai junto" se apoia na hierarquia: o ADCT art. 128 manda
@@ -83,12 +89,25 @@ para o regime de caixa de 2026, não têm cliente.
 - **A1–A3:** a norma não diz nada, mas nenhuma das três tem cliente: o produto vai ao ar em 2027 e o caixa acaba em
   31/12/2026.
 
-## 5. Lacunas
-- O texto integral da IN RFB 2.055/2021 não foi lido (só o guia oficial).
-- Não achei Solução de Consulta Cosit sobre o cabeleireiro e o percentual de 16%.
-- Não há regra de transição publicada para o fim do caixa do Simples (nem Res. CGSN nem orientação da RFB lidas até 30/10).
-- O texto do D13 foi gravado à mão a partir do SIJUT, porque o `baixar` recebe uma casca JS. O SHA-256 do arquivo é
-  `e8a4c9e1bcaa533e3570405ee24b3e4b43b9927595f544ee8da5673f0fe68ac2`.
+## 5. Lacunas (2ª varredura, 30/10)
+- ~~Texto integral da IN RFB 2.055/2021 não lido~~ **Fechada:** lida no SIJUT [D14]. O art. 28 § 2º confirma o guia [D11].
+- **Cabeleireiro e 16%: segue sem Solução de Consulta.** Busquei no SIJUT por "cabeleireiro presunção", "cabeleireiro
+  'lucro presumido'", "'profissão legalmente regulamentada' 16%", "'Lei nº 12.592'" e "esteticista 'lucro presumido'". Vieram
+  só atos de outro tema: a SC Cosit 127/2019 (Simples, Anexo III), a SC Cosit 80/2014 (PIS/Cofins do salão), INs da Dirf e a
+  IN 1.700, onde "cabeleireiro" só aparece na tabela de depreciação. Fato novo: a IN 1.700 [D15] confirma que os 16% excluem a
+  alínea "a" (profissão regulamentada), mas não define o termo. O padrão de 32% continua sendo o lado seguro.
+- **Transição do caixa: segue inexistente, agora conferida no texto.** A Res. 190 [D16] e as Res. 191 a 195 [D17] não tratam do
+  assunto (até 22/10/2026). Sem efeito no produto: o go-live é em 2027.
+- ~~D13 gravado à mão~~ **Fechada:** o D13 foi regravado com o innerText da página do SIJUT. O SHA-256 do texto integral,
+  calculado no navegador, é `4a55eb6d…df46b`. O arquivo diz o que foi tirado: só rótulos de interface e linhas de pontilhado.
+  O `baixar` continua recebendo a casca JS do SIJUT. O mesmo método (hash do innerText no navegador) valeu para D14–D17.
+
+## 6. Achado lateral (fora das 22)
+- **Res. CGSN 195/2026 (DOU 22/10/2026, efeitos em 01/01/2027), art. 106-C [D17]:** a DASN-Simei "poderá ser utilizada como
+  documento fiscal eletrônico" nas vendas e serviços do MEI a consumidor final pessoa física sem CNPJ. O dossiê
+  `emissao-mei-me-por-tipo` e a [[D-2026-10-29-EMISSAO-SIMPLES-E-FINANCEIRO]] não conhecem esse artigo: o dossiê diz que, para
+  tomador PF, a emissão do MEI é facultativa só "até 31/12/2026". **Inferido:** em 2027 o MEI continua sem obrigação de emitir
+  NFS-e para PF. Conferir antes de o produto exigir a nota nesse caso.
 <!-- /ANALISE -->
 
 ## Fontes consultadas

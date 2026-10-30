@@ -1,0 +1,21 @@
+Fonte: SIJUT (normas.receita.fazenda.gov.br), lido no navegador embutido em 2026-10-30 (2ª varredura).
+
+1) Lista de atos do CGSN com ano 2026 (busca ano_ato=2026, órgão CGSN): 14 itens; o mais recente é a Res. CGSN nº 195,
+   publicada em 22/10/2026. Resoluções que alteram a Res. 140 depois da 190: 191 (10/08/2026) e 195 (22/10/2026).
+   A 194 (28/09/2026) altera a Res. 186 (prazos de opção para 2027).
+
+2) Res. CGSN nº 191, de 04/08/2026 (DOU 10/08/2026) — https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/152781
+   SHA-256 do innerText integral (3.884 caracteres): e089e72db17c13a0f09bc145a246cbeadd76f835c273b02d9144e14abdf29a1d
+   Contagem: "caixa" 0 · "Caixa" 0 · "a receber" 0 · "recebid" 0 · "transição" 0. Trata do art. 59 (NFS-e).
+
+3) Res. CGSN nº 195, de 21/10/2026 (DOU 22/10/2026) — https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/154194
+   SHA-256 do innerText integral (2.269 caracteres): 8cdd8ad7dc0df930e155ff7871ffffe69cd1663257c57ee54d5db92285854fd0
+   Contagem: "caixa" 0 · "a receber" 0 · "recebid" 0 · "transição" 0. Trecho literal:
+   "Art. 106-C. A Declaração Anual Simplificada para o Microempreendedor Individual (DASN-Simei), de que trata o art. 109, poderá
+   ser utilizada como documento fiscal eletrônico relativo às vendas de mercadorias e às prestações de serviços realizadas pelo
+   MEI a consumidor final pessoa física não inscrita no CNPJ, para fins do disposto nos arts. 106, 106-A e 106-B desta
+   Resolução. (Lei Complementar nº 123, de 2006, art. 2º, inciso I e § 6º; art. 25-B; e art. 26, §§ 1º, 6º, inciso II, e 15)"
+   "Art. 2º Esta Resolução entra em vigor na data de sua publicação no Diário Oficial da União e produzirá efeitos a partir de
+   1º de janeiro de 2027."
+
+=> Até 22/10/2026 nenhum ato do CGSN trata da transição do regime de caixa.

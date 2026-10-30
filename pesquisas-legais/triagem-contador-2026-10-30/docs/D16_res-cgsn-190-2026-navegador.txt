@@ -1,0 +1,17 @@
+Fonte: https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/152832 (SIJUT, Res. CGSN nº 190/2026, visão Multivigente)
+Lido no navegador embutido em 2026-10-30 (2ª varredura). SHA-256 do document.body.innerText integral (68.139 caracteres),
+calculado no navegador: 2a0590a136f5c44a2495a5b3df7aa4deedbc52104c589e33a4c0a6efbf98fcc8
+
+RESOLUÇÃO CGSN Nº 190, DE 4 DE AGOSTO DE 2026 — Publicado(a) no DOU de 10/08/2026, seção 1-A, página 1
+
+Busca no texto integral (contagem de ocorrências): "caixa" 0 · "Caixa" 0 · "a receber" 0 · "transição" 0 · "Transição" 0 · "receb" 4
+(as 4 de "receb" são do split payment/recolhimento pelo adquirente e do art. 144-C, sem relação com o regime de caixa).
+=> A resolução não traz regra de transição para a receita do regime de caixa auferida e não recebida até 31/12/2026.
+
+Trechos literais:
+Art. 8º Ficam revogados: [...] IX - o §1º do art. 16; X - o parágrafo único do art. 17; XI - o §1º do art. 18; XII - os art. 19 e 20; [...] XXII - a Subseção III da Seção VIII do Capítulo II do Título I, localizada imediatamente após o art. 76; XXIII - os arts. 77 e 78; [...]
+Art. 9º Esta Resolução entra em vigor na data de sua publicação no Diário Oficial da União e produzirá efeitos a partir de 1º de janeiro de 2027.
+
+Arts. 144-D e 144-E (novos) tratam de outra coisa: quem entra no Simples em 01/01/2027 sem ter estado no regime o ano todo de 2026
+informa a receita e a folha anteriores no módulo "Receitas Anteriores à Opção" do PGDAS-D (dez/2025–nov/2026 até 20/12/2026;
+dez/2026 até 20/01/2027), para formar a RBT12 e a FS12.
